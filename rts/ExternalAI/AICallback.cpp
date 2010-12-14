@@ -793,176 +793,141 @@ float CAICallback::GetPathNodeCost(unsigned int x, unsigned int z) { return path
 
 
 
-
-int CAICallback::GetEnemyUnits(int* unitIds, int unitIds_max)
+static int FilterUnitsVector(const std::vector<CUnit*>& units, int* unitIds, int unitIds_max, bool (*includeUnit)(CUnit*) = NULL)
 {
-	verify();
 	int a = 0;
 
-	const int myAllyTeam = teamHandler->AllyTeam(team);
-	std::list<CUnit*>::const_iterator ui;
-	for (ui = uh->activeUnits.begin(); (ui != uh->activeUnits.end()) && (a < unitIds_max); ++ui) {
-		const CUnit* u = *ui;
+	std::vector<CUnit*>::const_iterator ui;
+	for (ui = units.begin(); (ui != units.end()) && (a < unitIds_max); ++ui) {
+		CUnit* u = *ui;
 
-		if (!teamHandler->Ally(u->allyteam, myAllyTeam) &&
-		    (u->losStatus[myAllyTeam] & LOS_INLOS)) {
-			if (!IsUnitNeutral(u->id)) {
-				if (unitIds != NULL) {
-					unitIds[a] = u->id;
-				}
-				a++;
+		if ((includeUnit == NULL) || (*includeUnit)(u)) {
+			if (unitIds != NULL) {
+				unitIds[a] = u->id;
 			}
+			a++;
+		}
+	}
+
+	return a;
+}
+static int FilterUnitsList(const std::list<CUnit*>& units, int* unitIds, int unitIds_max, bool (*includeUnit)(CUnit*) = NULL)
+{
+	int a = 0;
+
+	std::list<CUnit*>::const_iterator ui;
+	for (ui = units.begin(); (ui != units.end()) && (a < unitIds_max); ++ui) {
+		CUnit* u = *ui;
+
+		if ((includeUnit == NULL) || (*includeUnit)(u)) {
+			if (unitIds != NULL) {
+				unitIds[a] = u->id;
+			}
+			a++;
 		}
 	}
 
 	return a;
 }
 
+
+static inline bool unit_IsNeutral(CUnit* unit) {
+	return unit->IsNeutral();
+}
+
+static int myAllyTeamId = -1;
+
+/// You have to set myAllyTeamId before callign this function. NOT thread safe!
+static inline bool unit_IsEnemy(CUnit* unit) {
+	return (!teamHandler->Ally(unit->allyteam, myAllyTeamId)
+			&& !unit_IsNeutral(unit));
+}
+
+/// You have to set myAllyTeamId before callign this function. NOT thread safe!
+static inline bool unit_IsFriendly(CUnit* unit) {
+	return (teamHandler->Ally(unit->allyteam, myAllyTeamId)
+			&& !unit_IsNeutral(unit));
+}
+
+/// You have to set myAllyTeamId before callign this function. NOT thread safe!
+static inline bool unit_IsInLos(CUnit* unit) {
+	return ((unit->losStatus[myAllyTeamId] & LOS_INLOS) != 0);
+}
+
+/// You have to set myAllyTeamId before callign this function. NOT thread safe!
+static inline bool unit_IsInRadar(CUnit* unit) {
+	return ((unit->losStatus[myAllyTeamId] & LOS_INRADAR) != 0);
+}
+
+/// You have to set myAllyTeamId before callign this function. NOT thread safe!
+static inline bool unit_IsEnemyAndInLos(CUnit* unit) {
+	return (unit_IsEnemy(unit) && unit_IsInLos(unit));
+}
+
+/// You have to set myAllyTeamId before callign this function. NOT thread safe!
+static inline bool unit_IsEnemyAndInLosOrRadar(CUnit* unit) {
+	return (unit_IsEnemy(unit) && (unit_IsInLos(unit) || unit_IsInRadar(unit)));
+}
+
+/// You have to set myAllyTeamId before callign this function. NOT thread safe!
+static inline bool unit_IsNeutralAndInLos(CUnit* unit) {
+	return (unit_IsNeutral(unit) && unit_IsInLos(unit));
+}
+
+int CAICallback::GetEnemyUnits(int* unitIds, int unitIds_max)
+{
+	verify();
+	myAllyTeamId = teamHandler->AllyTeam(team);
+	return FilterUnitsList(uh->activeUnits, unitIds, unitIds_max, &unit_IsEnemyAndInLos);
+}
+
 int CAICallback::GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max)
 {
 	verify();
-	int a = 0;
-
-	const int myAllyTeam = teamHandler->AllyTeam(team);
-	std::list<CUnit*>::const_iterator ui;
-	for (ui = uh->activeUnits.begin(); (ui != uh->activeUnits.end()) && (a < unitIds_max); ++ui) {
-		const CUnit* u = *ui;
-
-		if (!teamHandler->Ally(u->allyteam, myAllyTeam)
-				&& (u->losStatus[myAllyTeam] & (LOS_INLOS | LOS_INRADAR))) {
-			if (!IsUnitNeutral(u->id)) {
-				if (unitIds != NULL) {
-					unitIds[a] = u->id;
-				}
-				a++;
-			}
-		}
-	}
-
-	return a;
+	myAllyTeamId = teamHandler->AllyTeam(team);
+	return FilterUnitsList(uh->activeUnits, unitIds, unitIds_max, &unit_IsEnemyAndInLosOrRadar);
 }
 
 int CAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius,
 		int unitIds_max)
 {
 	verify();
-	int a = 0;
-
-	const int myAllyTeam = teamHandler->AllyTeam(team);
 	const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, radius);
-	std::vector<CUnit*>::const_iterator ui;
-	for (ui = units.begin(); (ui != units.end()) && (a < unitIds_max); ++ui) {
-		const CUnit* u = *ui;
-
-		if (!teamHandler->Ally(u->allyteam, myAllyTeam)
-				&& (u->losStatus[myAllyTeam] & LOS_INLOS)) {
-			if (!IsUnitNeutral(u->id)) {
-				if (unitIds != NULL) {
-					unitIds[a] = u->id;
-				}
-				a++;
-			}
-		}
-	}
-
-	return a;
+	myAllyTeamId = teamHandler->AllyTeam(team);
+	return FilterUnitsVector(units, unitIds, unitIds_max, &unit_IsEnemyAndInLos);
 }
 
 
 int CAICallback::GetFriendlyUnits(int* unitIds, int unitIds_max)
 {
 	verify();
-	int a = 0;
-
-	const int myAllyTeam = teamHandler->AllyTeam(team);
-	std::list<CUnit*>::const_iterator ui;
-	for (ui = uh->activeUnits.begin(); (ui != uh->activeUnits.end()) && (a < unitIds_max); ++ui) {
-		const CUnit* u = *ui;
-
-		if (teamHandler->Ally(u->allyteam, myAllyTeam)) {
-			// IsUnitNeutral does a LOS check, but inconsequential
-			// since we can always see friendly units anyway
-			if (!IsUnitNeutral(u->id)) {
-				if (unitIds != NULL) {
-					unitIds[a] = u->id;
-				}
-				a++;
-			}
-		}
-	}
-
-	return a;
+	myAllyTeamId = teamHandler->AllyTeam(team);
+	return FilterUnitsList(uh->activeUnits, unitIds, unitIds_max, &unit_IsFriendly);
 }
 
 int CAICallback::GetFriendlyUnits(int* unitIds, const float3& pos, float radius,
 		int unitIds_max)
 {
 	verify();
-	int a = 0;
-
-	const int myAllyTeam = teamHandler->AllyTeam(team);
 	const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, radius);
-	std::vector<CUnit*>::const_iterator ui;
-	for (ui = units.begin(); (ui != units.end()) && (a < unitIds_max); ++ui) {
-		const CUnit* u = *ui;
-
-		if (teamHandler->Ally(u->allyteam, myAllyTeam)) {
-			// IsUnitNeutral does a LOS check, but inconsequential
-			// since we can always see friendly units anyway
-			if (!IsUnitNeutral(u->id)) {
-				if (unitIds != NULL) {
-					unitIds[a] = u->id;
-				}
-				a++;
-			}
-		}
-	}
-
-	return a;
+	myAllyTeamId = teamHandler->AllyTeam(team);
+	return FilterUnitsVector(units, unitIds, unitIds_max, &unit_IsFriendly);
 }
 
 
 int CAICallback::GetNeutralUnits(int* unitIds, int unitIds_max)
 {
 	verify();
-	int a = 0;
-
-	std::list<CUnit*>::const_iterator ui;
-	for (ui = uh->activeUnits.begin(); (ui != uh->activeUnits.end()) && (a < unitIds_max); ++ui) {
-		const CUnit* u = *ui;
-
-		// IsUnitNeutral does the LOS check
-		if (IsUnitNeutral(u->id)) {
-			if (unitIds != NULL) {
-				unitIds[a] = u->id;
-			}
-			a++;
-		}
-	}
-
-	return a;
+	myAllyTeamId = teamHandler->AllyTeam(team);
+	return FilterUnitsList(uh->activeUnits, unitIds, unitIds_max, &unit_IsNeutralAndInLos);
 }
 
 int CAICallback::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
 	verify();
-	int a = 0;
-
 	const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, radius);
-	std::vector<CUnit*>::const_iterator ui;
-	for (ui = units.begin(); (ui != units.end()) && (a < unitIds_max); ++ui) {
-		const CUnit* u = *ui;
-
-		// IsUnitNeutral does the LOS check
-		if (IsUnitNeutral(u->id)) {
-			if (unitIds != NULL) {
-				unitIds[a] = u->id;
-			}
-			a++;
-		}
-	}
-
-	return a;
+	myAllyTeamId = teamHandler->AllyTeam(team);
+	return FilterUnitsVector(units, unitIds, unitIds_max, &unit_IsNeutralAndInLos);
 }
 
 

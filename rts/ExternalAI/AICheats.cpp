@@ -120,98 +120,78 @@ float3 CAICheats::GetUnitVelocity(int unitid)
 }
 
 
-
-int CAICheats::GetEnemyUnits(int* unitIds, int unitIds_max)
+static int FilterUnitsVector(const std::vector<CUnit*>& units, int* unitIds, int unitIds_max, bool (*includeUnit)(CUnit*) = NULL)
 {
-	std::list<CUnit*>::iterator ui;
 	int a = 0;
 
-	for (std::list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+	std::vector<CUnit*>::const_iterator ui;
+	for (ui = units.begin(); (ui != units.end()) && (a < unitIds_max); ++ui) {
 		CUnit* u = *ui;
 
-		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(ai->GetTeamId()))) {
-			if (!IsUnitNeutral(u->id)) {
-				if (unitIds != NULL) {
-					unitIds[a] = u->id;
-				}
-				a++;
-				if (a >= unitIds_max) {
-					break;
-				}
+		if ((includeUnit == NULL) || (*includeUnit)(u)) {
+			if (unitIds != NULL) {
+				unitIds[a] = u->id;
 			}
+			a++;
 		}
 	}
 
 	return a;
+}
+static int FilterUnitsList(const std::list<CUnit*>& units, int* unitIds, int unitIds_max, bool (*includeUnit)(CUnit*) = NULL)
+{
+	int a = 0;
+
+	std::list<CUnit*>::const_iterator ui;
+	for (ui = units.begin(); (ui != units.end()) && (a < unitIds_max); ++ui) {
+		CUnit* u = *ui;
+
+		if ((includeUnit == NULL) || (*includeUnit)(u)) {
+			if (unitIds != NULL) {
+				unitIds[a] = u->id;
+			}
+			a++;
+		}
+	}
+
+	return a;
+}
+
+static inline bool unit_IsNeutral(CUnit* unit) {
+	return unit->IsNeutral();
+}
+
+static int myAllyTeamId = -1;
+
+/// You have to set myAllyTeamId before callign this function. NOT thread safe!
+static inline bool unit_IsEnemy(CUnit* unit) {
+	return (!teamHandler->Ally(unit->allyteam, myAllyTeamId)
+			&& !unit_IsNeutral(unit));
+}
+
+
+int CAICheats::GetEnemyUnits(int* unitIds, int unitIds_max)
+{
+	myAllyTeamId = teamHandler->AllyTeam(ai->GetTeamId());
+	return FilterUnitsList(uh->activeUnits, unitIds, unitIds_max, &unit_IsEnemy);
 }
 
 int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
-	const std::vector<CUnit*> &unit = qf->GetUnitsExact(pos, radius);
-	int a = 0;
-
-	for (std::vector<CUnit*>::const_iterator ui = unit.begin(); ui != unit.end(); ++ui) {
-		CUnit* u = *ui;
-
-		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(ai->GetTeamId()))) {
-			if (!IsUnitNeutral(u->id)) {
-				if (unitIds != NULL) {
-					unitIds[a] = u->id;
-				}
-				a++;
-				if (a >= unitIds_max) {
-					break;
-				}
-			}
-		}
-	}
-
-	return a;
+	const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, radius);
+	myAllyTeamId = teamHandler->AllyTeam(ai->GetTeamId());
+	return FilterUnitsVector(units, unitIds, unitIds_max, &unit_IsEnemy);
 }
-
-
 
 int CAICheats::GetNeutralUnits(int* unitIds, int unitIds_max)
 {
-	int a = 0;
-
-	for (std::list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
-		CUnit* u = *ui;
-
-		if (IsUnitNeutral(u->id)) {
-			if (unitIds != NULL) {
-				unitIds[a] = u->id;
-			}
-			a++;
-			if (a >= unitIds_max) {
-				break;
-			}
-		}
-	}
-
-	return a;
+	return FilterUnitsList(uh->activeUnits, unitIds, unitIds_max, &unit_IsNeutral);
 }
 
 int CAICheats::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
-	const std::vector<CUnit*> &unit = qf->GetUnitsExact(pos, radius);
-	int a = 0;
-
-	for (std::vector<CUnit*>::const_iterator ui = unit.begin(); ui != unit.end(); ++ui) {
-		CUnit* u = *ui;
-
-		if (IsUnitNeutral(u->id)) {
-			if (unitIds != NULL) {
-				unitIds[a] = u->id;
-			}
-			a++;
-			if (a >= unitIds_max) {
-				break;
-			}
-		}
-	}
-
-	return a;
+	const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, radius);
+	return FilterUnitsVector(units, unitIds, unitIds_max, &unit_IsNeutral);
 }
 
 int CAICheats::GetFeatures(int* features, int max) const {
@@ -256,7 +236,7 @@ float CAICheats::GetUnitHealth(int unitid)			//the units current health
 	return 0;
 }
 
-float CAICheats::GetUnitMaxHealth(int unitid)		//the units max health
+float CAICheats::GetUnitMaxHealth(int unitid)
 {
 	if (!CHECK_UNITID(unitid)) return 0;
 	CUnit* unit = uh->units[unitid];
@@ -266,7 +246,7 @@ float CAICheats::GetUnitMaxHealth(int unitid)		//the units max health
 	return 0;
 }
 
-float CAICheats::GetUnitPower(int unitid)				//sort of the measure of the units overall power
+float CAICheats::GetUnitPower(int unitid)
 {
 	if (!CHECK_UNITID(unitid)) return 0;
 	CUnit* unit = uh->units[unitid];
@@ -276,7 +256,7 @@ float CAICheats::GetUnitPower(int unitid)				//sort of the measure of the units 
 	return 0;
 }
 
-float CAICheats::GetUnitExperience(int unitid)	//how experienced the unit is (0.0-1.0)
+float CAICheats::GetUnitExperience(int unitid)
 {
 	if (!CHECK_UNITID(unitid)) return 0;
 	CUnit* unit = uh->units[unitid];
