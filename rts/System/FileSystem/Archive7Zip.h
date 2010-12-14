@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __ARCHIVE_7ZIP_H
-#define __ARCHIVE_7ZIP_H
+#ifndef _ARCHIVE_7ZIP_H
+#define _ARCHIVE_7ZIP_H
 
 #include <boost/thread/mutex.hpp>
 extern "C" {
@@ -15,7 +15,7 @@ class CArchive7Zip : public CArchiveBase
 {
 public:
 	CArchive7Zip(const std::string& name);
-	virtual ~CArchive7Zip(void);
+	virtual ~CArchive7Zip();
 
 	virtual bool IsOpen();
 	
@@ -28,7 +28,7 @@ public:
 private:
 	boost::mutex archiveLock;
 	UInt32 blockIndex;
-	Byte *outBuffer;
+	Byte* outBuffer;
 	size_t outBufferSize;
 
 	/**
@@ -87,4 +87,4 @@ private:
 	bool isOpen;
 };
 
-#endif
+#endif // _ARCHIVE_7ZIP_H

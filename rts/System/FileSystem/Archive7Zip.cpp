@@ -17,6 +17,10 @@ extern "C" {
 #include "mmgr.h"
 #include "LogOutput.h"
 
+#define CHECK_FILE_ID(fileId) \
+	assert((fileId >= 0) && (fileId < NumFiles()));
+
+
 CArchive7Zip::CArchive7Zip(const std::string& name) :
 	CArchiveBase(name),
 	isOpen(false)
@@ -49,12 +53,9 @@ CArchive7Zip::CArchive7Zip(const std::string& name) :
 	CrcGenerateTable();
 
 	SRes res = SzArEx_Open(&db, &lookStream.s, &allocImp, &allocTempImp);
-	if (res == SZ_OK)
-	{
+	if (res == SZ_OK) {
 		isOpen = true;
-	}
-	else
-	{
+	} else {
 		isOpen = false;
 		std::string error;
 		switch (res) {
@@ -86,15 +87,14 @@ CArchive7Zip::CArchive7Zip(const std::string& name) :
 
 	// In 7zip talk, folders are pack-units (solid blocks),
 	// not related to file-system folders.
-	UInt64 *folderUnpackSizes = new UInt64[db.db.NumFolders];
+	UInt64* folderUnpackSizes = new UInt64[db.db.NumFolders];
 	for (int fi = 0; fi < db.db.NumFolders; fi++) {
 		folderUnpackSizes[fi] = SzFolder_GetUnpackSize(db.db.Folders + fi);
 	}
 
 	// Get contents of archive and store name->int mapping
-	for (unsigned i = 0; i < db.db.NumFiles; ++i)
-	{
-		CSzFileItem *f = db.db.Files + i;
+	for (unsigned i = 0; i < db.db.NumFiles; ++i) {
+		CSzFileItem* f = db.db.Files + i;
 		if ((f->Size >= 0) && !f->IsDir) {
 			std::string fileName = f->Name;
 
@@ -122,14 +122,12 @@ CArchive7Zip::CArchive7Zip(const std::string& name) :
 	delete [] folderUnpackSizes;
 }
 
-CArchive7Zip::~CArchive7Zip(void)
+CArchive7Zip::~CArchive7Zip()
 {
-	if (outBuffer)
-	{
+	if (outBuffer) {
 		IAlloc_Free(&allocImp, outBuffer);
 	}
-	if (isOpen)
-	{
+	if (isOpen) {
 		File_Close(&archiveStream.file);
 	}
 	SzArEx_Free(&db, &allocImp);
@@ -148,7 +146,7 @@ unsigned CArchive7Zip::NumFiles() const
 bool CArchive7Zip::GetFile(unsigned fid, std::vector<boost::uint8_t>& buffer)
 {
 	boost::mutex::scoped_lock lck(archiveLock);
-	assert(fid >= 0 && fid < NumFiles());
+	CHECK_FILE_ID(fid);
 	
 	// Get 7zip to decompress it
 	size_t offset;
@@ -156,20 +154,17 @@ bool CArchive7Zip::GetFile(unsigned fid, std::vector<boost::uint8_t>& buffer)
 	SRes res;
 
 	res = SzAr_Extract(&db, &lookStream.s, fileData[fid].fp, &blockIndex, &outBuffer, &outBufferSize, &offset, &outSizeProcessed, &allocImp, &allocTempImp);
-	if (res == SZ_OK)
-	{
+	if (res == SZ_OK) {
 		std::copy((char*)outBuffer+offset, (char*)outBuffer+offset+outSizeProcessed, std::back_inserter(buffer));
 		return true;
-	}
-	else
-	{
+	} else {
 		return false;
 	}
 }
 
 void CArchive7Zip::FileInfo(unsigned fid, std::string& name, int& size) const
 {
-	assert(fid >= 0 && fid < NumFiles());
+	CHECK_FILE_ID(fid);
 	name = fileData[fid].origName;
 	size = fileData[fid].size;
 }
@@ -180,6 +175,7 @@ const size_t CArchive7Zip::COST_LIMIT_DISC_READ       = 32 * 1024;
 
 bool CArchive7Zip::HasLowReadingCost(unsigned fid) const
 {
+	CHECK_FILE_ID(fid);
 	const FileData& fd = fileData[fid];
 	// The cost is high, if the to-be-unpacked data is
 	// more then 32KB larger then the file alone,
@@ -194,6 +190,6 @@ bool CArchive7Zip::HasLowReadingCost(unsigned fid) const
 
 unsigned CArchive7Zip::GetCrc32(unsigned fid)
 {
-	assert(fid >= 0 && fid < NumFiles());
+	CHECK_FILE_ID(fid);
 	return fileData[fid].crc;
 }
