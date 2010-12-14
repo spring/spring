@@ -4,7 +4,6 @@
 #define AI_CHEATS_H
 
 #include "ExternalAI/AILegacySupport.h"
-#include "Sim/Misc/GlobalConstants.h" // needed for MAX_UNITS
 #include "float3.h"
 
 #include <string>
@@ -19,11 +18,18 @@ struct CommandDescription;
 class CCommandQueue;
 class CGroupHandler;
 class CGroup;
+class CUnit;
 class CSkirmishAIWrapper;
 
 class CAICheats
 {
 	CSkirmishAIWrapper* ai;
+
+	// utility methods
+
+	/// Returns the unit if the ID is valid
+	CUnit* GetUnit(int unitId) const;
+
 public:
 	CAICheats(CSkirmishAIWrapper* ai);
 	~CAICheats();
@@ -33,19 +39,18 @@ public:
 	void GiveMeMetal(float amount);
 	void GiveMeEnergy(float amount);
 
-	int CreateUnit(const char* name, float3 pos);
+	int CreateUnit(const char* name, const float3& pos);
 
 	const UnitDef* GetUnitDef(int unitId);
 	float3 GetUnitPos(int unitId);
 	float3 GetUnitVelocity(int unitId);
-	int GetEnemyUnits(int* unitIds, int unitIds_max = MAX_UNITS);
-	int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS);
-	int GetNeutralUnits(int* unitIds, int unitIds_max = MAX_UNITS);
-	int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS);
+	int GetEnemyUnits(int* unitIds, int unitIds_max = -1);
+	int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = -1);
+	int GetNeutralUnits(int* unitIds, int unitIds_max = -1);
+	int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = -1);
 
-	int GetFeatures(int *features, int max) const;
-	int GetFeatures(int *features, int max, const float3& pos,
-			float radius) const;
+	int GetFeatures(int* features, int max) const;
+	int GetFeatures(int* features, int max, const float3& pos, float radius) const;
 
 	int GetUnitTeam(int unitId);
 	int GetUnitAllyTeam(int unitId);
