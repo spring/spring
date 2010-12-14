@@ -1129,7 +1129,7 @@ struct SSkirmishAICallback {
 	/** The unit's max health */
 	float             (CALLING_CONV *Unit_getMaxHealth)(int skirmishAIId, int unitId);
 
-	/** How experienced the unit is (0.0f-1.0f) */
+	/** How experienced the unit is (0.0f - 1.0f) */
 	float             (CALLING_CONV *Unit_getExperience)(int skirmishAIId, int unitId);
 
 	/** Returns the group a unit belongs to, -1 if none */
