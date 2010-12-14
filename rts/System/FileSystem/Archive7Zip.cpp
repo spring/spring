@@ -86,7 +86,7 @@ CArchive7Zip::CArchive7Zip(const std::string& name) :
 
 	// In 7zip talk, folders are pack-units (solid blocks),
 	// not related to file-system folders.
-	UInt64 folderUnpackSizes[db.db.NumFolders];
+	UInt64 *folderUnpackSizes = new UInt64[db.db.NumFolders];
 	for (int fi = 0; fi < db.db.NumFolders; fi++) {
 		folderUnpackSizes[fi] = SzFolder_GetUnpackSize(db.db.Folders + fi);
 	}
@@ -118,6 +118,8 @@ CArchive7Zip::CArchive7Zip(const std::string& name) :
 			lcNameIndex[fileName] = fileData.size()-1;
 		}
 	}
+
+	delete [] folderUnpackSizes;
 }
 
 CArchive7Zip::~CArchive7Zip(void)
