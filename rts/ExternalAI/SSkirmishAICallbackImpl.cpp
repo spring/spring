@@ -3472,7 +3472,7 @@ EXPORT(int) skirmishAiCallback_getEnemyUnitsInRadarAndLos(int skirmishAIId, int*
 }
 
 EXPORT(int) skirmishAiCallback_getFriendlyUnits(int skirmishAIId, int* unitIds, int unitIds_sizeMax) {
-	return skirmishAIId_callback[skirmishAIId]->GetFriendlyUnits(unitIds);
+	return skirmishAIId_callback[skirmishAIId]->GetFriendlyUnits(unitIds, unitIds_sizeMax);
 }
 
 EXPORT(int) skirmishAiCallback_getFriendlyUnitsIn(int skirmishAIId, float* pos_posF3, float radius, int* unitIds, int unitIds_sizeMax) {
