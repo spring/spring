@@ -91,6 +91,8 @@ ClientSetup* startsetup = NULL;
 boost::uint8_t* keys = 0;
 boost::uint16_t currentUnicode = 0;
 
+COffscreenGLContext *SpringApp::ogc = NULL;
+
 /**
  * @brief xres default
  *
@@ -992,6 +994,7 @@ void SpringApp::Startup()
 #if defined(USE_GML) && GML_ENABLE_SIM
 volatile int gmlMultiThreadSim;
 volatile int gmlStartSim;
+volatile int SpringApp::gmlKeepRunning = 0;
 
 int SpringApp::Sim()
 {
@@ -1208,21 +1211,7 @@ int SpringApp::Run(int argc, char *argv[])
 		}
 	}
 
-	//FIXME this doesn't gets called when the above content_error is catched!!!!!
-#ifdef USE_GML
-	#if GML_ENABLE_SIM
-	gmlKeepRunning=0; // wait for sim to finish
-	while(!gmlProcessor->PumpAux())
-		boost::thread::yield();
-	if(GML_SHARE_LISTS)
-		delete ogc;
-	#endif
-	delete gmlProcessor;
-#endif
-
 	SaveWindowPosition();
-
-	CrashHandler::UninstallHangHandler();
 
 	// Shutdown
 	Shutdown();
@@ -1253,6 +1242,21 @@ static void normalizeKeySym(int& sym) {
  */
 void SpringApp::Shutdown()
 {
+#ifdef USE_GML
+	if(gmlProcessor) {
+#if GML_ENABLE_SIM
+		gmlKeepRunning=0; // wait for sim to finish
+		while(!gmlProcessor->PumpAux())
+			boost::thread::yield();
+		if(GML_SHARE_LISTS)
+			delete ogc;
+#endif
+		delete gmlProcessor;
+	}
+#endif
+
+	CrashHandler::UninstallHangHandler();
+
 	delete pregame;
 	delete game;
 	delete gameServer;
