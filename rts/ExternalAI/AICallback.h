@@ -1,10 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef AICALLBACK_H
-#define AICALLBACK_H
+#ifndef AI_CALLBACK_H
+#define AI_CALLBACK_H
 
 #include "ExternalAI/AILegacySupport.h"
-#include "Sim/Misc/GlobalConstants.h" // needed for MAX_UNITS
 #include "float3.h"
 
 #include <string>
@@ -19,8 +18,9 @@ struct CommandDescription;
 class CCommandQueue;
 class CGroupHandler;
 class CGroup;
+class CUnit;
 
-/** Generalized legacy callback interface */
+/** Generalized legacy callback interface backend */
 class CAICallback
 {
 	int team;
@@ -29,7 +29,18 @@ public:
 private:
 	CGroupHandler* gh;
 
+	// utility methods
 	void verify();
+
+	/// Returns the unit if the ID is valid
+	CUnit* GetUnit(int unitId) const;
+	/// Returns the unit if the ID is valid, and the unit is in this AIs team
+	CUnit* GetMyTeamUnit(int unitId) const;
+	CUnit* GetInSensorRangeUnit(int unitId, unsigned short losFlags) const;
+	/// Returns the unit if the ID is valid, and the unit is in LOS
+	CUnit* GetInLosUnit(int unitId) const;
+	/// Returns the unit if the ID is valid, and the unit is in LOS or Radar
+	CUnit* GetInLosAndRadarUnit(int unitId) const;
 
 public:
 	CAICallback(int teamId);
@@ -37,13 +48,13 @@ public:
 
 	void SendStartPos(bool ready, float3 pos);
 	void SendTextMsg(const char* text, int zone);
-	void SetLastMsgPos(float3 pos);
-	void AddNotification(float3 pos, float3 color, float alpha);
+	void SetLastMsgPos(const float3& pos);
+	void AddNotification(const float3& pos, const float3& color, float alpha);
 
 	bool SendResources(float mAmount, float eAmount, int receivingTeamId);
 	int SendUnits(const std::vector<int>& unitIds, int receivingTeamId);
 
-	bool PosInCamera(float3 pos, float radius);
+	bool PosInCamera(const float3& pos, float radius);
 
 	int GetCurrentFrame();
 	int GetMyTeam();
@@ -109,13 +120,13 @@ public:
 	bool SetPathNodeCost(unsigned int, unsigned int, float);
 	float GetPathNodeCost(unsigned int, unsigned int);
 
-	int GetEnemyUnits(int* unitIds, int unitIds_max = MAX_UNITS);
-	int GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max = MAX_UNITS);
-	int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS);
-	int GetFriendlyUnits(int* unitIds, int unitIds_max = MAX_UNITS);
-	int GetFriendlyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS);
-	int GetNeutralUnits(int* unitIds, int unitIds_max = MAX_UNITS);
-	int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS);
+	int GetEnemyUnits(int* unitIds, int unitIds_max = -1);
+	int GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max = -1);
+	int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = -1);
+	int GetFriendlyUnits(int* unitIds, int unitIds_max = -1);
+	int GetFriendlyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = -1);
+	int GetNeutralUnits(int* unitIds, int unitIds_max = -1);
+	int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = -1);
 
 
 	int GetMapWidth();
@@ -156,12 +167,12 @@ public:
 	void LineDrawerRestart();
 	void LineDrawerRestartSameColor();
 
-	int CreateSplineFigure(float3 pos1, float3 pos2, float3 pos3, float3 pos4, float width, int arrow, int lifetime, int figureGroupId);
-	int CreateLineFigure(float3 pos1, float3 pos2, float width, int arrow, int lifetime, int figureGroupId);
+	int CreateSplineFigure(const float3& pos1, const float3& pos2, const float3& pos3, const float3& pos4, float width, int arrow, int lifetime, int figureGroupId);
+	int CreateLineFigure(const float3& pos1, const float3& pos2, float width, int arrow, int lifetime, int figureGroupId);
 	void SetFigureColor(int figureGroupId,float red, float green, float blue, float alpha);
 	void DeleteFigureGroup(int figureGroupId);
 
-	void DrawUnit(const char* unitName, float3 pos, float rotation, int lifetime, int teamId, bool transparent, bool drawBorder, int facing);
+	void DrawUnit(const char* unitName, const float3& pos, float rotation, int lifetime, int teamId, bool transparent, bool drawBorder, int facing);
 
 
 	bool IsDebugDrawerEnabled() const;
@@ -182,8 +193,8 @@ public:
 	void DebugDrawerSetOverlayTextureLabel(int, const char*) {}
 
 
-	bool CanBuildAt(const UnitDef* unitDef, float3 pos, int facing);
-	float3 ClosestBuildSite(const UnitDef* unitdef, float3 pos, float searchRadius, int minDist, int facing);
+	bool CanBuildAt(const UnitDef* unitDef, const float3& pos, int facing);
+	float3 ClosestBuildSite(const UnitDef* unitdef, const float3& pos, float searchRadius, int minDist, int facing);
 
 	float GetMetal();
 	float GetMetalIncome();
@@ -217,7 +228,7 @@ public:
 	int GetNumUnitDefs();
 	void GetUnitDefList (const UnitDef** list);
 
-	int GetSelectedUnits(int* unitIds, int unitIds_max = MAX_UNITS);
+	int GetSelectedUnits(int* unitIds, int unitIds_max = -1);
 	float3 GetMousePos();
 	int GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAllies);
 	int GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllies);
@@ -247,4 +258,4 @@ public:
 	std::map<std::string, std::string> GetMyOptionValues() { return std::map<std::string, std::string>(); }
 };
 
-#endif /* AICALLBACK_H */
+#endif // AI_CALLBACK_H
