@@ -884,31 +884,41 @@ unsigned char CArchiveScanner::GetMetaFileClass(const std::string& filePath) {
 	const std::string lowerFilePath = StringToLower(filePath);
 	const std::string ext = filesystem.GetExtension(lowerFilePath);
 
-	if (lowerFilePath == "mapinfo.lua") {
+	// 1: what is commonly read from all archives when scanning through them
+	// 2: what is less commoonly used, or only used when looking
+	//    at a specific archive (for example when hosting Game-X)
+	if (lowerFilePath == "mapinfo.lua") {                      // basic archive info
 		metaFileClass = 1;
-	} else if (lowerFilePath == "modinfo.lua") {
+	} else if (lowerFilePath == "modinfo.lua") {               // basic archive info
 		metaFileClass = 1;
-//	} else if ((ext == "smf") || (ext == "sm3")) {
+//	} else if ((ext == "smf") || (ext == "sm3")) {             // to generate minimap
 //		metaFileClass = 1;
-	} else if (lowerFilePath == "luaai.lua") {
+	} else if (lowerFilePath == "modoptions.lua") {            // used by lobbies
 		metaFileClass = 2;
-	} else if (lowerFilePath == "modoptions.lua") {
+	} else if (lowerFilePath == "engineoptions.lua") {         // used by lobbies
 		metaFileClass = 2;
-	} else if (lowerFilePath == "engineoptions.lua") {
+	} else if (lowerFilePath == "validmaps.lua") {             // used by lobbies
 		metaFileClass = 2;
-	} else if (lowerFilePath == "validmaps.lua") {
+	} else if (lowerFilePath == "luaai.lua") {                 // used by lobbies
 		metaFileClass = 2;
-	} else if (lowerFilePath == "luaai.lua") {
+	} else if (StringStartsWith(lowerFilePath, "sidepics/")) { // used by lobbies
 		metaFileClass = 2;
-	} else if (lowerFilePath == "luaui.lua") {
+	} else if (StringStartsWith(lowerFilePath, "gamedata/")) { // used by lobbies
 		metaFileClass = 2;
-	} else if (StringStartsWith(lowerFilePath, "sidepics/")) {
+	} else if (lowerFilePath == "armor.txt") {                 // used by lobbies (disabled units list)
 		metaFileClass = 2;
-	} else if (StringStartsWith(lowerFilePath, "gamedata/")) {
+	} else if (lowerFilePath == "springignore.txt") {          // used by lobbies (disabled units list)
 		metaFileClass = 2;
-	} else if (StringStartsWith(lowerFilePath, "units/")) {
+	} else if (StringStartsWith(lowerFilePath, "units/")) {    // used by lobbies (disabled units list)
+		metaFileClass = 2;
+	} else if (StringStartsWith(lowerFilePath, "features/")) { // used by lobbies (disabled units list)
+		metaFileClass = 2;
+	} else if (StringStartsWith(lowerFilePath, "weapons/")) {  // used by lobbies (disabled units list)
 		metaFileClass = 2;
 	}
+	// Lobbies get the unit list from unitsync. Unitsync gets it by executing
+	// gamedata/defs.lua, which loads units, features, weapons, move types
+	// and armors (that is why armor.txt is in the list).
 
 	return metaFileClass;
 }
