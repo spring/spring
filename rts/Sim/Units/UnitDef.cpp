@@ -374,32 +374,27 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	maxSlope = cos(maxSlope * (PI / 180));
 	minWaterDepth = udTable.GetFloat("minWaterDepth", -10e6f);
 	maxWaterDepth = udTable.GetFloat("maxWaterDepth", +10e6f);
+	waterline = udTable.GetFloat("waterline", 0.0f);
 	minCollisionSpeed = udTable.GetFloat("minCollisionSpeed", 1.0f);
 	slideTolerance = udTable.GetFloat("slideTolerance", 0.0f); // disabled
 	pushResistant = udTable.GetBool("pushResistant", false);
 
-	waterline = udTable.GetFloat("waterline", 0.0f);
-	if ((waterline >= 5.0f) && canmove) {
-		// make subs travel at somewhat larger depths
-		// to reduce vulnerability to surface weapons
-		waterline += 10.0f;
-	}
-
 	canSelfD = udTable.GetBool("canSelfDestruct", true);
 	selfDCountdown = udTable.GetInt("selfDestructCountdown", 5);
 
-	speed  = udTable.GetFloat("maxVelocity",  0.0f) * GAME_SPEED;
+	speed  = udTable.GetFloat("maxVelocity", 0.0f) * GAME_SPEED;
 	rSpeed = udTable.GetFloat("maxReverseVelocity", 0.0f) * GAME_SPEED;
 	speed  = fabs(speed);
 	rSpeed = fabs(rSpeed);
 
 	maxAcc = fabs(udTable.GetFloat("acceleration", 0.5f)); // no negative values
-	maxDec = fabs(udTable.GetFloat("brakeRate",    3.0f * maxAcc)) * (canfly? 0.1f: 1.0f); // no negative values
+	maxDec = fabs(udTable.GetFloat("brakeRate", 3.0f * maxAcc)) * (canfly? 0.1f: 1.0f); // no negative values
 
-	turnRate    = udTable.GetFloat("turnRate",     0.0f);
-	turnInPlace = udTable.GetBool( "turnInPlace",  true);
+	turnRate    = udTable.GetFloat("turnRate", 0.0f);
+	turnInPlace = udTable.GetBool("turnInPlace", true);
 	turnInPlaceDistance = udTable.GetFloat("turnInPlaceDistance", 350.f);
-	turnInPlaceSpeedLimit = udTable.GetFloat("turnInPlaceSpeedLimit", (speed / GAME_SPEED) * 0.2f);
+	turnInPlaceSpeedLimit = ((turnRate / SPRING_CIRCLE_DIVS) * ((PI + PI) * SQUARE_SIZE)) * (speed / GAME_SPEED);
+	turnInPlaceSpeedLimit = udTable.GetFloat("turnInPlaceSpeedLimit", std::min(speed, turnInPlaceSpeedLimit));
 
 	const bool noAutoFire  = udTable.GetBool("noAutoFire",  false);
 	canFireControl = udTable.GetBool("canFireControl", !noAutoFire);
