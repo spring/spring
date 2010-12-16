@@ -239,6 +239,13 @@ SectionGroup "Tools"
 			!include "sections\archivemover.nsh"
 		!undef INSTALL
 	SectionEnd
+
+	Section "Simple spring-rapid downloader" SEC_RAPID
+		!define INSTALL
+			${!echonow} "Processing: rapid"
+			!include "sections\rapid.nsh"
+		!undef INSTALL
+	SectionEnd
 SectionGroupEnd
 
 

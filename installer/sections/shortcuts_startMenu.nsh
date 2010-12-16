@@ -12,6 +12,9 @@
 	${If} ${SectionIsSelected} ${SEC_ZERO_K_LOBBY}
 		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Zero-K Lobby.lnk" "$INSTDIR\Zero-K.exe"
 	${EndIf}
+	${If} ${SectionIsSelected} ${SEC_RAPID}
+		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\rapid-GUI.lnk" "$INSTDIR\rapid-gui.exe"
+	${EndIf}
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk" "$INSTDIR\springsettings.exe"
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk" "$INSTDIR\spring.exe"
 	!ifdef SEC_GML
@@ -34,6 +37,7 @@
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall Spring.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Spring Website.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Download Content.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\rapid-GUI.lnk"
 
 	; delete the old shortcuts if they're present from a prior installation
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall.lnk"
