@@ -234,9 +234,6 @@ endif (NOT "${AI_TYPES}" STREQUAL "NONE")
 # additional tools
 Add_Subdirectory(tools)
 
-# required for man pages (optional) and base files (mandatory)
-FIND_PACKAGE(SevenZip REQUIRED)
-
 # man pages
 Add_Subdirectory(doc)
 
