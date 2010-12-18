@@ -968,7 +968,8 @@ bool UnitDef::IsAllowedTerrainHeight(float rawHeight, float* clampedHeight) cons
 	}
 
 	if (floater || canhover) {
-		// if we are a surface unit, maxDepth is irrelevant
+		// if we are a surface unit, <maxDepth> is irrelevant
+		// (eg. hovercraft may be dropped anywhere over water)
 		maxDepth = +10e6f;
 	}
 

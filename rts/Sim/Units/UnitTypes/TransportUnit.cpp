@@ -407,14 +407,14 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 		wantedHeight = ground->GetHeightReal(wantedPos.x, wantedPos.z);
 		isAllowedHeight = unit->unitDef->IsAllowedTerrainHeight(wantedHeight, &clampedHeight);
 
-		if (unit->unitDef->floater) {
-			wantedHeight = std::max(-unit->unitDef->waterline, wantedHeight);
-			clampedHeight = wantedHeight;
-		} else if (unit->unitDef->canhover) {
-			// hovercraft may be dropped anywhere
-			isAllowedHeight = true;
-			wantedHeight = std::max(0.0f, wantedHeight);
-			clampedHeight = wantedHeight;
+		if (isAllowedHeight) {
+			if (unit->unitDef->floater) {
+				wantedHeight = std::max(-unit->unitDef->waterline, wantedHeight);
+				clampedHeight = wantedHeight;
+			} else if (unit->unitDef->canhover) {
+				wantedHeight = std::max(0.0f, wantedHeight);
+				clampedHeight = wantedHeight;
+			}
 		}
 
 		if (dynamic_cast<const CBuilding*>(unit) != NULL) {
@@ -436,11 +436,11 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 	if (dynamic_cast<CTAAirMoveType*>(moveType) != NULL) {
 		// if we are a gunship-style transport, we must be
 		// capable of reaching the point-of-contact height
-		unitDef->IsAllowedTerrainHeight(contactHeight, &finalHeight);
+		isAllowedHeight = unitDef->IsAllowedTerrainHeight(contactHeight, &finalHeight);
 	}
 
 	if (allowedPos) {
-		*allowedPos = isAllowedHeight && (finalHeight == contactHeight) && (clampedHeight == wantedHeight);
+		*allowedPos = isAllowedHeight;
 	}
 
 	return finalHeight;
