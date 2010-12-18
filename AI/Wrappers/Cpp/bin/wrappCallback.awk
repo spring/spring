@@ -1186,7 +1186,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 		}
 
 		_arrayType = params;
-		sub("(\\[\\])|(\*)[ \t]*" _arrayPaNa ".*$", "", _arrayType);
+		sub("(\\[\\])|(\\*)[ \t]*" _arrayPaNa ".*$", "", _arrayType);
 		sub("^.*,[ \t]", "", _arrayType);
 		_arraySizeMaxPaNa = _arrayPaNa "_sizeMax";
 		_arraySizeVar     = _arrayPaNa "_size";
