@@ -463,7 +463,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	nanoColor = udTable.GetFloat3("nanoColor", float3(0.2f,0.7f,0.2f));
 
 	canhover = udTable.GetBool("canHover", false);
-
 	floater = udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
 
 	if (builder && !buildSpeed) { // core anti is flagged as builder for some reason
@@ -832,20 +831,19 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 			}
 		}
 
-		const string badTarget = wTable.GetString("badTargetCategory", "");
-		unsigned int btc = CCategoryHandler::Instance()->GetCategories(badTarget);
+		const string& badTarget = wTable.GetString("badTargetCategory", "");
+		const string& onlyTarget = wTable.GetString("onlyTargetCategory", "");
 
-		const string onlyTarget = wTable.GetString("onlyTargetCategory", "");
-		unsigned int otc;
-		if (onlyTarget.empty()) {
-			otc = 0xffffffff;
-		} else {
+		unsigned int btc = CCategoryHandler::Instance()->GetCategories(badTarget);
+		unsigned int otc = 0xffffffff;
+
+		if (!onlyTarget.empty()) {
 			otc = CCategoryHandler::Instance()->GetCategories(onlyTarget);
 		}
 
 		const unsigned int slaveTo = wTable.GetInt("slaveTo", 0);
 
-		float3 mainDir = wTable.GetFloat3("mainDir", float3(1.0f, 0.0f, 0.0f)).SafeNormalize();
+		const float3 mainDir = wTable.GetFloat3("mainDir", float3(1.0f, 0.0f, 0.0f)).SafeNormalize();
 		const float angleDif = cos(wTable.GetFloat("maxAngleDif", 360.0f) * (PI / 360.0f));
 
 		const float fuelUse = wTable.GetFloat("fuelUsage", 0.0f);
@@ -955,27 +953,33 @@ void UnitDef::SetNoCost(bool noCost)
 }
 
 
-bool UnitDef::IsTerrainHeightOK(const float height) const {
-	return GetAllowedTerrainHeight(height) == height;
-}
 
-float UnitDef::GetAllowedTerrainHeight(float height) const {
-	float maxwd = maxWaterDepth;
-	float minwd = minWaterDepth;
+bool UnitDef::IsAllowedTerrainHeight(float rawHeight, float* clampedHeight) const {
+	float maxDepth = this->maxWaterDepth;
+	float minDepth = this->minWaterDepth;
 
-	if (movedata) {
-		if (movedata->moveType == MoveData::Ship_Move)
-			minwd = movedata->depth;
-		else
-			maxwd = movedata->depth;
+	if (movedata != NULL) {
+		// we are a mobile ground-unit
+		if (movedata->moveType == MoveData::Ship_Move) {
+			minDepth = movedata->depth;
+		} else {
+			maxDepth = movedata->depth;
+		}
 	}
 
-	height = std::min(height, -minwd);
+	if (floater || canhover) {
+		// if we are a surface unit, maxDepth is irrelevant
+		maxDepth = +10e6f;
+	}
 
-	if (!floater && !canhover)
-		height = std::max(-maxwd, height);
+	if (clampedHeight != NULL) {
+		*clampedHeight = rawHeight;
+		*clampedHeight = std::max(*clampedHeight, -maxDepth);
+		*clampedHeight = std::min(*clampedHeight, -minDepth);
+	}
 
-	return height;
+	// <rawHeight> must lie in the range [-maxDepth, -minDepth]
+	return (rawHeight >= -maxDepth && rawHeight <= -minDepth);
 }
 
 /******************************************************************************/
