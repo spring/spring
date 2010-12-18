@@ -54,5 +54,15 @@ inline float luaL_optfloat(lua_State* L, int idx, float def)
   return (float)luaL_optnumber(L, idx, def);
 }
 
+inline lua_State *LUA_OPEN() {
+	lua_State *L_New = lua_open();
+	L_New->luamutex = new boost::recursive_mutex();
+	return L_New;
+}
+
+inline void LUA_CLOSE(lua_State *L_Old) {
+	delete L_Old->luamutex;
+	lua_close(L_Old);
+}
 
 #endif // SPRING_LUA_INCLUDE
