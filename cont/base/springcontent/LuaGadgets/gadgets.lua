@@ -121,6 +121,10 @@ local callInLists = {
 	"UnitUnloaded",
 	"UnitCloaked",
 	"UnitDecloaked",
+	-- optional
+	-- "UnitUnitCollision",
+	-- "UnitFeatureCollision",
+	-- "UnitMoveFailed",
 	"StockpileChanged",
 
 	-- Feature CallIns
@@ -1441,6 +1445,19 @@ function gadgetHandler:UnitDecloaked(unitID, unitDefID, unitTeam)
     g:UnitDecloaked(unitID, unitDefID, unitTeam)
   end
   return
+end
+
+
+function gadgetHandler:UnitUnitCollision(colliderID, collideeID)
+	for _,g in ipairs(self.UnitUnitCollisionList) do
+		g:UnitUnitCollision(colliderID, collideeID)
+	end
+end
+
+function gadgetHandler:UnitFeatureCollision(colliderID, collideeID)
+	for _,g in ipairs(self.UnitFeatureCollisionList) do
+		g:UnitFeatureCollision(colliderID, collideeID)
+	end
 end
 
 
