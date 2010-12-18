@@ -225,7 +225,7 @@ function printNativeJNI() {
 				if (!isVoidRet) {
 					if (retTypeConv) {
 						condRet = "_retNative = ";
-					} else {retTypeConv
+					} else {
 						condRet = "_ret = (" jni_retType ") ";
 					}
 				}
