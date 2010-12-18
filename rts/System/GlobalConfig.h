@@ -50,9 +50,37 @@ public:
 	/**
 	 * @brief linkBandwidth
 	 *
-	 * Network link maximum bandwidth, per user, in bytes
+	 * Maximum outgoing bandwidth from server in bytes, per user
 	 */
-	int linkBandwidth;
+	int linkOutgoingBandwidth;
+
+	/**
+	 * @brief linkIncomingSustainedBandwidth
+	 *
+	 * Maximum incoming sustained bandwidth to server in bytes, per user
+	 */
+	int linkIncomingSustainedBandwidth;
+
+	/**
+	 * @brief linkIncomingPeakBandwidth
+	 *
+	 * Maximum peak incoming bandwidth to server in bytes, per user
+	 */
+	int linkIncomingPeakBandwidth;
+
+	/**
+	 * @brief linkIncomingMaxPacketRate
+	 *
+	 * Maximum number of incoming packets to server, per user and second
+	 */
+	int linkIncomingMaxPacketRate;
+
+	/**
+	 * @brief linkIncomingMaxWaitingPackets
+	 *
+	 * Maximum number of queued incoming packets to server, per user
+	 */
+	int linkIncomingMaxWaitingPackets;
 
 #ifdef USE_GML
 	bool enableDrawCallIns;

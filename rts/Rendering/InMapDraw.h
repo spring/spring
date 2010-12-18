@@ -46,7 +46,7 @@ public:
 
 	bool keyPressed;
 	float lastLeftClickTime;
-	float lastLineTime;
+	float lastDrawTime;
 	float3 lastPos;
 	bool wantLabel;
 	float3 waitingPoint;

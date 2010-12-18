@@ -78,6 +78,9 @@ const spring_duration playerInfoTime = spring_secs(2);
 /// every n'th frame will be a keyframe (and contain the server's framenumber)
 const unsigned serverKeyframeIntervall = 16;
 
+/// players incoming bandwidth new allowance every X milliseconds
+const unsigned playerBandwidthInterval = 100;
+
 const std::string commands[numCommands] = {
 	"kick", "kickbynum", "setminspeed", "setmaxspeed",
 	"nopause", "nohelp", "cheat", "godmode", "globallos",
@@ -218,6 +221,8 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	}
 
 	canReconnect = false;
+	linkMinPacketSize = gc->linkIncomingMaxPacketRate > 0 ? (gc->linkIncomingSustainedBandwidth / gc->linkIncomingMaxPacketRate) : 1;
+	lastBandwidthUpdate = spring_gettime();
 
 	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
 
@@ -840,7 +845,8 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 	switch (msgCode) {
 		case NETMSG_KEYFRAME: {
 			const int frameNum = *(int*)&inbuf[1];
-			players[a].lastFrameResponse = frameNum;
+			if(frameNum <= serverframenum && frameNum > players[a].lastFrameResponse)
+				players[a].lastFrameResponse = frameNum;
 			break;
 		}
 
@@ -1117,10 +1123,12 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		case NETMSG_SYNCRESPONSE: {
 #ifdef SYNCCHECK
 			const int frameNum = *(int*)&inbuf[1];
-			if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
-				players[a].syncResponse[frameNum] = *(unsigned*)&inbuf[5];
-			// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
-			players[a].lastFrameResponse = frameNum;
+			if(frameNum <= serverframenum && frameNum > players[a].lastFrameResponse) {
+				if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
+					players[a].syncResponse[frameNum] = *(unsigned*)&inbuf[5];
+				// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
+				players[a].lastFrameResponse = frameNum;
+			}
 #endif
 		}
 			break;
@@ -1626,6 +1634,10 @@ void CGameServer::ServerReadNet()
 		}
 	}
 
+	float updateBandwidth = (float)(spring_gettime() - lastBandwidthUpdate) / (float)playerBandwidthInterval;
+	if(updateBandwidth >= 1.0f)
+		lastBandwidthUpdate = spring_gettime();
+
 	for(size_t a=0; a < players.size(); a++) {
 		if (!players[a].link)
 			continue; // player not connected
@@ -1639,10 +1651,40 @@ void CGameServer::ServerReadNet()
 			continue;
 		}
 
+		bool bwLimitWasReached = (gc->linkIncomingPeakBandwidth > 0 && players[a].bandwidthUsage > gc->linkIncomingPeakBandwidth);
+
+		if(updateBandwidth >= 1.0f && gc->linkIncomingSustainedBandwidth > 0)
+			players[a].bandwidthUsage = std::max(0, players[a].bandwidthUsage - std::max(1, (int)((float)gc->linkIncomingSustainedBandwidth / (1000.0f / (playerBandwidthInterval * updateBandwidth)))));
+
+		int numDropped = 0;
 		boost::shared_ptr<const RawPacket> packet;
-		while (players[a].link && (packet = players[a].link->GetData())) {
-			ProcessPacket(a, packet);
+
+		bool dropPacket = gc->linkIncomingMaxWaitingPackets > 0 && (gc->linkIncomingPeakBandwidth <= 0 || bwLimitWasReached);
+		int ahead = 0;
+		bool bwLimitIsReached = gc->linkIncomingPeakBandwidth > 0 && players[a].bandwidthUsage > gc->linkIncomingPeakBandwidth;
+		while(players[a].link) {
+			if(dropPacket)
+				dropPacket = (packet = players[a].link->Peek(gc->linkIncomingMaxWaitingPackets));
+			packet = (!bwLimitIsReached || dropPacket) ? players[a].link->GetData() : players[a].link->Peek(ahead++);
+			if(!packet)
+				break;
+			bool droppablePacket = (packet->length <= 0 || (packet->data[0] != NETMSG_SYNCRESPONSE && packet->data[0] != NETMSG_KEYFRAME));
+			if(dropPacket && droppablePacket)
+				++numDropped;
+			else if(!bwLimitIsReached || !droppablePacket) {
+				ProcessPacket(a, packet); // non droppable packets may be processed more than once, but this does no harm
+				if(gc->linkIncomingPeakBandwidth > 0 && droppablePacket) {
+					players[a].bandwidthUsage += std::max((unsigned)linkMinPacketSize, packet->length);
+					if(!bwLimitIsReached)
+						bwLimitIsReached = (players[a].bandwidthUsage > gc->linkIncomingPeakBandwidth);
+				}
+			}
 		}
+		if(numDropped > 0)
+			PrivateMessage(a, str(format("Warning: Waiting packet limit was reached for %s [packets dropped]") %players[a].name));
+
+		if(!bwLimitWasReached && bwLimitIsReached)
+			PrivateMessage(a, str(format("Warning: Bandwidth limit was reached for %s [packets delayed]") %players[a].name));
 	}
 
 #ifdef SYNCDEBUG
