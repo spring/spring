@@ -13,6 +13,7 @@ GameParticipant::GameParticipant()
 , isLocal(false)
 , isReconn(false)
 , isMidgameJoin(false)
+, bandwidthUsage(0)
 {
 }
 
