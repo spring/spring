@@ -1,5 +1,6 @@
 
-FIND_PACKAGE(7zip REQUIRED)
+# required for man pages (optional) and base files (mandatory)
+FIND_PACKAGE(SevenZip REQUIRED)
 
 ### Make base-files (aka sdz's)
 file (TO_NATIVE_PATH "${CMAKE_BINARY_DIR}/base" BASE_BUILD_DIR)
@@ -13,7 +14,7 @@ endif (CMAKE_HOST_WIN32)
 add_custom_target(gamedata ALL
 	COMMAND ${BASE_BUILD_COMMAND}
 		${BASE_BUILD_DIR}
-		${7ZIP_BIN}
+		${SEVENZIP_BIN}
 	WORKING_DIRECTORY
 		"${CMAKE_CURRENT_SOURCE_DIR}/base"
 	)
