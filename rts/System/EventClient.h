@@ -109,6 +109,8 @@ class CEventClient
 		virtual void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
 		virtual void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);
 
+		virtual void UnitUnitCollision(const CUnit* collider, const CUnit* collidee);
+		virtual void UnitFeatureCollision(const CUnit* collider, const CFeature* collidee);
 		virtual void UnitMoveFailed(const CUnit* unit);
 
 		virtual void FeatureCreated(const CFeature* feature);

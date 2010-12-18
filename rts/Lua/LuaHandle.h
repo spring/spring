@@ -139,6 +139,8 @@ class CLuaHandle : public CEventClient
 		void UnitCloaked(const CUnit* unit);
 		void UnitDecloaked(const CUnit* unit);
 
+		void UnitUnitCollision(const CUnit* collider, const CUnit* collidee);
+		void UnitFeatureCollision(const CUnit* collider, const CFeature* collidee);
 		void UnitMoveFailed(const CUnit* unit);
 
 		void FeatureCreated(const CFeature* feature);
