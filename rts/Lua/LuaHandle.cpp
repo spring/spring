@@ -74,11 +74,9 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
 	execMiscBatch = false;
 
 	SetSynced(false, true);
-	L_Sim = lua_open();
-	L_Sim->luamutex = new boost::recursive_mutex();
+	L_Sim = LUA_OPEN();
 	LUA_OPEN_LIB(L_Sim, luaopen_debug);
-	L_Draw = lua_open();
-	L_Draw->luamutex = new boost::recursive_mutex();
+	L_Draw = LUA_OPEN();
 	LUA_OPEN_LIB(L_Draw, luaopen_debug);
 }
 
@@ -112,14 +110,14 @@ void CLuaHandle::KillLua()
 	if (L_Sim != NULL) {
 		CLuaHandle* orig = GetActiveHandle();
 		SetActiveHandle();
-		lua_close(L_Sim);
+		LUA_CLOSE(L_Sim);
 		SetActiveHandle(orig);
 		L_Sim = NULL;
 	}
 	if (L_Draw != NULL) {
 		CLuaHandle* orig = GetActiveHandle();
 		SetActiveHandle();
-		lua_close(L_Draw);
+		LUA_CLOSE(L_Draw);
 		SetActiveHandle(orig);
 		L_Draw = NULL;
 	}
