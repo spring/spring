@@ -13,7 +13,7 @@
 		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Zero-K Lobby.lnk" "$INSTDIR\Zero-K.exe"
 	${EndIf}
 	${If} ${SectionIsSelected} ${SEC_RAPID}
-		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\rapid-GUI.lnk" "$INSTDIR\rapid-gui.exe"
+		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\rapid-GUI.lnk" "$INSTDIR\rapid\rapid-gui.exe"
 	${EndIf}
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk" "$INSTDIR\springsettings.exe"
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk" "$INSTDIR\spring.exe"
