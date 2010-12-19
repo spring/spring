@@ -9,7 +9,7 @@
 	File "${BUILD_OR_DIST_DIR}\spring.exe"
 	File "${BUILD_OR_DIST_DIR}\unitsync.dll"
 	CreateDirectory "$INSTDIR\maps"
-	CreateDirectory "$INSTDIR\mods"
+	CreateDirectory "$INSTDIR\games"
 	SetOutPath "$INSTDIR"
 
 	${!echonow} "Processing: main: DLLs (mingwlibs)"
@@ -194,7 +194,7 @@
 	Delete "$INSTDIR\ext.txt"
 	RmDir "$INSTDIR\demos"
 	RmDir "$INSTDIR\maps"
-	RmDir "$INSTDIR\mods"
+	RmDir "$INSTDIR\games"
 
 	; Demofile file association
 	!insertmacro APP_UNASSOCIATE "sdf" "spring.demofile"
