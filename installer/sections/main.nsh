@@ -187,8 +187,7 @@
 	Delete "$INSTDIR\uninst.exe"
 
 	; Generated stuff from running spring
-	Delete "$INSTDIR\cache\ArchiveCacheV9.lua"
-	Delete "$INSTDIR\ArchiveCacheV7.lua"
+	Delete "$INSTDIR\cache\ArchiveCache.lua"
 	Delete "$INSTDIR\unitsync.log"
 	Delete "$INSTDIR\infolog.txt"
 	Delete "$INSTDIR\ext.txt"
