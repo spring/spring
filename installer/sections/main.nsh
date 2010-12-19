@@ -10,6 +10,7 @@
 	File "${BUILD_OR_DIST_DIR}\unitsync.dll"
 	CreateDirectory "$INSTDIR\maps"
 	CreateDirectory "$INSTDIR\games"
+	CreateDirectory "$INSTDIR\mods" ; deprecated
 	SetOutPath "$INSTDIR"
 
 	${!echonow} "Processing: main: DLLs (mingwlibs)"
@@ -187,6 +188,8 @@
 	Delete "$INSTDIR\uninst.exe"
 
 	; Generated stuff from running spring
+	Delete "$INSTDIR\cache\ArchiveCacheV9.lua" ; deprecated
+	Delete "$INSTDIR\ArchiveCacheV7.lua" ; deprecated
 	Delete "$INSTDIR\cache\ArchiveCache.lua"
 	Delete "$INSTDIR\unitsync.log"
 	Delete "$INSTDIR\infolog.txt"
@@ -194,13 +197,14 @@
 	RmDir "$INSTDIR\demos"
 	RmDir "$INSTDIR\maps"
 	RmDir "$INSTDIR\games"
+	RmDir "$INSTDIR\mods" ; deprecated
 
 	; Demofile file association
 	!insertmacro APP_UNASSOCIATE "sdf" "spring.demofile"
 
 	MessageBox MB_YESNO|MB_ICONQUESTION "Do you want me to completely remove all spring related files?$\n\
-			All maps, mods, screenshots and your settings will be removed. $\n\
-			CAREFULL: ALL CONTENTS OF YOUR SPRING INSTALLATION DIRECTORY WILL BE REMOVED!" \
+			All maps, games, screenshots and your settings will be removed. $\n\
+			CAREFULL: ALL CONTENTS OF YOUR SPRING INSTALLATION DIRECTORY WILL BE REMOVED! " \
 			/SD IDNO IDNO skip_purge
 		RmDir /r "$INSTDIR"
 		Delete "$LOCALAPPDATA\springsettings.cfg"
