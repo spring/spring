@@ -36,6 +36,16 @@
 #include "lib/streflop/streflop_cond.h"
 #endif // defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER) || defined(USE_MMGR)
 
+// set.erase(iterator++) is prone to crash with MSVC
+template <class S, class I>
+inline I set_erase(S &s, I i) {
+#ifdef _MSC_VER
+		return s.erase(i);
+#else
+		s.erase(i++);
+		return i;
+#endif
+}
 
 #if !defined(USE_GML) && (defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER))
 // top included files without lots of dependencies

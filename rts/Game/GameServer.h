@@ -195,7 +195,7 @@ private:
 
 	/////////////////// sync stuff ///////////////////
 #ifdef SYNCCHECK
-	std::deque<int> outstandingSyncFrames;
+	std::set<int> outstandingSyncFrames;
 #endif
 	int syncErrorFrame;
 	int syncWarningFrame;

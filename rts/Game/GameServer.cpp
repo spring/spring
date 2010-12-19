@@ -400,7 +400,7 @@ void CGameServer::SendDemoData(const bool skipping)
 				serverframenum++;
 #ifdef SYNCCHECK
 				if (!skipping)
-					outstandingSyncFrames.push_back(serverframenum);
+					outstandingSyncFrames.insert(serverframenum);
 				CheckSync();
 #endif
 				Broadcast(rpkt);
@@ -530,7 +530,7 @@ void CGameServer::CheckSync()
 {
 #ifdef SYNCCHECK
 	// Check sync
-	std::deque<int>::iterator f = outstandingSyncFrames.begin();
+	std::set<int>::iterator f = outstandingSyncFrames.begin();
 	while (f != outstandingSyncFrames.end()) {
 		unsigned correctChecksum = 0;
 		bool bGotCorrectChecksum = false;
@@ -655,7 +655,7 @@ void CGameServer::CheckSync()
 				if (players[a].myState < GameParticipant::DISCONNECTED)
 					players[a].syncResponse.erase(*f);
 			}
-			f = outstandingSyncFrames.erase(f);
+			f = set_erase(outstandingSyncFrames, f);
 		} else
 			++f;
 	}
@@ -1123,7 +1123,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		case NETMSG_SYNCRESPONSE: {
 #ifdef SYNCCHECK
 			const int frameNum = *(int*)&inbuf[1];
-			if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
+			if (outstandingSyncFrames.find(frameNum) != outstandingSyncFrames.end())
 				players[a].syncResponse[frameNum] = *(unsigned*)&inbuf[5];
 				// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
 			if (frameNum <= serverframenum && frameNum > players[a].lastFrameResponse)
@@ -2024,7 +2024,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 				else
 					Broadcast(CBaseNetProtocol::Get().SendNewFrame());
 #ifdef SYNCCHECK
-				outstandingSyncFrames.push_back(serverframenum);
+				outstandingSyncFrames.insert(serverframenum);
 #endif
 			}
 		}
