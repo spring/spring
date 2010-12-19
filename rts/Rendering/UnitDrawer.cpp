@@ -1142,7 +1142,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 				(*it)->decal->gbOwner = 0;
 
 			delete *it;
-			deadGhostedBuildings.erase(it++);
+			it = set_erase(deadGhostedBuildings, it);
 		} else {
 			if (camera->InView((*it)->pos, (*it)->model->radius * 2.0f)) {
 				glPushMatrix();

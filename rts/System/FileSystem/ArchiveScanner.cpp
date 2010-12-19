@@ -565,22 +565,14 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 	// TODO: this pattern should be moved into utility function..
 	for (std::map<std::string, ArchiveInfo>::iterator i = archiveInfo.begin(); i != archiveInfo.end(); ) {
 		if (!i->second.updated) {
-#ifdef _MSC_VER
-			i = archiveInfo.erase(i);
-#else
-			archiveInfo.erase(i++);
-#endif
+			i = set_erase(archiveInfo, i);
 		} else {
 			++i;
 		}
 	}
 	for (std::map<std::string, BrokenArchive>::iterator i = brokenArchives.begin(); i != brokenArchives.end(); ) {
 		if (!i->second.updated) {
-#ifdef _MSC_VER
-			i = brokenArchives.erase(i);
-#else
-			brokenArchives.erase(i++);
-#endif
+			i = set_erase(brokenArchives, i);
 		} else {
 			++i;
 		}
