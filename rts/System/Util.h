@@ -116,4 +116,16 @@ namespace proc {
 	unsigned int GetProcSSEBits();
 }
 
+// set.erase(iterator++) is prone to crash with MSVC
+template <class S, class I>
+inline I set_erase(S &s, I i) {
+#ifdef _MSC_VER
+		return s.erase(i);
+#else
+		s.erase(i++);
+		return i;
+#endif
+}
+
+
 #endif // UTIL_H
