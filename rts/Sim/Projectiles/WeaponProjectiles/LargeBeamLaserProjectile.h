@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef LARGEBEAMLASERPROJECTILE_H
-#define LARGEBEAMLASERPROJECTILE_H
+#ifndef LARGE_BEAM_LASER_PROJECTILE_H
+#define LARGE_BEAM_LASER_PROJECTILE_H
 
 #include "WeaponProjectile.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -10,10 +10,16 @@ class CLargeBeamLaserProjectile : public CWeaponProjectile
 {
 	CR_DECLARE(CLargeBeamLaserProjectile);
 public:
-	CLargeBeamLaserProjectile(const float3& startPos, const float3& endPos, const float3& color, const float3& color2,
-		CUnit* owner, const WeaponDef* weaponDef);
-	~CLargeBeamLaserProjectile(void);
+	CLargeBeamLaserProjectile(const float3& startPos, const float3& endPos,
+			const float3& color, const float3& color2, CUnit* owner,
+			const WeaponDef* weaponDef);
+	~CLargeBeamLaserProjectile();
 
+	void Update();
+	void Draw();
+	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
+
+private:
 	float3 startPos;
 	float3 endPos;
 	unsigned char corecolstart[4];
@@ -34,10 +40,6 @@ public:
 
 	AtlasedTexture beamtex;
 	AtlasedTexture side;
-
-	void Update(void);
-	void Draw(void);
-	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 };
 
-#endif
+#endif // LARGE_BEAM_LASER_PROJECTILE_H

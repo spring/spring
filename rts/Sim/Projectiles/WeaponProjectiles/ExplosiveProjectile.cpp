@@ -17,7 +17,7 @@
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (float3(0, 0, 0), float3(0, 0, 0), NULL, NULL, 1, 0));
+CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, NULL, NULL, 1, 0));
 
 CR_REG_METADATA(CExplosiveProjectile, (
 	CR_SETFLAG(CF_Synced),
@@ -30,13 +30,12 @@ CR_REG_METADATA(CExplosiveProjectile, (
 //////////////////////////////////////////////////////////////////////
 
 CExplosiveProjectile::CExplosiveProjectile(
-	const float3& pos, const float3& speed,
-	CUnit* owner, const WeaponDef *weaponDef,
-	int ttl, float areaOfEffect, float g):
-
-	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, ttl),
-	areaOfEffect(areaOfEffect),
-	curTime(0)
+		const float3& pos, const float3& speed,
+		CUnit* owner, const WeaponDef* weaponDef,
+		int ttl, float areaOfEffect, float g)
+	: CWeaponProjectile(pos, speed, owner, NULL, ZeroVector, weaponDef, NULL, ttl)
+	, areaOfEffect(areaOfEffect)
+	, curTime(0)
 {
 	projectileType = WEAPON_EXPLOSIVE_PROJECTILE;
 
@@ -49,16 +48,16 @@ CExplosiveProjectile::CExplosiveProjectile(
 		drawRadius = weaponDef->size;
 	}
 
-	if (ttl <= 0)
+	if (ttl <= 0) {
 		invttl = 1;
-	else
+	} else {
 		invttl = 1.0f / ttl;
+	}
 
 #ifdef TRACE_SYNC
 	tracefile << "New explosive: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
-
 
 	if (!cegTag.empty()) {
 		ceg.Load(explGenHandler, cegTag);
@@ -77,13 +76,14 @@ void CExplosiveProjectile::Update()
 		Collision();
 	} else {
 		if (!cegTag.empty() && ttl > 0) {
-			ceg.Explosion(pos, ttl, areaOfEffect, 0x0, 0.0f, 0x0, speed);
+			ceg.Explosion(pos, ttl, areaOfEffect, NULL, 0.0f, NULL, speed);
 		}
 	}
 
 	if (weaponDef->noExplode) {
-		if (TraveledRange())
+		if (TraveledRange()) {
 			CProjectile::Collision();
+		}
 	}
 
 	curTime += invttl;
@@ -101,8 +101,7 @@ void CExplosiveProjectile::Collision()
 
 		if (h > pos.y) {
 			pos -= speed * std::max(0.0f, std::min(1.0f, float((h - pos.y) * n.y / n.dot(speed) + 0.1f)));
-		}
-		else if (weaponDef->waterweapon) {
+		} else if (weaponDef->waterweapon) {
 			return; //let waterweapons go underwater
 		}
 	}
@@ -110,15 +109,15 @@ void CExplosiveProjectile::Collision()
 	CWeaponProjectile::Collision();
 }
 
-void CExplosiveProjectile::Collision(CUnit *unit)
+void CExplosiveProjectile::Collision(CUnit* unit)
 {
 	CWeaponProjectile::Collision(unit);
 }
 
-void CExplosiveProjectile::Draw(void)
+void CExplosiveProjectile::Draw()
 {
 	if (model) {
-		// don't draw if a 3D model has been defined for us
+		// do not draw if a 3D model has been defined for us
 		return;
 	}
 

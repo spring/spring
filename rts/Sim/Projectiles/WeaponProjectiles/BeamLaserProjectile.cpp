@@ -82,11 +82,11 @@ CBeamLaserProjectile::CBeamLaserProjectile(
 
 
 
-void CBeamLaserProjectile::Update(void)
+void CBeamLaserProjectile::Update()
 {
-	if (ttl <= 0)
+	if (ttl <= 0) {
 		deleteMe = true;
-	else {
+	} else {
 		ttl--;
 		for (int i = 0; i < 3; i++) {
 			corecolstart[i] = (corecolstart[i] * decay);
@@ -101,7 +101,7 @@ void CBeamLaserProjectile::Update(void)
 	}
 }
 
-void CBeamLaserProjectile::Draw(void)
+void CBeamLaserProjectile::Draw()
 {
 	inArray = true;
 
@@ -182,7 +182,7 @@ void CBeamLaserProjectile::Draw(void)
 
 void CBeamLaserProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 {
-	unsigned char color[4] = {kocolstart[0], kocolstart[1], kocolstart[2], 255};
+	unsigned char color[4] = { kocolstart[0], kocolstart[1], kocolstart[2], 255 };
 	lines.AddVertexQC(startPos, color);
 	lines.AddVertexQC(endPos, color);
 }
