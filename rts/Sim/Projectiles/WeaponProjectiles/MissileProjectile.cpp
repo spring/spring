@@ -23,9 +23,9 @@
 #include "System/Sync/SyncTracer.h"
 #include "System/GlobalUnsynced.h"
 
-static const float Smoke_Time=60;
+const float CMissileProjectile::SMOKE_TIME = 60;
 
-CR_BIND_DERIVED(CMissileProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,0,0,NULL,NULL,float3(0,0,0)));
+CR_BIND_DERIVED(CMissileProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, NULL, 0, 0.0f, 0.0f, NULL, NULL, ZeroVector));
 
 CR_REG_METADATA(CMissileProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -57,31 +57,30 @@ CR_REG_METADATA(CMissileProjectile,(
 	));
 
 CMissileProjectile::CMissileProjectile(
-	const float3& pos, const float3& speed,
-	CUnit* owner,
-	float areaOfEffect, float maxSpeed, int ttl,
-	CUnit* target, const WeaponDef* weaponDef,
-	float3 targetPos):
-
-	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, 0, ttl),
-	maxSpeed(maxSpeed),
-	areaOfEffect(areaOfEffect),
-	age(0),
-	oldSmoke(pos),
-	target(target),
-	decoyTarget(0),
-	drawTrail(true),
-	numParts(0),
-	targPos(targetPos),
-	isWobbling(weaponDef? (weaponDef->wobble > 0): false),
-	wobbleDir(0, 0, 0),
-	wobbleTime(1),
-	wobbleDif(0, 0, 0),
-	isDancing(weaponDef? (weaponDef->dance > 0): false),
-	danceTime(1),
-	danceMove(0, 0, 0),
-	danceCenter(0, 0, 0),
-	extraHeightTime(0)
+		const float3& pos, const float3& speed,
+		CUnit* owner,
+		float areaOfEffect, float maxSpeed, int ttl,
+		CUnit* target, const WeaponDef* weaponDef,
+		float3 targetPos)
+	: CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, NULL, ttl)
+	, maxSpeed(maxSpeed)
+	, areaOfEffect(areaOfEffect)
+	, age(0)
+	, oldSmoke(pos)
+	, target(target)
+	, decoyTarget(NULL)
+	, drawTrail(true)
+	, numParts(0)
+	, targPos(targetPos)
+	, isWobbling(weaponDef? (weaponDef->wobble > 0): false)
+	, wobbleDir(ZeroVector)
+	, wobbleTime(1)
+	, wobbleDif(ZeroVector)
+	, isDancing(weaponDef? (weaponDef->dance > 0): false)
+	, danceTime(1)
+	, danceMove(ZeroVector)
+	, danceCenter(ZeroVector)
+	, extraHeightTime(0)
 {
 	projectileType = WEAPON_MISSILE_PROJECTILE;
 	curSpeed = speed.Length();
@@ -123,10 +122,11 @@ CMissileProjectile::CMissileProjectile(
 		float dist = pos.distance(targPos);
 		extraHeight = (dist * weaponDef->trajectoryHeight);
 
-		if (dist < maxSpeed)
+		if (dist < maxSpeed) {
 			dist = maxSpeed;
+		}
 
-		extraHeightTime = int(dist / maxSpeed);
+		extraHeightTime = (int)(dist / maxSpeed);
 		extraHeightDecay = extraHeight / extraHeightTime;
 	}
 
@@ -136,22 +136,24 @@ CMissileProjectile::CMissileProjectile(
 	}
 }
 
-CMissileProjectile::~CMissileProjectile(void)
+CMissileProjectile::~CMissileProjectile()
 {
 }
 
 void CMissileProjectile::DependentDied(CObject* o)
 {
-	if (o == target)
-		target = 0;
-	if (o == decoyTarget)
-		decoyTarget = 0;
+	if (o == target) {
+		target = NULL;
+	}
+	if (o == decoyTarget) {
+		decoyTarget = NULL;
+	}
 	CWeaponProjectile::DependentDied(o);
 }
 
 void CMissileProjectile::Collision()
 {
-	float h = ground->GetHeightReal(pos.x, pos.z);
+	const float h = ground->GetHeightReal(pos.x, pos.z);
 
 	if (weaponDef->waterweapon && h < pos.y) {
 		// let waterweapons travel in water
@@ -159,11 +161,11 @@ void CMissileProjectile::Collision()
 	}
 
 	if (h > pos.y && fabs(speed.y) > 0.001f) {
-		pos -= speed * std::min(1.0f,float((h - pos.y) / fabs(speed.y)));
+		pos -= speed * std::min(1.0f, (float)((h - pos.y) / fabs(speed.y)));
 	}
 
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner(), false, true, 7, Smoke_Time, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner(), false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
 	}
 
 	CWeaponProjectile::Collision();
@@ -173,7 +175,7 @@ void CMissileProjectile::Collision()
 void CMissileProjectile::Collision(CUnit *unit)
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner(), false, true, 7, Smoke_Time, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner(), false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
 	}
 
 	CWeaponProjectile::Collision(unit);
@@ -181,7 +183,7 @@ void CMissileProjectile::Collision(CUnit *unit)
 }
 
 
-void CMissileProjectile::Update(void)
+void CMissileProjectile::Update()
 {
 	if (--ttl > 0) {
 		if (!luaMoveCtrl) {
@@ -189,7 +191,7 @@ void CMissileProjectile::Update(void)
 				curSpeed += weaponDef->weaponacceleration;
 			}
 
-			float3 targSpeed(0, 0, 0);
+			float3 targSpeed(ZeroVector);
 
 			if (weaponDef->tracks && (decoyTarget || target)) {
 				if (decoyTarget) {
@@ -232,9 +234,9 @@ void CMissileProjectile::Update(void)
 				pos += danceMove;
 			}
 
-			float3 orgTargPos = targPos;
-			float3 targetDir = (targPos - pos).Normalize();
-			float dist = targPos.distance(pos) + 0.1f;
+			const float3 orgTargPos = targPos;
+			const float3 targetDir = (targPos - pos).Normalize();
+			const float dist = targPos.distance(pos) + 0.1f;
 
 			if (extraHeightTime > 0) {
 				extraHeight -= extraHeightDecay;
@@ -276,7 +278,7 @@ void CMissileProjectile::Update(void)
 		}
 
 		if (!cegTag.empty()) {
-			ceg.Explosion(pos, ttl, areaOfEffect, 0x0, 0.0f, 0x0, dir);
+			ceg.Explosion(pos, ttl, areaOfEffect, NULL, 0.0f, NULL, dir);
 		}
 	} else {
 		if (weaponDef->selfExplode) {
@@ -304,7 +306,7 @@ void CMissileProjectile::Update(void)
 	if (weaponDef->visuals.smokeTrail && !(age & 7)) {
 		CSmokeTrailProjectile* tp = new CSmokeTrailProjectile(
 			pos, oldSmoke,
-			dir, oldDir, owner(), age == 8, false, 7, Smoke_Time, 0.6f, drawTrail, 0,
+			dir, oldDir, owner(), age == 8, false, 7, SMOKE_TIME, 0.6f, drawTrail, 0,
 			weaponDef->visuals.texture2
 		);
 
@@ -342,14 +344,14 @@ void CMissileProjectile::UpdateGroundBounce() {
 
 
 
-void CMissileProjectile::Draw(void)
+void CMissileProjectile::Draw()
 {
 	inArray = true;
 	const float age2 = (age & 7) + globalRendering->timeOffset;
 
 	unsigned char col[4];
 
-	va->EnlargeArrays(8+4*numParts,0,VA_SIZE_TC);
+	va->EnlargeArrays(8 + (4 * numParts), 0, VA_SIZE_TC);
 	if (weaponDef->visuals.smokeTrail) {
 		const float color = 0.6f;
 		if (drawTrail) {
@@ -363,7 +365,7 @@ void CMissileProjectile::Draw(void)
 			float3 dir2(dif2.cross(oldDir));
 			dir2.ANormalize();
 
-			float a1 = (1.0f / (Smoke_Time)) * 255;
+			float a1 = (1.0f / (SMOKE_TIME)) * 255;
 			a1 *= 0.7f + fabs(dif.dot(dir));
 			const float alpha1 = std::min(255.0f, std::max(0.0f, a1));
 			col[0] = (unsigned char) (color * alpha1);
@@ -372,10 +374,11 @@ void CMissileProjectile::Draw(void)
 			col[3] = (unsigned char) alpha1;
 
 			unsigned char col2[4];
-			float a2 = (1 - float(age2) / (Smoke_Time)) * 255;
+			float a2 = (1 - float(age2) / (SMOKE_TIME)) * 255;
 
-			if (age < 8)
+			if (age < 8) {
 				a2 = 0;
+			}
 
 			a2 *= 0.7f + fabs(dif2.dot(oldDir));
 			const float alpha2 = std::min(255.0f, std::max(0.0f, a2));
@@ -385,7 +388,7 @@ void CMissileProjectile::Draw(void)
 			col2[3] = (unsigned char) alpha2;
 
 			const float size = 1.0f;
-			const float size2 = (1 + (age2 * (1 / Smoke_Time)) * 7);
+			const float size2 = (1 + (age2 * (1 / SMOKE_TIME)) * 7);
 			const float txs = weaponDef->visuals.texture2->xend - (weaponDef->visuals.texture2->xend - weaponDef->visuals.texture2->xstart) * (age2 / 8.0f);
 
 			va->AddVertexQTC(drawPos  - dir1 * size,  txs,                               weaponDef->visuals.texture2->ystart, col);
@@ -405,7 +408,7 @@ void CMissileProjectile::Draw(void)
 				col[2] = (unsigned char) (color * alpha);
 				col[3] = (unsigned char) alpha;
 
-				const float size = (1 + (a * (1 / Smoke_Time)) * 7);
+				const float size = (1 + (a * (1 / SMOKE_TIME)) * 7);
 				float3 pos1 = CalcBeizer(float(a) / (numParts), pos, dirpos1, dirpos2, oldSmoke);
 
 				#define st projectileDrawer->smoketex[0]

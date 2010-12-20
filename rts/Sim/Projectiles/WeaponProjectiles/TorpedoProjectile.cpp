@@ -21,7 +21,7 @@
 	#include "Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CTorpedoProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,0,0,0,NULL,NULL));
+CR_BIND_DERIVED(CTorpedoProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, NULL, 0, 0, 0, 0, NULL, NULL));
 
 CR_REG_METADATA(CTorpedoProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -38,14 +38,13 @@ CR_REG_METADATA(CTorpedoProjectile,(
 	));
 
 CTorpedoProjectile::CTorpedoProjectile(
-	const float3& pos, const float3& speed,
-	CUnit* owner,
-	float areaOfEffect, float maxSpeed,
-	float tracking, int ttl,
-	CUnit* target,
-	const WeaponDef* weaponDef):
-
-	CWeaponProjectile(pos, speed, owner, target, ZeroVector, weaponDef, 0, ttl),
+		const float3& pos, const float3& speed,
+		CUnit* owner,
+		float areaOfEffect, float maxSpeed,
+		float tracking, int ttl,
+		CUnit* target,
+		const WeaponDef* weaponDef)
+	: CWeaponProjectile(pos, speed, owner, target, ZeroVector, weaponDef, NULL, ttl),
 	tracking(tracking),
 	maxSpeed(maxSpeed),
 	areaOfEffect(areaOfEffect),
@@ -76,21 +75,23 @@ CTorpedoProjectile::CTorpedoProjectile(
 	}
 }
 
-CTorpedoProjectile::~CTorpedoProjectile(void)
+CTorpedoProjectile::~CTorpedoProjectile()
 {
 }
 
 void CTorpedoProjectile::DependentDied(CObject* o)
 {
-	if (o == target)
-		target = 0;
+	if (o == target) {
+		target = NULL;
+	}
 	CWeaponProjectile::DependentDied(o);
 }
 
 void CTorpedoProjectile::Collision()
 {
-	if(ground->GetHeightReal(pos.x,pos.z)<pos.y+4)
+	if (ground->GetHeightReal(pos.x,pos.z) < (pos.y + 4)) {
 		return;
+	}
 	CWeaponProjectile::Collision();
 }
 
@@ -99,7 +100,7 @@ void CTorpedoProjectile::Collision(CUnit *unit)
 	CWeaponProjectile::Collision(unit);
 }
 
-void CTorpedoProjectile::Update(void)
+void CTorpedoProjectile::Update()
 {
 	if (!(weaponDef->submissile) && pos.y > -3.0f) {
 		// tracking etc only works when we are underwater
@@ -155,7 +156,7 @@ void CTorpedoProjectile::Update(void)
 			}
 
 			if (!cegTag.empty()) {
-				ceg.Explosion(pos, ttl, areaOfEffect, 0x0, 0.0f, 0x0, speed);
+				ceg.Explosion(pos, ttl, areaOfEffect, NULL, 0.0f, NULL, speed);
 			}
 		} else {
 			if (!luaMoveCtrl) {
@@ -189,67 +190,70 @@ void CTorpedoProjectile::Update(void)
 	UpdateGroundBounce();
 }
 
-void CTorpedoProjectile::Draw(void)
+void CTorpedoProjectile::Draw()
 {
-	if (model)	//dont draw if a 3d model has been defined for us
+	if (model) {
+		// do not draw if a 3D model has been defined for us
 		return;
+	}
 
-	inArray=true;
+	inArray = true;
 
 	unsigned char col[4];
-	col[0]=60;
-	col[1]=60;
-	col[2]=100;
-	col[3]=255;
+	col[0] = 60;
+	col[1] = 60;
+	col[2] = 100;
+	col[3] = 255;
 
-	float3 r=dir.cross(UpVector);
-	if(r.Length()<0.001f)
-		r=float3(1,0,0);
+	float3 r = dir.cross(UpVector);
+	if (r.Length() < 0.001f) {
+		r = float3(1.0f, 0.0f, 0.0f);
+	}
 	r.Normalize();
-	float3 u=dir.cross(r);
-	const float h=12;
-	const float w=2;
+	const float3 u = dir.cross(r);
+	const float h = 12;
+	const float w = 2;
 
-	va->EnlargeArrays(32,0,VA_SIZE_TC);
+	va->EnlargeArrays(32, 0, VA_SIZE_TC);
 
-	va->AddVertexQTC(drawPos+r*w, texx,texy,col);
-	va->AddVertexQTC(drawPos+u*w, texx,texy,col);
-	va->AddVertexQTC(drawPos+u*w+dir*h, texx,texy,col);
-	va->AddVertexQTC(drawPos+r*w+dir*h, texx,texy,col);
+	va->AddVertexQTC(drawPos + (r * w),             texx, texy, col);
+	va->AddVertexQTC(drawPos + (u * w),             texx, texy, col);
+	va->AddVertexQTC(drawPos + (u * w) + (dir * h), texx, texy, col);
+	va->AddVertexQTC(drawPos + (r * w) + (dir * h), texx, texy, col);
 
-	va->AddVertexQTC(drawPos+u*w, texx,texy,col);
-	va->AddVertexQTC(drawPos-r*w, texx,texy,col);
-	va->AddVertexQTC(drawPos-r*w+dir*h, texx,texy,col);
-	va->AddVertexQTC(drawPos+u*w+dir*h, texx,texy,col);
+	va->AddVertexQTC(drawPos + (u * w),             texx, texy, col);
+	va->AddVertexQTC(drawPos - (r * w),             texx, texy, col);
+	va->AddVertexQTC(drawPos - (r * w) + (dir * h), texx, texy, col);
+	va->AddVertexQTC(drawPos + (u * w) + (dir * h), texx, texy, col);
 
-	va->AddVertexQTC(drawPos-r*w, texx,texy,col);
-	va->AddVertexQTC(drawPos-u*w, texx,texy,col);
-	va->AddVertexQTC(drawPos-u*w+dir*h, texx,texy,col);
-	va->AddVertexQTC(drawPos-r*w+dir*h, texx,texy,col);
+	va->AddVertexQTC(drawPos - (r * w),             texx, texy, col);
+	va->AddVertexQTC(drawPos - (u * w),             texx, texy, col);
+	va->AddVertexQTC(drawPos - (u * w) + (dir * h), texx, texy, col);
+	va->AddVertexQTC(drawPos - (r * w) + (dir * h), texx, texy, col);
 
-	va->AddVertexQTC(drawPos-u*w, texx,texy,col);
-	va->AddVertexQTC(drawPos+r*w, texx,texy,col);
-	va->AddVertexQTC(drawPos+r*w+dir*h, texx,texy,col);
-	va->AddVertexQTC(drawPos-u*w+dir*h, texx,texy,col);
+	va->AddVertexQTC(drawPos - (u * w),             texx, texy, col);
+	va->AddVertexQTC(drawPos + (r * w),             texx, texy, col);
+	va->AddVertexQTC(drawPos + (r * w) + (dir * h), texx, texy, col);
+	va->AddVertexQTC(drawPos - (u * w) + (dir * h), texx, texy, col);
 
 
-	va->AddVertexQTC(drawPos+r*w+dir*h, texx,texy,col);
-	va->AddVertexQTC(drawPos+u*w+dir*h, texx,texy,col);
-	va->AddVertexQTC(drawPos+dir*h*1.2f, texx,texy,col);
-	va->AddVertexQTC(drawPos+dir*h*1.2f, texx,texy,col);
+	va->AddVertexQTC(drawPos + (r * w) + (dir * h), texx, texy, col);
+	va->AddVertexQTC(drawPos + (u * w) + (dir * h), texx, texy, col);
+	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
+	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
 
-	va->AddVertexQTC(drawPos+u*w+dir*h, texx,texy,col);
-	va->AddVertexQTC(drawPos-r*w+dir*h, texx,texy,col);
-	va->AddVertexQTC(drawPos+dir*h*1.2f, texx,texy,col);
-	va->AddVertexQTC(drawPos+dir*h*1.2f, texx,texy,col);
+	va->AddVertexQTC(drawPos + (u * w) + (dir * h), texx, texy, col);
+	va->AddVertexQTC(drawPos - (r * w) + (dir * h), texx, texy, col);
+	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
+	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
 
-	va->AddVertexQTC(drawPos-r*w+dir*h, texx,texy,col);
-	va->AddVertexQTC(drawPos-u*w+dir*h, texx,texy,col);
-	va->AddVertexQTC(drawPos+dir*h*1.2f, texx,texy,col);
-	va->AddVertexQTC(drawPos+dir*h*1.2f, texx,texy,col);
+	va->AddVertexQTC(drawPos - (r * w) + (dir * h), texx, texy, col);
+	va->AddVertexQTC(drawPos - (u * w) + (dir * h), texx, texy, col);
+	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
+	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
 
-	va->AddVertexQTC(drawPos-u*w+dir*h, texx,texy,col);
-	va->AddVertexQTC(drawPos+r*w+dir*h, texx,texy,col);
-	va->AddVertexQTC(drawPos+dir*h*1.2f, texx,texy,col);
-	va->AddVertexQTC(drawPos+dir*h*1.2f, texx,texy,col);
+	va->AddVertexQTC(drawPos - (u * w) + (dir * h), texx, texy, col);
+	va->AddVertexQTC(drawPos + (r * w) + (dir * h), texx, texy, col);
+	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
+	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
 }
