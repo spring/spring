@@ -692,60 +692,6 @@ void	m_setOwner(const char *file, const unsigned int line, const char *func)
 // memory tracking routines.
 // ---------------------------------------------------------------------------------------------------------------------------------
 
-void	*operator new(size_t reportedSize)
-{
-	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
-
-  #ifdef TEST_MEMORY_MANAGER
-	log("ENTER: new");
-	#endif
-
-	// ANSI says: allocation requests of 0 bytes will still return a valid value
-
-	if (reportedSize == 0) reportedSize = 1;
-
-	// ANSI says: loop continuously because the error handler could possibly free up some memory
-
-	for(;;)
-	{
-		// Try the allocation
-
-		void	*ptr = m_allocator(sourceFile, sourceLine, sourceFunc, m_alloc_new, reportedSize);
-		if (ptr)
-		{
-			#ifdef TEST_MEMORY_MANAGER
-			log("EXIT : new");
-			#endif
-			return ptr;
-		}
-
-		// There isn't a way to determine the new handler, except through setting it. So we'll just set it to NULL, then
-		// set it back again.
-
-		new_handler	nh = std::set_new_handler(0);
-		std::set_new_handler(nh);
-
-		// If there is an error handler, call it
-
-		if (nh)
-		{
-			(*nh)();
-		}
-
-		// Otherwise, throw the exception
-
-		else
-		{
-			#ifdef TEST_MEMORY_MANAGER
-			log("EXIT : new");
-			#endif
-			throw std::bad_alloc();
-		}
-	}
-}
-
-// ---------------------------------------------------------------------------------------------------------------------------------
-
 void	*operator new[](size_t reportedSize)
 {
 	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
@@ -806,7 +752,7 @@ void	*operator new[](size_t reportedSize)
 // our memory tracking routines.
 // ---------------------------------------------------------------------------------------------------------------------------------
 
-void	*operator new(size_t reportedSize, const char *sourceFile, int sourceLine)
+void	*operator new(size_t reportedSize, const char *sourceFile = "??", int sourceLine = -1)
 {
 	boost::recursive_mutex::scoped_lock scoped_lock(get_mutex());
 
