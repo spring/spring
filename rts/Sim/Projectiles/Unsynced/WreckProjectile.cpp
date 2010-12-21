@@ -14,7 +14,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
-CR_BIND_DERIVED(CWreckProjectile, CProjectile, (float3(0, 0,0 ), float3(0, 0, 0), 0, 0));
+CR_BIND_DERIVED(CWreckProjectile, CProjectile, (ZeroVector, ZeroVector, 0.0f, NULL));
 
 CR_REG_METADATA(CWreckProjectile,
 	CR_RESERVED(8)
@@ -24,8 +24,8 @@ CR_REG_METADATA(CWreckProjectile,
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CWreckProjectile::CWreckProjectile(float3 pos, float3 speed, float temperature, CUnit* owner):
-	CProjectile(pos,speed,owner, false, false, false)
+CWreckProjectile::CWreckProjectile(float3 pos, float3 speed, float temperature, CUnit* owner)
+	: CProjectile(pos,speed,owner, false, false, false)
 {
 	checkCol = false;
 	drawRadius = 2.0f;

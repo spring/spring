@@ -11,7 +11,8 @@ class CRepulseGfx : public CProjectile
 {
 	CR_DECLARE(CRepulseGfx);
 public:
-	CRepulseGfx(CUnit* owner, CProjectile* repulsed, float maxDist, const float3& color);
+	CRepulseGfx(CUnit* owner, CProjectile* repulsed, float maxDist,
+			const float3& color);
 	~CRepulseGfx();
 
 	void Draw();
@@ -19,6 +20,7 @@ public:
 
 	void DependentDied(CObject* o);
 
+private:
 	CProjectile* repulsed;
 	float sqMaxDist;
 	int age;

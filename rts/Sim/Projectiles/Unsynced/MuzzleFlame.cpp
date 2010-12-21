@@ -30,7 +30,7 @@ void CMuzzleFlame::creg_Serialize(creg::ISerializer& s)
 }
 
 CMuzzleFlame::CMuzzleFlame(const float3& pos, const float3& speed, const float3& dir, float size):
-	CProjectile(pos, speed, 0, false, false, false),
+	CProjectile(pos, speed, NULL, false, false, false),
 	dir(dir),
 	size(size),
 	age(0)

@@ -36,7 +36,7 @@ CGfxProjectile::CGfxProjectile(): CProjectile()
 }
 
 CGfxProjectile::CGfxProjectile(const float3& pos, const float3& speed, int lifeTime, const float3& color):
-	CProjectile(pos, speed, 0, false, false, false),
+	CProjectile(pos, speed, NULL, false, false, false),
 	creationTime(gs->frameNum),
 	lifeTime(lifeTime)
 {

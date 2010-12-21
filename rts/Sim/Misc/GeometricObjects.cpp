@@ -95,10 +95,7 @@ void CGeometricObjects::SetColor(int group, float r, float g, float b, float a)
 	std::vector<CGeoSquareProjectile*>::iterator gi;
 
 	for (gi = gg->squares.begin(); gi != gg->squares.end(); ++gi) {
-		(*gi)->r = r;
-		(*gi)->g = g;
-		(*gi)->b = b;
-		(*gi)->a = a;
+		(*gi)->SetColor(r, g, b, a);
 	}
 }
 

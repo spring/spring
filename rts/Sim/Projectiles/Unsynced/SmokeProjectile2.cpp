@@ -68,7 +68,7 @@ void CSmokeProjectile2::Init(const float3& pos, CUnit* owner)
 	CProjectile::Init(pos, owner);
 }
 
-CSmokeProjectile2::CSmokeProjectile2(float3 pos, float3 wantedPos, float3 speed, float ttl, float startSize, float sizeExpansion, CUnit* owner, float color)
+CSmokeProjectile2::CSmokeProjectile2(const float3& pos, const float3& wantedPos, const float3& speed, float ttl, float startSize, float sizeExpansion, CUnit* owner, float color)
 : CProjectile(pos, speed, owner, false, false, false),
 	color(color),
 	age(0),
@@ -115,16 +115,16 @@ void CSmokeProjectile2::Update()
 void CSmokeProjectile2::Draw()
 {
 	inArray = true;
-	float interAge = std::min(1.0f, age + ageSpeed * globalRendering->timeOffset);
+	const float interAge = std::min(1.0f, age + ageSpeed * globalRendering->timeOffset);
 	unsigned char col[4];
 	unsigned char alpha;
-	if(interAge < 0.05f) {
+	if (interAge < 0.05f) {
 		alpha = (unsigned char) (interAge * 19 * 127);
 	} else {
 		alpha = (unsigned char) ((1 - interAge) * 127);
 	}
-	float rglow = std::max(0.f, (1 - (interAge * glowFalloff))        * 127);
-	float gglow = std::max(0.f, (1 - (interAge * glowFalloff * 2.5f)) * 127);
+	const float rglow = std::max(0.f, (1 - (interAge * glowFalloff))        * 127);
+	const float gglow = std::max(0.f, (1 - (interAge * glowFalloff * 2.5f)) * 127);
 	col[0] = (unsigned char) (color * alpha + rglow);
 	col[1] = (unsigned char) (color * alpha + gglow);
 	col[2] = (unsigned char) std::max(0.f, color * alpha - gglow * 0.5f);
