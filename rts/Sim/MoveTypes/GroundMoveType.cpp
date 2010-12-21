@@ -39,6 +39,7 @@
 
 #define MIN_WAYPOINT_DISTANCE (SQUARE_SIZE << 1)
 #define DEBUG_OUTPUT 0
+#define PLAY_SOUNDS 1
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
 
@@ -419,7 +420,7 @@ Sets owner unit to start moving against given position with requested speed.
 void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float speed)
 {
 #ifdef TRACE_SYNC
-	tracefile << "Start moving called: ";
+	tracefile << "[" << __FUNCTION__ << "] ";
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
 #endif
 
@@ -442,6 +443,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 
 	StartEngine();
 
+	#if (PLAY_SOUNDS == 1)
 	if (owner->team == gu->myTeam) {
 		// Play "activate" sound.
 		const int soundIdx = owner->unitDef->sounds.activate.getRandomIdx();
@@ -451,11 +453,12 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 				owner->unitDef->sounds.activate.getVolume(soundIdx));
 		}
 	}
+	#endif
 }
 
 void CGroundMoveType::StopMoving() {
 #ifdef TRACE_SYNC
-	tracefile << "Stop moving called: ";
+	tracefile << "[" << __FUNCTION__ << "] ";
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
 #endif
 
@@ -569,7 +572,7 @@ void CGroundMoveType::SetDeltaSpeed(bool wantReverse)
 	}
 
 #ifdef TRACE_SYNC
-	tracefile << "Unit delta speed: ";
+	tracefile << "[" << __FUNCTION__ << "] ";
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << deltaSpeed << " " /*<< wSpeed*/ << " " << owner->id << "\n";
 #endif
 
@@ -603,7 +606,8 @@ void CGroundMoveType::ChangeHeading(short wantedHeading) {
 	}
 
 #ifdef TRACE_SYNC
-	tracefile << "Unit " << owner->id << " changed heading to " << heading << " from " << _oldheading << " (wantedHeading: " << wantedHeading << ")\n";
+	tracefile << "[" << __FUNCTION__ << "] ";
+	tracefile << "unit " << owner->id << " changed heading to " << heading << " from " << _oldheading << " (wantedHeading: " << wantedHeading << ")\n";
 #endif
 
 	owner->frontdir = GetVectorFromHeading(heading);
@@ -622,7 +626,7 @@ void CGroundMoveType::ChangeHeading(short wantedHeading) {
 	flatFrontDir.Normalize();
 }
 
-void CGroundMoveType::ImpulseAdded(void)
+void CGroundMoveType::ImpulseAdded()
 {
 	if (owner->beingBuilt || owner->unitDef->movedata->moveType == MoveData::Ship_Move)
 		return;
@@ -665,7 +669,7 @@ void CGroundMoveType::ImpulseAdded(void)
 	}
 }
 
-void CGroundMoveType::UpdateSkid(void)
+void CGroundMoveType::UpdateSkid()
 {
 	ASSERT_SYNCED_FLOAT3(owner->midPos);
 
@@ -775,7 +779,7 @@ void CGroundMoveType::UpdateSkid(void)
 	ASSERT_SYNCED_FLOAT3(owner->midPos);
 }
 
-void CGroundMoveType::UpdateControlledDrop(void)
+void CGroundMoveType::UpdateControlledDrop()
 {
 	float3& speed = owner->speed;
 	float3& pos = owner->pos;
@@ -808,7 +812,7 @@ void CGroundMoveType::UpdateControlledDrop(void)
 	}
 }
 
-void CGroundMoveType::CheckCollisionSkid(void)
+void CGroundMoveType::CheckCollisionSkid()
 {
 	float3& pos = owner->pos;
 	SyncedFloat3& midPos = owner->midPos;
@@ -928,7 +932,7 @@ void CGroundMoveType::CheckCollisionSkid(void)
 	}
 }
 
-void CGroundMoveType::CalcSkidRot(void)
+void CGroundMoveType::CalcSkidRot()
 {
 	owner->heading += (short int) skidRotSpeed;
 
@@ -1120,7 +1124,8 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 		avoidanceDir = (desiredDir + avoidanceVec).Normalize();
 
 #ifdef TRACE_SYNC
-		tracefile << __FUNCTION__ << " avoidanceVec = " << avoidanceVec.x << " " << avoidanceVec.y << " " << avoidanceVec.z << "\n";
+		tracefile << "[" << __FUNCTION__ << "] ";
+		tracefile << "avoidanceVec = <" << avoidanceVec.x << " " << avoidanceVec.y << " " << avoidanceVec.z << ">\n";
 #endif
 
 		return avoidanceDir;
@@ -1342,6 +1347,7 @@ void CGroundMoveType::Arrived()
 		// we have reached our goal
 		StopEngine();
 
+		#if (PLAY_SOUNDS == 1)
 		if (owner->team == gu->myTeam) {
 			const int soundIdx = owner->unitDef->sounds.arrived.getRandomIdx();
 			if (soundIdx >= 0) {
@@ -1350,6 +1356,7 @@ void CGroundMoveType::Arrived()
 					owner->unitDef->sounds.arrived.getVolume(soundIdx));
 			}
 		}
+		#endif
 
 		// and the action is done
 		progressState = Done;
@@ -1518,7 +1525,7 @@ void CGroundMoveType::HandleObjectCollisions()
 
 
 
-void CGroundMoveType::CreateLineTable(void)
+void CGroundMoveType::CreateLineTable()
 {
 	// for every <xt, zt> pair, computes a set of regularly spaced
 	// grid sample-points (int2 offsets) along the line from <start>
@@ -1593,7 +1600,7 @@ void CGroundMoveType::CreateLineTable(void)
 	}
 }
 
-void CGroundMoveType::DeleteLineTable(void)
+void CGroundMoveType::DeleteLineTable()
 {
 	for (int yt = 0; yt < LINETABLE_SIZE; ++yt) {
 		for (int xt = 0; xt < LINETABLE_SIZE; ++xt) {
@@ -1602,7 +1609,7 @@ void CGroundMoveType::DeleteLineTable(void)
 	}
 }
 
-void CGroundMoveType::TestNewTerrainSquare(void)
+void CGroundMoveType::TestNewTerrainSquare()
 {
 	// first make sure we don't go into any terrain we cant get out of
 	int newMoveSquareX = owner->pos.x / (MIN_WAYPOINT_DISTANCE);
@@ -1645,7 +1652,7 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 		} else {
 			if (newMoveSquareY > moveSquareY) {
 				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
-				if (cmod>0.01f && nmod <= 0.01f) {
+				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * MIN_WAYPOINT_DISTANCE + (MIN_WAYPOINT_DISTANCE - 0.01f);
 					newMoveSquareY = moveSquareY;
 				}
@@ -1727,7 +1734,7 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 	}
 }
 
-void CGroundMoveType::LeaveTransport(void)
+void CGroundMoveType::LeaveTransport()
 {
 	oldPos = owner->pos + UpVector * 0.001f;
 }
@@ -1795,7 +1802,7 @@ void CGroundMoveType::SetMainHeading() {
 			} else if (progressState == Active) {
 				ChangeHeading(heading);
 #ifdef TRACE_SYNC
-				tracefile << "Test heading: " << heading << ",  Real heading: " << owner->heading << "\n";
+				tracefile << "[" << __FUNCTION__ << "][1] test heading: " << heading << ", real heading: " << owner->heading << "\n";
 #endif
 			} else if (progressState != Active
 			  && owner->heading != heading
@@ -1805,7 +1812,7 @@ void CGroundMoveType::SetMainHeading() {
 				owner->script->StartMoving();
 				ChangeHeading(heading);
 #ifdef TRACE_SYNC
-				tracefile << "Start moving; Test heading: " << heading << ",  Real heading: " << owner->heading << "\n";
+				tracefile << "[" << __FUNCTION__ << "][2] test heading: " << heading << ", real heading: " << owner->heading << "\n";
 #endif
 			}
 		}
