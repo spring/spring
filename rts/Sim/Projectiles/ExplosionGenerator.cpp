@@ -557,9 +557,9 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		while (p < script.length()) {
 			char opcode;
 			char c;
-			do { c = script[p++]; } while(c == ' ');
+			do { c = script[p++]; } while (c == ' ');
 
-			bool useInt=false;
+			bool useInt = false;
 
 			if (c == 'i')      opcode = OP_INDEX;
 			else if (c == 'r') opcode = OP_RAND;
@@ -573,18 +573,21 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			else if (c == 'p') opcode = OP_POW;
 			else if (c == 'q') {opcode = OP_POWBUFF; useInt = true;}
 			else if (isdigit(c) || c == '.' || c == '-') { opcode = OP_ADD; p--; }
-			else throw content_error("Explosion script error: \"" + script + "\"  : \'" + string(1, c) + "\' is unknown opcode.");
+			else {
+				logOutput.Print("[CCEG::ParseExplosionCode] WARNING: unknown op-code \"" + string(1, c) + "\" in \"" + script + "\"");
+				continue;
+			}
 
 			char* endp;
-			if(!useInt) {
-				float v = (float)strtod(&script[p], &endp);
+			if (!useInt) {
+				const float v = (float)strtod(&script[p], &endp);
+
 				p += endp - &script[p];
 				code += opcode;
 				code.append((char*) &v, ((char*) &v) + 4);
-			}
-			else {
-				int v = (int)strtol(&script[p], &endp, 10);
-				if (v < 0 || v > 16) throw content_error("Explosion script error: \"" + script + "\"  : Buffer index is out of bounds.");
+			} else {
+				const int v = std::max(0, std::min(16, (int)strtol(&script[p], &endp, 10)));
+
 				p += endp - &script[p];
 				code += opcode;
 				code.append((char*) &v, ((char*) &v) + 4);
@@ -701,7 +704,7 @@ void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, const string
 
 		if (!expTable.IsValid()) {
 			// not a fatal error: any calls to ::Explosion will just return early
-			logOutput.Print("[CCustomExplosionGenerator::Load] WARNING: table for CEG \"" + tag + "\" invalid (parse errors?)");
+			logOutput.Print("[CCEG::Load] WARNING: table for CEG \"" + tag + "\" invalid (parse errors?)");
 			return;
 		}
 
