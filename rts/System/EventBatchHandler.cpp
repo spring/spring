@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "Util.h"
 #include "Sim/Projectiles/Projectile.h" // for operator delete
 
 #include "EventBatchHandler.h"

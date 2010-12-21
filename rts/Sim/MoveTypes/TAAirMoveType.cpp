@@ -17,9 +17,8 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "LogOutput.h"
-#include "myMath.h"
-#include "Matrix44f.h"
+#include "System/myMath.h"
+#include "System/Matrix44f.h"
 
 
 CR_BIND_DERIVED(CTAAirMoveType, AAirMoveType, (NULL));
@@ -953,9 +952,7 @@ void CTAAirMoveType::Update()
 
 void CTAAirMoveType::SlowUpdate()
 {
-	if (aircraftState != AIRCRAFT_LANDED && owner->unitDef->maxFuel > 0) {
-		owner->currentFuel = std::max(0.f, owner->currentFuel - (16.f / GAME_SPEED));
-	}
+	UpdateFuel();
 
 	if (!reservedPad && aircraftState == AIRCRAFT_FLYING && owner->health < owner->maxHealth * repairBelowHealth) {
 		CAirBaseHandler::LandingPad* lp = airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);

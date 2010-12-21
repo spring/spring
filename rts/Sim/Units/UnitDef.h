@@ -58,10 +58,10 @@ public:
 	~UnitDef();
 
 	S3DModel* LoadModel() const;
+
 	bool DontLand() const { return dlHoverFactor >= 0.0f; }
 	void SetNoCost(bool noCost);
-	bool IsTerrainHeightOK(const float height) const;
-	float GetAllowedTerrainHeight(float height) const;
+	bool IsAllowedTerrainHeight(float rawHeight, float* clampedHeight = NULL) const;
 
 	std::string name;
 	std::string humanName;

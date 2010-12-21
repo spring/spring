@@ -76,6 +76,8 @@ void CEventClient::RenderUnitDestroyed(const CUnit* unit) {}
 void CEventClient::RenderUnitCloakChanged(const CUnit* unit, int cloaked) {}
 void CEventClient::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus) {}
 
+void CEventClient::UnitUnitCollision(const CUnit* collider, const CUnit* collidee) {}
+void CEventClient::UnitFeatureCollision(const CUnit* collider, const CFeature* collidee) {}
 void CEventClient::UnitMoveFailed(const CUnit* unit) {}
 
 void CEventClient::FeatureCreated(const CFeature* feature) {}

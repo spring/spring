@@ -34,49 +34,52 @@ int main(int argc, char *argv[])
 #endif
 	SDL_Init(SDL_INIT_TIMER);
 	std::cout << "If you find any errors, report them to mantis or the forums." << std::endl << std::endl;
+
 	ConfigHandler::Instantiate(); // use the default config file
 	FileSystemHandler::Initialize(false);
+
 	CGameServer* server = 0;
 	CGameSetup* gameSetup = 0;
 
-	if (argc > 1)
-	{
+	if (argc == 2) {
 		const std::string script(argv[1]);
+		std::string buf;
+
 		std::cout << "Loading script from file: " << script << std::endl;
 
 		ClientSetup settings;
 		CFileHandler fh(argv[1]);
-		if (!fh.FileExists())
-			throw content_error("Setupscript doesn't exists in given location: "+script);
 
-		std::string buf;
+		if (!fh.FileExists())
+			throw content_error("script does not exist in given location: " + script);
+
 		if (!fh.LoadStringData(buf))
-			throw content_error("Setupscript cannot be read: "+script);
+			throw content_error("script cannot be read: " + script);
 		settings.Init(buf);
 
 		gameSetup = new CGameSetup();	// to store the gamedata inside
-		if (!gameSetup->Init(buf))	// read the script provided by cmdline
-		{
+
+		if (!gameSetup->Init(buf)) {
+			// read the script provided by cmdline
 			std::cout << "Failed to load script" << std::endl;
 			return 1;
 		}
 
 		std::cout << "Starting server..." << std::endl;
+
 		// Create the server, it will run in a separate thread
 		GameData data;
 		UnsyncedRNG rng;
+
 		rng.Seed(gameSetup->gameSetupText.length());
 		rng.Seed(script.length());
 		data.SetRandomSeed(rng.RandInt());
 
 		//  Use script provided hashes if they exist
-		if (gameSetup->mapHash != 0)
-		{
+		if (gameSetup->mapHash != 0) {
 			data.SetMapChecksum(gameSetup->mapHash);
 			gameSetup->LoadStartPositions(false); // reduced mode
-		}
-		else
-		{
+		} else {
 			data.SetMapChecksum(archiveScanner->GetArchiveCompleteChecksum(gameSetup->mapName));
 
 			CFileHandler f("maps/" + gameSetup->mapName);
@@ -89,12 +92,13 @@ int main(int argc, char *argv[])
 		if (gameSetup->modHash != 0) {
 			data.SetModChecksum(gameSetup->modHash);
 		} else {
-			const std::string modArchive = archiveScanner->ArchiveFromName(gameSetup->modName);
-			data.SetModChecksum(archiveScanner->GetArchiveCompleteChecksum(modArchive));
+			const std::string& modArchive = archiveScanner->ArchiveFromName(gameSetup->modName);
+			const unsigned int modCheckSum = archiveScanner->GetArchiveCompleteChecksum(modArchive);
+			data.SetModChecksum(modCheckSum);
 		}
 
 		data.SetSetup(gameSetup->gameSetupText);
-		server = new CGameServer(settings.hostport, &data, gameSetup);
+		server = new CGameServer(settings.hostIP, settings.hostPort, &data, gameSetup);
 
 		while (!server->HasFinished()) // check if still running
 #ifdef _WIN32
@@ -103,19 +107,15 @@ int main(int argc, char *argv[])
 			sleep(1);	// if so, wait 1  second
 #endif
 		delete server;	// delete the server after usage
-	}
-	else
-	{
-		std::cout << "usage: spring-dedicated <full_path_to_script>" << std::endl;
+	} else {
+		std::cout << "usage: " << argv[0] << " <full_path_to_script>" << std::endl;
 	}
 
 	FileSystemHandler::Cleanup();
 	ConfigHandler::Deallocate();
 
 #ifdef _WIN32
-	}
-	catch (const std::exception& err)
-	{
+	} catch (const std::exception& err) {
 		std::cout << "Exception raised: " << err.what() << std::endl;
 		return 1;
 	}
@@ -133,4 +133,3 @@ int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 #ifdef __cplusplus
 } // extern "C"
 #endif
-

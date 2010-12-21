@@ -78,7 +78,7 @@ CInMapDraw::CInMapDraw(void)
 	drawAll = false;
 	allowSpecMapDrawing = true;
 	allowLuaMapDrawing = true;
-	lastLineTime = 0;
+	lastDrawTime = 0;
 	lastLeftClickTime = 0;
 	lastPos = float3(1, 1, 1);
 
@@ -406,13 +406,14 @@ void CInMapDraw::MouseMove(int x, int y, int dx,int dy, int button)
 	if (pos.x < 0) {
 		return;
 	}
-	if (mouse->buttons[SDL_BUTTON_LEFT].pressed && lastLineTime < gu->gameTime - 0.05f) {
+	if (mouse->buttons[SDL_BUTTON_LEFT].pressed && lastDrawTime < gu->gameTime - 0.05f) {
 		SendLine(pos, lastPos, false);
-		lastLineTime = gu->gameTime;
+		lastDrawTime = gu->gameTime;
 		lastPos = pos;
 	}
-	if (mouse->buttons[SDL_BUTTON_RIGHT].pressed) {
+	if (mouse->buttons[SDL_BUTTON_RIGHT].pressed && lastDrawTime < gu->gameTime - 0.05f) {
 		SendErase(pos);
+		lastDrawTime = gu->gameTime;
 	}
 
 }

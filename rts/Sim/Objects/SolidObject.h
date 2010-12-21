@@ -30,8 +30,8 @@ public:
 
 	virtual bool AddBuildPower(float amount, CUnit* builder);
 
-	virtual void DoDamage(const DamageArray& damages, CUnit* attacker, const float3& impulse) {};
-	virtual void Kill(float3& impulse) {};
+	virtual void DoDamage(const DamageArray& damages, CUnit* attacker, const float3& impulse) {}
+	virtual void Kill(const float3& impulse) {}
 	virtual int GetBlockingMapID() const { return -1; }
 
 	void Block();

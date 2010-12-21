@@ -195,7 +195,7 @@ private:
 
 	/////////////////// sync stuff ///////////////////
 #ifdef SYNCCHECK
-	std::deque<int> outstandingSyncFrames;
+	std::set<int> outstandingSyncFrames;
 #endif
 	int syncErrorFrame;
 	int syncWarningFrame;
@@ -227,6 +227,8 @@ private:
 
 	bool canReconnect;
 	bool gameHasStarted;
+	spring_time lastBandwidthUpdate;
+	int linkMinPacketSize;
 };
 
 extern CGameServer* gameServer;

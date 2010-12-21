@@ -29,14 +29,38 @@ endif (CMAKE_HOST_WIN32)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(AWK DEFAULT_MSG AWK_BIN)
 
 if    (AWK_FOUND)
-	# try to fetch AWK version
-	# We use "-W version" instead of "--version", cause the later is
-	# not supported by all AWK versions, for example mawk.
-	EXECUTE_PROCESS(COMMAND ${AWK_BIN} -W version
+	# Try to fetch the AWK version
+	#
+	# There are different ways of doing this, and not all implementations
+	# support all of them. What is worse: none of the ways is supported by all
+	# implementations. :/
+	#
+	# Common Implementations:
+	# * GAWK: linux (& windows) standard
+	# * MAWK: gentoo
+	# * BWK:  OS X & BSDs (announces itsself just as "awk version 20070501")
+	# more info: http://en.wikipedia.org/wiki/AWK#Versions_and_implementations
+	#
+	# a) awk -Wv        (the standard, not supported by BWK)
+	# b) awk -W version (less standard, more verbose version of the above)
+	# c) awk --version  (works for BWK and GAWK)
+	# d) awk -version   (works for BWK)
+	#
+	# So we first try a) and if output is "", we try c)
+	#
+	EXECUTE_PROCESS(COMMAND ${AWK_BIN} -Wv
 		RESULT_VARIABLE RET_VAL
 		OUTPUT_VARIABLE AWK_VERSION
 		ERROR_QUIET
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
+	if    ( NOT${RET_VAL} EQUAL 0 OR AWK_VERSION STREQUAL "")
+		EXECUTE_PROCESS(COMMAND ${AWK_BIN} --version
+			RESULT_VARIABLE RET_VAL
+			OUTPUT_VARIABLE AWK_VERSION
+			ERROR_QUIET
+			OUTPUT_STRIP_TRAILING_WHITESPACE)
+	endif ( NOT${RET_VAL} EQUAL 0 OR AWK_VERSION STREQUAL "")
+
 	if    (${RET_VAL} EQUAL 0)
 		# reduce to first line
 		string(REPLACE "\\n.*" "" AWK_VERSION "${AWK_VERSION}")
@@ -44,7 +68,7 @@ if    (AWK_FOUND)
 			message(STATUS "AWK version: ${AWK_VERSION}")
 		endif (NOT AWK_FIND_QUIETLY)
 	else  (${RET_VAL} EQUAL 0)
-		# clear
+		# failed to fetch version, clear
 		set(AWK_VERSION)
 	endif (${RET_VAL} EQUAL 0)
 else  (AWK_FOUND)

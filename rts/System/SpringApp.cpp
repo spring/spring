@@ -92,6 +92,8 @@ ClientSetup* startsetup = NULL;
 boost::uint8_t* keys = 0;
 boost::uint16_t currentUnicode = 0;
 
+COffscreenGLContext *SpringApp::ogc = NULL;
+
 /**
  * @brief xres default
  *
@@ -545,9 +547,7 @@ bool SpringApp::GetDisplayGeometry()
 			case SW_SHOWMAXIMIZED:
 				windowState = 1;
 				break;
-			case SW_SHOWMINIMIZED:
-				windowState = 2;
-				break;
+			case SW_SHOWMINIMIZED: //minimized startup breaks init stuff, so don't store it
 			default:
 				windowState = 0;
 		}
@@ -620,7 +620,8 @@ void SpringApp::RestoreWindowPosition()
 				int wState;
 				switch (windowState) {
 					case 1: wState = SW_SHOWMAXIMIZED; break;
-					case 2: wState = SW_SHOWMINIMIZED; break;
+					//Setting the main-window minimized breaks initialization
+					case 2: // wState = SW_SHOWMINIMIZED; break;
 					default: stateChanged = false;
 				}
 				if (stateChanged) {
@@ -994,6 +995,7 @@ void SpringApp::Startup()
 #if defined(USE_GML) && GML_ENABLE_SIM
 volatile int gmlMultiThreadSim;
 volatile int gmlStartSim;
+volatile int SpringApp::gmlKeepRunning = 0;
 
 int SpringApp::Sim()
 {
@@ -1210,21 +1212,7 @@ int SpringApp::Run(int argc, char *argv[])
 		}
 	}
 
-	//FIXME this doesn't gets called when the above content_error is catched!!!!!
-#ifdef USE_GML
-	#if GML_ENABLE_SIM
-	gmlKeepRunning=0; // wait for sim to finish
-	while(!gmlProcessor->PumpAux())
-		boost::thread::yield();
-	if(GML_SHARE_LISTS)
-		delete ogc;
-	#endif
-	delete gmlProcessor;
-#endif
-
 	SaveWindowPosition();
-
-	CrashHandler::UninstallHangHandler();
 
 	// Shutdown
 	Shutdown();
@@ -1232,11 +1220,44 @@ int SpringApp::Run(int argc, char *argv[])
 }
 
 
+static void normalizeKeySym(int& sym) {
+
+	if (sym <= SDLK_DELETE) {
+		sym = tolower(sym);
+	}
+	else if (sym == SDLK_RSHIFT) { sym = SDLK_LSHIFT; }
+	else if (sym == SDLK_RCTRL)  { sym = SDLK_LCTRL;  }
+	else if (sym == SDLK_RMETA)  { sym = SDLK_LMETA;  }
+	else if (sym == SDLK_RALT)   { sym = SDLK_LALT;   }
+
+	if (keyBindings) {
+		const int fakeMetaKey = keyBindings->GetFakeMetaKey();
+		if (fakeMetaKey >= 0) {
+			keys[SDLK_LMETA] |= keys[fakeMetaKey];
+		}
+	}
+}
+
 /**
  * Deallocates and shuts down game
  */
 void SpringApp::Shutdown()
 {
+#ifdef USE_GML
+	if(gmlProcessor) {
+#if GML_ENABLE_SIM
+		gmlKeepRunning=0; // wait for sim to finish
+		while(!gmlProcessor->PumpAux())
+			boost::thread::yield();
+		if(GML_SHARE_LISTS)
+			delete ogc;
+#endif
+		delete gmlProcessor;
+	}
+#endif
+
+	CrashHandler::UninstallHangHandler();
+
 	delete pregame;
 	delete game;
 	delete gameServer;
@@ -1335,43 +1356,30 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			break;
 		}
 		case SDL_KEYDOWN: {
-			int i = event.key.keysym.sym;
+			int sym = event.key.keysym.sym;
 			currentUnicode = event.key.keysym.unicode;
 
-			const bool isRepeat = !!keys[i];
+			const bool isRepeat = !!keys[sym];
 
 			UpdateSDLKeys();
 
 			if (activeController) {
-				if (i <= SDLK_DELETE) {
-					i = tolower(i);
-				}
-				else if (i == SDLK_RSHIFT) { i = SDLK_LSHIFT; }
-				else if (i == SDLK_RCTRL)  { i = SDLK_LCTRL;  }
-				else if (i == SDLK_RMETA)  { i = SDLK_LMETA;  }
-				else if (i == SDLK_RALT)   { i = SDLK_LALT;   }
+				normalizeKeySym(sym);
 
-				if (keyBindings) {
-					const int fakeMetaKey = keyBindings->GetFakeMetaKey();
-					if (fakeMetaKey >= 0) {
-						keys[SDLK_LMETA] |= keys[fakeMetaKey];
-					}
-				}
-
-				activeController->KeyPressed(i, isRepeat);
+				activeController->KeyPressed(sym, isRepeat);
 
 				if (activeController->userWriting){
 					// use unicode for printed characters
-					i = event.key.keysym.unicode;
-					if ((i >= SDLK_SPACE) && (i <= 255)) {
+					sym = event.key.keysym.unicode;
+					if ((sym >= SDLK_SPACE) && (sym <= 255)) {
 						CGameController* ac = activeController;
-						if (ac->ignoreNextChar || ac->ignoreChar == char(i)) {
+						if (ac->ignoreNextChar || (ac->ignoreChar == (char)sym)) {
 							ac->ignoreNextChar = false;
 						} else {
-							if (i < 255 && (!isRepeat || ac->userInput.length()>0)) {
+							if (sym < 255 && (!isRepeat || ac->userInput.length()>0)) {
 								const int len = (int)ac->userInput.length();
 								ac->writingPos = std::max(0, std::min(len, ac->writingPos));
-								char str[2] = { char(i), 0 };
+								char str[2] = { (char)sym, 0 };
 								ac->userInput.insert(ac->writingPos, str);
 								ac->writingPos++;
 							}
@@ -1383,28 +1391,15 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			break;
 		}
 		case SDL_KEYUP: {
-			int i = event.key.keysym.sym;
+			int sym = event.key.keysym.sym;
 			currentUnicode = event.key.keysym.unicode;
 
 			UpdateSDLKeys();
 
 			if (activeController) {
-				if (i <= SDLK_DELETE) {
-					i = tolower(i);
-				}
-				else if (i == SDLK_RSHIFT) { i = SDLK_LSHIFT; }
-				else if (i == SDLK_RCTRL)  { i = SDLK_LCTRL;  }
-				else if (i == SDLK_RMETA)  { i = SDLK_LMETA;  }
-				else if (i == SDLK_RALT)   { i = SDLK_LALT;   }
+				normalizeKeySym(sym);
 
-				if (keyBindings) {
-					const int fakeMetaKey = keyBindings->GetFakeMetaKey();
-					if (fakeMetaKey >= 0) {
-						keys[SDLK_LMETA] |= keys[fakeMetaKey];
-					}
-				}
-
-				activeController->KeyReleased(i);
+				activeController->KeyReleased(sym);
 			}
 			break;
 		}

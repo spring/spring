@@ -46,6 +46,11 @@ CallInsList = {
 	"UnitLeftLos",
 	"UnitLoaded",
 	"UnitUnloaded",
+	"UnitCloaked",
+	"UnitDecloaked",
+	-- "UnitUnitCollision",
+	-- "UnitFeatureCollision",
+	-- "UnitMoveFailed",
 
 	"FeatureCreated",
 	"FeatureDestroyed",

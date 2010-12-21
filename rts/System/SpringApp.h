@@ -40,7 +40,7 @@ protected:
 #if defined(USE_GML) && GML_ENABLE_SIM
 	int Sim();                                      //!< Simulation  loop
 	static void Simcb(void *c) {((SpringApp *)c)->Sim();}
-	volatile int gmlKeepRunning;
+	static volatile int gmlKeepRunning;
 #endif
 
 	void UpdateSDLKeys();                           //!< Update SDL key array
@@ -113,7 +113,7 @@ protected:
 	 */
 	int lastRequiredDraw;
 
-	COffscreenGLContext *ogc;
+	static COffscreenGLContext *ogc;
 
 private:
 	bool MainEventHandler(const SDL_Event& ev);
