@@ -11,32 +11,33 @@
 #include "Platform/errorhandler.h"
 #endif
 
-ClientSetup::ClientSetup() :
-		hostport(DEFAULT_HOST_PORT),
-		isHost(false)
+static const unsigned int DEFAULT_HOST_PORT = 8452;
+static const std::string DEFAULT_HOST_IP = "localhost";
+static const std::string DEFAULT_HOST_PORT_STR = IntToString(DEFAULT_HOST_PORT);
+
+ClientSetup::ClientSetup():
+	hostPort(DEFAULT_HOST_PORT),
+	isHost(false)
 {
 }
 
 void ClientSetup::Init(const std::string& setup)
 {
-	static const std::string DEFAULT_HOST_PORT_STR = IntToString(DEFAULT_HOST_PORT);
-
 	TdfParser file(setup.c_str(), setup.length());
 
-	if (!file.SectionExist("GAME"))
-	{
-		throw content_error("GAME-section did not exist in setupscript");
+	if (!file.SectionExist("GAME")) {
+		throw content_error("GAME-section does not exist in script.txt");
 	}
 
 	// Technical parameters
-	file.GetDef(hostip,       "localhost",           "GAME\\HostIP");
-	file.GetDef(hostport,     DEFAULT_HOST_PORT_STR, "GAME\\HostPort");
+	file.GetDef(hostIP,       DEFAULT_HOST_IP,       "GAME\\HostIP");
+	file.GetDef(hostPort,     DEFAULT_HOST_PORT_STR, "GAME\\HostPort");
 
-	file.GetDef(myPlayerName, "",                    "GAME\\MyPlayerName");
-	file.GetDef(myPasswd, "",                    "GAME\\MyPasswd");
+	file.GetDef(myPlayerName, "", "GAME\\MyPlayerName");
+	file.GetDef(myPasswd,     "", "GAME\\MyPasswd");
 
 	if (!file.GetValue(isHost, "GAME\\IsHost")) {
-		logOutput.Print("Warning: The script.txt is missing the IsHost-entry. Assuming this is a client.");
+		logOutput.Print("Warning: script.txt is missing the IsHost-entry. Assuming this is a client.");
 	}
 #ifdef DEDICATED
 	if (!isHost) {
