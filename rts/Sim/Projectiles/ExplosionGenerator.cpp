@@ -698,8 +698,11 @@ void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, const string
 
 		const LuaTable& root = h->GetTable();
 		const LuaTable expTable = root.SubTable(tag);
+
 		if (!expTable.IsValid()) {
-			throw content_error("Explosion info for " + tag + " not found.");
+			// not a fatal error: any calls to ::Explosion will just return early
+			logOutput.Print("[CCustomExplosionGenerator::Load] WARNING: table for CEG \"" + tag + "\" invalid (parse errors?)");
+			return;
 		}
 
 		vector<string> spawns;
