@@ -13,7 +13,7 @@
 #include "Sim/Misc/Wind.h"
 #include "System/GlobalUnsynced.h"
 
-CR_BIND_DERIVED(CWakeProjectile, CProjectile, (ZeroVector, ZeroVector, 0, 0, NULL, 0, 0, 0));
+CR_BIND_DERIVED(CWakeProjectile, CProjectile, (ZeroVector, ZeroVector, 0.0f, 0.0f, NULL, 0.0f, 0.0f, 0.0f));
 
 CR_REG_METADATA(CWakeProjectile,(
 	CR_MEMBER(alpha),
@@ -31,17 +31,17 @@ CR_REG_METADATA(CWakeProjectile,(
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CWakeProjectile::CWakeProjectile(const float3 pos, const float3 speed, float startSize, float sizeExpansion, CUnit* owner, float alpha, float alphaFalloff, float fadeupTime):
+CWakeProjectile::CWakeProjectile(const float3& pos, const float3 speed, float startSize, float sizeExpansion, CUnit* owner, float alpha, float alphaFalloff, float fadeupTime):
 	CProjectile(pos, speed, owner, false, false, false),
-	alpha(0),
+	alpha(0.0f),
 	alphaFalloff(alphaFalloff),
 	alphaAdd(alpha / fadeupTime),
 	alphaAddTime((int)fadeupTime),
 	size(startSize),
 	sizeExpansion(sizeExpansion)
 {
-	this->pos.y = 0;
-	this->speed.y = 0;
+	this->pos.y = 0.0f;
+	this->speed.y = 0.0f;
 	rotation = gu->usRandFloat() * PI*2;
 	rotSpeed = (gu->usRandFloat() - 0.5f) * PI*2*0.01f;
 	checkCol = false;
@@ -79,10 +79,10 @@ void CWakeProjectile::Draw()
 {
 	inArray = true;
 	unsigned char col[4];
-	col[0] = (unsigned char) (255*alpha);
-	col[1] = (unsigned char) (255*alpha);
-	col[2] = (unsigned char) (255*alpha);
-	col[3] = (unsigned char) (255*alpha)/*-alphaFalloff*globalRendering->timeOffset*/;
+	col[0] = (unsigned char) (255 * alpha);
+	col[1] = (unsigned char) (255 * alpha);
+	col[2] = (unsigned char) (255 * alpha);
+	col[3] = (unsigned char) (255 * alpha)/*-alphaFalloff*globalRendering->timeOffset*/;
 
 	float interSize = size+sizeExpansion * globalRendering->timeOffset;
 	float interRot = rotation+rotSpeed * globalRendering->timeOffset;

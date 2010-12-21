@@ -126,18 +126,11 @@ void CPlasmaRepulser::Update(void)
 
 		if (drawMe || wasDrawn) {
 			const float colorMix = std::min(1.0f, curPower / std::max(1.0f, weaponDef->shieldPower));
-			const float3 color = (weaponDef->shieldGoodColor * colorMix) +
-													 (weaponDef->shieldBadColor * (1.0f - colorMix));
+			const float3 color = (weaponDef->shieldGoodColor * colorMix)
+					+ (weaponDef->shieldBadColor * (1.0f - colorMix));
 			std::list<CShieldPartProjectile*>::iterator si;
 			for (si = visibleShieldParts.begin(); si != visibleShieldParts.end(); ++si) {
-				CShieldPartProjectile* part = *si;
-				part->centerPos = weaponPos;
-				part->color = color;
-				if (isEnabled) {
-					part->baseAlpha = drawAlpha;
-				} else {
-					part->baseAlpha = 0.0f;
-				}
+				(*si)->Actualize(weaponPos, color, isEnabled ? drawAlpha : 0.0f);
 			}
 		}
 		wasDrawn = drawMe;

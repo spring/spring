@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __DIRT_PROJECTILE_H__
-#define __DIRT_PROJECTILE_H__
+#ifndef _DIRT_PROJECTILE_H
+#define _DIRT_PROJECTILE_H
 
 #include "Sim/Projectiles/Projectile.h"
 
@@ -11,12 +11,16 @@ class CDirtProjectile : public CProjectile
 {
 	CR_DECLARE(CDirtProjectile);
 public:
-	virtual void Draw();
-	virtual void Update();
 	CDirtProjectile();
-	CDirtProjectile(const float3 pos, const float3 speed, const float ttl, const float size, const float expansion, float slowdown, CUnit* owner, const float3& color);
+	CDirtProjectile(const float3 pos, const float3 speed, const float ttl,
+			const float size, const float expansion, float slowdown,
+			CUnit* owner, const float3& color);
 	virtual ~CDirtProjectile();
 
+	virtual void Draw();
+	virtual void Update();
+
+private:
 	float alpha;
 	float alphaFalloff;
 	float size;
@@ -27,4 +31,4 @@ public:
 	AtlasedTexture* texture;
 };
 
-#endif // __DIRT_PROJECTILE_H__
+#endif // _DIRT_PROJECTILE_H
