@@ -445,7 +445,6 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 
 	#if (PLAY_SOUNDS == 1)
 	if (owner->team == gu->myTeam) {
-		// Play "activate" sound.
 		const int soundIdx = owner->unitDef->sounds.activate.getRandomIdx();
 		if (soundIdx >= 0) {
 			Channels::UnitReply.PlaySample(
@@ -1454,15 +1453,25 @@ void CGroundMoveType::HandleObjectCollisions()
 				const float3 sepDirection   = (separationVector / sepDistance);
 				const float3 colResponseVec = sepDirection * (penDistance * 0.5f);
 
-				const float collisionMassSum  = collider->mass + collidee->mass + 1.0f;
-				const float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (collider->mass / collisionMassSum)));
-				const float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (collidee->mass / collisionMassSum)));
+				const float
+					m1 = collider->mass,
+					m2 = collidee->mass,
+					v1 = std::max(1.0f, collider->speed.SqLength()),
+					v2 = std::max(1.0f, collidee->speed.SqLength()),
+					c1 = (1.0f - math::fabs(collider->frontdir.dot(-sepDirection))) * 5.0f,
+					c2 = (1.0f - math::fabs(collidee->frontdir.dot( sepDirection))) * 5.0f,
+					s1 = m1 * v1 * c1,
+					s2 = m2 * v2 * c2;
+
+				// far from a realistic treatment, but works
+				const float collisionMassSum  = s1 + s2 + 1.0f;
+				const float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s1 / collisionMassSum)));
+				const float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s2 / collisionMassSum)));
 
 				if (!collideeMobile && (colliderMassScale > collideeMassScale)) {
 					SWAP_MASS_SCALES(&colliderMassScale, &collideeMassScale);
 				}
 
-				// note: don't push if colResponseVec is ~orthogonal to frontdir (to prevent sliding)?
 				if (pushCollider) { collider->pos += (colResponseVec * colliderMassScale); } else { collider->pos = colliderOldPos; }
 				if (pushCollidee) { collidee->pos -= (colResponseVec * collideeMassScale); } else { collidee->pos = collideeOldPos; }
 
