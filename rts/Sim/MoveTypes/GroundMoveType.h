@@ -97,7 +97,7 @@ protected:
 
 	void Arrived();
 	void Fail();
-	void CheckCollision(void);
+	void HandleObjectCollisions();
 
 	void ChangeHeading(short wantedHeading);
 
@@ -111,8 +111,6 @@ protected:
 	bool UpdateDirectControl();
 	void UpdateOwnerPos(bool);
 	bool WantReverse(const float3&) const;
-
-	void UpdateHeatMap();
 
 	bool skidding;
 	bool flying;
@@ -128,9 +126,6 @@ protected:
 	float skidRotSpeed2;
 	float skidRotPos2;
 	CSolidObject::PhysicalState oldPhysState;
-
-	bool CheckColH(int x, int y1, int y2, float xmove, int squareTestX);
-	bool CheckColV(int y, int x1, int x2, float zmove, int squareTestY);
 
 	// number of grid-cells along each dimension; should be an odd number
 	static const int LINETABLE_SIZE = 11;
