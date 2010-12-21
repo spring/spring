@@ -1456,8 +1456,8 @@ void CGroundMoveType::HandleObjectCollisions()
 				const float
 					m1 = collider->mass,
 					m2 = collidee->mass,
-					v1 = std::max(1.0f, collider->speed.SqLength()),
-					v2 = std::max(1.0f, collidee->speed.SqLength()),
+					v1 = std::max(1.0f, collider->speed.Length()), // TODO: precalculate
+					v2 = std::max(1.0f, collidee->speed.Length()), // TODO: precalculate
 					c1 = (1.0f - math::fabs(collider->frontdir.dot(-sepDirection))) * 5.0f,
 					c2 = (1.0f - math::fabs(collidee->frontdir.dot( sepDirection))) * 5.0f,
 					s1 = m1 * v1 * c1,
