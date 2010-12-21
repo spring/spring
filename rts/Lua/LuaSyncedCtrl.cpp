@@ -2805,8 +2805,8 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static void ParseMapParams(lua_State* L, const char* caller, float& factor,
-                           int& x1, int& z1, int& x2, int& z2)
+static void ParseParams(lua_State* L, const char* caller, float& factor,
+		int& x1, int& z1, int& x2, int& z2, int resolution, int maxX, int maxZ)
 {
 	float fx1 = 0.0f;
 	float fz1 = 0.0f;
@@ -2837,12 +2837,16 @@ static void ParseMapParams(lua_State* L, const char* caller, float& factor,
 	}
 
 	// quantize and clamp
-	x1 = (int)max(0 , min(gs->mapx, (int)(fx1 / SQUARE_SIZE)));
-	z1 = (int)max(0 , min(gs->mapy, (int)(fz1 / SQUARE_SIZE)));
-	x2 = (int)max(0 , min(gs->mapx, (int)(fx2 / SQUARE_SIZE)));
-	z2 = (int)max(0 , min(gs->mapy, (int)(fz2 / SQUARE_SIZE)));
+	x1 = (int)max(0 , min(maxX, (int)(fx1 / resolution)));
+	z1 = (int)max(0 , min(maxZ, (int)(fz1 / resolution)));
+	x2 = (int)max(0 , min(maxX, (int)(fx2 / resolution)));
+	z2 = (int)max(0 , min(maxZ, (int)(fz2 / resolution)));
+}
 
-	return;
+static inline void ParseMapParams(lua_State* L, const char* caller,
+		float& factor, int& x1, int& z1, int& x2, int& z2)
+{
+	ParseParams(L, caller, factor, x1, z1, x2, z2, SQUARE_SIZE, gs->mapx, gs->mapy);
 }
 
 
@@ -3054,44 +3058,12 @@ int LuaSyncedCtrl::SetHeightMapFunc(lua_State* L)
 /* smooth mesh manipulation                                                   */
 /******************************************************************************/
 
-static void ParseSmoothMeshParams(lua_State* L, const char* caller, float& factor,
-			   int& x1, int& z1, int& x2, int& z2)
+static inline void ParseSmoothMeshParams(lua_State* L, const char* caller,
+		float& factor, int& x1, int& z1, int& x2, int& z2)
 {
-	float fx1 = 0.0f;
-	float fz1 = 0.0f;
-	float fx2 = 0.0f;
-	float fz2 = 0.0f;
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args == 3) {
-		fx1 = fx2 = luaL_checkfloat(L, 1);
-		fz1 = fz2 = luaL_checkfloat(L, 2);
-		factor    = luaL_checkfloat(L, 3);
-	}
-	else if (args == 5) {
-		fx1    = luaL_checkfloat(L, 1);
-		fz1    = luaL_checkfloat(L, 2);
-		fx2    = luaL_checkfloat(L, 3);
-		fz2    = luaL_checkfloat(L, 4);
-		factor = luaL_checkfloat(L, 5);
-		if (fx1 > fx2) {
-			swap(fx1, fx2);
-		}
-		if (fz1 > fz2) {
-			swap(fz1, fz2);
-		}
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to %s()", caller);
-	}
-
-	// quantize and clamp
-	x1 = (int)max(0 , min(smoothGround->GetMaxX(), (int)(fx1 / smoothGround->GetResolution())));
-	z1 = (int)max(0 , min(smoothGround->GetMaxY(), (int)(fz1 / smoothGround->GetResolution())));
-	x2 = (int)max(0 , min(smoothGround->GetMaxX(), (int)(fx2 / smoothGround->GetResolution())));
-	z2 = (int)max(0 , min(smoothGround->GetMaxY(), (int)(fz2 / smoothGround->GetResolution())));
-
-	return;
+	ParseParams(L, caller, factor, x1, z1, x2, z2,
+			smoothGround->GetResolution(), smoothGround->GetMaxX(),
+			smoothGround->GetMaxY());
 }
 
 

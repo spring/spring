@@ -928,15 +928,6 @@ void CGuiHandler::Update()
 
 	SetCursorIcon();
 
-	// Notify LuaUI about groups that have changed
-	if (!changedGroups.empty()) {
-		set<int>::const_iterator it;
-		for (it = changedGroups.begin(); it != changedGroups.end(); ++it) {
-			eventHandler.GroupChanged(*it);
-		}
-		changedGroups.clear();
-	}
-
 	if (!invertQueueKey && (needShift && !keys[SDLK_LSHIFT])) {
 		SetShowingMetal(false);
 		inCommand=-1;
@@ -948,15 +939,10 @@ void CGuiHandler::Update()
 	if (commandsChanged) {
 		SetShowingMetal(false);
 		LayoutIcons(true);
-		//fadein = 100;
 	}
 	else if (forceLayoutUpdate) {
 		LayoutIcons(false);
 	}
-
-	/*if (fadein > 0) {
-		fadein -= 5;
-	}*/
 }
 
 
@@ -2918,11 +2904,10 @@ void CGuiHandler::DrawButtons() // Only called by Draw
 	if (alpha > 0.0f) {
 		glColor4f(0.2f, 0.2f, 0.2f, alpha);
 		glBegin(GL_QUADS);
-		const GLfloat fx = 0.0f; //-.2f*(1-fadein/100.0f)+.2f;
-			glVertex2f(buttonBox.x1 - fx, buttonBox.y1);
-			glVertex2f(buttonBox.x1 - fx, buttonBox.y2);
-			glVertex2f(buttonBox.x2 - fx, buttonBox.y2);
-			glVertex2f(buttonBox.x2 - fx, buttonBox.y1);
+			glVertex2f(buttonBox.x1, buttonBox.y1);
+			glVertex2f(buttonBox.x1, buttonBox.y2);
+			glVertex2f(buttonBox.x2, buttonBox.y2);
+			glVertex2f(buttonBox.x2, buttonBox.y1);
 		glEnd();
 	}
 

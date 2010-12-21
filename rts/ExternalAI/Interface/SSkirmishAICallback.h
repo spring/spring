@@ -1084,6 +1084,9 @@ struct SSkirmishAICallback {
 	 */
 	int               (CALLING_CONV *Unit_getModParams)(int skirmishAIId, int unitId); //$ FETCHER:MULTI:NUM:ModParam
 
+	/**
+	 * Not every mod parameter has a name.
+	 */
 	const char*       (CALLING_CONV *Unit_ModParam_getName)(int skirmishAIId, int unitId, int modParamId);
 
 	float             (CALLING_CONV *Unit_ModParam_getValue)(int skirmishAIId, int unitId, int modParamId);
@@ -1126,7 +1129,7 @@ struct SSkirmishAICallback {
 	/** The unit's max health */
 	float             (CALLING_CONV *Unit_getMaxHealth)(int skirmishAIId, int unitId);
 
-	/** How experienced the unit is (0.0f-1.0f) */
+	/** How experienced the unit is (0.0f - 1.0f) */
 	float             (CALLING_CONV *Unit_getExperience)(int skirmishAIId, int unitId);
 
 	/** Returns the group a unit belongs to, -1 if none */

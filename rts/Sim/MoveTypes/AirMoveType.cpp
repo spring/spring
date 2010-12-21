@@ -6,7 +6,6 @@
 #include "AirMoveType.h"
 #include "Game/GameHelper.h"
 #include "Game/Player.h"
-#include "LogOutput.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "myMath.h"
@@ -20,6 +19,9 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Weapons/Weapon.h"
+#ifdef DEBUG_AIRCRAFT
+#include "System/LogOutput.h"
+#endif
 
 CR_BIND_DERIVED(CAirMoveType, AAirMoveType, (NULL));
 CR_BIND(CAirMoveType::DrawLine, );
@@ -413,9 +415,7 @@ void CAirMoveType::HandleCollisions() {
 
 void CAirMoveType::SlowUpdate()
 {
-	if (aircraftState != AIRCRAFT_LANDED && owner->unitDef->maxFuel > 0.0f) {
-		owner->currentFuel = std::max(0.0f, owner->currentFuel - (16.0f / GAME_SPEED));
-	}
+	UpdateFuel();
 
 	// try to handle aircraft getting unlimited height
 	if (owner->pos != oldSlowUpdatePos) {

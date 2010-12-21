@@ -5,7 +5,7 @@
 	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_SPRINGLOBBY} "The default, cross-platform battleroom used to set up single- and multiplayer games and finding opponents.$\n$\nNote: You have to install at least one Lobby to play."
 
 	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_ARCHIVEMOVER} "The tool and the necessary file associations (for sd7 and sdz files) to ease installation of new content."
-	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_ZERO_K_LOBBY} "Fast, easy lobby with automated downloads of maps, mods, missions and GUI widgets."
+	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_ZERO_K_LOBBY} "Fast, easy lobby with automated downloads of maps, games, missions and GUI widgets."
 	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_TASSERVER} "Default spring lobby server, required for LAN play with friends."
 
 	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_AAI}    "Supports BA, some *A and other Games; Note: requires manual config file management (author: submarine)"

@@ -158,7 +158,6 @@ private:
 	int defaultCmdMemory;
 	int explicitCommand;
 	int curIconCommand;
-	//int fadein;
 
 	int actionOffset;
 	CKeySet lastKeySet;
@@ -217,7 +216,6 @@ private:
 
 	std::map<std::string, unsigned int> textureMap; // filename, glTextureID
 
-	std::set<int> changedGroups;
 	int failedSound;
 
 	std::vector<std::string> layoutCommands;

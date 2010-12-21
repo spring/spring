@@ -4,6 +4,7 @@
 #include "AAirMoveType.h"
 #include "MoveMath/MoveMath.h"
 
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -23,6 +24,7 @@ CR_REG_METADATA(AAirMoveType, (
 		CR_MEMBER(lastColWarningType),
 
 		CR_MEMBER(autoLand),
+		CR_MEMBER(lastFuelUpdateFrame),
 
 		CR_RESERVED(16)
 		));
@@ -38,7 +40,8 @@ AAirMoveType::AAirMoveType(CUnit* unit) :
 	useSmoothMesh(false),
 	lastColWarning(NULL),
 	lastColWarningType(0),
-	autoLand(true)
+	autoLand(true),
+	lastFuelUpdateFrame(0)
 {
 	useHeading = false;
 }
@@ -80,5 +83,13 @@ void AAirMoveType::DependentDied(CObject* o) {
 	if (o == reservedPad) {
 		SetState(AIRCRAFT_FLYING);
 		goalPos = oldGoalPos;
+	}
+}
+
+void AAirMoveType::UpdateFuel() {
+	if (owner->unitDef->maxFuel > 0.0f) {
+		if (aircraftState != AIRCRAFT_LANDED)
+			owner->currentFuel = std::max(0.0f, owner->currentFuel - ((float)(gs->frameNum - lastFuelUpdateFrame) / GAME_SPEED));
+		lastFuelUpdateFrame = gs->frameNum;
 	}
 }

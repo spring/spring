@@ -74,12 +74,7 @@ public:
 
 	ListIT erase_delete_set_synced(ListIT& it) {
 		delObj.push_back(*it);
-#ifdef _MSC_VER
-		return cont.erase(it);
-#else
-		cont.erase(it++);
-		return it;
-#endif
+		return set_erase(cont, it);
 	}
 
 	bool can_delete_synced() const {
@@ -132,12 +127,7 @@ public:
 
 	ListIT erase_delete_set(ListIT& it) {
 		delete *it;
-#ifdef _MSC_VER
-		return cont.erase(it);
-#else
-		cont.erase(it++);
-		return it;
-#endif
+		return set_erase(cont, it);
 	}
 
 	bool can_delete() const {
@@ -423,12 +413,7 @@ public:
 
 	SimIT erase_delete_set_synced(SimIT& it) {
 		delRender.push_back(*it);
-#ifdef _MSC_VER
-		return cont.erase(it);
-#else
-		cont.erase(it++);
-		return it;
-#endif
+		return set_erase(cont, it);
 	}
 
 	bool can_delete_synced() {
@@ -492,12 +477,7 @@ public:
 
 	SimIT erase_delete_set(SimIT& it) {
 		delRender.push_back(*it);
-#ifdef _MSC_VER
-		return cont.erase(it);
-#else
-		cont.erase(it++);
-		return it;
-#endif
+		return set_erase(cont, it);
 	}
 
 	bool can_delete() {
@@ -525,11 +505,7 @@ public:
 		for (SetIT it = postDelRender.begin(); it != postDelRender.end();) {
 			T s = *it;
 			if(contRender.erase(s) || addRender.erase(s)) {
-#ifdef _MSC_VER
-				it = postDelRender.erase(it);
-#else
-				postDelRender.erase(it++);
-#endif
+				it = set_erase(postDelRender, it);
 				delete s;
 			}
 			else
@@ -770,11 +746,7 @@ public:
 			T s = *it;
 			size_t d;
 			if((d = contRender.erase(s)) || addRender.erase(s)) {
-#ifdef _MSC_VER
-				it = postDelRender.erase(it);
-#else
-				postDelRender.erase(it++);
-#endif
+				it = set_erase(postDelRender, it);
 				if(d)
 					D::Remove(s);
 				D::Delete(s);

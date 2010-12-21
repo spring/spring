@@ -366,7 +366,7 @@ static int run(int argc, const Char* const* argv){
 		}
 
 		if(content == R_OTHER){
-			message<<_("'")<<source_file.leaf()<<_("' is not a valid map/mod ")
+			message<<_("'")<<source_file.leaf()<<_("' is not a valid map/game ")
 			_("it may be corrupted, try to redownload it.")<<endl;
 			return 1;
 		}
@@ -386,7 +386,7 @@ static int run(int argc, const Char* const* argv){
 			target_dir /= _("maps");
 		}else if(content == R_MOD){
 			//message<<"isMod: "<<filename<<endl;
-			target_dir /= _("mods");
+			target_dir /= _("games");
 		}else{
 			assert(false);
 		}
@@ -433,9 +433,9 @@ static int run(int argc, const Char* const* argv){
 		fs::rename(source_file, target_dir);
 
 		if (!quiet) {
-			message<<_("The ")<<(content == R_MAP? _("map '") : _("mod '"))<<source_file.leaf()
+			message<<_("The ")<<(content == R_MAP? _("map '") : _("game '"))<<source_file.leaf()
 			<<_("' has been saved succesfully to '")<<target_dir.branch_path()<<_("'.")<<endl
-			<<_("Use the reload mods/maps button in the lobby to make Spring find it.")<<endl;
+			<<_("Use the reload games/maps button in the lobby to make Spring find it.")<<endl;
 		}
 
 	}

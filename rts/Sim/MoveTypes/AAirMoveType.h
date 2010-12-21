@@ -57,6 +57,8 @@ public:
 
 protected:
 	virtual void SetState(AircraftState state) = 0;
+	int lastFuelUpdateFrame;
+	void UpdateFuel();
 };
 
 #endif // A_AIR_MOVE_TYPE_H_

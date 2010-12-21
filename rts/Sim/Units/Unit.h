@@ -78,7 +78,7 @@ public:
 	virtual void DoDamage(const DamageArray& damages, CUnit* attacker,
 	                      const float3& impulse, int weaponId = -1);
 	virtual void DoWaterDamage();
-	virtual void Kill(float3& impulse);
+	virtual void Kill(const float3& impulse);
 	virtual void FinishedBuilding();
 
 	int GetBlockingMapID() const { return id; }

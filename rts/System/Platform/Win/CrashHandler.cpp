@@ -27,6 +27,7 @@ extern volatile int gmlMultiThreadSim;
 
 HANDLE simthread = INVALID_HANDLE_VALUE; // used in gmlsrv.h as well
 HANDLE drawthread = INVALID_HANDLE_VALUE;
+#define MAX_STACK_DEPTH 4096
 
 
 namespace CrashHandler {
@@ -143,7 +144,7 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 			SymGetModuleBase,
 			NULL
 		);
-		if (!more || sf.AddrFrame.Offset == 0) {
+		if (!more || sf.AddrFrame.Offset == 0 || count > MAX_STACK_DEPTH) {
 			break;
 		}
 

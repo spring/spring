@@ -1033,6 +1033,31 @@ void CLuaHandle::UnitDecloaked(const CUnit* unit)
 }
 
 
+
+void CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
+{
+	static const LuaHashString cmdStr("UnitUnitCollision");
+
+	if (cmdStr.GetGlobalFunc(L)) {
+		lua_pushnumber(L, collider->id);
+		lua_pushnumber(L, collidee->id);
+
+		RunCallInTraceback(cmdStr, 2, 0, 0);
+	}
+}
+
+void CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* collidee)
+{
+	static const LuaHashString cmdStr("UnitFeatureCollision");
+
+	if (cmdStr.GetGlobalFunc(L)) {
+		lua_pushnumber(L, collider->id);
+		lua_pushnumber(L, collidee->id);
+
+		RunCallInTraceback(cmdStr, 2, 0, 0);
+	}
+}
+
 void CLuaHandle::UnitMoveFailed(const CUnit* unit)
 {
 	static const LuaHashString cmdStr("UnitMoveFailed");

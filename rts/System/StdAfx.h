@@ -36,7 +36,6 @@
 #include "lib/streflop/streflop_cond.h"
 #endif // defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER) || defined(USE_MMGR)
 
-
 #if !defined(USE_GML) && (defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER))
 // top included files without lots of dependencies
 // also, they shouldn't get in the way of mmgr

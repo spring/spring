@@ -180,7 +180,7 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 					wantedPos.y = ((CTransportUnit *)owner)->GetLoadUnloadHeight(wantedPos, unit);
 					SetGoal(wantedPos, owner->pos);
 					am->dontCheckCol = true;
-					am->ForceHeading(((CTransportUnit *)owner)->GetLoadUnloadHeading(wantedPos, unit));
+					am->ForceHeading(((CTransportUnit *)owner)->GetLoadUnloadHeading(unit));
 					am->SetWantedAltitude(wantedPos.y - ground->GetHeightAboveWater(wantedPos.x, wantedPos.z));
 					am->maxDrift = 1;
 					//logOutput.Print("cai dist %f %f %f",owner->pos.distance(wantedPos),owner->pos.distance2D(wantedPos),owner->pos.y-wantedPos.y);
@@ -690,7 +690,7 @@ void CTransportCAI::UnloadLand(Command& c)
 				// handle air transports differently
 				SetGoal(pos, owner->pos);
 				am->SetWantedAltitude(pos.y - ground->GetHeightAboveWater(pos.x, pos.z));
-				float unloadHeading = ((CTransportUnit *)owner)->GetLoadUnloadHeading(pos, unit);
+				float unloadHeading = ((CTransportUnit *)owner)->GetLoadUnloadHeading(unit);
 				am->ForceHeading(unloadHeading);
 				am->maxDrift = 1;
 				if ((owner->pos.SqDistance(pos) < 64) &&

@@ -2,10 +2,10 @@
 
 #ifndef __COLOR_H__
 #define __COLOR_H__
-
+#include <boost/cstdint.hpp>
 union SColor
 {
-	SColor(const uint8_t& r_, const uint8_t& g_, const uint8_t& b_, const uint8_t& a_ = 255) : r(r_), g(g_), b(b_), a(a_) {};
+	SColor(const boost::uint8_t& r_, const boost::uint8_t& g_, const boost::uint8_t& b_, const boost::uint8_t& a_ = 255) : r(r_), g(g_), b(b_), a(a_) {};
 	SColor(const int& r_, const int& g_, const int& b_, const int& a_ = 255) : r(r_), g(g_), b(b_), a(a_) {};
 	SColor(const float& r_, const float& g_, const float& b_, const float& a_ = 1.0f)
 	{
@@ -15,8 +15,8 @@ union SColor
 		a = (unsigned char)(a_ * 255.f);
 	};
 
-	struct { uint8_t r,g,b,a; };
-	uint32_t i;
+	struct { boost::uint8_t r,g,b,a; };
+	boost::uint32_t i;
 };
 
 #endif // __COLOR_H__

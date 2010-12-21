@@ -247,7 +247,7 @@ function printEventsOO() {
 			interfMeta_es = meta_es;
 			sub(/^.*INTERFACES:/, "", interfMeta_es);
 			sub(/[ \t].*$/, "", interfMeta_es);
-			interfList_size_es = split(interfMeta_es, interfList_es, "\),");
+			interfList_size_es = split(interfMeta_es, interfList_es, /\)\,/);
 
 			for (i=1; i <= interfList_size_es; i++) {
 				_intName = interfList_es[i];
@@ -503,6 +503,8 @@ function printOOEventClass(retType_ec, evtName_ec, ooParams_ec, meta_ec, ind_evt
 	}
 
 	print("}") >> outFile;
+
+	close(outFile);
 }
 
 function printOOEventInterface(int_name_ei) {

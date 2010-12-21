@@ -28,6 +28,11 @@ unsigned CArchiveBase::FindFile(const std::string& name) const
 		return NumFiles();
 }
 
+bool CArchiveBase::HasLowReadingCost(unsigned fid) const
+{
+	return true;
+}
+
 unsigned CArchiveBase::GetCrc32(unsigned fid)
 {
 	CRC crc;

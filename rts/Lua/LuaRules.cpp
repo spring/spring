@@ -216,20 +216,9 @@ bool CLuaRules::UnsyncedUpdateCallIn(const string& name)
 	return CLuaHandleSynced::UnsyncedUpdateCallIn(name);
 }
 
-
-bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
+/// pushes 7 items on the stack
+static void PushUnitAndCommand(lua_State* L, const CUnit* unit, const Command& cmd)
 {
-	if (!haveCommandFallback) {
-		return true; // the call is not defined
-	}
-
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 9);
-	static const LuaHashString cmdStr("CommandFallback");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return true; // the call is not defined
-	}
-
 	// push the unit info
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
@@ -258,6 +247,22 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 
 	// push the command tag
 	lua_pushnumber(L, cmd.tag);
+}
+
+bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
+{
+	if (!haveCommandFallback) {
+		return true; // the call is not defined
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 9);
+	static const LuaHashString cmdStr("CommandFallback");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return true; // the call is not defined
+	}
+
+	PushUnitAndCommand(L, unit, cmd);
 
 	// call the function
 	if (!RunCallIn(cmdStr, 7, 1)) {
@@ -292,34 +297,7 @@ bool CLuaRules::AllowCommand(const CUnit* unit, const Command& cmd, bool fromSyn
 		return true; // the call is not defined
 	}
 
-	// push the unit info
-	lua_pushnumber(L, unit->id);
-	lua_pushnumber(L, unit->unitDef->id);
-	lua_pushnumber(L, unit->team);
-
-	// push the command id
-	lua_pushnumber(L, cmd.id);
-
-	// push the params list
-	lua_newtable(L);
-	for (int p = 0; p < (int)cmd.params.size(); p++) {
-		lua_pushnumber(L, p + 1);
-		lua_pushnumber(L, cmd.params[p]);
-		lua_rawset(L, -3);
-	}
-	HSTR_PUSH_NUMBER(L, "n", cmd.params.size());
-
-	// push the options table
-	lua_newtable(L);
-	HSTR_PUSH_NUMBER(L, "coded", cmd.options);
-	HSTR_PUSH_BOOL(L, "alt",   !!(cmd.options & ALT_KEY));
-	HSTR_PUSH_BOOL(L, "ctrl",  !!(cmd.options & CONTROL_KEY));
-	HSTR_PUSH_BOOL(L, "shift", !!(cmd.options & SHIFT_KEY));
-	HSTR_PUSH_BOOL(L, "right", !!(cmd.options & RIGHT_MOUSE_KEY));
-	HSTR_PUSH_BOOL(L, "meta",  !!(cmd.options & META_KEY));
-
-	// push the command tag
-	lua_pushnumber(L, cmd.tag);
+	PushUnitAndCommand(L, unit, cmd);
 
 	lua_pushboolean(L, fromSynced);
 

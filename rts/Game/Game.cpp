@@ -1043,6 +1043,7 @@ bool CGame::DrawWorld()
 		if (smoothGround->drawEnabled)
 			smoothGround->DrawWireframe(1);
 		treeDrawer->DrawGrass();
+		gd->DrawTrees();
 	}
 
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
@@ -1060,11 +1061,6 @@ bool CGame::DrawWorld()
 	unitDrawer->Draw(false);
 	modelDrawer->Draw();
 	featureDrawer->Draw();
-
-	if (globalRendering->drawGround) {
-		gd->DrawTrees();
-	}
-
 	pathDrawer->Draw();
 
 	//! transparent stuff
@@ -1073,7 +1069,9 @@ bool CGame::DrawWorld()
 
 	bool noAdvShading = shadowHandler->drawShadows;
 
-	const double plane_below[4] = {0.0f, -1.0f, 0.0f, 0.0f};
+	static const double plane_below[4] = {0.0f, -1.0f, 0.0f, 0.0f};
+	static const double plane_above[4] = {0.0f,  1.0f, 0.0f, 0.0f};
+
 	glClipPlane(GL_CLIP_PLANE3, plane_below);
 	glEnable(GL_CLIP_PLANE3);
 
@@ -1092,7 +1090,6 @@ bool CGame::DrawWorld()
 		}
 	}
 
-	const double plane_above[4] = {0.0f, 1.0f, 0.0f, 0.0f};
 	glClipPlane(GL_CLIP_PLANE3, plane_above);
 	glEnable(GL_CLIP_PLANE3);
 
@@ -1123,7 +1120,7 @@ bool CGame::DrawWorld()
 
 	guihandler->DrawMapStuff(0);
 
-	if (globalRendering->drawMapMarks) {
+	if (globalRendering->drawMapMarks && !hideInterface) {
 		inMapDrawer->Draw();
 	}
 
