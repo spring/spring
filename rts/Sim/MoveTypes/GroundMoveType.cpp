@@ -18,6 +18,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
@@ -39,7 +40,6 @@
 
 #define MIN_WAYPOINT_DISTANCE (SQUARE_SIZE << 1)
 #define DEBUG_OUTPUT 0
-#define PLAY_SOUNDS 1
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
 
@@ -344,14 +344,14 @@ void CGroundMoveType::Update()
 	if (owner->pos != oldPos) {
 		// these checks must be executed even when we are stunned
 		TestNewTerrainSquare();
-		HandleObjectCollisions();
+		CheckCollision();
 		AdjustPosToWaterLine();
 
 		owner->speed = owner->pos - oldPos;
 		owner->UpdateMidPos();
 
-		// HandleObjectCollisions() may have negated the position set by
-		// UpdateOwnerPos() (so that owner->pos is again equal to oldPos)
+		// CheckCollision() may have negated UpdateOwnerPos()
+		// (so that owner->pos is again equal to oldPos)
 		idling = (owner->speed.SqLength() < 1.0f);
 		oldPos = owner->pos;
 
@@ -420,7 +420,7 @@ Sets owner unit to start moving against given position with requested speed.
 void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float speed)
 {
 #ifdef TRACE_SYNC
-	tracefile << "[" << __FUNCTION__ << "] ";
+	tracefile << "Start moving called: ";
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
 #endif
 
@@ -443,8 +443,8 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 
 	StartEngine();
 
-	#if (PLAY_SOUNDS == 1)
 	if (owner->team == gu->myTeam) {
+		// Play "activate" sound.
 		const int soundIdx = owner->unitDef->sounds.activate.getRandomIdx();
 		if (soundIdx >= 0) {
 			Channels::UnitReply.PlaySample(
@@ -452,12 +452,11 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 				owner->unitDef->sounds.activate.getVolume(soundIdx));
 		}
 	}
-	#endif
 }
 
 void CGroundMoveType::StopMoving() {
 #ifdef TRACE_SYNC
-	tracefile << "[" << __FUNCTION__ << "] ";
+	tracefile << "Stop moving called: ";
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
 #endif
 
@@ -571,7 +570,7 @@ void CGroundMoveType::SetDeltaSpeed(bool wantReverse)
 	}
 
 #ifdef TRACE_SYNC
-	tracefile << "[" << __FUNCTION__ << "] ";
+	tracefile << "Unit delta speed: ";
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << deltaSpeed << " " /*<< wSpeed*/ << " " << owner->id << "\n";
 #endif
 
@@ -605,8 +604,7 @@ void CGroundMoveType::ChangeHeading(short wantedHeading) {
 	}
 
 #ifdef TRACE_SYNC
-	tracefile << "[" << __FUNCTION__ << "] ";
-	tracefile << "unit " << owner->id << " changed heading to " << heading << " from " << _oldheading << " (wantedHeading: " << wantedHeading << ")\n";
+	tracefile << "Unit " << owner->id << " changed heading to " << heading << " from " << _oldheading << " (wantedHeading: " << wantedHeading << ")\n";
 #endif
 
 	owner->frontdir = GetVectorFromHeading(heading);
@@ -625,7 +623,7 @@ void CGroundMoveType::ChangeHeading(short wantedHeading) {
 	flatFrontDir.Normalize();
 }
 
-void CGroundMoveType::ImpulseAdded()
+void CGroundMoveType::ImpulseAdded(void)
 {
 	if (owner->beingBuilt || owner->unitDef->movedata->moveType == MoveData::Ship_Move)
 		return;
@@ -668,7 +666,7 @@ void CGroundMoveType::ImpulseAdded()
 	}
 }
 
-void CGroundMoveType::UpdateSkid()
+void CGroundMoveType::UpdateSkid(void)
 {
 	ASSERT_SYNCED_FLOAT3(owner->midPos);
 
@@ -778,7 +776,7 @@ void CGroundMoveType::UpdateSkid()
 	ASSERT_SYNCED_FLOAT3(owner->midPos);
 }
 
-void CGroundMoveType::UpdateControlledDrop()
+void CGroundMoveType::UpdateControlledDrop(void)
 {
 	float3& speed = owner->speed;
 	float3& pos = owner->pos;
@@ -811,7 +809,7 @@ void CGroundMoveType::UpdateControlledDrop()
 	}
 }
 
-void CGroundMoveType::CheckCollisionSkid()
+void CGroundMoveType::CheckCollisionSkid(void)
 {
 	float3& pos = owner->pos;
 	SyncedFloat3& midPos = owner->midPos;
@@ -931,7 +929,7 @@ void CGroundMoveType::CheckCollisionSkid()
 	}
 }
 
-void CGroundMoveType::CalcSkidRot()
+void CGroundMoveType::CalcSkidRot(void)
 {
 	owner->heading += (short int) skidRotSpeed;
 
@@ -1123,8 +1121,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 		avoidanceDir = (desiredDir + avoidanceVec).Normalize();
 
 #ifdef TRACE_SYNC
-		tracefile << "[" << __FUNCTION__ << "] ";
-		tracefile << "avoidanceVec = <" << avoidanceVec.x << " " << avoidanceVec.y << " " << avoidanceVec.z << ">\n";
+		tracefile << __FUNCTION__ << " avoidanceVec = " << avoidanceVec.x << " " << avoidanceVec.y << " " << avoidanceVec.z << "\n";
 #endif
 
 		return avoidanceDir;
@@ -1346,7 +1343,6 @@ void CGroundMoveType::Arrived()
 		// we have reached our goal
 		StopEngine();
 
-		#if (PLAY_SOUNDS == 1)
 		if (owner->team == gu->myTeam) {
 			const int soundIdx = owner->unitDef->sounds.arrived.getRandomIdx();
 			if (soundIdx >= 0) {
@@ -1355,7 +1351,6 @@ void CGroundMoveType::Arrived()
 					owner->unitDef->sounds.arrived.getVolume(soundIdx));
 			}
 		}
-		#endif
 
 		// and the action is done
 		progressState = Done;
@@ -1389,143 +1384,245 @@ void CGroundMoveType::Fail()
 
 
 
-void CGroundMoveType::HandleObjectCollisions()
+void CGroundMoveType::CheckCollision(void)
 {
-	CUnit* collider = owner;
-	collider->mobility->tempOwner = collider;
+	int2 newmp = owner->GetMapPos();
 
-	{
-		#define FOOTPRINT_RADIUS(xs, zs) (math::sqrt((xs * xs + zs * zs)) * 0.5f * SQUARE_SIZE)
-		#define SWAP_MASS_SCALES(pa, pb) { const float a = *pa; *(float*) pa = *pb; *(float*) pb = a; }
+	if (newmp.x != owner->mapPos.x || newmp.y != owner->mapPos.y) {
+		// now make sure we don't overrun any other units
+		bool haveCollided = false;
+		int retest = 0;
 
-		const UnitDef*   colliderUD = collider->unitDef;
-		const MoveData*  colliderMD = collider->mobility;
-		const CMoveMath* colliderMM = colliderMD->moveMath;
+		do {
+			const float zmove = (owner->mapPos.y + owner->zsize / 2) * SQUARE_SIZE;
+			const float xmove = (owner->mapPos.x + owner->xsize / 2) * SQUARE_SIZE;
 
-		const float3& colliderCurPos = collider->pos;
-		const float3& colliderOldPos = collider->moveType->oldPos;
-		const float colliderRadius = (colliderMD != NULL)?
-			FOOTPRINT_RADIUS(colliderMD->xsize, colliderMD->zsize):
-			FOOTPRINT_RADIUS(colliderUD->xsize, colliderUD->zsize);
-
-		const std::vector<CUnit*>& nearUnits = qf->GetUnitsExact(colliderCurPos, colliderRadius * 2.0f);
-		const std::vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(colliderCurPos, colliderRadius * 2.0f);
-
-		std::vector<CUnit*>::const_iterator uit;
-		std::vector<CFeature*>::const_iterator fit;
-
-		for (uit = nearUnits.begin(); uit != nearUnits.end(); ++uit) {
-			CUnit* collidee = const_cast<CUnit*>(*uit);
-
-			if (collidee == collider) {
-				continue;
-			}
-
-			const UnitDef*  collideeUD = collidee->unitDef;
-			const MoveData* collideeMD = collidee->mobility;
-
-			const float3& collideeCurPos = collidee->pos;
-			const float3& collideeOldPos = collidee->moveType->oldPos;
-
-			const bool collideeMobile = (collideeMD != NULL);
-			const float collideeRadius = collideeMobile?
-				FOOTPRINT_RADIUS(collideeMD->xsize, collideeMD->zsize):
-				FOOTPRINT_RADIUS(collideeUD->xsize, collideeUD->zsize);
-
-			bool pushCollider = true;
-			bool pushCollidee = collideeMobile;
-
-			if (collidee->usingScriptMoveType) { pushCollidee = false; }
-			if (collideeUD->pushResistant) { pushCollidee = false; }
-			if (!teamHandler->Ally(collider->allyteam, collidee->allyteam)) { pushCollider = false; pushCollidee = false; }
-			if (!teamHandler->Ally(collidee->allyteam, collider->allyteam)) { pushCollider = false; pushCollidee = false; }
-			if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
-			if (!collideeMobile && (colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
-
-			const float3 separationVector = colliderCurPos - collideeCurPos;
-			const float separationMinDist = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
-
-			if ((separationVector.SqLength() - separationMinDist) <= 0.01f) {
-				eventHandler.UnitUnitCollision(collider, collidee);
-
-				const float  sepDistance    = (separationVector.Length() + 0.01f);
-				const float  penDistance    = (colliderRadius + collideeRadius) - sepDistance;
-				const float3 sepDirection   = (separationVector / sepDistance);
-				const float3 colResponseVec = sepDirection * (penDistance * 0.5f);
-
-				const float collisionMassSum  = collider->mass + collidee->mass + 1.0f;
-				const float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (collider->mass / collisionMassSum)));
-				const float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (collidee->mass / collisionMassSum)));
-
-				if (!collideeMobile && (colliderMassScale > collideeMassScale)) {
-					SWAP_MASS_SCALES(&colliderMassScale, &collideeMassScale);
+			if (fabs(owner->frontdir.x) > fabs(owner->frontdir.z)) {
+				if (newmp.y < owner->mapPos.y) {
+					haveCollided |= CheckColV(newmp.y, newmp.x, newmp.x + owner->xsize - 1,  zmove - 3.99f, owner->mapPos.y);
+					newmp = owner->GetMapPos();
+				} else if (newmp.y > owner->mapPos.y) {
+					haveCollided |= CheckColV(newmp.y + owner->zsize - 1, newmp.x, newmp.x + owner->xsize - 1,  zmove + 3.99f, owner->mapPos.y + owner->zsize - 1);
+					newmp = owner->GetMapPos();
 				}
-
-				// note: don't push if colResponseVec is ~orthogonal to frontdir (to prevent sliding)?
-				if (pushCollider) { collider->pos += (colResponseVec * colliderMassScale); } else { collider->pos = colliderOldPos; }
-				if (pushCollidee) { collidee->pos -= (colResponseVec * collideeMassScale); } else { collidee->pos = collideeOldPos; }
-
-				collider->UpdateMidPos();
-				collidee->UpdateMidPos();
-			}
-
-			if (!((gs->frameNum + collider->id) & 31) && !collider->commandAI->unimportantMove) {
-				// if we do not have an internal move order, tell units around us to bugger off
-				helper->BuggerOff(colliderCurPos + collider->frontdir * colliderRadius, colliderRadius, true, false, collider->team, collider);
-			}
-		}
-
-
-		for (fit = nearFeatures.begin(); fit != nearFeatures.end(); ++fit) {
-			CFeature* collidee = const_cast<CFeature*>(*fit);
-
-			if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
-			if (!colliderMM->CrushResistant(*colliderMD, collidee)) { collidee->Kill(collider->frontdir * currentSpeed * 200.0f); }
-			if ((colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
-
-			const FeatureDef* collideeFD = collidee->def;
-			const float3& collideeCurPos = collidee->pos;
-			const float collideeRadius = FOOTPRINT_RADIUS(collideeFD->xsize, collideeFD->zsize);
-
-			const float3 separationVector = colliderCurPos - collideeCurPos;
-			const float separationMinDist = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
-
-			if ((separationVector.SqLength() - separationMinDist) <= 0.01f) {
-				eventHandler.UnitFeatureCollision(collider, collidee);
-
-				const float  sepDistance    = (separationVector.Length() + 0.01f);
-				const float  penDistance    = (colliderRadius + collideeRadius) - sepDistance;
-				const float3 sepDirection   = (separationVector / sepDistance);
-				const float3 colResponseVec = sepDirection * (penDistance * 0.5f);
-
-				// multiply the collider's mass by a large constant (so that
-				// heavy features do not bounce light units away like pinballs)
-				const float collisionMassSum  = collider->mass * 10000.0f + collidee->mass + 1.0f;
-				const float colliderMassScale = std::max(0.1f, std::min(0.9f, 1.0f - (collider->mass * 10000.0f / collisionMassSum)));
-				const float collideeMassScale = std::max(0.1f, std::min(0.9f, 1.0f - (collidee->mass            / collisionMassSum)));
-
-				if (collidee->reachedFinalPos && (colliderMassScale > collideeMassScale)) {
-					SWAP_MASS_SCALES(&colliderMassScale, &collideeMassScale);
+				if (newmp.x < owner->mapPos.x) {
+					haveCollided |= CheckColH(newmp.x, newmp.y, newmp.y + owner->zsize - 1,  xmove - 3.99f, owner->mapPos.x);
+					newmp = owner->GetMapPos();
+				} else if (newmp.x > owner->mapPos.x) {
+					haveCollided |= CheckColH(newmp.x + owner->xsize - 1, newmp.y, newmp.y + owner->zsize - 1,  xmove + 3.99f, owner->mapPos.x + owner->xsize - 1);
+					newmp = owner->GetMapPos();
 				}
-
-				collider->pos += (colResponseVec * colliderMassScale);
-			//	collidee->pos -= (colResponseVec * collideeMassScale);
-
-				collider->UpdateMidPos();
+			} else {
+				if (newmp.x < owner->mapPos.x) {
+					haveCollided |= CheckColH(newmp.x, newmp.y, newmp.y + owner->zsize - 1,  xmove - 3.99f, owner->mapPos.x);
+					newmp = owner->GetMapPos();
+				} else if (newmp.x > owner->mapPos.x) {
+					haveCollided |= CheckColH(newmp.x + owner->xsize - 1, newmp.y, newmp.y + owner->zsize - 1,  xmove + 3.99f, owner->mapPos.x + owner->xsize - 1);
+					newmp = owner->GetMapPos();
+				}
+				if (newmp.y < owner->mapPos.y) {
+					haveCollided |= CheckColV(newmp.y, newmp.x, newmp.x + owner->xsize - 1,  zmove - 3.99f, owner->mapPos.y);
+					newmp = owner->GetMapPos();
+				} else if (newmp.y > owner->mapPos.y) {
+					haveCollided |= CheckColV(newmp.y + owner->zsize - 1, newmp.x, newmp.x + owner->xsize - 1,  zmove + 3.99f, owner->mapPos.y + owner->zsize - 1);
+					newmp = owner->GetMapPos();
+				}
 			}
+			++retest;
 		}
+		while (haveCollided && retest < 2);
 
-		#undef INSIDE_FOOTPRINT
-		#undef FOOTPRINT_RADIUS
+		// owner->UnBlock();
+		owner->Block();
 	}
 
-	collider->mobility->tempOwner = NULL;
-	collider->Block();
+	return;
+}
+
+
+bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTestX)
+{
+	MoveData* m = owner->mobility;
+	m->tempOwner = owner;
+
+	bool ret = false;
+
+	for (int y = y1; y <= y2; ++y) {
+		bool blocked = false;
+		const int idx1 = y * gs->mapx + x;
+		const int idx2 = y * gs->mapx + squareTestX;
+		const BlockingMapCell& c = groundBlockingObjectMap->GetCell(idx1);
+		const BlockingMapCell& d = groundBlockingObjectMap->GetCell(idx2);
+		BlockingMapCellIt it;
+		float3 posDelta = ZeroVector;
+
+		if (!d.empty() && d.find(owner->id) == d.end()) {
+			continue;
+		}
+
+		for (it = c.begin(); it != c.end(); it++) {
+			CSolidObject* obj = it->second;
+
+			if (m->moveMath->IsNonBlocking(*m, obj)) {
+				// no collision possible
+				continue;
+			} else {
+				blocked = true;
+
+				if (obj->mobility) {
+					float part = owner->mass / (owner->mass + obj->mass * 2.0f);
+					float3 dif = obj->pos - owner->pos;
+					float dl = dif.Length();
+					float colDepth = streflop::fabs(owner->pos.x - xmove);
+
+					// adjust our own position a bit so we have to
+					// turn less (FIXME: can place us in building)
+					dif *= (dl != 0.0f)? (colDepth / dl): 0.0f;
+					posDelta -= (dif * (1.0f - part));
+
+					// safe cast (only units can be mobile)
+					CUnit* u = (CUnit*) obj;
+
+					const int uAllyTeam = u->allyteam;
+					const int oAllyTeam = owner->allyteam;
+					const bool allied = (teamHandler->Ally(uAllyTeam, oAllyTeam) || teamHandler->Ally(oAllyTeam, uAllyTeam));
+
+					if (!u->unitDef->pushResistant && !u->usingScriptMoveType && allied) {
+						// push the blocking unit out of the way
+						// (FIXME: can place object in building)
+						u->pos += (dif * part);
+						u->UpdateMidPos();
+					}
+				}
+
+				// if we can overrun this object (eg.
+				// DTs, trees, wreckage) then do so
+				if (!m->moveMath->CrushResistant(*m, obj)) {
+					float3 fix = owner->frontdir * currentSpeed * 200.0f;
+					obj->Kill(fix);
+				}
+			}
+		}
+
+		if (blocked) {
+			// HACK: make units find openings on the blocking map more easily
+			if (groundBlockingObjectMap->GetCell(y1 * gs->mapx + x).empty()) {
+				posDelta.z -= streflop::fabs(owner->pos.x - xmove) * 0.5f;
+			}
+			if (groundBlockingObjectMap->GetCell(y2 * gs->mapx + x).empty()) {
+				posDelta.z += streflop::fabs(owner->pos.x - xmove) * 0.5f;
+			}
+
+			if (!((gs->frameNum + owner->id) & 31) && !owner->commandAI->unimportantMove) {
+				// if we are doing something important, tell units around us to bugger off
+				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, false, owner->team, owner);
+			}
+
+			owner->pos += posDelta;
+			owner->pos.x = xmove;
+			currentSpeed *= 0.97f;
+			ret = true;
+			break;
+		}
+	}
+
+	m->tempOwner = NULL;
+	return ret;
+}
+
+bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTestY)
+{
+	MoveData* m = owner->mobility;
+	m->tempOwner = owner;
+
+	bool ret = false;
+
+	for (int x = x1; x <= x2; ++x) {
+		bool blocked = false;
+		const int idx1 = y * gs->mapx + x;
+		const int idx2 = squareTestY * gs->mapx + x;
+		const BlockingMapCell& c = groundBlockingObjectMap->GetCell(idx1);
+		const BlockingMapCell& d = groundBlockingObjectMap->GetCell(idx2);
+		BlockingMapCellIt it;
+		float3 posDelta = ZeroVector;
+
+		if (!d.empty() && d.find(owner->id) == d.end()) {
+			continue;
+		}
+
+		for (it = c.begin(); it != c.end(); it++) {
+			CSolidObject* obj = it->second;
+
+			if (m->moveMath->IsNonBlocking(*m, obj)) {
+				// no collision possible
+				continue;
+			} else {
+				blocked = true;
+
+				if (obj->mobility) {
+					float part = owner->mass / (owner->mass + obj->mass * 2.0f);
+					float3 dif = obj->pos - owner->pos;
+					float dl = dif.Length();
+					float colDepth = streflop::fabs(owner->pos.z - zmove);
+
+					// adjust our own position a bit so we have to
+					// turn less (FIXME: can place us in building)
+					dif *= (dl != 0.0f)? (colDepth / dl): 0.0f;
+					posDelta -= (dif * (1.0f - part));
+
+					// safe cast (only units can be mobile)
+					CUnit* u = (CUnit*) obj;
+
+					const int uAllyTeam = u->allyteam;
+					const int oAllyTeam = owner->allyteam;
+					const bool allied = (teamHandler->Ally(uAllyTeam, oAllyTeam) || teamHandler->Ally(oAllyTeam, uAllyTeam));
+
+					if (!u->unitDef->pushResistant && !u->usingScriptMoveType && allied) {
+						// push the blocking unit out of the way
+						// (FIXME: can place object in building)
+						u->pos += (dif * part);
+						u->UpdateMidPos();
+					}
+				}
+
+				// if we can overrun this object (eg.
+				// DTs, trees, wreckage) then do so
+				if (!m->moveMath->CrushResistant(*m, obj)) {
+					float3 fix = owner->frontdir * currentSpeed * 200.0f;
+					obj->Kill(fix);
+				}
+			}
+		}
+
+		if (blocked) {
+			// HACK: make units find openings on the blocking map more easily
+			if (groundBlockingObjectMap->GetCell(y * gs->mapx + x1).empty()) {
+				posDelta.x -= streflop::fabs(owner->pos.z - zmove) * 0.5f;
+			}
+			if (groundBlockingObjectMap->GetCell(y * gs->mapx + x2).empty()) {
+				posDelta.x += streflop::fabs(owner->pos.z - zmove) * 0.5f;
+			}
+
+			if (!((gs->frameNum + owner->id) & 31) && !owner->commandAI->unimportantMove) {
+				// if we are doing something important, tell units around us to bugger off
+				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, false, owner->team, owner);
+			}
+
+			owner->pos += posDelta;
+			owner->pos.z = zmove;
+			currentSpeed *= 0.97f;
+			ret = true;
+			break;
+		}
+	}
+
+	m->tempOwner = NULL;
+	return ret;
 }
 
 
 
-void CGroundMoveType::CreateLineTable()
+void CGroundMoveType::CreateLineTable(void)
 {
 	// for every <xt, zt> pair, computes a set of regularly spaced
 	// grid sample-points (int2 offsets) along the line from <start>
@@ -1600,7 +1697,7 @@ void CGroundMoveType::CreateLineTable()
 	}
 }
 
-void CGroundMoveType::DeleteLineTable()
+void CGroundMoveType::DeleteLineTable(void)
 {
 	for (int yt = 0; yt < LINETABLE_SIZE; ++yt) {
 		for (int xt = 0; xt < LINETABLE_SIZE; ++xt) {
@@ -1609,7 +1706,7 @@ void CGroundMoveType::DeleteLineTable()
 	}
 }
 
-void CGroundMoveType::TestNewTerrainSquare()
+void CGroundMoveType::TestNewTerrainSquare(void)
 {
 	// first make sure we don't go into any terrain we cant get out of
 	int newMoveSquareX = owner->pos.x / (MIN_WAYPOINT_DISTANCE);
@@ -1652,7 +1749,7 @@ void CGroundMoveType::TestNewTerrainSquare()
 		} else {
 			if (newMoveSquareY > moveSquareY) {
 				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
-				if (cmod > 0.01f && nmod <= 0.01f) {
+				if (cmod>0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * MIN_WAYPOINT_DISTANCE + (MIN_WAYPOINT_DISTANCE - 0.01f);
 					newMoveSquareY = moveSquareY;
 				}
@@ -1734,7 +1831,7 @@ void CGroundMoveType::TestNewTerrainSquare()
 	}
 }
 
-void CGroundMoveType::LeaveTransport()
+void CGroundMoveType::LeaveTransport(void)
 {
 	oldPos = owner->pos + UpVector * 0.001f;
 }
@@ -1802,7 +1899,7 @@ void CGroundMoveType::SetMainHeading() {
 			} else if (progressState == Active) {
 				ChangeHeading(heading);
 #ifdef TRACE_SYNC
-				tracefile << "[" << __FUNCTION__ << "][1] test heading: " << heading << ", real heading: " << owner->heading << "\n";
+				tracefile << "Test heading: " << heading << ",  Real heading: " << owner->heading << "\n";
 #endif
 			} else if (progressState != Active
 			  && owner->heading != heading
@@ -1812,7 +1909,7 @@ void CGroundMoveType::SetMainHeading() {
 				owner->script->StartMoving();
 				ChangeHeading(heading);
 #ifdef TRACE_SYNC
-				tracefile << "[" << __FUNCTION__ << "][2] test heading: " << heading << ", real heading: " << owner->heading << "\n";
+				tracefile << "Start moving; Test heading: " << heading << ",  Real heading: " << owner->heading << "\n";
 #endif
 			}
 		}

@@ -14,7 +14,7 @@ class CGroundMoveType : public AMoveType
 
 public:
 	CGroundMoveType(CUnit* owner);
-	~CGroundMoveType();
+	~CGroundMoveType(void);
 
 	void PostLoad();
 
@@ -29,12 +29,12 @@ public:
 
 	void SetMaxSpeed(float speed);
 
-	void ImpulseAdded();
+	void ImpulseAdded(void);
 
 	void KeepPointingTo(float3 pos, float distance, bool aggressive);
 	void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
 
-	bool OnSlope();
+	bool OnSlope(void);
 
 	float turnRate;
 	float accRate;
@@ -97,14 +97,14 @@ protected:
 
 	void Arrived();
 	void Fail();
-	void HandleObjectCollisions();
+	void CheckCollision(void);
 
 	void ChangeHeading(short wantedHeading);
 
-	void UpdateSkid();
-	void UpdateControlledDrop();
-	void CheckCollisionSkid();
-	void CalcSkidRot();
+	void UpdateSkid(void);
+	void UpdateControlledDrop(void);
+	void CheckCollisionSkid(void);
+	void CalcSkidRot(void);
 
 	float GetGroundHeight(const float3&) const;
 	void AdjustPosToWaterLine();
@@ -141,14 +141,14 @@ protected:
 	void SetMainHeading();
 
 public:
-	static void CreateLineTable();
-	static void DeleteLineTable();
+	static void CreateLineTable(void);
+	static void DeleteLineTable(void);
 
-	void TestNewTerrainSquare();
-	void LeaveTransport();
+	void TestNewTerrainSquare(void);
+	void LeaveTransport(void);
 
-	void StartSkidding();
-	void StartFlying();
+	void StartSkidding(void);
+	void StartFlying(void);
 
 	bool IsSkidding() const { return skidding; }
 	bool IsFlying() const { return flying; }
