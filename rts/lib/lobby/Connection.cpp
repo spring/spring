@@ -9,6 +9,7 @@
 #include <bitset>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
+#include "System/Net/Socket.h"
 #include "lib/md5/md5.h"
 #include "lib/md5/base64.h"
 #include "lib/streflop/streflop_cond.h"
@@ -47,12 +48,7 @@ void Connection::Connect(const std::string& server, int port)
 		std::ostringstream portbuf;
 		portbuf << port;
 		ip::tcp::resolver::query query(server, portbuf.str());
-		ip::tcp::resolver::iterator iter = resolver.resolve(query, err);
-#ifdef STREFLOP_H
-		//! (date of note: 08/22/10)
-		//! something in resolve() is invalidating the FPU flags
-		streflop_init<streflop::Simple>();
-#endif
+		ip::tcp::resolver::iterator iter = netcode::WrapResolve(resolver, query, &err);
 		if (err)
 		{
 			DoneConnecting(false, err.message());
