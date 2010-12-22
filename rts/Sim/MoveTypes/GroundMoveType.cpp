@@ -1032,6 +1032,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 
 			MoveData* moveData = owner->mobility;
+			CMoveMath* moveMath = moveData->moveMath;
 			moveData->tempOwner = owner;
 
 			const vector<CSolidObject*> &nearbyObjects = qf->GetSolidsExact(owner->pos, speedf * 35 + 30 + owner->xsize / 2);
@@ -1039,7 +1040,6 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 
 			for (vector<CSolidObject*>::const_iterator oi = nearbyObjects.begin(); oi != nearbyObjects.end(); ++oi) {
 				CSolidObject* o = *oi;
-				CMoveMath* moveMath = moveData->moveMath;
 
 				if (moveMath->IsNonBlocking(*moveData, o)) {
 					// no need to avoid this obstacle
