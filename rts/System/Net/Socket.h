@@ -5,6 +5,7 @@
 
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/udp.hpp>
+#include <boost/asio/ip/tcp.hpp>
 
 
 namespace netcode
@@ -25,6 +26,15 @@ bool IsLoopbackAddress(const boost::asio::ip::address& addr);
  * for sync relevant reasons.
  */
 boost::asio::ip::address WrapIP(const std::string& ip, boost::system::error_code* err = NULL);
+
+/**
+ * Encapsulates the ip::tcp::resolver::resolve(query) function,
+ * for sync relevant reasons.
+ */
+boost::asio::ip::tcp::resolver::iterator WrapResolve(
+		boost::asio::ip::tcp::resolver& resolver,
+		boost::asio::ip::tcp::resolver::query& query,
+		boost::system::error_code* err = NULL);
 
 } // namespace netcode
 

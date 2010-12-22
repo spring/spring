@@ -84,5 +84,26 @@ boost::asio::ip::address WrapIP(const std::string& ip, boost::system::error_code
 	return addr;
 }
 
+boost::asio::ip::tcp::resolver::iterator WrapResolve(
+		boost::asio::ip::tcp::resolver& resolver,
+		boost::asio::ip::tcp::resolver::query& query,
+		boost::system::error_code* err)
+{
+	boost::asio::ip::tcp::resolver::iterator resolveIt;
+
+	if (err == NULL) {
+		resolveIt = resolver.resolve(query);
+	} else {
+		resolveIt = resolver.resolve(query, *err);
+	}
+#ifdef STREFLOP_H
+	//! (date of note: 08/22/10)
+	//! something in resolve() is invalidating the FPU flags
+	streflop_init<streflop::Simple>();
+#endif
+
+	return resolveIt;
+}
+
 } // namespace netcode
 
