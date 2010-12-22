@@ -201,6 +201,10 @@ bool CMoveMath::CrushResistant(const MoveData& moveData, const CSolidObject* obj
  */
 bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obstacle) const
 {
+	if (!obstacle->blocking) {
+		return true;
+	}
+
 	const CSolidObject* unit = moveData.tempOwner;
 
 	const int hx = int(obstacle->pos.x / SQUARE_SIZE);
