@@ -32,8 +32,6 @@ extern gmlQueue gmlQueues[GML_MAX_NUM_THREADS];
 
 #include "gmlfun.h"
 
-extern boost::thread *gmlThreads[GML_MAX_NUM_THREADS];
-
 extern gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_VERTEX;
 extern gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_FRAGMENT;
 extern gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_GEOMETRY_EXT;
@@ -88,15 +86,15 @@ extern void gmlInit();
 	}\
 	GML_ITEMSERVER_CHECK_RET(threadnum,ret);
 
-EXTERN inline GLhandleARB gmlCreateProgram() {
+EXTERN inline GLhandleARB GML_GLAPIENTRY gmlCreateProgram() {
 	GML_IF_NONCLIENT_THREAD_RET(GLhandleARB,glCreateProgram);
 	return gmlProgramServer.GetItems();
 }
-EXTERN inline GLhandleARB gmlCreateProgramObjectARB() {
+EXTERN inline GLhandleARB GML_GLAPIENTRY gmlCreateProgramObjectARB() {
 	GML_IF_NONCLIENT_THREAD_RET(GLhandleARB,glCreateProgramObjectARB);
 	return gmlProgramObjectARBServer.GetItems();
 }
-EXTERN inline GLhandleARB gmlCreateShader(GLenum type) {
+EXTERN inline GLhandleARB GML_GLAPIENTRY gmlCreateShader(GLenum type) {
 	GML_IF_NONCLIENT_THREAD_RET(GLhandleARB,glCreateShader,type);
 	if(type==GL_VERTEX_SHADER)
 		return gmlShaderServer_VERTEX.GetItems();
@@ -106,7 +104,7 @@ EXTERN inline GLhandleARB gmlCreateShader(GLenum type) {
 		return gmlShaderServer_GEOMETRY_EXT.GetItems();
 	return 0;
 }
-EXTERN inline GLhandleARB gmlCreateShaderObjectARB(GLenum type) {
+EXTERN inline GLhandleARB GML_GLAPIENTRY gmlCreateShaderObjectARB(GLenum type) {
 	GML_IF_NONCLIENT_THREAD_RET(GLhandleARB,glCreateShaderObjectARB,type);
 	if(type==GL_VERTEX_SHADER_ARB)
 		return gmlShaderObjectARBServer_VERTEX.GetItems();
@@ -116,45 +114,45 @@ EXTERN inline GLhandleARB gmlCreateShaderObjectARB(GLenum type) {
 		return gmlShaderObjectARBServer_GEOMETRY_EXT.GetItems();
 	return 0;
 }
-EXTERN inline GLUquadric *gmluNewQuadric() {
+EXTERN inline GLUquadric *GML_GLAPIENTRY gmluNewQuadric() {
 	GML_IF_NONCLIENT_THREAD_RET(GLUquadric *,gluNewQuadric);
 	return gmlQuadricServer.GetItems();
 }
 
-EXTERN inline void gmlGenTextures(GLsizei n, GLuint *items) {
+EXTERN inline void GML_GLAPIENTRY gmlGenTextures(GLsizei n, GLuint *items) {
 	GML_IF_NONCLIENT_THREAD(glGenTextures,n,items);
 	gmlTextureServer.GetItems(n, items);
 }
-EXTERN inline void gmlGenBuffersARB(GLsizei n, GLuint *items) {
+EXTERN inline void GML_GLAPIENTRY gmlGenBuffersARB(GLsizei n, GLuint *items) {
 	GML_IF_NONCLIENT_THREAD(glGenBuffersARB,n,items);
 	gmlBufferARBServer.GetItems(n, items);
 }
-EXTERN inline void gmlGenFencesNV(GLsizei n, GLuint *items) {
+EXTERN inline void GML_GLAPIENTRY gmlGenFencesNV(GLsizei n, GLuint *items) {
 	GML_IF_NONCLIENT_THREAD(glGenFencesNV,n,items);
 	gmlFencesNVServer.GetItems(n, items);
 }
-EXTERN inline void gmlGenProgramsARB(GLsizei n, GLuint *items) {
+EXTERN inline void GML_GLAPIENTRY gmlGenProgramsARB(GLsizei n, GLuint *items) {
 	GML_IF_NONCLIENT_THREAD(glGenProgramsARB,n,items);
 	gmlProgramsARBServer.GetItems(n, items);
 }
-EXTERN inline void gmlGenRenderbuffersEXT(GLsizei n, GLuint *items) {
+EXTERN inline void GML_GLAPIENTRY gmlGenRenderbuffersEXT(GLsizei n, GLuint *items) {
 	GML_IF_NONCLIENT_THREAD(glGenRenderbuffersEXT,n,items);
 	gmlRenderbuffersEXTServer.GetItems(n, items);
 }
-EXTERN inline void gmlGenFramebuffersEXT(GLsizei n, GLuint *items) {
+EXTERN inline void GML_GLAPIENTRY gmlGenFramebuffersEXT(GLsizei n, GLuint *items) {
 	GML_IF_NONCLIENT_THREAD(glGenFramebuffersEXT,n,items);
 	gmlFramebuffersEXTServer.GetItems(n, items);
 }
-EXTERN inline void gmlGenQueries(GLsizei n, GLuint *items) {
+EXTERN inline void GML_GLAPIENTRY gmlGenQueries(GLsizei n, GLuint *items) {
 	GML_IF_NONCLIENT_THREAD(glGenQueries,n,items);
 	gmlQueryServer.GetItems(n, items);
 }
-EXTERN inline void gmlGenBuffers(GLsizei n, GLuint *items) {
+EXTERN inline void GML_GLAPIENTRY gmlGenBuffers(GLsizei n, GLuint *items) {
 	GML_IF_NONCLIENT_THREAD(glGenBuffers,n,items);
 	gmlBufferServer.GetItems(n, items);
 }
 
-EXTERN inline GLuint gmlGenLists(GLsizei items) {
+EXTERN inline GLuint GML_GLAPIENTRY gmlGenLists(GLsizei items) {
 	GML_IF_NONCLIENT_THREAD_RET(GLuint,glGenLists,items);
 	return gmlListServer.GetItems(items);
 }
@@ -249,8 +247,8 @@ extern gmlMutex simmutex;
 #else
 #	define GML_STDMUTEX_LOCK(name) boost::mutex::scoped_lock name##lock(name##mutex)
 #if GML_DEBUG_MUTEX
-extern std::map<std::string, int> lockmaps[33];
-extern std::map<boost::recursive_mutex *, int> lockmmaps[33];
+extern std::map<std::string, int> lockmaps[GML_MAX_NUM_THREADS];
+extern std::map<boost::recursive_mutex *, int> lockmmaps[GML_MAX_NUM_THREADS];
 extern boost::mutex lmmutex;
 class gmlRecursiveMutexLockDebug:public boost::recursive_mutex::scoped_lock {
 public:
@@ -362,17 +360,5 @@ inline unsigned gmlGetTicks() {
 #define GML_LOCK_TIME() 0
 
 #endif // USE_GML
-
-#ifdef    HEADLESS
-#define glGenerateMipmapEXT_NONGML NULL
-#define glUseProgram_NONGML NULL
-#define glProgramParameteriEXT_NONGML NULL
-#define glBlendEquation_NONGML NULL
-#else  // HEADLESS
-#define glGenerateMipmapEXT_NONGML GLEW_GET_FUN(__glewGenerateMipmapEXT)
-#define glUseProgram_NONGML GLEW_GET_FUN(__glewUseProgram)
-#define glProgramParameteriEXT_NONGML GLEW_GET_FUN(__glewProgramParameteriEXT)
-#define glBlendEquation_NONGML GLEW_GET_FUN(__glewBlendEquation)
-#endif // HEADLESS
 
 #endif
