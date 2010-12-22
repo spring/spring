@@ -157,7 +157,7 @@ public:
 		if(inited) {
 			GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState+ExecDepth;
 			BOOL_ dowait=TRUE;
-			for(int i=2; i<=gmlThreadCount; ++i) {
+			for(int i=3; i<=gmlThreadCount+1; ++i) {
 				if(!threads[i]->joinable() || threads[i]->timed_join(boost::posix_time::milliseconds(10)))
 					dowait=FALSE;
 			}
@@ -165,7 +165,7 @@ public:
 			dorun=FALSE;
 			if(dowait)
 				Barrier.wait();
-			for(int i=2; i<=gmlThreadCount; ++i) {
+			for(int i=3; i<=gmlThreadCount+1; ++i) {
 				if(threads[i]->joinable()) {
 					if(dowait)
 						threads[i]->join();
@@ -221,7 +221,7 @@ public:
 						gmlUpdateServers();
 					BOOL_ processed=FALSE;
 
-					for(int i=2; i<=gmlThreadCount; ++i) {
+					for(int i=3; i<=gmlThreadCount+1; ++i) {
 						gmlQueue *qd=&gmlQueues[i];
 						if(qd->Reloc)
 							qd->Realloc();
@@ -262,7 +262,7 @@ public:
 //		set_threadnum(0);
 		gmlInit();
 
-		for(int i=2; i<=gmlThreadCount; ++i)
+		for(int i=3; i<=gmlThreadCount+1; ++i)
 			threads[i]=new boost::thread(boost::bind<void, gmlClientServer, gmlClientServer*>(&gmlClientServer::gmlClient, this));
 #if GML_ENABLE_TLS_CHECK
 		for(int i=0; i<GML_MAX_NUM_THREADS; ++i)
@@ -279,7 +279,7 @@ public:
 			WorkInit();
 		if(auxworker)
 			--mt;
-		if(gmlThreadNumber!=0) {
+		if(gmlThreadNumber != GML_DRAW_THREAD_NUM) {
 			NewWork(wrk,wrka,wrkit,cls,mt,sm,it,nu,l1,l2,sw,swf);
 			return;
 		}
@@ -313,7 +313,7 @@ public:
 		GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState+ExecDepth;
 		
 		int thread=gmlThreadNumber;
-		if(thread>=ex->maxthreads) {
+		if(thread>=ex->maxthreads+2) {
 			++ClientsReady;	
 			return;
 		}
@@ -352,7 +352,7 @@ public:
 	}
 
 	void gmlClient() {
-		set_threadnum(++threadcnt + 1);
+		set_threadnum(++threadcnt + 2);
 		streflop_init<streflop::Simple>();
 		while(dorun) {
 			gmlClientSub();

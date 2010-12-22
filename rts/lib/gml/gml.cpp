@@ -9,9 +9,11 @@
 
 // GML works by "patching" all OpenGL calls. It is injected via a #include "gml.h" statement located in myGL.h.
 // All files that need GL should therefore include myGL.h. INCLUDING gl.h, glu.h, glext.h ... IS FORBIDDEN.
-// When a client thread (gmlThreadNumber > 0) executes a GL call, it is redirected into a queue.
+// When a client thread (gmlThreadNumber > 2) executes a GL call, it is redirected into a queue.
 // The server thread (gmlThreadNumber = 0) will then consume GL calls from the queues of each thread.
 // When the server thread makes a GL call, it calls directly into OpenGL of course.
+// The game load thread (gmlThreadNumber = 1) can also make GL calls.
+// The sim thread (gmlThreadNumber = 2) is allowed to make GL calls only if GML_SHARE_LISTS is enabled.
 
 // Since a single server thread makes all GL calls, there is no point in multithreading code that contains
 // lots of GL calls but almost no CPU intensive calculations. Also, there is no point in multithreading
@@ -168,8 +170,6 @@ EXTERN inline GLhandleARB glCreateShaderObjectARB_GEOMETRY_EXT() {
 }
 gmlQueue gmlQueues[GML_MAX_NUM_THREADS];
 
-boost::thread *gmlThreads[GML_MAX_NUM_THREADS];
-
 gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_VERTEX(&glCreateShader_VERTEX, 2, 0);
 gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_FRAGMENT(&glCreateShader_FRAGMENT, 2, 0);
 gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_GEOMETRY_EXT(&glCreateShader_GEOMETRY_EXT, 2, 0);
@@ -258,8 +258,8 @@ gmlMutex simmutex;
 
 #if GML_DEBUG_MUTEX
 boost::mutex lmmutex;
-std::map<std::string, int> lockmaps[33];
-std::map<boost::recursive_mutex *, int> lockmmaps[33];
+std::map<std::string, int> lockmaps[GML_MAX_NUM_THREADS];
+std::map<boost::recursive_mutex *, int> lockmmaps[GML_MAX_NUM_THREADS];
 #endif
 
 #endif

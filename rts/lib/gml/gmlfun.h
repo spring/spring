@@ -416,7 +416,7 @@ EXTERN inline void gmlSync(gmlQueue *qd) {
 #define GML_FUN(ftype,name,...) };\
 	EXTERN const int gml##name##Enum=(__LINE__-__FIRSTLINE__);\
 	GML_MAKENAME(name)\
-	EXTERN inline ftype gml##name(__VA_ARGS__)
+	EXTERN inline ftype GML_GLAPIENTRY gml##name(__VA_ARGS__)
 
 
 #if GML_ENABLE_ITEMSERVER_CHECK
@@ -1297,8 +1297,8 @@ GML_MAKEFUN1V(Normal3fv,const GLfloat,GLfloat,3)
 GML_MAKEFUN2(RasterPos2i,GLint,GLint,)
 GML_MAKEFUN1(ReadBuffer,GLenum)
 GML_MAKEFUN4(Scissor,GLint,GLint,GLsizei,GLsizei)
-GML_MAKEFUN4VSS(ShaderSource,GLuint,GLsizei,const GLchar,GLint,B)
-GML_MAKEFUN4VSS(ShaderSourceARB,GLhandleARB,GLsizei,const GLcharARB,GLint,B)
+GML_MAKEFUN4VSS(ShaderSource,GLuint,GLsizei,const GLchar,const GLint,B)
+GML_MAKEFUN4VSS(ShaderSourceARB,GLhandleARB,GLsizei,const GLcharARB,const GLint,B)
 GML_MAKEFUN1V(TexCoord2fv,const GLfloat,GLfloat,2)
 GML_MAKEFUN3V(TexParameterfv,GLenum,GLenum,const GLfloat,GLfloat,gmlNumArgsTexParam(B))
 GML_MAKEFUN3(Translated,GLdouble,GLdouble,GLdouble,)
