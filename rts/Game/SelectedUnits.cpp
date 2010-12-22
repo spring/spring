@@ -6,22 +6,19 @@
 
 #include "mmgr.h"
 
-#include "Sim/Misc/TeamHandler.h"
-#include "Sim/Misc/GlobalSynced.h"
 #include "SelectedUnits.h"
+#include "SelectedUnitsAI.h"
+#include "Camera.h"
 #include "WaitCommandsAI.h"
-#include "Rendering/GL/myGL.h"
-#include "NetProtocol.h"
-#include "Net/PackPacket.h"
-#include "Sim/Units/Groups/GroupHandler.h"
-#include "Sim/Units/Groups/Group.h"
-#include "ExternalAI/EngineOutHandler.h"
+#include "PlayerHandler.h"
 #include "UI/CommandColors.h"
 #include "UI/GuiHandler.h"
 #include "UI/TooltipConsole.h"
-#include "LogOutput.h"
+#include "ExternalAI/EngineOutHandler.h"
+#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include "SelectedUnitsAI.h"
+#include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -29,13 +26,18 @@
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
+#include "Sim/Units/Groups/GroupHandler.h"
+#include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
-#include "EventHandler.h"
-#include "ConfigHandler.h"
-#include "PlayerHandler.h"
-#include "Camera.h"
-#include "Sound/IEffectChannel.h"
-#include "Util.h"
+#include "System/ConfigHandler.h"
+#include "System/EventHandler.h"
+#include "System/LogOutput.h"
+#include "System/Util.h"
+#include "System/NetProtocol.h"
+#include "System/Net/PackPacket.h"
+#include "System/Sound/IEffectChannel.h"
+
+#define PLAY_SOUNDS 1
 
 extern boost::uint8_t* keys;
 
@@ -253,6 +255,7 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 
 	SendCommand(c);
 
+	#ifdef PLAY_SOUNDS
 	if (!selectedUnits.empty()) {
 		CUnitSet::const_iterator ui = selectedUnits.begin();
 
@@ -263,6 +266,7 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 				(*ui)->unitDef->sounds.ok.getVolume(soundIdx));
 		}
 	}
+	#endif
 }
 
 
