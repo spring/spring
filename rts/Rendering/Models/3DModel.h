@@ -5,8 +5,8 @@
 
 #include <vector>
 #include <string>
-#include <set>
-#include "Matrix44f.h"
+
+#include "System/Matrix44f.h"
 
 
 
@@ -47,6 +47,9 @@ struct S3DModelPiece {
 	const CollisionVolume* GetCollisionVolume() const { return colvol; }
 	      CollisionVolume* GetCollisionVolume()       { return colvol; }
 
+	unsigned int GetChildCount() const { return childs.size(); }
+	S3DModelPiece* GetChild(unsigned int i) { return childs[i]; }
+
 
 	std::string name;
 	std::vector<S3DModelPiece*> childs;
@@ -78,9 +81,9 @@ struct S3DModel
 		rootPiece = NULL;
 	}
 
-	inline S3DModelPiece* GetRootPiece() { return rootPiece; }
-	inline void SetRootPiece(S3DModelPiece* p) { rootPiece = p; }
-	inline void DrawStatic() const { rootPiece->DrawStatic(); }
+	S3DModelPiece* GetRootPiece() { return rootPiece; }
+	void SetRootPiece(S3DModelPiece* p) { rootPiece = p; }
+	void DrawStatic() const { rootPiece->DrawStatic(); }
 
 	std::string name;
 	std::string tex1;
@@ -105,31 +108,24 @@ struct S3DModel
 
 struct LocalModelPiece
 {
-	float3 pos;
-	float3 rot; //! in radian
-
-	// TODO: add (visibility) maxradius!
-	bool visible;
-
-	CollisionVolume* colvol;
-	S3DModelPiece* original;
-
-	LocalModelPiece* parent;
-	std::vector<LocalModelPiece*> childs;
-
-	unsigned int dispListID;
-	std::vector<unsigned int> lodDispLists;
-
-
+	LocalModelPiece() {
+		parent     = NULL;
+		colvol     = NULL;
+		original   = NULL;
+		dispListID = 0;
+		visible    = false;
+	}
 	void Init(S3DModelPiece* piece) {
 		original   =  piece;
 		dispListID =  piece->dispListID;
 		visible    = !piece->isEmpty;
 		pos        =  piece->offset;
-		rot        =  ZeroVector;
 
 		childs.reserve(piece->childs.size());
 	}
+
+	void AddChild(LocalModelPiece* c) { childs.push_back(c); }
+	void SetParent(LocalModelPiece* p) { parent = p; }
 
 	void Draw() const;
 	void DrawLOD(unsigned int lod) const;
@@ -144,6 +140,22 @@ struct LocalModelPiece
 	void SetCollisionVolume(CollisionVolume* cv) { colvol = cv; }
 	const CollisionVolume* GetCollisionVolume() const { return colvol; }
 	      CollisionVolume* GetCollisionVolume()       { return colvol; }
+
+
+	float3 pos;
+	float3 rot; //! in radian
+
+	// TODO: add (visibility) maxradius!
+	bool visible;
+
+	CollisionVolume* colvol;
+	S3DModelPiece* original;
+
+	LocalModelPiece* parent;
+	std::vector<LocalModelPiece*> childs;
+
+	unsigned int dispListID;
+	std::vector<unsigned int> lodDispLists;
 };
 
 struct LocalModel
@@ -157,21 +169,16 @@ struct LocalModel
 		for (unsigned int i = 0; i < model->numPieces; i++) {
 			pieces.push_back(new LocalModelPiece());
 		}
-
-		pieces[0]->parent = NULL;
 	}
 
 	~LocalModel();
+	void CreatePieces(S3DModelPiece*, unsigned int*);
 
+	LocalModelPiece* GetPiece(unsigned int i) { return pieces[i]; }
+	LocalModelPiece* GetRoot() { return GetPiece(0); }
 
-	int type;  //! MODELTYPE_*
-	unsigned int lodCount;
-
-	std::vector<LocalModelPiece*> pieces;
-	LocalModelPiece* GetRoot() { return pieces[0]; }
-
-	inline void Draw() const { pieces[0]->Draw(); }
-	inline void DrawLOD(unsigned int lod) const { if (lod <= lodCount) pieces[0]->DrawLOD(lod); }
+	void Draw() const { pieces[0]->Draw(); }
+	void DrawLOD(unsigned int lod) const { if (lod <= lodCount) pieces[0]->DrawLOD(lod); }
 	void SetLODCount(unsigned int count);
 
 	//! raw forms, the piecenum must be valid
@@ -180,6 +187,12 @@ struct LocalModel
 	CMatrix44f GetRawPieceMatrix(int piecenum) const;
 	float3 GetRawPieceDirection(int piecenum) const;
 	void GetRawEmitDirPos(int piecenum, float3& pos, float3& dir) const;
+
+
+	int type;  //! MODELTYPE_*
+	unsigned int lodCount;
+
+	std::vector<LocalModelPiece*> pieces;
 };
 
 

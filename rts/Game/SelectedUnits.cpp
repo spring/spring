@@ -6,22 +6,19 @@
 
 #include "mmgr.h"
 
-#include "Sim/Misc/TeamHandler.h"
-#include "Sim/Misc/GlobalSynced.h"
 #include "SelectedUnits.h"
+#include "SelectedUnitsAI.h"
+#include "Camera.h"
 #include "WaitCommandsAI.h"
-#include "Rendering/GL/myGL.h"
-#include "NetProtocol.h"
-#include "Net/PackPacket.h"
-#include "Sim/Units/Groups/GroupHandler.h"
-#include "Sim/Units/Groups/Group.h"
-#include "ExternalAI/EngineOutHandler.h"
+#include "PlayerHandler.h"
 #include "UI/CommandColors.h"
 #include "UI/GuiHandler.h"
 #include "UI/TooltipConsole.h"
-#include "LogOutput.h"
+#include "ExternalAI/EngineOutHandler.h"
+#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include "SelectedUnitsAI.h"
+#include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -29,13 +26,18 @@
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
+#include "Sim/Units/Groups/GroupHandler.h"
+#include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
-#include "EventHandler.h"
-#include "ConfigHandler.h"
-#include "PlayerHandler.h"
-#include "Camera.h"
-#include "Sound/IEffectChannel.h"
-#include "Util.h"
+#include "System/ConfigHandler.h"
+#include "System/EventHandler.h"
+#include "System/LogOutput.h"
+#include "System/Util.h"
+#include "System/NetProtocol.h"
+#include "System/Net/PackPacket.h"
+#include "System/Sound/IEffectChannel.h"
+
+#define PLAY_SOUNDS 1
 
 extern boost::uint8_t* keys;
 
@@ -253,6 +255,7 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 
 	SendCommand(c);
 
+	#ifdef PLAY_SOUNDS
 	if (!selectedUnits.empty()) {
 		CUnitSet::const_iterator ui = selectedUnits.begin();
 
@@ -263,6 +266,7 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 				(*ui)->unitDef->sounds.ok.getVolume(soundIdx));
 		}
 	}
+	#endif
 }
 
 
@@ -358,9 +362,7 @@ void CSelectedUnits::Draw()
 
 	GML_RECMUTEX_LOCK(grpsel); // Draw
 
-	if (cmdColors.unitBox[3] > 0.0f) {
-		glColor4fv(cmdColors.unitBox);
-
+	if (cmdColors.unitBox[3] > 0.05f) {
 		const CUnitSet* unitSet;
 		if (selectedGroup != -1) {
 			unitSet = &grouphandlers[gu->myTeam]->groups[selectedGroup]->units;
@@ -370,20 +372,51 @@ void CSelectedUnits::Draw()
 
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
-		va->EnlargeArrays(unitSet->size()*4, 0, VA_SIZE_0);
-		CUnitSet::const_iterator ui;
-		for (ui = unitSet->begin(); ui != unitSet->end(); ++ui) {
+		va->EnlargeArrays(unitSet->size() * 8, 0, VA_SIZE_C);
+
+		for (CUnitSet::const_iterator ui = unitSet->begin(); ui != unitSet->end(); ++ui) {
 			const CUnit* unit = *ui;
 			if (unit->isIcon) {
 				continue;
 			}
 
-			va->AddVertexQ0(unit->drawPos.x + unit->xsize * 4, unit->drawPos.y, unit->drawPos.z + unit->zsize * 4);
-			va->AddVertexQ0(unit->drawPos.x - unit->xsize * 4, unit->drawPos.y, unit->drawPos.z + unit->zsize * 4);
-			va->AddVertexQ0(unit->drawPos.x - unit->xsize * 4, unit->drawPos.y, unit->drawPos.z - unit->zsize * 4);
-			va->AddVertexQ0(unit->drawPos.x + unit->xsize * 4, unit->drawPos.y, unit->drawPos.z - unit->zsize * 4);
+			const int
+				uhxsize = (unit->xsize >> 1) * SQUARE_SIZE,
+				uhzsize = (unit->zsize >> 1) * SQUARE_SIZE,
+				mhxsize = (unit->mobility == NULL)? uhxsize: ((unit->mobility->xsize >> 1) * SQUARE_SIZE),
+				mhzsize = (unit->mobility == NULL)? uhzsize: ((unit->mobility->zsize >> 1) * SQUARE_SIZE);
+			const float3 verts[8] = {
+				// UnitDef footprint corners
+				float3(unit->drawPos.x + uhxsize, unit->drawPos.y, unit->drawPos.z + uhzsize),
+				float3(unit->drawPos.x - uhxsize, unit->drawPos.y, unit->drawPos.z + uhzsize),
+				float3(unit->drawPos.x - uhxsize, unit->drawPos.y, unit->drawPos.z - uhzsize),
+				float3(unit->drawPos.x + uhxsize, unit->drawPos.y, unit->drawPos.z - uhzsize),
+				// MoveDef footprint corners
+				float3(unit->drawPos.x + mhxsize, unit->drawPos.y, unit->drawPos.z + mhzsize),
+				float3(unit->drawPos.x - mhxsize, unit->drawPos.y, unit->drawPos.z + mhzsize),
+				float3(unit->drawPos.x - mhxsize, unit->drawPos.y, unit->drawPos.z - mhzsize),
+				float3(unit->drawPos.x + mhxsize, unit->drawPos.y, unit->drawPos.z - mhzsize),
+			};
+
+			const unsigned char colors[2][4] = {
+				{(0.0f + cmdColors.unitBox[0]) * 255, (0.0f + cmdColors.unitBox[1]) * 255, (0.0f + cmdColors.unitBox[2] * 255), cmdColors.unitBox[3] * 255},
+				{(1.0f - cmdColors.unitBox[0]) * 255, (1.0f - cmdColors.unitBox[1]) * 255, (1.0f - cmdColors.unitBox[2] * 255), cmdColors.unitBox[3] * 255},
+			};
+
+			va->AddVertexQC(verts[0], colors[0]);
+			va->AddVertexQC(verts[1], colors[0]);
+			va->AddVertexQC(verts[2], colors[0]);
+			va->AddVertexQC(verts[3], colors[0]);
+
+			if (globalRendering->drawdebug && (mhxsize != uhxsize || mhzsize != uhzsize)) {
+				va->AddVertexQC(verts[4], colors[1]);
+				va->AddVertexQC(verts[5], colors[1]);
+				va->AddVertexQC(verts[6], colors[1]);
+				va->AddVertexQC(verts[7], colors[1]);
+			}
 		}
-		va->DrawArray0(GL_QUADS);
+
+		va->DrawArrayC(GL_QUADS);
 	}
 
 	// highlight queued build sites if we are about to build something
