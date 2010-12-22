@@ -224,24 +224,27 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim
 		for(list<int>::iterator vi=orderVert.begin();vi!=orderVert.end();++vi)
 			vertHash=(vertHash+(*vi))*(*vi);
 
-		sp.texture=NULL;
-		if(p.OffsetToTextureName!=0)
-		{
-			string texture = GetText(p.OffsetToTextureName);
-			StringToLowerInPlace(texture);
 
-			if(teamtex.find(texture) != teamtex.end())
-				sp.texture=texturehandler3DO->Get3DOTexture(texture);
-			else
-				sp.texture=texturehandler3DO->Get3DOTexture(texture + "00");
+		std::string texName;
 
-			if(sp.texture==NULL)
-				LogObject() << "Parser couldnt get texture " << GetText(p.OffsetToTextureName).c_str() << "\n";
+		if (p.OffsetToTextureName != 0) {
+			texName = StringToLower(GetText(p.OffsetToTextureName));
+
+			if (teamtex.find(texName) == teamtex.end()) {
+				texName += "00";
+			}
 		} else {
-			char t[50];
-			sprintf(t,"ta_color%i",p.PaletteEntry);
-			sp.texture=texturehandler3DO->Get3DOTexture(t);
+			texName = "ta_color" + IntToString(p.PaletteEntry, "%i");
 		}
+
+		if ((sp.texture = texturehandler3DO->Get3DOTexture(texName)) == NULL) {
+			LogObject() << "[" << __FUNCTION__ << "] ";
+			LogObject() << "unknown 3DO texture \"" << texName << "\" for piece \"" << obj->name << "\"\n";
+
+			// assign a dummy texture (the entire atlas)
+			sp.texture = texturehandler3DO->Get3DOTexture("___dummy___");
+		}
+
 
 		float3 n = -(obj->vertices[sp.vertices[1]].pos - obj->vertices[sp.vertices[0]].pos).cross(obj->vertices[sp.vertices[2]].pos - obj->vertices[sp.vertices[0]].pos);
 		n.SafeNormalize();

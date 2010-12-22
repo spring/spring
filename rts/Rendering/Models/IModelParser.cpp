@@ -189,29 +189,13 @@ void C3DModelLoader::CreateLocalModel(CUnit* unit)
 
 LocalModel* C3DModelLoader::CreateLocalModel(S3DModel* model)
 {
-	LocalModel* lmodel = new LocalModel(model);
+	unsigned int pieceNum = 0;
 
-	int piecenum = 0;
-	CreateLocalModelPieces(model->GetRootPiece(), lmodel, &piecenum);
-	return lmodel;
+	LocalModel* lModel = new LocalModel(model);
+	lModel->CreatePieces(model->GetRootPiece(), &pieceNum);
+
+	return lModel;
 }
-
-void C3DModelLoader::CreateLocalModelPieces(S3DModelPiece* piece, LocalModel* lmodel, int* piecenum)
-{
-	LocalModelPiece* lmp = lmodel->pieces[*piecenum];
-	lmp->Init(piece);
-	lmp->SetCollisionVolume(new CollisionVolume(piece->GetCollisionVolume()));
-
-	for (unsigned int i = 0; i < piece->childs.size(); i++) {
-		(*piecenum)++;
-
-		lmp->childs.push_back(lmodel->pieces[*piecenum]);
-		lmodel->pieces[*piecenum]->parent = lmp;
-
-		CreateLocalModelPieces(piece->childs[i], lmodel, piecenum);
-	}
-}
-
 
 
 void C3DModelLoader::FixLocalModel(CUnit* unit)
@@ -219,7 +203,6 @@ void C3DModelLoader::FixLocalModel(CUnit* unit)
 	int piecenum = 0;
 	FixLocalModel(unit->model->GetRootPiece(), unit->localmodel, &piecenum);
 }
-
 
 void C3DModelLoader::FixLocalModel(S3DModelPiece* model, LocalModel* lmodel, int* piecenum)
 {
