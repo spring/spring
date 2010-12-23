@@ -26,7 +26,6 @@ public:
 
 	void Collision();
 
-private:
 	struct Spark {
 		CR_DECLARE_STRUCT(Spark);
 		float3 pos;
@@ -35,6 +34,7 @@ private:
 		int ttl;
 	};
 
+private:
 	SPARK_QUEUE sparks;
 
 	void EmitSpark();
