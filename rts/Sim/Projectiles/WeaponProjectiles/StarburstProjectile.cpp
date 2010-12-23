@@ -21,8 +21,6 @@
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 
-const float CStarburstProjectile::SMOKE_TIME = 70;
-
 CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, NULL, ZeroVector, 0, 0, 0, 0, NULL, NULL, NULL, 0, ZeroVector));
 
 CR_REG_METADATA(CStarburstProjectile,(

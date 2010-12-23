@@ -28,7 +28,7 @@ class CDefenseMatrix {
 		std::vector<int> BuildMaskArray;
 
 	private:
-		bool IsInitialized() const;
+		bool IsInitialized() const { return (spotFinder != NULL); }
 
 		CSpotFinder* spotFinder;
 		int ThreatMapXSize, ThreatMapYSize, TotalCells;
@@ -39,12 +39,12 @@ class CDefenseMatrix {
 			const UnitDef* def;
 		};
 		/**
-		 * Used for defs that get added before the matrix is initialzied.
+		 * Used for defs that get added before the matrix is initialized.
 		 */
 		std::vector<DefPos> defAddQueue;
 		/**
 		 * Used for defs that got removed after AI init
-		 * but before the matrix is initialzied.
+		 * but before the matrix is initialized.
 		 */
 		std::vector<DefPos> defRemoveQueue;
 };
