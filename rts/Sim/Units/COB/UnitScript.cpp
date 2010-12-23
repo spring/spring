@@ -441,7 +441,7 @@ void CUnitScript::SetVisibility(int piece, bool visible)
 }
 
 
-void CUnitScript::EmitSfx(int sxfType, int piece)
+void CUnitScript::EmitSfx(int sfxType, int piece)
 {
 #ifndef _CONSOLE
 	if (!PieceExists(piece)) {
@@ -449,13 +449,13 @@ void CUnitScript::EmitSfx(int sxfType, int piece)
 		return;
 	}
 
-	if (ph->particleSaturation > 1.0f && sxfType < SFX_CEG) {
+	if (ph->particleSaturation > 1.0f && sfxType < SFX_CEG) {
 		// skip adding (unsynced!) particles when we have too many
 		return;
 	}
 
 	// Make sure wakes are only emitted on water
-	if ((sxfType >= SFX_WAKE) && (sxfType <= SFX_REVERSE_WAKE_2)) {
+	if ((sfxType >= SFX_WAKE) && (sfxType <= SFX_REVERSE_WAKE_2)) {
 		if (ground->GetApproximateHeight(unit->pos.x, unit->pos.z) > 0.0f) {
 			return;
 		}
@@ -492,7 +492,7 @@ void CUnitScript::EmitSfx(int sxfType, int piece)
 		alphaFalloff = 0.008f;
 	}
 
-	switch (sxfType) {
+	switch (sfxType) {
 		case SFX_REVERSE_WAKE:
 		case SFX_REVERSE_WAKE_2: {  //reverse wake
 			new CWakeProjectile(
@@ -558,9 +558,9 @@ void CUnitScript::EmitSfx(int sxfType, int piece)
 			break;
 		}
 		default: {
-			if (sxfType & SFX_CEG) {
+			if (sfxType & SFX_CEG) {
 				// emit defined explosiongenerator
-				const unsigned index = sxfType - SFX_CEG;
+				const unsigned index = sfxType - SFX_CEG;
 				if (index >= unit->unitDef->sfxExplGens.size() || unit->unitDef->sfxExplGens[index] == NULL) {
 					ShowScriptError("Invalid explosion generator index for emit-sfx");
 					break;
@@ -569,9 +569,9 @@ void CUnitScript::EmitSfx(int sxfType, int piece)
 				CExplosionGenerator* explGen = unit->unitDef->sfxExplGens[index];
 				explGen->Explosion(pos, unit->cegDamage, 1, unit, 0, 0, dir);
 			}
-			else if (sxfType & SFX_FIRE_WEAPON) {
+			else if (sfxType & SFX_FIRE_WEAPON) {
 				// make a weapon fire from the piece
-				const unsigned index = sxfType - SFX_FIRE_WEAPON;
+				const unsigned index = sfxType - SFX_FIRE_WEAPON;
 				if (index >= unit->weapons.size() || unit->weapons[index] == NULL) {
 					ShowScriptError("Invalid weapon index for emit-sfx");
 					break;
@@ -595,8 +595,8 @@ void CUnitScript::EmitSfx(int sxfType, int piece)
 
 				weapon->targetPos = targetPos;
 			}
-			else if (sxfType & SFX_DETONATE_WEAPON) {
-				const unsigned index = sxfType - SFX_DETONATE_WEAPON;
+			else if (sfxType & SFX_DETONATE_WEAPON) {
+				const unsigned index = sfxType - SFX_DETONATE_WEAPON;
 				if (index >= unit->weapons.size() || unit->weapons[index] == NULL) {
 					ShowScriptError("Invalid weapon index for emit-sfx");
 					break;

@@ -381,10 +381,10 @@ void CSelectedUnits::Draw()
 			}
 
 			const int
-				uhxsize = (unit->xsize >> 1) * SQUARE_SIZE,
-				uhzsize = (unit->zsize >> 1) * SQUARE_SIZE,
-				mhxsize = (unit->mobility == NULL)? uhxsize: ((unit->mobility->xsize >> 1) * SQUARE_SIZE),
-				mhzsize = (unit->mobility == NULL)? uhzsize: ((unit->mobility->zsize >> 1) * SQUARE_SIZE);
+				uhxsize = (unit->xsize * SQUARE_SIZE) >> 1,
+				uhzsize = (unit->zsize * SQUARE_SIZE) >> 1,
+				mhxsize = (unit->mobility == NULL)? uhxsize: ((unit->mobility->xsize * SQUARE_SIZE) >> 1),
+				mhzsize = (unit->mobility == NULL)? uhzsize: ((unit->mobility->zsize * SQUARE_SIZE) >> 1);
 			const float3 verts[8] = {
 				// UnitDef footprint corners
 				float3(unit->drawPos.x + uhxsize, unit->drawPos.y, unit->drawPos.z + uhzsize),
