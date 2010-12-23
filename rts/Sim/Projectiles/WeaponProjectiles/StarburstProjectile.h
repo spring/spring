@@ -64,7 +64,7 @@ private:
 	OldInfo* oldInfos[5];
 
 	/// the smokes life-time in frames
-	static const float SMOKE_TIME;
+	static const float SMOKE_TIME = 70.0f;
 };
 
 #endif /* STARBURST_PROJECTILE_H */

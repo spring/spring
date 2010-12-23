@@ -42,10 +42,10 @@ struct TerrainMapAreaSector
 	// NOTE: some of these values are loaded as they become needed, use GlobalTerrainMap functions
 	TerrainMapSector *S;	// always valid
 	TerrainMapArea* area;		// The TerrainMapArea this sector belongs to, otherwise = 0 until
-	TerrainMapArea* areaClosest;// uninitalized, = the TerrainMapArea closest to this sector
+	TerrainMapArea* areaClosest;// uninitialized, = the TerrainMapArea closest to this sector
 	// Use this to find the closest sector useable by a unit with a different MoveType, the 0 pointer may be valid as a key index
-	map<TerrainMapMobileType*,TerrainMapAreaSector*> sectorAlternativeM; // uninitalized
-	map<TerrainMapImmobileType*,TerrainMapSector*> sectorAlternativeI; // uninitalized
+	map<TerrainMapMobileType*,TerrainMapAreaSector*> sectorAlternativeM; // uninitialized
+	map<TerrainMapImmobileType*,TerrainMapSector*> sectorAlternativeI; // uninitialized
 };
 
 struct TerrainMapArea
@@ -62,7 +62,7 @@ struct TerrainMapArea
 	TerrainMapMobileType* mobileType;
 	map<int,TerrainMapAreaSector*> sector;			// key = sector index, a list of all sectors belonging to it
 	map<int,TerrainMapAreaSector*> sectorClosest;	// key = sector indexes not in "sector", indicates the sector belonging to this map-area with the closest distance
-												// NOTE: use GlobalTerrainMap->GetClosestSector: these values are not initalized but are instead loaded as they become needed
+												// NOTE: use GlobalTerrainMap->GetClosestSector: these values are not initialized but are instead loaded as they become needed
 	float percentOfMap; // 0-100
 };
 #define MAP_AREA_LIST_SIZE 50

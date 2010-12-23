@@ -2,8 +2,6 @@
 #include "IncExternAI.h"
 #include "IncGlobalAI.h"
 
-#include "System/float3.h"
-
 CR_BIND(CDefenseMatrix, (NULL));
 CR_REG_METADATA(CDefenseMatrix, (
 	CR_MEMBER(ChokeMapsByMovetype),
@@ -241,9 +239,4 @@ void CDefenseMatrix::RemoveDefense(float3 pos, const UnitDef* def) {
 	}
 
 	spotFinder->InvalidateSumMap(x, y, Range);
-}
-
-
-bool CDefenseMatrix::IsInitialized() const {
-	return (spotFinder != NULL);
 }
