@@ -43,16 +43,15 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 		object->mapPos.y &= 0xfffffe;
 	}
 
-	const int bx = object->mapPos.x;
-	const int bz = object->mapPos.y;
-	const int minXSqr = bx;
-	const int minZSqr = bz;
-	const int maxXSqr = bx + object->xsize;
-	const int maxZSqr = bz + object->zsize;
+	const int bx = object->mapPos.x, sx = object->xsize;
+	const int bz = object->mapPos.y, sz = object->zsize;
+	const int minXSqr = bx, maxXSqr = bx + sx;
+	const int minZSqr = bz, maxZSqr = bz + sz;
 
 	for (int zSqr = minZSqr; zSqr < maxZSqr; zSqr++) {
 		for (int xSqr = minXSqr; xSqr < maxXSqr; xSqr++) {
 			const int idx = xSqr + zSqr * gs->mapx;
+
 			BlockingMapCell& cell = groundBlockingMap[idx];
 			BlockingMapCellIt it = cell.find(objID);
 
@@ -63,7 +62,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 	}
 
 	// FIXME: needs dependency injection (observer pattern?)
-	if (!object->mobility && pathManager) {
+	if (object->mobility == NULL && pathManager) {
 		pathManager->TerrainChange(minXSqr, minZSqr, maxXSqr, maxZSqr);
 	}
 }
@@ -81,17 +80,18 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 		object->mapPos.y &= 0xfffffe;
 	}
 
-	const int bx = object->mapPos.x;
-	const int bz = object->mapPos.y;
-	const int minXSqr = bx;
-	const int minZSqr = bz;
-	const int maxXSqr = bx + object->xsize;
-	const int maxZSqr = bz + object->zsize;
+	const int bx = object->mapPos.x, sx = object->xsize;
+	const int bz = object->mapPos.y, sz = object->zsize;
+	const int minXSqr = bx, maxXSqr = bx + sx;
+	const int minZSqr = bz, maxZSqr = bz + sz;
 
 	for (int z = 0; minZSqr + z < maxZSqr; z++) {
 		for (int x = 0; minXSqr + x < maxXSqr; x++) {
+			// unit yardmaps always contain sx=UnitDef::xsize * sz=UnitDef::zsize
+			// cells (the unit->mobility footprint can have different dimensions)
 			const int idx = minXSqr + x + (minZSqr + z) * gs->mapx;
-			const int off = x + z * object->xsize;
+			const int off = x + z * sx;
+
 			BlockingMapCell& cell = groundBlockingMap[idx];
 			BlockingMapCellIt it = cell.find(objID);
 
@@ -102,7 +102,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 	}
 
 	// FIXME: needs dependency injection (observer pattern?)
-	if (!object->mobility && pathManager) {
+	if (object->mobility == NULL && pathManager) {
 		pathManager->TerrainChange(minXSqr, minZSqr, maxXSqr, maxZSqr);
 	}
 }
@@ -112,11 +112,12 @@ void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 {
 	const int objID = GetObjectID(object);
 
-	object->isMarkedOnBlockingMap = false;
 	const int bx = object->mapPos.x;
 	const int bz = object->mapPos.y;
 	const int sx = object->xsize;
 	const int sz = object->zsize;
+
+	object->isMarkedOnBlockingMap = false;
 
 	for (int z = bz; z < bz + sz; ++z) {
 		for (int x = bx; x < bx + sx; ++x) {
@@ -131,7 +132,7 @@ void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 	}
 
 	// FIXME: needs dependency injection (observer pattern?)
-	if (!object->mobility) {
+	if (object->mobility == NULL && pathManager) {
 		pathManager->TerrainChange(bx, bz, bx + sx, bz + sz);
 	}
 }
@@ -219,6 +220,7 @@ bool CGroundBlockingObjectMap::CanCloseYard(CSolidObject* yard)
 	for (int z = yard->mapPos.y; z < yard->mapPos.y + yard->zsize; ++z) {
 		for (int x = yard->mapPos.x; x < yard->mapPos.x + yard->xsize; ++x) {
 			const int idx = z * gs->mapx + x;
+
 			BlockingMapCell& cell = groundBlockingMap[idx];
 			BlockingMapCellIt it = cell.find(objID);
 

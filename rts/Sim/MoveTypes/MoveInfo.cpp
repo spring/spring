@@ -169,11 +169,17 @@ CMoveInfo::CMoveInfo()
 		if (b2) { md->terrainClass = MoveData::Mixed; }
 
 
-		const int xsize = moveTable.GetInt("footprintX",     1);
-		const int zsize = moveTable.GetInt("footprintZ", xsize);
-		// make all footprints point-symmetric (in heightmap space)
-		md->xsize = std::max(1, (xsize * 2) - 1);
-		md->zsize = std::max(1, (zsize * 2) - 1);
+		const int xsize = std::max(1, moveTable.GetInt("footprintX",     1));
+		const int zsize = std::max(1, moveTable.GetInt("footprintZ", xsize));
+		const int scale = 2;
+
+		// make all mobile footprints point-symmetric in heightmap space
+		// (meaning that only non-even dimensions are possible and each
+		// footprint always has a unique center square)
+		md->xsize = xsize * scale;
+		md->zsize = zsize * scale;
+		md->xsize -= ((md->xsize & 1)? 0: 1);
+		md->zsize -= ((md->zsize & 1)? 0: 1);
 		md->slopeMod = moveTable.GetFloat("slopeMod", 4.0f / (md->maxSlope + 0.001f));
 
 		const unsigned int checksum =
