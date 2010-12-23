@@ -1364,13 +1364,14 @@ int LuaSyncedCtrl::SetUnitArmored(lua_State* L)
 	if (lua_isboolean(L, 2)) {
 		unit->armoredState = lua_toboolean(L, 2);
 	}
-	const float armoredMultiple = luaL_optfloat(L, 3, unit->armoredMultiple);
-	unit->armoredMultiple = max(0.0001f, armoredMultiple); //armored multiple of 0 will crash spring
+
+	// armored multiple of 0 will crash spring
+	unit->armoredMultiple = std::max(0.0001f, luaL_optfloat(L, 3, unit->armoredMultiple));
+
 	if (lua_toboolean(L, 2)) {
 		unit->curArmorMultiple = unit->armoredMultiple;
-	}
-	else {
-		unit->curArmorMultiple = 1;
+	} else {
+		unit->curArmorMultiple = 1.0f;
 	}
 	return 0;
 }
