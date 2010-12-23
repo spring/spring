@@ -180,7 +180,7 @@ float3 CDefenseMatrix::GetDefensePos(const UnitDef* def, float3 builderpos) {
 
 void CDefenseMatrix::AddDefense(float3 pos, const UnitDef* def) {
 
-	if (!IsInitialied()) {
+	if (!IsInitialized()) {
 		DefPos defPos = {pos, def};
 		defAddQueue.push_back(defPos);
 		return;
@@ -213,7 +213,7 @@ void CDefenseMatrix::AddDefense(float3 pos, const UnitDef* def) {
 
 void CDefenseMatrix::RemoveDefense(float3 pos, const UnitDef* def) {
 
-	if (!IsInitialied()) {
+	if (!IsInitialized()) {
 		DefPos defPos = {pos, def};
 		defRemoveQueue.push_back(defPos);
 		return;
@@ -244,6 +244,6 @@ void CDefenseMatrix::RemoveDefense(float3 pos, const UnitDef* def) {
 }
 
 
-bool CDefenseMatrix::IsInitialied() const {
+bool CDefenseMatrix::IsInitialized() const {
 	return (spotFinder != NULL);
 }

@@ -28,7 +28,7 @@ class CDefenseMatrix {
 		std::vector<int> BuildMaskArray;
 
 	private:
-		bool IsInitialied() const;
+		bool IsInitialized() const;
 
 		CSpotFinder* spotFinder;
 		int ThreatMapXSize, ThreatMapYSize, TotalCells;
