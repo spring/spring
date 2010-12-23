@@ -1276,55 +1276,48 @@ void CGameHelper::Update(void)
 
 /** @return true if there is an allied unit within
     the firing cone of <owner> (that might be hit) */
-bool CGameHelper::TestAllyCone(const float3& from, const float3& weaponDir, float length, float spread, int allyteam, CUnit* owner)
+bool CGameHelper::TestCone(
+	const float3& from,
+	const float3& weaponDir,
+	float length,
+	float spread,
+	const CUnit* owner,
+	unsigned int flags)
 {
-	int quads[1000];
+	int quads[1024];
 	int* endQuad = quads;
+
 	qf->GetQuadsOnRay(from, weaponDir, length, endQuad);
 
 	for (int* qi = quads; qi != endQuad; ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		for (std::list<CUnit*>::const_iterator ui = quad.teamUnits[allyteam].begin(); ui != quad.teamUnits[allyteam].end(); ++ui) {
+
+		const std::list<CUnit*>& units =
+			((flags & TEST_ALLIED) != 0)?
+			quad.teamUnits[owner->allyteam]:
+			quad.units;
+
+		for (std::list<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 			CUnit* u = *ui;
 
 			if (u == owner)
+				continue;
+
+			if ((flags & TEST_NEUTRAL) != 0 && !u->IsNeutral())
 				continue;
 
 			if (TestConeHelper(from, weaponDir, length, spread, u))
 				return true;
 		}
 	}
+
 	return false;
 }
 
-/** same as TestAllyCone, but looks for neutral units */
-bool CGameHelper::TestNeutralCone(const float3& from, const float3& weaponDir, float length, float spread, CUnit* owner)
-{
-	int quads[1000];
-	int* endQuad = quads;
-	qf->GetQuadsOnRay(from, weaponDir, length, endQuad);
-
-	for (int* qi = quads; qi != endQuad; ++qi) {
-		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-
-		for (std::list<CUnit*>::const_iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			CUnit* u = *ui;
-
-			if (u == owner)
-				continue;
-
-			if (u->IsNeutral()) {
-				if (TestConeHelper(from, weaponDir, length, spread, u))
-					return true;
-			}
-		}
-	}
-	return false;
-}
-
-
-/** helper for TestAllyCone and TestNeutralCone
-    @return true if the unit u is in the firing cone, false otherwise */
+/**
+    helper for TestCone
+    @return true if the unit u is in the firing cone
+*/
 bool CGameHelper::TestConeHelper(const float3& from, const float3& weaponDir, float length, float spread, const CUnit* u)
 {
 	// account for any offset, since we want to know if our shots might hit
@@ -1349,56 +1342,53 @@ bool CGameHelper::TestConeHelper(const float3& from, const float3& weaponDir, fl
 
 
 
-/** @return true if there is an allied unit within
+/** @return true if there is an allied or neutral unit within
     the firing trajectory of <owner> (that might be hit) */
-bool CGameHelper::TestTrajectoryAllyCone(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, int allyteam, CUnit* owner)
+bool CGameHelper::TestTrajectoryCone(
+	const float3& from,
+	const float3& flatdir,
+	float length,
+	float linear,
+	float quadratic,
+	float spread,
+	float baseSize,
+	const CUnit* owner,
+	unsigned int flags)
 {
-	int quads[1000];
+	int quads[1024];
 	int* endQuad = quads;
+
 	qf->GetQuadsOnRay(from, flatdir, length, endQuad);
 
 	for (int* qi = quads; qi != endQuad; ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		for (std::list<CUnit*>::const_iterator ui = quad.teamUnits[allyteam].begin(); ui != quad.teamUnits[allyteam].end(); ++ui) {
+
+		const std::list<CUnit*>& units =
+			((flags & TEST_ALLIED) != 0)?
+			quad.teamUnits[owner->allyteam]:
+			quad.units;
+
+		for (std::list<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 			CUnit* u = *ui;
 
 			if (u == owner)
+				continue;
+
+			if ((flags & TEST_NEUTRAL) != 0 && !u->IsNeutral())
 				continue;
 
 			if (TestTrajectoryConeHelper(from, flatdir, length, linear, quadratic, spread, baseSize, u))
 				return true;
 		}
 	}
+
 	return false;
 }
 
-/** same as TestTrajectoryAllyCone, but looks for neutral units */
-bool CGameHelper::TestTrajectoryNeutralCone(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, CUnit* owner)
-{
-	int quads[1000];
-	int* endQuad = quads;
-	qf->GetQuadsOnRay(from, flatdir, length, endQuad);
-
-	for (int* qi = quads; qi != endQuad; ++qi) {
-		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		for (std::list<CUnit*>::const_iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			CUnit* u = *ui;
-
-			if (u == owner)
-				continue;
-
-			if (u->IsNeutral()) {
-				if (TestTrajectoryConeHelper(from, flatdir, length, linear, quadratic, spread, baseSize, u))
-					return true;
-			}
-		}
-	}
-	return false;
-}
-
-
-/** helper for TestTrajectoryAllyCone and TestTrajectoryNeutralCone
-    @return true if the unit u is in the firing trajectory, false otherwise */
+/**
+    helper for TestTrajectoryCone
+    @return true if the unit u is in the firing trajectory
+*/
 bool CGameHelper::TestTrajectoryConeHelper(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, const CUnit* u)
 {
 	const CollisionVolume* cv = u->collisionVolume;

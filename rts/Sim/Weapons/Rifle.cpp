@@ -73,11 +73,10 @@ bool CRifle::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
 		(accuracy + sprayAngle) *
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 
-	if (helper->TestAllyCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, owner)) {
-		// note: check avoidFriendly?
+	if (avoidFriendly && helper->TestCone(weaponMuzzlePos, dir, length, spread, owner, CGameHelper::TEST_ALLIED)) {
 		return false;
 	}
-	if (avoidNeutral && helper->TestNeutralCone(weaponMuzzlePos, dir, length, spread, owner)) {
+	if (avoidNeutral && helper->TestCone(weaponMuzzlePos, dir, length, spread, owner, CGameHelper::TEST_NEUTRAL)) {
 		return false;
 	}
 

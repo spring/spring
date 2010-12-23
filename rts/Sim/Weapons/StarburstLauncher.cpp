@@ -78,12 +78,12 @@ bool CStarburstLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* un
 			return false;
 	}
 
-	if (avoidFriendly && helper->TestAllyCone(weaponMuzzlePos,
-		(weaponDef->fixedLauncher? weaponDir: UpVector), 100, 0, owner->allyteam, owner)) {
+	if (avoidFriendly && helper->TestCone(weaponMuzzlePos,
+		(weaponDef->fixedLauncher? weaponDir: UpVector), 100, 0, owner, CGameHelper::TEST_ALLIED)) {
 		return false;
 	}
-	if (avoidNeutral && helper->TestNeutralCone(weaponMuzzlePos,
-		(weaponDef->fixedLauncher? weaponDir: UpVector), 100, 0, owner)) {
+	if (avoidNeutral && helper->TestCone(weaponMuzzlePos,
+		(weaponDef->fixedLauncher? weaponDir: UpVector), 100, 0, owner, CGameHelper::TEST_NEUTRAL)) {
 		return false;
 	}
 
