@@ -83,10 +83,10 @@ bool CEmgCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 	if (avoidFeature && helper->LineFeatureCol(weaponMuzzlePos, dir, length)) {
 		return false;
 	}
-	if (avoidFriendly && helper->TestAllyCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, owner)) {
+	if (avoidFriendly && helper->TestCone(weaponMuzzlePos, dir, length, spread, owner, CGameHelper::TEST_ALLIED)) {
 		return false;
 	}
-	if (avoidNeutral && helper->TestNeutralCone(weaponMuzzlePos, dir, length, spread, owner)) {
+	if (avoidNeutral && helper->TestCone(weaponMuzzlePos, dir, length, spread, owner, CGameHelper::TEST_NEUTRAL)) {
 		return false;
 	}
 

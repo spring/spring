@@ -133,11 +133,11 @@ bool CBeamLaser::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 		return false;
 	}
 	if (avoidFriendly) {
-		if (helper->TestAllyCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, owner))
+		if (helper->TestCone(weaponMuzzlePos, dir, length, spread, owner, CGameHelper::TEST_ALLIED))
 			return false;
 	}
 	if (avoidNeutral) {
-		if (helper->TestNeutralCone(weaponMuzzlePos, dir, length, spread, owner))
+		if (helper->TestCone(weaponMuzzlePos, dir, length, spread, owner, CGameHelper::TEST_NEUTRAL))
 			return false;
 	}
 
