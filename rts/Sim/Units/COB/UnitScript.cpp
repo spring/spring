@@ -445,7 +445,7 @@ void CUnitScript::SetVisibility(int piece, bool visible)
 }
 
 
-void CUnitScript::EmitSfx(int type, int piece)
+void CUnitScript::EmitSfx(int sxfType, int piece)
 {
 #ifndef _CONSOLE
 	if (!PieceExists(piece)) {
@@ -453,17 +453,27 @@ void CUnitScript::EmitSfx(int type, int piece)
 		return;
 	}
 
-	if (ph->particleSaturation > 1 && type < 1024) {
+	if (ph->particleSaturation > 1.0f && sxfType < SFX_CEG) {
 		// skip adding (unsynced!) particles when we have too many
 		return;
 	}
 
+	// Make sure wakes are only emitted on water
+	if ((sxfType >= SFX_WAKE) && (sxfType <= SFX_REVERSE_WAKE_2)) {
+		if (ground->GetApproximateHeight(unit->pos.x, unit->pos.z) > 0.0f) {
+			return;
+		}
+	}
+
 	float3 relPos = ZeroVector;
 	float3 relDir = UpVector;
+
 	if (!GetEmitDirPos(piece, relPos, relDir)) {
 		ShowScriptError("emit-sfx: GetEmitDirPos failed");
 		return;
 	}
+
+	relDir.SafeNormalize();
 
 	const float3 pos =
 		unit->pos +
@@ -486,18 +496,9 @@ void CUnitScript::EmitSfx(int type, int piece)
 		alphaFalloff = 0.008f;
 	}
 
-	//Make sure wakes are only emitted on water
-	if ((type >= 2) && (type <= 5)) {
-		if (ground->GetApproximateHeight(unit->pos.x, unit->pos.z) > 0) {
-			return;
-		}
-	}
-
-	switch (type) {
+	switch (sxfType) {
 		case SFX_REVERSE_WAKE:
 		case SFX_REVERSE_WAKE_2: {  //reverse wake
-			relDir *= -0.2f;
-
 			new CWakeProjectile(
 				pos + gu->usRandVector() * 2.0f,
 				dir * 0.4f,
@@ -511,8 +512,6 @@ void CUnitScript::EmitSfx(int type, int piece)
 
 		case SFX_WAKE_2:  //wake 2, in TA it lives longer..
 		case SFX_WAKE: {  //regular ship wake
-			relDir *= 0.2f;
-
 			new CWakeProjectile(
 				pos + gu->usRandVector() * 2.0f,
 				dir * 0.4f,
@@ -545,17 +544,16 @@ void CUnitScript::EmitSfx(int type, int piece)
 		case SFX_BLACK_SMOKE:  //damaged unit smoke
 			new CSmokeProjectile(pos, gu->usRandVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, unit, 0.6f);
 			break;
-		case SFX_VTOL: {  //vtol
-			relDir *= 0.2f;
-
-			const float3 udir =
-				unit->frontdir * relDir.z +
-				unit->updir    * -fabs(relDir.y) +
-				unit->rightdir * relDir.x;
+		case SFX_VTOL: {
+			const float3 speed =
+				unit->speed    * 0.7f +
+				unit->frontdir * 0.5f *       relDir.z  +
+				unit->updir    * 0.5f * -fabs(relDir.y) +
+				unit->rightdir * 0.5f *       relDir.x;
 
 			CHeatCloudProjectile* hc = new CHeatCloudProjectile(
 				pos,
-				unit->speed * 0.7f + udir * 0.5f,
+				speed,
 				10 + gu->usRandFloat() * 5,
 				3 + gu->usRandFloat() * 2,
 				unit
@@ -564,22 +562,20 @@ void CUnitScript::EmitSfx(int type, int piece)
 			break;
 		}
 		default: {
-			if (type & SFX_CEG) {
+			if (sxfType & SFX_CEG) {
 				// emit defined explosiongenerator
-				const unsigned index = type - SFX_CEG;
+				const unsigned index = sxfType - SFX_CEG;
 				if (index >= unit->unitDef->sfxExplGens.size() || unit->unitDef->sfxExplGens[index] == NULL) {
 					ShowScriptError("Invalid explosion generator index for emit-sfx");
 					break;
 				}
 
-				float3 ndir = dir; 
-
 				CExplosionGenerator* explGen = unit->unitDef->sfxExplGens[index];
-				explGen->Explosion(pos, unit->cegDamage, 1, unit, 0, 0, ndir.SafeNormalize());
+				explGen->Explosion(pos, unit->cegDamage, 1, unit, 0, 0, dir);
 			}
-			else if (type & SFX_FIRE_WEAPON) {
+			else if (sxfType & SFX_FIRE_WEAPON) {
 				// make a weapon fire from the piece
-				const unsigned index = type - SFX_FIRE_WEAPON;
+				const unsigned index = sxfType - SFX_FIRE_WEAPON;
 				if (index >= unit->weapons.size() || unit->weapons[index] == NULL) {
 					ShowScriptError("Invalid weapon index for emit-sfx");
 					break;
@@ -590,13 +586,11 @@ void CUnitScript::EmitSfx(int type, int piece)
 				const float3 targetPos = weapon->targetPos;
 				const float3 weaponMuzzlePos = weapon->weaponMuzzlePos;
 
-				float3 ndir = dir;
-
 				// don't override the weapon's target position
 				// if it was not set internally (so that force-
 				// fire keeps working as expected)
 				if (!weapon->haveUserTarget) {
-					weapon->targetPos = pos + ndir.SafeNormalize();
+					weapon->targetPos = pos + dir;
 				}
 
 				weapon->weaponMuzzlePos = pos;
@@ -605,8 +599,8 @@ void CUnitScript::EmitSfx(int type, int piece)
 
 				weapon->targetPos = targetPos;
 			}
-			else if (type & SFX_DETONATE_WEAPON) {
-				const unsigned index = type - SFX_DETONATE_WEAPON;
+			else if (sxfType & SFX_DETONATE_WEAPON) {
+				const unsigned index = sxfType - SFX_DETONATE_WEAPON;
 				if (index >= unit->weapons.size() || unit->weapons[index] == NULL) {
 					ShowScriptError("Invalid weapon index for emit-sfx");
 					break;
