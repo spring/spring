@@ -95,9 +95,6 @@ enum NETMSG {
 
 	NETMSG_REQUEST_TEAMSTAT = 72, // uchar teamNum, ushort statFrameNum                   # used by LadderBot #
 
-	NETMSG_REGISTER_NETMSG	= 73, // uchar myPlayerNum, uchar NETMSG
-	NETMSG_UNREGISTER_NETMSG= 74, // uchar myPlayerNum, uchar NETMSG
-
 	NETMSG_CREATE_NEWPLAYER = 75, // uchar myPlayerNum, uchar spectator, uchar teamNum, std::string playerName #used for players not preset in script.txt#
 
 	NETMSG_AICOMMAND_TRACKED= 76  // uchar myPlayerNum; short unitID; int id; uchar options; int aiCommandId, std::vector<float> params;
@@ -204,9 +201,6 @@ public:
 
 	PacketType SendSetAllied(uchar myPlayerNum, uchar whichAllyTeam, uchar state);
 
-	PacketType SendRegisterNetMsg( uchar myPlayerNum, NETMSG msgID );
-	PacketType SendUnRegisterNetMsg( uchar myPlayerNum, NETMSG msgID );
-
 	PacketType SendCreateNewPlayer( uchar playerNum, bool spectator, uchar teamNum, std::string playerName );
 
 #ifdef SYNCDEBUG
@@ -222,3 +216,4 @@ private:
 };
 
 #endif // BASENETPROTOCOL_H
+
