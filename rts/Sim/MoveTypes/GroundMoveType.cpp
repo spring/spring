@@ -1488,9 +1488,6 @@ void CGroundMoveType::HandleObjectCollisions()
 		for (fit = nearFeatures.begin(); fit != nearFeatures.end(); ++fit) {
 			CFeature* collidee = const_cast<CFeature*>(*fit);
 
-			if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
-			if ((colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
-
 			const FeatureDef* collideeFD = collidee->def;
 			const float3& collideeCurPos = collidee->pos;
 			const float collideeRadius = FOOTPRINT_RADIUS(collideeFD->xsize, collideeFD->zsize);
@@ -1498,33 +1495,32 @@ void CGroundMoveType::HandleObjectCollisions()
 			const float3 separationVector = colliderCurPos - collideeCurPos;
 			const float separationMinDist = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
 
-			if ((separationVector.SqLength() - separationMinDist) <= 0.01f) {
-				eventHandler.UnitFeatureCollision(collider, collidee);
+			if ((separationVector.SqLength() - separationMinDist) >= 0.01f) { continue; }
+			if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
+			if (!colliderMM->CrushResistant(*colliderMD, collidee)) { collidee->Kill(collider->frontdir * currentSpeed * 200.0f); }
+			if ((colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
 
-				if (!colliderMM->CrushResistant(*colliderMD, collidee)) {
-					collidee->Kill(collider->frontdir * currentSpeed * 200.0f);
-				}
+			eventHandler.UnitFeatureCollision(collider, collidee);
 
-				const float  sepDistance    = (separationVector.Length() + 0.01f);
-				const float  penDistance    = (colliderRadius + collideeRadius) - sepDistance;
-				const float3 sepDirection   = (separationVector / sepDistance);
-				const float3 colResponseVec = sepDirection * (penDistance * 0.5f);
+			const float  sepDistance    = (separationVector.Length() + 0.01f);
+			const float  penDistance    = (colliderRadius + collideeRadius) - sepDistance;
+			const float3 sepDirection   = (separationVector / sepDistance);
+			const float3 colResponseVec = sepDirection * (penDistance * 0.5f);
 
-				// multiply the collider's mass by a large constant (so that
-				// heavy features do not bounce light units away like pinballs)
-				const float collisionMassSum  = collider->mass * 10000.0f + collidee->mass + 1.0f;
-				const float colliderMassScale = std::max(0.1f, std::min(0.9f, 1.0f - (collider->mass * 10000.0f / collisionMassSum)));
-				const float collideeMassScale = std::max(0.1f, std::min(0.9f, 1.0f - (collidee->mass            / collisionMassSum)));
+			// multiply the collider's mass by a large constant (so that
+			// heavy features do not bounce light units away like pinballs)
+			const float collisionMassSum  = collider->mass * 10000.0f + collidee->mass + 1.0f;
+			const float colliderMassScale = std::max(0.1f, std::min(0.9f, 1.0f - (collider->mass * 10000.0f / collisionMassSum)));
+			const float collideeMassScale = std::max(0.1f, std::min(0.9f, 1.0f - (collidee->mass            / collisionMassSum)));
 
-				if (collidee->reachedFinalPos && (colliderMassScale > collideeMassScale)) {
-					SWAP_MASS_SCALES(&colliderMassScale, &collideeMassScale);
-				}
-
-				collider->pos += (colResponseVec * colliderMassScale);
-			//	collidee->pos -= (colResponseVec * collideeMassScale);
-
-				collider->UpdateMidPos();
+			if (collidee->reachedFinalPos && (colliderMassScale > collideeMassScale)) {
+				SWAP_MASS_SCALES(&colliderMassScale, &collideeMassScale);
 			}
+
+			collider->pos += (colResponseVec * colliderMassScale);
+		//	collidee->pos -= (colResponseVec * collideeMassScale);
+
+			collider->UpdateMidPos();
 		}
 
 		#undef INSIDE_FOOTPRINT
