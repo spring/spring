@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef QUADFIELD_H
-#define QUADFIELD_H
+#ifndef QUAD_FIELD_H
+#define QUAD_FIELD_H
 
 #include <set>
 #include <vector>
@@ -36,8 +36,20 @@ public:
 	void GetQuadsOnRay(float3 start, float3 dir, float length, int*& dst);
 	void GetUnitsAndFeaturesExact(const float3& pos, float radius, CUnit**& dstUnit, CFeature**& dstFeature);
 
+	/**
+	 * Returns all units within @c radius of @c pos,
+	 * and treats each unit as a 3D point object
+	 */
 	std::vector<CUnit*> GetUnits(const float3& pos, float radius);
+	/**
+	 * Returns all units within @c radius of @c pos,
+	 * and takes the 3D model radius of each unit into account.
+	 */
 	std::vector<CUnit*> GetUnitsExact(const float3& pos, float radius, bool spherical = true);
+	/**
+	 * Returns all units within the rectangle defined by
+	 * mins and maxs, which extends infnitely along the y-axis.
+	 */
 	std::vector<CUnit*> GetUnitsExact(const float3& mins, const float3& maxs);
 
 	std::vector<CFeature*> GetFeaturesExact(const float3& pos, float radius);
@@ -57,8 +69,13 @@ public:
 		std::list<CFeature*> features;
 	};
 
-	const Quad& GetQuad(int i) const { assert(static_cast<unsigned>(i) < baseQuads.size()); return baseQuads[i]; }
-	const Quad& GetQuadAt(int x, int z) const { return baseQuads[numQuadsX * z + x]; }
+	const Quad& GetQuad(int i) const {
+		assert(static_cast<unsigned>(i) < baseQuads.size());
+		return baseQuads[i];
+	}
+	const Quad& GetQuadAt(int x, int z) const {
+		return baseQuads[numQuadsX * z + x];
+	}
 	int GetNumQuadsX() const { return numQuadsX; }
 	int GetNumQuadsZ() const { return numQuadsZ; }
 
@@ -73,4 +90,4 @@ private:
 
 extern CQuadField* qf;
 
-#endif /* QUADFIELD_H */
+#endif /* QUAD_FIELD_H */

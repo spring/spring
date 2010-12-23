@@ -23,6 +23,7 @@ public:
 	virtual void Update();
 	virtual void Init(const float3& explosionPos, CUnit* owner);
 
+protected:
 	float3 emitVector;
 	float3 emitMul;
 	float3 gravity;
@@ -75,10 +76,9 @@ public:
 	CSphereParticleSpawner();
 	~CSphereParticleSpawner();
 
-	void Draw() {};
-	void Update() {};
+	void Draw() {}
+	void Update() {}
 	virtual void Init(const float3& explosionPos, CUnit* owner);
-
 };
 
 #endif // SIMPLE_PARTICLE_SYSTEM_H

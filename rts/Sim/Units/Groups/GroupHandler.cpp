@@ -72,48 +72,21 @@ void CGroupHandler::GroupCommand(int num)
 {
 	GML_RECMUTEX_LOCK(grpsel); // GroupCommand
 
+	std::string cmd = "";
+
 	if (keys[SDLK_LCTRL]) {
 		if (!keys[SDLK_LSHIFT]) {
-			groups[num]->ClearUnits();
+			cmd = "set";
+		} else {
+			cmd = "add";
 		}
-		const CUnitSet& selUnits = selectedUnits.selectedUnits;
-		CUnitSet::const_iterator ui;
-		for(ui = selUnits.begin(); ui != selUnits.end(); ++ui) {
-			(*ui)->SetGroup(groups[num]);
-		}
-	}
-	else if (keys[SDLK_LSHIFT])  {
-		// do not select the group, just add its members to the current selection
-		CUnitSet::const_iterator gi;
-		for (gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
-			selectedUnits.AddUnit(*gi);
-		}
-		return;
-	}
-	else if (keys[SDLK_LALT]) {// || keys[SDLK_LMETA])  {
-		// do not select the group, just toggle its members with the current selection
-		const CUnitSet& selUnits = selectedUnits.selectedUnits;
-		CUnitSet::const_iterator gi;
-		for (gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
-			if (selUnits.find(*gi) == selUnits.end()) {
-				selectedUnits.AddUnit(*gi);
-			} else {
-				selectedUnits.RemoveUnit(*gi);
-			}
-		}
-		return;
+	} else if (keys[SDLK_LSHIFT])  {
+		cmd = "selectadd";
+	} else if (keys[SDLK_LALT]) {// || keys[SDLK_LMETA])  {
+		cmd = "selecttoggle";
 	}
 
-	if ((selectedUnits.selectedGroup == num) && !groups[num]->units.empty()) {
-		float3 p(0.0f, 0.0f, 0.0f);
-		for (CUnitSet::iterator gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
-			p += (*gi)->pos;
-		}
-		p /= groups[num]->units.size();
-		camHandler->GetCurrentController().SetPos(p);
-	}
-
-	selectedUnits.SelectGroup(num);
+	GroupCommand(num, cmd);
 }
 
 void CGroupHandler::GroupCommand(int num, const std::string& cmd)

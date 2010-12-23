@@ -108,7 +108,7 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 	ph->AddProjectile(this);
 }
 
-CWeaponProjectile::~CWeaponProjectile(void)
+CWeaponProjectile::~CWeaponProjectile()
 {
 }
 

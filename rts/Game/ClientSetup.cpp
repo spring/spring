@@ -12,7 +12,7 @@
 #endif
 
 static const unsigned int DEFAULT_HOST_PORT = 8452;
-static const std::string DEFAULT_HOST_IP = "localhost";
+static const std::string DEFAULT_HOST_IP = ""; // -> any local address
 static const std::string DEFAULT_HOST_PORT_STR = IntToString(DEFAULT_HOST_PORT);
 
 ClientSetup::ClientSetup():

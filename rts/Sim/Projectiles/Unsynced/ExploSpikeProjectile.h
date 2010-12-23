@@ -21,6 +21,7 @@ public:
 
 	virtual void Init(const float3& pos, CUnit* owner);
 
+private:
 	float length;
 	float width;
 	float alpha;

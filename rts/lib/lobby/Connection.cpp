@@ -9,6 +9,7 @@
 #include <bitset>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
+#include "System/Net/Socket.h"
 #include "lib/md5/md5.h"
 #include "lib/md5/base64.h"
 #include "lib/streflop/streflop_cond.h"
@@ -39,13 +40,7 @@ void Connection::Connect(const std::string& server, int port)
 {
 	using namespace boost::asio;
 	boost::system::error_code err;
-	ip::address tempAddr = ip::address::from_string(server, err);
-#ifdef STREFLOP_H
-	//! (date of note: 08/05/10)
-	//! something in from_string() is invalidating the FPU flags
-	//! tested on win2k and linux (not happening there)
-	streflop_init<streflop::Simple>();
-#endif
+	ip::address tempAddr = netcode::WrapIP(server, &err);
 	if (err)
 	{
 		// error, maybe a hostname?
@@ -53,12 +48,7 @@ void Connection::Connect(const std::string& server, int port)
 		std::ostringstream portbuf;
 		portbuf << port;
 		ip::tcp::resolver::query query(server, portbuf.str());
-		ip::tcp::resolver::iterator iter = resolver.resolve(query, err);
-#ifdef STREFLOP_H
-		//! (date of note: 08/22/10)
-		//! something in resolve() is invalidating the FPU flags
-		streflop_init<streflop::Simple>();
-#endif
+		ip::tcp::resolver::iterator iter = netcode::WrapResolve(resolver, query, &err);
 		if (err)
 		{
 			DoneConnecting(false, err.message());

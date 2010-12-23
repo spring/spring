@@ -41,13 +41,7 @@ boost::asio::ip::udp::endpoint ResolveAddr(const std::string& ip, int port)
 {
 	using namespace boost::asio;
 	boost::system::error_code err;
-	ip::address tempAddr = ip::address::from_string(ip, err);
-#ifdef STREFLOP_H
-	//! (date of note: 08/05/10)
-	//! something in from_string() is invalidating the FPU flags
-	//! tested on win2k and linux (not happening there)
-	streflop_init<streflop::Simple>();
-#endif
+	ip::address tempAddr = WrapIP(ip, &err);
 	if (err)
 	{
 		// error, maybe a hostname?
@@ -60,6 +54,55 @@ boost::asio::ip::udp::endpoint ResolveAddr(const std::string& ip, int port)
 	}
 
 	return ip::udp::endpoint(tempAddr, port);
+}
+
+bool IsLoopbackAddress(const boost::asio::ip::address& addr) {
+
+	if (addr.is_v6()) {
+		return addr.to_v6().is_loopback();
+	} else {
+		return (addr.to_v4() == boost::asio::ip::address_v4::loopback());
+	}
+}
+
+boost::asio::ip::address WrapIP(const std::string& ip, boost::system::error_code* err) {
+
+	boost::asio::ip::address addr;
+
+	if (err == NULL) {
+		addr = boost::asio::ip::address::from_string(ip);
+	} else {
+		addr = boost::asio::ip::address::from_string(ip, *err);
+	}
+#ifdef STREFLOP_H
+	//! (date of note: 08/05/10)
+	//! something in from_string() is invalidating the FPU flags
+	//! tested on win2k and linux (not happening there)
+	streflop_init<streflop::Simple>();
+#endif
+
+	return addr;
+}
+
+boost::asio::ip::tcp::resolver::iterator WrapResolve(
+		boost::asio::ip::tcp::resolver& resolver,
+		boost::asio::ip::tcp::resolver::query& query,
+		boost::system::error_code* err)
+{
+	boost::asio::ip::tcp::resolver::iterator resolveIt;
+
+	if (err == NULL) {
+		resolveIt = resolver.resolve(query);
+	} else {
+		resolveIt = resolver.resolve(query, *err);
+	}
+#ifdef STREFLOP_H
+	//! (date of note: 08/22/10)
+	//! something in resolve() is invalidating the FPU flags
+	streflop_init<streflop::Simple>();
+#endif
+
+	return resolveIt;
 }
 
 } // namespace netcode

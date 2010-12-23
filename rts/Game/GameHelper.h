@@ -27,10 +27,23 @@ public:
 	CGameHelper();
 	~CGameHelper();
 
-	bool TestAllyCone(const float3& from, const float3& dir, float length, float spread, int allyteam, CUnit* owner);
-	bool TestNeutralCone(const float3& from, const float3& dir, float length, float spread, CUnit* owner);
-	bool TestTrajectoryAllyCone(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, int allyteam, CUnit* owner);
-	bool TestTrajectoryNeutralCone(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, CUnit* owner);
+	bool TestCone(
+		const float3& from,
+		const float3& dir,
+		float length,
+		float spread,
+		const CUnit* owner,
+		unsigned int flags);
+	bool TestTrajectoryCone(
+		const float3& from,
+		const float3& flatdir,
+		float length,
+		float linear,
+		float quadratic,
+		float spread,
+		float baseSize,
+		const CUnit* owner,
+		unsigned int flags);
 
 	void GetEnemyUnits(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
 	void GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
@@ -64,6 +77,11 @@ public:
 
 	//get the position of a unit + eventuall error due to lack of los
 	float3 GetUnitErrorPos(const CUnit* unit, int allyteam);
+
+	enum {
+		TEST_ALLIED  = 1,
+		TEST_NEUTRAL = 2,
+	};
 
 protected:
 	CExplosionGenerator *stdExplosionGenerator;
@@ -100,8 +118,21 @@ protected:
 	std::list<WaitingDamage*> waitingDamages[128];
 
 private:
-	bool TestConeHelper(const float3& from, const float3& dir, float length, float spread, const CUnit* u);
-	bool TestTrajectoryConeHelper(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, const CUnit* u);
+	bool TestConeHelper(
+		const float3& from,
+		const float3& dir,
+		float length,
+		float spread,
+		const CUnit* u);
+	bool TestTrajectoryConeHelper(
+		const float3& from,
+		const float3& flatdir,
+		float length,
+		float linear,
+		float quadratic,
+		float spread,
+		float baseSize,
+		const CUnit* u);
 };
 
 extern CGameHelper* helper;

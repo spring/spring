@@ -12,7 +12,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 
-CR_BIND_DERIVED(CFlameProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),float3(0,0,0),NULL,NULL,0));
+CR_BIND_DERIVED(CFlameProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, ZeroVector, NULL, NULL, 0));
 
 CR_REG_METADATA(CFlameProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -31,7 +31,7 @@ CFlameProjectile::CFlameProjectile(
 	const float3& pos, const float3& speed, const float3& spread,
 	CUnit* owner, const WeaponDef* weaponDef, int ttl):
 
-	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, ttl),
+	CWeaponProjectile(pos, speed, owner, NULL, ZeroVector, weaponDef, NULL, ttl),
 	color(color),
 	color2(color2),
 	intensity(intensity),
@@ -42,7 +42,7 @@ CFlameProjectile::CFlameProjectile(
 	invttl = 1.0f / ttl;
 
 	if (weaponDef) {
-		SetRadius(weaponDef->size*weaponDef->collisionSize);
+		SetRadius(weaponDef->size * weaponDef->collisionSize);
 		drawRadius = weaponDef->size;
 		physLife = 1.0f / weaponDef->duration;
 	}
@@ -52,18 +52,18 @@ CFlameProjectile::CFlameProjectile(
 	}
 }
 
-CFlameProjectile::~CFlameProjectile(void)
+CFlameProjectile::~CFlameProjectile()
 {
 }
 
-void CFlameProjectile::Collision(void)
+void CFlameProjectile::Collision()
 {
 	if (ground->GetHeightReal(pos.x, pos.z) < pos.y && weaponDef->waterweapon) {
 		// prevent waterweapons from colliding with water
 		return;
 	}
-	float3 norm = ground->GetNormal(pos.x, pos.z);
-	float ns = speed.dot(norm);
+	const float3 norm = ground->GetNormal(pos.x, pos.z);
+	const float ns = speed.dot(norm);
 	speed -= (norm * ns);
 	pos.y += 0.05f;
 	curTime += 0.05f;
@@ -74,7 +74,7 @@ void CFlameProjectile::Collision(CUnit* unit)
 	CWeaponProjectile::Collision(unit);
 }
 
-void CFlameProjectile::Update(void)
+void CFlameProjectile::Update()
 {
 	if (!luaMoveCtrl) {
 		pos += speed;
@@ -87,19 +87,20 @@ void CFlameProjectile::Update(void)
 	drawRadius = radius * weaponDef->collisionSize;
 
 	curTime += invttl;
-	if (curTime > physLife)
+	if (curTime > physLife) {
 		checkCol = false;
+	}
 	if (curTime > 1) {
 		curTime = 1;
 		deleteMe = true;
 	}
 
 	if (!cegTag.empty()) {
-		ceg.Explosion(pos, curTime, intensity, 0x0, 0.0f, 0x0, speed);
+		ceg.Explosion(pos, curTime, intensity, NULL, 0.0f, NULL, speed);
 	}
 }
 
-void CFlameProjectile::Draw(void)
+void CFlameProjectile::Draw()
 {
 	inArray = true;
 	unsigned char col[4];

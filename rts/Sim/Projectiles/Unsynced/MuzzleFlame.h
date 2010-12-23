@@ -11,12 +11,14 @@ class CMuzzleFlame : public CProjectile
 
 	void creg_Serialize(creg::ISerializer& s);
 public:
-	CMuzzleFlame(const float3& pos, const float3& speed, const float3& dir, float size);
+	CMuzzleFlame(const float3& pos, const float3& speed, const float3& dir,
+			float size);
 	~CMuzzleFlame();
 
 	void Draw();
 	void Update();
 
+private:
 	float3 dir;
 	float size;
 	int age;

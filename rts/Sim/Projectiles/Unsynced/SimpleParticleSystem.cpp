@@ -194,8 +194,8 @@ void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit* owner)
 	float3 forward = up.cross(right);
 
 	for (int i = 0; i < numParticles; i++) {
-		float az = gu->usRandFloat() * 2 * PI;
-		float ay = (emitRot + emitRotSpread*gu->usRandFloat()) * (PI / 180.0);
+		const float az = gu->usRandFloat() * 2 * PI;
+		const float ay = (emitRot + emitRotSpread*gu->usRandFloat()) * (PI / 180.0);
 
 		float3 pspeed = ((up * emitMul.y) * cos(ay) - ((right * emitMul.x) * cos(az) - (forward * emitMul.z) * sin(az)) * sin(ay)) * (particleSpeed + (gu->usRandFloat() * particleSpeedSpread));
 
