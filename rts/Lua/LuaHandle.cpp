@@ -1036,25 +1036,45 @@ void CLuaHandle::UnitDecloaked(const CUnit* unit)
 
 void CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 {
-	static const LuaHashString cmdStr("UnitUnitCollision");
+	if (fullRead) {
+		lua_checkstack(L, 4);
 
-	if (cmdStr.GetGlobalFunc(L)) {
+		static const LuaHashString cmdStr("UnitUnitCollision");
+		const int errFunc = SetupTraceback();
+
+		if (!cmdStr.GetGlobalFunc(L)) {
+			if (errFunc != 0) {
+				lua_pop(L, 1);
+			}
+			return;
+		}
+
 		lua_pushnumber(L, collider->id);
 		lua_pushnumber(L, collidee->id);
 
-		RunCallInTraceback(cmdStr, 2, 0, 0);
+		RunCallInTraceback(cmdStr, 2, 0, errFunc);
 	}
 }
 
 void CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* collidee)
 {
-	static const LuaHashString cmdStr("UnitFeatureCollision");
+	if (fullRead) {
+		lua_checkstack(L, 4);
 
-	if (cmdStr.GetGlobalFunc(L)) {
+		static const LuaHashString cmdStr("UnitFeatureCollision");
+		const int errFunc = SetupTraceback();
+
+		if (!cmdStr.GetGlobalFunc(L)) {
+			if (errFunc != 0) {
+				lua_pop(L, 1);
+			}
+			return;
+		}
+
 		lua_pushnumber(L, collider->id);
 		lua_pushnumber(L, collidee->id);
 
-		RunCallInTraceback(cmdStr, 2, 0, 0);
+		RunCallInTraceback(cmdStr, 2, 0, errFunc);
 	}
 }
 
