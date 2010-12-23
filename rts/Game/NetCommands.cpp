@@ -799,6 +799,7 @@ void CGame::ClientReadNet()
 					case TEAMMSG_TEAM_DIED: {
 						// silently drop since we can calculate this ourself, altho it's useful info to store in replays
 						break;
+					}
 					default: {
 						logOutput.Print("Unknown action in NETMSG_TEAM (%i) from player %i", action, player);
 					}
@@ -806,7 +807,11 @@ void CGame::ClientReadNet()
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
-
+			case NETMSG_GAMEOVER: {
+				// silently drop since we can calculate this ourself, altho it's useful info to store in replays
+				AddTraffic(player, packetCode, dataLength);
+				break;
+			}
 			case NETMSG_TEAMSTAT: { /* LadderBot (dedicated client) only */ } break;
 			case NETMSG_REQUEST_TEAMSTAT: { /* LadderBot (dedicated client) only */ } break;
 
