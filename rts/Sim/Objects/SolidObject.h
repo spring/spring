@@ -22,7 +22,6 @@ public:
 		Floating,
 		Hovering,
 		Flying,
-		Submarine
 	};
 
 	CSolidObject();
