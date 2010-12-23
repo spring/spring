@@ -1298,7 +1298,7 @@ bool CGameHelper::TestCone(
 			quad.units;
 
 		for (std::list<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
-			CUnit* u = *ui;
+			const CUnit* u = *ui;
 
 			if (u == owner)
 				continue;
@@ -1369,7 +1369,7 @@ bool CGameHelper::TestTrajectoryCone(
 			quad.units;
 
 		for (std::list<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
-			CUnit* u = *ui;
+			const CUnit* u = *ui;
 
 			if (u == owner)
 				continue;
