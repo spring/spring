@@ -796,6 +796,9 @@ void CGame::ClientReadNet()
 						eventHandler.PlayerChanged(player);
 						break;
 					}
+					case TEAMMSG_TEAM_DIED: {
+						// silently drop since we can calculate this ourself, altho it's useful info to store in replays
+						break;
 					default: {
 						logOutput.Print("Unknown action in NETMSG_TEAM (%i) from player %i", action, player);
 					}
@@ -1099,3 +1102,4 @@ void CGame::ClientReadNet()
 
 	return;
 }
+
