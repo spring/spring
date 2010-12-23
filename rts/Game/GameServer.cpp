@@ -150,7 +150,7 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	whiteListAdditionalPlayers = configHandler->Get("WhiteListAdditionalPlayers", true);
 
 	if (!setup->onlyLocal) {
-		UDPNet.reset(new netcode::UDPListener(hostIP, hostPort));
+		UDPNet.reset(new netcode::UDPListener(hostPort, hostIP));
 	}
 
 	const std::string& autohostip = configHandler->Get("AutohostIP", std::string("localhost"));
