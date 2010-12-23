@@ -1435,6 +1435,10 @@ void CGroundMoveType::HandleObjectCollisions()
 			bool pushCollider = true;
 			bool pushCollidee = collideeMobile;
 
+			const float3 separationVector = colliderCurPos - collideeCurPos;
+			const float separationMinDist = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
+
+			if ((separationVector.SqLength() - separationMinDist) > 0.01f) { continue; }
 			if (collidee->usingScriptMoveType) { pushCollidee = false; }
 			if (collideeUD->pushResistant) { pushCollidee = false; }
 			if (!teamHandler->Ally(collider->allyteam, collidee->allyteam)) { pushCollider = false; pushCollidee = false; }
@@ -1442,42 +1446,37 @@ void CGroundMoveType::HandleObjectCollisions()
 			if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
 			if (!collideeMobile && (colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
 
-			const float3 separationVector = colliderCurPos - collideeCurPos;
-			const float separationMinDist = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
+			eventHandler.UnitUnitCollision(collider, collidee);
 
-			if ((separationVector.SqLength() - separationMinDist) <= 0.01f) {
-				eventHandler.UnitUnitCollision(collider, collidee);
+			const float  sepDistance    = (separationVector.Length() + 0.01f);
+			const float  penDistance    = (colliderRadius + collideeRadius) - sepDistance;
+			const float3 sepDirection   = (separationVector / sepDistance);
+			const float3 colResponseVec = sepDirection * (penDistance * 0.5f);
 
-				const float  sepDistance    = (separationVector.Length() + 0.01f);
-				const float  penDistance    = (colliderRadius + collideeRadius) - sepDistance;
-				const float3 sepDirection   = (separationVector / sepDistance);
-				const float3 colResponseVec = sepDirection * (penDistance * 0.5f);
+			const float
+				m1 = collider->mass,
+				m2 = collidee->mass,
+				v1 = std::max(1.0f, collider->speed.Length()), // TODO: precalculate
+				v2 = std::max(1.0f, collidee->speed.Length()), // TODO: precalculate
+				c1 = 1.0f + (1.0f - math::fabs(collider->frontdir.dot(-sepDirection))) * 5.0f,
+				c2 = 1.0f + (1.0f - math::fabs(collidee->frontdir.dot( sepDirection))) * 5.0f,
+				s1 = m1 * v1 * c1,
+				s2 = m2 * v2 * c2;
 
-				const float
-					m1 = collider->mass,
-					m2 = collidee->mass,
-					v1 = std::max(1.0f, collider->speed.Length()), // TODO: precalculate
-					v2 = std::max(1.0f, collidee->speed.Length()), // TODO: precalculate
-					c1 = 1.0f + (1.0f - math::fabs(collider->frontdir.dot(-sepDirection))) * 5.0f,
-					c2 = 1.0f + (1.0f - math::fabs(collidee->frontdir.dot( sepDirection))) * 5.0f,
-					s1 = m1 * v1 * c1,
-					s2 = m2 * v2 * c2;
+			// far from a realistic treatment, but works
+			const float collisionMassSum  = s1 + s2 + 1.0f;
+			const float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s1 / collisionMassSum)));
+			const float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s2 / collisionMassSum)));
 
-				// far from a realistic treatment, but works
-				const float collisionMassSum  = s1 + s2 + 1.0f;
-				const float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s1 / collisionMassSum)));
-				const float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s2 / collisionMassSum)));
-
-				if (!collideeMobile && (colliderMassScale > collideeMassScale)) {
-					SWAP_MASS_SCALES(&colliderMassScale, &collideeMassScale);
-				}
-
-				if (pushCollider) { collider->pos += (colResponseVec * colliderMassScale); } else { collider->pos = colliderOldPos; }
-				if (pushCollidee) { collidee->pos -= (colResponseVec * collideeMassScale); } else { collidee->pos = collideeOldPos; }
-
-				collider->UpdateMidPos();
-				collidee->UpdateMidPos();
+			if (!collideeMobile && (colliderMassScale > collideeMassScale)) {
+				SWAP_MASS_SCALES(&colliderMassScale, &collideeMassScale);
 			}
+
+			if (pushCollider) { collider->pos += (colResponseVec * colliderMassScale); } else { collider->pos = colliderOldPos; }
+			if (pushCollidee) { collidee->pos -= (colResponseVec * collideeMassScale); } else { collidee->pos = collideeOldPos; }
+
+			collider->UpdateMidPos();
+			collidee->UpdateMidPos();
 
 			if (!((gs->frameNum + collider->id) & 31) && !collider->commandAI->unimportantMove) {
 				// if we do not have an internal move order, tell units around us to bugger off
@@ -1495,7 +1494,7 @@ void CGroundMoveType::HandleObjectCollisions()
 			const float3 separationVector = colliderCurPos - collideeCurPos;
 			const float separationMinDist = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
 
-			if ((separationVector.SqLength() - separationMinDist) >= 0.01f) { continue; }
+			if ((separationVector.SqLength() - separationMinDist) > 0.01f) { continue; }
 			if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
 			if (!colliderMM->CrushResistant(*colliderMD, collidee)) { collidee->Kill(collider->frontdir * currentSpeed * 200.0f); }
 			if ((colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
