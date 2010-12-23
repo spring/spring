@@ -2412,7 +2412,8 @@ int LuaSyncedRead::GetUnitArmored(lua_State* L)
 		return 0;
 	}
 	lua_pushboolean(L, unit->armoredState);
-	return 1;
+	lua_pushnumber(L, unit->armoredMultiple);
+	return 2;
 }
 
 
