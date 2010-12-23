@@ -1489,7 +1489,6 @@ void CGroundMoveType::HandleObjectCollisions()
 			CFeature* collidee = const_cast<CFeature*>(*fit);
 
 			if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
-			if (!colliderMM->CrushResistant(*colliderMD, collidee)) { collidee->Kill(collider->frontdir * currentSpeed * 200.0f); }
 			if ((colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
 
 			const FeatureDef* collideeFD = collidee->def;
@@ -1501,6 +1500,10 @@ void CGroundMoveType::HandleObjectCollisions()
 
 			if ((separationVector.SqLength() - separationMinDist) <= 0.01f) {
 				eventHandler.UnitFeatureCollision(collider, collidee);
+
+				if (!colliderMM->CrushResistant(*colliderMD, collidee)) {
+					collidee->Kill(collider->frontdir * currentSpeed * 200.0f);
+				}
 
 				const float  sepDistance    = (separationVector.Length() + 0.01f);
 				const float  penDistance    = (colliderRadius + collideeRadius) - sepDistance;
