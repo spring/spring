@@ -41,13 +41,7 @@ boost::asio::ip::udp::endpoint ResolveAddr(const std::string& ip, int port)
 {
 	using namespace boost::asio;
 	boost::system::error_code err;
-	ip::address tempAddr = ip::address::from_string(ip, err);
-#ifdef STREFLOP_H
-	//! (date of note: 08/05/10)
-	//! something in from_string() is invalidating the FPU flags
-	//! tested on win2k and linux (not happening there)
-	streflop_init<streflop::Simple>();
-#endif
+	ip::address tempAddr = WrapIP(ip, &err);
 	if (err)
 	{
 		// error, maybe a hostname?
@@ -69,6 +63,25 @@ bool IsLoopbackAddress(const boost::asio::ip::address& addr) {
 	} else {
 		return (addr.to_v4() == boost::asio::ip::address_v4::loopback());
 	}
+}
+
+boost::asio::ip::address WrapIP(const std::string& ip, boost::system::error_code* err) {
+
+	boost::asio::ip::address addr;
+
+	if (err == NULL) {
+		addr = boost::asio::ip::address::from_string(ip);
+	} else {
+		addr = boost::asio::ip::address::from_string(ip, *err);
+	}
+#ifdef STREFLOP_H
+	//! (date of note: 08/05/10)
+	//! something in from_string() is invalidating the FPU flags
+	//! tested on win2k and linux (not happening there)
+	streflop_init<streflop::Simple>();
+#endif
+
+	return addr;
 }
 
 } // namespace netcode

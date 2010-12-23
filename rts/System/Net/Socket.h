@@ -20,6 +20,12 @@ boost::asio::ip::udp::endpoint ResolveAddr(const std::string& ip, int port);
  */
 bool IsLoopbackAddress(const boost::asio::ip::address& addr);
 
+/**
+ * Encapsulates the ip::address::from_string(str) function,
+ * for sync relevant reasons.
+ */
+boost::asio::ip::address WrapIP(const std::string& ip, boost::system::error_code* err = NULL);
+
 } // namespace netcode
 
 #endif
