@@ -150,7 +150,7 @@ void UDPListener::Update()
 
 boost::shared_ptr<UDPConnection> UDPListener::SpawnConnection(const std::string& address, const unsigned port)
 {
-	boost::shared_ptr<UDPConnection> temp(new UDPConnection(mySocket, ip::udp::endpoint(ip::address_v4::from_string(address), port)));
+	boost::shared_ptr<UDPConnection> temp(new UDPConnection(mySocket, ip::udp::endpoint(WrapIP(address), port)));
 	conn.push_back(temp);
 	return temp;
 }
