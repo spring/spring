@@ -12,7 +12,7 @@
 #include "Sim/Units/Unit.h"
 #include "System/GlobalUnsynced.h"
 
-CR_BIND_DERIVED(CRepulseGfx, CProjectile, (NULL, NULL, 0, ZeroVector));
+CR_BIND_DERIVED(CRepulseGfx, CProjectile, (NULL, NULL, 0.0f, ZeroVector));
 
 CR_REG_METADATA(CRepulseGfx,(
 	CR_MEMBER(repulsed),

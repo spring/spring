@@ -10,7 +10,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
-CR_BIND_DERIVED(CShieldPartProjectile, CProjectile, (ZeroVector, 0, 0, 0, ZeroVector, 0, NULL, NULL));
+CR_BIND_DERIVED(CShieldPartProjectile, CProjectile, (ZeroVector, 0, 0, 0.0f, ZeroVector, 0.0f, NULL, NULL));
 
 CR_REG_METADATA(CShieldPartProjectile,(
 	CR_MEMBER(centerPos),

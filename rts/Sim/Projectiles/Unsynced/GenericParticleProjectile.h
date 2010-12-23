@@ -13,7 +13,8 @@ class CGenericParticleProjectile : public CProjectile
 	CR_DECLARE(CGenericParticleProjectile);
 
 public:
-	CGenericParticleProjectile(const float3& pos, const float3& speed, CUnit* owner);
+	CGenericParticleProjectile(const float3& pos, const float3& speed,
+			CUnit* owner);
 	~CGenericParticleProjectile();
 
 	virtual void Draw();

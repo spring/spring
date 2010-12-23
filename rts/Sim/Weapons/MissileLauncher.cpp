@@ -117,10 +117,10 @@ bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 		if (gc > 0)
 			return false;
 
-		if (avoidFriendly && helper->TestTrajectoryAllyCone(weaponMuzzlePos, flatdir, flatlength - 30, linear, quadratic, 0, 8, owner->allyteam, owner)) {
+		if (avoidFriendly && helper->TestTrajectoryCone(weaponMuzzlePos, flatdir, flatlength - 30, linear, quadratic, 0, 8, owner, CGameHelper::TEST_ALLIED)) {
 			return false;
 		}
-		if (avoidNeutral && helper->TestTrajectoryNeutralCone(weaponMuzzlePos, flatdir, flatlength - 30, linear, quadratic, 0, 8, owner)) {
+		if (avoidNeutral && helper->TestTrajectoryCone(weaponMuzzlePos, flatdir, flatlength - 30, linear, quadratic, 0, 8, owner, CGameHelper::TEST_NEUTRAL)) {
 			return false;
 		}
 	} else {
@@ -142,10 +142,10 @@ bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 				return false;
 		}
 
-		if (avoidFriendly && helper->TestAllyCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, owner)) {
+		if (avoidFriendly && helper->TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner, CGameHelper::TEST_ALLIED)) {
 			return false;
 		}
-		if (avoidNeutral && helper->TestNeutralCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner)) {
+		if (avoidNeutral && helper->TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner, CGameHelper::TEST_NEUTRAL)) {
 			return false;
 		}
 	}

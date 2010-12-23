@@ -16,7 +16,7 @@
 #include "System/myMath.h"
 #include "System/GlobalUnsynced.h"
 
-CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, (ZeroVector, ZeroVector, ZeroVector, ZeroVector, NULL, 0, 0, 0, 0, 0, 0, NULL, NULL));
+CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, (ZeroVector, ZeroVector, ZeroVector, ZeroVector, NULL, false, false, 0.0f, 0, 0.0f, false, NULL, NULL));
 
 CR_REG_METADATA(CSmokeTrailProjectile,(
 	CR_MEMBER(pos1),
@@ -53,7 +53,7 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 	bool firstSegment,
 	bool lastSegment,
 	float size,
-	float time,
+	int time,
 	float color,
 	bool drawTrail,
 	CProjectile* drawCallback,
@@ -64,7 +64,7 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 	pos2(pos2),
 	orgSize(size),
 	creationTime(gs->frameNum),
-	lifeTime((int)time),
+	lifeTime(time),
 	color(color),
 	dir1(dir1),
 	dir2(dir2),
@@ -78,9 +78,9 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 	checkCol = false;
 	castShadow = true;
 
-	//if no custom texture is defined, use the default texture
-	//Note that this will crash anyway (no idea why) so never have a null texture!
-	if (texture == 0) {
+	// if no custom texture is defined, use the default texture
+	// Note that this will crash anyway (no idea why) so never have a null texture!
+	if (texture == NULL) {
 		texture = projectileDrawer->smoketrailtex;
 	}
 
@@ -113,9 +113,9 @@ void CSmokeTrailProjectile::Draw()
 {
 	inArray = true;
 	float age = gs->frameNum + globalRendering->timeOffset - creationTime;
-	va->EnlargeArrays(8*4, 0, VA_SIZE_TC);
+	va->EnlargeArrays(8 * 4, 0, VA_SIZE_TC);
 
-	if(drawTrail){
+	if (drawTrail) {
 		float3 dif(pos1-camera->pos2);
 		dif.ANormalize();
 		float3 odir1(dif.cross(dir1));
@@ -162,34 +162,34 @@ void CSmokeTrailProjectile::Draw()
 			unsigned char col3[4];
 			float a2 = (1 - (float)(age + 4) / lifeTime) * 255;
 			a2 *= 0.7f + fabs(dif3.dot(middir));
-			alpha = std::min(255.f, std::max(0.f, a2));
+			alpha = std::min(255.0f, std::max(0.0f, a2));
 			col3[0] = (unsigned char) (color * alpha);
 			col3[1] = (unsigned char) (color * alpha);
 			col3[2] = (unsigned char) (color * alpha);
 			col3[3] = (unsigned char) alpha;
 
-			const float midtexx = texture->xstart + (texture->xend - texture->xstart)*0.5f;
+			const float midtexx = texture->xstart + ((texture->xend - texture->xstart) * 0.5f);
 
-			va->AddVertexQTC(pos1 -   odir1 * size,  texture->xstart, texture->ystart, col);
-			va->AddVertexQTC(pos1 +   odir1 * size,  texture->xstart, texture->yend,   col);
-			va->AddVertexQTC(midpos + odir3 * size3, midtexx,         texture->yend,   col3);
-			va->AddVertexQTC(midpos - odir3 * size3, midtexx,         texture->ystart, col3);
+			va->AddVertexQTC(pos1   - (odir1 * size),  texture->xstart, texture->ystart, col);
+			va->AddVertexQTC(pos1   + (odir1 * size),  texture->xstart, texture->yend,   col);
+			va->AddVertexQTC(midpos + (odir3 * size3), midtexx,         texture->yend,   col3);
+			va->AddVertexQTC(midpos - (odir3 * size3), midtexx,         texture->ystart, col3);
 
-			va->AddVertexQTC(midpos - odir3 * size3, midtexx,         texture->ystart, col3);
-			va->AddVertexQTC(midpos + odir3 * size3, midtexx,         texture->yend,   col3);
-			va->AddVertexQTC(pos2 + odir2   * size2, texture->xend,   texture->yend,   col2);
-			va->AddVertexQTC(pos2 - odir2   * size2, texture->xend,   texture->ystart, col2);
+			va->AddVertexQTC(midpos - (odir3 * size3), midtexx,         texture->ystart, col3);
+			va->AddVertexQTC(midpos + (odir3 * size3), midtexx,         texture->yend,   col3);
+			va->AddVertexQTC(pos2   + (odir2 * size2), texture->xend,   texture->yend,   col2);
+			va->AddVertexQTC(pos2   - (odir2 * size2), texture->xend,   texture->ystart, col2);
 		} else {
-			va->AddVertexQTC(pos1 - odir1 * size,    texture->xstart, texture->ystart, col);
-			va->AddVertexQTC(pos1 + odir1 * size,    texture->xstart, texture->yend,   col);
-			va->AddVertexQTC(pos2 + odir2 * size2,   texture->xend,   texture->yend,   col2);
-			va->AddVertexQTC(pos2 - odir2 * size2,   texture->xend,   texture->ystart, col2);
+			va->AddVertexQTC(pos1 - (odir1 * size),    texture->xstart, texture->ystart, col);
+			va->AddVertexQTC(pos1 + (odir1 * size),    texture->xstart, texture->yend,   col);
+			va->AddVertexQTC(pos2 + (odir2 * size2),   texture->xend,   texture->yend,   col2);
+			va->AddVertexQTC(pos2 - (odir2 * size2),   texture->xend,   texture->ystart, col2);
 		}
 	} else {	//draw as particles
 		unsigned char col[4];
 		for (int a = 0; a < 8; ++a) {
-			float a1 = 1 - (float)(age + a) / lifeTime;
-			float alpha = std::min(255.f, std::max(0.f, a1 * 255));
+			const float a1 = 1 - (float)(age + a) / lifeTime;
+			const float alpha = std::min(255.0f, std::max(0.0f, a1 * 255));
 			col[0] = (unsigned char) (color * alpha);
 			col[1] = (unsigned char) (color * alpha);
 			col[2] = (unsigned char) (color * alpha);

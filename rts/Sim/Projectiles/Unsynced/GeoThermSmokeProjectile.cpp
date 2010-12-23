@@ -7,7 +7,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
-CR_BIND_DERIVED(CGeoThermSmokeProjectile, CSmokeProjectile, (float3(), float3(), 1, 0));
+CR_BIND_DERIVED(CGeoThermSmokeProjectile, CSmokeProjectile, (ZeroVector, ZeroVector, 1, NULL));
 
 CR_REG_METADATA(CGeoThermSmokeProjectile, (
 	CR_MEMBER(geo),
@@ -15,14 +15,13 @@ CR_REG_METADATA(CGeoThermSmokeProjectile, (
 	));
 
 CGeoThermSmokeProjectile::CGeoThermSmokeProjectile(const float3& pos, const float3& speed, int ttl, CFeature* geo)
-	: CSmokeProjectile(pos, speed, ttl, 6, 0.35f, 0, 0.8f)
+	: CSmokeProjectile(pos, speed, ttl, 6, 0.35f, NULL, 0.8f)
 	, geo(geo)
 {}
 
 void CGeoThermSmokeProjectile::Update()
 {
-	if (geo && geo->solidOnTop)
-	{
+	if (geo && geo->solidOnTop) {
 		CSolidObject* o = geo->solidOnTop;
 
 		float3 d = pos - o->pos;
@@ -40,7 +39,7 @@ void CGeoThermSmokeProjectile::Update()
 			}
 		}
 	}
-	float l = fastmath::apxsqrt(speed.SqLength());
+	const float l = fastmath::apxsqrt(speed.SqLength());
 	speed.y += 1.0f;
 	speed *= l * fastmath::isqrt(speed.SqLength());
 

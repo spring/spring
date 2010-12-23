@@ -24,16 +24,28 @@ class UDPListener : boost::noncopyable
 {
 public:
 	/**
-	@brief Open a socket and make it ready for listening
-	*/
-	UDPListener(const std::string& ip, int port);
+	 * @brief Open a socket and make it ready for listening
+	 * @param  port the port to bind the socket to
+	 * @param  ip local IP to bind to, or "" for any
+	 */
+	UDPListener(int port, const std::string& ip = "");
 	
 	/**
 	@brief close the socket and DELETE all connections
 	*/
 	~UDPListener() {}
 
-	bool TryBindSocket(const std::string& ip, int port, SocketPtr* socket) const;
+	/**
+	 * Try to bind a socket to a local address and port.
+	 * If no IP or an empty one is given, this method will use
+	 * the IP v6 any address "::", if IP v6 is supported.
+	 * @param  port the port to bind the socket to
+	 * @param  socket the socket to be bound
+	 * @param  ip local IP (v4 or v6) to bind to,
+	 *         the default value "" results in the v6 any address "::",
+	 *         or the v4 equivalent "0.0.0.0", if v6 is no supported
+	 */
+	static bool TryBindSocket(int port, SocketPtr* socket, const std::string& ip = "");
 	
 	/**
 	@brief Run this from time to time

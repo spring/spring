@@ -444,7 +444,7 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* _cb, cLogFile* l, GlobalTerrai
 						break;
 					}
 
-			// Initailizing MMS(.metal .assessing .x .z)
+			// Initializing MMS(.metal .assessing .x .z)
 			int SMindex;	// temp variable
 			float percentMetal = 0.0;
 			const unsigned char *StandardMetalMap = cb->GetMetalMap();

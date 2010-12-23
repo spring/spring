@@ -184,7 +184,7 @@ inline int fesetround(FPU_RoundMode roundMode) {
 
 typedef short int fenv_t;
 
-/// Default env. Defined in Math.cpp to be 0, and initalized on first use to the permanent holder
+/// Default env. Defined in Math.cpp to be 0, and initialized on first use to the permanent holder
 extern fenv_t FE_DFL_ENV;
 
 /// Get FP env into the given structure

@@ -2,9 +2,11 @@
 #define KAIK_DEFENSEMATRIX_HDR
 
 #include <vector>
+#include "System/float3.h"
 
 class CSpotFinder;
 struct AIClasses;
+struct UnitDef;
 
 class CDefenseMatrix {
 	public:
@@ -26,9 +28,25 @@ class CDefenseMatrix {
 		std::vector<int> BuildMaskArray;
 
 	private:
+		bool IsInitialized() const { return (spotFinder != NULL); }
+
 		CSpotFinder* spotFinder;
 		int ThreatMapXSize, ThreatMapYSize, TotalCells;
 		AIClasses* ai;
+
+		struct DefPos {
+			float3 pos;
+			const UnitDef* def;
+		};
+		/**
+		 * Used for defs that get added before the matrix is initialized.
+		 */
+		std::vector<DefPos> defAddQueue;
+		/**
+		 * Used for defs that got removed after AI init
+		 * but before the matrix is initialized.
+		 */
+		std::vector<DefPos> defRemoveQueue;
 };
 
 #endif

@@ -10,13 +10,18 @@ class CSpherePartProjectile : public CProjectile
 	CR_DECLARE(CSpherePartProjectile);
 
 public:
-	CSpherePartProjectile(const float3& centerPos, int xpart, int ypart, float expansionSpeed, float alpha, int ttl, CUnit* owner, const float3 &color);
+	CSpherePartProjectile(const float3& centerPos, int xpart, int ypart,
+			float expansionSpeed, float alpha, int ttl, CUnit* owner,
+			const float3& color);
 	~CSpherePartProjectile();
 
 	void Draw();
 	void Update();
-	static void CreateSphere(float3 pos, float alpha, int ttl, float expansionSpeed , CUnit* owner, float3 color = float3(0.8, 0.8, 0.6));
+	static void CreateSphere(float3 pos, float alpha, int ttl,
+			float expansionSpeed , CUnit* owner,
+			float3 color = float3(0.8, 0.8, 0.6));
 
+private:
 	float3 centerPos;
 	float3 vectors[25];
 	float3 color;
@@ -45,6 +50,7 @@ public:
 
 	virtual void Init(const float3& pos, CUnit* owner);
 
+private:
 	float alpha;
 	int ttl;
 	float expansionSpeed;
