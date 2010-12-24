@@ -14,9 +14,9 @@
 CR_BIND_DERIVED(CBuilding, CUnit, );
 
 CR_REG_METADATA(CBuilding, (
-				CR_RESERVED(8),
-				CR_POSTLOAD(PostLoad)
-				));
+	CR_RESERVED(8),
+	CR_POSTLOAD(PostLoad)
+));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -29,28 +29,24 @@ CBuilding::CBuilding(): buildingDecal(0)
 
 
 
-void CBuilding::Init(const CUnit* builder)
-{
-	if(!unitDef->transportableBuilding)
-		mass = 100000.0f;
-	physicalState = OnGround;
-
-	CUnit::Init(builder);
-}
-
-
-void CBuilding::PostLoad()
-{
-}
-
-
-void CBuilding::UnitInit(const UnitDef* def, int team, const float3& position)
+void CBuilding::PreInit(const UnitDef* def, int team, int facing, const float3& position, bool build)
 {
 	if (def->levelGround) {
 		blockHeightChanges = true;
 	}
-	CUnit::UnitInit(def, team, position);
+
+	CUnit::PreInit(def, team, facing, position, build);
 }
+
+void CBuilding::PostInit(const CUnit* builder)
+{
+	if (!unitDef->transportableBuilding)
+		mass = CSolidObject::DEFAULT_MASS;
+	physicalState = OnGround;
+
+	CUnit::PostInit(builder);
+}
+
 
 void CBuilding::ForcedMove(const float3& newPos, int facing) {
 	buildFacing = facing;

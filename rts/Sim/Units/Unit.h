@@ -70,7 +70,8 @@ public:
 	CUnit();
 	virtual ~CUnit();
 
-	virtual void UnitInit(const UnitDef* def, int team, const float3& position);
+	virtual void PreInit(const UnitDef* def, int team, int facing, const float3& position, bool build);
+	virtual void PostInit(const CUnit* builder);
 
 	bool AttackGround(const float3& pos, bool dgun);
 	bool AttackUnit(CUnit* unit, bool dgun);
@@ -124,7 +125,6 @@ public:
 	virtual void DeleteDeathDependence(CObject* o, DependenceType dep);
 
 	void SetUserTarget(CUnit* target);
-	virtual void Init(const CUnit* builder);
 	bool SetGroup(CGroup* group);
 
 	bool AllowedReclaim(CUnit* builder) const;

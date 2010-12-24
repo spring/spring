@@ -5,9 +5,9 @@
 namespace netcode {
 
 CConnection::CConnection()
+	: dataSent(0)
+	, dataRecv(0)
 {
-	dataSent = 0;
-	dataRecv = 0;
 }
 
 CConnection::~CConnection()

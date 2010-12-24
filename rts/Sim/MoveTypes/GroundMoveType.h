@@ -72,8 +72,6 @@ public:
 	/// how many times we have requested a path from the same place
 	unsigned int nonMovingFailures;
 
-	bool floatOnWater;
-
 	int moveSquareX;
 	int moveSquareY;
 

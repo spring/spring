@@ -23,7 +23,7 @@ public:
 	virtual void LoginEnd();
 	virtual void RegisterDenied(const std::string& reason);
 	virtual void RegisterAccept();
-	
+
 private:
 	UpdaterWindow* upwin;
 };

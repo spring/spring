@@ -17,22 +17,20 @@ struct WeaponDef;
 class CUnitLoader
 {
 public:
-	CUnitLoader();
-	virtual ~CUnitLoader();
+	/// @param builder may be NULL
+	CUnit* LoadUnit(const std::string& name, const float3& pos, int team, bool build, int facing, const CUnit* builder);
+	/// @param builder may be NULL
+	CUnit* LoadUnit(const UnitDef* ud, const float3& pos, int team, bool build, int facing, const CUnit* builder);
 
-	/// @param builder may be NULL
-	CUnit* LoadUnit(const std::string& name, float3 pos, int team, bool build, int facing, const CUnit* builder);
-	/// @param builder may be NULL
-	CUnit* LoadUnit(const UnitDef* ud, float3 pos, int team, bool build, int facing, const CUnit* builder);
+	CWeapon* LoadWeapon(CUnit* owner, const UnitDefWeapon* udw);
+
 	void FlattenGround(const CUnit* unit);
 	void RestoreGround(const CUnit* unit);
-
-	CWeapon* LoadWeapon(const WeaponDef* weapondef, CUnit* owner, const UnitDefWeapon* udw);
 
 protected:
 	void LoadSound(GuiSoundSet& sound);
 };
 
-extern CUnitLoader *unitLoader;
+extern CUnitLoader* unitLoader;
 
 #endif /* UNIT_LOADER_H */

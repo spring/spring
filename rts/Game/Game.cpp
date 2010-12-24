@@ -97,7 +97,9 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/ResourceHandler.h"
 #include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/Path/IPathManager.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/COB/CobEngine.h"
@@ -106,8 +108,6 @@
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "Sim/Units/UnitLoader.h"
-#include "Sim/MoveTypes/MoveType.h"
-#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "UI/CommandColors.h"
@@ -359,6 +359,7 @@ CGame::~CGame()
 	SafeDelete(moveinfo);
 	SafeDelete(unitDefHandler);
 	SafeDelete(unitLoader);
+	CGroundMoveType::DeleteLineTable();
 	CResourceHandler::FreeInstance();
 	SafeDelete(weaponDefHandler);
 	SafeDelete(damageArrayHandler);
@@ -497,6 +498,8 @@ void CGame::LoadSimulation(const std::string& mapname)
 	loadscreen->SetLoadMessage("Loading Unit Definitions");
 	unitDefHandler = new CUnitDefHandler();
 	unitLoader = new CUnitLoader();
+
+	CGroundMoveType::CreateLineTable();
 
 	uh = new CUnitHandler();
 	ph = new CProjectileHandler();

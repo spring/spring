@@ -75,8 +75,6 @@ CR_REG_METADATA(CGroundMoveType, (
 		CR_MEMBER(etaFailures),
 		CR_MEMBER(nonMovingFailures),
 
-		CR_MEMBER(floatOnWater),
-
 		CR_MEMBER(moveSquareX),
 		CR_MEMBER(moveSquareY),
 
@@ -141,8 +139,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	etaFailures(0),
 	nonMovingFailures(0),
 
-	floatOnWater(false),
-
 	nextDeltaSpeedUpdate(0),
 	nextObstacleAvoidanceUpdate(0),
 	lastTrackUpdate(0),
@@ -201,7 +197,7 @@ void CGroundMoveType::Update()
 		return;
 	}
 
-	if (OnSlope() && (!floatOnWater || !owner->inWater)) {
+	if (OnSlope() && (!owner->floatOnWater || !owner->inWater)) {
 		skidding = true;
 	}
 	if (skidding) {
@@ -707,7 +703,7 @@ void CGroundMoveType::UpdateSkid()
 		const bool onSlope =
 			midPos.IsInBounds() &&
 			(ground->GetSlope(midPos.x, midPos.z) > ud->movedata->maxSlope) &&
-			(!floatOnWater || !owner->inWater);
+			(!owner->floatOnWater || !owner->inWater);
 
 		if (speedf < speedReduction && !onSlope) {
 			// stop skidding
@@ -1859,7 +1855,7 @@ float CGroundMoveType::GetGroundHeight(const float3& p) const
 {
 	float h = 0.0f;
 
-	if (floatOnWater) {
+	if (owner->floatOnWater) {
 		// in [0, maxHeight]
 		h = ground->GetHeightAboveWater(p.x, p.z);
 	} else {
@@ -1875,7 +1871,7 @@ void CGroundMoveType::AdjustPosToWaterLine()
 	if (!(owner->falling || flying)) {
 		float wh = GetGroundHeight(owner->pos);
 
-		if (floatOnWater && owner->inWater) {
+		if (owner->floatOnWater && owner->inWater) {
 			wh = -owner->unitDef->waterline;
 		}
 
@@ -1889,7 +1885,7 @@ void CGroundMoveType::AdjustPosToWaterLine()
 
 		owner->pos.y = mm->yLevel(owner->pos.x, owner->pos.z);
 
-		if (floatOnWater && owner->inWater) {
+		if (owner->floatOnWater && owner->inWater) {
 			owner->pos.y -= owner->unitDef->waterline;
 		}
 
