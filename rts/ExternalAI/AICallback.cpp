@@ -1656,7 +1656,7 @@ bool CAICallback::GetProperty(int unitId, int property, void* data)
 		const int allyTeam = teamHandler->AllyTeam(team);
 		if (!(unit && (unit->losStatus[allyTeam] & LOS_INLOS))) {
 			// the unit does not exist or can not be seen
-			return false;  
+			return false;
 		}
 
 		switch (property) {

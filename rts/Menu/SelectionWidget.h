@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef SELECTIONWIDGET_H 
+#ifndef SELECTIONWIDGET_H
 #define SELECTIONWIDGET_H
 
 #include <string>
@@ -30,7 +30,7 @@ public:
 		agui::gui->AddElement(this);
 		SetPos(0.5, 0.2);
 		SetSize(0.4, 0.7);
-		
+
 		agui::VerticalLayout* modWindowLayout = new agui::VerticalLayout(this);
 		list = new agui::List(modWindowLayout);
 		list->FinishSelection.connect(boost::bind(&ListSelectWnd::SelectButton, this));
@@ -67,7 +67,7 @@ public:
 
 	SelectionWidget(agui::GuiElement* parent);
 	~SelectionWidget();
-	
+
 	void ShowModList();
 	void ShowMapList();
 	void ShowScriptList();
