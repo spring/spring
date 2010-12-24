@@ -11,15 +11,15 @@
 
 #include <boost/format.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/cstdint.hpp>
 
 #include "mmgr.h"
 
 #include "Socket.h"
 #include "ProtocolDef.h"
 #include "Exception.h"
-#include "ConfigHandler.h"
-#include <boost/cstdint.hpp>
-#include "GlobalUnsynced.h"
+#include "System/ConfigHandler.h"
+#include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 
 namespace netcode {

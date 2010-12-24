@@ -11,7 +11,7 @@
 #include <boost/system/error_code.hpp>
 #include "lib/streflop/streflop_cond.h"
 
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 
 namespace netcode
 {
