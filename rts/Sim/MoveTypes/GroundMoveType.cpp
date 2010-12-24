@@ -1869,13 +1869,13 @@ float CGroundMoveType::GetGroundHeight(const float3& p) const
 void CGroundMoveType::AdjustPosToWaterLine()
 {
 	if (!(owner->falling || flying)) {
-		float wh = GetGroundHeight(owner->pos);
+		float groundHeight = GetGroundHeight(owner->pos);
 
-		if (owner->floatOnWater && owner->inWater) {
-			wh = -owner->unitDef->waterline;
+		if (owner->floatOnWater && owner->inWater && groundHeight <= 0.0f) {
+			groundHeight = -owner->unitDef->waterline;
 		}
 
-		owner->pos.y = wh;
+		owner->pos.y = groundHeight;
 		owner->midPos.y = owner->pos.y + owner->relMidPos.y;
 
 		/*
