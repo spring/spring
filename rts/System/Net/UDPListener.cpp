@@ -15,13 +15,13 @@
 #include <list>
 #include <queue>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "ProtocolDef.h"
-#include "LogOutput.h"
 #include "UDPConnection.h"
 #include "Socket.h"
-#include "Platform/errorhandler.h"
+#include "System/LogOutput.h"
+#include "System/Platform/errorhandler.h"
 
 namespace netcode
 {
