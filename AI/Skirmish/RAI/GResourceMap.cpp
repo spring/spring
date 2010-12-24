@@ -103,7 +103,6 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* _cb, cLogFile* l, GlobalTerrai
 	relResourceFileName = "cache/" + cRAI::MakeFileSystemCompatible(cb->GetModHumanName());
 	relResourceFileName += "-" + IntToString(cb->GetModHash(), "%x");
 	relResourceFileName += "-" + cRAI::MakeFileSystemCompatible(cb->GetMapName());
-	relResourceFileName.resize(relResourceFileName.size() - 4); // cut off extension
 	relResourceFileName += "-" + IntToString(cb->GetMapHash(), "%x");
 	relResourceFileName += ".res";
 
