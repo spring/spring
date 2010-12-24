@@ -1089,16 +1089,12 @@ void cRAI::DebugDrawShape(float3 centerPos, float lineLength, float width, int a
 	DebugDrawLine(centerPos, lineLength, 3,  lineLength/2,  lineLength/2, yPosOffset, lifeTime, arrow, width, group);
 }
 
-bool cRAI::LocateFile(IAICallback* cb, const string& relFileName, string& absFileName, bool forWriting) {
+bool cRAI::LocateFile(IAICallback* cb, const string& relFileName, string& absFileName, bool forWriting) 
+{
+	int action = forWriting ? AIVAL_LOCATE_FILE_W : AIVAL_LOCATE_FILE_R;
 
-	int action = AIVAL_LOCATE_FILE_R;
-	if (forWriting) {
-		action = AIVAL_LOCATE_FILE_W;
-	}
-
-	const size_t absFN_sizeMax = 512 + relFileName.size();
-	char absFN[absFN_sizeMax];
-	STRCPYS(absFN, absFN_sizeMax, relFileName.c_str());
+	char absFN[2048];
+	STRCPYS(absFN, sizeof(absFN), relFileName.c_str());
 	const bool located = cb->GetValue(action, absFN);
 
 	if (located) {
