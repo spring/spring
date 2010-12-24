@@ -24,7 +24,7 @@ public:
 	void ShowAggreement(const std::string& text);
 	void AcceptAgreement();
 	void RejectAgreement();
-	
+
 	void ServerLabel(const std::string& text);
 	void Label(const std::string& text);
 
