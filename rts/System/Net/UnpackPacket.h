@@ -23,13 +23,13 @@ class UnpackPacket
 {
 public:
 	UnpackPacket(boost::shared_ptr<const RawPacket>, size_t skipBytes = 0);
-	
+
 	template <typename T>
 	void operator>>(T& t) {
 		if(pos + sizeof(T) > pckt->length)
 			throw UnpackPacketException("Unpack failure (type)");
 		t = *(T*)(pckt->data+pos); pos += sizeof(T);
-	};
+	}
 	template <typename element>
 	void operator>>(std::vector<element>& vec)
 	{
@@ -38,7 +38,7 @@ public:
 		const size_t toCopy = vec.size() * sizeof(element);
 		std::memcpy((void*)(&vec[0]), (pckt->data+pos), toCopy);
 		pos += toCopy;
-	};
+	}
 	void operator>>(std::string& text) {
 		int i = pos;
 		for(; i < pckt->length; ++i)
@@ -47,13 +47,13 @@ public:
 		if(i >= pckt->length)
 			throw UnpackPacketException("Unpack failure (string)");
 		text = std::string((char*)(pckt->data + pos)); pos += text.size()+1;
-	};
-	
+	}
+
 private:
 	boost::shared_ptr<const RawPacket> pckt;
 	size_t pos;
 };
 
-};
+} // namespace netcode
 
-#endif
+#endif // UNPACK_PACKET_H

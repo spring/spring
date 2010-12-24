@@ -18,7 +18,7 @@ class PackPacket : public RawPacket
 public:
 	PackPacket(const unsigned length);
 	PackPacket(const unsigned length, unsigned char msgID);
-	
+
 	template <typename T>
 	PackPacket& operator<<(const T& t) {
 		unsigned size = sizeof(T);
@@ -26,8 +26,10 @@ public:
 		*(T*)(data+pos) = t;
 		pos += size;
 		return *this;
-	};
+	}
+
 	PackPacket& operator<<(const std::string& text);
+
 	template <typename element>
 	PackPacket& operator<<(const std::vector<element>& vec) {
 		const size_t size = vec.size()* sizeof(element);
@@ -37,14 +39,16 @@ public:
 			pos += size;
 		}
 		return *this;
-	};
-	
-	unsigned char* GetWritingPos() {return data+pos;};
-	
+	}
+
+	unsigned char* GetWritingPos() {
+		return data+pos;
+	}
+
 private:
 	unsigned pos;
 };
 
-};
+} // namespace netcode
 
-#endif
+#endif // PACK_PACKET_H

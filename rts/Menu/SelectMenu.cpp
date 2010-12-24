@@ -60,7 +60,7 @@ public:
 		agui::gui->AddElement(this);
 		SetPos(0.5, 0.5);
 		SetSize(0.4, 0.2);
-		
+
 		agui::VerticalLayout* wndLayout = new agui::VerticalLayout(this);
 		HorizontalLayout* input = new HorizontalLayout(wndLayout);
 		/*agui::TextElement* label = */new agui::TextElement("Address:", input); // will be deleted in input
@@ -78,7 +78,7 @@ public:
 
 	boost::signal<void (std::string)> Connect;
 	agui::LineEdit* address;
-	
+
 private:
 	void Finish(bool connect)
 	{
@@ -115,7 +115,7 @@ public:
 
 	boost::signal<void (std::string)> OK;
 	agui::LineEdit* value;
-	
+
 private:
 	void Finish(bool set)
 	{
@@ -271,7 +271,7 @@ bool SelectMenu::Update()
 			updWindow = NULL;
 		}
 	}
-	
+
 	return true;
 }
 
@@ -387,7 +387,7 @@ void SelectMenu::ShowSettingsList()
 		curSelect = new ListSelectWnd("Select setting");
 		curSelect->Selected.connect(boost::bind(&SelectMenu::SelectSetting, this, _1));
 		curSelect->WantClose.connect(boost::bind(&SelectMenu::CleanWindow, this));
-	}	
+	}
 	curSelect->list->RemoveAllItems();
 	const std::map<std::string, std::string> &data = configHandler->GetData();
 	for(std::map<std::string,std::string>::const_iterator iter = data.begin(); iter != data.end(); ++iter)

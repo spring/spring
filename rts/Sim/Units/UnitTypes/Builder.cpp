@@ -112,7 +112,7 @@ void CBuilder::PostLoad()
 }
 
 
-void CBuilder::UnitInit(const UnitDef* def, int team, const float3& position)
+void CBuilder::PreInit(const UnitDef* def, int team, int facing, const float3& position, bool build)
 {
 	range3D = def->buildRange3D;
 	buildDistance = def->buildDistance;
@@ -126,7 +126,7 @@ void CBuilder::UnitInit(const UnitDef* def, int team, const float3& position)
 	captureSpeed   = scale * def->captureSpeed;
 	terraformSpeed = scale * def->terraformSpeed;
 
-	CUnit::UnitInit(def, team, position);
+	CUnit::PreInit(def, team, facing, position, build);
 }
 
 

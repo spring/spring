@@ -747,10 +747,6 @@ static inline bool SetGroundMoveTypeValue(CGroundMoveType* mt, const string& key
 	if (SetGenericMoveTypeValue(mt, key, value))
 		return true;
 
-	if (key == "floatOnWater") {
-		mt->floatOnWater = value; return true;
-	}
-
 	return false;
 }
 

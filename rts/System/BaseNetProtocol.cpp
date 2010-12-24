@@ -463,7 +463,7 @@ PacketType CBaseNetProtocol::SendSdBlockresponse(uchar myPlayerNum, std::vector<
 
 CBaseNetProtocol::CBaseNetProtocol()
 {
-	netcode::ProtocolDef* proto = netcode::ProtocolDef::instance();
+	netcode::ProtocolDef* proto = netcode::ProtocolDef::GetInstance();
 	// proto->AddType() length parameter:
 	//   > 0:  if its fixed length
 	//   < 0:  means the next x bytes represent the length

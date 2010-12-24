@@ -9,49 +9,50 @@
 
 namespace netcode {
 
-ProtocolDef* ProtocolDef::instance_ptr = 0;
+ProtocolDef* ProtocolDef::instance_ptr = NULL;
 
-ProtocolDef* ProtocolDef::instance()
+ProtocolDef* ProtocolDef::GetInstance()
 {
-	if (!instance_ptr)
+	if (!instance_ptr) {
 		instance_ptr = new ProtocolDef();
+	}
 	return instance_ptr;
 }
 
 ProtocolDef::ProtocolDef()
 {
-	memset(msg, '\0', sizeof(MsgType)*256);
+	memset(msg, '\0', sizeof(MsgType) * 256);
 }
 
-void ProtocolDef::AddType(const unsigned char id, const int MsgLength)
+void ProtocolDef::AddType(const unsigned char id, const int msgLength)
 {
-	msg[id].Length = MsgLength;
+	msg[id].length = msgLength;
 }
 
-// <-1: invalid id
-// -1: invalid length
-// 0: unknown length, buffer too short
-// >0: actual length
 int ProtocolDef::PacketLength(const unsigned char* const buf, const unsigned bufLength) const
 {
-	if (bufLength == 0)
+	if (bufLength == 0) {
 		return 0;
-	
-	unsigned char msgid = buf[0];
-	int len = msg[msgid].Length;
+	}
 
-	if (len > 0)
+	unsigned char msgid = buf[0];
+	int len = msg[msgid].length;
+
+	if (len > 0) {
 		return len;
-	if (len == 0)
+	}
+	if (len == 0) {
 		return -2;
+	}
 	if (len == -1) {
 		if (bufLength < 2)
 			return 0;
 		return (buf[1] >= 2) ? buf[1] : -1;
 	}
 	if (len == -2) {
-		if (bufLength < 3)
+		if (bufLength < 3) {
 			return 0;
+		}
 		unsigned short slen = *((unsigned short*)(buf + 1));
 		return (slen >= 3) ? slen : -1;
 	}

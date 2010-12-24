@@ -12,44 +12,44 @@ namespace netcode
 {
 
 /**
-@brief Base class for connecting to various recievers / senders
-*/
+ * @brief Base class for connecting to various recievers / senders
+ */
 class CConnection
 {
 public:
 	CConnection();
 	virtual ~CConnection();
-	
-	virtual void SendData(boost::shared_ptr<const RawPacket> data)=0;
+
+	virtual void SendData(boost::shared_ptr<const RawPacket> data) = 0;
 
 	virtual bool HasIncomingData() const = 0;
 
 	/**
-	@brief Take a look at the messages that will be returned by GetData().
-	@return A RawPacket holding the data, or 0 if no data
-	@param ahead How many packets to look ahead. A typical usage would be:
-	for (int ahead = 0; (packet = conn->Peek(ahead)); ++ahead) {}
-	*/
+	 * @brief Take a look at the messages that will be returned by GetData().
+	 * @return A RawPacket holding the data, or 0 if no data
+	 * @param ahead How many packets to look ahead. A typical usage would be:
+	 * for (int ahead = 0; (packet = conn->Peek(ahead)); ++ahead) {}
+	 */
 	virtual boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const = 0;
-	
-	/**
-	@brief New method of data gathering
-	@return A RawPacket holding the data, or 0 if no data
-	*/
-	virtual boost::shared_ptr<const RawPacket> GetData()=0;
 
-	virtual void Flush(const bool forced = false)=0;
+	/**
+	 * @brief New method of data gathering
+	 * @return A RawPacket holding the data, or 0 if no data
+	 */
+	virtual boost::shared_ptr<const RawPacket> GetData() = 0;
+
+	virtual void Flush(const bool forced = false) = 0;
 	virtual bool CheckTimeout(int nsecs = 0, bool initial = false) const = 0;
-	
-	virtual void ReconnectTo(CConnection &conn) = 0;
+
+	virtual void ReconnectTo(CConnection& conn) = 0;
 	virtual bool CanReconnect() const = 0;
 	virtual bool NeedsReconnect() = 0;
 
 	unsigned GetDataReceived() const;
-	
+
 	virtual std::string Statistics() const = 0;
 	virtual std::string GetFullAddress() const = 0;
-	virtual void Update() {};
+	virtual void Update() {}
 
 protected:
 	unsigned dataSent;
@@ -58,5 +58,4 @@ protected:
 
 } // namespace netcode
 
-
-#endif
+#endif // CONNECTION_H

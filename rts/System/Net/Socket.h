@@ -25,7 +25,8 @@ bool IsLoopbackAddress(const boost::asio::ip::address& addr);
  * Encapsulates the ip::address::from_string(str) function,
  * for sync relevant reasons.
  */
-boost::asio::ip::address WrapIP(const std::string& ip, boost::system::error_code* err = NULL);
+boost::asio::ip::address WrapIP(const std::string& ip,
+		boost::system::error_code* err = NULL);
 
 /**
  * Encapsulates the ip::tcp::resolver::resolve(query) function,
@@ -38,4 +39,4 @@ boost::asio::ip::tcp::resolver::iterator WrapResolve(
 
 } // namespace netcode
 
-#endif
+#endif // SOCKET_H

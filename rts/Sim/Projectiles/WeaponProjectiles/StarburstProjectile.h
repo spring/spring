@@ -55,16 +55,17 @@ private:
 	int missileAge;
 	float distanceToTravel;
 
-	struct OldInfo {
+	static const int NUM_TRACER_PARTS = 5;
+	/// the smokes life-time in frames
+	static const float SMOKE_TIME = 70.0f;
+
+	struct TracerPart {
 		float3 pos;
 		float3 dir;
 		float speedf;
 		AGEMOD_VECTOR ageMods;
 	};
-	OldInfo* oldInfos[5];
-
-	/// the smokes life-time in frames
-	static const float SMOKE_TIME = 70.0f;
+	TracerPart tracerParts[NUM_TRACER_PARTS];
 };
 
 #endif /* STARBURST_PROJECTILE_H */

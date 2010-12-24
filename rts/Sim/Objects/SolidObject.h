@@ -77,6 +77,8 @@ public:
 
 	int2 GetMapPos();
 	int2 GetMapPos(const float3& position);
+
+	static const float DEFAULT_MASS = 100000.0f;
 };
 
 #endif

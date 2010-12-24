@@ -181,7 +181,7 @@ public:
 
 	float3 modelCenterOffset;	///< offset from the unit model's default center point
 
-	bool usePieceCollisionVolumes;		///< if true, collisions are checked per-piece
+	bool usePieceCollisionVolumes;		///< if true, projectile collisions are checked per-piece
 
 	std::vector<UnitDefWeapon> weapons;
 	const WeaponDef* shieldWeaponDef;

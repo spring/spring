@@ -1490,8 +1490,8 @@ struct SSkirmishAICallback {
 	 * Returns the height for the center of the squares.
 	 * This differs slightly from the drawn map, since
 	 * that one uses the height at the corners.
-	 * Note that the actual map is 8 times larger (in each dimension) and 
-	 * all other maps (slope, los, resources, etc.) are relative to the 
+	 * Note that the actual map is 8 times larger (in each dimension) and
+	 * all other maps (slope, los, resources, etc.) are relative to the
 	 * size of the heightmap.
 	 *
 	 * - do NOT modify or delete the height-map (native code relevant only)
