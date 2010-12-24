@@ -149,21 +149,18 @@ void CFactory::Update()
 
 			// buildPiece is the rotating platform
 			const int buildPiece = GetBuildPiece();
+			const float3& buildPos = CalcBuildPos(buildPiece);
 			const CMatrix44f& mat = script->GetPieceMatrix(buildPiece);
 			const int h = GetHeadingFromVector(mat[2], mat[10]); //! x.z, z.z
 
 			// rotate unit nanoframe with platform
-			curBuild->heading = (h + GetHeadingFromFacing(buildFacing)) & 65535;
-
-			const float3 buildPos = CalcBuildPos(buildPiece);
+			curBuild->heading = (h + GetHeadingFromFacing(buildFacing)) & (SPRING_CIRCLE_DIVS - 1);
 			curBuild->pos = buildPos;
 
-			if (curBuild->floatOnWater) {
-				float waterline = ground->GetHeightAboveWater(buildPos.x, buildPos.z) - curBuild->unitDef->waterline;
-				if (waterline > curBuild->pos.y)
-					curBuild->pos.y = waterline;
-			}
-			curBuild->midPos = curBuild->pos + (UpVector * curBuild->relMidPos.y);
+			if (curBuild->floatOnWater && (buildPos.y <= 0.0f))
+				curBuild->pos.y = -curBuild->unitDef->waterline;
+
+			curBuild->UpdateMidPos();
 
 			const CCommandQueue& queue = commandAI->commandQue;
 

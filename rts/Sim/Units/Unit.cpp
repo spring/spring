@@ -80,12 +80,13 @@ CR_BIND_DERIVED(CUnit, CSolidObject, );
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
+//! info: SlowUpdate runs each 16th GameFrame (:= twice per 32GameFrames) (a second has GAME_SPEED=30 gameframes!)
+float CUnit::empDecline     = 2.0f * (float)UNIT_SLOWUPDATE_RATE / (float)GAME_SPEED / 40.0f;
 float CUnit::expMultiplier  = 1.0f;
 float CUnit::expPowerScale  = 1.0f;
 float CUnit::expHealthScale = 0.7f;
 float CUnit::expReloadScale = 0.4f;
 float CUnit::expGrade       = 0.0f;
-float CUnit::empDecline     = 2.0f * (float)UNIT_SLOWUPDATE_RATE / (float)GAME_SPEED / 40.0f;  //! info: SlowUpdate runs each 16th GameFrames (:= twice per 32GameFrames) (a second has GAME_SPEED=30 gameframes!)
 
 
 CUnit::CUnit():
@@ -374,7 +375,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	frontdir = GetVectorFromHeading(heading);
 	updir    = UpVector;
 	rightdir = frontdir.cross(updir);
-	upright  = (unitDef->movedata == NULL && !unitDef->canfly) || unitDef->upright;
+	upright  = unitDef->upright;
 
 	buildFacing = std::abs(facing) % NUM_FACINGS;
 	curYardMap = (unitDef->yardmaps[buildFacing].empty())? NULL: &unitDef->yardmaps[buildFacing][0];
@@ -424,6 +425,9 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 		unitDef->floater ||
 		(unitDef->movedata && ((unitDef->movedata->moveType == MoveData::Hover_Move) ||
 							   (unitDef->movedata->moveType == MoveData::Ship_Move)));
+
+	if (floatOnWater && (pos.y <= 0.0f))
+		pos.y = -unitDef->waterline;
 
 	maxSpeed = unitDef->speed / GAME_SPEED;
 	maxReverseSpeed = unitDef->rSpeed / GAME_SPEED;

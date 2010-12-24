@@ -594,17 +594,12 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	if (canmove && !canfly && (type != "Factory")) {
 		const std::string& moveclass = StringToLower(udTable.GetString("movementClass", ""));
-		movedata = moveinfo->GetMoveDataFromName(moveclass);
 
-		if (!movedata) {
+		if ((movedata = moveinfo->GetMoveDataFromName(moveclass)) == NULL) {
 			const string errmsg = "WARNING: Couldn't find a MoveClass named " + moveclass + " (used in UnitDef: " + unitName + ")";
 			throw content_error(errmsg); //! invalidate unitDef (this gets catched in ParseUnitDef!)
 		}
 
-		if ((movedata->moveType == MoveData::Hover_Move) ||
-		    (movedata->moveType == MoveData::Ship_Move)) {
-			upright = true;
-		}
 		if (canhover) {
 			if (movedata->moveType != MoveData::Hover_Move) {
 				logOutput.Print("Inconsistent movedata %i for %s (moveclass %s): canhover, but not a hovercraft movetype",
@@ -623,10 +618,18 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		}
 	}
 
+	if (movedata == NULL) {
+		upright = upright || !canfly;
+	} else {
+		upright = upright ||
+			(movedata->moveType == MoveData::Hover_Move) ||
+			(movedata->moveType == MoveData::Ship_Move);
+	}
+
+
 	if ((maxAcc != 0) && (speed != 0)) {
 		//meant to set the drag such that the maxspeed becomes what it should be
-		drag = 1.0f / (speed/GAME_SPEED * 1.1f / maxAcc)
-		          - (wingAngle * wingAngle * wingDrag);
+		drag = (1.0f / (speed / GAME_SPEED * 1.1f / maxAcc)) - (wingAngle * wingAngle * wingDrag);
 		drag = Clamp(drag, 0.0f, 1.0f);
 	} else {
 		//shouldn't be needed since drag is only used in CAirMoveType anyway,
