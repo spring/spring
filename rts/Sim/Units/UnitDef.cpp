@@ -879,7 +879,7 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 	// create the yardmaps for each build-facing
 	// (xsize and zsize are in heightmap units at
 	// this point)
-	for (int u = 0; u < 4; u++) {
+	for (int u = 0; u < NUM_FACINGS; u++) {
 		yardmaps[u].resize(xsize * zsize);
 	}
 

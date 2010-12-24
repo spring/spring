@@ -13,6 +13,7 @@
 #include "COB/NullUnitScript.h"
 #include "COB/UnitScriptFactory.h"
 #include "COB/CobInstance.h" // for TAANG2RAD
+
 #include "CommandAI/CommandAI.h"
 #include "CommandAI/FactoryCAI.h"
 #include "CommandAI/AirCAI.h"
@@ -28,10 +29,8 @@
 #include "Game/GameSetup.h"
 #include "Game/Player.h"
 #include "Game/SelectedUnits.h"
-#include "Game/UI/MiniMap.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
-#include "Map/MetalMap.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 
@@ -53,14 +52,14 @@
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/MoveType.h"
+#include "Sim/MoveTypes/MoveTypeFactory.h"
 #include "Sim/MoveTypes/ScriptMoveType.h"
 #include "Sim/Projectiles/FlareProjectile.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/MissileProjectile.h"
-#include "Sim/Weapons/BeamLaser.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
+#include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
@@ -69,6 +68,8 @@
 #include "System/Sound/IEffectChannel.h"
 #include "System/Sync/SyncedPrimitive.h"
 #include "System/Sync/SyncTracer.h"
+
+#define PLAY_SOUNDS 1
 
 CLogSubsystem LOG_UNIT("unit");
 
@@ -262,7 +263,7 @@ CUnit::~CUnit()
 		// to be as short as possible to prevent position jumps)
 		featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing,
 		                               delayedWreckLevel, team, -1, true,
-		                               unitDef->name, deathSpeed);
+		                               unitDefName, deathSpeed);
 	}
 
 	if (unitDef->isAirBase) {
@@ -319,46 +320,239 @@ CUnit::~CUnit()
 
 void CUnit::SetMetalStorage(float newStorage)
 {
-	teamHandler->Team(team)->metalStorage-=metalStorage;
+	teamHandler->Team(team)->metalStorage -= metalStorage;
 	metalStorage = newStorage;
-	teamHandler->Team(team)->metalStorage+=metalStorage;
+	teamHandler->Team(team)->metalStorage += metalStorage;
 }
 
 
 void CUnit::SetEnergyStorage(float newStorage)
 {
-	teamHandler->Team(team)->energyStorage-=energyStorage;
+	teamHandler->Team(team)->energyStorage -= energyStorage;
 	energyStorage = newStorage;
-	teamHandler->Team(team)->energyStorage+=energyStorage;
+	teamHandler->Team(team)->energyStorage += energyStorage;
 }
 
 
-void CUnit::UnitInit(const UnitDef* def, int Team, const float3& position)
+
+void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& position, bool build)
 {
-	pos = position;
-	team = Team;
-	allyteam = teamHandler->AllyTeam(Team);
-	unitDef = def;
+	team = uTeam;
+	allyteam = teamHandler->AllyTeam(uTeam);
+
+	unitDef = uDef;
 	unitDefName = unitDef->name;
 
-	localmodel = NULL;
-	SetRadius(1.2f);
+	pos = position;
+	pos.CheckInBounds();
 	mapSquare = ground->GetSquare(pos);
+
+	// temporary radius
+	SetRadius(1.2f);
 	uh->AddUnit(this);
 	qf->MovedUnit(this);
 	hasRadarPos = false;
 
-	losStatus[allyteam] = LOS_ALL_MASK_BITS |
-		LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
+	losStatus[allyteam] =
+		LOS_ALL_MASK_BITS |
+		LOS_INLOS         |
+		LOS_INRADAR       |
+		LOS_PREVLOS       |
+		LOS_CONTRADAR;
 
 	posErrorVector = gs->randVector();
 	posErrorVector.y *= 0.2f;
+
 #ifdef TRACE_SYNC
 	tracefile << "New unit: " << unitDefName.c_str() << " ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << id << "\n";
 #endif
+
 	ASSERT_SYNCED_FLOAT3(pos);
+
+	heading  = GetHeadingFromFacing(facing);
+	frontdir = GetVectorFromHeading(heading);
+	updir    = UpVector;
+	rightdir = frontdir.cross(updir);
+	upright  = (unitDef->movedata == NULL && !unitDef->canfly) || unitDef->upright;
+
+	buildFacing = std::abs(facing) % NUM_FACINGS;
+	curYardMap = (unitDef->yardmaps[buildFacing].empty())? NULL: &unitDef->yardmaps[buildFacing][0];
+	xsize = ((buildFacing & 1) == 0) ? unitDef->xsize : unitDef->zsize;
+	zsize = ((buildFacing & 1) == 1) ? unitDef->xsize : unitDef->zsize;
+
+	beingBuilt = build;
+	mass = (beingBuilt)? mass: unitDef->mass;
+	power = unitDef->power;
+	maxHealth = unitDef->health;
+	health = unitDef->health;
+	losHeight = unitDef->losHeight;
+	metalCost = unitDef->metalCost;
+	energyCost = unitDef->energyCost;
+	buildTime = unitDef->buildTime;
+	currentFuel = unitDef->maxFuel;
+	armoredMultiple = std::max(0.0001f, unitDef->armoredMultiple); // armored multiple of 0 will crash spring
+	armorType = unitDef->armorType;
+	category = unitDef->category;
+
+	aihint = unitDef->aihint;
+	tooltip = unitDef->humanName + " - " + unitDef->tooltip;
+	wreckName = unitDef->wreckName;
+
+
+	// sensor parameters
+	realLosRadius = int(unitDef->losRadius);
+	realAirLosRadius = int(unitDef->airLosRadius);
+
+	radarRadius      = unitDef->radarRadius    / (SQUARE_SIZE * 8);
+	sonarRadius      = unitDef->sonarRadius    / (SQUARE_SIZE * 8);
+	jammerRadius     = unitDef->jammerRadius   / (SQUARE_SIZE * 8);
+	sonarJamRadius   = unitDef->sonarJamRadius / (SQUARE_SIZE * 8);
+	seismicRadius    = unitDef->seismicRadius  / (SQUARE_SIZE * 8);
+	seismicSignature = unitDef->seismicSignature;
+	hasRadarCapacity =
+		(radarRadius   > 0.0f) || (sonarRadius    > 0.0f) ||
+		(jammerRadius  > 0.0f) || (sonarJamRadius > 0.0f) ||
+		(seismicRadius > 0.0f);
+	stealth = unitDef->stealth;
+	sonarStealth = unitDef->sonarStealth;
+	decloakDistance = unitDef->decloakDistance;
+	cloakTimeout = unitDef->cloakTimeout;
+
+
+	floatOnWater =
+		unitDef->floater ||
+		(unitDef->movedata && ((unitDef->movedata->moveType == MoveData::Hover_Move) ||
+							   (unitDef->movedata->moveType == MoveData::Ship_Move)));
+
+	maxSpeed = unitDef->speed / GAME_SPEED;
+	maxReverseSpeed = unitDef->rSpeed / GAME_SPEED;
+
+	flankingBonusMode        = unitDef->flankingBonusMode;
+	flankingBonusDir         = unitDef->flankingBonusDir;
+	flankingBonusMobility    = unitDef->flankingBonusMobilityAdd * 1000;
+	flankingBonusMobilityAdd = unitDef->flankingBonusMobilityAdd;
+	flankingBonusAvgDamage   = (unitDef->flankingBonusMax + unitDef->flankingBonusMin) * 0.5f;
+	flankingBonusDifDamage   = (unitDef->flankingBonusMax - unitDef->flankingBonusMin) * 0.5f;
+
+	useHighTrajectory = (unitDef->highTrajectoryType == 1);
+
+	if (unitDef->fireState != -1)
+		fireState = unitDef->fireState;
+
+	if (build) {
+		ChangeLos(1, 1);
+		health = 0.1f;
+	} else {
+		ChangeLos(realLosRadius, realAirLosRadius);
+	}
+
+	energyTickMake =
+		unitDef->energyMake +
+		unitDef->tidalGenerator * mapInfo->map.tidalStrength;
+
+	SetRadius((model = unitDef->LoadModel())->radius);
+	modelParser->CreateLocalModel(this);
+
+	// copy the UnitDef volume instance
+	//
+	// aircraft still get half-size spheres for coldet purposes
+	// iif no custom volume is defined (unit->model->radius and
+	// unit->radius themselves are no longer altered)
+	collisionVolume = new CollisionVolume(unitDef->collisionVolume, model->radius * ((unitDef->canfly)? 0.5f: 1.0f));
+	moveType = MoveTypeFactory::GetMoveType(this, unitDef);
+	script = CUnitScriptFactory::CreateScript(unitDef->scriptPath, this);
 }
+
+void CUnit::PostInit(const CUnit* builder)
+{
+	weapons.reserve(unitDef->weapons.size());
+
+	for (unsigned int i = 0; i < unitDef->weapons.size(); i++) {
+		weapons.push_back(unitLoader->LoadWeapon(this, &unitDef->weapons[i]));
+	}
+
+	// Call initializing script functions
+	script->Create();
+
+	if (!beingBuilt) {
+		FinishedBuilding();
+	}
+
+	relMidPos = model->relMidPos;
+	losHeight = relMidPos.y + (radius * 0.5f);
+	height = model->height;
+
+	UpdateMidPos();
+
+	// all ships starts on water, all others on ground.
+	// TODO: Improve this. There might be cases when this is not correct.
+	if (unitDef->movedata &&
+	    (unitDef->movedata->moveType == MoveData::Hover_Move)) {
+		physicalState = CSolidObject::Hovering;
+	} else if (floatOnWater) {
+		physicalState = CSolidObject::Floating;
+	} else {
+		physicalState = CSolidObject::OnGround;
+	}
+
+	// all units are blocking (ie. register on the blk-map
+	// when not flying) except mines, since their position
+	// would be given away otherwise by the PF, etc.
+	// note: this does mean that mines can be stacked (would
+	// need an extra yardmap character to prevent)
+	immobile = (unitDef->speed < 0.001f || !unitDef->canmove);
+	blocking = !(immobile && unitDef->canKamikaze);
+
+	if (blocking) {
+		Block();
+	}
+
+	if (unitDef->windGenerator > 0.0f) {
+		wind.AddUnit(this);
+	}
+
+	UpdateTerrainType();
+
+	Command c;
+	if (unitDef->canmove || unitDef->builder) {
+		if (unitDef->moveState < 0) {
+			if (builder != NULL) {
+				moveState = builder->moveState;
+			} else {
+				moveState = 1;
+			}
+		} else {
+			moveState = unitDef->moveState;
+		}
+
+		c.id = CMD_MOVE_STATE;
+		c.params.push_back(moveState);
+		commandAI->GiveCommand(c);
+	}
+
+	if (commandAI->CanChangeFireState()) {
+		if (unitDef->fireState < 0) {
+			if (builder != NULL && (builder->unitDef->type == "Factory"
+						|| dynamic_cast<CFactoryCAI*>(builder->commandAI))) {
+				fireState = builder->fireState;
+			} else {
+				fireState = 2;
+			}
+		} else {
+			fireState = unitDef->fireState;
+		}
+
+		c.id = CMD_FIRE_STATE;
+		c.params.push_back(fireState);
+		commandAI->GiveCommand(c);
+	}
+
+	eventHandler.UnitCreated(this, builder);
+	eoh->UnitCreated(*this, builder);
+}
+
+
 
 
 void CUnit::ForcedMove(const float3& newPos)
@@ -1446,89 +1640,6 @@ void CUnit::SetUserTarget(CUnit* target)
 }
 
 
-void CUnit::Init(const CUnit* builder)
-{
-	relMidPos = model->relMidPos;
-	midPos = pos + (frontdir * relMidPos.z)
-	             + (updir    * relMidPos.y)
-	             + (rightdir * relMidPos.x);
-	losHeight = relMidPos.y + (radius * 0.5f);
-	height = model->height;
-	// TODO: This one would be much better to have either in Constructor
-	//       or UnitLoader! // why this is always called in unitloader
-	currentFuel = unitDef->maxFuel;
-
-	// all ships starts on water, all others on ground.
-	// TODO: Improve this. There might be cases when this is not correct.
-	if (unitDef->movedata &&
-	    (unitDef->movedata->moveType == MoveData::Hover_Move)) {
-		physicalState = CSolidObject::Hovering;
-	} else if (floatOnWater) {
-		physicalState = CSolidObject::Floating;
-	} else {
-		physicalState = CSolidObject::OnGround;
-	}
-
-
-	// all units are blocking (ie. register on the blk-map
-	// when not flying) except mines, since their position
-	// would be given away otherwise by the PF, etc.
-	// note: this does mean that mines can be stacked (would
-	// need an extra yardmap character to prevent)
-	immobile = (unitDef->speed < 0.001f || !unitDef->canmove);
-	blocking = !(immobile && unitDef->canKamikaze);
-
-	if (blocking) {
-		Block();
-	}
-
-	if (unitDef->windGenerator > 0.0f) {
-		wind.AddUnit(this);
-	}
-
-	isUnderWater = ((pos.y + model->height) < 0.0f);
-	UpdateTerrainType();
-
-	Command c;
-	if (unitDef->canmove || unitDef->builder) {
-		if (unitDef->moveState < 0) {
-			if (builder != NULL) {
-				moveState = builder->moveState;
-			} else {
-				moveState = 1;
-			}
-		} else {
-			moveState = unitDef->moveState;
-		}
-
-		c.id = CMD_MOVE_STATE;
-		c.params.push_back(moveState);
-		commandAI->GiveCommand(c);
-		c.params.clear();
-	}
-
-	if (commandAI->CanChangeFireState()) {
-		if (unitDef->fireState < 0) {
-			if (builder != NULL && (builder->unitDef->type == "Factory"
-						|| dynamic_cast<CFactoryCAI*>(builder->commandAI))) {
-				fireState = builder->fireState;
-			} else {
-				fireState = 2;
-			}
-		} else {
-			fireState = unitDef->fireState;
-		}
-
-		c.id = CMD_FIRE_STATE;
-		c.params.push_back(fireState);
-		commandAI->GiveCommand(c);
-		c.params.clear();
-	}
-
-	eventHandler.UnitCreated(this, builder);
-	eoh->UnitCreated(*this, builder);
-}
-
 
 void CUnit::UpdateTerrainType()
 {
@@ -1716,8 +1827,8 @@ void CUnit::FinishedBuilding()
 		soloBuilder = NULL;
 	}
 
-	if (!(immobile && (mass == 100000))) {
-		mass = unitDef->mass;		//set this now so that the unit is harder to move during build
+	if (!(immobile && (mass == CSolidObject::DEFAULT_MASS))) {
+		mass = unitDef->mass;
 	}
 
 	ChangeLos(realLosRadius, realAirLosRadius);
@@ -1797,6 +1908,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 					false, false, wd->explosionGenerator, 0, ZeroVector, wd->id
 				);
 
+				#if (PLAY_SOUNDS == 1)
 				// play explosion sound
 				if (wd->soundhit.getID(0) > 0) {
 					// HACK: loading code doesn't set sane defaults for explosion sounds, so we do it here
@@ -1804,6 +1916,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 					float volume = wd->soundhit.getVolume(0);
 					Channels::Battle.PlaySample(wd->soundhit.getID(0), pos, (volume == -1) ? 1.0f : volume);
 				}
+				#endif
 			}
 		}
 
@@ -1907,12 +2020,14 @@ void CUnit::Activate()
 
 	radarhandler->MoveUnit(this);
 
+	#if (PLAY_SOUNDS == 1)
 	int soundIdx = unitDef->sounds.activate.getRandomIdx();
 	if (soundIdx >= 0) {
 		Channels::UnitReply.PlaySample(
 			unitDef->sounds.activate.getID(soundIdx), this,
 			unitDef->sounds.activate.getVolume(soundIdx));
 	}
+	#endif
 }
 
 void CUnit::Deactivate()
@@ -1929,12 +2044,14 @@ void CUnit::Deactivate()
 
 	radarhandler->RemoveUnit(this);
 
+	#if (PLAY_SOUNDS == 1)
 	int soundIdx = unitDef->sounds.deactivate.getRandomIdx();
 	if (soundIdx >= 0) {
 		Channels::UnitReply.PlaySample(
 			unitDef->sounds.deactivate.getID(soundIdx), this,
 			unitDef->sounds.deactivate.getVolume(soundIdx));
 	}
+	#endif
 }
 
 
@@ -2075,8 +2192,7 @@ void CUnit::PostLoad()
 
 	curYardMap = (unitDef->yardmaps[buildFacing].empty())? NULL: &unitDef->yardmaps[buildFacing][0];
 
-	model = unitDef->LoadModel();
-	SetRadius(model->radius);
+	SetRadius((model = unitDef->LoadModel())->radius);
 
 	modelParser->CreateLocalModel(this);
 	// FIXME: how to handle other script types (e.g. Lua) here?

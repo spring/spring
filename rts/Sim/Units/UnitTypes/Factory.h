@@ -29,7 +29,7 @@ public:
 	float3 CalcBuildPos(int buildPiece = -1);
 	int GetBuildPiece();
 
-	void UnitInit(const UnitDef* def, int team, const float3& position);
+	void PreInit(const UnitDef* def, int team, int facing, const float3& position, bool build);
 
 	float buildSpeed;
 

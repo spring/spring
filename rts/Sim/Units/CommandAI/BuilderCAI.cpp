@@ -315,7 +315,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		bi.pos = float3(c.params[0], c.params[1], c.params[2]);
 
 		if (c.params.size() == 4)
-			bi.buildFacing = int(abs(c.params[3])) % 4;
+			bi.buildFacing = int(abs(c.params[3])) % NUM_FACINGS;
 
 		bi.def = unitDefHandler->GetUnitDefByName(boi->second);
 		bi.pos = helper->Pos2BuildPos(bi);
@@ -467,7 +467,7 @@ void CBuilderCAI::SlowUpdate()
 			bi.pos.y = c.params[1];
 
 			if (c.params.size() == 4)
-				bi.buildFacing = int(abs(c.params[3])) % 4;
+				bi.buildFacing = int(abs(c.params[3])) % NUM_FACINGS;
 
 			bi.def = unitDefHandler->GetUnitDefByName(boi->second);
 
@@ -1664,7 +1664,7 @@ void CBuilderCAI::DrawCommands(void)
 				bi.def = unitDefHandler->GetUnitDefByID(-(ci->id));
 
 				if (ci->params.size() == 4) {
-					bi.buildFacing = int(abs(ci->params[3])) % 4;
+					bi.buildFacing = int(abs(ci->params[3])) % NUM_FACINGS;
 				}
 
 				bi.pos = float3(ci->params[0], ci->params[1], ci->params[2]);

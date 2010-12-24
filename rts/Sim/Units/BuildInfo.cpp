@@ -13,7 +13,7 @@ BuildInfo::BuildInfo(const std::string& name, const float3& pos, int facing)
 	: pos(pos)
 {
 	def = unitDefHandler->GetUnitDefByName(name);
-	buildFacing = abs(facing) % 4;
+	buildFacing = abs(facing) % NUM_FACINGS;
 }
 
 
@@ -38,7 +38,7 @@ bool BuildInfo::Parse(const Command& c)
 			buildFacing = 0;
 
 			if (c.params.size() == 4) {
-				buildFacing = int(abs(c.params[3])) % 4;
+				buildFacing = int(abs(c.params[3])) % NUM_FACINGS;
 			}
 
 			return true;
