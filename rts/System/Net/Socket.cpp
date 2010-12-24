@@ -25,13 +25,11 @@ boost::asio::io_service netservice;
 
 bool CheckErrorCode(boost::system::error_code& err)
 {
-	// connection reset can happen when host didn't start up before the client wants to connect
-	if (!err || err.value() == connection_reset)
-	{
+	// connection reset can happen when host did not start up
+	// before the client wants to connect
+	if (!err || err.value() == connection_reset) {
 		return false;
-	}
-	else
-	{
+	} else {
 		LogObject() << "Network error " << err.value() << ": " << err.message();
 		return true;
 	}
@@ -42,13 +40,13 @@ boost::asio::ip::udp::endpoint ResolveAddr(const std::string& ip, int port)
 	using namespace boost::asio;
 	boost::system::error_code err;
 	ip::address tempAddr = WrapIP(ip, &err);
-	if (err)
-	{
+	if (err) {
 		// error, maybe a hostname?
 		ip::udp::resolver resolver(netcode::netservice);
 		std::ostringstream portbuf;
 		portbuf << port;
 		ip::udp::resolver::query query(ip, portbuf.str());
+		// TODO: check if unsync problem exists here too (see WrapResolve below)
 		ip::udp::resolver::iterator iter = resolver.resolve(query);
 		tempAddr = iter->endpoint().address();
 	}
@@ -65,8 +63,9 @@ bool IsLoopbackAddress(const boost::asio::ip::address& addr) {
 	}
 }
 
-boost::asio::ip::address WrapIP(const std::string& ip, boost::system::error_code* err) {
-
+boost::asio::ip::address WrapIP(const std::string& ip,
+		boost::system::error_code* err)
+{
 	boost::asio::ip::address addr;
 
 	if (err == NULL) {
