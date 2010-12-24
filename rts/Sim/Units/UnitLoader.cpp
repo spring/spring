@@ -173,7 +173,7 @@ CWeapon* CUnitLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* udw)
 		weapon = new CEmgCannon(owner);
 	} else if (weaponDef->type == "DGun") {
 		weapon = new CDGunWeapon(owner);
-	} else if (weaponDef->type == "StarburstLauncher"){
+	} else if (weaponDef->type == "StarburstLauncher") {
 		weapon = new CStarburstLauncher(owner);
 		if (weaponDef->tracks)
 			((CStarburstLauncher*) weapon)->tracking = weaponDef->turnrate;

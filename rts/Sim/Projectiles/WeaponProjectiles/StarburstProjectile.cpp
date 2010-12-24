@@ -48,9 +48,10 @@ CR_REG_METADATA(CStarburstProjectile,(
 void CStarburstProjectile::creg_Serialize(creg::ISerializer& s)
 {
 	s.Serialize(numCallback, sizeof(int));
+
 	// NOTE This could be tricky if gs is serialized after losHandler.
-	for (int a = 0; a < 5; ++a) {
-		s.Serialize(oldInfos[a], sizeof(struct CStarburstProjectile::OldInfo));
+	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
+		s.Serialize(&tracerParts[a], sizeof(struct CStarburstProjectile::TracerPart));
 	}
 }
 
@@ -99,20 +100,18 @@ CStarburstProjectile::CStarburstProjectile(
 	numCallback = new int;
 	*numCallback = 0;
 
-	float3 camDir=(pos-camera->pos).Normalize();
-	if (((camera->pos.distance(pos) * 0.2f) + ((1 - fabs(camDir.dot(dir))) * 3000)) < 200)
-	{
-		drawTrail = false;
-	}
+	const float3 camDir = (pos - camera->pos).ANormalize();
+	const float camDist = (camera->pos.distance(pos) * 0.2f) + ((1.0f - fabs(camDir.dot(dir))) * 3000);
 
-	for (int a = 0; a < 5; ++a) {
-		oldInfos[a] = new OldInfo;
-		oldInfos[a]->dir = dir;
-		oldInfos[a]->pos = pos;
-		oldInfos[a]->speedf = curSpeed;
+	drawTrail = (camDist >= 200.0f);
+
+	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
+		tracerParts[a].dir = dir;
+		tracerParts[a].pos = pos;
+		tracerParts[a].speedf = curSpeed;
+
 		for (float aa = 0; aa < curSpeed + 0.6f; aa += 0.15f) {
-			float ageMod = 1.0f;
-			oldInfos[a]->ageMods.push_back(ageMod);
+			tracerParts[a].ageMods.push_back(1.0f);
 		}
 	}
 	castShadow = true;
@@ -132,9 +131,6 @@ CStarburstProjectile::~CStarburstProjectile()
 	delete numCallback;
 	if (curCallback) {
 		curCallback->drawCallbacker = 0;
-	}
-	for (int a = 0; a < 5; ++a) {
-		delete oldInfos[a];
 	}
 }
 
@@ -175,6 +171,7 @@ void CStarburstProjectile::Update()
 	ttl--;
 	uptime--;
 	missileAge++;
+
 	if (target && weaponDef->tracks && owner()) {
 		targetPos = helper->GetUnitErrorPos(target, owner()->allyteam);
 	}
@@ -265,25 +262,30 @@ void CStarburstProjectile::Update()
 	}
 
 
-	OldInfo* tempOldInfo = oldInfos[4];
-	for (size_t a = 3; a >= 0; --a) {
-		oldInfos[a + 1] = oldInfos[a];
+	TracerPart* lastTracerPart = &tracerParts[NUM_TRACER_PARTS - 1];
+
+	for (int a = NUM_TRACER_PARTS - 2; a >= 0; --a) {
+		tracerParts[a + 1] = tracerParts[a];
 	}
-	oldInfos[0] = tempOldInfo;
-	oldInfos[0]->pos = pos;
-	oldInfos[0]->dir = dir;
-	oldInfos[0]->speedf = curSpeed;
+
+	tracerParts[0] = *lastTracerPart;
+	tracerParts[0].pos = pos;
+	tracerParts[0].dir = dir;
+	tracerParts[0].speedf = curSpeed;
+
 	int newsize = 0;
 	for (float aa = 0; aa < curSpeed + 0.6f; aa += 0.15f, ++newsize) {
-		float ageMod = (missileAge < 20) ? 1 : 0.6f + rand() * 0.8f / RAND_MAX;
-		if (oldInfos[0]->ageMods.size() <= newsize) {
-			oldInfos[0]->ageMods.push_back(ageMod);
+		const float ageMod = (missileAge < 20) ? 1 : 0.6f + rand() * 0.8f / RAND_MAX;
+
+		if (tracerParts[0].ageMods.size() <= newsize) {
+			tracerParts[0].ageMods.push_back(ageMod);
 		} else {
-			oldInfos[0]->ageMods[newsize] = ageMod;
+			tracerParts[0].ageMods[newsize] = ageMod;
 		}
 	}
-	if (oldInfos[0]->ageMods.size() != newsize) {
-		oldInfos[0]->ageMods.resize(newsize);
+
+	if (tracerParts[0].ageMods.size() != newsize) {
+		tracerParts[0].ageMods.resize(newsize);
 	}
 
 	age++;
@@ -328,18 +330,14 @@ void CStarburstProjectile::Draw()
 		if (drawTrail) {
 			// draw the trail as a single quad
 
-			float3 dif(drawPos - camera->pos);
-			dif.Normalize();
-			float3 dir1(dif.cross(dir));
-			dir1.Normalize();
-			float3 dif2(oldSmoke - camera->pos);
-			dif2.Normalize();
-			float3 dir2(dif2.cross(oldSmokeDir));
-			dir2.Normalize();
+			float3 dif1 = (drawPos - camera->pos).Normalize();
+			float3 dir1 = (dif1.cross(dir)).Normalize();
+			float3 dif2 = (oldSmoke - camera->pos).Normalize();
+			float3 dir2 = (dif2.cross(oldSmokeDir)).Normalize();
 
 
 			float a1 = (1 - (0.0f / SMOKE_TIME)) * 255;
-			a1 *= 0.7f + fabs(dif.dot(dir));
+			a1 *= 0.7f + fabs(dif1.dot(dir));
 			const int alpha1 = std::min(255, (int) std::max(0.0f, a1));
 			col[0] = (unsigned char) (color * alpha1);
 			col[1] = (unsigned char) (color * alpha1);
@@ -406,21 +404,23 @@ void CStarburstProjectile::DrawCallback()
 		return;
 	}
 	*numCallback = 0;
-
 	inArray = true;
+
 	unsigned char col[4];
 
 	for (int a = 0; a < 5; ++a) {
 #if defined(USE_GML) && GML_ENABLE_SIM
-		OldInfo *oldinfo = *(OldInfo * volatile *)&oldInfos[a];
+		const TracerPart* tracerPart = *(TracerPart* volatile*) &tracerParts[a];
 #else
-		OldInfo *oldinfo = oldInfos[a];
+		const TracerPart* tracerPart = &tracerParts[a];
 #endif
-		const float3 opos = oldinfo->pos;
-		const float3 odir = oldinfo->dir;
-		const float ospeed = oldinfo->speedf;
+
+		const float3& opos = tracerPart->pos;
+		const float3& odir = tracerPart->dir;
+		const float ospeed = tracerPart->speedf;
 		float aa = 0;
-		for (AGEMOD_VECTOR::iterator ai = oldinfo->ageMods.begin(); ai != oldinfo->ageMods.end(); ++ai, aa += 0.15f) {
+
+		for (AGEMOD_VECTOR::const_iterator ai = tracerPart->ageMods.begin(); ai != tracerPart->ageMods.end(); ++ai, aa += 0.15f) {
 			const float ageMod = *ai;
 			const float age2 = (a + (aa / (ospeed + 0.01f))) * 0.2f;
 			const float3 interPos = opos - (odir * ((a * 0.5f) + aa));
