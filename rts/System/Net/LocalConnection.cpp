@@ -11,30 +11,32 @@
 namespace netcode {
 
 // static stuff
-unsigned CLocalConnection::Instances = 0;
+unsigned CLocalConnection::instances = 0;
 std::deque< boost::shared_ptr<const RawPacket> > CLocalConnection::Data[2];
 boost::mutex CLocalConnection::Mutex[2];
 
 CLocalConnection::CLocalConnection()
 {
-	if (Instances > 1)
-	{
+	if (instances > 1) {
 		throw network_error("Opening a third local connection is not allowed");
 	}
-	instance = Instances;
-	Instances++;
+	instance = instances;
+	instances++;
 }
 
 CLocalConnection::~CLocalConnection()
 {
-	Instances--;
+	instances--;
 }
 
 void CLocalConnection::SendData(boost::shared_ptr<const RawPacket> data)
 {
-	if (!ProtocolDef::instance()->IsValidPacket(data->data, data->length)) {
-		logOutput.Print("ERROR: Discarding invalid packet: ID %d, LEN %d", (data->length > 0) ? (int)data->data[0] : -1, data->length);
-		return; // having this check here makes it easier to find networking bugs also when testing locally
+	if (!ProtocolDef::GetInstance()->IsValidPacket(data->data, data->length)) {
+		// having this check here makes it easier to find networking bugs
+		// also when testing locally
+		logOutput.Print("ERROR: Discarding invalid packet: ID %d, LEN %d",
+				(data->length > 0) ? (int)data->data[0] : -1, data->length);
+		return;
 	}
 
 	dataSent += data->length;
@@ -58,16 +60,13 @@ boost::shared_ptr<const RawPacket> CLocalConnection::Peek(unsigned ahead) const
 boost::shared_ptr<const RawPacket> CLocalConnection::GetData()
 {
 	boost::mutex::scoped_lock scoped_lock(Mutex[instance]);
-	
-	if (!Data[instance].empty())
-	{
+
+	if (!Data[instance].empty()) {
 		boost::shared_ptr<const RawPacket> next = Data[instance].front();
 		Data[instance].pop_front();
 		dataRecv += next->length;
 		return next;
-	}
-	else
-	{
+	} else {
 		boost::shared_ptr<const RawPacket> empty;
 		return empty;
 	}
@@ -108,10 +107,11 @@ bool CLocalConnection::HasIncomingData() const
 
 unsigned CLocalConnection::OtherInstance() const
 {
-	if (instance == 0)
+	if (instance == 0) {
 		return 1;
-	else
+	} else {
 		return 0;
+	}
 }
 
 } // namespace netcode

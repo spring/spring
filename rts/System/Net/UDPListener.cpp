@@ -146,7 +146,7 @@ void UDPListener::Update()
 				break;
 			}
 		}
-		
+
 		if (!processed) // still have the packet (means no connection with the sender's address found)
 		{
 			if (acceptNewConnections && data.lastContinuous == -1 && data.nakType == 0)
@@ -164,9 +164,9 @@ void UDPListener::Update()
 			{
 				LogObject() << "Dropping packet from unknown IP: [" << sender_endpoint.address() << "]:" << sender_endpoint.port();
 			}
-		}	
+		}
 	}
-	
+
 	for (std::list< boost::weak_ptr< UDPConnection> >::iterator i = conn.begin(); i != conn.end(); ++i)
 	{
 		boost::shared_ptr<UDPConnection> temp = i->lock();

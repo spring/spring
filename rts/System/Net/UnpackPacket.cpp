@@ -5,10 +5,13 @@
 namespace netcode
 {
 
-UnpackPacket::UnpackPacket(boost::shared_ptr<const RawPacket> packet, size_t skipBytes) : pckt(packet), pos(skipBytes)
+UnpackPacket::UnpackPacket(boost::shared_ptr<const RawPacket> packet, size_t skipBytes)
+	: pckt(packet)
+	, pos(skipBytes)
 {
-	if(pos > pckt->length)
+	if (pos > pckt->length) {
 		throw UnpackPacketException("Unpack failure (byte skip)");
+	}
 }
 
 }
