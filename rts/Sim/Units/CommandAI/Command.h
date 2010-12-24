@@ -104,6 +104,7 @@ public:
 		options(0),
 		tag(0),
 		timeOut(INT_MAX) {}
+	~Command() { params.clear(); }
 
 	bool IsAreaCommand() const {
 		if (id == CMD_REPAIR ||

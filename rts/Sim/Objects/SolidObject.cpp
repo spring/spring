@@ -43,7 +43,7 @@ CR_REG_METADATA(CSolidObject,
 
 
 CSolidObject::CSolidObject():
-	mass(100000),
+	mass(DEFAULT_MASS),
 	blocking(false),
 	floatOnWater(false),
 	immobile(false),

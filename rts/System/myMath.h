@@ -35,7 +35,8 @@ enum FacingMap {
 	FACING_NORTH = 2,
 	FACING_SOUTH = 0,
 	FACING_EAST  = 1,
-	FACING_WEST  = 3
+	FACING_WEST  = 3,
+	NUM_FACINGS  = 4,
 };
 
 class CMyMath {

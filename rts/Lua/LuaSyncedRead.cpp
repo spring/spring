@@ -3347,7 +3347,7 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 		HSTR_PUSH_NUMBER(L, "requestedTurnRate", groundmt->requestedTurnRate);
 
 		HSTR_PUSH_NUMBER(L, "pathFailures", 0);
-		HSTR_PUSH_NUMBER(L, "floatOnWater", groundmt->floatOnWater);
+		HSTR_PUSH_NUMBER(L, "floatOnWater", unit->floatOnWater);
 
 		return 1;
 	}

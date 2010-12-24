@@ -15,10 +15,10 @@ public:
 
 	CBuilding();
 	virtual ~CBuilding() {}
-	void PostLoad();
+	void PostLoad() {}
 
-	void Init(const CUnit* builder);
-	void UnitInit(const UnitDef* def, int team, const float3& position);
+	void PreInit(const UnitDef* def, int team, int facing, const float3& position, bool build);
+	void PostInit(const CUnit* builder);
 	void ForcedMove(const float3& newPos, int facing);
 
 	BuildingGroundDecal* buildingDecal;
