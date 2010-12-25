@@ -284,7 +284,7 @@ void CStarburstProjectile::Update()
 
 		int newsize = 0;
 		for (float aa = 0; aa < curSpeed + 0.6f; aa += 0.15f, ++newsize) {
-			const float ageMod = (missileAge < 20) ? 1 : (0.6f + rand() * 0.8f) / RAND_MAX;
+			const float ageMod = (missileAge < 20) ? 1.0f : (0.6f + (rand() * 0.8f) / RAND_MAX);
 
 			if (tracerParts[0].ageMods.size() <= newsize) {
 				tracerParts[0].ageMods.push_back(ageMod);
