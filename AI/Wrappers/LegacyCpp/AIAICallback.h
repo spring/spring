@@ -242,6 +242,10 @@ public:
 
 	const float3* GetStartPos();
 
+	unsigned int GetCategoryFlag(const char* categoryName);
+	unsigned int GetCategoriesFlag(const char* categoryNames);
+	void GetCategoryName(int categoryFlag, char* name, int name_sizeMax);
+
 
 	const char* CallLuaRules(const char* data, int inSize, int* outSize);
 
