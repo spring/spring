@@ -26,26 +26,36 @@ public:
 	virtual void SetLastMsgPos(float3 pos) = 0;
 	virtual void AddNotification(float3 pos, float3 color, float alpha) = 0;
 
-	// give <mAmount> of metal and <eAmount> of energy to <receivingTeam>
-	// * the amounts are capped to the AI team's resource levels
-	// * does not check for alliance with <receivingTeam>
-	// * LuaRules might not allow resource transfers, AI's must verify the deduction
+	/**
+	 * Give <mAmount> of metal and <eAmount> of energy to <receivingTeam>
+	 * - the amounts are capped to the AI team's resource levels
+	 * - does not check for alliance with <receivingTeam>
+	 * - LuaRules might not allow resource transfers,
+	 *   AI's must verify the deduction
+	 */
 	virtual bool SendResources(float mAmount, float eAmount, int receivingTeam) = 0;
-	// give units to <receivingTeam>, the return value represents how many
-	// actually were transferred (make sure this always matches the size of
-	// the vector you pass in, if not then some unitID's were filtered out)
-	// * does not check for alliance with <receivingTeam>
-	// * AI's should check each unit if it is still under control of their
-	//   team after the transaction via UnitTaken() and UnitGiven(), since
-	//   LuaRules might block part of it
+	/**
+	 * Give units to <receivingTeam>, the return value represents how many
+	 * actually were transferred (make sure this always matches the size of
+	 * the vector you pass in, if not then some unitID's were filtered out)
+	 * - does not check for alliance with <receivingTeam>
+	 * - AI's should check each unit if it is still under control of their
+	 *   team after the transaction via UnitTaken() and UnitGiven(), since
+	 *   LuaRules might block part of it
+	 */
 	virtual int SendUnits(const std::vector<int>& unitIds, int receivingTeamId) = 0;
 
-	/// checks if pos is within view of the current camera, using radius as a margin
+	/**
+	 * Checks if pos is within view of the current camera,
+	 * using radius as a margin.
+	 */
 	virtual bool PosInCamera(float3 pos, float radius) = 0;
 
-	// get the current game time measured in frames (the
-	// simulation runs at 30 frames per second at normal
-	// speed)
+	/**
+	 * Returns the current game time measured in frames (the
+	 * simulation runs at 30 frames per second at normal
+	 * speed)
+	 */
 	virtual int GetCurrentFrame() = 0;
 
 	virtual int GetMySkirmishAIId() = 0;
@@ -67,7 +77,8 @@ public:
 	 * which will lead to a more stable and versatile AI.
 	 * @deprecated
 	 *
-	 * @return eg. "ARM" or "CORE"; may be "", depending on how the game was setup
+	 * @return eg. "ARM" or "CORE"; may be "",
+	 *         depending on how the game was setup
 	 */
 	virtual const char* GetTeamSide(int teamId) = 0;
 	virtual int GetTeamAllyTeam(int teamId) = 0;
@@ -85,11 +96,18 @@ public:
 	/// Returns true, if the two supplied ally-teams are currently allied
 	virtual bool IsAllied(int firstAllyTeamId, int secondAllyTeamId) = 0;
 
-	// returns the size of the created area, this is initialized to all 0 if not previously created
-	// set something to !0 to tell other AI's that the area is already initialized when they try to
-	// create it (the exact internal format of the memory areas is up to the AI's to keep consistent)
+	/**
+	 * Returns the size of the created area, this is initialized to all 0 if not
+	 * previously created set something to !0 to tell other AI's that the area
+	 * is already initialized when they try to create it (the exact internal
+	 * format of the memory areas is up to the AI's to keep consistent).
+	 * @deprecated
+	 */
 	virtual void* CreateSharedMemArea(char* name, int size) = 0;
-	// release your reference to a memory area
+	/**
+	 * Releases your reference to a memory area.
+	 * @deprecated
+	 */
 	virtual void ReleasedSharedMemArea(char* name) = 0;
 
 	/// Creates a group and returns the id it was given, returns -1 on failure
@@ -106,20 +124,32 @@ public:
 	virtual bool RemoveUnitFromGroup(int unitId) = 0;
 	/// Returns the group a unit belongs to, -1 if none
 	virtual int GetUnitGroup(int unitId) = 0;
-	/// The commands that this group can understand, other commands will be ignored
+	/**
+	 * The commands that this group can understand, other commands will be
+	 * ignored.
+	 */
 	virtual const std::vector<CommandDescription>* GetGroupCommands(int groupId) = 0;
 	virtual int GiveGroupOrder(int unitId, Command* c) = 0;
 
 	virtual int GiveOrder(int unitId, Command* c) = 0;
 
-	/// The commands that this unit can understand, other commands will be ignored
+	/**
+	 * The commands that this unit can understand, other commands will be
+	 * ignored.
+	 */
 	virtual const std::vector<CommandDescription>* GetUnitCommands(int unitId) = 0;
 	virtual const CCommandQueue* GetCurrentUnitCommands(int unitId) = 0;
 
-	// these functions always work on allied units, but for
-	// enemies only when you have LOS on them (so watch out
-	// when calling GetUnitDef)
-	/// integer telling something about the units main function, not implemented yet
+	/*
+	 * These functions always work on allied units, but for
+	 * enemies only when you have LOS on them (so watch out
+	 * when calling GetUnitDef)
+	 */
+
+	/**
+	 * Returns a number telling something about the units main function.
+	 * Note: not implemented yet!
+	 */
 	virtual int GetUnitAiHint(int unitId) = 0;
 	virtual int GetUnitTeam(int unitId) = 0;
 	virtual int GetUnitAllyTeam(int unitId) = 0;
@@ -156,25 +186,40 @@ public:
 
 	virtual const UnitDef* GetUnitDef(const char* unitName) = 0;
 
-	// the following functions allow the dll to use the built-in pathfinder
-	// * call InitPath and you get a pathid back
-	// * use this to call GetNextWaypoint to get subsequent waypoints, the waypoints are centered on 8*8 squares
-	// * note that the pathfinder calculates the waypoints as needed so don't retrieve them until they are needed
-	// * the waypoint's x and z coordinates are returned in x and z while y is used for error codes
-	//   y >= 0: worked ok, y = -2: still thinking call again, y = -1: end of path reached or invalid path
+	/**
+	 * the following functions allow the dll to use the built-in pathfinder
+	 * - call InitPath and you get a pathid back
+	 * - use this to call GetNextWaypoint to get subsequent waypoints,
+	 *   the waypoints are centered on 8*8 squares
+	 * - note that the pathfinder calculates the waypoints as needed so do not
+	 *   retrieve them until they are needed
+	 * - the waypoint's x and z coordinates are returned in x and z while y is
+	 *   used for error codes
+	 * y >= 0: worked ok
+	 * y = -2: still thinking, call again
+	 * y = -1: end of path reached or invalid path
+	 */
 	virtual int InitPath(float3 start, float3 end, int pathType, float goalRadius = 8) = 0;
 	virtual float3 GetNextWaypoint(int pathId) = 0;
 	virtual void FreePath(int pathId) = 0;
 
-	// returns the approximate path cost between two points (note that
-	// it needs to calculate the complete path so somewhat expensive)
+	/**
+	 * returns the approximate path cost between two points (note that
+	 * it needs to calculate the complete path so somewhat expensive)
+	 */
 	virtual float GetPathLength(float3 start, float3 end, int pathType, float goalRadius = 8) = 0;
 
-	// the following function return the units into arrays that must be allocated by the dll
-	// * 10000 is currently the max amount of units so that should be a safe size for the array
-	// * the return value indicates how many units were returned, the rest of the array is unchanged
-	// * all forms of GetEnemyUnits and GetFriendlyUnits filter out any neutrals, use the GetNeutral
-	//   callbacks to retrieve them
+	/*
+	 * The following function return the units into arrays that must be
+	 * allocated by the dll
+	 * - 10000 is currently the max amount of units so that should be a safe
+	 *   size for the array
+	 * - the return value indicates how many units were returned, the rest of
+	 *   the array is unchanged
+	 * - all forms of GetEnemyUnits and GetFriendlyUnits filter out any
+	 *   neutrals, use the GetNeutral callbacks to retrieve them
+	 */
+
 	/// returns all known (in LOS) enemy units
 	virtual int GetEnemyUnits(int* unitIds, int unitIds_max = MAX_UNITS) = 0;
 	/// returns all known enemy units within radius from pos
@@ -190,11 +235,16 @@ public:
 	/// returns all known neutral units within radius from pos
 	virtual int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS) = 0;
 
-	// the following functions are used to get information about the map
-	// * do NOT modify or delete any of the pointers returned
-	// * the maps are stored from top left and each data position is 8*8 in size
-	// * to get info about a position (x, y) look at location (int(y / 8)) * GetMapWidth() + (int(x / 8))
-	// * note that some of the type-maps are stored in a lower resolution than this
+	/*
+	 * The following functions are used to get information about the map
+	 * - do NOT modify or delete any of the pointers returned
+	 * - the maps are stored from top left and each data position is 8*8 in size
+	 * - to get info about a position (x, y) look at location
+	 *   (int(y / 8)) * GetMapWidth() + (int(x / 8))
+	 * - note that some of the type-maps are stored in a lower resolution than
+	 *   this
+	 */
+
 	virtual int GetMapWidth() = 0;
 	virtual int GetMapHeight() = 0;
 	/**
@@ -218,12 +268,14 @@ public:
 	virtual float GetMaxHeight() = 0;
 	/**
 	 * @brief the slope map
-	 * The values are 1 minus the y-component of the (average) facenormal of the square.
+	 * The values are 1 minus the y-component of the (average) facenormal of the
+	 * square.
 	 *
 	 * - do NOT modify or delete the height-map (native code relevant only)
 	 * - index 0 is top left
 	 * - each data position is 2*2 in size
-	 * - the value for the full resolution position (x, z) is at index ((z * width + x) / 2)
+	 * - the value for the full resolution position (x, z) is at index
+	 *   ((z * width + x) / 2)
 	 * - the last value, bottom right, is at index (width/2 * height/2 - 1)
 	 */
 	virtual const float* GetSlopeMap() = 0;
@@ -285,9 +337,12 @@ public:
 	virtual float GetGravity() const = 0;
 
 
-	// linedrawer interface functions
-	// * these allow you to draw command-like lines and figures
-	// * use these only from within CGroupAI::DrawCommands()
+	/*
+	 * Line-Drawer interface functions.
+	 * - these allow you to draw command-like lines and figures
+	 * - use these only from within CGroupAI::DrawCommands()
+	 */
+
 	virtual void LineDrawerStartPath(const float3& pos, const float* color) = 0;
 	virtual void LineDrawerFinishPath() = 0;
 	virtual void LineDrawerDrawLine(const float3& endPos, const float* color) = 0;
@@ -297,34 +352,48 @@ public:
 	virtual void LineDrawerRestart() = 0;
 	virtual void LineDrawerRestartSameColor() = 0;
 
-	// the following functions allow the AI to draw figures in the world
-	// * each figure is part of a figureGroup
-	// * when creating figures use 0 as figureGroupId to get a new figureGroup, the return value is the new figureGroup
-	// * the lifeTime is how many frames a figure should live before being autoremoved, 0 means no removal
-	// * arrow != 0 means that the figure will get an arrow at the end
-	/// Creates a cubic Bezier spline figure (from pos1 to pos4 with control points pos2 and pos3)
+	/*
+	 * The following functions allow the AI to draw figures in the world
+	 * - each figure is part of a figureGroup
+	 * - when creating figures use 0 as figureGroupId to get a new figureGroup,
+	 *   the return value is the new figureGroup
+	 * - the lifeTime is how many frames a figure should live before being
+	 *   auto-removed, 0 means no removal
+	 * - arrow != 0 means that the figure will get an arrow at the end
+	 */
+
+	/**
+	 * Creates a cubic Bezier spline figure from pos1 to pos4 with control
+	 * points pos2 and pos3).
+	 */
 	virtual int CreateSplineFigure(float3 pos1, float3 pos2, float3 pos3, float3 pos4, float width, int arrow, int lifeTime, int figureGroupId) = 0;
 	virtual int CreateLineFigure(float3 pos1, float3 pos2, float width, int arrow, int lifeTime, int figureGroupId) = 0;
 	virtual void SetFigureColor(int figureGroupId, float red, float green, float blue, float alpha) = 0;
 	virtual void DeleteFigureGroup(int figureGroupId) = 0;
 
-	// this function allows you to draw units in the map
-	// * they only show up on the local player's screen
-	// * they will be drawn in the "standard pose" (as if before any COB scripts are run)
-	// * the rotation is in radians, team affects the color of the unit
+	/**
+	 * Draws units on the map.
+	 * - they only show up on the local player's screen
+	 * - they will be drawn in the "standard pose"
+	 *   (as if before any COB scripts are run)
+	 * - the rotation is in radians, team affects the color of the unit
+	 */
 	virtual void DrawUnit(const char* unitName, float3 pos, float rotation, int lifeTime, int teamId, bool transparent, bool drawBorder, int facing = 0) = 0;
 
-	// the following functions allow AI's to plot real-time
-	// performance graphs (useful for basic visual profiling)
-	//
-	// * position and size are specified in relative screen-space
-	//  (ie. position must be in [-1.0, 1.0], size in [0.0, 2.0])
-	// * position refers to the bottom-left corner of the graph
-	// * data-points are automatically normalized, but must not
-	//   exceed 1E9 (1000^3) in absolute value
-	// * you must be a spectator and watching the team of an AI
-	//   that has called AddDebugGraphPoint() to see these graphs
-	//   (note: they are drawn IIF IsDebugDrawerEnabled())
+	/*
+	 * The following functions allow AI's to plot real-time
+	 * performance graphs (useful for basic visual profiling)
+	 *
+	 * - position and size are specified in relative screen-space
+	 *   (ie. position must be in [-1.0, 1.0], size in [0.0, 2.0])
+	 * - position refers to the bottom-left corner of the graph
+	 * - data-points are automatically normalized, but must not
+	 *   exceed 1E9 (1000^3) in absolute value
+	 * - you must be a spectator and watching the team of an AI
+	 *   that has called AddDebugGraphPoint() to see these graphs
+	 *   note: they are drawn IIF IsDebugDrawerEnabled())
+	 */
+
 	virtual bool IsDebugDrawerEnabled() const = 0;
 	virtual void DebugDrawerAddGraphPoint(int lineId, float x, float y) = 0;
 	virtual void DebugDrawerDelGraphPoints(int lineId, int numPoints) = 0;
@@ -333,16 +402,19 @@ public:
 	virtual void DebugDrawerSetGraphLineColor(int lineId, const float3& color) = 0;
 	virtual void DebugDrawerSetGraphLineLabel(int lineId, const char* label) = 0;
 
-	// the following functions allow AI's to visualize overlay
-	// maps as textures (useful for analyzing threat-maps and
-	// the like in real-time)
-	//
-	// * position and size are specified as for graphs
-	// * AI's are responsible for normalizing the data
-	// * the data must be stored in a one-dimensional
-	//   array of floats of length (w * h); updating
-	//   a texture sub-region must be done in absolute
-	//   (pixel) coordinates
+	/*
+	 * The following functions allow AI's to visualize overlay
+	 * maps as textures (useful for analyzing threat-maps and
+	 * the like in real-time)
+	 *
+	 * - position and size are specified as for graphs
+	 * - AI's are responsible for normalizing the data
+	 * - the data must be stored in a one-dimensional
+	 *   array of floats of length (w * h); updating
+	 *   a texture sub-region must be done in absolute
+	 *   pixel) coordinates
+	 */
+
 	virtual int DebugDrawerAddOverlayTexture(const float* texData, int w, int h) = 0;
 	virtual void DebugDrawerUpdateOverlayTexture(int texHandle, const float* texData, int x, int y, int w, int h) = 0;
 	virtual void DebugDrawerDelOverlayTexture(int texHandle) = 0;
@@ -353,9 +425,11 @@ public:
 
 	virtual bool CanBuildAt(const UnitDef* unitDef, float3 pos, int facing = 0) = 0;
 	/**
-	 * Returns the closest position from a given position that a building can be built at.
-	 * @param minDist the distance in squares that the building must keep to other buildings,
-	 *                to make it easier to keep free paths through a base
+	 * Returns the closest position from a given position that a building can be
+	 * built at.
+	 * @param minDist the distance in squares that the building must keep to
+	 *                other buildings, to make it easier to keep free paths
+	 *                through a base
 	 */
 	virtual float3 ClosestBuildSite(const UnitDef* unitdef, float3 pos, float searchRadius, int minDist, int facing = 0) = 0;
 
@@ -369,7 +443,6 @@ public:
 	/// Returns false when file does not exist or the buffer is too small
 	virtual bool ReadFile(const char* filename, void* buffer, int bufferLen) = 0;
 
-	// added by alik
 	virtual int GetSelectedUnits(int* unitIds, int unitIds_max = MAX_UNITS) = 0;
 	virtual float3 GetMousePos() = 0;
 	/**
@@ -385,15 +458,15 @@ public:
 	 */
 	virtual int GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllies) = 0;
 
-	virtual float GetMetal() = 0;					// current metal level for team
-	virtual float GetMetalIncome() = 0;				// current metal income for team
-	virtual float GetMetalUsage() = 0;				// current metal usage for team
-	virtual float GetMetalStorage() = 0;			// curent metal storage capacity for team
+	virtual float GetMetal() = 0;         ///< current metal level for team
+	virtual float GetMetalIncome() = 0;   ///< current metal income for team
+	virtual float GetMetalUsage() = 0;    ///< current metal usage for team
+	virtual float GetMetalStorage() = 0;  ///< curent metal storage capacity for team
 
-	virtual float GetEnergy() = 0;					// current energy level for team
-	virtual float GetEnergyIncome() = 0;			// current energy income for team
-	virtual float GetEnergyUsage() = 0;				// current energy usage for team
-	virtual float GetEnergyStorage() = 0;			// curent energy storage capacity for team
+	virtual float GetEnergy() = 0;        ///< current energy level for team
+	virtual float GetEnergyIncome() = 0;  ///< current energy income for team
+	virtual float GetEnergyUsage() = 0;   ///< current energy usage for team
+	virtual float GetEnergyStorage() = 0; ///< curent energy storage capacity for team
 
 	virtual int GetFeatures(int *featureIds, int max) = 0;
 	virtual int GetFeatures(int *featureIds, int max, const float3& pos, float radius) = 0;
@@ -404,18 +477,19 @@ public:
 
 	virtual int GetNumUnitDefs() = 0;
 	virtual void GetUnitDefList(const UnitDef** list) = 0;
-	virtual float GetUnitDefHeight(int unitDefId) = 0;	// forces loading of the unit model
-	virtual float GetUnitDefRadius(int unitDefId) = 0;	// forces loading of the unit model
+	virtual float GetUnitDefHeight(int unitDefId) = 0; ///< forces loading of the unit model
+	virtual float GetUnitDefRadius(int unitDefId) = 0; ///< forces loading of the unit model
 
 	virtual const WeaponDef* GetWeapon(const char* weaponName) = 0;
 
 	virtual const float3* GetStartPos() = 0;
 
-	// NOTES:
-	// 1. 'data' can be setup to NULL to skip passing in a string
-	// 2. if inSize is less than 0, the data size is calculated using strlen()
-	// 3. the return data is subject to lua garbage collection,
-	//    copy it if you wish to continue using it
+	/**
+	 * 1. 'data' can be setup to NULL to skip passing in a string
+	 * 2. if inSize is less than 0, the data size is calculated using strlen()
+	 * 3. the return data is subject to lua garbage collection,
+	 *    copy it if you wish to continue using it
+	 */
 	virtual const char* CallLuaRules(const char* data, int inSize = -1, int* outSize = NULL) = 0;
 
 	virtual std::map<std::string, std::string> GetMyInfo() = 0;
