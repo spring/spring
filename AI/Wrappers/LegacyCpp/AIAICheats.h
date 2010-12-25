@@ -20,7 +20,7 @@
 
 #include "IAICheats.h"
 
-class SSkirmishAICallback;
+struct SSkirmishAICallback;
 class CAIAICallback;
 
 /**
