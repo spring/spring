@@ -7,9 +7,11 @@
 #include <vector>
 
 #if defined(USE_GML) && GML_ENABLE_SIM
-#define AGEMOD_VECTOR gmlCircularQueue<float,64>
+#define AGEMOD_VECTOR gmlCircularQueue<float, 64>
+#define AGEMOD_VECTOR_IT gmlCircularQueue<float, 64>::iterator
 #else
 #define AGEMOD_VECTOR std::vector<float>
+#define AGEMOD_VECTOR_IT std::vector<float>::const_iterator
 #endif
 
 class CSmokeTrailProjectile;

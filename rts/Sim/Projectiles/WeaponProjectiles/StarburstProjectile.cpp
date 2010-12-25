@@ -426,7 +426,7 @@ void CStarburstProjectile::DrawCallback()
 
 	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
 #if defined(USE_GML) && GML_ENABLE_SIM
-		const TracerPart* tracerPart = *(TracerPart* volatile*) &tracerParts[a];
+		const volatile TracerPart* tracerPart = (volatile TracerPart*) &tracerParts[a];
 #else
 		const TracerPart* tracerPart = &tracerParts[a];
 #endif
@@ -436,7 +436,7 @@ void CStarburstProjectile::DrawCallback()
 		const float ospeed = tracerPart->speedf;
 		float aa = 0;
 
-		for (AGEMOD_VECTOR::const_iterator ai = tracerPart->ageMods.begin(); ai != tracerPart->ageMods.end(); ++ai, aa += 0.15f) {
+		for (AGEMOD_VECTOR_IT ai = tracerPart->ageMods.begin(); ai != tracerPart->ageMods.end(); ++ai, aa += 0.15f) {
 			const float ageMod = *ai;
 			const float age2 = (a + (aa / (ospeed + 0.01f))) * 0.2f;
 			const float3 interPos = opos - (odir * ((a * 0.5f) + aa));
