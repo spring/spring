@@ -397,12 +397,11 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	turnInPlaceSpeedLimit = ((turnRate / SPRING_CIRCLE_DIVS) * ((PI + PI) * SQUARE_SIZE)) * (speed / GAME_SPEED);
 	turnInPlaceSpeedLimit = udTable.GetFloat("turnInPlaceSpeedLimit", std::min(speed, turnInPlaceSpeedLimit));
 
-	const bool noAutoFire = udTable.GetBool("noAutoFire",  false);
-	canFireControl = udTable.GetBool("canFireControl", !noAutoFire);
+	canFireControl = !udTable.GetBool("noAutoFire", false);
 	fireState = udTable.GetInt("fireState", canFireControl? FIRESTATE_NONE: FIRESTATE_FIREATWILL);
-	fireState = std::min(fireState, FIRESTATE_FIREATWILL);
+	fireState = std::min(fireState, int(FIRESTATE_FIREATWILL));
 	moveState = udTable.GetInt("moveState", (canmove && speed > 0.0f)? MOVESTATE_NONE: MOVESTATE_MANEUVER);
-	moveState = std::min(moveState, MOVESTATE_ROAM);
+	moveState = std::min(moveState, int(MOVESTATE_ROAM));
 
 	buildRange3D = udTable.GetBool("buildRange3D", false);
 	buildDistance = udTable.GetFloat("buildDistance", 128.0f);
