@@ -53,8 +53,7 @@ public:
 			int unitIds_max);
 
 	int GetFeatures(int *features, int max);
-	int GetFeatures(int *features, int max, const float3& pos,
-			float radius);
+	int GetFeatures(int *features, int max, const float3& pos, float radius);
 
 	int GetUnitTeam(int unitid);
 	int GetUnitAllyTeam(int unitid);

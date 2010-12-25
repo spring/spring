@@ -102,17 +102,17 @@ public:
 	bool IsUnitCloaked(int unitid);
 	bool IsUnitParalyzed(int unitid);
 	bool IsUnitNeutral(int unitid);
-	bool GetUnitResourceInfo(int unitid,
-			UnitResourceInfo* resourceInfo);
+	bool GetUnitResourceInfo(int unitid, UnitResourceInfo* resourceInfo);
 
 	const UnitDef* GetUnitDef(const char* unitName);
 	const UnitDef* GetUnitDefById(int unitDefId);
 
-	int InitPath(float3 start, float3 end, int pathType, float goalRadius = 8);
+	int InitPath(float3 start, float3 end, int pathType, float goalRadius);
 	float3 GetNextWaypoint(int pathid);
 	void FreePath(int pathid);
 
-	float GetPathLength(float3 start, float3 end, int pathType, float goalRadius = 8);
+	float GetPathLength(float3 start, float3 end, int pathType,
+			float goalRadius);
 
 	int GetEnemyUnits(int* unitIds, int unitIds_max);
 	int GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max);
@@ -243,8 +243,7 @@ public:
 	const float3* GetStartPos();
 
 
-	const char* CallLuaRules(const char* data, int inSize = -1,
-			int* outSize = NULL);
+	const char* CallLuaRules(const char* data, int inSize, int* outSize);
 
 	std::map<std::string, std::string> GetMyInfo();
 	std::map<std::string, std::string> GetMyOptionValues();
