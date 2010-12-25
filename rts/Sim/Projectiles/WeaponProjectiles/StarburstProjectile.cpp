@@ -426,7 +426,7 @@ void CStarburstProjectile::DrawCallback()
 
 	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
 #if defined(USE_GML) && GML_ENABLE_SIM
-		const volatile TracerPart* tracerPart = (volatile TracerPart*) &tracerParts[a];
+		TracerPart* tracerPart = *(TracerPart* volatile*) &tracerParts[a];
 #else
 		const TracerPart* tracerPart = &tracerParts[a];
 #endif
