@@ -194,9 +194,9 @@ CUnit::CUnit():
 	userAttackPos(ZeroVector),
 	userAttackGround(false),
 	commandShotCount(-1),
-	fireState(2),
+	fireState(FIRESTATE_FIREATWILL),
+	moveState(MOVESTATE_MANEUVER),
 	dontFire(false),
-	moveState(0),
 	activated(false),
 	localmodel(NULL),
 	script(NULL),
@@ -512,13 +512,14 @@ void CUnit::PostInit(const CUnit* builder)
 	UpdateTerrainType();
 
 	if (unitDef->canmove || unitDef->builder) {
-		if (unitDef->moveState < 0) {
+		if (unitDef->moveState <= FIRESTATE_NONE) {
 			if (builder != NULL) {
+				// always inherit our builder's movestate
+				// if none, set CUnit's default (maneuver)
 				moveState = builder->moveState;
-			} else {
-				moveState = 1;
 			}
 		} else {
+			// use our predefined movestate
 			moveState = unitDef->moveState;
 		}
 
@@ -529,7 +530,7 @@ void CUnit::PostInit(const CUnit* builder)
 	}
 
 	if (commandAI->CanChangeFireState()) {
-		if (unitDef->fireState < 0) {
+		if (unitDef->fireState <= MOVESTATE_NONE) {
 			if (builder != NULL && dynamic_cast<CFactoryCAI*>(builder->commandAI) != NULL) {
 				// inherit our builder's firestate (if it is a factory)
 				// if no builder, CUnit's default (fire-at-will) is set
@@ -990,9 +991,8 @@ void CUnit::SlowUpdate()
 
 	SlowUpdateCloak(false);
 
-	if (unitDef->canKamikaze && (fireState >= 2 || userTarget || userAttackGround)) {
-		if (fireState >= 2)
-		{
+	if (unitDef->canKamikaze && (fireState >= FIRESTATE_FIREATWILL || userTarget || userAttackGround)) {
+		if (fireState >= FIRESTATE_FIREATWILL) {
 			std::vector<int> nearbyUnits;
 			if (unitDef->kamikazeUseLOS) {
 				helper->GetEnemyUnits(pos, unitDef->kamikazeDist, allyteam, nearbyUnits);
@@ -1064,7 +1064,7 @@ void CUnit::SlowUpdateWeapons() {
 
 			w->SlowUpdate();
 
-			if (w->targetType == Target_None && fireState > 0 && lastAttacker && (lastAttack + 200 > gs->frameNum))
+			if (w->targetType == Target_None && fireState > FIRESTATE_HOLDFIRE && lastAttacker && (lastAttack + 200 > gs->frameNum))
 				w->AttackUnit(lastAttacker, false);
 		}
 	}
@@ -1533,14 +1533,14 @@ void CUnit::ChangeTeamReset()
 	// reset move state
 	if (unitDef->canmove || unitDef->builder) {
 		c.id = CMD_MOVE_STATE;
-		c.params.push_back(1);
+		c.params.push_back(MOVESTATE_MANEUVER);
 		commandAI->GiveCommand(c);
 		c.params.clear();
 	}
 	// reset fire state
 	if (commandAI->CanChangeFireState()) {
 		c.id = CMD_FIRE_STATE;
-		c.params.push_back(2);
+		c.params.push_back(FIRESTATE_FIREATWILL);
 		commandAI->GiveCommand(c);
 		c.params.clear();
 	}

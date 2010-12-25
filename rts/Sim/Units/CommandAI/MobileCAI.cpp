@@ -580,7 +580,7 @@ void CMobileCAI::ExecuteFight(Command &c)
 		SetGoal(pos, owner->pos);
 	}
 
-	if (owner->unitDef->canAttack && owner->fireState >= 2 && !owner->weapons.empty()) {
+	if (owner->unitDef->canAttack && owner->fireState >= FIRESTATE_FIREATWILL && !owner->weapons.empty()) {
 		const float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
 		const float searchRadius = owner->maxRange + 100 * owner->moveState * owner->moveState;
 		CUnit* enemy = helper->GetClosestValidTarget(curPosOnLine, searchRadius, owner->allyteam, this);
@@ -612,7 +612,7 @@ bool CMobileCAI::IsValidTarget(const CUnit* enemy) const {
 		&& !(owner->unitDef->noChaseCategory & enemy->category)
 		&& !enemy->neutral
 		// on "Hold pos", a target can not be valid if there exists no line of fire to it.
-		&& (owner->moveState || owner->weapons.empty() ||
+		&& (owner->moveState > MOVESTATE_HOLDPOS || owner->weapons.empty() ||
 				owner->weapons.front()->TryTargetRotate(const_cast<CUnit*>(enemy), false));
 }
 
@@ -693,7 +693,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 	assert(owner->unitDef->canAttack);
 
 	// limit how far away we fly
-	if (tempOrder && (owner->moveState < 2) && orderTarget
+	if (tempOrder && (owner->moveState < MOVESTATE_ROAM) && orderTarget
 			&& LinePointDist(ClosestPointOnLine(commandPos1, commandPos2, owner->pos),
 					commandPos2, orderTarget->pos)
 			> (500 * owner->moveState + owner->maxRange)) {
@@ -786,7 +786,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		// also make sure that we're not locked in close-in/in-range state loop
 		// due to rotates invoked by in-range or out-of-range states
 		if (b2) {
-			if (!(tempOrder && owner->moveState == 0)
+			if (!(tempOrder && owner->moveState == MOVESTATE_HOLDPOS)
 				&& (diffLength2d * 1.4f > owner->maxRange
 					- orderTarget->speed.SqLength()
 							/ owner->unitDef->maxAcc)
@@ -808,7 +808,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 		// if we're on hold pos in a temporary order, then none of the close-in
 		// code below should run, and the attack command is cancelled.
-		else if (tempOrder && owner->moveState == 0) {
+		else if (tempOrder && owner->moveState == MOVESTATE_HOLDPOS) {
 			StopMove();
 			FinishCommand();
 			return;
@@ -1088,7 +1088,7 @@ void CMobileCAI::FinishCommand(void)
 
 void CMobileCAI::IdleCheck(void)
 {
-	if(owner->unitDef->canAttack && owner->fireState
+	if (owner->unitDef->canAttack && owner->fireState > FIRESTATE_HOLDFIRE
 			&& !owner->weapons.empty() && owner->haveTarget) {
 		if(!owner->userTarget) {
 			owner->haveTarget = false;
@@ -1106,7 +1106,7 @@ void CMobileCAI::IdleCheck(void)
 			return;
 		}
 	}
-	if(owner->unitDef->canAttack && owner->fireState
+	if (owner->unitDef->canAttack && owner->fireState > FIRESTATE_HOLDFIRE
 				&& !owner->weapons.empty() && !owner->haveTarget) {
 		if(owner->lastAttacker && owner->lastAttack + 200 > gs->frameNum
 				&& !(owner->unitDef->noChaseCategory & owner->lastAttacker->category)){
@@ -1127,7 +1127,7 @@ void CMobileCAI::IdleCheck(void)
 		}
 	}
 	if (owner->unitDef->canAttack && (gs->frameNum >= lastIdleCheck + 10)
-			&& owner->fireState >= 2 && !owner->weapons.empty() && !owner->haveTarget)
+			&& owner->fireState >= FIRESTATE_FIREATWILL && !owner->weapons.empty() && !owner->haveTarget)
 	{
 		const float searchRadius = owner->maxRange + 150 * owner->moveState * owner->moveState;
 		CUnit* enemy = helper->GetClosestValidTarget(owner->pos, searchRadius, owner->allyteam, this);
