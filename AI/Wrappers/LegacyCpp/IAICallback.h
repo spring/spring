@@ -485,6 +485,24 @@ public:
 	virtual const float3* GetStartPos() = 0;
 
 	/**
+	 * Returns the categories bit field value.
+	 * @return the categories bit field value or 0,
+	 *         in case of empty name or too many categories
+	 * @see #GetCategoryName
+	 */
+	unsigned int GetCategoryFlag(const char* categoryName);
+	/**
+	 * Returns the bitfield values of a list of category names.
+	 * @see #GetCategoryFlag
+	 */
+	unsigned int GetCategoriesFlag(const char* categoryNames);
+	/**
+	 * Return the name of the category described by a category flag.
+	 * @see #GetCategoryFlag
+	 */
+	void GetCategoryName(int categoryFlag, char* name, int name_sizeMax);
+
+	/**
 	 * 1. 'data' can be setup to NULL to skip passing in a string
 	 * 2. if inSize is less than 0, the data size is calculated using strlen()
 	 * 3. the return data is subject to lua garbage collection,
