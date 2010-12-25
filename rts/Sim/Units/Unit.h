@@ -212,7 +212,8 @@ public:
 
 	/**
 	 * neutral allegiance, will not be automatically
-	 * fired upon unless the fireState is set to >= 3
+	 * fired upon unless the fireState is set to >
+	 * FIRESTATE_FIREATWILL
 	 */
 	bool neutral;
 
@@ -372,12 +373,10 @@ public:
 	/// number of shots due to the latest command
 	int commandShotCount;
 
-	/// 0=hold fire,1=return,2=fire at will
 	int fireState;
+	int moveState;
 	/// temp variable that can be set when building etc to stop units to turn away to fire
 	bool dontFire;
-	/// 0=hold pos,1=maneuvre,2=roam
-	int moveState;
 
 	/// if the unit is in it's 'on'-state
 	bool activated;
