@@ -441,9 +441,6 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 
 	useHighTrajectory = (unitDef->highTrajectoryType == 1);
 
-	if (unitDef->fireState != -1)
-		fireState = unitDef->fireState;
-
 	if (build) {
 		ChangeLos(1, 1);
 		health = 0.1f;
@@ -478,10 +475,6 @@ void CUnit::PostInit(const CUnit* builder)
 
 	// Call initializing script functions
 	script->Create();
-
-	if (!beingBuilt) {
-		FinishedBuilding();
-	}
 
 	relMidPos = model->relMidPos;
 	losHeight = relMidPos.y + (radius * 0.5f);
@@ -518,7 +511,6 @@ void CUnit::PostInit(const CUnit* builder)
 
 	UpdateTerrainType();
 
-	Command c;
 	if (unitDef->canmove || unitDef->builder) {
 		if (unitDef->moveState < 0) {
 			if (builder != NULL) {
@@ -530,6 +522,7 @@ void CUnit::PostInit(const CUnit* builder)
 			moveState = unitDef->moveState;
 		}
 
+		Command c;
 		c.id = CMD_MOVE_STATE;
 		c.params.push_back(moveState);
 		commandAI->GiveCommand(c);
@@ -537,16 +530,17 @@ void CUnit::PostInit(const CUnit* builder)
 
 	if (commandAI->CanChangeFireState()) {
 		if (unitDef->fireState < 0) {
-			if (builder != NULL && (builder->unitDef->type == "Factory"
-						|| dynamic_cast<CFactoryCAI*>(builder->commandAI))) {
+			if (builder != NULL && dynamic_cast<CFactoryCAI*>(builder->commandAI) != NULL) {
+				// inherit our builder's firestate (if it is a factory)
+				// if no builder, CUnit's default (fire-at-will) is set
 				fireState = builder->fireState;
-			} else {
-				fireState = 2;
 			}
 		} else {
+			// use our predefined firestate
 			fireState = unitDef->fireState;
 		}
 
+		Command c;
 		c.id = CMD_FIRE_STATE;
 		c.params.push_back(fireState);
 		commandAI->GiveCommand(c);
@@ -554,6 +548,10 @@ void CUnit::PostInit(const CUnit* builder)
 
 	eventHandler.UnitCreated(this, builder);
 	eoh->UnitCreated(*this, builder);
+
+	if (!beingBuilt) {
+		FinishedBuilding();
+	}
 }
 
 
