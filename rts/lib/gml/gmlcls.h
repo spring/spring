@@ -1024,7 +1024,7 @@ public:
 	}
 	~gmlCircularQueue() {
 	}
-	void push_back(T &a) {
+	void push_back(const T &a) {
 		elements[back] = a;
 		if(csize == msize) {
 			if(front == msize)
@@ -1039,7 +1039,7 @@ public:
 		else
 			++back;
 	}
-	void push_front(T &a) {
+	void push_front(const T &a) {
 		int newfront = (front == 0) ? msize : front - 1;
 		elements[newfront] = a;
 		front = newfront;

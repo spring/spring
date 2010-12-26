@@ -20,6 +20,7 @@
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/Resource.h"
 #include "Sim/Misc/ResourceHandler.h"
 #include "Sim/Misc/ResourceMapAnalyzer.h"
@@ -1243,6 +1244,25 @@ EXPORT(float) skirmishAiCallback_Game_getSpeedFactor(int skirmishAIId) {
 	}
 
 	return speedFactor;
+}
+
+EXPORT(int) skirmishAiCallback_Game_getCategoryFlag(int skirmishAIId, const char* categoryName) {
+	return CCategoryHandler::Instance()->GetCategory(categoryName);
+}
+
+EXPORT(int) skirmishAiCallback_Game_getCategoriesFlag(int skirmishAIId, const char* categoryNames) {
+	return CCategoryHandler::Instance()->GetCategories(categoryNames);
+}
+
+EXPORT(void) skirmishAiCallback_Game_getCategoryName(int skirmishAIId, int categoryFlag, char* name, int name_sizeMax) {
+
+	const std::vector<std::string>& names = CCategoryHandler::Instance()->GetCategoryNames(categoryFlag);
+
+	const char* theName = '\0';
+	if (!names.empty()) {
+		theName = names.begin()->c_str();
+	}
+	STRCPYS(name, name_sizeMax, theName);
 }
 
 EXPORT(float) skirmishAiCallback_Gui_getViewRange(int skirmishAIId) {
@@ -4526,6 +4546,9 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Game_isPaused = &skirmishAiCallback_Game_isPaused;
 	callback->Game_getSpeedFactor = &skirmishAiCallback_Game_getSpeedFactor;
 	callback->Game_getSetupScript = &skirmishAiCallback_Game_getSetupScript;
+	callback->Game_getCategoryFlag = &skirmishAiCallback_Game_getCategoryFlag;
+	callback->Game_getCategoriesFlag = &skirmishAiCallback_Game_getCategoriesFlag;
+	callback->Game_getCategoryName = &skirmishAiCallback_Game_getCategoryName;
 	callback->Gui_getViewRange = &skirmishAiCallback_Gui_getViewRange;
 	callback->Gui_getScreenX = &skirmishAiCallback_Gui_getScreenX;
 	callback->Gui_getScreenY = &skirmishAiCallback_Gui_getScreenY;

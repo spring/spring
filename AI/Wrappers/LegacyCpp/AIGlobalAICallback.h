@@ -15,8 +15,8 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AIGLOBALAICALLBACK_H
-#define _AIGLOBALAICALLBACK_H
+#ifndef _AI_GLOBAL_AI_CALLBACK_H
+#define _AI_GLOBAL_AI_CALLBACK_H
 
 #include "IGlobalAICallback.h"
 
@@ -45,4 +45,4 @@ private:
 	CAIAICheats* wrappedAICheats;
 };
 
-#endif // _AIGLOBALAICALLBACK_H
+#endif // _AI_GLOBAL_AI_CALLBACK_H

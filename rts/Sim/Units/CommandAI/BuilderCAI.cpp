@@ -553,7 +553,7 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 			return;
 		}
 
-		if (tempOrder && owner->moveState == 1) {
+		if (tempOrder && owner->moveState == MOVESTATE_MANEUVER) {
 			// limit how far away we go
 			if (LinePointDist(commandPos1, commandPos2, unit->pos) > 500) {
 				StopMove();
@@ -1540,11 +1540,11 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 		if (teamHandler->Ally(owner->allyteam, unit->allyteam)) {
 			if (!haveEnemy && (unit->health < unit->maxHealth)) {
 				// don't help allies build unless set on roam
-				if (unit->beingBuilt && owner->team != unit->team && (owner->moveState != 2)) {
+				if (unit->beingBuilt && owner->team != unit->team && (owner->moveState != MOVESTATE_ROAM)) {
 					continue;
 				}                
 				// don't help factories produce units when set on hold pos                
-				if (unit->beingBuilt && unit->mobility && (owner->moveState == 0)) {
+				if (unit->beingBuilt && unit->mobility && (owner->moveState == MOVESTATE_HOLDPOS)) {
 					continue;
 				}
 				// don't repair stuff that can't be repaired

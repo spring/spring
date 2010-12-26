@@ -23,6 +23,8 @@
 #include "System/Sync/SyncTracer.h"
 #include "System/GlobalUnsynced.h"
 
+const float CMissileProjectile::SMOKE_TIME = 60.0f;
+
 CR_BIND_DERIVED(CMissileProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, NULL, 0, 0.0f, 0.0f, NULL, NULL, ZeroVector));
 
 CR_REG_METADATA(CMissileProjectile,(

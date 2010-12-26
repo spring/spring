@@ -233,9 +233,9 @@ void CAirCAI::SlowUpdate()
 //			myPlane->SetState(AAirMoveType::AIRCRAFT_LANDING);
 		}
 
-		if(owner->unitDef->canAttack && owner->fireState>=2
-				&& owner->moveState != 0 && owner->maxRange > 0){
-			if(myPlane->IsFighter()){
+		if(owner->unitDef->canAttack && owner->fireState >= FIRESTATE_FIREATWILL
+				&& owner->moveState != MOVESTATE_HOLDPOS && owner->maxRange > 0) {
+			if (myPlane->IsFighter()) {
 				float testRad=1000 * owner->moveState;
 				CUnit* enemy=helper->GetClosestEnemyAircraft(
 					owner->pos + (owner->speed * 10), testRad, owner->allyteam);
@@ -315,16 +315,16 @@ void CAirCAI::ExecuteMove(Command &c){
 	float3 pos(c.params[0], c.params[1], c.params[2]);
 	commandPos2 = pos;
 	myPlane->goalPos = pos;// This is not what we want move to do
-	if(owner->unitDef->canAttack && !(c.options & CONTROL_KEY)){
-		if(owner->fireState >= 2 && owner->moveState != 0 && owner->maxRange > 0){
+	if (owner->unitDef->canAttack && !(c.options & CONTROL_KEY)){
+		if (owner->fireState >= FIRESTATE_FIREATWILL && owner->moveState != MOVESTATE_HOLDPOS && owner->maxRange > 0) {
 			if(myPlane->isFighter){
 				float testRad = 500 * owner->moveState;
 				CUnit* enemy = helper->GetClosestEnemyAircraft(
 					owner->pos+owner->speed * 20, testRad, owner->allyteam);
 				if(enemy && ((enemy->unitDef->canfly && !enemy->crashing
 						&& myPlane->isFighter) || (!enemy->unitDef->canfly
-						&& (!myPlane->isFighter || owner->moveState == 2)))){
-					if(owner->moveState != 1
+						&& (!myPlane->isFighter || owner->moveState == MOVESTATE_ROAM)))) {
+					if(owner->moveState != MOVESTATE_MANEUVER
 							|| LinePointDist(commandPos1, commandPos2, enemy->pos) < 1000){
 						Command nc;
 						nc.id = CMD_ATTACK;
@@ -338,15 +338,15 @@ void CAirCAI::ExecuteMove(Command &c){
 					}
 				}
 			}
-			if((!myPlane->isFighter || owner->moveState == 2) && owner->maxRange > 0){
+			if((!myPlane->isFighter || owner->moveState == MOVESTATE_ROAM) && owner->maxRange > 0){
 				float testRad = 325 * owner->moveState;
 				CUnit* enemy = helper->GetClosestEnemyUnit(
 					owner->pos + owner->speed * 30, testRad, owner->allyteam);
 				if(enemy && (owner->hasUWWeapons || !enemy->isUnderWater)
 						&& ((enemy->unitDef->canfly && !enemy->crashing
 						&& myPlane->isFighter) || (!enemy->unitDef->canfly
-						&& (!myPlane->isFighter || owner->moveState==2)))){
-					if(owner->moveState!=1 || LinePointDist(
+						&& (!myPlane->isFighter || owner->moveState == MOVESTATE_ROAM)))){
+					if(owner->moveState != MOVESTATE_MANEUVER || LinePointDist(
 							commandPos1, commandPos2, enemy->pos) < 1000){
 						Command nc;
 						nc.id = CMD_ATTACK;
@@ -406,8 +406,8 @@ void CAirCAI::ExecuteFight(Command &c)
 	}
 
 	// CMD_FIGHT is pretty useless if !canAttack but we try to honour the modders wishes anyway...
-	if (owner->unitDef->canAttack && owner->fireState >= 2
-			&& owner->moveState != 0 && owner->maxRange > 0) {
+	if (owner->unitDef->canAttack && owner->fireState >= FIRESTATE_FIREATWILL
+			&& owner->moveState != MOVESTATE_HOLDPOS && owner->maxRange > 0) {
 		CUnit* enemy = NULL;
 		if(myPlane->IsFighter()) {
 			const float3 curPosOnLine = ClosestPointOnLine(
@@ -415,7 +415,7 @@ void CAirCAI::ExecuteFight(Command &c)
 			const float searchRadius = 1000 * owner->moveState;
 			enemy = helper->GetClosestEnemyAircraft(curPosOnLine, searchRadius, owner->allyteam);
 		}
-		if(IsValidTarget(enemy) && (owner->moveState!=1
+		if(IsValidTarget(enemy) && (owner->moveState != MOVESTATE_MANEUVER
 				|| LinePointDist(commandPos1, commandPos2, enemy->pos) < 1000))
 		{
 			Command nc;
@@ -470,7 +470,7 @@ void CAirCAI::ExecuteAttack(Command& c)
 	assert(owner->unitDef->canAttack);
 	targetAge++;
 
-	if (tempOrder && owner->moveState == 1) {
+	if (tempOrder && owner->moveState == MOVESTATE_MANEUVER) {
 		// limit how far away we fly
 		if (orderTarget && LinePointDist(commandPos1, commandPos2, orderTarget->pos) > 1500) {
 			owner->SetUserTarget(0);

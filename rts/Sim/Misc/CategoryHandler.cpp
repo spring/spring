@@ -1,14 +1,16 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
+
 #include <algorithm>
 #include <cctype>
 #include "mmgr.h"
 
 #include "CategoryHandler.h"
-#include "LogOutput.h"
-#include "creg/STL_Map.h"
-#include "Util.h"
+
+#include "System/creg/STL_Map.h"
+#include "System/Util.h"
+#include "System/LogOutput.h"
 
 CR_BIND(CCategoryHandler, );
 
@@ -42,11 +44,8 @@ unsigned int CCategoryHandler::GetCategory(std::string name)
 {
 	unsigned int cat = 0;
 
+	StringTrimInPlace(name);
 	StringToLowerInPlace(name);
-	// remove leading spaces
-	while (!name.empty() && (*name.begin() == ' ')) {
-		name.erase(name.begin());
-	}
 
 	if (name.empty()) {
 		// the empty category
@@ -80,20 +79,13 @@ unsigned int CCategoryHandler::GetCategories(std::string names)
 
 	StringToLowerInPlace(names);
 
-	while (!names.empty()) {
-		std::string name = names;
-
-		if (names.find_first_of(' ') != std::string::npos) {
-			name.erase(name.find_first_of(' '), 5000);
+	// split on ' '
+	std::stringstream namesStream(names);
+	std::string name;
+	while (std::getline(namesStream, name, ' ')) {
+		if (!name.empty()) {
+			ret |= GetCategory(name);
 		}
-
-		if (names.find_first_of(' ') == std::string::npos) {
-			names.clear();
-		} else {
-			names.erase(0, names.find_first_of(' ') + 1);
-		}
-
-		ret |= GetCategory(name);
 	}
 
 	return ret;
@@ -104,10 +96,9 @@ std::vector<std::string> CCategoryHandler::GetCategoryNames(unsigned int bits) c
 {
 	std::vector<std::string> names;
 
-	unsigned int bit;
-	for (bit = 1; bit != 0; bit = (bit << 1)) {
+	std::map<std::string, unsigned int>::const_iterator it;
+	for (unsigned int bit = 1; bit != 0; bit = (bit << 1)) {
 		if ((bit & bits) != 0) {
-			std::map<std::string,unsigned int>::const_iterator it;
 			for (it = categories.begin(); it != categories.end(); ++it) {
 				if (it->second == bit) {
 					names.push_back(it->first);
