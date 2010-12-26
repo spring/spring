@@ -61,7 +61,7 @@ private:
 	int extraHeightTime;
 
 	/// the smokes life-time in frames
-	static const float SMOKE_TIME = 60.0f;
+	static const float SMOKE_TIME;
 };
 
 
