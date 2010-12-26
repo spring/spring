@@ -21,6 +21,8 @@
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 
+const float CStarburstProjectile::SMOKE_TIME = 70.0f;
+
 CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, NULL, ZeroVector, 0, 0, 0, 0, NULL, NULL, NULL, 0, ZeroVector));
 
 CR_REG_METADATA(CStarburstProjectile,(
@@ -51,7 +53,7 @@ void CStarburstProjectile::creg_Serialize(creg::ISerializer& s)
 
 	// NOTE This could be tricky if gs is serialized after losHandler.
 	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
-		s.Serialize(&tracerParts[a], sizeof(struct CStarburstProjectile::TracerPart));
+		s.Serialize(tracerParts[a], sizeof(struct CStarburstProjectile::TracerPart));
 	}
 }
 
@@ -107,12 +109,13 @@ CStarburstProjectile::CStarburstProjectile(
 	drawRadius = maxSpeed * 8.0f;
 
 	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
-		tracerParts[a].dir = dir;
-		tracerParts[a].pos = pos;
-		tracerParts[a].speedf = curSpeed;
+		tracerParts[a] = &tracerPartMem[a];
+		tracerParts[a]->dir = dir;
+		tracerParts[a]->pos = pos;
+		tracerParts[a]->speedf = curSpeed;
 
 		for (float aa = 0; aa < curSpeed + 0.6f; aa += 0.15f) {
-			tracerParts[a].ageMods.push_back(1.0f);
+			tracerParts[a]->ageMods.push_back(1.0f);
 		}
 	}
 	castShadow = true;
@@ -135,7 +138,7 @@ CStarburstProjectile::~CStarburstProjectile()
 	}
 
 	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
-		tracerParts[a].ageMods.clear();
+		tracerParts[a]->ageMods.clear();
 	}
 }
 
@@ -271,30 +274,30 @@ void CStarburstProjectile::Update()
 
 
 	{
-		const TracerPart* lastTracerPart = &tracerParts[NUM_TRACER_PARTS - 1];
+		TracerPart* lastTracerPart = tracerParts[NUM_TRACER_PARTS - 1];
 
 		for (int a = NUM_TRACER_PARTS - 2; a >= 0; --a) {
 			tracerParts[a + 1] = tracerParts[a];
 		}
 
-		tracerParts[0] = *lastTracerPart;
-		tracerParts[0].pos = pos;
-		tracerParts[0].dir = dir;
-		tracerParts[0].speedf = curSpeed;
+		tracerParts[0] = lastTracerPart;
+		tracerParts[0]->pos = pos;
+		tracerParts[0]->dir = dir;
+		tracerParts[0]->speedf = curSpeed;
 
 		int newsize = 0;
 		for (float aa = 0; aa < curSpeed + 0.6f; aa += 0.15f, ++newsize) {
 			const float ageMod = (missileAge < 20) ? 1.0f : (0.6f + (rand() * 0.8f) / RAND_MAX);
 
-			if (tracerParts[0].ageMods.size() <= newsize) {
-				tracerParts[0].ageMods.push_back(ageMod);
+			if (tracerParts[0]->ageMods.size() <= newsize) {
+				tracerParts[0]->ageMods.push_back(ageMod);
 			} else {
-				tracerParts[0].ageMods[newsize] = ageMod;
+				tracerParts[0]->ageMods[newsize] = ageMod;
 			}
 		}
 
-		if (tracerParts[0].ageMods.size() != newsize) {
-			tracerParts[0].ageMods.resize(newsize);
+		if (tracerParts[0]->ageMods.size() != newsize) {
+			tracerParts[0]->ageMods.resize(newsize);
 		}
 	}
 
@@ -426,9 +429,9 @@ void CStarburstProjectile::DrawCallback()
 
 	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
 #if defined(USE_GML) && GML_ENABLE_SIM
-		TracerPart* tracerPart = (TracerPart* volatile) &tracerParts[a];
+		TracerPart* tracerPart = *(TracerPart* volatile*) &tracerParts[a];
 #else
-		const TracerPart* tracerPart = &tracerParts[a];
+		const TracerPart* tracerPart = tracerParts[a];
 #endif
 
 		const float3& opos = tracerPart->pos;
