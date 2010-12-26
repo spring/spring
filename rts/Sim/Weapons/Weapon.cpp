@@ -563,9 +563,9 @@ inline bool CWeapon::AllowWeaponTargetCheck() const
 		return true;
 	}
 
-	if (weaponDef->noAutoTarget) { return false; }
-	if (owner->fireState < 2)    { return false; }
-	if (haveUserTarget)          { return false; }
+	if (weaponDef->noAutoTarget)                 { return false; }
+	if (owner->fireState < FIRESTATE_FIREATWILL) { return false; }
+	if (haveUserTarget)                          { return false; }
 
 	if (targetType == Target_None) { return true; }
 	if (avoidTarget)             { return true; }
@@ -651,7 +651,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		if (!haveUserTarget) {
 			// stop firing at neutral targets (unless in FAW mode)
 			// note: HoldFire sets targetUnit to NULL, so recheck
-			if (targetUnit != NULL && targetUnit->neutral && owner->fireState < 3)
+			if (targetUnit != NULL && targetUnit->neutral && owner->fireState <= FIRESTATE_FIREATWILL)
 				HoldFire();
 
 			// stop firing at allied targets
@@ -703,7 +703,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		for (std::multimap<float, CUnit*>::const_iterator ti = targets.begin(); ti != targets.end(); ++ti) {
 			CUnit* nextTarget = ti->second;
 
-			if (nextTarget->neutral && (owner->fireState < 3)) {
+			if (nextTarget->neutral && (owner->fireState <= FIRESTATE_FIREATWILL)) {
 				continue;
 			}
 			if (targetUnit && (nextTarget->category & badTargetCategory)) {

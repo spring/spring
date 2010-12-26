@@ -31,16 +31,22 @@ public:
 	static void RemoveInstance();
 
 	/**
-	 * Returns the categories bit field value.
-	 * @return the categories bit field value or 0,
+	 * Returns the categories bit-field value.
+	 * @return the categories bit-field value or 0,
 	 *         in case of empty name or too many categories
 	 */
 	unsigned int GetCategory(std::string name);
+
 	/**
-	 * Returns the bitfield values of a list of category names
+	 * Returns the bit-field values of a list of category names.
 	 * @see GetCategory(std::string name)
 	 */
 	unsigned int GetCategories(std::string names);
+
+	/**
+	 * Returns a list of names of all categories described by the bit-field.
+	 * @see GetCategory(std::string name)
+	 */
 	std::vector<std::string> GetCategoryNames(unsigned int bits) const;
 
 private:

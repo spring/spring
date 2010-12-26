@@ -10,6 +10,8 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "myMath.h"
 
+const float CSolidObject::DEFAULT_MASS = 100000.0f;
+
 CR_BIND_DERIVED(CSolidObject, CWorldObject, );
 CR_REG_METADATA(CSolidObject,
 (

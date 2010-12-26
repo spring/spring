@@ -7,9 +7,11 @@
 #include <vector>
 
 #if defined(USE_GML) && GML_ENABLE_SIM
-#define AGEMOD_VECTOR gmlCircularQueue<float,64>
+#define AGEMOD_VECTOR gmlCircularQueue<float, 64>
+#define AGEMOD_VECTOR_IT gmlCircularQueue<float, 64>::iterator
 #else
 #define AGEMOD_VECTOR std::vector<float>
+#define AGEMOD_VECTOR_IT std::vector<float>::const_iterator
 #endif
 
 class CSmokeTrailProjectile;
@@ -57,7 +59,7 @@ private:
 
 	static const int NUM_TRACER_PARTS = 5;
 	/// the smokes life-time in frames
-	static const float SMOKE_TIME = 70.0f;
+	static const float SMOKE_TIME;
 
 	struct TracerPart {
 		float3 pos;
@@ -65,7 +67,8 @@ private:
 		float speedf;
 		AGEMOD_VECTOR ageMods;
 	};
-	TracerPart tracerParts[NUM_TRACER_PARTS];
+	TracerPart *tracerParts[NUM_TRACER_PARTS];
+	TracerPart tracerPartMem[NUM_TRACER_PARTS];
 };
 
 #endif /* STARBURST_PROJECTILE_H */

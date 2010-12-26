@@ -1559,6 +1559,18 @@ const float3* CAIAICallback::GetStartPos() {
 	return &startPos;
 }
 
+unsigned int CAIAICallback::GetCategoryFlag(const char* categoryName) {
+	return sAICallback->Game_getCategoryFlag(skirmishAIId, categoryName);
+}
+
+unsigned int CAIAICallback::GetCategoriesFlag(const char* categoryNames) {
+	return sAICallback->Game_getCategoriesFlag(skirmishAIId, categoryNames);
+}
+
+void CAIAICallback::GetCategoryName(int categoryFlag, char* name, int name_sizeMax) {
+	sAICallback->Game_getCategoryName(skirmishAIId, categoryFlag, name, name_sizeMax);
+}
+
 
 
 

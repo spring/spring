@@ -211,7 +211,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 		c.type = CMDTYPE_ICON_MODE;
 		c.name = "Fire state";
 		c.mouseicon = c.name;
-		c.params.push_back("2");
+		c.params.push_back(IntToString(FIRESTATE_FIREATWILL));
 		c.params.push_back("Hold fire");
 		c.params.push_back("Return fire");
 		c.params.push_back("Fire at will");
@@ -227,7 +227,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 		c.type = CMDTYPE_ICON_MODE;
 		c.name = "Move state";
 		c.mouseicon = c.name;
-		c.params.push_back("1");
+		c.params.push_back(IntToString(MOVESTATE_MANEUVER));
 		c.params.push_back("Hold pos");
 		c.params.push_back("Maneuver");
 		c.params.push_back("Roam");
@@ -235,7 +235,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_MOVE_STATE);
 	} else {
-		owner->moveState = 0;
+		owner->moveState = MOVESTATE_HOLDPOS;
 	}
 
 	if (owner->unitDef->canRepeat) {

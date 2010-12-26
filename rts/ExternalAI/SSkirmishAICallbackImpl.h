@@ -106,6 +106,12 @@ EXPORT(float            ) skirmishAiCallback_Game_getSpeedFactor(int skirmishAII
 
 EXPORT(const char*      ) skirmishAiCallback_Game_getSetupScript(int skirmishAIId);
 
+EXPORT(int              ) skirmishAiCallback_Game_getCategoryFlag(int skirmishAIId, const char* categoryName);
+
+EXPORT(int              ) skirmishAiCallback_Game_getCategoriesFlag(int skirmishAIId, const char* categoryNames);
+
+EXPORT(void             ) skirmishAiCallback_Game_getCategoryName(int skirmishAIId, int categoryFlag, char* name, int name_sizeMax);
+
 // END misc callback functions
 
 
