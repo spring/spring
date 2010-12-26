@@ -103,7 +103,7 @@ UnitDef::UnitDef()
 , stealth(false)
 , sonarStealth(false)
 , buildRange3D(false)
-, buildDistance(16.0f)
+, buildDistance(16.0f) // 16.0f is the minimum distance between two 1x1 units
 , buildSpeed(0.0f)
 , reclaimSpeed(0.0f)
 , repairSpeed(0.0f)
@@ -404,8 +404,11 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	moveState = std::min(moveState,2);
 
 	buildRange3D = udTable.GetBool("buildRange3D", false);
-	buildDistance = udTable.GetFloat("buildDistance", 16.0f);
-	buildDistance = std::max(16.0f, buildDistance);
+	// 128.0f is the ancient default
+	buildDistance = udTable.GetFloat("buildDistance", 128.0f);
+	// 38.0f was evaluated by bobthedinosaur and FLOZi to be the bare minimum
+	// to not overlap for a 1x1 constructor building a 1x1 structure
+	buildDistance = std::max(38.0f, buildDistance);
 	buildSpeed = udTable.GetFloat("workerTime", 0.0f);
 
 	repairSpeed    = udTable.GetFloat("repairSpeed",    buildSpeed);
