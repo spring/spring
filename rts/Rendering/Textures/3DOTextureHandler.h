@@ -26,7 +26,7 @@ public:
 
 	void Set3doAtlases() const;
 
-	UnitTexture* Get3DOTexture(std::string name);
+	UnitTexture* Get3DOTexture(const std::string& name);
 
 	unsigned int GetAtlasTex1ID() const  { return atlas3do1; }
 	unsigned int GetAtlasTex2ID() const  { return atlas3do2; }

@@ -14,7 +14,6 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "TAPalette.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
 #include "System/Util.h"
 #include "System/Vec2.h"
 #include "System/FileSystem/FileHandler.h"
@@ -236,12 +235,12 @@ C3DOTextureHandler::C3DOTextureHandler()
 //	CBitmap save(tex,bigTexX,bigTexY);
 //	save.Save("unittex-1x.jpg");
 
-	UnitTexture* t=new UnitTexture;
-	t->xstart=0;
-	t->ystart=0;
-	t->xend=1;
-	t->yend=1;
-	textures[" "]=t;
+	UnitTexture* t = new UnitTexture();
+	t->xstart = 0.0f;
+	t->ystart = 0.0f;
+	t->xend = 1.0f;
+	t->yend = 1.0f;
+	textures["___dummy___"] = t;
 
 	delete[] bigtex1;
 	delete[] bigtex2;
@@ -257,15 +256,15 @@ C3DOTextureHandler::~C3DOTextureHandler()
 	glDeleteTextures(1, &atlas3do2);
 }
 
-C3DOTextureHandler::UnitTexture* C3DOTextureHandler::Get3DOTexture(std::string name)
+C3DOTextureHandler::UnitTexture* C3DOTextureHandler::Get3DOTexture(const std::string& name)
 {
-	StringToLowerInPlace(name);
-	std::map<std::string,UnitTexture*>::iterator tti;
-	if((tti=textures.find(name))!=textures.end()){
+	std::map<std::string, UnitTexture*>::iterator tti;
+	if ((tti = textures.find(name)) != textures.end()) {
 		return tti->second;
 	}
-	LogObject() << "unknown 3DO texture " << name.c_str() << "\n";
-	return textures[" "];
+
+	// unknown texture
+	return NULL;
 }
 
 void C3DOTextureHandler::Set3doAtlases() const
