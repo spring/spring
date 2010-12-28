@@ -276,14 +276,16 @@ sRAIUnitDef::sRAIUnitDef(const UnitDef *unitdef, IAICallback* cb, GlobalResource
 				}
 			}
 			int iMost = 0;
-			for( map<TerrainMapMobileType*,int>::iterator iM=MTcount.begin(); iM!=MTcount.end(); iM++ )
+			for( map<TerrainMapMobileType*,int>::iterator iM=MTcount.begin(); iM!=MTcount.end(); ++iM )
+			{				
 				if( mobileType == 0 || iM->second > iMost )
 				{
 					mobileType = iM->first;
 					iMost = iM->second;
 				}
-			if( (mobileType!=0 && !mobileType->typeUsable) ||
-				(!immobileType->typeUsable && (mobileType==0 || immobileType->sector.size()<100)) )
+			}
+			if( (mobileType != 0 && !mobileType->typeUsable) ||
+				(!immobileType->typeUsable && (mobileType == 0 || float(immobileType->sector.size()) / (TM->sectorXSize * TM->sectorZSize) < 0.01f)) )
 			{
 				Disabled = true;
 				CheckBuildOptions();
