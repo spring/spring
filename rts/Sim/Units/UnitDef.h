@@ -63,10 +63,26 @@ public:
 	void SetNoCost(bool noCost);
 	bool IsAllowedTerrainHeight(float rawHeight, float* clampedHeight = NULL) const;
 
+	bool IsExtractorUnit()      const { return (extractsMetal > 0.0f); }
+	bool IsTransportUnit()      const { return (transportCapacity > 0); }
+	bool IsImmobileUnit()       const { return (movedata == NULL && !canfly && speed <= 0.0f); }
+	bool IsMobileBuilderUnit()  const { return (builder && !IsImmobileUnit()); }
+	bool IsStaticBuilderUnit()  const { return (builder &&  IsImmobileUnit()); }
+	bool IsFactoryUnit()        const { return (IsStaticBuilderUnit() && canmove); }
+	bool IsGroundUnit()         const { return (movedata != NULL && !canfly); }
+	bool IsAirUnit()            const { return (movedata == NULL &&  canfly); }
+	bool IsFighterUnit()        const { return (IsAirUnit() && !hoverAttack && !HasBomberWeapon()); }
+	bool IsBomberUnit()         const { return (IsAirUnit() && !hoverAttack &&  HasBomberWeapon()); }
+
+	bool HasBomberWeapon() const;
+	const std::vector<unsigned char>& GetYardMap(unsigned int facing) const { return (yardmaps[facing % /*NUM_FACINGS*/ 4]); }
+
 	std::string name;
 	std::string humanName;
 	std::string filename;
-	int id;					///< unique id for this type of unit
+
+	///< unique id for this type of unit
+	int id;
 
 	CollisionVolume* collisionVolume;
 
@@ -191,7 +207,6 @@ public:
 
 	std::map<int, std::string> buildOptions;
 
-	std::string type;
 	std::string tooltip;
 	std::string wreckName;
 
@@ -267,7 +282,10 @@ public:
 	float crashDrag;
 
 	MoveData* movedata;
-	std::vector<unsigned char> yardmaps[4];         ///< Iterations of the Ymap for building rotation
+
+	///< Iterations of the yardmap for building rotation
+	///< (only non-mobile ground units can have these)
+	std::vector<unsigned char> yardmaps[/*NUM_FACINGS*/ 4];
 
 	int xsize;										///< each size is 8 units
 	int zsize;										///< each size is 8 units
