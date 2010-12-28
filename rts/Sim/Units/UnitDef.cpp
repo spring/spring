@@ -514,7 +514,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	maxBank = udTable.GetFloat("maxBank", 0.8f);         // max roll
 	maxPitch = udTable.GetFloat("maxPitch", 0.45f);      // max pitch this plane tries to keep
-	turnRadius = udTable.GetFloat("turnRadius", 500.0f); // hint to the ai about how large turn radius this plane needs
+	turnRadius = udTable.GetFloat("turnRadius", 500.0f); // hint to CAirMoveType about required turn-radius
 	verticalSpeed = udTable.GetFloat("verticalSpeed", 3.0f); // speed of takeoff and landing, at least for gunships
 
 	maxAileron  = udTable.GetFloat("maxAileron",  0.015f); // turn speed around roll axis
@@ -553,41 +553,37 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	canDGun = udTable.GetBool("canDGun", false);
 	needGeo = false;
 
-	extractRange = 0.0f;
+	extractRange = mapInfo->map.extractorRadius * int(extractsMetal > 0.0f);
 	extractSquare = udTable.GetBool("extractSquare", false);
 
-	if (extractsMetal) {
-		extractRange = mapInfo->map.extractorRadius;
+
+	if (extractsMetal > 0.0f) {
 		type = "MetalExtractor";
-	}
-	else if (transportCapacity) {
+	} else if (transportCapacity) {
 		type = "Transport";
-	}
-	else if (builder) {
+	} else if (builder) {
 		if ((speed > 0.0f) || canfly || udTable.GetString("yardMap", "").empty()) {
 			// hubs and nano-towers need to be builders (for now)
 			type = "Builder";
 		} else {
 			type = "Factory";
 		}
-	}
-	else if (canfly && !hoverAttack) {
+	} else if (canfly && !hoverAttack) {
 		if (!weapons.empty() && (weapons[0].def != 0) &&
 		   (weapons[0].def->type == "AircraftBomb" || weapons[0].def->type == "TorpedoLauncher")) {
 			type = "Bomber";
 
-			if (turnRadius == 500) { // only reset it if user hasnt set it explicitly
-				turnRadius *= 2;   // hint to the ai about how large turn radius this plane needs
+			// double turn-radius for bombers if not set explicitly
+			if (turnRadius == 500.0f) {
+				turnRadius *= 2.0f;
 			}
 		} else {
 			type = "Fighter";
 		}
 		maxAcc = udTable.GetFloat("maxAcc", 0.065f); // engine power
-	}
-	else if (canmove) {
+	} else if (canmove && speed > 0.0f) {
 		type = "GroundUnit";
-	}
-	else {
+	} else {
 		type = "Building";
 	}
 
