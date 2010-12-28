@@ -76,47 +76,53 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, const float3& pos, int team,
 
 	SCOPED_TIMER("UnitLoader::LoadUnit");
 
-	CUnit* unit = NULL;
-
-	if (ud->type == "GroundUnit" || ud->type == "Bomber" || ud->type == "Fighter") {
-		unit = new CUnit();
-	} else if (ud->type == "Transport") {
-		unit = new CTransportUnit();
-	} else if (ud->type == "Building") {
-		unit = new CBuilding();
-	} else if (ud->type == "Factory") {
-		unit = new CFactory();
-	} else if (ud->type == "Builder") {
-		unit = new CBuilder();
-	} else if (ud->type == "MetalExtractor") {
-		unit = new CExtractorBuilding();
-	} else {
-		LogObject() << "Unknown unit type " << ud->type.c_str() << "\n";
-		return NULL;
-	}
-
 	if (team < 0) {
 		team = teamHandler->GaiaTeamID(); // FIXME use gs->gaiaTeamID ?  (once it is always enabled)
 		if (team < 0)
 			throw content_error("Invalid team and no gaia team to put unit in");
 	}
 
+	CUnit* unit = NULL;
+
+	if (ud->IsTransportUnit()) {
+		unit = new CTransportUnit();
+	} else if (ud->IsFactoryUnit()) {
+		// static builders that can be given move-orders
+		// (which are passed on to all mobile buildees)
+		unit = new CFactory();
+	} else if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit()) {
+		// all other types of "builders", including hubs and nano-towers
+		// (the latter should not have any build-options at all, whereas
+		// the former should be unable to build any mobile units)
+		unit = new CBuilder();
+	} else if (ud->IsImmobileUnit()) {
+		// static non-builder structure
+		if (ud->IsExtractorUnit()) {
+			unit = new CExtractorBuilding();
+		} else {
+			unit = new CBuilding();
+		}
+	} else {
+		// regular mobile unit
+		unit = new CUnit();
+	}
+
 	unit->PreInit(ud, team, facing, pos, build);
 
-	if (ud->type == "GroundUnit") {
-		new CMobileCAI(unit);
-	} else if (ud->type == "Transport") {
+	if (ud->IsTransportUnit()) {
 		new CTransportCAI(unit);
-	} else if (ud->type == "Factory") {
+	} else if (ud->IsFactoryUnit()) {
 		new CFactoryCAI(unit);
-	} else if (ud->type == "Builder") {
+	} else if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit()) {
 		new CBuilderCAI(unit);
-	} else if (ud->type == "Bomber" || ud->type == "Fighter") {
-		if (ud->hoverAttack) {
-			new CMobileCAI(unit);
-		} else {
-			new CAirCAI(unit);
-		}
+	} else if (ud->IsFighterUnit() || ud->IsBomberUnit()) {
+		// non-hovering aircraft types; coupled to AirMoveType
+		new CAirCAI(unit);
+	} else if (ud->IsAirUnit()) {
+		// all other aircraft
+		new CMobileCAI(unit);
+	} else if (ud->IsGroundUnit()) {
+		new CMobileCAI(unit);
 	} else {
 		new CCommandAI(unit);
 	}
@@ -212,7 +218,7 @@ CWeapon* CUnitLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* udw)
 	weapon->fireSoundVolume = weaponDef->firesound.getVolume(0);
 
 	weapon->onlyForward = weaponDef->onlyForward;
-	if (owner->unitDef->type == "Fighter" && !owner->unitDef->hoverAttack) {
+	if (owner->unitDef->IsFighterUnit() && !owner->unitDef->hoverAttack) {
 		// fighter aircraft have too big tolerance in TA
 		weapon->maxAngleDif = cos(weaponDef->maxAngle * 0.4f / 180 * PI);
 	} else {

@@ -556,45 +556,13 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	extractRange = mapInfo->map.extractorRadius * int(extractsMetal > 0.0f);
 	extractSquare = udTable.GetBool("extractSquare", false);
 
-
-	if (extractsMetal > 0.0f) {
-		type = "MetalExtractor";
-	} else if (transportCapacity) {
-		type = "Transport";
-	} else if (builder) {
-		if ((speed > 0.0f) || canfly || udTable.GetString("yardMap", "").empty()) {
-			// hubs and nano-towers need to be builders (for now)
-			type = "Builder";
-		} else {
-			type = "Factory";
-		}
-	} else if (canfly && !hoverAttack) {
-		if (!weapons.empty() && (weapons[0].def != 0) &&
-		   (weapons[0].def->type == "AircraftBomb" || weapons[0].def->type == "TorpedoLauncher")) {
-			type = "Bomber";
-
-			// double turn-radius for bombers if not set explicitly
-			if (turnRadius == 500.0f) {
-				turnRadius *= 2.0f;
-			}
-		} else {
-			type = "Fighter";
-		}
-		maxAcc = udTable.GetFloat("maxAcc", 0.065f); // engine power
-	} else if (canmove && speed > 0.0f) {
-		type = "GroundUnit";
-	} else {
-		type = "Building";
-	}
-
-
 	movedata = NULL;
 
-	if (canmove && !canfly && (type != "Factory")) {
+	if (canmove && !canfly && speed > 0.0f) {
 		const std::string& moveclass = StringToLower(udTable.GetString("movementClass", ""));
 
 		if ((movedata = moveinfo->GetMoveDataFromName(moveclass)) == NULL) {
-			const string errmsg = "WARNING: Couldn't find a MoveClass named " + moveclass + " (used in UnitDef: " + unitName + ")";
+			const std::string errmsg = "WARNING: Couldn't find a MoveClass named " + moveclass + " (used in UnitDef: " + unitName + ")";
 			throw content_error(errmsg); //! invalidate unitDef (this gets catched in ParseUnitDef!)
 		}
 
@@ -624,17 +592,28 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 			(movedata->moveType == MoveData::Ship_Move);
 	}
 
+	if (IsAirUnit()) {
+		if (IsFighterUnit() || IsBomberUnit()) {
+			// double turn-radius for bombers if not set explicitly
+			if (IsBomberUnit() && turnRadius == 500.0f) {
+				turnRadius *= 2.0f;
+			}
 
-	if ((maxAcc != 0) && (speed != 0)) {
-		//meant to set the drag such that the maxspeed becomes what it should be
-		drag = (1.0f / (speed / GAME_SPEED * 1.1f / maxAcc)) - (wingAngle * wingAngle * wingDrag);
-		drag = Clamp(drag, 0.0f, 1.0f);
-	} else {
-		//shouldn't be needed since drag is only used in CAirMoveType anyway,
-		//and aircraft without acceleration or speed aren't common :)
-		//initializing it anyway just for safety
-		drag = 0.005f;
+			maxAcc = udTable.GetFloat("maxAcc", 0.065f); // engine power
+		}
+
+		if ((maxAcc != 0) && (speed != 0)) {
+			//meant to set the drag such that the maxspeed becomes what it should be
+			drag = (1.0f / (speed / GAME_SPEED * 1.1f / maxAcc)) - (wingAngle * wingAngle * wingDrag);
+			drag = Clamp(drag, 0.0f, 1.0f);
+		} else {
+			//shouldn't be needed since drag is only used in CAirMoveType anyway,
+			//and aircraft without acceleration or speed aren't common :)
+			//initializing it anyway just for safety
+			drag = 0.005f;
+		}
 	}
+
 
 	objectName = udTable.GetString("objectName", "");
 	if (objectName.find(".") == std::string::npos) {
@@ -668,7 +647,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	xsize = std::max(1 * 2, (udTable.GetInt("footprintX", 1) * 2));
 	zsize = std::max(1 * 2, (udTable.GetInt("footprintZ", 1) * 2));
 
-	if (speed <= 0.0f) {
+	if (IsImmobileUnit()) {
 		CreateYardMap(udTable.GetString("yardMap", ""));
 	}
 
@@ -982,6 +961,16 @@ bool UnitDef::IsAllowedTerrainHeight(float rawHeight, float* clampedHeight) cons
 
 	// <rawHeight> must lie in the range [-maxDepth, -minDepth]
 	return (rawHeight >= -maxDepth && rawHeight <= -minDepth);
+}
+
+
+
+bool UnitDef::HasBomberWeapon() const {
+	if (weapons.empty()) { return false; }
+	if (weapons[0].def == NULL) { return false; }
+	return
+		weapons[0].def->type == "AircraftBomb" ||
+		weapons[0].def->type == "TorpedoLauncher";
 }
 
 /******************************************************************************/

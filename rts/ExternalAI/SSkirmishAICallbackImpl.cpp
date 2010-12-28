@@ -2346,7 +2346,7 @@ EXPORT(float) skirmishAiCallback_UnitDef_getMaxWeaponRange(int skirmishAIId, int
 }
 
 EXPORT(const char*) skirmishAiCallback_UnitDef_getType(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->type.c_str();
+	return "$$deprecated$$";
 }
 
 EXPORT(const char*) skirmishAiCallback_UnitDef_getTooltip(int skirmishAIId, int unitDefId) {
@@ -2561,26 +2561,21 @@ EXPORT(float) skirmishAiCallback_UnitDef_getMaxRudder(int skirmishAIId, int unit
 	return getUnitDefById(skirmishAIId, unitDefId)->maxRudder;
 }
 
-EXPORT(int) skirmishAiCallback_UnitDef_getYardMap(int skirmishAIId, int unitDefId, int facing, short* yardMap, int yardMap_sizeMax) {
-
-	if ((facing < 0) || (facing >= 4)) {
-		return 0;
-	}
-
+EXPORT(int) skirmishAiCallback_UnitDef_getYardMap(int skirmishAIId, int unitDefId, int facing, short* yardMapDst, int yardMapMaxSize) {
 	const UnitDef* unitDef = getUnitDefById(skirmishAIId, unitDefId);
-	const int yardMap_sizeReal = unitDef->yardmaps[facing].size();
+	const std::vector<unsigned char>& yardMap = unitDef->GetYardMap(facing);
 
-	int yardMap_size = yardMap_sizeReal;
+	int yardMapSize = yardMap.size();
 
-	if (yardMap != NULL) {
-		yardMap_size = min(yardMap_sizeReal, yardMap_sizeMax);
-		const std::vector<unsigned char>& ym = unitDef->yardmaps[facing];
-		for (int i = 0; i < yardMap_size; ++i) {
-			yardMap[i] = (short) ym[i];
+	if (!yardMap.empty()) {
+		yardMapSize = min(yardMap.size(), yardMapMaxSize);
+
+		for (int i = 0; i < yardMapSize; ++i) {
+			yardMapDst[i] = (short) yardMap[i];
 		}
 	}
 
-	return yardMap_size;
+	return yardMapSize;
 }
 
 EXPORT(int) skirmishAiCallback_UnitDef_getXSize(int skirmishAIId, int unitDefId) {

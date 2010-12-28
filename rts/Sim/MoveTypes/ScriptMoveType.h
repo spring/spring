@@ -87,9 +87,6 @@ class CScriptMoveType : public AMoveType
 		bool leaveTracks;
 
 	protected:
-		bool hasDecal;
-		bool isBuilding;
-
 		float3 rotOffset;
 
 		int lastTrackUpdate;
