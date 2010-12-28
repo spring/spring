@@ -349,6 +349,7 @@ struct SSkirmishAICallback {
 
 	/**
 	 * Returns the bitfield values of a list of category names.
+	 * @param categoryNames space delimited list of names
 	 * @see #getCategoryFlag
 	 */
 	int               (CALLING_CONV *Game_getCategoriesFlag)(int skirmishAIId, const char* categoryNames);
