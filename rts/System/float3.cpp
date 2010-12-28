@@ -14,8 +14,9 @@ CR_REG_METADATA(float2, (CR_MEMBER(x), CR_MEMBER(y)));
 CR_BIND(float3, );
 CR_REG_METADATA(float3, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z)));
 
-float float3::maxxpos = 2048.0f; /**< Maximum x position is 2048 */
-float float3::maxzpos = 2048.0f; /**< Maximum z position is 2048 */
+//! gets initialized later when the map is loaded
+float float3::maxxpos = -1.0f;
+float float3::maxzpos = -1.0f;
 
 #ifdef _MSC_VER
 const float float3::CMP_EPS = 1e-4f;
@@ -24,6 +25,8 @@ const float float3::NORMALIZE_EPS = 1e-12f;
 
 bool float3::IsInBounds() const
 {
+	assert(maxxpos > 0.0f); // check if initialized
+
 	return ((x >= 0.0f && x <= maxxpos) && (z >= 0.0f && z <= maxzpos));
 }
 
@@ -35,6 +38,8 @@ bool float3::IsInBounds() const
  */
 bool float3::CheckInBounds()
 {
+	assert(maxxpos > 0.0f); // check if initialized
+
 	bool in = true;
 
 	if (x < 1.0f) {
