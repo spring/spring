@@ -335,8 +335,9 @@ vector<CommandDescription>& CCommandAI::GetPossibleCommands()
 bool CCommandAI::isAttackCapable() const
 {
 	const UnitDef* ud = owner->unitDef;
-	return (ud->canAttack &&
-	        (!ud->weapons.empty() || ud->canKamikaze || (ud->type == "Factory")));
+	const bool b = (!ud->weapons.empty() || ud->canKamikaze || (ud->IsFactoryUnit()));
+
+	return (ud->canAttack && b);
 }
 
 
@@ -1615,10 +1616,11 @@ bool CCommandAI::SkipParalyzeTarget(const CUnit* target)
 	return false;
 }
 
-bool CCommandAI::CanChangeFireState(){
-	return owner->unitDef->canFireControl &&
-		(!owner->unitDef->weapons.empty() || owner->unitDef->type=="Factory" ||
-				owner->unitDef->canKamikaze);
+bool CCommandAI::CanChangeFireState() {
+	const UnitDef* ud = owner->unitDef;
+	const bool b = (!ud->weapons.empty() || ud->canKamikaze || ud->IsFactoryUnit());
+
+	return (ud->canFireControl && b);
 }
 
 /// remove attack commands targeted at our new ally

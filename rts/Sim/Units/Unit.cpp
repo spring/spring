@@ -365,7 +365,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	posErrorVector.y *= 0.2f;
 
 #ifdef TRACE_SYNC
-	tracefile << "New unit: " << unitDefName.c_str() << " ";
+	tracefile << "[" << __FUNCTION__ << "] new unit: " << unitDefName << " ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << id << "\n";
 #endif
 
@@ -378,7 +378,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	upright  = unitDef->upright;
 
 	buildFacing = std::abs(facing) % NUM_FACINGS;
-	curYardMap = (unitDef->yardmaps[buildFacing].empty())? NULL: &unitDef->yardmaps[buildFacing][0];
+	curYardMap = (unitDef->GetYardMap(buildFacing).empty())? NULL: &unitDef->GetYardMap(buildFacing)[0];
 	xsize = ((buildFacing & 1) == 0) ? unitDef->xsize : unitDef->zsize;
 	zsize = ((buildFacing & 1) == 1) ? unitDef->xsize : unitDef->zsize;
 

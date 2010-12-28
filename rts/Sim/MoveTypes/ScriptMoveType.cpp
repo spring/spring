@@ -42,8 +42,6 @@ CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(slopeStop),
 	CR_MEMBER(collideStop),
 	CR_MEMBER(leaveTracks),
-	CR_MEMBER(hasDecal),
-	CR_MEMBER(isBuilding),
 	CR_MEMBER(rotOffset),
 	CR_MEMBER(lastTrackUpdate),
 	CR_MEMBER(scriptNotify),
@@ -75,8 +73,6 @@ CScriptMoveType::CScriptMoveType(CUnit* owner):
 	slopeStop(false),
 	collideStop(false),
 	leaveTracks(true),
-	hasDecal(false),
-	isBuilding(false),
 	rotOffset(0.0f, 0.0f, 0.0f),
 	lastTrackUpdate(0),
 	scriptNotify(0)
@@ -85,12 +81,6 @@ CScriptMoveType::CScriptMoveType(CUnit* owner):
 
 	oldPos = owner? owner->pos: ZeroVector;
 	oldSlowUpdatePos = oldPos;
-
-	if (owner) {
-		isBuilding = (owner->unitDef->type == "Building");
-	} else {
-		isBuilding = false;
-	}
 }
 
 
