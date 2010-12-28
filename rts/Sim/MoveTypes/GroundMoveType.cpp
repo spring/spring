@@ -1400,6 +1400,7 @@ void CGroundMoveType::HandleObjectCollisions()
 
 		const float3& colliderCurPos = collider->pos;
 		const float3& colliderOldPos = collider->moveType->oldPos;
+		const float colliderSpeed = collider->speed.Length();
 		const float colliderRadius = (colliderMD != NULL)?
 			FOOTPRINT_RADIUS(colliderMD->xsize, colliderMD->zsize):
 			FOOTPRINT_RADIUS(colliderUD->xsize, colliderUD->zsize);
@@ -1424,12 +1425,13 @@ void CGroundMoveType::HandleObjectCollisions()
 			const float3& collideeOldPos = collidee->moveType->oldPos;
  
 			const bool collideeMobile = (collideeMD != NULL);
+			const float collideeSpeed = collidee->speed.Length();
 			const float collideeRadius = collideeMobile?
 				FOOTPRINT_RADIUS(collideeMD->xsize, collideeMD->zsize):
 				FOOTPRINT_RADIUS(collideeUD->xsize, collideeUD->zsize);
 
 			bool pushCollider = true;
-			bool pushCollidee = collideeMobile;
+			bool pushCollidee = (collideeMobile || collideeUD->canfly);
 
 			const float3 separationVector = colliderCurPos - collideeCurPos;
 			const float separationMinDist = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
@@ -1447,13 +1449,13 @@ void CGroundMoveType::HandleObjectCollisions()
 			const float  sepDistance    = (separationVector.Length() + 0.01f);
 			const float  penDistance    = (colliderRadius + collideeRadius) - sepDistance;
 			const float3 sepDirection   = (separationVector / sepDistance);
-			const float3 colResponseVec = sepDirection * (penDistance * 0.5f);
+			const float3 colResponseVec = sepDirection * float3(1.0f, 0.0f, 1.0f) * (penDistance * 0.5f);
 
 			const float
 				m1 = collider->mass,
 				m2 = collidee->mass,
-				v1 = std::max(1.0f, collider->speed.Length()), // TODO: precalculate
-				v2 = std::max(1.0f, collidee->speed.Length()), // TODO: precalculate
+				v1 = std::max(1.0f, colliderSpeed), // TODO: precalculate
+				v2 = std::max(1.0f, collideeSpeed), // TODO: precalculate
 				c1 = 1.0f + (1.0f - math::fabs(collider->frontdir.dot(-sepDirection))) * 5.0f,
 				c2 = 1.0f + (1.0f - math::fabs(collidee->frontdir.dot( sepDirection))) * 5.0f,
 				s1 = m1 * v1 * c1,
@@ -1500,7 +1502,13 @@ void CGroundMoveType::HandleObjectCollisions()
 			const float  sepDistance    = (separationVector.Length() + 0.01f);
 			const float  penDistance    = (colliderRadius + collideeRadius) - sepDistance;
 			const float3 sepDirection   = (separationVector / sepDistance);
-			const float3 colResponseVec = sepDirection * (penDistance * 0.5f);
+			const float3 colResponseVec = sepDirection * float3(1.0f, 0.0f, 1.0f) * (penDistance * 0.5f);
+
+			const float cosAngle = (collider->frontdir.dot(-sepDirection) + 1.0f) * 0.5f;
+			const float speedMod = std::max(0.01f, std::min(0.99f, cosAngle));
+
+			// restrain the next position update
+			currentSpeed *= speedMod;
 
 			// multiply the collider's mass by a large constant (so that
 			// heavy features do not bounce light units away like pinballs)
@@ -1513,7 +1521,7 @@ void CGroundMoveType::HandleObjectCollisions()
 			}
 
 			collider->pos += (colResponseVec * colliderMassScale);
-		//	collidee->pos -= (colResponseVec * collideeMassScale);
+			// collidee->pos -= (colResponseVec * collideeMassScale);
 
 			collider->UpdateMidPos();
 		}
