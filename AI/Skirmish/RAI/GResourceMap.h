@@ -109,6 +109,7 @@ private:
 
 	// needed to save the file
 	string relResourceFileName;
+	string resourceFileName_w;
 	bool saveResourceFile;
 	vector<int> saveUD;
 	vector<int> saveF;

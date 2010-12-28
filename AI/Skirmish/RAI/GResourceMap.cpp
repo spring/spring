@@ -84,7 +84,7 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* _cb, cLogFile* l, GlobalTerrai
 		return;
 	}
 
-	int *fList;
+	int *fList = NULL;
 	int fSize = 0;
 	if( UDGeoResource )
 	{
@@ -112,6 +112,11 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* _cb, cLogFile* l, GlobalTerrai
 	// get absolute file name
 	if (cRAI::LocateFile(cb, relResourceFileName, resourceFileName_r, false)) {
 		resourceFile_r = fopen(resourceFileName_r.c_str(), "rb");
+	}
+
+	// get absolute file name
+	if (!cRAI::LocateFile(cb, relResourceFileName, resourceFileName_w, true)) {
+		throw 12;
 	}
 
 	bool useResourceFile = false;
@@ -712,14 +717,7 @@ GlobalResourceMap::~GlobalResourceMap()
 {
 	if( saveResourceFile )
 	{
-		string resourceFileName_w;
-		FILE* resourceFile_w = NULL;
-		// get absolute file name
-		if (cRAI::LocateFile(cb, relResourceFileName, resourceFileName_w, true)) {
-			resourceFile_w = fopen(resourceFileName_w.c_str(), "wb");
-		} else {
-			throw 12;
-		}
+		FILE* resourceFile_w = fopen(resourceFileName_w.c_str(), "wb");
 
 		int size;
 		fwrite(&(size=saveUD.size()), sizeof(int), 1, resourceFile_w);
