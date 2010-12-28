@@ -10,32 +10,38 @@ using std::set;
 
 GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 {
-//	l = logfile;
+	const int mapFileVersion = 3;
+
 	*l<<"\n Loading the Terrain-Map ...";
 
 	// Reading the WaterDamage entry from the map file
-	const int mapFileVersion = 2;
+	
 	waterIsHarmful = false;
+	waterIsAVoid = false;
 
 	string relMapFileName = "cache/";
 	relMapFileName += cRAI::MakeFileSystemCompatible(cb->GetMapName());
-	relMapFileName.resize(relMapFileName.size() - 4); // cut off extension
 	relMapFileName += "-" + IntToString(cb->GetMapHash(), "%x");
 	relMapFileName += ".res";
 
 	string mapFileName_r;
 	FILE* mapFile_r = NULL;
+	// NOTE: cRAI::LocateFile() returns TRUE for _absent_ file under WIN32
 	if (cRAI::LocateFile(cb, relMapFileName, mapFileName_r, false)) {
 		mapFile_r = fopen(mapFileName_r.c_str(), "rb");
-	} else {
-		*l<<"\nCould not find cache file for reading: "<<relMapFileName;
+	}
+	
+	if (mapFile_r == NULL) {
+		*l<<"\n  Could not find cache file for reading: " << relMapFileName;
 	}
 
 	bool mapFileLoaded = false;
 	if( mapFile_r )
 	{
 		int version;
+		
 		fread(&version, sizeof(int), 1, mapFile_r);
+		
 		if( version == mapFileVersion )
 		{
 			fread(&waterIsHarmful, sizeof(bool), 1, mapFile_r);
@@ -44,21 +50,21 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 		}
 		else
 			*l<<"\n  The cached map-file is using a different version format, reloading...";
+		
 		fclose(mapFile_r);
 	}
+	
 	if( !mapFileLoaded )
 	{
 //		double mapArchiveTimer = clock();
 		string mapArchiveFileName = "maps/";
 		mapArchiveFileName += cRAI::MakeFileSystemCompatible(cb->GetMapName());
-		mapArchiveFileName.resize(mapArchiveFileName.size() - 4); // cut off extension
-		mapArchiveFileName += "-" + IntToString(cb->GetMapHash(), "%x");
 		mapArchiveFileName += ".smd";
 
 		int mapArchiveFileSize = cb->GetFileSize(mapArchiveFileName.c_str());
 		if( mapArchiveFileSize > 0 )
 		{
-			*l<<"\n  Searching the Map-Archive File: '"<<mapArchiveFileName<<"'  File Size: "<<mapArchiveFileSize;
+			*l<<"\n  Searching the Map-Archive File: '" << mapArchiveFileName << "'  File Size: "<<mapArchiveFileSize;
 			char *archiveFile = new char[mapArchiveFileSize];
 			cb->ReadFile(mapArchiveFileName.c_str(),archiveFile,mapArchiveFileSize);
 			int waterDamage = GetFileValue(mapArchiveFileSize,archiveFile,"WaterDamage");
@@ -80,6 +86,11 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 			}
 			delete [] archiveFile;
 		}
+		else
+		{
+			*l<<"\n  Could not find Map-Archive file for reading additional map info: " << mapArchiveFileName;
+		}
+
 //		*l<<"\n  Map-Archive Timer: "<<(clock()-mapArchiveTimer)/CLOCKS_PER_SEC<<" seconds";
 
 		string mapFileName_w;
@@ -105,7 +116,9 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 //		convertStoP *= 2; // Larger Sectors, less detailed analysis
 	sectorXSize = (8*cb->GetMapWidth())/convertStoP;
 	sectorZSize = (8*cb->GetMapHeight())/convertStoP;
+	
 	sectorAirType = new TerrainMapAreaSector[sectorXSize*sectorZSize];
+	
 	*l<<"\n  Sector-Map Block Size: "<<convertStoP;
 	*l<<"\n  Sector-Map Size: "<<sectorXSize*sectorZSize<<" (x"<<sectorXSize<<",z"<<sectorZSize<<")";
 
@@ -232,18 +245,23 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 	const int convertStoHM = convertStoP/8; // * for conversion, / for reverse conversion
 	const int slopeMapXSize = sectorXSize*convertStoSM;
 	const int heightMapXSize = sectorXSize*convertStoHM;
+	
 	typedef pair<int,TerrainMapSector*> itdPair;
+	
 	minElevation=0;
 	percentLand=0.0;
+
 	for(int z=0; z < sectorZSize; z++)
 		for(int x=0; x < sectorXSize; x++)
 		{
 			int i=(z*sectorXSize)+x;
+
 			sector[i].position.x = x*convertStoP+convertStoP/2; // Center position of the Block
 			sector[i].position.z = z*convertStoP+convertStoP/2; //
 			sector[i].position.y = cb->GetElevation(sector[i].position.x,sector[i].position.z);
+			
 			sectorAirType[i].S = &sector[i];
-			for(list<TerrainMapMobileType>::iterator iMT = mobileType.begin(); iMT != mobileType.end(); iMT++ )
+			for(list<TerrainMapMobileType>::iterator iMT = mobileType.begin(); iMT != mobileType.end(); ++iMT )
 				iMT->sector[i].S = &sector[i];
 
 			int iMap = ((z*convertStoSM)*slopeMapXSize)+x*convertStoSM;
@@ -255,7 +273,9 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 			iMap = ((z*convertStoHM)*heightMapXSize)+x*convertStoHM;
 			sector[i].minElevation = standardHeightMap[iMap];
 			sector[i].maxElevation = standardHeightMap[iMap];
+			
 			for(int zH=0; zH<convertStoHM; zH++)
+			{
 				for(int xH=0,iH=iMap+zH*heightMapXSize+xH; xH<convertStoHM; xH++,iH=iMap+zH*heightMapXSize+xH )
 				{
 					if( standardHeightMap[iH] >= 0 )
@@ -263,6 +283,7 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 						sector[i].percentLand++;
 						percentLand++;
 					}
+					
 					if( sector[i].minElevation > standardHeightMap[iH] )
 					{
 						sector[i].minElevation = standardHeightMap[iH];
@@ -272,7 +293,10 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 					else if( sector[i].maxElevation < standardHeightMap[iH] )
 						sector[i].maxElevation = standardHeightMap[iH];
 				}
-			sector[i].percentLand *= 100.0/(convertStoHM*convertStoHM);
+			}
+
+			sector[i].percentLand *= 100.0 / (convertStoHM*convertStoHM);
+			
 			if( sector[i].percentLand > 50.0 )
 				sector[i].isWater = false;
 			else
@@ -284,6 +308,7 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 					(iMT->minElevation <= sector[i].minElevation && iMT->maxElevation >= sector[i].maxElevation && (!waterIsHarmful || sector[i].minElevation >=0 ) ) )
 					iMT->sector.insert(itdPair(i,&sector[i]));
 		}
+	
 	percentLand *= 100.0/(sectorXSize*convertStoHM*sectorZSize*convertStoHM);
 
 	for(list<TerrainMapImmobileType>::iterator iMT = immobileType.begin(); iMT != immobileType.end(); iMT++ )
@@ -292,8 +317,12 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 		else
 			iMT->typeUsable = false;
 
-	*l<<"\n   Map Land Percent: "<<percentLand<<"%";
-	*l<<"\n   Minimum Elevation: "<<minElevation;
+	*l<<"\n   Map Land Percent: " << percentLand<<"%";
+	if (percentLand < 85.0f) {
+		*l<<"\n   Water is a void: " << waterIsAVoid;
+		*l<<"\n   Water is harmful: " << waterIsHarmful;
+	}
+	*l<<"\n   Minimum Elevation: " << minElevation;
 
 	for(list<TerrainMapImmobileType>::iterator iMT = immobileType.begin(); iMT != immobileType.end(); iMT++ )
 	{
