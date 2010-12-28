@@ -640,19 +640,17 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		{
 			static const size_t facings = 4;
 			const int yardMap_size = sAICallback->UnitDef_getYardMap(skirmishAIId, unitDefId, 0, NULL, 0);
-			short tmpYardMaps[facings][yardMap_size];
-			int ym;
-			for (ym = 0 ; ym < facings; ++ym) {
-				sAICallback->UnitDef_getYardMap(skirmishAIId, unitDefId, ym, tmpYardMaps[ym], yardMap_size);
-			}
+			short* tmpYardMap = new short[yardMap_size];
 
-			int i;
-			for (ym = 0 ; ym < facings; ++ym) {
-				unitDef->yardmaps[ym] = new unsigned char[yardMap_size];
-				for (i = 0; i < yardMap_size; ++i) {
-					unitDef->yardmaps[ym][i] = (const char) tmpYardMaps[ym][i];
+			for (int ym = 0 ; ym < facings; ++ym) {
+				sAICallback->UnitDef_getYardMap(skirmishAIId, unitDefId, ym, tmpYardMap, yardMap_size);
+				unitDef->yardmaps[ym] = new unsigned char[yardMap_size]; // this will be deleted in the dtor
+				for (int i = 0; i < yardMap_size; ++i) {
+					unitDef->yardmaps[ym][i] = (const char) tmpYardMap[i];
 				}
 			}
+
+			delete[] tmpYardMap;
 		}
 		unitDef->xsize = sAICallback->UnitDef_getXSize(skirmishAIId, unitDefId);
 		unitDef->zsize = sAICallback->UnitDef_getZSize(skirmishAIId, unitDefId);
@@ -894,10 +892,11 @@ const unsigned short* CAIAICallback::GetLosMap() {
 
 	if (losMap == NULL) {
 		const int size = sAICallback->Map_getLosMap(skirmishAIId, NULL, 0);
-		int tmpLosMap[size];
+		int* tmpLosMap = new int[size];
 		sAICallback->Map_getLosMap(skirmishAIId, tmpLosMap, size);
 		losMap = new unsigned short[size]; // NOTE: memory leak, but will be used till end of the game anyway
 		copyIntToUShortArray(tmpLosMap, losMap, size);
+		delete[] tmpLosMap;
 	}
 
 	return losMap;
@@ -915,10 +914,11 @@ const unsigned short* CAIAICallback::GetRadarMap() {
 
 	if (radarMap == NULL) {
 		const int size = sAICallback->Map_getRadarMap(skirmishAIId, NULL, 0);
-		int tmpRadarMap[size];
+		int* tmpRadarMap = new int[size];
 		sAICallback->Map_getRadarMap(skirmishAIId, tmpRadarMap, size);
 		radarMap = new unsigned short[size]; // NOTE: memory leak, but will be used till end of the game anyway
 		copyIntToUShortArray(tmpRadarMap, radarMap, size);
+		delete[] tmpRadarMap;
 	}
 
 	return radarMap;
@@ -928,10 +928,11 @@ const unsigned short* CAIAICallback::GetJammerMap() {
 
 	if (jammerMap == NULL) {
 		const int size = sAICallback->Map_getJammerMap(skirmishAIId, NULL, 0);
-		int tmpJammerMap[size];
+		int* tmpJammerMap = new int[size];
 		sAICallback->Map_getJammerMap(skirmishAIId, tmpJammerMap, size);
 		jammerMap = new unsigned short[size]; // NOTE: memory leak, but will be used till end of the game anyway
 		copyIntToUShortArray(tmpJammerMap, jammerMap, size);
+		delete[] tmpJammerMap;
 	}
 
 	return jammerMap;
@@ -943,10 +944,11 @@ const unsigned char* CAIAICallback::GetMetalMap() {
 
 	if (metalMap == NULL) {
 		const int size = sAICallback->Map_getResourceMapRaw(skirmishAIId, m, NULL, 0);
-		short tmpMetalMap[size];
+		short* tmpMetalMap = new short[size];
 		sAICallback->Map_getResourceMapRaw(skirmishAIId, m, tmpMetalMap, size);
 		metalMap = new unsigned char[size]; // NOTE: memory leak, but will be used till end of the game anyway
 		copyShortToUCharArray(tmpMetalMap, metalMap, size);
+		delete[] tmpMetalMap;
 	}
 
 	return metalMap;

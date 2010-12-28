@@ -15,8 +15,8 @@
 #include "Map/ReadMap.h"
 #include "System/LogOutput.h"
 #include "System/TimeProfiler.h"
-#include "creg/STL_Deque.h"
-#include "creg/STL_List.h"
+#include "System/creg/STL_Deque.h"
+#include "System/creg/STL_List.h"
 
 using std::min;
 using std::max;
@@ -241,8 +241,9 @@ void CLosHandler::FreeInstance(LosInstance* instance)
 
 int CLosHandler::GetHashNum(CUnit* unit)
 {
-	unsigned int t = unit->mapSquare * unit->losRadius + unit->allyteam;
-	t ^= *(unsigned int*) &unit->losHeight;
+	const unsigned int t =
+		(unit->mapSquare * unit->losRadius + unit->allyteam) ^
+		(*(unsigned int*) &unit->losHeight);
 	//! hash-value range is [0, LOSHANDLER_MAGIC_PRIME - 1]
 	return (t % LOSHANDLER_MAGIC_PRIME);
 }
