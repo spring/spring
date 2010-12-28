@@ -808,6 +808,7 @@ void CGame::ClientReadNet()
 				break;
 			}
 			case NETMSG_GAMEOVER: {
+				const unsigned char player = inbuf[1];
 				// silently drop since we can calculate this ourself, altho it's useful info to store in replays
 				AddTraffic(player, packetCode, dataLength);
 				break;

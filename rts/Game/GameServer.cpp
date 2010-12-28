@@ -1488,7 +1488,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 				if (hostif)
 					hostif->SendGameOver(playerNum, winningAllyTeams);
-				Broadcast(BaseNetProtocol::SendGameOver(playerNum, winningAllyTeams));
+				Broadcast(CBaseNetProtocol::Get().SendGameOver(playerNum, winningAllyTeams));
 
 				gameEndTime = spring_gettime();
 			} catch (netcode::UnpackPacketException& e) {
