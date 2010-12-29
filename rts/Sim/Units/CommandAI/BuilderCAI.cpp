@@ -430,8 +430,7 @@ void CBuilderCAI::SlowUpdate()
 							buildRetries++;
 							owner->moveType->KeepPointingTo(build.pos, builder->buildDistance * 0.7f + radius, false);
 
-							bool waitstance = false;
-							if (builder->StartBuild(build, f, waitstance) || (buildRetries > 20)) {
+							if (builder->StartBuild(build, f) || (buildRetries > 20)) {
 								building = true;
 							}
 							else if (f) {
