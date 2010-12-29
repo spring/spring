@@ -655,6 +655,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FUNCTION("maxz",    ud, ModelMaxz);
 
 	ADD_INT("id", ud.id);
+	ADD_INT("cobID", ud.cobID);
 
 	ADD_STRING("name",      ud.name);
 	ADD_STRING("humanName", ud.humanName);
@@ -662,16 +663,11 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_STRING("tooltip", ud.tooltip);
 
-	ADD_STRING("gaia", ud.gaia);
-
 	ADD_STRING("wreckName", ud.wreckName);
 	ADD_STRING("deathExplosion", ud.deathExplosion);
 	ADD_STRING("selfDExplosion", ud.selfDExplosion);
 
 	ADD_STRING("buildpicname", ud.buildPicName);
-
-	ADD_INT("aihint", ud.aihint);
-	ADD_INT("cobID",  ud.cobID);
 
 	ADD_INT("techLevel",   ud.techLevel);
 	ADD_INT("maxThisUnit", ud.maxThisUnit);
@@ -842,8 +838,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_INT("xsize", ud.xsize);
 	ADD_INT("zsize", ud.zsize);
-
-	ADD_INT("buildangle", ud.buildangle);
 
 	// transport stuff
 	ADD_INT(  "transportCapacity",     ud.transportCapacity);
