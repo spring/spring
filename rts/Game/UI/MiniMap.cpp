@@ -603,7 +603,7 @@ void CMiniMap::SelectUnits(int x, int y) const
 					for (; team <= lastTeam; team++) {
 						CUnitSet& myUnits = teamHandler->Team(team)->units;
 						for (ui = myUnits.begin(); ui != myUnits.end(); ++ui) {
-							if ((*ui)->aihint == unit->aihint) {
+							if ((*ui)->unitDef->id == unit->unitDef->id) {
 								selectedUnits.AddUnit(*ui);
 							}
 						}

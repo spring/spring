@@ -591,7 +591,6 @@ int CSelectedUnits::GetDefaultCmd(const CUnit* unit, const CFeature* feature)
 {
 	GML_RECMUTEX_LOCK(sel); // GetDefaultCmd
 
-	// NOTE: the unitDef->aihint value is being ignored
 	int luaCmd;
 	if (eventHandler.DefaultCommand(unit, feature, luaCmd)) {
 		return luaCmd;
