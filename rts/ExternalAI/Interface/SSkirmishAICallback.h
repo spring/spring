@@ -640,6 +640,9 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *UnitDef_getMaxWeaponRange)(int skirmishAIId, int unitDefId);
 
+	/**
+	 * @deprecated
+	 */
 	const char*       (CALLING_CONV *UnitDef_getType)(int skirmishAIId, int unitDefId);
 
 	const char*       (CALLING_CONV *UnitDef_getTooltip)(int skirmishAIId, int unitDefId);

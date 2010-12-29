@@ -2561,17 +2561,18 @@ EXPORT(float) skirmishAiCallback_UnitDef_getMaxRudder(int skirmishAIId, int unit
 	return getUnitDefById(skirmishAIId, unitDefId)->maxRudder;
 }
 
-EXPORT(int) skirmishAiCallback_UnitDef_getYardMap(int skirmishAIId, int unitDefId, int facing, short* yardMapDst, int yardMapMaxSize) {
+EXPORT(int) skirmishAiCallback_UnitDef_getYardMap(int skirmishAIId, int unitDefId, int facing, short* yardMap, int yardMap_sizeMax) {
+
 	const UnitDef* unitDef = getUnitDefById(skirmishAIId, unitDefId);
-	const std::vector<unsigned char>& yardMap = unitDef->GetYardMap(facing);
+	const std::vector<unsigned char>& yardMapInternal = unitDef->GetYardMap(facing);
 
-	int yardMapSize = yardMap.size();
+	int yardMapSize = yardMapInternal.size();
 
-	if (!yardMap.empty()) {
-		yardMapSize = min(yardMap.size(), yardMapMaxSize);
+	if ((yardMap != NULL) && !yardMapInternal.empty()) {
+		yardMapSize = min(yardMapInternal.size(), yardMap_sizeMax);
 
 		for (int i = 0; i < yardMapSize; ++i) {
-			yardMapDst[i] = (short) yardMap[i];
+			yardMap[i] = (short) yardMapInternal[i];
 		}
 	}
 
