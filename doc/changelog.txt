@@ -13,7 +13,6 @@ Engine / General:
  - prevent equal unsynced random seeds
  - fix SetUnitRotation
  - fix enemy units responding to bugger off
- - fix zombie builder after being attacked just at start of construction
  - apply damage wrt. impacted piece if usePieceCollisionVolumes == 1
  - make CBitmap::ReverseYAxis() more efficient
  - remove excess elements from BasicMapDamage::craterTable
