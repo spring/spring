@@ -84,17 +84,14 @@ public:
 
 	///< unique id for this type of unit
 	int id;
+	int cobID;				///< associated with the COB <GET COB_ID unitID> call
 
 	CollisionVolume* collisionVolume;
 
 	std::string decoyName;
 	const UnitDef* decoyDef;
 
-	int aihint;
-	int cobID;				///< associated with the COB <GET COB_ID unitID> call
-
 	int techLevel;
-	std::string gaia;
 
 	float metalUpkeep;
 	float energyUpkeep;
@@ -288,10 +285,10 @@ public:
 	///< (only non-mobile ground units can have these)
 	std::vector<unsigned char> yardmaps[/*NUM_FACINGS*/ 4];
 
-	int xsize;										///< each size is 8 units
-	int zsize;										///< each size is 8 units
-
-	int buildangle;
+	///< both sizes expressed in heightmap coordinates; M x N
+	///< footprint covers M*SQUARE_SIZE x N*SQUARE_SIZE elmos
+	int xsize;
+	int zsize;
 
 	float loadingRadius;							///< for transports
 	float unloadSpread;

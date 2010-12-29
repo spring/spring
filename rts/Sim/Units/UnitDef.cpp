@@ -56,12 +56,10 @@ UnitDefWeapon::UnitDefWeapon(
 
 UnitDef::UnitDef()
 : id(-1)
+, cobID(-1)
 , collisionVolume(NULL)
 , decoyDef(NULL)
-, aihint(0)
-, cobID(-1)
 , techLevel(0)
-, gaia("")
 , metalUpkeep(0.0f)
 , energyUpkeep(0.0f)
 , metalMake(0.0f)
@@ -190,7 +188,6 @@ UnitDef::UnitDef()
 , movedata(NULL)
 , xsize(0)
 , zsize(0)
-, buildangle(0)
 , loadingRadius(0.0f)
 , unloadSpread(0.0f)
 , transportCapacity(0)
@@ -277,7 +274,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 , techLevel(-1)
 , buildPic(NULL)
 , movedata(NULL)
-, buildangle(0)
 {
 	humanName = udTable.GetString("name", "");
 	if (humanName.empty()) {
@@ -291,9 +287,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	}
 	tooltip = udTable.GetString("description", name);
 	buildPicName = udTable.GetString("buildPic", "");
-
 	decoyName = udTable.GetString("decoyFor", "");
-	gaia = udTable.GetString("gaia", "");
 
 	isCommander = udTable.GetBool("commander", false);
 
@@ -315,8 +309,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	idleAutoHeal = udTable.GetFloat("idleAutoHeal", 10.0f) * (16.0f / GAME_SPEED);
 	idleTime     = udTable.GetInt("idleTime", 600);
 
-	buildangle = udTable.GetInt("buildAngle", 0);
-
 	losHeight = 20;
 	metalCost = udTable.GetFloat("buildCostMetal", 0.0f);
 	if (metalCost < 1.0f) {
@@ -332,7 +324,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		buildTime = 1.0f; //avoid some nasty divide by 0 etc
 	}
 
-	aihint = id; // FIXME? (as noted in SelectedUnits.cpp, aihint is ignored)
 	cobID = udTable.GetInt("cobID", -1);
 
 	losRadius = udTable.GetFloat("sightDistance", 0.0f) * modInfo.losMul / (SQUARE_SIZE * (1 << modInfo.losMipLevel));

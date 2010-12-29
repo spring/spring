@@ -414,28 +414,7 @@ const CCommandQueue* CAICallback::GetCurrentUnitCommands(int unitId)
 
 int CAICallback::GetUnitAiHint(int unitId)
 {
-	int aiHint = -1;
-
-	verify();
-	if (CHECK_UNITID(unitId)) {
-		const CUnit* unit = uh->units[unitId];
-		if (unit) {
-			const int allyTeam = teamHandler->AllyTeam(team);
-			if (teamHandler->Ally(unit->allyteam, allyTeam)) {
-				aiHint = unit->aihint;
-			} else if (unit->losStatus[allyTeam] & LOS_INLOS) {
-				const UnitDef* unitDef  = unit->unitDef;
-				const UnitDef* decoyDef = unitDef->decoyDef;
-				if (decoyDef == NULL) {
-					aiHint = unit->aihint;
-				} else {
-					aiHint = decoyDef->aihint;
-				}
-			}
-		}
-	}
-
-	return aiHint;
+	return -1;
 }
 
 int CAICallback::GetUnitTeam(int unitId)
