@@ -914,7 +914,7 @@ void CTAAirMoveType::Update()
 						dif /= dist;
 					}
 
-					if ((*ui)->mass >= 100000 || (*ui)->immobile) {
+					if ((*ui)->mass >= CSolidObject::DEFAULT_MASS || (*ui)->immobile) {
 						pos -= dif * (dist - totRad);
 						owner->UpdateMidPos();
 						owner->speed *= 0.99f;

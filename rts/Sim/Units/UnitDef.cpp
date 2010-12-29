@@ -276,6 +276,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 , decoyDef(NULL)
 , techLevel(-1)
 , buildPic(NULL)
+, movedata(NULL)
 , buildangle(0)
 {
 	humanName = udTable.GetString("name", "");
@@ -556,30 +557,31 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	extractRange = mapInfo->map.extractorRadius * int(extractsMetal > 0.0f);
 	extractSquare = udTable.GetBool("extractSquare", false);
 
-	movedata = NULL;
+	// aircraft have MoveTypes but no MoveData;
+	// static structures have no use for either
+	// (but get StaticMoveType instances)
+	if (WantsMoveType() && !canfly) {
+		const std::string& moveClass = StringToLower(udTable.GetString("movementClass", ""));
+		const std::string errMsg = "WARNING: Couldn't find a MoveClass named " + moveClass + " (used in UnitDef: " + unitName + ")";
 
-	if (canmove && !canfly && speed > 0.0f) {
-		const std::string& moveclass = StringToLower(udTable.GetString("movementClass", ""));
-
-		if ((movedata = moveinfo->GetMoveDataFromName(moveclass)) == NULL) {
-			const std::string errmsg = "WARNING: Couldn't find a MoveClass named " + moveclass + " (used in UnitDef: " + unitName + ")";
-			throw content_error(errmsg); //! invalidate unitDef (this gets catched in ParseUnitDef!)
+		if ((movedata = moveinfo->GetMoveDataFromName(moveClass)) == NULL) {
+			throw content_error(errMsg); //! invalidate unitDef (this gets catched in ParseUnitDef!)
 		}
 
 		if (canhover) {
 			if (movedata->moveType != MoveData::Hover_Move) {
 				logOutput.Print("Inconsistent movedata %i for %s (moveclass %s): canhover, but not a hovercraft movetype",
-				     movedata->pathType, name.c_str(), moveclass.c_str());
+				     movedata->pathType, name.c_str(), moveClass.c_str());
 			}
 		} else if (floater) {
 			if (movedata->moveType != MoveData::Ship_Move) {
 				logOutput.Print("Inconsistent movedata %i for %s (moveclass %s): floater, but not a ship movetype",
-				     movedata->pathType, name.c_str(), moveclass.c_str());
+				     movedata->pathType, name.c_str(), moveClass.c_str());
 			}
 		} else {
 			if (movedata->moveType != MoveData::Ground_Move) {
 				logOutput.Print("Inconsistent movedata %i for %s (moveclass %s): neither canhover nor floater, but not a ground movetype",
-				     movedata->pathType, name.c_str(), moveclass.c_str());
+				     movedata->pathType, name.c_str(), moveClass.c_str());
 			}
 		}
 	}

@@ -498,7 +498,7 @@ void CUnit::PostInit(const CUnit* builder)
 	// would be given away otherwise by the PF, etc.
 	// note: this does mean that mines can be stacked (would
 	// need an extra yardmap character to prevent)
-	immobile = (unitDef->speed < 0.001f || !unitDef->canmove);
+	immobile = unitDef->IsImmobileUnit();
 	blocking = !(immobile && unitDef->canKamikaze);
 
 	if (blocking) {

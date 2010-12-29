@@ -13,7 +13,7 @@
 AMoveType* MoveTypeFactory::GetMoveType(CUnit* unit, const UnitDef* ud) {
 	AMoveType* mt = NULL;
 
-	if (ud->speed > 0.0f) {
+	if (ud->WantsMoveType()) {
 		if (!ud->canfly) {
 			// ground-mobility
 			assert(ud->movedata != NULL);
