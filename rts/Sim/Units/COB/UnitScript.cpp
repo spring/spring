@@ -1402,7 +1402,10 @@ void CUnitScript::SetUnitVal(int val, int param)
 			break;
 		}
 		case INBUILDSTANCE: {
+			//logOutput.Print("buildstance %d", param);
 			unit->inBuildStance = (param != 0);
+			if(unit->inBuildStance)
+				unit->commandAI->SlowUpdate(); // start building immediately once build stance reached
 			break;
 		}
 		case BUSY: {
