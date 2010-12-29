@@ -419,9 +419,7 @@ void CGameServer::SendDemoData(const bool skipping)
 			case NETMSG_SETSHARE:
 			case NETMSG_SHARE:
 			case NETMSG_STARTPOS:
-			case NETMSG_REGISTER_NETMSG:
-			case NETMSG_TEAM:
-			case NETMSG_UNREGISTER_NETMSG: {
+			case NETMSG_TEAM: {
 				// TODO: more messages may need adjusted player numbers, or maybe there is a better solution
 				if (!AdjustPlayerNumber(buf, 1))
 					continue;
@@ -1320,7 +1318,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					}
 					break;
 				}
-				case TEAMMSG_TEAM_DIED: { // don't send to clients, they don't need it
+				case TEAMMSG_TEAM_DIED: {
 					const unsigned team = inbuf[3];
 #ifndef DEDICATED
 					if (players[player].isLocal) { // currently only host is allowed
@@ -1337,6 +1335,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 								players[p].spectator = true;
 								if (hostif)
 									hostif->SendPlayerDefeated(p);
+								Broadcast(CBaseNetProtocol::Get().SendTeamDied(player, team));
 							}
 						}
 						// The teams Skirmish AIs destruction process
@@ -1497,40 +1496,6 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			break;
 		}
 
-		case NETMSG_REGISTER_NETMSG: {
-			const unsigned char player = inbuf[1];
-			const unsigned char msg = inbuf[2];
-			MsgToForwardMap::iterator itor = relayingMessagesMap.find(msg);
-
-			if (itor != relayingMessagesMap.end()) { // one entry already exists in the map
-				PlayersToForwardMsgvec &toForward = itor->second;
-				if (toForward.find(player) == toForward.end())
-					toForward.insert(player);
-			}
-			else {
-				PlayersToForwardMsgvec toForward;
-				toForward.insert(player);
-				relayingMessagesMap[msg] = toForward;
-			}
-			break;
-		}
-
-		case NETMSG_UNREGISTER_NETMSG: {
-			const unsigned char player = inbuf[1];
-			const unsigned char msg = inbuf[2];
-			MsgToForwardMap::iterator itor = relayingMessagesMap.find(msg);
-			if (itor == relayingMessagesMap.end()) // no entry already exists in the map
-				break;
-			PlayersToForwardMsgvec& toForward = itor->second;
-			if (toForward.find(player) != toForward.end()) {
-				toForward.erase(player);
-				if (toForward.size() == 0) {
-					relayingMessagesMap.erase(itor);
-				}
-			}
-			break;
-		}
-
 		case NETMSG_GAMEOVER: {
 			try {
 				// msgCode + msgSize + playerNum (all uchar's)
@@ -1555,6 +1520,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 				if (hostif)
 					hostif->SendGameOver(playerNum, winningAllyTeams);
+				Broadcast(CBaseNetProtocol::Get().SendGameOver(playerNum, winningAllyTeams));
 
 				gameEndTime = spring_gettime();
 			} catch (netcode::UnpackPacketException& e) {
@@ -1586,16 +1552,6 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		break;
 	}
 
-	// forward special messages to the players that request them
-	size_t playersSize = players.size();
-	MsgToForwardMap::iterator toRelay = relayingMessagesMap.find(msgCode);
-	if (toRelay != relayingMessagesMap.end()) {
-		PlayersToForwardMsgvec& toRelaySet = toRelay->second;
-		for (PlayersToForwardMsgvec::iterator playerToRelay = toRelaySet.begin(); playerToRelay != toRelaySet.end(); ++playerToRelay) {
-			if (*playerToRelay < playersSize)
-				players[*playerToRelay].SendData(packet);
-		}
-	}
 }
 
 void CGameServer::ServerReadNet()
@@ -2308,3 +2264,4 @@ void CGameServer::AddToPacketCache(boost::shared_ptr<const netcode::RawPacket> &
 	}
 	packetCache.back().push_back(pckt);
 }
+
