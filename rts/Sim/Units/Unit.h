@@ -178,9 +178,6 @@ public:
 	LuaRulesParams::Params  modParams;
 	LuaRulesParams::HashMap modParamsMap; ///< name map for mod parameters
 
-	/// tells the units main function to the ai, eg "builder"
-	int aihint;
-
 	/// the forward direction of the unit
 	SyncedFloat3 frontdir;
 	SyncedFloat3 rightdir;

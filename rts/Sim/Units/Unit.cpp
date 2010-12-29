@@ -396,7 +396,6 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	armorType = unitDef->armorType;
 	category = unitDef->category;
 
-	aihint = unitDef->aihint;
 	tooltip = unitDef->humanName + " - " + unitDef->tooltip;
 	wreckName = unitDef->wreckName;
 
@@ -2323,7 +2322,6 @@ CR_REG_METADATA(CUnit, (
 	//CR_MEMBER(unitDef),
 	CR_MEMBER(unitDefName),
 	CR_MEMBER(collisionVolume),
-	CR_MEMBER(aihint),
 	CR_MEMBER(frontdir),
 	CR_MEMBER(rightdir),
 	CR_MEMBER(updir),

@@ -2005,7 +2005,7 @@ EXPORT(const char*) skirmishAiCallback_UnitDef_getFileName(int skirmishAIId, int
 //}
 
 EXPORT(int) skirmishAiCallback_UnitDef_getAiHint(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->aihint;
+	return 0;
 }
 
 EXPORT(int) skirmishAiCallback_UnitDef_getCobId(int skirmishAIId, int unitDefId) {
@@ -2017,7 +2017,7 @@ EXPORT(int) skirmishAiCallback_UnitDef_getTechLevel(int skirmishAIId, int unitDe
 }
 
 EXPORT(const char*) skirmishAiCallback_UnitDef_getGaia(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->gaia.c_str();
+	return "";
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_getUpkeep(int skirmishAIId,
@@ -2588,7 +2588,7 @@ EXPORT(int) skirmishAiCallback_UnitDef_getZSize(int skirmishAIId, int unitDefId)
 }
 
 EXPORT(int) skirmishAiCallback_UnitDef_getBuildAngle(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->buildangle;
+	return 0;
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_getLoadingRadius(int skirmishAIId, int unitDefId) {
@@ -3112,7 +3112,7 @@ EXPORT(int) skirmishAiCallback_Unit_getAllyTeam(int skirmishAIId, int unitId) {
 }
 
 EXPORT(int) skirmishAiCallback_Unit_getAiHint(int skirmishAIId, int unitId) {
-	return skirmishAIId_callback[skirmishAIId]->GetUnitAiHint(unitId);
+	return 0;
 }
 
 EXPORT(int) skirmishAiCallback_Unit_getSupportedCommands(int skirmishAIId, int unitId) {

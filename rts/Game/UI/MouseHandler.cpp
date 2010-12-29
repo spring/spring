@@ -465,9 +465,10 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 							CUnitSet::iterator ui;
 							CUnitSet& teamUnits = teamHandler->Team(team)->units;
 							for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
-								if (((*ui)->aihint == unit->aihint) &&
-										(camera->InView((*ui)->midPos) || keys[SDLK_LCTRL])) {
-									selectedUnits.AddUnit(*ui);
+								if ((*ui)->unitDef->id == unit->unitDef->id) {
+									if (camera->InView((*ui)->midPos) || keys[SDLK_LCTRL]) {
+										selectedUnits.AddUnit(*ui);
+									}
 								}
 							}
 						}
