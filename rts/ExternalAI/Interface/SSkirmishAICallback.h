@@ -456,12 +456,14 @@ struct SSkirmishAICallback {
 
 	const char*       (CALLING_CONV *UnitDef_getFileName)(int skirmishAIId, int unitDefId);
 
+	/** @deprecated */
 	int               (CALLING_CONV *UnitDef_getAiHint)(int skirmishAIId, int unitDefId);
 
 	int               (CALLING_CONV *UnitDef_getCobId)(int skirmishAIId, int unitDefId);
 
 	int               (CALLING_CONV *UnitDef_getTechLevel)(int skirmishAIId, int unitDefId);
 
+	/** @deprecated */
 	const char*       (CALLING_CONV *UnitDef_getGaia)(int skirmishAIId, int unitDefId);
 
 	float             (CALLING_CONV *UnitDef_getUpkeep)(int skirmishAIId, int unitDefId, int resourceId); //$ REF:resourceId->Resource
@@ -640,9 +642,7 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *UnitDef_getMaxWeaponRange)(int skirmishAIId, int unitDefId);
 
-	/**
-	 * @deprecated
-	 */
+	/** @deprecated */
 	const char*       (CALLING_CONV *UnitDef_getType)(int skirmishAIId, int unitDefId);
 
 	const char*       (CALLING_CONV *UnitDef_getTooltip)(int skirmishAIId, int unitDefId);
@@ -778,6 +778,7 @@ struct SSkirmishAICallback {
 
 	int               (CALLING_CONV *UnitDef_getZSize)(int skirmishAIId, int unitDefId);
 
+	/** @deprecated */
 	int               (CALLING_CONV *UnitDef_getBuildAngle)(int skirmishAIId, int unitDefId);
 
 // beginn: transports stuff
@@ -1163,6 +1164,7 @@ struct SSkirmishAICallback {
 	 *          1: ???
 	 *          2: ???
 	 *          ...
+	 * @deprecated
 	 */
 	int               (CALLING_CONV *Unit_getAiHint)(int skirmishAIId, int unitId);
 
