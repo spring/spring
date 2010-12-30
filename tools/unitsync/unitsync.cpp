@@ -236,7 +236,7 @@ static void _UnInit()
 	}
 }
 
-EXPORT(int) Init(bool isServer, int id)
+EXPORT(int) Init(bool isServer, int id, bool enable_logging)
 {
 	try {
 		if (!logOutputInitialised)
@@ -250,6 +250,7 @@ EXPORT(int) Init(bool isServer, int id)
 			logOutput.Initialize();
 			logOutputInitialised = true;
 		}
+		LOG_UNITSYNC.enabled = enable_logging;
 		logOutput.Print(LOG_UNITSYNC, "loaded, %s\n", SpringVersion::GetFull().c_str());
 
 		_UnInit();
