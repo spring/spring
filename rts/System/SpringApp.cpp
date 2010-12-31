@@ -11,8 +11,8 @@
 
 #include "mmgr.h"
 
-#include "SpringApp.h"
 #include "Rendering/GL/myGL.h"
+#include "SpringApp.h"
 
 #include "aGui/Gui.h"
 #include "ExternalAI/IAILibraryManager.h"
@@ -1329,7 +1329,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 						if (ac->ignoreNextChar || (ac->ignoreChar == (char)usym)) {
 							ac->ignoreNextChar = false;
 						} else {
-							if (usym < 255 && (!isRepeat || ac->userInput.length()>0)) {
+							if (usym < 255 && (!isRepeat || ac->userInput.length() > 0)) {
 								const int len = (int)ac->userInput.length();
 								const char str[2] = { (char)usym, 0 };
 
