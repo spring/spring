@@ -20,7 +20,6 @@
 #include "System/Exceptions.h"
 
 using std::sprintf;
-extern volatile bool globalQuit;
 
 
 static std::string FloatToSmallString(float num, float mul = 1) {
@@ -148,7 +147,7 @@ void CEndGameBox::MouseRelease(int x, int y, int button)
 
 	if (InBox(mx, my, box + exitBox)) {
 		delete this;
-		globalQuit = true;
+		gu->globalQuit = true;
 		return;
 	}
 

@@ -8,9 +8,9 @@
 #include <list>
 #include <cctype>
 
-#include "SDL_timer.h"
-#include "SDL_keysym.h"
-#include "SDL_mouse.h"
+#include <SDL_timer.h>
+#include <SDL_keysym.h>
+#include <SDL_mouse.h>
 
 #include "mmgr.h"
 
@@ -53,15 +53,14 @@
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
-#include "NetProtocol.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/VFSHandler.h"
-#include "FileSystem/FileSystem.h"
-#include "Sound/IMusicChannel.h"
+#include "System/NetProtocol.h"
+#include "System/Input/KeyInput.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/VFSHandler.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/Sound/IMusicChannel.h"
 
 using namespace std;
-
-extern boost::uint8_t *keys;
 
 const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
@@ -1740,7 +1739,7 @@ int LuaUnsyncedRead::GetKeyState(lua_State* L)
 	if ((key < 0) || (key >= SDLK_LAST)) {
 		lua_pushboolean(L, 0);
 	} else {
-		lua_pushboolean(L, keys[key]);
+		lua_pushboolean(L, keyInput->GetKeyState(key));
 	}
 	return 1;
 }
@@ -1749,10 +1748,10 @@ int LuaUnsyncedRead::GetKeyState(lua_State* L)
 int LuaUnsyncedRead::GetModKeyState(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushboolean(L, keys[SDLK_LALT]);
-	lua_pushboolean(L, keys[SDLK_LCTRL]);
-	lua_pushboolean(L, keys[SDLK_LMETA]);
-	lua_pushboolean(L, keys[SDLK_LSHIFT]);
+	lua_pushboolean(L, keyInput->GetKeyState(SDLK_LALT));
+	lua_pushboolean(L, keyInput->GetKeyState(SDLK_LCTRL));
+	lua_pushboolean(L, keyInput->GetKeyState(SDLK_LMETA));
+	lua_pushboolean(L, keyInput->GetKeyState(SDLK_LSHIFT));
 	return 4;
 }
 
@@ -1763,7 +1762,7 @@ int LuaUnsyncedRead::GetPressedKeys(lua_State* L)
 	lua_newtable(L);
 	int count = 0;
 	for (int i = 0; i < SDLK_LAST; i++) {
-		if (keys[i]) {
+		if (keyInput->GetKeyState(i)) {
 			lua_pushnumber(L, i);
 			lua_pushboolean(L, 1);
 			lua_rawset(L, -3);

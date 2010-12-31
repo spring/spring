@@ -10,6 +10,7 @@
 #endif
 #include <sstream>
 #include <boost/system/system_error.hpp>
+#include <boost/bind.hpp>
 
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"

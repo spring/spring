@@ -15,8 +15,8 @@
 
 #include "GameData.h"
 #include "Sim/Misc/TeamBase.h"
-#include "UnsyncedRNG.h"
-#include "float3.h"
+#include "System/UnsyncedRNG.h"
+#include "System/float3.h"
 #include "System/myTime.h"
 
 namespace netcode

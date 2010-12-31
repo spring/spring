@@ -1,20 +1,17 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+#include <cstdlib>
+#include <boost/cstdint.hpp>
+#include <SDL_keysym.h>
 
 #include "StdAfx.h"
-#include <stdlib.h>
-
 #include "mmgr.h"
 
 #include "KeySet.h"
 #include "KeyCodes.h"
-#include "SDL_keysym.h"
 
-#include "LogOutput.h"
-#include "Util.h"
-#include <boost/cstdint.hpp>
-
-extern boost::uint8_t* keys; // from System/Main.cpp
-
+#include "System/LogOutput.h"
+#include "System/Util.h"
+#include "System/Input/KeyInput.h"
 
 #define DISALLOW_RELEASE_BINDINGS
 
@@ -48,12 +45,14 @@ CKeySet::CKeySet(int k, bool release)
 {
 	key = k;
 	modifiers = 0;
-	if (keys[SDLK_LALT])   { modifiers |= KS_ALT; }  		
-	if (keys[SDLK_LCTRL])  { modifiers |= KS_CTRL; }		
-	if (keys[SDLK_LMETA])  { modifiers |= KS_META; }		
-	if (keys[SDLK_LSHIFT]) { modifiers |= KS_SHIFT; }
+
+	if (keyInput->IsKeyPressed(SDLK_LALT))   { modifiers |= KS_ALT; }
+	if (keyInput->IsKeyPressed(SDLK_LCTRL))  { modifiers |= KS_CTRL; }
+	if (keyInput->IsKeyPressed(SDLK_LMETA))  { modifiers |= KS_META; }
+	if (keyInput->IsKeyPressed(SDLK_LSHIFT)) { modifiers |= KS_SHIFT; }
+
 #ifndef DISALLOW_RELEASE_BINDINGS
-	if (release)           { modifiers |= KS_RELEASE; }
+	if (release) { modifiers |= KS_RELEASE; }
 #endif
 }
 

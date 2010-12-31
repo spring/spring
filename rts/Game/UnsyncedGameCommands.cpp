@@ -59,7 +59,7 @@
 #include "System/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/NetProtocol.h"
-#include "System/SpringApp.h"
+#include "System/Input/KeyInput.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/IEffectChannel.h"
@@ -613,7 +613,7 @@ bool CGame::ActionPressed(const Action& action,
 	else if (((cmd == "chat")     || (cmd == "chatall") ||
 	         (cmd == "chatally") || (cmd == "chatspec")) &&
 	         // if chat is bound to enter and we're waiting for user to press enter to start game, ignore.
-				  (ks.Key() != SDLK_RETURN || playing || !keys[SDLK_LCTRL] )) {
+				  (ks.Key() != SDLK_RETURN || playing || !keyInput->IsKeyPressed(SDLK_LCTRL))) {
 
 		if (cmd == "chatall")  { userInputPrefix = ""; }
 		if (cmd == "chatally") { userInputPrefix = "a:"; }
@@ -951,7 +951,7 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "quitforce" || cmd == "quit") {
 		logOutput.Print("User exited");
-		globalQuit = true;
+		gu->globalQuit = true;
 	}
 	else if (cmd == "incguiopacity") {
 		CInputReceiver::guiAlpha = std::min(CInputReceiver::guiAlpha+0.1f,1.0f);

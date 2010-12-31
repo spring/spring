@@ -19,8 +19,6 @@
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
 
-extern volatile bool globalQuit;
-
 CQuitBox::CQuitBox(void)
 {
 	box.x1 = 0.34f;
@@ -270,10 +268,9 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 			}
 		}
 	}
-	else if(InBox(mx,my,box+quitBox))
-	{
+	else if (InBox(mx, my, box + quitBox)) {
 		logOutput.Print("User exited");
-		globalQuit=true;
+		gu->globalQuit = true;
 	}
 	// if we're still in the game, remove the resign box
 	if(InBox(mx,my,box+resignBox) || InBox(mx,my,box+saveBox) || InBox(mx,my,box+giveAwayBox) || InBox(mx,my,box+cancelBox) || InBox(mx,my,box+quitBox)){

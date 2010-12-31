@@ -3,14 +3,13 @@
 #ifndef EXPLOSION_GENERATOR_H
 #define EXPLOSION_GENERATOR_H
 
-#include "Rendering/GL/myGL.h"
-#include "Sim/Misc/DamageArray.h"
-#include "Lua/LuaParser.h"
-#include "Sim/Objects/WorldObject.h"
 #include <map>
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
+
+#include "Lua/LuaParser.h"
+#include "Sim/Objects/WorldObject.h"
 
 class float3;
 class CUnit;
@@ -21,8 +20,8 @@ class CExpGenSpawnable: public CWorldObject
 {
 	CR_DECLARE(CExpGenSpawnable);
 public:
-	CExpGenSpawnable(): CWorldObject() { GML_EXPGEN_CHECK() }
-	CExpGenSpawnable(const float3& pos): CWorldObject(pos) { GML_EXPGEN_CHECK() }
+	CExpGenSpawnable();
+	CExpGenSpawnable(const float3& pos);
 	virtual ~CExpGenSpawnable() {}
 
 	virtual void Init(const float3& pos, CUnit* owner) = 0;

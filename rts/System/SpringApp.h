@@ -5,10 +5,10 @@
 
 #include <string>
 #include <boost/cstdint.hpp>
-#include "System/OffscreenGLContext.h"
 
 class BaseCmd;
 class CGameController;
+class COffscreenGLContext;
 union SDL_Event;
 
 /**
@@ -113,7 +113,7 @@ protected:
 	 */
 	int lastRequiredDraw;
 
-	static COffscreenGLContext *ogc;
+	static COffscreenGLContext* ogc;
 
 private:
 	bool MainEventHandler(const SDL_Event& ev);
@@ -126,27 +126,5 @@ private:
  * (could be a PreGame, could be a Game, etc)
  */
 extern CGameController* activeController;
-
-/**
- * @brief global quit
- *
- * Global boolean indicating whether the user
- * wants to quit
- */
-extern volatile bool globalQuit;
-
-/**
- * @brief keys
- *
- * Array of possible keys, and which are being pressed
- */
-extern boost::uint8_t *keys;
-
-/**
- * @brief currentUnicode
- *
- * Unicode character for the current KeyPressed or KeyReleased
- */
-extern boost::uint16_t currentUnicode;
 
 #endif

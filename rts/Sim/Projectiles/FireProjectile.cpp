@@ -12,6 +12,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Features/Feature.h"
+#include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
