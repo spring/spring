@@ -260,8 +260,19 @@ void CLogOutput::InitializeSubsystems()
 #endif
 
 	const char* const env = getenv("SPRING_LOG_SUBSYSTEMS");
+	bool env_override = false;
 	if (env)
-		subsystems += StringToLower(env) + ",";
+	{
+		//this allows to disable all subsystems from the evn var
+		std::string env_subsystems(StringToLower(env));
+		if ( env_subsystems == std::string("none" ))
+		{
+			subsystems = "";
+			env_override = true;
+		}
+		else
+			subsystems += env_subsystems + ",";
+	}
 
 
 	{
@@ -272,9 +283,11 @@ void CLogOutput::InitializeSubsystems()
 				const string name = StringToLower(sys->name);
 				const string::size_type index = subsystems.find("," + name + ",");
 
+				if (env_override)
+					sys->enabled = index != string::npos;
 				// log subsystems which are enabled by default can not be disabled
 				// ("enabled by default" wouldn't make sense otherwise...)
-				if (!sys->enabled && index != string::npos)
+				else if (!sys->enabled && index != string::npos)
 					sys->enabled = true;
 
 				if (sys->enabled) {
