@@ -43,7 +43,6 @@ protected:
 	static volatile int gmlKeepRunning;
 #endif
 
-	void UpdateSDLKeys();                           //!< Update SDL key array
 	bool GetDisplayGeometry();
 	void SetupViewportGeometry();
 
