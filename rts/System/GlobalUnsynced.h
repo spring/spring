@@ -124,6 +124,14 @@ public:
 	 */
 	CUnit* directControl;
 
+	/**
+	* @brief global quit
+	*
+	* Global boolean indicating whether the user
+	* wants to quit
+	*/
+	volatile bool globalQuit;
+
 private:
 	/**
 	* @brief rand seed

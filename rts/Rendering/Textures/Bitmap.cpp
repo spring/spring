@@ -336,7 +336,7 @@ bool CBitmap::Save(std::string const& filename, bool opaque) const
 
 
 #ifndef BITMAP_NO_OPENGL
-const GLuint CBitmap::CreateTexture(bool mipmaps) const
+const unsigned int CBitmap::CreateTexture(bool mipmaps) const
 {
 #ifndef BITMAP_NO_OPENGL
 	ScopedTimer timer("Textures::CBitmap::CreateTexture");
@@ -359,7 +359,7 @@ const GLuint CBitmap::CreateTexture(bool mipmaps) const
 		return bm.CreateTexture(mipmaps);
 	}
 
-	GLuint texture;
+	unsigned int texture;
 
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
@@ -386,7 +386,7 @@ const GLuint CBitmap::CreateTexture(bool mipmaps) const
 }
 
 
-const GLuint CBitmap::CreateDDSTexture(GLuint texID) const
+const unsigned int CBitmap::CreateDDSTexture(unsigned int texID) const
 {
 	glPushAttrib(GL_TEXTURE_BIT);
 
@@ -404,7 +404,7 @@ const GLuint CBitmap::CreateDDSTexture(GLuint texID) const
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, texID);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		if (!ddsimage->upload_texture2D()) {
+		if (!ddsimage->upload_texture2D(0, GL_TEXTURE_2D)) {
 			glDeleteTextures(1, &texID);
 			texID = 0;
 		}

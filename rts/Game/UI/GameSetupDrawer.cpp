@@ -26,9 +26,6 @@
 #include "KeyBindings.h"
 #include "EventHandler.h"
 
-extern boost::uint8_t *keys;
-
-
 GameSetupDrawer* GameSetupDrawer::instance = NULL;
 
 

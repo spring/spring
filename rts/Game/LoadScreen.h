@@ -8,7 +8,7 @@
 #include <boost/thread/recursive_mutex.hpp>
 
 #include "GameController.h"
-#include "Rendering/GL/myGL.h"
+/// #include "Rendering/GL/myGL.h"
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/OffscreenGLContext.h"
 #include "myTime.h"
@@ -63,7 +63,7 @@ private:
 	COffscreenGLThread* gameLoadThread;
 	bool mt_loading;
 
-	GLuint startupTexture;
+	unsigned int startupTexture;
 	float aspectRatio;
 	spring_time last_draw;
 };

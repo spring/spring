@@ -66,11 +66,8 @@
 #include "Util.h"
 
 using namespace std;
-extern boost::uint8_t *keys;
-
 
 CLuaUI* luaUI = NULL;
-
 
 const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 

@@ -13,28 +13,24 @@ struct int2;
 class IMouseInput
 {
 public:
-	static IMouseInput* Get();
+	static IMouseInput* GetInstance();
+	static void FreeInstance(IMouseInput*);
 
 	IMouseInput ();
-	virtual ~IMouseInput();
+	virtual ~IMouseInput() {}
 
-	virtual int2 GetPos ()
-	{
-		return mousepos;
-	};
-	void SetPos (int2 pos);
+	virtual int2 GetPos() { return mousepos; }
+	void SetPos(int2 pos);
 
-	bool HandleSDLMouseEvent (const SDL_Event& event);
+	bool HandleSDLMouseEvent(const SDL_Event& event);
 
-	virtual void SetWMMouseCursor (void* wmcursor) {}
+	virtual void SetWMMouseCursor(void* wmcursor) {}
 	
 protected:
 	int2 mousepos;
 	boost::signals::connection inputCon;
 };
 
-
-extern IMouseInput *mouseInput;
+extern IMouseInput* mouseInput;
 
 #endif 
-

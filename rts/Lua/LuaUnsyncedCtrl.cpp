@@ -73,7 +73,6 @@ using namespace std;
 
 // MinGW defines this for a WINAPI function
 #undef SendMessage
-extern boost::uint8_t *keys;
 
 const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 

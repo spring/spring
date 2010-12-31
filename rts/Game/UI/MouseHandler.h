@@ -7,8 +7,8 @@
 #include <vector>
 #include <map>
 
+#include "System/float3.h"
 #include "MouseCursor.h"
-#include "Rendering/GL/myGL.h"
 
 static const int NUM_BUTTONS = 10;
 

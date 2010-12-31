@@ -48,9 +48,6 @@ IMouseInput::IMouseInput()
 }
 
 
-IMouseInput::~IMouseInput()
-{}
-
 bool IMouseInput::HandleSDLMouseEvent (const SDL_Event& event)
 {
 	switch (event.type) {
@@ -224,9 +221,11 @@ void IMouseInput::SetPos(int2 pos)
 	SDL_PeepEvents(&events[0], 100, SDL_GETEVENT, SDL_MOUSEMOTIONMASK);
 }
 
-IMouseInput *IMouseInput::Get()
+
+
+IMouseInput* IMouseInput::GetInstance()
 {
-	if (!mouseInput) {
+	if (mouseInput == NULL) {
 #ifdef WIN32
 		mouseInput = new CWin32MouseInput;
 #else
@@ -236,3 +235,6 @@ IMouseInput *IMouseInput::Get()
 	return mouseInput;
 }
 
+void IMouseInput::FreeInstance(IMouseInput* mouseInp) {
+	delete mouseInp; mouseInput = NULL;
+}

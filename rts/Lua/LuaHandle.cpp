@@ -37,12 +37,10 @@
 #include "System/BaseNetProtocol.h"
 #include "System/EventHandler.h"
 #include "System/LogOutput.h"
-#include "System/SpringApp.h"
+#include "System/Input/KeyInput.h"
 #include "System/FileSystem/FileHandler.h"
 
 #include "LuaInclude.h"
-
-extern boost::uint8_t *keys;
 
 bool CLuaHandle::devMode = false;
 bool CLuaHandle::modUICtrl = true;
@@ -1641,17 +1639,17 @@ bool CLuaHandle::KeyPress(unsigned short key, bool isRepeat)
 	lua_pushnumber(L, key);
 
 	lua_newtable(L);
-	HSTR_PUSH_BOOL(L, "alt",   !!keys[SDLK_LALT]);
-	HSTR_PUSH_BOOL(L, "ctrl",  !!keys[SDLK_LCTRL]);
-	HSTR_PUSH_BOOL(L, "meta",  !!keys[SDLK_LMETA]);
-	HSTR_PUSH_BOOL(L, "shift", !!keys[SDLK_LSHIFT]);
+	HSTR_PUSH_BOOL(L, "alt",   !!keyInput->GetKeyState(SDLK_LALT));
+	HSTR_PUSH_BOOL(L, "ctrl",  !!keyInput->GetKeyState(SDLK_LCTRL));
+	HSTR_PUSH_BOOL(L, "meta",  !!keyInput->GetKeyState(SDLK_LMETA));
+	HSTR_PUSH_BOOL(L, "shift", !!keyInput->GetKeyState(SDLK_LSHIFT));
 
 	lua_pushboolean(L, isRepeat);
 
 	CKeySet ks(key, false);
 	lua_pushstring(L, ks.GetString(true).c_str());
 
-	lua_pushnumber(L, currentUnicode);
+	lua_pushnumber(L, keyInput->GetCurrentKeyUnicodeChar());
 
 	// call the function
 	if (!RunCallInUnsynced(cmdStr, 5, 1)) {
@@ -1684,15 +1682,15 @@ bool CLuaHandle::KeyRelease(unsigned short key)
 	lua_pushnumber(L, key);
 
 	lua_newtable(L);
-	HSTR_PUSH_BOOL(L, "alt",   !!keys[SDLK_LALT]);
-	HSTR_PUSH_BOOL(L, "ctrl",  !!keys[SDLK_LCTRL]);
-	HSTR_PUSH_BOOL(L, "meta",  !!keys[SDLK_LMETA]);
-	HSTR_PUSH_BOOL(L, "shift", !!keys[SDLK_LSHIFT]);
+	HSTR_PUSH_BOOL(L, "alt",   !!keyInput->GetKeyState(SDLK_LALT));
+	HSTR_PUSH_BOOL(L, "ctrl",  !!keyInput->GetKeyState(SDLK_LCTRL));
+	HSTR_PUSH_BOOL(L, "meta",  !!keyInput->GetKeyState(SDLK_LMETA));
+	HSTR_PUSH_BOOL(L, "shift", !!keyInput->GetKeyState(SDLK_LSHIFT));
 
 	CKeySet ks(key, false);
 	lua_pushstring(L, ks.GetString(true).c_str());
 
-	lua_pushnumber(L, currentUnicode);
+	lua_pushnumber(L, keyInput->GetCurrentKeyUnicodeChar());
 
 	// call the function
 	if (!RunCallInUnsynced(cmdStr, 4, 1)) {

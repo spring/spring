@@ -135,6 +135,7 @@
 #include "System/NetProtocol.h"
 #include "System/SpringApp.h"
 #include "System/Util.h"
+#include "System/Input/KeyInput.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/VFSHandler.h"
@@ -157,9 +158,6 @@
 #include "lib/gml/gmlsrv.h"
 extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 #endif
-
-extern boost::uint8_t *keys;
-extern volatile bool globalQuit;
 
 CGame* game = NULL;
 
@@ -392,16 +390,16 @@ CGame::~CGame()
 
 void CGame::LoadGame(const std::string& mapname)
 {
-	if (!globalQuit) LoadDefs();
-	if (!globalQuit) LoadSimulation(mapname);
-	if (!globalQuit) LoadRendering();
-	if (!globalQuit) LoadInterface();
-	if (!globalQuit) LoadLua();
-	if (!globalQuit) LoadFinalize();
+	if (!gu->globalQuit) LoadDefs();
+	if (!gu->globalQuit) LoadSimulation(mapname);
+	if (!gu->globalQuit) LoadRendering();
+	if (!gu->globalQuit) LoadInterface();
+	if (!gu->globalQuit) LoadLua();
+	if (!gu->globalQuit) LoadFinalize();
 
-	if (!globalQuit && saveFile) {
-			loadscreen->SetLoadMessage("Loading game");
-			saveFile->LoadGame();
+	if (!gu->globalQuit && saveFile) {
+		loadscreen->SetLoadMessage("Loading game");
+		saveFile->LoadGame();
 	}
 }
 
@@ -735,8 +733,9 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 			if (action.command == "edit_return") {
 				userWriting=false;
 				writingPos = 0;
+
 				if (k == SDLK_RETURN) {
-					keys[k] = false; //prevent game start when server chats
+					keyInput->SetKeyState(k, 0); //prevent game start when server chats
 				}
 				if (chatting) {
 					string command;
@@ -915,8 +914,6 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 
 int CGame::KeyReleased(unsigned short k)
 {
-	//	keys[k] = false;
-
 	if ((userWriting) && (((k>=' ') && (k<='Z')) || (k==8) || (k==190))) {
 		return 0;
 	}

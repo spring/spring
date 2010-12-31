@@ -4,8 +4,9 @@
 #include "Button.h"
 
 #include "Gui.h"
-#include "LogOutput.h"
 #include "Rendering/glFont.h"
+#include "Rendering/GL/myGL.h"
+#include "System/LogOutput.h"
 
 namespace agui
 {
