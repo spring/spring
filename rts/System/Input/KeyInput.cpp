@@ -35,10 +35,11 @@ KeyInput::KeyInput() {
 void KeyInput::Update(boost::uint16_t currKeyUnicodeChar, boost::int8_t fakeMetaKey)
 {
 	int numKeys = 0;
-	boost::uint8_t* keyStates = SDL_GetKeyState(&numKeys);
-	memcpy(&keys[0], keyStates, sizeof(boost::uint8_t) * numKeys);
 
 	const SDLMod mods = SDL_GetModState();
+	const boost::uint8_t* keyStates = SDL_GetKeyState(&numKeys);
+
+	memcpy(&keys[0], keyStates, sizeof(boost::uint8_t) * numKeys);
 
 	keys[SDLK_LALT]   = (mods & KMOD_ALT)   ? 1 : 0;
 	keys[SDLK_LCTRL]  = (mods & KMOD_CTRL)  ? 1 : 0;
