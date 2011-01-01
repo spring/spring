@@ -22,6 +22,7 @@ Engine / General:
  - convert some crashes because of invalid CEGs into warnings
  - properly ignore non-blocking objects during collisions
  - change minimum for UnitDef.buildDistance from 128 to 38 (default stays 128)
+ - broadcast team died events to all players, so it is stored in the demo file
 
 Engine / Logging:
  - give S3O model name in error message when a texture is missing
