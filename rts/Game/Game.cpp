@@ -296,93 +296,93 @@ CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHa
 
 CGame::~CGame()
 {
-	CLoadScreen::DeleteInstance();
-	SafeDelete(guihandler);
-
-	if (videoCapturing->IsCapturing()) {
-		videoCapturing->StopCapturing();
-	}
-	IVideoCapturing::FreeInstance();
-
 #ifdef TRACE_SYNC
-	tracefile << "End game\n";
+	tracefile << "[" << __FUNCTION__ << "]";
 #endif
+
+	CLoadScreen::DeleteInstance();
+	IVideoCapturing::FreeInstance();
+	ISound::Shutdown();
 
 	CLuaGaia::FreeHandler();
 	CLuaRules::FreeHandler();
 	LuaOpenGL::Free();
 	heightMapTexture.Kill();
-
-	eoh->PreDestroy();
+	CColorMap::DeleteColormaps();
 	CEngineOutHandler::Destroy();
+	CResourceHandler::FreeInstance();
 
-	for (std::vector<CGroupHandler*>::iterator git = grouphandlers.begin(); git != grouphandlers.end(); ++git) {
-		delete *git;
-	}
-	grouphandlers.clear();
+	SafeDelete(guihandler);
+	SafeDelete(minimap);
+	SafeDelete(resourceBar);
+	SafeDelete(tooltip); // CTooltipConsole*
+	SafeDelete(infoConsole);
+	SafeDelete(consoleHistory);
+	SafeDelete(wordCompletion);
+	SafeDelete(keyBindings);
+	SafeDelete(keyCodes);
+	SafeDelete(selectionKeys); // CSelectionKeyHandler*
+	SafeDelete(luaInputReceiver);
+	SafeDelete(mouse); // CMouseHandler*
 
 	SafeDelete(water);
 	SafeDelete(sky);
-	SafeDelete(resourceBar);
-	SafeDelete(featureDrawer);
-	SafeDelete(unitDrawer);
-	SafeDelete(modelDrawer);
-	SafeDelete(projectileDrawer);
-	SafeDelete(geometricObjects);
-	SafeDelete(featureHandler);
 	SafeDelete(treeDrawer);
 	SafeDelete(pathDrawer);
-	SafeDelete(uh);
-	SafeDelete(ph);
+	SafeDelete(modelDrawer);
+	SafeDelete(shadowHandler);
+	SafeDelete(camHandler);
+	SafeDelete(camera);
+	SafeDelete(cam2);
+	SafeDelete(iconHandler);
+	SafeDelete(inMapDrawer);
+	SafeDelete(geometricObjects);
+	SafeDelete(farTextureHandler);
+	SafeDelete(texturehandler3DO);
+	SafeDelete(texturehandlerS3O);
+
+	SafeDelete(featureDrawer);
+	SafeDelete(featureHandler); // depends on unitHandler (via ~CFeature)
+	SafeDelete(unitDrawer); // depends on unitHandler, cubeMapHandler, groundDecals
+	SafeDelete(uh); // CUnitHandler*, depends on modelParser (via ~CUnit)
+	SafeDelete(projectileDrawer);
+	SafeDelete(ph); // CProjectileHandler*
+
+	SafeDelete(cubeMapHandler);
 	SafeDelete(groundDecals);
-	SafeDelete(minimap);
+	SafeDelete(modelParser);
+
+	SafeDelete(unitLoader);
 	SafeDelete(pathManager);
 	SafeDelete(ground);
 	SafeDelete(smoothGround);
-	SafeDelete(luaInputReceiver);
-	SafeDelete(inMapDrawer);
-	SafeDelete(net);
+	SafeDelete(groundBlockingObjectMap);
 	SafeDelete(radarhandler);
 	SafeDelete(loshandler);
 	SafeDelete(mapDamage);
 	SafeDelete(qf);
-	SafeDelete(tooltip);
-	SafeDelete(keyBindings);
-	SafeDelete(keyCodes);
-	SafeDelete(selectionKeys);
-	SafeDelete(mouse);
-	SafeDelete(camHandler);
-	SafeDelete(helper);
-	SafeDelete(shadowHandler);
 	SafeDelete(moveinfo);
 	SafeDelete(unitDefHandler);
-	SafeDelete(unitLoader);
-	CGroundMoveType::DeleteLineTable();
-	CResourceHandler::FreeInstance();
 	SafeDelete(weaponDefHandler);
 	SafeDelete(damageArrayHandler);
+	SafeDelete(explGenHandler);
+	SafeDelete(helper);
+	SafeDelete((mapInfo = const_cast<CMapInfo*>(mapInfo)));
+
+	CGroundMoveType::DeleteLineTable();
+	CCategoryHandler::RemoveInstance();
+
+	for (unsigned int i = 0; i < grouphandlers.size(); i++) {
+		SafeDelete(grouphandlers[i]);
+	}
+	grouphandlers.clear();
+
+	SafeDelete(saveFile); // ILoadSaveHandler, depends on vfsHandler via ~CArchiveBase
 	SafeDelete(vfsHandler);
 	SafeDelete(archiveScanner);
-	SafeDelete(modelParser);
-	SafeDelete(iconHandler);
-	SafeDelete(farTextureHandler);
-	SafeDelete(texturehandler3DO);
-	SafeDelete(texturehandlerS3O);
-	SafeDelete(camera);
-	SafeDelete(cam2);
-	SafeDelete(infoConsole);
-	SafeDelete(consoleHistory);
-	SafeDelete(wordCompletion);
-	SafeDelete(explGenHandler);
-	SafeDelete(saveFile);
 
-	delete const_cast<CMapInfo*>(mapInfo);
-	mapInfo = NULL;
-	SafeDelete(groundBlockingObjectMap);
-
-	CCategoryHandler::RemoveInstance();
-	CColorMap::DeleteColormaps();
-	SafeDelete(cubeMapHandler);
+	SafeDelete(gameServer);
+	SafeDelete(net);
 
 	game = NULL;
 }
