@@ -10,7 +10,7 @@ class CMatrix44f
 public:
 	CR_DECLARE_STRUCT(CMatrix44f);
 
-	inline CMatrix44f();
+	CMatrix44f();
 
 	template<typename T> CMatrix44f(const T* m44) {
 		m[ 0] = float(m44[ 0]); m[ 1] = float(m44[ 1]); m[ 2] = float(m44[ 2]); m[ 3] = float(m44[ 3]);
@@ -19,44 +19,44 @@ public:
 		m[12] = float(m44[12]); m[13] = float(m44[13]); m[14] = float(m44[14]); m[15] = float(m44[15]);
 	}
 
-	inline CMatrix44f(const float3& pos, const float3& x, const float3& y, const float3& z);
-	inline CMatrix44f(const float& rotX, const float& rotY, const float& rotZ);
-	inline explicit CMatrix44f(const float3& pos);
+	CMatrix44f(const float3& pos, const float3& x, const float3& y, const float3& z);
+	CMatrix44f(const float& rotX, const float& rotY, const float& rotZ);
+	explicit CMatrix44f(const float3& pos);
 
-	inline CMatrix44f(const CMatrix44f& n);
-	inline CMatrix44f& operator=(const CMatrix44f& n);
+	CMatrix44f(const CMatrix44f& n);
+	CMatrix44f& operator=(const CMatrix44f& n);
 
-	inline void LoadIdentity();
+	void LoadIdentity();
 
-	inline float& operator[](int a) { return m[a]; }
-	inline float operator[](int a) const { return m[a]; }
+	float& operator[](int a) { return m[a]; }
+	float operator[](int a) const { return m[a]; }
 
-	inline void RotateX(float rad);
-	inline void RotateY(float rad);
-	inline void RotateZ(float rad);
-	inline void Rotate(float rad, const float3& axis); // axis is assumed to be normalized
-	inline void Translate(float x, float y, float z);
-	inline CMatrix44f Mul(const CMatrix44f& other) const;
+	void RotateX(float rad);
+	void RotateY(float rad);
+	void RotateZ(float rad);
+	void Rotate(float rad, const float3& axis); // axis is assumed to be normalized
+	void Translate(float x, float y, float z);
+	CMatrix44f Mul(const CMatrix44f& other) const;
 
-	inline CMatrix44f& InvertInPlace();
-	inline CMatrix44f Invert() const;
+	CMatrix44f& InvertInPlace();
+	CMatrix44f Invert() const;
 
-	static inline double CalculateCofactor(const double m[4][4], int ei, int ej);
-	static inline bool Invert(const double m[4][4], double mInv[4][4]);
+	static double CalculateCofactor(const double m[4][4], int ei, int ej);
+	static bool Invert(const double m[4][4], double mInv[4][4]);
 
 
-	inline float3 Mul(const float3& vect) const;
-	inline float3 GetPos(void) const { return float3(m[12], m[13], m[14]); }
+	float3 Mul(const float3& vect) const;
+	float3 GetPos(void) const { return float3(m[12], m[13], m[14]); }
 
-	inline void SetUpVector(float3& up);
-	inline void Translate(const float3& pos);
+	void SetUpVector(float3& up);
+	void Translate(const float3& pos);
 
 	/// OpenGL ordered (ie. column-major)
 	float m[16];
 
 	/// Allows implicit conversion to float* (for passing to gl functions)
-	inline operator const float* () const { return m; }
-	inline operator float* () { return m; }
+	operator const float* () const { return m; }
+	operator float* () { return m; }
 };
 
 
@@ -94,7 +94,5 @@ void delmat3(T*** mat) {
 	delete [] *mat;
 	delete [] mat;
 }
-
-#include "Matrix44f.inl"
 
 #endif /* MATRIX44F_H */
