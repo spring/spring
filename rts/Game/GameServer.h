@@ -217,9 +217,6 @@ private:
 	UnsyncedRNG rng;
 	boost::thread* thread;
 	mutable boost::recursive_mutex gameServerMutex;
-	typedef std::set<unsigned char> PlayersToForwardMsgvec;
-	typedef std::map<unsigned char, PlayersToForwardMsgvec> MsgToForwardMap;
-	MsgToForwardMap relayingMessagesMap;
 
 	bool canReconnect;
 	bool gameHasStarted;
@@ -228,3 +225,4 @@ private:
 extern CGameServer* gameServer;
 
 #endif // __GAME_SERVER_H__
+

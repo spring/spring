@@ -378,20 +378,6 @@ PacketType CBaseNetProtocol::SendSetAllied(uchar myPlayerNum, uchar whichAllyTea
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendRegisterNetMsg( uchar myPlayerNum, NETMSG msgID )
-{
-	PackPacket* packet = new PackPacket(3, NETMSG_REGISTER_NETMSG);
-	*packet << myPlayerNum << (uchar)msgID;
-	return PacketType(packet);
-}
-
-PacketType CBaseNetProtocol::SendUnRegisterNetMsg( uchar myPlayerNum, NETMSG msgID )
-{
-	PackPacket* packet = new PackPacket(3, NETMSG_UNREGISTER_NETMSG);
-	*packet << myPlayerNum << (uchar)msgID;
-	return PacketType(packet);
-}
-
 
 PacketType CBaseNetProtocol::SendCreateNewPlayer( uchar playerNum, bool spectator, uchar teamNum, std::string playerName )
 {
@@ -429,7 +415,7 @@ PacketType CBaseNetProtocol::SendSdBlockrequest(unsigned short begin, unsigned s
 	PackPacket* packet = new PackPacket(7, NETMSG_SD_BLKREQUEST);
 	*packet << begin << length << requestSize;
 	return PacketType(packet);
-	
+
 }
 
 
@@ -499,8 +485,6 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_CCOMMAND, -2);
 	proto->AddType(NETMSG_TEAMSTAT, 2 + sizeof(TeamStatistics));
 	proto->AddType(NETMSG_REQUEST_TEAMSTAT, 4 );
-	proto->AddType(NETMSG_REGISTER_NETMSG, 3 );
-	proto->AddType(NETMSG_UNREGISTER_NETMSG, 3);
 
 	proto->AddType(NETMSG_CREATE_NEWPLAYER, -2);
 
@@ -520,3 +504,4 @@ CBaseNetProtocol::~CBaseNetProtocol()
 {
 	//SendQuit();
 }
+
