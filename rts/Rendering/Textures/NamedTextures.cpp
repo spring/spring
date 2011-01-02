@@ -77,7 +77,7 @@ bool CNamedTextures::Bind(const string& texName)
 }
 
 
-bool CNamedTextures::Load(const string& texName, GLuint texID)
+bool CNamedTextures::Load(const string& texName, unsigned int texID)
 {
 	ScopedTimer timer("Textures::NamedTextures");
 

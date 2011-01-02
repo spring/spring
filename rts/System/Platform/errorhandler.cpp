@@ -47,8 +47,6 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 #ifdef DEDICATED
 	SafeDelete(gameServer);
 #else
-	globalQuit = true;
-
 	SpringApp::Shutdown();
 #endif
 

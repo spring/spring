@@ -36,9 +36,6 @@ extern "C" int backtrace (void **array, int size);
 #define LOGFILE_CLIENT   "syncdebug-client.log"
 
 
-// externals
-extern volatile bool globalQuit;
-
 
 /**
  * @brief logging instance

@@ -1,11 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
 
 #include <iostream>
 
-#include <signal.h>
 #include <SDL.h>
 #if !defined(HEADLESS)
 	#include <SDL_syswm.h>
@@ -13,23 +11,22 @@
 
 #include "mmgr.h"
 
+#include "Rendering/GL/myGL.h"
 #include "SpringApp.h"
-
-#undef KeyPress
-#undef KeyRelease
 
 #include "aGui/Gui.h"
 #include "ExternalAI/IAILibraryManager.h"
+#include "Game/ClientSetup.h"
 #include "Game/GameServer.h"
 #include "Game/GameSetup.h"
 #include "Game/GameVersion.h"
-#include "Game/ClientSetup.h"
 #include "Game/GameController.h"
-#include "Game/PreGame.h"
 #include "Game/Game.h"
+#include "Game/PreGame.h"
 #include "Game/LoadScreen.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MouseHandler.h"
+#include "Input/KeyInput.h"
 #include "Input/MouseInput.h"
 #include "Input/InputHandler.h"
 #include "Input/Joystick.h"
@@ -54,6 +51,7 @@
 #include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 #include "System/myMath.h"
+#include "System/OffscreenGLContext.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileSystemHandler.h"
@@ -77,6 +75,9 @@
 	#include "Platform/Linux/myX11.h"
 #endif
 
+#undef KeyPress
+#undef KeyRelease
+
 #ifdef USE_GML
 	#include "lib/gml/gmlsrv.h"
 	extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
@@ -84,15 +85,10 @@
 
 using std::string;
 
-volatile bool globalQuit = false;
-
 CGameController* activeController = NULL;
 ClientSetup* startsetup = NULL;
 
-boost::uint8_t* keys = 0;
-boost::uint16_t currentUnicode = 0;
-
-COffscreenGLContext *SpringApp::ogc = NULL;
+COffscreenGLContext* SpringApp::ogc = NULL;
 
 /**
  * @brief xres default
@@ -130,7 +126,6 @@ SpringApp::SpringApp()
 SpringApp::~SpringApp()
 {
 	delete cmdline;
-	delete[] keys;
 
 	creg::System::FreeClasses();
 }
@@ -184,7 +179,8 @@ bool SpringApp::Initialize()
 		return false;
 	}
 
-	mouseInput = IMouseInput::Get();
+	mouseInput = IMouseInput::GetInstance();
+	keyInput = KeyInput::GetInstance();
 
 	// Global structures
 	gs = new CGlobalSynced();
@@ -199,14 +195,7 @@ bool SpringApp::Initialize()
 	agui::InitGui();
 	palette.Init();
 
-	// Initialize keyboard
-	SDL_EnableUNICODE(1);
-	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
-	SDL_SetModState(KMOD_NONE);
-
 	input.AddHandler(boost::bind(&SpringApp::MainEventHandler, this, _1));
-	keys = new boost::uint8_t[SDLK_LAST];
-	memset(keys,0,sizeof(boost::uint8_t)*SDLK_LAST);
 
 	LoadFonts();
 
@@ -253,10 +242,10 @@ void SpringApp::SetProcessAffinity(int affinity) const {
 		//! Set the affinity
 		HANDLE thread = GetCurrentThread();
 		DWORD_PTR result = 0;
-		if (affinity==1) {
-			result = SetThreadIdealProcessor(thread,(DWORD)wantedCore);
-		} else if (affinity>=2) {
-			result = SetThreadAffinityMask(thread,wantedCore);
+		if (affinity == 1) {
+			result = SetThreadIdealProcessor(thread, (DWORD)wantedCore);
+		} else if (affinity >= 2) {
+			result = SetThreadAffinityMask(thread, wantedCore);
 		}
 
 		if (result > 0) {
@@ -820,12 +809,9 @@ void SpringApp::ParseCmdLine()
 	cmdline->AddSwitch(0,   "list-ai-interfaces", "Dump a list of available AI Interfaces to stdout");
 	cmdline->AddSwitch(0,   "list-skirmish-ais",  "Dump a list of available Skirmish AIs to stdout");
 
-	try
-	{
+	try {
 		cmdline->Parse();
-	}
-	catch (const std::exception& err)
-	{
+	} catch (const std::exception& err) {
 		std::cerr << err.what() << std::endl << std::endl;
 		cmdline->PrintUsage("Spring", SpringVersion::GetFull());
 		exit(1);
@@ -1109,24 +1095,6 @@ int SpringApp::Update()
 }
 
 
-/**
- * Tests SDL keystates and sets values
- * in key array
- */
-void SpringApp::UpdateSDLKeys()
-{
-	int numkeys;
-	boost::uint8_t *state;
-	state = SDL_GetKeyState(&numkeys);
-	memcpy(keys, state, sizeof(boost::uint8_t) * numkeys);
-
-	const SDLMod mods = SDL_GetModState();
-	keys[SDLK_LALT]   = (mods & KMOD_ALT)   ? 1 : 0;
-	keys[SDLK_LCTRL]  = (mods & KMOD_CTRL)  ? 1 : 0;
-	keys[SDLK_LMETA]  = (mods & KMOD_META)  ? 1 : 0;
-	keys[SDLK_LSHIFT] = (mods & KMOD_SHIFT) ? 1 : 0;
-}
-
 
 static void ResetScreenSaverTimeout()
 {
@@ -1176,17 +1144,18 @@ int SpringApp::Run(int argc, char *argv[])
 	CrashHandler::InstallHangHandler();
 
 #ifdef USE_GML
-	gmlProcessor=new gmlClientServer<void, int, CUnit*>;
+	gmlProcessor = new gmlClientServer<void, int, CUnit*>;
 #	if GML_ENABLE_SIM
-	gmlKeepRunning=1;
-	gmlStartSim=0;
-	if(GML_SHARE_LISTS)
+	gmlKeepRunning = 1;
+	gmlStartSim = 0;
+
+	if (GML_SHARE_LISTS)
 		ogc = new COffscreenGLContext();
-	gmlProcessor->AuxWork(&SpringApp::Simcb,this); // start sim thread
+	gmlProcessor->AuxWork(&SpringApp::Simcb, this); // start sim thread
 #	endif
 #endif
-	while (true) // end is handled by globalQuit
-	{
+
+	while (!gu->globalQuit) {
 		ResetScreenSaverTimeout();
 
 		{
@@ -1198,14 +1167,11 @@ int SpringApp::Run(int argc, char *argv[])
 			}
 		}
 
-		if (globalQuit)
-			break;
-
 		try {
 			if (!Update())
 				break;
 		} catch (content_error &e) {
-			//FIXME should this really be in here and not the crashhandler???
+			// FIXME should this really be in here and not the crashhandler???
 			LogObject() << "Caught content exception: " << e.what() << "\n";
 			handleerror(NULL, e.what(), "Content error", MBF_OK | MBF_EXCL);
 		}
@@ -1219,29 +1185,14 @@ int SpringApp::Run(int argc, char *argv[])
 }
 
 
-static void normalizeKeySym(int& sym) {
-
-	if (sym <= SDLK_DELETE) {
-		sym = tolower(sym);
-	}
-	else if (sym == SDLK_RSHIFT) { sym = SDLK_LSHIFT; }
-	else if (sym == SDLK_RCTRL)  { sym = SDLK_LCTRL;  }
-	else if (sym == SDLK_RMETA)  { sym = SDLK_LMETA;  }
-	else if (sym == SDLK_RALT)   { sym = SDLK_LALT;   }
-
-	if (keyBindings) {
-		const int fakeMetaKey = keyBindings->GetFakeMetaKey();
-		if (fakeMetaKey >= 0) {
-			keys[SDLK_LMETA] |= keys[fakeMetaKey];
-		}
-	}
-}
 
 /**
  * Deallocates and shuts down game
  */
 void SpringApp::Shutdown()
 {
+	gu->globalQuit = true;
+
 #ifdef USE_GML
 	if(gmlProcessor) {
 #if GML_ENABLE_SIM
@@ -1269,15 +1220,20 @@ void SpringApp::Shutdown()
 	GLContext::Free();
 	ConfigHandler::Deallocate();
 	UnloadExtensions();
-	delete mouseInput;
+
+	IMouseInput::FreeInstance(mouseInput);
+	KeyInput::FreeInstance(keyInput);
+
 	SDL_WM_GrabInput(SDL_GRAB_OFF);
 #if !defined(HEADLESS)
 	SDL_QuitSubSystem(SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_JOYSTICK);
 #endif
 	SDL_Quit();
+
 	delete gs;
 	delete gu;
 	delete startsetup;
+
 #ifdef USE_MMGR
 	m_dumpMemoryReport();
 #endif
@@ -1317,7 +1273,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			break;
 		}
 		case SDL_QUIT: {
-			globalQuit = true;
+			gu->globalQuit = true;
 			break;
 		}
 		case SDL_ACTIVEEVENT: {
@@ -1355,30 +1311,29 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			break;
 		}
 		case SDL_KEYDOWN: {
-			int sym = event.key.keysym.sym;
-			currentUnicode = event.key.keysym.unicode;
+			const boost::uint16_t sym = keyInput->GetNormalizedKeySymbol(event.key.keysym.sym);
+			const bool isRepeat = !!keyInput->GetKeyState(sym);
 
-			const bool isRepeat = !!keys[sym];
-
-			UpdateSDLKeys();
+			keyInput->Update(event.key.keysym.unicode, ((keyBindings != NULL)? keyBindings->GetFakeMetaKey(): -1));
 
 			if (activeController) {
-				normalizeKeySym(sym);
-
 				activeController->KeyPressed(sym, isRepeat);
 
 				if (activeController->userWriting){
 					// use unicode for printed characters
-					sym = event.key.keysym.unicode;
-					if ((sym >= SDLK_SPACE) && (sym <= 255)) {
+					const boost::uint16_t usym = keyInput->GetCurrentKeyUnicodeChar();
+
+					if ((usym >= SDLK_SPACE) && (usym <= 255)) {
 						CGameController* ac = activeController;
-						if (ac->ignoreNextChar || (ac->ignoreChar == (char)sym)) {
+
+						if (ac->ignoreNextChar || (ac->ignoreChar == (char)usym)) {
 							ac->ignoreNextChar = false;
 						} else {
-							if (sym < 255 && (!isRepeat || ac->userInput.length()>0)) {
+							if (usym < 255 && (!isRepeat || ac->userInput.length() > 0)) {
 								const int len = (int)ac->userInput.length();
+								const char str[2] = { (char)usym, 0 };
+
 								ac->writingPos = std::max(0, std::min(len, ac->writingPos));
-								char str[2] = { (char)sym, 0 };
 								ac->userInput.insert(ac->writingPos, str);
 								ac->writingPos++;
 							}
@@ -1390,20 +1345,16 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			break;
 		}
 		case SDL_KEYUP: {
-			int sym = event.key.keysym.sym;
-			currentUnicode = event.key.keysym.unicode;
-
-			UpdateSDLKeys();
+			keyInput->Update(event.key.keysym.unicode, ((keyBindings != NULL)? keyBindings->GetFakeMetaKey(): -1));
 
 			if (activeController) {
-				normalizeKeySym(sym);
-
-				activeController->KeyReleased(sym);
+				activeController->KeyReleased(keyInput->GetNormalizedKeySymbol(event.key.keysym.sym));
 			}
 			break;
 		}
 		default:
 			break;
 	}
+
 	return false;
 }

@@ -16,7 +16,7 @@ public:
 
 public:
 	CCameraController();
-	virtual ~CCameraController(void);
+	virtual ~CCameraController(void) {}
 
 	virtual const std::string GetName() const = 0;
 
@@ -61,7 +61,6 @@ protected:
 	bool SetStateBool(const StateMap& sm, const std::string& name, bool& var);
 	bool SetStateFloat(const StateMap& sm, const std::string& name, float& var);
 
-protected:
 	float fov;
 	float3 pos;
 
@@ -80,6 +79,8 @@ protected:
 	 * * 0.0 = 90 degree = first person
 	 */
 	float switchVal;
+
+	float pixelSize;
 };
 
 

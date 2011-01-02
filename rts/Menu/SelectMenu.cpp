@@ -24,16 +24,18 @@
 #include "SelectionWidget.h"
 #include "Game/PreGame.h"
 #include "Rendering/glFont.h"
-#include "LogOutput.h"
-#include "Exceptions.h"
-#include "TdfParser.h"
-#include "Util.h"
-#include "FileSystem/ArchiveScanner.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/VFSHandler.h"
-#include "FileSystem/FileSystem.h"
-#include "Input/InputHandler.h"
-#include "ConfigHandler.h"
+#include "Rendering/GL/myGL.h"
+#include "System/ConfigHandler.h"
+#include "System/GlobalUnsynced.h"
+#include "System/Exceptions.h"
+#include "System/LogOutput.h"
+#include "System/TdfParser.h"
+#include "System/Util.h"
+#include "System/Input/InputHandler.h"
+#include "System/FileSystem/ArchiveScanner.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/VFSHandler.h"
+#include "System/FileSystem/FileSystem.h"
 #include "ScriptHandler.h"
 #include "aGui/Gui.h"
 #include "aGui/VerticalLayout.h"
@@ -48,9 +50,6 @@
 using std::string;
 using agui::Button;
 using agui::HorizontalLayout;
-
-extern boost::uint8_t* keys;
-extern volatile bool globalQuit;
 
 class ConnectWindow : public agui::Window
 {
@@ -322,7 +321,7 @@ void SelectMenu::Multi()
 
 void SelectMenu::Quit()
 {
-	globalQuit = true;
+	gu->globalQuit = true;
 }
 
 void SelectMenu::ShowConnectWindow(bool show)
@@ -427,13 +426,10 @@ bool SelectMenu::HandleEventSelf(const SDL_Event& ev)
 {
 	switch (ev.type) {
 		case SDL_KEYDOWN: {
-			if (ev.key.keysym.sym == SDLK_ESCAPE)
-			{
+			if (ev.key.keysym.sym == SDLK_ESCAPE) {
 				logOutput.Print("User exited");
-				globalQuit=true;
-			}
-			else if (ev.key.keysym.sym == SDLK_RETURN)
-			{
+				Quit();
+			} else if (ev.key.keysym.sym == SDLK_RETURN) {
 				Single();
 				return true;
 			}

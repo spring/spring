@@ -30,8 +30,8 @@ public:
 	bool Save(std::string const& filename, bool opaque = true) const;
 
 #ifndef BITMAP_NO_OPENGL
-	const GLuint CreateTexture(bool mipmaps = false) const;
-	const GLuint CreateDDSTexture(GLuint texID = 0) const;
+	const unsigned int CreateTexture(bool mipmaps = false) const;
+	const unsigned int CreateDDSTexture(unsigned int texID = 0) const;
 #else  // !BITMAP_NO_OPENGL
 	const unsigned int CreateTexture(bool mipmaps = false) const;
 	const unsigned int CreateDDSTexture(unsigned int texID = 0) const;
@@ -75,7 +75,7 @@ public:
 
 	int type;
 #ifndef BITMAP_NO_OPENGL
-	GLenum textype; //! GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, ...
+	int textype; //! GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, ...
 	nv_dds::CDDSImage* ddsimage;
 #endif // !BITMAP_NO_OPENGL
 

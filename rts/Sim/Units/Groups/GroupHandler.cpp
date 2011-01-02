@@ -1,25 +1,24 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <boost/cstdint.hpp>
+#include <SDL_keysym.h>
+
 #include "StdAfx.h"
+#include "mmgr.h"
 
 #include "GroupHandler.h"
 #include "Group.h"
-#include "LogOutput.h"
 #include "Game/SelectedUnits.h"
-#include "TimeProfiler.h"
-#include "Sim/Units/Unit.h"
 #include "Game/UI/MouseHandler.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/CameraHandler.h"
-#include "Platform/SharedLib.h"
-#include "Platform/errorhandler.h"
-#include "FileSystem/FileSystem.h"
-#include "SDL_keysym.h"
-#include "mmgr.h"
-#include <boost/cstdint.hpp>
+#include "Sim/Units/Unit.h"
+#include "System/LogOutput.h"
+#include "System/TimeProfiler.h"
+#include "System/Input/KeyInput.h"
+#include "System/FileSystem/FileSystem.h"
 
 std::vector<CGroupHandler*> grouphandlers;
-extern boost::uint8_t *keys;
 
 CR_BIND(CGroupHandler, (0))
 
@@ -74,15 +73,15 @@ void CGroupHandler::GroupCommand(int num)
 
 	std::string cmd = "";
 
-	if (keys[SDLK_LCTRL]) {
-		if (!keys[SDLK_LSHIFT]) {
+	if (keyInput->IsKeyPressed(SDLK_LCTRL)) {
+		if (!keyInput->IsKeyPressed(SDLK_LSHIFT)) {
 			cmd = "set";
 		} else {
 			cmd = "add";
 		}
-	} else if (keys[SDLK_LSHIFT])  {
+	} else if (keyInput->IsKeyPressed(SDLK_LSHIFT))  {
 		cmd = "selectadd";
-	} else if (keys[SDLK_LALT]) {// || keys[SDLK_LMETA])  {
+	} else if (keyInput->IsKeyPressed(SDLK_LALT)) {
 		cmd = "selecttoggle";
 	}
 
@@ -152,9 +151,6 @@ CGroup* CGroupHandler::CreateNewGroup()
 	if (freeGroups.empty()) {
 		CGroup* group = new CGroup(firstUnusedGroup++, this);
 		groups.push_back(group);
-		if (group != groups[group->id]) {
-			handleerror(0, "Id error when creating group", "Error", 0);
-		}
 		return group;
 	} else {
 		int id = freeGroups.back();

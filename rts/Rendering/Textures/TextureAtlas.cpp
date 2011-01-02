@@ -10,6 +10,7 @@
 #include "TextureAtlas.h"
 #include "Bitmap.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/PBO.h"
 #include "System/GlobalUnsynced.h"
 #include "System/FileSystem/FileHandler.h"

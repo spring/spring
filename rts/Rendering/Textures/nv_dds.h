@@ -17,7 +17,6 @@
 #include <deque>
 #include <assert.h>
 
-#include "Rendering/GL/myGL.h"
 #if defined(__APPLE__)
 //#include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
@@ -207,7 +206,7 @@ namespace nv_dds
             bool save(std::string filename, bool flipImage = true);
 
             bool upload_texture1D();
-            bool upload_texture2D(unsigned int imageIndex = 0, GLenum target = GL_TEXTURE_2D);
+            bool upload_texture2D(unsigned int imageIndex, int target);
             bool upload_texture3D();
             bool upload_textureRectangle();
             bool upload_textureCubemap();
@@ -284,15 +283,7 @@ namespace nv_dds
             inline unsigned int get_format() const { return m_format; }
             inline TextureType get_type() const { return m_type; }
 
-            inline bool is_compressed()
-            {
-                if ((m_format == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) ||
-                    (m_format == GL_COMPRESSED_RGBA_S3TC_DXT3_EXT) ||
-                    (m_format == GL_COMPRESSED_RGBA_S3TC_DXT5_EXT))
-                    return true;
-                else
-                    return false;
-            }
+            bool is_compressed() const;
 
             inline bool is_cubemap() const { return (m_type == TextureCubemap); }
             inline bool is_volume() const { return (m_type == Texture3D); }

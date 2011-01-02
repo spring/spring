@@ -1,16 +1,16 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-
 #include <map>
 #include <set>
 #include <list>
 
+#include <SDL_keysym.h>
+#include <SDL_mouse.h>
+
+#include "StdAfx.h"
 #include "mmgr.h"
 
 #include "GuiHandler.h"
-#include "SDL_keysym.h"
-#include "SDL_mouse.h"
 #include "CommandColors.h"
 #include "KeyBindings.h"
 #include "KeyCodes.h"
@@ -45,17 +45,15 @@
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "Sound/IEffectChannel.h"
-#include "Sound/ISound.h"
-#include "EventHandler.h"
-#include "FileSystem/SimpleParser.h"
-#include "LogOutput.h"
-#include "ConfigHandler.h"
-#include "Util.h"
-#include "myMath.h"
-
-extern boost::uint8_t *keys;
-
+#include "System/ConfigHandler.h"
+#include "System/EventHandler.h"
+#include "System/LogOutput.h"
+#include "System/myMath.h"
+#include "System/Util.h"
+#include "System/Input/KeyInput.h"
+#include "System/Sound/IEffectChannel.h"
+#include "System/Sound/ISound.h"
+#include "System/FileSystem/SimpleParser.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -122,8 +120,8 @@ CGuiHandler::~CGuiHandler()
 
 bool CGuiHandler::GetQueueKeystate() const
 {
-	return (!invertQueueKey && keys[SDLK_LSHIFT]) ||
-	       (invertQueueKey && !keys[SDLK_LSHIFT]);
+	return (!invertQueueKey && keyInput->IsKeyPressed(SDLK_LSHIFT)) ||
+	       (invertQueueKey && !keyInput->IsKeyPressed(SDLK_LSHIFT));
 }
 
 
@@ -928,7 +926,7 @@ void CGuiHandler::Update()
 
 	SetCursorIcon();
 
-	if (!invertQueueKey && (needShift && !keys[SDLK_LSHIFT])) {
+	if (!invertQueueKey && (needShift && !keyInput->IsKeyPressed(SDLK_LSHIFT))) {
 		SetShowingMetal(false);
 		inCommand=-1;
 		needShift=false;
@@ -1090,7 +1088,7 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, floa
 		return;
 	}
 
-	if (!invertQueueKey && needShift && !keys[SDLK_LSHIFT]) {
+	if (!invertQueueKey && needShift && !keyInput->IsKeyPressed(SDLK_LSHIFT)) {
 		SetShowingMetal(false);
 		inCommand = -1;
 		needShift = false;
@@ -1254,25 +1252,27 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, int button,
 	// setup the mouse and key states
 	const bool  prevLMB   = mouse->buttons[SDL_BUTTON_LEFT].pressed;
 	const bool  prevRMB   = mouse->buttons[SDL_BUTTON_RIGHT].pressed;
-	const boost::uint8_t prevAlt   = keys[SDLK_LALT];
-	const boost::uint8_t prevCtrl  = keys[SDLK_LCTRL];
-	const boost::uint8_t prevMeta  = keys[SDLK_LMETA];
-	const boost::uint8_t prevShift = keys[SDLK_LSHIFT];
+	const boost::uint8_t prevAlt   = keyInput->IsKeyPressed(SDLK_LALT);
+	const boost::uint8_t prevCtrl  = keyInput->IsKeyPressed(SDLK_LCTRL);
+	const boost::uint8_t prevMeta  = keyInput->IsKeyPressed(SDLK_LMETA);
+	const boost::uint8_t prevShift = keyInput->IsKeyPressed(SDLK_LSHIFT);
 
 	mouse->buttons[SDL_BUTTON_LEFT].pressed  = lmb;
 	mouse->buttons[SDL_BUTTON_RIGHT].pressed = rmb;
-	keys[SDLK_LALT]   = alt;
-	keys[SDLK_LCTRL]  = ctrl;
-	keys[SDLK_LMETA]  = meta;
-	keys[SDLK_LSHIFT] = shift;
+
+	keyInput->SetKeyState(SDLK_LALT,   alt);
+	keyInput->SetKeyState(SDLK_LCTRL,  ctrl);
+	keyInput->SetKeyState(SDLK_LMETA,  meta);
+	keyInput->SetKeyState(SDLK_LSHIFT, shift);
 
 	const bool retval = SetActiveCommand(cmdIndex, effectiveRMB);
 
 	// revert the mouse and key states
-	keys[SDLK_LSHIFT] = prevShift;
-	keys[SDLK_LMETA]  = prevMeta;
-	keys[SDLK_LCTRL]  = prevCtrl;
-	keys[SDLK_LALT]   = prevAlt;
+	keyInput->SetKeyState(SDLK_LSHIFT, prevShift);
+	keyInput->SetKeyState(SDLK_LMETA,  prevMeta);
+	keyInput->SetKeyState(SDLK_LCTRL,  prevCtrl);
+	keyInput->SetKeyState(SDLK_LALT,   prevAlt);
+
 	mouse->buttons[SDL_BUTTON_RIGHT].pressed = prevRMB;
 	mouse->buttons[SDL_BUTTON_LEFT].pressed  = prevLMB;
 
@@ -1364,15 +1364,15 @@ static bool ParseCustomCmdMods(std::string& cmd, ModGroup& in, ModGroup& out)
 
 static bool CheckCustomCmdMods(bool rmb, ModGroup& inMods)
 {
-	if (((inMods.alt   == Required)  && !keys[SDLK_LALT])   ||
-	    ((inMods.alt   == Forbidden) &&  keys[SDLK_LALT])   ||
-	    ((inMods.ctrl  == Required)  && !keys[SDLK_LCTRL])  ||
-	    ((inMods.ctrl  == Forbidden) &&  keys[SDLK_LCTRL])  ||
-	    ((inMods.meta  == Required)  && !keys[SDLK_LMETA])  ||
-	    ((inMods.meta  == Forbidden) &&  keys[SDLK_LMETA])  ||
-	    ((inMods.shift == Required)  && !keys[SDLK_LSHIFT]) ||
-	    ((inMods.shift == Forbidden) &&  keys[SDLK_LSHIFT]) ||
-	    ((inMods.right == Required)  && !rmb)               ||
+	if (((inMods.alt   == Required)  && !keyInput->IsKeyPressed(SDLK_LALT))   ||
+	    ((inMods.alt   == Forbidden) &&  keyInput->IsKeyPressed(SDLK_LALT))   ||
+	    ((inMods.ctrl  == Required)  && !keyInput->IsKeyPressed(SDLK_LCTRL))  ||
+	    ((inMods.ctrl  == Forbidden) &&  keyInput->IsKeyPressed(SDLK_LCTRL))  ||
+	    ((inMods.meta  == Required)  && !keyInput->IsKeyPressed(SDLK_LMETA))  ||
+	    ((inMods.meta  == Forbidden) &&  keyInput->IsKeyPressed(SDLK_LMETA))  ||
+	    ((inMods.shift == Required)  && !keyInput->IsKeyPressed(SDLK_LSHIFT)) ||
+	    ((inMods.shift == Forbidden) &&  keyInput->IsKeyPressed(SDLK_LSHIFT)) ||
+	    ((inMods.right == Required)  && !rmb) ||
 	    ((inMods.right == Forbidden) &&  rmb)) {
 		return false;
 	}
@@ -1396,18 +1396,19 @@ void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool r
 		ModGroup outMods; // controls the state of the modifiers  (ex: "group1")
 		if (ParseCustomCmdMods(copy, inMods, outMods)) {
 			if (CheckCustomCmdMods(rmb, inMods)) {
-				const bool tmpAlt   = !!keys[SDLK_LALT];
-				const bool tmpCtrl  = !!keys[SDLK_LCTRL];
-				const bool tmpMeta  = !!keys[SDLK_LMETA];
-				const bool tmpShift = !!keys[SDLK_LSHIFT];
-				if (outMods.alt   == Required)  { keys[SDLK_LALT]   = 1; }
-				if (outMods.alt   == Forbidden) { keys[SDLK_LALT]   = 0; }
-				if (outMods.ctrl  == Required)  { keys[SDLK_LCTRL]  = 1; }
-				if (outMods.ctrl  == Forbidden) { keys[SDLK_LCTRL]  = 0; }
-				if (outMods.meta  == Required)  { keys[SDLK_LMETA]  = 1; }
-				if (outMods.meta  == Forbidden) { keys[SDLK_LMETA]  = 0; }
-				if (outMods.shift == Required)  { keys[SDLK_LSHIFT] = 1; }
-				if (outMods.shift == Forbidden) { keys[SDLK_LSHIFT] = 0; }
+				const bool tmpAlt   = !!keyInput->GetKeyState(SDLK_LALT);
+				const bool tmpCtrl  = !!keyInput->GetKeyState(SDLK_LCTRL);
+				const bool tmpMeta  = !!keyInput->GetKeyState(SDLK_LMETA);
+				const bool tmpShift = !!keyInput->GetKeyState(SDLK_LSHIFT);
+
+				if (outMods.alt   == Required)  { keyInput->SetKeyState(SDLK_LALT,   1); }
+				if (outMods.alt   == Forbidden) { keyInput->SetKeyState(SDLK_LALT,   0); }
+				if (outMods.ctrl  == Required)  { keyInput->SetKeyState(SDLK_LCTRL,  1); }
+				if (outMods.ctrl  == Forbidden) { keyInput->SetKeyState(SDLK_LCTRL,  0); }
+				if (outMods.meta  == Required)  { keyInput->SetKeyState(SDLK_LMETA,  1); }
+				if (outMods.meta  == Forbidden) { keyInput->SetKeyState(SDLK_LMETA,  0); }
+				if (outMods.shift == Required)  { keyInput->SetKeyState(SDLK_LSHIFT, 1); }
+				if (outMods.shift == Forbidden) { keyInput->SetKeyState(SDLK_LSHIFT, 0); }
 
 				Action action(copy);
 				if (!ProcessLocalActions(action)) {
@@ -1415,10 +1416,10 @@ void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool r
 					game->ActionPressed(action, ks, false /*isRepeat*/);
 				}
 
-				keys[SDLK_LALT]   = tmpAlt;
-				keys[SDLK_LCTRL]  = tmpCtrl;
-				keys[SDLK_LMETA]  = tmpMeta;
-				keys[SDLK_LSHIFT] = tmpShift;
+				keyInput->SetKeyState(SDLK_LALT,   tmpAlt);
+				keyInput->SetKeyState(SDLK_LCTRL,  tmpCtrl);
+				keyInput->SetKeyState(SDLK_LMETA,  tmpMeta);
+				keyInput->SetKeyState(SDLK_LSHIFT, tmpShift);
 			}
 		}
 	}
@@ -1460,15 +1461,9 @@ void CGuiHandler::CreateOptions(Command& c, bool rmb)
 			c.options |= SHIFT_KEY;
 		}
 	}
-	if (keys[SDLK_LCTRL]) {
-		c.options |= CONTROL_KEY;
-	}
-	if (keys[SDLK_LALT]) {// || keys[SDLK_LMETA]) {
-		c.options |= ALT_KEY;
-	}
-	if (keys[SDLK_LMETA]) {
-		c.options |= META_KEY;
-	}
+	if (keyInput->IsKeyPressed(SDLK_LCTRL)) { c.options |= CONTROL_KEY; }
+	if (keyInput->IsKeyPressed(SDLK_LALT) ) { c.options |= ALT_KEY;     }
+	if (keyInput->IsKeyPressed(SDLK_LMETA)) { c.options |= META_KEY;    }
 }
 
 
@@ -1986,11 +1981,11 @@ void CGuiHandler::FinishCommand(int button)
 {
 	GML_RECMUTEX_LOCK(gui); // FinishCommand - updates inCommand
 
-	if ((button == SDL_BUTTON_LEFT) && (keys[SDLK_LSHIFT] || invertQueueKey)) {
-		needShift=true;
+	if ((button == SDL_BUTTON_LEFT) && (keyInput->IsKeyPressed(SDLK_LSHIFT) || invertQueueKey)) {
+		needShift = true;
 	} else {
 		SetShowingMetal(false);
-		inCommand=-1;
+		inCommand = -1;
 	}
 }
 
@@ -2400,8 +2395,8 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 	float3 end=helper->Pos2BuildPos(endInfo);
 
 	BuildInfo other; // the unit around which buildings can be circled
-	if(GetQueueKeystate() && keys[SDLK_LCTRL])
-	{
+
+	if (GetQueueKeystate() && keyInput->IsKeyPressed(SDLK_LCTRL)) {
 		const CUnit* unit = NULL;
 
 		GML_RECMUTEX_LOCK(quad); // GetBuildCommand - accesses activeunits - called from DrawMapStuff -> GetBuildPos
@@ -2422,7 +2417,8 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 		}
 	}
 
-	if(other.def && GetQueueKeystate() && keys[SDLK_LCTRL]){		//circle build around building
+	if (other.def && GetQueueKeystate() && keyInput->IsKeyPressed(SDLK_LCTRL)) {
+		// circle build around building
 		int oxsize=other.GetXSize()*SQUARE_SIZE;
 		int ozsize=other.GetZSize()*SQUARE_SIZE;
 		int xsize=startInfo.GetXSize()*SQUARE_SIZE;
@@ -2453,16 +2449,16 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 		int znum=(int)((fabs(delta.z)+zsize*1.4f)/zsize);
 		float zstep=(int)((0<delta.z) ? zsize : -zsize);
 
-		if(keys[SDLK_LALT]){ // build a rectangle
-			if(keys[SDLK_LCTRL]){ // hollow rectangle
-				if(1<xnum&&1<znum){
+		if (keyInput->IsKeyPressed(SDLK_LALT)) { // build a rectangle
+			if (keyInput->IsKeyPressed(SDLK_LCTRL)) { // hollow rectangle
+				if (1 < xnum && 1 < znum) {
 					FillRowOfBuildPos(startInfo, start.x               , start.z+zstep         ,      0,  zstep, znum-1, 0, false, ret); // go "down" on the "left" side
 					FillRowOfBuildPos(startInfo, start.x+xstep         , start.z+(znum-1)*zstep,  xstep,      0, xnum-1, 0, false, ret); // go "right" on the "bottom" side
 					FillRowOfBuildPos(startInfo, start.x+(xnum-1)*xstep, start.z+(znum-2)*zstep,      0, -zstep, znum-1, 0, false, ret); // go "up" on the "right" side
 					FillRowOfBuildPos(startInfo, start.x+(xnum-2)*xstep, start.z               , -xstep,      0, xnum-1, 0, false, ret); // go "left" on the "top" side
-				} else if(1==xnum){
+				} else if (1 == xnum) {
 					FillRowOfBuildPos(startInfo, start.x, start.z, 0, zstep, znum, 0, false, ret);
-				} else if(1==znum){
+				} else if (1 == znum) {
 					FillRowOfBuildPos(startInfo, start.x, start.z, xstep, 0, xnum, 0, false, ret);
 				}
 			} else { // filled rectangle
@@ -2479,9 +2475,9 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 		} else { // build a line
 			bool x_dominates_z = fabs(delta.x) > fabs(delta.z);
 			if (x_dominates_z){
-				zstep = keys[SDLK_LCTRL] ? 0 : xstep * delta.z/(delta.x ? delta.x : 1);
+				zstep = keyInput->IsKeyPressed(SDLK_LCTRL) ? 0 : xstep * delta.z/(delta.x ? delta.x : 1);
 			} else {
-				xstep = keys[SDLK_LCTRL] ? 0 : zstep * delta.x/(delta.z ? delta.z : 1);
+				xstep = keyInput->IsKeyPressed(SDLK_LCTRL) ? 0 : zstep * delta.x/(delta.z ? delta.z : 1);
 			}
 			FillRowOfBuildPos(startInfo, start.x, start.z, xstep, zstep, x_dominates_z ? xnum : znum, 0, false, ret);
 		}
@@ -3835,11 +3831,11 @@ void CGuiHandler::DrawCentroidCursor()
 	}
 
 	if ((cmd == CMD_MOVE) || (cmd == CMD_GATHERWAIT)) {
-		if (!keys[SDLK_LCTRL] && !keys[SDLK_LALT] && !keys[SDLK_LMETA]) {
+		if (!keyInput->IsKeyPressed(SDLK_LCTRL) && !keyInput->IsKeyPressed(SDLK_LALT) && !keyInput->IsKeyPressed(SDLK_LMETA)) {
 			return;
 		}
 	} else if ((cmd == CMD_FIGHT) || (cmd == CMD_PATROL)) {
-		if (!keys[SDLK_LCTRL]) {
+		if (!keyInput->IsKeyPressed(SDLK_LCTRL)) {
 			return;
 		}
 	} else {

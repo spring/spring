@@ -6,8 +6,7 @@
 #include <string>
 #include <list>
 #include <limits.h> // for INT_MAX
-#include "GL/myGL.h"
-#include "GL/VertexArray.h"
+
 #include "float4.h"
 
 #undef GetCharWidth // winapi.h
@@ -30,6 +29,7 @@ static const int FONT_SCALE       = 1 << 12; //! given size argument will be tre
 
 static const int FONT_NEAREST     = 1 << 13; //! round x,y render pos to nearest integer, so there is no interpolation blur for small fontsizes
 
+class CVertexArray;
 class CglFont
 {
 public:
@@ -51,10 +51,10 @@ public:
 	 *                  FONT_TOP | FONT_ASCENDER | FONT_BOTTOM) |
 	 *                 FONT_NEAREST | FONT_OUTLINE | FONT_SHADOW
 	 */
-	void glPrint(GLfloat x, GLfloat y, float s, const int& options, const std::string& str);
-	void glPrintTable(GLfloat x, GLfloat y, float s, const int& options, const std::string& str);
-	void glFormat(GLfloat x, GLfloat y, float s, const int& options, const std::string& fmt, ...);
-	void glFormat(GLfloat x, GLfloat y, float s, const int& options, const char* fmt, ...);
+	void glPrint(float x, float y, float s, const int& options, const std::string& str);
+	void glPrintTable(float x, float y, float s, const int& options, const std::string& str);
+	void glFormat(float x, float y, float s, const int& options, const std::string& fmt, ...);
+	void glFormat(float x, float y, float s, const int& options, const char* fmt, ...);
 
 	void SetAutoOutlineColor(bool enable); //! auto select outline color for in-text-colorcodes
 	void SetTextColor(const float4* color = NULL);
@@ -85,9 +85,9 @@ public:
 	int GetCharStart() const { return charstart; }
 	int GetCharEnd()   const { return charend; }
 
-	inline GLuint GetTexture()   const { return fontTexture; }
-	inline GLuint GetTexWidth()  const { return texWidth; }
-	inline GLuint GetTexHeight() const { return texHeight; }
+	inline unsigned int GetTexture()   const { return fontTexture; }
+	inline unsigned int GetTexWidth()  const { return texWidth; }
+	inline unsigned int GetTexHeight() const { return texHeight; }
 
 	static const char ColorCodeIndicator = '\xFF'; //FIXME use a non-printable char? (<32)
 	static const char ColorResetIndicator = '\x08'; //! =: '\b'
@@ -174,15 +174,15 @@ private:
 	unsigned int charstart;
 	unsigned int charend;
 
-	GLuint fontTexture;
-	GLuint texWidth,texHeight;
+	unsigned int fontTexture;
+	unsigned int texWidth,texHeight;
 
 	ColorMap stripTextColors;
 	ColorMap stripOutlineColors;
 
 	bool inBeginEnd;
-	CVertexArray va;
-	CVertexArray va2;
+	CVertexArray* va;
+	CVertexArray* va2;
 
 	bool autoOutlineColor; //! auto select outline color for in-text-colorcodes
 

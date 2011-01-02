@@ -4,11 +4,9 @@
 #include "mmgr.h"
 
 #include "CameraController.h"
+#include "System/ConfigHandler.h"
 
-#include "ConfigHandler.h"
-
-
-CCameraController::CCameraController() : pos(2000, 70, 1800)
+CCameraController::CCameraController()
 {
 	// switchVal:
 	// * 1.0 = 0 degree  = overview
@@ -16,13 +14,10 @@ CCameraController::CCameraController() : pos(2000, 70, 1800)
 	switchVal = configHandler->Get("UseDistToGroundForIcons", 0.95f);
 	scrollSpeed = 1;
 	fov = 45.0f;
+	pixelSize = 1.0f;
 	enabled = true;
 }
 
-
-CCameraController::~CCameraController(void)
-{
-}
 
 
 bool CCameraController::SetStateBool(const StateMap& sm,

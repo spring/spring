@@ -6,7 +6,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "Rendering/GL/myGL.h"
 
 #include "creg/creg_cond.h"
 
@@ -40,7 +39,7 @@ public:
 	//! set to true to write finalized texture atlas to disk
 	static bool debug;
 
-	GLuint gltex;
+	unsigned int gltex;
 	bool freeTexture; //! free texture on atlas destruction?
 
 	int xsize;

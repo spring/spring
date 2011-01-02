@@ -1,33 +1,29 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
-
 #include "mmgr.h"
 
 #include <algorithm>
 #include <boost/cstdint.hpp>
 
 #include "MouseHandler.h"
-#include "Game/CameraHandler.h"
-#include "Game/Camera/CameraController.h"
-#include "Game/Camera.h"
 #include "CommandColors.h"
 #include "InputReceiver.h"
 #include "GuiHandler.h"
 #include "MiniMap.h"
 #include "MouseCursor.h"
-#include "System/Input/MouseInput.h"
 #include "TooltipConsole.h"
-#include "Sim/Units/Groups/Group.h"
+#include "Game/CameraHandler.h"
+#include "Game/Camera.h"
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
 #include "Game/PlayerHandler.h"
+#include "Game/Camera/CameraController.h"
 #include "Game/UI/UnitTracker.h"
+#include "Lua/LuaInputReceiver.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
-#include "Lua/LuaInputReceiver.h"
-#include "ConfigHandler.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
@@ -40,12 +36,16 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "EventHandler.h"
-#include "Exceptions.h"
-#include "FastMath.h"
-#include "myMath.h"
-#include "Sound/ISound.h"
-#include "Sound/IEffectChannel.h"
+#include "Sim/Units/Groups/Group.h"
+#include "System/ConfigHandler.h"
+#include "System/EventHandler.h"
+#include "System/Exceptions.h"
+#include "System/FastMath.h"
+#include "System/myMath.h"
+#include "System/Input/KeyInput.h"
+#include "System/Input/MouseInput.h"
+#include "System/Sound/ISound.h"
+#include "System/Sound/IEffectChannel.h"
 
 // can't be up there since those contain conflicting definitions
 #include <SDL_mouse.h>
@@ -56,9 +56,6 @@
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-
-extern boost::uint8_t *keys;
-
 
 CMouseHandler* mouse = NULL;
 
@@ -338,7 +335,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	}
 
 	if ((button == SDL_BUTTON_LEFT) && !buttons[button].chorded) {
-		if (!keys[SDLK_LSHIFT] && !keys[SDLK_LCTRL]) {
+		if (!keyInput->IsKeyPressed(SDLK_LSHIFT) && !keyInput->IsKeyPressed(SDLK_LCTRL)) {
 			selectedUnits.ClearSelected();
 		}
 
@@ -414,8 +411,8 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			for (; team <= lastTeam; team++) {
 				for(ui=teamHandler->Team(team)->units.begin();ui!=teamHandler->Team(team)->units.end();++ui){
 					float3 vec=(*ui)->midPos-camera->pos;
-					if(vec.dot(norm1)<0 && vec.dot(norm2)<0 && vec.dot(norm3)<0 && vec.dot(norm4)<0){
-						if (keys[SDLK_LCTRL] && selectedUnits.selectedUnits.find(*ui) != selectedUnits.selectedUnits.end()) {
+					if (vec.dot(norm1) < 0.0f && vec.dot(norm2) < 0.0f && vec.dot(norm3) < 0.0f && vec.dot(norm4) < 0.0f) {
+						if (keyInput->IsKeyPressed(SDLK_LCTRL) && selectedUnits.selectedUnits.find(*ui) != selectedUnits.selectedUnits.end()) {
 							selectedUnits.RemoveUnit(*ui);
 						} else {
 							selectedUnits.AddUnit(*ui);
@@ -441,14 +438,14 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			if (unit && ((unit->team == gu->myTeam) || gu->spectatingFullSelect)) {
 				if (buttons[button].lastRelease < (gu->gameTime - doubleClickTime)) {
 					CUnit* unitM = uh->units[unit->id];
-					if (keys[SDLK_LCTRL] && selectedUnits.selectedUnits.find((CUnit*)unit) != selectedUnits.selectedUnits.end()) {
+					if (keyInput->IsKeyPressed(SDLK_LCTRL) && selectedUnits.selectedUnits.find((CUnit*)unit) != selectedUnits.selectedUnits.end()) {
 						selectedUnits.RemoveUnit(unitM);
 					} else {
 						selectedUnits.AddUnit(unitM);
 					}
 				} else {
 					//double click
-					if (unit->group && !keys[SDLK_LCTRL]) {
+					if (unit->group && !keyInput->IsKeyPressed(SDLK_LCTRL)) {
 						//select the current unit's group if it has one
 						selectedUnits.SelectGroup(unit->group->id);
 					} else {
@@ -466,7 +463,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 							CUnitSet& teamUnits = teamHandler->Team(team)->units;
 							for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
 								if ((*ui)->unitDef->id == unit->unitDef->id) {
-									if (camera->InView((*ui)->midPos) || keys[SDLK_LCTRL]) {
+									if (camera->InView((*ui)->midPos) || keyInput->IsKeyPressed(SDLK_LCTRL)) {
 										selectedUnits.AddUnit(*ui);
 									}
 								}

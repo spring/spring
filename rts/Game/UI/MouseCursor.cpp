@@ -7,16 +7,17 @@
 
 #include "bitops.h"
 #include "CommandColors.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/SimpleParser.h"
-#include "LogOutput.h"
-#include "Util.h"
-#include "GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "MouseCursor.h"
 #include "HwMouseCursor.h"
-#include "myMath.h"
-#include "Rendering/Textures/Bitmap.h"
+#include "System/GlobalUnsynced.h"
+#include "System/LogOutput.h"
+#include "System/myMath.h"
+#include "System/Util.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/SimpleParser.h"
 
 using std::string;
 

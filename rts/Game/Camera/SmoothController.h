@@ -14,7 +14,6 @@ class SmoothController : public CCameraController
 {
 public:
 	SmoothController();
-	~SmoothController();
 
 	const std::string GetName() const { return "sm"; }
 
