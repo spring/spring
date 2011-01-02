@@ -464,8 +464,7 @@ void CGroundMoveType::StopMoving() {
 	StopEngine();
 
 	useMainHeading = false;
-	if (progressState != Done)
-		progressState = Done;
+	progressState = Done;
 }
 
 void CGroundMoveType::SetDeltaSpeed(bool wantReverse)
