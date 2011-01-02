@@ -263,7 +263,7 @@ void CLogOutput::InitializeSubsystems()
 	bool env_override = false;
 	if (env)
 	{
-		//this allows to disable all subsystems from the evn var
+		// this allows to disable all subsystems from the env var
 		std::string env_subsystems(StringToLower(env));
 		if ( env_subsystems == std::string("none" ))
 		{
@@ -301,6 +301,7 @@ void CLogOutput::InitializeSubsystems()
 
 	Print("Enable or disable log subsystems using the LogSubsystems configuration key\n");
 	Print("  or the SPRING_LOG_SUBSYSTEMS environment variable (both comma separated).\n");
+	Print("  Use \"none\" to disable the default log subsystems.\n");
 }
 
 
