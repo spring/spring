@@ -7,8 +7,6 @@
 #include <vector>
 #include <string>
 
-#include "Rendering/GL/myGL.h"
-
 using std::map;
 using std::string;
 using std::vector;
@@ -42,7 +40,7 @@ class CNamedTextures {
 		static const TexInfo* GetInfo(const string& texName);
 
 	private:
-		static bool Load(const string& texName, GLuint texID);
+		static bool Load(const string& texName, unsigned int texID);
 
 		static map<string, TexInfo> texMap;
 		static vector<string> texWaiting;

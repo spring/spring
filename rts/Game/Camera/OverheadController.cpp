@@ -11,21 +11,20 @@
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/UI/MouseHandler.h"
-#include "LogOutput.h"
 #include "Map/Ground.h"
-#include "GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
-#include "myMath.h"
-
-extern boost::uint8_t *keys;
+#include "System/GlobalUnsynced.h"
+#include "System/LogOutput.h"
+#include "System/myMath.h"
+#include "System/Input/KeyInput.h"
 
 COverheadController::COverheadController()
-	: flipped(false),
-	zscale(0.5f),
-	height(500),
-	oldAltHeight(500),
-	changeAltHeight(true),
-	maxHeight(10000)
+	: flipped(false)
+	, zscale(0.5f)
+	, height(500)
+	, oldAltHeight(500)
+	, changeAltHeight(true)
+	, maxHeight(10000)
 {
 	middleClickScrollSpeed = configHandler->Get("MiddleClickScrollSpeed", 0.01f);
 	scrollSpeed = configHandler->Get("OverheadScrollSpeed",10)*0.1f;
@@ -41,9 +40,9 @@ void COverheadController::KeyMove(float3 move)
 		move.y = -move.y;
 	}
 	move *= sqrt(move.z) * 200;
-	float pixelsize = camera->GetTanHalfFov() * 2/globalRendering->viewSizeY * height * 2;
-	pos.x += move.x * pixelsize * 2 * scrollSpeed;
-	pos.z -= move.y * pixelsize * 2 * scrollSpeed;
+
+	pos.x += move.x * pixelSize * 2.0f * scrollSpeed;
+	pos.z -= move.y * pixelSize * 2.0f * scrollSpeed;
 }
 
 void COverheadController::MouseMove(float3 move)
@@ -53,9 +52,9 @@ void COverheadController::MouseMove(float3 move)
 		move.y = -move.y;
 	}
 	move *= 100 * middleClickScrollSpeed;
-	float pixelsize = camera->GetTanHalfFov() * 2/globalRendering->viewSizeY * height * 2;
-	pos.x += move.x * pixelsize * (1+keys[SDLK_LSHIFT]*3) * scrollSpeed;
-	pos.z += move.y * pixelsize * (1+keys[SDLK_LSHIFT]*3) * scrollSpeed;
+
+	pos.x += move.x * pixelSize * (1 + keyInput->GetKeyState(SDLK_LSHIFT) * 3) * scrollSpeed;
+	pos.z += move.y * pixelSize * (1 + keyInput->GetKeyState(SDLK_LSHIFT) * 3) * scrollSpeed;
 }
 
 void COverheadController::ScreenEdgeMove(float3 move)
@@ -66,24 +65,24 @@ void COverheadController::ScreenEdgeMove(float3 move)
 void COverheadController::MouseWheelMove(float move)
 {
 	// tilt the camera if LCTRL is pressed
-	if (keys[SDLK_LCTRL]) {
-		zscale *= (1.0f + (0.01f * move * tiltSpeed * (keys[SDLK_LSHIFT] ? 3.0f : 1.0f)));
+	if (keyInput->IsKeyPressed(SDLK_LCTRL)) {
+		zscale *= (1.0f + (0.01f * move * tiltSpeed * (keyInput->IsKeyPressed(SDLK_LSHIFT) ? 3.0f : 1.0f)));
 		zscale = Clamp(zscale, 0.05f, 10.0f);
 	} else { // holding down LALT uses 'instant-zoom' from here to the end of the function
 		// ZOOM IN to mouse cursor instead of mid screen
 		if (move < 0) {
 			float3 cpos = pos - dir * height;
-			float dif = -height * move * 0.007f * (keys[SDLK_LSHIFT] ? 3:1);
+			float dif = -height * move * 0.007f * (keyInput->IsKeyPressed(SDLK_LSHIFT) ? 3:1);
 			if ((height - dif) < 60.0f) {
 				dif = height - 60.0f;
 			}
-			if (keys[SDLK_LALT]) { // instant-zoom: zoom in to standard view
+			if (keyInput->IsKeyPressed(SDLK_LALT)) { // instant-zoom: zoom in to standard view
 				dif = (height - oldAltHeight) / mouse->dir.y * dir.y;
 			}
 			float3 wantedPos = cpos + mouse->dir * dif;
 			float newHeight = ground->LineGroundCol(wantedPos, wantedPos + dir * 15000);
 			if (newHeight < 0) {
-				newHeight = height* (1.0f + move * 0.007f * (keys[SDLK_LSHIFT] ? 3:1));
+				newHeight = height* (1.0f + move * 0.007f * (keyInput->IsKeyPressed(SDLK_LSHIFT) ? 3:1));
 			}
 			if ((wantedPos.y + (dir.y * newHeight)) < 0) {
 				newHeight = -wantedPos.y / dir.y;
@@ -94,7 +93,7 @@ void COverheadController::MouseWheelMove(float move)
 			}
 		// ZOOM OUT from mid screen
 		} else {
-			if (keys[SDLK_LALT]) { // instant-zoom: zoom out to the max
+			if (keyInput->IsKeyPressed(SDLK_LALT)) { // instant-zoom: zoom out to the max
 				if(height < maxHeight*0.5f && changeAltHeight){
 					oldAltHeight = height;
 					changeAltHeight = false;
@@ -103,11 +102,11 @@ void COverheadController::MouseWheelMove(float move)
 				pos.x  = gs->mapx * 4;
 				pos.z  = gs->mapy * 4.8f; // somewhat longer toward bottom
 			} else {
-				height *= 1 + move * 0.007f * (keys[SDLK_LSHIFT] ? 3:1);
+				height *= 1 + move * 0.007f * (keyInput->IsKeyPressed(SDLK_LSHIFT) ? 3:1);
 			}
 		}
 		// instant-zoom: turn on the smooth transition and reset the camera tilt
-		if (keys[SDLK_LALT]) {
+		if (keyInput->IsKeyPressed(SDLK_LALT)) {
 			zscale = 0.5f;
 			camHandler->CameraTransition(1.0f);
 		} else {
@@ -118,6 +117,7 @@ void COverheadController::MouseWheelMove(float move)
 
 void COverheadController::Update()
 {
+	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * height * 2.0f;
 }
 
 float3 COverheadController::GetPos()

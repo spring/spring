@@ -1,25 +1,21 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-
+#include <boost/cstdint.hpp>
 #include <SDL_keysym.h>
 
+#include "StdAfx.h"
 #include "mmgr.h"
-#include <boost/cstdint.hpp>
 
 #include "TWController.h"
-
-#include "ConfigHandler.h"
 #include "Game/Camera.h"
-#include "LogOutput.h"
 #include "Map/Ground.h"
 #include "Game/UI/MouseHandler.h"
-#include "GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
-#include "myMath.h"
-
-extern boost::uint8_t *keys;
-
+#include "System/ConfigHandler.h"
+#include "System/GlobalUnsynced.h"
+#include "System/LogOutput.h"
+#include "System/myMath.h"
+#include "System/Input/KeyInput.h"
 
 CTWController::CTWController()
 {
@@ -42,9 +38,7 @@ void CTWController::KeyMove(float3 move)
 
 void CTWController::MouseMove(float3 move)
 {
-	float dist = -camera->rot.x * 1500;
-	float pixelsize = camera->GetTanHalfFov() * 2/globalRendering->viewSizeY * dist * 2;
-	move *= (1+keys[SDLK_LSHIFT]*3) * pixelsize;
+	move *= (1 + keyInput->GetKeyState(SDLK_LSHIFT) * 3) * pixelSize;
 
 	float3 flatForward = camera->forward;
 	flatForward.y = 0;
@@ -71,6 +65,7 @@ void CTWController::MouseWheelMove(float move)
 
 void CTWController::Update()
 {
+	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * (-camera->rot.x * 1500) * 2.0f;
 }
 
 float3 CTWController::GetPos()

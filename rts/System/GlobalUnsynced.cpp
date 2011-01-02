@@ -66,6 +66,8 @@ CGlobalUnsynced::CGlobalUnsynced()
 
 	directControl = NULL;
 	playerHandler = new CPlayerHandler();
+
+	globalQuit = false;
 }
 
 CGlobalUnsynced::~CGlobalUnsynced()

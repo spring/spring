@@ -97,6 +97,8 @@ CEngineOutHandler* CEngineOutHandler::GetInstance() {
 void CEngineOutHandler::Destroy() {
 
 	if (singleton != NULL) {
+		singleton->PreDestroy();
+
 		CEngineOutHandler* tmp = singleton;
 		singleton = NULL;
 		delete tmp;

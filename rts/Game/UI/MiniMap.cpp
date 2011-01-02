@@ -1,12 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 
-#include "lib/gml/ThreadSafeContainers.h"
-
+#include "StdAfx.h"
 #include "mmgr.h"
+#include "lib/gml/ThreadSafeContainers.h"
 
 #include "CommandColors.h"
 #include "CursorIcons.h"
@@ -48,6 +47,7 @@
 #include "System/EventHandler.h"
 #include "System/Util.h"
 #include "System/TimeProfiler.h"
+#include "System/Input/KeyInput.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Sound/IEffectChannel.h"
 
@@ -59,9 +59,6 @@
 
 
 CMiniMap* minimap = NULL;
-
-extern boost::uint8_t* keys;
-
 
 CMiniMap::CMiniMap()
 : CInputReceiver(BACK),
@@ -503,7 +500,7 @@ void CMiniMap::SelectUnits(int x, int y) const
 {
 	GML_RECMUTEX_LOCK(sel); // SelectUnits
 
-	if (!keys[SDLK_LSHIFT] && !keys[SDLK_LCTRL]) {
+	if (!keyInput->IsKeyPressed(SDLK_LSHIFT) && !keyInput->IsKeyPressed(SDLK_LCTRL)) {
 		selectedUnits.ClearSelected();
 	}
 
@@ -540,7 +537,7 @@ void CMiniMap::SelectUnits(int x, int y) const
 				if ((midPos.x > xmin) && (midPos.x < xmax) &&
 					(midPos.z > zmin) && (midPos.z < zmax)) {
 
-					if (keys[SDLK_LCTRL] && (selection.find(*ui) != selection.end())) {
+					if (keyInput->IsKeyPressed(SDLK_LCTRL) && (selection.find(*ui) != selection.end())) {
 						selectedUnits.RemoveUnit(*ui);
 					} else {
 						selectedUnits.AddUnit(*ui);
@@ -580,14 +577,14 @@ void CMiniMap::SelectUnits(int x, int y) const
 
 		if (unit && ((unit->team == gu->myTeam) || gu->spectatingFullSelect)) {
 			if (bp.lastRelease < (gu->gameTime - mouse->doubleClickTime)) {
-				if (keys[SDLK_LCTRL] && (selection.find(unit) != selection.end())) {
+				if (keyInput->IsKeyPressed(SDLK_LCTRL) && (selection.find(unit) != selection.end())) {
 					selectedUnits.RemoveUnit(unit);
 				} else {
 					selectedUnits.AddUnit(unit);
 				}
 			} else {
 				//double click
-				if (unit->group && !keys[SDLK_LCTRL]) {
+				if (unit->group && !keyInput->IsKeyPressed(SDLK_LCTRL)) {
 					//select the current units group if it has one
 					selectedUnits.SelectGroup(unit->group->id);
 				} else {
@@ -715,7 +712,7 @@ void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 		} else {
 			width = std::min(globalRendering->viewSizeX, width);
 		}
-		if (keys[SDLK_LSHIFT]) {
+		if (keyInput->IsKeyPressed(SDLK_LSHIFT)) {
 			width = (height * gs->mapx) / gs->mapy;
 		}
 		width = std::max(5, width);
@@ -756,7 +753,7 @@ void CMiniMap::MouseRelease(int x, int y, int button)
 
 	if (button == SDL_BUTTON_LEFT) {
 		if (showButtons && maximizeBox.Inside(x, y)) {
-			ToggleMaximized(!!keys[SDLK_LSHIFT]);
+			ToggleMaximized(!!keyInput->GetKeyState(SDLK_LSHIFT));
 			return;
 		}
 

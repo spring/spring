@@ -36,12 +36,14 @@
 using std::min;
 using std::max;
 
-CR_BIND_DERIVED_INTERFACE(CExpGenSpawnable, CWorldObject);
-
-CR_REG_METADATA(CExpGenSpawnable,
-);
-
 CExplosionGeneratorHandler* explGenHandler = NULL;
+
+CR_BIND_DERIVED_INTERFACE(CExpGenSpawnable, CWorldObject);
+CR_REG_METADATA(CExpGenSpawnable, );
+
+CExpGenSpawnable::CExpGenSpawnable(): CWorldObject() { GML_EXPGEN_CHECK() }
+CExpGenSpawnable::CExpGenSpawnable(const float3& pos): CWorldObject(pos) { GML_EXPGEN_CHECK() }
+
 
 
 // -------------------------------------------------------------------------------

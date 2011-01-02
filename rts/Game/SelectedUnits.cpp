@@ -35,11 +35,10 @@
 #include "System/Util.h"
 #include "System/NetProtocol.h"
 #include "System/Net/PackPacket.h"
+#include "System/Input/KeyInput.h"
 #include "System/Sound/IEffectChannel.h"
 
 #define PLAY_SOUNDS 1
-
-extern boost::uint8_t* keys;
 
 CSelectedUnits selectedUnits;
 
@@ -423,7 +422,7 @@ void CSelectedUnits::Draw()
 	// (or old-style, whenever the shift key is being held down)
 	if (cmdColors.buildBox[3] > 0.0f) {
 		if (!selectedUnits.empty() &&
-				((cmdColors.BuildBoxesOnShift() && keys[SDLK_LSHIFT]) ||
+				((cmdColors.BuildBoxesOnShift() && keyInput->IsKeyPressed(SDLK_LSHIFT)) ||
 				 ((guihandler->inCommand >= 0) &&
 					(guihandler->inCommand < int(guihandler->commands.size())) &&
 					(guihandler->commands[guihandler->inCommand].id < 0)))) {

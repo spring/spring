@@ -60,7 +60,7 @@ EXPORT(const char* ) GetSpringVersion();
  *
  * The config handler won't be reset, it will however be initialised if it wasn't before (with SetSpringConfigFile())
  */
-EXPORT(int         ) Init(bool isServer, int id);
+EXPORT(int         ) Init(bool isServer, int id, bool enable_logging = true);
 /**
  * @brief Uninitialize the unitsync library
  *

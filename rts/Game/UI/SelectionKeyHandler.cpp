@@ -27,8 +27,6 @@
 
 CSelectionKeyHandler* selectionKeys;
 
-extern boost::uint8_t *keys;
-
 CSelectionKeyHandler::CSelectionKeyHandler()
 {
 	LoadSelectionKeys();

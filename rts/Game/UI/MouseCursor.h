@@ -5,7 +5,7 @@
 
 #include <string>
 #include <vector>
-#include "Rendering/GL/myGL.h"
+/// #include "Rendering/GL/myGL.h"
 //#include "HwMouseCursor.h"
 
 class CBitmap;
@@ -33,7 +33,7 @@ class CMouseCursor {
 
 	protected:	
 		struct ImageData {
-			GLuint texture;
+			unsigned int texture;
 			int xOrigSize;
 			int yOrigSize;
 			int xAlignedSize;

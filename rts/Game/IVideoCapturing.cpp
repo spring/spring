@@ -28,6 +28,9 @@ IVideoCapturing* IVideoCapturing::GetInstance() {
 }
 
 void IVideoCapturing::FreeInstance() {
+	if (instance->IsCapturing()) {
+		instance->StopCapturing();
+	}
 
 	delete instance;
 	instance = NULL;
@@ -39,4 +42,3 @@ IVideoCapturing::IVideoCapturing() {
 
 IVideoCapturing::~IVideoCapturing() {
 }
-

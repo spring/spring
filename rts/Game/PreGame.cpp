@@ -34,6 +34,7 @@
 #include "System/Exceptions.h"
 #include "System/NetProtocol.h"
 #include "System/TdfParser.h"
+#include "System/Input/KeyInput.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
@@ -43,13 +44,12 @@
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/Net/RawPacket.h"
 #include "System/Net/UnpackPacket.h"
+#include "System/Platform/errorhandler.h"
 
-CPreGame* pregame = NULL;
 using netcode::RawPacket;
 using std::string;
 
-extern boost::uint8_t* keys;
-extern volatile bool globalQuit;
+CPreGame* pregame = NULL;
 
 CPreGame::CPreGame(const ClientSetup* setup) :
 		settings(setup),
@@ -99,10 +99,10 @@ void CPreGame::LoadSavefile(const std::string& save)
 
 int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
 {
-	if (k == SDLK_ESCAPE){
-		if(keys[SDLK_LSHIFT]){
+	if (k == SDLK_ESCAPE) {
+		if (keyInput->IsKeyPressed(SDLK_LSHIFT)) {
 			logOutput.Print("User exited");
-			globalQuit=true;
+			gu->globalQuit = true;
 		} else
 			logOutput.Print("Use shift-esc to quit");
 	}
@@ -199,7 +199,7 @@ void CPreGame::UpdateClientNet()
 	if (net->CheckTimeout(0, true))
 	{
 		logOutput.Print("Server not reachable");
-		globalQuit = true;
+		gu->globalQuit = true;
 		return;
 	}
 

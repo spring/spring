@@ -2,9 +2,10 @@
 
 #include "StdAfx.h"
 #include "mmgr.h"
-#include <SDL.h>
 #include <vector>
+#include <SDL.h>
 
+#include "Rendering/GL/myGL.h"
 #include "LoadScreen.h"
 #include "Game.h"
 #include "GameVersion.h"
@@ -119,8 +120,7 @@ CLoadScreen::~CLoadScreen()
 	//! Set hang detection trigger threshold back to normal
 	CrashHandler::GameLoading(false);
 
-	extern volatile bool globalQuit;
-	if (!globalQuit) {
+	if (!gu->globalQuit) {
 		//! sending your playername to the server indicates that you are finished loading
 		const CPlayer* p = playerHandler->Player(gu->myPlayerNum);
 		net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
