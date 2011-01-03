@@ -635,8 +635,6 @@ void CBumpWater::Update()
 
 void CBumpWater::UpdateWater(CGame* game)
 {
-	DeleteOldWater(this);
-
 	if ((!mapInfo->water.forceRendering && readmap->currMinHeight > 0.0f) || mapInfo->map.voidWater)
 		return;
 

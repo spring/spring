@@ -544,7 +544,7 @@ void CGame::LoadRendering()
 
 	loadscreen->SetLoadMessage("Creating Sky & Water");
 	sky = CBaseSky::GetSky();
-	water = CBaseWater::GetWater(NULL);
+	water = CBaseWater::GetWater(NULL, -1);
 
 	glLightfv(GL_LIGHT1, GL_AMBIENT, mapInfo->light.unitAmbientColor);
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, mapInfo->light.unitSunColor);
@@ -692,8 +692,8 @@ void CGame::ResizeEvent()
 		minimap->UpdateGeometry();
 	}
 
-	// Fix water renderer, they depend on screen resolution...
-	water = CBaseWater::GetWater(water);
+	// reload water renderer (it may depend on screen resolution)
+	water = CBaseWater::GetWater(water, water->GetID());
 
 	eventHandler.ViewResize();
 }

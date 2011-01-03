@@ -14,7 +14,8 @@ public:
 	void LoadGfx();
 
 	void Draw();
-	int GetID() const { return 3; }
+	int GetID() const { return WATER_RENDERER_REFL_REFR; }
+	const char* GetName() const { return "reflective&refractive"; }
 
 protected:
 	void SetupWaterDepthTex();

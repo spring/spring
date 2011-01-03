@@ -14,11 +14,12 @@ public:
 	CDynWater(void);
 	~CDynWater(void);
 
-	virtual void Draw();
-	virtual void UpdateWater(CGame* game);
-	virtual void Update();
-	virtual void AddExplosion(const float3& pos, float strength, float size);
-	int GetID() const { return 2; }
+	void Draw();
+	void UpdateWater(CGame* game);
+	void Update();
+	void AddExplosion(const float3& pos, float strength, float size);
+	int GetID() const { return WATER_RENDERER_DYNAMIC; }
+	const char* GetName() const { return "dynamic"; }
 
 private:
 	void DrawReflection(CGame* game);

@@ -35,9 +35,7 @@ CBasicWater::~CBasicWater()
 	glDeleteLists(displist,1);
 }
 
-void CBasicWater::UpdateWater(CGame* game) {
-	DeleteOldWater(this);
-}
+
 
 void CBasicWater::Draw()
 {

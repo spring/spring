@@ -15,82 +15,114 @@
 #include "Exceptions.h"
 #include "GlobalUnsynced.h"
 
-CBaseWater* water=0;
+CBaseWater* water = NULL;
 
 CBaseWater::CBaseWater(void)
 {
-	drawReflection=false;
-	drawRefraction=false;
- 	noWakeProjectiles=false;
- 	drawSolid=false;
-	oldwater=NULL;
+	drawReflection = false;
+	drawRefraction = false;
+ 	noWakeProjectiles = false;
+ 	drawSolid = false;
 }
 
-CBaseWater::~CBaseWater(void)
+
+
+CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRendererMode)
 {
-	DeleteOldWater(this);
-}
-
-void CBaseWater::DeleteOldWater(CBaseWater *water) {
-	if(water->oldwater) {
-		DeleteOldWater(water->oldwater);
-		delete water->oldwater;
-		water->oldwater=NULL;
-	}
-}
-
-CBaseWater* CBaseWater::GetWater(CBaseWater* old)
-{
-	CBaseWater* water = NULL;
-	int configValue = configHandler->Get("ReflectiveWater", 1);
-	
-	if(water==NULL && configValue==2 && GLEW_ARB_fragment_program && GLEW_ARB_texture_float &&
-	   ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "ARB/waterDyn.fp")) {
-		try {
-			water = new CDynWater;
-		} catch (content_error& e) {
-			delete water;
-			water = NULL;
-			logOutput.Print("Loading Dynamic Water failed");
-			logOutput.Print("Error: %s", e.what());
+	if (currWaterRenderer != NULL) {
+		if (currWaterRenderer->GetID() == nextWaterRendererMode) {
+			if (nextWaterRendererMode == CBaseWater::WATER_RENDERER_BASIC) {
+				return currWaterRenderer;
+			}
 		}
+
+		// for BumpWater, this needs to happen before a new renderer
+		// instance is created because its shaders must be recompiled
+		delete currWaterRenderer;
 	}
 
-	if(water==NULL && configValue==4 && GLEW_ARB_shading_language_100 && GL_ARB_fragment_shader && GL_ARB_vertex_shader) {
-		try {
-			water = new CBumpWater;
-		} catch (content_error& e) {
-			delete water;
-			water = NULL;
-			logOutput.Print("Loading Bumpmapped Water failed");
-			logOutput.Print("Error: %s", e.what());
-		}
+	if (nextWaterRendererMode < CBaseWater::WATER_RENDERER_BASIC) {
+		nextWaterRendererMode = configHandler->Get("ReflectiveWater", int(CBaseWater::WATER_RENDERER_REFLECTIVE));
 	}
-	
-	if(water==NULL && configValue==3 && GLEW_ARB_fragment_program && GLEW_ARB_texture_rectangle){
-		try {
-			water = new CRefractWater;
-		} catch (content_error& e) {
-			delete water;
-			water = NULL;
-			logOutput.Print("Loading Refractive Water failed");
-			logOutput.Print("Error: %s", e.what());
-		}
+
+	CBaseWater* nextWaterRenderer = NULL;
+
+	switch (nextWaterRendererMode) {
+		case WATER_RENDERER_DYNAMIC: {
+			const bool canLoad =
+				GLEW_ARB_fragment_program &&
+				GLEW_ARB_texture_float &&
+				ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "ARB/waterDyn.fp");
+
+			if (canLoad) {
+				try {
+					nextWaterRenderer = new CDynWater();
+				} catch (content_error& e) {
+					delete nextWaterRenderer;
+					nextWaterRenderer = NULL;
+					logOutput.Print("Loading Dynamic Water failed");
+					logOutput.Print("Error: %s", e.what());
+				}
+			}
+		} break;
+
+		case WATER_RENDERER_BUMPMAPPED: {
+			const bool canLoad =
+				GLEW_ARB_shading_language_100 &&
+				GL_ARB_fragment_shader &&
+				GL_ARB_vertex_shader;
+
+			if (canLoad) {
+				try {
+					nextWaterRenderer = new CBumpWater();
+				} catch (content_error& e) {
+					delete nextWaterRenderer;
+					nextWaterRenderer = NULL;
+					logOutput.Print("Loading Bumpmapped Water failed");
+					logOutput.Print("Error: %s", e.what());
+				}
+			}
+		} break;
+
+		case WATER_RENDERER_REFL_REFR: {
+			const bool canLoad =
+				GLEW_ARB_fragment_program &&
+				GLEW_ARB_texture_rectangle;
+
+			if (canLoad) {
+				try {
+					nextWaterRenderer = new CRefractWater();
+				} catch (content_error& e) {
+					delete nextWaterRenderer;
+					nextWaterRenderer = NULL;
+					logOutput.Print("Loading Refractive Water failed");
+					logOutput.Print("Error: %s", e.what());
+				}
+			}
+		} break;
+
+		case WATER_RENDERER_REFLECTIVE: {
+			const bool canLoad =
+				GLEW_ARB_fragment_program &&
+				ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "ARB/water.fp");
+
+			if (canLoad) {
+				try {
+					nextWaterRenderer = new CAdvWater();
+				} catch (content_error& e) {
+					delete nextWaterRenderer;
+					nextWaterRenderer = NULL;
+					logOutput.Print("Loading Reflective Water failed");
+					logOutput.Print("Error: %s", e.what());
+				}
+			}
+		} break;
 	}
-	
-	if(water==NULL && configValue!=0 && GLEW_ARB_fragment_program &&
-	   ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "ARB/water.fp")){
-		try {
-			water = new CAdvWater;
-		} catch (content_error& e) {
-			delete water;
-			water = NULL;
-			logOutput.Print("Loading Reflective Water failed");
-			logOutput.Print("Error: %s", e.what());
-		}
+
+	if (nextWaterRenderer == NULL) {
+		nextWaterRenderer = new CBasicWater();
 	}
-	if(water==NULL)
-		water = new CBasicWater;
-	water->oldwater=old;
-	return water;
+
+	configHandler->Set("ReflectiveWater", nextWaterRenderer->GetID());
+	return nextWaterRenderer;
 }

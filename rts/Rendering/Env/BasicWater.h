@@ -9,11 +9,13 @@
 class CBasicWater : public CBaseWater
 {
 public:
-	void Draw();
-	void UpdateWater(CGame* game);
 	CBasicWater();
-	virtual ~CBasicWater();
-	int GetID() const { return 0; }
+	~CBasicWater();
+
+	void Draw();
+	void UpdateWater(CGame*) {}
+	int GetID() const { return WATER_RENDERER_BASIC; }
+	const char* GetName() const { return "basic"; }
 
 	GLuint texture;
 	unsigned int displist;
