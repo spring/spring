@@ -1048,6 +1048,8 @@ bool CGame::DrawWorld()
 
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("Water");
+		GML_STDMUTEX_LOCK(water);
+
 		water->OcclusionQuery();
 		if (water->drawSolid) {
 			water->UpdateWater(this);
@@ -1084,6 +1086,8 @@ bool CGame::DrawWorld()
 	//! draw water
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("Water");
+		GML_STDMUTEX_LOCK(water);
+
 		if (!water->drawSolid) {
 			water->UpdateWater(this);
 			water->Draw();
