@@ -684,6 +684,8 @@ CBumpWater::CoastAtlasRect::CoastAtlasRect(CBumpWater::CoastUpdateRect& rect)
 
 void CBumpWater::HeightmapChanged(const int x1, const int y1, const int x2, const int y2)
 {
+	GML_STDMUTEX_LOCK(water);
+
 	if (!shoreWaves || readmap->currMinHeight > 0.0f || mapInfo->map.voidWater)
 		return;
 
