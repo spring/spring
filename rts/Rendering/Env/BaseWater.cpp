@@ -29,12 +29,22 @@ CBaseWater::CBaseWater(void)
 
 CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRendererMode)
 {
+	static CBaseWater  baseWaterRenderer;
+	       CBaseWater* nextWaterRenderer = NULL;
+
 	if (currWaterRenderer != NULL) {
+		assert(water == currWaterRenderer);
+
 		if (currWaterRenderer->GetID() == nextWaterRendererMode) {
 			if (nextWaterRendererMode == CBaseWater::WATER_RENDERER_BASIC) {
 				return currWaterRenderer;
 			}
 		}
+
+		// note: rendering thread(s) can concurrently dereference the
+		// <water> global, so they may not see destructed memory while
+		// it is being reinstantiated through <currWaterRenderer>
+		water = &baseWaterRenderer;
 
 		// for BumpWater, this needs to happen before a new renderer
 		// instance is created because its shaders must be recompiled
@@ -44,8 +54,6 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRen
 	if (nextWaterRendererMode < CBaseWater::WATER_RENDERER_BASIC) {
 		nextWaterRendererMode = configHandler->Get("ReflectiveWater", int(CBaseWater::WATER_RENDERER_REFLECTIVE));
 	}
-
-	CBaseWater* nextWaterRenderer = NULL;
 
 	switch (nextWaterRendererMode) {
 		case WATER_RENDERER_DYNAMIC: {
