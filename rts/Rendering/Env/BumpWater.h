@@ -26,7 +26,8 @@ public:
 	void DrawReflection(CGame* game);
 	void DrawRefraction(CGame* game);
 	void Draw();
-	int GetID() const { return 4; }
+	int GetID() const { return WATER_RENDERER_BUMPMAPPED; }
+	const char* GetName() const { return "bumpmapped"; }
 
 private:
 	void SetUniforms(); //! see useUniforms
