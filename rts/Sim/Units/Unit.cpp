@@ -290,7 +290,6 @@ CUnit::~CUnit()
 	delete commandAI;       commandAI       = NULL;
 	delete moveType;        moveType        = NULL;
 	delete prevMoveType;    prevMoveType    = NULL;
-	delete collisionVolume; collisionVolume = NULL;
 
 	// not all unit deletions run through KillUnit(),
 	// but we always want to call this for ourselves
@@ -458,6 +457,8 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	// aircraft still get half-size spheres for coldet purposes
 	// iif no custom volume is defined (unit->model->radius and
 	// unit->radius themselves are no longer altered)
+	//
+	// note: gets deleted in ~CSolidObject
 	collisionVolume = new CollisionVolume(unitDef->collisionVolume, model->radius * ((unitDef->canfly)? 0.5f: 1.0f));
 	moveType = MoveTypeFactory::GetMoveType(this, unitDef);
 	script = CUnitScriptFactory::CreateScript(unitDef->scriptPath, this);

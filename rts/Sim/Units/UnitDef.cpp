@@ -6,7 +6,6 @@
 #include "Game/GameSetup.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapInfo.h"
-#include "Map/ReadMap.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArrayHandler.h"
