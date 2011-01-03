@@ -7,6 +7,7 @@
 #include "Map/ReadMap.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "myMath.h"
 
