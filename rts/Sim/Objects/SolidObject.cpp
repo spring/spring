@@ -7,6 +7,7 @@
 #include "Map/ReadMap.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "myMath.h"
 
@@ -68,12 +69,17 @@ CSolidObject::CSolidObject():
 	buildFacing(0)
 {
 	mapPos = GetMapPos();
+	collisionVolume = NULL; //FIXME create collision volume with CWorldObject.radius?
 }
 
 CSolidObject::~CSolidObject() {
+	blocking = false;
+
 	delete mobility;
 	mobility = NULL;
-	blocking = false;
+
+	delete collisionVolume;
+	collisionVolume = NULL;
 }
 
 

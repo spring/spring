@@ -20,7 +20,6 @@ struct FeatureDef;
 class CUnit;
 struct DamageArray;
 class CFireProjectile;
-struct CollisionVolume;
 
 
 
@@ -78,6 +77,7 @@ public:
 		}
 	}
 
+public:
 	std::string createdFromUnit;
 	/**
 	 * This flag is used to stop a potential exploit involving tripping
@@ -100,7 +100,6 @@ public:
 
 	const FeatureDef* def;
 	std::string defName;
-	CollisionVolume* collisionVolume;
 
 	CMatrix44f transMatrix;
 

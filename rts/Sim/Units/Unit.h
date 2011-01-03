@@ -27,7 +27,6 @@ struct LocalModel;
 struct LocalModelPiece;
 struct UnitDef;
 struct UnitTrackStruct;
-struct CollisionVolume;
 struct DirectControlStruct;
 
 class CTransportUnit;
@@ -164,7 +163,6 @@ public:
 	virtual void StopAttackingAllyTeam(int ally);
 
 	const UnitDef* unitDef;
-	CollisionVolume* collisionVolume;
 	std::string unitDefName;
 
 	/**

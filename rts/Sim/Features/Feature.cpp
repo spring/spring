@@ -55,7 +55,7 @@ CR_REG_METADATA(CFeature, (
 				));
 
 
-CFeature::CFeature():
+CFeature::CFeature() : CSolidObject(),
 	isRepairingBeforeResurrect(false),
 	resurrectProgress(0.0f),
 	health(0.0f),
@@ -65,7 +65,6 @@ CFeature::CFeature():
 	tempNum(0),
 	lastReclaim(0),
 	def(NULL),
-	collisionVolume(NULL),
 	inUpdateQue(false),
 	drawQuad(-2),
 	finalHeight(0.0f),
@@ -100,9 +99,6 @@ CFeature::~CFeature()
 	if (def->geoThermal) {
 		CGeoThermSmokeProjectile::GeoThermDestroyed(this);
 	}
-
-	delete collisionVolume;
-	collisionVolume = NULL;
 }
 
 void CFeature::PostLoad()
@@ -168,6 +164,8 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 			height = model->height;
 			SetRadius(model->radius);
 			midPos = pos + model->relMidPos;
+
+			// note: gets deleted in ~CSolidObject
 			collisionVolume = new CollisionVolume(def->collisionVolume, model->radius);
 		}
 	}
@@ -177,6 +175,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 		height = 2 * TREE_RADIUS;
 
 		// LoadFeaturesFromMap() doesn't set a scale for trees
+		// note: gets deleted in ~CSolidObject
 		collisionVolume = new CollisionVolume(def->collisionVolume, TREE_RADIUS);
 	}
 	else {

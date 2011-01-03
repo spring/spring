@@ -70,32 +70,21 @@ CFeatureHandler::CFeatureHandler()
 	}
 }
 
-
 CFeatureHandler::~CFeatureHandler()
 {
 	for (CFeatureSet::iterator fi = activeFeatures.begin(); fi != activeFeatures.end(); ++fi) {
-		// unsavory, but better than a memleak
-		FeatureDef* fd = (FeatureDef*) (*fi)->def;
-
-		delete fd->collisionVolume;
-		fd->collisionVolume = NULL;
 		delete *fi;
+	}
+
+	for (std::map<std::string, const FeatureDef*>::iterator it = featureDefs.begin(); it != featureDefs.end(); ++it) {
+		delete it->second;
 	}
 
 	activeFeatures.clear();
 	features.clear();
-
-	while (!featureDefs.empty()) {
-		map<string, const FeatureDef*>::iterator fi = featureDefs.begin();
-
-		FeatureDef* fd = (FeatureDef*) fi->second;
-
-		delete fd->collisionVolume;
-		fd->collisionVolume = NULL;
-		delete fi->second;
-		featureDefs.erase(fi);
-	}
+	featureDefs.clear();
 }
+
 
 
 void CFeatureHandler::AddFeatureDef(const string& name, FeatureDef* fd)
