@@ -228,8 +228,6 @@ void CAdvWater::Draw(bool useBlending)
 
 void CAdvWater::UpdateWater(CGame* game)
 {
-	DeleteOldWater(this);
-
 	if ((!mapInfo->water.forceRendering && readmap->currMinHeight > 1.0f) || mapInfo->map.voidWater)
 		return;
 

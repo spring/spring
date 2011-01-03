@@ -142,18 +142,16 @@ bool CGame::ActionPressed(const Action& action,
 		shadowHandler = new CShadowHandler();
 	}
 	else if (cmd == "water") {
-		static char rmodes[5][32] = {"basic", "reflective", "dynamic", "reflective&refractive", "bumpmapped"};
-		int next = 0;
+		int nextWaterRendererMode = 0;
 
 		if (!action.extra.empty()) {
-			next = std::max(0, atoi(action.extra.c_str()) % 5);
+			nextWaterRendererMode = std::max(0, atoi(action.extra.c_str()) % CBaseWater::NUM_WATER_RENDERERS);
 		} else {
-			const int current = configHandler->Get("ReflectiveWater", 1);
-			next = (std::max(0, current) + 1) % 5;
+			nextWaterRendererMode = (std::max(0, water->GetID()) + 1) % CBaseWater::NUM_WATER_RENDERERS;
 		}
-		configHandler->Set("ReflectiveWater", next);
-		logOutput.Print("Set water rendering mode to %i (%s)", next, rmodes[next]);
-		water = CBaseWater::GetWater(water);
+
+		water = CBaseWater::GetWater(water, nextWaterRendererMode);
+		logOutput.Print("Set water rendering mode to %i (%s)", nextWaterRendererMode, water->GetName());
 	}
 	else if (cmd == "advshading") {
 		static bool canUse = unitDrawer->advShading;

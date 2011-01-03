@@ -10,12 +10,14 @@
 class CAdvWater : public CBaseWater
 {
 public:
-	void UpdateWater(CGame* game);
-	void Draw();
-	void Draw(bool useBlending);
-	CAdvWater(bool loadShader=true);
+	CAdvWater(bool loadShader = true);
 	virtual ~CAdvWater();
-	virtual int GetID() const { return 1; }
+	virtual int GetID() const { return WATER_RENDERER_REFLECTIVE; }
+	virtual const char* GetName() const { return "reflective"; }
+
+	virtual void Draw();
+	void Draw(bool useBlending);
+	void UpdateWater(CGame* game);
 
 protected:
 	FBO reflectFBO;
