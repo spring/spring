@@ -7,13 +7,11 @@
 #include "BasicWater.h"
 #include "AdvWater.h"
 #include "BumpWater.h"
-#include "Rendering/GL/myGL.h"
-#include "ConfigHandler.h"
-#include "LogOutput.h"
 #include "DynWater.h"
 #include "RefractWater.h"
-#include "Exceptions.h"
-#include "GlobalUnsynced.h"
+#include "System/ConfigHandler.h"
+#include "System/Exceptions.h"
+#include "System/LogOutput.h"
 
 CBaseWater* water = NULL;
 
@@ -29,6 +27,8 @@ CBaseWater::CBaseWater(void)
 
 CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRendererMode)
 {
+	GML_STDMUTEX_LOCK(water);
+
 	static CBaseWater  baseWaterRenderer;
 	       CBaseWater* nextWaterRenderer = NULL;
 
@@ -48,6 +48,7 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRen
 
 		// for BumpWater, this needs to happen before a new renderer
 		// instance is created because its shaders must be recompiled
+		// (delayed deletion will fail)
 		delete currWaterRenderer;
 	}
 
