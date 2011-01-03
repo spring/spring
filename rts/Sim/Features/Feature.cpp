@@ -55,7 +55,7 @@ CR_REG_METADATA(CFeature, (
 				));
 
 
-CFeature::CFeature():
+CFeature::CFeature() : CSolidObject(),
 	isRepairingBeforeResurrect(false),
 	resurrectProgress(0.0f),
 	health(0.0f),
@@ -65,7 +65,6 @@ CFeature::CFeature():
 	tempNum(0),
 	lastReclaim(0),
 	def(NULL),
-	collisionVolume(NULL),
 	inUpdateQue(false),
 	drawQuad(-2),
 	finalHeight(0.0f),

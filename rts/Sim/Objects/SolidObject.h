@@ -11,6 +11,7 @@
 
 class CUnit;
 struct DamageArray;
+struct CollisionVolume;
 
 
 class CSolidObject: public CWorldObject {
@@ -35,6 +36,10 @@ public:
 
 	void Block();
 	void UnBlock();
+
+public:
+	// Collision properties
+	CollisionVolume* collisionVolume;
 
 	// Static properties
 	float mass;									///< the physical mass of this object
