@@ -68,12 +68,17 @@ CSolidObject::CSolidObject():
 	buildFacing(0)
 {
 	mapPos = GetMapPos();
+	collisionVolume = NULL; //FIXME create collision volume with CWorldObject.radius?
 }
 
 CSolidObject::~CSolidObject() {
+	blocking = false;
+
 	delete mobility;
 	mobility = NULL;
-	blocking = false;
+
+	delete collisionVolume;
+	collisionVolume = NULL;
 }
 
 

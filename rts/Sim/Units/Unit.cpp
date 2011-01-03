@@ -89,9 +89,8 @@ float CUnit::expReloadScale = 0.4f;
 float CUnit::expGrade       = 0.0f;
 
 
-CUnit::CUnit():
+CUnit::CUnit() : CSolidObject(),
 	unitDef(NULL),
-	collisionVolume(NULL),
 	frontdir(0.0f, 0.0f, 1.0f),
 	rightdir(-1.0f, 0.0f, 0.0f),
 	updir(0.0f, 1.0f, 0.0f),
