@@ -84,6 +84,8 @@ void COffscreenGLContext::WorkerThreadFree()
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //! APPLE
 
+#include <AGL/agl.h>
+
 COffscreenGLContext::COffscreenGLContext()
 {
 	//FIXME: couldn't test this code myself! (coded from online documentations)
