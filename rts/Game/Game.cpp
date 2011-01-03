@@ -1266,8 +1266,10 @@ bool CGame::Draw() {
 
 		if (lastSimFrame != gs->frameNum && !skipping) {
 			projectileDrawer->UpdateTextures();
-			water->Update();
 			sky->Update();
+
+			GML_STDMUTEX_LOCK(water);
+			water->Update();
 		}
 	}
 
