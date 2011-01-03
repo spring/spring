@@ -94,6 +94,16 @@ CLuaHandle::~CLuaHandle()
 	if (this == GetStaticLuaContextData(true).activeHandle) {
 		GetStaticLuaContextData(true).activeHandle = NULL;
 	}
+
+	for(int i = 0; i < delayedRecvFromSynced.size(); ++i) {
+		DelayDataDump &ddp = delayedRecvFromSynced[i];
+		for(int d = 0; d < ddp.dd.size(); ++d) {
+			DelayData &ddt = ddp.dd[d]; 
+			if(ddt.type == LUA_TSTRING)
+				delete ddt.data.str;
+		}
+	}
+	delayedRecvFromSynced.clear();
 }
 
 
@@ -274,19 +284,20 @@ void CLuaHandle::DelayRecvFromSynced(lua_State* srcState, int args) {
 		ddata.type = type;
 		switch (type) {
 			case LUA_TBOOLEAN: {
-				ddata.bol = lua_toboolean(srcState, i);
+				ddata.data.bol = lua_toboolean(srcState, i);
 				break;
 			}
 			case LUA_TNUMBER: {
-				ddata.num = lua_tonumber(srcState, i);
+				ddata.data.num = lua_tonumber(srcState, i);
 				break;
 			}
 			case LUA_TSTRING: {
 				size_t len = 0;
 				const char* data = lua_tolstring(srcState, i, &len);
+				ddata.data.str = new std::string;
 				if (len > 0) {
-					ddata.str.resize(len);
-					memcpy(&ddata.str[0], data, len);
+					ddata.data.str->resize(len);
+					memcpy(&(*ddata.data.str)[0], data, len);
 				}
 				break;
 			}
@@ -374,15 +385,16 @@ void CLuaHandle::ExecuteRecvFromSynced() {
 				DelayData &ddt = ddp.dd[d]; 
 				switch (ddt.type) {
 					case LUA_TBOOLEAN: {
-						lua_pushboolean(L, ddt.bol);
+						lua_pushboolean(L, ddt.data.bol);
 						break;
 					}
 					case LUA_TNUMBER: {
-						lua_pushnumber(L, ddt.num);
+						lua_pushnumber(L, ddt.data.num);
 						break;
 					}
 					case LUA_TSTRING: {
-						lua_pushlstring(L, ddt.str.c_str(), ddt.str.size());
+						lua_pushlstring(L, ddt.data.str->c_str(), ddt.data.str->size());
+						delete ddt.data.str;
 						break;
 					}
 					case LUA_TNIL: {

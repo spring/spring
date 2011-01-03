@@ -231,9 +231,11 @@ class CLuaHandle : public CEventClient
 
 		struct DelayData {
 			int type;
-			std::string str;
-			float num;
-			bool bol;
+			union {
+				std::string *str;
+				float num;
+				bool bol;
+			} data;
 		};
 		struct DelayDataDump {
 			std::vector<DelayData> dd;
