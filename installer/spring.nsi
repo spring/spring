@@ -85,92 +85,69 @@ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" "Path"
 !include "include\fileMisc.nsh"
 !include "include\checkrunning.nsh"
 !include "include\aiHelpers.nsh"
+!include "include\getParameterValue.nsh"
 
-!include "sections\ensureDotNet.nsh"
+;!include "sections\ensureDotNet.nsh" ; deprecated, setup of zero-k installs .Net itself
 
-Function .onInit
 
-	${!echonow} ""
-	${!echonow} "Base dir:   <engine-source-root>/installer/"
+${!echonow} ""
+${!echonow} "Base dir:   <engine-source-root>/installer/"
 
-	; Set default values for undefined vars
-	!ifndef CONTENT_DIR
-		!define CONTENT_DIR "..\cont"
+; Set default values for undefined vars
+!ifndef CONTENT_DIR
+	!define CONTENT_DIR "..\cont"
+!endif
+${!defineifdirexists} CONTENT_DIR_EXISTS "${CONTENT_DIR}"
+!ifndef CONTENT_DIR_EXISTS
+	!error "Could not find the content dir at '${CONTENT_DIR}', try setting CONTENT_DIR manually."
+	!undef CONTENT_DIR_EXISTS
+!endif
+${!echonow} "Using CONTENT_DIR:   ${CONTENT_DIR}"
+!ifndef DOC_DIR
+	!define DOC_DIR "..\doc"
+!endif
+${!defineifdirexists} DOC_DIR_EXISTS "${DOC_DIR}"
+!ifndef DOC_DIR_EXISTS
+	!error "Could not find the documentation dir at '${DOC_DIR}', try setting DOC_DIR manually."
+	!undef DOC_DIR_EXISTS
+!endif
+${!echonow} "Using DOC_DIR:       ${DOC_DIR}"
+!ifndef MINGWLIBS_DIR
+	!define MINGWLIBS_DIR "..\mingwlibs"
+!endif
+${!defineifdirexists} MINGWLIBS_DIR_EXISTS "${MINGWLIBS_DIR}"
+!ifndef MINGWLIBS_DIR_EXISTS
+	!error "Could not find the MinGW libraries dir at '${MINGWLIBS_DIR}', try setting MINGWLIBS_DIR manually."
+	!undef MINGWLIBS_DIR_EXISTS
+!endif
+${!echonow} "Using MINGWLIBS_DIR: ${MINGWLIBS_DIR}"
+!ifndef BUILD_DIR
+	!ifndef DIST_DIR
+		!error "Neither BUILD_DIR nor DIST_DIR are defined. Define only one of the two, depending on whether you want to generate the installer from the install- or the build-directory."
 	!endif
-	${!defineifdirexists} CONTENT_DIR_EXISTS "${CONTENT_DIR}"
-	!ifndef CONTENT_DIR_EXISTS
-		!error "Could not find the content dir at '${CONTENT_DIR}', try setting CONTENT_DIR manually."
-		!undef CONTENT_DIR_EXISTS
+	${!defineifdirexists} DIST_DIR_EXISTS "${DIST_DIR}"
+	!ifndef DIST_DIR_EXISTS
+		!error "Could not find the distribution dir at '${DIST_DIR}'. Make sure you defined DIST_DIR correctly."
+		!undef DIST_DIR_EXISTS
 	!endif
-	${!echonow} "Using CONTENT_DIR:   ${CONTENT_DIR}"
-
-	!ifndef DOC_DIR
-		!define DOC_DIR "..\doc"
+	${!echonow} "Using DIST_DIR:      ${DIST_DIR}"
+	!define BUILD_OR_DIST_DIR "${DIST_DIR}"
+!endif
+!ifdef BUILD_DIR
+	!ifdef DIST_DIR
+		!error "Both BUILD_DIR and DIST_DIR are defined. Define only one of the two, depending on whether you want to generate the installer from the install- or the build-directory."
 	!endif
-	${!defineifdirexists} DOC_DIR_EXISTS "${DOC_DIR}"
-	!ifndef DOC_DIR_EXISTS
-		!error "Could not find the documentation dir at '${DOC_DIR}', try setting DOC_DIR manually."
-		!undef DOC_DIR_EXISTS
+	${!defineifdirexists} BUILD_DIR_EXISTS "${BUILD_DIR}"
+	!ifndef BUILD_DIR_EXISTS
+		!error "Could not find the build dir at '${BUILD_DIR}'. Make sure you defined BUILD_DIR correctly."
+		!undef BUILD_DIR_EXISTS
 	!endif
-	${!echonow} "Using DOC_DIR:       ${DOC_DIR}"
-
-	!ifndef MINGWLIBS_DIR
-		!define MINGWLIBS_DIR "..\mingwlibs"
-	!endif
-	${!defineifdirexists} MINGWLIBS_DIR_EXISTS "${MINGWLIBS_DIR}"
-	!ifndef MINGWLIBS_DIR_EXISTS
-		!error "Could not find the MinGW libraries dir at '${MINGWLIBS_DIR}', try setting MINGWLIBS_DIR manually."
-		!undef MINGWLIBS_DIR_EXISTS
-	!endif
-	${!echonow} "Using MINGWLIBS_DIR: ${MINGWLIBS_DIR}"
-
-	!ifndef BUILD_DIR
-		!ifndef DIST_DIR
-			!error "Neither BUILD_DIR nor DIST_DIR are defined. Define only one of the two, depending on whether you want to generate the installer from the install- or the build-directory."
-		!endif
-		${!defineifdirexists} DIST_DIR_EXISTS "${DIST_DIR}"
-		!ifndef DIST_DIR_EXISTS
-			!error "Could not find the distribution dir at '${DIST_DIR}'. Make sure you defined DIST_DIR correctly."
-			!undef DIST_DIR_EXISTS
-		!endif
-		${!echonow} "Using DIST_DIR:      ${DIST_DIR}"
-		!define BUILD_OR_DIST_DIR "${DIST_DIR}"
-	!endif
-	!ifdef BUILD_DIR
-		!ifdef DIST_DIR
-			!error "Both BUILD_DIR and DIST_DIR are defined. Define only one of the two, depending on whether you want to generate the installer from the install- or the build-directory."
-		!endif
-		${!defineifdirexists} BUILD_DIR_EXISTS "${BUILD_DIR}"
-		!ifndef BUILD_DIR_EXISTS
-			!error "Could not find the build dir at '${BUILD_DIR}'. Make sure you defined BUILD_DIR correctly."
-			!undef BUILD_DIR_EXISTS
-		!endif
-		${!echonow} "Using BUILD_DIR:     ${BUILD_DIR}"
-		; This allows us to easily use build products from an out of source build,
-		; without the need to run 'make install'
-		!define USE_BUILD_DIR
-		!define BUILD_OR_DIST_DIR "${BUILD_DIR}"
-	!endif
-
-	${!echonow} ""
-
-	!ifndef TEST_BUILD
-		IfSilent skiprunchecks ; don't check for running apps, the calling app has to do it
-		; check if we need to exit some processes which may be using unitsync
-		${CheckExecutableRunning} "TASClient.exe" "TASClient"
-		${CheckExecutableRunning} "springlobby.exe" "Spring Lobby"
-		${CheckExecutableRunning} "Zero-K.exe" "Zero-K Lobby"
-		${CheckExecutableRunning} "CADownloader.exe" "CA Downloader"
-		${CheckExecutableRunning} "springsettings.exe" "Spring Settings"
-		skiprunchecks:
-	!endif
-
-	; The core cannot be deselected
-	${IfNot} ${FileExists} "$INSTDIR\spring.exe"
-		!insertmacro SetSectionFlag 0 16 ; make the core section read only
-	${EndIf}
-FunctionEnd
-
+	${!echonow} "Using BUILD_DIR:     ${BUILD_DIR}"
+	; This allows us to easily use build products from an out of source build,
+	; without the need to run 'make install'
+	!define USE_BUILD_DIR
+	!define BUILD_OR_DIST_DIR "${BUILD_DIR}"
+!endif
 
 SectionGroup /e "!Engine"
 	Section "Main application (req)" SEC_MAIN
@@ -296,6 +273,24 @@ Section -Post
 	WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
 SectionEnd
 
+Function .onInit
+	${!echonow} ""
+	IfSilent skiprunchecks ; don't check for running apps, the calling app has to do it
+	; check if we need to exit some processes which may be using unitsync
+	${CheckExecutableRunning} "TASClient.exe" "TASClient"
+	${CheckExecutableRunning} "springlobby.exe" "Spring Lobby"
+	${CheckExecutableRunning} "Zero-K.exe" "Zero-K Lobby"
+	${CheckExecutableRunning} "CADownloader.exe" "CA Downloader"
+	${CheckExecutableRunning} "springsettings.exe" "Spring Settings"
+	skiprunchecks:
+
+	; The core cannot be deselected
+	IntOp $0 ${SEC_MAIN} | ${SF_RO}
+	SectionSetFlags ${SEC_MAIN} $0 ; make the core section read only
+
+	; enable/disable sections depending on parameters
+	!include "sections/SetupSections.nsh"
+FunctionEnd
 
 Function un.onUninstSuccess
 	IfSilent +3
