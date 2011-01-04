@@ -45,12 +45,16 @@ private:
 	float3 RandomVertexPos();
 
 public:
-	int flags;
-	int dispList;
+	unsigned int flags;
+	unsigned int dispList;
+	unsigned int cegID;
+
 	const S3DModelPiece* omp;
+
 	float3 spinVec;
 	float spinSpeed;
 	float spinAngle;
+
 	float alphaThreshold;
 
 	float3 oldSmoke, oldSmokeDir;
@@ -59,13 +63,12 @@ public:
 	int* numCallback;
 	int age;
 
-	CCustomExplosionGenerator ceg;
-
 	struct OldInfo {
 		float3 pos;
 		float size;
 	};
 	OldInfo* oldInfos[8];
+
 	int colorTeam;
 };
 

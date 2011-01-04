@@ -47,9 +47,7 @@ CFlameProjectile::CFlameProjectile(
 		physLife = 1.0f / weaponDef->duration;
 	}
 
-	if (!cegTag.empty()) {
-		ceg.Load(explGenHandler, cegTag);
-	}
+	cegID = gCEG->Load(explGenHandler, cegTag);
 }
 
 CFlameProjectile::~CFlameProjectile()
@@ -95,9 +93,7 @@ void CFlameProjectile::Update()
 		deleteMe = true;
 	}
 
-	if (!cegTag.empty()) {
-		ceg.Explosion(pos, curTime, intensity, NULL, 0.0f, NULL, speed);
-	}
+	gCEG->Explosion(cegID, pos, curTime, intensity, NULL, 0.0f, NULL, speed);
 }
 
 void CFlameProjectile::Draw()

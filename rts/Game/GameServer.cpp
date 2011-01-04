@@ -85,8 +85,8 @@ const std::string commands[numCommands] = {
 	"kick", "kickbynum", "setminspeed", "setmaxspeed",
 	"nopause", "nohelp", "cheat", "godmode", "globallos",
 	"nocost", "forcestart", "nospectatorchat", "nospecdraw",
-	"skip", "reloadcob", "devlua", "editdefs", "luagaia",
-	"singlestep"
+	"skip", "reloadcob", "reloadcegs", "devlua", "editdefs",
+	"luagaia", "singlestep"
 };
 using boost::format;
 

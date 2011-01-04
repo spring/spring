@@ -70,9 +70,7 @@ CLaserProjectile::CLaserProjectile(
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
 
-	if (!cegTag.empty()) {
-		ceg.Load(explGenHandler, cegTag);
-	}
+	cegID = gCEG->Load(explGenHandler, cegTag);
 }
 
 CLaserProjectile::~CLaserProjectile()
@@ -104,9 +102,7 @@ void CLaserProjectile::Update()
 
 
 	if (--ttl > 0 && checkCol) {
-		if (!cegTag.empty()) {
-			ceg.Explosion(pos, ttl, intensity, NULL, 0.0f, NULL, speed);
-		}
+		gCEG->Explosion(cegID, pos, ttl, intensity, NULL, 0.0f, NULL, speed);
 	}
 
 	if (weaponDef->visuals.hardStop) {
