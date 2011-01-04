@@ -155,13 +155,14 @@ Function .onInit
 	${!echonow} ""
 
 	!ifndef TEST_BUILD
+		IfSilent skiprunchecks ; don't check for running apps, the calling app has to do it
 		; check if we need to exit some processes which may be using unitsync
 		${CheckExecutableRunning} "TASClient.exe" "TASClient"
 		${CheckExecutableRunning} "springlobby.exe" "Spring Lobby"
-		IfSilent +2 ; Zero-K installs this silent, so don't check
 		${CheckExecutableRunning} "Zero-K.exe" "Zero-K Lobby"
 		${CheckExecutableRunning} "CADownloader.exe" "CA Downloader"
 		${CheckExecutableRunning} "springsettings.exe" "Spring Settings"
+		skiprunchecks:
 	!endif
 
 	; The core cannot be deselected
