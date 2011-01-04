@@ -70,9 +70,7 @@ CTorpedoProjectile::CTorpedoProjectile(
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
 
-	if (!cegTag.empty()) {
-		ceg.Load(explGenHandler, cegTag);
-	}
+	cegID = gCEG->Load(explGenHandler, cegTag);
 }
 
 CTorpedoProjectile::~CTorpedoProjectile()
@@ -155,9 +153,7 @@ void CTorpedoProjectile::Update()
 				speed = dir * curSpeed;
 			}
 
-			if (!cegTag.empty()) {
-				ceg.Explosion(pos, ttl, areaOfEffect, NULL, 0.0f, NULL, speed);
-			}
+			gCEG->Explosion(cegID, pos, ttl, areaOfEffect, NULL, 0.0f, NULL, speed);
 		} else {
 			if (!luaMoveCtrl) {
 				speed *= 0.98f;

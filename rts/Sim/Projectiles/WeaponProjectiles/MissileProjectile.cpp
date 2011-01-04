@@ -131,9 +131,7 @@ CMissileProjectile::CMissileProjectile(
 	}
 
 
-	if (!cegTag.empty()) {
-		ceg.Load(explGenHandler, cegTag);
-	}
+	cegID = gCEG->Load(explGenHandler, cegTag);
 }
 
 CMissileProjectile::~CMissileProjectile()
@@ -277,9 +275,7 @@ void CMissileProjectile::Update()
 			speed = dir * curSpeed;
 		}
 
-		if (!cegTag.empty()) {
-			ceg.Explosion(pos, ttl, areaOfEffect, NULL, 0.0f, NULL, dir);
-		}
+		gCEG->Explosion(cegID, pos, ttl, areaOfEffect, NULL, 0.0f, NULL, dir);
 	} else {
 		if (weaponDef->selfExplode) {
 			Collision();

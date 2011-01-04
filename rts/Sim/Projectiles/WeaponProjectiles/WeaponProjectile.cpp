@@ -39,8 +39,8 @@ CR_REG_METADATA(CWeaponProjectile,(
 	CR_MEMBER(ttl),
 	CR_MEMBER(bounces),
 	CR_MEMBER(keepBouncing),
-	CR_MEMBER(ceg),
 	CR_MEMBER(cegTag),
+	CR_MEMBER(cegID),
 	CR_MEMBER(interceptTarget),
 	CR_MEMBER(id),
 	CR_RESERVED(15),
@@ -58,7 +58,7 @@ CWeaponProjectile::CWeaponProjectile(): CProjectile()
 	interceptTarget = 0;
 	bounces = 0;
 	keepBouncing = true;
-	cegTag = "";
+	cegID = -1U;
 }
 
 CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
@@ -72,6 +72,7 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 	target(target),
 	targetPos(targetPos),
 	cegTag(weaponDef? weaponDef->cegTag: std::string("")),
+	cegID(-1U),
 	colorTeam(0),
 	startpos(pos),
 	ttl(ttl),
@@ -108,9 +109,7 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 	ph->AddProjectile(this);
 }
 
-CWeaponProjectile::~CWeaponProjectile()
-{
-}
+
 
 void CWeaponProjectile::Collision()
 {
@@ -255,17 +254,18 @@ void CWeaponProjectile::UpdateGroundBounce()
 				//Collision();
 				keepBouncing = false;
 			} else {
-				float3 tempPos = pos;
 				const float3& normal = ground->GetNormal(pos.x, pos.z);
+				const float dot = speed.dot(normal);
+
 				pos -= speed;
-				float dot = speed.dot(normal);
-				speed -= (speed + normal*fabs(dot))*(1 - weaponDef->bounceSlip);
-				speed += (normal*(fabs(dot)))*(1 + weaponDef->bounceRebound);
+				speed -= (speed + normal * fabs(dot)) * (1 - weaponDef->bounceSlip);
+				speed += (normal * (fabs(dot))) * (1 + weaponDef->bounceRebound);
 				pos += speed;
 
 				if (weaponDef->bounceExplosionGenerator) {
-					weaponDef->bounceExplosionGenerator->Explosion(pos,
-							speed.Length(), 1, owner(), 1, NULL, normal);
+					weaponDef->bounceExplosionGenerator->Explosion(
+						-1U, pos, speed.Length(), 1, owner(), 1, NULL, normal
+					);
 				}
 			}
 		}

@@ -44,9 +44,7 @@ CFireBallProjectile::CFireBallProjectile(
 		drawRadius = weaponDef->size;
 	}
 
-	if (!cegTag.empty()) {
-		ceg.Load(explGenHandler, cegTag);
-	}
+	cegID = gCEG->Load(explGenHandler, cegTag);
 }
 
 CFireBallProjectile::~CFireBallProjectile()
@@ -134,10 +132,7 @@ void CFireBallProjectile::Update()
 		sparks[i].speed *= 0.95f;
 	}
 
-	if (!cegTag.empty()) {
-		ceg.Explosion(pos, ttl, (sparks.size() > 0) ? sparks[0].size : 0.0f, NULL, 0.0f, NULL, speed);
-	}
-
+	gCEG->Explosion(cegID, pos, ttl, (sparks.size() > 0) ? sparks[0].size : 0.0f, NULL, 0.0f, NULL, speed);
 	UpdateGroundBounce();
 }
 

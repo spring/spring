@@ -40,7 +40,7 @@ class GameSkirmishAI;
  * this value is used as the sending player-number.
  */
 const unsigned SERVER_PLAYER = 255;
-const unsigned numCommands = 19;
+const unsigned numCommands = 20;
 extern const std::string commands[numCommands];
 
 class GameTeam : public TeamBase

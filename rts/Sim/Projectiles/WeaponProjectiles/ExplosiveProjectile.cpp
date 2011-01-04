@@ -59,9 +59,7 @@ CExplosiveProjectile::CExplosiveProjectile(
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
 
-	if (!cegTag.empty()) {
-		ceg.Load(explGenHandler, cegTag);
-	}
+	cegID = gCEG->Load(explGenHandler, cegTag);
 }
 
 void CExplosiveProjectile::Update()
@@ -75,8 +73,8 @@ void CExplosiveProjectile::Update()
 	if (--ttl == 0) {
 		Collision();
 	} else {
-		if (!cegTag.empty() && ttl > 0) {
-			ceg.Explosion(pos, ttl, areaOfEffect, NULL, 0.0f, NULL, speed);
+		if (ttl > 0) {
+			gCEG->Explosion(cegID, pos, ttl, areaOfEffect, NULL, 0.0f, NULL, speed);
 		}
 	}
 

@@ -75,9 +75,7 @@ CBeamLaserProjectile::CBeamLaserProjectile(
 		midtexx = 0.0f;
 	}
 
-	if (!cegTag.empty()) {
-		ceg.Load(explGenHandler, cegTag);
-	}
+	cegID = gCEG->Load(explGenHandler, cegTag);
 }
 
 
@@ -95,9 +93,7 @@ void CBeamLaserProjectile::Update()
 			kocolend[i] = (kocolend[i] * decay);
 		}
 
-		if (!cegTag.empty()) {
-			ceg.Explosion(startPos + ((endPos - startPos) / ttl), 0.0f, flaresize, 0x0, 0.0f, 0x0, endPos - startPos);
-		}
+		gCEG->Explosion(cegID, startPos + ((endPos - startPos) / ttl), 0.0f, flaresize, 0x0, 0.0f, 0x0, endPos - startPos);
 	}
 }
 
