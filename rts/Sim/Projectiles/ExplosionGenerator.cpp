@@ -687,8 +687,8 @@ unsigned int CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, cons
 		}
 
 		cegData.useDefaultExplosions = expTable.GetBool("useDefaultExplosions", false);
-		explosionID = explosionData.size();
 
+		explosionID = explosionData.size();
 		explosionData.push_back(cegData);
 		explosionIDs[tag] = explosionID;
 	} else {
@@ -698,19 +698,62 @@ unsigned int CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, cons
 	return explosionID;
 }
 
-void CCustomExplosionGenerator::RefreshCache() {
-	std::map<std::string, unsigned int> oldExplosionIDs(explosionIDs);
-	std::map<std::string, unsigned int>::const_iterator it;
+void CCustomExplosionGenerator::RefreshCache(const std::string& tag) {
+	// re-parse the projectile and generator tables
+	delete explGenHandler; explGenHandler = new CExplosionGeneratorHandler();
 
-	ClearCache();
+	if (tag.empty()) {
+		std::map<std::string, unsigned int> oldExplosionIDs(explosionIDs);
+		std::map<std::string, unsigned int>::const_iterator it;
 
-	// reload all currently cached CEGs by tag
-	// (ID's of active CEGs will remain valid)
-	for (it = oldExplosionIDs.begin(); it != oldExplosionIDs.end(); ++it) {
-		const std::string& tag = it->first;
+		ClearCache();
 
-		logOutput.Print("reloading CEG \"%s\" (ID %u)", tag.c_str(), it->second);
-		Load(explGenHandler, tag);
+		// reload all currently cached CEGs by tag
+		// (ID's of active CEGs will remain valid)
+		for (it = oldExplosionIDs.begin(); it != oldExplosionIDs.end(); ++it) {
+			const std::string& tmpTag = it->first;
+
+			logOutput.Print("[%s] reloading CEG \"%s\" (ID %u)", __FUNCTION__, tmpTag.c_str(), it->second);
+			Load(explGenHandler, tmpTag);
+		}
+	} else {
+		// reload a single CEG
+		const std::map<std::string, unsigned int>::const_iterator it = explosionIDs.find(tag);
+
+		if (it == explosionIDs.end()) {
+			logOutput.Print("[%s] unknown CEG-tag \"%s\"", __FUNCTION__, tag.c_str());
+			return;
+		}
+
+		const unsigned int numCEGs = explosionData.size();
+		const unsigned int cegIndex = it->second;
+
+		CEGData oldCEG = explosionData[cegIndex];
+		CEGData tmpCEG = explosionData[numCEGs - 1];
+
+		// get rid of the old data
+		explosionIDs.erase(tag);
+		explosionData[cegIndex] = tmpCEG;
+		explosionData.pop_back();
+
+		logOutput.Print("[%s] reloading single CEG \"%s\" (ID %u)", __FUNCTION__, tag.c_str(), cegIndex);
+
+		if (Load(explGenHandler, tag) == -1U) {
+			logOutput.Print("[%s] failed to reload single CEG \"%s\" (ID %u)", __FUNCTION__, tag.c_str(), cegIndex);
+
+			// reload failed, keep the old CEG
+			explosionIDs[tag] = cegIndex;
+
+			explosionData[cegIndex] = oldCEG;
+			explosionData.push_back(tmpCEG);
+			return;
+		}
+
+		// re-map the old ID to the new data
+		explosionIDs[tag] = cegIndex;
+
+		explosionData[cegIndex] = explosionData[numCEGs - 1];
+		explosionData[numCEGs - 1] = tmpCEG;
 	}
 }
 

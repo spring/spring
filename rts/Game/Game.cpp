@@ -2217,8 +2217,8 @@ void CGame::ReloadCOB(const string& msg, int player)
 	logOutput.Print("Reloaded cob script for %i units", count);
 }
 
-void CGame::ReloadCEGs() {
-	gCEG->RefreshCache();
+void CGame::ReloadCEGs(const std::string& tag) {
+	gCEG->RefreshCache(tag);
 }
 
 
