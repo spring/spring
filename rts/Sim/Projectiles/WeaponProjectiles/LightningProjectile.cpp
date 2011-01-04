@@ -62,9 +62,7 @@ CLightningProjectile::CLightningProjectile(
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << end.x << " " << end.y << " " << end.z << "\n";
 #endif
 
-	if (!cegTag.empty()) {
-		ceg.Load(explGenHandler, cegTag);
-	}
+	cegID = gCEG->Load(explGenHandler, cegTag);
 }
 
 CLightningProjectile::~CLightningProjectile()
@@ -76,9 +74,7 @@ void CLightningProjectile::Update()
 	if (--ttl <= 0) {
 		deleteMe = true;
 	} else {
-		if (!cegTag.empty()) {
-			ceg.Explosion(pos + ((endPos - pos) / ttl), 0.0f, displacements[0], NULL, 0.0f, NULL, endPos - pos);
-		}
+		gCEG->Explosion(cegID, pos + ((endPos - pos) / ttl), 0.0f, displacements[0], NULL, 0.0f, NULL, endPos - pos);
 	}
 
 	if (weapon && !luaMoveCtrl) {

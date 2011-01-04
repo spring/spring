@@ -36,6 +36,7 @@ CR_REG_METADATA(CPieceProjectile,(
 	CR_SERIALIZER(creg_Serialize), // numCallback, oldInfos
 	CR_MEMBER(flags),
 	CR_MEMBER(dispList),
+	CR_MEMBER(cegID),
 	// NOTE: what about this?
 	// CR_MEMBER(omp),
 	CR_MEMBER(spinVec),
@@ -49,7 +50,6 @@ CR_REG_METADATA(CPieceProjectile,(
 	CR_MEMBER(curCallback),
 	CR_MEMBER(age),
 	CR_MEMBER(colorTeam),
-	CR_MEMBER(ceg),
 	CR_RESERVED(36)
 	));
 
@@ -81,16 +81,13 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 		// (assumes all possible "tag + k" CEG identifiers are valid)
 		// if this piece does not override the FBI and wants a trail
 		if ((flags & PF_NoCEGTrail) == 0) {
-			const int size = owner->unitDef->pieceTrailCEGTag.size();
-			const int range = owner->unitDef->pieceTrailCEGRange;
-			const int num = gs->randInt() % range;
-			const char* tag = owner->unitDef->pieceTrailCEGTag.c_str();
+			if (!owner->unitDef->pieceTrailCEGTag.empty()) {
+				std::stringstream cegTagStr;
 
-			if (size > 0) {
-				char cegTag[1024];
-				SNPRINTF(cegTag, sizeof(cegTag) - 1, "%s%d", tag, num);
-				cegTag[1023] = 0;
-				ceg.Load(explGenHandler, cegTag);
+				cegTagStr << (owner->unitDef->pieceTrailCEGTag);
+				cegTagStr << (gs->randInt() % owner->unitDef->pieceTrailCEGRange);
+
+				cegID = gCEG->Load(explGenHandler, cegTagStr.str());
 			} else {
 				flags |= PF_NoCEGTrail;
 			}
@@ -300,7 +297,7 @@ void CPieceProjectile::Update()
 		}
 	} else {
 		// TODO: pass a more sensible ttl to the CEG (age-related?)
-		ceg.Explosion(pos, 100, 0.0f, 0x0, 0.0f, 0x0, speed);
+		gCEG->Explosion(cegID, pos, 100, 0.0f, 0x0, 0.0f, 0x0, speed);
 	}
 
 	if (age > 10) {

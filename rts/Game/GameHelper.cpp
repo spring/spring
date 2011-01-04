@@ -291,7 +291,7 @@ void CGameHelper::Explosion(
 		if (!explosionGraphics) {
 			explosionGraphics = stdExplosionGenerator;
 		}
-		explosionGraphics->Explosion(expPos, damages[0], expRad, owner, gfxMod, hitUnit, impactDir);
+		explosionGraphics->Explosion(-1U, expPos, damages[0], expRad, owner, gfxMod, hitUnit, impactDir);
 	}
 
 	groundDecals->AddExplosion(expPos, damages[0], expRad);

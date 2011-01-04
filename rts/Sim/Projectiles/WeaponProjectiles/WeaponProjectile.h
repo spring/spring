@@ -35,7 +35,7 @@ public:
 	CWeaponProjectile(const float3& pos, const float3& speed, CUnit* owner,
 			CUnit* target, const float3& targetPos, const WeaponDef* weaponDef,
 			CWeaponProjectile* interceptTarget, int ttl);
-	virtual ~CWeaponProjectile();
+	virtual ~CWeaponProjectile() {}
 
 	virtual void Collision();
 	virtual void Collision(CFeature* feature);
@@ -53,8 +53,8 @@ public:
 	CUnit* target;
 	float3 targetPos;
 
-	CCustomExplosionGenerator ceg;
 	std::string cegTag;
+	unsigned int cegID;
 
 	int colorTeam;
 
