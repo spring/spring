@@ -161,7 +161,7 @@ public:
 		explosionIDs.clear();
 		explosionData.clear();
 	}
-	void RefreshCache();
+	void RefreshCache(const std::string&);
 
 	static void OutputProjectileClassInfo();
 
