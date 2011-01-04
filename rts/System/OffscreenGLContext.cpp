@@ -94,7 +94,13 @@ COffscreenGLContext::COffscreenGLContext()
 	
 
 	//! Get PixelFormat
-	int attributeList[] = { AGL_ACCELERATED, AGL_RGBA, AGL_NONE };
+	int attributeList[] = {
+		AGL_ACCELERATED,
+		AGL_RGBA,
+		//AGL_OFFSCREEN,
+		//AGL_DISPLAY_MASK, 1 //FIXME: detect SDL Window's CGOpenGLDisplayMask
+		AGL_NONE
+	};
 	pxlfmt = aglChoosePixelFormat(NULL, 0, attributeList);
 	if (!pxlfmt)
 		throw opengl_error("Couldn't create an offscreen GL context: aglChoosePixelFmt failed!");
