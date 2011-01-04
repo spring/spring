@@ -33,27 +33,19 @@
 #include "System/creg/VarTypes.h"
 #include "System/FileSystem/FileHandler.h"
 
-using std::min;
-using std::max;
-
-CExplosionGeneratorHandler* explGenHandler = NULL;
-
 CR_BIND_DERIVED_INTERFACE(CExpGenSpawnable, CWorldObject);
 CR_REG_METADATA(CExpGenSpawnable, );
+
+CR_BIND_INTERFACE(CExplosionGenerator);
+CR_BIND_DERIVED(CStdExplosionGenerator, CExplosionGenerator, );
+CR_BIND_DERIVED(CCustomExplosionGenerator, CStdExplosionGenerator, );
+
+CExplosionGeneratorHandler* explGenHandler = NULL;
+CCustomExplosionGenerator* gCEG = NULL;
 
 CExpGenSpawnable::CExpGenSpawnable(): CWorldObject() { GML_EXPGEN_CHECK() }
 CExpGenSpawnable::CExpGenSpawnable(const float3& pos): CWorldObject(pos) { GML_EXPGEN_CHECK() }
 
-
-
-// -------------------------------------------------------------------------------
-// ClassAliasList: Finds C++ classes with class aliases
-// -------------------------------------------------------------------------------
-
-
-ClassAliasList::ClassAliasList()
-{
-}
 
 
 void ClassAliasList::Load(const LuaTable& aliasTable)
@@ -62,7 +54,6 @@ void ClassAliasList::Load(const LuaTable& aliasTable)
 	aliasTable.GetMap(aliasList);
 	aliases.insert(aliasList.begin(), aliasList.end());
 }
-
 
 creg::Class* ClassAliasList::GetClass(const string& name)
 {
@@ -90,13 +81,12 @@ string ClassAliasList::FindAlias(const string& className)
 }
 
 
-// -------------------------------------------------------------------------------
-// Explosion generator handler: loads and stores a list of explosion generators
-// -------------------------------------------------------------------------------
+
+
+
 
 CExplosionGeneratorHandler::CExplosionGeneratorHandler()
-: luaParser("gamedata/explosions.lua",
-	          SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP)
+: luaParser("gamedata/explosions.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP)
 
 {
 	LuaParser aliasParser("gamedata/explosion_alias.lua",
@@ -142,51 +132,22 @@ CExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag
 }
 
 
-// -------------------------------------------------------------------------------
-// Base explosion generator class
-// -------------------------------------------------------------------------------
-
-CR_BIND_INTERFACE(CExplosionGenerator);
 
 
-CExplosionGenerator::CExplosionGenerator()
-{
-}
 
 
-CExplosionGenerator::~CExplosionGenerator()
-{
-}
-
-
-// -------------------------------------------------------------------------------
-// Default explosion generator: everything is calculated from damage and radius
-// -------------------------------------------------------------------------------
-
-CR_BIND_DERIVED(CStdExplosionGenerator, CExplosionGenerator, );
-
-
-CStdExplosionGenerator::CStdExplosionGenerator()
-{
-}
-
-
-CStdExplosionGenerator::~CStdExplosionGenerator()
-{
-}
-
-
-void CStdExplosionGenerator::Load(CExplosionGeneratorHandler *h, const string& tag)
-{
-}
-
-
-void CStdExplosionGenerator::Explosion(const float3 &pos, float damage,
-                                       float radius, CUnit *owner,float gfxMod,
-                                       CUnit *hit, const float3 &dir)
-{
+bool CStdExplosionGenerator::Explosion(
+	unsigned int explosionID,
+	const float3& pos,
+	float damage,
+	float radius,
+	CUnit* owner,
+	float gfxMod,
+	CUnit* hit,
+	const float3 &dir
+) {
 	const float h2 = ground->GetHeightReal(pos.x, pos.z);
-	const float height = max(0.0f, pos.y - h2);
+	const float height = std::max(0.0f, pos.y - h2);
 
 	const bool waterExplosion = (h2 < -3.0f);
 	const bool uwExplosion = (pos.y < -15.0f);
@@ -213,7 +174,7 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage,
 	new CHeatCloudProjectile(npos, float3(0.0f, 0.3f, 0.0f), 8 + sqrt(damage) * 0.5f, 7 + damage * 2.8f, owner);
 
 	if (ph->particleSaturation < 1.0f) {
-		const bool airExplosion = (pos.y - max(0.0f, h2) > 20.0f);
+		const bool airExplosion = (pos.y - std::max(0.0f, h2) > 20.0f);
 
 		// turn off lots of graphic only particles when we have more particles than we want
 		float smokeDamage = damage;
@@ -249,7 +210,7 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage,
 		}
 
 		if (!airExplosion && !uwExplosion && !waterExplosion) {
-			const int numDirt = (int) min(20.0f, damage * 0.8f);
+			const int numDirt = std::min(20.0f, damage * 0.8f);
 			const float3 color(0.15f, 0.1f, 0.05f);
 
 			for (int a = 0; a < numDirt; ++a) {
@@ -258,7 +219,7 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage,
 					 1.7f + gu->usRandFloat()  * 1.6f,
 					(0.5f - gu->usRandFloat()) * 1.5f
 				);
-				speed *= (0.7f + min(30.0f, damage) / 30.0f);
+				speed *= (0.7f + std::min(30.0f, damage) / 30.0f);
 
 				const float3 npos(
 					pos.x - (0.5f - gu->usRandFloat()) * (radius * 0.6f),
@@ -270,11 +231,11 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage,
 			}
 		}
 		if (!airExplosion && !uwExplosion && waterExplosion) {
-			int numDirt = (int) min(40.f, damage*0.8f);
+			int numDirt = std::min(40.f, damage*0.8f);
 			float3 color(1.0f, 1.0f, 1.0f);
 			for (int a = 0; a < numDirt; ++a) {
 				float3 speed((0.5f - gu->usRandFloat()) * 0.2f, a * 0.1f + gu->usRandFloat()*0.8f, (0.5f - gu->usRandFloat()) * 0.2f);
-				speed *= 0.7f + min((float)30, damage) / 30;
+				speed *= 0.7f + std::min((float)30, damage) / 30;
 				float3 npos(pos.x-(0.5f-gu->usRandFloat())*(radius*0.2f),pos.y-2.0f-sqrt(damage)*2.0f,pos.z-(0.5f-gu->usRandFloat())*(radius*0.2f));
 				new CDirtProjectile(npos, speed, 90 + damage*2, 2.0f + sqrt(damage)*2.0f, 0.3f, 0.99f, owner, color);
 			}
@@ -291,7 +252,7 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage,
 				} else {
 					speed = float3(gu->usRandVector() * 2);
 				}
-				speed *= 0.7f + min(30.0f, damage) / 23;
+				speed *= 0.7f + std::min(30.0f, damage) / 23;
 				float3 npos(pos.x - (0.5f - gu->usRandFloat()) * (radius * 1), pos.y, pos.z - (0.5f - gu->usRandFloat()) * (radius * 1));
 				new CWreckProjectile(npos, speed, 90 + damage*2, owner);
 			}
@@ -342,74 +303,31 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage,
 	}
 
 	if (radius > 20 && damage > 6 && height < radius * 0.7f) {
-		float modSize = max(radius, damage * 2);
+		float modSize = std::max(radius, damage * 2);
 		float circleAlpha = 0;
 		float circleGrowth = 0;
 		float ttl = 8 + sqrt(damage)*0.8f;
 		if (radius > 40 && damage > 12) {
-			circleAlpha = min(0.5f, damage*0.01f);
+			circleAlpha = std::min(0.5f, damage * 0.01f);
 			circleGrowth = (8 + damage*2.5f) / (9 + sqrt(damage)*0.7f) * 0.55f;
 		}
 		float flashSize = modSize;
-		float flashAlpha = min(0.8f, damage*0.01f);
+		float flashAlpha = std::min(0.8f, damage * 0.01f);
 		new CStandardGroundFlash(pos, circleAlpha, flashAlpha, flashSize, circleGrowth, ttl);
 	}
 
 	if (radius > 40 && damage > 12) {
 		CSpherePartProjectile::CreateSphere(pos,
-				min(0.7f, damage*0.02f),
+				std::min(0.7f, damage * 0.02f),
 				5 + (int) (sqrt(damage) * 0.7f),
 				(8 + damage*2.5f) / (9 + sqrt(damage)*0.7f) * 0.5f,
 				owner);
 	}
-}
 
-// -------------------------------------------------------------------------------
-// CCustomExplosionGenerator: Uses explosion info from a TDF file
-// -------------------------------------------------------------------------------
-
-CR_BIND_DERIVED(CCustomExplosionGenerator, CStdExplosionGenerator, );
-
-enum
-{
-	SPW_WATER = 1,
-	SPW_GROUND = 2,
-	SPW_AIR = 4,
-	SPW_UNDERWATER = 8,
-	SPW_UNIT = 16,    // only execute when the explosion hits a unit
-	SPW_NO_UNIT = 32, // only execute when the explosion doesn't hit a unit (environment)
-	SPW_SYNCED = 64,  // spawn this projectile even if particleSaturation > 1
-};
-
-CCustomExplosionGenerator::CCustomExplosionGenerator()
-{
-	currentCEG = cachedCEGs.end();
-}
-
-CCustomExplosionGenerator::~CCustomExplosionGenerator()
-{
+	return true;
 }
 
 
-#define OP_END		 0
-#define OP_STOREI	 1 // int
-#define OP_STOREF	 2 // float
-#define OP_STOREC	 3 // char
-#define OP_ADD		 4
-#define OP_RAND		 5
-#define OP_DAMAGE	 6
-#define OP_INDEX	 7
-#define OP_LOADP	 8 // load a void* into the pointer register
-#define OP_STOREP	 9 // store the pointer register into a void*
-#define OP_DIR		10 // store the float3 direction
-#define OP_SAWTOOTH	11 // Performs a modulo to create a sawtooth wave
-#define OP_DISCRETE	12 // Floors the value to a multiple of its parameter
-#define OP_SINE		13 // Uses val as the phase of a sine wave
-#define OP_YANK     14 // Moves the input value into a buffer, returns zero
-#define OP_MULTIPLY 15 // Multiplies with buffer value
-#define OP_ADDBUFF  16 // Adds buffer value
-#define OP_POW      17 // Power with code as exponent
-#define OP_POWBUFF  18 // Power with buffer as exponent
 
 void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float damage, char* instance, int spawnIndex, const float3 &dir)
 {
@@ -680,25 +598,28 @@ static unsigned int GetFlagsFromTable(const LuaTable& table)
 {
 	unsigned int flags = 0;
 
-	if (table.GetBool("ground",     false)) { flags |= SPW_GROUND;     }
-	if (table.GetBool("water",      false)) { flags |= SPW_WATER;      }
-	if (table.GetBool("air",        false)) { flags |= SPW_AIR;        }
-	if (table.GetBool("underwater", false)) { flags |= SPW_UNDERWATER; }
-	if (table.GetBool("unit",       false)) { flags |= SPW_UNIT;       }
-	if (table.GetBool("nounit",     false)) { flags |= SPW_NO_UNIT;    }
+	if (table.GetBool("ground",     false)) { flags |= CCustomExplosionGenerator::SPW_GROUND;     }
+	if (table.GetBool("water",      false)) { flags |= CCustomExplosionGenerator::SPW_WATER;      }
+	if (table.GetBool("air",        false)) { flags |= CCustomExplosionGenerator::SPW_AIR;        }
+	if (table.GetBool("underwater", false)) { flags |= CCustomExplosionGenerator::SPW_UNDERWATER; }
+	if (table.GetBool("unit",       false)) { flags |= CCustomExplosionGenerator::SPW_UNIT;       }
+	if (table.GetBool("nounit",     false)) { flags |= CCustomExplosionGenerator::SPW_NO_UNIT;    }
 
 	return flags;
 }
 
 
-void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, const string& tag)
+unsigned int CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, const string& tag)
 {
-	typedef std::map<string, CEGData> CEGMap;
-	typedef std::map<string, CEGData>::iterator CEGMapIt;
+	unsigned int explosionID = -1U;
 
-	CEGMapIt it = cachedCEGs.find(tag);
+	if (tag.empty()) {
+		return explosionID;
+	}
 
-	if (it == cachedCEGs.end()) {
+	const std::map<std::string, unsigned int>::const_iterator it = explosionIDs.find(tag);
+
+	if (it == explosionIDs.end()) {
 		CEGData cegData;
 
 		const LuaTable& root = h->GetTable();
@@ -707,7 +628,7 @@ void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, const string
 		if (!expTable.IsValid()) {
 			// not a fatal error: any calls to ::Explosion will just return early
 			logOutput.Print("[CCEG::Load] WARNING: table for CEG \"" + tag + "\" invalid (parse errors?)");
-			return;
+			return explosionID;
 		}
 
 		vector<string> spawns;
@@ -766,34 +687,51 @@ void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, const string
 		}
 
 		cegData.useDefaultExplosions = expTable.GetBool("useDefaultExplosions", false);
-		it = cachedCEGs.insert(std::make_pair(tag, cegData)).first;
+
+		explosionData.push_back(cegData);
+		explosionIDs[tag] = explosionData.size() - 1;
+
+		explosionID = explosionData.size() - 1;
+	} else {
+		explosionID = it->second;
 	}
 
-	currentCEG = it;
+	return explosionID;
 }
 
 
-void CCustomExplosionGenerator::Explosion(const float3& pos, float damage, float radius, CUnit* owner, float gfxMod, CUnit* hit, const float3& dir)
-{
-	if (currentCEG == cachedCEGs.end()) {
-		// Explosion() called before Load()'ing a CEG (after
-		// constructing a CCustomExplosionGenerator object)
-		return;
+bool CCustomExplosionGenerator::Explosion(
+	unsigned int explosionID,
+	const float3& pos,
+	float damage,
+	float radius,
+	CUnit* owner,
+	float gfxMod,
+	CUnit* hit,
+	const float3& dir
+) {
+	if (explosionID == -1U || explosionID >= explosionData.size()) {
+		// invalid CEG ID
+		return false;
 	}
 
 	float h2 = ground->GetHeightReal(pos.x, pos.z);
 	unsigned int flags = 0;
 
-	if (pos.y - max(0.0f, h2) > 20) flags = SPW_AIR;
-	else if (h2 < -3)               flags = SPW_WATER;
-	else if (pos.y < -15)           flags = SPW_UNDERWATER;
-	else                            flags = SPW_GROUND;
+	if (pos.y - std::max(0.0f, h2) > 20.0f) flags = SPW_AIR;
+	else if (h2 < -3.0f)                    flags = SPW_WATER;
+	else if (pos.y < -15.0f)                flags = SPW_UNDERWATER;
+	else                                    flags = SPW_GROUND;
 
 	if (hit) flags |= SPW_UNIT;
 	else     flags |= SPW_NO_UNIT;
 
-	for (int a = 0; a < (currentCEG->second).projectileSpawn.size(); a++) {
-		ProjectileSpawnInfo& psi = (currentCEG->second).projectileSpawn[a];
+	const CEGData& cegData = explosionData[explosionID];
+	const std::vector<ProjectileSpawnInfo>& spawnInfo = cegData.projectileSpawn;
+	const GroundFlashInfo& groundFlash = cegData.groundFlash;
+
+	for (int a = 0; a < spawnInfo.size(); a++) {
+		const ProjectileSpawnInfo& psi = spawnInfo[a];
 
 		if (!(psi.flags & flags)) {
 			continue;
@@ -813,16 +751,16 @@ void CCustomExplosionGenerator::Explosion(const float3& pos, float damage, float
 		}
 	}
 
-	const GroundFlashInfo& groundFlash = (currentCEG->second).groundFlash;
-
-	if ((flags & SPW_GROUND) && groundFlash.ttl > 0) {
+	if ((flags & SPW_GROUND) && (groundFlash.ttl > 0)) {
 		new CStandardGroundFlash(pos, groundFlash.circleAlpha, groundFlash.flashAlpha,
 			groundFlash.flashSize, groundFlash.circleGrowth, groundFlash.ttl, groundFlash.color);
 	}
 
-	if ((currentCEG->second).useDefaultExplosions) {
-		CStdExplosionGenerator::Explosion(pos, damage, radius, owner, gfxMod, hit, dir);
+	if (cegData.useDefaultExplosions) {
+		return CStdExplosionGenerator::Explosion(-1U, pos, damage, radius, owner, gfxMod, hit, dir);
 	}
+
+	return true;
 }
 
 

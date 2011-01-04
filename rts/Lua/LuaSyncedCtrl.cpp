@@ -2569,13 +2569,13 @@ int LuaSyncedCtrl::SetProjectileCEG(lua_State* L)
 	if (proj->weapon) {
 		CWeaponProjectile* wproj = dynamic_cast<CWeaponProjectile*>(proj);
 		if (wproj != NULL) {
-			wproj->ceg.Load(explGenHandler, luaL_checkstring(L, 2));
+			wproj->cegID = gCEG->Load(explGenHandler, luaL_checkstring(L, 2));
 		}
 	}
 	if (proj->piece) {
 		CPieceProjectile* pproj = dynamic_cast<CPieceProjectile*>(proj);
 		if (pproj != NULL) {
-			pproj->ceg.Load(explGenHandler, luaL_checkstring(L, 2));
+			pproj->cegID = gCEG->Load(explGenHandler, luaL_checkstring(L, 2));
 		}
 	}
 
@@ -3317,15 +3317,12 @@ int LuaSyncedCtrl::SpawnCEG(lua_State* L)
 	const float rad = luaL_optfloat(L, 8, 0.0f);
 	const float dmg = luaL_optfloat(L, 9, 0.0f);
 	const float dmgMod = 1.0f;
-	if (name.empty()) {
-		return 0;
-	}
 
-	CCustomExplosionGenerator g;
-	g.Load(explGenHandler, name);
-	g.Explosion(pos, dmg, rad, 0x0, dmgMod, 0x0, dir);
+	const unsigned int cegID = gCEG->Load(explGenHandler, name);
+	const bool ret = gCEG->Explosion(cegID, pos, dmg, rad, NULL, dmgMod, NULL, dir);
 
-	return 0;
+	lua_pushboolean(L, ret);
+	return 1;
 }
 
 /******************************************************************************/

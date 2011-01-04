@@ -366,6 +366,7 @@ CGame::~CGame()
 	SafeDelete(weaponDefHandler);
 	SafeDelete(damageArrayHandler);
 	SafeDelete(explGenHandler);
+	SafeDelete(gCEG);
 	SafeDelete(helper);
 	SafeDelete((mapInfo = const_cast<CMapInfo*>(mapInfo)));
 
@@ -477,6 +478,7 @@ void CGame::LoadSimulation(const std::string& mapname)
 	qf = new CQuadField();
 	damageArrayHandler = new CDamageArrayHandler();
 	explGenHandler = new CExplosionGeneratorHandler();
+	gCEG = new CCustomExplosionGenerator();
 
 	{
 		//! FIXME: these five need to be loaded before featureHandler
@@ -2214,6 +2216,11 @@ void CGame::ReloadCOB(const string& msg, int player)
 	}
 	logOutput.Print("Reloaded cob script for %i units", count);
 }
+
+void CGame::ReloadCEGs() {
+	gCEG->ClearCache();
+}
+
 
 
 void CGame::SelectUnits(const string& line)

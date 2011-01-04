@@ -70,14 +70,9 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(
 		decay         = weaponDef->visuals.beamdecay;
 	}
 
-	if (!cegTag.empty()) {
-		ceg.Load(explGenHandler, cegTag);
-	}
+	cegID = gCEG->Load(explGenHandler, cegTag);
 }
 
-CLargeBeamLaserProjectile::~CLargeBeamLaserProjectile()
-{
-}
 
 
 void CLargeBeamLaserProjectile::Update()
@@ -89,9 +84,7 @@ void CLargeBeamLaserProjectile::Update()
 			kocolstart[i] = (unsigned char) (kocolstart[i] * decay);
 		}
 
-		if (!cegTag.empty()) {
-			ceg.Explosion(startPos + ((endPos - startPos) / ttl), 0.0f, flaresize, NULL, 0.0f, NULL, endPos - startPos);
-		}
+		gCEG->Explosion(cegID, startPos + ((endPos - startPos) / ttl), 0.0f, flaresize, NULL, 0.0f, NULL, endPos - startPos);
 	}
 	else {
 		deleteMe = true;

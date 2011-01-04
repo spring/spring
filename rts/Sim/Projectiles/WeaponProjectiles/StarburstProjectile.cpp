@@ -125,9 +125,7 @@ CStarburstProjectile::CStarburstProjectile(
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
 
-	if (!cegTag.empty()) {
-		ceg.Load(explGenHandler, cegTag);
-	}
+	cegID = gCEG->Load(explGenHandler, cegTag);
 }
 
 CStarburstProjectile::~CStarburstProjectile()
@@ -267,9 +265,7 @@ void CStarburstProjectile::Update()
 	}
 
 	if (ttl > 0) {
-		if (!cegTag.empty()) {
-			ceg.Explosion(pos, ttl, areaOfEffect, NULL, 0.0f, NULL, dir);
-		}
+		gCEG->Explosion(cegID, pos, ttl, areaOfEffect, NULL, 0.0f, NULL, dir);
 	}
 
 
