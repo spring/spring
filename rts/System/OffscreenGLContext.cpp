@@ -95,7 +95,7 @@ COffscreenGLContext::COffscreenGLContext()
 
 	//! Get PixelFormat
 	int attributeList[] = { AGL_ACCELERATED, AGL_RGBA, AGL_NONE };
-	pxlfmt = aglChoosePixelFmt(NULL, 0, attributeList);
+	pxlfmt = aglChoosePixelFormat(NULL, 0, attributeList);
 	if (!pxlfmt)
 		throw opengl_error("Couldn't create an offscreen GL context: aglChoosePixelFmt failed!");
 
