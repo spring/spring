@@ -687,16 +687,31 @@ unsigned int CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, cons
 		}
 
 		cegData.useDefaultExplosions = expTable.GetBool("useDefaultExplosions", false);
+		explosionID = explosionData.size();
 
 		explosionData.push_back(cegData);
-		explosionIDs[tag] = explosionData.size() - 1;
-
-		explosionID = explosionData.size() - 1;
+		explosionIDs[tag] = explosionID;
 	} else {
 		explosionID = it->second;
 	}
 
 	return explosionID;
+}
+
+void CCustomExplosionGenerator::RefreshCache() {
+	std::map<std::string, unsigned int> oldExplosionIDs(explosionIDs);
+	std::map<std::string, unsigned int>::const_iterator it;
+
+	ClearCache();
+
+	// reload all currently cached CEGs by tag
+	// (ID's of active CEGs will remain valid)
+	for (it = oldExplosionIDs.begin(); it != oldExplosionIDs.end(); ++it) {
+		const std::string& tag = it->first;
+
+		logOutput.Print("reloading CEG \"%s\" (ID %u)", tag.c_str(), it->second);
+		Load(explGenHandler, tag);
+	}
 }
 
 

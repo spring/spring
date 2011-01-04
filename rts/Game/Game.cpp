@@ -2218,7 +2218,7 @@ void CGame::ReloadCOB(const string& msg, int player)
 }
 
 void CGame::ReloadCEGs() {
-	gCEG->ClearCache();
+	gCEG->RefreshCache();
 }
 
 

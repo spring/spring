@@ -157,11 +157,12 @@ public:
 	CCustomExplosionGenerator() {}
 	~CCustomExplosionGenerator() { ClearCache(); }
 
-	/// NOTE: invalidates any still-alive projectiles with CEGs
 	void ClearCache() {
 		explosionIDs.clear();
 		explosionData.clear();
 	}
+	void RefreshCache();
+
 	static void OutputProjectileClassInfo();
 
 	/// @throws content_error/runtime_error on errors
