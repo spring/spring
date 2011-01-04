@@ -341,7 +341,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		ReloadCOB(action.extra, playernum);
 	}
 	else if (action.command == "reloadcegs" && gs->cheatEnabled) {
-		ReloadCEGs();
+		ReloadCEGs(action.extra);
 	}
 	else if (action.command == "devlua" && gs->cheatEnabled) {
 		bool devMode = CLuaHandle::GetDevMode();
