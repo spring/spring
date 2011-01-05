@@ -242,8 +242,9 @@ CGameServer::~CGameServer()
 #ifdef DEDICATED
 	// TODO: move this to a method in CTeamHandler
 	int numTeams = (int)setup->teamStartingData.size();
-	if (setup->useLuaGaia)
+	if (setup->useLuaGaia && (numTeams > 0)) {
 		--numTeams;
+	}
 	demoRecorder->SetTime(serverframenum / 30, spring_tomsecs(spring_gettime()-serverStartTime)/1000);
 	demoRecorder->InitializeStats(players.size(), numTeams);
 
