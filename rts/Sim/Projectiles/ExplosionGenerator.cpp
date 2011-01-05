@@ -10,8 +10,8 @@
 
 #include "ExplosionGenerator.h"
 #include "Game/Camera.h"
+#include "Lua/LuaParser.h"
 #include "Map/Ground.h"
-#include "ConfigHandler.h"
 #include "Rendering/GroundFlash.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/myGL.h"
@@ -27,6 +27,7 @@
 #include "Sim/Projectiles/Unsynced/WakeProjectile.h"
 #include "Sim/Projectiles/Unsynced/WreckProjectile.h"
 
+#include "System/ConfigHandler.h"
 #include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 #include "System/Exceptions.h"
@@ -59,13 +60,13 @@ creg::Class* ClassAliasList::GetClass(const string& name)
 {
 	string n = name;
 	for (;;) {
-		map<string,string>::iterator i = aliases.find(n);
+		map<string, string>::iterator i = aliases.find(n);
 		if (i == aliases.end()) {
 			break;
 		}
 		n = i->second;
 	}
-	creg::Class *cls = creg::System::GetClass(n);
+	creg::Class* cls = creg::System::GetClass(n);
 	if (!cls) {
 		throw content_error("Unknown class: " + name);
 	}
@@ -74,7 +75,7 @@ creg::Class* ClassAliasList::GetClass(const string& name)
 
 string ClassAliasList::FindAlias(const string& className)
 {
-	for (map<string,string>::iterator i = aliases.begin(); i != aliases.end(); ++i) {
+	for (map<string, string>::iterator i = aliases.begin(); i != aliases.end(); ++i) {
 		if (i->second == className) return i->first;
 	}
 	return className;
@@ -86,43 +87,66 @@ string ClassAliasList::FindAlias(const string& className)
 
 
 CExplosionGeneratorHandler::CExplosionGeneratorHandler()
-: luaParser("gamedata/explosions.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP)
-
 {
-	LuaParser aliasParser("gamedata/explosion_alias.lua",
-	                      SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	if (!aliasParser.Execute()) {
-		logOutput.Print(aliasParser.GetErrorLog());
-	} else {
-		const LuaTable root = aliasParser.GetRoot();
-		projectileClasses.Load(root.SubTable("projectiles"));
-		generatorClasses.Load(root.SubTable("generators"));
-	}
+	exploParser = NULL;
+	aliasParser = NULL;
+	explTblRoot = NULL;
 
-	if (!luaParser.Execute()) {
-		logOutput.Print(luaParser.GetErrorLog());
-	} else {
-		luaTable = luaParser.GetRoot();
-	}
+	ParseExplosionTables();
 }
 
+CExplosionGeneratorHandler::~CExplosionGeneratorHandler()
+{
+	delete exploParser; exploParser = NULL;
+	delete aliasParser; aliasParser = NULL;
+	delete explTblRoot; explTblRoot = NULL;
+}
+
+void CExplosionGeneratorHandler::ParseExplosionTables() {
+	delete exploParser;
+	delete aliasParser;
+	delete explTblRoot;
+
+	exploParser = new LuaParser("gamedata/explosions.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	aliasParser = new LuaParser("gamedata/explosion_alias.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	explTblRoot = NULL;
+
+	if (!aliasParser->Execute()) {
+		logOutput.Print(aliasParser->GetErrorLog());
+	} else {
+		const LuaTable& aliasRoot = aliasParser->GetRoot();
+
+		projectileClasses.Clear();
+		projectileClasses.Load(aliasRoot.SubTable("projectiles"));
+		generatorClasses.Clear();
+		generatorClasses.Load(aliasRoot.SubTable("generators"));
+	}
+
+	if (!exploParser->Execute()) {
+		logOutput.Print(exploParser->GetErrorLog());
+	} else {
+		explTblRoot = new LuaTable(exploParser->GetRoot());
+	}
+}
 
 CExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag)
 {
 	string klass;
 	string::size_type seppos = tag.find(':');
+
 	if (seppos == string::npos) {
 		klass = tag;
 	} else {
 		klass = tag.substr(0, seppos);
 	}
 
-	creg::Class *cls = generatorClasses.GetClass(klass);
+	creg::Class* cls = generatorClasses.GetClass(klass);
+
 	if (!cls->IsSubclassOf(CExplosionGenerator::StaticClass())) {
 		throw content_error(klass + " is not a subclass of CExplosionGenerator");
 	}
 
-	CExplosionGenerator* eg = (CExplosionGenerator *)cls->CreateInstance();
+	CExplosionGenerator* eg = (CExplosionGenerator*) cls->CreateInstance();
 
 	if (seppos != string::npos) {
 		eg->Load(this, tag.substr(seppos + 1));
@@ -622,8 +646,8 @@ unsigned int CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, cons
 	if (it == explosionIDs.end()) {
 		CEGData cegData;
 
-		const LuaTable& root = h->GetTable();
-		const LuaTable expTable = root.SubTable(tag);
+		const LuaTable* root = h->GetExplosionTableRoot();
+		const LuaTable& expTable = (root != NULL)? root->SubTable(tag): LuaTable();
 
 		if (!expTable.IsValid()) {
 			// not a fatal error: any calls to ::Explosion will just return early
@@ -700,7 +724,7 @@ unsigned int CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, cons
 
 void CCustomExplosionGenerator::RefreshCache(const std::string& tag) {
 	// re-parse the projectile and generator tables
-	delete explGenHandler; explGenHandler = new CExplosionGeneratorHandler();
+	explGenHandler->ParseExplosionTables();
 
 	if (tag.empty()) {
 		std::map<std::string, unsigned int> oldExplosionIDs(explosionIDs);
@@ -728,6 +752,7 @@ void CCustomExplosionGenerator::RefreshCache(const std::string& tag) {
 		const unsigned int numCEGs = explosionData.size();
 		const unsigned int cegIndex = it->second;
 
+		// note: if numCEGs == 1, these refer to the same data
 		CEGData oldCEG = explosionData[cegIndex];
 		CEGData tmpCEG = explosionData[numCEGs - 1];
 
@@ -744,8 +769,8 @@ void CCustomExplosionGenerator::RefreshCache(const std::string& tag) {
 			// reload failed, keep the old CEG
 			explosionIDs[tag] = cegIndex;
 
-			explosionData[cegIndex] = oldCEG;
 			explosionData.push_back(tmpCEG);
+			explosionData[cegIndex] = oldCEG;
 			return;
 		}
 

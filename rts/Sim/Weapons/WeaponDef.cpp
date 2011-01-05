@@ -15,7 +15,7 @@ WeaponDef::~WeaponDef()
 S3DModel* WeaponDef::LoadModel()
 {
 	if ((visuals.model==NULL) && (!visuals.modelName.empty())) {
-		std::string modelname = string("objects3d/") + visuals.modelName;
+		std::string modelname = "objects3d/" + visuals.modelName;
 		if (modelname.find(".") == std::string::npos) {
 			modelname += ".3do";
 		}
