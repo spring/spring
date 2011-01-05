@@ -777,8 +777,10 @@ void CCustomExplosionGenerator::RefreshCache(const std::string& tag) {
 		// re-map the old ID to the new data
 		explosionIDs[tag] = cegIndex;
 
-		explosionData[cegIndex] = explosionData[numCEGs - 1];
-		explosionData[numCEGs - 1] = tmpCEG;
+		if (numCEGs > 1) {
+			explosionData[cegIndex] = explosionData[numCEGs - 1];
+			explosionData[numCEGs - 1] = tmpCEG;
+		}
 	}
 }
 
