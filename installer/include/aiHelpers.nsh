@@ -19,7 +19,7 @@
 				SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS}"
 				!ifdef USE_BUILD_DIR
 					${!echonow} "Processing: AI Interface - ${aiIntName}: installing from $\'${BUILD_DIR}\AI\Interfaces\${aiIntName}\$\'"
-					File /r /x *.a /x *.def /x *.7z /x *.dbg /x CMakeFiles /x Makefile /x cmake_install.cmake "${BUILD_DIR}\AI\Interfaces\${aiIntName}\*.*"
+					File /r /x *.a /x *.def /x *.7z /x *.dbg /x CMakeFiles /x Makefile /x cmake_install.cmake /x src-generated* /x classes "${BUILD_DIR}\AI\Interfaces\${aiIntName}\*.*"
 					File /r "..\AI\Interfaces\${aiIntName}\data\*.*"
 				!else
 					${!echonow} "Processing: AI Interface - ${aiIntName}: installing from $\'${DIST_DIR}\AI\Interfaces\${aiIntName}\${AI_INT_VERS}\$\'"
