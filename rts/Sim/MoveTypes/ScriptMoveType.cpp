@@ -124,11 +124,11 @@ inline void CScriptMoveType::CalcDirections()
 void CScriptMoveType::CheckNotify()
 {
 	if (scriptNotify) {
-		scriptNotify = 0;
-
 		if (luaRules && luaRules->MoveCtrlNotify(owner, scriptNotify)) {
 			//! deletes <this>
 			owner->DisableScriptMoveType();
+		} else {
+			scriptNotify = 0;
 		}
 	}
 }
@@ -164,7 +164,6 @@ void CScriptMoveType::Update()
 			owner->pos.y = gndMin;
 			owner->speed.y = 0.0f;
 			if (gndStop) {
-				owner->speed.y = 0.0f;
 				vel    = ZeroVector;
 				relVel = ZeroVector;
 				rotVel = ZeroVector;

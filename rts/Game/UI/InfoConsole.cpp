@@ -35,10 +35,9 @@ CInfoConsole::CInfoConsole() :
 	, rawId(0)
 	, lastTime(0)
 {
-	wantLogInformationPrefix = configHandler->Get("DisplayDebugPrefixConsole", false);
-
 	data.clear();
 
+	wantLogInformationPrefix = configHandler->Get("DisplayDebugPrefixConsole", false);
 	lifetime = configHandler->Get("InfoMessageTime", 400);
 
 	const std::string geo = configHandler->GetString("InfoConsoleGeometry",
@@ -212,4 +211,3 @@ const float3& CInfoConsole::GetMsgPos()
 
 	return p;
 }
-

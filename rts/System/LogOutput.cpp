@@ -351,7 +351,6 @@ void CLogOutput::Output(const CLogSubsystem& subsystem, const std::string& str)
 #endif // _MSC_VER
 
 	ToFile(subsystem, msg);
-
 	ToStdout(subsystem, msg);
 }
 
