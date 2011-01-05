@@ -242,7 +242,7 @@ CGameServer::~CGameServer()
 	// TODO: move this to a method in CTeamHandler
 	// Figure out who won the game.
 	int numTeams = (int)setup->teamStartingData.size();
-	if (setup->useLuaGaia) {
+	if (setup->useLuaGaia && (numTeams > 0)) {
 		--numTeams;
 	}
 	int winner = -1;
