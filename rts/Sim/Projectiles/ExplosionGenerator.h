@@ -8,9 +8,10 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
-#include "Lua/LuaParser.h"
 #include "Sim/Objects/WorldObject.h"
 
+class LuaParser;
+class LuaTable;
 class float3;
 class CUnit;
 class CExplosionGenerator;
@@ -34,10 +35,12 @@ class ClassAliasList
 {
 public:
 	void Load(const LuaTable&);
+	void Clear() { aliases.clear(); }
+
 	creg::Class* GetClass(const std::string& name);
 	std::string FindAlias(const std::string& className);
 
-protected:
+private:
 	std::map<std::string, std::string> aliases;
 };
 
@@ -48,16 +51,19 @@ class CExplosionGeneratorHandler
 {
 public:
 	CExplosionGeneratorHandler();
+	~CExplosionGeneratorHandler();
 
+	void ParseExplosionTables();
 	CExplosionGenerator* LoadGenerator(const std::string& tag);
-	const LuaTable& GetTable() const { return luaTable; }
+	const LuaTable* GetExplosionTableRoot() const { return explTblRoot; }
 
-	ClassAliasList projectileClasses, generatorClasses;
+	ClassAliasList projectileClasses;
+	ClassAliasList generatorClasses;
 
 protected:
-	std::map<std::string, CExplosionGenerator*> generators;
-	LuaParser luaParser;
-	LuaTable  luaTable;
+	LuaParser* exploParser;
+	LuaParser* aliasParser;
+	LuaTable*  explTblRoot;
 };
 
 

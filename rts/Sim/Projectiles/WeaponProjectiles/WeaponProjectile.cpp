@@ -306,7 +306,7 @@ void CWeaponProjectile::PostLoad()
 
 	if (!weaponDef->visuals.modelName.empty()) {
 		if (weaponDef->visuals.model == NULL) {
-			std::string modelname = string("objects3d/") + weaponDef->visuals.modelName;
+			std::string modelname = "objects3d/" + weaponDef->visuals.modelName;
 			if (modelname.find(".") == std::string::npos) {
 				modelname += ".3do";
 			}
