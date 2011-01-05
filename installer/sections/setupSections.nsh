@@ -1,44 +1,58 @@
-; Allows disabling of sections by command line switch (for unattened installations)
-; current switches:
+;
+; Allows toggeling sections by command line switch (mainly for unattened installations)
+; all possible parameters are behind ${toggleSection}
+; for example:
+; 	${toggleSection} "PORTABLE" ${SEC_PORTABLE}
+; is the /PORTABLE switch
 
-!define setupSection "!insertmacro setupSection"
-!macro setupSection ParameterName Section
+Push $0 ; save register
+Push $1
+
+!define toggleSection "!insertmacro toggleSection"
+!macro toggleSection ParameterName Section
 	${getParameterValue} ${ParameterName} "false"
 	Pop $0
 	${If} $0 == ""
-		IntOp $0 $0 & ${SECTION_OFF}
-		SectionSetFlags ${Section} $0
+		SectionGetFlags ${Section} $1 ; get current flags
+		IntOp $1 $1 & ${SF_SELECTED}
+		${If} $1 = ${SF_SELECTED} ; selected?
+			IntOp $1 $1 - ${SF_SELECTED} ; unselect
+		${Else}
+			IntOp $1 $1 | ${SF_SELECTED} ; select
+		${Endif}
+		SectionSetFlags ${Section} $1 ; set flag for section
 	${EndIf}
 !macroend
 
-; enable portable mode if specified
-${getParameterValue} "PORTABLE" "false"
-Pop $0
-${If} $0 == ""
-	SectionSetFlags ${SEC_PORTABLE} 1
-${EndIf}
+; multithreaded
+${toggleSection} "NOMULTITHREAD" ${SEC_GML}
+
+; portable mode
+${toggleSection} "PORTABLE" ${SEC_PORTABLE}
 
 ; lobbies
-${setupSection} "NOSPRINGLOBBY" ${SEC_SPRINGLOBBY}
-${setupSection} "NOZEROK" ${SEC_ZERO_K_LOBBY}
+${toggleSection} "NOSPRINGLOBBY" ${SEC_SPRINGLOBBY}
+${toggleSection} "NOZEROK" ${SEC_ZERO_K_LOBBY}
 
 ; server
-${setupSection} "NOTASSERVER" ${SEC_TASSERVER}
+${toggleSection} "NOTASSERVER" ${SEC_TASSERVER}
 
 ; desktop shortcuts
-${setupSection} "NODESKTOPLINK" ${SEC_DESKTOP}
+${toggleSection} "NODESKTOPLINK" ${SEC_DESKTOP}
 
 ; tools
-${setupSection} "NOARCHIVEMOVER" ${SEC_ARCHIVEMOVER}
-${setupSection} "NORAPID" ${SEC_RAPID}
+${toggleSection} "NOARCHIVEMOVER" ${SEC_ARCHIVEMOVER}
+${toggleSection} "NORAPID" ${SEC_RAPID}
 
 ; startmenu
-${setupSection} "NOSTARTMENU" ${SEC_START}
+${toggleSection} "NOSTARTMENU" ${SEC_START}
 
-;ais
-${setupSection} "NOAAI" ${SEC_AAI}
-${setupSection} "NOKAIK" ${SEC_KAIK}
-${setupSection} "NORAI" ${SEC_RAI}
-${setupSection} "NOE323AI" ${SEC_E323AI}
+; ais
+${toggleSection} "NOAAI" ${SEC_AAI}
+${toggleSection} "NOKAIK" ${SEC_KAIK}
+${toggleSection} "NORAI" ${SEC_RAI}
+${toggleSection} "NOE323AI" ${SEC_E323AI}
 
+Pop $1 ; restore register
+Pop $0
 
