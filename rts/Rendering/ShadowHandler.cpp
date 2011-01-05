@@ -136,6 +136,7 @@ CShadowHandler::~CShadowHandler(void)
 
 void CShadowHandler::LoadShadowGenShaderProgs()
 {
+	#define sh shaderHandler
 	shadowGenProgs.resize(SHADOWGEN_PROGRAM_LAST);
 
 	static const std::string shadowGenProgNames[SHADOWGEN_PROGRAM_LAST] = {
@@ -167,8 +168,6 @@ void CShadowHandler::LoadShadowGenShaderProgs()
 		"#define SHADOWMATRIX_NONLINEAR 1\n";
 	#endif
 
-	CShaderHandler* sh = shaderHandler;
-
 	if (globalRendering->haveGLSL) {
 		for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
 			Shader::IProgramObject* po = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "GLSL", false);
@@ -197,6 +196,7 @@ void CShadowHandler::LoadShadowGenShaderProgs()
 	}
 
 	drawShadows = true;
+	#undef sh
 }
 
 

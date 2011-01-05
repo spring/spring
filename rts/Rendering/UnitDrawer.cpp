@@ -207,9 +207,8 @@ CUnitDrawer::~CUnitDrawer()
 
 bool CUnitDrawer::LoadModelShaders()
 {
+	#define sh shaderHandler
 	modelShaders.resize(MODEL_SHADER_S3O_LAST, NULL);
-
-	CShaderHandler* sh = shaderHandler;
 
 	modelShaders[MODEL_SHADER_S3O_BASIC ] = sh->CreateProgramObject("[UnitDrawer]", "S3OShaderDefARB", true);
 	modelShaders[MODEL_SHADER_S3O_SHADOW] = modelShaders[MODEL_SHADER_S3O_BASIC];
@@ -275,6 +274,7 @@ bool CUnitDrawer::LoadModelShaders()
 		modelShaders[MODEL_SHADER_S3O_ACTIVE] = modelShaders[MODEL_SHADER_S3O_SHADOW];
 	}
 
+	#undef sh
 	return true;
 }
 

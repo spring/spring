@@ -333,7 +333,11 @@ void CLogOutput::Output(const CLogSubsystem& subsystem, const std::string& str)
 	// Output to subscribers
 	if (subscribersEnabled) {
 		for (vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi) {
-			(*lsi)->NotifyLogMsg(subsystem, msg);
+			if ((*lsi)->wantLogInformationPrefix) {
+				(*lsi)->NotifyLogMsg(subsystem, msg);
+			} else {
+				(*lsi)->NotifyLogMsg(subsystem, str);
+			}
 		}
 	}
 
@@ -347,7 +351,6 @@ void CLogOutput::Output(const CLogSubsystem& subsystem, const std::string& str)
 #endif // _MSC_VER
 
 	ToFile(subsystem, msg);
-
 	ToStdout(subsystem, msg);
 }
 
@@ -486,3 +489,4 @@ void CLogOutput::ToFile(const CLogSubsystem& subsystem, const std::string& messa
 		filelog->flush();
 #endif
 }
+

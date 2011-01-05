@@ -88,11 +88,12 @@ public:
 	// Notification of log messages to subscriber
 	virtual void NotifyLogMsg(const CLogSubsystem& subsystem, const std::string& str) = 0;
 	virtual void SetLastMsgPos(const float3& pos) {}
+	bool wantLogInformationPrefix; //set it to true if you want extra information appended such as frame number, log type, etc
 };
 
 
 /**
- * @brief logging class 
+ * @brief logging class
  * Global object to write log info to.
  * Game UI elements that display log can subscribe to it to receive the log messages.
  */
@@ -241,3 +242,4 @@ extern CLogOutput logOutput;
 #undef FORMATSTRING
 
 #endif // LOGOUTPUT_H
+
