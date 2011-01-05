@@ -148,6 +148,7 @@ CGrassDrawer::~CGrassDrawer(void)
 
 
 void CGrassDrawer::LoadGrassShaders() {
+	#define sh shaderHandler
 	grassShaders.resize(GRASS_PROGRAM_LAST, NULL);
 
 	static const std::string shaderNames[GRASS_PROGRAM_LAST] = {
@@ -179,8 +180,6 @@ void CGrassDrawer::LoadGrassShaders() {
 		(mapInfo->grass.bladeWaveScale > 0.0f)?
 		"#define GRASS_ANIMATION\n":
 		"";
-
-	CShaderHandler* sh = shaderHandler;
 
 	if (!globalRendering->haveGLSL) {
 		grassShaders[GRASS_PROGRAM_DIST_BASIC] = sh->CreateProgramObject("[GrassDrawer]", shaderNames[GRASS_PROGRAM_DIST_BASIC] + "ARB", true);
@@ -216,6 +215,8 @@ void CGrassDrawer::LoadGrassShaders() {
 			grassShaders[i]->Disable();
 		}
 	}
+
+	#undef sh
 }
 
 

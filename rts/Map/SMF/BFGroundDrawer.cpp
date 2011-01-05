@@ -95,7 +95,7 @@ CBFGroundDrawer::~CBFGroundDrawer(void)
 }
 
 bool CBFGroundDrawer::LoadMapShaders() {
-	CShaderHandler* sh = shaderHandler;
+	#define sh shaderHandler
 
 	smfShaderBaseARB = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderBaseARB", true);
 	smfShaderReflARB = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderReflARB", true);
@@ -103,6 +103,10 @@ bool CBFGroundDrawer::LoadMapShaders() {
 	smfShaderCurrARB = smfShaderBaseARB;
 	smfShaderGLSL    = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderGLSL", false);
 
+	// three possible code paths:
+	//     haveARB ~= canUseShadows
+	//     haveGLSL && !haveSpecLight (TODO: just use GLSL here)
+	//     haveGLSL &&  haveSpecLight
 	if (shadowHandler->canUseShadows) {
 		if (!map->haveSpecularLighting) {
 			// always use FP shadows (shadowHandler->useFPShadows is short
@@ -184,13 +188,13 @@ bool CBFGroundDrawer::LoadMapShaders() {
 			smfShaderGLSL->SetUniform4fv(24, &mapInfo->splats.texMults[0]);
 			smfShaderGLSL->SetUniform1i(25,  9); // skyReflectTex (idx 25, texunit 9)
 			smfShaderGLSL->SetUniform1i(26, 10); // skyReflectModTex (idx 26, texunit 10)
-
 			smfShaderGLSL->Disable();
 		}
 
 		return true;
 	}
 
+	#undef sh
 	return false;
 }
 
