@@ -53,6 +53,16 @@ ${toggleSection} "NOKAIK" ${SEC_KAIK}
 ${toggleSection} "NORAI" ${SEC_RAI}
 ${toggleSection} "NOE323AI" ${SEC_E323AI}
 
+; disable registry writes
+${getParameterValue} "NOREGISTRY" "false"
+Pop $0
+
+${If} $0 == ""
+	IntOp $REGISTRY 0 + 0
+${Else}
+	IntOp $REGISTRY 0 + 1 ; default, write registry
+${EndIf}
+
 Pop $1 ; restore register
 Pop $0
 
