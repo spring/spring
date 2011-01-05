@@ -31,6 +31,8 @@ CInfoConsole::CInfoConsole():
 	disabled(false), lastMsgIter(lastMsgPositions.begin()), newLines(0),
 	rawId(0)
 {
+	wantLogInformationPrefix = configHandler->Get("DisplayDebugPrefixConsole", false);
+
 	data.clear();
 
 	lastTime=0;
@@ -206,3 +208,4 @@ const float3& CInfoConsole::GetMsgPos()
 
 	return p;
 }
+
