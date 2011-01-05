@@ -16,6 +16,10 @@ class CBuilding;
 class CVertexArray;
 struct GhostBuilding;
 
+namespace Shader {
+	struct IProgramObject;
+}
+
 struct TrackPart {
 	float3 pos1;
 	float3 pos2;
@@ -90,6 +94,8 @@ public:
 	void SetDrawDecals(bool v) { if (decalLevel > 0) { drawDecals = v; } }
 
 private:
+	void LoadDecalShaders();
+
 	GLuint scarTex;
 	int decalLevel;
 	int groundScarAlphaFade;
@@ -131,6 +137,14 @@ private:
 		CVertexArray* va;
 	};
 
+	enum DecalShaderProgram {
+		DECAL_SHADER_ARB,
+		DECAL_SHADER_GLSL,
+		DECAL_SHADER_CURR,
+		DECAL_SHADER_LAST
+	};
+
+	std::vector<Shader::IProgramObject*> decalShaders;
 	std::vector<BuildingGroundDecal*> decalsToDraw;
 
 	std::list<Scar*> scars;
@@ -151,10 +165,6 @@ private:
 	std::set<Scar*>* scarField;
 	int scarFieldX;
 	int scarFieldY;
-
-	unsigned int decalVP;
-	unsigned int decalFPsmf;
-	unsigned int decalFPsm3;
 
 	void DrawBuildingDecal(BuildingGroundDecal* decal);
 	void DrawGroundScar(Scar* scar, bool fade);

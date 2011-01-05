@@ -30,7 +30,7 @@ void main() {
 	float fogCoord = length(gl_Position.xyz);
 	gl_Position = gl_ProjectionMatrix * gl_Position;
 
-	diffuseTexCoords  = floor(gl_Vertex.xz) / SMF_TEXSQR_SIZE - vec2(ivec2(texSquareX,texSquareZ));
+	diffuseTexCoords  = floor(gl_Vertex.xz) / SMF_TEXSQR_SIZE - vec2(ivec2(texSquareX, texSquareZ));
 	specularTexCoords = gl_Vertex.xz / mapSize.xy;
 	normalTexCoords   = gl_Vertex.xz / mapSizePO2.xy;
 
