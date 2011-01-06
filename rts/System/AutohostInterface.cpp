@@ -283,6 +283,11 @@ std::string AutohostInterface::GetChatMessage()
 void AutohostInterface::Send(boost::asio::mutable_buffers_1 buffer)
 {
 	if (autohost.is_open()) {
-		autohost.send(buffer);
+		try {
+			autohost.send(buffer);
+		} catch (boost::system::system_error& e) {
+			autohost.close();
+			LogObject() << "[AutohostInterface] Error: Failed to send buffer; the autohost may not be reachable: " << e.what();
+		}
 	}
 }
