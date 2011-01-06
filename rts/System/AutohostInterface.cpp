@@ -22,8 +22,10 @@
 namespace {
 
 /**
-@enum EVENT Which events can be sent to the autohost (in bracets: parameters, where uchar means unsigned char and "string" means plain ascii text)
-*/
+ * @enum EVENT Which events can be sent to the autohost
+ *   (in brackets: parameters, where uchar means unsigned char and "string"
+ *   means plain ascii text)
+ */
 enum EVENT
 {
 	/// Server has started ()
@@ -47,20 +49,29 @@ enum EVENT
 	/// Player has joined the game (uchar playernumber, string name)
 	PLAYER_JOINED = 10,
 
-	/// Player has left (uchar playernumber, uchar reason (0: lost connection, 1: left, 2: kicked) )
+	/**
+	 * Player has left (uchar playernumber, uchar reason
+	 * (0: lost connection, 1: left, 2: kicked) )
+	 */
 	PLAYER_LEFT = 11,
 
-	/// Player has updated its ready-state (uchar playernumber, uchar state (0: not ready, 1: ready, 2: state not changed) )
+	/**
+	 * Player has updated its ready-state
+	 * (uchar playernumber, uchar state
+	 * (0: not ready, 1: ready, 2: state not changed) )
+	 */
 	PLAYER_READY = 12,
 
 	/**
-	@brief Player has sent a chat message (uchar playernumber, uchar destination, string text)
-	Destination can be any of: a playernumber [0-32]
-	static const int TO_ALLIES = 127;
-	static const int TO_SPECTATORS = 126;
-	static const int TO_EVERYONE = 125;
-	(copied from Game/ChatMessage.h)
-	*/
+	 * @brief Player has sent a chat message
+	 *   (uchar playernumber, uchar destination, string text)
+	 *
+	 * Destination can be any of: a playernumber [0-32]
+	 * static const int TO_ALLIES = 127;
+	 * static const int TO_SPECTATORS = 126;
+	 * static const int TO_EVERYONE = 125;
+	 * (copied from Game/ChatMessage.h)
+	 */
 	PLAYER_CHAT = 13,
 
 	/// Player has been defeated (uchar playernumber)
@@ -69,20 +80,24 @@ enum EVENT
 	/**
 	 * @brief Message sent by lua script
 	 *
-	 * (uchar playernumber, uint16_t script, uint8_t mode, uint8_t[X] data) (X = space left in packet)
-	 * */
+	 * (uchar playernumber, uint16_t script, uint8_t mode, uint8_t[X] data)
+	 * (X = space left in packet)
+	 */
 	GAME_LUAMSG = 20,
 
-	/// team statistics, see CTeam::Statistics for reference how to read them
 	/**
-	* (uchar teamnumber), CTeam::Statistics(in binary form)
-	*/
+	 * @brief team statistics
+	 * @see CTeam::Statistics for a reference of how to read them
+	 * (uchar teamnumber), CTeam::Statistics(in binary form)
+	 */
 	GAME_TEAMSTAT = 60
 };
 }
 
 using namespace boost::asio;
-AutohostInterface::AutohostInterface(const std::string& autohostip, int remoteport) : autohost(netcode::netservice)
+
+AutohostInterface::AutohostInterface(const std::string& remoteHost, int remotePort)
+		: autohost(netcode::netservice)
 {
 	boost::system::error_code err;
 	autohost.open(ip::udp::v6(), err); // test v6
@@ -102,7 +117,7 @@ AutohostInterface::AutohostInterface(const std::string& autohostip, int remotepo
 
 	try {
 		boost::system::error_code connectError;
-		autohost.connect(netcode::ResolveAddr(autohostip, remoteport), connectError);
+		autohost.connect(netcode::ResolveAddr(remoteHost, remotePort), connectError);
 
 		if (connectError) {
 			connectErrorMsg = connectError.message();
