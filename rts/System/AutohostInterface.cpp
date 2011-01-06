@@ -141,27 +141,21 @@ void AutohostInterface::SendStart()
 {
 	uchar msg = SERVER_STARTED;
 
-	if (autohost.is_open()) {
-		autohost.send(boost::asio::buffer(&msg, sizeof(uchar)));
-	}
+	Send(boost::asio::buffer(&msg, sizeof(uchar)));
 }
 
 void AutohostInterface::SendQuit()
 {
 	uchar msg = SERVER_QUIT;
 
-	if (autohost.is_open()) {
-		autohost.send(boost::asio::buffer(&msg, sizeof(uchar)));
-	}
+	Send(boost::asio::buffer(&msg, sizeof(uchar)));
 }
 
 void AutohostInterface::SendStartPlaying()
 {
 	uchar msg = SERVER_STARTPLAYING;
 
-	if (autohost.is_open()) {
-		autohost.send(boost::asio::buffer(&msg, sizeof(uchar)));
-	}
+	Send(boost::asio::buffer(&msg, sizeof(uchar)));
 }
 
 void AutohostInterface::SendGameOver(uchar playerNum, const std::vector<uchar>& winningAllyTeams)
@@ -175,9 +169,7 @@ void AutohostInterface::SendGameOver(uchar playerNum, const std::vector<uchar>& 
 	for (unsigned int i = 0; i < winningAllyTeams.size(); i++) {
 		buffer[3 + i] = winningAllyTeams[i];
 	}
-	if (autohost.is_open()) {
-		autohost.send(boost::asio::buffer(buffer));
-	}
+	Send(boost::asio::buffer(buffer));
 }
 
 void AutohostInterface::SendPlayerJoined(uchar playerNum, const std::string& name)
@@ -189,7 +181,7 @@ void AutohostInterface::SendPlayerJoined(uchar playerNum, const std::string& nam
 		buffer[1] = playerNum;
 		strncpy((char*)(&buffer[2]), name.c_str(), name.size());
 
-		autohost.send(boost::asio::buffer(buffer));
+		Send(boost::asio::buffer(buffer));
 	}
 }
 
@@ -197,18 +189,14 @@ void AutohostInterface::SendPlayerLeft(uchar playerNum, uchar reason)
 {
 	uchar msg[3] = {PLAYER_LEFT, playerNum, reason};
 
-	if (autohost.is_open()) {
-		autohost.send(boost::asio::buffer(&msg, 3 * sizeof(uchar)));
-	}
+	Send(boost::asio::buffer(&msg, 3 * sizeof(uchar)));
 }
 
 void AutohostInterface::SendPlayerReady(uchar playerNum, uchar readyState)
 {
 	uchar msg[3] = {PLAYER_READY, playerNum, readyState};
 
-	if (autohost.is_open()) {
-		autohost.send(boost::asio::buffer(&msg, 3 * sizeof(uchar)));
-	}
+	Send(boost::asio::buffer(&msg, 3 * sizeof(uchar)));
 }
 
 void AutohostInterface::SendPlayerChat(uchar playerNum, uchar destination, const std::string& chatmsg)
@@ -221,7 +209,7 @@ void AutohostInterface::SendPlayerChat(uchar playerNum, uchar destination, const
 		buffer[2] = destination;
 		strncpy((char*)(&buffer[3]), chatmsg.c_str(), chatmsg.size());
 
-		autohost.send(boost::asio::buffer(buffer));
+		Send(boost::asio::buffer(buffer));
 	}
 }
 
@@ -229,9 +217,7 @@ void AutohostInterface::SendPlayerDefeated(uchar playerNum)
 {
 	uchar msg[2] = {PLAYER_DEFEATED, playerNum};
 
-	if (autohost.is_open()) {
-		autohost.send(boost::asio::buffer(&msg, 2 * sizeof(uchar)));
-	}
+	Send(boost::asio::buffer(&msg, 2 * sizeof(uchar)));
 }
 
 void AutohostInterface::Message(const std::string& message)
@@ -242,7 +228,7 @@ void AutohostInterface::Message(const std::string& message)
 		buffer[0] = SERVER_MESSAGE;
 		strncpy((char*)(&buffer[1]), message.c_str(), message.size());
 
-		autohost.send(boost::asio::buffer(buffer));
+		Send(boost::asio::buffer(buffer));
 	}
 }
 
@@ -254,7 +240,7 @@ void AutohostInterface::Warning(const std::string& message)
 		buffer[0] = SERVER_WARNING;
 		strncpy((char*)(&buffer[1]), message.c_str(), message.size());
 
-		autohost.send(boost::asio::buffer(buffer));
+		Send(boost::asio::buffer(buffer));
 	}
 }
 
@@ -265,7 +251,7 @@ void AutohostInterface::SendLuaMsg(const boost::uint8_t* msg, size_t msgSize)
 		buffer[0] = GAME_LUAMSG;
 		std::copy(msg, msg + msgSize, buffer.begin() + 1);
 
-		autohost.send(boost::asio::buffer(buffer));
+		Send(boost::asio::buffer(buffer));
 	}
 }
 
@@ -275,7 +261,7 @@ void AutohostInterface::Send(const boost::uint8_t* msg, size_t msgSize)
 		std::vector<boost::uint8_t> buffer(msgSize);
 		std::copy(msg, msg + msgSize, buffer.begin());
 
-		autohost.send(boost::asio::buffer(buffer));
+		Send(boost::asio::buffer(buffer));
 	}
 }
 
@@ -292,4 +278,11 @@ std::string AutohostInterface::GetChatMessage()
 	}
 
 	return "";
+}
+
+void AutohostInterface::Send(boost::asio::mutable_buffers_1 buffer)
+{
+	if (autohost.is_open()) {
+		autohost.send(buffer);
+	}
 }
