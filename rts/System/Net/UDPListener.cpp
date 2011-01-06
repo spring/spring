@@ -21,7 +21,6 @@
 #include "UDPConnection.h"
 #include "Socket.h"
 #include "System/LogOutput.h"
-#include "System/Util.h"
 #include "System/Platform/errorhandler.h"
 
 namespace netcode
@@ -51,26 +50,18 @@ bool UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::string& 
 
 	std::string errorMsg = "";
 
+	ip::address addr;
 	try {
-		ip::address addr;
 		boost::system::error_code err;
 
 		socket->reset(new ip::udp::socket(netservice));
+
 		(*socket)->open(ip::udp::v6(), err); // test IP v6 support
+		const bool ipV6Support = !err;
 
-		const bool haveIPv6 = !err;
-
-		if (StringToLower(ip) != "localhost") {
-			addr = WrapIP(ip, &err);
-		} else {
-			if (haveIPv6)
-				addr = ip::address_v6::loopback();
-			else
-				addr = ip::address_v4::loopback();
-		}
-
+		addr = WrapIP(ip, &err);
 		if (ip.empty()) {
-			if (haveIPv6) {
+			if (ipV6Support) {
 				addr = ip::address_v6::any();
 			} else {
 				addr = ip::address_v4::any();
@@ -79,7 +70,7 @@ bool UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::string& 
 			throw std::runtime_error("Failed to parse address " + ip + ": " + err.message());
 		}
 
-		if (!haveIPv6 && addr.is_v6()) {
+		if (!ipV6Support && addr.is_v6()) {
 			throw std::runtime_error("IP v6 not supported, can not use address " + addr.to_string());
 		}
 
@@ -88,7 +79,7 @@ bool UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::string& 
 		}
 
 		if (!addr.is_v6()) {
-			if (haveIPv6) {
+			if (ipV6Support) {
 				(*socket)->close();
 			}
 			(*socket)->open(ip::udp::v4(), err);
