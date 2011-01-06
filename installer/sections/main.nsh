@@ -94,7 +94,7 @@
   !define AI_INT_VERS ${AI_INT_VERS_${aiIntName}}
   SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS}"
   !ifdef USE_BUILD_DIR
-	File /r /x *.a /x *.def /x *.7z /x *.dbg /x CMakeFiles /x Makefile /x cmake_install.cmake "${BUILD_DIR}\AI\Interfaces\${aiIntName}\*.*"
+	File /r /x *.a /x *.def /x *.7z /x *.dbg /x CMakeFiles /x Makefile /x cmake_install.cmake /x src-generated* /x classes "${BUILD_DIR}\AI\Interfaces\${aiIntName}\*.*"
 	File /r "..\AI\Interfaces\${aiIntName}\data\*.*"
   !else
 	File /r /x *.a /x *.def /x *.7z /x *.dbg "${DIST_DIR}\AI\Interfaces\${aiIntName}\${AI_INT_VERS}\*.*"
@@ -116,7 +116,7 @@
   !define SKIRM_AI_VERS ${SKIRM_AI_VERS_${skirAiName}}
   SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}"
   !ifdef USE_BUILD_DIR
-	File /r /x *.a /x *.def /x *.7z /x *.dbg /x CMakeFiles /x Makefile /x cmake_install.cmake "${BUILD_DIR}\AI\Skirmish\${skirAiName}\*.*"
+	File /r /x *.a /x *.def /x *.7z /x *.dbg /x CMakeFiles /x Makefile /x cmake_install.cmake /x classes "${BUILD_DIR}\AI\Skirmish\${skirAiName}\*.*"
 	File /r "..\AI\Skirmish\${skirAiName}\data\*.*"
   !else
 	File /r /x *.a /x *.def /x *.7z /x *.dbg "${DIST_DIR}\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
