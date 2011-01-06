@@ -190,7 +190,7 @@ bool CShadowHandler::InitDepthTarget()
 	// it turns the shadow render buffer in a buffer with color
 	bool useColorTexture = false;
 	if (!fb.IsValid()) {
-		logOutput.Print("framebuffer not valid!");
+		logOutput.Print("Warning: ShadowHandler: framebuffer not valid!");
 		return false;
 	}
 	glGenTextures(1,&shadowTexture);
