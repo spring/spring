@@ -50,6 +50,8 @@ public:
 	std::string GetChatMessage();
 
 private:
+	void Send(boost::asio::mutable_buffers_1 sendBuffer);
+
 	boost::asio::ip::udp::socket autohost;
 };
 
