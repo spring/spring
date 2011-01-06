@@ -49,7 +49,7 @@ CGameHelper* helper;
 
 CGameHelper::CGameHelper()
 {
-	stdExplosionGenerator = new CStdExplosionGenerator;
+	stdExplosionGenerator = new CStdExplosionGenerator();
 }
 
 CGameHelper::~CGameHelper()
@@ -199,7 +199,7 @@ void CGameHelper::Explosion(
 	float expSpeed, CUnit* owner,
 	bool damageGround, float gfxMod,
 	bool ignoreOwner, bool impactOnly,
-	CExplosionGenerator* explosionGraphics,
+	IExplosionGenerator* explosionGenerator,
 	CUnit* hitUnit,
 	const float3& impactDir, int weaponId,
 	CFeature* hitFeature
@@ -288,10 +288,10 @@ void CGameHelper::Explosion(
 
 	// use CStdExplosionGenerator by default
 	if (!noGfx) {
-		if (!explosionGraphics) {
-			explosionGraphics = stdExplosionGenerator;
+		if (explosionGenerator == NULL) {
+			explosionGenerator = stdExplosionGenerator;
 		}
-		explosionGraphics->Explosion(0, expPos, damages[0], expRad, owner, gfxMod, hitUnit, impactDir);
+		explosionGenerator->Explosion(0, expPos, damages[0], expRad, owner, gfxMod, hitUnit, impactDir);
 	}
 
 	groundDecals->AddExplosion(expPos, damages[0], expRad);

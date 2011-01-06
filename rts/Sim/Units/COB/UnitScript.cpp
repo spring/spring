@@ -566,7 +566,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 					break;
 				}
 
-				CExplosionGenerator* explGen = unit->unitDef->sfxExplGens[index];
+				IExplosionGenerator* explGen = unit->unitDef->sfxExplGens[index];
 				explGen->Explosion(0, pos, unit->cegDamage, 1, unit, 0, 0, dir);
 			}
 			else if (sfxType & SFX_FIRE_WEAPON) {

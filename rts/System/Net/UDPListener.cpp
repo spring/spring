@@ -50,13 +50,13 @@ bool UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::string& 
 
 	std::string errorMsg = "";
 
-	ip::address addr;
 	try {
+		ip::address addr;
 		boost::system::error_code err;
 
 		socket->reset(new ip::udp::socket(netservice));
-
 		(*socket)->open(ip::udp::v6(), err); // test IP v6 support
+
 		const bool supportsIPv6 = !err;
 
 		addr = WrapIP(ip, &err);
