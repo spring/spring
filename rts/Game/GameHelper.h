@@ -19,7 +19,8 @@ class CFeature;
 class CMobileCAI;
 struct UnitDef;
 struct BuildInfo;
-class CExplosionGenerator;
+class IExplosionGenerator;
+class CStdExplosionGenerator;
 
 class CGameHelper
 {
@@ -61,7 +62,7 @@ public:
 
 	void DoExplosionDamage(CUnit* unit, const float3& expPos, float expRad, float expSpeed, bool ignoreOwner, CUnit* owner, float edgeEffectiveness, const DamageArray& damages, int weaponId);
 	void DoExplosionDamage(CFeature* feature, const float3& expPos, float expRad, const DamageArray& damages);
-	void Explosion(float3 pos, const DamageArray& damages, float radius, float edgeEffectiveness, float explosionSpeed, CUnit* owner, bool damageGround, float gfxMod, bool ignoreOwner, bool impactOnly, CExplosionGenerator* explosionGraphics, CUnit* hit, const float3& impactDir, int weaponId, CFeature* hitfeature = NULL);
+	void Explosion(float3 pos, const DamageArray& damages, float radius, float edgeEffectiveness, float explosionSpeed, CUnit* owner, bool damageGround, float gfxMod, bool ignoreOwner, bool impactOnly, IExplosionGenerator* explosionGraphics, CUnit* hit, const float3& impactDir, int weaponId, CFeature* hitfeature = NULL);
 
 	float TraceRayTeam(const float3& start, const float3& dir, float length, CUnit*& hit, bool useRadar, CUnit* exclude, int allyteam);
 	void BuggerOff(float3 pos, float radius, bool spherical, bool forced, int teamId, CUnit* exclude);
@@ -84,7 +85,7 @@ public:
 	};
 
 protected:
-	CExplosionGenerator *stdExplosionGenerator;
+	CStdExplosionGenerator* stdExplosionGenerator;
 
 	struct WaitingDamage{
 #if !defined(SYNCIFY) && !defined(USE_MMGR)

@@ -14,7 +14,7 @@ class LuaParser;
 class LuaTable;
 class float3;
 class CUnit;
-class CExplosionGenerator;
+class IExplosionGenerator;
 
 
 class CExpGenSpawnable: public CWorldObject
@@ -54,7 +54,7 @@ public:
 	~CExplosionGeneratorHandler();
 
 	void ParseExplosionTables();
-	CExplosionGenerator* LoadGenerator(const std::string& tag);
+	IExplosionGenerator* LoadGenerator(const std::string& tag);
 	const LuaTable* GetExplosionTableRoot() const { return explTblRoot; }
 
 	ClassAliasList projectileClasses;
@@ -69,20 +69,20 @@ protected:
 
 
 //! Base explosion generator class
-class CExplosionGenerator
+class IExplosionGenerator
 {
-	CR_DECLARE(CExplosionGenerator);
+	CR_DECLARE(IExplosionGenerator);
 
 public:
-	CExplosionGenerator() {}
-	virtual ~CExplosionGenerator() {}
+	IExplosionGenerator() {}
+	virtual ~IExplosionGenerator() {}
 
 	virtual unsigned int Load(CExplosionGeneratorHandler* loader, const std::string& tag) = 0;
 	virtual bool Explosion(unsigned int explosionID, const float3& pos, float damage, float radius, CUnit* owner, float gfxMod, CUnit* hit, const float3& dir) = 0;
 };
 
 //! everything is calculated from damage and radius
-class CStdExplosionGenerator: public CExplosionGenerator
+class CStdExplosionGenerator: public IExplosionGenerator
 {
 	CR_DECLARE(CStdExplosionGenerator);
 
