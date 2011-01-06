@@ -91,6 +91,7 @@ system("wget", "-N", "http://springrts.com/dl/rapid-spring-latest-win32.7z");
 system("wget", "-N", "http://springrts.com/dl/TASServer.jar");
 system("wget", "-N", "http://www.springlobby.info/installer/springsettings.exe");
 system("wget", "-N", "http://zero-k.info/lobby/setup.exe");
+system("wget", "-N", "http://zero-k.info/lobby/setup_icon.ico");
 chdir("$installerDir/..");
 
 
