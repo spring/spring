@@ -21,7 +21,7 @@ CR_REG_METADATA(CExpGenSpawner,
 CExpGenSpawner::CExpGenSpawner() :
 	CProjectile(),
 	delay(1),
-	damage(0),
+	damage(0.0f),
 	explosionGenerator(NULL)
 {
 	checkCol = false;
@@ -29,14 +29,10 @@ CExpGenSpawner::CExpGenSpawner() :
 	synced = true;
 }
 
-CExpGenSpawner::~CExpGenSpawner()
-{
-}
-
 void CExpGenSpawner::Update()
 {
-	if (!delay--) {
-		explosionGenerator->Explosion(-1U, pos, damage, 0, owner(), 0, NULL, dir);
+	if (delay-- <= 0) {
+		explosionGenerator->Explosion(0, pos, damage, 0, owner(), 0, NULL, dir);
 		deleteMe = true;
 	}
 }
