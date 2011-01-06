@@ -43,7 +43,7 @@ CFarTextureHandler::CFarTextureHandler()
 	texSizeY = next_power_of_2(texSizeY);
 
 	if (!fbo.IsValid()) {
-		logOutput.Print("framebuffer not valid!");
+		logOutput.Print("Warning: FarTextureHandler: framebuffer not valid!");
 		return;
 	}
 

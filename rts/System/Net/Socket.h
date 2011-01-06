@@ -12,8 +12,19 @@ namespace netcode
 {
 
 extern boost::asio::io_service netservice;
-bool CheckErrorCode(boost::system::error_code&);
-boost::asio::ip::udp::endpoint ResolveAddr(const std::string& ip, int port);
+
+/**
+ * Check if a network error occured and eventually log it.
+ * @returns true if a network error occured, false otherwise
+ */
+bool CheckErrorCode(boost::system::error_code& err);
+
+/**
+ * Resolves a host name or IP plus port number into a boost UDP end-point,
+ * eventually resolving the host, if it is specified as name.
+ * @param host name or IP
+ */
+boost::asio::ip::udp::endpoint ResolveAddr(const std::string& host, int port);
 
 /**
  * Evaluates if an address is a loopback one or not.

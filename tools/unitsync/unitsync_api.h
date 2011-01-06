@@ -36,14 +36,43 @@
  *		@endcode
  */
 EXPORT(const char* ) GetNextError();
+
 /**
- * @brief Retrieve the version of Spring this unitsync was compiled with
- * @return The Spring/unitsync version string
+ * @brief Retrieve the synced version of Spring,
+ *   this unitsync was compiled with.
+ * @return The synced Spring/unitsync version, examples:
+ *   - 0.78.0: 1st release of 0.78
+ *   - 0.82.6: 7th release of 0.82
+ *   - 0.82+.5: some test-version from after the 6th release of 0.82
+ *   - 0.82+.0: some dev-version from after the 1st release of 0.82
+ *     (on the main dev branch)
  *
- * Returns a const char* string specifying the version of spring used to build this library with.
- * It was added to aid in lobby creation, where checks for updates to spring occur.
+ * Returns a string specifying the synced part of the version of Spring used to
+ * build this library with.
+ *
+ * The returned version will be of the format "Major.Minor".
+ * With Major=0.82 and Minor=6, the returned version would be "0.82.6".
+ * It was added to aid in lobby creation, to check if the engine version in use
+ * is sync-compatible with the current stable one.
  */
 EXPORT(const char* ) GetSpringVersion();
+
+/**
+ * @brief Retrieve the unsynced/patch-set part of the version of Spring,
+ *   this unitsync was compiled with.
+ * @return The unsynced/patch-set Spring/unitsync version,
+ *   for example "1" if the whole spring version is "0.82.6.1".
+ *
+ * Returns a string specifying the unsynced/patch-set part of the version of
+ * Spring used to build this library with.
+ *
+ * The You may use this together with GetSpringVersion(), to form the whole
+ * version like this:
+ * GetSpringVersion() + "." + GetSpringVersionPatchset()
+ * This will provide you with a version of the format "Major.Minor.Patchset",
+ * for example "0.82.6.0" or "0.82.6.1".
+ */
+EXPORT(const char* ) GetSpringVersionPatchset();
 
 /**
  * @brief Initialize the unitsync library

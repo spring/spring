@@ -35,17 +35,17 @@ bool CheckErrorCode(boost::system::error_code& err)
 	}
 }
 
-boost::asio::ip::udp::endpoint ResolveAddr(const std::string& ip, int port)
+boost::asio::ip::udp::endpoint ResolveAddr(const std::string& host, int port)
 {
 	using namespace boost::asio;
 	boost::system::error_code err;
-	ip::address tempAddr = WrapIP(ip, &err);
+	ip::address tempAddr = WrapIP(host, &err);
 	if (err) {
 		// error, maybe a hostname?
 		ip::udp::resolver resolver(netcode::netservice);
 		std::ostringstream portbuf;
 		portbuf << port;
-		ip::udp::resolver::query query(ip, portbuf.str());
+		ip::udp::resolver::query query(host, portbuf.str());
 		// TODO: check if unsync problem exists here too (see WrapResolve below)
 		ip::udp::resolver::iterator iter = resolver.resolve(query);
 		tempAddr = iter->endpoint().address();
