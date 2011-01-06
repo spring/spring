@@ -219,6 +219,12 @@ EXPORT(const char*) GetSpringVersion()
 }
 
 
+EXPORT(const char*) GetSpringVersionPatchset()
+{
+	return GetStr(SpringVersion::Patchset);
+}
+
+
 static void internal_deleteMapInfos();
 
 static void _UnInit()
