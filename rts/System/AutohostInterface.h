@@ -18,11 +18,11 @@ public:
 
 	/**
 	 * @brief Connects to a port on localhost
-	 * @param remoteHost name or IP of the autohost to connect to
+	 * @param remoteIP IP of the autohost to connect to
 	 * @param remotePort the port where the autohost runs its
 	 *   communication-with-engine service
 	 */
-	AutohostInterface(const std::string& remoteHost, int remotePort);
+	AutohostInterface(const std::string& remoteIP, int remotePort);
 	virtual ~AutohostInterface();
 
 	void SendStart();
