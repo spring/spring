@@ -913,7 +913,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("nanoColorG",   ud.nanoColor.y);
 	ADD_FLOAT("nanoColorB",   ud.nanoColor.z);
 
-//	vector<CExplosionGenerator*>  sfxExplGens;
 	ADD_STRING("pieceTrailCEGTag",   ud.pieceTrailCEGTag);
 	ADD_INT(   "pieceTrailCEGRange", ud.pieceTrailCEGRange);
 

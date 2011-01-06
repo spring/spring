@@ -55,10 +55,10 @@ public:
 
 /*
  * How Spring protocolheader looks like (size in bytes):
- * 4 (int): number of packet (continuous)
- * 4 (int): last in order (tell the client we received all packages with packetNumber less or equal)
- * 1 (unsigned char): nak (we missed x packets, starting with firstUnacked)
- *
+ * - 4 (int): number of packet (continuous)
+ * - 4 (int): last in order (tell the client we received all packages with
+ *   packetNumber less or equal)
+ * - 1 (unsigned char): nak (we missed x packets, starting with firstUnacked)
  */
 
 /**
@@ -179,7 +179,7 @@ private:
 
 	RawPacket* fragmentBuffer;
 
-	// Traffic statistics and stuff //
+	// Traffic statistics and stuff
 
 	/// packets that are resent
 	unsigned resentChunks;

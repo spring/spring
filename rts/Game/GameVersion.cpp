@@ -1,21 +1,19 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-/**
-	@brief Defines the current version string.
-	Take special care when moving this file, the Spring buildbot refers to this
-	file to append the version string with the SVN revision number.
-*/
+// IMPORTANT NOTE: external systems sed -i this file, so DO NOT CHANGE without
+// major thought in advance, and deliberation with bibim and tvo/Tobi!
 
 #include "GameVersion.h"
 
 #include <cstring>
 
-// IMPORTANT NOTE: external systems sed -i this file so DO NOT CHANGE without
-// major thought in advance, and deliberation with bibim and tvo/Tobi!
-
+/**
+ * @brief Defines the current version string.
+ * Take special care when moving this file.
+ * The build-bot refers to this file to append the exact SCM version.
+ */
 namespace SpringVersion
 {
-
 const char* const Major = "0.82+";
 const char* const Minor = "4";
 const char* const Patchset = "0";
@@ -91,7 +89,8 @@ std::string Get()
 
 std::string GetFull()
 {
-	static const std::string full(Get() + "." + Patchset + ((std::strlen(Additional) >0) ? (std::string(" (") + Additional + ")") : ""));
+	static const std::string full(Get() + "." + Patchset + ((std::strlen(Additional) > 0) ? (std::string(" (") + Additional + ")") : ""));
+
 	return full;
 }
 

@@ -558,8 +558,6 @@ static bool InitParamMap()
 	ADD_FLOAT("heightBoostFactor",  wd.heightBoostFactor);
 	ADD_FLOAT("proximityPriority",  wd.proximityPriority);
 
-//	CExplosionGenerator *explosionGenerator;
-
 	ADD_BOOL("sweepFire", wd.sweepFire);
 
 	ADD_BOOL("canAttackGround", wd.canAttackGround);

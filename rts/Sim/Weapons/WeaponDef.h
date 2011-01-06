@@ -11,7 +11,7 @@
 
 struct AtlasedTexture;
 class CColorMap;
-class CExplosionGenerator;
+class IExplosionGenerator;
 struct S3DModel;
 
 struct WeaponDef
@@ -368,8 +368,8 @@ public:
 
 	unsigned int collisionFlags;
 
-	CExplosionGenerator* explosionGenerator;        // can be NULL for default explosions
-	CExplosionGenerator* bounceExplosionGenerator;  // called when a projectile bounces
+	IExplosionGenerator* explosionGenerator;        // can be NULL for default explosions
+	IExplosionGenerator* bounceExplosionGenerator;  // called when a projectile bounces
 
 	bool sweepFire;
 	bool canAttackGround;
