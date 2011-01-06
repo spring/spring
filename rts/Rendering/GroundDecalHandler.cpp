@@ -27,8 +27,9 @@
 #include "System/Exceptions.h"
 #include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
-#include "System/FileSystem/FileSystem.h"
+#include "System/myMath.h"
 #include "System/Util.h"
+#include "System/FileSystem/FileSystem.h"
 
 using std::list;
 using std::min;
@@ -137,7 +138,9 @@ void CGroundDecalHandler::LoadDecalShaders() {
 
 	// SM3 maps have no baked lighting, so decals blend differently
 	const bool haveShadingTexture = (readmap->GetShadingTexture() != 0);
-	const char* fragmentProgramNameARB = haveShadingTexture? "ARB/GroundDecalsSMF.fp": "ARB/GroundDecalsSM3.fp";
+	const char* fragmentProgramNameARB = haveShadingTexture?
+		"ARB/GroundDecalsSMF.fp":
+		"ARB/GroundDecalsSM3.fp";
 	const std::string extraDef = haveShadingTexture?
 		"#define HAVE_SHADING_TEX 1\n":
 		"#define HAVE_SHADING_TEX 0\n";
@@ -228,7 +231,7 @@ inline void CGroundDecalHandler::DrawBuildingDecal(BuildingGroundDecal* decal)
 		int brz = decal->posy + zMax, blz = brz;	// heightmap z-coor of bottom-{left, right} quad vertex
 
 		switch (decal->facing) {
-			case 0: { // South (determines our reference texcoors)
+			case FACING_SOUTH: { // South (determines our reference texcoors)
 				// clip the quad vertices and texcoors against the map boundaries
 				if (tlx <    0) { xMin -= tlx       ;   tlx =    0; blx = tlx; }
 				if (trx > gsmx) { xMax -= trx - gsmx;   trx = gsmx; brx = trx; }
@@ -261,7 +264,7 @@ inline void CGroundDecalHandler::DrawBuildingDecal(BuildingGroundDecal* decal)
 				}
 			} break;
 
-			case 1: { // East
+			case FACING_EAST: { // East
 				if (tlx <    0) { zMin -= tlx       ; tlx =    0; blx = tlx; }
 				if (trx > gsmx) { zMax -= trx - gsmx; trx = gsmx; brx = trx; }
 				if (tlz <    0) { xMax += tlz       ; tlz =    0; trz = tlz; }
@@ -290,7 +293,7 @@ inline void CGroundDecalHandler::DrawBuildingDecal(BuildingGroundDecal* decal)
 				}
 			} break;
 
-			case 2: { // North
+			case FACING_NORTH: { // North
 				if (tlx <    0) { xMax += tlx       ; tlx =    0; blx = tlx; }
 				if (trx > gsmx) { xMin += trx - gsmx; trx = gsmx; brx = trx; }
 				if (tlz <    0) { zMax += tlz       ; tlz =    0; trz = tlz; }
@@ -319,7 +322,7 @@ inline void CGroundDecalHandler::DrawBuildingDecal(BuildingGroundDecal* decal)
 				}
 			} break;
 
-			case 3: { // West
+			case FACING_WEST: { // West
 				if (tlx <    0) { zMax += tlx       ; tlx =    0; blx = tlx; }
 				if (trx > gsmx) { zMin += trx - gsmx; trx = gsmx; brx = trx; }
 				if (tlz <    0) { xMin -= tlz       ; tlz =    0; trz = tlz; }
@@ -542,7 +545,7 @@ void CGroundDecalHandler::Draw()
 					if (decal->owner && decal->owner->buildProgress >= 0) {
 						decal->alpha = decal->owner->buildProgress;
 					} else if (!decal->gbOwner) {
-						decal->alpha -= decal->alphaFalloff * globalRendering->lastFrameTime * gs->speedFactor;
+						decal->alpha -= (decal->alphaFalloff * globalRendering->lastFrameTime * gs->speedFactor);
 					}
 
 					if (decal->alpha < 0.0f) {
