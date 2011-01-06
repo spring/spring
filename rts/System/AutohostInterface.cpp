@@ -96,40 +96,58 @@ enum EVENT
 
 using namespace boost::asio;
 
-AutohostInterface::AutohostInterface(const std::string& remoteHost, int remotePort)
+AutohostInterface::AutohostInterface(const std::string& remoteIP, int remotePort)
 		: autohost(netcode::netservice)
 {
+	std::string errorMsg = "";
+
+	ip::address localAddr;
+	ip::address remoteAddr;
 	boost::system::error_code err;
-	autohost.open(ip::udp::v6(), err); // test v6
-
-	if (!err) {
-		autohost.bind(ip::udp::endpoint(ip::address_v6::any(), 0));
-	} else {
-		LogObject() << "[AutohostInterface] IPv6 not supported, falling back to v4";
-		autohost.open(ip::udp::v4());
-		autohost.bind(ip::udp::endpoint(ip::address_v4::any(), 0));
-	}
-
-	boost::asio::socket_base::non_blocking_io command(true);
-	autohost.io_control(command);
-
-	std::string connectErrorMsg;
-
 	try {
-		boost::system::error_code connectError;
-		autohost.connect(netcode::ResolveAddr(remoteHost, remotePort), connectError);
+		autohost.open(ip::udp::v6(), err); // test IP v6 support
+		const bool supportsIPv6 = !err;
 
-		if (connectError) {
-			connectErrorMsg = connectError.message();
-			autohost.close();
+		remoteAddr = netcode::WrapIP(remoteIP, &err);
+		if (err) {
+			throw std::runtime_error("Failed to parse address " + remoteIP + ": " + err.message());
 		}
-	} catch (boost::system::system_error& e) {
-		connectErrorMsg = e.what();
+
+		if (!supportsIPv6 && remoteAddr.is_v6()) {
+			throw std::runtime_error("IP v6 not supported, can not use address " + remoteAddr.to_string());
+		}
+
+		// use the "any" address as local "from"
+		if (remoteAddr.is_v6()) {
+			localAddr = ip::address_v6::any();
+		} else {
+			if (supportsIPv6) {
+				autohost.close();
+			}
+			autohost.open(ip::udp::v4());
+			localAddr = ip::address_v4::any();
+		}
+
+		autohost.bind(ip::udp::endpoint(localAddr, 0));
+
+		boost::asio::socket_base::non_blocking_io command(true);
+		autohost.io_control(command);
+
+		// A similar, slighly less verbose message is already in GameServer
+		//LogObject() << "[AutohostInterface] Connecting (UDP) to IP "
+		//		<<  (remoteAddr.is_v6() ? "(v6)" : "(v4)") << " " << remoteAddr
+		//		<< " Port " << remotePort;
+		autohost.connect(ip::udp::endpoint(remoteAddr, remotePort));
+	} catch (std::runtime_error& e) { // includes also boost::system::system_error, as it inherits from runtime_error
 		autohost.close();
+		errorMsg = e.what();
+		if (errorMsg.empty()) {
+			errorMsg = "Unknown problem";
+		}
 	}
 
-	if (!autohost.is_open()) {
-		LogObject() << "could not open autohost socket: " << connectErrorMsg;
+	if (!errorMsg.empty()) {
+		LogObject() << "[AutohostInterface] Error: Failed to open socket: " << errorMsg;
 	}
 }
 
