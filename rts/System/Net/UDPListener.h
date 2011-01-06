@@ -48,7 +48,8 @@ public:
 	 *         the default value "" results in the v6 any address "::",
 	 *         or the v4 equivalent "0.0.0.0", if v6 is no supported
 	 */
-	static bool TryBindSocket(int port, SocketPtr* socket, const std::string& ip = "");
+	static bool TryBindSocket(int port, SocketPtr* socket,
+			const std::string& ip = "");
 
 	/**
 	 * @brief Run this from time to time
@@ -59,9 +60,10 @@ public:
 
 	/**
 	 * @brief Initiate a connection
-	 * Make a new connection to address:port. It will be pushed back in conn.
+	 * Make a new connection to ip:port. It will be pushed back in conn.
 	 */
-	boost::shared_ptr<UDPConnection> SpawnConnection(const std::string& address, const unsigned port);
+	boost::shared_ptr<UDPConnection> SpawnConnection(const std::string& ip,
+			const unsigned port);
 
 	/**
 	 * Set if we are going to accept new connections
@@ -87,7 +89,7 @@ private:
 	SocketPtr mySocket;
 
 	/// all connections
-	std::list< boost::weak_ptr< UDPConnection> > conn;
+	std::list< boost::weak_ptr<UDPConnection> > conn;
 
 	std::queue< boost::shared_ptr<UDPConnection> > waiting;
 };
