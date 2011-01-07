@@ -197,8 +197,16 @@ void CKAIK::EnemyDamaged(int enemyUnitID, int attackerUnitID, float damage, floa
 	}
 }
 
-void CKAIK::EnemyCreated(int enemyUnitID) { ai->tm->EnemyCreated(enemyUnitID); }
-void CKAIK::EnemyFinished(int enemyUnitID) { ai->tm->EnemyFinished(enemyUnitID); }
+void CKAIK::EnemyCreated(int enemyUnitID) {
+	if (ai->Initialized()) {
+		ai->tm->EnemyCreated(enemyUnitID);
+	}
+}
+void CKAIK::EnemyFinished(int enemyUnitID) {
+	if (ai->Initialized()) {
+		ai->tm->EnemyFinished(enemyUnitID);
+	}
+}
 
 
 
