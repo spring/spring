@@ -7,6 +7,8 @@
 #include <boost/cstdint.hpp>
 #include <boost/asio/ip/udp.hpp>
 
+class SocketPtr;
+
 /**
  * API for engine <-> autohost (or similar) communication, using UDP over
  * loopback.
@@ -21,9 +23,16 @@ public:
 	 * @param remoteIP IP of the autohost to connect to
 	 * @param remotePort the port where the autohost runs its
 	 *   communication-with-engine service
+	 * @param localIP the local IP to use in the connection,
+	 *   use "" to use the any IP
+	 * @param localPort the local port to use in the connection,
+	 *   use 0 for OS-select
 	 */
-	AutohostInterface(const std::string& remoteIP, int remotePort);
+	AutohostInterface(const std::string& remoteIP, int remotePort,
+			const std::string& localIP = "", int localPort = 0);
 	virtual ~AutohostInterface();
+
+	bool IsInitialized() const { return initialized; }
 
 	void SendStart();
 	void SendQuit();
@@ -52,7 +61,23 @@ public:
 private:
 	void Send(boost::asio::mutable_buffers_1 sendBuffer);
 
+	/**
+	 * Tries to bind a socket for communication with a UDP server.
+	 * @param remoteIP IP of the remote host to connect to
+	 * @param remotePort the port where the remote host runs its
+	 *   UDP service
+	 * @param localIP the local IP to use in the connection,
+	 *   use "" to use the any IP
+	 * @param localPort the local port to use in the connection,
+	 *   use 0 for OS-select
+	 * @return "" if everything went OK, and error description otherwise
+	 */
+	static std::string TryBindSocket(boost::asio::ip::udp::socket& socket,
+			const std::string& remoteIP, int remotePort,
+			const std::string& localIP = "", int localPort = 0);
+
 	boost::asio::ip::udp::socket autohost;
+	bool initialized;
 };
 
 #endif // AUTOHOST_INTERFACE_H

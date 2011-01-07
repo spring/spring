@@ -66,7 +66,7 @@ public:
 
 	void AddLocalClient(const std::string& myName, const std::string& myVersion);
 
-	void AddAutohostInterface(const std::string& autohostip, const int remotePort);
+	void AddAutohostInterface(const std::string& autohostIP, const int autohostPort);
 
 	/**
 	 * @brief Set frame after loading
