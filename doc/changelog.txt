@@ -1,5 +1,32 @@
 Spring change log
 
+0.82.7.1:
+Engine / General:
+ - disable frame number prefix in messages to the console by default
+ - add temporary hack to not crash on HostIP=localhost
+
+Engine / Lua:
+ - change parameter `useOverlay` from type number to bool in config access functions
+
+Engine / Auto-Hosts:
+ - gracefully exit if the autohost is not reachable
+ - if the local socket supports IP v6, but AutohostIP is specified as IP v4, use v4 to connect
+ - stop server on config problem
+
+Engine / Dedicated-Server:
+ - fix crash when game ends prematurely
+
+Unitsync:
+ - add new function GetSpringVersionPatchset() (return "1" for a spring version of "0.82.7.1"
+ - remove accidentially added third paramter to Init()
+
+Installer:
+ - fix: do not check for running .exe in silent-mode
+ - Zero-K: desktop-shortcut: rename & add icon
+
+AI:
+ - KAIK: add missing initialization checks
+
 0.82.7:
 Engine / General:
  - fix crash due to invalid lastAttacker
