@@ -276,12 +276,22 @@ void CGameServer::AddLocalClient(const std::string& myName, const std::string& m
 	localClientNumber = BindConnection(myName, "", myVersion, true, boost::shared_ptr<netcode::CConnection>(new netcode::CLocalConnection()));
 }
 
-void CGameServer::AddAutohostInterface(const std::string& autohostIP, const int remotePort)
+void CGameServer::AddAutohostInterface(const std::string& autohostIP, const int autohostPort)
 {
 	if (!hostif) {
-		hostif.reset(new AutohostInterface(autohostIP, remotePort));
-		hostif->SendStart();
-		Message(str(format(ConnectAutohost) %remotePort), false);
+		hostif.reset(new AutohostInterface(autohostIP, autohostPort));
+		if (hostif->IsInitialized()) {
+			hostif->SendStart();
+			Message(str(format(ConnectAutohost) %autohostPort), false);
+		} else {
+			// Quit if we are instructed to communicate with an auto-host,
+			// but are unable to do so. As we do not want an auto-host running
+			// a spring game that he has no control over. If we get here,
+			// it suggests a configuration problem in the auto-host.
+			hostif.reset();
+			Message(str(format(ConnectAutohostFailed) %autohostIP %autohostPort), false);
+			quitServer = true;
+		}
 	}
 }
 
