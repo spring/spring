@@ -236,12 +236,11 @@ void AIClasses::Init() {
 			p  = 0;
 			q  = 0;
 		}
-
-		if (!initialized) {
-			return;
-		}
 	}
 
+	if (!initialized) {
+		return;
+	}
 
 	activeUnits.resize(MAX_UNITS, NULL);
 	unitIDs.resize(MAX_UNITS, -1);
