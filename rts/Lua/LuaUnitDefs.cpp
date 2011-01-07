@@ -671,7 +671,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_INT("techLevel",   ud.techLevel);
 	ADD_INT("maxThisUnit", ud.maxThisUnit);
-	ADD_BOOL("transportableBuilding", ud.transportableBuilding);
 
 	ADD_FLOAT("metalUpkeep",    ud.metalUpkeep);
 	ADD_FLOAT("energyUpkeep",   ud.energyUpkeep);
