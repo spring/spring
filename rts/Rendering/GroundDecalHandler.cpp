@@ -1196,34 +1196,34 @@ void CGroundDecalHandler::ForceRemoveBuilding(CBuilding* building)
 int CGroundDecalHandler::GetBuildingDecalType(const std::string& name)
 {
 	if (decalLevel == 0) {
-		return 0;
+		return -1;
 	}
 
-	const std::string lowerName = StringToLower(name);
+	const std::string& lowerName = StringToLower(name);
+	const std::string& fullName = "unittextures/" + lowerName;
 
-	int a = 0;
+	int decalType = 0;
 	std::vector<BuildingDecalType*>::iterator bi;
 	for (bi = buildingDecalTypes.begin(); bi != buildingDecalTypes.end(); ++bi) {
 		if ((*bi)->name == lowerName) {
-			return a;
+			return decalType;
 		}
-		++a;
+		++decalType;
 	}
 
-	const std::string fullName = "unittextures/" + lowerName;
 	CBitmap bm;
 	if (!bm.Load(fullName)) {
-		throw content_error("Could not load building decal from file " + fullName);
+		logOutput.Print("[%s] Could not load building-decal from file \"%s\"", __FUNCTION__, fullName.c_str());
+		return -1;
 	}
 
-	BuildingDecalType* tt = new BuildingDecalType;
+	BuildingDecalType* tt = new BuildingDecalType();
 	tt->name = lowerName;
 	tt->texture = bm.CreateTexture(true);
 
 //	GML_STDMUTEX_LOCK(decaltype); // GetBuildingDecalType
 
 	buildingDecalTypes.push_back(tt);
-
 	return (buildingDecalTypes.size() - 1);
 }
 
