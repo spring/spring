@@ -1,69 +1,60 @@
 Steps taken for last few releases (0.82.X)
 ==========================================
 
-What I had to do for last few releases:
-
-(Wrote this down quickly, I hope I didn't forget anything..)
-
-Binary packages
----------------
+Make the release
+----------------
 
 1) cherry pick a whole lot of stuff / or ensure code we want to release is in some branch one way or another
 2) write / update change-log (doc/changelog.txt)
-3) git commit: "bump version to 0.82.6" (rts/Game/GameVersion.cpp)
-4) `git tag -a -m "0.82.6 release" 0.82.6`
-5) git commit: "post release version bump" (rts/Game/GameVersion.cpp)
+3) edit rts/Game/GameVersion.cpp and commit it:
+		${EDITOR} add rts/Game/GameVersion.cpp
+		git add rts/Game/GameVersion.cpp
+		git commit -m "bump version to 0.82.7.1"`
+4) tag the release
+		git tag -a -m "0.82.7.1 release" 0.82.7.1`
+5) edit rts/Game/GameVersion.cpp and commit it:
+		${EDITOR} add rts/Game/GameVersion.cpp
+		git add rts/Game/GameVersion.cpp
+		git commit -m "post release version bump"`
 6) create source-packages:
-		git checkout 0.82.6
+		git checkout 0.82.7.1
 		./installer/make_source_package.sh
-7) `git push --tags origin 0.82-branch`
-8) trigger build of the tag in buildbot (can put tag name in revision field, do not set branch (as it is currently an issue for buildbot when translating stack trace))
-9) write news post
+7) POINT OF NO RETURN: push to main repo:
+		git push --tags origin 0.82-branch
+8) Trigger the build of the tag (0.82.7.1) on the buildbot. You may put the tag name in the revision field. Do not set branch (as it is currently an issue for buildbot when translating stack-traces).
+9) write the news post
 10) once 8) is finished, create portable archive:
-		wget http://springrts.com/dl/buildbot/default/master/0.82.6/spring_0.82.6.exe
-		installer/make_portable_archive.sh spring_0.82.6.exe
+		wget http://springrts.com/dl/buildbot/default/master/0.82.7.1/spring_0.82.7.1.exe
+		installer/make_portable_archive.sh spring_0.82.7.1.exe
 11) you should now have these files:
-	* spring_0.82.6.exe
-	* spring_0.82.6_portable.7z
-	* spring_0.82.6_src.tar.gz
-	* spring_0.82.6_src.tar.lzma
+	* spring_0.82.7.1.exe
+	* spring_0.82.7.1_portable.7z
+	* spring_0.82.7.1_src.tar.gz
+	* spring_0.82.7.1_src.tar.lzma
 	Upload them to SF (replace USER with your SF account name):
-		rsync -e ssh spring_0.82.6* USER,springrts@frs.sourceforge.net:/home/frs/project/s/sp/springrts/springrts/spring-0.82.6/
+		rsync -e ssh spring_0.82.7.1* USER,springrts@frs.sourceforge.net:/home/frs/project/s/sp/springrts/springrts/spring-0.82.7.1/
 12) post news post
+13) download page mirror links:
+    Ask someone with access to http://springrts.com/dl/ to put spring_0.82.7.1* stuff there.
 
-Note: packages should also be put in springrts.com/dl at some point, but this is less important.
-(it's the 'mirror' link on download page)
+After 1 or 2 days, enforce it on the server, if it is a sync relevant change.
 
-Source packages
----------------
-
-Unfortunately they have to be made manually at this moment (that's what I did for 0.82.0-3).
-It's planned to have buildbot generate them.
-
-Build source packages:
-git checkout 0.82.6
-./installer/make_source_package.sh
-
-Portable package
-----------------
-
-One way to make it is (really, *really* needs to be improved & automated):
-
-1) install in wine (might use installer.exe /S, unattended install mode), do not touch the install (don't run anything in it), use dir: "C:\Program Files\spring-0.82.6\"
-2) add empty springsettings.cfg and springlobby.conf in the dir, if you did not choose portable option in the installer
-3) then rename that dir to spring-VERSION (see previous portable package and update this file :-))
-4) zip that dir and upload:
-	cd ~/.wine/drive_c/Program\ Files/
-	7z a spring_0.82.6_portable.7z spring-0.82.6
 
 Enforcing on server
 -------------------
 
-1) Ask aegis to do it
-Once done:
-2) Update download page to point to the new enforced version
-3) Update default downloads for each platform on SF (installer for Windows, .tar.gz for all other platforms)
+This only needs to be done if it is a sync relevant change.
 
+1) Ask aegis or a lobby admin to enforce the new version.
+2) Update the version templates on the Wiki.
+	This also changes the download page.
+		http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Major&action=edit
+		http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Minor&action=edit
+		http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Patchset&action=edit
+3) Update the default downloads for each platform on SF.
+	Installer .exe for Windows, .tar.gz for all other platforms.
+	Do so through the file(s) properties on this page:
+		https://sourceforge.net/projects/springrts/files/springrts/spring-0.82.7.1/
 
 
 Old stuff, to be cleaned up later
