@@ -243,7 +243,7 @@ UnitDef::UnitDef()
 , canLoopbackAttack(false)
 , levelGround(false)
 , useBuildingGroundDecal(false)
-, buildingDecalType(0)
+, buildingDecalType(-1)
 , buildingDecalSizeX(0)
 , buildingDecalSizeY(0)
 , buildingDecalDecaySpeed(0.0f)
@@ -255,7 +255,6 @@ UnitDef::UnitDef()
 , minAirBasePower(0.0f)
 , pieceTrailCEGRange(-1)
 , maxThisUnit(0)
-, transportableBuilding(false)
 , realMetalCost(0.0f)
 , realEnergyCost(0.0f)
 , realMetalUpkeep(0.0f)
@@ -480,7 +479,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	minTransportMass  = udTable.GetFloat("minTransportMass", 0.0f);
 	holdSteady        = udTable.GetBool("holdSteady",        false);
 	releaseHeld       = udTable.GetBool("releaseHeld",       false);
-	cantBeTransported = udTable.GetBool("cantBeTransported", false);
+	cantBeTransported = udTable.GetBool("cantBeTransported", !WantsMoveType());
 	transportByEnemy  = udTable.GetBool("transportByEnemy",  true);
 	fallSpeed         = udTable.GetFloat("fallSpeed",    0.2);
 	unitFallSpeed     = udTable.GetFloat("unitFallSpeed",  0);
@@ -516,7 +515,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	refuelTime = udTable.GetFloat("refuelTime", 5.0f);
 	minAirBasePower = udTable.GetFloat("minAirBasePower", 0.0f);
 	maxThisUnit = udTable.GetInt("unitRestricted", MAX_UNITS);
-	transportableBuilding = udTable.GetBool("transportableBuilding", false);
 
 	const string lname = StringToLower(name);
 

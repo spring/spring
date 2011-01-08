@@ -2119,7 +2119,7 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 			drawStat.insert(unit);
 #endif
 	} else if ((losStatus & LOS_PREVLOS) && (losStatus & LOS_CONTRADAR)) {
-		if (gameSetup->ghostedBuildings && unit->mobility == NULL) {
+		if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
 			unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->pos).SqLength());
 		}
 	}
@@ -2307,7 +2307,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* u) {
 	if (building != NULL) {
 		GhostBuilding* gb = NULL;
 
-		if (!gameSetup || gameSetup->ghostedBuildings) {
+		if (gameSetup->ghostedBuildings) {
 			if (!(building->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
 				(building->losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) &&
 				!gu->spectatingFullView) {
@@ -2370,16 +2370,16 @@ void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newS
 
 	if (newStatus & LOS_INLOS) {
 		if (allyTeam == gu->myAllyTeam) {
-			if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
-				liveGhostBuildings[MDL_TYPE(u)].erase(u);
+			if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
+				liveGhostBuildings[MDL_TYPE(unit)].erase(u);
 			}
 		}
 		unitRadarIcons[allyTeam].erase(u);
 	} else {
 		if (newStatus & LOS_PREVLOS) {
 			if (allyTeam == gu->myAllyTeam) {
-				if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
-					liveGhostBuildings[MDL_TYPE(u)].insert(u);
+				if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
+					liveGhostBuildings[MDL_TYPE(unit)].insert(u);
 				}
 			}
 		}

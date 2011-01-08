@@ -9,9 +9,6 @@ CR_REG_METADATA(CDefenseMatrix, (
 	CR_MEMBER(BuildMaskArray),
 
 	// CR_MEMBER(spotFinder),
-	CR_MEMBER(ThreatMapXSize),
-	CR_MEMBER(ThreatMapYSize),
-	CR_MEMBER(TotalCells),
 	CR_MEMBER(ai),
 // These two only matter during one frame, at AI-Init mid-game -> do not care
 //	CR_MEMBER(defAddQueue),
@@ -20,16 +17,13 @@ CR_REG_METADATA(CDefenseMatrix, (
 	CR_POSTLOAD(PostLoad)
 ));
 
-CDefenseMatrix::CDefenseMatrix(AIClasses *ai)
+CDefenseMatrix::CDefenseMatrix(AIClasses* ai)
 	: spotFinder(NULL)
-	, ThreatMapXSize(-1)
-	, ThreatMapYSize(-1)
-	, TotalCells(-1)
 	, ai(ai)
 {
 }
-CDefenseMatrix::~CDefenseMatrix() {
-}
+
+
 
 void CDefenseMatrix::PostLoad() {
 	spotFinder = new CSpotFinder(ai, ai->pather->PathMapYSize, ai->pather->PathMapXSize);
@@ -40,7 +34,7 @@ void CDefenseMatrix::PostLoad() {
 void CDefenseMatrix::Init() {
 	ChokePointArray.resize(ai->pather->totalcells);
 	// used to mask bad spots that workers can't build at
-	BuildMaskArray.resize(ai->pather->totalcells,0);
+	BuildMaskArray.resize(ai->pather->totalcells, 0);
 
 	ai->pather->CreateDefenseMatrix();
 
