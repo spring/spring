@@ -13,7 +13,6 @@ class CDefenseMatrix {
 		CR_DECLARE(CDefenseMatrix);
 
 		CDefenseMatrix(AIClasses* ai);
-		~CDefenseMatrix();
 
 		void PostLoad();
 		void Init();
@@ -31,7 +30,6 @@ class CDefenseMatrix {
 		bool IsInitialized() const { return (spotFinder != NULL); }
 
 		CSpotFinder* spotFinder;
-		int ThreatMapXSize, ThreatMapYSize, TotalCells;
 		AIClasses* ai;
 
 		struct DefPos {
