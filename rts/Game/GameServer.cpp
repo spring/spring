@@ -153,7 +153,13 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 		UDPNet.reset(new netcode::UDPListener(hostPort, hostIP));
 	}
 
-	const std::string& autohostip = configHandler->Get("AutohostIP", std::string("localhost"));
+	std::string autohostip = configHandler->Get("AutohostIP", std::string("127.0.0.1"));
+	if (StringToLower(autohostip) == "localhost") {
+		// FIXME temporary hack: we do not support (host-)names.
+		// "localhost" was the only name supported in the past.
+		// added 7. January 2011, to be removed in ~ 1 year
+		autohostip = "127.0.0.1";
+	}
 	const int autohostport = configHandler->Get("AutohostPort", 0);
 
 	if (autohostport > 0) {
@@ -270,12 +276,22 @@ void CGameServer::AddLocalClient(const std::string& myName, const std::string& m
 	localClientNumber = BindConnection(myName, "", myVersion, true, boost::shared_ptr<netcode::CConnection>(new netcode::CLocalConnection()));
 }
 
-void CGameServer::AddAutohostInterface(const std::string& autohostIP, const int remotePort)
+void CGameServer::AddAutohostInterface(const std::string& autohostIP, const int autohostPort)
 {
 	if (!hostif) {
-		hostif.reset(new AutohostInterface(autohostIP, remotePort));
-		hostif->SendStart();
-		Message(str(format(ConnectAutohost) %remotePort), false);
+		hostif.reset(new AutohostInterface(autohostIP, autohostPort));
+		if (hostif->IsInitialized()) {
+			hostif->SendStart();
+			Message(str(format(ConnectAutohost) %autohostPort), false);
+		} else {
+			// Quit if we are instructed to communicate with an auto-host,
+			// but are unable to do so. As we do not want an auto-host running
+			// a spring game that he has no control over. If we get here,
+			// it suggests a configuration problem in the auto-host.
+			hostif.reset();
+			Message(str(format(ConnectAutohostFailed) %autohostIP %autohostPort), false);
+			quitServer = true;
+		}
 	}
 }
 

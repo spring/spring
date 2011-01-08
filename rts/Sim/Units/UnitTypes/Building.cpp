@@ -40,7 +40,7 @@ void CBuilding::PreInit(const UnitDef* def, int team, int facing, const float3& 
 
 void CBuilding::PostInit(const CUnit* builder)
 {
-	if (!unitDef->transportableBuilding)
+	if (unitDef->cantBeTransported)
 		mass = CSolidObject::DEFAULT_MASS;
 	physicalState = OnGround;
 
