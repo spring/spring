@@ -127,7 +127,7 @@
 		Limit1=50;      // >0 can be used for limiting, like build restrictions in TA
 		//...
 	}
-	[MODOPTIONS]
+	[MODOPTIONS]        // values for the options defined in ModOptions.lua
 	{
 		StartMetal=1000;
 		StartEnergy=1000;
@@ -142,5 +142,9 @@
 		FixedAllies=1;      // Are ingame alliances allowed?
 		MaxSpeed=3;         // speed limits at game start
 		MinSpeed=0.3;
+	}
+	[MAPOPTIONS]        // values for the options defined in MapOptions.lua
+	{
+		PropX=1000;
 	}
 }
