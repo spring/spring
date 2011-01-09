@@ -85,10 +85,10 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 	// so throwing here would cause maps to break.
 	if (!tex2bm.Load(std::string("unittextures/" + model->tex2))) {
 		tex2bm.Alloc(1, 1);
-		tex2bm.mem[0] = 255;
-		tex2bm.mem[1] = 255;
-		tex2bm.mem[2] = 255;
-		tex2bm.mem[3] = 255;
+		tex2bm.mem[0] =   0; // self-illum
+		tex2bm.mem[1] =   0; // spec+refl
+		tex2bm.mem[2] =   0; // unused
+		tex2bm.mem[3] = 255; // team-color
 	}
 
 	tex.tex2      = tex2bm.CreateTexture(true);
