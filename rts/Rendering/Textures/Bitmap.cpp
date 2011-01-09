@@ -153,13 +153,17 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 #endif // !BITMAP_NO_OPENGL
 
 	if (filename.find(".dds") != std::string::npos) {
+		bool status = false;
+
+#ifndef BITMAP_NO_OPENGL
 		type = BitmapTypeDDS;
 		xsize = 0;
 		ysize = 0;
 		channels = 0;
-#ifndef BITMAP_NO_OPENGL
+
 		ddsimage = new nv_dds::CDDSImage();
-		bool status = ddsimage->load(filename);
+		status = ddsimage->load(filename);
+
 		if (status) {
 			xsize = ddsimage->get_width();
 			ysize = ddsimage->get_height();
@@ -179,11 +183,10 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 					break;
 			}
 		}
-		return status;
-#else
-		return false;
 #endif // !BITMAP_NO_OPENGL
+		return status;
 	}
+
 	type = BitmapTypeStandardRGBA;
 	channels = 4;
 

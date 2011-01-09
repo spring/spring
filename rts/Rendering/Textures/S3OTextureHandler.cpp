@@ -69,8 +69,8 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 		// file not found (or headless build), set single pixel to red so unit is visible
 		tex1bm.Alloc(1, 1);
 		tex1bm.mem[0] = 255;
-		tex2bm.mem[1] =   0;
-		tex2bm.mem[2] =   0;
+		tex1bm.mem[1] =   0;
+		tex1bm.mem[2] =   0;
 		tex1bm.mem[3] = 255;
 	}
 
