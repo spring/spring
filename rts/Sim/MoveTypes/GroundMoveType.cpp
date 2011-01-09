@@ -62,10 +62,8 @@ CR_REG_METADATA(CGroundMoveType, (
 		CR_MEMBER(nextWaypoint),
 		CR_MEMBER(atGoal),
 		CR_MEMBER(haveFinalWaypoint),
-		CR_MEMBER(terrainSpeed),
 
 		CR_MEMBER(requestedSpeed),
-		CR_MEMBER(requestedTurnRate),
 
 		CR_MEMBER(currentDistanceToWaypoint),
 
@@ -130,9 +128,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	atGoal(false),
 	haveFinalWaypoint(false),
 
-	terrainSpeed(1.0f),
 	requestedSpeed(0.0f),
-	requestedTurnRate(0),
 	currentDistanceToWaypoint(0),
 	restartDelay(0),
 	lastGetPathPos(ZeroVector),
@@ -189,9 +185,6 @@ void CGroundMoveType::PostLoad()
 void CGroundMoveType::Update()
 {
 	ASSERT_SYNCED_FLOAT3(owner->pos);
-
-	// Update mobility.
-	owner->mobility->maxSpeed = reversing? maxReverseSpeed: maxSpeed;
 
 	if (owner->transporter) {
 		return;
@@ -307,7 +300,7 @@ void CGroundMoveType::Update()
 
 					// If arriving at waypoint, then need to slow down, or may pass it.
 					if (!moreCommands && startBreaking) {
-						wantedSpeed = std::min(wantedSpeed, fastmath::apxsqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking));
+						wantedSpeed = 0.0f;
 					}
 					if (waypointDir.SqLength() > 0.1f) {
 						const float reqTurnAngle = streflop::acosf(waypointDir.dot(flatFrontDir)) * (180.0f / PI);
@@ -428,7 +421,6 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 	goalPos = moveGoalPos;
 	goalRadius = goalRadius;
 	requestedSpeed = speed;
-	requestedTurnRate = owner->mobility->maxTurnRate;
 	atGoal = false;
 	useMainHeading = false;
 	progressState = Active;
@@ -1262,12 +1254,9 @@ void CGroundMoveType::GetNextWaypoint()
 The distance the unit will move at max breaking before stopping,
 starting from given speed.
 */
-float CGroundMoveType::BreakingDistance(float speed)
+float CGroundMoveType::BreakingDistance(float speed) const
 {
-	if (!owner->mobility->maxBreaking) {
-		return 0.0f;
-	}
-	return fabs(speed*speed / owner->mobility->maxBreaking);
+	return math::fabs(speed * speed / std::max(decRate, 0.01f));
 }
 
 /*
@@ -1700,7 +1689,6 @@ void CGroundMoveType::TestNewTerrainSquare()
 		if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {
 			moveSquareX = newMoveSquareX;
 			moveSquareY = newMoveSquareY;
-			terrainSpeed = movemath->SpeedMod(md, moveSquareX * 2, moveSquareY * 2);
 
 			// if we have moved, check if we can get to the next waypoint
 			int nwsx = (int) nextWaypoint.x / (MIN_WAYPOINT_DISTANCE) - moveSquareX;
