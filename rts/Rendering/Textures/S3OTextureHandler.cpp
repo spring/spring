@@ -11,7 +11,6 @@
 #include "S3OTextureHandler.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/SimpleParser.h"
-#include "LogOutput.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Models/3DModel.h"
@@ -19,6 +18,7 @@
 #include "TAPalette.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
+#include "System/LogOutput.h"
 
 
 CS3OTextureHandler* texturehandlerS3O = NULL;
@@ -53,44 +53,52 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 {
 	GML_STDMUTEX_LOCK(model); // LoadS3OTextureNow
 
-	string totalName = model->tex1 + model->tex2;
+	const string totalName = model->tex1 + model->tex2;
 
-	if (s3oTextureNames.find(totalName) != s3oTextureNames.end()){
+	if (s3oTextureNames.find(totalName) != s3oTextureNames.end()) {
 		return s3oTextureNames[totalName];
 	}
-	const int newNum = s3oTextures.size();
+
+	CBitmap tex1bm;
+	CBitmap tex2bm;
 	S3oTex tex;
-	tex.num = newNum;
 
-	CBitmap bm;
-	if (!bm.Load(std::string("unittextures/" + model->tex1))) {
-		throw content_error("Could not load texture unittextures/" + model->tex1 + " from S3O model " + model->name);
+	if (!tex1bm.Load(std::string("unittextures/" + model->tex1))) {
+		logOutput.Print("[%s] could not load texture \"%s\" from model \"%s\"", __FUNCTION__, model->tex1.c_str(), model->name.c_str());
+
+		// file not found (or headless build), set single pixel to red so unit is visible
+		tex1bm.Alloc(1, 1);
+		tex1bm.mem[0] = 255;
+		tex2bm.mem[1] =   0;
+		tex2bm.mem[2] =   0;
+		tex1bm.mem[3] = 255;
 	}
-	tex.tex1 = bm.CreateTexture(true);
-	tex.tex1SizeX = bm.xsize;
-	tex.tex1SizeY = bm.ysize;
-	tex.tex2 = 0;
-	tex.tex2SizeX = 0;
-	tex.tex2SizeY = 0;
-	//if (unitDrawer->advShading)
-	{
-		CBitmap bm;
-		// No error checking here... other code relies on an empty texture
-		// being generated if it couldn't be loaded.
-		// Also many map features specify a tex2 but don't ship it with the map,
-		// so throwing here would cause maps to break.
-		if (!bm.Load(std::string("unittextures/" + model->tex2))) {
-			bm.Alloc(1, 1);
-			bm.mem[3] = 255; // file not found, set alpha to white so unit is visible
-		}
-		tex.tex2 = bm.CreateTexture(true);
-		tex.tex2SizeX = bm.xsize;
-		tex.tex2SizeY = bm.ysize;
+
+	tex.num       = s3oTextures.size();
+	tex.tex1      = tex1bm.CreateTexture(true);
+	tex.tex1SizeX = tex1bm.xsize;
+	tex.tex1SizeY = tex1bm.ysize;
+
+	// No error checking here... other code relies on an empty texture
+	// being generated if it couldn't be loaded.
+	// Also many map features specify a tex2 but don't ship it with the map,
+	// so throwing here would cause maps to break.
+	if (!tex2bm.Load(std::string("unittextures/" + model->tex2))) {
+		tex2bm.Alloc(1, 1);
+		tex2bm.mem[0] = 255;
+		tex2bm.mem[1] = 255;
+		tex2bm.mem[2] = 255;
+		tex2bm.mem[3] = 255;
 	}
+
+	tex.tex2      = tex2bm.CreateTexture(true);
+	tex.tex2SizeX = tex2bm.xsize;
+	tex.tex2SizeY = tex2bm.ysize;
+
 	s3oTextures.push_back(tex);
-	s3oTextureNames[totalName] = newNum;
+	s3oTextureNames[totalName] = tex.num;
 
-	return newNum;
+	return tex.num;
 }
 
 void CS3OTextureHandler::SetS3oTexture(int num)
