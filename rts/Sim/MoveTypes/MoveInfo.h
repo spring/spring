@@ -32,7 +32,7 @@ struct MoveData {
 		followGround    = unitDefMD? unitDefMD->followGround:    true;
 		subMarine       = unitDefMD? unitDefMD->subMarine:       false;
 		heatMapping     = unitDefMD? unitDefMD->heatMapping:     true;
-		heatMod	        = unitDefMD? unitDefMD->heatMod:         0.05f;
+		heatMod         = unitDefMD? unitDefMD->heatMod:         0.05f;
 		heatProduced    = unitDefMD? unitDefMD->heatProduced:    30;
 		unitDefRefCount = unitDefMD? unitDefMD->unitDefRefCount: 0;
 		moveMath        = unitDefMD? unitDefMD->moveMath:        NULL;
