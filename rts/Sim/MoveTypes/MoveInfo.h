@@ -18,25 +18,29 @@ struct MoveData {
 	MoveData(const MoveData* unitDefMD) {
 		name            = unitDefMD? unitDefMD->name:            "";
 
+		moveType        = unitDefMD? unitDefMD->moveType:        MoveData::Ground_Move;
+		moveFamily      = unitDefMD? unitDefMD->moveFamily:      MoveData::Tank;
+		terrainClass    = unitDefMD? unitDefMD->terrainClass:    MoveData::Mixed;
+
 		xsize           = unitDefMD? unitDefMD->xsize:           0;
 		zsize           = unitDefMD? unitDefMD->zsize:           0;
 		depth           = unitDefMD? unitDefMD->depth:           0.0f;
 		maxSlope        = unitDefMD? unitDefMD->maxSlope:        1.0f;
 		slopeMod        = unitDefMD? unitDefMD->slopeMod:        0.0f;
 		depthMod        = unitDefMD? unitDefMD->depthMod:        0.0f;
-		pathType        = unitDefMD? unitDefMD->pathType:        0;
 		crushStrength   = unitDefMD? unitDefMD->crushStrength:   0.0f;
-		moveType        = unitDefMD? unitDefMD->moveType:        MoveData::Ground_Move;
-		moveFamily      = unitDefMD? unitDefMD->moveFamily:      MoveData::Tank;
-		terrainClass    = unitDefMD? unitDefMD->terrainClass:    MoveData::Mixed;
+
+		pathType        = unitDefMD? unitDefMD->pathType:        0;
+		unitDefRefCount = unitDefMD? unitDefMD->unitDefRefCount: 0;
+
 		followGround    = unitDefMD? unitDefMD->followGround:    true;
 		subMarine       = unitDefMD? unitDefMD->subMarine:       false;
+
 		heatMapping     = unitDefMD? unitDefMD->heatMapping:     true;
 		heatMod         = unitDefMD? unitDefMD->heatMod:         0.05f;
 		heatProduced    = unitDefMD? unitDefMD->heatProduced:    30;
-		unitDefRefCount = unitDefMD? unitDefMD->unitDefRefCount: 0;
-		moveMath        = unitDefMD? unitDefMD->moveMath:        NULL;
 
+		moveMath        = unitDefMD? unitDefMD->moveMath:        NULL;
 		tempOwner       = NULL;
 	}
 
@@ -66,8 +70,6 @@ struct MoveData {
 	MoveType moveType;
 	MoveFamily moveFamily;
 	TerrainClass terrainClass;
-	/// do we stick to the ground when in water?
-	bool followGround;
 
 	/// of the footprint
 	int xsize;
@@ -77,11 +79,14 @@ struct MoveData {
 	float maxSlope;
 	float slopeMod;
 	float depthMod;
-
-	int pathType;
 	float crushStrength;
 
+	unsigned int pathType;
+	/// number of UnitDef types that refer to this MoveData class
+	unsigned int unitDefRefCount;
 
+	/// do we stick to the ground when in water?
+	bool followGround;
 	/// are we supposed to be a purely sub-surface ship?
 	bool subMarine;
 
@@ -91,9 +96,6 @@ struct MoveData {
 	float heatMod;
 	/// heat produced by a path
 	int heatProduced;
-
-	/// number of UnitDef types that refer to this MoveData class
-	unsigned int unitDefRefCount;
 
 	CMoveMath* moveMath;
 	CSolidObject* tempOwner;
