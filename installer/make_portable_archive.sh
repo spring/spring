@@ -18,9 +18,10 @@ mkdir -p ${INSTPATH}
 
 WINEINSTPATH="Z:${INSTPATH//\//\\\\}"
 
-echo wine ${INSTALLER} /S /D=$WINEINSTPATH
+INSTCOMMAND="wine ${INSTALLER} /S /PORTABLE /NOREGISTRY /NODESKTOPLINK /NOSTARTMENU /D=$WINEINSTPATH"
+echo $INSTCOMMAND
 
-if ! sh -c "wine ${INSTALLER} /S /PORTABLE /D=$WINEINSTPATH" ; then
+if ! sh -c "$INSTCOMMAND" ; then
 	echo "Installation failed"
 	exit
 fi
