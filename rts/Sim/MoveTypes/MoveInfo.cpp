@@ -42,12 +42,6 @@ CR_REG_METADATA(MoveData, (
 
 	CR_MEMBER(name),
 
-	CR_MEMBER(maxSpeed),
-	CR_MEMBER(maxTurnRate),
-
-	CR_MEMBER(maxAcceleration),
-	CR_MEMBER(maxBreaking),
-
 	CR_MEMBER(subMarine),
 	CR_MEMBER(tempOwner),
 
@@ -85,8 +79,9 @@ CMoveInfo::CMoveInfo()
 
 	for (int tt = 0; tt < CMapInfo::NUM_TERRAIN_TYPES; ++tt) {
 		const CMapInfo::TerrainType& terrType = mapInfo->terrainTypes[tt];
-		crc << terrType.tankSpeed << terrType.kbotSpeed
-			<< terrType.hoverSpeed << terrType.shipSpeed;
+
+		crc << terrType.tankSpeed << terrType.kbotSpeed;
+		crc << terrType.hoverSpeed << terrType.shipSpeed;
 	}
 
 	for (size_t num = 1; /* no test */; num++) {
@@ -97,11 +92,8 @@ CMoveInfo::CMoveInfo()
 
 		MoveData* md = new MoveData(NULL);
 
-		md->name     = StringToLower(moveTable.GetString("name", ""));
-		md->pathType = (num - 1);
-		md->maxSlope = 1.0f;
-		md->depth    = 0.0f;
-		md->depthMod = 0.0f;
+		md->name          = StringToLower(moveTable.GetString("name", ""));
+		md->pathType      = (num - 1);
 		md->crushStrength = moveTable.GetFloat("crushStrength", 10.0f);
 
 		const float minWaterDepth = moveTable.GetFloat("minWaterDepth", 10.0f);
@@ -114,14 +106,12 @@ CMoveInfo::CMoveInfo()
 			md->moveFamily = MoveData::Ship;
 			md->moveMath   = seaMoveMath;
 			md->subMarine  = moveTable.GetBool("subMarine", 0);
-		}
-		else if (md->name.find("hover") != string::npos) {
+		} else if (md->name.find("hover") != string::npos) {
 			md->moveType   = MoveData::Hover_Move;
 			md->maxSlope   = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 15.0f));
 			md->moveFamily = MoveData::Hover;
 			md->moveMath   = hoverMoveMath;
-		}
-		else {
+		} else {
 			md->moveType = MoveData::Ground_Move;
 			md->depthMod = moveTable.GetFloat("depthMod", 0.1f);
 			md->depth    = maxWaterDepth;
@@ -190,6 +180,7 @@ CMoveInfo::CMoveInfo()
 			(b2               <<  2) +
 			(b1               <<  1) +
 			(b0               <<  0);
+
 		crc << checksum
 			<< md->maxSlope << md->slopeMod
 			<< md->depth << md->depthMod
@@ -209,8 +200,8 @@ CMoveInfo::CMoveInfo()
 
 	CHoverMoveMath::noWaterMove = (waterDamage >= 10000.0f);
 
-	crc << CGroundMoveMath::waterCost
-		<< CHoverMoveMath::noWaterMove;
+	crc << CGroundMoveMath::waterCost;
+	crc << CHoverMoveMath::noWaterMove;
 
 	moveInfoChecksum = crc.GetDigest();
 }

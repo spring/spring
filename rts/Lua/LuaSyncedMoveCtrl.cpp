@@ -735,8 +735,6 @@ static inline bool SetGroundMoveTypeValue(CGroundMoveType* mt, const string& key
 		mt->wantedSpeed = value / GAME_SPEED; return true;
 	} else if (key == "requestedSpeed") {
 		mt->requestedSpeed = value / GAME_SPEED; return true;
-	} else if (key == "requestedTurnRate") {
-		mt->requestedTurnRate = value; return true;
 	}
 
 	return false;
