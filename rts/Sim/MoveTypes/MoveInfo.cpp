@@ -24,10 +24,11 @@ CR_BIND(MoveData, (0));
 CR_BIND(CMoveInfo, );
 
 CR_REG_METADATA(MoveData, (
+	CR_MEMBER(name),
+
 	CR_ENUM_MEMBER(moveType),
 	CR_ENUM_MEMBER(moveFamily),
 	CR_ENUM_MEMBER(terrainClass),
-	CR_MEMBER(followGround),
 
 	CR_MEMBER(xsize),
 	CR_MEMBER(zsize),
@@ -35,14 +36,19 @@ CR_REG_METADATA(MoveData, (
 	CR_MEMBER(maxSlope),
 	CR_MEMBER(slopeMod),
 	CR_MEMBER(depthMod),
-
-	CR_MEMBER(pathType),
-	CR_MEMBER(moveMath),
 	CR_MEMBER(crushStrength),
 
-	CR_MEMBER(name),
+	CR_MEMBER(pathType),
+	CR_MEMBER(unitDefRefCount),
 
+	CR_MEMBER(followGround),
 	CR_MEMBER(subMarine),
+
+	CR_MEMBER(heatMapping),
+	CR_MEMBER(heatMod),
+	CR_MEMBER(heatProduced),
+
+	CR_MEMBER(moveMath),
 	CR_MEMBER(tempOwner),
 
 	CR_RESERVED(16)
