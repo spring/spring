@@ -3344,7 +3344,6 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 		HSTR_PUSH_NUMBER(L, "nextwaypointz", groundmt->nextWaypoint.z);
 
 		HSTR_PUSH_NUMBER(L, "requestedSpeed", groundmt->requestedSpeed);
-		HSTR_PUSH_NUMBER(L, "requestedTurnRate", groundmt->requestedTurnRate);
 
 		HSTR_PUSH_NUMBER(L, "pathFailures", 0);
 		HSTR_PUSH_NUMBER(L, "floatOnWater", unit->floatOnWater);

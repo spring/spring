@@ -2909,19 +2909,19 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isMoveDataAvailable(int skirmishAIId, in
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getMaxAcceleration(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->maxAcceleration;
+	return 0.0f;
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getMaxBreaking(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->maxBreaking;
+	return 0.0f;
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_MoveData_getMaxSpeed(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->maxSpeed;
+	return 0.0f;
 }
 
 EXPORT(short) skirmishAiCallback_UnitDef_MoveData_getMaxTurnRate(int skirmishAIId, int unitDefId) {
-	return getUnitDefMoveDataById(skirmishAIId, unitDefId)->maxTurnRate;
+	return 0;
 }
 
 EXPORT(int) skirmishAiCallback_UnitDef_MoveData_getXSize(int skirmishAIId, int unitDefId) {

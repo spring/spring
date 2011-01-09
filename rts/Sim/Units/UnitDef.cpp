@@ -556,20 +556,24 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 			throw content_error(errMsg); //! invalidate unitDef (this gets catched in ParseUnitDef!)
 		}
 
+		movedata->unitDefRefCount += 1;
+
+		static const char* fmtString =
+			"[%s] inconsistent path-type %i for \"%s\" (move-class \"%s\"): %s, but not a %s-based movetype";
+		const char* udName = name.c_str();
+		const char* mdName = moveClass.c_str();
+
 		if (canhover) {
 			if (movedata->moveType != MoveData::Hover_Move) {
-				logOutput.Print("Inconsistent movedata %i for %s (moveclass %s): canhover, but not a hovercraft movetype",
-				     movedata->pathType, name.c_str(), moveClass.c_str());
+				logOutput.Print(fmtString, __FUNCTION__, movedata->pathType, udName, mdName, "canhover", "hover");
 			}
 		} else if (floater) {
 			if (movedata->moveType != MoveData::Ship_Move) {
-				logOutput.Print("Inconsistent movedata %i for %s (moveclass %s): floater, but not a ship movetype",
-				     movedata->pathType, name.c_str(), moveClass.c_str());
+				logOutput.Print(fmtString, __FUNCTION__, movedata->pathType, udName, mdName, "floater", "ship");
 			}
 		} else {
 			if (movedata->moveType != MoveData::Ground_Move) {
-				logOutput.Print("Inconsistent movedata %i for %s (moveclass %s): neither canhover nor floater, but not a ground movetype",
-				     movedata->pathType, name.c_str(), moveClass.c_str());
+				logOutput.Print(fmtString, __FUNCTION__, movedata->pathType, udName, mdName, "!(canhover || floater)", "ground");
 			}
 		}
 	}

@@ -192,8 +192,11 @@ void CPathEstimator::CalculateBlockOffsets(unsigned int blockIdx, unsigned int t
 		net->Send(CBaseNetProtocol::Get().SendCPUUsage(BLOCK_SIZE | (blockIdx << 8)));
 	}
 
-	for (vector<MoveData*>::iterator mi = moveinfo->moveData.begin(); mi != moveinfo->moveData.end(); mi++)
-		FindOffset(**mi, x, z);
+	for (vector<MoveData*>::iterator mi = moveinfo->moveData.begin(); mi != moveinfo->moveData.end(); mi++) {
+		if ((*mi)->unitDefRefCount > 0) {
+			FindOffset(**mi, x, z);
+		}
+	}
 }
 
 void CPathEstimator::EstimatePathCosts(unsigned int blockIdx, unsigned int threadNum) {
@@ -210,8 +213,11 @@ void CPathEstimator::EstimatePathCosts(unsigned int blockIdx, unsigned int threa
 		loadscreen->SetLoadMessage(calcMsg, (blockIdx != 0));
 	}
 
-	for (vector<MoveData*>::iterator mi = moveinfo->moveData.begin(); mi != moveinfo->moveData.end(); mi++)
-		CalculateVertices(**mi, x, z, threadNum);
+	for (vector<MoveData*>::iterator mi = moveinfo->moveData.begin(); mi != moveinfo->moveData.end(); mi++) {
+		if ((*mi)->unitDefRefCount > 0) {
+			CalculateVertices(**mi, x, z, threadNum);
+		}
+	}
 }
 
 
@@ -368,12 +374,14 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
 				std::vector<MoveData*>::iterator mi;
 
 				for (mi = moveinfo->moveData.begin(); mi < moveinfo->moveData.end(); mi++) {
-					SingleBlock sb;
-						sb.blockPos.x = x;
-						sb.blockPos.y = z;
-						sb.moveData = *mi;
-					changedBlocks.push_back(sb);
-					blockStates[z * nbrOfBlocksX + x].nodeMask |= PATHOPT_OBSOLETE;
+					if ((*mi)->unitDefRefCount > 0) {
+						SingleBlock sb;
+							sb.blockPos.x = x;
+							sb.blockPos.y = z;
+							sb.moveData = *mi;
+						changedBlocks.push_back(sb);
+						blockStates[z * nbrOfBlocksX + x].nodeMask |= PATHOPT_OBSOLETE;
+					}
 				}
 			}
 		}
