@@ -20,12 +20,10 @@ WINEINSTPATH="Z:${INSTPATH//\//\\\\}"
 
 echo wine ${INSTALLER} /S /D=$WINEINSTPATH
 
-if ! sh -c "wine ${INSTALLER} /S /D=$WINEINSTPATH" ; then
+if ! sh -c "wine ${INSTALLER} /S /PORTABLE /D=$WINEINSTPATH" ; then
 	echo "Installation failed"
 	exit
 fi
-
-touch ${INSTPATH}/springsettings.cfg ${INSTPATH}/springlobby.conf
 
 7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on spring_${VERSION}_portable.7z ${INSTPATH}
 
