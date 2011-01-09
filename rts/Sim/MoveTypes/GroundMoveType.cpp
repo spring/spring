@@ -300,7 +300,7 @@ void CGroundMoveType::Update()
 
 					// If arriving at waypoint, then need to slow down, or may pass it.
 					if (!moreCommands && startBreaking) {
-						wantedSpeed = 0.0f;
+						 wantedSpeed = std::min(wantedSpeed, fastmath::apxsqrt(currentDistanceToWaypoint * decRate));
 					}
 					if (waypointDir.SqLength() > 0.1f) {
 						const float reqTurnAngle = streflop::acosf(waypointDir.dot(flatFrontDir)) * (180.0f / PI);
