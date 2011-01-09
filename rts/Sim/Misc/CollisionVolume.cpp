@@ -80,37 +80,46 @@ CollisionVolume::CollisionVolume(const CollisionVolume* v, float defaultRadius)
 	}
 }
 
-CollisionVolume::CollisionVolume(const std::string& volTypeStr, const float3& scales, const float3& offsets, int hitTestType)
+CollisionVolume::CollisionVolume(const std::string& volTypeString, const float3& scales, const float3& offsets, int hitTestType)
 {
+	static const char* fmtString = "[%s] %s (scale: <%.2f, %.2f, %.2f>, offsets: <%.2f, %.2f, %.2f>, test-type: %d, axis: %d)";
+
 	int volType = COLVOL_TYPE_FOOTPRINT;
 	int volAxis = COLVOL_AXIS_Z;
 
-	if (!volTypeStr.empty()) {
-		const std::string volTypeStrLC(StringToLower(volTypeStr));
+	if (!volTypeString.empty()) {
+		const std::string& volTypeStr = StringToLower(volTypeString);
+		const std::string& volTypePrefix = volTypeStr.substr(0, 3);
 
-		if (volTypeStrLC.find("ell") != std::string::npos) {
+		if (volTypePrefix == "ell") {
 			volType = COLVOL_TYPE_ELLIPSOID;
-		} else if (volTypeStrLC.find("cyl") != std::string::npos) {
+		} else if (volTypePrefix == "cyl") {
 			volType = COLVOL_TYPE_CYLINDER;
 
-			if (volTypeStrLC.size() == 4) {
-				switch (volTypeStrLC[3]) {
-					case 'x': { volAxis = COLVOL_AXIS_X; } break;
-					case 'y': { volAxis = COLVOL_AXIS_Y; } break;
-					case 'z': { volAxis = COLVOL_AXIS_Z; } break;
-					default: {} break;
-				}
+			switch (volTypeStr[volTypeStr.size() - 1]) {
+				case 'x': { volAxis = COLVOL_AXIS_X; } break;
+				case 'y': { volAxis = COLVOL_AXIS_Y; } break;
+				case 'z': { volAxis = COLVOL_AXIS_Z; } break;
+				default: {} break;
 			}
-		} else if (volTypeStrLC.find("box") != std::string::npos) {
+		} else if (volTypePrefix == "box") {
 			volType = COLVOL_TYPE_BOX;
 		}
 	}
 
 	switch (volType) {
-		case COLVOL_TYPE_ELLIPSOID: { logOutput.Print(LOG_COLVOL, "New ellipsoid"); } break;
-		case COLVOL_TYPE_CYLINDER:  { logOutput.Print(LOG_COLVOL, "New cylinder");  } break;
-		case COLVOL_TYPE_BOX:       { logOutput.Print(LOG_COLVOL, "New box");       } break;
-		case COLVOL_TYPE_FOOTPRINT: { logOutput.Print(LOG_COLVOL, "New footprint"); } break;
+		case COLVOL_TYPE_ELLIPSOID: {
+			logOutput.Print(LOG_COLVOL, fmtString, __FUNCTION__, "ellipsoid", scales.x, scales.y, scales.z, offsets.x, offsets.y, offsets.z, hitTestType, volAxis);
+		} break;
+		case COLVOL_TYPE_CYLINDER: {
+			logOutput.Print(LOG_COLVOL, fmtString, __FUNCTION__, "cylinder", scales.x, scales.y, scales.z, offsets.x, offsets.y, offsets.z, hitTestType, volAxis);
+		} break;
+		case COLVOL_TYPE_BOX: {
+			logOutput.Print(LOG_COLVOL, fmtString, __FUNCTION__, "cuboid", scales.x, scales.y, scales.z, offsets.x, offsets.y, offsets.z, hitTestType, volAxis);
+		} break;
+		case COLVOL_TYPE_FOOTPRINT: {
+			logOutput.Print(LOG_COLVOL, fmtString, __FUNCTION__, "footprint", scales.x, scales.y, scales.z, offsets.x, offsets.y, offsets.z, hitTestType, volAxis);
+		} break;
 		default: {} break;
 	}
 
