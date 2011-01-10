@@ -200,13 +200,15 @@ static inline void AddQuadVertices(CVertexArray* va, int x, float* yv, int z, co
 
 inline void CGroundDecalHandler::DrawBuildingDecal(BuildingGroundDecal* decal)
 {
+	if (!camera->InView(decal->pos, decal->radius)) {
+		return;
+	}
+
 	const float* hm = readmap->GetHeightmap();
 	const int gsmx = gs->mapx;
 	const int gsmx1 = gsmx + 1;
 	const int gsmy = gs->mapy;
 
-	float yv[4] = {0.0f};
-	float uv[8] = {0.0f};
 	unsigned char color[4] = {255, 255, 255, int(decal->alpha * 255)};
 
 	#ifndef DEBUG
@@ -220,136 +222,67 @@ inline void CGroundDecalHandler::DrawBuildingDecal(BuildingGroundDecal* decal)
 		decal->va = new CVertexArray();
 		decal->va->Initialize();
 
-		const float xts = 1.0f / decal->xsize;
-		const float yts = 1.0f / decal->ysize;
+		const int
+			dxsize = decal->xsize,
+			dzsize = decal->ysize,
+			dxpos  = decal->posx,              // top-left quad x-coordinate
+			dzpos  = decal->posy,              // top-left quad z-coordinate
+			dxoff  = (dxpos < 0)? -(dxpos): 0, // offset from left map edge
+			dzoff  = (dzpos < 0)? -(dzpos): 0; // offset from top map edge
 
-		int xMin = 0, xMax = decal->xsize;			// x-extends in local decal-space (heightmap scale)
-		int zMin = 0, zMax = decal->ysize;			// z-extends in local decal-space (heightmap scale)
-		int tlx = decal->posx + xMin, blx = tlx;	// heightmap x-coor of {top, bottom}-left   quad vertex
-		int trx = decal->posx + xMax, brx = trx;	// heightmap x-coor of {top, bottom}-right  quad vertex
-		int tlz = decal->posy + zMin, trz = tlz;	// heightmap z-coor of top-{left, right}    quad vertex
-		int brz = decal->posy + zMax, blz = brz;	// heightmap z-coor of bottom-{left, right} quad vertex
+		const float xts = 1.0f / dxsize;
+		const float zts = 1.0f / dzsize;
 
-		switch (decal->facing) {
-			case FACING_SOUTH: { // South (determines our reference texcoors)
-				// clip the quad vertices and texcoors against the map boundaries
-				if (tlx <    0) { xMin -= tlx       ;   tlx =    0; blx = tlx; }
-				if (trx > gsmx) { xMax -= trx - gsmx;   trx = gsmx; brx = trx; }
-				if (tlz <    0) { zMin -= tlz       ;   tlz =    0; trz = tlz; }
-				if (brz > gsmy) { zMax -= brz - gsmy;   brz = gsmy; blz = brz; }
+		float yv[4] = {0.0f}; // heights at each sub-quad vertex (tl, tr, br, bl)
+		float uv[8] = {0.0f}; // tex-coors at each sub-quad vertex
 
-				for (int x = xMin; x < xMax; x++) {
-					const int xh = tlx + x;
-					if (xh >= gsmx)
-						break;
+		// clipped decal dimensions
+		int cxsize = dxsize - dxoff;
+		int czsize = dzsize - dzoff;
 
-					for (int z = zMin; z < zMax; z++) {
-						const int zh = tlz + z;
-						if (zh >= gsmy)
-							break;
+		if ((dxpos + dxsize) > gsmx) { cxsize -= ((dxpos + dxsize) - gsmx); }
+		if ((dzpos + dzsize) > gsmy) { czsize -= ((dzpos + dzsize) - gsmy); }
 
-						// (htl, htr, hbr, hbl)
-						yv[0] = HEIGHT(zh,     xh    ); yv[1] = HEIGHT(zh,     xh + 1);
-						yv[2] = HEIGHT(zh + 1, xh + 1); yv[3] = HEIGHT(zh + 1, xh    );
+		for (int vx = 0; vx < cxsize; vx++) {
+			for (int vz = 0; vz < czsize; vz++) {
+				const int rx = dxoff + vx;  // x-coor in decal-space
+				const int rz = dzoff + vz;  // z-coor in decal-space
+				const int px = dxpos + rx;  // x-coor in heightmap-space
+				const int pz = dzpos + rz;  // z-coor in heightmap-space
 
-						// (utl, vtl),  (utr, vtr)
-						// (ubr, vbr),  (ubl, vbl)
-						uv[0] = (x    ) * xts; uv[1] = (z    ) * yts; // uv = (0, 0)
-						uv[2] = (x + 1) * xts; uv[3] = (z    ) * yts; // uv = (1, 0)
-						uv[4] = (x + 1) * xts; uv[5] = (z + 1) * yts; // uv = (1, 1)
-						uv[6] = (x    ) * xts; uv[7] = (z + 1) * yts; // uv = (0, 1)
+				yv[0] = HEIGHT(pz,     px    ); yv[1] = HEIGHT(pz,     px + 1);
+				yv[2] = HEIGHT(pz + 1, px + 1); yv[3] = HEIGHT(pz + 1, px    );
 
-						AddQuadVertices(decal->va, xh, yv, zh, uv, color);
-					}
+				switch (decal->facing) {
+					case FACING_SOUTH: {
+						uv[0] = (rx    ) * xts; uv[1] = (rz    ) * zts; // uv = (0, 0)
+						uv[2] = (rx + 1) * xts; uv[3] = (rz    ) * zts; // uv = (1, 0)
+						uv[4] = (rx + 1) * xts; uv[5] = (rz + 1) * zts; // uv = (1, 1)
+						uv[6] = (rx    ) * xts; uv[7] = (rz + 1) * zts; // uv = (0, 1)
+					} break;
+					case FACING_NORTH: {
+						uv[0] = (dxsize - rx    ) * xts; uv[1] = (dzsize - rz    ) * zts; // uv = (1, 1)
+						uv[2] = (dxsize - rx - 1) * xts; uv[3] = (dzsize - rz    ) * zts; // uv = (0, 1)
+						uv[4] = (dxsize - rx - 1) * xts; uv[5] = (dzsize - rz - 1) * zts; // uv = (0, 0)
+						uv[6] = (dxsize - rx    ) * xts; uv[7] = (dzsize - rz - 1) * zts; // uv = (1, 0)
+					} break;
+
+					case FACING_EAST: {
+						uv[0] = 1.0f - (rz    ) * zts; uv[1] = (rx    ) * xts; // uv = (1, 0)
+						uv[2] = 1.0f - (rz    ) * zts; uv[3] = (rx + 1) * xts; // uv = (1, 1)
+						uv[4] = 1.0f - (rz + 1) * zts; uv[5] = (rx + 1) * xts; // uv = (0, 1)
+						uv[6] = 1.0f - (rz + 1) * zts; uv[7] = (rx    ) * xts; // uv = (0, 0)
+					} break;
+					case FACING_WEST: {
+						uv[0] = (rz    ) * zts; uv[1] = 1.0f - (rx    ) * xts; // uv = (0, 1)
+						uv[2] = (rz    ) * zts; uv[3] = 1.0f - (rx + 1) * xts; // uv = (0, 0)
+						uv[4] = (rz + 1) * zts; uv[5] = 1.0f - (rx + 1) * xts; // uv = (1, 0)
+						uv[6] = (rz + 1) * zts; uv[7] = 1.0f - (rx    ) * xts; // uv = (1, 1)
+					} break;
 				}
-			} break;
 
-			case FACING_EAST: { // East
-				if (tlx <    0) { zMin -= tlx       ; tlx =    0; blx = tlx; }
-				if (trx > gsmx) { zMax -= trx - gsmx; trx = gsmx; brx = trx; }
-				if (tlz <    0) { xMax += tlz       ; tlz =    0; trz = tlz; }
-				if (brz > gsmy) { xMin += brz - gsmy; brz = gsmy; blz = brz; }
-
-				for (int x = xMin; x < xMax; x++) {
-					const int xh = tlx + x;
-					if (xh >= gsmx)
-						break;
-
-					for (int z = zMin; z < zMax; z++) {
-						const int zh = tlz + z;
-						if (zh >= gsmy)
-							break;
-
-						yv[0] = HEIGHT(zh,     xh    ); yv[1] = HEIGHT(zh,     xh + 1);
-						yv[2] = HEIGHT(zh + 1, xh + 1); yv[3] = HEIGHT(zh + 1, xh    );
-
-						uv[0] = 1.0f - (z    ) * yts; uv[1] = (x    ) * xts; // uv = (1, 0)
-						uv[2] = 1.0f - (z    ) * yts; uv[3] = (x + 1) * xts; // uv = (1, 1)
-						uv[4] = 1.0f - (z + 1) * yts; uv[5] = (x + 1) * xts; // uv = (0, 1)
-						uv[6] = 1.0f - (z + 1) * yts; uv[7] = (x    ) * xts; // uv = (0, 0)
-
-						AddQuadVertices(decal->va, xh, yv, zh, uv, color);
-					}
-				}
-			} break;
-
-			case FACING_NORTH: { // North
-				if (tlx <    0) { xMax += tlx       ; tlx =    0; blx = tlx; }
-				if (trx > gsmx) { xMin += trx - gsmx; trx = gsmx; brx = trx; }
-				if (tlz <    0) { zMax += tlz       ; tlz =    0; trz = tlz; }
-				if (brz > gsmy) { zMin += brz - gsmy; brz = gsmy; blz = brz; }
-
-				for (int x = xMin; x < xMax; x++) {
-					const int xh = tlx + x;
-					if (xh >= gsmx)
-						break;
-
-					for (int z = zMin; z < zMax; z++) {
-						const int zh = tlz + z;
-						if (zh >= gsmy)
-							break;
-
-						yv[0] = HEIGHT(zh,     xh    ); yv[1] = HEIGHT(zh,     xh + 1);
-						yv[2] = HEIGHT(zh + 1, xh + 1); yv[3] = HEIGHT(zh + 1, xh    );
-
-						uv[0] = (xMax - x    ) * xts; uv[1] = (zMax - z    ) * yts; // uv = (1, 1)
-						uv[2] = (xMax - x - 1) * xts; uv[3] = (zMax - z    ) * yts; // uv = (0, 1)
-						uv[4] = (xMax - x - 1) * xts; uv[5] = (zMax - z - 1) * yts; // uv = (0, 0)
-						uv[6] = (xMax - x    ) * xts; uv[7] = (zMax - z - 1) * yts; // uv = (1, 0)
-
-						AddQuadVertices(decal->va, xh, yv, zh, uv, color);
-					}
-				}
-			} break;
-
-			case FACING_WEST: { // West
-				if (tlx <    0) { zMax += tlx       ; tlx =    0; blx = tlx; }
-				if (trx > gsmx) { zMin += trx - gsmx; trx = gsmx; brx = trx; }
-				if (tlz <    0) { xMin -= tlz       ; tlz =    0; trz = tlz; }
-				if (brz > gsmy) { xMax -= brz - gsmy; brz = gsmy; blz = brz; }
-
-				for (int x = xMin; x < xMax; x++) {
-					const int xh = tlx + x;
-					if (xh >= gsmx)
-						break;
-
-					for (int z = zMin; z < zMax; z++) {
-						const int zh = tlz + z;
-						if (zh >= gsmy)
-							break;
-
-						yv[0] = HEIGHT(zh,     xh    ); yv[1] = HEIGHT(zh,     xh + 1);
-						yv[2] = HEIGHT(zh + 1, xh + 1); yv[3] = HEIGHT(zh + 1, xh    );
-
-						uv[0] = (z    ) * yts; uv[1] = 1.0f - (x    ) * xts; // uv = (0, 1)
-						uv[2] = (z    ) * yts; uv[3] = 1.0f - (x + 1) * xts; // uv = (0, 0)
-						uv[4] = (z + 1) * yts; uv[5] = 1.0f - (x + 1) * xts; // uv = (1, 0)
-						uv[6] = (z + 1) * yts; uv[7] = 1.0f - (x    ) * xts; // uv = (1, 1)
-
-						AddQuadVertices(decal->va, xh, yv, zh, uv, color);
-					}
-				}
-			} break;
+				AddQuadVertices(decal->va, px, yv, pz, uv, color);
+			}
 		}
 	} else {
 		const float c = *((float*) (color));
@@ -572,10 +505,7 @@ void CGroundDecalHandler::Draw()
 			}
 
 			for (std::vector<BuildingGroundDecal*>::iterator di = decalsToDraw.begin(); di != decalsToDraw.end(); ++di) {
-				BuildingGroundDecal *decal = *di;
-				if (camera->InView(decal->pos, decal->radius)) {
-					DrawBuildingDecal(decal);
-				}
+				DrawBuildingDecal(*di);
 			}
 
 			// glBindTexture(GL_TEXTURE_2D, 0);
@@ -1120,31 +1050,30 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 	if (building->buildingDecal)
 		return;
 
-	int posx = int(building->pos.x / 8);
-	int posy = int(building->pos.z / 8);
-	int sizex = building->unitDef->buildingDecalSizeX;
-	int sizey = building->unitDef->buildingDecalSizeY;
+	const int sizex = building->unitDef->buildingDecalSizeX;
+	const int sizey = building->unitDef->buildingDecalSizeY;
 
-	BuildingGroundDecal* decal = new BuildingGroundDecal;
+	BuildingGroundDecal* decal = new BuildingGroundDecal();
 
 	decal->owner = building;
 	decal->gbOwner = 0;
 	decal->alphaFalloff = building->unitDef->buildingDecalDecaySpeed;
-	decal->alpha = 0;
+	decal->alpha = 0.0f;
 	decal->pos = building->pos;
-	decal->radius = sqrt((float) (sizex * sizex + sizey * sizey)) * 8 + 20;
+	decal->radius = math::sqrtf(float(sizex * sizex + sizey * sizey)) * SQUARE_SIZE + 20.0f;
 	decal->facing = building->buildFacing;
+	// convert to heightmap coors
+	decal->xsize = sizex << 1;
+	decal->ysize = sizey << 1;
 
-	decal->xsize = sizex * 2;
-	decal->ysize = sizey * 2;
-
-	if (building->buildFacing == 1 || building->buildFacing == 3) {
+	if (building->buildFacing == FACING_EAST || building->buildFacing == FACING_WEST) {
 		// swap xsize and ysize if building faces East or West
 		std::swap(decal->xsize, decal->ysize);
 	}
 
-	decal->posx = posx - (decal->xsize / 2);
-	decal->posy = posy - (decal->ysize / 2);
+	// position of top-left corner
+	decal->posx = (building->pos.x / SQUARE_SIZE) - (decal->xsize >> 1);
+	decal->posy = (building->pos.z / SQUARE_SIZE) - (decal->ysize >> 1);
 
 	building->buildingDecal = decal;
 	buildingDecalTypes[building->unitDef->buildingDecalType]->buildingDecals.insert(decal);
