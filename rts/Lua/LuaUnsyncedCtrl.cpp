@@ -1166,6 +1166,7 @@ static void ParseLight(lua_State* L, GL::Light& light) {
 	}
 }
 
+
 int LuaUnsyncedCtrl::AddMapLight(lua_State* L) {
 	if (!lua_istable(L, 1)) {
 		luaL_error(L, "[%s] argument should be a table", __FUNCTION__);
@@ -1179,6 +1180,29 @@ int LuaUnsyncedCtrl::AddMapLight(lua_State* L) {
 	return 1;
 }
 
+int LuaUnsyncedCtrl::UpdateMapLight(lua_State* L) {
+	if (!lua_isnumber(L, 1)) {
+		luaL_error(L, "[%s] first argument should be a number", __FUNCTION__);
+		return 0;
+	}
+	if (!lua_istable(L, 2)) {
+		luaL_error(L, "[%s] second argument should be a table", __FUNCTION__);
+		return 0;
+	}
+
+	GL::Light* light = readmap->GetGroundDrawer()->GetLight(lua_tonumber(L, 1));
+
+	if (light != NULL) {
+		ParseLight(L, *light);
+		lua_pushboolean(L, true);
+	} else {
+		lua_pushboolean(L, false);
+	}
+
+	return 1;
+}
+
+
 int LuaUnsyncedCtrl::AddModelLight(lua_State* L) {
 	if (!lua_istable(L, 1)) {
 		luaL_error(L, "[%s] argument should be a table", __FUNCTION__);
@@ -1189,6 +1213,28 @@ int LuaUnsyncedCtrl::AddModelLight(lua_State* L) {
 	ParseLight(L, light);
 
 	lua_pushnumber(L, unitDrawer->AddLight(light));
+	return 1;
+}
+
+int LuaUnsyncedCtrl::UpdateModelLight(lua_State* L) {
+	if (!lua_isnumber(L, 1)) {
+		luaL_error(L, "[%s] first argument should be a number", __FUNCTION__);
+		return 0;
+	}
+	if (!lua_istable(L, 2)) {
+		luaL_error(L, "[%s] second argument should be a table", __FUNCTION__);
+		return 0;
+	}
+
+	GL::Light* light = unitDrawer->GetLight(lua_tonumber(L, 1));
+
+	if (light != NULL) {
+		ParseLight(L, *light);
+		lua_pushboolean(L, true);
+	} else {
+		lua_pushboolean(L, false);
+	}
+
 	return 1;
 }
 
