@@ -44,6 +44,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/InMapDraw.h"
+#include "Rendering/UnitDrawer.h"
 #include "Rendering/WindowManagerHelper.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -135,6 +136,9 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetDrawGround);
 
 	REGISTER_LUA_CFUNC(SetWaterParams);
+
+	REGISTER_LUA_CFUNC(AddMapLight);
+	REGISTER_LUA_CFUNC(AddModelLight);
 
 	REGISTER_LUA_CFUNC(SetUnitNoDraw);
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
@@ -1123,6 +1127,71 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 }
 
 
+
+
+static void ParseLight(lua_State* L, GL::Light& light) {
+	for (lua_pushnil(L); lua_next(L, 1) != 0; lua_pop(L, 1)) {
+		if (lua_israwstring(L, -2)) {
+			const std::string& key = lua_tostring(L, -2);
+
+			if (lua_istable(L, -1)) {
+				float array[3];
+				const int size = ParseFloatArray(L, -1, array, 3);
+
+				if (size == 3) {
+					if (key == "position") {
+						light.SetPosition(array);
+					} else if (key == "ambientColor") {
+						light.SetAmbientColor(array);
+					} else if (key == "diffuseColor") {
+						light.SetDiffuseColor(array);
+					} else if (key == "specularColor") {
+						light.SetSpecularColor(array);
+					} else if (key == "colorWeight") {
+						light.SetColorWeight(array);
+					} else if (key == "attenuation") {
+						light.SetAttenuation(array);
+					}
+				}
+			}
+
+			else if (lua_isnumber(L, -1)) {
+				if (key == "radius") {
+					light.SetRadius(std::max(0.0f, lua_tonumber(L, -1)));
+				} else if (key == "ttl") {
+					light.SetTTL(lua_tonumber(L, -1));
+				}
+			}
+		}
+	}
+}
+
+int LuaUnsyncedCtrl::AddMapLight(lua_State* L) {
+	if (!lua_istable(L, 1)) {
+		luaL_error(L, "[%s] argument should be a table", __FUNCTION__);
+		return 0;
+	}
+
+	GL::Light light;
+	ParseLight(L, light);
+
+	lua_pushnumber(L, readmap->GetGroundDrawer()->AddLight(light));
+	return 1;
+}
+
+int LuaUnsyncedCtrl::AddModelLight(lua_State* L) {
+	if (!lua_istable(L, 1)) {
+		luaL_error(L, "[%s] argument should be a table", __FUNCTION__);
+		return 0;
+	}
+
+	GL::Light light;
+	ParseLight(L, light);
+
+	lua_pushnumber(L, unitDrawer->AddLight(light));
+	return 1;
+}
+
 /******************************************************************************/
 
 int LuaUnsyncedCtrl::SetUnitNoDraw(lua_State* L)
@@ -1505,7 +1574,7 @@ int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 		luaL_error(L, "Incorrect arguments to SetLosViewColors()");
 	}
 	const int scale = CBaseGroundDrawer::losColorScale;
-	CBaseGroundDrawer *gd = readmap->GetGroundDrawer();
+	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 	gd->alwaysColor[0] = (int)(scale *   red[0]);
 	gd->alwaysColor[1] = (int)(scale * green[0]);
 	gd->alwaysColor[2] = (int)(scale *  blue[0]);

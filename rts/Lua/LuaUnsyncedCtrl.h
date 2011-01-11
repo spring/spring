@@ -61,6 +61,9 @@ class LuaUnsyncedCtrl {
 
 		static int SetWaterParams(lua_State* L);
 
+		static int AddMapLight(lua_State* L);
+		static int AddModelLight(lua_State* L);
+
 		static int SetUnitNoDraw(lua_State* L);
 		static int SetUnitNoMinimap(lua_State* L);
 		static int SetUnitNoSelect(lua_State* L);
