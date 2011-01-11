@@ -1630,6 +1630,16 @@ unsigned int CBFGroundDrawer::AddLight(const GL::Light& light) {
 	return lightHandle++;
 }
 
+GL::Light* CBFGroundDrawer::GetLight(unsigned int lightHandle) {
+	const std::map<unsigned int, GL::Light>::iterator it = dynLights.find(lightHandle);
+
+	if (it != dynLights.end()) {
+		return &(it->second);
+	}
+
+	return NULL;
+}
+
 void CBFGroundDrawer::UpdateDynamicLightProperties(Shader::IProgramObject* shader) {
 	static const float4 ZeroVector4 = float4(0.0f, 0.0f, 0.0f, 0.0f);
 

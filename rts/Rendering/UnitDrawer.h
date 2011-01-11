@@ -129,6 +129,7 @@ public:
 	IWorldObjectModelRenderer* GetCloakedModelRenderer(int modelType) { return cloakedModelRenderers[modelType]; }
 
 	unsigned int AddLight(const GL::Light&);
+	GL::Light* GetLight(unsigned int);
 
 
 #ifdef USE_GML
