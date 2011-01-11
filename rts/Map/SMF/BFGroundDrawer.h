@@ -37,6 +37,7 @@ public:
 	void DecreaseDetail();
 
 	unsigned int AddLight(const GL::Light&);
+	GL::Light* GetLight(unsigned int);
 
 private:
 	struct fline {
