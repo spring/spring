@@ -48,6 +48,7 @@ public:
 
 	virtual void SetDrawMode(BaseGroundDrawMode dm) { drawMode = dm; }
 	virtual unsigned int AddLight(const GL::Light&) { return -1U; }
+	virtual GL::Light* GetLight(unsigned int) { return NULL; }
 
 	void DrawTrees(bool drawReflection = false) const;
 
