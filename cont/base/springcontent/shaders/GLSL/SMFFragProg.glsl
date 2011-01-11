@@ -45,20 +45,22 @@ varying vec3 halfDir;
 
 varying float fogFactor;
 
-varying vec4 vertexPos;
+varying vec4 vertexWorldPos;
 varying vec2 diffuseTexCoords;
 varying vec2 specularTexCoords;
 varying vec2 normalTexCoords;
 
+uniform int numMapDynLights;
+
 
 void main() {
 	// we don't calculate it in the vertex shader to save varyings (OpenGL2.0 just allows 32 varying components)
-	vec3 cameraDir = vertexPos.xyz - cameraPos;
+	vec3 cameraDir = vertexWorldPos.xyz - cameraPos;
 
 	vec2 p17 = vec2(shadowParams.z, shadowParams.z);
 	vec2 p18 = vec2(shadowParams.w, shadowParams.w);
 
-	vec4 vertexShadowPos = shadowMat * vertexPos;
+	vec4 vertexShadowPos = shadowMat * vertexWorldPos;
 		vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + p17) + p18);
 		vertexShadowPos.st += shadowParams.xy;
 
@@ -71,25 +73,28 @@ void main() {
 	#endif
 
 	float cosAngleDiffuse = clamp(dot(normalize(lightDir.xyz), normal), 0.0, 1.0);
-	vec4 diffuseCol = texture2D(diffuseTex, diffuseTexCoords);
-
 	float cosAngleSpecular = clamp(dot(normalize(halfDir), normal), 0.0, 1.0);
-	vec4 specularFrag = texture2D(specularTex, specularTexCoords);
-	float specularExp = specularFrag.a * 16.0;
+	vec4 diffuseCol = texture2D(diffuseTex, diffuseTexCoords);
+	vec4 specularCol = texture2D(specularTex, specularTexCoords);
+
+	// sun specular lighting contribution
+	float specularExp = specularCol.a * 16.0;
 	float specularPow = pow(cosAngleSpecular, specularExp);
-	vec3 specularInt  = specularFrag.rgb * specularPow;
+	vec3 specularInt  = specularCol.rgb * specularPow;
+
 
 	vec4 detailCol;
 	#if (SMF_DETAIL_TEXTURE_SPLATTING == 0)
 		detailCol = (texture2D(detailTex, gl_TexCoord[0].st) * 2.0) - 1.0;
 	#else
 		vec4 splatDetails;
-		splatDetails.r = texture2D(splatDetailTex, gl_TexCoord[0].st).r;
-		splatDetails.g = texture2D(splatDetailTex, gl_TexCoord[0].pq).g;
-		splatDetails.b = texture2D(splatDetailTex, gl_TexCoord[1].st).b;
-		splatDetails.a = texture2D(splatDetailTex, gl_TexCoord[1].pq).a;
+			splatDetails.r = texture2D(splatDetailTex, gl_TexCoord[0].st).r;
+			splatDetails.g = texture2D(splatDetailTex, gl_TexCoord[0].pq).g;
+			splatDetails.b = texture2D(splatDetailTex, gl_TexCoord[1].st).b;
+			splatDetails.a = texture2D(splatDetailTex, gl_TexCoord[1].pq).a;
+			splatDetails   = (splatDetails * 2.0) - 1.0;
 		vec4 splatCofac = texture2D(splatDistrTex, specularTexCoords) * splatTexMults;
-		splatDetails = (splatDetails * 2.0) - 1.0;
+
 		detailCol.rgb = vec3(dot(splatDetails, splatCofac));
 		detailCol.a = 1.0;
 	#endif
@@ -106,29 +111,29 @@ void main() {
 
 	// vec4 diffuseInt = texture2D(shadingTex, diffuseTexCoords);
 	float shadowInt = shadow2DProj(shadowTex, vertexShadowPos).r;
-	specularInt *= shadowInt;
-	shadowInt = 1.0 - (1.0 - shadowInt) * groundShadowDensity;
 	vec3 diffuseInt = groundAmbientColor + groundDiffuseColor * cosAngleDiffuse;
-
 	vec3 ambientInt = groundAmbientColor;
 	vec4 shadeInt;
+
+	specularInt *= shadowInt;
+	shadowInt = 1.0 - (1.0 - shadowInt) * groundShadowDensity;
 	shadeInt.rgb = mix(ambientInt, diffuseInt, shadowInt);
 	shadeInt.rgb *= SMF_INTENSITY_MUL;
 	shadeInt.a = 1.0;
 
 
 	#if (SMF_WATER_ABSORPTION == 1)
-		if (vertexPos.y < 0.0) {
-			float vertexStepHeight = min(1023.0, -floor(vertexPos.y));
+		if (vertexWorldPos.y < 0.0) {
+			float vertexStepHeight = min(1023.0, -floor(vertexWorldPos.y));
 			float waterLightInt = min((cosAngleDiffuse + 0.2) * 2.0, 1.0);
 			vec4 waterHeightColor;
-			waterHeightColor.rgb = max(waterMinColor.rgb, waterBaseColor.rgb - (waterAbsorbColor.rgb * vertexStepHeight)) * SMF_INTENSITY_MUL;
-			waterHeightColor.a = max(0.0, (255.0 + 10.0 * vertexPos.y) / 255.0);
+				waterHeightColor.rgb = max(waterMinColor.rgb, waterBaseColor.rgb - (waterAbsorbColor.rgb * vertexStepHeight)) * SMF_INTENSITY_MUL;
+				waterHeightColor.a = max(0.0, (255.0 + 10.0 * vertexWorldPos.y) / 255.0);
 
-			if (vertexPos.y > -10.0) {
+			if (vertexWorldPos.y > -10.0) {
 				shadeInt.rgb =
-					(diffuseInt.rgb * (1.0 - (-vertexPos.y * 0.1))) +
-					(waterHeightColor.rgb * (0.0 + (-vertexPos.y * 0.1)) * waterLightInt);
+					(diffuseInt.rgb * (1.0 - (-vertexWorldPos.y * 0.1))) +
+					(waterHeightColor.rgb * (0.0 + (-vertexWorldPos.y * 0.1)) * waterLightInt);
 			} else {
 				shadeInt.rgb = waterHeightColor.rgb * waterLightInt;
 			}
@@ -146,6 +151,29 @@ void main() {
 		gl_FragColor.rgb += specularInt;
 	#endif
 
+	#if (MAX_DYNAMIC_MAP_LIGHTS > 0)
+	for (int i = 0; i < MAX_DYNAMIC_MAP_LIGHTS; i++) {
+		vec3 lightVec = gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].position.xyz - vertexWorldPos.xyz;
+		vec3 halfVec = gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].halfVector.xyz;
+
+		float lightRadius = gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].spotDirection.x;
+		float lightDistance = length(lightVec);
+		float lightCosAngDiff = clamp(dot(normal, lightVec / lightDistance), 0.0, 1.0);
+		float lightCosAngSpec = clamp(dot(normal, normalize(halfVec)), 0.0, 1.0);
+		float lightScale = (lightDistance > lightRadius)? 0.0: 1.0;
+		float lightAttenuation =
+			(gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].constantAttenuation) +
+			(gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].linearAttenuation * lightDistance) +
+			(gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].quadraticAttenuation * lightDistance * lightDistance);
+
+		lightAttenuation = 1.0 / max(lightAttenuation, 1.0);
+
+		gl_FragColor.rgb += (lightScale * gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].ambient);
+		gl_FragColor.rgb += (lightScale * lightAttenuation * (diffuseCol.rgb * gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].diffuse.rgb * lightCosAngDiff));
+		gl_FragColor.rgb += (lightScale * lightAttenuation * (specularCol.rgb * gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].specular.rgb * pow(lightCosAngSpec, specularExp)));
+	}
+	#endif
+
 	gl_FragColor = mix(gl_Fog.color, gl_FragColor, fogFactor);
-	gl_FragColor.a = min(diffuseCol.a, (vertexPos.y * 0.1) + 1.0);
+	gl_FragColor.a = min(diffuseCol.a, (vertexWorldPos.y * 0.1) + 1.0);
 }
