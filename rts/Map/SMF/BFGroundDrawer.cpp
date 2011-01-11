@@ -21,6 +21,7 @@
 #include "System/FastMath.h"
 #include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
+#include "System/Util.h"
 #include "System/mmgr.h"
 
 #ifdef USE_GML
@@ -44,8 +45,6 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 
 	map = rm;
 	heightData = map->heightmap;
-
-	LoadMapShaders();
 
 	textures = new CBFGroundTextures(map);
 
@@ -73,6 +72,12 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 	multiThreadDrawGround = configHandler->Get("MultiThreadDrawGround", 1);
 	multiThreadDrawGroundShadow = configHandler->Get("MultiThreadDrawGroundShadow", 0);
 #endif
+
+	baseDynamicMapLight = 2;
+	maxDynamicMapLights = GL_MAX_LIGHTS - baseDynamicMapLight;
+	maxDynamicMapLights = std::min(int(maxDynamicMapLights), configHandler->Get("MaxDynamicMapLights", 3));
+
+	LoadMapShaders();
 }
 
 CBFGroundDrawer::~CBFGroundDrawer(void)
@@ -124,19 +129,22 @@ bool CBFGroundDrawer::LoadMapShaders() {
 			smfShaderRefrARB->AttachShaderObject(sh->CreateShaderObject("ARB/groundFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
 			smfShaderRefrARB->Link();
 		} else {
-			std::string defs;
-				defs += (map->haveSplatTexture)?
+			std::string extraDefs;
+				extraDefs += (map->haveSplatTexture)?
 					"#define SMF_DETAIL_TEXTURE_SPLATTING 1\n":
 					"#define SMF_DETAIL_TEXTURE_SPLATTING 0\n";
-				defs += (map->minheight > 0.0f || mapInfo->map.voidWater)?
+				extraDefs += (map->minheight > 0.0f || mapInfo->map.voidWater)?
 					"#define SMF_WATER_ABSORPTION 0\n":
 					"#define SMF_WATER_ABSORPTION 1\n";
-				defs += (map->GetSkyReflectModTexture() != 0)?
+				extraDefs += (map->GetSkyReflectModTexture() != 0)?
 					"#define SMF_SKY_REFLECTIONS 1\n":
 					"#define SMF_SKY_REFLECTIONS 0\n";
+				extraDefs +=
+					("#define BASE_DYNAMIC_MAP_LIGHT " + IntToString(baseDynamicMapLight) + "\n") +
+					("#define MAX_DYNAMIC_MAP_LIGHTS " + IntToString(maxDynamicMapLights) + "\n");
 
-			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFVertProg.glsl", defs, GL_VERTEX_SHADER));
-			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFFragProg.glsl", defs, GL_FRAGMENT_SHADER));
+			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFVertProg.glsl", extraDefs, GL_VERTEX_SHADER));
+			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFFragProg.glsl", extraDefs, GL_FRAGMENT_SHADER));
 			smfShaderGLSL->Link();
 			smfShaderGLSL->SetUniformLocation("diffuseTex");          // idx  0
 			smfShaderGLSL->SetUniformLocation("normalsTex");          // idx  1
@@ -165,6 +173,7 @@ bool CBFGroundDrawer::LoadMapShaders() {
 			smfShaderGLSL->SetUniformLocation("splatTexMults");       // idx 24
 			smfShaderGLSL->SetUniformLocation("skyReflectTex");       // idx 25
 			smfShaderGLSL->SetUniformLocation("skyReflectModTex");    // idx 26
+			smfShaderGLSL->SetUniformLocation("numMapDynLights");     // idx 27
 
 			smfShaderGLSL->Enable();
 			smfShaderGLSL->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
@@ -188,6 +197,7 @@ bool CBFGroundDrawer::LoadMapShaders() {
 			smfShaderGLSL->SetUniform4fv(24, &mapInfo->splats.texMults[0]);
 			smfShaderGLSL->SetUniform1i(25,  9); // skyReflectTex (idx 25, texunit 9)
 			smfShaderGLSL->SetUniform1i(26, 10); // skyReflectModTex (idx 26, texunit 10)
+			smfShaderGLSL->SetUniform1i(27, 0); // numMapDynLights
 			smfShaderGLSL->Disable();
 		}
 
@@ -1348,6 +1358,8 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			smfShaderGLSL->SetUniformMatrix4fv(12, false, &shadowHandler->shadowMatrix.m[0]);
 			smfShaderGLSL->SetUniform4fv(13, &(shadowHandler->GetShadowParams().x));
 
+			UpdateDynamicLightProperties(smfShaderGLSL);
+
 			glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, map->GetNormalsTexture());
 			glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, map->GetSpecularTexture());
 			glActiveTexture(GL_TEXTURE7); glBindTexture(GL_TEXTURE_2D, map->GetSplatDetailTexture());
@@ -1600,4 +1612,99 @@ void CBFGroundDrawer::DecreaseDetail()
 {
 	viewRadius -= 2;
 	LogObject() << "ViewRadius is now " << viewRadius << "\n";
+}
+
+
+
+unsigned int CBFGroundDrawer::AddLight(const GL::Light& light) {
+	static unsigned int lightHandle = 0;
+
+	if (dynLights.size() >= maxDynamicMapLights) { return -1U; }
+	if (light.GetTTL() == 0 || light.GetRadius() <= 0.0f) { return -1U; }
+	if (light.GetColorWeight().SqLength() <= 0.01f) { return -1U; }
+
+	dynLightWeight += light.GetColorWeight();
+	dynLights[lightHandle] = light;
+	dynLights[lightHandle].SetAge(gs->frameNum);
+
+	return lightHandle++;
+}
+
+void CBFGroundDrawer::UpdateDynamicLightProperties(Shader::IProgramObject* shader) {
+	static const float4 ZeroVector4 = float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+	static unsigned int numMapDynLights = 0;
+	static bool firstUpdate = true;
+
+	if (firstUpdate) {
+		firstUpdate = false;
+
+		for (unsigned int i = 0; i < maxDynamicMapLights; i++) {
+			const unsigned int id = GL_LIGHT0 + baseDynamicMapLight + i;
+
+			glEnable(id);
+			glLightfv(id, GL_POSITION, &ZeroVector4.x);
+			glLightfv(id, GL_AMBIENT,  &ZeroVector4.x);
+			glLightfv(id, GL_DIFFUSE,  &ZeroVector4.x);
+			glLightfv(id, GL_SPECULAR, &ZeroVector4.x);
+			glLightfv(id, GL_SPOT_DIRECTION, &ZeroVector4.x);
+			glLightf(id, GL_CONSTANT_ATTENUATION,  0.0f);
+			glLightf(id, GL_LINEAR_ATTENUATION,    0.0f);
+			glLightf(id, GL_QUADRATIC_ATTENUATION, 0.0f);
+			glDisable(id);
+		}
+	}
+
+	if (dynLights.size() != numMapDynLights) {
+		numMapDynLights = dynLights.size();
+
+		// update the active light-count
+		shader->SetUniform1i(27, numMapDynLights);
+	}
+
+	if (numMapDynLights == 0) {
+		return;
+	}
+
+	unsigned int lightID = GL_LIGHT0 + baseDynamicMapLight;
+
+	for (std::map<unsigned int, GL::Light>::iterator it = dynLights.begin(); it != dynLights.end(); ) {
+		const GL::Light& light = it->second;
+		const unsigned int lightHandle = it->first;
+
+		const float4 weightedAmbientCol  = (light.GetAmbientColor()  * light.GetColorWeight().x) / dynLightWeight.x;
+		const float4 weightedDiffuseCol  = (light.GetDiffuseColor()  * light.GetColorWeight().y) / dynLightWeight.y;
+		const float4 weightedSpecularCol = (light.GetSpecularColor() * light.GetColorWeight().z) / dynLightWeight.z;
+		const float4 lightRadiusVector   = float4(light.GetRadius(), 0.0f, 0.0f, 0.0f);
+
+		if ((gs->frameNum - light.GetAge()) > light.GetTTL()) {
+			++it;
+
+			dynLightWeight -= light.GetColorWeight();
+			dynLights.erase(lightHandle);
+
+			// kill the contribution from this light
+			glEnable(lightID);
+			glLightfv(lightID, GL_AMBIENT,  &ZeroVector4.x);
+			glLightfv(lightID, GL_DIFFUSE,  &ZeroVector4.x);
+			glLightfv(lightID, GL_SPECULAR, &ZeroVector4.x);
+			glDisable(lightID);
+		} else {
+			++it;
+
+			// communicate properties via the FFP to save uniforms
+			glEnable(lightID);
+			glLightfv(lightID, GL_POSITION, &light.GetPosition().x);
+			glLightfv(lightID, GL_AMBIENT,  &weightedAmbientCol.x);
+			glLightfv(lightID, GL_DIFFUSE,  &weightedDiffuseCol.x);
+			glLightfv(lightID, GL_SPECULAR, &weightedSpecularCol.x);
+			glLightfv(lightID, GL_SPOT_DIRECTION, &lightRadiusVector.x); //!
+			glLightf(lightID, GL_CONSTANT_ATTENUATION,  light.GetAttenuation().x);
+			glLightf(lightID, GL_LINEAR_ATTENUATION,    light.GetAttenuation().y);
+			glLightf(lightID, GL_QUADRATIC_ATTENUATION, light.GetAttenuation().z);
+			glDisable(lightID);
+		}
+
+		++lightID;
+	}
 }

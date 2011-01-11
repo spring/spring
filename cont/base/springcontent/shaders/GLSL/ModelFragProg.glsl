@@ -20,6 +20,7 @@
 
   uniform vec4 teamColor; // alpha contains `far distance fading factor`
 
+  varying vec4 vertexWorldPos;
   varying vec3 cameraDir;
   varying float fogFactor;
 
@@ -29,6 +30,9 @@
 #else
   varying vec3 normalv;
 #endif
+
+uniform int numModelDynLights;
+
 
 void main(void)
 {
@@ -45,6 +49,8 @@ void main(void)
 	float a    = max( dot(normal, sunDir), 0.0);
 	vec3 light = a * sunDiffuse + sunAmbient;
 
+
+	vec4 diffuse     = texture2D(textureS3o1, gl_TexCoord[0].st);
 	vec4 extraColor  = texture2D(textureS3o2, gl_TexCoord[0].st);
 
 	vec3 reflectDir = reflect(cameraDir, normal);
@@ -63,9 +69,33 @@ void main(void)
 	reflection += extraColor.rrr; // self-illum
 #endif
 
-	gl_FragColor     = texture2D(textureS3o1, gl_TexCoord[0].st);
+	gl_FragColor     = diffuse;
 	gl_FragColor.rgb = mix(gl_FragColor.rgb, teamColor.rgb, gl_FragColor.a); // teamcolor
 	gl_FragColor.rgb = gl_FragColor.rgb * reflection + specular;
+
+	#if (MAX_DYNAMIC_MODEL_LIGHTS > 0)
+	for (int i = 0; i < MAX_DYNAMIC_MODEL_LIGHTS; i++) {
+		vec3 lightVec = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].position.xyz - vertexWorldPos.xyz;
+		vec3 halfVec = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].halfVector.xyz;
+
+		float lightRadius = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].spotDirection.x;
+		float lightDistance = length(lightVec);
+		float lightCosAngDiff = clamp(dot(normal, lightVec / lightDistance), 0.0, 1.0);
+		float lightCosAngSpec = clamp(dot(normal, normalize(halfVec)), 0.0, 1.0);
+		float lightScale = (lightDistance > lightRadius)? 0.0: 1.0;
+		float lightAttenuation =
+			(gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].constantAttenuation) +
+			(gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].linearAttenuation * lightDistance) +
+			(gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].quadraticAttenuation * lightDistance * lightDistance);
+
+		lightAttenuation = 1.0 / max(lightAttenuation, 1.0);
+
+		gl_FragColor.rgb += (lightScale * gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].ambient);
+		gl_FragColor.rgb += (lightScale * lightAttenuation * (diffuse.rgb * gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].diffuse.rgb * lightCosAngDiff));
+		gl_FragColor.rgb += (lightScale * lightAttenuation * (specular.rgb * gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].specular.rgb * pow(lightCosAngSpec, 4.0)));
+	}
+	#endif
+
 	gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fogFactor); // fog
 	gl_FragColor.a   = extraColor.a * teamColor.a;
 }
