@@ -100,19 +100,10 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	unitSunColor = mapInfo->light.unitSunColor;
 	unitShadowDensity = mapInfo->light.unitShadowDensity;
 
-	advFade = GLEW_NV_vertex_program2;
-	advShading = (LoadModelShaders() && cubeMapHandler->Init());
-
 	cloakAlpha  = std::max(0.11f, std::min(1.0f, 1.0f - configHandler->Get("UnitTransparency", 0.7f)));
 	cloakAlpha1 = std::min(1.0f, cloakAlpha + 0.1f);
 	cloakAlpha2 = std::min(1.0f, cloakAlpha + 0.2f);
 	cloakAlpha3 = std::min(1.0f, cloakAlpha + 0.4f);
-
-#ifdef USE_GML
-	showHealthBars = !!configHandler->Get("ShowHealthBars", 1);
-	multiThreadDrawUnit = configHandler->Get("MultiThreadDrawUnit", 1);
-	multiThreadDrawUnitShadow = configHandler->Get("MultiThreadDrawUnitShadow", 1);
-#endif
 
 	// load unit explosion generators
 	for (int unitDefID = 1; unitDefID < unitDefHandler->unitDefs.size(); unitDefID++) {
@@ -148,6 +139,19 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	}
 
 	unitRadarIcons.resize(teamHandler->ActiveAllyTeams());
+
+#ifdef USE_GML
+	showHealthBars = !!configHandler->Get("ShowHealthBars", 1);
+	multiThreadDrawUnit = configHandler->Get("MultiThreadDrawUnit", 1);
+	multiThreadDrawUnitShadow = configHandler->Get("MultiThreadDrawUnitShadow", 1);
+#endif
+
+	baseDynamicModelLight = 2;
+	maxDynamicModelLights = GL_MAX_LIGHTS - baseDynamicModelLight;
+	maxDynamicModelLights = std::min(int(maxDynamicModelLights), configHandler->Get("MaxDynamicModelLights", 3));
+
+	advFade = GLEW_NV_vertex_program2;
+	advShading = (LoadModelShaders() && cubeMapHandler->Init());
 }
 
 CUnitDrawer::~CUnitDrawer()
@@ -226,10 +230,13 @@ bool CUnitDrawer::LoadModelShaders()
 
 	// with advFade, submerged transparent objects are clipped against GL_CLIP_PLANE3
 	const char* vertexProgNameARB = (advFade)? "ARB/units3o2.vp": "ARB/units3o.vp";
+	const std::string extraDefs =
+		("#define BASE_DYNAMIC_MODEL_LIGHT " + IntToString(baseDynamicModelLight) + "\n") +
+		("#define MAX_DYNAMIC_MODEL_LIGHTS " + IntToString(maxDynamicModelLights) + "\n");
 
-	modelShaders[MODEL_SHADER_S3O_BASIC ]->AttachShaderObject(sh->CreateShaderObject(vertexProgNameARB, "", GL_VERTEX_PROGRAM_ARB));
-	modelShaders[MODEL_SHADER_S3O_BASIC ]->AttachShaderObject(sh->CreateShaderObject("ARB/units3o.fp", "", GL_FRAGMENT_PROGRAM_ARB));
-	modelShaders[MODEL_SHADER_S3O_BASIC ]->Link();
+	modelShaders[MODEL_SHADER_S3O_BASIC]->AttachShaderObject(sh->CreateShaderObject(vertexProgNameARB, "", GL_VERTEX_PROGRAM_ARB));
+	modelShaders[MODEL_SHADER_S3O_BASIC]->AttachShaderObject(sh->CreateShaderObject("ARB/units3o.fp", "", GL_FRAGMENT_PROGRAM_ARB));
+	modelShaders[MODEL_SHADER_S3O_BASIC]->Link();
 
 	if (shadowHandler->canUseShadows) {
 		if (!globalRendering->haveGLSL) {
@@ -239,8 +246,8 @@ bool CUnitDrawer::LoadModelShaders()
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->Link();
 		} else {
 			modelShaders[MODEL_SHADER_S3O_SHADOW] = sh->CreateProgramObject("[UnitDrawer]", "S3OShaderAdvGLSL", false);
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelVertProg.glsl", "", GL_VERTEX_SHADER));
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelFragProg.glsl", "", GL_FRAGMENT_SHADER));
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelVertProg.glsl", extraDefs, GL_VERTEX_SHADER));
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelFragProg.glsl", extraDefs, GL_FRAGMENT_SHADER));
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->Link();
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("diffuseTex");        // idx  0 (t1: diffuse + team-color)
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadingTex");        // idx  1 (t2: spec/refl + self-illum)
@@ -257,6 +264,7 @@ bool CUnitDrawer::LoadModelShaders()
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowDensity");     // idx 12
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowMatrix");      // idx 13
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowParams");      // idx 14
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("numModelDynLights"); // idx 15
 
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->Enable();
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
@@ -268,6 +276,7 @@ bool CUnitDrawer::LoadModelShaders()
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(10, &unitAmbientColor[0]);
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(11, &unitSunColor[0]);
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(12, unitShadowDensity);
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(15, 0); // numModelDynLights
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->Disable();
 		}
 
@@ -1195,6 +1204,8 @@ void CUnitDrawer::SetupForUnitDrawing()
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4dv(8, false, camera->GetViewMatInv());
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(13, false, &shadowHandler->shadowMatrix.m[0]);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(14, &(shadowHandler->GetShadowParams().x));
+
+			UpdateDynamicLightProperties(modelShaders[MODEL_SHADER_S3O_ACTIVE]);
 		} else {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(10, mapInfo->light.sunDir.x, mapInfo->light.sunDir.y ,mapInfo->light.sunDir.z, 0.0f);
@@ -2276,6 +2287,11 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 	return canBuild;
 }
 
+
+
+
+
+
 void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 	CUnit* unit = const_cast<CUnit*>(u);
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
@@ -2389,5 +2405,103 @@ void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newS
 		} else {
 			unitRadarIcons[allyTeam].erase(u);
 		}
+	}
+}
+
+
+
+
+
+
+unsigned int CUnitDrawer::AddLight(const GL::Light& light) {
+	static unsigned int lightHandle = 0;
+
+	if (dynLights.size() >= maxDynamicModelLights) { return -1U; }
+	if (light.GetTTL() == 0 || light.GetRadius() <= 0.0f) { return -1U; }
+	if (light.GetColorWeight().SqLength() <= 0.01f) { return -1U; }
+
+	dynLightWeight += light.GetColorWeight();
+	dynLights[lightHandle] = light;
+	dynLights[lightHandle].SetAge(gs->frameNum);
+
+	return lightHandle++;
+}
+
+void CUnitDrawer::UpdateDynamicLightProperties(Shader::IProgramObject* shader) {
+	static const float4 ZeroVector4 = float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+	static unsigned int numModelDynLights = 0;
+	static bool firstUpdate = true;
+
+	if (firstUpdate) {
+		firstUpdate = false;
+
+		for (unsigned int i = 0; i < maxDynamicModelLights; i++) {
+			const unsigned int id = GL_LIGHT0 + baseDynamicModelLight + i;
+
+			glEnable(id);
+			glLightfv(id, GL_POSITION, &ZeroVector4.x);
+			glLightfv(id, GL_AMBIENT,  &ZeroVector4.x);
+			glLightfv(id, GL_DIFFUSE,  &ZeroVector4.x);
+			glLightfv(id, GL_SPECULAR, &ZeroVector4.x);
+			glLightfv(id, GL_SPOT_DIRECTION, &ZeroVector4.x);
+			glLightf(id, GL_CONSTANT_ATTENUATION,  0.0f);
+			glLightf(id, GL_LINEAR_ATTENUATION,    0.0f);
+			glLightf(id, GL_QUADRATIC_ATTENUATION, 0.0f);
+			glDisable(id);
+		}
+	}
+
+	if (dynLights.size() != numModelDynLights) {
+		numModelDynLights = dynLights.size();
+
+		// update the active light-count
+		shader->SetUniform1i(15, numModelDynLights);
+	}
+
+	if (numModelDynLights == 0) {
+		return;
+	}
+
+	unsigned int lightID = GL_LIGHT0 + baseDynamicModelLight;
+
+	for (std::map<unsigned int, GL::Light>::iterator it = dynLights.begin(); it != dynLights.end(); ) {
+		const GL::Light& light = it->second;
+		const unsigned int lightHandle = it->first;
+
+		const float4 weightedAmbientCol  = (light.GetAmbientColor()  * light.GetColorWeight().x) / dynLightWeight.x;
+		const float4 weightedDiffuseCol  = (light.GetDiffuseColor()  * light.GetColorWeight().y) / dynLightWeight.y;
+		const float4 weightedSpecularCol = (light.GetSpecularColor() * light.GetColorWeight().z) / dynLightWeight.z;
+		const float4 lightRadiusVector   = float4(light.GetRadius(), 0.0f, 0.0f, 0.0f);
+
+		if ((gs->frameNum - light.GetAge()) > light.GetTTL()) {
+			++it;
+
+			dynLightWeight -= light.GetColorWeight();
+			dynLights.erase(lightHandle);
+
+			// kill the contribution from this light
+			glEnable(lightID);
+			glLightfv(lightID, GL_AMBIENT,  &ZeroVector4.x);
+			glLightfv(lightID, GL_DIFFUSE,  &ZeroVector4.x);
+			glLightfv(lightID, GL_SPECULAR, &ZeroVector4.x);
+			glDisable(lightID);
+		} else {
+			++it;
+
+			// communicate properties via the FFP to save uniforms
+			glEnable(lightID);
+			glLightfv(lightID, GL_POSITION, &light.GetPosition().x);
+			glLightfv(lightID, GL_AMBIENT,  &weightedAmbientCol.x);
+			glLightfv(lightID, GL_DIFFUSE,  &weightedDiffuseCol.x);
+			glLightfv(lightID, GL_SPECULAR, &weightedSpecularCol.x);
+			glLightfv(lightID, GL_SPOT_DIRECTION, &lightRadiusVector.x); //!
+			glLightf(lightID, GL_CONSTANT_ATTENUATION,  light.GetAttenuation().x);
+			glLightf(lightID, GL_LINEAR_ATTENUATION,    light.GetAttenuation().y);
+			glLightf(lightID, GL_QUADRATIC_ATTENUATION, light.GetAttenuation().z);
+			glDisable(lightID);
+		}
+
+		++lightID;
 	}
 }

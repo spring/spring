@@ -12,7 +12,7 @@ varying vec3 halfDir;
 
 varying float fogFactor;
 
-varying vec4 vertexPos;
+varying vec4 vertexWorldPos;
 varying vec2 diffuseTexCoords;
 varying vec2 specularTexCoords;
 varying vec2 normalTexCoords;
@@ -20,11 +20,14 @@ varying vec2 normalTexCoords;
 // defaults to SMF_DETAILTEX_RES per channel
 uniform vec4 splatTexScales;
 
+uniform int numMapDynLights;
+
+
 void main() {
 	vec3 viewDir = vec3(gl_ModelViewMatrixInverse * vec4(0.0, 0.0, 0.0, 1.0));
 	viewDir = normalize(viewDir - gl_Vertex.xyz);
 	halfDir = normalize(lightDir.xyz + viewDir);
-	vertexPos = gl_Vertex;
+	vertexWorldPos = gl_Vertex;
 
 	gl_Position = gl_ModelViewMatrix * gl_Vertex;
 	float fogCoord = length(gl_Position.xyz);
