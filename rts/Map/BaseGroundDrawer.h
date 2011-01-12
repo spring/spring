@@ -28,6 +28,7 @@ public:
 		drawHeight,
 		drawPathTraversability,
 		drawPathHeat,
+		drawPathFlow,
 		drawPathCost,
 	};
 
