@@ -73,9 +73,11 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 	multiThreadDrawGroundShadow = configHandler->Get("MultiThreadDrawGroundShadow", 0);
 #endif
 
+	glGetIntegerv(GL_MAX_LIGHTS, reinterpret_cast<int*>(&maxDynamicMapLights));
+
 	baseDynamicMapLight = 2;
-	maxDynamicMapLights = GL_MAX_LIGHTS - baseDynamicMapLight;
-	maxDynamicMapLights = std::min(int(maxDynamicMapLights), configHandler->Get("MaxDynamicMapLights", 3));
+	maxDynamicMapLights -= baseDynamicMapLight;
+	maxDynamicMapLights = std::min(maxDynamicMapLights, configHandler->Get("MaxDynamicMapLights", 3U));
 
 	LoadMapShaders();
 }

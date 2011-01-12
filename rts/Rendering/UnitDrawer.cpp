@@ -146,9 +146,11 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	multiThreadDrawUnitShadow = configHandler->Get("MultiThreadDrawUnitShadow", 1);
 #endif
 
+	glGetIntegerv(GL_MAX_LIGHTS, reinterpret_cast<int*>(&maxDynamicModelLights));
+
 	baseDynamicModelLight = 2;
-	maxDynamicModelLights = GL_MAX_LIGHTS - baseDynamicModelLight;
-	maxDynamicModelLights = std::min(int(maxDynamicModelLights), configHandler->Get("MaxDynamicModelLights", 3));
+	maxDynamicModelLights -= baseDynamicModelLight;
+	maxDynamicModelLights = std::min(maxDynamicModelLights, configHandler->Get("MaxDynamicModelLights", 3U));
 
 	advFade = GLEW_NV_vertex_program2;
 	advShading = (LoadModelShaders() && cubeMapHandler->Init());
