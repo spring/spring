@@ -139,6 +139,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(AddMapLight);
 	REGISTER_LUA_CFUNC(AddModelLight);
+	REGISTER_LUA_CFUNC(UpdateMapLight);
+	REGISTER_LUA_CFUNC(UpdateModelLight);
 
 	REGISTER_LUA_CFUNC(SetUnitNoDraw);
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
@@ -1186,6 +1188,26 @@ int LuaUnsyncedCtrl::AddMapLight(lua_State* L) {
 	return 1;
 }
 
+int LuaUnsyncedCtrl::AddModelLight(lua_State* L) {
+	if (!lua_istable(L, 1)) {
+		luaL_error(L, "[%s] argument should be a table", __FUNCTION__);
+		return 0;
+	}
+
+	GL::LightHandler* lightHandler = unitDrawer->GetLightHandler();
+	GL::Light light;
+
+	if (lightHandler != NULL) {
+		ParseLight(L, light);
+		lua_pushnumber(L, lightHandler->AddLight(light));
+	} else {
+		lua_pushnumber(L, -1U);
+	}
+
+	return 1;
+}
+
+
 int LuaUnsyncedCtrl::UpdateMapLight(lua_State* L) {
 	if (!lua_isnumber(L, 1)) {
 		luaL_error(L, "[%s] first argument should be a number", __FUNCTION__);
@@ -1204,26 +1226,6 @@ int LuaUnsyncedCtrl::UpdateMapLight(lua_State* L) {
 		lua_pushboolean(L, true);
 	} else {
 		lua_pushboolean(L, false);
-	}
-
-	return 1;
-}
-
-
-int LuaUnsyncedCtrl::AddModelLight(lua_State* L) {
-	if (!lua_istable(L, 1)) {
-		luaL_error(L, "[%s] argument should be a table", __FUNCTION__);
-		return 0;
-	}
-
-	GL::LightHandler* lightHandler = unitDrawer->GetLightHandler();
-	GL::Light light;
-
-	if (lightHandler != NULL) {
-		ParseLight(L, light);
-		lua_pushnumber(L, lightHandler->AddLight(light));
-	} else {
-		lua_pushnumber(L, -1U);
 	}
 
 	return 1;
