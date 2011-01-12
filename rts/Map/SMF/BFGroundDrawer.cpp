@@ -1358,7 +1358,10 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			smfShaderGLSL->SetUniformMatrix4fv(12, false, &shadowHandler->shadowMatrix.m[0]);
 			smfShaderGLSL->SetUniform4fv(13, &(shadowHandler->GetShadowParams().x));
 
+			// already on the MV stack
+			glLoadIdentity();
 			UpdateDynamicLightProperties(smfShaderGLSL);
+			glMultMatrixd(camera->GetViewMat());
 
 			glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, map->GetNormalsTexture());
 			glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, map->GetSpecularTexture());
@@ -1703,6 +1706,7 @@ void CBFGroundDrawer::UpdateDynamicLightProperties(Shader::IProgramObject* shade
 			++it;
 
 			// communicate properties via the FFP to save uniforms
+			// note: we want MV to be identity here
 			glEnable(lightID);
 			glLightfv(lightID, GL_POSITION, &light.GetPosition().x);
 			glLightfv(lightID, GL_AMBIENT,  &weightedAmbientCol.x);

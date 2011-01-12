@@ -82,6 +82,7 @@ void main(void)
 		float lightDistance = length(lightVec);
 		float lightCosAngDiff = clamp(dot(normal, lightVec / lightDistance), 0.0, 1.0);
 		float lightCosAngSpec = clamp(dot(normal, normalize(halfVec)), 0.0, 1.0);
+		#if (OGL_SPEC_ATTENUATION == 1)
 		float lightScale = (lightDistance > lightRadius)? 0.0: 1.0;
 		float lightAttenuation =
 			(gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].constantAttenuation) +
@@ -89,8 +90,12 @@ void main(void)
 			(gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].quadraticAttenuation * lightDistance * lightDistance);
 
 		lightAttenuation = 1.0 / max(lightAttenuation, 1.0);
+		#else
+		float lightScale = 1.0;
+		float lightAttenuation = 1.0 - min(1.0, ((lightDistance * lightDistance) / (lightRadius * lightRadius)));
+		#endif
 
-		gl_FragColor.rgb += (lightScale * gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].ambient);
+		gl_FragColor.rgb += (lightScale * lightAttenuation * gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].ambient);
 		gl_FragColor.rgb += (lightScale * lightAttenuation * (diffuse.rgb * gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].diffuse.rgb * lightCosAngDiff));
 		gl_FragColor.rgb += (lightScale * lightAttenuation * (specular.rgb * gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].specular.rgb * pow(lightCosAngSpec, 4.0)));
 	}
