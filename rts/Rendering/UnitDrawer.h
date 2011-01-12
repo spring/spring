@@ -9,7 +9,7 @@
 #include <string>
 #include <map>
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/Light.h"
+#include "Rendering/GL/LightHandler.h"
 #include "System/EventClient.h"
 #include "lib/gml/ThreadSafeContainers.h"
 
@@ -128,9 +128,7 @@ public:
 	IWorldObjectModelRenderer* GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
 	IWorldObjectModelRenderer* GetCloakedModelRenderer(int modelType) { return cloakedModelRenderers[modelType]; }
 
-	unsigned int AddLight(const GL::Light&);
-	GL::Light* GetLight(unsigned int);
-
+	GL::LightHandler* GetLightHandler() { return &lightHandler; }
 
 #ifdef USE_GML
 	int multiThreadDrawUnit;
@@ -156,7 +154,6 @@ public:
 
 private:
 	bool LoadModelShaders();
-	void UpdateDynamicLightProperties(Shader::IProgramObject*);
 
 	bool DrawUnitLOD(CUnit* unit);
 	void DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
@@ -229,11 +226,7 @@ private:
 
 	std::vector<std::set<CUnit*> > unitRadarIcons;
 
-	std::map<unsigned int, GL::Light> dynLights;
-	float3 dynLightWeight;
-
-	unsigned int baseDynamicModelLight;
-	unsigned int maxDynamicModelLights;
+	GL::LightHandler lightHandler;
 };
 
 extern CUnitDrawer* unitDrawer;
