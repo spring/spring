@@ -146,11 +146,7 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	multiThreadDrawUnitShadow = configHandler->Get("MultiThreadDrawUnitShadow", 1);
 #endif
 
-	glGetIntegerv(GL_MAX_LIGHTS, reinterpret_cast<int*>(&maxDynamicModelLights));
-
-	baseDynamicModelLight = 2;
-	maxDynamicModelLights -= baseDynamicModelLight;
-	maxDynamicModelLights = std::min(maxDynamicModelLights, configHandler->Get("MaxDynamicModelLights", 3U));
+	lightHandler.Init(2U, configHandler->Get("MaxDynamicModelLights", 4U));
 
 	advFade = GLEW_NV_vertex_program2;
 	advShading = (LoadModelShaders() && cubeMapHandler->Init());
@@ -207,6 +203,8 @@ CUnitDrawer::~CUnitDrawer()
 
 	unitRadarIcons.clear();
 	unsortedUnits.clear();
+
+	lightHandler.Kill();
 }
 
 
@@ -233,8 +231,8 @@ bool CUnitDrawer::LoadModelShaders()
 	// with advFade, submerged transparent objects are clipped against GL_CLIP_PLANE3
 	const char* vertexProgNameARB = (advFade)? "ARB/units3o2.vp": "ARB/units3o.vp";
 	const std::string extraDefs =
-		("#define BASE_DYNAMIC_MODEL_LIGHT " + IntToString(baseDynamicModelLight) + "\n") +
-		("#define MAX_DYNAMIC_MODEL_LIGHTS " + IntToString(maxDynamicModelLights) + "\n");
+		("#define BASE_DYNAMIC_MODEL_LIGHT " + IntToString(lightHandler.GetBaseLight()) + "\n") +
+		("#define MAX_DYNAMIC_MODEL_LIGHTS " + IntToString(lightHandler.GetMaxLights()) + "\n");
 
 	modelShaders[MODEL_SHADER_S3O_BASIC]->AttachShaderObject(sh->CreateShaderObject(vertexProgNameARB, "", GL_VERTEX_PROGRAM_ARB));
 	modelShaders[MODEL_SHADER_S3O_BASIC]->AttachShaderObject(sh->CreateShaderObject("ARB/units3o.fp", "", GL_FRAGMENT_PROGRAM_ARB));
@@ -1214,7 +1212,7 @@ void CUnitDrawer::SetupForUnitDrawing()
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(13, false, &shadowHandler->shadowMatrix.m[0]);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(14, &(shadowHandler->GetShadowParams().x));
 
-			UpdateDynamicLightProperties(modelShaders[MODEL_SHADER_S3O_ACTIVE]);
+			lightHandler.Update(modelShaders[MODEL_SHADER_S3O_ACTIVE]);
 		} else {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(10, mapInfo->light.sunDir.x, mapInfo->light.sunDir.y ,mapInfo->light.sunDir.z, 0.0f);
@@ -2408,112 +2406,5 @@ void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newS
 		} else {
 			unitRadarIcons[allyTeam].erase(u);
 		}
-	}
-}
-
-
-
-
-
-
-unsigned int CUnitDrawer::AddLight(const GL::Light& light) {
-	static unsigned int lightHandle = 0;
-
-	if (dynLights.size() >= maxDynamicModelLights) { return -1U; }
-	if (light.GetTTL() == 0 || light.GetRadius() <= 0.0f) { return -1U; }
-	if (light.GetColorWeight().SqLength() <= 0.01f) { return -1U; }
-
-	dynLightWeight += light.GetColorWeight();
-	dynLights[lightHandle] = light;
-	dynLights[lightHandle].SetAge(gs->frameNum);
-
-	return lightHandle++;
-}
-
-GL::Light* CUnitDrawer::GetLight(unsigned int lightHandle) {
-	const std::map<unsigned int, GL::Light>::iterator it = dynLights.find(lightHandle);
-
-	if (it != dynLights.end()) {
-		return &(it->second);
-	}
-
-	return NULL;
-}
-
-void CUnitDrawer::UpdateDynamicLightProperties(Shader::IProgramObject* shader) {
-	static const float4 ZeroVector4 = float4(0.0f, 0.0f, 0.0f, 0.0f);
-
-	static unsigned int numModelDynLights = 0;
-	static bool firstUpdate = true;
-
-	if (firstUpdate) {
-		firstUpdate = false;
-
-		for (unsigned int i = 0; i < maxDynamicModelLights; i++) {
-			const unsigned int id = GL_LIGHT0 + baseDynamicModelLight + i;
-
-			glEnable(id);
-			glLightfv(id, GL_POSITION, &ZeroVector4.x);
-			glLightfv(id, GL_AMBIENT,  &ZeroVector4.x);
-			glLightfv(id, GL_DIFFUSE,  &ZeroVector4.x);
-			glLightfv(id, GL_SPECULAR, &ZeroVector4.x);
-			glLightfv(id, GL_SPOT_DIRECTION, &ZeroVector4.x);
-			glLightf(id, GL_CONSTANT_ATTENUATION,  0.0f);
-			glLightf(id, GL_LINEAR_ATTENUATION,    0.0f);
-			glLightf(id, GL_QUADRATIC_ATTENUATION, 0.0f);
-			glDisable(id);
-		}
-	}
-
-	if (dynLights.size() != numModelDynLights) {
-		numModelDynLights = dynLights.size();
-
-		// update the active light-count
-		shader->SetUniform1i(15, numModelDynLights);
-	}
-
-	if (numModelDynLights == 0) {
-		return;
-	}
-
-	unsigned int lightID = GL_LIGHT0 + baseDynamicModelLight;
-
-	for (std::map<unsigned int, GL::Light>::iterator it = dynLights.begin(); it != dynLights.end(); ) {
-		const GL::Light& light = it->second;
-		const unsigned int lightHandle = it->first;
-
-		const float4 weightedAmbientCol  = (light.GetAmbientColor()  * light.GetColorWeight().x) / dynLightWeight.x;
-		const float4 weightedDiffuseCol  = (light.GetDiffuseColor()  * light.GetColorWeight().y) / dynLightWeight.y;
-		const float4 weightedSpecularCol = (light.GetSpecularColor() * light.GetColorWeight().z) / dynLightWeight.z;
-		const float4 lightRadiusVector   = float4(light.GetRadius(), 0.0f, 0.0f, 0.0f);
-
-		++it;
-
-		if ((gs->frameNum - light.GetAge()) > light.GetTTL()) {
-			dynLightWeight -= light.GetColorWeight();
-			dynLights.erase(lightHandle);
-
-			// kill the contribution from this light
-			glEnable(lightID);
-			glLightfv(lightID, GL_AMBIENT,  &ZeroVector4.x);
-			glLightfv(lightID, GL_DIFFUSE,  &ZeroVector4.x);
-			glLightfv(lightID, GL_SPECULAR, &ZeroVector4.x);
-			glDisable(lightID);
-		} else {
-			// communicate properties via the FFP to save uniforms
-			// note: we want MV to be identity here
-			glEnable(lightID);
-			glLightfv(lightID, GL_POSITION, &light.GetPosition().x);
-			glLightfv(lightID, GL_AMBIENT,  &weightedAmbientCol.x);
-			glLightfv(lightID, GL_DIFFUSE,  &weightedDiffuseCol.x);
-			glLightfv(lightID, GL_SPECULAR, &weightedSpecularCol.x);
-			glLightfv(lightID, GL_SPOT_DIRECTION, &lightRadiusVector.x); //!
-			glLightf(lightID, GL_CONSTANT_ATTENUATION,  light.GetAttenuation().x);
-			glLightf(lightID, GL_LINEAR_ATTENUATION,    light.GetAttenuation().y);
-			glLightf(lightID, GL_QUADRATIC_ATTENUATION, light.GetAttenuation().z);
-			glDisable(lightID);
-		}
-
-		++lightID;
 	}
 }
