@@ -1173,10 +1173,16 @@ int LuaUnsyncedCtrl::AddMapLight(lua_State* L) {
 		return 0;
 	}
 
+	GL::LightHandler* lightHandler = readmap->GetGroundDrawer()->GetLightHandler();
 	GL::Light light;
-	ParseLight(L, light);
 
-	lua_pushnumber(L, readmap->GetGroundDrawer()->AddLight(light));
+	if (lightHandler != NULL) {
+		ParseLight(L, light);
+		lua_pushnumber(L, lightHandler->AddLight(light));
+	} else {
+		lua_pushnumber(L, -1U);
+	}
+
 	return 1;
 }
 
@@ -1190,7 +1196,8 @@ int LuaUnsyncedCtrl::UpdateMapLight(lua_State* L) {
 		return 0;
 	}
 
-	GL::Light* light = readmap->GetGroundDrawer()->GetLight(lua_tonumber(L, 1));
+	GL::LightHandler* lightHandler = readmap->GetGroundDrawer()->GetLightHandler();
+	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lua_tonumber(L, 1)): NULL;
 
 	if (light != NULL) {
 		ParseLight(L, *light);
@@ -1209,10 +1216,16 @@ int LuaUnsyncedCtrl::AddModelLight(lua_State* L) {
 		return 0;
 	}
 
+	GL::LightHandler* lightHandler = unitDrawer->GetLightHandler();
 	GL::Light light;
-	ParseLight(L, light);
 
-	lua_pushnumber(L, unitDrawer->AddLight(light));
+	if (lightHandler != NULL) {
+		ParseLight(L, light);
+		lua_pushnumber(L, lightHandler->AddLight(light));
+	} else {
+		lua_pushnumber(L, -1U);
+	}
+
 	return 1;
 }
 
@@ -1226,7 +1239,8 @@ int LuaUnsyncedCtrl::UpdateModelLight(lua_State* L) {
 		return 0;
 	}
 
-	GL::Light* light = unitDrawer->GetLight(lua_tonumber(L, 1));
+	GL::LightHandler* lightHandler = unitDrawer->GetLightHandler();
+	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lua_tonumber(L, 1)): NULL;
 
 	if (light != NULL) {
 		ParseLight(L, *light);

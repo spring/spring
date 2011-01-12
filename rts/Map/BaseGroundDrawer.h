@@ -5,7 +5,7 @@
 
 #include <map>
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/Light.h"
+#include "Rendering/GL/LightHandler.h"
 #include "Rendering/GL/PBO.h"
 #include "float3.h"
 
@@ -47,8 +47,7 @@ public:
 	virtual void DecreaseDetail() = 0;
 
 	virtual void SetDrawMode(BaseGroundDrawMode dm) { drawMode = dm; }
-	virtual unsigned int AddLight(const GL::Light&) { return -1U; }
-	virtual GL::Light* GetLight(unsigned int) { return NULL; }
+	virtual GL::LightHandler* GetLightHandler() { return NULL; }
 
 	void DrawTrees(bool drawReflection = false) const;
 
@@ -104,4 +103,3 @@ public:
 };
 
 #endif // __BASE_GROUND_DRAWER__
-

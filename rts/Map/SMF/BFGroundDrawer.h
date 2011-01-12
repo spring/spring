@@ -36,8 +36,7 @@ public:
 	void IncreaseDetail();
 	void DecreaseDetail();
 
-	unsigned int AddLight(const GL::Light&);
-	GL::Light* GetLight(unsigned int);
+	GL::LightHandler* GetLightHandler() { return &lightHandler; }
 
 private:
 	struct fline {
@@ -51,7 +50,6 @@ private:
 #endif
 
 	bool LoadMapShaders();
-	void UpdateDynamicLightProperties(Shader::IProgramObject*);
 	void CreateWaterPlanes(const bool &camOufOfMap);
 	inline void DrawWaterPlane(bool drawWaterReflection);
 
@@ -101,14 +99,9 @@ private:
 
 	std::vector<fline> right, left;
 
-	std::map<unsigned int, GL::Light> dynLights;
-	float3 dynLightWeight;
-
-	unsigned int baseDynamicMapLight;
-	unsigned int maxDynamicMapLights;
+	GL::LightHandler lightHandler;
 
 	bool waterDrawn;
 };
 
 #endif // _BF_GROUND_DRAWER_H_
-
