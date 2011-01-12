@@ -2487,9 +2487,9 @@ void CUnitDrawer::UpdateDynamicLightProperties(Shader::IProgramObject* shader) {
 		const float4 weightedSpecularCol = (light.GetSpecularColor() * light.GetColorWeight().z) / dynLightWeight.z;
 		const float4 lightRadiusVector   = float4(light.GetRadius(), 0.0f, 0.0f, 0.0f);
 
-		if ((gs->frameNum - light.GetAge()) > light.GetTTL()) {
-			++it;
+		++it;
 
+		if ((gs->frameNum - light.GetAge()) > light.GetTTL()) {
 			dynLightWeight -= light.GetColorWeight();
 			dynLights.erase(lightHandle);
 
@@ -2500,8 +2500,6 @@ void CUnitDrawer::UpdateDynamicLightProperties(Shader::IProgramObject* shader) {
 			glLightfv(lightID, GL_SPECULAR, &ZeroVector4.x);
 			glDisable(lightID);
 		} else {
-			++it;
-
 			// communicate properties via the FFP to save uniforms
 			// note: we want MV to be identity here
 			glEnable(lightID);
