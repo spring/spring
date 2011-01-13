@@ -426,7 +426,7 @@ void CPathEstimator::Update() {
 				blockStates[blockN].nodeMask &= ~PATHOPT_OBSOLETE;
 			}
 
-			// one SingleBlock consumed
+			// one stale SingleBlock consumed
 			n++;
 		}
 	}
