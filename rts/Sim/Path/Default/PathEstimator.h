@@ -119,7 +119,7 @@ private:
 
 	struct SingleBlock {
 		int2 blockPos;
-		MoveData* moveData;
+		const MoveData* moveData;
 	};
 
 	void FindOffset(const MoveData&, unsigned int, unsigned int);
