@@ -395,30 +395,36 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
 void CPathEstimator::Update() {
 	pathCache->Update();
 
-	unsigned int counter = 0;
+	for (unsigned int n = 0; !changedBlocks.empty() && n < BLOCKS_TO_UPDATE; ) {
+		// copy the next block in line
+		const SingleBlock sb = changedBlocks.front();
 
-	while (!changedBlocks.empty() && counter < BLOCKS_TO_UPDATE) {
-		// next block in line
-		SingleBlock sb = changedBlocks.front();
+		const unsigned int blockX = sb.blockPos.x;
+		const unsigned int blockZ = sb.blockPos.y;
+		const unsigned int blockN = blockZ * nbrOfBlocksX + blockX;
+
 		changedBlocks.pop_front();
 
-		const unsigned int blockIdx = sb.blockPos.y * nbrOfBlocksX + sb.blockPos.x;
+		// check if it's not already updated
+		if (blockStates[blockN].nodeMask & PATHOPT_OBSOLETE) {
+			const MoveData* currBlockMD = sb.moveData;
+			const MoveData* nextBlockMD = (changedBlocks.empty())? NULL: (changedBlocks.front()).moveData;
 
-		// check if it's already updated
-		if (!(blockStates[blockIdx].nodeMask & PATHOPT_OBSOLETE))
-			continue;
+			// no, update the block
+			FindOffset(*currBlockMD, blockX, blockZ);
+			CalculateVertices(*currBlockMD, blockX, blockZ);
 
-		// no, update the block
-		FindOffset(*sb.moveData, sb.blockPos.x, sb.blockPos.y);
-		CalculateVertices(*sb.moveData, sb.blockPos.x, sb.blockPos.y);
+			// each MapChanged() call adds AT MOST <moveData.size()> SingleBlock's
+			// in ascending pathType order per (x, z) PE-block, therefore when the
+			// next SingleBlock's pathType is less or equal to the current we know
+			// that all have been processed (for one PE-block)
+			if (nextBlockMD == NULL || nextBlockMD->pathType <= currBlockMD->pathType) {
+				blockStates[blockN].nodeMask &= ~PATHOPT_OBSOLETE;
+			}
 
-		// mark it as updated
-		if (sb.moveData == moveinfo->moveData.back()) {
-			blockStates[blockIdx].nodeMask &= ~PATHOPT_OBSOLETE;
+			// one stale SingleBlock consumed
+			n++;
 		}
-
-		// one block updated
-		counter++;
 	}
 }
 
