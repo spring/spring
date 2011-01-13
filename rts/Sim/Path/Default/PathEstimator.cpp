@@ -398,30 +398,37 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
  */
 void CPathEstimator::Update() {
 	pathCache->Update();
-	unsigned int counter = 0;
 
-	while (!needUpdate.empty() && counter < BLOCKS_TO_UPDATE) {
-		// next block in line
-		SingleBlock sb = needUpdate.front();
+	for (unsigned int n = 0; !needUpdate.empty() && n < BLOCKS_TO_UPDATE; ) {
+		// copy the next block in line
+		const SingleBlock sb = needUpdate.front();
+
+		const unsigned int blockX = sb.block.x;
+		const unsigned int blockZ = sb.block.y;
+		const unsigned int blockN = blockZ * nbrOfBlocksX + blockX;
+
 		needUpdate.pop_front();
 
-		const int blocknr = sb.block.y * nbrOfBlocksX + sb.block.x;
+		// check if it's not already updated
+		if (blockStates[blockN].nodeMask & PATHOPT_OBSOLETE) {
+			const MoveData* currBlockMD = sb.moveData;
+			const MoveData* nextBlockMD = (needUpdate.empty())? NULL: (needUpdate.front()).moveData;
 
-		// check if it's already updated
-		if (!(blockStates[blocknr].nodeMask & PATHOPT_OBSOLETE))
-			continue;
+			// no, update the block
+			FindOffset(currBlockMD, blockX, blockZ);
+			CalculateVertices(currBlockMD, blockX, blockZ);
 
-		// no, update the block
-		FindOffset(*sb.moveData, sb.block.x, sb.block.y);
-		CalculateVertices(*sb.moveData, sb.block.x, sb.block.y);
+			// each MapChanged() call adds AT MOST <moveData.size()> SingleBlock's
+			// in ascending pathType order per (x, z) PE-block, therefore when the
+			// next SingleBlock's pathType is less or equal to the current we know
+			// that all have been processed (for one PE-block)
+			if (nextBlockMD == NULL || nextBlockMD->pathType <= currBlockMD->pathType) {
+				blockStates[blockN].nodeMask &= ~PATHOPT_OBSOLETE;
+			}
 
-		// mark it as updated
-		if (sb.moveData == moveinfo->moveData.back()) {
-			blockStates[blocknr].nodeMask &= ~PATHOPT_OBSOLETE;
+			// one SingleBlock consumed
+			n++;
 		}
-
-		// one block updated
-		counter++;
 	}
 }
 

@@ -126,7 +126,7 @@ private:
 
 	struct SingleBlock {
 		int2 block;
-		MoveData* moveData;
+		const MoveData* moveData;
 	};
 
 
