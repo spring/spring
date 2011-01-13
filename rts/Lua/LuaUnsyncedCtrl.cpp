@@ -1131,8 +1131,8 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 
 
 
-static void ParseLight(lua_State* L, GL::Light& light) {
-	for (lua_pushnil(L); lua_next(L, 1) != 0; lua_pop(L, 1)) {
+static void ParseLight(lua_State* L, int tblIdx, GL::Light& light) {
+	for (lua_pushnil(L); lua_next(L, tblIdx) != 0; lua_pop(L, 1)) {
 		if (lua_israwstring(L, -2)) {
 			const std::string& key = lua_tostring(L, -2);
 
@@ -1179,7 +1179,7 @@ int LuaUnsyncedCtrl::AddMapLight(lua_State* L) {
 	GL::Light light;
 
 	if (lightHandler != NULL) {
-		ParseLight(L, light);
+		ParseLight(L, 1, light);
 		lua_pushnumber(L, lightHandler->AddLight(light));
 	} else {
 		lua_pushnumber(L, -1U);
@@ -1198,7 +1198,7 @@ int LuaUnsyncedCtrl::AddModelLight(lua_State* L) {
 	GL::Light light;
 
 	if (lightHandler != NULL) {
-		ParseLight(L, light);
+		ParseLight(L, 1, light);
 		lua_pushnumber(L, lightHandler->AddLight(light));
 	} else {
 		lua_pushnumber(L, -1U);
@@ -1222,7 +1222,7 @@ int LuaUnsyncedCtrl::UpdateMapLight(lua_State* L) {
 	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lua_tonumber(L, 1)): NULL;
 
 	if (light != NULL) {
-		ParseLight(L, *light);
+		ParseLight(L, 2, *light);
 		lua_pushboolean(L, true);
 	} else {
 		lua_pushboolean(L, false);
@@ -1245,7 +1245,7 @@ int LuaUnsyncedCtrl::UpdateModelLight(lua_State* L) {
 	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lua_tonumber(L, 1)): NULL;
 
 	if (light != NULL) {
-		ParseLight(L, *light);
+		ParseLight(L, 2, *light);
 		lua_pushboolean(L, true);
 	} else {
 		lua_pushboolean(L, false);
