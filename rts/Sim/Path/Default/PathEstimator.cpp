@@ -415,8 +415,8 @@ void CPathEstimator::Update() {
 			const MoveData* nextBlockMD = (needUpdate.empty())? NULL: (needUpdate.front()).moveData;
 
 			// no, update the block
-			FindOffset(currBlockMD, blockX, blockZ);
-			CalculateVertices(currBlockMD, blockX, blockZ);
+			FindOffset(*currBlockMD, blockX, blockZ);
+			CalculateVertices(*currBlockMD, blockX, blockZ);
 
 			// each MapChanged() call adds AT MOST <moveData.size()> SingleBlock's
 			// in ascending pathType order per (x, z) PE-block, therefore when the
