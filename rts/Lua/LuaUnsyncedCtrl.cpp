@@ -48,6 +48,8 @@
 #include "Rendering/WindowManagerHelper.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Projectiles/Projectile.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
@@ -141,6 +143,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(AddModelLight);
 	REGISTER_LUA_CFUNC(UpdateMapLight);
 	REGISTER_LUA_CFUNC(UpdateModelLight);
+	REGISTER_LUA_CFUNC(SetMapLightTrackPosition);
+	REGISTER_LUA_CFUNC(SetModelLightTrackPosition);
 
 	REGISTER_LUA_CFUNC(SetUnitNoDraw);
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
@@ -282,24 +286,43 @@ static inline bool CanCtrlAllyTeam(int allyteam)
 //  Parsing helpers
 //
 
+static inline const CProjectile* ParseRawProjectile(lua_State* L, const char* caller, int index, bool synced)
+{
+	if (!lua_isnumber(L, index)) {
+		if (caller != NULL) {
+			luaL_error(L, "[%s] projectile ID parameter in %s() not a number\n", __FUNCTION__, caller);
+		}
+		return NULL;
+	}
+
+	const int projID = lua_toint(L, index);
+	const ProjectileMap& projectiles = synced?
+		ph->syncedProjectileIDs:
+		ph->unsyncedProjectileIDs;
+	const ProjectileMap::const_iterator it = projectiles.find(projID);
+
+	if (it == projectiles.end()) {
+		return NULL;
+	}
+
+	return ((it->second).first);
+}
+
 static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
 		if (caller != NULL) {
-			luaL_error(L, "Bad unitID parameter in %s()\n", caller);
-		} else {
-			return NULL;
+			luaL_error(L, "[%s] unit ID parameter in %s() not a number\n", __FUNCTION__, caller);
 		}
+		return NULL;
 	}
+
 	const int unitID = lua_toint(L, index);
 	if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 	}
-	CUnit* unit = uh->units[unitID];
-	if (unit == NULL) {
-		return NULL;
-	}
-	return unit;
+
+	return uh->units[unitID];
 }
 
 
@@ -1253,6 +1276,83 @@ int LuaUnsyncedCtrl::UpdateModelLight(lua_State* L) {
 
 	return 1;
 }
+
+
+// set a map-illuminating light to start/stop tracking
+// the position of a moving object (unit or projectile)
+int LuaUnsyncedCtrl::SetMapLightTrackPosition(lua_State* L) {
+	if (!(CLuaHandle::GetActiveHandle())->GetSynced()) {
+		// no tracking lights for unsynced Lua
+		// (would illuminate the map out of LOS)
+		return 0;
+	}
+
+	if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isboolean(L, 3) || !lua_isboolean(L, 4)) {
+		luaL_error(L, "[%s] 1st and 2nd arguments should be numbers, 3rd and 4th should be booleans", __FUNCTION__);
+		return 0;
+	}
+
+	const unsigned int lightHandle = lua_tointeger(L, 1);
+	const unsigned int objectID = lua_tointeger(L, 2);
+	const bool trackEnable = lua_toboolean(L, 3);
+	const bool trackUnit = lua_toboolean(L, 4);
+
+	GL::LightHandler* lightHandler = readmap->GetGroundDrawer()->GetLightHandler();
+	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightHandle): NULL;
+
+	if (light != NULL) {
+		const CUnit* unit = NULL;
+		const CProjectile* proj = NULL;
+
+		// NOTE: risky (and MT-unsafe) if tracked object is destroyed
+		// and a gadget does not cancel the tracking state immediately
+		// ==> need a better way to prevent dangling pointers
+		if (trackUnit) {
+			unit = ParseRawUnit(L, __FUNCTION__, 2);
+			light->SetTrackPosition((trackEnable && unit != NULL)? &unit->drawPos: NULL);
+		} else {
+			// only track synced projectiles (LuaSynced
+			// does not know about unsynced ID's anyway)
+			proj = ParseRawProjectile(L, __FUNCTION__, 2, true);
+			light->SetTrackPosition((trackEnable && proj != NULL)? &proj->drawPos: NULL);
+		}
+	}
+}
+
+// set a model-illuminating light to start/stop tracking
+// the position of a moving object (unit or projectile)
+int LuaUnsyncedCtrl::SetModelLightTrackPosition(lua_State* L) {
+	if (!(CLuaHandle::GetActiveHandle())->GetSynced()) {
+		return 0;
+	}
+
+	if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isboolean(L, 3) || !lua_isboolean(L, 4)) {
+		luaL_error(L, "[%s] 1st and 2nd arguments should be numbers, 3rd and 4th should be booleans", __FUNCTION__);
+		return 0;
+	}
+
+	const unsigned int lightHandle = lua_tointeger(L, 1);
+	const unsigned int objectID = lua_tointeger(L, 2);
+	const bool trackEnable = lua_toboolean(L, 3);
+	const bool trackUnit = lua_toboolean(L, 4);
+
+	GL::LightHandler* lightHandler = unitDrawer->GetLightHandler();
+	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightHandle): NULL;
+
+	if (light != NULL) {
+		const CUnit* unit = NULL;
+		const CProjectile* proj = NULL;
+
+		if (trackUnit) {
+			unit = ParseRawUnit(L, __FUNCTION__, 2);
+			light->SetTrackPosition((trackEnable && unit != NULL)? &unit->drawPos: NULL);
+		} else {
+			proj = ParseRawProjectile(L, __FUNCTION__, 2, true);
+			light->SetTrackPosition((trackEnable && proj != NULL)? &proj->drawPos: NULL);
+		}
+	}
+}
+
 
 /******************************************************************************/
 

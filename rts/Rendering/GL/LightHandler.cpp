@@ -71,10 +71,12 @@ void GL::LightHandler::Update(Shader::IProgramObject* shader) {
 		const GL::Light& light = it->second;
 		const unsigned int lightHndle = it->first;
 
-		const float4 weightedAmbientCol  = (light.GetAmbientColor()  * light.GetColorWeight().x) / lightWeight.x;
-		const float4 weightedDiffuseCol  = (light.GetDiffuseColor()  * light.GetColorWeight().y) / lightWeight.y;
-		const float4 weightedSpecularCol = (light.GetSpecularColor() * light.GetColorWeight().z) / lightWeight.z;
-		const float4 lightRadiusVector   = float4(light.GetRadius(), 0.0f, 0.0f, 0.0f);
+		const float4  weightedAmbientCol  = (light.GetAmbientColor()  * light.GetColorWeight().x) / lightWeight.x;
+		const float4  weightedDiffuseCol  = (light.GetDiffuseColor()  * light.GetColorWeight().y) / lightWeight.y;
+		const float4  weightedSpecularCol = (light.GetSpecularColor() * light.GetColorWeight().z) / lightWeight.z;
+		const float4  lightRadiusVector   = float4(light.GetRadius(), 0.0f, 0.0f, 0.0f);
+		const float3* lightTrackPos       = light.GetTrackPosition();
+		const float4  lightPos            = (lightTrackPos != NULL)? float4(*lightTrackPos, 1.0f): light.GetPosition();
 
 		++it;
 
@@ -92,7 +94,7 @@ void GL::LightHandler::Update(Shader::IProgramObject* shader) {
 			// communicate properties via the FFP to save uniforms
 			// note: we want MV to be identity here
 			glEnable(lightID);
-			glLightfv(lightID, GL_POSITION, &light.GetPosition().x);
+			glLightfv(lightID, GL_POSITION, &lightPos.x);
 			glLightfv(lightID, GL_AMBIENT,  &weightedAmbientCol.x);
 			glLightfv(lightID, GL_DIFFUSE,  &weightedDiffuseCol.x);
 			glLightfv(lightID, GL_SPECULAR, &weightedSpecularCol.x);
