@@ -19,6 +19,7 @@ namespace GL {
 
 			radius = 0.0f;
 
+			id = -1U;
 			ttl = 0;
 			age = 0;
 		}
@@ -42,8 +43,10 @@ namespace GL {
 		float GetRadius() const { return radius; }
 		void SetRadius(float r) { radius = r; }
 
+		const unsigned int GetID() const { return id; }
 		unsigned int GetTTL() const { return ttl; }
 		unsigned int GetAge() const { return age; }
+		void SetID(unsigned int n) { id = n; }
 		void SetTTL(unsigned int n) { ttl = n; }
 		void SetAge(unsigned int n) { age = n; }
 
@@ -57,6 +60,7 @@ namespace GL {
 
 		float radius;          // elmos
 
+		unsigned int id;       // GL_LIGHT we are bound to
 		unsigned int ttl;      // lifetime in sim-frames
 		unsigned int age;      // sim-frame this light was created
 
