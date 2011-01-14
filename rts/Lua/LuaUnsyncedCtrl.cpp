@@ -286,7 +286,7 @@ static inline bool CanCtrlAllyTeam(int allyteam)
 //  Parsing helpers
 //
 
-static inline const CProjectile* ParseRawProjectile(lua_State* L, const char* caller, int index, bool synced)
+static inline CProjectile* ParseRawProjectile(lua_State* L, const char* caller, int index, bool synced)
 {
 	if (!lua_isnumber(L, index)) {
 		if (caller != NULL) {
@@ -299,7 +299,8 @@ static inline const CProjectile* ParseRawProjectile(lua_State* L, const char* ca
 	const ProjectileMap& projectiles = synced?
 		ph->syncedProjectileIDs:
 		ph->unsyncedProjectileIDs;
-	const ProjectileMap::const_iterator it = projectiles.find(projID);
+
+	ProjectileMap::const_iterator it = projectiles.find(projID);
 
 	if (it == projectiles.end()) {
 		return NULL;
@@ -1278,6 +1279,32 @@ int LuaUnsyncedCtrl::UpdateModelLight(lua_State* L) {
 }
 
 
+static bool AddLightTrackingTarget(lua_State* L, GL::Light* light, bool trackEnable, bool trackUnit) {
+	if (trackUnit) {
+		CUnit* unit = ParseRawUnit(L, __FUNCTION__, 2);
+
+		if (trackEnable && unit != NULL) {
+			light->AddDeathDependence(unit);
+			light->SetTrackPosition(&unit->drawPos);
+		} else {
+			light->DeleteDeathDependence(unit);
+			light->SetTrackPosition(NULL);
+		}
+	} else {
+		// only track synced projectiles (LuaSynced
+		// does not know about unsynced ID's anyway)
+		CProjectile* proj = ParseRawProjectile(L, __FUNCTION__, 2, true);
+
+		if (trackEnable && proj != NULL) {
+			light->AddDeathDependence(proj);
+			light->SetTrackPosition(&proj->drawPos);
+		} else {
+			light->DeleteDeathDependence(proj);
+			light->SetTrackPosition(NULL);
+		}
+	}
+}
+
 // set a map-illuminating light to start/stop tracking
 // the position of a moving object (unit or projectile)
 int LuaUnsyncedCtrl::SetMapLightTrackingState(lua_State* L) {
@@ -1292,30 +1319,11 @@ int LuaUnsyncedCtrl::SetMapLightTrackingState(lua_State* L) {
 		return 0;
 	}
 
-	const unsigned int lightHandle = lua_tointeger(L, 1);
-	const unsigned int objectID = lua_tointeger(L, 2);
-	const bool trackEnable = lua_toboolean(L, 3);
-	const bool trackUnit = lua_toboolean(L, 4);
-
 	GL::LightHandler* lightHandler = readmap->GetGroundDrawer()->GetLightHandler();
-	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightHandle): NULL;
+	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lua_tointeger(L, 1)): NULL;
 
 	if (light != NULL) {
-		const CUnit* unit = NULL;
-		const CProjectile* proj = NULL;
-
-		// NOTE: risky (and MT-unsafe) if tracked object is destroyed
-		// and a gadget does not cancel the tracking state immediately
-		// ==> need a better way to prevent dangling pointers
-		if (trackUnit) {
-			unit = ParseRawUnit(L, __FUNCTION__, 2);
-			light->SetTrackPosition((trackEnable && unit != NULL)? &unit->drawPos: NULL);
-		} else {
-			// only track synced projectiles (LuaSynced
-			// does not know about unsynced ID's anyway)
-			proj = ParseRawProjectile(L, __FUNCTION__, 2, true);
-			light->SetTrackPosition((trackEnable && proj != NULL)? &proj->drawPos: NULL);
-		}
+		AddLightTrackingTarget(L, light, lua_toboolean(L, 3), lua_toboolean(L, 4));
 	}
 }
 
@@ -1331,25 +1339,11 @@ int LuaUnsyncedCtrl::SetModelLightTrackingState(lua_State* L) {
 		return 0;
 	}
 
-	const unsigned int lightHandle = lua_tointeger(L, 1);
-	const unsigned int objectID = lua_tointeger(L, 2);
-	const bool trackEnable = lua_toboolean(L, 3);
-	const bool trackUnit = lua_toboolean(L, 4);
-
 	GL::LightHandler* lightHandler = unitDrawer->GetLightHandler();
-	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightHandle): NULL;
+	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lua_tointeger(L, 1)): NULL;
 
 	if (light != NULL) {
-		const CUnit* unit = NULL;
-		const CProjectile* proj = NULL;
-
-		if (trackUnit) {
-			unit = ParseRawUnit(L, __FUNCTION__, 2);
-			light->SetTrackPosition((trackEnable && unit != NULL)? &unit->drawPos: NULL);
-		} else {
-			proj = ParseRawProjectile(L, __FUNCTION__, 2, true);
-			light->SetTrackPosition((trackEnable && proj != NULL)? &proj->drawPos: NULL);
-		}
+		AddLightTrackingTarget(L, light, lua_toboolean(L, 3), lua_toboolean(L, 4));
 	}
 }
 
