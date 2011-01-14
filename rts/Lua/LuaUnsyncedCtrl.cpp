@@ -143,8 +143,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(AddModelLight);
 	REGISTER_LUA_CFUNC(UpdateMapLight);
 	REGISTER_LUA_CFUNC(UpdateModelLight);
-	REGISTER_LUA_CFUNC(SetMapLightTrackPosition);
-	REGISTER_LUA_CFUNC(SetModelLightTrackPosition);
+	REGISTER_LUA_CFUNC(SetMapLightTrackingState);
+	REGISTER_LUA_CFUNC(SetModelLightTrackingState);
 
 	REGISTER_LUA_CFUNC(SetUnitNoDraw);
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
@@ -1280,7 +1280,7 @@ int LuaUnsyncedCtrl::UpdateModelLight(lua_State* L) {
 
 // set a map-illuminating light to start/stop tracking
 // the position of a moving object (unit or projectile)
-int LuaUnsyncedCtrl::SetMapLightTrackPosition(lua_State* L) {
+int LuaUnsyncedCtrl::SetMapLightTrackingState(lua_State* L) {
 	if (!(CLuaHandle::GetActiveHandle())->GetSynced()) {
 		// no tracking lights for unsynced Lua
 		// (would illuminate the map out of LOS)
@@ -1321,7 +1321,7 @@ int LuaUnsyncedCtrl::SetMapLightTrackPosition(lua_State* L) {
 
 // set a model-illuminating light to start/stop tracking
 // the position of a moving object (unit or projectile)
-int LuaUnsyncedCtrl::SetModelLightTrackPosition(lua_State* L) {
+int LuaUnsyncedCtrl::SetModelLightTrackingState(lua_State* L) {
 	if (!(CLuaHandle::GetActiveHandle())->GetSynced()) {
 		return 0;
 	}
