@@ -3,6 +3,7 @@
 #ifndef __GL_LIGHTHANDLER_H__
 #define __GL_LIGHTHANDLER_H__
 
+#include <list>
 #include <map>
 #include "Light.h"
 
@@ -28,6 +29,7 @@ namespace GL {
 
 	private:
 		std::map<unsigned int, GL::Light> lights;
+		std::list<unsigned int> lightIDs;
 
 		float3 lightWeight;
 

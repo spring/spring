@@ -25,19 +25,24 @@ void GL::LightHandler::Init(unsigned int cfgBaseLight, unsigned int cfgMaxLights
 		glLightf(lightID, GL_LINEAR_ATTENUATION,    0.0f);
 		glLightf(lightID, GL_QUADRATIC_ATTENUATION, 0.0f);
 		glDisable(lightID);
+
+		// reserve free light ID's
+		lightIDs.push_back(lightID);
 	}
 }
 
 
 unsigned int GL::LightHandler::AddLight(const GL::Light& light) {
-	if (lights.size() >= maxLights) { return -1U; }
+	if (lights.size() >= maxLights || lightIDs.empty()) { return -1U; }
 	if (light.GetTTL() == 0 || light.GetRadius() <= 0.0f) { return -1U; }
 	if (light.GetColorWeight().SqLength() <= 0.01f) { return -1U; }
 
 	lightWeight += light.GetColorWeight();
 	lights[lightHandle] = light;
+	lights[lightHandle].SetID(lightIDs.front());
 	lights[lightHandle].SetAge(gs->frameNum);
 
+	lightIDs.pop_front();
 	return lightHandle++;
 }
 
@@ -65,10 +70,9 @@ void GL::LightHandler::Update(Shader::IProgramObject* shader) {
 		return;
 	}
 
-	unsigned int lightID = GL_LIGHT0 + baseLight;
-
 	for (std::map<unsigned int, GL::Light>::iterator it = lights.begin(); it != lights.end(); ) {
 		const GL::Light& light = it->second;
+		const unsigned int lightID = light.GetID();
 		const unsigned int lightHndle = it->first;
 
 		const float4  weightedAmbientCol  = (light.GetAmbientColor()  * light.GetColorWeight().x) / lightWeight.x;
@@ -83,6 +87,7 @@ void GL::LightHandler::Update(Shader::IProgramObject* shader) {
 		if ((gs->frameNum - light.GetAge()) > light.GetTTL()) {
 			lightWeight -= light.GetColorWeight();
 			lights.erase(lightHndle);
+			lightIDs.push_back(lightID);
 
 			// kill the contribution from this light
 			glEnable(lightID);
@@ -104,7 +109,5 @@ void GL::LightHandler::Update(Shader::IProgramObject* shader) {
 			glLightf(lightID, GL_QUADRATIC_ATTENUATION, light.GetAttenuation().z);
 			glDisable(lightID);
 		}
-
-		++lightID;
 	}
 }
