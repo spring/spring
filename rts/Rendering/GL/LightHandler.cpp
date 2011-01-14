@@ -41,8 +41,8 @@ unsigned int GL::LightHandler::AddLight(const GL::Light& light) {
 	return lightHandle++;
 }
 
-GL::Light* GL::LightHandler::GetLight(unsigned int lightHandle) {
-	const std::map<unsigned int, GL::Light>::iterator it = lights.find(lightHandle);
+GL::Light* GL::LightHandler::GetLight(unsigned int _lightHandle) {
+	const std::map<unsigned int, GL::Light>::iterator it = lights.find(_lightHandle);
 
 	if (it != lights.end()) {
 		return &(it->second);
@@ -69,7 +69,7 @@ void GL::LightHandler::Update(Shader::IProgramObject* shader) {
 
 	for (std::map<unsigned int, GL::Light>::iterator it = lights.begin(); it != lights.end(); ) {
 		const GL::Light& light = it->second;
-		const unsigned int lightHandle = it->first;
+		const unsigned int lightHndle = it->first;
 
 		const float4 weightedAmbientCol  = (light.GetAmbientColor()  * light.GetColorWeight().x) / lightWeight.x;
 		const float4 weightedDiffuseCol  = (light.GetDiffuseColor()  * light.GetColorWeight().y) / lightWeight.y;
@@ -80,7 +80,7 @@ void GL::LightHandler::Update(Shader::IProgramObject* shader) {
 
 		if ((gs->frameNum - light.GetAge()) > light.GetTTL()) {
 			lightWeight -= light.GetColorWeight();
-			lights.erase(lightHandle);
+			lights.erase(lightHndle);
 
 			// kill the contribution from this light
 			glEnable(lightID);
