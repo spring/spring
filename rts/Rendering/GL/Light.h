@@ -3,11 +3,12 @@
 #ifndef __GL_LIGHT_H__
 #define __GL_LIGHT_H__
 
+#include "System/Object.h"
 #include "System/float3.h"
 #include "System/float4.h"
 
 namespace GL {
-	struct Light {
+	struct Light: public CObject {
 	public:
 		Light() {
 			position        = float4(0.0f, 0.0f, 1.0f, 1.0f);
@@ -19,10 +20,13 @@ namespace GL {
 
 			radius = 0.0f;
 
-			id = -1U;
+			id  = -1U;
 			ttl = 0;
 			age = 0;
 		}
+
+		// a light can only depend on one object
+		void DependentDied(CObject*) { trackPosition = NULL; }
 
 		const float4& GetPosition() const { return position; }
 		const float3* GetTrackPosition() const { return trackPosition; }
@@ -58,11 +62,11 @@ namespace GL {
 		float3  colorWeight;    // x=ambient, y=diffuse, z=specular
 		float3  attenuation;    // x=constant, y=linear, z=quadratic
 
-		float radius;          // elmos
+		float radius;           // elmos
 
-		unsigned int id;       // GL_LIGHT we are bound to
-		unsigned int ttl;      // lifetime in sim-frames
-		unsigned int age;      // sim-frame this light was created
+		unsigned int id;        // GL_LIGHTx we are bound to
+		unsigned int ttl;       // lifetime in sim-frames
+		unsigned int age;       // sim-frame this light was created
 
 		const float3* trackPosition;
 	};
