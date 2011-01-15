@@ -1280,29 +1280,51 @@ int LuaUnsyncedCtrl::UpdateModelLight(lua_State* L) {
 
 
 static bool AddLightTrackingTarget(lua_State* L, GL::Light* light, bool trackEnable, bool trackUnit) {
+	bool ret = false;
+
 	if (trackUnit) {
 		CUnit* unit = ParseRawUnit(L, __FUNCTION__, 2);
 
-		if (trackEnable && unit != NULL) {
-			light->AddDeathDependence(unit);
-			light->SetTrackPosition(&unit->drawPos);
-		} else {
-			light->DeleteDeathDependence(unit);
-			light->SetTrackPosition(NULL);
+		if (unit != NULL) {
+			if (trackEnable) {
+				if (light->GetTrackPosition() == NULL) {
+					light->AddDeathDependence(unit);
+					light->SetTrackPosition(&unit->drawPos);
+					ret = true;
+				}
+			} else {
+				// assume <light> was tracking <unit>
+				if (light->GetTrackPosition() == &unit->drawPos) {
+					light->DeleteDeathDependence(unit);
+					light->SetTrackPosition(NULL);
+					ret = true;
+				}
+			}
 		}
 	} else {
 		// only track synced projectiles (LuaSynced
 		// does not know about unsynced ID's anyway)
 		CProjectile* proj = ParseRawProjectile(L, __FUNCTION__, 2, true);
 
-		if (trackEnable && proj != NULL) {
-			light->AddDeathDependence(proj);
-			light->SetTrackPosition(&proj->drawPos);
-		} else {
-			light->DeleteDeathDependence(proj);
-			light->SetTrackPosition(NULL);
+		if (proj != NULL) {
+			if (trackEnable) {
+				if (light->GetTrackPosition() == NULL) {
+					light->AddDeathDependence(proj);
+					light->SetTrackPosition(&proj->drawPos);
+					ret = true;
+				}
+			} else {
+				// assume <light> was tracking <proj>
+				if (light->GetTrackPosition() == &proj->drawPos) {
+					light->DeleteDeathDependence(proj);
+					light->SetTrackPosition(NULL);
+					ret = true;
+				}
+			}
 		}
 	}
+
+	return ret;
 }
 
 // set a map-illuminating light to start/stop tracking
@@ -1321,10 +1343,14 @@ int LuaUnsyncedCtrl::SetMapLightTrackingState(lua_State* L) {
 
 	GL::LightHandler* lightHandler = readmap->GetGroundDrawer()->GetLightHandler();
 	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lua_tointeger(L, 1)): NULL;
+	bool ret = false;
 
 	if (light != NULL) {
-		AddLightTrackingTarget(L, light, lua_toboolean(L, 3), lua_toboolean(L, 4));
+		ret = AddLightTrackingTarget(L, light, lua_toboolean(L, 3), lua_toboolean(L, 4));
 	}
+
+	lua_pushboolean(L, ret);
+	return 1;
 }
 
 // set a model-illuminating light to start/stop tracking
@@ -1341,10 +1367,14 @@ int LuaUnsyncedCtrl::SetModelLightTrackingState(lua_State* L) {
 
 	GL::LightHandler* lightHandler = unitDrawer->GetLightHandler();
 	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lua_tointeger(L, 1)): NULL;
+	bool ret = false;
 
 	if (light != NULL) {
-		AddLightTrackingTarget(L, light, lua_toboolean(L, 3), lua_toboolean(L, 4));
+		ret = AddLightTrackingTarget(L, light, lua_toboolean(L, 3), lua_toboolean(L, 4));
 	}
+
+	lua_pushboolean(L, ret);
+	return 1;
 }
 
 
