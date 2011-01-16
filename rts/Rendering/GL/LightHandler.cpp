@@ -21,6 +21,7 @@ void GL::LightHandler::Init(unsigned int cfgBaseLight, unsigned int cfgMaxLights
 		glLightfv(lightID, GL_DIFFUSE,  &ZeroVector4.x);
 		glLightfv(lightID, GL_SPECULAR, &ZeroVector4.x);
 		glLightfv(lightID, GL_SPOT_DIRECTION, &ZeroVector4.x);
+		glLightf(lightID, GL_SPOT_CUTOFF, 180.0f);
 		glLightf(lightID, GL_CONSTANT_ATTENUATION,  0.0f);
 		glLightf(lightID, GL_LINEAR_ATTENUATION,    0.0f);
 		glLightf(lightID, GL_QUADRATIC_ATTENUATION, 0.0f);
@@ -78,9 +79,10 @@ void GL::LightHandler::Update(Shader::IProgramObject* shader) {
 		const float4  weightedAmbientCol  = (light.GetAmbientColor()  * light.GetColorWeight().x) / lightWeight.x;
 		const float4  weightedDiffuseCol  = (light.GetDiffuseColor()  * light.GetColorWeight().y) / lightWeight.y;
 		const float4  weightedSpecularCol = (light.GetSpecularColor() * light.GetColorWeight().z) / lightWeight.z;
-		const float4  lightRadiusVector   = float4(light.GetRadius(), 0.0f, 0.0f, 0.0f);
 		const float3* lightTrackPos       = light.GetTrackPosition();
-		const float4  lightPos            = (lightTrackPos != NULL)? float4(*lightTrackPos, 1.0f): light.GetPosition();
+		const float3* lightTrackDir       = light.GetTrackDirection();
+		const float4& lightPos            = (lightTrackPos != NULL)? float4(*lightTrackPos, 1.0f): light.GetPosition();
+		const float3& lightDir            = (lightTrackDir != NULL)? float3(*lightTrackDir      ): light.GetDirection();
 
 		++it;
 
@@ -103,10 +105,14 @@ void GL::LightHandler::Update(Shader::IProgramObject* shader) {
 			glLightfv(lightID, GL_AMBIENT,  &weightedAmbientCol.x);
 			glLightfv(lightID, GL_DIFFUSE,  &weightedDiffuseCol.x);
 			glLightfv(lightID, GL_SPECULAR, &weightedSpecularCol.x);
-			glLightfv(lightID, GL_SPOT_DIRECTION, &lightRadiusVector.x); //!
+			glLightfv(lightID, GL_SPOT_DIRECTION, &lightDir.x);
+			glLightf(lightID, GL_SPOT_CUTOFF, light.GetFOV());
+			glLightf(lightID, GL_CONSTANT_ATTENUATION, light.GetRadius()); //!
+			#if (OGL_SPEC_ATTENUATION == 1)
 			glLightf(lightID, GL_CONSTANT_ATTENUATION,  light.GetAttenuation().x);
 			glLightf(lightID, GL_LINEAR_ATTENUATION,    light.GetAttenuation().y);
 			glLightf(lightID, GL_QUADRATIC_ATTENUATION, light.GetAttenuation().z);
+			#endif
 			glDisable(lightID);
 		}
 	}
