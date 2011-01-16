@@ -590,7 +590,7 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 		bool pos_given = false;
 		bool speed_given = false;
 
-		int index = 5;
+		int index = 3;
 		if (args >= 5 && lua_isnumber(L, 3) && lua_isnumber(L, 4) && lua_isnumber(L, 5)) {
 			pos = float3(lua_tofloat(L, 3), lua_tofloat(L, 4), lua_tofloat(L, 5));
 			pos_given = true;
