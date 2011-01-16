@@ -1342,7 +1342,7 @@ static bool AddLightTrackingTarget(lua_State* L, GL::Light* light, bool trackEna
 				if (light->GetTrackPosition() == NULL) {
 					light->AddDeathDependence(unit);
 					light->SetTrackPosition(&unit->drawPos);
-					light->SetTrackDirection((float3*) &unit->frontdir); //!
+					light->SetTrackDirection(&unit->speed); //! non-normalized
 					ret = true;
 				}
 			} else {
