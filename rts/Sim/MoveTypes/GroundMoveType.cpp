@@ -292,9 +292,10 @@ void CGroundMoveType::Update()
 					SetMainHeading();
 				}
 
-				SetDeltaSpeed(requestedSpeed, wantReverse, avoidVec);
-				pathManager->UpdatePath(owner, pathId);
+				SetDeltaSpeed(requestedSpeed, wantReverse);
 			}
+
+			pathManager->UpdatePath(owner, pathId);
 		}
 
 		UpdateOwnerPos(wantReverse);
@@ -431,7 +432,7 @@ void CGroundMoveType::StopMoving() {
 
 
 
-void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, const float3& avoidVec)
+void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse)
 {
 	wantedSpeed = newWantedSpeed;
 
