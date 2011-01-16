@@ -2179,7 +2179,7 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isTurnInPlace(int skirmishAIId, int unit
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_getTurnInPlaceDistance(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->turnInPlaceDistance;
+	return 0.0f;
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_getTurnInPlaceSpeedLimit(int skirmishAIId, int unitDefId) {
