@@ -122,14 +122,11 @@ public:
 	float rSpeed;       ///< maximum reverse speed the unit can attain (elmos/sec)
 	float turnRate;
 	bool turnInPlace;
-	/**
-	 * units above this distance to goal will try to turn while keeping
-	 * some of their speed. 0 to disable
-	 */
-	float turnInPlaceDistance;
+
 	/**
 	 * units below this speed will turn in place regardless of their
-	 * turnInPlace setting
+	 * turnInPlace setting, units above this speed will slow down to
+	 * it when turning
 	 */
 	float turnInPlaceSpeedLimit;
 
