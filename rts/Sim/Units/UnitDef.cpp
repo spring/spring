@@ -84,7 +84,6 @@ UnitDef::UnitDef()
 , rSpeed(0.0f)
 , turnRate(0.0f)
 , turnInPlace(false)
-, turnInPlaceDistance(0.0f)
 , turnInPlaceSpeedLimit(0.0f)
 , upright(false)
 , collide(false)
@@ -383,7 +382,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	turnRate    = udTable.GetFloat("turnRate", 0.0f);
 	turnInPlace = udTable.GetBool("turnInPlace", true);
-	turnInPlaceDistance = udTable.GetFloat("turnInPlaceDistance", 350.f);
 	turnInPlaceSpeedLimit = ((turnRate / SPRING_CIRCLE_DIVS) * ((PI + PI) * SQUARE_SIZE)) * (speed / GAME_SPEED);
 	turnInPlaceSpeedLimit = udTable.GetFloat("turnInPlaceSpeedLimit", std::min(speed, turnInPlaceSpeedLimit));
 
