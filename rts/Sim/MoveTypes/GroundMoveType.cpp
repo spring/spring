@@ -293,7 +293,6 @@ void CGroundMoveType::Update()
 				}
 
 				SetDeltaSpeed(requestedSpeed, wantReverse, avoidVec);
-				pathManager->UpdatePath(owner, pathId);
 			}
 
 			pathManager->UpdatePath(owner, pathId);
