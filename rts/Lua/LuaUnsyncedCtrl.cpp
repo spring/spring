@@ -1249,7 +1249,7 @@ int LuaUnsyncedCtrl::AddMapLight(lua_State* L) {
 	int ret = -1U;
 	if (lightHandler != NULL) {
 		ParseLight(L, 1, light);
-		ret = lightHandler->AddLight(light);
+		ret = lightHandler->AddLight(light));
 	}
 
 	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
@@ -1271,7 +1271,7 @@ int LuaUnsyncedCtrl::AddModelLight(lua_State* L) {
 	int ret = -1U;
 	if (lightHandler != NULL) {
 		ParseLight(L, 1, light);
-		ret = lightHandler->AddLight(light);
+		ret = lightHandler->AddLight(light));
 	}
 
 	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
