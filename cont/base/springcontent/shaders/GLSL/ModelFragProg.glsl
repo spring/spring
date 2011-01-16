@@ -78,7 +78,7 @@ void main(void)
 		vec3 lightVec = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].position.xyz - vertexWorldPos.xyz;
 		vec3 halfVec = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].halfVector.xyz;
 
-		float lightRadius = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].spotDirection.x;
+		float lightRadius = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].constantAttenuation;
 		float lightDistance = length(lightVec);
 		float lightCosAngDiff = clamp(dot(normal, lightVec / lightDistance), 0.0, 1.0);
 		float lightCosAngSpec = clamp(dot(normal, normalize(halfVec)), 0.0, 1.0);
@@ -95,7 +95,12 @@ void main(void)
 		float lightAttenuation = 1.0 - min(1.0, ((lightDistance * lightDistance) / (lightRadius * lightRadius)));
 		#endif
 
-		gl_FragColor.rgb += (lightScale * lightAttenuation * gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].ambient);
+		float vectorDot = dot((-lightVec / lightDistance), gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].spotDirection);
+		float cutoffDot = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].spotCosCutoff;
+
+		lightScale *= ((vectorDot < cutoffDot)? 0.0: 1.0);
+
+		gl_FragColor.rgb += (lightScale *                                  gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].ambient);
 		gl_FragColor.rgb += (lightScale * lightAttenuation * (diffuse.rgb * gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].diffuse.rgb * lightCosAngDiff));
 		gl_FragColor.rgb += (lightScale * lightAttenuation * (specular.rgb * gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].specular.rgb * pow(lightCosAngSpec, 4.0)));
 	}
