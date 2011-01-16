@@ -1211,6 +1211,8 @@ static void ParseLight(lua_State* L, int tblIdx, GL::Light& light) {
 				if (size == 3) {
 					if (key == "position") {
 						light.SetPosition(array);
+					} else if (key == "direction") {
+						light.SetDirection(array);
 					} else if (key == "ambientColor") {
 						light.SetAmbientColor(array);
 					} else if (key == "diffuseColor") {
@@ -1228,6 +1230,8 @@ static void ParseLight(lua_State* L, int tblIdx, GL::Light& light) {
 			else if (lua_isnumber(L, -1)) {
 				if (key == "radius") {
 					light.SetRadius(std::max(0.0f, lua_tonumber(L, -1)));
+				} else if (key == "fov") {
+					light.SetFOV(std::max(0.0f, std::min(180.0f, lua_tonumber(L, -1))));
 				} else if (key == "ttl") {
 					light.SetTTL(lua_tonumber(L, -1));
 				}
@@ -1246,13 +1250,15 @@ int LuaUnsyncedCtrl::AddMapLight(lua_State* L) {
 	GL::LightHandler* lightHandler = readmap->GetGroundDrawer()->GetLightHandler();
 	GL::Light light;
 
+	// NOTE: intentionally sync-unsafe
+	unsigned int lightHandle = -1U;
+
 	if (lightHandler != NULL) {
 		ParseLight(L, 1, light);
-		lua_pushnumber(L, lightHandler->AddLight(light));
-	} else {
-		lua_pushnumber(L, -1U);
+		lightHandle = lightHandler->AddLight(light);
 	}
 
+	lua_pushnumber(L, lightHandle);
 	return 1;
 }
 
@@ -1265,13 +1271,15 @@ int LuaUnsyncedCtrl::AddModelLight(lua_State* L) {
 	GL::LightHandler* lightHandler = unitDrawer->GetLightHandler();
 	GL::Light light;
 
+	// NOTE: intentionally sync-unsafe
+	unsigned int lightHandle = -1U;
+
 	if (lightHandler != NULL) {
 		ParseLight(L, 1, light);
-		lua_pushnumber(L, lightHandler->AddLight(light));
-	} else {
-		lua_pushnumber(L, -1U);
+		lightHandle = lightHandler->AddLight(light);
 	}
 
+	lua_pushnumber(L, lightHandle);
 	return 1;
 }
 
@@ -1288,7 +1296,7 @@ int LuaUnsyncedCtrl::UpdateMapLight(lua_State* L) {
 
 	GL::LightHandler* lightHandler = readmap->GetGroundDrawer()->GetLightHandler();
 	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lua_tonumber(L, 1)): NULL;
-	bool ret = false; // sync-safety
+	bool ret = false; // sync-safe
 
 	if (light != NULL) {
 		ParseLight(L, 2, *light);
@@ -1311,7 +1319,7 @@ int LuaUnsyncedCtrl::UpdateModelLight(lua_State* L) {
 
 	GL::LightHandler* lightHandler = unitDrawer->GetLightHandler();
 	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lua_tonumber(L, 1)): NULL;
-	bool ret = false; // sync-safety
+	bool ret = false; // sync-safe
 
 	if (light != NULL) {
 		ParseLight(L, 2, *light);
@@ -1334,6 +1342,7 @@ static bool AddLightTrackingTarget(lua_State* L, GL::Light* light, bool trackEna
 				if (light->GetTrackPosition() == NULL) {
 					light->AddDeathDependence(unit);
 					light->SetTrackPosition(&unit->drawPos);
+					light->SetTrackDirection((float3*) &unit->frontdir); //!
 					ret = true;
 				}
 			} else {
@@ -1341,6 +1350,7 @@ static bool AddLightTrackingTarget(lua_State* L, GL::Light* light, bool trackEna
 				if (light->GetTrackPosition() == &unit->drawPos) {
 					light->DeleteDeathDependence(unit);
 					light->SetTrackPosition(NULL);
+					light->SetTrackDirection(NULL);
 					ret = true;
 				}
 			}
@@ -1355,6 +1365,7 @@ static bool AddLightTrackingTarget(lua_State* L, GL::Light* light, bool trackEna
 				if (light->GetTrackPosition() == NULL) {
 					light->AddDeathDependence(proj);
 					light->SetTrackPosition(&proj->drawPos);
+					light->SetTrackDirection(&proj->dir);
 					ret = true;
 				}
 			} else {
@@ -1362,6 +1373,7 @@ static bool AddLightTrackingTarget(lua_State* L, GL::Light* light, bool trackEna
 				if (light->GetTrackPosition() == &proj->drawPos) {
 					light->DeleteDeathDependence(proj);
 					light->SetTrackPosition(NULL);
+					light->SetTrackDirection(NULL);
 					ret = true;
 				}
 			}
@@ -1387,7 +1399,7 @@ int LuaUnsyncedCtrl::SetMapLightTrackingState(lua_State* L) {
 
 	GL::LightHandler* lightHandler = readmap->GetGroundDrawer()->GetLightHandler();
 	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lua_tointeger(L, 1)): NULL;
-	bool ret = false; // sync-safety
+	bool ret = false; // sync-safe
 
 	if (light != NULL) {
 		ret = AddLightTrackingTarget(L, light, lua_toboolean(L, 3), lua_toboolean(L, 4));
@@ -1412,14 +1424,13 @@ int LuaUnsyncedCtrl::SetModelLightTrackingState(lua_State* L) {
 
 	GL::LightHandler* lightHandler = unitDrawer->GetLightHandler();
 	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lua_tointeger(L, 1)): NULL;
-	bool ret = false; // sync-safety
+	bool ret = false; // sync-safe
 
 	if (light != NULL) {
 		ret = AddLightTrackingTarget(L, light, lua_toboolean(L, 3), lua_toboolean(L, 4));
 		ret = ret && (CLuaHandle::GetActiveHandle())->GetUserMode();
 	}
 
-	// sync-safety
 	lua_pushboolean(L, ret);
 	return 1;
 }
