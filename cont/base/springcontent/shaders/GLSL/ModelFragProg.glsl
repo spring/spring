@@ -80,10 +80,10 @@ void main(void)
 
 		float lightRadius = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].constantAttenuation;
 		float lightDistance = length(lightVec);
+		float lightScale = (lightDistance > lightRadius)? 0.0: 1.0;
 		float lightCosAngDiff = clamp(dot(normal, lightVec / lightDistance), 0.0, 1.0);
 		float lightCosAngSpec = clamp(dot(normal, normalize(halfVec)), 0.0, 1.0);
 		#if (OGL_SPEC_ATTENUATION == 1)
-		float lightScale = (lightDistance > lightRadius)? 0.0: 1.0;
 		float lightAttenuation =
 			(gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].constantAttenuation) +
 			(gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].linearAttenuation * lightDistance) +
@@ -91,7 +91,6 @@ void main(void)
 
 		lightAttenuation = 1.0 / max(lightAttenuation, 1.0);
 		#else
-		float lightScale = 1.0;
 		float lightAttenuation = 1.0 - min(1.0, ((lightDistance * lightDistance) / (lightRadius * lightRadius)));
 		#endif
 
