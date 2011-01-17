@@ -269,9 +269,6 @@ void CGroundMoveType::Update()
 					}
 				}
 
-				if (haveFinalWaypoint && atGoal) {
-					Arrived();
-				}
 				if (wpBehind) {
 					wantReverse = WantReverse(waypointDir);
 				}
@@ -370,7 +367,7 @@ void CGroundMoveType::SlowUpdate()
 Sets unit to start moving against given position with max speed.
 */
 void CGroundMoveType::StartMoving(float3 pos, float goalRadius) {
-	StartMoving(pos, goalRadius, (reversing? maxReverseSpeed * 2: maxSpeed * 2));
+	StartMoving(pos, goalRadius, (reversing? maxReverseSpeed: maxSpeed));
 }
 
 
@@ -465,7 +462,7 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse)
 
 			const float reqTurnAngle = streflop::acosf(waypointDir.dot(flatFrontDir)) * (180.0f / PI);
 			const float maxTurnAngle = (turnRate / SPRING_CIRCLE_DIVS) * 360.0f;
-			const float reducedSpeed = (maxSpeed * 2.0f) * (maxTurnAngle / reqTurnAngle);
+			const float reducedSpeed = maxSpeed * (maxTurnAngle / reqTurnAngle);
 
 			if (startBreaking) {
 				// at this point, Update() will no longer call GetNextWaypoint()
@@ -755,7 +752,7 @@ void CGroundMoveType::UpdateControlledDrop()
 
 		if (wh > midPos.y - owner->relMidPos.y) {
 			owner->falling = false;
-			midPos.y = wh + owner->relMidPos.y - speed.y*0.8;
+			midPos.y = wh + owner->relMidPos.y - speed.y * 0.8;
 			owner->script->Landed(); //stop parachute animation
 		}
 	}
@@ -1280,7 +1277,7 @@ void CGroundMoveType::StopEngine() {
 	}
 
 	owner->isMoving = false;
-	wantedSpeed = 0;
+	wantedSpeed = 0.0f;
 }
 
 
@@ -1785,7 +1782,7 @@ void CGroundMoveType::SetMaxSpeed(float speed)
 	maxSpeed        = std::min(speed, owner->maxSpeed);
 	maxReverseSpeed = std::min(speed, owner->maxReverseSpeed);
 
-	requestedSpeed = speed * 2.0f;
+	requestedSpeed = speed;
 }
 
 bool CGroundMoveType::OnSlope() {
@@ -1862,13 +1859,13 @@ bool CGroundMoveType::UpdateDirectControl()
 
 	if (owner->directControl->forward) {
 		assert(!wantReverse);
-		SetDeltaSpeed(maxSpeed * 2.0f, wantReverse);
+		SetDeltaSpeed(maxSpeed, wantReverse);
 
 		owner->isMoving = true;
 		owner->script->StartMoving();
 	} else if (owner->directControl->back) {
 		assert(wantReverse);
-		SetDeltaSpeed(maxReverseSpeed * 2.0f, wantReverse);
+		SetDeltaSpeed(maxReverseSpeed, wantReverse);
 
 		owner->isMoving = true;
 		owner->script->StartMoving();
