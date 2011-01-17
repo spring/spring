@@ -1291,7 +1291,7 @@ int LuaUnsyncedCtrl::AddModelLight(lua_State* L)
 
 int LuaUnsyncedCtrl::UpdateMapLight(lua_State* L)
 {
-	const unsigned int lightID = lua_checkint(L, 1);
+	const unsigned int lightID = luaL_checkint(L, 1);
 	GL::LightHandler* lightHandler = readmap->GetGroundDrawer()->GetLightHandler();
 	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightID): NULL;
 	bool ret = false;
@@ -1309,7 +1309,7 @@ int LuaUnsyncedCtrl::UpdateMapLight(lua_State* L)
 
 int LuaUnsyncedCtrl::UpdateModelLight(lua_State* L)
 {
-	const unsigned int lightID = lua_checkint(L, 1);
+	const unsigned int lightID = luaL_checkint(L, 1);
 	GL::LightHandler* lightHandler = unitDrawer->GetLightHandler();
 	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightID): NULL;
 	bool ret = false;
@@ -1383,7 +1383,7 @@ static bool AddLightTrackingTarget(lua_State* L, GL::Light* light, bool trackEna
 // the position of a moving object (unit or projectile)
 int LuaUnsyncedCtrl::SetMapLightTrackingState(lua_State* L)
 {
-	const unsigned int lightID = lua_checkint(L, 1);
+	const unsigned int lightID = luaL_checkint(L, 1);
 	const bool trackEnable = lua_isboolean(L, 3) ? lua_toboolean(L, 3) : true;
 	const bool trackUnit = lua_isboolean(L, 4) ? lua_toboolean(L, 4) : true;
 
@@ -1411,7 +1411,7 @@ int LuaUnsyncedCtrl::SetModelLightTrackingState(lua_State* L)
 		return 0;
 	}
 
-	const unsigned int lightID = lua_checkint(L, 1);
+	const unsigned int lightID = luaL_checkint(L, 1);
 	const bool trackEnable = lua_isboolean(L, 3) ? lua_toboolean(L, 3) : true;
 	const bool trackUnit = lua_isboolean(L, 4) ? lua_toboolean(L, 4) : true;
 
