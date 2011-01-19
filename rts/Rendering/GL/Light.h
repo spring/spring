@@ -29,7 +29,10 @@ namespace GL {
 		}
 
 		// a light can only depend on one object
-		void DependentDied(CObject*) { trackPosition = NULL; }
+		void DependentDied(CObject*) {
+			trackPosition = NULL;
+			trackDirection = NULL;
+		}
 
 		const float4& GetPosition() const { return position; }
 		const float3& GetDirection() const { return direction; }
