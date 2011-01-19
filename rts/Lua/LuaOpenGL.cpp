@@ -1085,9 +1085,6 @@ int LuaOpenGL::GetString(lua_State* L)
 int LuaOpenGL::ConfigScreen(lua_State* L)
 {
 //	CheckDrawingEnabled(L, __FUNCTION__);
-	if (!CLuaHandle::GetActiveHandle()->GetUserMode()) {
-		return 0;
-	}
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
 		luaL_error(L, "Incorrect arguments to gl.ConfigScreen()");
@@ -1112,9 +1109,6 @@ int LuaOpenGL::SlaveMiniMap(lua_State* L)
 		return 0;
 	}
 //	CheckDrawingEnabled(L, __FUNCTION__);
-	if (!CLuaHandle::GetActiveHandle()->GetUserMode()) {
-		return 0;
-	}
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 1) || !lua_isboolean(L, 1)) {
 		luaL_error(L, "Incorrect arguments to gl.SlaveMiniMap()");
@@ -1130,9 +1124,6 @@ int LuaOpenGL::SlaveMiniMap(lua_State* L)
 int LuaOpenGL::ConfigMiniMap(lua_State* L)
 {
 	if (!minimap) {
-		return 0;
-	}
-	if (!CLuaHandle::GetActiveHandle()->GetUserMode()) {
 		return 0;
 	}
 	const int args = lua_gettop(L); // number of arguments
@@ -1154,9 +1145,6 @@ int LuaOpenGL::DrawMiniMap(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 	if (!minimap) {
-		return 0;
-	}
-	if (!CLuaHandle::GetActiveHandle()->GetUserMode()) {
 		return 0;
 	}
 	if (drawMode != DRAW_SCREEN) {
