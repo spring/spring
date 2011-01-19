@@ -316,7 +316,7 @@ static int WeaponDefToID(lua_State* L, const void* data)
 static int SafeIconType(lua_State* L, const void* data)
 {
 	// the iconType is unsynced because LuaUI has SetUnitDefIcon()
-	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
+	if (!CLuaHandle::GetActiveHandle()->GetSynced()) {
 		const CIcon& iconType = *((const CIcon*)data);
 		lua_pushstring(L, iconType->GetName().c_str());
 		return 1;
@@ -442,7 +442,7 @@ static void PushGuiSoundSet(lua_State* L, const string& name,
 		const GuiSoundSet::Data& sound = soundSet.sounds[i];
 		HSTR_PUSH_STRING(L, "name",   sound.name);
 		HSTR_PUSH_NUMBER(L, "volume", sound.volume);
-		if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
+		if (!CLuaHandle::GetActiveHandle()->GetSynced()) {
 			HSTR_PUSH_NUMBER(L, "id", sound.id);
 		}
 		lua_rawset(L, -3);
