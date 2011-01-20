@@ -97,7 +97,6 @@ public:
 
 	float3 unitAmbientColor;
 	float3 unitSunColor;
-	float unitShadowDensity;
 
 	struct TempDrawUnit {
 		const UnitDef* unitdef;
@@ -112,6 +111,7 @@ public:
 
 	float3 camNorm; ///< used to draw far-textures
 
+	void UpdateSunDir();
 	void CreateSpecularFace(unsigned int glType, int size, float3 baseDir, float3 xDif, float3 yDif, float3 sunDir, float exponent, float3 sunColor);
 
 	void DrawBuildingSample(const UnitDef* unitdef, int side, float3 pos, int facing = 0);

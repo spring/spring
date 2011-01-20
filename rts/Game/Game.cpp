@@ -1272,6 +1272,7 @@ bool CGame::Draw() {
 
 			GML_STDMUTEX_LOCK(water);
 			water->Update();
+			globalRendering->Update();
 		}
 	}
 
@@ -1356,7 +1357,10 @@ bool CGame::Draw() {
 				SetDrawMode(gameNormalDraw);
 			}
 
+			cubeMapHandler->UpdateSpecularTexture();
 			cubeMapHandler->UpdateReflectionTexture();
+			sky->UpdateSkyTexture();
+
 
 			if (FBO::IsSupported())
 				FBO::Unbind();
@@ -1770,6 +1774,7 @@ void CGame::SimFrame() {
 			(playerHandler->Player(gu->myPlayerNum)->dccs).SendStateUpdate(camMove);
 		}
 		CTeamHighlight::Update(gs->frameNum);
+		globalRendering->UpdateSun();
 	}
 
 	// everything from here is simulation

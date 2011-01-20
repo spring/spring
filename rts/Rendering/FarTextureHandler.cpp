@@ -219,7 +219,8 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 
 		//! rotate by 45 degrees for the next orientation
 		glRotatef(-360.0f / numOrientations, 0, 1, 0);
-		glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir);
+		const float4 sunDir = globalRendering->dynamicSun ? float4(0.0f, 1.0f, 0.0f) : globalRendering->sunDir; // assume non static sun is in zenith
+		glLightfv(GL_LIGHT1, GL_POSITION, sunDir);
 	}
 
 	unitDrawer->GetOpaqueModelRenderer(model->type)->PopRenderState();

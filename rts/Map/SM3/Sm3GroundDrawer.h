@@ -19,6 +19,7 @@ public:
 	void Draw(bool drawWaterReflection,bool drawUnitReflection);
 	void DrawShadowPass(void);
 	void Update();
+	void UpdateSunDir() {}
 
 	void IncreaseDetail();
 	void DecreaseDetail();

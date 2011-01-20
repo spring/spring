@@ -11,6 +11,7 @@
 #include "Game/LoadScreen.h"
 #include "Map/MapInfo.h"
 #include "Map/MapParser.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "System/ConfigHandler.h"

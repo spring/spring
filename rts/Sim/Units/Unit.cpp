@@ -35,6 +35,7 @@
 #include "Map/ReadMap.h"
 
 #include "Rendering/Models/IModelParser.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/GroundFlash.h"
 
@@ -2169,7 +2170,7 @@ unsigned int CUnit::CalcShadowLOD(unsigned int lastLOD) const
 	if (lastLOD == 0) { return 0; }
 
 	// FIXME: fix it, cap it for shallow shadows?
-	const float3& sun = mapInfo->light.sunDir;
+	const float3& sun = globalRendering->sunDir;
 	const float3 diff = (camera->pos - pos);
 	const float  dot  = diff.dot(sun);
 	const float3 gap  = diff - (sun * dot);

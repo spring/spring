@@ -802,7 +802,7 @@ void LuaOpenGL::ResetDrawInMiniMap()
 void LuaOpenGL::SetupWorldLighting()
 {
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-	glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir);
+	glLightfv(GL_LIGHT1, GL_POSITION, globalRendering->sunDir);
 	glEnable(GL_LIGHT1);
 }
 
@@ -882,7 +882,7 @@ void LuaOpenGL::SetupScreenLighting()
 	// sun light -- needs the camera transformation
 	glPushMatrix();
 	glLoadMatrixd(camera->GetViewMat());
-	glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir);
+	glLightfv(GL_LIGHT1, GL_POSITION, globalRendering->sunDir);
 
 	const float sunFactor = 1.0f;
 	const float sf = sunFactor;
@@ -5037,17 +5037,17 @@ int LuaOpenGL::GetSun(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if (args == 0) {
-		lua_pushnumber(L, mapInfo->light.sunDir[0]);
-		lua_pushnumber(L, mapInfo->light.sunDir[1]);
-		lua_pushnumber(L, mapInfo->light.sunDir[2]);
+		lua_pushnumber(L, globalRendering->sunDir[0]);
+		lua_pushnumber(L, globalRendering->sunDir[1]);
+		lua_pushnumber(L, globalRendering->sunDir[2]);
 		return 3;
 	}
 
 	const string param = luaL_checkstring(L, 1);
 	if (param == "pos") {
-		lua_pushnumber(L, mapInfo->light.sunDir[0]);
-		lua_pushnumber(L, mapInfo->light.sunDir[1]);
-		lua_pushnumber(L, mapInfo->light.sunDir[2]);
+		lua_pushnumber(L, globalRendering->sunDir[0]);
+		lua_pushnumber(L, globalRendering->sunDir[1]);
+		lua_pushnumber(L, globalRendering->sunDir[2]);
 		return 3;
 	}
 
@@ -5058,9 +5058,9 @@ int LuaOpenGL::GetSun(lua_State* L)
 
 	if (param == "shadowDensity") {
 		if (!unitMode) {
-			lua_pushnumber(L, mapInfo->light.groundShadowDensity);
+			lua_pushnumber(L, globalRendering->groundShadowDensity);
 		} else {
-			lua_pushnumber(L, unitDrawer->unitShadowDensity);
+			lua_pushnumber(L, globalRendering->unitShadowDensity);
 		}
 		return 1;
 	}
