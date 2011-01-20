@@ -1,12 +1,18 @@
 // Property keys are case insensitive
 
+// == IP Support ==
+// IP properties accept:
+// - IP v4 addresses like 127.0.0.1 or 123.123.123.123
+// - IP v6 addresses like ::  or fe80::1
+// - NO host-names
+
 // A minimal client example
 // If spring is started as client, it needs the following information to work properly
 [GAME]
 {
-	HostIP=xxx.xxx.xxx.xxx; // can also be IPv6, e.g. HostIP=fe80::1;
-	HostPort=xxx;       // standard is 8452
-	SourcePort=0;       // set this if you want a different source port (as client), 0 means OS-select and should be prefered
+	HostIP=xxx.xxx.xxx.xxx; // which IP the server is hosting on. see "IP Support" at the start of this document.
+	HostPort=xxx;       // (optional) default is 8452
+	SourcePort=0;       // (optional) default is 0. set this if you want a different source port (as client), 0 means OS-select and should be preferred.
 
 	MyPlayerName=somename;
 	MyPasswd=secretpassword;
@@ -28,10 +34,10 @@
 	DemoFile=demo.sdf;  // if set this game is a multiplayer demo replay
 	SaveFile=save.ssf;  // if set this game is a continuation of a saved game
 
-	HostIP=xxx.xxx.xxx.xxx; // no effect as host
-	HostPort=xxx;       // where clients are going to connet to, usually 8452
+	HostIP=xxx.xxx.xxx.xxx; // (optional) which IP to host on. omit or use an empty value to host on any local IP. see "IP Support" at the start of this document.
+	HostPort=xxx;       // (optional) default is 8452. where clients are going to connect to.
 	SourcePort=0;       // no effect for host
-	AutohostIP=xxx;     // communicate with spring, specify the ip you are listening (as host)
+	AutohostIP=xxx.xxx.xxx.xxx; // communicate with spring, specify which IP the autohost is listening on. see "IP Support" at the start of this document.
 	AutohostPort=X;     // communicate with spring, specify the port you are listening (as host)
 
 	MyPlayerName=somename; // our ingame-name (needs to match one players Name= field)
@@ -121,7 +127,7 @@
 		Limit1=50;      // >0 can be used for limiting, like build restrictions in TA
 		//...
 	}
-	[MODOPTIONS]
+	[MODOPTIONS]        // values for the options defined in ModOptions.lua
 	{
 		StartMetal=1000;
 		StartEnergy=1000;
@@ -136,5 +142,9 @@
 		FixedAllies=1;      // Are ingame alliances allowed?
 		MaxSpeed=3;         // speed limits at game start
 		MinSpeed=0.3;
+	}
+	[MAPOPTIONS]        // values for the options defined in MapOptions.lua
+	{
+		PropX=1000;
 	}
 }

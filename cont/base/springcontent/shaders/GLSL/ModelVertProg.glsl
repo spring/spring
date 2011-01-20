@@ -25,6 +25,7 @@
   uniform vec4 shadowParams;
 #endif
 
+  varying vec4 vertexWorldPos;
   varying vec3 cameraDir;
   varying float fogFactor;
 
@@ -33,6 +34,9 @@
 #else
   varying vec3 normalv;
 #endif
+
+uniform int numModelDynLights;
+
 
 void main(void)
 {
@@ -44,12 +48,12 @@ void main(void)
 	normalv = gl_NormalMatrix * gl_Normal;
 #endif
 
-	vec4 worldPos = gl_ModelViewMatrix * gl_Vertex;
-	gl_Position   = gl_ProjectionMatrix * worldPos;
-	cameraDir     = worldPos.xyz - cameraPos;
+	vertexWorldPos = gl_ModelViewMatrix * gl_Vertex;
+	gl_Position    = gl_ProjectionMatrix * vertexWorldPos;
+	cameraDir      = vertexWorldPos.xyz - cameraPos;
 
 #ifdef use_shadows
-	gl_TexCoord[1] = shadowMatrix * worldPos;
+	gl_TexCoord[1] = shadowMatrix * vertexWorldPos;
 	gl_TexCoord[1].st = gl_TexCoord[1].st * (inversesqrt( abs(gl_TexCoord[1].st) + shadowParams.z) + shadowParams.w) + shadowParams.xy;
 #endif
 

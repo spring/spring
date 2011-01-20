@@ -62,10 +62,8 @@ CR_REG_METADATA(CGroundMoveType, (
 		CR_MEMBER(nextWaypoint),
 		CR_MEMBER(atGoal),
 		CR_MEMBER(haveFinalWaypoint),
-		CR_MEMBER(terrainSpeed),
 
 		CR_MEMBER(requestedSpeed),
-		CR_MEMBER(requestedTurnRate),
 
 		CR_MEMBER(currentDistanceToWaypoint),
 
@@ -130,9 +128,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	atGoal(false),
 	haveFinalWaypoint(false),
 
-	terrainSpeed(1.0f),
 	requestedSpeed(0.0f),
-	requestedTurnRate(0),
 	currentDistanceToWaypoint(0),
 	restartDelay(0),
 	lastGetPathPos(ZeroVector),
@@ -190,9 +186,6 @@ void CGroundMoveType::Update()
 {
 	ASSERT_SYNCED_FLOAT3(owner->pos);
 
-	// Update mobility.
-	owner->mobility->maxSpeed = reversing? maxReverseSpeed: maxSpeed;
-
 	if (owner->transporter) {
 		return;
 	}
@@ -228,9 +221,7 @@ void CGroundMoveType::Update()
 			ChangeHeading(owner->heading + deltaHeading);
 		} else {
 			if (pathId == 0) {
-				wantedSpeed = 0.0f;
-
-				SetDeltaSpeed(false);
+				SetDeltaSpeed(0.0f, false);
 				SetMainHeading();
 			} else {
 				// TODO: Stop the unit from moving as a reaction on collision/explosion physics.
@@ -298,40 +289,10 @@ void CGroundMoveType::Update()
 					SetMainHeading();
 				}
 
-
-				if (nextDeltaSpeedUpdate <= gs->frameNum) {
-					wantedSpeed = requestedSpeed;
-
-					const bool moreCommands = owner->commandAI->HasMoreMoveCommands();
-					const bool startBreaking = (currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE);
-
-					// If arriving at waypoint, then need to slow down, or may pass it.
-					if (!moreCommands && startBreaking) {
-						wantedSpeed = std::min(wantedSpeed, fastmath::apxsqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking));
-					}
-					if (waypointDir.SqLength() > 0.1f) {
-						const float reqTurnAngle = streflop::acosf(waypointDir.dot(flatFrontDir)) * (180.0f / PI);
-						const float maxTurnAngle = (turnRate / SPRING_CIRCLE_DIVS) * 360.0f;
-						const float reducedSpeed = (maxSpeed * 2.0f) * (maxTurnAngle / reqTurnAngle);
-
-						if (!wantReverse && reqTurnAngle > maxTurnAngle) {
-							wantedSpeed = std::min(wantedSpeed, std::max(ud->turnInPlaceSpeedLimit, reducedSpeed));
-						}
-					}
-
-					if (ud->turnInPlace) {
-						if (wantReverse) {
-							wantedSpeed *= std::max(0.0f, std::min(1.0f, avoidVec.dot(-owner->frontdir) + 0.1f));
-						} else {
-							wantedSpeed *= std::max(0.0f, std::min(1.0f, avoidVec.dot( owner->frontdir) + 0.1f));
-						}
-					}
-
-					SetDeltaSpeed(wantReverse);
-				}
-
-				pathManager->UpdatePath(owner, pathId);
+				SetDeltaSpeed(requestedSpeed, wantReverse);
 			}
+
+			pathManager->UpdatePath(owner, pathId);
 		}
 
 		UpdateOwnerPos(wantReverse);
@@ -406,7 +367,7 @@ void CGroundMoveType::SlowUpdate()
 Sets unit to start moving against given position with max speed.
 */
 void CGroundMoveType::StartMoving(float3 pos, float goalRadius) {
-	StartMoving(pos, goalRadius, (reversing? maxReverseSpeed * 2: maxSpeed * 2));
+	StartMoving(pos, goalRadius, (reversing? maxReverseSpeed: maxSpeed));
 }
 
 
@@ -428,7 +389,6 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 	goalPos = moveGoalPos;
 	goalRadius = goalRadius;
 	requestedSpeed = speed;
-	requestedTurnRate = owner->mobility->maxTurnRate;
 	atGoal = false;
 	useMainHeading = false;
 	progressState = Active;
@@ -467,8 +427,12 @@ void CGroundMoveType::StopMoving() {
 	progressState = Done;
 }
 
-void CGroundMoveType::SetDeltaSpeed(bool wantReverse)
+
+
+void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse)
 {
+	wantedSpeed = newWantedSpeed;
+
 	// round low speeds to zero
 	if (wantedSpeed == 0.0f && currentSpeed < 0.01f) {
 		currentSpeed = 0.0f;
@@ -479,9 +443,9 @@ void CGroundMoveType::SetDeltaSpeed(bool wantReverse)
 	// wanted speed and acceleration
 	float wSpeed = reversing? maxReverseSpeed: maxSpeed;
 
-	// limit speed and acceleration
 	if (wantedSpeed > 0.0f) {
-		const float groundMod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, owner->pos, flatFrontDir);
+		const UnitDef* ud = owner->unitDef;
+		const float groundMod = ud->movedata->moveMath->SpeedMod(*ud->movedata, owner->pos, flatFrontDir);
 
 		wSpeed *= groundMod;
 
@@ -490,78 +454,67 @@ void CGroundMoveType::SetDeltaSpeed(bool wantReverse)
 		const float3 goalPosTmp = owner->pos + goalDifRev;
 
 		const float3 goalDif = reversing? goalDifRev: goalDifFwd;
-		const short turn = owner->heading - GetHeadingFromVector(goalDif.x, goalDif.z);
+		const short turnDeltaHeading = owner->heading - GetHeadingFromVector(goalDif.x, goalDif.z);
 
-		if (turn != 0) {
-			const float goalLength = goalDif.Length();
-			const float turnSpeed = (goalLength + 8.0f) / (abs(turn) / turnRate) * 0.5f;
+		if (turnDeltaHeading != 0) {
+			const bool moreCommands = owner->commandAI->HasMoreMoveCommands();
+			const bool startBreaking = (haveFinalWaypoint && !atGoal);
 
-			if (turnSpeed < wSpeed) {
-				// make sure we can turn fast enough to hit the goal
-				// (but don't slow us down to a complete crawl either)
-				//
-				// NOTE: can cause units with large turning circles to
-				// circle around close waypoints indefinitely, but one
-				// GetNextWaypoint() often is sufficient prevention
-				// If current waypoint is the last one and it's near,
-				// hit the brakes a bit more.
-				const UnitDef* ud = owner->unitDef;
-				const float finalGoalSqDist = owner->pos.SqDistance2D(goalPos);
-				const float tipSqDist = ud->turnInPlaceDistance * ud->turnInPlaceDistance;
-				const bool inPlaceTurn = (ud->turnInPlace && (tipSqDist > finalGoalSqDist || ud->turnInPlaceDistance <= 0.0f));
+			const float reqTurnAngle = streflop::acosf(waypointDir.dot(flatFrontDir)) * (180.0f / PI);
+			const float maxTurnAngle = (turnRate / SPRING_CIRCLE_DIVS) * 360.0f;
+			const float reducedSpeed = maxSpeed * (maxTurnAngle / reqTurnAngle);
 
-				if (inPlaceTurn || (currentSpeed < ud->turnInPlaceSpeedLimit)) {
-					// keep the turn mostly in-place
-					wSpeed = turnSpeed;
-				} else {
-					if (haveFinalWaypoint && goalLength < ((reversing? maxReverseSpeed * GAME_SPEED: maxSpeed * GAME_SPEED))) {
-						// hit the brakes if this is the last waypoint of the path
-						wSpeed = std::max(turnSpeed, (turnSpeed + wSpeed) * 0.2f);
-					} else {
-						// just skip, assume close enough
-						GetNextWaypoint();
-						wSpeed = (turnSpeed + wSpeed) * 0.625f;
+			if (startBreaking) {
+				// at this point, Update() will no longer call GetNextWaypoint()
+				// and we must slow down to prevent entering an infinite circle
+				wSpeed = std::min(wSpeed, fastmath::apxsqrt(currentDistanceToWaypoint * decRate));
+			}
+
+			if (!ud->turnInPlace) {
+				if (waypointDir.SqLength() > 0.1f) {
+					if (!wantReverse && (reqTurnAngle > maxTurnAngle)) {
+						wSpeed = std::min(wSpeed, std::max(ud->turnInPlaceSpeedLimit, reducedSpeed));
 					}
 				}
+			} else {
+				wSpeed = reducedSpeed;
 			}
 		}
 
-		if (wSpeed > wantedSpeed) {
-			wSpeed = wantedSpeed;
-		}
+		wSpeed = std::min(wSpeed, wantedSpeed);
 	} else {
 		wSpeed = 0.0f;
 	}
 
 
-	float dif = wSpeed - currentSpeed;
+	float speedDif = wSpeed - currentSpeed;
 
 	// make the forward/reverse transitions more fluid
-	if ( wantReverse && !reversing) { dif = -currentSpeed; }
-	if (!wantReverse &&  reversing) { dif = -currentSpeed; }
+	if ( wantReverse && !reversing) { speedDif = -currentSpeed; }
+	if (!wantReverse &&  reversing) { speedDif = -currentSpeed; }
 
 	// limit speed change according to acceleration
-	if (fabs(dif) < 0.05f) {
+	if (fabs(speedDif) < 0.05f) {
 		// we are already going (mostly) how fast we want to go
-		deltaSpeed = dif * 0.125f;
+		deltaSpeed = speedDif * 0.125f;
 		nextDeltaSpeedUpdate = gs->frameNum + 8;
-	} else if (dif > 0.0f) {
+	} else if (speedDif > 0.0f) {
 		// we want to accelerate
-		if (dif < accRate) {
-			deltaSpeed = dif;
+		if (speedDif < accRate) {
+			deltaSpeed = speedDif;
 			nextDeltaSpeedUpdate = gs->frameNum;
 		} else {
 			deltaSpeed = accRate;
-			nextDeltaSpeedUpdate = (int) (gs->frameNum + std::min(8.0f, dif / accRate));
+			nextDeltaSpeedUpdate = (int) (gs->frameNum + std::min(8.0f, speedDif / accRate));
 		}
 	} else {
 		// we want to decelerate
-		if (dif > -10.0f * decRate) {
-			deltaSpeed = dif;
+		if (speedDif > -10.0f * decRate) {
+			deltaSpeed = speedDif;
 			nextDeltaSpeedUpdate = gs->frameNum + 1;
 		} else {
 			deltaSpeed = -10.0f * decRate;
-			nextDeltaSpeedUpdate = (int) (gs->frameNum + std::min(8.0f, dif / deltaSpeed));
+			nextDeltaSpeedUpdate = (int) (gs->frameNum + std::min(8.0f, speedDif / deltaSpeed));
 		}
 	}
 
@@ -569,7 +522,6 @@ void CGroundMoveType::SetDeltaSpeed(bool wantReverse)
 	tracefile << "[" << __FUNCTION__ << "] ";
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << deltaSpeed << " " /*<< wSpeed*/ << " " << owner->id << "\n";
 #endif
-
 }
 
 /*
@@ -800,7 +752,7 @@ void CGroundMoveType::UpdateControlledDrop()
 
 		if (wh > midPos.y - owner->relMidPos.y) {
 			owner->falling = false;
-			midPos.y = wh + owner->relMidPos.y - speed.y*0.8;
+			midPos.y = wh + owner->relMidPos.y - speed.y * 0.8;
 			owner->script->Landed(); //stop parachute animation
 		}
 	}
@@ -1262,12 +1214,9 @@ void CGroundMoveType::GetNextWaypoint()
 The distance the unit will move at max breaking before stopping,
 starting from given speed.
 */
-float CGroundMoveType::BreakingDistance(float speed)
+float CGroundMoveType::BreakingDistance(float speed) const
 {
-	if (!owner->mobility->maxBreaking) {
-		return 0.0f;
-	}
-	return fabs(speed*speed / owner->mobility->maxBreaking);
+	return math::fabs(speed * speed / std::max(decRate, 0.01f));
 }
 
 /*
@@ -1328,7 +1277,7 @@ void CGroundMoveType::StopEngine() {
 	}
 
 	owner->isMoving = false;
-	wantedSpeed = 0;
+	wantedSpeed = 0.0f;
 }
 
 
@@ -1700,7 +1649,6 @@ void CGroundMoveType::TestNewTerrainSquare()
 		if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {
 			moveSquareX = newMoveSquareX;
 			moveSquareY = newMoveSquareY;
-			terrainSpeed = movemath->SpeedMod(md, moveSquareX * 2, moveSquareY * 2);
 
 			// if we have moved, check if we can get to the next waypoint
 			int nwsx = (int) nextWaypoint.x / (MIN_WAYPOINT_DISTANCE) - moveSquareX;
@@ -1834,7 +1782,7 @@ void CGroundMoveType::SetMaxSpeed(float speed)
 	maxSpeed        = std::min(speed, owner->maxSpeed);
 	maxReverseSpeed = std::min(speed, owner->maxReverseSpeed);
 
-	requestedSpeed = speed * 2.0f;
+	requestedSpeed = speed;
 }
 
 bool CGroundMoveType::OnSlope() {
@@ -1911,19 +1859,19 @@ bool CGroundMoveType::UpdateDirectControl()
 
 	if (owner->directControl->forward) {
 		assert(!wantReverse);
-		wantedSpeed = maxSpeed * 2.0f;
-		SetDeltaSpeed(wantReverse);
+		SetDeltaSpeed(maxSpeed, wantReverse);
+
 		owner->isMoving = true;
 		owner->script->StartMoving();
 	} else if (owner->directControl->back) {
 		assert(wantReverse);
-		wantedSpeed = maxReverseSpeed * 2.0f;
-		SetDeltaSpeed(wantReverse);
+		SetDeltaSpeed(maxReverseSpeed, wantReverse);
+
 		owner->isMoving = true;
 		owner->script->StartMoving();
 	} else {
-		wantedSpeed = 0;
-		SetDeltaSpeed(false);
+		SetDeltaSpeed(0.0f, false);
+
 		owner->isMoving = false;
 		owner->script->StopMoving();
 	}

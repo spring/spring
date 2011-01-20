@@ -10,6 +10,7 @@
 const std::string ServerStart = "Server started on port %d"; 
 const std::string PlayingDemo = "Opening demofile %s";
 const std::string ConnectAutohost = "Connecting to autohost on port %d";
+const std::string ConnectAutohostFailed = "Failed connecting to autohost on IP %s, port %d";
 const std::string DemoStart = "Beginning demo playback";
 const std::string DemoEnd = "End of demo reached";
 const std::string GameEnd = "Game has ended";

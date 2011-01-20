@@ -21,6 +21,7 @@
 #include "System/FastMath.h"
 #include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
+#include "System/Util.h"
 #include "System/mmgr.h"
 
 #ifdef USE_GML
@@ -44,8 +45,6 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 
 	map = rm;
 	heightData = map->heightmap;
-
-	LoadMapShaders();
 
 	textures = new CBFGroundTextures(map);
 
@@ -73,6 +72,9 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 	multiThreadDrawGround = configHandler->Get("MultiThreadDrawGround", 1);
 	multiThreadDrawGroundShadow = configHandler->Get("MultiThreadDrawGroundShadow", 0);
 #endif
+
+	lightHandler.Init(2U, configHandler->Get("MaxDynamicMapLights", 4U));
+	LoadMapShaders();
 }
 
 CBFGroundDrawer::~CBFGroundDrawer(void)
@@ -92,6 +94,8 @@ CBFGroundDrawer::~CBFGroundDrawer(void)
 	configHandler->Set("MultiThreadDrawGround", multiThreadDrawGround);
 	configHandler->Set("MultiThreadDrawGroundShadow", multiThreadDrawGroundShadow);
 #endif
+
+	lightHandler.Kill();
 }
 
 bool CBFGroundDrawer::LoadMapShaders() {
@@ -124,19 +128,22 @@ bool CBFGroundDrawer::LoadMapShaders() {
 			smfShaderRefrARB->AttachShaderObject(sh->CreateShaderObject("ARB/groundFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
 			smfShaderRefrARB->Link();
 		} else {
-			std::string defs;
-				defs += (map->haveSplatTexture)?
+			std::string extraDefs;
+				extraDefs += (map->haveSplatTexture)?
 					"#define SMF_DETAIL_TEXTURE_SPLATTING 1\n":
 					"#define SMF_DETAIL_TEXTURE_SPLATTING 0\n";
-				defs += (map->minheight > 0.0f || mapInfo->map.voidWater)?
+				extraDefs += (map->minheight > 0.0f || mapInfo->map.voidWater)?
 					"#define SMF_WATER_ABSORPTION 0\n":
 					"#define SMF_WATER_ABSORPTION 1\n";
-				defs += (map->GetSkyReflectModTexture() != 0)?
+				extraDefs += (map->GetSkyReflectModTexture() != 0)?
 					"#define SMF_SKY_REFLECTIONS 1\n":
 					"#define SMF_SKY_REFLECTIONS 0\n";
+				extraDefs +=
+					("#define BASE_DYNAMIC_MAP_LIGHT " + IntToString(lightHandler.GetBaseLight()) + "\n") +
+					("#define MAX_DYNAMIC_MAP_LIGHTS " + IntToString(lightHandler.GetMaxLights()) + "\n");
 
-			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFVertProg.glsl", defs, GL_VERTEX_SHADER));
-			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFFragProg.glsl", defs, GL_FRAGMENT_SHADER));
+			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFVertProg.glsl", extraDefs, GL_VERTEX_SHADER));
+			smfShaderGLSL->AttachShaderObject(sh->CreateShaderObject("GLSL/SMFFragProg.glsl", extraDefs, GL_FRAGMENT_SHADER));
 			smfShaderGLSL->Link();
 			smfShaderGLSL->SetUniformLocation("diffuseTex");          // idx  0
 			smfShaderGLSL->SetUniformLocation("normalsTex");          // idx  1
@@ -165,6 +172,7 @@ bool CBFGroundDrawer::LoadMapShaders() {
 			smfShaderGLSL->SetUniformLocation("splatTexMults");       // idx 24
 			smfShaderGLSL->SetUniformLocation("skyReflectTex");       // idx 25
 			smfShaderGLSL->SetUniformLocation("skyReflectModTex");    // idx 26
+			smfShaderGLSL->SetUniformLocation("numMapDynLights");     // idx 27
 
 			smfShaderGLSL->Enable();
 			smfShaderGLSL->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
@@ -188,6 +196,7 @@ bool CBFGroundDrawer::LoadMapShaders() {
 			smfShaderGLSL->SetUniform4fv(24, &mapInfo->splats.texMults[0]);
 			smfShaderGLSL->SetUniform1i(25,  9); // skyReflectTex (idx 25, texunit 9)
 			smfShaderGLSL->SetUniform1i(26, 10); // skyReflectModTex (idx 26, texunit 10)
+			smfShaderGLSL->SetUniform1i(27, 0); // numMapDynLights
 			smfShaderGLSL->Disable();
 		}
 
@@ -1365,6 +1374,11 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			smfShaderGLSL->SetUniform3fv(10, &camera->pos[0]);
 			smfShaderGLSL->SetUniformMatrix4fv(12, false, &shadowHandler->shadowMatrix.m[0]);
 			smfShaderGLSL->SetUniform4fv(13, &(shadowHandler->GetShadowParams().x));
+
+			// already on the MV stack
+			glLoadIdentity();
+			lightHandler.Update(smfShaderGLSL);
+			glMultMatrixd(camera->GetViewMat());
 
 			glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, map->GetNormalsTexture());
 			glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, map->GetSpecularTexture());

@@ -18,14 +18,13 @@ mkdir -p ${INSTPATH}
 
 WINEINSTPATH="Z:${INSTPATH//\//\\\\}"
 
-echo wine ${INSTALLER} /S /D=$WINEINSTPATH
+INSTCOMMAND="wine ${INSTALLER} /S /PORTABLE /NOREGISTRY /NODESKTOPLINK /NOSTARTMENU /D=$WINEINSTPATH"
+echo $INSTCOMMAND
 
-if ! sh -c "wine ${INSTALLER} /S /D=$WINEINSTPATH" ; then
+if ! sh -c "$INSTCOMMAND" ; then
 	echo "Installation failed"
 	exit
 fi
-
-touch ${INSTPATH}/springsettings.cfg ${INSTPATH}/springlobby.conf
 
 7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on spring_${VERSION}_portable.7z ${INSTPATH}
 

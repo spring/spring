@@ -393,7 +393,7 @@ static int GuiSoundSetTable(lua_State* L, const void* data)
 		const GuiSoundSet::Data& sound = soundSet.sounds[i];
 		HSTR_PUSH_STRING(L, "name",   sound.name);
 		HSTR_PUSH_NUMBER(L, "volume", sound.volume);
-		if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
+		if (!CLuaHandle::GetActiveHandle()->GetSynced()) {
 			HSTR_PUSH_NUMBER(L, "id", sound.id);
 		}
 		lua_rawset(L, -3);
@@ -557,8 +557,6 @@ static bool InitParamMap()
 	ADD_FLOAT("minIntensity",       wd.minIntensity);
 	ADD_FLOAT("heightBoostFactor",  wd.heightBoostFactor);
 	ADD_FLOAT("proximityPriority",  wd.proximityPriority);
-
-//	CExplosionGenerator *explosionGenerator;
 
 	ADD_BOOL("sweepFire", wd.sweepFire);
 

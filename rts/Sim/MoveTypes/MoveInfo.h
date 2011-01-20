@@ -15,31 +15,32 @@ class CSolidObject;
 struct MoveData {
 	CR_DECLARE_STRUCT(MoveData);
 
-	MoveData(const MoveData* udefMD) {
-		maxAcceleration = udefMD? udefMD->maxAcceleration:         0.0f;
-		maxBreaking     = udefMD? udefMD->maxAcceleration * -3.0f: 0.0f;
-		maxSpeed        = udefMD? udefMD->maxSpeed / GAME_SPEED:   0.0f;
-		maxTurnRate     = udefMD? (short int) udefMD->maxTurnRate: 0;
+	MoveData(const MoveData* unitDefMD) {
+		name            = unitDefMD? unitDefMD->name:            "";
 
-		xsize           = udefMD? udefMD->xsize:                   0;
-		zsize           = udefMD? udefMD->zsize:                   0;
-		depth           = udefMD? udefMD->depth:                   0.0f;
-		maxSlope        = udefMD? udefMD->maxSlope:                0.0f;
-		slopeMod        = udefMD? udefMD->slopeMod:                0.0f;
-		depthMod        = udefMD? udefMD->depthMod:                0.0f;
-		pathType        = udefMD? udefMD->pathType:                0;
-		moveMath        = udefMD? udefMD->moveMath:                0x0;
-		crushStrength   = udefMD? udefMD->crushStrength:           0.0f;
-		moveType        = udefMD? udefMD->moveType:                MoveData::Ground_Move;
-		moveFamily      = udefMD? udefMD->moveFamily:              MoveData::Tank;
-		terrainClass    = udefMD? udefMD->terrainClass:            MoveData::Mixed;
-		followGround    = udefMD? udefMD->followGround:            true;
-		subMarine       = udefMD? udefMD->subMarine:               false;
-		name            = udefMD? udefMD->name:                    "tank";
-		heatMapping     = udefMD? udefMD->heatMapping:             true;
-		heatMod	        = udefMD? udefMD->heatMod:                 0.05f;
-		heatProduced    = udefMD? udefMD->heatProduced:            30;
+		moveType        = unitDefMD? unitDefMD->moveType:        MoveData::Ground_Move;
+		moveFamily      = unitDefMD? unitDefMD->moveFamily:      MoveData::Tank;
+		terrainClass    = unitDefMD? unitDefMD->terrainClass:    MoveData::Mixed;
 
+		xsize           = unitDefMD? unitDefMD->xsize:           0;
+		zsize           = unitDefMD? unitDefMD->zsize:           0;
+		depth           = unitDefMD? unitDefMD->depth:           0.0f;
+		maxSlope        = unitDefMD? unitDefMD->maxSlope:        1.0f;
+		slopeMod        = unitDefMD? unitDefMD->slopeMod:        0.0f;
+		depthMod        = unitDefMD? unitDefMD->depthMod:        0.0f;
+		crushStrength   = unitDefMD? unitDefMD->crushStrength:   0.0f;
+
+		pathType        = unitDefMD? unitDefMD->pathType:        0;
+		unitDefRefCount = unitDefMD? unitDefMD->unitDefRefCount: 0;
+
+		followGround    = unitDefMD? unitDefMD->followGround:    true;
+		subMarine       = unitDefMD? unitDefMD->subMarine:       false;
+
+		heatMapping     = unitDefMD? unitDefMD->heatMapping:     true;
+		heatMod         = unitDefMD? unitDefMD->heatMod:         0.05f;
+		heatProduced    = unitDefMD? unitDefMD->heatProduced:    30;
+
+		moveMath        = unitDefMD? unitDefMD->moveMath:        NULL;
 		tempOwner       = NULL;
 	}
 
@@ -63,12 +64,12 @@ struct MoveData {
 		Mixed = 2
 	};
 
+	std::string name;
+
 	/// NOTE: rename? (because of (AMoveType*) CUnit::moveType)
 	MoveType moveType;
 	MoveFamily moveFamily;
 	TerrainClass terrainClass;
-	/// do we stick to the ground when in water?
-	bool followGround;
 
 	/// of the footprint
 	int xsize;
@@ -78,21 +79,14 @@ struct MoveData {
 	float maxSlope;
 	float slopeMod;
 	float depthMod;
-
-	int pathType;
-	CMoveMath* moveMath;
 	float crushStrength;
 
-	std::string name;
+	unsigned int pathType;
+	/// number of UnitDef types that refer to this MoveData class
+	unsigned int unitDefRefCount;
 
-
-	// CMobility refugees
-	float maxSpeed;
-	short maxTurnRate;
-
-	float maxAcceleration;
-	float maxBreaking;
-
+	/// do we stick to the ground when in water?
+	bool followGround;
 	/// are we supposed to be a purely sub-surface ship?
 	bool subMarine;
 
@@ -103,6 +97,7 @@ struct MoveData {
 	/// heat produced by a path
 	int heatProduced;
 
+	CMoveMath* moveMath;
 	CSolidObject* tempOwner;
 };
 
@@ -116,6 +111,7 @@ public:
 
 	std::vector<MoveData*> moveData;
 	std::map<std::string, int> name2moveData;
+
 	MoveData* GetMoveDataFromName(const std::string& name);
 	unsigned int moveInfoChecksum;
 

@@ -99,19 +99,10 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	unitAmbientColor = mapInfo->light.unitAmbientColor;
 	unitSunColor = mapInfo->light.unitSunColor;
 
-	advFade = GLEW_NV_vertex_program2;
-	advShading = (LoadModelShaders() && cubeMapHandler->Init());
-
 	cloakAlpha  = std::max(0.11f, std::min(1.0f, 1.0f - configHandler->Get("UnitTransparency", 0.7f)));
 	cloakAlpha1 = std::min(1.0f, cloakAlpha + 0.1f);
 	cloakAlpha2 = std::min(1.0f, cloakAlpha + 0.2f);
 	cloakAlpha3 = std::min(1.0f, cloakAlpha + 0.4f);
-
-#ifdef USE_GML
-	showHealthBars = !!configHandler->Get("ShowHealthBars", 1);
-	multiThreadDrawUnit = configHandler->Get("MultiThreadDrawUnit", 1);
-	multiThreadDrawUnitShadow = configHandler->Get("MultiThreadDrawUnitShadow", 1);
-#endif
 
 	// load unit explosion generators
 	for (int unitDefID = 1; unitDefID < unitDefHandler->unitDefs.size(); unitDefID++) {
@@ -147,6 +138,17 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	}
 
 	unitRadarIcons.resize(teamHandler->ActiveAllyTeams());
+
+#ifdef USE_GML
+	showHealthBars = !!configHandler->Get("ShowHealthBars", 1);
+	multiThreadDrawUnit = configHandler->Get("MultiThreadDrawUnit", 1);
+	multiThreadDrawUnitShadow = configHandler->Get("MultiThreadDrawUnitShadow", 1);
+#endif
+
+	lightHandler.Init(2U, configHandler->Get("MaxDynamicModelLights", 4U));
+
+	advFade = GLEW_NV_vertex_program2;
+	advShading = (LoadModelShaders() && cubeMapHandler->Init());
 }
 
 CUnitDrawer::~CUnitDrawer()
@@ -200,6 +202,8 @@ CUnitDrawer::~CUnitDrawer()
 
 	unitRadarIcons.clear();
 	unsortedUnits.clear();
+
+	lightHandler.Kill();
 }
 
 
@@ -225,10 +229,13 @@ bool CUnitDrawer::LoadModelShaders()
 
 	// with advFade, submerged transparent objects are clipped against GL_CLIP_PLANE3
 	const char* vertexProgNameARB = (advFade)? "ARB/units3o2.vp": "ARB/units3o.vp";
+	const std::string extraDefs =
+		("#define BASE_DYNAMIC_MODEL_LIGHT " + IntToString(lightHandler.GetBaseLight()) + "\n") +
+		("#define MAX_DYNAMIC_MODEL_LIGHTS " + IntToString(lightHandler.GetMaxLights()) + "\n");
 
-	modelShaders[MODEL_SHADER_S3O_BASIC ]->AttachShaderObject(sh->CreateShaderObject(vertexProgNameARB, "", GL_VERTEX_PROGRAM_ARB));
-	modelShaders[MODEL_SHADER_S3O_BASIC ]->AttachShaderObject(sh->CreateShaderObject("ARB/units3o.fp", "", GL_FRAGMENT_PROGRAM_ARB));
-	modelShaders[MODEL_SHADER_S3O_BASIC ]->Link();
+	modelShaders[MODEL_SHADER_S3O_BASIC]->AttachShaderObject(sh->CreateShaderObject(vertexProgNameARB, "", GL_VERTEX_PROGRAM_ARB));
+	modelShaders[MODEL_SHADER_S3O_BASIC]->AttachShaderObject(sh->CreateShaderObject("ARB/units3o.fp", "", GL_FRAGMENT_PROGRAM_ARB));
+	modelShaders[MODEL_SHADER_S3O_BASIC]->Link();
 
 	if (shadowHandler->canUseShadows) {
 		if (!globalRendering->haveGLSL) {
@@ -238,8 +245,8 @@ bool CUnitDrawer::LoadModelShaders()
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->Link();
 		} else {
 			modelShaders[MODEL_SHADER_S3O_SHADOW] = sh->CreateProgramObject("[UnitDrawer]", "S3OShaderAdvGLSL", false);
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelVertProg.glsl", "", GL_VERTEX_SHADER));
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelFragProg.glsl", "", GL_FRAGMENT_SHADER));
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelVertProg.glsl", extraDefs, GL_VERTEX_SHADER));
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelFragProg.glsl", extraDefs, GL_FRAGMENT_SHADER));
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->Link();
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("diffuseTex");        // idx  0 (t1: diffuse + team-color)
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadingTex");        // idx  1 (t2: spec/refl + self-illum)
@@ -256,6 +263,7 @@ bool CUnitDrawer::LoadModelShaders()
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowDensity");     // idx 12
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowMatrix");      // idx 13
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("shadowParams");      // idx 14
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniformLocation("numModelDynLights"); // idx 15
 
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->Enable();
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
@@ -267,6 +275,7 @@ bool CUnitDrawer::LoadModelShaders()
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(10, &unitAmbientColor[0]);
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(11, &unitSunColor[0]);
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(12, globalRendering->unitShadowDensity);
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(15, 0); // numModelDynLights
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->Disable();
 		}
 
@@ -1190,6 +1199,13 @@ void CUnitDrawer::SetupForUnitDrawing()
 	glEnable(GL_ALPHA_TEST);
 
 	if (advShading && !water->drawReflection) {
+		glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glMultMatrixd(camera->GetViewMat());
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
+
 		// ARB standard does not seem to support
 		// vertex program + clipplanes (used for
 		// reflective pass) at once ==> not true,
@@ -1205,6 +1221,8 @@ void CUnitDrawer::SetupForUnitDrawing()
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4dv(8, false, camera->GetViewMatInv());
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(13, false, &shadowHandler->shadowMatrix.m[0]);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(14, &(shadowHandler->GetShadowParams().x));
+
+			lightHandler.Update(modelShaders[MODEL_SHADER_S3O_ACTIVE]);
 		} else {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(10, globalRendering->sunDir.x, globalRendering->sunDir.y, globalRendering->sunDir.z, 0.0f);
@@ -1217,6 +1235,7 @@ void CUnitDrawer::SetupForUnitDrawing()
 
 			glMatrixMode(GL_MATRIX0_ARB);
 			glLoadMatrixf(shadowHandler->shadowMatrix.m);
+			glMatrixMode(GL_MODELVIEW);
 		}
 
 		glActiveTexture(GL_TEXTURE0);
@@ -1245,13 +1264,6 @@ void CUnitDrawer::SetupForUnitDrawing()
 		glActiveTexture(GL_TEXTURE0);
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		glMultMatrixd(camera->GetViewMat());
-		glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-		glLoadIdentity();
 	} else {
 		glEnable(GL_LIGHTING);
 		glLightfv(GL_LIGHT1, GL_POSITION, globalRendering->sunDir);
@@ -2129,7 +2141,7 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 			drawStat.insert(unit);
 #endif
 	} else if ((losStatus & LOS_PREVLOS) && (losStatus & LOS_CONTRADAR)) {
-		if (gameSetup->ghostedBuildings && unit->mobility == NULL) {
+		if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
 			unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->pos).SqLength());
 		}
 	}
@@ -2286,6 +2298,11 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 	return canBuild;
 }
 
+
+
+
+
+
 void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 	CUnit* unit = const_cast<CUnit*>(u);
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
@@ -2317,7 +2334,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* u) {
 	if (building != NULL) {
 		GhostBuilding* gb = NULL;
 
-		if (!gameSetup || gameSetup->ghostedBuildings) {
+		if (gameSetup->ghostedBuildings) {
 			if (!(building->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
 				(building->losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) &&
 				!gu->spectatingFullView) {
@@ -2380,16 +2397,16 @@ void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newS
 
 	if (newStatus & LOS_INLOS) {
 		if (allyTeam == gu->myAllyTeam) {
-			if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
-				liveGhostBuildings[MDL_TYPE(u)].erase(u);
+			if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
+				liveGhostBuildings[MDL_TYPE(unit)].erase(u);
 			}
 		}
 		unitRadarIcons[allyTeam].erase(u);
 	} else {
 		if (newStatus & LOS_PREVLOS) {
 			if (allyTeam == gu->myAllyTeam) {
-				if ((!gameSetup || gameSetup->ghostedBuildings) && !(u->mobility)) {
-					liveGhostBuildings[MDL_TYPE(u)].insert(u);
+				if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
+					liveGhostBuildings[MDL_TYPE(unit)].insert(u);
 				}
 			}
 		}

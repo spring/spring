@@ -37,8 +37,8 @@
 CR_BIND_DERIVED_INTERFACE(CExpGenSpawnable, CWorldObject);
 CR_REG_METADATA(CExpGenSpawnable, );
 
-CR_BIND_INTERFACE(CExplosionGenerator);
-CR_BIND_DERIVED(CStdExplosionGenerator, CExplosionGenerator, );
+CR_BIND_INTERFACE(IExplosionGenerator);
+CR_BIND_DERIVED(CStdExplosionGenerator, IExplosionGenerator, );
 CR_BIND_DERIVED(CCustomExplosionGenerator, CStdExplosionGenerator, );
 
 CExplosionGeneratorHandler* explGenHandler = NULL;
@@ -129,7 +129,7 @@ void CExplosionGeneratorHandler::ParseExplosionTables() {
 	}
 }
 
-CExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag)
+IExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag)
 {
 	string klass;
 	string::size_type seppos = tag.find(':');
@@ -142,11 +142,11 @@ CExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag
 
 	creg::Class* cls = generatorClasses.GetClass(klass);
 
-	if (!cls->IsSubclassOf(CExplosionGenerator::StaticClass())) {
-		throw content_error(klass + " is not a subclass of CExplosionGenerator");
+	if (!cls->IsSubclassOf(IExplosionGenerator::StaticClass())) {
+		throw content_error(klass + " is not a subclass of IExplosionGenerator");
 	}
 
-	CExplosionGenerator* eg = (CExplosionGenerator*) cls->CreateInstance();
+	IExplosionGenerator* eg = (IExplosionGenerator*) cls->CreateInstance();
 
 	if (seppos != string::npos) {
 		eg->Load(this, tag.substr(seppos + 1));
@@ -604,7 +604,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			code += OP_STOREP;
 			boost::uint16_t ofs = offset;
 			code.append((char*)&ofs, (char*)&ofs + 2);
-		} else if (type->GetName() == "CExplosionGenerator*") {
+		} else if (type->GetName() == "IExplosionGenerator*") {
 			string::size_type end = script.find(';', 0);
 			string name = script.substr(0, end);
 			void* explgen = explGenHandler->LoadGenerator(name);

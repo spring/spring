@@ -21,7 +21,7 @@ public:
 	void Update();
 	void SlowUpdate();
 
-	void SetDeltaSpeed(bool);
+	void SetDeltaSpeed(float, bool);
 
 	void StartMoving(float3 pos, float goalRadius);
 	void StartMoving(float3 pos, float goalRadius, float speed);
@@ -58,9 +58,7 @@ public:
 	bool atGoal;
 	bool haveFinalWaypoint;
 
-	float terrainSpeed;
 	float requestedSpeed;
-	short requestedTurnRate;
 
 	float currentDistanceToWaypoint;
 
@@ -87,7 +85,7 @@ protected:
 	void GetNewPath();
 	void GetNextWaypoint();
 
-	float BreakingDistance(float speed);
+	float BreakingDistance(float speed) const;
 	float3 Here();
 
 	void StartEngine();

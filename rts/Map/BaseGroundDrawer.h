@@ -3,8 +3,9 @@
 #ifndef __BASE_GROUND_DRAWER_H__
 #define __BASE_GROUND_DRAWER_H__
 
-#include <vector>
+#include <map>
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/LightHandler.h"
 #include "Rendering/GL/PBO.h"
 #include "float3.h"
 
@@ -19,6 +20,15 @@ public:
 		COLOR_G = 1,
 		COLOR_B = 0,
 		COLOR_A = 3,
+	};
+	enum BaseGroundDrawMode {
+		drawNormal,
+		drawLos,
+		drawMetal,
+		drawHeight,
+		drawPathTraversability,
+		drawPathHeat,
+		drawPathCost,
 	};
 
 	CBaseGroundDrawer(void);
@@ -37,26 +47,9 @@ public:
 	virtual void IncreaseDetail() = 0;
 	virtual void DecreaseDetail() = 0;
 
-
-#ifdef USE_GML
-	int multiThreadDrawGround;
-	int multiThreadDrawGroundShadow;
-#endif
-
-	enum BaseGroundDrawMode {
-		drawNormal,
-		drawLos,
-		drawMetal,
-		drawHeight,
-		drawPathTraversability,
-		drawPathHeat,
-		drawPathCost,
-	};
-
-protected:
 	virtual void SetDrawMode(BaseGroundDrawMode dm) { drawMode = dm; }
+	virtual GL::LightHandler* GetLightHandler() { return NULL; }
 
-public:
 	void DrawTrees(bool drawReflection = false) const;
 
 	// Everything that deals with drawing extra textures on top
@@ -104,8 +97,12 @@ public:
 	bool highResLosTex;
 	int extraTextureUpdateRate;
 
+#ifdef USE_GML
+	int multiThreadDrawGround;
+	int multiThreadDrawGroundShadow;
+#endif
+
 	CHeightLinePalette* heightLinePal;
 };
 
 #endif // __BASE_GROUND_DRAWER__
-

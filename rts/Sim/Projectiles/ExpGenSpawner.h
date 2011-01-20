@@ -5,22 +5,23 @@
 
 #include "Projectile.h"
 
-class CExplosionGenerator;
+class IExplosionGenerator;
 
-/// Spawn an explosiongenerator after a delay
+//! spawns a given explosion-generator after <delay> frames
 class CExpGenSpawner : public CProjectile
 {
 	CR_DECLARE(CExpGenSpawner);
 public:
 	CExpGenSpawner();
-	~CExpGenSpawner();
+	~CExpGenSpawner() {}
 
 	void Update();
-	void Draw() {};
 
+private:
 	int delay;
 	float damage;
-	CExplosionGenerator* explosionGenerator;
+
+	IExplosionGenerator* explosionGenerator;
 };
 
 #endif // EXP_GEN_SPAWNER_H
