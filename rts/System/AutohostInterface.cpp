@@ -22,8 +22,10 @@
 namespace {
 
 /**
-@enum EVENT Which events can be sent to the autohost (in bracets: parameters, where uchar means unsigned char and "string" means plain ascii text)
-*/
+ * @enum EVENT Which events can be sent to the autohost
+ *   (in brackets: parameters, where uchar means unsigned char and "string"
+ *   means plain ascii text)
+ */
 enum EVENT
 {
 	/// Server has started ()
@@ -47,20 +49,29 @@ enum EVENT
 	/// Player has joined the game (uchar playernumber, string name)
 	PLAYER_JOINED = 10,
 
-	/// Player has left (uchar playernumber, uchar reason (0: lost connection, 1: left, 2: kicked) )
+	/**
+	 * Player has left (uchar playernumber, uchar reason
+	 * (0: lost connection, 1: left, 2: kicked) )
+	 */
 	PLAYER_LEFT = 11,
 
-	/// Player has updated its ready-state (uchar playernumber, uchar state (0: not ready, 1: ready, 2: state not changed) )
+	/**
+	 * Player has updated its ready-state
+	 * (uchar playernumber, uchar state
+	 * (0: not ready, 1: ready, 2: state not changed) )
+	 */
 	PLAYER_READY = 12,
 
 	/**
-	@brief Player has sent a chat message (uchar playernumber, uchar destination, string text)
-	Destination can be any of: a playernumber [0-32]
-	static const int TO_ALLIES = 127;
-	static const int TO_SPECTATORS = 126;
-	static const int TO_EVERYONE = 125;
-	(copied from Game/ChatMessage.h)
-	*/
+	 * @brief Player has sent a chat message
+	 *   (uchar playernumber, uchar destination, string text)
+	 *
+	 * Destination can be any of: a playernumber [0-32]
+	 * static const int TO_ALLIES = 127;
+	 * static const int TO_SPECTATORS = 126;
+	 * static const int TO_EVERYONE = 125;
+	 * (copied from Game/ChatMessage.h)
+	 */
 	PLAYER_CHAT = 13,
 
 	/// Player has been defeated (uchar playernumber)
@@ -69,53 +80,98 @@ enum EVENT
 	/**
 	 * @brief Message sent by lua script
 	 *
-	 * (uchar playernumber, uint16_t script, uint8_t mode, uint8_t[X] data) (X = space left in packet)
-	 * */
+	 * (uchar playernumber, uint16_t script, uint8_t mode, uint8_t[X] data)
+	 * (X = space left in packet)
+	 */
 	GAME_LUAMSG = 20,
 
-	/// team statistics, see CTeam::Statistics for reference how to read them
 	/**
-	* (uchar teamnumber), CTeam::Statistics(in binary form)
-	*/
+	 * @brief team statistics
+	 * @see CTeam::Statistics for a reference of how to read them
+	 * (uchar teamnumber), CTeam::Statistics(in binary form)
+	 */
 	GAME_TEAMSTAT = 60
 };
 }
 
 using namespace boost::asio;
-AutohostInterface::AutohostInterface(const std::string& autohostip, int remoteport) : autohost(netcode::netservice)
+
+AutohostInterface::AutohostInterface(const std::string& remoteIP, int remotePort, const std::string& localIP, int localPort)
+		: autohost(netcode::netservice)
+		, initialized(false)
 {
-	boost::system::error_code err;
-	autohost.open(ip::udp::v6(), err); // test v6
+	std::string errorMsg = AutohostInterface::TryBindSocket(autohost, remoteIP, remotePort, localIP, localPort);
 
-	if (!err) {
-		autohost.bind(ip::udp::endpoint(ip::address_v6::any(), 0));
+	if (errorMsg.empty()) {
+		initialized = true;
 	} else {
-		LogObject() << "[AutohostInterface] IPv6 not supported, falling back to v4";
-		autohost.open(ip::udp::v4());
-		autohost.bind(ip::udp::endpoint(ip::address_v4::any(), 0));
+		LogObject() << "[AutohostInterface] Error: Failed to open socket: " << errorMsg;
 	}
+}
 
-	boost::asio::socket_base::non_blocking_io command(true);
-	autohost.io_control(command);
+std::string AutohostInterface::TryBindSocket(
+			boost::asio::ip::udp::socket& socket,
+			const std::string& remoteIP, int remotePort,
+			const std::string& localIP, int localPort)
+{
+	std::string errorMsg = "";
 
-	std::string connectErrorMsg;
-
+	ip::address localAddr;
+	ip::address remoteAddr;
+	boost::system::error_code err;
 	try {
-		boost::system::error_code connectError;
-		autohost.connect(netcode::ResolveAddr(autohostip, remoteport), connectError);
+		socket.open(ip::udp::v6(), err); // test IP v6 support
+		const bool supportsIPv6 = !err;
 
-		if (connectError) {
-			connectErrorMsg = connectError.message();
-			autohost.close();
+		remoteAddr = netcode::WrapIP(remoteIP, &err);
+		if (err) {
+			throw std::runtime_error("Failed to parse address " + remoteIP + ": " + err.message());
 		}
-	} catch (boost::system::system_error& e) {
-		connectErrorMsg = e.what();
-		autohost.close();
+
+		if (!supportsIPv6 && remoteAddr.is_v6()) {
+			throw std::runtime_error("IP v6 not supported, can not use address " + remoteAddr.to_string());
+		}
+
+		if (localIP.empty()) {
+			// use the "any" address as local "from"
+			if (remoteAddr.is_v6()) {
+				localAddr = ip::address_v6::any();
+			} else {
+				if (supportsIPv6) {
+					socket.close();
+				}
+				socket.open(ip::udp::v4());
+				localAddr = ip::address_v4::any();
+			}
+		} else {
+			localAddr = netcode::WrapIP(localIP, &err);
+			if (err) {
+				throw std::runtime_error("Failed to parse local IP " + localIP + ": " + err.message());
+			}
+			if (localAddr.is_v6() != remoteAddr.is_v6()) {
+				throw std::runtime_error("Local IP " + localAddr.to_string() + " and remote IP " + remoteAddr.to_string() + " are IP v4/v6 mixed");
+			}
+		}
+
+		socket.bind(ip::udp::endpoint(localAddr, localPort));
+
+		boost::asio::socket_base::non_blocking_io command(true);
+		socket.io_control(command);
+
+		// A similar, slighly less verbose message is already in GameServer
+		//LogObject() << "[AutohostInterface] Connecting (UDP) to IP "
+		//		<<  (remoteAddr.is_v6() ? "(v6)" : "(v4)") << " " << remoteAddr
+		//		<< " Port " << remotePort;
+		socket.connect(ip::udp::endpoint(remoteAddr, remotePort));
+	} catch (std::runtime_error& e) { // includes also boost::system::system_error, as it inherits from runtime_error
+		socket.close();
+		errorMsg = e.what();
+		if (errorMsg.empty()) {
+			errorMsg = "Unknown problem";
+		}
 	}
 
-	if (!autohost.is_open()) {
-		LogObject() << "could not open autohost socket: " << connectErrorMsg;
-	}
+	return errorMsg;
 }
 
 AutohostInterface::~AutohostInterface()
@@ -126,27 +182,21 @@ void AutohostInterface::SendStart()
 {
 	uchar msg = SERVER_STARTED;
 
-	if (autohost.is_open()) {
-		autohost.send(boost::asio::buffer(&msg, sizeof(uchar)));
-	}
+	Send(boost::asio::buffer(&msg, sizeof(uchar)));
 }
 
 void AutohostInterface::SendQuit()
 {
 	uchar msg = SERVER_QUIT;
 
-	if (autohost.is_open()) {
-		autohost.send(boost::asio::buffer(&msg, sizeof(uchar)));
-	}
+	Send(boost::asio::buffer(&msg, sizeof(uchar)));
 }
 
 void AutohostInterface::SendStartPlaying()
 {
 	uchar msg = SERVER_STARTPLAYING;
 
-	if (autohost.is_open()) {
-		autohost.send(boost::asio::buffer(&msg, sizeof(uchar)));
-	}
+	Send(boost::asio::buffer(&msg, sizeof(uchar)));
 }
 
 void AutohostInterface::SendGameOver(uchar playerNum, const std::vector<uchar>& winningAllyTeams)
@@ -160,9 +210,7 @@ void AutohostInterface::SendGameOver(uchar playerNum, const std::vector<uchar>& 
 	for (unsigned int i = 0; i < winningAllyTeams.size(); i++) {
 		buffer[3 + i] = winningAllyTeams[i];
 	}
-	if (autohost.is_open()) {
-		autohost.send(boost::asio::buffer(buffer));
-	}
+	Send(boost::asio::buffer(buffer));
 }
 
 void AutohostInterface::SendPlayerJoined(uchar playerNum, const std::string& name)
@@ -174,7 +222,7 @@ void AutohostInterface::SendPlayerJoined(uchar playerNum, const std::string& nam
 		buffer[1] = playerNum;
 		strncpy((char*)(&buffer[2]), name.c_str(), name.size());
 
-		autohost.send(boost::asio::buffer(buffer));
+		Send(boost::asio::buffer(buffer));
 	}
 }
 
@@ -182,18 +230,14 @@ void AutohostInterface::SendPlayerLeft(uchar playerNum, uchar reason)
 {
 	uchar msg[3] = {PLAYER_LEFT, playerNum, reason};
 
-	if (autohost.is_open()) {
-		autohost.send(boost::asio::buffer(&msg, 3 * sizeof(uchar)));
-	}
+	Send(boost::asio::buffer(&msg, 3 * sizeof(uchar)));
 }
 
 void AutohostInterface::SendPlayerReady(uchar playerNum, uchar readyState)
 {
 	uchar msg[3] = {PLAYER_READY, playerNum, readyState};
 
-	if (autohost.is_open()) {
-		autohost.send(boost::asio::buffer(&msg, 3 * sizeof(uchar)));
-	}
+	Send(boost::asio::buffer(&msg, 3 * sizeof(uchar)));
 }
 
 void AutohostInterface::SendPlayerChat(uchar playerNum, uchar destination, const std::string& chatmsg)
@@ -206,7 +250,7 @@ void AutohostInterface::SendPlayerChat(uchar playerNum, uchar destination, const
 		buffer[2] = destination;
 		strncpy((char*)(&buffer[3]), chatmsg.c_str(), chatmsg.size());
 
-		autohost.send(boost::asio::buffer(buffer));
+		Send(boost::asio::buffer(buffer));
 	}
 }
 
@@ -214,9 +258,7 @@ void AutohostInterface::SendPlayerDefeated(uchar playerNum)
 {
 	uchar msg[2] = {PLAYER_DEFEATED, playerNum};
 
-	if (autohost.is_open()) {
-		autohost.send(boost::asio::buffer(&msg, 2 * sizeof(uchar)));
-	}
+	Send(boost::asio::buffer(&msg, 2 * sizeof(uchar)));
 }
 
 void AutohostInterface::Message(const std::string& message)
@@ -227,7 +269,7 @@ void AutohostInterface::Message(const std::string& message)
 		buffer[0] = SERVER_MESSAGE;
 		strncpy((char*)(&buffer[1]), message.c_str(), message.size());
 
-		autohost.send(boost::asio::buffer(buffer));
+		Send(boost::asio::buffer(buffer));
 	}
 }
 
@@ -239,7 +281,7 @@ void AutohostInterface::Warning(const std::string& message)
 		buffer[0] = SERVER_WARNING;
 		strncpy((char*)(&buffer[1]), message.c_str(), message.size());
 
-		autohost.send(boost::asio::buffer(buffer));
+		Send(boost::asio::buffer(buffer));
 	}
 }
 
@@ -250,7 +292,7 @@ void AutohostInterface::SendLuaMsg(const boost::uint8_t* msg, size_t msgSize)
 		buffer[0] = GAME_LUAMSG;
 		std::copy(msg, msg + msgSize, buffer.begin() + 1);
 
-		autohost.send(boost::asio::buffer(buffer));
+		Send(boost::asio::buffer(buffer));
 	}
 }
 
@@ -260,7 +302,7 @@ void AutohostInterface::Send(const boost::uint8_t* msg, size_t msgSize)
 		std::vector<boost::uint8_t> buffer(msgSize);
 		std::copy(msg, msg + msgSize, buffer.begin());
 
-		autohost.send(boost::asio::buffer(buffer));
+		Send(boost::asio::buffer(buffer));
 	}
 }
 
@@ -277,4 +319,16 @@ std::string AutohostInterface::GetChatMessage()
 	}
 
 	return "";
+}
+
+void AutohostInterface::Send(boost::asio::mutable_buffers_1 buffer)
+{
+	if (autohost.is_open()) {
+		try {
+			autohost.send(buffer);
+		} catch (boost::system::system_error& e) {
+			autohost.close();
+			LogObject() << "[AutohostInterface] Error: Failed to send buffer; the autohost may not be reachable: " << e.what();
+		}
+	}
 }

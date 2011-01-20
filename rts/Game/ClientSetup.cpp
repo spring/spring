@@ -31,6 +31,12 @@ void ClientSetup::Init(const std::string& setup)
 
 	// Technical parameters
 	file.GetDef(hostIP,       DEFAULT_HOST_IP,       "GAME\\HostIP");
+	if (StringToLower(hostIP) == "localhost") {
+		// FIXME temporary hack: we do not support (host-)names.
+		// "localhost" was the only name supported in the past.
+		// added 7. January 2011, to be removed in ~ 1 year
+		hostIP = "127.0.0.1";
+	}
 	file.GetDef(hostPort,     DEFAULT_HOST_PORT_STR, "GAME\\HostPort");
 
 	file.GetDef(myPlayerName, "", "GAME\\MyPlayerName");

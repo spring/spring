@@ -140,7 +140,7 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		pathBarrier = new boost::barrier(numThreads);
 
 		// Start threads if applicable
-		for(size_t i=1; i<numThreads; ++i) {
+		for (size_t i = 1; i < numThreads; ++i) {
 			pathFinders[i] = new CPathFinder();
 			threads[i] = new boost::thread(boost::bind(&CPathEstimator::CalcOffsetsAndPathCosts, this, i));
 		}
@@ -148,7 +148,7 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		// Use the current thread as thread zero
 		CalcOffsetsAndPathCosts(0);
 
-		for(size_t i=1; i<numThreads; ++i) {
+		for (size_t i = 1; i < numThreads; ++i) {
 			threads[i]->join();
 			delete threads[i];
 			delete pathFinders[i];
@@ -190,12 +190,12 @@ void CPathEstimator::CalcOffsetsAndPathCosts(int thread) {
 	const int nbr = blockStates.GetSize() - 1;
 	int i;
 
-	while((i = --offsetBlockNum) >= 0)
+	while ((i = --offsetBlockNum) >= 0)
 		CalculateBlockOffsets(nbr - i, thread);
 
 	pathBarrier->wait();
 
-	while((i = --costBlockNum) >= 0)
+	while ((i = --costBlockNum) >= 0)
 		EstimatePathCosts(nbr - i, thread);
 }
 
@@ -207,11 +207,14 @@ void CPathEstimator::CalculateBlockOffsets(int idx, int thread)
 
 	if (thread == 0 && idx >= nextOffsetMessage) {
 		nextOffsetMessage = idx + blockStates.GetSize() / 16;
-		net->Send(CBaseNetProtocol::Get().SendCPUUsage(BLOCK_SIZE | (idx<<8)));
+		net->Send(CBaseNetProtocol::Get().SendCPUUsage(BLOCK_SIZE | (idx << 8)));
 	}
 
-	for (vector<MoveData*>::iterator mi = moveinfo->moveData.begin(); mi != moveinfo->moveData.end(); mi++)
-		FindOffset(**mi, x, z);
+	for (vector<MoveData*>::iterator mi = moveinfo->moveData.begin(); mi != moveinfo->moveData.end(); mi++) {
+		if ((*mi)->unitDefRefCount > 0) {
+			FindOffset(**mi, x, z);
+		}
+	}
 }
 
 void CPathEstimator::EstimatePathCosts(int idx, int thread) {
@@ -226,8 +229,11 @@ void CPathEstimator::EstimatePathCosts(int idx, int thread) {
 		loadscreen->SetLoadMessage(calcMsg, (idx != 0));
 	}
 
-	for (vector<MoveData*>::iterator mi = moveinfo->moveData.begin(); mi != moveinfo->moveData.end(); mi++)
-		CalculateVertices(**mi, x, z, thread);
+	for (vector<MoveData*>::iterator mi = moveinfo->moveData.begin(); mi != moveinfo->moveData.end(); mi++) {
+		if ((*mi)->unitDefRefCount > 0) {
+			CalculateVertices(**mi, x, z, thread);
+		}
+	}
 }
 
 
@@ -372,12 +378,14 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
 				vector<MoveData*>::iterator mi;
 
 				for (mi = moveinfo->moveData.begin(); mi < moveinfo->moveData.end(); mi++) {
-					SingleBlock sb;
-						sb.block.x = x;
-						sb.block.y = z;
-						sb.moveData = *mi;
-					needUpdate.push_back(sb);
-					blockStates[z * nbrOfBlocksX + x].nodeMask |= PATHOPT_OBSOLETE;
+					if ((*mi)->unitDefRefCount > 0) {
+						SingleBlock sb;
+							sb.block.x = x;
+							sb.block.y = z;
+							sb.moveData = *mi;
+						needUpdate.push_back(sb);
+						blockStates[z * nbrOfBlocksX + x].nodeMask |= PATHOPT_OBSOLETE;
+					}
 				}
 			}
 		}
@@ -390,30 +398,37 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
  */
 void CPathEstimator::Update() {
 	pathCache->Update();
-	unsigned int counter = 0;
 
-	while (!needUpdate.empty() && counter < BLOCKS_TO_UPDATE) {
-		// next block in line
-		SingleBlock sb = needUpdate.front();
+	for (unsigned int n = 0; !needUpdate.empty() && n < BLOCKS_TO_UPDATE; ) {
+		// copy the next block in line
+		const SingleBlock sb = needUpdate.front();
+
+		const unsigned int blockX = sb.block.x;
+		const unsigned int blockZ = sb.block.y;
+		const unsigned int blockN = blockZ * nbrOfBlocksX + blockX;
+
 		needUpdate.pop_front();
 
-		const int blocknr = sb.block.y * nbrOfBlocksX + sb.block.x;
+		// check if it's not already updated
+		if (blockStates[blockN].nodeMask & PATHOPT_OBSOLETE) {
+			const MoveData* currBlockMD = sb.moveData;
+			const MoveData* nextBlockMD = (needUpdate.empty())? NULL: (needUpdate.front()).moveData;
 
-		// check if it's already updated
-		if (!(blockStates[blocknr].nodeMask & PATHOPT_OBSOLETE))
-			continue;
+			// no, update the block
+			FindOffset(*currBlockMD, blockX, blockZ);
+			CalculateVertices(*currBlockMD, blockX, blockZ);
 
-		// no, update the block
-		FindOffset(*sb.moveData, sb.block.x, sb.block.y);
-		CalculateVertices(*sb.moveData, sb.block.x, sb.block.y);
+			// each MapChanged() call adds AT MOST <moveData.size()> SingleBlock's
+			// in ascending pathType order per (x, z) PE-block, therefore when the
+			// next SingleBlock's pathType is less or equal to the current we know
+			// that all have been processed (for one PE-block)
+			if (nextBlockMD == NULL || nextBlockMD->pathType <= currBlockMD->pathType) {
+				blockStates[blockN].nodeMask &= ~PATHOPT_OBSOLETE;
+			}
 
-		// mark it as updated
-		if (sb.moveData == moveinfo->moveData.back()) {
-			blockStates[blocknr].nodeMask &= ~PATHOPT_OBSOLETE;
+			// one stale SingleBlock consumed
+			n++;
 		}
-
-		// one block updated
-		counter++;
 	}
 }
 

@@ -1324,12 +1324,7 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 		return 0;
 	}
 
-	// no player names for synchronized scripts
-	if (CLuaHandle::GetActiveHandle()->GetSynced()) {
-		HSTR_PUSH(L, "SYNCED_NONAME");
-	} else {
-		lua_pushstring(L, player->name.c_str());
-	}
+	lua_pushstring(L, player->name.c_str());
 	lua_pushboolean(L, player->active);
 	lua_pushboolean(L, player->spectator);
 	lua_pushnumber(L, player->team);
@@ -3344,7 +3339,6 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 		HSTR_PUSH_NUMBER(L, "nextwaypointz", groundmt->nextWaypoint.z);
 
 		HSTR_PUSH_NUMBER(L, "requestedSpeed", groundmt->requestedSpeed);
-		HSTR_PUSH_NUMBER(L, "requestedTurnRate", groundmt->requestedTurnRate);
 
 		HSTR_PUSH_NUMBER(L, "pathFailures", 0);
 		HSTR_PUSH_NUMBER(L, "floatOnWater", unit->floatOnWater);

@@ -12,10 +12,6 @@
 #include "float3.h"
 
 class LuaTable;
-class CExplosionGenerator;
-
-class CExplosionGeneratorHandler;
-
 
 class CWeaponDefHandler : CommonDefHandler
 {

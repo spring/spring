@@ -174,10 +174,8 @@ int LuaPathFinder::RequestPath(lua_State* L)
 	const MoveData* moveData = NULL;
 	
 	if (lua_israwstring(L, 1)) {
-		const string moveName = lua_tostring(L, 1);
-		moveData = moveinfo->GetMoveDataFromName(moveName);
-	}
-	else {
+		moveData = moveinfo->GetMoveDataFromName(lua_tostring(L, 1));
+	} else {
 		const int moveID = luaL_checkint(L, 1);
 		if ((moveID < 0) || ((size_t)moveID >= moveinfo->moveData.size())) {
 			luaL_error(L, "Invalid moveID passed to RequestPath");

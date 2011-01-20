@@ -146,50 +146,57 @@ void CPathFinder::Init() {
 
 
 void CPathFinder::CreateDefenseMatrix() {
-	int enemycomms[16];
-	float3 enemyposes[16];
-	ai->dm->ChokeMapsByMovetype.resize(NumOfMoveTypes);
+	int enemyStartUnitIDs[255] = {-1};
+	float3 enemyStartPositions[255] = {ZeroVector};
 
-	int Range = int(sqrtf(float(PathMapXSize * PathMapYSize)) / THREATRES / 3);
-	int squarerange = Range * Range;
-	int maskwidth = (2 * Range + 1);
-	float* costmask = new float[maskwidth * maskwidth];
+	const int range = std::max(1.0f, sqrtf(float(PathMapXSize * PathMapYSize)) / THREATRES / 3);
+	const int rangeSq = range * range;
+	const int maskWidth = (2 * range + 1);
+	std::vector<float> costMask(maskWidth * maskWidth);
 
-	for (int x = 0; x < maskwidth; x++) {
-		for (int y = 0; y < maskwidth; y++) {
-			int distance = (x - Range) * (x - Range) + (y - Range) * (y - Range);
+	for (int x = 0; x < maskWidth; x++) {
+		for (int y = 0; y < maskWidth; y++) {
+			const int index = y * maskWidth + x;
+			const int distSq = (x - range) * (x - range) + (y - range) * (y - range);
 
-			if (distance <= squarerange) {
-				costmask[y * maskwidth + x] = (distance - squarerange) * (distance - squarerange) / squarerange * 2;
-			}
-			else {
-				costmask[y * maskwidth + x] = 0;
+			if (distSq <= rangeSq) {
+				costMask[index] = ((distSq - rangeSq) * (distSq - rangeSq)) / (rangeSq * 2);
+			} else {
+				costMask[index] = 0.0f;
 			}
 		}
 	}
 
-	for (int m = 0; m < NumOfMoveTypes;m++) {
-		int numberofenemyplayers = ai->ccb->GetEnemyUnits(enemycomms);
+	ai->dm->ChokeMapsByMovetype.resize(NumOfMoveTypes);
 
-		for (int i = 0; i < numberofenemyplayers; i++) {
-			enemyposes[i] = ai->ccb->GetUnitPos(enemycomms[i]);
+	for (int m = 0; m < NumOfMoveTypes;m++) {
+		const int numEnemies = ai->ccb->GetEnemyUnits(enemyStartUnitIDs);
+
+		for (int i = 0; i < numEnemies; i++) {
+			enemyStartPositions[i] = ai->ccb->GetUnitPos(enemyStartUnitIDs[i]);
 		}
 
-		float3 mypos = ai->cb->GetUnitPos(ai->uh->AllUnitsByCat[CAT_BUILDER].front());
-		ai->dm->ChokeMapsByMovetype[m].resize(totalcells);
-		int reruns = 35;
+		const float3& myPos = ai->cb->GetUnitPos(ai->uh->AllUnitsByCat[CAT_BUILDER].front());
+		const int reruns = 35;
 
+		ai->dm->ChokeMapsByMovetype[m].resize(totalcells);
 		micropather->SetMapData(MoveArrays[m], &ai->dm->ChokeMapsByMovetype[m][0], PathMapXSize, PathMapYSize);
 
 		for (int i = 0; i < totalcells; i++) {
 			ai->dm->ChokeMapsByMovetype[m][i] = 1;
 		}
 
-		// HACK
-		if (numberofenemyplayers > 0 && m == PATHTOUSE) {
+		// HACK:
+		//    for each enemy start-unit, find a path to its position <N> times
+		//    for each found path, deposit cost-crumbs at every second waypoint
+		//    regions where many paths overlap indicate choke-points
+		if (numEnemies > 0 && m == PATHTOUSE) {
 			for (int r = 0; r < reruns; r++) {
-				for (int startpos = 0; startpos < numberofenemyplayers; startpos++) {
-					if (micropather->Solve(Pos2Node(enemyposes[startpos]), Pos2Node(mypos), &path, &totalcost) != MicroPather::SOLVED) {
+				for (int startPosIdx = 0; startPosIdx < numEnemies; startPosIdx++) {
+					void* startPos = Pos2Node(enemyStartPositions[startPosIdx]);
+					void* goalPos = Pos2Node(myPos);
+
+					if (micropather->Solve(startPos, goalPos, &path, &totalcost) != MicroPather::SOLVED) {
 						continue;
 					}
 
@@ -197,23 +204,25 @@ void CPathFinder::CreateDefenseMatrix() {
 						if ((i % 2) == 0) { continue; }
 
 						int x, y;
+
 						Node2XY(path[i], &x, &y);
 
-						for (int myx = -Range; myx <= Range; myx++) {
+						for (int myx = -range; myx <= range; myx++) {
 							const int actualx = x + myx;
 
 							if (actualx < 0 || actualx >= PathMapXSize) {
 								continue;
 							}
 
-							for (int myy = -Range; myy <= Range; myy++) {
+							for (int myy = -range; myy <= range; myy++) {
 								const int actualy = y + myy;
+								const int cmIndex = actualy * PathMapXSize + actualx;
 
 								if (actualy < 0 || actualy >= PathMapYSize) {
 									continue;
 								}
 
-								ai->dm->ChokeMapsByMovetype[m][actualy * PathMapXSize + actualx] += costmask[(myy + Range) * maskwidth + (myx+Range)];
+								ai->dm->ChokeMapsByMovetype[m][cmIndex] += costMask[(myy + range) * maskWidth + (myx + range)];
 							}
 
 						}
@@ -222,8 +231,6 @@ void CPathFinder::CreateDefenseMatrix() {
 			}
 		}
 	}
-
-	delete[] costmask;
 }
 
 void CPathFinder::PrintData(std::string) {

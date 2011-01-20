@@ -967,12 +967,16 @@ struct SSkirmishAICallback {
 
 	bool              (CALLING_CONV *UnitDef_isMoveDataAvailable)(int skirmishAIId, int unitDefId); //$ AVAILABLE:MoveData
 
+	/// @deprecated
 	float             (CALLING_CONV *UnitDef_MoveData_getMaxAcceleration)(int skirmishAIId, int unitDefId);
 
+	/// @deprecated
 	float             (CALLING_CONV *UnitDef_MoveData_getMaxBreaking)(int skirmishAIId, int unitDefId);
 
+	/// @deprecated
 	float             (CALLING_CONV *UnitDef_MoveData_getMaxSpeed)(int skirmishAIId, int unitDefId);
 
+	/// @deprecated
 	short             (CALLING_CONV *UnitDef_MoveData_getMaxTurnRate)(int skirmishAIId, int unitDefId);
 
 	int               (CALLING_CONV *UnitDef_MoveData_getXSize)(int skirmishAIId, int unitDefId);

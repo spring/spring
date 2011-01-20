@@ -65,7 +65,7 @@ CGuiHandler* guihandler = NULL;
 
 CGuiHandler::CGuiHandler():
 	inCommand(-1),
-	buildFacing(0),
+	buildFacing(FACING_SOUTH),
 	buildSpacing(0),
 	needShift(false),
 	showingMetal(false),
@@ -1679,59 +1679,53 @@ void CGuiHandler::RunLayoutCommand(const std::string& command)
 
 bool CGuiHandler::ProcessBuildActions(const Action& action)
 {
-	const std::string arg = StringToLower(action.extra);
+	const std::string& arg = StringToLower(action.extra);
+	bool ret = false;
+
 	if (action.command == "buildspacing") {
 		if (arg == "inc") {
 			buildSpacing++;
-			return true;
+			ret = true;
 		}
 		else if (arg == "dec") {
 			if (buildSpacing > 0) {
 				buildSpacing--;
 			}
-			return true;
+			ret = true;
 		}
 	}
 	else if (action.command == "buildfacing") {
-		const char* buildFaceDirs[] = { "South", "East", "North", "West" };
+		static const char* buildFaceDirs[] = {"South", "East", "North", "West"};
+
 		if (arg == "inc") {
-			buildFacing++;
-			if (buildFacing > 3) {
-				buildFacing = 0;
-			}
-			logOutput.Print("Buildings set to face %s", buildFaceDirs[buildFacing]);
-			return true;
+			buildFacing = (buildFacing +               1) % NUM_FACINGS;
+			ret = true;
 		}
 		else if (arg == "dec") {
-			buildFacing--;
-			if (buildFacing < 0) {
-				buildFacing = 3;
-			}
-			logOutput.Print("Buildings set to face %s", buildFaceDirs[buildFacing]);
-			return true;
+			buildFacing = (buildFacing + NUM_FACINGS - 1) % NUM_FACINGS;
+			ret = true;
 		}
 		else if (arg == "south") {
-			buildFacing = 0;
-			logOutput.Print("Buildings set to face South");
-			return true;
+			buildFacing = FACING_SOUTH;
+			ret = true;
 		}
 		else if (arg == "east") {
-			buildFacing = 1;
-			logOutput.Print("Buildings set to face East");
-			return true;
+			buildFacing = FACING_EAST;
+			ret = true;
 		}
 		else if (arg == "north") {
-			buildFacing = 2;
-			logOutput.Print("Buildings set to face North");
-			return true;
+			buildFacing = FACING_NORTH;
+			ret = true;
 		}
 		else if (arg == "west") {
-			buildFacing = 3;
-			logOutput.Print("Buildings set to face West");
-			return true;
+			buildFacing = FACING_WEST;
+			ret = true;
 		}
+
+		logOutput.Print("Buildings set to face %s", buildFaceDirs[buildFacing]);
 	}
-	return false;
+
+	return ret;
 }
 
 
@@ -2376,7 +2370,7 @@ static bool WouldCancelAnyQueued(const BuildInfo& b)
 static void FillRowOfBuildPos(const BuildInfo& startInfo, float x, float z, float xstep, float zstep, int n, int facing, bool nocancel, std::vector<BuildInfo>& ret)
 {
 	for(int i=0;i<n;++i){
-		BuildInfo bi(startInfo.def,float3(x,0,z),(startInfo.buildFacing+facing)%4);
+		BuildInfo bi(startInfo.def, float3(x, 0.0f, z), (startInfo.buildFacing + facing) % NUM_FACINGS);
 		bi.pos=helper->Pos2BuildPos(bi);
 		if (!nocancel || !WouldCancelAnyQueued(bi)){
 			ret.push_back(bi);

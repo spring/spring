@@ -196,7 +196,7 @@ int LuaFonts::meta_index(lua_State* L)
 
 int LuaFonts::LoadFont(lua_State* L)
 {
-	const string fileName   = lua_tostring(L, 1);
+	const string fileName   = luaL_checkstring(L, 1);
 	const int size          = luaL_optint(L, 2, 14);
 	const int outlineWidth  = luaL_optint(L, 3, 2);
 	const float outlineWeight = luaL_optfloat(L, 4, 15.0f);

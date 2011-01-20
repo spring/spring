@@ -9,6 +9,7 @@
 #include <string>
 #include <map>
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/LightHandler.h"
 #include "System/EventClient.h"
 #include "lib/gml/ThreadSafeContainers.h"
 
@@ -127,6 +128,8 @@ public:
 	IWorldObjectModelRenderer* GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
 	IWorldObjectModelRenderer* GetCloakedModelRenderer(int modelType) { return cloakedModelRenderers[modelType]; }
 
+	GL::LightHandler* GetLightHandler() { return &lightHandler; }
+
 #ifdef USE_GML
 	int multiThreadDrawUnit;
 	int multiThreadDrawUnitShadow;
@@ -222,6 +225,8 @@ private:
 #endif
 
 	std::vector<std::set<CUnit*> > unitRadarIcons;
+
+	GL::LightHandler lightHandler;
 };
 
 extern CUnitDrawer* unitDrawer;
