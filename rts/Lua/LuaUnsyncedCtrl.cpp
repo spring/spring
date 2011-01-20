@@ -202,6 +202,10 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetBuildSpacing);
 	REGISTER_LUA_CFUNC(SetBuildFacing);
 
+	REGISTER_LUA_CFUNC(SetSunParameters);
+	REGISTER_LUA_CFUNC(SetSunManualControl);
+	REGISTER_LUA_CFUNC(SetSunDirection);
+
 	return true;
 }
 
@@ -2345,5 +2349,55 @@ int LuaUnsyncedCtrl::SetBuildFacing(lua_State* L)
 
 	return 0;
 }
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaUnsyncedCtrl::SetSunParameters(lua_State* L)
+{
+	if(!globalRendering->dynamicSun)
+		return 0;
+
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 5 || !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4) || !lua_isnumber(L, 5)) {
+		luaL_error(L, "Incorrect arguments to SetSunParameters(float,float,float,float,float)");
+	}
+
+	float4 sunDir(lua_tofloat(L, 1), lua_tofloat(L, 2), lua_tofloat(L, 3), lua_tofloat(L, 4));
+	globalRendering->sunOrbitTime = lua_tofloat(L, 5);
+	globalRendering->UpdateSunParams(sunDir, false);
+
+	return 0;
+}
+
+int LuaUnsyncedCtrl::SetSunManualControl(lua_State* L)
+{
+	if(!globalRendering->dynamicSun)
+		return 0;
+
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 1 || !lua_isboolean(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetSunManualControl(bool)");
+	}
+
+	globalRendering->dynamicSun = lua_toboolean(L, 1) ? 2 : 1;
+
+	return 0;
+}
+
+int LuaUnsyncedCtrl::SetSunDirection(lua_State* L)
+{
+	if(globalRendering->dynamicSun != 2)
+		return 0;
+
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 3 || !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
+		luaL_error(L, "Incorrect arguments to SetSunDirection(float,float,float)");
+	}
+
+	globalRendering->UpdateSunDir(float3(lua_tofloat(L, 1), lua_tofloat(L, 2), lua_tofloat(L, 3)));
+
+	return 0;
+}
+
 /******************************************************************************/
 /******************************************************************************/

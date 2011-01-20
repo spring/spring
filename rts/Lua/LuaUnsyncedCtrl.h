@@ -129,6 +129,10 @@ class LuaUnsyncedCtrl {
 
 		static int SetBuildSpacing(lua_State* L);
 		static int SetBuildFacing(lua_State* L);
+
+		static int SetSunParameters(lua_State* L);
+		static int SetSunManualControl(lua_State* L);
+		static int SetSunDirection(lua_State* L);
 };
 
 

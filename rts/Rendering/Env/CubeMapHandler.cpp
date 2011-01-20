@@ -6,6 +6,7 @@
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Map/MapInfo.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Env/BaseSky.h"
@@ -25,15 +26,31 @@ CubeMapHandler::CubeMapHandler() {
 
 	currReflectionFace = 0;
 	mapSkyReflections = false;
+	specExp = configHandler->Get("CubeTexSpecularExponent", 100.0f);
+	specularUpdateIter = 0;
 }
+
+void CubeMapHandler::UpdateSpecularTexture() {
+	if(!globalRendering->dynamicSun)
+		return;
+	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, specularTexID);
+
+	UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, specTexSize, float3( 1,  1,  1), float3( 0, 0, -2), float3(0, -2,  0), specularUpdateIter, specTexBuf);
+	UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, specTexSize, float3(-1,  1, -1), float3( 0, 0,  2), float3(0, -2,  0), specularUpdateIter, specTexBuf);
+	UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, specTexSize, float3(-1,  1, -1), float3( 2, 0,  0), float3(0,  0,  2), specularUpdateIter, specTexBuf);
+	UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, specTexSize, float3(-1, -1,  1), float3( 2, 0,  0), float3(0,  0, -2), specularUpdateIter, specTexBuf);
+	UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, specTexSize, float3(-1,  1,  1), float3( 2, 0,  0), float3(0, -2,  0), specularUpdateIter, specTexBuf);
+	UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, specTexSize, float3( 1,  1, -1), float3(-2, 0,  0), float3(0, -2,  0), specularUpdateIter, specTexBuf);
+	specularUpdateIter = (specularUpdateIter + 1) % specTexSize;
+}
+
 
 bool CubeMapHandler::Init() {
 	specTexSize = configHandler->Get("CubeTexSizeSpecular", 128);
 	reflTexSize = configHandler->Get("CubeTexSizeReflection", 128);
+	specTexBuf = new unsigned char[specTexSize * 4];
 
 	mapSkyReflections = !(mapInfo->smf.skyReflectModTexName.empty());
-
-	const float specExp = configHandler->Get("CubeTexSpecularExponent", 100.0f);
 
 	{
 		glGenTextures(1, &specularTexID);
@@ -43,12 +60,12 @@ bool CubeMapHandler::Init() {
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, specTexSize, float3( 1,  1,  1), float3( 0, 0, -2), float3(0, -2,  0), specExp);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, specTexSize, float3(-1,  1, -1), float3( 0, 0,  2), float3(0, -2,  0), specExp);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, specTexSize, float3(-1,  1, -1), float3( 2, 0,  0), float3(0,  0,  2), specExp);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, specTexSize, float3(-1, -1,  1), float3( 2, 0,  0), float3(0,  0, -2), specExp);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, specTexSize, float3(-1,  1,  1), float3( 2, 0,  0), float3(0, -2,  0), specExp);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, specTexSize, float3( 1,  1, -1), float3(-2, 0,  0), float3(0, -2,  0), specExp);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, specTexSize, float3( 1,  1,  1), float3( 0, 0, -2), float3(0, -2,  0));
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, specTexSize, float3(-1,  1, -1), float3( 0, 0,  2), float3(0, -2,  0));
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, specTexSize, float3(-1,  1, -1), float3( 2, 0,  0), float3(0,  0,  2));
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, specTexSize, float3(-1, -1,  1), float3( 2, 0,  0), float3(0,  0, -2));
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, specTexSize, float3(-1,  1,  1), float3( 2, 0,  0), float3(0, -2,  0));
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, specTexSize, float3( 1,  1, -1), float3(-2, 0,  0), float3(0, -2,  0));
 	}
 
 	{
@@ -111,6 +128,7 @@ void CubeMapHandler::Free() {
 		glDeleteTextures(1, &skyReflectionTexID);
 		skyReflectionTexID = 0;
 	}
+	delete [] specTexBuf;
 }
 
 
@@ -213,31 +231,56 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 	camera->Update(false);
 }
 
+void CubeMapHandler::CreateSpecularFacePart(
+	unsigned int texType,
+	int size,
+	const float3& cdir,
+	const float3& xdif,
+	const float3& ydif,
+	int y,
+	unsigned char *buf)
+{
+	for (int x = 0; x < size; ++x) {
+		const float3 dir = (cdir + (xdif * (x + 0.5f)) / size + (ydif * (y + 0.5f)) / size).Normalize();
+		const float dot = std::max(0.0f, dir.dot(globalRendering->sunDir));
+		const float spec = std::min(1.0f, pow(dot, specExp) + pow(dot, 3.0f) * 0.25f);
+
+		buf[x * 4 + 0] = (unsigned char) (mapInfo->light.unitSpecularColor.x * spec * 255);
+		buf[x * 4 + 1] = (unsigned char) (mapInfo->light.unitSpecularColor.y * spec * 255);
+		buf[x * 4 + 2] = (unsigned char) (mapInfo->light.unitSpecularColor.z * spec * 255);
+		buf[x * 4 + 3] = 255;
+	}
+}
 
 void CubeMapHandler::CreateSpecularFace(
 	unsigned int texType,
 	int size,
 	const float3& cdir,
 	const float3& xdif,
-	const float3& ydif,
-	float specExponent)
+	const float3& ydif)
 {
 	unsigned char* buf = new unsigned char[size * size * 4];
 
 	for (int y = 0; y < size; ++y) {
-		for (int x = 0; x < size; ++x) {
-			const float3 dir = (cdir + (xdif * (x + 0.5f)) / size + (ydif * (y + 0.5f)) / size).Normalize();
-			const float dot = std::max(0.0f, dir.dot(mapInfo->light.sunDir));
-			const float spec = std::min(1.0f, pow(dot, specExponent) + pow(dot, 3.0f) * 0.25f);
-
-			buf[(y * size + x) * 4 + 0] = (unsigned char) (mapInfo->light.unitSpecularColor.x * spec * 255);
-			buf[(y * size + x) * 4 + 1] = (unsigned char) (mapInfo->light.unitSpecularColor.y * spec * 255);
-			buf[(y * size + x) * 4 + 2] = (unsigned char) (mapInfo->light.unitSpecularColor.z * spec * 255);
-			buf[(y * size + x) * 4 + 3] = 255;
-		}
+		CreateSpecularFacePart(texType, size, cdir, xdif, ydif, y, &buf[y * size * 4]);
 	}
 
 	//! note: no mipmaps, cubemap linear filtering is broken
-	glTexImage2D(texType, 0, GL_RGBA8, size, size, 0, GL_RGBA,GL_UNSIGNED_BYTE, buf);
+	glTexImage2D(texType, 0, GL_RGBA8, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 	delete[] buf;
 }
+
+void CubeMapHandler::UpdateSpecularFace(
+	unsigned int texType,
+	int size,
+	const float3& cdir,
+	const float3& xdif,
+	const float3& ydif,
+	int y,
+	unsigned char *buf)
+{
+	CreateSpecularFacePart(texType, size, cdir, xdif, ydif, y, buf);
+
+	glTexSubImage2D(texType, 0, 0, y, size, 1, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+}
+

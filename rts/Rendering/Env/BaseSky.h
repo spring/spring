@@ -14,6 +14,8 @@ public:
 	virtual void Update() = 0;
 	virtual void Draw() = 0;
 	virtual void DrawSun() = 0;
+	virtual void UpdateSunDir() = 0;
+	virtual void UpdateSkyTexture() = 0;
 
 	static CBaseSky* GetSky();
 
