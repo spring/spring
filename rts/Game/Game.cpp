@@ -1050,11 +1050,10 @@ bool CGame::DrawWorld()
 
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("Water");
-		GML_STDMUTEX_LOCK(water);
 
 		water->OcclusionQuery();
 		if (water->drawSolid) {
-			water->UpdateWater(this);
+			water->UpdateBaseWater(this);
 			water->Draw();
 		}
 	}
@@ -1088,10 +1087,9 @@ bool CGame::DrawWorld()
 	//! draw water
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("Water");
-		GML_STDMUTEX_LOCK(water);
 
 		if (!water->drawSolid) {
-			water->UpdateWater(this);
+			water->UpdateBaseWater(this);
 			water->Draw();
 		}
 	}
@@ -1270,7 +1268,6 @@ bool CGame::Draw() {
 			projectileDrawer->UpdateTextures();
 			sky->Update();
 
-			GML_STDMUTEX_LOCK(water);
 			water->Update();
 			globalRendering->Update();
 		}

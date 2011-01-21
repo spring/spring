@@ -30,7 +30,10 @@ public:
 	virtual int  GetID() const { return -1; }
 	virtual const char* GetName() const { return ""; }
 
+	static void UpdateBaseWater(CGame* game);
 	static CBaseWater* GetWater(CBaseWater* currWaterRenderer, int nextWaterRenderMode);
+	static void PushWaterMode(int nextWaterRenderMode);
+	static std::vector<int> waterModes;
 
 	bool drawReflection;
 	bool drawRefraction;
