@@ -149,8 +149,8 @@ void CMapInfo::ReadLight()
 {
 	const LuaTable lightTable = parser->GetRoot().SubTable("lighting");
 
+	light.sunStartAngle = lightTable.GetFloat("sunStartAngle", 0.0f);
 	light.sunOrbitTime = lightTable.GetFloat("sunOrbitTime", 1440.0f);
-	globalRendering->sunOrbitTime = light.sunOrbitTime;
 	light.sunDir = lightTable.GetFloat4("sunDir", float4(0.0f, 1.0f, 2.0f, FLT_MAX));
 	bool iscompat = (light.sunDir.w == FLT_MAX);
 	if(iscompat) {
@@ -158,7 +158,7 @@ void CMapInfo::ReadLight()
 		light.sunDir.w = 0.0f;
 	}
 	light.sunDir.ANormalize();
-	globalRendering->UpdateSunParams(light.sunDir, iscompat);
+	globalRendering->UpdateSunParams(light.sunDir, light.sunStartAngle, light.sunOrbitTime, iscompat);
 
 	light.groundAmbientColor  = lightTable.GetFloat3("groundAmbientColor",
 	                                                float3(0.5f, 0.5f, 0.5f));

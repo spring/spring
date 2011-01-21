@@ -22,8 +22,9 @@ public:
 	void PostInit();
 	void UpdateSunDir(const float4& newSunDir);
 	void Update();
+	inline float4 CalculateSunDir(float startAngle);
 	void UpdateSun(bool forced = false);
-	void UpdateSunParams(const float4& newSunDir, bool iscompat);
+	void UpdateSunParams(float4 newSunDir, float startAngle, float orbitTime, bool iscompat);
 
 	/**
 	 * Does the user want team colored nanospray if the mod allows it?
@@ -231,6 +232,11 @@ public:
 	 * @brief the time in seconds for the sun to complete the orbit
 	 */
 	float sunOrbitTime;
+
+	/**
+	 * @brief the sun normally starts where its peak elevation occurs, unless this offset angle is set
+	 */
+	float sunStartAngle;
 
 	/**
 	 * @brief density factor to provide darker shadows at low sun altitude

@@ -2690,13 +2690,13 @@ int LuaUnsyncedCtrl::SetSunParameters(lua_State* L)
 		return 0;
 
 	const int args = lua_gettop(L); // number of arguments
-	if (args != 5 || !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4) || !lua_isnumber(L, 5)) {
-		luaL_error(L, "Incorrect arguments to SetSunParameters(float,float,float,float,float)");
+	if (args != 6 || !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || 
+			!lua_isnumber(L, 4) || !lua_isnumber(L, 5) || !lua_isnumber(L, 6)) {
+		luaL_error(L, "Incorrect arguments to SetSunParameters(float,float,float,float,float,float)");
 	}
 
 	float4 sunDir(lua_tofloat(L, 1), lua_tofloat(L, 2), lua_tofloat(L, 3), lua_tofloat(L, 4));
-	globalRendering->sunOrbitTime = lua_tofloat(L, 5);
-	globalRendering->UpdateSunParams(sunDir, false);
+	globalRendering->UpdateSunParams(sunDir, lua_tofloat(L, 5), lua_tofloat(L, 6), false);
 
 	return 0;
 }
