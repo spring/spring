@@ -150,8 +150,7 @@ bool CGame::ActionPressed(const Action& action,
 			nextWaterRendererMode = (std::max(0, water->GetID()) + 1) % CBaseWater::NUM_WATER_RENDERERS;
 		}
 
-		water = CBaseWater::GetWater(water, nextWaterRendererMode);
-		logOutput.Print("Set water rendering mode to %i (%s)", nextWaterRendererMode, water->GetName());
+		CBaseWater::PushWaterMode(nextWaterRendererMode);
 	}
 	else if (cmd == "advshading") {
 		static bool canUse = unitDrawer->advShading;

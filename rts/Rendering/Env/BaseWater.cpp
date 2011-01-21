@@ -14,6 +14,7 @@
 #include "System/LogOutput.h"
 
 CBaseWater* water = NULL;
+std::vector<int> CBaseWater::waterModes;
 
 CBaseWater::CBaseWater(void)
 {
@@ -24,11 +25,31 @@ CBaseWater::CBaseWater(void)
 }
 
 
+void CBaseWater::PushWaterMode(int nextWaterRenderMode) {
+	GML_STDMUTEX_LOCK(water); // PushWaterMode
+
+	waterModes.push_back(nextWaterRenderMode);
+}
+
+void CBaseWater::UpdateBaseWater(CGame* game) {
+	std::vector<int> wm;
+	{
+		GML_STDMUTEX_LOCK(water); // UpdateBaseWater
+
+		wm.swap(waterModes);
+	}
+
+	for(std::vector<int>::iterator i = wm.begin(); i != wm.end(); ++i) {
+		int nextWaterRendererMode = *i;
+		water = GetWater(water, nextWaterRendererMode);
+		logOutput.Print("Set water rendering mode to %i (%s)", nextWaterRendererMode, water->GetName());
+	}
+
+	water->UpdateWater(game);
+}
 
 CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRendererMode)
 {
-	GML_STDMUTEX_LOCK(water);
-
 	static CBaseWater  baseWaterRenderer;
 	       CBaseWater* nextWaterRenderer = NULL;
 
