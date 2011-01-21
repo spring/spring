@@ -148,8 +148,8 @@ void CGlobalRendering::Update() {
 	groundDecals->UpdateSunDir();
 
 	sunIntensity = sqrt(std::max(0.0f, std::min(sunDir.y, 1.0f)));
-	unitShadowDensity = sunIntensity * mapInfo->light.unitShadowDensity;
-	groundShadowDensity = sunIntensity *  mapInfo->light.groundShadowDensity;
+	unitShadowDensity = sunIntensity * shadowDensityFactor * mapInfo->light.unitShadowDensity;
+	groundShadowDensity = sunIntensity * shadowDensityFactor *  mapInfo->light.groundShadowDensity;
 }
 
 void CGlobalRendering::UpdateSunParams(const float4& newSunDir, bool iscompat) {
@@ -195,6 +195,9 @@ void CGlobalRendering::UpdateSunParams(const float4& newSunDir, bool iscompat) {
 
 	sunRotation.LoadIdentity();
 	sunRotation.SetUpVector(sunDir);
+
+	UpdateSun(true);
+	shadowDensityFactor = 1.0f / std::max(0.01f, sunDir.y);
 }
 
 void CGlobalRendering::UpdateSunDir(const float4 &newSunDir) {
@@ -208,13 +211,13 @@ void CGlobalRendering::UpdateSunDir(const float4 &newSunDir) {
 }
 
 
-void CGlobalRendering::UpdateSun() {
-	if(globalRendering->dynamicSun != 1)
+void CGlobalRendering::UpdateSun(bool forced) {
+	if(!forced && globalRendering->dynamicSun != 1)
 		return;
 
-	float sang = gs->frameNum * 2.0f * PI / (GAME_SPEED * sunOrbitTime);
+	float sang = -gs->frameNum * 2.0f * PI / (GAME_SPEED * sunOrbitTime) - initialSunAngle + PI;
 
-	float4 sdir(sunOrbitRad * cos(sang + initialSunAngle), sunOrbitHeight, sunOrbitRad * sin(sang + initialSunAngle));
+	float4 sdir(sunOrbitRad * cos(sang), sunOrbitHeight, sunOrbitRad * sin(sang));
 	sdir = sunRotation.Mul(sdir);
 
 	UpdateSunDir(sdir);

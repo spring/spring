@@ -22,7 +22,7 @@ public:
 	void PostInit();
 	void UpdateSunDir(const float4& newSunDir);
 	void Update();
-	void UpdateSun();
+	void UpdateSun(bool forced = false);
 	void UpdateSunParams(const float4& newSunDir, bool iscompat);
 
 	/**
@@ -188,7 +188,7 @@ public:
 	float4 skyDir;
 
 	/**
-	 * @brief sun elevation adjusted unit shadow density
+	 * @brief sun intensity
 	 */
 	float sunIntensity;
 
@@ -231,6 +231,11 @@ public:
 	 * @brief the time in seconds for the sun to complete the orbit
 	 */
 	float sunOrbitTime;
+
+	/**
+	 * @brief density factor to provide darker shadows at low sun altitude
+	 */
+	float shadowDensityFactor;
 
 	/**
 	 * @brief tells if globalrendering needs an Update()
