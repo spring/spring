@@ -104,6 +104,7 @@ public:
 	struct light_t {
 		float4 sunDir;     ///< Holds vector for the direction of the sun
 		float sunOrbitTime;
+		float sunStartAngle;
 		float3 groundAmbientColor;
 		float3 groundSunColor;
 		float3 groundSpecularColor;

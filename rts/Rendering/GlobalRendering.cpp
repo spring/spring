@@ -148,29 +148,40 @@ void CGlobalRendering::Update() {
 	groundDecals->UpdateSunDir();
 
 	sunIntensity = sqrt(std::max(0.0f, std::min(sunDir.y, 1.0f)));
-	unitShadowDensity = sunIntensity * shadowDensityFactor * mapInfo->light.unitShadowDensity;
-	groundShadowDensity = sunIntensity * shadowDensityFactor *  mapInfo->light.groundShadowDensity;
+	float shadowDensity = std::min(1.0f, sunIntensity * shadowDensityFactor);
+	unitShadowDensity = shadowDensity * mapInfo->light.unitShadowDensity;
+	groundShadowDensity = shadowDensity *  mapInfo->light.groundShadowDensity;
 }
 
-void CGlobalRendering::UpdateSunParams(const float4& newSunDir, bool iscompat) {
-	sunDir = newSunDir;
-	sunDir.ANormalize();
+float4 CGlobalRendering::CalculateSunDir(float startAngle) {
+	float sang = PI - startAngle - initialSunAngle - gs->frameNum * 2.0f * PI / (GAME_SPEED * sunOrbitTime);
 
-	initialSunAngle = fastmath::coords2angle(sunDir.x, sunDir.z);
+	float4 sdir(sunOrbitRad * cos(sang), sunOrbitHeight, sunOrbitRad * sin(sang));
+	sdir = sunRotation.Mul(sdir);
+
+	return sdir;
+}
+
+void CGlobalRendering::UpdateSunParams(float4 newSunDir, float startAngle, float orbitTime, bool iscompat) {
+	newSunDir.ANormalize();
+	sunStartAngle = startAngle;
+	sunOrbitTime = orbitTime;
+
+	initialSunAngle = fastmath::coords2angle(newSunDir.x, newSunDir.z);
 
 	if(iscompat) { // backwards compatible: sunDir is position where sun reaches highest altitude
-		float sunLen = sunDir.Length2D();
-		float sunAzimuth = (sunLen <= 0.001f) ? PI/2.0f : atan(sunDir.y/sunLen);
-		float sunHeight = tan(sunAzimuth  -0.001f);
+		float sunLen = newSunDir.Length2D();
+		float sunAzimuth = (sunLen <= 0.001f) ? PI / 2.0f : atan(newSunDir.y / sunLen);
+		float sunHeight = tan(sunAzimuth - 0.001f);
 
 		float orbitMinSunHeight = 0.1f; // the lowest sun altitude for an auto generated orbit
 		float3 v1(cos(initialSunAngle), sunHeight, sin(initialSunAngle));
 		v1.ANormalize();
 
 		if(v1.y <= orbitMinSunHeight) {
-			sunDir = float3(0.0f, 1.0f, 0.0f);
+			newSunDir = float3(0.0f, 1.0f, 0.0f);
 			sunOrbitHeight = v1.y;
-			sunOrbitRad = sqrt(1 - sunOrbitHeight * sunOrbitHeight);
+			sunOrbitRad = sqrt(1.0f - sunOrbitHeight * sunOrbitHeight);
 		}
 		else {
 			float3 v2(cos(initialSunAngle + PI), orbitMinSunHeight, sin(initialSunAngle + PI));
@@ -184,20 +195,21 @@ void CGlobalRendering::UpdateSunParams(const float4& newSunDir, bool iscompat) {
 			v5.ANormalize();
 			if(v5.y < 0)
 				v5 = -v5;
-			sunDir = v5;
+			newSunDir = v5;
 			sunOrbitHeight = v5.dot(v1);
 		}
 	}
 	else { // new: sunDir is center position of orbit, and sunDir.w is orbit height
-		sunOrbitHeight = std::max(-1.0f, std::min(sunDir.w, 1.0f));
-		sunOrbitRad = sqrt(1 - sunOrbitHeight * sunOrbitHeight);
+		sunOrbitHeight = std::max(-1.0f, std::min(newSunDir.w, 1.0f));
+		sunOrbitRad = sqrt(1.0f - sunOrbitHeight * sunOrbitHeight);
 	}
 
 	sunRotation.LoadIdentity();
-	sunRotation.SetUpVector(sunDir);
+	sunRotation.SetUpVector(newSunDir);
 
+	float4 peakSunDir = CalculateSunDir(0.0f);
+	shadowDensityFactor = 1.0f / std::max(0.01f, peakSunDir.y);
 	UpdateSun(true);
-	shadowDensityFactor = 1.0f / std::max(0.01f, sunDir.y);
 }
 
 void CGlobalRendering::UpdateSunDir(const float4 &newSunDir) {
@@ -210,16 +222,10 @@ void CGlobalRendering::UpdateSunDir(const float4 &newSunDir) {
 	}
 }
 
-
 void CGlobalRendering::UpdateSun(bool forced) {
 	if(!forced && globalRendering->dynamicSun != 1)
 		return;
 
-	float sang = -gs->frameNum * 2.0f * PI / (GAME_SPEED * sunOrbitTime) - initialSunAngle + PI;
-
-	float4 sdir(sunOrbitRad * cos(sang), sunOrbitHeight, sunOrbitRad * sin(sang));
-	sdir = sunRotation.Mul(sdir);
-
-	UpdateSunDir(sdir);
+	UpdateSunDir(CalculateSunDir(sunStartAngle));
 }
 
