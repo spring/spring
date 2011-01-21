@@ -253,17 +253,17 @@ namespace fastmath {
 
 	inline float coords2angle(float dx, float dy) {
 		float a;
-		if(dx!=0) {
-			a=atan(dy/dx);
-			if(dx<0)
-				a+=PI;
-			else if(dy<0)
-				a+=2.0f*PI;
+		if(dx != 0) {
+			a = math::atan(dy / dx);
+			if(dx < 0)
+				a += PI;
+			else if(dy < 0)
+				a += 2.0f * PI;
 			return a;
 		}
-		a=PI/2.0f;
-		if(dy<0)
-			a+=PI;
+		a = PI / 2.0f;
+		if(dy < 0)
+			a += PI;
 		return a;
 	}
 }

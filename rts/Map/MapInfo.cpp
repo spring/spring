@@ -14,6 +14,7 @@
 #include "Lua/LuaParser.h"
 #include "LogOutput.h"
 #include "Exceptions.h"
+#include <float.h>
 
 
 using namespace std;
