@@ -131,13 +131,6 @@ CLuaRules::~CLuaRules()
 		KillLua();
 	}
 	luaRules = NULL;
-
-	// clear all lods
-	std::list<CUnit*>::iterator it;
-	for (it = uh->activeUnits.begin(); it != uh->activeUnits.end(); ++it) {
-		CUnit* unit = *it;
-		unit->SetLODCount(0);
-	}
 }
 
 
