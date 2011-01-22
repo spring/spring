@@ -2381,7 +2381,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* u) {
 	drawStat.erase(unit);
 #endif
 
-	SetUnitLODCount(0);
+	SetUnitLODCount(unit, 0);
 }
 
 
@@ -2459,7 +2459,7 @@ unsigned int CUnitDrawer::CalcUnitShadowLOD(const CUnit* unit, unsigned int last
 
 	// FIXME: fix it, cap it for shallow shadows?
 	const float3& sun = globalRendering->sunDir;
-	const float3 diff = (camera->pos - pos);
+	const float3 diff = (camera->pos - unit->pos);
 	const float  dot  = diff.dot(sun);
 	const float3 gap  = diff - (sun * dot);
 	const float  lpp  = std::max(0.0f, gap.Length() * UNIT_GLOBAL_LOD_FACTOR);
