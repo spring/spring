@@ -233,7 +233,7 @@ void CGroundMoveType::Update()
 
 				if (!atGoal) {
 					if (!idling) {
-						etaFailures = std::max(    0, int(etaFailures - 1));
+						etaFailures = std::max(0, int(etaFailures - 1));
 					} else {
 						// note: the unit could just be turning in-place
 						// over several frames (eg. to maneuver around an
@@ -1151,8 +1151,8 @@ void CGroundMoveType::GetNewPath()
 		Fail();
 	}
 
-	// limit path-requests to one per second
-	restartDelay = gs->frameNum + GAME_SPEED;
+	// limit frequency of path-requests from SlowUpdate's
+	restartDelay = gs->frameNum + (UNIT_SLOWUPDATE_RATE << 1);
 }
 
 
@@ -1242,7 +1242,7 @@ float3 CGroundMoveType::Here()
 /* Initializes motion. */
 void CGroundMoveType::StartEngine() {
 	// ran only if the unit has no path and is not already at goal
-	if (!pathId && !atGoal) {
+	if (pathId == 0 && !atGoal) {
 		GetNewPath();
 
 		// activate "engine" only if a path was found
