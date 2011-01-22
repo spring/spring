@@ -124,6 +124,10 @@ public:
 	/** CGame::DrawDirectControlHud,  **/
 	void DrawIndividual(CUnit* unit);
 
+	unsigned int CalcUnitLOD(const CUnit* unit, unsigned int lastLOD) const;
+	unsigned int CalcUnitShadowLOD(const CUnit* unit, unsigned int lastLOD) const;
+	void SetUnitLODCount(CUnit* unit, unsigned int count);
+
 	const std::set<CUnit*>& GetUnsortedUnits() const { return unsortedUnits; }
 	IWorldObjectModelRenderer* GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
 	IWorldObjectModelRenderer* GetCloakedModelRenderer(int modelType) { return cloakedModelRenderers[modelType]; }

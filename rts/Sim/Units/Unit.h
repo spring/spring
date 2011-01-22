@@ -463,7 +463,18 @@ public:
 
 	float currentFuel;
 
-	// 4 unsynced vars
+	/// max speed of the unit
+	float maxSpeed;
+	/// max reverse speed (used only by ground units for now)
+	float maxReverseSpeed;
+
+	/// minimum alpha value for a texel to be drawn
+	float alphaThreshold;
+	/// the damage value passed to CEGs spawned by this unit's script
+	int cegDamage;
+
+
+	// unsynced vars
 	bool luaDraw;
 	bool noDraw;
 	bool noSelect;
@@ -472,30 +483,18 @@ public:
 	bool isIcon;
 	float iconRadius;
 
-	/// max speed of the unit
-	float maxSpeed;
-	/// max reverse speed (used only by ground units for now)
-	float maxReverseSpeed;
-
-	// unsynced calls
-	void SetLODCount(unsigned int count);
-	unsigned int CalcLOD(unsigned int lastLOD) const;
-	unsigned int CalcShadowLOD(unsigned int lastLOD) const;
-	// unsynced data
 	unsigned int lodCount;
 	unsigned int currentLOD;
+
 	/// length-per-pixel
 	std::vector<float> lodLengths;
 	LuaUnitMaterial luaMats[LUAMAT_TYPE_COUNT];
 
-	/// minimum alpha value for a texel to be drawn
-	float alphaThreshold;
-	/// the damage value passed to CEGs spawned by this unit's script
-	int cegDamage;
 #ifdef USE_GML
 	/// last draw frame
 	int lastDrawFrame;
 #endif
+
 protected:
 	void ChangeTeamReset();
 	void UpdateResources();
@@ -512,8 +511,6 @@ public:
 	void PostLoad();
 
 public:
-	static void SetLODFactor(float value);
-
 	static void  SetExpMultiplier(float value) { expMultiplier = value; }
 	static float GetExpMultiplier()     { return expMultiplier; }
 	static void  SetExpPowerScale(float value) { expPowerScale = value; }
@@ -526,8 +523,6 @@ public:
 	static float GetExpGrade()     { return expGrade; }
 
 private:
-	static float lodFactor; // unsynced
-
 	static float expMultiplier;
 	static float expPowerScale;
 	static float expHealthScale;

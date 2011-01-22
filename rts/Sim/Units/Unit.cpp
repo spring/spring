@@ -24,7 +24,6 @@
 #include "CommandAI/TransportCAI.h"
 
 #include "ExternalAI/EngineOutHandler.h"
-#include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
 #include "Game/Player.h"
@@ -35,7 +34,6 @@
 #include "Map/ReadMap.h"
 
 #include "Rendering/Models/IModelParser.h"
-#include "Rendering/GlobalRendering.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/GroundFlash.h"
 
@@ -1475,8 +1473,6 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	qf->MovedUnit(this);
 	radarhandler->MoveUnit(this);
 
-	SetLODCount(0);
-
 	if (unitDef->isAirBase) {
 		airBaseHandler->RegisterAirBase(this);
 	}
@@ -2114,78 +2110,6 @@ void CUnit::ReleaseTempHoldFire()
 }
 
 
-/******************************************************************************/
-
-float CUnit::lodFactor = 1.0f;
-
-
-void CUnit::SetLODFactor(float value)
-{
-	lodFactor = (value * camera->lppScale);
-}
-
-
-void CUnit::SetLODCount(unsigned int count)
-{
-	const unsigned int oldCount = lodCount;
-
-	lodCount = count;
-
-	lodLengths.resize(count);
-	for (unsigned int i = oldCount; i < count; i++) {
-		lodLengths[i] = -1.0f;
-	}
-
-	localmodel->SetLODCount(count);
-
-	for (int m = 0; m < LUAMAT_TYPE_COUNT; m++) {
-		luaMats[m].SetLODCount(count);
-	}
-
-	return;
-}
-
-
-unsigned int CUnit::CalcLOD(unsigned int lastLOD) const
-{
-	if (lastLOD == 0) { return 0; }
-
-	const float3 diff = (pos - camera->pos);
-	const float dist = diff.dot(camera->forward);
-	const float lpp = std::max(0.0f, dist * lodFactor);
-	for (/* no-op */; lastLOD != 0; lastLOD--) {
-		if (lpp > lodLengths[lastLOD]) {
-			break;
-		}
-	}
-	return lastLOD;
-}
-
-
-unsigned int CUnit::CalcShadowLOD(unsigned int lastLOD) const
-{
-	return CalcLOD(lastLOD); // FIXME
-
-	// FIXME -- the more 'correct' method
-	if (lastLOD == 0) { return 0; }
-
-	// FIXME: fix it, cap it for shallow shadows?
-	const float3& sun = globalRendering->sunDir;
-	const float3 diff = (camera->pos - pos);
-	const float  dot  = diff.dot(sun);
-	const float3 gap  = diff - (sun * dot);
-	const float  lpp  = std::max(0.0f, gap.Length() * lodFactor);
-
-	for (/* no-op */; lastLOD != 0; lastLOD--) {
-		if (lpp > lodLengths[lastLOD]) {
-			break;
-		}
-	}
-	return lastLOD;
-}
-
-
-/******************************************************************************/
 
 void CUnit::PostLoad()
 {
@@ -2443,7 +2367,6 @@ CR_REG_METADATA(CUnit, (
 //#endif
 	//CR_MEMBER(model),
 	//CR_MEMBER(localmodel),
-	//CR_MEMBER(cob),
 	//CR_MEMBER(script),
 	CR_MEMBER(tooltip),
 	CR_MEMBER(crashing),
@@ -2489,14 +2412,10 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(maxSpeed),
 	CR_MEMBER(maxReverseSpeed),
 //	CR_MEMBER(weaponHitMod),
-//	CR_MEMBER(lodCount),
-//	CR_MEMBER(currentLOD),
-//	CR_MEMBER(lodLengths),
 //	CR_MEMBER(luaMats),
 	CR_MEMBER(alphaThreshold),
 	CR_MEMBER(cegDamage),
 //	CR_MEMBER(lastDrawFrame),
-//	CR_MEMBER(lodFactor), // unsynced
 //	CR_MEMBER(expMultiplier),
 //	CR_MEMBER(expPowerScale),
 //	CR_MEMBER(expHealthScale),

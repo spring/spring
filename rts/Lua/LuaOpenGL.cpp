@@ -1345,15 +1345,14 @@ int LuaOpenGL::Unit(lua_State* L)
 		useLOD = false;
 	}
 	else {
-		unsigned int lod;
+		unsigned int lod = 0;
 		if (!lua_isnumber(L, 3)) {
 			const LuaMatType matType =
 				(water->drawReflection) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
-			lod = unit->CalcLOD(unit->luaMats[matType].GetLastLOD());
+			lod = unitDrawer->CalcUnitLOD(unit, unit->luaMats[matType].GetLastLOD());
 		} else {
 			int tmpLod = lua_toint(L, 3);
 			if (tmpLod < 0) {
-				lod = 0;
 				useLOD = false;
 			} else {
 				lod = std::min(unit->lodCount - 1, (unsigned int)tmpLod);
@@ -1411,7 +1410,7 @@ int LuaOpenGL::UnitRaw(lua_State* L)
 		if (!lua_isnumber(L, 3)) {
 			const LuaMatType matType =
 				(water->drawReflection) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
-			lod = unit->CalcLOD(unit->luaMats[matType].GetLastLOD());
+			lod = unitDrawer->CalcUnitLOD(unit, unit->luaMats[matType].GetLastLOD());
 		} else {
 			int tmpLod = lua_toint(L, 3);
 			if (tmpLod < 0) {
