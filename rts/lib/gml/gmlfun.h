@@ -318,21 +318,20 @@ EXTERN inline int gmlSizeOf(int datatype) {
 #if GML_CALL_DEBUG
 #include "lib/lua/include/lauxlib.h"
 extern unsigned gmlLockTime;
-extern lua_State *gmlCurrentLuaState;
+extern lua_State *gmlCurrentLuaStates[GML_MAX_NUM_THREADS];
 class gmlCallDebugger {
 public:
-	bool set;
-	gmlCallDebugger(lua_State *L) { 
-		if(!gmlCurrentLuaState) {
-			gmlCurrentLuaState = L;
-			set=true;
-		} 
-		else 
-			set = false;
+	lua_State ** currentLuaState;
+	gmlCallDebugger(lua_State *L) {
+		currentLuaState = &gmlCurrentLuaStates[gmlThreadNumber]; 		
+		if(!*currentLuaState)
+			*currentLuaState = L;
+		else
+			currentLuaState = NULL;
 	}
 	~gmlCallDebugger() {
-		if(set) {
-			gmlCurrentLuaState = NULL;
+		if(currentLuaState) {
+			*currentLuaState = NULL;
 		}
 	}
 	static unsigned getLockTime() {
@@ -344,11 +343,12 @@ public:
 		return ret;
 	}
 };
-#define GML_CURRENT_LUA() (gmlCurrentLuaState ? "LUA" : "Unknown")
+#define GML_CURRENT_LUA(currentLuaState) (currentLuaState ? "LUA" : "Unknown")
 #define GML_THREAD_ERROR(msg, ret)\
-	logOutput.Print("GML error: Sim thread called %s (%s)", msg, GML_CURRENT_LUA());\
-	if(gmlCurrentLuaState)\
-		luaL_error(gmlCurrentLuaState, "Invalid call");\
+	lua_State *currentLuaState = gmlCurrentLuaStates[gmlThreadNumber];\
+	logOutput.Print("GML error: Sim thread called %s (%s)", msg, GML_CURRENT_LUA(currentLuaState));\
+	if(currentLuaState)\
+		luaL_error(currentLuaState, "Invalid call");\
 	ret
 #define GML_ITEMLOG_PRINT() GML_THREAD_ERROR(GML_FUNCTION,)
 #define GML_DUMMYRET() return;

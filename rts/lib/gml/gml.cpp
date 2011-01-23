@@ -724,7 +724,7 @@ const char *gmlNOPDummy=(gmlFunctionNames[GML_NOP]="gmlNOP");
 gmlItemSequenceServer<GLuint, GLsizei,GLuint (GML_GLAPIENTRY *)(GLsizei)> gmlListServer(&glGenLists, &gmlDeleteLists, 100, 25, 20, 5);
 
 #if GML_CALL_DEBUG
-lua_State *gmlCurrentLuaState = NULL;
+lua_State *gmlCurrentLuaStates[GML_MAX_NUM_THREADS] = { NULL };
 #endif
 
 // queue handler - exequtes one GL command from queue (pointed to by p)
