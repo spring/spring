@@ -24,6 +24,7 @@ using std::max;
 CR_BIND(LosInstance, );
 CR_BIND(CLosHandler, );
 CR_BIND(CLosHandler::DelayedInstance, );
+CR_BIND(int2, );
 
 CR_REG_METADATA(LosInstance,(
 //		CR_MEMBER(losSquares),
