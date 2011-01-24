@@ -111,6 +111,8 @@ class CEventHandler
 		void UpdateDrawFeatures();
 		void UpdateFeatures();
 
+		void DeleteSyncedObjects();
+
 		void ProjectileCreated(const CProjectile* proj, int allyTeam);
 		void ProjectileDestroyed(const CProjectile* proj, int allyTeam);
 
@@ -752,6 +754,10 @@ inline void CEventHandler::DeleteSyncedFeatures() {
 	if(luaUI) luaUI->ExecuteFeatEventBatch();
 }
 
+inline void CEventHandler::DeleteSyncedObjects() {
+	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedObjects
+	if(luaUI) luaUI->ExecuteObjEventBatch();
+}
 
 
 inline void CEventHandler::ProjectileCreated(const CProjectile* proj, int allyTeam)

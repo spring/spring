@@ -211,7 +211,6 @@ gmlMultiItemServer<GLuint, GLsizei, void (GML_GLAPIENTRY *)(GLsizei, GLuint *)> 
 boost::mutex caimutex;
 boost::mutex decalmutex;
 boost::mutex treemutex;
-boost::mutex modelmutex;
 boost::mutex mapmutex;
 boost::mutex inmapmutex;
 boost::mutex tempmutex;
@@ -233,6 +232,7 @@ boost::mutex drawmutex;
 boost::mutex recvmutex;
 boost::mutex ulbatchmutex;
 boost::mutex flbatchmutex;
+boost::mutex olbatchmutex;
 boost::mutex plbatchmutex;
 boost::mutex glbatchmutex;
 boost::mutex mlbatchmutex;
@@ -254,6 +254,8 @@ boost::recursive_mutex &grpselmutex=selmutex;
 boost::recursive_mutex laycmdmutex;
 //boost::recursive_mutex luadrawmutex;
 boost::recursive_mutex projmutex;
+boost::recursive_mutex objmutex;
+boost::recursive_mutex modelmutex;
 
 gmlMutex simmutex;
 

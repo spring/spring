@@ -386,10 +386,15 @@ void CFeatureHandler::Update()
 
 		if(!toBeRemoved.empty()) {
 
+			GML_RECMUTEX_LOCK(obj); // Update
+
+			eventHandler.DeleteSyncedObjects();
+
 			GML_RECMUTEX_LOCK(feat); // Update
-			GML_RECMUTEX_LOCK(quad); // Update
 
 			eventHandler.DeleteSyncedFeatures();
+
+			GML_RECMUTEX_LOCK(quad); // Update
 
 			while (!toBeRemoved.empty()) {
 				CFeature* feature = GetFeature(toBeRemoved.back());

@@ -399,6 +399,7 @@ class CLuaHandle : public CEventClient
 		}
 		void ExecuteUnitEventBatch();
 		void ExecuteFeatEventBatch();
+		void ExecuteObjEventBatch();
 		void ExecuteProjEventBatch();
 		void ExecuteFrameEventBatch();
 		void ExecuteMiscEventBatch();
@@ -409,11 +410,13 @@ class CLuaHandle : public CEventClient
 
 		std::vector<LuaUnitEvent>luaUnitEventBatch;
 		std::vector<LuaFeatEvent>luaFeatEventBatch;
+		std::vector<LuaObjEvent>luaObjEventBatch;
 		std::vector<LuaProjEvent>luaProjEventBatch;
 		std::vector<int>luaFrameEventBatch;
 		std::vector<LuaMiscEvent>luaMiscEventBatch;
 		bool execUnitBatch;
 		bool execFeatBatch;
+		bool execObjBatch;
 		bool execProjBatch;
 		bool execFrameBatch;
 		bool execMiscBatch;

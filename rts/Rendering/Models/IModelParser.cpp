@@ -81,7 +81,7 @@ inline S3DModelPiece* ModelTypeToModelPiece(int type) {
 
 S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffset)
 {
-	GML_STDMUTEX_LOCK(model); // Load3DModel
+	GML_RECMUTEX_LOCK(model); // Load3DModel
 
 	StringToLowerInPlace(name);
 
@@ -129,7 +129,7 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffs
 
 void C3DModelLoader::Update() {
 #if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
-	GML_STDMUTEX_LOCK(model); // Update
+	GML_RECMUTEX_LOCK(model); // Update
 
 	for (std::vector<S3DModelPiece*>::iterator it = createLists.begin(); it != createLists.end(); ++it) {
 		CreateListsNow(*it);
@@ -163,7 +163,7 @@ void C3DModelLoader::DeleteChilds(S3DModelPiece* o)
 void C3DModelLoader::DeleteLocalModel(CUnit* unit)
 {
 #if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
-	GML_STDMUTEX_LOCK(model); // DeleteLocalModel
+	GML_RECMUTEX_LOCK(model); // DeleteLocalModel
 
 	fixLocalModels.erase(unit);
 	deleteLocalModels.push_back(unit->localmodel);
@@ -175,7 +175,7 @@ void C3DModelLoader::DeleteLocalModel(CUnit* unit)
 void C3DModelLoader::CreateLocalModel(CUnit* unit)
 {
 #if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
-	GML_STDMUTEX_LOCK(model); // CreateLocalModel
+	GML_RECMUTEX_LOCK(model); // CreateLocalModel
 
 	unit->localmodel = CreateLocalModel(unit->model);
 	fixLocalModels.insert(unit);

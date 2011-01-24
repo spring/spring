@@ -67,6 +67,7 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
 	UpdateThreading();
 	execUnitBatch = false;
 	execFeatBatch = false;
+	execObjBatch = false;
 	execProjBatch = false;
 	execFrameBatch = false;
 	execMiscBatch = false;
@@ -227,8 +228,9 @@ void CLuaHandle::CheckStack()
 {
 	ExecuteRecvFromSynced();
 	ExecuteUnitEventBatch();
-	ExecuteProjEventBatch();
 	ExecuteFeatEventBatch();
+	ExecuteObjEventBatch();
+	ExecuteProjEventBatch();
 	ExecuteFrameEventBatch();
 	ExecuteMiscEventBatch();
 
@@ -1281,11 +1283,13 @@ void CLuaHandle::UnitDecloaked(const CUnit* unit)
 
 void CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 {
-	if (fullRead) {
+	if (GetFullRead()) {
+		LUA_UNIT_BATCH_PUSH(,UNIT_UNIT_COLLISION, collider, collidee);
+		LUA_CALL_IN_CHECK(L);
 		lua_checkstack(L, 4);
 
 		static const LuaHashString cmdStr("UnitUnitCollision");
-		const int errFunc = SetupTraceback();
+		const int errFunc = SetupTraceback(L);
 
 		if (!cmdStr.GetGlobalFunc(L)) {
 			if (errFunc != 0) {
@@ -1303,11 +1307,13 @@ void CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 
 void CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* collidee)
 {
-	if (fullRead) {
+	if (GetFullRead()) {
+		LUA_OBJ_BATCH_PUSH(UNIT_FEAT_COLLISION, collider, collidee);
+		LUA_CALL_IN_CHECK(L);
 		lua_checkstack(L, 4);
 
 		static const LuaHashString cmdStr("UnitFeatureCollision");
-		const int errFunc = SetupTraceback();
+		const int errFunc = SetupTraceback(L);
 
 		if (!cmdStr.GetGlobalFunc(L)) {
 			if (errFunc != 0) {
@@ -1588,6 +1594,9 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 			case UNIT_EXPLOSION:
 				Explosion(e.int1, e.pos1, e.unit1);
 				break;
+			case UNIT_UNIT_COLLISION:
+				UnitUnitCollision(e.unit1, e.unit2);
+				break;
 			case UNIT_STOCKPILE_CHANGED:
 				StockpileChanged(e.unit1, (CWeapon *)e.unit2, e.int1);
 				break;
@@ -1626,6 +1635,32 @@ void CLuaHandle::ExecuteFeatEventBatch() {
 		}
 	}
 	execFeatBatch = false;
+}
+
+
+void CLuaHandle::ExecuteObjEventBatch() {
+	if(!UseEventBatch()) return;
+
+	GML_THRMUTEX_LOCK(obj, GML_DRAW); // ExecuteObjEventBatch
+
+	std::vector<LuaObjEvent> loeb;
+	{
+		GML_STDMUTEX_LOCK(olbatch);
+		luaObjEventBatch.swap(loeb);
+	}
+	execObjBatch = true;
+	for(std::vector<LuaObjEvent>::iterator i = loeb.begin(); i != loeb.end(); ++i) {
+		LuaObjEvent &e = *i;
+		switch(e.id) {
+			case UNIT_FEAT_COLLISION:
+				UnitFeatureCollision(e.unit, e.feat);
+				break;
+			default:
+				logOutput.Print("%s: Invalid Event %d", __FUNCTION__, e.id);
+				break;
+		}
+	}
+	execObjBatch = false;
 }
 
 

@@ -168,7 +168,6 @@ EXTERN inline GLuint GML_GLAPIENTRY gmlGenLists(GLsizei items) {
 extern boost::mutex caimutex;
 extern boost::mutex decalmutex;
 extern boost::mutex treemutex;
-extern boost::mutex modelmutex;
 extern boost::mutex mapmutex;
 extern boost::mutex inmapmutex;
 extern boost::mutex tempmutex;
@@ -190,6 +189,7 @@ extern boost::mutex drawmutex;
 extern boost::mutex recvmutex;
 extern boost::mutex ulbatchmutex;
 extern boost::mutex flbatchmutex;
+extern boost::mutex olbatchmutex;
 extern boost::mutex plbatchmutex;
 extern boost::mutex glbatchmutex;
 extern boost::mutex mlbatchmutex;
@@ -211,6 +211,8 @@ extern boost::recursive_mutex &grpselmutex;
 extern boost::recursive_mutex laycmdmutex;
 //extern boost::recursive_mutex luadrawmutex;
 extern boost::recursive_mutex projmutex;
+extern boost::recursive_mutex objmutex;
+extern boost::recursive_mutex modelmutex;
 
 extern gmlMutex simmutex;
 
