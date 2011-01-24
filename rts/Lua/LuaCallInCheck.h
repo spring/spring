@@ -57,12 +57,17 @@ enum UnitEvent {
 	UNIT_DECLOAKED,
 	UNIT_MOVE_FAILED,
 	UNIT_EXPLOSION,
+	UNIT_UNIT_COLLISION,
 	UNIT_STOCKPILE_CHANGED
 };
 
 enum FeatEvent {
 	FEAT_CREATED,
 	FEAT_DESTROYED
+};
+
+enum ObjEvent {
+	UNIT_FEAT_COLLISION
 };
 
 enum ProjEvent {
@@ -101,6 +106,13 @@ struct LuaFeatEvent {
 	LuaFeatEvent(FeatEvent i, const CFeature *f1) : id(i), feat1(f1) {}
 };
 
+struct LuaObjEvent {
+	ObjEvent id;
+	const CUnit *unit;
+	const CFeature *feat;
+	LuaObjEvent(ObjEvent i, const CUnit *u, const CFeature *f) : id(i), unit(u), feat(f) {}
+};
+
 struct LuaProjEvent {
 	ProjEvent id;
 	const CProjectile *proj1;
@@ -127,6 +139,12 @@ struct LuaMiscEvent {
 		luaFeatEventBatch.push_back(LuaFeatEvent(__VA_ARGS__));\
 		return;\
 	}
+#define LUA_OBJ_BATCH_PUSH(...)\
+	if(UseEventBatch() && !execObjBatch && Threading::IsSimThread()) {\
+		GML_STDMUTEX_LOCK(olbatch);\
+		luaObjEventBatch.push_back(LuaObjEvent(__VA_ARGS__));\
+		return;\
+	}
 #define LUA_PROJ_BATCH_PUSH(...)\
 	if(UseEventBatch() && !execProjBatch && Threading::IsSimThread()) {\
 		GML_STDMUTEX_LOCK(plbatch);\
@@ -148,6 +166,7 @@ struct LuaMiscEvent {
 #else
 #define LUA_UNIT_BATCH_PUSH(r,...)
 #define LUA_FEAT_BATCH_PUSH(...)
+#define LUA_OBJ_BATCH_PUSH(...)
 #define LUA_PROJ_BATCH_PUSH(...)
 #define LUA_FRAME_BATCH_PUSH(...)
 #define LUA_MISC_BATCH_PUSH(r,...)

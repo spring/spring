@@ -51,7 +51,7 @@ void CS3OTextureHandler::Update() {
 
 int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 {
-	GML_STDMUTEX_LOCK(model); // LoadS3OTextureNow
+	GML_RECMUTEX_LOCK(model); // LoadS3OTextureNow
 
 	const string totalName = model->tex1 + model->tex2;
 
