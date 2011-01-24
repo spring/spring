@@ -398,7 +398,7 @@ CBumpWater::CBumpWater()
 		GLSLDefineConstf1(definitions, "SpecularFactor", mapInfo->water.specularFactor);
 		GLSLDefineConstf1(definitions, "AmbientFactor",  mapInfo->water.ambientFactor);
 		GLSLDefineConstf1(definitions, "DiffuseFactor",  mapInfo->water.diffuseFactor * 15.0f);
-		GLSLDefineConstf3(definitions, "SunDir",         mapInfo->light.sunDir);
+		GLSLDefineConstf3(definitions, "SunDir",         globalRendering->sunDir); // FIXME: Break dependence with const sunDir (sun is no longer static)
 		GLSLDefineConstf1(definitions, "FresnelMin",     mapInfo->water.fresnelMin);
 		GLSLDefineConstf1(definitions, "FresnelMax",     mapInfo->water.fresnelMax);
 		GLSLDefineConstf1(definitions, "FresnelPower",   mapInfo->water.fresnelPower);
@@ -684,8 +684,6 @@ CBumpWater::CoastAtlasRect::CoastAtlasRect(CBumpWater::CoastUpdateRect& rect)
 
 void CBumpWater::HeightmapChanged(const int x1, const int y1, const int x2, const int y2)
 {
-	GML_STDMUTEX_LOCK(water);
-
 	if (!shoreWaves || readmap->currMinHeight > 0.0f || mapInfo->map.voidWater)
 		return;
 
@@ -1114,7 +1112,7 @@ void CBumpWater::SetUniforms()
 	glUniform1f(uniforms[ 5], mapInfo->water.specularFactor);
 	glUniform1f(uniforms[ 6], mapInfo->water.ambientFactor);
 	glUniform1f(uniforms[ 7], mapInfo->water.diffuseFactor * 15.0f);
-	glUniform3f(uniforms[ 8], mapInfo->light.sunDir.x,mapInfo->light.sunDir.y,mapInfo->light.sunDir.z );
+	glUniform3f(uniforms[ 8], globalRendering->sunDir.x,globalRendering->sunDir.y,globalRendering->sunDir.z );
 	glUniform1f(uniforms[ 9], mapInfo->water.fresnelMin);
 	glUniform1f(uniforms[10], mapInfo->water.fresnelMax);
 	glUniform1f(uniforms[11], mapInfo->water.fresnelPower);

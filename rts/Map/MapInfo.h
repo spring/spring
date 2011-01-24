@@ -78,6 +78,7 @@ public:
 		float  fogStart;
 		float4 fogColor;
 		float3 skyColor;
+		float3 skyDir;
 		float3 sunColor;
 		float3 cloudColor;
 		float  minWind;
@@ -102,6 +103,8 @@ public:
 	/** settings read from "MAP\LIGHT" section */
 	struct light_t {
 		float4 sunDir;     ///< Holds vector for the direction of the sun
+		float sunOrbitTime;
+		float sunStartAngle;
 		float3 groundAmbientColor;
 		float3 groundSunColor;
 		float3 groundSpecularColor;

@@ -8,10 +8,13 @@
 #include <assert.h>
 
 #include "Sim/Misc/GlobalConstants.h"
+#include "Rendering/GlobalRendering.h"
+
 #include "MapParser.h"
 #include "Lua/LuaParser.h"
 #include "LogOutput.h"
 #include "Exceptions.h"
+#include <float.h>
 
 
 using namespace std;
@@ -109,6 +112,9 @@ void CMapInfo::ReadAtmosphere()
 	atmo.fogStart     = atmoTable.GetFloat("fogStart", 0.1f);
 	atmo.fogColor   = atmoTable.GetFloat3("fogColor", float3(0.7f, 0.7f, 0.8f));
 	atmo.skyColor   = atmoTable.GetFloat3("skyColor", float3(0.1f, 0.15f, 0.7f));
+	atmo.skyDir = atmoTable.GetFloat3("skyDir", float3(0.0f, 0.0f, -1.0f));
+	atmo.skyDir.ANormalize();
+	globalRendering->skyDir = atmo.skyDir;
 	atmo.sunColor   = atmoTable.GetFloat3("sunColor", float3(1.0f, 1.0f, 1.0f));
 	atmo.cloudColor = atmoTable.GetFloat3("cloudColor", float3(1.0f, 1.0f, 1.0f));
 	atmo.skyBox = atmoTable.GetString("skyBox", "");
@@ -143,8 +149,16 @@ void CMapInfo::ReadLight()
 {
 	const LuaTable lightTable = parser->GetRoot().SubTable("lighting");
 
-	light.sunDir = lightTable.GetFloat3("sunDir", float3(0.0f, 1.0f, 2.0f));
+	light.sunStartAngle = lightTable.GetFloat("sunStartAngle", 0.0f);
+	light.sunOrbitTime = lightTable.GetFloat("sunOrbitTime", 1440.0f);
+	light.sunDir = lightTable.GetFloat4("sunDir", float4(0.0f, 1.0f, 2.0f, FLT_MAX));
+	bool iscompat = (light.sunDir.w == FLT_MAX);
+	if(iscompat) {
+		light.sunDir = lightTable.GetFloat3("sunDir", float3(0.0f, 1.0f, 2.0f));
+		light.sunDir.w = 0.0f;
+	}
 	light.sunDir.ANormalize();
+	globalRendering->UpdateSunParams(light.sunDir, light.sunStartAngle, light.sunOrbitTime, iscompat);
 
 	light.groundAmbientColor  = lightTable.GetFloat3("groundAmbientColor",
 	                                                float3(0.5f, 0.5f, 0.5f));
@@ -153,6 +167,7 @@ void CMapInfo::ReadLight()
 	light.groundSpecularColor = lightTable.GetFloat3("groundSpecularColor",
 	                                                float3(0.1f, 0.1f, 0.1f));
 	light.groundShadowDensity = lightTable.GetFloat("groundShadowDensity", 0.8f);
+	globalRendering->groundShadowDensity = light.groundShadowDensity;
 
 	light.unitAmbientColor  = lightTable.GetFloat3("unitAmbientColor",
 	                                                float3(0.4f, 0.4f, 0.4f));
@@ -161,6 +176,7 @@ void CMapInfo::ReadLight()
 	light.unitSpecularColor  = lightTable.GetFloat3("unitSpecularColor",
 	                                               light.unitSunColor);
 	light.unitShadowDensity = lightTable.GetFloat("unitShadowDensity", 0.8f);
+	globalRendering->unitShadowDensity = light.unitShadowDensity;
 }
 
 

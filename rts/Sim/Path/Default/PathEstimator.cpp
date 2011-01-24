@@ -325,7 +325,7 @@ void CPathEstimator::CalculateVertex(
 	// use this thread's "private" CPathFinder instance
 	// (rather than locking pathFinder->GetPath()) if we
 	// are in one
-	result = pathFinders[threadNum]->GetPath(moveData, startPos, pfDef, path, false, true, MAX_SEARCHED_NODES_PE, false, 0, true);
+	result = pathFinders[threadNum]->GetPath(moveData, startPos, pfDef, path, false, true, MAX_SEARCHED_NODES_PF >> 2, false, 0, true);
 
 	// store the result
 	if (result == IPath::Ok)

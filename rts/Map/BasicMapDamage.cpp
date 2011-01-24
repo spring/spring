@@ -198,7 +198,7 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 	readmap->HeightmapUpdated(x1, y1, x2, y2);
 	pathManager->TerrainChange(x1, y1, x2, y2);
 	featureHandler->TerrainChanged(x1, y1, x2, y2);
-	water->HeightmapChanged(x1, y1, x2, y2);
+	CBaseWater::PushHeightmapChange(x1, y1, x2, y2);
 	heightMapTexture.UpdateArea(x1, y1, x2, y2);
 }
 

@@ -1050,11 +1050,10 @@ bool CGame::DrawWorld()
 
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("Water");
-		GML_STDMUTEX_LOCK(water);
 
 		water->OcclusionQuery();
 		if (water->drawSolid) {
-			water->UpdateWater(this);
+			water->UpdateBaseWater(this);
 			water->Draw();
 		}
 	}
@@ -1088,10 +1087,9 @@ bool CGame::DrawWorld()
 	//! draw water
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("Water");
-		GML_STDMUTEX_LOCK(water);
 
 		if (!water->drawSolid) {
-			water->UpdateWater(this);
+			water->UpdateBaseWater(this);
 			water->Draw();
 		}
 	}
@@ -1270,8 +1268,8 @@ bool CGame::Draw() {
 			projectileDrawer->UpdateTextures();
 			sky->Update();
 
-			GML_STDMUTEX_LOCK(water);
 			water->Update();
+			globalRendering->Update();
 		}
 	}
 
@@ -1356,7 +1354,10 @@ bool CGame::Draw() {
 				SetDrawMode(gameNormalDraw);
 			}
 
+			cubeMapHandler->UpdateSpecularTexture();
 			cubeMapHandler->UpdateReflectionTexture();
+			sky->UpdateSkyTexture();
+
 
 			if (FBO::IsSupported())
 				FBO::Unbind();
@@ -1770,6 +1771,7 @@ void CGame::SimFrame() {
 			(playerHandler->Player(gu->myPlayerNum)->dccs).SendStateUpdate(camMove);
 		}
 		CTeamHighlight::Update(gs->frameNum);
+		globalRendering->UpdateSun();
 	}
 
 	// everything from here is simulation

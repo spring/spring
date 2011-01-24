@@ -14,7 +14,6 @@
 #include "Map/ReadMap.h"
 #include "MoveMath/MoveMath.h"
 #include "Rendering/GroundDecalHandler.h"
-#include "Rendering/Models/3DModel.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
@@ -28,14 +27,14 @@
 #include "Sim/Units/CommandAI/MobileCAI.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "System/Sync/SyncTracer.h"
 #include "System/GlobalUnsynced.h"
 #include "System/EventHandler.h"
 #include "System/LogOutput.h"
-#include "Sound/IEffectChannel.h"
 #include "System/FastMath.h"
 #include "System/myMath.h"
 #include "System/Vec2.h"
+#include "System/Sound/IEffectChannel.h"
+#include "System/Sync/SyncTracer.h"
 
 #define MIN_WAYPOINT_DISTANCE (SQUARE_SIZE << 1)
 #define DEBUG_OUTPUT 0
@@ -233,7 +232,7 @@ void CGroundMoveType::Update()
 
 				if (!atGoal) {
 					if (!idling) {
-						etaFailures = std::max(    0, int(etaFailures - 1));
+						etaFailures = std::max(0, int(etaFailures - 1));
 					} else {
 						// note: the unit could just be turning in-place
 						// over several frames (eg. to maneuver around an
@@ -1151,8 +1150,8 @@ void CGroundMoveType::GetNewPath()
 		Fail();
 	}
 
-	// limit path-requests to one per second
-	restartDelay = gs->frameNum + GAME_SPEED;
+	// limit frequency of path-requests from SlowUpdate's
+	restartDelay = gs->frameNum + (UNIT_SLOWUPDATE_RATE << 1);
 }
 
 
@@ -1242,7 +1241,7 @@ float3 CGroundMoveType::Here()
 /* Initializes motion. */
 void CGroundMoveType::StartEngine() {
 	// ran only if the unit has no path and is not already at goal
-	if (!pathId && !atGoal) {
+	if (pathId == 0 && !atGoal) {
 		GetNewPath();
 
 		// activate "engine" only if a path was found
@@ -1340,7 +1339,6 @@ void CGroundMoveType::HandleObjectCollisions()
 
 	{
 		#define FOOTPRINT_RADIUS(xs, zs) (math::sqrt((xs * xs + zs * zs)) * 0.5f * SQUARE_SIZE)
-		#define SWAP_MASS_SCALES(pa, pb) { const float a = *pa; *(float*) pa = *pb; *(float*) pb = a; }
 
 		const UnitDef*   colliderUD = collider->unitDef;
 		const MoveData*  colliderMD = collider->mobility;
@@ -1366,8 +1364,9 @@ void CGroundMoveType::HandleObjectCollisions()
 				continue;
 			}
 
-			const UnitDef*  collideeUD = collidee->unitDef;
-			const MoveData* collideeMD = collidee->mobility;
+			const UnitDef*   collideeUD = collidee->unitDef;
+			const MoveData*  collideeMD = collidee->mobility;
+			const CMoveMath* collideeMM = (collideeMD != NULL)? collideeMD->moveMath: NULL;
 
 			const float3& collideeCurPos = collidee->pos;
 			const float3& collideeOldPos = collidee->moveType->oldPos;
@@ -1387,8 +1386,11 @@ void CGroundMoveType::HandleObjectCollisions()
 			if ((separationVector.SqLength() - separationMinDist) > 0.01f) { continue; }
 			if (collidee->usingScriptMoveType) { pushCollidee = false; }
 			if (collideeUD->pushResistant) { pushCollidee = false; }
+
 			if (!teamHandler->Ally(collider->allyteam, collidee->allyteam)) { pushCollider = false; pushCollidee = false; }
 			if (!teamHandler->Ally(collidee->allyteam, collider->allyteam)) { pushCollider = false; pushCollidee = false; }
+
+			// don't push either party if the collidee does not block the collider
 			if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
 			if (!collideeMobile && (colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
 
@@ -1411,12 +1413,21 @@ void CGroundMoveType::HandleObjectCollisions()
 
 			// far from a realistic treatment, but works
 			const float collisionMassSum  = s1 + s2 + 1.0f;
-			const float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s1 / collisionMassSum)));
-			const float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s2 / collisionMassSum)));
+			      float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s1 / collisionMassSum)));
+			      float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s2 / collisionMassSum)));
 
-			if (!collideeMobile && (colliderMassScale > collideeMassScale)) {
-				SWAP_MASS_SCALES(&colliderMassScale, &collideeMassScale);
+			if (!collideeMobile && colliderMassScale > collideeMassScale) {
+				std::swap(colliderMassScale, collideeMassScale);
 			}
+
+			const float3 colliderNewPos = collider->pos + (colResponseVec * colliderMassScale);
+			const float3 collideeNewPos = collidee->pos - (colResponseVec * collideeMassScale);
+
+			// try to prevent both parties from being pushed onto non-traversable squares
+			if (                  (colliderMM->IsBlocked(*colliderMD, colliderNewPos) & CMoveMath::BLOCK_STRUCTURE) != 0) { colliderMassScale = 0.0f; }
+			if (collideeMobile && (collideeMM->IsBlocked(*collideeMD, collideeNewPos) & CMoveMath::BLOCK_STRUCTURE) != 0) { collideeMassScale = 0.0f; }
+			if (                  colliderMM->SpeedMod(*colliderMD, colliderNewPos) <= 0.01f) { colliderMassScale = 0.0f; }
+			if (collideeMobile && collideeMM->SpeedMod(*collideeMD, collideeNewPos) <= 0.01f) { collideeMassScale = 0.0f; }
 
 			if (pushCollider) { collider->pos += (colResponseVec * colliderMassScale); } else { collider->pos = colliderOldPos; }
 			if (pushCollidee) { collidee->pos -= (colResponseVec * collideeMassScale); } else { collidee->pos = collideeOldPos; }
@@ -1442,6 +1453,7 @@ void CGroundMoveType::HandleObjectCollisions()
 
 			if ((separationVector.SqLength() - separationMinDist) > 0.01f) { continue; }
 			if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
+
 			if (!colliderMM->CrushResistant(*colliderMD, collidee)) { collidee->Kill(collider->frontdir * currentSpeed * 200.0f); }
 			if ((colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
 
@@ -1461,11 +1473,11 @@ void CGroundMoveType::HandleObjectCollisions()
 			// multiply the collider's mass by a large constant (so that
 			// heavy features do not bounce light units away like pinballs)
 			const float collisionMassSum  = collider->mass * 10000.0f + collidee->mass + 1.0f;
-			const float colliderMassScale = std::max(0.1f, std::min(0.9f, 1.0f - (collider->mass * 10000.0f / collisionMassSum)));
-			const float collideeMassScale = std::max(0.1f, std::min(0.9f, 1.0f - (collidee->mass            / collisionMassSum)));
+			      float colliderMassScale = std::max(0.1f, std::min(0.9f, 1.0f - (collider->mass * 10000.0f / collisionMassSum)));
+			      float collideeMassScale = std::max(0.1f, std::min(0.9f, 1.0f - (collidee->mass            / collisionMassSum)));
 
-			if (collidee->reachedFinalPos && (colliderMassScale > collideeMassScale)) {
-				SWAP_MASS_SCALES(&colliderMassScale, &collideeMassScale);
+			if (collidee->reachedFinalPos && colliderMassScale > collideeMassScale) {
+				std::swap(colliderMassScale, collideeMassScale);
 			}
 
 			collider->pos += (colResponseVec * colliderMassScale);

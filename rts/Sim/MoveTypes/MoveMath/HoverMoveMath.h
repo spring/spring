@@ -12,11 +12,9 @@
 class CHoverMoveMath : public CMoveMath {
 	CR_DECLARE(CHoverMoveMath);
 public:
-	//SpeedMod returns a speed-multiplier for given position or data.
 	float SpeedMod(const MoveData& moveData, float height, float slope) const;
-	float SpeedMod(const MoveData& moveData, float height, float slope,float moveSlope) const;
+	float SpeedMod(const MoveData& moveData, float height, float slope, float moveSlope) const;
 
-	//Gives the y-coordinate the unit will "stand on".
 	float yLevel(int xSquare, int zSquare) const;
 	float yLevel(const float3& pos) const;
 

@@ -322,8 +322,8 @@ void CShadowHandler::CreateShadows(void)
 	glLoadIdentity();
 
 
-	cross1 = (mapInfo->light.sunDir.cross(UpVector)).ANormalize();
-	cross2 = cross1.cross(mapInfo->light.sunDir);
+	cross1 = (globalRendering->sunDir.cross(UpVector)).ANormalize();
+	cross2 = cross1.cross(globalRendering->sunDir);
 	centerPos = camera->pos;
 
 	//! derive the size of the shadow-map from the
@@ -353,10 +353,10 @@ void CShadowHandler::CreateShadows(void)
 	shadowMatrix[ 5] =   cross2.y / maxLengthY;
 	shadowMatrix[ 9] =   cross2.z / maxLengthY;
 	shadowMatrix[13] = -(cross2.dot(centerPos)) / maxLengthY;
-	shadowMatrix[ 2] = -mapInfo->light.sunDir.x / maxLength;
-	shadowMatrix[ 6] = -mapInfo->light.sunDir.y / maxLength;
-	shadowMatrix[10] = -mapInfo->light.sunDir.z / maxLength;
-	shadowMatrix[14] = ((centerPos.x * mapInfo->light.sunDir.x + centerPos.z * mapInfo->light.sunDir.z) / maxLength) + 0.5f;
+	shadowMatrix[ 2] = -globalRendering->sunDir.x / maxLength;
+	shadowMatrix[ 6] = -globalRendering->sunDir.y / maxLength;
+	shadowMatrix[10] = -globalRendering->sunDir.z / maxLength;
+	shadowMatrix[14] = ((centerPos.x * globalRendering->sunDir.x + centerPos.z * globalRendering->sunDir.z) / maxLength) + 0.5f;
 
 	glLoadMatrixf(shadowMatrix.m);
 
@@ -380,9 +380,11 @@ void CShadowHandler::CreateShadows(void)
 	float3 oldup = camera->up;
 	camera->right = cross1;
 	camera->up = cross2;
-	camera->pos2 = camera->pos + mapInfo->light.sunDir * 8000;
+	camera->pos2 = camera->pos + globalRendering->sunDir * 8000;
 
-	DrawShadowPasses();
+
+	if(globalRendering->sunIntensity > 0)
+		DrawShadowPasses();
 
 	camera->up = oldup;
 	camera->pos2 = camera->pos;
