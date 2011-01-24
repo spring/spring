@@ -24,13 +24,16 @@ float CMoveMath::yLevel(const float3& pos) const
 /* Converts a point-request into a square-positional request. */
 float CMoveMath::SpeedMod(const MoveData& moveData, const float3& pos) const
 {
-	return SpeedMod(moveData, (pos.x / SQUARE_SIZE), (pos.z / SQUARE_SIZE));
+	//! casts are required so we call MM::SpeedMod(int, int) and not an overloaded *MM::SpeedMod(float, float)
+	return SpeedMod(moveData, int(pos.x / SQUARE_SIZE), int(pos.z / SQUARE_SIZE));
 }
 
 float CMoveMath::SpeedMod(const MoveData& moveData, const float3& pos, const float3& moveDir) const
 {
-	return SpeedMod(moveData, (pos.x / SQUARE_SIZE), (pos.z / SQUARE_SIZE), moveDir);
+	//! casts are required so we call MM::SpeedMod(int, int) and not an overloaded *MM::SpeedMod(float, float)
+	return SpeedMod(moveData, int(pos.x / SQUARE_SIZE), int(pos.z / SQUARE_SIZE), moveDir);
 }
+
 
 
 /* calculate the local speed-modifier for this movedata */

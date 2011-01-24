@@ -14,7 +14,6 @@
 #include "Map/ReadMap.h"
 #include "MoveMath/MoveMath.h"
 #include "Rendering/GroundDecalHandler.h"
-#include "Rendering/Models/3DModel.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
@@ -28,14 +27,14 @@
 #include "Sim/Units/CommandAI/MobileCAI.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "System/Sync/SyncTracer.h"
 #include "System/GlobalUnsynced.h"
 #include "System/EventHandler.h"
 #include "System/LogOutput.h"
-#include "Sound/IEffectChannel.h"
 #include "System/FastMath.h"
 #include "System/myMath.h"
 #include "System/Vec2.h"
+#include "System/Sound/IEffectChannel.h"
+#include "System/Sync/SyncTracer.h"
 
 #define MIN_WAYPOINT_DISTANCE (SQUARE_SIZE << 1)
 #define DEBUG_OUTPUT 0
@@ -1366,8 +1365,9 @@ void CGroundMoveType::HandleObjectCollisions()
 				continue;
 			}
 
-			const UnitDef*  collideeUD = collidee->unitDef;
-			const MoveData* collideeMD = collidee->mobility;
+			const UnitDef*   collideeUD = collidee->unitDef;
+			const MoveData*  collideeMD = collidee->mobility;
+			const CMoveMath* collideeMM = (collideeMD != NULL)? collideeMD->moveMath: NULL;
 
 			const float3& collideeCurPos = collidee->pos;
 			const float3& collideeOldPos = collidee->moveType->oldPos;
@@ -1387,8 +1387,10 @@ void CGroundMoveType::HandleObjectCollisions()
 			if ((separationVector.SqLength() - separationMinDist) > 0.01f) { continue; }
 			if (collidee->usingScriptMoveType) { pushCollidee = false; }
 			if (collideeUD->pushResistant) { pushCollidee = false; }
+
 			if (!teamHandler->Ally(collider->allyteam, collidee->allyteam)) { pushCollider = false; pushCollidee = false; }
 			if (!teamHandler->Ally(collidee->allyteam, collider->allyteam)) { pushCollider = false; pushCollidee = false; }
+
 			if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
 			if (!collideeMobile && (colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
 
@@ -1418,8 +1420,17 @@ void CGroundMoveType::HandleObjectCollisions()
 				SWAP_MASS_SCALES(&colliderMassScale, &collideeMassScale);
 			}
 
-			if (pushCollider) { collider->pos += (colResponseVec * colliderMassScale); } else { collider->pos = colliderOldPos; }
-			if (pushCollidee) { collidee->pos -= (colResponseVec * collideeMassScale); } else { collidee->pos = collideeOldPos; }
+			const float3 colliderNewPos = collider->pos + (colResponseVec * colliderMassScale);
+			const float3 collideeNewPos = collidee->pos - (colResponseVec * collideeMassScale);
+
+			// try to prevent both parties from being pushed onto non-traversable squares
+			if (                  (colliderMM->IsBlocked(*colliderMD, colliderNewPos) & CMoveMath::BLOCK_STRUCTURE) != 0) { pushCollider = false; }
+			if (collideeMobile && (collideeMM->IsBlocked(*collideeMD, collideeNewPos) & CMoveMath::BLOCK_STRUCTURE) != 0) { pushCollidee = false; }
+			if (                  colliderMM->SpeedMod(*colliderMD, colliderNewPos) <= 0.01f) { pushCollider = false; }
+			if (collideeMobile && collideeMM->SpeedMod(*collideeMD, collideeNewPos) <= 0.01f) { pushCollidee = false; }
+
+			if (pushCollider) { collider->pos = colliderNewPos; } else { collider->pos = colliderOldPos; }
+			if (pushCollidee) { collidee->pos = collideeNewPos; } else { collidee->pos = collideeOldPos; }
 
 			collider->UpdateMidPos();
 			collidee->UpdateMidPos();
