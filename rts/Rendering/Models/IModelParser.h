@@ -44,7 +44,7 @@ private:
 	std::map<std::string, S3DModel*> cache;
 	std::map<std::string, IModelParser*> parsers;
 
-#if defined(USE_GML) && GML_ENABLE_SIM
+#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
 	std::vector<S3DModelPiece*> createLists;
 
 	std::set<CUnit*> fixLocalModels;

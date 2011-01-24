@@ -15,6 +15,8 @@ namespace Threading {
 
 	void SetMainThread(boost::thread* mt);
 	boost::thread* GetMainThread();
+	void SetSimThread(bool set);
+	bool IsSimThread();
 	void SetThreadError(const Error& err);
 	Error* GetThreadError();
 	bool IsMainThread();

@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
-
 #include <set>
 #include <list>
 #include <cctype>
@@ -93,8 +92,8 @@ enum UnitAllegiance {
 /******************************************************************************/
 /******************************************************************************/
 
-static const bool& fullRead     = CLuaHandle::GetActiveFullRead();
-static const int&  readAllyTeam = CLuaHandle::GetActiveReadAllyTeam();
+#define fullRead CLuaHandle::GetActiveFullRead()
+#define readAllyTeam CLuaHandle::GetActiveReadAllyTeam()
 
 
 /******************************************************************************/

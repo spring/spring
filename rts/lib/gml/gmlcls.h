@@ -59,7 +59,9 @@
 #define GML_LOCKED_GMLCOUNT_ASSIGNMENT 0 // experimental feature, probably not needed
 #define GML_SHARE_LISTS 1 // use glShareLists to allow opengl calls in sim thread
 #define GML_DRAW_THREAD_NUM 0 // thread number of draw thread
-#define GML_SIM_THREAD_NUM 1 // thread number of sim thread
+#define GML_LOAD_THREAD_NUM 1 // thread number of game loading thread
+#define GML_SIM_THREAD_NUM 2 // thread number of sim thread
+#define GML_DEBUG_MUTEX 0 // debugs the mutex locking order
 //#define BOOST_AC_USE_PTHREADS
 
 // memory barriers for different platforms
@@ -202,8 +204,8 @@ extern unsigned gmlCPUCount();
 #else
 #	define GML_CPU_COUNT (gmlThreadCountOverride ? gmlThreadCountOverride : gmlCPUCount() )
 #endif
-#define GML_MAX_NUM_THREADS (32+1) // one extra for the aux (Sim) thread
-#define GML_IF_SERVER_THREAD(thread) if(!GML_ENABLE || ((GML_SHARE_LISTS && thread <= GML_SIM_THREAD_NUM) || (!GML_SHARE_LISTS && thread == GML_DRAW_THREAD_NUM)))
+#define GML_MAX_NUM_THREADS (32+2) // extra for the Sim & Loading threads
+#define GML_IF_SERVER_THREAD(thread) if(!GML_ENABLE || ((GML_SHARE_LISTS && thread <= GML_SIM_THREAD_NUM) || (!GML_SHARE_LISTS && thread <= GML_LOAD_THREAD_NUM)))
 extern int gmlItemsConsumed;
 
 typedef unsigned char BYTE;
@@ -804,7 +806,7 @@ struct gmlQueue {
 
 template<class T,class S, class C>
 class gmlItemSequenceServer {
-	typedef void (*delitemseqfun)(T, S);
+	typedef void (GML_GLAPIENTRY * delitemseqfun)(T, S);
 	C genfun;
 	delitemseqfun delfun;
 	gmlCount req;

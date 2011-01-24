@@ -20,6 +20,19 @@ using std::vector;
 
 class LuaUtils {
 	public:
+
+		struct DataDump {
+			int type;
+			std::string str;
+			float num;
+			bool bol;
+			std::vector<std::pair<DataDump, DataDump> > table;
+		};
+
+		static int Backup(std::vector<DataDump> &dv, lua_State* src, int count);
+
+		static int Restore(const std::vector<DataDump> &dv, lua_State* dst);
+
 		static int CopyData(lua_State* dst, lua_State* src, int count);
 
 		static void PushCurrentFuncEnv(lua_State* L, const char* caller);

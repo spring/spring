@@ -85,8 +85,8 @@ const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
 CUnitSet LuaUnsyncedCtrl::drawCmdQueueUnits;
 
-static const bool& fullRead     = CLuaHandle::GetActiveFullRead();
-static const int&  readAllyTeam = CLuaHandle::GetActiveReadAllyTeam();
+#define fullRead CLuaHandle::GetActiveFullRead()
+#define readAllyTeam CLuaHandle::GetActiveReadAllyTeam()
 
 
 /******************************************************************************/
@@ -1498,7 +1498,7 @@ int LuaUnsyncedCtrl::SetUnitNoMinimap(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 {
-//	GML_RECMUTEX_LOCK(sel); // SetUnitNoSelect - this mutex is already locked (lua)
+	GML_RECMUTEX_LOCK(sel); // SetUnitNoSelect
 
 	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
 		return 0;
@@ -2087,7 +2087,7 @@ int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 	const string texName = lua_tostring(L, 2);
 
 	if (texName[0] == LuaTextures::prefix) { // '!'
-		LuaTextures& textures = CLuaHandle::GetActiveTextures();
+		LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
 		const LuaTextures::Texture* tex = textures.GetInfo(texName);
 		if (tex == NULL) {
 			return 0;
@@ -2104,7 +2104,7 @@ int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 {
-//	GML_RECMUTEX_LOCK(group); // SetUnitGroup - this mutex is already locked (lua)
+	GML_RECMUTEX_LOCK(group); // SetUnitGroup - this mutex is already locked (lua)
 
 	if (!CheckModUICtrl()) {
 		return 0;
