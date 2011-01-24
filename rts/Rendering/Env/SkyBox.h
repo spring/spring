@@ -15,6 +15,8 @@ public:
 	void Draw();
 	void Update() {}
 	void DrawSun(void) {}
+	void UpdateSunDir() {}
+	void UpdateSkyTexture() {}
 
 private:
 	unsigned int tex;

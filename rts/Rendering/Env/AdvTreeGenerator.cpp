@@ -153,7 +153,7 @@ void CAdvTreeGenerator::Draw() const
 
 void CAdvTreeGenerator::DrawTrunk(const float3& start, const float3& end, const float3& orto1, const float3& orto2, float size)
 {
-	float3 flatSun = mapInfo->light.sunDir;
+	float3 flatSun = globalRendering->sunDir;
 	flatSun.y = 0.0f;
 
 	int numIter=(int)max(3.0f,size*10);
@@ -237,7 +237,7 @@ void CAdvTreeGenerator::CreateLeaves(const float3& start, const float3& dir, flo
 	const float baseRot = fRand(2 * PI);
 	const int numLeaves = (int) length * 10 / MAX_TREE_HEIGHT;
 
-	float3 flatSun = mapInfo->light.sunDir;
+	float3 flatSun = globalRendering->sunDir;
 	flatSun.y = 0;
 
 	for (int a = 0; a < numLeaves + 1; a++) {
@@ -567,7 +567,7 @@ void CAdvTreeGenerator::DrawPineTrunk(const float3 &start, const float3 &end, fl
 {
 	float3 orto1(1,0,0);
 	float3 orto2(0,0,1);
-	float3 flatSun=mapInfo->light.sunDir;
+	float3 flatSun=globalRendering->sunDir;
 	flatSun.y=0;
 
 	int numIter=8;
@@ -589,7 +589,7 @@ void CAdvTreeGenerator::DrawPineTrunk(const float3 &start, const float3 &end, fl
 
 void CAdvTreeGenerator::DrawPineBranch(const float3 &start, const float3 &dir, float size)
 {
-	float3 flatSun = mapInfo->light.sunDir;
+	float3 flatSun = globalRendering->sunDir;
 	flatSun.y = 0;
 
 	float3 orto1 = dir.cross(UpVector);

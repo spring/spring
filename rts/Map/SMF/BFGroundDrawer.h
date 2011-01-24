@@ -32,6 +32,7 @@ public:
 	void SetupRefrDrawPass(void) { smfShaderCurrARB = smfShaderRefrARB; }
 
 	void Update();
+	void UpdateSunDir();
 
 	void IncreaseDetail();
 	void DecreaseDetail();

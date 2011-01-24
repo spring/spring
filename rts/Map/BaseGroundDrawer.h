@@ -43,6 +43,7 @@ public:
 	virtual void SetupRefrDrawPass(void) {}
 
 	virtual void Update() = 0;
+	virtual void UpdateSunDir() = 0;
 
 	virtual void IncreaseDetail() = 0;
 	virtual void DecreaseDetail() = 0;

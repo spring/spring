@@ -147,11 +147,10 @@ bool CGame::ActionPressed(const Action& action,
 		if (!action.extra.empty()) {
 			nextWaterRendererMode = std::max(0, atoi(action.extra.c_str()) % CBaseWater::NUM_WATER_RENDERERS);
 		} else {
-			nextWaterRendererMode = (std::max(0, water->GetID()) + 1) % CBaseWater::NUM_WATER_RENDERERS;
+			nextWaterRendererMode = -1;
 		}
 
-		water = CBaseWater::GetWater(water, nextWaterRendererMode);
-		logOutput.Print("Set water rendering mode to %i (%s)", nextWaterRendererMode, water->GetName());
+		CBaseWater::PushWaterMode(nextWaterRendererMode);
 	}
 	else if (cmd == "advshading") {
 		static bool canUse = unitDrawer->advShading;
@@ -727,6 +726,13 @@ bool CGame::ActionPressed(const Action& action,
 			sky->dynamicSky = !sky->dynamicSky;
 		} else {
 			sky->dynamicSky = !!atoi(action.extra.c_str());
+		}
+	}
+	else if (cmd == "dynamicsun") {
+		if (action.extra.empty()) {
+			globalRendering->dynamicSun = !globalRendering->dynamicSun;
+		} else {
+			globalRendering->dynamicSun = !!atoi(action.extra.c_str());
 		}
 	}
 #ifdef USE_GML

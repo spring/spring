@@ -17,6 +17,12 @@ public:
 	void Update();
 	void DrawSun();
 	void Draw();
+	void UpdateSunDir();
+	void UpdateSkyDir();
+	void UpdateSunFlare();
+	void UpdateSkyTexture();
+	inline void UpdateTexPartDot3(int x, int y, unsigned char (*texp)[4]);
+	inline void UpdateTexPart(int x, int y, unsigned char (*texp)[4]);
 
 private:
 	void UpdatePart(int ast, int aed, int a3cstart, int a4cstart);
@@ -62,6 +68,8 @@ private:
 
 	float3 sundir1;
 	float3 sundir2;
+	float3 skydir1;
+	float3 skydir2;
 
 	float3 modSunDir;
 
@@ -73,6 +81,10 @@ private:
 	float3 skyColor;
 	float3 sunColor;
 	float3 cloudColor;
+
+	unsigned char (* skytexpart)[4];
+	int skyTexUpdateIter;
+	float skyAngle;
 
 protected:
 	inline unsigned char GetCloudThickness(int x,int y);

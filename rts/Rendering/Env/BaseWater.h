@@ -6,6 +6,12 @@
 #include "float3.h"
 class CGame;
 
+struct HeightmapChange {
+	int x1,y1,x2,y2;
+	HeightmapChange(const int _x1, const int _y1, const int _x2, const int _y2):
+									x1(_x1), y1(_y1), x2(_x2), y2(_y2) {}
+};
+
 class CBaseWater
 {
 public:
@@ -30,11 +36,16 @@ public:
 	virtual int  GetID() const { return -1; }
 	virtual const char* GetName() const { return ""; }
 
+	static void UpdateBaseWater(CGame* game);
 	static CBaseWater* GetWater(CBaseWater* currWaterRenderer, int nextWaterRenderMode);
+	static void PushWaterMode(int nextWaterRenderMode);
+	static void PushHeightmapChange(const int x1, const int y1, const int x2, const int y2);
+	static std::vector<int> waterModes;
+	static std::vector<HeightmapChange> heightmapChanges;
+ 	static bool noWakeProjectiles;
 
 	bool drawReflection;
 	bool drawRefraction;
- 	bool noWakeProjectiles;
  	bool drawSolid;
 };
 

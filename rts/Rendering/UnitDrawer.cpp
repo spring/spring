@@ -66,7 +66,13 @@ extern gmlClientServer<void, int, CUnit*> *gmlProcessor;
 
 CUnitDrawer* unitDrawer;
 
-static bool luaDrawing = false; // FIXME
+static bool LUA_DRAWING = false; // FIXME
+static float UNIT_GLOBAL_LOD_FACTOR = 1.0f;
+
+inline static void SetUnitGlobalLODFactor(float value)
+{
+	UNIT_GLOBAL_LOD_FACTOR = (value * camera->lppScale);
+}
 
 static float GetLODFloat(const string& name, float def)
 {
@@ -98,7 +104,6 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 
 	unitAmbientColor = mapInfo->light.unitAmbientColor;
 	unitSunColor = mapInfo->light.unitSunColor;
-	unitShadowDensity = mapInfo->light.unitShadowDensity;
 
 	cloakAlpha  = std::max(0.11f, std::min(1.0f, 1.0f - configHandler->Get("UnitTransparency", 0.7f)));
 	cloakAlpha1 = std::min(1.0f, cloakAlpha + 0.1f);
@@ -272,10 +277,10 @@ bool CUnitDrawer::LoadModelShaders()
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(2, 2); // shadowTex   (idx 2, texunit 2)
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(3, 3); // reflectTex  (idx 3, texunit 3)
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(5, &mapInfo->light.sunDir[0]);
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(5, &globalRendering->sunDir[0]);
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(10, &unitAmbientColor[0]);
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(11, &unitSunColor[0]);
-			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(12, unitShadowDensity);
+			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(12, globalRendering->unitShadowDensity);
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(15, 0); // numModelDynLights
 			modelShaders[MODEL_SHADER_S3O_SHADOW]->Disable();
 		}
@@ -287,6 +292,17 @@ bool CUnitDrawer::LoadModelShaders()
 	return true;
 }
 
+
+void CUnitDrawer::UpdateSunDir() {
+	if (shadowHandler->canUseShadows && globalRendering->haveGLSL && modelShaders.size() > MODEL_SHADER_S3O_SHADOW) {
+		modelShaders[MODEL_SHADER_S3O_SHADOW]->Enable();
+		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(5, &globalRendering->sunDir[0]);
+		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(12, globalRendering->unitShadowDensity);
+		float3 factoredUnitSunColor = unitSunColor * globalRendering->sunIntensity;
+		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(11, &factoredUnitSunColor[0]);
+		modelShaders[MODEL_SHADER_S3O_SHADOW]->Disable();
+	}
+}
 
 
 void CUnitDrawer::SetUnitDrawDist(float dist)
@@ -358,7 +374,7 @@ inline bool CUnitDrawer::DrawUnitLOD(CUnit* unit)
 			const LuaMatType matType = (water->drawReflection)?
 				LUAMAT_ALPHA_REFLECT: LUAMAT_ALPHA;
 			LuaUnitMaterial& unitMat = unit->luaMats[matType];
-			const unsigned lod = unit->CalcLOD(unitMat.GetLastLOD());
+			const unsigned lod = CalcUnitLOD(unit, unitMat.GetLastLOD());
 			unit->currentLOD = lod;
 			LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(lod);
 
@@ -369,7 +385,7 @@ inline bool CUnitDrawer::DrawUnitLOD(CUnit* unit)
 			const LuaMatType matType =
 				(water->drawReflection) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
 			LuaUnitMaterial& unitMat = unit->luaMats[matType];
-			const unsigned lod = unit->CalcLOD(unitMat.GetLastLOD());
+			const unsigned lod = CalcUnitLOD(unit, unitMat.GetLastLOD());
 			unit->currentLOD = lod;
 			LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(lod);
 
@@ -444,11 +460,11 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	}
 
 	if (drawReflection) {
-		CUnit::SetLODFactor(LODScale * LODScaleReflection);
+		SetUnitGlobalLODFactor(LODScale * LODScaleReflection);
 	} else if (drawRefraction) {
-		CUnit::SetLODFactor(LODScale * LODScaleRefraction);
+		SetUnitGlobalLODFactor(LODScale * LODScaleRefraction);
 	} else {
-		CUnit::SetLODFactor(LODScale);
+		SetUnitGlobalLODFactor(LODScale);
 	}
 
 	camNorm = camera->forward;
@@ -586,7 +602,7 @@ static void DrawLuaMatBins(LuaMatType type)
 		return;
 	}
 
-	luaDrawing = true;
+	LUA_DRAWING = true;
 
 	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
 	if (type == LUAMAT_ALPHA || type == LUAMAT_ALPHA_REFLECT) {
@@ -626,7 +642,7 @@ static void DrawLuaMatBins(LuaMatType type)
 
 	glPopAttrib();
 
-	luaDrawing = false;
+	LUA_DRAWING = false;
 }
 
 
@@ -794,7 +810,7 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 		POP_SHADOW_TEXTURE_STATE(unit->model);
 	} else {
 		LuaUnitMaterial& unitMat = unit->luaMats[LUAMAT_SHADOW];
-		const unsigned lod = unit->CalcLOD(unitMat.GetLastLOD());
+		const unsigned lod = CalcUnitLOD(unit, unitMat.GetLastLOD());
 		unit->currentLOD = lod;
 		LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(lod);
 
@@ -826,7 +842,7 @@ void CUnitDrawer::DrawShadowPass()
 		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	po->Enable();
 
-	CUnit::SetLODFactor(LODScale * LODScaleShadow);
+	SetUnitGlobalLODFactor(LODScale * LODScaleShadow);
 
 	GML_RECMUTEX_LOCK(unit); // DrawShadowPass
 
@@ -923,7 +939,7 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool asRadarBlip)
 void CUnitDrawer::SetupForGhostDrawing() const
 {
 	glEnable(GL_LIGHTING); // Give faded objects same appearance as regular
-	glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir);
+	glLightfv(GL_LIGHT1, GL_POSITION, globalRendering->sunDir);
 	glEnable(GL_LIGHT1);
 
 	SetupBasicS3OTexture0();
@@ -1215,12 +1231,12 @@ void CUnitDrawer::SetupForUnitDrawing()
 			lightHandler.Update(modelShaders[MODEL_SHADER_S3O_ACTIVE]);
 		} else {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(10, mapInfo->light.sunDir.x, mapInfo->light.sunDir.y ,mapInfo->light.sunDir.z, 0.0f);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(10, globalRendering->sunDir.x, globalRendering->sunDir.y, globalRendering->sunDir.z, 0.0f);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(11, unitSunColor.x, unitSunColor.y, unitSunColor.z, 0.0f);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(12, unitAmbientColor.x, unitAmbientColor.y, unitAmbientColor.z, 1.0f); //!
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(13, camera->pos.x, camera->pos.y, camera->pos.z, 0.0f);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(10, 0.0f, 0.0f, 0.0f, unitShadowDensity);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(10, 0.0f, 0.0f, 0.0f, globalRendering->unitShadowDensity);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(11, unitAmbientColor.x, unitAmbientColor.y, unitAmbientColor.z, 1.0f);
 
 			glMatrixMode(GL_MATRIX0_ARB);
@@ -1256,7 +1272,7 @@ void CUnitDrawer::SetupForUnitDrawing()
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	} else {
 		glEnable(GL_LIGHTING);
-		glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir);
+		glLightfv(GL_LIGHT1, GL_POSITION, globalRendering->sunDir);
 		glEnable(GL_LIGHT1);
 
 		SetupBasicS3OTexture1();
@@ -1321,7 +1337,7 @@ void CUnitDrawer::SetTeamColour(int team, float alpha) const
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(14, &c[0]);
 		}
 
-		if (luaDrawing) {// FIXME?
+		if (LUA_DRAWING) {// FIXME?
 			SetBasicTeamColour(team, alpha);
 		}
 	} else {
@@ -1513,7 +1529,7 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 	}
 
 	if (lodMat && lodMat->IsActive()) {
-		CUnit::SetLODFactor(LODScale);
+		SetUnitGlobalLODFactor(LODScale);
 
 		luaMatHandler.setup3doShader = SetupOpaque3DO;
 		luaMatHandler.reset3doShader = ResetOpaque3DO;
@@ -1755,7 +1771,7 @@ void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPiece* lap
 inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 {
 	if (globalRendering->drawdebug) {
-		if (!luaDrawing && !shadowHandler->inShadowPass && !water->drawReflection) {
+		if (!LUA_DRAWING && !shadowHandler->inShadowPass && !water->drawReflection) {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->Disable();
 		}
 
@@ -1812,7 +1828,7 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 			UnitDrawingTexturesOn();
 		glPopAttrib();
 
-		if (!luaDrawing && !shadowHandler->inShadowPass && !water->drawReflection) {
+		if (!LUA_DRAWING && !shadowHandler->inShadowPass && !water->drawReflection) {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->Enable();
 		}
 	}
@@ -1845,7 +1861,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	glColorf3(fc * col);
 
 	//! render wireframe with FFP
-	if (!luaDrawing && advShading && !water->drawReflection) {
+	if (!LUA_DRAWING && advShading && !water->drawReflection) {
 		modelShaders[MODEL_SHADER_S3O_ACTIVE]->Disable();
 	}
 
@@ -1894,7 +1910,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	glDisable(GL_CLIP_PLANE1);
 	unitDrawer->UnitDrawingTexturesOn();
 
-	if (!luaDrawing && advShading && !water->drawReflection) {
+	if (!LUA_DRAWING && advShading && !water->drawReflection) {
 		modelShaders[MODEL_SHADER_S3O_ACTIVE]->Enable();
 	}
 
@@ -2364,6 +2380,8 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* u) {
 	drawIcon.erase(unit);
 	drawStat.erase(unit);
 #endif
+
+	SetUnitLODCount(unit, 0);
 }
 
 
@@ -2406,5 +2424,68 @@ void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newS
 		} else {
 			unitRadarIcons[allyTeam].erase(u);
 		}
+	}
+}
+
+
+
+
+
+
+unsigned int CUnitDrawer::CalcUnitLOD(const CUnit* unit, unsigned int lastLOD) const
+{
+	if (lastLOD == 0) { return 0; }
+
+	const float3 diff = (unit->pos - camera->pos);
+	const float dist = diff.dot(camera->forward);
+	const float lpp = std::max(0.0f, dist * UNIT_GLOBAL_LOD_FACTOR);
+
+	for (/* no-op */; lastLOD != 0; lastLOD--) {
+		if (lpp > unit->lodLengths[lastLOD]) {
+			break;
+		}
+	}
+
+	return lastLOD;
+}
+
+// unused
+unsigned int CUnitDrawer::CalcUnitShadowLOD(const CUnit* unit, unsigned int lastLOD) const
+{
+	return CalcUnitLOD(unit, lastLOD); // FIXME
+
+	// FIXME -- the more 'correct' method
+	if (lastLOD == 0) { return 0; }
+
+	// FIXME: fix it, cap it for shallow shadows?
+	const float3& sun = globalRendering->sunDir;
+	const float3 diff = (camera->pos - unit->pos);
+	const float  dot  = diff.dot(sun);
+	const float3 gap  = diff - (sun * dot);
+	const float  lpp  = std::max(0.0f, gap.Length() * UNIT_GLOBAL_LOD_FACTOR);
+
+	for (/* no-op */; lastLOD != 0; lastLOD--) {
+		if (lpp > unit->lodLengths[lastLOD]) {
+			break;
+		}
+	}
+
+	return lastLOD;
+}
+
+void CUnitDrawer::SetUnitLODCount(CUnit* unit, unsigned int count)
+{
+	const unsigned int oldCount = unit->lodCount;
+
+	unit->lodCount = count;
+	unit->lodLengths.resize(count);
+	unit->localmodel->SetLODCount(count);
+
+	for (unsigned int i = oldCount; i < count; i++) {
+		unit->lodLengths[i] = -1.0f;
+	}
+
+	for (int m = 0; m < LUAMAT_TYPE_COUNT; m++) {
+		unit->luaMats[m].SetLODCount(count);
 	}
 }

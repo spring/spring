@@ -77,6 +77,7 @@ public:
 	virtual ~CGroundDecalHandler();
 	void Draw();
 	void Update();
+	void UpdateSunDir();
 
 	void UnitMoved(CUnit* unit);
 	void UnitMovedNow(CUnit* unit);

@@ -28,6 +28,10 @@
 
 CAdvSky::CAdvSky()
 {
+	sunFlareList = 0;
+	skytexpart = new unsigned char[512][4];
+	skyTexUpdateIter = 0;
+
 	if (!(FBO::IsSupported() && GLEW_ARB_fragment_program && ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB,"ARB/clouds.fp"))) {
 		throw content_error("ADVSKY: missing OpenGL features!");
 	}
@@ -41,19 +45,8 @@ CAdvSky::CAdvSky()
 	domeheight = cos(PI/16)*1.01f;
 	domeWidth = sin(2*PI/32)*400*1.7f;
 
-	sundir2=mapInfo->light.sunDir;
-	sundir2.y=0;
-	if(sundir2.Length()==0)
-		sundir2.x=1;
-	sundir2.ANormalize();
-	sundir1=sundir2.cross(UpVector);
-
-	modSunDir.y = mapInfo->light.sunDir.y;
-	modSunDir.x = 0;
-	modSunDir.z = math::sqrt(mapInfo->light.sunDir.x*mapInfo->light.sunDir.x+mapInfo->light.sunDir.z*mapInfo->light.sunDir.z);
-
-	sunTexCoordX=0.5f;
-	sunTexCoordY=GetTexCoordFromDir(modSunDir);
+	UpdateSkyDir();
+	UpdateSunDir();
 
 	for(int a=0;a<CLOUD_DETAIL;a++)
 		cloudDown[a]=false;
@@ -180,6 +173,8 @@ CAdvSky::~CAdvSky()
 	delmat3<int>(randMatrix);
 	delmat2<int>(rawClouds);
 	delmat3<int>(blendMatrix);
+
+	delete [] skytexpart;
 }
 
 void CAdvSky::Draw()
@@ -189,10 +184,10 @@ void CAdvSky::Draw()
 
 	glPushMatrix();
 //	glTranslatef(camera->pos.x,camera->pos.y,camera->pos.z);
-	CMatrix44f m(camera->pos,sundir1,UpVector,sundir2);
+	CMatrix44f m(camera->pos,skydir1,UpVector,skydir2);
 	glMultMatrixf(m.m);
 
-	float3 modCamera=sundir1*camera->pos.x+sundir2*camera->pos.z;
+	float3 modCamera=skydir1*camera->pos.x+skydir2*camera->pos.z;
 
 	glMatrixMode(GL_TEXTURE);
 	  glActiveTextureARB(GL_TEXTURE2_ARB);
@@ -243,6 +238,57 @@ float3 CAdvSky::GetCoord(int x, int y)
 	) * 400;
 }
 
+void CAdvSky::UpdateTexPartDot3(int x, int y, unsigned char (*texp)[4]) {
+	float3 dir = GetDirFromTexCoord(x/256.0f,(255.0f-y)/256.0f);
+	float sunDist = acos(dir.dot(globalRendering->sunDir))*50;
+	float sunMod = globalRendering->sunIntensity*(0.3f/math::sqrt(sunDist)+3.0f/(1+sunDist));
+	float green = std::min(1.0f,(0.55f+sunMod));
+	float blue = 203-globalRendering->sunIntensity*(40.0f/(3+sunDist));
+	texp[x][0]=(unsigned char)(globalRendering->sunIntensity*(255-std::min(255.0f, sunDist)));				//sun on borders
+	texp[x][1]=(unsigned char)(green*255);			//sun light through
+	texp[x][2]=(unsigned char) blue;						//ambient
+	texp[x][3]=255;
+}
+
+void CAdvSky::UpdateTexPart(int x, int y, unsigned char (*texp)[4]) {
+	float3 dir=GetDirFromTexCoord(x/512.0f,(511.0f-y)/512.0f);
+	float sunDist=acos(dir.dot(globalRendering->sunDir))*70;
+	float sunMod=globalRendering->sunIntensity*12.0f/(12+sunDist);
+	float red=(skyColor.x+sunMod*sunColor.x);
+	float green=(skyColor.y+sunMod*sunColor.y);
+	float blue=(skyColor.z+sunMod*sunColor.z);
+	red   = std::min(red,1.0f);
+	green = std::min(green,1.0f);
+	blue  = std::min(blue,1.0f);
+	texp[x][0]=(unsigned char)(red*255);
+	texp[x][1]=(unsigned char)(green*255);
+	texp[x][2]=(unsigned char)(blue*255);
+	texp[x][3]=255;
+}
+
+void CAdvSky::UpdateSkyTexture() {
+	if(!globalRendering->dynamicSun)
+		return;
+	int mod = skyTexUpdateIter % 3;
+	if (mod <= 1) {
+		int y = (skyTexUpdateIter / 3) * 2 + mod;
+		for(int x=0; x<512; x++) {
+			UpdateTexPart(x, y, skytexpart);
+		}
+		glBindTexture(GL_TEXTURE_2D, skyTex);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, y, 512, 1, GL_RGBA, GL_UNSIGNED_BYTE, skytexpart[0]);
+	}
+	else {
+		int y = (skyTexUpdateIter / 3);
+		for(int x=0;x<256;x++) {
+			UpdateTexPartDot3(x, y, skytexpart);
+		}
+		glBindTexture(GL_TEXTURE_2D, skyDot3Tex);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, y, 256, 1, GL_RGBA, GL_UNSIGNED_BYTE, skytexpart[0]);
+	}
+	skyTexUpdateIter = (skyTexUpdateIter + 1) % (512 + 256);
+}
+
 void CAdvSky::CreateClouds()
 {
 	cloudThickness=new unsigned char[CLOUD_SIZE*CLOUD_SIZE+1];
@@ -279,48 +325,29 @@ void CAdvSky::CreateClouds()
 
 	for (int y=0; y<512 ;y++) {
 		for(int x=0; x<512; x++) {
-			float3 dir=GetDirFromTexCoord(x/512.0f,y/512.0f);
-			float sunDist=acos(dir.dot(modSunDir))*70;
-			float sunMod=12.0f/(12+sunDist);
-
-			float red=(skyColor.x+sunMod*sunColor.x);
-			float green=(skyColor.y+sunMod*sunColor.y);
-			float blue=(skyColor.z+sunMod*sunColor.z);
-			red   = std::min(red,1.0f);
-			green = std::min(green,1.0f);
-			blue  = std::min(blue,1.0f);
-			skytex[y][x][0]=(unsigned char)(red*255);
-			skytex[y][x][1]=(unsigned char)(green*255);
-			skytex[y][x][2]=(unsigned char)(blue*255);
-			skytex[y][x][3]=255;
+			UpdateTexPart(x, y, skytex[y]);
 		}
 	}
 
 	glBindTexture(GL_TEXTURE_2D, skyTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,512, 512, GL_RGBA, GL_UNSIGNED_BYTE, skytex[0][0]);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR/*_MIPMAP_NEAREST*/);
+//	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,512, 512, GL_RGBA, GL_UNSIGNED_BYTE, skytex[0][0]);
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, skytex[0][0]);
 	delete [] skytex;
 
 	unsigned char (* skytex2)[256][4] = new unsigned char[256][256][4];
 	for(int y=0;y<256;y++){
 		for(int x=0;x<256;x++){
-			float3 dir = GetDirFromTexCoord(x/256.0f,y/256.0f);
-			float sunDist = acos(dir.dot(modSunDir))*50;
-			float sunMod = 0.3f/math::sqrt(sunDist)+3.0f/(1+sunDist);
-			float green = std::min(1.0f,(0.55f+sunMod));
-			float blue = 203-(40.0f/(3+sunDist));
-			skytex2[y][x][0]=(unsigned char)(255-y/2);				//sun on borders
-			skytex2[y][x][1]=(unsigned char)(green*255);			//sun light through
-			skytex2[y][x][2]=(unsigned char) blue;						//ambient
-			skytex2[y][x][3]=255;
+			UpdateTexPartDot3(x, y, skytex2[y]);
 		}
 	}
 
 	glBindTexture(GL_TEXTURE_2D, skyDot3Tex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,256, 256, GL_RGBA, GL_UNSIGNED_BYTE, skytex2[0][0]);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR/*_MIPMAP_NEAREST*/);
+//	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,256, 256, GL_RGBA, GL_UNSIGNED_BYTE, skytex2[0][0]);
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, skytex2[0][0]);
 	delete [] skytex2;
 
 	for(int a=0;a<CLOUD_DETAIL;a++){
@@ -605,12 +632,69 @@ void CAdvSky::DrawSun()
 	glBindTexture(GL_TEXTURE_2D, sunFlareTex);
 	glTexSubImage2D(GL_TEXTURE_2D,0,0,0,32,3,GL_LUMINANCE,GL_UNSIGNED_BYTE,buf);
 
-	glColor4f(0.4f*sunColor.x,0.4f*sunColor.y,0.4f*sunColor.z,0.0f);
+	float si = globalRendering->sunIntensity;
+	glColor4f(si*sunColor.x,si*sunColor.y,si*sunColor.z,0.0f);
 	glCallList(sunFlareList);
 
 	glEnable(GL_DEPTH_TEST);
 	glPopMatrix();
 }
+
+void CAdvSky::UpdateSkyDir() {
+	skydir2=globalRendering->skyDir;
+	skydir2.y=0;
+	if(skydir2.Length()==0)
+		skydir2.x=1;
+	skydir2.ANormalize();
+	skydir1=skydir2.cross(UpVector);
+	skyAngle = fastmath::coords2angle(skydir2.x, skydir2.z) + PI/2.0f;
+}
+
+void CAdvSky::UpdateSunDir() {
+	sundir2=globalRendering->sunDir;
+	sundir2.y=0;
+	if(sundir2.Length()==0)
+		sundir2.x=1;
+	sundir2.ANormalize();
+	sundir1=sundir2.cross(UpVector);
+
+	modSunDir.y = globalRendering->sunDir.y;
+	modSunDir.x = 0;
+	modSunDir.z = math::sqrt(globalRendering->sunDir.x*globalRendering->sunDir.x+globalRendering->sunDir.z*globalRendering->sunDir.z);
+
+	sunTexCoordX=0.5f;
+	sunTexCoordY=GetTexCoordFromDir(modSunDir);
+
+	UpdateSunFlare();
+}
+
+void CAdvSky::UpdateSunFlare() {
+	if(sunFlareList)
+		glDeleteLists(sunFlareList, 1);
+	float3 ldir=modSunDir.cross(UpVector);
+	ldir.ANormalize();
+	float3 udir=modSunDir.cross(ldir);
+
+	sunFlareList=glGenLists(1);
+	glNewList(sunFlareList, GL_COMPILE);
+	glDisable(GL_FOG);
+	glBindTexture(GL_TEXTURE_2D, sunFlareTex);
+	glBlendFunc(GL_ONE_MINUS_DST_COLOR,GL_ONE);
+	glBegin(GL_TRIANGLE_STRIP);
+	for(int x=0;x<257;++x){
+		float dx = sin(x*2*PI/256.0f);
+		float dy = cos(x*2*PI/256.0f);
+
+		glTexCoord2f(x/256.0f,0.125f);
+		glVertexf3(modSunDir*5+ldir*dx*0.0014f+udir*dy*0.0014f);
+		glTexCoord2f(x/256.0f,0.875f);
+		glVertexf3(modSunDir*5+ldir*dx*4+udir*dy*4);
+	}
+	glEnd();
+	if (globalRendering->drawFog) glEnable(GL_FOG);
+	glEndList();
+}
+
 
 void CAdvSky::SetCloudShadow(int texunit)
 {
@@ -668,29 +752,6 @@ void CAdvSky::InitSun()
 	glTexImage2D(GL_TEXTURE_2D,0,GL_LUMINANCE ,32, 4,0, GL_LUMINANCE, GL_UNSIGNED_BYTE, mem);
 
 	delete [] mem;
-
-	float3 ldir=modSunDir.cross(UpVector);
-	ldir.ANormalize();
-	float3 udir=modSunDir.cross(ldir);
-
-	sunFlareList=glGenLists(1);
-	glNewList(sunFlareList, GL_COMPILE);
-		glDisable(GL_FOG);
-		glBindTexture(GL_TEXTURE_2D, sunFlareTex);
-		glBlendFunc(GL_ONE_MINUS_DST_COLOR,GL_ONE);
-		glBegin(GL_TRIANGLE_STRIP);
-		for(int x=0;x<257;++x){
-			float dx = sin(x*2*PI/256.0f);
-			float dy = cos(x*2*PI/256.0f);
-
-			glTexCoord2f(x/256.0f,0.125f);
-			glVertexf3(modSunDir*5+ldir*dx*0.0014f+udir*dy*0.0014f);
-			glTexCoord2f(x/256.0f,0.875f);
-			glVertexf3(modSunDir*5+ldir*dx*4+udir*dy*4);
-		}
-		glEnd();
-		if (globalRendering->drawFog) glEnable(GL_FOG);
-	glEndList();
 }
 
 void CAdvSky::CreateCover(int baseX, int baseY, float *buf)
@@ -819,6 +880,9 @@ float3 CAdvSky::GetDirFromTexCoord(float x, float y)
 	dir.z = (y-0.5f) * domeWidth;
 
 	float hdist = math::sqrt(dir.x*dir.x+dir.z*dir.z);
+	float ang = fastmath::coords2angle(dir.x,dir.z) + skyAngle;
+	dir.x = hdist * cos(ang);
+	dir.z = hdist * sin(ang);
 	float fy = asin(hdist/400);
 	dir.y = (fastmath::cos(fy) - domeheight) * 400;
 

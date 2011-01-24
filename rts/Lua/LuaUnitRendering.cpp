@@ -108,7 +108,7 @@ int LuaUnitRendering::SetLODCount(lua_State* L)
 	if (count > 1024) {
 		luaL_error(L, "SetLODCount() ridiculous lod count");
 	}
-	unit->SetLODCount(count);
+	unitDrawer->SetUnitLODCount(unit, count);
 	return 0;
 }
 

@@ -13,31 +13,16 @@ Calculate speed-multiplier for given height and slope data.
 */
 float CShipMoveMath::SpeedMod(const MoveData& moveData, float height, float slope) const
 {
-	//Too ground?
-	if(-height < moveData.depth)
+	if (-height < moveData.depth)
 		return 0.0f;
+
 	return 1.0f;
 }
 
 float CShipMoveMath::SpeedMod(const MoveData& moveData, float height, float slope, float moveSlope) const
 {
-	if(-height < moveData.depth && moveSlope>0)
+	if (-height < moveData.depth && moveSlope > 0.0f)
 		return 0.0f;
+
 	return 1.0f;
 }
-
-
-/*
-Ships are always in water level.
-*/
-float CShipMoveMath::yLevel(int xSquare, int zSquare) const
-{
-	return 0.0f;
-}
-
-
-float CShipMoveMath::yLevel(const float3& pos) const
-{
-	return 0.0f;
-}
-

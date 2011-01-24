@@ -173,7 +173,7 @@ void CGroundDecalHandler::LoadDecalShaders() {
 			decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(1, 1); // shadeTex  (idx 1, texunit 1)
 			decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(2, 2); // shadowTex (idx 2, texunit 2)
 			decalShaders[DECAL_SHADER_GLSL]->SetUniform2f(3, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
-			decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, mapInfo->light.groundShadowDensity);
+			decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, globalRendering->groundShadowDensity);
 			decalShaders[DECAL_SHADER_GLSL]->Disable();
 
 			decalShaders[DECAL_SHADER_CURR] = decalShaders[DECAL_SHADER_GLSL];
@@ -183,7 +183,13 @@ void CGroundDecalHandler::LoadDecalShaders() {
 	#undef sh
 }
 
-
+void CGroundDecalHandler::UpdateSunDir() {
+	if(globalRendering->haveGLSL && decalShaders.size() > DECAL_SHADER_GLSL) {
+		decalShaders[DECAL_SHADER_GLSL]->Enable();
+		decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, globalRendering->groundShadowDensity);
+		decalShaders[DECAL_SHADER_GLSL]->Disable();
+	}
+}
 
 static inline void AddQuadVertices(CVertexArray* va, int x, float* yv, int z, const float* uv, unsigned char* color)
 {
@@ -443,7 +449,7 @@ void CGroundDecalHandler::Draw()
 			decalShaders[DECAL_SHADER_CURR]->SetUniform4f(10, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0.0f, 1.0f);
 			decalShaders[DECAL_SHADER_CURR]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
 			decalShaders[DECAL_SHADER_CURR]->SetUniform4f(10, ambientColor.x, ambientColor.y, ambientColor.z, 1.0f);
-			decalShaders[DECAL_SHADER_CURR]->SetUniform4f(11, 0.0f, 0.0f, 0.0f, mapInfo->light.groundShadowDensity);
+			decalShaders[DECAL_SHADER_CURR]->SetUniform4f(11, 0.0f, 0.0f, 0.0f, globalRendering->groundShadowDensity);
 
 			glMatrixMode(GL_MATRIX0_ARB);
 			glLoadMatrixf(shadowHandler->shadowMatrix.m);

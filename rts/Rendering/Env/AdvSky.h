@@ -29,6 +29,12 @@ public:
 	void Draw();
 	float3 GetCoord(int x,int y);
 	void CreateDetailTex();
+	void UpdateSunDir();
+	void UpdateSkyDir();
+	void UpdateSunFlare();
+	void UpdateSkyTexture();
+	inline void UpdateTexPartDot3(int x, int y, unsigned char (*texp)[4]);
+	inline void UpdateTexPart(int x, int y, unsigned char (*texp)[4]);
 
 	GLuint skyTex;
 	GLuint skyDot3Tex;
@@ -67,6 +73,8 @@ public:
 
 	float3 sundir1;
 	float3 sundir2;
+	float3 skydir1;
+	float3 skydir2;
 
 	float3 modSunDir;
 
@@ -82,6 +90,12 @@ public:
 	float3 sunColor;
 	float3 cloudColor;
 	float fogStart;
+
+	unsigned char (* skytexpart)[4];
+	int skyTexUpdateIter;
+	float skyAngle;
+
+
 
 private:
 	FBO fbo;
