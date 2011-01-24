@@ -32,8 +32,8 @@ class CLuaRules : public CLuaHandleSynced
 		static void FreeHandler();
 
 	public: // call-ins
-		bool SyncedUpdateCallIn(const string& name);
-		bool UnsyncedUpdateCallIn(const string& name);
+		bool SyncedUpdateCallIn(lua_State *L, const string& name);
+		bool UnsyncedUpdateCallIn(lua_State *L, const string& name);
 
 		bool CommandFallback(const CUnit* unit, const Command& cmd);
 		bool AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced);
@@ -85,8 +85,8 @@ class CLuaRules : public CLuaHandleSynced
 		~CLuaRules();
 
 	protected:
-		bool AddSyncedCode();
-		bool AddUnsyncedCode();
+		bool AddSyncedCode(lua_State *L);
+		bool AddUnsyncedCode(lua_State *L);
 
 		int UnpackCobArg(lua_State* L);
 

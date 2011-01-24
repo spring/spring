@@ -1,7 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
+#include "Rendering/GL/myGL.h"
 #include "ConfigHandler.h"
+#include "Sim/Misc/ModInfo.h"
 
 GlobalConfig* gc = NULL;
 
@@ -28,10 +30,20 @@ GlobalConfig::GlobalConfig() {
 		linkIncomingSustainedBandwidth = linkIncomingPeakBandwidth;
 	if(linkIncomingMaxPacketRate > 0 && linkIncomingSustainedBandwidth <= 0)
 		linkIncomingSustainedBandwidth = linkIncomingPeakBandwidth = 1024 * 1024;
-#ifdef USE_GML
-	enableDrawCallIns = !!configHandler->Get("EnableDrawCallIns", 1);
+#if defined(USE_GML) && GML_ENABLE_SIM
+	multiThreadLua = configHandler->Get("MultiThreadLua", 0);
 #endif
 }
+
+
+int GlobalConfig::GetMultiThreadLua() {
+#if defined(USE_GML) && GML_ENABLE_SIM
+	return std::max(1, std::min((multiThreadLua == 0) ? modInfo.luaThreadingModel : multiThreadLua, 5));
+#else
+	return 0;
+#endif
+}
+
 
 void GlobalConfig::Instantiate() {
 	Deallocate();

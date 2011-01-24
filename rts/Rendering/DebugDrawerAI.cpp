@@ -37,6 +37,9 @@ DebugDrawerAI* DebugDrawerAI::GetInstance() {
 
 
 void DebugDrawerAI::Draw() {
+#if defined(USE_GML) && GML_ENABLE_SIM
+	return;
+#endif
 	if (!draw || !gu->spectating) {
 		return;
 	}
@@ -390,6 +393,9 @@ int DebugDrawerAI::TexSet::AddTexture(const float* data, int w, int h) {
 }
 
 void DebugDrawerAI::TexSet::UpdateTexture(int texHandle, const float* data, int x, int y, int w, int h) {
+#if defined(USE_GML) && GML_ENABLE_SIM
+	return;
+#endif
 	std::map<int, TexSet::Texture*>::iterator it = textures.find(texHandle);
 
 	if (it == textures.end()) {
@@ -482,6 +488,9 @@ DebugDrawerAI::TexSet::Texture::Texture(int w, int h, const float* data):
 	labelWidth(0.0f),
 	labelHeight(0.0f)
 {
+#if defined(USE_GML) && GML_ENABLE_SIM
+	return;
+#endif
 	const int intFormat = GL_RGBA;  // note: data only holds the red component
 	const int extFormat = GL_RED;
 	const int dataType  = GL_FLOAT;
@@ -497,6 +506,9 @@ DebugDrawerAI::TexSet::Texture::Texture(int w, int h, const float* data):
 }
 
 DebugDrawerAI::TexSet::Texture::~Texture() {
+#if defined(USE_GML) && GML_ENABLE_SIM
+	return;
+#endif
 	glDeleteTextures(1, &id);
 }
 

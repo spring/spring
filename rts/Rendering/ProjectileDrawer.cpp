@@ -542,7 +542,7 @@ void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 
 void CProjectileDrawer::DrawProjectilesMiniMap()
 {
-	GML_STDMUTEX_LOCK(proj); // DrawProjectilesMiniMap
+	GML_RECMUTEX_LOCK(proj); // DrawProjectilesMiniMap
 
 	typedef std::set<CProjectile*> ProjectileSet;
 	typedef std::set<CProjectile*>::const_iterator ProjectileSetIt;
@@ -666,7 +666,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	Update();
 
 	{
-		GML_STDMUTEX_LOCK(proj); // Draw
+		GML_RECMUTEX_LOCK(proj); // Draw
 
 		unitDrawer->SetupForUnitDrawing();
 
@@ -742,7 +742,7 @@ void CProjectileDrawer::DrawShadowPass()
 	CProjectile::va->Initialize();
 
 	{
-		GML_STDMUTEX_LOCK(proj); // DrawShadowPass
+		GML_RECMUTEX_LOCK(proj); // DrawShadowPass
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			DrawProjectilesShadow(modelType);
@@ -1041,7 +1041,7 @@ void CProjectileDrawer::GenerateNoiseTex(unsigned int tex, int size)
 
 void CProjectileDrawer::RenderProjectileCreated(const CProjectile* p)
 {
-#if defined(USE_GML) && GML_ENABLE_SIM
+#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
 	if(p->model && TEX_TYPE(p) < 0)
 		TEX_TYPE(p) = texturehandlerS3O->LoadS3OTextureNow(p->model);
 #endif

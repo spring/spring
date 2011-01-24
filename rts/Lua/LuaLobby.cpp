@@ -14,6 +14,7 @@
 #include "LuaHashString.h"
 #include "LuaUtils.h"
 
+#define SingleState() luaUI->SingleState()
 
 #define REGISTER_LUA_CFUNC(x) \
 	lua_pushstring(L, #x);      \
@@ -27,7 +28,7 @@
 	LUA_CALL_IN_CHECK(L); \
 	lua_checkstack(L, stackSize); \
 	static const LuaHashString cmdStr(__FUNCTION__); \
-	if (!PushCallIn(cmdStr)) { \
+	if (!PushCallIn(L, cmdStr)) { \
 		return; \
 	}
 
@@ -44,10 +45,9 @@ inline LuaLobby* toLuaLobby(lua_State* L, int idx)
 
 /******************************************************************************/
 /******************************************************************************/
-
-LuaLobby::LuaLobby(lua_State* _L) : L(_L)
+LuaLobby::LuaLobby(lua_State* L) : L_Sim(luaUI->L_Sim), L_Draw(luaUI->L_Draw)
 {
-	if (L != luaUI->L) {
+	if (L != L_Sim && L != L_Draw) {
 		luaL_error(L, "Tried to create a LuaLobby object in a non-LuaUI enviroment!");
 	}
 }
@@ -190,7 +190,7 @@ int LuaLobby::meta_newindex(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-inline bool LuaLobby::PushCallIn(const LuaHashString& name)
+inline bool LuaLobby::PushCallIn(lua_State *L, const LuaHashString& name)
 {
 	// get callin lua function
 	lua_rawgeti(L, LUA_REGISTRYINDEX, luaRefEvents);

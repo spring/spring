@@ -1044,6 +1044,7 @@ bool CGame::ActionPressed(const Action& action,
 			showMTInfo = !!atoi(action.extra.c_str());
 		}
 		configHandler->Set("ShowMTInfo", showMTInfo ? 1 : 0);
+		showMTInfo = (showMTInfo && gc->GetMultiThreadLua() <= 3) ? gc->GetMultiThreadLua() : 0;
 	}
 	else if (cmd == "teamhighlight") {
 		if (action.extra.empty()) {

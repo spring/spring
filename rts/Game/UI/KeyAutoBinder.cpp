@@ -12,6 +12,7 @@
 #include "Game/GameSetup.h"
 #include "Sim/Misc/Team.h"
 #include "Lua/LuaDefs.h"
+#include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaConstGame.h"
 #include "Lua/LuaUnitDefs.h"
 #include "Lua/LuaWeaponDefs.h"
@@ -47,11 +48,12 @@ static const string endlStr = "\r\n";
 CKeyAutoBinder::CKeyAutoBinder()
 	: CLuaHandle("KeyAutoBinder", 1234, false)
 {
-	if (L == NULL) {
+	if (!IsValid())
 		return;
-	}
 
-	LoadCompareFunc();
+	BEGIN_ITERATE_LUA_STATES();
+
+	LoadCompareFunc(L);
 
 	// load the standard libraries
 	LUA_OPEN_LIB(L, luaopen_base);
@@ -70,7 +72,10 @@ CKeyAutoBinder::CKeyAutoBinder()
 	    !AddEntriesToTable(L, "WeaponDefs",         LuaWeaponDefs::PushEntries)) {
 		logOutput.Print("KeyAutoBinder: error loading lua libraries\n");
 	}
-  lua_settop(L, 0);
+
+	lua_settop(L, 0);
+
+	END_ITERATE_LUA_STATES();
 }
 
 
@@ -91,11 +96,10 @@ string CKeyAutoBinder::LoadFile(const string& filename) const
 }
 
 
-bool CKeyAutoBinder::LoadCode(const string& code, const string& debug)
+bool CKeyAutoBinder::LoadCode(lua_State *L, const string& code, const string& debug)
 {
-	if (L == NULL) {
+	if (!IsValid())
 		return false;
-	}
 
 	lua_settop(L, 0);
 
@@ -119,7 +123,7 @@ bool CKeyAutoBinder::LoadCode(const string& code, const string& debug)
 }
 
 
-bool CKeyAutoBinder::LoadCompareFunc()
+bool CKeyAutoBinder::LoadCompareFunc(lua_State *L)
 {
 	std::stringstream code(endlStr);
 
@@ -144,7 +148,7 @@ bool CKeyAutoBinder::LoadCompareFunc()
 		logOutput.Print(codeStr);
 	}
 
-	if (!LoadCode(codeStr, CompareFuncName + "()")) {
+	if (!LoadCode(L, codeStr, CompareFuncName + "()")) {
 		return false;
 	}
 
@@ -172,9 +176,10 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
                                    const vector<string>& sortCriteria,
                                    const vector<string>& chords)
 {
-	if (L == NULL) {
+	if (!IsValid())
 		return false;
-	}
+
+	SELECT_LUA_STATE();
 
 	lua_settop(L, 0);
 
@@ -188,8 +193,8 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
 		logOutput.Print(sortCall);
 	}
 
-	if (!LoadCode(reqCall,  keystr + ":" + ReqFuncName + "()") ||
-	    !LoadCode(sortCall, keystr + ":" + SortFuncName + "()")) {
+	if (!LoadCode(L, reqCall,  keystr + ":" + ReqFuncName + "()") ||
+	    !LoadCode(L, sortCall, keystr + ":" + SortFuncName + "()")) {
 		return false;
 	}
 

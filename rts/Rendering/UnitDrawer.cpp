@@ -981,20 +981,19 @@ void CUnitDrawer::CleanUpGhostDrawing() const
 void CUnitDrawer::DrawCloakedUnits(bool disableAdvShading)
 {
 	const bool oldAdvShading = advShading;
+	// don't use shaders if shadows are enabled
+	advShading = advShading && !disableAdvShading;
+
+	if (advShading) {
+		SetupForUnitDrawing();
+		glDisable(GL_ALPHA_TEST);
+	} else {
+		SetupForGhostDrawing();
+	}
+
+	glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
 
 	{
-		// don't use shaders if shadows are enabled
-		advShading = advShading && !disableAdvShading;
-
-		if (advShading) {
-			SetupForUnitDrawing();
-			glDisable(GL_ALPHA_TEST);
-		} else {
-			SetupForGhostDrawing();
-		}
-
-		glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
-
 		GML_RECMUTEX_LOCK(unit); // DrawCloakedUnits
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
@@ -1011,10 +1010,11 @@ void CUnitDrawer::DrawCloakedUnits(bool disableAdvShading)
 		}
 
 		advShading = oldAdvShading;
+
+		// shader rendering
+		DrawCloakedShaderUnits();
 	}
 
-	// shader rendering
-	DrawCloakedShaderUnits();
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
@@ -2313,7 +2313,7 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 	CUnit* unit = const_cast<CUnit*>(u);
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
 
-#if defined(USE_GML) && GML_ENABLE_SIM
+#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
 	if (u->model && TEX_TYPE(u) < 0)
 		TEX_TYPE(u) = texturehandlerS3O->LoadS3OTextureNow(u->model);
 #endif
