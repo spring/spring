@@ -11,7 +11,6 @@ class CMoveMath {
 	CR_DECLARE(CMoveMath);
 public:
 	// Block-check-options
-	// Note: options are hierarchical, with CHECK_STRUCTURE as the first check.
 	const static int BLOCK_MOVING = 1;
 	const static int BLOCK_MOBILE = 2;
 	const static int BLOCK_MOBILE_BUSY = 4;
@@ -19,10 +18,10 @@ public:
 
 	// returns a speed-multiplier for given position or data
 	float SpeedMod(const MoveData& moveData, const float3& pos) const;
-	float SpeedMod(const MoveData& moveData, int xSquare, int zSquare) const;
-	virtual float SpeedMod(const MoveData& moveData, float height, float slope) const = 0;
 	float SpeedMod(const MoveData& moveData, const float3& pos, const float3& moveDir) const;
-	float SpeedMod(const MoveData& moveData, int xSquare, int zSquare,const float3& moveDir) const;
+	float SpeedMod(const MoveData& moveData, int xSquare, int zSquare) const;
+	float SpeedMod(const MoveData& moveData, int xSquare, int zSquare, const float3& moveDir) const;
+	virtual float SpeedMod(const MoveData& moveData, float height, float slope) const = 0;
 	virtual float SpeedMod(const MoveData& moveData, float height, float slope, float moveSlope) const = 0;
 
 	// tells whether a position is blocked (inaccessable for a given object's movedata)
