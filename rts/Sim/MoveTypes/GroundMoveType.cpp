@@ -1339,7 +1339,6 @@ void CGroundMoveType::HandleObjectCollisions()
 
 	{
 		#define FOOTPRINT_RADIUS(xs, zs) (math::sqrt((xs * xs + zs * zs)) * 0.5f * SQUARE_SIZE)
-		#define SWAP_MASS_SCALES(pa, pb) { const float a = *pa; *(float*) pa = *pb; *(float*) pb = a; }
 
 		const UnitDef*   colliderUD = collider->unitDef;
 		const MoveData*  colliderMD = collider->mobility;
@@ -1391,6 +1390,7 @@ void CGroundMoveType::HandleObjectCollisions()
 			if (!teamHandler->Ally(collider->allyteam, collidee->allyteam)) { pushCollider = false; pushCollidee = false; }
 			if (!teamHandler->Ally(collidee->allyteam, collider->allyteam)) { pushCollider = false; pushCollidee = false; }
 
+			// don't push either party if the collidee does not block the collider
 			if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
 			if (!collideeMobile && (colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
 
@@ -1413,24 +1413,24 @@ void CGroundMoveType::HandleObjectCollisions()
 
 			// far from a realistic treatment, but works
 			const float collisionMassSum  = s1 + s2 + 1.0f;
-			const float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s1 / collisionMassSum)));
-			const float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s2 / collisionMassSum)));
+			      float colliderMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s1 / collisionMassSum)));
+			      float collideeMassScale = std::max(0.01f, std::min(0.99f, 1.0f - (s2 / collisionMassSum)));
 
-			if (!collideeMobile && (colliderMassScale > collideeMassScale)) {
-				SWAP_MASS_SCALES(&colliderMassScale, &collideeMassScale);
+			if (!collideeMobile && colliderMassScale > collideeMassScale) {
+				std::swap(colliderMassScale, collideeMassScale);
 			}
 
 			const float3 colliderNewPos = collider->pos + (colResponseVec * colliderMassScale);
 			const float3 collideeNewPos = collidee->pos - (colResponseVec * collideeMassScale);
 
 			// try to prevent both parties from being pushed onto non-traversable squares
-			if (                  (colliderMM->IsBlocked(*colliderMD, colliderNewPos) & CMoveMath::BLOCK_STRUCTURE) != 0) { pushCollider = false; }
-			if (collideeMobile && (collideeMM->IsBlocked(*collideeMD, collideeNewPos) & CMoveMath::BLOCK_STRUCTURE) != 0) { pushCollidee = false; }
-			if (                  colliderMM->SpeedMod(*colliderMD, colliderNewPos) <= 0.01f) { pushCollider = false; }
-			if (collideeMobile && collideeMM->SpeedMod(*collideeMD, collideeNewPos) <= 0.01f) { pushCollidee = false; }
+			if (                  (colliderMM->IsBlocked(*colliderMD, colliderNewPos) & CMoveMath::BLOCK_STRUCTURE) != 0) { colliderMassScale = 0.0f; }
+			if (collideeMobile && (collideeMM->IsBlocked(*collideeMD, collideeNewPos) & CMoveMath::BLOCK_STRUCTURE) != 0) { collideeMassScale = 0.0f; }
+			if (                  colliderMM->SpeedMod(*colliderMD, colliderNewPos) <= 0.01f) { colliderMassScale = 0.0f; }
+			if (collideeMobile && collideeMM->SpeedMod(*collideeMD, collideeNewPos) <= 0.01f) { collideeMassScale = 0.0f; }
 
-			if (pushCollider) { collider->pos = colliderNewPos; } else { collider->pos = colliderOldPos; }
-			if (pushCollidee) { collidee->pos = collideeNewPos; } else { collidee->pos = collideeOldPos; }
+			if (pushCollider) { collider->pos += (colResponseVec * colliderMassScale); } else { collider->pos = colliderOldPos; }
+			if (pushCollidee) { collidee->pos -= (colResponseVec * collideeMassScale); } else { collidee->pos = collideeOldPos; }
 
 			collider->UpdateMidPos();
 			collidee->UpdateMidPos();
@@ -1453,6 +1453,7 @@ void CGroundMoveType::HandleObjectCollisions()
 
 			if ((separationVector.SqLength() - separationMinDist) > 0.01f) { continue; }
 			if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
+
 			if (!colliderMM->CrushResistant(*colliderMD, collidee)) { collidee->Kill(collider->frontdir * currentSpeed * 200.0f); }
 			if ((colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
 
@@ -1472,11 +1473,11 @@ void CGroundMoveType::HandleObjectCollisions()
 			// multiply the collider's mass by a large constant (so that
 			// heavy features do not bounce light units away like pinballs)
 			const float collisionMassSum  = collider->mass * 10000.0f + collidee->mass + 1.0f;
-			const float colliderMassScale = std::max(0.1f, std::min(0.9f, 1.0f - (collider->mass * 10000.0f / collisionMassSum)));
-			const float collideeMassScale = std::max(0.1f, std::min(0.9f, 1.0f - (collidee->mass            / collisionMassSum)));
+			      float colliderMassScale = std::max(0.1f, std::min(0.9f, 1.0f - (collider->mass * 10000.0f / collisionMassSum)));
+			      float collideeMassScale = std::max(0.1f, std::min(0.9f, 1.0f - (collidee->mass            / collisionMassSum)));
 
-			if (collidee->reachedFinalPos && (colliderMassScale > collideeMassScale)) {
-				SWAP_MASS_SCALES(&colliderMassScale, &collideeMassScale);
+			if (collidee->reachedFinalPos && colliderMassScale > collideeMassScale) {
+				std::swap(colliderMassScale, collideeMassScale);
 			}
 
 			collider->pos += (colResponseVec * colliderMassScale);
