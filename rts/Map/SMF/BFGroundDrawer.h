@@ -27,6 +27,7 @@ public:
 	void Draw(bool drawWaterReflection = false, bool drawUnitReflection = false);
 	void DrawShadowPass();
 
+	// for non-GLSL clients
 	void SetupBaseDrawPass(void) { smfShaderCurrARB = smfShaderBaseARB; }
 	void SetupReflDrawPass(void) { smfShaderCurrARB = smfShaderReflARB; }
 	void SetupRefrDrawPass(void) { smfShaderCurrARB = smfShaderRefrARB; }
@@ -51,15 +52,15 @@ private:
 #endif
 
 	bool LoadMapShaders();
-	void CreateWaterPlanes(const bool &camOufOfMap);
+	void CreateWaterPlanes(bool camOufOfMap);
 	inline void DrawWaterPlane(bool drawWaterReflection);
 
-	void FindRange(int &xs, int &xe, const std::vector<fline> &left, const std::vector<fline> &right, int y, int lod);
+	void FindRange(int &xs, int &xe, const std::vector<fline>& left, const std::vector<fline>& right, int y, int lod);
 	void DoDrawGroundRow(int bty);
-	void DrawVertexAQ(CVertexArray *ma, int x, int y);
-	void DrawVertexAQ(CVertexArray *ma, int x, int y, float height);
-	void EndStripQ(CVertexArray *ma);
-	void DrawGroundVertexArrayQ(CVertexArray * &ma);
+	void DrawVertexAQ(CVertexArray* ma, int x, int y);
+	void DrawVertexAQ(CVertexArray* ma, int x, int y, float height);
+	void EndStripQ(CVertexArray* ma);
+	void DrawGroundVertexArrayQ(CVertexArray* &ma);
 	void DoDrawGroundShadowLOD(int nlod);
 
 	inline bool BigTexSquareRowVisible(int);
@@ -96,12 +97,15 @@ private:
 	Shader::IProgramObject* smfShaderReflARB;   //! shader (V+F) for the DynamicWater reflection pass
 	Shader::IProgramObject* smfShaderRefrARB;   //! shader (V+F) for the DynamicWater refraction pass
 	Shader::IProgramObject* smfShaderCurrARB;   //! currently active ARB shader
-	Shader::IProgramObject* smfShaderGLSL;      //! used if the map wants specular lighting
+	Shader::IProgramObject* smfShaderDefGLSL;   //! GLSL shader used when shadows are on
+	Shader::IProgramObject* smfShaderAdvGLSL;   //! GLSL shader used when shadows are off
+	Shader::IProgramObject* smfShaderCurGLSL;   //! currently active GLSL shader
 
 	std::vector<fline> right, left;
 
 	GL::LightHandler lightHandler;
 
+	bool useShaders;
 	bool waterDrawn;
 };
 

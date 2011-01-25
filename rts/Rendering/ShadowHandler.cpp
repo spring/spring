@@ -30,8 +30,7 @@
 
 CShadowHandler* shadowHandler = 0;
 
-bool CShadowHandler::canUseShadows = false;
-bool CShadowHandler::useFPShadows  = false;
+bool CShadowHandler::shadowsSupported = false;
 bool CShadowHandler::firstInstance = true;
 
 
@@ -40,8 +39,8 @@ CShadowHandler::CShadowHandler(void)
 	const bool tmpFirstInstance = firstInstance;
 	firstInstance = false;
 
-	drawShadows   = false;
-	inShadowPass  = false;
+	shadowsLoaded = false;
+	inShadowPass = false;
 	shadowTexture = 0;
 	dummyColorTexture = 0;
 	drawTerrainShadow = true;
@@ -54,7 +53,7 @@ CShadowHandler::CShadowHandler(void)
 	x2 = 0.0f;
 	y2 = 0.0f;
 
-	if (!tmpFirstInstance && !canUseShadows) {
+	if (!tmpFirstInstance && !shadowsSupported) {
 		return;
 	}
 
@@ -93,7 +92,6 @@ CShadowHandler::CShadowHandler(void)
 		//      2. (!GLEW_ARB_shadow_ambient && GLEW_ARB_shadow)
 		// but the non-FP result isn't nice anyway so just always
 		// use the program if we are guaranteed of shadow support
-		useFPShadows = true;
 
 		if (!GLEW_ARB_shadow_ambient) {
 			// can't use arbitrary texvals in case the depth comparison op fails (only 0)
@@ -106,7 +104,7 @@ CShadowHandler::CShadowHandler(void)
 	}
 
 	if (tmpFirstInstance) {
-		canUseShadows = true;
+		shadowsSupported = true;
 	}
 
 	if (configValue == 0) {
@@ -115,7 +113,7 @@ CShadowHandler::CShadowHandler(void)
 		shadowTexture = 0;
 		glDeleteTextures(1, &dummyColorTexture);
 		dummyColorTexture = 0;
-		return; // drawShadows is still false
+		return; // shadowsLoaded is still false
 	}
 
 	LoadShadowGenShaderProgs();
@@ -123,7 +121,7 @@ CShadowHandler::CShadowHandler(void)
 
 CShadowHandler::~CShadowHandler(void)
 {
-	if (drawShadows) {
+	if (shadowsLoaded) {
 		glDeleteTextures(1, &shadowTexture);
 		glDeleteTextures(1, &dummyColorTexture);
 	}
@@ -195,7 +193,7 @@ void CShadowHandler::LoadShadowGenShaderProgs()
 		}
 	}
 
-	drawShadows = true;
+	shadowsLoaded = true;
 	#undef sh
 }
 

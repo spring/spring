@@ -1074,7 +1074,7 @@ int LuaUnsyncedRead::HaveShadows(lua_State* L)
 	if (shadowHandler == NULL) {
 		return 0;
 	}
-	lua_pushboolean(L, shadowHandler->drawShadows);
+	lua_pushboolean(L, shadowHandler->shadowsLoaded);
 	return 1;
 }
 

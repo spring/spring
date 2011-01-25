@@ -185,11 +185,11 @@ void CGrassDrawer::LoadGrassShaders() {
 		grassShaders[GRASS_PROGRAM_DIST_BASIC] = sh->CreateProgramObject("[GrassDrawer]", shaderNames[GRASS_PROGRAM_DIST_BASIC] + "ARB", true);
 		grassShaders[GRASS_PROGRAM_DIST_BASIC]->AttachShaderObject(sh->CreateShaderObject("ARB/grassFarNS.vp", "", GL_VERTEX_PROGRAM_ARB));
 
-		// these remain stubs if !canUseShadows
+		// these remain stubs if !shadowsSupported
 		grassShaders[GRASS_PROGRAM_NEAR_SHADOW] = sh->CreateProgramObject("[GrassDrawer]", shaderNames[GRASS_PROGRAM_NEAR_SHADOW] + "ARB", true);
 		grassShaders[GRASS_PROGRAM_DIST_SHADOW] = sh->CreateProgramObject("[GrassDrawer]", shaderNames[GRASS_PROGRAM_DIST_SHADOW] + "ARB", true);
 
-		if (shadowHandler->canUseShadows) {
+		if (shadowHandler->shadowsSupported) {
 			grassShaders[GRASS_PROGRAM_NEAR_SHADOW]->AttachShaderObject(sh->CreateShaderObject("ARB/grass.vp", "", GL_VERTEX_PROGRAM_ARB));
 			grassShaders[GRASS_PROGRAM_DIST_SHADOW]->AttachShaderObject(sh->CreateShaderObject("ARB/grassFar.vp", "", GL_VERTEX_PROGRAM_ARB));
 		}
@@ -419,7 +419,7 @@ void CGrassDrawer::Draw(void)
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 	Shader::IProgramObject* grassShader = NULL;
 
-	if (shadowHandler->drawShadows && !gd->DrawExtraTex()) {
+	if (shadowHandler->shadowsLoaded && !gd->DrawExtraTex()) {
 		grassShader = grassShaders[GRASS_PROGRAM_NEAR_SHADOW];
 		grassShader->Enable();
 
@@ -571,7 +571,7 @@ void CGrassDrawer::Draw(void)
 	glDepthMask(false);
 
 
-	if (shadowHandler->drawShadows && !gd->DrawExtraTex()) {
+	if (shadowHandler->shadowsLoaded && !gd->DrawExtraTex()) {
 		glActiveTextureARB(GL_TEXTURE3_ARB);
 		glBindTexture(GL_TEXTURE_2D, farTex);
 		glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -721,7 +721,7 @@ void CGrassDrawer::Draw(void)
 
 	glDisable(GL_ALPHA_TEST);
 
-	if (shadowHandler->drawShadows && !gd->DrawExtraTex()) {
+	if (shadowHandler->shadowsLoaded && !gd->DrawExtraTex()) {
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 		glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 1);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);

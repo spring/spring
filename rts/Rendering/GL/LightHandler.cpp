@@ -22,7 +22,7 @@ void GL::LightHandler::Init(unsigned int cfgBaseLight, unsigned int cfgMaxLights
 		glLightfv(lightID, GL_SPECULAR, &ZeroVector4.x);
 		glLightfv(lightID, GL_SPOT_DIRECTION, &ZeroVector4.x);
 		glLightf(lightID, GL_SPOT_CUTOFF, 180.0f);
-		glLightf(lightID, GL_CONSTANT_ATTENUATION,  0.0f);
+		glLightf(lightID, GL_CONSTANT_ATTENUATION,  1.0f);
 		glLightf(lightID, GL_LINEAR_ATTENUATION,    0.0f);
 		glLightf(lightID, GL_QUADRATIC_ATTENUATION, 0.0f);
 		glDisable(lightID);
