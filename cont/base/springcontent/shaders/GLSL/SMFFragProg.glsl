@@ -2,7 +2,6 @@
 // by this constant; shading-texture intensities are
 // also pre-dimmed
 #define SMF_INTENSITY_MUL (210.0 / 255.0)
-#define SMF_ARB_LIGHTING 0
 #define SSMF_UNCOMPRESSED_NORMALS 0
 
 uniform vec4 lightDir;
@@ -13,8 +12,10 @@ uniform sampler2DShadow shadowTex;
 uniform sampler2D       detailTex;
 uniform sampler2D       specularTex;
 
+#if (HAVE_SHADOWS == 1)
 uniform mat4 shadowMat;
 uniform vec4 shadowParams;
+#endif
 
 uniform vec3 groundAmbientColor;
 uniform vec3 groundDiffuseColor;
@@ -57,12 +58,14 @@ void main() {
 	// we don't calculate it in the vertex shader to save varyings (OpenGL2.0 just allows 32 varying components)
 	vec3 cameraDir = vertexWorldPos.xyz - cameraPos;
 
+	#if (HAVE_SHADOWS == 1)
 	vec2 p17 = vec2(shadowParams.z, shadowParams.z);
 	vec2 p18 = vec2(shadowParams.w, shadowParams.w);
 
 	vec4 vertexShadowPos = shadowMat * vertexWorldPos;
 		vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + p17) + p18);
 		vertexShadowPos.st += shadowParams.xy;
+	#endif
 
 	vec3 normal;
 	#if (SSMF_UNCOMPRESSED_NORMALS == 1)
@@ -77,10 +80,12 @@ void main() {
 	vec4 diffuseCol = texture2D(diffuseTex, diffuseTexCoords);
 	vec4 specularCol = texture2D(specularTex, specularTexCoords);
 
+	#if (SMF_ARB_LIGHTING == 0)
 	// sun specular lighting contribution
 	float specularExp = specularCol.a * 16.0;
 	float specularPow = pow(cosAngleSpecular, specularExp);
 	vec3 specularInt  = specularCol.rgb * specularPow;
+	#endif
 
 
 	vec4 detailCol;
@@ -109,15 +114,30 @@ void main() {
 	#endif
 
 
-	// vec4 diffuseInt = texture2D(shadingTex, diffuseTexCoords);
+
+	#if (HAVE_SHADOWS == 1)
 	float shadowInt = shadow2DProj(shadowTex, vertexShadowPos).r;
+	#else
+	float shadowInt = 1.0;
+	#endif
+
+	// NOTE: do we want to add the ambient term to diffuseInt?
+	// vec4 diffuseInt = texture2D(shadingTex, diffuseTexCoords);
 	vec3 diffuseInt = groundAmbientColor + groundDiffuseColor * cosAngleDiffuse;
 	vec3 ambientInt = groundAmbientColor;
 	vec4 shadeInt;
 
+	#if (SMF_ARB_LIGHTING == 0)
 	specularInt *= shadowInt;
+	#endif
+
+	#if (HAVE_SHADOWS == 1)
 	shadowInt = 1.0 - (1.0 - shadowInt) * groundShadowDensity;
 	shadeInt.rgb = mix(ambientInt, diffuseInt, shadowInt);
+	#else
+	shadeInt.rgb = diffuseInt;
+	#endif
+
 	shadeInt.rgb *= SMF_INTENSITY_MUL;
 	shadeInt.a = 1.0;
 
@@ -175,11 +195,17 @@ void main() {
 		float vectorDot = dot((-lightVec / lightDistance), gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].spotDirection);
 		float cutoffDot = gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].spotCosCutoff;
 
+		#if (SMF_ARB_LIGHTING == 0)
+		float lightSpecularPow = pow(lightCosAngSpec, specularExp);
+		#else
+		float lightSpecularPow = 0.0;
+		#endif
+
 		lightScale *= ((vectorDot < cutoffDot)? 0.0: 1.0);
 
 		gl_FragColor.rgb += (lightScale *                                     gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].ambient.rgb);
 		gl_FragColor.rgb += (lightScale * lightAttenuation * (diffuseCol.rgb * gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].diffuse.rgb * lightCosAngDiff));
-		gl_FragColor.rgb += (lightScale * lightAttenuation * (specularCol.rgb * gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].specular.rgb * pow(lightCosAngSpec, specularExp)));
+		gl_FragColor.rgb += (lightScale * lightAttenuation * (specularCol.rgb * gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].specular.rgb * lightSpecularPow));
 	}
 	#endif
 

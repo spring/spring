@@ -1242,7 +1242,7 @@ static bool ParseLight(lua_State* L, int tblIdx, GL::Light& light, const char* c
 
 			else if (lua_isnumber(L, -1)) {
 				if (key == "radius") {
-					light.SetRadius(std::max(0.0f, lua_tonumber(L, -1)));
+					light.SetRadius(std::max(1.0f, lua_tonumber(L, -1)));
 				} else if (key == "fov") {
 					light.SetFOV(std::max(0.0f, std::min(180.0f, lua_tonumber(L, -1))));
 				} else if (key == "ttl") {
