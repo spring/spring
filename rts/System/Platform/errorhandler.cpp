@@ -35,10 +35,11 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 	if (!(flags & MBF_MAIN)) {
 		Threading::Error err(caption, msg, flags);
 		Threading::SetThreadError(err);
-		if (!Threading::IsMainThread()) {
-			Threading::GetMainThread()->interrupt();
-		}
-		throw boost::thread_interrupted();
+		boost::thread *mainthread = Threading::GetMainThread();
+		if (mainthread && !Threading::IsMainThread())
+			mainthread->interrupt();
+		if (!(flags & MBF_CRASH) && Threading::IsLoadingThread())
+			throw boost::thread_interrupted(); // only the loading thread currently catches this interrupted exception (makes a more graceful exit)
 	}
 #endif
 
@@ -47,7 +48,8 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 #ifdef DEDICATED
 	SafeDelete(gameServer);
 #else
-	SpringApp::Shutdown();
+	if(Threading::IsMainThread())
+		SpringApp::Shutdown();
 #endif
 
 	logOutput.SetSubscribersEnabled(false);
@@ -75,5 +77,9 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
   #endif // ifdef WIN32
 #endif // if !defined(DEDICATED) && !defined(HEADLESS)
 
+#ifdef _MSC_VER
+	TerminateProcess(GetCurrentProcess(), -1);
+#else
 	exit(-1); // continuing execution when SDL_Quit has already been run will result in a crash
+#endif
 }

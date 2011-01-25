@@ -3,6 +3,7 @@
 #include "StdAfx.h"
 #include <windows.h>
 #include "seh.h"
+#include "System/Platform/CrashHandler.h"
 
 #ifdef _MSC_VER
 static const char *ExceptionName(DWORD exceptionCode)
@@ -37,6 +38,7 @@ void __cdecl se_translator_function(unsigned int err, struct _EXCEPTION_POINTERS
 {
 	char buf[128];
 	sprintf(buf,"%s(0x%08x) at 0x%08x",ExceptionName(err),err,ep->ExceptionRecord->ExceptionAddress);
+	CrashHandler::ExceptionHandler(ep);
 	throw std::exception(buf);
 }
 #endif

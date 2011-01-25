@@ -225,7 +225,7 @@ static BOOL CALLBACK EnumModules(LPSTR moduleName, DWORD baseOfDll, PVOID userCo
 #endif // _MSC_VER >= 1500
 
 /** Called by windows if an exception happens. */
-static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
+LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 {
 	// Prologue.
 	logOutput.SetSubscribersEnabled(false);
@@ -250,6 +250,9 @@ static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 	// Unintialize IMAGEHLP.DLL
 	SymCleanup(GetCurrentProcess());
 
+	// Only the first crash is of any real interest
+	CrashHandler::Remove();
+
 	// Inform user.
 	char dir[MAX_PATH], msg[MAX_PATH+200];
 	GetCurrentDirectory(sizeof(dir) - 1, dir);
@@ -257,7 +260,7 @@ static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 		"Spring has crashed.\n\n"
 		"A stacktrace has been written to:\n"
 		"%s\\infolog.txt", dir);
-	ErrorMessageBox(msg, "Spring: Unhandled exception", 0);
+	ErrorMessageBox(msg, "Spring: Unhandled exception", MBF_CRASH);
 
 	// this seems to silently close the application
 	return EXCEPTION_EXECUTE_HANDLER;
