@@ -298,6 +298,8 @@ bool CLoadScreen::Draw()
 
 void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 {
+	CrashHandler::ClearDrawWDT();
+
 	boost::recursive_mutex::scoped_lock lck(mutex);
 
 	if (!replace_lastline) {

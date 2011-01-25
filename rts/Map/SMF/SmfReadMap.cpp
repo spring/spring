@@ -69,7 +69,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 
 
 
-	haveSpecularLighting = (!(mapInfo->smf.specularTexName.empty()) && globalRendering->haveGLSL);
+	haveSpecularLighting = !(mapInfo->smf.specularTexName.empty());
 	haveSplatTexture = (!mapInfo->smf.splatDetailTexName.empty() && !mapInfo->smf.splatDistrTexName.empty());
 
 	CBitmap detailTexBM;
@@ -299,7 +299,7 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 	}
 
 
-	if (haveSpecularLighting) {
+	if (globalRendering->haveGLSL) {
 		// update the vertex normals
 		const float* hm = heightmap;
 

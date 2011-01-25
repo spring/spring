@@ -107,11 +107,12 @@ void CGlobalRendering::PostInit() {
 	haveGLSL = !!GLEW_VERSION_2_0;
 
 	{
-		std::string vendor = StringToLower(std::string((char*) glGetString(GL_VENDOR)));
+		const std::string vendor = StringToLower(std::string((char*) glGetString(GL_VENDOR)));
+		const std::string renderer = StringToLower(std::string((char*) glGetString(GL_RENDERER)));
+
 		haveATI = (vendor.find("ati ") != std::string::npos);
 
 		if (haveATI) {
-			std::string renderer = StringToLower(std::string((char*) glGetString(GL_RENDERER)));
 			//! x-series doesn't support NPOTs (but hd-series does)
 			supportNPOTs = (renderer.find(" x") == std::string::npos && renderer.find(" 9") == std::string::npos);
 		}
