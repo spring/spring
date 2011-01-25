@@ -120,7 +120,7 @@ void CSm3ReadMap::NewGroundDrawer() {
 	}
 
 	renderer->config.useStaticShadow = false;
-	renderer->config.useShadowMaps = shadowHandler->drawShadows;
+	renderer->config.useShadowMaps = shadowHandler->shadowsLoaded;
 	renderer->config.terrainNormalMaps = false;
 	renderer->config.normalMapLevel = 3;
 

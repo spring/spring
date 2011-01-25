@@ -1070,7 +1070,7 @@ bool CGame::DrawWorld()
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
 
-	bool noAdvShading = shadowHandler->drawShadows;
+	const bool noAdvShading = shadowHandler->shadowsLoaded;
 
 	static const double plane_below[4] = {0.0f, -1.0f, 0.0f, 0.0f};
 	static const double plane_above[4] = {0.0f,  1.0f, 0.0f, 0.0f};
@@ -1346,8 +1346,7 @@ bool CGame::Draw() {
 	if (doDrawWorld) {
 		{
 			SCOPED_TIMER("Shadows/Reflections");
-			if (shadowHandler->drawShadows &&
-				(gd->drawMode != CBaseGroundDrawer::drawLos)) {
+			if (shadowHandler->shadowsLoaded && (gd->drawMode != CBaseGroundDrawer::drawLos)) {
 				// NOTE: shadows don't work in LOS mode, gain a few fps (until it's fixed)
 				SetDrawMode(gameShadowDraw);
 				shadowHandler->CreateShadows();

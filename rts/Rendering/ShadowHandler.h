@@ -24,10 +24,9 @@ public:
 	unsigned int shadowTexture;
 	unsigned int dummyColorTexture;
 
-	static bool canUseShadows;
-	static bool useFPShadows;
+	static bool shadowsSupported;
 
-	bool drawShadows;
+	bool shadowsLoaded;
 	bool inShadowPass;
 	bool drawTerrainShadow;
 

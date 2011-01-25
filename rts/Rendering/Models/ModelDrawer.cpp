@@ -263,7 +263,7 @@ bool CModelDrawerARB::LoadModelShaders()
 		shaders[modelType].resize(CGame::gameRefractionDraw + 1, NULL);
 
 		for (int drawMode = CGame::gameNotDrawing; drawMode < CGame::gameRefractionDraw + 1; drawMode++) {
-			if (drawMode == CGame::gameShadowDraw && shadowHandler->drawShadows) {
+			if (drawMode == CGame::gameShadowDraw && shadowHandler->shadowsLoaded) {
 				shaders[modelType][drawMode] = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 			} else {
 				shaders[modelType][drawMode] = shaderHandler->CreateProgramObject(GetName(), "$DUMMY-ARB$", true);
@@ -305,7 +305,7 @@ bool CModelDrawerGLSL::LoadModelShaders()
 		shaders[modelType].resize(CGame::gameRefractionDraw + 1, NULL);
 
 		for (int drawMode = CGame::gameNotDrawing; drawMode < CGame::gameRefractionDraw + 1; drawMode++) {
-			if (drawMode == CGame::gameShadowDraw && shadowHandler->drawShadows) {
+			if (drawMode == CGame::gameShadowDraw && shadowHandler->shadowsLoaded) {
 				shaders[modelType][drawMode] = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 			} else {
 				shaders[modelType][drawMode] = shaderHandler->CreateProgramObject(GetName(), "$DUMMY-GLSL$", false);

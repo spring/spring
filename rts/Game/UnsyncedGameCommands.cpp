@@ -120,7 +120,7 @@ bool CGame::ActionPressed(const Action& action,
 			logOutput.Print("Change your configuration and restart to use them");
 			return true;
 		}
-		else if (!shadowHandler->canUseShadows) {
+		else if (!shadowHandler->shadowsSupported) {
 			logOutput.Print("Your hardware/driver setup does not support shadows");
 			return true;
 		}

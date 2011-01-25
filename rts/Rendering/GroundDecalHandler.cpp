@@ -433,7 +433,7 @@ void CGroundDecalHandler::Draw()
 		glBindTexture(GL_TEXTURE_2D, gd->infoTex);
 	}
 
-	if (shadowHandler && shadowHandler->drawShadows) {
+	if (shadowHandler && shadowHandler->shadowsLoaded) {
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 			glEnable(GL_TEXTURE_2D);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -519,7 +519,7 @@ void CGroundDecalHandler::Draw()
 	}
 
 
-	if (shadowHandler && shadowHandler->drawShadows) {
+	if (shadowHandler && shadowHandler->shadowsLoaded) {
 		decalShaders[DECAL_SHADER_CURR]->Disable();
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);

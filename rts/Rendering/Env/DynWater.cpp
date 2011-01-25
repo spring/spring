@@ -447,24 +447,26 @@ void CDynWater::DrawReflection(CGame* game)
 
 	sky->Draw();
 
+	static const double plane[4] = {0.0, 1.0, 0.0, 1.0};
+	static const double plane2[4] = {0.0, -1.0, 0, 1.0};
+	const bool shadowsLoaded = shadowHandler->shadowsLoaded;
+
 	glEnable(GL_CLIP_PLANE2);
-	double plane2[4]={0,-1,0,1.0f};
-	glClipPlane(GL_CLIP_PLANE2 ,plane2);
-	drawReflection=true;
-	bool drawShadows=shadowHandler->drawShadows;
-	shadowHandler->drawShadows=false;
+	glClipPlane(GL_CLIP_PLANE2, plane2);
+
+	drawReflection = true;
+	shadowHandler->shadowsLoaded = false;
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 		gd->SetupReflDrawPass();
 		gd->Draw(true, false);
 		gd->SetupBaseDrawPass();
 
-	double plane[4]={0,1,0,1.0f};
 	glClipPlane(GL_CLIP_PLANE2 ,plane);
 
 	gd->Draw(true);
 
-	shadowHandler->drawShadows=drawShadows;
+	shadowHandler->shadowsLoaded = shadowsLoaded;
 
 	unitDrawer->Draw(true);
 	featureDrawer->Draw();

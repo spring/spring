@@ -17,6 +17,7 @@ public:
 
 	void UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2);
 
+	inline GLuint GetDetailTexture() const { return detailTex; }
 	inline GLuint GetShadingTexture() const { return shadingTex; }
 	inline GLuint GetNormalsTexture() const { return normalsTex; }
 	inline GLuint GetSpecularTexture() const { return specularTex; }
