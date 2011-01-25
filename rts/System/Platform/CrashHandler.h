@@ -11,6 +11,9 @@ namespace CrashHandler {
 	void ClearDrawWDT(bool disable = false);
 	void ClearSimWDT(bool disable = false);
 	void GameLoading(bool);
+#ifdef WIN32
+	LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e);
+#endif
 };
 
 #endif // _CRASH_HANDLER_H_

@@ -13,11 +13,13 @@ namespace Threading {
 		unsigned int flags;
 	};
 
-	void SetMainThread(boost::thread* mt);
+	void SetMainThread(boost::thread* mt = NULL);
+	void SetLoadingThread();
 	boost::thread* GetMainThread();
 	void SetThreadError(const Error& err);
 	Error* GetThreadError();
 	bool IsMainThread();
+	bool IsLoadingThread();
 };
 
 #endif // _THREADING_H_
