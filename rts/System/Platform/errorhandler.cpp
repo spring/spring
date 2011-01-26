@@ -13,6 +13,9 @@
 #include "System/LogOutput.h"
 #include "System/Util.h"
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/posix_time/ptime.hpp>
+
 #ifndef DEDICATED
 	#include "SpringApp.h"
 	#include "System/Platform/Threading.h"
@@ -27,7 +30,21 @@
     #endif // ifndef HEADLESS
 #endif // ifndef DEDICATED
 
+volatile bool shutdownSucceeded = false;
 
+void ForcedExit() {
+	int count = 0;
+	while(!shutdownSucceeded && ++count < 50)
+		boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+	if(!shutdownSucceeded) {
+		LogObject() << "Shutdown failed, forced exit";
+#ifdef _MSC_VER
+		TerminateProcess(GetCurrentProcess(), -1);
+#else
+		exit(-1); // continuing execution when SDL_Quit has already been run will result in a crash
+#endif
+	}
+}
 
 void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags)
 {
@@ -38,6 +55,9 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 		boost::thread *mainthread = Threading::GetMainThread();
 		if (mainthread && !Threading::IsMainThread())
 			mainthread->interrupt();
+		boost::thread *loadthread = Threading::GetLoadingThread();
+		if (loadthread && Threading::IsMainThread())
+			loadthread->interrupt();
 		if (!(flags & MBF_CRASH) && Threading::IsLoadingThread())
 			throw boost::thread_interrupted(); // only the loading thread currently catches this interrupted exception (makes a more graceful exit)
 	}
@@ -48,8 +68,13 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 #ifdef DEDICATED
 	SafeDelete(gameServer);
 #else
-	if(Threading::IsMainThread())
+	if(Threading::IsMainThread()) {
+		boost::thread *forcedExitThread = new boost::thread(&ForcedExit);
 		SpringApp::Shutdown();
+		shutdownSucceeded = true;
+		forcedExitThread->join();
+		delete forcedExitThread;
+	}
 #endif
 
 	logOutput.SetSubscribersEnabled(false);

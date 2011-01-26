@@ -7,6 +7,7 @@ namespace Threading {
 	static boost::thread* mainThread = NULL;
 	static boost::thread::id mainThreadID;
 	static Error* threadError = NULL;
+	static boost::thread* loadingThread = NULL;
 	static boost::thread::id loadingThreadID;
 
 	void SetMainThread(boost::thread* mt) {
@@ -17,12 +18,17 @@ namespace Threading {
 		}
 	}
 
-	void SetLoadingThread() {
-		loadingThreadID = boost::this_thread::get_id();
+	void SetLoadingThread(boost::thread* lt) {
+		loadingThread = lt;
+		loadingThreadID = lt ? lt->get_id() : boost::this_thread::get_id();
 	}
 
 	boost::thread* GetMainThread() {
 		return mainThread;
+	}
+
+	boost::thread* GetLoadingThread() {
+		return loadingThread;
 	}
 
 	void SetThreadError(const Error& err) {
