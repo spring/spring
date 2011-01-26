@@ -3,6 +3,10 @@
 #ifndef _CRASH_HANDLER_H_
 #define _CRASH_HANDLER_H_
 
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 namespace CrashHandler {
 	void Install();
 	void Remove();
