@@ -3,6 +3,10 @@
 #ifndef _CRASH_HANDLER_H_
 #define _CRASH_HANDLER_H_
 
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 namespace CrashHandler {
 	void Install();
 	void Remove();
@@ -11,6 +15,9 @@ namespace CrashHandler {
 	void ClearDrawWDT(bool disable = false);
 	void ClearSimWDT(bool disable = false);
 	void GameLoading(bool);
+#ifdef WIN32
+	LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e);
+#endif
 };
 
 #endif // _CRASH_HANDLER_H_
