@@ -5,6 +5,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Objects/SolidObject.h"
+#include "System/myMath.h"
 
 #define FLOW_EPSILON         0.01f
 #define FLOW_DECAY_ENABLED   0
@@ -137,12 +138,10 @@ void PathFlowMap::Update() {
 			bCell.flowVector.z /= flowLen;
 		}
 
-		// note: if FLOW_DECAY_ENABLED == 1, cells
-		// whose normalized flow-strength is less
-		// than FLOW_EPSILON will also be decayed
-		// (this can be a problem if the range of
-		// unit mass values is very wide and there
-		// are units at both extremes in-game)
+		// note: if FLOW_DECAY_ENABLED == 1, all cells whose normalized
+		// flow-strength is less than FLOW_EPSILON will also be decayed
+		// (this can be problematic if the range of unit mass values is
+		// wide and there are units at both extremes in-game)
 		if (maxFlow[bBufferIdx] > FLOW_EPSILON) {
 			bCell.flowVector.y /= maxFlow[bBufferIdx];
 		}
@@ -167,6 +166,8 @@ void PathFlowMap::AddFlow(const CSolidObject* o) {
 		return;
 	}
 
+	// prevent self-obstruction if the unit is not moving
+	const float3& flowVec = (o->speed.SqLength() >= 1.0f)? o->speed: GetVectorFromHeading(o->heading);
 	const unsigned int cellIdx = GetCellIdx(o);
 
 	std::vector<FlowCell>& bCells = buffers[bBufferIdx];
@@ -174,8 +175,8 @@ void PathFlowMap::AddFlow(const CSolidObject* o) {
 
 	FlowCell& bCell = bCells[cellIdx];
 
-	bCell.flowVector.x += (o->speed.x);
-	bCell.flowVector.z += (o->speed.z);
+	bCell.flowVector.x += (flowVec.x);
+	bCell.flowVector.z += (flowVec.z);
 	bCell.flowVector.y += (o->mass * o->mobility->flowMod);
 	bCell.numObjects   += 1;
 
@@ -206,9 +207,9 @@ void PathFlowMap::AddFlow(const CSolidObject* o) {
 		else if (halfSpaces[1] && halfSpaces[2]) {  i = ((z - 1) * xsize + (x + 1));  bIndices.insert(i);  ngbs[2] = &bCells[i];  }
 		else if (halfSpaces[1] && halfSpaces[3]) {  i = ((z + 1) * xsize + (x + 1));  bIndices.insert(i);  ngbs[2] = &bCells[i];  }
 
-		if (ngbs[0] != NULL) {  ngbs[0]->flowVector += float3(o->speed.x, o->mass * o->mobility->flowMod * 0.666f, o->speed.z);  ngbs[0]->numObjects += 1;  }
-		if (ngbs[1] != NULL) {  ngbs[1]->flowVector += float3(o->speed.x, o->mass * o->mobility->flowMod * 0.666f, o->speed.z);  ngbs[1]->numObjects += 1;  }
-		if (ngbs[2] != NULL) {  ngbs[2]->flowVector += float3(o->speed.x, o->mass * o->mobility->flowMod * 0.333f, o->speed.z);  ngbs[2]->numObjects += 1;  }
+		if (ngbs[0] != NULL) {  ngbs[0]->flowVector += float3(flowVec.x, o->mass * o->mobility->flowMod * 0.666f, flowVec.z);  ngbs[0]->numObjects += 1;  }
+		if (ngbs[1] != NULL) {  ngbs[1]->flowVector += float3(flowVec.x, o->mass * o->mobility->flowMod * 0.666f, flowVec.z);  ngbs[1]->numObjects += 1;  }
+		if (ngbs[2] != NULL) {  ngbs[2]->flowVector += float3(flowVec.x, o->mass * o->mobility->flowMod * 0.333f, flowVec.z);  ngbs[2]->numObjects += 1;  }
 	}
 	#endif
 
