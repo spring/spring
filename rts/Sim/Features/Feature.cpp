@@ -477,10 +477,6 @@ bool CFeature::UpdatePosition()
 	if (udef != NULL) {
 		// we are a wreck of a dead unit
 		if (!reachedFinalPos) {
-			bool haveForwardSpeed = false;
-			bool haveVerticalSpeed = false;
-			bool inBounds = false;
-
 			// NOTE: apply more drag if we were a tank or bot?
 			// (would require passing extra data to Initialize())
 			deathSpeed *= 0.95f;
@@ -490,14 +486,15 @@ bool CFeature::UpdatePosition()
 				qf->RemoveFeature(this);
 
 				// update our forward speed (and quadfield
-				// position) if it's still greater than 0
+				// position) if it is still greater than 0
 				pos += deathSpeed;
 				midPos += deathSpeed;
 
-				haveForwardSpeed = true;
-
 				qf->AddFeature(this);
 				Block();
+			} else {
+				deathSpeed.x = 0.0f;
+				deathSpeed.z = 0.0f;
 			}
 
 			// def->floating is unreliable (true for land unit wrecks),
@@ -517,20 +514,19 @@ bool CFeature::UpdatePosition()
 
 				pos.y += deathSpeed.y;
 				midPos.y += deathSpeed.y;
-				haveVerticalSpeed = true;
 			} else {
+				deathSpeed.y = 0.0f;
+
 				// last Update() may have sunk us into
 				// ground if pos.y was only marginally
 				// larger than ground height, correct
 				pos.y = realGroundHeight;
 				midPos.y = pos.y + model->relMidPos.y;
-				deathSpeed.y = 0.0f;
 			}
 
-			inBounds = pos.CheckInBounds();
-			reachedFinalPos = (!haveForwardSpeed && !haveVerticalSpeed);
+			reachedFinalPos = (deathSpeed == ZeroVector);
 
-			if (!inBounds) {
+			if (!pos.CheckInBounds()) {
 				// ensure that no more forward-speed updates are done
 				// (prevents wrecks floating in mid-air at edge of map
 				// due to gravity no longer being applied either)
@@ -563,10 +559,10 @@ bool CFeature::UpdatePosition()
 			if (def->drawType >= DRAWTYPE_TREE)
 				treeDrawer->DeleteTree(pos);
 
+			const float diff = finalHeight - pos.y;
+
 			pos.y = finalHeight;
 			speed.y = 0.0f;
-
-			const float diff = finalHeight - pos.y;
 
 			midPos.y += diff;
 			transMatrix[13] += diff;
@@ -575,7 +571,7 @@ bool CFeature::UpdatePosition()
 				treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
 		}
 
-		reachedFinalPos = (pos.y <= finalHeight);
+		reachedFinalPos = (pos.y == finalHeight);
 	}
 
 	isUnderWater = ((pos.y + height) < 0.0f);
