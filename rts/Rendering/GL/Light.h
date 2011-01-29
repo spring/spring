@@ -11,21 +11,26 @@ namespace GL {
 	struct Light: public CObject {
 	public:
 		Light() {
-			position        = float4(0.0f, 0.0f, 1.0f, 1.0f);
-			direction       = ZeroVector;
-			trackPosition   = NULL;
-			trackDirection  = NULL;
-			ambientColor.w  = 1.0f;
-			diffuseColor.w  = 1.0f;
-			specularColor.w = 1.0f;
-			colorWeight     = float3(1.0f, 1.0f, 1.0f);
+			position          = float4(0.0f, 0.0f, 1.0f, 1.0f);
+			direction         = ZeroVector;
+			trackPosition     = NULL;
+			trackDirection    = NULL;
+			ambientColor.w    = 1.0f;
+			diffuseColor.w    = 1.0f;
+			specularColor.w   = 1.0f;
+			lightWeight       = float3(1.0f, 1.0f, 1.0f);
+			ambientDecayRate  = float3(1.0f, 1.0f, 1.0f);
+			diffuseDecayRate  = float3(1.0f, 1.0f, 1.0f);
+			specularDecayRate = float3(1.0f, 1.0f, 1.0f);
+			decayFunctionType = float3(1.0f, 1.0f, 1.0f);
 
 			radius = 0.0f;
 			fov = 180.0f;
 
 			id  = -1U;
 			ttl = 0;
-			age = 0;
+			relTime = 0;
+			absTime = 0;
 		}
 
 		// a light can only depend on one object
@@ -41,8 +46,12 @@ namespace GL {
 		const float4& GetAmbientColor() const { return ambientColor; }
 		const float4& GetDiffuseColor() const { return diffuseColor; }
 		const float4& GetSpecularColor() const { return specularColor; }
-		const float3& GetColorWeight() const { return colorWeight; }
+		const float3& GetLightWeight() const { return lightWeight; }
 		const float3& GetAttenuation() const { return attenuation; }
+		const float3& GetAmbientDecayRate() const { return ambientDecayRate; }
+		const float3& GetDiffuseDecayRate() const { return diffuseDecayRate; }
+		const float3& GetSpecularDecayRate() const { return specularDecayRate; }
+		const float3& GetDecayFunctionType() const { return decayFunctionType; }
 
 		void SetPosition(const float array[3]) { position = array; }
 		void SetDirection(const float array[3]) { direction = array; }
@@ -51,8 +60,16 @@ namespace GL {
 		void SetAmbientColor(const float array[3]) { ambientColor = array; }
 		void SetDiffuseColor(const float array[3]) { diffuseColor = array; }
 		void SetSpecularColor(const float array[3]) { specularColor = array; }
-		void SetColorWeight(const float array[3]) { colorWeight = array; }
+		void SetLightWeight(const float array[3]) { lightWeight = array; }
 		void SetAttenuation(const float array[3]) { attenuation = array; }
+		void SetAmbientDecayRate(const float array[3]) { ambientDecayRate = array; }
+		void SetDiffuseDecayRate(const float array[3]) { diffuseDecayRate = array; }
+		void SetSpecularDecayRate(const float array[3]) { specularDecayRate = array; }
+		void SetDecayFunctionType(const float array[3]) { decayFunctionType = array; }
+
+		void SetAmbientColor(const float3& ac) { ambientColor = ac; }
+		void SetDiffuseColor(const float3& dc) { diffuseColor = dc; }
+		void SetSpecularColor(const float3& sc) { specularColor = sc; }
 
 		float GetRadius() const { return radius; }
 		float GetFOV() const { return fov; }
@@ -61,26 +78,72 @@ namespace GL {
 
 		const unsigned int GetID() const { return id; }
 		unsigned int GetTTL() const { return ttl; }
-		unsigned int GetAge() const { return age; }
+		unsigned int GetRelativeTime() const { return relTime; }
+		unsigned int GetAbsoluteTime() const { return absTime; }
 		void SetID(unsigned int n) { id = n; }
 		void SetTTL(unsigned int n) { ttl = n; }
-		void SetAge(unsigned int n) { age = n; }
+		void SetRelativeTime(unsigned int n) { relTime = n; }
+		void SetAbsoluteTime(unsigned int n) { absTime = n; }
+
+		void DecayColors() {
+			const bool expAmbientDecay  = (decayFunctionType.x != 0.0f);
+			const bool expDiffuseDecay  = (decayFunctionType.y != 0.0f);
+			const bool expSpecularDecay = (decayFunctionType.z != 0.0f);
+
+			if (expAmbientDecay) {
+				SetAmbientColor(GetAmbientColor() * GetAmbientDecayRate());
+			} else {
+				SetAmbientColor(GetAmbientColor() - GetAmbientDecayRate());
+			}
+
+			if (expDiffuseDecay) {
+				SetDiffuseColor(GetDiffuseColor() * GetDiffuseDecayRate());
+			} else {
+				SetDiffuseColor(GetDiffuseColor() - GetDiffuseDecayRate());
+			}
+
+			if (expSpecularDecay) {
+				SetSpecularColor(GetSpecularColor() * GetSpecularDecayRate());
+			} else {
+				SetSpecularColor(GetSpecularColor() - GetSpecularDecayRate());
+			}
+		}
+
+		void ClampColors() {
+			ambientColor.x = std::max(0.0f, ambientColor.x);
+			ambientColor.y = std::max(0.0f, ambientColor.y);
+			ambientColor.z = std::max(0.0f, ambientColor.z);
+
+			diffuseColor.x = std::max(0.0f, diffuseColor.x);
+			diffuseColor.y = std::max(0.0f, diffuseColor.y);
+			diffuseColor.z = std::max(0.0f, diffuseColor.z);
+
+			specularColor.x = std::max(0.0f, specularColor.x);
+			specularColor.y = std::max(0.0f, specularColor.y);
+			specularColor.z = std::max(0.0f, specularColor.z);
+		}
 
 	private:
-		float4  position;       // world-space, w == 1 (non-directional)
-		float3  direction;      // world-space
-		float4  ambientColor;   // RGBA
-		float4  diffuseColor;   // RGBA
-		float4  specularColor;  // RGBA
-		float3  colorWeight;    // x=ambient, y=diffuse, z=specular
-		float3  attenuation;    // x=constant, y=linear, z=quadratic
+		float4  position;         // world-space, w == 1 (non-directional)
+		float3  direction;        // world-space
+		float4  ambientColor;     // RGBA
+		float4  diffuseColor;     // RGBA
+		float4  specularColor;    // RGBA
+		float3  lightWeight;      // x=ambient, y=diffuse, z=specular
+		float3  attenuation;      // x=constant, y=linear, z=quadratic
 
-		float radius;           // elmos
-		float fov;              // degrees
+		float3 ambientDecayRate;  // x=ambient, y=diffuse, z=specular
+		float3 diffuseDecayRate;  // x=ambient, y=diffuse, z=specular
+		float3 specularDecayRate; // x=ambient, y=diffuse, z=specular
+		float3 decayFunctionType; // x=ambient, y=diffuse, z=specular (0.0f=linear, 1.0f=exponential)
 
-		unsigned int id;        // GL_LIGHTx we are bound to
-		unsigned int ttl;       // lifetime in sim-frames
-		unsigned int age;       // sim-frame this light was created
+		float radius;             // elmos
+		float fov;                // degrees ([0.0 - 90.0] or 180.0)
+
+		unsigned int id;          // GL_LIGHT[id] we are bound to
+		unsigned int ttl;         // maximum lifetime in sim-frames
+		unsigned int relTime;     // current lifetime in sim-frames
+		unsigned int absTime;     // current sim-frame this light is at
 
 		const float3* trackPosition;
 		const float3* trackDirection;

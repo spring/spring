@@ -412,7 +412,7 @@ namespace CrashHandler {
 		if (!keepRunning) {
 			logOutput.End();
 			// this also calls exit()
-			ErrorMessageBox(error, "Spring crashed", 0);
+			ErrorMessageBox(error, "Spring crashed", MBF_CRASH);
 		}
 	}
 
