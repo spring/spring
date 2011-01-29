@@ -262,7 +262,7 @@ CUnit::~CUnit()
 		// to be as short as possible to prevent position jumps)
 		featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing,
 		                               delayedWreckLevel, team, -1, true,
-		                               unitDefName, deathSpeed);
+		                               unitDef, deathSpeed);
 	}
 
 	if (unitDef->isAirBase) {
@@ -1856,7 +1856,7 @@ void CUnit::FinishedBuilding()
 		UnBlock();
 		CFeature* f =
 			featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing,
-										   0, team, allyteam, false, "");
+										   0, team, allyteam, false, NULL);
 		if (f) {
 			f->blockHeightChanges = true;
 		}

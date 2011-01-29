@@ -36,7 +36,7 @@ public:
 	 * This will add this to the FeatureHandler.
 	 */
 	void Initialize(const float3& pos, const FeatureDef* def, short int heading, int facing,
-		int team, int allyteam, std::string fromUnit, const float3& speed = ZeroVector, int smokeTime = 0);
+		int team, int allyteam, const UnitDef* udef, const float3& speed = ZeroVector, int smokeTime = 0);
 	int GetBlockingMapID() const { return id + (10 * uh->MaxUnits()); }
 
 	/**
@@ -78,7 +78,6 @@ public:
 	}
 
 public:
-	std::string createdFromUnit;
 	/**
 	 * This flag is used to stop a potential exploit involving tripping
 	 * a unit back and forth across a chunk boundary to get unlimited resources.
@@ -99,6 +98,8 @@ public:
 	int lastReclaim;
 
 	const FeatureDef* def;
+	const UnitDef* udef; /// type of unit this feature should be resurrected to
+
 	std::string defName;
 
 	CMatrix44f transMatrix;

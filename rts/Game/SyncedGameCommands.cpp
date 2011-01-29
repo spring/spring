@@ -304,7 +304,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 
 							CFeature* feature = new CFeature();
 							// Initialize() adds the feature to the FeatureHandler -> no memory-leak
-							feature->Initialize(upos, featureDef, 0, 0, team, allyteam, "");
+							feature->Initialize(upos, featureDef, 0, 0, team, allyteam, NULL);
 							--total;
 						}
 					}

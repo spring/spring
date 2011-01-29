@@ -41,7 +41,7 @@ unsigned int GL::LightHandler::AddLight(const GL::Light& light) {
 		unsigned int minPriorityValue = light.GetPriority();
 		unsigned int minPriorityHandle = -1U;
 
-		for (std::map<unsigned int, GL::Light>::const_iterator it = lights.begin(); it != lights.end(); ) {
+		for (std::map<unsigned int, GL::Light>::const_iterator it = lights.begin(); it != lights.end(); ++it) {
 			const GL::Light& lgt = it->second;
 
 			if (lgt.GetPriority() < minPriorityValue) {

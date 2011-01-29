@@ -282,7 +282,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			(new CFeature)->Initialize(
 				float3(mfi[a].pos.x, ypos, mfi[a].pos.z),
 				def->second, (short int) mfi[a].rotation,
-				0, -1, -1, ""
+				0, -1, -1, NULL
 			);
 		}
 
@@ -332,7 +332,7 @@ CFeature* CFeatureHandler::GetFeature(int id)
 }
 
 CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const string& name,
-	float rot, int facing, int iter, int team, int allyteam, bool emitSmoke, string fromUnit,
+	float rot, int facing, int iter, int team, int allyteam, bool emitSmoke, const UnitDef* udef,
 	const float3& speed)
 {
 	const FeatureDef* fd;
@@ -344,17 +344,19 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const string& name,
 		fd = GetFeatureDef(*defname);
 		if (!fd) return NULL;
 		defname = &(fd->deathFeature);
-	}while (--i > 0);
+	} while (--i > 0);
 
 	if (luaRules && !luaRules->AllowFeatureCreation(fd, team, pos))
 		return NULL;
 
 	if (!fd->modelname.empty()) {
-		if (fd->resurrectable==0 || (iter>1 && fd->resurrectable<0))
-			fromUnit = "";
-
 		CFeature* f = new CFeature;
-		f->Initialize(pos, fd, (short int) rot, facing, team, allyteam, fromUnit, speed, emitSmoke ? fd->smokeTime : 0);
+
+		if (fd->resurrectable == 0 || (iter > 1 && fd->resurrectable < 0)) {
+			f->Initialize(pos, fd, (short int) rot, facing, team, allyteam, NULL, speed, emitSmoke ? fd->smokeTime : 0);
+		} else {
+			f->Initialize(pos, fd, (short int) rot, facing, team, allyteam, udef, speed, emitSmoke ? fd->smokeTime : 0);
+		}
 
 		return f;
 	}

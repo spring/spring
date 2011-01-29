@@ -938,7 +938,7 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 		if (id >= uh->MaxUnits()) { // resurrect feature
 			CFeature* feature = featureHandler->GetFeature(id - uh->MaxUnits());
 
-			if (feature && feature->createdFromUnit != "") {
+			if (feature && feature->udef != NULL) {
 				if (((c.options & INTERNAL_ORDER) && !(c.options & CONTROL_KEY) && IsFeatureBeingReclaimed(feature->id, owner)) ||
 					!ResurrectObject(feature)) {
 					StopMove();
@@ -1159,7 +1159,7 @@ int CBuilderCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 		}
 	}
 	if (feature) {
-		if (owner->unitDef->canResurrect && !feature->createdFromUnit.empty()) {
+		if (owner->unitDef->canResurrect && feature->udef != NULL) {
 			return CMD_RESURRECT;
 		} else if(owner->unitDef->canReclaim && feature->def->reclaimable) {
 			return CMD_RECLAIM;
@@ -1372,7 +1372,7 @@ bool CBuilderCAI::FindReclaimTargetAndReclaim(const float3& pos,
 		for (std::vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
 			const CFeature* f = *fi;
 			if (f->def->reclaimable && (recSpecial || f->def->autoreclaim) && 
-				(!recNonRez || !(f->def->destructable && f->createdFromUnit != ""))) {
+				(!recNonRez || !(f->def->destructable && f->udef != NULL))) {
 				if (recSpecial && metal && f->def->metal <= 0.0) {
 					continue;
 				}
@@ -1436,7 +1436,7 @@ bool CBuilderCAI::FindResurrectableFeatureAndResurrect(const float3& pos,
 
 	for (std::vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
 		const CFeature* f = *fi;
-		if (f->def->destructable && f->createdFromUnit != "") {
+		if (f->def->destructable && f->udef != NULL) {
 			if (!f->IsInLosForAllyTeam(owner->allyteam)) {
 				continue;
 			}

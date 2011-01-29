@@ -13,9 +13,7 @@
 
 
 struct S3DModel;
-class CFileHandler;
-class CLoadSaveInterface;
-class CVertexArray;
+struct UnitDef;
 class LuaTable;
 
 
@@ -29,7 +27,7 @@ public:
 
 	CFeature* CreateWreckage(const float3& pos, const std::string& name,
 		float rot, int facing, int iter, int team, int allyteam, bool emitSmoke,
-		std::string fromUnit, const float3& speed = ZeroVector);
+		const UnitDef* udef, const float3& speed = ZeroVector);
 
 	void Update();
 
