@@ -221,6 +221,7 @@ COffscreenGLThread::~COffscreenGLThread()
 {
 	if (thread)
 		Join();
+	Threading::SetLoadingThread(NULL);
 	delete thread; thread = NULL;
 }
 
@@ -241,7 +242,7 @@ void COffscreenGLThread::Join()
 
 void COffscreenGLThread::WrapFunc(boost::function<void()> f)
 {
-	Threading::SetLoadingThread();
+	Threading::SetLoadingThread(thread);
 	glOffscreenCtx.WorkerThreadPost();
 
 #ifdef STREFLOP_H
