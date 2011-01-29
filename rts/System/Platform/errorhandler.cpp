@@ -25,7 +25,7 @@
 		#include <windows.h>
 		#else
 		// from X_MessageBox.cpp:
-		void X_MessageBox(const char *msg, const char *caption, unsigned int flags);
+		void X_MessageBox(const char* msg, const char* caption, unsigned int flags);
 		#endif
     #endif // ifndef HEADLESS
 #endif // ifndef DEDICATED
@@ -33,11 +33,13 @@
 volatile bool shutdownSucceeded = false;
 
 void ForcedExit() {
-	int count = 0;
-	while(!shutdownSucceeded && ++count < 50)
+	for (unsigned int n = 0; !shutdownSucceeded && n < 50; n++) {
 		boost::this_thread::sleep(boost::posix_time::milliseconds(100));
-	if(!shutdownSucceeded) {
-		LogObject() << "Shutdown failed, forced exit";
+	}
+
+	if (!shutdownSucceeded) {
+		LogObject() << "WARNING: failed to shutdown normally, exit forced";
+
 #ifdef _MSC_VER
 		TerminateProcess(GetCurrentProcess(), -1);
 #else
@@ -52,12 +54,15 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 	if (!(flags & MBF_MAIN)) {
 		Threading::Error err(caption, msg, flags);
 		Threading::SetThreadError(err);
-		boost::thread *mainthread = Threading::GetMainThread();
+
+		boost::thread* mainthread = Threading::GetMainThread();
 		if (mainthread && !Threading::IsMainThread())
 			mainthread->interrupt();
-		boost::thread *loadthread = Threading::GetLoadingThread();
+
+		boost::thread* loadthread = Threading::GetLoadingThread();
 		if (loadthread && Threading::IsMainThread())
 			loadthread->interrupt();
+
 		if (!(flags & MBF_CRASH) && Threading::IsLoadingThread())
 			throw boost::thread_interrupted(); // only the loading thread currently catches this interrupted exception (makes a more graceful exit)
 	}
@@ -68,12 +73,11 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 #ifdef DEDICATED
 	SafeDelete(gameServer);
 #else
-	if(Threading::IsMainThread()) {
-		boost::thread *forcedExitThread = new boost::thread(&ForcedExit);
+	if (Threading::IsMainThread()) {
+		boost::thread forcedExitThread(&ForcedExit);
 		SpringApp::Shutdown();
 		shutdownSucceeded = true;
-		forcedExitThread->join();
-		delete forcedExitThread;
+		forcedExitThread.join();
 	}
 #endif
 
