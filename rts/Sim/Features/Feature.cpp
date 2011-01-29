@@ -31,28 +31,28 @@
 CR_BIND_DERIVED(CFeature, CSolidObject, )
 
 CR_REG_METADATA(CFeature, (
-				//CR_MEMBER(model),
-				CR_MEMBER(createdFromUnit),
-				CR_MEMBER(isRepairingBeforeResurrect),
-				CR_MEMBER(resurrectProgress),
-				CR_MEMBER(health),
-				CR_MEMBER(reclaimLeft),
-				CR_MEMBER(luaDraw),
-				CR_MEMBER(noSelect),
-				CR_MEMBER(tempNum),
-				CR_MEMBER(lastReclaim),
-//				CR_MEMBER(def),
-				CR_MEMBER(defName),
-				CR_MEMBER(transMatrix),
-				CR_MEMBER(inUpdateQue),
-				CR_MEMBER(drawQuad),
-				CR_MEMBER(finalHeight),
-				CR_MEMBER(myFire),
-				CR_MEMBER(fireTime),
-				CR_MEMBER(emitSmokeTime),
-				CR_RESERVED(64),
-				CR_POSTLOAD(PostLoad)
-				));
+	// CR_MEMBER(model),
+	CR_MEMBER(isRepairingBeforeResurrect),
+	CR_MEMBER(resurrectProgress),
+	CR_MEMBER(health),
+	CR_MEMBER(reclaimLeft),
+	CR_MEMBER(luaDraw),
+	CR_MEMBER(noSelect),
+	CR_MEMBER(tempNum),
+	CR_MEMBER(lastReclaim),
+	// CR_MEMBER(def),
+	// CR_MEMBER(udef),
+	CR_MEMBER(defName),
+	CR_MEMBER(transMatrix),
+	CR_MEMBER(inUpdateQue),
+	CR_MEMBER(drawQuad),
+	CR_MEMBER(finalHeight),
+	CR_MEMBER(myFire),
+	CR_MEMBER(fireTime),
+	CR_MEMBER(emitSmokeTime),
+	CR_RESERVED(64),
+	CR_POSTLOAD(PostLoad)
+));
 
 
 CFeature::CFeature() : CSolidObject(),
@@ -65,10 +65,11 @@ CFeature::CFeature() : CSolidObject(),
 	tempNum(0),
 	lastReclaim(0),
 	def(NULL),
+	udef(NULL),
 	inUpdateQue(false),
 	drawQuad(-2),
 	finalHeight(0.0f),
-	reachedFinalPos(false),
+	reachedFinalPos(true),
 	myFire(NULL),
 	fireTime(0),
 	emitSmokeTime(0),
@@ -131,17 +132,17 @@ void CFeature::ChangeTeam(int newTeam)
 
 
 void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int _heading,
-	int facing, int _team, int _allyteam, std::string fromUnit, const float3& speed, int _smokeTime)
+	int facing, int _team, int _allyteam, const UnitDef* _udef, const float3& speed, int _smokeTime)
 {
 	pos = _pos;
 	def = _def;
+	udef = _udef;
 	defName = def->myName;
 	heading = _heading;
 	buildFacing = facing;
 	team = _team;
 	allyteam = _allyteam;
 	emitSmokeTime = _smokeTime;
-	createdFromUnit = fromUnit;
 
 	ChangeTeam(team); // maybe should not be here, but it prevents crashes caused by team = -1
 
@@ -202,6 +203,8 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	if (speed != ZeroVector) {
 		deathSpeed = speed;
 	}
+
+	reachedFinalPos = (speed == ZeroVector && pos.y == finalHeight);
 }
 
 
@@ -228,7 +231,7 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 
 	if (amount > 0.0f) {
 		// Check they are trying to repair a feature that can be resurrected
-		if (createdFromUnit == "") {
+		if (udef == NULL) {
 			return false;
 		}
 
@@ -366,7 +369,7 @@ void CFeature::DoDamage(const DamageArray& damages, const float3& impulse)
 	if (health <= 0 && def->destructable) {
 		CFeature* deathFeature = featureHandler->CreateWreckage(
 			pos, def->deathFeature, heading,
-			buildFacing, 1, team, -1, false, ""
+			buildFacing, 1, team, -1, false, NULL
 		);
 
 		if (deathFeature) {
@@ -471,9 +474,7 @@ void CFeature::ForcedSpin(const float3& newDir)
 
 bool CFeature::UpdatePosition()
 {
-	bool finishedUpdate = true;
-
-	if (!createdFromUnit.empty()) {
+	if (udef != NULL) {
 		// we are a wreck of a dead unit
 		if (!reachedFinalPos) {
 			bool haveForwardSpeed = false;
@@ -502,8 +503,8 @@ bool CFeature::UpdatePosition()
 			// def->floating is unreliable (true for land unit wrecks),
 			// just assume wrecks always sink even if their "owner" was
 			// a floating object (as is the case for ships anyway)
-			float realGroundHeight = ground->GetHeightReal(pos.x, pos.z);
-			bool reachedGround = (pos.y <= realGroundHeight);
+			const float realGroundHeight = ground->GetHeightReal(pos.x, pos.z);
+			const bool reachedGround = (pos.y <= realGroundHeight);
 
 			if (!reachedGround) {
 				if (pos.y > 0.0f) {
@@ -528,7 +529,6 @@ bool CFeature::UpdatePosition()
 
 			inBounds = pos.CheckInBounds();
 			reachedFinalPos = (!haveForwardSpeed && !haveVerticalSpeed);
-			// reachedFinalPos = ((!haveForwardSpeed && !haveVerticalSpeed) || !inBounds);
 
 			if (!inBounds) {
 				// ensure that no more forward-speed updates are done
@@ -541,9 +541,6 @@ bool CFeature::UpdatePosition()
 
 			CalculateTransform();
 		}
-
-		if (!reachedFinalPos)
-			finishedUpdate = false;
 	} else {
 		if (pos.y > finalHeight) {
 			//! feature is falling
@@ -566,28 +563,28 @@ bool CFeature::UpdatePosition()
 			if (def->drawType >= DRAWTYPE_TREE)
 				treeDrawer->DeleteTree(pos);
 
-			float diff = finalHeight - pos.y;
 			pos.y = finalHeight;
+			speed.y = 0.0f;
+
+			const float diff = finalHeight - pos.y;
+
 			midPos.y += diff;
 			transMatrix[13] += diff;
-			speed.y = 0.0f;
 
 			if (def->drawType >= DRAWTYPE_TREE)
 				treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
 		}
 
-		if (pos.y != finalHeight)
-			finishedUpdate = false;
+		reachedFinalPos = (pos.y <= finalHeight);
 	}
 
 	isUnderWater = ((pos.y + height) < 0.0f);
-	return finishedUpdate;
+	return reachedFinalPos;
 }
 
 bool CFeature::Update()
 {
-	bool finishedUpdate = true;
-	finishedUpdate = UpdatePosition();
+	bool finishedUpdate = UpdatePosition();
 
 	if (emitSmokeTime != 0) {
 		--emitSmokeTime;

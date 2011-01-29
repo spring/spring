@@ -570,7 +570,7 @@ static inline bool IsBetterLeader(const UnitDef* newDef, const UnitDef* oldDef)
 		}
 	}
 	else if (targetFeature) {
-		if (!targetFeature->createdFromUnit.empty()) {
+		if (targetFeature->udef != NULL) {
 			if ( newDef->canResurrect && !oldDef->canResurrect) { return true;  }
 			if (!newDef->canResurrect &&  oldDef->canResurrect) { return false; }
 		}

@@ -4224,7 +4224,13 @@ int LuaSyncedRead::GetFeatureResurrect(lua_State* L)
 	if (feature == NULL) {
 		return 0;
 	}
-	lua_pushstring(L, feature->createdFromUnit.c_str());
+
+	if (feature->udef == NULL) {
+		lua_pushstring(L, "");
+	} else {
+		lua_pushstring(L, feature->udef->name.c_str());
+	}
+
 	lua_pushnumber(L, feature->buildFacing);
 	return 2;
 }
