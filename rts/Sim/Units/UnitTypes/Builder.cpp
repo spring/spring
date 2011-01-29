@@ -299,8 +299,9 @@ void CBuilder::Update()
 			}
 		}
 		else if(curResurrect && f3SqDist(curResurrect->pos, pos)<Square(buildDistance+curResurrect->radius) && inBuildStance){
-			const UnitDef* ud=unitDefHandler->GetUnitDefByName(curResurrect->createdFromUnit);
-			if(ud){
+			const UnitDef* ud = curResurrect->udef;
+
+			if (ud) {
 				if ((modInfo.reclaimMethod != 1) && (curResurrect->reclaimLeft < 1)) {
 					// This corpse has been reclaimed a little, need to restore the resources
 					// before we can let the player resurrect it.
@@ -312,15 +313,17 @@ void CBuilder::Update()
 						curResurrect->resurrectProgress+=resurrectSpeed/ud->buildTime;
 						CreateNanoParticle(curResurrect->midPos,curResurrect->radius*0.7f,gs->randInt()&1);
 					}
-					if(curResurrect->resurrectProgress>1){		//resurrect finished
+					if (curResurrect->resurrectProgress > 1) {
+						// resurrect finished
 						curResurrect->UnBlock();
-						CUnit* u = unitLoader->LoadUnit(curResurrect->createdFromUnit, curResurrect->pos,
+						CUnit* u = unitLoader->LoadUnit(ud, curResurrect->pos,
 													team, false, curResurrect->buildFacing, this);
+
 						if (!this->unitDef->canBeAssisted) {
 							u->soloBuilder = this;
 							u->AddDeathDependence(this);
 						}
-						u->health*=0.05f;
+						u->health *= 0.05f;
 
 						CBuilderCAI *cai = (CBuilderCAI *)commandAI;
 						for (CUnitSet::iterator it = cai->resurrecters.begin(); it != cai->resurrecters.end(); ++it) {
@@ -444,13 +447,13 @@ void CBuilder::SetReclaimTarget(CSolidObject* target)
 
 void CBuilder::SetResurrectTarget(CFeature* target)
 {
-	if(curResurrect==target || target->createdFromUnit=="")
+	if (curResurrect == target || target->udef == NULL)
 		return;
 
 	StopBuild(false);
 	TempHoldFire();
 
-	curResurrect=target;
+	curResurrect = target;
 	AddDeathDependence(curResurrect);
 
 	SetBuildStanceToward(target->pos);

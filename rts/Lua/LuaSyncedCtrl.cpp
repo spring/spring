@@ -2270,7 +2270,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	// use SetFeatureResurrect() to fill in the missing bits
 	inCreateFeature = true;
 	CFeature* feature = new CFeature();
-	feature->Initialize(pos, featureDef, heading, facing, team, allyTeam, "");
+	feature->Initialize(pos, featureDef, heading, facing, team, allyTeam, NULL);
 	inCreateFeature = false;
 
 	lua_pushnumber(L, feature->id);
@@ -2394,7 +2394,12 @@ int LuaSyncedCtrl::SetFeatureResurrect(lua_State* L)
 	if (feature == NULL) {
 		return 0;
 	}
-	feature->createdFromUnit = luaL_checkstring(L, 2);
+
+	const UnitDef* ud = unitDefHandler->GetUnitDefByName(luaL_checkstring(L, 2));
+
+	if (ud != NULL) {
+		feature->udef = ud;
+	}
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args >= 3) {
