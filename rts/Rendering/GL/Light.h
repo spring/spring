@@ -91,21 +91,21 @@ namespace GL {
 			const bool expSpecularDecay = (decayFunctionType.z != 0.0f);
 
 			if (expAmbientDecay) {
-				SetAmbientColor(GetAmbientColor() * GetAmbientDecayRate());
+				ambientColor *= ambientDecayRate;
 			} else {
-				SetAmbientColor(GetAmbientColor() - GetAmbientDecayRate());
+				ambientColor -= ambientDecayRate;
 			}
 
 			if (expDiffuseDecay) {
-				SetDiffuseColor(GetDiffuseColor() * GetDiffuseDecayRate());
+				diffuseColor *= diffuseDecayRate;
 			} else {
-				SetDiffuseColor(GetDiffuseColor() - GetDiffuseDecayRate());
+				diffuseColor -= diffuseDecayRate;
 			}
 
 			if (expSpecularDecay) {
-				SetSpecularColor(GetSpecularColor() * GetSpecularDecayRate());
+				specularColor *= specularDecayRate;
 			} else {
-				SetSpecularColor(GetSpecularColor() - GetSpecularDecayRate());
+				specularColor -= specularDecayRate;
 			}
 		}
 
