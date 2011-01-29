@@ -31,7 +31,8 @@ namespace GL {
 		std::map<unsigned int, GL::Light> lights;
 		std::list<unsigned int> lightIDs;
 
-		float3 lightWeight;
+		// sum of intensity weights for all active lights
+		float3 lightIntensityWeight;
 
 		unsigned int baseLight;
 		unsigned int maxLights;
