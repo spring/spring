@@ -1218,7 +1218,7 @@ static bool ParseLight(lua_State* L, int tblIdx, GL::Light& light, const char* c
 			const std::string& key = lua_tostring(L, -2);
 
 			if (lua_istable(L, -1)) {
-				float array[3];
+				float array[3] = {0.0f, 0.0f, 0.0f};
 				const int size = ParseFloatArray(L, -1, array, 3);
 
 				if (size == 3) {
@@ -1232,10 +1232,18 @@ static bool ParseLight(lua_State* L, int tblIdx, GL::Light& light, const char* c
 						light.SetDiffuseColor(array);
 					} else if (key == "specularColor") {
 						light.SetSpecularColor(array);
-					} else if (key == "colorWeight") {
-						light.SetColorWeight(array);
+					} else if (key == "lightWeight") {
+						light.SetLightWeight(array);
 					} else if (key == "attenuation") {
 						light.SetAttenuation(array);
+					} else if (key == "ambientDecayRate") {
+						light.SetAmbientDecayRate(array);
+					} else if (key == "diffuseDecayRate") {
+						light.SetDiffuseDecayRate(array);
+					} else if (key == "specularDecayRate") {
+						light.SetSpecularDecayRate(array);
+					} else if (key == "decayFunctionType") {
+						light.SetDecayFunctionType(array);
 					}
 				}
 			}
