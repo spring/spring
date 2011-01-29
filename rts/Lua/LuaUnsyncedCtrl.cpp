@@ -1232,8 +1232,8 @@ static bool ParseLight(lua_State* L, int tblIdx, GL::Light& light, const char* c
 						light.SetDiffuseColor(array);
 					} else if (key == "specularColor") {
 						light.SetSpecularColor(array);
-					} else if (key == "lightWeight") {
-						light.SetLightWeight(array);
+					} else if (key == "intensityWeight") {
+						light.SetIntensityWeight(array);
 					} else if (key == "attenuation") {
 						light.SetAttenuation(array);
 					} else if (key == "ambientDecayRate") {
@@ -1255,6 +1255,8 @@ static bool ParseLight(lua_State* L, int tblIdx, GL::Light& light, const char* c
 					light.SetFOV(std::max(0.0f, std::min(180.0f, lua_tonumber(L, -1))));
 				} else if (key == "ttl") {
 					light.SetTTL(lua_tonumber(L, -1));
+				} else if (key == "priority") {
+					light.SetPriority(lua_tonumber(L, -1));
 				}
 			}
 		}

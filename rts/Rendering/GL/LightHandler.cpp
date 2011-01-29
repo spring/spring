@@ -34,18 +34,41 @@ void GL::LightHandler::Init(unsigned int cfgBaseLight, unsigned int cfgMaxLights
 
 
 unsigned int GL::LightHandler::AddLight(const GL::Light& light) {
-	if (lights.size() >= maxLights || lightIDs.empty()) { return -1U; }
 	if (light.GetTTL() == 0 || light.GetRadius() <= 0.0f) { return -1U; }
-	if (light.GetLightWeight().SqLength() <= 0.01f) { return -1U; }
+	if (light.GetIntensityWeight().SqLength() <= 0.01f) { return -1U; }
+
+	if (lights.size() >= maxLights || lightIDs.empty()) {
+		unsigned int minPriorityValue = light.GetPriority();
+		unsigned int minPriorityHandle = -1U;
+
+		for (std::map<unsigned int, GL::Light>::const_iterator it = lights.begin(); it != lights.end(); ) {
+			const GL::Light& lgt = it->second;
+
+			if (lgt.GetPriority() < minPriorityValue) {
+				minPriorityValue = lgt.GetPriority();
+				minPriorityHandle = it->first;
+			}
+		}
+
+		if (minPriorityHandle != -1U) {
+			lightIntensityWeight -= lights[minPriorityHandle].GetIntensityWeight();
+			lightIDs.push_back(lights[minPriorityHandle].GetID());
+			lights.erase(minPriorityHandle);
+		} else {
+			// no available light to replace
+			return -1U;
+		}
+	}
 
 	lights[lightHandle] = light;
 	lights[lightHandle].SetID(lightIDs.front());
 	lights[lightHandle].SetRelativeTime(0);
 	lights[lightHandle].SetAbsoluteTime(gs->frameNum);
 
-	lightWeight += light.GetLightWeight();
+	lightIntensityWeight += light.GetIntensityWeight();
 	lightIDs.pop_front();
-	return lightHandle++;
+
+	return (lightHandle++);
 }
 
 GL::Light* GL::LightHandler::GetLight(unsigned int _lightHandle) {
@@ -85,9 +108,9 @@ void GL::LightHandler::Update(Shader::IProgramObject* shader) {
 		const unsigned int lightID = light.GetID();
 		const unsigned int lightHndle = it->first;
 
-		const float4  weightedAmbientCol  = (light.GetAmbientColor()  * light.GetLightWeight().x) / lightWeight.x;
-		const float4  weightedDiffuseCol  = (light.GetDiffuseColor()  * light.GetLightWeight().y) / lightWeight.y;
-		const float4  weightedSpecularCol = (light.GetSpecularColor() * light.GetLightWeight().z) / lightWeight.z;
+		const float4  weightedAmbientCol  = (light.GetAmbientColor()  * light.GetIntensityWeight().x) / lightIntensityWeight.x;
+		const float4  weightedDiffuseCol  = (light.GetDiffuseColor()  * light.GetIntensityWeight().y) / lightIntensityWeight.y;
+		const float4  weightedSpecularCol = (light.GetSpecularColor() * light.GetIntensityWeight().z) / lightIntensityWeight.z;
 		const float3* lightTrackPos       = light.GetTrackPosition();
 		const float3* lightTrackDir       = light.GetTrackDirection();
 		const float4& lightPos            = (lightTrackPos != NULL)? float4(*lightTrackPos, 1.0f): light.GetPosition();
@@ -96,9 +119,9 @@ void GL::LightHandler::Update(Shader::IProgramObject* shader) {
 		++it;
 
 		if (light.GetRelativeTime() > light.GetTTL()) {
-			lightWeight -= light.GetLightWeight();
-			lights.erase(lightHndle);
+			lightIntensityWeight -= light.GetIntensityWeight();
 			lightIDs.push_back(lightID);
+			lights.erase(lightHndle);
 
 			// kill the contribution from this light
 			glEnable(lightID);
