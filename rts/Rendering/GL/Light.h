@@ -18,7 +18,7 @@ namespace GL {
 			ambientColor.w    = 1.0f;
 			diffuseColor.w    = 1.0f;
 			specularColor.w   = 1.0f;
-			lightWeight       = float3(1.0f, 1.0f, 1.0f);
+			intensityWeight   = float3(1.0f, 1.0f, 1.0f);
 			ambientDecayRate  = float3(1.0f, 1.0f, 1.0f);
 			diffuseDecayRate  = float3(1.0f, 1.0f, 1.0f);
 			specularDecayRate = float3(1.0f, 1.0f, 1.0f);
@@ -31,6 +31,7 @@ namespace GL {
 			ttl = 0;
 			relTime = 0;
 			absTime = 0;
+			priority = 0;
 		}
 
 		// a light can only depend on one object
@@ -46,7 +47,7 @@ namespace GL {
 		const float4& GetAmbientColor() const { return ambientColor; }
 		const float4& GetDiffuseColor() const { return diffuseColor; }
 		const float4& GetSpecularColor() const { return specularColor; }
-		const float3& GetLightWeight() const { return lightWeight; }
+		const float3& GetIntensityWeight() const { return intensityWeight; }
 		const float3& GetAttenuation() const { return attenuation; }
 		const float3& GetAmbientDecayRate() const { return ambientDecayRate; }
 		const float3& GetDiffuseDecayRate() const { return diffuseDecayRate; }
@@ -60,7 +61,7 @@ namespace GL {
 		void SetAmbientColor(const float array[3]) { ambientColor = array; }
 		void SetDiffuseColor(const float array[3]) { diffuseColor = array; }
 		void SetSpecularColor(const float array[3]) { specularColor = array; }
-		void SetLightWeight(const float array[3]) { lightWeight = array; }
+		void SetIntensityWeight(const float array[3]) { intensityWeight = array; }
 		void SetAttenuation(const float array[3]) { attenuation = array; }
 		void SetAmbientDecayRate(const float array[3]) { ambientDecayRate = array; }
 		void SetDiffuseDecayRate(const float array[3]) { diffuseDecayRate = array; }
@@ -80,10 +81,12 @@ namespace GL {
 		unsigned int GetTTL() const { return ttl; }
 		unsigned int GetRelativeTime() const { return relTime; }
 		unsigned int GetAbsoluteTime() const { return absTime; }
+		unsigned int GetPriority() const { return priority; }
 		void SetID(unsigned int n) { id = n; }
 		void SetTTL(unsigned int n) { ttl = n; }
 		void SetRelativeTime(unsigned int n) { relTime = n; }
 		void SetAbsoluteTime(unsigned int n) { absTime = n; }
+		void SetPriority(unsigned int n) { priority = n; }
 
 		void DecayColors() {
 			const bool expAmbientDecay  = (decayFunctionType.x != 0.0f);
@@ -129,7 +132,7 @@ namespace GL {
 		float4  ambientColor;     // RGBA
 		float4  diffuseColor;     // RGBA
 		float4  specularColor;    // RGBA
-		float3  lightWeight;      // x=ambient, y=diffuse, z=specular
+		float3  intensityWeight;  // x=ambient, y=diffuse, z=specular
 		float3  attenuation;      // x=constant, y=linear, z=quadratic
 
 		float3 ambientDecayRate;  // x=ambient, y=diffuse, z=specular
@@ -144,6 +147,7 @@ namespace GL {
 		unsigned int ttl;         // maximum lifetime in sim-frames
 		unsigned int relTime;     // current lifetime in sim-frames
 		unsigned int absTime;     // current sim-frame this light is at
+		unsigned int priority;
 
 		const float3* trackPosition;
 		const float3* trackDirection;
