@@ -1406,7 +1406,7 @@ void CGroundMoveType::HandleObjectCollisions()
 				const float3 colliderNextPos = colliderCurPos + collider->frontdir * currentSpeed;
 				const unsigned int colliderNextPosBits = colliderMM->IsBlocked(*colliderMD, colliderNextPos);
 
-				if ((colliderNextPosBits & CMoveMath::BLOCK_STRUCTURE) != 0 && collider->frontdir.dot(sepDirection) < 0.0f) {
+				if ((colliderNextPosBits & CMoveMath::BLOCK_STRUCTURE) != 0 && collider->frontdir.dot(sepDirection) < -0.25f) {
 					const int2   sgnVec = int2((colResponseVec.x >= 0.0f)? 1: -1, (colResponseVec.z >= 0.0f)? 1: -1);
 					const float2 absVec = float2(math::fabs(colResponseVec.x * collideeMassScale), math::fabs(colResponseVec.z * collideeMassScale));
 					const float3 resVec = float3(std::max(absVec.x, 0.25f) * sgnVec.x, 0.0f, std::max(absVec.y, 0.25f) * sgnVec.y);
@@ -1488,7 +1488,7 @@ void CGroundMoveType::HandleObjectCollisions()
 				const float3 colliderNextPos = colliderCurPos + collider->frontdir * currentSpeed;
 				const unsigned int colliderNextPosBits = colliderMM->IsBlocked(*colliderMD, colliderNextPos);
 
-				if ((colliderNextPosBits & CMoveMath::BLOCK_STRUCTURE) != 0 && collider->frontdir.dot(sepDirection) < 0.0f) {
+				if ((colliderNextPosBits & CMoveMath::BLOCK_STRUCTURE) != 0 && collider->frontdir.dot(sepDirection) < -0.25f) {
 					// make sure the scaled response is never of epsilon-length (units would get stuck otherwise)
 					const int2   sgnVec = int2((colResponseVec.x >= 0.0f)? 1: -1, (colResponseVec.z >= 0.0f)? 1: -1);
 					const float2 absVec = float2(math::fabs(colResponseVec.x * collideeMassScale), math::fabs(colResponseVec.z * collideeMassScale));
