@@ -88,7 +88,6 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	wd.minIntensity = wdTable.GetFloat("minIntensity", 0.0f);
 
-	wd.dropped  = wdTable.GetBool("dropped", false); //FIXME: unused in the engine?
 	manualBombSettings = wdTable.GetBool("manualBombSettings", false);
 	wd.turret   = wdTable.GetBool("turret",      false);
 	wd.highTrajectory = wdTable.GetInt("highTrajectory", 2);
@@ -129,11 +128,9 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.visuals.noGap         = wdTable.GetBool("noGap",         true);
 	wd.visuals.stages        = wdTable.GetInt("stages",         5);
 
-	wd.gravityAffected = wdTable.GetBool("gravityAffected", wd.dropped);
+	wd.gravityAffected = wdTable.GetBool("gravityAffected", false);
 
 	wd.type = wdTable.GetString("weaponType", "Cannon");
-
-//	logOutput.Print("%s as %s",weaponname.c_str(),wd.type.c_str());
 
 	const bool melee = (wd.type == "Melee");
 	wd.targetBorder = wdTable.GetFloat("targetBorder", melee ? 1.0f : 0.0f);
