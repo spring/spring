@@ -261,14 +261,15 @@ CWeapon* CUnitLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* udw)
 
 void CUnitLoader::GiveUnits(const std::vector<std::string>& args, int team)
 {
+	float3 pos;
+
 	if (args.size() < 3) {
-		logOutput.Print("[%s] not enough arguments (\"/give [amount] <objectName | all> [team] <x,y,z>\")", __FUNCTION__);
+		logOutput.Print("[%s] not enough arguments (\"/give [amount] <objectName | 'all'> [team] [@x, y, z]\")", __FUNCTION__);
 		return;
 	}
 
-	float3 pos;
-	if (sscanf(args[args.size() - 1].c_str(), "@%f,%f,%f", &pos.x, &pos.y, &pos.z) != 3) {
-		logOutput.Print("[%s] invalid position argument (\"/give [amount] <objectName | all> [team] <x,y,z>\")", __FUNCTION__);
+	if (sscanf(args[args.size() - 1].c_str(), "@%f, %f, %f", &pos.x, &pos.y, &pos.z) != 3) {
+		logOutput.Print("[%s] invalid position argument (\"/give [amount] <objectName | 'all'> [team] [@x, y, z]\")", __FUNCTION__);
 		return;
 	}
 
