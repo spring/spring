@@ -571,7 +571,7 @@ void CUnitDrawer::DrawUnitIcons(bool drawReflection)
 		}
 		if (!gu->spectatingFullView) {
 			for (std::set<CUnit*>::const_iterator ui = unitRadarIcons[gu->myAllyTeam].begin(); ui != unitRadarIcons[gu->myAllyTeam].end(); ++ui) {
-				DrawIcon(*ui, true);
+				DrawIcon(*ui, ((*ui)->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR)) != (LOS_PREVLOS | LOS_CONTRADAR));
 			}
 		}
 
@@ -873,11 +873,12 @@ void CUnitDrawer::DrawShadowPass()
 
 
 
-void CUnitDrawer::DrawIcon(CUnit* unit, bool asRadarBlip)
+void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 {
 	// If the icon is to be drawn as a radar blip, we want to get the default icon.
 	const CIconData* iconData = NULL;
-	if (asRadarBlip) {
+
+	if (useDefaultIcon) {
 		iconData = iconHandler->GetDefaultIconData();
 	} else {
 		iconData = unit->unitDef->iconType.GetIconData();
@@ -893,9 +894,11 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool asRadarBlip)
 	} else {
 		pos = helper->GetUnitErrorPos(unit, gu->myAllyTeam);
 	}
+
 	float dist = fastmath::sqrt2(fastmath::sqrt2((pos - camera->pos).SqLength()));
 	float scale = 0.4f * iconData->GetSize() * dist;
-	if (iconData->GetRadiusAdjust() && !asRadarBlip) {
+
+	if (iconData->GetRadiusAdjust() && !useDefaultIcon) {
 		// I take the standard unit radius to be 30
 		// ... call it an educated guess. (Teake Nutma)
 		scale *= (unit->radius / 30);
