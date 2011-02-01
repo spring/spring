@@ -26,6 +26,8 @@
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
+
+#include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 
 #include "Sim/Weapons/WeaponDef.h"
@@ -254,6 +256,187 @@ CWeapon* CUnitLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* udw)
 
 	return weapon;
 }
+
+
+
+void CUnitLoader::GiveUnits(const std::vector<std::string>& args, int team)
+{
+	if (args.size() < 3) {
+		logOutput.Print("[%s] not enough arguments (\"/give [amount] <objectName | all> [team] <x,y,z>\")", __FUNCTION__);
+		return;
+	}
+
+	float3 pos;
+	if (sscanf(args[args.size() - 1].c_str(), "@%f,%f,%f", &pos.x, &pos.y, &pos.z) != 3) {
+		logOutput.Print("[%s] invalid position argument (\"/give [amount] <objectName | all> [team] <x,y,z>\")", __FUNCTION__);
+		return;
+	}
+
+	int amount = 1;
+	int amountArgIdx = -1;
+	int teamArgIdx = -1;
+
+	if (args.size() == 5) {
+		amountArgIdx = 1;
+		teamArgIdx = 3;
+	}
+	else if (args.size() == 4) {
+		if (args[1].find_first_not_of("0123456789") == std::string::npos) {
+			amountArgIdx = 1;
+		} else {
+			teamArgIdx = 2;
+		}
+	}
+
+	if (amountArgIdx >= 0) {
+		amount = atoi(args[amountArgIdx].c_str());
+
+		if ((amount < 0) || (args[amountArgIdx].find_first_not_of("0123456789") != std::string::npos)) {
+			logOutput.Print("[%s] invalid amount argument: %s", __FUNCTION__, args[amountArgIdx].c_str());
+			return;
+		}
+	}
+
+	if (teamArgIdx >= 0) {
+		team = atoi(args[teamArgIdx].c_str());
+
+		if ((!teamHandler->IsValidTeam(team)) || (args[teamArgIdx].find_first_not_of("0123456789") != std::string::npos)) {
+			logOutput.Print("[%s] invalid team argument: %s", __FUNCTION__, args[teamArgIdx].c_str());
+			return;
+		}
+	}
+
+	const std::string& objectName = (amountArgIdx >= 0) ? args[2] : args[1];
+
+	if (objectName.empty()) {
+		logOutput.Print("[%s] invalid object-name argument", __FUNCTION__);
+		return;
+	}
+
+	if (objectName == "all") {
+		int numRequestedUnits = unitDefHandler->unitDefs.size() - 1; /// defid=0 is not valid
+		int currentNumUnits = teamHandler->Team(team)->units.size();
+
+		// make sure team unit-limit is not exceeded
+		if ((currentNumUnits + numRequestedUnits) > uh->MaxUnitsPerTeam()) {
+			numRequestedUnits = uh->MaxUnitsPerTeam() - currentNumUnits;
+		}
+
+		// make sure square is entirely on the map
+		const int sqSize = streflop::ceil(streflop::sqrt((float) numRequestedUnits));
+		const float sqHalfMapSize = sqSize / 2 * 10 * SQUARE_SIZE;
+
+		pos.x = std::max(sqHalfMapSize, std::min(pos.x, float3::maxxpos - sqHalfMapSize - 1));
+		pos.z = std::max(sqHalfMapSize, std::min(pos.z, float3::maxzpos - sqHalfMapSize - 1));
+
+		for (int a = 1; a <= numRequestedUnits; ++a) {
+			const float px = pos.x + (a % sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
+			const float pz = pos.z + (a / sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
+			const float3 unitPos = float3(px, ground->GetHeightReal(px, pz), pz);
+			const UnitDef* unitDef = unitDefHandler->GetUnitDefByID(a);
+
+			if (unitDef != NULL) {
+				const CUnit* unit = LoadUnit(unitDef, unitPos, team, false, 0, NULL);
+
+				if (unit != NULL) {
+					FlattenGround(unit);
+				}
+			}
+		}
+	} else {
+		int numRequestedUnits = amount;
+		int currentNumUnits = teamHandler->Team(team)->units.size();
+
+		if (currentNumUnits >= uh->MaxUnitsPerTeam()) {
+			logOutput.Print("[%s] unable to give more units to team %d (current: %d, max: %d)", __FUNCTION__, team, currentNumUnits, uh->MaxUnits());
+			return;
+		}
+
+		// make sure team unit-limit is not exceeded
+		if ((currentNumUnits + numRequestedUnits) > uh->MaxUnitsPerTeam()) {
+			numRequestedUnits = uh->MaxUnitsPerTeam() - currentNumUnits;
+		}
+
+		const UnitDef* unitDef = unitDefHandler->GetUnitDefByName(objectName);
+		const FeatureDef* featureDef = featureHandler->GetFeatureDef(objectName);
+
+		if (unitDef == NULL && featureDef == NULL) {
+			logOutput.Print("[%s] %s is not a valid object-name", __FUNCTION__, objectName.c_str());
+			return;
+		}
+
+		if (unitDef != NULL) {
+			const int xsize = unitDef->xsize;
+			const int zsize = unitDef->zsize;
+			const int squareSize = streflop::ceil(streflop::sqrt((float) numRequestedUnits));
+			const float3 squarePos = float3(
+				pos.x - (((squareSize - 1) * xsize * SQUARE_SIZE) / 2),
+				pos.y,
+				pos.z - (((squareSize - 1) * zsize * SQUARE_SIZE) / 2)
+			);
+
+			int total = numRequestedUnits;
+
+			for (int z = 0; z < squareSize; ++z) {
+				for (int x = 0; x < squareSize && total > 0; ++x) {
+					const float px = squarePos.x + x * xsize * SQUARE_SIZE;
+					const float pz = squarePos.z + z * zsize * SQUARE_SIZE;
+
+					const float3 unitPos = float3(px, ground->GetHeightReal(px, pz), pz);
+					const CUnit* unit = LoadUnit(unitDef, unitPos, team, false, 0, NULL);
+
+					if (unit != NULL) {
+						FlattenGround(unit);
+					}
+
+					--total;
+				}
+			}
+
+			logOutput.Print("[%s] spawned %i %s unit(s) for team %i", __FUNCTION__, numRequestedUnits, objectName.c_str(), team);
+		}
+
+		if (featureDef != NULL) {
+			int allyteam = -1;
+
+			if (teamArgIdx < 0) {
+				team = -1; // default to world features
+				allyteam = -1;
+			} else {
+				allyteam = teamHandler->AllyTeam(team);
+			}
+
+			const int xsize = featureDef->xsize;
+			const int zsize = featureDef->zsize;
+			const int squareSize = streflop::ceil(streflop::sqrt((float) numRequestedUnits));
+			const float3 squarePos = float3(
+				pos.x - (((squareSize - 1) * xsize * SQUARE_SIZE) / 2),
+				pos.y,
+				pos.z - (((squareSize - 1) * zsize * SQUARE_SIZE) / 2)
+			);
+
+			int total = amount; // FIXME -- feature count limit?
+
+			for (int z = 0; z < squareSize; ++z) {
+				for (int x = 0; x < squareSize && total > 0; ++x) {
+					const float px = squarePos.x + x * xsize * SQUARE_SIZE;
+					const float pz = squarePos.z + z * zsize * SQUARE_SIZE;
+					const float3 featurePos = float3(px, ground->GetHeightReal(px, pz), pz);
+
+					CFeature* feature = new CFeature();
+					// Initialize() adds the feature to the FeatureHandler -> no memory-leak
+					feature->Initialize(featurePos, featureDef, 0, 0, team, allyteam, NULL);
+
+					--total;
+				}
+			}
+
+			logOutput.Print("[%s] spawned %i %s feature(s) for team %i", __FUNCTION__, numRequestedUnits, objectName.c_str(), team);
+		}
+	}
+}
+
+
 
 
 void CUnitLoader::FlattenGround(const CUnit* unit)
