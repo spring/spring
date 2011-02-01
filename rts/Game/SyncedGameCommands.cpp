@@ -13,10 +13,12 @@
 #include "Rendering/InMapDraw.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
-#include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
+#include "Sim/Units/Unit.h"
 #include "UI/GameInfo.h"
 #include "UI/LuaUI.h"
 #include "UI/MouseHandler.h"
@@ -97,7 +99,7 @@ bool CGame::ActionReleased(const Action& action)
 }
 
 // FOR SYNCED MESSAGES
-void CGame::ActionReceived(const Action& action, int playernum)
+void CGame::ActionReceived(const Action& action, int playerNum)
 {
 	if (action.command == "cheat") {
 		SetBoolArg(gs->cheatEnabled, action.extra);
@@ -150,187 +152,26 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		}
 	}
 	else if (action.command == "give" && gs->cheatEnabled) {
-		std::string s = "give "; //FIXME lazyness
-		s += action.extra;
+		// FIXME lazyness
+		const std::string cmd = action.command + " " + action.extra;
+		const vector<string>& args = CSimpleParser::Tokenize(cmd, 0);
 
-		// .give [amount] <unitName> [team] <@x,y,z>
-		const vector<string> &args = CSimpleParser::Tokenize(s, 0);
-
-		if (args.size() < 3) {
-			logOutput.Print("Someone is spoofing invalid .give messages!");
-			return;
-		}
-
-		float3 pos;
-		if (sscanf(args[args.size() - 1].c_str(), "@%f,%f,%f", &pos.x, &pos.y, &pos.z) != 3) {
-			logOutput.Print("Someone is spoofing invalid .give messages!");
-			return;
-		}
-
-		int amount = 1;
-		int team = playerHandler->Player(playernum)->team;
-
-		int amountArgIdx = -1;
-		int teamArgIdx = -1;
-
-		if (args.size() == 5) {
-			amountArgIdx = 1;
-			teamArgIdx = 3;
-		}
-		else if (args.size() == 4) {
-			if (args[1].find_first_not_of("0123456789") == string::npos) {
-				amountArgIdx = 1;
-			} else {
-				teamArgIdx = 2;
-			}
-		}
-
-		if (amountArgIdx >= 0) {
-			const string& amountStr = args[amountArgIdx];
-			amount = atoi(amountStr.c_str());
-			if ((amount < 0) || (amountStr.find_first_not_of("0123456789") != string::npos)) {
-				logOutput.Print("Bad give amount: %s", amountStr.c_str());
-				return;
-			}
-		}
-
-		if (teamArgIdx >= 0) {
-			const string& teamStr = args[teamArgIdx];
-			team = atoi(teamStr.c_str());
-			if ((!teamHandler->IsValidTeam(team)) || (teamStr.find_first_not_of("0123456789") != string::npos)) {
-				logOutput.Print("Bad give team: %s", teamStr.c_str());
-				return;
-			}
-		}
-
-		const string unitName = (amountArgIdx >= 0) ? args[2] : args[1];
-
-		if (unitName == "all") {
-			// player entered ".give all"
-			int numRequestedUnits = unitDefHandler->unitDefs.size() - 1; /// defid=0 is not valid
-			int currentNumUnits = teamHandler->Team(team)->units.size();
-			int sqSize = (int) streflop::ceil(streflop::sqrt((float) numRequestedUnits));
-
-			// make sure team unit-limit not exceeded
-			if ((currentNumUnits + numRequestedUnits) > uh->MaxUnitsPerTeam()) {
-				numRequestedUnits = uh->MaxUnitsPerTeam() - currentNumUnits;
-			}
-
-			// make sure square is entirely on the map
-			float sqHalfMapSize = sqSize / 2 * 10 * SQUARE_SIZE;
-			pos.x = std::max(sqHalfMapSize, std::min(pos.x, float3::maxxpos - sqHalfMapSize - 1));
-			pos.z = std::max(sqHalfMapSize, std::min(pos.z, float3::maxzpos - sqHalfMapSize - 1));
-
-			for (int a = 1; a <= numRequestedUnits; ++a) {
-				float posx = pos.x + (a % sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
-				float posz = pos.z + (a / sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
-				float3 pos2 = float3(posx, pos.y, posz);
-				const UnitDef* ud = unitDefHandler->GetUnitDefByID(a);
-				if (ud) {
-					const CUnit* unit = unitLoader->LoadUnit(ud, pos2, team, false, 0, NULL);
-					if (unit) {
-						unitLoader->FlattenGround(unit);
-					}
-				}
-			}
-		}
-		else if (!unitName.empty()) {
-			int numRequestedUnits = amount;
-			int currentNumUnits = teamHandler->Team(team)->units.size();
-
-			if (currentNumUnits >= uh->MaxUnitsPerTeam()) {
-				LogObject() << "Unable to give any more units to team " << team << "(current: " << currentNumUnits << ", max: " << uh->MaxUnits() << ")";
-				return;
-			}
-
-			// make sure team unit-limit is not exceeded
-			if ((currentNumUnits + numRequestedUnits) > uh->MaxUnitsPerTeam()) {
-				numRequestedUnits = uh->MaxUnitsPerTeam() - currentNumUnits;
-			}
-
-			const UnitDef* unitDef = unitDefHandler->GetUnitDefByName(unitName);
-
-			if (unitDef != NULL) {
-				int xsize = unitDef->xsize;
-				int zsize = unitDef->zsize;
-				int squareSize = (int) streflop::ceil(streflop::sqrt((float) numRequestedUnits));
-				int total = numRequestedUnits;
-
-				float3 minpos = pos;
-				minpos.x -= ((squareSize - 1) * xsize * SQUARE_SIZE) / 2;
-				minpos.z -= ((squareSize - 1) * zsize * SQUARE_SIZE) / 2;
-
-				for (int z = 0; z < squareSize; ++z) {
-					for (int x = 0; x < squareSize && total > 0; ++x) {
-						float minposx = minpos.x + x * xsize * SQUARE_SIZE;
-						float minposz = minpos.z + z * zsize * SQUARE_SIZE;
-						const float3 upos(minposx, minpos.y, minposz);
-						const CUnit* unit = unitLoader->LoadUnit(unitDef, upos, team, false, 0, NULL);
-
-						if (unit) {
-							unitLoader->FlattenGround(unit);
-						}
-						--total;
-					}
-				}
-
-				logOutput.Print("Giving %i %s to team %i", numRequestedUnits, unitName.c_str(), team);
-			} else {
-				int allyteam = -1;
-				if (teamArgIdx < 0) {
-					team = -1; // default to world features
-					allyteam = -1;
-				} else {
-					allyteam = teamHandler->AllyTeam(team);
-				}
-
-				const FeatureDef* featureDef = featureHandler->GetFeatureDef(unitName);
-				if (featureDef) {
-					int xsize = featureDef->xsize;
-					int zsize = featureDef->zsize;
-					int squareSize = (int) streflop::ceil(streflop::sqrt((float) numRequestedUnits));
-					int total = amount; // FIXME -- feature count limit?
-
-					float3 minpos = pos;
-					minpos.x -= ((squareSize - 1) * xsize * SQUARE_SIZE) / 2;
-					minpos.z -= ((squareSize - 1) * zsize * SQUARE_SIZE) / 2;
-
-					for (int z = 0; z < squareSize; ++z) {
-						for (int x = 0; x < squareSize && total > 0; ++x) {
-							float minposx = minpos.x + x * xsize * SQUARE_SIZE;
-							float minposz = minpos.z + z * zsize * SQUARE_SIZE;
-							float minposy = ground->GetHeightReal(minposx, minposz);
-							const float3 upos(minposx, minposy, minposz);
-
-							CFeature* feature = new CFeature();
-							// Initialize() adds the feature to the FeatureHandler -> no memory-leak
-							feature->Initialize(upos, featureDef, 0, 0, team, allyteam, NULL);
-							--total;
-						}
-					}
-
-					logOutput.Print("Giving %i %s (feature) to team %i",
-									numRequestedUnits, unitName.c_str(), team);
-				}
-				else {
-					logOutput.Print(unitName + " is not a valid unitname");
-				}
-			}
-		}
+		unitLoader->GiveUnits(args, playerHandler->Player(playerNum)->team);
 	}
 	else if (action.command == "destroy" && gs->cheatEnabled) {
 		std::stringstream ss(action.extra);
 		logOutput.Print("Killing units: %s", action.extra.c_str());
+
 		do {
-			unsigned id;
-			ss >> id;
+			unsigned int id; ss >> id;
+
 			if (!ss)
 				break;
-			if (id >= uh->units.size())
-				continue;
-			if (uh->units[id] == NULL)
-				continue;
-			uh->units[id]->KillUnit(false, false, 0);
+
+			CUnit* u = uh->GetUnit(id);
+
+			if (u != NULL)
+				u->KillUnit(false, false, 0);
 		} while (true);
 	}
 	else if (action.command == "nospectatorchat") {
@@ -338,7 +179,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		logOutput.Print("Spectators %s chat", noSpectatorChat ? "can not" : "can");
 	}
 	else if (action.command == "reloadcob" && gs->cheatEnabled) {
-		ReloadCOB(action.extra, playernum);
+		ReloadCOB(action.extra, playerNum);
 	}
 	else if (action.command == "reloadcegs" && gs->cheatEnabled) {
 		ReloadCEGs(action.extra);
@@ -361,7 +202,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			logOutput.Print("No definition Editing");
 	}
 	else if ((action.command == "luarules") && (gs->frameNum > 1)) {
-		if ((action.extra == "reload") && (playernum == 0)) {
+		if ((action.extra == "reload") && (playerNum == 0)) {
 			if (!gs->cheatEnabled) {
 				logOutput.Print("Cheating required to reload synced scripts");
 			} else {
@@ -374,7 +215,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 				}
 			}
 		}
-		else if ((action.extra == "disable") && (playernum == 0)) {
+		else if ((action.extra == "disable") && (playerNum == 0)) {
 			if (!gs->cheatEnabled) {
 				logOutput.Print("Cheating required to disable synced scripts");
 			} else {
@@ -383,12 +224,12 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			}
 		}
 		else {
-			if (luaRules) luaRules->GotChatMsg(action.extra, playernum);
+			if (luaRules) luaRules->GotChatMsg(action.extra, playerNum);
 		}
 	}
 	else if ((action.command == "luagaia") && (gs->frameNum > 1)) {
 		if (gs->useLuaGaia) {
-			if ((action.extra == "reload") && (playernum == 0)) {
+			if ((action.extra == "reload") && (playerNum == 0)) {
 				if (!gs->cheatEnabled) {
 					logOutput.Print("Cheating required to reload synced scripts");
 				} else {
@@ -401,7 +242,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 					}
 				}
 			}
-			else if ((action.extra == "disable") && (playernum == 0)) {
+			else if ((action.extra == "disable") && (playerNum == 0)) {
 				if (!gs->cheatEnabled) {
 					logOutput.Print("Cheating required to disable synced scripts");
 				} else {
@@ -410,7 +251,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 				}
 			}
 			else if (luaGaia) {
-				luaGaia->GotChatMsg(action.extra, playernum);
+				luaGaia->GotChatMsg(action.extra, playerNum);
 			}
 			else {
 				logOutput.Print("LuaGaia is not enabled");
@@ -426,7 +267,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 
 		for (size_t i = uh->MaxUnits() - 1; i >= 0; --i) {
 			if (uh->units[i]) {
-				if (playernum == gu->myPlayerNum) {
+				if (playerNum == gu->myPlayerNum) {
 					++uh->units[i]->midPos.x; // and desync...
 					++uh->units[i]->midPos.x;
 				} else {
@@ -441,12 +282,12 @@ void CGame::ActionReceived(const Action& action, int playernum)
 	}
 #endif // defined DEBUG
 	else if (action.command == "atm" && gs->cheatEnabled) {
-		int team = playerHandler->Player(playernum)->team;
+		const int team = playerHandler->Player(playerNum)->team;
 		teamHandler->Team(team)->AddMetal(1000);
 		teamHandler->Team(team)->AddEnergy(1000);
 	}
-	else if (action.command == "take" && (!playerHandler->Player(playernum)->spectator || gs->cheatEnabled)) {
-		const int sendTeam = playerHandler->Player(playernum)->team;
+	else if (action.command == "take" && (!playerHandler->Player(playerNum)->spectator || gs->cheatEnabled)) {
+		const int sendTeam = playerHandler->Player(playerNum)->team;
 		for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
 			if (teamHandler->AlliedTeams(a, sendTeam)) {
 				bool hasPlayer = false;
@@ -474,7 +315,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		}
 	}
 	else if (gs->frameNum > 1) {
-		if (luaRules) luaRules->SyncedActionFallback(action.rawline, playernum);
-		if (luaGaia)  luaGaia->SyncedActionFallback(action.rawline, playernum);
+		if (luaRules) luaRules->SyncedActionFallback(action.rawline, playerNum);
+		if (luaGaia) luaGaia->SyncedActionFallback(action.rawline, playerNum);
 	}
 }
