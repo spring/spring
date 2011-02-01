@@ -4030,7 +4030,7 @@ EXPORT(bool) skirmishAiCallback_WeaponDef_isTracks(int skirmishAIId, int weaponD
 }
 
 EXPORT(bool) skirmishAiCallback_WeaponDef_isDropped(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->dropped;
+	return false;
 }
 
 EXPORT(bool) skirmishAiCallback_WeaponDef_isParalyzer(int skirmishAIId, int weaponDefId) {

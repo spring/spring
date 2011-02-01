@@ -66,7 +66,6 @@ public:
 		, fireSubmersed(false)
 		, submissile(false)
 		, tracks(false)
-		, dropped(false)
 		, paralyzer(false)
 		, impactOnly(false)
 		, noAutoTarget(false)
@@ -209,7 +208,6 @@ public:
 	bool fireSubmersed;
 	bool submissile;            ///< Lets a torpedo travel above water like it does below water
 	bool tracks;
-	bool dropped;
 	bool paralyzer;             ///< weapon will only paralyze not do real damage
 	bool impactOnly;            ///< The weapon damages by impacting, not by exploding
 
