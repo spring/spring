@@ -1502,10 +1502,12 @@ void CCommandAI::UpdateStockpileIcon(void)
 
 void CCommandAI::WeaponFired(CWeapon* weapon)
 {
-	if(weapon->weaponDef->manualfire && !weapon->weaponDef->dropped && !commandQue.empty()
-		&& (commandQue.front().id==CMD_ATTACK || commandQue.front().id==CMD_DGUN) && inCommand)
-	{
-		owner->AttackUnit(0,true);
+	if (!inCommand) { return; }
+	if (commandQue.empty()) { return; }
+	if (!weapon->weaponDef->manualfire) { return; }
+
+	if (commandQue.front().id == CMD_ATTACK || commandQue.front().id == CMD_DGUN) {
+		owner->AttackUnit(0, true);
 		eoh->WeaponFired(*owner, *(weapon->weaponDef));
 		FinishCommand();
 	}
