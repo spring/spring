@@ -238,7 +238,7 @@ void CTAAirMoveType::ExecuteStop()
 
 	switch (aircraftState) {
 		case AIRCRAFT_TAKEOFF:
-			if(!dontLand && autoLand) {
+			if (!dontLand && autoLand) {
 				SetState(AIRCRAFT_LANDING);
 				// trick to land directly
 				waitCounter = 30;
@@ -724,7 +724,7 @@ void CTAAirMoveType::UpdateAirPhysics()
 	if (fabs(wh - h) > 2.0f) {
 		if (speed.y > ws) {
 			speed.y = std::max(ws, speed.y - accRate * 1.5f);
-		} else if(!owner->beingBuilt) {
+		} else if (!owner->beingBuilt) {
 			// let them accelerate upward faster if close to ground
 			speed.y = std::min(ws, speed.y + accRate * (h < 20.0f? 2.0f: 0.7f));
 		}
@@ -770,123 +770,124 @@ void CTAAirMoveType::Update()
 		SetState(AIRCRAFT_TAKEOFF);
 	}
 
+	if (owner->stunned || owner->beingBuilt) {
+		wantedSpeed = ZeroVector;
+		wantToStop = true;
+	}
+
 	// Allow us to stop if wanted
 	if (wantToStop) {
 		ExecuteStop();
 	}
 
-	float3 lastSpeed = speed;
+	const float3 lastSpeed = speed;
 
-	if (owner->stunned  || owner->beingBuilt) {
+	if (owner->directControl) {
+		DirectControlStruct* dc = owner->directControl;
+		SetState(AIRCRAFT_FLYING);
+
+		float3 forward = dc->viewDir;
+		float3 flatForward = forward;
+		flatForward.y = 0;
+		flatForward.Normalize();
+		float3 right = forward.cross(UpVector);
+		float3 nextPos = pos + speed;
 		wantedSpeed = ZeroVector;
+
+		if (dc->forward)
+			wantedSpeed += flatForward;
+		if (dc->back)
+			wantedSpeed -= flatForward;
+		if (dc->right)
+			wantedSpeed += right;
+		if (dc->left)
+			wantedSpeed -= right;
+		wantedSpeed.Normalize();
+		wantedSpeed *= maxSpeed;
+
+		if (!nextPos.CheckInBounds()) {
+			speed = ZeroVector;
+		}
+
 		UpdateAirPhysics();
+		wantedHeading = GetHeadingFromVector(flatForward.x, flatForward.z);
 	} else {
-		if (owner->directControl) {
-			DirectControlStruct* dc = owner->directControl;
-			SetState(AIRCRAFT_FLYING);
 
-			float3 forward = dc->viewDir;
-			float3 flatForward = forward;
-			flatForward.y = 0;
-			flatForward.Normalize();
-			float3 right = forward.cross(UpVector);
-			float3 nextPos = pos + speed;
-			wantedSpeed = ZeroVector;
+		if (reservedPad) {
+			CUnit* unit = reservedPad->GetUnit();
+			const float3 relPos = unit->script->GetPiecePos(reservedPad->GetPiece());
+			const float3 pos = unit->pos + unit->frontdir * relPos.z
+					+ unit->updir * relPos.y + unit->rightdir * relPos.x;
 
-			if (dc->forward)
-				wantedSpeed += flatForward;
-			if (dc->back)
-				wantedSpeed -= flatForward;
-			if (dc->right)
-				wantedSpeed += right;
-			if (dc->left)
-				wantedSpeed -= right;
-			wantedSpeed.Normalize();
-			wantedSpeed *= maxSpeed;
+			if (padStatus == 0) {
+				if (aircraftState != AIRCRAFT_FLYING && aircraftState != AIRCRAFT_TAKEOFF)
+					SetState(AIRCRAFT_FLYING);
 
-			if (!nextPos.CheckInBounds()) {
-				speed = ZeroVector;
-			}
+				goalPos = pos;
 
-			UpdateAirPhysics();
-			wantedHeading = GetHeadingFromVector(flatForward.x, flatForward.z);
-		} else {
+				if (pos.SqDistance2D(owner->pos) < 400*400) {
+					padStatus = 1;
+				}
+			} else if (padStatus == 1) {
+				if (aircraftState != AIRCRAFT_FLYING) {
+					SetState(AIRCRAFT_FLYING);
+				}
+				flyState = FLY_LANDING;
 
-			if (reservedPad) {
-				CUnit* unit = reservedPad->GetUnit();
-				const float3 relPos = unit->script->GetPiecePos(reservedPad->GetPiece());
-				const float3 pos = unit->pos + unit->frontdir * relPos.z
-						+ unit->updir * relPos.y + unit->rightdir * relPos.x;
+				goalPos = pos;
+				reservedLandingPos = pos;
+				wantedHeight = pos.y - ground->GetHeightAboveWater(pos.x, pos.z);
 
-				if (padStatus == 0) {
-					if (aircraftState != AIRCRAFT_FLYING && aircraftState != AIRCRAFT_TAKEOFF)
-						SetState(AIRCRAFT_FLYING);
+				if (owner->pos.SqDistance(pos) < 9 || aircraftState == AIRCRAFT_LANDED) {
+					padStatus = 2;
+				}
+			} else {
+				if (aircraftState != AIRCRAFT_LANDED)
+					SetState(AIRCRAFT_LANDED);
 
-					goalPos = pos;
+				owner->pos = pos;
+				owner->AddBuildPower(unit->unitDef->buildSpeed / 30, unit);
+				owner->currentFuel = std::min(owner->unitDef->maxFuel,
+						owner->currentFuel + (owner->unitDef->maxFuel
+								/ (GAME_SPEED * owner->unitDef->refuelTime)));
 
-					if (pos.SqDistance2D(owner->pos) < 400*400) {
-						padStatus = 1;
-					}
-				} else if (padStatus == 1) {
-					if (aircraftState != AIRCRAFT_FLYING) {
-						SetState(AIRCRAFT_FLYING);
-					}
-					flyState = FLY_LANDING;
-
-					goalPos = pos;
-					reservedLandingPos = pos;
-					wantedHeight = pos.y - ground->GetHeightAboveWater(pos.x, pos.z);
-
-					if (owner->pos.SqDistance(pos) < 9 || aircraftState == AIRCRAFT_LANDED) {
-						padStatus = 2;
-					}
-				} else {
-					if (aircraftState != AIRCRAFT_LANDED)
-						SetState(AIRCRAFT_LANDED);
-
-					owner->pos = pos;
-					owner->AddBuildPower(unit->unitDef->buildSpeed / 30, unit);
-					owner->currentFuel = std::min(owner->unitDef->maxFuel,
-							owner->currentFuel + (owner->unitDef->maxFuel
-									/ (GAME_SPEED * owner->unitDef->refuelTime)));
-
-					if (owner->health >= owner->maxHealth - 1
-							&& owner->currentFuel >= owner->unitDef->maxFuel) {
-						airBaseHandler->LeaveLandingPad(reservedPad);
-						reservedPad = NULL;
-						padStatus = 0;
-						goalPos = oldGoalPos;
-						SetState(AIRCRAFT_TAKEOFF);
-					}
+				if (owner->health >= owner->maxHealth - 1
+						&& owner->currentFuel >= owner->unitDef->maxFuel) {
+					airBaseHandler->LeaveLandingPad(reservedPad);
+					reservedPad = NULL;
+					padStatus = 0;
+					goalPos = oldGoalPos;
+					SetState(AIRCRAFT_TAKEOFF);
 				}
 			}
+		}
 
-			// Main state handling
-			switch (aircraftState) {
-				case AIRCRAFT_LANDED:
-					UpdateLanded();
-					break;
-				case AIRCRAFT_TAKEOFF:
-					UpdateTakeoff();
-					break;
-				case AIRCRAFT_FLYING:
-					UpdateFlying();
-					break;
-				case AIRCRAFT_LANDING:
-					UpdateLanding();
-					break;
-				case AIRCRAFT_HOVERING:
-					UpdateHovering();
-					break;
-				case AIRCRAFT_CRASHING:
-					break;
-			}
+		// Main state handling
+		switch (aircraftState) {
+			case AIRCRAFT_LANDED:
+				UpdateLanded();
+				break;
+			case AIRCRAFT_TAKEOFF:
+				UpdateTakeoff();
+				break;
+			case AIRCRAFT_FLYING:
+				UpdateFlying();
+				break;
+			case AIRCRAFT_LANDING:
+				UpdateLanding();
+				break;
+			case AIRCRAFT_HOVERING:
+				UpdateHovering();
+				break;
+			case AIRCRAFT_CRASHING:
+				break;
 		}
 	}
 
+
 	// Banking requires deltaSpeed.y = 0
 	deltaSpeed = speed - lastSpeed;
-	deltaSpeed.y = 0;
+	deltaSpeed.y = 0.0f;
 
 	// Turn and bank and move
 	UpdateHeading();
