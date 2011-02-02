@@ -525,8 +525,9 @@ void CProjectileDrawer::DrawProjectilesSetShadow(std::set<CProjectile*>& project
 
 void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 {
+	const CUnit* owner = p->owner();
 	if ((gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam) ||
-		(p->owner() && teamHandler->Ally(p->owner()->allyteam, gu->myAllyTeam)))) {
+		(owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)))) {
 
 		if (!DrawProjectileModel(p, true)) {
 			if (p->castShadow) {
@@ -593,7 +594,8 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 		for (std::set<CProjectile*>::iterator it = renderProjectiles.begin(); it != renderProjectiles.end(); ++it) {
 			CProjectile* p = *it;
 
-			if ((p->owner() && (p->owner()->allyteam == gu->myAllyTeam)) ||
+			const CUnit* owner = p->owner();
+			if ((owner && (owner->allyteam == gu->myAllyTeam)) ||
 				gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
 				p->DrawOnMinimap(*lines, *points);
 			}
@@ -1041,7 +1043,7 @@ void CProjectileDrawer::GenerateNoiseTex(unsigned int tex, int size)
 
 void CProjectileDrawer::RenderProjectileCreated(const CProjectile* p)
 {
-#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
+#if defined(USE_GML) && GML_ENABLE_SIM
 	if(p->model && TEX_TYPE(p) < 0)
 		TEX_TYPE(p) = texturehandlerS3O->LoadS3OTextureNow(p->model);
 #endif

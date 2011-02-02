@@ -31,6 +31,7 @@ GlobalConfig::GlobalConfig() {
 	if(linkIncomingMaxPacketRate > 0 && linkIncomingSustainedBandwidth <= 0)
 		linkIncomingSustainedBandwidth = linkIncomingPeakBandwidth = 1024 * 1024;
 #if defined(USE_GML) && GML_ENABLE_SIM
+	enableDrawCallIns = !!configHandler->Get("EnableDrawCallIns", 1);
 	multiThreadLua = configHandler->Get("MultiThreadLua", 0);
 #endif
 }
