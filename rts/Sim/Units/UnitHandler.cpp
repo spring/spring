@@ -146,6 +146,8 @@ int CUnitHandler::AddUnit(CUnit *unit)
 
 void CUnitHandler::DeleteUnit(CUnit* unit)
 {
+	if(!unit->isDead) // there are many ways to fiddle with "deathScriptFinished", so a unit may arrive here
+		unit->KillUnit(false, true, NULL); // without being properly killed, which can result in MT deadlocking
 	toBeRemoved.push_back(unit);
 	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).dequeue_synced(unit);
 }
