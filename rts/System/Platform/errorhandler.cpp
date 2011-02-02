@@ -32,56 +32,11 @@
 
 volatile bool shutdownSucceeded = false;
 
-void ForcedExit() {
-	for (unsigned int n = 0; !shutdownSucceeded && n < 50; n++) {
-		boost::this_thread::sleep(boost::posix_time::milliseconds(100));
-	}
 
-	if (!shutdownSucceeded) {
-		LogObject() << "WARNING: failed to shutdown normally, exit forced";
-
-#ifdef _MSC_VER
-		TerminateProcess(GetCurrentProcess(), -1);
-#else
-		exit(-1); // continuing execution when SDL_Quit has already been run will result in a crash
-#endif
-	}
-}
-
-void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags)
-{
-#ifndef DEDICATED
-	if (!(flags & MBF_MAIN)) {
-		Threading::Error err(caption, msg, flags);
-		Threading::SetThreadError(err);
-
-		boost::thread* mainthread = Threading::GetMainThread();
-		if (mainthread && !Threading::IsMainThread())
-			mainthread->interrupt();
-
-		boost::thread* loadthread = Threading::GetLoadingThread();
-		if (loadthread && Threading::IsMainThread())
-			loadthread->interrupt();
-
-		if (!(flags & MBF_CRASH) && Threading::IsLoadingThread())
-			throw boost::thread_interrupted(); // only the loading thread currently catches this interrupted exception (makes a more graceful exit)
-	}
-#endif
-
-	//! exiting any possibly threads
-	//! (else they would still run while the error messagebox is shown)
-#ifdef DEDICATED
-	SafeDelete(gameServer);
-#else
-	if (Threading::IsMainThread()) {
-		boost::thread forcedExitThread(&ForcedExit);
-		SpringApp::Shutdown();
-		shutdownSucceeded = true;
-		forcedExitThread.join();
-	}
-#endif
-
+void ExitMessage(const std::string& msg, const std::string& caption, unsigned int flags, bool forced) {
 	logOutput.SetSubscribersEnabled(false);
+	if(forced)
+		LogObject() << "WARNING: failed to shutdown normally, exit forced";
 	LogObject() << caption << " " << msg;
 
 #if !defined(DEDICATED) && !defined(HEADLESS)
@@ -111,4 +66,50 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 #else
 	exit(-1); // continuing execution when SDL_Quit has already been run will result in a crash
 #endif
+}
+
+
+void ForcedExit(const std::string& msg, const std::string& caption, unsigned int flags) {
+	for (unsigned int n = 0; !shutdownSucceeded && n < 50; ++n)
+		boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+
+	if(!shutdownSucceeded)
+		ExitMessage(msg, caption, flags, true);
+}
+
+
+void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags)
+{
+#ifndef DEDICATED
+	if (!(flags & MBF_MAIN)) {
+		Threading::Error err(caption, msg, flags);
+		Threading::SetThreadError(err);
+
+		boost::thread* mainthread = Threading::GetMainThread();
+		if (mainthread && !Threading::IsMainThread())
+			mainthread->interrupt();
+
+		boost::thread* loadthread = Threading::GetLoadingThread();
+		if (loadthread && Threading::IsMainThread())
+			loadthread->interrupt();
+
+		if (!(flags & MBF_CRASH) && Threading::IsLoadingThread())
+			throw boost::thread_interrupted(); // only the loading thread currently catches this interrupted exception (makes a more graceful exit)
+	}
+#endif
+
+	//! exiting any possibly threads
+	//! (else they would still run while the error messagebox is shown)
+#ifdef DEDICATED
+	SafeDelete(gameServer);
+#else
+	if (Threading::IsMainThread()) {
+		boost::thread forcedExitThread(&ForcedExit, msg, caption, flags);
+		SpringApp::Shutdown();
+		shutdownSucceeded = true;
+		forcedExitThread.join();
+	}
+#endif
+
+	ExitMessage(msg, caption, flags, false);
 }
