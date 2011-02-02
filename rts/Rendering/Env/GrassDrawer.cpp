@@ -105,6 +105,7 @@ CGrassDrawer::CGrassDrawer()
 		CBitmap grassBladeTexBM;
 		if (!grassBladeTexBM.Load(mapInfo->smf.grassBladeTexName)) {
 			//! map didn't define a grasstex, so generate one
+			grassBladeTexBM.channels = 4;
 			grassBladeTexBM.Alloc(256,64);
 
 			for (int a = 0; a < 16; ++a) {
