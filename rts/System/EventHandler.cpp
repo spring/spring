@@ -438,23 +438,30 @@ void CEventHandler::Load(CArchiveBase* archive)
 	}
 }
 
+
 #ifdef USE_GML
-#define GML_DRAW_CALLIN_SELECTOR() if(!gc->enableDrawCallIns) return
+	#define GML_DRAW_CALLIN_SELECTOR() if(!gc->enableDrawCallIns) return
 #else
-#define GML_DRAW_CALLIN_SELECTOR()
+	#define GML_DRAW_CALLIN_SELECTOR()
 #endif
+
+#define GML_CALLIN_MUTEXES() \
+	GML_RECMUTEX_LOCK(unit); \
+	GML_RECMUTEX_LOCK(feat)
+
+
+#define EVENTHANDLER_CHECK(name, ...) \
+	const int count = list ## name.size(); \
+	if (count <= 0) \
+		return __VA_ARGS__; \
+	GML_CALLIN_MUTEXES();
+
 
 void CEventHandler::Update()
 {
 	GML_DRAW_CALLIN_SELECTOR();
 
-	const int count = listUpdate.size();
-
-	if (count <= 0)
-		return;
-
-	GML_RECMUTEX_LOCK(unit); // Update
-	GML_RECMUTEX_LOCK(feat); // Update
+	EVENTHANDLER_CHECK(Update);
 
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listUpdate[i];
@@ -465,10 +472,8 @@ void CEventHandler::Update()
 
 void CEventHandler::ViewResize()
 {
-	GML_RECMUTEX_LOCK(unit); //
-	GML_RECMUTEX_LOCK(feat); //
+	EVENTHANDLER_CHECK(ViewResize);
 
-	const int count = listViewResize.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listViewResize[i];
 		ec->ViewResize();
@@ -480,13 +485,8 @@ void CEventHandler::ViewResize()
   void CEventHandler:: Draw ## name ()            \
   {                                               \
     GML_DRAW_CALLIN_SELECTOR();                   \
-    const int count = listDraw ## name.size();    \
-    if (count <= 0) {                             \
-      return;                                     \
-    }                                             \
-                                                  \
-    GML_RECMUTEX_LOCK(unit); /* DRAW_CALLIN */    \
-    GML_RECMUTEX_LOCK(feat); /* DRAW_CALLIN */    \
+		                                              \
+    EVENTHANDLER_CHECK(Draw ## name);             \
                                                   \
     LuaOpenGL::EnableDraw ## name ();             \
     listDraw ## name [0]->Draw ## name ();        \
@@ -516,11 +516,9 @@ DRAW_CALLIN(InMiniMap)
 
 bool CEventHandler::CommandNotify(const Command& cmd)
 {
-	GML_RECMUTEX_LOCK(unit); //
-	GML_RECMUTEX_LOCK(feat); //
+	EVENTHANDLER_CHECK(CommandNotify, false);
 
 	// reverse order, user has the override
-	const int count = listCommandNotify.size();
 	for (int i = (count - 1); i >= 0; i--) {
 		CEventClient* ec = listCommandNotify[i];
 		if (ec->CommandNotify(cmd)) {
@@ -533,11 +531,9 @@ bool CEventHandler::CommandNotify(const Command& cmd)
 
 bool CEventHandler::KeyPress(unsigned short key, bool isRepeat)
 {
-	GML_RECMUTEX_LOCK(unit); //
-	GML_RECMUTEX_LOCK(feat); //
+	EVENTHANDLER_CHECK(KeyPress, false);
 
 	// reverse order, user has the override
-	const int count = listKeyPress.size();
 	for (int i = (count - 1); i >= 0; i--) {
 		CEventClient* ec = listKeyPress[i];
 		if (ec->KeyPress(key, isRepeat)) {
@@ -550,11 +546,9 @@ bool CEventHandler::KeyPress(unsigned short key, bool isRepeat)
 
 bool CEventHandler::KeyRelease(unsigned short key)
 {
-	GML_RECMUTEX_LOCK(unit); //
-	GML_RECMUTEX_LOCK(feat); //
+	EVENTHANDLER_CHECK(KeyRelease, false);
 
 	// reverse order, user has the override
-	const int count = listKeyRelease.size();
 	for (int i = (count - 1); i >= 0; i--) {
 		CEventClient* ec = listKeyRelease[i];
 		if (ec->KeyRelease(key)) {
@@ -567,11 +561,9 @@ bool CEventHandler::KeyRelease(unsigned short key)
 
 bool CEventHandler::MousePress(int x, int y, int button)
 {
-	GML_RECMUTEX_LOCK(unit); //
-	GML_RECMUTEX_LOCK(feat); //
+	EVENTHANDLER_CHECK(MousePress, false);
 
 	// reverse order, user has the override
-	const int count = listMousePress.size();
 	for (int i = (count - 1); i >= 0; i--) {
 		CEventClient* ec = listMousePress[i];
 		if (ec->MousePress(x, y, button)) {
@@ -587,14 +579,13 @@ bool CEventHandler::MousePress(int x, int y, int button)
 // return a cmd index, or -1
 int CEventHandler::MouseRelease(int x, int y, int button)
 {
-	GML_RECMUTEX_LOCK(unit); //
-	GML_RECMUTEX_LOCK(feat); //
-
 	if (mouseOwner == NULL) {
 		return -1;
 	}
 	else
 	{
+		GML_CALLIN_MUTEXES();
+
 		const int retval = mouseOwner->MouseRelease(x, y, button);
 		mouseOwner = NULL;
 		return retval;
@@ -604,23 +595,21 @@ int CEventHandler::MouseRelease(int x, int y, int button)
 
 bool CEventHandler::MouseMove(int x, int y, int dx, int dy, int button)
 {
-	GML_RECMUTEX_LOCK(unit); //
-	GML_RECMUTEX_LOCK(feat); //
-
 	if (mouseOwner == NULL) {
 		return false;
 	}
+
+	GML_CALLIN_MUTEXES();
+
 	return mouseOwner->MouseMove(x, y, dx, dy, button);
 }
 
 
 bool CEventHandler::MouseWheel(bool up, float value)
 {
-	GML_RECMUTEX_LOCK(unit); //
-	GML_RECMUTEX_LOCK(feat); //
+	EVENTHANDLER_CHECK(MouseWheel, false);
 
 	// reverse order, user has the override
-	const int count = listMouseWheel.size();
 	for (int i = (count - 1); i >= 0; i--) {
 		CEventClient* ec = listMouseWheel[i];
 		if (ec->MouseWheel(up, value)) {
@@ -632,11 +621,9 @@ bool CEventHandler::MouseWheel(bool up, float value)
 
 bool CEventHandler::JoystickEvent(const std::string& event, int val1, int val2)
 {
-	GML_RECMUTEX_LOCK(unit); //
-	GML_RECMUTEX_LOCK(feat); //
+	EVENTHANDLER_CHECK(JoystickEvent, false);
 
 	// reverse order, user has the override
-	const int count = listMouseWheel.size();
 	for (int i = (count - 1); i >= 0; i--) {
 		CEventClient* ec = listMouseWheel[i];
 		if (ec->JoystickEvent(event, val1, val2)) {
@@ -648,11 +635,9 @@ bool CEventHandler::JoystickEvent(const std::string& event, int val1, int val2)
 
 bool CEventHandler::IsAbove(int x, int y)
 {
-	GML_RECMUTEX_LOCK(unit); //
-	GML_RECMUTEX_LOCK(feat); //
+	EVENTHANDLER_CHECK(IsAbove, false);
 
 	// reverse order, user has the override
-	const int count = listIsAbove.size();
 	for (int i = (count - 1); i >= 0; i--) {
 		CEventClient* ec = listIsAbove[i];
 		if (ec->IsAbove(x, y)) {
@@ -664,11 +649,9 @@ bool CEventHandler::IsAbove(int x, int y)
 
 string CEventHandler::GetTooltip(int x, int y)
 {
-	GML_RECMUTEX_LOCK(unit); //
-	GML_RECMUTEX_LOCK(feat); //
+	EVENTHANDLER_CHECK(GetTooltip, "");
 
 	// reverse order, user has the override
-	const int count = listGetTooltip.size();
 	for (int i = (count - 1); i >= 0; i--) {
 		CEventClient* ec = listGetTooltip[i];
 		const string tt = ec->GetTooltip(x, y);
@@ -682,10 +665,8 @@ string CEventHandler::GetTooltip(int x, int y)
 
 bool CEventHandler::AddConsoleLine(const string& msg, const CLogSubsystem& subsystem)
 {
-	GML_RECMUTEX_LOCK(unit); //
-	GML_RECMUTEX_LOCK(feat); //
+	EVENTHANDLER_CHECK(AddConsoleLine, false);
 
-	const int count = listAddConsoleLine.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listAddConsoleLine[i];
 		ec->AddConsoleLine(msg, subsystem);
@@ -696,10 +677,8 @@ bool CEventHandler::AddConsoleLine(const string& msg, const CLogSubsystem& subsy
 
 bool CEventHandler::GroupChanged(int groupID)
 {
-	GML_RECMUTEX_LOCK(unit); //
-	GML_RECMUTEX_LOCK(feat); //
+	EVENTHANDLER_CHECK(GroupChanged, false);
 
-	const int count = listGroupChanged.size();
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listGroupChanged[i];
 		ec->GroupChanged(groupID);
@@ -712,11 +691,9 @@ bool CEventHandler::GroupChanged(int groupID)
 bool CEventHandler::GameSetup(const string& state, bool& ready,
                                   const map<int, string>& playerStates)
 {
-	GML_RECMUTEX_LOCK(unit); //
-	GML_RECMUTEX_LOCK(feat); //
+	EVENTHANDLER_CHECK(GameSetup, false);
 
 	// reverse order, user has the override
-	const int count = listGameSetup.size();
 	for (int i = (count - 1); i >= 0; i--) {
 		CEventClient* ec = listGameSetup[i];
 		if (ec->GameSetup(state, ready, playerStates)) {
@@ -731,11 +708,9 @@ string CEventHandler::WorldTooltip(const CUnit* unit,
                                    const CFeature* feature,
                                    const float3* groundPos)
 {
-	GML_RECMUTEX_LOCK(unit); //
-	GML_RECMUTEX_LOCK(feat); //
+	EVENTHANDLER_CHECK(WorldTooltip, "");
 
 	// reverse order, user has the override
-	const int count = listWorldTooltip.size();
 	for (int i = (count - 1); i >= 0; i--) {
 		CEventClient* ec = listWorldTooltip[i];
 		const string tt = ec->WorldTooltip(unit, feature, groundPos);
@@ -751,11 +726,9 @@ bool CEventHandler::MapDrawCmd(int playerID, int type,
                                const float3* pos0, const float3* pos1,
                                    const string* label)
 {
-	GML_RECMUTEX_LOCK(unit); //
-	GML_RECMUTEX_LOCK(feat); //
+	EVENTHANDLER_CHECK(MapDrawCmd, false);
 
 	// reverse order, user has the override
-	const int count = listMapDrawCmd.size();
 	for (int i = (count - 1); i >= 0; i--) {
 		CEventClient* ec = listMapDrawCmd[i];
 		if (ec->MapDrawCmd(playerID, type, pos0, pos1, label)) {

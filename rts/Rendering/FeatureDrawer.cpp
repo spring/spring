@@ -85,7 +85,7 @@ CFeatureDrawer::~CFeatureDrawer()
 void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 {
 	CFeature* f = const_cast<CFeature*>(feature);
-#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
+#if defined(USE_GML) && GML_ENABLE_SIM
 	if(f->model && TEX_TYPE(f) < 0)
 		TEX_TYPE(f) = texturehandlerS3O->LoadS3OTextureNow(f->model);
 #endif

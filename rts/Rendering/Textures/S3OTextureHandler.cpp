@@ -39,7 +39,7 @@ CS3OTextureHandler::~CS3OTextureHandler()
 }
 
 void CS3OTextureHandler::LoadS3OTexture(S3DModel* model) {
-#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
+#if defined(USE_GML) && GML_ENABLE_SIM // even though glShareLists is now in place, this delayed loading is good because eliminates the need for locking
 	model->textureType = -1;
 #else
 	model->textureType = LoadS3OTextureNow(model);
