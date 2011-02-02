@@ -67,6 +67,7 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 		logOutput.Print("[%s] could not load texture \"%s\" from model \"%s\"", __FUNCTION__, model->tex1.c_str(), model->name.c_str());
 
 		// file not found (or headless build), set single pixel to red so unit is visible
+		tex1bm.channels = 4;
 		tex1bm.Alloc(1, 1);
 		tex1bm.mem[0] = 255;
 		tex1bm.mem[1] =   0;
@@ -84,6 +85,7 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 	// Also many map features specify a tex2 but don't ship it with the map,
 	// so throwing here would cause maps to break.
 	if (!tex2bm.Load(std::string("unittextures/" + model->tex2))) {
+		tex2bm.channels = 4;
 		tex2bm.Alloc(1, 1);
 		tex2bm.mem[0] =   0; // self-illum
 		tex2bm.mem[1] =   0; // spec+refl
