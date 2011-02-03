@@ -146,8 +146,6 @@ int CUnitHandler::AddUnit(CUnit *unit)
 
 void CUnitHandler::DeleteUnit(CUnit* unit)
 {
-	if(!unit->isDead) // there are many ways to fiddle with "deathScriptFinished", so a unit may arrive here
-		unit->KillUnit(false, true, NULL); // without being properly killed, which can result in MT deadlocking
 	toBeRemoved.push_back(unit);
 	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).dequeue_synced(unit);
 }
@@ -239,7 +237,19 @@ void CUnitHandler::Update()
 		SCOPED_TIMER("Unit update");
 		std::list<CUnit*>::iterator usi;
 		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
-			(*usi)->Update();
+			CUnit* unit = *usi;
+
+			if (unit->deathScriptFinished) {
+				// there are many ways to fiddle with "deathScriptFinished", so a unit may
+				// arrive here without having been properly killed (and isDead still false),
+				// which can result in MT deadlocking -- FIXME verify this
+				// (KU returns early if isDead)
+				unit->KillUnit(false, true, NULL);
+
+				DeleteUnit(unit);
+			} else {
+				unit->Update();
+			}
 		}
 	}
 
