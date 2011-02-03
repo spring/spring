@@ -436,6 +436,6 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 
 	if (net && net->GetDemoRecorder()) {
 		net->GetDemoRecorder()->SetName(gameSetup->mapName, gameSetup->modName);
-		LogObject() << "Recording Demo to " << net->GetDemoRecorder()->GetName() << "\n";
+		LogObject() << "recording demo: " << net->GetDemoRecorder()->GetName() << "\n";
 	}
 }

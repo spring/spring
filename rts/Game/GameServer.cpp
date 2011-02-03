@@ -132,6 +132,8 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	cheating = false;
 
 	gameHasStarted = false;
+	generatedGameID = false;
+
 	gameEndTime = spring_notime;
 	readyTime = spring_notime;
 
@@ -1691,6 +1693,8 @@ void CGameServer::GenerateAndSendGameID()
 #ifdef DEDICATED
 	demoRecorder->SetGameID(gameID.charArray);
 #endif
+
+	generatedGameID = true;
 }
 
 void CGameServer::CheckForGameStart(bool forced)
