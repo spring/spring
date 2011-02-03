@@ -689,11 +689,6 @@ void CUnit::Update()
 
 	posErrorVector += posErrorDelta;
 
-	if (deathScriptFinished) {
-		uh->DeleteUnit(this);
-		return;
-	}
-
 	if (beingBuilt) {
 		return;
 	}
