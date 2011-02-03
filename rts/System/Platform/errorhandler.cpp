@@ -13,6 +13,7 @@
 #include "System/LogOutput.h"
 #include "System/Util.h"
 
+#include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 
@@ -35,7 +36,7 @@ volatile bool shutdownSucceeded = false;
 
 void ExitMessage(const std::string& msg, const std::string& caption, unsigned int flags, bool forced) {
 	logOutput.SetSubscribersEnabled(false);
-	if(forced)
+	if (forced)
 		LogObject() << "WARNING: failed to shutdown normally, exit forced";
 	LogObject() << caption << " " << msg;
 
@@ -73,7 +74,7 @@ void ForcedExit(const std::string& msg, const std::string& caption, unsigned int
 	for (unsigned int n = 0; !shutdownSucceeded && n < 50; ++n)
 		boost::this_thread::sleep(boost::posix_time::milliseconds(100));
 
-	if(!shutdownSucceeded)
+	if (!shutdownSucceeded)
 		ExitMessage(msg, caption, flags, true);
 }
 
@@ -104,7 +105,7 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 	SafeDelete(gameServer);
 #else
 	if (Threading::IsMainThread()) {
-		boost::thread forcedExitThread(&ForcedExit, msg, caption, flags);
+		boost::thread forcedExitThread(boost::bind(&ForcedExit, msg, caption, flags));
 		SpringApp::Shutdown();
 		shutdownSucceeded = true;
 		forcedExitThread.join();
