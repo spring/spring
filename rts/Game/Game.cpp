@@ -547,7 +547,10 @@ void CGame::LoadRendering()
 	loadscreen->SetLoadMessage("Creating Sky & Water");
 	sky = CBaseSky::GetSky();
 	water = CBaseWater::GetWater(NULL, -1);
+}
 
+void CGame::SetupRenderingParams()
+{
 	glLightfv(GL_LIGHT1, GL_AMBIENT, mapInfo->light.unitAmbientColor);
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, mapInfo->light.unitSunColor);
 	glLightfv(GL_LIGHT1, GL_SPECULAR, mapInfo->light.unitAmbientColor);

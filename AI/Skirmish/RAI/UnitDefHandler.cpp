@@ -180,7 +180,7 @@ sRAIUnitDef::sRAIUnitDef(const UnitDef *unitdef, IAICallback* cb, GlobalResource
 			SWeapon=iW->def;
 //			*l<<"(SWeapon)";
 		}
-		if( iW->def->dropped )
+		if( iW->def->type == "AircraftBomb" )
 			IsBomber = true;
 
 		if( ud->speed == 0 && iW->def->range > 250 && iW->def->coverageRange == 0 && (!iW->def->manualfire || iW->def->range < MaxFiringRange ) )

@@ -323,7 +323,7 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unitDef, const UnitDef* victim) {
 				}
 
 				// bombers are useless against air
-				if (uwDef->def->dropped && victim->canfly && unitDef->canfly && unitDef->wantedHeight <= victim->wantedHeight) {
+				if (uwDef->def->type == "AircraftBomb" && victim->canfly && unitDef->canfly && unitDef->wantedHeight <= victim->wantedHeight) {
 					canhit = false;
 				}
 

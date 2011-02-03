@@ -34,6 +34,7 @@ private:
 
 public:
 	void LoadGame(const std::string& mapname);
+	void SetupRenderingParams();
 
 private:
 	void LoadDefs();

@@ -86,9 +86,7 @@ bool CUNIT::CanAttack(int otherUnit) const {
 	if (ud_mine != NULL && ud_other != NULL) {
 		assert(otherUnit != 0);
 
-		// float dps = this->ai->ut->GetDPSvsUnit(ud_mine, ud_other);
-		float dps = ai->ut->unitTypes[ud_mine->id].DPSvsUnit[ud_other->id];
-		return (dps > 5.0f);
+		return (ai->ut->unitTypes[ud_mine->id].DPSvsUnit[ud_other->id] > 5.0f);
 	}
 
 	// might be a false negative

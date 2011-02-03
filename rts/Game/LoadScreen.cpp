@@ -149,6 +149,7 @@ void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& 
 	// Init() already requires GetInstance() to work.
 	singleton->Init();
 	if (!singleton->mt_loading) {
+		game->SetupRenderingParams();
 		CLoadScreen::DeleteInstance();
 	}
 }
@@ -211,6 +212,7 @@ bool CLoadScreen::Update()
 	}
 
 	if (game->finishedLoading) {
+		game->SetupRenderingParams();
 		CLoadScreen::DeleteInstance();
 	}
 

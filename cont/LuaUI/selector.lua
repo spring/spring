@@ -247,6 +247,19 @@ function widget:DrawScreen()
 
   -- draw the widget labels
   local mx,my,lmb,mmb,rmb = Spring.GetMouseState()
+  
+  local tcol = WhiteStr
+  if minx < mx and mx < minx + 30 and miny - 20 < my and my < miny then
+    tcol = '\255\031\031\255'
+  end
+  gl.Text(tcol .. 'All', minx + 15, miny - 15, fontSize * 1.25, "oc")
+  tcol = WhiteStr
+  if maxx - 50 < mx and mx < maxx and miny - 20 < my and my < miny then
+    tcol = '\255\031\031\255'
+  end
+  gl.Text(tcol .. 'None', maxx - 25, miny - 15, fontSize * 1.25, "oc")
+  
+  
   local nd = not widgetHandler.tweakMode and self:AboveLabel(mx, my)
   local pointedY = nil
   local pointedEnabled = false
@@ -454,6 +467,13 @@ function widget:MousePress(x, y, button)
   UpdateList()
 
   if button == 1 then
+    if minx < x and x < minx + 30 and miny - 20 < y and y < miny then
+      return true
+    end
+    if maxx - 50 < x and x < maxx and miny - 20 < y and y < miny then  
+      return true
+    end
+  
     if sbposx < x and x < sbposx + sbsizex and sbposy < y and y < sbposy + sbsizey then
       activescrollbar = true
       scrollbargrabpos = y - sbposy
@@ -519,6 +539,21 @@ function widget:MouseRelease(x, y, button)
     scrollbargrabpos = 0.0
     return -1
   end
+
+  if button == 1 then
+    if minx < x and x < minx + 30 and miny - 20 < y and y < miny then
+      for _,namedata in ipairs(fullWidgetsList) do
+        widgetHandler:EnableWidget(namedata[1])
+      end
+      return -1
+    end
+    if maxx - 50 < x and x < maxx and miny - 20 < y and y < miny then
+      for _,namedata in ipairs(fullWidgetsList) do
+        widgetHandler:DisableWidget(namedata[1])
+      end
+      return -1
+    end
+  end
   
   local namedata = self:AboveLabel(x, y)
   if (not namedata) then
@@ -563,7 +598,7 @@ end
 function widget:IsAbove(x, y)
   UpdateList()
   if ((x < minx) or (x > maxx + yStep) or
-      (y < miny) or (y > maxy)) then
+      (y < miny - 20) or (y > maxy)) then
     return false
   end
   return true
