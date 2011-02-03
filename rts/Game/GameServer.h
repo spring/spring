@@ -80,11 +80,16 @@ public:
 
 	void SetGamePausable(const bool arg);
 
-	bool HasDemo() const { return (demoReader != NULL); }
+	bool HasStarted() const { return gameHasStarted; }
+	bool HasGameID() const { return generatedGameID; }
 	/// Is the server still running?
 	bool HasFinished() const;
 
 	void UpdateSpeedControl(int speedCtrl);
+
+	#ifdef DEDICATED
+	const boost::scoped_ptr<CDemoRecorder>& GetDemoRecorder() const { return demoRecorder; }
+	#endif
 
 private:
 	/**
@@ -111,7 +116,7 @@ private:
 	void ServerReadNet();
 	void CheckForGameEnd();
 
-	/** @brief Generate a unique game identifier and sent it to all clients. */
+	/** @brief Generate a unique game identifier and send it to all clients. */
 	void GenerateAndSendGameID();
 	std::string GetPlayerNames(const std::vector<int>& indices) const;
 
@@ -223,7 +228,9 @@ private:
 	mutable boost::recursive_mutex gameServerMutex;
 
 	bool canReconnect;
-	bool gameHasStarted;
+	volatile bool gameHasStarted;
+	volatile bool generatedGameID;
+
 	spring_time lastBandwidthUpdate;
 	int linkMinPacketSize;
 };
