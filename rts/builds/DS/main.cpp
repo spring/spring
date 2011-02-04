@@ -41,20 +41,20 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 	if (strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "--version") == 0) {
-		std::cout << "[DS] " << SpringVersion::GetFull() << std::endl;
+		printf("[DS] %s\n", (SpringVersion::GetFull()).c_str());
 		return 0;
 	}
 
-	SDL_Init(SDL_INIT_TIMER);
+	std::string scriptName(argv[1]);
+	std::string scriptText;
 
-	std::cout << "[DS] if you find any errors, report them to mantis or the forums." << std::endl << std::endl;
+	printf("[DS] report any errors to Mantis or the forums\n.");
+	printf("[DS] loading script from file: %s\n", scriptName.c_str());
+
+	SDL_Init(SDL_INIT_TIMER);
 
 	ConfigHandler::Instantiate(); // use the default config file
 	FileSystemHandler::Initialize(false);
-
-	std::string scriptName(argv[1]);
-	std::string scriptText;
-	std::cout << "[DS] loading script from file: " << scriptName << std::endl;
 
 	CGameServer* server = NULL;
 	CGameSetup* gameSetup = NULL;
@@ -72,11 +72,9 @@ int main(int argc, char* argv[])
 
 	if (!gameSetup->Init(scriptText)) {
 		// read the script provided by cmdline
-		std::cout << "[DS] failed to load script" << std::endl;
+		printf("[DS] failed to load script %s\n", scriptName.c_str());
 		return 1;
 	}
-
-	std::cout << "[DS] starting server..." << std::endl;
 
 	// Create the server, it will run in a separate thread
 	GameData data;
@@ -108,27 +106,37 @@ int main(int argc, char* argv[])
 		data.SetModChecksum(modCheckSum);
 	}
 
+	printf("[DS] starting server...\n");
+
 	data.SetSetup(gameSetup->gameSetupText);
 	server = new CGameServer(settings.hostIP, settings.hostPort, &data, gameSetup);
 
 	while (!server->HasGameID()) {
-		// wait until gameID has been generated
-	}
-
-	{
-		const boost::scoped_ptr<CDemoRecorder>& demoRec = server->GetDemoRecorder();
-		const boost::uint8_t* gameID = (demoRec->GetFileHeader()).gameID;
-
-		printf("[DS] recording demo: %s\n", (demoRec->GetName()).c_str());
-		printf("[DS] using mod: %s\n", (gameSetup->modName).c_str());
-		printf("[DS] using map: %s\n", (gameSetup->mapName).c_str());
-		printf("[DS] GameID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
-			gameID[ 0], gameID[ 1], gameID[ 2], gameID[ 3], gameID[ 4], gameID[ 5], gameID[ 6], gameID[ 7],
-			gameID[ 8], gameID[ 9], gameID[10], gameID[11], gameID[12], gameID[13], gameID[14], gameID[15]
-		);
+		// wait until gameID has been generated or
+		// a timeout occurs (if no clients connect)
+		if (server->HasFinished()) {
+			break;
+		}
 	}
 
 	while (!server->HasFinished()) {
+		static bool printData = true;
+
+		if (printData) {
+			printData = false;
+
+			const boost::scoped_ptr<CDemoRecorder>& demoRec = server->GetDemoRecorder();
+			const boost::uint8_t* gameID = (demoRec->GetFileHeader()).gameID;
+
+			printf("[DS] recording demo: %s\n", (demoRec->GetName()).c_str());
+			printf("[DS] using mod: %s\n", (gameSetup->modName).c_str());
+			printf("[DS] using map: %s\n", (gameSetup->mapName).c_str());
+			printf("[DS] GameID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
+				gameID[ 0], gameID[ 1], gameID[ 2], gameID[ 3], gameID[ 4], gameID[ 5], gameID[ 6], gameID[ 7],
+				gameID[ 8], gameID[ 9], gameID[10], gameID[11], gameID[12], gameID[13], gameID[14], gameID[15]
+			);
+		}
+
 		// wait 1 second between checks
 #ifdef _WIN32
 		Sleep(1000);
@@ -144,7 +152,7 @@ int main(int argc, char* argv[])
 
 #ifdef _WIN32
 	} catch (const std::exception& err) {
-		std::cout << "[DS] exception raised: " << err.what() << std::endl;
+		printf("[DS] exception raised: %s\n" << (err.what()).c_str());
 		return 1;
 	}
 #endif
