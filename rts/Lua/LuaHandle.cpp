@@ -2086,6 +2086,7 @@ void CLuaHandle::DrawScreenEffects()
 
 void CLuaHandle::DrawInMiniMap()
 {
+	LUA_USERMODE_CHECK(); // prevent chained eventHandler calls from luaUI to non-luaUI (will deadlock MT)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("DrawInMiniMap");
