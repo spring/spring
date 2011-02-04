@@ -943,21 +943,24 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 
 void CCommandAI::ExecuteRemove(const Command& c)
 {
+	CCommandQueue* queue = &commandQue;
+	CFactoryCAI* facCAI = dynamic_cast<CFactoryCAI*>(this);
+
+	// if false, remove commands by tag
+	const bool removeByID = (c.options & ALT_KEY);
 	// disable repeating during the removals
 	const bool prevRepeat = repeatOrders;
-	repeatOrders = false;
 
-	CCommandQueue* queue = &commandQue;
-
+	// erase commands by a list of command types
+	bool active = false;
 	bool facBuildQueue = false;
-	CFactoryCAI* facCAI = dynamic_cast<CFactoryCAI*>(this);
 
 	if (facCAI) {
 		if (c.options & CONTROL_KEY) {
-			// check the build order
+			// keep using the build-order queue
 			facBuildQueue = true;
 		} else {
-			// use the new commands
+			// use the command-queue for new units
 			queue = &facCAI->newUnitCommands;
 		}
 	}
@@ -966,20 +969,24 @@ void CCommandAI::ExecuteRemove(const Command& c)
 		return;
 	}
 
-	// erase commands by a list of command types
-	bool active = false;
-	for (unsigned int p = 0; p < c.params.size(); p++) {
-		const int removeValue = (int)c.params[p]; // tag or id
+	repeatOrders = false;
 
-		if (facBuildQueue && (removeValue == 0) && !(c.options & ALT_KEY)) {
-			continue; // don't remove tag=0 commands from build queues, they
-			          // are used the same way that CMD_STOP is, to void orders
+	for (unsigned int p = 0; p < c.params.size(); p++) {
+		const int removeValue = c.params[p]; // tag or id
+
+		if (facBuildQueue && !removeByID && (removeValue == 0)) {
+			// don't remove commands with tag 0 from build queues, they
+			// are used the same way that CMD_STOP is (to void orders)
+			continue;
 		}
+
 		CCommandQueue::iterator ci;
+
 		do {
 			for (ci = queue->begin(); ci != queue->end(); ++ci) {
 				const Command& qc = *ci;
-				if (c.options & ALT_KEY) {
+
+				if (removeByID) {
 					if (qc.id != removeValue)  { continue; }
 				} else {
 					if (qc.tag != removeValue) { continue; }
@@ -990,9 +997,11 @@ void CCommandAI::ExecuteRemove(const Command& c)
 				}
 
 				if (facBuildQueue) {
-					facCAI->RemoveBuildCommand(ci);
-					ci = queue->begin();
-					break; // the removal may have corrupted the iterator
+					// if ci == queue->begin() and !queue->empty(), this pop_front()'s
+					// via CFAI::ExecuteStop; otherwise only modifies *ci (not <queue>)
+					if (facCAI->RemoveBuildCommand(ci)) {
+						ci = queue->begin(); break;
+					}
 				}
 
 				if (!facCAI && (ci == queue->begin())) {
@@ -1004,16 +1013,18 @@ void CCommandAI::ExecuteRemove(const Command& c)
 					}
 					active = true;
 				}
+
 				queue->erase(ci);
 				ci = queue->begin();
-				break; // the removal may have corrupted the iterator
+
+				// the removal may have corrupted the iterator
+				break;
 			}
 		}
 		while (ci != queue->end());
 	}
 
 	repeatOrders = prevRepeat;
-	return;
 }
 
 
