@@ -380,6 +380,8 @@ public:
 	}
 
 	BOOL_ PumpAux() {
+		if(!threads[GML_SIM_THREAD_NUM]->joinable())
+			return TRUE;
 		static int updsrvaux=0;
 		if((updsrvaux++%GML_UPDSRV_INTERVAL)==0 || *(volatile int *)&gmlItemsConsumed>=GML_UPDSRV_INTERVAL)
 			gmlUpdateServers();

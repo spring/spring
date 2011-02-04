@@ -223,6 +223,8 @@ struct LuaMiscEvent {
 #  define LUA_CALL_IN_CHECK(L) SELECT_LUA_STATE()
 #endif
 
+#define LUA_USERMODE_CHECK(...) if(!this->userMode) { CLuaHandle *luaah = GetActiveHandle(); if(luaah != NULL && luaah->userMode) return __VA_ARGS__; }
+
 #ifdef USE_GML // hack to add some degree of thread safety to LUA
 #	include "Rendering/GL/myGL.h"
 #	include "lib/gml/gmlsrv.h"
