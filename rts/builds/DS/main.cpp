@@ -152,7 +152,7 @@ int main(int argc, char* argv[])
 
 #ifdef _WIN32
 	} catch (const std::exception& err) {
-		printf("[DS] exception raised: %s\n" << (err.what()).c_str());
+		printf("[DS] exception raised: %s\n" << err.what());
 		return 1;
 	}
 #endif
