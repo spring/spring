@@ -78,7 +78,7 @@ CUnitScript::CUnitScript(CUnit* unit, const std::vector<LocalModelPiece*>& piece
 	, hasStartBuilding(false)
 	, pieces(pieces)
 {
-	memset(unitVars, int(0), UNIT_VAR_COUNT);
+	memset(unitVars, 0, sizeof(unitVars));
 }
 
 
@@ -239,23 +239,21 @@ int CUnitScript::Tick(int deltaTime)
 		// Queue for removal (UnblockAll may add new anims)
 		if (done) {
 			remove.push_back(ai);
-			it = anims.erase(it);
 		}
-		else {
-			++it;
-		}
+		++it;
 	}
 
 	//Tell listeners to unblock?
 	for (std::vector<struct AnimInfo *>::iterator it = remove.begin(); it != remove.end(); ++it) {
-		UnblockAll(*it);
+		UnblockAll(*it); //! NOTE: UnblockAll might result in new anims being added
+	}
+
+	for (std::vector<struct AnimInfo *>::iterator it = remove.begin(); it != remove.end(); ++it) {
+		anims.remove(*it);
 		delete *it;
 	}
 
-	if (anims.empty())
-		return -1;
-	else
-		return 0;
+	return anims.empty() ? -1 : 0;
 }
 
 
@@ -275,22 +273,28 @@ struct CUnitScript::AnimInfo *CUnitScript::FindAnim(AnimType type, int piece, in
 // Returns true if an animation was found and deleted
 void CUnitScript::RemoveAnim(AnimType type, int piece, int axis)
 {
+	struct AnimInfo *remove = NULL;
+
 	for (std::list<struct AnimInfo *>::iterator i = anims.begin(); i != anims.end(); ++i) {
 		struct AnimInfo *ai = *i;
 
 		if ((ai->type == type) && (ai->piece == piece) && (ai->axis == axis)) {
-			anims.erase(i);
+			remove = ai;
+			break;
+		}
+	}
 
-			// We need to unblock threads waiting on this animation, otherwise they will be lost in the void
-			UnblockAll(ai);
+	if (remove) {
+		// We need to unblock threads waiting on this animation, otherwise they will be lost in the void
+		UnblockAll(remove); //! NOTE: UnblockAll might result in new anims being added
 
-			delete ai;
+		anims.remove(remove);
 
-			// If this was the last animation, remove from currently animating list
-			if (anims.empty()) {
-				GUnitScriptEngine.RemoveInstance(this);
-			}
-			return;
+		delete remove;
+
+		// If this was the last animation, remove from currently animating list
+		if (anims.empty()) {
+			GUnitScriptEngine.RemoveInstance(this);
 		}
 	}
 }
