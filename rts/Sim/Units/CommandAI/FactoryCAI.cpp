@@ -307,7 +307,7 @@ void CFactoryCAI::InsertBuildCommand(CCommandQueue::iterator& it,
 }
 
 
-void CFactoryCAI::RemoveBuildCommand(CCommandQueue::iterator& it)
+bool CFactoryCAI::RemoveBuildCommand(CCommandQueue::iterator& it)
 {
 	Command& cmd = *it;
 	map<int, BuildOption>::iterator boi = buildOptions.find(cmd.id);
@@ -317,12 +317,13 @@ void CFactoryCAI::RemoveBuildCommand(CCommandQueue::iterator& it)
 	}
 	if (!commandQue.empty() && (it == commandQue.begin())) {
 		ExecuteStop(cmd);
-		return;
+		return true;
 	}
 	if (cmd.id < 0) {
 		cmd.id = CMD_STOP;
 		cmd.tag = 0;
 	}
+	return false;
 }
 
 
@@ -417,9 +418,11 @@ void CFactoryCAI::SlowUpdate()
 
 void CFactoryCAI::ExecuteStop(Command &c)
 {
-	CFactory* fac=(CFactory*)owner;
-	building=false;
+	building = false;
+
+	CFactory* fac = (CFactory*) owner;
 	fac->StopBuild();
+
 	commandQue.pop_front();
 	return;
 }
