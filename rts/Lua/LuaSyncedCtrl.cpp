@@ -921,69 +921,69 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 {
 	CheckAllowGameChanges(L);
 
+	if (inCreateUnit) {
+		luaL_error(L, "[%s()]: recursion is not permitted", __FUNCTION__);
+		return 0;
+	}
+
 	const UnitDef* unitDef = NULL;
 	if (lua_israwstring(L, 1)) {
 		const string defName = lua_tostring(L, 1);
 		unitDef = unitDefHandler->GetUnitDefByName(defName);
 		if (unitDef == NULL) {
-			luaL_error(L, "CreateUnit(): bad unitDef name: %s", defName.c_str());
+			luaL_error(L, "[%s()]: bad unitDef name: %s", __FUNCTION__, defName.c_str());
 			return 0;
 		}
 	} else if (lua_israwnumber(L, 1)) {
 		const int defID = lua_toint(L, 1);
 		unitDef = unitDefHandler->GetUnitDefByID(defID);
 		if (unitDef == NULL) {
-			luaL_error(L, "CreateUnit(): bad unitDef ID: %i", defID);
+			luaL_error(L, "[%s()]: bad unitDef ID: %i", __FUNCTION__, defID);
 			return 0;
 		}
 	} else {
-		luaL_error(L, "Incorrect arguments to CreateUnit()");
+		luaL_error(L, "[%s] incorrect type for first argument", __FUNCTION__);
 	}
 
-	float3 pos(luaL_checkfloat(L, 2),
-	           luaL_checkfloat(L, 3),
-	           luaL_checkfloat(L, 4));
-
-	//clamps the pos in the map boundings
-	pos.CheckInBounds(); //TODO: fix unit init code to work offmap
-
+	// CUnit::PreInit will clamp the position
+	// TODO: also allow off-map unit creation?
+	const float3 pos(
+		luaL_checkfloat(L, 2),
+		luaL_checkfloat(L, 3),
+		luaL_checkfloat(L, 4)
+	);
 	const int facing = LuaUtils::ParseFacing(L, __FUNCTION__, 5);
+	const bool beingBuilt = (lua_isboolean(L, 7) && lua_toboolean(L, 7)); // default false
+	const bool flattenGround = (lua_isboolean(L, 8) && lua_toboolean(L, 8)) || lua_isnone(L, 8); // default true
 
 	int teamID = CtrlTeam();
 	if (lua_israwnumber(L, 6)) {
 		teamID = lua_toint(L, 6);
 	}
 	if (!teamHandler->IsValidTeam(teamID)) {
-		luaL_error(L, "CreateUnit(): bad team number: %d", teamID);
+		luaL_error(L, "[%s()]: invalid team number (%d)", __FUNCTION__, teamID);
 		return 0;
 	}
-
 	if (!FullCtrl() && (CtrlTeam() != teamID)) {
-		luaL_error(L, "CreateUnit(): bad team %d", teamID);
+		luaL_error(L, "[%s()]: not a controllable team (%d)", __FUNCTION__, teamID);
 		return 0;
 	}
-
-
-	const bool build = lua_toboolean(L, 7);
-
 	if (!uh->CanBuildUnit(unitDef, teamID)) {
 		return 0; // unit limit reached
 	}
 
-	// FIXME -- allow specifying the 'builder' parameter?
-
-	if (inCreateUnit) {
-		luaL_error(L, "CreateUnit(): recursion is not permitted");
-		return 0;
-	}
-	inCreateUnit = true;
 	ASSERT_SYNCED_FLOAT3(pos);
-	ASSERT_SYNCED_PRIMITIVE((int)facing);
-	CUnit* unit = unitLoader->LoadUnit(unitDef, pos, teamID, build, facing, NULL);
+	ASSERT_SYNCED_PRIMITIVE(facing);
+
+	// FIXME -- allow specifying the 'builder' parameter?
+	inCreateUnit = true;
+	CUnit* unit = unitLoader->LoadUnit(unitDef, pos, teamID, beingBuilt, facing, NULL);
 	inCreateUnit = false;
 
-	if (unit) {
-		unitLoader->FlattenGround(unit);
+	if (unit != NULL) {
+		if (flattenGround)
+			unitLoader->FlattenGround(unit);
+
 		lua_pushnumber(L, unit->id);
 		return 1;
 	}
