@@ -927,22 +927,23 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	}
 
 	const UnitDef* unitDef = NULL;
+
 	if (lua_israwstring(L, 1)) {
-		const string defName = lua_tostring(L, 1);
-		unitDef = unitDefHandler->GetUnitDefByName(defName);
-		if (unitDef == NULL) {
-			luaL_error(L, "[%s()]: bad unitDef name: %s", __FUNCTION__, defName.c_str());
-			return 0;
-		}
+		unitDef = unitDefHandler->GetUnitDefByName(lua_tostring(L, 1));
 	} else if (lua_israwnumber(L, 1)) {
-		const int defID = lua_toint(L, 1);
-		unitDef = unitDefHandler->GetUnitDefByID(defID);
-		if (unitDef == NULL) {
-			luaL_error(L, "[%s()]: bad unitDef ID: %i", __FUNCTION__, defID);
-			return 0;
-		}
+		unitDef = unitDefHandler->GetUnitDefByID(lua_toint(L, 1));
 	} else {
-		luaL_error(L, "[%s] incorrect type for first argument", __FUNCTION__);
+		luaL_error(L, "[%s()] incorrect type for first argument", __FUNCTION__);
+		return 0;
+	}
+
+	if (unitDef == NULL) {
+		if (lua_israwstring(L, 1)) {
+			luaL_error(L, "[%s()]: bad unitDef name: %s", __FUNCTION__, lua_tostring(L, 1));
+		} else {
+			luaL_error(L, "[%s()]: bad unitDef ID: %d", __FUNCTION__, lua_toint(L, 1));
+		}
+		return 0;
 	}
 
 	// CUnit::PreInit will clamp the position
