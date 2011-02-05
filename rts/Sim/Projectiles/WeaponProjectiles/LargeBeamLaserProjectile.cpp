@@ -31,12 +31,12 @@ CR_REG_METADATA(CLargeBeamLaserProjectile,(
 	));
 
 CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(
-		const float3& startPos, const float3& endPos,
+		const float3& _startPos, const float3& _endPos,
 		const float3& color, const float3& color2,
 		CUnit* owner, const WeaponDef* weaponDef)
-	: CWeaponProjectile(startPos + (endPos - startPos) * 0.5f, ZeroVector, owner, NULL, ZeroVector, weaponDef, NULL, 1)
-	, startPos(startPos)
-	, endPos(endPos)
+	: CWeaponProjectile(_startPos + (_endPos - _startPos) * 0.5f, ZeroVector, owner, NULL, ZeroVector, weaponDef, NULL, 1)
+	, startPos(_startPos)
+	, endPos(_endPos)
 	, decay(1.0f)
 {
 	projectileType = WEAPON_LARGEBEAMLASER_PROJECTILE;
@@ -50,13 +50,13 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(
 
 	SetRadius(pos.distance(endPos));
 
-	corecolstart[0] = (unsigned char)(color2.x * 255);
-	corecolstart[1] = (unsigned char)(color2.y * 255);
-	corecolstart[2] = (unsigned char)(color2.z * 255);
+	corecolstart[0] = (color2.x * 255);
+	corecolstart[1] = (color2.y * 255);
+	corecolstart[2] = (color2.z * 255);
 	corecolstart[3] = 1;
-	kocolstart[0]   = (unsigned char)(color.x * 255);
-	kocolstart[1]   = (unsigned char)(color.y * 255);
-	kocolstart[2]   = (unsigned char)(color.z * 255);
+	kocolstart[0]   = (color.x * 255);
+	kocolstart[1]   = (color.y * 255);
+	kocolstart[2]   = (color.z * 255);
 	kocolstart[3]   = 1;
 
 	if (weaponDef) {
@@ -96,11 +96,10 @@ void CLargeBeamLaserProjectile::Draw()
 	inArray = true;
 
 	float3 dif(pos - camera->pos);
-	float camDist = dif.Length();
-	dif /= camDist;
-
 	float3 ddir(endPos - startPos);
-	float beamlength = ddir.Length();
+	const float camDist = dif.Length();
+	const float beamlength = ddir.Length();
+	dif /= camDist;
 	ddir = ddir / beamlength;
 
 	const float3 dir1((dif.cross(ddir)).Normalize());
@@ -111,20 +110,23 @@ void CLargeBeamLaserProjectile::Draw()
 
 	float starttex = (gu->modGameTime) * scrollspeed;
 	starttex = 1.0f - (starttex - (int)starttex);
+
 	const float texxsize = beamtex.xend - beamtex.xstart;
-	AtlasedTexture tex = beamtex;
 	const float& size = thickness;
 	const float& coresize = size * corethickness;
 
-	float polylength = (tex.xend-beamtex.xstart)*(1/texxsize)*tilelength;
+	const float polylength = (beamtex.xend - beamtex.xstart) * (1.0f / texxsize) * tilelength;
 
-	float istart = polylength * (1-starttex);
-	float iend = beamlength - tilelength;
+	const float istart = polylength * (1.0f - starttex);
+	const float iend = beamlength - tilelength;
+
+	AtlasedTexture tex = beamtex;
+
 	va->EnlargeArrays(64 + (8 * ((int)((iend - istart) / tilelength) + 2)), 0, VA_SIZE_TC);
 	if (istart > beamlength) {
 		// beam short enough to be drawn by one polygon
 		// draw laser start
-		tex.xstart = beamtex.xstart + starttex*((beamtex.xend-beamtex.xstart));
+		tex.xstart = beamtex.xstart + starttex * ((beamtex.xend - beamtex.xstart));
 
 		va->AddVertexQTC(pos1 - (dir1 * size),     tex.xstart, tex.ystart, kocolstart);
 		va->AddVertexQTC(pos1 + (dir1 * size),     tex.xstart, tex.yend,   kocolstart);
@@ -153,8 +155,8 @@ void CLargeBeamLaserProjectile::Draw()
 		// draw continous beam
 		tex.xstart = beamtex.xstart;
 		float i;
-		for (i = istart; i < iend; i += tilelength) //! CAUTION: loop count must match EnlargeArrays above
-		{
+		for (i = istart; i < iend; i += tilelength) {
+			//! CAUTION: loop count must match EnlargeArrays above
 			pos1 = startPos + ddir * i;
 			pos2 = startPos + ddir * (i + tilelength);
 
@@ -173,40 +175,43 @@ void CLargeBeamLaserProjectile::Draw()
 		pos2 = endPos;
 		tex.xend = tex.xstart + ((pos2 - pos1).Length() / tilelength) * texxsize;
 
-		va->AddVertexQTC(pos1 - dir1 * size,     tex.xstart, tex.ystart, kocolstart);
-		va->AddVertexQTC(pos1 + dir1 * size,     tex.xstart, tex.yend,   kocolstart);
-		va->AddVertexQTC(pos2 + dir1 * size,     tex.xend,   tex.yend,   kocolstart);
-		va->AddVertexQTC(pos2 - dir1 * size,     tex.xend,   tex.ystart, kocolstart);
-		va->AddVertexQTC(pos1 - dir1 * coresize, tex.xstart, tex.ystart, corecolstart);
-		va->AddVertexQTC(pos1 + dir1 * coresize, tex.xstart, tex.yend,   corecolstart);
-		va->AddVertexQTC(pos2 + dir1 * coresize, tex.xend,   tex.yend,   corecolstart);
-		va->AddVertexQTC(pos2 - dir1 * coresize, tex.xend,   tex.ystart, corecolstart);
+		va->AddVertexQTC(pos1 - (dir1 * size),     tex.xstart, tex.ystart, kocolstart);
+		va->AddVertexQTC(pos1 + (dir1 * size),     tex.xstart, tex.yend,   kocolstart);
+		va->AddVertexQTC(pos2 + (dir1 * size),     tex.xend,   tex.yend,   kocolstart);
+		va->AddVertexQTC(pos2 - (dir1 * size),     tex.xend,   tex.ystart, kocolstart);
+		va->AddVertexQTC(pos1 - (dir1 * coresize), tex.xstart, tex.ystart, corecolstart);
+		va->AddVertexQTC(pos1 + (dir1 * coresize), tex.xstart, tex.yend,   corecolstart);
+		va->AddVertexQTC(pos2 + (dir1 * coresize), tex.xend,   tex.yend,   corecolstart);
+		va->AddVertexQTC(pos2 - (dir1 * coresize), tex.xend,   tex.ystart, corecolstart);
 	}
 
-	//float midtexx = weaponDef->visuals.texture2->xstart + (weaponDef->visuals.texture2->xend-weaponDef->visuals.texture2->xstart)*0.5f;
-	va->AddVertexQTC(pos2 - (dir1 * size),                         weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->ystart, kocolstart);
-	va->AddVertexQTC(pos2 + (dir1 * size),                         weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->yend,   kocolstart);
-	va->AddVertexQTC(pos2 + (dir1 * size) + (dir2 * size),         weaponDef->visuals.texture2->xend,   weaponDef->visuals.texture2->yend,   kocolstart);
-	va->AddVertexQTC(pos2 - (dir1 * size) + (dir2 * size),         weaponDef->visuals.texture2->xend,   weaponDef->visuals.texture2->ystart, kocolstart);
-	va->AddVertexQTC(pos2 - (dir1 * coresize),                     weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->ystart, corecolstart);
-	va->AddVertexQTC(pos2 + (dir1 * coresize),                     weaponDef->visuals.texture2->xstart, weaponDef->visuals.texture2->yend,   corecolstart);
-	va->AddVertexQTC(pos2 + (dir1 * coresize) + (dir2 * coresize), weaponDef->visuals.texture2->xend,   weaponDef->visuals.texture2->yend,   corecolstart);
-	va->AddVertexQTC(pos2 - (dir1 * coresize) + (dir2 * coresize), weaponDef->visuals.texture2->xend,   weaponDef->visuals.texture2->ystart, corecolstart);
+	#define WT2 weaponDef->visuals.texture2
+	va->AddVertexQTC(pos2 - (dir1 * size),                         WT2->xstart, WT2->ystart, kocolstart);
+	va->AddVertexQTC(pos2 + (dir1 * size),                         WT2->xstart, WT2->yend,   kocolstart);
+	va->AddVertexQTC(pos2 + (dir1 * size) + (dir2 * size),         WT2->xend,   WT2->yend,   kocolstart);
+	va->AddVertexQTC(pos2 - (dir1 * size) + (dir2 * size),         WT2->xend,   WT2->ystart, kocolstart);
+	va->AddVertexQTC(pos2 - (dir1 * coresize),                     WT2->xstart, WT2->ystart, corecolstart);
+	va->AddVertexQTC(pos2 + (dir1 * coresize),                     WT2->xstart, WT2->yend,   corecolstart);
+	va->AddVertexQTC(pos2 + (dir1 * coresize) + (dir2 * coresize), WT2->xend,   WT2->yend,   corecolstart);
+	va->AddVertexQTC(pos2 - (dir1 * coresize) + (dir2 * coresize), WT2->xend,   WT2->ystart, corecolstart);
+	#undef WT2
 
-	// draw muzzleflare
 	starttex  = gu->modGameTime * pulseSpeed;
 	starttex -= (int)starttex;
 
-		float muzzlesize = size*flaresize*starttex;
-		unsigned char corcol[4];
-		unsigned char kocol[4];
-		corcol[3] = 1;
-		kocol[3] = 1;
-		for (int i = 0; i < 3; i++) {
-			corcol[i] = (int)(corecolstart[i] * (1 - starttex));
-			kocol[i]  = (int)(kocolstart[i]   * (1 - starttex));
-		}
+	float muzzlesize = size * flaresize * starttex;
+	float fsize = size * flaresize;
 
+	unsigned char corcol[4] = {0, 0, 0, 1};
+	unsigned char kocol[4] = {0, 0, 0, 1};
+
+	for (int i = 0; i < 3; i++) {
+		corcol[i] = (int)(corecolstart[i] * (1 - starttex));
+		kocol[i]  = (int)(kocolstart[i]   * (1 - starttex));
+	}
+
+	{
+		// draw muzzleflare
 		pos1 = startPos - ddir * (size * flaresize) * 0.02f;
 
 		va->AddVertexQTC(pos1 + (dir1 * muzzlesize),                       side.xstart, side.ystart, kocol);
@@ -237,22 +242,25 @@ void CLargeBeamLaserProjectile::Draw()
 		va->AddVertexQTC(pos1 + (dir1 * muzzlesize) + (ddir * muzzlesize), side.xend,   side.ystart, corcol);
 		va->AddVertexQTC(pos1 - (dir1 * muzzlesize) + (ddir * muzzlesize), side.xend,   side.yend,   corcol);
 		va->AddVertexQTC(pos1 - (dir1 * muzzlesize),                       side.xstart, side.yend,   corcol);
+	}
 
-	// draw flare
-	float fsize = size * flaresize;
-	// move flare slightly in camera direction
-	pos1 = startPos - (camera->forward * 3);
-	va->AddVertexQTC(pos1 - (camera->right * fsize-camera->up * fsize), weaponDef->visuals.texture4->xstart, weaponDef->visuals.texture4->ystart, kocolstart);
-	va->AddVertexQTC(pos1 + (camera->right * fsize-camera->up * fsize), weaponDef->visuals.texture4->xend,   weaponDef->visuals.texture4->ystart, kocolstart);
-	va->AddVertexQTC(pos1 + (camera->right * fsize+camera->up * fsize), weaponDef->visuals.texture4->xend,   weaponDef->visuals.texture4->yend,   kocolstart);
-	va->AddVertexQTC(pos1 - (camera->right * fsize+camera->up * fsize), weaponDef->visuals.texture4->xstart, weaponDef->visuals.texture4->yend,   kocolstart);
+	{
+		// draw flare (moved slightly along the camera direction)
+		pos1 = startPos - (camera->forward * 3.0f);
 
-	fsize = fsize*corethickness;
-	va->AddVertexQTC(pos1 - (camera->right * fsize-camera->up * fsize), weaponDef->visuals.texture4->xstart, weaponDef->visuals.texture4->ystart, corecolstart);
-	va->AddVertexQTC(pos1 + (camera->right * fsize-camera->up * fsize), weaponDef->visuals.texture4->xend,   weaponDef->visuals.texture4->ystart, corecolstart);
-	va->AddVertexQTC(pos1 + (camera->right * fsize+camera->up * fsize), weaponDef->visuals.texture4->xend,   weaponDef->visuals.texture4->yend,   corecolstart);
-	va->AddVertexQTC(pos1 - (camera->right * fsize+camera->up * fsize), weaponDef->visuals.texture4->xstart, weaponDef->visuals.texture4->yend,   corecolstart);
+		#define WT4 weaponDef->visuals.texture4
+		va->AddVertexQTC(pos1 - (camera->right * fsize) - (camera->up * fsize), WT4->xstart, WT4->ystart, kocolstart);
+		va->AddVertexQTC(pos1 + (camera->right * fsize) - (camera->up * fsize), WT4->xend,   WT4->ystart, kocolstart);
+		va->AddVertexQTC(pos1 + (camera->right * fsize) + (camera->up * fsize), WT4->xend,   WT4->yend,   kocolstart);
+		va->AddVertexQTC(pos1 - (camera->right * fsize) + (camera->up * fsize), WT4->xstart, WT4->yend,   kocolstart);
 
+		fsize = fsize * corethickness;
+		va->AddVertexQTC(pos1 - (camera->right * fsize) - (camera->up * fsize), WT4->xstart, WT4->ystart, corecolstart);
+		va->AddVertexQTC(pos1 + (camera->right * fsize) - (camera->up * fsize), WT4->xend,   WT4->ystart, corecolstart);
+		va->AddVertexQTC(pos1 + (camera->right * fsize) + (camera->up * fsize), WT4->xend,   WT4->yend,   corecolstart);
+		va->AddVertexQTC(pos1 - (camera->right * fsize) + (camera->up * fsize), WT4->xstart, WT4->yend,   corecolstart);
+		#undef WT4
+	}
 }
 
 void CLargeBeamLaserProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
