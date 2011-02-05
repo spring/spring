@@ -74,12 +74,11 @@ void CUnitScriptEngine::Tick(int deltaTime)
 	SCOPED_TIMER("Scripts");
 
 	// Tick all instances that have registered themselves as animating
-	std::list<CUnitScript*>::iterator it = animating.begin();
-	std::list<CUnitScript*>::iterator curit;
-	while (it != animating.end()) {
-		curit = it++;
-		if ((*curit)->Tick(deltaTime) == -1)
-			animating.erase(curit);
+	for (std::list<CUnitScript*>::iterator it = animating.begin(); it != animating.end(); ) {
+		if ((*it)->Tick(deltaTime) == -1)
+			it = animating.erase(it);
+		else
+			++it;
 	}
 }
 
