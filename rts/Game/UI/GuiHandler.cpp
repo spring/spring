@@ -1669,7 +1669,7 @@ void CGuiHandler::RunLayoutCommand(const std::string& command)
 		if (luaUI != NULL) {
 			luaUI->ConfigCommand(command);
 		} else {
-			logOutput.Print("LuaUI is not loaded\n");
+			// logOutput.Print("[%s] LuaUI is not loaded (command=\"%s\")\n", __FUNCTION__, command.c_str());
 		}
 	}
 
