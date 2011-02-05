@@ -277,7 +277,6 @@ public:
 
 	/// used to see if something has operated on the unit before
 	int tempNum;
-	int lastSlowUpdate;
 
 	int mapSquare;
 
