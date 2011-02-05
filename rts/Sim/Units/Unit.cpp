@@ -137,7 +137,6 @@ CUnit::CUnit() : CSolidObject(),
 	category(0),
 	los(NULL),
 	tempNum(0),
-	lastSlowUpdate(0),
 	losRadius(0),
 	airLosRadius(0),
 	losHeight(0.0f),
@@ -931,9 +930,6 @@ void CUnit::SlowUpdate()
 	}
 
 	// below is stuff that should not be run while being built
-
-	lastSlowUpdate=gs->frameNum;
-
 	commandAI->SlowUpdate();
 	moveType->SlowUpdate();
 
@@ -1379,12 +1375,12 @@ void CUnit::DoSeismicPing(float pingSize)
 }
 
 
-void CUnit::ChangeLos(int l, int airlos)
+void CUnit::ChangeLos(int losRad, int airRad)
 {
 	loshandler->FreeInstance(los);
 	los = NULL;
-	losRadius = l;
-	airLosRadius = airlos;
+	losRadius = losRad;
+	airLosRadius = airRad;
 	loshandler->MoveUnit(this, false);
 }
 
@@ -1461,7 +1457,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 	neutral = false;
 
-	loshandler->MoveUnit(this,false);
+	loshandler->MoveUnit(this, false);
 	losStatus[allyteam] = LOS_ALL_MASK_BITS |
 		LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
 
@@ -2292,7 +2288,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(quads),
 	CR_MEMBER(los),
 	CR_MEMBER(tempNum),
-	CR_MEMBER(lastSlowUpdate),
 	CR_MEMBER(mapSquare),
 	CR_MEMBER(losRadius),
 	CR_MEMBER(airLosRadius),

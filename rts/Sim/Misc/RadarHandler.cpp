@@ -87,6 +87,9 @@ CRadarHandler::~CRadarHandler()
 // todo: add the optimizations that is in loshandler
 void CRadarHandler::MoveUnit(CUnit* unit)
 {
+	SCOPED_TIMER("RadarHandler::MoveUnit");
+
+	if (gs->globalLOS) { return; }
 	if (!unit->hasRadarCapacity || !unit->activated) {
 		return;
 	}
@@ -99,7 +102,7 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 		(newPos.x != unit->oldRadarPos.x) ||
 	    (newPos.y != unit->oldRadarPos.y)) {
 		RemoveUnit(unit);
-		SCOPED_TIMER("Radar");
+
 		if (unit->jammerRadius) {
 			jammerMaps[unit->allyteam].AddMapArea(newPos, unit->jammerRadius, 1);
 			commonJammerMap.AddMapArea(newPos, unit->jammerRadius, 1);
