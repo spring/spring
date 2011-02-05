@@ -3532,6 +3532,9 @@ int LuaSyncedRead::GetUnitCommands(lua_State* L)
 		luaL_error(L,
 			"Incorrect arguments to GetUnitCommands(unitID [, count])");
 	}
+
+	GML_STDMUTEX_LOCK(cai); // GetUnitCommands
+
 	const CCommandAI* commandAI = unit->commandAI;
 	if (commandAI == NULL) {
 		return 0;
@@ -3567,6 +3570,9 @@ int LuaSyncedRead::GetFactoryCommands(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
+
+	GML_STDMUTEX_LOCK(cai); // GetFactoryCommands
+
 	const CCommandAI* commandAI = unit->commandAI;
 	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
 	if (!factoryCAI) {
@@ -3658,6 +3664,8 @@ int LuaSyncedRead::GetFactoryCounts(lua_State* L)
 		return 0;
 	}
 
+	GML_STDMUTEX_LOCK(cai); // GetFactoryCounts
+
 	const CCommandAI* commandAI = unit->commandAI;
 	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
 	if (!factoryCAI) {
@@ -3699,6 +3707,9 @@ int LuaSyncedRead::GetCommandQueue(lua_State* L)
 		luaL_error(L,
 			"Incorrect arguments to GetCommandQueue(unitID [, count])");
 	}
+
+	GML_STDMUTEX_LOCK(cai); // GetCommandQueue
+
 	const CCommandAI* commandAI = unit->commandAI;
 	if (commandAI == NULL) {
 		return 0;
