@@ -6,9 +6,10 @@
 #include "mmgr.h"
 
 #include "InMapDraw.h"
+#include "Colors.h"
 #include "glFont.h"
 #include "GL/VertexArray.h"
-#include "Colors.h"
+#include "ExternalAI/AILegacySupport.h" // {Point, Line}Marker
 #include "Game/Camera.h"
 #include "Game/Game.h"
 #include "Game/PlayerHandler.h"
@@ -75,7 +76,7 @@ CInMapDraw::CInMapDraw(void)
 {
 	keyPressed = false;
 	wantLabel = false;
-	drawAll = false;
+	drawAllMarks = false;
 	allowSpecMapDrawing = true;
 	allowLuaMapDrawing = true;
 	lastDrawTime = 0;
@@ -84,8 +85,7 @@ CInMapDraw::CInMapDraw(void)
 
 	drawQuadsX = gs->mapx / DRAW_QUAD_SIZE;
 	drawQuadsY = gs->mapy / DRAW_QUAD_SIZE;
-	numQuads = drawQuadsX * drawQuadsY;
-	drawQuads.resize(numQuads);
+	drawQuads.resize(drawQuadsX * drawQuadsY);
 
 	unsigned char tex[64][128][4];
 	for (int y = 0; y < 64; y++) {
@@ -175,9 +175,9 @@ CInMapDraw::~CInMapDraw(void)
 
 void CInMapDraw::PostLoad()
 {
-	if (drawQuads.size() != numQuads) {
+	if (drawQuads.size() != (drawQuadsX * drawQuadsY)) {
 		// For old savegames
-		drawQuads.resize(numQuads);
+		drawQuads.resize(drawQuadsX * drawQuadsY);
 	}
 }
 
@@ -222,7 +222,7 @@ bool CInMapDraw::MapPoint::MaySee(CInMapDraw* imd) const
 	const bool allied =
 		(teamHandler->Ally(gu->myAllyTeam, allyteam) &&
 		teamHandler->Ally(allyteam, gu->myAllyTeam));
-	const bool maySee = (gu->spectating || (!spec && allied) || imd->drawAll);
+	const bool maySee = (gu->spectating || (!spec && allied) || imd->drawAllMarks);
 	return maySee;
 }
 
@@ -233,7 +233,7 @@ bool CInMapDraw::MapLine::MaySee(CInMapDraw* imd) const
 	const bool allied =
 		(teamHandler->Ally(gu->myAllyTeam, allyteam) &&
 		teamHandler->Ally(allyteam, gu->myAllyTeam));
-	const bool maySee = (gu->spectating || (!spec && allied) || imd->drawAll);
+	const bool maySee = (gu->spectating || (!spec && allied) || imd->drawAllMarks);
 	return maySee;
 }
 
@@ -250,31 +250,28 @@ struct InMapDraw_QuadDrawer: public CReadMap::IQuadDrawer
 
 void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 {
-	int drawQuadsX = imd->drawQuadsX;
+	const int drawQuadsX = imd->drawQuadsX;
 	CInMapDraw::DrawQuad* dq = &imd->drawQuads[y * drawQuadsX + x];
 
 	va->EnlargeArrays(dq->points.size()*12,0,VA_SIZE_TC);
 	//! draw point markers
 	for (std::list<CInMapDraw::MapPoint>::iterator pi = dq->points.begin(); pi != dq->points.end(); ++pi) {
 		if (pi->MaySee(imd)) {
-			float3 pos = pi->pos;
-			float3 dif(pos - camera->pos);
-			dif.ANormalize();
-			float3 dir1(dif.cross(UpVector));
-			dir1.ANormalize();
-			float3 dir2(dif.cross(dir1));
+			const float3 pos = pi->pos;
+			const float3 dif = (pos - camera->pos).ANormalize();
+			const float3 dir1 = (dif.cross(UpVector)).ANormalize();
+			const float3 dir2 = (dif.cross(dir1));
 
-			unsigned char col[4];
-			col[0] = pi->color[0];
-			col[1] = pi->color[1];
-			col[2] = pi->color[2];
-			col[3] = 200;
+			const unsigned char col[4] = {
+				pi->color[0],
+				pi->color[1],
+				pi->color[2],
+				200
+			};
 
-			float size = 6;
-			float3 pos1 = pos;
-			pos1.y += 5.0f;
-			float3 pos2 = pos1;
-			pos2.y += 100.0f;
+			const float size = 6.0f;
+			const float3 pos1(pos.x,  pos.y  +   5.0f, pos.z);
+			const float3 pos2(pos1.x, pos1.y + 100.0f, pos1.z);
 
 			va->AddVertexQTC(pos1 - dir1 * size,               0.25f, 0, col);
 			va->AddVertexQTC(pos1 + dir1 * size,               0.25f, 1, col);
@@ -291,13 +288,13 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 			va->AddVertexQTC(pos2 + dir1 * size - dir2 * size, 0.00f, 1, col);
 			va->AddVertexQTC(pos2 - dir1 * size - dir2 * size, 0.00f, 0, col);
 
-			if (pi->label.size() > 0) {
+			if (!pi->label.empty()) {
 				visLabels->push_back(&*pi);
 			}
 		}
 	}
 
-	lineva->EnlargeArrays(dq->lines.size()*2,0,VA_SIZE_C);
+	lineva->EnlargeArrays(dq->lines.size() * 2, 0, VA_SIZE_C);
 	//! draw line markers
 	for (std::list<CInMapDraw::MapLine>::iterator li = dq->lines.begin(); li != dq->lines.end(); ++li) {
 		if (li->MaySee(imd)) {
@@ -334,6 +331,7 @@ void CInMapDraw::Draw(void)
 	glDisable(GL_TEXTURE_2D);
 	glLineWidth(3.f);
 	lineva->DrawArrayC(GL_LINES); //! draw lines
+
 	// XXX hopeless drivers, retest in a year or so...
 	// width greater than 2 causes GUI flicker on ATI hardware as of driver version 9.3
 	// so redraw lines with width 1
@@ -341,6 +339,7 @@ void CInMapDraw::Draw(void)
 		glLineWidth(1.f);
 		lineva->DrawArrayC(GL_LINES);
 	}
+
 	// draw points
 	glLineWidth(1);
 	glEnable(GL_TEXTURE_2D);
@@ -442,7 +441,7 @@ bool CInMapDraw::AllowedMsg(const CPlayer* sender) const {
 		// we are playing and the guy sending the
 		// net-msg is a spectator or not an ally;
 		// cannot just ignore the message due to
-		// drawAll mode considerations
+		// drawAllMarks mode considerations
 		return false;
 	}
 
@@ -550,7 +549,7 @@ void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
 	drawQuads[quad].points.push_back(point);
 
 
-	if (allowed || drawAll) {
+	if (allowed || drawAllMarks) {
 		// if we happen to be in drawAll mode, notify us now
 		// even if this message is not intented for our ears
 		logOutput.Print("%s added point: %s",
@@ -666,6 +665,14 @@ void CInMapDraw::SendLine(const float3& pos, const float3& pos2, bool fromLua)
 		net->Send(CBaseNetProtocol::Get().SendMapDrawLine(gu->myPlayerNum, (short)pos.x, (short)pos.z, (short)pos2.x, (short)pos2.z, fromLua));
 }
 
+void CInMapDraw::SendWaitingInput(const std::string& label)
+{
+	SendPoint(waitingPoint, label, false);
+
+	wantLabel = false;
+	keyPressed = false;
+}
+
 
 void CInMapDraw::PromptLabel(const float3& pos)
 {
@@ -687,4 +694,71 @@ void CInMapDraw::SetLuaMapDrawingAllowed(bool state)
 {
 	allowLuaMapDrawing = state;
 	logOutput.Print("Lua map drawing is %s", allowLuaMapDrawing? "disabled": "enabled");
+}
+
+
+
+unsigned int CInMapDraw::GetPoints(PointMarker* array, unsigned int maxPoints, const std::list<const unsigned char*>& colors)
+{
+	int numPoints = 0;
+
+	std::list<MapPoint>* points = NULL;
+	std::list<MapPoint>::const_iterator point;
+	std::list<const unsigned char*>::const_iterator ic;
+
+	for (size_t i = 0; i < (drawQuadsX * drawQuadsY) && numPoints < maxPoints; i++) {
+		points = &(drawQuads[i].points);
+
+		for (point = points->begin(); point != points->end() && numPoints < maxPoints; ++point) {
+			for (ic = colors.begin(); ic != colors.end(); ++ic) {
+				if (point->color == *ic) {
+					array[numPoints].pos   = point->pos;
+					array[numPoints].color = point->color;
+					array[numPoints].label = point->label.c_str();
+					numPoints++;
+					break;
+				}
+			}
+		}
+	}
+
+	return numPoints;
+}
+
+unsigned int CInMapDraw::GetLines(LineMarker* array, unsigned int maxLines, const std::list<const unsigned char*>& colors)
+{
+	int numLines = 0;
+
+	std::list<MapLine>* lines = NULL;
+	std::list<MapLine>::const_iterator line;
+	std::list<const unsigned char*>::const_iterator ic;
+
+	for (size_t i = 0; i < (drawQuadsX * drawQuadsY) && numLines < maxLines; i++) {
+		lines = &(drawQuads[i].lines);
+
+		for (line = lines->begin(); line != lines->end() && numLines < maxLines; ++line) {
+			for (ic = colors.begin(); ic != colors.end(); ++ic) {
+				if (line->color == *ic) {
+					array[numLines].pos   = line->pos;
+					array[numLines].pos2  = line->pos2;
+					array[numLines].color = line->color;
+					numLines++;
+					break;
+				}
+			}
+		}
+	}
+
+	return numLines;
+}
+
+
+void CInMapDraw::ClearMarks()
+{
+	for (unsigned int n = 0; n < drawQuads.size(); n++) {
+		drawQuads[n].points.clear();
+		drawQuads[n].lines.clear();
+	}
+
+	visibleLabels.clear();
 }
