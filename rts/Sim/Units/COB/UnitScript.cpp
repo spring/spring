@@ -1372,7 +1372,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 	}
 
 #ifndef _CONSOLE
-	switch(val) {
+	switch (val) {
 		case ACTIVATION: {
 			if(unit->unitDef->onoffable) {
 				Command c;
@@ -1575,23 +1575,26 @@ void CUnitScript::SetUnitVal(int val, int param)
 			break;
 		}
 		case CRASHING: {
-			if(dynamic_cast<CAirMoveType*>(unit->moveType)){
-				if(!!param){
+			if (dynamic_cast<CAirMoveType*>(unit->moveType)) {
+				if (!!param) {
 					((CAirMoveType*)unit->moveType)->SetState(AAirMoveType::AIRCRAFT_CRASHING);
 				} else {
-					unit->crashing=false;
-					((CAirMoveType*)unit->moveType)->aircraftState=AAirMoveType::AIRCRAFT_TAKEOFF;
+					unit->crashing = false;
+					((CAirMoveType*)unit->moveType)->aircraftState = AAirMoveType::AIRCRAFT_TAKEOFF;
 					((CAirMoveType*)unit->moveType)->SetState(AAirMoveType::AIRCRAFT_FLYING);
 				}
 			}
 			break;
 		}
 		case CHANGE_TARGET: {
-			unit->weapons[param - 1]->avoidTarget = true;
+			if (param <                     0) { return; }
+			if (param >= unit->weapons.size()) { return; }
+
+			unit->weapons[param]->avoidTarget = true;
 			break;
 		}
 		case ALPHA_THRESHOLD: {
-			unit->alphaThreshold = float(param) / 255.0f;
+			unit->alphaThreshold = param / 255.0f;
 			break;
 		}
 		case CEG_DAMAGE: {
