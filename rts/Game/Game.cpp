@@ -1908,12 +1908,10 @@ void CGame::UpdateUI(bool updateCam)
 				userInput = userInput.substr(0, 200);
 				writingPos = (int)userInput.length();
 			}
-			inMapDrawer->SendPoint(inMapDrawer->waitingPoint, userInput, false);
-			inMapDrawer->wantLabel = false;
+			inMapDrawer->SendWaitingInput(userInput);
 			userInput = "";
 			writingPos = 0;
 			ignoreChar = 0;
-			inMapDrawer->keyPressed = false;
 		}
 	}
 }

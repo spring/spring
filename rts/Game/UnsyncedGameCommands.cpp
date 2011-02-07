@@ -1182,11 +1182,14 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "allmapmarks") {
 		if (gs->cheatEnabled) {
 			if (action.extra.empty()) {
-				inMapDrawer->ToggleAllVisible();
+				inMapDrawer->ToggleAllMarksVisible();
 			} else {
-				inMapDrawer->SetAllVisible(!!atoi(action.extra.c_str()));
+				inMapDrawer->SetAllMarksVisible(!!atoi(action.extra.c_str()));
 			}
 		}
+	}
+	else if (cmd == "clearmapmarks") {
+		inMapDrawer->ClearMarks();
 	}
 	else if (cmd == "noluadraw") {
 		if (action.extra.empty()) {
