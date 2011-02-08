@@ -8,7 +8,7 @@
 #include "Rendering/GroundDecalHandler.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
-#include "Sim/Units/COB/CobInstance.h"
+#include "Sim/Units/Scripts/CobInstance.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitDef.h"
