@@ -14,7 +14,6 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Units/COB/CobInstance.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/GlobalUnsynced.h"

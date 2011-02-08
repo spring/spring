@@ -31,7 +31,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/COB/CobInstance.h"
+#include "Sim/Units/Scripts/CobInstance.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
