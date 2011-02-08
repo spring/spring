@@ -39,7 +39,7 @@
 #include "Rendering/VerticalSync.h"
 #include "Lua/LuaOpenGL.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Units/COB/UnitScript.h"
+#include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
 #include "UI/CommandColors.h"

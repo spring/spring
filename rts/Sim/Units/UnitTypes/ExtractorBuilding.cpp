@@ -6,7 +6,7 @@
 #include "StdAfx.h"
 #include <typeinfo>
 #include "ExtractorBuilding.h"
-#include "Sim/Units/COB/UnitScript.h"
+#include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Map/ReadMap.h"
 #include "LogOutput.h"

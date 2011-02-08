@@ -10,9 +10,9 @@
 #include "UnitLoader.h"
 #include "UnitTypes/Building.h"
 #include "UnitTypes/TransportUnit.h"
-#include "COB/NullUnitScript.h"
-#include "COB/UnitScriptFactory.h"
-#include "COB/CobInstance.h" // for TAANG2RAD
+#include "Scripts/NullUnitScript.h"
+#include "Scripts/UnitScriptFactory.h"
+#include "Scripts/CobInstance.h" // for TAANG2RAD
 
 #include "CommandAI/CommandAI.h"
 #include "CommandAI/FactoryCAI.h"

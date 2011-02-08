@@ -8,7 +8,7 @@
 #include "UnitDef.h"
 #include "UnitDefHandler.h"
 
-#include "COB/UnitScript.h"
+#include "Scripts/UnitScript.h"
 
 #include "UnitTypes/Builder.h"
 #include "UnitTypes/ExtractorBuilding.h"

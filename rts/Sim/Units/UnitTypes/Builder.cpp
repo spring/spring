@@ -21,7 +21,7 @@
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/GfxProjectile.h"
-#include "Sim/Units/COB/CobInstance.h"
+#include "Sim/Units/Scripts/CobInstance.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDefHandler.h"
