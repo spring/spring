@@ -17,6 +17,8 @@
 #include <sstream>
 #include <boost/system/system_error.hpp>
 #include <boost/bind.hpp>
+//SDL_main.h contains a macro that replaces the main function, see SDL_main.h for details
+#include <SDL_main.h>
 
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
