@@ -56,7 +56,7 @@ __ieee754_exp2f (Simple x)
       int tval, unsafe;
       Simple rx, x22, result;
       union ieee754_float ex2_u, scale_u;
-      fenv_t oldenv;
+      fpenv_t oldenv;
 
       feholdexcept (&oldenv);
 #ifdef FE_TONEAREST
