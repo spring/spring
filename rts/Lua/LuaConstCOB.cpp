@@ -7,7 +7,7 @@
 #include "LuaConstCOB.h"
 #include "LuaInclude.h"
 #include "LuaUtils.h"
-#include "Sim/Units/COB/CobDefines.h"
+#include "Sim/Units/Scripts/CobDefines.h"
 #include "Sim/Projectiles/PieceProjectile.h"
 
 

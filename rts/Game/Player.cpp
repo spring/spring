@@ -18,7 +18,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "Sim/Units/COB/CobInstance.h"
+#include "Sim/Units/Scripts/CobInstance.h"
 #include "System/myMath.h"
 #include "System/EventHandler.h"
 #include "System/GlobalUnsynced.h"

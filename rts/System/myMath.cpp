@@ -5,7 +5,7 @@
 #include "Util.h"
 #include "LogOutput.h"
 #include "Platform/errorhandler.h"
-#include "Sim/Units/COB/CobInstance.h" // for TAANG2RAD (ugh)
+#include "Sim/Units/Scripts/CobInstance.h" // for TAANG2RAD (ugh)
 
 float2 CMyMath::headingToVectorTable[NUM_HEADINGS];
 
