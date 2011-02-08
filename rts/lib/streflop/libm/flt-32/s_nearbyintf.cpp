@@ -38,7 +38,7 @@ TWO23[2]={
 	Simple x;
 #endif
 {
-	fenv_t env;
+	fpenv_t env;
 	int32_t i0,j0,sx;
 	u_int32_t i,i1;
 	Simple w,t;
