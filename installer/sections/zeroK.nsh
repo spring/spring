@@ -12,5 +12,6 @@
 !else
 
 	Delete "$INSTDIR\Zero-K.exe"
+	Delete "$INSTDIR\Zero-K.ico"
 
 !endif ; !INSTALL
