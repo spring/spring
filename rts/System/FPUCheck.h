@@ -69,7 +69,7 @@ static inline void good_fpu_control_registers(const char* text)
 
 #if defined(STREFLOP_SSE)
 	// struct
-	streflop::fenv_t fenv;
+	streflop::fpenv_t fenv;
 	streflop::fegetenv(&fenv);
 
 	#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)	// -fsignaling-nans
@@ -93,7 +93,7 @@ static inline void good_fpu_control_registers(const char* text)
 
 #elif defined(STREFLOP_X87)
 	// short int
-	streflop::fenv_t fenv;
+	streflop::fpenv_t fenv;
 	streflop::fegetenv(&fenv);
 
 	#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)

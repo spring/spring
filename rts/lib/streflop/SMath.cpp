@@ -32,11 +32,11 @@ namespace streflop {
 
     // Default environment. Initialized to 0, and really set on first access
 #if defined(STREFLOP_X87)
-    fenv_t FE_DFL_ENV = 0;
+    fpenv_t FE_DFL_ENV = 0;
 #elif defined(STREFLOP_SSE)
-    fenv_t FE_DFL_ENV = {0,0};
+    fpenv_t FE_DFL_ENV = {0,0};
 #elif defined(STREFLOP_SOFT)
-    fenv_t FE_DFL_ENV = {42,0,0};
+    fpenv_t FE_DFL_ENV = {42,0,0};
 #else
 #error STREFLOP: Invalid combination or unknown FPU type.
 #endif

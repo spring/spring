@@ -52,7 +52,7 @@
 
 namespace streflop {
 
-// We do not use libm, so let's copy a few flags and C99 functions
+// We do not use libm, so let's copy a few flags and C99 functions from fenv.h
 // Give warning in case these flags would be defined already, this is indication
 // of potential confusion!
 
@@ -182,13 +182,13 @@ inline int fesetround(FPU_RoundMode roundMode) {
     return 0;
 }
 
-typedef short int fenv_t;
+typedef short int fpenv_t;
 
-/// Default env. Defined in Math.cpp to be 0, and initialized on first use to the permanent holder
-extern fenv_t FE_DFL_ENV;
+/// Default env. Defined in SMath.cpp to be 0, and initialized on first use to the permanent holder
+extern fpenv_t FE_DFL_ENV;
 
 /// Get FP env into the given structure
-inline int fegetenv(fenv_t *envp) {
+inline int fegetenv(fpenv_t *envp) {
     // check that default env exists, otherwise save it now
     if (!FE_DFL_ENV) STREFLOP_FSTCW(FE_DFL_ENV);
     // Now store env into argument
@@ -197,7 +197,7 @@ inline int fegetenv(fenv_t *envp) {
 }
 
 /// Sets FP env from the given structure
-inline int fesetenv(const fenv_t *envp) {
+inline int fesetenv(const fpenv_t *envp) {
     // check that default env exists, otherwise save it now
     if (!FE_DFL_ENV) STREFLOP_FSTCW(FE_DFL_ENV);
     // Now overwrite current env by argument
@@ -206,7 +206,7 @@ inline int fesetenv(const fenv_t *envp) {
 }
 
 /// get env and clear exceptions
-inline int feholdexcept(fenv_t *envp) {
+inline int feholdexcept(fpenv_t *envp) {
     fegetenv(envp);
     feclearexcept(FE_ALL_EXCEPT);
     return 0;
@@ -313,16 +313,16 @@ inline int fesetround(FPU_RoundMode roundMode) {
 }
 
 /// stores both x87 and SSE words
-struct fenv_t {
+struct fpenv_t {
     int sse_mode;
     short int x87_mode;
 };
 
-/// Default env. Defined in Math.cpp, structs are initialized to 0
-extern fenv_t FE_DFL_ENV;
+/// Default env. Defined in SMath.cpp, structs are initialized to 0
+extern fpenv_t FE_DFL_ENV;
 
 /// Get FP env into the given structure
-inline int fegetenv(fenv_t *envp) {
+inline int fegetenv(fpenv_t *envp) {
     // check that default env exists, otherwise save it now
     if (!FE_DFL_ENV.x87_mode) STREFLOP_FSTCW(FE_DFL_ENV.x87_mode);
     // Now store env into argument
@@ -336,7 +336,7 @@ inline int fegetenv(fenv_t *envp) {
 }
 
 /// Sets FP env from the given structure
-inline int fesetenv(const fenv_t *envp) {
+inline int fesetenv(const fpenv_t *envp) {
     // check that default env exists, otherwise save it now
     if (!FE_DFL_ENV.x87_mode) STREFLOP_FSTCW(FE_DFL_ENV.x87_mode);
     // Now overwrite current env by argument
@@ -350,7 +350,7 @@ inline int fesetenv(const fenv_t *envp) {
 }
 
 /// get env and clear exceptions
-inline int feholdexcept(fenv_t *envp) {
+inline int feholdexcept(fpenv_t *envp) {
     fegetenv(envp);
     feclearexcept(FE_ALL_EXCEPT);
     return 0;
@@ -462,17 +462,17 @@ inline int fesetround(FPU_RoundMode roundMode) {
 }
 
 /// SoftFloat environment comprises non-volatile state variables
-struct fenv_t {
+struct fpenv_t {
     char tininess;
     char rounding_mode;
     int exception_realtraps;
 };
 
-/// Default env. Defined in Math.cpp, initialized to some invalid value for detection
-extern fenv_t FE_DFL_ENV;
+/// Default env. Defined in SMath.cpp, initialized to some invalid value for detection
+extern fpenv_t FE_DFL_ENV;
 
 /// Get FP env into the given structure
-inline int fegetenv(fenv_t *envp) {
+inline int fegetenv(fpenv_t *envp) {
     // check that default env exists, otherwise save it now
     if (FE_DFL_ENV.tininess==42) {
         // First use: save default environment now
@@ -488,7 +488,7 @@ inline int fegetenv(fenv_t *envp) {
 }
 
 /// Sets FP env from the given structure
-inline int fesetenv(const fenv_t *envp) {
+inline int fesetenv(const fpenv_t *envp) {
     // check that default env exists, otherwise save it now
     if (FE_DFL_ENV.tininess==42) {
         // First use: save default environment now
@@ -504,7 +504,7 @@ inline int fesetenv(const fenv_t *envp) {
 }
 
 /// get env and clear exceptions
-inline int feholdexcept(fenv_t *envp) {
+inline int feholdexcept(fpenv_t *envp) {
     fegetenv(envp);
     feclearexcept(FE_ALL_EXCEPT);
     return 0;
