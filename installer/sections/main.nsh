@@ -154,9 +154,14 @@
 	Delete "$INSTDIR\libgcc_s_dw2-1.dll"
 	Delete "$INSTDIR\MSVCR71.dll"
 
-
 	Delete "$INSTDIR\PALETTE.PAL"
 
+	; deprecated files
+	Delete "$INSTDIR\SpringDownloader.exe"
+	Delete "$INSTDIR\springfiles.url"
+	Delete "$INSTDIR\springfiles.url"
+	Delete "$INSTDIR\ArchiveCacheV7.lua"
+	
 	; Fonts
 	Delete "$INSTDIR\fonts\FreeSansBold.otf"
 	RmDir "$INSTDIR\fonts"
