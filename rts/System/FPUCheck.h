@@ -66,9 +66,11 @@ static inline void good_fpu_control_registers(const char* text)
 {
 	// We are paranoid.
 	// We don't trust the enumeration constants from streflop / (g)libc.
+
 #if defined(STREFLOP_SSE)
-	fenv_t fenv;
-	fegetenv(&fenv);
+	// struct
+	streflop::fenv_t fenv;
+	streflop::fegetenv(&fenv);
 
 	#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)	// -fsignaling-nans
 	bool ret = ((fenv.sse_mode & 0xFF80) == (0x1937 & 0xFF80) || (fenv.sse_mode & 0xFF80) == (0x1925 & 0xFF80)) &&
@@ -79,28 +81,34 @@ static inline void good_fpu_control_registers(const char* text)
 	#endif
 
 	if (!ret) {
-		logOutput.Print("Sync warning: MXCSR 0x%04X instead of 0x1D00 or 0x1F80 (\"%s\")", fenv.sse_mode, text);
-		logOutput.Print("Sync warning: FPUCW 0x%04X instead of 0x003A or 0x003F (\"%s\")", fenv.x87_mode, text);
+		logOutput.Print("[%s] Sync warning: (env.sse_mode) MXCSR 0x%04X instead of 0x1D00 or 0x1F80 (\"%s\")", __FUNCTION__, fenv.sse_mode, text);
+		logOutput.Print("[%s] Sync warning: (env.x87_mode) FPUCW 0x%04X instead of 0x003A or 0x003F (\"%s\")", __FUNCTION__, fenv.x87_mode, text);
+
 		// Set single precision floating point math.
 		streflop_init<streflop::Simple>();
 	#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
-		feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+		streflop::feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 	#endif
 	}
+
 #elif defined(STREFLOP_X87)
-	fenv_t fenv;
-	fegetenv(&fenv);
+	// short int
+	streflop::fenv_t fenv;
+	streflop::fegetenv(&fenv);
+
 	#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
 	bool ret = (fenv & 0x1F3F) == 0x0072 || (fenv & 0x1F3F) == 0x003F;
 	#else
 	bool ret = (fenv & 0x1F3F) == 0x003A || (fenv & 0x1F3F) == 0x003F;
 	#endif
+
 	if (!ret) {
-		logOutput.Print("Sync warning: FPUCW 0x%04X instead of 0x003A or 0x003F (\"%s\")", fenv, text);
+		logOutput.Print("[%s] Sync warning: FPUCW 0x%04X instead of 0x003A or 0x003F (\"%s\")", __FUNCTION__, fenv, text);
+
 		// Set single precision floating point math.
 		streflop_init<streflop::Simple>();
 	#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
-		feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+		streflop::feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 	#endif
 	}
 #endif
