@@ -35,11 +35,11 @@
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall Spring.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Spring Website.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Download Content.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\rapid-GUI.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Readme.lnk"
 
-	; delete the old shortcuts if they're present from a prior installation
+	; deprecated files
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Website.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Spring test.lnk"
@@ -47,7 +47,10 @@
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Selectionkeys editor.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Update CA.lnk"
 
-	; delete the .url files
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\SpringDownloader.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Spring Website.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Download Content.lnk"
+
 	Delete "$INSTDIR\Spring.url"
 	Delete "$INSTDIR\springfiles.url"
 

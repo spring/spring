@@ -13,6 +13,9 @@
 !else
 
 	Delete "$DESKTOP\SpringLobby.lnk"
+	Delete "$DESKTOP\Spring lobby-client Zero-K.lnk"
+
+	; deprecated
 	Delete "$DESKTOP\Zero-K Lobby.lnk"
 
 !endif
