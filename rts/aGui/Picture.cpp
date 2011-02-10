@@ -3,8 +3,8 @@
 #include "StdAfx.h"
 #include "Picture.h"
 
-#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "LogOutput.h"
 
 namespace agui

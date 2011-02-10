@@ -17,11 +17,6 @@
 #include <deque>
 #include <assert.h>
 
-#if defined(__APPLE__)
-//#include <OpenGL/gl.h>
-#include <OpenGL/glext.h>
-#endif
-
 namespace nv_dds
 {
     // surface description flags
