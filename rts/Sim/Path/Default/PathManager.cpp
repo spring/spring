@@ -527,6 +527,7 @@ bool CPathManager::SetNodeExtraCosts(const float* costs, unsigned int sizex, uns
 	PathNodeStateBuffer& medResBuf = medResPE->GetNodeStateBuffer();
 	PathNodeStateBuffer& lowResBuf = lowResPE->GetNodeStateBuffer();
 
+	// make all buffers share the same cost-overlay
 	maxResBuf.SetNodeExtraCosts(costs, sizex, sizez, synced);
 	medResBuf.SetNodeExtraCosts(costs, sizex, sizez, synced);
 	lowResBuf.SetNodeExtraCosts(costs, sizex, sizez, synced);
@@ -537,11 +538,13 @@ float CPathManager::GetNodeExtraCost(unsigned int x, unsigned int z, bool synced
 	if (x >= gs->mapx) { return 0.0f; }
 	if (z >= gs->mapy) { return 0.0f; }
 
-	PathNodeStateBuffer& maxResBuf = maxResPF->GetNodeStateBuffer();
-	return (maxResBuf.GetNodeExtraCost(x, z, synced));
+	const PathNodeStateBuffer& maxResBuf = maxResPF->GetNodeStateBuffer();
+	const float cost = maxResBuf.GetNodeExtraCost(x, z, synced);
+	return cost;
 }
 
 const float* CPathManager::GetNodeExtraCosts(bool synced) const {
 	const PathNodeStateBuffer& buf = maxResPF->GetNodeStateBuffer();
-	return (buf.GetNodeExtraCosts(synced));
+	const float* costs = buf.GetNodeExtraCosts(synced);
+	return costs;
 }
