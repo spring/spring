@@ -7,6 +7,8 @@
 #include <vector>
 #include <limits.h> // for INT_MAX
 #include "System/creg/creg_cond.h"
+#include "System/LogOutput.h"
+#include "System/Platform/CrashHandler.h"
 
 // cmds lower than 0 is reserved for build options (cmd -x = unitdefs[x])
 #define CMD_STOP                   0
@@ -104,6 +106,43 @@ enum {
 	FIRESTATE_FIREATWILL =  2,
 };
 
+#define USE_SAFE_VECTOR 1
+
+#if USE_SAFE_VECTOR
+template<class T>
+class safe_vector : public std::vector<T> {
+	CR_DECLARE_STRUCT(safe_vector);
+	static T dummy;
+	static const T defval;
+	static bool firsterror;
+public:
+	const T& safe_element() const;
+	T& safe_element();
+
+	const T& operator[] (const size_type i) const {
+		if(i >= size())
+			return safe_element();
+		return std::vector<T>::operator[](i);
+	}
+	T& operator[] (const size_type i) {
+		if(i >= size())
+			return safe_element();
+		return std::vector<T>::operator[](i);
+	}
+	const T& at (const size_type i) const {
+		if(i >= size())
+			return safe_element();
+		return std::vector<T>::at(i);
+	}
+	T& at (const size_type i) {
+		if(i >= size())
+			return safe_element();
+		return std::vector<T>::at(i);
+	}
+};
+#else
+#define safe_vector std::vector
+#endif
 
 struct Command
 {
@@ -148,7 +187,7 @@ public:
 	/// option bits
 	unsigned char options;
 	/// command parameters
-	std::vector<float> params;
+	safe_vector<float> params;
 	/// adds a value to this commands parameter list
 	void AddParam(float par) {
 		params.push_back(par);
