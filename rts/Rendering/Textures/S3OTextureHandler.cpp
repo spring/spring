@@ -19,6 +19,7 @@
 #include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
+#include "System/Platform/Threading.h"
 
 
 CS3OTextureHandler* texturehandlerS3O = NULL;
@@ -40,7 +41,7 @@ CS3OTextureHandler::~CS3OTextureHandler()
 
 void CS3OTextureHandler::LoadS3OTexture(S3DModel* model) {
 #if defined(USE_GML) && GML_ENABLE_SIM // even though glShareLists is now in place, this delayed loading is good because eliminates the need for locking
-	model->textureType = -1;
+	model->textureType = Threading::IsSimThread() ? -1 : LoadS3OTextureNow(model);
 #else
 	model->textureType = LoadS3OTextureNow(model);
 #endif
