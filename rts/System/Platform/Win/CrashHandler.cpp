@@ -29,7 +29,6 @@ HANDLE simthread = INVALID_HANDLE_VALUE; // used in gmlsrv.h as well
 HANDLE drawthread = INVALID_HANDLE_VALUE;
 #define MAX_STACK_DEPTH 4096
 
-
 namespace CrashHandler {
 
 boost::thread* hangdetectorthread = NULL;
@@ -38,6 +37,10 @@ volatile int keepRunning = 1;
 volatile spring_time simwdt = spring_notime, drawwdt = spring_notime;
 spring_time hangTimeout = spring_msecs(0);
 volatile bool gameLoading = false;
+
+CRITICAL_SECTION stackLock;
+int stackLockInit() { InitializeCriticalSection(&stackLock); return 0; }
+int dummyStackLock = stackLockInit();
 
 void SigAbrtHandler(int signal)
 {
@@ -91,7 +94,7 @@ static void initImageHlpDll() {
 /** Print out a stacktrace. */
 static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE) {
 	PIMAGEHLP_SYMBOL pSym;
-	STACKFRAME sf;
+	STACKFRAME64 sf;
 	HANDLE process, thread;
 	DWORD dwModBase, Disp, dwModAddrToPrint;
 	BOOL more = FALSE;
@@ -105,23 +108,51 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 	if (e) {
 		c = *e->ContextRecord;
 		thread = GetCurrentThread();
-	} else {
+	} else if (hThread != INVALID_HANDLE_VALUE) {
 		SuspendThread(hThread);
 		suspended = TRUE;
 		memset(&c, 0, sizeof(CONTEXT));
 		c.ContextFlags = CONTEXT_FULL;
-		// FIXME: This does not work if you want to dump the current thread's stack
+
 		if (!GetThreadContext(hThread, &c)) {
 			ResumeThread(hThread);
 			return;
 		}
 		thread = hThread;
 	}
+	else {
+#ifdef _M_IX86
+		ZeroMemory( &c, sizeof( CONTEXT ) );
+		c.ContextFlags = CONTEXT_CONTROL;
+		__asm
+		{
+			call func;
+			func: pop eax;
+			mov [c.Eip], eax;
+			mov [c.Ebp], ebp;
+			mov [c.Esp], esp;
+		}
+#else
+		RtlCaptureContext( &c );
+#endif
+		thread = GetCurrentThread();
+	}
 
+	DWORD MachineType = 0;
 	ZeroMemory(&sf, sizeof(sf));
+#ifdef _M_IX86
+	MachineType = IMAGE_FILE_MACHINE_I386;
 	sf.AddrPC.Offset = c.Eip;
 	sf.AddrStack.Offset = c.Esp;
 	sf.AddrFrame.Offset = c.Ebp;
+#elif _M_X64
+	MachineType = IMAGE_FILE_MACHINE_AMD64;
+	sf.AddrPC.Offset = c.Rip;
+	sf.AddrStack.Offset = c.Rsp;
+	sf.AddrFrame.Offset = c.Rsp;
+#else
+	#error "CrashHandler: Unsupported platform"
+#endif
 	sf.AddrPC.Mode = AddrModeFlat;
 	sf.AddrStack.Mode = AddrModeFlat;
 	sf.AddrFrame.Mode = AddrModeFlat;
@@ -131,17 +162,19 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 	// use globalalloc to reduce risk for allocator related deadlock
 	char* printstrings = (char*)GlobalAlloc(GMEM_FIXED, 0);
 
+	EnterCriticalSection( &stackLock );
+
 	bool containsOglDll = false;
 	while (true) {
-		more = StackWalk(
-			IMAGE_FILE_MACHINE_I386, // TODO: fix this for 64 bit windows?
+		more = StackWalk64(
+			MachineType,
 			process,
 			thread,
 			&sf,
 			&c,
 			NULL,
-			SymFunctionTableAccess,
-			SymGetModuleBase,
+			SymFunctionTableAccess64,
+			SymGetModuleBase64,
 			NULL
 		);
 		if (!more || sf.AddrFrame.Offset == 0 || count > MAX_STACK_DEPTH) {
@@ -189,6 +222,8 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 		++count;
 	}
 
+	LeaveCriticalSection( &stackLock );
+
 	if (suspended) {
 		ResumeThread(hThread);
 	}
@@ -223,6 +258,27 @@ static BOOL CALLBACK EnumModules(LPSTR moduleName, DWORD baseOfDll, PVOID userCo
 	return TRUE;
 }
 #endif // _MSC_VER >= 1500
+
+void OutputStacktrace() {
+	PRINT("Error handler invoked for Spring %s.", SpringVersion::GetFull().c_str());
+#ifdef USE_GML
+	PRINT("MT with %d threads.", gmlThreadCount);
+#endif
+
+	initImageHlpDll();
+
+	// Record list of loaded DLLs.
+	PRINT("DLL information:");
+	SymEnumerateModules(GetCurrentProcess(), EnumModules, NULL);
+
+	PRINT("Stacktrace:");
+	Stacktrace(NULL);
+
+	// Unintialize IMAGEHLP.DLL
+	SymCleanup(GetCurrentProcess());
+
+	logOutput.Flush();
+}
 
 /** Called by windows if an exception happens. */
 static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)

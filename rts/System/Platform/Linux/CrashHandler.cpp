@@ -439,4 +439,6 @@ namespace CrashHandler {
 	void ClearSimWDT(bool disable) {}
 
 	void GameLoading(bool) {}
+
+	void OutputStacktrace() {}
 };
