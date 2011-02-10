@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <algorithm>
+#include <vector>
 
 #include "mmgr.h"
 
@@ -16,6 +17,8 @@ using namespace std;
 #include "Sim/Path/IPathManager.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 
+static std::map<unsigned int, std::vector<float> > costArrayMapSynced;
+static std::map<unsigned int, std::vector<float> > costArrayMapUnsynced;
 
 static void CreatePathMetatable(lua_State* L);
 
@@ -25,9 +28,9 @@ static void CreatePathMetatable(lua_State* L);
 
 bool LuaPathFinder::PushEntries(lua_State* L)
 {
-	CreatePathMetatable(L);	
+	CreatePathMetatable(L);
 
-#define REGISTER_LUA_CFUNC(x) \
+#define REGISTER_LUA_CFUNC(x)   \
 	lua_pushstring(L, #x);      \
 	lua_pushcfunction(L, x);    \
 	lua_rawset(L, -3)
@@ -117,6 +120,7 @@ static int path_estimates(lua_State* L)
 }
 
 
+
 static int path_index(lua_State* L)
 {
 	const int* idPtr = (int*)luaL_checkudata(L, 1, "Path");
@@ -136,12 +140,10 @@ static int path_index(lua_State* L)
 	return 0;
 }
 
-
 static int path_newindex(lua_State* L)
 {
 	return 0;
 }
-
 
 static int path_gc(lua_State* L)
 {
@@ -215,23 +217,127 @@ int LuaPathFinder::RequestPath(lua_State* L)
 
 
 
+int LuaPathFinder::InitPathNodeCostsArray(lua_State* L)
+{
+	const unsigned int array = luaL_checkint(L, 1);
+	const unsigned int sizex = luaL_checkint(L, 2);
+	const unsigned int sizez = luaL_checkint(L, 3);
+	const bool synced = CLuaHandle::GetActiveHandle()->GetSynced();
+
+	std::map<unsigned int, std::vector<float> >& map = synced?
+		costArrayMapSynced:
+		costArrayMapUnsynced;
+	std::vector<float>& vec = map[array];
+
+	if (sizex == 0 || sizez == 0) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+	if (!vec.empty()) {
+		// no resizing
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	vec.resize(sizex * sizez, 0.0f);
+
+	lua_pushboolean(L, true);
+	return 1;
+}
+
+int LuaPathFinder::FreePathNodeCostsArray(lua_State* L)
+{
+	const unsigned int array = luaL_checkint(L, 1);
+	const bool synced = CLuaHandle::GetActiveHandle()->GetSynced();
+
+	std::map<unsigned int, std::vector<float> >& map = synced?
+		costArrayMapSynced:
+		costArrayMapUnsynced;
+	std::vector<float>& vec = map[array];
+
+	if (vec.empty()) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	// nullify the active cost-overlay
+	if (pathManager->GetNodeExtraCosts(synced) == &vec[0]) {
+		pathManager->SetNodeExtraCosts(NULL, 1, 1, synced);
+	}
+
+	vec.clear();
+	map.erase(array);
+
+	lua_pushboolean(L, true);
+	return 1;
+}
+
+
+int LuaPathFinder::SetPathNodeCosts(lua_State* L)
+{
+	const unsigned int array = luaL_checkint(L, 1);
+	const unsigned int sizex = luaL_checkint(L, 2);
+	const unsigned int sizez = luaL_checkint(L, 3);
+	const bool synced = CLuaHandle::GetActiveHandle()->GetSynced();
+
+	std::map<unsigned int, std::vector<float> >& map = synced?
+		costArrayMapSynced:
+		costArrayMapUnsynced;
+	std::vector<float>& vec = map[array];
+
+	if (vec.empty()) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	// set the active cost-overlay to <vec>
+	lua_pushboolean(L, pathManager->SetNodeExtraCosts(&vec[0], sizex, sizez, synced));
+	return 1;
+}
+
+int LuaPathFinder::GetPathNodeCosts(lua_State* L)
+{
+	// not implemented
+	return 0;
+}
+
+
 int LuaPathFinder::SetPathNodeCost(lua_State* L)
 {
-	const unsigned int x = luaL_checkint(L, 1);
-	const unsigned int z = luaL_checkint(L, 2);
-	const float cost = luaL_checkint(L, 3);
+	const unsigned int array = luaL_checkint(L, 1);
+	const unsigned int index = luaL_checkint(L, 2);
+	const unsigned int hmx = luaL_checkint(L, 3);
+	const unsigned int hmz = luaL_checkint(L, 4);
+	const float cost = luaL_checkfloat(L, 5);
+	const bool synced = CLuaHandle::GetActiveHandle()->GetSynced();
 
-	const bool r = pathManager->SetNodeExtraCost(x, z, cost, CLuaHandle::GetActiveHandle()->GetSynced());
+	std::map<unsigned int, std::vector<float> >& map = synced?
+		costArrayMapSynced:
+		costArrayMapUnsynced;
+	std::vector<float>& vec = map[array];
 
-	lua_pushboolean(L, r);
+	if (vec.empty()) {
+		// invalid array ID (possibly created through operator[])
+		lua_pushboolean(L, pathManager->SetNodeExtraCost(hmx, hmz, cost, synced));
+	} else {
+		// modify only the cost-overlay (whether it is active or not)
+		if (index < vec.size())
+			vec[index] = cost;
+
+		lua_pushboolean(L, (index < vec.size()));
+	}
+
 	return 1;
 }
 
 int LuaPathFinder::GetPathNodeCost(lua_State* L)
 {
-	const unsigned int x = luaL_checkint(L, 1);
-	const unsigned int z = luaL_checkint(L, 2);
-	const float cost = pathManager->GetNodeExtraCost(x, z, CLuaHandle::GetActiveHandle()->GetSynced());
+	const unsigned int hmx = luaL_checkint(L, 1);
+	const unsigned int hmz = luaL_checkint(L, 2);
+	const bool synced = CLuaHandle::GetActiveHandle()->GetSynced();
+
+	// reads from overlay if PathNodeStateBuffer::extraCosts != NULL
+	const float cost = pathManager->GetNodeExtraCost(hmx, hmz, synced);
 
 	lua_pushnumber(L, cost);
 	return 1;

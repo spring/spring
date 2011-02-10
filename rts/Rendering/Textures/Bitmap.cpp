@@ -12,6 +12,11 @@
 #include <boost/thread.hpp>
 #include "mmgr.h"
 
+#ifndef BITMAP_NO_OPENGL
+	#include "Rendering/GL/myGL.h"
+	#include "System/TimeProfiler.h"
+#endif // !BITMAP_NO_OPENGL
+
 #include "Rendering/GlobalRendering.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystem.h"
@@ -20,10 +25,6 @@
 #include "bitops.h"
 #include "LogOutput.h"
 
-#ifndef BITMAP_NO_OPENGL
-	#include "Rendering/GL/myGL.h"
-	#include "System/TimeProfiler.h"
-#endif // !BITMAP_NO_OPENGL
 
 boost::mutex devilMutex; // devil functions, whilst expensive, aren't thread-save
 

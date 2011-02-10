@@ -159,14 +159,15 @@
 //         image[0].get_mipmap(i).get_depth(), 0, image.get_format(), 
 //         GL_UNSIGNED_BYTE, image[0].get_mipmap(i));
 // }
+
 #include "StdAfx.h"
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include "nv_dds.h"
 
 // spring related
 #include "Rendering/GL/myGL.h"
+#include "nv_dds.h"
 #include "FileSystem/FileHandler.h"
 #include "Platform/byteorder.h"
 #include "mmgr.h"
