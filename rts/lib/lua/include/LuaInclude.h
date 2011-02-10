@@ -6,6 +6,7 @@
 #include "lib/lua/src/lstate.h"
 #include "lualib.h"
 #include "lauxlib.h"
+#include <boost/thread/recursive_mutex.hpp>
 
 
 inline bool lua_israwnumber(lua_State* L, int index)
@@ -54,14 +55,20 @@ inline float luaL_optfloat(lua_State* L, int idx, float def)
   return (float)luaL_optnumber(L, idx, def);
 }
 
-inline lua_State *LUA_OPEN() {
+extern boost::recursive_mutex luaprimmutex, luasecmutex;
+
+inline lua_State *LUA_OPEN(bool userMode = true, bool primary = true) {
 	lua_State *L_New = lua_open();
-	L_New->luamutex = new boost::recursive_mutex();
+	if(userMode)
+		L_New->luamutex = new boost::recursive_mutex();
+	else // LuaGaia & LuaRules will share mutexes to avoid deadlocks during XCalls etc.
+		L_New->luamutex = primary ? &luaprimmutex : &luasecmutex;
 	return L_New;
 }
 
 inline void LUA_CLOSE(lua_State *L_Old) {
-	delete L_Old->luamutex;
+	if(L_Old->luamutex != &luaprimmutex && L_Old->luamutex != &luasecmutex)
+		delete L_Old->luamutex;
 	lua_close(L_Old);
 }
 

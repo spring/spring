@@ -50,6 +50,8 @@ bool CLuaHandle::devMode = false;
 bool CLuaHandle::modUICtrl = true;
 bool CLuaHandle::useDualStates = false;
 
+boost::recursive_mutex luaprimmutex, luasecmutex;
+
 /******************************************************************************/
 /******************************************************************************/
 
@@ -73,9 +75,9 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
 	execMiscBatch = false;
 
 	SetSynced(false, true);
-	L_Sim = LUA_OPEN();
+	L_Sim = LUA_OPEN(userMode, true);
 	LUA_OPEN_LIB(L_Sim, luaopen_debug);
-	L_Draw = LUA_OPEN();
+	L_Draw = LUA_OPEN(userMode, false);
 	LUA_OPEN_LIB(L_Draw, luaopen_debug);
 }
 
@@ -2086,7 +2088,7 @@ void CLuaHandle::DrawScreenEffects()
 
 void CLuaHandle::DrawInMiniMap()
 {
-	LUA_USERMODE_CHECK(); // prevent chained eventHandler calls from luaUI to non-luaUI (will deadlock MT)
+	LUA_RECURSION_CHECK(); // prevent chained eventHandler calls between different lua handles (will deadlock MT)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("DrawInMiniMap");

@@ -395,7 +395,7 @@ class CLuaHandle : public CEventClient
 		static void HandleLuaMsg(int playerID, int script, int mode,
 			const std::vector<boost::uint8_t>& msg);
 		static inline bool IsDrawCallIn() {
-			return !Threading::IsSimThread();
+			return DUAL_LUA_STATES && !Threading::IsSimThread();
 		}
 		void ExecuteUnitEventBatch();
 		void ExecuteFeatEventBatch();
