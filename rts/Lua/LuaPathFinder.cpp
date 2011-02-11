@@ -36,6 +36,10 @@ bool LuaPathFinder::PushEntries(lua_State* L)
 	lua_rawset(L, -3)
                         
 	REGISTER_LUA_CFUNC(RequestPath);
+	REGISTER_LUA_CFUNC(InitPathNodeCostsArray);
+	REGISTER_LUA_CFUNC(FreePathNodeCostsArray);
+	REGISTER_LUA_CFUNC(SetPathNodeCosts);
+	REGISTER_LUA_CFUNC(GetPathNodeCosts);
 	REGISTER_LUA_CFUNC(SetPathNodeCost);
 	REGISTER_LUA_CFUNC(GetPathNodeCost);
 
