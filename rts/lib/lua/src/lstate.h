@@ -13,6 +13,7 @@
 #include "ltm.h"
 #include "lzio.h"
 #include <boost/thread/recursive_mutex.hpp>
+struct luaContextData;
 
 
 struct lua_longjmp;  /* defined in ldo.c */
@@ -134,6 +135,7 @@ struct lua_State {
   struct lua_longjmp *errorJmp;  /* current error recover point */
   ptrdiff_t errfunc;  /* current error handling function (stack index) */
 	boost::recursive_mutex *luamutex;
+	luaContextData *lcd;
 };
 
 

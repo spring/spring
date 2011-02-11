@@ -75,9 +75,9 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
 	execMiscBatch = false;
 
 	SetSynced(false, true);
-	L_Sim = LUA_OPEN(userMode, true);
+	L_Sim = LUA_OPEN(&D_Sim, userMode, true);
 	LUA_OPEN_LIB(L_Sim, luaopen_debug);
-	L_Draw = LUA_OPEN(userMode, false);
+	L_Draw = LUA_OPEN(&D_Draw, userMode, false);
 	LUA_OPEN_LIB(L_Draw, luaopen_debug);
 }
 
@@ -118,19 +118,19 @@ void CLuaHandle::UpdateThreading() {
 
 void CLuaHandle::KillLua()
 {
-	if (L_Sim != NULL) {
-		CLuaHandle* orig = GetActiveHandle();
-		SetActiveHandle();
-		LUA_CLOSE(L_Sim);
-		SetActiveHandle(orig);
-		L_Sim = NULL;
-	}
 	if (L_Draw != NULL) {
 		CLuaHandle* orig = GetActiveHandle();
 		SetActiveHandle();
 		LUA_CLOSE(L_Draw);
 		SetActiveHandle(orig);
 		L_Draw = NULL;
+	}
+	if (L_Sim != NULL) {
+		CLuaHandle* orig = GetActiveHandle();
+		SetActiveHandle();
+		LUA_CLOSE(L_Sim);
+		SetActiveHandle(orig);
+		L_Sim = NULL;
 	}
 }
 
