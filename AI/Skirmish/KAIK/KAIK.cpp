@@ -137,11 +137,11 @@ void CKAIK::UnitIdle(int unitID) {
 }
 
 void CKAIK::UnitDamaged(int unitID, int attackerID, float damage, float3 dir) {
-	if (ai->GetUnit(unitID)->isDead) {
-		return;
-	}
-
 	if (ai->Initialized()) {
+		if (ai->GetUnit(unitID)->isDead) {
+			return;
+		}
+
 		attackerID = attackerID;
 		dir = dir;
 
