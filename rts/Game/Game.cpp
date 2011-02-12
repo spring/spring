@@ -47,6 +47,7 @@
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
+#include "Rendering/DebugColVolDrawer.h"
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/Screenshot.h"
@@ -1064,6 +1065,7 @@ bool CGame::DrawWorld()
 	selectedUnits.Draw();
 	eventHandler.DrawWorldPreUnit();
 
+	DebugColVolDrawer::Draw();
 	unitDrawer->Draw(false);
 	modelDrawer->Draw();
 	featureDrawer->Draw();
@@ -1180,7 +1182,7 @@ bool CGame::DrawWorld()
 	glLoadIdentity();
 
 	glEnable(GL_BLEND);
-	glDisable(GL_DEPTH_TEST );
+	glDisable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// underwater overlay, part 2
