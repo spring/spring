@@ -182,8 +182,6 @@ public:
 	SyncedFloat3 updir;
 	/// if the updir is straight up or align to the ground vector
 	bool upright;
-	/// = (midPos - pos)
-	SyncedFloat3 relMidPos;
 
 	float3 deathSpeed;
 
