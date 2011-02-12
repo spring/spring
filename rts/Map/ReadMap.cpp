@@ -121,7 +121,7 @@ CReadMap::CReadMap():
 	currMaxHeight(0.0f),
 	mapChecksum(0)
 {
-	memset(mipHeightmap, NULL, sizeof(mipHeightmap));
+	memset(mipHeightmap, 0, sizeof(mipHeightmap));
 }
 
 

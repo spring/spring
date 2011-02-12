@@ -13,8 +13,9 @@
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -488,8 +489,7 @@ public:
 		for (std::set<CFeature*>::const_iterator fi = dq->features.begin(); fi != dq->features.end(); ++fi) {
 			CFeature* f = (*fi);
 
-			if (f->def->drawType != DRAWTYPE_MODEL)
-				continue;
+			assert(f->def->drawType == DRAWTYPE_MODEL);
 
 			if (gu->spectatingFullView || f->IsInLosForAllyTeam(gu->myAllyTeam)) {
 				if (drawReflection) {
