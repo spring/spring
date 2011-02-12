@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <boost/system/error_code.hpp>
 #include <stdexcept>
+#include <string.h> //memcpy
 
 extern "C" {
 #include "lib/7z/Types.h"
@@ -155,7 +156,8 @@ bool CArchive7Zip::GetFile(unsigned fid, std::vector<boost::uint8_t>& buffer)
 
 	res = SzAr_Extract(&db, &lookStream.s, fileData[fid].fp, &blockIndex, &outBuffer, &outBufferSize, &offset, &outSizeProcessed, &allocImp, &allocTempImp);
 	if (res == SZ_OK) {
-		std::copy((char*)outBuffer+offset, (char*)outBuffer+offset+outSizeProcessed, std::back_inserter(buffer));
+		buffer.resize(outSizeProcessed);
+		memcpy(&buffer[0], (char*)outBuffer+offset, outSizeProcessed);
 		return true;
 	} else {
 		return false;
