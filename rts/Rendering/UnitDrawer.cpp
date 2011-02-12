@@ -36,7 +36,6 @@
 #include "Rendering/Models/WorldObjectModelRenderer.h"
 
 #include "Sim/Features/Feature.h"
-#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -51,11 +50,12 @@
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/Weapon.h"
 
-#include "System/myMath.h"
-#include "System/LogOutput.h"
 #include "System/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/GlobalUnsynced.h"
+#include "System/LogOutput.h"
+#include "System/myMath.h"
+#include "System/Util.h"
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
@@ -1688,156 +1688,6 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 
 
 
-void DrawCollisionVolume(const CollisionVolume* vol, GLUquadricObj* q)
-{
-	switch (vol->GetVolumeType()) {
-		case CollisionVolume::COLVOL_TYPE_FOOTPRINT:
-			// fall through, this is too hard to render correctly so just render sphere :)
-		case CollisionVolume::COLVOL_TYPE_SPHERE:
-			// fall through, sphere is special case of ellipsoid
-		case CollisionVolume::COLVOL_TYPE_ELLIPSOID: {
-			// scaled sphere: radius, slices, stacks
-			glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-			glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetHScale(2));
-			gluSphere(q, 1.0f, 20, 20);
-		} break;
-		case CollisionVolume::COLVOL_TYPE_CYLINDER: {
-			// scaled cylinder: base-radius, top-radius, height, slices, stacks
-			//
-			// (cylinder base is drawn at unit center by default so add offset
-			// by half major axis to visually match the mathematical situation,
-			// height of the cylinder equals the unit's full major axis)
-			switch (vol->GetPrimaryAxis()) {
-				case CollisionVolume::COLVOL_AXIS_X: {
-					glTranslatef(-(vol->GetHScale(0)), 0.0f, 0.0f);
-					glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-					glScalef(vol->GetScale(0), vol->GetHScale(1), vol->GetHScale(2));
-					glRotatef( 90.0f, 0.0f, 1.0f, 0.0f);
-				} break;
-				case CollisionVolume::COLVOL_AXIS_Y: {
-					glTranslatef(0.0f, -(vol->GetHScale(1)), 0.0f);
-					glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-					glScalef(vol->GetHScale(0), vol->GetScale(1), vol->GetHScale(2));
-					glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
-				} break;
-				case CollisionVolume::COLVOL_AXIS_Z: {
-					glTranslatef(0.0f, 0.0f, -(vol->GetHScale(2)));
-					glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-					glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetScale(2));
-				} break;
-			}
-
-			gluCylinder(q, 1.0f, 1.0f, 1.0f, 20, 20);
-		} break;
-		case CollisionVolume::COLVOL_TYPE_BOX: {
-			// scaled cube: length, width, height
-			glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-			glScalef(vol->GetScale(0), vol->GetScale(1), vol->GetScale(2));
-			gluMyCube(1.0f);
-		} break;
-	}
-}
-
-
-void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPiece* lap, int lapf, CMatrix44f mat, GLUquadricObj* q)
-{
-	mat.Translate(p->pos.x, p->pos.y, p->pos.z);
-	mat.RotateY(-p->rot[1]);
-	mat.RotateX(-p->rot[0]);
-	mat.RotateZ(-p->rot[2]);
-
-	glPushMatrix();
-		glMultMatrixf(mat.m);
-
-		if (p->visible && !p->GetCollisionVolume()->IsDisabled()) {
-			if ((p == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
-				glLineWidth(2.0f);
-				glColor3f((1.0f - ((gs->frameNum - lapf) / 150.0f)), 0.0f, 0.0f);
-			}
-
-			DrawCollisionVolume(p->GetCollisionVolume(), q);
-
-			if ((p == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
-				glLineWidth(1.0f);
-				glColor3f(0.0f, 0.0f, 0.0f);
-			}
-		}
-	glPopMatrix();
-
-	for (unsigned int i = 0; i < p->childs.size(); i++) {
-		DrawUnitDebugPieceTree(p->childs[i], lap, lapf, mat, q);
-	}
-}
-
-
-inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
-{
-	if (globalRendering->drawdebug) {
-		if (!LUA_DRAWING && !shadowHandler->inShadowPass && !water->drawReflection) {
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->Disable();
-		}
-
-		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-			glDisable(GL_LIGHTING);
-			glDisable(GL_LIGHT0);
-			glDisable(GL_LIGHT1);
-			glDisable(GL_CULL_FACE);
-			glDisable(GL_TEXTURE_2D);
-			glDisable(GL_BLEND);
-			glDisable(GL_ALPHA_TEST);
-			glDisable(GL_FOG);
-			glDisable(GL_CLIP_PLANE0);
-			glDisable(GL_CLIP_PLANE1);
-
-			UnitDrawingTexturesOff();
-
-			glPushMatrix();
-				glTranslatef3(unit->relMidPos * float3(-1.0f, 1.0f, 1.0f));
-
-				GLUquadricObj* q = gluNewQuadric();
-
-				// draw the aimpoint
-				glColor3f(1.0f, 1.0f, 1.0f);
-				gluQuadricDrawStyle(q, GLU_FILL);
-				gluSphere(q, 2.0f, 20, 20);
-
-				glColor3f(0.0f, 0.0f, 0.0f);
-				gluQuadricDrawStyle(q, GLU_LINE);
-
-				if (unit->unitDef->usePieceCollisionVolumes) {
-					// draw only the piece volumes for less clutter
-					CMatrix44f mat(unit->relMidPos * float3(0.0f, -1.0f, 0.0f));
-					DrawUnitDebugPieceTree(unit->localmodel->GetRoot(), unit->lastAttackedPiece, unit->lastAttackedPieceFrame, mat, q);
-				} else {
-					if (!unit->collisionVolume->IsDisabled()) {
-						if (unit->lastAttack > 0 && ((gs->frameNum - unit->lastAttack) < 150)) {
-							glLineWidth(2.0f);
-							glColor3f((1.0f - ((gs->frameNum - unit->lastAttack) / 150.0f)), 0.0f, 0.0f);
-						}
-
-						DrawCollisionVolume(unit->collisionVolume, q);
-
-						if (unit->lastAttack > 0 && ((gs->frameNum - unit->lastAttack) < 150)) {
-							glLineWidth(1.0f);
-							glColor3f(0.0f, 0.0f, 0.0f);
-						}
-					}
-				}
-
-				gluDeleteQuadric(q);
-			glPopMatrix();
-
-			UnitDrawingTexturesOn();
-		glPopAttrib();
-
-		if (!LUA_DRAWING && !shadowHandler->inShadowPass && !water->drawReflection) {
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->Enable();
-		}
-	}
-}
-
-
-
 void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 {
 	if (shadowHandler->inShadowPass) {
@@ -1946,7 +1796,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 
 
 
-void CUnitDrawer::ApplyUnitTransformMatrix(CUnit* unit)
+void CUnitDrawer::ApplyUnitTransformMatrix(const CUnit* unit)
 {
 	const CMatrix44f& m = unit->GetTransformMatrix();
 	glMultMatrixf(m);
@@ -1984,9 +1834,6 @@ void CUnitDrawer::DrawUnitNow(CUnit* unit)
 	} else {
 		DrawUnitBeingBuilt(unit);
 	}
-#ifndef USE_GML
-	DrawUnitDebug(unit);
-#endif
 	glPopMatrix();
 
 	/*
@@ -2015,10 +1862,6 @@ void CUnitDrawer::DrawUnitWithLists(CUnit* unit, unsigned int preList, unsigned 
 	if (postList != 0) {
 		glCallList(postList);
 	}
-
-#ifndef USE_GML
-	DrawUnitDebug(unit);
-#endif
 	glPopMatrix();
 }
 
