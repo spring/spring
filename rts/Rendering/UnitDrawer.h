@@ -48,7 +48,7 @@ public:
 	void DrawCloakedUnits(bool noAdvShading = false);
 	void DrawShadowPass();
 
-	void ApplyUnitTransformMatrix(CUnit* unit);
+	static void ApplyUnitTransformMatrix(const CUnit* unit);
 	void DrawUnitRaw(CUnit* unit);
 	void DrawUnitRawModel(CUnit* unit);
 	void DrawUnitWithLists(CUnit* unit, unsigned int preList, unsigned int postList);
@@ -174,7 +174,6 @@ private:
 	void DrawUnitIcons(bool drawReflection);
 
 	// note: make these static?
-	inline void DrawUnitDebug(CUnit* unit);
 	void DrawUnitBeingBuilt(CUnit* unit);
 	inline void DrawUnitModel(CUnit* unit);
 	void DrawUnitNow(CUnit* unit);
