@@ -163,7 +163,7 @@ void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 //#else
 	f->drawPos = f->pos + (f->speed * globalRendering->timeOffset);
 //#endif
-	f->drawMidPos = f->drawPos + (f->midPos - f->pos);
+	f->drawMidPos = f->drawPos + f->relMidPos;
 }
 
 
