@@ -405,7 +405,7 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 	if (unit->noDraw) {
 		return;
 	}
-	if (!camera->InView(unit->drawMidPos, unit->radius * 2.0f)) {
+	if (!camera->InView(unit->drawMidPos, unit->drawRadius)) {
 		return;
 	}
 
@@ -421,7 +421,7 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 					camera->pos  * (unit->drawMidPos.y / dif) +
 					unit->drawMidPos * (-camera->pos.y / dif);
 			}
-			if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > unit->radius) {
+			if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > unit->drawRadius) {
 				return;
 			}
 		}
@@ -791,7 +791,7 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	const bool unitInLOS = ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView);
 
 	// FIXME: test against the shadow projection intersection
-	if (!(unitInLOS && camera->InView(unit->drawMidPos, unit->radius + 700.0f))) {
+	if (!(unitInLOS && camera->InView(unit->drawMidPos, unit->drawRadius + 700.0f))) {
 		return;
 	}
 
@@ -1052,7 +1052,7 @@ void CUnitDrawer::DrawCloakedUnitsHelper(int modelType)
 }
 
 inline void CUnitDrawer::DrawCloakedUnit(CUnit* unit, int modelType, bool drawGhostBuildingsPass) {
-	if (!camera->InView(unit->drawMidPos, unit->radius * 2.0f)) {
+	if (!camera->InView(unit->drawMidPos, unit->drawRadius)) {
 		return;
 	}
 

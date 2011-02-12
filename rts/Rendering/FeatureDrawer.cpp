@@ -302,7 +302,7 @@ void CFeatureDrawer::DrawFeatureStatBars(const CFeature* feature)
 
 bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature)
 {
-	if (!camera->InView(feature->pos, feature->radius * 4.0f)) { return false; }
+	if (!camera->InView(feature->pos, feature->drawRadius)) { return false; }
 	if (!feature->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) { return false; }
 
 	glPushMatrix();
@@ -503,7 +503,7 @@ public:
 							camera->pos * (f->midPos.y / dif) +
 							f->midPos * (-camera->pos.y / dif);
 					}
-					if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > f->radius) {
+					if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > f->drawRadius) {
 						continue;
 					}
 				}
