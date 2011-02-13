@@ -82,7 +82,6 @@ Makefile
 *.dir
 *.class
 *.orig
-*.dylib
 
 # ???
 progress.make

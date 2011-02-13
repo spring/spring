@@ -80,6 +80,53 @@ void COffscreenGLContext::WorkerThreadFree()
 		throw opengl_error("Could not delete off-screen rendering context");
 }
 
+
+#elif __APPLE__
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//! APPLE
+
+COffscreenGLContext::COffscreenGLContext()
+{
+	//FIXME: couldn't test this code myself! (coded from online documentations)
+
+	AGLContext currentCtx = aglGetCurrentContext();
+	if (!currentCtx)
+		throw opengl_error("Couldn't create an offscreen GL context: aglGetCurrentContext/aglGetCurrentDrawable failed!");
+	
+
+	//! Get PixelFormat
+	int attributeList[] = {
+		AGL_ACCELERATED,
+		AGL_RGBA,
+		//AGL_OFFSCREEN,
+		//AGL_DISPLAY_MASK, 1 //FIXME: detect SDL Window's CGOpenGLDisplayMask
+		AGL_NONE
+	};
+	pxlfmt = aglChoosePixelFormat(NULL, 0, attributeList);
+	if (!pxlfmt)
+		throw opengl_error("Couldn't create an offscreen GL context: aglChoosePixelFmt failed!");
+
+
+	//! Create Shared Context
+	workerCtx = aglCreateContext(pxlfmt, currentCtx);
+	if (!workerCtx)
+		throw opengl_error("Couldn't create an offscreen GL context: aglCreateContext failed!");
+}
+
+
+void COffscreenGLContext::WorkerThreadPost()
+{
+	aglSetCurrentContext(workerCtx);
+}
+
+
+void COffscreenGLContext::WorkerThreadFree()
+{
+	aglSetCurrentContext(NULL);
+	aglDestroyContext(workerCtx);
+	aglDestroyPixelFormat(pxlfmt);
+}
+
 #else
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //! UNIX
