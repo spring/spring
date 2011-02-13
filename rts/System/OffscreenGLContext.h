@@ -8,11 +8,9 @@
 #elif WIN32
 	#include "System/Platform/Win/win32.h"
 	#include <wingdi.h>
-#elif __APPLE__
-	#include <AGL/agl.h>
 #else
+	#include "Rendering/GL/myGL.h"
 	#include <GL/glx.h>
-
 	#include <X11/Xlib.h>
 	#undef KeyPress
 	#undef KeyRelease
@@ -34,9 +32,6 @@ private:
 #elif WIN32
 	HDC hdc;
 	HGLRC offscreenRC;
-#elif __APPLE__
-	AGLPixelFormat pxlfmt;
-	AGLContext workerCtx;
 #else
 	Display* display;
 	GLXPbuffer pbuf;
