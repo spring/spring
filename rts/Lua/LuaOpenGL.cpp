@@ -1486,7 +1486,8 @@ int LuaOpenGL::UnitMultMatrix(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	unitDrawer->ApplyUnitTransformMatrix(unit);
+
+	glMultMatrixf(unit->GetTransformMatrix());
 	return 0;
 }
 

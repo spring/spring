@@ -1796,13 +1796,6 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 
 
 
-void CUnitDrawer::ApplyUnitTransformMatrix(const CUnit* unit)
-{
-	const CMatrix44f& m = unit->GetTransformMatrix();
-	glMultMatrixf(m);
-}
-
-
 inline void CUnitDrawer::DrawUnitModel(CUnit* unit) {
 	if (unit->luaDraw && luaRules && luaRules->DrawUnit(unit->id)) {
 		return;
@@ -1827,7 +1820,7 @@ void CUnitDrawer::DrawUnitNow(CUnit* unit)
 	*/
 
 	glPushMatrix();
-	ApplyUnitTransformMatrix(unit);
+	glMultMatrixf(unit->GetTransformMatrix());
 
 	if (!unit->beingBuilt || !unit->unitDef->showNanoFrame) {
 		DrawUnitModel(unit);
@@ -1847,7 +1840,7 @@ void CUnitDrawer::DrawUnitNow(CUnit* unit)
 void CUnitDrawer::DrawUnitWithLists(CUnit* unit, unsigned int preList, unsigned int postList)
 {
 	glPushMatrix();
-	ApplyUnitTransformMatrix(unit);
+	glMultMatrixf(unit->GetTransformMatrix());
 
 	if (preList != 0) {
 		glCallList(preList);
@@ -1869,7 +1862,7 @@ void CUnitDrawer::DrawUnitWithLists(CUnit* unit, unsigned int preList, unsigned 
 void CUnitDrawer::DrawUnitRaw(CUnit* unit)
 {
 	glPushMatrix();
-	ApplyUnitTransformMatrix(unit);
+	glMultMatrixf(unit->GetTransformMatrix());
 	DrawUnitModel(unit);
 	glPopMatrix();
 }
@@ -1888,7 +1881,7 @@ void CUnitDrawer::DrawUnitRawModel(CUnit* unit)
 void CUnitDrawer::DrawUnitRawWithLists(CUnit* unit, unsigned int preList, unsigned int postList)
 {
 	glPushMatrix();
-	ApplyUnitTransformMatrix(unit);
+	glMultMatrixf(unit->GetTransformMatrix());
 
 	if (preList != 0) {
 		glCallList(preList);
