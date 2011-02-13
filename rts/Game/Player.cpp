@@ -16,7 +16,6 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Units/Scripts/CobInstance.h"
 #include "System/myMath.h"
@@ -147,40 +146,40 @@ void CPlayer::GameFrame(int frameNum)
 
 	const int piece = unit->script->AimFromWeapon(0);
 	const float3 relPos = unit->script->GetPiecePos(piece);
-	float3 pos = unit->pos +
+	const float3 pos = unit->pos +
 		unit->frontdir * relPos.z +
 		unit->updir    * relPos.y +
-		unit->rightdir * relPos.x;
-	pos += UpVector * 7;
+		unit->rightdir * relPos.x +
+		UpVector       * 7.0f;
 
 	dccs.oldDCpos = pos;
 
-	CUnit* hit;
+	CUnit* hit = NULL;
 	float dist = helper->TraceRayTeam(pos, dc->viewDir, unit->maxRange, hit, 1, unit, teamHandler->AllyTeam(team));
-	dc->target = hit;
 
 	if (hit) {
+		dc->target = hit;
 		dc->targetDist = dist;
 		dc->targetPos = hit->pos;
 		if (!dc->mouse2) {
-			unit->AttackUnit(hit, true);
+			unit->AttackUnit(hit, true, true);
 		}
 	} else {
 		if (dist > unit->maxRange * 0.95f) {
 			dist = unit->maxRange * 0.95f;
 		}
 
+		dc->target = NULL;
 		dc->targetDist = dist;
 		dc->targetPos = pos + dc->viewDir * dc->targetDist;
 
 		if (!dc->mouse2) {
-			unit->AttackGround(dc->targetPos, true);
+			unit->AttackGround(dc->targetPos, true, true);
+
 			for (std::vector<CWeapon*>::iterator wi = unit->weapons.begin(); wi != unit->weapons.end(); ++wi) {
-				float d = dc->targetDist;
-				if (d > (*wi)->range * 0.95f) {
-					d = (*wi)->range * 0.95f;
-				}
+				const float d = std::min(dc->targetDist, (*wi)->range * 0.95f);
 				const float3 p = pos + dc->viewDir * d;
+
 				(*wi)->AttackGround(p, true);
 			}
 		}
@@ -189,13 +188,14 @@ void CPlayer::GameFrame(int frameNum)
 
 void CPlayer::StopControllingUnit()
 {
-	if (!dccs.playerControlledUnit) {
+	if (dccs.playerControlledUnit == NULL || mouse == NULL) {
 		return;
 	}
 
 	CUnit* unit = dccs.playerControlledUnit;
 	unit->directControl = NULL;
-	unit->AttackUnit(NULL, true);
+	unit->AttackUnit(NULL, true, true);
+
 	if (gu->directControl == dccs.playerControlledUnit) {
 		assert(playerHandler->Player(gu->myPlayerNum) == this);
 		gu->directControl = NULL;
