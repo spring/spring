@@ -105,17 +105,20 @@ CFeature::~CFeature()
 void CFeature::PostLoad()
 {
 	def = featureHandler->GetFeatureDef(defName);
+
+	//FIXME is this really needed (aren't all those tags saved via creg?)
 	if (def->drawType == DRAWTYPE_MODEL) {
 		model = def->LoadModel();
 		height = model->height;
 		SetRadius(model->radius);
-		midPos = pos + model->relMidPos;
+		relMidPos = model->relMidPos;
 	} else if (def->drawType >= DRAWTYPE_TREE) {
-		midPos = pos + (UpVector * TREE_RADIUS);
+		relMidPos = UpVector * TREE_RADIUS;
 		height = 2 * TREE_RADIUS;
 	} else {
-		midPos = pos;
+		relMidPos = ZeroVector;
 	}
+	midPos = pos + relMidPos;
 }
 
 
@@ -160,11 +163,11 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 		if (!model) {
 			logOutput.Print("Features: Couldn't load model for " + defName);
 			SetRadius(0.0f);
-			midPos = pos;
+			relMidPos = ZeroVector;
 		} else {
 			height = model->height;
 			SetRadius(model->radius);
-			midPos = pos + model->relMidPos;
+			relMidPos = model->relMidPos;
 
 			// note: gets deleted in ~CSolidObject
 			collisionVolume = new CollisionVolume(def->collisionVolume, model->radius);
@@ -172,7 +175,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	}
 	else if (def->drawType >= DRAWTYPE_TREE) {
 		SetRadius(TREE_RADIUS);
-		midPos = pos + (UpVector * TREE_RADIUS);
+		relMidPos = UpVector * TREE_RADIUS;
 		height = 2 * TREE_RADIUS;
 
 		// LoadFeaturesFromMap() doesn't set a scale for trees
@@ -182,8 +185,9 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	else {
 		// geothermal (no collision volume)
 		SetRadius(0.0f);
-		midPos = pos;
+		relMidPos = ZeroVector;
 	}
+	midPos = pos + relMidPos;
 
 	featureHandler->AddFeature(this);
 	qf->AddFeature(this);
@@ -434,13 +438,7 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 	}
 
 	// setup midPos
-	if (def->drawType == DRAWTYPE_MODEL) {
-		midPos = pos + model->relMidPos;
-	} else if (def->drawType >= DRAWTYPE_TREE) {
-		midPos = pos + (UpVector * TREE_RADIUS);
-	} else {
-		midPos = pos;
-	}
+	midPos = pos + relMidPos;
 
 	// setup the visual transformation matrix
 	CalculateTransform();
@@ -564,7 +562,7 @@ bool CFeature::UpdatePosition()
 			pos.y = finalHeight;
 			speed.y = 0.0f;
 
-			midPos.y += diff;
+			midPos = pos + relMidPos;
 			transMatrix[13] += diff;
 
 			if (def->drawType >= DRAWTYPE_TREE)

@@ -75,6 +75,9 @@ bool CFileHandler::TryModFS(const string& filename)
 
 	const string file = StringToLower(filename);
 	if (vfsHandler->LoadFile(file, fileBuffer)) {
+		//! did we allocated more mem than needed (e.g. because of incorrect usage of std::vector)?
+		assert(fileBuffer.size() == fileBuffer.capacity()); 
+
 		fileSize = fileBuffer.size();
 		return true;
 	}

@@ -108,13 +108,8 @@ bool CCollisionHandler::Collision(const CFeature* f, const float3& p)
 			return CCollisionHandler::CollisionFootprint(f, p);
 		}
 		default: {
-			// NOTE: CFeature does not have a relMidPos member so
-			// calculate and apply the translation from pos (used
-			// by transMatrix) to midPos manually
-			const float3 relMidPos(f->midPos - f->pos);
-
 			CMatrix44f m(f->transMatrix);
-			m.Translate(relMidPos);
+			m.Translate(f->relMidPos);
 			m.Translate(v->GetOffsets());
 
 			return CCollisionHandler::Collision(v, m, p);
