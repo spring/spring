@@ -13,8 +13,9 @@
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -163,7 +164,7 @@ void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 //#else
 	f->drawPos = f->pos + (f->speed * globalRendering->timeOffset);
 //#endif
-	f->drawMidPos = f->drawPos + (f->midPos - f->pos);
+	f->drawMidPos = f->drawPos + f->relMidPos;
 }
 
 
@@ -302,7 +303,7 @@ void CFeatureDrawer::DrawFeatureStatBars(const CFeature* feature)
 
 bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature)
 {
-	if (!camera->InView(feature->pos, feature->radius * 4.0f)) { return false; }
+	if (!camera->InView(feature->pos, feature->drawRadius)) { return false; }
 	if (!feature->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) { return false; }
 
 	glPushMatrix();
@@ -488,8 +489,7 @@ public:
 		for (std::set<CFeature*>::const_iterator fi = dq->features.begin(); fi != dq->features.end(); ++fi) {
 			CFeature* f = (*fi);
 
-			if (f->def->drawType != DRAWTYPE_MODEL)
-				continue;
+			assert(f->def->drawType == DRAWTYPE_MODEL);
 
 			if (gu->spectatingFullView || f->IsInLosForAllyTeam(gu->myAllyTeam)) {
 				if (drawReflection) {
@@ -503,7 +503,7 @@ public:
 							camera->pos * (f->midPos.y / dif) +
 							f->midPos * (-camera->pos.y / dif);
 					}
-					if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > f->radius) {
+					if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > f->drawRadius) {
 						continue;
 					}
 				}

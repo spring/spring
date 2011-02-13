@@ -70,8 +70,9 @@ public:
 	MoveData* mobility;							///< holds information about the mobility and movedata of this object (0 means object can not move on its own)
 
 	// Positional properties
-	SyncedFloat3 midPos;						///< This is the calculated center position of the model (pos is usually at the very bottom of the model). Used as mass center.
-	int2 mapPos;								///< Current position on GroundBlockingMap.
+	SyncedFloat3 relMidPos;   ///< = (midPos - pos)
+	SyncedFloat3 midPos;      ///< This is the calculated center position of the model (pos is usually at the very bottom of the model). Used as mass center.
+	int2 mapPos;              ///< Current position on GroundBlockingMap.
 
 	// Unsynced positional properties
 	float3 drawPos;
