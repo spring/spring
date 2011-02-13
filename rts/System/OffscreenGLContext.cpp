@@ -84,6 +84,9 @@ void COffscreenGLContext::WorkerThreadFree()
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //! UNIX
 
+//always use X11 driver, fix for OS X
+#define SDL_VIDEO_DRIVER_X11
+
 #include <SDL.h>
 #include <SDL_syswm.h>
 
