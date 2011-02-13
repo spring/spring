@@ -72,8 +72,6 @@
 
 CLogSubsystem LOG_UNIT("unit");
 
-CR_BIND_DERIVED(CUnit, CSolidObject, );
-
 // See end of source for member bindings
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -90,6 +88,7 @@ float CUnit::expGrade       = 0.0f;
 
 CUnit::CUnit() : CSolidObject(),
 	unitDef(NULL),
+	unitDefID(-1),
 	frontdir(0.0f, 0.0f, 1.0f),
 	rightdir(-1.0f, 0.0f, 0.0f),
 	updir(0.0f, 1.0f, 0.0f),
@@ -295,8 +294,7 @@ CUnit::~CUnit()
 	// Remove us from our group, if we were in one
 	SetGroup(NULL);
 
-	std::vector<CWeapon*>::iterator wi;
-	for (wi = weapons.begin(); wi != weapons.end(); ++wi) {
+	for (std::vector<CWeapon*>::const_iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
 		delete *wi;
 	}
 
@@ -337,7 +335,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	allyteam = teamHandler->AllyTeam(uTeam);
 
 	unitDef = uDef;
-	unitDefName = unitDef->name;
+	unitDefID = unitDef->id;
 
 	pos = position;
 	pos.CheckInBounds();
@@ -360,8 +358,8 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	posErrorVector.y *= 0.2f;
 
 #ifdef TRACE_SYNC
-	tracefile << "[" << __FUNCTION__ << "] new unit: " << unitDefName << " ";
-	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << id << "\n";
+	tracefile << "[" << __FUNCTION__ << "] id: " << id << ", name: " << unitDef->name << " ";
+	tracefile << "pos: <" << pos.x << ", " << pos.y << ", " << pos.z << ">\n";
 #endif
 
 	ASSERT_SYNCED_FLOAT3(pos);
@@ -588,6 +586,7 @@ void CUnit::ForcedSpin(const float3& newDir)
 }
 
 
+/*
 void CUnit::SetFront(const SyncedFloat3& newDir)
 {
 	frontdir = newDir;
@@ -612,7 +611,6 @@ void CUnit::SetUp(const SyncedFloat3& newDir)
 	UpdateMidPos();
 }
 
-
 void CUnit::SetRight(const SyncedFloat3& newDir)
 {
 	rightdir = newDir;
@@ -623,6 +621,24 @@ void CUnit::SetRight(const SyncedFloat3& newDir)
 	frontdir.Normalize();
 	heading = GetHeadingFromVector(frontdir.x, frontdir.z);
 	UpdateMidPos();
+}
+*/
+
+void CUnit::SetDirectionFromHeading()
+{
+	if (GetTransporter() == NULL) {
+		frontdir = GetVectorFromHeading(heading);
+
+		if (upright || !unitDef->canmove) {
+			updir = UpVector;
+			rightdir = frontdir.cross(updir);
+		} else  {
+			updir = ground->GetNormal(pos.x, pos.z);
+			rightdir = frontdir.cross(updir);
+			rightdir.Normalize();
+			frontdir = updir.cross(rightdir);
+		}
+	}
 }
 
 
@@ -732,8 +748,7 @@ void CUnit::Update()
 			moveType->padStatus = 0;
 		}
 		// paralyzed weapons shouldn't reload
-		std::vector<CWeapon*>::iterator wi;
-		for (wi = weapons.begin(); wi != weapons.end(); ++wi) {
+		for (std::vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
 			++(*wi)->reloadStatus;
 		}
 		return;
@@ -742,8 +757,7 @@ void CUnit::Update()
 	restTime++;
 
 	if (!dontUseWeapons) {
-		std::vector<CWeapon*>::iterator wi;
-		for (wi = weapons.begin(); wi != weapons.end(); ++wi) {
+		for (std::vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
 			(*wi)->Update();
 		}
 	}
@@ -1039,9 +1053,9 @@ void CUnit::SlowUpdateWeapons() {
 	if (!dontFire) {
 		for (vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
 			CWeapon* w = *wi;
-			
+
 			if (!w->haveUserTarget) {
-				if (haveDGunRequest == (unitDef->canDGun && w->weaponDef->manualfire)) { // == ((!haveDGunRequest && !isDGun) || (haveDGunRequest && isDGun))
+				if ((haveDGunRequest == (unitDef->canDGun && w->weaponDef->manualfire))) {
 					if (userTarget) {
 						w->AttackUnit(userTarget, true);
 					} else if (userAttackGround) {
@@ -1054,24 +1068,6 @@ void CUnit::SlowUpdateWeapons() {
 
 			if (w->targetType == Target_None && fireState > FIRESTATE_HOLDFIRE && lastAttacker && (lastAttack + 200 > gs->frameNum))
 				w->AttackUnit(lastAttacker, false);
-		}
-	}
-}
-
-
-void CUnit::SetDirectionFromHeading()
-{
-	if (GetTransporter() == NULL) {
-		frontdir = GetVectorFromHeading(heading);
-
-		if (upright || !unitDef->canmove) {
-			updir = UpVector;
-			rightdir = frontdir.cross(updir);
-		} else  {
-			updir = ground->GetNormal(pos.x, pos.z);
-			rightdir = frontdir.cross(updir);
-			rightdir.Normalize();
-			frontdir = updir.cross(rightdir);
 		}
 	}
 }
@@ -1540,48 +1536,56 @@ void CUnit::ChangeTeamReset()
 }
 
 
-bool CUnit::AttackUnit(CUnit *unit,bool dgun)
+
+bool CUnit::AttackUnit(CUnit* targetUnit, bool wantDGun, bool fpsMode)
 {
-	bool r = false;
-	haveDGunRequest = dgun;
+	bool ret = false;
+
+	haveDGunRequest = wantDGun;
 	userAttackGround = false;
 	commandShotCount = 0;
-	SetUserTarget(unit);
 
-	std::vector<CWeapon*>::iterator wi;
-	for (wi = weapons.begin(); wi != weapons.end(); ++wi) {
-		(*wi)->haveUserTarget = false;
-		(*wi)->targetType = Target_None;
-		if (haveDGunRequest == (unitDef->canDGun && (*wi)->weaponDef->manualfire)) // == ((!haveDGunRequest && !isDGun) || (haveDGunRequest && isDGun))
-			if ((*wi)->AttackUnit(unit, true))
-				r = true;
-	}
-	return r;
-}
-
-
-bool CUnit::AttackGround(const float3& pos, bool dgun)
-{
-	bool r = false;
-
-	haveDGunRequest = dgun;
-	SetUserTarget(0);
-	userAttackPos = pos;
-	userAttackGround = true;
-	commandShotCount = 0;
+	SetUserTarget(targetUnit);
 
 	for (std::vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
-		(*wi)->haveUserTarget = false;
+		CWeapon* w = *wi;
 
-		if (haveDGunRequest == (unitDef->canDGun && (*wi)->weaponDef->manualfire)) { // == ((!haveDGunRequest && !isDGun) || (haveDGunRequest && isDGun))
-			if ((*wi)->AttackGround(pos, true)) {
-				r = true;
+		w->targetType = Target_None;
+
+		if ((wantDGun == (unitDef->canDGun && w->weaponDef->manualfire)) || fpsMode) {
+			if (w->AttackUnit(targetUnit, true)) {
+				ret = true;
 			}
 		}
 	}
 
-	return r;
+	return ret;
 }
+
+bool CUnit::AttackGround(const float3& pos, bool wantDGun, bool fpsMode)
+{
+	bool ret = false;
+
+	haveDGunRequest = wantDGun;
+	userAttackPos = pos;
+	userAttackGround = true;
+	commandShotCount = 0;
+
+	SetUserTarget(NULL);
+
+	for (std::vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
+		CWeapon* w = *wi;
+
+		if ((wantDGun == (unitDef->canDGun && w->weaponDef->manualfire)) || fpsMode) {
+			if (w->AttackGround(pos, true)) {
+				ret = true;
+			}
+		}
+	}
+
+	return ret;
+}
+
 
 
 void CUnit::SetLastAttacker(CUnit* attacker)
@@ -1598,6 +1602,20 @@ void CUnit::SetLastAttacker(CUnit* attacker)
 		AddDeathDependence(attacker);
 }
 
+void CUnit::SetUserTarget(CUnit* target)
+{
+	if (userTarget)
+		DeleteDeathDependence(userTarget, DEPENDENCE_TARGET);
+
+	userTarget = target;
+	for (vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
+		(*wi)->haveUserTarget = false; // should be (target != NULL)?
+	}
+
+	if (target) {
+		AddDeathDependence(target);
+	}
+}
 
 void CUnit::DependentDied(CObject* o)
 {
@@ -1609,22 +1627,6 @@ void CUnit::DependentDied(CObject* o)
 	incomingMissiles.remove((CMissileProjectile*) o);
 
 	CSolidObject::DependentDied(o);
-}
-
-
-void CUnit::SetUserTarget(CUnit* target)
-{
-	if (userTarget)
-		DeleteDeathDependence(userTarget, DEPENDENCE_TARGET);
-
-	userTarget=target;
-	for(vector<CWeapon*>::iterator wi=weapons.begin();wi!=weapons.end();++wi) {
-		(*wi)->haveUserTarget = false;
-	}
-
-	if (target) {
-		AddDeathDependence(target);
-	}
 }
 
 
@@ -2104,7 +2106,7 @@ void CUnit::ReleaseTempHoldFire()
 void CUnit::PostLoad()
 {
 	//HACK:Initializing after load
-	unitDef = unitDefHandler->GetUnitDefByName(unitDefName);
+	unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
 
 	curYardMap = (unitDef->yardmaps[buildFacing].empty())? NULL: &unitDef->yardmaps[buildFacing][0];
 
@@ -2232,10 +2234,12 @@ void CUnit::DeleteDeathDependence(CObject* o, DependenceType dep) {
 }
 
 
+
+CR_BIND_DERIVED(CUnit, CSolidObject, );
 // Member bindings
 CR_REG_METADATA(CUnit, (
-	//CR_MEMBER(unitDef),
-	CR_MEMBER(unitDefName),
+	// CR_MEMBER(unitDef),
+	CR_MEMBER(unitDefID),
 	CR_MEMBER(collisionVolume),
 	CR_MEMBER(frontdir),
 	CR_MEMBER(rightdir),
@@ -2411,4 +2415,4 @@ CR_REG_METADATA(CUnit, (
 //	CR_MEMBER(expGrade),
 
 	CR_POSTLOAD(PostLoad)
-	));
+));

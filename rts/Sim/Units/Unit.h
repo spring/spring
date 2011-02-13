@@ -72,8 +72,9 @@ public:
 	virtual void PreInit(const UnitDef* def, int team, int facing, const float3& position, bool build);
 	virtual void PostInit(const CUnit* builder);
 
-	bool AttackGround(const float3& pos, bool dgun);
-	bool AttackUnit(CUnit* unit, bool dgun);
+	virtual void SlowUpdate();
+	virtual void SlowUpdateWeapons();
+	virtual void Update();
 
 	virtual void DoDamage(const DamageArray& damages, CUnit* attacker,
 	                      const float3& impulse, int weaponId = -1);
@@ -81,9 +82,12 @@ public:
 	virtual void Kill(const float3& impulse);
 	virtual void FinishedBuilding();
 
+	bool AttackGround(const float3& pos, bool wantDGun, bool fpsMode = false);
+	bool AttackUnit(CUnit* unit, bool wantDGun, bool fpsMode = false);
+
 	int GetBlockingMapID() const { return id; }
 
-	void ChangeLos(int l, int airlos);
+	void ChangeLos(int losRad, int airRad);
 	void ChangeSensorRadius(int* valuePtr, int newValue);
 	/// negative amount=reclaim, return= true -> build power was successfully applied
 	bool AddBuildPower(float amount, CUnit* builder);
@@ -94,20 +98,9 @@ public:
 
 	void ForcedMove(const float3& newPos);
 	void ForcedSpin(const float3& newDir);
-	void SetFront(const SyncedFloat3& newDir);
-	void SetUp(const SyncedFloat3& newDir);
-	void SetRight(const SyncedFloat3& newDir);
+	void SetDirectionFromHeading();
 	void EnableScriptMoveType();
 	void DisableScriptMoveType();
-
-	///// order unit to move to position
-	//void SetGoal(float3 pos);
-
-	virtual void SlowUpdate();
-	virtual void SlowUpdateWeapons();
-	virtual void Update();
-
-	void SetDirectionFromHeading();
 
 	void ApplyTransformMatrix() const;
 	CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const;
@@ -119,8 +112,18 @@ public:
 	}
 
 	void DependentDied(CObject* o);
-	enum DependenceType { DEPENDENCE_ATTACKER, DEPENDENCE_BUILD, DEPENDENCE_BUILDER, DEPENDENCE_CAPTURE, DEPENDENCE_RECLAIM, 
-						DEPENDENCE_RESURRECT, DEPENDENCE_TARGET, DEPENDENCE_TERRAFORM, DEPENDENCE_TRANSPORTEE, DEPENDENCE_TRANSPORTER };
+	enum DependenceType {
+		DEPENDENCE_ATTACKER,
+		DEPENDENCE_BUILD,
+		DEPENDENCE_BUILDER,
+		DEPENDENCE_CAPTURE,
+		DEPENDENCE_RECLAIM, 
+		DEPENDENCE_RESURRECT,
+		DEPENDENCE_TARGET,
+		DEPENDENCE_TERRAFORM,
+		DEPENDENCE_TRANSPORTEE,
+		DEPENDENCE_TRANSPORTER
+	};
 	virtual void DeleteDeathDependence(CObject* o, DependenceType dep);
 
 	void SetUserTarget(CUnit* target);
@@ -155,7 +158,7 @@ public:
 	void SlowUpdateCloak(bool);
 	void ScriptDecloak(bool);
 
-	enum ChangeType{
+	enum ChangeType {
 		ChangeGiven,
 		ChangeCaptured
 	};
@@ -163,7 +166,7 @@ public:
 	virtual void StopAttackingAllyTeam(int ally);
 
 	const UnitDef* unitDef;
-	std::string unitDefName;
+	int unitDefID;
 
 	/**
 	 * @brief mod controlled parameters
@@ -239,8 +242,11 @@ public:
 	bool stunned;
 	/// tells weapons that support it to try to use a high trajectory
 	bool useHighTrajectory;
-	/// used by landed aircrafts for now
+
+	/// used by landed gunships to block weapon updates
 	bool dontUseWeapons;
+	/// temp variable that can be set when building etc to stop units to turn away to fire
+	bool dontFire;
 
 	/// the script has finished exectuting the killed function and the unit can be deleted
 	bool deathScriptFinished;
@@ -367,8 +373,6 @@ public:
 
 	int fireState;
 	int moveState;
-	/// temp variable that can be set when building etc to stop units to turn away to fire
-	bool dontFire;
 
 	/// if the unit is in it's 'on'-state
 	bool activated;
