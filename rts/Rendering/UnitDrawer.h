@@ -48,7 +48,6 @@ public:
 	void DrawCloakedUnits(bool noAdvShading = false);
 	void DrawShadowPass();
 
-	static void ApplyUnitTransformMatrix(const CUnit* unit);
 	void DrawUnitRaw(CUnit* unit);
 	void DrawUnitRawModel(CUnit* unit);
 	void DrawUnitWithLists(CUnit* unit, unsigned int preList, unsigned int postList);

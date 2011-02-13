@@ -134,7 +134,7 @@ inline void DrawUnitColVol(const CUnit* unit)
 	if (!camera->InView(unit->drawMidPos, unit->drawRadius)) return;
 
 	glPushMatrix();
-		CUnitDrawer::ApplyUnitTransformMatrix(unit);
+		glMultMatrixf(unit->GetTransformMatrix());
 		glTranslatef3(unit->relMidPos * float3(-1.0f, 1.0f, 1.0f));
 
 		GLUquadricObj* q = gluNewQuadric();
