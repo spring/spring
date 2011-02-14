@@ -8,38 +8,41 @@
 #include <string>
 
 class float3;
-class SoundSource;
 
-/// Empty sound system implementation
-class NullSound : public ISound
-{
-public:
-	NullSound();
-	virtual ~NullSound();
+namespace sound {
+	class SoundSource;
 
-	virtual bool HasSoundItem(const std::string& name);
-	virtual size_t GetSoundId(const std::string& name, bool hardFail = true);
+	/// Empty sound system implementation
+	class NullSound : public ISound
+	{
+	public:
+		NullSound();
+		virtual ~NullSound();
 
-	virtual SoundSource* GetNextBestSource(bool lock = true);
+		virtual bool HasSoundItem(const std::string& name);
+		virtual size_t GetSoundId(const std::string& name, bool hardFail = true);
 
-	virtual void UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime);
-	virtual void NewFrame();
+		virtual SoundSource* GetNextBestSource(bool lock = true);
 
-	virtual void ConfigNotify(const std::string& key, const std::string& value);
-	virtual void PitchAdjust(const float newPitch);
+		virtual void UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime);
+		virtual void NewFrame();
 
-	virtual bool Mute();
-	virtual bool IsMuted() const;
+		virtual void ConfigNotify(const std::string& key, const std::string& value);
+		virtual void PitchAdjust(const float newPitch);
 
-	virtual void Iconified(bool state);
+		virtual bool Mute();
+		virtual bool IsMuted() const;
 
-	virtual void PrintDebugInfo();
-	virtual bool LoadSoundDefs(const std::string& fileName);
+		virtual void Iconified(bool state);
 
-private:
-	friend class EffectChannel;
-	// this is used by EffectChannel in AudioChannel.cpp
-	virtual void PlaySample(size_t id, const float3 &p, const float3& velocity, float volume, bool relative);
+		virtual void PrintDebugInfo();
+		virtual bool LoadSoundDefs(const std::string& fileName);
+
+	private:
+		friend class EffectChannel;
+		// this is used by EffectChannel in AudioChannel.cpp
+		virtual void PlaySample(size_t id, const float3 &p, const float3& velocity, float volume, bool relative);
+	};
 };
 
 #endif // _NULL_SOUND_H_

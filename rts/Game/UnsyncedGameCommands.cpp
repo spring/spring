@@ -62,8 +62,7 @@
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/IEffectChannel.h"
-#include "System/Sound/IMusicChannel.h"
+#include "System/Sound/SoundChannels.h"
 
 static std::vector<std::string> _local_strSpaceTokenize(const std::string& text) {
 
@@ -678,7 +677,7 @@ bool CGame::ActionPressed(const Action& action,
 		}
 	}
 	else if (cmd == "nosound") {
-		if (sound->Mute()) {
+		if (gSound->Mute()) {
 			logOutput.Print("Sound disabled");
 		} else {
 			logOutput.Print("Sound enabled");
@@ -696,15 +695,15 @@ bool CGame::ActionPressed(const Action& action,
 			enable = true;
 
 		if (channel == "UnitReply")
-			Channels::UnitReply.Enable(enable);
+			sound::Channels::UnitReply.Enable(enable);
 		else if (channel == "General")
-			Channels::General.Enable(enable);
+			sound::Channels::General.Enable(enable);
 		else if (channel == "Battle")
-			Channels::Battle.Enable(enable);
+			sound::Channels::Battle.Enable(enable);
 		else if (channel == "UserInterface")
-			Channels::UserInterface.Enable(enable);
+			sound::Channels::UserInterface.Enable(enable);
 		else if (channel == "Music")
-			Channels::BGMusic.Enable(enable);
+			sound::Channels::BGMusic.Enable(enable);
 	}
 
 	else if (cmd == "createvideo") {
@@ -1411,7 +1410,7 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "debuginfo") {
 		if (action.extra == "sound") {
-			sound->PrintDebugInfo();
+			gSound->PrintDebugInfo();
 		} else if (action.extra == "profiling") {
 			profiler.PrintProfilingInfo();
 		}
