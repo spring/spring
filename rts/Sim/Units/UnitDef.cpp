@@ -525,8 +525,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	category = CCategoryHandler::Instance()->GetCategories(udTable.GetString("category", ""));
 	noChaseCategory = CCategoryHandler::Instance()->GetCategories(udTable.GetString("noChaseCategory", ""));
 
-	const string iconName = udTable.GetString("iconType", "default");
-	iconType = iconHandler->GetIcon(iconName);
+	iconType = icon::iconHandler->GetIcon(udTable.GetString("iconType", "default"));
 
 	shieldWeaponDef    = NULL;
 	stockpileWeaponDef = NULL;

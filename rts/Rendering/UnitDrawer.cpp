@@ -876,10 +876,10 @@ void CUnitDrawer::DrawShadowPass()
 void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 {
 	// If the icon is to be drawn as a radar blip, we want to get the default icon.
-	const CIconData* iconData = NULL;
+	const icon::CIconData* iconData = NULL;
 
 	if (useDefaultIcon) {
-		iconData = iconHandler->GetDefaultIconData();
+		iconData = icon::iconHandler->GetDefaultIconData();
 	} else {
 		iconData = unit->unitDef->iconType.GetIconData();
 	}

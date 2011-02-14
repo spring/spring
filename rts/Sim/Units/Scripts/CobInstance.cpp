@@ -38,11 +38,10 @@
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "GlobalUnsynced.h"
-#include "Util.h"
-#include "Sound/IEffectChannel.h"
-#include "myMath.h"
-#include "Sync/SyncTracer.h"
+#include "System/Util.h"
+#include "System/myMath.h"
+#include "System/Sound/SoundChannels.h"
+#include "System/Sync/SyncTracer.h"
 
 #endif // _CONSOLE
 
@@ -592,9 +591,9 @@ void CCobInstance::Signal(int signal)
 
 void CCobInstance::PlayUnitSound(int snr, int attr)
 {
-	int sid = script.sounds[snr];
+	const int sid = script.sounds[snr];
 	//logOutput.Print("Playing %d %d %d", snr, attr, sid);
-	Channels::UnitReply.PlaySample(sid, unit->pos, unit->speed, attr);
+	sound::Channels::UnitReply.PlaySample(sid, unit->pos, unit->speed, attr);
 }
 
 

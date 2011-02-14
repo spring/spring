@@ -12,29 +12,29 @@
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/byteorder.h"
 
-namespace
-{
-struct VorbisInputBuffer
-{
-	boost::uint8_t* data;
-	size_t pos;
-	size_t size;
-};
+namespace sound {
+	namespace {
+		struct VorbisInputBuffer
+		{
+			boost::uint8_t* data;
+			size_t pos;
+			size_t size;
+		};
 
-size_t VorbisRead(void* ptr, size_t size, size_t nmemb, void* datasource)
-{
-	VorbisInputBuffer* buffer = (VorbisInputBuffer*)datasource;
-	const size_t maxRead = std::min(size * nmemb, buffer->size - buffer->pos);
-	memcpy(ptr, buffer->data + buffer->pos, maxRead);
-	buffer->pos += maxRead;
-	return maxRead;
-};
+		size_t VorbisRead(void* ptr, size_t size, size_t nmemb, void* datasource)
+		{
+			VorbisInputBuffer* buffer = (VorbisInputBuffer*)datasource;
+			const size_t maxRead = std::min(size * nmemb, buffer->size - buffer->pos);
+			memcpy(ptr, buffer->data + buffer->pos, maxRead);
+			buffer->pos += maxRead;
+			return maxRead;
+		};
 
-int	VorbisClose(void* datasource)
-{
-	return 0; // nothing to be done here
-};
-}
+		int	VorbisClose(void* datasource)
+		{
+			return 0; // nothing to be done here
+		};
+	};
 
 SoundBuffer::bufferMapT SoundBuffer::bufferMap; // filename, index into Buffers
 SoundBuffer::bufferVecT SoundBuffer::buffers;
@@ -281,3 +281,5 @@ bool SoundBuffer::AlGenBuffer(const std::string& file, ALenum format, const boos
 	alBufferData(id, format, (ALvoid*) data, datalength, rate);
 	return CheckError("SoundBuffer::AlGenBuffer");
 }
+
+};

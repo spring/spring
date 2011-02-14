@@ -29,7 +29,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/IMusicChannel.h"
+#include "System/Sound/SoundChannels.h"
 
 
 CLoadScreen* CLoadScreen::singleton = NULL;
@@ -83,7 +83,7 @@ void CLoadScreen::Init()
 
 		const std::string mapStartMusic(mapInfo->GetStringValue("Startmusic"));
 		if (!mapStartMusic.empty())
-			Channels::BGMusic.Play(mapStartMusic);
+			sound::Channels::BGMusic.Play(mapStartMusic);
 	}
 
 	try {

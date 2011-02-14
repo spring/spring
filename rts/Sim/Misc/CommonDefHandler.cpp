@@ -18,7 +18,7 @@ int CommonDefHandler::LoadSoundFile(const std::string& fileName)
 			hasFile = true;
 	}
 
-	if (!sound->HasSoundItem(fileName) && !hasFile)
+	if (!gSound->HasSoundItem(fileName) && !hasFile)
 	{
 		std::string soundFile = "sounds/" + fileName;
 
@@ -29,7 +29,7 @@ int CommonDefHandler::LoadSoundFile(const std::string& fileName)
 		CFileHandler fh(soundFile);
 		if (fh.FileExists()) {
 			// we have a valid soundfile: store name, ID, and default volume
-			const int id = sound->GetSoundId(soundFile);
+			const int id = gSound->GetSoundId(soundFile);
 			return id;
 		}
 		else
@@ -40,7 +40,7 @@ int CommonDefHandler::LoadSoundFile(const std::string& fileName)
 	}
 	else
 	{
-		const int id = sound->GetSoundId(fileName);
+		const int id = gSound->GetSoundId(fileName);
 		return id;
 	}
 }

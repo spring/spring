@@ -32,6 +32,7 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/UnitDrawer.h"
+#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -49,9 +50,11 @@
 #include "System/TimeProfiler.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/SimpleParser.h"
-#include "System/Sound/IEffectChannel.h"
+#include "System/Sound/SoundChannels.h"
 
 #include <boost/cstdint.hpp>
+
+#define PLAY_SOUNDS 1
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -548,17 +551,19 @@ void CMiniMap::SelectUnits(int x, int y) const
 			}
 		}
 
+		#if (PLAY_SOUNDS == 1)
 		if (addedunits >= 2) {
-			Channels::UserInterface.PlaySample(mouse->soundMultiselID);
+			sound::Channels::UserInterface.PlaySample(mouse->soundMultiselID);
 		}
 		else if (addedunits == 1) {
-			int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
+			const int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
 			if (soundIdx >= 0) {
-				Channels::UnitReply.PlaySample(
+				sound::Channels::UnitReply.PlaySample(
 					unit->unitDef->sounds.select.getID(soundIdx), unit,
 					unit->unitDef->sounds.select.getVolume(soundIdx));
 			}
 		}
+		#endif
 	}
 	else {
 		// Single unit
@@ -609,12 +614,14 @@ void CMiniMap::SelectUnits(int x, int y) const
 			}
 			bp.lastRelease = gu->gameTime;
 
-			int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
+			#if (PLAY_SOUNDS == 1)
+			const int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
 			if (soundIdx >= 0) {
-				Channels::UnitReply.PlaySample(
+				sound::Channels::UnitReply.PlaySample(
 					unit->unitDef->sounds.select.getID(soundIdx), unit,
 					unit->unitDef->sounds.select.getVolume(soundIdx));
 			}
+			#endif
 		}
 	}
 }
@@ -1497,7 +1504,7 @@ void CMiniMap::GetFrustumSide(float3& side)
 }
 
 
-inline const CIconData* CMiniMap::GetUnitIcon(const CUnit* unit, float& scale) const
+inline const icon::CIconData* CMiniMap::GetUnitIcon(const CUnit* unit, float& scale) const
 {
 	scale = 1.0f;
 
@@ -1511,7 +1518,7 @@ inline const CIconData* CMiniMap::GetUnitIcon(const CUnit* unit, float& scale) c
 			|| ((losStatus & LOS_INRADAR)&&((losStatus & prevMask) == prevMask))
 			|| gu->spectatingFullView)
 		{
-			const CIconData* iconData = unit->unitDef->iconType.GetIconData();
+			const icon::CIconData* iconData = unit->unitDef->iconType.GetIconData();
 			if (iconData->GetRadiusAdjust()) {
 				scale *= (unit->radius / 30.0f);
 			}
@@ -1521,7 +1528,7 @@ inline const CIconData* CMiniMap::GetUnitIcon(const CUnit* unit, float& scale) c
 
 	//! show default icon (unknown unitdef)
 	if (losStatus & LOS_INRADAR) {
-		return iconHandler->GetDefaultIconData();
+		return icon::iconHandler->GetDefaultIconData();
 	}
 
 	return NULL;
@@ -1541,7 +1548,7 @@ void CMiniMap::DrawUnit(const CUnit* unit)
 
 	// includes the visibility check
 	float iconScale;
-	const CIconData* iconData = GetUnitIcon(unit, iconScale);
+	const icon::CIconData* iconData = GetUnitIcon(unit, iconScale);
 	if (iconData == NULL) {
 		return;
 	}

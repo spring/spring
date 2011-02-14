@@ -4,6 +4,7 @@
 
 #include "UnitScript.h"
 
+#include "CobDefines.h"
 #include "CobFile.h"
 #include "CobInstance.h"
 #include "UnitScriptEngine.h"
@@ -11,6 +12,7 @@
 #ifndef _CONSOLE
 
 #include <SDL_timer.h>
+
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
@@ -42,9 +44,8 @@
 #include "System/myMath.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"
-#include "System/Sound/IEffectChannel.h"
+#include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
-#include "CobDefines.h"
 
 #endif
 
@@ -609,7 +610,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 				const WeaponDef* weaponDef = unit->weapons[index]->weaponDef;
 
 				if (weaponDef->soundhit.getID(0) > 0) {
-					Channels::Battle.PlaySample(weaponDef->soundhit.getID(0), unit, weaponDef->soundhit.getVolume(0));
+					sound::Channels::Battle.PlaySample(weaponDef->soundhit.getID(0), unit, weaponDef->soundhit.getVolume(0));
 				}
 
 				helper->Explosion(
@@ -1144,9 +1145,9 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 				break;
 		}
 		if (p4 == 0) {
-			Channels::UnitReply.PlaySample(script->sounds[p1], unit->pos, unit->speed, float(p2) / COBSCALE);
+			sound::Channels::UnitReply.PlaySample(script->sounds[p1], unit->pos, unit->speed, float(p2) / COBSCALE);
 		} else {
-			Channels::UnitReply.PlaySample(script->sounds[p1], float(p2) / COBSCALE);
+			sound::Channels::UnitReply.PlaySample(script->sounds[p1], float(p2) / COBSCALE);
 		}
 		return 0;
 	}
