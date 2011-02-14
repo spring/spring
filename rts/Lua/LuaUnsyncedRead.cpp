@@ -64,14 +64,6 @@ using namespace std;
 
 const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
-
-/******************************************************************************/
-/******************************************************************************/
-
-#define fullRead CLuaHandle::GetActiveFullRead()
-#define readAllyTeam CLuaHandle::GetActiveReadAllyTeam()
-
-
 /******************************************************************************/
 /******************************************************************************/
 
@@ -231,10 +223,10 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 	if (unit == NULL) {
 		return NULL;
 	}
-	if (readAllyTeam < 0) {
-		return fullRead ? unit : NULL;
+	if (ActiveReadAllyTeam() < 0) {
+		return ActiveFullRead() ? unit : NULL;
 	}
-	if ((unit->losStatus[readAllyTeam] & (LOS_INLOS | LOS_INRADAR)) == 0) {
+	if ((unit->losStatus[ActiveReadAllyTeam()] & (LOS_INLOS | LOS_INRADAR)) == 0) {
 		return NULL;
 	}
 	return unit;
@@ -249,10 +241,10 @@ static inline CFeature* ParseFeature(lua_State* L, const char* caller, int index
 	const int featureID = lua_toint(L, index);
 	CFeature* feature = featureHandler->GetFeature(featureID);
 
-	if (fullRead) { return feature; }
-	if (readAllyTeam < 0) { return NULL; }
+	if (ActiveFullRead()) { return feature; }
+	if (ActiveReadAllyTeam() < 0) { return NULL; }
 	if (feature == NULL) { return NULL; }
-	if (feature->IsInLosForAllyTeam(readAllyTeam)) { return feature; }
+	if (feature->IsInLosForAllyTeam(ActiveReadAllyTeam())) { return feature; }
 
 	return NULL;
 }
@@ -452,10 +444,10 @@ int LuaUnsyncedRead::IsUnitAllied(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (readAllyTeam < 0) {
-		lua_pushboolean(L, fullRead);
+	if (ActiveReadAllyTeam() < 0) {
+		lua_pushboolean(L, ActiveFullRead());
 	} else {
-		lua_pushboolean(L, (unit->allyteam == readAllyTeam));
+		lua_pushboolean(L, (unit->allyteam == ActiveReadAllyTeam()));
 	}
 	return 1;
 }
@@ -491,8 +483,8 @@ int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 	const float radius = luaL_optnumber(L, 2, unit->radius);
 	const bool checkIcon = lua_toboolean(L, 3);
 
-	if (readAllyTeam < 0) {
-		if (!fullRead) {
+	if (ActiveReadAllyTeam() < 0) {
+		if (!ActiveFullRead()) {
 			lua_pushboolean(L, false);
 		} else {
 			lua_pushboolean(L,
@@ -501,7 +493,7 @@ int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 		}
 	}
 	else {
-		if ((unit->losStatus[readAllyTeam] & LOS_INLOS) == 0) {
+		if ((unit->losStatus[ActiveReadAllyTeam()] & LOS_INLOS) == 0) {
 			lua_pushboolean(L, false);
 		} else {
 			lua_pushboolean(L,
@@ -690,19 +682,19 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	//! arg 1 - teamID
 	int teamID = luaL_optint(L, 1, -1);
 	if (teamID == MyUnits) {
-		const int scriptTeamID = CLuaHandle::GetActiveHandle()->GetReadTeam();
+		const int scriptTeamID = CLuaHandle::GetReadTeam(L);
 		if (scriptTeamID >= 0) {
 			teamID = scriptTeamID;
 		} else {
 			teamID = AllUnits;
 		}
 	}
-	int allyTeamID = readAllyTeam;
+	int allyTeamID = ActiveReadAllyTeam();
 	if (teamID >= 0) {
 		allyTeamID = teamHandler->AllyTeam(teamID);
 	}
 	if (allyTeamID < 0) {
-		if (!fullRead) {
+		if (!ActiveFullRead()) {
 			return 0;
 		}
 	}
@@ -826,8 +818,8 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	}
 	if (allyTeamID < 0) {
 		allyTeamID = -1;
-		if (!fullRead) {
-			allyTeamID = CLuaHandle::GetActiveHandle()->GetReadAllyTeam();
+		if (!ActiveFullRead()) {
+			allyTeamID = CLuaHandle::GetReadAllyTeam(L);
 		}
 	}
 

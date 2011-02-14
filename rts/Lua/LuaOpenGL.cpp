@@ -1015,7 +1015,7 @@ void LuaOpenGL::ResetMiniMapMatrices()
 static inline bool CheckModUICtrl()
 {
 	return CLuaHandle::GetModUICtrl() ||
-	       CLuaHandle::GetActiveHandle()->GetUserMode();
+	       ActiveHandle()->GetUserMode();
 }
 
 
@@ -1311,8 +1311,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 		return NULL;
 	}
 
-	const CLuaHandle* lh = CLuaHandle::GetActiveHandle();
-	const int readAllyTeam = lh->GetReadAllyTeam();
+	const int readAllyTeam = CLuaHandle::GetReadAllyTeam(L);
 	if (readAllyTeam < 0) {
 		if (readAllyTeam == CEventClient::NoAccessTeam) {
 			return NULL;
@@ -1559,13 +1558,12 @@ int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 
 /******************************************************************************/
 
-static inline bool IsFeatureVisible(const CFeature* feature)
+static inline bool IsFeatureVisible(const lua_State *L, const CFeature* feature)
 {
-	if (CLuaHandle::GetActiveFullRead())
+	if (ActiveFullRead())
 		return true;
 
-	const CLuaHandle* lh = CLuaHandle::GetActiveHandle();
-	const int readAllyTeam = lh->GetReadAllyTeam();
+	const int readAllyTeam = CLuaHandle::GetReadAllyTeam(L);
 	if (readAllyTeam < 0) {
 		return (readAllyTeam == CEventClient::AllAccessTeam);
 	}
@@ -1585,7 +1583,7 @@ static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 	if (!feature)
 		return NULL;
 
-	if (!IsFeatureVisible(feature)) {
+	if (!IsFeatureVisible(L, feature)) {
 		return NULL;
 	}
 	return feature;
@@ -1639,8 +1637,6 @@ int LuaOpenGL::FeatureShape(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-#define fullRead CLuaHandle::GetActiveFullRead()
-#define readAllyTeam CLuaHandle::GetActiveReadAllyTeam()
 
 
 static inline CUnit* ParseDrawUnit(lua_State* L, const char* caller, int index)
@@ -1660,12 +1656,12 @@ static inline CUnit* ParseDrawUnit(lua_State* L, const char* caller, int index)
 	if (unit == NULL) {
 		return NULL;
 	}
-	if (readAllyTeam < 0) {
-		if (!fullRead) {
+	if (ActiveReadAllyTeam() < 0) {
+		if (!ActiveFullRead()) {
 			return NULL;
 		}
 	} else {
-		if ((unit->losStatus[readAllyTeam] & LOS_INLOS) == 0) {
+		if ((unit->losStatus[ActiveReadAllyTeam()] & LOS_INLOS) == 0) {
 			return NULL;
 		}
 	}
