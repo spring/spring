@@ -69,50 +69,40 @@ class CLuaHandle : public CEventClient
 		void ResetCallinErrors() { callinErrors = 0; }
 
 	public:
-		inline bool CanCtrlTeam(int team) {
-			int ctrlTeam = GetCtrlTeam();
-			if (ctrlTeam < 0) {
-				return (ctrlTeam == AllAccessTeam);
-			} else {
-				return (ctrlTeam == team);
-			}
-		}
-		inline bool CanReadAllyTeam(int allyTeam) {
-			int readAllyTeam = GetReadAllyTeam();
-			if (readAllyTeam < 0) {
-				return (readAllyTeam == AllAccessTeam);
-			} else {
-				return (readAllyTeam == allyTeam);
-			}
-		}
-
 #define GET_CONTEXT_DATA(v) ((L ? L : GetActiveState())->lcd->v)
-#define SET_CONTEXT_DATA(v) if(all) { D_Sim.v = _##v; D_Draw.v = _##v; } else GET_CONTEXT_DATA(v) = _##v
-		inline void SetFullRead(bool _fullRead, bool all = false) { SetFullRead(NULL, _fullRead, all); }
-		inline void SetFullRead(const lua_State *L, bool _fullRead, bool all = false) { SET_CONTEXT_DATA(fullRead); }
-		inline bool GetFullRead() const { return GetFullRead(NULL); } // virtual function in CEventClient
-		inline bool GetFullRead(const lua_State *L) const { return GET_CONTEXT_DATA(fullRead); }
+#define GET_ACTIVE_CONTEXT_DATA(v) (GetActiveState()->lcd->v)
+#define GET_HANDLE_CONTEXT_DATA(v) (L->lcd->v)
+#define SET_ACTIVE_CONTEXT_DATA(v) if(all) { D_Sim.v = _##v; D_Draw.v = _##v; } else GET_ACTIVE_CONTEXT_DATA(v) = _##v
+#define SET_HANDLE_CONTEXT_DATA(v) GET_HANDLE_CONTEXT_DATA(v) = _##v
+		inline void SetFullRead(bool _fullRead, bool all = false) { SET_ACTIVE_CONTEXT_DATA(fullRead); }
+		static inline void SetFullRead(const lua_State *L, bool _fullRead) { SET_HANDLE_CONTEXT_DATA(fullRead); }
+		inline bool GetFullRead() const { return GET_ACTIVE_CONTEXT_DATA(fullRead); } // virtual function in CEventClient
+		static inline bool GetFullRead(const lua_State *L) { return GET_HANDLE_CONTEXT_DATA(fullRead); }
 
-		inline void SetFullCtrl(bool _fullCtrl, bool all = false) { SetFullCtrl(NULL, _fullCtrl, all); }
-		inline void SetFullCtrl(const lua_State *L, bool _fullCtrl, bool all = false) { SET_CONTEXT_DATA(fullCtrl); }
-		inline bool GetFullCtrl(const lua_State *L = NULL) const { return GET_CONTEXT_DATA(fullCtrl); }
+		inline void SetFullCtrl(bool _fullCtrl, bool all = false) { SET_ACTIVE_CONTEXT_DATA(fullCtrl); }
+		static inline void SetFullCtrl(const lua_State *L, bool _fullCtrl) { SET_HANDLE_CONTEXT_DATA(fullCtrl); }
+		inline bool GetFullCtrl() const { return GET_ACTIVE_CONTEXT_DATA(fullCtrl); }
+		static inline bool GetFullCtrl(const lua_State *L) { return GET_HANDLE_CONTEXT_DATA(fullCtrl); }
 
-		inline void SetCtrlTeam(int _ctrlTeam, bool all = false) { SetCtrlTeam(NULL, _ctrlTeam, all); }
-		inline void SetCtrlTeam(const lua_State *L, int _ctrlTeam, bool all = false) { SET_CONTEXT_DATA(ctrlTeam); }
-		inline int GetCtrlTeam(const lua_State *L = NULL) const { return GET_CONTEXT_DATA(ctrlTeam); }
+		inline void SetCtrlTeam(int _ctrlTeam, bool all = false) { SET_ACTIVE_CONTEXT_DATA(ctrlTeam); }
+		static inline void SetCtrlTeam(const lua_State *L, int _ctrlTeam) { SET_HANDLE_CONTEXT_DATA(ctrlTeam); }
+		inline bool GetCtrlTeam() const { return GET_ACTIVE_CONTEXT_DATA(ctrlTeam); }
+		static inline int GetCtrlTeam(const lua_State *L) { return GET_HANDLE_CONTEXT_DATA(ctrlTeam); }
 
-		inline void SetReadTeam(int _readTeam, bool all = false) { SetReadTeam(NULL, _readTeam, all); }
-		inline void SetReadTeam(const lua_State *L, int _readTeam, bool all = false) { SET_CONTEXT_DATA(readTeam); }
-		inline int GetReadTeam(const lua_State *L = NULL) const { return GET_CONTEXT_DATA(readTeam); }
+		inline void SetReadTeam(int _readTeam, bool all = false) { SET_ACTIVE_CONTEXT_DATA(readTeam); }
+		static inline void SetReadTeam(const lua_State *L, int _readTeam) { SET_HANDLE_CONTEXT_DATA(readTeam); }
+		inline bool GetReadTeam() const { return GET_ACTIVE_CONTEXT_DATA(readTeam); }
+		static inline int GetReadTeam(const lua_State *L) { return GET_HANDLE_CONTEXT_DATA(readTeam); }
 
-		inline void SetReadAllyTeam(int _readAllyTeam, bool all = false) { SetReadAllyTeam(NULL, _readAllyTeam, all); }
-		inline void SetReadAllyTeam(const lua_State *L, int _readAllyTeam, bool all = false) { SET_CONTEXT_DATA(readAllyTeam); }
-		inline int GetReadAllyTeam() const { return GetReadAllyTeam(NULL); } // virtual function in CEventClient
-		inline int GetReadAllyTeam(const lua_State *L) const { return GET_CONTEXT_DATA(readAllyTeam); }
+		inline void SetReadAllyTeam(int _readAllyTeam, bool all = false) { SET_ACTIVE_CONTEXT_DATA(readAllyTeam); }
+		static inline void SetReadAllyTeam(const lua_State *L, int _readAllyTeam) { SET_HANDLE_CONTEXT_DATA(readAllyTeam); }
+		inline int GetReadAllyTeam() const { return GET_ACTIVE_CONTEXT_DATA(readAllyTeam); } // virtual function in CEventClient
+		static inline int GetReadAllyTeam(const lua_State *L) { return GET_HANDLE_CONTEXT_DATA(readAllyTeam); }
 
-		inline void SetSelectTeam(int _selectTeam, bool all = false) { SetSelectTeam(NULL, _selectTeam, all); }
-		inline void SetSelectTeam(const lua_State *L, int _selectTeam, bool all = false) { SET_CONTEXT_DATA(selectTeam); }
-		inline int GetSelectTeam(const lua_State *L = NULL) const { return GET_CONTEXT_DATA(selectTeam); }
+		inline void SetSelectTeam(int _selectTeam, bool all = false) { SET_ACTIVE_CONTEXT_DATA(selectTeam); }
+		static inline void SetSelectTeam(const lua_State *L, int _selectTeam) { SET_HANDLE_CONTEXT_DATA(selectTeam); }
+		inline bool GetSelectTeam() const { return GET_ACTIVE_CONTEXT_DATA(selectTeam); }
+		static inline int GetSelectTeam(const lua_State *L) { return GET_HANDLE_CONTEXT_DATA(selectTeam); }
 
 		inline void SetSynced(bool _synced, bool all = false) { if(!IsDrawCallIn() || all) synced = _synced; }
 		inline bool GetSynced() const { return IsDrawCallIn() ? false : synced; }
@@ -291,8 +281,8 @@ class CLuaHandle : public CEventClient
 
 		void KillLua();
 
-		inline void SetActiveHandle(bool draw = IsDrawCallIn());
-		inline void SetActiveHandle(CLuaHandle* lh, bool draw = IsDrawCallIn());
+		inline void SetActiveHandle();
+		inline void SetActiveHandle(CLuaHandle* lh);
 		bool singleState;
 		// DUAL_LUA_STATES inserted below mainly so that compiler can optimize code if DUAL_LUA_STATES = 0
 		inline bool SingleState() const { return !DUAL_LUA_STATES || singleState; } // Is this handle using a single Lua state?
@@ -373,15 +363,8 @@ class CLuaHandle : public CEventClient
 		static int CallOutUnsyncedUpdateCallIn(lua_State* L);
 
 	public: // static
-		static inline CLuaHandle* GetActiveHandle(bool draw = IsDrawCallIn()) {
-			return GetStaticLuaContextData(draw).activeHandle;
-		}
-
-		static inline bool ActiveCanCtrlTeam(int team) {
-			return GetActiveHandle()->CanCtrlTeam(team);
-		}
-		static inline bool ActiveCanReadAllyTeam(int allyTeam) {
-			return GetActiveHandle()->CanReadAllyTeam(allyTeam);
+		static inline CLuaHandle* GetActiveHandle() {
+			return GetStaticLuaContextData().activeHandle;
 		}
 
 		static inline const bool GetActiveFullRead() { return GetStaticLuaContextData().activeFullRead; }
@@ -448,14 +431,14 @@ class CLuaHandle : public CEventClient
 };
 
 
-inline void CLuaHandle::SetActiveHandle(bool draw)
+inline void CLuaHandle::SetActiveHandle()
 {
-	SetActiveHandle(this, draw);
+	SetActiveHandle(this);
 }
 
-inline void CLuaHandle::SetActiveHandle(CLuaHandle* lh, bool draw)
+inline void CLuaHandle::SetActiveHandle(CLuaHandle* lh)
 {
-	staticLuaContextData &slcd = GetStaticLuaContextData(draw);
+	staticLuaContextData &slcd = GetStaticLuaContextData();
 	slcd.activeHandle = lh;
 	if (lh) {
 		slcd.activeFullRead = lh->GetFullRead();
@@ -477,6 +460,15 @@ inline bool CLuaHandle::RunCallInUnsynced(const LuaHashString& hs, int inArgs, i
 	SetSynced(!userMode);
 	return retval;
 }
+
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+inline CLuaHandle *ActiveHandle() { return CLuaHandle::GetActiveHandle(); }
+inline bool ActiveFullRead() { return CLuaHandle::GetActiveFullRead(); }
+inline int ActiveReadAllyTeam() { return CLuaHandle::GetActiveReadAllyTeam(); }
 
 
 #endif /* LUA_HANDLE_H */

@@ -877,7 +877,7 @@ void CLuaHandle::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
 	lua_pushnumber(L, unit->team);
-	if (GetFullRead() && (attacker != NULL)) {
+	if (GetFullRead(L) && (attacker != NULL)) {
 		lua_pushnumber(L, attacker->id);
 		lua_pushnumber(L, attacker->unitDef->id);
 		lua_pushnumber(L, attacker->team);
@@ -1034,7 +1034,7 @@ void CLuaHandle::UnitDamaged(const CUnit* unit, const CUnit* attacker,
 	lua_pushnumber(L, unit->team);
 	lua_pushnumber(L, damage);
 	lua_pushboolean(L, paralyzer);
-	if (GetFullRead()) {
+	if (GetFullRead(L)) {
 		lua_pushnumber(L, weaponID);
 		argCount += 1;
 		if (attacker != NULL) {
@@ -1086,7 +1086,7 @@ void CLuaHandle::UnitSeismicPing(const CUnit* unit, int allyTeam,
 	LUA_UNIT_BATCH_PUSH(,UNIT_SEISMIC_PING, unit, allyTeam, pos, strength);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 9);
-	int readAllyTeam = GetReadAllyTeam();
+	int readAllyTeam = GetReadAllyTeam(L);
 	if ((readAllyTeam >= 0) && (unit->losStatus[readAllyTeam] & LOS_INLOS)) {
 		return; // don't need to see this ping
 	}
@@ -1100,14 +1100,14 @@ void CLuaHandle::UnitSeismicPing(const CUnit* unit, int allyTeam,
 	lua_pushnumber(L, pos.y);
 	lua_pushnumber(L, pos.z);
 	lua_pushnumber(L, strength);
-	if (GetFullRead()) {
+	if (GetFullRead(L)) {
 		lua_pushnumber(L, allyTeam);
 		lua_pushnumber(L, unit->id);
 		lua_pushnumber(L, unit->unitDef->id);
 	}
 
 	// call the routine
-	RunCallIn(cmdStr, GetFullRead() ? 7 : 4, 0);
+	RunCallIn(cmdStr, GetFullRead(L) ? 7 : 4, 0);
 	return;
 }
 
@@ -1125,13 +1125,13 @@ void CLuaHandle::LosCallIn(const LuaHashString& hs,
 
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->team);
-	if (GetFullRead()) {
+	if (GetFullRead(L)) {
 		lua_pushnumber(L, allyTeam);
 		lua_pushnumber(L, unit->unitDef->id);
 	}
 
 	// call the routine
-	RunCallIn(hs, GetFullRead() ? 4 : 2, 0);
+	RunCallIn(hs, GetFullRead(L) ? 4 : 2, 0);
 	return;
 }
 
@@ -2119,7 +2119,7 @@ void CLuaHandle::DrawInMiniMap()
 static inline bool CheckModUICtrl()
 {
 	return CLuaHandle::GetModUICtrl() ||
-	       CLuaHandle::GetActiveHandle()->GetUserMode();
+	       ActiveHandle()->GetUserMode();
 }
 
 
@@ -2757,42 +2757,42 @@ int CLuaHandle::CallOutGetSynced(lua_State* L)
 
 int CLuaHandle::CallOutGetFullCtrl(lua_State* L)
 {
-	lua_pushboolean(L, GetActiveHandle()->GetFullCtrl());
+	lua_pushboolean(L, GetFullCtrl(L));
 	return 1;
 }
 
 
 int CLuaHandle::CallOutGetFullRead(lua_State* L)
 {
-	lua_pushboolean(L, GetActiveHandle()->GetFullRead());
+	lua_pushboolean(L, GetFullRead(L));
 	return 1;
 }
 
 
 int CLuaHandle::CallOutGetCtrlTeam(lua_State* L)
 {
-	lua_pushnumber(L, GetActiveHandle()->GetCtrlTeam());
+	lua_pushnumber(L, GetCtrlTeam(L));
 	return 1;
 }
 
 
 int CLuaHandle::CallOutGetReadTeam(lua_State* L)
 {
-	lua_pushnumber(L, GetActiveHandle()->GetReadTeam());
+	lua_pushnumber(L, GetReadTeam(L));
 	return 1;
 }
 
 
 int CLuaHandle::CallOutGetReadAllyTeam(lua_State* L)
 {
-	lua_pushnumber(L, GetActiveHandle()->GetReadAllyTeam());
+	lua_pushnumber(L, GetReadAllyTeam(L));
 	return 1;
 }
 
 
 int CLuaHandle::CallOutGetSelectTeam(lua_State* L)
 {
-	lua_pushnumber(L, GetActiveHandle()->GetSelectTeam());
+	lua_pushnumber(L, GetSelectTeam(L));
 	return 1;
 }
 
