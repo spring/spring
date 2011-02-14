@@ -4,5 +4,6 @@
 
 #include "System/LogOutput.h"
 
-const CLogSubsystem LOG_SOUND("Sound", true);
-
+namespace sound {
+	const CLogSubsystem LOG_SOUND("Sound", true);
+};

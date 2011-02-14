@@ -7,37 +7,39 @@
 
 #include "IMusicChannel.h"
 
-class SoundSource;
+namespace sound {
+	class SoundSource;
 
-class MusicChannel : public IMusicChannel {
-public:
-	MusicChannel();
-	~MusicChannel();
+	class MusicChannel : public IMusicChannel {
+	public:
+		MusicChannel();
+		~MusicChannel();
 
-	virtual void SetVolume(float volume);
-	virtual void Enable(bool newState);
+		virtual void SetVolume(float volume);
+		virtual void Enable(bool newState);
 
-	/**
-	 * @brief Start playing an ogg-file
-	 * 
-	 * NOT threadsafe, unlike the other functions!
-	 * If another file is playing, it will stop it and play the new one instead.
-	 */
-	virtual void Play(const std::string& path, float volume = 1.0f, bool enqueue = false);
+		/**
+		* @brief Start playing an ogg-file
+		* 
+		* NOT threadsafe, unlike the other functions!
+		* If another file is playing, it will stop it and play the new one instead.
+		*/
+		virtual void Play(const std::string& path, float volume = 1.0f, bool enqueue = false);
 
-	virtual void Pause();
+		virtual void Pause();
 
-	/**
-	 * @brief Stop playback
-	 * 
-	 * Do not call this if you just want to play another file (for performance).
-	 */
-	virtual void Stop();
-	virtual float GetTime();
-	virtual float GetPlayTime();
+		/**
+		* @brief Stop playback
+		* 
+		* Do not call this if you just want to play another file (for performance).
+		*/
+		virtual void Stop();
+		virtual float GetTime();
+		virtual float GetPlayTime();
 
-private:
-	SoundSource* current;
+	private:
+		SoundSource* current;
+	};
 };
 
 #endif // MUSIC_CHANNEL_H

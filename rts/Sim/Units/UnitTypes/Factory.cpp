@@ -24,9 +24,11 @@
 #include "System/EventHandler.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
-#include "System/Sound/IEffectChannel.h"
+#include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 #include "mmgr.h"
+
+#define PLAY_SOUNDS 1
 
 CR_BIND_DERIVED(CFactory, CBuilding, );
 
@@ -129,12 +131,14 @@ void CFactory::Update()
 
 			script->StartBuilding();
 
-			int soundIdx = unitDef->sounds.build.getRandomIdx();
+			#if (PLAY_SOUNDS == 1)
+			const int soundIdx = unitDef->sounds.build.getRandomIdx();
 			if (soundIdx >= 0) {
-				Channels::UnitReply.PlaySample(
+				sound::Channels::UnitReply.PlaySample(
 					unitDef->sounds.build.getID(soundIdx), pos,
 					unitDef->sounds.build.getVolume(0));
 			}
+			#endif
 		} else {
 			helper->BuggerOff(buildPos - float3(0.01f, 0, 0.02f), radius + 8, true, true, team, NULL);
 		}
