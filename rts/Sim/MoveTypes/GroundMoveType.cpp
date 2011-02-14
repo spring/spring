@@ -209,7 +209,7 @@ void CGroundMoveType::Update()
 	} else {
 		bool wantReverse = false;
 
-		if (owner->directControl) {
+		if (owner->fpsControlPlayer != NULL) {
 			wantReverse = UpdateDirectControl();
 			ChangeHeading(owner->heading + deltaHeading);
 		} else {
@@ -1888,19 +1888,22 @@ void CGroundMoveType::AdjustPosToWaterLine()
 
 bool CGroundMoveType::UpdateDirectControl()
 {
-	const bool wantReverse = (owner->directControl->back && !owner->directControl->forward);
+	const CPlayer* myPlayer = gu->GetMyPlayer();
+	const FPSUnitController& selfCon = myPlayer->fpsController;
+	const FPSUnitController& unitCon = owner->fpsControlPlayer->fpsController;
+	const bool wantReverse = (unitCon.back && !unitCon.forward);
 
 	waypoint = owner->pos;
 	waypoint += wantReverse ? -owner->frontdir * 100 : owner->frontdir * 100;
 	waypoint.CheckInBounds();
 
-	if (owner->directControl->forward) {
+	if (unitCon.forward) {
 		assert(!wantReverse);
 		SetDeltaSpeed(maxSpeed, wantReverse);
 
 		owner->isMoving = true;
 		owner->script->StartMoving();
-	} else if (owner->directControl->back) {
+	} else if (unitCon.back) {
 		assert(wantReverse);
 		SetDeltaSpeed(maxReverseSpeed, wantReverse);
 
@@ -1912,16 +1915,16 @@ bool CGroundMoveType::UpdateDirectControl()
 		owner->isMoving = false;
 		owner->script->StopMoving();
 	}
+
 	deltaHeading = 0;
-	if (owner->directControl->left) {
-		deltaHeading += (short) turnRate;
-	}
-	if (owner->directControl->right) {
-		deltaHeading -= (short) turnRate;
+
+	if (unitCon.left ) { deltaHeading += (short) turnRate; }
+	if (unitCon.right) { deltaHeading -= (short) turnRate; }
+
+	if (selfCon.GetControllee() == owner) {
+		camera->rot.y += (deltaHeading * TAANG2RAD);
 	}
 
-	if (gu->directControl == owner)
-		camera->rot.y += deltaHeading * TAANG2RAD;
 	return wantReverse;
 }
 

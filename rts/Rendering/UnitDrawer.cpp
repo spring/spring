@@ -6,10 +6,10 @@
 #include "UnitDrawer.h"
 
 #include "Game/Camera.h"
+#include "Game/CameraHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
-#include "Game/SelectedUnits.h"
-#include "Game/CameraHandler.h"
+#include "Game/Player.h"
 #include "Game/UI/MiniMap.h"
 #include "Lua/LuaMaterial.h"
 #include "Lua/LuaUnitMaterial.h"
@@ -470,7 +470,8 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	camNorm.y = -0.1f;
 	camNorm.ANormalize();
 
-	const CUnit* excludeUnit = drawReflection? NULL: gu->directControl;
+	const CPlayer* myPlayer = gu->GetMyPlayer();
+	const CUnit* excludeUnit = drawReflection? NULL: myPlayer->fpsController.GetControllee();
 
 	SetupForUnitDrawing();
 
