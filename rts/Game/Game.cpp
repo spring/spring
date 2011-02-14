@@ -1399,7 +1399,7 @@ bool CGame::Draw() {
 		eventHandler.DrawScreenEffects();
 	}
 
-	hudDrawer->Draw(gu->directControl);
+	hudDrawer->Draw((gu->GetMyPlayer())->fpsController.GetControllee());
 	debugDrawerAI->Draw();
 
 	glEnable(GL_TEXTURE_2D);
@@ -1770,9 +1770,8 @@ void CGame::SimFrame() {
 		}
 		profiler.Update();
 
-		if (gu->directControl) {
-			(playerHandler->Player(gu->myPlayerNum)->dccs).SendStateUpdate(camMove);
-		}
+		(playerHandler->Player(gu->myPlayerNum)->fpsController).SendStateUpdate(camMove);
+
 		CTeamHighlight::Update(gs->frameNum);
 		globalRendering->UpdateSun();
 	}
@@ -1823,17 +1822,17 @@ void CGame::UpdateUI(bool updateCam)
 {
 	if (updateCam) {
 		CPlayer* player = playerHandler->Player(gu->myPlayerNum);
-		DirectControlClientState& dccs = player->dccs;
+		FPSUnitController& fpsCon = player->fpsController;
 
-		if (dccs.oldDCpos != ZeroVector) {
+		if (fpsCon.oldDCpos != ZeroVector) {
 			GML_STDMUTEX_LOCK(pos); // UpdateUI
 
-			camHandler->GetCurrentController().SetPos(dccs.oldDCpos);
-			dccs.oldDCpos = ZeroVector;
+			camHandler->GetCurrentController().SetPos(fpsCon.oldDCpos);
+			fpsCon.oldDCpos = ZeroVector;
 		}
 	}
 
-	if (!gu->directControl) {
+	if (!gu->fpsMode) {
 		float cameraSpeed = 1.0f;
 
 		if (camMove[7]) { cameraSpeed *=  0.1f; }

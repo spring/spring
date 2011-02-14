@@ -8,58 +8,19 @@
 
 #include "PlayerBase.h"
 #include "PlayerStatistics.h"
+#include "FPSUnitController.h"
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
 
 class CPlayer;
 class CUnit;
 
-struct DirectControlStruct {
-
-	DirectControlStruct();
-
-	bool forward;
-	bool back;
-	bool left;
-	bool right;
-	bool mouse1;
-	bool mouse2;
-
-	float3 viewDir;
-	float3 targetPos;
-	float targetDist;
-	CUnit* target;
-	CPlayer* myController;
-};
-
-struct DirectControlClientState {
-	DirectControlClientState() {
-		oldPitch   = 0;
-		oldHeading = 0;
-		oldState   = 255;
-		oldDCpos   = ZeroVector;
-
-		playerControlledUnit = NULL;
-	}
-
-	void SendStateUpdate(bool*);
-
-	CUnit* playerControlledUnit; //! synced
-	short oldHeading, oldPitch;  //! unsynced
-	unsigned char oldState;      //! unsynced
-	float3 oldDCpos;             //! unsynced
-
-	// TODO: relocate the CUnit* from GlobalUnsynced
-	// to here as well so everything is in one place
-};
-
-
 class CPlayer : public PlayerBase
 {
 public:
 	CR_DECLARE(CPlayer);
 	CPlayer();
-	~CPlayer();
+	~CPlayer() {}
 
 	bool CanControlTeam(int teamID) const {
 		return (controlledTeams.find(teamID) != controlledTeams.end());
@@ -73,6 +34,7 @@ public:
 
 	CPlayer& operator=(const PlayerBase& base) { PlayerBase::operator=(base); return *this; }
 
+	void StartControllingUnit();
 	void StopControllingUnit();
 
 	bool active;
@@ -84,9 +46,7 @@ public:
 	typedef PlayerStatistics Statistics;
 
 	Statistics currentStats;
-
-	DirectControlStruct myControl;
-	DirectControlClientState dccs;
+	FPSUnitController fpsController;
 
 private:
 	std::set<int> controlledTeams;

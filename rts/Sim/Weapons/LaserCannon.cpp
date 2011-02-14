@@ -115,16 +115,15 @@ void CLaserCannon::FireImpl()
 	dir.Normalize();
 
 	int fpsSub = 0;
-	if (owner->directControl)
-		fpsSub = 6;
+
+	if (owner->fpsControlPlayer != NULL) {
+		// subtract 24 elmos in FPS mode (?)
+		fpsSub = 24;
+	}
 
 	new CLaserProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
 		weaponDef->duration * weaponDef->maxvelocity,
 		weaponDef->visuals.color, weaponDef->visuals.color2,
 		weaponDef->intensity, weaponDef,
-		(int) ((weaponDef->range - fpsSub * 4) / weaponDef->projectilespeed) - fpsSub);
+		(int) ((weaponDef->range - fpsSub) / weaponDef->projectilespeed) - 6);
 }
-
-
-
-

@@ -150,8 +150,11 @@ CUnit::CUnit() : CSolidObject(),
 	moveType(NULL),
 	prevMoveType(NULL),
 	usingScriptMoveType(false),
+	fpsControlPlayer(NULL),
 	commandAI(NULL),
 	group(NULL),
+	localmodel(NULL),
+	script(NULL),
 	condUseMetal(0.0f),
 	condUseEnergy(0.0f),
 	condMakeMetal(0.0f),
@@ -193,8 +196,6 @@ CUnit::CUnit() : CSolidObject(),
 	moveState(MOVESTATE_MANEUVER),
 	dontFire(false),
 	activated(false),
-	localmodel(NULL),
-	script(NULL),
 	crashing(false),
 	isDead(false),
 	falling(false),
@@ -223,7 +224,6 @@ CUnit::CUnit() : CSolidObject(),
 	lastTerrainType(-1),
 	curTerrainType(0),
 	selfDCountdown(0),
-	directControl(NULL),
 	myTrack(NULL),
 	lastFlareDrop(0),
 	currentFuel(0.0f),
@@ -271,9 +271,9 @@ CUnit::~CUnit()
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << id << "\n";
 #endif
 
-	if (directControl) {
-		directControl->myController->StopControllingUnit();
-		directControl = NULL;
+	if (fpsControlPlayer != NULL) {
+		fpsControlPlayer->StopControllingUnit();
+		assert(fpsControlPlayer == NULL);
 	}
 
 	if (activated && unitDef->targfac) {
@@ -1398,9 +1398,9 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	}
 
 	// do not allow old player to keep controlling the unit
-	if (directControl) {
-		directControl->myController->StopControllingUnit();
-		directControl = NULL;
+	if (fpsControlPlayer != NULL) {
+		fpsControlPlayer->StopControllingUnit();
+		assert(fpsControlPlayer == NULL);
 	}
 
 	const int oldteam = team;
@@ -2313,6 +2313,9 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(usingScriptMoveType),
 	CR_MEMBER(commandAI),
 	CR_MEMBER(group),
+	// CR_MEMBER(fpsControlPlayer),
+	// CR_MEMBER(localmodel),
+	// CR_MEMBER(script),
 	CR_MEMBER(condUseMetal),
 	CR_MEMBER(condUseEnergy),
 	CR_MEMBER(condMakeMetal),
@@ -2358,8 +2361,6 @@ CR_REG_METADATA(CUnit, (
 //	CR_MEMBER(lastUnitUpdate),
 //#endif
 	//CR_MEMBER(model),
-	//CR_MEMBER(localmodel),
-	//CR_MEMBER(script),
 	CR_MEMBER(tooltip),
 	CR_MEMBER(crashing),
 	CR_MEMBER(isDead),
@@ -2390,7 +2391,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(lastTerrainType),
 	CR_MEMBER(curTerrainType),
 	CR_MEMBER(selfDCountdown),
-//	CR_MEMBER(directControl),
 	//CR_MEMBER(myTrack), // unused
 	CR_MEMBER(incomingMissiles),
 	CR_MEMBER(lastFlareDrop),

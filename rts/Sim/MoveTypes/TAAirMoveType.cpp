@@ -782,11 +782,12 @@ void CTAAirMoveType::Update()
 
 	const float3 lastSpeed = speed;
 
-	if (owner->directControl) {
-		DirectControlStruct* dc = owner->directControl;
+	if (owner->fpsControlPlayer != NULL) {
 		SetState(AIRCRAFT_FLYING);
 
-		float3 forward = dc->viewDir;
+		const FPSUnitController& con = owner->fpsControlPlayer->fpsController;
+
+		float3 forward = con.viewDir;
 		float3 flatForward = forward;
 		flatForward.y = 0;
 		flatForward.Normalize();
@@ -794,14 +795,11 @@ void CTAAirMoveType::Update()
 		float3 nextPos = pos + speed;
 		wantedSpeed = ZeroVector;
 
-		if (dc->forward)
-			wantedSpeed += flatForward;
-		if (dc->back)
-			wantedSpeed -= flatForward;
-		if (dc->right)
-			wantedSpeed += right;
-		if (dc->left)
-			wantedSpeed -= right;
+		if (con.forward) wantedSpeed += flatForward;
+		if (con.back   ) wantedSpeed -= flatForward;
+		if (con.right  ) wantedSpeed += right;
+		if (con.left   ) wantedSpeed -= right;
+
 		wantedSpeed.Normalize();
 		wantedSpeed *= maxSpeed;
 

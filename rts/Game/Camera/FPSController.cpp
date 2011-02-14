@@ -54,7 +54,7 @@ void CFPSController::MouseWheelMove(float move)
 
 float3 CFPSController::GetPos()
 {
-	if (!gu->directControl)
+	if (!gu->fpsMode)
 	{
 		const float margin = 0.01f;
 		const float xMin = margin;
@@ -90,7 +90,7 @@ void CFPSController::SetPos(const float3& newPos)
 {
 	CCameraController::SetPos(newPos);
 
-	if (!gu->directControl)
+	if (!gu->fpsMode)
 	{
 		pos.y = ground->GetHeightAboveWater(pos.x, pos.z) + oldHeight;
 	}
