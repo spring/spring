@@ -146,8 +146,7 @@
 #include "System/Net/PackPacket.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/IEffectChannel.h"
-#include "System/Sound/IMusicChannel.h"
+#include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncedPrimitiveIO.h"
 #include "System/Sync/SyncTracer.h"
 
@@ -303,7 +302,7 @@ CGame::~CGame()
 
 	CLoadScreen::DeleteInstance();
 	IVideoCapturing::FreeInstance();
-	ISound::Shutdown();
+	sound::ISound::Shutdown();
 
 	CLuaGaia::FreeHandler();
 	CLuaRules::FreeHandler();
@@ -335,7 +334,7 @@ CGame::~CGame()
 	SafeDelete(camHandler);
 	SafeDelete(camera);
 	SafeDelete(cam2);
-	SafeDelete(iconHandler);
+	SafeDelete(icon::iconHandler);
 	SafeDelete(inMapDrawer);
 	SafeDelete(geometricObjects);
 	SafeDelete(farTextureHandler);
@@ -410,7 +409,7 @@ void CGame::LoadDefs()
 {
 	{
 		loadscreen->SetLoadMessage("Loading Radar Icons");
-		iconHandler = new CIconHandler();
+		icon::iconHandler = new icon::CIconHandler();
 	}
 
 	{
@@ -455,8 +454,8 @@ void CGame::LoadDefs()
 		ScopedOnceTimer timer("Loading Sound Definitions");
 		loadscreen->SetLoadMessage("Loading Sound Definitions");
 
-		sound->LoadSoundDefs("gamedata/sounds.lua");
-		chatSound = sound->GetSoundId("IncomingChat", false);
+		gSound->LoadSoundDefs("gamedata/sounds.lua");
+		chatSound = gSound->GetSoundId("IncomingChat", false);
 	}
 }
 
@@ -1282,7 +1281,7 @@ bool CGame::Draw() {
 		CInputReceiver::CollectGarbage();
 		if (!skipping) {
 			// TODO call only when camera changed
-			sound->UpdateListener(camera->pos, camera->forward, camera->up, globalRendering->lastFrameTime);
+			gSound->UpdateListener(camera->pos, camera->forward, camera->up, globalRendering->lastFrameTime);
 		}
 	}
 
@@ -1764,7 +1763,7 @@ void CGame::SimFrame() {
 		infoConsole->Update();
 		waitCommandsAI.Update();
 		geometricObjects->Update();
-		sound->NewFrame();
+		gSound->NewFrame();
 		eoh->Update();
 		for (size_t a = 0; a < grouphandlers.size(); a++) {
 			grouphandlers[a]->Update();
@@ -2073,27 +2072,27 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 			const bool allied = teamHandler->Ally(msgAllyTeam, gu->myAllyTeam);
 			if (gu->spectating || (allied && !player->spectator)) {
 				logOutput.Print(label + "Allies: " + s);
-				Channels::UserInterface.PlaySample(chatSound, 5);
+				sound::Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 		}
 		else if (msg.destination == ChatMessage::TO_SPECTATORS) {
 			if (gu->spectating || myMsg) {
 				logOutput.Print(label + "Spectators: " + s);
-				Channels::UserInterface.PlaySample(chatSound, 5);
+				sound::Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 		}
 		else if (msg.destination == ChatMessage::TO_EVERYONE) {
 			const bool specsOnly = noSpectatorChat && (player && player->spectator);
 			if (gu->spectating || !specsOnly) {
 				logOutput.Print(label + s);
-				Channels::UserInterface.PlaySample(chatSound, 5);
+				sound::Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 		}
 		else if (msg.destination < playerHandler->ActivePlayers())
 		{
 			if (msg.destination == gu->myPlayerNum && player && !player->spectator) {
 				logOutput.Print(label + "Private: " + s);
-				Channels::UserInterface.PlaySample(chatSound, 5);
+				sound::Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 			else if (player->playerNum == gu->myPlayerNum)
 			{
@@ -2123,9 +2122,9 @@ void CGame::StartSkip(int toFrame) {
 	skipTotalFrames = skipEndFrame - skipStartFrame;
 	skipSeconds = (float)(skipTotalFrames) / (float)GAME_SPEED;
 
-	skipSoundmute = sound->IsMuted();
+	skipSoundmute = gSound->IsMuted();
 	if (!skipSoundmute)
-		sound->Mute(); // no sounds
+		gSound->Mute(); // no sounds
 
 	skipOldSpeed     = gs->speedFactor;
 	skipOldUserSpeed = gs->userSpeedFactor;
@@ -2148,7 +2147,7 @@ void CGame::EndSkip() {
 	gs->userSpeedFactor = skipOldUserSpeed;
 
 	if (!skipSoundmute)
-		sound->Mute(); // sounds back on
+		gSound->Mute(); // sounds back on
 
 	logOutput.Print("Skipped %.1f seconds\n", skipSeconds);
 }

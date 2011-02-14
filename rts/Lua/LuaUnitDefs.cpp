@@ -317,7 +317,7 @@ static int SafeIconType(lua_State* L, const void* data)
 {
 	// the iconType is unsynced because LuaUI has SetUnitDefIcon()
 	if (!CLuaHandle::GetActiveHandle()->GetSynced()) {
-		const CIcon& iconType = *((const CIcon*)data);
+		const icon::CIcon& iconType = *((const icon::CIcon*)data);
 		lua_pushstring(L, iconType->GetName().c_str());
 		return 1;
 	}

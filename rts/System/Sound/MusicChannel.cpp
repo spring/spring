@@ -5,6 +5,8 @@
 #include "ISound.h"
 #include "SoundSource.h"
 
+namespace sound {
+
 MusicChannel::MusicChannel() : current(NULL)
 {
 }
@@ -39,7 +41,7 @@ void MusicChannel::Play(const std::string& path, float _volume, bool enqueue)
 	}
 
 	if (!current)
-		current = sound->GetNextBestSource(); // may return 0 if no sources available
+		current = gSound->GetNextBestSource(); // may return 0 if no sources available
 
 	if (current)
 		current->PlayStream(path, volume * _volume, enqueue);
@@ -75,3 +77,5 @@ float MusicChannel::GetPlayTime()
 	else
 		return 0;
 }
+
+};

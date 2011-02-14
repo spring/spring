@@ -57,7 +57,7 @@ CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos, int xpart,
 	pos = centerPos+vectors[12] * sphereSize;
 
 	drawRadius = 60;
-	alwaysVisible = true;
+
 	texx = projectileDrawer->sphereparttex->xstart + (projectileDrawer->sphereparttex->xend - projectileDrawer->sphereparttex->xstart) * 0.5f;
 	texy = projectileDrawer->sphereparttex->ystart + (projectileDrawer->sphereparttex->yend - projectileDrawer->sphereparttex->ystart) * 0.5f;
 }

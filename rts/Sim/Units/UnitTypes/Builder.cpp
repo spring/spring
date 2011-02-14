@@ -29,8 +29,10 @@
 #include "Sim/Units/UnitLoader.h"
 #include "System/GlobalUnsynced.h"
 #include "System/EventHandler.h"
-#include "System/Sound/IEffectChannel.h"
+#include "System/Sound/SoundChannels.h"
 #include "System/mmgr.h"
+
+#define PLAY_SOUNDS 1
 
 using std::min;
 using std::max;
@@ -694,12 +696,14 @@ void CBuilder::SetBuildStanceToward(float3 pos)
 		script->StartBuilding(ClampRad(h - heading * TAANG2RAD), p - pitch);
 	}
 
-	int soundIdx = unitDef->sounds.build.getRandomIdx();
+	#if (PLAY_SOUNDS == 1)
+	const int soundIdx = unitDef->sounds.build.getRandomIdx();
 	if (soundIdx >= 0) {
-		Channels::UnitReply.PlaySample(
+		sound::Channels::UnitReply.PlaySample(
 			unitDef->sounds.build.getID(soundIdx), pos,
 			unitDef->sounds.build.getVolume(soundIdx));
 	}
+	#endif
 }
 
 

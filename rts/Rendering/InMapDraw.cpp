@@ -25,7 +25,7 @@
 #include "System/NetProtocol.h"
 #include "System/LogOutput.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/IEffectChannel.h"
+#include "System/Sound/SoundChannels.h"
 #include "System/creg/STL_List.h"
 
 
@@ -164,7 +164,7 @@ CInMapDraw::CInMapDraw(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, 128, 64, GL_RGBA, GL_UNSIGNED_BYTE, tex[0]);
 
-	blippSound = sound->GetSoundId("MapPoint", false);
+	blippSound = gSound->GetSoundId("MapPoint", false);
 }
 
 
@@ -555,7 +555,7 @@ void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
 		logOutput.Print("%s added point: %s",
 		                sender->name.c_str(), point.label.c_str());
 		logOutput.SetLastMsgPos(pos);
-		Channels::UserInterface.PlaySample(blippSound, pos);
+		sound::Channels::UserInterface.PlaySample(blippSound, pos);
 		minimap->AddNotification(pos, float3(1.0f, 1.0f, 1.0f), 1.0f);
 	}
 }

@@ -5,16 +5,18 @@
 
 #include "IEffectChannel.h"
 
-class EffectChannel : public IEffectChannel {
-public:
-	EffectChannel();
+namespace sound {
+	class EffectChannel : public IEffectChannel {
+	public:
+		EffectChannel();
 
-	virtual void PlaySample(size_t id, float volume = 1.0f);
-	virtual void PlaySample(size_t id, const float3& p, float volume = 1.0f);
-	virtual void PlaySample(size_t id, const float3& p, const float3& velocity, float volume = 1.0f);
+		virtual void PlaySample(size_t id, float volume = 1.0f);
+		virtual void PlaySample(size_t id, const float3& p, float volume = 1.0f);
+		virtual void PlaySample(size_t id, const float3& p, const float3& velocity, float volume = 1.0f);
 
-	virtual void PlaySample(size_t id, const CUnit* u, float volume = 1.0f);
-	virtual void PlaySample(size_t id, const CWorldObject* p, float volume = 1.0f);
+		virtual void PlaySample(size_t id, const CUnit* u, float volume = 1.0f);
+		virtual void PlaySample(size_t id, const CWorldObject* p, float volume = 1.0f);
+	};
 };
 
 #endif // EFFECT_CHANNEL_H
