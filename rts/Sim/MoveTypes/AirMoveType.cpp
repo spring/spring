@@ -168,26 +168,20 @@ void CAirMoveType::Update()
 		SetState(AIRCRAFT_TAKEOFF);
 	}
 
-	if (owner->directControl && !(aircraftState == AIRCRAFT_CRASHING)) {
+	if (owner->fpsControlPlayer != NULL && !(aircraftState == AIRCRAFT_CRASHING)) {
 		SetState(AIRCRAFT_FLYING);
-		DirectControlStruct* dc = owner->directControl;
 		inefficientAttackTime = 0;
 
-		if (dc->forward || dc->back || dc->left || dc->right) {
-			float aileron = 0;
-			float elevator = 0;
-			if (dc->forward) {
-				elevator -= 1;
-			}
-			if (dc->back) {
-				elevator += 1;
-			}
-			if (dc->right) {
-				aileron += 1;
-			}
-			if (dc->left) {
-				aileron -= 1;
-			}
+		const FPSUnitController& con = owner->fpsControlPlayer->fpsController;
+
+		if (con.forward || con.back || con.left || con.right) {
+			float aileron = 0.0f;
+			float elevator = 0.0f;
+
+			if (con.forward) { elevator -= 1; }
+			if (con.back   ) { elevator += 1; }
+			if (con.right  ) { aileron += 1; }
+			if (con.left   ) { aileron -= 1; }
 
 			UpdateAirPhysics(0, aileron, elevator, 1, owner->frontdir);
 			maneuver = 0;
@@ -746,8 +740,10 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	}
 
 
-	if (adjustedGoalDir.dot(frontdir) < -0.1f && goalLength < turnRadius && (!owner->directControl || owner->directControl->mouse2))
-		goalDotRight = -goalDotRight;
+	if (adjustedGoalDir.dot(frontdir) < -0.1f && goalLength < turnRadius) {
+		if (owner->fpsControlPlayer == NULL || owner->fpsControlPlayer->fpsController.mouse2)
+			goalDotRight = -goalDotRight;
+	}
 	if (lastColWarning) {
 		goalDotRight -= otherDir.dot(rightdir) * otherThreat;
 	}
@@ -1028,7 +1024,7 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 
 	const float gHeight = ground->GetHeightAboveWater(pos.x, pos.z);
 
-	if (owner->directControl) {
+	if (owner->fpsControlPlayer != NULL) {
 		if ((pos.y - gHeight) > wantedHeight * 1.2f) {
 			engine = std::max(0.0f, std::min(engine, 1 - (pos.y - gHeight - wantedHeight * 1.2f) / wantedHeight));
 		}

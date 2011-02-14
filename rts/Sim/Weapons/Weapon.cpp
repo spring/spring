@@ -316,8 +316,8 @@ void CWeapon::Update()
 	}
 
 	if ((salvoLeft == 0)
-	    && (!owner->directControl || owner->directControl->mouse1
-	                              || owner->directControl->mouse2)
+	    && (owner->fpsControlPlayer == NULL || owner->fpsControlPlayer->fpsController.mouse1
+	                                        || owner->fpsControlPlayer->fpsController.mouse2)
 	    && (targetType != Target_None)
 	    && angleGood
 	    && subClassReady

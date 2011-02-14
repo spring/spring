@@ -41,7 +41,7 @@ CR_REG_METADATA(CGlobalUnsynced, (
 	CR_MEMBER(spectating),
 	CR_MEMBER(spectatingFullView),
 	CR_MEMBER(spectatingFullSelect),
-	CR_MEMBER(directControl),
+	CR_MEMBER(fpsMode),
 	CR_MEMBER(usRandSeed),
 	CR_RESERVED(64)
 ));
@@ -63,8 +63,8 @@ CGlobalUnsynced::CGlobalUnsynced()
 	spectating           = false;
 	spectatingFullView   = false;
 	spectatingFullSelect = false;
+	fpsMode = false;
 
-	directControl = NULL;
 	playerHandler = new CPlayerHandler();
 
 	globalQuit = false;
@@ -123,6 +123,8 @@ float3 CGlobalUnsynced::usRandVector()
 	return ret;
 }
 
+
+
 void CGlobalUnsynced::SetMyPlayer(const int myNumber)
 {
 	myPlayerNum = myNumber;
@@ -147,4 +149,8 @@ void CGlobalUnsynced::SetMyPlayer(const int myNumber)
 		myPlayingTeam = myTeam;
 		myPlayingAllyTeam = myAllyTeam;
 	}
+}
+
+CPlayer* CGlobalUnsynced::GetMyPlayer() {
+	return (playerHandler->Player(myPlayerNum));
 }

@@ -6,8 +6,8 @@
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
 
+class CPlayer;
 class CGameSetup;
-class CUnit;
 
 /**
  * @brief Globally accessible unsynced data
@@ -27,6 +27,7 @@ public:
 
 	void LoadFromSetup(const CGameSetup* setup);
 	void SetMyPlayer(const int myNumber);
+	CPlayer* GetMyPlayer();
 
 	/**
 	 * @brief mod game time
@@ -117,12 +118,11 @@ public:
 	bool spectatingFullSelect;
 
 	/**
-	 * @brief direct control
+	 * @brief fpsMode
 	 *
-	 * Pointer to unit being directly controlled by
-	 * this player
+	 * if true, player is controlling a unit in FPS mode
 	 */
-	CUnit* directControl;
+	bool fpsMode;
 
 	/**
 	* @brief global quit
