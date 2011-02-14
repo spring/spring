@@ -132,7 +132,7 @@ void HUDDrawer::DrawWeaponStates(const CUnit* unit)
 	glColor4f(0.2f, 0.8f, 0.2f, 0.8f);
 	font->glFormat(-0.9f, 0.35f, 1.0f, FONT_SCALE | FONT_NORM, "Health: %.0f / %.0f", (float) unit->health, (float) unit->maxHealth);
 
-	if (playerHandler->Player(gu->myPlayerNum)->myControl.mouse2) {
+	if (playerHandler->Player(gu->myPlayerNum)->fpsController.mouse2) {
 		font->glPrint(-0.9f, 0.30f, 1.0f, FONT_SCALE | FONT_NORM, "Free-Fire Mode");
 	}
 
@@ -235,7 +235,9 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 				glEnd();
 
 				if (!w->onlyForward) {
-					const float dist = std::min(w->owner->directControl->targetDist, w->range * 0.9f);
+					const CPlayer* p = w->owner->fpsControlPlayer;
+					const FPSUnitController& c = p->fpsController;
+					const float dist = std::min(c.targetDist, w->range * 0.9f);
 
 					pos = w->weaponPos + w->wantedDir * dist;
 					v1 = (pos - camera->pos).ANormalize();
@@ -274,7 +276,7 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 
 void HUDDrawer::Draw(const CUnit* unit)
 {
-	if (unit == 0 || !draw) {
+	if (unit == NULL || !draw) {
 		return;
 	}
 

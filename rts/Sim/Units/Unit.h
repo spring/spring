@@ -13,6 +13,7 @@
 #include "Matrix44f.h"
 #include "Vec2.h"
 
+class CPlayer;
 class CCommandAI;
 class CGroup;
 class CLoadSaveInterface;
@@ -27,7 +28,6 @@ struct LocalModel;
 struct LocalModelPiece;
 struct UnitDef;
 struct UnitTrackStruct;
-struct DirectControlStruct;
 
 class CTransportUnit;
 
@@ -306,9 +306,13 @@ public:
 	AMoveType* prevMoveType;
 	bool usingScriptMoveType;
 
+	CPlayer* fpsControlPlayer;
 	CCommandAI* commandAI;
 	/// if the unit is part of an group (hotkey group)
 	CGroup* group;
+
+	LocalModel* localmodel;
+	CUnitScript* script;
 
 	// only when the unit is active
 	float condUseMetal;
@@ -390,9 +394,6 @@ public:
 	unsigned lastUnitUpdate;
 #endif
 
-	LocalModel* localmodel;
-	CUnitScript* script;
-
 	std::string tooltip;
 
 	bool crashing;
@@ -455,7 +456,6 @@ public:
 	int curTerrainType;
 
 	int selfDCountdown;
-	DirectControlStruct* directControl;
 
 	UnitTrackStruct* myTrack;
 

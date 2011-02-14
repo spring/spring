@@ -332,7 +332,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		return;
 	}
 
-	if (gu->directControl) {
+	if (gu->fpsMode) {
 		return;
 	}
 
@@ -510,7 +510,7 @@ void CMouseHandler::DrawSelectionBox()
 		return;
 	}
 
-	if (gu->directControl) {
+	if (gu->fpsMode) {
 		return;
 	}
 	if (buttons[SDL_BUTTON_LEFT].pressed && !buttons[SDL_BUTTON_LEFT].chorded &&
@@ -867,7 +867,7 @@ void CMouseHandler::DrawCursor()
 			glTranslatef(0.5f - globalRendering->pixelX * 0.5f, 0.5f - globalRendering->pixelY * 0.5f, 0.f);
 			glScalef(xscale, yscale, 1.f);
 
-			if (gu->directControl) {
+			if (gu->fpsMode) {
 				DrawFPSCursor();
 			} else {
 				DrawScrollCursor();

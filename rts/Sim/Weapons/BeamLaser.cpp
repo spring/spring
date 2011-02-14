@@ -199,7 +199,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		rangeMod = 1.3f;
 	}
 
-	if (owner->directControl) {
+	if (owner->fpsControlPlayer != NULL) {
 		rangeMod = 0.95f;
 	}
 

@@ -901,9 +901,10 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "controlunit") {
 		if (!gu->spectating) {
 			Command c;
-			c.id=CMD_STOP;
-			c.options=0;
-			selectedUnits.GiveCommand(c,false);		//force it to update selection and clear order que
+			c.id = CMD_STOP;
+			c.options = 0;
+			// force it to update selection and clear order queue
+			selectedUnits.GiveCommand(c, false);
 			net->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));
 		}
 	}

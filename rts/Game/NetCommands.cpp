@@ -21,11 +21,11 @@
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Rendering/InMapDraw.h"
 #include "Lua/LuaRules.h"
-#include "Sim/Misc/TeamHandler.h"
-#include "Sim/Path/IPathManager.h"
 #include "UI/GameSetupDrawer.h"
 #include "UI/LuaUI.h"
 #include "UI/MouseHandler.h"
+#include "Sim/Misc/TeamHandler.h"
+#include "Sim/Path/IPathManager.h"
 #include "System/EventHandler.h"
 #include "System/FPUCheck.h"
 #include "System/myMath.h"
@@ -419,13 +419,11 @@ void CGame::ClientReadNet()
 						short int unitid;
 						pckt >> unitid;
 
-						if(unitid < 0 || static_cast<size_t>(unitid) >= uh->MaxUnits())
+						if (uh->GetUnit(unitid) == NULL)
 							throw netcode::UnpackPacketException("Invalid unit ID");
 
-						if ((uh->units[unitid] &&
-							(uh->units[unitid]->team == playerHandler->Player(player)->team)) ||
-							gs->godMode) {
-								selected.push_back(unitid);
+						if ((uh->GetUnit(unitid)->team == playerHandler->Player(player)->team) || gs->godMode) {
+							selected.push_back(unitid);
 						}
 					}
 					selectedUnits.NetSelect(selected, player);
@@ -643,10 +641,12 @@ void CGame::ClientReadNet()
 				if (shareUnits) {
 					vector<int>& netSelUnits = selectedUnits.netSelected[player];
 					vector<int>::const_iterator ui;
-					for (ui = netSelUnits.begin(); ui != netSelUnits.end(); ++ui){
-						CUnit* unit = uh->units[*ui];
+
+					for (ui = netSelUnits.begin(); ui != netSelUnits.end(); ++ui) {
+						CUnit* unit = uh->GetUnit(*ui);
+
 						if (unit && unit->team == teamID1 && !unit->beingBuilt) {
-							if (!unit->directControl)
+							if (unit->fpsControlPlayer == NULL)
 								unit->ChangeTeam(teamID2, CUnit::ChangeGiven);
 						}
 					}
@@ -988,45 +988,8 @@ void CGame::ClientReadNet()
 					break;
 				}
 
-				CUnit* ctrlUnit = (sender->dccs).playerControlledUnit;
-				if (ctrlUnit) {
-					// player released control
-					sender->StopControllingUnit();
-				} else {
-					// player took control
-					if (
-						!selectedUnits.netSelected[player].empty() &&
-						uh->units[selectedUnits.netSelected[player][0]] != NULL &&
-						!uh->units[selectedUnits.netSelected[player][0]]->weapons.empty()
-					) {
-						CUnit* unit = uh->units[selectedUnits.netSelected[player][0]];
+				sender->StartControllingUnit();
 
-						if (unit->directControl && unit->directControl->myController) {
-							if (player == gu->myPlayerNum) {
-								logOutput.Print(
-									"player %d is already controlling unit %d, try later",
-									unit->directControl->myController->playerNum, unit->id
-								);
-							}
-						}
-						else if (!luaRules || luaRules->AllowDirectUnitControl(player, unit)) {
-							unit->directControl = &sender->myControl;
-							(sender->dccs).playerControlledUnit = unit;
-
-							if (player == gu->myPlayerNum) {
-								gu->directControl = unit;
-								mouse->wasLocked = mouse->locked;
-								if (!mouse->locked) {
-									mouse->locked = true;
-									mouse->HideMouse();
-								}
-								camHandler->PushMode();
-								camHandler->SetCameraMode(0);
-								selectedUnits.ClearSelected();
-							}
-						}
-					}
-				}
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
@@ -1038,25 +1001,8 @@ void CGame::ClientReadNet()
 					break;
 				}
 
-				DirectControlStruct* dc = &playerHandler->Player(player)->myControl;
-				DirectControlClientState& dccs = playerHandler->Player(player)->dccs;
-				CUnit* unit = dccs.playerControlledUnit;
-
-				dc->forward    = !!(inbuf[2] & (1 << 0));
-				dc->back       = !!(inbuf[2] & (1 << 1));
-				dc->left       = !!(inbuf[2] & (1 << 2));
-				dc->right      = !!(inbuf[2] & (1 << 3));
-				dc->mouse1     = !!(inbuf[2] & (1 << 4));
-				bool newMouse2 = !!(inbuf[2] & (1 << 5));
-
-				if (!dc->mouse2 && newMouse2 && unit) {
-					unit->AttackUnit(0, true);
-				}
-				dc->mouse2 = newMouse2;
-
-				short int h = *((short int*) &inbuf[3]);
-				short int p = *((short int*) &inbuf[5]);
-				dc->viewDir = GetVectorFromHAndPExact(h, p);
+				CPlayer* sender = playerHandler->Player(player);
+				sender->fpsController.RecvStateUpdate(inbuf);
 
 				AddTraffic(player, packetCode, dataLength);
 				break;

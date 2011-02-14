@@ -42,10 +42,11 @@ void CPlayerHandler::LoadFromSetup(const CGameSetup* setup)
 		players.push_back(new CPlayer());
 
 	for (size_t i = 0; i < setup->playerStartingData.size(); ++i) {
-		CPlayer *player = players[i];
+		CPlayer* player = players[i];
 		*player = setup->playerStartingData[i];
+
 		player->playerNum = (int)i;
-		player->myControl.myController = player;
+		player->fpsController.SetControllerPlayer(player);
 	}
 }
 
@@ -88,19 +89,19 @@ void CPlayerHandler::GameFrame(int frameNum)
 	}
 }
 
-void CPlayerHandler::AddPlayer( const CPlayer& player )
+void CPlayerHandler::AddPlayer(const CPlayer& player)
 {
 	GML_MSTMUTEX_DOUNLOCK(sim); // AddPlayer - temporarily unlock this mutex to prevent a deadlock
 
-	int oldSize = players.size();
-	int newSize = std::max( (int)players.size(), player.playerNum + 1 );
+	const int oldSize = players.size();
+	const int newSize = std::max( (int)players.size(), player.playerNum + 1 );
 
 	{
 		GML_STDMUTEX_LOCK(draw); // AddPlayer - rendering accesses Player(x) in too many places, lock the entire draw thread
 
-		for ( unsigned int i = oldSize; i < newSize; ++i ) // fill gap with stubs
-		{
-			CPlayer *stub = new CPlayer();
+		for (unsigned int i = oldSize; i < newSize; ++i) {
+			// fill gap with stubs
+			CPlayer* stub = new CPlayer();
 			stub->name = "unknown";
 			stub->isFromDemo = false;
 			stub->spectator = true;
@@ -109,9 +110,9 @@ void CPlayerHandler::AddPlayer( const CPlayer& player )
 			players.push_back(stub);
 		}
 
-		CPlayer *newplayer = players[player.playerNum];
+		CPlayer* newplayer = players[player.playerNum];
 		*newplayer = player;
-		newplayer->myControl.myController = newplayer;
+		newplayer->fpsController.SetControllerPlayer(newplayer);
 	}
 
 	GML_MSTMUTEX_DOLOCK(sim); // AddPlayer - restore unlocked mutex

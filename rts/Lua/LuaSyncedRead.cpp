@@ -1359,7 +1359,9 @@ int LuaSyncedRead::GetPlayerControlledUnit(lua_State* L)
 		return 0;
 	}
 
-	CUnit* unit = (player->dccs).playerControlledUnit;
+	const FPSUnitController& con = player->fpsController;
+	const CUnit* unit = con.GetControllee();
+
 	if (unit == NULL) {
 		return 0;
 	}
