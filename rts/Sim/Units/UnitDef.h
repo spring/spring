@@ -213,7 +213,7 @@ public:
 	std::string buildPicName;
 	mutable UnitDefImage* buildPic;
 
-	mutable CIcon iconType;
+	mutable icon::CIcon iconType;
 
 	bool canSelfD;
 	int selfDCountdown;

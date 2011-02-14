@@ -7,10 +7,11 @@
 #include <string>
 #include <list>
 #include "InputReceiver.h"
-#include "Rendering/GL/myGL.h"
 
 class CUnit;
-class CIconData;
+namespace icon {
+	class CIconData;
+}
 
 
 class CMiniMap : public CInputReceiver {
@@ -71,7 +72,7 @@ class CMiniMap : public CInputReceiver {
 		void DrawUnitHighlight(const CUnit* unit);
 		void DrawCircle(const float3& pos, float radius);
 		void DrawSquare(const float3& pos, float xsize, float zsize);
-		const CIconData* GetUnitIcon(const CUnit* unit, float& scale) const;
+		const icon::CIconData* GetUnitIcon(const CUnit* unit, float& scale) const;
 		void GetFrustumSide(float3& side);
 		
 	protected:
@@ -134,7 +135,7 @@ class CMiniMap : public CInputReceiver {
 		unsigned char allyColor[4];
 		unsigned char enemyColor[4];
 
-		GLuint buttonsTexture;
+		unsigned int buttonsTexture;
 		unsigned int circleLists; // 8 - 256 divs
 		static const int circleListsCount = 6;
 				
