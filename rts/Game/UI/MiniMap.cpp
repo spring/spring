@@ -32,6 +32,7 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/UnitDrawer.h"
+#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -1497,7 +1498,7 @@ void CMiniMap::GetFrustumSide(float3& side)
 }
 
 
-inline const CIconData* CMiniMap::GetUnitIcon(const CUnit* unit, float& scale) const
+inline const icon::CIconData* CMiniMap::GetUnitIcon(const CUnit* unit, float& scale) const
 {
 	scale = 1.0f;
 
@@ -1511,7 +1512,7 @@ inline const CIconData* CMiniMap::GetUnitIcon(const CUnit* unit, float& scale) c
 			|| ((losStatus & LOS_INRADAR)&&((losStatus & prevMask) == prevMask))
 			|| gu->spectatingFullView)
 		{
-			const CIconData* iconData = unit->unitDef->iconType.GetIconData();
+			const icon::CIconData* iconData = unit->unitDef->iconType.GetIconData();
 			if (iconData->GetRadiusAdjust()) {
 				scale *= (unit->radius / 30.0f);
 			}
@@ -1521,7 +1522,7 @@ inline const CIconData* CMiniMap::GetUnitIcon(const CUnit* unit, float& scale) c
 
 	//! show default icon (unknown unitdef)
 	if (losStatus & LOS_INRADAR) {
-		return iconHandler->GetDefaultIconData();
+		return icon::iconHandler->GetDefaultIconData();
 	}
 
 	return NULL;
@@ -1541,7 +1542,7 @@ void CMiniMap::DrawUnit(const CUnit* unit)
 
 	// includes the visibility check
 	float iconScale;
-	const CIconData* iconData = GetUnitIcon(unit, iconScale);
+	const icon::CIconData* iconData = GetUnitIcon(unit, iconScale);
 	if (iconData == NULL) {
 		return;
 	}

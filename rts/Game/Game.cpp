@@ -335,7 +335,7 @@ CGame::~CGame()
 	SafeDelete(camHandler);
 	SafeDelete(camera);
 	SafeDelete(cam2);
-	SafeDelete(iconHandler);
+	SafeDelete(icon::iconHandler);
 	SafeDelete(inMapDrawer);
 	SafeDelete(geometricObjects);
 	SafeDelete(farTextureHandler);
@@ -410,7 +410,7 @@ void CGame::LoadDefs()
 {
 	{
 		loadscreen->SetLoadMessage("Loading Radar Icons");
-		iconHandler = new CIconHandler();
+		icon::iconHandler = new icon::CIconHandler();
 	}
 
 	{
