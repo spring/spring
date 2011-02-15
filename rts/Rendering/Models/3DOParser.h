@@ -36,8 +36,25 @@ struct S3DOPiece: public S3DModelPiece {
 	void SetMinMaxExtends();
 	int GetVertexCount() const { return vertices.size(); }
 	const float3& GetVertexPos(int idx) const { return vertices[idx].pos; }
-	void Shatter(float pieceChance, int texType, int team, const float3& pos,
-			const float3& speed) const;
+	float3 GetPosOffset() const {
+		float3 p = ZeroVector;
+
+		// fix for 3DO *A units with two-vertex pieces
+		if (vertices.size() == 2) {
+			const S3DOVertex& v0 = vertices[0];
+			const S3DOVertex& v1 = vertices[1];
+
+			if (v0.pos.y > v1.pos.y) {
+				p = float3(v0.pos.x, v0.pos.y, -v0.pos.z);
+			} else {
+				p = float3(v1.pos.x, v1.pos.y, -v1.pos.z);
+			}
+		}
+
+		return p;
+	}
+
+	void Shatter(float pieceChance, int texType, int team, const float3& pos, const float3& speed) const;
 
 	std::vector<S3DOVertex> vertices;
 	std::vector<S3DOPrimitive> prims;
