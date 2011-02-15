@@ -40,6 +40,7 @@ struct S3DModelPiece {
 	virtual void SetMinMaxExtends() {}
 	virtual void SetVertexTangents() {}
 	virtual const float3& GetVertexPos(int) const = 0;
+	virtual float3 GetPosOffset() const { return ZeroVector; }
 	virtual void Shatter(float, int, int, const float3&, const float3&) const {}
 	void DrawStatic() const;
 
