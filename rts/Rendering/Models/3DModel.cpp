@@ -223,18 +223,7 @@ float3 LocalModelPiece::GetPos() const
 	CMatrix44f mat;
 	GetPiecePosIter(&mat);
 
-	if (original->type == MODELTYPE_3DO) {
-		// fix for valkyres
-		const S3DOPiece* p3 = static_cast<S3DOPiece*>(original);
-		if (p3 && (p3->vertices.size() == 2)) {
-			const std::vector<S3DOVertex>& pv = p3->vertices;
-			if (pv[0].pos.y > pv[1].pos.y) {
-				mat.Translate(pv[0].pos.x, pv[0].pos.y, -pv[0].pos.z);
-			} else {
-				mat.Translate(pv[1].pos.x, pv[1].pos.y, -pv[1].pos.z);
-			}
-		}
-	}
+	mat.Translate(original->GetPosOffset());
 
 	// we use a 'right' vector, and the positive x axis points to the left
 	float3 pos = mat.GetPos();
