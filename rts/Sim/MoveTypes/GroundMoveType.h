@@ -21,7 +21,7 @@ public:
 	void Update();
 	void SlowUpdate();
 
-	void SetDeltaSpeed(float, bool);
+	void SetDeltaSpeed(float, bool, bool = false);
 
 	void StartMoving(float3 pos, float goalRadius);
 	void StartMoving(float3 pos, float goalRadius, float speed);
