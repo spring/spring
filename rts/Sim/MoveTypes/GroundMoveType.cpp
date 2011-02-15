@@ -439,7 +439,7 @@ void CGroundMoveType::StopMoving() {
 
 
 
-void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse)
+void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool fpsMode)
 {
 	wantedSpeed = newWantedSpeed;
 
@@ -466,7 +466,8 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse)
 		const float3 goalDif = reversing? goalDifRev: goalDifFwd;
 		const short turnDeltaHeading = owner->heading - GetHeadingFromVector(goalDif.x, goalDif.z);
 
-		if (turnDeltaHeading != 0) {
+		if (!fpsMode && turnDeltaHeading != 0) {
+			// only auto-adjust speed for turns when not in FPS mode
 			const bool moreCommands = owner->commandAI->HasMoreMoveCommands();
 			const bool startBreaking = (haveFinalWaypoint && !atGoal);
 
@@ -1898,19 +1899,18 @@ bool CGroundMoveType::UpdateDirectControl()
 	waypoint.CheckInBounds();
 
 	if (unitCon.forward) {
-		assert(!wantReverse);
-		SetDeltaSpeed(maxSpeed, wantReverse);
+		SetDeltaSpeed(maxSpeed, wantReverse, true);
 
 		owner->isMoving = true;
 		owner->script->StartMoving();
 	} else if (unitCon.back) {
-		assert(wantReverse);
-		SetDeltaSpeed(maxReverseSpeed, wantReverse);
+		SetDeltaSpeed(maxReverseSpeed, wantReverse, true);
 
 		owner->isMoving = true;
 		owner->script->StartMoving();
 	} else {
-		SetDeltaSpeed(0.0f, false);
+		// not moving forward or backward, stop
+		SetDeltaSpeed(0.0f, false, true);
 
 		owner->isMoving = false;
 		owner->script->StopMoving();
