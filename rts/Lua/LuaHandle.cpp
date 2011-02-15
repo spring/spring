@@ -75,9 +75,11 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
 	execMiscBatch = false;
 
 	SetSynced(false, true);
-	L_Sim = LUA_OPEN(&D_Sim, userMode, true);
+	D_Sim.owner = this;
+	L_Sim = LUA_OPEN(&D_Sim, GetUserMode(), true);
 	LUA_OPEN_LIB(L_Sim, luaopen_debug);
-	L_Draw = LUA_OPEN(&D_Draw, userMode, false);
+	D_Draw.owner = this;
+	L_Draw = LUA_OPEN(&D_Draw, GetUserMode(), false);
 	LUA_OPEN_LIB(L_Draw, luaopen_debug);
 }
 
@@ -337,7 +339,7 @@ int CLuaHandle::SendToUnsynced(lua_State* L)
 			luaL_error(L, "Incorrect data type for SendToUnsynced(), arg %d", i);
 		}
 	}
-	CLuaHandle* lh = GetActiveHandle();
+	CLuaHandle* lh = GetActiveHandle(L);
 	lh->RecvFromSynced(args);
 
 	return 0;
@@ -1823,7 +1825,7 @@ inline bool CLuaHandle::PushUnsyncedCallIn(lua_State *L, const LuaHashString& hs
 {
 	// LuaUI keeps these call-ins in the Global table,
 	// the synced handles keep them in the Registry table
-	if (userMode) {
+	if (GetUserMode()) {
 		return hs.GetGlobalFunc(L);
 	} else {
 		return hs.GetRegistryFunc(L);
@@ -1834,7 +1836,7 @@ inline bool CLuaHandle::PushUnsyncedCallIn(lua_State *L, const LuaHashString& hs
 void CLuaHandle::Save(zipFile archive)
 {
 	// LuaUI does not get this call-in
-	if (userMode) {
+	if (GetUserMode()) {
 		return;
 	}
 
@@ -2119,7 +2121,7 @@ void CLuaHandle::DrawInMiniMap()
 static inline bool CheckModUICtrl()
 {
 	return CLuaHandle::GetModUICtrl() ||
-	       ActiveHandle()->GetUserMode();
+		CLuaHandle::GetActiveHandle()->GetUserMode();
 }
 
 
@@ -2743,14 +2745,14 @@ bool CLuaHandle::AddBasicCalls(lua_State *L)
 
 int CLuaHandle::CallOutGetName(lua_State* L)
 {
-	lua_pushstring(L, GetActiveHandle()->GetName().c_str());
+	lua_pushstring(L, GetActiveHandle(L)->GetName().c_str());
 	return 1;
 }
 
 
 int CLuaHandle::CallOutGetSynced(lua_State* L)
 {
-	lua_pushboolean(L, GetActiveHandle()->GetSynced());
+	lua_pushboolean(L, GetSynced(L));
 	return 1;
 }
 
@@ -2847,7 +2849,7 @@ int CLuaHandle::CallOutSyncedUpdateCallIn(lua_State* L)
 		luaL_error(L, "Incorrect arguments to UpdateCallIn()");
 	}
 	const string name = lua_tostring(L, 1);
-	CLuaHandle *lh = GetActiveHandle();
+	CLuaHandle *lh = GetActiveHandle(L);
 	lh->SyncedUpdateCallIn(lh->GetActiveState(), name);
 	return 0;
 }
@@ -2862,7 +2864,7 @@ int CLuaHandle::CallOutUnsyncedUpdateCallIn(lua_State* L)
 		luaL_error(L, "Incorrect arguments to UpdateCallIn()");
 	}
 	const string name = lua_tostring(L, 1);
-	CLuaHandle *lh = GetActiveHandle();
+	CLuaHandle *lh = GetActiveHandle(L);
 	lh->UnsyncedUpdateCallIn(lh->GetActiveState(), name);
 	return 0;
 }
