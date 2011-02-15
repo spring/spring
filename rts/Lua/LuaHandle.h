@@ -42,10 +42,11 @@ struct Command;
 struct LuaHashString;
 struct lua_State;
 class CLogSubsystem;
+class CLuaHandle;
 
 struct luaContextData {
 	luaContextData() : fullCtrl(false), fullRead(false), ctrlTeam(CEventClient::NoAccessTeam), 
-		readTeam(0), readAllyTeam(0), selectTeam(CEventClient::NoAccessTeam) {}
+		readTeam(0), readAllyTeam(0), selectTeam(CEventClient::NoAccessTeam), synced(false), owner(NULL) {}
 	bool fullCtrl;
 	bool fullRead;
 	int  ctrlTeam;
@@ -59,6 +60,8 @@ struct luaContextData {
 	LuaFBOs fbos;
 	LuaRBOs rbos;
 	CLuaDisplayLists displayLists;
+	bool synced;
+	CLuaHandle *owner;
 };
 
 class CLuaHandle : public CEventClient
@@ -86,12 +89,12 @@ class CLuaHandle : public CEventClient
 
 		inline void SetCtrlTeam(int _ctrlTeam, bool all = false) { SET_ACTIVE_CONTEXT_DATA(ctrlTeam); }
 		static inline void SetCtrlTeam(const lua_State *L, int _ctrlTeam) { SET_HANDLE_CONTEXT_DATA(ctrlTeam); }
-		inline bool GetCtrlTeam() const { return GET_ACTIVE_CONTEXT_DATA(ctrlTeam); }
+		inline int GetCtrlTeam() const { return GET_ACTIVE_CONTEXT_DATA(ctrlTeam); }
 		static inline int GetCtrlTeam(const lua_State *L) { return GET_HANDLE_CONTEXT_DATA(ctrlTeam); }
 
 		inline void SetReadTeam(int _readTeam, bool all = false) { SET_ACTIVE_CONTEXT_DATA(readTeam); }
 		static inline void SetReadTeam(const lua_State *L, int _readTeam) { SET_HANDLE_CONTEXT_DATA(readTeam); }
-		inline bool GetReadTeam() const { return GET_ACTIVE_CONTEXT_DATA(readTeam); }
+		inline int GetReadTeam() const { return GET_ACTIVE_CONTEXT_DATA(readTeam); }
 		static inline int GetReadTeam(const lua_State *L) { return GET_HANDLE_CONTEXT_DATA(readTeam); }
 
 		inline void SetReadAllyTeam(int _readAllyTeam, bool all = false) { SET_ACTIVE_CONTEXT_DATA(readAllyTeam); }
@@ -101,14 +104,16 @@ class CLuaHandle : public CEventClient
 
 		inline void SetSelectTeam(int _selectTeam, bool all = false) { SET_ACTIVE_CONTEXT_DATA(selectTeam); }
 		static inline void SetSelectTeam(const lua_State *L, int _selectTeam) { SET_HANDLE_CONTEXT_DATA(selectTeam); }
-		inline bool GetSelectTeam() const { return GET_ACTIVE_CONTEXT_DATA(selectTeam); }
+		inline int GetSelectTeam() const { return GET_ACTIVE_CONTEXT_DATA(selectTeam); }
 		static inline int GetSelectTeam(const lua_State *L) { return GET_HANDLE_CONTEXT_DATA(selectTeam); }
 
-		inline void SetSynced(bool _synced, bool all = false) { if(!IsDrawCallIn() || all) synced = _synced; }
-		inline bool GetSynced() const { return IsDrawCallIn() ? false : synced; }
+		inline void SetSynced(bool _synced, bool all = false) { SET_ACTIVE_CONTEXT_DATA(synced); }
+		static inline void SetSynced(const lua_State *L, bool _synced) { SET_HANDLE_CONTEXT_DATA(synced); }
+		inline bool GetSynced() const { return GET_ACTIVE_CONTEXT_DATA(synced); }
+		static inline bool GetSynced(const lua_State *L) { return GET_HANDLE_CONTEXT_DATA(synced); }
 
-		bool GetUserMode()     const { return userMode; }
-
+		static inline bool GetUserMode(const lua_State *L) { return GET_HANDLE_CONTEXT_DATA(owner->userMode); }
+		inline bool GetUserMode()     const { return userMode; }
 
 		bool WantsToDie() const { return killMe; }
 
@@ -120,8 +125,7 @@ class CLuaHandle : public CEventClient
 		LuaRBOs& GetRBOs(const lua_State *L = NULL) { return GET_CONTEXT_DATA(rbos); }
 		CLuaDisplayLists& GetDisplayLists(const lua_State *L = NULL) { return GET_CONTEXT_DATA(displayLists); }
 
-	public:
-		const bool userMode;
+		bool userMode;
 
 	public: // call-ins
 		virtual bool HasCallIn(lua_State *L, const string& name) { return false; } // FIXME
@@ -321,15 +325,11 @@ class CLuaHandle : public CEventClient
 		void UnitCallIn(const LuaHashString& hs, const CUnit* unit);
 		bool PushUnsyncedCallIn(lua_State *L, const LuaHashString& hs);
 
-		inline bool CheckModUICtrl() { return modUICtrl || userMode; }
+		inline bool CheckModUICtrl() { return GetModUICtrl() || GetUserMode(); }
 
 		inline bool IsValid() const { return (L_Sim != NULL) && (L_Draw != NULL); }
 
 	protected:
-
-		bool synced; // FIXME -- remove this once the lua_State split is done
-		//          (use the constant CEventClient version ...)
-
 
 		lua_State* L_Sim;
 		lua_State* L_Draw;
@@ -366,6 +366,9 @@ class CLuaHandle : public CEventClient
 		static inline CLuaHandle* GetActiveHandle() {
 			return GetStaticLuaContextData().activeHandle;
 		}
+		static inline CLuaHandle* GetActiveHandle(lua_State *L) {
+			return GET_HANDLE_CONTEXT_DATA(owner);
+		}
 
 		static inline const bool GetActiveFullRead() { return GetStaticLuaContextData().activeFullRead; }
 		static inline void SetActiveFullRead(bool fr) {	GetStaticLuaContextData().activeFullRead = fr; }
@@ -383,8 +386,8 @@ class CLuaHandle : public CEventClient
 		static void SetDevMode(bool value) { devMode = value; }
 		static bool GetDevMode() { return devMode; }
 
-		static void SetModUICtrl(bool value) { modUICtrl = value; }
-		static bool GetModUICtrl() { return modUICtrl; }
+		static inline void SetModUICtrl(bool value) { modUICtrl = value; }
+		static inline bool GetModUICtrl() { return modUICtrl; }
 
 		static void HandleLuaMsg(int playerID, int script, int mode,
 			const std::vector<boost::uint8_t>& msg);

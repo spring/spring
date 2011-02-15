@@ -761,11 +761,11 @@ void CLuaHandleSynced::RecvFromSynced(int args)
 
 	// call the routine
 	SetAllowChanges(false);
-	SetSynced(false);
+	SetSynced(L, false);
 
 	RunCallIn(cmdStr, args, 0);
 
-	SetSynced(true);
+	SetSynced(L, true);
 	SetAllowChanges(true);
 }
 
@@ -906,11 +906,11 @@ int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 
 	GML_MEASURE_LOCK_TIME(GML_THRMUTEX_LOCK(lua, GML_DRAW|GML_SIM, *L->));
 
-	const bool prevSynced = GetSynced();
-	SetSynced(false);
+	const bool prevSynced = GetSynced(L);
+	SetSynced(L, false);
 	unsyncedStr.GetRegistry(L); // push the UNSYNCED table
 	const int retval = XCall(L, srcState, funcName);
-	SetSynced(prevSynced);
+	SetSynced(L, prevSynced);
 	return retval;
 }
 
@@ -976,7 +976,7 @@ int CLuaHandleSynced::LoadStringData(lua_State* L)
 
 int CLuaHandleSynced::CallAsTeam(lua_State* L)
 {
-	CLuaHandleSynced* lhs = GetActiveHandle();
+	CLuaHandleSynced* lhs = GetActiveHandle(L);
 	if (lhs->teamsLocked) {
 		luaL_error(L, "CallAsTeam() called when teams are locked");
 	}
@@ -1089,7 +1089,7 @@ int CLuaHandleSynced::AddSyncedActionFallback(lua_State* L)
 		return 1;
 	}
 
-	CLuaHandleSynced* lhs = GetActiveHandle();
+	CLuaHandleSynced* lhs = GetActiveHandle(L);
 	lhs->textCommands[cmd] = lua_tostring(L, 2);
 	game->wordCompletion->AddWord(cmdRaw, true, false, false);
 	lua_pushboolean(L, true);
@@ -1117,7 +1117,7 @@ int CLuaHandleSynced::RemoveSyncedActionFallback(lua_State* L)
 		return 1;
 	}
 
-	CLuaHandleSynced* lhs = GetActiveHandle();
+	CLuaHandleSynced* lhs = GetActiveHandle(L);
 
 	map<string, string>::iterator it = lhs->textCommands.find(cmd);
 	if (it != lhs->textCommands.end()) {
@@ -1135,7 +1135,7 @@ int CLuaHandleSynced::RemoveSyncedActionFallback(lua_State* L)
 
 int CLuaHandleSynced::GetWatchWeapon(lua_State* L)
 {
-	CLuaHandleSynced* lhs = GetActiveHandle();
+	CLuaHandleSynced* lhs = GetActiveHandle(L);
 	const int weaponID = luaL_checkint(L, 1);
 	if ((weaponID < 0) || (weaponID >= (int)lhs->watchWeapons.size())) {
 		return 0;
@@ -1147,7 +1147,7 @@ int CLuaHandleSynced::GetWatchWeapon(lua_State* L)
 
 int CLuaHandleSynced::SetWatchWeapon(lua_State* L)
 {
-	CLuaHandleSynced* lhs = GetActiveHandle();
+	CLuaHandleSynced* lhs = GetActiveHandle(L);
 	const int weaponID = luaL_checkint(L, 1);
 	if ((weaponID < 0) || (weaponID >= (int)lhs->watchWeapons.size())) {
 		return 0;

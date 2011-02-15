@@ -96,8 +96,7 @@ static float smoothMeshAmountChanged;
 
 inline void LuaSyncedCtrl::CheckAllowGameChanges(lua_State* L)
 {
-	const CLuaHandleSynced* lhs =
-		dynamic_cast<const CLuaHandleSynced*>(ActiveHandle());
+	const CLuaHandleSynced* lhs = CLuaHandleSynced::GetActiveHandle(L);
 
 	if (lhs == NULL) {
 		luaL_error(L, "Internal lua error, unsynced script using synced calls");

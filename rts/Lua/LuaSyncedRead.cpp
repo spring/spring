@@ -1385,7 +1385,7 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 	numVals += 3;
 
 	// no unsynced Skirmish AI info for synchronized scripts
-	if (ActiveHandle()->GetSynced()) {
+	if (CLuaHandle::GetSynced(L)) {
 		HSTR_PUSH(L, "SYNCED_NOSHORTNAME");
 		HSTR_PUSH(L, "SYNCED_NOVERSION");
 		lua_newtable(L);
