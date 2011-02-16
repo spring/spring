@@ -62,6 +62,11 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 
 	CReadMap::Initialize();
 
+	shadingTexPixelRow = new unsigned char[gs->mapx * 4];
+	shadingTexUpdateIter = 0;
+	shadingTexUpdateRate = std::max(1, (int)ceil(5.0f*(float)gs->mapx/(float)gs->mapy));
+
+
 	for (unsigned int a = 0; a < mapname.size(); ++a) {
 		mapChecksum += mapname[a];
 		mapChecksum *= mapname[a];
@@ -235,12 +240,48 @@ CSmfReadMap::~CSmfReadMap()
 	if (splatDistrTex   ) { glDeleteTextures(1, &splatDistrTex   ); }
 	if (grassShadingTex ) { glDeleteTextures(1, &grassShadingTex ); }
 	if (skyReflectModTex) { glDeleteTextures(1, &skyReflectModTex); }
+
+	delete [] shadingTexPixelRow;
 }
 
 
 void CSmfReadMap::NewGroundDrawer() { groundDrawer = new CBFGroundDrawer(this); }
 CBaseGroundDrawer* CSmfReadMap::GetGroundDrawer() { return (CBaseGroundDrawer*) groundDrawer; }
 
+
+void CSmfReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigned char *pixels) {
+	for (int x = 0; x < xsize; ++x) {
+		const int xi = x1 + x, yi = y1 + y;
+		const float& height = centerheightmap[(xi) + (yi) * gs->mapx];
+
+		if (height < 0.0f) {
+			const int h = (int) - height & 1023; //! waterHeightColors array just holds 1024 colors
+			float light = std::min((DiffuseSunCoeff(x + x1, y + y1) + 0.2f) * 2.0f, 1.0f);
+
+			if (height > -10.0f) {
+				const float wc = -height * 0.1f;
+				const float3 light3 = GetLightValue(x + x1, y + y1) * (1.0f - wc) * 210.0f;
+				light *= wc;
+
+				pixels[x * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light + light3.x);
+				pixels[x * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light + light3.y);
+				pixels[x * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light + light3.z);
+			} else {
+				pixels[x * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light);
+				pixels[x * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light);
+				pixels[x * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light);
+			}
+			pixels[x * 4 + 3] = EncodeHeight(height);
+		} else {
+			const float3 light = GetLightValue(x + x1, y + y1) * 210.0f;
+
+			pixels[x * 4 + 0] = (unsigned char) light.x;
+			pixels[x * 4 + 1] = (unsigned char) light.y;
+			pixels[x * 4 + 2] = (unsigned char) light.z;
+			pixels[x * 4 + 3] = 255;
+		}
+	}
+}
 
 void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 {
@@ -262,37 +303,7 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 		std::vector<unsigned char> pixels(xsize * ysize * 4, 0.0f);
 
 		for (int y = 0; y < ysize; ++y) {
-			for (int x = 0; x < xsize; ++x) {
-				const int xi = x1 + x, yi = y1 + y;
-				const float& height = centerheightmap[(xi) + (yi) * gs->mapx];
-
-				if (height < 0.0f) {
-					const int h = (int) - height & 1023; //! waterHeightColors array just holds 1024 colors
-					float light = std::min((DiffuseSunCoeff(x + x1, y + y1) + 0.2f) * 2.0f, 1.0f);
-
-					if (height > -10.0f) {
-						const float wc = -height * 0.1f;
-						const float3 light3 = GetLightValue(x + x1, y + y1) * (1.0f - wc) * 210.0f;
-						light *= wc;
-
-						pixels[(y * xsize + x) * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light + light3.x);
-						pixels[(y * xsize + x) * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light + light3.y);
-						pixels[(y * xsize + x) * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light + light3.z);
-					} else {
-						pixels[(y * xsize + x) * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light);
-						pixels[(y * xsize + x) * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light);
-						pixels[(y * xsize + x) * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light);
-					}
-					pixels[(y * xsize + x) * 4 + 3] = EncodeHeight(height);
-				} else {
-					const float3 light = GetLightValue(x + x1, y + y1) * 210.0f;
-
-					pixels[(y * xsize + x) * 4 + 0] = (unsigned char) light.x;
-					pixels[(y * xsize + x) * 4 + 1] = (unsigned char) light.y;
-					pixels[(y * xsize + x) * 4 + 2] = (unsigned char) light.z;
-					pixels[(y * xsize + x) * 4 + 3] = 255;
-				}
-			}
+			UpdateShadingTexPart(y, x1, y1, xsize, &pixels[y * xsize * 4]);
 		}
 
 		// redefine the texture subregion
@@ -393,10 +404,30 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 }
 
 
+void CSmfReadMap::UpdateShadingTexture() {
+	if(!globalRendering->dynamicSun)
+		return;
+	const int xsize = gs->mapx;
+	const int ysize = gs->mapy;
+	int y = shadingTexUpdateIter;
+
+	shadingTexUpdateIter = (shadingTexUpdateIter + 1) % (ysize * shadingTexUpdateRate);
+	if((y % shadingTexUpdateRate) != 0)
+		return;
+	y /= shadingTexUpdateRate;
+
+	UpdateShadingTexPart(y, 0, 0, xsize, shadingTexPixelRow);
+
+	glBindTexture(GL_TEXTURE_2D, shadingTex);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, y, xsize, 1, GL_RGBA, GL_UNSIGNED_BYTE, shadingTexPixelRow);
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+
 float CSmfReadMap::DiffuseSunCoeff(const int& x, const int& y) const
 {
 	const float3& n = centernormals[(y * gs->mapx) + x];
-	return Clamp(mapInfo->light.sunDir.dot(n), 0.0f, 1.0f);
+	return Clamp(globalRendering->sunDir.dot(n), 0.0f, 1.0f);
 }
 
 
