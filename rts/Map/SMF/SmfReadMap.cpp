@@ -64,7 +64,10 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 
 	shadingTexPixelRow = new unsigned char[gs->mapx * 4];
 	shadingTexUpdateIter = 0;
-	shadingTexUpdateRate = std::max(1, (int)ceil(5.0f*(float)gs->mapx/(float)gs->mapy));
+	shadingTexUpdateRate = std::max(1, (int)ceil((float)gs->mapx / (float)gs->mapy));
+	// with GLSL, the shading texture has very limited use (minimap etc) so we increase the update interval
+	if (globalRendering->haveGLSL)
+		shadingTexUpdateRate *= 10;
 
 
 	for (unsigned int a = 0; a < mapname.size(); ++a) {
@@ -415,6 +418,7 @@ void CSmfReadMap::UpdateShadingTexture() {
 	if((y % shadingTexUpdateRate) != 0)
 		return;
 	y /= shadingTexUpdateRate;
+	y = (y * 2 + ((((ysize % 2) == 0) && (y >= (ysize / 2))) ? 1 : 0)) % ysize;
 
 	UpdateShadingTexPart(y, 0, 0, xsize, shadingTexPixelRow);
 
