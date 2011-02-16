@@ -59,6 +59,7 @@ public:
 
 	virtual ~CReadMap();
 	static CReadMap* LoadMap(const std::string& mapname);
+	virtual void UpdateShadingTexture() {}
 
 protected:
 	CReadMap();

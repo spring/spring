@@ -16,6 +16,8 @@ public:
 	~CSmfReadMap();
 
 	void UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2);
+	inline void UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigned char *pixels);
+	virtual void UpdateShadingTexture();
 
 	inline GLuint GetDetailTexture() const { return detailTex; }
 	inline GLuint GetShadingTexture() const { return shadingTex; }
@@ -85,6 +87,10 @@ protected:
 
 	friend class CBFGroundDrawer;
 	CBFGroundDrawer* groundDrawer;
+
+	unsigned char *shadingTexPixelRow;
+	int shadingTexUpdateIter;
+	int shadingTexUpdateRate;
 };
 
 #endif
