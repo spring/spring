@@ -25,8 +25,6 @@
 #include "System/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/UnsyncedRNG.h"
-//SDL_main.h contains a macro that replaces the main function, see SDL_main.h for details
-#include <SDL_main.h>
 
 #ifdef __cplusplus
 extern "C" {
