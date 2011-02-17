@@ -36,7 +36,7 @@
 #include "System/NetProtocol.h"
 #include "System/Net/PackPacket.h"
 #include "System/Input/KeyInput.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/IEffectChannel.h"
 
 #define PLAY_SOUNDS 1
 
@@ -254,13 +254,13 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 
 	SendCommand(c);
 
-	#if (PLAY_SOUNDS == 1)
+	#ifdef PLAY_SOUNDS
 	if (!selectedUnits.empty()) {
 		CUnitSet::const_iterator ui = selectedUnits.begin();
 
 		const int soundIdx = (*ui)->unitDef->sounds.ok.getRandomIdx();
 		if (soundIdx >= 0) {
-			sound::Channels::UnitReply.PlaySample(
+			Channels::UnitReply.PlaySample(
 				(*ui)->unitDef->sounds.ok.getID(soundIdx), (*ui),
 				(*ui)->unitDef->sounds.ok.getVolume(soundIdx));
 		}

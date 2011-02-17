@@ -9,7 +9,6 @@
 #include <alc.h>
 #include <boost/cstdint.hpp>
 
-#include "SoundChannels.h"
 #include "SoundLog.h"
 #include "SoundSource.h"
 #include "SoundBuffer.h"
@@ -27,8 +26,6 @@
 #include "Lua/LuaParser.h"
 
 #include "float3.h"
-
-namespace sound {
 
 CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), numAbortedPlays(0), soundThread(NULL), soundThreadQuit(false)
 {
@@ -561,5 +558,3 @@ void CSound::NewFrame()
 	Channels::UnitReply.UpdateFrame();
 	Channels::UserInterface.UpdateFrame();
 }
-
-};

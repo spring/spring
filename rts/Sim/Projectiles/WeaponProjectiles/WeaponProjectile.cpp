@@ -17,10 +17,10 @@
 #include "Map/Ground.h"
 #include "System/Matrix44f.h"
 #include "System/GlobalUnsynced.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/IEffectChannel.h"
 #include "System/LogOutput.h"
 #ifdef TRACE_SYNC
-	#include "System/Sync/SyncTracer.h"
+	#include "Sync/SyncTracer.h"
 #endif
 
 
@@ -158,7 +158,7 @@ void CWeaponProjectile::Collision(CFeature* feature)
 	}
 
 	if (weaponDef->soundhit.getID(0) > 0) {
-		sound::Channels::Battle.PlaySample(weaponDef->soundhit.getID(0), this, weaponDef->soundhit.getVolume(0));
+		Channels::Battle.PlaySample(weaponDef->soundhit.getID(0), this, weaponDef->soundhit.getVolume(0));
 	}
 
 	if (!weaponDef->noExplode){
@@ -211,7 +211,7 @@ void CWeaponProjectile::Collision(CUnit* unit)
 	}
 
 	if (weaponDef->soundhit.getID(0) > 0) {
-		sound::Channels::Battle.PlaySample(weaponDef->soundhit.getID(0), this,
+		Channels::Battle.PlaySample(weaponDef->soundhit.getID(0), this,
 				weaponDef->soundhit.getVolume(0));
 	}
 

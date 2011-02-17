@@ -33,7 +33,7 @@
 #include "System/FastMath.h"
 #include "System/myMath.h"
 #include "System/Vec2.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/IEffectChannel.h"
 #include "System/Sync/SyncTracer.h"
 
 #define MIN_WAYPOINT_DISTANCE (SQUARE_SIZE << 1)
@@ -413,7 +413,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 	if (owner->team == gu->myTeam) {
 		const int soundIdx = owner->unitDef->sounds.activate.getRandomIdx();
 		if (soundIdx >= 0) {
-			sound::Channels::UnitReply.PlaySample(
+			Channels::UnitReply.PlaySample(
 				owner->unitDef->sounds.activate.getID(soundIdx), owner,
 				owner->unitDef->sounds.activate.getVolume(soundIdx));
 		}
@@ -1280,7 +1280,7 @@ void CGroundMoveType::Arrived()
 		if (owner->team == gu->myTeam) {
 			const int soundIdx = owner->unitDef->sounds.arrived.getRandomIdx();
 			if (soundIdx >= 0) {
-				sound::Channels::UnitReply.PlaySample(
+				Channels::UnitReply.PlaySample(
 					owner->unitDef->sounds.arrived.getID(soundIdx), owner,
 					owner->unitDef->sounds.arrived.getVolume(soundIdx));
 			}

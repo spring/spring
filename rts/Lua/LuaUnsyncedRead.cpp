@@ -58,7 +58,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/IMusicChannel.h"
 
 using namespace std;
 
@@ -1457,8 +1457,8 @@ int LuaUnsyncedRead::DiffTimers(lua_State* L)
 
 int LuaUnsyncedRead::GetSoundStreamTime(lua_State* L)
 {
-	lua_pushnumber(L, sound::Channels::BGMusic.GetPlayTime());
-	lua_pushnumber(L, sound::Channels::BGMusic.GetTime());
+	lua_pushnumber(L, Channels::BGMusic.GetPlayTime());
+	lua_pushnumber(L, Channels::BGMusic.GetTime());
 	return 2;
 }
 

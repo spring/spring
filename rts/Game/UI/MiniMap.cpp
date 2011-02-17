@@ -50,11 +50,9 @@
 #include "System/TimeProfiler.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/SimpleParser.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/IEffectChannel.h"
 
 #include <boost/cstdint.hpp>
-
-#define PLAY_SOUNDS 1
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -551,19 +549,17 @@ void CMiniMap::SelectUnits(int x, int y) const
 			}
 		}
 
-		#if (PLAY_SOUNDS == 1)
 		if (addedunits >= 2) {
-			sound::Channels::UserInterface.PlaySample(mouse->soundMultiselID);
+			Channels::UserInterface.PlaySample(mouse->soundMultiselID);
 		}
 		else if (addedunits == 1) {
-			const int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
+			int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
 			if (soundIdx >= 0) {
-				sound::Channels::UnitReply.PlaySample(
+				Channels::UnitReply.PlaySample(
 					unit->unitDef->sounds.select.getID(soundIdx), unit,
 					unit->unitDef->sounds.select.getVolume(soundIdx));
 			}
 		}
-		#endif
 	}
 	else {
 		// Single unit
@@ -614,14 +610,12 @@ void CMiniMap::SelectUnits(int x, int y) const
 			}
 			bp.lastRelease = gu->gameTime;
 
-			#if (PLAY_SOUNDS == 1)
-			const int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
+			int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
 			if (soundIdx >= 0) {
-				sound::Channels::UnitReply.PlaySample(
+				Channels::UnitReply.PlaySample(
 					unit->unitDef->sounds.select.getID(soundIdx), unit,
 					unit->unitDef->sounds.select.getVolume(soundIdx));
 			}
-			#endif
 		}
 	}
 }
