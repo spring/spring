@@ -87,7 +87,10 @@ void CMapInfo::ReadGlobal()
 	map.voidWater = topTable.GetBool("voidWater", false);
 
 	// clamps
-	map.hardness        = max(0.001f, map.hardness);
+	if (-0.001f < map.hardness && map.hardness <= 0.0f)
+		map.hardness = -0.001f;
+	else if (0.0f <= map.hardness && map.hardness < 0.001f)
+		map.hardness = 0.001f;
 	map.tidalStrength   = max(0.000f, map.tidalStrength);
 	map.maxMetal        = max(0.000f, map.maxMetal);
 	map.extractorRadius = max(0.000f, map.extractorRadius);
