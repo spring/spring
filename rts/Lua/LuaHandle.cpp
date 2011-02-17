@@ -2090,7 +2090,6 @@ void CLuaHandle::DrawScreenEffects()
 
 void CLuaHandle::DrawInMiniMap()
 {
-	LUA_RECURSION_CHECK(); // prevent chained eventHandler calls between different lua handles (will deadlock MT)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("DrawInMiniMap");

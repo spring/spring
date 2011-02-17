@@ -195,6 +195,7 @@ extern boost::mutex glbatchmutex;
 extern boost::mutex mlbatchmutex;
 extern boost::mutex cmdmutex;
 extern boost::mutex luauimutex;
+extern boost::mutex xcallmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 extern boost::recursive_mutex unitmutex;

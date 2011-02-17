@@ -1313,7 +1313,7 @@ bool CGame::Draw() {
 
 	SetDrawMode(gameNormalDraw);
 
- 	if (luaUI)    { luaUI->CheckStack(); }
+ 	if (luaUI)    { luaUI->CheckStack(); luaUI->ExecuteDelayedXCalls(); }
 	if (luaGaia)  { luaGaia->CheckStack(); }
 	if (luaRules) { luaRules->CheckStack(); }
 

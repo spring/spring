@@ -71,6 +71,7 @@ class CLuaUI : public CLuaHandle
 	public: // custom call-in
 		bool HasUnsyncedXCall(const string& funcName);
 		int UnsyncedXCall(lua_State* srcState, const string& funcName);
+		void ExecuteDelayedXCalls();
 
 	protected:
 		CLuaUI();
@@ -104,6 +105,8 @@ class CLuaUI : public CLuaHandle
 
 	private: // call-outs
 		static int SetShockFrontFactors(lua_State* L);
+
+		std::vector<DelayDataDump> delayedXCall;
 };
 
 
