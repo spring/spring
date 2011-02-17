@@ -238,6 +238,7 @@ boost::mutex glbatchmutex;
 boost::mutex mlbatchmutex;
 boost::mutex cmdmutex;
 boost::mutex luauimutex;
+boost::mutex xcallmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 boost::recursive_mutex unitmutex;

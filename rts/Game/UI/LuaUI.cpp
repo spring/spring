@@ -217,6 +217,13 @@ CLuaUI::CLuaUI()
 
 CLuaUI::~CLuaUI()
 {
+	for(int i = 0; i < delayedXCall.size(); ++i) {
+		DelayDataDump &ddp = delayedXCall[i];
+		if(ddp.dd.size() == 1 && ddp.dd[0].type == LUA_TSTRING)
+			delete ddp.dd[0].data.str;
+	}
+	delayedXCall.clear();
+
 	if (L_Sim != NULL || L_Draw != NULL) {
 		Shutdown();
 		KillLua();
@@ -821,9 +828,78 @@ bool CLuaUI::HasUnsyncedXCall(const string& funcName)
 	return haveFunc;
 }
 
+void CLuaUI::ExecuteDelayedXCalls() {
+	std::vector<DelayDataDump> dxc;
+	{
+		GML_STDMUTEX_LOCK(xcall); // ExecuteDelayedXCalls
+
+		delayedXCall.swap(dxc);
+	}
+
+	GML_RECMUTEX_LOCK(unit); // ExecuteDelayedXCalls
+	GML_RECMUTEX_LOCK(feat); // ExecuteDelayedXCalls
+
+	for(int i = 0; i < dxc.size(); ++i) {
+		DelayDataDump &ddp = dxc[i];
+
+		LUA_CALL_IN_CHECK(L);
+
+		if(ddp.dd.size() == 1) {
+			DelayData dd = ddp.dd[0];
+			if(dd.type == LUA_TSTRING) {
+				const LuaHashString funcHash(*dd.data.str);
+				delete dd.data.str;
+				if (!funcHash.GetGlobalFunc(L))
+					return;
+
+				const int top = lua_gettop(L) - 1;
+
+				LuaUtils::Restore(ddp.com, L);
+
+				if (!RunCallIn(funcHash, ddp.com.size(), LUA_MULTRET))
+					return;
+
+				lua_settop(L, top);
+			}
+		}
+	}
+}
 
 int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 {
+#if DUAL_LUA_STATES
+	{
+		SELECT_LUA_STATE();
+		if(srcState != L) {
+			DelayDataDump ddmp;
+
+			DelayData ddata;
+			ddata.type = LUA_TSTRING;
+
+			size_t len = funcName.length();
+			ddata.data.str = new std::string;
+			if (len > 0) {
+				ddata.data.str->resize(len);
+				memcpy(&(*ddata.data.str)[0], funcName.c_str(), len);
+			}
+			ddmp.dd.push_back(ddata);
+
+			LuaUtils::Backup(ddmp.com, srcState, lua_gettop(srcState));
+
+			lua_settop(srcState, 0);
+
+			GML_STDMUTEX_LOCK(xcall);
+
+			DelayDataDump ddtemp;
+			delayedXCall.push_back(ddtemp);
+			delayedXCall.back().dd.swap(ddmp.dd);
+			delayedXCall.back().com.swap(ddmp.com);
+
+			return 0;
+		}
+	}
+#endif
+
 	LUA_CALL_IN_CHECK(L);
 	const LuaHashString funcHash(funcName);
 	if (!funcHash.GetGlobalFunc(L)) {
