@@ -62,9 +62,9 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 
 	CReadMap::Initialize();
 
-	shadingTexPixelRow = new unsigned char[gs->mapx * 4];
+	shadingTexPixelRow.resize(gs->mapx * 4, 0);
 	shadingTexUpdateIter = 0;
-	shadingTexUpdateRate = std::max(1, (int)ceil((float)gs->mapx / (float)gs->mapy));
+	shadingTexUpdateRate = std::max(1.0f, std::ceil(gs->mapx / float(gs->mapy)));
 	// with GLSL, the shading texture has very limited use (minimap etc) so we increase the update interval
 	if (globalRendering->haveGLSL)
 		shadingTexUpdateRate *= 10;
@@ -243,8 +243,6 @@ CSmfReadMap::~CSmfReadMap()
 	if (splatDistrTex   ) { glDeleteTextures(1, &splatDistrTex   ); }
 	if (grassShadingTex ) { glDeleteTextures(1, &grassShadingTex ); }
 	if (skyReflectModTex) { glDeleteTextures(1, &skyReflectModTex); }
-
-	delete [] shadingTexPixelRow;
 }
 
 
@@ -252,7 +250,7 @@ void CSmfReadMap::NewGroundDrawer() { groundDrawer = new CBFGroundDrawer(this); 
 CBaseGroundDrawer* CSmfReadMap::GetGroundDrawer() { return (CBaseGroundDrawer*) groundDrawer; }
 
 
-void CSmfReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigned char *pixels) {
+void CSmfReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigned char* pixelRow) {
 	for (int x = 0; x < xsize; ++x) {
 		const int xi = x1 + x, yi = y1 + y;
 		const float& height = centerheightmap[(xi) + (yi) * gs->mapx];
@@ -266,22 +264,22 @@ void CSmfReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigne
 				const float3 light3 = GetLightValue(x + x1, y + y1) * (1.0f - wc) * 210.0f;
 				light *= wc;
 
-				pixels[x * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light + light3.x);
-				pixels[x * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light + light3.y);
-				pixels[x * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light + light3.z);
+				pixelRow[x * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light + light3.x);
+				pixelRow[x * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light + light3.y);
+				pixelRow[x * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light + light3.z);
 			} else {
-				pixels[x * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light);
-				pixels[x * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light);
-				pixels[x * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light);
+				pixelRow[x * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light);
+				pixelRow[x * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light);
+				pixelRow[x * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light);
 			}
-			pixels[x * 4 + 3] = EncodeHeight(height);
+			pixelRow[x * 4 + 3] = EncodeHeight(height);
 		} else {
 			const float3 light = GetLightValue(x + x1, y + y1) * 210.0f;
 
-			pixels[x * 4 + 0] = (unsigned char) light.x;
-			pixels[x * 4 + 1] = (unsigned char) light.y;
-			pixels[x * 4 + 2] = (unsigned char) light.z;
-			pixels[x * 4 + 3] = 255;
+			pixelRow[x * 4 + 0] = (unsigned char) light.x;
+			pixelRow[x * 4 + 1] = (unsigned char) light.y;
+			pixelRow[x * 4 + 2] = (unsigned char) light.z;
+			pixelRow[x * 4 + 3] = 255;
 		}
 	}
 }
@@ -408,22 +406,26 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 
 
 void CSmfReadMap::UpdateShadingTexture() {
-	if(!globalRendering->dynamicSun)
+	if (!globalRendering->dynamicSun)
 		return;
+
 	const int xsize = gs->mapx;
 	const int ysize = gs->mapy;
 	int y = shadingTexUpdateIter;
 
 	shadingTexUpdateIter = (shadingTexUpdateIter + 1) % (ysize * shadingTexUpdateRate);
-	if((y % shadingTexUpdateRate) != 0)
+	if ((y % shadingTexUpdateRate) != 0)
 		return;
-	y /= shadingTexUpdateRate;
-	y = (y * 2 + ((((ysize % 2) == 0) && (y >= (ysize / 2))) ? 1 : 0)) % ysize;
 
-	UpdateShadingTexPart(y, 0, 0, xsize, shadingTexPixelRow);
+	y /= shadingTexUpdateRate;
+	y *= 2;
+	y += ((((ysize % 2) == 0) && (y >= (ysize / 2))) ? 1 : 0);
+	y %= ysize;
+
+	UpdateShadingTexPart(y, 0, 0, xsize, &shadingTexPixelRow[0]);
 
 	glBindTexture(GL_TEXTURE_2D, shadingTex);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, y, xsize, 1, GL_RGBA, GL_UNSIGNED_BYTE, shadingTexPixelRow);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, y, xsize, 1, GL_RGBA, GL_UNSIGNED_BYTE, &shadingTexPixelRow[0]);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 

@@ -88,9 +88,10 @@ protected:
 	friend class CBFGroundDrawer;
 	CBFGroundDrawer* groundDrawer;
 
-	unsigned char *shadingTexPixelRow;
-	int shadingTexUpdateIter;
-	int shadingTexUpdateRate;
+private:
+	std::vector<unsigned char> shadingTexPixelRow;
+	unsigned int shadingTexUpdateIter;
+	unsigned int shadingTexUpdateRate;
 };
 
 #endif
