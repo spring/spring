@@ -5,8 +5,6 @@
 #include "SoundLog.h"
 #include "System/LogOutput.h"
 
-namespace sound {
-
 NullSound::NullSound() {
 }
 
@@ -58,5 +56,3 @@ bool NullSound::LoadSoundDefs(const std::string& fileName) {
 
 void NullSound::NewFrame() {
 }
-
-};

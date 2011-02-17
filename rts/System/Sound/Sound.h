@@ -15,82 +15,81 @@
 
 #include "float3.h"
 
-namespace sound {
-	class SoundSource;
-	class SoundBuffer;
-	class SoundItem;
+class SoundSource;
+class SoundBuffer;
+class SoundItem;
 
-	/// Default sound system implementation (OpenAL)
-	class CSound : public ISound
-	{
-	public:
-		CSound();
-		virtual ~CSound();
 
-		virtual bool HasSoundItem(const std::string& name);
-		virtual size_t GetSoundId(const std::string& name, bool hardFail = true);
+/// Default sound system implementation (OpenAL)
+class CSound : public ISound
+{
+public:
+	CSound();
+	virtual ~CSound();
 
-		virtual SoundSource* GetNextBestSource(bool lock = true);
+	virtual bool HasSoundItem(const std::string& name);
+	virtual size_t GetSoundId(const std::string& name, bool hardFail = true);
 
-		virtual void UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime);
-		virtual void NewFrame();
+	virtual SoundSource* GetNextBestSource(bool lock = true);
 
-		/// @see ConfigHandler::ConfigNotifyCallback
-		virtual void ConfigNotify(const std::string& key, const std::string& value);
-		virtual void PitchAdjust(const float newPitch);
+	virtual void UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime);
+	virtual void NewFrame();
 
-		virtual bool Mute();
-		virtual bool IsMuted() const;
+	/// @see ConfigHandler::ConfigNotifyCallback
+	virtual void ConfigNotify(const std::string& key, const std::string& value);
+	virtual void PitchAdjust(const float newPitch);
 
-		virtual void Iconified(bool state);
+	virtual bool Mute();
+	virtual bool IsMuted() const;
 
-		virtual void PrintDebugInfo();
-		virtual bool LoadSoundDefs(const std::string& fileName);
+	virtual void Iconified(bool state);
 
-	private:
-		void StartThread(int maxSounds);
-		void Update();
+	virtual void PrintDebugInfo();
+	virtual bool LoadSoundDefs(const std::string& fileName);
 
-		typedef std::map<std::string, std::string> soundItemDef;
-		typedef std::map<std::string, soundItemDef> soundItemDefMap;
+private:
+	void StartThread(int maxSounds);
+	void Update();
 
-		size_t MakeItemFromDef(const soundItemDef& itemDef);
+	typedef std::map<std::string, std::string> soundItemDef;
+	typedef std::map<std::string, soundItemDef> soundItemDefMap;
 
-		friend class EffectChannel;
-		// this is used by EffectChannel in AudioChannel.cpp
-		virtual void PlaySample(size_t id, const float3 &p, const float3& velocity, float volume, bool relative);
+	size_t MakeItemFromDef(const soundItemDef& itemDef);
 
-		size_t LoadSoundBuffer(const std::string& filename, bool hardFail);
+	friend class EffectChannel;
+	// this is used by EffectChannel in AudioChannel.cpp
+	virtual void PlaySample(size_t id, const float3 &p, const float3& velocity, float volume, bool relative);
 
-		float masterVolume;
-		bool mute;
-		/// we do not play if minimized / iconified
-		bool appIsIconified;
-		bool pitchAdjust;
+	size_t LoadSoundBuffer(const std::string& filename, bool hardFail);
 
-		typedef std::map<std::string, size_t> soundMapT;
-		typedef boost::ptr_vector<SoundItem> soundVecT;
-		soundMapT soundMap;
-		soundVecT sounds;
+	float masterVolume;
+	bool mute;
+	/// we do not play if minimized / iconified
+	bool appIsIconified;
+	bool pitchAdjust;
 
-		/// unscaled
-		float3 myPos;
-		float3 prevVelocity;
+	typedef std::map<std::string, size_t> soundMapT;
+	typedef boost::ptr_vector<SoundItem> soundVecT;
+	soundMapT soundMap;
+	soundVecT sounds;
 
-		typedef boost::ptr_vector<SoundSource> sourceVecT;
-		sourceVecT sources;
+	/// unscaled
+	float3 myPos;
+	float3 prevVelocity;
 
-		unsigned numEmptyPlayRequests;
-		unsigned numAbortedPlays;
+	typedef boost::ptr_vector<SoundSource> sourceVecT;
+	sourceVecT sources;
 
-		soundItemDef defaultItem;
-		soundItemDefMap soundItemDefs;
+	unsigned numEmptyPlayRequests;
+	unsigned numAbortedPlays;
 
-		boost::thread* soundThread;
-		boost::recursive_mutex soundMutex;
+	soundItemDef defaultItem;
+	soundItemDefMap soundItemDefs;
 
-		volatile bool soundThreadQuit;
-	};
+	boost::thread* soundThread;
+	boost::recursive_mutex soundMutex;
+
+	volatile bool soundThreadQuit;
 };
 
 #endif // _SOUND_H_

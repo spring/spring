@@ -16,8 +16,6 @@
 #include "LogOutput.h"
 #include "myMath.h"
 
-namespace sound {
-
 float SoundSource::globalPitch = 1.0;
 float SoundSource::heightAdjustedRolloffModifier = 1.0;
 float SoundSource::referenceDistance = 200.0f;
@@ -308,5 +306,3 @@ void SoundSource::SetAirAbsorption(float factor)
 		LogObject(LOG_SOUND) << "air absorption not supported by the sound device in use";
 	}
 }
-
-};

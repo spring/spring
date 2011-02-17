@@ -24,8 +24,8 @@
 #include "System/EventHandler.h"
 #include "System/float3.h"
 #include "System/myMath.h"
-#include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
+#include "System/Sound/IEffectChannel.h"
 
 CR_BIND_DERIVED(CWeapon, CObject, (NULL));
 
@@ -964,7 +964,7 @@ void CWeapon::Fire()
 #endif
 	FireImpl();
 	if (fireSoundId && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))
-		sound::Channels::Battle.PlaySample(fireSoundId, owner, fireSoundVolume);
+		Channels::Battle.PlaySample(fireSoundId, owner, fireSoundVolume);
 }
 
 void CWeapon::CheckIntercept(void)

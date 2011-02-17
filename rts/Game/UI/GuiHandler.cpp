@@ -51,8 +51,8 @@
 #include "System/myMath.h"
 #include "System/Util.h"
 #include "System/Input/KeyInput.h"
+#include "System/Sound/IEffectChannel.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/SoundChannels.h"
 #include "System/FileSystem/SimpleParser.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -100,7 +100,7 @@ CGuiHandler::CGuiHandler():
 		useStencil = (stencilBits >= 1);
 	}
 
-	failedSound = gSound->GetSoundId("FailedCommand", false);
+	failedSound = sound->GetSoundId("FailedCommand", false);
 }
 
 
@@ -1124,7 +1124,7 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, floa
 	Command c = GetCommand(x, y, button, false, camerapos, mousedir);
 
 	if (c.id == CMD_FAILED) { // indicates we should not finish the current command
-		sound::Channels::UserInterface.PlaySample(failedSound, 5);
+		Channels::UserInterface.PlaySample(failedSound, 5);
 		return;
 	}
 	// if cmd_stop is returned it indicates that no good command could be found
