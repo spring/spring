@@ -100,6 +100,7 @@ local mapDefaults = {
     grassBladeTex    = '',
     grassShadingTex  = '',
     skyReflectModTex = '',
+    detailNormalTex  = '',
   },
 
   defaultTerrainType = {

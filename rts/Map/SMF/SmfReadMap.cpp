@@ -91,10 +91,13 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 	splatDetailTex   = 0;
 	splatDistrTex    = 0;
 	skyReflectModTex = 0;
+	detailNormalTex  = 0;
 
 	if (haveSpecularLighting) {
 		CBitmap specularTexBM;
 		CBitmap skyReflectModTexBM;
+		CBitmap detailNormalTexBM;
+
 		if (!specularTexBM.Load(mapInfo->smf.specularTexName)) {
 			// maps wants specular lighting, but no moderation
 			specularTexBM.channels = 4;
@@ -135,8 +138,13 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 			splatDistrTex = splatDistrTexBM.CreateTexture(true);
 		}
 
+		// no default 1x1 textures for these
 		if (skyReflectModTexBM.Load(mapInfo->smf.skyReflectModTexName)) {
 			skyReflectModTex = skyReflectModTexBM.CreateTexture(false);
+		}
+
+		if (detailNormalTexBM.Load(mapInfo->smf.detailNormalTexName)) {
+			detailNormalTex = detailNormalTexBM.CreateTexture(false);
 		}
 	}
 
@@ -234,15 +242,16 @@ CSmfReadMap::~CSmfReadMap()
 	delete groundDrawer;
 	delete[] heightmap;
 
-	if (detailTex       ) { glDeleteTextures(1, &detailTex       ); }
-	if (specularTex     ) { glDeleteTextures(1, &specularTex     ); }
-	if (minimapTex      ) { glDeleteTextures(1, &minimapTex      ); }
-	if (shadingTex      ) { glDeleteTextures(1, &shadingTex      ); }
-	if (normalsTex      ) { glDeleteTextures(1, &normalsTex      ); }
-	if (splatDetailTex  ) { glDeleteTextures(1, &splatDetailTex  ); }
-	if (splatDistrTex   ) { glDeleteTextures(1, &splatDistrTex   ); }
-	if (grassShadingTex ) { glDeleteTextures(1, &grassShadingTex ); }
-	if (skyReflectModTex) { glDeleteTextures(1, &skyReflectModTex); }
+	if (detailTex        != 0) { glDeleteTextures(1, &detailTex       ); }
+	if (specularTex      != 0) { glDeleteTextures(1, &specularTex     ); }
+	if (minimapTex       != 0) { glDeleteTextures(1, &minimapTex      ); }
+	if (shadingTex       != 0) { glDeleteTextures(1, &shadingTex      ); }
+	if (normalsTex       != 0) { glDeleteTextures(1, &normalsTex      ); }
+	if (splatDetailTex   != 0) { glDeleteTextures(1, &splatDetailTex  ); }
+	if (splatDistrTex    != 0) { glDeleteTextures(1, &splatDistrTex   ); }
+	if (grassShadingTex  != 0) { glDeleteTextures(1, &grassShadingTex ); }
+	if (skyReflectModTex != 0) { glDeleteTextures(1, &skyReflectModTex); }
+	if (detailNormalTex  != 0) { glDeleteTextures(1, &detailNormalTex ); }
 }
 
 
