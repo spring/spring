@@ -81,15 +81,15 @@ void main() {
 
 	#if (SMF_DETAIL_NORMALS == 1)
 	// detail-normals are (assumed to be) defined within STN space
-	// for a regular vertex normal equal to <0, 1, 0>, the S- and
-	// T-tangents are aligned with Spring's +x and +z (!) axes
+	// (for a regular vertex normal equal to <0, 1, 0>, the S- and
+	// T-tangents are aligned with Spring's +x and +z (!) axes)
 	vec3 tTangent = cross(normal, vec3(-1.0, 0.0, 0.0));
 	vec3 sTangent = cross(normal, tTangent);
 	vec4 dtSample = texture2D(detailNormalTex, normalTexCoords);
 	vec3 dtNormal = (dtSample.rgb * 2.0) - 1.0;
 	mat3 stnMatrix = mat3(sTangent, tTangent, normal);
 
-	normal = normalize((normal * (1.0 - dtSample.a)) + ((stnMatrix * dtNormal) * (dtSample.a)));
+	normal = normalize((normal * (1.0 - dtSample.a)) + ((stnMatrix * dtNormal) * dtSample.a));
 	#endif
 
 
