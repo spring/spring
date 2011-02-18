@@ -6,7 +6,7 @@
 #include <string>
 
 class float3;
-class SoundSource;
+class CSoundSource;
 
 
 /**
@@ -33,7 +33,7 @@ public:
 	 * Returns a free sound source if available,
 	 * the one with the lowest priority otherwise.
 	 */
-	virtual SoundSource* GetNextBestSource(bool lock = true) = 0;
+	virtual CSoundSource* GetNextBestSource(bool lock = true) = 0;
 
 	virtual void UpdateListener(const float3& camPos, const float3& camDir, const float3& camUp, float lastFrameTime) = 0;
 	virtual void NewFrame() = 0;

@@ -15,7 +15,7 @@
 
 #include "float3.h"
 
-class SoundSource;
+class CSoundSource;
 class SoundBuffer;
 class SoundItem;
 
@@ -30,7 +30,7 @@ public:
 	virtual bool HasSoundItem(const std::string& name);
 	virtual size_t GetSoundId(const std::string& name, bool hardFail = true);
 
-	virtual SoundSource* GetNextBestSource(bool lock = true);
+	virtual CSoundSource* GetNextBestSource(bool lock = true);
 
 	virtual void UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime);
 	virtual void NewFrame();
@@ -77,7 +77,7 @@ private:
 	float3 myPos;
 	float3 prevVelocity;
 
-	typedef boost::ptr_vector<SoundSource> sourceVecT;
+	typedef boost::ptr_vector<CSoundSource> sourceVecT;
 	sourceVecT sources;
 
 	unsigned numEmptyPlayRequests;

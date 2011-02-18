@@ -8,7 +8,7 @@
 #include <string>
 
 class float3;
-class SoundSource;
+class CSoundSource;
 
 /// Empty sound system implementation
 class NullSound : public ISound
@@ -20,7 +20,7 @@ public:
 	virtual bool HasSoundItem(const std::string& name);
 	virtual size_t GetSoundId(const std::string& name, bool hardFail = true);
 
-	virtual SoundSource* GetNextBestSource(bool lock = true);
+	virtual CSoundSource* GetNextBestSource(bool lock = true);
 
 	virtual void UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime);
 	virtual void NewFrame();
