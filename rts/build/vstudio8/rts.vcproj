@@ -1001,6 +1001,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\FPSUnitController.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\FPSUnitController.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Game\Game.cpp"
 				>
 			</File>
@@ -2209,6 +2217,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Rendering\DebugColVolDrawer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\DebugColVolDrawer.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Rendering\DebugDrawerAI.cpp"
 				>
 			</File>
@@ -3214,94 +3230,6 @@
 				<Filter
 					Name="COB"
 					>
-					<File
-						RelativePath="..\..\Sim\Units\Cob\CobEngine.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\Cob\CobEngine.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\Cob\CobFile.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\Cob\CobFile.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\Cob\CobInstance.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\Cob\CobInstance.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\COB\CobScriptNames.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\COB\CobScriptNames.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\Cob\CobThread.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\Cob\CobThread.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\COB\LuaScriptNames.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\COB\LuaScriptNames.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\COB\LuaUnitScript.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\COB\LuaUnitScript.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\COB\NullUnitScript.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\COB\NullUnitScript.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\COB\UnitScript.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\COB\UnitScript.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\COB\UnitScriptEngine.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\COB\UnitScriptEngine.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\COB\UnitScriptFactory.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\COB\UnitScriptFactory.h"
-						>
-					</File>
 				</Filter>
 				<Filter
 					Name="UnitTypes"
@@ -3428,6 +3356,102 @@
 					</File>
 					<File
 						RelativePath="..\..\Sim\Units\Groups\GroupHandler.h"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="Scripts"
+					>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\CobDefines.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\CobEngine.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\CobEngine.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\CobFile.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\CobFile.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\CobInstance.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\CobInstance.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\CobScriptNames.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\CobScriptNames.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\CobThread.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\CobThread.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\LuaScriptNames.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\LuaScriptNames.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\LuaUnitScript.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\LuaUnitScript.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\NullUnitScript.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\NullUnitScript.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\UnitScript.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\UnitScript.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\UnitScriptEngine.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\UnitScriptEngine.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\UnitScriptFactory.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\Scripts\UnitScriptFactory.h"
 						>
 					</File>
 				</Filter>
@@ -4809,26 +4833,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Dedicated Server (Debug)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\builds\DS\main.cpp"
 				>
 				<FileConfiguration
@@ -4907,6 +4911,26 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Dedicated Server (Debug)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>

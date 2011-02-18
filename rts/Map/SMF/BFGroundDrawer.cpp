@@ -148,6 +148,9 @@ bool CBFGroundDrawer::LoadMapShaders() {
 				extraDefs += (map->GetSkyReflectModTexture() != 0)?
 					"#define SMF_SKY_REFLECTIONS 1\n":
 					"#define SMF_SKY_REFLECTIONS 0\n";
+				extraDefs += (map->GetDetailNormalTexture() != 0)?
+					"#define SMF_DETAIL_NORMALS 1\n":
+					"#define SMF_DETAIL_NORMALS 0\n";
 				extraDefs +=
 					("#define BASE_DYNAMIC_MAP_LIGHT " + IntToString(lightHandler.GetBaseLight()) + "\n") +
 					("#define MAX_DYNAMIC_MAP_LIGHTS " + IntToString(lightHandler.GetMaxLights()) + "\n");
@@ -194,7 +197,8 @@ bool CBFGroundDrawer::LoadMapShaders() {
 				smfShaders[i]->SetUniformLocation("splatTexMults");       // idx 24
 				smfShaders[i]->SetUniformLocation("skyReflectTex");       // idx 25
 				smfShaders[i]->SetUniformLocation("skyReflectModTex");    // idx 26
-				smfShaders[i]->SetUniformLocation("numMapDynLights");     // idx 27
+				smfShaders[i]->SetUniformLocation("detailNormalTex");     // idx 27
+				smfShaders[i]->SetUniformLocation("numMapDynLights");     // idx 28
 
 				smfShaders[i]->Enable();
 				smfShaders[i]->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
@@ -218,7 +222,8 @@ bool CBFGroundDrawer::LoadMapShaders() {
 				smfShaders[i]->SetUniform4fv(24, &mapInfo->splats.texMults[0]);
 				smfShaders[i]->SetUniform1i(25,  9); // skyReflectTex (idx 25, texunit 9)
 				smfShaders[i]->SetUniform1i(26, 10); // skyReflectModTex (idx 26, texunit 10)
-				smfShaders[i]->SetUniform1i(27, 0); // numMapDynLights
+				smfShaders[i]->SetUniform1i(27, 11); // detailNormalTex (idx 27, texunit 11)
+				smfShaders[i]->SetUniform1i(28, 0); // numMapDynLights (unused)
 				smfShaders[i]->Disable();
 			}
 		}
@@ -1387,6 +1392,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 					glEnable(GL_TEXTURE_CUBE_MAP_ARB);
 					glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetSkyReflectionTextureID());
 				glActiveTexture(GL_TEXTURE10); glBindTexture(GL_TEXTURE_2D, map->GetSkyReflectModTexture());
+				glActiveTexture(GL_TEXTURE11); glBindTexture(GL_TEXTURE_2D, map->GetDetailNormalTexture());
 
 				// setup for shadow2DProj
 				glActiveTexture(GL_TEXTURE4);
@@ -1522,6 +1528,7 @@ void CBFGroundDrawer::ResetTextureUnits(bool drawReflection)
 			glDisable(GL_TEXTURE_CUBE_MAP_ARB);
 			glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, 0);
 		glActiveTexture(GL_TEXTURE10); glBindTexture(GL_TEXTURE_2D, 0);
+		glActiveTexture(GL_TEXTURE11); glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTexture(GL_TEXTURE0);
 
 		if (smfShaderCurGLSL != NULL) {
