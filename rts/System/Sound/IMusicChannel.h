@@ -7,7 +7,6 @@
 
 #include "IAudioChannel.h"
 
-class SoundSource;
 
 class IMusicChannel : public IAudioChannel {
 public:

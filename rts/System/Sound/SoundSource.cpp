@@ -16,13 +16,13 @@
 #include "LogOutput.h"
 #include "myMath.h"
 
-float SoundSource::globalPitch = 1.0;
-float SoundSource::heightAdjustedRolloffModifier = 1.0;
-float SoundSource::referenceDistance = 200.0f;
-float SoundSource::airAbsorption = AL_MIN_AIR_ABSORPTION_FACTOR;
-bool SoundSource::airAbsorptionSupported = false;
+float CSoundSource::globalPitch = 1.0;
+float CSoundSource::heightAdjustedRolloffModifier = 1.0;
+float CSoundSource::referenceDistance = 200.0f;
+float CSoundSource::airAbsorption = AL_MIN_AIR_ABSORPTION_FACTOR;
+bool CSoundSource::airAbsorptionSupported = false;
 
-struct SoundSource::StreamControl
+struct CSoundSource::StreamControl
 {
 	StreamControl(ALuint id) : stream(id), current(NULL), next(NULL), stopRequest(false) {};
 	COggStream stream;
@@ -40,27 +40,27 @@ struct SoundSource::StreamControl
 	bool stopRequest;
 };
 
-SoundSource::SoundSource() : curPlaying(NULL), curStream(NULL)
+CSoundSource::CSoundSource() : curPlaying(NULL), curStream(NULL)
 {
 	alGenSources(1, &id);
-	if (!CheckError("SoundSource::SoundSource"))
+	if (!CheckError("CSoundSource::CSoundSource"))
 	{
 		id = 0;
 	}
 	else
 	{
 		alSourcef(id, AL_REFERENCE_DISTANCE, referenceDistance);
-		CheckError("SoundSource::SoundSource");
+		CheckError("CSoundSource::CSoundSource");
 	}
 }
 
-SoundSource::~SoundSource()
+CSoundSource::~CSoundSource()
 {
 	alDeleteSources(1, &id);
-	CheckError("SoundSource::~SoundSource");
+	CheckError("CSoundSource::~CSoundSource");
 }
 
-void SoundSource::Update()
+void CSoundSource::Update()
 {
 	if (curStream)
 	{
@@ -72,7 +72,7 @@ void SoundSource::Update()
 			delete curStream->next;
 			delete curStream;
 			curStream = NULL;
-			CheckError("SoundSource::Update()");
+			CheckError("CSoundSource::Update()");
 		}
 		else
 		{
@@ -96,32 +96,32 @@ void SoundSource::Update()
 				curStream->stream.Play(curStream->current->file, curStream->current->volume);
 			}
 			curStream->stream.Update();
-			CheckError("SoundSource::Update");
+			CheckError("CSoundSource::Update");
 		}
 	}
 	if (curPlaying && (!IsPlaying() || ((curPlaying->loopTime > 0) && (loopStop < SDL_GetTicks()))))
 		Stop();
 }
 
-int SoundSource::GetCurrentPriority() const
+int CSoundSource::GetCurrentPriority() const
 {
 	if (curStream)
 	{
 		return INT_MAX;
 	}
 	else if (!curPlaying) {
-		logOutput.Print("Warning: SoundSource::GetCurrentPriority() curPlaying is NULL (id %d)", id);
+		logOutput.Print("Warning: CSoundSource::GetCurrentPriority() curPlaying is NULL (id %d)", id);
 		return INT_MIN;
 	}
 	return curPlaying->priority;
 }
 
-bool SoundSource::IsPlaying() const
+bool CSoundSource::IsPlaying() const
 {
-	CheckError("SoundSource::IsPlaying");
+	CheckError("CSoundSource::IsPlaying");
 	ALint state;
 	alGetSourcei(id, AL_SOURCE_STATE, &state);
-	CheckError("SoundSource::IsPlaying");
+	CheckError("CSoundSource::IsPlaying");
 	if (state == AL_PLAYING || curStream)
 		return true;
 	else
@@ -130,7 +130,7 @@ bool SoundSource::IsPlaying() const
 	}
 }
 
-void SoundSource::Stop()
+void CSoundSource::Stop()
 {
 	alSourceStop(id);
 	if (curPlaying)
@@ -138,10 +138,10 @@ void SoundSource::Stop()
 		curPlaying->StopPlay();
 		curPlaying = NULL;
 	}
-	CheckError("SoundSource::Stop");
+	CheckError("CSoundSource::Stop");
 }
 
-void SoundSource::Play(SoundItem* item, const float3& pos, float3 velocity, float volume, bool relative)
+void CSoundSource::Play(SoundItem* item, const float3& pos, float3 velocity, float volume, bool relative)
 {
 	assert(!curStream);
 	if (!item->PlayNow())
@@ -192,11 +192,11 @@ void SoundSource::Play(SoundItem* item, const float3& pos, float3 velocity, floa
 	alSourcePlay(id);
 
 	if (item->buffer->GetId() == 0)
-		logOutput.Print("SoundSource::Play: Empty buffer for item %s (file %s)", item->name.c_str(), item->buffer->GetFilename().c_str());
-	CheckError("SoundSource::Play");
+		logOutput.Print("CSoundSource::Play: Empty buffer for item %s (file %s)", item->name.c_str(), item->buffer->GetFilename().c_str());
+	CheckError("CSoundSource::Play");
 }
 
-void SoundSource::PlayStream(const std::string& file, float volume, bool enqueue)
+void CSoundSource::PlayStream(const std::string& file, float volume, bool enqueue)
 {
 	boost::mutex::scoped_lock lock(streamMutex);
 	if (!curStream)
@@ -212,7 +212,7 @@ void SoundSource::PlayStream(const std::string& file, float volume, bool enqueue
 	curStream->next->enqueue = enqueue;
 }
 
-void SoundSource::StreamStop()
+void CSoundSource::StreamStop()
 {
 	if (curStream)
 	{
@@ -226,7 +226,7 @@ void SoundSource::StreamStop()
 		assert(false);
 }
 
-void SoundSource::StreamPause()
+void CSoundSource::StreamPause()
 {
 	if (curStream)
 	{
@@ -243,7 +243,7 @@ void SoundSource::StreamPause()
 		assert(false);
 }
 
-float SoundSource::GetStreamTime()
+float CSoundSource::GetStreamTime()
 {
 	if (curStream)
 	{
@@ -257,7 +257,7 @@ float SoundSource::GetStreamTime()
 	return 0;
 }
 
-float SoundSource::GetStreamPlayTime()
+float CSoundSource::GetStreamPlayTime()
 {
 	if (curStream)
 	{
@@ -271,12 +271,12 @@ float SoundSource::GetStreamPlayTime()
 	return 0;
 }
 
-void SoundSource::SetPitch(float newPitch)
+void CSoundSource::SetPitch(float newPitch)
 {
 	globalPitch = newPitch;
 }
 
-void SoundSource::SetVolume(float newVol)
+void CSoundSource::SetVolume(float newVol)
 {
 	if (curStream && curStream->current)
 	{
@@ -284,12 +284,12 @@ void SoundSource::SetVolume(float newVol)
 	}
 }
 
-void SoundSource::SetAirAbsorptionSupported(bool supported)
+void CSoundSource::SetAirAbsorptionSupported(bool supported)
 {
 	airAbsorptionSupported = supported;
 }
 
-void SoundSource::SetAirAbsorption(float factor)
+void CSoundSource::SetAirAbsorption(float factor)
 {
 	if (airAbsorptionSupported) {
 		airAbsorption = Clamp(factor, AL_MIN_AIR_ABSORPTION_FACTOR, AL_MAX_AIR_ABSORPTION_FACTOR);

@@ -7,7 +7,7 @@
 
 #include "IMusicChannel.h"
 
-class SoundSource;
+class CSoundSource;
 
 class MusicChannel : public IMusicChannel {
 public:
@@ -37,7 +37,7 @@ public:
 	virtual float GetPlayTime();
 
 private:
-	SoundSource* current;
+	CSoundSource* current;
 };
 
 #endif // MUSIC_CHANNEL_H

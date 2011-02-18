@@ -17,13 +17,13 @@ class SoundItem;
  * 
  * Construct some of them, and they can play SoundItems positioned anywhere in 3D-space for you.
  */
-class SoundSource : boost::noncopyable
+class CSoundSource : boost::noncopyable
 {
 public:
 	/// is ready after this
-	SoundSource();
+	CSoundSource();
 	/// will stop during deletion
-	~SoundSource();
+	~CSoundSource();
 
 	void Update();
 

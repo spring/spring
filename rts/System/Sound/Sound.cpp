@@ -134,7 +134,7 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 	}
 }
 
-SoundSource* CSound::GetNextBestSource(bool lock)
+CSoundSource* CSound::GetNextBestSource(bool lock)
 {
 	if (sources.empty())
 		return NULL;
@@ -158,7 +158,7 @@ void CSound::PitchAdjust(const float newPitch)
 {
 	boost::recursive_mutex::scoped_lock lck(soundMutex);
 	if (pitchAdjust)
-		SoundSource::SetPitch(newPitch);
+		CSoundSource::SetPitch(newPitch);
 }
 
 void CSound::ConfigNotify(const std::string& key, const std::string& value)
@@ -193,7 +193,7 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 	else if (key == "snd_airAbsorption")
 	{
 		const float airAbsorption = std::atof(value.c_str());
-		SoundSource::SetAirAbsorption(airAbsorption);
+		CSoundSource::SetAirAbsorption(airAbsorption);
 	}
 	else if (key == "PitchAdjust")
 	{
@@ -254,7 +254,7 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 			LogObject(LOG_SOUND) << "CSound::PlaySample: maxdist ignored for relative payback: " << sounds[id].Name();
 	}
 
-	SoundSource* best = GetNextBestSource(false);
+	CSoundSource* best = GetNextBestSource(false);
 	if (best && (!best->IsPlaying() || (best->GetCurrentPriority() <= 0 && best->GetCurrentPriority() < sounds[id].GetPriority())))
 	{
 		if (best->IsPlaying())
@@ -336,16 +336,16 @@ void CSound::StartThread(int maxSounds)
 			}
 		}
 
-		SoundSource::SetAirAbsorptionSupported(airAbsorptionSupported);
+		CSoundSource::SetAirAbsorptionSupported(airAbsorptionSupported);
 		if (airAbsorptionSupported) {
 			const float airAbsorption = configHandler->Get("snd_airAbsorption", 0.1f);
-			SoundSource::SetAirAbsorption(airAbsorption);
+			CSoundSource::SetAirAbsorption(airAbsorption);
 		}
 
 		// Generate sound sources
 		for (int i = 0; i < maxSounds; i++)
 		{
-			SoundSource* thenewone = new SoundSource();
+			CSoundSource* thenewone = new CSoundSource();
 			if (thenewone->IsValid())
 			{
 				sources.push_back(thenewone);
@@ -414,7 +414,7 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 	myPos = campos;
 	alListener3f(AL_POSITION, myPos.x, myPos.y, myPos.z);
 
-	SoundSource::SetHeightRolloffModifer(std::min(5.*600./std::max(campos.y, 200.f), 5.0));
+	CSoundSource::SetHeightRolloffModifer(std::min(5.*600./std::max(campos.y, 200.f), 5.0));
 	//TODO: reactivate when it does not go crazy on camera "teleportation" or fast movement,
 	// like when clicked on minimap
 	//const float3 velocity = (myPos - prevPos)*(10.0/myPos.y)/(lastFrameTime);
