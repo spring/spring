@@ -16,6 +16,8 @@ public:
 	~CSmfReadMap();
 
 	void UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2);
+	inline void UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigned char *pixels);
+	virtual void UpdateShadingTexture();
 
 	inline GLuint GetDetailTexture() const { return detailTex; }
 	inline GLuint GetShadingTexture() const { return shadingTex; }
@@ -25,6 +27,7 @@ public:
 	inline GLuint GetSplatDetailTexture() const { return splatDetailTex; }
 	inline GLuint GetSplatDistrTexture() const { return splatDistrTex; }
 	inline GLuint GetSkyReflectModTexture() const { return skyReflectModTex; }
+	inline GLuint GetDetailNormalTexture() const { return detailNormalTex; }
 
 	void DrawMinimap() const;
 	void GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize);
@@ -72,6 +75,7 @@ protected:
 	GLuint splatDistrTex;    // specifies the per-channel distribution of splatDetailTex (map-wide, overrides detailTex)
 	GLuint grassShadingTex;  // specifies grass-blade modulation color (defaults to minimapTex)
 	GLuint skyReflectModTex; // modulates sky-reflection RGB intensities (must be the same size as specularTex)
+	GLuint detailNormalTex;  // tangent-space offset normals
 
 	bool haveSpecularLighting;
 	bool haveSplatTexture;
@@ -85,6 +89,11 @@ protected:
 
 	friend class CBFGroundDrawer;
 	CBFGroundDrawer* groundDrawer;
+
+private:
+	std::vector<unsigned char> shadingTexPixelRow;
+	unsigned int shadingTexUpdateIter;
+	unsigned int shadingTexUpdateRate;
 };
 
 #endif

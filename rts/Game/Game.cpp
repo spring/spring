@@ -1360,7 +1360,7 @@ bool CGame::Draw() {
 			cubeMapHandler->UpdateSpecularTexture();
 			cubeMapHandler->UpdateReflectionTexture();
 			sky->UpdateSkyTexture();
-
+			readmap->UpdateShadingTexture();
 
 			if (FBO::IsSupported())
 				FBO::Unbind();

@@ -37,7 +37,6 @@
 #include "Rendering/GLContext.h"
 #include "Rendering/VerticalSync.h"
 #include "Rendering/WindowManagerHelper.h"
-#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureAtlas.h"

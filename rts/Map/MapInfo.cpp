@@ -87,7 +87,10 @@ void CMapInfo::ReadGlobal()
 	map.voidWater = topTable.GetBool("voidWater", false);
 
 	// clamps
-	map.hardness        = max(0.001f, map.hardness);
+	if (-0.001f < map.hardness && map.hardness <= 0.0f)
+		map.hardness = -0.001f;
+	else if (0.0f <= map.hardness && map.hardness < 0.001f)
+		map.hardness = 0.001f;
 	map.tidalStrength   = max(0.000f, map.tidalStrength);
 	map.maxMetal        = max(0.000f, map.maxMetal);
 	map.extractorRadius = max(0.000f, map.extractorRadius);
@@ -296,11 +299,12 @@ void CMapInfo::ReadSmf()
 	smf.grassShadingTexName = mapResTable.GetString("grassShadingTex", "");
 
 	smf.skyReflectModTexName = mapResTable.GetString("skyReflectModTex", "");
+	smf.detailNormalTexName = mapResTable.GetString("detailNormalTex", "");
 
 	if (!smf.detailTexName.empty()) {
 		smf.detailTexName = "maps/" + smf.detailTexName;
 	} else {
-		const LuaTable resGfxMaps = resRoot->SubTable("graphics").SubTable("maps");
+		const LuaTable& resGfxMaps = resRoot->SubTable("graphics").SubTable("maps");
 		smf.detailTexName = resGfxMaps.GetString("detailtex", "detailtex2.bmp");
 		smf.detailTexName = "bitmaps/" + smf.detailTexName;
 	}
@@ -311,6 +315,7 @@ void CMapInfo::ReadSmf()
 	if (!smf.grassBladeTexName.empty()) { smf.grassBladeTexName = "maps/" + smf.grassBladeTexName; }
 	if (!smf.grassShadingTexName.empty()) { smf.grassShadingTexName = "maps/" + smf.grassShadingTexName; }
 	if (!smf.skyReflectModTexName.empty()) { smf.skyReflectModTexName = "maps/" + smf.skyReflectModTexName; }
+	if (!smf.detailNormalTexName.empty()) { smf.detailNormalTexName = "maps/" + smf.detailNormalTexName; }
 
 	// height overrides
 	const LuaTable smfTable = parser->GetRoot().SubTable("smf");
