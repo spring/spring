@@ -202,13 +202,12 @@ void CGroundMoveType::Update()
 	ASSERT_SYNCED_FLOAT3(owner->pos);
 
 	const UnitDef* ud = owner->unitDef;
+	bool wantReverse = false;
 
 	if (owner->stunned || owner->beingBuilt) {
 		owner->script->StopMoving();
 		owner->speed = ZeroVector;
 	} else {
-		bool wantReverse = false;
-
 		if (owner->fpsControlPlayer != NULL) {
 			wantReverse = UpdateDirectControl();
 			ChangeHeading(owner->heading + deltaHeading);
@@ -287,13 +286,14 @@ void CGroundMoveType::Update()
 
 			pathManager->UpdatePath(owner, pathId);
 		}
-
-		UpdateOwnerPos(wantReverse);
-		AdjustPosToWaterLine();
 	}
 
+	// these must be executed even when stunned (so
+	// units do not get buried by restoring terrain)
+	UpdateOwnerPos(wantReverse);
+	AdjustPosToWaterLine();
+
 	if (owner->pos != oldPos) {
-		// these checks must be executed even when we are stunned
 		TestNewTerrainSquare();
 		HandleObjectCollisions();
 
