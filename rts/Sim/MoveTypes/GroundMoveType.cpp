@@ -289,13 +289,13 @@ void CGroundMoveType::Update()
 		}
 
 		UpdateOwnerPos(wantReverse);
+		AdjustPosToWaterLine();
 	}
 
 	if (owner->pos != oldPos) {
 		// these checks must be executed even when we are stunned
 		TestNewTerrainSquare();
 		HandleObjectCollisions();
-		AdjustPosToWaterLine();
 
 		owner->speed = owner->pos - oldPos;
 		owner->UpdateMidPos();
@@ -1948,8 +1948,6 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		// a new path is requested
 		currentSpeed += deltaSpeed;
 		owner->pos += (flatFrontDir * currentSpeed * (reversing? -1.0f: 1.0f));
-
-		AdjustPosToWaterLine();
 	}
 
 	if (!wantReverse && currentSpeed == 0.0f) {
