@@ -55,21 +55,18 @@ inline float luaL_optfloat(lua_State* L, int idx, float def)
   return (float)luaL_optnumber(L, idx, def);
 }
 
-extern boost::recursive_mutex luaprimmutex, luasecmutex;
+extern boost::recursive_mutex* getLuaMutex(bool userMode, bool primary);
 struct luaContextData;
 
 inline lua_State *LUA_OPEN(luaContextData* lcd = NULL, bool userMode = true, bool primary = true) {
 	lua_State *L_New = lua_open();
 	L_New->lcd = lcd;
-	if(userMode)
-		L_New->luamutex = new boost::recursive_mutex();
-	else // LuaGaia & LuaRules will share mutexes to avoid deadlocks during XCalls etc.
-		L_New->luamutex = primary ? &luaprimmutex : &luasecmutex;
+	L_New->luamutex = getLuaMutex(userMode, primary);
 	return L_New;
 }
 
 inline void LUA_CLOSE(lua_State *L_Old) {
-	if(L_Old->luamutex != &luaprimmutex && L_Old->luamutex != &luasecmutex)
+	if(L_Old->luamutex != getLuaMutex(false, false) && L_Old->luamutex != getLuaMutex(false, true))
 		delete L_Old->luamutex;
 	lua_close(L_Old);
 }

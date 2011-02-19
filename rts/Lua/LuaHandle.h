@@ -288,14 +288,14 @@ class CLuaHandle : public CEventClient
 		inline void SetActiveHandle();
 		inline void SetActiveHandle(CLuaHandle* lh);
 		bool singleState;
-		// DUAL_LUA_STATES inserted below mainly so that compiler can optimize code if DUAL_LUA_STATES = 0
-		inline bool SingleState() const { return !DUAL_LUA_STATES || singleState; } // Is this handle using a single Lua state?
+		// USE_LUA_MT inserted below mainly so that compiler can optimize code if USE_LUA_MT = 0
+		inline bool SingleState() const { return !USE_LUA_MT || singleState; } // Is this handle using a single Lua state?
 		bool copyExportTable;
-		inline bool CopyExportTable() const { return DUAL_LUA_STATES && copyExportTable; } // Copy the table _G.EXPORT --> SYNCED.EXPORT between dual states?
+		inline bool CopyExportTable() const { return USE_LUA_MT && copyExportTable; } // Copy the table _G.EXPORT --> SYNCED.EXPORT between dual states?
 		static bool useDualStates;
-		static inline bool UseDualStates() { return DUAL_LUA_STATES && useDualStates; } // Is Lua handle splitting enabled (globally)?
+		static inline bool UseDualStates() { return USE_LUA_MT && useDualStates; } // Is Lua handle splitting enabled (globally)?
 		bool useEventBatch;
-		inline bool UseEventBatch() const { return DUAL_LUA_STATES && useEventBatch; } // Use event batch to forward "synced" luaui events into draw thread?
+		inline bool UseEventBatch() const { return USE_LUA_MT && useEventBatch; } // Use event batch to forward "synced" luaui events into draw thread?
 
 		inline lua_State *GetActiveState() {
 			return (SingleState() || Threading::IsSimThread()) ? L_Sim : L_Draw;
@@ -392,7 +392,7 @@ class CLuaHandle : public CEventClient
 		static void HandleLuaMsg(int playerID, int script, int mode,
 			const std::vector<boost::uint8_t>& msg);
 		static inline bool IsDrawCallIn() {
-			return DUAL_LUA_STATES && !Threading::IsSimThread();
+			return USE_LUA_MT && !Threading::IsSimThread();
 		}
 		void ExecuteUnitEventBatch();
 		void ExecuteFeatEventBatch();

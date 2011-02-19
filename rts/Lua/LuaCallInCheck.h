@@ -25,9 +25,9 @@ class LuaCallInCheck {
 };
 
 #if defined(USE_GML) && GML_ENABLE_SIM
-#define DUAL_LUA_STATES 1
+#define USE_LUA_MT 1 // allow parallel execution of separate lua_States
 #else
-#define DUAL_LUA_STATES 0
+#define USE_LUA_MT 0
 #endif
 
 enum UnitEvent {
@@ -126,7 +126,7 @@ struct LuaMiscEvent {
 	LuaMiscEvent(MiscEvent i, const std::string &s1, void *p) : id(i), str1(s1), ptr(p) {}
 };
 
-#if DUAL_LUA_STATES
+#if USE_LUA_MT
 #define LUA_UNIT_BATCH_PUSH(r,...)\
 	if(UseEventBatch() && !execUnitBatch && Threading::IsSimThread()) {\
 		GML_STDMUTEX_LOCK(ulbatch);\
@@ -178,7 +178,7 @@ struct LuaMiscEvent {
 #define GML_MEASURE_LOCK_TIME(lock) lock
 #endif
 
-#if DUAL_LUA_STATES
+#if USE_LUA_MT
 #define BEGIN_ITERATE_LUA_STATES() lua_State *L_Cur = L_Sim; do { lua_State * const L = L_Cur
 #define END_ITERATE_LUA_STATES() if(SingleState() || L_Cur == L_Draw) break; L_Cur = L_Draw; } while(true)
 #ifndef LUA_SYNCED_ONLY
