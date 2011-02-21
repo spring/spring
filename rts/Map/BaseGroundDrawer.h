@@ -64,6 +64,7 @@ public:
 	bool DrawExtraTex() const { return drawMode != drawNormal; }
 
 	bool wireframe;
+	bool advShading;
 
 	float LODScaleReflection;
 	float LODScaleRefraction;

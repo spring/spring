@@ -151,18 +151,34 @@ bool CGame::ActionPressed(const Action& action,
 
 		CBaseWater::PushWaterMode(nextWaterRendererMode);
 	}
-	else if (cmd == "advshading") {
-		static bool canUse = unitDrawer->advShading;
-		if (canUse) {
+
+	else if (cmd == "advmodelshading") {
+		static bool canUseShaders = unitDrawer->advShading;
+
+		if (canUseShaders) {
 			if (!action.extra.empty()) {
 				unitDrawer->advShading = !!atoi(action.extra.c_str());
 			} else {
 				unitDrawer->advShading = !unitDrawer->advShading;
 			}
-			logOutput.Print("Advanced shading %s",
-			                unitDrawer->advShading ? "enabled" : "disabled");
+
+			logOutput.Print("model shaders %sabled", (unitDrawer->advShading? "en": "dis"));
 		}
 	}
+	else if (cmd == "advmapshading") {
+		static bool canUseShaders = gd->advShading;
+
+		if (canUseShaders) {
+			if (!action.extra.empty()) {
+				gd->advShading = !!atoi(action.extra.c_str());
+			} else {
+				gd->advShading = !gd->advShading;
+			}
+
+			logOutput.Print("map shaders %sabled", (gd->advShading? "en": "dis"));
+		}
+	}
+
 	else if (cmd == "say") {
 		SendNetChat(action.extra);
 	}

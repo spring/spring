@@ -31,7 +31,8 @@ void CWordCompletion::Reset()
 	words["/aireload "] = sl;
 	words["/aicontrol "] = sl;
 	words["/ailist"] = sl;
-	words["/advshading "] = sl;
+	words["/advmodelshading "] = sl;
+	words["/advmapshading "] = sl;
 	words["/hardwarecursor "] = sl;
 	words["/clock"] = sl;
 	words["/cmdcolors "] = sl;
