@@ -122,6 +122,7 @@ CUnit::CUnit() : CSolidObject(),
 	deathScriptFinished(false),
 	delayedWreckLevel(-1),
 	restTime(0),
+	outOfMapTime(0),
 	shieldWeapon(NULL),
 	stockpileWeapon(NULL),
 	reloadSpeed(1.0f),
@@ -755,6 +756,7 @@ void CUnit::Update()
 	}
 
 	restTime++;
+	outOfMapTime = (pos.CheckInBounds())? 0: outOfMapTime + 1;
 
 	if (!dontUseWeapons) {
 		for (std::vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
@@ -2275,6 +2277,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(deathScriptFinished),
 	CR_MEMBER(delayedWreckLevel),
 	CR_MEMBER(restTime),
+	CR_MEMBER(outOfMapTime),
 	CR_MEMBER(weapons),
 	CR_MEMBER(shieldWeapon),
 	CR_MEMBER(stockpileWeapon),

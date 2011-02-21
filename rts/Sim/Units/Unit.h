@@ -254,7 +254,8 @@ public:
 	int delayedWreckLevel;
 
 	/// how long the unit has been inactive
-	int restTime;
+	unsigned int restTime;
+	unsigned int outOfMapTime;
 
 	std::vector<CWeapon*> weapons;
 	/// Our shield weapon, or NULL, if we have none
