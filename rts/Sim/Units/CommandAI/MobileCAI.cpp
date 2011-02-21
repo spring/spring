@@ -624,45 +624,48 @@ void CMobileCAI::ExecuteGuard(Command &c)
 	assert(owner->unitDef->canGuard);
 	assert(!c.params.empty());
 
-	CUnit* guarded = uh->GetUnit(c.params[0]);
+	const CUnit* guardee = uh->GetUnit(c.params[0]);
 
-	if (guarded != NULL && UpdateTargetLostTimer(guarded->id)) {
-		if (owner->unitDef->canAttack && guarded->lastAttack + 40 < gs->frameNum
-				&& IsValidTarget(guarded->lastAttacker))
-		{
-			StopSlowGuard();
-			Command nc;
+	if (guardee == NULL) { FinishCommand(); return; }
+	if (UpdateTargetLostTimer(guardee->id) == 0) { FinishCommand(); return; }
+	if (guardee->outOfMapTime > (GAME_SPEED * 5)) { FinishCommand(); return; }
+
+	const bool pushAttackCommand =
+		owner->unitDef->canAttack &&
+		(guardee->lastAttack + 40 < gs->frameNum) &&
+		IsValidTarget(guardee->lastAttacker);
+
+	if (pushAttackCommand) {
+		Command nc;
 			nc.id = CMD_ATTACK;
-			nc.params.push_back(guarded->lastAttacker->id);
+			nc.params.push_back(guardee->lastAttacker->id);
 			nc.options = c.options;
-			commandQue.push_front(nc);
-			SlowUpdate();
-			return;
-		} else {
-			//float3 dif = guarded->speed * guarded->frontdir;
-			float3 dif = guarded->pos - owner->pos;
-			dif.Normalize();
-			float3 goal = guarded->pos - dif * (guarded->radius + owner->radius + 64);
-			if((goalPos - goal).SqLength2D() > 1600
-					|| (goalPos - owner->pos).SqLength2D()
-						< (owner->maxSpeed*30 + 1 + SQUARE_SIZE*2)
-						 * (owner->maxSpeed*30 + 1 + SQUARE_SIZE*2)){
-				SetGoal(goal, owner->pos);
-			}
-			if((goal - owner->pos).SqLength2D() < 6400) {
-				StartSlowGuard(guarded->maxSpeed);
-				if((goal-owner->pos).SqLength2D() < 1800){
-					StopMove();
-					NonMoving();
-				}
-			} else {
-				StopSlowGuard();
-			}
-		}
+		commandQue.push_front(nc);
+
+		StopSlowGuard();
+		SlowUpdate();
 	} else {
-		FinishCommand();
+		const float3 dif = (guardee->pos - owner->pos).Normalize();
+		const float3 goal = guardee->pos - dif * (guardee->radius + owner->radius + 64.0f);
+		const bool resetGoal =
+			((goalPos - goal).SqLength2D() > 1600.0f) ||
+			(goalPos - owner->pos).SqLength2D() < Square(owner->maxSpeed * GAME_SPEED + 1 + SQUARE_SIZE * 2);
+
+		if (resetGoal) {
+			SetGoal(goal, owner->pos);
+		}
+
+		if ((goal - owner->pos).SqLength2D() < 6400.0f) {
+			StartSlowGuard(guardee->maxSpeed);
+
+			if ((goal - owner->pos).SqLength2D() < 1800.0f) {
+				StopMove();
+				NonMoving();
+			}
+		} else {
+			StopSlowGuard();
+		}
 	}
-	return;
 }
 
 /**
