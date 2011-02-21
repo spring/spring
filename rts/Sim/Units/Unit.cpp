@@ -756,7 +756,7 @@ void CUnit::Update()
 	}
 
 	restTime++;
-	outOfMapTime = (pos.CheckInBounds())? 0: outOfMapTime + 1;
+	outOfMapTime = (pos.IsInBounds())? 0: outOfMapTime + 1;
 
 	if (!dontUseWeapons) {
 		for (std::vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
