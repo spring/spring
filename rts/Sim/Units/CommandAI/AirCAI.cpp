@@ -594,41 +594,44 @@ void CAirCAI::ExecuteGuard(Command& c)
 
 	const CUnit* guardee = uh->GetUnit(c.params[0]);
 
-	if (guardee != NULL && UpdateTargetLostTimer(guardee->id)) {
-		if (owner->unitDef->canAttack && guardee->lastAttack + 40 < gs->frameNum
-				&& owner->maxRange > 0 && IsValidTarget(guardee->lastAttacker))
-		{
-			Command nc;
+	if (guardee == NULL) { FinishCommand(); return; }
+	if (UpdateTargetLostTimer(guardee->id) == 0) { FinishCommand(); return; }
+	if (guardee->outOfMapTime > (GAME_SPEED * 5)) { FinishCommand(); return; }
+
+	const bool pushAttackCommand =
+		owner->maxRange > 0.0f &&
+		owner->unitDef->canAttack &&
+		(guardee->lastAttack + 40 < gs->frameNum) &&
+		IsValidTarget(guardee->lastAttacker);
+
+	if (pushAttackCommand) {
+		Command nc;
 			nc.id = CMD_ATTACK;
 			nc.params.push_back(guardee->lastAttacker->id);
 			nc.options = c.options | INTERNAL_ORDER;
-			commandQue.push_front(nc);
-			SlowUpdate();
-			return;
-		} else {
-			Command c2;
-				c2.id = CMD_MOVE;
-				c2.options = c.options | INTERNAL_ORDER;
-				c2.timeOut = gs->frameNum + 60;
-
-			if (guardee->pos.IsInBounds()) {
-				c2.params.push_back(guardee->pos.x);
-				c2.params.push_back(guardee->pos.y);
-				c2.params.push_back(guardee->pos.z);
-			} else {
-				float3 clampedGuardeePos = guardee->pos;
-					clampedGuardeePos.CheckInBounds();
-
-				c2.params.push_back(clampedGuardeePos.x);
-				c2.params.push_back(clampedGuardeePos.y);
-				c2.params.push_back(clampedGuardeePos.z);
-			}
-
-			commandQue.push_front(c2);
-			return;
-		}
+		commandQue.push_front(nc);
+		SlowUpdate();
 	} else {
-		FinishCommand();
+		Command c2;
+			c2.id = CMD_MOVE;
+			c2.options = c.options | INTERNAL_ORDER;
+			c2.timeOut = gs->frameNum + 60;
+
+		if (guardee->pos.IsInBounds()) {
+			c2.params.push_back(guardee->pos.x);
+			c2.params.push_back(guardee->pos.y);
+			c2.params.push_back(guardee->pos.z);
+		} else {
+			float3 clampedGuardeePos = guardee->pos;
+
+			clampedGuardeePos.CheckInBounds();
+
+			c2.params.push_back(clampedGuardeePos.x);
+			c2.params.push_back(clampedGuardeePos.y);
+			c2.params.push_back(clampedGuardeePos.z);
+		}
+
+		commandQue.push_front(c2);
 	}
 }
 
