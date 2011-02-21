@@ -75,7 +75,7 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 #endif
 
 	lightHandler.Init(2U, configHandler->Get("MaxDynamicMapLights", 4U));
-	LoadMapShaders();
+	advShading = LoadMapShaders();
 }
 
 CBFGroundDrawer::~CBFGroundDrawer(void)
@@ -834,7 +834,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 	glEnable(GL_TEXTURE_2D);
 
 	smfShaderCurGLSL = shadowHandler->shadowsLoaded? smfShaderAdvGLSL: smfShaderDefGLSL;
-	useShaders = !DrawExtraTex() && ((smfShaderCurrARB != NULL && shadowHandler->shadowsLoaded) || (smfShaderCurGLSL != NULL));
+	useShaders = advShading && (!DrawExtraTex() && ((smfShaderCurrARB != NULL && shadowHandler->shadowsLoaded) || (smfShaderCurGLSL != NULL)));
 	waterDrawn = drawWaterReflection;
 
 	if (drawUnitReflection) {
