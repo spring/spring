@@ -34,6 +34,7 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 	drawLineOfSight = false;
 	drawRadarAndJammer = true;
 	wireframe = false;
+	advShading = false;
 	highResInfoTex = false;
 	updateTextureState = 0;
 
