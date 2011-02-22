@@ -31,6 +31,7 @@ public:
 
 	virtual bool IsFighter() const = 0;
 	virtual void Takeoff() = 0;
+
 	void ReservePad(CAirBaseHandler::LandingPad* lp);
 	void DependentDied(CObject* o);
 
@@ -48,17 +49,19 @@ public:
 	bool collide;
 	/// controls use of smoothGround for determining altitude
 	bool useSmoothMesh;
-	/// unit found to be dangerously close to our path
-	CUnit* lastColWarning;
-	/// 1=generally forward of us, 2=directly in path
-	int lastColWarningType;
-
 	bool autoLand;
 
 protected:
 	virtual void SetState(AircraftState state) = 0;
-	int lastFuelUpdateFrame;
+	virtual void CheckForCollision();
 	void UpdateFuel();
+
+	/// unit found to be dangerously close to our path
+	CUnit* lastColWarning;
+
+	/// 1=generally forward of us, 2=directly in path
+	int lastColWarningType;
+	int lastFuelUpdateFrame;
 };
 
 #endif // A_AIR_MOVE_TYPE_H_

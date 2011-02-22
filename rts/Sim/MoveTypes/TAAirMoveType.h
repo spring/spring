@@ -101,7 +101,6 @@ public:
 	void ForceHeading(short h);
 	void SetWantedAltitude(float altitude);
 	void SetDefaultAltitude(float altitude);
-	void CheckForCollision();
 	void DependentDied(CObject* o);
 
 	void Takeoff();
