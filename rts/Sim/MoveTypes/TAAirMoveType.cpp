@@ -480,8 +480,6 @@ void CTAAirMoveType::UpdateFlying()
 	// If we are close to our goal, we should go slow enough to be able to break in time
 	// new additional rule: if in attack mode or if we have more move orders then this is
 	// an intermediate waypoint, don't slow down (FIXME)
-
-	/// if (flyState != FLY_ATTACKING && dist < breakDistance && !owner->commandAI->HasMoreMoveCommands()) {
 	if (flyState != FLY_ATTACKING && dist < brakeDistance) {
 		realMax = dist / (speed.Length2D() + 0.01f) * decRate;
 	}
@@ -887,9 +885,10 @@ void CTAAirMoveType::Update()
 	deltaSpeed = speed - lastSpeed;
 	deltaSpeed.y = 0.0f;
 
-	// Turn and bank and move
+	// Turn and bank and move; update dirs
 	UpdateHeading();
-	UpdateBanking(aircraftState == AIRCRAFT_HOVERING);			// updates dirs
+	UpdateBanking(aircraftState == AIRCRAFT_HOVERING);
+
 	owner->UpdateMidPos();
 
 	// Push other units out of the way
@@ -897,7 +896,7 @@ void CTAAirMoveType::Update()
 		oldpos = pos;
 
 		if (!dontCheckCol && collide) {
-			const vector<CUnit*> &nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);
+			const vector<CUnit*>& nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);
 
 			for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
 				if ((*ui)->transporter)
@@ -1013,64 +1012,6 @@ void CTAAirMoveType::SetDefaultAltitude(float altitude)
 {
 	wantedHeight =  altitude;
 	orgWantedHeight = altitude;
-}
-
-void CTAAirMoveType::CheckForCollision()
-{
-	if (!collide) return;
-
-	SyncedFloat3& pos = owner->midPos;
-	SyncedFloat3 forward = owner->speed;
-	forward.Normalize();
-	float3 midTestPos = pos + forward * 121;
-
-	const std::vector<CUnit*>& others = qf->GetUnitsExact(midTestPos, 115);
-	float dist = 200.0f;
-
-	if (lastColWarning) {
-		DeleteDeathDependence(lastColWarning);
-		lastColWarning = 0;
-		lastColWarningType = 0;
-	}
-
-	for (std::vector<CUnit*>::const_iterator ui = others.begin(); ui != others.end(); ++ui) {
-		if (*ui == owner || !(*ui)->unitDef->canfly)
-			continue;
-
-		SyncedFloat3& op = (*ui)->midPos;
-		float3 dif = op - pos;
-		float3 forwardDif = forward * (forward.dot(dif));
-
-		if (forwardDif.SqLength() < dist * dist) {
-			const float frontLength = forwardDif.Length();
-			const float3 ortoDif = dif - forwardDif;
-			// note: the radius is multiplied by two since we rely on aircraft
-			// having small spheres (see unitloader)
-			const float minOrtoDif = ((*ui)->radius + owner->radius) * 2 + frontLength * 0.05f + 5;
-
-			if (ortoDif.SqLength() < minOrtoDif * minOrtoDif) {
-				dist = frontLength;
-				lastColWarning = (*ui);
-			}
-		}
-	}
-	if (lastColWarning) {
-		lastColWarningType = 2;
-		AddDeathDependence(lastColWarning);
-		return;
-	}
-	for (std::vector<CUnit*>::const_iterator ui = others.begin(); ui != others.end(); ++ui) {
-		if (*ui == owner)
-			continue;
-		if (((*ui)->midPos - pos).SqLength() < dist * dist) {
-			lastColWarning = *ui;
-		}
-	}
-	if (lastColWarning) {
-		lastColWarningType = 1;
-		AddDeathDependence(lastColWarning);
-	}
-	return;
 }
 
 void CTAAirMoveType::DependentDied(CObject* o)
