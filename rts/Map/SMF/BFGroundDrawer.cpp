@@ -111,6 +111,11 @@ bool CBFGroundDrawer::LoadMapShaders() {
 	smfShaderAdvGLSL = NULL;
 	smfShaderCurGLSL = NULL;
 
+	if (configHandler->Get("AdvMapShading", 1) == 0) {
+		// not allowed to do shader-based map rendering
+		return false;
+	}
+
 	if (globalRendering->haveARB && !globalRendering->haveGLSL) {
 		smfShaderBaseARB = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderBaseARB", true);
 		smfShaderReflARB = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderReflARB", true);
