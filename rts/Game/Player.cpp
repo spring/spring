@@ -153,8 +153,9 @@ void CPlayer::StartControllingUnit()
 		if (newControlleeUnit->fpsControlPlayer != NULL) {
 			if (this->playerNum == gu->myPlayerNum) {
 				logOutput.Print(
-					"player %d is already controlling unit %d",
+					"player %d (%s) is already controlling unit %d",
 					newControlleeUnit->fpsControlPlayer->playerNum,
+					newControlleeUnit->fpsControlPlayer->name.c_str(),
 					newControlleeUnit->id
 				);
 			}

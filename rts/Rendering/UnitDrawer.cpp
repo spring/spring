@@ -217,21 +217,22 @@ CUnitDrawer::~CUnitDrawer()
 bool CUnitDrawer::LoadModelShaders()
 {
 	#define sh shaderHandler
-	modelShaders.resize(MODEL_SHADER_S3O_LAST, NULL);
-
-	modelShaders[MODEL_SHADER_S3O_BASIC ] = sh->CreateProgramObject("[UnitDrawer]", "S3OShaderDefARB", true);
-	modelShaders[MODEL_SHADER_S3O_SHADOW] = modelShaders[MODEL_SHADER_S3O_BASIC];
-	modelShaders[MODEL_SHADER_S3O_ACTIVE] = modelShaders[MODEL_SHADER_S3O_BASIC];
 
 	if (!globalRendering->haveARB) {
 		// not possible to do (ARB) shader-based model rendering
 		logOutput.Print("[LoadModelShaders] OpenGL ARB extensions missing for advanced unit shading");
 		return false;
 	}
-	if (!(!!configHandler->Get("AdvUnitShading", 1))) {
+	if (configHandler->Get("AdvUnitShading", 1) == 0) {
 		// not allowed to do shader-based model rendering
 		return false;
 	}
+
+	modelShaders.resize(MODEL_SHADER_S3O_LAST, NULL);
+
+	modelShaders[MODEL_SHADER_S3O_BASIC ] = sh->CreateProgramObject("[UnitDrawer]", "S3OShaderDefARB", true);
+	modelShaders[MODEL_SHADER_S3O_SHADOW] = modelShaders[MODEL_SHADER_S3O_BASIC];
+	modelShaders[MODEL_SHADER_S3O_ACTIVE] = modelShaders[MODEL_SHADER_S3O_BASIC];
 
 	// with advFade, submerged transparent objects are clipped against GL_CLIP_PLANE3
 	const char* vertexProgNameARB = (advFade)? "ARB/units3o2.vp": "ARB/units3o.vp";
@@ -293,7 +294,7 @@ bool CUnitDrawer::LoadModelShaders()
 
 
 void CUnitDrawer::UpdateSunDir() {
-	if (shadowHandler->shadowsSupported && globalRendering->haveGLSL) {
+	if (advShading && shadowHandler->shadowsSupported && globalRendering->haveGLSL) {
 		modelShaders[MODEL_SHADER_S3O_SHADOW]->Enable();
 		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(5, &globalRendering->sunDir[0]);
 		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(12, globalRendering->unitShadowDensity);
