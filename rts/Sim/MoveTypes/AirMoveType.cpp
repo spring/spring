@@ -247,14 +247,6 @@ void CAirMoveType::Update()
 
 	switch (aircraftState) {
 		case AIRCRAFT_FLYING: {
-	#ifdef DEBUG_AIRCRAFT
-			GML_RECMUTEX_LOCK(sel); // Update
-
-			if (selectedUnits.selectedUnits.find(this) != selectedUnits.selectedUnits.end()) {
-				logOutput.Print("Flying %i %i %.1f %i", moveState, fireState, inefficientAttackTime, (int) isFighter);
-			}
-	#endif
-
 			owner->restTime = 0;
 
 			// somewhat hackish, but planes that have attack orders
@@ -314,51 +306,65 @@ void CAirMoveType::Update()
 
 
 
-void CAirMoveType::HandleCollisions() {
 
+void CAirMoveType::HandleCollisions() {
 	float3& pos = owner->pos;
 
 	if (pos != oldpos) {
 		oldpos = pos;
-		bool hitBuilding = false;
 
-		if (collide && (aircraftState == AIRCRAFT_FLYING || aircraftState == AIRCRAFT_CRASHING)) {
-			const vector<CUnit*> &nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);
+		const bool checkCollisions =
+			!owner->beingBuilt && collide &&
+			(aircraftState == AIRCRAFT_FLYING || aircraftState == AIRCRAFT_CRASHING);
+
+		if (checkCollisions) {
+			bool hitBuilding = false;
+			const vector<CUnit*>& nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);
 
 			for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
-				const float sqDist = (pos - (*ui)->pos).SqLength();
-				const float totRad = owner->radius + (*ui)->radius;
+				CUnit* unit = *ui;
+
+				const float sqDist = (pos - unit->pos).SqLength();
+				const float totRad = owner->radius + unit->radius;
 
 				if (sqDist < totRad * totRad && sqDist != 0) {
 					const float dist = sqrt(sqDist);
-					float3 dif = pos - (*ui)->pos;
+					float3 dif = pos - unit->pos;
 
 					if (dist > 0.0f) {
 						dif /= dist;
 					}
 
-					if ((*ui)->immobile) {
+					if (unit->immobile) {
 						pos -= dif * (dist - totRad);
+
 						owner->UpdateMidPos();
 						owner->speed *= 0.99f;
-						const float damage = (((*ui)->speed - owner->speed) * 0.1f).SqLength();
+
+						const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
+
 						owner->DoDamage(DamageArray(damage), 0, ZeroVector);
-						(*ui)->DoDamage(DamageArray(damage), 0, ZeroVector);
+						unit->DoDamage(DamageArray(damage), 0, ZeroVector);
 						hitBuilding = true;
 					} else {
-						const float part = owner->mass / (owner->mass + (*ui)->mass);
+						const float part = owner->mass / (owner->mass + unit->mass);
+
 						pos -= dif * (dist - totRad) * (1 - part);
 						owner->UpdateMidPos();
-						CUnit* u = (CUnit*)(*ui);
-						u->pos += dif * (dist - totRad) * (part);
-						u->UpdateMidPos();
-						const float damage = (((*ui)->speed - owner->speed) * 0.1f).SqLength();
+
+						unit->pos += dif * (dist - totRad) * (part);
+						unit->UpdateMidPos();
+
+						const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
+
 						owner->DoDamage(DamageArray(damage), 0, ZeroVector);
-						(*ui)->DoDamage(DamageArray(damage), 0, ZeroVector);
+						unit->DoDamage(DamageArray(damage), 0, ZeroVector);
+
 						owner->speed *= 0.99f;
 					}
 				}
 			}
+
 			if (hitBuilding && owner->crashing) {
 				// if our collision sphere overlapped with that
 				// of a building and we're crashing, die right
@@ -371,7 +377,7 @@ void CAirMoveType::HandleCollisions() {
 			}
 		}
 
-		if (pos.x < 0) {
+		if (pos.x < 0.0f) {
 			pos.x += 1.5f;
 			owner->midPos.x += 1.5f;
 		} else if (pos.x > float3::maxxpos) {
@@ -379,7 +385,7 @@ void CAirMoveType::HandleCollisions() {
 			owner->midPos.x -= 1.5f;
 		}
 
-		if (pos.z < 0) {
+		if (pos.z < 0.0f) {
 			pos.z += 1.5f;
 			owner->midPos.z += 1.5f;
 		} else if (pos.z > float3::maxzpos) {
@@ -426,13 +432,6 @@ void CAirMoveType::SlowUpdate()
 
 void CAirMoveType::UpdateManeuver()
 {
-#ifdef DEBUG_AIRCRAFT
-	GML_RECMUTEX_LOCK(sel); // UpdateManuever
-
-	if (selectedUnits.selectedUnits.find(this) != selectedUnits.selectedUnits.end()) {
-		logOutput.Print("UpdataMan %i %i", maneuver, maneuverSubState);
-	}
-#endif
 	const float speedf = owner->speed.Length();
 
 	switch (maneuver) {
@@ -658,13 +657,6 @@ void CAirMoveType::UpdateFighterAttack()
 			elevator = minPitch * upside;
 		}
 	}
-#ifdef DEBUG_AIRCRAFT
-	GML_RECMUTEX_LOCK(sel); // UpdateFighterAttack
-
-	if (selectedUnits.selectedUnits.find(this) != selectedUnits.selectedUnits.end()){
-		logOutput.Print("FAttack %.1f %.1f %.2f", pos.y - gHeight, goalLength, goalDir.dot(frontdir));
-	}
-#endif
 
 	if (groundTarget) {
 		engine = 1;
@@ -719,7 +711,7 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	float otherThreat = 0.0f;
 	float3 otherDir; // only used if lastColWarning == true
 	if (lastColWarning) {
-		float3 otherDif = lastColWarning->pos - pos;
+		const float3 otherDif = lastColWarning->pos - pos;
 		const float otherLength = otherDif.Length();
 
 		otherDir =
@@ -1033,8 +1025,8 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 	}
 
 
-	speed += engineVector * maxAcc * engine;
-	speed.y += mapInfo->map.gravity * myGravity;
+	speed += (engineVector * maxAcc * engine);
+	speed.y += (mapInfo->map.gravity * myGravity * (owner->beingBuilt? 0.0f: 1.0f));
 
 	if (aircraftState == AIRCRAFT_CRASHING) {
 		speed *= crashDrag;
@@ -1044,20 +1036,20 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 
 	const float3 wingDir = updir * (1 - wingAngle) - frontdir * wingAngle;
 	const float wingForce = wingDir.dot(speed) * wingDrag;
-	speed -= wingDir * wingForce;
+	speed -= (wingDir * wingForce);
 
-	frontdir += rightdir * rudder * maxRudder * speedf;
-	updir += rightdir * aileron * maxAileron * speedf;
-	frontdir += updir * elevator * maxElevator * speedf;
-	frontdir += (speeddir - frontdir) * frontToSpeed;
-	speed += (frontdir * speedf - speed) * speedToFront;
+	frontdir += (rightdir * rudder * maxRudder * speedf);
+	updir += (rightdir * aileron * maxAileron * speedf);
+	frontdir += (updir * elevator * maxElevator * speedf);
+	frontdir += ((speeddir - frontdir) * frontToSpeed);
+	speed += ((frontdir * speedf - speed) * speedToFront);
 
 	if (nextPosInBounds) {
 		pos += speed;
 	}
 
 	// ground collision
-	if (gHeight > owner->pos.y - owner->model->radius * 0.2f && !owner->crashing) {
+	if (gHeight > (owner->pos.y - owner->model->radius * 0.2f) && !owner->crashing) {
 		const float3 gNormal = ground->GetNormal(pos.x, pos.z);
 		const float impactSpeed = -speed.dot(gNormal);
 
@@ -1095,15 +1087,6 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 	updir = rightdir.cross(frontdir);
 
 	owner->UpdateMidPos();
-
-#ifdef DEBUG_AIRCRAFT
-	GML_RECMUTEX_LOCK(sel); // UpdateAirPhysics
-
-	if (selectedUnits.selectedUnits.find(this) != selectedUnits.selectedUnits.end()) {
-		logOutput.Print("UpdataAP %.1f %.1f %.1f %.1f", speedf, pos.x, pos.y, pos.z);
-		// logOutput.Print("Rudders %.1f %.1f %.1f %.1f", rudder, aileron, elevator, engine);
-	}
-#endif
 }
 
 
@@ -1195,70 +1178,6 @@ float3 CAirMoveType::FindLandingPos() const
 	}
 
 	return tryPos;
-}
-
-
-
-void CAirMoveType::CheckForCollision()
-{
-	if (!collide) return;
-
-	SyncedFloat3& pos = owner->midPos;
-	SyncedFloat3& forward = owner->frontdir;
-	const float3 midTestPos = pos + forward * 121;
-
-	const std::vector<CUnit*> &others = qf->GetUnitsExact(midTestPos, 115);
-
-	float dist = 200;
-	if (lastColWarning) {
-		DeleteDeathDependence(lastColWarning);
-		lastColWarning = NULL;
-		lastColWarningType = 0;
-	}
-
-	for (std::vector<CUnit*>::const_iterator ui = others.begin(); ui != others.end(); ++ui) {
-		if (*ui == owner || !(*ui)->unitDef->canfly) {
-			continue;
-		}
-		SyncedFloat3& op = (*ui)->midPos;
-		const float3 dif = op - pos;
-		const float3 forwardDif = forward * (forward.dot(dif));
-		if (forwardDif.SqLength() < dist * dist) {
-			const float frontLength = forwardDif.Length();
-			const float3 ortoDif = dif - forwardDif;
-
-			// note that the radii are multiplied by two since we rely on
-			// aircraft having half-size hitspheres (see unitloader)
-			//
-			// FIXME: with the new collision volumes, is this still true?
-			//
-			// yes: for backward compatibility, aircraft that do not define
-			// their own custom volumes get halved hitspheres by default
-
-			const float minOrtoDif = ((*ui)->radius + owner->radius) * 2 + frontLength * 0.1f + 10;
-			if (ortoDif.SqLength() < minOrtoDif * minOrtoDif) {
-				dist = frontLength;
-				lastColWarning = (*ui);
-			}
-		}
-	}
-	if (lastColWarning) {
-		lastColWarningType = 2;
-		AddDeathDependence(lastColWarning);
-		return;
-	}
-	for (std::vector<CUnit*>::const_iterator ui = others.begin(); ui != others.end(); ++ui) {
-		if (*ui == owner)
-			continue;
-		if (((*ui)->midPos - pos).SqLength() < dist * dist) {
-			lastColWarning = *ui;
-		}
-	}
-	if (lastColWarning) {
-		lastColWarningType = 1;
-		AddDeathDependence(lastColWarning);
-	}
-	return;
 }
 
 

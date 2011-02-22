@@ -34,7 +34,7 @@ public:
 	void UpdateTakeOff(float wantedHeight);
 	void ImpulseAdded();
 	float3 FindLandingPos() const;
-	void CheckForCollision();
+
 	void DependentDied(CObject* o);
 	void SetMaxSpeed(float speed);
 
