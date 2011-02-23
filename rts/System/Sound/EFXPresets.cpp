@@ -151,7 +151,4 @@ static void InitPresets()
 	eaxPresets["smallwaterroom"] = EAXSfxProps(1, 0.7, 0.316228, 0.447713, 1, 1.51, 1.25, 1.14, 0.891251, 0.02, float3(0, 0, 0.3), 1.41254, 0.03, float3(0, 0, 0.3), 0.179, 0.15, 0.895, 0.19, 0.991973, 5000, 250, 1, AL_FALSE);
 }
 
-#define DO_ONCE(func) \
-	struct do_once##func { do_once##func() {func();} }; static do_once##func do_once_var##func;
-
 DO_ONCE(InitPresets)
