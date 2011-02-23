@@ -6,8 +6,8 @@
 #include <string>
 #include <map>
 #include "float3.h"
-#include <AL/al.h>
-#include <AL/efx.h>
+#include <al.h>
+#include <efx.h>
 
 
 struct EAXSfxProps
