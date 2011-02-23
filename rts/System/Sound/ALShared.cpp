@@ -4,7 +4,6 @@
 
 #include "SoundLog.h"
 
-#include <al.h>
 
 bool CheckError(const char* msg)
 {
