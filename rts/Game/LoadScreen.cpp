@@ -27,7 +27,7 @@
 #include "System/LogOutput.h"
 #include "System/NetProtocol.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/Platform/CrashHandler.h"
+#include "System/Platform/Watchdog.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/IMusicChannel.h"
 
@@ -59,9 +59,6 @@ void CLoadScreen::Init()
 	//! When calling this function, mod archives have to be loaded
 	//! and gu->myPlayerNum has to be set.
 	skirmishAIHandler.LoadPreGame();
-
-	//! Increase hang detection trigger threshold, to prevent false positives during load
-	CrashHandler::GameLoading(true);
 
 	mt_loading = configHandler->Get("LoadingMT", true);
 
@@ -116,11 +113,7 @@ CLoadScreen::~CLoadScreen()
 		netHeartbeatThread->join();
 	delete netHeartbeatThread; netHeartbeatThread = NULL;
 
-	UnloadStartPicture();
-
-	CrashHandler::ClearDrawWDT();
-	//! Set hang detection trigger threshold back to normal
-	CrashHandler::GameLoading(false);
+	Watchdog::ClearTimer();
 
 	if (!gu->globalQuit) {
 		//! sending your playername to the server indicates that you are finished loading
@@ -133,6 +126,8 @@ CLoadScreen::~CLoadScreen()
 
 		activeController = game;
 	}
+
+	UnloadStartPicture();
 
 	if (activeController == this)
 		activeController = NULL;
@@ -302,7 +297,7 @@ bool CLoadScreen::Draw()
 
 void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 {
-	CrashHandler::ClearDrawWDT();
+	Watchdog::ClearTimer("main");
 
 	boost::recursive_mutex::scoped_lock lck(mutex);
 

@@ -6,16 +6,16 @@
 #ifdef WIN32
 #include <windows.h>
 #endif
+#include "Threading.h"
 
 namespace CrashHandler {
 	void Install();
 	void Remove();
-	void InstallHangHandler();
-	void UninstallHangHandler();
-	void ClearDrawWDT(bool disable = false);
-	void ClearSimWDT(bool disable = false);
-	void GameLoading(bool);
+
+	void Stacktrace(Threading::NativeThreadHandle thread);
+
 #ifdef WIN32
+	//! used by seh
 	LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e);
 #endif
 };
