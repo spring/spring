@@ -60,6 +60,7 @@
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Threading.h"
+#include "System/Platform/Watchdog.h"
 #include "System/Sound/ISound.h"
 
 #include "mmgr.h"
@@ -991,12 +992,12 @@ int SpringApp::Sim()
 
 		while(gmlKeepRunning) {
 			if(!gmlMultiThreadSim) {
-				CrashHandler::ClearSimWDT(true);
+				Watchdog::ClearTimer("main",true);
 				while(!gmlMultiThreadSim && gmlKeepRunning)
 					SDL_Delay(200);
 			}
 			else if (activeController) {
-				CrashHandler::ClearSimWDT();
+				Watchdog::ClearTimer("main");
 				gmlProcessor->ExpandAuxQueue();
 
 				{
@@ -1035,7 +1036,7 @@ int SpringApp::Update()
 
 	int ret = 1;
 	if (activeController) {
-		CrashHandler::ClearDrawWDT();
+		Watchdog::ClearTimer("main");
 #if defined(USE_GML) && GML_ENABLE_SIM
 			if (gmlMultiThreadSim) {
 				if (!gs->frameNum) {
@@ -1139,7 +1140,7 @@ int SpringApp::Run(int argc, char *argv[])
 	if (!Initialize())
 		return -1;
 
-	CrashHandler::InstallHangHandler();
+	Watchdog::Install();
 
 #ifdef USE_GML
 	gmlProcessor = new gmlClientServer<void, int, CUnit*>;
@@ -1200,8 +1201,6 @@ void SpringApp::Shutdown()
 	}
 #endif
 
-	CrashHandler::UninstallHangHandler();
-
 	DeleteAndNull(pregame);
 	DeleteAndNull(game);
 	DeleteAndNull(gameServer);
@@ -1228,6 +1227,8 @@ void SpringApp::Shutdown()
 	DeleteAndNull(gu);
 	DeleteAndNull(startsetup);
 
+	Watchdog::Uninstall();
+
 #ifdef USE_MMGR
 	m_dumpMemoryReport();
 #endif
@@ -1240,7 +1241,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 
 			GML_MSTMUTEX_LOCK(sim); // MainEventHandler
 
-			CrashHandler::ClearDrawWDT(true);
+			Watchdog::ClearTimer("main",true);
 			screenWidth = event.resize.w;
 			screenHeight = event.resize.h;
 #ifndef WIN32
@@ -1257,7 +1258,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 
 			GML_MSTMUTEX_LOCK(sim); // MainEventHandler
 
-			CrashHandler::ClearDrawWDT(true);
+			Watchdog::ClearTimer("main",true);
 			// re-initialize the stencil
 			glClearStencil(0);
 			glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
@@ -1271,7 +1272,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			break;
 		}
 		case SDL_ACTIVEEVENT: {
-			CrashHandler::ClearDrawWDT(true);
+			Watchdog::ClearTimer("main",true);
 
 			if (event.active.state & (SDL_APPACTIVE | (globalRendering->fullScreen ? SDL_APPINPUTFOCUS : 0))) {
 				globalRendering->active = !!event.active.gain;

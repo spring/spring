@@ -63,7 +63,7 @@
 #include "Sound/ISound.h"
 #include "Sound/IEffectChannel.h"
 #include "Sound/IMusicChannel.h"
-#include "System/Platform/CrashHandler.h"
+#include "System/Platform/Watchdog.h"
 
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystemHandler.h"
@@ -2750,23 +2750,14 @@ int LuaUnsyncedCtrl::SetSunDirection(lua_State* L)
 int LuaUnsyncedCtrl::ClearWatchDogTimer(lua_State* L) {
 	const int args = lua_gettop(L); // number of arguments
 
-	if(!(args == 0 || (args == 1 && lua_isnumber(L, 1)))) {
-		luaL_error(L, "Incorrect arguments to ClearWatchDogTimer(optional int)");
+	if (args == 0) {
+		Watchdog::ClearTimer();
+	} else {
+		std::string threadname = "main";
+		if (lua_isstring(L, 1))
+			threadname = lua_tostring(L, 1);
+		Watchdog::ClearTimer(threadname);
 	}
-
-	bool simthread = false;
-	bool simthreadrun = false;
-#if defined(USE_GML) && GML_ENABLE_SIM
-	extern volatile int gmlMultiThreadSim, gmlStartSim;
-	simthread = (gmlThreadNumber == GML_SIM_THREAD_NUM);
-	simthreadrun = (gmlMultiThreadSim && gmlStartSim);
-#endif
-
-	int flag = (args == 0) ? 0 : lua_tonumber(L, 1);
-	if((args == 0 && !simthread) || (args == 1 && (flag == 0 || (flag & 1))))
-		CrashHandler::ClearDrawWDT();
-	if(simthreadrun && ((args == 0 && simthread) || (args == 1 && (flag == 0 || (flag & 2)))))
-		CrashHandler::ClearSimWDT();
 
 	return 0;
 }
