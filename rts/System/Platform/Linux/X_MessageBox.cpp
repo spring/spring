@@ -64,21 +64,28 @@ void X_MessageBox(const char *msg, const char *caption, unsigned int flags)
 			const char* type = "--error";
 
 			if (gnome) {
-				// --warning shows 2 buttons, so it should only be used with a true _warning_
-				// ie. one which allows you to continue/cancel execution
-//				if (flags & MBF_EXCL) {
-//					type = "--warning";
-//				}
-				if (flags & MBF_INFO) {
+				if (flags & MBF_EXCL) {
+					// --warning shows 2 buttons, so it should only be used with a true _warning_
+					// ie. one which allows you to continue/cancel execution
+					//type = "--warning";
+					type = "--error";
+				}
+				else if (flags & MBF_CRASH) {
+					type = "--error";
+				}
+				else if (flags & MBF_INFO) {
 					type = "--info";
 				}
 				execlp("zenity", "zenity", "--title", caption2, type, "--text", msg2, (char*)NULL);
 			}
 			if (kde && strstr(kde, "true")) {
-				if (flags & MBF_EXCL) {
+				if (flags & MBF_CRASH) {
+					type = "--error";
+				}
+				else if (flags & MBF_EXCL) {
 					type = "--sorry";
 				}
-				if (flags & MBF_INFO) {
+				else if (flags & MBF_INFO) {
 					type = "--msgbox";
 				}
 				execlp("kdialog", "kdialog", "--title", caption2, type, msg2, (char*)NULL);
