@@ -287,6 +287,8 @@ public:
 		std::string bounceExpGenTag;
 		CColorMap* colorMap;
 
+		/// TODO: make the scar-type configurable
+		bool explosionScar;
 		bool smokeTrail;
 		bool beamweapon;
 		/// whether the shot should fade out or stop and contract at max range

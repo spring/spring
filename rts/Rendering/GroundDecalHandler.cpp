@@ -42,7 +42,7 @@ CGroundDecalHandler::CGroundDecalHandler()
 {
 	drawDecals = false;
 	decalLevel = std::max(0, configHandler->Get("GroundDecals", 1));
-	groundScarAlphaFade = configHandler->Get("GroundScarAlphaFade", 0);
+	groundScarAlphaFade = (configHandler->Get("GroundScarAlphaFade", 0) != 0);
 
 	if (decalLevel == 0) {
 		return;
@@ -184,7 +184,7 @@ void CGroundDecalHandler::LoadDecalShaders() {
 }
 
 void CGroundDecalHandler::UpdateSunDir() {
-	if(globalRendering->haveGLSL && decalShaders.size() > DECAL_SHADER_GLSL) {
+	if (globalRendering->haveGLSL && decalShaders.size() > DECAL_SHADER_GLSL) {
 		decalShaders[DECAL_SHADER_GLSL]->Enable();
 		decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, globalRendering->groundShadowDensity);
 		decalShaders[DECAL_SHADER_GLSL]->Disable();
@@ -315,6 +315,10 @@ inline void CGroundDecalHandler::DrawBuildingDecal(BuildingGroundDecal* decal)
 
 inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar, bool fade)
 {
+	if (!camera->InView(scar->pos, scar->radius + 16)) {
+		return;
+	}
+
 	const float* hm = readmap->GetHeightmap();
 	const int gsmx = gs->mapx;
 	const int gsmx1 = gsmx + 1;
@@ -394,76 +398,8 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 }
 
 
-void CGroundDecalHandler::Draw()
-{
-	if (!drawDecals) {
-		return;
-	}
 
-	const float3 ambientColor = mapInfo->light.groundAmbientColor * (210.0f / 255.0f);
-	const CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_POLYGON_OFFSET_FILL);
-	glPolygonOffset(-10, -200);
-	glDepthMask(0);
-
-	glActiveTextureARB(GL_TEXTURE1_ARB);
-		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
-		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_REPLACE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-
-	if (gd->DrawExtraTex()) {
-		glActiveTextureARB(GL_TEXTURE3_ARB);
-		glEnable(GL_TEXTURE_2D);
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_MODULATE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_ARB, GL_TEXTURE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-
-		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
-
-		glBindTexture(GL_TEXTURE_2D, gd->infoTex);
-	}
-
-	if (shadowHandler && shadowHandler->shadowsLoaded) {
-		glActiveTextureARB(GL_TEXTURE2_ARB);
-			glEnable(GL_TEXTURE_2D);
-			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-
-		decalShaders[DECAL_SHADER_CURR]->Enable();
-
-		if (decalShaders[DECAL_SHADER_CURR] == decalShaders[DECAL_SHADER_ARB]) {
-			decalShaders[DECAL_SHADER_CURR]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-			decalShaders[DECAL_SHADER_CURR]->SetUniform4f(10, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0.0f, 1.0f);
-			decalShaders[DECAL_SHADER_CURR]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-			decalShaders[DECAL_SHADER_CURR]->SetUniform4f(10, ambientColor.x, ambientColor.y, ambientColor.z, 1.0f);
-			decalShaders[DECAL_SHADER_CURR]->SetUniform4f(11, 0.0f, 0.0f, 0.0f, globalRendering->groundShadowDensity);
-
-			glMatrixMode(GL_MATRIX0_ARB);
-			glLoadMatrixf(shadowHandler->shadowMatrix.m);
-			glMatrixMode(GL_MODELVIEW);
-		} else {
-			decalShaders[DECAL_SHADER_CURR]->SetUniform4f(4, ambientColor.x, ambientColor.y, ambientColor.z, 1.0f);
-			decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(5, false, &shadowHandler->shadowMatrix.m[0]);
-			decalShaders[DECAL_SHADER_CURR]->SetUniform4fv(6, &(shadowHandler->GetShadowParams().x));
-		}
-	}
-
-	glActiveTextureARB(GL_TEXTURE0_ARB);
-
-
+void CGroundDecalHandler::DrawBuildingDecals() {
 	// create and draw the quads for each building decal
 	for (std::vector<BuildingDecalType*>::iterator bdti = buildingDecalTypes.begin(); bdti != buildingDecalTypes.end(); ++bdti) {
 		BuildingDecalType* bdt = *bdti;
@@ -517,30 +453,11 @@ void CGroundDecalHandler::Draw()
 			// glBindTexture(GL_TEXTURE_2D, 0);
 		}
 	}
-
-
-	if (shadowHandler && shadowHandler->shadowsLoaded) {
-		decalShaders[DECAL_SHADER_CURR]->Disable();
-
-		glActiveTextureARB(GL_TEXTURE2_ARB);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-			glDisable(GL_TEXTURE_2D);
-		glActiveTextureARB(GL_TEXTURE1_ARB);
-
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_TEXTURE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
-
-		glActiveTextureARB(GL_TEXTURE0_ARB);
-	}
+}
 
 
 
-	glPolygonOffset(-10, -20);
-
-	unsigned char color[4] = {255, 255, 255, 255};
-	unsigned char color2[4] = {255, 255, 255, 255};
-
+void CGroundDecalHandler::AddTracks() {
 	{
 		GML_STDMUTEX_LOCK(track); // Draw
 		// Delayed addition of new tracks
@@ -567,7 +484,8 @@ void CGroundDecalHandler::Draw()
 			if (unit->myTrack->parts.size() > 1) {
 				list<TrackPart *>::iterator pi = --unit->myTrack->parts.end();
 				list<TrackPart *>::iterator pi2 = pi--;
-				if(((tp->pos1+(*pi)->pos1)*0.5f).SqDistance((*pi2)->pos1)<1)
+
+				if (((tp->pos1 + (*pi)->pos1) * 0.5f).SqDistance((*pi2)->pos1) < 1.0f)
 					replace = true;
 			}
 
@@ -587,11 +505,16 @@ void CGroundDecalHandler::Draw()
 
 	tracksToBeDeleted.clear();
 	tracksToBeCleaned.clear();
+}
 
+void CGroundDecalHandler::DrawTracks() {
+	unsigned char color[4] = {255, 255, 255, 255};
+	unsigned char color2[4] = {255, 255, 255, 255};
 
 	// create and draw the unit footprint quads
 	for (std::vector<TrackType*>::iterator tti = trackTypes.begin(); tti != trackTypes.end(); ++tti) {
 		TrackType* tt = *tti;
+
 		if (!tt->tracks.empty()) {
 			set<UnitTrackStruct*>::iterator utsi = tt->tracks.begin();
 
@@ -630,32 +553,37 @@ void CGroundDecalHandler::Draw()
 			va->DrawArrayTC(GL_QUADS);
 		}
 	}
+}
 
-	{
-		GML_STDMUTEX_LOCK(track); // Draw
-		// Cleanup old tracks
-		for (std::vector<TrackToClean>::iterator ti = tracksToBeCleaned.begin(); ti != tracksToBeCleaned.end(); ++ti) {
-			TrackToClean *ttc = &(*ti);
-			UnitTrackStruct *track = ttc->track;
-			while (!track->parts.empty() && track->parts.front()->creationTime < gs->frameNum - track->lifeTime) {
-				delete track->parts.front();
-				track->parts.pop_front();
+void CGroundDecalHandler::CleanTracks() {
+	GML_STDMUTEX_LOCK(track); // Draw
+
+	// Cleanup old tracks
+	for (std::vector<TrackToClean>::iterator ti = tracksToBeCleaned.begin(); ti != tracksToBeCleaned.end(); ++ti) {
+		TrackToClean *ttc = &(*ti);
+		UnitTrackStruct *track = ttc->track;
+
+		while (!track->parts.empty() && track->parts.front()->creationTime < gs->frameNum - track->lifeTime) {
+			delete track->parts.front();
+			track->parts.pop_front();
+		}
+
+		if (track->parts.empty()) {
+			if (track->owner) {
+				track->owner->myTrack = 0;
+				track->owner = 0;
 			}
-			if (track->parts.empty()) {
-				if (track->owner) {
-					track->owner->myTrack = 0;
-					track->owner = 0;
-				}
-				ttc->tracks->erase(track);
-				tracksToBeDeleted.push_back(track);
-			}
+			ttc->tracks->erase(track);
+			tracksToBeDeleted.push_back(track);
 		}
 	}
+}
 
-	glBindTexture(GL_TEXTURE_2D, scarTex);
-	glPolygonOffset(-10, -400);
 
+
+void CGroundDecalHandler::AddScars() {
 	scarsToBeChecked.clear();
+
 	{
 		GML_STDMUTEX_LOCK(scar); // Draw
 
@@ -683,7 +611,9 @@ void CGroundDecalHandler::Draw()
 
 		scars.push_back(s); 
 	}
+}
 
+void CGroundDecalHandler::DrawScars() {
 	// create and draw the 16x16 quads for each ground scar
 	for (std::list<Scar*>::iterator si = scars.begin(); si != scars.end(); ) {
 		Scar* scar = *si;
@@ -694,18 +624,118 @@ void CGroundDecalHandler::Draw()
 			continue;
 		}
 
-		if (camera->InView(scar->pos, scar->radius + 16)) {
-			DrawGroundScar(scar, groundScarAlphaFade);
-		}
-
+		DrawGroundScar(scar, groundScarAlphaFade);
 		++si;
 	}
+}
 
+
+
+
+void CGroundDecalHandler::Draw()
+{
+	if (!drawDecals) {
+		return;
+	}
+
+	const float3 ambientColor = mapInfo->light.groundAmbientColor * (210.0f / 255.0f);
+	const CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(-10, -200);
+	glDepthMask(0);
+
+	glActiveTexture(GL_TEXTURE1);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, readmap->GetShadingTexture());
+		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_REPLACE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
+
+	if (gd->DrawExtraTex()) {
+		glActiveTexture(GL_TEXTURE3);
+		glEnable(GL_TEXTURE_2D);
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_ARB, GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
+
+		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
+
+		glBindTexture(GL_TEXTURE_2D, gd->infoTex);
+	}
+
+	if (shadowHandler && shadowHandler->shadowsLoaded) {
+		glActiveTexture(GL_TEXTURE2);
+			glEnable(GL_TEXTURE_2D);
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
+			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+
+		decalShaders[DECAL_SHADER_CURR]->Enable();
+
+		if (decalShaders[DECAL_SHADER_CURR] == decalShaders[DECAL_SHADER_ARB]) {
+			decalShaders[DECAL_SHADER_CURR]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
+			decalShaders[DECAL_SHADER_CURR]->SetUniform4f(10, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0.0f, 1.0f);
+			decalShaders[DECAL_SHADER_CURR]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
+			decalShaders[DECAL_SHADER_CURR]->SetUniform4f(10, ambientColor.x, ambientColor.y, ambientColor.z, 1.0f);
+			decalShaders[DECAL_SHADER_CURR]->SetUniform4f(11, 0.0f, 0.0f, 0.0f, globalRendering->groundShadowDensity);
+
+			glMatrixMode(GL_MATRIX0_ARB);
+			glLoadMatrixf(shadowHandler->shadowMatrix.m);
+			glMatrixMode(GL_MODELVIEW);
+		} else {
+			decalShaders[DECAL_SHADER_CURR]->SetUniform4f(4, ambientColor.x, ambientColor.y, ambientColor.z, 1.0f);
+			decalShaders[DECAL_SHADER_CURR]->SetUniformMatrix4fv(5, false, &shadowHandler->shadowMatrix.m[0]);
+			decalShaders[DECAL_SHADER_CURR]->SetUniform4fv(6, &(shadowHandler->GetShadowParams().x));
+		}
+	}
+
+	glActiveTexture(GL_TEXTURE0);
+	DrawBuildingDecals();
+
+
+	if (shadowHandler && shadowHandler->shadowsLoaded) {
+		decalShaders[DECAL_SHADER_CURR]->Disable();
+
+		glActiveTexture(GL_TEXTURE2);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
+			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+			glDisable(GL_TEXTURE_2D);
+		glActiveTexture(GL_TEXTURE1);
+
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
+
+		glActiveTexture(GL_TEXTURE0);
+	}
+
+
+
+	glPolygonOffset(-10, -20);
+
+	AddTracks();
+	DrawTracks();
+	CleanTracks();
+
+	glBindTexture(GL_TEXTURE_2D, scarTex);
+	glPolygonOffset(-10, -400);
+
+	AddScars();
+	DrawScars();
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glDisable(GL_BLEND);
 
-	glActiveTextureARB(GL_TEXTURE1_ARB);
+	glActiveTexture(GL_TEXTURE1);
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_TEXTURE_GEN_S);
 		glDisable(GL_TEXTURE_GEN_T);
@@ -713,7 +743,7 @@ void CGroundDecalHandler::Draw()
 		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
 		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_ARB, GL_TEXTURE);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glActiveTextureARB(GL_TEXTURE3_ARB); //! infotex
+	glActiveTexture(GL_TEXTURE3); //! infotex
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_TEXTURE_GEN_S);
 		glDisable(GL_TEXTURE_GEN_T);
@@ -721,7 +751,7 @@ void CGroundDecalHandler::Draw()
 		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
 		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_ARB, GL_TEXTURE);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glActiveTexture(GL_TEXTURE0);
 }
 
 
@@ -871,19 +901,21 @@ unsigned int CGroundDecalHandler::LoadTexture(const std::string& name)
 }
 
 
-void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius)
+void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius, bool addScar)
 {
-	if (decalLevel == 0)
+	if (decalLevel == 0 || !addScar)
 		return;
 
-	float height = pos.y - ground->GetHeightReal(pos.x, pos.z);
+	const float lifeTime = decalLevel * damage * 3.0f;
+	const float height = pos.y - ground->GetHeightReal(pos.x, pos.z);
+
 	if (height >= radius)
 		return;
 
 	pos.y -= height;
 	radius -= height;
 
-	if (radius < 5)
+	if (radius < 5.0f)
 		return;
 
 	if (damage > radius * 30)
@@ -903,9 +935,9 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius)
 	s->radius = radius * 1.4f;
 	s->creationTime = gs->frameNum;
 	s->startAlpha = max(50.f, min(255.f, damage));
-	float lifeTime = decalLevel * (damage) * 3;
 	s->alphaFalloff = s->startAlpha / (lifeTime);
 	s->lifeTime = (int) (gs->frameNum + lifeTime);
+	// atlas contains 2x2 textures, pick one of them
 	s->texOffsetX = (gu->usRandInt() & 128)? 0: 0.5f;
 	s->texOffsetY = (gu->usRandInt() & 128)? 0: 0.5f;
 

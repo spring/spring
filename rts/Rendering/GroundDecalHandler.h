@@ -9,7 +9,6 @@
 #include <string>
 
 #include "System/float3.h"
-#include "Rendering/GL/myGL.h"
 
 class CUnit;
 class CBuilding;
@@ -84,7 +83,7 @@ public:
 	void RemoveUnit(CUnit* unit);
 	int GetTrackType(const std::string& name);
 
-	void AddExplosion(float3 pos, float damage, float radius);
+	void AddExplosion(float3 pos, float damage, float radius, bool);
 
 	void AddBuilding(CBuilding* building);
 	void RemoveBuilding(CBuilding* building, GhostBuilding* gb);
@@ -96,22 +95,30 @@ public:
 
 private:
 	void LoadDecalShaders();
+	void DrawBuildingDecals();
 
-	GLuint scarTex;
-	int decalLevel;
-	int groundScarAlphaFade;
+	void AddTracks();
+	void DrawTracks();
+	void CleanTracks();
+
+	void AddScars();
+	void DrawScars();
+
+	unsigned int scarTex;
+	unsigned int decalLevel;
+	bool groundScarAlphaFade;
 
 	struct TrackType {
 		std::string name;
 		std::set<UnitTrackStruct*> tracks;
-		GLuint texture;
+		unsigned int texture;
 	};
 	std::vector<TrackType*> trackTypes;
 
 	struct BuildingDecalType {
 		std::string name;
 		std::set<BuildingGroundDecal*> buildingDecals;
-		GLuint texture;
+		unsigned int texture;
 	};
 	std::vector<BuildingDecalType*> buildingDecalTypes;
 
