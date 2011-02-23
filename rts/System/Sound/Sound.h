@@ -47,21 +47,27 @@ public:
 	virtual void PrintDebugInfo();
 	virtual bool LoadSoundDefs(const std::string& fileName);
 
+	static float GetElmoInMeters() {
+		return 1.f/8; //SQUARE_SIZE; //! 8 elmos = 1m
+	}
+
+private:
+	typedef std::map<std::string, std::string> soundItemDef;
+	typedef std::map<std::string, soundItemDef> soundItemDefMap;
+
 private:
 	void StartThread(int maxSounds);
 	void Update();
 
-	typedef std::map<std::string, std::string> soundItemDef;
-	typedef std::map<std::string, soundItemDef> soundItemDefMap;
-
 	size_t MakeItemFromDef(const soundItemDef& itemDef);
 
-	friend class EffectChannel;
 	// this is used by EffectChannel in AudioChannel.cpp
 	virtual void PlaySample(size_t id, const float3 &p, const float3& velocity, float volume, bool relative);
+	friend class EffectChannel;
 
 	size_t LoadSoundBuffer(const std::string& filename, bool hardFail);
 
+private:
 	float masterVolume;
 	bool mute;
 	/// we do not play if minimized / iconified
