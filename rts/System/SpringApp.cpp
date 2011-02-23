@@ -84,7 +84,6 @@
 
 using std::string;
 
-CGameController* activeController = NULL;
 ClientSetup* startsetup = NULL;
 
 COffscreenGLContext* SpringApp::ogc = NULL;
@@ -1190,7 +1189,9 @@ int SpringApp::Run(int argc, char *argv[])
  */
 void SpringApp::Shutdown()
 {
-	gu->globalQuit = true;
+	if (gu) gu->globalQuit = true;
+
+#define DeleteAndNull(x) delete x; x = NULL;
 
 #ifdef USE_GML
 	if(gmlProcessor) {
@@ -1199,22 +1200,22 @@ void SpringApp::Shutdown()
 		while(!gmlProcessor->PumpAux())
 			boost::thread::yield();
 		if(GML_SHARE_LISTS)
-			delete ogc;
+			DeleteAndNull(ogc);
 #endif
-		delete gmlProcessor;
+		DeleteAndNull(gmlProcessor);
 	}
 #endif
 
 	CrashHandler::UninstallHangHandler();
 
-	delete pregame;
-	delete game;
-	delete gameServer;
-	delete gameSetup;
+	DeleteAndNull(pregame);
+	DeleteAndNull(game);
+	DeleteAndNull(gameServer);
+	DeleteAndNull(gameSetup);
 	CLoadScreen::DeleteInstance();
 	ISound::Shutdown();
-	delete font;
-	delete smallFont;
+	DeleteAndNull(font);
+	DeleteAndNull(smallFont);
 	CNamedTextures::Kill();
 	GLContext::Free();
 	ConfigHandler::Deallocate();
@@ -1229,9 +1230,9 @@ void SpringApp::Shutdown()
 #endif
 	SDL_Quit();
 
-	delete gs;
-	delete gu;
-	delete startsetup;
+	DeleteAndNull(gs);
+	DeleteAndNull(gu);
+	DeleteAndNull(startsetup);
 
 #ifdef USE_MMGR
 	m_dumpMemoryReport();

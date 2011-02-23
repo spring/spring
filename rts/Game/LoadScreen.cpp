@@ -65,7 +65,7 @@ void CLoadScreen::Init()
 
 	mt_loading = configHandler->Get("LoadingMT", true);
 
-	//! Create a Thread that pings the host/server, so it knows that this client is still alive
+	//! Create a thread during the loading that pings the host/server, so it knows that this client is still alive/loading
 	netHeartbeatThread = new boost::thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
 
 	game = new CGame(mapName, modName, saveFile);
@@ -110,8 +110,10 @@ CLoadScreen::~CLoadScreen()
 {
 	delete gameLoadThread; gameLoadThread = NULL;
 
-	net->loading = false;
-	netHeartbeatThread->join();
+	if (net)
+		net->loading = false;
+	if (netHeartbeatThread)
+		netHeartbeatThread->join();
 	delete netHeartbeatThread; netHeartbeatThread = NULL;
 
 	UnloadStartPicture();
