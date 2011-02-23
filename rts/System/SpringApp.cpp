@@ -1165,14 +1165,8 @@ int SpringApp::Run(int argc, char *argv[])
 			}
 		}
 
-		try {
-			if (!Update())
-				break;
-		} catch (content_error &e) {
-			// FIXME should this really be in here and not the crashhandler???
-			LogObject() << "Caught content exception: " << e.what() << "\n";
-			handleerror(NULL, e.what(), "Content error", MBF_OK | MBF_EXCL);
-		}
+		if (!Update())
+			break;
 	}
 
 	SaveWindowPosition();
