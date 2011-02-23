@@ -349,31 +349,6 @@ bool CLuaUI::ConfigCommand(const string& command)
 }
 
 
-bool CLuaUI::AddConsoleLines()
-{
-	CInfoConsole* ic = game->infoConsole;
-	if (ic == NULL) {
-		return true;
-	}
-
-	vector<CInfoConsole::RawLine> lines;
-	ic->GetNewRawLines(lines);
-
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
-
-	const int count = (int)lines.size();
-	for (int i = 0; i < count; i++) {
-		const CInfoConsole::RawLine& rl = lines[i];
-
-		if (!AddConsoleLine(rl.text, *rl.subsystem)) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
 
 static inline float fuzzRand(float fuzz)
 {
