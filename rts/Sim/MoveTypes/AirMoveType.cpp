@@ -1065,8 +1065,10 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 					owner->DoDamage(DamageArray(damage * 0.4f), 0, ZeroVector);
 				}
 			}
+
 			pos.y = gHeight + owner->model->radius * 0.2f + 0.01f;
 			speed += gNormal * (impactSpeed * 1.5f);
+
 			// fix for mantis #1355
 			// aircraft could get stuck in the ground and never recover;
 			// this only happened when the speed wasn't high enough.

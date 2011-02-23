@@ -137,7 +137,7 @@ void CTAAirMoveType::SetState(AircraftState newState)
 	switch (aircraftState) {
 		case AIRCRAFT_LANDED:
 			if (padStatus == 0) {
-				// don't set us as on ground if we are on pad
+				// set us on ground if we are not on a pad
 				owner->physicalState = CSolidObject::OnGround;
 				owner->Block();
 			}
@@ -288,18 +288,21 @@ void CTAAirMoveType::Idle()
 
 void CTAAirMoveType::UpdateLanded()
 {
-	float3& pos = owner->pos;
+	if (owner->beingBuilt)
+		return;
 
-	// dont place on ground if we are on a repair pad
+	float3& pos = owner->pos;
+	float3& spd = owner->speed;
+
 	if (padStatus == 0) {
 		if (owner->unitDef->canSubmerge) {
-			pos.y = ground->GetApproximateHeight(pos.x, pos.z);
+			pos.y = std::max(pos.y, ground->GetApproximateHeight(pos.x, pos.z));
 		} else {
-			pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
+			pos.y = std::max(pos.y, ground->GetHeightAboveWater(pos.x, pos.z));
 		}
 	}
 
-	owner->speed = ZeroVector;
+	spd = ZeroVector;
 }
 
 void CTAAirMoveType::UpdateTakeoff()
@@ -542,7 +545,7 @@ void CTAAirMoveType::UpdateLanding()
 		}
 	}
 	// We should wait until we actually have stopped smoothly
-	if (speed.SqLength2D() > 1) {
+	if (speed.SqLength2D() > 1.0f) {
 		UpdateFlying();
 		return;
 	}
@@ -552,18 +555,19 @@ void CTAAirMoveType::UpdateLanding()
 	float h = 0.0f;
 
 	// if aircraft submergible and above water we want height of ocean floor
-	if ((owner->unitDef->canSubmerge) && (gah < 0)) {
+	if ((owner->unitDef->canSubmerge) && (gah < 0.0f)) {
 		h = pos.y - gah;
 		wantedHeight = gah;
 	} else {
 		h = pos.y - ground->GetHeightAboveWater(pos.x, pos.z);
-		wantedHeight = -2;
+		wantedHeight = -2.0;
 	}
 
 	UpdateAirPhysics();
 
 	if (h <= 0) {
 		SetState(AIRCRAFT_LANDED);
+
 		pos.y = gah;
 	}
 }
@@ -785,12 +789,14 @@ void CTAAirMoveType::Update()
 
 		const FPSUnitController& con = owner->fpsControlPlayer->fpsController;
 
-		float3 forward = con.viewDir;
+		const float3 forward = con.viewDir;
+		const float3 right = forward.cross(UpVector);
+		const float3 nextPos = pos + speed;
+
 		float3 flatForward = forward;
-		flatForward.y = 0;
+		flatForward.y = 0.0f;
 		flatForward.Normalize();
-		float3 right = forward.cross(UpVector);
-		float3 nextPos = pos + speed;
+
 		wantedSpeed = ZeroVector;
 
 		if (con.forward) wantedSpeed += flatForward;
@@ -801,7 +807,7 @@ void CTAAirMoveType::Update()
 		wantedSpeed.Normalize();
 		wantedSpeed *= maxSpeed;
 
-		if (!nextPos.CheckInBounds()) {
+		if (!nextPos.IsInBounds()) {
 			speed = ZeroVector;
 		}
 
