@@ -39,6 +39,8 @@ local spGetUnitDefID    = Spring.GetUnitDefID
 local spGetUnitPosition = Spring.GetUnitPosition
 local spGiveOrderToUnit = Spring.GiveOrderToUnit
 
+local hmsx = Game.mapSizeX/2
+local hmsz = Game.mapSizeZ/2
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -65,7 +67,17 @@ local function SetupUnit(unitID)
   local x, y, z = spGetUnitPosition(unitID)
   if (x) then
     spGiveOrderToUnit(unitID, CMD_MOVE_STATE, { 2 }, {})
-    spGiveOrderToUnit(unitID, CMD_PATROL, { x + 25, y, z - 25 }, {})
+    if (x > hmsx) then
+      x = x - 25
+    else
+      x = x + 25
+    end
+    if (z > hmsz) then
+      z = z - 25
+    else
+      z = z + 25
+    end
+    spGiveOrderToUnit(unitID, CMD_PATROL, { x, y, z }, {})
   end
 end
 
