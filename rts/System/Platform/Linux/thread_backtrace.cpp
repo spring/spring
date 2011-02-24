@@ -16,7 +16,7 @@
 #define INSTACK(a)  ((a) >= stack_buffer && (a) <= (stack_buffer + stack_size))
 
 
-uint8_t* TranslateStackAddrToBufferAddr(uint8_t* p, uint8_t* stackbot, uint8_t* stack_buffer)
+static uint8_t* TranslateStackAddrToBufferAddr(uint8_t* p, uint8_t* stackbot, uint8_t* stack_buffer)
 {
 	uintptr_t addr = *(uintptr_t*)(p);
 	uintptr_t pos = addr - (uintptr_t)stackbot;
@@ -25,7 +25,7 @@ uint8_t* TranslateStackAddrToBufferAddr(uint8_t* p, uint8_t* stackbot, uint8_t* 
 }
 
 
-void internal_pthread_backtrace(pthread_t thread, void** buffer, size_t max, size_t* depth, size_t skip)
+static void internal_pthread_backtrace(pthread_t thread, void** buffer, size_t max, size_t* depth, size_t skip)
 {
 	*depth = 0;
 
@@ -34,12 +34,18 @@ void internal_pthread_backtrace(pthread_t thread, void** buffer, size_t max, siz
 	uint8_t* stackbot;
 	size_t stack_size; //! in bytes
 	size_t guard_size; //! in bytes
+#ifdef __APPLE__
+	stackbot = (uint8_t*)pthread_get_stackaddr_np(thread);
+	stack_size = pthread_get_stacksize_np(thread);
+	guard_size = 0; //FIXME anyway to get that?
+#else
 	pthread_attr_t attr;
 	pthread_getattr_np(thread, &attr);
 	pthread_attr_getstack(&attr, (void**)&stackbot, &stack_size);
 	pthread_attr_getguardsize(&attr, &guard_size);
-	stacktop = stackbot + (stack_size - guard_size);
+#endif
 	stack_size -= guard_size;
+	stacktop = stackbot + stack_size;
 
 	//! The thread is is still running!!!
 	//! So make a buffer copy of the stack, else it gets changed while we reading from it!
