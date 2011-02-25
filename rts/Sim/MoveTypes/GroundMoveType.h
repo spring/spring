@@ -18,7 +18,7 @@ public:
 
 	void PostLoad();
 
-	void Update();
+	bool Update();
 	void SlowUpdate();
 
 	void SetDeltaSpeed(float, bool, bool = false);
@@ -127,7 +127,6 @@ protected:
 
 	unsigned int nextDeltaSpeedUpdate;
 	unsigned int nextObstacleAvoidanceUpdate;
-	unsigned int lastTrackUpdate; // unsynced
 
 	unsigned int pathRequestDelay;
 

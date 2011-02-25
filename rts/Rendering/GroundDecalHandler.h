@@ -9,6 +9,7 @@
 #include <string>
 
 #include "System/float3.h"
+#include "System/EventClient.h"
 
 class CUnit;
 class CBuilding;
@@ -28,8 +29,11 @@ struct TrackPart {
 };
 
 struct UnitTrackStruct {
+	UnitTrackStruct(CUnit* u): owner(u), lastAdded(NULL) {}
+
 	CUnit* owner;
-	int lifeTime;
+	unsigned int lastUpdate;
+	unsigned int lifeTime;
 	int trackAlpha;
 	float alphaFalloff;
 	TrackPart* lastAdded;
@@ -69,16 +73,17 @@ struct BuildingGroundDecal {
 };
 
 
-class CGroundDecalHandler
+class CGroundDecalHandler: public CEventClient
 {
 public:
 	CGroundDecalHandler();
-	virtual ~CGroundDecalHandler();
+	~CGroundDecalHandler();
+
 	void Draw();
 	void Update();
 	void UpdateSunDir();
 
-	void UnitMoved(CUnit* unit);
+	void UnitMoved(const CUnit*);
 	void UnitMovedNow(CUnit* unit);
 	void RemoveUnit(CUnit* unit);
 	int GetTrackType(const std::string& name);
@@ -93,6 +98,11 @@ public:
 	bool GetDrawDecals() const { return drawDecals; }
 	void SetDrawDecals(bool v) { if (decalLevel > 0) { drawDecals = v; } }
 
+	bool WantsEvent(const std::string& eventName) {
+		return (eventName == "UnitMoved");
+	}
+	bool GetFullRead() const { return true; }
+	int GetReadAllyTeam() const { return AllAccessTeam; }
 private:
 	void LoadDecalShaders();
 	void DrawBuildingDecals();

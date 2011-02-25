@@ -179,7 +179,7 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 					float3 wantedPos = unit->pos;
 					wantedPos.y = ((CTransportUnit *)owner)->GetLoadUnloadHeight(wantedPos, unit);
 					SetGoal(wantedPos, owner->pos);
-					am->dontCheckCol = true;
+					am->loadingUnits = true;
 					am->ForceHeading(((CTransportUnit *)owner)->GetLoadUnloadHeading(unit));
 					am->SetWantedAltitude(wantedPos.y - ground->GetHeightAboveWater(wantedPos.x, wantedPos.z));
 					am->maxDrift = 1;
@@ -188,7 +188,7 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 						(abs(owner->heading-unit->heading) < AIRTRANSPORT_DOCKING_ANGLE) &&
 						(owner->updir.dot(UpVector) > 0.995f))
 					{
-						am->dontCheckCol = false;
+						am->loadingUnits = false;
 						am->dontLand = true;
 						owner->script->BeginTransport(unit);
 						const int piece = owner->script->QueryTransport(unit);
@@ -1037,7 +1037,7 @@ void CTransportCAI::FinishCommand()
 {
 	CTAAirMoveType* am = dynamic_cast<CTAAirMoveType*>(owner->moveType);
 	if (am) {
-		am->dontCheckCol = false;
+		am->loadingUnits = false;
 	}
 
 	if (toBeTransportedUnitId != -1) {

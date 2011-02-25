@@ -19,66 +19,63 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Weapons/Weapon.h"
-#ifdef DEBUG_AIRCRAFT
-#include "System/LogOutput.h"
-#endif
 
 CR_BIND_DERIVED(CAirMoveType, AAirMoveType, (NULL));
 CR_BIND(CAirMoveType::DrawLine, );
 CR_BIND(CAirMoveType::RudderInfo, );
 
 CR_REG_METADATA(CAirMoveType, (
-		CR_MEMBER(subState),
+	CR_MEMBER(subState),
 
-		CR_MEMBER(maneuver),
-		CR_MEMBER(maneuverSubState),
+	CR_MEMBER(maneuver),
+	CR_MEMBER(maneuverSubState),
 
-		CR_MEMBER(loopbackAttack),
-		CR_MEMBER(isFighter),
+	CR_MEMBER(loopbackAttack),
+	CR_MEMBER(isFighter),
 
-		CR_MEMBER(wingDrag),
-		CR_MEMBER(wingAngle),
-		CR_MEMBER(invDrag),
-		CR_MEMBER(crashDrag),
-		CR_MEMBER(frontToSpeed),
-		CR_MEMBER(speedToFront),
-		CR_MEMBER(myGravity),
+	CR_MEMBER(wingDrag),
+	CR_MEMBER(wingAngle),
+	CR_MEMBER(invDrag),
+	CR_MEMBER(crashDrag),
+	CR_MEMBER(frontToSpeed),
+	CR_MEMBER(speedToFront),
+	CR_MEMBER(myGravity),
 
-		CR_MEMBER(maxBank),
-		CR_MEMBER(maxPitch),
-		CR_MEMBER(maxSpeed),
-		CR_MEMBER(turnRadius),
+	CR_MEMBER(maxBank),
+	CR_MEMBER(maxPitch),
+	CR_MEMBER(maxSpeed),
+	CR_MEMBER(turnRadius),
 
-		CR_MEMBER(maxAcc),
-		CR_MEMBER(maxAileron),
-		CR_MEMBER(maxElevator),
-		CR_MEMBER(maxRudder),
+	CR_MEMBER(maxAcc),
+	CR_MEMBER(maxAileron),
+	CR_MEMBER(maxElevator),
+	CR_MEMBER(maxRudder),
 
-		CR_MEMBER(inSupply),
+	CR_MEMBER(inSupply),
 
-		CR_MEMBER(mySide),
-		CR_MEMBER(crashAileron),
-		CR_MEMBER(crashElevator),
-		CR_MEMBER(crashRudder),
+	CR_MEMBER(mySide),
+	CR_MEMBER(crashAileron),
+	CR_MEMBER(crashElevator),
+	CR_MEMBER(crashRudder),
 
-		CR_MEMBER(lines),
+	CR_MEMBER(lines),
 
-		CR_MEMBER(rudder),
-		CR_MEMBER(elevator),
-		CR_MEMBER(aileronRight),
-		CR_MEMBER(aileronLeft),
-		CR_MEMBER(rudders),
+	CR_MEMBER(rudder),
+	CR_MEMBER(elevator),
+	CR_MEMBER(aileronRight),
+	CR_MEMBER(aileronLeft),
+	CR_MEMBER(rudders),
 
-		CR_MEMBER(lastRudderUpdate),
-		CR_MEMBER(lastRudderPos),
-		CR_MEMBER(lastElevatorPos),
-		CR_MEMBER(lastAileronPos),
+	CR_MEMBER(lastRudderUpdate),
+	CR_MEMBER(lastRudderPos),
+	CR_MEMBER(lastElevatorPos),
+	CR_MEMBER(lastAileronPos),
 
-		CR_MEMBER(inefficientAttackTime),
-		CR_MEMBER(exitVector),
+	CR_MEMBER(inefficientAttackTime),
+	CR_MEMBER(exitVector),
 
-		CR_RESERVED(63)
-		));
+	CR_RESERVED(63)
+));
 
 CR_REG_METADATA_SUB(CAirMoveType, DrawLine, (
 		CR_MEMBER(pos1), CR_MEMBER(pos2),
@@ -151,14 +148,13 @@ CAirMoveType::~CAirMoveType()
 
 
 
-void CAirMoveType::Update()
+bool CAirMoveType::Update()
 {
 	float3& pos = owner->pos;
 
 	if (owner->stunned || owner->beingBuilt) {
 		UpdateAirPhysics(0, lastAileronPos, lastElevatorPos, 0, ZeroVector);
-		HandleCollisions();
-		return;
+		return (HandleCollisions());
 	}
 
 	// note: this is only set to false after
@@ -186,8 +182,7 @@ void CAirMoveType::Update()
 			UpdateAirPhysics(0, aileron, elevator, 1, owner->frontdir);
 			maneuver = 0;
 
-			HandleCollisions();
-			return;
+			return (HandleCollisions());
 		}
 	}
 
@@ -204,7 +199,7 @@ void CAirMoveType::Update()
 
 			goalPos = posToBe;
 
-			if (posToBe.SqDistance2D(owner->pos) < (400*400)) {
+			if (posToBe.SqDistance2D(pos) < (400*400)) {
 				padStatus = 1;
 			}
 		} else if (padStatus == 1) {
@@ -215,7 +210,7 @@ void CAirMoveType::Update()
 			goalPos = posToBe;
 			reservedLandingPos = posToBe;
 
-			if (owner->pos.SqDistance(posToBe) < 9 || aircraftState == AIRCRAFT_LANDED) {
+			if (pos.SqDistance(posToBe) < 9 || aircraftState == AIRCRAFT_LANDED) {
 				padStatus = 2;
 			}
 		} else {
@@ -223,7 +218,7 @@ void CAirMoveType::Update()
 				SetState(AIRCRAFT_LANDED);
 			}
 
-			owner->pos = posToBe;
+			pos = posToBe;
 			owner->AddBuildPower(unit->unitDef->buildSpeed / GAME_SPEED, unit);
 			owner->currentFuel = std::min(owner->unitDef->maxFuel, owner->currentFuel + (owner->unitDef->maxFuel / (GAME_SPEED * owner->unitDef->refuelTime)));
 
@@ -300,21 +295,35 @@ void CAirMoveType::Update()
 			break;
 	}
 
-	HandleCollisions();
-	return;
+	return (HandleCollisions());
 }
 
 
 
 
-void CAirMoveType::HandleCollisions() {
+bool CAirMoveType::HandleCollisions() {
 	float3& pos = owner->pos;
 
-	if (pos != oldpos) {
-		oldpos = pos;
+#ifdef DEBUG_AIRCRAFT
+	if (lastColWarningType == 1) {
+		const int g = geometricObjects->AddLine(owner->pos, lastColWarning->pos, 10, 1, 1);
+		geometricObjects->SetColor(g, 0.2f, 1, 0.2f, 0.6f);
+	} else if (lastColWarningType == 2) {
+		const int g = geometricObjects->AddLine(owner->pos, lastColWarning->pos, 10, 1, 1);
+		if (owner->frontdir.dot(lastColWarning->midPos + lastColWarning->speed * 20 - owner->midPos - owner->speed * 20) < 0) {
+			geometricObjects->SetColor(g, 1, 0.2f, 0.2f, 0.6f);
+		} else {
+			geometricObjects->SetColor(g, 1, 1, 0.2f, 0.6f);
+		}
+	}
+#endif
+
+	if (pos != oldPos) {
+		oldPos = pos;
 
 		const bool checkCollisions =
-			!owner->beingBuilt && collide &&
+			collide &&
+			(!owner->beingBuilt) &&
 			(aircraftState == AIRCRAFT_FLYING || aircraftState == AIRCRAFT_CRASHING);
 
 		if (checkCollisions) {
@@ -327,41 +336,38 @@ void CAirMoveType::HandleCollisions() {
 				const float sqDist = (pos - unit->pos).SqLength();
 				const float totRad = owner->radius + unit->radius;
 
-				if (sqDist < totRad * totRad && sqDist != 0) {
-					const float dist = sqrt(sqDist);
-					float3 dif = pos - unit->pos;
+				if (sqDist <= 0.1f || sqDist >= (totRad * totRad))
+					continue;
 
-					if (dist > 0.0f) {
-						dif /= dist;
-					}
+				const float dist = math::sqrt(sqDist);
+				const float3 dif = (pos - unit->pos).Normalize();
 
-					if (unit->immobile) {
-						pos -= dif * (dist - totRad);
+				if (unit->immobile) {
+					pos -= dif * (dist - totRad);
 
-						owner->UpdateMidPos();
-						owner->speed *= 0.99f;
+					owner->UpdateMidPos();
+					owner->speed *= 0.99f;
 
-						const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
+					const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
 
-						owner->DoDamage(DamageArray(damage), 0, ZeroVector);
-						unit->DoDamage(DamageArray(damage), 0, ZeroVector);
-						hitBuilding = true;
-					} else {
-						const float part = owner->mass / (owner->mass + unit->mass);
+					owner->DoDamage(DamageArray(damage), 0, ZeroVector);
+					unit->DoDamage(DamageArray(damage), 0, ZeroVector);
+					hitBuilding = true;
+				} else {
+					const float part = owner->mass / (owner->mass + unit->mass);
 
-						pos -= dif * (dist - totRad) * (1 - part);
-						owner->UpdateMidPos();
+					pos -= dif * (dist - totRad) * (1 - part);
+					owner->UpdateMidPos();
 
-						unit->pos += dif * (dist - totRad) * (part);
-						unit->UpdateMidPos();
+					unit->pos += dif * (dist - totRad) * (part);
+					unit->UpdateMidPos();
 
-						const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
+					const float damage = ((unit->speed - owner->speed) * 0.1f).SqLength();
 
-						owner->DoDamage(DamageArray(damage), 0, ZeroVector);
-						unit->DoDamage(DamageArray(damage), 0, ZeroVector);
+					owner->DoDamage(DamageArray(damage), 0, ZeroVector);
+					unit->DoDamage(DamageArray(damage), 0, ZeroVector);
 
-						owner->speed *= 0.99f;
-					}
+					owner->speed *= 0.99f;
 				}
 			}
 
@@ -373,7 +379,7 @@ void CAirMoveType::HandleCollisions() {
 				// if eg. we're going down over a crowded field
 				// of windmills due to col-det)
 				owner->KillUnit(true, false, 0);
-				return;
+				return true;
 			}
 		}
 
@@ -392,23 +398,11 @@ void CAirMoveType::HandleCollisions() {
 			pos.z -= 1.5f;
 			owner->midPos.z -= 1.5f;
 		}
+
+		return true;
 	}
 
-
-
-#ifdef DEBUG_AIRCRAFT
-	if (lastColWarningType == 1) {
-		const int g = geometricObjects->AddLine(owner->pos, lastColWarning->pos, 10, 1, 1);
-		geometricObjects->SetColor(g, 0.2f, 1, 0.2f, 0.6f);
-	} else if (lastColWarningType == 2) {
-		const int g = geometricObjects->AddLine(owner->pos, lastColWarning->pos, 10, 1, 1);
-		if (owner->frontdir.dot(lastColWarning->midPos + lastColWarning->speed * 20 - owner->midPos - owner->speed * 20) < 0) {
-			geometricObjects->SetColor(g, 1, 0.2f, 0.2f, 0.6f);
-		} else {
-			geometricObjects->SetColor(g, 1, 1, 0.2f, 0.6f);
-		}
-	}
-#endif
+	return false;
 }
 
 

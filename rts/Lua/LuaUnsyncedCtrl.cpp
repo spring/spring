@@ -150,6 +150,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitNoDraw);
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
 	REGISTER_LUA_CFUNC(SetUnitNoSelect);
+	REGISTER_LUA_CFUNC(SetUnitLeaveTracks);
 
 	REGISTER_LUA_CFUNC(AddUnitIcon);
 	REGISTER_LUA_CFUNC(FreeUnitIcon);
@@ -1534,6 +1535,18 @@ int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 			selectedUnits.RemoveUnit(unit);
 		}
 	}
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::SetUnitLeaveTracks(lua_State* L)
+{
+	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	unit->leaveTracks = lua_toboolean(L, 2);
 	return 0;
 }
 

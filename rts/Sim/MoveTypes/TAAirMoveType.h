@@ -20,7 +20,7 @@ public:
 	 * needed to get transport close enough to what is going to be transported.
 	 * better way ?
 	 */
-	bool dontCheckCol;
+	bool loadingUnits;
 	bool bankingAllowed;
 
 	/// to reset altitude back
@@ -71,13 +71,18 @@ public:
 	~CTAAirMoveType();
 
 	// MoveType interface
-	void Update();
+	bool Update();
 	void SlowUpdate();
 	void StartMoving(float3 pos, float goalRadius);
 	void StartMoving(float3 pos, float goalRadius, float speed);
 	void KeepPointingTo(float3 pos, float distance, bool aggressive);
 	void StopMoving();
-	void Idle();
+
+	void ForceHeading(short h);
+	void SetGoal(float3 newPos, float distance);
+	void SetState(AircraftState newState);
+	void SetWantedAltitude(float altitude);
+	void SetDefaultAltitude(float altitude);
 
 	// Main state handlers
 	void UpdateLanded();
@@ -87,24 +92,21 @@ public:
 	void UpdateCircling();
 	void UpdateHovering();
 
+private:
 	// Helpers for (multiple) state handlers
 	void UpdateHeading();
 	void UpdateBanking(bool noBanking);
 	void UpdateAirPhysics();
 	void UpdateMoveRate();
 
-	void SetGoal(float3 newPos, float distance);
-	void SetState(AircraftState newState);
-
 	bool CanLandAt(const float3& pos) const;
 	void ExecuteStop();
-	void ForceHeading(short h);
-	void SetWantedAltitude(float altitude);
-	void SetDefaultAltitude(float altitude);
 	void DependentDied(CObject* o);
 
 	void Takeoff();
 	bool IsFighter() const;
+
+	bool HandleCollisions();
 };
 
 #endif // TA_AIR_MOVE_TYPE_H

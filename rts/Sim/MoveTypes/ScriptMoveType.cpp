@@ -41,9 +41,7 @@ CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(shotStop),
 	CR_MEMBER(slopeStop),
 	CR_MEMBER(collideStop),
-	CR_MEMBER(leaveTracks),
 	CR_MEMBER(rotOffset),
-	CR_MEMBER(lastTrackUpdate),
 	CR_MEMBER(scriptNotify),
 	CR_RESERVED(64)
 ));
@@ -72,9 +70,7 @@ CScriptMoveType::CScriptMoveType(CUnit* owner):
 	shotStop(false),
 	slopeStop(false),
 	collideStop(false),
-	leaveTracks(true),
 	rotOffset(0.0f, 0.0f, 0.0f),
-	lastTrackUpdate(0),
 	scriptNotify(0)
 {
 	useHeading = false; // use the transformation matrix instead of heading
@@ -134,7 +130,7 @@ void CScriptMoveType::CheckNotify()
 }
 
 
-void CScriptMoveType::Update()
+bool CScriptMoveType::Update()
 {
 	if (useRotVel) {
 		rot += rotVel;
@@ -184,7 +180,7 @@ void CScriptMoveType::Update()
 	// don't need the rest if the pos hasn't changed
 	if (oldPos == owner->pos) {
 		CheckNotify();
-		return;
+		return false;
 	}
 
 	oldPos = owner->pos;
@@ -193,14 +189,8 @@ void CScriptMoveType::Update()
 		owner->Block();
 	}
 
-	if (owner->unitDef->leaveTracks && leaveTracks &&
-	    (lastTrackUpdate < (gs->frameNum - 7)) &&
-	    ((owner->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
-		lastTrackUpdate = gs->frameNum;
-		groundDecals->UnitMoved(owner);
-	}
-
 	CheckNotify();
+	return true;
 }
 
 

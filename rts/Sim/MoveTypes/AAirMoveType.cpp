@@ -14,7 +14,6 @@ CR_BIND_DERIVED_INTERFACE(AAirMoveType, AMoveType);
 
 CR_REG_METADATA(AAirMoveType, (
 	CR_MEMBER(oldGoalPos),
-	CR_MEMBER(oldpos),
 	CR_MEMBER(reservedLandingPos),
 
 	CR_MEMBER(wantedHeight),
@@ -34,7 +33,6 @@ AAirMoveType::AAirMoveType(CUnit* unit) :
 	AMoveType(unit),
 	aircraftState(AIRCRAFT_LANDED),
 	oldGoalPos(owner? owner->pos : ZeroVector),
-	oldpos(ZeroVector),
 	reservedLandingPos(-1.0f, -1.0f, -1.0f),
 	wantedHeight(80.0f),
 	collide(true),
