@@ -24,6 +24,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "System/ConfigHandler.h"
+#include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
@@ -38,8 +39,10 @@ using std::max;
 CGroundDecalHandler* groundDecals = NULL;
 
 
-CGroundDecalHandler::CGroundDecalHandler()
+CGroundDecalHandler::CGroundDecalHandler(): CEventClient("[CGroundDecalHandler]", 314159, false)
 {
+	eventHandler.AddClient(this);
+
 	drawDecals = false;
 	decalLevel = std::max(0, configHandler->Get("GroundDecals", 1));
 	groundScarAlphaFade = (configHandler->Get("GroundScarAlphaFade", 0) != 0);
@@ -89,6 +92,8 @@ CGroundDecalHandler::CGroundDecalHandler()
 
 CGroundDecalHandler::~CGroundDecalHandler()
 {
+	eventHandler.RemoveClient(this);
+
 	for (std::vector<TrackType*>::iterator tti = trackTypes.begin(); tti != trackTypes.end(); ++tti) {
 		for (set<UnitTrackStruct*>::iterator ti = (*tti)->tracks.begin(); ti != (*tti)->tracks.end(); ++ti) {
 			delete *ti;
@@ -569,9 +574,9 @@ void CGroundDecalHandler::CleanTracks() {
 		}
 
 		if (track->parts.empty()) {
-			if (track->owner) {
-				track->owner->myTrack = 0;
-				track->owner = 0;
+			if (track->owner != NULL) {
+				track->owner->myTrack = NULL;
+				track->owner = NULL;
 			}
 			ttc->tracks->erase(track);
 			tracksToBeDeleted.push_back(track);
@@ -757,42 +762,44 @@ void CGroundDecalHandler::Draw()
 
 void CGroundDecalHandler::Update()
 {
-	for(std::vector<CUnit *>::iterator i=moveUnits.begin(); i!=moveUnits.end(); ++i)
+	for (std::vector<CUnit *>::iterator i = moveUnits.begin(); i != moveUnits.end(); ++i)
 		UnitMovedNow(*i);
+
 	moveUnits.clear();
 }
 
 
-void CGroundDecalHandler::UnitMoved(CUnit* unit)
+void CGroundDecalHandler::UnitMoved(const CUnit* unit)
 {
-	moveUnits.push_back(unit);
-}
+	if (decalLevel == 0 || !unit->leaveTracks)
+		return;
 
+	if (unit->unitDef->trackType < 0 || !unit->unitDef->IsGroundUnit())
+		return;
+
+	if (unit->myTrack != NULL && unit->myTrack->lastUpdate >= (gs->frameNum - 7))
+		return;
+
+	if ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)
+		moveUnits.push_back(const_cast<CUnit*>(unit));
+}
 
 void CGroundDecalHandler::UnitMovedNow(CUnit* unit)
 {
-	if (decalLevel == 0)
-		return;
-	if (unit->unitDef->trackType < 0)
+	const int zp = (int(unit->pos.z) / SQUARE_SIZE * 2);
+	const int xp = (int(unit->pos.x) / SQUARE_SIZE * 2);
+	const int mp = Clamp(zp * gs->hmapx + xp, 0, (gs->mapSquares / 4) - 1);
+
+	if (!mapInfo->terrainTypes[readmap->typemap[mp]].receiveTracks)
 		return;
 
-	int zp = (int(unit->pos.z)/SQUARE_SIZE*2);
-	int xp = (int(unit->pos.x)/SQUARE_SIZE*2);
-	int mp = zp*gs->hmapx+xp;
-	if(mp<0)
-		mp = 0;
-	if(mp >= gs->mapSquares/4)
-		mp = gs->mapSquares/4-1;
-	if(!mapInfo->terrainTypes[readmap->typemap[mp]].receiveTracks)
-		return;
-
-	float3 pos = unit->pos+unit->frontdir*unit->unitDef->trackOffset;
+	const float3 pos = unit->pos + unit->frontdir * unit->unitDef->trackOffset;
 
 	TrackPart* tp = new TrackPart;
-	tp->pos1 = pos+unit->rightdir*unit->unitDef->trackWidth*0.5f;
-	tp->pos1.y = ground->GetHeightReal(tp->pos1.x,tp->pos1.z);
-	tp->pos2 = pos-unit->rightdir*unit->unitDef->trackWidth*0.5f;
-	tp->pos2.y = ground->GetHeightReal(tp->pos2.x,tp->pos2.z);
+	tp->pos1 = pos + unit->rightdir * unit->unitDef->trackWidth * 0.5f;
+	tp->pos2 = pos - unit->rightdir * unit->unitDef->trackWidth * 0.5f;
+	tp->pos1.y = ground->GetHeightReal(tp->pos1.x, tp->pos1.z);
+	tp->pos2.y = ground->GetHeightReal(tp->pos2.x, tp->pos2.z);
 	tp->creationTime = gs->frameNum;
 
 	TrackToAdd tta;
@@ -801,38 +808,42 @@ void CGroundDecalHandler::UnitMovedNow(CUnit* unit)
 
 	GML_STDMUTEX_LOCK(track); // Update
 
-	if(!unit->myTrack){
-		UnitTrackStruct* ts = new UnitTrackStruct;
-		ts->owner = unit;
-		ts->lifeTime = (int)(30*decalLevel*unit->unitDef->trackStrength);
-		ts->trackAlpha = (int)(unit->unitDef->trackStrength*25);
-		ts->alphaFalloff = float(ts->trackAlpha)/float(ts->lifeTime);
-		unit->myTrack = ts;
+	if (unit->myTrack == NULL) {
+		unit->myTrack = new UnitTrackStruct(unit);
+		unit->myTrack->lifeTime = (GAME_SPEED * decalLevel * unit->unitDef->trackStrength);
+		unit->myTrack->trackAlpha = (unit->unitDef->trackStrength * 25);
+		unit->myTrack->alphaFalloff = float(unit->myTrack->trackAlpha) / float(unit->myTrack->lifeTime);
+
 		tta.unit = NULL; // signal new trackstruct
+
 		tp->texPos = 0;
 		tp->connected = false;
 	} else {
-		tp->texPos = unit->myTrack->lastAdded->texPos+tp->pos1.distance(unit->myTrack->lastAdded->pos1)/unit->unitDef->trackWidth*unit->unitDef->trackStretch;
-		tp->connected = unit->myTrack->lastAdded->creationTime == gs->frameNum-8;
+		tp->texPos =
+			unit->myTrack->lastAdded->texPos +
+			(tp->pos1.distance(unit->myTrack->lastAdded->pos1) / unit->unitDef->trackWidth) *
+			unit->unitDef->trackStretch;
+		tp->connected = (unit->myTrack->lastAdded->creationTime == (gs->frameNum - 8));
 	}
 
+	unit->myTrack->lastUpdate = gs->frameNum;
 	unit->myTrack->lastAdded = tp;
-	tta.ts = unit->myTrack;
 
+	tta.ts = unit->myTrack;
 	tracksToBeAdded.push_back(tta);
 }
 
 
 void CGroundDecalHandler::RemoveUnit(CUnit* unit)
 {
-	if(decalLevel == 0)
+	if (decalLevel == 0)
 		return;
 
 	GML_STDMUTEX_LOCK(track); // RemoveUnit
 
-	if(unit->myTrack){
-		unit->myTrack->owner=0;
-		unit->myTrack=0;
+	if (unit->myTrack != NULL) {
+		unit->myTrack->owner = NULL;
+		unit->myTrack = NULL;
 	}
 }
 

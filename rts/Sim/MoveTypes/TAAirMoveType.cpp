@@ -24,7 +24,7 @@
 CR_BIND_DERIVED(CTAAirMoveType, AAirMoveType, (NULL));
 
 CR_REG_METADATA(CTAAirMoveType, (
-	CR_MEMBER(dontCheckCol),
+	CR_MEMBER(loadingUnits),
 	CR_MEMBER(bankingAllowed),
 
 	CR_MEMBER(orgWantedHeight),
@@ -65,7 +65,7 @@ CR_REG_METADATA(CTAAirMoveType, (
 CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	AAirMoveType(owner),
 	flyState(FLY_CRUISING),
-	dontCheckCol(false),
+	loadingUnits(false),
 	bankingAllowed(true),
 	orgWantedHeight(0.0f),
 	circlingPos(ZeroVector),
@@ -277,11 +277,6 @@ void CTAAirMoveType::StopMoving()
 	forceHeading = false;
 	owner->isMoving = false;
 	wantedHeight = orgWantedHeight;
-}
-
-void CTAAirMoveType::Idle()
-{
-	StopMoving();
 }
 
 
@@ -761,7 +756,7 @@ void CTAAirMoveType::UpdateMoveRate()
 }
 
 
-void CTAAirMoveType::Update()
+bool CTAAirMoveType::Update()
 {
 	float3& pos = owner->pos;
 	float3& speed = owner->speed;
@@ -896,62 +891,7 @@ void CTAAirMoveType::Update()
 	UpdateBanking(aircraftState == AIRCRAFT_HOVERING);
 
 	owner->UpdateMidPos();
-
-	// Push other units out of the way
-	if (pos != oldpos && aircraftState != AIRCRAFT_TAKEOFF && padStatus == 0) {
-		oldpos = pos;
-
-		if (!dontCheckCol && collide) {
-			const vector<CUnit*>& nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);
-
-			for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
-				if ((*ui)->transporter)
-					continue;
-
-				const float sqDist = (pos-(*ui)->pos).SqLength();
-				const float totRad = owner->radius + (*ui)->radius;
-				if (sqDist < totRad * totRad && sqDist != 0) {
-					const float dist = sqrt(sqDist);
-					float3 dif = pos - (*ui)->pos;
-
-					if (dist > 0.0f) {
-						dif /= dist;
-					}
-
-					if ((*ui)->mass >= CSolidObject::DEFAULT_MASS || (*ui)->immobile) {
-						pos -= dif * (dist - totRad);
-						owner->UpdateMidPos();
-						owner->speed *= 0.99f;
-					} else {
-						const float part = owner->mass / (owner->mass + (*ui)->mass);
-						pos -= dif * (dist - totRad) * (1 - part);
-						owner->UpdateMidPos();
-						CUnit* u = (CUnit*) (*ui);
-						u->pos += dif * (dist - totRad) * (part);
-						u->UpdateMidPos();
-						const float colSpeed = -owner->speed.dot(dif) + u->speed.dot(dif);
-						owner->speed += dif * colSpeed * (1 - part);
-						u->speed -= dif * colSpeed * (part);
-					}
-				}
-			}
-		}
-		if (pos.x < 0) {
-			pos.x += 0.6f;
-			owner->midPos.x += 0.6f;
-		} else if (pos.x > float3::maxxpos) {
-			pos.x -= 0.6f;
-			owner->midPos.x -= 0.6f;
-		}
-
-		if (pos.z < 0) {
-			pos.z += 0.6f;
-			owner->midPos.z += 0.6f;
-		} else if (pos.z > float3::maxzpos) {
-			pos.z -= 0.6f;
-			owner->midPos.z -= 0.6f;
-		}
-	}
+	return (HandleCollisions());
 }
 
 void CTAAirMoveType::SlowUpdate()
@@ -1047,5 +987,81 @@ void CTAAirMoveType::Takeoff()
 
 bool CTAAirMoveType::IsFighter() const
 {
+	return false;
+}
+
+
+
+bool CTAAirMoveType::HandleCollisions()
+{
+	float3& pos = owner->pos;
+
+	if (pos != oldPos) {
+		oldPos = pos;
+
+		const bool checkCollisions =
+			collide &&
+			(!loadingUnits) &&
+			(padStatus == 0) &&
+			(aircraftState != AIRCRAFT_TAKEOFF);
+
+		if (checkCollisions) {
+			const vector<CUnit*>& nearUnits = qf->GetUnitsExact(pos, owner->radius + 6);
+
+			for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
+				CUnit* unit = *ui;
+
+				if (unit->transporter != NULL)
+					continue;
+
+				const float sqDist = (pos - unit->pos).SqLength();
+				const float totRad = owner->radius + unit->radius;
+
+				if (sqDist <= 0.1f || sqDist >= (totRad * totRad))
+					continue;
+
+				const float dist = math::sqrt(sqDist);
+				const float3 dif = (pos - unit->pos).Normalize();
+
+				if (unit->mass >= CSolidObject::DEFAULT_MASS || unit->immobile) {
+					pos -= dif * (dist - totRad);
+					owner->UpdateMidPos();
+					owner->speed *= 0.99f;
+				} else {
+					const float part = owner->mass / (owner->mass + unit->mass);
+
+					pos -= dif * (dist - totRad) * (1.0f - part);
+					owner->UpdateMidPos();
+
+					unit->pos += dif * (dist - totRad) * (part);
+					unit->UpdateMidPos();
+
+					const float colSpeed = -owner->speed.dot(dif) + unit->speed.dot(dif);
+
+					owner->speed += (dif * colSpeed * (1.0f - part));
+					unit->speed -= (dif * colSpeed * (part));
+				}
+			}
+		}
+
+		if (pos.x < 0.0f) {
+			pos.x += 0.6f;
+			owner->midPos.x += 0.6f;
+		} else if (pos.x > float3::maxxpos) {
+			pos.x -= 0.6f;
+			owner->midPos.x -= 0.6f;
+		}
+
+		if (pos.z < 0.0f) {
+			pos.z += 0.6f;
+			owner->midPos.z += 0.6f;
+		} else if (pos.z > float3::maxzpos) {
+			pos.z -= 0.6f;
+			owner->midPos.z -= 0.6f;
+		}
+
+		return true;
+	}
+
 	return false;
 }

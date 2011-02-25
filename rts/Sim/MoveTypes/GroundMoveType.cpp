@@ -13,7 +13,6 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "MoveMath/MoveMath.h"
-#include "Rendering/GroundDecalHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
@@ -132,7 +131,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 
 	nextDeltaSpeedUpdate(0),
 	nextObstacleAvoidanceUpdate(0),
-	lastTrackUpdate(0),
 
 	skidding(false),
 	flying(false),
@@ -162,9 +160,6 @@ CGroundMoveType::~CGroundMoveType()
 	if (pathId != 0) {
 		pathManager->DeletePath(pathId);
 	}
-	if (owner->myTrack) {
-		groundDecals->RemoveUnit(owner);
-	}
 }
 
 void CGroundMoveType::PostLoad()
@@ -175,12 +170,12 @@ void CGroundMoveType::PostLoad()
 	}
 }
 
-void CGroundMoveType::Update()
+bool CGroundMoveType::Update()
 {
 	ASSERT_SYNCED_FLOAT3(owner->pos);
 
-	if (owner->transporter) {
-		return;
+	if (owner->transporter != NULL) {
+		return false;
 	}
 
 	if (OnSlope() && (!owner->floatOnWater || !owner->inWater)) {
@@ -188,20 +183,21 @@ void CGroundMoveType::Update()
 	}
 	if (skidding) {
 		UpdateSkid();
-		return;
+		return false;
 	}
 
 	ASSERT_SYNCED_FLOAT3(owner->pos);
 
-	//set drop height when we start to drop
+	// set drop height when we start to drop
 	if (owner->falling) {
 		UpdateControlledDrop();
-		return;
+		return false;
 	}
 
 	ASSERT_SYNCED_FLOAT3(owner->pos);
 
 	const UnitDef* ud = owner->unitDef;
+	bool hasMoved = false;
 	bool wantReverse = false;
 
 	if (owner->stunned || owner->beingBuilt) {
@@ -304,16 +300,13 @@ void CGroundMoveType::Update()
 		// UpdateOwnerPos() (so that owner->pos is again equal to oldPos)
 		idling = (owner->speed.SqLength() < (accRate * accRate));
 		oldPos = owner->pos;
-
-		if (ud->leaveTracks && (lastTrackUpdate < gs->frameNum - 7) &&
-			((owner->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
-			lastTrackUpdate = gs->frameNum;
-			groundDecals->UnitMoved(owner);
-		}
+		hasMoved = true;
 	} else {
 		owner->speed = ZeroVector;
 		idling = true;
 	}
+
+	return hasMoved;
 }
 
 void CGroundMoveType::SlowUpdate()

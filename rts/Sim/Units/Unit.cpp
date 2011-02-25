@@ -232,6 +232,7 @@ CUnit::CUnit() : CSolidObject(),
 	noDraw(false),
 	noSelect(false),
 	noMinimap(false),
+	leaveTracks(false),
 	isIcon(false),
 	iconRadius(0.0f),
 	maxSpeed(0.0f),
@@ -389,6 +390,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	armoredMultiple = std::max(0.0001f, unitDef->armoredMultiple); // armored multiple of 0 will crash spring
 	armorType = unitDef->armorType;
 	category = unitDef->category;
+	leaveTracks = unitDef->leaveTracks;
 
 	tooltip = unitDef->humanName + " - " + unitDef->tooltip;
 	wreckName = unitDef->wreckName;
@@ -2402,6 +2404,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(noDraw),
 	CR_MEMBER(noSelect),
 	CR_MEMBER(noMinimap),
+	CR_MEMBER(leaveTracks),
 //	CR_MEMBER(isIcon),
 //	CR_MEMBER(iconRadius),
 	CR_MEMBER(maxSpeed),

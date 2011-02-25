@@ -49,8 +49,6 @@ class LuaSyncedMoveCtrl {
 
 		static int SetNoBlocking(lua_State* L);
 
-		static int SetLeaveTracks(lua_State* L);
-
 		static int SetShotStop(lua_State* L);
 		static int SetSlopeStop(lua_State* L);
 		static int SetCollideStop(lua_State* L);

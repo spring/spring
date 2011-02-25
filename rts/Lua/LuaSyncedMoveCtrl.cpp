@@ -74,8 +74,6 @@ bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetNoBlocking);
 
-	REGISTER_LUA_CFUNC(SetLeaveTracks);
-
 	REGISTER_LUA_CFUNC(SetShotStop);
 	REGISTER_LUA_CFUNC(SetSlopeStop);
 	REGISTER_LUA_CFUNC(SetCollideStop);
@@ -534,21 +532,6 @@ int LuaSyncedMoveCtrl::SetNoBlocking(lua_State* L)
 	// marks or unmarks the unit on the blocking-map, but
 	// does not change its blocking (collidable) state
 	moveType->SetNoBlocking(lua_toboolean(L, 2));
-	return 0;
-}
-
-
-int LuaSyncedMoveCtrl::SetLeaveTracks(lua_State* L)
-{
-	CScriptMoveType* moveType = ParseMoveType(L, __FUNCTION__, 1);
-	if (moveType == NULL) {
-		return 0;
-	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetLeaveTracks()");
-	}
-	moveType->leaveTracks = lua_toboolean(L, 2);
 	return 0;
 }
 

@@ -8,9 +8,9 @@
 #include "Unit.h"
 #include "UnitDefHandler.h"
 #include "UnitLoader.h"
+#include "CommandAI/Command.h"
 #include "CommandAI/BuilderCAI.h"
 #include "Game/GameSetup.h"
-#include "Game/SelectedUnits.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -22,7 +22,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
-#include "CommandAI/Command.h"
+#include "System/EventHandler.h"
 #include "System/EventBatchHandler.h"
 #include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
@@ -33,7 +33,6 @@
 #include "System/creg/STL_Deque.h"
 #include "System/creg/STL_List.h"
 #include "System/creg/STL_Set.h"
-#include "EventHandler.h"
 using std::min;
 using std::max;
 
@@ -228,8 +227,14 @@ void CUnitHandler::Update()
 		SCOPED_TIMER("Unit Movetype update");
 		std::list<CUnit*>::iterator usi;
 		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
-			(*usi)->moveType->Update();
-			GML_GET_TICKS((*usi)->lastUnitUpdate);
+			CUnit* unit = *usi;
+			AMoveType* moveType = unit->moveType;
+
+			if (moveType->Update()) {
+				eventHandler.UnitMoved(unit);
+			}
+
+			GML_GET_TICKS(unit->lastUnitUpdate);
 		}
 	}
 
@@ -255,14 +260,13 @@ void CUnitHandler::Update()
 
 	{
 		SCOPED_TIMER("Unit slow update");
-		if (!(gs->frameNum & (UNIT_SLOWUPDATE_RATE-1))) {
+		if (!(gs->frameNum & (UNIT_SLOWUPDATE_RATE - 1))) {
 			slowUpdateIterator = activeUnits.begin();
 		}
 
-		int numToUpdate = activeUnits.size() / UNIT_SLOWUPDATE_RATE + 1;
-		for (; slowUpdateIterator != activeUnits.end() && numToUpdate != 0; ++ slowUpdateIterator) {
-			(*slowUpdateIterator)->SlowUpdate();
-			numToUpdate--;
+		int n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1;
+		for (; slowUpdateIterator != activeUnits.end() && n != 0; ++ slowUpdateIterator) {
+			(*slowUpdateIterator)->SlowUpdate(); n--;
 		}
 	} // for timer destruction
 }
