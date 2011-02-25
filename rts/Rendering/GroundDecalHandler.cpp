@@ -529,13 +529,16 @@ void CGroundDecalHandler::DrawTracks() {
 
 			while (utsi != tt->tracks.end()) {
 				UnitTrackStruct* track = *utsi;
+
 				if (track->parts.empty()) {
 					tracksToBeCleaned.push_back(TrackToClean(track, &(tt->tracks)));
 					continue;
 				}
-				if (track->parts.front()->creationTime < gs->frameNum - track->lifeTime) {
+
+				if (gs->frameNum > (track->parts.front()->creationTime + track->lifeTime)) {
 					tracksToBeCleaned.push_back(TrackToClean(track, &(tt->tracks)));
 				}
+
 				if (camera->InView((track->parts.front()->pos1 + track->parts.back()->pos1) * 0.5f, track->parts.front()->pos1.distance(track->parts.back()->pos1) + 500)) {
 					list<TrackPart *>::iterator ppi = track->parts.begin();
 					color2[3] = std::max(0, track->trackAlpha - (int) ((gs->frameNum - (*ppi)->creationTime) * track->alphaFalloff));
@@ -568,7 +571,10 @@ void CGroundDecalHandler::CleanTracks() {
 		TrackToClean *ttc = &(*ti);
 		UnitTrackStruct *track = ttc->track;
 
-		while (!track->parts.empty() && track->parts.front()->creationTime < gs->frameNum - track->lifeTime) {
+		while (!track->parts.empty()) {
+			if (gs->frameNum > (track->parts.front()->creationTime + track->lifeTime))
+				break;
+
 			delete track->parts.front();
 			track->parts.pop_front();
 		}

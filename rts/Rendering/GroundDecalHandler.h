@@ -25,7 +25,7 @@ struct TrackPart {
 	float3 pos2;
 	float texPos;
 	bool connected;
-	int creationTime;
+	unsigned int creationTime;
 };
 
 struct UnitTrackStruct {
