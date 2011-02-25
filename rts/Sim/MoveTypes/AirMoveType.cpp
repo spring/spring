@@ -306,10 +306,10 @@ bool CAirMoveType::HandleCollisions() {
 
 #ifdef DEBUG_AIRCRAFT
 	if (lastColWarningType == 1) {
-		const int g = geometricObjects->AddLine(owner->pos, lastColWarning->pos, 10, 1, 1);
+		const int g = geometricObjects->AddLine(pos, lastColWarning->pos, 10, 1, 1);
 		geometricObjects->SetColor(g, 0.2f, 1, 0.2f, 0.6f);
 	} else if (lastColWarningType == 2) {
-		const int g = geometricObjects->AddLine(owner->pos, lastColWarning->pos, 10, 1, 1);
+		const int g = geometricObjects->AddLine(pos, lastColWarning->pos, 10, 1, 1);
 		if (owner->frontdir.dot(lastColWarning->midPos + lastColWarning->speed * 20 - owner->midPos - owner->speed * 20) < 0) {
 			geometricObjects->SetColor(g, 1, 0.2f, 0.2f, 0.6f);
 		} else {
