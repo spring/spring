@@ -39,6 +39,10 @@ CEFX::CEFX(ALCdevice* device)
 
 	supported = alcIsExtensionPresent(device, "ALC_EXT_EFX");
 
+	// always allocate this
+	sfxProperties = new EAXSfxProps();
+	*sfxProperties = eaxPresets[default_preset];
+
 	if (!supported) {
 		LogObject(LOG_SOUND) << "  EFX Supported: no";
 		return;
@@ -142,8 +146,6 @@ CEFX::CEFX(ALCdevice* device)
 
 
 	//! Load defaults
-	sfxProperties = new EAXSfxProps();
-	*sfxProperties = eaxPresets[default_preset];
 	CommitEffects();
 	if (!CheckError("  EFX")) {
 		LogObject(LOG_SOUND) << "  Initializing EFX failed!";
@@ -226,12 +228,13 @@ void CEFX::SetHeightRolloffModifer(const float& mod)
 void CEFX::CommitEffects()
 {
 	//! commit reverb properties
-	for (std::map<ALuint, ALfloat>::iterator it=sfxProperties->properties_f.begin(); it != sfxProperties->properties_f.end(); ++it)
+	for (std::map<ALuint, ALfloat>::iterator it = sfxProperties->properties_f.begin(); it != sfxProperties->properties_f.end(); ++it)
 		alEffectf(sfxReverb, it->first, it->second);
-	for (std::map<ALuint, ALint>::iterator it=sfxProperties->properties_i.begin(); it != sfxProperties->properties_i.end(); ++it)
+	for (std::map<ALuint, ALint>::iterator it = sfxProperties->properties_i.begin(); it != sfxProperties->properties_i.end(); ++it)
 		alEffecti(sfxReverb, it->first, it->second);
-	for (std::map<ALuint, float3>::iterator it=sfxProperties->properties_v.begin(); it != sfxProperties->properties_v.end(); ++it)
+	for (std::map<ALuint, float3>::iterator it = sfxProperties->properties_v.begin(); it != sfxProperties->properties_v.end(); ++it)
 		alEffectfv(sfxReverb, it->first, (ALfloat*)&it->second[0]);
+
 	alEffectf(sfxReverb, AL_EAXREVERB_ROOM_ROLLOFF_FACTOR, sfxProperties->properties_f[AL_EAXREVERB_ROOM_ROLLOFF_FACTOR] * heightRolloffModifier);
 	alAuxiliaryEffectSloti(sfxSlot, AL_EFFECTSLOT_EFFECT, sfxReverb);
 
