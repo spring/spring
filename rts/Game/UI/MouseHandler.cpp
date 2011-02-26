@@ -45,12 +45,14 @@
 #include "System/Input/KeyInput.h"
 #include "System/Input/MouseInput.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/IEffectChannel.h"
+#include "System/Sound/SoundChannels.h"
 
 // can't be up there since those contain conflicting definitions
 #include <SDL_mouse.h>
 #include <SDL_events.h>
 #include <SDL_keysym.h>
+
+#define PLAY_SOUNDS 1
 
 
 //////////////////////////////////////////////////////////////////////
@@ -422,16 +424,19 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 					}
 				}
 			}
+
+			#if (PLAY_SOUNDS == 1)
 			if (addedunits == 1) {
-				int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
+				const int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
 				if (soundIdx >= 0) {
 					Channels::UnitReply.PlaySample(
 						unit->unitDef->sounds.select.getID(soundIdx), unit,
 						unit->unitDef->sounds.select.getVolume(soundIdx));
 				}
 			}
-			else if(addedunits) //more than one unit selected
+			else if (addedunits) //more than one unit selected
 				Channels::UserInterface.PlaySample(soundMultiselID);
+			#endif
 		} else {
 			const CUnit* unit;
 			helper->GuiTraceRay(camera->pos,dir,globalRendering->viewRange*1.4f,unit,false);
@@ -473,12 +478,14 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 				}
 				buttons[button].lastRelease=gu->gameTime;
 
-				int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
+				#if (PLAY_SOUNDS == 1)
+				const int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
 				if (soundIdx >= 0) {
 					Channels::UnitReply.PlaySample(
 						unit->unitDef->sounds.select.getID(soundIdx), unit,
 						unit->unitDef->sounds.select.getVolume(soundIdx));
 				}
+				#endif
 			}
 		}
 	}

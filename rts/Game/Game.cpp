@@ -146,8 +146,7 @@
 #include "System/Net/PackPacket.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/IEffectChannel.h"
-#include "System/Sound/IMusicChannel.h"
+#include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncedPrimitiveIO.h"
 #include "System/Sync/SyncTracer.h"
 

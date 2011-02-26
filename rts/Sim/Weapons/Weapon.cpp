@@ -25,7 +25,7 @@
 #include "System/float3.h"
 #include "System/myMath.h"
 #include "System/Sync/SyncTracer.h"
-#include "System/Sound/IEffectChannel.h"
+#include "System/Sound/SoundChannels.h"
 
 CR_BIND_DERIVED(CWeapon, CObject, (NULL));
 

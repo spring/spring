@@ -29,7 +29,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/Watchdog.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/IMusicChannel.h"
+#include "System/Sound/SoundChannels.h"
 
 
 CLoadScreen* CLoadScreen::singleton = NULL;

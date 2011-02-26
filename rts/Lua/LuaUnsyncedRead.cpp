@@ -58,7 +58,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/Sound/IMusicChannel.h"
+#include "System/Sound/SoundChannels.h"
 
 using namespace std;
 

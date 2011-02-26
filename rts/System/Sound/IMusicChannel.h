@@ -33,19 +33,4 @@ public:
 	virtual float GetPlayTime() = 0;
 };
 
-#ifdef    NO_SOUND
-	class NullMusicChannel;
-	#include "NullMusicChannel.h"
-	typedef NullMusicChannel MusicChannelImpl;
-#else  // NO_SOUND
-	class MusicChannel;
-	#include "MusicChannel.h"
-	typedef MusicChannel MusicChannelImpl;
-#endif // NO_SOUND
-
-namespace Channels
-{
-	extern MusicChannelImpl BGMusic;
-}
-
 #endif // I_MUSIC_CHANNEL_H
