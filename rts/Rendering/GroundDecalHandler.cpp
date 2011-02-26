@@ -572,7 +572,8 @@ void CGroundDecalHandler::CleanTracks() {
 		UnitTrackStruct *track = ttc->track;
 
 		while (!track->parts.empty()) {
-			if (gs->frameNum > (track->parts.front()->creationTime + track->lifeTime))
+			// stop at the first part that is still too young for deletion
+			if (gs->frameNum <= (track->parts.front()->creationTime + track->lifeTime))
 				break;
 
 			delete track->parts.front();
