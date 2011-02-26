@@ -4,6 +4,7 @@
 
 #include "UnitScript.h"
 
+#include "CobDefines.h"
 #include "CobFile.h"
 #include "CobInstance.h"
 #include "UnitScriptEngine.h"
@@ -11,6 +12,7 @@
 #ifndef _CONSOLE
 
 #include <SDL_timer.h>
+
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
@@ -42,9 +44,8 @@
 #include "System/myMath.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"
-#include "System/Sound/IEffectChannel.h"
+#include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
-#include "CobDefines.h"
 
 #endif
 

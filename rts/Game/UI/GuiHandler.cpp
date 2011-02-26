@@ -51,8 +51,8 @@
 #include "System/myMath.h"
 #include "System/Util.h"
 #include "System/Input/KeyInput.h"
-#include "System/Sound/IEffectChannel.h"
 #include "System/Sound/ISound.h"
+#include "System/Sound/SoundChannels.h"
 #include "System/FileSystem/SimpleParser.h"
 
 //////////////////////////////////////////////////////////////////////

@@ -61,8 +61,7 @@
 #include "Util.h"
 #include "NetProtocol.h"
 #include "Sound/ISound.h"
-#include "Sound/IEffectChannel.h"
-#include "Sound/IMusicChannel.h"
+#include "Sound/SoundChannels.h"
 #include "System/Platform/Watchdog.h"
 
 #include "FileSystem/FileHandler.h"

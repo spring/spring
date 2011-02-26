@@ -9,6 +9,7 @@
 #include <alc.h>
 #include <boost/cstdint.hpp>
 
+#include "SoundChannels.h"
 #include "SoundLog.h"
 #include "SoundSource.h"
 #include "SoundBuffer.h"
@@ -565,15 +566,12 @@ size_t CSound::LoadSoundBuffer(const std::string& path, bool hardFail)
 		}
 
 		CheckError("CSound::LoadALBuffer");
-		if (!success)
-		{
+		if (!success) {
 			LogObject(LOG_SOUND) << "Failed to load file: " << path;
 			return 0;
 		}
-		else
-		{
-			return SoundBuffer::Insert(buffer);
-		}
+
+		return SoundBuffer::Insert(buffer);
 	}
 }
 

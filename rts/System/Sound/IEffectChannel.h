@@ -5,9 +5,9 @@
 
 #include "IAudioChannel.h"
 
-#include "float3.h"
 #include <cstring> // for size_t
 
+class float3;
 class CWorldObject;
 class CUnit;
 
@@ -34,26 +34,5 @@ protected:
 	unsigned emmitsPerFrame;
 	unsigned emmitsThisFrame;
 };
-
-#ifdef    NO_SOUND
-	class NullEffectChannel;
-	#include "NullEffectChannel.h"
-	typedef NullEffectChannel EffectChannelImpl;
-#else  // NO_SOUND
-	class EffectChannel;
-	#include "EffectChannel.h"
-	typedef EffectChannel EffectChannelImpl;
-#endif // NO_SOUND
-
-/**
- * @brief If you want to play a sound, use one of these
- */
-namespace Channels
-{
-	extern EffectChannelImpl General;
-	extern EffectChannelImpl Battle;
-	extern EffectChannelImpl UnitReply;
-	extern EffectChannelImpl UserInterface;
-}
 
 #endif // I_EFFECT_CHANNEL_H

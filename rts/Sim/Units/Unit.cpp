@@ -64,7 +64,7 @@
 #include "System/myMath.h"
 #include "System/creg/STL_List.h"
 #include "System/LoadSave/LoadSaveInterface.h"
-#include "System/Sound/IEffectChannel.h"
+#include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncedPrimitive.h"
 #include "System/Sync/SyncTracer.h"
 
@@ -1907,7 +1907,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 				if (wd->soundhit.getID(0) > 0) {
 					// HACK: loading code doesn't set sane defaults for explosion sounds, so we do it here
 					// NOTE: actually no longer true, loading code always ensures that sound volume != -1
-					float volume = wd->soundhit.getVolume(0);
+					const float volume = wd->soundhit.getVolume(0);
 					Channels::Battle.PlaySample(wd->soundhit.getID(0), pos, (volume == -1) ? 1.0f : volume);
 				}
 				#endif
@@ -2015,7 +2015,7 @@ void CUnit::Activate()
 	radarhandler->MoveUnit(this);
 
 	#if (PLAY_SOUNDS == 1)
-	int soundIdx = unitDef->sounds.activate.getRandomIdx();
+	const int soundIdx = unitDef->sounds.activate.getRandomIdx();
 	if (soundIdx >= 0) {
 		Channels::UnitReply.PlaySample(
 			unitDef->sounds.activate.getID(soundIdx), this,
@@ -2039,7 +2039,7 @@ void CUnit::Deactivate()
 	radarhandler->RemoveUnit(this);
 
 	#if (PLAY_SOUNDS == 1)
-	int soundIdx = unitDef->sounds.deactivate.getRandomIdx();
+	const int soundIdx = unitDef->sounds.deactivate.getRandomIdx();
 	if (soundIdx >= 0) {
 		Channels::UnitReply.PlaySample(
 			unitDef->sounds.deactivate.getID(soundIdx), this,

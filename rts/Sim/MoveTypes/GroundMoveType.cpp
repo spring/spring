@@ -32,7 +32,7 @@
 #include "System/FastMath.h"
 #include "System/myMath.h"
 #include "System/Vec2.h"
-#include "System/Sound/IEffectChannel.h"
+#include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 
 #define MIN_WAYPOINT_DISTANCE (SQUARE_SIZE << 1)

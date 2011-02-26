@@ -62,8 +62,7 @@
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/IEffectChannel.h"
-#include "System/Sound/IMusicChannel.h"
+#include "System/Sound/SoundChannels.h"
 
 static std::vector<std::string> _local_strSpaceTokenize(const std::string& text) {
 
