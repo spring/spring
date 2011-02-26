@@ -8,15 +8,11 @@
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
-#include "Rendering/GroundDecalHandler.h"
-#include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/Wind.h"
-#include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/Building.h"
-#include "GlobalUnsynced.h"
-#include "Matrix44f.h"
-#include "myMath.h"
+#include "System/Matrix44f.h"
+#include "System/myMath.h"
 
 CR_BIND_DERIVED(CScriptMoveType, AMoveType, (NULL));
 CR_REG_METADATA(CScriptMoveType, (
