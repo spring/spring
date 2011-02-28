@@ -331,13 +331,10 @@ void CLogOutput::Output(const CLogSubsystem& subsystem, const std::string& str)
 	if (!subsystem.enabled) return;
 
 	// Output to subscribers
+	//FIXME make threadsafe!!!
 	if (subscribersEnabled) {
 		for (vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi) {
-			if ((*lsi)->wantLogInformationPrefix) {
-				(*lsi)->NotifyLogMsg(subsystem, msg);
-			} else {
-				(*lsi)->NotifyLogMsg(subsystem, str);
-			}
+			(*lsi)->NotifyLogMsg(subsystem, str);
 		}
 	}
 
