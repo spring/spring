@@ -135,6 +135,14 @@ SpringApp::~SpringApp()
  */
 bool SpringApp::Initialize()
 {
+#if !(defined(__APPLE__) && defined(WIN32))
+	//! this MUST run before any other X11 call (esp. those by SDL!)
+	if (!XInitThreads()) {
+		LogObject() << "Xlib not thread safe";
+		return false;
+	}
+#endif
+
 #if defined(_WIN32) && defined(__GNUC__)
 	// load QTCreator's gdb helper dll; a variant of this should also work on other OSes
 	{
