@@ -458,11 +458,11 @@ bool CKeyBindings::UnBindAction(const string& command)
 		}
 		if (al.size() <= 0) {
 			KeyMap::iterator it_next = it;
-			it_next++;
+			++it_next;
 			bindings.erase(it);
 			it = it_next;
 		} else {
-			it++;
+			++it;
 		}
 	}
 	return success;

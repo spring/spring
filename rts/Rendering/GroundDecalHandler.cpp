@@ -447,7 +447,7 @@ void CGroundDecalHandler::DrawBuildingDecals() {
 						decalsToDraw.push_back(decal);
 					}
 
-					bgdi++;
+					++bgdi;
 				}
 			}
 
@@ -556,7 +556,7 @@ void CGroundDecalHandler::DrawTracks() {
 						ppi = pi;
 					}
 				}
-				utsi++;
+				++utsi;
 			}
 			va->DrawArrayTC(GL_QUADS);
 		}

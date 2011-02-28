@@ -73,7 +73,7 @@ void GLContext::RemoveHookSet(Func init, Func free, void* data)
 	for (it = getHooks().begin(); it != getHooks().end(); ++it) {
 		if (hs == *it) {
 			list<HookSet>::iterator it_next = it;
-			it_next++;
+			++it_next;
 			getHooks().erase(it);
 			it = it_next;
 		}

@@ -2319,7 +2319,7 @@ void CGame::SelectCycle(const string& command)
 		if (fit == unitIDs.end()) {
 			lastID = *unitIDs.begin();
 		} else {
-			fit++;
+			++fit;
 			if (fit != unitIDs.end()) {
 				lastID = *fit;
 			} else {

@@ -166,7 +166,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 	for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 		if (*usi == delUnit) {
 			if (slowUpdateIterator != activeUnits.end() && *usi == *slowUpdateIterator) {
-				slowUpdateIterator++;
+				++slowUpdateIterator;
 			}
 			delTeam = delUnit->team;
 			delType = delUnit->unitDef->id;

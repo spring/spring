@@ -393,7 +393,7 @@ void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType) {
 void CFeatureDrawer::DrawFadeFeaturesSet(std::set<CFeature*>& fadeFeatures, int modelType)
 {
 	for (std::set<CFeature*>::const_iterator fi = fadeFeatures.begin(); fi != fadeFeatures.end(); ) {
-		std::set<CFeature*>::const_iterator fiNext(fi); fiNext++;
+		std::set<CFeature*>::const_iterator fiNext(fi); ++fiNext;
 
 		const float cols[] = {1.0f, 1.0f, 1.0f, (*fi)->tempalpha};
 
@@ -409,7 +409,7 @@ void CFeatureDrawer::DrawFadeFeaturesSet(std::set<CFeature*>& fadeFeatures, int 
 			fadeFeatures.erase(*fi);
 			fi = fiNext;
 		} else {
-			fi++;
+			++fi;
 		}
 	}
 }
