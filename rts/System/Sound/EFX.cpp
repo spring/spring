@@ -205,13 +205,14 @@ void CEFX::Disable()
 
 void CEFX::SetPreset(std::string name)
 {
-	if (enabled) {
-		std::map<std::string, EAXSfxProps>::const_iterator it = eaxPresets.find(name);
-		if (it != eaxPresets.end()) {
-			*sfxProperties = it->second;
-			CommitEffects();
-			LogObject(LOG_SOUND) << "EAX Preset changed to: " << name;
-		}
+	if (!supported)
+		return;
+
+	std::map<std::string, EAXSfxProps>::const_iterator it = eaxPresets.find(name);
+	if (it != eaxPresets.end()) {
+		*sfxProperties = it->second;
+		CommitEffects();
+		LogObject(LOG_SOUND) << "EAX Preset changed to: " << name;
 	}
 }
 
@@ -220,6 +221,9 @@ void CEFX::SetHeightRolloffModifer(const float& mod)
 {
 	heightRolloffModifier = mod;
 
+	if (!supported)
+		return;
+
 	alEffectf(sfxReverb, AL_EAXREVERB_ROOM_ROLLOFF_FACTOR, sfxProperties->properties_f[AL_EAXREVERB_ROOM_ROLLOFF_FACTOR] * heightRolloffModifier);
 	alAuxiliaryEffectSloti(sfxSlot, AL_EFFECTSLOT_EFFECT, sfxReverb);
 };
@@ -227,6 +231,9 @@ void CEFX::SetHeightRolloffModifer(const float& mod)
 
 void CEFX::CommitEffects()
 {
+	if (!supported)
+		return;
+
 	//! commit reverb properties
 	for (std::map<ALuint, ALfloat>::iterator it = sfxProperties->properties_f.begin(); it != sfxProperties->properties_f.end(); ++it)
 		alEffectf(sfxReverb, it->first, it->second);
