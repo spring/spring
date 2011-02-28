@@ -118,20 +118,23 @@ void CGlobalRendering::PostInit() {
 		}
 	}
 
-	// Runtime compress textures?
+	//! Runtime compress textures?
 	if (GLEW_ARB_texture_compression) {
-		// we don't even need to check it, 'cos groundtextures must have that extension
-		// default to off because it reduces quality (smallest mipmap level is bigger)
+		//! we don't even need to check it, 'cos groundtextures must have that extension
+		//! default to off because it reduces quality (smallest mipmap level is bigger)
 		compressTextures = !!configHandler->Get("CompressTextures", 0);
 	}
 
-	// maximum 2D texture size
+	//! maximum 2D texture size
 	{
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
 	}
 
-	// use some ATI bugfixes?
-	if ((atiHacks = !!configHandler->Get("AtiHacks", haveATI? 1: 0))) {
+	//! use some ATI bugfixes?
+	const int atiHacksCfg = configHandler->Get("AtiHacks", -1);
+	atiHacks = haveATI && (atiHacksCfg < 0); //! runtime detect
+	atiHacks |= atiHacksCfg > 0; //! user override
+	if (atiHacks) {
 		logOutput.Print("ATI hacks enabled\n");
 	}
 

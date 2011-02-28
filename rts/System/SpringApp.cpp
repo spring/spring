@@ -755,6 +755,10 @@ void SpringApp::UpdateOldConfigs()
 		configHandler->Delete("DepthBufferBits"); //! update to 24bits
 		configHandler->Set("Version",2);
 	}
+	if (cfgVersion < 3) {
+		configHandler->Delete("AtiHacks"); //! new runtime detection with -1
+		configHandler->Set("Version",3);
+	}
 }
 
 
