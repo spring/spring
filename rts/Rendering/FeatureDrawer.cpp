@@ -242,7 +242,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 			FeatureSet::iterator featureSetItNext(featureSetIt); ++featureSetItNext;
 
 			if (!DrawFeatureNow(*featureSetIt)) {
-				featureSet.erase(*featureSetIt);
+				featureSet.erase(featureSetIt);
 				featureSetIt = featureSetItNext;
 			} else {
 				++featureSetIt;
@@ -406,7 +406,7 @@ void CFeatureDrawer::DrawFadeFeaturesSet(std::set<CFeature*>& fadeFeatures, int 
 		glColor4fv(cols);
 
 		if (!DrawFeatureNow(*fi)) {
-			fadeFeatures.erase(*fi);
+			fadeFeatures.erase(fi);
 			fi = fiNext;
 		} else {
 			++fi;
