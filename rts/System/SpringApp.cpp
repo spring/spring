@@ -68,13 +68,11 @@
 #ifdef WIN32
 	#include "Platform/Win/win32.h"
 	#include "Platform/Win/WinVersion.h"
-#elifdef __APPLE__
+#elif defined(__APPLE__) || defined(HEADLESS)
 #else
 	#include <X11/Xlib.h>
-	#ifndef HEADLESS
-		#include <sched.h>
-		#include "Platform/Linux/myX11.h"
-	#endif
+	#include <sched.h>
+	#include "Platform/Linux/myX11.h"
 #endif
 
 #undef KeyPress
@@ -137,7 +135,7 @@ SpringApp::~SpringApp()
  */
 bool SpringApp::Initialize()
 {
-#if !(defined(WIN32) || defined(__APPLE__))
+#if !(defined(WIN32) || defined(__APPLE__) || defined(HEADLESS))
 	//! this MUST run before any other X11 call (esp. those by SDL!)
 	if (!XInitThreads()) {
 		LogObject() << "Xlib not thread safe";

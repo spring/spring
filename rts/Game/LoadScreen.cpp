@@ -60,7 +60,11 @@ void CLoadScreen::Init()
 	//! and gu->myPlayerNum has to be set.
 	skirmishAIHandler.LoadPreGame();
 
+#ifdef HEADLESS
+	mt_loading = false;
+#else
 	mt_loading = configHandler->Get("LoadingMT", true);
+#endif
 
 	//! Create a thread during the loading that pings the host/server, so it knows that this client is still alive/loading
 	netHeartbeatThread = new boost::thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
