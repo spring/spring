@@ -257,6 +257,7 @@ public:
 			, color2(ZeroVector)
 			, model(NULL)
 			, colorMap(NULL)
+			, explosionScar(true)
 			, smokeTrail(false)
 			, beamweapon(false)
 			, hardStop(false)
