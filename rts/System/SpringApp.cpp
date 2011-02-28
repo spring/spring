@@ -221,10 +221,12 @@ bool SpringApp::Initialize()
 
 	// Sound
 	ISound::Initialize();
+	InitJoystick();
 
 	SetProcessAffinity(configHandler->Get("SetCoreAffinity", 0));
 
-	InitJoystick();
+	Watchdog::Install();
+
 	// Create CGameSetup and CPreGame objects
 	Startup();
 
@@ -542,7 +544,10 @@ bool SpringApp::GetDisplayGeometry()
 			case SW_SHOWMAXIMIZED:
 				windowState = 1;
 				break;
-			case SW_SHOWMINIMIZED: //minimized startup breaks init stuff, so don't store it
+			case SW_SHOWMINIMIZED:
+				//! minimized startup breaks SDL_init stuff, so don't store it
+				//windowState = 2;
+				//break;
 			default:
 				windowState = 0;
 		}
@@ -1147,8 +1152,6 @@ int SpringApp::Run(int argc, char *argv[])
 
 	if (!Initialize())
 		return -1;
-
-	Watchdog::Install();
 
 #ifdef USE_GML
 	gmlProcessor = new gmlClientServer<void, int, CUnit*>;
