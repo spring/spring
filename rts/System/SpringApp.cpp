@@ -773,7 +773,7 @@ void SpringApp::LoadFonts()
 			if (font && smallFont) {
 				break;
 			} else {
-				fi++;
+				++fi;
 			}
 		}
 		if (!font) {

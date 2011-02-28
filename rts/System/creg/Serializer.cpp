@@ -409,7 +409,7 @@ void COutputStreamSerializer::SavePackage (std::ostream *s, void *rootObj, Class
 			}
 			stream->write ((char*)&groupFlags, sizeof(char));
 			int midx=0;
-			for (std::vector<COutputStreamSerializer::ObjectMember>::iterator k=j->members.begin();k!=j->members.end();k++,midx++) {
+			for (std::vector<COutputStreamSerializer::ObjectMember>::iterator k=j->members.begin();k!=j->members.end();++k,++midx) {
 				if (k->memberId!=midx && (!hasSerializerMember || k!=j->members.end()-1))
 					throw "Invalid member id";
 				WriteVarSizeUInt(stream,k->size);
@@ -651,7 +651,7 @@ void CInputStreamSerializer::LoadPackage (std::istream *s, void*& root, creg::Cl
 		std::vector<Class*> hierarchy;
 		for (Class *c2=c;c2;c2=c2->base)
 			hierarchy.insert(hierarchy.end(),c2);
-		for (std::vector<Class*>::reverse_iterator i=hierarchy.rbegin();i!=hierarchy.rend();i++) {
+		for (std::vector<Class*>::reverse_iterator i=hierarchy.rbegin();i!=hierarchy.rend();++i) {
 			if ((*i)->postLoadProc) {
 				_DummyStruct *ds = (_DummyStruct*)o.obj;
 				(ds->*(*i)->postLoadProc)();

@@ -455,7 +455,7 @@ bool CTransportCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::list
 	// first spot
 	if (ti!=transport->GetTransportedUnits().end()) {
 		nextPos += dir*(gap + ti->unit->radius);
-		ti++;
+		++ti;
 	}
 
 	// remaining spots
@@ -470,7 +470,7 @@ bool CTransportCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::list
 
 			dropSpots.push_front(nextPos);
 			nextPos += dir*(gap + ti->unit->radius);
-			ti++;
+			++ti;
 		}
 		return true;
 	}

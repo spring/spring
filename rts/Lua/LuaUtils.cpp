@@ -461,9 +461,9 @@ int LuaUtils::Next(const ParamMap& paramMap, lua_State* L)
 		ParamMap::const_iterator it = paramMap.find(key);
 		if ((it != paramMap.end()) && (it->second.type != READONLY_TYPE)) {
 			// last key was an internal parameter
-			it++;
+			++it;
 			while ((it != paramMap.end()) && (it->second.type == READONLY_TYPE)) {
-				it++; // skip read-only parameters
+				++it; // skip read-only parameters
 			}
 			if ((it != paramMap.end()) && (it->second.type != READONLY_TYPE)) {
 				// next key is an internal parameter

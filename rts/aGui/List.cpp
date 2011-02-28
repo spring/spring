@@ -157,7 +157,7 @@ bool List::MouseUpdate(int x, int y)
 	std::vector<std::string>::iterator ii = filteredItems->begin();
 	UpdateTopIndex();
 
-	while (nCurIndex < topIndex) { ii++; nCurIndex++; }
+	while (nCurIndex < topIndex) { ++ii; ++nCurIndex; }
 
 	const int numDisplay = NumDisplay();
 
