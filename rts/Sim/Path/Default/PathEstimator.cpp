@@ -245,7 +245,7 @@ void CPathEstimator::EstimatePathCosts(int idx, int thread) {
  * Finds a square accessable by the given movedata within the given block
  */
 void CPathEstimator::FindOffset(const MoveData& moveData, int blockX, int blockZ) {
-	// lower corner position of block
+	//! lower corner position of block
 	const int lowerX = blockX * BLOCK_SIZE;
 	const int lowerZ = blockZ * BLOCK_SIZE;
 	const unsigned int blockArea = (BLOCK_SIZE * BLOCK_SIZE) / SQUARE_SIZE;
@@ -254,19 +254,19 @@ void CPathEstimator::FindOffset(const MoveData& moveData, int blockX, int blockZ
 	unsigned int bestPosZ = BLOCK_SIZE >> 1;
 
 	float bestCost = std::numeric_limits<float>::max();
+	const CMoveMath& moveMath = *(moveData.moveMath);
 
 	// search for an accessible position
 	for (unsigned int z = 1; z < BLOCK_SIZE; z += 2) {
 		for (unsigned int x = 1; x < BLOCK_SIZE; x += 2) {
 			const int dx = x - (BLOCK_SIZE >> 1);
 			const int dz = z - (BLOCK_SIZE >> 1);
-			const float speedMod = moveData.moveMath->SpeedMod(moveData, int(lowerX + x), int(lowerZ + z));
 
-			float cost = (dx * dx + dz * dz) + (blockArea / (0.001f + speedMod));
-
-			if (moveData.moveMath->IsBlocked(moveData, lowerX + x, lowerZ + z) & CMoveMath::BLOCK_STRUCTURE) {
-				cost = std::numeric_limits<float>::infinity();
-			}
+			if (moveMath.IsBlocked(moveData, lowerX + x, lowerZ + z) & CMoveMath::BLOCK_STRUCTURE)
+				continue;
+			
+			const float speedMod = moveMath.SpeedMod(moveData, lowerX + x, lowerZ + z);
+			const float cost = (dx * dx + dz * dz) + (blockArea / (0.001f + speedMod));
 
 			if (cost < bestCost) {
 				bestCost = cost;
