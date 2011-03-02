@@ -54,83 +54,84 @@ class CEventClient
 
 	protected:
 		CEventClient(const std::string& name, int order, bool synced);
-		virtual ~CEventClient();
+		virtual ~CEventClient() {}
 
 	public:
 		// Synced events
-		virtual void Load(CArchiveBase* archive);
+		virtual void Load(CArchiveBase* archive) {}
 
-		virtual void GamePreload();
-		virtual void GameStart();
-		virtual void GameOver(std::vector<unsigned char> winningAllyTeams);
-		virtual void GamePaused(int playerID, bool paused);
-		virtual void GameFrame(int gameFrame);
-		virtual void TeamDied(int teamID);
-		virtual void TeamChanged(int teamID);
-		virtual void PlayerChanged(int playerID);
-		virtual void PlayerAdded(int playerID);
-		virtual void PlayerRemoved(int playerID, int reason);
+		virtual void GamePreload() {}
+		virtual void GameStart() {}
+		virtual void GameOver(std::vector<unsigned char> winningAllyTeams) {}
+		virtual void GamePaused(int playerID, bool paused) {}
+		virtual void GameFrame(int gameFrame) {}
+		virtual void TeamDied(int teamID) {}
+		virtual void TeamChanged(int teamID) {}
+		virtual void PlayerChanged(int playerID) {}
+		virtual void PlayerAdded(int playerID) {}
+		virtual void PlayerRemoved(int playerID, int reason) {}
 
-		virtual void UnitCreated(const CUnit* unit, const CUnit* builder);
-		virtual void UnitFinished(const CUnit* unit);
+		virtual void UnitCreated(const CUnit* unit, const CUnit* builder) {}
+		virtual void UnitFinished(const CUnit* unit) {}
 		virtual void UnitFromFactory(const CUnit* unit, const CUnit* factory,
-		                             bool userOrders);
-		virtual void UnitDestroyed(const CUnit* unit, const CUnit* attacker);
-		virtual void UnitTaken(const CUnit* unit, int newTeam);
-		virtual void UnitGiven(const CUnit* unit, int oldTeam);
+		                             bool userOrders) {}
+		virtual void UnitDestroyed(const CUnit* unit, const CUnit* attacker) {}
+		virtual void UnitTaken(const CUnit* unit, int newTeam) {}
+		virtual void UnitGiven(const CUnit* unit, int oldTeam) {}
 
-		virtual void UnitIdle(const CUnit* unit);
-		virtual void UnitCommand(const CUnit* unit, const Command& command);
-		virtual void UnitCmdDone(const CUnit* unit, int cmdType, int cmdTag);
+		virtual void UnitIdle(const CUnit* unit) {}
+		virtual void UnitCommand(const CUnit* unit, const Command& command) {}
+		virtual void UnitCmdDone(const CUnit* unit, int cmdType, int cmdTag) {}
 		virtual void UnitDamaged(const CUnit* unit, const CUnit* attacker,
-		                         float damage, int weaponID, bool paralyzer);
-		virtual void UnitExperience(const CUnit* unit, float oldExperience);
+		                         float damage, int weaponID, bool paralyzer) {}
+		virtual void UnitExperience(const CUnit* unit, float oldExperience) {}
 
 		virtual void UnitSeismicPing(const CUnit* unit, int allyTeam,
-		                             const float3& pos, float strength);
-		virtual void UnitEnteredRadar(const CUnit* unit, int allyTeam);
-		virtual void UnitEnteredLos(const CUnit* unit, int allyTeam);
-		virtual void UnitLeftRadar(const CUnit* unit, int allyTeam);
-		virtual void UnitLeftLos(const CUnit* unit, int allyTeam);
+		                             const float3& pos, float strength) {}
+		virtual void UnitEnteredRadar(const CUnit* unit, int allyTeam) {}
+		virtual void UnitEnteredLos(const CUnit* unit, int allyTeam) {}
+		virtual void UnitLeftRadar(const CUnit* unit, int allyTeam) {}
+		virtual void UnitLeftLos(const CUnit* unit, int allyTeam) {}
 
-		virtual void UnitEnteredWater(const CUnit* unit);
-		virtual void UnitEnteredAir(const CUnit* unit);
-		virtual void UnitLeftWater(const CUnit* unit);
-		virtual void UnitLeftAir(const CUnit* unit);
+		virtual void UnitEnteredWater(const CUnit* unit) {}
+		virtual void UnitEnteredAir(const CUnit* unit) {}
+		virtual void UnitLeftWater(const CUnit* unit) {}
+		virtual void UnitLeftAir(const CUnit* unit) {}
 
-		virtual void UnitLoaded(const CUnit* unit, const CUnit* transport);
-		virtual void UnitUnloaded(const CUnit* unit, const CUnit* transport);
+		virtual void UnitLoaded(const CUnit* unit, const CUnit* transport) {}
+		virtual void UnitUnloaded(const CUnit* unit, const CUnit* transport) {}
 
-		virtual void UnitCloaked(const CUnit* unit);
-		virtual void UnitDecloaked(const CUnit* unit);
+		virtual void UnitCloaked(const CUnit* unit) {}
+		virtual void UnitDecloaked(const CUnit* unit) {}
 
-		virtual void RenderUnitCreated(const CUnit* unit, int cloaked);
-		virtual void RenderUnitDestroyed(const CUnit* unit);
-		virtual void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
-		virtual void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);
+		virtual void RenderUnitCreated(const CUnit* unit, int cloaked) {}
+		virtual void RenderUnitDestroyed(const CUnit* unit) {}
+		virtual void RenderUnitCloakChanged(const CUnit* unit, int cloaked) {}
+		virtual void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus) {}
 
-		virtual void UnitUnitCollision(const CUnit* collider, const CUnit* collidee);
-		virtual void UnitFeatureCollision(const CUnit* collider, const CFeature* collidee);
-		virtual void UnitMoveFailed(const CUnit* unit);
+		virtual void UnitUnitCollision(const CUnit* collider, const CUnit* collidee) {}
+		virtual void UnitFeatureCollision(const CUnit* collider, const CFeature* collidee) {}
+		virtual void UnitMoved(const CUnit* unit) {}
+		virtual void UnitMoveFailed(const CUnit* unit) {}
 
-		virtual void FeatureCreated(const CFeature* feature);
-		virtual void FeatureDestroyed(const CFeature* feature);
-		virtual void FeatureMoved(const CFeature* feature);
+		virtual void FeatureCreated(const CFeature* feature) {}
+		virtual void FeatureDestroyed(const CFeature* feature) {}
+		virtual void FeatureMoved(const CFeature* feature) {}
 
-		virtual void RenderFeatureCreated(const CFeature* feature);
-		virtual void RenderFeatureDestroyed(const CFeature* feature);
-		virtual void RenderFeatureMoved(const CFeature* feature);
+		virtual void RenderFeatureCreated(const CFeature* feature) {}
+		virtual void RenderFeatureDestroyed(const CFeature* feature) {}
+		virtual void RenderFeatureMoved(const CFeature* feature) {}
 
-		virtual void ProjectileCreated(const CProjectile* proj);
-		virtual void ProjectileDestroyed(const CProjectile* proj);
+		virtual void ProjectileCreated(const CProjectile* proj) {}
+		virtual void ProjectileDestroyed(const CProjectile* proj) {}
 
-		virtual void RenderProjectileCreated(const CProjectile* proj);
-		virtual void RenderProjectileDestroyed(const CProjectile* proj);
+		virtual void RenderProjectileCreated(const CProjectile* proj) {}
+		virtual void RenderProjectileDestroyed(const CProjectile* proj) {}
 
 		virtual void StockpileChanged(const CUnit* unit,
-		                              const CWeapon* weapon, int oldCount);
+		                              const CWeapon* weapon, int oldCount) {}
 
-		virtual bool Explosion(int weaponID, const float3& pos, const CUnit* owner);
+		virtual bool Explosion(int weaponID, const float3& pos, const CUnit* owner) { return false; }
 
 		// Unsynced events
 		virtual void Save(zipFile archive);

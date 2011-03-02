@@ -15,7 +15,7 @@ public:
 	void StartMoving(float3 pos, float goalRadius, float speed) {}
 	void KeepPointingTo(float3 pos, float distance, bool aggressive) {}
 	void StopMoving() {}
-	void Update() {}
+	bool Update() { return false; }
 	void SlowUpdate();
 };
 

@@ -96,6 +96,7 @@ class CEventHandler
 
 		void UnitUnitCollision(const CUnit* collider, const CUnit* collidee);
 		void UnitFeatureCollision(const CUnit* collider, const CFeature* collidee);
+		void UnitMoved(const CUnit* unit);
 		void UnitMoveFailed(const CUnit* unit);
 
 		void FeatureCreated(const CFeature* feature);
@@ -275,6 +276,7 @@ class CEventHandler
 
 		EventClientList listUnitUnitCollision;
 		EventClientList listUnitFeatureCollision;
+		EventClientList listUnitMoved;
 		EventClientList listUnitMoveFailed;
 
 		EventClientList listFeatureCreated;
@@ -374,6 +376,7 @@ inline void CEventHandler::UnitCreated(const CUnit* unit, const CUnit* builder)
 
 UNIT_CALLIN_NO_PARAM(UnitFinished)
 UNIT_CALLIN_NO_PARAM(UnitIdle)
+UNIT_CALLIN_NO_PARAM(UnitMoved)
 UNIT_CALLIN_NO_PARAM(UnitMoveFailed)
 UNIT_CALLIN_NO_PARAM(UnitEnteredWater)
 UNIT_CALLIN_NO_PARAM(UnitEnteredAir)

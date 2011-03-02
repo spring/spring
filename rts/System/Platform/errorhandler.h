@@ -15,20 +15,7 @@
 #define MBF_OK    1
 #define MBF_INFO  2
 #define MBF_EXCL  4
-#define MBF_MAIN  8
-#define MBF_CRASH 16
-
-#if defined __GNUC__ && (__GNUC__ >= 4)
-	#define NO_RETURN_POSTFIX __attribute__ ((noreturn))
-#else
-	#define NO_RETURN_POSTFIX
-#endif
-
-#if defined _MSC_VER
-	#define NO_RETURN_PREFIX __declspec(noreturn)
-#else
-	#define NO_RETURN_PREFIX
-#endif
+#define MBF_CRASH 8
 
 // legacy support define
 #define handleerror(o, m, c, f) ErrorMessageBox(m, c, f)
@@ -38,11 +25,12 @@
  * @param  msg     the main text, describing the error
  * @param  caption will appear in the title bar of the error window
  * @param  flags   one of:
- *                 - MB_OK   : Error
- *                 - MB_EXCL : Warning
- *                 - MB_INFO : Info
+ *                 - MBF_OK   : Error
+ *                 - MBF_EXCL : Warning
+ *                 - MBF_INFO : Info
+ *                 - MBF_CRASH: Crash
  */
-NO_RETURN_PREFIX void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags = MBF_OK) NO_RETURN_POSTFIX;
+void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags = MBF_OK);
 
 
 /**
@@ -51,30 +39,29 @@ NO_RETURN_PREFIX void ErrorMessageBox(const std::string& msg, const std::string&
 #ifdef NO_CATCH_EXCEPTIONS
 	#define CATCH_SPRING_ERRORS \
 		catch (const content_error& e) {                                                        \
-			ErrorMessageBox(e.what(), "Incorrect/Missing content:", MBF_OK | MBF_EXCL);     \
+			ErrorMessageBox(e.what(), "Spring: Incorrect/Missing content: ", MBF_OK | MBF_EXCL);     \
 		}                                                                                       \
 		catch (const opengl_error& e) {                                                         \
-			ErrorMessageBox(e.what(), "OpenGL content:", MBF_OK | MBF_EXCL);                \
+			ErrorMessageBox(e.what(), "Spring: OpenGL content", MBF_OK | MBF_CRASH);        \
 		}
 #else
 	#define CATCH_SPRING_ERRORS \
 		catch (const content_error& e) {                                                        \
-			ErrorMessageBox(e.what(), "Incorrect/Missing content:", MBF_OK | MBF_EXCL);     \
+			ErrorMessageBox(e.what(), "Spring: Incorrect/Missing content: ", MBF_OK | MBF_EXCL);     \
 		}                                                                                       \
 		catch (const opengl_error& e) {                                                         \
-			ErrorMessageBox(e.what(), "OpenGL content:", MBF_OK | MBF_EXCL);                \
+			ErrorMessageBox(e.what(), "Spring: OpenGL content", MBF_OK | MBF_CRASH);        \
 		}                                                                                       \
 		catch (const boost::system::system_error& e) {                                          \
-			std::stringstream ss;                                                           \
+			std::ostringstream ss;                                                          \
 			ss << e.code().value() << ": " << e.what();                                     \
-			std::string tmp = ss.str();                                                     \
-			ErrorMessageBox(tmp, "Fatal Error", MBF_OK | MBF_EXCL);                         \
+			ErrorMessageBox(ss.str(), "Spring: Fatal Error", MBF_OK | MBF_CRASH);           \
 		}                                                                                       \
 		catch (const std::exception& e) {                                                       \
-			ErrorMessageBox(e.what(), "Fatal Error", MBF_OK | MBF_EXCL);                    \
+			ErrorMessageBox(e.what(), "Spring: Fatal Error", MBF_OK | MBF_CRASH);           \
 		}                                                                                       \
 		catch (const char* e) {                                                                 \
-			ErrorMessageBox(e, "Fatal Error", MBF_OK | MBF_EXCL);                           \
+			ErrorMessageBox(e, "Spring: Fatal Error", MBF_OK | MBF_CRASH);                  \
 		}
 #endif
 

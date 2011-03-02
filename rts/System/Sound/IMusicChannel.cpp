@@ -3,8 +3,7 @@
 #include "IMusicChannel.h"
 #include "SoundChannels.h"
 
-namespace sound {
-	namespace Channels {
-		MusicChannelImpl BGMusic;
-	}
-};
+namespace Channels
+{
+	MusicChannelImpl BGMusic;
+}

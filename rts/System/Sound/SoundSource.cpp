@@ -11,20 +11,20 @@
 #include "SoundItem.h"
 #include "OggStream.h"
 #include "ALShared.h"
+#include "EFX.h"
+
+#include "Sound.h" //remove when unified ElmoInMeters
+
 #include "float3.h"
 #include "Util.h"
 #include "LogOutput.h"
 #include "myMath.h"
 
-namespace sound {
+float CSoundSource::referenceDistance = 200.0f;
+float CSoundSource::globalPitch = 1.0;
+float CSoundSource::heightRolloffModifier = 1.0f;
 
-float SoundSource::globalPitch = 1.0;
-float SoundSource::heightAdjustedRolloffModifier = 1.0;
-float SoundSource::referenceDistance = 200.0f;
-float SoundSource::airAbsorption = AL_MIN_AIR_ABSORPTION_FACTOR;
-bool SoundSource::airAbsorptionSupported = false;
-
-struct SoundSource::StreamControl
+struct CSoundSource::StreamControl
 {
 	StreamControl(ALuint id) : stream(id), current(NULL), next(NULL), stopRequest(false) {};
 	COggStream stream;
@@ -42,28 +42,45 @@ struct SoundSource::StreamControl
 	bool stopRequest;
 };
 
-SoundSource::SoundSource() : curPlaying(NULL), curStream(NULL)
+CSoundSource::CSoundSource() : curPlaying(NULL), curStream(NULL), loopStop(1e9), in3D(false), efxEnabled(false), curHeightRolloffModifier(1)
 {
 	alGenSources(1, &id);
-	if (!CheckError("SoundSource::SoundSource"))
+	if (!CheckError("CSoundSource::CSoundSource"))
 	{
 		id = 0;
-	}
-	else
-	{
-		alSourcef(id, AL_REFERENCE_DISTANCE, referenceDistance);
-		CheckError("SoundSource::SoundSource");
+	} else {
+		alSourcef(id, AL_REFERENCE_DISTANCE, referenceDistance * CSound::GetElmoInMeters());
+		CheckError("CSoundSource::CSoundSource");
 	}
 }
 
-SoundSource::~SoundSource()
+CSoundSource::~CSoundSource()
 {
+	if (efxEnabled) {
+		alSource3i(id, AL_AUXILIARY_SEND_FILTER, AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
+		alSourcei(id, AL_DIRECT_FILTER, AL_FILTER_NULL);
+	}
+
 	alDeleteSources(1, &id);
-	CheckError("SoundSource::~SoundSource");
+	CheckError("CSoundSource::~CSoundSource");
 }
 
-void SoundSource::Update()
+void CSoundSource::Update()
 {
+	if (curPlaying) {
+		if (in3D && (efxEnabled != efx->enabled)) {
+			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, (efx->enabled) ? efx->airAbsorptionFactor : 0);
+			alSource3i(id, AL_AUXILIARY_SEND_FILTER, (efx->enabled) ? efx->sfxSlot : AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
+			alSourcei(id, AL_DIRECT_FILTER, (efx->enabled) ? efx->sfxFilter : AL_FILTER_NULL);
+			efxEnabled = efx->enabled;
+		}
+
+		if (heightRolloffModifier != curHeightRolloffModifier) {
+			curHeightRolloffModifier = heightRolloffModifier;
+			alSourcef(id, AL_ROLLOFF_FACTOR, curPlaying->rolloff * heightRolloffModifier);
+		}
+	}
+
 	if (curStream)
 	{
 		boost::mutex::scoped_lock lock(streamMutex);
@@ -74,7 +91,7 @@ void SoundSource::Update()
 			delete curStream->next;
 			delete curStream;
 			curStream = NULL;
-			CheckError("SoundSource::Update()");
+			CheckError("CSoundSource::Update()");
 		}
 		else
 		{
@@ -82,48 +99,55 @@ void SoundSource::Update()
 			if (curStream->next != NULL && (finished ||  !curStream->next->enqueue))
 			{
 				Stop();
-				// COggStreams only appends buffers, giving errors when a buffer of another format is still asigned
+				// COggStreams only appends buffers, giving errors when a buffer of another format is still assigned
 				alSourcei(id, AL_BUFFER, AL_NONE);
 				curStream->stream.Stop();
 				delete curStream->current;
 				curStream->current = curStream->next;
 				curStream->next = NULL;
 
-				alSource3f(id, AL_POSITION,        0.0, 0.0, -1.0); // in case of mono streams
-				alSourcef(id, AL_GAIN, curStream->current->volume);
-				alSource3f(id, AL_VELOCITY,        0.0f,  0.0f,  0.0f);
-				alSource3f(id, AL_DIRECTION,       0.0f,  0.0f,  0.0f);
+				in3D = false;
+				if (efxEnabled) {
+					alSource3i(id, AL_AUXILIARY_SEND_FILTER, AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
+					alSourcei(id, AL_DIRECT_FILTER, AL_FILTER_NULL);
+					efxEnabled = false;
+				}
+
+				alSource3f(id, AL_POSITION,       0.0f, 0.0f, -1.0f * CSound::GetElmoInMeters()); // in case of mono streams
+				alSourcef(id, AL_GAIN,            curStream->current->volume);
+				alSource3f(id, AL_VELOCITY,       0.0f,  0.0f,  0.0f);
+				alSource3f(id, AL_DIRECTION,      0.0f,  0.0f,  0.0f);
 				alSourcef(id, AL_ROLLOFF_FACTOR,  0.0f);
-				alSourcei(id, AL_SOURCE_RELATIVE, true);
+				alSourcei(id, AL_SOURCE_RELATIVE, AL_TRUE);
 				curStream->stream.Play(curStream->current->file, curStream->current->volume);
 			}
 			curStream->stream.Update();
-			CheckError("SoundSource::Update");
+			CheckError("CSoundSource::Update");
 		}
 	}
 	if (curPlaying && (!IsPlaying() || ((curPlaying->loopTime > 0) && (loopStop < SDL_GetTicks()))))
 		Stop();
 }
 
-int SoundSource::GetCurrentPriority() const
+int CSoundSource::GetCurrentPriority() const
 {
 	if (curStream)
 	{
 		return INT_MAX;
 	}
 	else if (!curPlaying) {
-		logOutput.Print("Warning: SoundSource::GetCurrentPriority() curPlaying is NULL (id %d)", id);
+		logOutput.Print("Warning: CSoundSource::GetCurrentPriority() curPlaying is NULL (id %d)", id);
 		return INT_MIN;
 	}
 	return curPlaying->priority;
 }
 
-bool SoundSource::IsPlaying() const
+bool CSoundSource::IsPlaying() const
 {
-	CheckError("SoundSource::IsPlaying");
+	CheckError("CSoundSource::IsPlaying");
 	ALint state;
 	alGetSourcei(id, AL_SOURCE_STATE, &state);
-	CheckError("SoundSource::IsPlaying");
+	CheckError("CSoundSource::IsPlaying");
 	if (state == AL_PLAYING || curStream)
 		return true;
 	else
@@ -132,7 +156,7 @@ bool SoundSource::IsPlaying() const
 	}
 }
 
-void SoundSource::Stop()
+void CSoundSource::Stop()
 {
 	alSourceStop(id);
 	if (curPlaying)
@@ -140,10 +164,10 @@ void SoundSource::Stop()
 		curPlaying->StopPlay();
 		curPlaying = NULL;
 	}
-	CheckError("SoundSource::Stop");
+	CheckError("CSoundSource::Stop");
 }
 
-void SoundSource::Play(SoundItem* item, const float3& pos, float3 velocity, float volume, bool relative)
+void CSoundSource::Play(SoundItem* item, float3 pos, float3 velocity, float volume, bool relative)
 {
 	assert(!curStream);
 	if (!item->PlayNow())
@@ -153,26 +177,36 @@ void SoundSource::Play(SoundItem* item, const float3& pos, float3 velocity, floa
 	alSourcei(id, AL_BUFFER, item->buffer->GetId());
 	alSourcef(id, AL_GAIN, item->GetGain() * volume);
 	alSourcef(id, AL_PITCH, item->GetPitch() * globalPitch);
-	if (airAbsorptionSupported) {
-		alSourcef(id, AL_AIR_ABSORPTION_FACTOR, airAbsorption);
-	}
-	velocity *= item->dopplerScale;
+	velocity *= item->dopplerScale * CSound::GetElmoInMeters();
 	alSource3f(id, AL_VELOCITY, velocity.x, velocity.y, velocity.z);
-	if (item->loopTime > 0)
-		alSourcei(id, AL_LOOPING, AL_TRUE);
-	else
-		alSourcei(id, AL_LOOPING, AL_FALSE);
+	alSourcei(id, AL_LOOPING, (item->loopTime > 0) ? AL_TRUE : AL_FALSE);
 	loopStop = SDL_GetTicks() + item->loopTime;
 	if (relative || !item->in3D)
 	{
+		in3D = false;
+		if (efxEnabled) {
+			alSource3i(id, AL_AUXILIARY_SEND_FILTER, AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
+			alSourcei(id, AL_DIRECT_FILTER, AL_FILTER_NULL);
+			efxEnabled = false;
+		}
 		alSourcei(id, AL_SOURCE_RELATIVE, AL_TRUE);
-		alSource3f(id, AL_POSITION, 0.0, 0.0, -1.0);
+		alSourcef(id, AL_ROLLOFF_FACTOR, 0.f);
+		alSource3f(id, AL_POSITION, 0.0f, 0.0f, -1.0f * CSound::GetElmoInMeters());
 	}
 	else
 	{
+		in3D = true;
+		if (efx->enabled) {
+			efxEnabled = true;
+			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, efx->airAbsorptionFactor);
+			alSource3i(id, AL_AUXILIARY_SEND_FILTER, efx->sfxSlot, 0, AL_FILTER_NULL);
+			alSourcei(id, AL_DIRECT_FILTER, efx->sfxFilter);
+		}
 		alSourcei(id, AL_SOURCE_RELATIVE, AL_FALSE);
+		pos *= CSound::GetElmoInMeters();
 		alSource3f(id, AL_POSITION, pos.x, pos.y, pos.z);
-		alSourcef(id, AL_ROLLOFF_FACTOR, item->rolloff * heightAdjustedRolloffModifier);
+		curHeightRolloffModifier = heightRolloffModifier;
+		alSourcef(id, AL_ROLLOFF_FACTOR, item->rolloff * heightRolloffModifier);
 #ifdef __APPLE__
 		alSourcef(id, AL_MAX_DISTANCE, 1000000.0f);
 		// Max distance is too small by default on my Mac...
@@ -180,25 +214,26 @@ void SoundSource::Play(SoundItem* item, const float3& pos, float3 velocity, floa
 		if (gain > 1.0f) {
 			// OpenAL on Mac cannot handle AL_GAIN > 1 well, so we will adjust settings to get the same output with AL_GAIN = 1.
 			ALint model = alGetInteger(AL_DISTANCE_MODEL);
-			ALfloat rolloff = item->rolloff * heightAdjustedRolloffModifier, ref = referenceDistance;
+			ALfloat rolloff = item->rolloff * heightRolloffModifier;
+			ALfloat ref = referenceDistance * CSound::GetElmoInMeters();
 			if ((model == AL_INVERSE_DISTANCE_CLAMPED) || (model == AL_INVERSE_DISTANCE)) {
 				alSourcef(id, AL_REFERENCE_DISTANCE, ((gain - 1.0f) * ref / rolloff) + ref);
 				alSourcef(id, AL_ROLLOFF_FACTOR, (gain + rolloff - 1.0f) / gain);
 				alSourcef(id, AL_GAIN, 1.0f);
 			}
 		} else {
-			alSourcef(id, AL_REFERENCE_DISTANCE, referenceDistance);
+			alSourcef(id, AL_REFERENCE_DISTANCE, referenceDistance * CSound::GetElmoInMeters());
 		}
 #endif
 	}
 	alSourcePlay(id);
 
 	if (item->buffer->GetId() == 0)
-		logOutput.Print("SoundSource::Play: Empty buffer for item %s (file %s)", item->name.c_str(), item->buffer->GetFilename().c_str());
-	CheckError("SoundSource::Play");
+		logOutput.Print("CSoundSource::Play: Empty buffer for item %s (file %s)", item->name.c_str(), item->buffer->GetFilename().c_str());
+	CheckError("CSoundSource::Play");
 }
 
-void SoundSource::PlayStream(const std::string& file, float volume, bool enqueue)
+void CSoundSource::PlayStream(const std::string& file, float volume, bool enqueue)
 {
 	boost::mutex::scoped_lock lock(streamMutex);
 	if (!curStream)
@@ -214,7 +249,7 @@ void SoundSource::PlayStream(const std::string& file, float volume, bool enqueue
 	curStream->next->enqueue = enqueue;
 }
 
-void SoundSource::StreamStop()
+void CSoundSource::StreamStop()
 {
 	if (curStream)
 	{
@@ -228,7 +263,7 @@ void SoundSource::StreamStop()
 		assert(false);
 }
 
-void SoundSource::StreamPause()
+void CSoundSource::StreamPause()
 {
 	if (curStream)
 	{
@@ -245,7 +280,7 @@ void SoundSource::StreamPause()
 		assert(false);
 }
 
-float SoundSource::GetStreamTime()
+float CSoundSource::GetStreamTime()
 {
 	if (curStream)
 	{
@@ -259,7 +294,7 @@ float SoundSource::GetStreamTime()
 	return 0;
 }
 
-float SoundSource::GetStreamPlayTime()
+float CSoundSource::GetStreamPlayTime()
 {
 	if (curStream)
 	{
@@ -273,40 +308,13 @@ float SoundSource::GetStreamPlayTime()
 	return 0;
 }
 
-void SoundSource::SetPitch(float newPitch)
-{
-	globalPitch = newPitch;
-}
-
-void SoundSource::SetVolume(float newVol)
+void CSoundSource::SetVolume(float newVol)
 {
 	if (curStream && curStream->current)
 	{
 		alSourcef(id, AL_GAIN, newVol * curStream->current->volume);
 	}
-}
-
-void SoundSource::SetAirAbsorptionSupported(bool supported)
-{
-	airAbsorptionSupported = supported;
-}
-
-void SoundSource::SetAirAbsorption(float factor)
-{
-	if (airAbsorptionSupported) {
-		airAbsorption = Clamp(factor, AL_MIN_AIR_ABSORPTION_FACTOR, AL_MAX_AIR_ABSORPTION_FACTOR);
-
-		if (airAbsorption == AL_MIN_AIR_ABSORPTION_FACTOR)
-		{
-			LogObject(LOG_SOUND) << "air absorption disabled";
-		}
-		else
-		{
-			LogObject(LOG_SOUND) << "air absorption enabled: " << airAbsorption;
-		}
-	} else {
-		LogObject(LOG_SOUND) << "air absorption not supported by the sound device in use";
+	else if (curPlaying) {
+		alSourcef(id, AL_GAIN, newVol * curPlaying->GetGain());
 	}
 }
-
-};

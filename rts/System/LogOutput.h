@@ -88,7 +88,6 @@ public:
 	// Notification of log messages to subscriber
 	virtual void NotifyLogMsg(const CLogSubsystem& subsystem, const std::string& str) = 0;
 	virtual void SetLastMsgPos(const float3& pos) {}
-	bool wantLogInformationPrefix; //set it to true if you want extra information appended such as frame number, log type, etc
 };
 
 
@@ -152,7 +151,7 @@ public:
 	 * @brief returns the absolute path to the log file
 	 *
 	 * Relative paths are relative to the writeable data-dir.
-	 * This method may only be called after the logger got initialzized.
+	 * This method may only be called after the logger got initialized.
 	 * @see Initialize()
 	 */
 	const std::string& GetFilePath() const;

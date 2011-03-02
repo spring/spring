@@ -127,7 +127,7 @@ void CWaitCommandsAI::Update()
 	while (it != waitMap.end()) {
 		// grab an incremented iterator in case the active iterator deletes itself
 		WaitMap::iterator tmp = it;
-		tmp++;
+		++tmp;
 		it->second->Update();
 		it = tmp;
 	}
@@ -137,7 +137,7 @@ void CWaitCommandsAI::Update()
 	it = unackedMap.begin();
 	while (it != unackedMap.end()) {
 		WaitMap::iterator tmp = it;
-		tmp++;
+		++tmp;
 		Wait* wait = it->second;
 		if (wait->GetDeadTime() < nowTime) {
 			delete wait;
@@ -431,7 +431,7 @@ CWaitCommandsAI::Wait::WaitState
 	}
 
 	CCommandQueue::const_iterator it = dq.begin();
-	it++;
+	++it;
 	for ( ; it != dq.end(); ++it) {
 		const Command& qcmd = *it;
 		if ((qcmd.id == CMD_WAIT) && (qcmd.params.size() == 2) &&

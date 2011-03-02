@@ -5,14 +5,9 @@
  * everything else
  */
 
-#ifdef WIN32
-#define BOOST_MAIN_THREAD 1 // main thread as separate boost::thread
-#else
-#define BOOST_MAIN_THREAD 0 // linux has some SDL problems with this
-#endif
 
 #ifdef _MSC_VER
-#include "StdAfx.h"
+	#include "StdAfx.h"
 #endif
 #include <sstream>
 #include <boost/system/system_error.hpp>
@@ -24,16 +19,15 @@
 #include "System/Platform/Threading.h"
 
 #ifndef _MSC_VER
-#include "StdAfx.h"
+	#include "StdAfx.h"
 #endif
 #include "lib/gml/gml.h"
-#include "System/LogOutput.h"
 #include "System/Exceptions.h"
 
 #include "SpringApp.h"
 
 #ifdef WIN32
-#include "Platform/Win/win32.h"
+	#include "Platform/Win/win32.h"
 #endif
 
 void MainFunc(int argc, char** argv, int* ret) {
@@ -70,22 +64,13 @@ int Run(int argc, char* argv[])
 {
 	int ret = -1;
 
-#if BOOST_MAIN_THREAD
-	boost::thread* mainThread = new boost::thread(boost::bind(&MainFunc, argc, argv, &ret));
-	Threading::SetMainThread(mainThread);
-	while(mainThread->joinable())
-		if(mainThread->timed_join(boost::posix_time::seconds(1)))
-			break;
-	delete mainThread;
-#else
 	Threading::SetMainThread();
 	MainFunc(argc, argv, &ret);
-#endif
 
 	//! check if Spring crashed, if so display an error message
 	Threading::Error* err = Threading::GetThreadError();
 	if (err)
-		ErrorMessageBox(err->message, err->caption, err->flags | MBF_MAIN);
+		ErrorMessageBox(err->message, err->caption, err->flags);
 
 	return ret;
 }
@@ -110,6 +95,6 @@ int main(int argc, char* argv[])
 #ifdef WIN32
 int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	return Run(__argc, __argv);
+	return main(__argc, __argv);
 }
 #endif

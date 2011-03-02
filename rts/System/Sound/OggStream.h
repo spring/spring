@@ -10,58 +10,57 @@
 #include <string>
 #include <vector>
 
-namespace sound {
-	class COggStream
-	{
-	public:
-		typedef std::vector<std::string> TagVector;
-		COggStream(ALuint _source);
-		~COggStream();
+class COggStream
+{
+public:
+	typedef std::vector<std::string> TagVector;
+	COggStream(ALuint _source);
+	~COggStream();
 
-		void Play(const std::string& path, float volume);
-		void Stop();
-		bool TogglePause();
-		void Update();
+	void Play(const std::string& path, float volume);
+	void Stop();
+	bool TogglePause();
+	void Update();
 
-		float GetPlayTime() const;
-		float GetTotalTime();
-		const TagVector& VorbisTags() const;
-		bool Valid() const;
+	float GetPlayTime() const;
+	float GetTotalTime();
+	const TagVector& VorbisTags() const;
+	bool Valid() const;
 
-	private:
-		void DisplayInfo();
-		bool IsPlaying();
-		bool StartPlaying();
+private:
+	void DisplayInfo();
+	bool IsPlaying();
+	bool StartPlaying();
 
-		bool DecodeStream(ALuint buffer);
-		void EmptyBuffers();
-		void ReleaseBuffers();
+	bool DecodeStream(ALuint buffer);
+	void EmptyBuffers();
+	void ReleaseBuffers();
 
-		/**
-		@brief Decode next part of the stream and queue it for playing
-		@return wheter it is the end of the stream (check for IsPlaying() wheter the complete stream was played)
-		*/
-		bool UpdateBuffers();
+	/**
+	@brief Decode next part of the stream and queue it for playing
+	@return wheter it is the end of the stream (check for IsPlaying() wheter the complete stream was played)
+	*/
+	bool UpdateBuffers();
 
-		OggVorbis_File oggStream;
-		vorbis_info* vorbisInfo;
+	OggVorbis_File oggStream;
+	vorbis_info* vorbisInfo;
 
-		static const unsigned int BUFFER_SIZE = (4096 * 128); // 512KB
-		static const unsigned int NUM_BUFFERS = 2;
+	static const unsigned int BUFFER_SIZE = (4096 * 128); // 512KB
+	static const unsigned int NUM_BUFFERS = 2;
 
-		ALuint buffers[NUM_BUFFERS];
-		ALuint source;
-		ALenum format;
+	ALuint buffers[NUM_BUFFERS];
+	ALuint source;
+	ALenum format;
 
-		bool stopped;
-		bool paused;
+	bool stopped;
+	bool paused;
 
-		unsigned msecsPlayed;
-		unsigned lastTick;
-		
-		std::vector<std::string> vorbisTags;
-		std::string vendor;
-	};
+	unsigned msecsPlayed;
+	unsigned lastTick;
+	
+	std::vector<std::string> vorbisTags;
+	std::string vendor;
 };
+
 
 #endif

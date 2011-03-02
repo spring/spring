@@ -17,7 +17,7 @@ public:
 	float yLevel(int xSquare, int zSquare) const;
 	float yLevel(const float3& pos) const;
 
-	static float waterCost;
+	static float waterDamageCost;
 };
 
 #endif

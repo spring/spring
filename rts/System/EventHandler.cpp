@@ -76,6 +76,7 @@ CEventHandler::CEventHandler()
 
 	SETUP_EVENT(UnitUnitCollision,    MANAGED_BIT);
 	SETUP_EVENT(UnitFeatureCollision, MANAGED_BIT);
+	SETUP_EVENT(UnitMoved,            MANAGED_BIT);
 	SETUP_EVENT(UnitMoveFailed,       MANAGED_BIT);
 
 	SETUP_EVENT(FeatureCreated,   MANAGED_BIT);

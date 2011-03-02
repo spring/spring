@@ -89,8 +89,8 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, const float3& pos, int team,
 	if (ud->IsTransportUnit()) {
 		unit = new CTransportUnit();
 	} else if (ud->IsFactoryUnit()) {
-		// static builders that can be given move-orders
-		// (which are passed on to all mobile buildees)
+		// special static builders that can always be given move
+		// orders (which are passed on to all mobile buildees)
 		unit = new CFactory();
 	} else if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit()) {
 		// all other types of "builders", including hubs and nano-towers

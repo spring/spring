@@ -3,17 +3,16 @@
 #include "IEffectChannel.h"
 #include "SoundChannels.h"
 
-namespace sound {
-	IEffectChannel::IEffectChannel()
-		: emmitsPerFrame(32)
-		, emmitsThisFrame(0)
-	{
-	}
+IEffectChannel::IEffectChannel()
+	: emmitsPerFrame(32)
+	, emmitsThisFrame(0)
+{
+}
 
-	namespace Channels {
-		EffectChannelImpl General;
-		EffectChannelImpl Battle;
-		EffectChannelImpl UnitReply;
-		EffectChannelImpl UserInterface;
-	}
-};
+namespace Channels
+{
+	EffectChannelImpl General;
+	EffectChannelImpl Battle;
+	EffectChannelImpl UnitReply;
+	EffectChannelImpl UserInterface;
+}

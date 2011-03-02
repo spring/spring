@@ -9,8 +9,6 @@
 #include "ALShared.h"
 #include "VorbisShared.h"
 
-namespace sound {
-
 namespace VorbisCallbacks {
 	size_t VorbisStreamRead(void* ptr, size_t size, size_t nmemb, void* datasource)
 	{
@@ -333,5 +331,3 @@ void COggStream::EmptyBuffers()
 		alSourceUnqueueBuffers(source, 1, &buffer); CheckError("COggStream");
 	}
 }
-
-};

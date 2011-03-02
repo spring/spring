@@ -731,7 +731,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 			}
 			else {
 				do {
-					ci--;
+					--ci;
 					if (ci->params.size() >= 3) {
 						Command c2;
 						c2.id = CMD_PATROL;
@@ -908,7 +908,7 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 			return;
 		}
 		if ((c.options & RIGHT_MOUSE_KEY) && (insertIt != queue->end())) {
-			insertIt++; // insert after the tagged command
+			++insertIt; // insert after the tagged command
 		}
 	}
 
@@ -1049,7 +1049,7 @@ CCommandQueue::iterator CCommandAI::GetCancelQueued(const Command &c,
 
 	while (ci != q.begin()) {
 
-		ci--; //iterate from the end and dont check the current order
+		--ci; //iterate from the end and dont check the current order
 		const Command& t = *ci;
 
 		if (((c.id == t.id) || ((c.id < 0) && (t.id < 0))
@@ -1103,21 +1103,21 @@ int CCommandAI::CancelCommands(const Command &c, CCommandQueue& q,
 		CCommandQueue::iterator firstErase = ci;
 		CCommandQueue::iterator lastErase = ci;
 
-		ci++;
+		++ci;
 		if ((ci != q.end()) && (ci->id == CMD_SET_WANTED_MAX_SPEED)) {
 			lastErase = ci;
 			cancelCount++;
-			ci++;
+			++ci;
 		}
 
 		if ((ci != q.end()) && (ci->id == CMD_WAIT)) {
   		waitCommandsAI.RemoveWaitCommand(owner, *ci);
 			lastErase = ci;
 			cancelCount++;
-			ci++;
+			++ci;
 		}
 
-		lastErase++; // STL: erase the range [first, last)
+		++lastErase; // STL: erase the range [first, last)
 		q.erase(firstErase, lastErase);
 
 		if (c.id >= 0) {
@@ -1148,7 +1148,7 @@ std::vector<Command> CCommandAI::GetOverlapQueued(const Command &c,
 
 	if (ci != q.begin()){
 		do {
-			ci--; //iterate from the end and dont check the current order
+			--ci; //iterate from the end and dont check the current order
 			const Command& t = *ci;
 
 			if (((t.id == c.id) || ((c.id < 0) && (t.id < 0))) &&

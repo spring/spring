@@ -14,25 +14,21 @@
 
 CR_BIND_DERIVED_INTERFACE(AMoveType, CObject);
 CR_REG_METADATA(AMoveType, (
-		CR_MEMBER(forceTurn),
-		CR_MEMBER(forceTurnTo),
-		CR_MEMBER(owner),
-		CR_MEMBER(goalPos),
-		CR_MEMBER(oldPos),
-		CR_MEMBER(oldSlowUpdatePos),
-		CR_MEMBER(maxSpeed),
-		CR_MEMBER(maxWantedSpeed),
-		CR_MEMBER(reservedPad),
-		CR_MEMBER(padStatus),
-		CR_MEMBER(repairBelowHealth),
-		CR_MEMBER(useHeading),
-		CR_ENUM_MEMBER(progressState),
-		CR_RESERVED(32)
-		));
+	CR_MEMBER(owner),
+	CR_MEMBER(goalPos),
+	CR_MEMBER(oldPos),
+	CR_MEMBER(oldSlowUpdatePos),
+	CR_MEMBER(maxSpeed),
+	CR_MEMBER(maxWantedSpeed),
+	CR_MEMBER(reservedPad),
+	CR_MEMBER(padStatus),
+	CR_MEMBER(repairBelowHealth),
+	CR_MEMBER(useHeading),
+	CR_ENUM_MEMBER(progressState),
+	CR_RESERVED(32)
+));
 
 AMoveType::AMoveType(CUnit* owner):
-	forceTurn(0),
-	forceTurnTo(0),
 	owner(owner),
 	goalPos(owner ? owner->pos : float3(0.0f, 0.0f, 0.0f)),
 	oldPos(owner? owner->pos: float3(0.0f, 0.0f, 0.0f)),

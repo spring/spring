@@ -2,12 +2,8 @@
 
 #include "IAudioChannel.h"
 
-namespace sound {
-
 IAudioChannel::IAudioChannel()
 	: volume(1.0f)
 	, enabled(true)
 {
 }
-
-};

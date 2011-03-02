@@ -9,7 +9,7 @@
 #include <string>
 
 #include "System/float3.h"
-#include "Rendering/GL/myGL.h"
+#include "System/EventClient.h"
 
 class CUnit;
 class CBuilding;
@@ -25,12 +25,15 @@ struct TrackPart {
 	float3 pos2;
 	float texPos;
 	bool connected;
-	int creationTime;
+	unsigned int creationTime;
 };
 
 struct UnitTrackStruct {
+	UnitTrackStruct(CUnit* u): owner(u), lastAdded(NULL) {}
+
 	CUnit* owner;
-	int lifeTime;
+	unsigned int lastUpdate;
+	unsigned int lifeTime;
 	int trackAlpha;
 	float alphaFalloff;
 	TrackPart* lastAdded;
@@ -70,21 +73,22 @@ struct BuildingGroundDecal {
 };
 
 
-class CGroundDecalHandler
+class CGroundDecalHandler: public CEventClient
 {
 public:
 	CGroundDecalHandler();
-	virtual ~CGroundDecalHandler();
+	~CGroundDecalHandler();
+
 	void Draw();
 	void Update();
 	void UpdateSunDir();
 
-	void UnitMoved(CUnit* unit);
+	void UnitMoved(const CUnit*);
 	void UnitMovedNow(CUnit* unit);
 	void RemoveUnit(CUnit* unit);
 	int GetTrackType(const std::string& name);
 
-	void AddExplosion(float3 pos, float damage, float radius);
+	void AddExplosion(float3 pos, float damage, float radius, bool);
 
 	void AddBuilding(CBuilding* building);
 	void RemoveBuilding(CBuilding* building, GhostBuilding* gb);
@@ -94,24 +98,37 @@ public:
 	bool GetDrawDecals() const { return drawDecals; }
 	void SetDrawDecals(bool v) { if (decalLevel > 0) { drawDecals = v; } }
 
+	bool WantsEvent(const std::string& eventName) {
+		return (eventName == "UnitMoved");
+	}
+	bool GetFullRead() const { return true; }
+	int GetReadAllyTeam() const { return AllAccessTeam; }
 private:
 	void LoadDecalShaders();
+	void DrawBuildingDecals();
 
-	GLuint scarTex;
-	int decalLevel;
-	int groundScarAlphaFade;
+	void AddTracks();
+	void DrawTracks();
+	void CleanTracks();
+
+	void AddScars();
+	void DrawScars();
+
+	unsigned int scarTex;
+	unsigned int decalLevel;
+	bool groundScarAlphaFade;
 
 	struct TrackType {
 		std::string name;
 		std::set<UnitTrackStruct*> tracks;
-		GLuint texture;
+		unsigned int texture;
 	};
 	std::vector<TrackType*> trackTypes;
 
 	struct BuildingDecalType {
 		std::string name;
 		std::set<BuildingGroundDecal*> buildingDecals;
-		GLuint texture;
+		unsigned int texture;
 	};
 	std::vector<BuildingDecalType*> buildingDecalTypes;
 

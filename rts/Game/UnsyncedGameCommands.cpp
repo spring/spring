@@ -693,7 +693,7 @@ bool CGame::ActionPressed(const Action& action,
 		}
 	}
 	else if (cmd == "nosound") {
-		if (gSound->Mute()) {
+		if (sound->Mute()) {
 			logOutput.Print("Sound disabled");
 		} else {
 			logOutput.Print("Sound enabled");
@@ -711,15 +711,15 @@ bool CGame::ActionPressed(const Action& action,
 			enable = true;
 
 		if (channel == "UnitReply")
-			sound::Channels::UnitReply.Enable(enable);
+			Channels::UnitReply.Enable(enable);
 		else if (channel == "General")
-			sound::Channels::General.Enable(enable);
+			Channels::General.Enable(enable);
 		else if (channel == "Battle")
-			sound::Channels::Battle.Enable(enable);
+			Channels::Battle.Enable(enable);
 		else if (channel == "UserInterface")
-			sound::Channels::UserInterface.Enable(enable);
+			Channels::UserInterface.Enable(enable);
 		else if (channel == "Music")
-			sound::Channels::BGMusic.Enable(enable);
+			Channels::BGMusic.Enable(enable);
 	}
 
 	else if (cmd == "createvideo") {
@@ -1434,7 +1434,7 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "debuginfo") {
 		if (action.extra == "sound") {
-			gSound->PrintDebugInfo();
+			sound->PrintDebugInfo();
 		} else if (action.extra == "profiling") {
 			profiler.PrintProfilingInfo();
 		}
