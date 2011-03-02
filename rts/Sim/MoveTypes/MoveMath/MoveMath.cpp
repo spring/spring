@@ -109,8 +109,10 @@ int CMoveMath::IsBlocked(const MoveData& moveData, int xSquare, int zSquare) con
 
 	int ret = 0;
 
-	const int xmin = xSquare - (moveData.xsize >> 1), xmax = xSquare + (moveData.xsize >> 1), xstep = (moveData.xsize >> 2);
-	const int zmin = zSquare - (moveData.zsize >> 1), zmax = zSquare + (moveData.zsize >> 1), zstep = (moveData.zsize >> 2);
+	const int xmin = xSquare - (moveData.xsize >> 1), xmax = xSquare + (moveData.xsize >> 1);
+	const int zmin = zSquare - (moveData.zsize >> 1), zmax = zSquare + (moveData.zsize >> 1);
+	const int xstep = std::max(1, moveData.xsize >> 2);
+	const int zstep = std::max(1, moveData.zsize >> 2);
 
 	if (moveData.xsize <= (SQUARE_SIZE >> 1) && moveData.zsize <= (SQUARE_SIZE >> 1)) {
 		// only check squares under the footprint-corners and center
