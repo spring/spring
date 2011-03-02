@@ -8,7 +8,7 @@
 
 CR_BIND_DERIVED(CGroundMoveMath, CMoveMath, );
 
-float CGroundMoveMath::waterCost = 0.0f;
+float CGroundMoveMath::waterDamageCost = 1.0f;
 
 /*
 Calculate speed-multiplier for given height and slope data.
@@ -29,7 +29,7 @@ float CGroundMoveMath::SpeedMod(const MoveData& moveData, float height, float sl
 	// depth-mod
 	if (height < 0.0f) {
 		speedMod /= (1.0f - std::max(-1.0f, (height * moveData.depthMod)));
-		speedMod *= waterCost;
+		speedMod *= waterDamageCost;
 	}
 
 	return speedMod;
