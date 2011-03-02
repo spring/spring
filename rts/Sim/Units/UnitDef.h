@@ -68,7 +68,7 @@ public:
 	bool IsImmobileUnit()       const { return (movedata == NULL && !canfly && speed <= 0.0f); }
 	bool IsMobileBuilderUnit()  const { return (builder && !IsImmobileUnit()); }
 	bool IsStaticBuilderUnit()  const { return (builder &&  IsImmobileUnit()); }
-	bool IsFactoryUnit()        const { return (IsStaticBuilderUnit() && canmove); }
+	bool IsFactoryUnit()        const { return (IsStaticBuilderUnit() && !yardmaps[0].empty()); }
 	bool IsGroundUnit()         const { return (movedata != NULL && !canfly); }
 	bool IsAirUnit()            const { return (movedata == NULL &&  canfly); }
 	bool IsFighterUnit()        const { return (IsAirUnit() && !hoverAttack && !HasBomberWeapon()); }
@@ -82,9 +82,9 @@ public:
 	std::string humanName;
 	std::string filename;
 
-	///< unique id for this type of unit
-	int id;
-	int cobID;				///< associated with the COB <GET COB_ID unitID> call
+
+	int id;                 ///< unique id for this type of unit
+	int cobID;              ///< associated with the COB <GET COB_ID unitID> call
 
 	CollisionVolume* collisionVolume;
 
@@ -298,7 +298,7 @@ public:
 	float minTransportMass;
 	bool holdSteady;
 	bool releaseHeld;
-	bool cantBeTransported;                         /// defaults to true for buildings, false for all other unit-types
+	bool cantBeTransported;                         /// defaults to true for immobile units, false for all other unit-types
 	bool transportByEnemy;
 	int transportUnloadMethod;						///< 0 - land unload, 1 - flyover drop, 2 - land flood
 	float fallSpeed;								///< dictates fall speed of all transported units
