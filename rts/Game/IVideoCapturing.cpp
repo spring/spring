@@ -28,7 +28,7 @@ IVideoCapturing* IVideoCapturing::GetInstance() {
 }
 
 void IVideoCapturing::FreeInstance() {
-	if (instance->IsCapturing()) {
+	if (instance && instance->IsCapturing()) {
 		instance->StopCapturing();
 	}
 

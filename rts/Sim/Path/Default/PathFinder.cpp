@@ -276,7 +276,7 @@ bool CPathFinder::TestSquare(
 	}
 
 	// Evaluate this square.
-	float squareSpeedMod = moveData.moveMath->SpeedMod(moveData, square.x, square.y);
+	float squareSpeedMod = moveData.moveMath->GetPosSpeedMod(moveData, square.x, square.y);
 	blockBits = (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY);
 
 	if (squareSpeedMod == 0) {

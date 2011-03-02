@@ -394,7 +394,7 @@ void CMobileCAI::SlowUpdate()
 	// to the current command  (and ignore them when it's their turn)
 	if (commandQue.size() >= 2 && !slowGuard) {
 		CCommandQueue::iterator it = commandQue.begin();
-		it++;
+		++it;
 		const Command& c = *it;
 		if ((c.id == CMD_SET_WANTED_MAX_SPEED) && (c.params.size() >= 1)) {
 			const float defMaxSpeed = owner->maxSpeed;

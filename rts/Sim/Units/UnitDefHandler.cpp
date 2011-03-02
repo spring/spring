@@ -133,10 +133,10 @@ void CUnitDefHandler::CleanBuildOptions()
 
 			if (erase) {
 				map<int, string>::iterator tmp = it;
-				it++;
+				++it;
 				bo.erase(tmp);
 			} else {
-				it++;
+				++it;
 			}
 		}
 	}

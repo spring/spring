@@ -129,7 +129,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 						const unsigned int idx = ((y * (gs->pwr2mapx >> 1)) + x) * 4 - offset;
 
 						if (md != NULL) {
-							float m = md->moveMath->SpeedMod(*md, x << 1, y << 1);
+							float m = md->moveMath->GetPosSpeedMod(*md, x << 1, y << 1);
 
 							if (showBlockedMap && (md->moveMath->IsBlocked(*md, (x << 1) + 1, (y << 1) + 1) & CMoveMath::BLOCK_STRUCTURE)) {
 								m = 0.0f;
@@ -263,19 +263,19 @@ void DefaultPathDrawer::Draw(const CPathManager* pm) const {
 
 			// draw estimatePath2 (green)
 			glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
-			for (PathIt pvi = path->lowResPath.path.begin(); pvi != path->lowResPath.path.end(); pvi++) {
+			for (PathIt pvi = path->lowResPath.path.begin(); pvi != path->lowResPath.path.end(); ++pvi) {
 				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
 			}
 
 			// draw estimatePath (blue)
 			glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
-			for (PathIt pvi = path->medResPath.path.begin(); pvi != path->medResPath.path.end(); pvi++) {
+			for (PathIt pvi = path->medResPath.path.begin(); pvi != path->medResPath.path.end(); ++pvi) {
 				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
 			}
 
 			// draw detailPath (red)
 			glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
-			for (PathIt pvi = path->maxResPath.path.begin(); pvi != path->maxResPath.path.end(); pvi++) {
+			for (PathIt pvi = path->maxResPath.path.begin(); pvi != path->maxResPath.path.end(); ++pvi) {
 				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
 			}
 

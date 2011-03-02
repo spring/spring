@@ -311,7 +311,7 @@ string ConfigHandler::GetDefaultConfig()
 		cfg = verConfigPath;
 	} else {
 		cfg = strPath;
-		cfg += "\\springsettings.cfg"; // e.g. F:\Dokumente und Einstellungen\MyUser\Anwendungsdaten
+		cfg += "\\springsettings.cfg"; // e.g. F:\Documents and Settings\MyUser\Local Settings\App Data
 	}
 	// log here so unitsync shows configuration source, too
 	logOutput.Print("default config file: " + cfg + "\n");

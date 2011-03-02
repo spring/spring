@@ -752,7 +752,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("buildDistance",  ud.buildDistance);
 	ADD_FLOAT("buildSpeed",     ud.buildSpeed);
 	ADD_FLOAT("repairSpeed",    ud.repairSpeed);
-	ADD_FLOAT("maxRepairSpeed",    ud.repairSpeed);
+	ADD_FLOAT("maxRepairSpeed", ud.repairSpeed);
 	ADD_FLOAT("reclaimSpeed",   ud.reclaimSpeed);
 	ADD_FLOAT("resurrectSpeed", ud.resurrectSpeed);
 	ADD_FLOAT("captureSpeed",   ud.captureSpeed);
@@ -764,6 +764,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("canHover",          ud.canhover);
 	ADD_BOOL("floater",           ud.floater);
 	ADD_BOOL("builder",           ud.builder);
+	ADD_BOOL("isBuilder",         ud.builder); // NOTE: deprecated, remove after 0.83.*
 	ADD_BOOL("onOffable",         ud.onoffable);
 	ADD_BOOL("activateWhenBuilt", ud.activateWhenBuilt);
 

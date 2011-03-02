@@ -741,7 +741,7 @@ int CCobThread::Tick(int deltaTime)
 				ei = execTrace.begin();
 				while (ei != execTrace.end()) {
 					logOutput.Print("PC: %3x  opcode: %s", *ei, GetOpcodeName(script.code[*ei]).c_str());
-					ei++;
+					++ei;
 				}
 				state = Dead;
 				return -1;

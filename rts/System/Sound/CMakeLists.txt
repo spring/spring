@@ -29,6 +29,9 @@ if    (NOT NO_SOUND)
 	SET(soundSources
 			${noSoundSources}
 			ALShared
+			EFX
+			EFXfuncs
+			EFXPresets
 			EffectChannel
 			MusicChannel
 			OggStream
@@ -45,6 +48,9 @@ if    (NOT NO_SOUND)
 
 	FIND_PACKAGE(SDL REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
+
+	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/)
+	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/AL)
 
 	ADD_LIBRARY(sound STATIC EXCLUDE_FROM_ALL ${soundSources})
 	TARGET_LINK_LIBRARIES(sound ${OPENAL_LIBRARY} ${OGG_LIBRARY} ${VORBISFILE_LIBRARY} ${VORBIS_LIBRARY} ${SDL_LIBRARY})

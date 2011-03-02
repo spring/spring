@@ -48,6 +48,7 @@ using std::endl;
 
 
 BOOST_STATIC_ASSERT(BOOST_VERSION >= 103400);
+#define BOOST_FILESYSTEM_VERSION 2
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 

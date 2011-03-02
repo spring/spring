@@ -20,24 +20,8 @@ float CMoveMath::yLevel(const float3& pos) const
 }
 
 
-
-/* Converts a point-request into a square-positional request. */
-float CMoveMath::SpeedMod(const MoveData& moveData, const float3& pos) const
-{
-	//! casts are required so we call MM::SpeedMod(int, int) and not an overloaded *MM::SpeedMod(float, float)
-	return SpeedMod(moveData, int(pos.x / SQUARE_SIZE), int(pos.z / SQUARE_SIZE));
-}
-
-float CMoveMath::SpeedMod(const MoveData& moveData, const float3& pos, const float3& moveDir) const
-{
-	//! casts are required so we call MM::SpeedMod(int, int) and not an overloaded *MM::SpeedMod(float, float)
-	return SpeedMod(moveData, int(pos.x / SQUARE_SIZE), int(pos.z / SQUARE_SIZE), moveDir);
-}
-
-
-
 /* calculate the local speed-modifier for this movedata */
-float CMoveMath::SpeedMod(const MoveData& moveData, int xSquare, int zSquare) const
+float CMoveMath::GetPosSpeedMod(const MoveData& moveData, int xSquare, int zSquare) const
 {
 	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy) {
 		return 0.0f;
@@ -61,7 +45,7 @@ float CMoveMath::SpeedMod(const MoveData& moveData, int xSquare, int zSquare) co
 	return 0.0f;
 }
 
-float CMoveMath::SpeedMod(const MoveData& moveData, int xSquare, int zSquare, const float3& moveDir) const
+float CMoveMath::GetPosSpeedMod(const MoveData& moveData, int xSquare, int zSquare, const float3& moveDir) const
 {
 	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy) {
 		return 0.0f;
@@ -103,14 +87,16 @@ int CMoveMath::IsBlocked(const MoveData& moveData, const float3& pos) const
 /* Check if a given square-position is accessable by the movedata footprint. */
 int CMoveMath::IsBlocked(const MoveData& moveData, int xSquare, int zSquare) const
 {
-	if (CMoveMath::SpeedMod(moveData, xSquare, zSquare) == 0.0f) {
+	if (CMoveMath::GetPosSpeedMod(moveData, xSquare, zSquare) == 0.0f) {
 		return 1;
 	}
 
 	int ret = 0;
 
-	const int xmin = xSquare - (moveData.xsize >> 1), xmax = xSquare + (moveData.xsize >> 1), xstep = (moveData.xsize >> 2);
-	const int zmin = zSquare - (moveData.zsize >> 1), zmax = zSquare + (moveData.zsize >> 1), zstep = (moveData.zsize >> 2);
+	const int xmin = xSquare - (moveData.xsize >> 1), xmax = xSquare + (moveData.xsize >> 1);
+	const int zmin = zSquare - (moveData.zsize >> 1), zmax = zSquare + (moveData.zsize >> 1);
+	const int xstep = std::max(1, moveData.xsize >> 2);
+	const int zstep = std::max(1, moveData.zsize >> 2);
 
 	if (moveData.xsize <= (SQUARE_SIZE >> 1) && moveData.zsize <= (SQUARE_SIZE >> 1)) {
 		// only check squares under the footprint-corners and center

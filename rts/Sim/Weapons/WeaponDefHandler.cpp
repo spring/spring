@@ -120,6 +120,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.lodDistance    = wdTable.GetInt("lodDistance",      1000);
 
 	wd.visuals.modelName     = wdTable.GetString("model",       "");
+	wd.visuals.explosionScar = wdTable.GetBool("explosionScar", true);
 	wd.visuals.smokeTrail    = wdTable.GetBool("smokeTrail",    false);
 	wd.visuals.alwaysVisible = wdTable.GetBool("alwaysVisible", false);
 	wd.visuals.sizeDecay     = wdTable.GetFloat("sizeDecay",    0.0f);

@@ -19,6 +19,7 @@
 
 //todo: switch from glu to a faster render impl. (DisplayLists, VertexArrays,...)?
 
+static float3 defaultColVolColor(0.45f, 0.f, 0.45f);
 
 static inline void DrawCollisionVolume(const CollisionVolume* vol, GLUquadricObj* q)
 {
@@ -31,7 +32,7 @@ static inline void DrawCollisionVolume(const CollisionVolume* vol, GLUquadricObj
 			// scaled sphere: radius, slices, stacks
 			glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
 			glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetHScale(2));
-			gluSphere(q, 1.0f, 20, 20);
+			gluSphere(q, 1.0f, 10, 10);
 		} break;
 		case CollisionVolume::COLVOL_TYPE_CYLINDER: {
 			// scaled cylinder: base-radius, top-radius, height, slices, stacks
@@ -59,7 +60,7 @@ static inline void DrawCollisionVolume(const CollisionVolume* vol, GLUquadricObj
 				} break;
 			}
 
-			gluCylinder(q, 1.0f, 1.0f, 1.0f, 20, 20);
+			gluCylinder(q, 1.0f, 1.0f, 1.0f, 10, 10);
 		} break;
 		case CollisionVolume::COLVOL_TYPE_BOX: {
 			// scaled cube: length, width, height
@@ -71,7 +72,7 @@ static inline void DrawCollisionVolume(const CollisionVolume* vol, GLUquadricObj
 }
 
 
-inline void DrawFeatureColVol(const CFeature* f)
+static inline void DrawFeatureColVol(const CFeature* f)
 {
 	if (f->collisionVolume && !f->collisionVolume->IsDisabled()) {
 		if (!f->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) return;
@@ -83,12 +84,12 @@ inline void DrawFeatureColVol(const CFeature* f)
 
 			GLUquadricObj* q = gluNewQuadric();
 
-			// draw the aimpoint
-			glColor3f(1.0f, 1.0f, 1.0f);
+			// draw the centerpos
+			glColor3f(1.0f, 0.0f, 1.0f);
 			gluQuadricDrawStyle(q, GLU_FILL);
-			gluSphere(q, 2.0f, 20, 20);
+			gluSphere(q, 2.0f, 5, 5);
 
-			glColor3f(0.0f, 0.0f, 0.0f);
+			glColorf3(defaultColVolColor);
 			gluQuadricDrawStyle(q, GLU_LINE);
 
 			DrawCollisionVolume(f->collisionVolume, q);
@@ -117,7 +118,7 @@ static void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPie
 			DrawCollisionVolume(p->GetCollisionVolume(), q);
 
 			if ((p == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
-				glColor3f(0.0f, 0.0f, 0.0f);
+				glColorf3(defaultColVolColor);
 			}
 		}
 	glPopMatrix();
@@ -128,7 +129,7 @@ static void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPie
 }
 
 
-inline void DrawUnitColVol(const CUnit* unit)
+static inline void DrawUnitColVol(const CUnit* unit)
 {
 	if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView) return;
 	if (!camera->InView(unit->drawMidPos, unit->drawRadius)) return;
@@ -140,11 +141,11 @@ inline void DrawUnitColVol(const CUnit* unit)
 		GLUquadricObj* q = gluNewQuadric();
 
 		// draw the aimpoint
-		glColor3f(1.0f, 1.0f, 1.0f);
+		glColor3f(1.0f, 0.0f, 1.0f);
 		gluQuadricDrawStyle(q, GLU_FILL);
-		gluSphere(q, 2.0f, 20, 20);
+		gluSphere(q, 2.0f, 5, 5);
 
-		glColor3f(0.0f, 0.0f, 0.0f);
+		glColorf3(defaultColVolColor);
 		gluQuadricDrawStyle(q, GLU_LINE);
 
 		if (unit->unitDef->usePieceCollisionVolumes) {
@@ -161,7 +162,7 @@ inline void DrawUnitColVol(const CUnit* unit)
 				DrawCollisionVolume(unit->collisionVolume, q);
 
 				if (unit->lastAttack > 0 && ((gs->frameNum - unit->lastAttack) < 150)) {
-					glColor3f(0.0f, 0.0f, 0.0f);
+					glColorf3(defaultColVolColor);
 				}
 			}
 		}
@@ -208,21 +209,19 @@ namespace DebugColVolDrawer
 			glDisable(GL_LIGHT1);
 			glDisable(GL_CULL_FACE);
 			glDisable(GL_TEXTURE_2D);
-			glDisable(GL_BLEND);
+			//glDisable(GL_BLEND);
 			glDisable(GL_ALPHA_TEST);
 			glDisable(GL_FOG);
 			glDisable(GL_CLIP_PLANE0);
 			glDisable(GL_CLIP_PLANE1);
 
-			glDisable(GL_TEXTURE_2D);
-			glLineWidth(2.f);
+			//glLineWidth(1.f);
 			glDepthMask(GL_TRUE);
 
 			static CDebugColVolQuadDrawer drawer;
 			readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 1e9, &drawer);
 
-			glLineWidth(1.f);
-			glEnable(GL_TEXTURE_2D);
+			//glLineWidth(1.f);
 		glPopAttrib();
 	}
 
