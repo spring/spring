@@ -199,14 +199,14 @@ CMoveInfo::CMoveInfo()
 
 	const float waterDamage = mapInfo->water.damage;
 	if (waterDamage >= 1000.0f) {
-		CGroundMoveMath::waterCost = 0.0f;
+		CGroundMoveMath::waterDamageCost = 0.0f; //! block water
 	} else {
-		CGroundMoveMath::waterCost = 1.0f / (1.0f + waterDamage * 0.1f);
+		CGroundMoveMath::waterDamageCost = 1.0f / (1.0f + waterDamage * 0.1f);
 	}
 
 	CHoverMoveMath::noWaterMove = (waterDamage >= 10000.0f);
 
-	crc << CGroundMoveMath::waterCost;
+	crc << CGroundMoveMath::waterDamageCost;
 	crc << CHoverMoveMath::noWaterMove;
 
 	moveInfoChecksum = crc.GetDigest();
