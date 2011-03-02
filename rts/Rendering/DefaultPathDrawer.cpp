@@ -127,7 +127,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 						const int idx = ((y * (gs->pwr2mapx >> 1)) + x) * 4 - offset;
 
 						if (md != NULL) {
-							float m = md->moveMath->SpeedMod(*md, x << 1, y << 1);
+							float m = md->moveMath->GetPosSpeedMod(*md, x << 1, y << 1);
 
 							if (showBlockedMap && (md->moveMath->IsBlocked(*md, (x << 1) + 1, (y << 1) + 1) & CMoveMath::BLOCK_STRUCTURE)) {
 								m = 0.0f;

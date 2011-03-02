@@ -265,7 +265,7 @@ void CPathEstimator::FindOffset(const MoveData& moveData, int blockX, int blockZ
 			if (moveMath.IsBlocked(moveData, lowerX + x, lowerZ + z) & CMoveMath::BLOCK_STRUCTURE)
 				continue;
 			
-			const float speedMod = moveMath.SpeedMod(moveData, lowerX + x, lowerZ + z);
+			const float speedMod = moveMath.GetPosSpeedMod(moveData, lowerX + x, lowerZ + z);
 			const float cost = (dx * dx + dz * dz) + (blockArea / (0.001f + speedMod));
 
 			if (cost < bestCost) {

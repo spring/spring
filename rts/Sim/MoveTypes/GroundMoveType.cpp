@@ -448,7 +448,7 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 
 	if (wantedSpeed > 0.0f) {
 		const UnitDef* ud = owner->unitDef;
-		const float groundMod = ud->movedata->moveMath->SpeedMod(*ud->movedata, owner->pos, flatFrontDir);
+		const float groundMod = ud->movedata->moveMath->GetPosSpeedMod(*ud->movedata, owner->pos, flatFrontDir);
 
 		wSpeed *= groundMod;
 
@@ -958,7 +958,7 @@ float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
 					const int y = (moveSquareY + li->y) * 2;
 
 					if ((udMoveData.moveMath->IsBlocked(udMoveData, x, y) & blockBits) ||
-					    (udMoveData.moveMath->SpeedMod(udMoveData, x, y) <= 0.01f)) {
+					    (udMoveData.moveMath->GetPosSpeedMod(udMoveData, x, y) <= 0.01f)) {
 
 						#if (DEBUG_OUTPUT == 1)
 						logOutput.Print("[CGMT::OA] path blocked for unit %i", owner->id);
@@ -1314,6 +1314,8 @@ void CGroundMoveType::Fail()
 
 void CGroundMoveType::HandleObjectCollisions()
 {
+	//FIXME move this to a global space to optimize the check (atm unit collision checks are done twice for the collider & collidee!)
+
 	CUnit* collider = owner;
 	collider->mobility->tempOwner = collider;
 
@@ -1423,8 +1425,8 @@ void CGroundMoveType::HandleObjectCollisions()
 			// try to prevent both parties from being pushed onto non-traversable squares
 			if (                  (colliderMM->IsBlocked(*colliderMD, colliderNewPos) & CMoveMath::BLOCK_STRUCTURE) != 0) { colliderMassScale = 0.0f; }
 			if (collideeMobile && (collideeMM->IsBlocked(*collideeMD, collideeNewPos) & CMoveMath::BLOCK_STRUCTURE) != 0) { collideeMassScale = 0.0f; }
-			if (                  colliderMM->SpeedMod(*colliderMD, colliderNewPos) <= 0.01f) { colliderMassScale = 0.0f; }
-			if (collideeMobile && collideeMM->SpeedMod(*collideeMD, collideeNewPos) <= 0.01f) { collideeMassScale = 0.0f; }
+			if (                  colliderMM->GetPosSpeedMod(*colliderMD, colliderNewPos) <= 0.01f) { colliderMassScale = 0.0f; }
+			if (collideeMobile && collideeMM->GetPosSpeedMod(*collideeMD, collideeNewPos) <= 0.01f) { collideeMassScale = 0.0f; }
 
 			if (pushCollider) { collider->pos += (colResponseVec * colliderMassScale); } else { collider->pos = colliderOldPos; }
 			if (pushCollidee) { collidee->pos -= (colResponseVec * collideeMassScale); } else { collidee->pos = collideeOldPos; }
@@ -1610,30 +1612,30 @@ void CGroundMoveType::TestNewTerrainSquare()
 	if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {
 		const CMoveMath* movemath = owner->unitDef->movedata->moveMath;
 		const MoveData& md = *(owner->unitDef->movedata);
-		const float cmod = movemath->SpeedMod(md, moveSquareX * 2, moveSquareY * 2);
+		const float cmod = movemath->GetPosSpeedMod(md, moveSquareX * 2, moveSquareY * 2);
 
 		if (fabs(owner->frontdir.x) < fabs(owner->frontdir.z)) {
 			if (newMoveSquareX > moveSquareX) {
-				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
+				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * MIN_WAYPOINT_DISTANCE + (MIN_WAYPOINT_DISTANCE - 0.01f);
 					newMoveSquareX = moveSquareX;
 				}
 			} else if (newMoveSquareX < moveSquareX) {
-				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
+				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * MIN_WAYPOINT_DISTANCE + 0.01f;
 					newMoveSquareX = moveSquareX;
 				}
 			}
 			if (newMoveSquareY > moveSquareY) {
-				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
+				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * MIN_WAYPOINT_DISTANCE + (MIN_WAYPOINT_DISTANCE - 0.01f);
 					newMoveSquareY = moveSquareY;
 				}
 			} else if (newMoveSquareY < moveSquareY) {
-				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
+				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * MIN_WAYPOINT_DISTANCE + 0.01f;
 					newMoveSquareY = moveSquareY;
@@ -1641,13 +1643,13 @@ void CGroundMoveType::TestNewTerrainSquare()
 			}
 		} else {
 			if (newMoveSquareY > moveSquareY) {
-				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
+				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * MIN_WAYPOINT_DISTANCE + (MIN_WAYPOINT_DISTANCE - 0.01f);
 					newMoveSquareY = moveSquareY;
 				}
 			} else if (newMoveSquareY < moveSquareY) {
-				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
+				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.z = moveSquareY * MIN_WAYPOINT_DISTANCE + 0.01f;
 					newMoveSquareY = moveSquareY;
@@ -1655,13 +1657,13 @@ void CGroundMoveType::TestNewTerrainSquare()
 			}
 
 			if (newMoveSquareX > moveSquareX) {
-				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
+				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * MIN_WAYPOINT_DISTANCE + (MIN_WAYPOINT_DISTANCE - 0.01f);
 					newMoveSquareX = moveSquareX;
 				}
 			} else if (newMoveSquareX < moveSquareX) {
-				const float nmod = movemath->SpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
+				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
 					newpos.x = moveSquareX * MIN_WAYPOINT_DISTANCE + 0.01f;
 					newMoveSquareX = moveSquareX;
@@ -1702,7 +1704,7 @@ void CGroundMoveType::TestNewTerrainSquare()
 						const int y = (moveSquareY + li->y) * 2;
 
 						if ((movemath->IsBlocked(md, x, y) & blockBits) ||
-							movemath->SpeedMod(md, x, y) <= 0.01f) {
+							movemath->GetPosSpeedMod(md, x, y) <= 0.01f) {
 							wpOk = false;
 							break;
 						}
