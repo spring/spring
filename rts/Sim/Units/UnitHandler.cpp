@@ -4,6 +4,7 @@
 #include <assert.h>
 #include "mmgr.h"
 
+#include "lib/gml/gml.h"
 #include "UnitHandler.h"
 #include "Unit.h"
 #include "UnitDefHandler.h"

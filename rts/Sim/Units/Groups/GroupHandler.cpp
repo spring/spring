@@ -6,6 +6,7 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
+#include "lib/gml/gml.h"
 #include "GroupHandler.h"
 #include "Group.h"
 #include "Game/SelectedUnits.h"
@@ -17,7 +18,6 @@
 #include "System/TimeProfiler.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/FileSystem.h"
-#include "lib/gml/gml.h"
 
 std::vector<CGroupHandler*> grouphandlers;
 
