@@ -8,6 +8,10 @@
 
 #define WORLDOBJECT_MODEL_RENDERER_DEBUG 0
 
+bool afcmp::operator() (const AlphaFeature& af1, const AlphaFeature& af2) const {
+	return af1.feature < af2.feature;
+}
+
 IWorldObjectModelRenderer* IWorldObjectModelRenderer::GetInstance(int modelType)
 {
 	switch (modelType) {
@@ -76,7 +80,7 @@ void IWorldObjectModelRenderer::DrawModels(const UnitSet& models)
 void IWorldObjectModelRenderer::DrawModels(const FeatureSet& models)
 {
 	for (FeatureSetIt fIt = models.begin(); fIt != models.end(); ++fIt) {
-		DrawModel(*fIt);
+		DrawModel(fIt->feature);
 	}
 }
 
@@ -111,26 +115,52 @@ void IWorldObjectModelRenderer::DelUnit(const CUnit* u)
 }
 
 
-void IWorldObjectModelRenderer::AddFeature(const CFeature* f)
+void IWorldObjectModelRenderer::AddFeature(const CFeature* f, float alpha)
 {
 	if (features.find(TEX_TYPE(f)) == features.end()) {
 		features[TEX_TYPE(f)] = FeatureSet();
 	}
 
-	if(features[TEX_TYPE(f)].insert(const_cast<CFeature*>(f)).second)
-		numFeatures += 1;
+	FeatureSet::iterator i = features[TEX_TYPE(f)].find(AlphaFeature(const_cast<CFeature*>(f)));
+	if(i != features[TEX_TYPE(f)].end()) {
+		i->alpha = alpha;
+	}
+	else {
+		if(features[TEX_TYPE(f)].insert(AlphaFeature(const_cast<CFeature*>(f), alpha)).second)
+			numFeatures += 1;
+	}
 }
 
 void IWorldObjectModelRenderer::DelFeature(const CFeature* f)
 {
-	if(features[TEX_TYPE(f)].erase(const_cast<CFeature*>(f)))
-		numFeatures -= 1;
+	{
+		FeatureRenderBin::iterator i = features.find(TEX_TYPE(f));
+		if (i != features.end()) {
+			if((*i).second.erase(AlphaFeature(const_cast<CFeature*>(f))))
+				numFeatures -= 1;
 
-	if (features[TEX_TYPE(f)].empty()) {
-		features.erase(TEX_TYPE(f));
+			if ((*i).second.empty()) 
+				features.erase(TEX_TYPE(f));
+		}
+	}
+
+	{
+		FeatureRenderBin::iterator i = featuresSave.find(TEX_TYPE(f));
+		if (i != featuresSave.end()) {
+			if((*i).second.erase(AlphaFeature(const_cast<CFeature*>(f))))
+				numFeaturesSave -= 1;
+
+			if ((*i).second.empty()) 
+				featuresSave.erase(TEX_TYPE(f));
+		}
 	}
 }
 
+void IWorldObjectModelRenderer::SwapFeatures()
+{
+	features.swap(featuresSave);
+	std::swap(numFeatures, numFeaturesSave);
+}
 
 void IWorldObjectModelRenderer::AddProjectile(const CProjectile* p)
 {
