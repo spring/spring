@@ -63,28 +63,52 @@ public:
 	void SetNoCost(bool noCost);
 	bool IsAllowedTerrainHeight(float rawHeight, float* clampedHeight = NULL) const;
 
-	bool IsExtractorUnit()      const { return (extractsMetal > 0.0f); }
 	bool IsTransportUnit()      const { return (transportCapacity > 0 && transportMass > 0.0f); }
 	bool IsImmobileUnit()       const { return (movedata == NULL && !canfly && speed <= 0.0f); }
+	bool IsBuildingUnit()       const { return (IsImmobileUnit() && !yardmaps[0].empty()); }
 	bool IsMobileBuilderUnit()  const { return (builder && !IsImmobileUnit()); }
 	bool IsStaticBuilderUnit()  const { return (builder &&  IsImmobileUnit()); }
-	bool IsFactoryUnit()        const { return (IsStaticBuilderUnit() && canmove); }
+	bool IsFactoryUnit()        const { return (builder &&  IsBuildingUnit()); }
+	bool IsExtractorUnit()      const { return (extractsMetal > 0.0f); }
 	bool IsGroundUnit()         const { return (movedata != NULL && !canfly); }
 	bool IsAirUnit()            const { return (movedata == NULL &&  canfly); }
-	bool IsFighterUnit()        const { return (IsAirUnit() && !hoverAttack && !HasBomberWeapon()); }
-	bool IsBomberUnit()         const { return (IsAirUnit() && !hoverAttack &&  HasBomberWeapon()); }
+	bool IsNonHoveringAirUnit() const { return (IsAirUnit() && !hoverAttack); }
+	bool IsFighterUnit()        const { return (IsNonHoveringAirUnit() && !HasBomberWeapon()); }
+	bool IsBomberUnit()         const { return (IsNonHoveringAirUnit() &&  HasBomberWeapon()); }
 
-	bool WantsMoveType() const { return (canmove && speed > 0.0f); }
+	bool WantsMoveData() const { return (canmove && speed > 0.0f && !canfly); }
 	bool HasBomberWeapon() const;
 	const std::vector<unsigned char>& GetYardMap(unsigned int facing) const { return (yardmaps[facing % /*NUM_FACINGS*/ 4]); }
+
+	// NOTE: deprecated, remove after 0.83.*
+	const char* GetTypeString() const {
+		if (IsTransportUnit()) { return "Transport"; }
+
+		if (IsBuildingUnit()) {
+			if (IsFactoryUnit()) { return "Factory"; }
+			if (IsExtractorUnit()) { return "MetalExtractor"; }
+			return "Building";
+		}
+
+		if (IsMobileBuilderUnit() || IsStaticBuilderUnit()) { return "Builder"; }
+
+		if (IsGroundUnit()) { return "GroundUnit"; }
+		if (IsAirUnit()) {
+			if (IsFighterUnit()) { return "Fighter"; }
+			if (IsBomberUnit()) { return "Bomber"; }
+			return "Aircraft";
+		}
+
+		return "Unknown";
+	}
 
 	std::string name;
 	std::string humanName;
 	std::string filename;
 
-	///< unique id for this type of unit
-	int id;
-	int cobID;				///< associated with the COB <GET COB_ID unitID> call
+
+	int id;                 ///< unique id for this type of unit
+	int cobID;              ///< associated with the COB <GET COB_ID unitID> call
 
 	CollisionVolume* collisionVolume;
 
@@ -298,7 +322,7 @@ public:
 	float minTransportMass;
 	bool holdSteady;
 	bool releaseHeld;
-	bool cantBeTransported;                         /// defaults to true for buildings, false for all other unit-types
+	bool cantBeTransported;                         /// defaults to true for immobile units, false for all other unit-types
 	bool transportByEnemy;
 	int transportUnloadMethod;						///< 0 - land unload, 1 - flyover drop, 2 - land flood
 	float fallSpeed;								///< dictates fall speed of all transported units

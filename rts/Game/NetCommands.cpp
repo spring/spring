@@ -187,7 +187,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_INTERNAL_SPEED: {
 				gs->speedFactor = *((float*) &inbuf[1]);
-				gSound->PitchAdjust(sqrt(gs->speedFactor));
+				sound->PitchAdjust(sqrt(gs->speedFactor));
 				//	logOutput.Print("Internal speed set to %.2f",gs->speedFactor);
 				AddTraffic(-1, packetCode, dataLength);
 				break;

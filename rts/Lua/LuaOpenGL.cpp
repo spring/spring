@@ -4405,7 +4405,7 @@ int LuaOpenGL::LoadMatrix(lua_State* L)
 	}
 	else {
 		for (int i = 1; i <= 16; i++) {
-			matrix[i] = (GLfloat)luaL_checknumber(L, i);
+			matrix[i-1] = (GLfloat)luaL_checknumber(L, i);
 		}
 	}
 	glLoadMatrixf(matrix);
@@ -4436,7 +4436,7 @@ int LuaOpenGL::MultMatrix(lua_State* L)
 	}
 	else {
 		for (int i = 1; i <= 16; i++) {
-			matrix[i] = (GLfloat)luaL_checknumber(L, i);
+			matrix[i-1] = (GLfloat)luaL_checknumber(L, i);
 		}
 	}
 	glMultMatrixf(matrix);

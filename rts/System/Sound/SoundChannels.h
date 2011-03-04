@@ -4,32 +4,24 @@
 #define SOUND_CHANNELS_H
 
 #ifdef NO_SOUND
-	#include "NullEffectChannel.h"
-	#include "NullMusicChannel.h"
-	namespace sound {
-		typedef NullEffectChannel EffectChannelImpl;
-		typedef NullMusicChannel MusicChannelImpl;
-	};
+	#include "NullAudioChannel.h"
+
+	typedef NullAudioChannel AudioChannelImpl;
 #else
-	#include "EffectChannel.h"
-	#include "MusicChannel.h"
-	namespace sound {
-		typedef EffectChannel EffectChannelImpl;
-		typedef MusicChannel MusicChannelImpl;
-	};
+	#include "AudioChannel.h"
+
+	typedef AudioChannel AudioChannelImpl;
 #endif
 
-namespace sound {
-	/**
-	* @brief If you want to play a sound, use one of these
-	*/
-	namespace Channels {
-		extern MusicChannelImpl BGMusic;
-		extern EffectChannelImpl General;
-		extern EffectChannelImpl Battle;
-		extern EffectChannelImpl UnitReply;
-		extern EffectChannelImpl UserInterface;
-	};
+/**
+* @brief If you want to play a sound, use one of these
+*/
+namespace Channels {
+	extern AudioChannelImpl BGMusic;
+	extern AudioChannelImpl General;
+	extern AudioChannelImpl Battle;
+	extern AudioChannelImpl UnitReply;
+	extern AudioChannelImpl UserInterface;
 };
 
 #endif

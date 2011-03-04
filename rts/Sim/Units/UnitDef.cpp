@@ -344,6 +344,21 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	canRepeat   = udTable.GetBool("canRepeat",   true);
 
 	builder = udTable.GetBool("builder", false);
+	buildRange3D = udTable.GetBool("buildRange3D", false);
+	// 128.0f is the ancient default
+	buildDistance = udTable.GetFloat("buildDistance", 128.0f);
+	// 38.0f was evaluated by bobthedinosaur and FLOZi to be the bare minimum
+	// to not overlap for a 1x1 constructor building a 1x1 structure
+	buildDistance = std::max(38.0f, buildDistance);
+	buildSpeed = udTable.GetFloat("workerTime", 0.0f);
+	builder = builder && (buildSpeed > 0.0f);
+
+	repairSpeed    = udTable.GetFloat("repairSpeed",    buildSpeed);
+	maxRepairSpeed = udTable.GetFloat("maxRepairSpeed", 1e20f);
+	reclaimSpeed   = udTable.GetFloat("reclaimSpeed",   buildSpeed);
+	resurrectSpeed = udTable.GetFloat("resurrectSpeed", buildSpeed);
+	captureSpeed   = udTable.GetFloat("captureSpeed",   buildSpeed);
+	terraformSpeed = udTable.GetFloat("terraformSpeed", buildSpeed);
 
 	canRestore = udTable.GetBool("canRestore", builder);
 	canRepair  = udTable.GetBool("canRepair",  builder);
@@ -390,21 +405,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	fireState = std::min(fireState, int(FIRESTATE_FIREATWILL));
 	moveState = udTable.GetInt("moveState", (canmove && speed > 0.0f)? MOVESTATE_NONE: MOVESTATE_MANEUVER);
 	moveState = std::min(moveState, int(MOVESTATE_ROAM));
-
-	buildRange3D = udTable.GetBool("buildRange3D", false);
-	// 128.0f is the ancient default
-	buildDistance = udTable.GetFloat("buildDistance", 128.0f);
-	// 38.0f was evaluated by bobthedinosaur and FLOZi to be the bare minimum
-	// to not overlap for a 1x1 constructor building a 1x1 structure
-	buildDistance = std::max(38.0f, buildDistance);
-	buildSpeed = udTable.GetFloat("workerTime", 0.0f);
-
-	repairSpeed    = udTable.GetFloat("repairSpeed",    buildSpeed);
-	maxRepairSpeed = udTable.GetFloat("maxRepairSpeed", 1e20f);
-	reclaimSpeed   = udTable.GetFloat("reclaimSpeed",   buildSpeed);
-	resurrectSpeed = udTable.GetFloat("resurrectSpeed", buildSpeed);
-	captureSpeed   = udTable.GetFloat("captureSpeed",   buildSpeed);
-	terraformSpeed = udTable.GetFloat("terraformSpeed", buildSpeed);
 
 	flankingBonusMode = udTable.GetInt("flankingBonusMode", modInfo.flankingBonusModeDefault);
 	flankingBonusMax  = udTable.GetFloat("flankingBonusMax", 1.9f);
@@ -455,10 +455,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	canhover = udTable.GetBool("canHover", false);
 	floater = udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
 
-	if (builder && !buildSpeed) { // core anti is flagged as builder for some reason
-		builder = false;
-	}
-
 	airStrafe      = udTable.GetBool("airStrafe", true);
 	hoverAttack    = udTable.GetBool("hoverAttack", false);
 	wantedHeight   = udTable.GetFloat("cruiseAlt", 0.0f);
@@ -477,7 +473,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	minTransportMass  = udTable.GetFloat("minTransportMass", 0.0f);
 	holdSteady        = udTable.GetBool("holdSteady",        false);
 	releaseHeld       = udTable.GetBool("releaseHeld",       false);
-	cantBeTransported = udTable.GetBool("cantBeTransported", !WantsMoveType());
+	cantBeTransported = udTable.GetBool("cantBeTransported", !WantsMoveData());
 	transportByEnemy  = udTable.GetBool("transportByEnemy",  true);
 	fallSpeed         = udTable.GetFloat("fallSpeed",    0.2);
 	unitFallSpeed     = udTable.GetFloat("unitFallSpeed",  0);
@@ -545,7 +541,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	// aircraft have MoveTypes but no MoveData;
 	// static structures have no use for either
 	// (but get StaticMoveType instances)
-	if (WantsMoveType() && !canfly) {
+	if (WantsMoveData()) {
 		const std::string& moveClass = StringToLower(udTable.GetString("movementClass", ""));
 		const std::string errMsg = "WARNING: Couldn't find a MoveClass named " + moveClass + " (used in UnitDef: " + unitName + ")";
 
@@ -847,6 +843,15 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 
 void UnitDef::CreateYardMap(std::string yardMapStr)
 {
+	if (yardMapStr.empty()) {
+		// if a unit is immobile but does *not* have a yardmap
+		// defined, assume it is not supposed to be a building
+		// (so do not assign a default per facing)
+		return;
+	}
+
+	StringToLowerInPlace(yardMapStr);
+
 	// create the yardmaps for each build-facing
 	// (xsize and zsize are in heightmap units at
 	// this point)
@@ -859,29 +864,25 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 
 	std::vector<unsigned char> yardMap(hxsize * hzsize, 255);
 
-	if (!yardMapStr.empty()) {
-		StringToLowerInPlace(yardMapStr);
+	unsigned int x = 0;
+	unsigned int z = 0;
 
-		unsigned int x = 0;
-		unsigned int z = 0;
+	for (unsigned int n = 0; n < yardMapStr.size(); n++) {
+		const unsigned char c = yardMapStr[n];
 
-		for (unsigned int n = 0; n < yardMapStr.size(); n++) {
-			const unsigned char c = yardMapStr[n];
+		if (c == ' ') { continue; }
+		if (c == 'g') { needGeo = true; continue; }
+		if (c == 'c') { yardMap[x + z * hxsize] = 1; }   // blocking (not walkable, not buildable)
+		if (c == 'y') { yardMap[x + z * hxsize] = 0; }   // non-blocking (walkable, buildable)
+	//	if (c == 'o') { yardMap[x + z * hxsize] = 2; }   // walkable, not buildable?
+	//	if (c == 'w') { yardMap[x + z * hxsize] = 3; }   // not walkable, buildable?
 
-			if (c == ' ') { continue; }
-			if (c == 'g') { needGeo = true; continue; }
-			if (c == 'c') { yardMap[x + z * hxsize] = 1; }   // blocking (not walkable, not buildable)
-			if (c == 'y') { yardMap[x + z * hxsize] = 0; }   // non-blocking (walkable, buildable)
-		//	if (c == 'o') { yardMap[x + z * hxsize] = 2; }   // walkable, not buildable?
-		//	if (c == 'w') { yardMap[x + z * hxsize] = 3; }   // not walkable, buildable?
+		x += 1;
+		z += ((x == hxsize)? 1: 0);
+		x %= hxsize;
 
-			x += 1;
-			z += ((x == hxsize)? 1: 0);
-			x %= hxsize;
-
-			if (z >= hzsize) {
-				break;
-			}
+		if (z >= hzsize) {
+			break;
 		}
 	}
 

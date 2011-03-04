@@ -17,6 +17,7 @@
 #include "LuaUnsyncedCtrl.h"
 
 #include "LuaInclude.h"
+
 #include "LuaHandle.h"
 #include "LuaHashString.h"
 #include "LuaUtils.h"
@@ -61,7 +62,7 @@
 #include "NetProtocol.h"
 #include "Sound/ISound.h"
 #include "Sound/SoundChannels.h"
-#include "System/Platform/CrashHandler.h"
+#include "System/Platform/Watchdog.h"
 
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystemHandler.h"
@@ -148,6 +149,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitNoDraw);
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
 	REGISTER_LUA_CFUNC(SetUnitNoSelect);
+	REGISTER_LUA_CFUNC(SetUnitLeaveTracks);
 
 	REGISTER_LUA_CFUNC(AddUnitIcon);
 	REGISTER_LUA_CFUNC(FreeUnitIcon);
@@ -569,7 +571,7 @@ int LuaUnsyncedCtrl::LoadSoundDef(lua_State* L)
 	}
 
 	const string soundFile = lua_tostring(L, 1);
-	bool success = gSound->LoadSoundDefs(soundFile);
+	bool success = sound->LoadSoundDefs(soundFile);
 
 	if (!CLuaHandle::GetActiveHandle()->GetSynced()) {
 		lua_pushboolean(L, success);
@@ -587,7 +589,7 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 	}
 	bool success = false;
 	const string soundFile = lua_tostring(L, 1);
-	const unsigned int soundID = gSound->GetSoundId(soundFile, false);
+	const unsigned int soundID = sound->GetSoundId(soundFile, false);
 	if (soundID > 0) {
 		float volume = luaL_optfloat(L, 2, 1.0f);
 		float3 pos;
@@ -610,32 +612,32 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 		}
 
 		//! last argument (with and without pos/speed arguments) is the optional `sfx channel`
-		sound::EffectChannelImpl* channel = &sound::Channels::General;
+		AudioChannelImpl* channel = &Channels::General;
 		if (args >= index) {
 			if (lua_isstring(L, index)) {
 				string channelStr = lua_tostring(L, index);
 				StringToLowerInPlace(channelStr);
 
 				if (channelStr == "battle" || channelStr == "sfx") {
-					channel = &sound::Channels::Battle;
+					channel = &Channels::Battle;
 				}
 				else if (channelStr == "unitreply" || channelStr == "voice") {
-					channel = &sound::Channels::UnitReply;
+					channel = &Channels::UnitReply;
 				}
 				else if (channelStr == "userinterface" || channelStr == "ui") {
-					channel = &sound::Channels::UserInterface;
+					channel = &Channels::UserInterface;
 				}
 			} else if (lua_isnumber(L, index)) {
 				const int channelNum = lua_toint(L, index);
 
 				if (channelNum == 1) {
-					channel = &sound::Channels::Battle;
+					channel = &Channels::Battle;
 				}
 				else if (channelNum == 2) {
-					channel = &sound::Channels::UnitReply;
+					channel = &Channels::UnitReply;
 				}
 				else if (channelNum == 3) {
-					channel = &sound::Channels::UserInterface;
+					channel = &Channels::UserInterface;
 				}
 			}
 		}
@@ -671,7 +673,7 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 	if (args >= 3)
 		enqueue = lua_toboolean(L, 3);
 
-	sound::Channels::BGMusic.Play(soundFile, volume, enqueue);
+	Channels::BGMusic.StreamPlay(soundFile, volume, enqueue);
 
 	// .ogg files don't have sound ID's generated
 	// for them (yet), so we always succeed here
@@ -685,19 +687,19 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 
 int LuaUnsyncedCtrl::StopSoundStream(lua_State*)
 {
-	sound::Channels::BGMusic.Stop();
+	Channels::BGMusic.StreamStop();
 	return 0;
 }
 int LuaUnsyncedCtrl::PauseSoundStream(lua_State*)
 {
-	sound::Channels::BGMusic.Pause();
+	Channels::BGMusic.StreamPause();
 	return 0;
 }
 int LuaUnsyncedCtrl::SetSoundStreamVolume(lua_State* L)
 {
 	const int args = lua_gettop(L);
 	if (args == 1) {
-		sound::Channels::BGMusic.SetVolume(lua_tonumber(L, 1));
+		Channels::BGMusic.SetVolume(lua_tonumber(L, 1));
 	} else {
 		luaL_error(L, "Incorrect arguments to SetSoundStreamVolume(v)");
 	}
@@ -1536,6 +1538,18 @@ int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 }
 
 
+int LuaUnsyncedCtrl::SetUnitLeaveTracks(lua_State* L)
+{
+	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	unit->leaveTracks = lua_toboolean(L, 2);
+	return 0;
+}
+
+
 /******************************************************************************/
 
 int LuaUnsyncedCtrl::AddUnitIcon(lua_State* L)
@@ -1982,7 +1996,7 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 
 #ifdef _WIN32
 		//! else OpenAL soft crashes when using execvp
-		sound::ISound::Shutdown();
+		ISound::Shutdown();
 #endif
 
 	const std::string execError = Platform::ExecuteProcess(springFullName, processArgs);
@@ -2748,23 +2762,14 @@ int LuaUnsyncedCtrl::SetSunDirection(lua_State* L)
 int LuaUnsyncedCtrl::ClearWatchDogTimer(lua_State* L) {
 	const int args = lua_gettop(L); // number of arguments
 
-	if(!(args == 0 || (args == 1 && lua_isnumber(L, 1)))) {
-		luaL_error(L, "Incorrect arguments to ClearWatchDogTimer(optional int)");
+	if (args == 0) {
+		Watchdog::ClearTimer();
+	} else {
+		std::string threadname = "main";
+		if (lua_isstring(L, 1))
+			threadname = lua_tostring(L, 1);
+		Watchdog::ClearTimer(threadname);
 	}
-
-	bool simthread = false;
-	bool simthreadrun = false;
-#if defined(USE_GML) && GML_ENABLE_SIM
-	extern volatile int gmlMultiThreadSim, gmlStartSim;
-	simthread = (gmlThreadNumber == GML_SIM_THREAD_NUM);
-	simthreadrun = (gmlMultiThreadSim && gmlStartSim);
-#endif
-
-	int flag = (args == 0) ? 0 : lua_tonumber(L, 1);
-	if((args == 0 && !simthread) || (args == 1 && (flag == 0 || (flag & 1))))
-		CrashHandler::ClearDrawWDT();
-	if(simthreadrun && ((args == 0 && simthread) || (args == 1 && (flag == 0 || (flag & 2)))))
-		CrashHandler::ClearSimWDT();
 
 	return 0;
 }

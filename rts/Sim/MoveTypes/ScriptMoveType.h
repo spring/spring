@@ -14,7 +14,7 @@ class CScriptMoveType : public AMoveType
 		virtual ~CScriptMoveType(void);
 
 	public:
-		void Update();
+		bool Update();
 		void ForceUpdates();
 
 		void SetPhysics(const float3& pos, const float3& vel, const float3& rot);
@@ -33,9 +33,7 @@ class CScriptMoveType : public AMoveType
 		void KeepPointingTo(float3, float distance, bool aggressive) {}
 		void KeepPointingTo(CUnit* unit, float distance, bool aggressive) {}
 		void StopMoving() {}
-		void Idle(unsigned int frames) {}
-		void Idle() {}
-		void DeIdle() {}
+
 		void ImpulseAdded() {}
 		void SetGoal(float3 pos) {}
 		void SetMaxSpeed(float speed) {}
@@ -84,12 +82,9 @@ class CScriptMoveType : public AMoveType
 		bool slopeStop;
 		bool collideStop;
 
-		bool leaveTracks;
-
 	protected:
 		float3 rotOffset;
 
-		int lastTrackUpdate;
 		int scriptNotify;
 };
 

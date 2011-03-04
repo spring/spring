@@ -19,7 +19,7 @@ public:
 
 	CAirMoveType(CUnit* owner);
 	~CAirMoveType();
-	void Update();
+	bool Update();
 	void SlowUpdate();
 
 	void UpdateManeuver();
@@ -109,8 +109,7 @@ public:
 	float3 exitVector;
 
 private:
-
-	void HandleCollisions();
+	bool HandleCollisions();
 };
 
 #endif // _AIR_MOVE_TYPE_H_

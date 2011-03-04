@@ -43,8 +43,8 @@ public:
 
 public:
 	static const size_t maxLastMsgPos;
-
 	static const size_t maxRawLines;
+
 	struct RawLine {
 		RawLine(const std::string& text, const CLogSubsystem* subsystem, int id)
 		: text(text), subsystem(subsystem), id(id), time(0) {}
@@ -53,6 +53,7 @@ public:
 		int id;
 		boost::uint32_t time;
 	};
+
 	int  GetRawLines(std::deque<RawLine>& copy);
 	void GetNewRawLines(std::vector<RawLine>& copy);
 

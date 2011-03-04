@@ -141,11 +141,11 @@ void CUnitTracker::CleanTrackGroup()
 
 	while (it != trackGroup.end()) {
 		if (uh->GetUnitUnsafe(*it) != NULL) {
-			it++;
+			++it;
 			continue;
 		}
 		std::set<int>::iterator it_next = it;
-		it_next++;
+		++it_next;
 		if (trackUnit == *it) {
 			if (it_next == trackGroup.end()) {
 				trackUnit = *trackGroup.begin();
@@ -177,7 +177,7 @@ void CUnitTracker::NextUnit()
 		trackUnit = *trackGroup.begin();
 	}
 	else {
-		it++;
+		++it;
 		if (it == trackGroup.end()) {
 			trackUnit = *trackGroup.begin();
 			Disable();

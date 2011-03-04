@@ -100,7 +100,7 @@ CMouseHandler::CMouseHandler()
 	hardwareCursor = !!configHandler->Get("HardwareCursor", 0);
 #endif
 
-	soundMultiselID = gSound->GetSoundId("MultiSelect", false);
+	soundMultiselID = sound->GetSoundId("MultiSelect", false);
 
 	invertMouse = !!configHandler->Get("InvertMouse",0);
 	doubleClickTime = configHandler->Get("DoubleClickTime", 200.0f) / 1000.0f;
@@ -429,15 +429,14 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			if (addedunits == 1) {
 				const int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
 				if (soundIdx >= 0) {
-					sound::Channels::UnitReply.PlaySample(
+					Channels::UnitReply.PlaySample(
 						unit->unitDef->sounds.select.getID(soundIdx), unit,
 						unit->unitDef->sounds.select.getVolume(soundIdx));
 				}
 			}
-			else if(addedunits) //more than one unit selected
-				sound::Channels::UserInterface.PlaySample(soundMultiselID);
+			else if (addedunits) //more than one unit selected
+				Channels::UserInterface.PlaySample(soundMultiselID);
 			#endif
-
 		} else {
 			const CUnit* unit;
 			helper->GuiTraceRay(camera->pos,dir,globalRendering->viewRange*1.4f,unit,false);
@@ -482,7 +481,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 				#if (PLAY_SOUNDS == 1)
 				const int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
 				if (soundIdx >= 0) {
-					sound::Channels::UnitReply.PlaySample(
+					Channels::UnitReply.PlaySample(
 						unit->unitDef->sounds.select.getID(soundIdx), unit,
 						unit->unitDef->sounds.select.getVolume(soundIdx));
 				}

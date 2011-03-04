@@ -699,7 +699,7 @@ void CBuilder::SetBuildStanceToward(float3 pos)
 	#if (PLAY_SOUNDS == 1)
 	const int soundIdx = unitDef->sounds.build.getRandomIdx();
 	if (soundIdx >= 0) {
-		sound::Channels::UnitReply.PlaySample(
+		Channels::UnitReply.PlaySample(
 			unitDef->sounds.build.getID(soundIdx), pos,
 			unitDef->sounds.build.getVolume(soundIdx));
 	}

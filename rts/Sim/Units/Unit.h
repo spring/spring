@@ -391,12 +391,6 @@ public:
 #endif
 	}
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-	unsigned lastUnitUpdate;
-#endif
-
-	std::string tooltip;
-
 	bool crashing;
 	/// prevent damage from hitting an already dead unit (causing multi wreck etc)
 	bool isDead;
@@ -430,6 +424,7 @@ public:
 	/// multiply all damage the unit take with this
 	float curArmorMultiple;
 
+	std::string tooltip;
 	std::string wreckName;
 
 	/// used for innacuracy with radars etc
@@ -481,6 +476,7 @@ public:
 	bool noDraw;
 	bool noSelect;
 	bool noMinimap;
+	bool leaveTracks;
 
 	bool isIcon;
 	float iconRadius;
@@ -496,6 +492,10 @@ public:
 	/// last draw frame
 	int lastDrawFrame;
 #endif
+#if defined(USE_GML) && GML_ENABLE_SIM
+	unsigned lastUnitUpdate;
+#endif
+
 
 protected:
 	void ChangeTeamReset();

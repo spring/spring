@@ -163,6 +163,7 @@ public:
 		std::string grassShadingTexName;  // defaults to minimap texture
 		std::string skyReflectModTexName;
 		std::string detailNormalTexName;
+		std::string lightEmissionTexName;
 
 		float minHeight;
 		bool  minHeightOverride;

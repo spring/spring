@@ -553,12 +553,12 @@ void CMiniMap::SelectUnits(int x, int y) const
 
 		#if (PLAY_SOUNDS == 1)
 		if (addedunits >= 2) {
-			sound::Channels::UserInterface.PlaySample(mouse->soundMultiselID);
+			Channels::UserInterface.PlaySample(mouse->soundMultiselID);
 		}
 		else if (addedunits == 1) {
 			const int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
 			if (soundIdx >= 0) {
-				sound::Channels::UnitReply.PlaySample(
+				Channels::UnitReply.PlaySample(
 					unit->unitDef->sounds.select.getID(soundIdx), unit,
 					unit->unitDef->sounds.select.getVolume(soundIdx));
 			}
@@ -617,7 +617,7 @@ void CMiniMap::SelectUnits(int x, int y) const
 			#if (PLAY_SOUNDS == 1)
 			const int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
 			if (soundIdx >= 0) {
-				sound::Channels::UnitReply.PlaySample(
+				Channels::UnitReply.PlaySample(
 					unit->unitDef->sounds.select.getID(soundIdx), unit,
 					unit->unitDef->sounds.select.getVolume(soundIdx));
 			}

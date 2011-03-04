@@ -3,8 +3,8 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
+#include "lib/gml/gml.h"
 #include "QuadField.h"
-
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -42,10 +42,10 @@ void CQuadField::Serialize(creg::ISerializer& s)
 CR_BIND(CQuadField::Quad, );
 
 CR_REG_METADATA_SUB(CQuadField, Quad, (
-		CR_MEMBER(units),
-		CR_MEMBER(teamUnits),
-		CR_MEMBER(features)
-		));
+	CR_MEMBER(units),
+	CR_MEMBER(teamUnits),
+	CR_MEMBER(features)
+));
 
 
 //////////////////////////////////////////////////////////////////////
