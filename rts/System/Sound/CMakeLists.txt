@@ -5,9 +5,8 @@ REMOVE_DEFINITIONS(-DNO_SOUND)
 # Dummy Sound implementaiton
 SET(noSoundSources
 		IAudioChannel
-		IEffectChannel
-		IMusicChannel
 		ISound
+		SoundChannels
 		NullSound
 		SoundLog
 	)
@@ -32,8 +31,7 @@ if    (NOT NO_SOUND)
 			EFX
 			EFXfuncs
 			EFXPresets
-			EffectChannel
-			MusicChannel
+			AudioChannel
 			OggStream
 			Sound
 			SoundBuffer

@@ -14,8 +14,6 @@
 #include "SoundSource.h"
 #include "SoundBuffer.h"
 #include "SoundItem.h"
-#include "IEffectChannel.h"
-#include "IMusicChannel.h"
 #include "ALShared.h"
 #include "EFX.h"
 #include "EFXPresets.h"
