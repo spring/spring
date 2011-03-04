@@ -74,6 +74,8 @@ CSound::~CSound()
 		soundThread = NULL;
 	}
 
+	for (soundVecT::iterator it = sounds.begin(); it != sounds.end(); ++it)
+		delete *it;
 	sounds.clear();
 	SoundBuffer::Deinitialise();
 }
@@ -140,24 +142,35 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 	}
 }
 
+SoundItem* CSound::GetSoundItem(size_t id) const {
+	//! id==0 is a special id and invalid
+	if (id == 0 || id >= sounds.size())
+		return NULL;
+	return sounds[id];
+}
+
 CSoundSource* CSound::GetNextBestSource(bool lock)
 {
+	boost::recursive_mutex::scoped_lock lck(soundMutex, boost::defer_lock);
+	if (lock)
+		lck.lock();
+
 	if (sources.empty())
 		return NULL;
-	sourceVecT::iterator bestPos = sources.begin();
-	
+
+	CSoundSource* bestPos = NULL;
 	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
 	{
 		if (!it->IsPlaying())
 		{
-			return &(*it); //argh
+			return &(*it);
 		}
-		else if (it->GetCurrentPriority() <= bestPos->GetCurrentPriority())
+		else if (it->GetCurrentPriority() <= (bestPos ? bestPos->GetCurrentPriority() : INT_MAX))
 		{
-			bestPos = it;
+			bestPos = &(*it);
 		}
 	}
-	return &(*bestPos);
+	return bestPos;
 }
 
 void CSound::PitchAdjust(const float newPitch)

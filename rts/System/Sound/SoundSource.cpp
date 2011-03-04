@@ -44,6 +44,7 @@ CSoundSource::~CSoundSource()
 		alSourcei(id, AL_DIRECT_FILTER, AL_FILTER_NULL);
 	}
 
+	Stop();
 	alDeleteSources(1, &id);
 	CheckError("CSoundSource::~CSoundSource");
 }
@@ -62,6 +63,9 @@ void CSoundSource::Update()
 			curHeightRolloffModifier = heightRolloffModifier;
 			alSourcef(id, AL_ROLLOFF_FACTOR, curPlaying->rolloff * heightRolloffModifier);
 		}
+
+		if (!IsPlaying() || ((curPlaying->loopTime > 0) && (loopStop < SDL_GetTicks())))
+			Stop();
 	}
 
 	if (curStream)
@@ -75,8 +79,6 @@ void CSoundSource::Update()
 			CheckError("CSoundSource::Update");
 		}
 	}
-	if (curPlaying && (!IsPlaying() || ((curPlaying->loopTime > 0) && (loopStop < SDL_GetTicks()))))
-		Stop();
 }
 
 int CSoundSource::GetCurrentPriority() const
@@ -85,7 +87,6 @@ int CSoundSource::GetCurrentPriority() const
 		return INT_MAX;
 	}
 	else if (!curPlaying) {
-		logOutput.Print("Warning: CSoundSource::GetCurrentPriority() curPlaying is NULL (id %d)", id);
 		return INT_MIN;
 	}
 	return curPlaying->priority;
