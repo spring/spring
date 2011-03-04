@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 #include "mmgr.h"
+#include "lib/gml/gml.h"
 
 #include "UnitDef.h"
 #include "Unit.h"
