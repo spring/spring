@@ -6,6 +6,7 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
+#include "lib/gml/gml.h"
 #include "GroupHandler.h"
 #include "Group.h"
 #include "Game/SelectedUnits.h"

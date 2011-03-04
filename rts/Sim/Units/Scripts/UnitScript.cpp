@@ -610,7 +610,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 				const WeaponDef* weaponDef = unit->weapons[index]->weaponDef;
 
 				if (weaponDef->soundhit.getID(0) > 0) {
-					sound::Channels::Battle.PlaySample(weaponDef->soundhit.getID(0), unit, weaponDef->soundhit.getVolume(0));
+					Channels::Battle.PlaySample(weaponDef->soundhit.getID(0), unit, weaponDef->soundhit.getVolume(0));
 				}
 
 				helper->Explosion(
@@ -1145,9 +1145,9 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 				break;
 		}
 		if (p4 == 0) {
-			sound::Channels::UnitReply.PlaySample(script->sounds[p1], unit->pos, unit->speed, float(p2) / COBSCALE);
+			Channels::UnitReply.PlaySample(script->sounds[p1], unit->pos, unit->speed, float(p2) / COBSCALE);
 		} else {
-			sound::Channels::UnitReply.PlaySample(script->sounds[p1], float(p2) / COBSCALE);
+			Channels::UnitReply.PlaySample(script->sounds[p1], float(p2) / COBSCALE);
 		}
 		return 0;
 	}
@@ -1692,7 +1692,7 @@ int CUnitScript::ScriptToModel(int scriptnum) const {
 
 	int i = 0;
 	const std::vector<LocalModelPiece*>& modelpieces = unit->localmodel->pieces;
-	for (std::vector<LocalModelPiece*>::const_iterator pm = modelpieces.begin(); pm != modelpieces.end(); pm++, i++) {
+	for (std::vector<LocalModelPiece*>::const_iterator pm = modelpieces.begin(); pm != modelpieces.end(); ++pm, ++i) {
 		if (p == *pm) return i;
 	}
 	return -1;

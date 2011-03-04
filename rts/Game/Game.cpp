@@ -302,7 +302,7 @@ CGame::~CGame()
 
 	CLoadScreen::DeleteInstance();
 	IVideoCapturing::FreeInstance();
-	sound::ISound::Shutdown();
+	ISound::Shutdown();
 
 	CLuaGaia::FreeHandler();
 	CLuaRules::FreeHandler();
@@ -454,8 +454,8 @@ void CGame::LoadDefs()
 		ScopedOnceTimer timer("Loading Sound Definitions");
 		loadscreen->SetLoadMessage("Loading Sound Definitions");
 
-		gSound->LoadSoundDefs("gamedata/sounds.lua");
-		chatSound = gSound->GetSoundId("IncomingChat", false);
+		sound->LoadSoundDefs("gamedata/sounds.lua");
+		chatSound = sound->GetSoundId("IncomingChat", false);
 	}
 }
 
@@ -1284,7 +1284,7 @@ bool CGame::Draw() {
 		CInputReceiver::CollectGarbage();
 		if (!skipping) {
 			// TODO call only when camera changed
-			gSound->UpdateListener(camera->pos, camera->forward, camera->up, globalRendering->lastFrameTime);
+			sound->UpdateListener(camera->pos, camera->forward, camera->up, globalRendering->lastFrameTime);
 		}
 	}
 
@@ -1766,7 +1766,7 @@ void CGame::SimFrame() {
 		infoConsole->Update();
 		waitCommandsAI.Update();
 		geometricObjects->Update();
-		gSound->NewFrame();
+		sound->NewFrame();
 		eoh->Update();
 		for (size_t a = 0; a < grouphandlers.size(); a++) {
 			grouphandlers[a]->Update();
@@ -2074,27 +2074,27 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 			const bool allied = teamHandler->Ally(msgAllyTeam, gu->myAllyTeam);
 			if (gu->spectating || (allied && !player->spectator)) {
 				logOutput.Print(label + "Allies: " + s);
-				sound::Channels::UserInterface.PlaySample(chatSound, 5);
+				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 		}
 		else if (msg.destination == ChatMessage::TO_SPECTATORS) {
 			if (gu->spectating || myMsg) {
 				logOutput.Print(label + "Spectators: " + s);
-				sound::Channels::UserInterface.PlaySample(chatSound, 5);
+				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 		}
 		else if (msg.destination == ChatMessage::TO_EVERYONE) {
 			const bool specsOnly = noSpectatorChat && (player && player->spectator);
 			if (gu->spectating || !specsOnly) {
 				logOutput.Print(label + s);
-				sound::Channels::UserInterface.PlaySample(chatSound, 5);
+				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 		}
 		else if (msg.destination < playerHandler->ActivePlayers())
 		{
 			if (msg.destination == gu->myPlayerNum && player && !player->spectator) {
 				logOutput.Print(label + "Private: " + s);
-				sound::Channels::UserInterface.PlaySample(chatSound, 5);
+				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 			else if (player->playerNum == gu->myPlayerNum)
 			{
@@ -2124,9 +2124,9 @@ void CGame::StartSkip(int toFrame) {
 	skipTotalFrames = skipEndFrame - skipStartFrame;
 	skipSeconds = (float)(skipTotalFrames) / (float)GAME_SPEED;
 
-	skipSoundmute = gSound->IsMuted();
+	skipSoundmute = sound->IsMuted();
 	if (!skipSoundmute)
-		gSound->Mute(); // no sounds
+		sound->Mute(); // no sounds
 
 	skipOldSpeed     = gs->speedFactor;
 	skipOldUserSpeed = gs->userSpeedFactor;
@@ -2149,7 +2149,7 @@ void CGame::EndSkip() {
 	gs->userSpeedFactor = skipOldUserSpeed;
 
 	if (!skipSoundmute)
-		gSound->Mute(); // sounds back on
+		sound->Mute(); // sounds back on
 
 	logOutput.Print("Skipped %.1f seconds\n", skipSeconds);
 }
@@ -2322,7 +2322,7 @@ void CGame::SelectCycle(const string& command)
 		if (fit == unitIDs.end()) {
 			lastID = *unitIDs.begin();
 		} else {
-			fit++;
+			++fit;
 			if (fit != unitIDs.end()) {
 				lastID = *fit;
 			} else {

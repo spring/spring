@@ -559,19 +559,20 @@ static int TotalEnergyOut(lua_State* L, const void* data)
 
 
 
-#define TYPE_BOOL_FUNC(FuncName)                        \
+#define TYPE_FUNC(FuncName, LuaType)                    \
 	static int FuncName(lua_State* L, const void* data) \
 	{                                                   \
 		const UnitDef* ud = (const UnitDef*) data;      \
-		lua_pushboolean(L, ud->FuncName());             \
+		lua_push ## LuaType(L, ud->FuncName());         \
 		return 1;                                       \
 	}
 
-TYPE_BOOL_FUNC(IsImmobileUnit);
-TYPE_BOOL_FUNC(IsFactoryUnit);
-TYPE_BOOL_FUNC(IsFighterUnit);
-TYPE_BOOL_FUNC(IsBomberUnit);
-TYPE_BOOL_FUNC(IsGroundUnit);
+TYPE_FUNC(GetTypeString, string);
+TYPE_FUNC(IsBuildingUnit, boolean);
+TYPE_FUNC(IsFactoryUnit, boolean);
+TYPE_FUNC(IsFighterUnit, boolean);
+TYPE_FUNC(IsBomberUnit, boolean);
+TYPE_FUNC(IsGroundUnit, boolean);
 
 
 
@@ -636,11 +637,12 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FUNCTION("stockpileWeaponDef", ud.stockpileWeaponDef, WeaponDefToID);
 	ADD_FUNCTION("iconType",           ud.iconType,           SafeIconType);
 
-	ADD_FUNCTION("isBuilding",       ud, IsImmobileUnit); // !
-	ADD_FUNCTION("isFactory",        ud, IsFactoryUnit);
-	ADD_FUNCTION("isFighter",        ud, IsFighterUnit);
-	ADD_FUNCTION("isBomber",         ud, IsBomberUnit);
-	ADD_FUNCTION("isGroundUnit",     ud, IsGroundUnit);
+	ADD_FUNCTION("type",         ud, GetTypeString); // NOTE: deprecated, remove after 0.83.*
+	ADD_FUNCTION("isBuilding",   ud, IsBuildingUnit);
+	ADD_FUNCTION("isFactory",    ud, IsFactoryUnit);
+	ADD_FUNCTION("isFighter",    ud, IsFighterUnit);
+	ADD_FUNCTION("isBomber",     ud, IsBomberUnit);
+	ADD_FUNCTION("isGroundUnit", ud, IsGroundUnit);
 
 	ADD_FUNCTION("height",  ud, ModelHeight);
 	ADD_FUNCTION("radius",  ud, ModelRadius);
@@ -752,7 +754,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("buildDistance",  ud.buildDistance);
 	ADD_FLOAT("buildSpeed",     ud.buildSpeed);
 	ADD_FLOAT("repairSpeed",    ud.repairSpeed);
-	ADD_FLOAT("maxRepairSpeed",    ud.repairSpeed);
+	ADD_FLOAT("maxRepairSpeed", ud.repairSpeed);
 	ADD_FLOAT("reclaimSpeed",   ud.reclaimSpeed);
 	ADD_FLOAT("resurrectSpeed", ud.resurrectSpeed);
 	ADD_FLOAT("captureSpeed",   ud.captureSpeed);
@@ -764,6 +766,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("canHover",          ud.canhover);
 	ADD_BOOL("floater",           ud.floater);
 	ADD_BOOL("builder",           ud.builder);
+	ADD_BOOL("isBuilder",         ud.builder); // NOTE: deprecated, remove after 0.83.*
 	ADD_BOOL("onOffable",         ud.onoffable);
 	ADD_BOOL("activateWhenBuilt", ud.activateWhenBuilt);
 

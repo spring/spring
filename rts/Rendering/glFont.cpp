@@ -1101,7 +1101,7 @@ void CglFont::AddEllipsis(std::list<line>& lines, std::list<word>& words, float 
 
 	//! sometimes words aren't hyphenated for visual aspects
 	//! but if we put an ellipsis in there, it is better to show as many as possible characters of those words
-	std::list<word>::iterator nextwi(l->end); nextwi++;
+	std::list<word>::iterator nextwi(l->end); ++nextwi;
 	if (
 	    (!l->forceLineBreak) &&
 	    (nextwi != words.end()) &&
@@ -1131,7 +1131,7 @@ void CglFont::AddEllipsis(std::list<line>& lines, std::list<word>& words, float 
 			space.numSpaces = 1;
 			space.width = spaceAdvance;
 			std::list<word>::iterator wi(l->end);
-			l->end++;
+			++l->end;
 			if (l->end == words.end()) {
 				space.pos = wi->pos + wi->text.length() + 1;
 			} else {
@@ -1147,7 +1147,7 @@ void CglFont::AddEllipsis(std::list<line>& lines, std::list<word>& words, float 
 	ellipsis.text  = "\x85";
 	ellipsis.width = ellipsisAdvance;
 	std::list<word>::iterator wi(l->end);
-	l->end++;
+	++l->end;
 	if (l->end == words.end()) {
 		ellipsis.pos = wi->pos + wi->text.length() + 1;
 	} else {
@@ -1192,7 +1192,7 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 				currLineValid = false;
 				currLine = &(lines.back());
 				currLine->start = wi;
-				currLine->start++;
+				++currLine->start;
 		} else {
 			currLine->width += wi->width;
 			currLine->end = wi;
@@ -1223,7 +1223,7 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 
 					//! insert the L-part right before R
 					wi = words.insert(wi, wL);
-					wi++;
+					++wi;
 				}
 
 				//! insert the forced linebreak (either after W or before R)
@@ -1237,11 +1237,11 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 					currLineValid = false;
 					currLine = &(lines.back());
 					currLine->start = wi;
-					wi--; //! compensate the wi++ downwards
+					--wi; //! compensate the wi++ downwards
 			}
 		}
 
-		wi++;
+		++wi;
 
 		if (wi == words.end()) {
 			break;
@@ -1265,7 +1265,7 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 	if (addEllipsis)
 		AddEllipsis(lines, words, maxWidth);
 
-	wi = currLine->end; wi++;
+	wi = currLine->end; ++wi;
 	wi = words.erase(wi, words.end());
 }
 
@@ -1378,7 +1378,7 @@ void CglFont::RemergeColorCodes(std::list<word>* words, std::list<colorcode>& co
 	for (ci = colorcodes.begin(); ci != colorcodes.end(); ++ci) {
 		while(wi != words->end() && wi->pos <= ci->pos) {
 			wi2 = wi;
-			wi++;
+			++wi;
 		}
 
 		word wc;
@@ -1397,7 +1397,7 @@ void CglFont::RemergeColorCodes(std::list<word>* words, std::list<colorcode>& co
 
 		if (wi2->isSpace || wi2->isLineBreak) {
 			while(wi2 != words->end() && (wi2->isSpace || wi2->isLineBreak))
-				wi2++;
+				++wi2;
 
 			if (wi == words->end() && (wi2->pos + wi2->numSpaces) < ci->pos) {
 				return;
@@ -1423,7 +1423,7 @@ void CglFont::RemergeColorCodes(std::list<word>* words, std::list<colorcode>& co
 			}
 		}
 		wi = wi2;
-		wi++;
+		++wi;
 	}
 }
 

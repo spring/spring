@@ -89,16 +89,16 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, const float3& pos, int team,
 	if (ud->IsTransportUnit()) {
 		unit = new CTransportUnit();
 	} else if (ud->IsFactoryUnit()) {
-		// static builders that can be given move-orders
-		// (which are passed on to all mobile buildees)
+		// special static builder structures that can always be given
+		// move orders (which are passed on to all mobile buildees)
 		unit = new CFactory();
 	} else if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit()) {
-		// all other types of "builders", including hubs and nano-towers
-		// (the latter should not have any build-options at all, whereas
-		// the former should be unable to build any mobile units)
+		// all other types of non-structure "builders", including hubs and
+		// nano-towers (the latter should not have any build-options at all,
+		// whereas the former should be unable to build any mobile units)
 		unit = new CBuilder();
-	} else if (ud->IsImmobileUnit()) {
-		// static non-builder structure
+	} else if (ud->IsBuildingUnit()) {
+		// static non-builder structures
 		if (ud->IsExtractorUnit()) {
 			unit = new CExtractorBuilding();
 		} else {
@@ -117,8 +117,8 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, const float3& pos, int team,
 		new CFactoryCAI(unit);
 	} else if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit()) {
 		new CBuilderCAI(unit);
-	} else if (ud->IsFighterUnit() || ud->IsBomberUnit()) {
-		// non-hovering aircraft types; coupled to AirMoveType
+	} else if (ud->IsNonHoveringAirUnit()) {
+		// non-hovering fighter or bomber aircraft; coupled to AirMoveType
 		new CAirCAI(unit);
 	} else if (ud->IsAirUnit()) {
 		// all other aircraft

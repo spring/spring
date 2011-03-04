@@ -64,8 +64,6 @@ class CLuaUI : public CLuaHandle
 
 		bool ConfigCommand(const string& command);
 
-		bool AddConsoleLines();
-
 		void ShockFront(float power, const float3& pos, float areaOfEffect);
 
 	public: // custom call-in

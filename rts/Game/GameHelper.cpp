@@ -204,21 +204,20 @@ void CGameHelper::Explosion(
 	const float3& impactDir, int weaponId,
 	CFeature* hitFeature
 ) {
-	if (luaUI) {
-		const WeaponDef* wd = weaponDefHandler->GetWeaponById(weaponId);
+	const WeaponDef* wd = weaponDefHandler->GetWeaponById(weaponId);
 
+	if (luaUI) {
 		if (wd != NULL && wd->cameraShake > 0.0f) {
 			luaUI->ShockFront(wd->cameraShake, expPos, expRad);
 		}
 	}
-
-	const bool noGfx = eventHandler.Explosion(weaponId, expPos, owner);
 
 #ifdef TRACE_SYNC
 	tracefile << "Explosion: ";
 	tracefile << expPos.x << " " << damages[0] <<  " " << expRad << "\n";
 #endif
 
+	const bool noGfx = eventHandler.Explosion(weaponId, expPos, owner);
 	const float h2 = ground->GetHeightReal(expPos.x, expPos.z);
 
 	expPos.y = std::max(expPos.y, h2);
@@ -294,7 +293,7 @@ void CGameHelper::Explosion(
 		explosionGenerator->Explosion(0, expPos, damages[0], expRad, owner, gfxMod, hitUnit, impactDir);
 	}
 
-	groundDecals->AddExplosion(expPos, damages[0], expRad);
+	groundDecals->AddExplosion(expPos, damages[0], expRad, (wd != NULL && wd->visuals.explosionScar));
 	water->AddExplosion(expPos, damages[0], expRad);
 }
 

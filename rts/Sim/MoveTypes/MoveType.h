@@ -31,11 +31,8 @@ public:
 	virtual void SetWantedMaxSpeed(float speed);
 	virtual void LeaveTransport(void);
 
-	virtual void Update() = 0;
+	virtual bool Update() = 0;
 	virtual void SlowUpdate();
-
-	int forceTurn;
-	int forceTurnTo;
 
 	CUnit* owner;
 

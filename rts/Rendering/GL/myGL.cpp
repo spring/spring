@@ -173,6 +173,7 @@ void UnloadExtensions()
 {
 	delete vertexArray1;
 	delete vertexArray2;
+	vertexArray1 = vertexArray2 = NULL;
 }
 
 

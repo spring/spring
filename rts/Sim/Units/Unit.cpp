@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 #include "mmgr.h"
+#include "lib/gml/gml.h"
 
 #include "UnitDef.h"
 #include "Unit.h"
@@ -232,6 +233,7 @@ CUnit::CUnit() : CSolidObject(),
 	noDraw(false),
 	noSelect(false),
 	noMinimap(false),
+	leaveTracks(false),
 	isIcon(false),
 	iconRadius(0.0f),
 	maxSpeed(0.0f),
@@ -389,6 +391,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	armoredMultiple = std::max(0.0001f, unitDef->armoredMultiple); // armored multiple of 0 will crash spring
 	armorType = unitDef->armorType;
 	category = unitDef->category;
+	leaveTracks = unitDef->leaveTracks;
 
 	tooltip = unitDef->humanName + " - " + unitDef->tooltip;
 	wreckName = unitDef->wreckName;
@@ -1906,7 +1909,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 					// HACK: loading code doesn't set sane defaults for explosion sounds, so we do it here
 					// NOTE: actually no longer true, loading code always ensures that sound volume != -1
 					const float volume = wd->soundhit.getVolume(0);
-					sound::Channels::Battle.PlaySample(wd->soundhit.getID(0), pos, (volume == -1) ? 1.0f : volume);
+					Channels::Battle.PlaySample(wd->soundhit.getID(0), pos, (volume == -1) ? 1.0f : volume);
 				}
 				#endif
 			}
@@ -2015,7 +2018,7 @@ void CUnit::Activate()
 	#if (PLAY_SOUNDS == 1)
 	const int soundIdx = unitDef->sounds.activate.getRandomIdx();
 	if (soundIdx >= 0) {
-		sound::Channels::UnitReply.PlaySample(
+		Channels::UnitReply.PlaySample(
 			unitDef->sounds.activate.getID(soundIdx), this,
 			unitDef->sounds.activate.getVolume(soundIdx));
 	}
@@ -2039,7 +2042,7 @@ void CUnit::Deactivate()
 	#if (PLAY_SOUNDS == 1)
 	const int soundIdx = unitDef->sounds.deactivate.getRandomIdx();
 	if (soundIdx >= 0) {
-		sound::Channels::UnitReply.PlaySample(
+		Channels::UnitReply.PlaySample(
 			unitDef->sounds.deactivate.getID(soundIdx), this,
 			unitDef->sounds.deactivate.getVolume(soundIdx));
 	}
@@ -2402,6 +2405,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(noDraw),
 	CR_MEMBER(noSelect),
 	CR_MEMBER(noMinimap),
+	CR_MEMBER(leaveTracks),
 //	CR_MEMBER(isIcon),
 //	CR_MEMBER(iconRadius),
 	CR_MEMBER(maxSpeed),

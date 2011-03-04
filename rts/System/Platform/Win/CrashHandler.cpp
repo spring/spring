@@ -6,40 +6,23 @@
 #include <process.h>
 #include <imagehlp.h>
 #include <signal.h>
-#include <boost/thread/thread.hpp>
 
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/errorhandler.h"
-
-#include "ConfigHandler.h"
 #include "LogOutput.h"
-#include "myTime.h"
 #include "NetProtocol.h"
 #include "seh.h"
 #include "Util.h"
 #include "Game/GameVersion.h"
 
+
 #define BUFFER_SIZE 2048
-
-#if defined(USE_GML) && GML_ENABLE_SIM
-extern volatile int gmlMultiThreadSim;
-#endif
-
-HANDLE simthread = INVALID_HANDLE_VALUE; // used in gmlsrv.h as well
-HANDLE drawthread = INVALID_HANDLE_VALUE;
 #define MAX_STACK_DEPTH 4096
 
 
 namespace CrashHandler {
 
-boost::thread* hangdetectorthread = NULL;
-volatile int keepRunning = 1;
-// watchdog timers
-volatile spring_time simwdt = spring_notime, drawwdt = spring_notime;
-spring_time hangTimeout = spring_msecs(0);
-volatile bool gameLoading = false;
-
-void SigAbrtHandler(int signal)
+static void SigAbrtHandler(int signal)
 {
 	// cause an exception if on windows
 	// TODO FIXME do a proper stacktrace dump here
@@ -51,7 +34,7 @@ void SigAbrtHandler(int signal)
 #define PRINT logOutput.Print
 
 /** Convert exception code to human readable string. */
-static const char *ExceptionName(DWORD exceptionCode)
+static const char* ExceptionName(DWORD exceptionCode)
 {
 	switch (exceptionCode) {
 		case EXCEPTION_ACCESS_VIOLATION:         return "Access violation";
@@ -80,16 +63,43 @@ static const char *ExceptionName(DWORD exceptionCode)
 	return "Unknown exception";
 }
 
-static void initImageHlpDll() {
 
+static bool InitImageHlpDll()
+{
 	char userSearchPath[8];
 	STRCPY(userSearchPath, ".");
 	// Initialize IMAGEHLP.DLL
-	SymInitialize(GetCurrentProcess(), userSearchPath, TRUE);
+	// Note: For some strange reason it doesn't work ~4 times after it was loaded&unloaded the first time.
+	int i = 0;
+	do {
+		if (SymInitialize(GetCurrentProcess(), userSearchPath, TRUE))
+			return true;
+		SymCleanup(GetCurrentProcess());
+		i++;
+	} while (i<20);
+	return false;
 }
 
+
+/** Callback for SymEnumerateModules */
+#if _MSC_VER >= 1500
+	static BOOL CALLBACK EnumModules(PCSTR moduleName, ULONG baseOfDll, PVOID userContext)
+	{
+		PRINT("0x%08lx\t%s", baseOfDll, moduleName);
+		return TRUE;
+	}
+#else // _MSC_VER >= 1500
+	static BOOL CALLBACK EnumModules(LPSTR moduleName, DWORD baseOfDll, PVOID userContext)
+	{
+		PRINT("0x%08lx\t%s", baseOfDll, moduleName);
+		return TRUE;
+	}
+#endif // _MSC_VER >= 1500
+
+
 /** Print out a stacktrace. */
-static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE) {
+static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE)
+{
 	PIMAGEHLP_SYMBOL pSym;
 	STACKFRAME sf;
 	HANDLE process, thread;
@@ -98,26 +108,33 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 	int count = 0;
 	char modname[MAX_PATH];
 
-	pSym = (PIMAGEHLP_SYMBOL)GlobalAlloc(GMEM_FIXED, 16384);
+	process = GetCurrentProcess();
 
-	BOOL suspended = FALSE;
+	if (!InitImageHlpDll())
+		return;
+
+	// List all loaded DLLs.
+	PRINT("DLL information:");
+	SymEnumerateModules(process, EnumModules, NULL);
+
+	bool suspended = false;
 	CONTEXT c;
 	if (e) {
 		c = *e->ContextRecord;
 		thread = GetCurrentThread();
 	} else {
 		SuspendThread(hThread);
-		suspended = TRUE;
+		suspended = true;
 		memset(&c, 0, sizeof(CONTEXT));
 		c.ContextFlags = CONTEXT_FULL;
 		// FIXME: This does not work if you want to dump the current thread's stack
 		if (!GetThreadContext(hThread, &c)) {
+			SymCleanup(process); // Unintialize IMAGEHLP.DLL
 			ResumeThread(hThread);
 			return;
 		}
 		thread = hThread;
 	}
-
 	ZeroMemory(&sf, sizeof(sf));
 	sf.AddrPC.Offset = c.Eip;
 	sf.AddrStack.Offset = c.Esp;
@@ -126,11 +143,11 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 	sf.AddrStack.Mode = AddrModeFlat;
 	sf.AddrFrame.Mode = AddrModeFlat;
 
-	process = GetCurrentProcess();
-
 	// use globalalloc to reduce risk for allocator related deadlock
+	pSym = (PIMAGEHLP_SYMBOL)GlobalAlloc(GMEM_FIXED, 16384);
 	char* printstrings = (char*)GlobalAlloc(GMEM_FIXED, 0);
 
+	PRINT("Stacktrace:");
 	bool containsOglDll = false;
 	while (true) {
 		more = StackWalk(
@@ -189,6 +206,9 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 		++count;
 	}
 
+	// Unintialize IMAGEHLP.DLL
+	SymCleanup(process);
+
 	if (suspended) {
 		ResumeThread(hThread);
 	}
@@ -205,24 +225,15 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 	}
 
 	GlobalFree(printstrings);
-
 	GlobalFree(pSym);
 }
 
-/** Callback for SymEnumerateModules */
-#if _MSC_VER >= 1500
-static BOOL CALLBACK EnumModules(PCSTR moduleName, ULONG baseOfDll, PVOID userContext)
+
+void Stacktrace(Threading::NativeThreadHandle thread)
 {
-	PRINT("0x%08lx\t%s", baseOfDll, moduleName);
-	return TRUE;
+	Stacktrace(NULL, thread);
 }
-#else // _MSC_VER >= 1500
-static BOOL CALLBACK EnumModules(LPSTR moduleName, DWORD baseOfDll, PVOID userContext)
-{
-	PRINT("0x%08lx\t%s", baseOfDll, moduleName);
-	return TRUE;
-}
-#endif // _MSC_VER >= 1500
+
 
 /** Called by windows if an exception happens. */
 LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
@@ -233,34 +244,26 @@ LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 #ifdef USE_GML
 	PRINT("MT with %d threads.", gmlThreadCount);
 #endif
-	initImageHlpDll();
 
-	// Record exception info.
-	PRINT("Exception: %s (0x%08lx)", ExceptionName(e->ExceptionRecord->ExceptionCode), e->ExceptionRecord->ExceptionCode);
+	const std::string error(ExceptionName(e->ExceptionRecord->ExceptionCode));
+
+	// Print exception info.
+	PRINT("Exception: %s (0x%08lx)", error.c_str(), e->ExceptionRecord->ExceptionCode);
 	PRINT("Exception Address: 0x%08lx", (unsigned long int) (PVOID) e->ExceptionRecord->ExceptionAddress);
 
-	// Record list of loaded DLLs.
-	PRINT("DLL information:");
-	SymEnumerateModules(GetCurrentProcess(), EnumModules, NULL);
-
-	// Record stacktrace.
-	PRINT("Stacktrace:");
+	// Print stacktrace.
 	Stacktrace(e);
-
-	// Unintialize IMAGEHLP.DLL
-	SymCleanup(GetCurrentProcess());
 
 	// Only the first crash is of any real interest
 	CrashHandler::Remove();
 
 	// Inform user.
-	char dir[MAX_PATH], msg[MAX_PATH+200];
-	GetCurrentDirectory(sizeof(dir) - 1, dir);
-	SNPRINTF(msg, sizeof(msg),
-		"Spring has crashed.\n\n"
-		"A stacktrace has been written to:\n"
-		"%s\\infolog.txt", dir);
-	ErrorMessageBox(msg, "Spring: Unhandled exception", MBF_CRASH);
+	std::ostringstream buf;
+	buf << "Spring has crashed:\n"
+		<< "  " << error << ".\n\n"
+		<< "A stacktrace has been written to:\n"
+		<< "  " << logOutput.GetFilePath();
+	ErrorMessageBox(buf.str(), "Spring: Unhandled exception", MBF_OK | MBF_CRASH); //calls exit()!
 
 	// this seems to silently close the application
 	return EXCEPTION_EXECUTE_HANDLER;
@@ -273,101 +276,6 @@ LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 	//return EXCEPTION_CONTINUE_EXECUTION;
 }
 
-/** Print stack traces for relevant threads. */
-void HangHandler(bool simhang)
-{
-	PRINT("Hang detection triggered %sfor Spring %s.", simhang ? "(in sim thread) " : "", SpringVersion::GetFull().c_str());
-#ifdef USE_GML
-	PRINT("MT with %d threads.", gmlThreadCount);
-#endif
-
-	initImageHlpDll();
-
-	// Record list of loaded DLLs.
-	PRINT("DLL information:");
-	SymEnumerateModules(GetCurrentProcess(), EnumModules, NULL);
-
-
-	if (drawthread != INVALID_HANDLE_VALUE) {
-		// Record stacktrace.
-		PRINT("Stacktrace:");
-		Stacktrace(NULL, drawthread);
-	}
-
-#if defined(USE_GML) && GML_ENABLE_SIM
-	if (gmlMultiThreadSim && simthread != INVALID_HANDLE_VALUE) {
-		PRINT("Stacktrace (sim):");
-		Stacktrace(NULL, simthread);
-	}
-#endif
-
-	// Unintialize IMAGEHLP.DLL
-	SymCleanup(GetCurrentProcess());
-
-	logOutput.Flush();
-}
-
-void HangDetector() {
-	while (keepRunning) {
-		// increase multiplier during game load to prevent false positives e.g. during pathing
-		const int hangTimeMultiplier = CrashHandler::gameLoading ? 3 : 1;
-		const spring_time hangtimeout = spring_msecs(spring_tomsecs(hangTimeout) * hangTimeMultiplier);
-
-		spring_time curwdt = spring_gettime();
-#if defined(USE_GML) && GML_ENABLE_SIM
-		if (gmlMultiThreadSim) {
-			spring_time cursimwdt = simwdt;
-			if (spring_istime(cursimwdt) && curwdt > cursimwdt && (curwdt - cursimwdt) > hangtimeout) {
-				HangHandler(true);
-				simwdt = curwdt;
-			}
-		}
-#endif
-		spring_time curdrawwdt = drawwdt;
-		if (spring_istime(curdrawwdt) && curwdt > curdrawwdt && (curwdt - curdrawwdt) > hangtimeout) {
-			HangHandler(false);
-			drawwdt = curwdt;
-		}
-
-		spring_sleep(spring_secs(1));
-	}
-}
-
-
-void InstallHangHandler() {
-	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(),
-					&drawthread, 0, TRUE, DUPLICATE_SAME_ACCESS);
-	int hangTimeoutSecs = configHandler->Get("HangTimeout", 0);
-	CrashHandler::gameLoading = false;
-	// HangTimeout = -1 to force disable hang detection
-	if (hangTimeoutSecs >= 0) {
-		if (hangTimeoutSecs == 0)
-			hangTimeoutSecs = 10;
-		hangTimeout = spring_secs(hangTimeoutSecs);
-		hangdetectorthread = new boost::thread(&HangDetector);
-	}
-	InitializeSEH();
-}
-
-void ClearDrawWDT(bool disable) { drawwdt = disable ? spring_notime : spring_gettime(); }
-void ClearSimWDT(bool disable) { simwdt = disable ? spring_notime : spring_gettime(); }
-
-void GameLoading(bool loading) { CrashHandler::gameLoading = loading; }
-
-void UninstallHangHandler()
-{
-	if (hangdetectorthread) {
-		keepRunning = 0;
-		hangdetectorthread->join();
-		delete hangdetectorthread;
-	}
-	if (drawthread != INVALID_HANDLE_VALUE) {
-		CloseHandle(drawthread);
-	}
-	if (simthread != INVALID_HANDLE_VALUE) {
-		CloseHandle(simthread);
-	}
-}
 
 /** Install crash handler. */
 void Install()
@@ -375,6 +283,7 @@ void Install()
 	SetUnhandledExceptionFilter(ExceptionHandler);
 	signal(SIGABRT, SigAbrtHandler);
 }
+
 
 /** Uninstall crash handler. */
 void Remove()

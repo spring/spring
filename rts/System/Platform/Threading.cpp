@@ -10,6 +10,32 @@ namespace Threading {
 	static boost::thread* loadingThread = NULL;
 	static boost::thread::id loadingThreadID;
 
+
+	NativeThreadHandle _GetCurrentThread()
+	{
+	#ifdef WIN32
+		//! we need to use this cause GetCurrentThread() just returns a pseudo handle,
+		//! which returns in all threads the current active one, so we need to translate it
+		//! with DuplicateHandle to an absolute handle valid in our watchdog thread
+		NativeThreadHandle hThread;
+		DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &hThread, 0, TRUE, DUPLICATE_SAME_ACCESS);
+		return hThread;
+	#else
+		return pthread_self();
+	#endif
+	}
+
+
+	NativeThreadId _GetCurrentThreadId()
+	{
+	#ifdef WIN32
+		return GetCurrentThreadId();
+	#else
+		return pthread_self();
+	#endif
+	}
+
+
 	void SetMainThread(boost::thread* mt) {
 		if (!haveMainThreadID) {
 			haveMainThreadID = true;

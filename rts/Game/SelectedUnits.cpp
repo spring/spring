@@ -260,7 +260,7 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 
 		const int soundIdx = (*ui)->unitDef->sounds.ok.getRandomIdx();
 		if (soundIdx >= 0) {
-			sound::Channels::UnitReply.PlaySample(
+			Channels::UnitReply.PlaySample(
 				(*ui)->unitDef->sounds.ok.getID(soundIdx), (*ui),
 				(*ui)->unitDef->sounds.ok.getVolume(soundIdx));
 		}

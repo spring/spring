@@ -9,6 +9,9 @@
 
 #include "maindefines.h"
 
+#define DO_ONCE(func) \
+	struct do_once##func { do_once##func() {func();} }; static do_once##func do_once_var##func;
+
 static inline void StringToLowerInPlace(std::string& s)
 {
 	std::transform(s.begin(), s.end(), s.begin(), (int (*)(int))tolower);
@@ -100,8 +103,6 @@ template<class T> void SafeDelete(T& a)
 	a = NULL;
 	delete tmp;
 }
-
-
 
 namespace proc {
 	#if defined(__GNUC__)

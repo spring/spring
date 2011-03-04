@@ -11,6 +11,14 @@
 
 struct ClientStatus
 {
+	ClientStatus()
+	: ingame(false)
+	, away(false)
+	, rank(0)
+	, moderator(false)
+	, bot(false)
+	{}
+	
 	bool ingame;
 	bool away;
 	int rank;

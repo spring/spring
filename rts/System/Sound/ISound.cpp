@@ -11,8 +11,6 @@
 #include "System/LogOutput.h"
 #include "System/ConfigHandler.h"
 
-namespace sound {
-
 ISound* ISound::singleton = NULL;
 
 void ISound::Initialize()
@@ -45,4 +43,3 @@ bool ISound::IsInitialized()
 	return (singleton != NULL);
 }
 
-};

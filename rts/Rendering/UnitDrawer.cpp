@@ -166,11 +166,14 @@ CUnitDrawer::~CUnitDrawer()
 
 	// RenderUnitDestroyed does not trigger on exit, clean up manually
 	for (std::set<CUnit*>::iterator it = unsortedUnits.begin(); it != unsortedUnits.end(); ++it) {
-		CBuilding* building = dynamic_cast<CBuilding*>(*it);
+		CUnit* unit = *it;
+		CBuilding* building = dynamic_cast<CBuilding*>(unit);
 
 		if (building != NULL) {
 			groundDecals->RemoveBuilding(building, NULL);
 		}
+
+		groundDecals->RemoveUnit(unit);
 	}
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
@@ -2202,6 +2205,8 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* u) {
 
 		groundDecals->RemoveBuilding(building, gb);
 	}
+
+	groundDecals->RemoveUnit(unit);
 
 	if (u->model) {
 		// renderer unit cloak state may not match sim (because of MT) - erase from both renderers to be sure

@@ -45,6 +45,10 @@ uniform float groundShadowDensity;
 	uniform sampler2D detailNormalTex;
 #endif
 
+#if (SMF_LIGHT_EMISSION == 1)
+	uniform sampler2D lightEmissionTex;
+#endif
+
 uniform vec3 cameraPos;
 varying vec3 halfDir;
 
@@ -122,6 +126,10 @@ void main() {
 		detailCol.a = 1.0;
 	#endif
 
+	#if (SMF_LIGHT_EMISSION == 1)
+	vec4 lightEmissionCol = texture2D(lightEmissionTex, specularTexCoords);
+	#endif
+
 
 	#if (SMF_SKY_REFLECTIONS == 1)
 		vec3 reflectDir = reflect(cameraDir, normal); //cameraDir doesn't need to be normalized for reflect()
@@ -183,6 +191,10 @@ void main() {
 
 
 	gl_FragColor = (diffuseCol + detailCol) * shadeInt;
+
+	#if (SMF_LIGHT_EMISSION == 1)
+		gl_FragColor.rgb = (gl_FragColor.rgb * (1.0 - lightEmissionCol.a)) + lightEmissionCol.rgb;
+	#endif
 
 	#if (SMF_ARB_LIGHTING == 0)
 		// no need to multiply by groundSpecularColor anymore

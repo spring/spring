@@ -12,10 +12,12 @@
 
 #ifdef USE_GML
 
+#include "StdAfx.h"
 #include <boost/thread/thread.hpp>
 #include <boost/thread/barrier.hpp>
 #include <boost/bind.hpp>
 #include "System/Platform/errorhandler.h"
+#include "System/Platform/Watchdog.h"
 #include "lib/streflop/streflop_cond.h"
 #if !defined(_MSC_VER) && defined(_WIN32)
 #	include <windows.h>
@@ -431,16 +433,12 @@ public:
 
 		qd->ReleaseWrite();
 
-		++AuxClientsReady;	
+		++AuxClientsReady;
 		auxworker=NULL;
 	}
 
 	void gmlClientAux() {
-#ifdef _WIN32
-		extern HANDLE simthread; // from System/Platform/Win/CrashHandler.cpp
-		DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(),
-						&simthread, 0, TRUE, DUPLICATE_SAME_ACCESS);
-#endif
+		Watchdog::RegisterThread("sim");
 		set_threadnum(GML_SIM_THREAD_NUM);
 		streflop_init<streflop::Simple>();
 		while(dorun) {

@@ -9,6 +9,11 @@
 
 class CMoveMath {
 	CR_DECLARE(CMoveMath);
+	
+protected:
+	virtual float SpeedMod(const MoveData& moveData, float height, float slope) const = 0;
+	virtual float SpeedMod(const MoveData& moveData, float height, float slope, float moveSlope) const = 0;
+	
 public:
 	// Block-check-options
 	const static int BLOCK_MOVING = 1;
@@ -17,12 +22,16 @@ public:
 	const static int BLOCK_STRUCTURE = 8;
 
 	// returns a speed-multiplier for given position or data
-	float SpeedMod(const MoveData& moveData, const float3& pos) const;
-	float SpeedMod(const MoveData& moveData, const float3& pos, const float3& moveDir) const;
-	float SpeedMod(const MoveData& moveData, int xSquare, int zSquare) const;
-	float SpeedMod(const MoveData& moveData, int xSquare, int zSquare, const float3& moveDir) const;
-	virtual float SpeedMod(const MoveData& moveData, float height, float slope) const = 0;
-	virtual float SpeedMod(const MoveData& moveData, float height, float slope, float moveSlope) const = 0;
+	float GetPosSpeedMod(const MoveData& moveData, int xSquare, int zSquare) const;
+	float GetPosSpeedMod(const MoveData& moveData, int xSquare, int zSquare, const float3& moveDir) const;
+	float GetPosSpeedMod(const MoveData& moveData, const float3& pos) const
+	{
+		return GetPosSpeedMod(moveData, pos.x / SQUARE_SIZE, pos.z / SQUARE_SIZE);
+	}
+	float GetPosSpeedMod(const MoveData& moveData, const float3& pos, const float3& moveDir) const
+	{
+		return GetPosSpeedMod(moveData, pos.x / SQUARE_SIZE, pos.z / SQUARE_SIZE, moveDir);
+	}
 
 	// tells whether a position is blocked (inaccessable for a given object's movedata)
 	int IsBlocked(const MoveData& moveData, const float3& pos) const;

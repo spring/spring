@@ -5,9 +5,8 @@ REMOVE_DEFINITIONS(-DNO_SOUND)
 # Dummy Sound implementaiton
 SET(noSoundSources
 		IAudioChannel
-		IEffectChannel
-		IMusicChannel
 		ISound
+		SoundChannels
 		NullSound
 		SoundLog
 	)
@@ -29,8 +28,10 @@ if    (NOT NO_SOUND)
 	SET(soundSources
 			${noSoundSources}
 			ALShared
-			EffectChannel
-			MusicChannel
+			EFX
+			EFXfuncs
+			EFXPresets
+			AudioChannel
 			OggStream
 			Sound
 			SoundBuffer
@@ -45,6 +46,9 @@ if    (NOT NO_SOUND)
 
 	FIND_PACKAGE(SDL REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
+
+	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/)
+	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/AL)
 
 	ADD_LIBRARY(sound STATIC EXCLUDE_FROM_ALL ${soundSources})
 	TARGET_LINK_LIBRARIES(sound ${OPENAL_LIBRARY} ${OGG_LIBRARY} ${VORBISFILE_LIBRARY} ${VORBIS_LIBRARY} ${SDL_LIBRARY})

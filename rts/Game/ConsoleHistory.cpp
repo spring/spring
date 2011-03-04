@@ -101,7 +101,7 @@ std::string CConsoleHistory::NextLine(const std::string& current)
 		}
 	}
 
-	pos++;
+	++pos;
 
 	if (pos == lines.end()) {
 		return prefix;
@@ -138,7 +138,7 @@ std::string CConsoleHistory::PrevLine(const std::string& current)
 		}
 	}
 
-	pos--;
+	--pos;
 
 	return prefix + *pos;
 }
