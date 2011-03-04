@@ -300,6 +300,7 @@ void CMapInfo::ReadSmf()
 
 	smf.skyReflectModTexName = mapResTable.GetString("skyReflectModTex", "");
 	smf.detailNormalTexName = mapResTable.GetString("detailNormalTex", "");
+	smf.lightEmissionTexName = mapResTable.GetString("lightEmissionTex", "");
 
 	if (!smf.detailTexName.empty()) {
 		smf.detailTexName = "maps/" + smf.detailTexName;
@@ -316,6 +317,7 @@ void CMapInfo::ReadSmf()
 	if (!smf.grassShadingTexName.empty()) { smf.grassShadingTexName = "maps/" + smf.grassShadingTexName; }
 	if (!smf.skyReflectModTexName.empty()) { smf.skyReflectModTexName = "maps/" + smf.skyReflectModTexName; }
 	if (!smf.detailNormalTexName.empty()) { smf.detailNormalTexName = "maps/" + smf.detailNormalTexName; }
+	if (!smf.lightEmissionTexName.empty()) { smf.lightEmissionTexName = "maps/" + smf.lightEmissionTexName; }
 
 	// height overrides
 	const LuaTable smfTable = parser->GetRoot().SubTable("smf");

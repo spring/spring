@@ -11,6 +11,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "System/creg/STL_List.h"
+#include "lib/gml/gml.h"
 
 CR_BIND(CQuadField, );
 CR_REG_METADATA(CQuadField, (
@@ -42,10 +43,10 @@ void CQuadField::Serialize(creg::ISerializer& s)
 CR_BIND(CQuadField::Quad, );
 
 CR_REG_METADATA_SUB(CQuadField, Quad, (
-		CR_MEMBER(units),
-		CR_MEMBER(teamUnits),
-		CR_MEMBER(features)
-		));
+	CR_MEMBER(units),
+	CR_MEMBER(teamUnits),
+	CR_MEMBER(features)
+));
 
 
 //////////////////////////////////////////////////////////////////////

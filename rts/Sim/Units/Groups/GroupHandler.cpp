@@ -17,6 +17,7 @@
 #include "System/TimeProfiler.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/FileSystem.h"
+#include "lib/gml/gml.h"
 
 std::vector<CGroupHandler*> grouphandlers;
 
