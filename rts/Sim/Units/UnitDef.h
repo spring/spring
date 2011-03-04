@@ -98,6 +98,8 @@ public:
 			if (IsBomberUnit()) { return "Bomber"; }
 			return "Aircraft";
 		}
+
+		return "Unknown";
 	}
 
 	std::string name;
