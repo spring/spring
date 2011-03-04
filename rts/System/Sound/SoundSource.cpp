@@ -25,8 +25,8 @@ float CSoundSource::globalPitch = 1.0;
 float CSoundSource::heightRolloffModifier = 1.0f;
 
 
+CSoundSource::CSoundSource() : curPlaying(NULL), curStream(NULL), curVolume(1.f), loopStop(1e9), in3D(false), efxEnabled(false), curHeightRolloffModifier(1)
 
-CSoundSource::CSoundSource() : curPlaying(NULL), curStream(NULL), loopStop(1e9), in3D(false), efxEnabled(false), curHeightRolloffModifier(1)
 {
 	alGenSources(1, &id);
 	if (!CheckError("CSoundSource::CSoundSource"))
@@ -129,6 +129,7 @@ void CSoundSource::Play(SoundItem* item, float3 pos, float3 velocity, float volu
 	if (!item->PlayNow())
 		return;
 	Stop();
+	curVolume = volume;
 	curPlaying = item;
 	alSourcei(id, AL_BUFFER, item->buffer->GetId());
 	alSourcef(id, AL_GAIN, item->GetGain() * volume);

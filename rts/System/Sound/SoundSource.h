@@ -65,6 +65,7 @@ private:
 	SoundItem* curPlaying;
 	COggStream* curStream;
 	boost::mutex streamMutex;
+	float curVolume;
 	unsigned loopStop;
 	bool in3D;
 	bool efxEnabled;
