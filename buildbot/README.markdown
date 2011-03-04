@@ -73,8 +73,8 @@ Then recompile the runtime libraries against the new compiler:
 	apt-get source mingw32-runtime
 	cd mingw32-runtime-3.15.2
 	dpkg-buildpackage -rfakeroot -b
-   cd ..
-   dpkg -i mingw32-runtime*.deb
+	cd ..
+	dpkg -i mingw32-runtime*.deb
 	echo "mingw32-runtime hold"|dpkg --set-selections
 
 Optionally, remove build dependencies (check what apt-get build-dep installed!):
