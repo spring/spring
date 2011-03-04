@@ -24,23 +24,7 @@ float CSoundSource::referenceDistance = 200.0f;
 float CSoundSource::globalPitch = 1.0;
 float CSoundSource::heightRolloffModifier = 1.0f;
 
-struct CSoundSource::StreamControl
-{
-	StreamControl(ALuint id) : stream(id), current(NULL), next(NULL), stopRequest(false) {};
-	COggStream stream;
 
-	struct TrackItem
-	{
-		std::string file;
-		float volume;
-		bool enqueue;
-	};
-
-	TrackItem* current;
-	TrackItem* next;
-
-	bool stopRequest;
-};
 
 CSoundSource::CSoundSource() : curPlaying(NULL), curStream(NULL), loopStop(1e9), in3D(false), efxEnabled(false), curHeightRolloffModifier(1)
 {
@@ -84,44 +68,11 @@ void CSoundSource::Update()
 	if (curStream)
 	{
 		boost::mutex::scoped_lock lock(streamMutex);
-		if (curStream->stopRequest)
-		{
+		if (curStream->IsFinished()) {
 			Stop();
-			delete curStream->current;
-			delete curStream->next;
-			delete curStream;
-			curStream = NULL;
-			CheckError("CSoundSource::Update()");
 		}
-		else
-		{
-			bool finished = curStream->stream.Valid() ? curStream->stream.GetPlayTime() >= curStream->stream.GetTotalTime() : true;
-			if (curStream->next != NULL && (finished ||  !curStream->next->enqueue))
-			{
-				Stop();
-				// COggStreams only appends buffers, giving errors when a buffer of another format is still assigned
-				alSourcei(id, AL_BUFFER, AL_NONE);
-				curStream->stream.Stop();
-				delete curStream->current;
-				curStream->current = curStream->next;
-				curStream->next = NULL;
-
-				in3D = false;
-				if (efxEnabled) {
-					alSource3i(id, AL_AUXILIARY_SEND_FILTER, AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
-					alSourcei(id, AL_DIRECT_FILTER, AL_FILTER_NULL);
-					efxEnabled = false;
-				}
-
-				alSource3f(id, AL_POSITION,       0.0f, 0.0f, -1.0f * CSound::GetElmoInMeters()); // in case of mono streams
-				alSourcef(id, AL_GAIN,            curStream->current->volume);
-				alSource3f(id, AL_VELOCITY,       0.0f,  0.0f,  0.0f);
-				alSource3f(id, AL_DIRECTION,      0.0f,  0.0f,  0.0f);
-				alSourcef(id, AL_ROLLOFF_FACTOR,  0.0f);
-				alSourcei(id, AL_SOURCE_RELATIVE, AL_TRUE);
-				curStream->stream.Play(curStream->current->file, curStream->current->volume);
-			}
-			curStream->stream.Update();
+		else {
+			curStream->Update();
 			CheckError("CSoundSource::Update");
 		}
 	}
@@ -163,6 +114,11 @@ void CSoundSource::Stop()
 	{
 		curPlaying->StopPlay();
 		curPlaying = NULL;
+	}
+	if (curStream) {
+		boost::mutex::scoped_lock lock(streamMutex);
+		delete curStream;
+		curStream = NULL;
 	}
 	CheckError("CSoundSource::Stop");
 }
@@ -239,85 +195,81 @@ void CSoundSource::Play(SoundItem* item, float3 pos, float3 velocity, float volu
 void CSoundSource::PlayStream(const std::string& file, float volume, bool enqueue)
 {
 	boost::mutex::scoped_lock lock(streamMutex);
-	if (!curStream)
-	{
-		StreamControl* temp = new StreamControl(id);
-		curStream = temp;
-	}
 
-	delete curStream->next;
-	curStream->next = new StreamControl::TrackItem;
-	curStream->next->file = file;
-	curStream->next->volume = volume;
-	curStream->next->enqueue = enqueue;
+	//! stop any current playback
+	Stop();
+
+	if (!curStream)
+		curStream = new COggStream(id);
+
+	bool finished = curStream->IsFinished();
+
+	//! setup OpenAL params
+	curVolume = volume;
+	in3D = false;
+	if (efxEnabled) {
+		alSource3i(id, AL_AUXILIARY_SEND_FILTER, AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
+		alSourcei(id, AL_DIRECT_FILTER, AL_FILTER_NULL);
+		efxEnabled = false;
+	}
+	alSource3f(id, AL_POSITION,       0.0f, 0.0f, 0.0f);
+	alSourcef(id, AL_GAIN,            volume);
+	alSource3f(id, AL_VELOCITY,       0.0f,  0.0f,  0.0f);
+	alSource3f(id, AL_DIRECTION,      0.0f,  0.0f,  0.0f);
+	alSourcef(id, AL_ROLLOFF_FACTOR,  0.0f);
+	alSourcei(id, AL_SOURCE_RELATIVE, AL_TRUE);
+
+	//! COggStreams only appends buffers, giving errors when a buffer of another format is still assigned
+	alSourcei(id, AL_BUFFER, AL_NONE);
+	curStream->Play(file, volume);
+	curStream->Update();
+	CheckError("CSoundSource::Update");
 }
 
 void CSoundSource::StreamStop()
 {
-	if (curStream)
-	{
-		boost::mutex::scoped_lock lock(streamMutex);
-		if (curStream->current)
-		{
-			curStream->stopRequest = true;
-		}
-	}
-	else
-		assert(false);
+	if (!curStream)
+		return;
+
+	Stop();
 }
 
 void CSoundSource::StreamPause()
 {
-	if (curStream)
-	{
-		boost::mutex::scoped_lock lock(streamMutex);
-		if (curStream->current)
-		{
-			if (curStream->stream.TogglePause())
-				alSourcePause(id);
-			else
-				alSourcePlay(id);
-		}
-	}
+	if (!curStream)
+		return;
+
+	boost::mutex::scoped_lock lock(streamMutex);
+	if (curStream->TogglePause())
+		alSourcePause(id);
 	else
-		assert(false);
+		alSourcePlay(id);
 }
 
 float CSoundSource::GetStreamTime()
 {
-	if (curStream)
-	{
-		boost::mutex::scoped_lock lock(streamMutex);
-		if (curStream->current)
-			return curStream->stream.GetTotalTime();
-		else
-			return 0;
-	}
-	assert(false);
-	return 0;
+	if (!curStream)
+		return 0;
+
+	boost::mutex::scoped_lock lock(streamMutex);
+	return curStream->GetTotalTime();
 }
 
 float CSoundSource::GetStreamPlayTime()
 {
-	if (curStream)
-	{
-		boost::mutex::scoped_lock lock(streamMutex);
-		if (curStream->current)
-			return curStream->stream.GetPlayTime();
-		else
-			return 0;
-	}
-	assert(false);
-	return 0;
+	if (!curStream)
+		return 0;
+
+	boost::mutex::scoped_lock lock(streamMutex);
+	return curStream->GetPlayTime();
 }
 
 void CSoundSource::SetVolume(float newVol)
 {
-	if (curStream && curStream->current)
-	{
-		alSourcef(id, AL_GAIN, newVol * curStream->current->volume);
+	if (curStream) {
+		alSourcef(id, AL_GAIN, curVolume * newVol);
 	}
 	else if (curPlaying) {
-		alSourcef(id, AL_GAIN, newVol * curPlaying->GetGain());
+		alSourcef(id, AL_GAIN, curVolume * curPlaying->GetGain() * newVol);
 	}
 }

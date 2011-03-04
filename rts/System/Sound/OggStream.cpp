@@ -68,9 +68,7 @@ COggStream::COggStream(ALuint _source)
 
 COggStream::~COggStream()
 {
-	if (!stopped) {
-		ReleaseBuffers();
-	}
+	Stop();
 }
 
 // open an Ogg stream from a given file and start playing it
@@ -139,14 +137,19 @@ float COggStream::GetTotalTime()
 	return ov_time_total(&oggStream, -1);
 }
 
-const COggStream::TagVector& COggStream::VorbisTags() const
-{
-	return vorbisTags;
-}
-
 bool COggStream::Valid() const
 {
 	return (vorbisInfo != 0);
+}
+
+bool COggStream::IsFinished()
+{
+	return !Valid() || (GetPlayTime() >= GetTotalTime());
+}
+
+const COggStream::TagVector& COggStream::VorbisTags() const
+{
+	return vorbisTags;
 }
 
 // display Ogg info and comments

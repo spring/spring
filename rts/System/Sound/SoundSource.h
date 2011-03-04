@@ -11,6 +11,7 @@
 
 class float3;
 class SoundItem;
+class COggStream;
 
 /**
  * @brief One soundsource wich can play some sounds
@@ -59,11 +60,10 @@ private:
 
 	//! reduce the rolloff when the camera is height above the ground (so we still hear something in tab mode or far zoom)
 	static float heightRolloffModifier;
-
+	
 	ALuint id;
 	SoundItem* curPlaying;
-	struct StreamControl;
-	StreamControl* curStream;
+	COggStream* curStream;
 	boost::mutex streamMutex;
 	unsigned loopStop;
 	bool in3D;
