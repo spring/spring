@@ -3,15 +3,14 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
+#include "lib/gml/gml.h"
 #include "QuadField.h"
-
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "System/creg/STL_List.h"
-#include "lib/gml/gml.h"
 
 CR_BIND(CQuadField, );
 CR_REG_METADATA(CQuadField, (
