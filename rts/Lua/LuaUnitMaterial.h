@@ -5,7 +5,10 @@
 
 // NOTE: some implementation is done in LuaMaterial.cpp
 
-#include "Rendering/GL/myGL.h"
+typedef            int   GLint;
+typedef unsigned   int  GLuint;
+typedef          float GLfloat;
+typedef unsigned   int  GLenum;
 
 #include <vector>
 using std::vector;
