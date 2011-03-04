@@ -39,7 +39,7 @@ int	VorbisClose(void* datasource)
 SoundBuffer::bufferMapT SoundBuffer::bufferMap; // filename, index into Buffers
 SoundBuffer::bufferVecT SoundBuffer::buffers;
 
-SoundBuffer::SoundBuffer() : id(0)
+SoundBuffer::SoundBuffer() : id(0), channels(0)
 {
 }
 
@@ -146,6 +146,10 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<boost::uint8_t> b
 
 	if (!AlGenBuffer(file, format, &buffer[sizeof(WAVHeader)], header->datalen, header->SamplesPerSec))
 		LogObject(LOG_SOUND) << "Loading audio failed for " << file;
+
+	filename = file;
+	channels = header->channels;
+
 	return true;
 }
 
@@ -218,6 +222,8 @@ bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<boost::uint8_t
 	} while (read > 0); // read == 0 indicated EOF, read < 0 is error
 
 	AlGenBuffer(file, format, &decodeBuffer[0], pos, vorbisInfo->rate);
+	filename = file;
+	channels = vorbisInfo->channels;
 	return true;
 }
 
@@ -277,7 +283,6 @@ size_t SoundBuffer::Insert(boost::shared_ptr<SoundBuffer> buffer)
 bool SoundBuffer::AlGenBuffer(const std::string& file, ALenum format, const boost::uint8_t* data, size_t datalength, int rate)
 {
 	alGenBuffers(1, &id);
-	filename = file;
 	alBufferData(id, format, (ALvoid*) data, datalength, rate);
 	return CheckError("SoundBuffer::AlGenBuffer");
 }

@@ -38,6 +38,11 @@ public:
 	{
 		return id;
 	};
+
+	ALuint GetChannels() const
+	{
+		return channels;
+	};
 	
 	int BufferSize() const;
 	
@@ -56,6 +61,7 @@ private:
 
 	std::string filename;
 	ALuint id;
+	ALuint channels;
 	
 	typedef std::map<std::string, size_t> bufferMapT;
 	typedef std::vector< boost::shared_ptr<SoundBuffer> > bufferVecT;
