@@ -29,7 +29,7 @@
 #include "System/EventHandler.h"
 #include "System/GlobalUnsynced.h"
 #include "System/myMath.h"
-
+#include "System/Util.h"
 
 #define DRAW_QUAD_SIZE 32
 
@@ -223,9 +223,6 @@ void CFeatureDrawer::Draw()
 
 void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 {
-	typedef std::set<CFeature*> FeatureSet;
-	typedef std::map<int, FeatureSet> FeatureRenderBin;
-
 	FeatureRenderBin& featureBin = opaqueModelRenderers[modelType]->GetFeatureBinMutable();
 
 	FeatureRenderBin::iterator featureBinIt;
@@ -239,11 +236,8 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 		FeatureSet& featureSet = featureBinIt->second;
 
 		for (featureSetIt = featureSet.begin(); featureSetIt != featureSet.end(); ) {
-			FeatureSet::iterator featureSetItNext(featureSetIt); ++featureSetItNext;
-
-			if (!DrawFeatureNow(*featureSetIt)) {
-				featureSet.erase(*featureSetIt);
-				featureSetIt = featureSetItNext;
+			if (!DrawFeatureNow(featureSetIt->feature)) {
+				featureSetIt = set_erase(featureSet, featureSetIt);
 			} else {
 				++featureSetIt;
 			}
@@ -301,7 +295,7 @@ void CFeatureDrawer::DrawFeatureStatBars(const CFeature* feature)
 }
 #endif
 
-bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature)
+bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 {
 	if (!camera->InView(feature->pos, feature->drawRadius)) { return false; }
 	if (!feature->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) { return false; }
@@ -309,7 +303,7 @@ bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature)
 	glPushMatrix();
 	glMultMatrixf(feature->transMatrix.m);
 
-	unitDrawer->SetTeamColour(feature->team, feature->tempalpha);
+	unitDrawer->SetTeamColour(feature->team, alpha);
 
 	if (!(feature->luaDraw && luaRules && luaRules->DrawFeature(feature->id))) {
 		feature->model->DrawStatic();
@@ -374,10 +368,6 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 
 void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType) {
 	{
-		typedef std::set<CFeature*> FeatureSet;
-		typedef std::map<int, FeatureSet> FeatureRenderBin;
-		typedef std::map<int, FeatureSet>::iterator FeatureRenderBinIt;
-
 		FeatureRenderBin& featureBin = cloakedModelRenderers[modelType]->GetFeatureBinMutable();
 
 		for (FeatureRenderBinIt it = featureBin.begin(); it != featureBin.end(); ++it) {
@@ -390,26 +380,23 @@ void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType) {
 	}
 }
 
-void CFeatureDrawer::DrawFadeFeaturesSet(std::set<CFeature*>& fadeFeatures, int modelType)
+void CFeatureDrawer::DrawFadeFeaturesSet(FeatureSet& fadeFeatures, int modelType)
 {
-	for (std::set<CFeature*>::const_iterator fi = fadeFeatures.begin(); fi != fadeFeatures.end(); ) {
-		std::set<CFeature*>::const_iterator fiNext(fi); fiNext++;
-
-		const float cols[] = {1.0f, 1.0f, 1.0f, (*fi)->tempalpha};
+	for (FeatureSet::iterator fi = fadeFeatures.begin(); fi != fadeFeatures.end(); ) {
+		const float cols[] = {1.0f, 1.0f, 1.0f, fi->alpha};
 
 		if (modelType == MODELTYPE_S3O) {
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, cols);
 		}
 
 		// hack, sorting objects by distance would look better
-		glAlphaFunc(GL_GREATER, (*fi)->tempalpha / 2.0f);
+		glAlphaFunc(GL_GREATER, fi->alpha / 2.0f);
 		glColor4fv(cols);
 
-		if (!DrawFeatureNow(*fi)) {
-			fadeFeatures.erase(*fi);
-			fi = fiNext;
+		if (!DrawFeatureNow(fi->feature, fi->alpha)) {
+			fi = set_erase(fadeFeatures, fi);
 		} else {
-			fi++;
+			++fi;
 		}
 	}
 }
@@ -532,13 +519,12 @@ public:
 					}
 
 					if (sqDist < sqFadeDistB) {
-						f->tempalpha = 0.99f;
 						cloakedModelRenderers[MDL_TYPE(f)]->DelFeature(f);
 						opaqueModelRenderers[MDL_TYPE(f)]->AddFeature(f);
 					} else if (sqDist < sqFadeDistE) {
-						f->tempalpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
+						const float falpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
 						opaqueModelRenderers[MDL_TYPE(f)]->DelFeature(f);
-						cloakedModelRenderers[MDL_TYPE(f)]->AddFeature(f);
+						cloakedModelRenderers[MDL_TYPE(f)]->AddFeature(f, falpha);
 					}
 				} else {
 					if (farFeatures) {
@@ -577,7 +563,14 @@ void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 	readmap->GridVisibility(camera, DRAW_QUAD_SIZE, featureDist, &drawer, extraSize);
 }
 
+void CFeatureDrawer::SwapFeatures() {
+	GML_RECMUTEX_LOCK(feat); // SwapFeatures
 
+	for(int i = 0; i < MODELTYPE_OTHER; ++i) {
+		opaqueModelRenderers[i]->SwapFeatures();
+		cloakedModelRenderers[i]->SwapFeatures();
+	}
+}
 
 void CFeatureDrawer::PostLoad()
 {
