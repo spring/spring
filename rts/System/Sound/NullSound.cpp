@@ -40,9 +40,6 @@ bool NullSound::IsMuted() const {
 void NullSound::Iconified(bool state) {
 }
 
-void NullSound::PlaySample(size_t id, const float3& p, const float3& velocity, float volume, bool relative) {
-}
-
 void NullSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime) {
 }
 

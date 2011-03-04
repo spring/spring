@@ -9,6 +9,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/thread/mutex.hpp>
 
+class IAudioChannel;
 class float3;
 class SoundItem;
 class COggStream;
@@ -28,7 +29,7 @@ public:
 
 	void Update();
 
-	void SetVolume(float newVol);
+	void UpdateVolume();
 	bool IsValid() const { return (id != 0); };
 
 	int GetCurrentPriority() const;
@@ -36,8 +37,8 @@ public:
 	void Stop();
 
 	/// will stop a currently playing sound, if any
-	void Play(SoundItem* buffer, float3 pos, float3 velocity, float volume, bool relative = false);
-	void PlayStream(const std::string& stream, float volume, bool enqueue);
+	void Play(IAudioChannel* channel, SoundItem* buffer, float3 pos, float3 velocity, float volume, bool relative = false);
+	void PlayStream(IAudioChannel* channel, const std::string& stream, float volume);
 	void StreamStop();
 	void StreamPause();
 	float GetStreamTime();
@@ -63,6 +64,7 @@ private:
 	
 	ALuint id;
 	SoundItem* curPlaying;
+	IAudioChannel* curChannel;
 	COggStream* curStream;
 	boost::mutex streamMutex;
 	float curVolume;

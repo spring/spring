@@ -51,11 +51,6 @@ public:
 
 	virtual void PrintDebugInfo() = 0;
 	virtual bool LoadSoundDefs(const std::string& fileName) = 0;
-
-private:
-	friend class EffectChannel;
-	// this is used by EffectChannel in AudioChannel.cpp
-	virtual void PlaySample(size_t id, const float3 &p, const float3& velocity, float volume, bool relative) = 0;
 };
 
 #define sound ISound::GetInstance()

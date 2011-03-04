@@ -10,27 +10,7 @@
 
 class IMusicChannel : public IAudioChannel {
 public:
-	virtual void SetVolume(float volume) = 0;
-	virtual void Enable(bool newState) = 0;
 
-	/**
-	 * @brief Start playing an ogg-file
-	 * 
-	 * NOT threadsafe, unlike the other functions!
-	 * If another file is playing, it will stop it and play the new one instead.
-	 */
-	virtual void Play(const std::string& path, float volume = 1.0f, bool enqueue = false) = 0;
-
-	virtual void Pause() = 0;
-
-	/**
-	 * @brief Stop playback
-	 * 
-	 * Don't call this if you just want to play another file (for performance).
-	 */
-	virtual void Stop() = 0;
-	virtual float GetTime() = 0;
-	virtual float GetPlayTime() = 0;
 };
 
 #endif // I_MUSIC_CHANNEL_H

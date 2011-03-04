@@ -9,10 +9,6 @@
 
 class NullMusicChannel : public IMusicChannel {
 public:
-
-	virtual void SetVolume(float volume) {}
-	virtual void Enable(bool newState) {}
-
 	/**
 	 * @brief Start playing an ogg-file
 	 * 

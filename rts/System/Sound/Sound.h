@@ -65,10 +65,6 @@ private:
 
 	size_t MakeItemFromDef(const soundItemDef& itemDef);
 
-	// this is used by EffectChannel in AudioChannel.cpp
-	virtual void PlaySample(size_t id, const float3 &p, const float3& velocity, float volume, bool relative);
-	friend class EffectChannel;
-
 	size_t LoadSoundBuffer(const std::string& filename, bool hardFail);
 
 private:

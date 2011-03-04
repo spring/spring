@@ -10,47 +10,47 @@ EffectChannel::EffectChannel()
 {
 }
 
-void EffectChannel::PlaySample(size_t id, float ovolume)
+void EffectChannel::PlaySample(size_t id, float volume)
 {
-	if (enabled && emmitsThisFrame < emmitsPerFrame)
+	if (emmitsThisFrame < emmitsPerFrame)
 	{
 		emmitsThisFrame++;
-		sound->PlaySample(id, float3(0.0, 0.0, -1.0), ZeroVector, volume * ovolume, true);
+		FindSourceAndPlay(id, float3(0.0, 0.0, -1.0), ZeroVector, volume, true);
 	}
 }
 
-void EffectChannel::PlaySample(size_t id, const float3& p, float ovolume)
+void EffectChannel::PlaySample(size_t id, const float3& p, float volume)
 {
-	if (enabled && emmitsThisFrame < emmitsPerFrame)
+	if (emmitsThisFrame < emmitsPerFrame)
 	{
 		emmitsThisFrame++;
-		sound->PlaySample(id, p, ZeroVector, volume * ovolume, false);
+		FindSourceAndPlay(id, p, ZeroVector, volume, false);
 	}
 }
 
-void EffectChannel::PlaySample(size_t id, const float3& p, const float3& velocity, float ovolume)
+void EffectChannel::PlaySample(size_t id, const float3& p, const float3& velocity, float volume)
 {
-	if (enabled && emmitsThisFrame < emmitsPerFrame)
+	if (emmitsThisFrame < emmitsPerFrame)
 	{
 		emmitsThisFrame++;
-		sound->PlaySample(id, p, velocity, volume * ovolume, false);
+		FindSourceAndPlay(id, p, velocity, volume, false);
 	}
 }
 
-void EffectChannel::PlaySample(size_t id, const CUnit* u,float ovolume)
+void EffectChannel::PlaySample(size_t id, const CUnit* u, float volume)
 {
-	if (enabled && emmitsThisFrame < emmitsPerFrame)
+	if (emmitsThisFrame < emmitsPerFrame)
 	{
 		emmitsThisFrame++;
-		sound->PlaySample(id, u->pos, u->speed, volume * ovolume, false);
+		FindSourceAndPlay(id, u->pos, u->speed, volume, false);
 	}
 }
 
-void EffectChannel::PlaySample(size_t id, const CWorldObject* p,float ovolume)
+void EffectChannel::PlaySample(size_t id, const CWorldObject* p, float volume)
 {
-	if (enabled && emmitsThisFrame < emmitsPerFrame)
+	if (emmitsThisFrame < emmitsPerFrame)
 	{
 		emmitsThisFrame++;
-		sound->PlaySample(id, p->pos, ZeroVector, volume * ovolume, false);
+		FindSourceAndPlay(id, p->pos, ZeroVector, volume, false);
 	}
 } 

@@ -6,12 +6,13 @@
 #include <alc.h>
 #include <SDL_timer.h>
 
+#include "ALShared.h"
+#include "EFX.h"
+#include "IAudioChannel.h"
+#include "OggStream.h"
 #include "SoundLog.h"
 #include "SoundBuffer.h"
 #include "SoundItem.h"
-#include "OggStream.h"
-#include "ALShared.h"
-#include "EFX.h"
 
 #include "Sound.h" //remove when unified ElmoInMeters
 
@@ -25,8 +26,8 @@ float CSoundSource::globalPitch = 1.0;
 float CSoundSource::heightRolloffModifier = 1.0f;
 
 
-CSoundSource::CSoundSource() : curPlaying(NULL), curStream(NULL), curVolume(1.f), loopStop(1e9), in3D(false), efxEnabled(false), curHeightRolloffModifier(1)
 
+CSoundSource::CSoundSource() : curPlaying(NULL), curChannel(NULL), curStream(NULL), curVolume(1.f), loopStop(1e9), in3D(false), efxEnabled(false), curHeightRolloffModifier(1)
 {
 	alGenSources(1, &id);
 	if (!CheckError("CSoundSource::CSoundSource")) {
@@ -113,19 +114,25 @@ void CSoundSource::Stop()
 		delete curStream;
 		curStream = NULL;
 	}
+	if (curChannel) {
+		curChannel->SoundSourceFinished(this);
+		curChannel = NULL;
+	}
 	CheckError("CSoundSource::Stop");
 }
 
-void CSoundSource::Play(SoundItem* item, float3 pos, float3 velocity, float volume, bool relative)
+void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, float3 velocity, float volume, bool relative)
 {
 	assert(!curStream);
+	assert(channel);
 	if (!item->PlayNow())
 		return;
 	Stop();
 	curVolume = volume;
 	curPlaying = item;
+	curChannel = channel;
 	alSourcei(id, AL_BUFFER, item->buffer->GetId());
-	alSourcef(id, AL_GAIN, item->GetGain() * volume);
+	alSourcef(id, AL_GAIN, volume * item->GetGain() * channel->volume);
 	alSourcef(id, AL_PITCH, item->GetPitch() * globalPitch);
 	velocity *= item->dopplerScale * CSound::GetElmoInMeters();
 	alSource3f(id, AL_VELOCITY, velocity.x, velocity.y, velocity.z);
@@ -160,7 +167,7 @@ void CSoundSource::Play(SoundItem* item, float3 pos, float3 velocity, float volu
 #ifdef __APPLE__
 		alSourcef(id, AL_MAX_DISTANCE, 1000000.0f);
 		//! Max distance is too small by default on my Mac...
-		ALfloat gain = item->GetGain() * volume;
+		ALfloat gain = channel->volume * item->GetGain() * volume;
 		if (gain > 1.0f) {
 			//! OpenAL on Mac cannot handle AL_GAIN > 1 well, so we will adjust settings to get the same output with AL_GAIN = 1.
 			ALint model = alGetInteger(AL_DISTANCE_MODEL);
@@ -183,7 +190,7 @@ void CSoundSource::Play(SoundItem* item, float3 pos, float3 velocity, float volu
 	CheckError("CSoundSource::Play");
 }
 
-void CSoundSource::PlayStream(const std::string& file, float volume, bool enqueue)
+void CSoundSource::PlayStream(IAudioChannel* channel, const std::string& file, float volume)
 {
 	boost::mutex::scoped_lock lock(streamMutex);
 
@@ -196,6 +203,7 @@ void CSoundSource::PlayStream(const std::string& file, float volume, bool enqueu
 	bool finished = curStream->IsFinished();
 
 	//! setup OpenAL params
+	curChannel = channel;
 	curVolume = volume;
 	in3D = false;
 	if (efxEnabled) {
@@ -255,12 +263,12 @@ float CSoundSource::GetStreamPlayTime()
 	return curStream->GetPlayTime();
 }
 
-void CSoundSource::SetVolume(float newVol)
+void CSoundSource::UpdateVolume()
 {
 	if (curStream) {
-		alSourcef(id, AL_GAIN, curVolume * newVol);
+		alSourcef(id, AL_GAIN, curVolume * curChannel->volume);
 	}
 	else if (curPlaying) {
-		alSourcef(id, AL_GAIN, curVolume * curPlaying->GetGain() * newVol);
+		alSourcef(id, AL_GAIN, curVolume * curPlaying->GetGain() * curChannel->volume);
 	}
 }
