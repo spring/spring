@@ -8,12 +8,15 @@
 #include <set>
 #include <string>
 #include <map>
+#include <vector>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 
 #include "float3.h"
+
+#include "SoundItem.h"
 
 class CSoundSource;
 class SoundBuffer;
@@ -29,6 +32,7 @@ public:
 
 	virtual bool HasSoundItem(const std::string& name);
 	virtual size_t GetSoundId(const std::string& name, bool hardFail = true);
+	SoundItem* GetSoundItem(size_t id) const;
 
 	virtual CSoundSource* GetNextBestSource(bool lock = true);
 
@@ -75,7 +79,7 @@ private:
 	bool pitchAdjust;
 
 	typedef std::map<std::string, size_t> soundMapT;
-	typedef boost::ptr_vector<SoundItem> soundVecT;
+	typedef std::vector<SoundItem*> soundVecT;
 	soundMapT soundMap;
 	soundVecT sounds;
 
