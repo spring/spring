@@ -195,6 +195,9 @@ void CSoundSource::Play(SoundItem* item, float3 pos, float3 velocity, float volu
 	}
 	else
 	{
+		if (item->buffer->GetChannels() > 1)
+			LogObject(LOG_SOUND) << "Can't play non-mono \"" << item->buffer->GetFilename() << "\" in 3d.";
+
 		in3D = true;
 		if (efx->enabled) {
 			efxEnabled = true;
