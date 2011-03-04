@@ -264,38 +264,6 @@ void CSound::Iconified(bool state)
 	appIsIconified = state;
 }
 
-void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, float volume, bool relative)
-{
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
-
-	if (sources.empty() || volume == 0.0f)
-		return;
-
-	if (id == 0)
-	{
-		numEmptyPlayRequests++;
-		return;
-	}
-
-	if (p.distance(myPos) > sounds[id].MaxDistance())
-	{
-		if (!relative)
-			return;
-		else
-			LogObject(LOG_SOUND) << "CSound::PlaySample: maxdist ignored for relative payback: " << sounds[id].Name();
-	}
-
-	CSoundSource* best = GetNextBestSource(false);
-	if (best && (!best->IsPlaying() || (best->GetCurrentPriority() <= 0 && best->GetCurrentPriority() < sounds[id].GetPriority())))
-	{
-		if (best->IsPlaying())
-			++numAbortedPlays;
-		best->Play(&sounds[id], p, velocity, volume, relative);
-	}
-	CheckError("CSound::PlaySample");
-}
-
-
 void CSound::StartThread(int maxSounds)
 {
 	{
