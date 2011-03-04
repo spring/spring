@@ -24,8 +24,10 @@ public:
 
 	float GetPlayTime() const;
 	float GetTotalTime();
-	const TagVector& VorbisTags() const;
 	bool Valid() const;
+	bool IsFinished();
+	
+	const TagVector& VorbisTags() const;
 
 private:
 	void DisplayInfo();
