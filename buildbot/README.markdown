@@ -19,16 +19,16 @@ Add to the end of /etc/schroot/schroot.conf:
 
 ## Building and entering the chroot
 
-	debootstrap --variant=buildd --arch i386 natty /fast/buildbot/chroots/natty/ http://ftp.cvut.cz/ubuntu/
-	mkdir -p /fast/buildbot/chroots/natty/home/buildbot/www
-	chown buildbot:buildbot /fast/buildbot/chroots/natty/home/buildbot
-	schroot -c buildbot-natty
+	debootstrap --variant=buildd --arch i386 maverick /fast/buildbot/chroots/maverick/ http://ftp.cvut.cz/ubuntu/
+	mkdir -p /fast/buildbot/chroots/maverick/home/buildbot/www
+	chown buildbot:buildbot /fast/buildbot/chroots/maverick/home/buildbot
+	schroot -c buildbot-maverick
 
 # Inside the chroot
 
 ## Run (as root)
 
-	echo 'deb http://ftp.cvut.cz/ubuntu natty universe' >> /etc/apt/sources.list
+	echo 'deb http://ftp.cvut.cz/ubuntu maverick universe' >> /etc/apt/sources.list
 	sed s/deb/deb-src/g /etc/apt/sources.list >> /etc/apt/sources.list
 	apt-get update
 	apt-get install nano git-core python-dev python-setuptools
