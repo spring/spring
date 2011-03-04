@@ -364,7 +364,7 @@ void CSound::StartThread(int maxSounds)
 			if (thenewone->IsValid()) {
 				sources.push_back(thenewone);
 			} else {
-				maxSounds = std::max(i-1,0);
+				maxSounds = std::max(i-1, 0);
 				LogObject(LOG_SOUND) << "Your hardware/driver can not handle more than " << maxSounds << " soundsources";
 				delete thenewone;
 				break;
@@ -403,6 +403,8 @@ void CSound::Update()
 
 size_t CSound::MakeItemFromDef(const soundItemDef& itemDef)
 {
+	//! MakeItemFromDef is private. Only caller is LoadSoundDefs and it sets the mutex itself.
+	//boost::recursive_mutex::scoped_lock lck(soundMutex);
 	const size_t newid = sounds.size();
 	soundItemDef::const_iterator it = itemDef.find("file");
 	boost::shared_ptr<SoundBuffer> buffer = SoundBuffer::GetById(LoadSoundBuffer(it->second, false));

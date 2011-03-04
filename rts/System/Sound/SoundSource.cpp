@@ -29,8 +29,7 @@ CSoundSource::CSoundSource() : curPlaying(NULL), curStream(NULL), curVolume(1.f)
 
 {
 	alGenSources(1, &id);
-	if (!CheckError("CSoundSource::CSoundSource"))
-	{
+	if (!CheckError("CSoundSource::CSoundSource")) {
 		id = 0;
 	} else {
 		alSourcef(id, AL_REFERENCE_DISTANCE, referenceDistance * CSound::GetElmoInMeters());
@@ -82,8 +81,7 @@ void CSoundSource::Update()
 
 int CSoundSource::GetCurrentPriority() const
 {
-	if (curStream)
-	{
+	if (curStream) {
 		return INT_MAX;
 	}
 	else if (!curPlaying) {
@@ -99,19 +97,13 @@ bool CSoundSource::IsPlaying() const
 	ALint state;
 	alGetSourcei(id, AL_SOURCE_STATE, &state);
 	CheckError("CSoundSource::IsPlaying");
-	if (state == AL_PLAYING || curStream)
-		return true;
-	else
-	{
-		return false;
-	}
+	return (state == AL_PLAYING || curStream);
 }
 
 void CSoundSource::Stop()
 {
 	alSourceStop(id);
-	if (curPlaying)
-	{
+	if (curPlaying) {
 		curPlaying->StopPlay();
 		curPlaying = NULL;
 	}
@@ -138,8 +130,7 @@ void CSoundSource::Play(SoundItem* item, float3 pos, float3 velocity, float volu
 	alSource3f(id, AL_VELOCITY, velocity.x, velocity.y, velocity.z);
 	alSourcei(id, AL_LOOPING, (item->loopTime > 0) ? AL_TRUE : AL_FALSE);
 	loopStop = SDL_GetTicks() + item->loopTime;
-	if (relative || !item->in3D)
-	{
+	if (relative || !item->in3D) {
 		in3D = false;
 		if (efxEnabled) {
 			alSource3i(id, AL_AUXILIARY_SEND_FILTER, AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
@@ -149,9 +140,7 @@ void CSoundSource::Play(SoundItem* item, float3 pos, float3 velocity, float volu
 		alSourcei(id, AL_SOURCE_RELATIVE, AL_TRUE);
 		alSourcef(id, AL_ROLLOFF_FACTOR, 0.f);
 		alSource3f(id, AL_POSITION, 0.0f, 0.0f, -1.0f * CSound::GetElmoInMeters());
-	}
-	else
-	{
+	} else {
 		if (item->buffer->GetChannels() > 1)
 			LogObject(LOG_SOUND) << "Can't play non-mono \"" << item->buffer->GetFilename() << "\" in 3d.";
 
@@ -169,10 +158,10 @@ void CSoundSource::Play(SoundItem* item, float3 pos, float3 velocity, float volu
 		alSourcef(id, AL_ROLLOFF_FACTOR, item->rolloff * heightRolloffModifier);
 #ifdef __APPLE__
 		alSourcef(id, AL_MAX_DISTANCE, 1000000.0f);
-		// Max distance is too small by default on my Mac...
+		//! Max distance is too small by default on my Mac...
 		ALfloat gain = item->GetGain() * volume;
 		if (gain > 1.0f) {
-			// OpenAL on Mac cannot handle AL_GAIN > 1 well, so we will adjust settings to get the same output with AL_GAIN = 1.
+			//! OpenAL on Mac cannot handle AL_GAIN > 1 well, so we will adjust settings to get the same output with AL_GAIN = 1.
 			ALint model = alGetInteger(AL_DISTANCE_MODEL);
 			ALfloat rolloff = item->rolloff * heightRolloffModifier;
 			ALfloat ref = referenceDistance * CSound::GetElmoInMeters();
