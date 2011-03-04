@@ -120,3 +120,7 @@ Substitute MASTER with host:port of the buildmaster and SLAVENAME and PASSWORD w
 	git clone git://github.com/spring/mingwlibs.git
 
 Last, copy win32.cmake from spring/buildbot/slave (Spring repository) to /slave (inside the chroot).
+
+## ccache
+
+To install ccache simply run `apt-get install ccache` (inside the chroot) and (optionally) tweak the settings (cache size etc.)
