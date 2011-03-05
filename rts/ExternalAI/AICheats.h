@@ -41,9 +41,6 @@ public:
 
 	int CreateUnit(const char* name, const float3& pos);
 
-	const UnitDef* GetUnitDef(int unitId);
-	float3 GetUnitPos(int unitId);
-	float3 GetUnitVelocity(int unitId);
 	int GetEnemyUnits(int* unitIds, int unitIds_max = -1);
 	int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = -1);
 	int GetNeutralUnits(int* unitIds, int unitIds_max = -1);
@@ -51,27 +48,30 @@ public:
 
 	int GetFeatures(int* features, int max) const;
 	int GetFeatures(int* features, int max, const float3& pos, float radius) const;
+	
+	const UnitDef* GetUnitDef(int unitId) const;
+	float3 GetUnitPos(int unitId) const;
+	float3 GetUnitVelocity(int unitId) const;
+	int GetUnitTeam(int unitId) const;
+	int GetUnitAllyTeam(int unitId) const;
+	float GetUnitHealth(int unitId) const;
+	float GetUnitMaxHealth(int unitId) const;
+	float GetUnitPower(int unitId) const;
+	float GetUnitExperience(int unitId) const;
+	bool IsUnitActivated(int unitId) const;
+	bool UnitBeingBuilt(int unitId) const;
+	bool IsUnitNeutral(int unitId) const;
+	bool GetUnitResourceInfo(int unitId, UnitResourceInfo* resourceInfo) const;
+	const CCommandQueue* GetCurrentUnitCommands(int unitId) const;
 
-	int GetUnitTeam(int unitId);
-	int GetUnitAllyTeam(int unitId);
-	float GetUnitHealth(int unitId);
-	float GetUnitMaxHealth(int unitId);
-	float GetUnitPower(int unitId);
-	float GetUnitExperience(int unitId);
-	bool IsUnitActivated(int unitId);
-	bool UnitBeingBuilt(int unitId);
-	bool IsUnitNeutral(int unitId);
-	bool GetUnitResourceInfo(int unitId, UnitResourceInfo* resourceInfo);
-	const CCommandQueue* GetCurrentUnitCommands(int unitId);
-
-	int GetBuildingFacing(int unitId);
-	bool IsUnitCloaked(int unitId);
-	bool IsUnitParalyzed(int unitId);
+	int GetBuildingFacing(int unitId) const;
+	bool IsUnitCloaked(int unitId) const;
+	bool IsUnitParalyzed(int unitId) const;
 
 	static bool OnlyPassiveCheats();
 	void EnableCheatEvents(bool enable);
 
-	bool GetProperty(int unit, int property, void* dst);
+	bool GetProperty(int unit, int property, void* dst) const;
 	bool GetValue(int id, void* dst) const;
 	int HandleCommand(int commandId, void* data);
 };
