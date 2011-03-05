@@ -121,13 +121,17 @@ void IWorldObjectModelRenderer::AddFeature(const CFeature* f, float alpha)
 		features[TEX_TYPE(f)] = FeatureSet();
 	}
 
-	FeatureSet::iterator i = features[TEX_TYPE(f)].find(AlphaFeature(const_cast<CFeature*>(f)));
-	if(i != features[TEX_TYPE(f)].end()) {
-		i->alpha = alpha;
+	FeatureSet &fs = features.find(TEX_TYPE(f))->second;
+	FeatureSet::iterator i = fs.find(AlphaFeature(const_cast<CFeature*>(f)));
+	if(i != fs.end()) {
+		if(i->alpha != alpha) {
+			fs.erase(i);
+			fs.insert(AlphaFeature(const_cast<CFeature*>(f), alpha));
+		}
 	}
 	else {
-		if(features[TEX_TYPE(f)].insert(AlphaFeature(const_cast<CFeature*>(f), alpha)).second)
-			numFeatures += 1;
+		fs.insert(AlphaFeature(const_cast<CFeature*>(f), alpha));
+		numFeatures += 1;
 	}
 }
 
