@@ -5825,6 +5825,14 @@
 					RelativePath="..\..\System\Platform\Threading.h"
 					>
 				</File>
+				<File
+					RelativePath="..\..\System\Platform\Watchdog.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Platform\Watchdog.h"
+					>
+				</File>
 				<Filter
 					Name="Win32"
 					>
@@ -6543,11 +6551,35 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\Sound\EffectChannel.cpp"
+					RelativePath="..\..\System\Sound\AudioChannel.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\Sound\EffectChannel.h"
+					RelativePath="..\..\System\Sound\AudioChannel.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\EFX.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\EFX.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\EFXfuncs.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\EFXfuncs.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\EFXPresets.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\EFXPresets.h"
 					>
 				</File>
 				<File
@@ -6559,22 +6591,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\Sound\IEffectChannel.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Sound\IEffectChannel.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Sound\IMusicChannel.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Sound\IMusicChannel.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\System\Sound\ISound.cpp"
 					>
 				</File>
@@ -6583,11 +6599,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\Sound\MusicChannel.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Sound\MusicChannel.h"
+					RelativePath="..\..\System\Sound\NullAudioChannel.h"
 					>
 				</File>
 				<File
@@ -6628,6 +6640,14 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Sound\SoundBuffer.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\SoundChannels.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\SoundChannels.h"
 					>
 				</File>
 				<File
