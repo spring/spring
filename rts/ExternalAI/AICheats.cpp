@@ -5,7 +5,6 @@
 #include "StdAfx.h"
 #include "ExternalAI/SkirmishAIWrapper.h"
 #include "Game/GameHelper.h"
-#include "Game/TraceRay.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Misc/QuadField.h"
