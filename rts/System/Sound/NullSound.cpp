@@ -4,6 +4,7 @@
 
 #include "SoundLog.h"
 #include "System/LogOutput.h"
+#include "System/float3.h"
 
 NullSound::NullSound() {
 }
@@ -52,4 +53,8 @@ bool NullSound::LoadSoundDefs(const std::string& fileName) {
 }
 
 void NullSound::NewFrame() {
+}
+
+const float3& NullSound::GetListenerPos() const {
+	return ZeroVector;
 }

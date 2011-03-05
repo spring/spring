@@ -54,6 +54,9 @@ public:
 	static float GetElmoInMeters() {
 		return 1.f/8; //SQUARE_SIZE; //! 8 elmos = 1m
 	}
+	const float3& GetListenerPos() const {
+		return myPos;
+	}
 
 private:
 	typedef std::map<std::string, std::string> soundItemDef;

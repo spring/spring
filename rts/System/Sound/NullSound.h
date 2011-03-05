@@ -36,6 +36,8 @@ public:
 
 	void PrintDebugInfo();
 	bool LoadSoundDefs(const std::string& fileName);
+	
+	const float3& GetListenerPos() const;
 };
 
 #endif // _NULL_SOUND_H_

@@ -31,7 +31,7 @@
 
 #include "float3.h"
 
-CSound::CSound() : myPos(0.0, 0.0, 0.0), prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), numAbortedPlays(0), soundThread(NULL), soundThreadQuit(false)
+CSound::CSound() : myPos(0., 0., 0.), prevVelocity(0., 0., 0.), numEmptyPlayRequests(0), numAbortedPlays(0), soundThread(NULL), soundThreadQuit(false)
 {
 	boost::recursive_mutex::scoped_lock lck(soundMutex);
 	mute = false;

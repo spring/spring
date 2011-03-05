@@ -51,6 +51,8 @@ public:
 
 	virtual void PrintDebugInfo() = 0;
 	virtual bool LoadSoundDefs(const std::string& fileName) = 0;
+	
+	virtual const float3& GetListenerPos() const = 0;
 };
 
 #define sound ISound::GetInstance()
