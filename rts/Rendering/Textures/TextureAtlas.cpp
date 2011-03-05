@@ -28,7 +28,8 @@ CR_BIND_DERIVED(GroundFXTexture, AtlasedTexture, );
 bool CTextureAtlas::debug;
 
 CTextureAtlas::CTextureAtlas(int maxxsize, int maxysize)
-	: freeTexture(true)
+	: gltex(0)
+	, freeTexture(true)
 	, xsize(4)
 	, ysize(4)
 	, maxxsize(maxxsize)

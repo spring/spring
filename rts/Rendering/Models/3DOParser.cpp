@@ -116,6 +116,7 @@ C3DOParser::C3DOParser()
 		teamtex.insert(StringToLower(parser.GetLine()));
 	}
 
+	curOffset = 0;
 	fileBuf = NULL;
 }
 
