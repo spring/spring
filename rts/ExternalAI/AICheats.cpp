@@ -447,12 +447,10 @@ int CAICheats::HandleCommand(int commandId, void* data)
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
 				const CUnit* srcUnit = uh->units[cmdData->srcUID];
-				CUnit* hitUnit = NULL;
-				CFeature* hitFeature = NULL;
+				const CUnit* hitUnit = NULL;
 
 				if (srcUnit != NULL) {
-					//FIXME ignore features?
-					cmdData->rayLen = TraceRay::TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, cmdData->flags, srcUnit, hitUnit, hitFeature);
+					cmdData->rayLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags);
 					cmdData->hitUID = (hitUnit != NULL)? hitUnit->id: -1;
 				}
 			}
@@ -465,12 +463,11 @@ int CAICheats::HandleCommand(int commandId, void* data)
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
 				const CUnit* srcUnit = uh->units[cmdData->srcUID];
-				CUnit* hitUnit = NULL;
-				CFeature* hitFeature = NULL;
+				const CUnit* hitUnit = NULL;
+				const CFeature* hitFeature = NULL;
 
 				if (srcUnit != NULL) {
-					//FIXME ignore units?
-					cmdData->rayLen = TraceRay::TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, cmdData->flags, srcUnit, hitUnit, hitFeature);
+					cmdData->rayLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags, &hitFeature);
 					cmdData->hitFID = (hitFeature != NULL)? hitFeature->id: -1;
 				}
 			}
