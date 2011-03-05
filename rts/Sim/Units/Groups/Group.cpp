@@ -21,7 +21,6 @@ CR_REG_METADATA(CGroup, (
 				CR_MEMBER(myCommands),
 				CR_MEMBER(lastCommandPage),
 				CR_MEMBER(handler),
-				CR_SERIALIZER(Serialize),
 				CR_POSTLOAD(PostLoad)
 				));
 
@@ -42,9 +41,7 @@ CGroup::~CGroup()
 	ClearUnits();
 }
 
-void CGroup::Serialize(creg::ISerializer *s)
-{
-}
+
 
 void CGroup::PostLoad()
 {
@@ -106,16 +103,6 @@ const vector<CommandDescription>& CGroup::GetPossibleCommands()
 int CGroup::GetDefaultCmd(const CUnit *unit, const CFeature* feature) const
 {
 	return CMD_STOP;
-}
-
-void CGroup::GiveCommand(Command c)
-{
-	// There are no commands that a group could receive
-	// TODO: possible FIXME: give command to all units in the group that can handle it
-}
-
-void CGroup::CommandFinished(int unitId, int commandTopicId)
-{
 }
 
 void CGroup::ClearUnits(void)
