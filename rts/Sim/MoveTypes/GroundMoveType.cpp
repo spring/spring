@@ -373,7 +373,7 @@ void CGroundMoveType::StartMoving(float3 pos, float goalRadius) {
 /*
 Sets owner unit to start moving against given position with requested speed.
 */
-void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float speed)
+void CGroundMoveType::StartMoving(float3 moveGoalPos, float _goalRadius, float speed)
 {
 #ifdef TRACE_SYNC
 	tracefile << "[" << __FUNCTION__ << "] ";
@@ -386,7 +386,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 
 	// set the new goal
 	goalPos = moveGoalPos;
-	goalRadius = goalRadius;
+	goalRadius = _goalRadius;
 	requestedSpeed = speed;
 	atGoal = false;
 	useMainHeading = false;
