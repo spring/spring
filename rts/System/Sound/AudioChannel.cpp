@@ -72,13 +72,13 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3 &p, const float3& v
 		return;
 	}
 
-	/*if (p.distance(myPos) > sndItem->MaxDistance())
+	if (p.distance(sound->GetListenerPos()) > sndItem->MaxDistance())
 	{
 		if (!relative)
 			return;
 		else
 			LogObject(LOG_SOUND) << "CSound::PlaySample: maxdist ignored for relative payback: " << sndItem->Name();
-	}*/
+	}
 
 	if (emmitsThisFrame >= emmitsPerFrame)
 		return;
