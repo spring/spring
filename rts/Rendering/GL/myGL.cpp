@@ -84,8 +84,84 @@ void PrintAvailableResolutions()
 		logOutput.Print("Supported Video modes: %s\n",buffer);
 	}
 }
-  
-  
+
+#ifdef GL_ARB_debug_output
+#ifdef WIN32
+	#define _APIENTRY APIENTRY
+#else
+	#define _APIENTRY
+#endif
+void _APIENTRY OpenGLDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, GLvoid* userParam)
+{
+	std::string sourceStr;
+	std::string typeStr;
+	std::string severityStr;
+	std::string messageStr(message, length);
+
+	switch (source) {
+		case GL_DEBUG_SOURCE_API_ARB:
+			sourceStr = "API";
+			break;
+		case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
+			sourceStr = "WindowSystem";
+			break;
+		case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB:
+			sourceStr = "Shader";
+			break;
+		case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
+			sourceStr = "3rd Party";
+			break;
+		case GL_DEBUG_SOURCE_APPLICATION_ARB:
+			sourceStr = "Application";
+			break;
+		case GL_DEBUG_SOURCE_OTHER_ARB:
+			sourceStr = "other";
+			break;
+		default:
+			sourceStr = "unknown";
+	}
+
+	switch (type) {
+		case GL_DEBUG_TYPE_ERROR_ARB:
+			typeStr = "error";
+			break;
+		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
+			typeStr = "deprecated";
+			break;
+		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:
+			typeStr = "undefined";
+			break;
+		case GL_DEBUG_TYPE_PORTABILITY_ARB:
+			typeStr = "portability";
+			break;
+		case GL_DEBUG_TYPE_PERFORMANCE_ARB:
+			typeStr = "peformance";
+			break;
+		case GL_DEBUG_TYPE_OTHER_ARB:
+			typeStr = "other";
+			break;
+		default:
+			typeStr = "unknown";
+	}
+
+	switch (severity) {
+		case GL_DEBUG_SEVERITY_HIGH_ARB:
+			severityStr = "high";
+			break;
+		case GL_DEBUG_SEVERITY_MEDIUM_ARB:
+			severityStr = "medium";
+			break;
+		case GL_DEBUG_SEVERITY_LOW_ARB:
+			severityStr = "low";
+			break;
+		default:
+			severityStr = "unknown";
+	}
+
+	logOutput.Print("OpenGL Error: source<%s> type<%s> id<%u> severity<%s>:\n%s", sourceStr.c_str(), typeStr.c_str(), id, severityStr.c_str(), messageStr.c_str());
+}
+#endif // GL_ARB_debug_output
+
 void LoadExtensions()
 {
 	glewInit();
@@ -163,6 +239,13 @@ void LoadExtensions()
 				(const char*)glGetString(GL_RENDERER));
 		handleerror(0, errorMsg, "Update graphic drivers", 0);
 	}
+
+#ifdef GL_ARB_debug_output //! it's not defined in older GLEW versions
+	if (GLEW_ARB_debug_output) {
+		logOutput.Print("Installing OpenGL-DebugMessageHandler");
+		glDebugMessageCallbackARB(&OpenGLDebugMessageCallback, NULL);
+	}
+#endif
 
 	vertexArray1 = new CVertexArray;
 	vertexArray2 = new CVertexArray;
