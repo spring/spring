@@ -34,6 +34,7 @@ public:
 	IWorldObjectModelRenderer(int mdlType): modelType(mdlType) {
 		numUnits = 0;
 		numFeatures = 0;
+		numFeaturesSave = 0;
 		numProjectiles = 0;
 	}
 	virtual ~IWorldObjectModelRenderer();
