@@ -271,6 +271,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 , techLevel(-1)
 , buildPic(NULL)
 , movedata(NULL)
+, trackType(0)
+, buildingDecalType(-1)
 {
 	humanName = udTable.GetString("name", "");
 	if (humanName.empty()) {
@@ -725,6 +727,13 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	// custom parameters table
 	udTable.SubTable("customParams").GetMap(customParams);
+
+	//! buffer them (so we can reconstruct those on /cheat /nocost 1 ... /nocost 0)
+	realMetalCost = metalCost;
+	realEnergyCost = energyCost;
+	realMetalUpkeep = metalUpkeep;
+	realEnergyUpkeep = energyUpkeep;
+	realBuildTime = buildTime;
 }
 
 
