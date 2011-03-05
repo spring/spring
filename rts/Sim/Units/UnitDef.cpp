@@ -906,6 +906,7 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 void UnitDef::SetNoCost(bool noCost)
 {
 	if (noCost) {
+		// initialized from UnitDefHandler::PushNewUnitDef
 		realMetalCost    = metalCost;
 		realEnergyCost   = energyCost;
 		realMetalUpkeep  = metalUpkeep;
