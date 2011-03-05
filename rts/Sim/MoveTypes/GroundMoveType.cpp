@@ -196,7 +196,6 @@ bool CGroundMoveType::Update()
 
 	ASSERT_SYNCED_FLOAT3(owner->pos);
 
-	const UnitDef* ud = owner->unitDef;
 	bool hasMoved = false;
 	bool wantReverse = false;
 

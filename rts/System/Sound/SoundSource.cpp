@@ -200,8 +200,6 @@ void CSoundSource::PlayStream(IAudioChannel* channel, const std::string& file, f
 	if (!curStream)
 		curStream = new COggStream(id);
 
-	bool finished = curStream->IsFinished();
-
 	//! setup OpenAL params
 	curChannel = channel;
 	curVolume = volume;
