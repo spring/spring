@@ -727,13 +727,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	// custom parameters table
 	udTable.SubTable("customParams").GetMap(customParams);
-
-	//! buffer them (so we can reconstruct those on /cheat /nocost 1 ... /nocost 0)
-	realMetalCost = metalCost;
-	realEnergyCost = energyCost;
-	realMetalUpkeep = metalUpkeep;
-	realEnergyUpkeep = energyUpkeep;
-	realBuildTime = buildTime;
 }
 
 
