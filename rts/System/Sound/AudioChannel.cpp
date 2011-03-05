@@ -23,8 +23,6 @@ void AudioChannel::SetVolume(float newVolume)
 {
 	volume = newVolume;
 
-	LogObject(LOG_SOUND) << "AudioChannel::SetVolume";
-
 	for (std::map<CSoundSource*, bool>::iterator it = cur_sources.begin(); it != cur_sources.end(); ++it)
 		it->first->UpdateVolume();
 }
@@ -82,6 +80,10 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3 &p, const float3& v
 			LogObject(LOG_SOUND) << "CSound::PlaySample: maxdist ignored for relative payback: " << sndItem->Name();
 	}*/
 
+	if (emmitsThisFrame >= emmitsPerFrame)
+		return;
+	emmitsThisFrame++;
+	
 	CSoundSource* sndSource = sound->GetNextBestSource();
 	if (!sndSource)
 		return;
@@ -100,47 +102,27 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3 &p, const float3& v
 
 void AudioChannel::PlaySample(size_t id, float volume)
 {
-	if (emmitsThisFrame < emmitsPerFrame)
-	{
-		emmitsThisFrame++;
-		FindSourceAndPlay(id, float3(0.0, 0.0, -1.0), ZeroVector, volume, true);
-	}
+	FindSourceAndPlay(id, float3(0.0, 0.0, -1.0), ZeroVector, volume, true);
 }
 
 void AudioChannel::PlaySample(size_t id, const float3& p, float volume)
 {
-	if (emmitsThisFrame < emmitsPerFrame)
-	{
-		emmitsThisFrame++;
-		FindSourceAndPlay(id, p, ZeroVector, volume, false);
-	}
+	FindSourceAndPlay(id, p, ZeroVector, volume, false);
 }
 
 void AudioChannel::PlaySample(size_t id, const float3& p, const float3& velocity, float volume)
 {
-	if (emmitsThisFrame < emmitsPerFrame)
-	{
-		emmitsThisFrame++;
-		FindSourceAndPlay(id, p, velocity, volume, false);
-	}
+	FindSourceAndPlay(id, p, velocity, volume, false);
 }
 
 void AudioChannel::PlaySample(size_t id, const CUnit* u, float volume)
 {
-	if (emmitsThisFrame < emmitsPerFrame)
-	{
-		emmitsThisFrame++;
-		FindSourceAndPlay(id, u->pos, u->speed, volume, false);
-	}
+	FindSourceAndPlay(id, u->pos, u->speed, volume, false);
 }
 
 void AudioChannel::PlaySample(size_t id, const CWorldObject* p, float volume)
 {
-	if (emmitsThisFrame < emmitsPerFrame)
-	{
-		emmitsThisFrame++;
-		FindSourceAndPlay(id, p->pos, ZeroVector, volume, false);
-	}
+	FindSourceAndPlay(id, p->pos, ZeroVector, volume, false);
 }
 
 void AudioChannel::StreamPlay(const std::string& filepath, float volume, bool enqueue)
