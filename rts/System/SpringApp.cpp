@@ -1270,7 +1270,6 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			break;
 		}
 		case SDL_VIDEOEXPOSE: {
-
 			GML_MSTMUTEX_LOCK(sim); // MainEventHandler
 
 			Watchdog::ClearTimer("main",true);
@@ -1299,21 +1298,37 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			if (mouse && mouse->locked) {
 				mouse->ToggleState();
 			}
-
+			
 			if ((event.active.state & (SDL_APPACTIVE | SDL_APPINPUTFOCUS)) && !event.active.gain) {
-				// simulate release all to prevent hung buttons
+				//! release all keyboard keys
+				for (boost::uint16_t i = 1; i <= SDLK_LAST; ++i) {
+					if (keyInput->IsKeyPressed(i)) {
+						SDL_Event event;
+						event.type = event.key.type = SDL_KEYUP;
+						event.key.state = SDL_RELEASED;
+						event.key.keysym.sym = (SDLKey)i;
+						event.key.keysym.unicode = i;
+						//event.keysym.mod =;
+						//event.keysym.scancode =;
+						SDL_PushEvent(&event);
+					}
+				}
+			}
+
+			if ((event.active.state & (SDL_APPACTIVE | SDL_APPMOUSEFOCUS)) && !event.active.gain) {
+				//! simulate mouse release to prevent hung buttons
 				for (int i = 1; i <= NUM_BUTTONS; ++i) {
 					SDL_Event event;
 					event.type = event.button.type = SDL_MOUSEBUTTONUP;
+					event.button.state = SDL_RELEASED;
 					event.button.which = 0;
 					event.button.button = i;
 					event.button.x = -1;
 					event.button.y = -1;
-					event.button.state = SDL_RELEASED;
-					if(!mouse || mouse->buttons[i].pressed)
-						input.PushEvent(event);
+					SDL_PushEvent(&event);
 				}
-				// and make sure to un-capture mouse
+
+				//! and make sure to un-capture mouse
 				if(SDL_WM_GrabInput(SDL_GRAB_QUERY) == SDL_GRAB_ON)
 					SDL_WM_GrabInput(SDL_GRAB_OFF);
 			}

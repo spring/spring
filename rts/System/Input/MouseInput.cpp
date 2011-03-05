@@ -52,7 +52,7 @@ bool IMouseInput::HandleSDLMouseEvent(const SDL_Event& event)
 {
 	switch (event.type) {
 		case SDL_ACTIVEEVENT: {
-			if (event.active.state & SDL_APPMOUSEFOCUS) {
+			if (event.active.state & (SDL_APPACTIVE | SDL_APPMOUSEFOCUS)) {
 				if (event.active.gain == 0) { //! mouse left window (set mouse pos internally to window center to prevent endless scrolling)
 					mousepos.x = globalRendering->viewSizeX / 2;
 					mousepos.y = globalRendering->viewSizeY / 2;

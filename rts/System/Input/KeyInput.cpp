@@ -1,6 +1,9 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include <cstring>
 #include <SDL_keyboard.h>
 #include <SDL_keysym.h>
+#include <assert.h>
 
 #include "KeyInput.h"
 
@@ -39,6 +42,7 @@ void KeyInput::Update(boost::uint16_t currKeyUnicodeChar, boost::int8_t fakeMeta
 	const SDLMod keyMods = SDL_GetModState();
 	const boost::uint8_t* keyStates = SDL_GetKeyState(&numKeys);
 
+	assert(numKeys <= SDLK_LAST);
 	memcpy(&keys[0], keyStates, sizeof(boost::uint8_t) * numKeys);
 
 	keys[SDLK_LALT]   = (keyMods & KMOD_ALT)   ? 1 : 0;
