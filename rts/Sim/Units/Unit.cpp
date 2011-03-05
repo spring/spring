@@ -1266,8 +1266,6 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 		interPos += helper->GetUnitErrorPos(this, gu->myAllyTeam) - midPos;
 	}
 
-	CTransportUnit* trans = NULL;
-
 	if (usingScriptMoveType ||
 	    (!beingBuilt && (physicalState == CSolidObject::Flying) && unitDef->canmove)) {
 		// aircraft, skidding ground unit, or active ScriptMoveType
@@ -1275,7 +1273,7 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 		// use this matrix, or their nanoframes won't spin on pad
 		return CMatrix44f(interPos, -rightdir, updir, frontdir);
 	}
-	else if ((trans = GetTransporter()) != NULL) {
+	else if (GetTransporter()) {
 		// we're being transported, transporter sets our vectors
 		return CMatrix44f(interPos, -rightdir, updir, frontdir);
 	}
