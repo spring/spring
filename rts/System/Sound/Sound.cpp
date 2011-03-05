@@ -349,6 +349,7 @@ void CSound::StartThread(int maxSounds)
 				break;
 			}
 		}
+		LogObject(LOG_SOUND) << "  Max Sounds: " << maxSounds;
 
 		// Set distance model (sound attenuation)
 		alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
