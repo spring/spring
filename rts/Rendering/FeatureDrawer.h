@@ -19,7 +19,7 @@ class CFeatureDrawer: public CEventClient
 	CR_DECLARE(CFeatureDrawer);
 	CR_DECLARE_SUB(DrawQuad);
 
-typedef std::set<AlphaFeature, afcmp> FeatureSet;
+typedef std::map<CFeature*, float> FeatureSet;
 typedef std::map<int, FeatureSet> FeatureRenderBin;
 typedef std::map<int, FeatureSet>::iterator FeatureRenderBinIt;
 

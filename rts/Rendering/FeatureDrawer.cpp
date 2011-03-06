@@ -236,7 +236,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 		FeatureSet& featureSet = featureBinIt->second;
 
 		for (featureSetIt = featureSet.begin(); featureSetIt != featureSet.end(); ) {
-			if (!DrawFeatureNow(featureSetIt->feature)) {
+			if (!DrawFeatureNow(featureSetIt->first)) {
 				featureSetIt = set_erase(featureSet, featureSetIt);
 			} else {
 				++featureSetIt;
@@ -383,17 +383,17 @@ void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType) {
 void CFeatureDrawer::DrawFadeFeaturesSet(FeatureSet& fadeFeatures, int modelType)
 {
 	for (FeatureSet::iterator fi = fadeFeatures.begin(); fi != fadeFeatures.end(); ) {
-		const float cols[] = {1.0f, 1.0f, 1.0f, fi->alpha};
+		const float cols[] = {1.0f, 1.0f, 1.0f, fi->second};
 
 		if (modelType == MODELTYPE_S3O) {
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, cols);
 		}
 
 		// hack, sorting objects by distance would look better
-		glAlphaFunc(GL_GREATER, fi->alpha / 2.0f);
+		glAlphaFunc(GL_GREATER, fi->second / 2.0f);
 		glColor4fv(cols);
 
-		if (!DrawFeatureNow(fi->feature, fi->alpha)) {
+		if (!DrawFeatureNow(fi->first, fi->second)) {
 			fi = set_erase(fadeFeatures, fi);
 		} else {
 			++fi;
