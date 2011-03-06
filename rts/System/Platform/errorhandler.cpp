@@ -29,9 +29,11 @@
 #endif // ifndef DEDICATED
 
 
-static void ExitMessage(const std::string& msg, const std::string& caption, unsigned int flags)
+static void ExitMessage(const std::string& msg, const std::string& caption, unsigned int flags, bool forced)
 {
 	logOutput.SetSubscribersEnabled(false);
+	if (forced)
+		LogObject() << "WARNING: failed to shutdown normally, exit forced";
 	LogObject() << caption << " " << msg;
 
 #if !defined(DEDICATED) && !defined(HEADLESS)
@@ -66,10 +68,26 @@ static void ExitMessage(const std::string& msg, const std::string& caption, unsi
 #endif
 }
 
+volatile bool shutdownSucceeded = false;
+
+void ForcedExit(const std::string& msg, const std::string& caption, unsigned int flags) {
+	for (unsigned int n = 0; !shutdownSucceeded && n < 50; ++n)
+		boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+
+	if (!shutdownSucceeded)
+		ExitMessage(msg, caption, flags, true);
+}
 
 void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags)
 {
 #ifndef DEDICATED
+
+#ifdef USE_GML
+	// SpringApp::Shutdown is extremely likely to deadlock or end up waiting indefinitely if any 
+	// MT thread has crashed or deviated from its normal execution path by throwing an exception
+	boost::thread* forcedExitThread = new boost::thread(boost::bind(&ForcedExit, msg, caption, flags));
+#endif
+
 	if (!Threading::IsMainThread()) {
 		gu->globalQuit = true;
 		Threading::Error err(caption, msg, flags);
@@ -86,7 +104,14 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 	//! exiting any possibly threads
 	//! (else they would still run while the error messagebox is shown)
 	SpringApp::Shutdown();
+
+#ifdef USE_GML
+	shutdownSucceeded = true;
+	forcedExitThread->join();
+	delete forcedExitThread;
 #endif
 
-	ExitMessage(msg, caption, flags);
+#endif
+
+	ExitMessage(msg, caption, flags, false);
 }
