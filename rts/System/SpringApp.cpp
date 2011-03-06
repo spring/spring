@@ -1004,17 +1004,21 @@ int SpringApp::Sim()
 		if(GML_SHARE_LISTS)
 			ogc->WorkerThreadPost();
 
+		Watchdog::ClearTimer("sim",true);
+
 		while(gmlKeepRunning && !gmlStartSim)
 			SDL_Delay(100);
 
+		Watchdog::ClearTimer("sim");
+
 		while(gmlKeepRunning) {
 			if(!gmlMultiThreadSim) {
-				Watchdog::ClearTimer("main",true);
+				Watchdog::ClearTimer("sim",true);
 				while(!gmlMultiThreadSim && gmlKeepRunning)
 					SDL_Delay(200);
 			}
 			else if (activeController) {
-				Watchdog::ClearTimer("main");
+				Watchdog::ClearTimer("sim");
 				gmlProcessor->ExpandAuxQueue();
 
 				{
@@ -1301,7 +1305,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			
 			if ((event.active.state & (SDL_APPACTIVE | SDL_APPINPUTFOCUS)) && !event.active.gain) {
 				//! release all keyboard keys
-				for (boost::uint16_t i = 1; i <= SDLK_LAST; ++i) {
+				for (boost::uint16_t i = 1; i < SDLK_LAST; ++i) {
 					if (keyInput->IsKeyPressed(i)) {
 						SDL_Event event;
 						event.type = event.key.type = SDL_KEYUP;
