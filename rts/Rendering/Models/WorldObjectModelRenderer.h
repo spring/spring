@@ -15,18 +15,6 @@ class CUnit;
 class CFeature;
 class CProjectile;
 
-struct AlphaFeature {
-	AlphaFeature(CFeature *f, float a = 0.99f) : feature(f), alpha(a) {}
-	CFeature *feature;
-	float alpha;
-	bool operator==(const AlphaFeature &af) const { return feature == af.feature; }
-};
-
-struct afcmp {
-	bool operator() (const AlphaFeature& af1, const AlphaFeature& af2) const;
-};
-
-
 class IWorldObjectModelRenderer {
 public:
 	static IWorldObjectModelRenderer* GetInstance(int);
@@ -58,8 +46,8 @@ public:
 protected:
 	typedef std::set<CUnit*>                       UnitSet;
 	typedef std::set<CUnit*>::const_iterator       UnitSetIt;
-	typedef std::set<AlphaFeature, afcmp>                 FeatureSet;
-	typedef std::set<AlphaFeature, afcmp>::const_iterator FeatureSetIt;
+	typedef std::map<CFeature*, float>                 FeatureSet;
+	typedef std::map<CFeature*, float>::const_iterator FeatureSetIt;
 	typedef std::set<CProjectile*>                 ProjectileSet;
 	typedef std::set<CProjectile*>::const_iterator ProjectileSetIt;
 

@@ -8,10 +8,6 @@
 
 #define WORLDOBJECT_MODEL_RENDERER_DEBUG 0
 
-bool afcmp::operator() (const AlphaFeature& af1, const AlphaFeature& af2) const {
-	return af1.feature < af2.feature;
-}
-
 IWorldObjectModelRenderer* IWorldObjectModelRenderer::GetInstance(int modelType)
 {
 	switch (modelType) {
@@ -80,7 +76,7 @@ void IWorldObjectModelRenderer::DrawModels(const UnitSet& models)
 void IWorldObjectModelRenderer::DrawModels(const FeatureSet& models)
 {
 	for (FeatureSetIt fIt = models.begin(); fIt != models.end(); ++fIt) {
-		DrawModel(fIt->feature);
+		DrawModel(fIt->first);
 	}
 }
 
@@ -122,15 +118,14 @@ void IWorldObjectModelRenderer::AddFeature(const CFeature* f, float alpha)
 	}
 
 	FeatureSet &fs = features.find(TEX_TYPE(f))->second;
-	FeatureSet::iterator i = fs.find(AlphaFeature(const_cast<CFeature*>(f)));
+	FeatureSet::iterator i = fs.find(const_cast<CFeature*>(f));
 	if(i != fs.end()) {
-		if(i->alpha != alpha) {
-			fs.erase(i);
-			fs.insert(AlphaFeature(const_cast<CFeature*>(f), alpha));
+		if(i->second != alpha) {
+			fs[const_cast<CFeature*>(f)] = alpha;
 		}
 	}
 	else {
-		fs.insert(AlphaFeature(const_cast<CFeature*>(f), alpha));
+		fs[const_cast<CFeature*>(f)] = alpha;
 		numFeatures += 1;
 	}
 }
@@ -140,7 +135,7 @@ void IWorldObjectModelRenderer::DelFeature(const CFeature* f)
 	{
 		FeatureRenderBin::iterator i = features.find(TEX_TYPE(f));
 		if (i != features.end()) {
-			if((*i).second.erase(AlphaFeature(const_cast<CFeature*>(f))))
+			if((*i).second.erase(const_cast<CFeature*>(f)))
 				numFeatures -= 1;
 
 			if ((*i).second.empty()) 
@@ -151,7 +146,7 @@ void IWorldObjectModelRenderer::DelFeature(const CFeature* f)
 	{
 		FeatureRenderBin::iterator i = featuresSave.find(TEX_TYPE(f));
 		if (i != featuresSave.end()) {
-			if((*i).second.erase(AlphaFeature(const_cast<CFeature*>(f))))
+			if((*i).second.erase(const_cast<CFeature*>(f)))
 				numFeaturesSave -= 1;
 
 			if ((*i).second.empty()) 
