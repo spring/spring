@@ -127,7 +127,6 @@ static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hT
 		c.ContextFlags = CONTEXT_FULL;
 		// FIXME: This does not work if you want to dump the current thread's stack
 		if (!GetThreadContext(hThread, &c)) {
-			SymCleanup(process); // Unintialize IMAGEHLP.DLL
 			ResumeThread(hThread);
 			return;
 		}
