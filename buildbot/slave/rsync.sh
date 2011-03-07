@@ -24,9 +24,13 @@ function zip() {
 
 # Create one archive for base content and two archives for each exe/dll:
 # one containing the exe/dll, and one containing debug symbols.
-cd ${BUILDDIR}/..
-7z u "${BASE_ARCHIVE}" ${BUILDDIR}/base cont/* -x!cont/base -xr!CMake* -xr!cmake*
-cd ${BUILDDIR}
+rm -f "${BUILDDIR}/${BASE_ARCHIVE}"
+cd $BUILDDIR/../cont
+# add LuaUI + fonts + misc files in root of cont to base archive
+7z a "${BUILDDIR}/${BASE_ARCHIVE}" . -x!base -x!freedesktop -xr!CMake* -xr!cmake* -xr!Makefile
+cd $BUILDDIR
+# add already created 7z files (springcontent.sd7, maphelper.sd7, cursors.sdz, bitmaps.sdz) to base archive
+7z u "${BUILDDIR}/${BASE_ARCHIVE}" ${BUILDDIR}/base
 
 for tostripfile in spring.exe spring-dedicated.exe spring-multithreaded.exe spring-headless.exe unitsync.dll; do
 	zip ${tostripfile} ${tostripfile%.*}
