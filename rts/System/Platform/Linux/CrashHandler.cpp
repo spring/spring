@@ -375,11 +375,13 @@ namespace CrashHandler
 	}
 
 
-	void Stacktrace(Threading::NativeThreadHandle thread)
+	void Stacktrace(Threading::NativeThreadHandle thread, const char *threadName)
 	{
 		Stacktrace(NULL, &thread);
 	}
 
+	void PrepareStacktrace() {}
+	void CleanupStacktrace() {}
 
 	void HandleSignal(int signal)
 	{

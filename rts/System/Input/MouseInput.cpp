@@ -48,9 +48,21 @@ IMouseInput::IMouseInput()
 }
 
 
-bool IMouseInput::HandleSDLMouseEvent (const SDL_Event& event)
+bool IMouseInput::HandleSDLMouseEvent(const SDL_Event& event)
 {
 	switch (event.type) {
+		case SDL_ACTIVEEVENT: {
+			if (event.active.state & (SDL_APPACTIVE | SDL_APPMOUSEFOCUS)) {
+				if (event.active.gain == 0) { //! mouse left window (set mouse pos internally to window center to prevent endless scrolling)
+					mousepos.x = globalRendering->viewSizeX / 2;
+					mousepos.y = globalRendering->viewSizeY / 2;
+					if (mouse) {
+						mouse->MouseMove(mousepos.x, mousepos.y, 0, 0);
+					}
+				}
+			}
+			break;
+		}
 		case SDL_MOUSEMOTION: {
 			mousepos = int2(event.motion.x, event.motion.y);
 			if (mouse) {

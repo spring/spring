@@ -24,8 +24,10 @@ function zip() {
 
 # Create one archive for base content and two archives for each exe/dll:
 # one containing the exe/dll, and one containing debug symbols.
+cd ${BUILDDIR}/..
+7z u "${BASE_ARCHIVE}" ${BUILDDIR}/base cont/* -x!cont/base -xr!CMake* -xr!cmake*
 cd ${BUILDDIR}
-7za u "${BASE_ARCHIVE}" base ${PWD}/cont/LuaUI ${PWD}/cont/fonts
+
 for tostripfile in spring.exe spring-dedicated.exe spring-multithreaded.exe spring-headless.exe unitsync.dll; do
 	zip ${tostripfile} ${tostripfile%.*}
 done

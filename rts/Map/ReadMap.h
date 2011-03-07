@@ -3,12 +3,6 @@
 #ifndef READ_MAP_H
 #define READ_MAP_H
 
-#ifdef     BITMAP_NO_OPENGL
-// FIXME: this is hacky. this class should not depend on OpenGL stuff
-typedef unsigned int GLuint;
-#else  // !BITMAP_NO_OPENGL
-#include "Rendering/GL/myGL.h"
-#endif //  BITMAP_NO_OPENGL
 #include "creg/creg_cond.h"
 #include "float3.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -82,12 +76,12 @@ public:
 	virtual void NewGroundDrawer() = 0;
 	virtual CBaseGroundDrawer* GetGroundDrawer() { return 0; }
 
-	virtual GLuint GetGrassShadingTexture() const { return 0; }
+	virtual unsigned int GetGrassShadingTexture() const { return 0; }
 	/**
 	 * a texture with RGB for shading and A for height
 	 * (0 := above water; 1-255 := under water = 255+height*10)
 	 */
-	virtual GLuint GetShadingTexture() const = 0;
+	virtual unsigned int GetShadingTexture() const = 0;
 
 	/// if you modify the heightmap, call HeightmapUpdated
 	virtual void SetHeight(const int& idx, const float& h) = 0;

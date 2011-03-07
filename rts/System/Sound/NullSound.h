@@ -17,29 +17,27 @@ public:
 	NullSound();
 	virtual ~NullSound();
 
-	virtual bool HasSoundItem(const std::string& name);
-	virtual size_t GetSoundId(const std::string& name, bool hardFail = true);
+	bool HasSoundItem(const std::string& name);
+	size_t GetSoundId(const std::string& name, bool hardFail = true);
+	SoundItem* GetSoundItem(size_t id) const { return NULL; }
 
-	virtual CSoundSource* GetNextBestSource(bool lock = true);
+	CSoundSource* GetNextBestSource(bool lock = true);
 
-	virtual void UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime);
-	virtual void NewFrame();
+	void UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime);
+	void NewFrame();
 
-	virtual void ConfigNotify(const std::string& key, const std::string& value);
-	virtual void PitchAdjust(const float newPitch);
+	void ConfigNotify(const std::string& key, const std::string& value);
+	void PitchAdjust(const float newPitch);
 
-	virtual bool Mute();
-	virtual bool IsMuted() const;
+	bool Mute();
+	bool IsMuted() const;
 
-	virtual void Iconified(bool state);
+	void Iconified(bool state);
 
-	virtual void PrintDebugInfo();
-	virtual bool LoadSoundDefs(const std::string& fileName);
-
-private:
-	friend class EffectChannel;
-	// this is used by EffectChannel in AudioChannel.cpp
-	virtual void PlaySample(size_t id, const float3 &p, const float3& velocity, float volume, bool relative);
+	void PrintDebugInfo();
+	bool LoadSoundDefs(const std::string& fileName);
+	
+	const float3& GetListenerPos() const;
 };
 
 #endif // _NULL_SOUND_H_

@@ -7,6 +7,7 @@
 #include <vector>
 #include "creg/creg_cond.h"
 #include "System/EventClient.h"
+#include "Rendering/Models/WorldObjectModelRenderer.h"
 
 class CFeature;
 class IWorldObjectModelRenderer;
@@ -17,6 +18,10 @@ class CFeatureDrawer: public CEventClient
 {
 	CR_DECLARE(CFeatureDrawer);
 	CR_DECLARE_SUB(DrawQuad);
+
+typedef std::map<CFeature*, float> FeatureSet;
+typedef std::map<int, FeatureSet> FeatureRenderBin;
+typedef std::map<int, FeatureSet>::iterator FeatureRenderBinIt;
 
 public:
 	CFeatureDrawer();
@@ -29,6 +34,7 @@ public:
 	void DrawShadowPass();
 
 	void DrawFadeFeatures(bool noAdvShading = false);
+	void SwapFeatures();
 
 	bool WantsEvent(const std::string& eventName) {
 		return (eventName == "RenderFeatureCreated" || eventName == "RenderFeatureDestroyed" || eventName == "RenderFeatureMoved");
@@ -54,9 +60,9 @@ private:
 
 	void DrawOpaqueFeatures(int);
 	void DrawFarFeatures();
-	bool DrawFeatureNow(const CFeature*);
+	bool DrawFeatureNow(const CFeature*, float alpha = 0.99f);
 	void DrawFadeFeaturesHelper(int);
-	void DrawFadeFeaturesSet(std::set<CFeature*>&, int);
+	void DrawFadeFeaturesSet(FeatureSet&, int);
 	void GetVisibleFeatures(int, bool drawFar);
 
 	void PostLoad();

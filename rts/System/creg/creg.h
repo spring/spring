@@ -146,7 +146,7 @@ namespace creg {
 
 		void SetFlag(ClassFlags flag);
 
-		bool IsAbstract() { return (binder->flags & CF_Abstract) != 0; }
+		bool IsAbstract() const { return (binder->flags & CF_Abstract) != 0; }
 
 		std::vector<Class*> GetImplementations(); // get all concrete classes that implement this class
 

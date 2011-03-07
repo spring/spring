@@ -17,12 +17,12 @@
 #include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 
-//todo: switch from glu to a faster render impl. (DisplayLists, VertexArrays,...)?
+static float3 defaultColVolColor(0.45f, 0.0f, 0.45f);
 
-static float3 defaultColVolColor(0.45f, 0.f, 0.45f);
-
-static inline void DrawCollisionVolume(const CollisionVolume* vol, GLUquadricObj* q)
+static inline void DrawCollisionVolume(const CollisionVolume* vol)
 {
+	static unsigned int listIDs[3] = {0, 0, 0};
+
 	switch (vol->GetVolumeType()) {
 		case CollisionVolume::COLVOL_TYPE_FOOTPRINT:
 			// fall through, this is too hard to render correctly so just render sphere :)
@@ -32,7 +32,7 @@ static inline void DrawCollisionVolume(const CollisionVolume* vol, GLUquadricObj
 			// scaled sphere: radius, slices, stacks
 			glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
 			glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetHScale(2));
-			gluSphere(q, 1.0f, 10, 10);
+			glWireSphere(&listIDs[0], 20, 20);
 		} break;
 		case CollisionVolume::COLVOL_TYPE_CYLINDER: {
 			// scaled cylinder: base-radius, top-radius, height, slices, stacks
@@ -60,13 +60,13 @@ static inline void DrawCollisionVolume(const CollisionVolume* vol, GLUquadricObj
 				} break;
 			}
 
-			gluCylinder(q, 1.0f, 1.0f, 1.0f, 10, 10);
+			glWireCylinder(&listIDs[1], 20, 1.0f);
 		} break;
 		case CollisionVolume::COLVOL_TYPE_BOX: {
 			// scaled cube: length, width, height
 			glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
 			glScalef(vol->GetScale(0), vol->GetScale(1), vol->GetScale(2));
-			gluMyCube(1.0f);
+			glWireCube(&listIDs[2]);
 		} break;
 	}
 }
@@ -83,24 +83,22 @@ static inline void DrawFeatureColVol(const CFeature* f)
 			glTranslatef3(f->relMidPos * float3(-1.0f, 1.0f, 1.0f));
 
 			GLUquadricObj* q = gluNewQuadric();
-
-			// draw the centerpos
-			glColor3f(1.0f, 0.0f, 1.0f);
-			gluQuadricDrawStyle(q, GLU_FILL);
-			gluSphere(q, 2.0f, 5, 5);
-
-			glColorf3(defaultColVolColor);
-			gluQuadricDrawStyle(q, GLU_LINE);
-
-			DrawCollisionVolume(f->collisionVolume, q);
-
+			{
+				// draw the centerpos
+				glColor3f(1.0f, 0.0f, 1.0f);
+				gluQuadricDrawStyle(q, GLU_FILL);
+				gluSphere(q, 2.0f, 5, 5);
+				glColorf3(defaultColVolColor);
+			}
 			gluDeleteQuadric(q);
+
+			DrawCollisionVolume(f->collisionVolume);
 		glPopMatrix();
 	}
 }
 
 
-static void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPiece* lap, int lapf, CMatrix44f mat, GLUquadricObj* q)
+static void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPiece* lap, int lapf, CMatrix44f mat)
 {
 	mat.Translate(p->pos.x, p->pos.y, p->pos.z);
 	mat.RotateY(-p->rot[1]);
@@ -115,7 +113,7 @@ static void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPie
 				glColor3f((1.0f - ((gs->frameNum - lapf) / 150.0f)), 0.0f, 0.0f);
 			}
 
-			DrawCollisionVolume(p->GetCollisionVolume(), q);
+			DrawCollisionVolume(p->GetCollisionVolume());
 
 			if ((p == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
 				glColorf3(defaultColVolColor);
@@ -124,7 +122,7 @@ static void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPie
 	glPopMatrix();
 
 	for (unsigned int i = 0; i < p->childs.size(); i++) {
-		DrawUnitDebugPieceTree(p->childs[i], lap, lapf, mat, q);
+		DrawUnitDebugPieceTree(p->childs[i], lap, lapf, mat);
 	}
 }
 
@@ -139,19 +137,19 @@ static inline void DrawUnitColVol(const CUnit* unit)
 		glTranslatef3(unit->relMidPos * float3(-1.0f, 1.0f, 1.0f));
 
 		GLUquadricObj* q = gluNewQuadric();
-
-		// draw the aimpoint
-		glColor3f(1.0f, 0.0f, 1.0f);
-		gluQuadricDrawStyle(q, GLU_FILL);
-		gluSphere(q, 2.0f, 5, 5);
-
-		glColorf3(defaultColVolColor);
-		gluQuadricDrawStyle(q, GLU_LINE);
+		{
+			// draw the aimpoint
+			glColor3f(1.0f, 0.0f, 1.0f);
+			gluQuadricDrawStyle(q, GLU_FILL);
+			gluSphere(q, 2.0f, 5, 5);
+			glColorf3(defaultColVolColor);
+		}
+		gluDeleteQuadric(q);
 
 		if (unit->unitDef->usePieceCollisionVolumes) {
 			//! draw only the piece volumes for less clutter
 			CMatrix44f mat(unit->relMidPos * float3(0.0f, -1.0f, 0.0f));
-			DrawUnitDebugPieceTree(unit->localmodel->GetRoot(), unit->lastAttackedPiece, unit->lastAttackedPieceFrame, mat, q);
+			DrawUnitDebugPieceTree(unit->localmodel->GetRoot(), unit->lastAttackedPiece, unit->lastAttackedPieceFrame, mat);
 		} else {
 			if (!unit->collisionVolume->IsDisabled()) {
 				//! make it fade red under attack
@@ -159,15 +157,13 @@ static inline void DrawUnitColVol(const CUnit* unit)
 					glColor3f((1.0f - ((gs->frameNum - unit->lastAttack) / 150.0f)), 0.0f, 0.0f);
 				}
 
-				DrawCollisionVolume(unit->collisionVolume, q);
+				DrawCollisionVolume(unit->collisionVolume);
 
 				if (unit->lastAttack > 0 && ((gs->frameNum - unit->lastAttack) < 150)) {
 					glColorf3(defaultColVolColor);
 				}
 			}
 		}
-
-		gluDeleteQuadric(q);
 	glPopMatrix();
 }
 
@@ -194,7 +190,6 @@ public:
 
 namespace DebugColVolDrawer
 {
-
 	void Draw()
 	{
 		if (!globalRendering->drawdebug)
@@ -209,20 +204,19 @@ namespace DebugColVolDrawer
 			glDisable(GL_LIGHT1);
 			glDisable(GL_CULL_FACE);
 			glDisable(GL_TEXTURE_2D);
-			//glDisable(GL_BLEND);
+			// glDisable(GL_BLEND);
 			glDisable(GL_ALPHA_TEST);
 			glDisable(GL_FOG);
 			glDisable(GL_CLIP_PLANE0);
 			glDisable(GL_CLIP_PLANE1);
 
-			//glLineWidth(1.f);
+			glLineWidth(2.0f);
 			glDepthMask(GL_TRUE);
 
 			static CDebugColVolQuadDrawer drawer;
 			readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 1e9, &drawer);
 
-			//glLineWidth(1.f);
+			glLineWidth(1.0f);
 		glPopAttrib();
 	}
-
-} //namespace DebugColVolDrawer
+}

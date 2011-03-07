@@ -98,7 +98,7 @@ static bool InitImageHlpDll()
 
 
 /** Print out a stacktrace. */
-static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE)
+static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE)
 {
 	PIMAGEHLP_SYMBOL pSym;
 	STACKFRAME sf;
@@ -110,12 +110,10 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 
 	process = GetCurrentProcess();
 
-	if (!InitImageHlpDll())
-		return;
-
-	// List all loaded DLLs.
-	PRINT("DLL information:");
-	SymEnumerateModules(process, EnumModules, NULL);
+	if(threadName)
+		PRINT("Stacktrace (%s):", threadName);
+	else
+		PRINT("Stacktrace:");
 
 	bool suspended = false;
 	CONTEXT c;
@@ -129,7 +127,6 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 		c.ContextFlags = CONTEXT_FULL;
 		// FIXME: This does not work if you want to dump the current thread's stack
 		if (!GetThreadContext(hThread, &c)) {
-			SymCleanup(process); // Unintialize IMAGEHLP.DLL
 			ResumeThread(hThread);
 			return;
 		}
@@ -147,7 +144,6 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 	pSym = (PIMAGEHLP_SYMBOL)GlobalAlloc(GMEM_FIXED, 16384);
 	char* printstrings = (char*)GlobalAlloc(GMEM_FIXED, 0);
 
-	PRINT("Stacktrace:");
 	bool containsOglDll = false;
 	while (true) {
 		more = StackWalk(
@@ -206,9 +202,6 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 		++count;
 	}
 
-	// Unintialize IMAGEHLP.DLL
-	SymCleanup(process);
-
 	if (suspended) {
 		ResumeThread(hThread);
 	}
@@ -229,11 +222,23 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 }
 
 
-void Stacktrace(Threading::NativeThreadHandle thread)
+void Stacktrace(Threading::NativeThreadHandle thread, const char *threadName)
 {
-	Stacktrace(NULL, thread);
+	Stacktrace(threadName, NULL, thread);
 }
 
+void PrepareStacktrace() {
+	InitImageHlpDll();
+
+	// Record list of loaded DLLs.
+	PRINT("DLL information:");
+	SymEnumerateModules(GetCurrentProcess(), EnumModules, NULL);
+}
+
+void CleanupStacktrace() {
+	// Unintialize IMAGEHLP.DLL
+	SymCleanup(GetCurrentProcess());
+}
 
 /** Called by windows if an exception happens. */
 LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
@@ -245,6 +250,8 @@ LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 	PRINT("MT with %d threads.", gmlThreadCount);
 #endif
 
+	PrepareStacktrace();
+
 	const std::string error(ExceptionName(e->ExceptionRecord->ExceptionCode));
 
 	// Print exception info.
@@ -252,7 +259,9 @@ LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 	PRINT("Exception Address: 0x%08lx", (unsigned long int) (PVOID) e->ExceptionRecord->ExceptionAddress);
 
 	// Print stacktrace.
-	Stacktrace(e);
+	Stacktrace(NULL, e);
+
+	CleanupStacktrace();
 
 	// Only the first crash is of any real interest
 	CrashHandler::Remove();

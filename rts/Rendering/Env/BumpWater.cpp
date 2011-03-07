@@ -679,6 +679,7 @@ CBumpWater::CoastAtlasRect::CoastAtlasRect(CBumpWater::CoastUpdateRect& rect)
 	x2 = rect.x2 / (float)gs->mapx;
 	y1 = rect.z1 / (float)gs->mapy;
 	y2 = rect.z2 / (float)gs->mapy;
+	tx1 = tx2 = ty1 = ty2 = 0.f;
 	isCoastline = true;
 }
 

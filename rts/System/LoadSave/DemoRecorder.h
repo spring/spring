@@ -30,7 +30,7 @@ public:
 	destructor. Otherwise the name "DATE_TIME_unnamed_VERSION.sdf" will be used.
 	*/
 	void SetName(const std::string& mapname, const std::string& modname);
-	const std::string& GetName() { return wantedName; }
+	const std::string& GetName() const { return wantedName; }
 
 	void SetGameID(const unsigned char* buf);
 	void SetTime(int gameTime, int wallclockTime);

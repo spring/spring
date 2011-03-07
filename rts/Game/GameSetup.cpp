@@ -218,16 +218,6 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 				"incorrect number of skirmish AIs in GameSetup script");
 	}
 }
-const SkirmishAIData* CGameSetup::GetSkirmishAIDataForTeam(int teamId) const {
-
-	std::map<int, const SkirmishAIData*>::const_iterator sad;
-	sad = team_skirmishAI.find(teamId);
-	if (sad == team_skirmishAI.end()) {
-		return NULL;
-	} else {
-		return sad->second;
-	}
-}
 
 const std::vector<SkirmishAIData>& CGameSetup::GetSkirmishAIs() const {
 	return skirmishAIStartingData;

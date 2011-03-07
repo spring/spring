@@ -90,6 +90,7 @@ public:
 
 	struct RudderInfo{
 		CR_DECLARE_STRUCT(RudderInfo);
+		RudderInfo() : rotation(0.f) {}
 		float rotation;
 	};
 

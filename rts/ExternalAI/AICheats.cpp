@@ -102,7 +102,7 @@ int CAICheats::CreateUnit(const char* name, const float3& pos)
 	return unitId;
 }
 
-const UnitDef* CAICheats::GetUnitDef(int unitId)
+const UnitDef* CAICheats::GetUnitDef(int unitId) const
 {
 	const UnitDef* unitDef = NULL;
 
@@ -116,7 +116,7 @@ const UnitDef* CAICheats::GetUnitDef(int unitId)
 
 
 
-float3 CAICheats::GetUnitPos(int unitId)
+float3 CAICheats::GetUnitPos(int unitId) const
 {
 	const CUnit* unit = GetUnit(unitId);
 	if (unit) {
@@ -126,7 +126,7 @@ float3 CAICheats::GetUnitPos(int unitId)
 	return ZeroVector;
 }
 
-float3 CAICheats::GetUnitVelocity(int unitId)
+float3 CAICheats::GetUnitVelocity(int unitId) const
 {
 	const CUnit* unit = GetUnit(unitId);
 	if (unit) {
@@ -233,7 +233,7 @@ int CAICheats::GetFeatures(int* features, int max, const float3& pos,
 
 
 
-int CAICheats::GetUnitTeam(int unitId)
+int CAICheats::GetUnitTeam(int unitId) const
 {
 	int unitTeamId = 0;
 
@@ -245,7 +245,7 @@ int CAICheats::GetUnitTeam(int unitId)
 	return unitTeamId;
 }
 
-int CAICheats::GetUnitAllyTeam(int unitId)
+int CAICheats::GetUnitAllyTeam(int unitId) const
 {
 	int unitAllyTeamId = 0;
 
@@ -257,7 +257,7 @@ int CAICheats::GetUnitAllyTeam(int unitId)
 	return unitAllyTeamId;
 }
 
-float CAICheats::GetUnitHealth(int unitId)
+float CAICheats::GetUnitHealth(int unitId) const
 {
 	float health = 0.0f;
 
@@ -269,7 +269,7 @@ float CAICheats::GetUnitHealth(int unitId)
 	return health;
 }
 
-float CAICheats::GetUnitMaxHealth(int unitId)
+float CAICheats::GetUnitMaxHealth(int unitId) const
 {
 	float maxHealth = 0.0f;
 
@@ -281,7 +281,7 @@ float CAICheats::GetUnitMaxHealth(int unitId)
 	return maxHealth;
 }
 
-float CAICheats::GetUnitPower(int unitId)
+float CAICheats::GetUnitPower(int unitId) const
 {
 	float power = 0.0f;
 
@@ -293,7 +293,7 @@ float CAICheats::GetUnitPower(int unitId)
 	return power;
 }
 
-float CAICheats::GetUnitExperience(int unitId)
+float CAICheats::GetUnitExperience(int unitId) const
 {
 	float experience = 0.0f;
 
@@ -305,7 +305,7 @@ float CAICheats::GetUnitExperience(int unitId)
 	return experience;
 }
 
-bool CAICheats::IsUnitActivated(int unitId)
+bool CAICheats::IsUnitActivated(int unitId) const
 {
 	bool activated = false;
 
@@ -317,7 +317,7 @@ bool CAICheats::IsUnitActivated(int unitId)
 	return activated;
 }
 
-bool CAICheats::UnitBeingBuilt(int unitId)
+bool CAICheats::UnitBeingBuilt(int unitId) const
 {
 	bool beingBuilt = false;
 
@@ -329,7 +329,7 @@ bool CAICheats::UnitBeingBuilt(int unitId)
 	return beingBuilt;
 }
 
-bool CAICheats::GetUnitResourceInfo(int unitId, UnitResourceInfo* unitResInf)
+bool CAICheats::GetUnitResourceInfo(int unitId, UnitResourceInfo* unitResInf) const
 {
 	bool fetchOk = false;
 
@@ -345,7 +345,7 @@ bool CAICheats::GetUnitResourceInfo(int unitId, UnitResourceInfo* unitResInf)
 	return fetchOk;
 }
 
-const CCommandQueue* CAICheats::GetCurrentUnitCommands(int unitId)
+const CCommandQueue* CAICheats::GetCurrentUnitCommands(int unitId) const
 {
 	const CCommandQueue* currentUnitCommands = NULL;
 
@@ -357,7 +357,7 @@ const CCommandQueue* CAICheats::GetCurrentUnitCommands(int unitId)
 	return currentUnitCommands;
 }
 
-int CAICheats::GetBuildingFacing(int unitId)
+int CAICheats::GetBuildingFacing(int unitId) const
 {
 	int buildFacing = 0;
 
@@ -369,7 +369,7 @@ int CAICheats::GetBuildingFacing(int unitId)
 	return buildFacing;
 }
 
-bool CAICheats::IsUnitCloaked(int unitId)
+bool CAICheats::IsUnitCloaked(int unitId) const
 {
 	bool isCloaked = false;
 
@@ -381,7 +381,7 @@ bool CAICheats::IsUnitCloaked(int unitId)
 	return isCloaked;
 }
 
-bool CAICheats::IsUnitParalyzed(int unitId)
+bool CAICheats::IsUnitParalyzed(int unitId) const
 {
 	bool stunned = false;
 
@@ -394,7 +394,7 @@ bool CAICheats::IsUnitParalyzed(int unitId)
 }
 
 
-bool CAICheats::IsUnitNeutral(int unitId)
+bool CAICheats::IsUnitNeutral(int unitId) const
 {
 	bool isNeutral = false;
 
@@ -407,7 +407,7 @@ bool CAICheats::IsUnitNeutral(int unitId)
 }
 
 
-bool CAICheats::GetProperty(int id, int property, void *data)
+bool CAICheats::GetProperty(int id, int property, void *data) const
 {
 	bool fetchOk = false;
 

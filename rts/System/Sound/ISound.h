@@ -7,6 +7,7 @@
 
 class float3;
 class CSoundSource;
+class SoundItem;
 
 
 /**
@@ -28,6 +29,7 @@ public:
 
 	virtual bool HasSoundItem(const std::string& name) = 0;
 	virtual size_t GetSoundId(const std::string& name, bool hardFail = true) = 0;
+	virtual SoundItem* GetSoundItem(size_t id) const = 0;
 
 	/**
 	 * Returns a free sound source if available,
@@ -49,11 +51,8 @@ public:
 
 	virtual void PrintDebugInfo() = 0;
 	virtual bool LoadSoundDefs(const std::string& fileName) = 0;
-
-private:
-	friend class EffectChannel;
-	// this is used by EffectChannel in AudioChannel.cpp
-	virtual void PlaySample(size_t id, const float3 &p, const float3& velocity, float volume, bool relative) = 0;
+	
+	virtual const float3& GetListenerPos() const = 0;
 };
 
 #define sound ISound::GetInstance()

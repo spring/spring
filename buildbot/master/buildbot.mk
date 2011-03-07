@@ -21,10 +21,10 @@ start-slave:
 	##### Not using schroot
 	#env -i PATH=$$PATH nice -19 ionice -c3 buildslave start slaves/testslave
 	##### Using schroot
-	schroot --begin-session --chroot buildbot-lucid > ~/run/slave_schroot_session
+	schroot --begin-session --chroot buildbot-maverick > ~/run/slave_schroot_session
 	## `ionice -c3' sets the process to idle IO priority.
 	## This is only useful when using CFQ IO scheduler on the relevant disk.
-	schroot --run-session --chroot `cat ~/run/slave_schroot_session` -- env -i PATH=/usr/local/bin:/usr/bin:/bin nice -19 ionice -c3 buildslave start /slave
+	schroot --run-session --chroot `cat ~/run/slave_schroot_session` -- env -i PATH=/usr/lib/ccache:/usr/local/bin:/usr/bin:/bin nice -19 ionice -c3 buildslave start /slave
 
 stop-slave:
 	##### Not using schroot
