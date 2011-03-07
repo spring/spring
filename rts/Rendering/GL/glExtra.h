@@ -27,6 +27,8 @@ extern void setSurfaceSquareFunc(SurfaceSquareFunc func);
 typedef void (*DrawVolumeFunc)(const void* data);
 extern void glDrawVolume(DrawVolumeFunc drawFunc, const void* data);
 
-extern void gluMyCube(float);
+extern void glWireCube(unsigned int* listID);
+extern void glWireCylinder(unsigned int* listID, unsigned int numDivs, float zSize);
+extern void glWireSphere(unsigned int* listID, unsigned int numRows, unsigned int numCols);
 
 #endif
