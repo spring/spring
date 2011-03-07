@@ -62,7 +62,8 @@ static inline unsigned int count_bits_set(unsigned int w)
  * Quick macro to make a number even, by
  * forcing the rightmost bit to 0.
  */
-#define make_even_number(x) 	((x) &= ~0x1)
+#define make_even_number(n) 	((n) += ((n) & 0x1)?1:0) //! ~ceil()
+//#define make_even_number(n) 	((x) &= ~0x1)            //! ~floor()
 
 /**
  * @brief Conditionally set flag macro

@@ -92,13 +92,6 @@ protected:
 	int windowState;
 
 	/**
-	 * @brief FSAA
-	 *
-	 * Level of full-screen anti-aliasing
-	 */
-	bool FSAA;
-
-	/**
 	 * @brief depthBufferBits
 	 *
 	 * number of Depthbuffer bits

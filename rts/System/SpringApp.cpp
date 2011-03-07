@@ -96,6 +96,21 @@ COffscreenGLContext* SpringApp::ogc = NULL;
  */
 const int XRES_DEFAULT = 1024;
 
+static bool MultisampleVerify()
+{
+	if (!GLEW_ARB_multisample)
+		return false;
+	GLint buffers = 0;
+	GLint samples = 0;
+	glGetIntegerv(GL_SAMPLE_BUFFERS_ARB, &buffers);
+	glGetIntegerv(GL_SAMPLES_ARB, &samples);
+	if (buffers && samples) {
+		return true;
+	}
+	return false;
+}
+
+
 /**
  * @brief yres default
  *
@@ -111,7 +126,6 @@ SpringApp::SpringApp()
 {
 	cmdline = NULL;
 	screenWidth = screenHeight = 0;
-	FSAA = false;
 	lastRequiredDraw = 0;
 	depthBufferBits = 24;
 	windowState = 0;
@@ -211,6 +225,10 @@ bool SpringApp::Initialize()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	SDL_GL_SwapBuffers();
 
+	//! check if FSAA init worked fine
+	if (globalRendering->FSAA && !MultisampleVerify())
+		globalRendering->FSAA = 0;
+
 	globalRendering->PostInit();
 
 	// Initialize named texture handler
@@ -293,49 +311,6 @@ void SpringApp::SetProcessAffinity(int affinity) const {
 }
 
 
-
-/**
- * @brief multisample test
- * @return whether the multisampling test was successful
- *
- * Tests if a user has requested FSAA, if it's a valid
- * FSAA mode, and if it's supported by the current GL context
- */
-static bool MultisampleTest(void)
-{
-	if (!GL_ARB_multisample)
-		return false;
-	GLuint fsaa = configHandler->Get("FSAA",0);
-	if (!fsaa)
-		return false;
-	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS,1);
-	GLuint fsaalevel = std::max(std::min(configHandler->Get("FSAALevel", 2), 8), 0);
-
-	make_even_number(fsaalevel);
-
-	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES,fsaalevel);
-	return true;
-}
-
-/**
- * @brief multisample verify
- * @return whether verification passed
- *
- * Tests whether FSAA was actually enabled
- */
-static bool MultisampleVerify(void)
-{
-	GLint buffers = 0;
-	GLint samples = 0;
-	glGetIntegerv(GL_SAMPLE_BUFFERS_ARB, &buffers);
-	glGetIntegerv(GL_SAMPLES_ARB, &samples);
-	if (buffers && samples) {
-		return true;
-	}
-	return false;
-}
-
-
 /**
  * @return whether window initialization succeeded
  * @param title char* string with window title
@@ -394,10 +369,15 @@ bool SpringApp::SetSDLVideoMode()
 
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depthBufferBits);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler->Get("StencilBufferBits", 8));
-
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-	FSAA = MultisampleTest();
+	//! FullScreen AntiAliasing
+	globalRendering->FSAA = Clamp(configHandler->Get("FSAALevel", 0), 0, 8);
+	if (globalRendering->FSAA > 0) {
+		make_even_number(globalRendering->FSAA);
+		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, globalRendering->FSAA);
+	}
 
 	// screen will be freed by SDL_Quit()
 	// from: http://sdl.beuc.net/sdl.wiki/SDL_SetVideoMode
@@ -417,10 +397,6 @@ bool SpringApp::SetSDLVideoMode()
 	// Set single precision floating point math.
 	streflop_init<streflop::Simple>();
 #endif
-
-	if (FSAA) {
- 		FSAA = MultisampleVerify();
-	}
 
 	// setup GL smoothing
 	const int defaultSmooth = 0; // FSAA ? 0 : 3;  // until a few things get fixed
@@ -759,6 +735,13 @@ void SpringApp::UpdateOldConfigs()
 		configHandler->Delete("AtiHacks"); //! new runtime detection with -1
 		configHandler->Set("Version",3);
 	}
+	if (cfgVersion < 4) {
+		bool fsaaEnabled = configHandler->Get("FSAA", false);
+		if (!fsaaEnabled)
+			configHandler->Set("FSAALevel", 0);
+		configHandler->Delete("FSAA");
+		configHandler->Set("Version",4);
+	}
 }
 
 
@@ -1052,7 +1035,7 @@ int SpringApp::Sim()
  */
 int SpringApp::Update()
 {
-	if (FSAA)
+	if (globalRendering->FSAA)
 		glEnable(GL_MULTISAMPLE_ARB);
 
 	int ret = 1;
@@ -1107,9 +1090,8 @@ int SpringApp::Update()
 	VSync.Delay();
 	SDL_GL_SwapBuffers();
 
-	if (FSAA) {
+	if (globalRendering->FSAA)
 		glDisable(GL_MULTISAMPLE_ARB);
-	}
 
 	return ret;
 }
