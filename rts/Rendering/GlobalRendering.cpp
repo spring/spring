@@ -58,6 +58,7 @@ CGlobalRendering::CGlobalRendering() {
 	pixelX = 0.01f;
 	pixelY = 0.01f;
 	aspectRatio = 1.0f;
+	FSAA = 0;
 
 	drawSky      = true;
 	drawWater    = true;

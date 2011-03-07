@@ -86,6 +86,13 @@ public:
 	 */
 	int depthBufferBits;
 
+	/**
+	 * @brief FSAA
+	 *
+	 * Level of full-screen anti-aliasing
+	 */
+	int FSAA;
+
 	bool drawSky;
 	bool drawWater;
 	bool drawGround;
