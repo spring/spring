@@ -58,6 +58,7 @@ CGlobalRendering::CGlobalRendering() {
 	pixelX = 0.01f;
 	pixelY = 0.01f;
 	aspectRatio = 1.0f;
+	
 	FSAA = 0;
 
 	drawSky      = true;
@@ -86,6 +87,8 @@ CGlobalRendering::CGlobalRendering() {
 	
 	viewPosX = 0;
 	viewPosY = 0;
+	
+	winState = 0;
 	
 	winSizeX = 0;
 	winSizeY = 0;

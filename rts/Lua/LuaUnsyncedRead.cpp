@@ -310,10 +310,11 @@ int LuaUnsyncedRead::GetViewGeometry(lua_State* L)
 int LuaUnsyncedRead::GetWindowGeometry(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
+	const int winPosY_bl = globalRendering->screenSizeY - globalRendering->winSizeY - globalRendering->winPosY; //! origin BOTTOMLEFT
 	lua_pushnumber(L, globalRendering->winSizeX);
 	lua_pushnumber(L, globalRendering->winSizeY);
 	lua_pushnumber(L, globalRendering->winPosX);
-	lua_pushnumber(L, globalRendering->winPosY);
+	lua_pushnumber(L, winPosY_bl);
 	return 4;
 }
 

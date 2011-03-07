@@ -819,10 +819,11 @@ void LuaOpenGL::SetupScreenMatrices()
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
+	const int winPosY_bl = globalRendering->screenSizeY - globalRendering->winSizeY - globalRendering->winPosY; //! origin BOTTOMLEFT
 	const float dist   = screenDistance;         // eye-to-screen (meters)
 	const float width  = screenWidth;            // screen width (meters)
 	const float vppx   = float(globalRendering->winPosX + globalRendering->viewPosX); // view pixel pos x
-	const float vppy   = float(globalRendering->winPosY + globalRendering->viewPosY); // view pixel pos y
+	const float vppy   = float(winPosY_bl + globalRendering->viewPosY); // view pixel pos y
 	const float vpsx   = float(globalRendering->viewSizeX);   // view pixel size x
 	const float vpsy   = float(globalRendering->viewSizeY);   // view pixel size y
 	const float spsx   = float(globalRendering->screenSizeX); // screen pixel size x

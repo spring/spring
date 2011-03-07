@@ -57,39 +57,6 @@ protected:
 	BaseCmd *cmdline;
 
 	/**
-	 * @brief screen width
-	 *
-	 * Game screen width
-	 */
-	int screenWidth;
-
-	/**
-	 * @brief screen height
-	 *
-	 * Game screen height
-	 */
-	int screenHeight;
-
-	/**
-	 * @brief window position - X
-	 *
-	 * Game window position from the left of the screen (if not full-screen)
-	 */
-	int windowPosX;
-
-	/**
-	 * @brief window position - Y
-	 *
-	 * Game window position from the top of the screen (if not full-screen)
-	 */
-	int windowPosY;
-
-	/**
-	 * @brief window state
-	 *
-	 * Game window state (0=normal,1=maximized,2=minimized)
-	 */
-	int windowState;
 
 	/**
 	 * @brief depthBufferBits

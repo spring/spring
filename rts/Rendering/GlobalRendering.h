@@ -52,11 +52,14 @@ public:
 	int screenSizeX;
 	int screenSizeY;
 
-	// the window position relative to the screen's bottom-left corner
+	/// the window state (0=normal,1=maximized,2=minimized)
+	int winState;
+
+	/// the window position relative to the screen's bottom-left corner
 	int winPosX;
 	int winPosY;
-
-	// the window size in pixels
+	
+	/// the window size in pixels
 	int winSizeX;
 	int winSizeY;
 
