@@ -695,7 +695,7 @@ void SpringApp::InitOpenGL()
 {
 	SetupViewportGeometry();
 	glViewport(globalRendering->viewPosX, globalRendering->viewPosY, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	gluPerspective(45.0f, (GLfloat)globalRendering->viewSizeX / (GLfloat)globalRendering->viewSizeY, 2.8f, MAX_VIEW_RANGE);
+	gluPerspective(45.0f,  globalRendering->aspectRatio, 2.8f, MAX_VIEW_RANGE);
 
 	// Initialize some GL states
 	glShadeModel(GL_SMOOTH);
