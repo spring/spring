@@ -1381,6 +1381,8 @@ void CLuaHandle::ViewResize()
 		return;
 	}
 
+	const int winPosY_bl = globalRendering->screenSizeY - globalRendering->winSizeY - globalRendering->winPosY; //! origin BOTTOMLEFT
+
 	lua_newtable(L);
 	LuaPushNamedNumber(L, "screenSizeX", globalRendering->screenSizeX);
 	LuaPushNamedNumber(L, "screenSizeY", globalRendering->screenSizeY);
@@ -1389,7 +1391,7 @@ void CLuaHandle::ViewResize()
 	LuaPushNamedNumber(L, "windowSizeX", globalRendering->winSizeX);
 	LuaPushNamedNumber(L, "windowSizeY", globalRendering->winSizeY);
 	LuaPushNamedNumber(L, "windowPosX",  globalRendering->winPosX);
-	LuaPushNamedNumber(L, "windowPosY",  globalRendering->winPosY);
+	LuaPushNamedNumber(L, "windowPosY",  winPosY_bl);
 	LuaPushNamedNumber(L, "viewSizeX",   globalRendering->viewSizeX);
 	LuaPushNamedNumber(L, "viewSizeY",   globalRendering->viewSizeY);
 	LuaPushNamedNumber(L, "viewPosX",    globalRendering->viewPosX);
