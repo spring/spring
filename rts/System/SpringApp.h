@@ -57,15 +57,6 @@ protected:
 	BaseCmd *cmdline;
 
 	/**
-
-	/**
-	 * @brief depthBufferBits
-	 *
-	 * number of Depthbuffer bits
-	 */
-	bool depthBufferBits;
-
-	/**
 	 * @brief last required draw
 	 *
 	 * sim frame after which the last required draw was conducted

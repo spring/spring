@@ -126,7 +126,6 @@ SpringApp::SpringApp()
 {
 	cmdline = NULL;
 	lastRequiredDraw = 0;
-	depthBufferBits = 24;
 	ogc = NULL;
 }
 
@@ -361,10 +360,8 @@ bool SpringApp::SetSDLVideoMode()
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8); // enable alpha channel
 
-	depthBufferBits = configHandler->Get("DepthBufferBits", 24);
-	if (globalRendering) globalRendering->depthBufferBits = depthBufferBits;
-
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depthBufferBits);
+	globalRendering->depthBufferBits = configHandler->Get("DepthBufferBits", 24);
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, globalRendering->depthBufferBits);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler->Get("StencilBufferBits", 8));
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
