@@ -38,7 +38,7 @@ enter-chroot:
 	schroot --run-session --chroot `cat ~/run/slave_schroot_session`
 
 start-github:
-	env -i PATH=$$PATH buildbot/contrib/github_buildbot.py -m localhost:9989 -p 9987 -l ~/log/github_buildbot.log -L debug --pidfile ~/run/github_buildbot.pid &
+	env -i PATH=$$PATH buildbot/master/contrib/github_buildbot.py -m localhost:9989 -p 9987 -l ~/log/github_buildbot.log -L debug --pidfile ~/run/github_buildbot.pid &
 
 stop-github:
 	-[ -e ~/run/github_buildbot.pid ] && kill `cat ~/run/github_buildbot.pid`
