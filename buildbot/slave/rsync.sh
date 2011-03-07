@@ -39,6 +39,7 @@ cd $BUILDDIR
 cd ${MINGWLIBS_DIR}
 7z a ${MINGWLIBS_ARCHIVE} .
 
+cd ${BUILDDIR}
 for tostripfile in spring.exe spring-dedicated.exe spring-multithreaded.exe spring-headless.exe unitsync.dll; do
 	zip ${tostripfile} ${tostripfile%.*}
 done
