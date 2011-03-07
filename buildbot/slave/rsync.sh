@@ -5,6 +5,9 @@ set -e
 REMOTE_HOST=localhost
 REMOTE_BASE=/home/buildbot/www
 BASE_ARCHIVE="${TMP_PATH}/${VERSION}_base.7z"
+MINGWLIBS_ARCHIVE="${TMP_PATH}/${VERSION}_mingwlibs.7z"
+CONTENT_DIR=$BUILDDIR/../cont
+MINGWLIBS_DIR=$BUILDDIR/../../mingwlibs/dll
 CMD="rsync -avz --chmod=D+rx,F+r"
 
 umask 022
@@ -25,12 +28,16 @@ function zip() {
 # Create one archive for base content and two archives for each exe/dll:
 # one containing the exe/dll, and one containing debug symbols.
 rm -f "${BASE_ARCHIVE}"
-cd $BUILDDIR/../cont
+cd ${CONTENT_DIR}
 # add LuaUI + fonts + misc files in root of cont to base archive
-7z a "${BASE_ARCHIVE}" . -x!base -x!freedesktop -xr!CMake* -xr!cmake* -xr!Makefile
+7z a ${BASE_ARCHIVE} . -x!base -x!freedesktop -xr!CMake* -xr!cmake* -xr!Makefile
 cd $BUILDDIR
 # add already created 7z files (springcontent.sd7, maphelper.sd7, cursors.sdz, bitmaps.sdz) to base archive
-7z u "${BASE_ARCHIVE}" ${BUILDDIR}/base
+7z u ${BASE_ARCHIVE} ${BUILDDIR}/base
+
+#create archive for needed dlls from mingwlibs
+cd ${MINGWLIBS_DIR}
+7z a ${MINGWLIBS_ARCHIVE} .
 
 for tostripfile in spring.exe spring-dedicated.exe spring-multithreaded.exe spring-headless.exe unitsync.dll; do
 	zip ${tostripfile} ${tostripfile%.*}
