@@ -83,19 +83,18 @@
 	extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 #endif
 
-using std::string;
 
 ClientSetup* startsetup = NULL;
-
 COffscreenGLContext* SpringApp::ogc = NULL;
 
-/**
- * @brief xres default
- *
- * Defines the default X resolution as 1024
- */
-const int XRES_DEFAULT = 1024;
 
+
+/**
+ * @brief multisample verify
+ * @return whether verification passed
+ *
+ * Tests whether FSAA was actually enabled
+ */
 static bool MultisampleVerify()
 {
 	if (!GLEW_ARB_multisample)
@@ -109,14 +108,6 @@ static bool MultisampleVerify()
 	}
 	return false;
 }
-
-
-/**
- * @brief yres default
- *
- * Defines the default Y resolution as 768
- */
-const int YRES_DEFAULT = 768;
 
 
 /**
@@ -373,6 +364,18 @@ bool SpringApp::SetSDLVideoMode()
 		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, globalRendering->FSAA);
 	}
 
+	//! use desktop resolution?
+	if ((globalRendering->viewSizeX<=0) || (globalRendering->viewSizeY<=0)) {
+		const SDL_VideoInfo* screenInfo = SDL_GetVideoInfo(); //! it's a read-only struct (we don't need to free it!)
+		globalRendering->viewSizeX = screenInfo->current_w;
+		globalRendering->viewSizeY = screenInfo->current_h;
+	}
+	//! fallback if resolution couldn't be detected
+	if ((globalRendering->viewSizeX<=0) || (globalRendering->viewSizeY<=0)) {
+		globalRendering->viewSizeX = 1024;
+		globalRendering->viewSizeY = 768;
+	}
+	
 	//! screen will be freed by SDL_Quit()
 	//! from: http://sdl.beuc.net/sdl.wiki/SDL_SetVideoMode
 	//! Note 3: This function should be called in the main thread of your application.
@@ -735,6 +738,15 @@ void SpringApp::UpdateOldConfigs()
 		configHandler->Delete("FSAA");
 		configHandler->Set("Version",4);
 	}
+	if (cfgVersion < 5) {
+		const int xres = configHandler->Get("XResolution", 0); 
+		const int yres = configHandler->Get("YResolution", 0);
+		if ((xres == 1024) && (yres == 768)) { //! old default res (use desktop res now by default)
+			configHandler->Delete("XResolution");
+			configHandler->Delete("YResolution");
+		}
+		configHandler->Set("Version",5);
+	}
 }
 
 
@@ -861,11 +873,11 @@ void SpringApp::ParseCmdLine()
 		}
 	}
 
-	globalRendering->viewSizeX = configHandler->Get("XResolution", XRES_DEFAULT);
+	globalRendering->viewSizeX = configHandler->Get("XResolution", 0);
 	if (cmdline->IsSet("xresolution"))
 		globalRendering->viewSizeX = std::max(cmdline->GetInt("xresolution"), 640);
 
-	globalRendering->viewSizeY = configHandler->Get("YResolution", YRES_DEFAULT);
+	globalRendering->viewSizeY = configHandler->Get("YResolution", 0);
 	if (cmdline->IsSet("yresolution"))
 		globalRendering->viewSizeY = std::max(cmdline->GetInt("yresolution"), 480);
 
