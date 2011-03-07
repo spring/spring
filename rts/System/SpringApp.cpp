@@ -117,7 +117,6 @@ SpringApp::SpringApp()
 {
 	cmdline = NULL;
 	lastRequiredDraw = 0;
-	ogc = NULL;
 }
 
 /**
@@ -126,7 +125,6 @@ SpringApp::SpringApp()
 SpringApp::~SpringApp()
 {
 	delete cmdline;
-
 	creg::System::FreeClasses();
 }
 
@@ -189,32 +187,23 @@ bool SpringApp::Initialize()
 
 	mouseInput = IMouseInput::GetInstance();
 	keyInput = KeyInput::GetInstance();
-
+	input.AddHandler(boost::bind(&SpringApp::MainEventHandler, this, _1));
+	
 	// Global structures
 	gs = new CGlobalSynced();
 	gu = new CGlobalUnsynced();
 
-	if (cmdline->IsSet("minimise")) {
-		globalRendering->active = false;
-		SDL_WM_IconifyWindow();
-	}
-
-	InitOpenGL();
-	agui::InitGui();
-	palette.Init();
-
-	input.AddHandler(boost::bind(&SpringApp::MainEventHandler, this, _1));
-
-	LoadFonts();
-
 	// Initialize GLEW
 	LoadExtensions();
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	SDL_GL_SwapBuffers();
 
 	//! check if FSAA init worked fine
 	if (globalRendering->FSAA && !MultisampleVerify())
 		globalRendering->FSAA = 0;
+
+	InitOpenGL();
+	agui::InitGui();
+	palette.Init();
+	LoadFonts();
 
 	globalRendering->PostInit();
 
@@ -326,9 +315,13 @@ bool SpringApp::InitWindow(const char* title)
 	}
 
 	RestoreWindowPosition();
+	if (cmdline->IsSet("minimise")) {
+		globalRendering->active = false;
+		SDL_WM_IconifyWindow();
+	}
 
 	glClearColor(0.0f,0.0f,0.0f,0.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	SDL_GL_SwapBuffers();
 
 	return true;
@@ -343,13 +336,13 @@ bool SpringApp::SetSDLVideoMode()
 {
 	int sdlflags = SDL_OPENGL | SDL_RESIZABLE;
 
-	//! w/o SDL_NOFRAME, kde's windowmanager still creates a border and force a `window`-resize causing a lot of trouble
+	//! w/o SDL_NOFRAME, kde's windowmanager still creates a border (in fullscreen!) and forces a `window`-resize causing a lot of trouble (in the ::SaveWindowPositione)
 	sdlflags |= globalRendering->fullScreen ? SDL_FULLSCREEN | SDL_NOFRAME : 0;
 
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8); // enable alpha channel
+	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8); //! enable alpha channel ???
 
 	globalRendering->depthBufferBits = configHandler->Get("DepthBufferBits", 24);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, globalRendering->depthBufferBits);
@@ -390,13 +383,13 @@ bool SpringApp::SetSDLVideoMode()
 	}
 
 #ifdef STREFLOP_H
-	// Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
-	// Set single precision floating point math.
+	//! Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
+	//! Set single precision floating point math.
 	streflop_init<streflop::Simple>();
 #endif
 
-	// setup GL smoothing
-	const int defaultSmooth = 0; // FSAA ? 0 : 3;  // until a few things get fixed
+	//! setup GL smoothing
+	const int defaultSmooth = 0; //! FSAA ? 0 : 3;  // until a few things get fixed
 	const int lineSmoothing = configHandler->Get("SmoothLines", defaultSmooth);
 	if (lineSmoothing > 0) {
 		GLenum hint = GL_FASTEST;
@@ -420,18 +413,18 @@ bool SpringApp::SetSDLVideoMode()
 		glHint(GL_POINT_SMOOTH_HINT, hint);
 	}
 
-	// setup LOD bias factor
-	const float lodBias = std::max(std::min( configHandler->Get("TextureLODBias", 0.0f) , 4.0f), -4.0f);
+	//! setup LOD bias factor
+	const float lodBias = Clamp(configHandler->Get("TextureLODBias", 0.0f), -4.f, 4.f);
 	if (fabs(lodBias)>0.01f) {
 		glTexEnvf(GL_TEXTURE_FILTER_CONTROL,GL_TEXTURE_LOD_BIAS, lodBias );
 	}
 
-	// there must be a way to see if this is necessary, compare old/new context pointers?
+	//! there must be a way to see if this is necessary, compare old/new context pointers?
 	if (!!configHandler->Get("FixAltTab", 0)) {
-		// free GL resources
+		//! free GL resources
 		GLContext::Free();
 
-		// initialize any GL resources that were lost
+		//! initialize any GL resources that were lost
 		GLContext::Init();
 	}
 
@@ -701,9 +694,7 @@ void SpringApp::SetupViewportGeometry()
 void SpringApp::InitOpenGL()
 {
 	SetupViewportGeometry();
-
 	glViewport(globalRendering->viewPosX, globalRendering->viewPosY, globalRendering->viewSizeX, globalRendering->viewSizeY);
-
 	gluPerspective(45.0f, (GLfloat)globalRendering->viewSizeX / (GLfloat)globalRendering->viewSizeY, 2.8f, MAX_VIEW_RANGE);
 
 	// Initialize some GL states
@@ -716,7 +707,6 @@ void SpringApp::InitOpenGL()
 
 void SpringApp::UpdateOldConfigs()
 {
-	// not very neat, should be done in the installer someday
 	const int cfgVersion = configHandler->Get("Version",0);
 	if (cfgVersion < 2) {
 		// force an update to new defaults
@@ -732,7 +722,7 @@ void SpringApp::UpdateOldConfigs()
 		configHandler->Set("Version",3);
 	}
 	if (cfgVersion < 4) {
-		bool fsaaEnabled = configHandler->Get("FSAA", false);
+		const bool fsaaEnabled = configHandler->Get("FSAA", false);
 		if (!fsaaEnabled)
 			configHandler->Set("FSAALevel", 0);
 		configHandler->Delete("FSAA");
@@ -1047,26 +1037,24 @@ int SpringApp::Update()
 	if (activeController) {
 		Watchdog::ClearTimer("main");
 #if defined(USE_GML) && GML_ENABLE_SIM
-			if (gmlMultiThreadSim) {
-				if (!gs->frameNum) {
-					GML_MSTMUTEX_LOCK(sim); // Update
-
-					activeController->Update();
-					if (gs->frameNum) {
-						gmlStartSim = 1;
-					}
-				}
-			} else {
+		if (gmlMultiThreadSim) {
+			if (!gs->frameNum) {
 				GML_MSTMUTEX_LOCK(sim); // Update
-
-				activeController->Update();
+				
+				ret = activeController->Update();
+				if (gs->frameNum) {
+					gmlStartSim = 1;
+				}
 			}
-#else
-		if (!activeController->Update()) {
-			ret = 0;
 		} else {
+			GML_MSTMUTEX_LOCK(sim); // Update
+			
+			ret = activeController->Update();
+		}
+#else
+		ret = activeController->Update();
 #endif
-
+		if (ret) {
 			globalRendering->drawFrame++;
 			if (globalRendering->drawFrame == 0) {
 				globalRendering->drawFrame++;
@@ -1076,8 +1064,8 @@ int SpringApp::Update()
 #if defined(USE_GML) && GML_ENABLE_SIM
 				!gmlMultiThreadSim &&
 #endif
-				gs->frameNum-lastRequiredDraw >= (float)MAX_CONSECUTIVE_SIMFRAMES * gs->userSpeedFactor) {
-
+				gs->frameNum-lastRequiredDraw >= (float)MAX_CONSECUTIVE_SIMFRAMES * gs->userSpeedFactor)
+			{
 				ScopedTimer cputimer("CPU load"); // Update
 
 				ret = activeController->Draw();
@@ -1087,9 +1075,8 @@ int SpringApp::Update()
 			}
 #if defined(USE_GML) && GML_ENABLE_SIM
 			gmlProcessor->PumpAux();
-#else
-		}
 #endif
+		}
 	}
 
 	VSync.Delay();
@@ -1244,7 +1231,6 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 {
 	switch (event.type) {
 		case SDL_VIDEORESIZE: {
-
 			GML_MSTMUTEX_LOCK(sim); // MainEventHandler
 
 			Watchdog::ClearTimer("main",true);
@@ -1279,6 +1265,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 		case SDL_ACTIVEEVENT: {
 			Watchdog::ClearTimer("main",true);
 
+			//! deactivate sounds and other
 			if (event.active.state & (SDL_APPACTIVE | (globalRendering->fullScreen ? SDL_APPINPUTFOCUS : 0))) {
 				globalRendering->active = !!event.active.gain;
 				if (ISound::IsInitialized()) {
@@ -1290,12 +1277,14 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			if (event.active.gain) {
 				keyInput->Update(event.key.keysym.unicode, ((keyBindings != NULL)? keyBindings->GetFakeMetaKey(): -1));
 			}
+
+			//! unlock mouse
 			if (mouse && mouse->locked) {
 				mouse->ToggleState();
 			}
 			
+			//! release all keyboard keys		
 			if ((event.active.state & (SDL_APPACTIVE | SDL_APPINPUTFOCUS)) && !event.active.gain) {
-				//! release all keyboard keys
 				for (boost::uint16_t i = 1; i < SDLK_LAST; ++i) {
 					if (keyInput->IsKeyPressed(i)) {
 						SDL_Event event;

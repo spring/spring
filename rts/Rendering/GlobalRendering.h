@@ -19,6 +19,7 @@ class CGlobalRendering {
 	CGlobalRendering();
 
 public:
+	//FIXME: wrong pos? (move to Rendering/Env/BaseSky?)
 	void PostInit();
 	void UpdateSunDir(const float4& newSunDir);
 	void Update();
@@ -38,17 +39,17 @@ public:
 	 */
 	float lastFrameTime;
 
-	// the starting time in tick for last draw frame
+	/// the starting time in tick for last draw frame
 	unsigned lastFrameStart;
 
-	// 0.001f * GAME_SPEED * gs->speedFactor, used for rendering
+	/// 0.001f * GAME_SPEED * gs->speedFactor, used for rendering
 	float weightedSpeedFactor;
 
-	// the draw frame number (never 0)
+	/// the draw frame number (never 0)
 	unsigned int drawFrame;
 
 
-	// the screen size in pixels
+	/// the screen size in pixels
 	int screenSizeX;
 	int screenSizeY;
 
@@ -63,15 +64,15 @@ public:
 	int winSizeX;
 	int winSizeY;
 
-	// the viewport position relative to the window's bottom-left corner
+	/// the viewport position relative to the window's bottom-left corner
 	int viewPosX;
 	int viewPosY;
 
-	// the viewport size in pixels
+	/// the viewport size in pixels
 	int viewSizeX;
 	int viewSizeY;
 
-	// size of one pixel in viewport coordinates, i.e. 1/viewSizeX and 1/viewSizeY
+	/// size of one pixel in viewport coordinates, i.e. 1/viewSizeX and 1/viewSizeY
 	float pixelX;
 	float pixelY;
 
