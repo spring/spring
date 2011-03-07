@@ -5,5 +5,7 @@
 IAudioChannel::IAudioChannel()
 	: volume(1.0f)
 	, enabled(true)
+	, emmitsPerFrame(1000)
+	, emmitsThisFrame(0)
 {
 }

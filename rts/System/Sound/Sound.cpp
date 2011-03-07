@@ -14,8 +14,6 @@
 #include "SoundSource.h"
 #include "SoundBuffer.h"
 #include "SoundItem.h"
-#include "IEffectChannel.h"
-#include "IMusicChannel.h"
 #include "ALShared.h"
 #include "EFX.h"
 #include "EFXPresets.h"
@@ -33,7 +31,7 @@
 
 #include "float3.h"
 
-CSound::CSound() : myPos(0.0, 0.0, 0.0), prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), numAbortedPlays(0), soundThread(NULL), soundThreadQuit(false)
+CSound::CSound() : myPos(0., 0., 0.), prevVelocity(0., 0., 0.), numEmptyPlayRequests(0), numAbortedPlays(0), soundThread(NULL), soundThreadQuit(false)
 {
 	boost::recursive_mutex::scoped_lock lck(soundMutex);
 	mute = false;
@@ -74,6 +72,8 @@ CSound::~CSound()
 		soundThread = NULL;
 	}
 
+	for (soundVecT::iterator it = sounds.begin(); it != sounds.end(); ++it)
+		delete *it;
 	sounds.clear();
 	SoundBuffer::Deinitialise();
 }
@@ -140,24 +140,35 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 	}
 }
 
+SoundItem* CSound::GetSoundItem(size_t id) const {
+	//! id==0 is a special id and invalid
+	if (id == 0 || id >= sounds.size())
+		return NULL;
+	return sounds[id];
+}
+
 CSoundSource* CSound::GetNextBestSource(bool lock)
 {
+	boost::recursive_mutex::scoped_lock lck(soundMutex, boost::defer_lock);
+	if (lock)
+		lck.lock();
+
 	if (sources.empty())
 		return NULL;
-	sourceVecT::iterator bestPos = sources.begin();
-	
+
+	CSoundSource* bestPos = NULL;
 	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
 	{
 		if (!it->IsPlaying())
 		{
-			return &(*it); //argh
+			return &(*it);
 		}
-		else if (it->GetCurrentPriority() <= bestPos->GetCurrentPriority())
+		else if (it->GetCurrentPriority() <= (bestPos ? bestPos->GetCurrentPriority() : INT_MAX))
 		{
-			bestPos = it;
+			bestPos = &(*it);
 		}
 	}
-	return &(*bestPos);
+	return bestPos;
 }
 
 void CSound::PitchAdjust(const float newPitch)
@@ -251,38 +262,6 @@ void CSound::Iconified(bool state)
 	appIsIconified = state;
 }
 
-void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, float volume, bool relative)
-{
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
-
-	if (sources.empty() || volume == 0.0f)
-		return;
-
-	if (id == 0)
-	{
-		numEmptyPlayRequests++;
-		return;
-	}
-
-	if (p.distance(myPos) > sounds[id].MaxDistance())
-	{
-		if (!relative)
-			return;
-		else
-			LogObject(LOG_SOUND) << "CSound::PlaySample: maxdist ignored for relative payback: " << sounds[id].Name();
-	}
-
-	CSoundSource* best = GetNextBestSource(false);
-	if (best && (!best->IsPlaying() || (best->GetCurrentPriority() <= 0 && best->GetCurrentPriority() < sounds[id].GetPriority())))
-	{
-		if (best->IsPlaying())
-			++numAbortedPlays;
-		best->Play(&sounds[id], p, velocity, volume, relative);
-	}
-	CheckError("CSound::PlaySample");
-}
-
-
 void CSound::StartThread(int maxSounds)
 {
 	{
@@ -364,12 +343,13 @@ void CSound::StartThread(int maxSounds)
 			if (thenewone->IsValid()) {
 				sources.push_back(thenewone);
 			} else {
-				maxSounds = std::max(i-1,0);
+				maxSounds = std::max(i-1, 0);
 				LogObject(LOG_SOUND) << "Your hardware/driver can not handle more than " << maxSounds << " soundsources";
 				delete thenewone;
 				break;
 			}
 		}
+		LogObject(LOG_SOUND) << "  Max Sounds: " << maxSounds;
 
 		// Set distance model (sound attenuation)
 		alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
@@ -403,6 +383,8 @@ void CSound::Update()
 
 size_t CSound::MakeItemFromDef(const soundItemDef& itemDef)
 {
+	//! MakeItemFromDef is private. Only caller is LoadSoundDefs and it sets the mutex itself.
+	//boost::recursive_mutex::scoped_lock lck(soundMutex);
 	const size_t newid = sounds.size();
 	soundItemDef::const_iterator it = itemDef.find("file");
 	boost::shared_ptr<SoundBuffer> buffer = SoundBuffer::GetById(LoadSoundBuffer(it->second, false));

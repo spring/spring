@@ -8,12 +8,15 @@
 #include <set>
 #include <string>
 #include <map>
+#include <vector>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 
 #include "float3.h"
+
+#include "SoundItem.h"
 
 class CSoundSource;
 class SoundBuffer;
@@ -29,6 +32,7 @@ public:
 
 	virtual bool HasSoundItem(const std::string& name);
 	virtual size_t GetSoundId(const std::string& name, bool hardFail = true);
+	SoundItem* GetSoundItem(size_t id) const;
 
 	virtual CSoundSource* GetNextBestSource(bool lock = true);
 
@@ -50,6 +54,9 @@ public:
 	static float GetElmoInMeters() {
 		return 1.f/8; //SQUARE_SIZE; //! 8 elmos = 1m
 	}
+	const float3& GetListenerPos() const {
+		return myPos;
+	}
 
 private:
 	typedef std::map<std::string, std::string> soundItemDef;
@@ -61,10 +68,6 @@ private:
 
 	size_t MakeItemFromDef(const soundItemDef& itemDef);
 
-	// this is used by EffectChannel in AudioChannel.cpp
-	virtual void PlaySample(size_t id, const float3 &p, const float3& velocity, float volume, bool relative);
-	friend class EffectChannel;
-
 	size_t LoadSoundBuffer(const std::string& filename, bool hardFail);
 
 private:
@@ -75,7 +78,7 @@ private:
 	bool pitchAdjust;
 
 	typedef std::map<std::string, size_t> soundMapT;
-	typedef boost::ptr_vector<SoundItem> soundVecT;
+	typedef std::vector<SoundItem*> soundVecT;
 	soundMapT soundMap;
 	soundVecT sounds;
 

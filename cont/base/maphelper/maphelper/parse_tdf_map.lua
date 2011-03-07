@@ -205,6 +205,7 @@ return function(sourceText)
      grassShadingTex  = map.grassshadingtex,
      skyReflectModTex = map.skyreflectmodtex,
      detailNormalTex  = map.detailnormaltex,
+     lightEmissionTex = map.lightemissiontex,
   }
 
   ConvertTerrainTypes(map)

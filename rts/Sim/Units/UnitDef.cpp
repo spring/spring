@@ -271,6 +271,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 , techLevel(-1)
 , buildPic(NULL)
 , movedata(NULL)
+, trackType(0)
+, buildingDecalType(-1)
 {
 	humanName = udTable.GetString("name", "");
 	if (humanName.empty()) {
@@ -904,6 +906,7 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 void UnitDef::SetNoCost(bool noCost)
 {
 	if (noCost) {
+		// initialized from UnitDefHandler::PushNewUnitDef
 		realMetalCost    = metalCost;
 		realEnergyCost   = energyCost;
 		realMetalUpkeep  = metalUpkeep;

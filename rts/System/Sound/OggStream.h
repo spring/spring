@@ -24,8 +24,10 @@ public:
 
 	float GetPlayTime() const;
 	float GetTotalTime();
-	const TagVector& VorbisTags() const;
 	bool Valid() const;
+	bool IsFinished();
+	
+	const TagVector& VorbisTags() const;
 
 private:
 	void DisplayInfo();
@@ -45,7 +47,7 @@ private:
 	OggVorbis_File oggStream;
 	vorbis_info* vorbisInfo;
 
-	static const unsigned int BUFFER_SIZE = (4096 * 128); // 512KB
+	static const unsigned int BUFFER_SIZE = (512 * 1024); // 512KB
 	static const unsigned int NUM_BUFFERS = 2;
 
 	ALuint buffers[NUM_BUFFERS];

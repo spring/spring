@@ -4,6 +4,7 @@
 
 #include "SoundLog.h"
 #include "System/LogOutput.h"
+#include "System/float3.h"
 
 NullSound::NullSound() {
 }
@@ -40,9 +41,6 @@ bool NullSound::IsMuted() const {
 void NullSound::Iconified(bool state) {
 }
 
-void NullSound::PlaySample(size_t id, const float3& p, const float3& velocity, float volume, bool relative) {
-}
-
 void NullSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime) {
 }
 
@@ -55,4 +53,8 @@ bool NullSound::LoadSoundDefs(const std::string& fileName) {
 }
 
 void NullSound::NewFrame() {
+}
+
+const float3& NullSound::GetListenerPos() const {
+	return ZeroVector;
 }

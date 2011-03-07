@@ -71,6 +71,7 @@ CStarburstProjectile::CStarburstProjectile(
 	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, interceptTarget, 200),
 	tracking(tracking),
 	maxSpeed(maxSpeed),
+	acceleration(0.f),
 	areaOfEffect(areaOfEffect),
 	age(0),
 	oldSmoke(pos),

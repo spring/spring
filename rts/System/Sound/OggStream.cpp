@@ -68,9 +68,7 @@ COggStream::COggStream(ALuint _source)
 
 COggStream::~COggStream()
 {
-	if (!stopped) {
-		ReleaseBuffers();
-	}
+	Stop();
 }
 
 // open an Ogg stream from a given file and start playing it
@@ -117,7 +115,7 @@ void COggStream::Play(const std::string& path, float volume)
 		format = AL_FORMAT_STEREO16;
 	}
 
-	alGenBuffers(2, buffers); CheckError("COggStream");
+	alGenBuffers(2, buffers); CheckError("COggStream::Play");
 
 	if (!StartPlaying()) {
 		ReleaseBuffers();
@@ -126,7 +124,7 @@ void COggStream::Play(const std::string& path, float volume)
 		paused = false;
 	}
 
-	CheckError("COggStream");
+	CheckError("COggStream::Play");
 }
 
 float COggStream::GetPlayTime() const
@@ -139,14 +137,19 @@ float COggStream::GetTotalTime()
 	return ov_time_total(&oggStream, -1);
 }
 
-const COggStream::TagVector& COggStream::VorbisTags() const
-{
-	return vorbisTags;
-}
-
 bool COggStream::Valid() const
 {
 	return (vorbisInfo != 0);
+}
+
+bool COggStream::IsFinished()
+{
+	return !Valid() || (GetPlayTime() >= GetTotalTime());
+}
+
+const COggStream::TagVector& COggStream::VorbisTags() const
+{
+	return vorbisTags;
 }
 
 // display Ogg info and comments
@@ -177,7 +180,7 @@ void COggStream::ReleaseBuffers()
 	EmptyBuffers();
 
 	alDeleteBuffers(2, buffers);
-	CheckError("COggStream");
+	CheckError("COggStream::ReleaseBuffers");
 
 	ov_clear(&oggStream);
 }
@@ -193,8 +196,8 @@ bool COggStream::StartPlaying()
 	if (!DecodeStream(buffers[0])) { return false; }
 	if (!DecodeStream(buffers[1])) { return false; }
 
-	alSourceQueueBuffers(source, 2, buffers); CheckError("COggStream");
-	alSourcePlay(source); CheckError("COggStream");
+	alSourceQueueBuffers(source, 2, buffers); CheckError("COggStream::StartPlaying");
+	alSourcePlay(source); CheckError("COggStream::StartPlaying");
 
 	return true;
 }
@@ -243,12 +246,12 @@ bool COggStream::UpdateBuffers()
 
 	while (buffersProcessed-- > 0) {
 		ALuint buffer;
-		alSourceUnqueueBuffers(source, 1, &buffer); CheckError("COggStream");
+		alSourceUnqueueBuffers(source, 1, &buffer); CheckError("COggStream::UpdateBuffers");
 
 		// false if we've reached end of stream
 		active = DecodeStream(buffer);
 		if (active)
-			alSourceQueueBuffers(source, 1, &buffer); CheckError("COggStream");
+			alSourceQueueBuffers(source, 1, &buffer); CheckError("COggStream::UpdateBuffers");
 	}
 
 	return active;
@@ -314,7 +317,7 @@ bool COggStream::DecodeStream(ALuint buffer)
 	}
 
 	alBufferData(buffer, format, pcm, size, vorbisInfo->rate);
-	CheckError("COggStream");
+	CheckError("COggStream::DecodeStream");
 
 	return true;
 }
@@ -324,10 +327,10 @@ bool COggStream::DecodeStream(ALuint buffer)
 void COggStream::EmptyBuffers()
 {
 	int queuedBuffers = 0;
-	alGetSourcei(source, AL_BUFFERS_QUEUED, &queuedBuffers); CheckError("COggStream");
+	alGetSourcei(source, AL_BUFFERS_QUEUED, &queuedBuffers); CheckError("COggStream::EmptyBuffers");
 
 	while (queuedBuffers-- > 0) {
 		ALuint buffer;
-		alSourceUnqueueBuffers(source, 1, &buffer); CheckError("COggStream");
+		alSourceUnqueueBuffers(source, 1, &buffer); CheckError("COggStream::EmptyBuffers");
 	}
 }

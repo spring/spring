@@ -612,7 +612,7 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 		}
 
 		//! last argument (with and without pos/speed arguments) is the optional `sfx channel`
-		EffectChannelImpl* channel = &Channels::General;
+		AudioChannelImpl* channel = &Channels::General;
 		if (args >= index) {
 			if (lua_isstring(L, index)) {
 				string channelStr = lua_tostring(L, index);
@@ -673,7 +673,7 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 	if (args >= 3)
 		enqueue = lua_toboolean(L, 3);
 
-	Channels::BGMusic.Play(soundFile, volume, enqueue);
+	Channels::BGMusic.StreamPlay(soundFile, volume, enqueue);
 
 	// .ogg files don't have sound ID's generated
 	// for them (yet), so we always succeed here
@@ -687,12 +687,12 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 
 int LuaUnsyncedCtrl::StopSoundStream(lua_State*)
 {
-	Channels::BGMusic.Stop();
+	Channels::BGMusic.StreamStop();
 	return 0;
 }
 int LuaUnsyncedCtrl::PauseSoundStream(lua_State*)
 {
-	Channels::BGMusic.Pause();
+	Channels::BGMusic.StreamPause();
 	return 0;
 }
 int LuaUnsyncedCtrl::SetSoundStreamVolume(lua_State* L)

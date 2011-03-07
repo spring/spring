@@ -22,6 +22,7 @@ public:
 	IWorldObjectModelRenderer(int mdlType): modelType(mdlType) {
 		numUnits = 0;
 		numFeatures = 0;
+		numFeaturesSave = 0;
 		numProjectiles = 0;
 	}
 	virtual ~IWorldObjectModelRenderer();
@@ -32,8 +33,9 @@ public:
 
 	virtual void AddUnit(const CUnit*);
 	virtual void DelUnit(const CUnit*);
-	virtual void AddFeature(const CFeature*);
+	virtual void AddFeature(const CFeature*, float alpha = 0.99f);
 	virtual void DelFeature(const CFeature*);
+	virtual void SwapFeatures();
 	virtual void AddProjectile(const CProjectile*);
 	virtual void DelProjectile(const CProjectile*);
 
@@ -44,8 +46,8 @@ public:
 protected:
 	typedef std::set<CUnit*>                       UnitSet;
 	typedef std::set<CUnit*>::const_iterator       UnitSetIt;
-	typedef std::set<CFeature*>                    FeatureSet;
-	typedef std::set<CFeature*>::const_iterator    FeatureSetIt;
+	typedef std::map<CFeature*, float>                 FeatureSet;
+	typedef std::map<CFeature*, float>::const_iterator FeatureSetIt;
 	typedef std::set<CProjectile*>                 ProjectileSet;
 	typedef std::set<CProjectile*>::const_iterator ProjectileSetIt;
 
@@ -66,12 +68,14 @@ protected:
 
 	UnitRenderBin units;              // all opaque or all cloaked
 	FeatureRenderBin features;        // opaque only, culled via GridVisibility()
+	FeatureRenderBin featuresSave;    // opaque only, culled via GridVisibility()
 	ProjectileRenderBin projectiles;  // opaque only, (synced && (piece || weapon)) only
 
 	int modelType;
 
 	int numUnits;
 	int numFeatures;
+	int numFeaturesSave;
 	int numProjectiles;
 
 public:

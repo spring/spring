@@ -12,7 +12,9 @@ namespace CrashHandler {
 	void Install();
 	void Remove();
 
-	void Stacktrace(Threading::NativeThreadHandle thread);
+	void Stacktrace(Threading::NativeThreadHandle thread, const char *threadName);
+	void PrepareStacktrace();
+	void CleanupStacktrace();
 
 #ifdef WIN32
 	//! used by seh

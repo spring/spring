@@ -84,7 +84,7 @@ void CLoadScreen::Init()
 
 		const std::string mapStartMusic(mapInfo->GetStringValue("Startmusic"));
 		if (!mapStartMusic.empty())
-			Channels::BGMusic.Play(mapStartMusic);
+			Channels::BGMusic.StreamPlay(mapStartMusic);
 	}
 
 	try {

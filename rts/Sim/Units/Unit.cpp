@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 #include "mmgr.h"
+#include "lib/gml/gml.h"
 
 #include "UnitDef.h"
 #include "Unit.h"
@@ -136,6 +137,7 @@ CUnit::CUnit() : CSolidObject(),
 	category(0),
 	los(NULL),
 	tempNum(0),
+	mapSquare(-1),
 	losRadius(0),
 	airLosRadius(0),
 	losHeight(0.0f),
@@ -148,6 +150,9 @@ CUnit::CUnit() : CSolidObject(),
 	seismicSignature(0.0f),
 	hasRadarCapacity(false),
 	oldRadarPos(0, 0),
+	hasRadarPos(false),
+	stealth(false),
+	sonarStealth(false),
 	moveType(NULL),
 	prevMoveType(NULL),
 	usingScriptMoveType(false),
@@ -1261,8 +1266,6 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 		interPos += helper->GetUnitErrorPos(this, gu->myAllyTeam) - midPos;
 	}
 
-	CTransportUnit* trans = NULL;
-
 	if (usingScriptMoveType ||
 	    (!beingBuilt && (physicalState == CSolidObject::Flying) && unitDef->canmove)) {
 		// aircraft, skidding ground unit, or active ScriptMoveType
@@ -1270,7 +1273,7 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 		// use this matrix, or their nanoframes won't spin on pad
 		return CMatrix44f(interPos, -rightdir, updir, frontdir);
 	}
-	else if ((trans = GetTransporter()) != NULL) {
+	else if (GetTransporter()) {
 		// we're being transported, transporter sets our vectors
 		return CMatrix44f(interPos, -rightdir, updir, frontdir);
 	}
