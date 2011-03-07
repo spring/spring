@@ -22,7 +22,7 @@ static struct SDL_Surface stubSurface;
 static struct SDL_RWops stubRWops;
 static Uint8 stubKeyState[0];
 static SDL_version stubVersion;
-
+static SDL_VideoInfo stubVideo;
 
 extern DECLSPEC int SDLCALL SDL_Init(Uint32 flags) {
 
@@ -30,6 +30,8 @@ extern DECLSPEC int SDLCALL SDL_Init(Uint32 flags) {
 
 	stubSurface.w = 512;
 	stubSurface.h = 512;
+	stubVideo.current_w = 512;
+	stubVideo.current_h = 512;
 
 	return 0;
 }
@@ -48,6 +50,10 @@ extern DECLSPEC int SDLCALL SDL_GL_SetAttribute(SDL_GLattr attr, int value) {
 
 extern DECLSPEC SDL_Surface* SDLCALL SDL_SetVideoMode(int width, int height, int bpp, Uint32 flags) {
 	return &stubSurface;
+}
+
+extern DECLSPEC const SDL_VideoInfo* SDLCALL SDL_GetVideoInfo(void) {
+	return &stubVideo;
 }
 
 extern DECLSPEC struct SDL_RWops* SDLCALL SDL_RWFromFile(const char* file, const char* mode) {
