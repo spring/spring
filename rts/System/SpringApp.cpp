@@ -1299,6 +1299,10 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 				}
 			}
 
+			//! update keydown table
+			if (event.active.gain) {
+				keyInput->Update(event.key.keysym.unicode, ((keyBindings != NULL)? keyBindings->GetFakeMetaKey(): -1));
+			}
 			if (mouse && mouse->locked) {
 				mouse->ToggleState();
 			}
@@ -1318,18 +1322,20 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 					}
 				}
 			}
-
+			
+			//! simulate mouse release to prevent hung buttons
 			if ((event.active.state & (SDL_APPACTIVE | SDL_APPMOUSEFOCUS)) && !event.active.gain) {
-				//! simulate mouse release to prevent hung buttons
 				for (int i = 1; i <= NUM_BUTTONS; ++i) {
-					SDL_Event event;
-					event.type = event.button.type = SDL_MOUSEBUTTONUP;
-					event.button.state = SDL_RELEASED;
-					event.button.which = 0;
-					event.button.button = i;
-					event.button.x = -1;
-					event.button.y = -1;
-					SDL_PushEvent(&event);
+					if (mouse && mouse->buttons[i].pressed) {
+						SDL_Event event;
+						event.type = event.button.type = SDL_MOUSEBUTTONUP;
+						event.button.state = SDL_RELEASED;
+						event.button.which = 0;
+						event.button.button = i;
+						event.button.x = -1;
+						event.button.y = -1;
+						SDL_PushEvent(&event);
+					}
 				}
 
 				//! and make sure to un-capture mouse
