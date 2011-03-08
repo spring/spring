@@ -2,7 +2,7 @@
 set -e
 . buildbot/slave/prepare.sh
 
-MINGWLIBS_PATH=${3}
+MINGWLIBS_PATH=${1}
 MINGW_HOST=i586-mingw32msvc-
 
 echo "!define MINGWLIBS_DIR \"${MINGWLIBS_PATH}\"" > installer/custom_defines.nsi
