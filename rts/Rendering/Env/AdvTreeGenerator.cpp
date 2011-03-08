@@ -3,6 +3,7 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 #include <cstring>
+#include <vector>
 
 #include "AdvTreeGenerator.h"
 
@@ -292,8 +293,8 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 		throw content_error("Could not create FBO!");
 	}
 
-	unsigned char* data = new unsigned char[512 * 512 * 4];
-	unsigned char* data2 = new unsigned char[512 * 512 * 4];
+	std::vector<unsigned char> data(512 * 512 * 4);
+	std::vector<unsigned char> data2(512 * 512 * 4);
 
 	for (int y = 0; y < 512; ++y) {
 		for (int x = 0; x < 512; ++x) {
@@ -352,8 +353,8 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 			glScalef(-1.0f, 1.0f, 1.0f);
 			glOrtho(-MAX_TREE_HEIGHT * 0.5f, MAX_TREE_HEIGHT * 0.5f, 0, MAX_TREE_HEIGHT, -MAX_TREE_HEIGHT * 0.5f, MAX_TREE_HEIGHT * 0.5f);
 
-			CreateFarView(data, a * 64,   0, leafDL + a);
-			CreateFarView(data, a * 64, 256, pineDL + a);
+			CreateFarView(&data[0], a * 64,   0, leafDL + a);
+			CreateFarView(&data[0], a * 64, 256, pineDL + a);
 			glScalef(-1.0f, 1.0f, 1.0f);
 
 
@@ -361,16 +362,16 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 
 			glMatrixMode(GL_MODELVIEW);
 			glRotatef(-90.0f, 0.0f, 1.0f, 0.0f);
-			CreateFarView(data, a * 64, 64,       leafDL + a);
-			CreateFarView(data, a * 64, 64 + 256, pineDL + a);
+			CreateFarView(&data[0], a * 64, 64,       leafDL + a);
+			CreateFarView(&data[0], a * 64, 64 + 256, pineDL + a);
 
 
 			treeShader->SetUniform3f(((globalRendering->haveGLSL)? 0: 13), -1.0f, 0.0f, 0.0f);
 
 			glMatrixMode(GL_MODELVIEW);
 			glRotatef(-90.0f, 0.0f, 1.0f, 0.0f);
-			CreateFarView(data2, a * 64,   0, leafDL + a);
-			CreateFarView(data2, a * 64, 256, pineDL + a);
+			CreateFarView(&data2[0], a * 64,   0, leafDL + a);
+			CreateFarView(&data2[0], a * 64, 256, pineDL + a);
 
 
 			treeShader->SetUniform3f(((globalRendering->haveGLSL)? 0: 13), 0.0f, 0.0f, 1.0f);
@@ -383,8 +384,8 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 			glLoadIdentity();
 			glOrtho(-MAX_TREE_HEIGHT * 0.5f, MAX_TREE_HEIGHT * 0.5f, -MAX_TREE_HEIGHT * 0.5f, MAX_TREE_HEIGHT * 0.5f, -MAX_TREE_HEIGHT, MAX_TREE_HEIGHT);
 
-			CreateFarView(data, a * 64, 128,       leafDL + a);
-			CreateFarView(data, a * 64, 128 + 256, pineDL + a);
+			CreateFarView(&data[0], a * 64, 128,       leafDL + a);
+			CreateFarView(&data[0], a * 64, 128 + 256, pineDL + a);
 		}
 
 		glDisable(GL_ALPHA_TEST);
@@ -410,28 +411,25 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 	glBindTexture(GL_TEXTURE_2D, farTex[0]);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, 512, 512, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, 512, 512, GL_RGBA, GL_UNSIGNED_BYTE, &data[0]);
 
 	glBindTexture(GL_TEXTURE_2D, farTex[1]);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, 512, 512, GL_RGBA, GL_UNSIGNED_BYTE, data2);
-
-	delete[] data;
-	delete[] data2;
+	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, 512, 512, GL_RGBA, GL_UNSIGNED_BYTE, &data2[0]);
 
 	FBO::Unbind();
 }
 
 void CAdvTreeGenerator::CreateFarView(unsigned char* mem,int dx,int dy,unsigned int displist)
 {
-	unsigned char* buf=new unsigned char[64*64*4];
+	std::vector<unsigned char> buf(64 * 64 * 4);
 	glClearColor(0.0f,0.0f,0.0f,0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glCallList(displist);
 
-	glReadPixels(0,0,64,64,GL_RGBA,GL_UNSIGNED_BYTE,buf);
+	glReadPixels(0,0,64,64,GL_RGBA,GL_UNSIGNED_BYTE,&buf[0]);
 
 	for(int y=0;y<64;++y){
 		for(int x=0;x<64;++x){
@@ -448,8 +446,6 @@ void CAdvTreeGenerator::CreateFarView(unsigned char* mem,int dx,int dy,unsigned 
 			}
 		}
 	}
-
-	delete[] buf;
 }
 
 
@@ -474,8 +470,8 @@ void CAdvTreeGenerator::CreateGranTex(unsigned char* data, int xpos, int ypos, i
 
 	CreateGranTexBranch(ZeroVector,float3(0.93f,0.93f,0));
 
-	unsigned char* buf=new unsigned char[256*256*4];
-	glReadPixels(0,0,256,256,GL_RGBA,GL_UNSIGNED_BYTE,buf);
+	std::vector<unsigned char> buf(256 * 256 * 4);
+	glReadPixels(0,0,256,256,GL_RGBA,GL_UNSIGNED_BYTE,&buf[0]);
 
 	for(int y=0;y<256;++y){
 		for(int x=0;x<256;++x){
@@ -493,7 +489,6 @@ void CAdvTreeGenerator::CreateGranTex(unsigned char* data, int xpos, int ypos, i
 		}
 	}
 
-	delete[] buf;
 	glEnable(GL_DEPTH_TEST);
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
@@ -629,8 +624,6 @@ float CAdvTreeGenerator::fRand(float size)
 
 void CAdvTreeGenerator::CreateLeafTex(unsigned int baseTex, int xpos, int ypos,unsigned char buf[256][2048][4])
 {
-	unsigned char* buf2=new unsigned char[256*256*4];
-
 	glViewport(0,0,256,256);
 	glPushMatrix();
 	glLoadIdentity();
@@ -683,7 +676,8 @@ void CAdvTreeGenerator::CreateLeafTex(unsigned int baseTex, int xpos, int ypos,u
 		glPopMatrix();
 	}
 
-	glReadPixels(0,0,256,256,GL_RGBA,GL_UNSIGNED_BYTE,buf2);
+	std::vector<unsigned char> buf2(256 * 256 * 4);
+	glReadPixels(0,0,256,256,GL_RGBA,GL_UNSIGNED_BYTE,&buf2[0]);
 
 //	CBitmap bm(buf2,256,256);
 //	bm.Save("leaf.bmp");
@@ -709,6 +703,4 @@ void CAdvTreeGenerator::CreateLeafTex(unsigned int baseTex, int xpos, int ypos,u
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
-
-	delete[] buf2;
 }
