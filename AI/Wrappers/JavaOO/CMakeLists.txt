@@ -344,10 +344,14 @@ if    (BUILD_${myName}_AIWRAPPER)
 	if    (isMavenInstalled)
 		set(myVersion "${Java_AIINTERFACE_VERS}")
 		add_custom_command(TARGET ${myTarget} POST_BUILD
+			COMMAND "${CMAKE_COMMAND}"
+				"-Dfile.in=${myDir}/pom.xml"
+				"-Dfile.out=${myBuildDir}/pom.xml"
+				"-DmyVersion=${myVersion}"
+				"-P" "${CMAKE_MODULES_SPRING}/ConfigureFile.cmake"
 			COMMAND "mvn"
 				"install:install-file"
-				"-DpomFile=${myDir}/pom.xml"
-				"-Dversion=${myVersion}"
+				"-DpomFile=${myBuildDir}/pom.xml"
 				"-Dfile=${myBuildDir}/${myBinJarFile}"
 				"-Dsources=${myBuildDir}/${mySrcJarFile}"
 			DEPENDS

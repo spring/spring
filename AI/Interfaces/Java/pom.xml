@@ -11,8 +11,10 @@
 
 	<groupId>com.springrts</groupId>
 	<artifactId>ai-interface-java</artifactId>
+	<version>${myVersion}</version> <!-- replaced by CMake or -DmyVersion=0.1 -->
+
 	<packaging>jar</packaging>
-	<version>HAS-TO-BE-OVERRIDEN</version>
+
 	<name>Java AI Interface</name>
 	<description>Java Artificial Intelligence interface plugin for the Spring RTS engine</description>
 	<url>http://springrts.com/wiki/AIInterface:Java</url>

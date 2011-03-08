@@ -16,7 +16,8 @@ else  (WIN32)
 endif (WIN32)
 cmake_minimum_required(VERSION ${MIN_CMAKE_VERSION})
 
-LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
+SET(CMAKE_MODULES_SPRING "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
+LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_MODULES_SPRING}")
 
 # includes rts/build/cmake/Util.cmake
 INCLUDE(Util)
