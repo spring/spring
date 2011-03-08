@@ -15,6 +15,10 @@
 
 	<packaging>jar</packaging>
 
+	<organization>
+		<name>Spring RTS Community</name>
+		<url>http://springrts.com</url>
+	</organization>
 	<name>Java AI Interface</name>
 	<description>Java Artificial Intelligence interface plugin for the Spring RTS engine</description>
 	<url>http://springrts.com/wiki/AIInterface:Java</url>
