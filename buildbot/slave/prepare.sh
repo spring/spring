@@ -17,7 +17,8 @@ set -e
 CONFIG=${1:-default}
 BRANCH=${2:-master}
 REV=$(git describe --tags)
-BUILDDIR=${PWD}/build-${CONFIG}
+SOURCEDIR=${PWD}
+BUILDDIR=${PWD}/build/${CONFIG}
 TMP_BASE=/tmp/spring
 TMP_PATH=${TMP_BASE}/${CONFIG}/${BRANCH}/${REV}
 
