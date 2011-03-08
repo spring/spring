@@ -333,7 +333,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		WORKING_DIRECTORY
 			"${myBuildDir}"
 		COMMENT
-			"  ${myTarget}: Creating sources archive ${mySrcJarFile} ..." VERBATIM
+			"  ${myTarget}: Creating sources archive ${mySrcJarFile}" VERBATIM
 		)
 
 endif (BUILD_${myName}_AIWRAPPER)
