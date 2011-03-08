@@ -227,7 +227,8 @@ bool SpringApp::Initialize()
 	return true;
 }
 
-void SpringApp::SetProcessAffinity(int affinity) const {
+void SpringApp::SetProcessAffinity(int affinity)
+{
 #ifdef WIN32
 	if (affinity > 0) {
 		//! Get the available cores
@@ -1064,12 +1065,12 @@ int SpringApp::Update()
 #if defined(USE_GML) && GML_ENABLE_SIM
 				!gmlMultiThreadSim &&
 #endif
-				gs->frameNum-lastRequiredDraw >= (float)MAX_CONSECUTIVE_SIMFRAMES * gs->userSpeedFactor)
+				(gs->frameNum - lastRequiredDraw) >= (float)MAX_CONSECUTIVE_SIMFRAMES * gs->userSpeedFactor)
 			{
 				ScopedTimer cputimer("CPU load"); // Update
 
 				ret = activeController->Draw();
-				lastRequiredDraw=gs->frameNum;
+				lastRequiredDraw = gs->frameNum;
 			} else {
 				ret = activeController->Draw();
 			}
