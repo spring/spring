@@ -582,7 +582,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		WORKING_DIRECTORY
 			"${myAwkScriptsDir}"
 		COMMENT
-			"  ${myTarget}: Cleanup & create generated source directories ..." VERBATIM
+			"  ${myTarget}: Cleanup & create generated source directories" VERBATIM
 		)
 
 	# 1. & 2. Wrapp Callback (native->native)
@@ -609,7 +609,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		WORKING_DIRECTORY
 			"${myAwkScriptsDir}"
 		COMMENT
-			"  ${myTarget}: Generating native callback wrapper sources ..." VERBATIM
+			"  ${myTarget}: Generating native callback wrapper sources" VERBATIM
 		)
 
 	# 3. Wrapp AI Callback (native-JNI->Java)
@@ -632,7 +632,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		WORKING_DIRECTORY
 			"${myAwkScriptsDir}"
 		COMMENT
-			"  ${myTarget}: Generating JNI callback wrapper sources ..." VERBATIM
+			"  ${myTarget}: Generating JNI callback wrapper sources" VERBATIM
 		)
 
 	# 4. Wrapp AI Events (native-JNI->Java)
@@ -655,7 +655,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		WORKING_DIRECTORY
 			"${myAwkScriptsDir}"
 		COMMENT
-			"  ${myTarget}: Generating JNI events wrapper sources ..." VERBATIM
+			"  ${myTarget}: Generating JNI events wrapper sources" VERBATIM
 		)
 
 	# Locate the manifest file
@@ -733,7 +733,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		WORKING_DIRECTORY
 			"${myBuildDir}"
 		COMMENT
-			"  ${myTarget}: Creating sources archive ${mySrcJarFile} ..." VERBATIM
+			"  ${myTarget}: Creating sources archive ${mySrcJarFile}" VERBATIM
 		)
 
 	add_custom_target(${myTarget}-java ALL
