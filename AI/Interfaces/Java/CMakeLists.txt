@@ -102,11 +102,7 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 			# ${my.build.dir}/SkirmishAI-src.jar (optional)
 			file(RELATIVE_PATH myBuildDirRel "${myDir}" "${myBuildDir}")
 			set(MVN_ATTRIBUTES
-				"-P" "as-spring-subproject,!stand-alone" # disable default profile & enable special profile
-				"-Djava.ai.int.src.dir=${SOURCE_ROOT_Java_AIINTERFACE}"
-				"-Djava.ai.int.build.dir=${BUILD_ROOT_Java_AIINTERFACE}"
-				"-Djava.oo.wrp.src.dir=${SOURCE_ROOT_JavaOO_AIWRAPPER}"
-				"-Djava.oo.wrp.build.dir=${BUILD_ROOT_JavaOO_AIWRAPPER}"
+				"-P" "as-spring-subproject" # enable special profile
 				"-Dmy.build.dir=${myBuildDirRel}"
 				"-Dmy.version=${myVersion}"
 				"--batch-mode" # Run in non-interactive (batch) mode
@@ -623,6 +619,26 @@ if    (BUILD_${myName}_AIINTERFACE)
 		COMMENT
 			"  ${myTarget}: Creating sources archive ${mySrcJarFile}" VERBATIM
 		)
+
+	IsMavenInstalled(isMavenInstalled)
+	if    (isMavenInstalled)
+		add_custom_command(TARGET ${myTarget} POST_BUILD
+			COMMAND "mvn"
+				"install:install-file"
+				"-DpomFile=${myDir}/pom.xml"
+				"-Dversion=${myVersion}"
+				"-Dfile=${myBuildDir}/${myBinJarFile}"
+				"-Dsources=${myBuildDir}/${mySrcJarFile}"
+			DEPENDS
+				"${myDir}/pom.xml"
+				"${myBuildDir}/${myBinJarFile}"
+				"${myBuildDir}/${mySrcJarFile}"
+			WORKING_DIRECTORY
+				"${myDir}"
+			COMMENT
+				"  ${myTarget}: Installing to local maven repository" VERBATIM
+			)
+	endif (isMavenInstalled)
 
 	add_custom_target(${myTarget}-java ALL
 		DEPENDS

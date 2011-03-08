@@ -6,6 +6,10 @@
 
 #enable_language(Java)
 
+# includes rts/build/cmake/UtilJava.cmake
+INCLUDE(UtilJava)
+
+
 set(myName               "JavaOO")
 
 
@@ -335,5 +339,26 @@ if    (BUILD_${myName}_AIWRAPPER)
 		COMMENT
 			"  ${myTarget}: Creating sources archive ${mySrcJarFile}" VERBATIM
 		)
+
+	IsMavenInstalled(isMavenInstalled)
+	if    (isMavenInstalled)
+		set(myVersion "${Java_AIINTERFACE_VERS}")
+		add_custom_command(TARGET ${myTarget} POST_BUILD
+			COMMAND "mvn"
+				"install:install-file"
+				"-DpomFile=${myDir}/pom.xml"
+				"-Dversion=${myVersion}"
+				"-Dfile=${myBuildDir}/${myBinJarFile}"
+				"-Dsources=${myBuildDir}/${mySrcJarFile}"
+			DEPENDS
+				"${myDir}/pom.xml"
+				"${myBuildDir}/${myBinJarFile}"
+				"${myBuildDir}/${mySrcJarFile}"
+			WORKING_DIRECTORY
+				"${myDir}"
+			COMMENT
+				"  ${myTarget}: Installing to local maven repository" VERBATIM
+			)
+	endif (isMavenInstalled)
 
 endif (BUILD_${myName}_AIWRAPPER)
