@@ -15,6 +15,10 @@
 
 	<packaging>jar</packaging>
 
+	<organization>
+		<name>Spring RTS Community</name>
+		<url>http://springrts.com</url>
+	</organization>
 	<name>Java OO AI Wrapper</name>
 	<description>Java Object Oriented Artificial Intelligence interface wrapper for the Spring RTS engine</description>
 	<url>http://springrts.com/wiki/AIWrapper:JavaOO</url>
