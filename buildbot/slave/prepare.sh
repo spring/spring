@@ -25,13 +25,13 @@ BUILDDIR=${PWD}/build/${CONFIG}
 TMP_BASE=/tmp/spring
 TMP_PATH=${TMP_BASE}/${CONFIG}/${BRANCH}/${REV}
 
-if [ ${CONFIG} == default ]; then
+if [ x${CONFIG} = xdefault ]; then
    CONFIG_=''
 else
    CONFIG_="[${CONFIG}]"
 fi
 
-if [ ${BRANCH} == master ]; then
+if [ x${BRANCH} = xmaster ]; then
    BRANCH_=''
 else
    BRANCH_="{${BRANCH}}"
