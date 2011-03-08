@@ -17,7 +17,7 @@ fi
 echo "configuring ${DIR} with $@ ..."
 
 cd ${DIR}
-cmake ../.. $@
+cmake ${SOURCEDIR} $@
 
 echo "erasing old base content..."
 rm -rf base
