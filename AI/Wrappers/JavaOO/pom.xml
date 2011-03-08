@@ -31,6 +31,11 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>com.springrts</groupId>
+			<artifactId>ai-interface-java</artifactId>
+			<version>${myVersion}</version> <!-- replaced by CMake or -DmyVersion=0.1 -->
+		</dependency>
+		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>vecmath</artifactId>
 			<version>1.3.1</version>
