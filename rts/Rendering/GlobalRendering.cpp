@@ -150,15 +150,15 @@ void CGlobalRendering::Update() {
 		return;
 	needsUpdate = false;
 
-	sky->UpdateSunDir();
-	unitDrawer->UpdateSunDir();
-	readmap->GetGroundDrawer()->UpdateSunDir();
-	groundDecals->UpdateSunDir();
-
 	sunIntensity = sqrt(std::max(0.0f, std::min(sunDir.y, 1.0f)));
 	float shadowDensity = std::min(1.0f, sunIntensity * shadowDensityFactor);
 	unitShadowDensity = shadowDensity * mapInfo->light.unitShadowDensity;
 	groundShadowDensity = shadowDensity *  mapInfo->light.groundShadowDensity;
+
+	sky->UpdateSunDir();
+	unitDrawer->UpdateSunDir();
+	readmap->GetGroundDrawer()->UpdateSunDir();
+	groundDecals->UpdateSunDir();
 }
 
 float4 CGlobalRendering::CalculateSunDir(float startAngle) {
