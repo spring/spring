@@ -282,10 +282,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 	# Build the jars
 	# --------------
 
-	# Stub file for dependency tracking
-	set(myClassesStubFile "${CMAKE_CURRENT_BINARY_DIR}/myClasses.stub")
-	set_source_files_properties(${myClassesStubFile} PROPERTIES GENERATED TRUE)
-
 	# Write list of source files to an arg-file
 	set(mySrcArgFile "${CMAKE_CURRENT_BINARY_DIR}/sourceFiles.txt")
 	if    (EXISTS "${mySrcArgFile}")
@@ -295,10 +291,10 @@ if    (BUILD_${myName}_AIWRAPPER)
 		file(APPEND "${mySrcArgFile}" "${srcFile}\n")
 	endforeach (srcFile)
 
-	# compile
+	# compile and pack library
 	add_custom_command(
 		OUTPUT
-			${myClassesStubFile}
+			"${myBuildDir}/${myBinJarFile}"
 		COMMAND "${CMAKE_COMMAND}"
 			"-E" "remove_directory" "${myJavaBuildDir}"
 		COMMAND "${CMAKE_COMMAND}"
@@ -308,8 +304,9 @@ if    (BUILD_${myName}_AIWRAPPER)
 			"-cp" "${myClassPath}"
 			"-d" "${myJavaBuildDir}"
 			"@${mySrcArgFile}"
-		COMMAND "${CMAKE_COMMAND}"
-			"-E" "touch" "${myClassesStubFile}"
+		COMMAND "${JAVA_ARCHIVE}" ARGS
+			${myBinJarArgs} "${myBuildDir}/${myBinJarFile}"
+			"-C" "${myJavaBuildDir}" "${myPkgFirstPart}"
 		DEPENDS
 			${myDependLibFiles}
 			${mySources}
@@ -317,22 +314,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		WORKING_DIRECTORY
 			"${myBinDir}"
 		COMMENT
-			"  ${myTarget}: Compiling sources" VERBATIM
-		)
-
-	# pack library
-	add_custom_command(
-		OUTPUT
-			"${myBuildDir}/${myBinJarFile}"
-		COMMAND "${JAVA_ARCHIVE}" ARGS
-			${myBinJarArgs} "${${myName}_AIWRAPPER_JAR_BIN}"
-			"-C" "${myJavaBuildDir}" "${myPkgFirstPart}"
-		DEPENDS
-			"${myClassesStubFile}"
-		WORKING_DIRECTORY
-			"${myBuildDir}"
-		COMMENT
-			"  ${myTarget}: Creating library ${myBinJarFile} ..." VERBATIM
+			"  ${myTarget}: Compiling sources and packing library ${myBinJarFile}" VERBATIM
 		)
 
 	# pack sources
