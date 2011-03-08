@@ -11,8 +11,10 @@
 
 	<groupId>com.springrts</groupId>
 	<artifactId>ai-wrapper-javaoo</artifactId>
+	<version>${myVersion}</version> <!-- replaced by CMake or -DmyVersion=0.1 -->
+
 	<packaging>jar</packaging>
-	<version>HAS-TO-BE-OVERRIDEN</version>
+
 	<name>Java OO AI Wrapper</name>
 	<description>Java Object Oriented Artificial Intelligence interface wrapper for the Spring RTS engine</description>
 	<url>http://springrts.com/wiki/AIWrapper:JavaOO</url>

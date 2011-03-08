@@ -623,10 +623,14 @@ if    (BUILD_${myName}_AIINTERFACE)
 	IsMavenInstalled(isMavenInstalled)
 	if    (isMavenInstalled)
 		add_custom_command(TARGET ${myTarget} POST_BUILD
+			COMMAND "${CMAKE_COMMAND}"
+				"-Dfile.in=${myDir}/pom.xml"
+				"-Dfile.out=${myBuildDir}/pom.xml"
+				"-DmyVersion=${myVersion}"
+				"-P" "${CMAKE_MODULES_SPRING}/ConfigureFile.cmake"
 			COMMAND "mvn"
 				"install:install-file"
-				"-DpomFile=${myDir}/pom.xml"
-				"-Dversion=${myVersion}"
+				"-DpomFile=${myBuildDir}/pom.xml"
 				"-Dfile=${myBuildDir}/${myBinJarFile}"
 				"-Dsources=${myBuildDir}/${mySrcJarFile}"
 			DEPENDS
