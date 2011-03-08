@@ -69,15 +69,6 @@ CAdvSky::CAdvSky()
 
 	cloudFP = LoadFragmentProgram("ARB/clouds.fp");
 
-	fbo.reloadOnAltTab = true;
-	fbo.Bind();
-	fbo.AttachTexture(cdtex);
-	bool status = fbo.CheckStatus("ADVSKY");
-	FBO::Unbind();
-	if (!status) {
-		throw content_error("ADVSKY: FBO is unavailable");
-	}
-
 	glGetError();
 	displist=glGenLists(1);
 	glNewList(displist, GL_COMPILE);
@@ -359,6 +350,15 @@ void CAdvSky::CreateClouds()
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8, CLOUD_SIZE, CLOUD_SIZE,0,GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	
+	fbo.reloadOnAltTab = true;
+	fbo.Bind();
+	fbo.AttachTexture(cdtex);
+	bool status = fbo.CheckStatus("ADVSKY");
+	FBO::Unbind();
+	if (!status) {
+		throw content_error("ADVSKY: FBO is unavailable");
+	}
 
 	CreateTransformVectors();
 	for(int i=0; i<CLOUD_DETAIL+7; ++i)
@@ -812,7 +812,7 @@ void CAdvSky::CreateDetailTex()
 	glDisable(GL_LIGHTING);
 	glEnable(GL_TEXTURE_2D);
 	glClearColor(0,0,0,0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE);
 	glDisable(GL_DEPTH_TEST);
