@@ -151,12 +151,12 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 	set(myBuildDir      "${CMAKE_CURRENT_BINARY_DIR}")
 
 	# Check if the user wants to compile the AI
-	if    (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}" AND CUSTOM_TARGET_SOURCES_SUPPORT)
+	if    (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 		set(BUILD_THIS_SKIRMISHAI TRUE)
-	else  (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}" AND CUSTOM_TARGET_SOURCES_SUPPORT)
+	else  (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 		set(BUILD_THIS_SKIRMISHAI FALSE)
 		message("warning: ${myName} Skirmish AI will not be built!")
-	endif (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}" AND CUSTOM_TARGET_SOURCES_SUPPORT)
+	endif (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 
 	# Compile and install
 	if    (BUILD_THIS_SKIRMISHAI)
@@ -242,7 +242,7 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 				COMMENT
 					"  ${myTarget}: Running Maven ${MVN_PHASE} phase" VERBATIM
 				)
-			add_custom_target(${myTarget} ALL SOURCES "${myBuildDir}/${myBinJarFile}" ${myVersionDepFile})
+			add_custom_target(${myTarget} ALL DEPENDS "${myBuildDir}/${myBinJarFile}" ${myVersionDepFile})
 			add_dependencies(${myTarget} ${myDependTargets})
 		else  (configureMavenProject)
 			# If main Java package is "my.ai.pkg", this has to be set to "my".
@@ -255,13 +255,13 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 			set(myJavaBuildDir "${myBuildDir}/classes")
 
 			add_custom_target(${myBinaryTarget}
-				SOURCES "${myBuildDir}/${myBinJarFile}")
+				DEPENDS "${myBuildDir}/${myBinJarFile}")
 			add_dependencies(${myBinaryTarget} ${myDependTargets})
 
 			add_custom_target(${mySourceTarget}
-				SOURCES "${myBuildDir}/${mySrcJarFile}")
+				DEPENDS "${myBuildDir}/${mySrcJarFile}")
 
-			add_custom_target(${myTarget} ALL SOURCES ${myVersionDepFile})
+			add_custom_target(${myTarget} ALL DEPENDS ${myVersionDepFile})
 			add_dependencies(${myTarget} ${myBinaryTarget} ${mySourceTarget})
 
 			# Create our full Java class-path
