@@ -6,8 +6,8 @@ REMOTE_HOST=localhost
 REMOTE_BASE=/home/buildbot/www
 BASE_ARCHIVE="${TMP_PATH}/${VERSION}_base.7z"
 MINGWLIBS_ARCHIVE="${TMP_PATH}/${VERSION}_mingwlibs.7z"
-CONTENT_DIR=$BUILDDIR/../cont
-MINGWLIBS_DIR=$BUILDDIR/../../../mingwlibs/dll
+CONTENT_DIR=${SOURCEDIR}/cont
+MINGWLIBS_DIR=${SOURCEDIR}/../../mingwlibs/dll
 CMD="rsync -avz --chmod=D+rx,F+r"
 
 umask 022
