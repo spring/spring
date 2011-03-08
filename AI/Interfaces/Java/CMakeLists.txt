@@ -311,7 +311,7 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 				WORKING_DIRECTORY
 					"${mySourceDir}"
 				COMMENT
-					"  ${myTarget}: Creating library ${myBinJarFile}" VERBATIM
+					"  ${myTarget}: Compiling sources and packing library ${myBinJarFile}" VERBATIM
 				)
 
 			# Pack the sources
@@ -694,8 +694,9 @@ if    (BUILD_${myName}_AIINTERFACE)
 		file(APPEND "${mySrcArgFile}" "${srcFile}\n")
 	endforeach (srcFile)
 
-	add_custom_command(TARGET ${myTarget} POST_BUILD
-		#OUTPUT "${myJavaBuildDir}/${myPkg}/*.class"
+	add_custom_command(
+		OUTPUT
+			"${myBuildDir}/${myBinJarFile}"
 		COMMAND "${CMAKE_COMMAND}"
 			"-E" "remove_directory" "${myJavaBuildDir}"
 		COMMAND "${CMAKE_COMMAND}"
@@ -705,21 +706,21 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"-cp" "${myClassPath}"
 			"-d" "${myJavaBuildDir}"
 			"@${mySrcArgFile}"
-		DEPENDS ${myJavaSources} ${myJavaGeneratedSources}
-		WORKING_DIRECTORY "${myJavaGeneratedSourceDir}"
-		COMMENT "  ${myTarget}: Compiling Java sources ..." VERBATIM)
-
-	add_custom_command(TARGET ${myTarget} POST_BUILD
-		#OUTPUT "${myBuildDir}/${myBinJarFile}"
-		#DEPENDS "${myJavaBuildDir}/${myPkg}/*.class"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
 			${myBinJarArgs} "${myBuildDir}/${myBinJarFile}"
 			"-C" "${myJavaBuildDir}" "${myPkgFirstPart}"
-		WORKING_DIRECTORY "${myBuildDir}"
-		COMMENT "  ${myTarget}: Creating library ${myBinJarFile} ..." VERBATIM)
+		DEPENDS
+			${myJavaSources}
+			${myJavaGeneratedSources}
+		WORKING_DIRECTORY
+			"${myJavaGeneratedSourceDir}"
+		COMMENT
+			"  ${myTarget}: Compiling sources and packing library ${myBinJarFile}" VERBATIM
+		)
 
-	add_custom_command(TARGET ${myTarget} POST_BUILD
-		#OUTPUT "${myBuildDir}/${mySrcJarFile}"
+	add_custom_command(
+		OUTPUT
+			"${myBuildDir}/${mySrcJarFile}"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
 			"cf" "${myBuildDir}/${mySrcJarFile}"
 			"-C" "${myJavaSourceDir}" "${myPkgFirstPart}"
@@ -729,8 +730,17 @@ if    (BUILD_${myName}_AIINTERFACE)
 		DEPENDS
 			${myJavaSources}
 			${myJavaGeneratedSources}
-		WORKING_DIRECTORY "${myBuildDir}"
-		COMMENT "  ${myTarget}: Creating sources archive ${mySrcJarFile} ..." VERBATIM)
+		WORKING_DIRECTORY
+			"${myBuildDir}"
+		COMMENT
+			"  ${myTarget}: Creating sources archive ${mySrcJarFile} ..." VERBATIM
+		)
+
+	add_custom_target(${myTarget}-java ALL
+		DEPENDS
+			"${myBuildDir}/${myBinJarFile}"
+			"${myBuildDir}/${mySrcJarFile}")
+	add_dependencies(${myTarget} ${myTarget}-java)
 
 	# Install the native library
 	install(TARGETS   ${myTarget} DESTINATION ${myInstLibsDir})
