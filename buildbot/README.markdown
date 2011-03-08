@@ -37,7 +37,7 @@ Add to the end of /etc/schroot/schroot.conf:
 	git clone git://github.com/buildbot/buildbot.git
 	cd buildbot
 	git checkout v0.8.3p1
-   cd slave
+	cd slave
 	python setup.py install
 	mkdir /slave
 	chown buildbot:buildbot /slave
@@ -105,6 +105,8 @@ For MinGW builds:
 
 	mv /usr/bin/i586-mingw32msvc-ld /usr/bin/i586-mingw32msvc-ld.orig
 	cp ld /usr/bin/i586-mingw32msvc-ld
+	mv /usr/i586-mingw32msvc/bin/ld /usr/i586-mingw32msvc/bin/ld.orig
+	cp ld /usr/i586-mingw32msvc/bin/ld
 
 For makensis:
 
@@ -118,8 +120,6 @@ Substitute MASTER with host:port of the buildmaster and SLAVENAME and PASSWORD w
 	buildslave create-slave /slave MASTER SLAVENAME PASSWORD
 	cd /slave
 	git clone git://github.com/spring/mingwlibs.git
-
-Last, copy win32.cmake from spring/buildbot/slave (Spring repository) to /slave (inside the chroot).
 
 ## ccache
 
