@@ -30,24 +30,23 @@ protected:
 	void ParseCmdLine();                            //!< Parse command line
 	void Startup();                                 //!< Parses startup data (script etc.) and starts SelectMenu or PreGame
 	bool InitWindow(const char* title);             //!< Initializes window
-	void InitOpenGL();                              //!< Initializes OpenGL
-	void UpdateOldConfigs();                        //!< Forces an update to new config defaults
-	void LoadFonts();                               //!< Initialize glFonts (font & smallFont)
-	bool SetSDLVideoMode();                         //!< Sets SDL video mode
-	void SetProcessAffinity(int) const;
+	static void InitOpenGL();                       //!< Initializes OpenGL
+	static void UpdateOldConfigs();                 //!< Forces an update to new config defaults
+	static void LoadFonts();                        //!< Initialize glFonts (font & smallFont)
+	static bool SetSDLVideoMode();                  //!< Sets SDL video mode
+	static void SetProcessAffinity(int);
 	int Update();                                   //!< Run simulation and draw
+
+	static bool GetDisplayGeometry();
+	static void SetupViewportGeometry();
+	static void RestoreWindowPosition();
+	static void SaveWindowPosition();
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 	int Sim();                                      //!< Simulation  loop
 	static void Simcb(void *c) {((SpringApp *)c)->Sim();}
 	static volatile int gmlKeepRunning;
 #endif
-
-	bool GetDisplayGeometry();
-	void SetupViewportGeometry();
-
-	void RestoreWindowPosition();
-	void SaveWindowPosition();
 
 	/**
 	 * @brief command line
