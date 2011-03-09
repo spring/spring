@@ -62,13 +62,13 @@ done
 for tostripfile in $(find AI/Skirmish -name SkirmishAI.dll); do
 	name=$(basename $(dirname ${tostripfile}))
 	zip ${tostripfile} $name
-	adddata ${TMP_PATH}/${VERSION}_$name.7z $(dirname tostripfile)
+#	adddata ${TMP_PATH}/${VERSION}_$name.7z $(dirname tostripfile)
 done
 
 for tostripfile in $(find AI/Interfaces -name AIInterface.dll); do
 	name=$(basename $(dirname ${tostripfile}))
 	zip ${tostripfile} $name
-	adddata ${TMP_PATH}/${VERSION}_$name.7z $(dirname tostripfile)
+#	adddata ${TMP_PATH}/${VERSION}_$name.7z $(dirname tostripfile)
 done
 
 cd $OLDPWD
