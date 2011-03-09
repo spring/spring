@@ -10,8 +10,14 @@ AIS_ARCHIVE="${TMP_PATH}/${VERSION}_ais.z7"
 CONTENT_DIR=${SOURCEDIR}/cont
 MINGWLIBS_DIR=${SOURCEDIR}/../../mingwlibs/dll
 CMD="rsync -avz --chmod=D+rx,F+r"
+#Ultra settings
+SEVENZIP="7za u -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on"
 
 umask 022
+
+for i in BUILDDIR CONTENT_DIR MINGWLIBS_DIR ; do
+	eval echo Using $i: \$$i
+done  
 
 # Usage: zip <file> <name>
 function zip() {
@@ -21,28 +27,27 @@ function zip() {
 		debugfile=${file%.*}.dbg
 		archive="${TMP_PATH}/${VERSION}_${name}.7z"
 		archive_debug="${TMP_PATH}/${VERSION}_${name}_dbg.7z"
-		7za u "${archive}" ${file}
-		[ ! -f ${debugfile} ] || 7za u "${archive_debug}" ${debugfile}
+		${SEVENZIP} "${archive}" ${file}
+		[ ! -f ${debugfile} ] || ${SEVENZIP} "${archive_debug}" ${debugfile}
 	fi
 }
 
 # Create one archive for base content and two archives for each exe/dll:
 # one containing the exe/dll, and one containing debug symbols.
-rm -f "${BASE_ARCHIVE}"
 cd ${CONTENT_DIR}
 # add LuaUI + fonts + misc files in root of cont to base archive
-7z a ${BASE_ARCHIVE} . -x!base -x!freedesktop -xr!CMake* -xr!cmake* -xr!Makefile
+${SEVENZIP} ${BASE_ARCHIVE} . -x!base -x!freedesktop -xr!CMake* -xr!cmake* -xr!Makefile
 # add already created 7z files (springcontent.sd7, maphelper.sd7, cursors.sdz, bitmaps.sdz) to base archive
 cd ${BUILDDIR}
-7z u ${BASE_ARCHIVE} ${BUILDDIR}/base
+${SEVENZIP} ${BASE_ARCHIVE} ${BUILDDIR}/base
 
 #create archive for needed dlls from mingwlibs
 cd ${MINGWLIBS_DIR}
-7z u ${MINGWLIBS_ARCHIVE} .
+${SEVENZIP} ${MINGWLIBS_ARCHIVE} .
 
 #create archive with ais + interfaces
 cd ${BUILDDIR}
-7z a ${AIS_ARCHIVE} AI -xr!CMakeFiles -xr!Makefile -xr!cmake_install.cmake -xr!*.dbg -xr!*.7z -xr!*.dev -xr!*.a -xr!sourceFiles.txt -xr!*.class -xr!*.java -xr!*.cpp -xr!*.h
+${SEVENZIP} ${AIS_ARCHIVE} AI -xr!CMakeFiles -xr!Makefile -xr!cmake_install.cmake -xr!*.dbg -xr!*.7z -xr!*.dev -xr!*.a -xr!sourceFiles.txt -xr!*.class -xr!*.java -xr!*.cpp -xr!*.h -xr!*.c -xr!VERSION
 
 cd ${BUILDDIR}
 for tostripfile in spring.exe spring-dedicated.exe spring-multithreaded.exe spring-headless.exe unitsync.dll; do
