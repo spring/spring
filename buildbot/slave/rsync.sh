@@ -42,7 +42,7 @@ cd ${MINGWLIBS_DIR}
 
 #create archive with ais + interfaces
 cd ${BUILDDIR}
-7z a ${AIS_ARCHIVE} AI -xr!CMakeFiles -xr!Makefile -xr!cmake_install.cmake -xr!*.dbg -xr!*.7z -xr!*.dev -xr!*.a
+7z a ${AIS_ARCHIVE} AI -xr!CMakeFiles -xr!Makefile -xr!cmake_install.cmake -xr!*.dbg -xr!*.7z -xr!*.dev -xr!*.a -xr!sourceFiles.txt -xr!*.class -xr!*.java -xr!*.cpp -xr!*.h
 
 cd ${BUILDDIR}
 for tostripfile in spring.exe spring-dedicated.exe spring-multithreaded.exe spring-headless.exe unitsync.dll; do
