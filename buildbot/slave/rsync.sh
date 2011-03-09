@@ -6,6 +6,7 @@ REMOTE_HOST=localhost
 REMOTE_BASE=/home/buildbot/www
 BASE_ARCHIVE="${TMP_PATH}/${VERSION}_base.7z"
 MINGWLIBS_ARCHIVE="${TMP_PATH}/${VERSION}_mingwlibs.7z"
+AIS_ARCHIVE="${TMP_PATH}/${VERSION}_ais.z7"
 CONTENT_DIR=${SOURCEDIR}/cont
 MINGWLIBS_DIR=${SOURCEDIR}/../../mingwlibs/dll
 CMD="rsync -avz --chmod=D+rx,F+r"
@@ -31,13 +32,17 @@ rm -f "${BASE_ARCHIVE}"
 cd ${CONTENT_DIR}
 # add LuaUI + fonts + misc files in root of cont to base archive
 7z a ${BASE_ARCHIVE} . -x!base -x!freedesktop -xr!CMake* -xr!cmake* -xr!Makefile
-cd $BUILDDIR
 # add already created 7z files (springcontent.sd7, maphelper.sd7, cursors.sdz, bitmaps.sdz) to base archive
+cd ${BUILDDIR}
 7z u ${BASE_ARCHIVE} ${BUILDDIR}/base
 
 #create archive for needed dlls from mingwlibs
 cd ${MINGWLIBS_DIR}
-7z a ${MINGWLIBS_ARCHIVE} .
+7z u ${MINGWLIBS_ARCHIVE} .
+
+#create archive with ais + interfaces
+cd ${BUILDDIR}
+7z a ${AIS_ARCHIVE} AI -xr!CMakeFiles -xr!Makefile -xr!cmake_install.cmake -xr!*.dbg -xr!*.7z -xr!*.dev -xr!*.a
 
 cd ${BUILDDIR}
 for tostripfile in spring.exe spring-dedicated.exe spring-multithreaded.exe spring-headless.exe unitsync.dll; do
