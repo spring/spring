@@ -31,6 +31,16 @@ function zip() {
 		[ ! -f ${debugfile} ] || ${SEVENZIP} "${archive_debug}" ${debugfile}
 	fi
 }
+#adds /data to 7z for AIInterface + SkirmishAI
+#Usage: addata <archive> <root path to ai>
+function adddata() {
+	archive=$1
+	rootpath=$2
+	if [ -f ${archive} ]; then
+		cd ${rootpath}
+		${SEVENZIP} ${archive} VERSION data/
+	fi
+}
 
 # Create one archive for base content and two archives for each exe/dll:
 # one containing the exe/dll, and one containing debug symbols.
@@ -54,8 +64,17 @@ for tostripfile in spring.exe spring-dedicated.exe spring-multithreaded.exe spri
 	zip ${tostripfile} ${tostripfile%.*}
 done
 for tostripfile in $(find AI/Skirmish -name SkirmishAI.dll); do
-	zip ${tostripfile} $(basename $(dirname ${tostripfile}))
+	name=$(basename $(dirname ${tostripfile}))
+	zip ${tostripfile} $name
+	adddata ${TMP_PATH}/${VERSION}_$name.7z $(dirname tostripfile)
 done
+
+for tostripfile in $(find AI/Interfaces -name AIInterface.dll); do
+	name=$(basename $(dirname ${tostripfile}))
+	zip ${tostripfile} $name
+	adddata ${TMP_PATH}/${VERSION}_$name.7z $(dirname tostripfile)
+done
+
 cd $OLDPWD
 
 # Rsync archives to a world-visible location.
