@@ -35,7 +35,7 @@ DynamicSkyLight::DynamicSkyLight(): luaControl(false) {
 }
 
 void DynamicSkyLight::Update() {
-	if (!SetLightDir(CalculateDir(sunStartAngle))) {
+	if (luaControl || !SetLightDir(CalculateDir(sunStartAngle))) {
 		// sun position cannot change between simframes
 		return;
 	}
@@ -133,15 +133,3 @@ void DynamicSkyLight::SetLightParams(float4 newLightDir, float startAngle, float
 
 	SetLightDir(startDir);
 }
-
-
-
-/*
-originally called from CGame::SimFrame (!)
--void CGlobalRendering::UpdateSun(bool forced) {
--	if(!forced && globalRendering->dynamicSun != 1)
--		return;
--
--	UpdateSunDir(CalculateSunDir(sunStartAngle));   ==     SetLightDir(CalculateDir(sunStartAngle))
--}
-*/
