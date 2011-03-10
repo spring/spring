@@ -34,21 +34,16 @@ function zip() {
 		[ ! -f ${debugfile} ] || ${SEVENZIP} "${archive_debug}" ${debugfile}
 	fi
 }
-#adds /data to 7z for AIInterface + SkirmishAI
-#Usage: addata <archive> <root path to ai>
+#adds VERSION + files from /data to 7z for AIInterface + SkirmishAI
+#Usage: addata <archive>, ./VERSION has to exist
 function adddata() {
 	archive=$1
-	rootpath=$2
-	CWDDIR=$(pwd)
 	if [ -f ${archive} ]; then
-		echo Adding ${rootpath} to ${archive}
-		cd ${rootpath}
+		echo "Adding $(pwd)/VERSION + data/* to ${archive}"
 		${SEVENZIP} ${archive} VERSION
 		cd data
 		${SEVENZIP} ${archive} .
 	fi
-	#restore cwd
-	cd $CWDDIR
 }
 
 # Create one archive for base content and two archives for each exe/dll:
@@ -68,16 +63,13 @@ cd ${BUILDDIR}
 for tostripfile in spring.exe spring-dedicated.exe spring-multithreaded.exe spring-headless.exe unitsync.dll; do
 	zip ${tostripfile} ${tostripfile%.*}
 done
-for tostripfile in $(find AI/Skirmish -name SkirmishAI.dll); do
-	name=$(basename $(dirname ${tostripfile}))
-	zip ${tostripfile} $name
-	adddata ${TMP_PATH}/${VERSION}_$name.7z ${SOURCEDIR}/$(dirname ${tostripfile})
-done
 
-for tostripfile in $(find AI/Interfaces -name AIInterface.dll); do
+for tostripfile in $(find AI/Skirmish -name SkirmishAI.dll) $(find AI/Interfaces -name AIInterface.dll); do
 	name=$(basename $(dirname ${tostripfile}))
-	zip ${tostripfile} $name
-	adddata ${TMP_PATH}/${VERSION}_$name.7z ${SOURCEDIR}/$(dirname ${tostripfile})
+	relpath=$(dirname ${tostripfile})
+	cd  ${BUILDDIR}/$relpath
+	zip $(basename ${tostripfile}) $name
+	adddata ${TMP_PATH}/${VERSION}_$name.7z
 done
 
 cd ${PWDOLD}
