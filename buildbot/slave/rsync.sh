@@ -15,6 +15,9 @@ SEVENZIP="7za u -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on"
 
 umask 022
 
+#store pwd for later restore
+PWDOLD=$(pwd)
+
 for i in BUILDDIR CONTENT_DIR MINGWLIBS_DIR ; do
 	eval echo Using $i: \$$i
 done  
@@ -36,10 +39,15 @@ function zip() {
 function adddata() {
 	archive=$1
 	rootpath=$2
+	CWDDIR=$(pwd)
 	if [ -f ${archive} ]; then
+		echo Adding ${rootpath} to ${archive}
 		cd ${rootpath}
-		${SEVENZIP} ${archive} VERSION data/
+		${SEVENZIP} ${archive} VERSION
+		${SEVENZIP} ${archive} .
 	fi
+	#restore cwd
+	cd $CWDDIR
 }
 
 # Create one archive for base content and two archives for each exe/dll:
@@ -62,16 +70,16 @@ done
 for tostripfile in $(find AI/Skirmish -name SkirmishAI.dll); do
 	name=$(basename $(dirname ${tostripfile}))
 	zip ${tostripfile} $name
-#	adddata ${TMP_PATH}/${VERSION}_$name.7z $(dirname tostripfile)
+	adddata ${TMP_PATH}/${VERSION}_$name.7z ${SOURCEDIR}/$(dirname ${tostripfile})
 done
 
 for tostripfile in $(find AI/Interfaces -name AIInterface.dll); do
 	name=$(basename $(dirname ${tostripfile}))
 	zip ${tostripfile} $name
-#	adddata ${TMP_PATH}/${VERSION}_$name.7z $(dirname tostripfile)
+	adddata ${TMP_PATH}/${VERSION}_$name.7z ${SOURCEDIR}/$(dirname ${tostripfile})
 done
 
-cd $OLDPWD
+cd ${PWDOLD}
 
 # Rsync archives to a world-visible location.
 if [ ${REMOTE_HOST} = localhost ] && [ -w ${REMOTE_BASE} ]; then
