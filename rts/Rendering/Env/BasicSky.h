@@ -6,8 +6,6 @@
 #include "Rendering/GL/myGL.h"
 #include "BaseSky.h"
 
-#define CLOUD_SIZE 256 // must be divisible by 4 and 8
-
 class CBasicSky : public CBaseSky
 {
 public:
@@ -15,79 +13,22 @@ public:
 	virtual ~CBasicSky();
 
 	void Update();
-	void DrawSun();
-	void Draw();
-	void UpdateSunDir();
-	void UpdateSkyDir();
 	void UpdateSunFlare();
-	void UpdateSkyTexture();
-	inline void UpdateTexPartDot3(int x, int y, unsigned char (*texp)[4]);
-	inline void UpdateTexPart(int x, int y, unsigned char (*texp)[4]);
+	void Draw();
+	void DrawSun();
 
 private:
-	void UpdatePart(int ast, int aed, int a3cstart, int a4cstart);
-	void CreateCover(int baseX,int baseY,float* buf);
 	void InitSun();
+	void CreateCover(int baseX, int baseY, float* buf);
 	void CreateTransformVectors();
 	void CreateRandMatrix(int **matrix,float mod);
-	void DrawShafts();
-	void ResetCloudShadow(int texunit);
-	void SetCloudShadow(int texunit);
 	void CreateClouds();
+	void UpdatePart(int ast, int aed, int a3cstart, int a4cstart);
 
-	float3 GetCoord(int x,int y);
-	float3 GetDirFromTexCoord(float x, float y);
-	float GetTexCoordFromDir(float3 dir);
-
-	GLuint skyTex;
-	GLuint skyDot3Tex;
-	GLuint cloudDot3Tex;
-	unsigned int displist;
-
-	GLuint sunTex;
-	GLuint sunFlareTex;
-	unsigned int sunFlareList;
-
-	int ***randMatrix;
-	int **rawClouds;
-	int ***blendMatrix;
-
-	int ydif[CLOUD_SIZE];
-	int updatecounter;
-
-	unsigned char alphaTransform[1024];
-	unsigned char thicknessTransform[1024];
-
-	bool cloudDown[10];
-
-	unsigned char *cloudThickness;
-
-	float covers[4][32];
-	int oldCoverBaseX;
-	int oldCoverBaseY;
-
-	float3 sundir1;
-	float3 sundir2;
-	float3 skydir1;
-	float3 skydir2;
-
-	float3 modSunDir;
-
-	float domeheight;
-	float domeWidth;
-
-	float sunTexCoordX,sunTexCoordY;
-
-	float3 skyColor;
-	float3 sunColor;
-	float3 cloudColor;
-
-	unsigned char (* skytexpart)[4];
-	int skyTexUpdateIter;
-	float skyAngle;
+	float3 GetCoord(int x, int y);
 
 protected:
-	inline unsigned char GetCloudThickness(int x,int y);
+	inline unsigned char GetCloudThickness(int x, int y);
 };
 
 #endif // __BASIC_SKY_H__

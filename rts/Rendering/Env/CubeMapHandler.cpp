@@ -223,7 +223,7 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 
 
 void CubeMapHandler::UpdateSpecularTexture() {
-	if (!globalRendering->dynamicSun || specTexSize == 0)
+	if (specTexSize == 0)
 		return;
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, specularTexID);
@@ -263,7 +263,7 @@ void CubeMapHandler::CreateSpecularFacePart(
 {
 	for (int x = 0; x < size; ++x) {
 		const float3 dir = (cdir + (xdif * (x + 0.5f)) / size + (ydif * (y + 0.5f)) / size).Normalize();
-		const float dot = std::max(0.0f, dir.dot(globalRendering->sunDir));
+		const float dot = std::max(0.0f, dir.dot(sky->GetLight()->GetLightDir()));
 		const float spec = std::min(1.0f, pow(dot, specExp) + pow(dot, 3.0f) * 0.25f);
 
 		buf[x * 4 + 0] = (mapInfo->light.unitSpecularColor.x * spec * 255);

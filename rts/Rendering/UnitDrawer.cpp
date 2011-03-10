@@ -19,6 +19,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 
+#include "Rendering/Env/BaseSky.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/FarTextureHandler.h"
@@ -280,10 +281,10 @@ bool CUnitDrawer::LoadModelShaders()
 		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(2, 2); // shadowTex   (idx 2, texunit 2)
 		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(3, 3); // reflectTex  (idx 3, texunit 3)
 		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(5, &globalRendering->sunDir[0]);
+		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(5, &sky->GetLight()->GetLightDir().x);
 		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(10, &unitAmbientColor[0]);
 		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(11, &unitSunColor[0]);
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(12, globalRendering->unitShadowDensity);
+		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(12, sky->GetLight()->GetUnitShadowDensity());
 		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(15, 0); // numModelDynLights
 		modelShaders[MODEL_SHADER_S3O_SHADOW]->Disable();
 	}
@@ -298,10 +299,11 @@ bool CUnitDrawer::LoadModelShaders()
 
 void CUnitDrawer::UpdateSunDir() {
 	if (advShading && shadowHandler->shadowsSupported && globalRendering->haveGLSL) {
+		const float3 factoredUnitSunColor = unitSunColor * sky->GetLight()->GetLightIntensity();
+
 		modelShaders[MODEL_SHADER_S3O_SHADOW]->Enable();
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(5, &globalRendering->sunDir[0]);
-		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(12, globalRendering->unitShadowDensity);
-		float3 factoredUnitSunColor = unitSunColor * globalRendering->sunIntensity;
+		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(5, &sky->GetLight()->GetLightDir().x);
+		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(12, sky->GetLight()->GetUnitShadowDensity());
 		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform3fv(11, &factoredUnitSunColor[0]);
 		modelShaders[MODEL_SHADER_S3O_SHADOW]->Disable();
 	}
@@ -946,7 +948,7 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 void CUnitDrawer::SetupForGhostDrawing() const
 {
 	glEnable(GL_LIGHTING); // Give faded objects same appearance as regular
-	glLightfv(GL_LIGHT1, GL_POSITION, globalRendering->sunDir);
+	glLightfv(GL_LIGHT1, GL_POSITION, sky->GetLight()->GetLightDir());
 	glEnable(GL_LIGHT1);
 
 	SetupBasicS3OTexture0();
@@ -1238,12 +1240,12 @@ void CUnitDrawer::SetupForUnitDrawing()
 			lightHandler.Update(modelShaders[MODEL_SHADER_S3O_ACTIVE]);
 		} else {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(10, globalRendering->sunDir.x, globalRendering->sunDir.y, globalRendering->sunDir.z, 0.0f);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(10, &sky->GetLight()->GetLightDir().x);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(11, unitSunColor.x, unitSunColor.y, unitSunColor.z, 0.0f);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(12, unitAmbientColor.x, unitAmbientColor.y, unitAmbientColor.z, 1.0f); //!
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(13, camera->pos.x, camera->pos.y, camera->pos.z, 0.0f);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(10, 0.0f, 0.0f, 0.0f, globalRendering->unitShadowDensity);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(10, 0.0f, 0.0f, 0.0f, sky->GetLight()->GetUnitShadowDensity());
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(11, unitAmbientColor.x, unitAmbientColor.y, unitAmbientColor.z, 1.0f);
 
 			glMatrixMode(GL_MATRIX0_ARB);
@@ -1279,7 +1281,7 @@ void CUnitDrawer::SetupForUnitDrawing()
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	} else {
 		glEnable(GL_LIGHTING);
-		glLightfv(GL_LIGHT1, GL_POSITION, globalRendering->sunDir);
+		glLightfv(GL_LIGHT1, GL_POSITION, sky->GetLight()->GetLightDir());
 		glEnable(GL_LIGHT1);
 
 		SetupBasicS3OTexture1();
@@ -2303,7 +2305,7 @@ unsigned int CUnitDrawer::CalcUnitShadowLOD(const CUnit* unit, unsigned int last
 	if (lastLOD == 0) { return 0; }
 
 	// FIXME: fix it, cap it for shallow shadows?
-	const float3& sun = globalRendering->sunDir;
+	const float3& sun = sky->GetLight()->GetLightDir();
 	const float3 diff = (camera->pos - unit->pos);
 	const float  dot  = diff.dot(sun);
 	const float3 gap  = diff - (sun * dot);

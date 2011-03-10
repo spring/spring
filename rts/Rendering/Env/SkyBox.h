@@ -3,8 +3,8 @@
 #ifndef SKYBOX_H
 #define SKYBOX_H
 
-#include "BaseSky.h"
 #include <string>
+#include "BaseSky.h"
 
 class CSkyBox : public CBaseSky
 {
@@ -14,9 +14,10 @@ public:
 
 	void Draw();
 	void Update() {}
-	void DrawSun(void) {}
 	void UpdateSunDir() {}
+	void UpdateSunFlare() {}
 	void UpdateSkyTexture() {}
+	void DrawSun() {}
 
 private:
 	unsigned int tex;

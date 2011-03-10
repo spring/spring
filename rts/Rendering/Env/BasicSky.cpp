@@ -62,17 +62,17 @@ CBasicSky::CBasicSky()
 
 	cloudThickness=new unsigned char[CLOUD_SIZE*CLOUD_SIZE*4+4];
 
-	dynamicSky=true;
+	dynamicSky = true;
 	CreateClouds();
-	dynamicSky=!!configHandler->Get("DynamicSky",0);
+	dynamicSky = (configHandler->Get("DynamicSky", 0) != 0);
 
 	InitSun();
 	oldCoverBaseX=-5;
 
 	int y;
 	glGetError();
-	displist=glGenLists(1);
-	glNewList(displist, GL_COMPILE);
+	skyDomeList = glGenLists(1);
+	glNewList(skyDomeList, GL_COMPILE);
 
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
@@ -211,7 +211,7 @@ CBasicSky::~CBasicSky()
 	glDeleteTextures(1, &skyTex);
 	glDeleteTextures(1, &skyDot3Tex);
 	glDeleteTextures(1, &cloudDot3Tex);
-	glDeleteLists(displist,1);
+	glDeleteLists(skyDomeList, 1);
 
 	glDeleteTextures(1, &sunTex);
 	glDeleteTextures(1, &sunFlareTex);
@@ -242,7 +242,7 @@ void CBasicSky::Draw()
 		CMatrix44f m(camera->pos,skydir1,UpVector,skydir2);
 		glMultMatrixf(m.m);
 
-	glCallList(displist);
+	glCallList(skyDomeList);
 
 	glMatrixMode(GL_TEXTURE);
 		glPopMatrix();
@@ -275,56 +275,6 @@ float3 CBasicSky::GetCoord(int x, int y)
 	c.y=(cos(fy/32)-domeheight)*400;
 	c.z=sin(fy/32)*cos(fx)*400;
 	return c;
-}
-
-void CBasicSky::UpdateTexPartDot3(int x, int y, unsigned char (*texp)[4]) {
-	float3 dir = GetDirFromTexCoord(x/256.0f,(255.0f-y)/256.0f);
-	float sunDist = acos(dir.dot(globalRendering->sunDir))*50;
-	float sunMod = globalRendering->sunIntensity*(0.3f/sqrt(sunDist)+2.0f/sunDist);
-	float green = std::min(1.0f,(0.55f+sunMod));
-	texp[x][0]=(unsigned char)(globalRendering->sunIntensity*(255-std::min(255.0f, sunDist)));				//sun on borders
-	texp[x][1]=(unsigned char)(green*255);			//sun light through
-	texp[x][2]=(unsigned char) 203;						//ambient
-	texp[x][3]=255;
-}
-
-void CBasicSky::UpdateTexPart(int x, int y, unsigned char (*texp)[4]) {
-	float3 dir=GetDirFromTexCoord(x/512.0f,(511.0f-y)/512.0f);
-	float sunDist=acos(dir.dot(globalRendering->sunDir))*70;
-	float sunMod=globalRendering->sunIntensity*12.0f/(12+sunDist);
-	float red=(skyColor.x+sunMod*sunColor.x);
-	float green=(skyColor.y+sunMod*sunColor.y);
-	float blue=(skyColor.z+sunMod*sunColor.z);
-	red   = std::min(red,1.0f);
-	green = std::min(green,1.0f);
-	blue  = std::min(blue,1.0f);
-	texp[x][0]=(unsigned char)(red*255);
-	texp[x][1]=(unsigned char)(green*255);
-	texp[x][2]=(unsigned char)(blue*255);
-	texp[x][3]=255;
-}
-
-void CBasicSky::UpdateSkyTexture() {
-	if(!globalRendering->dynamicSun)
-		return;
-	int mod = skyTexUpdateIter % 3;
-	if (mod <= 1) {
-		int y = (skyTexUpdateIter / 3) * 2 + mod;
-		for(int x=0; x<512; x++) {
-			UpdateTexPart(x, y, skytexpart);
-		}
-		glBindTexture(GL_TEXTURE_2D, skyTex);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, y, 512, 1, GL_RGBA, GL_UNSIGNED_BYTE, skytexpart[0]);
-	}
-	else {
-		int y = (skyTexUpdateIter / 3);
-		for(int x=0;x<256;x++) {
-			UpdateTexPartDot3(x, y, skytexpart);
-		}
-		glBindTexture(GL_TEXTURE_2D, skyDot3Tex);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, y, 256, 1, GL_RGBA, GL_UNSIGNED_BYTE, skytexpart[0]);
-	}
-	skyTexUpdateIter = (skyTexUpdateIter + 1) % (512 + 256);
 }
 
 void CBasicSky::CreateClouds()
@@ -420,7 +370,7 @@ inline void CBasicSky::UpdatePart(int ast, int aed, int a3cstart, int a4cstart) 
 
 void CBasicSky::Update()
 {
-	if(!dynamicSky)
+	if (!dynamicSky)
 		return;
 
 	SCOPED_TIMER("Sky Update");
@@ -640,40 +590,14 @@ void CBasicSky::DrawSun()
 	glBindTexture(GL_TEXTURE_2D, sunFlareTex);
 	glTexSubImage2D(GL_TEXTURE_2D,0,0,0,32,1,GL_LUMINANCE,GL_UNSIGNED_BYTE,buf);
 
-	float si = globalRendering->sunIntensity;
-	glColor4f(si*sunColor.x,si*sunColor.y,si*sunColor.z,0.0f);
+	const float si = skyLight->GetLightIntensity();
+	const float3 sc = sunColor * si;
+
+	glColor4f(sc.x, sc.y, sc.z, 0.0f);
 	glCallList(sunFlareList);
 
 	glEnable(GL_DEPTH_TEST);
 	glPopMatrix();
-}
-
-void CBasicSky::UpdateSkyDir() {
-	skydir2=globalRendering->skyDir;
-	skydir2.y=0;
-	if(skydir2.Length()==0)
-		skydir2.x=1;
-	skydir2.ANormalize();
-	skydir1=skydir2.cross(UpVector);
-	skyAngle = fastmath::coords2angle(skydir2.x, skydir2.z) + PI/2.0f;
-}
-
-void CBasicSky::UpdateSunDir() {
-	sundir2=globalRendering->sunDir;
-	sundir2.y=0;
-	if(sundir2.Length()==0)
-		sundir2.x=1;
-	sundir2.ANormalize();
-	sundir1=sundir2.cross(UpVector);
-
-	modSunDir.y = globalRendering->sunDir.y;
-	modSunDir.x = 0;
-	modSunDir.z = math::sqrt(globalRendering->sunDir.x*globalRendering->sunDir.x+globalRendering->sunDir.z*globalRendering->sunDir.z);
-
-	sunTexCoordX=0.5f;
-	sunTexCoordY=GetTexCoordFromDir(modSunDir);
-
-	UpdateSunFlare();
 }
 
 void CBasicSky::UpdateSunFlare() {
@@ -704,17 +628,6 @@ void CBasicSky::UpdateSunFlare() {
 	glEndList();
 }
 
-void CBasicSky::SetCloudShadow(int texunit)
-{
-}
-
-void CBasicSky::ResetCloudShadow(int texunit)
-{
-}
-
-void CBasicSky::DrawShafts()
-{
-}
 
 
 void CBasicSky::InitSun()
@@ -801,42 +714,4 @@ void CBasicSky::CreateCover(int baseX, int baseY, float *buf)
 		buf[l+16]=cover3/total;
 		buf[l+24]=cover4/total;
 	}
-}
-
-float3 CBasicSky::GetDirFromTexCoord(float x, float y)
-{
-	float3 dir;
-
-	dir.x=(x-0.5f)*domeWidth;
-	dir.z=(y-0.5f)*domeWidth;
-
-	float hdist=sqrt(dir.x*dir.x+dir.z*dir.z);
-	float ang = fastmath::coords2angle(dir.x,dir.z) + skyAngle;
-	dir.x = hdist * cos(ang);
-	dir.z = hdist * sin(ang);
-	float fy=asin(hdist/400);
-	dir.y=(cos(fy)-domeheight)*400;
-
-	dir.ANormalize();
-
-	return dir;
-}
-
-//should be improved
-//only take stuff in yz plane
-float CBasicSky::GetTexCoordFromDir(float3 dir)
-{
-	float tp=0.5f;
-	float step=0.25f;
-
-	for(int a=0;a<10;++a){
-		float tx=0.5f+tp;
-		float3 d=GetDirFromTexCoord(tx,0.5f);
-		if(d.y<dir.y)
-			tp-=step;
-		else
-			tp+=step;
-		step*=0.5f;
-	}
-	return 0.5f+tp;
 }
