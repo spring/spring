@@ -1,23 +1,20 @@
 #!/bin/sh
-
-# Quit on error.
 set -e
+. buildbot/slave/prepare.sh
 
-DIR=build-${1}
-shift
-echo -n "creating ${DIR} ... "
+echo -n "creating ${BUILDDIR} ... "
 
-if [ ! -d ${DIR} ] ; then
-	mkdir ${DIR}
+if [ ! -d ${BUILDDIR} ] ; then
+	mkdir -p ${BUILDDIR}
 	echo "done."
 else
 	echo "skipped."
 fi
 
-echo "configuring ${DIR} with $@ ..."
+echo "configuring ${BUILDDIR} with $@ ..."
 
-cd ${DIR}
-cmake .. $@
+cd ${BUILDDIR}
+cmake ${SOURCEDIR} $@
 
 echo "erasing old base content..."
 rm -rf base

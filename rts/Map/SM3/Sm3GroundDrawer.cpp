@@ -10,9 +10,10 @@
 #include "Map/MapInfo.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/GL/myGL.h"
 #include "System/GlobalUnsynced.h"
 #include "System/ConfigHandler.h"
@@ -75,7 +76,7 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 
 	terrain::RenderContext* currc = rc;
 
-	tr->SetShaderParams(globalRendering->sunDir, currc->cam->pos);
+	tr->SetShaderParams(sky->GetLight()->GetLightDir(), currc->cam->pos);
 
 	if (shadowHandler->shadowsLoaded) {
 		terrain::ShadowMapParams params;
@@ -99,7 +100,7 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glEnable(GL_LIGHTING);
-	glLightfv(GL_LIGHT0, GL_POSITION, globalRendering->sunDir);
+	glLightfv(GL_LIGHT0, GL_POSITION, sky->GetLight()->GetLightDir());
 
 	float d[4] = {0.0f, 0.0f, 0.0f, 1.0f};
 	const float z[] = {0.0f, 0.0f, 0.0f, 1.0f};

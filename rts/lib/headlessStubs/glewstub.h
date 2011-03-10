@@ -36,6 +36,7 @@ extern "C" {
 #define GLEW_EXT_texture_edge_clamp GL_FALSE
 #define GLEW_ARB_texture_border_clamp GL_TRUE
 #define GLEW_EXT_texture_rectangle GL_TRUE
+#define GLEW_ARB_multisample GL_FALSE
 #define GLEW_ARB_multitexture GL_TRUE
 #define GLEW_ARB_depth_texture GL_TRUE
 #define GLEW_ARB_vertex_buffer_object GL_FALSE

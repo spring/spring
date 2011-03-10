@@ -10,6 +10,7 @@
 #include "Game/Camera.h"
 #include "Game/LoadScreen.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/Env/BaseSky.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/bitops.h"
@@ -422,9 +423,6 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 
 
 void CSmfReadMap::UpdateShadingTexture() {
-	if (!globalRendering->dynamicSun)
-		return;
-
 	const int xsize = gs->mapx;
 	const int ysize = gs->mapy;
 	int y = shadingTexUpdateIter;
@@ -448,8 +446,9 @@ void CSmfReadMap::UpdateShadingTexture() {
 
 float CSmfReadMap::DiffuseSunCoeff(const int& x, const int& y) const
 {
-	const float3& n = centernormals[(y * gs->mapx) + x];
-	return Clamp(globalRendering->sunDir.dot(n), 0.0f, 1.0f);
+	const float3& N = centernormals[(y * gs->mapx) + x];
+	const float3& L = sky->GetLight()->GetLightDir();
+	return Clamp(L.dot(N), 0.0f, 1.0f);
 }
 
 

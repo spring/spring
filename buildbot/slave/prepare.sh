@@ -7,6 +7,7 @@
 # - CONFIG_  : $CONFIG wrapped in [] or empty if CONFIG=default
 # - BRANCH_  : $BRANCH wrapped in {} or empty if BRANCH=master
 # - REV      : output of `git describe --tags'
+# - SOURCEDIR: absolute path to the source directory
 # - BUILDDIR : absolute path to the build directory
 # - TMP_BASE : folder for temporary work items
 # - TMP_PATH : $TMP_BASE/$CONFIG/$BRANCH/$REV
@@ -16,18 +17,21 @@ set -e
 
 CONFIG=${1:-default}
 BRANCH=${2:-master}
+shift 2
+
 REV=$(git describe --tags)
-BUILDDIR=${PWD}/build-${CONFIG}
+SOURCEDIR=${PWD}
+BUILDDIR=${PWD}/build/${CONFIG}
 TMP_BASE=/tmp/spring
 TMP_PATH=${TMP_BASE}/${CONFIG}/${BRANCH}/${REV}
 
-if [ ${CONFIG} == default ]; then
+if [ x${CONFIG} = xdefault ]; then
    CONFIG_=''
 else
    CONFIG_="[${CONFIG}]"
 fi
 
-if [ ${BRANCH} == master ]; then
+if [ x${BRANCH} = xmaster ]; then
    BRANCH_=''
 else
    BRANCH_="{${BRANCH}}"

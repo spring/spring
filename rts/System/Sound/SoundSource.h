@@ -7,7 +7,7 @@
 
 #include <al.h>
 #include <boost/noncopyable.hpp>
-#include <boost/thread/mutex.hpp>
+#include <boost/thread/recursive_mutex.hpp>
 
 class IAudioChannel;
 class float3;
@@ -66,7 +66,7 @@ private:
 	SoundItem* curPlaying;
 	IAudioChannel* curChannel;
 	COggStream* curStream;
-	boost::mutex streamMutex;
+	boost::recursive_mutex streamMutex;
 	float curVolume;
 	unsigned loopStop;
 	bool in3D;

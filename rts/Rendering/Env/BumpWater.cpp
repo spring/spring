@@ -385,7 +385,7 @@ CBumpWater::CBumpWater()
 	GLSLDefineConstf3(definitions, "MapMid",                    float3(readmap->width * SQUARE_SIZE * 0.5f, 0.0f, readmap->height * SQUARE_SIZE * 0.5f) );
 	GLSLDefineConstf2(definitions, "ScreenInverse",             1.0f / globalRendering->viewSizeX, 1.0f / globalRendering->viewSizeY );
 	GLSLDefineConstf2(definitions, "ScreenTextureSizeInverse",  1.0f / screenTextureX, 1.0f / screenTextureY );
-	GLSLDefineConstf2(definitions, "ViewPos",                   globalRendering->viewPosX,globalRendering->viewPosY );
+	GLSLDefineConstf2(definitions, "ViewPos",                   globalRendering->viewPosX, globalRendering->viewPosY );
 
 	if (useUniforms) {
 		SetupUniforms(definitions);
@@ -398,12 +398,12 @@ CBumpWater::CBumpWater()
 		GLSLDefineConstf1(definitions, "SpecularFactor", mapInfo->water.specularFactor);
 		GLSLDefineConstf1(definitions, "AmbientFactor",  mapInfo->water.ambientFactor);
 		GLSLDefineConstf1(definitions, "DiffuseFactor",  mapInfo->water.diffuseFactor * 15.0f);
-		GLSLDefineConstf3(definitions, "SunDir",         globalRendering->sunDir); // FIXME: Break dependence with const sunDir (sun is no longer static)
+		GLSLDefineConstf3(definitions, "SunDir",         sky->GetLight()->GetLightDir()); // FIXME: not a constant
 		GLSLDefineConstf1(definitions, "FresnelMin",     mapInfo->water.fresnelMin);
 		GLSLDefineConstf1(definitions, "FresnelMax",     mapInfo->water.fresnelMax);
 		GLSLDefineConstf1(definitions, "FresnelPower",   mapInfo->water.fresnelPower);
 		GLSLDefineConstf1(definitions, "ReflDistortion", mapInfo->water.reflDistortion);
-		GLSLDefineConstf2(definitions, "BlurBase",       0.0f,mapInfo->water.blurBase/globalRendering->viewSizeY);
+		GLSLDefineConstf2(definitions, "BlurBase",       0.0f, mapInfo->water.blurBase / globalRendering->viewSizeY);
 		GLSLDefineConstf1(definitions, "BlurExponent",   mapInfo->water.blurExponent);
 		GLSLDefineConstf1(definitions, "PerlinStartFreq",  mapInfo->water.perlinStartFreq);
 		GLSLDefineConstf1(definitions, "PerlinLacunarity", mapInfo->water.perlinLacunarity);
@@ -1105,25 +1105,25 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 
 void CBumpWater::SetUniforms()
 {
-	glUniform4f(uniforms[ 0], mapInfo->water.surfaceColor.x*0.4, mapInfo->water.surfaceColor.y*0.4, mapInfo->water.surfaceColor.z*0.4, mapInfo->water.surfaceAlpha);
-	glUniform4f(uniforms[ 1], mapInfo->water.planeColor.x*0.4, mapInfo->water.planeColor.y*0.4, mapInfo->water.planeColor.z*0.4, mapInfo->water.surfaceAlpha);
-	glUniform3f(uniforms[ 2], mapInfo->water.diffuseColor.x, mapInfo->water.diffuseColor.y, mapInfo->water.diffuseColor.z);
-	glUniform3f(uniforms[ 3], mapInfo->water.specularColor.x, mapInfo->water.specularColor.y, mapInfo->water.specularColor.z);
-	glUniform1f(uniforms[ 4], mapInfo->water.specularPower);
-	glUniform1f(uniforms[ 5], mapInfo->water.specularFactor);
-	glUniform1f(uniforms[ 6], mapInfo->water.ambientFactor);
-	glUniform1f(uniforms[ 7], mapInfo->water.diffuseFactor * 15.0f);
-	glUniform3f(uniforms[ 8], globalRendering->sunDir.x,globalRendering->sunDir.y,globalRendering->sunDir.z );
-	glUniform1f(uniforms[ 9], mapInfo->water.fresnelMin);
-	glUniform1f(uniforms[10], mapInfo->water.fresnelMax);
-	glUniform1f(uniforms[11], mapInfo->water.fresnelPower);
-	glUniform1f(uniforms[12], mapInfo->water.reflDistortion);
-	glUniform2f(uniforms[13], 0.0f,mapInfo->water.blurBase/globalRendering->viewSizeY);
-	glUniform1f(uniforms[14], mapInfo->water.blurExponent);
-	glUniform1f(uniforms[15], mapInfo->water.perlinStartFreq);
-	glUniform1f(uniforms[16], mapInfo->water.perlinLacunarity);
-	glUniform1f(uniforms[17], mapInfo->water.perlinAmplitude);
-	glUniform1f(uniforms[18], mapInfo->water.windSpeed);
+	glUniform4f( uniforms[ 0], mapInfo->water.surfaceColor.x*0.4, mapInfo->water.surfaceColor.y*0.4, mapInfo->water.surfaceColor.z*0.4, mapInfo->water.surfaceAlpha);
+	glUniform4f( uniforms[ 1], mapInfo->water.planeColor.x*0.4, mapInfo->water.planeColor.y*0.4, mapInfo->water.planeColor.z*0.4, mapInfo->water.surfaceAlpha);
+	glUniform3f( uniforms[ 2], mapInfo->water.diffuseColor.x, mapInfo->water.diffuseColor.y, mapInfo->water.diffuseColor.z);
+	glUniform3f( uniforms[ 3], mapInfo->water.specularColor.x, mapInfo->water.specularColor.y, mapInfo->water.specularColor.z);
+	glUniform1f( uniforms[ 4], mapInfo->water.specularPower);
+	glUniform1f( uniforms[ 5], mapInfo->water.specularFactor);
+	glUniform1f( uniforms[ 6], mapInfo->water.ambientFactor);
+	glUniform1f( uniforms[ 7], mapInfo->water.diffuseFactor * 15.0f);
+	glUniform3fv(uniforms[ 8], 1, &sky->GetLight()->GetLightDir().x);
+	glUniform1f( uniforms[ 9], mapInfo->water.fresnelMin);
+	glUniform1f( uniforms[10], mapInfo->water.fresnelMax);
+	glUniform1f( uniforms[11], mapInfo->water.fresnelPower);
+	glUniform1f( uniforms[12], mapInfo->water.reflDistortion);
+	glUniform2f( uniforms[13], 0.0f, mapInfo->water.blurBase / globalRendering->viewSizeY);
+	glUniform1f( uniforms[14], mapInfo->water.blurExponent);
+	glUniform1f( uniforms[15], mapInfo->water.perlinStartFreq);
+	glUniform1f( uniforms[16], mapInfo->water.perlinLacunarity);
+	glUniform1f( uniforms[17], mapInfo->water.perlinAmplitude);
+	glUniform1f( uniforms[18], mapInfo->water.windSpeed);
 }
 
 
