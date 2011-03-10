@@ -69,6 +69,7 @@ for tostripfile in $(find AI/Skirmish -name SkirmishAI.dll) $(find AI/Interfaces
 	relpath=$(dirname ${tostripfile})
 	cd  ${BUILDDIR}/$relpath
 	zip $(basename ${tostripfile}) $name
+	cd ${SOURCEDIR}/$relpath
 	adddata ${TMP_PATH}/${VERSION}_$name.7z
 done
 
