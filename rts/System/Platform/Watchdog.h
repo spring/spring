@@ -22,7 +22,7 @@ namespace Watchdog
 
 	//! Call these in the threads you want to monitor
 	void RegisterThread(std::string name);
-	//void DeregisterThread();
+	void DeregisterThread(std::string name);
 }
 
 #endif // _WATCHDOG_H

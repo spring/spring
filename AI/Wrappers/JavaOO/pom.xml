@@ -1,0 +1,45 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<!--
+		You may not use this file to build this project!
+		It acts only as a container for certain info, and is used with:
+		> mvn install:install-file -DpomFile=.../pom.xml -Dversion=X
+	-->
+
+	<groupId>com.springrts</groupId>
+	<artifactId>ai-wrapper-javaoo</artifactId>
+	<version>${myVersion}</version> <!-- replaced by CMake or -DmyVersion=0.1 -->
+
+	<packaging>jar</packaging>
+
+	<organization>
+		<name>Spring RTS Community</name>
+		<url>http://springrts.com</url>
+	</organization>
+	<name>Java OO AI Wrapper</name>
+	<description>Java Object Oriented Artificial Intelligence interface wrapper for the Spring RTS engine</description>
+	<url>http://springrts.com/wiki/AIWrapper:JavaOO</url>
+
+	<scm>
+		<connection>scm:git:git://github.com/spring/spring.git</connection>
+		<url>http://github.com/spring/spring</url>
+		<developerConnection>scm:git:git@github.com:spring/spring.git</developerConnection>
+	</scm>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.springrts</groupId>
+			<artifactId>ai-interface-java</artifactId>
+			<version>${myVersion}</version> <!-- replaced by CMake or -DmyVersion=0.1 -->
+		</dependency>
+		<dependency>
+			<groupId>java3d</groupId>
+			<artifactId>vecmath</artifactId>
+			<version>1.3.1</version>
+		</dependency>
+	</dependencies>
+
+</project>

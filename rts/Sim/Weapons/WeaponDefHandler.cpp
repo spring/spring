@@ -21,6 +21,7 @@
 #include "Sound/ISound.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
+#include "Sim/Units/Scripts/CobInstance.h"
 
 using std::min;
 using std::max;
@@ -203,7 +204,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.salvodelay = wdTable.GetFloat("burstRate", 0.1f);
 	wd.salvosize = wdTable.GetInt("burst", 1);
 	wd.projectilespershot = wdTable.GetInt("projectiles", 1);
-	wd.maxAngle = wdTable.GetFloat("tolerance", 3000.0f) * 180.0f / 0x7fff;
+	wd.maxAngle = wdTable.GetFloat("tolerance", 3000.0f) * 180.0f / COBSCALEHALF;
 	wd.restTime = 0.0f;
 	wd.metalcost = wdTable.GetFloat("metalPerShot", 0.0f);
 	wd.energycost = wdTable.GetFloat("energyPerShot", 0.0f);
@@ -308,7 +309,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	}
 	wd.interceptedByShieldType = wdTable.GetInt("interceptedByShieldType", defInterceptType);
 
-	wd.wobble = wdTable.GetFloat("wobble", 0.0f) * PI / 0x7fff / 30.0f;
+	wd.wobble = wdTable.GetFloat("wobble", 0.0f) * TAANG2RAD / 30.0f;
 	wd.dance = wdTable.GetFloat("dance", 0.0f) / GAME_SPEED;
 	wd.trajectoryHeight = wdTable.GetFloat("trajectoryHeight", 0.0f);
 

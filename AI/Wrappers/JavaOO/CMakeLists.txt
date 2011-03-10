@@ -6,6 +6,10 @@
 
 #enable_language(Java)
 
+# includes rts/build/cmake/UtilJava.cmake
+INCLUDE(UtilJava)
+
+
 set(myName               "JavaOO")
 
 
@@ -18,12 +22,12 @@ endif ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA")
 
 
 # Check dependencies of the wrapper are met
-if    (AIWRAPPERS_JAVA AND BUILD_Java_AIINTERFACE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}" AND CUSTOM_TARGET_SOURCES_SUPPORT)
+if    (AIWRAPPERS_JAVA AND BUILD_Java_AIINTERFACE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 	SetGlobal(BUILD_${myName}_AIWRAPPER TRUE)
-else  (AIWRAPPERS_JAVA AND BUILD_Java_AIINTERFACE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}" AND CUSTOM_TARGET_SOURCES_SUPPORT)
+else  (AIWRAPPERS_JAVA AND BUILD_Java_AIINTERFACE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 	SetGlobal(BUILD_${myName}_AIWRAPPER FALSE)
 	message("warning: Java OO AI Wrapper will not be built!")
-endif (AIWRAPPERS_JAVA AND BUILD_Java_AIINTERFACE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}" AND CUSTOM_TARGET_SOURCES_SUPPORT)
+endif (AIWRAPPERS_JAVA AND BUILD_Java_AIINTERFACE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 
 
 # Build
@@ -224,7 +228,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set_source_files_properties(${myDependLibFiles} PROPERTIES GENERATED TRUE)
 
 	add_custom_target(${myTarget} ALL
-		SOURCES
+		DEPENDS
 			"${myBuildDir}/${myBinJarFile}"
 			"${myBuildDir}/${mySrcJarFile}")
 	add_dependencies(${myTarget} ${myDependTargets})
@@ -282,10 +286,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 	# Build the jars
 	# --------------
 
-	# Stub file for dependency tracking
-	set(myClassesStubFile "${CMAKE_CURRENT_BINARY_DIR}/myClasses.stub")
-	set_source_files_properties(${myClassesStubFile} PROPERTIES GENERATED TRUE)
-
 	# Write list of source files to an arg-file
 	set(mySrcArgFile "${CMAKE_CURRENT_BINARY_DIR}/sourceFiles.txt")
 	if    (EXISTS "${mySrcArgFile}")
@@ -295,10 +295,10 @@ if    (BUILD_${myName}_AIWRAPPER)
 		file(APPEND "${mySrcArgFile}" "${srcFile}\n")
 	endforeach (srcFile)
 
-	# compile
+	# compile and pack library
 	add_custom_command(
 		OUTPUT
-			${myClassesStubFile}
+			"${myBuildDir}/${myBinJarFile}"
 		COMMAND "${CMAKE_COMMAND}"
 			"-E" "remove_directory" "${myJavaBuildDir}"
 		COMMAND "${CMAKE_COMMAND}"
@@ -308,8 +308,9 @@ if    (BUILD_${myName}_AIWRAPPER)
 			"-cp" "${myClassPath}"
 			"-d" "${myJavaBuildDir}"
 			"@${mySrcArgFile}"
-		COMMAND "${CMAKE_COMMAND}"
-			"-E" "touch" "${myClassesStubFile}"
+		COMMAND "${JAVA_ARCHIVE}" ARGS
+			${myBinJarArgs} "${myBuildDir}/${myBinJarFile}"
+			"-C" "${myJavaBuildDir}" "${myPkgFirstPart}"
 		DEPENDS
 			${myDependLibFiles}
 			${mySources}
@@ -317,22 +318,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		WORKING_DIRECTORY
 			"${myBinDir}"
 		COMMENT
-			"  ${myTarget}: Compiling sources" VERBATIM
-		)
-
-	# pack library
-	add_custom_command(
-		OUTPUT
-			"${myBuildDir}/${myBinJarFile}"
-		COMMAND "${JAVA_ARCHIVE}" ARGS
-			${myBinJarArgs} "${${myName}_AIWRAPPER_JAR_BIN}"
-			"-C" "${myJavaBuildDir}" "${myPkgFirstPart}"
-		DEPENDS
-			"${myClassesStubFile}"
-		WORKING_DIRECTORY
-			"${myBuildDir}"
-		COMMENT
-			"  ${myTarget}: Creating library ${myBinJarFile} ..." VERBATIM
+			"  ${myTarget}: Compiling sources and packing library ${myBinJarFile}" VERBATIM
 		)
 
 	# pack sources
@@ -351,7 +337,32 @@ if    (BUILD_${myName}_AIWRAPPER)
 		WORKING_DIRECTORY
 			"${myBuildDir}"
 		COMMENT
-			"  ${myTarget}: Creating sources archive ${mySrcJarFile} ..." VERBATIM
+			"  ${myTarget}: Creating sources archive ${mySrcJarFile}" VERBATIM
 		)
+
+	IsMavenInstalled(isMavenInstalled)
+	if    (isMavenInstalled)
+		set(myVersion "${Java_AIINTERFACE_VERS}")
+		add_custom_command(TARGET ${myTarget} POST_BUILD
+			COMMAND "${CMAKE_COMMAND}"
+				"-Dfile.in=${myDir}/pom.xml"
+				"-Dfile.out=${myBuildDir}/pom.xml"
+				"-DmyVersion=${myVersion}"
+				"-P" "${CMAKE_MODULES_SPRING}/ConfigureFile.cmake"
+			COMMAND "mvn"
+				"install:install-file"
+				"-DpomFile=${myBuildDir}/pom.xml"
+				"-Dfile=${myBuildDir}/${myBinJarFile}"
+				"-Dsources=${myBuildDir}/${mySrcJarFile}"
+			DEPENDS
+				"${myDir}/pom.xml"
+				"${myBuildDir}/${myBinJarFile}"
+				"${myBuildDir}/${mySrcJarFile}"
+			WORKING_DIRECTORY
+				"${myDir}"
+			COMMENT
+				"  ${myTarget}: Installing to local maven repository" VERBATIM
+			)
+	endif (isMavenInstalled)
 
 endif (BUILD_${myName}_AIWRAPPER)

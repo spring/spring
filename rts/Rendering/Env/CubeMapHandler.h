@@ -35,7 +35,7 @@ private:
 	unsigned int specTexSize;
 
 	unsigned int currReflectionFace;
-	unsigned int currSpecularTexRow;
+	unsigned int specularTexIter;
 	bool mapSkyReflections;
 
 	float specExp;

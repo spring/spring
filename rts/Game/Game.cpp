@@ -524,6 +524,10 @@ void CGame::LoadSimulation(const std::string& mapname)
 void CGame::LoadRendering()
 {
 	// rendering components
+	loadscreen->SetLoadMessage("Creating Sky");
+	sky = CBaseSky::GetSky();
+
+	loadscreen->SetLoadMessage("Creating ShadowHandler & DecalHandler");
 	cubeMapHandler = new CubeMapHandler();
 	shadowHandler = new CShadowHandler();
 	groundDecals = new CGroundDecalHandler();
@@ -539,13 +543,13 @@ void CGame::LoadRendering()
 
 	geometricObjects = new CGeometricObjects();
 
+	loadscreen->SetLoadMessage("Creating ProjectileDrawer & UnitDrawer");
 	projectileDrawer = new CProjectileDrawer();
 	projectileDrawer->LoadWeaponTextures();
 	unitDrawer = new CUnitDrawer();
 	modelDrawer = IModelDrawer::GetInstance();
 
-	loadscreen->SetLoadMessage("Creating Sky & Water");
-	sky = CBaseSky::GetSky();
+	loadscreen->SetLoadMessage("Creating Water");
 	water = CBaseWater::GetWater(NULL, -1);
 }
 
@@ -1274,11 +1278,11 @@ bool CGame::Draw() {
 		if (lastSimFrame != gs->frameNum && !skipping) {
 			projectileDrawer->UpdateTextures();
 			sky->Update();
-
+			sky->GetLight()->Update();
 			water->Update();
-			globalRendering->Update();
 		}
 	}
+
 
 	if (lastSimFrame != gs->frameNum) {
 		CInputReceiver::CollectGarbage();
@@ -1302,7 +1306,7 @@ bool CGame::Draw() {
 
 	lastSimFrame = gs->frameNum;
 
-	if(!skipping)
+	if (!skipping)
 		UpdateUI(true);
 
 	SetDrawMode(gameNormalDraw);
@@ -1351,25 +1355,27 @@ bool CGame::Draw() {
 	}
 
 	if (doDrawWorld) {
-		{
-			SCOPED_TIMER("Shadows/Reflections");
-			if (shadowHandler->shadowsLoaded && (gd->drawMode != CBaseGroundDrawer::drawLos)) {
-				// NOTE: shadows don't work in LOS mode, gain a few fps (until it's fixed)
-				SetDrawMode(gameShadowDraw);
-				shadowHandler->CreateShadows();
-				SetDrawMode(gameNormalDraw);
-			}
+		SCOPED_TIMER("Shadows/Reflections");
 
+		if (shadowHandler->shadowsLoaded && (gd->drawMode != CBaseGroundDrawer::drawLos)) {
+			// NOTE: shadows don't work in LOS mode, gain a few fps (until it's fixed)
+			SetDrawMode(gameShadowDraw);
+			shadowHandler->CreateShadows();
+			SetDrawMode(gameNormalDraw);
+		}
+
+		cubeMapHandler->UpdateReflectionTexture();
+
+		if (sky->GetLight()->IsDynamic()) {
 			cubeMapHandler->UpdateSpecularTexture();
-			cubeMapHandler->UpdateReflectionTexture();
 			sky->UpdateSkyTexture();
 			readmap->UpdateShadingTexture();
-
-			if (FBO::IsSupported())
-				FBO::Unbind();
-
-			glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 		}
+
+		if (FBO::IsSupported())
+			FBO::Unbind();
+
+		glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	}
 
 	glDepthMask(GL_TRUE);
@@ -1776,7 +1782,6 @@ void CGame::SimFrame() {
 		(playerHandler->Player(gu->myPlayerNum)->fpsController).SendStateUpdate(camMove);
 
 		CTeamHighlight::Update(gs->frameNum);
-		globalRendering->UpdateSun();
 	}
 
 	// everything from here is simulation

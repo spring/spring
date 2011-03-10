@@ -11,6 +11,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/Env/BaseSky.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -217,11 +218,11 @@ bool CBFGroundDrawer::LoadMapShaders() {
 				smfShaders[i]->SetUniform1i(4, 6); // specularTex (idx 4, texunit 6)
 				smfShaders[i]->SetUniform2f(5, (gs->pwr2mapx * SQUARE_SIZE), (gs->pwr2mapy * SQUARE_SIZE));
 				smfShaders[i]->SetUniform2f(6, (gs->mapx * SQUARE_SIZE), (gs->mapy * SQUARE_SIZE));
-				smfShaders[i]->SetUniform4fv(9, &globalRendering->sunDir[0]);
+				smfShaders[i]->SetUniform4fv(9, &sky->GetLight()->GetLightDir().x);
 				smfShaders[i]->SetUniform3fv(14, &mapInfo->light.groundAmbientColor[0]);
 				smfShaders[i]->SetUniform3fv(15, &mapInfo->light.groundSunColor[0]);
 				smfShaders[i]->SetUniform3fv(16, &mapInfo->light.groundSpecularColor[0]);
-				smfShaders[i]->SetUniform1f(17, globalRendering->groundShadowDensity);
+				smfShaders[i]->SetUniform1f(17, sky->GetLight()->GetGroundShadowDensity());
 				smfShaders[i]->SetUniform3fv(18, &mapInfo->water.minColor[0]);
 				smfShaders[i]->SetUniform3fv(19, &mapInfo->water.baseColor[0]);
 				smfShaders[i]->SetUniform3fv(20, &mapInfo->water.absorb[0]);
@@ -251,13 +252,13 @@ void CBFGroundDrawer::UpdateSunDir() {
 
 	if (smfShaderCurGLSL != NULL) {
 		smfShaderCurGLSL->Enable();
-		smfShaderCurGLSL->SetUniform4fv(9, &globalRendering->sunDir[0]);
-		smfShaderCurGLSL->SetUniform1f(17, globalRendering->groundShadowDensity);
+		smfShaderCurGLSL->SetUniform4fv(9, &sky->GetLight()->GetLightDir().x);
+		smfShaderCurGLSL->SetUniform1f(17, sky->GetLight()->GetGroundShadowDensity());
 		smfShaderCurGLSL->Disable();
 	} else {
 		if (smfShaderCurrARB != NULL) {
 			smfShaderCurrARB->Enable();
-			smfShaderCurrARB->SetUniform4f(11, 0, 0, 0, globalRendering->groundShadowDensity);
+			smfShaderCurrARB->SetUniform4f(11, 0, 0, 0, sky->GetLight()->GetGroundShadowDensity());
 			smfShaderCurrARB->Disable();
 		}
 	}
@@ -1421,7 +1422,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 				smfShaderCurrARB->SetUniform4f(14, 0.02f, 0.02f, 0, 1);
 				smfShaderCurrARB->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
 				smfShaderCurrARB->SetUniform4f(10, ambientColor.x, ambientColor.y, ambientColor.z, 1);
-				smfShaderCurrARB->SetUniform4f(11, 0, 0, 0, globalRendering->groundShadowDensity);
+				smfShaderCurrARB->SetUniform4f(11, 0, 0, 0, sky->GetLight()->GetGroundShadowDensity());
 
 				glMatrixMode(GL_MATRIX0_ARB);
 				glLoadMatrixf(shadowHandler->shadowMatrix.m);

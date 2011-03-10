@@ -745,9 +745,9 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "dynamicsun") {
 		if (action.extra.empty()) {
-			globalRendering->dynamicSun = !globalRendering->dynamicSun;
+			sky->SetLight(!sky->GetLight()->IsDynamic());
 		} else {
-			globalRendering->dynamicSun = !!atoi(action.extra.c_str());
+			sky->SetLight(!!atoi(action.extra.c_str()));
 		}
 	}
 #ifdef USE_GML
@@ -870,12 +870,14 @@ bool CGame::ActionPressed(const Action& action,
 		LogObject() << "Base tree distance " << treeDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
 	}
 	else if (cmd == "moreclouds") {
-		sky->cloudDensity*=0.95f;
-		LogObject() << "Cloud density " << 1/sky->cloudDensity << "\n";
+		sky->IncreaseCloudDensity();
+
+		LogObject() << "Cloud density " << 1.0f / sky->GetCloudDensity() << "\n";
 	}
 	else if (cmd == "lessclouds") {
-		sky->cloudDensity*=1.05f;
-		LogObject() << "Cloud density " << 1/sky->cloudDensity << "\n";
+		sky->DecreaseCloudDensity();
+
+		LogObject() << "Cloud density " << 1.0f / sky->GetCloudDensity() << "\n";
 	}
 
 	// Break up the if/else chain to workaround MSVC compiler limit

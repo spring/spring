@@ -42,6 +42,7 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
+#include "Rendering/Env/BaseSky.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/GL/glExtra.h"
@@ -802,7 +803,7 @@ void LuaOpenGL::ResetDrawInMiniMap()
 void LuaOpenGL::SetupWorldLighting()
 {
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-	glLightfv(GL_LIGHT1, GL_POSITION, globalRendering->sunDir);
+	glLightfv(GL_LIGHT1, GL_POSITION, sky->GetLight()->GetLightDir());
 	glEnable(GL_LIGHT1);
 }
 
@@ -819,10 +820,11 @@ void LuaOpenGL::SetupScreenMatrices()
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
+	const int winPosY_bl = globalRendering->screenSizeY - globalRendering->winSizeY - globalRendering->winPosY; //! origin BOTTOMLEFT
 	const float dist   = screenDistance;         // eye-to-screen (meters)
 	const float width  = screenWidth;            // screen width (meters)
 	const float vppx   = float(globalRendering->winPosX + globalRendering->viewPosX); // view pixel pos x
-	const float vppy   = float(globalRendering->winPosY + globalRendering->viewPosY); // view pixel pos y
+	const float vppy   = float(winPosY_bl + globalRendering->viewPosY); // view pixel pos y
 	const float vpsx   = float(globalRendering->viewSizeX);   // view pixel size x
 	const float vpsy   = float(globalRendering->viewSizeY);   // view pixel size y
 	const float spsx   = float(globalRendering->screenSizeX); // screen pixel size x
@@ -882,7 +884,7 @@ void LuaOpenGL::SetupScreenLighting()
 	// sun light -- needs the camera transformation
 	glPushMatrix();
 	glLoadMatrixd(camera->GetViewMat());
-	glLightfv(GL_LIGHT1, GL_POSITION, globalRendering->sunDir);
+	glLightfv(GL_LIGHT1, GL_POSITION, sky->GetLight()->GetLightDir());
 
 	const float sunFactor = 1.0f;
 	const float sf = sunFactor;
@@ -5025,17 +5027,17 @@ int LuaOpenGL::GetSun(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if (args == 0) {
-		lua_pushnumber(L, globalRendering->sunDir[0]);
-		lua_pushnumber(L, globalRendering->sunDir[1]);
-		lua_pushnumber(L, globalRendering->sunDir[2]);
+		lua_pushnumber(L, sky->GetLight()->GetLightDir().x);
+		lua_pushnumber(L, sky->GetLight()->GetLightDir().y);
+		lua_pushnumber(L, sky->GetLight()->GetLightDir().z);
 		return 3;
 	}
 
 	const string param = luaL_checkstring(L, 1);
 	if (param == "pos") {
-		lua_pushnumber(L, globalRendering->sunDir[0]);
-		lua_pushnumber(L, globalRendering->sunDir[1]);
-		lua_pushnumber(L, globalRendering->sunDir[2]);
+		lua_pushnumber(L, sky->GetLight()->GetLightDir().x);
+		lua_pushnumber(L, sky->GetLight()->GetLightDir().y);
+		lua_pushnumber(L, sky->GetLight()->GetLightDir().z);
 		return 3;
 	}
 
@@ -5046,9 +5048,9 @@ int LuaOpenGL::GetSun(lua_State* L)
 
 	if (param == "shadowDensity") {
 		if (!unitMode) {
-			lua_pushnumber(L, globalRendering->groundShadowDensity);
+			lua_pushnumber(L, sky->GetLight()->GetGroundShadowDensity());
 		} else {
-			lua_pushnumber(L, globalRendering->unitShadowDensity);
+			lua_pushnumber(L, sky->GetLight()->GetUnitShadowDensity());
 		}
 		return 1;
 	}
