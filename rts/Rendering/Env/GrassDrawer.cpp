@@ -12,6 +12,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/Env/BaseSky.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/VertexArray.h"
@@ -452,7 +453,7 @@ void CGrassDrawer::Draw(void)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_ALPHA);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB, 1.0f - globalRendering->groundShadowDensity);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB, 1.0f - sky->GetLight()->GetGroundShadowDensity());
 		
 		static const float texConstant[] = {
 			mapInfo->light.groundAmbientColor.x * 1.24f,

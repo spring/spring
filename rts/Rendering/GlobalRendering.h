@@ -19,13 +19,7 @@ class CGlobalRendering {
 	CGlobalRendering();
 
 public:
-	//FIXME: wrong pos? (move to Rendering/Env/BaseSky?)
 	void PostInit();
-	void UpdateSunDir(const float4& newSunDir);
-	void Update();
-	inline float4 CalculateSunDir(float startAngle);
-	void UpdateSun(bool forced = false);
-	void UpdateSunParams(float4 newSunDir, float startAngle, float orbitTime, bool iscompat);
 
 	/**
 	 * Does the user want team colored nanospray if the mod allows it?
@@ -188,76 +182,6 @@ public:
 	 * @brief full-screen or windowed rendering
 	 */
 	bool fullScreen;
-
-	/**
-	 * @brief current sunlight direction
-	 */
-	float4 sunDir;
-
-	/**
-	 * @brief current sky direction
-	 */
-	float4 skyDir;
-
-	/**
-	 * @brief sun intensity
-	 */
-	float sunIntensity;
-
-	/**
-	 * @brief sun elevation adjusted unit shadow density
-	 */
-	float unitShadowDensity;
-
-	/**
-	 * @brief sun elevation adjusted ground shadow density
-	 */
-	float groundShadowDensity;
-
-	/**
-	 * @brief dynamic sun, the opposite to static sun
-	 */
-	int dynamicSun;
-
-	/**
-	 * @brief the initial sun angle (around y axis)
-	 */
-	float initialSunAngle;
-
-	/**
-	 * @brief matrix that rotates the sun orbit
-	 */
-	CMatrix44f sunRotation;
-
-	/**
-	 * @brief the distance of sun orbit center from origin
-	 */
-	float sunOrbitHeight;
-
-	/**
-	 * @brief the radius of the sun orbit
-	 */
-	float sunOrbitRad;
-
-	/**
-	 * @brief the time in seconds for the sun to complete the orbit
-	 */
-	float sunOrbitTime;
-
-	/**
-	 * @brief the sun normally starts where its peak elevation occurs, unless this offset angle is set
-	 */
-	float sunStartAngle;
-
-	/**
-	 * @brief density factor to provide darker shadows at low sun altitude
-	 */
-	float shadowDensityFactor;
-
-	/**
-	 * @brief tells if globalrendering needs an Update()
-	 */
-	bool needsUpdate;
 };
 
 extern CGlobalRendering* globalRendering;

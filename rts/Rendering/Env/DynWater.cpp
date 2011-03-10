@@ -319,8 +319,9 @@ void CDynWater::Draw()
 	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, waterVP );
 	glEnable( GL_VERTEX_PROGRAM_ARB );
 
-	float dx=float(globalRendering->viewSizeX)/globalRendering->viewSizeY * camera->GetTanHalfFov();
-	float dy=float(globalRendering->viewSizeY)/globalRendering->viewSizeY * camera->GetTanHalfFov();
+	const float dx = float(globalRendering->viewSizeX) / globalRendering->viewSizeY * camera->GetTanHalfFov();
+	const float dy = float(globalRendering->viewSizeY) / globalRendering->viewSizeY * camera->GetTanHalfFov();
+	const float3& L = sky->GetLight()->GetLightDir();
 
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 1.0f/(W_SIZE*256),1.0f/(W_SIZE*256), 0, 0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -camPosX/256.0f+0.5f,-camPosZ/256.0f+0.5f, 0, 0);
@@ -336,7 +337,7 @@ void CDynWater::Draw()
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,6, 0.05f, 1-0.05f, 0, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,7, 0.2f, 0, 0, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,8, 0.5f, 0.6f, 0.8f, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,9, globalRendering->sunDir.x, globalRendering->sunDir.y, globalRendering->sunDir.z, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,9, L.x, L.y, L.z, 0.0f);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,10, mapInfo->light.groundSunColor.x, mapInfo->light.groundSunColor.y, mapInfo->light.groundSunColor.z, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,11, mapInfo->light.groundAmbientColor.x, mapInfo->light.groundAmbientColor.y, mapInfo->light.groundAmbientColor.z, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,12, refractRight.x,refractRight.y,refractRight.z,0);

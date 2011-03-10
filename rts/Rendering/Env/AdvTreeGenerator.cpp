@@ -13,6 +13,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/Env/BaseSky.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/Shader.hpp"
@@ -154,7 +155,7 @@ void CAdvTreeGenerator::Draw() const
 
 void CAdvTreeGenerator::DrawTrunk(const float3& start, const float3& end, const float3& orto1, const float3& orto2, float size)
 {
-	float3 flatSun = globalRendering->sunDir;
+	float3 flatSun = sky->GetLight()->GetLightDir();
 	flatSun.y = 0.0f;
 
 	int numIter=(int)max(3.0f,size*10);
@@ -238,8 +239,8 @@ void CAdvTreeGenerator::CreateLeaves(const float3& start, const float3& dir, flo
 	const float baseRot = fRand(2 * PI);
 	const int numLeaves = (int) length * 10 / MAX_TREE_HEIGHT;
 
-	float3 flatSun = globalRendering->sunDir;
-	flatSun.y = 0;
+	float3 flatSun = sky->GetLight()->GetLightDir();
+	flatSun.y = 0.0f;
 
 	for (int a = 0; a < numLeaves + 1; a++) {
 		const float angle = baseRot + a * 0.618f * 2 * PI;
@@ -562,8 +563,9 @@ void CAdvTreeGenerator::DrawPineTrunk(const float3 &start, const float3 &end, fl
 {
 	float3 orto1(1,0,0);
 	float3 orto2(0,0,1);
-	float3 flatSun=globalRendering->sunDir;
-	flatSun.y=0;
+
+	float3 flatSun = sky->GetLight()->GetLightDir();
+	flatSun.y = 0.0f;
 
 	int numIter=8;
 	for(int a=0;a<numIter;a++){
@@ -584,8 +586,8 @@ void CAdvTreeGenerator::DrawPineTrunk(const float3 &start, const float3 &end, fl
 
 void CAdvTreeGenerator::DrawPineBranch(const float3 &start, const float3 &dir, float size)
 {
-	float3 flatSun = globalRendering->sunDir;
-	flatSun.y = 0;
+	float3 flatSun = sky->GetLight()->GetLightDir();
+	flatSun.y = 0.0f;
 
 	float3 orto1 = dir.cross(UpVector);
 	orto1.ANormalize();

@@ -5,6 +5,7 @@
 #include <set>
 #include <list>
 #include <cctype>
+#include <cfloat>
 
 #include <fstream>
 
@@ -15,9 +16,7 @@
 #include "mmgr.h"
 
 #include "LuaUnsyncedCtrl.h"
-
 #include "LuaInclude.h"
-
 #include "LuaHandle.h"
 #include "LuaHashString.h"
 #include "LuaUtils.h"
@@ -41,6 +40,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
+#include "Rendering/Env/BaseSky.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/InMapDraw.h"
@@ -57,17 +57,16 @@
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
-#include "LogOutput.h"
-#include "Util.h"
-#include "NetProtocol.h"
-#include "Sound/ISound.h"
-#include "Sound/SoundChannels.h"
+#include "System/ConfigHandler.h"
+#include "System/LogOutput.h"
+#include "System/Util.h"
+#include "System/NetProtocol.h"
+#include "System/Sound/ISound.h"
+#include "System/Sound/SoundChannels.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystemHandler.h"
+#include "System/FileSystem/FileSystem.h"
 #include "System/Platform/Watchdog.h"
-
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/FileSystemHandler.h"
-#include "FileSystem/FileSystem.h"
-#include "ConfigHandler.h"
 
 #include <boost/cstdint.hpp>
 #include <Platform/Misc.h>
@@ -2709,26 +2708,35 @@ int LuaUnsyncedCtrl::SetBuildFacing(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+
+
 int LuaUnsyncedCtrl::SetSunParameters(lua_State* L)
 {
-	if(!globalRendering->dynamicSun)
+	DynamicSkyLight* dynSkyLight = dynamic_cast<DynamicSkyLight*>(sky->GetLight());
+
+	if (dynSkyLight == NULL)
 		return 0;
 
 	const int args = lua_gettop(L); // number of arguments
-	if (args != 6 || !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || 
-			!lua_isnumber(L, 4) || !lua_isnumber(L, 5) || !lua_isnumber(L, 6)) {
-		luaL_error(L, "Incorrect arguments to SetSunParameters(float,float,float,float,float,float)");
+	if (args != 6 ||
+		!lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || 
+		!lua_isnumber(L, 4) || !lua_isnumber(L, 5) || !lua_isnumber(L, 6)) {
+		luaL_error(L, "Incorrect arguments to SetSunParameters(float, float, float, float, float, float)");
 	}
 
-	float4 sunDir(lua_tofloat(L, 1), lua_tofloat(L, 2), lua_tofloat(L, 3), lua_tofloat(L, 4));
-	globalRendering->UpdateSunParams(sunDir, lua_tofloat(L, 5), lua_tofloat(L, 6), false);
+	const float4 sunDir(lua_tofloat(L, 1), lua_tofloat(L, 2), lua_tofloat(L, 3), lua_tofloat(L, 4));
+	const float startAngle = lua_tofloat(L, 5);
+	const float orbitTime = lua_tofloat(L, 6);
 
+	dynSkyLight->SetLightParams(sunDir, startAngle, orbitTime);
 	return 0;
 }
 
 int LuaUnsyncedCtrl::SetSunManualControl(lua_State* L)
 {
-	if(!globalRendering->dynamicSun)
+	DynamicSkyLight* dynSkyLight = dynamic_cast<DynamicSkyLight*>(sky->GetLight());
+
+	if (dynSkyLight == NULL)
 		return 0;
 
 	const int args = lua_gettop(L); // number of arguments
@@ -2736,25 +2744,29 @@ int LuaUnsyncedCtrl::SetSunManualControl(lua_State* L)
 		luaL_error(L, "Incorrect arguments to SetSunManualControl(bool)");
 	}
 
-	globalRendering->dynamicSun = lua_toboolean(L, 1) ? 2 : 1;
-
+	dynSkyLight->SetLuaControl(lua_toboolean(L, 1));
 	return 0;
 }
 
 int LuaUnsyncedCtrl::SetSunDirection(lua_State* L)
 {
-	if(globalRendering->dynamicSun != 2)
+	DynamicSkyLight* dynSkyLight = dynamic_cast<DynamicSkyLight*>(sky->GetLight());
+
+	if (dynSkyLight == NULL)
+		return 0;
+	if (!dynSkyLight->GetLuaControl())
 		return 0;
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args != 3 || !lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
-		luaL_error(L, "Incorrect arguments to SetSunDirection(float,float,float)");
+		luaL_error(L, "Incorrect arguments to SetSunDirection(float, float, float)");
 	}
 
-	globalRendering->UpdateSunDir(float3(lua_tofloat(L, 1), lua_tofloat(L, 2), lua_tofloat(L, 3)));
-
+	dynSkyLight->SetLightDir(float3(lua_tofloat(L, 1), lua_tofloat(L, 2), lua_tofloat(L, 3)));
 	return 0;
 }
+
+
 
 /******************************************************************************/
 /******************************************************************************/

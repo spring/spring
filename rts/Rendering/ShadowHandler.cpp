@@ -13,6 +13,8 @@
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/UnitDrawer.h"
+#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -23,7 +25,6 @@
 #include "System/GlobalUnsynced.h"
 #include "System/Matrix44f.h"
 #include "System/LogOutput.h"
-#include "Rendering/Env/BaseTreeDrawer.h"
 
 #define DEFAULT_SHADOWMAPSIZE 2048
 #define SHADOWMATRIX_NONLINEAR 0
@@ -320,8 +321,11 @@ void CShadowHandler::CreateShadows(void)
 	glLoadIdentity();
 
 
-	cross1 = (globalRendering->sunDir.cross(UpVector)).ANormalize();
-	cross2 = cross1.cross(globalRendering->sunDir);
+	const ISkyLight* L = sky->GetLight();
+	const float3& D = L->GetLightDir();
+
+	cross1 = (D.cross(UpVector)).ANormalize();
+	cross2 = cross1.cross(D);
 	centerPos = camera->pos;
 
 	//! derive the size of the shadow-map from the
@@ -351,10 +355,10 @@ void CShadowHandler::CreateShadows(void)
 	shadowMatrix[ 5] =   cross2.y / maxLengthY;
 	shadowMatrix[ 9] =   cross2.z / maxLengthY;
 	shadowMatrix[13] = -(cross2.dot(centerPos)) / maxLengthY;
-	shadowMatrix[ 2] = -globalRendering->sunDir.x / maxLength;
-	shadowMatrix[ 6] = -globalRendering->sunDir.y / maxLength;
-	shadowMatrix[10] = -globalRendering->sunDir.z / maxLength;
-	shadowMatrix[14] = ((centerPos.x * globalRendering->sunDir.x + centerPos.z * globalRendering->sunDir.z) / maxLength) + 0.5f;
+	shadowMatrix[ 2] = -D.x / maxLength;
+	shadowMatrix[ 6] = -D.y / maxLength;
+	shadowMatrix[10] = -D.z / maxLength;
+	shadowMatrix[14] = ((centerPos.x * D.x + centerPos.z * D.z) / maxLength) + 0.5f;
 
 	glLoadMatrixf(shadowMatrix.m);
 
@@ -374,18 +378,19 @@ void CShadowHandler::CreateShadows(void)
 		}
 	}
 
-	//! move view into sun-space
-	float3 oldup = camera->up;
-	camera->right = cross1;
-	camera->up = cross2;
-	camera->pos2 = camera->pos + globalRendering->sunDir * 8000;
+	if (L->GetLightIntensity() > 0.0f) {
+		//! move view into sun-space
+		const float3 oldup = camera->up;
 
+		camera->right = cross1;
+		camera->up = cross2;
+		camera->pos2 = camera->pos + D * 8000.0f;
 
-	if(globalRendering->sunIntensity > 0)
 		DrawShadowPasses();
 
-	camera->up = oldup;
-	camera->pos2 = camera->pos;
+		camera->up = oldup;
+		camera->pos2 = camera->pos;
+	}
 
 	shadowMatrix[14] -= 0.00001f;
 
