@@ -44,6 +44,7 @@ function adddata() {
 		echo Adding ${rootpath} to ${archive}
 		cd ${rootpath}
 		${SEVENZIP} ${archive} VERSION
+		cd data
 		${SEVENZIP} ${archive} .
 	fi
 	#restore cwd
