@@ -428,10 +428,10 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	vfsHandler->AddArchiveWithDeps(gameSetup->mapName, false);
 	archiveScanner->CheckArchive(gameSetup->mapName, gameData->GetMapChecksum());
 
-	LogObject() << "Using mod: " << gameSetup->modName << "\n";
+	LogObject() << "Using game: " << gameSetup->modName << "\n";
 	vfsHandler->AddArchiveWithDeps(gameSetup->modName, false);
 	modArchive = archiveScanner->ArchiveFromName(gameSetup->modName);
-	LogObject() << "Using mod archive: " << modArchive << "\n";
+	LogObject() << "Using game archive: " << modArchive << "\n";
 	archiveScanner->CheckArchive(modArchive, gameData->GetModChecksum());
 
 	if (net && net->GetDemoRecorder()) {
