@@ -4,11 +4,13 @@
 #include "AAirMoveType.h"
 #include "MoveMath/MoveMath.h"
 
+#include "Map/Ground.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Units/Scripts/UnitScript.h"
 
 CR_BIND_DERIVED_INTERFACE(AAirMoveType, AMoveType);
 
@@ -72,6 +74,7 @@ bool AAirMoveType::UseSmoothMesh() const {
 
 void AAirMoveType::ReservePad(CAirBaseHandler::LandingPad* lp) {
 	oldGoalPos = goalPos;
+
 	AMoveType::ReservePad(lp);
 	Takeoff();
 }
@@ -85,10 +88,21 @@ void AAirMoveType::DependentDied(CObject* o) {
 	}
 }
 
+bool AAirMoveType::Update() {
+	// NOTE: useHeading is never true by default for aircraft (AAirMoveType
+	// forces it to false, TransportUnit::{Attach,Detach}Unit manipulate it
+	// specifically for TAAirMoveType's)
+	if (useHeading) {
+		useHeading = false;
+		SetState(AIRCRAFT_TAKEOFF);
+	}
+}
+
 void AAirMoveType::UpdateFuel() {
 	if (owner->unitDef->maxFuel > 0.0f) {
 		if (aircraftState != AIRCRAFT_LANDED)
 			owner->currentFuel = std::max(0.0f, owner->currentFuel - ((float)(gs->frameNum - lastFuelUpdateFrame) / GAME_SPEED));
+
 		lastFuelUpdateFrame = gs->frameNum;
 	}
 }
@@ -158,4 +172,69 @@ void AAirMoveType::CheckForCollision()
 		lastColWarningType = 1;
 		AddDeathDependence(lastColWarning);
 	}
+}
+
+
+
+bool AAirMoveType::MoveToRepairPad() {
+	CUnit* airBase = reservedPad->GetUnit();
+
+	if (airBase->beingBuilt || airBase->stunned) {
+		// pad became inoperable after being reserved
+		DependentDied(airBase);
+		return false;
+	} else {
+		const float3& relPadPos = airBase->script->GetPiecePos(reservedPad->GetPiece());
+		const float3 absPadPos = airBase->pos +
+			(airBase->frontdir * relPadPos.z) +
+			(airBase->updir    * relPadPos.y) +
+			(airBase->rightdir * relPadPos.x);
+
+		if (padStatus == 0) {
+			// approaching pad
+			if (aircraftState != AIRCRAFT_FLYING && aircraftState != AIRCRAFT_TAKEOFF) {
+				SetState(AIRCRAFT_FLYING);
+			}
+
+			goalPos = absPadPos;
+
+			if (absPadPos.SqDistance2D(owner->pos) < (400.0f * 400.0f)) {
+				padStatus = 1;
+			}
+		} else if (padStatus == 1) {
+			// landing on pad
+			if (aircraftState != AIRCRAFT_FLYING) {
+				SetState(AIRCRAFT_FLYING);
+			}
+
+			goalPos = absPadPos;
+			reservedLandingPos = absPadPos;
+			wantedHeight = absPadPos.y - ground->GetHeightAboveWater(absPadPos.x, absPadPos.z);
+
+			if (owner->pos.SqDistance(absPadPos) < 9.0f || aircraftState == AIRCRAFT_LANDED) {
+				padStatus = 2;
+			}
+		} else {
+			// taking off from pad
+			if (aircraftState != AIRCRAFT_LANDED) {
+				SetState(AIRCRAFT_LANDED);
+			}
+
+			owner->pos = absPadPos;
+			owner->AddBuildPower(airBase->unitDef->buildSpeed / GAME_SPEED, airBase);
+			owner->currentFuel += (owner->unitDef->maxFuel / (GAME_SPEED * owner->unitDef->refuelTime));
+			owner->currentFuel = std::min(owner->unitDef->maxFuel, owner->currentFuel);
+
+			if (owner->health >= owner->maxHealth - 1.0f && owner->currentFuel >= owner->unitDef->maxFuel) {
+				// repaired and filled up, leave the pad
+				airBaseHandler->LeaveLandingPad(reservedPad);
+				reservedPad = NULL;
+				padStatus = 0;
+				goalPos = oldGoalPos;
+				SetState(AIRCRAFT_TAKEOFF);
+			}
+		}
+	}
+
+	return true;
 }

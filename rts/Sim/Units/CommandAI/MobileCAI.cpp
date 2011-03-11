@@ -285,80 +285,83 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 /// returns true if the unit has to land
 bool CMobileCAI::RefuelIfNeeded()
 {
-	if (!owner->moveType->reservedPad) {
-		// we don't have a pad yet
-		if (owner->currentFuel <= 0) {
-			// we're out of fuel
-			StopMove();
+	if (owner->moveType->reservedPad != NULL) {
+		// we already have a pad
+		return false;
+	}
 
+	if (owner->currentFuel <= 0.0f) {
+		// we're completely out of fuel
+		StopMove();
+
+		owner->userAttackGround = false;
+		owner->userTarget = 0;
+		inCommand = false;
+
+		CAirBaseHandler::LandingPad* lp =
+			airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
+
+		if (lp != NULL) {
+			// found a pad
+			owner->moveType->ReservePad(lp);
+		} else {
+			// no pads available, search for a landing
+			// spot near any that are currently occupied
+			const float3& landingPos = airBaseHandler->FindClosestAirBasePos(owner, owner->unitDef->minAirBasePower);
+
+			if (landingPos != ZeroVector) {
+				// NOTE: owner->userAttackGround is wrongly reset to
+				// true in CUnit::AttackGround() via ExecuteAttack()
+				// so don't call it
+				SetGoal(landingPos, owner->pos);
+			} else {
+				owner->moveType->StopMoving();
+			}
+		}
+		return true;
+	} else if (owner->moveType->WantsRefuel() && true
+		/* (commandQue.empty() || commandQue.front().id == CMD_PATROL || commandQue.front().id == CMD_FIGHT) */) {
+		// current fuel level is below our bingo threshold
+		// note: force the refuel attempt (irrespective of
+		// what our currently active command is)
+
+		CAirBaseHandler::LandingPad* lp =
+			airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
+
+		if (lp != NULL) {
+			StopMove();
 			owner->userAttackGround = false;
 			owner->userTarget = 0;
 			inCommand = false;
-
-			CAirBaseHandler::LandingPad* lp =
-				airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
-
-			if (lp) {
-				// found a pad
-				owner->moveType->ReservePad(lp);
-			} else {
-				// no pads available, search for a landing
-				// spot near any that are currently occupied
-				float3 landingPos =
-					airBaseHandler->FindClosestAirBasePos(owner, owner->unitDef->minAirBasePower);
-
-				if (landingPos != ZeroVector) {
-					// NOTE: owner->userAttackGround is wrongly reset to
-					// true in CUnit::AttackGround() via ExecuteAttack()
-					// so don't call it
-					SetGoal(landingPos, owner->pos);
-				} else {
-					owner->moveType->StopMoving();
-				}
-			}
+			owner->moveType->ReservePad(lp);
 			return true;
-		} else if (owner->currentFuel < (owner->moveType->repairBelowHealth * owner->unitDef->maxFuel) && true
-			/* (commandQue.empty() || commandQue.front().id == CMD_PATROL || commandQue.front().id == CMD_FIGHT) */) {
-			// current fuel level is below our bingo threshold
-			// note: force the refuel attempt (irrespective of
-			// what our currently active command is)
-
-			CAirBaseHandler::LandingPad* lp =
-				airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
-
-			if (lp) {
-				StopMove();
-				owner->userAttackGround = false;
-				owner->userTarget = 0;
-				inCommand = false;
-				owner->moveType->ReservePad(lp);
-				return true;
-			}
 		}
 	}
+
 	return false;
 }
 
 /// returns true if the unit has to land
 bool CMobileCAI::LandRepairIfNeeded()
 {
-	if (!owner->moveType->reservedPad
-		&& owner->health < owner->maxHealth * owner->moveType->repairBelowHealth) {
+	if (owner->moveType->reservedPad == NULL && owner->moveType->WantsRepair()) {
 		// we're damaged, just seek a pad for repairs
 		CAirBaseHandler::LandingPad* lp =
 			airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
 
-		if (lp) {
+		if (lp != NULL) {
 			owner->moveType->ReservePad(lp);
 			return true;
 		}
 
-		float3 newGoal = airBaseHandler->FindClosestAirBasePos(owner, owner->unitDef->minAirBasePower);
+		const float3& newGoal = airBaseHandler->FindClosestAirBasePos(owner, owner->unitDef->minAirBasePower);
+
 		if (newGoal != ZeroVector) {
 			SetGoal(newGoal, owner->pos);
 			return true;
 		}
 	}
+
 	return false;
 }
 
