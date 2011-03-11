@@ -898,7 +898,7 @@ void CUnit::SlowUpdate()
 		return;
 	}
 
-	repairAmount=0.0f;
+	repairAmount = 0.0f;
 
 	if (paralyzeDamage > 0) {
 		paralyzeDamage -= maxHealth * 0.5f * CUnit::empDecline;
@@ -989,7 +989,7 @@ void CUnit::SlowUpdate()
 	}
 	AddEnergy(energyTickMake * 0.5f);
 
-	if (health<maxHealth) {
+	if (health < maxHealth) {
 		health += unitDef->autoHeal;
 
 		if (restTime > unitDef->idleTime) {
@@ -1034,9 +1034,14 @@ void CUnit::SlowUpdate()
 		}
 	}
 
+	// aircraft and ScriptMoveType do not want this
+	if (moveType->useHeading) {
+		SetDirectionFromHeading();
+	}
+
 	SlowUpdateWeapons();
 
-	if (moveType->progressState == AMoveType::Active ) {
+	if (moveType->progressState == AMoveType::Active) {
 		if (seismicSignature && !GetTransporter()) {
 			DoSeismicPing((int)seismicSignature);
 		}
@@ -1053,11 +1058,6 @@ void CUnit::SlowUpdateWeapons() {
 
 	haveTarget = false;
 	haveUserTarget = false;
-
-	// aircraft and ScriptMoveType do not want this
-	if (moveType->useHeading) {
-		SetDirectionFromHeading();
-	}
 
 	if (!dontFire) {
 		for (vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
