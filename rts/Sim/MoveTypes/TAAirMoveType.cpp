@@ -7,7 +7,6 @@
 
 #include "Game/Player.h"
 #include "Map/Ground.h"
-#include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
@@ -761,11 +760,7 @@ bool CTAAirMoveType::Update()
 	float3& pos = owner->pos;
 	float3& speed = owner->speed;
 
-	// This is only set to false after the plane has finished constructing
-	if (useHeading) {
-		useHeading = false;
-		SetState(AIRCRAFT_TAKEOFF);
-	}
+	AAirMoveType::Update();
 
 	if (owner->stunned || owner->beingBuilt) {
 		wantedSpeed = ZeroVector;
@@ -809,53 +804,11 @@ bool CTAAirMoveType::Update()
 		UpdateAirPhysics();
 		wantedHeading = GetHeadingFromVector(flatForward.x, flatForward.z);
 	} else {
+		if (reservedPad != NULL) {
+			MoveToRepairPad();
 
-		if (reservedPad) {
-			CUnit* unit = reservedPad->GetUnit();
-			const float3 relPos = unit->script->GetPiecePos(reservedPad->GetPiece());
-			const float3 pos = unit->pos + unit->frontdir * relPos.z
-					+ unit->updir * relPos.y + unit->rightdir * relPos.x;
-
-			if (padStatus == 0) {
-				if (aircraftState != AIRCRAFT_FLYING && aircraftState != AIRCRAFT_TAKEOFF)
-					SetState(AIRCRAFT_FLYING);
-
-				goalPos = pos;
-
-				if (pos.SqDistance2D(owner->pos) < 400*400) {
-					padStatus = 1;
-				}
-			} else if (padStatus == 1) {
-				if (aircraftState != AIRCRAFT_FLYING) {
-					SetState(AIRCRAFT_FLYING);
-				}
+			if (padStatus >= 1) {
 				flyState = FLY_LANDING;
-
-				goalPos = pos;
-				reservedLandingPos = pos;
-				wantedHeight = pos.y - ground->GetHeightAboveWater(pos.x, pos.z);
-
-				if (owner->pos.SqDistance(pos) < 9 || aircraftState == AIRCRAFT_LANDED) {
-					padStatus = 2;
-				}
-			} else {
-				if (aircraftState != AIRCRAFT_LANDED)
-					SetState(AIRCRAFT_LANDED);
-
-				owner->pos = pos;
-				owner->AddBuildPower(unit->unitDef->buildSpeed / 30, unit);
-				owner->currentFuel = std::min(owner->unitDef->maxFuel,
-						owner->currentFuel + (owner->unitDef->maxFuel
-								/ (GAME_SPEED * owner->unitDef->refuelTime)));
-
-				if (owner->health >= owner->maxHealth - 1
-						&& owner->currentFuel >= owner->unitDef->maxFuel) {
-					airBaseHandler->LeaveLandingPad(reservedPad);
-					reservedPad = NULL;
-					padStatus = 0;
-					goalPos = oldGoalPos;
-					SetState(AIRCRAFT_TAKEOFF);
-				}
 			}
 		}
 
@@ -898,13 +851,15 @@ void CTAAirMoveType::SlowUpdate()
 {
 	UpdateFuel();
 
-	if (!reservedPad && aircraftState == AIRCRAFT_FLYING && owner->health < owner->maxHealth * repairBelowHealth) {
+	// TAAirMoveType aircraft are controlled by AirCAI's,
+	// but only MobileCAI's reserve pads so we need to do
+	// this for ourselves
+	if (reservedPad == NULL && aircraftState == AIRCRAFT_FLYING && WantsRepair()) {
 		CAirBaseHandler::LandingPad* lp = airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
 
-		if (lp) {
-			AddDeathDependence(lp);
-			reservedPad = lp;
-			padStatus = 0;
+		if (lp != NULL) {
+			AMoveType::ReservePad(lp);
+
 			oldGoalPos = goalPos;
 		}
 	}

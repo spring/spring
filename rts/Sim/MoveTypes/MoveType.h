@@ -4,9 +4,9 @@
 #define MOVETYPE_H
 
 #include "creg/creg_cond.h"
-#include "Object.h"
 #include "Sim/Misc/AirBaseHandler.h"
-#include "float3.h"
+#include "System/Object.h"
+#include "System/float3.h"
 
 class CUnit;
 
@@ -23,7 +23,7 @@ public:
 	virtual void KeepPointingTo(float3 pos, float distance, bool aggressive) = 0;
 	virtual void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
 	virtual void StopMoving() = 0;
-	virtual void ImpulseAdded(void);
+	virtual void ImpulseAdded(void) {}
 	virtual void ReservePad(CAirBaseHandler::LandingPad* lp);
 
 	virtual void SetGoal(const float3& pos);
@@ -33,6 +33,9 @@ public:
 
 	virtual bool Update() = 0;
 	virtual void SlowUpdate();
+
+	bool WantsRepair() const;
+	bool WantsRefuel() const;
 
 	CUnit* owner;
 
