@@ -29,7 +29,7 @@
 #define DEFAULT_SHADOWMAPSIZE 2048
 #define SHADOWMATRIX_NONLINEAR 0
 
-CShadowHandler* shadowHandler = 0;
+CShadowHandler* shadowHandler = NULL;
 
 bool CShadowHandler::shadowsSupported = false;
 bool CShadowHandler::firstInstance = true;
@@ -45,14 +45,6 @@ CShadowHandler::CShadowHandler(void)
 	shadowTexture = 0;
 	dummyColorTexture = 0;
 	drawTerrainShadow = true;
-	p17 = 0.0f;
-	p18 = 0.0f;
-	xmid = 0;
-	ymid = 0;
-	x1 = 0.0f;
-	y1 = 0.0f;
-	x2 = 0.0f;
-	y2 = 0.0f;
 
 	if (!tmpFirstInstance && !shadowsSupported) {
 		return;
@@ -280,15 +272,15 @@ void CShadowHandler::SetShadowMapSizeFactors()
 {
 	#if (SHADOWMATRIX_NONLINEAR == 1)
 	if (shadowMapSize >= 2048) {
-		p17 =  0.01f;
-		p18 = -0.1f;
+		shadowProjCenter.z =  0.01f;
+		shadowProjCenter.w = -0.1f;
 	} else {
-		p17 =  0.0025f;
-		p18 = -0.05f;
+		shadowProjCenter.z =  0.0025f;
+		shadowProjCenter.w = -0.05f;
 	}
 	#else
-	p17 =  FLT_MAX;
-	p18 =  1.0f;
+	shadowProjCenter.z = FLT_MAX;
+	shadowProjCenter.w = 1.0f;
 	#endif
 }
 
@@ -336,15 +328,20 @@ void CShadowHandler::CreateShadows(void)
 
 	// it should be possible to tweak a bit more shadow map resolution from this
 	const float maxLength = 12000.0f;
-	const float maxLengthX = (x2 - x1) * 1.5f;
-	const float maxLengthY = (y2 - y1) * 1.5f;
+	const float maxLengthX = (shadowProjMinMax.y - shadowProjMinMax.x) * 1.5f;
+	const float maxLengthY = (shadowProjMinMax.w - shadowProjMinMax.z) * 1.5f;
 
 	#if (SHADOWMATRIX_NONLINEAR == 1)
-	xmid = 1.0f - (sqrt(fabs(x2)) / (sqrt(fabs(x2)) + sqrt(fabs(x1))));
-	ymid = 1.0f - (sqrt(fabs(y2)) / (sqrt(fabs(y2)) + sqrt(fabs(y1))));
+	const float shadowMapX =              sqrt( fabs(shadowProjMinMax.y) ); // sqrt( |x2| )
+	const float shadowMapY =              sqrt( fabs(shadowProjMinMax.w) ); // sqrt( |y2| )
+	const float shadowMapW = shadowMapX + sqrt( fabs(shadowProjMinMax.x) ); // sqrt( |x2| ) + sqrt( |x1| )
+	const float shadowMapH = shadowMapY + sqrt( fabs(shadowProjMinMax.z) ); // sqrt( |y2| ) + sqrt( |y1| )
+
+	shadowProjCenter.x = 1.0f - (shadowMapX / shadowMapW);
+	shadowProjCenter.y = 1.0f - (shadowMapY / shadowMapH);
 	#else
-	xmid = 0.5f;
-	ymid = 0.5f;
+	shadowProjCenter.x = 0.5f;
+	shadowProjCenter.y = 0.5f;
 	#endif
 
 	shadowMatrix[ 0] =   cross1.x / maxLengthX;
@@ -366,14 +363,14 @@ void CShadowHandler::CreateShadows(void)
 	//! NOTE: so long as any part of Spring rendering still uses
 	//! ARB programs at run-time, these lines can not be removed
 	//! (all ARB programs share the same environment)
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 16, xmid, ymid, 0.0f, 0.0f);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 17,  p17,  p17, 0.0f, 0.0f);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 18,  p18,  p18, 0.0f, 0.0f);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 16, shadowProjCenter.x, shadowProjCenter.y, 0.0f, 0.0f);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 17, shadowProjCenter.z, shadowProjCenter.z, 0.0f, 0.0f);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 18, shadowProjCenter.w, shadowProjCenter.w, 0.0f, 0.0f);
 
 	if (globalRendering->haveGLSL) {
 		for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
 			shadowGenProgs[i]->Enable();
-			shadowGenProgs[i]->SetUniform4f(0, xmid, ymid, p17, p18);
+			shadowGenProgs[i]->SetUniform4fv(0, &shadowProjCenter.x);
 			shadowGenProgs[i]->Disable();
 		}
 	}
@@ -434,14 +431,14 @@ void CShadowHandler::CalcMinMaxView(void)
 		}
 	}
 
-	x1 = -100;
-	x2 =  100;
-	y1 = -100;
-	y2 =  100;
+	shadowProjMinMax.x = -100.0f;
+	shadowProjMinMax.y =  100.0f;
+	shadowProjMinMax.z = -100.0f;
+	shadowProjMinMax.w =  100.0f;
 
 	//if someone could figure out how the frustum and nonlinear shadow transform really works (and not use the SJan trial and error method)
 	//so that we can skip this sort of fudge factors it would be good
-	float borderSize = 270;
+	float borderSize = 270.0f;
 	float maxSize = globalRendering->viewRange * 0.75f;
 
 	if (shadowMapSize == 1024) {
@@ -461,25 +458,26 @@ void CShadowHandler::CalcMinMaxView(void)
 				p[4] = float3(camera->pos.x, 0.0f, camera->pos.z);
 
 				for (int a = 0; a < 5; ++a) {
-					float xd = (p[a] - centerPos).dot(cross1);
-					float yd = (p[a] - centerPos).dot(cross2);
-					if (xd + borderSize > x2) { x2 = xd + borderSize; }
-					if (xd - borderSize < x1) { x1 = xd - borderSize; }
-					if (yd + borderSize > y2) { y2 = yd + borderSize; }
-					if (yd - borderSize < y1) { y1 = yd - borderSize; }
+					const float xd = (p[a] - centerPos).dot(cross1);
+					const float yd = (p[a] - centerPos).dot(cross2);
+
+					if (xd + borderSize > shadowProjMinMax.y) { shadowProjMinMax.y = xd + borderSize; }
+					if (xd - borderSize < shadowProjMinMax.x) { shadowProjMinMax.x = xd - borderSize; }
+					if (yd + borderSize > shadowProjMinMax.w) { shadowProjMinMax.w = yd + borderSize; }
+					if (yd - borderSize < shadowProjMinMax.z) { shadowProjMinMax.z = yd - borderSize; }
 				}
 			}
 		}
 
-		if (x1 < -maxSize) { x1 = -maxSize; }
-		if (x2 >  maxSize) { x2 =  maxSize; }
-		if (y1 < -maxSize) { y1 = -maxSize; }
-		if (y2 >  maxSize) { y2 =  maxSize; }
+		if (shadowProjMinMax.x < -maxSize) { shadowProjMinMax.x = -maxSize; }
+		if (shadowProjMinMax.y >  maxSize) { shadowProjMinMax.y =  maxSize; }
+		if (shadowProjMinMax.z < -maxSize) { shadowProjMinMax.z = -maxSize; }
+		if (shadowProjMinMax.w >  maxSize) { shadowProjMinMax.w =  maxSize; }
 	} else {
-		x1 = -maxSize;
-		x2 =  maxSize;
-		y1 = -maxSize;
-		y2 =  maxSize;
+		shadowProjMinMax.x = -maxSize;
+		shadowProjMinMax.y =  maxSize;
+		shadowProjMinMax.z = -maxSize;
+		shadowProjMinMax.w =  maxSize;
 	}
 }
 
