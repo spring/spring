@@ -57,37 +57,37 @@ CAirBaseHandler::~CAirBaseHandler()
 	}
 }
 
-void CAirBaseHandler::RegisterAirBase(CUnit* base)
+void CAirBaseHandler::RegisterAirBase(CUnit* owner)
 {
 	// prevent a unit from being registered as a base more than
 	// once (this can happen eg. when an airbase unit is damaged
 	// and then repaired back to full health, which causes it to
 	// re-register itself via FinishedBuilding())
-	if (airBaseIDs.find(base->id) != airBaseIDs.end()) {
+	if (airBaseIDs.find(owner->id) != airBaseIDs.end()) {
 		return;
 	}
 
-	AirBase* ab = new AirBase(base);
+	AirBase* ab = new AirBase(owner);
 	std::vector<int> args;
 
-	base->script->QueryLandingPads(/*out*/ args);
+	owner->script->QueryLandingPads(/*out*/ args);
 
 	// FIXME: use a set to avoid multiple bases per piece?
-	for (int p = 0; p < (int)args.size(); p++) {
+	for (unsigned int p = 0; p < args.size(); p++) {
 		const int piece = args[p];
-		if (!base->script->PieceExists(piece)) {
+		if (!owner->script->PieceExists(piece)) {
 			continue;
 		}
-		LandingPad* pad = new LandingPad(base, piece, ab);
+		LandingPad* pad = new LandingPad(piece, owner, ab);
 
 		ab->pads.push_back(pad);
 		ab->freePads.push_back(pad);
 	}
 
-	freeBases[base->allyteam].push_back(ab);
-	bases[base->allyteam].push_back(ab);
+	freeBases[owner->allyteam].push_back(ab);
+	bases[owner->allyteam].push_back(ab);
 
-	airBaseIDs.insert(base->id);
+	airBaseIDs.insert(owner->id);
 }
 
 
@@ -121,9 +121,10 @@ void CAirBaseHandler::DeregisterAirBase(CUnit* base)
 
 CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float minPower)
 {
-	float closest = 1e30f;
-	PadLstIt foundPad;
-	AirBaseLstIt foundBase = freeBases[unit->allyteam].end();
+	float minDist = 1e30f;
+
+	PadLstIt foundPadIt;
+	AirBaseLstIt foundBaseIt = freeBases[unit->allyteam].end();
 
 	for (AirBaseLstIt bi = freeBases[unit->allyteam].begin(); bi != freeBases[unit->allyteam].end(); ++bi) {
 		CUnit* baseUnit = (*bi)->unit;
@@ -132,23 +133,30 @@ CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float min
 			// do not pick ourselves as a landing pad
 			continue;
 		}
-
-		if (baseUnit->pos.SqDistance(unit->pos) >= closest || baseUnit->unitDef->buildSpeed < minPower) {
+		if (baseUnit->beingBuilt || baseUnit->stunned) {
 			continue;
 		}
 
-		closest = baseUnit->pos.SqDistance(unit->pos);
-		for (PadLstIt pi = (*bi)->freePads.begin(); pi != (*bi)->freePads.end(); ++pi) {
-			foundPad = pi;
-			foundBase = bi;
+		if (baseUnit->pos.SqDistance(unit->pos) >= minDist || baseUnit->unitDef->buildSpeed < minPower) {
+			continue;
 		}
+
+		minDist = baseUnit->pos.SqDistance(unit->pos);
+
+		if ((*bi)->freePads.empty()) {
+			continue;
+		}
+
+		foundPadIt = (*bi)->freePads.begin();
+		foundBaseIt = bi;
 	}
 
+	if (foundBaseIt != freeBases[unit->allyteam].end()) {
+		AirBase* foundBase = *foundBaseIt;
+		LandingPad* foundPad = *foundPadIt;
 
-	if (foundBase != freeBases[unit->allyteam].end()) {
-		LandingPad* found = *foundPad;
-		(*foundBase)->freePads.erase(foundPad);
-		return found;
+		foundBase->freePads.erase(foundPadIt);
+		return foundPad;
 	}
 
 	return NULL;
@@ -163,8 +171,8 @@ void CAirBaseHandler::LeaveLandingPad(LandingPad* pad)
 
 float3 CAirBaseHandler::FindClosestAirBasePos(CUnit* unit, float minPower)
 {
-	float closest = 1e30f;
-	AirBaseLstIt foundBase = freeBases[unit->allyteam].end();
+	float minDist = 1e30f;
+	AirBaseLstIt foundBaseIt = freeBases[unit->allyteam].end();
 
 	for (AirBaseLstIt bi = freeBases[unit->allyteam].begin(); bi != freeBases[unit->allyteam].end(); ++bi) {
 		CUnit* baseUnit = (*bi)->unit;
@@ -173,17 +181,20 @@ float3 CAirBaseHandler::FindClosestAirBasePos(CUnit* unit, float minPower)
 			// do not pick ourselves as a landing pad
 			continue;
 		}
-
-		if (baseUnit->pos.SqDistance(unit->pos) >= closest || baseUnit->unitDef->buildSpeed < minPower) {
+		if (baseUnit->beingBuilt || baseUnit->stunned) {
 			continue;
 		}
 
-		closest = baseUnit->pos.SqDistance(unit->pos);
-		foundBase = bi;
+		if (baseUnit->pos.SqDistance(unit->pos) >= minDist || baseUnit->unitDef->buildSpeed < minPower) {
+			continue;
+		}
+
+		minDist = baseUnit->pos.SqDistance(unit->pos);
+		foundBaseIt = bi;
 	}
 
-	if (foundBase != freeBases[unit->allyteam].end()) {
-		return (*foundBase)->unit->pos;
+	if (foundBaseIt != freeBases[unit->allyteam].end()) {
+		return (*foundBaseIt)->unit->pos;
 	}
 
 	return ZeroVector;

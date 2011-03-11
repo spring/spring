@@ -27,16 +27,16 @@ public:
 		CR_DECLARE(LandingPad);
 
 	public:
-		LandingPad(CUnit* u, int p, AirBase* b):
-			unit(u), piece(p), base(b) {}
+		LandingPad(int p, CUnit* u, AirBase* b):
+			piece(p), unit(u), base(b) {}
 
-		CUnit* GetUnit() const { return unit; }
 		int GetPiece() const { return piece; }
+		CUnit* GetUnit() const { return unit; }
 		AirBase* GetBase() const { return base; }
 
 	private:
-		CUnit* unit;
 		int piece;
+		CUnit* unit;
 		AirBase* base;
 	};
 

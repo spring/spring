@@ -16,7 +16,7 @@ class AAirMoveType : public AMoveType
 	CR_DECLARE(AAirMoveType);
 public:
 
-	enum AircraftState{
+	enum AircraftState {
 		AIRCRAFT_LANDED,
 		AIRCRAFT_FLYING,
 		AIRCRAFT_LANDING,
@@ -29,6 +29,7 @@ public:
 	AAirMoveType(CUnit* unit);
 	~AAirMoveType();
 
+	virtual bool Update();
 	virtual bool IsFighter() const = 0;
 	virtual void Takeoff() = 0;
 
@@ -52,7 +53,9 @@ public:
 
 protected:
 	virtual void SetState(AircraftState state) = 0;
-	virtual void CheckForCollision();
+
+	void CheckForCollision();
+	bool MoveToRepairPad();
 	void UpdateFuel();
 
 	/// unit found to be dangerously close to our path

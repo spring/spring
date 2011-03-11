@@ -4,12 +4,9 @@
 #include "mmgr.h"
 
 #include "AirMoveType.h"
-#include "Game/GameHelper.h"
 #include "Game/Player.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
-#include "myMath.h"
-#include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
@@ -19,6 +16,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Weapons/Weapon.h"
+#include "System/myMath.h"
 
 CR_BIND_DERIVED(CAirMoveType, AAirMoveType, (NULL));
 CR_BIND(CAirMoveType::DrawLine, );
@@ -152,16 +150,11 @@ bool CAirMoveType::Update()
 {
 	float3& pos = owner->pos;
 
+	AAirMoveType::Update();
+
 	if (owner->stunned || owner->beingBuilt) {
 		UpdateAirPhysics(0, lastAileronPos, lastElevatorPos, 0, ZeroVector);
 		return (HandleCollisions());
-	}
-
-	// note: this is only set to false after
-	// the plane has finished constructing
-	if (useHeading) {
-		useHeading = false;
-		SetState(AIRCRAFT_TAKEOFF);
 	}
 
 	if (owner->fpsControlPlayer != NULL && !(aircraftState == AIRCRAFT_CRASHING)) {
@@ -186,56 +179,15 @@ bool CAirMoveType::Update()
 		}
 	}
 
-
-	if (reservedPad) {
-		CUnit* unit = reservedPad->GetUnit();
-		const float3 relPos = unit->script->GetPiecePos(reservedPad->GetPiece());
-		const float3 posToBe = unit->pos + (unit->frontdir * relPos.z) + (unit->updir * relPos.y) + (unit->rightdir * relPos.x);
-
-		if (padStatus == 0) {
-			if (aircraftState != AIRCRAFT_FLYING && aircraftState != AIRCRAFT_TAKEOFF) {
-				SetState(AIRCRAFT_FLYING);
-			}
-
-			goalPos = posToBe;
-
-			if (posToBe.SqDistance2D(pos) < (400*400)) {
-				padStatus = 1;
-			}
-		} else if (padStatus == 1) {
-			if (aircraftState != AIRCRAFT_LANDING) {
-				SetState(AIRCRAFT_LANDING);
-			}
-
-			goalPos = posToBe;
-			reservedLandingPos = posToBe;
-
-			if (pos.SqDistance(posToBe) < 9 || aircraftState == AIRCRAFT_LANDED) {
-				padStatus = 2;
-			}
-		} else {
-			if (aircraftState != AIRCRAFT_LANDED) {
-				SetState(AIRCRAFT_LANDED);
-			}
-
-			pos = posToBe;
-			owner->AddBuildPower(unit->unitDef->buildSpeed / GAME_SPEED, unit);
-			owner->currentFuel = std::min(owner->unitDef->maxFuel, owner->currentFuel + (owner->unitDef->maxFuel / (GAME_SPEED * owner->unitDef->refuelTime)));
-
-			if (owner->health >= owner->maxHealth - 1 && owner->currentFuel >= owner->unitDef->maxFuel) {
-				// repaired and filled up, leave the pad
-				airBaseHandler->LeaveLandingPad(reservedPad);
-				reservedPad = 0;
-				padStatus = 0;
-				goalPos = oldGoalPos;
-				SetState(AIRCRAFT_TAKEOFF);
-			}
-		}
-	} else if ((owner->unitDef->maxFuel > 0.0f && owner->currentFuel <= 0.0f) &&
+	if (reservedPad != NULL) {
+		MoveToRepairPad();
+	} else {
+		if ((owner->unitDef->maxFuel > 0.0f && owner->currentFuel <= 0.0f) &&
 				padStatus == 0 && maxWantedSpeed > 0.0f) {
-		// keep us in the air to reach our landing goalPos
-		// (which is hopefully in the vicinity of a pad)
-		SetState(AIRCRAFT_FLYING);
+			// out of fuel, keep us in the air to reach our landing
+			// goalPos (which is hopefully in the vicinity of a pad)
+			SetState(AIRCRAFT_FLYING);
+		}
 	}
 
 
@@ -248,7 +200,7 @@ bool CAirMoveType::Update()
 			// while no pad is available would otherwise continue
 			// attacking even if out of fuel
 			const bool continueAttack =
-				(!reservedPad && ((owner->currentFuel > 0.0f) || owner->unitDef->maxFuel <= 0.0f));
+				(reservedPad == NULL && ((owner->currentFuel > 0.0f) || owner->unitDef->maxFuel <= 0.0f));
 
 			if (continueAttack && ((owner->userTarget && !owner->userTarget->isDead) || owner->userAttackGround)) {
 				inefficientAttackTime = std::min(inefficientAttackTime, float(gs->frameNum) - owner->lastFireWeapon);

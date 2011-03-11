@@ -10,7 +10,7 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include <assert.h>
+#include <cassert>
 
 CR_BIND_DERIVED_INTERFACE(AMoveType, CObject);
 CR_REG_METADATA(AMoveType, (
@@ -49,7 +49,7 @@ AMoveType::~AMoveType(void)
 
 void AMoveType::SetMaxSpeed(float speed)
 {
-	assert(speed > 0);
+	assert(speed > 0.0f);
 	maxSpeed = speed;
 }
 
@@ -62,10 +62,6 @@ void AMoveType::SetWantedMaxSpeed(float speed)
 	} else {
 		maxWantedSpeed = speed;
 	}
-}
-
-void AMoveType::ImpulseAdded(void)
-{
 }
 
 void AMoveType::SlowUpdate()
@@ -114,14 +110,18 @@ void AMoveType::SetGoal(const float3& pos)
 void AMoveType::DependentDied(CObject* o)
 {
 	if (o == reservedPad) {
-		reservedPad = 0;
+		reservedPad = NULL;
 	}
 }
 
 void AMoveType::ReservePad(CAirBaseHandler::LandingPad* lp)
 {
 	AddDeathDependence(lp);
+	SetGoal(lp->GetUnit()->pos);
+
 	reservedPad = lp;
 	padStatus = 0;
-	SetGoal(lp->GetUnit()->pos);
 }
+
+bool AMoveType::WantsRepair() const { return (owner->health      < (repairBelowHealth * owner->maxHealth)); }
+bool AMoveType::WantsRefuel() const { return (owner->currentFuel < (repairBelowHealth * owner->unitDef->maxFuel)); }
