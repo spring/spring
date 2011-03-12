@@ -125,7 +125,13 @@ local function SaveTable(t, file, indent)
     if (vtype == 'string') then
       file:write(encloseStr(v)..',\n')
     elseif (vtype == 'number') then
-      file:write(tostring(v)..',\n')
+      if (v == math.huge) then
+        file:write('math.huge,\n')
+      elseif (v == -math.huge) then
+        file:write('-math.huge,\n')
+      else
+        file:write(tostring(v)..',\n')
+      end
     elseif (vtype == 'boolean') then
       file:write(tostring(v)..',\n')
     elseif (vtype == 'table') then
