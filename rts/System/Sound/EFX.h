@@ -36,6 +36,8 @@ public:
 	ALuint sfxFilter;
 	ALfloat airAbsorptionFactor;
 
+	int updates;
+
 private:
 	//! reduce the rolloff when the camera is height above the ground (so we still hear something in tab mode or far zoom)
 	static float heightRolloffModifier;
@@ -48,6 +50,7 @@ private:
 	ALuint maxSlotsPerSource;
 };
 
+//! init in Sound.cpp
 extern CEFX* efx;
 
 #endif // _EFX_H_

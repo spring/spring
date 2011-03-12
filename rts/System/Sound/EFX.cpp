@@ -31,6 +31,7 @@ CEFX::CEFX(ALCdevice* device)
 	,sfxSlot(0)
 	,sfxReverb(0)
 	,sfxFilter(0)
+	,updates(0)
 	,maxSlots(0)
 	,maxSlotsPerSource(0)
 {
@@ -247,4 +248,6 @@ void CEFX::CommitEffects()
 
 	for (std::map<ALuint, ALfloat>::iterator it=sfxProperties->filter_properties_f.begin(); it != sfxProperties->filter_properties_f.end(); ++it)
 		alFilterf(sfxFilter, it->first, it->second);
+
+	updates++;
 }
