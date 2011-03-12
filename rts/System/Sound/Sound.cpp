@@ -510,26 +510,17 @@ size_t CSound::LoadSoundBuffer(const std::string& path, bool hardFail)
 {
 	const size_t id = SoundBuffer::GetId(path);
 	
-	if (id > 0)
-	{
+	if (id > 0) {
 		return id; // file is loaded already
-	}
-	else
-	{
+	} else {
 		CFileHandler file(path);
 
-		if (!file.FileExists())
-		{
-			if (hardFail) {
+		if (!file.FileExists()) {
+			if (hardFail)
 				handleerror(0, "Couldn't open audio file", path.c_str(),0);
-			}
 			else
 				LogObject(LOG_SOUND) << "Unable to open audio file: " << path;
 			return 0;
-		}
-		else
-		{
-			
 		}
 
 		std::vector<boost::uint8_t> buf(file.FileSize());
