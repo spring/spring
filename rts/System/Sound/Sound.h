@@ -89,9 +89,6 @@ private:
 	typedef boost::ptr_vector<CSoundSource> sourceVecT;
 	sourceVecT sources;
 
-	unsigned numEmptyPlayRequests;
-	unsigned numAbortedPlays;
-
 	soundItemDef defaultItem;
 	soundItemDefMap soundItemDefs;
 
