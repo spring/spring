@@ -18,6 +18,7 @@ class ISound {
 	static ISound* singleton;
 
 public:
+	ISound();
 	virtual ~ISound() {};
 
 	static void Initialize();
@@ -53,6 +54,10 @@ public:
 	virtual bool LoadSoundDefs(const std::string& fileName) = 0;
 	
 	virtual const float3& GetListenerPos() const = 0;
+
+public:
+	unsigned numEmptyPlayRequests;
+	unsigned numAbortedPlays;
 };
 
 #define sound ISound::GetInstance()
