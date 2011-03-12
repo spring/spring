@@ -236,7 +236,7 @@ function widgetHandler:LoadConfigData()
   if (chunk == nil) then
     return {}
   else
-    local tmp = {}
+    local tmp = {math = {huge = math.huge}}
     setfenv(chunk, tmp)
     self.orderList = chunk().order
     self.configData = chunk().data
