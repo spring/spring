@@ -80,7 +80,7 @@ struct LuaHashString {
 		}
 		inline void PushString(lua_State* L, const string& value) const {
 			Push(L);
-			lua_pushlstring(L, value.c_str(), value.size());
+			lua_pushsstring(L, value);
 			lua_rawset(L, -3);
 		}
 		inline void PushHashString(lua_State* L, const LuaHashString& hs) const {

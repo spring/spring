@@ -1133,7 +1133,7 @@ int LuaUnsyncedRead::GetCameraNames(lua_State* L)
 	lua_newtable(L);
 	const std::vector<CCameraController*>& cc = camHandler->GetAvailableControllers();
 	for (size_t i = 0; i < cc.size(); ++i) {
-		lua_pushstring(L, cc[i]->GetName().c_str());
+		lua_pushsstring(L, cc[i]->GetName());
 		lua_pushnumber(L, i);
 		lua_rawset(L, -3);
 	}
@@ -1148,15 +1148,15 @@ int LuaUnsyncedRead::GetCameraState(lua_State* L)
 
 	lua_newtable(L);
 
-	lua_pushstring(L, "name");
-	lua_pushstring(L, camHandler->GetCurrentControllerName().c_str());
+	lua_pushliteral(L, "name");
+	lua_pushsstring(L, camHandler->GetCurrentControllerName());
 	lua_rawset(L, -3);
 
 	CCameraController::StateMap camState;
 	CCameraController::StateMap::const_iterator it;
 	camHandler->GetState(camState);
 	for (it = camState.begin(); it != camState.end(); ++it) {
-		lua_pushstring(L, it->first.c_str());
+		lua_pushsstring(L, it->first);
 		lua_pushnumber(L, it->second);
 		lua_rawset(L, -3);
 	}
@@ -1256,17 +1256,17 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 			if (!onlyCoords) {
 				const CUnit* unit = minimap->GetSelectUnit(pos);
 				if (unit != NULL) {
-					lua_pushstring(L, "unit");
+					lua_pushliteral(L, "unit");
 					lua_pushnumber(L, unit->id);
 					return 2;
 				}
 			}
 			const float posY = ground->GetHeightReal(pos.x, pos.z);
-			lua_pushstring(L, "ground");
-			lua_newtable(L);
-			lua_pushnumber(L, 1); lua_pushnumber(L, pos.x); lua_rawset(L, -3);
-			lua_pushnumber(L, 2); lua_pushnumber(L, posY);  lua_rawset(L, -3);
-			lua_pushnumber(L, 3); lua_pushnumber(L, pos.z); lua_rawset(L, -3);
+			lua_pushliteral(L, "ground");
+			lua_createtable(L, 3, 0);
+			lua_pushnumber(L, pos.x); lua_rawseti(L, -2, 1);
+			lua_pushnumber(L, posY);  lua_rawseti(L, -2, 2);
+			lua_pushnumber(L, pos.z); lua_rawseti(L, -2, 3);
 			return 2;
 		}
 	}
@@ -1292,7 +1292,7 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 	const float badRange = (range - 300.0f);
 	if ((udist > badRange) && (fdist > badRange) && (unit == NULL)) {
 		if (includeSky) {
-			lua_pushstring(L, "sky");
+			lua_pushliteral(L, "sky");
 		} else {
 			return 0;
 		}
@@ -1304,20 +1304,20 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 				feature = NULL;
 			}
 	
-			if (unit != NULL) {
-				lua_pushstring(L, "unit");
+			if (unit) {
+				lua_pushliteral(L, "unit");
 				lua_pushnumber(L, unit->id);
 				return 2;
 			}
 	
-			if (feature != NULL) {
-				lua_pushstring(L, "feature");
+			if (feature) {
+				lua_pushliteral(L, "feature");
 				lua_pushnumber(L, feature->id);
 				return 2;
 			}
 		}
 
-		lua_pushstring(L, "ground");
+		lua_pushliteral(L, "ground");
 	}
 
 	const float3 groundPos = pos + (dir * udist);
@@ -1505,7 +1505,7 @@ int LuaUnsyncedRead::GetActiveCommand(lua_State* L)
 	}
 	lua_pushnumber(L, cmdDescs[inCommand].id);
 	lua_pushnumber(L, cmdDescs[inCommand].type);
-	lua_pushstring(L, cmdDescs[inCommand].name.c_str());
+	lua_pushsstring(L, cmdDescs[inCommand].name);
 	return 4;
 }
 
@@ -1529,7 +1529,7 @@ int LuaUnsyncedRead::GetDefaultCommand(lua_State* L)
 	}
 	lua_pushnumber(L, cmdDescs[defCmd].id);
 	lua_pushnumber(L, cmdDescs[defCmd].type);
-	lua_pushstring(L, cmdDescs[defCmd].name.c_str());
+	lua_pushsstring(L, cmdDescs[defCmd].name);
 	return 4;
 }
 
@@ -1555,12 +1555,9 @@ static void PushCommandDesc(lua_State* L, const CommandDescription& cd)
 	lua_newtable(L);
 	const int pCount = (int)cd.params.size();
 	for (int p = 0; p < pCount; p++) {
-		lua_pushnumber(L, p + 1);
-		lua_pushstring(L, cd.params[p].c_str());
-		lua_rawset(L, -3);
+		lua_pushsstring(L, cd.params[p]);
+		lua_rawseti(L, -2, p + 1);
 	}
-	HSTR_PUSH_NUMBER(L, "n", pCount);
-	lua_rawset(L, -3);
 }
 
 
@@ -1694,7 +1691,7 @@ int LuaUnsyncedRead::GetMouseState(lua_State* L)
 int LuaUnsyncedRead::GetMouseCursor(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushstring(L, mouse->cursorText.c_str());
+	lua_pushsstring(L, mouse->cursorText);
 	lua_pushnumber(L, mouse->cursorScale);
 	return 2;
 }
@@ -1845,11 +1842,11 @@ int LuaUnsyncedRead::GetConsoleBuffer(lua_State* L)
 		count++;
 		lua_pushnumber(L, count);
 		lua_newtable(L); {
-			lua_pushstring(L, "text");
-			lua_pushstring(L, lines[i].text.c_str());
+			lua_pushliteral(L, "text");
+			lua_pushsstring(L, lines[i].text);
 			lua_rawset(L, -3);
 			// FIXME: migrate priority to subsystem...
-			lua_pushstring(L, "priority");
+			lua_pushliteral(L, "priority");
 			lua_pushnumber(L, 0 /*priority*/ );
 			//lua_pushstring(L, lines[i].subsystem->name);
 			lua_rawset(L, -3);
@@ -1868,7 +1865,7 @@ int LuaUnsyncedRead::GetCurrentTooltip(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
 	const string tooltip = mouse->GetCurrentTooltip();
-	lua_pushstring(L, tooltip.c_str());
+	lua_pushsstring(L, tooltip);
 	return 1;
 }
 
@@ -1892,8 +1889,8 @@ int LuaUnsyncedRead::GetKeySymbol(lua_State* L)
 		luaL_error(L, "Incorrect arguments to GetKeySymbol(keycode)");
 	}
 	const int keycode = lua_toint(L, 1);
-	lua_pushstring(L, keyCodes->GetName(keycode).c_str());
-	lua_pushstring(L, keyCodes->GetDefaultName(keycode).c_str());
+	lua_pushsstring(L, keyCodes->GetName(keycode));
+	lua_pushsstring(L, keyCodes->GetDefaultName(keycode));
 	return 2;
 }
 
@@ -1915,8 +1912,8 @@ int LuaUnsyncedRead::GetKeyBindings(lua_State* L)
 		const Action& action = actions[i];
 		lua_pushnumber(L, i + 1);
 		lua_newtable(L);
-		lua_pushstring(L, action.command.c_str());
-		lua_pushstring(L, action.extra.c_str());
+		lua_pushsstring(L, action.command);
+		lua_pushsstring(L, action.extra);
 		lua_rawset(L, -3);
 		lua_rawset(L, -3);
 	}
@@ -1939,7 +1936,7 @@ int LuaUnsyncedRead::GetActionHotKeys(lua_State* L)
 	for (int i = 0; i < (int)hotkeys.size(); i++) {
 		const string& hotkey = hotkeys[i];
 		lua_pushnumber(L, i + 1);
-		lua_pushstring(L, hotkey.c_str());
+		lua_pushsstring(L, hotkey);
 		lua_rawset(L, -3);
 	}
 	lua_pushstring(L, "n");

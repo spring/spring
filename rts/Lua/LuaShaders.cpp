@@ -158,7 +158,7 @@ void LuaShaders::DeleteProgram(Program& p)
 int LuaShaders::GetShaderLog(lua_State* L)
 {
 	const LuaShaders& shaders = CLuaHandle::GetActiveShaders();
-	lua_pushstring(L, shaders.errorLog.c_str());
+	lua_pushsstring(L, shaders.errorLog);
 	return 1;
 }
 

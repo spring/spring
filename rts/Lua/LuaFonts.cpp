@@ -156,7 +156,7 @@ int LuaFonts::meta_index(lua_State* L)
 		//} else if (key == "textcolor") {
 		} else if (key == "path") {
 			const std::string& filepath = font->GetFilePath();
-			lua_pushlstring(L, filepath.c_str(), filepath.length());
+			lua_pushsstring(L, filepath);
 			return 1;
 		} else if (key == "height" || key == "lineheight") {
 			lua_pushnumber(L, font->GetLineHeight());
@@ -172,11 +172,11 @@ int LuaFonts::meta_index(lua_State* L)
 			return 1;
 		} else if (key == "family") {
 			const std::string& family = font->GetFamily();
-			lua_pushlstring(L, family.c_str(), family.length());
+			lua_pushsstring(L, family);
 			return 1;
 		} else if (key == "style") {
 			const std::string& style = font->GetStyle();
-			lua_pushlstring(L, style.c_str(), style.length());
+			lua_pushsstring(L, style);
 			return 1;
 		} else if (key == "texturewidth") {
 			lua_pushnumber(L, font->GetTexWidth());
@@ -314,7 +314,7 @@ int LuaFonts::WrapText(lua_State* L)
 
 	const int lines = font->WrapInPlace(text,size,maxWidth,maxHeight);
 
-	lua_pushlstring(L, text.c_str(), text.length());
+	lua_pushsstring(L, text);
 	lua_pushnumber(L, lines);
 	return 2;
 }

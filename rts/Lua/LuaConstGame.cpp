@@ -30,7 +30,7 @@
 static void LuaPushNamedColor(lua_State* L,
                               const string& name, const float3& color)
 {
-	lua_pushlstring(L, name.c_str(), name.size());
+	lua_pushsstring(L, name);
 	lua_newtable(L);
 	lua_pushnumber(L, color.x); lua_rawseti(L, -2, 1);
 	lua_pushnumber(L, color.y); lua_rawseti(L, -2, 2);
@@ -112,11 +112,11 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedColor(L,  "groundSunColor",      mi->light.groundSunColor);
 
 	const vector<string>& causticTexs = mi->water.causticTextures;
-	lua_pushstring(L, "waterCausticTextures");
+	lua_pushliteral(L, "waterCausticTextures");
 	lua_newtable(L);
 	for (int i = 0; i < (int)causticTexs.size(); i++) {
 		lua_pushnumber(L, i + 1);
-		lua_pushstring(L, causticTexs[i].c_str());
+		lua_pushsstring(L, causticTexs[i]);
 		lua_rawset(L, -3);
 	}
 	lua_rawset(L, -3);
@@ -164,24 +164,24 @@ bool LuaConstGame::PushEntries(lua_State* L)
 
 	const vector<string> &cats =
 		CCategoryHandler::Instance()->GetCategoryNames(~0);
-	lua_pushstring(L, "springCategories");
+	lua_pushliteral(L, "springCategories");
 	lua_newtable(L);
 	for (int i = 0; i < (int)cats.size(); i++) {
 		LuaPushNamedNumber(L, StringToLower(cats[i]), i);
 	}
 	lua_rawset(L, -3);
 
-	lua_pushstring(L, "armorTypes");
+	lua_pushliteral(L, "armorTypes");
 	lua_newtable(L);
 	const std::vector<std::string>& typeList = damageArrayHandler->GetTypeList();
 	const int typeCount = (int)typeList.size();
 	for (int i = 0; i < typeCount; i++) {
 		// bidirectional map
-		lua_pushstring(L, typeList[i].c_str());
+		lua_pushsstring(L, typeList[i]);
 		lua_pushnumber(L, i);
 		lua_rawset(L, -3);
 		lua_pushnumber(L, i);
-		lua_pushstring(L, typeList[i].c_str());
+		lua_pushsstring(L, typeList[i]);
 		lua_rawset(L, -3);
 	}
 	lua_rawset(L, -3);
