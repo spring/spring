@@ -15,7 +15,7 @@ const int MAX_WORLD_SIZE = 1000000;
  *
  * Defines the size of 1 square as 8
  */
-const int  SQUARE_SIZE = 8;
+const int SQUARE_SIZE = 8;
 
 /**
  * @brief game speed
