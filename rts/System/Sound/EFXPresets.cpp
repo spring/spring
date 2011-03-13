@@ -5,6 +5,12 @@
 
 std::map<std::string, EAXSfxProps> eaxPresets;
 
+std::map<ALuint, unsigned> alParamType;
+std::map<std::string, ALuint> nameToALParam;
+std::map<ALuint, std::string> alParamToName;
+std::map<std::string, ALuint> nameToALFilterParam;
+std::map<ALuint, std::string> alFilterParamToName;
+
 static void InitPresets()
 {
 	//source: EFX-Util.h from the OpenAL1.1 SDK
@@ -151,4 +157,68 @@ static void InitPresets()
 	eaxPresets["smallwaterroom"] = EAXSfxProps(1, 0.7, 0.316228, 0.447713, 1, 1.51, 1.25, 1.14, 0.891251, 0.02, float3(0, 0, 0.3), 1.41254, 0.03, float3(0, 0, 0.3), 0.179, 0.15, 0.895, 0.19, 0.991973, 5000, 250, 1, AL_FALSE);
 }
 
+static void InitConversionTables()
+{
+	alParamType[AL_EAXREVERB_DENSITY]               = EFXParamTypes::FLOAT;
+	alParamType[AL_EAXREVERB_DIFFUSION]             = EFXParamTypes::FLOAT;
+	alParamType[AL_EAXREVERB_GAIN]                  = EFXParamTypes::FLOAT;
+	alParamType[AL_EAXREVERB_GAINHF]                = EFXParamTypes::FLOAT;
+	alParamType[AL_EAXREVERB_GAINLF]                = EFXParamTypes::FLOAT;
+	alParamType[AL_EAXREVERB_DECAY_TIME]            = EFXParamTypes::FLOAT;
+	alParamType[AL_EAXREVERB_DECAY_HFLIMIT]         = EFXParamTypes::BOOL;
+	alParamType[AL_EAXREVERB_DECAY_HFRATIO]         = EFXParamTypes::FLOAT;
+	alParamType[AL_EAXREVERB_DECAY_LFRATIO]         = EFXParamTypes::FLOAT;
+	alParamType[AL_EAXREVERB_REFLECTIONS_GAIN]      = EFXParamTypes::FLOAT;
+	alParamType[AL_EAXREVERB_REFLECTIONS_DELAY]     = EFXParamTypes::FLOAT;
+	alParamType[AL_EAXREVERB_REFLECTIONS_PAN]       = EFXParamTypes::VECTOR;
+	alParamType[AL_EAXREVERB_LATE_REVERB_GAIN]      = EFXParamTypes::FLOAT;
+	alParamType[AL_EAXREVERB_LATE_REVERB_DELAY]     = EFXParamTypes::FLOAT;
+	alParamType[AL_EAXREVERB_LATE_REVERB_PAN]       = EFXParamTypes::VECTOR;
+	alParamType[AL_EAXREVERB_ECHO_TIME]             = EFXParamTypes::FLOAT;
+	alParamType[AL_EAXREVERB_ECHO_DEPTH]            = EFXParamTypes::FLOAT;
+	alParamType[AL_EAXREVERB_MODULATION_TIME]       = EFXParamTypes::FLOAT;
+	alParamType[AL_EAXREVERB_MODULATION_DEPTH]      = EFXParamTypes::FLOAT;
+	alParamType[AL_EAXREVERB_AIR_ABSORPTION_GAINHF] = EFXParamTypes::FLOAT;
+	alParamType[AL_EAXREVERB_HFREFERENCE]           = EFXParamTypes::FLOAT;
+	alParamType[AL_EAXREVERB_LFREFERENCE]           = EFXParamTypes::FLOAT;
+	alParamType[AL_EAXREVERB_ROOM_ROLLOFF_FACTOR]   = EFXParamTypes::FLOAT;
+	alParamType[AL_LOWPASS_GAIN]                    = EFXParamTypes::FLOAT;
+	alParamType[AL_LOWPASS_GAINHF]                  = EFXParamTypes::FLOAT;
+
+
+	alParamToName[AL_EAXREVERB_DENSITY]               = "density";
+	alParamToName[AL_EAXREVERB_DIFFUSION]             = "diffusion";
+	alParamToName[AL_EAXREVERB_GAIN]                  = "gain";
+	alParamToName[AL_EAXREVERB_GAINHF]                = "gainhf";
+	alParamToName[AL_EAXREVERB_GAINLF]                = "gainlf";
+	alParamToName[AL_EAXREVERB_DECAY_TIME]            = "decaytime";
+	alParamToName[AL_EAXREVERB_DECAY_HFLIMIT]         = "decayhflimit";
+	alParamToName[AL_EAXREVERB_DECAY_HFRATIO]         = "decayhfratio";
+	alParamToName[AL_EAXREVERB_DECAY_LFRATIO]         = "decaylfratio";
+	alParamToName[AL_EAXREVERB_REFLECTIONS_GAIN]      = "reflectionsgain";
+	alParamToName[AL_EAXREVERB_REFLECTIONS_DELAY]     = "reflectionsdelay";
+	alParamToName[AL_EAXREVERB_REFLECTIONS_PAN]       = "reflectionspan";
+	alParamToName[AL_EAXREVERB_LATE_REVERB_GAIN]      = "latereverbgain";
+	alParamToName[AL_EAXREVERB_LATE_REVERB_DELAY]     = "latereverbdelay";
+	alParamToName[AL_EAXREVERB_LATE_REVERB_PAN]       = "latereverbpan";
+	alParamToName[AL_EAXREVERB_ECHO_TIME]             = "echotime";
+	alParamToName[AL_EAXREVERB_ECHO_DEPTH]            = "echodepth";
+	alParamToName[AL_EAXREVERB_MODULATION_TIME]       = "modtime";
+	alParamToName[AL_EAXREVERB_MODULATION_DEPTH]      = "moddepth";
+	alParamToName[AL_EAXREVERB_AIR_ABSORPTION_GAINHF] = "airabsorptiongainhf";
+	alParamToName[AL_EAXREVERB_HFREFERENCE]           = "hfreference";
+	alParamToName[AL_EAXREVERB_LFREFERENCE]           = "lfreference";
+	alParamToName[AL_EAXREVERB_ROOM_ROLLOFF_FACTOR]   = "roomrollofffactor";
+
+	alFilterParamToName[AL_LOWPASS_GAIN]   = "gainlf";
+	alFilterParamToName[AL_LOWPASS_GAINHF] = "gainhf";
+
+	for (std::map<ALuint, std::string>::iterator it=alParamToName.begin(); it != alParamToName.end(); ++it)
+		nameToALParam[it->second] = it->first;
+
+	for (std::map<ALuint, std::string>::iterator it=alFilterParamToName.begin(); it != alFilterParamToName.end(); ++it)
+		nameToALFilterParam[it->second] = it->first;
+}
+
 DO_ONCE(InitPresets)
+DO_ONCE(InitConversionTables)

@@ -58,6 +58,8 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/Sound/EFX.h"
+#include "System/Sound/EFXPresets.h"
 #include "System/Sound/SoundChannels.h"
 
 using namespace std;
@@ -152,6 +154,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(DiffTimers);
 
 	REGISTER_LUA_CFUNC(GetSoundStreamTime);
+	REGISTER_LUA_CFUNC(GetSoundEffectParams);
 
 	// moved from LuaUI
 
@@ -1457,6 +1460,81 @@ int LuaUnsyncedRead::GetSoundStreamTime(lua_State* L)
 	lua_pushnumber(L, Channels::BGMusic.StreamGetPlayTime());
 	lua_pushnumber(L, Channels::BGMusic.StreamGetTime());
 	return 2;
+}
+
+
+int LuaUnsyncedRead::GetSoundEffectParams(lua_State* L)
+{
+	if (!efx && !efx->sfxProperties)
+		return 0;
+
+	EAXSfxProps* efxprops = efx->sfxProperties;
+
+	lua_createtable(L, 0, 2);
+
+	size_t n = efxprops->filter_properties_f.size();
+	lua_pushliteral(L, "passfilter");
+	lua_createtable(L, 0, n);
+	lua_rawset(L, -3);
+	for (std::map<ALuint, ALfloat>::iterator it = efxprops->filter_properties_f.begin(); it != efxprops->filter_properties_f.end(); ++it)
+	{
+		const ALuint& param = it->first;
+		std::map<ALuint, std::string>::iterator fit = alFilterParamToName.find(param);
+		if (fit != alFilterParamToName.end()) {
+			const std::string& name = fit->second;
+			lua_pushsstring(L, name);
+			lua_pushnumber(L, it->second);
+			lua_rawset(L, -3);
+		}
+	}
+
+
+	n = efxprops->properties_v.size() + efxprops->properties_f.size() + efxprops->properties_i.size();
+	lua_pushliteral(L, "reverb");
+	lua_createtable(L, 0, n);
+	lua_rawset(L, -3);
+	for (std::map<ALuint, ALfloat>::iterator it = efxprops->properties_f.begin(); it != efxprops->properties_f.end(); ++it)
+	{
+		const ALuint& param = it->first;
+		std::map<ALuint, std::string>::iterator fit = alParamToName.find(param);
+		if (fit != alParamToName.end()) {
+			const std::string& name = fit->second;
+			lua_pushsstring(L, name);
+			lua_pushnumber(L, it->second);
+			lua_rawset(L, -3);
+		}
+	}
+	for (std::map<ALuint, float3>::iterator it = efxprops->properties_v.begin(); it != efxprops->properties_v.end(); ++it)
+	{
+		const ALuint& param = it->first;
+		std::map<ALuint, std::string>::iterator fit = alParamToName.find(param);
+		if (fit != alParamToName.end()) {
+			const float3& v = it->second;
+			const std::string& name = fit->second;
+			lua_pushsstring(L, name);
+			lua_createtable(L, 3, 0);
+				lua_pushnumber(L, v.x);
+				lua_rawseti(L, -2, 1);
+				lua_pushnumber(L, v.y);
+				lua_rawseti(L, -2, 2);
+				lua_pushnumber(L, v.z);
+				lua_rawseti(L, -2, 3);
+			lua_rawset(L, -3);
+		}
+	}
+	for (std::map<ALuint, ALint>::iterator it = efxprops->properties_i.begin(); it != efxprops->properties_i.end(); ++it)
+	{
+		const ALuint& param = it->first;
+		std::map<ALuint, std::string>::iterator fit = alParamToName.find(param);
+		if (fit != alParamToName.end()) {
+			const std::string& name = fit->second;
+			lua_pushsstring(L, name);
+			lua_pushboolean(L, it->second);
+			lua_rawset(L, -3);
+		}
+	}
+
+	return 1;
 }
 
 

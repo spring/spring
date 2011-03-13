@@ -77,7 +77,20 @@ struct EAXSfxProps
 	std::map<ALuint, ALfloat> filter_properties_f;
 };
 
+namespace EFXParamTypes {
+	enum {
+		FLOAT,
+		VECTOR,
+		BOOL
+	};
+}
 
 extern std::map<std::string, EAXSfxProps> eaxPresets;
+
+extern std::map<ALuint, unsigned> alParamType;
+extern std::map<std::string, ALuint> nameToALParam;
+extern std::map<ALuint, std::string> alParamToName;
+extern std::map<std::string, ALuint> nameToALFilterParam;
+extern std::map<ALuint, std::string> alFilterParamToName;
 
 #endif // _EFX_PRESETS_H_
