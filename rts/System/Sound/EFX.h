@@ -18,7 +18,7 @@ public:
 	CEFX(ALCdevice* device);
 	~CEFX();
 
-	void SetPreset(std::string name);
+	void SetPreset(std::string name, bool verbose = true, bool commit = true);
 	void CommitEffects();
 
 	void Enable();

@@ -204,16 +204,21 @@ void CEFX::Disable()
 }
 
 
-void CEFX::SetPreset(std::string name)
+void CEFX::SetPreset(std::string name, bool verbose, bool commit)
 {
 	if (!supported)
 		return;
 
+	if (name == "default")
+		name = default_preset;
+
 	std::map<std::string, EAXSfxProps>::const_iterator it = eaxPresets.find(name);
 	if (it != eaxPresets.end()) {
 		*sfxProperties = it->second;
-		CommitEffects();
-		LogObject(LOG_SOUND) << "EAX Preset changed to: " << name;
+		if (commit)
+			CommitEffects();
+		if (verbose)
+			LogObject(LOG_SOUND) << "EAX Preset changed to: " << name;
 	}
 }
 
