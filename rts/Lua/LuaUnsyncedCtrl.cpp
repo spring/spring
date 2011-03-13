@@ -1921,7 +1921,7 @@ int LuaUnsyncedCtrl::GetConfigString(lua_State* L)
 	const string def  = luaL_optstring(L, 2, "");
 	const bool setInOverlay = lua_isboolean(L, 3) ? lua_toboolean(L, 3) : false;
 	const string value = configHandler->GetString(name, def, setInOverlay);
-	lua_pushstring(L, value.c_str());
+	lua_pushsstring(L, value);
 	return 1;
 }
 

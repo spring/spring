@@ -1,10 +1,16 @@
 #ifndef SPRING_LUA_INCLUDE
 #define SPRING_LUA_INCLUDE
 
-
+#include <string>
 #include "lua.h"
 #include "lualib.h"
 #include "lauxlib.h"
+
+
+inline void lua_pushsstring(lua_State* L, const std::string& str)
+{
+	lua_pushlstring(L, str.data(), str.size());
+}
 
 
 inline bool lua_israwnumber(lua_State* L, int index)
