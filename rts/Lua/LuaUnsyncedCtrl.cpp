@@ -75,6 +75,7 @@ using namespace std;
 
 // MinGW defines this for a WINAPI function
 #undef SendMessage
+#undef CreateDirectory
 
 const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
