@@ -1202,9 +1202,9 @@ int LuaUnsyncedRead::GetCameraVectors(lua_State* L)
 #define PACK_CAMERA_VECTOR(n) \
 	HSTR_PUSH(L, #n);           \
 	lua_newtable(L);            \
-	lua_pushnumber(L, 1); lua_pushnumber(L, cam-> n .x); lua_rawset(L, -3); \
-	lua_pushnumber(L, 2); lua_pushnumber(L, cam-> n .y); lua_rawset(L, -3); \
-	lua_pushnumber(L, 3); lua_pushnumber(L, cam-> n .z); lua_rawset(L, -3); \
+	lua_pushnumber(L, cam-> n .x); lua_rawseti(L, -2, 1); \
+	lua_pushnumber(L, cam-> n .y); lua_rawseti(L, -2, 2); \
+	lua_pushnumber(L, cam-> n .z); lua_rawseti(L, -2, 3); \
 	lua_rawset(L, -3)
 
 	lua_newtable(L);
@@ -1320,11 +1320,11 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 		lua_pushliteral(L, "ground");
 	}
 
-	const float3 groundPos = pos + (dir * udist);
-	lua_newtable(L);
-	lua_pushnumber(L, 1); lua_pushnumber(L, groundPos.x); lua_rawset(L, -3);
-	lua_pushnumber(L, 2); lua_pushnumber(L, groundPos.y); lua_rawset(L, -3);
-	lua_pushnumber(L, 3); lua_pushnumber(L, groundPos.z); lua_rawset(L, -3);
+	const float3 groundPos = pos + (dir * dist);
+	lua_createtable(L, 3, 0);
+	lua_pushnumber(L, groundPos.x); lua_rawseti(L, -2, 1);
+	lua_pushnumber(L, groundPos.y); lua_rawseti(L, -2, 2);
+	lua_pushnumber(L, groundPos.z); lua_rawseti(L, -2, 3);
 
 	return 2;
 }
@@ -1372,15 +1372,11 @@ int LuaUnsyncedRead::GetPlayerRoster(lua_State* L)
 
 	playerRoster.SetSortTypeByCode(oldSort); // revert
 
-	lua_newtable(L);
+	lua_createtable(L, count, 0);
 	for (int i = 0; i < count; i++) {
-		lua_pushnumber(L, i + 1);
 		AddPlayerToRoster(L, players[i]);
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, i + 1);
 	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, count);
-	lua_rawset(L, -3);
 
 	return 1;
 }
@@ -1756,15 +1752,11 @@ int LuaUnsyncedRead::GetPressedKeys(lua_State* L)
 	int count = 0;
 	for (int i = 0; i < SDLK_LAST; i++) {
 		if (keyInput->GetKeyState(i)) {
-			lua_pushnumber(L, i);
 			lua_pushboolean(L, 1);
-			lua_rawset(L, -3);
+			lua_rawseti(L, -2, i);
 			count++;
 		}
 	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, count);
-	lua_rawset(L, -3);
 	return 1;
 }
 
