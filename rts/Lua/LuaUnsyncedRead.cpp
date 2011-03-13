@@ -1465,7 +1465,7 @@ int LuaUnsyncedRead::GetSoundStreamTime(lua_State* L)
 
 int LuaUnsyncedRead::GetSoundEffectParams(lua_State* L)
 {
-	if (!efx && !efx->sfxProperties)
+	if (!efx || !efx->sfxProperties)
 		return 0;
 
 	EAXSfxProps* efxprops = efx->sfxProperties;
