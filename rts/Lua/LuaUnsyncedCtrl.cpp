@@ -1725,7 +1725,7 @@ static int SetActiveCommandByIndex(lua_State* L)
 	if ((args < 8) ||
 	    !lua_isboolean(L, 3) || !lua_isboolean(L, 4) || !lua_isboolean(L, 5) ||
 	    !lua_isboolean(L, 6) || !lua_isboolean(L, 7) || !lua_isboolean(L, 8)) {
-		lua_pushstring(L, "Incorrect arguments to SetActiveCommand()");
+		luaL_error(L, "Incorrect arguments to SetActiveCommand()");
 	}
 	const bool lmb   = lua_toboolean(L, 3);
 	const bool rmb   = lua_toboolean(L, 4);
