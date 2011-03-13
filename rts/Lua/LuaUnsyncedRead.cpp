@@ -1320,7 +1320,7 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 		lua_pushliteral(L, "ground");
 	}
 
-	const float3 groundPos = pos + (dir * dist);
+	const float3 groundPos = pos + (dir * udist);
 	lua_createtable(L, 3, 0);
 	lua_pushnumber(L, groundPos.x); lua_rawseti(L, -2, 1);
 	lua_pushnumber(L, groundPos.y); lua_rawseti(L, -2, 2);
