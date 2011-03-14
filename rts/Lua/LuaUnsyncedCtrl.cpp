@@ -61,8 +61,6 @@
 #include "System/LogOutput.h"
 #include "System/NetProtocol.h"
 #include "System/Util.h"
-#include "System/Sound/EFX.h"
-#include "System/Sound/EFXPresets.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/FileSystem/FileHandler.h"
@@ -73,6 +71,10 @@
 #include <boost/cstdint.hpp>
 #include <Platform/Misc.h>
 
+#if !defined(HEADLESS) && !defined(NO_SOUND)
+	#include "System/Sound/EFX.h"
+	#include "System/Sound/EFXPresets.h"
+#endif
 
 using namespace std;
 
@@ -713,6 +715,7 @@ int LuaUnsyncedCtrl::SetSoundStreamVolume(lua_State* L)
 
 int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 {
+#if !defined(HEADLESS) && !defined(NO_SOUND)
 	if (!efx)
 		return 0;
 
@@ -804,6 +807,7 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 
 	//! commit effects
 	efx->CommitEffects();
+#endif /// !defined(HEADLESS) && !defined(NO_SOUND)
 
 	return 0;
 }
