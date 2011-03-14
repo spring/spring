@@ -1599,7 +1599,8 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 po
 			texturehandler3DO->Set3doAtlases();
 		} break;
 		case MODELTYPE_S3O:
-		case MODELTYPE_OBJ: {
+		case MODELTYPE_OBJ:
+		case MODELTYPE_ASS: {
 			texturehandlerS3O->SetS3oTexture(model->textureType);
 		} break;
 		default: {
@@ -1987,7 +1988,7 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 #ifdef USE_GML
 		if (showHealthBars && !unit->noDraw &&
 			(unit->health < unit->maxHealth || unit->paralyzeDamage > 0.0f || unit->limExperience > 0.0f ||
-			unit->beingBuilt || unit->stockpileWeapon || unit->group) && 
+			unit->beingBuilt || unit->stockpileWeapon || unit->group) &&
 			((unit->pos - camera->pos).SqLength() < (unitDrawDistSqr * 500.0f)))
 			drawStat.insert(unit);
 #endif
