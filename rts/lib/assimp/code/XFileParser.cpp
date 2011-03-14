@@ -53,7 +53,11 @@ using namespace Assimp::XFile;
 
 #ifndef ASSIMP_BUILD_NO_COMPRESSED_X
 
-#include "../contrib/zlib/zlib.h"
+#	ifdef ASSIMP_BUILD_NO_OWN_ZLIB
+#		include <zlib.h>
+#	else
+#		include "../contrib/zlib/zlib.h"
+#	endif
 
 // Magic identifier for MSZIP compressed data
 #define MSZIP_MAGIC 0x4B43
@@ -61,14 +65,12 @@ using namespace Assimp::XFile;
 
 // ------------------------------------------------------------------------------------------------
 // Dummy memory wrappers for use with zlib
-void* dummy_alloc (void* /*opaque*/, unsigned int items, unsigned int size)	{
-
-	// we're using calloc to make it easier to debug the whole stuff
-	return ::calloc(items,size);
+static void* dummy_alloc (void* /*opaque*/, unsigned int items, unsigned int size)	{
+	return ::operator new(items*size);
 }
 
-void  dummy_free  (void* /*opaque*/, void* address)	{
-	return ::free(address);
+static void  dummy_free  (void* /*opaque*/, void* address)	{
+	return ::operator delete(address);
 }
 
 #endif // !! ASSIMP_BUILD_NO_COMPRESSED_X
@@ -708,6 +710,8 @@ void XFileParser::ParseDataObjectMaterial( Material* pMaterial)
 {
 	std::string matName;
 	readHeadOfDataObject( &matName);
+	if( matName.empty())
+		matName = std::string( "material") + boost::lexical_cast<std::string>( mLineNumber);
 	pMaterial->mName = matName;
 	pMaterial->mIsReference = false;
 
@@ -996,6 +1000,22 @@ void XFileParser::CheckForSeparator()
 	std::string token = GetNextToken();
 	if( token != "," && token != ";")
 		ThrowException( "Separator character (';' or ',') expected.");
+}
+
+// ------------------------------------------------------------------------------------------------
+// tests and possibly consumes a separator char, but does nothing if there was no separator
+void XFileParser::TestForSeparator()
+{
+  if( mIsBinaryFormat)
+    return;
+
+  FindNextNoneWhiteSpace();
+  if( P >= End)
+    return;
+
+  // test and skip
+  if( *P == ';' || *P == ',')
+    P++;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -1330,7 +1350,7 @@ aiVector2D XFileParser::ReadVector2()
 	aiVector2D vector;
 	vector.x = ReadFloat();
 	vector.y = ReadFloat();
-	CheckForSeparator();
+	TestForSeparator();
 
 	return vector;
 }
@@ -1342,7 +1362,7 @@ aiVector3D XFileParser::ReadVector3()
 	vector.x = ReadFloat();
 	vector.y = ReadFloat();
 	vector.z = ReadFloat();
-	CheckForSeparator();
+	TestForSeparator();
 
 	return vector;
 }
@@ -1355,7 +1375,7 @@ aiColor4D XFileParser::ReadRGBA()
 	color.g = ReadFloat();
 	color.b = ReadFloat();
 	color.a = ReadFloat();
-	CheckForSeparator();
+	TestForSeparator();
 
 	return color;
 }
@@ -1367,7 +1387,7 @@ aiColor3D XFileParser::ReadRGB()
 	color.r = ReadFloat();
 	color.g = ReadFloat();
 	color.b = ReadFloat();
-	CheckForSeparator();
+	TestForSeparator();
 
 	return color;
 }

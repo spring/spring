@@ -45,6 +45,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Exceptional.h"
 
 #include <string>
+#include <map>
+#include <vector>
 #include "./../include/aiTypes.h"
 
 struct aiScene;
@@ -53,11 +55,44 @@ namespace Assimp	{
 
 class IOSystem;
 class Importer;
+class BaseImporter;
+class BaseProcess;
+class SharedPostProcessInfo;
+class IOStream;
 
 // utility to do char4 to uint32 in a portable manner
 #define AI_MAKE_MAGIC(string) ((uint32_t)((string[0] << 24) + \
 	(string[1] << 16) + (string[2] << 8) + string[3]))
 
+// ---------------------------------------------------------------------------
+template <typename T>
+struct ScopeGuard
+{
+	ScopeGuard(T* obj) : obj(obj), mdismiss() {}
+	~ScopeGuard () throw() {
+		if (!mdismiss) {
+			delete obj;
+		}
+		obj = NULL;
+	} 
+
+	T* dismiss() {
+		mdismiss=true;
+		return obj;
+	}
+
+	operator T*() {
+		return obj;
+	}
+
+	T* operator -> () {
+		return obj;
+	}
+
+private:
+	T* obj;
+	bool mdismiss;
+};
 
 //! @cond never
 // ---------------------------------------------------------------------------
@@ -85,6 +120,10 @@ public:
 	/** IO handler to use for all file accesses. */
 	IOSystem* mIOHandler;
 	bool mIsDefaultHandler;
+
+	/** Progress handler for feedback. */
+	ProgressHandler* mProgressHandler;
+	bool mIsDefaultProgressHandler;
 
 	/** Format-specific importer worker objects - one for each format we can read.*/
 	std::vector<BaseImporter*> mImporter;
@@ -170,6 +209,7 @@ public:
 	 * takes care that any partially constructed data is destroyed
 	 * beforehand.
 	 *
+	 * @param pImp #Importer object hosting this loader.
 	 * @param pFile Path of the file to be imported. 
 	 * @param pIOHandler IO-Handler used to open this and possible other files.
 	 * @return The imported data or NULL if failed. If it failed a 
@@ -182,6 +222,7 @@ public:
 	 *  a suitable response to the caller.
 	 */
 	aiScene* ReadFile(
+		const Importer* pImp, 
 		const std::string& pFile, 
 		IOSystem* pIOHandler
 		);
@@ -361,6 +402,9 @@ protected:
 
 	/** Error description in case there was one. */
 	std::string mErrorText;
+
+	/** Currently set progress handler */
+	ProgressHandler* progress;
 };
 
 struct BatchData;

@@ -118,6 +118,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <new>
 #include <cstdio>
 
+// Boost headers
+#include <boost/pointer_cast.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/scoped_array.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/shared_array.hpp>
+//#include <boost/make_shared.hpp>
+#include <boost/format.hpp>
+#include <boost/foreach.hpp>
+#include <boost/static_assert.hpp>
+#include <boost/lexical_cast.hpp>
+
 // Public ASSIMP headers
 #include "../include/DefaultLogger.h"
 #include "../include/IOStream.h"
@@ -133,11 +145,5 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "StreamReader.h"
 #include "qnan.h"
 
-// ----------------------------------------------------------------------------------------
-#include <boost/scoped_ptr.hpp>
-#include <boost/scoped_array.hpp>
-#include <boost/format.hpp>
-#include <boost/foreach.hpp>
-#include <boost/static_assert.hpp>
 
 #endif // !! ASSIMP_PCH_INCLUDED

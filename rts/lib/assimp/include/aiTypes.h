@@ -82,6 +82,7 @@ namespace Intern		{
 	 * the application is determined to crash.
 	 */
 	// --------------------------------------------------------------------
+#ifndef SWIG
 	struct ASSIMP_API AllocateFromAssimpHeap	{
 		// http://www.gotw.ca/publications/mill15.htm
 
@@ -96,6 +97,7 @@ namespace Intern		{
 		void  operator delete[] ( void* data);
 
 	}; // struct AllocateFromAssimpHeap
+#endif
 } // namespace Intern
 	//! @endcond
 } // namespace Assimp
@@ -259,7 +261,7 @@ struct aiString
 	}
 
 	/** Constructor from std::string */
-	aiString(const std::string& pString) : 
+	explicit aiString(const std::string& pString) : 
 		length(pString.length()) 
 	{
 		length = length>=MAXLEN?MAXLEN-1:length;
