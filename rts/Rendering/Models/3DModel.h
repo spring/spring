@@ -5,6 +5,8 @@
 
 #include <vector>
 #include <string>
+#include <set>
+#include "Matrix44f.h"
 
 #include "System/Matrix44f.h"
 
@@ -14,13 +16,15 @@ const int
 	MODELTYPE_3DO   = 0,
 	MODELTYPE_S3O   = 1,
 	MODELTYPE_OBJ   = 2,
-	MODELTYPE_OTHER = 3;
+	MODELTYPE_ASS	= 3, // Model loaded by Assimp library
+	MODELTYPE_OTHER	= 4; // For future use. Still used in some parts of code.
 
 struct CollisionVolume;
 struct S3DModel;
 struct S3DModelPiece;
 struct LocalModel;
 struct LocalModelPiece;
+struct aiScene;
 
 
 struct S3DModelPiece {
@@ -93,6 +97,8 @@ struct S3DModel
 	int id;                 //! unsynced ID, starting with 1
 	int type;               //! MODELTYPE_*
 	int textureType;        //! FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or OBJ)
+	int flipTexY;			// Turn both textures upside down before use
+	int invertAlpha;		// Invert teamcolor alpha channel in S3O texture 1
 
 	int numPieces;
 	float radius;

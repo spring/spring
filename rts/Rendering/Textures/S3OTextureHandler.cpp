@@ -20,6 +20,15 @@
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 
+static CLogSubsystem LOG_TEXTURE("Texture");
+
+// The S3O texture handler uses two textures.
+// The first contains diffuse color (RGB) and teamcolor (A)
+// The second contains glow (R), reflectivity (G) and 1-bit Alpha (A).
+
+//////////////////////////////////////////////////////////////////////
+// Construction/Destruction
+//////////////////////////////////////////////////////////////////////
 
 CS3OTextureHandler* texturehandlerS3O = NULL;
 
@@ -52,6 +61,10 @@ void CS3OTextureHandler::Update() {
 int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 {
 	GML_STDMUTEX_LOCK(model); // LoadS3OTextureNow
+	logOutput.Print(LOG_TEXTURE, "Load S3O texture now (Flip Y Axis: %s, Invert Team Alpha: %s)", 
+		model->flipTexY ? "yes" : "no",
+		model->invertTexAlpha ? "yes" : "no"
+	);
 
 	const string totalName = model->tex1 + model->tex2;
 
@@ -74,6 +87,8 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 		tex1bm.mem[2] =   0;
 		tex1bm.mem[3] = 255;
 	}
+	if (model->flipTexY) tex1bm.ReverseYAxis();
+	if (model->invertTexAlpha) tex1bm.InvertAlpha();
 
 	tex.num       = s3oTextures.size();
 	tex.tex1      = tex1bm.CreateTexture(true);
@@ -92,6 +107,7 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 		tex2bm.mem[2] =   0; // unused
 		tex2bm.mem[3] = 255; // team-color
 	}
+	if (model->flipTexY) tex2bm.ReverseYAxis();
 
 	tex.tex2      = tex2bm.CreateTexture(true);
 	tex.tex2SizeX = tex2bm.xsize;

@@ -83,6 +83,7 @@ public:
 	CBitmap CreateRescaled(int newx, int newy) const;
 	void ReverseYAxis();
 	void InvertColors();
+	void InvertAlpha();
 	void GrayScale();
 	void Tint(const float tint[3]);
 };
