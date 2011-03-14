@@ -1088,7 +1088,7 @@ void CAirMoveType::SetState(AAirMoveType::AircraftState state)
 
 
 
-void CAirMoveType::ImpulseAdded(void)
+void CAirMoveType::ImpulseAdded(const float3&)
 {
 	if (aircraftState == AIRCRAFT_FLYING) {
 		owner->speed += owner->residualImpulse;

@@ -29,7 +29,7 @@ public:
 
 	void SetMaxSpeed(float speed);
 
-	void ImpulseAdded();
+	void ImpulseAdded(const float3&);
 
 	void KeepPointingTo(float3 pos, float distance, bool aggressive);
 	void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
