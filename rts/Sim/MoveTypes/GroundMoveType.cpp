@@ -81,12 +81,11 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(canReverse),
 	CR_MEMBER(useMainHeading),
 
-	CR_MEMBER(skidRotSpeed),
-
 	CR_MEMBER(waypointDir),
 	CR_MEMBER(flatFrontDir),
 
 	CR_MEMBER(skidRotVector),
+	CR_MEMBER(skidRotSpeed),
 	CR_MEMBER(skidRotSpeed2),
 	CR_MEMBER(skidRotPos2),
 	CR_ENUM_MEMBER(oldPhysState),
@@ -139,8 +138,8 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	canReverse(owner->unitDef->rSpeed > 0.0f),
 	useMainHeading(false),
 
-	skidRotSpeed(0.0f),
 	skidRotVector(UpVector),
+	skidRotSpeed(0.0f),
 	skidRotSpeed2(0.0f),
 	skidRotPos2(0.0f),
 	oldPhysState(CSolidObject::OnGround),
@@ -559,23 +558,17 @@ void CGroundMoveType::ChangeHeading(short wantedHeading) {
 	tracefile << "unit " << owner->id << " changed heading to " << heading << " from " << _oldheading << " (wantedHeading: " << wantedHeading << ")\n";
 #endif
 
-	owner->frontdir = GetVectorFromHeading(heading);
-	if (owner->upright) {
-		owner->updir = UpVector;
-		owner->rightdir = owner->frontdir.cross(owner->updir);
-	} else {
-		owner->updir = ground->GetNormal(owner->pos.x, owner->pos.z);
-		owner->rightdir = owner->frontdir.cross(owner->updir);
-		owner->rightdir.Normalize();
-		owner->frontdir = owner->updir.cross(owner->rightdir);
-	}
+	owner->SetDirectionFromHeading();
 
 	flatFrontDir = owner->frontdir;
 	flatFrontDir.y = 0.0f;
 	flatFrontDir.Normalize();
 }
 
-void CGroundMoveType::ImpulseAdded()
+
+
+
+void CGroundMoveType::ImpulseAdded(const float3&)
 {
 	if (owner->beingBuilt || owner->unitDef->movedata->moveType == MoveData::Ship_Move)
 		return;
@@ -588,25 +581,34 @@ void CGroundMoveType::ImpulseAdded()
 		impulse = ZeroVector;
 	}
 
-	float3 groundNormal = ground->GetNormal(owner->pos.x, owner->pos.z);
+	const float3& groundNormal = ground->GetNormal(owner->pos.x, owner->pos.z);
+	const float groundImpulseScale = impulse.dot(groundNormal);
 
-	if (impulse.dot(groundNormal) < 0)
-		impulse -= groundNormal * impulse.dot(groundNormal);
+	if (groundImpulseScale < 0.0f)
+		impulse -= (groundNormal * groundImpulseScale);
 
-	const float sqstrength = impulse.SqLength();
-
-	if (sqstrength > 9 || impulse.dot(groundNormal) > 0.3f) {
+	if (impulse.SqLength() > 9.0f || groundImpulseScale > 0.3f) {
 		skidding = true;
 		speed += impulse;
 		impulse = ZeroVector;
 
+		// FIXME: impulse should not cause a _random_ rotational component
 		skidRotSpeed += (gs->randFloat() - 0.5f) * 1500;
-		skidRotPos2 = 0;
-		skidRotSpeed2 = 0;
-		float3 skidDir(speed);
-			skidDir.y = 0;
+		skidRotSpeed2 = 0.0f;
+		skidRotPos2 = 0.0f;
+
+		float3 skidDir;
+
+		if (speed.SqLength2D() >= 0.01f) {
+			skidDir = speed;
+			skidDir.y = 0.0f;
 			skidDir.Normalize();
+		} else {
+			skidDir = owner->frontdir;
+		}
+
 		skidRotVector = skidDir.cross(UpVector);
+
 		oldPhysState = owner->physicalState;
 		owner->physicalState = CSolidObject::Flying;
 		owner->moveType->useHeading = false;
@@ -686,8 +688,8 @@ void CGroundMoveType::UpdateSkid()
 				speed *= (speedf - speedReduction) / speedf;
 			}
 
-			float remTime = speedf / speedReduction - 1.0f;
-			float rp = floor(skidRotPos2 + skidRotSpeed2 * remTime + 0.5f);
+			const float remTime = speedf / speedReduction - 1.0f;
+			const float rp = floor(skidRotPos2 + skidRotSpeed2 * remTime + 0.5f);
 
 			skidRotSpeed2 = (remTime + 1.0f == 0.0f ) ? 0.0f : (rp - skidRotPos2) / (remTime + 1.0f);
 
@@ -716,13 +718,7 @@ void CGroundMoveType::UpdateSkid()
 		}
 	}
 	CalcSkidRot();
-
-	midPos += speed;
-	pos = midPos -
-		owner->frontdir * owner->relMidPos.z -
-		owner->updir    * owner->relMidPos.y -
-		owner->rightdir * owner->relMidPos.x;
-	owner->midPos = midPos;
+	owner->MoveMidPos(speed);
 
 	CheckCollisionSkid();
 	ASSERT_SYNCED_FLOAT3(owner->midPos);
@@ -735,25 +731,17 @@ void CGroundMoveType::UpdateControlledDrop()
 	SyncedFloat3& midPos = owner->midPos;
 
 	if (owner->falling) {
-		speed.y += mapInfo->map.gravity * owner->fallSpeed;
+		speed.y += (mapInfo->map.gravity * owner->fallSpeed);
+		speed.y = std::min(speed.y, 0.0f);
 
-		if (owner->speed.y > 0) //sometimes the dropped unit gets an upward force, still unsure where its coming from
-			owner->speed.y = 0;
+		owner->MoveMidPos(speed);
 
-		midPos += speed;
-		pos = midPos -
-			owner->frontdir * owner->relMidPos.z -
-			owner->updir * owner->relMidPos.y -
-			owner->rightdir * owner->relMidPos.x;
-
-		owner->midPos.y = owner->pos.y + owner->relMidPos.y;
-
-		if(midPos.y < 0)
-			speed*=0.90;
+		if (midPos.y < 0.0f)
+			speed *= 0.90;
 
 		const float wh = GetGroundHeight(midPos);
 
-		if (wh > midPos.y - owner->relMidPos.y) {
+		if (wh > (midPos.y - owner->relMidPos.y)) {
 			owner->falling = false;
 			midPos.y = wh + owner->relMidPos.y - speed.y * 0.8;
 			owner->script->Landed(); //stop parachute animation
@@ -791,12 +779,8 @@ void CGroundMoveType::CheckCollisionSkid()
 			const float impactSpeed = -owner->speed.dot(dif);
 
 			if (impactSpeed > 0.0f) {
-				midPos += dif * impactSpeed;
-				pos = midPos -
-					owner->frontdir * owner->relMidPos.z -
-					owner->updir    * owner->relMidPos.y -
-					owner->rightdir * owner->relMidPos.x;
-				owner->speed += dif * (impactSpeed * 1.8f);
+				owner->MoveMidPos(dif * impactSpeed);
+				owner->speed += ((dif * impactSpeed) * 1.8f);
 
 				// damage the collider
 				if (impactSpeed > ownerUD->minCollisionSpeed && ownerUD->minCollisionSpeed >= 0) {
@@ -813,17 +797,10 @@ void CGroundMoveType::CheckCollisionSkid()
 			const float impactSpeed = (u->speed - owner->speed).dot(dif) * 0.5f;
 
 			if (impactSpeed > 0.0f) {
-				midPos += dif * (impactSpeed * (1 - part) * 2);
-				pos = midPos -
-					owner->frontdir * owner->relMidPos.z -
-					owner->updir    * owner->relMidPos.y -
-					owner->rightdir * owner->relMidPos.x;
+				owner->MoveMidPos(dif * (impactSpeed * (1 - part) * 2));
 				owner->speed += dif * (impactSpeed * (1 - part) * 2);
-				u->midPos -= dif * (impactSpeed * part * 2);
-				u->pos = u->midPos -
-					u->frontdir * u->relMidPos.z -
-					u->updir    * u->relMidPos.y -
-					u->rightdir * u->relMidPos.x;
+
+				u->MoveMidPos(dif * (impactSpeed * part * -2));
 				u->speed -= dif * (impactSpeed * part * 2);
 
 				if (CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(u->moveType)) {
@@ -866,12 +843,8 @@ void CGroundMoveType::CheckCollisionSkid()
 		const float impactSpeed = -owner->speed.dot(dif);
 
 		if (impactSpeed > 0.0f) {
-			midPos += dif * impactSpeed;
-			pos = midPos -
-				owner->frontdir * owner->relMidPos.z -
-				owner->updir    * owner->relMidPos.y -
-				owner->rightdir * owner->relMidPos.x;
-			owner->speed += dif * (impactSpeed * 1.8f);
+			owner->MoveMidPos(dif * impactSpeed);
+			owner->speed += ((dif * impactSpeed) * 1.8f);
 
 			if (impactSpeed > ownerUD->minCollisionSpeed && ownerUD->minCollisionSpeed >= 0) {
 				owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
@@ -884,18 +857,7 @@ void CGroundMoveType::CheckCollisionSkid()
 void CGroundMoveType::CalcSkidRot()
 {
 	owner->heading += (short int) skidRotSpeed;
-
-	owner->frontdir = GetVectorFromHeading(owner->heading);
-
-	if (owner->upright) {
-		owner->updir = UpVector;
-		owner->rightdir = owner->frontdir.cross(owner->updir);
-	} else {
-		owner->updir = ground->GetSmoothNormal(owner->pos.x, owner->pos.z);
-		owner->rightdir = owner->frontdir.cross(owner->updir);
-		owner->rightdir.Normalize();
-		owner->frontdir = owner->updir.cross(owner->rightdir);
-	}
+	owner->SetDirectionFromHeading();
 
 	skidRotPos2 += skidRotSpeed2;
 
@@ -904,19 +866,22 @@ void CGroundMoveType::CalcSkidRot()
 
 	float3 f1 = skidRotVector * skidRotVector.dot(owner->frontdir);
 	float3 f2 = owner->frontdir - f1;
-	f2 = f2 * cosp + f2.cross(skidRotVector) * sinp;
-	owner->frontdir = f1 + f2;
 
 	float3 r1 = skidRotVector * skidRotVector.dot(owner->rightdir);
 	float3 r2 = owner->rightdir - r1;
-	r2 = r2 * cosp + r2.cross(skidRotVector) * sinp;
-	owner->rightdir = r1 + r2;
 
 	float3 u1 = skidRotVector * skidRotVector.dot(owner->updir);
 	float3 u2 = owner->updir - u1;
+
+	f2 = f2 * cosp + f2.cross(skidRotVector) * sinp;
+	r2 = r2 * cosp + r2.cross(skidRotVector) * sinp;
 	u2 = u2 * cosp + u2.cross(skidRotVector) * sinp;
-	owner->updir = u1 + u2;
+
+	owner->frontdir = f1 + f2;
+	owner->rightdir = r1 + r2;
+	owner->updir    = u1 + u2;
 }
+
 
 
 
