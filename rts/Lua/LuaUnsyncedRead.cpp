@@ -58,9 +58,12 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/Sound/EFX.h"
-#include "System/Sound/EFXPresets.h"
 #include "System/Sound/SoundChannels.h"
+
+#if !defined(HEADLESS) && !defined(NO_SOUND)
+	#include "System/Sound/EFX.h"
+	#include "System/Sound/EFXPresets.h"
+#endif
 
 using namespace std;
 
@@ -1465,6 +1468,9 @@ int LuaUnsyncedRead::GetSoundStreamTime(lua_State* L)
 
 int LuaUnsyncedRead::GetSoundEffectParams(lua_State* L)
 {
+#if defined(HEADLESS) || defined(NO_SOUND)
+	return 0;
+#else
 	if (!efx || !efx->sfxProperties)
 		return 0;
 
@@ -1535,6 +1541,7 @@ int LuaUnsyncedRead::GetSoundEffectParams(lua_State* L)
 	}
 
 	return 1;
+#endif //! defined(HEADLESS) || defined(NO_SOUND)
 }
 
 
