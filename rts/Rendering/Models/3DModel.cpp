@@ -18,6 +18,18 @@
 
 
 //////////////////////////////////////////////////////////////////////
+// S3DModel
+//
+
+S3DModelPiece* S3DModel::FindPiece( std::string name )
+{
+    const ModelPieceMap::const_iterator it = pieces.find(name);
+    if (it != pieces.end()) return it->second;
+    return NULL;
+}
+
+
+//////////////////////////////////////////////////////////////////////
 // S3DModelPiece
 //
 

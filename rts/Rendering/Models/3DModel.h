@@ -6,10 +6,8 @@
 #include <vector>
 #include <string>
 #include <set>
-#include "Matrix44f.h"
-
+#include <map>
 #include "System/Matrix44f.h"
-
 
 
 const int
@@ -26,6 +24,7 @@ struct LocalModel;
 struct LocalModelPiece;
 struct aiScene;
 
+typedef std::map<std::string, S3DModelPiece*> ModelPieceMap;
 
 struct S3DModelPiece {
 	S3DModelPiece(): type(-1) {
@@ -57,8 +56,10 @@ struct S3DModelPiece {
 
 
 	std::string name;
+	std::string parentName;
 	std::vector<S3DModelPiece*> childs;
 
+    S3DModel* model;
 	S3DModelPiece* parent;
 	CollisionVolume* colvol;
 
@@ -72,23 +73,32 @@ struct S3DModelPiece {
 	float3 maxs;
 	float3 offset;    // wrt. parent
 	float3 goffset;   // wrt. root
+	float3 rot;
+	float3 scale;
 };
 
 
 struct S3DModel
 {
 	S3DModel(): id(-1), type(-1), textureType(-1) {
-		numPieces = 0;
-
-		radius = 0.0f;
-		height = 0.0f;
-
-		rootPiece = NULL;
+        height = 0.0f;
+        radius = 0.0f;
+        relMidPos = float3(0.0f, 0.0f, 0.0f);
+        mins = float3(10000.0f, 10000.0f, 10000.0f);
+        maxs = float3(-10000.0f, -10000.0f, -10000.0f);
+        tex1 = "default.png";
+        tex2 = "";
+        flipTexY = false;
+        invertTexAlpha = false;
+        numPieces = 0;
+        rootPiece = NULL;
+        scene = NULL;
 	}
 
 	S3DModelPiece* GetRootPiece() { return rootPiece; }
 	void SetRootPiece(S3DModelPiece* p) { rootPiece = p; }
 	void DrawStatic() const { rootPiece->DrawStatic(); }
+	S3DModelPiece* FindPiece( std::string name );
 
 	std::string name;
 	std::string tex1;
@@ -97,10 +107,9 @@ struct S3DModel
 	int id;                 //! unsynced ID, starting with 1
 	int type;               //! MODELTYPE_*
 	int textureType;        //! FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or OBJ)
-	int flipTexY;			// Turn both textures upside down before use
-	int invertAlpha;		// Invert teamcolor alpha channel in S3O texture 1
+	bool flipTexY;			//! Turn both textures upside down before use
+	bool invertTexAlpha;	//! Invert teamcolor alpha channel in S3O texture 1
 
-	int numPieces;
 	float radius;
 	float height;
 
@@ -108,7 +117,10 @@ struct S3DModel
 	float3 maxs;
 	float3 relMidPos;
 
-	S3DModelPiece* rootPiece;
+	int numPieces;
+    S3DModelPiece* rootPiece;   //! The piece at the base of the model hierarchy
+    ModelPieceMap pieces;       //! Lookup table for pieces by name
+    const aiScene* scene;       //! Assimp scene containing all loaded model data. NULL for S30/3DO.
 };
 
 

@@ -145,9 +145,9 @@ S3DModel* CAssParser::Load(const std::string& modelFileName)
 
     S3DModel* model = new S3DModel;
     model->name = modelFileName;
-	model->type = MODELTYPE_OTHER;
+	model->type = MODELTYPE_ASS;
 	model->numPieces = 0;
-    model->scene = scene;
+	model->scene = scene;
     //model->meta = &metaTable;
 
     // Assign textures
@@ -434,8 +434,8 @@ SAssPiece* CAssParser::LoadPiece(S3DModel* model, aiNode* node, const LuaTable& 
 void CAssParser::BuildPieceHierarchy( S3DModel* model )
 {
     // Loop through all pieces and create missing hierarchy info
-    PieceMap::const_iterator end = model->pieces.end();
-    for (PieceMap::const_iterator it = model->pieces.begin(); it != end; ++it)
+    ModelPieceMap::const_iterator end = model->pieces.end();
+    for (ModelPieceMap::const_iterator it = model->pieces.begin(); it != end; ++it)
     {
         S3DModelPiece* piece = it->second;
         if (piece->name == "root") {
