@@ -43,6 +43,8 @@ LIST(APPEND engineLibraries ${sound-impl})
 
 LIST(APPEND engineLibraries ${engineCommonLibraries})
 
+INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
+
 
 ### Assemble external incude dirs
 INCLUDE_DIRECTORIES(${DEVIL_INCLUDE_DIR})
