@@ -43,12 +43,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifndef INCLUDED_AI_CSM_LOADER_H
 #define INCLUDED_AI_CSM_LOADER_H
-
-#include "BaseImporter.h"
 namespace Assimp	{
 
 // ---------------------------------------------------------------------------
-/** @brief Importer class to load MOCAPs in CharacterStudio Motion format.
+/** Importer class to load MOCAPs in CharacterStudio Motion format.
  *
  *  A very rudimentary loader for the moment. No support for the hierarchy,
  *  every marker is returned as child of root.
@@ -59,7 +57,6 @@ namespace Assimp	{
 class CSMImporter : public BaseImporter
 {
 	friend class Importer;
-
 protected:
 	/** Constructor to be privately used by Importer */
 	CSMImporter();
@@ -68,7 +65,6 @@ protected:
 	~CSMImporter();
 
 public:
-
 	// -------------------------------------------------------------------
 	bool CanRead( const std::string& pFile, IOSystem* pIOHandler, 
 		bool checkSig) const;
@@ -78,19 +74,15 @@ protected:
 	// -------------------------------------------------------------------
 	void GetExtensionList(std::set<std::string>& extensions);
 
-
 	// -------------------------------------------------------------------
 	void SetupProperties(const Importer* pImp);
-
 
 	// -------------------------------------------------------------------
 	void InternReadFile( const std::string& pFile, aiScene* pScene, 
 		IOSystem* pIOHandler);
 
 private:
-
-}; // !class CSMImporter
-
+}; // end of class CSMImporter
 } // end of namespace Assimp
-
 #endif // AI_AC3DIMPORTER_H_INC
+

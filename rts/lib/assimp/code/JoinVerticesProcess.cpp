@@ -49,6 +49,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "JoinVerticesProcess.h"
 #include "ProcessHelper.h"
 #include "Vertex.h"
+#include "TinyFormatter.h"
 
 using namespace Assimp;
 // ------------------------------------------------------------------------------------------------
@@ -126,10 +127,13 @@ int JoinVerticesProcess::ProcessMesh( aiMesh* pMesh, unsigned int meshIndex)
 	std::vector<Vertex> uniqueVertices;
 	uniqueVertices.reserve( pMesh->mNumVertices);
 
-	// For each vertex the index of the vertex it was replaced by. 
+	// For each vertex the index of the vertex it was replaced by.
+	// Since the maximal number of vertices is 2^31-1, the most significand bit can be used to mark
+	//	whether a new vertex was created for the index (true) or if it was replaced by an existing
+	//	unique vertex (false). This saves an additional std::vector<bool> and greatly enhances
+	//	branching performance.
+	BOOST_STATIC_ASSERT(AI_MAX_VERTICES == 0x7fffffff);
 	std::vector<unsigned int> replaceIndex( pMesh->mNumVertices, 0xffffffff);
-	// for each vertex whether it was replaced by an existing unique vertex (true) or a new vertex was created for it (false)
-	std::vector<bool> isVertexUnique( pMesh->mNumVertices, false);
 
 	// A little helper to find locally close vertices faster.
 	// Try to reuse the lookup table from the last step.
@@ -179,7 +183,7 @@ int JoinVerticesProcess::ProcessMesh( aiMesh* pMesh, unsigned int meshIndex)
 		Vertex v(pMesh,a);
 
 		// collect all vertices that are close enough to the given position
-		vertexFinder->FindPositions( v.position, posEpsilonSqr, verticesFound);
+		vertexFinder->FindIdenticalPositions( v.position, verticesFound);
 		unsigned int matchIndex = 0xffffffff;
 
 		// check all unique vertices close to the position if this vertex is already present among them
@@ -187,9 +191,8 @@ int JoinVerticesProcess::ProcessMesh( aiMesh* pMesh, unsigned int meshIndex)
 
 			const unsigned int vidx = verticesFound[b];
 			const unsigned int uidx = replaceIndex[ vidx];
-			if( uidx == 0xffffffff || !isVertexUnique[ vidx]) {
+			if( uidx & 0x80000000)
 				continue;
-			}
 
 			const Vertex& uv = uniqueVertices[ uidx];
 			// Position mismatch is impossible - the vertex finder already discarded all non-matching positions
@@ -238,26 +241,28 @@ int JoinVerticesProcess::ProcessMesh( aiMesh* pMesh, unsigned int meshIndex)
 		if( matchIndex != 0xffffffff)
 		{
 			// store where to found the matching unique vertex
-			replaceIndex[a] = matchIndex;
-			isVertexUnique[a] = false;
+			replaceIndex[a] = matchIndex | 0x80000000;
 		}
 		else
 		{
 			// no unique vertex matches it upto now -> so add it
 			replaceIndex[a] = (unsigned int)uniqueVertices.size();
 			uniqueVertices.push_back( v);
-			isVertexUnique[a] = true;
 		}
 	}
 
 	if (!DefaultLogger::isNullLogger() && DefaultLogger::get()->getLogSeverity() == Logger::VERBOSE)	{
-		char szBuff[128]; // should be sufficiently large in every case
-		::sprintf(szBuff,"Mesh %i | Verts in: %i out: %i | ~%.1f%%",
-			meshIndex,
-			pMesh->mNumVertices,
-			(int)uniqueVertices.size(),
-			((pMesh->mNumVertices - uniqueVertices.size()) / (float)pMesh->mNumVertices) * 100.f);
-		DefaultLogger::get()->debug(szBuff);
+		DefaultLogger::get()->debug((Formatter::format(),
+			"Mesh ",meshIndex,
+			" (",
+			(pMesh->mName.length ? pMesh->mName.data : "unnamed"),
+			") | Verts in: ",pMesh->mNumVertices,
+			" out: ",
+			uniqueVertices.size(),
+			" | ~",
+			((pMesh->mNumVertices - uniqueVertices.size()) / (float)pMesh->mNumVertices) * 100.f,
+			"%"
+		));
 	}
 
 	// replace vertex data with the unique data sets
@@ -326,7 +331,7 @@ int JoinVerticesProcess::ProcessMesh( aiMesh* pMesh, unsigned int meshIndex)
 	{
 		aiFace& face = pMesh->mFaces[a];
 		for( unsigned int b = 0; b < face.mNumIndices; b++)	{
-			face.mIndices[b] = replaceIndex[face.mIndices[b]];
+			face.mIndices[b] = replaceIndex[face.mIndices[b]] & ~0x80000000;
 		}
 	}
 
@@ -341,7 +346,7 @@ int JoinVerticesProcess::ProcessMesh( aiMesh* pMesh, unsigned int meshIndex)
 		{
 			const aiVertexWeight& ow = bone->mWeights[b];
 			// if the vertex is a unique one, translate it
-			if( isVertexUnique[ow.mVertexId])
+			if( !(replaceIndex[ow.mVertexId] & 0x80000000))
 			{
 				aiVertexWeight nw;
 				nw.mVertexId = replaceIndex[ow.mVertexId];

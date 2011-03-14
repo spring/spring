@@ -44,6 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "AssimpPCH.h"
+#include "../include/aiVersion.h"
 
 // ------------------------------------------------------------------------------------------------
 /* Uncomment this line to prevent Assimp from catching unknown exceptions.
@@ -63,180 +64,201 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "BaseProcess.h"
 #include "DefaultIOStream.h"
 #include "DefaultIOSystem.h"
+#include "DefaultProgressHandler.h"
 #include "GenericProperty.h"
 #include "ProcessHelper.h"
 #include "ScenePreprocessor.h"
 #include "MemoryIOWrapper.h"
+#include "Profiler.h"
+#include "TinyFormatter.h"
+
+using namespace Assimp::Profiling;
+using namespace Assimp::Formatter;
 
 // ------------------------------------------------------------------------------------------------
 // Importers
 // (include_new_importers_here)
 // ------------------------------------------------------------------------------------------------
-#ifndef AI_BUILD_NO_X_IMPORTER
+#ifndef ASSIMP_BUILD_NO_X_IMPORTER
 #	include "XFileImporter.h"
 #endif
-#ifndef AI_BUILD_NO_3DS_IMPORTER
+#ifndef ASSIMP_BUILD_NO_3DS_IMPORTER
 #	include "3DSLoader.h"
 #endif
-#ifndef AI_BUILD_NO_MD3_IMPORTER
+#ifndef ASSIMP_BUILD_NO_MD3_IMPORTER
 #	include "MD3Loader.h"
 #endif
-#ifndef AI_BUILD_NO_MDL_IMPORTER
+#ifndef ASSIMP_BUILD_NO_MDL_IMPORTER
 #	include "MDLLoader.h"
 #endif
-#ifndef AI_BUILD_NO_MD2_IMPORTER
+#ifndef ASSIMP_BUILD_NO_MD2_IMPORTER
 #	include "MD2Loader.h"
 #endif
-#ifndef AI_BUILD_NO_PLY_IMPORTER
+#ifndef ASSIMP_BUILD_NO_PLY_IMPORTER
 #	include "PlyLoader.h"
 #endif
-#ifndef AI_BUILD_NO_ASE_IMPORTER
+#ifndef ASSIMP_BUILD_NO_ASE_IMPORTER
 #	include "ASELoader.h"
 #endif
-#ifndef AI_BUILD_NO_OBJ_IMPORTER
+#ifndef ASSIMP_BUILD_NO_OBJ_IMPORTER
 #	include "ObjFileImporter.h"
 #endif
-#ifndef AI_BUILD_NO_HMP_IMPORTER
+#ifndef ASSIMP_BUILD_NO_HMP_IMPORTER
 #	include "HMPLoader.h"
 #endif
-#ifndef AI_BUILD_NO_SMD_IMPORTER
+#ifndef ASSIMP_BUILD_NO_SMD_IMPORTER
 #	include "SMDLoader.h"
 #endif
-#ifndef AI_BUILD_NO_MDC_IMPORTER
+#ifndef ASSIMP_BUILD_NO_MDC_IMPORTER
 #	include "MDCLoader.h"
 #endif
-#ifndef AI_BUILD_NO_MD5_IMPORTER
+#ifndef ASSIMP_BUILD_NO_MD5_IMPORTER
 #	include "MD5Loader.h"
 #endif
-#ifndef AI_BUILD_NO_STL_IMPORTER
+#ifndef ASSIMP_BUILD_NO_STL_IMPORTER
 #	include "STLLoader.h"
 #endif
-#ifndef AI_BUILD_NO_LWO_IMPORTER
+#ifndef ASSIMP_BUILD_NO_LWO_IMPORTER
 #	include "LWOLoader.h"
 #endif
-#ifndef AI_BUILD_NO_DXF_IMPORTER
+#ifndef ASSIMP_BUILD_NO_DXF_IMPORTER
 #	include "DXFLoader.h"
 #endif
-#ifndef AI_BUILD_NO_NFF_IMPORTER
+#ifndef ASSIMP_BUILD_NO_NFF_IMPORTER
 #	include "NFFLoader.h"
 #endif
-#ifndef AI_BUILD_NO_RAW_IMPORTER
+#ifndef ASSIMP_BUILD_NO_RAW_IMPORTER
 #	include "RawLoader.h"
 #endif
-#ifndef AI_BUILD_NO_OFF_IMPORTER
+#ifndef ASSIMP_BUILD_NO_OFF_IMPORTER
 #	include "OFFLoader.h"
 #endif
-#ifndef AI_BUILD_NO_AC_IMPORTER
+#ifndef ASSIMP_BUILD_NO_AC_IMPORTER
 #	include "ACLoader.h"
 #endif
-#ifndef AI_BUILD_NO_BVH_IMPORTER
+#ifndef ASSIMP_BUILD_NO_BVH_IMPORTER
 #	include "BVHLoader.h"
 #endif
-#ifndef AI_BUILD_NO_IRRMESH_IMPORTER
+#ifndef ASSIMP_BUILD_NO_IRRMESH_IMPORTER
 #	include "IRRMeshLoader.h"
 #endif
-#ifndef AI_BUILD_NO_IRR_IMPORTER
+#ifndef ASSIMP_BUILD_NO_IRR_IMPORTER
 #	include "IRRLoader.h"
 #endif
-#ifndef AI_BUILD_NO_Q3D_IMPORTER
+#ifndef ASSIMP_BUILD_NO_Q3D_IMPORTER
 #	include "Q3DLoader.h"
 #endif
-#ifndef AI_BUILD_NO_B3D_IMPORTER
+#ifndef ASSIMP_BUILD_NO_B3D_IMPORTER
 #	include "B3DImporter.h"
 #endif
-#ifndef AI_BUILD_NO_COLLADA_IMPORTER
+#ifndef ASSIMP_BUILD_NO_COLLADA_IMPORTER
 #	include "ColladaLoader.h"
 #endif
-#ifndef AI_BUILD_NO_TERRAGEN_IMPORTER
+#ifndef ASSIMP_BUILD_NO_TERRAGEN_IMPORTER
 #	include "TerragenLoader.h"
 #endif
-#ifndef AI_BUILD_NO_CSM_IMPORTER
+#ifndef ASSIMP_BUILD_NO_CSM_IMPORTER
 #	include "CSMLoader.h"
 #endif
-#ifndef AI_BUILD_NO_3D_IMPORTER
+#ifndef ASSIMP_BUILD_NO_3D_IMPORTER
 #	include "UnrealLoader.h"
 #endif
-#ifndef AI_BUILD_NO_LWS_IMPORTER
+#ifndef ASSIMP_BUILD_NO_LWS_IMPORTER
 #	include "LWSLoader.h"
 #endif
-#ifndef AI_BUILD_NO_OGRE_IMPORTER
+#ifndef ASSIMP_BUILD_NO_OGRE_IMPORTER
 #	include "OgreImporter.h"
 #endif
-#ifndef AI_BUILD_NO_MS3D_IMPORTER
+#ifndef ASSIMP_BUILD_NO_MS3D_IMPORTER
 #	include "MS3DLoader.h"
 #endif
-#ifndef AI_BUILD_NO_COB_IMPORTER
+#ifndef ASSIMP_BUILD_NO_COB_IMPORTER
 #	include "COBLoader.h"
+#endif
+#ifndef ASSIMP_BUILD_NO_BLEND_IMPORTER
+#	include "BlenderLoader.h"
+#endif
+//#ifndef ASSIMP_BUILD_NO_SWORDOFMOONLIGHT_IMPORTER
+//#	include "SomLoader.h"
+//#endif
+#ifndef ASSIMP_BUILD_NO_Q3BSP_IMPORTER
+#	include "Q3BSPFileImporter.h"
+#endif
+#ifndef ASSIMP_BUILD_NO_NDO_IMPORTER
+#	include "NDOLoader.h"
 #endif
 
 // ------------------------------------------------------------------------------------------------
 // Post processing-Steps
 // ------------------------------------------------------------------------------------------------
-#ifndef AI_BUILD_NO_CALCTANGENTS_PROCESS
+#ifndef ASSIMP_BUILD_NO_CALCTANGENTS_PROCESS
 #	include "CalcTangentsProcess.h"
 #endif
-#ifndef AI_BUILD_NO_JOINVERTICES_PROCESS
+#ifndef ASSIMP_BUILD_NO_JOINVERTICES_PROCESS
 #	include "JoinVerticesProcess.h"
 #endif
-#if !(defined AI_BUILD_NO_MAKELEFTHANDED_PROCESS && defined AI_BUILD_NO_FLIPUVS_PROCESS && defined AI_BUILD_NO_FLIPWINDINGORDER_PROCESS)
+#if !(defined ASSIMP_BUILD_NO_MAKELEFTHANDED_PROCESS && defined ASSIMP_BUILD_NO_FLIPUVS_PROCESS && defined ASSIMP_BUILD_NO_FLIPWINDINGORDER_PROCESS)
 #	include "ConvertToLHProcess.h"
 #endif
-#ifndef AI_BUILD_NO_TRIANGULATE_PROCESS
+#ifndef ASSIMP_BUILD_NO_TRIANGULATE_PROCESS
 #	include "TriangulateProcess.h"
 #endif
-#ifndef AI_BUILD_NO_GENFACENORMALS_PROCESS
+#ifndef ASSIMP_BUILD_NO_GENFACENORMALS_PROCESS
 #	include "GenFaceNormalsProcess.h"
 #endif
-#ifndef AI_BUILD_NO_GENVERTEXNORMALS_PROCESS
+#ifndef ASSIMP_BUILD_NO_GENVERTEXNORMALS_PROCESS
 #	include "GenVertexNormalsProcess.h"
 #endif
-#ifndef AI_BUILD_NO_REMOVEVC_PROCESS
+#ifndef ASSIMP_BUILD_NO_REMOVEVC_PROCESS
 #	include "RemoveVCProcess.h"
 #endif
-#ifndef AI_BUILD_NO_SPLITLARGEMESHES_PROCESS
+#ifndef ASSIMP_BUILD_NO_SPLITLARGEMESHES_PROCESS
 #	include "SplitLargeMeshes.h"
 #endif
-#ifndef AI_BUILD_NO_PRETRANSFORMVERTICES_PROCESS
+#ifndef ASSIMP_BUILD_NO_PRETRANSFORMVERTICES_PROCESS
 #	include "PretransformVertices.h"
 #endif
-#ifndef AI_BUILD_NO_LIMITBONEWEIGHTS_PROCESS
+#ifndef ASSIMP_BUILD_NO_LIMITBONEWEIGHTS_PROCESS
 #	include "LimitBoneWeightsProcess.h"
 #endif
-#ifndef AI_BUILD_NO_VALIDATEDS_PROCESS
+#ifndef ASSIMP_BUILD_NO_VALIDATEDS_PROCESS
 #	include "ValidateDataStructure.h"
 #endif
-#ifndef AI_BUILD_NO_IMPROVECACHELOCALITY_PROCESS
+#ifndef ASSIMP_BUILD_NO_IMPROVECACHELOCALITY_PROCESS
 #	include "ImproveCacheLocality.h"
 #endif
-#ifndef AI_BUILD_NO_FIXINFACINGNORMALS_PROCESS
+#ifndef ASSIMP_BUILD_NO_FIXINFACINGNORMALS_PROCESS
 #	include "FixNormalsStep.h"
 #endif
-#ifndef AI_BUILD_NO_REMOVE_REDUNDANTMATERIALS_PROCESS
+#ifndef ASSIMP_BUILD_NO_REMOVE_REDUNDANTMATERIALS_PROCESS
 #	include "RemoveRedundantMaterials.h"
 #endif
-#ifndef AI_BUILD_NO_FINDINVALIDDATA_PROCESS
+#ifndef ASSIMP_BUILD_NO_FINDINVALIDDATA_PROCESS
 #	include "FindInvalidDataProcess.h"
 #endif
-#ifndef AI_BUILD_NO_FINDDEGENERATES_PROCESS
+#ifndef ASSIMP_BUILD_NO_FINDDEGENERATES_PROCESS
 #	include "FindDegenerates.h"
 #endif
-#ifndef AI_BUILD_NO_SORTBYPTYPE_PROCESS
+#ifndef ASSIMP_BUILD_NO_SORTBYPTYPE_PROCESS
 #	include "SortByPTypeProcess.h"
 #endif
-#ifndef AI_BUILD_NO_GENUVCOORDS_PROCESS
+#ifndef ASSIMP_BUILD_NO_GENUVCOORDS_PROCESS
 #	include "ComputeUVMappingProcess.h"
 #endif
-#ifndef AI_BUILD_NO_TRANSFORMTEXCOORDS_PROCESS
+#ifndef ASSIMP_BUILD_NO_TRANSFORMTEXCOORDS_PROCESS
 #	include "TextureTransform.h"
 #endif
-#ifndef AI_BUILD_NO_FINDINSTANCES_PROCESS
+#ifndef ASSIMP_BUILD_NO_FINDINSTANCES_PROCESS
 #	include "FindInstancesProcess.h"
 #endif
-#ifndef AI_BUILD_NO_OPTIMIZEMESHES_PROCESS
+#ifndef ASSIMP_BUILD_NO_OPTIMIZEMESHES_PROCESS
 #	include "OptimizeMeshes.h"
 #endif
-#ifndef AI_BUILD_NO_OPTIMIZEGRAPH_PROCESS
+#ifndef ASSIMP_BUILD_NO_OPTIMIZEGRAPH_PROCESS
 #	include "OptimizeGraph.h"
+#endif
+#ifndef ASSIMP_BUILD_NO_SPLITBYBONECOUNT_PROCESS
+#	include "SplitByBoneCountProcess.h"
 #endif
 
 using namespace Assimp;
@@ -297,106 +319,121 @@ Importer::Importer()
 	pimpl->mIsDefaultHandler = true; 
 	pimpl->bExtraVerbose     = false; // disable extra verbose mode by default
 
+	pimpl->mProgressHandler = new DefaultProgressHandler();
+	pimpl->mIsDefaultProgressHandler = true;
+
 	// ----------------------------------------------------------------------------
 	// Add an instance of each worker class here
 	// (register_new_importers_here)
 	// ----------------------------------------------------------------------------
 	pimpl->mImporter.reserve(64);
-#if (!defined AI_BUILD_NO_X_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_X_IMPORTER)
 	pimpl->mImporter.push_back( new XFileImporter());
 #endif
-#if (!defined AI_BUILD_NO_OBJ_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_OBJ_IMPORTER)
 	pimpl->mImporter.push_back( new ObjFileImporter());
 #endif
-#if (!defined AI_BUILD_NO_3DS_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_3DS_IMPORTER)
 	pimpl->mImporter.push_back( new Discreet3DSImporter());
 #endif
-#if (!defined AI_BUILD_NO_MD3_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_MD3_IMPORTER)
 	pimpl->mImporter.push_back( new MD3Importer());
 #endif
-#if (!defined AI_BUILD_NO_MD2_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_MD2_IMPORTER)
 	pimpl->mImporter.push_back( new MD2Importer());
 #endif
-#if (!defined AI_BUILD_NO_PLY_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_PLY_IMPORTER)
 	pimpl->mImporter.push_back( new PLYImporter());
 #endif
-#if (!defined AI_BUILD_NO_MDL_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_MDL_IMPORTER)
 	pimpl->mImporter.push_back( new MDLImporter());
 #endif
-#if (!defined AI_BUILD_NO_ASE_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_ASE_IMPORTER)
 	pimpl->mImporter.push_back( new ASEImporter());
 #endif
-#if (!defined AI_BUILD_NO_HMP_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_HMP_IMPORTER)
 	pimpl->mImporter.push_back( new HMPImporter());
 #endif
-#if (!defined AI_BUILD_NO_SMD_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_SMD_IMPORTER)
 	pimpl->mImporter.push_back( new SMDImporter());
 #endif
-#if (!defined AI_BUILD_NO_MDC_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_MDC_IMPORTER)
 	pimpl->mImporter.push_back( new MDCImporter());
 #endif
-#if (!defined AI_BUILD_NO_MD5_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_MD5_IMPORTER)
 	pimpl->mImporter.push_back( new MD5Importer());
 #endif
-#if (!defined AI_BUILD_NO_STL_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_STL_IMPORTER)
 	pimpl->mImporter.push_back( new STLImporter());
 #endif
-#if (!defined AI_BUILD_NO_LWO_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_LWO_IMPORTER)
 	pimpl->mImporter.push_back( new LWOImporter());
 #endif
-#if (!defined AI_BUILD_NO_DXF_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_DXF_IMPORTER)
 	pimpl->mImporter.push_back( new DXFImporter());
 #endif
-#if (!defined AI_BUILD_NO_NFF_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_NFF_IMPORTER)
 	pimpl->mImporter.push_back( new NFFImporter());
 #endif
-#if (!defined AI_BUILD_NO_RAW_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_RAW_IMPORTER)
 	pimpl->mImporter.push_back( new RAWImporter());
 #endif
-#if (!defined AI_BUILD_NO_OFF_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_OFF_IMPORTER)
 	pimpl->mImporter.push_back( new OFFImporter());
 #endif
-#if (!defined AI_BUILD_NO_AC_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_AC_IMPORTER)
 	pimpl->mImporter.push_back( new AC3DImporter());
 #endif
-#if (!defined AI_BUILD_NO_BVH_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_BVH_IMPORTER)
 	pimpl->mImporter.push_back( new BVHLoader());
 #endif
-#if (!defined AI_BUILD_NO_IRRMESH_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_IRRMESH_IMPORTER)
 	pimpl->mImporter.push_back( new IRRMeshImporter());
 #endif
-#if (!defined AI_BUILD_NO_IRR_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_IRR_IMPORTER)
 	pimpl->mImporter.push_back( new IRRImporter());
 #endif
-#if (!defined AI_BUILD_NO_Q3D_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_Q3D_IMPORTER)
 	pimpl->mImporter.push_back( new Q3DImporter());
 #endif
-#if (!defined AI_BUILD_NO_B3D_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_B3D_IMPORTER)
 	pimpl->mImporter.push_back( new B3DImporter());
 #endif
-#if (!defined AI_BUILD_NO_COLLADA_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_COLLADA_IMPORTER)
 	pimpl->mImporter.push_back( new ColladaLoader());
 #endif
-#if (!defined AI_BUILD_NO_TERRAGEN_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_TERRAGEN_IMPORTER)
 	pimpl->mImporter.push_back( new TerragenImporter());
 #endif
-#if (!defined AI_BUILD_NO_CSM_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_CSM_IMPORTER)
 	pimpl->mImporter.push_back( new CSMImporter());
 #endif
-#if (!defined AI_BUILD_NO_3D_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_3D_IMPORTER)
 	pimpl->mImporter.push_back( new UnrealImporter());
 #endif
-#if (!defined AI_BUILD_NO_LWS_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_LWS_IMPORTER)
 	pimpl->mImporter.push_back( new LWSImporter());
 #endif
-#if (!defined AI_BUILD_NO_OGRE_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_OGRE_IMPORTER)
 	pimpl->mImporter.push_back( new Ogre::OgreImporter());
 #endif
-#if (!defined AI_BUILD_NO_MS3D_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_MS3D_IMPORTER)
 	pimpl->mImporter.push_back( new MS3DImporter());
 #endif
-#if (!defined AI_BUILD_NO_COB_IMPORTER)
+#if (!defined ASSIMP_BUILD_NO_COB_IMPORTER)
 	pimpl->mImporter.push_back( new COBImporter());
+#endif
+#if (!defined ASSIMP_BUILD_NO_BLEND_IMPORTER)
+	pimpl->mImporter.push_back( new BlenderImporter());
+#endif
+//#if (!defined ASSIMP_BUILD_NO_SWORDOFMOONLIGHT_IMPORTER)
+//	pimpl->mImporter.push_back( new SomImporter());
+//#endif
+#if (!defined ASSIMP_BUILD_NO_Q3BSP_IMPORTER)
+	pimpl->mImporter.push_back( new Q3BSPFileImporter() );
+#endif
+#if (!defined ASSIMP_BUILD_NO_NDO_IMPORTER)
+	pimpl->mImporter.push_back( new NDOImporter() );
 #endif
 
 	// ----------------------------------------------------------------------------
@@ -405,49 +442,52 @@ Importer::Importer()
 	// validated - as RegisterPPStep() does - all dependencies must be given.
 	// ----------------------------------------------------------------------------
 	pimpl->mPostProcessingSteps.reserve(25);
-#if (!defined AI_BUILD_NO_REMOVEVC_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_REMOVEVC_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new RemoveVCProcess());
 #endif
-#if (!defined AI_BUILD_NO_REMOVE_REDUNDANTMATERIALS_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_REMOVE_REDUNDANTMATERIALS_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new RemoveRedundantMatsProcess());
 #endif
-#if (!defined AI_BUILD_NO_FINDINSTANCES_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_FINDINSTANCES_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new FindInstancesProcess());
 #endif
-#if (!defined AI_BUILD_NO_OPTIMIZEGRAPH_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_OPTIMIZEGRAPH_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new OptimizeGraphProcess());
 #endif
-#if (!defined AI_BUILD_NO_OPTIMIZEMESHES_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_OPTIMIZEMESHES_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new OptimizeMeshesProcess());
 #endif
-#if (!defined AI_BUILD_NO_FINDDEGENERATES_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_FINDDEGENERATES_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new FindDegeneratesProcess());
 #endif
-#ifndef AI_BUILD_NO_GENUVCOORDS_PROCESS
+#ifndef ASSIMP_BUILD_NO_GENUVCOORDS_PROCESS
 	pimpl->mPostProcessingSteps.push_back( new ComputeUVMappingProcess());
 #endif
-#ifndef AI_BUILD_NO_TRANSFORMTEXCOORDS_PROCESS
+#ifndef ASSIMP_BUILD_NO_TRANSFORMTEXCOORDS_PROCESS
 	pimpl->mPostProcessingSteps.push_back( new TextureTransformStep());
 #endif
-#if (!defined AI_BUILD_NO_PRETRANSFORMVERTICES_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_PRETRANSFORMVERTICES_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new PretransformVertices());
 #endif
-#if (!defined AI_BUILD_NO_TRIANGULATE_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_TRIANGULATE_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new TriangulateProcess());
 #endif
-#if (!defined AI_BUILD_NO_SORTBYPTYPE_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_SORTBYPTYPE_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new SortByPTypeProcess());
 #endif
-#if (!defined AI_BUILD_NO_FINDINVALIDDATA_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_FINDINVALIDDATA_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new FindInvalidDataProcess());
 #endif
-#if (!defined AI_BUILD_NO_FIXINFACINGNORMALS_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_FIXINFACINGNORMALS_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new FixInfacingNormalsProcess());
 #endif
-#if (!defined AI_BUILD_NO_SPLITLARGEMESHES_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_SPLITBYBONECOUNT_PROCESS)
+	pimpl->mPostProcessingSteps.push_back( new SplitByBoneCountProcess());
+#endif
+#if (!defined ASSIMP_BUILD_NO_SPLITLARGEMESHES_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new SplitLargeMeshesProcess_Triangle());
 #endif
-#if (!defined AI_BUILD_NO_GENFACENORMALS_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_GENFACENORMALS_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new GenFaceNormalsProcess());
 #endif
 
@@ -456,13 +496,13 @@ Importer::Importer()
 	pimpl->mPostProcessingSteps.push_back( new ComputeSpatialSortProcess());
 	// .........................................................................
 
-#if (!defined AI_BUILD_NO_GENVERTEXNORMALS_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_GENVERTEXNORMALS_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new GenVertexNormalsProcess());
 #endif
-#if (!defined AI_BUILD_NO_CALCTANGENTS_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_CALCTANGENTS_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new CalcTangentsProcess());
 #endif
-#if (!defined AI_BUILD_NO_JOINVERTICES_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_JOINVERTICES_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new JoinVerticesProcess());
 #endif
 
@@ -470,22 +510,22 @@ Importer::Importer()
 	pimpl->mPostProcessingSteps.push_back( new DestroySpatialSortProcess());
 	// .........................................................................
 
-#if (!defined AI_BUILD_NO_SPLITLARGEMESHES_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_SPLITLARGEMESHES_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new SplitLargeMeshesProcess_Vertex());
 #endif
-#if (!defined AI_BUILD_NO_MAKELEFTHANDED_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_MAKELEFTHANDED_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new MakeLeftHandedProcess());
 #endif
-#if (!defined AI_BUILD_NO_FLIPUVS_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_FLIPUVS_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new FlipUVsProcess());
 #endif
-#if (!defined AI_BUILD_NO_FLIPWINDINGORDER_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_FLIPWINDINGORDER_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new FlipWindingOrderProcess());
 #endif
-#if (!defined AI_BUILD_NO_LIMITBONEWEIGHTS_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_LIMITBONEWEIGHTS_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new LimitBoneWeightsProcess());
 #endif
-#if (!defined AI_BUILD_NO_IMPROVECACHELOCALITY_PROCESS)
+#if (!defined ASSIMP_BUILD_NO_IMPROVECACHELOCALITY_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new ImproveCacheLocalityProcess());
 #endif
 
@@ -511,8 +551,9 @@ Importer::~Importer()
 	for( unsigned int a = 0; a < pimpl->mPostProcessingSteps.size(); a++)
 		delete pimpl->mPostProcessingSteps[a];
 
-	// Delete the assigned IO handler
+	// Delete the assigned IO and progress handler
 	delete pimpl->mIOHandler;
+	delete pimpl->mProgressHandler;
 
 	// Kill imported scene. Destructors should do that recursivly
 	delete pimpl->mScene;
@@ -593,7 +634,9 @@ aiReturn Importer::UnregisterLoader(BaseImporter* pImp)
 	}
 
 	ASSIMP_BEGIN_EXCEPTION_REGION();
-	std::vector<BaseImporter*>::iterator it = std::find(pimpl->mImporter.begin(),pimpl->mImporter.end(),pImp);
+	std::vector<BaseImporter*>::iterator it = std::find(pimpl->mImporter.begin(),
+		pimpl->mImporter.end(),pImp);
+
 	if (it != pimpl->mImporter.end())	{
 		pimpl->mImporter.erase(it);
 
@@ -618,7 +661,9 @@ aiReturn Importer::UnregisterPPStep(BaseProcess* pImp)
 	}
 
 	ASSIMP_BEGIN_EXCEPTION_REGION();
-	std::vector<BaseProcess*>::iterator it = std::find(pimpl->mPostProcessingSteps.begin(),pimpl->mPostProcessingSteps.end(),pImp);
+	std::vector<BaseProcess*>::iterator it = std::find(pimpl->mPostProcessingSteps.begin(),
+		pimpl->mPostProcessingSteps.end(),pImp);
+
 	if (it != pimpl->mPostProcessingSteps.end())	{
 		pimpl->mPostProcessingSteps.erase(it);
 		DefaultLogger::get()->info("Unregistering custom post-processing step");
@@ -653,21 +698,57 @@ void Importer::SetIOHandler( IOSystem* pIOHandler)
 
 // ------------------------------------------------------------------------------------------------
 // Get the currently set IO handler
-IOSystem* Importer::GetIOHandler()
+IOSystem* Importer::GetIOHandler() const
 {
 	return pimpl->mIOHandler;
 }
 
 // ------------------------------------------------------------------------------------------------
 // Check whether a custom IO handler is currently set
-bool Importer::IsDefaultIOHandler()
+bool Importer::IsDefaultIOHandler() const
 {
 	return pimpl->mIsDefaultHandler;
 }
 
 // ------------------------------------------------------------------------------------------------
+// Supplies a custom progress handler to get regular callbacks during importing
+void Importer::SetProgressHandler ( ProgressHandler* pHandler )
+{
+	ASSIMP_BEGIN_EXCEPTION_REGION();
+	// If the new handler is zero, allocate a default implementation.
+	if (!pHandler)
+	{
+		// Release pointer in the possession of the caller
+		pimpl->mProgressHandler = new DefaultProgressHandler();
+		pimpl->mIsDefaultProgressHandler = true;
+	}
+	// Otherwise register the custom handler
+	else if (pimpl->mProgressHandler != pHandler)
+	{
+		delete pimpl->mProgressHandler;
+		pimpl->mProgressHandler = pHandler;
+		pimpl->mIsDefaultProgressHandler = false;
+	}
+	ASSIMP_END_EXCEPTION_REGION(void);
+}
+
+// ------------------------------------------------------------------------------------------------
+// Get the currently set progress handler
+ProgressHandler* Importer::GetProgressHandler() const
+{
+	return pimpl->mProgressHandler;
+}
+
+// ------------------------------------------------------------------------------------------------
+// Check whether a custom progress handler is currently set
+bool Importer::IsDefaultProgressHandler() const
+{
+	return pimpl->mIsDefaultProgressHandler;
+}
+
+// ------------------------------------------------------------------------------------------------
 // Validate post process step flags 
-bool _ValidateFlags(unsigned int pFlags)
+bool _ValidateFlags(unsigned int pFlags) 
 {
 	if (pFlags & aiProcess_GenSmoothNormals && pFlags & aiProcess_GenNormals)	{
 		DefaultLogger::get()->error("#aiProcess_GenSmoothNormals and #aiProcess_GenNormals are incompatible");
@@ -730,7 +811,7 @@ aiScene* Importer::GetOrphanedScene()
 
 // ------------------------------------------------------------------------------------------------
 // Validate post-processing flags
-bool Importer::ValidateFlags(unsigned int pFlags)
+bool Importer::ValidateFlags(unsigned int pFlags) const
 {
 	ASSIMP_BEGIN_EXCEPTION_REGION();
 	// run basic checks for mutually exclusive flags
@@ -739,9 +820,10 @@ bool Importer::ValidateFlags(unsigned int pFlags)
 	}
 
 	// ValidateDS does not anymore occur in the pp list, it plays an awesome extra role ...
-#ifdef AI_BUILD_NO_VALIDATEDS_PROCESS
-	if (pFlags & aiProcess_ValidateDataStructure)
+#ifdef ASSIMP_BUILD_NO_VALIDATEDS_PROCESS
+	if (pFlags & aiProcess_ValidateDataStructure) {
 		return false;
+	}
 #endif
 	pFlags &= ~aiProcess_ValidateDataStructure;
 
@@ -759,8 +841,9 @@ bool Importer::ValidateFlags(unsigned int pFlags)
 					break;
 				}
 			}
-			if (!have)
+			if (!have) {
 				return false;
+			}
 		}
 	}
 	ASSIMP_END_EXCEPTION_REGION(bool);
@@ -801,7 +884,59 @@ const aiScene* Importer::ReadFileFromMemory( const void* pBuffer,
 }
 
 // ------------------------------------------------------------------------------------------------
-// Reads the given file and returns its contents if successful. 
+void WriteLogOpening(const std::string& file)
+{
+	Logger* l = DefaultLogger::get();
+	if (!l) {
+		return;
+	}
+	l->info("Load " + file);
+
+	// print a full version dump. This is nice because we don't
+	// need to ask the authors of incoming bug reports for
+	// the library version they're using - a log dump is
+	// sufficient.
+	const unsigned int flags = aiGetCompileFlags();
+	l->debug(format()
+		<< "Assimp "
+		<< aiGetVersionMajor() 
+		<< "." 
+		<< aiGetVersionMinor() 
+		<< "." 
+		<< aiGetVersionRevision()
+
+#if defined(ASSIMP_BUILD_X86_32BIT_ARCHITECTURE)
+		<< " x86"
+#elif defined(ASSIMP_BUILD_X86_64BIT_ARCHITECTURE)
+		<< " amd64"
+#elif defined(ASSIMP_BUILD_IA_64BIT_ARCHITECTURE)
+		<< " itanium"
+#elif defined(ASSIMP_BUILD_PPC_32BIT_ARCHITECTURE)
+		<< " ppc32"
+#else
+#	error unknown architecture
+#endif
+
+#if defined(_MSC_VER)
+		<< " msvc"
+#elif defined(__GNUC__)
+		<< " gcc"
+#else
+#	error unknown compiler
+#endif
+
+#ifndef NDEBUG
+		<< " debug"
+#endif
+
+		<< (flags & ASSIMP_CFLAGS_NOBOOST ? " noboost" : "")
+		<< (flags & ASSIMP_CFLAGS_SHARED  ? " shared" : "")
+		<< (flags & ASSIMP_CFLAGS_SINGLETHREADED  ? " singlethreaded" : "")
+		);
+}
+
+// ------------------------------------------------------------------------------------------------
+// Reads the given file and returns its contents if successful.
 const aiScene* Importer::ReadFile( const char* _pFile, unsigned int pFlags)
 {
 	ASSIMP_BEGIN_EXCEPTION_REGION();
@@ -813,24 +948,31 @@ const aiScene* Importer::ReadFile( const char* _pFile, unsigned int pFlags)
 	// ImportErrorException's are throw by ourselves and caught elsewhere.
 	//-----------------------------------------------------------------------
 
+	WriteLogOpening(pFile);
+
 #ifdef ASSIMP_CATCH_GLOBAL_EXCEPTIONS
 	try
 #endif // ! ASSIMP_CATCH_GLOBAL_EXCEPTIONS
 	{
 		// Check whether this Importer instance has already loaded
 		// a scene. In this case we need to delete the old one
-		if (pimpl->mScene)
-		{
-			DefaultLogger::get()->debug("Deleting previous scene");
+		if (pimpl->mScene)	{
+
+			DefaultLogger::get()->debug("(Deleting previous scene)");
 			FreeScene();
 		}
 
 		// First check if the file is accessable at all
-		if( !pimpl->mIOHandler->Exists( pFile))
-		{
+		if( !pimpl->mIOHandler->Exists( pFile))	{
+
 			pimpl->mErrorString = "Unable to open file \"" + pFile + "\".";
 			DefaultLogger::get()->error(pimpl->mErrorString);
 			return NULL;
+		}
+
+		boost::scoped_ptr<Profiler> profiler(GetPropertyInteger(AI_CONFIG_GLOB_MEASURE_TIME,0)?new Profiler():NULL);
+		if (profiler) {
+			profiler->BeginRegion("total");
 		}
 
 		// Find an worker class which can handle the file
@@ -843,10 +985,9 @@ const aiScene* Importer::ReadFile( const char* _pFile, unsigned int pFlags)
 			}
 		}
 
-		if (!imp)
-		{
+		if (!imp)	{
 			// not so bad yet ... try format auto detection.
-			std::string::size_type s = pFile.find_last_of('.');
+			const std::string::size_type s = pFile.find_last_of('.');
 			if (s != std::string::npos) {
 				DefaultLogger::get()->info("File extension now known, trying signature-based detection");
 				for( unsigned int a = 0; a < pimpl->mImporter.size(); a++)	{
@@ -867,13 +1008,23 @@ const aiScene* Importer::ReadFile( const char* _pFile, unsigned int pFlags)
 
 		// Dispatch the reading to the worker class for this format
 		DefaultLogger::get()->info("Found a matching importer for this file format");
-		imp->SetupProperties( this );
-		pimpl->mScene = imp->ReadFile( pFile, pimpl->mIOHandler);
+		pimpl->mProgressHandler->Update();
+
+		if (profiler) {
+			profiler->BeginRegion("import");
+		}
+
+		pimpl->mScene = imp->ReadFile( this, pFile, pimpl->mIOHandler);
+		pimpl->mProgressHandler->Update();
+
+		if (profiler) {
+			profiler->EndRegion("import");
+		}
 
 		// If successful, apply all active post processing steps to the imported data
 		if( pimpl->mScene)	{
 
-#ifndef AI_BUILD_NO_VALIDATEDS_PROCESS
+#ifndef ASSIMP_BUILD_NO_VALIDATEDS_PROCESS
 			// The ValidateDS process is an exception. It is executed first, even before ScenePreprocessor is called.
 			if (pFlags & aiProcess_ValidateDataStructure)
 			{
@@ -886,8 +1037,17 @@ const aiScene* Importer::ReadFile( const char* _pFile, unsigned int pFlags)
 #endif // no validation
 
 			// Preprocess the scene and prepare it for post-processing 
+			if (profiler) {
+				profiler->BeginRegion("preprocess");
+			}
+
 			ScenePreprocessor pre(pimpl->mScene);
 			pre.ProcessScene();
+
+			pimpl->mProgressHandler->Update();
+			if (profiler) {
+				profiler->EndRegion("preprocess");
+			}
 
 			// Ensure that the validation process won't be called twice
 			ApplyPostProcessing(pFlags & (~aiProcess_ValidateDataStructure));
@@ -899,6 +1059,10 @@ const aiScene* Importer::ReadFile( const char* _pFile, unsigned int pFlags)
 
 		// clear any data allocated by post-process steps
 		pimpl->mPPShared->Clean();
+
+		if (profiler) {
+			profiler->EndRegion("total");
+		}
 	}
 #ifdef ASSIMP_CATCH_GLOBAL_EXCEPTIONS
 	catch (std::exception &e)
@@ -920,6 +1084,7 @@ const aiScene* Importer::ReadFile( const char* _pFile, unsigned int pFlags)
 	return pimpl->mScene;
 }
 
+
 // ------------------------------------------------------------------------------------------------
 // Apply post-processing to the currently bound scene
 const aiScene* Importer::ApplyPostProcessing(unsigned int pFlags)
@@ -939,7 +1104,7 @@ const aiScene* Importer::ApplyPostProcessing(unsigned int pFlags)
 	ai_assert(_ValidateFlags(pFlags));
 	DefaultLogger::get()->info("Entering post processing pipeline");
 
-#ifndef AI_BUILD_NO_VALIDATEDS_PROCESS
+#ifndef ASSIMP_BUILD_NO_VALIDATEDS_PROCESS
 	// The ValidateDS process plays an exceptional role. It isn't contained in the global
 	// list of post-processing steps, so we need to call it manually.
 	if (pFlags & aiProcess_ValidateDataStructure)
@@ -954,29 +1119,40 @@ const aiScene* Importer::ApplyPostProcessing(unsigned int pFlags)
 #ifdef _DEBUG
 	if (pimpl->bExtraVerbose)
 	{
-#ifndef AI_BUILD_NO_VALIDATEDS_PROCESS
+#ifndef ASSIMP_BUILD_NO_VALIDATEDS_PROCESS
 		DefaultLogger::get()->error("Verbose Import is not available due to build settings");
 #endif  // no validation
 		pFlags |= aiProcess_ValidateDataStructure;
 	}
 #else
-	if (pimpl->bExtraVerbose)
+	if (pimpl->bExtraVerbose) {
 		DefaultLogger::get()->warn("Not a debug build, ignoring extra verbose setting");
+	}
 #endif // ! DEBUG
+
+	boost::scoped_ptr<Profiler> profiler(GetPropertyInteger(AI_CONFIG_GLOB_MEASURE_TIME,0)?new Profiler():NULL);
 	for( unsigned int a = 0; a < pimpl->mPostProcessingSteps.size(); a++)	{
 
 		BaseProcess* process = pimpl->mPostProcessingSteps[a];
 		if( process->IsActive( pFlags))	{
 
-			process->SetupProperties( this );
+			if (profiler) {
+				profiler->BeginRegion("postprocess");
+			}
+
 			process->ExecuteOnScene	( this );
+			pimpl->mProgressHandler->Update();
+
+			if (profiler) {
+				profiler->EndRegion("postprocess");
+			}
 		}
 		if( !pimpl->mScene) {
 			break; 
 		}
 #ifdef _DEBUG
 
-#ifndef AI_BUILD_NO_VALIDATEDS_PROCESS
+#ifndef ASSIMP_BUILD_NO_VALIDATEDS_PROCESS
 		continue;
 #endif  // no validation
 
@@ -1004,14 +1180,14 @@ const aiScene* Importer::ApplyPostProcessing(unsigned int pFlags)
 
 // ------------------------------------------------------------------------------------------------
 // Helper function to check whether an extension is supported by ASSIMP
-bool Importer::IsExtensionSupported(const char* szExtension)
+bool Importer::IsExtensionSupported(const char* szExtension) const
 {
 	return NULL != FindLoader(szExtension);
 }
 
 // ------------------------------------------------------------------------------------------------
 // Find a loader plugin for a given file extension
-BaseImporter* Importer::FindLoader (const char* szExtension)
+BaseImporter* Importer::FindLoader (const char* szExtension) const
 {
 	ai_assert(szExtension);
 	ASSIMP_BEGIN_EXCEPTION_REGION();
@@ -1020,8 +1196,10 @@ BaseImporter* Importer::FindLoader (const char* szExtension)
 	for(;*szExtension == '*' || *szExtension == '.'; ++szExtension);
 
 	std::string ext(szExtension);
-	if (ext.empty())
+	if (ext.empty()) {
 		return NULL;
+	}
+	std::transform(ext.begin(),ext.end(), ext.begin(), tolower);
 
 	std::set<std::string> str;
 	for (std::vector<BaseImporter*>::const_iterator i =  pimpl->mImporter.begin();i != pimpl->mImporter.end();++i)	{
@@ -1040,7 +1218,7 @@ BaseImporter* Importer::FindLoader (const char* szExtension)
 
 // ------------------------------------------------------------------------------------------------
 // Helper function to build a list of all file extensions supported by ASSIMP
-void Importer::GetExtensionList(aiString& szOut)
+void Importer::GetExtensionList(aiString& szOut) const
 {
 	ASSIMP_BEGIN_EXCEPTION_REGION();
 	std::set<std::string> str;
@@ -1085,18 +1263,6 @@ void Importer::SetPropertyFloat(const char* szName, float iValue,
 void Importer::SetPropertyString(const char* szName, const std::string& value, 
 	bool* bWasExisting /*= NULL*/)
 {
-	try {
-		std::cout << "";
-	}
-	catch (...) {
-		try {
-			throw;
-		}
-		catch(std::exception&) {
-			return;
-		}
-	}
-
 	ASSIMP_BEGIN_EXCEPTION_REGION();
 		SetGenericProperty<std::string>(pimpl->mStringProperties, szName,value,bWasExisting);	
 	ASSIMP_END_EXCEPTION_REGION(void);

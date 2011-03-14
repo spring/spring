@@ -58,53 +58,55 @@ namespace Assimp	{
  * to have a small replacement function here. No need to use a full sprintf()
  * if we just want to print a number ...
  * @param out Output buffer
- * @param max Maximum number of characters to be written, including '\0'
+ * @param max Maximum number of characters to be written, including '\0'.
+ *   This parameter may not be 0.
  * @param number Number to be written
- * @return Number of bytes written. Including the terminal zero.
+ * @return Length of the output string, excluding the '\0'
  */
 inline unsigned int ASSIMP_itoa10( char* out, unsigned int max, int32_t number)
 {
 	ai_assert(NULL != out);
 
-	static const char lookup[] = {'0','1','2','3','4','5','6','7','8','9'};
-
 	// write the unary minus to indicate we have a negative number
 	unsigned int written = 1u;
-	if (number < 0 && written < max)
-	{
+	if (number < 0 && written < max)	{
 		*out++ = '-';
 		++written;
+		number = -number;
 	}
 
 	// We begin with the largest number that is not zero. 
 	int32_t cur = 1000000000; // 2147483648
 	bool mustPrint = false;
-	while (cur > 0 && written <= max)
-	{
-		unsigned int digit = number / cur;
-		if (digit > 0 || mustPrint || 1 == cur)
-		{
-			// print all future zero's from now
+	while (written < max)	{
+
+		const unsigned int digit = number / cur;
+		if (mustPrint || digit > 0 || 1 == cur)	{
+			// print all future zeroes from now
 			mustPrint = true;	
-			*out++ = lookup[digit];
+
+			*out++ = '0'+digit;
 
 			++written;
 			number -= digit*cur;
+			if (1 == cur) {
+				break;
+			}
 		}
 		cur /= 10;
 	}
 
 	// append a terminal zero
 	*out++ = '\0';
-	return written;
+	return written-1;
 }
 
 // -------------------------------------------------------------------------------
 /** @brief itoa with a fixed base 10 (Secure template overload)
- *  The compiler should choose this function if he is able to determine the
+ *  The compiler should choose this function if he or she is able to determine the
  *  size of the array automatically.
  */
-template <unsigned int length>
+template <size_t length>
 inline unsigned int ASSIMP_itoa10( char(& out)[length], int32_t number)
 {
 	return ASSIMP_itoa10(out,length,number);
@@ -128,20 +130,17 @@ inline int ASSIMP_stricmp(const char *s1, const char *s2)
 #if (defined _MSC_VER)
 
 	return ::_stricmp(s1,s2);
-
 #elif defined( __GNUC__ )
-
+	
 	return ::strcasecmp(s1,s2);
-
 #else
+	
 	register char c1, c2;
-	do 
-	{
+	do	{
 		c1 = tolower(*s1++);
 		c2 = tolower(*s2++);
 	} 
 	while ( c1 && (c1 == c2) );
-
 	return c1 - c2;
 #endif
 }

@@ -52,6 +52,7 @@ using namespace Assimp;
 // ------------------------------------------------------------------------------------------------
 // Constructor to be privately used by Importer
 BaseImporter::BaseImporter()
+: progress()
 {
 	// nothing to do here
 }
@@ -63,34 +64,21 @@ BaseImporter::~BaseImporter()
 	// nothing to do here
 }
 
-template <typename T>
-struct tinyguard
-{
-	tinyguard(T* obj) : obj(obj), mdismiss() {}
-	~tinyguard () throw() {if (!mdismiss) {delete obj;} obj = NULL;} 
-
-	void dismiss() {
-		mdismiss=true;
-	}
-
-	operator T*() {
-		return obj;
-	}
-
-private:
-	T* obj;
-	bool mdismiss;
-};
-
 // ------------------------------------------------------------------------------------------------
 // Imports the given file and returns the imported data.
-aiScene* BaseImporter::ReadFile( const std::string& pFile, IOSystem* pIOHandler)
+aiScene* BaseImporter::ReadFile(const Importer* pImp, const std::string& pFile, IOSystem* pIOHandler)
 {
-	// Construct a file system filter to improve our success ratio reading external files
+	progress = pImp->GetProgressHandler();
+	ai_assert(progress);
+
+	// Gather configuration properties for this run
+	SetupProperties( pImp );
+
+	// Construct a file system filter to improve our success ratio at reading external files
 	FileSystemFilter filter(pFile,pIOHandler);
 
 	// create a scene object to hold the data
-	tinyguard<aiScene> sc(new aiScene());
+	ScopeGuard<aiScene> sc(new aiScene());
 
 	// dispatch importing
 	try
@@ -132,8 +120,9 @@ void BaseImporter::SetupProperties(const Importer* pImp)
 		boost::scoped_array<char> _buffer (new char[searchBytes+1 /* for the '\0' */]);
 		char* buffer = _buffer.get();
 
-		unsigned int read = (unsigned int)pStream->Read(buffer,1,searchBytes);
-		if (!read)return false;
+		const unsigned int read = pStream->Read(buffer,1,searchBytes);
+		if (!read)
+			return false;
 
 		for (unsigned int i = 0; i < read;++i)
 			buffer[i] = ::tolower(buffer[i]);
