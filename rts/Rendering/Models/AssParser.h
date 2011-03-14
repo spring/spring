@@ -7,6 +7,7 @@
 
 struct aiNode;
 struct aiScene;
+class LuaTable;
 
 struct SAssVertex {
 	float3 pos;
@@ -37,10 +38,14 @@ class CAssParser: public IModelParser
 {
 public:
 	S3DModel* Load(const std::string& modelFileName); ///< Load a model
-	void Draw( const S3DModelPiece* o) const; ///< Build displaylist for loaded model
+	void Draw(const S3DModelPiece* o) const; ///< Build displaylist for loaded model
 
 private:
-	SAssPiece* LoadPiece(aiNode* node, S3DModel* model);
+	SAssPiece* LoadPiece(S3DModel* model, aiNode* node, const LuaTable& metaTable);
+	void BuildPieceHierarchy(S3DModel* model);
+    void CalculateRadius( S3DModel* model );
+    void CalculateHeight( S3DModel* model );
+    void CalculateMinMax( S3DModelPiece* piece );
 };
 
 #endif /* ASSPARSER_H */
