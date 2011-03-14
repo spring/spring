@@ -33,7 +33,6 @@ SET(USE_GML_DEBUG FALSE CACHE BOOL "Use GML call debugging?")
 
 ### Assemble common incude dirs
 INCLUDE_DIRECTORIES(BEFORE lib/lua/include)
-INCLUDE_DIRECTORIES(BEFORE lib/assimp/include)
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/AL)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/System/)
@@ -47,13 +46,6 @@ if    (NO_SOUND)
 endif (NO_SOUND)
 
 LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY})
-
-SET(ASSIMP_DIR lib/assimp)
-INCLUDE_DIRECTORIES(${ASSIMP_DIR}/include)
-#LINK_DIRECTORIES(${ASSIMP_DIR}/lib)
-LIST(APPEND engineCommonLibraries assimp)
-
-INCLUDE_DIRECTORIES(lib/streflop)
 
 ### Find include directories and add platform specific libraries
 LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY})
