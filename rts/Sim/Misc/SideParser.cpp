@@ -14,7 +14,10 @@
 #include "Util.h"
 
 
+
 SideParser sideParser;
+
+const std::string SideParser::emptyStr = "";
 
 
 /******************************************************************************/
