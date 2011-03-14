@@ -253,7 +253,7 @@ void CLogOutput::InitializeSubsystems()
 #else
 #  ifdef DEBUG
 	// unitsync logging in debug mode always on
-	string subsystems = ",unitsync,";
+	string subsystems = ",unitsync,archivescanner";
 #  else
 	string subsystems = ",";
 #  endif
