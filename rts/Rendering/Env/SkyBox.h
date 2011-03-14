@@ -6,16 +6,15 @@
 #include <string>
 #include "BaseSky.h"
 
-class CSkyBox : public CBaseSky
+class CSkyBox : public IBaseSky
 {
 public:
 	CSkyBox(const std::string&);
-	~CSkyBox(void);
+	~CSkyBox();
 
 	void Draw();
 	void Update() {}
 	void UpdateSunDir() {}
-	void UpdateSunFlare() {}
 	void UpdateSkyTexture() {}
 	void DrawSun() {}
 

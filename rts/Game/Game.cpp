@@ -525,7 +525,7 @@ void CGame::LoadRendering()
 {
 	// rendering components
 	loadscreen->SetLoadMessage("Creating Sky");
-	sky = CBaseSky::GetSky();
+	sky = IBaseSky::GetSky();
 
 	loadscreen->SetLoadMessage("Creating ShadowHandler & DecalHandler");
 	cubeMapHandler = new CubeMapHandler();
