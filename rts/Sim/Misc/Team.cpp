@@ -27,56 +27,52 @@
 
 CR_BIND(CTeam,);
 CR_REG_METADATA(CTeam, (
-// from CTeamBase
-				CR_MEMBER(leader),
-				CR_MEMBER(color),
-				CR_MEMBER(incomeMultiplier),
-				CR_MEMBER(side),
-				CR_MEMBER(startPos),
-				CR_MEMBER(teamStartNum),
-				CR_MEMBER(teamAllyteam),
-//				CR_MEMBER(customValues),
-// from CTeam
-				CR_MEMBER(teamNum),
-				CR_MEMBER(isDead),
-				CR_MEMBER(gaia),
-				CR_MEMBER(origColor),
-				CR_MEMBER(units),
-				CR_MEMBER(metal),
-				CR_MEMBER(energy),
-				CR_MEMBER(metalPull),
-				CR_MEMBER(prevMetalPull),
-				CR_MEMBER(metalIncome),
-				CR_MEMBER(prevMetalIncome),
-				CR_MEMBER(metalExpense),
-				CR_MEMBER(prevMetalExpense),
-				CR_MEMBER(metalUpkeep),
-				CR_MEMBER(prevMetalUpkeep),
-				CR_MEMBER(energyPull),
-				CR_MEMBER(prevEnergyPull),
-				CR_MEMBER(energyIncome),
-				CR_MEMBER(prevEnergyIncome),
-				CR_MEMBER(energyExpense),
-				CR_MEMBER(prevEnergyExpense),
-				CR_MEMBER(energyUpkeep),
-				CR_MEMBER(prevEnergyUpkeep),
-				CR_MEMBER(metalStorage),
-				CR_MEMBER(energyStorage),
-				CR_MEMBER(metalShare),
-				CR_MEMBER(energyShare),
-				CR_MEMBER(delayedMetalShare),
-				CR_MEMBER(delayedEnergyShare),
-				CR_MEMBER(metalSent),
-				CR_MEMBER(metalReceived),
-				CR_MEMBER(energySent),
-				CR_MEMBER(energyReceived),
-				//CR_MEMBER(currentStats),
-				CR_MEMBER(nextHistoryEntry),
-				//CR_MEMBER(statHistory),
-				CR_MEMBER(modParams),
-				CR_MEMBER(modParamsMap),
-				CR_RESERVED(64)
-				));
+	// from CTeamBase
+	CR_MEMBER(leader),
+	CR_MEMBER(color),
+	CR_MEMBER(incomeMultiplier),
+	CR_MEMBER(side),
+	CR_MEMBER(startPos),
+	CR_MEMBER(teamStartNum),
+	CR_MEMBER(teamAllyteam),
+	// CR_MEMBER(customValues),
+	// from CTeam
+	CR_MEMBER(teamNum),
+	CR_MEMBER(isDead),
+	CR_MEMBER(gaia),
+	CR_MEMBER(origColor),
+	CR_MEMBER(units),
+	CR_MEMBER(metal),
+	CR_MEMBER(energy),
+	CR_MEMBER(metalPull),
+	CR_MEMBER(prevMetalPull),
+	CR_MEMBER(metalIncome),
+	CR_MEMBER(prevMetalIncome),
+	CR_MEMBER(metalExpense),
+	CR_MEMBER(prevMetalExpense),
+	CR_MEMBER(energyPull),
+	CR_MEMBER(prevEnergyPull),
+	CR_MEMBER(energyIncome),
+	CR_MEMBER(prevEnergyIncome),
+	CR_MEMBER(energyExpense),
+	CR_MEMBER(prevEnergyExpense),
+	CR_MEMBER(metalStorage),
+	CR_MEMBER(energyStorage),
+	CR_MEMBER(metalShare),
+	CR_MEMBER(energyShare),
+	CR_MEMBER(delayedMetalShare),
+	CR_MEMBER(delayedEnergyShare),
+	CR_MEMBER(metalSent),
+	CR_MEMBER(metalReceived),
+	CR_MEMBER(energySent),
+	CR_MEMBER(energyReceived),
+	//CR_MEMBER(currentStats),
+	CR_MEMBER(nextHistoryEntry),
+	//CR_MEMBER(statHistory),
+	CR_MEMBER(modParams),
+	CR_MEMBER(modParamsMap),
+	CR_RESERVED(64)
+));
 
 
 //////////////////////////////////////////////////////////////////////
@@ -92,11 +88,9 @@ CTeam::CTeam() :
 	metalPull(0.0f),     prevMetalPull(0.0f),
 	metalIncome(0.0f),   prevMetalIncome(0.0f),
 	metalExpense(0.0f),  prevMetalExpense(0.0f),
-	metalUpkeep(0.0f),   prevMetalUpkeep(0.0f),
 	energyPull(0.0f),    prevEnergyPull(0.0f),
 	energyIncome(0.0f),  prevEnergyIncome(0.0f),
 	energyExpense(0.0f), prevEnergyExpense(0.0f),
-	energyUpkeep(0.0f),  prevEnergyUpkeep(0.0f),
 	metalStorage(1000000),
 	energyStorage(1000000),
 	metalShare(0.99f),
@@ -120,55 +114,27 @@ CTeam::CTeam() :
 }
 
 
-CTeam::~CTeam()
-{
-}
-
 
 bool CTeam::UseMetal(float amount)
-{
-	if ((metal - (prevMetalUpkeep * 10)) >= amount) {
-		metal -= amount;
-		metalExpense += amount;
-		return true;
-	}
-	return false;
-}
-
-
-bool CTeam::UseEnergy(float amount)
-{
-	if ((energy - (prevEnergyUpkeep * 10)) >= amount) {
-		energy -= amount;
-		energyExpense += amount;
-		return true;
-	}
-	return false;
-}
-
-
-bool CTeam::UseMetalUpkeep(float amount)
 {
 	if (metal >= amount) {
 		metal -= amount;
 		metalExpense += amount;
-		metalUpkeep += amount;
 		return true;
 	}
 	return false;
 }
 
-
-bool CTeam::UseEnergyUpkeep(float amount)
+bool CTeam::UseEnergy(float amount)
 {
 	if (energy >= amount) {
 		energy -= amount;
 		energyExpense += amount;
-		energyUpkeep += amount;
 		return true;
 	}
 	return false;
 }
+
 
 
 void CTeam::AddMetal(float amount, bool useIncomeMultiplier)
@@ -177,11 +143,10 @@ void CTeam::AddMetal(float amount, bool useIncomeMultiplier)
 	metal += amount;
 	metalIncome += amount;
 	if (metal > metalStorage) {
-		delayedMetalShare += metal - metalStorage;
+		delayedMetalShare += (metal - metalStorage);
 		metal = metalStorage;
 	}
 }
-
 
 void CTeam::AddEnergy(float amount, bool useIncomeMultiplier)
 {
@@ -189,10 +154,12 @@ void CTeam::AddEnergy(float amount, bool useIncomeMultiplier)
 	energy += amount;
 	energyIncome += amount;
 	if (energy > energyStorage) {
-		delayedEnergyShare += energy - energyStorage;
+		delayedEnergyShare += (energy - energyStorage);
 		energy = energyStorage;
 	}
 }
+
+
 
 void CTeam::GiveEverythingTo(const unsigned toTeam)
 {
@@ -253,10 +220,6 @@ void CTeam::Died()
 	eventHandler.TeamDied(teamNum);
 }
 
-void CTeam::StartposMessage(const float3& pos)
-{
-	startPos = pos;
-}
 
 CTeam& CTeam::operator=(const TeamBase& base)
 {
@@ -264,43 +227,36 @@ CTeam& CTeam::operator=(const TeamBase& base)
 	return *this;
 }
 
-void CTeam::ResetFrameVariables()
+
+
+void CTeam::ResetResourceState()
 {
-	prevMetalPull     = metalPull;
-	prevMetalIncome   = metalIncome;
-	prevMetalExpense  = metalExpense;
-	prevMetalUpkeep   = metalUpkeep;
-	prevEnergyPull    = energyPull;
-	prevEnergyIncome  = energyIncome;
-	prevEnergyExpense = energyExpense;
-	prevEnergyUpkeep  = energyUpkeep;
+	// reset all state variables that were
+	// potentially modified during the last
+	// <TEAM_SLOWUPDATE_RATE> frames
+	prevMetalPull     = metalPull;     metalPull     = 0.0f;
+	prevMetalIncome   = metalIncome;   metalIncome   = 0.0f;
+	prevMetalExpense  = metalExpense;  metalExpense  = 0.0f;
+	prevEnergyPull    = energyPull;    energyPull    = 0.0f;
+	prevEnergyIncome  = energyIncome;  energyIncome  = 0.0f;
+	prevEnergyExpense = energyExpense; energyExpense = 0.0f;
 
-	metalPull = 0;
-	metalIncome = 0;
-	metalExpense = 0;
-	metalUpkeep = 0;
-	energyPull = 0;
-	energyIncome = 0;
-	energyExpense = 0;
-	energyUpkeep = 0;
-
-	metalSent = 0;
-	energySent = 0;
-	metalReceived = 0;
-	energyReceived = 0;
+	// reset the sharing accumulators
+	metalSent = 0.0f; metalReceived = 0.0f;
+	energySent = 0.0f; energyReceived = 0.0f;
 }
 
 void CTeam::SlowUpdate()
 {
-	currentStats->metalProduced  += prevMetalIncome;
-	currentStats->energyProduced += prevEnergyIncome;
-	currentStats->metalUsed  += prevMetalUpkeep + prevMetalExpense;
-	currentStats->energyUsed += prevEnergyUpkeep + prevEnergyExpense;
-
 	float eShare = 0.0f, mShare = 0.0f;
+
+	// calculate the total amount of resources that all
+	// (allied) teams can collectively receive through
+	// sharing
 	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
+		CTeam* team = teamHandler->Team(a);
+
 		if ((a != teamNum) && (teamHandler->AllyTeam(teamNum) == teamHandler->AllyTeam(a))) {
-			CTeam* team = teamHandler->Team(a);
 			if (team->isDead)
 				continue;
 
@@ -309,21 +265,25 @@ void CTeam::SlowUpdate()
 		}
 	}
 
-	metal += delayedMetalShare;
-	energy += delayedEnergyShare;
-	delayedMetalShare = 0;
-	delayedEnergyShare = 0;
 
+	currentStats->metalProduced  += prevMetalIncome;
+	currentStats->energyProduced += prevEnergyIncome;
+	currentStats->metalUsed  += prevMetalExpense;
+	currentStats->energyUsed += prevEnergyExpense;
+
+	metal  += delayedMetalShare;  delayedMetalShare  = 0.0f;
+	energy += delayedEnergyShare; delayedEnergyShare = 0.0f;
+
+
+	// calculate how much we can share in total (any and all excess resources)
 	const float eExcess = std::max(0.0f, energy - (energyStorage * energyShare));
 	const float mExcess = std::max(0.0f, metal  - (metalStorage  * metalShare));
 
 	float de = 0.0f, dm = 0.0f;
-	if (eShare > 0.0f) {
-		de = std::min(1.0f, eExcess/eShare);
-	}
-	if (mShare > 0.0f) {
-		dm = std::min(1.0f, mExcess/mShare);
-	}
+	if (eShare > 0.0f) { de = std::min(1.0f, eExcess / eShare); }
+	if (mShare > 0.0f) { dm = std::min(1.0f, mExcess / mShare); }
+
+	// now evenly distribute our excess resources among allied teams
 	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
 		if ((a != teamNum) && (teamHandler->AllyTeam(teamNum) == teamHandler->AllyTeam(a))) {
 			CTeam* team = teamHandler->Team(a);
@@ -331,23 +291,19 @@ void CTeam::SlowUpdate()
 				continue;
 
 			const float edif = std::max(0.0f, (team->energyStorage * 0.99f) - team->energy) * de;
-			energy -= edif;
-			energySent += edif;
-			currentStats->energySent += edif;
-			team->energy += edif;
-			team->energyReceived += edif;
-			team->currentStats->energyReceived += edif;
-
 			const float mdif = std::max(0.0f, (team->metalStorage * 0.99f) - team->metal) * dm;
-			metal -= mdif;
-			metalSent += mdif;
-			currentStats->metalSent += mdif;
-			team->metal += mdif;
-			team->metalReceived += mdif;
-			team->currentStats->metalReceived += mdif;
+
+			energy     -= edif; team->energy         += edif;
+			energySent += edif; team->energyReceived += edif;
+			metal      -= mdif; team->metal          += mdif;
+			metalSent  += mdif; team->metalReceived  += mdif;
+
+			currentStats->energySent += edif; team->currentStats->energyReceived += edif;
+			currentStats->metalSent  += mdif; team->currentStats->metalReceived  += mdif;
 		}
 	}
 
+	// clamp resource levels to storage capacity
 	if (metal > metalStorage) {
 		currentStats->metalExcess += (metal - metalStorage);
 		metal = metalStorage;
@@ -369,11 +325,10 @@ void CTeam::SlowUpdate()
 		nextHistoryEntry = gs->frameNum + statsFrames;
 		currentStats->frame = nextHistoryEntry;
 	}
-
 }
 
 
-void CTeam::AddUnit(CUnit* unit,AddType type)
+void CTeam::AddUnit(CUnit* unit, AddType type)
 {
 	units.insert(unit);
 	switch (type) {
@@ -393,7 +348,7 @@ void CTeam::AddUnit(CUnit* unit,AddType type)
 }
 
 
-void CTeam::RemoveUnit(CUnit* unit,RemoveType type)
+void CTeam::RemoveUnit(CUnit* unit, RemoveType type)
 {
 	units.erase(unit);
 	switch (type) {
