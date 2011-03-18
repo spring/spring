@@ -15,7 +15,7 @@
 #include "PlayerRoster.h"
 #include "TimeProfiler.h"
 #include "IVideoCapturing.h"
-#include "Game/UI/UnitTracker.h"
+#include "WordCompletion.h"
 #ifdef _WIN32
 #  include "winerror.h"
 #endif
@@ -55,6 +55,7 @@
 #include "UI/SelectionKeyHandler.h"
 #include "UI/ShareBox.h"
 #include "UI/TooltipConsole.h"
+#include "UI/UnitTracker.h"
 #include "UI/ProfileDrawer.h"
 #include "System/ConfigHandler.h"
 #include "System/EventHandler.h"
@@ -88,9 +89,183 @@ static std::vector<std::string> _local_strSpaceTokenize(const std::string& text)
 }
 
 
+
+bool CGame::ProcessCommandText(unsigned int key, const std::string& command) {
+	if ((command[0] == '/') && (command[1] != '/')) {
+		const string actionLine = command.substr(1); // strip the '/'
+
+		Action fakeAction(actionLine);
+		ActionPressed(key, fakeAction, false);
+		return true;
+	}
+
+	return false;
+}
+
+bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
+	if (action.command == "edit_return") {
+		userWriting = false;
+		writingPos = 0;
+
+		if (key == SDLK_RETURN) {
+			// prevent game start when host enters a chat message
+			keyInput->SetKeyState(key, 0);
+		}
+		if (chatting) {
+			string command;
+
+			if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
+				command = userInput.substr(2);
+			} else {
+				command = userInput;
+			}
+
+			if (ProcessCommandText(key, command)) {
+				// execute an action
+				consoleHistory->AddLine(command);
+				logOutput.Print(command);
+
+				chatting = false;
+				userInput = "";
+				writingPos = 0;
+			}
+		}
+		return true;
+	}
+	else if ((action.command == "edit_escape") && (chatting || inMapDrawer->wantLabel)) {
+		if (chatting) {
+			consoleHistory->AddLine(userInput);
+		}
+		userWriting = false;
+		chatting = false;
+		inMapDrawer->wantLabel = false;
+		userInput = "";
+		writingPos = 0;
+		return true;
+	}
+	else if (action.command == "edit_complete") {
+		string head = userInput.substr(0, writingPos);
+		string tail = userInput.substr(writingPos);
+		const vector<string> &partials = wordCompletion->Complete(head);
+		userInput = head + tail;
+		writingPos = (int)head.length();
+
+		if (!partials.empty()) {
+			string msg;
+			for (unsigned int i = 0; i < partials.size(); i++) {
+				msg += "  ";
+				msg += partials[i];
+			}
+			logOutput.Print(msg);
+		}
+		return true;
+	}
+	else if (action.command == "chatswitchall") {
+		if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
+			userInput = userInput.substr(2);
+			writingPos = std::max(0, writingPos - 2);
+		}
+
+		userInputPrefix = "";
+		return true;
+	}
+	else if (action.command == "chatswitchally") {
+		if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
+			userInput[0] = 'a';
+		} else {
+			userInput = "a:" + userInput;
+			writingPos += 2;
+		}
+
+		userInputPrefix = "a:";
+		return true;
+	}
+	else if (action.command == "chatswitchspec") {
+		if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
+			userInput[0] = 's';
+		} else {
+			userInput = "s:" + userInput;
+			writingPos += 2;
+		}
+
+		userInputPrefix = "s:";
+		return true;
+	}
+	else if (action.command == "pastetext") {
+		if (!action.extra.empty()) {
+			userInput.insert(writingPos, action.extra);
+			writingPos += action.extra.length();
+		} else {
+			PasteClipboard();
+		}
+		return true;
+	}
+
+	else if (action.command == "edit_backspace") {
+		if (!userInput.empty() && (writingPos > 0)) {
+			userInput.erase(writingPos - 1, 1);
+			writingPos--;
+		}
+		return true;
+	}
+	else if (action.command == "edit_delete") {
+		if (!userInput.empty() && (writingPos < (int)userInput.size())) {
+			userInput.erase(writingPos, 1);
+		}
+		return true;
+	}
+	else if (action.command == "edit_home") {
+		writingPos = 0;
+		return true;
+	}
+	else if (action.command == "edit_end") {
+		writingPos = (int)userInput.length();
+		return true;
+	}
+	else if (action.command == "edit_prev_char") {
+		writingPos = std::max(0, std::min((int)userInput.length(), writingPos - 1));
+		return true;
+	}
+	else if (action.command == "edit_next_char") {
+		writingPos = std::max(0, std::min((int)userInput.length(), writingPos + 1));
+		return true;
+	}
+	else if (action.command == "edit_prev_word") {
+		// prev word
+		const char* s = userInput.c_str();
+		int p = writingPos;
+		while ((p > 0) && !isalnum(s[p - 1])) { p--; }
+		while ((p > 0) &&  isalnum(s[p - 1])) { p--; }
+		writingPos = p;
+		return true;
+	}
+	else if (action.command == "edit_next_word") {
+		const int len = (int)userInput.length();
+		const char* s = userInput.c_str();
+		int p = writingPos;
+		while ((p < len) && !isalnum(s[p])) { p++; }
+		while ((p < len) &&  isalnum(s[p])) { p++; }
+		writingPos = p;
+		return true;
+	}
+	else if ((action.command == "edit_prev_line") && chatting) {
+		userInput = consoleHistory->PrevLine(userInput);
+		writingPos = (int)userInput.length();
+		return true;
+	}
+	else if ((action.command == "edit_next_line") && chatting) {
+		userInput = consoleHistory->NextLine(userInput);
+		writingPos = (int)userInput.length();
+		return true;
+	}
+
+	return false;
+}
+
+
+
 // FOR UNSYNCED MESSAGES
-bool CGame::ActionPressed(const Action& action,
-                          const CKeySet& ks, bool isRepeat)
+bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 {
 	// we may need these later
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
@@ -231,7 +406,7 @@ bool CGame::ActionPressed(const Action& action,
 		if (pos.x >= 0) {
 			inMapDrawer->keyPressed = false;
 			inMapDrawer->PromptLabel(pos);
-			if ((ks.Key() >= SDLK_SPACE) && (ks.Key() <= SDLK_DELETE)) {
+			if ((key >= SDLK_SPACE) && (key <= SDLK_DELETE)) {
 				ignoreNextChar=true;
 			}
 		}
@@ -625,7 +800,7 @@ bool CGame::ActionPressed(const Action& action,
 	else if (((cmd == "chat")     || (cmd == "chatall") ||
 	         (cmd == "chatally") || (cmd == "chatspec")) &&
 	         // if chat is bound to enter and we're waiting for user to press enter to start game, ignore.
-				  (ks.Key() != SDLK_RETURN || playing || !keyInput->IsKeyPressed(SDLK_LCTRL))) {
+				  (key != SDLK_RETURN || playing || !keyInput->IsKeyPressed(SDLK_LCTRL))) {
 
 		if (cmd == "chatall")  { userInputPrefix = ""; }
 		if (cmd == "chatally") { userInputPrefix = "a:"; }
@@ -636,7 +811,7 @@ bool CGame::ActionPressed(const Action& action,
 		writingPos = (int)userInput.length();
 		chatting = true;
 
-		if (ks.Key() != SDLK_RETURN) {
+		if (key != SDLK_RETURN) {
 			ignoreNextChar = true;
 		}
 
@@ -1468,5 +1643,3 @@ bool CGame::ActionPressed(const Action& action,
 
 	return true;
 }
-
-

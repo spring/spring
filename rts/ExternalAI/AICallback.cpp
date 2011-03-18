@@ -3,9 +3,7 @@
 #include "ExternalAI/AICallback.h"
 
 #include "StdAfx.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/FileSystem.h"
-#include "FileSystem/FileSystemHandler.h"
+#include "Game/Game.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
@@ -14,14 +12,10 @@
 #include "Game/PlayerHandler.h"
 #include "Game/SelectedUnits.h"
 #include "Game/UI/MiniMap.h"
-#include "Game/UI/MouseHandler.h"
 #include "Lua/LuaRules.h"
 #include "Map/MapInfo.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
-#include "NetProtocol.h"
-#include "ConfigHandler.h"
-#include "Platform/errorhandler.h"
 #include "Rendering/DebugDrawerAI.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/Models/3DModel.h"
@@ -30,7 +24,6 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/GlobalConstants.h" // needed for MAX_UNITS
-#include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
@@ -50,12 +43,15 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "ExternalAI/AICheats.h"
 #include "ExternalAI/SkirmishAIHandler.h"
-#include "ExternalAI/SkirmishAIWrapper.h"
 #include "ExternalAI/EngineOutHandler.h"
-#include "LogOutput.h"
-#include "mmgr.h"
+#include "System/mmgr.h"
+#include "System/LogOutput.h"
+#include "System/NetProtocol.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/FileSystemHandler.h"
+#include "System/Platform/errorhandler.h"
 
 // Cast id to unsigned to catch negative ids in the same operations,
 // cast MAX_* to unsigned to suppress GCC comparison between signed/unsigned warning.
@@ -145,7 +141,9 @@ void CAICallback::SendTextMsg(const char* text, int zone)
 	const CSkirmishAIHandler::ids_t& teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(this->team);
 	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(*(teamAIs.begin())); // FIXME is there a better way?
 
-	logOutput.Print("<SkirmishAI: %s %s (team %d)>: %s", aiData->shortName.c_str(), aiData->version.c_str(), team, text);
+	if (!game->ProcessCommandText(-1, text)) {
+		logOutput.Print("<SkirmishAI: %s %s (team %d)>: %s", aiData->shortName.c_str(), aiData->version.c_str(), team, text);
+	}
 }
 
 void CAICallback::SetLastMsgPos(const float3& pos)
