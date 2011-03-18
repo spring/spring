@@ -47,6 +47,7 @@ private:
 
 public:
 	CGame(const std::string& mapname, const std::string& modName, ILoadSaveHandler* saveFile);
+	virtual ~CGame();
 
 	bool Draw();
 	bool DrawMT();
@@ -56,19 +57,21 @@ public:
 	/// Called when a key is released by the user
 	int KeyReleased(unsigned short k);
 	/// Called when the key is pressed by the user (can be called several times due to key repeat)
-	int KeyPressed(unsigned short k,bool isRepeat);
+	int KeyPressed(unsigned short k, bool isRepeat);
 	void ResizeEvent();
-	virtual ~CGame();
 
-	bool ActionPressed(const Action&, const CKeySet& ks, bool isRepeat);
+
+	bool ProcessCommandText(unsigned int key, const std::string& command);
+	bool ProcessKeyPressAction(unsigned int key, const Action& action);
+
+	bool ActionPressed(unsigned int key, const Action&, bool isRepeat);
 	bool ActionReleased(const Action&);
-	
-	bool HasLag() const;
 
-	volatile bool finishedLoading;
+	bool HasLag() const;
 
 	/// show GameEnd-window, calculate mouse movement etc.
 	void GameEnd(const std::vector<unsigned char>& winningAllyTeams);
+
 
 	enum GameDrawMode {
 		gameNotDrawing     = 0,
@@ -117,6 +120,7 @@ public:
 	bool showMTInfo;
 	/// Prevents spectator msgs from being seen by players
 	bool noSpectatorChat;
+	volatile bool finishedLoading;
 
 	unsigned char gameID[16];
 
@@ -138,7 +142,7 @@ private:
 	void SendNetChat(std::string message, int destination = -1);
 	/// Format and display a chat message received over network
 	void HandleChatMsg(const ChatMessage& msg);
-	
+
 	/// synced actions (received from server) go in here
 	void ActionReceived(const Action&, int playernum);
 
