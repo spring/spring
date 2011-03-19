@@ -91,6 +91,9 @@ static std::vector<std::string> _local_strSpaceTokenize(const std::string& text)
 
 
 bool CGame::ProcessCommandText(unsigned int key, const std::string& command) {
+	if (command.size() <= 2)
+		return false;
+
 	if ((command[0] == '/') && (command[1] != '/')) {
 		const string actionLine = command.substr(1); // strip the '/'
 
