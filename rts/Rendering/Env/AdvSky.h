@@ -21,6 +21,7 @@ public:
 	void UpdateSkyTexture();
 
 private:
+	void CreateSkyDomeList();
 	void InitSun();
 	void UpdateSunFlare();
 	void CreateCover(int baseX, int baseY, float* buf);
