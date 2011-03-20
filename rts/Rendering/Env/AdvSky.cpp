@@ -46,6 +46,7 @@ CAdvSky::CAdvSky()
 	domeWidth = sin(2*PI/32)*400*1.7f;
 
 	UpdateSkyDir();
+	InitSun();
 	UpdateSunDir();
 
 	for(int a=0;a<CLOUD_DETAIL;a++)
@@ -64,11 +65,15 @@ CAdvSky::CAdvSky()
 	CreateClouds();
 	dynamicSky = configHandler->Get("DynamicSky", false);
 
-	InitSun();
 	oldCoverBaseX=-5;
 
 	cloudFP = LoadFragmentProgram("ARB/clouds.fp");
 
+	CreateSkyDomeList();
+}
+
+void CAdvSky::CreateSkyDomeList()
+{
 	glGetError();
 	skyDomeList = glGenLists(1);
 	glNewList(skyDomeList, GL_COMPILE);
@@ -660,7 +665,7 @@ void CAdvSky::InitSun()
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
 //	gluBuild2DMipmaps(GL_TEXTURE_2D,1 ,32, 2, GL_ALPHA, GL_UNSIGNED_BYTE, mem);
-	glTexImage2D(GL_TEXTURE_2D,0,GL_LUMINANCE ,32, 4,0, GL_LUMINANCE, GL_UNSIGNED_BYTE, mem);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE ,32, 4, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, mem);
 
 	delete [] mem;
 }
