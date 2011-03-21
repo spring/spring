@@ -7,6 +7,7 @@
 #include "BasicTreeDrawer.h"
 #include "AdvTreeDrawer.h"
 #include "Game/Camera.h"
+#include "Rendering/GlobalRendering.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/GlobalConstants.h"
