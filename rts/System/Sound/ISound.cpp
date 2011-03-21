@@ -13,6 +13,12 @@
 
 ISound* ISound::singleton = NULL;
 
+ISound::ISound()
+	: numEmptyPlayRequests(0)
+	, numAbortedPlays(0)
+{
+}
+
 void ISound::Initialize()
 {
 	if (singleton == NULL) {

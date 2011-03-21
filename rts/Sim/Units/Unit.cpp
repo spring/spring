@@ -593,45 +593,6 @@ void CUnit::ForcedSpin(const float3& newDir)
 	ForcedMove(pos); // lazy, don't need to update the quadfield, etc...
 }
 
-
-/*
-void CUnit::SetFront(const SyncedFloat3& newDir)
-{
-	frontdir = newDir;
-	frontdir.Normalize();
-	rightdir = frontdir.cross(updir);
-	rightdir.Normalize();
-	updir = rightdir.cross(frontdir);
-	updir.Normalize();
-	heading = GetHeadingFromVector(frontdir.x, frontdir.z);
-	UpdateMidPos();
-}
-
-void CUnit::SetUp(const SyncedFloat3& newDir)
-{
-	updir = newDir;
-	updir.Normalize();
-	frontdir = updir.cross(rightdir);
-	frontdir.Normalize();
-	rightdir = frontdir.cross(updir);
-	rightdir.Normalize();
-	heading = GetHeadingFromVector(frontdir.x, frontdir.z);
-	UpdateMidPos();
-}
-
-void CUnit::SetRight(const SyncedFloat3& newDir)
-{
-	rightdir = newDir;
-	rightdir.Normalize();
-	updir = rightdir.cross(frontdir);
-	updir.Normalize();
-	frontdir = updir.cross(rightdir);
-	frontdir.Normalize();
-	heading = GetHeadingFromVector(frontdir.x, frontdir.z);
-	UpdateMidPos();
-}
-*/
-
 void CUnit::SetDirectionFromHeading()
 {
 	if (GetTransporter() == NULL) {
@@ -655,6 +616,14 @@ void CUnit::UpdateMidPos()
 	midPos = pos +
 		(frontdir * relMidPos.z) +
 		(updir    * relMidPos.y) +
+		(rightdir * relMidPos.x);
+}
+
+void CUnit::MoveMidPos(const float3& deltaPos) {
+	midPos += deltaPos;
+	pos = midPos -
+		(frontdir * relMidPos.z) -
+		(updir    * relMidPos.y) -
 		(rightdir * relMidPos.x);
 }
 
@@ -1085,18 +1054,21 @@ void CUnit::SlowUpdateWeapons() {
 
 void CUnit::DoWaterDamage()
 {
-	if (uh->waterDamage > 0.0f) {
-		if (pos.IsInBounds()) {
-			const int  px            = int(pos.x / (SQUARE_SIZE * 2));
-			const int  pz            = int(pos.z / (SQUARE_SIZE * 2));
-			const bool isFloating    = (physicalState == CSolidObject::Floating);
-			const bool onGround      = (physicalState == CSolidObject::OnGround);
-			const bool isWaterSquare = (readmap->mipHeightmap[1][pz * gs->hmapx + px] <= 0.0f);
+	if (mapInfo->water.damage <= 0.0f) {
+		return;
+	}
+	if (!pos.IsInBounds()) {
+		return;
+	}
 
-			if ((pos.y <= 0.0f) && isWaterSquare && (isFloating || onGround)) {
-				DoDamage(DamageArray(uh->waterDamage), 0, ZeroVector, -1);
-			}
-		}
+	const int  px            = pos.x / (SQUARE_SIZE * 2);
+	const int  pz            = pos.z / (SQUARE_SIZE * 2);
+	const bool isFloating    = (physicalState == CSolidObject::Floating);
+	const bool onGround      = (physicalState == CSolidObject::OnGround);
+	const bool isWaterSquare = (readmap->mipHeightmap[1][pz * gs->hmapx + px] <= 0.0f);
+
+	if ((pos.y <= 0.0f) && isWaterSquare && (isFloating || onGround)) {
+		DoDamage(DamageArray(mapInfo->water.damage), 0, ZeroVector, -1);
 	}
 }
 
@@ -1156,8 +1128,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 		damage = newDamage;
 	}
 
-	residualImpulse += ((impulse * impulseMult) / mass);
-	moveType->ImpulseAdded();
+	AddImpulse((impulse * impulseMult) / mass);
 
 	if (paralyzeTime == 0) { // real damage
 		if (damage > 0.0f) {
@@ -1178,8 +1149,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 				stunned = false;
 			}
 		}
-	}
-	else { // paralyzation
+	} else { // paralyzation
 		experienceMod *= 0.1f; // reduced experience
 		if (damage > 0.0f) {
 			// paralyzeDamage may not get higher than maxHealth * (paralyzeTime + 1),
@@ -1251,6 +1221,13 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 void CUnit::Kill(const float3& impulse) {
 	DamageArray da(health);
 	DoDamage(da, NULL, impulse, -1);
+}
+
+void CUnit::AddImpulse(const float3& addedImpulse) {
+	residualImpulse += addedImpulse;
+
+	if (addedImpulse.SqLength() >= 0.01f)
+		moveType->ImpulseAdded(addedImpulse);
 }
 
 

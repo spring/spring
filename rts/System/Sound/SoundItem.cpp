@@ -11,26 +11,27 @@
 
 namespace
 {
-UnsyncedRNG randnum; // no need for strong randomness here, so default seed is ok
-template <typename T>
-inline bool MapEntryValExtract(const std::map<std::string, std::string> map, const std::string& key, T& t)
-{
-	std::map<std::string, std::string>::const_iterator it = map.find(key);
-	if (it != map.end())
+	UnsyncedRNG randnum; // no need for strong randomness here, so default seed is ok
+	
+	template <typename T>
+	inline bool MapEntryValExtract(const std::map<std::string, std::string> map, const std::string& key, T& t)
 	{
-		std::istringstream stream(it->second);
-		stream >> t;
-		return true;
+		std::map<std::string, std::string>::const_iterator it = map.find(key);
+		if (it != map.end())
+		{
+			std::istringstream stream(it->second);
+			stream >> t;
+			return true;
+		}
+		else
+			return false;
 	}
-	else
-		return false;
-}
 
-template <typename T>
-void FitInIntervall(const T& lower, T& val, const T& upper)
-{
-	val = std::max(std::min(val, upper), lower);
-}
+	template <typename T>
+	void FitInIntervall(const T& lower, T& val, const T& upper)
+	{
+		val = std::max(std::min(val, upper), lower);
+	}
 }
 
 SoundItem::SoundItem(boost::shared_ptr<SoundBuffer> _buffer, const std::map<std::string, std::string>& items) :

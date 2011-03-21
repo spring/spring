@@ -1251,7 +1251,7 @@ bool CLuaHandle::RecvLuaMsg(const string& msg, int playerID)
 		return false;
 	}
 
-	lua_pushlstring(L, msg.data(), msg.size()); // allow embedded 0's
+	lua_pushsstring(L, msg); // allow embedded 0's
 	lua_pushnumber(L, playerID);
 
 	// call the routine
@@ -1649,7 +1649,7 @@ bool CLuaHandle::KeyPress(unsigned short key, bool isRepeat)
 	lua_pushboolean(L, isRepeat);
 
 	CKeySet ks(key, false);
-	lua_pushstring(L, ks.GetString(true).c_str());
+	lua_pushsstring(L, ks.GetString(true));
 
 	lua_pushnumber(L, keyInput->GetCurrentKeyUnicodeChar());
 
@@ -1690,7 +1690,7 @@ bool CLuaHandle::KeyRelease(unsigned short key)
 	HSTR_PUSH_BOOL(L, "shift", !!keyInput->GetKeyState(SDLK_LSHIFT));
 
 	CKeySet ks(key, false);
-	lua_pushstring(L, ks.GetString(true).c_str());
+	lua_pushsstring(L, ks.GetString(true));
 
 	lua_pushnumber(L, keyInput->GetCurrentKeyUnicodeChar());
 
@@ -1934,7 +1934,7 @@ bool CLuaHandle::ConfigCommand(const string& command)
 		return true; // the call is not defined
 	}
 
-	lua_pushstring(L, command.c_str());
+	lua_pushsstring(L, command);
 
 	// call the routine
 	if (!RunCallInUnsynced(cmdStr, 1, 0)) {
@@ -2006,7 +2006,7 @@ bool CLuaHandle::AddConsoleLine(const string& msg, const CLogSubsystem& /**/)
 		return true; // the call is not defined
 	}
 
-	lua_pushstring(L, msg.c_str());
+	lua_pushsstring(L, msg);
 	// FIXME: makes no sense now, but *gets might expect this
 	lua_pushnumber(L, 0);
 
@@ -2120,7 +2120,7 @@ bool CLuaHandle::MapDrawCmd(int playerID, int type,
 		lua_pushnumber(L, pos0->x);
 		lua_pushnumber(L, pos0->y);
 		lua_pushnumber(L, pos0->z);
-		lua_pushstring(L, label->c_str());
+		lua_pushsstring(L, *label);
 		args = 6;
 	}
 	else if (type == MAPDRAW_LINE) {
@@ -2176,7 +2176,7 @@ bool CLuaHandle::GameSetup(const string& state, bool& ready,
 		return false;
 	}
 
-	lua_pushstring(L, state.c_str());
+	lua_pushsstring(L, state);
 
 	lua_pushboolean(L, ready);
 
@@ -2184,7 +2184,7 @@ bool CLuaHandle::GameSetup(const string& state, bool& ready,
 	map<int, string>::const_iterator it;
 	for (it = playerStates.begin(); it != playerStates.end(); ++it) {
 		lua_pushnumber(L, it->first);
-		lua_pushstring(L, it->second.c_str());
+		lua_pushsstring(L, it->second);
 		lua_rawset(L, -3);
 	}
 
@@ -2243,7 +2243,7 @@ bool CLuaHandle::AddBasicCalls()
 
 int CLuaHandle::CallOutGetName(lua_State* L)
 {
-	lua_pushstring(L, activeHandle->GetName().c_str());
+	lua_pushsstring(L, activeHandle->GetName());
 	return 1;
 }
 
@@ -2323,7 +2323,7 @@ int CLuaHandle::CallOutGetCallInList(lua_State* L)
 	eventHandler.GetEventList(list);
 	lua_createtable(L, 0, list.size());
 	for (unsigned int i = 0; i < list.size(); i++) {
-		lua_pushstring(L, list[i].c_str());
+		lua_pushsstring(L, list[i]);
 		lua_newtable(L); {
 			lua_pushliteral(L, "unsynced");
 			lua_pushboolean(L, eventHandler.IsUnsynced(list[i]));

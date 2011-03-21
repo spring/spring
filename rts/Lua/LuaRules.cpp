@@ -146,12 +146,12 @@ bool CLuaRules::AddSyncedCode()
 
 bool CLuaRules::AddUnsyncedCode()
 {
-	lua_pushstring(L, "UNSYNCED");
+	lua_pushliteral(L, "UNSYNCED");
 	lua_gettable(L, LUA_REGISTRYINDEX);
 
-	lua_pushstring(L, "Spring");
+	lua_pushliteral(L, "Spring");
 	lua_rawget(L, -2);
-	lua_pushstring(L, "UnitRendering");
+	lua_pushliteral(L, "UnitRendering");
 	lua_newtable(L);
 	LuaUnitRendering::PushEntries(L);
 	lua_rawset(L, -3);
@@ -517,7 +517,7 @@ bool CLuaRules::AllowResourceLevel(int teamID, const string& type, float level)
 	}
 
 	lua_pushnumber(L, teamID);
-	lua_pushstring(L, type.c_str());
+	lua_pushsstring(L, type);
 	lua_pushnumber(L, level);
 
 	// call the function
@@ -554,7 +554,7 @@ bool CLuaRules::AllowResourceTransfer(int oldTeam, int newTeam,
 
 	lua_pushnumber(L, oldTeam);
 	lua_pushnumber(L, newTeam);
-	lua_pushstring(L, type.c_str());
+	lua_pushsstring(L, type);
 	lua_pushnumber(L, amount);
 
 	// call the function

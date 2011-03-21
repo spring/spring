@@ -370,7 +370,7 @@ void LuaLobby::DoneConnecting(bool succes, const std::string& err)
 	LUA_LOBBY_CALL_IN_CHECK(L, 4);
 
 	lua_pushboolean(L, succes);
-	lua_pushstring(L, err.c_str());
+	lua_pushsstring(L, err);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 2, 0);
@@ -380,8 +380,8 @@ void LuaLobby::ServerGreeting(const std::string& serverVer, const std::string& s
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 6);
 
-	lua_pushstring(L, serverVer.c_str());
-	lua_pushstring(L, springVer.c_str());
+	lua_pushsstring(L, serverVer);
+	lua_pushsstring(L, springVer);
 	lua_pushnumber(L, udpport);
 	lua_pushnumber(L, mode);
 
@@ -393,7 +393,7 @@ void LuaLobby::RegisterDenied(const std::string& reason)
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 3);
 
-	lua_pushstring(L, reason.c_str());
+	lua_pushsstring(L, reason);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 1, 0);
@@ -411,7 +411,7 @@ void LuaLobby::LoginDenied(const std::string& reason)
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 3);
 
-	lua_pushstring(L, reason.c_str());
+	lua_pushsstring(L, reason);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 1, 0);
@@ -429,7 +429,7 @@ void LuaLobby::Aggreement(const std::string& text)
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 3);
 
-	lua_pushstring(L, text.c_str());
+	lua_pushsstring(L, text);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 1, 0);
@@ -439,7 +439,7 @@ void LuaLobby::Motd(const std::string& text)
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 3);
 
-	lua_pushstring(L, text.c_str());
+	lua_pushsstring(L, text);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 1, 0);
@@ -449,7 +449,7 @@ void LuaLobby::ServerMessage(const std::string& text)
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 3);
 
-	lua_pushstring(L, text.c_str());
+	lua_pushsstring(L, text);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 1, 0);
@@ -459,8 +459,8 @@ void LuaLobby::ServerMessageBox(const std::string& text, const std::string& url)
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 4);
 
-	lua_pushstring(L, text.c_str());
-	lua_pushstring(L, url.c_str());
+	lua_pushsstring(L, text);
+	lua_pushsstring(L, url);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 2, 0);
@@ -470,8 +470,8 @@ void LuaLobby::AddUser(const std::string& name, const std::string& country, int 
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 5);
 
-	lua_pushstring(L, name.c_str());
-	lua_pushstring(L, country.c_str());
+	lua_pushsstring(L, name);
+	lua_pushsstring(L, country);
 	lua_pushnumber(L, cpu);
 
 	// call the routine
@@ -482,7 +482,7 @@ void LuaLobby::RemoveUser(const std::string& name)
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 3);
 
-	lua_pushstring(L, name.c_str());
+	lua_pushsstring(L, name);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 1, 0);
@@ -492,7 +492,7 @@ void LuaLobby::UserStatusUpdate(const std::string& name, ClientStatus status)
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 8);
 
-	lua_pushstring(L, name.c_str());
+	lua_pushsstring(L, name);
 	lua_pushboolean(L, status.away);
 	lua_pushboolean(L, status.bot);
 	lua_pushboolean(L, status.ingame);
@@ -507,7 +507,7 @@ void LuaLobby::ChannelInfo(const std::string& channel, unsigned users)
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 4);
 
-	lua_pushstring(L, channel.c_str());
+	lua_pushsstring(L, channel);
 	lua_pushnumber(L, users);
 
 	// call the routine
@@ -526,12 +526,12 @@ void LuaLobby::Mutelist(const std::string& channel, std::list<std::string> list)
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 4);
 
-	lua_pushstring(L, channel.c_str());
+	lua_pushsstring(L, channel);
 	lua_newtable(L);
 	int i = 1;
 	for (std::list<std::string>::const_iterator it = list.begin(); it != list.end(); ++it)
 	{
-		lua_pushstring(L, it->c_str());
+		lua_pushsstring(L, *it);
 		lua_rawseti(L, -2, i++);
 	}
 
@@ -543,7 +543,7 @@ void LuaLobby::Joined(const std::string& channame)
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 3);
 
-	lua_pushstring(L, channame.c_str());
+	lua_pushsstring(L, channame);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 1, 0);
@@ -553,8 +553,8 @@ void LuaLobby::ChannelMember(const std::string& channame, const std::string& nam
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 5);
 
-	lua_pushstring(L, channame.c_str());
-	lua_pushstring(L, name.c_str());
+	lua_pushsstring(L, channame);
+	lua_pushsstring(L, name);
 	lua_pushboolean(L, joined);
 
 	// call the routine
@@ -565,9 +565,9 @@ void LuaLobby::ChannelMemberLeft(const std::string& channame, const std::string&
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 5);
 
-	lua_pushstring(L, channame.c_str());
-	lua_pushstring(L, name.c_str());
-	lua_pushstring(L, reason.c_str());
+	lua_pushsstring(L, channame);
+	lua_pushsstring(L, name);
+	lua_pushsstring(L, reason);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 3, 0);
@@ -577,8 +577,8 @@ void LuaLobby::JoinFailed(const std::string& channame, const std::string& reason
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 4);
 
-	lua_pushstring(L, channame.c_str());
-	lua_pushstring(L, reason.c_str());
+	lua_pushsstring(L, channame);
+	lua_pushsstring(L, reason);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 2, 0);
@@ -588,9 +588,9 @@ void LuaLobby::ChannelMemberKicked(const std::string& channame, const std::strin
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 5);
 
-	lua_pushstring(L, channame.c_str());
-	lua_pushstring(L, user.c_str());
-	lua_pushstring(L, reason.c_str());
+	lua_pushsstring(L, channame);
+	lua_pushsstring(L, user);
+	lua_pushsstring(L, reason);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 3, 0);
@@ -600,10 +600,10 @@ void LuaLobby::ChannelTopic(const std::string& channame, const std::string& auth
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 6);
 
-	lua_pushstring(L, channame.c_str());
-	lua_pushstring(L, author.c_str());
+	lua_pushsstring(L, channame);
+	lua_pushsstring(L, author);
 	lua_pushnumber(L, time/1000);
-	lua_pushstring(L, topic.c_str());
+	lua_pushsstring(L, topic);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 4, 0);
@@ -613,8 +613,8 @@ void LuaLobby::ChannelMessage(const std::string& channel, const std::string& tex
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 4);
 
-	lua_pushstring(L, channel.c_str());
-	lua_pushstring(L, text.c_str());
+	lua_pushsstring(L, channel);
+	lua_pushsstring(L, text);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 2, 0);
@@ -624,9 +624,9 @@ void LuaLobby::Said(const std::string& channel, const std::string& user, const s
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 5);
 
-	lua_pushstring(L, channel.c_str());
-	lua_pushstring(L, user.c_str());
-	lua_pushstring(L, text.c_str());
+	lua_pushsstring(L, channel);
+	lua_pushsstring(L, user);
+	lua_pushsstring(L, text);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 3, 0);
@@ -636,9 +636,9 @@ void LuaLobby::SaidEx(const std::string& channel, const std::string& user, const
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 5);
 
-	lua_pushstring(L, channel.c_str());
-	lua_pushstring(L, user.c_str());
-	lua_pushstring(L, text.c_str());
+	lua_pushsstring(L, channel);
+	lua_pushsstring(L, user);
+	lua_pushsstring(L, text);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 3, 0);
@@ -648,8 +648,8 @@ void LuaLobby::SaidPrivate(const std::string& user, const std::string& text)
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 4);
 
-	lua_pushstring(L, user.c_str());
-	lua_pushstring(L, text.c_str());
+	lua_pushsstring(L, user);
+	lua_pushsstring(L, text);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 2, 0);
@@ -667,7 +667,7 @@ void LuaLobby::NetworkError(const std::string& msg)
 {
 	LUA_LOBBY_CALL_IN_CHECK(L, 3);
 
-	lua_pushstring(L, msg.c_str());
+	lua_pushsstring(L, msg);
 
 	// call the routine
 	luaUI->RunCallInUnsynced(cmdStr, 1, 0);

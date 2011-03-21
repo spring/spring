@@ -2073,7 +2073,6 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 	}
 
 	unit->DoDamage(damages, attacker, impulse, weaponID);
-
 	return 0;
 }
 
@@ -2087,8 +2086,7 @@ int LuaSyncedCtrl::AddUnitImpulse(lua_State* L)
 	float3 impulse(luaL_checkfloat(L, 2),
 	               luaL_checkfloat(L, 3),
 	               luaL_checkfloat(L, 4));
-	unit->residualImpulse += impulse;
-	unit->moveType->ImpulseAdded();
+	unit->AddImpulse(impulse);
 	return 0;
 }
 

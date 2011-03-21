@@ -192,7 +192,7 @@ static int FeatureDefIndex(lua_State* L)
 			return 1;
 		}
 		case STRING_TYPE: {
-			lua_pushstring(L, ((string*)p)->c_str());
+			lua_pushsstring(L, *((string*)p));
 			return 1;
 		}
 		case FUNCTION_TYPE: {
@@ -321,8 +321,8 @@ static int CustomParamsTable(lua_State* L, const void* data)
 	lua_newtable(L);
 	map<string, string>::const_iterator it;
 	for (it = params.begin(); it != params.end(); ++it) {
-		lua_pushstring(L, it->first.c_str());
-		lua_pushstring(L, it->second.c_str());
+		lua_pushsstring(L, it->first);
+		lua_pushsstring(L, it->second);
 		lua_rawset(L, -3);
 	}
 	return 1;

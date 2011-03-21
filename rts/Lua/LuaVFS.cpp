@@ -239,7 +239,7 @@ int LuaVFS::LoadFile(lua_State* L, bool synced)
 
 	string data;
 	if (LoadFileWithModes(filename, data, modes)) {
-		lua_pushlstring(L, data.c_str(), data.size());
+		lua_pushsstring(L, data);
 		return 1;
 	}
 	return 0;
@@ -428,7 +428,7 @@ int LuaVFS::MapArchive(lua_State* L)
 		std::ostringstream buf;
 		buf << "Achive not found: " << filename;
 		lua_pushboolean(L, false);
-		lua_pushstring(L, buf.str().c_str());
+		lua_pushsstring(L, buf.str());
 		return 0;
 	}
 
@@ -444,7 +444,7 @@ int LuaVFS::MapArchive(lua_State* L)
 			std::ostringstream buf;
 			buf << "Bad archive checksum, got: " << realchecksum << " expected: " << checksum;
 			lua_pushboolean(L, false);
-			lua_pushstring(L, buf.str().c_str());
+			lua_pushsstring(L, buf.str());
 			return 0;
 		}
 	}
@@ -453,7 +453,7 @@ int LuaVFS::MapArchive(lua_State* L)
 		std::ostringstream buf;
 		buf << "Failed to load archive: " << filename;
 		lua_pushboolean(L, false);
-		lua_pushstring(L, buf.str().c_str());
+		lua_pushsstring(L, buf.str());
 	}
 	else
 	{

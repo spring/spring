@@ -71,6 +71,7 @@ private:
 	unsigned loopStop;
 	bool in3D;
 	bool efxEnabled;
+	int efxUpdates;
 	ALfloat curHeightRolloffModifier;
 };
 

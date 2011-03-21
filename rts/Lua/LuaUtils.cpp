@@ -202,11 +202,11 @@ static bool LowerKeysReal(lua_State* L, int depth)
 				lua_pushnil(L);
 				lua_rawset(L, table);
 				// does the lower case key alread exist in the table?
-				lua_pushstring(L, lowerKey.c_str());
+				lua_pushsstring(L, lowerKey);
 				lua_rawget(L, table);
 				if (lua_isnil(L, -1)) {
 					// lower case does not exist, add it to the changed table
-					lua_pushstring(L, lowerKey.c_str());
+					lua_pushsstring(L, lowerKey);
 					lua_pushvalue(L, -3); // the value
 					lua_rawset(L, changed);
 				}
@@ -449,9 +449,9 @@ int LuaUtils::Next(const ParamMap& paramMap, lua_State* L)
 	// internal parameters first
 	if (lua_isnil(L, 2)) {
 		const string& nextKey = paramMap.begin()->first;
-		lua_pushstring(L, nextKey.c_str()); // push the key
-		lua_pushvalue(L, 3);                // copy the key
-		lua_gettable(L, 1);                 // get the value
+		lua_pushsstring(L, nextKey); // push the key
+		lua_pushvalue(L, 3);         // copy the key
+		lua_gettable(L, 1);          // get the value
 		return 2;
 	}
 
@@ -468,9 +468,9 @@ int LuaUtils::Next(const ParamMap& paramMap, lua_State* L)
 			if ((it != paramMap.end()) && (it->second.type != READONLY_TYPE)) {
 				// next key is an internal parameter
 				const string& nextKey = it->first;
-				lua_pushstring(L, nextKey.c_str()); // push the key
-				lua_pushvalue(L, 3);                // copy the key
-				lua_gettable(L, 1);                 // get the value (proxied)
+				lua_pushsstring(L, nextKey); // push the key
+				lua_pushvalue(L, 3);         // copy the key
+				lua_gettable(L, 1);          // get the value (proxied)
 				return 2;
 			}
 			// start the user parameters,
@@ -688,15 +688,12 @@ int LuaUtils::PushDebugTraceback(lua_State *L)
 
 void LuaUtils::PushStringVector(lua_State* L, const vector<string>& vec)
 {
-	lua_newtable(L);
+	lua_createtable(L, vec.size(), 0);
 	for (size_t i = 0; i < vec.size(); i++) {
 		lua_pushnumber(L, (int) (i + 1));
-		lua_pushstring(L, vec[i].c_str());
+		lua_pushsstring(L, vec[i]);
 		lua_rawset(L, -3);
 	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, vec.size());
-	lua_rawset(L, -3);
 }
 
 /******************************************************************************/

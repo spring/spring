@@ -31,6 +31,7 @@ CEFX::CEFX(ALCdevice* device)
 	,sfxSlot(0)
 	,sfxReverb(0)
 	,sfxFilter(0)
+	,updates(0)
 	,maxSlots(0)
 	,maxSlotsPerSource(0)
 {
@@ -203,16 +204,21 @@ void CEFX::Disable()
 }
 
 
-void CEFX::SetPreset(std::string name)
+void CEFX::SetPreset(std::string name, bool verbose, bool commit)
 {
 	if (!supported)
 		return;
 
+	if (name == "default")
+		name = default_preset;
+
 	std::map<std::string, EAXSfxProps>::const_iterator it = eaxPresets.find(name);
 	if (it != eaxPresets.end()) {
 		*sfxProperties = it->second;
-		CommitEffects();
-		LogObject(LOG_SOUND) << "EAX Preset changed to: " << name;
+		if (commit)
+			CommitEffects();
+		if (verbose)
+			LogObject(LOG_SOUND) << "EAX Preset changed to: " << name;
 	}
 }
 
@@ -247,4 +253,6 @@ void CEFX::CommitEffects()
 
 	for (std::map<ALuint, ALfloat>::iterator it=sfxProperties->filter_properties_f.begin(); it != sfxProperties->filter_properties_f.end(); ++it)
 		alFilterf(sfxFilter, it->first, it->second);
+
+	updates++;
 }

@@ -4,8 +4,6 @@
 #define _GLOBAL_RENDERING_H
 
 #include "System/creg/creg_cond.h"
-#include "System/float4.h"
-#include "System/Matrix44f.h"
 
 /**
  * @brief Globally accessible unsynced, rendering related data
@@ -182,6 +180,18 @@ public:
 	 * @brief full-screen or windowed rendering
 	 */
 	bool fullScreen;
+
+
+
+	/**
+	* @brief max view range in elmos
+	*/
+	static const float MAX_VIEW_RANGE = 8000.0f;
+
+	/**
+	* @brief near z-plane distance in elmos
+	*/
+	static const float NEAR_PLANE = 2.8f;
 };
 
 extern CGlobalRendering* globalRendering;

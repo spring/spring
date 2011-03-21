@@ -59,8 +59,8 @@
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "System/ConfigHandler.h"
 #include "System/LogOutput.h"
-#include "System/Util.h"
 #include "System/NetProtocol.h"
+#include "System/Util.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/FileSystem/FileHandler.h"
@@ -71,10 +71,16 @@
 #include <boost/cstdint.hpp>
 #include <Platform/Misc.h>
 
+#if !defined(HEADLESS) && !defined(NO_SOUND)
+	#include "System/Sound/EFX.h"
+	#include "System/Sound/EFXPresets.h"
+#endif
+
 using namespace std;
 
 // MinGW defines this for a WINAPI function
 #undef SendMessage
+#undef CreateDirectory
 
 const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
@@ -112,6 +118,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(StopSoundStream);
 	REGISTER_LUA_CFUNC(PauseSoundStream);
 	REGISTER_LUA_CFUNC(SetSoundStreamVolume);
+	REGISTER_LUA_CFUNC(SetSoundEffectParams);
 
 	REGISTER_LUA_CFUNC(SetCameraState);
 	REGISTER_LUA_CFUNC(SetCameraTarget);
@@ -706,6 +713,106 @@ int LuaUnsyncedCtrl::SetSoundStreamVolume(lua_State* L)
 }
 
 
+int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
+{
+#if !defined(HEADLESS) && !defined(NO_SOUND)
+	if (!efx)
+		return 0;
+
+	//! only a preset name given?
+	if (lua_israwstring(L, 1)) {
+		const std::string presetname = lua_tostring(L, 1);
+		efx->SetPreset(presetname, false);
+		return 0;
+	}
+
+	if (!lua_istable(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetSoundEffectParams()");
+	}
+
+	//! first parse the 'preset' key (so all following params use it as base and override it)
+	lua_pushliteral(L, "preset");
+	lua_gettable(L, -2);
+	if (lua_israwstring(L, -1)) {
+		std::string presetname = lua_tostring(L, -1);
+		efx->SetPreset(presetname, false, false);
+	}
+	lua_pop(L, 1);
+
+
+	if (!efx->sfxProperties)
+		return 0;
+
+	EAXSfxProps* efxprops = efx->sfxProperties;
+
+
+	//! parse pass filter
+	lua_pushliteral(L, "passfilter");
+	lua_gettable(L, -2);
+	if (lua_istable(L, -1)) {
+		for (lua_pushnil(L); lua_next(L, -2) != 0; lua_pop(L, 1)) {
+			if (lua_israwstring(L, -2)) {
+				const string key = StringToLower(lua_tostring(L, -2));
+				std::map<std::string, ALuint>::iterator it = nameToALFilterParam.find(key);
+				if (it != nameToALFilterParam.end()) {
+					ALuint& param = it->second;
+					if (lua_isnumber(L, -1)) {
+						if (alParamType[param] == EFXParamTypes::FLOAT) {
+							const float value = lua_tonumber(L, -1);
+							efxprops->filter_properties_f[param] = value;
+						}
+					}
+				}
+			}
+		}
+	}
+	lua_pop(L, 1);
+
+	//! parse EAX Reverb
+	lua_pushliteral(L, "reverb");
+	lua_gettable(L, -2);
+	if (lua_istable(L, -1)) {
+		for (lua_pushnil(L); lua_next(L, -2) != 0; lua_pop(L, 1)) {
+			if (lua_israwstring(L, -2)) {
+				const string key = StringToLower(lua_tostring(L, -2));
+				std::map<std::string, ALuint>::iterator it = nameToALParam.find(key);
+				if (it != nameToALParam.end()) {
+					ALuint& param = it->second;
+					if (lua_istable(L, -1)) {
+						if (alParamType[param] == EFXParamTypes::VECTOR) {
+							float3 v;
+							const int size = ParseFloatArray(L, -1, &v[0], 3);
+							if (size >= 3) {
+								efxprops->properties_v[param] = v;
+							}
+						}
+					}
+					else if (lua_isnumber(L, -1)) {
+						if (alParamType[param] == EFXParamTypes::FLOAT) {
+							const float value = lua_tonumber(L, -1);
+							efxprops->properties_f[param] = value;
+						}
+					}
+					else if (lua_isboolean(L, -1)) {
+						if (alParamType[param] == EFXParamTypes::BOOL) {
+							const bool value = lua_toboolean(L, -1);
+							efxprops->properties_i[param] = value;
+						}
+					}
+				}
+			}
+		}
+	}
+	lua_pop(L, 1);
+
+	//! commit effects
+	efx->CommitEffects();
+#endif /// !defined(HEADLESS) && !defined(NO_SOUND)
+
+	return 0;
+}
+
+
 /******************************************************************************/
 /******************************************************************************/
 
@@ -1201,7 +1308,6 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 
 	return 0;
 }
-
 
 
 
@@ -1725,7 +1831,7 @@ static int SetActiveCommandByIndex(lua_State* L)
 	if ((args < 8) ||
 	    !lua_isboolean(L, 3) || !lua_isboolean(L, 4) || !lua_isboolean(L, 5) ||
 	    !lua_isboolean(L, 6) || !lua_isboolean(L, 7) || !lua_isboolean(L, 8)) {
-		lua_pushstring(L, "Incorrect arguments to SetActiveCommand()");
+		luaL_error(L, "Incorrect arguments to SetActiveCommand()");
 	}
 	const bool lmb   = lua_toboolean(L, 3);
 	const bool rmb   = lua_toboolean(L, 4);
@@ -1921,7 +2027,7 @@ int LuaUnsyncedCtrl::GetConfigString(lua_State* L)
 	const string def  = luaL_optstring(L, 2, "");
 	const bool setInOverlay = lua_isboolean(L, 3) ? lua_toboolean(L, 3) : false;
 	const string value = configHandler->GetString(name, def, setInOverlay);
-	lua_pushstring(L, value.c_str());
+	lua_pushsstring(L, value);
 	return 1;
 }
 

@@ -23,7 +23,7 @@ public:
 	virtual void KeepPointingTo(float3 pos, float distance, bool aggressive) = 0;
 	virtual void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
 	virtual void StopMoving() = 0;
-	virtual void ImpulseAdded(void) {}
+	virtual void ImpulseAdded(const float3&) {}
 	virtual void ReservePad(CAirBaseHandler::LandingPad* lp);
 
 	virtual void SetGoal(const float3& pos);

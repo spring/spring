@@ -113,8 +113,8 @@ void LuaParser::SetupEnv()
 
 	// FIXME: replace "random" as in LuaHandleSynced (can write your own for now)
 	lua_getglobal(L, "math");
-	lua_pushstring(L, "random");     lua_pushnil(L); lua_rawset(L, -3);
-	lua_pushstring(L, "randomseed"); lua_pushnil(L); lua_rawset(L, -3);
+	lua_pushliteral(L, "random");     lua_pushnil(L); lua_rawset(L, -3);
+	lua_pushliteral(L, "randomseed"); lua_pushnil(L); lua_rawset(L, -3);
 	lua_pop(L, 1); // pop "math"
 
 	AddFunc("DontMessWithMyCase", DontMessWithMyCase);
@@ -254,13 +254,13 @@ void LuaParser::GetTable(const string& name, bool overwrite)
 {
 	if ((L == NULL) || (initDepth < 0)) { return; }
 
-	lua_pushstring(L, name.c_str());
+	lua_pushsstring(L, name);
 
 	if (overwrite) {
 		lua_newtable(L);
 	}
 	else {
-		lua_pushstring(L, name.c_str());
+		lua_pushsstring(L, name);
 		lua_gettable(L, (initDepth == 0) ? LUA_GLOBALSINDEX : -3);
 		if (!lua_istable(L, -1)) {
 			lua_pop(L, 1);
@@ -309,7 +309,7 @@ void LuaParser::AddFunc(const string& key, int (*func)(lua_State*))
 {
 	if ((L == NULL) || (initDepth < 0)) { return; }
 	if (func == NULL) { return; }
-	lua_pushstring(L, key.c_str());
+	lua_pushsstring(L, key);
 	lua_pushcfunction(L, func);
 	PushParam();
 }
@@ -318,7 +318,7 @@ void LuaParser::AddFunc(const string& key, int (*func)(lua_State*))
 void LuaParser::AddInt(const string& key, int value)
 {
 	if ((L == NULL) || (initDepth < 0)) { return; }
-	lua_pushstring(L, key.c_str());
+	lua_pushsstring(L, key);
 	lua_pushnumber(L, value);
 	PushParam();
 }
@@ -327,7 +327,7 @@ void LuaParser::AddInt(const string& key, int value)
 void LuaParser::AddBool(const string& key, bool value)
 {
 	if ((L == NULL) || (initDepth < 0)) { return; }
-	lua_pushstring(L, key.c_str());
+	lua_pushsstring(L, key);
 	lua_pushboolean(L, value);
 	PushParam();
 }
@@ -336,7 +336,7 @@ void LuaParser::AddBool(const string& key, bool value)
 void LuaParser::AddFloat(const string& key, float value)
 {
 	if ((L == NULL) || (initDepth < 0)) { return; }
-	lua_pushstring(L, key.c_str());
+	lua_pushsstring(L, key);
 	lua_pushnumber(L, value);
 	PushParam();
 }
@@ -345,8 +345,8 @@ void LuaParser::AddFloat(const string& key, float value)
 void LuaParser::AddString(const string& key, const string& value)
 {
 	if ((L == NULL) || (initDepth < 0)) { return; }
-	lua_pushstring(L, key.c_str());
-	lua_pushstring(L, value.c_str());
+	lua_pushsstring(L, key);
+	lua_pushsstring(L, value);
 	PushParam();
 }
 
@@ -394,7 +394,7 @@ void LuaParser::AddString(int key, const string& value)
 {
 	if ((L == NULL) || (initDepth < 0)) { return; }
 	lua_pushnumber(L, key);
-	lua_pushstring(L, value.c_str());
+	lua_pushsstring(L, value);
 	PushParam();
 }
 

@@ -68,7 +68,7 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3 &p, const float3& v
 	SoundItem* sndItem = sound->GetSoundItem(id);
 	if (!sndItem)
 	{
-		//numEmptyPlayRequests++;
+		sound->numEmptyPlayRequests++;
 		return;
 	}
 
@@ -90,8 +90,8 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3 &p, const float3& v
 
 	if (sndSource->GetCurrentPriority() < sndItem->GetPriority())
 	{
-		//if (sndSource->IsPlaying())
-		//	++numAbortedPlays;
+		if (sndSource->IsPlaying())
+			sound->numAbortedPlays++;
 
 		sndSource->Play(this, sndItem, p, velocity, volume, relative);
 		CheckError("CSound::PlaySample");

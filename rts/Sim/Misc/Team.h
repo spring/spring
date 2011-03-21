@@ -21,28 +21,20 @@ class CTeam : public TeamBase, private boost::noncopyable //! cannot allow shall
 	CR_DECLARE(CTeam);
 public:
 	CTeam();
-	~CTeam();
-public:
 
-	/**
-	 * This has to be called for every team before SlowUpdates start,
-	 * otherwise values get overwritten.
-	 */
-	void ResetFrameVariables();
+	void ResetResourceState();
 	void SlowUpdate();
 
 	void AddMetal(float amount, bool useIncomeMultiplier = true);
 	void AddEnergy(float amount, bool useIncomeMultiplier = true);
 	bool UseEnergy(float amount);
 	bool UseMetal(float amount);
-	bool UseEnergyUpkeep(float amount);
-	bool UseMetalUpkeep(float amount);
 
 	void GiveEverythingTo(const unsigned toTeam);
 
 	void Died();
 
-	void StartposMessage(const float3& pos);
+	void StartposMessage(const float3& pos) { startPos = pos; }
 
 	CTeam& operator=(const TeamBase& base);
 
@@ -79,12 +71,10 @@ public:
 	float metalPull,    prevMetalPull;
 	float metalIncome,  prevMetalIncome;
 	float metalExpense, prevMetalExpense;
-	float metalUpkeep,  prevMetalUpkeep;
 
 	float energyPull,    prevEnergyPull;
 	float energyIncome,  prevEnergyIncome;
 	float energyExpense, prevEnergyExpense;
-	float energyUpkeep,  prevEnergyUpkeep;
 
 	SyncedFloat metalStorage, energyStorage;
 

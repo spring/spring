@@ -33,7 +33,7 @@ using namespace std;
 
 bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 {
-	lua_pushstring(L, "MoveCtrl");
+	lua_pushliteral(L, "MoveCtrl");
 	lua_newtable(L);
 
 #define REGISTER_LUA_CFUNC(x) \

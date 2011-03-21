@@ -102,7 +102,7 @@ bool CLuaGaia::AddSyncedCode()
 
 bool CLuaGaia::AddUnsyncedCode()
 {
-	/*lua_pushstring(L, "UNSYNCED");
+	/*lua_pushliteral(L, "UNSYNCED");
 	lua_gettable(L, LUA_REGISTRYINDEX);*/
 
 	return true;

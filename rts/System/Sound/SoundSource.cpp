@@ -27,7 +27,16 @@ float CSoundSource::heightRolloffModifier = 1.0f;
 
 
 
-CSoundSource::CSoundSource() : curPlaying(NULL), curChannel(NULL), curStream(NULL), curVolume(1.f), loopStop(1e9), in3D(false), efxEnabled(false), curHeightRolloffModifier(1)
+CSoundSource::CSoundSource()
+	: curPlaying(NULL)
+	, curChannel(NULL)
+	, curStream(NULL)
+	, curVolume(1.f)
+	, loopStop(1e9)
+	, in3D(false)
+	, efxEnabled(false)
+	, efxUpdates(0)
+	, curHeightRolloffModifier(1)
 {
 	alGenSources(1, &id);
 	if (!CheckError("CSoundSource::CSoundSource")) {
@@ -58,6 +67,7 @@ void CSoundSource::Update()
 			alSource3i(id, AL_AUXILIARY_SEND_FILTER, (efx->enabled) ? efx->sfxSlot : AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
 			alSourcei(id, AL_DIRECT_FILTER, (efx->enabled) ? efx->sfxFilter : AL_FILTER_NULL);
 			efxEnabled = efx->enabled;
+			efxUpdates = efx->updates;
 		}
 
 		if (heightRolloffModifier != curHeightRolloffModifier) {
@@ -79,6 +89,13 @@ void CSoundSource::Update()
 			curStream->Update();
 			CheckError("CSoundSource::Update");
 		}
+	}
+
+	if (efxEnabled && (efxUpdates != efx->updates)) {
+		//! airAbsorption & LowPass aren't auto updated by OpenAL on change, so we need to do it per source
+		alSourcef(id, AL_AIR_ABSORPTION_FACTOR, efx->airAbsorptionFactor);
+		alSourcei(id, AL_DIRECT_FILTER, efx->sfxFilter);
+		efxUpdates = efx->updates;
 	}
 }
 
@@ -158,6 +175,7 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, efx->airAbsorptionFactor);
 			alSource3i(id, AL_AUXILIARY_SEND_FILTER, efx->sfxSlot, 0, AL_FILTER_NULL);
 			alSourcei(id, AL_DIRECT_FILTER, efx->sfxFilter);
+			efxUpdates = efx->updates;
 		}
 		alSourcei(id, AL_SOURCE_RELATIVE, AL_FALSE);
 		pos *= CSound::GetElmoInMeters();

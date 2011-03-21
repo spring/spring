@@ -7,6 +7,7 @@
 #include "BasicTreeDrawer.h"
 #include "AdvTreeDrawer.h"
 #include "Game/Camera.h"
+#include "Rendering/GlobalRendering.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -82,7 +83,8 @@ void CBaseTreeDrawer::DrawShadowPass()
 
 void CBaseTreeDrawer::Draw(bool drawReflection)
 {
-	const float treeDistance = Clamp(baseTreeDistance, 1.0f, (float)MAX_VIEW_RANGE / (SQUARE_SIZE * TREE_SQUARE_SIZE));
+	const float maxDistance = CGlobalRendering::MAX_VIEW_RANGE / (SQUARE_SIZE * TREE_SQUARE_SIZE);
+	const float treeDistance = Clamp(baseTreeDistance, 1.0f, maxDistance);
 	Draw(treeDistance, drawReflection);
 }
 

@@ -25,7 +25,7 @@ CR_REG_METADATA(CTeamHandler, (
 ));
 
 
-CTeamHandler* teamHandler;
+CTeamHandler* teamHandler = NULL;
 
 
 CTeamHandler::CTeamHandler():
@@ -88,12 +88,12 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 
 void CTeamHandler::GameFrame(int frameNum)
 {
-	if (!(frameNum & (TEAM_SLOWUPDATE_RATE-1))) {
+	if ((frameNum % TEAM_SLOWUPDATE_RATE) == 0) {
 		for (int a = 0; a < ActiveTeams(); ++a) {
-			Team(a)->ResetFrameVariables();
+			teams[a]->ResetResourceState();
 		}
 		for (int a = 0; a < ActiveTeams(); ++a) {
-			Team(a)->SlowUpdate();
+			teams[a]->SlowUpdate();
 		}
 	}
 }
