@@ -1,20 +1,18 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
-#include <assert.h>
+#include <cassert>
 #include "mmgr.h"
 
 #include "lib/gml/gml.h"
 #include "UnitHandler.h"
 #include "Unit.h"
 #include "UnitDefHandler.h"
-#include "UnitLoader.h"
-#include "CommandAI/Command.h"
 #include "CommandAI/BuilderCAI.h"
+#include "CommandAI/Command.h"
 #include "Game/GameSetup.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/Ground.h"
-#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
@@ -29,7 +27,6 @@
 #include "System/LogOutput.h"
 #include "System/TimeProfiler.h"
 #include "System/myMath.h"
-#include "System/LoadSave/LoadSaveInterface.h"
 #include "System/Sync/SyncTracer.h"
 #include "System/creg/STL_Deque.h"
 #include "System/creg/STL_List.h"
@@ -82,6 +79,10 @@ CUnitHandler::CUnitHandler()
 	maxUnits = std::min(gameSetup->maxUnits * teamHandler->ActiveTeams(), MAX_UNITS);
 	maxUnitsPerTeam = maxUnits / teamHandler->ActiveTeams();
 
+	// ensure each team can make at least one unit
+	assert(maxUnits >= teamHandler->ActiveTeams());
+	assert(maxUnitsPerTeam >= 1);
+
 	units.resize(maxUnits, NULL);
 	unitsByDefs.resize(teamHandler->ActiveTeams(), std::vector<CUnitSet>(unitDefHandler->unitDefs.size()));
 
@@ -124,6 +125,10 @@ CUnitHandler::~CUnitHandler()
 bool CUnitHandler::AddUnit(CUnit *unit)
 {
 	if (freeUnitIDs.empty()) {
+		// should be unreachable (all code that goes through
+		// UnitLoader::LoadUnit --> Unit::PreInit checks the
+		// unit limit first)
+		assert(false);
 		return false;
 	}
 
