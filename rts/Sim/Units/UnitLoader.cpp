@@ -315,8 +315,8 @@ void CUnitLoader::GiveUnits(const std::vector<std::string>& args, int team)
 	}
 
 	if (objectName == "all") {
-		int numRequestedUnits = unitDefHandler->unitDefs.size() - 1; /// defid=0 is not valid
-		int currentNumUnits = teamHandler->Team(team)->units.size();
+		unsigned int numRequestedUnits = unitDefHandler->unitDefs.size() - 1; /// defid=0 is not valid
+		unsigned int currentNumUnits = teamHandler->Team(team)->units.size();
 
 		// make sure team unit-limit is not exceeded
 		if ((currentNumUnits + numRequestedUnits) > uh->MaxUnitsPerTeam()) {
@@ -345,11 +345,14 @@ void CUnitLoader::GiveUnits(const std::vector<std::string>& args, int team)
 			}
 		}
 	} else {
-		int numRequestedUnits = amount;
-		int currentNumUnits = teamHandler->Team(team)->units.size();
+		unsigned int numRequestedUnits = amount;
+		unsigned int currentNumUnits = teamHandler->Team(team)->units.size();
 
 		if (currentNumUnits >= uh->MaxUnitsPerTeam()) {
-			logOutput.Print("[%s] unable to give more units to team %d (current: %d, max: %d)", __FUNCTION__, team, currentNumUnits, uh->MaxUnits());
+			logOutput.Print(
+				"[%s] unable to give more units to team %d (current: %u, team limit: %u, global limit: %u)",
+				__FUNCTION__, team, currentNumUnits, uh->MaxUnitsPerTeam(), uh->MaxUnits()
+			);
 			return;
 		}
 

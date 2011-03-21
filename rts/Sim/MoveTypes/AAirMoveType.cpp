@@ -96,6 +96,8 @@ bool AAirMoveType::Update() {
 		useHeading = false;
 		SetState(AIRCRAFT_TAKEOFF);
 	}
+
+	return false; // this return value is never used
 }
 
 void AAirMoveType::UpdateFuel() {

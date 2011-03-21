@@ -88,7 +88,7 @@ class LuaUtils {
 inline void LuaPushNamedBool(lua_State* L,
                              const string& key, bool value)
 {
-	lua_pushstring(L, key.c_str());
+	lua_pushsstring(L, key);
 	lua_pushboolean(L, value);
 	lua_rawset(L, -3);
 }
@@ -97,7 +97,7 @@ inline void LuaPushNamedBool(lua_State* L,
 inline void LuaPushNamedNumber(lua_State* L,
                                const string& key, lua_Number value)
 {
-	lua_pushstring(L, key.c_str());
+	lua_pushsstring(L, key);
 	lua_pushnumber(L, value);
 	lua_rawset(L, -3);
 }
@@ -106,8 +106,8 @@ inline void LuaPushNamedNumber(lua_State* L,
 inline void LuaPushNamedString(lua_State* L,
                                const string& key, const string& value)
 {
-	lua_pushstring(L, key.c_str());
-	lua_pushstring(L, value.c_str());
+	lua_pushsstring(L, key);
+	lua_pushsstring(L, value);
 	lua_rawset(L, -3);
 }
 
@@ -115,7 +115,7 @@ inline void LuaPushNamedString(lua_State* L,
 inline void LuaPushNamedCFunc(lua_State* L,
                               const string& key, int (*func)(lua_State*))
 {
-	lua_pushstring(L, key.c_str());
+	lua_pushsstring(L, key);
 	lua_pushcfunction(L, func);
 	lua_rawset(L, -3);
 }
@@ -123,11 +123,11 @@ inline void LuaPushNamedCFunc(lua_State* L,
 
 inline void LuaInsertDualMapPair(lua_State* L, const string& name, int number)
 {
-	lua_pushstring(L, name.c_str());
+	lua_pushsstring(L, name);
 	lua_pushnumber(L, number);
 	lua_rawset(L, -3);
 	lua_pushnumber(L, number);
-	lua_pushstring(L, name.c_str());
+	lua_pushsstring(L, name);
 	lua_rawset(L, -3);
 }
 

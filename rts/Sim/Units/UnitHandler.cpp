@@ -42,29 +42,24 @@ using std::max;
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CUnitHandler* uh;
+CUnitHandler* uh = NULL;
 
-CR_BIND(CUnitHandler, (true));
+CR_BIND(CUnitHandler, );
 CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(activeUnits),
 	CR_MEMBER(units),
-	CR_MEMBER(freeIDs),
-	CR_MEMBER(waterDamage),
-	CR_MEMBER(unitsPerTeam),
+	CR_MEMBER(freeUnitIDs),
+	CR_MEMBER(maxUnits),
+	CR_MEMBER(maxUnitsPerTeam),
 	CR_MEMBER(maxUnitRadius),
-	CR_MEMBER(toBeRemoved),
+	CR_MEMBER(unitsToBeRemoved),
 	CR_MEMBER(morphUnitToFeature),
-//	CR_MEMBER(toBeRemoved),
 	CR_MEMBER(builderCAIs),
 	CR_MEMBER(unitsByDefs),
 	CR_POSTLOAD(PostLoad),
 	CR_SERIALIZER(Serialize)
-	));
+));
 
-
-void CUnitHandler::Serialize(creg::ISerializer& s)
-{
-}
 
 
 void CUnitHandler::PostLoad()
@@ -74,38 +69,51 @@ void CUnitHandler::PostLoad()
 }
 
 
-CUnitHandler::CUnitHandler(bool serializing)
+CUnitHandler::CUnitHandler()
 :
 	maxUnitRadius(0.0f),
 	morphUnitToFeature(true)
 {
-	const size_t maxUnitsTemp = std::min(gameSetup->maxUnits * teamHandler->ActiveTeams(), MAX_UNITS);
-	units.resize(maxUnitsTemp);
-	unitsPerTeam = maxUnitsTemp / teamHandler->ActiveTeams() - 5;
+	assert(teamHandler->ActiveTeams() > 0);
 
-	freeIDs.reserve(units.size()-1);
-	for (size_t a = 1; a < units.size(); a++) {
-		freeIDs.push_back(a);
-		units[a] = NULL;
+	// note: the number of active teams can change at run-time, so
+	// the team unit limit should be recalculated whenever one dies
+	// or spawns (but would get complicated)
+	maxUnits = std::min(gameSetup->maxUnits * teamHandler->ActiveTeams(), MAX_UNITS);
+	maxUnitsPerTeam = maxUnits / teamHandler->ActiveTeams();
+
+	units.resize(maxUnits, NULL);
+	unitsByDefs.resize(teamHandler->ActiveTeams(), std::vector<CUnitSet>(unitDefHandler->unitDefs.size()));
+
+	{
+		std::vector<unsigned int> freeIDs(units.size());
+
+		// id's are used as indices, so they must lie in [0, units.size() - 1]
+		// (furthermore all id's are treated equally, none have special status)
+		for (unsigned int id = 0; id < units.size(); id++) {
+			freeIDs[id] = id;
+		}
+
+		// randomize the unit ID's so that Lua widgets can not
+		// easily determine enemy unit counts from ID's alone
+		// (shuffle twice for good measure)
+		SyncedRNG rng;
+
+		std::random_shuffle(freeIDs.begin(), freeIDs.end(), rng);
+		std::random_shuffle(freeIDs.begin(), freeIDs.end(), rng);
+		std::copy(freeIDs.begin(), freeIDs.end(), std::front_inserter(freeUnitIDs));
 	}
-	units[0] = NULL;
 
 	slowUpdateIterator = activeUnits.end();
-
-	waterDamage = mapInfo->water.damage;
-
-	if (!serializing) {
-		airBaseHandler = new CAirBaseHandler;
-
-		unitsByDefs.resize(teamHandler->ActiveTeams(), std::vector<CUnitSet>(unitDefHandler->unitDefs.size()));
-	}
+	airBaseHandler = new CAirBaseHandler();
 }
 
 
 CUnitHandler::~CUnitHandler()
 {
 	for (std::list<CUnit*>::iterator usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
-		(*usi)->delayedWreckLevel = -1; // dont create wreckages since featureHandler may be destroyed already
+		// ~CUnit dereferences featureHandler which is destroyed already
+		(*usi)->delayedWreckLevel = -1;
 		delete (*usi);
 	}
 
@@ -113,40 +121,43 @@ CUnitHandler::~CUnitHandler()
 }
 
 
-int CUnitHandler::AddUnit(CUnit *unit)
+bool CUnitHandler::AddUnit(CUnit *unit)
 {
-	int num = (int)(gs->randFloat()) * ((int)activeUnits.size() - 1);
-	std::list<CUnit*>::iterator ui = activeUnits.begin();
-	for (int a = 0; a < num;++a) {
-		++ui;
+	if (freeUnitIDs.empty()) {
+		return false;
 	}
 
-	// randomize this to make the order in slowupdate random (good if one
-	// builds say many buildings at once and then many mobile ones etc)
-	activeUnits.insert(ui, unit);
-
-	// randomize the unitID assignment so that lua widgets can
-	// not easily determine enemy unit counts from unitIDs alone
-	assert(!freeIDs.empty());
-	const unsigned int freeSlot = gs->randInt() % freeIDs.size();
-	const unsigned int freeMax  = freeIDs.size() - 1;
-	unit->id = freeIDs[freeSlot]; // set the unit ID
-	freeIDs[freeSlot] = freeIDs[freeMax];
-	freeIDs.resize(freeMax);
-
+	unit->id = freeUnitIDs.front();
 	units[unit->id] = unit;
+
+	std::list<CUnit*>::iterator ui = activeUnits.begin();
+
+	if (activeUnits.empty()) {
+		// move to .end()
+		++ui;
+	} else {
+		// randomize this to make the slow-update order random (good if one
+		// builds say many buildings at once and then many mobile ones etc)
+		const unsigned int insertionPos = gs->randFloat() * activeUnits.size();
+
+		for (unsigned int n = 0; n < insertionPos; ++n) {
+			++ui;
+		}
+	}
+
+	activeUnits.insert(ui, unit);
+	freeUnitIDs.pop_front();
+
 	teamHandler->Team(unit->team)->AddUnit(unit, CTeam::AddBuilt);
 	unitsByDefs[unit->team][unit->unitDef->id].insert(unit);
 
 	maxUnitRadius = max(unit->radius, maxUnitRadius);
-
-	return unit->id;
+	return true;
 }
-
 
 void CUnitHandler::DeleteUnit(CUnit* unit)
 {
-	toBeRemoved.push_back(unit);
+	unitsToBeRemoved.push_back(unit);
 	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).dequeue_synced(unit);
 }
 
@@ -174,13 +185,12 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 
 			activeUnits.erase(usi);
 			units[delUnit->id] = 0;
-			freeIDs.push_back(delUnit->id);
+			freeUnitIDs.push_back(delUnit->id);
 			teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
 
 			unitsByDefs[delTeam][delType].erase(delUnit);
 
 			delete delUnit;
-
 			break;
 		}
 	}
@@ -203,7 +213,7 @@ void CUnitHandler::Update()
 	{
 		GML_STDMUTEX_LOCK(runit); // Update
 
-		if (!toBeRemoved.empty()) {
+		if (!unitsToBeRemoved.empty()) {
 			GML_RECMUTEX_LOCK(unit); // Update - for anti-deadlock purposes.
 			GML_RECMUTEX_LOCK(sel);  // Update - unit is removed from selectedUnits in ~CObject, which is too late.
 			GML_RECMUTEX_LOCK(quad); // Update - make sure unit does not get partially deleted before before being removed from the quadfield
@@ -211,9 +221,9 @@ void CUnitHandler::Update()
 
 			eventHandler.DeleteSyncedUnits();
 
-			while (!toBeRemoved.empty()) {
-				CUnit* delUnit = toBeRemoved.back();
-				toBeRemoved.pop_back();
+			while (!unitsToBeRemoved.empty()) {
+				CUnit* delUnit = unitsToBeRemoved.back();
+				unitsToBeRemoved.pop_back();
 
 				DeleteUnitNow(delUnit);
 			}
@@ -225,7 +235,7 @@ void CUnitHandler::Update()
 	GML_UPDATE_TICKS();
 
 	{
-		SCOPED_TIMER("Unit Movetype update");
+		SCOPED_TIMER("Unit::MoveType::Update");
 		std::list<CUnit*>::iterator usi;
 		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 			CUnit* unit = *usi;
@@ -240,7 +250,7 @@ void CUnitHandler::Update()
 	}
 
 	{
-		SCOPED_TIMER("Unit update");
+		SCOPED_TIMER("Unit::Update");
 		std::list<CUnit*>::iterator usi;
 		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 			CUnit* unit = *usi;
@@ -260,7 +270,7 @@ void CUnitHandler::Update()
 	}
 
 	{
-		SCOPED_TIMER("Unit slow update");
+		SCOPED_TIMER("Unit::SlowUpdate");
 		if (!(gs->frameNum & (UNIT_SLOWUPDATE_RATE - 1))) {
 			slowUpdateIterator = activeUnits.begin();
 		}
@@ -273,10 +283,10 @@ void CUnitHandler::Update()
 }
 
 
-float CUnitHandler::GetBuildHeight(float3 pos, const UnitDef* unitdef)
+float CUnitHandler::GetBuildHeight(const float3& pos, const UnitDef* unitdef)
 {
-	float minh=-5000;
-	float maxh=5000;
+	float minh = -5000.0f;
+	float maxh =  5000.0f;
 	int numBorder=0;
 	float borderh=0;
 	const float* heightmap=readmap->GetHeightmap();
@@ -465,9 +475,8 @@ void CUnitHandler::AddBuilderCAI(CBuilderCAI* b)
 {
 	GML_STDMUTEX_LOCK(cai); // AddBuilderCAI
 
-	builderCAIs.insert(builderCAIs.end(),b);
+	builderCAIs.insert(builderCAIs.end(), b);
 }
-
 
 void CUnitHandler::RemoveBuilderCAI(CBuilderCAI* b)
 {
@@ -477,46 +486,51 @@ void CUnitHandler::RemoveBuilderCAI(CBuilderCAI* b)
 }
 
 
-void CUnitHandler::LoadSaveUnits(CLoadSaveInterface* file, bool loading)
-{
-}
-
 
 /**
  * Returns a build Command that intersects the ray described by pos and dir from
  * the command queues of the units 'units' on team number 'team'.
  * @brief returns a build Command that intersects the ray described by pos and dir
- * @return the build Command, or a Command wiht id 0 if none is found
+ * @return the build Command, or a Command with id 0 if none is found
  */
-Command CUnitHandler::GetBuildCommand(float3 pos, float3 dir){
+Command CUnitHandler::GetBuildCommand(const float3& pos, const float3& dir) {
 	float3 tempF1 = pos;
 
 	GML_STDMUTEX_LOCK(cai); // GetBuildCommand
 
 	CCommandQueue::iterator ci;
-	for(std::list<CUnit*>::iterator ui = this->activeUnits.begin(); ui != this->activeUnits.end(); ++ui){
-		if((*ui)->team == gu->myTeam){
-			ci = (*ui)->commandAI->commandQue.begin();
-			for(; ci != (*ui)->commandAI->commandQue.end(); ++ci){
-				if((*ci).id < 0 && (*ci).params.size() >= 3){
-					BuildInfo bi(*ci);
-					tempF1 = pos + dir*((bi.pos.y - pos.y)/dir.y) - bi.pos;
-					if(bi.def && bi.GetXSize()/2*SQUARE_SIZE > fabs(tempF1.x) && bi.GetZSize()/2*SQUARE_SIZE > fabs(tempF1.z)){
-						return (*ci);
-					}
+	for (std::list<CUnit*>::const_iterator ui = activeUnits.begin(); ui != activeUnits.end(); ++ui) {
+		const CUnit* unit = *ui;
+
+		if (unit->team != gu->myTeam) {
+			continue;
+		}
+
+		ci = unit->commandAI->commandQue.begin();
+
+		for (; ci != unit->commandAI->commandQue.end(); ++ci) {
+			const Command& cmd = *ci;
+
+			if (cmd.id < 0 && cmd.params.size() >= 3) {
+				BuildInfo bi(cmd);
+				tempF1 = pos + dir * ((bi.pos.y - pos.y) / dir.y) - bi.pos;
+
+				if (bi.def && (bi.GetXSize() / 2) * SQUARE_SIZE > fabs(tempF1.x) && (bi.GetZSize() / 2) * SQUARE_SIZE > fabs(tempF1.z)) {
+					return cmd;
 				}
 			}
 		}
 	}
+
 	Command c;
-	c.id = 0;
+	c.id = CMD_STOP;
 	return c;
 }
 
 
 bool CUnitHandler::CanBuildUnit(const UnitDef* unitdef, int team)
 {
-	if (teamHandler->Team(team)->units.size() >= unitsPerTeam) {
+	if (teamHandler->Team(team)->units.size() >= maxUnitsPerTeam) {
 		return false;
 	}
 	if (unitsByDefs[team][unitdef->id].size() >= unitdef->maxThisUnit) {

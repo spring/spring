@@ -177,7 +177,7 @@ bool CLuaHandleSynced::SetupSynced(const string& code, const string& filename)
 
 	AddBasicCalls(); // into Global
 
-	lua_pushstring(L, "Script");
+	lua_pushliteral(L, "Script");
 	lua_rawget(L, -2);
 	LuaPushNamedCFunc(L, "AddActionFallback",    AddSyncedActionFallback);
 	LuaPushNamedCFunc(L, "RemoveActionFallback", RemoveSyncedActionFallback);
@@ -247,15 +247,15 @@ bool CLuaHandleSynced::SetupUnsynced(const string& code, const string& filename)
 	AddBasicCalls(); // into UNSYNCED
 
 	// remove Script.Kill()
-	lua_pushstring(L, "Script");
+	lua_pushliteral(L, "Script");
 	lua_rawget(L, -2);
-	lua_pushstring(L, "Kill");
+	lua_pushliteral(L, "Kill");
 	lua_pushnil(L);
 	lua_rawset(L, -3);
 	LuaPushNamedCFunc(L, "UpdateCallIn", CallOutUnsyncedUpdateCallIn);
 	lua_pop(L, 1);
 
-	lua_pushstring(L, "_G");
+	lua_pushliteral(L, "_G");
 	unsyncedStr.GetRegistry(L);
 	lua_rawset(L, -3);
 
@@ -284,19 +284,19 @@ bool CLuaHandleSynced::SetupUnsynced(const string& code, const string& filename)
 		return false;
 	}
 
-	lua_pushstring(L, "math"); lua_newtable(L);
+	lua_pushliteral(L, "math"); lua_newtable(L);
 	lua_getglobal(L, "math"); LightCopyTable(-2, -1); lua_pop(L, 1);
 	lua_rawset(L, -3);
 
-	lua_pushstring(L, "table"); lua_newtable(L);
+	lua_pushliteral(L, "table"); lua_newtable(L);
 	lua_getglobal(L, "table"); LightCopyTable(-2, -1); lua_pop(L, 1);
 	lua_rawset(L, -3);
 
-	lua_pushstring(L, "string"); lua_newtable(L);
+	lua_pushliteral(L, "string"); lua_newtable(L);
 	lua_getglobal(L, "string"); LightCopyTable(-2, -1); lua_pop(L, 1);
 	lua_rawset(L, -3);
 
-	lua_pushstring(L, "coroutine"); lua_newtable(L);
+	lua_pushliteral(L, "coroutine"); lua_newtable(L);
 	lua_getglobal(L, "coroutine"); LightCopyTable(-2, -1); lua_pop(L, 1);
 	lua_rawset(L, -3);
 
@@ -367,24 +367,24 @@ bool CLuaHandleSynced::SyncifyRandomFuncs()
 	}
 
 	// copy the original random() into the registry
-	lua_pushstring(L, "random");
-	lua_pushstring(L, "random");
+	lua_pushliteral(L, "random");
+	lua_pushliteral(L, "random");
 	lua_rawget(L, -3); // math table
 	lua_rawset(L, LUA_REGISTRYINDEX);
 
 	// copy the original randomseed() into the registry
-	lua_pushstring(L, "randomseed");
-	lua_pushstring(L, "randomseed");
+	lua_pushliteral(L, "randomseed");
+	lua_pushliteral(L, "randomseed");
 	lua_rawget(L, -3); // math table
 	lua_rawset(L, LUA_REGISTRYINDEX);
 
 	// install our custom random()
-	lua_pushstring(L, "random");
+	lua_pushliteral(L, "random");
 	lua_pushcfunction(L, SyncedRandom);
 	lua_rawset(L, -3);
 
 	// remove randomseed()
-	lua_pushstring(L, "randomseed");
+	lua_pushliteral(L, "randomseed");
 	lua_pushnil(L);
 	lua_rawset(L, -3);
 
@@ -396,16 +396,16 @@ bool CLuaHandleSynced::SyncifyRandomFuncs()
 
 bool CLuaHandleSynced::CopyRealRandomFuncs()
 {
-	lua_pushstring(L, "math");
+	lua_pushliteral(L, "math");
 	lua_rawget(L, -2);
 
-	lua_pushstring(L, "random");
-	lua_pushstring(L, "random");
+	lua_pushliteral(L, "random");
+	lua_pushliteral(L, "random");
 	lua_rawget(L, LUA_REGISTRYINDEX);
 	lua_rawset(L, -3);
 
-	lua_pushstring(L, "randomseed");
-	lua_pushstring(L, "randomseed");
+	lua_pushliteral(L, "randomseed");
+	lua_pushliteral(L, "randomseed");
 	lua_rawget(L, LUA_REGISTRYINDEX);
 	lua_rawset(L, -3);
 
@@ -569,7 +569,7 @@ bool CLuaHandleSynced::HasCallIn(const string& name)
 
 	bool haveFunc = true;
 	lua_settop(L, 0);
-	lua_pushstring(L, name.c_str());
+	lua_pushsstring(L, name);
 	lua_gettable(L, tableIndex);
 	if (!lua_isfunction(L, -1)) {
 		haveFunc = false;
@@ -631,7 +631,7 @@ bool CLuaHandleSynced::Initialize(const string& syncData)
 	int errfunc = SetupTraceback() ? -2 : 0;
 	logOutput.Print("Initialize errfunc=%d\n", errfunc);
 
-	lua_pushlstring(L, syncData.c_str(), syncData.size());
+	lua_pushsstring(L, syncData);
 
 	// call the routine
 	if (!RunCallInTraceback(cmdStr, 1, 1, errfunc)) {
@@ -706,7 +706,7 @@ bool CLuaHandleSynced::GotChatMsg(const string& msg, int playerID)
 		return true; // the call is not defined
 	}
 
-	lua_pushstring(L, msg.c_str());
+	lua_pushsstring(L, msg);
 	lua_pushnumber(L, playerID);
 
 	// call the routine
@@ -767,7 +767,7 @@ bool CLuaHandleSynced::HasSyncedXCall(const string& funcName)
 		lua_pop(L, 1);
 		return false;
 	}
-	lua_pushstring(L, funcName.c_str()); // push the function name
+	lua_pushsstring(L, funcName); // push the function name
 	lua_rawget(L, -2);                   // get the function
 	const bool haveFunc = lua_isfunction(L, -1);
 	lua_pop(L, 2);
@@ -782,7 +782,7 @@ bool CLuaHandleSynced::HasUnsyncedXCall(const string& funcName)
 		lua_pop(L, 1);
 		return false;
 	}
-	lua_pushstring(L, funcName.c_str()); // push the function name
+	lua_pushsstring(L, funcName); // push the function name
 	lua_rawget(L, -2);                   // get the function
 	const bool haveFunc = lua_isfunction(L, -1);
 	lua_pop(L, 2);

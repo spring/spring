@@ -3607,7 +3607,7 @@ int LuaOpenGL::CreateTexture(lua_State* L)
 		return 0;
 	}
 
-	lua_pushstring(L, name.c_str());
+	lua_pushsstring(L, name);
 	return 1;
 }
 
@@ -4978,18 +4978,14 @@ int LuaOpenGL::GetGlobalTexNames(lua_State* L)
 	const map<string, C3DOTextureHandler::UnitTexture*>& textures =
 		texturehandler3DO->GetAtlasTextures();
 
-	lua_newtable(L);
+	lua_createtable(L, textures.size(), 0);
 	int count = 0;
 	for (it = textures.begin(); it != textures.end(); ++it) {
 		count++;
 		lua_pushnumber(L, count);
-		lua_pushstring(L, it->first.c_str());
+		lua_pushsstring(L, it->first);
 		lua_rawset(L, -3);
 	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, count);
-	lua_rawset(L, -3);
-
 	return 1;
 }
 

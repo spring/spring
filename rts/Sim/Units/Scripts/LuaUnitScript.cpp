@@ -31,7 +31,7 @@ some notes:
 - therefore, compared to COB, the X axis for the Move callout is mirrored
 - destination, speed, accel, decel for Turn, Spin, StopSpin are in radians
 - GetUnitCOBValue(PLAY_SOUND, ...) does NOT work for Lua unit scripts,
-  use Spring.PlaySound in combination with Spring.SendToUnsynced instead.
+  use Spring.PlaySound instead (synced code can call unsynced funcs!).
 - Because in current design CBCobThreadFinish can impossibly be called, certain
   state changes which normally happen immediately when script returns should
   be triggered through a call to a callOut when using Lua scripts.

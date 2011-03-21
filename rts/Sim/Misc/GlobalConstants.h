@@ -15,7 +15,7 @@ const int MAX_WORLD_SIZE = 1000000;
  *
  * Defines the size of 1 square as 8
  */
-const int  SQUARE_SIZE = 8;
+const int SQUARE_SIZE = 8;
 
 /**
  * @brief game speed
@@ -39,13 +39,6 @@ const int UNIT_SLOWUPDATE_RATE = 16;
 const int TEAM_SLOWUPDATE_RATE = 32;
 
 /**
- * @brief max view range
- *
- * Defines the maximum view range as 8000
- */
-const int MAX_VIEW_RANGE = 8000;
-
-/**
  * @brief max teams
  *
  * Defines the maximum number of teams
@@ -63,9 +56,10 @@ const int MAX_PLAYERS = 251;
 /**
  * @brief max units
  *
- * Defines the maximum number of untis that may be set as maximum for a game.
- * The real maximum of the game is stored in uh->maxUnits,
- * and may not be higher then this value.
+ * Defines the absolute global maximum number of units allowed to exist in a game.
+ * MUST be <= SHRT_MAX ((1 << ((sizeof(short) * 8) - 1)) - 1) because current net
+ * code transmits unit ID's as signed shorts. The effective global unit limit is
+ * stored in UnitHandler::maxUnits and is always clamped to this value.
  */
 const int MAX_UNITS = 32000;
 
@@ -73,13 +67,6 @@ const int MAX_UNITS = 32000;
  * @brief max weapons per unit
  */
 const int MAX_WEAPONS_PER_UNIT = 32;
-
-/**
- * @brief near plane
- *
- * Defines the near plane as 2.8f
- */
-const float NEAR_PLANE = 2.8f;
 
 /**
  * @brief randint max

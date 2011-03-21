@@ -31,7 +31,11 @@
 
 #include "float3.h"
 
-CSound::CSound() : myPos(0., 0., 0.), prevVelocity(0., 0., 0.), numEmptyPlayRequests(0), numAbortedPlays(0), soundThread(NULL), soundThreadQuit(false)
+CSound::CSound()
+	: myPos(0., 0., 0.)
+	, prevVelocity(0., 0., 0.)
+	, soundThread(NULL)
+	, soundThreadQuit(false)
 {
 	boost::recursive_mutex::scoped_lock lck(soundMutex);
 	mute = false;
@@ -510,26 +514,17 @@ size_t CSound::LoadSoundBuffer(const std::string& path, bool hardFail)
 {
 	const size_t id = SoundBuffer::GetId(path);
 	
-	if (id > 0)
-	{
+	if (id > 0) {
 		return id; // file is loaded already
-	}
-	else
-	{
+	} else {
 		CFileHandler file(path);
 
-		if (!file.FileExists())
-		{
-			if (hardFail) {
+		if (!file.FileExists()) {
+			if (hardFail)
 				handleerror(0, "Couldn't open audio file", path.c_str(),0);
-			}
 			else
 				LogObject(LOG_SOUND) << "Unable to open audio file: " << path;
 			return 0;
-		}
-		else
-		{
-			
 		}
 
 		std::vector<boost::uint8_t> buf(file.FileSize());
@@ -543,9 +538,7 @@ size_t CSound::LoadSoundBuffer(const std::string& path, bool hardFail)
 		else if (ending == "ogg")
 			success = buffer->LoadVorbis(path, buf, hardFail);
 		else
-		{
 			LogObject(LOG_SOUND) << "CSound::LoadALBuffer: unknown audio format: " << ending;
-		}
 
 		CheckError("CSound::LoadALBuffer");
 		if (!success) {

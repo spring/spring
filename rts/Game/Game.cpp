@@ -525,7 +525,7 @@ void CGame::LoadRendering()
 {
 	// rendering components
 	loadscreen->SetLoadMessage("Creating Sky");
-	sky = CBaseSky::GetSky();
+	sky = IBaseSky::GetSky();
 
 	loadscreen->SetLoadMessage("Creating ShadowHandler & DecalHandler");
 	cubeMapHandler = new CubeMapHandler();
@@ -708,20 +708,23 @@ void CGame::ResizeEvent()
 }
 
 
-int CGame::KeyPressed(unsigned short k, bool isRepeat)
+int CGame::KeyPressed(unsigned short key, bool isRepeat)
 {
 	if (!gameOver && !isRepeat) {
 		playerHandler->Player(gu->myPlayerNum)->currentStats.keyPresses++;
 	}
 
+	// Get the list of possible key actions
+	const CKeySet ks(key, false);
+	const CKeyBindings::ActionList& actionList = keyBindings->GetActionList(ks);
+
 	if (!hotBinding.empty()) {
-		if (k == SDLK_ESCAPE) {
+		if (key == SDLK_ESCAPE) {
 			hotBinding.clear();
 		}
-		else if (!keyCodes->IsModifier(k) && (k != keyBindings->GetFakeMetaKey())) {
-			CKeySet ks(k, false);
+		else if (!keyCodes->IsModifier(key) && (key != keyBindings->GetFakeMetaKey())) {
 			string cmd = "bind";
-			cmd += " " + ks.GetString(false) ;
+			cmd += " " + ks.GetString(false);
 			cmd += " " + hotBinding;
 			keyBindings->Command(cmd);
 			hotBinding.clear();
@@ -730,171 +733,13 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 		return 0;
 	}
 
-	// Get the list of possible key actions
-	CKeySet ks(k, false);
-	const CKeyBindings::ActionList& actionList = keyBindings->GetActionList(ks);
-
 	if (userWriting) {
-		unsigned int actionIndex;
-		for (actionIndex = 0; actionIndex < actionList.size(); actionIndex++) {
-			const Action& action = actionList[actionIndex];
-
-			if (action.command == "edit_return") {
-				userWriting=false;
-				writingPos = 0;
-
-				if (k == SDLK_RETURN) {
-					keyInput->SetKeyState(k, 0); //prevent game start when server chats
-				}
-				if (chatting) {
-					string command;
-					if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
-						command = userInput.substr(2);
-					} else {
-						command = userInput;
-					}
-					if ((command[0] == '/') && (command[1] != '/')) {
-						// execute an action
-						consoleHistory->AddLine(command);
-						const string actionLine = command.substr(1); // strip the '/'
-						chatting = false;
-						userInput = "";
-						writingPos = 0;
-						logOutput.Print(command);
-						CKeySet ks(k, false);
-						Action fakeAction(actionLine);
-						ActionPressed(fakeAction, ks, isRepeat);
-					}
-				}
+		for (unsigned int actionIndex = 0; actionIndex < actionList.size(); actionIndex++) {
+			if (ProcessKeyPressAction(key, actionList[actionIndex])) {
+				// the key was used, ignore it (ex: alt+a)
+				ignoreNextChar = (actionIndex < (actionList.size() - 1));
 				break;
 			}
-			else if ((action.command == "edit_escape") &&
-			         (chatting || inMapDrawer->wantLabel)) {
-				if (chatting) {
-					consoleHistory->AddLine(userInput);
-				}
-				userWriting=false;
-				chatting=false;
-				inMapDrawer->wantLabel=false;
-				userInput="";
-				writingPos = 0;
-				break;
-			}
-			else if (action.command == "edit_complete") {
-				string head = userInput.substr(0, writingPos);
-				string tail = userInput.substr(writingPos);
-				const vector<string> &partials = wordCompletion->Complete(head);
-				userInput = head + tail;
-				writingPos = (int)head.length();
-				if (!partials.empty()) {
-					string msg;
-					for (unsigned int i = 0; i < partials.size(); i++) {
-						msg += "  ";
-						msg += partials[i];
-					}
-					logOutput.Print(msg);
-				}
-				break;
-			}
-			else if (action.command == "chatswitchall") {
-				if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
-					userInput = userInput.substr(2);
-					writingPos = std::max(0, writingPos - 2);
-				}
-				userInputPrefix = "";
-				break;
-			}
-			else if (action.command == "chatswitchally") {
-				if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
-					userInput[0] = 'a';
-				} else {
-					userInput = "a:" + userInput;
-					writingPos += 2;
-				}
-				userInputPrefix = "a:";
-				break;
-			}
-			else if (action.command == "chatswitchspec") {
-				if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
-					userInput[0] = 's';
-				} else {
-					userInput = "s:" + userInput;
-					writingPos += 2;
-				}
-				userInputPrefix = "s:";
-				break;
-			}
-			else if (action.command == "pastetext") {
-				if (!action.extra.empty()) {
-					userInput.insert(writingPos, action.extra);
-					writingPos += action.extra.length();
-				} else {
-					PasteClipboard();
-				}
-				break;
-			}
-
-			else if (action.command == "edit_backspace") {
-				if (!userInput.empty() && (writingPos > 0)) {
-					userInput.erase(writingPos - 1, 1);
-					writingPos--;
-				}
-				break;
-			}
-			else if (action.command == "edit_delete") {
-				if (!userInput.empty() && (writingPos < (int)userInput.size())) {
-					userInput.erase(writingPos, 1);
-				}
-				break;
-			}
-			else if (action.command == "edit_home") {
-				writingPos = 0;
-				break;
-			}
-			else if (action.command == "edit_end") {
-				writingPos = (int)userInput.length();
-				break;
-			}
-			else if (action.command == "edit_prev_char") {
-				writingPos = std::max(0, std::min((int)userInput.length(), writingPos - 1));
-				break;
-			}
-			else if (action.command == "edit_next_char") {
-				writingPos = std::max(0, std::min((int)userInput.length(), writingPos + 1));
-				break;
-			}
-			else if (action.command == "edit_prev_word") {
-				// prev word
-				const char* s = userInput.c_str();
-				int p = writingPos;
-				while ((p > 0) && !isalnum(s[p - 1])) { p--; }
-				while ((p > 0) &&  isalnum(s[p - 1])) { p--; }
-				writingPos = p;
-				break;
-			}
-			else if (action.command == "edit_next_word") {
-				const int len = (int)userInput.length();
-				const char* s = userInput.c_str();
-				int p = writingPos;
-				while ((p < len) && !isalnum(s[p])) { p++; }
-				while ((p < len) &&  isalnum(s[p])) { p++; }
-				writingPos = p;
-				break;
-			}
-			else if ((action.command == "edit_prev_line") && chatting) {
-				userInput = consoleHistory->PrevLine(userInput);
-				writingPos = (int)userInput.length();
-				break;
-			}
-			else if ((action.command == "edit_next_line") && chatting) {
-				userInput = consoleHistory->NextLine(userInput);
-				writingPos = (int)userInput.length();
-				break;
-			}
-		}
-
-		if (actionIndex != actionList.size()) {
-			ignoreNextChar = true; // the key was used, ignore it  (ex: alt+a)
 		}
 
 		return 0;
@@ -904,15 +749,15 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
-		CInputReceiver* recv=*ri;
-		if (recv && recv->KeyPressed(k, isRepeat)) {
+		CInputReceiver* recv = *ri;
+		if (recv && recv->KeyPressed(key, isRepeat)) {
 			return 0;
 		}
 	}
 
 	// try our list of actions
-	for (int i = 0; i < (int)actionList.size(); ++i) {
-		if (ActionPressed(actionList[i], ks, isRepeat)) {
+	for (unsigned int i = 0; i < actionList.size(); ++i) {
+		if (ActionPressed(key, actionList[i], isRepeat)) {
 			return 0;
 		}
 	}

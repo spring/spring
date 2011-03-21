@@ -132,8 +132,9 @@ void CCamera::Update(bool freeze, bool resetUp)
 
 	const float gndHeight = ground->GetHeightAboveWater(pos.x, pos.z);
 	const float rangemod = 1.0f + std::max(0.0f, pos.y - gndHeight - 500.0f) * 0.0003f;
-	const float zNear = (NEAR_PLANE * rangemod);
-	globalRendering->viewRange = MAX_VIEW_RANGE * rangemod;
+	const float zNear = (CGlobalRendering::NEAR_PLANE * rangemod);
+
+	globalRendering->viewRange = CGlobalRendering::MAX_VIEW_RANGE * rangemod;
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
