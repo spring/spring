@@ -7,3 +7,6 @@
 [submodule "AI/Interfaces/Python"]
 	path = AI/Interfaces/Python
 	url = git://github.com/spring/Python.git
+[submodule "AI/Skirmish/Shard"]
+	path = AI/Skirmish/Shard
+	url = git://github.com/Tarendai/Shard.git
