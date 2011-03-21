@@ -1609,9 +1609,12 @@ void CGame::SimFrame() {
 		m_validateAllAllocUnits();
 #endif
 
-	eventHandler.GameFrame(gs->frameNum);
-
-	gs->frameNum++;
+	// Important: gs->frameNum must be updated *before* GameFrame is called,
+	// or any call-outs called by Lua will see a stale gs->frameNum.
+	// (e.g. effective TTL of CEGs emitted in GameFrame will be reduced...)
+	// It must still be passed the old frameNum because Lua may depend on it.
+	// (e.g. initialization in frame 0...)
+	eventHandler.GameFrame(gs->frameNum++);
 
 	if (!skipping) {
 		infoConsole->Update();
