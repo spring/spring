@@ -4,8 +4,6 @@
 #define _GLOBAL_RENDERING_H
 
 #include "System/creg/creg_cond.h"
-#include "System/float4.h"
-#include "System/Matrix44f.h"
 
 /**
  * @brief Globally accessible unsynced, rendering related data

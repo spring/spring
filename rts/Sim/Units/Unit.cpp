@@ -1054,18 +1054,21 @@ void CUnit::SlowUpdateWeapons() {
 
 void CUnit::DoWaterDamage()
 {
-	if (uh->waterDamage > 0.0f) {
-		if (pos.IsInBounds()) {
-			const int  px            = int(pos.x / (SQUARE_SIZE * 2));
-			const int  pz            = int(pos.z / (SQUARE_SIZE * 2));
-			const bool isFloating    = (physicalState == CSolidObject::Floating);
-			const bool onGround      = (physicalState == CSolidObject::OnGround);
-			const bool isWaterSquare = (readmap->mipHeightmap[1][pz * gs->hmapx + px] <= 0.0f);
+	if (mapInfo->water.damage <= 0.0f) {
+		return;
+	}
+	if (!pos.IsInBounds()) {
+		return;
+	}
 
-			if ((pos.y <= 0.0f) && isWaterSquare && (isFloating || onGround)) {
-				DoDamage(DamageArray(uh->waterDamage), 0, ZeroVector, -1);
-			}
-		}
+	const int  px            = pos.x / (SQUARE_SIZE * 2);
+	const int  pz            = pos.z / (SQUARE_SIZE * 2);
+	const bool isFloating    = (physicalState == CSolidObject::Floating);
+	const bool onGround      = (physicalState == CSolidObject::OnGround);
+	const bool isWaterSquare = (readmap->mipHeightmap[1][pz * gs->hmapx + px] <= 0.0f);
+
+	if ((pos.y <= 0.0f) && isWaterSquare && (isFloating || onGround)) {
+		DoDamage(DamageArray(mapInfo->water.damage), 0, ZeroVector, -1);
 	}
 }
 
