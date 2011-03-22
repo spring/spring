@@ -22,18 +22,24 @@ public:
 	std::vector<std::string> GetDirsInDir(const std::string& dir);
 
 	/**
-	 * Override determines whether if conflicts overwrites
-	 * an existing entry in the virtual filesystem or not
+	 * Adds an archive to the VFS.
+	 * @param override determines whether in case of a  conflict, the existing
+	 *   entry in the VFS is overwritten or not.
 	 */
-	bool AddArchive(const std::string& arName, bool override, const std::string& type = "");
-	bool AddArchiveWithDeps(const std::string& mapName, bool override, const std::string& type = "");
+	bool AddArchive(const std::string& archiveName, bool override, const std::string& type = "");
+	/**
+	 * Adds an archive and all of its dependencies to the VFS.
+	 * @param override determines whether in case of a  conflict, the existing
+	 *   entry in the VFS is overwritten or not.
+	 */
+	bool AddArchiveWithDeps(const std::string& archiveName, bool override, const std::string& type = "");
 
 	/**
-	 * Returns true if the archive is not loaded,
-	 * so it may was not loaded in the first place or was unloaded
-	 * successfully.
+	 * Removes an archive from the VFS.
+	 * @return true if the archive is not loaded anymore; it may was not loaded
+	 *   in the first place, or was unloaded successfully.
 	 */
-	bool RemoveArchive(const std::string& arName);
+	bool RemoveArchive(const std::string& archiveName);
 
 protected:
 	struct FileData {

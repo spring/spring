@@ -148,7 +148,7 @@ EXPORT(int         ) GetUnitCount();
 /**
  * @brief Get the units internal mod name
  * @param unit The units id number
- * @return The units internal modname or NULL on error
+ * @return The units internal mod name or NULL on error
  *
  * This function returns the units internal mod name. For example it would
  * return 'armck' and not 'Arm Construction kbot'.
@@ -174,12 +174,12 @@ EXPORT(const char* ) GetFullUnitName(int unit);
  * Do not forget to call RemoveAllArchives() before proceeding with other
  * archives.
  */
-EXPORT(void        ) AddArchive(const char* name);
+EXPORT(void        ) AddArchive(const char* archiveName);
 /**
  * @brief Adds an achive and all its dependencies to the VFS
  * @see AddArchive
  */
-EXPORT(void        ) AddAllArchives(const char* root);
+EXPORT(void        ) AddAllArchives(const char* rootArchiveName);
 /**
  * @brief Removes all archives from the VFS (Virtual File System)
  *
@@ -198,12 +198,12 @@ EXPORT(void        ) RemoveAllArchives();
  * This checksum depends only on the contents from the archive itself, and not
  * on the contents from dependencies of this archive (if any).
  */
-EXPORT(unsigned int) GetArchiveChecksum(const char* arname);
+EXPORT(unsigned int) GetArchiveChecksum(const char* archiveName);
 /**
  * @brief Gets the real path to the archive
  * @return NULL on error; a path to the archive on success
  */
-EXPORT(const char* ) GetArchivePath(const char* arname);
+EXPORT(const char* ) GetArchivePath(const char* archiveName);
 
 #if       !defined(PLAIN_API_STRUCTURE)
 /**
@@ -279,7 +279,7 @@ EXPORT(int         ) GetMapCount();
  */
 EXPORT(const char* ) GetMapName(int index);
 /**
- * @brief Get the filename of a map
+ * @brief Get the file-name of a map
  * @return NULL on error; the file-name of the map (e.g. "maps/SmallDivide.smf")
  *   on success
  */
@@ -422,10 +422,10 @@ EXPORT(unsigned int) GetMapChecksum(int index);
 EXPORT(unsigned int) GetMapChecksumFromName(const char* mapName);
 /**
  * @brief Retrieves a minimap image for a map.
- * @param filename The name of the map, including extension.
- * @param miplevel Which miplevel of the minimap to extract from the file.
- * Set miplevel to 0 to get the largest, 1024x1024 minimap. Each increment
- * divides the width and height by 2. The maximum miplevel is 8, resulting in a
+ * @param fileName The name of the map, including extension.
+ * @param mipLevel Which mip-level of the minimap to extract from the file.
+ * Set mip-level to 0 to get the largest, 1024x1024 minimap. Each increment
+ * divides the width and height by 2. The maximum mip-level is 8, resulting in a
  * 4x4 image.
  * @return A pointer to a static memory area containing the minimap as a 16 bit
  * packed RGB-565 (MSB to LSB: 5 bits red, 6 bits green, 5 bits blue) linear
@@ -434,7 +434,7 @@ EXPORT(unsigned int) GetMapChecksumFromName(const char* mapName);
  * An example usage would be GetMinimap("SmallDivide", 2).
  * This would return a 16 bit packed RGB-565 256x256 (= 1024/2^2) bitmap.
  */
-EXPORT(unsigned short*) GetMinimap(const char* filename, int miplevel);
+EXPORT(unsigned short*) GetMinimap(const char* fileName, int mipLevel);
 /**
  * @brief Retrieves dimensions of infomap for a map.
  * @param mapName  The name of the map, e.g. "SmallDivide".
@@ -612,8 +612,8 @@ EXPORT(const char* ) GetPrimaryModArchive(int index);
  * name of each archive.  In code:
  *		@code
  *		int count = GetPrimaryModArchiveCount(mod_index);
- *		for (int arnr = 0; arnr < count; ++arnr) {
- *			printf("primary mod archive: %s\n", GetPrimaryModArchiveList(arnr));
+ *		for (int archive = 0; archive < count; ++archive) {
+ *			printf("primary mod archive: %s\n", GetPrimaryModArchiveList(archive));
  *		}
  *		@endcode
  */
@@ -624,7 +624,7 @@ EXPORT(int         ) GetPrimaryModArchiveCount(int index);
  * @return NULL on error; the name of the archive on success
  * @see GetPrimaryModArchiveCount
  */
-EXPORT(const char* ) GetPrimaryModArchiveList(int arnr);
+EXPORT(const char* ) GetPrimaryModArchiveList(int archive);
 /**
  * @brief The reverse of GetPrimaryModName()
  * @param name The name of the mod
@@ -910,12 +910,12 @@ EXPORT(void        ) CloseFileVFS(int file);
 /**
  * @brief Read some data from a file in the VFS
  * @param file the file handle as returned by OpenFileVFS()
- * @param buf output buffer, must be at least length bytes
- * @param length how many bytes to read from the file
+ * @param buf output buffer, must be at least of size numBytes
+ * @param numBytes how many bytes to read from the file
  * @return -1 on error; the number of bytes read on success
  * (if this is less than length you reached the end of the file.)
  */
-EXPORT(int         ) ReadFileVFS(int file, unsigned char* buf, int length);
+EXPORT(int         ) ReadFileVFS(int file, unsigned char* buf, int numBytes);
 /**
  * @brief Retrieve size of a file in the VFS
  * @param file the file handle as returned by OpenFileVFS()
