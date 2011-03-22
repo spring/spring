@@ -2297,12 +2297,20 @@ EXPORT(int) FindFilesArchive(int archive, int file, char* nameBuf, int* size)
 
 		if (file < arch->NumFiles())
 		{
+			const int nameBufSize = *size;
 			std::string fileName;
 			int fileSize;
 			arch->FileInfo(file, fileName, fileSize);
 			*size = fileSize;
-			STRCPY(nameBuf, fileName.c_str()); // FIXME: oops, buffer overflow
-			return ++file;
+			if (nameBufSize > fileName.length())
+			{
+				STRCPY(nameBuf, fileName.c_str());
+				return ++file;
+			}
+			else
+			{
+				SetLastError("name-buffer is too small");
+			}
 		}
 		return 0;
 	}
