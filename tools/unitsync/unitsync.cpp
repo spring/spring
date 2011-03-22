@@ -8,23 +8,23 @@
 #include <set>
 
 // shared with spring:
-#include "LuaInclude.h"
-#include "FileSystem/ArchiveFactory.h"
-#include "FileSystem/ArchiveScanner.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/VFSHandler.h"
+#include "lib/lua/include/LuaInclude.h"
 #include "Game/GameVersion.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
 #include "Map/SMF/SmfMapFile.h"
-#include "ConfigHandler.h"
-#include "FileSystem/FileSystem.h"
-#include "FileSystem/FileSystemHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/SideParser.h"
 #include "ExternalAI/Interface/aidefines.h"
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "ExternalAI/LuaAIImplHandler.h"
+#include "System/FileSystem/ArchiveFactory.h"
+#include "System/FileSystem/ArchiveScanner.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/VFSHandler.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/FileSystemHandler.h"
+#include "System/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"
@@ -52,7 +52,7 @@ static CLogSubsystem LOG_UNITSYNC("unitsync", true);
 static CSyncer* syncer;
 
 static bool logOutputInitialised = false;
-// I'd rather not include globalstuff
+// for we do not have to include global-stuff (Sim/Misc/GlobalConstants.h)
 #define SQUARE_SIZE 8
 
 
@@ -359,25 +359,25 @@ EXPORT(const char*) GetFullUnitName(int unit)
 //////////////////////////
 //////////////////////////
 
-EXPORT(void) AddArchive(const char* name)
+EXPORT(void) AddArchive(const char* archiveName)
 {
 	try {
 		CheckInit();
-		CheckNullOrEmpty(name);
+		CheckNullOrEmpty(archiveName);
 
-		logOutput.Print(LOG_UNITSYNC, "adding archive: %s\n", name);
-		vfsHandler->AddArchive(name, false);
+		logOutput.Print(LOG_UNITSYNC, "adding archive: %s\n", archiveName);
+		vfsHandler->AddArchive(archiveName, false);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }
 
 
-EXPORT(void) AddAllArchives(const char* root)
+EXPORT(void) AddAllArchives(const char* rootArchiveName)
 {
 	try {
 		CheckInit();
-		CheckNullOrEmpty(root);
-		vfsHandler->AddArchiveWithDeps(root, false);
+		CheckNullOrEmpty(rootArchiveName);
+		vfsHandler->AddArchiveWithDeps(rootArchiveName, false);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }
@@ -396,27 +396,27 @@ EXPORT(void) RemoveAllArchives()
 	UNITSYNC_CATCH_BLOCKS;
 }
 
-EXPORT(unsigned int) GetArchiveChecksum(const char* arname)
+EXPORT(unsigned int) GetArchiveChecksum(const char* archiveName)
 {
 	try {
 		CheckInit();
-		CheckNullOrEmpty(arname);
+		CheckNullOrEmpty(archiveName);
 
-		logOutput.Print(LOG_UNITSYNC, "archive checksum: %s\n", arname);
-		return archiveScanner->GetSingleArchiveChecksum(arname);
+		logOutput.Print(LOG_UNITSYNC, "archive checksum: %s\n", archiveName);
+		return archiveScanner->GetSingleArchiveChecksum(archiveName);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return 0;
 }
 
-EXPORT(const char*) GetArchivePath(const char* arname)
+EXPORT(const char*) GetArchivePath(const char* archiveName)
 {
 	try {
 		CheckInit();
-		CheckNullOrEmpty(arname);
+		CheckNullOrEmpty(archiveName);
 
-		logOutput.Print(LOG_UNITSYNC, "archive path: %s\n", arname);
-		return GetStr(archiveScanner->GetArchivePath(arname));
+		logOutput.Print(LOG_UNITSYNC, "archive path: %s\n", archiveName);
+		return GetStr(archiveScanner->GetArchivePath(archiveName));
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return NULL;
@@ -652,8 +652,8 @@ EXPORT(const char*) GetMapName(int index)
 
 
 /**
- * @brief Get the filename (+ VFS-path) of a map
- * @return NULL on error; the filename of the map (e.g. "maps/SmallDivide.smf") on success
+ * @brief Get the file-name (+ VFS-path) of a map
+ * @return NULL on error; the file-name of the map (e.g. "maps/SmallDivide.smf") on success
  */
 EXPORT(const char*) GetMapFileName(int index)
 {
@@ -2121,16 +2121,16 @@ EXPORT(void) CloseFileVFS(int file)
 	UNITSYNC_CATCH_BLOCKS;
 }
 
-EXPORT(int) ReadFileVFS(int file, unsigned char* buf, int length)
+EXPORT(int) ReadFileVFS(int file, unsigned char* buf, int numBytes)
 {
 	try {
 		CheckFileHandle(file);
 		CheckNull(buf);
-		CheckPositive(length);
+		CheckPositive(numBytes);
 
 		logOutput.Print(LOG_UNITSYNC, "ReadFileVFS: %d\n", file);
 		CFileHandler* fh = openFiles[file];
-		return fh->Read(buf, length);
+		return fh->Read(buf, numBytes);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return -1;

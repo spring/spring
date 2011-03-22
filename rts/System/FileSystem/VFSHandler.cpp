@@ -32,19 +32,19 @@ CVFSHandler::CVFSHandler()
 }
 
 
-bool CVFSHandler::AddArchive(const std::string& arName, bool override, const std::string& type)
+bool CVFSHandler::AddArchive(const std::string& archiveName, bool override, const std::string& type)
 {
 	logOutput.Print(LOG_VFS, "AddArchive(arName = \"%s\", override = %s, type = \"%s\")",
-	                arName.c_str(), override ? "true" : "false", type.c_str());
+			archiveName.c_str(), override ? "true" : "false", type.c_str());
 
-	CArchiveBase* ar = archives[arName];
+	CArchiveBase* ar = archives[archiveName];
 	if (!ar) {
-		ar = CArchiveFactory::OpenArchive(arName, type);
+		ar = CArchiveFactory::OpenArchive(archiveName, type);
 		if (!ar) {
-			logOutput.Print(LOG_VFS, "AddArchive: Failed to open archive '%s'.", arName.c_str());
+			logOutput.Print(LOG_VFS, "AddArchive: Failed to open archive '%s'.", archiveName.c_str());
 			return false;
 		}
-		archives[arName] = ar;
+		archives[archiveName] = ar;
 	}
 
 	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid)
@@ -78,21 +78,21 @@ bool CVFSHandler::AddArchiveWithDeps(const std::string& archiveName, bool overri
 {
 	const std::vector<std::string> &ars = archiveScanner->GetArchives(archiveName);
 	if (ars.empty())
-		throw content_error("Couldn't find any archives for '" + archiveName + "'.");
+		throw content_error("Could not find any archives for '" + archiveName + "'.");
 	std::vector<std::string>::const_iterator it;
 	for (it = ars.begin(); it != ars.end(); ++it)
 	{
 		if (!AddArchive(*it, override, type))
-			throw content_error("Couldn't load archive '" + *it + "' for '" + archiveName + "'.");
+			throw content_error("Failed loading archive '" + *it + "', dependency of '" + archiveName + "'.");
 	}
 	return true;
 }
 
-bool CVFSHandler::RemoveArchive(const std::string& arName)
+bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 {
-	logOutput.Print(LOG_VFS, "RemoveArchive(arName = \"%s\")", arName.c_str());
+	logOutput.Print(LOG_VFS, "RemoveArchive(archiveName = \"%s\")", archiveName.c_str());
 
-	CArchiveBase* ar = archives[arName];
+	CArchiveBase* ar = archives[archiveName];
 	if (ar == NULL) {
 		// archive is not loaded
 		return true;
@@ -108,7 +108,7 @@ bool CVFSHandler::RemoveArchive(const std::string& arName)
 			 ++f;
 	}
 	delete ar;
-	archives.erase(arName);
+	archives.erase(archiveName);
 
 	return true;
 }
