@@ -47,7 +47,8 @@ using std::string;
 
 static CLogSubsystem LOG_UNITSYNC("unitsync", true);
 
-//This means that the DLL can only support one instance. Don't think this should be a problem.
+// NOTE This means that the DLL can only support one instance.
+//   This is no problem in the current architecture.
 static CSyncer* syncer;
 
 static bool logOutputInitialised = false;
@@ -131,11 +132,11 @@ static void _SetLastError(string err)
 //////////////////////////
 //////////////////////////
 
-static std::string GetMapFile(const std::string& mapname)
+static std::string GetMapFile(const std::string& mapName)
 {
-	std::string mapFile = archiveScanner->MapNameToMapFile(mapname);
+	std::string mapFile = archiveScanner->MapNameToMapFile(mapName);
 
-	if (mapFile != mapname) {
+	if (mapFile != mapName) {
 		//! translation finished fine
 		return mapFile;
 	}
@@ -155,7 +156,7 @@ static std::string GetMapFile(const std::string& mapname)
 		return "maps/" + map;
 	}*/
 
-	throw std::invalid_argument("Couldn't find a map named \"" + mapname + "\"");
+	throw std::invalid_argument("Could not find a map named \"" + mapName + "\"");
 	return "";
 }
 
@@ -427,7 +428,7 @@ static void safe_strzcpy(char* dst, std::string src, size_t max)
 	if (src.length() > max-1) {
 		src = src.substr(0, max-1);
 	}
-	strcpy(dst, src.c_str());
+	STRCPY(dst, src.c_str());
 }
 
 
@@ -450,17 +451,17 @@ struct InternalMapInfo
 	std::vector<float> zPos;  ///< Start positions Z coordinates defined by the map
 };
 
-static bool internal_GetMapInfo(const char* mapname, InternalMapInfo* outInfo)
+static bool internal_GetMapInfo(const char* mapName, InternalMapInfo* outInfo)
 {
 	CheckInit();
-	CheckNullOrEmpty(mapname);
+	CheckNullOrEmpty(mapName);
 	CheckNull(outInfo);
 
-	logOutput.Print(LOG_UNITSYNC, "get map info: %s", mapname);
+	logOutput.Print(LOG_UNITSYNC, "get map info: %s", mapName);
 
-	const std::string mapFile = GetMapFile(mapname);
+	const std::string mapFile = GetMapFile(mapName);
 
-	ScopedMapLoader mapLoader(mapname, mapFile);
+	ScopedMapLoader mapLoader(mapName, mapFile);
 
 	std::string err("");
 
@@ -537,16 +538,16 @@ static bool internal_GetMapInfo(const char* mapname, InternalMapInfo* outInfo)
 }
 
 /** @deprecated */
-static bool _GetMapInfoEx(const char* mapname, MapInfo* outInfo, int version)
+static bool _GetMapInfoEx(const char* mapName, MapInfo* outInfo, int version)
 {
 	CheckInit();
-	CheckNullOrEmpty(mapname);
+	CheckNullOrEmpty(mapName);
 	CheckNull(outInfo);
 
 	bool fetchOk;
 
 	InternalMapInfo internalMapInfo;
-	fetchOk = internal_GetMapInfo(mapname, &internalMapInfo);
+	fetchOk = internal_GetMapInfo(mapName, &internalMapInfo);
 
 	if (fetchOk) {
 		safe_strzcpy(outInfo->description, internalMapInfo.description, 255);
@@ -587,12 +588,12 @@ static bool _GetMapInfoEx(const char* mapname, MapInfo* outInfo, int version)
 	return fetchOk;
 }
 
-EXPORT(int) GetMapInfoEx(const char* mapname, MapInfo* outInfo, int version)
+EXPORT(int) GetMapInfoEx(const char* mapName, MapInfo* outInfo, int version)
 {
 	int ret = 0;
 
 	try {
-		const bool fetchOk = _GetMapInfoEx(mapname, outInfo, version);
+		const bool fetchOk = _GetMapInfoEx(mapName, outInfo, version);
 		ret = fetchOk ? 1 : 0;
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -601,12 +602,12 @@ EXPORT(int) GetMapInfoEx(const char* mapname, MapInfo* outInfo, int version)
 }
 
 
-EXPORT(int) GetMapInfo(const char* mapname, MapInfo* outInfo)
+EXPORT(int) GetMapInfo(const char* mapName, MapInfo* outInfo)
 {
 	int ret = 0;
 
 	try {
-		const bool fetchOk = _GetMapInfoEx(mapname, outInfo, 0);
+		const bool fetchOk = _GetMapInfoEx(mapName, outInfo, 0);
 		ret = fetchOk ? 1 : 0;
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -844,6 +845,7 @@ EXPORT(float) GetMapPosX(int index, int posIndex) {
 	return -1.0f;
 }
 
+//FIXME: rename to GetMapStartPosZ ?
 EXPORT(float) GetMapPosZ(int index, int posIndex) {
 
 	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
@@ -855,10 +857,10 @@ EXPORT(float) GetMapPosZ(int index, int posIndex) {
 }
 
 
-EXPORT(float) GetMapMinHeight(const char* mapname) {
+EXPORT(float) GetMapMinHeight(const char* mapName) {
 	try {
-		const std::string mapFile = GetMapFile(mapname);
-		ScopedMapLoader loader(mapname, mapFile);
+		const std::string mapFile = GetMapFile(mapName);
+		ScopedMapLoader loader(mapName, mapFile);
 		CSmfMapFile file(mapFile);
 		MapParser parser(mapFile);
 
@@ -877,10 +879,10 @@ EXPORT(float) GetMapMinHeight(const char* mapname) {
 	return 0.0f;
 }
 
-EXPORT(float) GetMapMaxHeight(const char* mapname) {
+EXPORT(float) GetMapMaxHeight(const char* mapName) {
 	try {
-		const std::string mapFile = GetMapFile(mapname);
-		ScopedMapLoader loader(mapname, mapFile);
+		const std::string mapFile = GetMapFile(mapName);
+		ScopedMapLoader loader(mapName, mapFile);
 		CSmfMapFile file(mapFile);
 		MapParser parser(mapFile);
 
@@ -966,7 +968,7 @@ EXPORT(unsigned int) GetMapChecksumFromName(const char* mapName)
 // Used to return the image
 static unsigned short imgbuf[1024*1024];
 
-static unsigned short* GetMinimapSM3(string mapFileName, int miplevel)
+static unsigned short* GetMinimapSM3(string mapFileName, int mipLevel)
 {
 	MapParser mapParser(mapFileName);
 	const string minimapFile = mapParser.GetRoot().GetString("minimap", "");
@@ -982,8 +984,8 @@ static unsigned short* GetMinimapSM3(string mapFileName, int miplevel)
 		return imgbuf;
 	}
 
-	if (1024 >> miplevel != bm.xsize || 1024 >> miplevel != bm.ysize)
-		bm = bm.CreateRescaled(1024 >> miplevel, 1024 >> miplevel);
+	if (1024 >> mipLevel != bm.xsize || 1024 >> mipLevel != bm.ysize)
+		bm = bm.CreateRescaled(1024 >> mipLevel, 1024 >> mipLevel);
 
 	unsigned short* dst = (unsigned short*)imgbuf;
 	unsigned char* src = bm.mem;
@@ -1003,11 +1005,11 @@ static unsigned short* GetMinimapSM3(string mapFileName, int miplevel)
 	return imgbuf;
 }
 
-static unsigned short* GetMinimapSMF(string mapFileName, int miplevel)
+static unsigned short* GetMinimapSMF(string mapFileName, int mipLevel)
 {
 	CSmfMapFile in(mapFileName);
 	std::vector<uint8_t> buffer;
-	const int mipsize = in.ReadMinimap(buffer, miplevel);
+	const int mipsize = in.ReadMinimap(buffer, mipLevel);
 
 	// Do stuff
 	unsigned short* colors = (unsigned short*)((void*)imgbuf);
@@ -1063,24 +1065,24 @@ static unsigned short* GetMinimapSMF(string mapFileName, int miplevel)
 	return colors;
 }
 
-EXPORT(unsigned short*) GetMinimap(const char* mapname, int miplevel)
+EXPORT(unsigned short*) GetMinimap(const char* mapName, int mipLevel)
 {
 	try {
 		CheckInit();
-		CheckNullOrEmpty(mapname);
+		CheckNullOrEmpty(mapName);
 
-		if (miplevel < 0 || miplevel > 8)
+		if (mipLevel < 0 || mipLevel > 8)
 			throw std::out_of_range("Miplevel must be between 0 and 8 (inclusive) in GetMinimap.");
 
-		const std::string mapFile = GetMapFile(mapname);
-		ScopedMapLoader mapLoader(mapname, mapFile);
+		const std::string mapFile = GetMapFile(mapName);
+		ScopedMapLoader mapLoader(mapName, mapFile);
 
 		unsigned short* ret = NULL;
 		const string extension = filesystem.GetExtension(mapFile);
 		if (extension == "smf") {
-			ret = GetMinimapSMF(mapFile, miplevel);
+			ret = GetMinimapSMF(mapFile, mipLevel);
 		} else if (extension == "sm3") {
-			ret = GetMinimapSM3(mapFile, miplevel);
+			ret = GetMinimapSM3(mapFile, mipLevel);
 		}
 
 		return ret;
@@ -1090,17 +1092,17 @@ EXPORT(unsigned short*) GetMinimap(const char* mapname, int miplevel)
 }
 
 
-EXPORT(int) GetInfoMapSize(const char* mapname, const char* name, int* width, int* height)
+EXPORT(int) GetInfoMapSize(const char* mapName, const char* name, int* width, int* height)
 {
 	try {
 		CheckInit();
-		CheckNullOrEmpty(mapname);
+		CheckNullOrEmpty(mapName);
 		CheckNullOrEmpty(name);
 		CheckNull(width);
 		CheckNull(height);
 
-		const std::string mapFile = GetMapFile(mapname);
-		ScopedMapLoader mapLoader(mapname, mapFile);
+		const std::string mapFile = GetMapFile(mapName);
+		ScopedMapLoader mapLoader(mapName, mapFile);
 		CSmfMapFile file(mapFile);
 
 		MapBitmapInfo bmInfo = file.GetInfoMapSize(name);
@@ -1119,16 +1121,16 @@ EXPORT(int) GetInfoMapSize(const char* mapname, const char* name, int* width, in
 }
 
 
-EXPORT(int) GetInfoMap(const char* mapname, const char* name, unsigned char* data, int typeHint)
+EXPORT(int) GetInfoMap(const char* mapName, const char* name, unsigned char* data, int typeHint)
 {
 	try {
 		CheckInit();
-		CheckNullOrEmpty(mapname);
+		CheckNullOrEmpty(mapName);
 		CheckNullOrEmpty(name);
 		CheckNull(data);
 
-		const std::string mapFile = GetMapFile(mapname);
-		ScopedMapLoader mapLoader(mapname, mapFile);
+		const std::string mapFile = GetMapFile(mapName);
+		ScopedMapLoader mapLoader(mapName, mapFile);
 		CSmfMapFile file(mapFile);
 
 		const string n = name;
@@ -1500,7 +1502,7 @@ EXPORT(int) GetModOptionCount()
 	return 0;
 }
 
-EXPORT(int) GetCustomOptionCount(const char* filename)
+EXPORT(int) GetCustomOptionCount(const char* fileName)
 {
 	try {
 		CheckInit();
@@ -1509,7 +1511,7 @@ EXPORT(int) GetCustomOptionCount(const char* filename)
 		optionsSet.clear();
 
 		try {
-			ParseOptions(filename, SPRING_VFS_ZIP, SPRING_VFS_ZIP);
+			ParseOptions(fileName, SPRING_VFS_ZIP, SPRING_VFS_ZIP);
 		}
 		UNITSYNC_CATCH_BLOCKS;
 
@@ -2075,12 +2077,12 @@ static map<int, CFileHandler*> openFiles;
 static int nextFile = 0;
 static vector<string> curFindFiles;
 
-static void CheckFileHandle(int handle)
+static void CheckFileHandle(int file)
 {
 	CheckInit();
 
-	if (openFiles.find(handle) == openFiles.end())
-		throw content_error("Unregistered handle. Pass a handle returned by OpenFileVFS.");
+	if (openFiles.find(file) == openFiles.end())
+		throw content_error("Unregistered file handle. Pass a file handle returned by OpenFileVFS.");
 }
 
 
@@ -2090,7 +2092,7 @@ EXPORT(int) OpenFileVFS(const char* name)
 		CheckInit();
 		CheckNullOrEmpty(name);
 
-		logOutput.Print(LOG_UNITSYNC, "openfilevfs: %s\n", name);
+		logOutput.Print(LOG_UNITSYNC, "OpenFileVFS: %s\n", name);
 
 		CFileHandler* fh = new CFileHandler(name);
 		if (!fh->FileExists()) {
@@ -2107,40 +2109,40 @@ EXPORT(int) OpenFileVFS(const char* name)
 	return 0;
 }
 
-EXPORT(void) CloseFileVFS(int handle)
+EXPORT(void) CloseFileVFS(int file)
 {
 	try {
-		CheckFileHandle(handle);
+		CheckFileHandle(file);
 
-		logOutput.Print(LOG_UNITSYNC, "closefilevfs: %d\n", handle);
-		delete openFiles[handle];
-		openFiles.erase(handle);
+		logOutput.Print(LOG_UNITSYNC, "CloseFileVFS: %d\n", file);
+		delete openFiles[file];
+		openFiles.erase(file);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }
 
-EXPORT(int) ReadFileVFS(int handle, unsigned char* buf, int length)
+EXPORT(int) ReadFileVFS(int file, unsigned char* buf, int length)
 {
 	try {
-		CheckFileHandle(handle);
+		CheckFileHandle(file);
 		CheckNull(buf);
 		CheckPositive(length);
 
-		logOutput.Print(LOG_UNITSYNC, "readfilevfs: %d\n", handle);
-		CFileHandler* fh = openFiles[handle];
+		logOutput.Print(LOG_UNITSYNC, "ReadFileVFS: %d\n", file);
+		CFileHandler* fh = openFiles[file];
 		return fh->Read(buf, length);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return -1;
 }
 
-EXPORT(int) FileSizeVFS(int handle)
+EXPORT(int) FileSizeVFS(int file)
 {
 	try {
-		CheckFileHandle(handle);
+		CheckFileHandle(file);
 
-		logOutput.Print(LOG_UNITSYNC, "filesizevfs: %d\n", handle);
-		CFileHandler* fh = openFiles[handle];
+		logOutput.Print(LOG_UNITSYNC, "FileSizeVFS: %d\n", file);
+		CFileHandler* fh = openFiles[file];
 		return fh->FileSize();
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -2155,7 +2157,7 @@ EXPORT(int) InitFindVFS(const char* pattern)
 
 		string path = filesystem.GetDirectory(pattern);
 		string patt = filesystem.GetFilename(pattern);
-		logOutput.Print(LOG_UNITSYNC, "initfindvfs: %s\n", pattern);
+		logOutput.Print(LOG_UNITSYNC, "InitFindVFS: %s\n", pattern);
 		curFindFiles = CFileHandler::FindFiles(path, patt);
 		return 0;
 	}
@@ -2194,18 +2196,19 @@ EXPORT(int) InitSubDirsVFS(const char* path, const char* pattern, const char* mo
 	return -1;
 }
 
-EXPORT(int) FindFilesVFS(int handle, char* nameBuf, int size)
+EXPORT(int) FindFilesVFS(int file, char* nameBuf, int size)
 {
 	try {
 		CheckInit();
 		CheckNull(nameBuf);
 		CheckPositive(size);
 
-		logOutput.Print(LOG_UNITSYNC, "findfilesvfs: %d\n", handle);
-		if ((unsigned)handle >= curFindFiles.size())
+		logOutput.Print(LOG_UNITSYNC, "FindFilesVFS: %d\n", file);
+		if ((unsigned)file >= curFindFiles.size()) {
 			return 0;
-		safe_strzcpy(nameBuf, curFindFiles[handle], size);
-		return handle + 1;
+		}
+		safe_strzcpy(nameBuf, curFindFiles[file], size);
+		return file + 1;
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return 0;
@@ -2219,12 +2222,13 @@ static map<int, CArchiveBase*> openArchives;
 static int nextArchive = 0;
 
 
-static void CheckArchiveHandle(int handle)
+static void CheckArchiveHandle(int archive)
 {
 	CheckInit();
 
-	if (openArchives.find(handle) == openArchives.end())
-		throw content_error("Unregistered handle. Pass a handle returned by OpenArchive.");
+	if (openArchives.find(archive) == openArchives.end()) {
+		throw content_error("Unregistered archive handle. Pass an archive handle returned by OpenArchive.");
+	}
 }
 
 
@@ -2280,25 +2284,25 @@ EXPORT(void) CloseArchive(int archive)
 	UNITSYNC_CATCH_BLOCKS;
 }
 
-EXPORT(int) FindFilesArchive(int archive, int cur, char* nameBuf, int* size)
+EXPORT(int) FindFilesArchive(int archive, int file, char* nameBuf, int* size)
 {
 	try {
 		CheckArchiveHandle(archive);
 		CheckNull(nameBuf);
 		CheckNull(size);
 
-		CArchiveBase* a = openArchives[archive];
+		CArchiveBase* arch = openArchives[archive];
 
-		logOutput.Print(LOG_UNITSYNC, "findfilesarchive: %d\n", archive);
+		logOutput.Print(LOG_UNITSYNC, "FindFilesArchive: %d\n", archive);
 
-		if (cur < a->NumFiles())
+		if (file < arch->NumFiles())
 		{
-			string name;
-			int s;
-			a->FileInfo(cur, name, s);
-			strcpy(nameBuf, name.c_str()); // FIXME: oops, buffer overflow
-			*size = s;
-			return ++cur;
+			std::string fileName;
+			int fileSize;
+			arch->FileInfo(file, fileName, fileSize);
+			*size = fileSize;
+			STRCPY(nameBuf, fileName.c_str()); // FIXME: oops, buffer overflow
+			return ++file;
 		}
 		return 0;
 	}
@@ -2319,7 +2323,7 @@ EXPORT(int) OpenArchiveFile(int archive, const char* name)
 	return 0;
 }
 
-EXPORT(int) ReadArchiveFile(int archive, int handle, unsigned char* buffer, int numBytes)
+EXPORT(int) ReadArchiveFile(int archive, int file, unsigned char* buffer, int numBytes)
 {
 	try {
 		CheckArchiveHandle(archive);
@@ -2328,7 +2332,7 @@ EXPORT(int) ReadArchiveFile(int archive, int handle, unsigned char* buffer, int 
 
 		CArchiveBase* a = openArchives[archive];
 		std::vector<uint8_t> buf;
-		if (!a->GetFile(handle, buf))
+		if (!a->GetFile(file, buf))
 			return -1;
 		std::memcpy(buffer, &buf[0], std::min(buf.size(), (size_t)numBytes));
 		return std::min(buf.size(), (size_t)numBytes);
@@ -2337,7 +2341,7 @@ EXPORT(int) ReadArchiveFile(int archive, int handle, unsigned char* buffer, int 
 	return -1;
 }
 
-EXPORT(void) CloseArchiveFile(int archive, int handle)
+EXPORT(void) CloseArchiveFile(int archive, int file)
 {
 	try {
 		// nuting
@@ -2345,7 +2349,7 @@ EXPORT(void) CloseArchiveFile(int archive, int handle)
 	UNITSYNC_CATCH_BLOCKS;
 }
 
-EXPORT(int) SizeArchiveFile(int archive, int handle)
+EXPORT(int) SizeArchiveFile(int archive, int file)
 {
 	try {
 		CheckArchiveHandle(archive);
@@ -2353,7 +2357,7 @@ EXPORT(int) SizeArchiveFile(int archive, int handle)
 		CArchiveBase* a = openArchives[archive];
 		string name;
 		int s;
-		a->FileInfo(handle, name, s);
+		a->FileInfo(file, name, s);
 		return s;
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -2369,12 +2373,10 @@ char strBuf[STRBUF_SIZE];
 /// defined in unitsync.h. Just returning str.c_str() does not work
 const char* GetStr(std::string str)
 {
-	//static char strBuf[STRBUF_SIZE];
-
 	if (str.length() + 1 > STRBUF_SIZE) {
 		sprintf(strBuf, "Increase STRBUF_SIZE (needs "_STPF_" bytes)", str.length() + 1);
 	} else {
-		strcpy(strBuf, str.c_str());
+		STRCPY(strBuf, str.c_str());
 	}
 
 	return strBuf;
@@ -2388,9 +2390,9 @@ void PrintLoadMsg(const char* text)
 //////////////////////////
 //////////////////////////
 
-EXPORT(void) SetSpringConfigFile(const char* filenameAsAbsolutePath)
+EXPORT(void) SetSpringConfigFile(const char* fileNameAsAbsolutePath)
 {
-	ConfigHandler::Instantiate(filenameAsAbsolutePath);
+	ConfigHandler::Instantiate(fileNameAsAbsolutePath);
 }
 
 EXPORT(const char*) GetSpringConfigFile()
