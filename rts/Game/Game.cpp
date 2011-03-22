@@ -217,7 +217,6 @@ CR_REG_METADATA(CGame,(
 
 
 CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHandler* saveFile) :
-	finishedLoading(false),
 	gameDrawMode(gameNotDrawing),
 	defsParser(NULL),
 	fps(0),
@@ -231,6 +230,7 @@ CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHa
 	gameOver(false),
 
 	noSpectatorChat(false),
+	finishedLoading(false),
 
 	infoConsole(NULL),
 	consoleHistory(NULL),

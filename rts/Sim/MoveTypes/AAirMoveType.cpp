@@ -39,9 +39,9 @@ AAirMoveType::AAirMoveType(CUnit* unit) :
 	wantedHeight(80.0f),
 	collide(true),
 	useSmoothMesh(false),
+	autoLand(true),
 	lastColWarning(NULL),
 	lastColWarningType(0),
-	autoLand(true),
 	lastFuelUpdateFrame(0)
 {
 	useHeading = false;

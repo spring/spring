@@ -113,7 +113,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	deltaSpeed(0.0f),
 	deltaHeading(0),
 
-	flatFrontDir(0.0f, 0.0, 1.0f),
 	pathId(0),
 	goalRadius(0),
 
@@ -143,7 +142,8 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	skidRotSpeed2(0.0f),
 	skidRotPos2(0.0f),
 	oldPhysState(CSolidObject::OnGround),
-	mainHeadingPos(0.0f, 0.0f, 0.0f)
+	flatFrontDir(0.0f, 0.0, 1.0f),
+	mainHeadingPos(ZeroVector)
 {
 	if (owner) {
 		moveSquareX = owner->pos.x / MIN_WAYPOINT_DISTANCE;
