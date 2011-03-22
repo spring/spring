@@ -102,7 +102,7 @@ EXPORT(int         ) Init(bool isServer, int id);
 EXPORT(void        ) UnInit();
 
 /**
- * @brief Get the main data directory that's used by unitsync and Spring
+ * @brief Get the main data directory that is used by unitsync and Spring
  * @return NULL on error; the data directory path on success
  *
  * This is the data directory which is used to write logs, screen-shots, demos,
@@ -120,7 +120,7 @@ EXPORT(const char* ) GetWritableDataDirectory();
  * Because of risk for infinite loops, this function can not return any error
  * code. It is advised to poll GetNextError() after calling this function.
  *
- * Before any units are available, you'll first need to map a mod's archives
+ * Before any units are available, you will first need to map a mod's archives
  * into the VFS using AddArchive() or AddAllArchives().
  */
 EXPORT(int         ) ProcessUnits();
@@ -176,7 +176,7 @@ EXPORT(const char* ) GetFullUnitName(int unit);
  */
 EXPORT(void        ) AddArchive(const char* name);
 /**
- * @brief Adds an achive and all it's dependencies to the VFS
+ * @brief Adds an achive and all its dependencies to the VFS
  * @see AddArchive
  */
 EXPORT(void        ) AddAllArchives(const char* root);
@@ -454,8 +454,8 @@ EXPORT(int         ) GetInfoMapSize(const char* mapName, const char* name, int* 
  *   infomap data.
  * @param typeHint One of bm_grayscale_8 (or 1) and bm_grayscale_16 (or 2).
  * @return Non-zero if the infomap was successfully extracted (and optionally
- * converted), or zero on error (map wasn't found, infomap wasn't found, or
- * typeHint could not be honoured.)
+ * converted), or zero on error (map was not found, infomap was not found, or
+ * typeHint could not be honored.)
  *
  * This function extracts an infomap from a map. This can currently be one of:
  * "height", "metal", "grass", "type". The heightmap is natively in 16 bits per
@@ -996,7 +996,7 @@ EXPORT(int         ) OpenArchive(const char* name);
  * engine.
  *
  * FIXME This function is pointless, because OpenArchive() does the same and
- * automatically detects the file type based on it's extension.
+ * automatically detects the file type based on its extension.
  * Who added it anyway?
  * @deprecated
  */
