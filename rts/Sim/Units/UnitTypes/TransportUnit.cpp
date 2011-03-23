@@ -77,16 +77,19 @@ void CTransportUnit::Update()
 		if (unitDef->holdSteady) {
 			// slave transportee orientation to piece
 			if (ti->piece >= 0) {
+				const CMatrix44f& transMat = GetTransformMatrix(true);
 				const CMatrix44f& pieceMat = script->GetPieceMatrix(ti->piece);
-				const float3 pieceDir =
-					frontdir * pieceMat[10] +
-					updir    * pieceMat[ 6] +
-					rightdir * pieceMat[ 2];
+				const CMatrix44f  slaveMat = transMat.Mul(pieceMat);
 
-				transportee->heading  = GetHeadingFromVector(pieceDir.x, pieceDir.z);
-				transportee->frontdir = pieceDir;
-				transportee->rightdir = transportee->frontdir.cross(UpVector);
-				transportee->updir    = transportee->rightdir.cross(transportee->frontdir);
+				SyncedFloat3& xdir = transportee->rightdir;
+				SyncedFloat3& ydir = transportee->updir;
+				SyncedFloat3& zdir = transportee->frontdir;
+
+				zdir.x = slaveMat[8]; zdir.y = slaveMat[9]; zdir.z = slaveMat[10];
+				xdir.x = slaveMat[0]; xdir.y = slaveMat[1]; xdir.z = slaveMat[ 2];
+				ydir.x = slaveMat[4]; ydir.y = slaveMat[5]; ydir.z = slaveMat[ 6];
+
+				transportee->heading  = GetHeadingFromVector(zdir.x, zdir.z);
 			}
 		} else {
 			// slave transportee orientation to body
