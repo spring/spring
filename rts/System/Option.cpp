@@ -67,10 +67,9 @@ static bool parseOption(const LuaTable& root, int index, Option& opt,
 	opt.key = StringToLower(opt.key);
 
 	opt.scope = optTbl.GetString("scope", "scope");
-	if (opt.key.empty()
-		   || (opt.key.find_first_of(Option_badKeyChars) != string::npos)) {
+	if (opt.scope.find_first_of(Option_badKeyChars) != string::npos) {
 		logOutput.Print(logSubsystem,
-						"parseOption: empty key or key contains bad characters");
+				"parseOption: scope contains bad characters");
 		return false;
 	}
 	opt.scope = StringToLower(opt.scope);
