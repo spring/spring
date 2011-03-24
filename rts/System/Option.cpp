@@ -46,44 +46,34 @@ std::string option_getDefString(const Option& option) {
 	return def;
 }
 
-static bool parseOption(const LuaTable& root, int index, Option& opt,
-		std::set<string>& optionsSet, CLogSubsystem& logSubsystem) {
+static void parseOption(const LuaTable& root, int index, Option& opt,
+		std::set<string>& optionsSet) {
 
 	const LuaTable& optTbl = root.SubTable(index);
 	if (!optTbl.IsValid()) {
-		logOutput.Print(logSubsystem,
-				"parseOption: subtable %d invalid", index);
-		return false;
+		throw content_error("parseOption: subtable " + IntToString(index) + " is invalid");
 	}
 
 	// common options properties
 	opt.key = optTbl.GetString("key", "");
 	if (opt.key.empty()
 			|| (opt.key.find_first_of(Option_badKeyChars) != string::npos)) {
-		logOutput.Print(logSubsystem,
-				"parseOption: empty key or key contains bad characters");
-		return false;
+		throw content_error("parseOption: (key=\"" + opt.key + "\") empty key or key contains bad characters (\"" + Option_badKeyChars + "\")");
 	}
 	opt.key = StringToLower(opt.key);
 
 	opt.scope = optTbl.GetString("scope", "scope");
 	if (opt.scope.find_first_of(Option_badKeyChars) != string::npos) {
-		logOutput.Print(logSubsystem,
-				"parseOption: scope contains bad characters");
-		return false;
+		throw content_error("parseOption: (key=" + opt.key + ") scope contains bad characters (\"" + Option_badKeyChars + "\"): \"" + opt.scope + "\"");
 	}
 	opt.scope = StringToLower(opt.scope);
 
 	if (optionsSet.find(opt.key) != optionsSet.end()) {
-		logOutput.Print(logSubsystem, "parseOption: key %s exists already",
-				opt.key.c_str());
-		return false;
+		throw content_error("parseOption: key \"" + opt.key + "\" exists already");
 	}
 	opt.name = optTbl.GetString("name", opt.key);
 	if (opt.name.empty()) {
-		logOutput.Print(logSubsystem, "parseOption: %s: empty name",
-				opt.key.c_str());
-		return false;
+		throw content_error("parseOption: (key=" + opt.key + ") empty name");
 	}
 	opt.desc = optTbl.GetString("desc", opt.name);
 
@@ -115,8 +105,7 @@ static bool parseOption(const LuaTable& root, int index, Option& opt,
 
 		const LuaTable& listTbl = optTbl.SubTable("items");
 		if (!listTbl.IsValid()) {
-			logOutput.Print(logSubsystem, "parseOption: %s: subtable items invalid", opt.key.c_str());
-			return false;
+			throw content_error("parseOption: (key=" + opt.key + ") subtables: items invalid");
 		}
 
 		for (int i = 1; listTbl.KeyExists(i); i++) {
@@ -135,33 +124,23 @@ static bool parseOption(const LuaTable& root, int index, Option& opt,
 			// table format  (name & desc)
 			const LuaTable& itemTbl = listTbl.SubTable(i);
 			if (!itemTbl.IsValid()) {
-				logOutput.Print(logSubsystem,
-						"parseOption: %s: subtable %d of subtable items invalid",
-						opt.key.c_str(), i);
-				break;
+				throw content_error("parseOption: (key=" + opt.key + ") subtables: subtable " + IntToString(i) + " contains invalid items");
 			}
 			item.key = itemTbl.GetString("key", "");
 			if (item.key.empty() || (item.key.find_first_of(Option_badKeyChars) != string::npos)) {
-				logOutput.Print(logSubsystem,
-						"parseOption: %s: empty key or key contains bad characters",
-						opt.key.c_str());
-				return false;
+				throw content_error("parseOption: (key=" + opt.key + ") subtables: (key=\"" + item.key + "\") empty key or key contains bad characters (\"" + Option_badKeyChars + "\")");
 			}
 			item.key = StringToLower(item.key);
 			item.name = itemTbl.GetString("name", item.key);
 			if (item.name.empty()) {
-				logOutput.Print(logSubsystem, "parseOption: %s: empty name",
-						opt.key.c_str());
-				return false;
+				throw content_error("parseOption: (key=" + opt.key + ") subtables: (key=" + item.key + ") empty name");
 			}
 			item.desc = itemTbl.GetString("desc", item.name);
 			opt.list.push_back(item);
 		}
 
 		if (opt.list.size() <= 0) {
-			logOutput.Print(logSubsystem, "parseOption: %s: empty list",
-					opt.key.c_str());
-			return false; // no empty lists
+			throw content_error("parseOption: (key=" + opt.key + ") subtables: empty list");
 		}
 
 		opt.listDef = optTbl.GetString("def", opt.list[0].name);
@@ -170,14 +149,10 @@ static bool parseOption(const LuaTable& root, int index, Option& opt,
 		opt.typeCode = opt_section;
 	}
 	else {
-		logOutput.Print(logSubsystem, "parseOption: %s: unknown type %s",
-				opt.key.c_str(), opt.type.c_str());
-		return false; // unknown type
+		throw content_error("parseOption: (key=" + opt.key + ") unknown type \"" + opt.type + "\"");
 	}
 
 	optionsSet.insert(opt.key);
-
-	return true;
 }
 
 
@@ -213,8 +188,13 @@ void parseOptions(
 	}
 	for (int index = 1; root.KeyExists(index); index++) {
 		Option opt;
-		if (parseOption(root, index, opt, *myOptionsSet, *logSubsystem)) {
+		try {
+			parseOption(root, index, opt, *myOptionsSet);
 			options.push_back(opt);
+		} catch (content_error err) {
+			logOutput.Print(*logSubsystem,
+					"Failed parsing option %d from %s: %s",
+					index, fileName.c_str(), err.what());
 		}
 	}
 	if (optionsSet == NULL) {
@@ -246,7 +226,7 @@ void parseMapOptions(
 		throw "Missing map name!";
 
 	if (configName.empty())
-		throw "Couldn't determine config filename from the map name '" + mapName + "'!";
+		throw "Could not determine config-file name from the map name '" + mapName + "'!";
 
 	luaParser.GetTable("Map");
 	luaParser.AddString("name",     mapName);	
@@ -273,8 +253,13 @@ void parseMapOptions(
 	}
 	for (int index = 1; root.KeyExists(index); index++) {
 		Option opt;
-		if (parseOption(root, index, opt, *myOptionsSet, *logSubsystem)) {
+		try {
+			parseOption(root, index, opt, *myOptionsSet);
 			options.push_back(opt);
+		} catch (content_error err) {
+			logOutput.Print(*logSubsystem,
+					"Failed parsing map-option %d from %s for map %s: %s",
+					index, fileName.c_str(), mapName.c_str(), err.what());
 		}
 	}
 	if (optionsSet == NULL) {
