@@ -111,6 +111,18 @@ EXPORT(void        ) UnInit();
 EXPORT(const char* ) GetWritableDataDirectory();
 
 /**
+ * @brief Get the total number of readable data directories used by unitsync and Spring
+ * @return -1 if there was an error, otherwise integer >= 0
+ */
+EXPORT(int         ) GetDataDirectoryCount();
+
+/**
+ * @brief Get the abosulte path to i-th data directory
+ * @return NULL on error; the i-th data directory absolute path on success
+ */
+EXPORT(const char* ) GetDataDirectory(int index);
+
+/**
  * @brief Process another unit and return how many are left to process
  * @return The number of unprocessed units to be handled
  *
