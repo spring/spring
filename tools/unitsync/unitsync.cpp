@@ -1438,13 +1438,10 @@ static void ParseOptions(const string& fileName,
 }
 
 
-static void ParseMapOptions(const string& fileName,
-                         const string& mapName,
-                         const string& fileModes,
-                         const string& accessModes)
+static void ParseMapOptions(const string& mapName)
 {
-	parseMapOptions(options, fileName, mapName, fileModes, accessModes,
-			&optionsSet, &LOG_UNITSYNC);
+	parseMapOptions(options, "MapOptions.lua", mapName, SPRING_VFS_MAP,
+			SPRING_VFS_MAP, &optionsSet, &LOG_UNITSYNC);
 }
 
 
@@ -1475,7 +1472,7 @@ EXPORT(int) GetMapOptionCount(const char* name)
 		options.clear();
 		optionsSet.clear();
 
-		ParseMapOptions("MapOptions.lua", name, SPRING_VFS_MAP, SPRING_VFS_MAP);
+		ParseMapOptions(name);
 
 		optionsSet.clear();
 
