@@ -240,8 +240,8 @@ void parseMapOptions(
 
 	LuaParser luaParser(fileName, fileModes, accessModes);
 
-	const string configName = MapParser::GetMapConfigName(mapName);
 	const string mapFile    = archiveScanner->MapNameToMapFile(mapName);
+	const string configName = MapParser::GetMapConfigName(mapFile);
 
 	if (mapName.empty())
 		throw "Missing map name!";
