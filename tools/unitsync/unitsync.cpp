@@ -302,8 +302,29 @@ EXPORT(const char*) GetWritableDataDirectory()
 	UNITSYNC_CATCH_BLOCKS;
 	return NULL;
 }
-// TODO (when needed): GetDataDirectoryCount(), GetDataDirectory(int index)
 
+EXPORT(int) GetDataDirectoryCount()
+{
+	try {
+		CheckInit();
+		return int( FileSystemHandler::GetInstance().GetDataDirectories().size() );
+	}
+	UNITSYNC_CATCH_BLOCKS;
+	return -1;
+}
+
+EXPORT(const char*) GetDataDirectory(int index)
+{
+	try {
+		CheckInit();
+		const std::vector<std::string> datadirs = FileSystemHandler::GetInstance().GetDataDirectories();
+		if (index > datadirs.size())
+			return NULL;
+		return GetStr(datadirs[index]);
+	}
+	UNITSYNC_CATCH_BLOCKS;
+	return NULL;
+}
 
 EXPORT(int) ProcessUnits()
 {
