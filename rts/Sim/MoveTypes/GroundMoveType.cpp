@@ -110,6 +110,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	maxReverseSpeed(0.0f),
 	wantedSpeed(0.0f),
 	currentSpeed(0.0f),
+	requestedSpeed(0.0f),
 	deltaSpeed(0.0f),
 	deltaHeading(0),
 
@@ -120,15 +121,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	nextWaypoint(ZeroVector),
 	atGoal(false),
 	haveFinalWaypoint(false),
-
-	requestedSpeed(0.0f),
 	currentDistanceToWaypoint(0),
-	pathRequestDelay(0),
-	numIdlingUpdates(0),
-	numIdlingSlowUpdates(0),
-
-	nextDeltaSpeedUpdate(0),
-	nextObstacleAvoidanceUpdate(0),
 
 	skidding(false),
 	flying(false),
@@ -142,8 +135,17 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	skidRotSpeed2(0.0f),
 	skidRotPos2(0.0f),
 	oldPhysState(CSolidObject::OnGround),
+
 	flatFrontDir(0.0f, 0.0, 1.0f),
-	mainHeadingPos(ZeroVector)
+	mainHeadingPos(ZeroVector),
+
+	nextDeltaSpeedUpdate(0),
+	nextObstacleAvoidanceUpdate(0),
+
+	pathRequestDelay(0),
+
+	numIdlingUpdates(0),
+	numIdlingSlowUpdates(0)
 {
 	if (owner) {
 		moveSquareX = owner->pos.x / MIN_WAYPOINT_DISTANCE;
