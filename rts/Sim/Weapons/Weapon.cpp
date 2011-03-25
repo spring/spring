@@ -474,7 +474,7 @@ bool CWeapon::AttackGround(float3 pos, bool userTarget)
 		return false;
 	if (targetUnit) {
 		DeleteDeathDependence(targetUnit);
-		targetUnit=0;
+		targetUnit = NULL;
 	}
 
 	haveUserTarget = userTarget;
@@ -531,7 +531,7 @@ bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 
 	if (targetUnit) {
 		DeleteDeathDependence(targetUnit);
-		targetUnit = 0;
+		targetUnit = NULL;
 	}
 
 	haveUserTarget = userTarget;
@@ -549,7 +549,7 @@ void CWeapon::HoldFire()
 {
 	if (targetUnit) {
 		DeleteDeathDependence(targetUnit);
-		targetUnit = 0;
+		targetUnit = NULL;
 	}
 	targetType = Target_None;
 	haveUserTarget = false;
@@ -668,7 +668,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		// use targets from the thing we are slaved to
 		if (targetUnit) {
 			DeleteDeathDependence(targetUnit);
-			targetUnit = 0;
+			targetUnit = NULL;
 		}
 		targetType = Target_None;
 
@@ -698,25 +698,34 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		lastTargetRetry = gs->frameNum;
 
 		std::multimap<float, CUnit*> targets;
+		std::multimap<float, CUnit*>::const_iterator nextTargetIt;
+		std::multimap<float, CUnit*>::const_iterator lastTargetIt;
+
 		helper->GenerateWeaponTargets(this, targetUnit, targets);
 
-		for (std::multimap<float, CUnit*>::const_iterator ti = targets.begin(); ti != targets.end(); ++ti) {
-			CUnit* nextTarget = ti->second;
+		if (!targets.empty())
+			lastTargetIt = --targets.end();
 
-			if (nextTarget->neutral && (owner->fireState <= FIRESTATE_FIREATWILL)) {
+		for (nextTargetIt = targets.begin(); nextTargetIt != targets.end(); ++nextTargetIt) {
+			CUnit* nextTargetUnit = nextTargetIt->second;
+
+			if (nextTargetUnit->neutral && (owner->fireState <= FIRESTATE_FIREATWILL)) {
 				continue;
 			}
 
 			// when only one target is available, <nextTarget> can equal <targetUnit>
 			// and we want to attack whether it is in our bad target category or not
-			if (targetUnit != NULL && targets.size() != 1 && (nextTarget->category & badTargetCategory)) {
-				continue;
+			// (if only bad targets are available and this is the last, just pick it)
+			if (nextTargetUnit != targetUnit && (nextTargetUnit->category & badTargetCategory)) {
+				if (nextTargetIt != lastTargetIt) {
+					continue;
+				}
 			}
 
-			const float weaponLead = weaponDef->targetMoveError * GAME_SPEED * nextTarget->speed.Length();
+			const float weaponLead = weaponDef->targetMoveError * GAME_SPEED * nextTargetUnit->speed.Length();
 			const float weaponError = weaponLead * (1.0f - owner->limExperience);
 
-			float3 nextTargetPos = nextTarget->midPos + (errorVector * weaponError);
+			float3 nextTargetPos = nextTargetUnit->midPos + (errorVector * weaponError);
 
 			const float appHeight = ground->GetApproximateHeight(nextTargetPos.x, nextTargetPos.z) + 2.0f;
 
@@ -724,13 +733,13 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 				nextTargetPos.y = appHeight;
 			}
 
-			if (TryTarget(nextTargetPos, false, nextTarget)) {
+			if (TryTarget(nextTargetPos, false, nextTargetUnit)) {
 				if (targetUnit) {
 					DeleteDeathDependence(targetUnit);
 				}
 
 				targetType = Target_Unit;
-				targetUnit = nextTarget;
+				targetUnit = nextTargetUnit;
 				targetPos = nextTargetPos;
 
 				AddDeathDependence(targetUnit);
