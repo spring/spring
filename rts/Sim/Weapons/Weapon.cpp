@@ -706,7 +706,10 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 			if (nextTarget->neutral && (owner->fireState <= FIRESTATE_FIREATWILL)) {
 				continue;
 			}
-			if (targetUnit && (nextTarget->category & badTargetCategory)) {
+
+			// when only one target is available, <nextTarget> can equal <targetUnit>
+			// and we want to attack whether it is in our bad target category or not
+			if (targetUnit != NULL && targets.size() != 1 && (nextTarget->category & badTargetCategory)) {
 				continue;
 			}
 
@@ -743,7 +746,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		}
 	} else {
 		// if we can't target anything, try switching aim point
-		if (useWeaponPosForAim && (useWeaponPosForAim == 1)) {
+		if (useWeaponPosForAim == 1) {
 			useWeaponPosForAim = 0;
 		} else {
 			useWeaponPosForAim = 1;

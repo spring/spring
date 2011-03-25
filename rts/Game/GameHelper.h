@@ -55,7 +55,7 @@ public:
 	CUnit* GetClosestFriendlyUnit(const float3& pos, float searchRadius, int searchAllyteam);
 	CUnit* GetClosestEnemyAircraft(const float3& pos, float searchRadius, int searchAllyteam);
 
-	void GenerateWeaponTargets(const CWeapon* attacker, CUnit* lastTarget, std::multimap<float, CUnit*>& targets);
+	void GenerateWeaponTargets(const CWeapon* attacker, const CUnit* lastTarget, std::multimap<float, CUnit*>& targets);
 	float TraceRay(const float3& start, const float3& dir, float length, float power, const CUnit* owner, const CUnit*& hit, int collisionFlags = 0, const CFeature** hitFeature = NULL);
 	float GuiTraceRay(const float3& start, const float3& dir, float length, const CUnit*& hit, bool useRadar, const CUnit* exclude = NULL);
 	float GuiTraceRayFeature(const float3& start, const float3& dir, float length, const CFeature*& feature);
