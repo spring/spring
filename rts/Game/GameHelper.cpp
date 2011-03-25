@@ -829,7 +829,7 @@ public:
 
 
 
-void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, CUnit* lastTarget, std::multimap<float, CUnit*>& targets)
+void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* lastTargetUnit, std::multimap<float, CUnit*>& targets)
 {
 	GML_RECMUTEX_LOCK(qnum); // GenerateTargets
 
@@ -845,7 +845,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, CUnit* lastTarget
 
 	const std::vector<int>& quads = qf->GetQuads(pos, radius + (aHeight - std::max(0.f, readmap->minheight)) * heightMod);
 
-	int tempNum = gs->tempNum++;
+	const int tempNum = gs->tempNum++;
 
 	typedef std::vector<int>::const_iterator VectorIt;
 	typedef std::list<CUnit*>::const_iterator ListIt;
@@ -893,13 +893,16 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, CUnit* lastTarget
 					const float modRange = radius + (aHeight - targPos.y) * heightMod;
 
 					if ((pos - targPos).SqLength2D() <= modRange * modRange) {
-						float dist2d = (pos - targPos).Length2D();
-						targetPriority *= (dist2d * weapon->weaponDef->proximityPriority + modRange * 0.4f + 100.0f);
+						const float dist2D = (pos - targPos).Length2D();
+						const float rangeMul = (dist2D * weapon->weaponDef->proximityPriority + modRange * 0.4f + 100.0f);
+						const float damageMul = weapon->weaponDef->damages[targetUnit->armorType] * targetUnit->curArmorMultiple;
+
+						targetPriority *= rangeMul;
 
 						if (targetLOSState & LOS_INLOS) {
 							targetPriority *= (secDamage + targetUnit->health);
 
-							if (targetUnit == lastTarget) {
+							if (targetUnit == lastTargetUnit) {
 								targetPriority *= weapon->avoidTarget ? 10.0f : 0.4f;
 							}
 
@@ -915,9 +918,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, CUnit* lastTarget
 						}
 
 						if (targetLOSState & LOS_PREVLOS) {
-							targetPriority /=
-								weapon->weaponDef->damages[targetUnit->armorType] * targetUnit->curArmorMultiple *
-								targetUnit->power * (0.7f + gs->randFloat() * 0.6f);
+							targetPriority /= (damageMul * targetUnit->power * (0.7f + gs->randFloat() * 0.6f));
 
 							if (targetUnit->category & weapon->badTargetCategory) {
 								targetPriority *= 100.0f;
@@ -944,7 +945,6 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, CUnit* lastTarget
 		tracefile << "\n";
 	}
 #endif
-
 }
 
 CUnit* CGameHelper::GetClosestUnit(const float3 &pos, float searchRadius)

@@ -89,7 +89,7 @@ void CTransportUnit::Update()
 				xdir.x = slaveMat[0]; xdir.y = slaveMat[1]; xdir.z = slaveMat[ 2];
 				ydir.x = slaveMat[4]; ydir.y = slaveMat[5]; ydir.z = slaveMat[ 6];
 
-				transportee->heading  = GetHeadingFromVector(zdir.x, zdir.z);
+				transportee->heading = GetHeadingFromVector(zdir.x, zdir.z);
 			}
 		} else {
 			// slave transportee orientation to body
