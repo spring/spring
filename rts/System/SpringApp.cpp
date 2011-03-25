@@ -167,7 +167,6 @@ bool SpringApp::Initialize()
 	good_fpu_control_registers("::Run");
 
 	// log OS version
-	// TODO: improve version logging of non-Windows OSes
 	logOutput.Print("OS: %s", Platform::GetOS().c_str());
 	if (Platform::Is64Bit())
 		logOutput.Print("OS: 64bit native mode");
