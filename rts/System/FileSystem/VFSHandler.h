@@ -16,9 +16,36 @@ public:
 	CVFSHandler();
 	~CVFSHandler();
 
-	bool LoadFile(const std::string& name, std::vector<boost::uint8_t>& buffer);
+	/**
+	 * Checks whether a file exists in the VFS (does not work for dirs).
+	 * This is cheaper then calling LoadFile, if you do not require the contents
+	 * of the file.
+	 * @param filePath raw file path, for example "maps/myMap.smf",
+	 *   case-insensitive
+	 * @return true if the file exists in the VFS, false otherwise
+	 */
+	bool FileExists(const std::string& filePath);
+	/**
+	 * Reads the contents of a file from within the VFS.
+	 * @param filePath raw file path, for example "maps/myMap.smf",
+	 *   case-insensitive
+	 * @return true if the file exists in the VFS and was successfully read
+	 */
+	bool LoadFile(const std::string& filePath, std::vector<boost::uint8_t>& buffer);
 
+	/**
+	 * Returns all the files in the given (virtual) directory without the
+	 * preceeding pathname.
+	 * @param dir raw directory path, for example "maps/" or "maps",
+	 *   case-insensitive
+	 */
 	std::vector<std::string> GetFilesInDir(const std::string& dir);
+	/**
+	 * Returns all the sub-directories in the given (virtual) directory without
+	 * the preceeding pathname.
+	 * @param dir raw directory path, for example "maps/" or "maps",
+	 *   case-insensitive
+	 */
 	std::vector<std::string> GetDirsInDir(const std::string& dir);
 
 	/**
@@ -49,6 +76,10 @@ protected:
 	};
 	std::map<std::string, FileData> files; 
 	std::map<std::string, CArchiveBase*> archives;
+
+private:
+	std::string GetNormalizedPath(const std::string& rawPath);
+	const FileData* GetFileData(const std::string& normalizedFilePath);
 };
 
 extern CVFSHandler* vfsHandler;
