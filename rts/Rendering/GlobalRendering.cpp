@@ -23,7 +23,7 @@
 CGlobalRendering* globalRendering;
 
 const float CGlobalRendering::MAX_VIEW_RANGE = 8000.0f;
-const float CGlobalRendering::NEAR_PLANE = 8000.0f;
+const float CGlobalRendering::NEAR_PLANE = 2.8f;
 
 CR_BIND(CGlobalRendering, );
 
