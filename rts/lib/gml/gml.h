@@ -277,8 +277,13 @@ inline unsigned gmlGetTicks() {
 #define GML_DRAW_CALLIN_TIME() 0
 #endif
 
+#if GML_ENABLE_SIM
 #define GML_GET_TICKS(var) var=gmlGetTicks()
 #define GML_UPDATE_TICKS() gmlUpdateTicks()
+#else
+#define GML_GET_TICKS(var)
+#define GML_UPDATE_TICKS()
+#endif
 
 #else
 
