@@ -18,14 +18,20 @@ std::string CArchiveBase::GetArchiveName() const
 	return archiveFile;
 }
 
-unsigned CArchiveBase::FindFile(const std::string& name) const
+bool CArchiveBase::FileExists(const std::string& normalizedFilePath) const
 {
-	const std::string fileName = StringToLower(name);
-	std::map<std::string, unsigned>::const_iterator it = lcNameIndex.find(fileName);
-	if (it != lcNameIndex.end())
+	return (lcNameIndex.find(normalizedFilePath) != lcNameIndex.end());
+}
+
+unsigned CArchiveBase::FindFile(const std::string& filePath) const
+{
+	const std::string normalizedFilePath = StringToLower(filePath);
+	const std::map<std::string, unsigned>::const_iterator it = lcNameIndex.find(normalizedFilePath);
+	if (it != lcNameIndex.end()) {
 		return it->second;
-	else
+	} else {
 		return NumFiles();
+	}
 }
 
 bool CArchiveBase::HasLowReadingCost(unsigned fid) const
