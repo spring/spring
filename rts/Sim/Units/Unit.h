@@ -12,6 +12,7 @@
 #include "Sim/Objects/SolidObject.h"
 #include "Matrix44f.h"
 #include "Vec2.h"
+#include "lib/gml/gml.h"
 
 class CPlayer;
 class CCommandAI;
