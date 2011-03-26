@@ -186,12 +186,12 @@ public:
 	/**
 	* @brief max view range in elmos
 	*/
-	static const float MAX_VIEW_RANGE = 8000.0f;
+	static const float MAX_VIEW_RANGE;
 
 	/**
 	* @brief near z-plane distance in elmos
 	*/
-	static const float NEAR_PLANE = 2.8f;
+	static const float NEAR_PLANE;
 };
 
 extern CGlobalRendering* globalRendering;
