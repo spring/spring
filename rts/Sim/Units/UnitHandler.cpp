@@ -137,10 +137,7 @@ bool CUnitHandler::AddUnit(CUnit *unit)
 
 	std::list<CUnit*>::iterator ui = activeUnits.begin();
 
-	if (activeUnits.empty()) {
-		// move to .end()
-		++ui;
-	} else {
+	if (ui != activeUnits.end()) {
 		// randomize this to make the slow-update order random (good if one
 		// builds say many buildings at once and then many mobile ones etc)
 		const unsigned int insertionPos = gs->randFloat() * activeUnits.size();
