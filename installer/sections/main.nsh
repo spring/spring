@@ -109,6 +109,7 @@
 			!insertmacro APP_ASSOCIATE "sdf" "spring.demofile" "Spring demo file" \
 				"$INSTDIR\spring.exe,0" "Open with Spring" "$\"$INSTDIR\spring.exe$\" $\"%1$\""
 			!insertmacro UPDATEFILEASSOC
+			WriteRegStr ${PRODUCT_ROOT_KEY} ${PRODUCT_KEY} "SpringEngineHelper" "$INSTDIR\unitsync.dll"
 		${EndIf}
 	${EndIf}
 
@@ -205,6 +206,9 @@
 	RmDir "$INSTDIR\maps"
 	RmDir "$INSTDIR\games"
 	RmDir "$INSTDIR\mods" ; deprecated
+
+	; Registry Keys
+	DeleteRegValue ${PRODUCT_ROOT_KEY} ${PRODUCT_KEY} "SpringEngineHelper"
 
 	; Demofile file association
 	!insertmacro APP_UNASSOCIATE "sdf" "spring.demofile"

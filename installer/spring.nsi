@@ -17,6 +17,8 @@ SetCompressor /SOLID /FINAL lzma
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\spring.exe"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
+!define PRODUCT_ROOT_KEY "HKLM"
+!define PRODUCT_KEY "Software\Spring"
 
 ; MUI 1.67 compatible ------
 !include "MUI.nsh"
@@ -75,7 +77,7 @@ Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 
 OutFile "${SP_BASENAME}${SP_OUTSUFFIX1}.exe"
 InstallDir "$PROGRAMFILES\Spring"
-InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" "Path"
+InstallDirRegKey ${PRODUCT_ROOT_KEY} "${PRODUCT_DIR_REGKEY}" "Path"
 ;ShowInstDetails show ;fix graphical glitch
 ;ShowUnInstDetails show ;fix graphical glitch
 
@@ -266,8 +268,8 @@ Section -Post
 	${!echonow} "Processing: Registry entries"
 	WriteUninstaller "$INSTDIR\uninst.exe"
 	${If} $REGISTRY = 1
-		WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "@" "$INSTDIR\spring.exe"
-		WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "Path" "$INSTDIR"
+		WriteRegStr ${PRODUCT_ROOT_KEY} "${PRODUCT_DIR_REGKEY}" "@" "$INSTDIR\spring.exe"
+		WriteRegStr ${PRODUCT_ROOT_KEY} "${PRODUCT_DIR_REGKEY}" "Path" "$INSTDIR"
 		WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
 		WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString" "$INSTDIR\uninst.exe"
 		WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\spring.exe"
@@ -335,6 +337,6 @@ Section Uninstall
 	RMDir "$INSTDIR"
 
 	DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
-	DeleteRegKey HKLM "${PRODUCT_DIR_REGKEY}"
+	DeleteRegKey ${PRODUCT_ROOT_KEY} "${PRODUCT_DIR_REGKEY}"
 	SetAutoClose true
 SectionEnd
