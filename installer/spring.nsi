@@ -266,7 +266,9 @@ SectionEnd
 
 Section -Post
 	${!echonow} "Processing: Registry entries"
-	WriteUninstaller "$INSTDIR\uninst.exe"
+	${If} $PORTABLE = 1
+		WriteUninstaller "$INSTDIR\uninst.exe"
+	${EndIf}
 	${If} $REGISTRY = 1
 		WriteRegStr ${PRODUCT_ROOT_KEY} "${PRODUCT_DIR_REGKEY}" "@" "$INSTDIR\spring.exe"
 		WriteRegStr ${PRODUCT_ROOT_KEY} "${PRODUCT_DIR_REGKEY}" "Path" "$INSTDIR"
