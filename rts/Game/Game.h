@@ -11,8 +11,6 @@
 #include "GameController.h"
 #include "creg/creg_cond.h"
 
-#include "lib/gml/gml.h"
-
 class CBaseWater;
 class CConsoleHistory;
 class CWordCompletion;
