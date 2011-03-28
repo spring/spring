@@ -13,7 +13,7 @@ SetCompressor /SOLID /FINAL lzma
 !include "WordFunc.nsh"
 !insertmacro VersionCompare
 
-; HM NIS Edit Wizard helper defines
+; this registry entry is deprecated (march 2011, use HKLM\Software\Spring\SpringEngine[Helper] instead)
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\spring.exe"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
@@ -74,15 +74,12 @@ Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 ; if present this should hold defines with custom mingwlibs location, etc.
 !include /NONFATAL "custom_defines.nsi"
 
-
+; set output filename for installer
 OutFile "${SP_BASENAME}${SP_OUTSUFFIX1}.exe"
 InstallDir "$PROGRAMFILES\Spring"
 InstallDirRegKey ${PRODUCT_ROOT_KEY} "${PRODUCT_DIR_REGKEY}" "Path"
-;ShowInstDetails show ;fix graphical glitch
-;ShowUnInstDetails show ;fix graphical glitch
 
 VAR REGISTRY ; if 1 registry values are written
-VAR PORTABLE ; = 1 if portable section is selected (/PORTABLE switch)
 
 !include "include\echo.nsh"
 !include "include\fileassoc.nsh"
@@ -182,10 +179,10 @@ SectionGroupEnd
 
 SectionGroup "Multiplayer battlerooms"
 	Section "SpringLobby" SEC_SPRINGLOBBY
-	!define INSTALL
-		${!echonow} "Processing: springlobby"
-		!include "sections\springlobby.nsh"
-	!undef INSTALL
+		!define INSTALL
+			${!echonow} "Processing: springlobby"
+			!include "sections\springlobby.nsh"
+		!undef INSTALL
 	SectionEnd
 
 	Section "Zero-K lobby" SEC_ZERO_K_LOBBY
@@ -267,7 +264,8 @@ SectionEnd
 
 Section -Post
 	${!echonow} "Processing: Registry entries"
-	${If} $PORTABLE = 1
+	IntOp $R0 ${SEC_PORTABLE} & ${SF_SELECTED} ; check if in normal mode
+	${If} $R0 != ${SF_SELECTED}
 		WriteUninstaller "$INSTDIR\uninst.exe"
 	${EndIf}
 	${If} $REGISTRY = 1
