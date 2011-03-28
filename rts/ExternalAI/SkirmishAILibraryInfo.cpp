@@ -29,9 +29,11 @@ CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 
 	std::vector<InfoItem> tmpInfo;
 	parseInfo(tmpInfo, aiInfoFile);
-	std::vector<InfoItem>::const_iterator ii;
+	std::vector<InfoItem>::iterator ii;
 	for (ii = tmpInfo.begin(); ii != tmpInfo.end(); ++ii) {
-		SetInfo(ii->key, ii->value, ii->desc);
+		// TODO remove this, once we support non-string value types for Skirmish AI info
+		info_convertToStringValue(&(*ii));
+		SetInfo(ii->key, ii->valueTypeString, ii->desc);
 	}
 
 	if (!aiOptionFile.empty()) {

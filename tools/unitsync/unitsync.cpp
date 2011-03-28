@@ -1715,7 +1715,9 @@ EXPORT(const char*) GetInfoValue(int infoIndex) {
 	const char* value = NULL;
 
 	try {
-		value = GetStr(GetInfoItem(infoIndex)->value);
+		// TODO remove this, once we support non-string value types
+		info_convertToStringValue(const_cast<InfoItem*>(GetInfoItem(infoIndex)));
+		value = GetStr(GetInfoItem(infoIndex)->valueTypeString);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
