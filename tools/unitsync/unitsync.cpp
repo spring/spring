@@ -1685,44 +1685,53 @@ static void CheckSkirmishAIInfoIndex(int infoIndex)
 	}
 }
 
+static const InfoItem* GetInfoItem(int infoIndex) {
+
+	const InfoItem* infoItem = NULL;
+
+	CheckSkirmishAIInfoIndex(infoIndex);
+	if (loadedLuaAIIndex >= 0) {
+		infoItem = &(luaAIInfos[ToPureLuaAIIndex(loadedLuaAIIndex)][infoIndex]);
+	} else {
+		infoItem = &(info[infoIndex]);
+	}
+
+	return infoItem;
+}
+
 EXPORT(const char*) GetInfoKey(int infoIndex) {
 
+	const char* key = NULL;
+
 	try {
-		CheckSkirmishAIInfoIndex(infoIndex);
-		if (loadedLuaAIIndex >= 0) {
-			return GetStr(luaAIInfos[ToPureLuaAIIndex(loadedLuaAIIndex)][infoIndex].key);
-		} else {
-			return GetStr(info[infoIndex].key);
-		}
+		key = GetStr(GetInfoItem(infoIndex)->key);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+
+	return key;
 }
 EXPORT(const char*) GetInfoValue(int infoIndex) {
 
+	const char* value = NULL;
+
 	try {
-		CheckSkirmishAIInfoIndex(infoIndex);
-		if (loadedLuaAIIndex >= 0) {
-			return GetStr(luaAIInfos[ToPureLuaAIIndex(loadedLuaAIIndex)][infoIndex].value);
-		} else {
-			return GetStr(info[infoIndex].value);
-		}
+		value = GetStr(GetInfoItem(infoIndex)->value);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+
+	return value;
+}
 }
 EXPORT(const char*) GetInfoDescription(int infoIndex) {
 
+	const char* desc = NULL;
+
 	try {
-		CheckSkirmishAIInfoIndex(infoIndex);
-		if (loadedLuaAIIndex >= 0) {
-			return GetStr(luaAIInfos[ToPureLuaAIIndex(loadedLuaAIIndex)][infoIndex].desc);
-		} else {
-			return GetStr(info[infoIndex].desc);
-		}
+		desc = GetStr(GetInfoItem(infoIndex)->desc);
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
+
+	return desc;
 }
 
 EXPORT(int) GetSkirmishAIOptionCount(int aiIndex) {
