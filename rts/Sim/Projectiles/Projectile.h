@@ -12,7 +12,6 @@
 #include "ExplosionGenerator.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/float3.h"
-#include "lib/gml/gml.h" 
 
 class CUnit;
 class CFeature;

@@ -3,6 +3,8 @@
 #ifndef UNIT_H
 #define UNIT_H
 
+#include "Rendering/GL/myGL.h"
+
 #include <map>
 #include <vector>
 #include <string>
@@ -12,7 +14,6 @@
 #include "Sim/Objects/SolidObject.h"
 #include "Matrix44f.h"
 #include "Vec2.h"
-#include "lib/gml/gml.h"
 
 class CPlayer;
 class CCommandAI;
