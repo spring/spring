@@ -82,6 +82,7 @@ InstallDirRegKey ${PRODUCT_ROOT_KEY} "${PRODUCT_DIR_REGKEY}" "Path"
 ;ShowUnInstDetails show ;fix graphical glitch
 
 VAR REGISTRY ; if 1 registry values are written
+VAR PORTABLE ; = 1 if portable section is selected (/PORTABLE switch)
 
 !include "include\echo.nsh"
 !include "include\fileassoc.nsh"
