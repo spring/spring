@@ -109,7 +109,10 @@
 			!insertmacro APP_ASSOCIATE "sdf" "spring.demofile" "Spring demo file" \
 				"$INSTDIR\spring.exe,0" "Open with Spring" "$\"$INSTDIR\spring.exe$\" $\"%1$\""
 			!insertmacro UPDATEFILEASSOC
+			; we don't add here $INSTDIR directly to registry, because file-structure will change in future
+			; please use this values directly without modifying them
 			WriteRegStr ${PRODUCT_ROOT_KEY} ${PRODUCT_KEY} "SpringEngineHelper" "$INSTDIR\unitsync.dll"
+			WriteRegStr ${PRODUCT_ROOT_KEY} ${PRODUCT_KEY} "SpringEngine" "$INSTDIR\spring.exe"
 		${EndIf}
 	${EndIf}
 
@@ -209,6 +212,7 @@
 
 	; Registry Keys
 	DeleteRegValue ${PRODUCT_ROOT_KEY} ${PRODUCT_KEY} "SpringEngineHelper"
+	DeleteRegValue ${PRODUCT_ROOT_KEY} ${PRODUCT_KEY} "SpringEngine"
 
 	; Demofile file association
 	!insertmacro APP_UNASSOCIATE "sdf" "spring.demofile"
