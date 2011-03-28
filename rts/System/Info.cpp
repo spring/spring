@@ -10,6 +10,28 @@
 
 static const char* InfoItem_badKeyChars = " =;\r\n\t";
 
+void info_convertToStringValue(InfoItem* infoItem) {
+
+	assert(infoItem != NULL);
+
+	switch (infoItem->valueType) {
+		case INFO_VALUE_TYPE_STRING: {
+			// do nothing
+		} break;
+		case INFO_VALUE_TYPE_INTEGER: {
+			infoItem->valueTypeString = IntToString(infoItem->value.typeInteger);
+		} break;
+		case INFO_VALUE_TYPE_FLOAT: {
+			infoItem->valueTypeString = FloatToString(infoItem->value.typeFloat);
+		} break;
+		case INFO_VALUE_TYPE_BOOL: {
+			infoItem->valueTypeString = IntToString((int) infoItem->value.typeBool);
+		} break;
+	}
+
+	infoItem->valueType = INFO_VALUE_TYPE_STRING;
+}
+
 static bool parseInfoItem(const LuaTable& root, int index, InfoItem& inf,
 		std::set<string>& infoSet, CLogSubsystem& logSubsystem)
 {
@@ -34,8 +56,10 @@ static bool parseInfoItem(const LuaTable& root, int index, InfoItem& inf,
 				inf.key.c_str());
 		return false;
 	}
-	inf.value = infsTbl.GetString("value", inf.key);
-	if (inf.value.empty()) {
+	// TODO add support for info value types other then string
+	inf.valueType = INFO_VALUE_TYPE_STRING;
+	inf.valueTypeString = infsTbl.GetString("value", inf.key);
+	if (inf.valueTypeString.empty()) {
 		logOutput.Print(logSubsystem, "parseInfoItem: %s: empty value",
 				inf.key.c_str());
 		return false;

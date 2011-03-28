@@ -79,23 +79,27 @@ std::vector< std::vector<InfoItem> > CLuaAIImplHandler::LoadInfos() {
 		std::vector<InfoItem> aiInfo;
 
 		ii.key = SKIRMISH_AI_PROPERTY_SHORT_NAME;
-		ii.value = shortName;
+		ii.valueType = INFO_VALUE_TYPE_STRING;
+		ii.valueTypeString = shortName;
 		ii.desc = "the short name of this Lua Skirmish AI";
 		aiInfo.push_back(ii);
 
 		ii.key = SKIRMISH_AI_PROPERTY_VERSION;
-		ii.value = "<not-versioned>";
+		ii.valueType = INFO_VALUE_TYPE_STRING;
+		ii.valueTypeString = "<not-versioned>";
 		ii.desc = "Lua Skirmish AIs do not have a version, "
 				"because they are fully defined by the mods version already.";
 		aiInfo.push_back(ii);
 
 		ii.key = SKIRMISH_AI_PROPERTY_NAME;
-		ii.value = shortName + " (Mod specific AI)";
+		ii.valueType = INFO_VALUE_TYPE_STRING;
+		ii.valueTypeString = shortName + " (Mod specific AI)";
 		ii.desc = "the human readable name of this Lua Skirmish AI";
 		aiInfo.push_back(ii);
 
 		ii.key = SKIRMISH_AI_PROPERTY_DESCRIPTION;
-		ii.value = description;
+		ii.valueType = INFO_VALUE_TYPE_STRING;
+		ii.valueTypeString = description;
 		ii.desc = "a short description of this Lua Skirmish AI";
 		aiInfo.push_back(ii);
 
