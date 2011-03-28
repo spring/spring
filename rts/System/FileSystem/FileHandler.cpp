@@ -26,25 +26,25 @@ using std::string;
 /******************************************************************************/
 /******************************************************************************/
 
-CFileHandler::CFileHandler(const char* filename, const char* modes)
-: ifs(NULL), filePos(0), fileSize(-1)
+CFileHandler::CFileHandler(const char* fileName, const char* modes)
+	: ifs(NULL), filePos(0), fileSize(-1)
 {
 	GML_RECMUTEX_LOCK(file); // CFileHandler
 
-	Init(filename, modes);
+	TryReadContent(fileName, modes);
 }
 
 
-CFileHandler::CFileHandler(const string& filename, const string& modes)
-: ifs(NULL), filePos(0), fileSize(-1)
+CFileHandler::CFileHandler(const string& fileName, const string& modes)
+	: ifs(NULL), filePos(0), fileSize(-1)
 {
 	GML_RECMUTEX_LOCK(file); // CFileHandler
 
-	Init(filename, modes);
+	TryReadContent(fileName, modes);
 }
 
 
-CFileHandler::~CFileHandler(void)
+CFileHandler::~CFileHandler()
 {
 	GML_RECMUTEX_LOCK(file); // ~CFileHandler
 
@@ -54,9 +54,9 @@ CFileHandler::~CFileHandler(void)
 
 /******************************************************************************/
 
-bool CFileHandler::TryRawFS(const string& filename)
+bool CFileHandler::TryReadFromRawFS(const string& fileName)
 {
-	const string rawpath = filesystem.LocateFile(filename);
+	const string rawpath = filesystem.LocateFile(fileName);
 	ifs = new std::ifstream(rawpath.c_str(), std::ios::in | std::ios::binary);
 	if (ifs && !ifs->bad() && ifs->is_open()) {
 		ifs->seekg(0, std::ios_base::end);
@@ -70,15 +70,16 @@ bool CFileHandler::TryRawFS(const string& filename)
 }
 
 
-bool CFileHandler::TryModFS(const string& filename)
+bool CFileHandler::TryReadFromModFS(const string& fileName)
 {
 	if (vfsHandler == NULL) {
 		return false;
 	}
 
-	const string file = StringToLower(filename);
+	const string file = StringToLower(fileName);
 	if (vfsHandler->LoadFile(file, fileBuffer)) {
-		//! did we allocated more mem than needed (e.g. because of incorrect usage of std::vector)?
+		//! did we allocated more mem than needed
+		//! (e.g. because of incorrect usage of std::vector)?
 		assert(fileBuffer.size() == fileBuffer.capacity()); 
 
 		fileSize = fileBuffer.size();
@@ -89,27 +90,27 @@ bool CFileHandler::TryModFS(const string& filename)
 }
 
 
-bool CFileHandler::TryMapFS(const string& filename)
+bool CFileHandler::TryReadFromMapFS(const string& fileName)
 {
-	return TryModFS(filename); // FIXME
+	return TryReadFromModFS(fileName); // FIXME
 }
 
 
-bool CFileHandler::TryBaseFS(const string& filename)
+bool CFileHandler::TryReadFromBaseFS(const string& fileName)
 {
-	return TryModFS(filename); // FIXME
+	return TryReadFromModFS(fileName); // FIXME
 }
 
 
-void CFileHandler::Init(const string& _filename, const string& modes)
+void CFileHandler::TryReadContent(const string& fileName, const string& modes)
 {
-	filename = _filename;
+	this->fileName = fileName;
 	const char* c = modes.c_str();
 	while (c[0] != 0) {
-		if (c[0] == SPRING_VFS_RAW[0])  { if (TryRawFS(filename))  { return; } }
-		if (c[0] == SPRING_VFS_MOD[0])  { if (TryModFS(filename))  { return; } }
-		if (c[0] == SPRING_VFS_MAP[0])  { if (TryMapFS(filename))  { return; } }
-		if (c[0] == SPRING_VFS_BASE[0]) { if (TryBaseFS(filename)) { return; } }
+		if ((c[0] == SPRING_VFS_RAW[0])  && TryReadFromRawFS(fileName))  break;
+		if ((c[0] == SPRING_VFS_MOD[0])  && TryReadFromModFS(fileName))  break;
+		if ((c[0] == SPRING_VFS_MAP[0])  && TryReadFromMapFS(fileName))  break;
+		if ((c[0] == SPRING_VFS_BASE[0]) && TryReadFromBaseFS(fileName)) break;
 		c++;
 	}
 }
@@ -123,7 +124,7 @@ bool CFileHandler::FileExists() const
 }
 
 
-int CFileHandler::Read(void* buf,int length)
+int CFileHandler::Read(void* buf, int length)
 {
 	GML_RECMUTEX_LOCK(file); // Read
 
@@ -136,7 +137,7 @@ int CFileHandler::Read(void* buf,int length)
 			length = fileSize - filePos;
 		}
 		if (length > 0) {
-			assert(fileBuffer.size() >= filePos+length);
+			assert(fileBuffer.size() >= (filePos + length));
 			memcpy(buf, &fileBuffer[filePos], length);
 			filePos += length;
 		}
@@ -153,7 +154,8 @@ void CFileHandler::Seek(int length, std::ios_base::seekdir where)
 
 	if (ifs)
 	{
-		// on some machines, EOF bit does not get reset when seeking to another pos
+		// on some machines, the EOF bit does not get reset when seeking to
+		// another pos
 		ifs->clear();
 		ifs->seekg(length, where);
 	}
@@ -182,7 +184,7 @@ int CFileHandler::Peek() const
 	if (ifs) {
 		return ifs->peek();
 	}
-	else if (!fileBuffer.empty()){
+	else if (!fileBuffer.empty()) {
 		if (filePos < fileSize) {
 			return fileBuffer.at(filePos);
 		} else {
@@ -241,19 +243,19 @@ bool CFileHandler::LoadStringData(string& data)
 
 std::string CFileHandler::GetFileExt() const
 {
-	return filesystem.GetExtension(filename);
+	return filesystem.GetExtension(fileName);
 }
 
 /******************************************************************************/
 
 std::vector<string> CFileHandler::FindFiles(const string& path,
-                                       const string& pattern)
+		const string& pattern)
 {
 	GML_RECMUTEX_LOCK(file); // FindFiles
 
 	std::vector<string> found = filesystem.FindFiles(path, pattern);
 	boost::regex regexpattern(filesystem.glob_to_regex(pattern),
-	                          boost::regex::icase);
+			boost::regex::icase);
 	std::vector<string> f;
 
 	if (vfsHandler) {
@@ -272,8 +274,7 @@ std::vector<string> CFileHandler::FindFiles(const string& path,
 /******************************************************************************/
 
 std::vector<string> CFileHandler::DirList(const string& path,
-                                     const string& pattern,
-                                     const string& modes)
+		const string& pattern, const string& modes)
 {
 	GML_RECMUTEX_LOCK(file); // DirList
 
@@ -298,8 +299,7 @@ std::vector<string> CFileHandler::DirList(const string& path,
 
 
 bool CFileHandler::InsertRawFiles(std::set<string>& fileSet,
-                                  const string& path,
-                                  const string& pattern)
+		const string& path, const string& pattern)
 {
 	boost::regex regexpattern(filesystem.glob_to_regex(pattern),
 	                          boost::regex::icase);
@@ -317,8 +317,7 @@ bool CFileHandler::InsertRawFiles(std::set<string>& fileSet,
 
 
 bool CFileHandler::InsertModFiles(std::set<string>& fileSet,
-                                  const string& path,
-                                  const string& pattern)
+		const string& path, const string& pattern)
 {
 	if (!vfsHandler) {
 		return false;
@@ -329,7 +328,8 @@ bool CFileHandler::InsertModFiles(std::set<string>& fileSet,
 		prefix += '/';
 	}
 
-	boost::regex regexpattern(filesystem.glob_to_regex(pattern), boost::regex::icase);
+	boost::regex regexpattern(filesystem.glob_to_regex(pattern),
+			boost::regex::icase);
 
 	const std::vector<string> &found = vfsHandler->GetFilesInDir(path);
 	std::vector<string>::const_iterator fi;
@@ -344,16 +344,14 @@ bool CFileHandler::InsertModFiles(std::set<string>& fileSet,
 
 
 bool CFileHandler::InsertMapFiles(std::set<string>& fileSet,
-                                  const string& path,
-                                  const string& pattern)
+		const string& path, const string& pattern)
 {
 	return InsertModFiles(fileSet, path, pattern); // FIXME
 }
 
 
 bool CFileHandler::InsertBaseFiles(std::set<string>& fileSet,
-                                   const string& path,
-                                   const string& pattern)
+		const string& path, const string& pattern)
 {
 	return InsertModFiles(fileSet, path, pattern); // FIXME
 }
@@ -362,8 +360,7 @@ bool CFileHandler::InsertBaseFiles(std::set<string>& fileSet,
 /******************************************************************************/
 
 std::vector<string> CFileHandler::SubDirs(const string& path,
-                                     const string& pattern,
-                                     const string& modes)
+		const string& pattern, const string& modes)
 {
 	GML_RECMUTEX_LOCK(file); // SubDirs
 
@@ -388,8 +385,7 @@ std::vector<string> CFileHandler::SubDirs(const string& path,
 
 
 bool CFileHandler::InsertRawDirs(std::set<string>& dirSet,
-                                 const string& path,
-                                 const string& pattern)
+		const string& path, const string& pattern)
 {
 	boost::regex regexpattern(filesystem.glob_to_regex(pattern),
 	                          boost::regex::icase);
@@ -409,8 +405,7 @@ bool CFileHandler::InsertRawDirs(std::set<string>& dirSet,
 
 
 bool CFileHandler::InsertModDirs(std::set<string>& dirSet,
-                                 const string& path,
-                                 const string& pattern)
+		const string& path, const string& pattern)
 {
 	if (!vfsHandler) {
 		return false;
@@ -421,7 +416,8 @@ bool CFileHandler::InsertModDirs(std::set<string>& dirSet,
 		prefix += '/';
 	}
 
-	boost::regex regexpattern(filesystem.glob_to_regex(pattern), boost::regex::icase);
+	boost::regex regexpattern(filesystem.glob_to_regex(pattern),
+			boost::regex::icase);
 
 	const std::vector<string> &found = vfsHandler->GetDirsInDir(path);
 	std::vector<string>::const_iterator fi;
@@ -436,16 +432,14 @@ bool CFileHandler::InsertModDirs(std::set<string>& dirSet,
 
 
 bool CFileHandler::InsertMapDirs(std::set<string>& dirSet,
-                                  const string& path,
-                                  const string& pattern)
+		const string& path, const string& pattern)
 {
 	return InsertModDirs(dirSet, path, pattern); // FIXME
 }
 
 
 bool CFileHandler::InsertBaseDirs(std::set<string>& dirSet,
-                                   const string& path,
-                                   const string& pattern)
+		const string& path, const string& pattern)
 {
 	return InsertModDirs(dirSet, path, pattern); // FIXME
 }
