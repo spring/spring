@@ -37,7 +37,11 @@
 #include "StdAfx.h"
 
 #ifdef USE_GML
+
+#include <GL/glew.h>
 #include "gmlcls.h"
+#include "gmlque.h"
+
 #include "LogOutput.h"
 
 const char *gmlProfMutex = "lua";

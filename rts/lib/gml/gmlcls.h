@@ -10,8 +10,6 @@
 #ifndef GMLCLASSES_H
 #define GMLCLASSES_H
 
-#include <GL/glew.h>
-
 #include "gmlcnt.h"
 
 #include <boost/thread/mutex.hpp>
@@ -21,48 +19,9 @@
 #include <set>
 #include <string.h>
 
+#include "gmlcnf.h"
+
 #define GML_QUOTE(x) #x
-
-#ifdef USE_GML
-#	define GML_ENABLE 1 // multithreaded drawing of units and ground
-#else
-#	define GML_ENABLE 0 // manually enable opengl multithreading here
-#endif
-
-#ifdef USE_GML_SIM
-#	define GML_ENABLE_SIM (GML_ENABLE && 1) // runs a completely independent thread loop for the Sim
-#else
-#	define GML_ENABLE_SIM 0  // manually enable sim thread here
-#endif
-
-#ifdef USE_GML_DEBUG
-#	define GML_CALL_DEBUG 0  // manually force enable call debugging here
-#else
-#	define GML_CALL_DEBUG (GML_ENABLE && GML_ENABLE_SIM && 1) // checks for calls made from the wrong thread (enabled by default)
-#endif
-
-#define GML_ENABLE_DRAW (GML_ENABLE && 0) // draws everything in a separate thread (for testing only, will degrade performance)
-#define GML_SERVER_GLCALL 1 // allows the server thread (0) to make direct GL calls
-#define GML_INIT_QUEUE_SIZE 10 // initial queue size, will be reallocated, but must be >= 4
-#define GML_USE_NO_ERROR 1 // glGetError always returns success (to improve performance)
-#define GML_USE_DEFAULT 1// compile/link/buffer status always returns TRUE/COMPLETE (to improve performance)
-#define GML_USE_CACHE 1 // certain glGet calls may use data cached during gmlInit (to improve performance)
-//#define GML_USE_QUADRIC_SERVER 1 // use server thread to create/delete quadrics
-#define GML_AUX_PREALLOC 128*1024 // preallocation size for aux queue to reduce risk for hang if gl calls happen to be made from Sim thread
-#define GML_ENABLE_ITEMSERVER_CHECK (GML_ENABLE_SIM && 1) // if calls to itemserver are made from Sim, output errors to log
-#define GML_UPDSRV_INTERVAL 10
-#define GML_ALTERNATE_SYNCMODE 1 // mutex-protected synced execution, slower but more portable
-#define GML_ENABLE_TLS_CHECK 1 // check if Thread Local Storage appears to be working
-#define GML_GCC_TLS_FIX 1 // fix buggy TLS in GCC by using the Win32 TIB (faster also!)
-#define GML_MSC_TLS_OPT 1 // use the Win32 TIB for TLS in MSVC (possibly faster)
-#define GML_64BIT_USE_GS 1 // 64-bit OS will use the GS register for TLS (untested feature)
-#define GML_LOCKED_GMLCOUNT_ASSIGNMENT 0 // experimental feature, probably not needed
-#define GML_SHARE_LISTS 1 // use glShareLists to allow opengl calls in sim thread
-#define GML_DRAW_THREAD_NUM 0 // thread number of draw thread
-#define GML_LOAD_THREAD_NUM 1 // thread number of game loading thread
-#define GML_SIM_THREAD_NUM 2 // thread number of sim thread
-#define GML_DEBUG_MUTEX 0 // debugs the mutex locking order
-//#define BOOST_AC_USE_PTHREADS
 
 // memory barriers for different platforms
 #if defined(__APPLE__) || defined(__FreeBSD__)
@@ -704,104 +663,6 @@ public:
 			Shrink();
 	}
 };
-
-struct VAdata {
-	GLint size;
-	GLenum type;
-	GLboolean normalized;
-	GLsizei stride;
-	const GLvoid *pointer;
-	GLuint buffer;
-	VAdata(){}
-	VAdata(GLint si, GLenum ty, GLboolean no, GLsizei st, const GLvoid *po, GLuint buf):
-	size(si),type(ty),normalized(no),stride(st),pointer(po),buffer(buf) {}
-};
-
-struct VAstruct {
-	GLuint target;
-	GLint size;
-	GLenum type;
-	GLboolean normalized;
-	GLvoid * pointer;
-	GLuint buffer;
-	int totalsize;
-};
-
-
-struct gmlQueue {
-	std::map<GLuint,VAdata> VAmap;
-	std::set<GLuint> VAset;
-	
-	BYTE *ReadPos;
-	BYTE *WritePos;
-	BYTE *Pos1;
-	BYTE *Pos2;
-	
-	BYTE *WriteSize;
-	BYTE *Size1;
-	BYTE *Size2;
-	
-	BYTE *Read;
-	BYTE *Write;
-	BYTE *Queue1;
-	BYTE *Queue2;
-	
-	gmlLock Locks1;
-	gmlLock Locks2;
-	volatile BOOL_ Locked1;
-	volatile BOOL_ Locked2;
-	
-	volatile BOOL_ Reloc;
-	BYTE * volatile Sync;
-	BOOL_ WasSynced;
-	
-	GLenum ClientState;
-	// VertexPointer
-	GLint VPsize;
-	GLenum VPtype;
-	GLsizei VPstride;
-	const GLvoid *VPpointer;
-	// ColorPointer
-	GLint CPsize;
-	GLenum CPtype;
-	GLsizei CPstride;
-	const GLvoid *CPpointer;
-	// EdgeFlagPointer
-	GLsizei EFPstride;
-	const GLboolean *EFPpointer;
-	// IndexPointer
-	GLenum IPtype;
-	GLsizei IPstride;
-	const GLvoid *IPpointer;
-	// NormalPointer
-	GLenum NPtype;
-	GLsizei NPstride;
-	const GLvoid *NPpointer;
-	// TexCoordPointer
-	GLint TCPsize;
-	GLenum TCPtype;
-	GLsizei TCPstride;
-	const GLvoid *TCPpointer;
-
-	GLuint ArrayBuffer;
-	GLuint ElementArrayBuffer;
-	GLuint PixelPackBuffer;
-	GLuint PixelUnpackBuffer;
-	
-	gmlQueue();
-	
-	BYTE *Realloc(BYTE **e=NULL);
-	BYTE *WaitRealloc(BYTE **e=NULL);
-	void ReleaseWrite(BOOL_ final=TRUE);
-	BOOL_ GetWrite(BOOL_ critical);
-	void ReleaseRead();
-	BOOL_ GetRead(BOOL_ critical=FALSE);
-	void SyncRequest();
-	void Execute();
-	void ExecuteSynced(void (gmlQueue::*execfun)() =&gmlQueue::Execute);
-	void ExecuteDebug();
-};
-
 
 
 template<class T,class S, class C>
