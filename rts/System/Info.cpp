@@ -32,6 +32,28 @@ void info_convertToStringValue(InfoItem* infoItem) {
 	infoItem->valueType = INFO_VALUE_TYPE_STRING;
 }
 
+const char* info_convertTypeToString(InfoValueType infoValueType) {
+
+	const char* typeString = NULL;
+
+	switch (infoValueType) {
+		case INFO_VALUE_TYPE_STRING: {
+			typeString = "string";
+		} break;
+		case INFO_VALUE_TYPE_INTEGER: {
+			typeString = "integer";
+		} break;
+		case INFO_VALUE_TYPE_FLOAT: {
+			typeString = "float";
+		} break;
+		case INFO_VALUE_TYPE_BOOL: {
+			typeString = "bool";
+		} break;
+	}
+
+	return typeString;
+}
+
 static bool parseInfoItem(const LuaTable& root, int index, InfoItem& inf,
 		std::set<string>& infoSet, CLogSubsystem& logSubsystem)
 {

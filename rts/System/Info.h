@@ -36,6 +36,8 @@ struct InfoItem {
 
 void info_convertToStringValue(InfoItem* infoItem);
 
+const char* info_convertTypeToString(InfoValueType infoValueType);
+
 // TODO add info_ prefix
 void parseInfo(
 		std::vector<InfoItem>& options,
