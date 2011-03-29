@@ -584,6 +584,10 @@ EXPORT(const char* ) GetInfoDescription(int index);
  * @param index Skirmish AI index/id
  * @return Zero on error; the number of Skirmish AI options available on success
  * @see GetSkirmishAICount
+ * @see GetOptionKey
+ * @see GetOptionName
+ * @see GetOptionDesc
+ * @see GetOptionType
  *
  * Be sure to call GetSkirmishAICount() prior to using this function.
  */
@@ -742,13 +746,21 @@ EXPORT(const char* ) GetSideStartUnit(int side);
 
 /**
  * @brief Retrieve the number of map options available
- * @param mapName  the name of the map, e.g. "SmallDivide"
+ * @param mapName the name of the map, e.g. "SmallDivide"
  * @return Zero on error; the number of map options available on success
+ * @see GetOptionKey
+ * @see GetOptionName
+ * @see GetOptionDesc
+ * @see GetOptionType
  */
 EXPORT(int         ) GetMapOptionCount(const char* mapName);
 /**
  * @brief Retrieve the number of mod options available
  * @return Zero on error; the number of mod options available on success
+ * @see GetOptionKey
+ * @see GetOptionName
+ * @see GetOptionDesc
+ * @see GetOptionType
  *
  * Be sure to map the mod into the VFS using AddArchive() or AddAllArchives()
  * prior to using this function.
@@ -758,6 +770,10 @@ EXPORT(int         ) GetModOptionCount();
  * @brief Returns the number of options available in a specific option file
  * @param fileName the VFS path to a Lua file containing an options table
  * @return Zero on error; the number of options available on success
+ * @see GetOptionKey
+ * @see GetOptionName
+ * @see GetOptionDesc
+ * @see GetOptionType
  */
 EXPORT(int         ) GetCustomOptionCount(const char* fileName);
 /**
@@ -765,18 +781,28 @@ EXPORT(int         ) GetCustomOptionCount(const char* fileName);
  * @param optIndex option index/id
  * @return NULL on error; the option's key on success
  *
- * The key of an option is the name it should be given in the start script's
- * MODOPTIONS or MAPOPTIONS section.
- * Be sure you have made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
+ *
+ * For mods, maps or Skimrish AIs, the key of an option is the name it should be
+ * given in the start script (section [MODOPTIONS], [MAPOPTIONS] or
+ * [AI/OPTIONS]).
  */
 EXPORT(const char* ) GetOptionKey(int optIndex);
 /**
  * @brief Retrieve an option's scope
  * @param optIndex option index/id
- * @return NULL on error; the option's scope on success
+ * @return NULL on error; the option's scope on success, one of:
+ *   "global" (default), "player", "team", "allyteam"
  *
- * Will be either "global" (default), "player", "team" or "allyteam"
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(const char* ) GetOptionScope(int optIndex);
 /**
@@ -784,8 +810,11 @@ EXPORT(const char* ) GetOptionScope(int optIndex);
  * @param optIndex option index/id
  * @return NULL on error; the option's user visible name on success
  *
- * Be sure you have made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(const char* ) GetOptionName(int optIndex);
 /**
@@ -793,8 +822,11 @@ EXPORT(const char* ) GetOptionName(int optIndex);
  * @param optIndex option index/id
  * @return NULL on error; the option's section name on success
  *
- * Be sure you have made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(const char* ) GetOptionSection(int optIndex);
 /**
@@ -802,10 +834,13 @@ EXPORT(const char* ) GetOptionSection(int optIndex);
  * @param optIndex option index/id
  * @return NULL on error; the option's style on success
  *
- * The format of an option style string is currently undecided.
+ * XXX The format of an option style string is currently undecided.
  *
- * Be sure you have made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(const char* ) GetOptionStyle(int optIndex);
 /**
@@ -813,8 +848,11 @@ EXPORT(const char* ) GetOptionStyle(int optIndex);
  * @param optIndex option index/id
  * @return NULL on error; the option's description on success
  *
- * Be sure you have made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(const char* ) GetOptionDesc(int optIndex);
 /**
@@ -822,8 +860,11 @@ EXPORT(const char* ) GetOptionDesc(int optIndex);
  * @param optIndex option index/id
  * @return opt_error on error; the option's type on success
  *
- * Be sure you have made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(int         ) GetOptionType(int optIndex);
 
@@ -832,8 +873,11 @@ EXPORT(int         ) GetOptionType(int optIndex);
  * @param optIndex option index/id
  * @return Zero on error; the option's default value (0 or 1) on success
  *
- * Be sure you have made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(int         ) GetOptionBoolDef(int optIndex);
 
@@ -842,8 +886,11 @@ EXPORT(int         ) GetOptionBoolDef(int optIndex);
  * @param optIndex option index/id
  * @return Zero on error; the option's default value on success
  *
- * Be sure you have made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(float       ) GetOptionNumberDef(int optIndex);
 /**
@@ -851,8 +898,11 @@ EXPORT(float       ) GetOptionNumberDef(int optIndex);
  * @param optIndex option index/id
  * @return -1.0e30 on error; the option's minimum value on success
  *
- * Be sure you have made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(float       ) GetOptionNumberMin(int optIndex);
 /**
@@ -860,8 +910,11 @@ EXPORT(float       ) GetOptionNumberMin(int optIndex);
  * @param optIndex option index/id
  * @return +1.0e30 on error; the option's maximum value on success
  *
- * Be sure you have made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(float       ) GetOptionNumberMax(int optIndex);
 /**
@@ -869,8 +922,11 @@ EXPORT(float       ) GetOptionNumberMax(int optIndex);
  * @param optIndex option index/id
  * @return Zero on error; the option's step value on success
  *
- * Be sure you have made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(float       ) GetOptionNumberStep(int optIndex);
 
@@ -879,8 +935,11 @@ EXPORT(float       ) GetOptionNumberStep(int optIndex);
  * @param optIndex option index/id
  * @return NULL on error; the option's default value on success
  *
- * Be sure you have made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(const char* ) GetOptionStringDef(int optIndex);
 /**
@@ -888,8 +947,11 @@ EXPORT(const char* ) GetOptionStringDef(int optIndex);
  * @param optIndex option index/id
  * @return Zero on error; the option's maximum length on success
  *
- * Be sure you have made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(int         ) GetOptionStringMaxLen(int optIndex);
 
@@ -898,8 +960,11 @@ EXPORT(int         ) GetOptionStringMaxLen(int optIndex);
  * @param optIndex option index/id
  * @return Zero on error; the option's number of available items on success
  *
- * Be sure you have made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(int         ) GetOptionListCount(int optIndex);
 /**
@@ -907,8 +972,11 @@ EXPORT(int         ) GetOptionListCount(int optIndex);
  * @param optIndex option index/id
  * @return NULL on error; the option's default value (list item key) on success
  *
- * Be sure you have made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(const char* ) GetOptionListDef(int optIndex);
 /**
@@ -917,8 +985,11 @@ EXPORT(const char* ) GetOptionListDef(int optIndex);
  * @param itemIndex list item index/id
  * @return NULL on error; the option item's key (list item key) on success
  *
- * Be sure you have made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(const char* ) GetOptionListItemKey(int optIndex, int itemIndex);
 /**
@@ -927,8 +998,11 @@ EXPORT(const char* ) GetOptionListItemKey(int optIndex, int itemIndex);
  * @param itemIndex list item index/id
  * @return NULL on error; the option item's name on success
  *
- * Be sure you have made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(const char* ) GetOptionListItemName(int optIndex, int itemIndex);
 /**
@@ -937,8 +1011,11 @@ EXPORT(const char* ) GetOptionListItemName(int optIndex, int itemIndex);
  * @param itemIndex list item index/id
  * @return NULL on error; the option item's description on success
  *
- * Be sure you have made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(const char* ) GetOptionListItemDesc(int optIndex, int itemIndex);
 
