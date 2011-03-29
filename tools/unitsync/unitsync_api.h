@@ -504,14 +504,72 @@ EXPORT(int         ) GetSkirmishAIInfoCount(int index);
  */
 EXPORT(const char* ) GetInfoKey(int index);
 /**
- * @brief Retrieves an info item's value
+ * @brief Retrieves an info item's value type
  * @param index info item index/id
- * @return NULL on error; the info item's value on success
+ * @return NULL on error; the info item's value type on success,
+ *   which will be one of:
+ *   "string", "integer", "float", "bool"
  * @see GetSkirmishAIInfoCount
+ * @see GetInfoValue
+ * @see GetInfoValueString
+ * @see GetInfoValueInteger
+ * @see GetInfoValueFloat
+ * @see GetInfoValueBool
  *
  * Be sure to call GetSkirmishAIInfoCount() prior to using this function.
  */
+EXPORT(const char* ) GetInfoType(int index);
+/**
+ * @brief Retrieves an info item's value of type string
+ * @param index info item index/id
+ * @return NULL on error; the info item's value on success
+ * @see GetSkirmishAIInfoCount
+ * @see GetInfoType
+ *
+ * Be sure to call GetSkirmishAIInfoCount() prior to using this function.
+ * @deprecated
+ */
 EXPORT(const char* ) GetInfoValue(int index);
+/**
+ * @brief Retrieves an info item's value of type string
+ * @param index info item index/id
+ * @return NULL on error; the info item's value on success
+ * @see GetSkirmishAIInfoCount
+ * @see GetInfoType
+ *
+ * Be sure to call GetSkirmishAIInfoCount() prior to using this function.
+ */
+EXPORT(const char* ) GetInfoValueString(int index);
+/**
+ * @brief Retrieves an info item's value of type integer
+ * @param index info item index/id
+ * @return NULL on error; the info item's value on success
+ * @see GetSkirmishAIInfoCount
+ * @see GetInfoType
+ *
+ * Be sure to call GetSkirmishAIInfoCount() prior to using this function.
+ */
+EXPORT(int         ) GetInfoValueInteger(int index);
+/**
+ * @brief Retrieves an info item's value of type float
+ * @param index info item index/id
+ * @return NULL on error; the info item's value on success
+ * @see GetSkirmishAIInfoCount
+ * @see GetInfoType
+ *
+ * Be sure to call GetSkirmishAIInfoCount() prior to using this function.
+ */
+EXPORT(float       ) GetInfoValueFloat(int index);
+/**
+ * @brief Retrieves an info item's value of type bool
+ * @param index info item index/id
+ * @return NULL on error; the info item's value on success
+ * @see GetSkirmishAIInfoCount
+ * @see GetInfoType
+ *
+ * Be sure to call GetSkirmishAIInfoCount() prior to using this function.
+ */
+EXPORT(bool        ) GetInfoValueBool(int index);
 /**
  * @brief Retrieves an info item's description
  * @param index info item index/id

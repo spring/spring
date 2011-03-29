@@ -1699,6 +1699,16 @@ static const InfoItem* GetInfoItem(int infoIndex) {
 	return infoItem;
 }
 
+static void CheckInfoValueType(const InfoItem* infoItem, InfoValueType requiredValueType) {
+
+	if (infoItem->valueType != requiredValueType) {
+		throw std::invalid_argument(
+				std::string("Tried to fetch info-value of type ")
+				+ info_convertTypeToString(infoItem->valueType)
+				+ " as " + info_convertTypeToString(requiredValueType) + ".");
+	}
+}
+
 EXPORT(const char*) GetInfoKey(int infoIndex) {
 
 	const char* key = NULL;
@@ -1710,19 +1720,71 @@ EXPORT(const char*) GetInfoKey(int infoIndex) {
 
 	return key;
 }
-EXPORT(const char*) GetInfoValue(int infoIndex) {
+EXPORT(const char*) GetInfoType(int infoIndex) {
+
+	const char* type = NULL;
+
+	try {
+		type = info_convertTypeToString(GetInfoItem(infoIndex)->valueType);
+	}
+	UNITSYNC_CATCH_BLOCKS;
+
+	return type;
+}
+EXPORT(const char*) GetInfoValue(int infoIndex) { // deprecated
+	return GetInfoValueString(infoIndex);
+}
+EXPORT(const char*) GetInfoValueString(int infoIndex) {
 
 	const char* value = NULL;
 
 	try {
-		// TODO remove this, once we support non-string value types
-		info_convertToStringValue(const_cast<InfoItem*>(GetInfoItem(infoIndex)));
-		value = GetStr(GetInfoItem(infoIndex)->valueTypeString);
+		const InfoItem* infoItem = GetInfoItem(infoIndex);
+		CheckInfoValueType(infoItem, INFO_VALUE_TYPE_STRING);
+		value = GetStr(infoItem->valueTypeString);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
 	return value;
 }
+EXPORT(int) GetInfoValueInteger(int infoIndex) {
+
+	int value = 0;
+
+	try {
+		const InfoItem* infoItem = GetInfoItem(infoIndex);
+		CheckInfoValueType(infoItem, INFO_VALUE_TYPE_INTEGER);
+		value = infoItem->value.typeInteger;
+	}
+	UNITSYNC_CATCH_BLOCKS;
+
+	return value;
+}
+EXPORT(float) GetInfoValueFloat(int infoIndex) {
+
+	float value = 0.0f;
+
+	try {
+		const InfoItem* infoItem = GetInfoItem(infoIndex);
+		CheckInfoValueType(infoItem, INFO_VALUE_TYPE_FLOAT);
+		value = infoItem->value.typeFloat;
+	}
+	UNITSYNC_CATCH_BLOCKS;
+
+	return value;
+}
+EXPORT(bool) GetInfoValueBool(int infoIndex) {
+
+	bool value = false;
+
+	try {
+		const InfoItem* infoItem = GetInfoItem(infoIndex);
+		CheckInfoValueType(infoItem, INFO_VALUE_TYPE_BOOL);
+		value = infoItem->value.typeBool;
+	}
+	UNITSYNC_CATCH_BLOCKS;
+
+	return value;
 }
 EXPORT(const char*) GetInfoDescription(int infoIndex) {
 
