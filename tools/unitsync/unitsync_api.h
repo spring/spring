@@ -520,14 +520,8 @@ EXPORT(const char* ) GetInfoKey(int index);
  */
 EXPORT(const char* ) GetInfoType(int index);
 /**
- * @brief Retrieves an info item's value of type string
- * @param index info item index/id
- * @return NULL on error; the info item's value on success
- * @see GetSkirmishAIInfoCount
- * @see GetInfoType
- *
- * Be sure to call GetSkirmishAIInfoCount() prior to using this function.
- * @deprecated
+ * @see GetInfoValueString
+ * @deprecated use GetInfoValueString instead
  */
 EXPORT(const char* ) GetInfoValue(int index);
 /**

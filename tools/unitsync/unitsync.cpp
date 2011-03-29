@@ -1644,29 +1644,24 @@ static int ToPureLuaAIIndex(int aiIndex) {
 	return (aiIndex - skirmishAIDataDirs.size());
 }
 
-static int loadedLuaAIIndex = -1;
-
 EXPORT(int) GetSkirmishAIInfoCount(int aiIndex) {
 
 	try {
 		CheckSkirmishAIIndex(aiIndex);
 
+		info.clear();
+
 		if (IsLuaAIIndex(aiIndex)) {
-			loadedLuaAIIndex = aiIndex;
-			return luaAIInfos[ToPureLuaAIIndex(loadedLuaAIIndex)].size();
+			const std::vector<InfoItem>& iInfo = luaAIInfos[ToPureLuaAIIndex(aiIndex)];
+			info.insert(info.end(), iInfo.begin(), iInfo.end());
 		} else {
-			loadedLuaAIIndex = -1;
-
-			info.clear();
 			infoSet.clear();
-
 			ParseInfo(skirmishAIDataDirs[aiIndex] + "/AIInfo.lua",
 					SPRING_VFS_RAW, SPRING_VFS_RAW);
-
 			infoSet.clear();
-
-			return (int)info.size();
 		}
+
+		return (int)info.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
@@ -1675,28 +1670,11 @@ EXPORT(int) GetSkirmishAIInfoCount(int aiIndex) {
 	return 0;
 }
 
-static void CheckSkirmishAIInfoIndex(int infoIndex)
-{
-	CheckInit();
-	if (loadedLuaAIIndex >= 0) {
-		CheckBounds(infoIndex, luaAIInfos[ToPureLuaAIIndex(loadedLuaAIIndex)].size());
-	} else {
-		CheckBounds(infoIndex, info.size());
-	}
-}
-
 static const InfoItem* GetInfoItem(int infoIndex) {
 
-	const InfoItem* infoItem = NULL;
-
-	CheckSkirmishAIInfoIndex(infoIndex);
-	if (loadedLuaAIIndex >= 0) {
-		infoItem = &(luaAIInfos[ToPureLuaAIIndex(loadedLuaAIIndex)][infoIndex]);
-	} else {
-		infoItem = &(info[infoIndex]);
-	}
-
-	return infoItem;
+	CheckInit();
+	CheckBounds(infoIndex, info.size());
+	return &(info[infoIndex]);
 }
 
 static void CheckInfoValueType(const InfoItem* infoItem, InfoValueType requiredValueType) {
