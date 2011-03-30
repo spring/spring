@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __ARCHIVE_SCANNER_H
-#define __ARCHIVE_SCANNER_H
+#ifndef _ARCHIVE_SCANNER_H
+#define _ARCHIVE_SCANNER_H
 
 #include <string>
 #include <vector>
@@ -12,13 +12,15 @@ class IFileFilter;
 class LuaTable;
 
 /*
- * This class searches through a given directory and its subdirectories looking for archive files.
- * When it finds one, it figures out what kind of archive it is (i.e. if it is a map or a mod currently).
- * This information is cached, so that only modified archives are actually opened. The information can
- * then be retreived by the mod and map selectors.
+ * This class searches through a given directory and its sub-directories looking
+ * for archive files.
+ * When it finds one, it figures out what kind of archive it is (i.e. if it is a
+ * map or a mod currently). This information is cached, so that only modified
+ * archives are actually opened. The information can then be retreived by the
+ * mod and map selectors.
  *
- * The archive namespace is global, so it is not allowed to have an archive with the same name in more
- * than one folder.
+ * The archive namespace is global, so it is not allowed to have an archive with
+ * the same name in more than one folder.
  */
 
 namespace modtype
@@ -33,17 +35,17 @@ class CArchiveScanner
 public:
 	struct ArchiveData
 	{
-		std::string name;							// ex:  Original Total Annihilation v2.3
-		std::string shortName;						// ex:  OTA
-		std::string version;						// ex:  v2.3
-		std::string mutator;						// ex:  deployment
-		std::string game;							// ex:  Total Annihilation
-		std::string shortGame;						// ex:  TA
-		std::string description;					// ex:  Little units blowing up other little units
-		std::string mapfile;						// in case its a map, store location of smf/sm3 file
-		int modType;
-		std::vector<std::string> dependencies;		// Archives it depends on
-		std::vector<std::string> replaces;			// This archive obsoletes these ones
+		std::string name;                      ///< ex:  Original Total Annihilation v2.3
+		std::string shortName;                 ///< ex:  OTA
+		std::string version;                   ///< ex:  v2.3
+		std::string mutator;                   ///< ex:  deployment
+		std::string game;                      ///< ex:  Total Annihilation
+		std::string shortGame;                 ///< ex:  TA
+		std::string description;               ///< ex:  Little units blowing up other little units
+		std::string mapfile;                   ///< in case its a map, store location of smf/sm3 file
+		int modType;                           ///< 1=primary, 0=hidden, 3=map
+		std::vector<std::string> dependencies; ///< Archives it depends on
+		std::vector<std::string> replaces;     ///< This archive obsoletes these ones
 	};
 
 	CArchiveScanner();
@@ -94,12 +96,12 @@ private:
 	struct ArchiveInfo
 	{
 		std::string path;
-		std::string origName;					// Could be useful to have the non-lowercased name around
+		std::string origName;     ///< Could be useful to have the non-lowercased name around
 		unsigned int modified;
 		ArchiveData archiveData;
 		unsigned int checksum;
 		bool updated;
-		std::string replaced;					// If not empty, use that archive instead
+		std::string replaced;     ///< If not empty, use that archive instead
 	};
 	struct BrokenArchive
 	{
@@ -134,4 +136,4 @@ private:
 
 extern CArchiveScanner* archiveScanner;
 
-#endif
+#endif // _ARCHIVE_SCANNER_H
