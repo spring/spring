@@ -2,7 +2,7 @@
 
 #include "StdAfx.h"
 
-#include "Rendering/GL/myGL.h"
+#include "lib/gml/gml.h" // FIXME: linux for some reason does not compile without this
 
 #include "PathEstimator.h"
 
