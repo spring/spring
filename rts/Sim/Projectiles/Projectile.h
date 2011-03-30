@@ -3,7 +3,7 @@
 #ifndef PROJECTILE_H
 #define PROJECTILE_H
 
-#include "Rendering/GL/myGL.h"
+#include "lib/gml/gml.h" // for GML_ENABLE_SIM
 
 #ifdef _MSC_VER
 #pragma warning(disable:4291)

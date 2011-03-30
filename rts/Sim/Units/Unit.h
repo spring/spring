@@ -3,7 +3,7 @@
 #ifndef UNIT_H
 #define UNIT_H
 
-#include "Rendering/GL/myGL.h"
+#include "lib/gml/gml.h" // for GML_ENABLE_SIM
 
 #include <map>
 #include <vector>
