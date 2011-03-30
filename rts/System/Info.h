@@ -34,6 +34,8 @@ struct InfoItem {
 	std::string valueTypeString;
 };
 
+std::string info_getValueAsString(const InfoItem* infoItem);
+
 void info_convertToStringValue(InfoItem* infoItem);
 
 const char* info_convertTypeToString(InfoValueType infoValueType);
