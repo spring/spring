@@ -12,15 +12,15 @@
 
 #include "ArchiveScanner.h"
 
-#include "Lua/LuaParser.h"
-#include "LogOutput.h"
 #include "ArchiveFactory.h"
 #include "CRC.h"
 #include "FileFilter.h"
-#include "FileSystem/FileSystem.h"
-#include "FileSystem/FileSystemHandler.h"
-#include "Util.h"
-#include "Exceptions.h"
+#include "FileSystem.h"
+#include "FileSystemHandler.h"
+#include "Lua/LuaParser.h"
+#include "System/LogOutput.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 
 CLogSubsystem LOG_ARCHIVESCANNER("ArchiveScanner");
@@ -98,7 +98,7 @@ CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveData(const LuaTable& arc
 	md.shortGame   = archiveTable.GetString("shortGame",   "");
 	md.description = archiveTable.GetString("description", "");
 	md.modType     = archiveTable.GetInt("modType", 0);
-	md.mapfile = archiveTable.GetString("mapfile", "");
+	md.mapfile     = archiveTable.GetString("mapfile", "");
 
 	const LuaTable dependencies = archiveTable.SubTable("depend");
 	for (int dep = 1; dependencies.KeyExists(dep); ++dep) {
@@ -111,7 +111,7 @@ CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveData(const LuaTable& arc
 		md.replaces.push_back(replaces.GetString(rep, ""));
 	}
 
-	// HACK needed until lobbies, lobbyserver and unitsync are sorted out
+	// XXX HACK needed until lobbies, lobbyserver and unitsync are sorted out
 	// so they can uniquely identify different versions of the same mod.
 	// (at time of this writing they use name only)
 
@@ -130,10 +130,11 @@ CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveData(const LuaTable& arc
 void CArchiveScanner::ScanDirs(const std::vector<std::string>& scanDirs, bool doChecksum)
 {
 	// add the archives
-	for (std::vector<std::string>::const_iterator it = scanDirs.begin(); it != scanDirs.end(); ++it) {
-		if (FileSystemHandler::DirExists(*it)) {
-			logOutput.Print("Scanning: %s\n", it->c_str());
-			Scan(*it, doChecksum);
+	std::vector<std::string>::const_iterator dir;
+	for (dir = scanDirs.begin(); dir != scanDirs.end(); ++dir) {
+		if (FileSystemHandler::DirExists(*dir)) {
+			logOutput.Print("Scanning: %s\n", dir->c_str());
+			Scan(*dir, doChecksum);
 		}
 	}
 }
@@ -562,7 +563,7 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 	}
 
 	// First delete all outdated information
-	// TODO: this pattern should be moved into utility function..
+	// TODO: this pattern should be moved into an utility function..
 	for (std::map<std::string, ArchiveInfo>::iterator i = archiveInfo.begin(); i != archiveInfo.end(); ) {
 		if (!i->second.updated) {
 			i = set_erase(archiveInfo, i);
