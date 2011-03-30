@@ -10,25 +10,35 @@
 
 static const char* InfoItem_badKeyChars = " =;\r\n\t";
 
+std::string info_getValueAsString(const InfoItem* infoItem) {
+
+	assert(infoItem != NULL);
+
+	std::string stringValue = "";
+
+	switch (infoItem->valueType) {
+		case INFO_VALUE_TYPE_STRING: {
+			stringValue = infoItem->valueTypeString;
+		} break;
+		case INFO_VALUE_TYPE_INTEGER: {
+			stringValue = IntToString(infoItem->value.typeInteger);
+		} break;
+		case INFO_VALUE_TYPE_FLOAT: {
+			stringValue = FloatToString(infoItem->value.typeFloat);
+		} break;
+		case INFO_VALUE_TYPE_BOOL: {
+			stringValue = IntToString((int) infoItem->value.typeBool);
+		} break;
+	}
+
+	return stringValue;
+}
+
 void info_convertToStringValue(InfoItem* infoItem) {
 
 	assert(infoItem != NULL);
 
-	switch (infoItem->valueType) {
-		case INFO_VALUE_TYPE_STRING: {
-			// do nothing
-		} break;
-		case INFO_VALUE_TYPE_INTEGER: {
-			infoItem->valueTypeString = IntToString(infoItem->value.typeInteger);
-		} break;
-		case INFO_VALUE_TYPE_FLOAT: {
-			infoItem->valueTypeString = FloatToString(infoItem->value.typeFloat);
-		} break;
-		case INFO_VALUE_TYPE_BOOL: {
-			infoItem->valueTypeString = IntToString((int) infoItem->value.typeBool);
-		} break;
-	}
-
+	infoItem->valueTypeString = info_getValueAsString(infoItem);
 	infoItem->valueType = INFO_VALUE_TYPE_STRING;
 }
 
