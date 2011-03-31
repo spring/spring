@@ -1,0 +1,26 @@
+Assimp
+Open Asset Import Library
+Model Loader for many formats
+3-clause BSD license
+http://assimp.sourceforge.net
+
+Changes from official Assimp SDK:
+
+* Copied code/ include/ and information text files from Assimp 2.0.863 SDK (Note: LICENSE is required).
+* Cast float to double in std::min call in ScenePreprocessor.cpp.
+* "Windows.h" changed to "windows.h" in Win32DebugLogStream.h because it breaks Mingw.
+* Change Assimp CMakeLists to build as static library, not shared
+
+These changes to Assimp files may or may not be required depending on Boost version and effects of maths operations on sync:
+
+* <math.h> includes changed to "streflop_cond.h".
+* Prepend streflop:: to math functions to resolve ambiguous calls.
+* ASSIMP_BUILD_BOOST_WORKAROUND build option set in CMakeLists to disable threading (optional depends on boost compatibility).
+* Newlines added to EOF to suppress GCC warnings in BoostWorkaround/boost/*.h
+
+Changes to Spring:
+
+* Added Rendering/UnitModels/AssParser and AssIO classes for loading.
+* New type MODELTYPE_ASS to mean anything loaded by assimp.
+* Overloading of S30 rendering and texturing in Unit/FeatureDrawer classes
+* Overloading of WorldObjectRenderer to emulate S3O rendering pipeline
