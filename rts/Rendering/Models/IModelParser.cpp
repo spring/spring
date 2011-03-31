@@ -8,9 +8,12 @@
 
 #include "IModelParser.h"
 #include "3DModel.h"
+#include "3DModelLog.h"
 #include "3DOParser.h"
 #include "S3OParser.h"
 #include "OBJParser.h"
+#include "AssParser.h"
+#include "assimp.hpp"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Units/Unit.h"
 #include "System/FileSystem/FileSystem.h"
@@ -18,9 +21,7 @@
 #include "System/LogOutput.h"
 #include "System/Exceptions.h"
 
-
 C3DModelLoader* modelParser = NULL;
-
 
 //////////////////////////////////////////////////////////////////////
 // C3DModelLoader
@@ -31,7 +32,26 @@ C3DModelLoader::C3DModelLoader()
 	// file-extension should be lowercase
 	parsers["3do"] = new C3DOParser();
 	parsers["s3o"] = new CS3OParser();
-	parsers["obj"] = new COBJParser();
+	//parsers["obj"] = new COBJParser(); // replaced by Assimp
+
+	// assimp library
+	CAssParser* unitassparser = new CAssParser();
+	std::string extensionlist;
+
+	Assimp::Importer importer;
+	importer.GetExtensionList(extensionlist); // get a ";" separated list of wildcards
+	char* charextensionlist = new char[extensionlist.size() +1];
+	strcpy (charextensionlist, extensionlist.c_str());
+	logOutput.Print("Assimp: Supported model formats: %s", extensionlist.c_str());
+	char* extensionchar = strtok( charextensionlist, ";" );
+	while( extensionchar )
+	{
+		std::string extension = extensionchar;
+		extension = extension.substr( 2 ); // strip wildcard and dot
+		parsers[extension] = unitassparser; // register extension
+		extensionchar = strtok( NULL, ";" );
+	}
+	delete charextensionlist;
 }
 
 
@@ -48,11 +68,15 @@ C3DModelLoader::~C3DModelLoader()
 	cache.clear();
 
 	// delete parsers
+	std::set<IModelParser*> dedupe_parsers; // this is to avoid deleting the same parser twice, if it's assigned to multiple model formats
 	std::map<std::string, IModelParser*>::iterator pi;
 	for (pi = parsers.begin(); pi != parsers.end(); ++pi) {
+		if ( dedupe_parsers.count( pi->second ) != 0 ) continue;
+		dedupe_parsers.insert( pi->second );
 		delete pi->second;
 	}
 	parsers.clear();
+	dedupe_parsers.clear();
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 	createLists.clear();
@@ -67,7 +91,7 @@ inline int ModelExtToModelType(const std::string& ext) {
 	if (ext == "3do") { return MODELTYPE_3DO; }
 	if (ext == "s3o") { return MODELTYPE_S3O; }
 	if (ext == "obj") { return MODELTYPE_OBJ; }
-	return -1;
+	return MODELTYPE_ASS; // FIXME: Return -1 if Assimp cant handle extension
 }
 inline S3DModelPiece* ModelTypeToModelPiece(int type) {
 	if (type == MODELTYPE_3DO) { return (new S3DOPiece()); }

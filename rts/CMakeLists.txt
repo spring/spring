@@ -50,7 +50,7 @@ LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY})
 ### Find include directories and add platform specific libraries
 LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY})
 
-LIST(APPEND engineCommonLibraries lua 7zip oscpack minizip streflop lobby)
+LIST(APPEND engineCommonLibraries lua 7zip oscpack minizip streflop lobby assimp)
 
 IF    (UNIX)
 	# Needed for dynamically loading shared libraries (on some OS)

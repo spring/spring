@@ -24,6 +24,13 @@ INCLUDE(Util)
 
 CheckMinCMakeVersion(CUSTOM_TARGET_SOURCES_SUPPORT 2 6 3)
 
+# Tell windows to pass arguments around in @response files
+# (32k arg limit workaround)
+if    (WIN32)
+	SET(CMAKE_C_USE_RESPONSE_FILE_FOR_OBJECTS 1)
+	SET(CMAKE_CXX_USE_RESPONSE_FILE_FOR_OBJECTS 1)
+endif (WIN32)
+
 ### Install path (relative to CMAKE_INSTALL_PREFIX)
 if    (UNIX AND NOT MINGW)
 	set (BINDIR  "bin"                CACHE STRING "Where to install binaries")
@@ -40,7 +47,9 @@ else  (UNIX AND NOT MINGW)
 	set (LIBDIR  "." CACHE STRING "Where to install libraries")
 	set (DATADIR "." CACHE STRING "Where to install game content")
 
-	set(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs package")
+	if    (NOT MINGWLIBS)
+		set(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs package")
+	endif (NOT MINGWLIBS)
 	if    (NOT EXISTS "${MINGWLIBS}" OR NOT IS_DIRECTORY "${MINGWLIBS}")
 		MESSAGE(FATAL_ERROR "MINGWLIBS is not a valid directory")
 	endif (NOT EXISTS "${MINGWLIBS}" OR NOT IS_DIRECTORY "${MINGWLIBS}")
