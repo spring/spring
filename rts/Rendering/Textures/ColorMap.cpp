@@ -94,8 +94,9 @@ void CColorMap::DeleteColormaps()
 
 void CColorMap::LoadMap(const unsigned char* buf, int num)
 {
-	delete [] map;
+	delete[] map;
 
+	map = NULL; // to prevent a dead-pointer in case of an out-of-memory exception on the next line
 	map = new unsigned char[num];
 	std::memcpy(map, buf, num);
 }

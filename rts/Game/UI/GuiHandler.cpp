@@ -425,6 +425,7 @@ void CGuiHandler::ResizeIconArray(unsigned int size)
 	if (iconsSize < minIconsSize) {
 		iconsSize = minIconsSize;
 		delete[] icons;
+		icons = NULL; // to prevent a dead-pointer in case of an out-of-memory exception on the next line
 		icons = new IconInfo[iconsSize];
 	}
 }

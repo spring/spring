@@ -125,6 +125,7 @@ void CLogger::FlushBuffer()
 		get_executable_name(buf1, sizeof(buf1));
 		int len = strlen(buf1);
 		strncpy(buf2, buf1, sizeof(buf2));
+		buf2[sizeof(buf2)-1] = '\0'; // make sure the string is terminated
 		if (len > 4 && buf2[len-4] == '.')
 			buf2[len-4] = 0;
 		// Note: strncat: 3rd param: maximum number of characters to append
