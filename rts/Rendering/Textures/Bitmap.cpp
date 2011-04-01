@@ -280,6 +280,7 @@ bool CBitmap::LoadGrayscale(const std::string& filename)
 	ysize = ilGetInteger(IL_IMAGE_HEIGHT);
 
 	delete[] mem;
+	mem = NULL; // to prevent a dead-pointer in case of an out-of-memory exception on the next line
 	mem = new unsigned char[xsize * ysize];
 	memcpy(mem, ilGetData(), xsize * ysize);
 
