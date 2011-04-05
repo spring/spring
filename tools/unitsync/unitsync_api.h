@@ -608,6 +608,29 @@ EXPORT(int         ) GetPrimaryModCount();
  *
  * Returns the name of the mod usually found in ModInfo.lua.
  * Be sure you have made a call to GetPrimaryModCount() prior to using this.
+
+ * @brief Retrieves the number of info items available for this mod
+ * @param index The mods index/id
+ * @return Zero on error; the number of info items available on success
+ * @see GetPrimaryModCount
+ * @see GetInfoKey
+ * @see GetInfoType
+ * @see GetInfoDescription
+ *
+ * Be sure you have made a call to GetPrimaryModCount() prior to using this.
+ */
+EXPORT(int         ) GetPrimaryModInfoCount(int index);
+/**
+ * @brief Retrieves the human readable name of this mod
+ * @param index The mods index/id
+ * @return NULL on error; The mods name on success
+ *
+ * Returns the name of the mod usually found in ModInfo.lua.
+ * Be sure you have made a call to GetPrimaryModCount() prior to using this.
+ *
+ * @deprecated use the mod info item with key "name" instead
+ * @see GetPrimaryModInfoCount
+ * @see GetInfoKey
  */
 EXPORT(const char* ) GetPrimaryModName(int index);
 /**
@@ -617,6 +640,10 @@ EXPORT(const char* ) GetPrimaryModName(int index);
  *
  * Returns the shortened name of the mod usually found in ModInfo.lua.
  * Be sure you have made a call GetPrimaryModCount() prior to using this.
+ *
+ * @deprecated use the mod info item with key "shortName" instead
+ * @see GetPrimaryModInfoCount
+ * @see GetInfoKey
  */
 EXPORT(const char* ) GetPrimaryModShortName(int index);
 /**
@@ -627,6 +654,10 @@ EXPORT(const char* ) GetPrimaryModShortName(int index);
  * Returns value of the mutator tag for the specified mod usually found in
  * ModInfo.lua.
  * Be sure you have made a call to GetPrimaryModCount() prior to using this.
+ *
+ * @deprecated use the mod info item with key "version" instead
+ * @see GetPrimaryModInfoCount
+ * @see GetInfoKey
  */
 EXPORT(const char* ) GetPrimaryModVersion(int index);
 /**
@@ -637,6 +668,10 @@ EXPORT(const char* ) GetPrimaryModVersion(int index);
  * Returns value of the mutator tag for the specified mod usually found in
  * ModInfo.lua.
  * Be sure you have made a call to GetPrimaryModCount() prior to using this.
+ *
+ * @deprecated use the mod info item with key "mutator" instead
+ * @see GetPrimaryModInfoCount
+ * @see GetInfoKey
  */
 EXPORT(const char* ) GetPrimaryModMutator(int index);
 /**
@@ -647,6 +682,10 @@ EXPORT(const char* ) GetPrimaryModMutator(int index);
  * Returns the name of the game this mod belongs to usually found in
  * ModInfo.lua.
  * Be sure you have made a call to GetPrimaryModCount() prior to using this.
+ *
+ * @deprecated use the mod info item with key "game" instead
+ * @see GetPrimaryModInfoCount
+ * @see GetInfoKey
  */
 EXPORT(const char* ) GetPrimaryModGame(int index);
 /**
@@ -657,6 +696,10 @@ EXPORT(const char* ) GetPrimaryModGame(int index);
  * Returns the abbrieviated name of the game this mod belongs to usually found
  * in ModInfo.lua.
  * Be sure you have made a call to GetPrimaryModCount() prior to using this.
+ *
+ * @deprecated use the mod info item with key "shortGame" instead
+ * @see GetPrimaryModInfoCount
+ * @see GetInfoKey
  */
 EXPORT(const char* ) GetPrimaryModShortGame(int index);
 /**
@@ -666,6 +709,10 @@ EXPORT(const char* ) GetPrimaryModShortGame(int index);
  *
  * Returns a description for the specified mod usually found in ModInfo.lua.
  * Be sure you have made a call to GetPrimaryModCount() prior to using this.
+ *
+ * @deprecated use the mod info item with key "description" instead
+ * @see GetPrimaryModInfoCount
+ * @see GetInfoKey
  */
 EXPORT(const char* ) GetPrimaryModDescription(int index);
 /**

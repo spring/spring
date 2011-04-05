@@ -105,6 +105,9 @@ static void _CheckPositive(int value, const char* name)
 #define CheckBounds(arg, size) _CheckBounds((arg), (size), #arg)
 #define CheckPositive(arg)     _CheckPositive((arg), #arg);
 
+static std::vector<InfoItem> info;
+static std::set<std::string> infoSet;
+
 //////////////////////////
 //////////////////////////
 
@@ -1207,7 +1210,26 @@ EXPORT(int) GetPrimaryModCount()
 	return 0;
 }
 
-EXPORT(const char*) GetPrimaryModName(int index)
+EXPORT(int) GetPrimaryModInfoCount(int modIndex) {
+
+	try {
+		CheckInit();
+		CheckBounds(modIndex, modData.size());
+
+		info.clear();
+
+		std::vector<InfoItem> modInfoItems = modData[modIndex].GetInfoItems();
+		info.insert(info.end(), modInfoItems.begin(), modInfoItems.end());
+
+		return (int)info.size();
+	}
+	UNITSYNC_CATCH_BLOCKS;
+
+	info.clear();
+
+	return 0;
+}
+EXPORT(const char*) GetPrimaryModName(int index) // deprecated
 {
 	try {
 		CheckInit();
@@ -1220,7 +1242,7 @@ EXPORT(const char*) GetPrimaryModName(int index)
 	return NULL;
 }
 
-EXPORT(const char*) GetPrimaryModShortName(int index)
+EXPORT(const char*) GetPrimaryModShortName(int index) // deprecated
 {
 	try {
 		CheckInit();
@@ -1233,7 +1255,7 @@ EXPORT(const char*) GetPrimaryModShortName(int index)
 	return NULL;
 }
 
-EXPORT(const char*) GetPrimaryModVersion(int index)
+EXPORT(const char*) GetPrimaryModVersion(int index) // deprecated
 {
 	try {
 		CheckInit();
@@ -1246,7 +1268,7 @@ EXPORT(const char*) GetPrimaryModVersion(int index)
 	return NULL;
 }
 
-EXPORT(const char*) GetPrimaryModMutator(int index)
+EXPORT(const char*) GetPrimaryModMutator(int index) // deprecated
 {
 	try {
 		CheckInit();
@@ -1259,7 +1281,7 @@ EXPORT(const char*) GetPrimaryModMutator(int index)
 	return NULL;
 }
 
-EXPORT(const char*) GetPrimaryModGame(int index)
+EXPORT(const char*) GetPrimaryModGame(int index) // deprecated
 {
 	try {
 		CheckInit();
@@ -1272,7 +1294,7 @@ EXPORT(const char*) GetPrimaryModGame(int index)
 	return NULL;
 }
 
-EXPORT(const char*) GetPrimaryModShortGame(int index)
+EXPORT(const char*) GetPrimaryModShortGame(int index) // deprecated
 {
 	try {
 		CheckInit();
@@ -1285,7 +1307,7 @@ EXPORT(const char*) GetPrimaryModShortGame(int index)
 	return NULL;
 }
 
-EXPORT(const char*) GetPrimaryModDescription(int index)
+EXPORT(const char*) GetPrimaryModDescription(int index) // deprecated
 {
 	try {
 		CheckInit();
@@ -1619,9 +1641,6 @@ EXPORT(int) GetSkirmishAICount() {
 	return 0;
 }
 
-
-static std::vector<InfoItem> info;
-static std::set<std::string> infoSet;
 
 static void ParseInfo(const std::string& fileName,
                       const std::string& fileModes,
