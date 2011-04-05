@@ -1730,7 +1730,16 @@ EXPORT(const char*) GetInfoType(int infoIndex) {
 	return type;
 }
 EXPORT(const char*) GetInfoValue(int infoIndex) { // deprecated
-	return GetInfoValueString(infoIndex);
+
+	const char* value = NULL;
+
+	try {
+		const InfoItem* infoItem = GetInfoItem(infoIndex);
+		value = GetStr(info_getValueAsString(infoItem));
+	}
+	UNITSYNC_CATCH_BLOCKS;
+
+	return value;
 }
 EXPORT(const char*) GetInfoValueString(int infoIndex) {
 
