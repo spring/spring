@@ -760,7 +760,7 @@ void CGame::ClientReadNet()
 								}
 							}
 						}
-						logOutput.Print("Player %i resigned and is now spectating!", player);
+						logOutput.Print("Player %i (%s) resigned and is now spectating!", player, playerHandler->Player(player)->name.c_str());
 						selectedUnits.ClearNetSelect(player);
 						CPlayer::UpdateControlledTeams();
 						break;
