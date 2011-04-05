@@ -87,7 +87,6 @@ InfoItem& CArchiveScanner::ArchiveData::EnsureInfoItem(const std::string& key) {
 		infoItem.key = key;
 		infoItem.valueType = INFO_VALUE_TYPE_INTEGER;
 		infoItem.value.typeInteger = 0;
-		infoItem.desc = GetKeyDescription(keyLower);
 
 		info[keyLower] = infoItem;
 	}
@@ -154,6 +153,7 @@ std::vector<InfoItem> CArchiveScanner::ArchiveData::GetInfoItems() const {
 
 	for (std::map<std::string, InfoItem>::const_iterator i = info.begin(); i != info.end(); ++i) {
 		infoItems.push_back(i->second);
+		infoItems.at(infoItems.size() - 1).desc = GetKeyDescription(i->first);
 	}
 
 	return infoItems;
