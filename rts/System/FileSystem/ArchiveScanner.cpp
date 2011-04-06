@@ -12,6 +12,7 @@
 
 #include "ArchiveScanner.h"
 
+#include "LuaInclude.h" // for lua_type defines
 #include "ArchiveFactory.h"
 #include "CRC.h"
 #include "FileFilter.h"
@@ -44,6 +45,175 @@ const int INTERNAL_VER = 9;
 
 CArchiveScanner* archiveScanner = NULL;
 
+CArchiveScanner::ArchiveData::ArchiveData() {
+}
+
+InfoItem* CArchiveScanner::ArchiveData::GetInfoItem(const std::string& key) {
+
+	InfoItem* infoItem = NULL;
+
+	const std::map<std::string, InfoItem>::iterator ii = info.find(StringToLower(key));
+	if (ii != info.end()) {
+		infoItem = &(ii->second);
+	}
+
+	return infoItem;
+}
+
+const InfoItem* CArchiveScanner::ArchiveData::GetInfoItem(const std::string& key) const {
+
+	const InfoItem* infoItem = NULL;
+
+	const std::map<std::string, InfoItem>::const_iterator ii = info.find(StringToLower(key));
+	if (ii != info.end()) {
+		infoItem = &(ii->second);
+	}
+
+	return infoItem;
+}
+
+InfoItem& CArchiveScanner::ArchiveData::EnsureInfoItem(const std::string& key) {
+
+	const std::string& keyLower = StringToLower(key);
+
+	if (IsReservedKey(keyLower)) {
+		throw content_error("You may not use key " + key + " in archive info, as it is reserved.");
+	}
+
+	const std::map<std::string, InfoItem>::iterator ii = info.find(keyLower);
+	if (ii == info.end()) {
+		// add a new info-item
+		InfoItem infoItem;
+		infoItem.key = key;
+		infoItem.valueType = INFO_VALUE_TYPE_INTEGER;
+		infoItem.value.typeInteger = 0;
+		infoItem.desc = GetKeyDescription(keyLower);
+
+		info[keyLower] = infoItem;
+	}
+
+	return info.at(keyLower);
+}
+
+void CArchiveScanner::ArchiveData::SetInfoItemValueString(const std::string& key, const std::string& value) {
+
+	InfoItem& infoItem = EnsureInfoItem(key);
+	infoItem.valueType = INFO_VALUE_TYPE_STRING;
+	infoItem.valueTypeString = value;
+}
+
+void CArchiveScanner::ArchiveData::SetInfoItemValueInteger(const std::string& key, int value) {
+
+	InfoItem& infoItem = EnsureInfoItem(key);
+	infoItem.valueType = INFO_VALUE_TYPE_INTEGER;
+	infoItem.value.typeInteger = value;
+}
+
+void CArchiveScanner::ArchiveData::SetInfoItemValueFloat(const std::string& key, float value) {
+
+	InfoItem& infoItem = EnsureInfoItem(key);
+	infoItem.valueType = INFO_VALUE_TYPE_FLOAT;
+	infoItem.value.typeFloat = value;
+}
+
+void CArchiveScanner::ArchiveData::SetInfoItemValueBool(const std::string& key, bool value) {
+
+	InfoItem& infoItem = EnsureInfoItem(key);
+	infoItem.valueType = INFO_VALUE_TYPE_BOOL;
+	infoItem.value.typeBool = value;
+}
+
+std::string CArchiveScanner::ArchiveData::GetKeyDescription(const std::string& keyLower) {
+
+	if (keyLower == "name") {
+		return "example: Original Total Annihilation v2.3";
+	} else if (keyLower == "shortname") {
+		return "example: OTA";
+	} else if (keyLower == "version") {
+		return "example: v2.3";
+	} else if (keyLower == "mutator") {
+		return "example: deployment";
+	} else if (keyLower == "game") {
+		return "example: Total Annihilation";
+	} else if (keyLower == "shortgame") {
+		return "example: TA";
+	} else if (keyLower == "description") {
+		return "example: Little units blowing up other little units";
+	} else if (keyLower == "mapfile") {
+		return "in case its a map, store location of smf/sm3 file";
+	} else if (keyLower == "modtype") {
+		return "1=primary, 0=hidden, 3=map";
+	} else {
+		return "<custom property>";
+	}
+}
+
+std::vector<InfoItem> CArchiveScanner::ArchiveData::GetInfoItems() const {
+
+	std::vector<InfoItem> infoItems;
+
+	for (std::map<std::string, InfoItem>::const_iterator i = info.begin(); i != info.end(); ++i) {
+		infoItems.push_back(i->second);
+	}
+
+	return infoItems;
+}
+
+bool CArchiveScanner::ArchiveData::IsReservedKey(const std::string& keyLower) {
+	return ((keyLower == "depend") || (keyLower == "replace"));
+}
+
+std::string CArchiveScanner::ArchiveData::GetInfoValueString(const std::string& key) const {
+
+	std::string valueString = "";
+
+	const InfoItem* infoItem = GetInfoItem(key);
+	if (infoItem != NULL) {
+		if (infoItem->valueType == INFO_VALUE_TYPE_STRING) {
+			valueString = infoItem->valueTypeString;
+		} else {
+			valueString = info_getValueAsString(infoItem);
+		}
+	}
+
+	return valueString;
+}
+
+int CArchiveScanner::ArchiveData::GetInfoValueInteger(const std::string& key) const {
+
+	int value = 0;
+
+	const InfoItem* infoItem = GetInfoItem(key);
+	if ((infoItem != NULL) && (infoItem->valueType == INFO_VALUE_TYPE_INTEGER)) {
+		value = infoItem->value.typeInteger;
+	}
+
+	return value;
+}
+
+float CArchiveScanner::ArchiveData::GetInfoValueFloat(const std::string& key) const {
+
+	float value = 0.0f;
+
+	const InfoItem* infoItem = GetInfoItem(key);
+	if ((infoItem != NULL) && (infoItem->valueType == INFO_VALUE_TYPE_FLOAT)) {
+		value = infoItem->value.typeFloat;
+	}
+
+	return value;
+}
+
+bool CArchiveScanner::ArchiveData::GetInfoValueBool(const std::string& key) const {
+
+	bool value = false;
+
+	const InfoItem* infoItem = GetInfoItem(key);
+	if ((infoItem != NULL) && (infoItem->valueType == INFO_VALUE_TYPE_BOOL)) {
+		value = infoItem->value.typeBool;
+	}
+
+	return value;
+}
 
 CArchiveScanner::CArchiveScanner()
 : isDirty(false)
@@ -86,29 +256,52 @@ const std::string& CArchiveScanner::GetFilename() const
 CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveData(const LuaTable& archiveTable)
 {
 	ArchiveData md;
+
 	if (!archiveTable.IsValid()) {
 		return md;
 	}
 
-	md.name        = archiveTable.GetString("name",        "");
-	md.shortName   = archiveTable.GetString("shortName",   "");
-	md.version     = archiveTable.GetString("version",     "");
-	md.mutator     = archiveTable.GetString("mutator",     "");
-	md.game        = archiveTable.GetString("game",        "");
-	md.shortGame   = archiveTable.GetString("shortGame",   "");
-	md.description = archiveTable.GetString("description", "");
-	md.modType     = archiveTable.GetInt("modType", 0);
-	md.mapfile     = archiveTable.GetString("mapfile", "");
+	std::vector<std::string> keys;
+	if (!archiveTable.GetKeys(keys)) {
+		return md;
+	}
+
+	std::vector<std::string>::const_iterator key;
+	for (key = keys.begin(); key != keys.end(); ++key) {
+		const std::string& keyLower = StringToLower(*key);
+		if (!ArchiveData::IsReservedKey(keyLower)) {
+			const int luaType = archiveTable.GetType(*key);
+			switch (luaType) {
+				case LUA_TSTRING: {
+					md.SetInfoItemValueString(*key, archiveTable.GetString(*key, ""));
+				} break;
+				case LUA_TNUMBER: {
+					if (keyLower == "modtype") {
+						md.SetInfoItemValueInteger(*key, archiveTable.GetInt(*key, 0));
+					} else {
+						md.SetInfoItemValueFloat(*key, archiveTable.GetFloat(*key, 0.0f));
+					}
+				} break;
+				case LUA_TBOOLEAN: {
+					md.SetInfoItemValueBool(*key, archiveTable.GetBool(*key, false));
+				} break;
+				default: {
+					// just ignore unsupported types (most likely to be lua-tables)
+					//throw content_error("Lua-type " + IntToString(luaType) + " not supported in archive-info, but it is used on key \"" + *key + "\"");
+				} break;
+			}
+		}
+	}
 
 	const LuaTable dependencies = archiveTable.SubTable("depend");
 	for (int dep = 1; dependencies.KeyExists(dep); ++dep) {
 		const std::string depend = dependencies.GetString(dep, "");
-		md.dependencies.push_back(depend);
+		md.GetDependencies().push_back(depend);
 	}
 
 	const LuaTable replaces = archiveTable.SubTable("replace");
 	for (int rep = 1; replaces.KeyExists(rep); ++rep) {
-		md.replaces.push_back(replaces.GetString(rep, ""));
+		md.GetReplaces().push_back(replaces.GetString(rep, ""));
 	}
 
 	// XXX HACK needed until lobbies, lobbyserver and unitsync are sorted out
@@ -120,8 +313,10 @@ CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveData(const LuaTable& arc
 	// so make sure it doesn't keep adding stuff to the name everytime
 	// Spring/unitsync is loaded.
 
-	if (md.name.find(md.version) == std::string::npos && !md.version.empty()) {
-		md.name += " " + md.version;
+	const std::string& name = md.GetName();
+	const std::string& version = md.GetVersion();
+	if ((name.find(version) == std::string::npos) && !version.empty()) {
+		md.SetInfoItemValueString("name", name + " " + version);
 	}
 
 	return md;
@@ -178,7 +373,7 @@ void CArchiveScanner::Scan(const std::string& curPath, bool doChecksum)
 
 	// Now we'll have to parse the replaces-stuff found in the mods
 	for (std::map<std::string, ArchiveInfo>::iterator aii = archiveInfo.begin(); aii != archiveInfo.end(); ++aii) {
-		for (std::vector<std::string>::iterator i = aii->second.archiveData.replaces.begin(); i != aii->second.archiveData.replaces.end(); ++i) {
+		for (std::vector<std::string>::const_iterator i = aii->second.archiveData.GetReplaces().begin(); i != aii->second.archiveData.GetReplaces().end(); ++i) {
 
 			const std::string lcname = StringToLower(*i);
 			std::map<std::string, ArchiveInfo>::iterator ar = archiveInfo.find(lcname);
@@ -313,19 +508,21 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 					// backwards-compat for modinfo.lua in maps
 					ScanArchiveLua(ar, "modinfo.lua", ai);
 				}
-				if (ai.archiveData.name.empty()) {
-					ai.archiveData.name = filesystem.GetBasename(mapfile);
+				if (ai.archiveData.GetName().empty()) {
+					// FIXME The name will never be empty, if version is set (see HACK in GetArchiveData)
+					ai.archiveData.SetInfoItemValueString("name", filesystem.GetBasename(mapfile));
 				}
-				if (ai.archiveData.mapfile.empty()) {
-					ai.archiveData.mapfile = mapfile;
+				if (ai.archiveData.GetMapFile().empty()) {
+					ai.archiveData.SetInfoItemValueString("mapfile", mapfile);
 				}
-				AddDependency(ai.archiveData.dependencies, "Map Helper v1");
-				ai.archiveData.modType = modtype::map;
+				AddDependency(ai.archiveData.GetDependencies(), "Map Helper v1");
+				ai.archiveData.SetInfoItemValueInteger("modType", modtype::map);
 			} else if (hasModinfo) {
 				// it is a mod
 				ScanArchiveLua(ar, "modinfo.lua", ai);
-				if (ai.archiveData.modType == modtype::primary)
-					AddDependency(ai.archiveData.dependencies, "Spring content v1");
+				if (ai.archiveData.GetModType() == modtype::primary) {
+					AddDependency(ai.archiveData.GetDependencies(), "Spring content v1");
+				}
 			} else {
 				// neither a map nor a mod: error
 				error = "missing modinfo.lua/mapinfo.lua";
@@ -493,10 +690,10 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 		ai.updated = false;
 
 		ai.archiveData = GetArchiveData(archived);
-		if (ai.archiveData.modType == modtype::map) {
-			AddDependency(ai.archiveData.dependencies, "Map Helper v1");
-		} else if (ai.archiveData.modType == modtype::primary) {
-			AddDependency(ai.archiveData.dependencies, "Spring content v1");
+		if (ai.archiveData.GetModType() == modtype::map) {
+			AddDependency(ai.archiveData.GetDependencies(), "Map Helper v1");
+		} else if (ai.archiveData.GetModType() == modtype::primary) {
+			AddDependency(ai.archiveData.GetDependencies(), "Spring content v1");
 		}
 
 		std::string lcname = StringToLower(ai.origName);
@@ -596,22 +793,32 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 
 		// mod info?
 		const ArchiveData& archData = arcInfo.archiveData;
-		if (archData.name != "") {
+		if (!archData.GetName().empty()) {
 			fprintf(out, "\t\t\tarchivedata = {\n");
-			SafeStr(out, "\t\t\t\tname = ",         archData.name);
-			SafeStr(out, "\t\t\t\tshortname = ",    archData.shortName);
-			SafeStr(out, "\t\t\t\tversion = ",      archData.version);
-			SafeStr(out, "\t\t\t\tmutator = ",      archData.mutator);
-			SafeStr(out, "\t\t\t\tgame = ",         archData.game);
-			SafeStr(out, "\t\t\t\tmapfile = ",      archData.mapfile);
-			SafeStr(out, "\t\t\t\tshortgame = ",    archData.shortGame);
-			SafeStr(out, "\t\t\t\tdescription = ",  archData.description);
-			fprintf(out, "\t\t\t\tmodtype = %d,\n", archData.modType);
 
-			std::vector<std::string> deps = archData.dependencies;
-			if (archData.modType == modtype::map) {
+			const std::map<std::string, InfoItem>& info = archData.GetInfo();
+			std::map<std::string, InfoItem>::const_iterator ii;
+			for (ii = info.begin(); ii != info.end(); ++ii) {
+				switch (ii->second.valueType) {
+					case INFO_VALUE_TYPE_STRING: {
+						SafeStr(out, std::string("\t\t\t\t" + ii->first + " = ").c_str(), ii->second.valueTypeString);
+					} break;
+					case INFO_VALUE_TYPE_INTEGER: {
+						fprintf(out, "\t\t\t\t%s = %d,\n", ii->first.c_str(), ii->second.value.typeInteger);
+					} break;
+					case INFO_VALUE_TYPE_FLOAT: {
+						fprintf(out, "\t\t\t\t%s = %f,\n", ii->first.c_str(), ii->second.value.typeFloat);
+					} break;
+					case INFO_VALUE_TYPE_BOOL: {
+						fprintf(out, "\t\t\t\t%s = %d,\n", ii->first.c_str(), (int)ii->second.value.typeBool);
+					} break;
+				}
+			}
+
+			std::vector<std::string> deps = archData.GetDependencies();
+			if (archData.GetModType() == modtype::map) {
 				FilterDep(deps, "Map Helper v1");
-			} else if (archData.modType == modtype::primary) {
+			} else if (archData.GetModType() == modtype::primary) {
 				FilterDep(deps, "Spring content v1");
 			}
 			
@@ -657,7 +864,7 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 
 static bool archNameCompare(const CArchiveScanner::ArchiveData& a, const CArchiveScanner::ArchiveData& b)
 {
-	return (a.name < b.name);
+	return (a.GetName() < b.GetName());
 }
 static void sortByName(std::vector<CArchiveScanner::ArchiveData>& data)
 {
@@ -669,10 +876,10 @@ std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetPrimaryMods() cons
 	std::vector<ArchiveData> ret;
 
 	for (std::map<std::string, ArchiveInfo>::const_iterator i = archiveInfo.begin(); i != archiveInfo.end(); ++i) {
-		if (i->second.archiveData.name != "" && i->second.archiveData.modType == modtype::primary) {
+		if (!(i->second.archiveData.GetName().empty()) && (i->second.archiveData.GetModType() == modtype::primary)) {
 			// Add the archive the mod is in as the first dependency
 			ArchiveData md = i->second.archiveData;
-			md.dependencies.insert(md.dependencies.begin(), i->second.origName);
+			md.GetDependencies().insert(md.GetDependencies().begin(), i->second.origName);
 			ret.push_back(md);
 		}
 	}
@@ -688,10 +895,10 @@ std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllMods() const
 	std::vector<ArchiveData> ret;
 
 	for (std::map<std::string, ArchiveInfo>::const_iterator i = archiveInfo.begin(); i != archiveInfo.end(); ++i) {
-		if (i->second.archiveData.name != "" && (i->second.archiveData.modType == modtype::primary || i->second.archiveData.modType == modtype::hidden)) {
+		if (!(i->second.archiveData.GetName().empty()) && ((i->second.archiveData.GetModType() == modtype::primary) || (i->second.archiveData.GetModType() == modtype::hidden))) {
 			// Add the archive the mod is in as the first dependency
 			ArchiveData md = i->second.archiveData;
-			md.dependencies.insert(md.dependencies.begin(), i->second.origName);
+			md.GetDependencies().insert(md.GetDependencies().begin(), i->second.origName);
 			ret.push_back(md);
 		}
 	}
@@ -731,8 +938,8 @@ std::vector<std::string> CArchiveScanner::GetArchives(const std::string& root, i
 	ret.push_back(aii->second.path + aii->second.origName);
 
 	// add depth-first
-	for (std::vector<std::string>::const_iterator i = aii->second.archiveData.dependencies.begin(); i != aii->second.archiveData.dependencies.end(); ++i) {
-		const std::vector<std::string> &dep = GetArchives(*i, depth + 1);
+	for (std::vector<std::string>::const_iterator i = aii->second.archiveData.GetDependencies().begin(); i != aii->second.archiveData.GetDependencies().end(); ++i) {
+		const std::vector<std::string>& dep = GetArchives(*i, depth + 1);
 
 		for (std::vector<std::string>::const_iterator j = dep.begin(); j != dep.end(); ++j) {
 			if (std::find(ret.begin(), ret.end(), *j) == ret.end()) {
@@ -754,8 +961,8 @@ std::vector<std::string> CArchiveScanner::GetMaps() const
 	std::vector<std::string> ret;
 
 	for (std::map<std::string, ArchiveInfo>::const_iterator aii = archiveInfo.begin(); aii != archiveInfo.end(); ++aii) {
-		if (aii->second.archiveData.name != "" && aii->second.archiveData.modType == modtype::map) {
-			ret.push_back(aii->second.archiveData.name);
+		if (!(aii->second.archiveData.GetName().empty()) && aii->second.archiveData.GetModType() == modtype::map) {
+			ret.push_back(aii->second.archiveData.GetName());
 		}
 	}
 
@@ -766,8 +973,8 @@ std::string CArchiveScanner::MapNameToMapFile(const std::string& s) const
 {
 	// Convert map name to map archive
 	for (std::map<std::string, ArchiveInfo>::const_iterator aii = archiveInfo.begin(); aii != archiveInfo.end(); ++aii) {
-		if (s == aii->second.archiveData.name) {
-			return aii->second.archiveData.mapfile;
+		if (s == aii->second.archiveData.GetName()) {
+			return aii->second.archiveData.GetMapFile();
 		}
 	}
 	logOutput.Print(LOG_ARCHIVESCANNER, "mapfile of %s not found\n", s.c_str());
@@ -834,7 +1041,7 @@ std::string CArchiveScanner::GetArchivePath(const std::string& name) const
 std::string CArchiveScanner::ArchiveFromName(const std::string& name) const
 {
 	for (std::map<std::string, ArchiveInfo>::const_iterator it = archiveInfo.begin(); it != archiveInfo.end(); ++it) {
-		if (it->second.archiveData.name == name) {
+		if (it->second.archiveData.GetName() == name) {
 			return it->second.origName;
 		}
 	}
@@ -847,7 +1054,7 @@ std::string CArchiveScanner::NameFromArchive(const std::string& archiveName) con
 	const std::string lcArchiveName = StringToLower(archiveName);
 	std::map<std::string, ArchiveInfo>::const_iterator aii = archiveInfo.find(lcArchiveName);
 	if (aii != archiveInfo.end()) {
-		return aii->second.archiveData.name;
+		return aii->second.archiveData.GetName();
 	}
 
 	return archiveName;
@@ -857,7 +1064,7 @@ CArchiveScanner::ArchiveData CArchiveScanner::GetArchiveData(const std::string& 
 {
 	for (std::map<std::string, ArchiveInfo>::const_iterator it = archiveInfo.begin(); it != archiveInfo.end(); ++it) {
 		const ArchiveData& md = it->second.archiveData;
-		if (md.name == name) {
+		if (md.GetName() == name) {
 			return md;
 		}
 	}

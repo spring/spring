@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "System/Info.h"
 
 class CArchiveBase;
 class IFileFilter;
@@ -33,19 +34,71 @@ namespace modtype
 class CArchiveScanner
 {
 public:
-	struct ArchiveData
+	class ArchiveData
 	{
-		std::string name;                      ///< ex:  Original Total Annihilation v2.3
-		std::string shortName;                 ///< ex:  OTA
-		std::string version;                   ///< ex:  v2.3
-		std::string mutator;                   ///< ex:  deployment
-		std::string game;                      ///< ex:  Total Annihilation
-		std::string shortGame;                 ///< ex:  TA
-		std::string description;               ///< ex:  Little units blowing up other little units
-		std::string mapfile;                   ///< in case its a map, store location of smf/sm3 file
-		int modType;                           ///< 1=primary, 0=hidden, 3=map
-		std::vector<std::string> dependencies; ///< Archives it depends on
-		std::vector<std::string> replaces;     ///< This archive obsoletes these ones
+	public:
+		ArchiveData();
+
+		void SetInfoItemValueString(const std::string& key, const std::string& value);
+		void SetInfoItemValueInteger(const std::string& key, int value);
+		void SetInfoItemValueFloat(const std::string& key, float value);
+		void SetInfoItemValueBool(const std::string& key, bool value);
+
+		/*
+		 * These methods are only here for convenience and compile time checks.
+		 * These are all the properties used engine internally.
+		 * With these methods, we prevent spreading key strings through the
+		 * code, which could provoke runtime bugs when edited wrong.
+		 * There may well be other info-times supplied by the archive.
+		 */
+		/// ex:  Original Total Annihilation v2.3
+		std::string GetName() const { return GetInfoValueString("name"); }
+		/// ex:  OTA
+		std::string GetShortName() const { return GetInfoValueString("shortName"); }
+		/// ex:  v2.3
+		std::string GetVersion() const { return GetInfoValueString("version"); }
+		/// ex:  deployment
+		std::string GetMutator() const { return GetInfoValueString("mutator"); }
+		/// ex:  Total Annihilation
+		std::string GetGame() const { return GetInfoValueString("game"); }
+		/// ex:  TA
+		std::string GetShortGame() const { return GetInfoValueString("shortGame"); }
+		/// ex:  Little units blowing up other little units
+		std::string GetDescription() const { return GetInfoValueString("description"); }
+		/// in case its a map, store location of smf/sm3 file
+		std::string GetMapFile() const { return GetInfoValueString("mapFile"); }
+		/// 1=primary, 0=hidden, 3=map
+		int GetModType() const { return GetInfoValueInteger("modType"); }
+
+		const std::map<std::string, InfoItem>& GetInfo() const { return info; }
+		std::vector<InfoItem> GetInfoItems() const;
+
+		const std::vector<std::string>& GetDependencies() const { return dependencies; }
+		std::vector<std::string>& GetDependencies() { return dependencies; }
+
+		const std::vector<std::string>& GetReplaces() const { return replaces; }
+		std::vector<std::string>& GetReplaces() { return replaces; }
+
+		static bool IsReservedKey(const std::string& keyLower);
+
+	private:
+		InfoValueType GetInfoValueType(const std::string& key) const;
+		std::string GetInfoValueString(const std::string& key) const;
+		int GetInfoValueInteger(const std::string& key) const;
+		float GetInfoValueFloat(const std::string& key) const;
+		bool GetInfoValueBool(const std::string& key) const;
+
+		InfoItem* GetInfoItem(const std::string& key);
+		const InfoItem* GetInfoItem(const std::string& key) const;
+
+		static std::string GetKeyDescription(const std::string& keyLower);
+		InfoItem& EnsureInfoItem(const std::string& key);
+
+		std::map<std::string, InfoItem> info;
+		/// Archives we depend on
+		std::vector<std::string> dependencies;
+		/// This archive obsoletes these archives
+		std::vector<std::string> replaces;
 	};
 
 	CArchiveScanner();

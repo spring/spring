@@ -1213,7 +1213,7 @@ EXPORT(const char*) GetPrimaryModName(int index)
 		CheckInit();
 		CheckBounds(index, modData.size());
 
-		string x = modData[index].name;
+		const std::string& x = modData[index].GetName();
 		return GetStr(x);
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -1226,7 +1226,7 @@ EXPORT(const char*) GetPrimaryModShortName(int index)
 		CheckInit();
 		CheckBounds(index, modData.size());
 
-		string x = modData[index].shortName;
+		const std::string& x = modData[index].GetShortName();
 		return GetStr(x);
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -1239,7 +1239,7 @@ EXPORT(const char*) GetPrimaryModVersion(int index)
 		CheckInit();
 		CheckBounds(index, modData.size());
 
-		string x = modData[index].version;
+		const std::string& x = modData[index].GetVersion();
 		return GetStr(x);
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -1252,7 +1252,7 @@ EXPORT(const char*) GetPrimaryModMutator(int index)
 		CheckInit();
 		CheckBounds(index, modData.size());
 
-		string x = modData[index].mutator;
+		const std::string& x = modData[index].GetMutator();
 		return GetStr(x);
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -1265,7 +1265,7 @@ EXPORT(const char*) GetPrimaryModGame(int index)
 		CheckInit();
 		CheckBounds(index, modData.size());
 
-		string x = modData[index].game;
+		const std::string& x = modData[index].GetGame();
 		return GetStr(x);
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -1278,7 +1278,7 @@ EXPORT(const char*) GetPrimaryModShortGame(int index)
 		CheckInit();
 		CheckBounds(index, modData.size());
 
-		string x = modData[index].shortGame;
+		const std::string& x = modData[index].GetShortGame();
 		return GetStr(x);
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -1291,7 +1291,7 @@ EXPORT(const char*) GetPrimaryModDescription(int index)
 		CheckInit();
 		CheckBounds(index, modData.size());
 
-		string x = modData[index].description;
+		const std::string& x = modData[index].GetDescription();
 		return GetStr(x);
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -1304,7 +1304,8 @@ EXPORT(const char*) GetPrimaryModArchive(int index)
 		CheckInit();
 		CheckBounds(index, modData.size());
 
-		return GetStr(modData[index].dependencies[0]);
+		const std::string& x = modData[index].GetDependencies()[0];
+		return GetStr(x);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return NULL;
@@ -1319,7 +1320,7 @@ EXPORT(int) GetPrimaryModArchiveCount(int index)
 		CheckInit();
 		CheckBounds(index, modData.size());
 
-		primaryArchives = archiveScanner->GetArchives(modData[index].dependencies[0]);
+		primaryArchives = archiveScanner->GetArchives(modData[index].GetDependencies()[0]);
 		return primaryArchives.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -1344,9 +1345,9 @@ EXPORT(int) GetPrimaryModIndex(const char* name)
 	try {
 		CheckInit();
 
-		string n(name);
+		const std::string searchedName(name);
 		for (unsigned i = 0; i < modData.size(); ++i) {
-			if (modData[i].name == n)
+			if (modData[i].GetName() == searchedName)
 				return i;
 		}
 	}
