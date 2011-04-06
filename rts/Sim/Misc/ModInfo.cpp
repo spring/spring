@@ -29,10 +29,10 @@ void CModInfo::Init(const char* modArchive)
 
 	const CArchiveScanner::ArchiveData md = archiveScanner->GetArchiveData(humanName);
 
-	shortName   = md.shortName;
-	version     = md.version;
-	mutator     = md.mutator;
-	description = md.description;
+	shortName   = md.GetShortName();
+	version     = md.GetVersion();
+	mutator     = md.GetMutator();
+	description = md.GetDescription();
 
 	// initialize the parser
 	LuaParser parser("gamedata/modrules.lua",
