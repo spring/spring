@@ -330,7 +330,10 @@ endif (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS
 # Build
 if    (BUILD_${myName}_AIINTERFACE)
 	GetVersionPlusDepFile(myVersion myVersionDepFile)
-	set(myTarget      "${myName}-AIInterface")
+	set(myTarget       "${myName}-AIInterface")
+	set(myNativeTarget "${myTarget}-native")
+	set(myJavaTarget   "${myTarget}-java")
+	set(myMavenInstallTarget "${myTarget}-mavenInstall")
 	set(myInstLibsDir ${AI_INTERFACES_LIBS}/${myName}/${myVersion})
 	set(myInstDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
 	MakeAbsolute(myNativeSourceDir "${myDir}" "${myNativeSourceDirRel}")
@@ -365,6 +368,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	SetGlobal(BUILD_ROOT_${myName}_AIINTERFACE       "${myBuildDir}")
 	SetGlobal(${myName}_AIINTERFACE_JAR_BIN          "${myBuildDir}/${myBinJarFile}")
 	SetGlobal(${myName}_AIINTERFACE_JAR_SRC          "${myBuildDir}/${mySrcJarFile}")
+	SetGlobal(${myName}_AIINTERFACE_POM              "${myBuildDir}/pom.xml")
 	SetGlobal(CLASSPATH_${myName}_AIINTERFACE        "${myJavaLibs}${PATH_DELIM_H}${myBuildDir}/${myBinJarFile}")
 	SetGlobal(JAVA_SRC_DIR_${myName}_AIINTERFACE     "${myJavaSourceDir}")
 	SetGlobal(JAVA_GEN_SRC_DIR_${myName}_AIINTERFACE "${myJavaGeneratedSourceDir}")
@@ -559,11 +563,11 @@ if    (BUILD_${myName}_AIINTERFACE)
 		include_directories(BEFORE ${MINGWLIBS}/include/java)
 	endif (MINGW)
 	include_directories(BEFORE "${rts}/lib/streflop" "${myNativeSourceDir}" "${myNativeGeneratedSourceDir}")
-	add_library(${myTarget} MODULE ${myNativeSources} ${myNativeGeneratedSources} ${ai_common_SRC} ${CUtils_SRC} ${myVersionDepFile})
-	target_link_libraries(${myTarget} streflop)
-	set_target_properties(${myTarget} PROPERTIES COMPILE_FLAGS "-DUSING_STREFLOP")
-	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME   "AIInterface")
-	FixLibName(${myTarget})
+	add_library(${myNativeTarget} MODULE ${myNativeSources} ${myNativeGeneratedSources} ${ai_common_SRC} ${CUtils_SRC} ${myVersionDepFile})
+	target_link_libraries(${myNativeTarget} streflop)
+	set_target_properties(${myNativeTarget} PROPERTIES COMPILE_FLAGS "-DUSING_STREFLOP")
+	set_target_properties(${myNativeTarget} PROPERTIES OUTPUT_NAME   "AIInterface")
+	FixLibName(${myNativeTarget})
 
 
 	# Build the java part
@@ -620,21 +624,53 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"  ${myTarget}: Creating sources archive ${mySrcJarFile}" VERBATIM
 		)
 
+	add_custom_target(${myJavaTarget}
+		DEPENDS
+			"${myBuildDir}/${myBinJarFile}"
+			"${myBuildDir}/${mySrcJarFile}")
+
+	add_custom_target(${myTarget} ALL)
+	add_dependencies(${myTarget} ${myNativeTarget})
+
+	# this sets the version in pom.xml
+	set(myMavenProperties "-DmyVersion=${myVersion}")
+	add_custom_command(
+		OUTPUT
+			"${myBuildDir}/pom.xml"
+		COMMAND "${CMAKE_COMMAND}"
+			"-Dfile.in=${myDir}/pom.xml"
+			"-Dfile.out=${myBuildDir}/pom.xml"
+			${myMavenProperties}
+			"-P" "${CMAKE_MODULES_SPRING}/ConfigureFile.cmake"
+		DEPENDS
+			"${myDir}/pom.xml"
+		WORKING_DIRECTORY
+			"${myDir}"
+		COMMENT
+			"  ${myTarget}: Configure pom.xml" VERBATIM
+		)
+	set_source_files_properties("${myBuildDir}/pom.xml" PROPERTIES GENERATED TRUE)
+
 	IsMavenInstalled(isMavenInstalled)
 	if    (isMavenInstalled)
-		add_custom_command(TARGET ${myTarget} POST_BUILD
-			COMMAND "${CMAKE_COMMAND}"
-				"-Dfile.in=${myDir}/pom.xml"
-				"-Dfile.out=${myBuildDir}/pom.xml"
-				"-DmyVersion=${myVersion}"
-				"-P" "${CMAKE_MODULES_SPRING}/ConfigureFile.cmake"
+		# This is required because the local Maven install does not create a
+		# file (whichs path we could know), and thus we would not be able to
+		# create a nice dependency chain without this.
+		set(myMavenInstallStubFile "${myBuildDir}/mavenInstallStub.txt")
+		set_source_files_properties("${myMavenInstallStubFile}" PROPERTIES GENERATED TRUE)
+		SetGlobal(${myName}_AIINTERFACE_MVN_INST_STUB_FILE  "${myMavenInstallStubFile}")
+		add_custom_command(
+			OUTPUT
+				"${myMavenInstallStubFile}"
 			COMMAND "mvn"
 				"install:install-file"
 				"-DpomFile=${myBuildDir}/pom.xml"
 				"-Dfile=${myBuildDir}/${myBinJarFile}"
 				"-Dsources=${myBuildDir}/${mySrcJarFile}"
+			COMMAND "${CMAKE_COMMAND}"
+				"-E" "touch" "${myMavenInstallStubFile}"
 			DEPENDS
-				"${myDir}/pom.xml"
+				"${myBuildDir}/pom.xml"
 				"${myBuildDir}/${myBinJarFile}"
 				"${myBuildDir}/${mySrcJarFile}"
 			WORKING_DIRECTORY
@@ -642,16 +678,18 @@ if    (BUILD_${myName}_AIINTERFACE)
 			COMMENT
 				"  ${myTarget}: Installing to local maven repository" VERBATIM
 			)
+		add_custom_target(${myMavenInstallTarget}
+			DEPENDS
+				"${myMavenInstallStubFile}"
+			)
+		add_dependencies(${myMavenInstallTarget} ${myJavaTarget})
+		add_dependencies(${myTarget} ${myMavenInstallTarget})
+	else  (isMavenInstalled)
+		add_dependencies(${myTarget} ${myJavaTarget})
 	endif (isMavenInstalled)
 
-	add_custom_target(${myTarget}-java ALL
-		DEPENDS
-			"${myBuildDir}/${myBinJarFile}"
-			"${myBuildDir}/${mySrcJarFile}")
-	add_dependencies(${myTarget} ${myTarget}-java)
-
 	# Install the native library
-	install(TARGETS   ${myTarget} DESTINATION ${myInstLibsDir})
+	install(TARGETS   ${myNativeTarget} DESTINATION ${myInstLibsDir})
 	# Install the data files
 	install(DIRECTORY "${myDir}/data/" DESTINATION ${myInstLibsDir} FILES_MATCHING PATTERN REGEX "InterfaceInfo\\.lua$")
 	install(DIRECTORY "${myDir}/data/" DESTINATION ${myInstDataDir} FILES_MATCHING PATTERN REGEX "InterfaceInfo\\.lua$" EXCLUDE PATTERN "*")
