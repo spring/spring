@@ -1131,21 +1131,26 @@ bool CGame::Draw() {
 
 	if (lastSimFrame != gs->frameNum) {
 		CInputReceiver::CollectGarbage();
-		if (!skipping) {
-			// TODO call only when camera changed
-			sound->UpdateListener(camera->pos, camera->forward, camera->up, globalRendering->lastFrameTime);
-		}
 	}
 
-	//! update extra texture even if paused (you can still give orders)
-	if (!skipping && (lastSimFrame != gs->frameNum || gs->paused)) {
-		static unsigned next_upd = lastUpdate + 1000/30;
+	//! always update ExtraTexture & SoundListener with <=30Hz (even when paused)
+	if (!skipping) {
+		bool newSimFrame = (lastSimFrame != gs->frameNum);
+		if (newSimFrame || gs->paused) {
+			static unsigned lastUpdate = SDL_GetTicks();
+			unsigned deltaMSec = currentTime - lastUpdate;
 
-		if (!gs->paused || next_upd <= lastUpdate) {
-			next_upd = lastUpdate + 1000/30;
+			if (!gs->paused || deltaMSec >= 1000/30.f) {
+				lastUpdate = currentTime;
 
-			SCOPED_TIMER("ExtraTexture");
-			gd->UpdateExtraTexture();
+				{
+					SCOPED_TIMER("ExtraTexture");
+					gd->UpdateExtraTexture();
+				}
+
+				// TODO call only when camera changed
+				sound->UpdateListener(camera->pos, camera->forward, camera->up, deltaMSec / 1000.f);
+			}
 		}
 	}
 
