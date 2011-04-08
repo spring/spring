@@ -4576,7 +4576,12 @@ int LuaOpenGL::GetMatrixData(lua_State* L)
 int LuaOpenGL::PushAttrib(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-	glPushAttrib((GLbitfield)luaL_optnumber(L, 1, GL_ALL_ATTRIB_BITS));
+	int mask = luaL_optnumber(L, 1, GL_ALL_ATTRIB_BITS);
+	if (mask < 0) {
+		mask = -mask;
+		mask |= GL_ALL_ATTRIB_BITS;
+	}
+	glPushAttrib((GLbitfield)mask);
 	return 0;
 }
 
