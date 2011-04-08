@@ -2260,15 +2260,16 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 						c.params.push_back((float)buildFacing);
 				}
 			} else {	//created area
-				float dist=ground->LineGroundCol(mouse->buttons[button].camPos,mouse->buttons[button].camPos+mouse->buttons[button].dir*globalRendering->viewRange*1.4f);
+				float dist = ground->LineGroundCol(mouse->buttons[button].camPos, mouse->buttons[button].camPos + mouse->buttons[button].dir*globalRendering->viewRange*1.4f);
+
 				if(dist<0){
 					return defaultRet;
 				}
-				float3 pos=mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
+				float3 pos = mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
 				c.params.push_back(pos.x);
 				c.params.push_back(pos.y);
 				c.params.push_back(pos.z);
-				dist=ground->LineGroundCol(camerapos,camerapos+mousedir*globalRendering->viewRange*1.4f);
+				dist = ground->LineGroundCol(camerapos, camerapos + mousedir*globalRendering->viewRange*1.4f);
 				if(dist<0){
 					return defaultRet;
 				}
@@ -2293,7 +2294,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 					return defaultRet;
 				}
 
-				if (unit != NULL) {
+				if (unit) {
 					// clicked on unit
 					c.params.push_back(unit->id);
 				} else {
@@ -2408,11 +2409,11 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 		int xsize=startInfo.GetXSize()*SQUARE_SIZE;
 		int zsize=startInfo.GetZSize()*SQUARE_SIZE;
 
-		start =end=helper->Pos2BuildPos(other);
-		start.x-=oxsize/2;
-		start.z-=ozsize/2;
-		end.x+=oxsize/2;
-		end.z+=ozsize/2;
+		start = end = helper->Pos2BuildPos(other);
+		start.x -= oxsize/2;
+		start.z -= ozsize/2;
+		end.x += oxsize/2;
+		end.z += ozsize/2;
 
 		int nvert=1+oxsize/xsize;
 		int nhori=1+ozsize/xsize;
@@ -3715,7 +3716,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 			if (onMinimap && (unit->unitDef->speed > 0.0f)) {
 				continue;
 			}
-			if(unit->maxRange>0 && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)){
+			if(unit->maxRange>0 && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
 				glColor4fv(cmdColors.rangeAttack);
 				glBallisticCircle(unit->pos, unit->maxRange,
 				                  unit->weapons.front(), 40);
