@@ -81,6 +81,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.avoidFeature  = wdTable.GetBool("avoidFeature",  true);
 	wd.avoidNeutral  = wdTable.GetBool("avoidNeutral",  false);
 
+	//FIXME may be smarter to merge the collideXYZ tags with avoidXYZ and removing the collisionFlags tag (and move the code into CWeapon)?
 	wd.collisionFlags = 0;
 	const bool collideFriendly = wdTable.GetBool("collideFriendly", true);
 	const bool collideFeature  = wdTable.GetBool("collideFeature",  true);
