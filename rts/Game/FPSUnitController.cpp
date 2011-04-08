@@ -5,7 +5,8 @@
 #include "FPSUnitController.h"
 #include "UI/MouseHandler.h"
 #include "Game/Camera.h"
-#include "Game/GameHelper.h"
+#include "Game/TraceRay.h"
+#include "Sim/Features/Feature.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/Scripts/CobInstance.h"
@@ -44,12 +45,22 @@ void FPSUnitController::Update() {
 		controllee->rightdir * relPos.x +
 		UpVector             * 7.0f;
 
-	CUnit* hitUnit = NULL;
-	float hitDist = helper->TraceRayTeam(pos, viewDir, controllee->maxRange, hitUnit, 1, controllee, teamHandler->AllyTeam(controllee->team));
-
 	oldDCpos = pos;
 
-	if (hitUnit != NULL) {
+	float hitDist;
+	CUnit* hitUnit;
+	CFeature* hitFeature;
+	{
+		int origAllyTeam = gu->myAllyTeam;
+		gu->myAllyTeam = teamHandler->AllyTeam(controllee->team);
+
+		//hitDist = helper->TraceRayTeam(pos, dc->viewDir, controllee->maxRange, hit, 1, controllee, teamHandler->AllyTeam(team));
+		hitDist = TraceRay::GuiTraceRay(pos, viewDir, controllee->maxRange, true, controllee, hitUnit, hitFeature);
+
+		gu->myAllyTeam = origAllyTeam;
+	}
+
+	if (hitUnit) {
 		targetUnit = hitUnit;
 		targetDist = hitDist;
 		targetPos  = hitUnit->pos;

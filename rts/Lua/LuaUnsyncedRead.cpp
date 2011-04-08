@@ -21,13 +21,14 @@
 #include "LuaHandle.h"
 #include "LuaHashString.h"
 #include "Game/Camera.h"
-#include "Game/Camera/CameraController.h"
+#include "Game/CameraHandler.h"
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
 #include "Game/PlayerHandler.h"
 #include "Game/PlayerRoster.h"
-#include "Game/CameraHandler.h"
+#include "Game/TraceRay.h"
+#include "Game/Camera/CameraController.h"
 #include "Game/UI/GuiHandler.h"
 #include "Game/UI/InfoConsole.h"
 #include "Game/UI/KeyCodes.h"
@@ -1282,8 +1283,8 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 		return 0;
 	}
 
-	const CUnit* unit = NULL;
-	const CFeature* feature = NULL;
+	CUnit* unit = NULL;
+	CFeature* feature = NULL;
 	const float range = globalRendering->viewRange * 1.4f;
 	const float3& pos = camera->pos;
 	const float3 dir = camera->CalcPixelDir(wx, wy);
@@ -1291,12 +1292,11 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 
 // FIXME	const int origAllyTeam = gu->myAllyTeam;
 //	gu->myAllyTeam = readAllyTeam;
-	const float udist = helper->GuiTraceRay(pos, dir, range, unit, true);
-	const float fdist = helper->GuiTraceRayFeature(pos, dir, range, feature);
+	const float dist = TraceRay::GuiTraceRay(pos, dir, range, true, NULL, unit, feature);
 //	gu->myAllyTeam = origAllyTeam;
 
-	const float badRange = (range - 300.0f);
-	if ((udist > badRange) && (fdist > badRange) && (unit == NULL)) {
+	const float badRange = range - 300.0f;
+	if ((dist > badRange) && !unit && !feature) {
 		if (includeSky) {
 			lua_pushliteral(L, "sky");
 		} else {
@@ -1304,12 +1304,6 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 		}
 	} else {
 		if (!onlyCoords) {
-			if (udist > fdist) {
-				unit = NULL;
-			} else {
-				feature = NULL;
-			}
-	
 			if (unit) {
 				lua_pushliteral(L, "unit");
 				lua_pushnumber(L, unit->id);
@@ -1326,7 +1320,7 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 		lua_pushliteral(L, "ground");
 	}
 
-	const float3 groundPos = pos + (dir * udist);
+	const float3 groundPos = pos + (dir * dist);
 	lua_createtable(L, 3, 0);
 	lua_pushnumber(L, groundPos.x); lua_rawseti(L, -2, 1);
 	lua_pushnumber(L, groundPos.y); lua_rawseti(L, -2, 2);

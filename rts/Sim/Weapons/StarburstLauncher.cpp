@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
-#include "Game/GameHelper.h"
+#include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/StarburstProjectile.h"
@@ -78,12 +78,12 @@ bool CStarburstLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* un
 			return false;
 	}
 
-	if (avoidFriendly && helper->TestCone(weaponMuzzlePos,
-		(weaponDef->fixedLauncher? weaponDir: UpVector), 100, 0, owner, CGameHelper::TEST_ALLIED)) {
+	if (avoidFriendly && TraceRay::TestAllyCone(weaponMuzzlePos,
+		(weaponDef->fixedLauncher? weaponDir: UpVector), 100, 0, owner->allyteam, owner)) {
 		return false;
 	}
-	if (avoidNeutral && helper->TestCone(weaponMuzzlePos,
-		(weaponDef->fixedLauncher? weaponDir: UpVector), 100, 0, owner, CGameHelper::TEST_NEUTRAL)) {
+	if (avoidNeutral && TraceRay::TestNeutralCone(weaponMuzzlePos,
+		(weaponDef->fixedLauncher? weaponDir: UpVector), 100, 0, owner)) {
 		return false;
 	}
 

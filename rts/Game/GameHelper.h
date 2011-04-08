@@ -28,24 +28,7 @@ public:
 	CGameHelper();
 	~CGameHelper();
 
-	bool TestCone(
-		const float3& from,
-		const float3& dir,
-		float length,
-		float spread,
-		const CUnit* owner,
-		unsigned int flags);
-	bool TestTrajectoryCone(
-		const float3& from,
-		const float3& flatdir,
-		float length,
-		float linear,
-		float quadratic,
-		float spread,
-		float baseSize,
-		const CUnit* owner,
-		unsigned int flags);
-
+public:
 	void GetEnemyUnits(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
 	void GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
 	CUnit* GetClosestUnit(const float3& pos, float searchRadius);
@@ -55,29 +38,25 @@ public:
 	CUnit* GetClosestFriendlyUnit(const float3& pos, float searchRadius, int searchAllyteam);
 	CUnit* GetClosestEnemyAircraft(const float3& pos, float searchRadius, int searchAllyteam);
 
-	void GenerateWeaponTargets(const CWeapon* attacker, const CUnit* lastTarget, std::multimap<float, CUnit*>& targets);
-	float TraceRay(const float3& start, const float3& dir, float length, float power, const CUnit* owner, const CUnit*& hit, int collisionFlags = 0, const CFeature** hitFeature = NULL);
-	float GuiTraceRay(const float3& start, const float3& dir, float length, const CUnit*& hit, bool useRadar, const CUnit* exclude = NULL);
-	float GuiTraceRayFeature(const float3& start, const float3& dir, float length, const CFeature*& feature);
+public:
+	//get the position of a unit + eventuall error due to lack of los
+	float3 GetUnitErrorPos(const CUnit* unit, int allyteam);
 
-	void DoExplosionDamage(CUnit* unit, const float3& expPos, float expRad, float expSpeed, bool ignoreOwner, CUnit* owner, float edgeEffectiveness, const DamageArray& damages, int weaponId);
-	void DoExplosionDamage(CFeature* feature, const float3& expPos, float expRad, const DamageArray& damages);
-	void Explosion(float3 pos, const DamageArray& damages, float radius, float edgeEffectiveness, float explosionSpeed, CUnit* owner, bool damageGround, float gfxMod, bool ignoreOwner, bool impactOnly, IExplosionGenerator* explosionGraphics, CUnit* hit, const float3& impactDir, int weaponId, CFeature* hitfeature = NULL);
-
-	float TraceRayTeam(const float3& start, const float3& dir, float length, CUnit*& hit, bool useRadar, CUnit* exclude, int allyteam);
 	void BuggerOff(float3 pos, float radius, bool spherical, bool forced, int teamId, CUnit* exclude);
 	float3 Pos2BuildPos(const BuildInfo& buildInfo);
 	float3 Pos2BuildPos(const float3& pos, const UnitDef* ud);
+
 	/**
 	 * @param minDist measured in 1/(SQUARE_SIZE * 2) = 1/16 of full map resolution.
 	 */
 	float3 ClosestBuildSite(int team, const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing = 0);
+
+public:
 	void Update();
-
-	bool LineFeatureCol(const float3& start, const float3& dir, float length);
-
-	//get the position of a unit + eventuall error due to lack of los
-	float3 GetUnitErrorPos(const CUnit* unit, int allyteam);
+	void GenerateWeaponTargets(const CWeapon* weapon, const CUnit* lastTargetUnit, std::multimap<float, CUnit*>& targets);
+	void DoExplosionDamage(CUnit* unit, const float3& expPos, float expRad, float expSpeed, bool ignoreOwner, CUnit* owner, float edgeEffectiveness, const DamageArray& damages, int weaponId);
+	void DoExplosionDamage(CFeature* feature, const float3& expPos, float expRad, const DamageArray& damages);
+	void Explosion(float3 pos, const DamageArray& damages, float radius, float edgeEffectiveness, float explosionSpeed, CUnit* owner, bool damageGround, float gfxMod, bool ignoreOwner, bool impactOnly, IExplosionGenerator* explosionGraphics, CUnit* hit, const float3& impactDir, int weaponId, CFeature* hitfeature = NULL);
 
 	enum {
 		TEST_ALLIED  = 1,
@@ -117,23 +96,6 @@ protected:
 	 * into high trafic STL containers instead of pointers to them
 	 */
 	std::list<WaitingDamage*> waitingDamages[128];
-
-private:
-	bool TestConeHelper(
-		const float3& from,
-		const float3& dir,
-		float length,
-		float spread,
-		const CUnit* u);
-	bool TestTrajectoryConeHelper(
-		const float3& from,
-		const float3& flatdir,
-		float length,
-		float linear,
-		float quadratic,
-		float spread,
-		float baseSize,
-		const CUnit* u);
 };
 
 extern CGameHelper* helper;

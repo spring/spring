@@ -16,7 +16,7 @@
 #include "Game/CameraHandler.h"
 #include "Game/Camera.h"
 #include "Game/Game.h"
-#include "Game/GameHelper.h"
+#include "Game/TraceRay.h"
 #include "Game/SelectedUnits.h"
 #include "Game/PlayerHandler.h"
 #include "Game/Camera/CameraController.h"
@@ -438,8 +438,9 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 				Channels::UserInterface.PlaySample(soundMultiselID);
 			#endif
 		} else {
-			const CUnit* unit;
-			helper->GuiTraceRay(camera->pos,dir,globalRendering->viewRange*1.4f,unit,false);
+			CUnit* unit;
+			CFeature* feature;
+			TraceRay::GuiTraceRay(camera->pos, dir, globalRendering->viewRange*1.4f, false, NULL, unit, feature);
 			if (unit && ((unit->team == gu->myTeam) || gu->spectatingFullSelect)) {
 				if (buttons[button].lastRelease < (gu->gameTime - doubleClickTime)) {
 					CUnit* unitM = uh->units[unit->id];
@@ -609,21 +610,9 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 	GML_RECMUTEX_LOCK(quad); // GetCurrentTooltip - called from ToolTipConsole::Draw --> MouseHandler::GetCurrentTooltip
 
 	const float range = (globalRendering->viewRange * 1.4f);
-	const CUnit* unit = NULL;
-	float udist = helper->GuiTraceRay(camera->pos, dir, range, unit, true);
-	const CFeature* feature = NULL;
-	float fdist = helper->GuiTraceRayFeature(camera->pos, dir, range, feature);
-
-	if ((udist > (range - 300.0f)) &&
-	    (fdist > (range - 300.0f)) && (unit == NULL)) {
-		return "";
-	}
-
-	if (udist > fdist) {
-		unit = NULL;
-	} else {
-		feature = NULL;
-	}
+	CUnit* unit;
+	CFeature* feature;
+	float dist = TraceRay::GuiTraceRay(camera->pos, dir, range, true, NULL, unit, feature);
 
 	if (unit) {
 		return CTooltipConsole::MakeUnitString(unit);
@@ -638,8 +627,8 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 		return selTip;
 	}
 
-	if (udist < (range - 100.0f)) {
-		const float3 pos = camera->pos + (dir * udist);
+	if (dist <= range) {
+		const float3 pos = camera->pos + (dir * dist);
 		return CTooltipConsole::MakeGroundString(pos);
 	}
 

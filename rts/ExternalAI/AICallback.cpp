@@ -8,6 +8,7 @@
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/GameHelper.h"
+#include "Game/TraceRay.h"
 #include "Game/GameSetup.h"
 #include "Game/PlayerHandler.h"
 #include "Game/SelectedUnits.h"
@@ -1461,8 +1462,10 @@ int CAICallback::HandleCommand(int commandId, void* data)
 				const CUnit* srcUnit = uh->units[cmdData->srcUID];
 
 				if (srcUnit != NULL) {
-					const CUnit* hitUnit = NULL;
-					const float realLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags);
+					CUnit* hitUnit = NULL;
+					CFeature* hitFeature = NULL;
+					//FIXME add COLLISION_NOFEATURE?
+					const float realLen = TraceRay::TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, cmdData->flags, srcUnit, hitUnit, hitFeature);
 
 					if (hitUnit != NULL) {
 						const bool isUnitVisible = (hitUnit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS);
@@ -1484,9 +1487,10 @@ int CAICallback::HandleCommand(int commandId, void* data)
 				const CUnit* srcUnit = uh->units[cmdData->srcUID];
 
 				if (srcUnit != NULL) {
-					const CUnit* hitUnit = NULL;
-					const CFeature* hitFeature = NULL;
-					const float realLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags, &hitFeature);
+					CUnit* hitUnit = NULL;
+					CFeature* hitFeature = NULL;
+					//FIXME add COLLISION_NOENEMIES || COLLISION_NOFRIENDLIES || COLLISION_NONEUTRALS?
+					const float realLen = TraceRay::TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, cmdData->flags, srcUnit, hitUnit, hitFeature);
 
 					if (hitFeature != NULL) {
 						const bool isFeatureVisible = hitFeature->IsInLosForAllyTeam(teamHandler->AllyTeam(team));
