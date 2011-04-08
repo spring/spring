@@ -353,7 +353,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.uptime = wdTable.GetFloat("weaponTimer", 0.0f);
 	wd.flighttime = wdTable.GetFloat("flightTime", 0) * 32;
 
-	wd.turnrate = wdTable.GetFloat("turnRate", 0.0f) * PI / 0x7fff / 30.0f;
+	wd.turnrate = wdTable.GetFloat("turnRate", 0.0f) * TAANG2RAD / 30.0f;
 
 	if ((wd.type == "AircraftBomb") && !manualBombSettings) {
 		if (wd.reload < 0.5f) {
