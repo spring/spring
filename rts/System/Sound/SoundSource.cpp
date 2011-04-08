@@ -281,6 +281,9 @@ float CSoundSource::GetStreamPlayTime()
 
 void CSoundSource::UpdateVolume()
 {
+	if (!curChannel)
+		return;
+
 	if (curStream) {
 		alSourcef(id, AL_GAIN, curVolume * curChannel->volume);
 	}
