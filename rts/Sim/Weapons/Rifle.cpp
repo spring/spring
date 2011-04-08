@@ -1,18 +1,18 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
-#include "Game/GameHelper.h"
-#include "LogOutput.h"
-#include "Map/Ground.h"
-#include "myMath.h"
+#include "mmgr.h"
+
 #include "Rifle.h"
+#include "WeaponDefHandler.h"
+#include "Game/TraceRay.h"
+#include "Map/Ground.h"
 #include "Sim/Projectiles/Unsynced/HeatCloudProjectile.h"
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
 #include "Sim/Projectiles/Unsynced/TracerProjectile.h"
 #include "Sim/Units/Unit.h"
-#include "WeaponDefHandler.h"
 #include "Sync/SyncTracer.h"
-#include "mmgr.h"
+#include "System/myMath.h"
 
 CR_BIND_DERIVED(CRifle, CWeapon, (NULL));
 
@@ -73,10 +73,10 @@ bool CRifle::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
 		(accuracy + sprayAngle) *
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 
-	if (avoidFriendly && helper->TestCone(weaponMuzzlePos, dir, length, spread, owner, CGameHelper::TEST_ALLIED)) {
+	if (avoidFriendly && TraceRay::TestAllyCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, owner)) {
 		return false;
 	}
-	if (avoidNeutral && helper->TestCone(weaponMuzzlePos, dir, length, spread, owner, CGameHelper::TEST_NEUTRAL)) {
+	if (avoidNeutral && TraceRay::TestNeutralCone(weaponMuzzlePos, dir, length, spread, owner)) {
 		return false;
 	}
 
@@ -91,13 +91,14 @@ void CRifle::FireImpl()
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight));
 	dir.Normalize();
 
-	const CUnit* hit;
-	float length=helper->TraceRay(weaponMuzzlePos, dir, range, weaponDef->damages[0], owner, hit, collisionFlags);
-	if (hit) {
-		CUnit* hitM = uh->units[hit->id];
-		hitM->DoDamage(weaponDef->damages, owner, ZeroVector, weaponDef->id);
-		new CHeatCloudProjectile(weaponMuzzlePos + dir * length, hit->speed*0.9f, 30, 1, owner);
+	CUnit* hitUnit;
+	CFeature* hitFeature;
+	float length = TraceRay::TraceRay(weaponMuzzlePos, dir, range, 0, owner, hitUnit, hitFeature);
+
+	if (hitUnit) {
+		hitUnit->DoDamage(weaponDef->damages, owner, ZeroVector, weaponDef->id);
+		new CHeatCloudProjectile(weaponMuzzlePos + dir*length, hitUnit->speed*0.9f, 30, 1, owner);
 	}
-	new CTracerProjectile(weaponMuzzlePos,dir*projectileSpeed,length,owner);
-	new CSmokeProjectile(weaponMuzzlePos,float3(0,0.0f,0),70,0.1f,0.02f,owner,0.6f);
+	new CTracerProjectile(weaponMuzzlePos, dir*projectileSpeed, length, owner);
+	new CSmokeProjectile(weaponMuzzlePos, float3(0,0,0), 70, 0.1f, 0.02f, owner, 0.6f);
 }

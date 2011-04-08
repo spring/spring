@@ -17,9 +17,6 @@ class CUnit;
 class CFeature;
 class CVertexArray;
 
-#define COLLISION_NOFRIENDLY	1
-#define COLLISION_NOFEATURE		2
-#define COLLISION_NONEUTRAL		4
 
 class CProjectile: public CExpGenSpawnable
 {

@@ -6,6 +6,7 @@
 
 #include "Projectile.h"
 #include "ProjectileHandler.h"
+#include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Rendering/GroundFlash.h"
@@ -344,11 +345,11 @@ void CProjectileHandler::CheckUnitCollisions(
 		// if this unit fired this projectile or (this unit is in the
 		// same allyteam as the unit that shot this projectile and we
 		// are ignoring friendly collisions)
-		if (p->owner() == unit || ((p->collisionFlags & COLLISION_NOFRIENDLY) && friendlyShot)) {
+		if (p->owner() == unit || ((p->collisionFlags & Collision::NOFRIENDLIES) && friendlyShot)) {
 			continue;
 		}
 
-		if (p->collisionFlags & COLLISION_NONEUTRAL) {
+		if (p->collisionFlags & Collision::NONEUTRALS) {
 			if (unit->IsNeutral()) { continue; }
 		}
 
@@ -388,7 +389,7 @@ void CProjectileHandler::CheckFeatureCollisions(
 {
 	CollisionQuery q;
 
-	if (p->collisionFlags & COLLISION_NOFEATURE) {
+	if (p->collisionFlags & Collision::NOFEATURES) {
 		return;
 	}
 

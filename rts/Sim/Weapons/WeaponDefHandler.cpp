@@ -8,19 +8,21 @@
 #include <iostream>
 #include <stdexcept>
 #include "WeaponDefHandler.h"
-#include "Sim/Misc/GlobalConstants.h"
+
 #include "Game/Game.h"
+#include "Game/TraceRay.h"
 #include "Lua/LuaParser.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TAPalette.h"
-#include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
+#include "Sim/Misc/DamageArrayHandler.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Projectiles/Projectile.h"
-#include "System/FileSystem/FileHandler.h"
 #include "System/LogOutput.h"
-#include "Sound/ISound.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/Sound/ISound.h"
 #include "Sim/Units/Scripts/CobInstance.h"
 
 using std::min;
@@ -83,9 +85,9 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	const bool collideFriendly = wdTable.GetBool("collideFriendly", true);
 	const bool collideFeature  = wdTable.GetBool("collideFeature",  true);
 	const bool collideNeutral  = wdTable.GetBool("collideNeutral",  true);
-	if (!collideFriendly) { wd.collisionFlags |= COLLISION_NOFRIENDLY; }
-	if (!collideFeature)  { wd.collisionFlags |= COLLISION_NOFEATURE;  }
-	if (!collideNeutral)  { wd.collisionFlags |= COLLISION_NONEUTRAL;  }
+	if (!collideFriendly) { wd.collisionFlags |= Collision::NOFRIENDLIES; }
+	if (!collideFeature)  { wd.collisionFlags |= Collision::NOFEATURES;  }
+	if (!collideNeutral)  { wd.collisionFlags |= Collision::NONEUTRALS;  }
 
 	wd.minIntensity = wdTable.GetFloat("minIntensity", 0.0f);
 

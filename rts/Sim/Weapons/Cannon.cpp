@@ -2,7 +2,7 @@
 
 #include "StdAfx.h"
 #include "Cannon.h"
-#include "Game/GameHelper.h"
+#include "Game/TraceRay.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -142,12 +142,12 @@ bool CCannon::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
 		((accuracy + sprayAngle) * 0.6f) *
 		((1.0f - owner->limExperience * weaponDef->ownerExpAccWeight) * 0.9f);
 
-	if (avoidFriendly && helper->TestTrajectoryCone(weaponMuzzlePos, flatdir,
-		flatlength - 30, dir.y, quadratic, spread, 3, owner, CGameHelper::TEST_ALLIED)) {
+	if (avoidFriendly && TraceRay::TestTrajectoryAllyCone(weaponMuzzlePos, flatdir,
+		flatlength - 30, dir.y, quadratic, spread, 3, owner->allyteam, owner)) {
 		return false;
 	}
-	if (avoidNeutral && helper->TestTrajectoryCone(weaponMuzzlePos, flatdir,
-		flatlength - 30, dir.y, quadratic, spread, 3, owner, CGameHelper::TEST_NEUTRAL)) {
+	if (avoidNeutral && TraceRay::TestTrajectoryNeutralCone(weaponMuzzlePos, flatdir,
+		flatlength - 30, dir.y, quadratic, spread, 3, owner)) {
 		return false;
 	}
 

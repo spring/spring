@@ -21,6 +21,7 @@
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
+#include "Game/TraceRay.h"
 #include "Lua/LuaTextures.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
@@ -1498,8 +1499,8 @@ int CGuiHandler::GetDefaultCommand(int x, int y, float3& camerapos, float3& mous
 	GML_RECMUTEX_LOCK(sel); // GetDefaultCommand - anti deadlock
 	GML_RECMUTEX_LOCK(quad); // GetDefaultCommand
 
-	const CUnit* unit = NULL;
-	const CFeature* feature = NULL;
+	CUnit* unit = NULL;
+	CFeature* feature = NULL;
 	if ((ir == minimap) && (minimap->FullProxy())) {
 		unit = minimap->GetSelectUnit(minimap->GetMapPosition(x, y));
 	}
@@ -1507,24 +1508,12 @@ int CGuiHandler::GetDefaultCommand(int x, int y, float3& camerapos, float3& mous
 		const float3 camPos = camerapos;
 		const float3 camDir = mousedir;
 		const float viewRange = globalRendering->viewRange*1.4f;
-		const float dist = helper->GuiTraceRay(camPos, camDir, viewRange, unit, true);
-		const float dist2 = helper->GuiTraceRayFeature(camPos, camDir, viewRange, feature);
+		const float dist = TraceRay::GuiTraceRay(camPos, camDir, viewRange, true, NULL, unit, feature);
 		const float3 hit = camPos + camDir*dist;
 
 		// make sure the ray hit in the map
-		if (unit == NULL && (hit.x < 0.f || hit.x > gs->mapx*SQUARE_SIZE
-				|| hit.z < 0.f || hit.z > gs->mapy*SQUARE_SIZE))
+		if (!unit && !feature && !hit.IsInBounds())
 			return -1;
-
-		if ((dist > viewRange - 300) && (dist2 > viewRange - 300) && (unit == NULL)) {
-			return -1;
-		}
-
-		if (dist > dist2) {
-			unit = NULL;
-		} else {
-			feature = NULL;
-		}
 	}
 
 	GML_RECMUTEX_LOCK(gui); // GetDefaultCommand
@@ -2152,11 +2141,12 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			return c;}
 
 		case CMDTYPE_ICON_UNIT: {
-			const CUnit* unit = NULL;
+			CUnit* unit = NULL;
+			CFeature* feature = NULL;
 			Command c;
 
 			c.id=commands[tempInCommand].id;
-			helper->GuiTraceRay(camerapos,mousedir,globalRendering->viewRange*1.4f,unit,true);
+			TraceRay::GuiTraceRay(camerapos, mousedir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
 			if (!unit) {
 				return defaultRet;
 			}
@@ -2169,13 +2159,14 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			Command c;
 			c.id=commands[tempInCommand].id;
 
-			const CUnit* unit = NULL;
-			float dist2 = helper->GuiTraceRay(camerapos,mousedir,globalRendering->viewRange*1.4f,unit,true);
+			CUnit* unit = NULL;
+			CFeature* feature = NULL;
+			float dist2 = TraceRay::GuiTraceRay(camerapos, mousedir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
 			if(dist2 > (globalRendering->viewRange * 1.4f - 300)) {
 				return defaultRet;
 			}
 
-			if (unit != NULL) {
+			if (unit) {
 				// clicked on unit
 				c.params.push_back(unit->id);
 			} else {
@@ -2245,18 +2236,17 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				GML_RECMUTEX_LOCK(unit); // GetCommand
 				GML_RECMUTEX_LOCK(feat); // GetCommand
 
-				const CUnit* unit = NULL;
-				const CFeature* feature = NULL;
-				float dist2 = helper->GuiTraceRay(camerapos,mousedir,globalRendering->viewRange*1.4f,unit,true);
-				float dist3 = helper->GuiTraceRayFeature(camerapos,mousedir,globalRendering->viewRange*1.4f,feature);
+				CUnit* unit = NULL;
+				CFeature* feature = NULL;
+				float dist2 = TraceRay::GuiTraceRay(camerapos, mousedir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
 
-				if(dist2 > (globalRendering->viewRange * 1.4f - 300) && (commands[tempInCommand].type!=CMDTYPE_ICON_UNIT_FEATURE_OR_AREA || dist3>globalRendering->viewRange*1.4f-300)) {
+				if(dist2 > (globalRendering->viewRange * 1.4f - 300) && (commands[tempInCommand].type!=CMDTYPE_ICON_UNIT_FEATURE_OR_AREA)) {
 					return defaultRet;
 				}
 
-				if (feature!=0 && dist3<dist2 && commands[tempInCommand].type==CMDTYPE_ICON_UNIT_FEATURE_OR_AREA) {  // clicked on feature
+				if (feature && commands[tempInCommand].type==CMDTYPE_ICON_UNIT_FEATURE_OR_AREA) {  // clicked on feature
 					c.params.push_back(uh->MaxUnits()+feature->id);
-				} else if (unit!=0 && commands[tempInCommand].type!=CMDTYPE_ICON_AREA) {  // clicked on unit
+				} else if (unit && commands[tempInCommand].type!=CMDTYPE_ICON_AREA) {  // clicked on unit
 					c.params.push_back(unit->id);
 				} else { // clicked in map
 					if(explicitCommand<0) // only attack ground if explicitly set the command
@@ -2295,9 +2285,9 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			c.id=commands[tempInCommand].id;
 
 			if (mouse->buttons[button].movement < 16) {
-				const CUnit* unit = NULL;
-
-				float dist2 = helper->GuiTraceRay(camerapos, mousedir, globalRendering->viewRange*1.4f, unit, true);
+				CUnit* unit;
+				CFeature* feature;
+				float dist2 = TraceRay::GuiTraceRay(camerapos, mousedir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
 
 				if (dist2 > (globalRendering->viewRange * 1.4f - 300)) {
 					return defaultRet;
@@ -2390,11 +2380,12 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 	BuildInfo other; // the unit around which buildings can be circled
 
 	if (GetQueueKeystate() && keyInput->IsKeyPressed(SDLK_LCTRL)) {
-		const CUnit* unit = NULL;
-
 		GML_RECMUTEX_LOCK(quad); // GetBuildCommand - accesses activeunits - called from DrawMapStuff -> GetBuildPos
 
-		helper->GuiTraceRay(camerapos,mousedir,globalRendering->viewRange*1.4f,unit,true);
+		CUnit* unit;
+		CFeature* feature;
+		TraceRay::GuiTraceRay(camerapos, mousedir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
+
 		if (unit) {
 			other.def = unit->unitDef;
 			other.pos = unit->pos;
@@ -3491,13 +3482,16 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 	GML_RECMUTEX_LOCK(unit); // DrawMapStuff
 
 	if (GetQueueKeystate()) {
-		const CUnit* unit = NULL;
+		CUnit* unit = NULL;
+		CFeature* feature = NULL;
+
 		if (minimapCoords) {
 			unit = minimap->GetSelectUnit(camerapos);
 		} else {
 			// ignoring the returned distance
-			helper->GuiTraceRay(camerapos,mousedir,globalRendering->viewRange*1.4f,unit,false);
+			TraceRay::GuiTraceRay(camerapos, mousedir, globalRendering->viewRange*1.4f, false, NULL, unit, feature);
 		}
+
 		if (unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
 			pointedAt = unit;
 			const UnitDef* unitdef = unit->unitDef;
