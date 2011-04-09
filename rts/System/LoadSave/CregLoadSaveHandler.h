@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef CREGLOADSAVEHANDLER_H
-#define CREGLOADSAVEHANDLER_H
+#ifndef CREG_LOAD_SAVE_HANDLER_H
+#define CREG_LOAD_SAVE_HANDLER_H
 
 #include <string>
 #include <fstream>
@@ -20,7 +20,7 @@ public:
 	void LoadGame(); 
 
 protected:
-	std::ifstream *ifs;
+	std::ifstream* ifs;
 };
 
-#endif // CREGLOADSAVEHANDLER_H
+#endif // CREG_LOAD_SAVE_HANDLER_H

@@ -193,8 +193,11 @@ struct ShaderBuilder
 	ShadingMethod CalculateShadingMethod(ShaderDef* sd) const;
 
 	struct TexReq {
-		TexReq() { coords = units = 0; }
-		GLint coords, units;
+		TexReq()
+			: coords(0)
+			, units(0)
+		{}
+
 		void GetFromGL();
 		bool Fits(TexReq maxrq) const {
 			return ((coords <= maxrq.coords) && (units <= maxrq.units));
@@ -205,9 +208,12 @@ struct ShaderBuilder
 			r.units = units + rq.units;
 			return r;
 		}
+
+		GLint coords;
+		GLint units;
 	};
 	// Calculate the texturing requirements for the specified stages
-	TexReq CalcStagesTexReq (const vector<ShaderDef::Stage>& stages, uint startIndex) const;
+	TexReq CalcStagesTexReq(const vector<ShaderDef::Stage>& stages, uint startIndex) const;
 };
 
 
@@ -770,7 +776,7 @@ void GLSLShaderHandler::EndTexturing() {
 
 	if (curShader) {
 		curShader->Cleanup();
-		curShader = 0;
+		curShader = NULL;
 	}
 }
 
@@ -805,7 +811,7 @@ bool GLSLShaderHandler::SetupShader(IShaderSetup* ps, NodeSetupParams& params)
 {
 	if (curShader) {
 		curShader->Cleanup();
-		curShader = 0;
+		curShader = NULL;
 	}
 
 	GLSLBaseShader* bs = static_cast<GLSLBaseShader*>(ps);
@@ -825,8 +831,8 @@ void GLSLShaderHandler::BeginBuild()
 	delete buffer;
 	delete scShader;
 
-	buffer = 0;
-	scShader = 0;
+	buffer = NULL;
+	scShader = NULL;
 
 	renderSetups.clear();
 }
