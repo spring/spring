@@ -368,7 +368,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	SetGlobal(BUILD_ROOT_${myName}_AIINTERFACE       "${myBuildDir}")
 	SetGlobal(${myName}_AIINTERFACE_JAR_BIN          "${myBuildDir}/${myBinJarFile}")
 	SetGlobal(${myName}_AIINTERFACE_JAR_SRC          "${myBuildDir}/${mySrcJarFile}")
-	SetGlobal(${myName}_AIINTERFACE_POM              "${myBuildDir}/pom.xml")
+	SetGlobal(${myName}_AIINTERFACE_POM              "${myBuildDir}/pom-generated.xml")
 	SetGlobal(CLASSPATH_${myName}_AIINTERFACE        "${myJavaLibs}${PATH_DELIM_H}${myBuildDir}/${myBinJarFile}")
 	SetGlobal(JAVA_SRC_DIR_${myName}_AIINTERFACE     "${myJavaSourceDir}")
 	SetGlobal(JAVA_GEN_SRC_DIR_${myName}_AIINTERFACE "${myJavaGeneratedSourceDir}")
@@ -636,10 +636,10 @@ if    (BUILD_${myName}_AIINTERFACE)
 	set(myMavenProperties "-DmyVersion=${myVersion}")
 	add_custom_command(
 		OUTPUT
-			"${myBuildDir}/pom.xml"
+			"${myBuildDir}/pom-generated.xml"
 		COMMAND "${CMAKE_COMMAND}"
 			"-Dfile.in=${myDir}/pom.xml"
-			"-Dfile.out=${myBuildDir}/pom.xml"
+			"-Dfile.out=${myBuildDir}/pom-generated.xml"
 			${myMavenProperties}
 			"-P" "${CMAKE_MODULES_SPRING}/ConfigureFile.cmake"
 		DEPENDS
@@ -649,7 +649,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		COMMENT
 			"  ${myTarget}: Configure pom.xml" VERBATIM
 		)
-	set_source_files_properties("${myBuildDir}/pom.xml" PROPERTIES GENERATED TRUE)
+	set_source_files_properties("${myBuildDir}/pom-generated.xml" PROPERTIES GENERATED TRUE)
 
 	IsMavenInstalled(isMavenInstalled)
 	if    (isMavenInstalled)
@@ -664,13 +664,13 @@ if    (BUILD_${myName}_AIINTERFACE)
 				"${myMavenInstallStubFile}"
 			COMMAND "mvn"
 				"install:install-file"
-				"-DpomFile=${myBuildDir}/pom.xml"
+				"-DpomFile=${myBuildDir}/pom-generated.xml"
 				"-Dfile=${myBuildDir}/${myBinJarFile}"
 				"-Dsources=${myBuildDir}/${mySrcJarFile}"
 			COMMAND "${CMAKE_COMMAND}"
 				"-E" "touch" "${myMavenInstallStubFile}"
 			DEPENDS
-				"${myBuildDir}/pom.xml"
+				"${myBuildDir}/pom-generated.xml"
 				"${myBuildDir}/${myBinJarFile}"
 				"${myBuildDir}/${mySrcJarFile}"
 			WORKING_DIRECTORY
