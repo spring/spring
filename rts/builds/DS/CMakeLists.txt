@@ -59,6 +59,7 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/TdfParser
 	${ENGINE_SRC_ROOT_DIR}/System/ConfigHandler
 	${ENGINE_SRC_ROOT_DIR}/System/GlobalConfig
+	${ENGINE_SRC_ROOT_DIR}/System/Info
 	${ENGINE_SRC_ROOT_DIR}/System/LogOutput
 	${ENGINE_SRC_ROOT_DIR}/System/TimeUtil
 	${ENGINE_SRC_ROOT_DIR}/System/BaseNetProtocol
