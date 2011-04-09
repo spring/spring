@@ -51,7 +51,7 @@ C3DModelLoader::C3DModelLoader()
 		parsers[extension] = unitassparser; // register extension
 		extensionchar = strtok( NULL, ";" );
 	}
-	delete charextensionlist;
+	delete[] charextensionlist;
 }
 
 

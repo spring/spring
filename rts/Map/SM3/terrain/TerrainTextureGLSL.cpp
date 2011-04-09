@@ -199,7 +199,7 @@ struct ShaderBuilder
 		bool Fits(TexReq maxrq) const {
 			return ((coords <= maxrq.coords) && (units <= maxrq.units));
 		}
-		TexReq operator + (const TexReq& rq) {
+		TexReq operator + (const TexReq& rq) const {
 			TexReq r;
 			r.coords = coords + rq.coords;
 			r.units = units + rq.units;
@@ -784,6 +784,7 @@ void GLSLShaderHandler::BeginPass(const std::vector<Blendmap*>& blendmaps, const
 	if (buffer) {
 		if ((buffer->width != globalRendering->viewSizeX) || (buffer->height != globalRendering->viewSizeY)) {
 			delete buffer;
+			buffer = NULL; // to prevent a dead-pointer in case of an out-of-memory exception on the next line
 			buffer = new BufferTexture;
 		}
 	}

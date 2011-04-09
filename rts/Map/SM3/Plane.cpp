@@ -19,7 +19,7 @@ void Plane::MakePlane(const Vector3& v1,const Vector3& v2,const Vector3& v3)
 	d=a*v2.x+b*v2.y+c*v2.z;
 }
 
-bool Plane::operator==(const Plane &pln)
+bool Plane::operator==(const Plane &pln) const
 {
 	if((pln.a < a + EPSILON) && (pln.a > a - EPSILON) &&
 		(pln.b < b + EPSILON) && (pln.b > b - EPSILON) &&

@@ -103,6 +103,7 @@ void PBO::Resize(GLsizeiptr _size, GLenum usage)
 		glBufferData(GL_PIXEL_UNPACK_BUFFER, size, 0, usage);
 	} else {
 		delete[] data;
+		data = NULL; // to prevent a dead-pointer in case of an out-of-memory exception on the next line
 		data = new GLubyte[size];
 	}
 }
