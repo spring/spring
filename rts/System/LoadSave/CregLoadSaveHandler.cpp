@@ -34,6 +34,7 @@
 #include "Exceptions.h"
 
 CCregLoadSaveHandler::CCregLoadSaveHandler(void)
+	: ifs(NULL)
 {}
 
 CCregLoadSaveHandler::~CCregLoadSaveHandler(void)

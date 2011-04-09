@@ -27,12 +27,14 @@ struct aiScene;
 typedef std::map<std::string, S3DModelPiece*> ModelPieceMap;
 
 struct S3DModelPiece {
-	S3DModelPiece(): type(-1) {
-		parent = NULL;
-		colvol = NULL;
-
-		isEmpty = true;
-		dispListID = 0;
+	S3DModelPiece()
+		: model(NULL)
+		, parent(NULL)
+		, colvol(NULL)
+		, isEmpty(true)
+		, dispListID(0)
+		, type(-1)
+	{
 	}
 
 	virtual ~S3DModelPiece();
