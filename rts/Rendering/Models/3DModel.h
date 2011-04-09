@@ -73,8 +73,8 @@ struct S3DModelPiece {
 
 	float3 mins;
 	float3 maxs;
-	float3 offset;    // wrt. parent
-	float3 goffset;   // wrt. root
+	float3 offset;    ///< @see parent
+	float3 goffset;   ///< @see root
 	float3 rot;
 	float3 scale;
 };
@@ -82,25 +82,29 @@ struct S3DModelPiece {
 
 struct S3DModel
 {
-	S3DModel(): id(-1), type(-1), textureType(-1) {
-        height = 0.0f;
-        radius = 0.0f;
-        relMidPos = float3(0.0f, 0.0f, 0.0f);
-        mins = float3(10000.0f, 10000.0f, 10000.0f);
-        maxs = float3(-10000.0f, -10000.0f, -10000.0f);
-        tex1 = "default.png";
-        tex2 = "";
-        flipTexY = false;
-        invertTexAlpha = false;
-        numPieces = 0;
-        rootPiece = NULL;
-        scene = NULL;
+	S3DModel()
+		: tex1("default.png")
+		, tex2("")
+		, id(-1)
+		, type(-1)
+		, textureType(-1)
+		, flipTexY(false)
+		, invertTexAlpha(false)
+		, radius(0.0f)
+		, height(0.0f)
+		, mins(10000.0f, 10000.0f, 10000.0f)
+		, maxs(-10000.0f, -10000.0f, -10000.0f)
+		, relMidPos(ZeroVector)
+		, numPieces(0)
+		, rootPiece(NULL)
+		, scene(NULL)
+	{
 	}
 
 	S3DModelPiece* GetRootPiece() { return rootPiece; }
 	void SetRootPiece(S3DModelPiece* p) { rootPiece = p; }
 	void DrawStatic() const { rootPiece->DrawStatic(); }
-	S3DModelPiece* FindPiece( std::string name );
+	S3DModelPiece* FindPiece(std::string name);
 
 	std::string name;
 	std::string tex1;
@@ -129,13 +133,15 @@ struct S3DModel
 
 struct LocalModelPiece
 {
-	LocalModelPiece() {
-		parent     = NULL;
-		colvol     = NULL;
-		original   = NULL;
-		dispListID = 0;
-		visible    = false;
+	LocalModelPiece()
+		: visible(false)
+		, colvol(NULL)
+		, original(NULL)
+		, parent(NULL)
+		, dispListID(0)
+	{
 	}
+
 	void Init(S3DModelPiece* piece) {
 		original   =  piece;
 		dispListID =  piece->dispListID;
@@ -181,8 +187,10 @@ struct LocalModelPiece
 
 struct LocalModel
 {
-	LocalModel(const S3DModel* model) : type(-1), lodCount(0) {
-		type = model->type;
+	LocalModel(const S3DModel* model)
+		: type(model->type)
+		, lodCount(0)
+	{
 		pieces.reserve(model->numPieces);
 
 		assert(model->numPieces >= 1);
@@ -215,6 +223,5 @@ struct LocalModel
 
 	std::vector<LocalModelPiece*> pieces;
 };
-
 
 #endif /* _3DMODEL_H */
