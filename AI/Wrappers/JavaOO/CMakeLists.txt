@@ -348,10 +348,10 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(myMavenProperties "-DmyVersion=${Java_AIINTERFACE_VERS}")
 	add_custom_command(
 		OUTPUT
-			"${myBuildDir}/pom.xml"
+			"${myBuildDir}/pom-generated.xml"
 		COMMAND "${CMAKE_COMMAND}"
 			"-Dfile.in=${myDir}/pom.xml"
-			"-Dfile.out=${myBuildDir}/pom.xml"
+			"-Dfile.out=${myBuildDir}/pom-generated.xml"
 			${myMavenProperties}
 			"-P" "${CMAKE_MODULES_SPRING}/ConfigureFile.cmake"
 		DEPENDS
@@ -361,11 +361,11 @@ if    (BUILD_${myName}_AIWRAPPER)
 		COMMENT
 			"  ${myTarget}: Configure pom.xml" VERBATIM
 		)
-	set_source_files_properties("${myBuildDir}/pom.xml" PROPERTIES GENERATED TRUE)
+	set_source_files_properties("${myBuildDir}/pom-generated.xml" PROPERTIES GENERATED TRUE)
 
 	add_custom_target(${myPomTarget}
 		DEPENDS
-			"${myBuildDir}/pom.xml")
+			"${myBuildDir}/pom-generated.xml")
 
 	add_custom_target(${myTarget} ALL)
 
@@ -382,7 +382,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 				"${myMavenInstallStubFile}"
 			COMMAND "mvn"
 				"install:install-file"
-				"-DpomFile=${myBuildDir}/pom.xml"
+				"-DpomFile=${myBuildDir}/pom-generated.xml"
 				"-Dfile=${myBuildDir}/${myBinJarFile}"
 				"-Dsources=${myBuildDir}/${mySrcJarFile}"
 			COMMAND "${CMAKE_COMMAND}"
@@ -392,7 +392,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 				# We have to handle these through target level dependencies, or
 				# else their generating custom commands may be executed multiple
 				# times.
-				#"${myBuildDir}/pom.xml"
+				#"${myBuildDir}/pom-generated.xml"
 				#"${myBuildDir}/${myBinJarFile}"
 				#"${myBuildDir}/${mySrcJarFile}"
 			WORKING_DIRECTORY
