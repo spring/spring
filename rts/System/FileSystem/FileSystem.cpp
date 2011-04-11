@@ -294,6 +294,29 @@ std::string& FileSystem::ForwardSlashes(std::string& path) const
 }
 
 /**
+ * @brief adds an allowed top level parent directory ref
+ */
+void FileSystem::AllowParentRef(const std::string &dir) {
+	allowedParentRefs.insert(dir);
+}
+
+/**
+ * @brief checks if a top level parent directory ref is allowed
+ */
+bool FileSystem::IsAllowedParentRef(const std::string &file, int dpos) const {
+	std::string parentDir = "..";
+	if (dpos == std::string::npos || file.find(parentDir, dpos + 1) != std::string::npos)
+		return false; // only one escape can be allowed
+	parentDir += (char)fs.GetNativePathSeparator();
+	for(std::set<std::string>::const_iterator i = allowedParentRefs.begin(); i != allowedParentRefs.end(); ++i) {
+		int pos = file.find(parentDir + *i);
+		if (pos == dpos)
+			return true;
+	}
+	return false;
+}
+
+/**
  * @brief does a little checking of a filename
  */
 bool FileSystem::CheckFile(const std::string& file) const
@@ -302,7 +325,10 @@ bool FileSystem::CheckFile(const std::string& file) const
 	// Note: this does NOT mean this is a SAFE fopen function:
 	// symlink-, hardlink-, you name it-attacks are all very well possible.
 	// The check is just ment to "enforce" certain coding behaviour.
-	bool hasParentRef = (file.find("..") != std::string::npos);
+	int dpos = file.find("..");
+	bool hasParentRef = (dpos != std::string::npos);
+	if (hasParentRef && IsAllowedParentRef(file, dpos))
+			return true;
 
 	return !hasParentRef;
 }
