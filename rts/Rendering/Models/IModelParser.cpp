@@ -12,6 +12,9 @@
 #include "3DOParser.h"
 #include "S3OParser.h"
 #include "OBJParser.h"
+#ifdef _MSC_VER
+#define _INC_MATH // a hack to prevent ambiguous math calls
+#endif
 #include "AssParser.h"
 #include "assimp.hpp"
 #include "Sim/Misc/CollisionVolume.h"

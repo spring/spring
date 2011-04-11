@@ -1,7 +1,9 @@
 #include "StdAfx.h"
 
 #include <string>
-
+#ifdef _MSC_VER
+#define _INC_MATH // a hack to prevent ambiguous math calls
+#endif
 #include "AssIO.h"
 
 #include "FileSystem/FileHandler.h"
