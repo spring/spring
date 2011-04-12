@@ -224,7 +224,7 @@ static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hT
 
 void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName)
 {
-	Stacktrace(threadName, NULL, thread.c_str());
+	Stacktrace(threadName.c_str(), NULL, thread);
 }
 
 void PrepareStacktrace() {
