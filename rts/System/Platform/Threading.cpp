@@ -2,23 +2,28 @@
 
 #include "Threading.h"
 
+#include <boost/thread.hpp>
+#ifdef WIN32
+namespace windows {
+	#include <windows.h>
+};
+#endif
+
 namespace Threading {
 	static bool haveMainThreadID = false;
-	static boost::thread* mainThread = NULL;
 	static boost::thread::id mainThreadID;
+	static NativeThreadId nativeMainThreadID;
 	static Error* threadError = NULL;
-	static boost::thread* loadingThread = NULL;
-	static boost::thread::id loadingThreadID;
 
 
-	NativeThreadHandle _GetCurrentThread()
+	NativeThreadHandle GetCurrentThread()
 	{
 	#ifdef WIN32
 		//! we need to use this cause GetCurrentThread() just returns a pseudo handle,
 		//! which returns in all threads the current active one, so we need to translate it
 		//! with DuplicateHandle to an absolute handle valid in our watchdog thread
 		NativeThreadHandle hThread;
-		DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &hThread, 0, TRUE, DUPLICATE_SAME_ACCESS);
+		DuplicateHandle(GetCurrentProcess(), ::GetCurrentThread(), GetCurrentProcess(), &hThread, 0, TRUE, DUPLICATE_SAME_ACCESS);
 		return hThread;
 	#else
 		return pthread_self();
@@ -26,50 +31,53 @@ namespace Threading {
 	}
 
 
-	NativeThreadId _GetCurrentThreadId()
+	NativeThreadId GetCurrentThreadId()
 	{
 	#ifdef WIN32
-		return GetCurrentThreadId();
+		return ::GetCurrentThreadId();
 	#else
 		return pthread_self();
 	#endif
 	}
 
 
-	void SetMainThread(boost::thread* mt) {
+	bool NativeThreadIdsEqual(const NativeThreadId& thID1, const NativeThreadId& thID2)
+	{
+	#ifdef WIN32
+		return (thID1 == thID2);
+	#else
+		return pthread_equal(thID1, thID2);
+	#endif
+	}
+
+
+	void SetMainThread()
+	{
 		if (!haveMainThreadID) {
 			haveMainThreadID = true;
-			mainThread = mt;
-			mainThreadID = mt ? mt->get_id() : boost::this_thread::get_id();
+			mainThreadID = boost::this_thread::get_id();
+			nativeMainThreadID = Threading::GetCurrentThreadId();
 		}
 	}
 
-	void SetLoadingThread(boost::thread* lt) {
-		loadingThread = lt;
-		loadingThreadID = lt ? lt->get_id() : boost::this_thread::get_id();
-	}
-
-	boost::thread* GetMainThread() {
-		return mainThread;
-	}
-
-	boost::thread* GetLoadingThread() {
-		return loadingThread;
-	}
-
-	void SetThreadError(const Error& err) {
-		threadError = new Error(err); //FIXME memory leak!
-	}
-
-	Error* GetThreadError() {
-		return threadError;
-	}
-
-	bool IsMainThread() {
+	bool IsMainThread()
+	{
 		return (boost::this_thread::get_id() == Threading::mainThreadID);
 	}
 
-	bool IsLoadingThread() {
-		return (boost::this_thread::get_id() == Threading::loadingThreadID);
+	bool IsMainThread(NativeThreadId threadID)
+	{
+		return NativeThreadIdsEqual(threadID, Threading::nativeMainThreadID);
+	}
+
+
+	void SetThreadError(const Error& err)
+	{
+		threadError = new Error(err); //FIXME memory leak!
+	}
+
+	Error* GetThreadError()
+	{
+		return threadError;
 	}
 };

@@ -191,7 +191,7 @@ static void FindBaseMemoryAddresses(std::map<std::string,uintptr_t>& binPath_bas
 
 namespace CrashHandler
 {
-	static void Stacktrace(bool* keepRunning, pthread_t* hThread = NULL)
+	static void Stacktrace(bool* keepRunning, pthread_t* hThread = NULL, const char* threadName = NULL)
 	{
 		static const int MAX_STACKTRACE_DEPTH = 10;
 		static const std::string INVALID_LINE_INDICATOR = "#####";
@@ -375,9 +375,9 @@ namespace CrashHandler
 	}
 
 
-	void Stacktrace(Threading::NativeThreadHandle thread, const char *threadName)
+	void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName)
 	{
-		Stacktrace(NULL, &thread);
+		Stacktrace(NULL, &thread, threadName.c_str());
 	}
 
 	void PrepareStacktrace() {}

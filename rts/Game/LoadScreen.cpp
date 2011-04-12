@@ -223,6 +223,8 @@ bool CLoadScreen::Update()
 
 bool CLoadScreen::Draw()
 {
+	Watchdog::ClearTimer();
+	
 	//! Limit the Frames Per Second to not lock a singlethreaded CPU from loading the game
 	if (mt_loading) {
 		spring_time now = spring_gettime();
@@ -301,7 +303,7 @@ bool CLoadScreen::Draw()
 
 void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 {
-	Watchdog::ClearTimer("main");
+	Watchdog::ClearTimer();
 
 	boost::recursive_mutex::scoped_lock lck(mutex);
 
