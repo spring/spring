@@ -1640,7 +1640,7 @@ bool CLuaHandle::KeyPress(unsigned short key, bool isRepeat)
 
 	lua_pushnumber(L, key);
 
-	lua_newtable(L);
+	lua_createtable(L, 0, 4);
 	HSTR_PUSH_BOOL(L, "alt",   !!keyInput->GetKeyState(SDLK_LALT));
 	HSTR_PUSH_BOOL(L, "ctrl",  !!keyInput->GetKeyState(SDLK_LCTRL));
 	HSTR_PUSH_BOOL(L, "meta",  !!keyInput->GetKeyState(SDLK_LMETA));
@@ -1683,7 +1683,7 @@ bool CLuaHandle::KeyRelease(unsigned short key)
 
 	lua_pushnumber(L, key);
 
-	lua_newtable(L);
+	lua_createtable(L, 0, 4);
 	HSTR_PUSH_BOOL(L, "alt",   !!keyInput->GetKeyState(SDLK_LALT));
 	HSTR_PUSH_BOOL(L, "ctrl",  !!keyInput->GetKeyState(SDLK_LCTRL));
 	HSTR_PUSH_BOOL(L, "meta",  !!keyInput->GetKeyState(SDLK_LMETA));
@@ -1960,15 +1960,14 @@ bool CLuaHandle::CommandNotify(const Command& cmd)
 	lua_pushnumber(L, cmd.id);
 
 	// push the params list
-	lua_newtable(L);
+	lua_createtable(L, cmd.params.size(), 0);
 	for (int p = 0; p < (int)cmd.params.size(); p++) {
-		lua_pushnumber(L, p + 1);
 		lua_pushnumber(L, cmd.params[p]);
-		lua_rawset(L, -3);
+		lua_rawseti(L, -2, p + 1);
 	}
 
 	// push the options table
-	lua_newtable(L);
+	lua_createtable(L, 0, 6);
 	HSTR_PUSH_NUMBER(L, "coded", cmd.options);
 	HSTR_PUSH_BOOL(L, "alt",   !!(cmd.options & ALT_KEY));
 	HSTR_PUSH_BOOL(L, "ctrl",  !!(cmd.options & CONTROL_KEY));
