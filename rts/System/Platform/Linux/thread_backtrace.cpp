@@ -43,6 +43,7 @@ static void internal_pthread_backtrace(pthread_t thread, void** buffer, size_t m
 	pthread_getattr_np(thread, &attr);
 	pthread_attr_getstack(&attr, (void**)&stackbot, &stack_size);
 	pthread_attr_getguardsize(&attr, &guard_size);
+	pthread_attr_destroy(&attr);
 #endif
 	stack_size -= guard_size;
 	stacktop = stackbot + stack_size;
