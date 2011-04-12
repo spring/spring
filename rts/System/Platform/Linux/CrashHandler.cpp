@@ -13,6 +13,7 @@
 #include <cstdio>
 #include <inttypes.h> // for uintptr_t
 #include <boost/static_assert.hpp> // for BOOST_STATIC_ASSERT
+#include <SDL_events.h>
 
 #include "thread_backtrace.h"
 #include "FileSystem/FileSystemHandler.h"
@@ -429,13 +430,20 @@ namespace CrashHandler
 
 	void HandleSignal(int signal)
 	{
-		static bool inExit = false;
-		static spring_time exitTime = spring_notime;
-		if (inExit) {
-			if (signal == SIGINT &&
-				(spring_gettime() > exitTime + spring_secs(3))
-			) {
-				exit(-1);
+		if (signal == SIGINT) {
+			static bool inExit = false;
+			static spring_time exitTime = spring_notime;
+			if (inExit) {
+				//! give Spring 3 seconds to cleanly exit
+				if (spring_gettime() > exitTime + spring_secs(3)) {
+					exit(-1);
+				}
+			} else {
+				inExit = true;
+				exitTime = spring_gettime();
+				SDL_Event event;
+				event.type = SDL_QUIT;
+				SDL_PushEvent(&event);
 			}
 			return;
 		}
@@ -494,9 +502,8 @@ namespace CrashHandler
 			}
 		}
 
+		//! exit app if we catched a critical one
 		if (!keepRunning) {
-			inExit = true;
-			exitTime = spring_gettime();
 			std::ostringstream buf;
 			buf << "Spring has crashed:\n"
 				<< error << ".\n\n"
@@ -512,7 +519,7 @@ namespace CrashHandler
 		signal(SIGPIPE, HandleSignal); //! maybe some network error
 		signal(SIGIO,   HandleSignal); //! who knows?
 		signal(SIGABRT, HandleSignal);
-		//signal(SIGINT,  HandleSignal);
+		signal(SIGINT,  HandleSignal);
 	}
 
 	void Remove() {
@@ -521,5 +528,6 @@ namespace CrashHandler
 		signal(SIGPIPE, SIG_DFL);
 		signal(SIGIO,   SIG_DFL);
 		signal(SIGABRT, SIG_DFL);
+		signal(SIGINT,  SIG_DFL);
 	}
 };
