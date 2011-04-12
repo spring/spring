@@ -202,7 +202,6 @@ static std::string ExtractPath(const std::string& line)
 {
 	//! example paths: "./spring" "/usr/lib/AI/Skirmish/NTai/0.666/libSkirmishAI.so"
 	std::string path;
-	size_t begin = 0;
 	size_t end   = line.find_last_of('('); //! if there is a function name
 	if (end == std::string::npos) {
 		end = line.find_last_of('['); //! if there is only the memory address
@@ -213,6 +212,7 @@ static std::string ExtractPath(const std::string& line)
 	if (end == std::string::npos) {
 		path = INVALID_LINE_INDICATOR;
 	} else {
+		size_t begin = 0;
 		path = line.substr(begin, end-begin);
 	}
 	return path;
