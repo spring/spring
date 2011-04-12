@@ -145,6 +145,7 @@
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/Net/PackPacket.h"
 #include "System/Platform/CrashHandler.h"
+#include "System/Platform/Watchdog.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncedPrimitiveIO.h"
@@ -391,6 +392,8 @@ CGame::~CGame()
 
 void CGame::LoadGame(const std::string& mapname)
 {
+	Watchdog::RegisterThread("loadscreen");
+
 	if (!gu->globalQuit) LoadDefs();
 	if (!gu->globalQuit) LoadSimulation(mapname);
 	if (!gu->globalQuit) LoadRendering();
@@ -402,6 +405,8 @@ void CGame::LoadGame(const std::string& mapname)
 		loadscreen->SetLoadMessage("Loading game");
 		saveFile->LoadGame();
 	}
+
+	Watchdog::DeregisterThread("loadscreen");
 }
 
 

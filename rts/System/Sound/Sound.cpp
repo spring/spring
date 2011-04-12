@@ -28,6 +28,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/myMath.h"
 #include "System/Platform/errorhandler.h"
+#include "System/Platform/Watchdog.h"
 
 #include "float3.h"
 
@@ -363,10 +364,15 @@ void CSound::StartThread(int maxSounds)
 	}
 	configHandler->Set("MaxSounds", maxSounds);
 
+	Watchdog::RegisterThread("audio");
+
 	while (!soundThreadQuit) {
 		boost::this_thread::sleep(boost::posix_time::millisec(50)); //! 20Hz
 		Update();
+		Watchdog::ClearTimer();
 	}
+
+	Watchdog::DeregisterThread("audio");
 
 	sources.clear(); // delete all sources
 	delete efx; // must happen after sources and before context
