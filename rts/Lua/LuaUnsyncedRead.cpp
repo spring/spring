@@ -1208,7 +1208,7 @@ int LuaUnsyncedRead::GetCameraVectors(lua_State* L)
 
 #define PACK_CAMERA_VECTOR(n) \
 	HSTR_PUSH(L, #n);           \
-	lua_newtable(L);            \
+	lua_createtable(L, 3, 0);            \
 	lua_pushnumber(L, cam-> n .x); lua_rawseti(L, -2, 1); \
 	lua_pushnumber(L, cam-> n .y); lua_rawseti(L, -2, 2); \
 	lua_pushnumber(L, cam-> n .z); lua_rawseti(L, -2, 3); \
@@ -1612,7 +1612,7 @@ int LuaUnsyncedRead::GetDefaultCommand(lua_State* L)
 // FIXME: duplicated in LuaSyncedRead.cpp
 static void PushCommandDesc(lua_State* L, const CommandDescription& cd)
 {
-	lua_newtable(L);
+	lua_createtable(L, 0, 12);
 
 	HSTR_PUSH_NUMBER(L, "id",          cd.id);
 	HSTR_PUSH_NUMBER(L, "type",        cd.type);
@@ -1627,8 +1627,8 @@ static void PushCommandDesc(lua_State* L, const CommandDescription& cd)
 	HSTR_PUSH_BOOL(L,   "onlyTexture", cd.onlyTexture);
 
 	HSTR_PUSH(L, "params");
-	lua_newtable(L);
 	const int pCount = (int)cd.params.size();
+	lua_createtable(L, pCount, 0);
 	for (int p = 0; p < pCount; p++) {
 		lua_pushsstring(L, cd.params[p]);
 		lua_rawseti(L, -2, p + 1);

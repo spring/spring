@@ -3649,7 +3649,7 @@ int LuaOpenGL::DeleteTextureFBO(lua_State* L)
 static bool PushUnitTextureInfo(lua_State* L, const string& texture)
 {
 	if (texture[1] == 0) {
-		lua_newtable(L);
+		lua_createtable(L, 0, 2);
 		HSTR_PUSH_NUMBER(L, "xsize", texturehandler3DO->GetAtlasTexSizeX());
 		HSTR_PUSH_NUMBER(L, "ysize", texturehandler3DO->GetAtlasTexSizeY());
 		return 1;
@@ -3678,13 +3678,13 @@ static bool PushUnitTextureInfo(lua_State* L, const string& texture)
 
 	endPtr++; // skip the ':'
 	if (*endPtr == '0') {
-		lua_newtable(L);
+		lua_createtable(L, 0, 2);
 		HSTR_PUSH_NUMBER(L, "xsize", stex->tex1SizeX);
 		HSTR_PUSH_NUMBER(L, "ysize", stex->tex1SizeY);
 		return 1;
 	}
 	else if (*endPtr == '1') {
-		lua_newtable(L);
+		lua_createtable(L, 0, 2);
 		HSTR_PUSH_NUMBER(L, "xsize", stex->tex2SizeX);
 		HSTR_PUSH_NUMBER(L, "ysize", stex->tex2SizeY);
 		return 1;
@@ -3714,7 +3714,7 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 		if (ud == NULL) {
 			return 0;
 		}
-		lua_newtable(L);
+		lua_createtable(L, 0, 2);
 		unitDefHandler->GetUnitDefImage(ud); // forced existance
 		HSTR_PUSH_NUMBER(L, "xsize", ud->buildPic->imageSizeX);
 		HSTR_PUSH_NUMBER(L, "ysize", ud->buildPic->imageSizeY);
@@ -3730,7 +3730,7 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 		if (ud == NULL) {
 			return 0;
 		}
-		lua_newtable(L);
+		lua_createtable(L, 0, 2);
 		HSTR_PUSH_NUMBER(L, "xsize", ud->iconType->GetSizeX());
 		HSTR_PUSH_NUMBER(L, "ysize", ud->iconType->GetSizeY());
 	}
@@ -3743,28 +3743,28 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 		if (tex == NULL) {
 			return 0;
 		}
-		lua_newtable(L);
+		lua_createtable(L, 0, 2);
 		HSTR_PUSH_NUMBER(L, "xsize", tex->xsize);
 		HSTR_PUSH_NUMBER(L, "ysize", tex->ysize);
 	}
 	else if (texture[0] == '$') {
 		if (texture == "$units") {
-			lua_newtable(L);
+			lua_createtable(L, 0, 2);
 			HSTR_PUSH_NUMBER(L, "xsize", texturehandler3DO->GetAtlasTexSizeX());
 			HSTR_PUSH_NUMBER(L, "ysize", texturehandler3DO->GetAtlasTexSizeY());
 		}
 		else if (texture == "$shadow") {
-			lua_newtable(L);
+			lua_createtable(L, 0, 2);
 			HSTR_PUSH_NUMBER(L, "xsize", shadowHandler->shadowMapSize);
 			HSTR_PUSH_NUMBER(L, "ysize", shadowHandler->shadowMapSize);
 		}
 		else if (texture == "$reflection") {
-			lua_newtable(L);
+			lua_createtable(L, 0, 2);
 			HSTR_PUSH_NUMBER(L, "xsize", cubeMapHandler->GetReflectionTextureSize());
 			HSTR_PUSH_NUMBER(L, "ysize", cubeMapHandler->GetReflectionTextureSize());
 		}
 		else if (texture == "$specular") {
-			lua_newtable(L);
+			lua_createtable(L, 0, 2);
 			HSTR_PUSH_NUMBER(L, "xsize", cubeMapHandler->GetSpecularTextureSize());
 			HSTR_PUSH_NUMBER(L, "ysize", cubeMapHandler->GetSpecularTextureSize());
 		}
@@ -3772,28 +3772,28 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 			if (!heightMapTexture.CheckTextureID()) {
 				return 0;
 			} else {
-				lua_newtable(L);
+				lua_createtable(L, 0, 2);
 				HSTR_PUSH_NUMBER(L, "xsize", heightMapTexture.GetSizeX());
 				HSTR_PUSH_NUMBER(L, "ysize", heightMapTexture.GetSizeY());
 			}
 		}
 		else if (texture == "$shading") {
-			lua_newtable(L);
+			lua_createtable(L, 0, 2);
 			HSTR_PUSH_NUMBER(L, "xsize", gs->pwr2mapx);
 			HSTR_PUSH_NUMBER(L, "ysize", gs->pwr2mapy);
 		}
 		else if (texture == "$grass") {
-			lua_newtable(L);
+			lua_createtable(L, 0, 2);
 			HSTR_PUSH_NUMBER(L, "xsize", 1024);
 			HSTR_PUSH_NUMBER(L, "ysize", 1024);
 		}
 		else if (texture == "$font") {
-			lua_newtable(L);
+			lua_createtable(L, 0, 2);
 			HSTR_PUSH_NUMBER(L, "xsize", font->GetTexWidth());
 			HSTR_PUSH_NUMBER(L, "ysize", font->GetTexHeight());
 		}
 		else if (texture == "$smallfont") {
-			lua_newtable(L);
+			lua_createtable(L, 0, 2);
 			HSTR_PUSH_NUMBER(L, "xsize", smallFont->GetTexWidth());
 			HSTR_PUSH_NUMBER(L, "ysize", smallFont->GetTexHeight());
 		}
@@ -3804,7 +3804,7 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 		if (texInfo == NULL) {
 			return 0;
 		}
-		lua_newtable(L);
+		lua_createtable(L, 0, 2);
 		HSTR_PUSH_NUMBER(L, "xsize", texInfo->xsize);
 		HSTR_PUSH_NUMBER(L, "ysize", texInfo->ysize);
 		// HSTR_PUSH_BOOL(L,   "alpha", texInfo->alpha);  FIXME
