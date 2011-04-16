@@ -139,7 +139,7 @@ std::string CArchiveScanner::ArchiveData::GetKeyDescription(const std::string& k
 	} else if (keyLower == "description") {
 		return "example: Little units blowing up other little units";
 	} else if (keyLower == "mapfile") {
-		return "in case its a map, store location of smf/sm3 file";
+		return "in case its a map, store location of smf/sm3 file"; //FIXME is this ever used in the engine?! or does it auto calc the location?
 	} else if (keyLower == "modtype") {
 		return "1=primary, 0=hidden, 3=map";
 	} else {

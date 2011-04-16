@@ -34,7 +34,7 @@ public:
 	 * Returns true if the file exists in this archive.
 	 * @param normalizedFilePath VFS path to the file in lower-case,
 	 *   using forward-slashes, for example "maps/mymap.smf"
-	 * @return true if the file exists in this archive, flase otherwise
+	 * @return true if the file exists in this archive, false otherwise
 	 */
 	bool FileExists(const std::string& normalizedFilePath) const;
 	/**
