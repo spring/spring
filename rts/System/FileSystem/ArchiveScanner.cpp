@@ -469,23 +469,18 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 			std::string error = "";
 
 			std::string mapfile;
-			bool hasModinfo = false;
-			bool hasMapinfo = false;
+			bool hasModinfo = ar->FileExists("modinfo.lua");
+			bool hasMapinfo = ar->FileExists("mapinfo.lua");
 			for (unsigned fid = 0; fid != ar->NumFiles(); ++fid)
 			{
 				std::string name;
 				int size;
 				ar->FileInfo(fid, name, size);
-
 				const std::string lowerName = StringToLower(name);
 				const std::string ext = filesystem.GetExtension(lowerName);
 
 				if ((ext == "smf") || (ext == "sm3")) {
 					mapfile = name;
-				} else if (lowerName == "modinfo.lua") {
-					hasModinfo = true;
-				} else if (lowerName == "mapinfo.lua") {
-					hasMapinfo = true;
 				}
 
 				const unsigned char metaFileClass = GetMetaFileClass(lowerName);
