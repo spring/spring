@@ -23,7 +23,7 @@ using namespace std;
 // no (other) situations where mapInfo may be modified, except
 //   LuaUnsyncedCtrl may change water
 //   LuaSyncedCtrl may change terrainTypes
-const CMapInfo* mapInfo;
+const CMapInfo* mapInfo = NULL;
 
 
 CMapInfo::CMapInfo(const std::string& _mapInfoFile, const string& mapName) : mapInfoFile(_mapInfoFile)
