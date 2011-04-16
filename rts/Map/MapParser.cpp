@@ -36,7 +36,11 @@ MapParser::MapParser(const std::string& mapFileName) : parser(NULL)
 {
 	const std::string mapConfig = GetMapConfigName(mapFileName);
 
-	parser = new LuaParser("maphelper/mapinfo.lua", SPRING_VFS_MAP_BASE, SPRING_VFS_MAP_BASE);
+	parser = new LuaParser("mapinfo.lua", SPRING_VFS_MAP_BASE, SPRING_VFS_MAP_BASE);
+	if (!parser->IsValid()) {
+		delete parser; parser = NULL;
+		parser = new LuaParser("maphelper/mapinfo.lua", SPRING_VFS_MAP_BASE, SPRING_VFS_MAP_BASE);
+	}
 	parser->GetTable("Map");
 	parser->AddString("fileName", filesystem.GetFilename(mapFileName));
 	parser->AddString("fullName", mapFileName);
