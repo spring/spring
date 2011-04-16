@@ -102,6 +102,15 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 
 		CFileHandler tileFile(smtFilePath);
 
+		if (!tileFile.FileExists()) {
+			//! try absolute path
+			if (!smtHeaderOverride) {
+				smtFilePath = smtFileName;
+			} else {
+				smtFilePath = smf.smtFileNames[a];
+			}
+			tileFile = CFileHandler(smtFilePath);
+		}
 
 		if (!tileFile.FileExists()) {
 			logOutput.Print(
