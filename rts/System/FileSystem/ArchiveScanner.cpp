@@ -494,7 +494,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	} else {
 		CArchiveBase* ar = CArchiveFactory::OpenArchive(fullName);
 		if (!ar || !ar->IsOpen()) {
-			logOutput.Print(LOG_ARCHIVESCANNER, "Unable to open archive: %s", fullName.c_str());
+			logOutput.Print("Unable to open archive: %s", fullName.c_str());
 			return;
 		}
 
@@ -569,7 +569,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 
 		if (!error.empty()) {
 			//! for some reason, the archive is marked as broken
-			logOutput.Print(LOG_ARCHIVESCANNER, "Failed to scan %s (%s)", fullName.c_str(), error.c_str());
+			logOutput.Print("Failed to scan %s (%s)", fullName.c_str(), error.c_str());
 
 			//! record it as broken, so we don't need to look inside everytime
 			BrokenArchive ba;
