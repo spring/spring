@@ -138,11 +138,15 @@ CEventHandler::CEventHandler()
 	SETUP_EVENT(RenderProjectileDestroyed, MANAGED_BIT | UNSYNCED_BIT);
 
 	// unmanaged call-ins
+	SetupEvent("Shutdown", NULL, 0);
 	SetupEvent("RecvLuaMsg", NULL, 0);
 
 	SetupEvent("AICallIn", NULL, UNSYNCED_BIT);
 	SetupEvent("DrawUnit", NULL, UNSYNCED_BIT);
 	SetupEvent("DrawFeature", NULL, UNSYNCED_BIT);
+
+	// LuaUI
+	SetupEvent("ConfigureLayout", NULL, UNSYNCED_BIT | CONTROL_BIT);
 
 	// LuaRules
 	SetupEvent("CommandFallback",        NULL, CONTROL_BIT);
