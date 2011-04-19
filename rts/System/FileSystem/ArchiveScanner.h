@@ -51,24 +51,15 @@ public:
 		 * code, which could provoke runtime bugs when edited wrong.
 		 * There may well be other info-times supplied by the archive.
 		 */
-		/// ex:  Original Total Annihilation v2.3
-		std::string GetName() const { return GetInfoValueString("name"); }
-		/// ex:  OTA
-		std::string GetShortName() const { return GetInfoValueString("shortName"); }
-		/// ex:  v2.3
-		std::string GetVersion() const { return GetInfoValueString("version"); }
-		/// ex:  deployment
-		std::string GetMutator() const { return GetInfoValueString("mutator"); }
-		/// ex:  Total Annihilation
-		std::string GetGame() const { return GetInfoValueString("game"); }
-		/// ex:  TA
-		std::string GetShortGame() const { return GetInfoValueString("shortGame"); }
-		/// ex:  Little units blowing up other little units
-		std::string GetDescription() const { return GetInfoValueString("description"); }
-		/// in case its a map, store location of smf/sm3 file
-		std::string GetMapFile() const { return GetInfoValueString("mapFile"); }
-		/// 1=primary, 0=hidden, 3=map
-		int GetModType() const { return GetInfoValueInteger("modType"); }
+		std::string GetName() const { return GetInfoValueString("name"); }               /// ex:  Original Total Annihilation v2.3
+		std::string GetShortName() const { return GetInfoValueString("shortName"); }     /// ex:  OTA
+		std::string GetVersion() const { return GetInfoValueString("version"); }         /// ex:  v2.3
+		std::string GetMutator() const { return GetInfoValueString("mutator"); }         /// ex:  deployment
+		std::string GetGame() const { return GetInfoValueString("game"); }               /// ex:  Total Annihilation
+		std::string GetShortGame() const { return GetInfoValueString("shortGame"); }     /// ex:  TA
+		std::string GetDescription() const { return GetInfoValueString("description"); } /// ex:  Little units blowing up other little units
+		std::string GetMapFile() const { return GetInfoValueString("mapFile"); }         /// in case its a map, store location of smf/sm3 file
+		int GetModType() const { return GetInfoValueInteger("modType"); }                /// 1=primary, 0=hidden, 3=map
 
 		const std::map<std::string, InfoItem>& GetInfo() const { return info; }
 		std::vector<InfoItem> GetInfoItems() const;
@@ -95,10 +86,9 @@ public:
 		InfoItem& EnsureInfoItem(const std::string& key);
 
 		std::map<std::string, InfoItem> info;
-		/// Archives we depend on
-		std::vector<std::string> dependencies;
-		/// This archive obsoletes these archives
-		std::vector<std::string> replaces;
+		
+		std::vector<std::string> dependencies; /// Archives we depend on
+		std::vector<std::string> replaces;     /// This archive obsoletes these archives
 	};
 
 	CArchiveScanner();
@@ -180,7 +170,7 @@ private:
 	IFileFilter* CreateIgnoreFilter(CArchiveBase* ar);
 	/**
 	 * Get CRC of the data in the specified archive.
-     * Returns 0 if file could not be opened.
+	 * Returns 0 if file could not be opened.
 	 */
 	unsigned int GetCRC(const std::string& filename);
 	bool isDirty;
