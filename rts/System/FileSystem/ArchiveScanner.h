@@ -39,10 +39,6 @@ public:
 	public:
 		ArchiveData();
 
-		void SetInfoItemValueString(const std::string& key, const std::string& value);
-		void SetInfoItemValueInteger(const std::string& key, int value);
-		void SetInfoItemValueFloat(const std::string& key, float value);
-		void SetInfoItemValueBool(const std::string& key, bool value);
 
 		/*
 		 * These methods are only here for convenience and compile time checks.
@@ -70,7 +66,12 @@ public:
 		const std::vector<std::string>& GetReplaces() const { return replaces; }
 		std::vector<std::string>& GetReplaces() { return replaces; }
 
+		void SetInfoItemValueString(const std::string& key, const std::string& value);
+		void SetInfoItemValueInteger(const std::string& key, int value);
+		void SetInfoItemValueFloat(const std::string& key, float value);
+		void SetInfoItemValueBool(const std::string& key, bool value);
 		static bool IsReservedKey(const std::string& keyLower);
+		static std::string GetKeyDescription(const std::string& keyLower);
 
 	private:
 		InfoValueType GetInfoValueType(const std::string& key) const;
@@ -82,7 +83,6 @@ public:
 		InfoItem* GetInfoItem(const std::string& key);
 		const InfoItem* GetInfoItem(const std::string& key) const;
 
-		static std::string GetKeyDescription(const std::string& keyLower);
 		InfoItem& EnsureInfoItem(const std::string& key);
 
 		std::map<std::string, InfoItem> info;
