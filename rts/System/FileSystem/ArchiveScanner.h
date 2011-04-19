@@ -37,8 +37,8 @@ public:
 	class ArchiveData
 	{
 	public:
-		ArchiveData();
-
+		ArchiveData() {};
+		ArchiveData(const LuaTable& archiveTable);
 
 		/*
 		 * These methods are only here for convenience and compile time checks.
@@ -70,6 +70,9 @@ public:
 		void SetInfoItemValueInteger(const std::string& key, int value);
 		void SetInfoItemValueFloat(const std::string& key, float value);
 		void SetInfoItemValueBool(const std::string& key, bool value);
+
+		bool IsValid(std::string& error) const;
+
 		static bool IsReservedKey(const std::string& keyLower);
 		static std::string GetKeyDescription(const std::string& keyLower);
 
@@ -159,14 +162,13 @@ private:
 
 	void ScanArchive(const std::string& fullName, bool checksum = false);
 	/// scan mapinfo / modinfo lua files
-	bool ScanArchiveLua(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai);
+	bool ScanArchiveLua(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai, std::string& err);
 
 	void ReadCacheData(const std::string& filename);
 	void WriteCacheData(const std::string& filename);
 
 	std::map<std::string, ArchiveInfo> archiveInfo;
 	std::map<std::string, BrokenArchive> brokenArchives;
-	ArchiveData GetArchiveData(const LuaTable& archiveTable);
 	IFileFilter* CreateIgnoreFilter(CArchiveBase* ar);
 	/**
 	 * Get CRC of the data in the specified archive.
