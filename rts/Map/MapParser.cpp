@@ -10,7 +10,9 @@
 
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
+#include "System/Exceptions.h"
 #include "System/Util.h"
+#include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 
 
@@ -36,9 +38,10 @@ MapParser::MapParser(const std::string& mapFileName) : parser(NULL)
 {
 	const std::string mapConfig = GetMapConfigName(mapFileName);
 
-	parser = new LuaParser("mapinfo.lua", SPRING_VFS_MAP_BASE, SPRING_VFS_MAP_BASE);
-	if (!parser->IsValid()) {
-		delete parser; parser = NULL;
+	CFileHandler f("mapinfo.lua", SPRING_VFS_MAP_BASE);
+	if (f.FileExists()) {
+		parser = new LuaParser("mapinfo.lua", SPRING_VFS_MAP_BASE, SPRING_VFS_MAP_BASE);
+	} else {
 		parser = new LuaParser("maphelper/mapinfo.lua", SPRING_VFS_MAP_BASE, SPRING_VFS_MAP_BASE);
 	}
 	parser->GetTable("Map");
@@ -58,7 +61,7 @@ MapParser::MapParser(const std::string& mapFileName) : parser(NULL)
 
 	if (!parser->Execute())
 	{
-		// do nothing
+		errorLog = parser->GetErrorLog();
 	}
 }
 
