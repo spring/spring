@@ -46,6 +46,29 @@ CArchiveScanner* archiveScanner = NULL;
 
 
 /*
+ * Engine known (and used?) tags in [map|mod]info.lua
+ */
+struct KnownInfoTag {
+	std::string name;
+	std::string desc;
+	bool must_have;
+};
+
+const KnownInfoTag knownTags[] = {
+	"name",        "example: Original Total Annihilation v2.3", true,
+	"shortname",   "example: OTA", false,
+	"version",     "example: v2.3", false,
+	"mutator",     "example: deployment", false,
+	"game",        "example: Total Annihilation", false,
+	"shortgame",   "example: TA", false,
+	"description", "example: Little units blowing up other little units", false,
+	"mapfile",     "in case its a map, store location of smf/sm3 file", false, //FIXME is this ever used in the engine?! or does it auto calc the location?
+	"modtype",     "1=primary, 0=hidden, 3=map", true,
+	"depend",      "a table with all archives that needs to be loaded for this one", false,
+	"replace",     "a table with archives that got replaced with this one", false
+};
+
+/*
  * CArchiveScanner::ArchiveData
  */
 CArchiveScanner::ArchiveData::ArchiveData(const LuaTable& archiveTable)
@@ -116,31 +139,15 @@ CArchiveScanner::ArchiveData::ArchiveData(const LuaTable& archiveTable)
 
 std::string CArchiveScanner::ArchiveData::GetKeyDescription(const std::string& keyLower)
 {
-	if (keyLower == "name") {
-		return "example: Original Total Annihilation v2.3";
-	} else if (keyLower == "shortname") {
-		return "example: OTA";
-	} else if (keyLower == "version") {
-		return "example: v2.3";
-	} else if (keyLower == "mutator") {
-		return "example: deployment";
-	} else if (keyLower == "game") {
-		return "example: Total Annihilation";
-	} else if (keyLower == "shortgame") {
-		return "example: TA";
-	} else if (keyLower == "description") {
-		return "example: Little units blowing up other little units";
-	} else if (keyLower == "mapfile") {
-		return "in case its a map, store location of smf/sm3 file"; //FIXME is this ever used in the engine?! or does it auto calc the location?
-	} else if (keyLower == "modtype") {
-		return "1=primary, 0=hidden, 3=map";
-	} else if (keyLower == "depend") {
-		return "a table with all archives that needs to be loaded for this one";
-	} else if (keyLower == "replace") {
-		return "a table with archives that got replaced with this one";
-	} else {
-		return "<custom property>";
+	static const int extCount = sizeof(knownTags) / sizeof(KnownInfoTag);
+	for (int i = 0; i < extCount; ++i) {
+		const KnownInfoTag tag = knownTags[i];
+		if (keyLower == tag.name) {
+			return tag.desc;
+		}
 	}
+
+	return "<custom property>";
 }
 
 
@@ -153,8 +160,15 @@ bool CArchiveScanner::ArchiveData::IsReservedKey(const std::string& keyLower)
 bool CArchiveScanner::ArchiveData::IsValid(std::string& err) const
 {
 	std::string missingtag;
-	if     (info.find("name") == info.end()) missingtag = "name";
-	else if (info.find("modtype") == info.end()) missingtag = "modtype";
+	
+	static const int extCount = sizeof(knownTags) / sizeof(KnownInfoTag);
+	for (int i = 0; i < extCount; ++i) {
+		const KnownInfoTag tag = knownTags[i];
+		if (tag.must_have && (info.find(tag.name) == info.end())) {
+			missingtag = tag.name;
+			break;
+		}
+	}
 
 	if (missingtag.empty()) {
 		return true;
