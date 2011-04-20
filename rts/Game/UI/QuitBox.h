@@ -33,11 +33,19 @@ private:
 	ContainerBox teamBox;
 	ContainerBox quitBox;
 	ContainerBox cancelBox;
+	ContainerBox scrollbarBox;
+	ContainerBox scrollBox;
 
 	int shareTeam;
 	bool noAlliesLeft;
 
 	bool moveBox;
+
+	int startTeam;
+	int numTeamsDisp;
+	bool scrolling;
+	float scrollGrab;
+	bool hasScroll;
 };
 
 #endif // _QUIT_BOX_H
