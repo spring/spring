@@ -1,8 +1,6 @@
-// AssParser.cpp: implementation of the CAssParser class. Reads 3D formats supported by Assimp lib.
-//
-//////////////////////////////////////////////////////////////////////
-//#include "StdAfx.h"
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+//#include "StdAfx.h"
 #include "Util.h"
 #include "LogOutput.h"
 #include "Platform/errorhandler.h"
@@ -48,10 +46,10 @@
 // Convert Assimp quaternion to radians around x, y and z
 float3 QuaternionToRadianAngles( aiQuaternion q1 )
 {
-    float sqw = q1.w*q1.w;
-    float sqx = q1.x*q1.x;
-    float sqy = q1.y*q1.y;
-    float sqz = q1.z*q1.z;
+	float sqw = q1.w*q1.w;
+	float sqx = q1.x*q1.x;
+	float sqy = q1.y*q1.y;
+	float sqz = q1.z*q1.z;
 	float unit = sqx + sqy + sqz + sqw; // if normalised is one, otherwise is correction factor
 	float test = q1.x*q1.y + q1.z*q1.w;
 
@@ -64,9 +62,9 @@ float3 QuaternionToRadianAngles( aiQuaternion q1 )
 		result.x = -2 * atan2(q1.x,q1.w);
 		result.y = -PI/2;
 	} else {
-        result.x = atan2(2*q1.y*q1.w-2*q1.x*q1.z , sqx - sqy - sqz + sqw);
-        result.y = asin(2*test/unit);
-        result.z = atan2(2*q1.x*q1.w-2*q1.y*q1.z , -sqx + sqy - sqz + sqw);
+		result.x = atan2(2*q1.y*q1.w-2*q1.x*q1.z , sqx - sqy - sqz + sqw);
+		result.y = asin(2*test/unit);
+		result.z = atan2(2*q1.x*q1.w-2*q1.y*q1.z , -sqx + sqy - sqz + sqw);
 	}
 	return result;
 }
@@ -74,9 +72,9 @@ float3 QuaternionToRadianAngles( aiQuaternion q1 )
 // Convert float3 rotations in degrees to radians
 void DegreesToRadianAngles( float3& angles )
 {
-    angles.x *= DEGTORAD;
-    angles.y *= DEGTORAD;
-    angles.z *= DEGTORAD;
+	angles.x *= DEGTORAD;
+	angles.y *= DEGTORAD;
+	angles.z *= DEGTORAD;
 }
 
 class AssLogStream : public Assimp::LogStream
@@ -96,18 +94,18 @@ S3DModel* CAssParser::Load(const std::string& modelFileName)
 {
 	logOutput.Print (LOG_MODEL, "Loading model: %s\n", modelFileName.c_str() );
 	std::string modelPath = modelFileName.substr(0, modelFileName.find_last_of('/'));
-    std::string modelFileNameNoPath = modelFileName.substr(modelPath.length()+1, modelFileName.length());
-    std::string modelName = modelFileNameNoPath.substr(0, modelFileNameNoPath.find_last_of('.'));
-    std::string modelExt = modelFileNameNoPath.substr(modelFileNameNoPath.find_last_of('.'), modelFileName.length());
+	std::string modelFileNameNoPath = modelFileName.substr(modelPath.length()+1, modelFileName.length());
+	std::string modelName = modelFileNameNoPath.substr(0, modelFileNameNoPath.find_last_of('.'));
+	std::string modelExt = modelFileNameNoPath.substr(modelFileNameNoPath.find_last_of('.'), modelFileName.length());
 
-    // LOAD METADATA
+	// LOAD METADATA
 	// Load the lua metafile. This contains properties unique to Spring models and must return a table
 	std::string metaFileName = modelFileName + ".lua";
 	CFileHandler* metaFile = new CFileHandler(metaFileName);
 	if (!metaFile->FileExists()) {
 	    // Try again without the model file extension
-        metaFileName = modelPath + '/' + modelName + ".lua";
-        metaFile = new CFileHandler(metaFileName);
+		metaFileName = modelPath + '/' + modelName + ".lua";
+		metaFile = new CFileHandler(metaFileName);
 	}
 	LuaParser metaFileParser(metaFileName, SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	if (!metaFileParser.Execute()) {
@@ -119,12 +117,12 @@ S3DModel* CAssParser::Load(const std::string& modelFileName)
 	}
 	// Get the (root-level) model table
 	const LuaTable& metaTable = metaFileParser.GetRoot();
-    if (metaTable.IsValid()) logOutput.Print(LOG_MODEL, "Found valid model metadata in '%s'", metaFileName.c_str());
+	if (metaTable.IsValid()) logOutput.Print(LOG_MODEL, "Found valid model metadata in '%s'", metaFileName.c_str());
 
 
-    // LOAD MODEL DATA
+	// LOAD MODEL DATA
 	// Create a model importer instance
- 	Assimp::Importer importer;
+	Assimp::Importer importer;
 
 	// Create a logger for debugging model loading issues
 	Assimp::DefaultLogger::create("",Assimp::Logger::VERBOSE);
@@ -134,87 +132,87 @@ S3DModel* CAssParser::Load(const std::string& modelFileName)
 	// Give the importer an IO class that handles Spring's VFS
 	importer.SetIOHandler( new AssVFSSystem() );
 
-    // Speed-up processing by skipping things we don't need
-    importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS, aiComponent_CAMERAS|aiComponent_LIGHTS|aiComponent_TEXTURES|aiComponent_ANIMATIONS);
+	// Speed-up processing by skipping things we don't need
+	importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS, aiComponent_CAMERAS|aiComponent_LIGHTS|aiComponent_TEXTURES|aiComponent_ANIMATIONS);
 
 	// Read the model file to build a scene object
 	logOutput.Print(LOG_MODEL, "Importing model file: %s\n", modelFileName.c_str() );
 	const aiScene* scene = importer.ReadFile( modelFileName, ASS_POSTPROCESS_OPTIONS );
 	if (scene != NULL) {
 		logOutput.Print(LOG_MODEL, "Processing scene for model: %s (%d meshes / %d materials / %d textures)", modelFileName.c_str(), scene->mNumMeshes, scene->mNumMaterials, scene->mNumTextures );
-    } else {
+	} else {
 		logOutput.Print (LOG_MODEL, "Model Import Error: %s\n",  importer.GetErrorString());
 	}
 
-    S3DModel* model = new S3DModel;
-    model->name = modelFileName;
+	S3DModel* model = new S3DModel;
+	model->name = modelFileName;
 	model->type = MODELTYPE_ASS;
 	model->numPieces = 0;
 	model->scene = scene;
-    //model->meta = &metaTable;
+	//model->meta = &metaTable;
 
-    // Assign textures
-    // The S3O texture handler uses two textures.
-    // The first contains diffuse color (RGB) and teamcolor (A)
-    // The second contains glow (R), reflectivity (G) and 1-bit Alpha (A).
-    if (metaTable.KeyExists("tex1")) {
-        model->tex1 = metaTable.GetString("tex1", "default.png");
-    } else {
-        // Search for a texture
-        std::vector<std::string> files = CFileHandler::FindFiles("unittextures/", modelName + ".*");
-        for(std::vector<std::string>::iterator fi = files.begin(); fi != files.end(); ++fi) {
-            std::string texPath = std::string(*fi);
-            model->tex1 = texPath.substr(texPath.find('/')+1, texPath.length());
-            break; // there can be only one!
-        }
-    }
-    if (metaTable.KeyExists("tex2")) {
-        model->tex2 = metaTable.GetString("tex2", "");
-    } else {
-        // Search for a texture
-        std::vector<std::string> files = CFileHandler::FindFiles("unittextures/", modelName + "2.*");
-        for(std::vector<std::string>::iterator fi = files.begin(); fi != files.end(); ++fi) {
-            std::string texPath = std::string(*fi);
-            model->tex2 = texPath.substr(texPath.find('/')+1, texPath.length());
-            break; // there can be only one!
-        }
-    }
-    model->flipTexY = metaTable.GetBool("fliptextures", true); // Flip texture upside down
-    model->invertTexAlpha = metaTable.GetBool("invertteamcolor", true); // Reverse teamcolor levels
+	// Assign textures
+	// The S3O texture handler uses two textures.
+	// The first contains diffuse color (RGB) and teamcolor (A)
+	// The second contains glow (R), reflectivity (G) and 1-bit Alpha (A).
+	if (metaTable.KeyExists("tex1")) {
+		model->tex1 = metaTable.GetString("tex1", "default.png");
+	} else {
+		// Search for a texture
+		std::vector<std::string> files = CFileHandler::FindFiles("unittextures/", modelName + ".*");
+		for(std::vector<std::string>::iterator fi = files.begin(); fi != files.end(); ++fi) {
+			std::string texPath = std::string(*fi);
+			model->tex1 = texPath.substr(texPath.find('/')+1, texPath.length());
+			break; // there can be only one!
+		}
+	}
+	if (metaTable.KeyExists("tex2")) {
+		model->tex2 = metaTable.GetString("tex2", "");
+	} else {
+		// Search for a texture
+		std::vector<std::string> files = CFileHandler::FindFiles("unittextures/", modelName + "2.*");
+		for(std::vector<std::string>::iterator fi = files.begin(); fi != files.end(); ++fi) {
+			std::string texPath = std::string(*fi);
+			model->tex2 = texPath.substr(texPath.find('/')+1, texPath.length());
+			break; // there can be only one!
+		}
+	}
+	model->flipTexY = metaTable.GetBool("fliptextures", true); // Flip texture upside down
+	model->invertTexAlpha = metaTable.GetBool("invertteamcolor", true); // Reverse teamcolor levels
 
-    // Load textures
-    logOutput.Print(LOG_MODEL, "Loading textures. Tex1: '%s' Tex2: '%s'", model->tex1.c_str(), model->tex2.c_str());
-    texturehandlerS3O->LoadS3OTexture(model);
+	// Load textures
+	logOutput.Print(LOG_MODEL, "Loading textures. Tex1: '%s' Tex2: '%s'", model->tex1.c_str(), model->tex2.c_str());
+	texturehandlerS3O->LoadS3OTexture(model);
 
-    // Load all pieces in the model
-    logOutput.Print(LOG_MODEL, "Loading pieces from root node '%s'", scene->mRootNode->mName.data);
-    LoadPiece( model, scene->mRootNode, metaTable );
+	// Load all pieces in the model
+	logOutput.Print(LOG_MODEL, "Loading pieces from root node '%s'", scene->mRootNode->mName.data);
+	LoadPiece( model, scene->mRootNode, metaTable );
 
-    // Update piece hierarchy based on metadata
-    BuildPieceHierarchy( model );
+	// Update piece hierarchy based on metadata
+	BuildPieceHierarchy( model );
 
-    // Simplified dimensions used for rough calculations
-    model->radius = metaTable.GetFloat("radius", model->radius);
-    model->height = metaTable.GetFloat("height", model->height);
-    model->relMidPos = metaTable.GetFloat3("midpos", model->relMidPos);
-    model->mins = metaTable.GetFloat3("mins", model->mins);
-    model->maxs = metaTable.GetFloat3("maxs", model->maxs);
+	// Simplified dimensions used for rough calculations
+	model->radius = metaTable.GetFloat("radius", model->radius);
+	model->height = metaTable.GetFloat("height", model->height);
+	model->relMidPos = metaTable.GetFloat3("midpos", model->relMidPos);
+	model->mins = metaTable.GetFloat3("mins", model->mins);
+	model->maxs = metaTable.GetFloat3("maxs", model->maxs);
 
-    // Calculate model dimensions if not set
-    if (!metaTable.KeyExists("mins") || !metaTable.KeyExists("maxs")) CalculateMinMax( model->rootPiece );
-    if (model->radius < 0.0001f) CalculateRadius( model );
-    if (model->height < 0.0001f) CalculateHeight( model );
+	// Calculate model dimensions if not set
+	if (!metaTable.KeyExists("mins") || !metaTable.KeyExists("maxs")) CalculateMinMax( model->rootPiece );
+	if (model->radius < 0.0001f) CalculateRadius( model );
+	if (model->height < 0.0001f) CalculateHeight( model );
 
-    // Verbose logging of model properties
-    logOutput.Print(LOG_MODEL_DETAIL, "model->name: %s", model->name.c_str());
-    logOutput.Print(LOG_MODEL_DETAIL, "model->numobjects: %d", model->numPieces);
-    logOutput.Print(LOG_MODEL_DETAIL, "model->radius: %f", model->radius);
-    logOutput.Print(LOG_MODEL_DETAIL, "model->height: %f", model->height);
-    logOutput.Print(LOG_MODEL_DETAIL, "model->mins: (%f,%f,%f)", model->mins[0], model->mins[1], model->mins[2]);
-    logOutput.Print(LOG_MODEL_DETAIL, "model->maxs: (%f,%f,%f)", model->maxs[0], model->maxs[1], model->maxs[2]);
+	// Verbose logging of model properties
+	logOutput.Print(LOG_MODEL_DETAIL, "model->name: %s", model->name.c_str());
+	logOutput.Print(LOG_MODEL_DETAIL, "model->numobjects: %d", model->numPieces);
+	logOutput.Print(LOG_MODEL_DETAIL, "model->radius: %f", model->radius);
+	logOutput.Print(LOG_MODEL_DETAIL, "model->height: %f", model->height);
+	logOutput.Print(LOG_MODEL_DETAIL, "model->mins: (%f,%f,%f)", model->mins[0], model->mins[1], model->mins[2]);
+	logOutput.Print(LOG_MODEL_DETAIL, "model->maxs: (%f,%f,%f)", model->maxs[0], model->maxs[1], model->maxs[2]);
 
-    logOutput.Print (LOG_MODEL, "Model %s Imported.", model->name.c_str());
-    return model;
+	logOutput.Print (LOG_MODEL, "Model %s Imported.", model->name.c_str());
+	return model;
 }
 
 SAssPiece* CAssParser::LoadPiece(S3DModel* model, aiNode* node, const LuaTable& metaTable)
@@ -227,21 +225,21 @@ SAssPiece* CAssParser::LoadPiece(S3DModel* model, aiNode* node, const LuaTable& 
 	piece->model = model;
 	piece->isEmpty = node->mNumMeshes == 0;
 
-    if (node->mParent) {
-        piece->name = std::string(node->mName.data);
+	if (node->mParent) {
+		piece->name = std::string(node->mName.data);
 	} else {
-        piece->name = "root"; // The real model root
+		piece->name = "root"; // The real model root
 	}
 	logOutput.Print(LOG_PIECE, "Converting node '%s' to piece '%s' (%d meshes).", node->mName.data, piece->name.c_str(), node->mNumMeshes);
 
-    // Load additional piece properties from metadata
-    const LuaTable& pieceTable = metaTable.SubTable("pieces").SubTable(piece->name);
-    if (pieceTable.IsValid()) logOutput.Print(LOG_PIECE, "Found metadata for piece '%s'", piece->name.c_str());
+	// Load additional piece properties from metadata
+	const LuaTable& pieceTable = metaTable.SubTable("pieces").SubTable(piece->name);
+	if (pieceTable.IsValid()) logOutput.Print(LOG_PIECE, "Found metadata for piece '%s'", piece->name.c_str());
 
-    // Process transforms
-    float3 rotate, scale, offset;
+	// Process transforms
+	float3 rotate, scale, offset;
 	aiVector3D _scale, _offset;
- 	aiQuaternion _rotate;
+	aiQuaternion _rotate;
 	node->mTransformation.Decompose(_scale,_rotate,_offset);
 
 	logOutput.Print(LOG_PIECE, "(%d:%s) Assimp offset (%f,%f,%f), rotate (%f,%f,%f), scale (%f,%f,%f)", model->numPieces, piece->name.c_str(),
@@ -251,25 +249,25 @@ SAssPiece* CAssParser::LoadPiece(S3DModel* model, aiNode* node, const LuaTable& 
 	);
 
 	offset = pieceTable.GetFloat3("offset", float3(_offset.x, _offset.y, _offset.z));
-    offset.x = pieceTable.GetFloat("offsetx", offset.x);
-    offset.y = pieceTable.GetFloat("offsety", offset.y);
-    offset.z = pieceTable.GetFloat("offsetz", offset.z);
+	offset.x = pieceTable.GetFloat("offsetx", offset.x);
+	offset.y = pieceTable.GetFloat("offsety", offset.y);
+	offset.z = pieceTable.GetFloat("offsetz", offset.z);
 
-    if (pieceTable.KeyExists("rotate")) {
-        rotate = pieceTable.GetFloat3("rotate", float3(0.0f, 0.0f, 0.0f));
-        DegreesToRadianAngles(rotate);
-    } else {
-        rotate = QuaternionToRadianAngles(_rotate);
-        rotate = float3(rotate.z, rotate.x, rotate.y);
-    }
-    if (pieceTable.KeyExists("rotatex")) rotate.x = pieceTable.GetFloat("rotatex", 0.0f) * DEGTORAD;
-    if (pieceTable.KeyExists("rotatey")) rotate.y = pieceTable.GetFloat("rotatey", 0.0f) * DEGTORAD;
-    if (pieceTable.KeyExists("rotatez")) rotate.z = pieceTable.GetFloat("rotatez", 0.0f) * DEGTORAD;
+	if (pieceTable.KeyExists("rotate")) {
+		rotate = pieceTable.GetFloat3("rotate", float3(0.0f, 0.0f, 0.0f));
+		DegreesToRadianAngles(rotate);
+	} else {
+		rotate = QuaternionToRadianAngles(_rotate);
+		rotate = float3(rotate.z, rotate.x, rotate.y);
+	}
+	if (pieceTable.KeyExists("rotatex")) rotate.x = pieceTable.GetFloat("rotatex", 0.0f) * DEGTORAD;
+	if (pieceTable.KeyExists("rotatey")) rotate.y = pieceTable.GetFloat("rotatey", 0.0f) * DEGTORAD;
+	if (pieceTable.KeyExists("rotatez")) rotate.z = pieceTable.GetFloat("rotatez", 0.0f) * DEGTORAD;
 
 	scale = pieceTable.GetFloat3("scale", float3(_scale.x, _scale.z, _scale.y));
-    scale.x = pieceTable.GetFloat("scalex", scale.x);
-    scale.y = pieceTable.GetFloat("scaley", scale.y);
-    scale.z = pieceTable.GetFloat("scalez", scale.z);
+	scale.x = pieceTable.GetFloat("scalex", scale.x);
+	scale.y = pieceTable.GetFloat("scaley", scale.y);
+	scale.z = pieceTable.GetFloat("scalez", scale.z);
 
 	logOutput.Print(LOG_PIECE, "(%d:%s) Relative offset (%f,%f,%f), rotate (%f,%f,%f), scale (%f,%f,%f)", model->numPieces, piece->name.c_str(),
 		offset.x, offset.y, offset.z,
@@ -363,7 +361,7 @@ SAssPiece* CAssParser::LoadPiece(S3DModel* model, aiNode* node, const LuaTable& 
 		if ( mesh->HasFaces() ) {
 			logOutput.Print(LOG_PIECE_DETAIL, "Processing faces for mesh %d (%d faces)", meshIndex, mesh->mNumFaces);
 			for ( unsigned faceIndex = 0; faceIndex < mesh->mNumFaces; faceIndex++ ) {
-                aiFace& face = mesh->mFaces[faceIndex];
+				aiFace& face = mesh->mFaces[faceIndex];
 				// get the vertex belonging to the mesh
 				for ( unsigned vertexListID = 0; vertexListID < face.mNumIndices; vertexListID++ ) {
 					unsigned int vertexID = mesh_vertex_mapping[face.mIndices[vertexListID]];
@@ -374,30 +372,30 @@ SAssPiece* CAssParser::LoadPiece(S3DModel* model, aiNode* node, const LuaTable& 
 		}
 	}
 
-    // Check if piece is special (ie, used to set Spring model properties)
-    if (strcmp(node->mName.data, "SpringHeight") == 0) {
-        // Set the model height to this nodes Z value
-        if (!metaTable.KeyExists("height")) {
-            model->height = piece->offset.z;
-            logOutput.Print (LOG_MODEL, "Model height of %f set by special node 'SpringHeight'", model->height);
-        }
-        return NULL;
-    }
-    if (strcmp(node->mName.data, "SpringRadius") == 0) {
-        if (!metaTable.KeyExists("midpos")) {
-            model->relMidPos = float3(piece->offset.x, piece->offset.z, piece->offset.y); // Y and Z are swapped because this piece isn't rotated
-            logOutput.Print (LOG_MODEL, "Model midpos of (%f,%f,%f) set by special node 'SpringRadius'", model->relMidPos.x, model->relMidPos.y, model->relMidPos.z);
-        }
-        if (!metaTable.KeyExists("radius")) {
-            if (piece->maxs.x <= 0.00001f) {
-                model->radius = piece->scale.x; // the blender import script only sets the scale property
-            } else {
-                model->radius = piece->maxs.x; // use the transformed mesh extents
-            }
-            logOutput.Print (LOG_MODEL, "Model radius of %f set by special node 'SpringRadius'", model->radius);
-        }
-        return NULL;
-    }
+	// Check if piece is special (ie, used to set Spring model properties)
+	if (strcmp(node->mName.data, "SpringHeight") == 0) {
+		// Set the model height to this nodes Z value
+		if (!metaTable.KeyExists("height")) {
+			model->height = piece->offset.z;
+			logOutput.Print (LOG_MODEL, "Model height of %f set by special node 'SpringHeight'", model->height);
+		}
+		return NULL;
+	}
+	if (strcmp(node->mName.data, "SpringRadius") == 0) {
+		if (!metaTable.KeyExists("midpos")) {
+			model->relMidPos = float3(piece->offset.x, piece->offset.z, piece->offset.y); // Y and Z are swapped because this piece isn't rotated
+			logOutput.Print (LOG_MODEL, "Model midpos of (%f,%f,%f) set by special node 'SpringRadius'", model->relMidPos.x, model->relMidPos.y, model->relMidPos.z);
+		}
+		if (!metaTable.KeyExists("radius")) {
+			if (piece->maxs.x <= 0.00001f) {
+				model->radius = piece->scale.x; // the blender import script only sets the scale property
+			} else {
+				model->radius = piece->maxs.x; // use the transformed mesh extents
+			}
+			logOutput.Print (LOG_MODEL, "Model radius of %f set by special node 'SpringRadius'", model->radius);
+		}
+		return NULL;
+	}
 
 	// collision volume for piece (not sure about these coords)
 	const float3 cvScales = (piece->maxs) - (piece->mins);
@@ -405,24 +403,24 @@ SAssPiece* CAssParser::LoadPiece(S3DModel* model, aiNode* node, const LuaTable& 
 	//const float3 cvOffset(piece->offset.x, piece->offset.y, piece->offset.z);
 	piece->colvol = new CollisionVolume("box", cvScales, cvOffset, CollisionVolume::COLVOL_HITTEST_CONT);
 
-    // Get parent name from metadata or model
-    if (pieceTable.KeyExists("parent")) {
-        piece->parentName = pieceTable.GetString("parent", "");
-    } else if (node->mParent) {
-        if (node->mParent->mParent) {
-            piece->parentName = std::string(node->mParent->mName.data);
-        } else { // my parent is the root, which gets renamed
-            piece->parentName = "root";
-        }
-    } else {
-        piece->parentName = "";
-    }
+	// Get parent name from metadata or model
+	if (pieceTable.KeyExists("parent")) {
+		piece->parentName = pieceTable.GetString("parent", "");
+	} else if (node->mParent) {
+		if (node->mParent->mParent) {
+			piece->parentName = std::string(node->mParent->mName.data);
+		} else { // my parent is the root, which gets renamed
+			piece->parentName = "root";
+		}
+	} else {
+		piece->parentName = "";
+	}
 
-    logOutput.Print(LOG_PIECE, "Loaded model piece: %s with %d meshes\n", piece->name.c_str(), node->mNumMeshes );
+	logOutput.Print(LOG_PIECE, "Loaded model piece: %s with %d meshes\n", piece->name.c_str(), node->mNumMeshes );
 
-    // Verbose logging of piece properties
-    logOutput.Print(LOG_PIECE, "piece->name: %s", piece->name.c_str());
-    logOutput.Print(LOG_PIECE, "piece->parent: %s", piece->parentName.c_str());
+	// Verbose logging of piece properties
+	logOutput.Print(LOG_PIECE, "piece->name: %s", piece->name.c_str());
+	logOutput.Print(LOG_PIECE, "piece->parent: %s", piece->parentName.c_str());
 
 	// Recursively process all child pieces
 	for (unsigned int i = 0; i < node->mNumChildren; ++i) {
@@ -436,37 +434,37 @@ SAssPiece* CAssParser::LoadPiece(S3DModel* model, aiNode* node, const LuaTable& 
 // Because of metadata overrides we don't know the true hierarchy until all pieces have been loaded
 void CAssParser::BuildPieceHierarchy( S3DModel* model )
 {
-    // Loop through all pieces and create missing hierarchy info
-    ModelPieceMap::const_iterator end = model->pieces.end();
-    for (ModelPieceMap::const_iterator it = model->pieces.begin(); it != end; ++it)
-    {
-        S3DModelPiece* piece = it->second;
-        if (piece->name == "root") {
-            piece->parent = NULL;
-            model->SetRootPiece(piece);
-        } else if (piece->parentName != "") {
-            piece->parent = model->FindPiece(piece->parentName);
-            if (piece->parent == NULL) {
-                logOutput.Print( LOG_PIECE, "Error: Missing piece '%s' declared as parent of '%s'.\n", piece->parentName.c_str(), piece->name.c_str() );
-            } else {
-                piece->parent->childs.push_back(piece);
-            }
-        } else {
-            // A piece with no parent that isn't the root (orphan)
-            piece->parent = model->FindPiece("root");
-            if (piece->parent == NULL) {
-                logOutput.Print( LOG_PIECE, "Error: Missing root piece.\n" );
-            } else {
-                piece->parent->childs.push_back(piece);
-            }
-        }
-    }
+	// Loop through all pieces and create missing hierarchy info
+	ModelPieceMap::const_iterator end = model->pieces.end();
+	for (ModelPieceMap::const_iterator it = model->pieces.begin(); it != end; ++it)
+	{
+		S3DModelPiece* piece = it->second;
+		if (piece->name == "root") {
+			piece->parent = NULL;
+			model->SetRootPiece(piece);
+		} else if (piece->parentName != "") {
+			piece->parent = model->FindPiece(piece->parentName);
+			if (piece->parent == NULL) {
+				logOutput.Print( LOG_PIECE, "Error: Missing piece '%s' declared as parent of '%s'.\n", piece->parentName.c_str(), piece->name.c_str() );
+			} else {
+				piece->parent->childs.push_back(piece);
+			}
+		} else {
+			// A piece with no parent that isn't the root (orphan)
+			piece->parent = model->FindPiece("root");
+			if (piece->parent == NULL) {
+				logOutput.Print( LOG_PIECE, "Error: Missing root piece.\n" );
+			} else {
+				piece->parent->childs.push_back(piece);
+			}
+		}
+	}
 }
 
 // Iterate over the model and calculate its overall dimensions
 void CAssParser::CalculateMinMax( S3DModelPiece* piece )
 {
-    piece->goffset = piece->parent ? piece->parent->goffset + piece->offset : piece->offset;
+	piece->goffset = piece->parent ? piece->parent->goffset + piece->offset : piece->offset;
 
 	// update model min/max extents
 	piece->model->mins.x = std::min(piece->goffset.x + piece->mins.x, piece->model->mins.x);
@@ -485,15 +483,15 @@ void CAssParser::CalculateMinMax( S3DModelPiece* piece )
 // Calculate model radius from the min/max extents
 void CAssParser::CalculateRadius( S3DModel* model )
 {
-    model->radius = std::max(model->radius, model->maxs.x);
-    model->radius = std::max(model->radius, model->maxs.y);
-    model->radius = std::max(model->radius, model->maxs.z);
+	model->radius = std::max(model->radius, model->maxs.x);
+	model->radius = std::max(model->radius, model->maxs.y);
+	model->radius = std::max(model->radius, model->maxs.z);
 }
 
 // Calculate model height from the min/max extents
 void CAssParser::CalculateHeight( S3DModel* model )
 {
-    model->height = model->maxs.z;
+	model->height = model->maxs.z;
 }
 
 void DrawPiecePrimitive( const S3DModelPiece* o)
