@@ -180,6 +180,9 @@ void DataDirLocater::LocateDataDirs()
 		}
 	}
 
+	// if this true, ie var is present in env, we'll only add the dir where both binary and unitysnc lib reside in Portable mode
+	const bool true_portable_mode = ( getenv("SPRING_PORTABLE") != NULL );
+
 #if       defined(UNITSYNC)
 	const std::string dd_curWorkDir = Platform::GetModulePath();
 #else  // defined(UNITSYNC)
@@ -250,56 +253,61 @@ void DataDirLocater::LocateDataDirs()
 	datadirs.clear();
 	// The first dir added will be the writeable data dir.
 
-	// same on all platforms
-	AddDirs(dd_env);    // ENV{SPRING_DATADIR}
-	// user defined in spring config handler
-	// (Linux: ~/.springrc, Windows: .\springsettings.cfg)
-	AddDirs(SubstEnvVars(configHandler->GetString("SpringData", "")));
+	if ( !true_portable_mode )
+	{
+		// same on all platforms
+		AddDirs(dd_env);    // ENV{SPRING_DATADIR}
+		// user defined in spring config handler
+		// (Linux: ~/.springrc, Windows: .\springsettings.cfg)
+		AddDirs(SubstEnvVars(configHandler->GetString("SpringData", "")));
 
 #ifdef WIN32
-	// All MS Windows variants
+		// All MS Windows variants
 
-	if ((dd_curWorkDirParent != "") && LooksLikeMultiVersionDataDir(dd_curWorkDirParent)) {
-		AddDirs(dd_curWorkDirParent); // "../"
-	} else if (IsPortableMode()) { // we can not add both ./ and ../ as data-dir
-		AddDirs(dd_curWorkDir); // "./"
-	}
-	AddDirs(dd_myDocsMyGames);  // "C:/.../My Documents/My Games/Spring/"
-	AddDirs(dd_myDocs);         // "C:/.../My Documents/Spring/"
-	AddDirs(dd_appData);        // "C:/.../All Users/Applications/Spring/"
+		if ((dd_curWorkDirParent != "") && LooksLikeMultiVersionDataDir(dd_curWorkDirParent)) {
+			AddDirs(dd_curWorkDirParent); // "../"
+		} else if (IsPortableMode()) { // we can not add both ./ and ../ as data-dir
+			AddDirs(dd_curWorkDir); // "./"
+		}
+		AddDirs(dd_myDocsMyGames);  // "C:/.../My Documents/My Games/Spring/"
+		AddDirs(dd_myDocs);         // "C:/.../My Documents/Spring/"
+		AddDirs(dd_appData);        // "C:/.../All Users/Applications/Spring/"
 
 #elif defined(MACOSX_BUNDLE)
-	// Mac OS X
+		// Mac OS X
 
-	// Maps and mods are supposed to be located in spring's executable location on Mac, but unitsync
-	// cannot find them since it does not know spring binary path. I have no idea but to force users
-	// to locate lobby executables in the same as spring's dir and add its location to search dirs.
-	#ifdef UNITSYNC
-	AddDirs(dd_curWorkDir);     // "./"
-	#endif
+		// Maps and mods are supposed to be located in spring's executable location on Mac, but unitsync
+		// cannot find them since it does not know spring binary path. I have no idea but to force users
+		// to locate lobby executables in the same as spring's dir and add its location to search dirs.
+		#ifdef UNITSYNC
+		AddDirs(dd_curWorkDir);     // "./"
+		#endif
 
-	// libs and data are supposed to be located in subdirectories of spring executable, so they
-	// sould be added instead of SPRING_DATADIR definition.
-	AddDirs(dd_curWorkDirData); // "./data/"
-	AddDirs(dd_curWorkDirLib);  // "./lib/"
+		// libs and data are supposed to be located in subdirectories of spring executable, so they
+		// sould be added instead of SPRING_DATADIR definition.
+		AddDirs(dd_curWorkDirData); // "./data/"
+		AddDirs(dd_curWorkDirLib);  // "./lib/"
 
 #else
-	// Linux, FreeBSD, Solaris, Apple non-bundle
+		// Linux, FreeBSD, Solaris, Apple non-bundle
 
-	if ((dd_curWorkDirParent != "") && LooksLikeMultiVersionDataDir(dd_curWorkDirParent)) {
-		AddDirs(dd_curWorkDirParent); // "../"
-	} else if (IsPortableMode()) { // we can not add both ./ and ../ as data-dir
-		// always using this would be unclean, because spring and unitsync
-		// would end up with different sets of data-dirs
-		AddDirs(dd_curWorkDir); // "./"
-	}
-	AddDirs(SubstEnvVars("$HOME/.spring")); // "~/.spring/"
-	AddDirs(dd_etc);            // from /etc/spring/datadir
+		if ((dd_curWorkDirParent != "") && LooksLikeMultiVersionDataDir(dd_curWorkDirParent)) {
+			AddDirs(dd_curWorkDirParent); // "../"
+		} else if (IsPortableMode()) { // we can not add both ./ and ../ as data-dir
+			// always using this would be unclean, because spring and unitsync
+			// would end up with different sets of data-dirs
+			AddDirs(dd_curWorkDir); // "./"
+		}
+		AddDirs(SubstEnvVars("$HOME/.spring")); // "~/.spring/"
+		AddDirs(dd_etc);            // from /etc/spring/datadir
 #endif
 
 #ifdef SPRING_DATADIR
-	AddDirs(SubstEnvVars(SPRING_DATADIR)); // from -DSPRING_DATADIR
+		AddDirs(SubstEnvVars(SPRING_DATADIR)); // from -DSPRING_DATADIR
 #endif
+	}
+	else
+		AddDirs(dd_curWorkDir);
 
 	// Figure out permissions of all datadirs
 	DeterminePermissions();
