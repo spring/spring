@@ -26,6 +26,13 @@ struct aiScene;
 
 typedef std::map<std::string, S3DModelPiece*> ModelPieceMap;
 
+
+/**
+ * S3DModel
+ * A 3D model definition. Holds the vertices data, texture data, piece tree & default geometric data of those.
+ * The S3DModel is static and shouldn't change once created, instead LocalModel is used by each agent.
+ */
+
 struct S3DModelPiece {
 	S3DModelPiece()
 		: model(NULL)
@@ -61,7 +68,7 @@ struct S3DModelPiece {
 	std::string parentName;
 	std::vector<S3DModelPiece*> childs;
 
-    S3DModel* model;
+	S3DModel* model;
 	S3DModelPiece* parent;
 	CollisionVolume* colvol;
 
@@ -113,8 +120,8 @@ struct S3DModel
 	int id;                 //! unsynced ID, starting with 1
 	int type;               //! MODELTYPE_*
 	int textureType;        //! FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or OBJ)
-	bool flipTexY;			//! Turn both textures upside down before use
-	bool invertTexAlpha;	//! Invert teamcolor alpha channel in S3O texture 1
+	bool flipTexY;          //! Turn both textures upside down before use
+	bool invertTexAlpha;    //! Invert teamcolor alpha channel in S3O texture 1
 
 	float radius;
 	float height;
@@ -124,12 +131,16 @@ struct S3DModel
 	float3 relMidPos;
 
 	int numPieces;
-    S3DModelPiece* rootPiece;   //! The piece at the base of the model hierarchy
-    ModelPieceMap pieces;       //! Lookup table for pieces by name
-    const aiScene* scene;       //! Assimp scene containing all loaded model data. NULL for S30/3DO.
+	S3DModelPiece* rootPiece;   //! The piece at the base of the model hierarchy
+	ModelPieceMap pieces;       //! Lookup table for pieces by name
+	const aiScene* scene;       //! Assimp scene containing all loaded model data. NULL for S30/3DO.
 };
 
 
+/**
+ * LocalModel
+ * Instance of S3DModel. Container for the geometric properties & piece visibility status of the agent's instance of a 3d model.
+ */
 
 struct LocalModelPiece
 {
