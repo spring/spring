@@ -213,13 +213,9 @@ void C3DModelLoader::CreateLocalModel(CUnit* unit)
 
 
 
-LocalModel* C3DModelLoader::CreateLocalModel(S3DModel* model)
+LocalModel* C3DModelLoader::CreateLocalModel(S3DModel* model) //FIXME redundant???
 {
-	unsigned int pieceNum = 0;
-
 	LocalModel* lModel = new LocalModel(model);
-	lModel->CreatePieces(model->GetRootPiece(), &pieceNum);
-
 	return lModel;
 }
 
