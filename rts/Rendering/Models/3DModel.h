@@ -61,9 +61,9 @@ struct S3DModelPiece {
 	      CollisionVolume* GetCollisionVolume()       { return colvol; }
 
 	unsigned int GetChildCount() const { return childs.size(); }
-	S3DModelPiece* GetChild(unsigned int i) { return childs[i]; }
+	S3DModelPiece* GetChild(unsigned int i) const { return childs[i]; }
 
-
+public:
 	std::string name;
 	std::string parentName;
 	std::vector<S3DModelPiece*> childs;
@@ -108,11 +108,12 @@ struct S3DModel
 	{
 	}
 
-	S3DModelPiece* GetRootPiece() { return rootPiece; }
+	S3DModelPiece* GetRootPiece() const { return rootPiece; }
 	void SetRootPiece(S3DModelPiece* p) { rootPiece = p; }
 	void DrawStatic() const { rootPiece->DrawStatic(); }
 	S3DModelPiece* FindPiece(std::string name);
 
+public:
 	std::string name;
 	std::string tex1;
 	std::string tex2;
@@ -144,23 +145,8 @@ struct S3DModel
 
 struct LocalModelPiece
 {
-	LocalModelPiece()
-		: visible(false)
-		, colvol(NULL)
-		, original(NULL)
-		, parent(NULL)
-		, dispListID(0)
-	{
-	}
-
-	void Init(S3DModelPiece* piece) {
-		original   =  piece;
-		dispListID =  piece->dispListID;
-		visible    = !piece->isEmpty;
-		pos        =  piece->offset;
-
-		childs.reserve(piece->childs.size());
-	}
+	LocalModelPiece(const S3DModelPiece* piece);
+	~LocalModelPiece();
 
 	void AddChild(LocalModelPiece* c) { childs.push_back(c); }
 	void SetParent(LocalModelPiece* p) { parent = p; }
@@ -175,11 +161,10 @@ struct LocalModelPiece
 	bool GetEmitDirPos(float3& pos, float3& dir) const;
 	CMatrix44f GetMatrix() const;
 
-	void SetCollisionVolume(CollisionVolume* cv) { colvol = cv; }
 	const CollisionVolume* GetCollisionVolume() const { return colvol; }
 	      CollisionVolume* GetCollisionVolume()       { return colvol; }
 
-
+public:
 	float3 pos;
 	float3 rot; //! in radian
 
@@ -187,7 +172,7 @@ struct LocalModelPiece
 	bool visible;
 
 	CollisionVolume* colvol;
-	S3DModelPiece* original;
+	const S3DModelPiece* original;
 
 	LocalModelPiece* parent;
 	std::vector<LocalModelPiece*> childs;
@@ -199,23 +184,27 @@ struct LocalModelPiece
 struct LocalModel
 {
 	LocalModel(const S3DModel* model)
-		: type(model->type)
+		: original(model)
+		, type(model->type)
 		, lodCount(0)
 	{
-		pieces.reserve(model->numPieces);
-
 		assert(model->numPieces >= 1);
-
-		for (unsigned int i = 0; i < model->numPieces; i++) {
-			pieces.push_back(new LocalModelPiece());
-		}
+		pieces.reserve(model->numPieces);
+		CreateLocalModelPieces(model->GetRootPiece());
+		assert(pieces.size() == model->numPieces);
 	}
 
-	~LocalModel();
-	void CreatePieces(S3DModelPiece*, unsigned int*);
+	~LocalModel()
+	{
+		//! delete the local piece copies
+		for (std::vector<LocalModelPiece*>::iterator pi = pieces.begin(); pi != pieces.end(); ++pi) {
+			delete *pi;
+		}
+		pieces.clear();
+	}
 
-	LocalModelPiece* GetPiece(unsigned int i) { return pieces[i]; }
-	LocalModelPiece* GetRoot() { return GetPiece(0); }
+	LocalModelPiece* GetPiece(unsigned int i) const { return pieces[i]; }
+	LocalModelPiece* GetRoot() const { return GetPiece(0); }
 
 	void Draw() const { pieces[0]->Draw(); }
 	void DrawLOD(unsigned int lod) const { if (lod <= lodCount) pieces[0]->DrawLOD(lod); }
@@ -228,6 +217,11 @@ struct LocalModel
 	float3 GetRawPieceDirection(int piecenum) const;
 	void GetRawEmitDirPos(int piecenum, float3& pos, float3& dir) const;
 
+private:
+	LocalModelPiece* CreateLocalModelPieces(const S3DModelPiece* mpParent, size_t pieceNum = 0);
+
+public:
+	const S3DModel* original;
 
 	int type;  //! MODELTYPE_*
 	unsigned int lodCount;

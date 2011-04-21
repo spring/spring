@@ -17,9 +17,9 @@
 #include "System/LogOutput.h"
 
 
-//////////////////////////////////////////////////////////////////////
-// S3DModel
-//
+/** ****************************************************************************************************
+ * S3DModel
+ */
 
 S3DModelPiece* S3DModel::FindPiece( std::string name )
 {
@@ -29,9 +29,9 @@ S3DModelPiece* S3DModel::FindPiece( std::string name )
 }
 
 
-//////////////////////////////////////////////////////////////////////
-// S3DModelPiece
-//
+/** ****************************************************************************************************
+ * S3DModelPiece
+ */
 
 void S3DModelPiece::DrawStatic() const
 {
@@ -52,21 +52,23 @@ S3DModelPiece::~S3DModelPiece()
 }
 
 
+/** ****************************************************************************************************
+ * LocalModel
+ */
 
-/******************************************************************************/
-/******************************************************************************/
-//
-//  LocalModel
-//
-
-LocalModel::~LocalModel()
+LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParent, size_t pieceNum)
 {
-	// delete the local piece copies
-	for (std::vector<LocalModelPiece*>::iterator pi = pieces.begin(); pi != pieces.end(); ++pi) {
-		delete (*pi)->GetCollisionVolume();
-		delete (*pi);
+	LocalModelPiece* lmpParent = new LocalModelPiece(mpParent);
+	pieces.push_back(lmpParent);
+
+	LocalModelPiece* lmpChild = NULL;
+	for (unsigned int i = 0; i < mpParent->GetChildCount(); i++) {
+		lmpChild = CreateLocalModelPieces(mpParent->GetChild(i), ++pieceNum);
+		lmpChild->SetParent(lmpParent);
+		lmpParent->AddChild(lmpChild);
 	}
-	pieces.clear();
+
+	return lmpParent;
 }
 
 
@@ -95,48 +97,43 @@ CMatrix44f LocalModel::GetRawPieceMatrix(int piecenum) const
 }
 
 
-
-
 void LocalModel::GetRawEmitDirPos(int piecenum, float3 &pos, float3 &dir) const
 {
 	pieces[piecenum]->GetEmitDirPos(pos, dir);
 }
 
 
-//Only useful for special pieces used for emit-sfx
+//! Only useful for special pieces. Used for emit-sfx.
 float3 LocalModel::GetRawPieceDirection(int piecenum) const
 {
 	return pieces[piecenum]->GetDirection();
 }
 
 
+/** ****************************************************************************************************
+ * LocalModelPiece
+ */
 
-void LocalModel::CreatePieces(S3DModelPiece* mpParent, unsigned int* pieceNum) {
-	LocalModelPiece* lmpParent = pieces[*pieceNum];
-	LocalModelPiece* lmpChild = NULL;
+static const float RADTOANG  = 180 / PI;
 
-	lmpParent->Init(mpParent);
-	lmpParent->SetCollisionVolume(new CollisionVolume(mpParent->GetCollisionVolume()));
+LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
+{
+	assert(piece);
+	original   =  piece;
+	dispListID =  piece->dispListID;
+	visible    = !piece->isEmpty;
+	pos        =  piece->offset;
+	colvol     =  new CollisionVolume(piece->GetCollisionVolume());
+	childs.reserve(piece->childs.size());
 
-	for (unsigned int i = 0; i < mpParent->GetChildCount(); i++) {
-		lmpChild = pieces[ ++(*pieceNum) ];
-
-		lmpChild->SetParent(lmpParent);
-		lmpParent->AddChild(lmpChild);
-
-		CreatePieces(mpParent->GetChild(i), pieceNum);
-	}
+	parent = NULL; //FIXME?
 }
 
 
+LocalModelPiece::~LocalModelPiece() {
+	delete colvol;
+}
 
-/******************************************************************************/
-/******************************************************************************/
-//
-//  LocalModelPiece
-//
-
-static const float RADTOANG  = 180 / PI;
 
 void LocalModelPiece::Draw() const
 {
@@ -226,8 +223,8 @@ void LocalModelPiece::SetLODCount(unsigned int count)
 
 
 #if defined(USE_GML) && defined(__GNUC__) && (__GNUC__ == 4)
-// This is supposed to fix some GCC crashbug related to threading
-// The MOVAPS SSE instruction is otherwise getting misaligned data
+//! This is supposed to fix some GCC crashbug related to threading
+//! The MOVAPS SSE instruction is otherwise getting misaligned data
 __attribute__ ((force_align_arg_pointer))
 #endif
 float3 LocalModelPiece::GetPos() const
@@ -237,7 +234,7 @@ float3 LocalModelPiece::GetPos() const
 
 	mat.Translate(original->GetPosOffset());
 
-	// we use a 'right' vector, and the positive x axis points to the left
+	//! we use a 'right' vector, and the positive x axis points to the left
 	float3 pos = mat.GetPos();
 	pos.x = -pos.x;
 	return pos;
@@ -292,7 +289,7 @@ bool LocalModelPiece::GetEmitDirPos(float3& pos, float3& dir) const
 		return false;
 	}
 
-	// we use a 'right' vector, and the positive x axis points to the left
+	//! we use a 'right' vector, and the positive x axis points to the left
 	pos.x = -pos.x;
 	dir.x = -dir.x;
 
