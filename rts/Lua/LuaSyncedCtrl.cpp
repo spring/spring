@@ -463,7 +463,6 @@ int LuaSyncedCtrl::KillTeam(lua_State* L)
 
 int LuaSyncedCtrl::GameOver(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
 	if (!lua_istable(L, 1)) {
 		luaL_error(L, "Incorrect arguments to GameOver()");
 	}
@@ -1801,7 +1800,7 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 	const bool affectLocal  = lua_toboolean(L, 3);
 	const bool affectGlobal = lua_toboolean(L, 4);
 	const bool enableLocal  = lua_toboolean(L, 5);
-	const bool enableGlobal = lua_toboolean(L, 6);
+	const bool enableGlobal = lua_toboolean(L, 6); //FIXME remove!!!!!!
 
 	if (pieceIndex < 0 || pieceIndex >= localModel->pieces.size()) {
 		return 0;
@@ -1811,8 +1810,8 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 		return 0;
 	}
 
-	LocalModelPiece* lmp = localModel->pieces[pieceIndex];
-	S3DModelPiece*   omp = lmp->original;
+	LocalModelPiece* lmp     = localModel->pieces[pieceIndex];
+	//const S3DModelPiece* omp = lmp->original;
 
 	const float xs  = luaL_checkfloat(L,  7);
 	const float ys  = luaL_checkfloat(L,  8);
@@ -1839,7 +1838,7 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 			lmp->GetCollisionVolume()->Disable();
 		}
 	}
-
+/*
 	if (affectGlobal) {
 		// affects all future units with this model
 		if (enableGlobal) {
@@ -1849,6 +1848,7 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 			omp->GetCollisionVolume()->Disable();
 		}
 	}
+*/
 
 	return 0;
 }
