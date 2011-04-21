@@ -43,6 +43,12 @@ public:
 	 * --------------------------
 	 * (descending priority -> first entry is searched first)
 	 *
+	 *	If the environment variable SPRING_PORTABLE is present
+	 *	_only_ Platform::GetProcessExecutablePath() (non-UNITSYNC)
+	 *			or Platform::GetModulePath() (UNITSYNC)
+	 *	will be added.
+	 * It the var is not present, the following hierarchy is observed:
+	 *
 	 * Windows:
 	 * - SPRING_DATADIR env-variable (semi-colon separated list, like PATH)
 	 * - ./springsettings.cfg:SpringData=C:\data (semi-colon separated list)
