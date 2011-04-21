@@ -12,7 +12,7 @@
 #include "3DModelLog.h"
 #include "S3OParser.h"
 #ifdef _MSC_VER
-#define _INC_MATH // a hack to prevent ambiguous math calls
+	#define _INC_MATH // a hack to prevent ambiguous math calls
 #endif
 #include "AssIO.h"
 #include "AssParser.h"
@@ -24,6 +24,10 @@
 #include "aiPostProcess.h"
 #include "DefaultLogger.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
+
+#ifndef BITMAP_NO_OPENGL
+	#include "Rendering/GL/myGL.h"
+#endif
 
 #define IS_QNAN(f) (f != f)
 static float DEGTORAD = PI / 180.f;
@@ -132,6 +136,16 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 
 	// Speed-up processing by skipping things we don't need
 	importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS, aiComponent_CAMERAS|aiComponent_LIGHTS|aiComponent_TEXTURES|aiComponent_ANIMATIONS);
+
+#ifndef BITMAP_NO_OPENGL
+	//! Optimize VBO-Mesh sizes/ranges
+	GLint maxIndices  = 1024;
+	GLint maxVertices = 1024;
+	glGetIntegerv(GL_MAX_ELEMENTS_INDICES,  &maxIndices);
+	glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &maxVertices);
+	importer.SetPropertyInteger(AI_CONFIG_PP_SLM_VERTEX_LIMIT,   maxVertices);
+	importer.SetPropertyInteger(AI_CONFIG_PP_SLM_TRIANGLE_LIMIT, maxIndices/3);
+#endif
 
 	// Read the model file to build a scene object
 	logOutput.Print(LOG_MODEL, "Importing model file: %s\n", modelFilePath.c_str() );
