@@ -9,13 +9,13 @@
 #include <map>
 #include "System/Matrix44f.h"
 
-
-const int
+enum {
 	MODELTYPE_3DO   = 0,
 	MODELTYPE_S3O   = 1,
 	MODELTYPE_OBJ   = 2,
-	MODELTYPE_ASS	= 3, // Model loaded by Assimp library
-	MODELTYPE_OTHER	= 4; // For future use. Still used in some parts of code.
+	MODELTYPE_ASS   = 3, // Model loaded by Assimp library
+	MODELTYPE_OTHER = 4  // For future use. Still used in some parts of code.
+};
 
 struct CollisionVolume;
 struct S3DModel;
