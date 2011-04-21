@@ -26,25 +26,25 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 
 #define IS_QNAN(f) (f != f)
-#define DEGTORAD 0.0174532925
+static float DEGTORAD = PI / 180.f;
 
 // triangulate guarantees the most complex mesh is a triangle
 // sortbytype ensure only 1 type of primitive type per mesh is used
-#define ASS_POSTPROCESS_OPTIONS \
-    aiProcess_RemoveComponent               | \
-	aiProcess_FindInvalidData				| \
-	aiProcess_CalcTangentSpace				| \
-	aiProcess_GenSmoothNormals				| \
-	aiProcess_SplitLargeMeshes				| \
-	aiProcess_Triangulate					| \
-	aiProcess_GenUVCoords             		| \
-	aiProcess_SortByPType					| \
-	aiProcess_JoinIdenticalVertices
+static int ASS_POSTPROCESS_OPTIONS =
+	  aiProcess_RemoveComponent
+	| aiProcess_FindInvalidData
+	| aiProcess_CalcTangentSpace
+	| aiProcess_GenSmoothNormals
+	| aiProcess_Triangulate
+	| aiProcess_GenUVCoords
+	| aiProcess_SortByPType
+	| aiProcess_JoinIdenticalVertices
+	| aiProcess_ImproveCacheLocality
+	| aiProcess_SplitLargeMeshes;
 
-//aiProcess_ImproveCacheLocality
 
 // Convert Assimp quaternion to radians around x, y and z
-float3 QuaternionToRadianAngles( aiQuaternion q1 )
+static float3 QuaternionToRadianAngles(aiQuaternion q1)
 {
 	float sqw = q1.w*q1.w;
 	float sqx = q1.x*q1.x;
@@ -53,7 +53,7 @@ float3 QuaternionToRadianAngles( aiQuaternion q1 )
 	float unit = sqx + sqy + sqz + sqw; // if normalised is one, otherwise is correction factor
 	float test = q1.x*q1.y + q1.z*q1.w;
 
-	float3 result(0.0f, 0.0f, 0.0f);
+	float3 result;
 
 	if (test > 0.499f * unit) { // singularity at north pole
 		result.x = 2 * atan2(q1.x,q1.w);
@@ -70,11 +70,9 @@ float3 QuaternionToRadianAngles( aiQuaternion q1 )
 }
 
 // Convert float3 rotations in degrees to radians
-void DegreesToRadianAngles( float3& angles )
+inline static void DegreesToRadianAngles(float3& angles)
 {
-	angles.x *= DEGTORAD;
-	angles.y *= DEGTORAD;
-	angles.z *= DEGTORAD;
+	angles *= DEGTORAD;
 }
 
 class AssLogStream : public Assimp::LogStream
@@ -90,20 +88,20 @@ public:
 
 
 
-S3DModel* CAssParser::Load(const std::string& modelFileName)
+S3DModel* CAssParser::Load(const std::string& modelFilePath)
 {
-	logOutput.Print (LOG_MODEL, "Loading model: %s\n", modelFileName.c_str() );
-	std::string modelPath = modelFileName.substr(0, modelFileName.find_last_of('/'));
-	std::string modelFileNameNoPath = modelFileName.substr(modelPath.length()+1, modelFileName.length());
+	logOutput.Print (LOG_MODEL, "Loading model: %s\n", modelFilePath.c_str() );
+	std::string modelPath = modelFilePath.substr(0, modelFilePath.find_last_of('/'));
+	std::string modelFileNameNoPath = modelFilePath.substr(modelPath.length()+1, modelFilePath.length());
 	std::string modelName = modelFileNameNoPath.substr(0, modelFileNameNoPath.find_last_of('.'));
-	std::string modelExt = modelFileNameNoPath.substr(modelFileNameNoPath.find_last_of('.'), modelFileName.length());
+	std::string modelExt = modelFileNameNoPath.substr(modelFileNameNoPath.find_last_of('.'), modelFilePath.length());
 
 	// LOAD METADATA
 	// Load the lua metafile. This contains properties unique to Spring models and must return a table
-	std::string metaFileName = modelFileName + ".lua";
+	std::string metaFileName = modelFilePath + ".lua";
 	CFileHandler* metaFile = new CFileHandler(metaFileName);
 	if (!metaFile->FileExists()) {
-	    // Try again without the model file extension
+		// Try again without the model file extension
 		metaFileName = modelPath + '/' + modelName + ".lua";
 		metaFile = new CFileHandler(metaFileName);
 	}
@@ -136,18 +134,17 @@ S3DModel* CAssParser::Load(const std::string& modelFileName)
 	importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS, aiComponent_CAMERAS|aiComponent_LIGHTS|aiComponent_TEXTURES|aiComponent_ANIMATIONS);
 
 	// Read the model file to build a scene object
-	logOutput.Print(LOG_MODEL, "Importing model file: %s\n", modelFileName.c_str() );
-	const aiScene* scene = importer.ReadFile( modelFileName, ASS_POSTPROCESS_OPTIONS );
+	logOutput.Print(LOG_MODEL, "Importing model file: %s\n", modelFilePath.c_str() );
+	const aiScene* scene = importer.ReadFile( modelFilePath, ASS_POSTPROCESS_OPTIONS );
 	if (scene != NULL) {
-		logOutput.Print(LOG_MODEL, "Processing scene for model: %s (%d meshes / %d materials / %d textures)", modelFileName.c_str(), scene->mNumMeshes, scene->mNumMaterials, scene->mNumTextures );
+		logOutput.Print(LOG_MODEL, "Processing scene for model: %s (%d meshes / %d materials / %d textures)", modelFilePath.c_str(), scene->mNumMeshes, scene->mNumMaterials, scene->mNumTextures );
 	} else {
 		logOutput.Print (LOG_MODEL, "Model Import Error: %s\n",  importer.GetErrorString());
 	}
 
 	S3DModel* model = new S3DModel;
-	model->name = modelFileName;
+	model->name = modelFilePath;
 	model->type = MODELTYPE_ASS;
-	model->numPieces = 0;
 	model->scene = scene;
 	//model->meta = &metaTable;
 
