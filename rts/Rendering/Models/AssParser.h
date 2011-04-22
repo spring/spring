@@ -11,6 +11,8 @@ struct aiScene;
 class LuaTable;
 
 struct SAssVertex {
+	SAssVertex() : normal(UpVector), textureX(0.f), textureY(0.f), hasNormal(false), hasTangent(false) {}
+
 	float3 pos;
 	float3 normal;
 	float textureX;
