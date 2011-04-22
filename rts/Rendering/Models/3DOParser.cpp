@@ -412,7 +412,7 @@ void C3DOParser::SimStreamRead(void* buf, int length)
 
 
 
-void S3DOPiece::DrawList() const
+void S3DOPiece::DrawForList() const
 {
 	if (isEmpty) {
 		return;

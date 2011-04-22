@@ -25,7 +25,7 @@ struct SAssPiece: public S3DModelPiece
 {
 	SAssPiece() : node(NULL) {}
 	const float3& GetVertexPos(int idx) const { return vertices[idx].pos; }
-	void DrawList() const;
+	void DrawForList() const;
 	
 public:
 	aiNode* node;

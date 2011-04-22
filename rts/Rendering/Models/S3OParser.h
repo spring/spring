@@ -24,7 +24,7 @@ struct SS3OPiece: public S3DModelPiece {
 		tTangents.clear();
 	}
 
-	void DrawList() const;
+	void DrawForList() const;
 	void SetMinMaxExtends();
 	void SetVertexTangents();
 	int GetVertexCount() const { return vertices.size(); }

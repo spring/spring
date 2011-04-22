@@ -32,7 +32,7 @@ struct S3DOPrimitive {
 struct S3DOPiece: public S3DModelPiece {
 	S3DOPiece() { parent = NULL; radius = 0; }
 
-	void DrawList() const;
+	void DrawForList() const;
 	void SetMinMaxExtends();
 	int GetVertexCount() const { return vertices.size(); }
 	const float3& GetVertexPos(int idx) const { return vertices[idx].pos; }

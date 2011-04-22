@@ -498,7 +498,7 @@ void COBJParser::BuildModelPieceTreeRec(
 
 
 
-void SOBJPiece::DrawList() const
+void SOBJPiece::DrawForList() const
 {
 	if (isEmpty) {
 		return;
