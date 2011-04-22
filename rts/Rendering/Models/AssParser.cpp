@@ -523,11 +523,15 @@ void CAssParser::CalculateMinMax(S3DModelPiece* piece)
 }
 
 //! Calculate model radius from the min/max extents
-void CAssParser::CalculateRadius( S3DModel* model )
+void CAssParser::CalculateRadius(S3DModel* model)
 {
-	model->radius = std::max(model->radius, model->maxs.x);
-	model->radius = std::max(model->radius, model->maxs.y);
-	model->radius = std::max(model->radius, model->maxs.z);
+	model->radius = std::max(model->radius, math::fabs(model->maxs.x));
+	model->radius = std::max(model->radius, math::fabs(model->maxs.y));
+	model->radius = std::max(model->radius, math::fabs(model->maxs.z));
+
+	model->radius = std::max(model->radius, math::fabs(model->mins.x));
+	model->radius = std::max(model->radius, math::fabs(model->mins.y));
+	model->radius = std::max(model->radius, math::fabs(model->mins.z));
 }
 
 //! Calculate model height from the min/max extents
