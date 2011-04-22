@@ -414,20 +414,17 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 			//! vertex tangent, x is positive in texture axis
 			if (mesh->HasTangentsAndBitangents()) {
 				logOutput.Print(LOG_PIECE_DETAIL, "Fetching tangent for vertex %d", vertexIndex );
-				aiVector3D& aiTangent = mesh->mTangents[vertexIndex];
-				aiVector3D& aiBitangent = mesh->mBitangents[vertexIndex];
+				const aiVector3D& aiTangent = mesh->mTangents[vertexIndex];
+				const aiVector3D& aiBitangent = mesh->mBitangents[vertexIndex];
 				vertex.hasTangent = !IS_QNAN(aiBitangent) && !IS_QNAN(aiTangent);
-				if (vertex.hasTangent) {
-					const float3 tangent(aiTangent.x, aiTangent.y, aiTangent.z);
-					//logOutput.Print(LOG_PIECE_DETAIL, "vertex tangent %d: %f %f %f",vertexIndex, tangent.x, tangent.y,tangent.z);
-					piece->sTangents.push_back(tangent);
 
-					const float3 bitangent(aiBitangent.x, aiBitangent.y, aiBitangent.z);
-					//logOutput.Print(LOG_PIECE_DETAIL, "vertex bitangent %d: %f %f %f",vertexIndex, bitangent.x, bitangent.y,bitangent.z);
-					piece->tTangents.push_back(bitangent);
-				}
-			} else {
-				vertex.hasTangent = false;
+				const float3 tangent(aiTangent.x, aiTangent.y, aiTangent.z);
+				//logOutput.Print(LOG_PIECE_DETAIL, "vertex tangent %d: %f %f %f",vertexIndex, tangent.x, tangent.y,tangent.z);
+				piece->sTangents.push_back(tangent);
+
+				const float3 bitangent(aiBitangent.x, aiBitangent.y, aiBitangent.z);
+				//logOutput.Print(LOG_PIECE_DETAIL, "vertex bitangent %d: %f %f %f",vertexIndex, bitangent.x, bitangent.y,bitangent.z);
+				piece->tTangents.push_back(bitangent);
 			}
 
 			//! vertex texcoords
