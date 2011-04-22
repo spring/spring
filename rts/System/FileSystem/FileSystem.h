@@ -4,7 +4,6 @@
 #define FILESYSTEM_H
 
 #include <vector>
-#include <set>
 #include <string>
 
 // winapi redifines these which breaks things
@@ -97,15 +96,12 @@ class FileSystem
 		 */
 		bool InWriteDir(const std::string& path, const std::string& prefix = "");
 
-		void AllowParentRef(const std::string &dir);
 	private:
-		bool IsAllowedParentRef(const std::string &file, int dpos) const;
 		bool CheckFile(const std::string& file) const;
 //		bool CheckDir(const std::string& dir) const;
 
 //		FileSystem(const FileSystem&);
 //		FileSystem& operator=(const FileSystem&);
-		std::set<std::string> allowedParentRefs;
 };
 
 // basically acts like a namespace, but with semantics like configHandler has

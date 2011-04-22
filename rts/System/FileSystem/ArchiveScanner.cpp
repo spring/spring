@@ -222,7 +222,7 @@ InfoItem& CArchiveScanner::ArchiveData::EnsureInfoItem(const std::string& key)
 		info[keyLower] = infoItem;
 	}
 
-	return info[keyLower];
+	return info.at(keyLower);
 }
 
 void CArchiveScanner::ArchiveData::SetInfoItemValueString(const std::string& key, const std::string& value)
@@ -335,22 +335,15 @@ CArchiveScanner::CArchiveScanner()
 	file << "cache" << (char)FileSystemHandler::GetNativePathSeparator() << "ArchiveCache.lua";
 	cachefile = file.str();
 	FileSystemHandler& fsh = FileSystemHandler::GetInstance();
-	filesystem.AllowParentRef("spring-maps"); // make the folder names unique for spring to reduce the risk that it would -
-	filesystem.AllowParentRef("spring-games"); // be able to access something unrelated to spring in the parent directory
-
 	ReadCacheData(fsh.GetWriteDir() + GetFilename());
 
 	const std::vector<std::string>& datadirs = fsh.GetDataDirectories();
 	std::vector<std::string> scanDirs;
-	std::string parentDir = "..";
-	parentDir += (char)fsh.GetNativePathSeparator();
 	for (std::vector<std::string>::const_reverse_iterator d = datadirs.rbegin(); d != datadirs.rend(); ++d) {
 		scanDirs.push_back(*d + "maps");
-		scanDirs.push_back(*d + parentDir + "spring-maps");
 		scanDirs.push_back(*d + "base");
 		scanDirs.push_back(*d + "games");
-		scanDirs.push_back(*d + parentDir + "spring-games");
-		scanDirs.push_back(*d + "mods"); // deprecated
+		scanDirs.push_back(*d + "mods");
 		scanDirs.push_back(*d + "packages");
 	}
 	ScanDirs(scanDirs, true);
