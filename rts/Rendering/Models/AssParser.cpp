@@ -562,17 +562,15 @@ void CAssParser::CalculateHeight(S3DModel* model)
 }
 
 
-static inline void DrawPiecePrimitive(const SAssPiece* so)
+void SAssPiece::DrawForList() const
 {
-	//FIXME might me better to save all vertices in one VBO and bind this on per model basis instead of per modelpiece!
-	
-	if (so->isEmpty) {
+	if (isEmpty) {
 		return;
 	}
-	logOutput.Print(LOG_PIECE_DETAIL, "Compiling piece %s", so->name.c_str());
+	logOutput.Print(LOG_PIECE_DETAIL, "Compiling piece %s", name.c_str());
 	//! Add GL commands to the pieces displaylist
 
-	const SAssVertex* sAssV = &so->vertices[0];
+	const SAssVertex* sAssV = &vertices[0];
 
 	//! pass the tangents as 3D texture coordinates
 	//! (array elements are float3's, which are 12
@@ -581,15 +579,15 @@ static inline void DrawPiecePrimitive(const SAssPiece* so)
 	//! TODO: test if we have this many texunits
 	//! (if not, could only send the s-tangents)?
 
-	if (!so->sTangents.empty()) {
+	if (!sTangents.empty()) {
 		glClientActiveTexture(GL_TEXTURE5);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &so->sTangents[0].x);
+		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &sTangents[0].x);
 	}
-	if (!so->tTangents.empty()) {
+	if (!tTangents.empty()) {
 		glClientActiveTexture(GL_TEXTURE6);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &so->tTangents[0].x);
+		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &tTangents[0].x);
 	}
 
 	glClientActiveTexture(GL_TEXTURE0);
@@ -603,13 +601,13 @@ static inline void DrawPiecePrimitive(const SAssPiece* so)
 	glNormalPointer(GL_FLOAT, sizeof(SAssVertex), &sAssV->normal.x);
 
 	//! since aiProcess_SortByPType is being used, we're sure we'll get only 1 type here, so combination check isn't needed, also anything more complex than triangles is being split thanks to aiProcess_Triangulate
-	glDrawElements(GL_TRIANGLES, so->vertexDrawOrder.size(), GL_UNSIGNED_INT, &so->vertexDrawOrder[0]);
+	glDrawElements(GL_TRIANGLES, vertexDrawOrder.size(), GL_UNSIGNED_INT, &vertexDrawOrder[0]);
 
-	if (!so->sTangents.empty()) {
+	if (!sTangents.empty()) {
 		glClientActiveTexture(GL_TEXTURE6);
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	}
-	if (!so->tTangents.empty()) {
+	if (!tTangents.empty()) {
 		glClientActiveTexture(GL_TEXTURE5);
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	}
@@ -620,10 +618,5 @@ static inline void DrawPiecePrimitive(const SAssPiece* so)
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
 
-	logOutput.Print(LOG_PIECE_DETAIL, "Completed compiling piece %s", so->name.c_str());
-}
-
-void SAssPiece::DrawList() const
-{
-	DrawPiecePrimitive(this);
+	logOutput.Print(LOG_PIECE_DETAIL, "Completed compiling piece %s", name.c_str());
 }

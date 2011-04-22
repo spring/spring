@@ -142,7 +142,7 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 
 
 
-void SS3OPiece::DrawList() const
+void SS3OPiece::DrawForList() const
 {
 	if (isEmpty) {
 		return;

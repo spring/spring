@@ -205,24 +205,16 @@ void C3DModelLoader::CreateLocalModel(CUnit* unit)
 #if defined(USE_GML) && GML_ENABLE_SIM
 	GML_STDMUTEX_LOCK(model); // CreateLocalModel
 
-	unit->localmodel = CreateLocalModel(unit->model);
+	unit->localmodel = new LocalModel(unit->model);
 	fixLocalModels.insert(unit);
 #else
-	unit->localmodel = CreateLocalModel(unit->model);
+	unit->localmodel = new LocalModel(unit->model);
 	// FixLocalModel(unit);
 #endif
 }
 
 
-
-LocalModel* C3DModelLoader::CreateLocalModel(S3DModel* model) //FIXME redundant???
-{
-	LocalModel* lModel = new LocalModel(model);
-	return lModel;
-}
-
-
-void C3DModelLoader::FixLocalModel(CUnit* unit)
+void C3DModelLoader::FixLocalModel(CUnit* unit) //FIXME rename! (it adds (delayed) the DL-Ids to the localmodel)
 {
 	int piecenum = 0;
 	FixLocalModel(unit->model->GetRootPiece(), unit->localmodel, &piecenum);
@@ -243,7 +235,7 @@ void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 {
 	o->dispListID = glGenLists(1);
 	glNewList(o->dispListID, GL_COMPILE);
-	o->DrawList();
+		o->DrawForList();
 	glEndList();
 
 	for (std::vector<S3DModelPiece*>::iterator bs = o->childs.begin(); bs != o->childs.end(); ++bs) {

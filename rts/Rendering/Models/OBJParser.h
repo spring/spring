@@ -34,7 +34,7 @@ public:
 		tTangents.clear();
 	}
 
-	void DrawList() const;
+	void DrawForList() const;
 	void SetMinMaxExtends();
 	void SetVertexTangents();
 

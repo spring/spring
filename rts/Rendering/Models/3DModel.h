@@ -45,7 +45,7 @@ struct S3DModelPiece {
 	}
 
 	virtual ~S3DModelPiece();
-	virtual void DrawList() const = 0;
+	virtual void DrawForList() const = 0;
 	virtual int GetVertexCount() const { return 0; }
 	virtual int GetNormalCount() const { return 0; }
 	virtual int GetTxCoorCount() const { return 0; }
