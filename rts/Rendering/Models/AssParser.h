@@ -52,15 +52,16 @@ class CAssParser: public IModelParser
 {
 public:
 	S3DModel* Load(const std::string& modelFileName);
-	void Draw(const S3DModelPiece* o) const;
+	static void Draw(const S3DModelPiece* o);
 
 private:
 	static SAssPiece* LoadPiece(SAssModel* model, aiNode* node, const LuaTable& metaTable);
-	void BuildPieceHierarchy(S3DModel* model);
-    void CalculateRadius( S3DModel* model );
-    void CalculateHeight( S3DModel* model );
-    void CalculateMinMax( S3DModelPiece* piece );
+	static void BuildPieceHierarchy(S3DModel* model);
+	static void CalculateRadius(S3DModel* model);
+	static void CalculateHeight(S3DModel* model);
+	static void CalculateMinMax(S3DModelPiece* piece);
 	static void LoadPieceTransformations(SAssPiece* piece, const LuaTable& metaTable);
+	
 	void CalculatePerMeshMinMax(SAssModel* model);
 };
 
