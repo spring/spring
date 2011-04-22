@@ -307,6 +307,20 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 		//FIXME is this really smart?
 		piece->name = "root"; //! The real model root
 	}
+	//! find a new name if none given or if a piece with the same name already exists
+	if (piece->name.empty()) {
+		piece->name = "piece";
+	}
+	ModelPieceMap::const_iterator it = model->pieces.find(piece->name);
+	if (it != model->pieces.end()) {
+		char buf[64];
+		int i = 0;
+		while (it != model->pieces.end()) {
+			SNPRINTF(buf, 64, "%s%02i", piece->name.c_str(), i++);
+			it = model->pieces.find(buf);
+		}
+		piece->name = buf;
+	}
 	logOutput.Print(LOG_PIECE, "Converting node '%s' to piece '%s' (%d meshes).", node->mName.data, piece->name.c_str(), node->mNumMeshes);
 
 	//! Load additional piece properties from metadata
