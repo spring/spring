@@ -152,11 +152,14 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 		logOutput.Print (LOG_MODEL, "Model Import Error: %s\n",  importer.GetErrorString());
 	}
 
-	S3DModel* model = new S3DModel;
+	SAssModel* model = new SAssModel;
 	model->name = modelFilePath;
 	model->type = MODELTYPE_ASS;
 	model->scene = scene;
 	//model->meta = &metaTable;
+
+	//! Gather per mesh info
+	CalculatePerMeshMinMax(model);
 
 	//! Assign textures
 	//! The S3O texture handler uses two textures.
@@ -220,6 +223,28 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 
 	logOutput.Print (LOG_MODEL, "Model %s Imported.", model->name.c_str());
 	return model;
+}
+
+
+void CAssParser::CalculatePerMeshMinMax(SAssModel* model)
+{
+	const aiScene* scene = model->scene;
+
+	model->mesh_minmax.resize(scene->mNumMeshes);
+	for (size_t i = 0; i < scene->mNumMeshes; i++) {
+		const aiMesh& mesh = *scene->mMeshes[i];
+
+		SAssModel::MinMax& minmax = model->mesh_minmax[i];
+		for (size_t vertexIndex= 0; vertexIndex < mesh.mNumVertices; vertexIndex++) {
+			const aiVector3D& aiVertex = mesh.mVertices[vertexIndex];
+			minmax.mins.x = std::min(minmax.mins.x, aiVertex.x);
+			minmax.mins.y = std::min(minmax.mins.y, aiVertex.y);
+			minmax.mins.z = std::min(minmax.mins.z, aiVertex.z);
+			minmax.maxs.x = std::max(minmax.maxs.x, aiVertex.x);
+			minmax.maxs.y = std::max(minmax.maxs.y, aiVertex.y);
+			minmax.maxs.z = std::max(minmax.maxs.z, aiVertex.z);
+		}
+	}
 }
 
 
@@ -304,6 +329,16 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 				(mesh->HasTangentsAndBitangents())?"Y":"N",
 				(mesh->HasTextureCoords(0)?"Y":"N")
 		);
+
+		//! update piece min/max extents
+		SAssModel::MinMax& minmax = model->mesh_minmax[meshIndex];
+		piece->mins.x = std::min(piece->mins.x, minmax.mins.x);
+		piece->mins.y = std::min(piece->mins.y, minmax.mins.y);
+		piece->mins.z = std::min(piece->mins.z, minmax.mins.z);
+		piece->maxs.x = std::max(piece->maxs.x, minmax.maxs.x);
+		piece->maxs.y = std::max(piece->maxs.y, minmax.maxs.y);
+		piece->maxs.z = std::max(piece->maxs.z, minmax.maxs.z);
+
 		//FIXME add piece->vertices.reserve()
 		for ( unsigned vertexIndex= 0; vertexIndex < mesh->mNumVertices; vertexIndex++) {
 			SAssVertex vertex;
@@ -314,15 +349,6 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 			vertex.pos.x = aiVertex.x;
 			vertex.pos.y = aiVertex.y;
 			vertex.pos.z = aiVertex.z;
-
-			//FIXME THIS IS PER MESH DATA!!! save ti per mesh an just load it, instead of iterating all vertices per instance!
-			//! update piece min/max extents
-			piece->mins.x = std::min(piece->mins.x, aiVertex.x);
-			piece->mins.y = std::min(piece->mins.y, aiVertex.y);
-			piece->mins.z = std::min(piece->mins.z, aiVertex.z);
-			piece->maxs.x = std::max(piece->maxs.x, aiVertex.x);
-			piece->maxs.y = std::max(piece->maxs.y, aiVertex.y);
-			piece->maxs.z = std::max(piece->maxs.z, aiVertex.z);
 
 			logOutput.Print(LOG_PIECE_DETAIL, "vertex position %d: %f %f %f", vertexIndex, vertex.pos.x, vertex.pos.y, vertex.pos.z );
 
