@@ -46,6 +46,7 @@ private:
     void CalculateRadius( S3DModel* model );
     void CalculateHeight( S3DModel* model );
     void CalculateMinMax( S3DModelPiece* piece );
+	static void LoadPieceTransformations(SAssPiece* piece, const LuaTable& metaTable);
 };
 
 #endif /* ASSPARSER_H */

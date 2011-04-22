@@ -31,6 +31,7 @@
 
 #define IS_QNAN(f) (f != f)
 static float DEGTORAD = PI / 180.f;
+static float RADTODEG = 180.f / PI;
 
 //! triangulate guarantees the most complex mesh is a triangle
 //! sortbytype ensure only 1 type of primitive type per mesh is used
@@ -73,11 +74,6 @@ static float3 QuaternionToRadianAngles(aiQuaternion q1)
 	return result;
 }
 
-//! Convert float3 rotations in degrees to radians
-inline static void DegreesToRadianAngles(float3& angles)
-{
-	angles *= DEGTORAD;
-}
 
 class AssLogStream : public Assimp::LogStream
 {
@@ -226,10 +222,54 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	return model;
 }
 
-SAssPiece* CAssParser::LoadPiece(S3DModel* model, aiNode* node, const LuaTable& metaTable)
+
+void CAssParser::LoadPieceTransformations(SAssPiece* piece, const LuaTable& pieceMetaTable)
+{
+	//! Process transforms
+	float3 rotate, scale, offset;
+	aiVector3D _scale, _offset;
+	aiQuaternion _rotate;
+	piece->node->mTransformation.Decompose(_scale,_rotate,_offset);
+
+	logOutput.Print(LOG_PIECE, "(%d:%s) Assimp offset (%f,%f,%f), rotate (%f,%f,%f), scale (%f,%f,%f)", piece->model->numPieces, piece->name.c_str(),
+		_offset.x, _offset.y, _offset.z,
+		_rotate.x, _rotate.y, _rotate.z,
+		_scale.x, _scale.y, _scale.z
+	);
+
+	offset   = pieceMetaTable.GetFloat3("offset", float3(_offset.x, _offset.y, _offset.z));
+	offset.x = pieceMetaTable.GetFloat("offsetx", offset.x);
+	offset.y = pieceMetaTable.GetFloat("offsety", offset.y);
+	offset.z = pieceMetaTable.GetFloat("offsetz", offset.z);
+
+	rotate   = QuaternionToRadianAngles(_rotate);
+	rotate   = float3(rotate.z, rotate.x, rotate.y); //! swizzle
+	rotate   = pieceMetaTable.GetFloat3("rotate", rotate * RADTODEG);
+	rotate.x = pieceMetaTable.GetFloat("rotatex", rotate.x);
+	rotate.y = pieceMetaTable.GetFloat("rotatey", rotate.y);
+	rotate.z = pieceMetaTable.GetFloat("rotatez", rotate.z);
+	rotate *= DEGTORAD;
+
+	scale   = pieceMetaTable.GetFloat3("scale", float3(_scale.x, _scale.z, _scale.y));
+	scale.x = pieceMetaTable.GetFloat("scalex", scale.x);
+	scale.y = pieceMetaTable.GetFloat("scaley", scale.y);
+	scale.z = pieceMetaTable.GetFloat("scalez", scale.z);
+
+	logOutput.Print(LOG_PIECE, "(%d:%s) Relative offset (%f,%f,%f), rotate (%f,%f,%f), scale (%f,%f,%f)", piece->model->numPieces, piece->name.c_str(),
+		offset.x, offset.y, offset.z,
+		rotate.x, rotate.y, rotate.z,
+		scale.x, scale.y, scale.z
+	);
+	piece->offset = offset;
+	piece->rot = rotate;
+	piece->scale = scale;
+}
+
+
+SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable& metaTable)
 {
 	//! Create new piece
-	model->numPieces++;
+	++model->numPieces;
 	SAssPiece* piece = new SAssPiece;
 	piece->type = MODELTYPE_OTHER;
 	piece->node = node;
@@ -239,6 +279,7 @@ SAssPiece* CAssParser::LoadPiece(S3DModel* model, aiNode* node, const LuaTable& 
 	if (node->mParent) {
 		piece->name = std::string(node->mName.data);
 	} else {
+		//FIXME is this really smart?
 		piece->name = "root"; //! The real model root
 	}
 	logOutput.Print(LOG_PIECE, "Converting node '%s' to piece '%s' (%d meshes).", node->mName.data, piece->name.c_str(), node->mNumMeshes);
@@ -247,50 +288,11 @@ SAssPiece* CAssParser::LoadPiece(S3DModel* model, aiNode* node, const LuaTable& 
 	const LuaTable& pieceTable = metaTable.SubTable("pieces").SubTable(piece->name);
 	if (pieceTable.IsValid()) logOutput.Print(LOG_PIECE, "Found metadata for piece '%s'", piece->name.c_str());
 
-	//! Process transforms
-	float3 rotate, scale, offset;
-	aiVector3D _scale, _offset;
-	aiQuaternion _rotate;
-	node->mTransformation.Decompose(_scale,_rotate,_offset);
-
-	logOutput.Print(LOG_PIECE, "(%d:%s) Assimp offset (%f,%f,%f), rotate (%f,%f,%f), scale (%f,%f,%f)", model->numPieces, piece->name.c_str(),
-		_offset.x, _offset.y, _offset.z,
-		_rotate.x, _rotate.y, _rotate.z,
-		_scale.x, _scale.y, _scale.z
-	);
-
-	offset = pieceTable.GetFloat3("offset", float3(_offset.x, _offset.y, _offset.z));
-	offset.x = pieceTable.GetFloat("offsetx", offset.x);
-	offset.y = pieceTable.GetFloat("offsety", offset.y);
-	offset.z = pieceTable.GetFloat("offsetz", offset.z);
-
-	if (pieceTable.KeyExists("rotate")) {
-		rotate = pieceTable.GetFloat3("rotate", float3(0.0f, 0.0f, 0.0f));
-		DegreesToRadianAngles(rotate);
-	} else {
-		rotate = QuaternionToRadianAngles(_rotate);
-		rotate = float3(rotate.z, rotate.x, rotate.y);
-	}
-	if (pieceTable.KeyExists("rotatex")) rotate.x = pieceTable.GetFloat("rotatex", 0.0f) * DEGTORAD;
-	if (pieceTable.KeyExists("rotatey")) rotate.y = pieceTable.GetFloat("rotatey", 0.0f) * DEGTORAD;
-	if (pieceTable.KeyExists("rotatez")) rotate.z = pieceTable.GetFloat("rotatez", 0.0f) * DEGTORAD;
-
-	scale = pieceTable.GetFloat3("scale", float3(_scale.x, _scale.z, _scale.y));
-	scale.x = pieceTable.GetFloat("scalex", scale.x);
-	scale.y = pieceTable.GetFloat("scaley", scale.y);
-	scale.z = pieceTable.GetFloat("scalez", scale.z);
-
-	logOutput.Print(LOG_PIECE, "(%d:%s) Relative offset (%f,%f,%f), rotate (%f,%f,%f), scale (%f,%f,%f)", model->numPieces, piece->name.c_str(),
-		offset.x, offset.y, offset.z,
-		rotate.x, rotate.y, rotate.z,
-		scale.x, scale.y, scale.z
-	);
-	piece->offset = offset;
-	piece->rot = rotate;
-	piece->scale = scale;
+	//! Load transforms
+	LoadPieceTransformations(piece, pieceTable);
 
 	//! Get vertex data from node meshes
-	for ( unsigned meshListIndex = 0; meshListIndex < node->mNumMeshes; meshListIndex++ ) {
+	for (unsigned meshListIndex = 0; meshListIndex < node->mNumMeshes; meshListIndex++) {
 		unsigned int meshIndex = node->mMeshes[meshListIndex];
 		logOutput.Print(LOG_PIECE_DETAIL, "Fetching mesh %d from scene", meshIndex );
 		aiMesh* mesh = model->scene->mMeshes[meshIndex];
