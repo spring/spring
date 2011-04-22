@@ -9,7 +9,7 @@
 #include <map>
 #include "System/Matrix44f.h"
 
-enum {
+enum ModelType {
 	MODELTYPE_3DO   = 0,
 	MODELTYPE_S3O   = 1,
 	MODELTYPE_OBJ   = 2,
@@ -40,7 +40,7 @@ struct S3DModelPiece {
 		, colvol(NULL)
 		, isEmpty(true)
 		, dispListID(0)
-		, type(-1)
+		, type(MODELTYPE_OTHER)
 	{
 	}
 
@@ -75,8 +75,7 @@ public:
 	bool isEmpty;
 	unsigned int dispListID;
 
-	//! MODELTYPE_*
-	int type;
+	ModelType type;
 
 	float3 mins;
 	float3 maxs;
@@ -93,7 +92,7 @@ struct S3DModel
 		: tex1("default.png")
 		, tex2("")
 		, id(-1)
-		, type(-1)
+		, type(MODELTYPE_OTHER)
 		, textureType(-1)
 		, flipTexY(false)
 		, invertTexAlpha(false)
@@ -119,7 +118,7 @@ public:
 	std::string tex2;
 
 	int id;                 //! unsynced ID, starting with 1
-	int type;               //! MODELTYPE_*
+	ModelType type;
 	int textureType;        //! FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or OBJ)
 	bool flipTexY;          //! Turn both textures upside down before use
 	bool invertTexAlpha;    //! Invert teamcolor alpha channel in S3O texture 1
@@ -223,7 +222,7 @@ private:
 public:
 	const S3DModel* original;
 
-	int type;  //! MODELTYPE_*
+	ModelType type;
 	unsigned int lodCount;
 
 	std::vector<LocalModelPiece*> pieces;
