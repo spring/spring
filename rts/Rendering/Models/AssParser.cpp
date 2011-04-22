@@ -316,10 +316,53 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 	//! Load transforms
 	LoadPieceTransformations(piece, pieceTable);
 
-	//! Get vertex data from node meshes
+	//! Update piece min/max extents
 	for (unsigned meshListIndex = 0; meshListIndex < node->mNumMeshes; meshListIndex++) {
 		unsigned int meshIndex = node->mMeshes[meshListIndex];
-		logOutput.Print(LOG_PIECE_DETAIL, "Fetching mesh %d from scene", meshIndex );
+		SAssModel::MinMax& minmax = model->mesh_minmax[meshIndex];
+		piece->mins.x = std::min(piece->mins.x, minmax.mins.x);
+		piece->mins.y = std::min(piece->mins.y, minmax.mins.y);
+		piece->mins.z = std::min(piece->mins.z, minmax.mins.z);
+		piece->maxs.x = std::max(piece->maxs.x, minmax.maxs.x);
+		piece->maxs.y = std::max(piece->maxs.y, minmax.maxs.y);
+		piece->maxs.z = std::max(piece->maxs.z, minmax.maxs.z);
+	}
+
+
+	//! Check if piece is special (ie, used to set Spring model properties)
+	if (strcmp(node->mName.data, "SpringHeight") == 0) {
+		//! Set the model height to this nodes Z value
+		if (!metaTable.KeyExists("height")) {
+			model->height = piece->offset.z;
+			logOutput.Print (LOG_MODEL, "Model height of %f set by special node 'SpringHeight'", model->height);
+		}
+		--model->numPieces;
+		delete piece;
+		return NULL;
+	}
+	if (strcmp(node->mName.data, "SpringRadius") == 0) {
+		if (!metaTable.KeyExists("midpos")) {
+			model->relMidPos = float3(piece->offset.x, piece->offset.z, piece->offset.y); //! Y and Z are swapped because this piece isn't rotated
+			logOutput.Print (LOG_MODEL, "Model midpos of (%f,%f,%f) set by special node 'SpringRadius'", model->relMidPos.x, model->relMidPos.y, model->relMidPos.z);
+		}
+		if (!metaTable.KeyExists("radius")) {
+			if (piece->maxs.x <= 0.00001f) {
+				model->radius = piece->scale.x; //! the blender import script only sets the scale property
+			} else {
+				model->radius = piece->maxs.x; //! use the transformed mesh extents
+			}
+			logOutput.Print (LOG_MODEL, "Model radius of %f set by special node 'SpringRadius'", model->radius);
+		}
+		--model->numPieces;
+		delete piece;
+		return NULL;
+	}
+
+
+	//! Get vertex data from node meshes
+	for (unsigned meshListIndex = 0; meshListIndex < node->mNumMeshes; ++meshListIndex) {
+		unsigned int meshIndex = node->mMeshes[meshListIndex];
+		logOutput.Print(LOG_PIECE_DETAIL, "Fetching mesh %d from scene", meshIndex);
 		aiMesh* mesh = model->scene->mMeshes[meshIndex];
 		std::vector<unsigned> mesh_vertex_mapping;
 		//! extract vertex data
@@ -329,15 +372,6 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 				(mesh->HasTangentsAndBitangents())?"Y":"N",
 				(mesh->HasTextureCoords(0)?"Y":"N")
 		);
-
-		//! update piece min/max extents
-		SAssModel::MinMax& minmax = model->mesh_minmax[meshIndex];
-		piece->mins.x = std::min(piece->mins.x, minmax.mins.x);
-		piece->mins.y = std::min(piece->mins.y, minmax.mins.y);
-		piece->mins.z = std::min(piece->mins.z, minmax.mins.z);
-		piece->maxs.x = std::max(piece->maxs.x, minmax.maxs.x);
-		piece->maxs.y = std::max(piece->maxs.y, minmax.maxs.y);
-		piece->maxs.z = std::max(piece->maxs.z, minmax.maxs.z);
 
 		//FIXME add piece->vertices.reserve()
 		for (unsigned vertexIndex= 0; vertexIndex < mesh->mNumVertices; ++vertexIndex) {
@@ -431,7 +465,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 		piece->parentName = "";
 	}
 
-	logOutput.Print(LOG_PIECE, "Loaded model piece: %s with %d meshes\n", piece->name.c_str(), node->mNumMeshes );
+	logOutput.Print(LOG_PIECE, "Loaded model piece: %s with %d meshes\n", piece->name.c_str(), node->mNumMeshes);
 
 	//! Verbose logging of piece properties
 	logOutput.Print(LOG_PIECE, "piece->name: %s", piece->name.c_str());
