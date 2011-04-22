@@ -393,7 +393,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 
 			//! vertex coordinates
 			//logOutput.Print(LOG_PIECE_DETAIL, "Fetching vertex %d from mesh", vertexIndex);
-			aiVector3D& aiVertex = mesh->mVertices[vertexIndex];
+			const aiVector3D& aiVertex = mesh->mVertices[vertexIndex];
 			vertex.pos.x = aiVertex.x;
 			vertex.pos.y = aiVertex.y;
 			vertex.pos.z = aiVertex.z;
@@ -402,7 +402,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 
 			//! vertex normal
 			logOutput.Print(LOG_PIECE_DETAIL, "Fetching normal for vertex %d", vertexIndex);
-			aiVector3D& aiNormal = mesh->mNormals[vertexIndex];
+			const aiVector3D& aiNormal = mesh->mNormals[vertexIndex];
 			vertex.hasNormal = !IS_QNAN(aiNormal);
 			if (vertex.hasNormal) {
 				vertex.normal.x = aiNormal.x;
@@ -442,7 +442,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 		//FIXME add piece->vertexDrawOrder.reserve()
 		logOutput.Print(LOG_PIECE_DETAIL, "Processing faces for mesh %d (%d faces)", meshIndex, mesh->mNumFaces);
 		for (unsigned faceIndex = 0; faceIndex < mesh->mNumFaces; ++faceIndex) {
-			aiFace& face = mesh->mFaces[faceIndex];
+			const aiFace& face = mesh->mFaces[faceIndex];
 			//! get the vertex belonging to the mesh
 			for (unsigned vertexListID = 0; vertexListID < face.mNumIndices; ++vertexListID) {
 				unsigned int vertexID = mesh_vertex_mapping[face.mIndices[vertexListID]];
