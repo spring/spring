@@ -29,9 +29,9 @@ public:
 	aiNode* node;
 	std::vector<SAssVertex> vertices;
 	std::vector<unsigned int> vertexDrawOrder;
-	// cannot store these in SAssVertex
-	std::vector<float3> sTangents; // == T(angent) dirs
-	std::vector<float3> tTangents; // == B(itangent) dirs
+	//! cannot store these in SAssVertex
+	std::vector<float3> sTangents; //! == T(angent) dirs
+	std::vector<float3> tTangents; //! == B(itangent) dirs
 };
 
 struct SAssModel: public S3DModel
