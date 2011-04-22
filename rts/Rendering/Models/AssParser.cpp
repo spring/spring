@@ -551,19 +551,18 @@ void CAssParser::CalculateHeight(S3DModel* model)
 	model->height = model->maxs.z;
 }
 
-static inline void DrawPiecePrimitive(const S3DModelPiece* o)
+
+static inline void DrawPiecePrimitive(const SAssPiece* so)
 {
 	//FIXME might me better to save all vertices in one VBO and bind this on per model basis instead of per modelpiece!
 	
-	if (o->isEmpty) {
+	if (so->isEmpty) {
 		return;
 	}
-	logOutput.Print(LOG_PIECE_DETAIL, "Compiling piece %s", o->name.c_str());
+	logOutput.Print(LOG_PIECE_DETAIL, "Compiling piece %s", so->name.c_str());
 	//! Add GL commands to the pieces displaylist
 
-	const SAssPiece* so = static_cast<const SAssPiece*>(o);
-	const SAssVertex* sAssV = static_cast<const SAssVertex*>(&so->vertices[0]);
-
+	const SAssVertex* sAssV = &so->vertices[0];
 
 	//! pass the tangents as 3D texture coordinates
 	//! (array elements are float3's, which are 12
@@ -611,12 +610,7 @@ static inline void DrawPiecePrimitive(const S3DModelPiece* o)
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
 
-	logOutput.Print(LOG_PIECE_DETAIL, "Completed compiling piece %s", o->name.c_str());
-}
-
-void CAssParser::Draw(const S3DModelPiece* obj)
-{
-	DrawPiecePrimitive(obj);
+	logOutput.Print(LOG_PIECE_DETAIL, "Completed compiling piece %s", so->name.c_str());
 }
 
 void SAssPiece::DrawList() const
