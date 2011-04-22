@@ -307,6 +307,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 		//FIXME is this really smart?
 		piece->name = "root"; //! The real model root
 	}
+
 	//! find a new name if none given or if a piece with the same name already exists
 	if (piece->name.empty()) {
 		piece->name = "piece";
@@ -348,7 +349,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 		//! Set the model height to this nodes Z value
 		if (!metaTable.KeyExists("height")) {
 			model->height = piece->offset.z;
-			logOutput.Print (LOG_MODEL, "Model height of %f set by special node 'SpringHeight'", model->height);
+			logOutput.Print(LOG_MODEL, "Model height of %f set by special node 'SpringHeight'", model->height);
 		}
 		--model->numPieces;
 		delete piece;
@@ -357,7 +358,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 	if (strcmp(node->mName.data, "SpringRadius") == 0) {
 		if (!metaTable.KeyExists("midpos")) {
 			model->relMidPos = float3(piece->offset.x, piece->offset.z, piece->offset.y); //! Y and Z are swapped because this piece isn't rotated
-			logOutput.Print (LOG_MODEL, "Model midpos of (%f,%f,%f) set by special node 'SpringRadius'", model->relMidPos.x, model->relMidPos.y, model->relMidPos.z);
+			logOutput.Print(LOG_MODEL, "Model midpos of (%f,%f,%f) set by special node 'SpringRadius'", model->relMidPos.x, model->relMidPos.y, model->relMidPos.z);
 		}
 		if (!metaTable.KeyExists("radius")) {
 			if (piece->maxs.x <= 0.00001f) {
@@ -365,7 +366,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 			} else {
 				model->radius = piece->maxs.x; //! use the transformed mesh extents
 			}
-			logOutput.Print (LOG_MODEL, "Model radius of %f set by special node 'SpringRadius'", model->radius);
+			logOutput.Print(LOG_MODEL, "Model radius of %f set by special node 'SpringRadius'", model->radius);
 		}
 		--model->numPieces;
 		delete piece;
@@ -453,6 +454,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 	}
 
 	//! collision volume for piece (not sure about these coords)
+	//FIXME add metatable tags for this!!!!
 	const float3 cvScales = piece->maxs - piece->mins;
 	const float3 cvOffset = (piece->maxs - piece->offset) + (piece->mins - piece->offset);
 	//const float3 cvOffset(piece->offset.x, piece->offset.y, piece->offset.z);
