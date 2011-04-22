@@ -90,13 +90,15 @@ C3DModelLoader::~C3DModelLoader()
 
 
 
-inline int ModelExtToModelType(const std::string& ext) {
+static inline ModelType ModelExtToModelType(const std::string& ext) {
 	if (ext == "3do") { return MODELTYPE_3DO; }
 	if (ext == "s3o") { return MODELTYPE_S3O; }
 	if (ext == "obj") { return MODELTYPE_OBJ; }
 	return MODELTYPE_ASS; // FIXME: Return -1 if Assimp cant handle extension
 }
-inline S3DModelPiece* ModelTypeToModelPiece(int type) {
+
+
+static inline S3DModelPiece* ModelTypeToModelPiece(const ModelType& type) {
 	if (type == MODELTYPE_3DO) { return (new S3DOPiece()); }
 	if (type == MODELTYPE_S3O) { return (new SS3OPiece()); }
 	if (type == MODELTYPE_OBJ) { return (new SOBJPiece()); }
