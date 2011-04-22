@@ -196,7 +196,7 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 
 	//! Load all pieces in the model
 	logOutput.Print(LOG_MODEL, "Loading pieces from root node '%s'", scene->mRootNode->mName.data);
-	LoadPiece( model, scene->mRootNode, metaTable );
+	LoadPiece(model, scene->mRootNode, metaTable);
 
 	//! Update piece hierarchy based on metadata
 	BuildPieceHierarchy( model );
@@ -474,7 +474,7 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 }
 
 //! Because of metadata overrides we don't know the true hierarchy until all pieces have been loaded
-void CAssParser::BuildPieceHierarchy( S3DModel* model )
+void CAssParser::BuildPieceHierarchy(S3DModel* model)
 {
 	//! Loop through all pieces and create missing hierarchy info
 	ModelPieceMap::const_iterator end = model->pieces.end();
@@ -504,7 +504,7 @@ void CAssParser::BuildPieceHierarchy( S3DModel* model )
 }
 
 //! Iterate over the model and calculate its overall dimensions
-void CAssParser::CalculateMinMax( S3DModelPiece* piece )
+void CAssParser::CalculateMinMax(S3DModelPiece* piece)
 {
 	piece->goffset = piece->parent ? piece->parent->goffset + piece->offset : piece->offset;
 
@@ -531,12 +531,12 @@ void CAssParser::CalculateRadius( S3DModel* model )
 }
 
 //! Calculate model height from the min/max extents
-void CAssParser::CalculateHeight( S3DModel* model )
+void CAssParser::CalculateHeight(S3DModel* model)
 {
 	model->height = model->maxs.z;
 }
 
-void DrawPiecePrimitive( const S3DModelPiece* o)
+static inline void DrawPiecePrimitive(const S3DModelPiece* o)
 {
 	//FIXME might me better to save all vertices in one VBO and bind this on per model basis instead of per modelpiece!
 	
@@ -599,9 +599,9 @@ void DrawPiecePrimitive( const S3DModelPiece* o)
 	logOutput.Print(LOG_PIECE_DETAIL, "Completed compiling piece %s", o->name.c_str());
 }
 
-void CAssParser::Draw( const S3DModelPiece* o) const
+void CAssParser::Draw(const S3DModelPiece* obj)
 {
-	DrawPiecePrimitive( o );
+	DrawPiecePrimitive(obj);
 }
 
 void SAssPiece::DrawList() const
