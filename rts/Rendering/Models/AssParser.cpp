@@ -44,7 +44,7 @@ static const int ASS_POSTPROCESS_OPTIONS =
 	| aiProcess_GenUVCoords
 	| aiProcess_SortByPType
 	| aiProcess_JoinIdenticalVertices
-	| aiProcess_ImproveCacheLocality
+	//| aiProcess_ImproveCacheLocality FIXME crashes in an assert in VertexTriangleAdjancency.h (date 04/2011)
 	| aiProcess_SplitLargeMeshes;
 
 
