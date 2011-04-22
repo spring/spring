@@ -498,28 +498,32 @@ SAssPiece* CAssParser::LoadPiece(SAssModel* model, aiNode* node, const LuaTable&
 //! Because of metadata overrides we don't know the true hierarchy until all pieces have been loaded
 void CAssParser::BuildPieceHierarchy(S3DModel* model)
 {
+	model->numPieces = 0;
+	
 	//! Loop through all pieces and create missing hierarchy info
-	ModelPieceMap::const_iterator end = model->pieces.end();
-	for (ModelPieceMap::const_iterator it = model->pieces.begin(); it != end; ++it)
+	for (ModelPieceMap::const_iterator it = model->pieces.begin(); it != model->pieces.end(); ++it)
 	{
 		S3DModelPiece* piece = it->second;
 		if (piece->name == "root") {
 			piece->parent = NULL;
-			model->SetRootPiece(piece);
+			model->SetRootPiece(piece); //FIXME what if called multiple times?
+			++model->numPieces;
 		} else if (piece->parentName != "") {
 			piece->parent = model->FindPiece(piece->parentName);
 			if (piece->parent == NULL) {
 				logOutput.Print(LOG_PIECE, "Error: Missing piece '%s' declared as parent of '%s'.\n", piece->parentName.c_str(), piece->name.c_str());
 			} else {
 				piece->parent->childs.push_back(piece);
+				++model->numPieces;
 			}
 		} else {
 			//! A piece with no parent that isn't the root (orphan)
 			piece->parent = model->FindPiece("root");
 			if (piece->parent == NULL) {
-				logOutput.Print( LOG_PIECE, "Error: Missing root piece.\n" );
+				logOutput.Print(LOG_PIECE, "Error: Missing root piece.\n");
 			} else {
 				piece->parent->childs.push_back(piece);
+				++model->numPieces;
 			}
 		}
 	}
