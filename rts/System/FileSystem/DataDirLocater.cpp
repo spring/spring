@@ -186,6 +186,17 @@ void DataDirLocater::LocateDataDirs()
 	const std::string dd_curWorkDir = Platform::GetProcessExecutablePath();
 #endif // defined(UNITSYNC)
 
+	// This is useful in case of multiple engine/unitsync versions installed
+	// together in a sub-dir of the data-dir
+	// The data-dir structure then might look similar to this:
+	// maps/
+	// games/
+	// engines/engine-0.83.0.0.exe
+	// engines/engine-0.83.1.0.exe
+	// unitsyncs/unitsync-0.83.0.0.exe
+	// unitsyncs/unitsync-0.83.1.0.exe
+	const std::string dd_curWorkDirParent = FileSystemHandler::GetParent(dd_curWorkDir);
+
 #if    defined(WIN32)
 	// fetch my documents path
 	TCHAR pathMyDocs[MAX_PATH];
@@ -248,7 +259,9 @@ void DataDirLocater::LocateDataDirs()
 #ifdef WIN32
 	// All MS Windows variants
 
-	if (IsPortableMode()) {
+	if ((dd_curWorkDirParent != "") && LooksLikeMultiVersionDataDir(dd_curWorkDirParent)) {
+		AddDirs(dd_curWorkDirParent); // "../"
+	} else if (IsPortableMode()) { // we can not add both ./ and ../ as data-dir
 		AddDirs(dd_curWorkDir); // "./"
 	}
 	AddDirs(dd_myDocsMyGames);  // "C:/.../My Documents/My Games/Spring/"
@@ -273,7 +286,9 @@ void DataDirLocater::LocateDataDirs()
 #else
 	// Linux, FreeBSD, Solaris, Apple non-bundle
 
-	if (IsPortableMode()) {
+	if ((dd_curWorkDirParent != "") && LooksLikeMultiVersionDataDir(dd_curWorkDirParent)) {
+		AddDirs(dd_curWorkDirParent); // "../"
+	} else if (IsPortableMode()) { // we can not add both ./ and ../ as data-dir
 		// always using this would be unclean, because spring and unitsync
 		// would end up with different sets of data-dirs
 		AddDirs(dd_curWorkDir); // "./"
@@ -361,4 +376,19 @@ bool DataDirLocater::IsPortableMode() {
 #endif // defined(UNITSYNC)
 
 	return portableMode;
+}
+
+bool DataDirLocater::LooksLikeMultiVersionDataDir(const std::string& dirPath) {
+
+	bool looksLikeDataDir = false;
+
+	if (FileSystemHandler::DirExists(dirPath + "/maps")
+			&& FileSystemHandler::DirExists(dirPath + "/games")
+			&& FileSystemHandler::DirExists(dirPath + "/engines")
+			/*&& FileSystemHandler::DirExists(dirPath + "/unitsyncs") TODO uncomment this if the new name for unitsync has been set */)
+	{
+		looksLikeDataDir = true;
+	}
+
+	return looksLikeDataDir;
 }

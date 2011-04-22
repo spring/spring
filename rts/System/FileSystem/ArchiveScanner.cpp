@@ -222,7 +222,7 @@ InfoItem& CArchiveScanner::ArchiveData::EnsureInfoItem(const std::string& key)
 		info[keyLower] = infoItem;
 	}
 
-	return info.at(keyLower);
+	return info[keyLower];
 }
 
 void CArchiveScanner::ArchiveData::SetInfoItemValueString(const std::string& key, const std::string& value)
