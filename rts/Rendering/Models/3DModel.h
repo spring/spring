@@ -103,7 +103,6 @@ struct S3DModel
 		, relMidPos(ZeroVector)
 		, numPieces(0)
 		, rootPiece(NULL)
-		, scene(NULL)
 	{
 	}
 
@@ -133,7 +132,6 @@ public:
 	int numPieces;
 	S3DModelPiece* rootPiece;   //! The piece at the base of the model hierarchy
 	ModelPieceMap pieces;       //! Lookup table for pieces by name
-	const aiScene* scene;       //! Assimp scene containing all loaded model data. NULL for S30/3DO.
 };
 
 
