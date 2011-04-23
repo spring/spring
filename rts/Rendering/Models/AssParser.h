@@ -24,13 +24,24 @@ struct SAssVertex {
 struct SAssPiece: public S3DModelPiece
 {
 	SAssPiece() : node(NULL) {}
-	const float3& GetVertexPos(int idx) const { return vertices[idx].pos; }
+
 	void DrawForList() const;
+	const float3& GetVertexPos(int idx) const { return vertices[idx].pos; }	
+	
+	//FIXME implement
+	//int GetVertexCount() const { return 0; }
+	//int GetNormalCount() const { return 0; }
+	//int GetTxCoorCount() const { return 0; }
+	//void SetMinMaxExtends() {}
+	//void SetVertexTangents() {}
+	//float3 GetPosOffset() const { return ZeroVector; }
+	//void Shatter(float, int, int, const float3&, const float3&) const
 	
 public:
 	aiNode* node;
 	std::vector<SAssVertex> vertices;
 	std::vector<unsigned int> vertexDrawOrder;
+
 	//! cannot store these in SAssVertex
 	std::vector<float3> sTangents; //! == T(angent) dirs
 	std::vector<float3> tTangents; //! == B(itangent) dirs

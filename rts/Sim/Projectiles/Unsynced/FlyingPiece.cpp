@@ -21,7 +21,7 @@ void FlyingPiece::Draw(int modelType, size_t* lastTeam, size_t* lastTex, CVertex
 	if (team != *lastTeam) {
 		*lastTeam = team;
 
-		va->DrawArrayTN(GL_QUADS);
+		va->DrawArrayTN(GL_QUADS); //switch to GL_TRIANGLES?
 		va->Initialize();
 		unitDrawer->SetTeamColour(team);
 	}
