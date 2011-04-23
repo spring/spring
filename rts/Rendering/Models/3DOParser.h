@@ -37,6 +37,7 @@ struct S3DOPiece: public S3DModelPiece {
 	int GetVertexCount() const { return vertices.size(); }
 	const float3& GetVertexPos(int idx) const { return vertices[idx].pos; }
 	float3 GetPosOffset() const {
+		//FIXME merge into float3 offset???
 		float3 p = ZeroVector;
 
 		// fix for 3DO *A units with two-vertex pieces
