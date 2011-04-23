@@ -42,7 +42,7 @@ struct FeatureDef
 
 	bool upright;
 	int drawType;
-	S3DModel* model;
+	mutable S3DModel* model;
 	std::string modelname;
 
 	/// -1 := only if it is the 1st wreckage of the unitdef (default), 0 := no it isn't, 1 := yes it is
