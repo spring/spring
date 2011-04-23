@@ -221,15 +221,16 @@ void CCollisionHandler::IntersectPieceTreeHelper(
 	mat.RotateZ(-rot[2]);
 
 	if (lmp->visible && !vol->IsDisabled()) {
-		CollisionQuery q;
+		mat.Translate(offset);
 
+		CollisionQuery q;
 		if (CCollisionHandler::Intersect(vol, mat, p0, p1, &q)) {
 			q.lmp = lmp;
 			hits->push_back(q);
 		}
-	}
 
-	mat.Translate(-offset);
+		mat.Translate(-offset);
+	}
 
 	for (unsigned int i = 0; i < lmp->childs.size(); i++) {
 		IntersectPieceTreeHelper(lmp->childs[i], mat, p0, p1, hits);
