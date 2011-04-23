@@ -66,12 +66,9 @@ FeatureDef::~FeatureDef() {
 
 S3DModel* FeatureDef::LoadModel() const
 {
-	// not exactly kosher, but...
-	FeatureDef* fdef = const_cast<FeatureDef*>(this);
-
-	if (fdef->model == NULL) {
-		fdef->model = modelParser->Load3DModel(modelname);
+	if (this->model == NULL) {
+		this->model = modelParser->Load3DModel(modelname);
 	}
 
-	return (fdef->model);
+	return (this->model);
 }

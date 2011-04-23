@@ -208,13 +208,12 @@ public:
 	float  flankingBonusMin; ///< damage factor for the most protected direction
 	float  flankingBonusMobilityAdd; ///< how much the ability of the flanking bonus direction to move builds up each frame
 
-	UnitModelDef modelDef;
-
 	std::string objectName;     ///< raw name of the unit's model without objects3d prefix, eg. "armjeth.s3o"
 	std::string scriptName;     ///< the name of the unit's script, e.g. "armjeth.cob"
 	std::string scriptPath;     ///< the path of the unit's script, e.g. "scripts/armjeth.cob"
 
-	float3 modelCenterOffset;	///< offset from the unit model's default center point
+	mutable UnitModelDef modelDef;
+	mutable float3 modelCenterOffset;	///< offset from the unit model's default center point
 
 	bool usePieceCollisionVolumes;		///< if true, projectile collisions are checked per-piece
 
