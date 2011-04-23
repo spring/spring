@@ -151,24 +151,33 @@ struct LocalModelPiece
 	void Draw() const;
 	void DrawLOD(unsigned int lod) const;
 	void SetLODCount(unsigned int count);
+
 	void ApplyTransform() const;
 	void GetPiecePosIter(CMatrix44f* mat) const;
-	float3 GetPos() const;
-	float3 GetDirection() const;
 	bool GetEmitDirPos(float3& pos, float3& dir) const;
+	float3 GetAbsolutePos() const;
+
+	void SetPosition(const float3& p) { pos = p; };
+	void SetRotation(const float3& r) { rot = r; };
+	//void SetDirection(const float3&);
+	const float3& GetPosition() const { return pos; }
+	const float3& GetRotation() const { return rot; }
+	float3 GetDirection() const;
 	CMatrix44f GetMatrix() const;
 
 	const CollisionVolume* GetCollisionVolume() const { return colvol; }
 	      CollisionVolume* GetCollisionVolume()       { return colvol; }
 
-public:
+private:
 	float3 pos;
-	float3 rot; //! in radian
+	float3 rot; //! in radians
 
+	CollisionVolume* colvol;
+
+public:
 	// TODO: add (visibility) maxradius!
 	bool visible;
 
-	CollisionVolume* colvol;
 	const S3DModelPiece* original;
 
 	LocalModelPiece* parent;

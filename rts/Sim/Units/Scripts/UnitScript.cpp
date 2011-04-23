@@ -225,15 +225,21 @@ int CUnitScript::Tick(int deltaTime)
 		bool done = false;
 
 		switch (ai->type) {
-			case AMove:
-				done = MoveToward(pieces[ai->piece]->pos[ai->axis], ai->dest, ai->speed / (1000 / deltaTime));
-				break;
-			case ATurn:
-				done = TurnToward(pieces[ai->piece]->rot[ai->axis], ai->dest, ai->speed / (1000 / deltaTime));
-				break;
-			case ASpin:
-				done = DoSpin(pieces[ai->piece]->rot[ai->axis], ai->dest, ai->speed, ai->accel, 1000 / deltaTime);
-				break;
+			case AMove: {
+				float3 pos = pieces[ai->piece]->GetPosition();
+				done = MoveToward(pos[ai->axis], ai->dest, ai->speed / (1000 / deltaTime));
+				pieces[ai->piece]->SetPosition(pos);
+			} break;
+			case ATurn: {
+				float3 rot = pieces[ai->piece]->GetRotation();
+				done = TurnToward(rot[ai->axis], ai->dest, ai->speed / (1000 / deltaTime));
+				pieces[ai->piece]->SetRotation(rot);
+			} break;
+			case ASpin: {
+				float3 rot = pieces[ai->piece]->GetRotation();
+				done = DoSpin(rot[ai->axis], ai->dest, ai->speed, ai->accel, 1000 / deltaTime);
+				pieces[ai->piece]->SetRotation(rot);
+			} break;
 		}
 
 		// Queue for removal (UnblockAll may add new anims)
@@ -415,7 +421,9 @@ void CUnitScript::MoveNow(int piece, int axis, float destination)
 	}
 
 	LocalModelPiece* p = pieces[piece];
-	p->pos[axis] = pieces[piece]->original->offset[axis] + destination;
+	float3 pos = p->GetPosition();
+	pos[axis] = pieces[piece]->original->offset[axis] + destination;
+	p->SetPosition(pos);
 }
 
 
@@ -427,7 +435,9 @@ void CUnitScript::TurnNow(int piece, int axis, float destination)
 	}
 
 	LocalModelPiece* p = pieces[piece];
-	p->rot[axis] = destination;
+	float3 rot = p->GetRotation();
+	rot[axis] = destination;
+	p->SetRotation(rot);
 }
 
 
@@ -795,7 +805,7 @@ void CUnitScript::MoveSmooth(int piece, int axis, float destination, int delta, 
 		}
 	}
 
-	float cur = pieces[piece]->pos[axis] - pieces[piece]->original->offset[axis];
+	float cur = pieces[piece]->GetPosition()[axis] - pieces[piece]->original->offset[axis];
 	float dist = streflop::fabsf(destination - cur);
 	int timeFactor = (1000 * 1000) / (deltaTime * deltaTime);
 	float speed = (dist * timeFactor) / delta;
@@ -820,7 +830,7 @@ void CUnitScript::TurnSmooth(int piece, int axis, float destination, int delta, 
 	}
 
 	// not sure the ClampRad() call is necessary here
-	float cur = ClampRad(pieces[piece]->rot[axis]);
+	float cur = ClampRad(pieces[piece]->GetRotation()[axis]);
 	float dist = streflop::fabsf(destination - cur);
 	int timeFactor = (1000 * 1000) / (deltaTime * deltaTime);
 	float speed = (dist * timeFactor) / delta;

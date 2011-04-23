@@ -117,9 +117,9 @@ public:
 		return w; \
 	};
 
-	SCRIPT_TO_LOCALPIECE_FUNC(float3,     GetPiecePos,       GetPos,       float3(0.0f,0.0f,0.0f))
-	SCRIPT_TO_LOCALPIECE_FUNC(CMatrix44f, GetPieceMatrix,    GetMatrix,    CMatrix44f())
-	SCRIPT_TO_LOCALPIECE_FUNC(float3,     GetPieceDirection, GetDirection, float3(1.0f,1.0f,1.0f))
+	SCRIPT_TO_LOCALPIECE_FUNC(float3,     GetPiecePos,       GetAbsolutePos, float3(0.0f,0.0f,0.0f))
+	SCRIPT_TO_LOCALPIECE_FUNC(CMatrix44f, GetPieceMatrix,    GetMatrix,      CMatrix44f())
+	SCRIPT_TO_LOCALPIECE_FUNC(float3,     GetPieceDirection, GetDirection,   float3(1.0f,1.0f,1.0f))
 	//SCRIPT_TO_LOCALPIECE_FUNC(int,        GetPieceVertCount, GetVertCount, 0)
 
 	bool GetEmitDirPos(int scriptnum, float3 &pos, float3 &dir) const {

@@ -213,12 +213,12 @@ void CCollisionHandler::IntersectPieceTreeHelper(
 {
 	const CollisionVolume* vol = lmp->GetCollisionVolume();
 	const float3& offset = vol->GetOffsets();
+	const float3& rot = lmp->GetRotation();
 
-	mat.Translate(lmp->pos);
-	mat.RotateY(-lmp->rot[1]);
-	mat.RotateX(-lmp->rot[0]);
-	mat.RotateZ(-lmp->rot[2]);
-	mat.Translate(offset);
+	mat.Translate(lmp->GetPosition());
+	mat.RotateY(-rot[1]);
+	mat.RotateX(-rot[0]);
+	mat.RotateZ(-rot[2]);
 
 	if (lmp->visible && !vol->IsDisabled()) {
 		CollisionQuery q;
