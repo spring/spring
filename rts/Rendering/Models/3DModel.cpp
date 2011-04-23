@@ -87,7 +87,7 @@ void LocalModel::ApplyRawPieceTransform(int piecenum) const
 
 float3 LocalModel::GetRawPiecePos(int piecenum) const
 {
-	return pieces[piecenum]->GetPos();
+	return pieces[piecenum]->GetAbsolutePos();
 }
 
 
@@ -227,7 +227,7 @@ void LocalModelPiece::SetLODCount(unsigned int count)
 //! The MOVAPS SSE instruction is otherwise getting misaligned data
 __attribute__ ((force_align_arg_pointer))
 #endif
-float3 LocalModelPiece::GetPos() const
+float3 LocalModelPiece::GetAbsolutePos() const
 {
 	CMatrix44f mat;
 	GetPiecePosIter(&mat);
@@ -245,7 +245,6 @@ CMatrix44f LocalModelPiece::GetMatrix() const
 {
 	CMatrix44f mat;
 	GetPiecePosIter(&mat);
-
 	return mat;
 }
 
