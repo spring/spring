@@ -31,6 +31,10 @@
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 
+#if !defined(HEADLESS) && !defined(NO_SOUND)
+	#include "System/Sound/EFX.h"
+	#include "System/Sound/EFXPresets.h"
+#endif
 
 CLoadScreen* CLoadScreen::singleton = NULL;
 
@@ -130,6 +134,11 @@ CLoadScreen::~CLoadScreen()
 
 		activeController = game;
 	}
+
+#if !defined(HEADLESS) && !defined(NO_SOUND)
+	*(efx->sfxProperties) = *(mapInfo->efxprops);
+	efx->CommitEffects();
+#endif
 
 	UnloadStartPicture();
 
