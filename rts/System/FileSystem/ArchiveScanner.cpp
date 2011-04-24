@@ -12,7 +12,6 @@
 
 #include "ArchiveScanner.h"
 
-#include "LuaInclude.h" // for lua_type defines
 #include "ArchiveFactory.h"
 #include "CRC.h"
 #include "FileFilter.h"
@@ -88,17 +87,17 @@ CArchiveScanner::ArchiveData::ArchiveData(const LuaTable& archiveTable)
 		if (!ArchiveData::IsReservedKey(keyLower)) {
 			const int luaType = archiveTable.GetType(*key);
 			switch (luaType) {
-				case LUA_TSTRING: {
+				case LuaTable::STRING: {
 					SetInfoItemValueString(*key, archiveTable.GetString(*key, ""));
 				} break;
-				case LUA_TNUMBER: {
+				case LuaTable::NUMBER: {
 					if (keyLower == "modtype") {
 						SetInfoItemValueInteger(*key, archiveTable.GetInt(*key, 0));
 					} else {
 						SetInfoItemValueFloat(*key, archiveTable.GetFloat(*key, 0.0f));
 					}
 				} break;
-				case LUA_TBOOLEAN: {
+				case LuaTable::BOOLEAN: {
 					SetInfoItemValueBool(*key, archiveTable.GetBool(*key, false));
 				} break;
 				default: {
