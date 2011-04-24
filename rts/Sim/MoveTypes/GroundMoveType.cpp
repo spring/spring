@@ -1325,7 +1325,8 @@ void CGroundMoveType::HandleObjectCollisions()
 				FOOTPRINT_RADIUS(collideeMD->xsize, collideeMD->zsize):
 				FOOTPRINT_RADIUS(collideeUD->xsize, collideeUD->zsize);
 
-			bool pushCollider = true;
+			bool colliderMobile = (collider->mobility != NULL);
+			bool pushCollider = colliderMobile;
 			bool pushCollidee = (collideeMobile || collideeUD->canfly);
 
 			const float3 separationVector = colliderCurPos - collideeCurPos;
@@ -1394,8 +1395,8 @@ void CGroundMoveType::HandleObjectCollisions()
 			if (                  colliderMM->GetPosSpeedMod(*colliderMD, colliderNewPos) <= 0.01f) { colliderMassScale = 0.0f; }
 			if (collideeMobile && collideeMM->GetPosSpeedMod(*collideeMD, collideeNewPos) <= 0.01f) { collideeMassScale = 0.0f; }
 
-			if (pushCollider) { collider->pos += (colResponseVec * colliderMassScale); } else { collider->pos = colliderOldPos; }
-			if (pushCollidee) { collidee->pos -= (colResponseVec * collideeMassScale); } else { collidee->pos = collideeOldPos; }
+			if (pushCollider) { collider->pos += (colResponseVec * colliderMassScale); } else if (colliderMobile) { collider->pos = colliderOldPos; }
+			if (pushCollidee) { collidee->pos -= (colResponseVec * collideeMassScale); } else if (collideeMobile) { collidee->pos = collideeOldPos; }
 
 			collider->UpdateMidPos();
 			collidee->UpdateMidPos();
