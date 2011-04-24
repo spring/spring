@@ -911,25 +911,39 @@ bool LuaTable::KeyExists(const string& key) const
 //  Value types
 //
 
-int LuaTable::GetType(int key) const
+LuaTable::DataType LuaTable::GetType(int key) const
 {
 	if (!PushValue(key)) {
-		return -1;
+		return NIL;
 	}
 	const int type = lua_type(L, -1);
 	lua_pop(L, 1);
-	return type;
+	
+	switch (type) {
+		case LUA_TBOOLEAN: return BOOLEAN;
+		case LUA_TNUMBER:  return NUMBER;
+		case LUA_TSTRING:  return STRING;
+		case LUA_TTABLE:   return TABLE;
+		default:           return NIL;
+	}
 }
 
 
-int LuaTable::GetType(const string& key) const
+LuaTable::DataType LuaTable::GetType(const string& key) const
 {
 	if (!PushValue(key)) {
-		return -1;
+		return NIL;
 	}
 	const int type = lua_type(L, -1);
 	lua_pop(L, 1);
-	return type;
+	
+	switch (type) {
+		case LUA_TBOOLEAN: return BOOLEAN;
+		case LUA_TNUMBER:  return NUMBER;
+		case LUA_TSTRING:  return STRING;
+		case LUA_TTABLE:   return TABLE;
+		default:           return NIL;
+	}
 }
 
 
