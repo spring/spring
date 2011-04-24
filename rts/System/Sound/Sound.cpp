@@ -317,8 +317,6 @@ void CSound::StartThread(int maxSounds)
 			}
 		}
 
-		const bool airAbsorptionSupported = alcIsExtensionPresent(device, "ALC_EXT_EFX");
-
 		LogObject(LOG_SOUND) << "OpenAL info:\n";
 		if(alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
 		{

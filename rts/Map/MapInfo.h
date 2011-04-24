@@ -11,6 +11,9 @@
 
 class LuaTable;
 class MapParser;
+#if !defined(HEADLESS) && !defined(NO_SOUND)
+	struct EAXSfxProps;
+#endif
 
 class CMapInfo
 {
@@ -193,6 +196,13 @@ public:
 		bool receiveTracks;
 	};
 	TerrainType terrainTypes[NUM_TERRAIN_TYPES];
+	
+	/**
+	 * Sound EFX param structure
+	 */
+#if !defined(HEADLESS) && !defined(NO_SOUND)
+	EAXSfxProps* efxprops;
+#endif
 
 private:
 	void ReadGlobal();
@@ -205,6 +215,7 @@ private:
 	void ReadSmf();
 	void ReadSm3();
 	void ReadTerrainTypes();
+	void ReadSound();
 
 	std::string mapInfoFile;
 	MapParser* parser; // map       parser root table

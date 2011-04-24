@@ -13,6 +13,11 @@
 #include "System/LogOutput.h"
 #include "System/Exceptions.h"
 
+#if !defined(HEADLESS) && !defined(NO_SOUND)
+	#include "System/Sound/EFX.h"
+	#include "System/Sound/EFXPresets.h"
+#endif
+
 #include <cassert>
 #include <cfloat>
 
@@ -52,6 +57,10 @@ CMapInfo::CMapInfo(const std::string& _mapInfoFile, const string& mapName) : map
 	ReadSmf();
 	ReadSm3();
 	ReadTerrainTypes();
+	ReadSound();
+
+	//FIXME save all data in an array, so we can destroy the lua context (to save mem)?
+	//delete parser; 
 }
 
 CMapInfo::~CMapInfo()
@@ -361,4 +370,66 @@ void CMapInfo::ReadTerrainTypes()
 		terrType.hoverSpeed = max(0.000f, terrType.hoverSpeed);
 		terrType.shipSpeed  = max(0.000f, terrType.shipSpeed);
 	}
+}
+
+
+void CMapInfo::ReadSound()
+{
+#if !defined(HEADLESS) && !defined(NO_SOUND)
+	const LuaTable soundTable = parser->GetRoot().SubTable("sound");
+
+	efxprops = new EAXSfxProps();
+
+	const std::string presetname = soundTable.GetString("preset", "default");
+	std::map<std::string, EAXSfxProps>::const_iterator et = eaxPresets.find(presetname);
+	if (et != eaxPresets.end()) {
+		*efxprops = et->second;
+	}
+
+	std::map<std::string, ALuint>::const_iterator it;
+
+	const LuaTable filterTable = soundTable.SubTable("passfilter");
+	for (it = nameToALFilterParam.begin(); it != nameToALFilterParam.end(); ++it) {
+		const std::string& name = it->first;
+		const int luaType = filterTable.GetType(name);
+
+		if (luaType == LuaTable::NIL)
+			continue;
+		
+		const ALuint& param = it->second;
+		const unsigned& type = alParamType[param];
+		switch (type) {
+			case EFXParamTypes::FLOAT:
+				if (luaType == LuaTable::NUMBER)
+					efxprops->filter_properties_f[param] = filterTable.GetFloat(name, 0.f);
+				break;
+		}
+	}
+
+	const LuaTable reverbTable = soundTable.SubTable("reverb");
+	for (it = nameToALParam.begin(); it != nameToALParam.end(); ++it) {
+		const std::string& name = it->first;
+		const int luaType = filterTable.GetType(name);
+
+		if (luaType == LuaTable::NIL)
+			continue;
+
+		const ALuint& param = it->second;
+		const unsigned& type = alParamType[param];
+		switch (type) {
+			case EFXParamTypes::VECTOR:
+				if (luaType == LuaTable::TABLE)
+					efxprops->properties_v[param] = filterTable.GetFloat3(name, ZeroVector);
+				break;
+			case EFXParamTypes::FLOAT:
+				if (luaType == LuaTable::NUMBER)
+					efxprops->properties_f[param] = filterTable.GetFloat(name, 0.f);
+				break;
+			case EFXParamTypes::BOOL:
+				if (luaType == LuaTable::BOOLEAN)
+					efxprops->properties_i[param] = filterTable.GetBool(name, false);
+				break;
+		}
+	}
+#endif
 }
