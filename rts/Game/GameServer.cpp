@@ -86,7 +86,7 @@ const std::string commands[numCommands] = {
 	"nopause", "nohelp", "cheat", "godmode", "globallos",
 	"nocost", "forcestart", "nospectatorchat", "nospecdraw",
 	"skip", "reloadcob", "reloadcegs", "devlua", "editdefs",
-	"luagaia", "singlestep"
+	"singlestep"
 };
 using boost::format;
 
