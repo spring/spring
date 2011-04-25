@@ -1615,13 +1615,15 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 	else if (cmd == "benchmark-script") {
 		CUnitScript::BenchmarkScript(action.extra);
 	}
-	else if (cmd == "atm" ||
+	else if (cmd == "atm"
 #ifdef DEBUG
-			cmd == "desync" ||
+			|| cmd == "desync"
 #endif
-			cmd == "resync" ||
-			cmd == "take" ||
-			cmd == "luarules") {
+			|| cmd == "resync"
+			|| cmd == "take"
+			|| cmd == "luarules"
+			|| cmd == "luagaia"
+	) {
 		//these are synced commands, forward only
 		CommandMessage pckt(action, gu->myPlayerNum);
 		net->Send(pckt.Pack());
