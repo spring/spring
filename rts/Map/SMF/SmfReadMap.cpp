@@ -432,9 +432,7 @@ void CSmfReadMap::UpdateShadingTexture() {
 		return;
 
 	y /= shadingTexUpdateRate;
-	y *= 2;
-	y += ((((ysize % 2) == 0) && (y >= (ysize / 2))) ? 1 : 0);
-	y %= ysize;
+	y = (y * 2 + ((((ysize % 2) == 0) && (y >= (ysize / 2))) ? 1 : 0)) % ysize;
 
 	UpdateShadingTexPart(y, 0, 0, xsize, &shadingTexPixelRow[0]);
 
