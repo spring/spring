@@ -233,7 +233,7 @@ void CEFX::SetHeightRolloffModifer(const float& mod)
 
 	alEffectf(sfxReverb, AL_EAXREVERB_ROOM_ROLLOFF_FACTOR, sfxProperties->properties_f[AL_EAXREVERB_ROOM_ROLLOFF_FACTOR] * heightRolloffModifier);
 	alAuxiliaryEffectSloti(sfxSlot, AL_EFFECTSLOT_EFFECT, sfxReverb);
-};
+}
 
 
 void CEFX::CommitEffects()
