@@ -1064,9 +1064,9 @@ int SpringApp::Update()
 #if defined(USE_GML) && GML_ENABLE_SIM
 				!gmlMultiThreadSim &&
 #endif
-				(gs->frameNum - lastRequiredDraw) >= (float)MAX_CONSECUTIVE_SIMFRAMES * gs->userSpeedFactor)
+				(gs->frameNum - lastRequiredDraw) >= GAME_SPEED/float(gu->minFPS) * gs->userSpeedFactor)
 			{
-				ScopedTimer cputimer("CPU load"); // Update
+				ScopedTimer cputimer("CPU-DrawFrame load"); // Update
 
 				ret = activeController->Draw();
 				lastRequiredDraw = gs->frameNum;
