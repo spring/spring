@@ -2,7 +2,9 @@
 
 #include "StdAfx.h"
 
-//#include <omp.h>
+#ifdef OPENMP
+	#include <omp.h>
+#endif
 #include <ostream>
 #include <fstream>
 #include <string.h>
@@ -533,7 +535,8 @@ void CBitmap::Renormalize(float3 newCol)
 }
 
 
-inline void kernelBlur(CBitmap* dst, const unsigned char* src, int x, int y, int channel, float weight) {
+inline static void kernelBlur(CBitmap* dst, const unsigned char* src, int x, int y, int channel, float weight)
+{
 	float fragment = 0.0f;
 
 	const int pos = (x + y * dst->xsize) * dst->channels + channel;
@@ -574,13 +577,15 @@ void CBitmap::Blur(int iterations, float weight)
 	dst->Alloc(xsize,ysize);
 
 	for (int i=0; i < iterations; ++i){
-		#pragma omp parallel private(y,x,i)
 		{
-			#pragma omp for
-			for (int y=0; y < ysize; ++y) {
-				for (int x=0; x < xsize; ++x) {
-					for (int i=0; i < channels; ++i) {
-						kernelBlur(dst, src->mem, x, y, i, weight);
+			int j,y,x;
+#ifdef OPENMP
+			#pragma omp parallel for private(j,x,y)
+#endif
+			for (y=0; y < ysize; y++) {
+				for (x=0; x < xsize; x++) {
+					for (j=0; j < channels; j++) {
+						kernelBlur(dst, src->mem, x, y, j, weight);
 					}
 				}
 			}
