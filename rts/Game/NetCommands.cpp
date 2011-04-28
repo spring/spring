@@ -42,7 +42,7 @@ void CGame::ClientReadNet()
 		lastCpuUsageTime = gu->gameTime;
 
 		if (playing) {
-			net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("CPU load")));
+			net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("CPU load") + profiler.GetPercent("CPU-DrawFrame load")));
 #if defined(USE_GML) && GML_ENABLE_SIM
 			net->Send(CBaseNetProtocol::Get().SendLuaDrawTime(gu->myPlayerNum, luaDrawTime));
 #endif
@@ -82,7 +82,7 @@ void CGame::ClientReadNet()
 	{
 		// make sure ClientReadNet returns at least every 15 game frames
 		// so CGame can process keyboard input, and render etc.
-		timeLeft = (float)MAX_CONSECUTIVE_SIMFRAMES * gs->userSpeedFactor;
+		timeLeft = GAME_SPEED/float(gu->minFPS) * gs->userSpeedFactor;
 	}
 
 	// always render at least 2FPS (will otherwise be highly unresponsive when catching up after a reconnection)

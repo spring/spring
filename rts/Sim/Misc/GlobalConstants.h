@@ -20,7 +20,7 @@ const int SQUARE_SIZE = 8;
 /**
  * @brief game speed
  *
- * Defines the game speed as 30
+ * Defines the game frames per second
  */
 const int GAME_SPEED = 30;
 
