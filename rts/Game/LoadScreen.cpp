@@ -131,14 +131,15 @@ CLoadScreen::~CLoadScreen()
 		net->Send(CBaseNetProtocol::Get().SendPathCheckSum(gu->myPlayerNum, pathManager->GetPathCheckSum()));
 #endif
 		mouse->ShowMouse();
+		
+#if !defined(HEADLESS) && !defined(NO_SOUND)
+		*(efx->sfxProperties) = *(mapInfo->efxprops);
+		efx->CommitEffects();
+#endif
+		game->SetupRenderingParams();
 
 		activeController = game;
 	}
-
-#if !defined(HEADLESS) && !defined(NO_SOUND)
-	*(efx->sfxProperties) = *(mapInfo->efxprops);
-	efx->CommitEffects();
-#endif
 
 	UnloadStartPicture();
 
@@ -222,7 +223,6 @@ bool CLoadScreen::Update()
 	}
 
 	if (game->finishedLoading) {
-		game->SetupRenderingParams();
 		CLoadScreen::DeleteInstance();
 	}
 
