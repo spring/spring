@@ -563,22 +563,25 @@ void CResourceMapAnalyzer::SaveResourceMap() {
 
 bool CResourceMapAnalyzer::LoadResourceMap() {
 
-	std::string map = GetCacheFileName();
+	const std::string map = GetCacheFileName();
 	FILE* loadFile = fopen(map.c_str(), "rb");
 
 	if (loadFile != NULL) {
-		fread(&numSpotsFound, sizeof(int), 1, loadFile);
+		#define f_read(buf,size,count,f) (fread(buf,size,count,f) == count ? true : false)
+		if (!f_read(&numSpotsFound, sizeof(int), 1, loadFile)) goto failed;
 		vectoredSpots.resize(numSpotsFound);
-		fread(&averageIncome, sizeof(float), 1, loadFile);
+		if (!f_read(&averageIncome, sizeof(float), 1, loadFile)) goto failed;
 
 		for (int i = 0; i < numSpotsFound; i++) {
-			fread(&vectoredSpots[i], sizeof(float3), 1, loadFile);
+			if (!f_read(&vectoredSpots[i], sizeof(float3), 1, loadFile)) goto failed;
 		}
 
 		fclose(loadFile);
 		return true;
 	}
 
+failed:
+	fclose(loadFile);
 	return false;
 }
 
