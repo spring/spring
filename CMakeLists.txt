@@ -1,4 +1,4 @@
-
+ 
 project(Spring)
 
 # CMake 2.4:
@@ -92,6 +92,12 @@ if    (WIN32)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mwindows")
 	endif (NOT WINDOWS_CONSOLE)
 endif (WIN32)
+
+set(OPENMP FALSE CACHE BOOL "Enable local multithreading")
+if    (OPENMP)
+	add_definitions(-DOPENMP)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -lgomp")
+endif (OPENMP)
 
 set(BUILTIN_DATADIRS "")
 if    (NOT MINGW)
