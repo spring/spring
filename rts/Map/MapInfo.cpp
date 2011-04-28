@@ -152,11 +152,16 @@ void CMapInfo::ReadSplats()
 void CMapInfo::ReadGrass()
 {
 	const LuaTable grassTable = parser->GetRoot().SubTable("grass");
-
+	const LuaTable mapResTable = parser->GetRoot().SubTable("resources");
+	
 	grass.bladeWaveScale = grassTable.GetFloat("bladeWaveScale", 1.0f);
 	grass.bladeWidth     = grassTable.GetFloat("bladeWidth", 0.32f);
 	grass.bladeHeight    = grassTable.GetFloat("bladeHeight", 4.0f);
 	grass.bladeAngle     = grassTable.GetFloat("bladeAngle", 1.57f);
+	grass.color          = grassTable.GetFloat3("bladeColor", float3(0.59f, 0.81f, 0.57f));
+
+	grass.grassBladeTexName = mapResTable.GetString("grassBladeTex", "");
+	if (!grass.grassBladeTexName.empty()) { grass.grassBladeTexName = "maps/" + grass.grassBladeTexName; }
 }
 
 void CMapInfo::ReadLight()
@@ -296,7 +301,6 @@ void CMapInfo::ReadSmf()
 	smf.splatDetailTexName = mapResTable.GetString("splatDetailTex", "");
 	smf.splatDistrTexName  = mapResTable.GetString("splatDistrTex", "");
 
-	smf.grassBladeTexName = mapResTable.GetString("grassBladeTex", "");
 	smf.grassShadingTexName = mapResTable.GetString("grassShadingTex", "");
 
 	smf.skyReflectModTexName = mapResTable.GetString("skyReflectModTex", "");
@@ -314,7 +318,6 @@ void CMapInfo::ReadSmf()
 	if (!smf.specularTexName.empty()) { smf.specularTexName = "maps/" + smf.specularTexName; }
 	if (!smf.splatDetailTexName.empty()) { smf.splatDetailTexName = "maps/" + smf.splatDetailTexName; }
 	if (!smf.splatDistrTexName.empty()) { smf.splatDistrTexName = "maps/" + smf.splatDistrTexName; }
-	if (!smf.grassBladeTexName.empty()) { smf.grassBladeTexName = "maps/" + smf.grassBladeTexName; }
 	if (!smf.grassShadingTexName.empty()) { smf.grassShadingTexName = "maps/" + smf.grassShadingTexName; }
 	if (!smf.skyReflectModTexName.empty()) { smf.skyReflectModTexName = "maps/" + smf.skyReflectModTexName; }
 	if (!smf.detailNormalTexName.empty()) { smf.detailNormalTexName = "maps/" + smf.detailNormalTexName; }

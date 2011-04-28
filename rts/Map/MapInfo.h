@@ -102,6 +102,8 @@ public:
 		float bladeWidth;
 		float bladeHeight;    //! actual blades will be (bladeHeight + randf(0, bladeHeight)) tall
 		float bladeAngle;
+		float4 color;
+		std::string grassBladeTexName;    // defaults to internally-generated texture
 	} grass;
 
 	/** settings read from "MAP\LIGHT" section */
@@ -163,7 +165,6 @@ public:
 		std::string specularTexName;      ///< "MAP\SpecularTex"
 		std::string splatDistrTexName;
 		std::string splatDetailTexName;
-		std::string grassBladeTexName;    // defaults to internally-generated texture
 		std::string grassShadingTexName;  // defaults to minimap texture
 		std::string skyReflectModTexName;
 		std::string detailNormalTexName;
