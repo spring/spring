@@ -210,16 +210,7 @@ void CAdvSky::Draw()
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
-	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
-	glFogf(GL_FOG_START,globalRendering->viewRange*fogStart);
-	glFogf(GL_FOG_END,globalRendering->viewRange);
-	glFogf(GL_FOG_DENSITY,1.0f);
-	glFogi(GL_FOG_MODE,GL_LINEAR);
-	if (globalRendering->drawFog) {
-		glEnable(GL_FOG);
-	} else {
-		glDisable(GL_FOG);
-	}
+	SetFog();
 }
 
 float3 CAdvSky::GetCoord(int x, int y)

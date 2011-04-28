@@ -24,9 +24,12 @@ public:
 	void DecreaseCloudDensity() { cloudDensity *= 0.95f; }
 	float GetCloudDensity() const { return cloudDensity; }
 
-	ISkyLight* GetLight() { return skyLight; }
+	ISkyLight* GetLight() const { return skyLight; }
 	void SetLight(bool);
 
+	static void SetFog();
+
+public:
 	bool wireframe;
 	bool dynamicSky;
 

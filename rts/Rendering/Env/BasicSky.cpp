@@ -229,16 +229,7 @@ void CBasicSky::Draw()
 
 	glEnable(GL_DEPTH_TEST);
 
-	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
-	glFogi(GL_FOG_MODE,GL_LINEAR);
-	glFogf(GL_FOG_START,globalRendering->viewRange*fogStart);
-	glFogf(GL_FOG_END,globalRendering->viewRange);
-	glFogf(GL_FOG_DENSITY,1.00f);
-	if (globalRendering->drawFog) {
-		glEnable(GL_FOG);
-	} else {
-		glDisable(GL_FOG);
-	}
+	SetFog();
 }
 
 float3 CBasicSky::GetCoord(int x, int y)

@@ -117,17 +117,21 @@ void CMapInfo::ReadAtmosphere()
 	// MAP\ATMOSPHERE
 	const LuaTable atmoTable = parser->GetRoot().SubTable("atmosphere");
 	atmosphere_t& atmo = atmosphere;
-	atmo.cloudDensity = atmoTable.GetFloat("cloudDensity", 0.5f);
-	atmo.minWind      = atmoTable.GetFloat("minWind", 5.0f);
-	atmo.maxWind      = atmoTable.GetFloat("maxWind", 25.0f);
-	atmo.fogStart     = atmoTable.GetFloat("fogStart", 0.1f);
+
+	atmo.minWind = atmoTable.GetFloat("minWind", 5.0f);
+	atmo.maxWind = atmoTable.GetFloat("maxWind", 25.0f);
+
+	atmo.fogStart   = atmoTable.GetFloat("fogStart", 0.1f);
+	atmo.fogEnd     = atmoTable.GetFloat("fogEnd",   1.0f);
 	atmo.fogColor   = atmoTable.GetFloat3("fogColor", float3(0.7f, 0.7f, 0.8f));
-	atmo.skyColor   = atmoTable.GetFloat3("skyColor", float3(0.1f, 0.15f, 0.7f));
-	atmo.skyDir = atmoTable.GetFloat3("skyDir", float3(0.0f, 0.0f, -1.0f));
+
+	atmo.skyBox       = atmoTable.GetString("skyBox", "");
+	atmo.skyColor     = atmoTable.GetFloat3("skyColor", float3(0.1f, 0.15f, 0.7f));
+	atmo.skyDir       = atmoTable.GetFloat3("skyDir", float3(0.0f, 0.0f, -1.0f));
 	atmo.skyDir.ANormalize();
-	atmo.sunColor   = atmoTable.GetFloat3("sunColor", float3(1.0f, 1.0f, 1.0f));
-	atmo.cloudColor = atmoTable.GetFloat3("cloudColor", float3(1.0f, 1.0f, 1.0f));
-	atmo.skyBox = atmoTable.GetString("skyBox", "");
+	atmo.sunColor     = atmoTable.GetFloat3("sunColor", float3(1.0f, 1.0f, 1.0f));
+	atmo.cloudColor   = atmoTable.GetFloat3("cloudColor", float3(1.0f, 1.0f, 1.0f));
+	atmo.cloudDensity = atmoTable.GetFloat("cloudDensity", 0.5f);
 
 	// clamps
 	atmo.cloudDensity = max(0.0f, atmo.cloudDensity);
