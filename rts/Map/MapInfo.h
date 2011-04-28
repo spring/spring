@@ -79,6 +79,7 @@ public:
 	struct atmosphere_t {
 		float  cloudDensity;
 		float  fogStart;
+		float  fogEnd;
 		float4 fogColor;
 		float3 skyColor;
 		float3 skyDir;

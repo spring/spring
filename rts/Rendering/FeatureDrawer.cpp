@@ -11,8 +11,9 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/FarTextureHandler.h"
-#include "Rendering/Env/BaseWater.h"
+#include "Rendering/Env/BaseSky.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
+#include "Rendering/Env/BaseWater.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -170,10 +171,7 @@ void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 
 void CFeatureDrawer::Draw()
 {
-	if(globalRendering->drawFog) {
-		glEnable(GL_FOG);
-		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
-	}
+	IBaseSky::SetFog();
 
 	GML_RECMUTEX_LOCK(feat); // Draw
 
@@ -337,10 +335,7 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.5f);
 
-		if (globalRendering->drawFog) {
-			glEnable(GL_FOG);
-			glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
-		}
+		IBaseSky::SetFog();
 
 		{
 			GML_RECMUTEX_LOCK(feat); // DrawFadeFeatures

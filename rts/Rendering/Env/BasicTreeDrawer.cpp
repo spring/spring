@@ -7,9 +7,9 @@
 #include "Game/Camera.h"
 #include "Lua/LuaParser.h"
 #include "Map/Ground.h"
-#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/Env/BaseSky.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/LogOutput.h"
@@ -340,10 +340,7 @@ void CBasicTreeDrawer::Draw(float treeDistance,bool drawReflection)
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_ALPHA_TEST);
 
-	if(globalRendering->drawFog) {
-		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
-		glEnable(GL_FOG);
-	}
+	IBaseSky::SetFog();
 	glColor4f(1,1,1,1);
 
 	const int cx=(int)(camera->pos.x/(SQUARE_SIZE*TREE_SQUARE_SIZE));

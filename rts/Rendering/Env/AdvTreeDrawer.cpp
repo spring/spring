@@ -444,11 +444,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 	glEnable(GL_ALPHA_TEST);
 	glEnable(GL_TEXTURE_2D);
 
-	if (globalRendering->drawFog) {
-		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
-		glEnable(GL_FOG);
-	}
-
+	IBaseSky::SetFog();
 
 	if (shadowHandler->shadowsLoaded && !gd->DrawExtraTex()) {
 		glActiveTexture(GL_TEXTURE1);
