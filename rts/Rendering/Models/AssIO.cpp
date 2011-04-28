@@ -46,6 +46,7 @@ aiReturn AssVFSStream::Seek( size_t pOffset, aiOrigin pOrigin)
 			if ( pOffset >= file->FileSize() ) return AI_FAILURE;
 			file->Seek( pOffset, std::ios_base::end );
 			break;
+		case _AI_ORIGIN_ENFORCE_ENUM_SIZE: ; // this prevents a compile-warning
 	}
 	return AI_SUCCESS;
 }
