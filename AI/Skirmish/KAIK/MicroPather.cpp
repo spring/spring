@@ -134,8 +134,8 @@ class OpenQueueBH {
 		int index = 1;
 		int smalest = 1;
 
-		{
-			LOOPING_HEAPIFY:
+		bool heapFixed = false;
+		while (heapFixed) {
 			index = smalest;
 			int left = Left(index);
 			int right = Right(index);
@@ -150,7 +150,8 @@ class OpenQueueBH {
 				smalest = right;
 
 			// L("index: " << index << ", smalest: " << smalest);
-			if (smalest != index) {
+			heapFixed = (smalest == index);
+			if (!heapFixed) {
 				// swap them
 				PathNode* temp = heapArray[index];
 				heapArray[index] = heapArray[smalest];
@@ -158,8 +159,6 @@ class OpenQueueBH {
 
 				temp->myIndex = smalest;
 				heapArray[index]->myIndex = index;
-
-				goto LOOPING_HEAPIFY;
 			}
 		}
 
