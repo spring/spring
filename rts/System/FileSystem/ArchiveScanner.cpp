@@ -54,7 +54,7 @@ struct KnownInfoTag {
 };
 
 const KnownInfoTag knownTags[] = {
-	{"name",        "example: Original Total Annihilation v2.3", true},
+	{"name",        "example: Original Total Annihilation", true},
 	{"shortname",   "example: OTA", false},
 	{"version",     "example: v2.3", false},
 	{"mutator",     "example: deployment", false},
