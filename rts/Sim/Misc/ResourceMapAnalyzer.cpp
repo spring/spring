@@ -21,6 +21,8 @@ using std::fclose;
 #include "FileSystem/FileSystem.h"
 #include "LogOutput.h"
 
+#include <stdexcept>
+
 static const float3 ERRORVECTOR(-1, 0, 0);
 static std::string CACHE_BASE("");
 
@@ -561,28 +563,38 @@ void CResourceMapAnalyzer::SaveResourceMap() {
 	fclose(saveFile);
 }
 
+static void fileReadChecked(void* buf, size_t size, size_t count, FILE* fstream) {
+
+	if (fread(buf, size, count, fstream) != count) {
+		throw std::runtime_error("Failed to read the required number of items");
+	}
+}
+
 bool CResourceMapAnalyzer::LoadResourceMap() {
 
-	const std::string map = GetCacheFileName();
-	FILE* loadFile = fopen(map.c_str(), "rb");
+	bool loaded = false;
 
-	if (loadFile != NULL) {
-		#define f_read(buf,size,count,f) (fread(buf,size,count,f) == count ? true : false)
-		if (!f_read(&numSpotsFound, sizeof(int), 1, loadFile)) goto failed;
-		vectoredSpots.resize(numSpotsFound);
-		if (!f_read(&averageIncome, sizeof(float), 1, loadFile)) goto failed;
+	const std::string cacheFileName = GetCacheFileName();
 
-		for (int i = 0; i < numSpotsFound; i++) {
-			if (!f_read(&vectoredSpots[i], sizeof(float3), 1, loadFile)) goto failed;
+	FILE* cacheFile = fopen(cacheFileName.c_str(), "rb");
+
+	if (cacheFile != NULL) {
+		try {
+			fileReadChecked(&numSpotsFound, sizeof(int), 1, cacheFile);
+			vectoredSpots.resize(numSpotsFound);
+			fileReadChecked(&averageIncome, sizeof(float), 1, cacheFile);
+			for (int i = 0; i < numSpotsFound; i++) {
+				fileReadChecked(&vectoredSpots[i], sizeof(float3), 1, cacheFile);
+			}
+			loaded = true;
+		} catch (const std::runtime_error& err) {
+			logOutput.Print("Failed to load the resource map cache from file "
+					+ cacheFileName + ": " + err.what());
 		}
-
-		fclose(loadFile);
-		return true;
+		fclose(cacheFile);
 	}
 
-failed:
-	fclose(loadFile);
-	return false;
+	return loaded;
 }
 
 
