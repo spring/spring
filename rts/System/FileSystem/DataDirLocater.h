@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef DATADIRLOCATER_H
-#define DATADIRLOCATER_H
+#ifndef DATA_DIR_LOCATER_H
+#define DATA_DIR_LOCATER_H
 
 #include <string>
 #include <vector>
@@ -13,7 +13,7 @@ struct DataDir
 	 *
 	 * Appends a slash to the end of the path if there isn't one already.
 	 */
-	DataDir(const std::string& p);
+	DataDir(const std::string& path);
 
 	std::string path;
 	bool writable;
@@ -34,8 +34,8 @@ public:
 	 *
 	 * Attempts to locate a writeable data dir, and then tries to
 	 * chdir to it.
-	 * As the writeable data dir will usually be the current dir already under windows,
-	 * the chdir will have no effect.
+	 * As the writeable data dir will usually be the current dir already under
+	 * windows, the chdir will have no effect.
 	 *
 	 * The first dir added will be the writeable data dir.
 	 *
@@ -65,7 +65,8 @@ public:
 	 * Max OS X:
 	 * - SPRING_DATADIR env-variable (colon separated list, like PATH)
 	 * - ~/.springrc:SpringData=/path/to/data (colon separated list)
-	 * - path to the current work-dir/module (either spring(binary) or libunitsync.dylib)
+	 * - path to the current work-dir/module
+	 *   (either spring(binary) or libunitsync.dylib)
 	 * - CWD; allways:
 	 *   ~ path to the current work-dir/module,
 	 *     which is either the spring binary or libunitsync.so, or
@@ -82,7 +83,8 @@ public:
 	 *     which is either the spring binary or libunitsync.so, or
 	 *   ~ the parent dir of the above, if it is a multi-version data-dir
 	 * - "$HOME/.spring"
-	 * - from file '/etc/spring/datadir', preserving order (new-line separated list)
+	 * - from file '/etc/spring/datadir', preserving order
+	 *   (new-line separated list)
 	 * - SPRING_DATADIR compiler flag (colon separated list)
 	 *   This is set by the build system, and will usually contain dirs like:
 	 *   * /usr/share/games/spring/
@@ -100,8 +102,8 @@ public:
 	 */
 	void LocateDataDirs();
 
-	const std::vector<DataDir>& GetDataDirs() const { return datadirs; }
-	const DataDir* GetWriteDir() const { return writedir; }
+	const std::vector<DataDir>& GetDataDirs() const { return dataDirs; }
+	const DataDir* GetWriteDir() const { return writeDir; }
 
 private:
 
@@ -129,10 +131,12 @@ private:
 	 */
 	std::string SubstEnvVars(const std::string& in) const;
 	/**
-	 * @brief Adds the directories from a colon separated string to the datadir handler.
-	 * @param  in colon separated string, use ';' on Windows and ':' on all other OSs)
+	 * @brief Adds the directories from a colon separated string to the data-dir
+	 *   handler.
+	 * @param dirs colon separated string, use ';' on Windows and ':' on all
+	 *   other OSs
 	 */
-	void AddDirs(const std::string& in);
+	void AddDirs(const std::string& dirs);
 	/**
 	 * @brief Adds a single directory to the datadir handler.
 	 * Will only add the directory if it was not already added,
@@ -141,10 +145,10 @@ private:
 	 */
 	void AddDir(const std::string& dir);
 	/**
-	 * @brief Figure out permissions we have for a single data directory d.
+	 * @brief Figure out permissions we have for a single data directory.
 	 * @returns whether we have permissions to read the data directory.
 	 */
-	bool DeterminePermissions(DataDir* d);
+	bool DeterminePermissions(DataDir* dataDir);
 	/**
 	 * @brief Figure out permissions we have for the data directories.
 	 */
@@ -173,8 +177,8 @@ private:
 	 */
 	static bool LooksLikeMultiVersionDataDir(const std::string& dirPath);
 
-	std::vector<DataDir> datadirs;
-	const DataDir* writedir;
+	std::vector<DataDir> dataDirs;
+	const DataDir* writeDir;
 };
 
-#endif // !defined(DATADIRLOCATER_H)
+#endif // !defined(DATA_DIR_LOCATER_H)
