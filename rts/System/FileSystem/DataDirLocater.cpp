@@ -209,9 +209,10 @@ void DataDirLocater::LocateDataDirs()
 		}
 	}
 
-	// if this is true, ie the var is present in env, we will only add the dir
-	// where both binary and unitysnc lib reside in Portable mode
-	const bool isolationMode = (getenv("SPRING_PORTABLE") != NULL);
+	// If this is true, ie the var is present in env, we will only add the dir
+	// where both binary and unitysnc lib reside in Portable mode,
+	// or the parent dir, if it is a versioned data-dir.
+	const bool isolationMode = (getenv("SPRING_ISOLATED") != NULL);
 
 #if       defined(UNITSYNC)
 	const std::string dd_curWorkDir = Platform::GetModulePath();
