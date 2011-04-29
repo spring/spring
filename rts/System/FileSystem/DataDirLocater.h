@@ -43,17 +43,20 @@ public:
 	 * --------------------------
 	 * (descending priority -> first entry is searched first)
 	 *
-	 *	If the environment variable SPRING_PORTABLE is present
-	 *	_only_ Platform::GetProcessExecutablePath() (non-UNITSYNC)
-	 *			or Platform::GetModulePath() (UNITSYNC)
-	 *	will be added.
-	 * It the var is not present, the following hierarchy is observed:
+	 * If the environment variable SPRING_ISOLATED is present
+	 * _only_ Platform::GetProcessExecutablePath() (non-UNITSYNC)
+	 *     or Platform::GetModulePath() (UNITSYNC)
+	 * or the relative parent dir, in case of a multi-version engine install,
+	 * will be added.
+	 * If the var is not present, the following hierarchy is observed:
 	 *
 	 * Windows:
 	 * - SPRING_DATADIR env-variable (semi-colon separated list, like PATH)
 	 * - ./springsettings.cfg:SpringData=C:\data (semi-colon separated list)
-	 * - in portable mode only (usually: on): path to the current work-dir/module
-	 *   (either spring.exe or unitsync.dll)
+	 * - CWD; in portable mode only (usually: on):
+	 *   ~ path to the current work-dir/module,
+	 *     which is either spring.exe or unitsync.dll, or
+	 *   ~ the parent dir of the above, if it is a multi-version data-dir
 	 * - "C:/.../My Documents/My Games/Spring/"
 	 * - "C:/.../My Documents/Spring/"
 	 * - "C:/.../All Users/Applications/Spring/"
@@ -63,6 +66,10 @@ public:
 	 * - SPRING_DATADIR env-variable (colon separated list, like PATH)
 	 * - ~/.springrc:SpringData=/path/to/data (colon separated list)
 	 * - path to the current work-dir/module (either spring(binary) or libunitsync.dylib)
+	 * - CWD; allways:
+	 *   ~ path to the current work-dir/module,
+	 *     which is either the spring binary or libunitsync.so, or
+	 *   ~ the parent dir of the above, if it is a multi-version data-dir
 	 * - {module-path}/data/
 	 * - {module-path}/lib/
 	 * - SPRING_DATADIR compiler flag (colon separated list)
@@ -70,8 +77,10 @@ public:
 	 * Unixes:
 	 * - SPRING_DATADIR env-variable (colon separated list, like PATH)
 	 * - ~/.springrc:SpringData=/path/to/data (colon separated list)
-	 * - in portable mode only (usually: off): path to the current work-dir/module
-	 *   (either spring binary or libunitsync.so)
+	 * - CWD; in portable mode only (usually: off):
+	 *   ~ path to the current work-dir/module,
+	 *     which is either the spring binary or libunitsync.so, or
+	 *   ~ the parent dir of the above, if it is a multi-version data-dir
 	 * - "$HOME/.spring"
 	 * - from file '/etc/spring/datadir', preserving order (new-line separated list)
 	 * - SPRING_DATADIR compiler flag (colon separated list)
@@ -95,6 +104,26 @@ public:
 	const DataDir* GetWriteDir() const { return writedir; }
 
 private:
+
+	/**
+	 * Adds either the CWD "./", its parent dir "../" or none of the two as a
+	 * data dir.
+	 * If ../ seems to be a multi-version data-dir, it is added.
+	 * Otherwise, ./ is added, if it seems to be a portable data-dir,
+	 * or adding is forced.
+	 * Adding ../ is useful in case of multiple engine/unitsync versions
+	 * installed together in a sub-dir of the data-dir.
+	 * The data-dir structure then might look similar to this:
+	 * maps/
+	 * games/
+	 * engines/engine-0.83.0.0.exe
+	 * engines/engine-0.83.1.0.exe
+	 * unitsyncs/unitsync-0.83.0.0.exe
+	 * unitsyncs/unitsync-0.83.1.0.exe
+	 * @param curWorkDir the CWD to possibly add (or the relative ../)
+	 * @param forceAdd whether to always add either the parent or the CWD
+	 */
+	void AddCwdOrParentDir(const std::string& curWorkDir, bool forceAdd = false);
 	/**
 	 * @brief substitutes environment variables with their values
 	 */

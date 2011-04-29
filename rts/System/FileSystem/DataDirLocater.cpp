@@ -167,6 +167,29 @@ void DataDirLocater::DeterminePermissions()
 	datadirs = newDatadirs;
 }
 
+void DataDirLocater::AddCwdOrParentDir(const std::string& curWorkDir, bool forceAdd)
+{
+	// This is useful in case of multiple engine/unitsync versions installed
+	// together in a sub-dir of the data-dir
+	// The data-dir structure then might look similar to this:
+	// maps/
+	// games/
+	// engines/engine-0.83.0.0.exe
+	// engines/engine-0.83.1.0.exe
+	// unitsyncs/unitsync-0.83.0.0.exe
+	// unitsyncs/unitsync-0.83.1.0.exe
+	const std::string curWorkDirParent = FileSystemHandler::GetParent(curWorkDir);
+
+	// we can not add both ./ and ../ as data-dir
+	if ((curWorkDirParent != "") && LooksLikeMultiVersionDataDir(curWorkDirParent)) {
+		AddDirs(curWorkDirParent); // "../"
+	} else if (IsPortableMode() || forceAdd) {
+		// always using this would be unclean, because spring and unitsync
+		// would end up with different sets of data-dirs
+		AddDirs(curWorkDir); // "./"
+	}
+}
+
 void DataDirLocater::LocateDataDirs()
 {
 	// Prepare the data-dirs defined in different places
@@ -180,25 +203,15 @@ void DataDirLocater::LocateDataDirs()
 		}
 	}
 
-	// if this true, ie var is present in env, we'll only add the dir where both binary and unitysnc lib reside in Portable mode
-	const bool true_portable_mode = ( getenv("SPRING_PORTABLE") != NULL );
+	// if this is true, ie the var is present in env, we will only add the dir
+	// where both binary and unitysnc lib reside in Portable mode
+	const bool isolationMode = (getenv("SPRING_PORTABLE") != NULL);
 
 #if       defined(UNITSYNC)
 	const std::string dd_curWorkDir = Platform::GetModulePath();
 #else  // defined(UNITSYNC)
 	const std::string dd_curWorkDir = Platform::GetProcessExecutablePath();
 #endif // defined(UNITSYNC)
-
-	// This is useful in case of multiple engine/unitsync versions installed
-	// together in a sub-dir of the data-dir
-	// The data-dir structure then might look similar to this:
-	// maps/
-	// games/
-	// engines/engine-0.83.0.0.exe
-	// engines/engine-0.83.1.0.exe
-	// unitsyncs/unitsync-0.83.0.0.exe
-	// unitsyncs/unitsync-0.83.1.0.exe
-	const std::string dd_curWorkDirParent = FileSystemHandler::GetParent(dd_curWorkDir);
 
 #if    defined(WIN32)
 	// fetch my documents path
@@ -253,8 +266,9 @@ void DataDirLocater::LocateDataDirs()
 	datadirs.clear();
 	// The first dir added will be the writeable data dir.
 
-	if ( !true_portable_mode )
-	{
+	if (isolationMode) {
+		AddCwdOrParentDir(dd_curWorkDir, true); // "./" or "../"
+	} else {
 		// same on all platforms
 		AddDirs(dd_env);    // ENV{SPRING_DATADIR}
 		// user defined in spring config handler
@@ -264,11 +278,7 @@ void DataDirLocater::LocateDataDirs()
 #ifdef WIN32
 		// All MS Windows variants
 
-		if ((dd_curWorkDirParent != "") && LooksLikeMultiVersionDataDir(dd_curWorkDirParent)) {
-			AddDirs(dd_curWorkDirParent); // "../"
-		} else if (IsPortableMode()) { // we can not add both ./ and ../ as data-dir
-			AddDirs(dd_curWorkDir); // "./"
-		}
+		AddCwdOrParentDir(dd_curWorkDir); // "./" or "../"
 		AddDirs(dd_myDocsMyGames);  // "C:/.../My Documents/My Games/Spring/"
 		AddDirs(dd_myDocs);         // "C:/.../My Documents/Spring/"
 		AddDirs(dd_appData);        // "C:/.../All Users/Applications/Spring/"
@@ -276,11 +286,11 @@ void DataDirLocater::LocateDataDirs()
 #elif defined(MACOSX_BUNDLE)
 		// Mac OS X
 
-		// Maps and mods are supposed to be located in spring's executable location on Mac, but unitsync
+		// FIXME Maps and mods are supposed to be located in spring's executable location on Mac, but unitsync
 		// cannot find them since it does not know spring binary path. I have no idea but to force users
 		// to locate lobby executables in the same as spring's dir and add its location to search dirs.
 		#ifdef UNITSYNC
-		AddDirs(dd_curWorkDir);     // "./"
+		AddCwdOrParentDir(dd_curWorkDir, true); // "./" or "../"
 		#endif
 
 		// libs and data are supposed to be located in subdirectories of spring executable, so they
@@ -291,13 +301,7 @@ void DataDirLocater::LocateDataDirs()
 #else
 		// Linux, FreeBSD, Solaris, Apple non-bundle
 
-		if ((dd_curWorkDirParent != "") && LooksLikeMultiVersionDataDir(dd_curWorkDirParent)) {
-			AddDirs(dd_curWorkDirParent); // "../"
-		} else if (IsPortableMode()) { // we can not add both ./ and ../ as data-dir
-			// always using this would be unclean, because spring and unitsync
-			// would end up with different sets of data-dirs
-			AddDirs(dd_curWorkDir); // "./"
-		}
+		AddCwdOrParentDir(dd_curWorkDir); // "./" or "../"
 		AddDirs(SubstEnvVars("$HOME/.spring")); // "~/.spring/"
 		AddDirs(dd_etc);            // from /etc/spring/datadir
 #endif
@@ -306,8 +310,6 @@ void DataDirLocater::LocateDataDirs()
 		AddDirs(SubstEnvVars(SPRING_DATADIR)); // from -DSPRING_DATADIR
 #endif
 	}
-	else
-		AddDirs(dd_curWorkDir);
 
 	// Figure out permissions of all datadirs
 	DeterminePermissions();
