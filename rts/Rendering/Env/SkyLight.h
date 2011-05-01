@@ -99,6 +99,11 @@ private:
 	float shadowDensityFactor;
 
 	/**
+	 * @brief the lowest sun elevation for an automatically generated orbit
+	 */
+	float orbitMinSunHeight;
+
+	/**
 	 * @brief matrix that rotates the sun orbit
 	 */
 	CMatrix44f sunRotation;

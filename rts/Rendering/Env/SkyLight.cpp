@@ -9,6 +9,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "ConfigHandler.h"
 
 StaticSkyLight::StaticSkyLight() {
 	const CMapInfo::light_t& light = mapInfo->light;
@@ -29,6 +30,7 @@ DynamicSkyLight::DynamicSkyLight(): luaControl(false) {
 	lightIntensity = 1.0f;
 	groundShadowDensity = light.groundShadowDensity;
 	unitShadowDensity = light.unitShadowDensity;
+	orbitMinSunHeight = std::max(-1.0f, std::min(configHandler->Get("DynamicSunMinElevation", 0.1f), 1.0f));
 
 	// light.sunDir has already been normalized (in 3D) in MapInfo
 	SetLightParams(light.sunDir, light.sunStartAngle, light.sunOrbitTime);
@@ -89,9 +91,6 @@ void DynamicSkyLight::SetLightParams(float4 newLightDir, float startAngle, float
 		const float sunLen = newLightDir.Length2D();
 		const float sunAzimuth = (sunLen <= 0.001f) ? PI / 2.0f : atan(newLightDir.y / sunLen);
 		const float sunHeight = tan(sunAzimuth - 0.001f);
-
-		// the lowest sun altitude for an auto-generated orbit
-		const float orbitMinSunHeight = 0.1f;
 
 		float3 v1(cos(initialSunAngle), sunHeight, sin(initialSunAngle));
 		v1.ANormalize();
