@@ -150,8 +150,8 @@ class OpenQueueBH {
 				smalest = right;
 
 			// L("index: " << index << ", smalest: " << smalest);
-			heapFixed = (smalest != index);
-			if (heapFixed) {
+			heapFixed = (smalest == index);
+			if (!heapFixed) {
 				// swap them
 				PathNode* temp = heapArray[index];
 				heapArray[index] = heapArray[smalest];
@@ -160,7 +160,7 @@ class OpenQueueBH {
 				temp->myIndex = smalest;
 				heapArray[index]->myIndex = index;
 			}
-		}while(heapFixed);
+		} while(!heapFixed);
 
 		return min;
 	}
