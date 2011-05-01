@@ -10,3 +10,6 @@
 [submodule "AI/Skirmish/Shard"]
 	path = AI/Skirmish/Shard
 	url = git://github.com/Tarendai/Shard.git
+[submodule "AI/Skirmish/KAIK"]
+	path = AI/Skirmish/KAIK
+	url = git://github.com/Kloot/KAIK.git
