@@ -395,7 +395,7 @@ bool CLogOutput::IsSubscribersEnabled() const {
 // Printing functions
 // ----------------------------------------------------------------------
 
-void CLogOutput::Print(CLogSubsystem& subsystem, const char* fmt, ...)
+void CLogOutput::Print(const CLogSubsystem& subsystem, const char* fmt, ...)
 {
 	// if logOutput isn't initialized then subsystem.enabled still has it's default value
 	if (initialized && !subsystem.enabled) return;
@@ -408,7 +408,7 @@ void CLogOutput::Print(CLogSubsystem& subsystem, const char* fmt, ...)
 }
 
 
-void CLogOutput::Printv(CLogSubsystem& subsystem, const char* fmt, va_list argp)
+void CLogOutput::Printv(const CLogSubsystem& subsystem, const char* fmt, va_list argp)
 {
 	// if logOutput isn't initialized then subsystem.enabled still has it's default value
 	if (initialized && !subsystem.enabled) return;
