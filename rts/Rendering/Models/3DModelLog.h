@@ -6,9 +6,9 @@
 #include "System/LogOutput.h"
 
 // Enabling the "Model" and "Piece" log subsystems will help debug model loading. "Model-detail" is extremely verbose.
-static CLogSubsystem LOG_MODEL("Model");
-static CLogSubsystem LOG_MODEL_DETAIL("Model-detail");
-static CLogSubsystem LOG_PIECE("Piece");
-static CLogSubsystem LOG_PIECE_DETAIL("Piece-detail");
+extern const CLogSubsystem LOG_MODEL;
+extern const CLogSubsystem LOG_MODEL_DETAIL;
+extern const CLogSubsystem LOG_PIECE;
+extern const CLogSubsystem LOG_PIECE_DETAIL;
 
 #endif // _3DMODELLOG_H_
