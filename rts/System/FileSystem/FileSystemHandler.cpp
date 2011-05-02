@@ -188,16 +188,15 @@ std::string FileSystemHandler::StripTrailingSlashes(const std::string& path)
 
 std::string FileSystemHandler::GetParent(const std::string& path) {
 
-	std::string parent = "";
-
+	std::string parent = path;
 	EnsureNoPathSepAtEnd(parent);
 
-	static const char* PATH_SEP_REGEX = sPS_WIN32 sPS_POSIX;
-	const std::string::size_type slashPos = path.find_last_of(PATH_SEP_REGEX);
+	static const char* PATH_SEP_REGEX = sPS_POSIX sPS_WIN32;
+	const std::string::size_type slashPos = parent.find_last_of(PATH_SEP_REGEX);
 	if (slashPos == std::string::npos) {
 		parent = "";
 	} else {
-		parent.resize(0, slashPos + 1);
+		parent.resize(slashPos + 1);
 	}
 
 	return parent;
