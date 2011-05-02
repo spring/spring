@@ -560,12 +560,16 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 			}
 			AddDependency(ai.archiveData.GetDependencies(), "Map Helper v1");
 			ai.archiveData.SetInfoItemValueInteger("modType", modtype::map);
+
+			logOutput.Print(LOG_ARCHIVESCANNER, "Found new map: %s", ai.archiveData.GetName().c_str());
 		} else if (hasModinfo) {
 			//! it is a mod
 			ScanArchiveLua(ar, "modinfo.lua", ai, error);
 			if (ai.archiveData.GetModType() == modtype::primary) {
 				AddDependency(ai.archiveData.GetDependencies(), "Spring content v1");
 			}
+
+			logOutput.Print(LOG_ARCHIVESCANNER, "Found new game: %s", ai.archiveData.GetName().c_str());
 		} else {
 			//! neither a map nor a mod: error
 			error = "missing modinfo.lua/mapinfo.lua";
