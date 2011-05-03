@@ -346,28 +346,14 @@ void LuaMaterial::Execute(const LuaMaterial& prev) const
 
 	shader.Execute(prev.shader);
 
+	//FIXME add projection matrices!!!
 	if (cameraLoc >= 0) {
-		// FIXME: this is happening too much, just use floats?
-		GLfloat array[16];
-		const GLdouble* viewMat = camera->GetViewMat(); // GetMatrixData("camera")
-		for (int i = 0; i < 16; i += 4) {
-			array[i    ] = (GLfloat) viewMat[i    ];
-			array[i + 1] = (GLfloat) viewMat[i + 1];
-			array[i + 2] = (GLfloat) viewMat[i + 2];
-			array[i + 3] = (GLfloat) viewMat[i + 3];
-		}
-		glUniformMatrix4fv(cameraLoc, 1, GL_FALSE, array);
+		const CMatrix44f& viewMat = camera->GetViewMatrix(); // GetMatrixData("camera")
+		glUniformMatrix4fv(cameraLoc, 1, GL_FALSE, viewMat);
 	}
 	if (cameraInvLoc >= 0) {
-		GLfloat array[16];
-		const GLdouble* viewMatInv = camera->GetViewMatInv(); // GetMatrixData("caminv")
-		for (int i = 0; i < 16; i += 4) {
-			array[i    ] = (GLfloat) viewMatInv[i    ];
-			array[i + 1] = (GLfloat) viewMatInv[i + 1];
-			array[i + 2] = (GLfloat) viewMatInv[i + 2];
-			array[i + 3] = (GLfloat) viewMatInv[i + 3];
-		}
-		glUniformMatrix4fv(cameraInvLoc, 1, GL_FALSE, array);
+		const CMatrix44f& viewMatInv = camera->GetViewMatrixInverse(); // GetMatrixData("caminv")
+		glUniformMatrix4fv(cameraInvLoc, 1, GL_FALSE, viewMatInv);
 	}
 
 	if (cameraPosLoc >= 0) {

@@ -1213,7 +1213,7 @@ void CUnitDrawer::SetupForUnitDrawing()
 	if (advShading && !water->drawReflection) {
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
-		glMultMatrixd(camera->GetViewMat());
+		glMultMatrixf(camera->GetViewMatrix());
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
@@ -1229,9 +1229,9 @@ void CUnitDrawer::SetupForUnitDrawing()
 
 		if (globalRendering->haveGLSL && shadowHandler->shadowsLoaded) {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform3fv(6, &camera->pos[0]);
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4dv(7, false, camera->GetViewMat());
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4dv(8, false, camera->GetViewMatInv());
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(13, false, &shadowHandler->shadowMatrix.m[0]);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(8, false, camera->GetViewMatrixInverse());
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(13, false, shadowHandler->shadowMatrix);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(14, &(shadowHandler->GetShadowParams().x));
 
 			lightHandler.Update(modelShaders[MODEL_SHADER_S3O_ACTIVE]);
@@ -1246,7 +1246,7 @@ void CUnitDrawer::SetupForUnitDrawing()
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(11, unitAmbientColor.x, unitAmbientColor.y, unitAmbientColor.z, 1.0f);
 
 			glMatrixMode(GL_MATRIX0_ARB);
-			glLoadMatrixf(shadowHandler->shadowMatrix.m);
+			glLoadMatrixf(shadowHandler->shadowMatrix);
 			glMatrixMode(GL_MODELVIEW);
 		}
 

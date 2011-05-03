@@ -5,6 +5,7 @@
 
 #include "Rendering/GL/myGL.h"
 #include "System/float3.h"
+#include "System/Matrix44f.h"
 
 
 class CCamera
@@ -20,13 +21,13 @@ public:
 	bool InView(const float3& mins, const float3& maxs);
 	void Update(bool freeze, bool resetUp = true);
 
-	void Roll(float rad);
-	void Pitch(float rad);
-
-	const GLdouble* GetProjMat() const { return projMat; }
-	const GLdouble* GetViewMat() const { return viewMat; }
-	const GLdouble* GetViewMatInv() const { return viewMatInv; }
-	const GLdouble* GetBBoardMat() const { return bboardMat; }
+	const CMatrix44f& GetViewMatrix() const { return viewMatrix; }
+	const CMatrix44f& GetViewMatrixInverse() const { return viewMatrixInverse; }
+	const CMatrix44f& GetProjectionMatrix() const { return projectionMatrix; }
+	const CMatrix44f& GetProjectionMatrixInverse() const { return projectionMatrixInverse; }
+	const CMatrix44f& GetViewProjectionMatrix() const { return viewProjectionMatrix; }
+	const CMatrix44f& GetViewProjectionMatrixInverse() const { return viewProjectionMatrixInverse; }
+	const CMatrix44f& GetBillBoardMatrix() const { return billboardMatrix; }
 
 	float GetFov() const { return fov; }
 	float GetHalfFov() const { return halfFov; }
@@ -38,7 +39,7 @@ public:
 
 	float3 pos;
 	float3 pos2;       ///< use this for calculating orthodirections (might differ from pos when calcing shadows)
-	float3 rot;        ///< varning inte alltid uppdaterad
+	float3 rot;        ///< warning is not always updated
 	float3 forward;
 	float3 right;
 	float3 up;
@@ -59,10 +60,16 @@ private:
 	void myGluPerspective(float aspect, float zNear, float zFar);
 	void myGluLookAt(const float3&, const float3&, const float3&);
 
-	GLdouble projMat[16];
-	GLdouble viewMat[16];
-	GLdouble viewMatInv[16];
-	GLdouble bboardMat[16];
+	CMatrix44f projectionMatrix;
+	CMatrix44f projectionMatrixInverse;
+	CMatrix44f viewMatrix;
+	CMatrix44f viewMatrixInverse;
+	CMatrix44f viewProjectionMatrix;
+	CMatrix44f viewProjectionMatrixInverse;
+	CMatrix44f billboardMatrix;
+
+	std::vector<GLdouble> viewMatrixD;
+	std::vector<GLdouble> projectionMatrixD;
 
 	float fov; ///< in degrees
 	float halfFov; ///< half the fov in radians
