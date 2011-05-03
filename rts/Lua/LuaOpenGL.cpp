@@ -30,6 +30,7 @@
 #include "LuaFBOs.h"
 #include "LuaRBOs.h"
 #include "LuaFonts.h"
+#include "LuaOpenGLUtils.h"
 #include "LuaDisplayLists.h"
 #include "Game/Camera.h"
 #include "Game/UI/CommandColors.h"
@@ -883,7 +884,7 @@ void LuaOpenGL::SetupScreenLighting()
 
 	// sun light -- needs the camera transformation
 	glPushMatrix();
-	glLoadMatrixd(camera->GetViewMat());
+	glLoadMatrixf(camera->GetViewMatrix());
 	glLightfv(GL_LIGHT1, GL_POSITION, sky->GetLight()->GetLightDir());
 
 	const float sunFactor = 1.0f;
@@ -943,11 +944,11 @@ void LuaOpenGL::ResetWorldMatrices()
 	}
 	glMatrixMode(GL_PROJECTION); {
 		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
-		glLoadMatrixd(camera->GetProjMat());
+		glLoadMatrixf(camera->GetProjectionMatrix());
 	}
 	glMatrixMode(GL_MODELVIEW); {
 		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
-		glLoadMatrixd(camera->GetViewMat());
+		glLoadMatrixf(camera->GetViewMatrix());
 	}
 }
 
@@ -4359,31 +4360,6 @@ int LuaOpenGL::LoadIdentity(lua_State* L)
 }
 
 
-static const double* GetNamedMatrix(const string& name)
-{
-	if (name == "shadow") {
-		static double mat[16];
-		for (int i =0; i <16; i++) {
-			mat[i] = shadowHandler->shadowMatrix.m[i];
-		}
-		return mat;
-	}
-	else if (name == "camera") {
-		return camera->GetViewMat();
-	}
-	else if (name == "caminv") {
-		return camera->GetViewMatInv();
-	}
-	else if (name == "camprj") {
-		return camera->GetProjMat();
-	}
-	else if (name == "billboard") {
-		return camera->GetBBoardMat();
-	}
-	return NULL;
-}
-
-
 int LuaOpenGL::LoadMatrix(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
@@ -4392,9 +4368,9 @@ int LuaOpenGL::LoadMatrix(lua_State* L)
 
 	const int luaType = lua_type(L, 1);
 	if (luaType == LUA_TSTRING) {
-		const double* matptr = GetNamedMatrix(lua_tostring(L, 1));
+		const CMatrix44f* matptr = LuaOpenGLUtils::GetNamedMatrix(lua_tostring(L, 1));
 		if (matptr != NULL) {
-			glLoadMatrixd(matptr);
+			glLoadMatrixf(*matptr);
 		} else {
 			luaL_error(L, "Incorrect arguments to gl.LoadMatrix()");
 		}
@@ -4423,9 +4399,9 @@ int LuaOpenGL::MultMatrix(lua_State* L)
 
 	const int luaType = lua_type(L, 1);
 	if (luaType == LUA_TSTRING) {
-		const double* matptr = GetNamedMatrix(lua_tostring(L, 1));
+		const CMatrix44f* matptr = LuaOpenGLUtils::GetNamedMatrix(lua_tostring(L, 1));
 		if (matptr != NULL) {
-			glMultMatrixd(matptr);
+			glMultMatrixf(*matptr);
 		} else {
 			luaL_error(L, "Incorrect arguments to gl.MultMatrix()");
 		}
@@ -4556,15 +4532,25 @@ int LuaOpenGL::GetMatrixData(lua_State* L)
 		return 16;
 	}
 	else if (luaType == LUA_TSTRING) {
-		const double* matptr = GetNamedMatrix(lua_tostring(L, 1));
-		if (matptr != NULL) {
-			for (int i = 0; i < 16; i++) {
-				lua_pushnumber(L, matptr[i]);
-			}
-		}
-		else {
+		const CMatrix44f* matptr = LuaOpenGLUtils::GetNamedMatrix(lua_tostring(L, 1));
+
+		if (!matptr) {
 			luaL_error(L, "Incorrect arguments to gl.GetMatrixData(name)");
 		}
+
+		if (lua_isnumber(L, 2)) {
+			const int index = lua_toint(L, 2);
+			if ((index < 0) || (index >= 16)) {
+				return 0;
+			}
+			lua_pushnumber(L, *matptr[index]);
+			return 1;
+		}
+
+		for (int i = 0; i < 16; i++) {
+			lua_pushnumber(L, *matptr[i]);
+		}
+
 		return 16;
 	}
 

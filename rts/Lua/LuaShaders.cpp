@@ -16,6 +16,7 @@ using std::vector;
 #include "LuaHashString.h"
 #include "LuaHandle.h"
 #include "LuaOpenGL.h"
+#include "LuaOpenGLUtils.h"
 
 #include "Game/Camera.h"
 #include "Rendering/ShadowHandler.h"
@@ -766,16 +767,6 @@ int LuaShaders::UniformInt(lua_State* L)
 }
 
 
-static void UniformMatrix4dv(GLint location, const double dm[16])
-{
-	float fm[16];
-	for (int i = 0; i < 16; i++) {
-		fm[i] = (float)dm[i];
-	}
-	glUniformMatrix4fv(location, 1, GL_FALSE, fm);
-}
-
-
 int LuaShaders::UniformMatrix(lua_State* L)
 {
 	if (activeShaderDepth <= 0) {
@@ -790,22 +781,11 @@ int LuaShaders::UniformMatrix(lua_State* L)
 				luaL_error(L, "Incorrect arguments to gl.UniformMatrix()");
 			}
 			const string matName = lua_tostring(L, 2);
-			if (matName == "shadow") {
-				if (shadowHandler) {
-					glUniformMatrix4fv(location, 1, GL_FALSE,
-					                   shadowHandler->shadowMatrix.m);
-				}
-			}
-			else if (matName == "camera") {
-				UniformMatrix4dv(location, camera->GetViewMat());
-			}
-			else if (matName == "caminv") {
-				UniformMatrix4dv(location, camera->GetViewMatInv());
-			}
-			else if (matName == "camprj") {
-				UniformMatrix4dv(location, camera->GetProjMat());
-			}
-			else {
+			const CMatrix44f* mat = LuaOpenGLUtils::GetNamedMatrix(matName);
+
+			if (mat) {
+				glUniformMatrix4fv(location, 1, GL_FALSE, *mat);
+			} else {
 				luaL_error(L, "Incorrect arguments to gl.UniformMatrix()");
 			}
 			break;
