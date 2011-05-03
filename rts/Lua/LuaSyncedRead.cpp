@@ -2748,9 +2748,9 @@ int LuaSyncedRead::GetUnitVectors(lua_State* L)
 
 #define PACK_VECTOR(n) \
 	lua_createtable(L, 3, 0);            \
-	lua_pushnumber(L, unit-> n .x); lua_rawseti(L, -3, 1); \
-	lua_pushnumber(L, unit-> n .y); lua_rawseti(L, -3, 2); \
-	lua_pushnumber(L, unit-> n .z); lua_rawseti(L, -3, 3)
+	lua_pushnumber(L, unit-> n .x); lua_rawseti(L, -2, 1); \
+	lua_pushnumber(L, unit-> n .y); lua_rawseti(L, -2, 2); \
+	lua_pushnumber(L, unit-> n .z); lua_rawseti(L, -2, 3)
 
 	PACK_VECTOR(frontdir);
 	PACK_VECTOR(updir);
