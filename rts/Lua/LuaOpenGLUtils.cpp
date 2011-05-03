@@ -3,7 +3,7 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 #include <map>
-#include <boost/assign.hpp>
+#include <boost/assign/list_of.hpp>
 
 #include "LuaOpenGLUtils.h"
 #include "Game/Camera.h"
