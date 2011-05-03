@@ -4364,8 +4364,6 @@ int LuaOpenGL::LoadMatrix(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	GLfloat matrix[16];
-
 	const int luaType = lua_type(L, 1);
 	if (luaType == LUA_TSTRING) {
 		const CMatrix44f* matptr = LuaOpenGLUtils::GetNamedMatrix(lua_tostring(L, 1));
@@ -4375,18 +4373,20 @@ int LuaOpenGL::LoadMatrix(lua_State* L)
 			luaL_error(L, "Incorrect arguments to gl.LoadMatrix()");
 		}
 		return 0;
-	}
-	else if (luaType == LUA_TTABLE) {
-		if (ParseFloatArray(L, matrix, 16) != 16) {
-			luaL_error(L, "gl.LoadMatrix requires all 16 values");
+	} else {
+		GLfloat matrix[16];
+		if (luaType == LUA_TTABLE) {
+			if (ParseFloatArray(L, matrix, 16) != 16) {
+				luaL_error(L, "gl.LoadMatrix requires all 16 values");
+			}
 		}
-	}
-	else {
-		for (int i = 1; i <= 16; i++) {
-			matrix[i-1] = (GLfloat)luaL_checknumber(L, i);
+		else {
+			for (int i = 1; i <= 16; i++) {
+				matrix[i-1] = (GLfloat)luaL_checknumber(L, i);
+			}
 		}
+		glLoadMatrixf(matrix);
 	}
-	glLoadMatrixf(matrix);
 	return 0;
 }
 
@@ -4394,8 +4394,6 @@ int LuaOpenGL::LoadMatrix(lua_State* L)
 int LuaOpenGL::MultMatrix(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-
-	GLfloat matrix[16];
 
 	const int luaType = lua_type(L, 1);
 	if (luaType == LUA_TSTRING) {
@@ -4406,18 +4404,20 @@ int LuaOpenGL::MultMatrix(lua_State* L)
 			luaL_error(L, "Incorrect arguments to gl.MultMatrix()");
 		}
 		return 0;
-	}
-	else if (luaType == LUA_TTABLE) {
-		if (ParseFloatArray(L, matrix, 16) != 16) {
-			luaL_error(L, "gl.MultMatrix requires all 16 values");
+	} else {
+		GLfloat matrix[16];
+		if (luaType == LUA_TTABLE) {
+			if (ParseFloatArray(L, matrix, 16) != 16) {
+				luaL_error(L, "gl.LoadMatrix requires all 16 values");
+			}
 		}
-	}
-	else {
-		for (int i = 1; i <= 16; i++) {
-			matrix[i-1] = (GLfloat)luaL_checknumber(L, i);
+		else {
+			for (int i = 1; i <= 16; i++) {
+				matrix[i-1] = (GLfloat)luaL_checknumber(L, i);
+			}
 		}
+		glMultMatrixf(matrix);
 	}
-	glMultMatrixf(matrix);
 	return 0;
 }
 
