@@ -58,6 +58,9 @@ inline static LUAMATRICES MatrixGetId(const std::string& name)
 
 const CMatrix44f* LuaOpenGLUtils::GetNamedMatrix(const std::string& name)
 {
+	//! don't do for performance reasons (this function gets called a lot)
+	//StringToLowerInPlace(name);
+
 	const LUAMATRICES mat = MatrixGetId(name);
 
 	switch (mat) {
@@ -73,7 +76,7 @@ const CMatrix44f* LuaOpenGLUtils::GetNamedMatrix(const std::string& name)
 		case LUAMATRICES_PROJECTIONINVERSE:
 			return &camera->GetProjectionMatrixInverse();
 		case LUAMATRICES_VIEWPROJECTION:
-			return &camera->GetViewProjectionMatrixInverse();
+			return &camera->GetViewProjectionMatrix();
 		case LUAMATRICES_VIEWPROJECTIONINVERSE:
 			return &camera->GetViewProjectionMatrixInverse();
 		case LUAMATRICES_BILLBOARD:
