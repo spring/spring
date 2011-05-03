@@ -1385,7 +1385,7 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 	}
 
 	CSkirmishAIHandler::ids_t saids = skirmishAIHandler.GetSkirmishAIsInTeam(teamId);
-	if (saids.size() == 0) {
+	if (saids.empty()) {
 		return numVals;
 	}
 	const size_t skirmishAIId    = *(saids.begin());

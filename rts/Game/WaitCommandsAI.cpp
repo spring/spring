@@ -1097,7 +1097,7 @@ CWaitCommandsAI::GatherWait::GatherWait(const Command& cmd)
 {
 	GML_RECMUTEX_LOCK(sel); // GatherWait
 
-	if (cmd.params.size() != 0) {
+	if (!cmd.params.empty()) {
 		return;
 	}
 
