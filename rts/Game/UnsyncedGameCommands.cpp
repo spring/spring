@@ -514,7 +514,7 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 				badArgs = true;
 			} else {
 				const CSkirmishAIHandler::ids_t skirmishAIIds = skirmishAIHandler.GetSkirmishAIsInTeam(teamToKillId, gu->myPlayerNum);
-				if (skirmishAIIds.size() > 0) {
+				if (!skirmishAIIds.empty()) {
 					skirmishAIId = skirmishAIIds[0];
 				} else {
 					logOutput.Print("Team to %s: not a local Skirmish AI team: %i", actionName.c_str(), teamToKillId);

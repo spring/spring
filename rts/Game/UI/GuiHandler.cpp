@@ -3624,7 +3624,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 				for (std::vector<BuildInfo>::iterator bpi = buildPos.begin(); bpi != buildPos.end(); ++bpi) {
 					const float3& buildpos = bpi->pos;
 					// draw weapon range
-					if (unitdef->weapons.size() > 0) {
+					if (!unitdef->weapons.empty()) {
 						glColor4fv(cmdColors.rangeAttack);
 						glBallisticCircle(buildpos, unitdef->weapons[0].def->range,
 						                  NULL, 40, unitdef->weapons[0].def->heightmod);

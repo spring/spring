@@ -137,7 +137,7 @@ LocalModelPiece::~LocalModelPiece() {
 
 void LocalModelPiece::Draw() const
 {
-	if (!visible && childs.size()==0)
+	if (!visible && childs.empty())
 		return;
 
 	glPushMatrix();
