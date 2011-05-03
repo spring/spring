@@ -142,7 +142,7 @@ void CCamera::Update(bool freeze, bool resetUp)
 	myGluLookAt(camPos, center, up);
 
 	// create extra matrices
-	viewProjectionMatrix = viewMatrix.Mul(projectionMatrix);
+	viewProjectionMatrix = viewMatrix * projectionMatrix;
 	viewMatrixInverse = viewMatrix.InvertAffine();
 	projectionMatrixInverse = projectionMatrix.Invert();
 	viewProjectionMatrixInverse = viewProjectionMatrix.Invert();

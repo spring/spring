@@ -79,7 +79,7 @@ void CTransportUnit::Update()
 			if (ti->piece >= 0) {
 				const CMatrix44f& transMat = GetTransformMatrix(true);
 				const CMatrix44f& pieceMat = script->GetPieceMatrix(ti->piece);
-				const CMatrix44f  slaveMat = transMat.Mul(pieceMat);
+				const CMatrix44f slaveMat = pieceMat * transMat;
 
 				SyncedFloat3& xdir = transportee->rightdir;
 				SyncedFloat3& ydir = transportee->updir;
