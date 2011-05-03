@@ -32,11 +32,12 @@ public:
 	void SetPos(const float3& pos);
 	float3 GetPos() const { return float3(m[12], m[13], m[14]); }
 
-	CMatrix44f Mul(const CMatrix44f& other) const;
 	float3 Mul(const float3& vect) const;
 
 	void Transpose();
 
+	CMatrix44f operator* (const CMatrix44f& other) const;
+	CMatrix44f& operator*= (const CMatrix44f& other);
 	inline void operator*= (const float a) {
 		for (size_t i=0; i < 16; ++i)
 			m[i] *= a;

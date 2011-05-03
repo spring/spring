@@ -228,34 +228,31 @@ void CMatrix44f::SetPos(const float3& pos)
 }
 
 
-CMatrix44f CMatrix44f::Mul(const CMatrix44f& m2) const
+CMatrix44f CMatrix44f::operator* (const CMatrix44f& m2) const
 {
-	CMatrix44f res;
+	CMatrix44f res(*this);
+	res *= m2;
+	return res;
+}
 
-	float m20, m21, m22, m23;
+
+CMatrix44f& CMatrix44f::operator*= (const CMatrix44f& m2)
+{
+	float m10, m11, m12, m13;
 
 	for(int i = 0; i < 16; i += 4){
-		m20 = m2[i];
-		m21 = m2[i+1];
-		m22 = m2[i+2];
-		m23 = m2[i+3];
+		m10 = m[i];
+		m11 = m[i+1];
+		m12 = m[i+2];
+		m13 = m[i+3];
 
-		res[i]   = m[0]*m20 + m[4]*m21 + m[8]*m22  + m[12]*m23;
-		res[i+1] = m[1]*m20 + m[5]*m21 + m[9]*m22  + m[13]*m23;
-		res[i+2] = m[2]*m20 + m[6]*m21 + m[10]*m22 + m[14]*m23;
-		res[i+3] = m[3]*m20 + m[7]*m21 + m[11]*m22 + m[15]*m23;
+		m[i]   = m2[0]*m10 + m2[4]*m11 + m2[8]*m12  + m2[12]*m13;
+		m[i+1] = m2[1]*m10 + m2[5]*m11 + m2[9]*m12  + m2[13]*m13;
+		m[i+2] = m2[2]*m10 + m2[6]*m11 + m2[10]*m12 + m2[14]*m13;
+		m[i+3] = m2[3]*m10 + m2[7]*m11 + m2[11]*m12 + m2[15]*m13;
 	}
-/*
-	for(int x=0;x<4;++x){
-		for(int y=0;y<4;++y){
-			res[x*4+y]=0;
-			for(int a=0;a<4;++a){
-				res[x*4+y]+=m[a*4+y]*other[x*4+a];
-			}
-		}
-	}
-*/
-	return res;
+
+	return (*this);
 }
 
 
