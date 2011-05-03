@@ -4,6 +4,7 @@
 #define _MEM_POOL_H_
 
 #include <new>
+#include <cstring> // for size_t
 
 const size_t MAX_MEM_SIZE=200;
 
