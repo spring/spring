@@ -4543,12 +4543,12 @@ int LuaOpenGL::GetMatrixData(lua_State* L)
 			if ((index < 0) || (index >= 16)) {
 				return 0;
 			}
-			lua_pushnumber(L, *matptr[index]);
+			lua_pushnumber(L, (*matptr)[index]);
 			return 1;
 		}
 
 		for (int i = 0; i < 16; i++) {
-			lua_pushnumber(L, *matptr[i]);
+			lua_pushnumber(L, (*matptr)[i]);
 		}
 
 		return 16;
