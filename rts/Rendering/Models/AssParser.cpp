@@ -82,7 +82,7 @@ public:
 	~AssLogStream() {}
 	void write(const char* message)
 	{
-		logOutput.Print (LOG_MODEL_DETAIL, "Assimp: %s", message);
+		logOutput.Print(LOG_MODEL_DETAIL, "Assimp: %s", message);
 	}
 };
 

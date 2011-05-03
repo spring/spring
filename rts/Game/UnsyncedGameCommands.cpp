@@ -1287,7 +1287,7 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 
 			newFont = CglFont::LoadFont(action.extra, fontSize, outlineWidth, outlineWeight);
 			newSmallFont = CglFont::LoadFont(action.extra, smallFontSize, smallOutlineWidth, smallOutlineWeight);
-		} catch (std::exception e) {
+		} catch (std::exception& e) {
 			delete newFont;
 			delete newSmallFont;
 			newFont = newSmallFont = NULL;

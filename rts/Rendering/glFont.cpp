@@ -1860,7 +1860,7 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 }
 
 
-void CglFont::glWorldPrint(const float3 p, const float size, const std::string& str)
+void CglFont::glWorldPrint(const float3& p, const float size, const std::string& str)
 {
 
 	glPushMatrix();

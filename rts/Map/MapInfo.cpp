@@ -65,6 +65,9 @@ CMapInfo::CMapInfo(const std::string& _mapInfoFile, const string& mapName) : map
 
 CMapInfo::~CMapInfo()
 {
+#if !defined(HEADLESS) && !defined(NO_SOUND)
+	delete efxprops;
+#endif
 	delete parser;
 }
 

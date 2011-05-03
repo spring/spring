@@ -24,8 +24,6 @@ protected:
 	const int numBigTexX;
 	const int numBigTexY;
 
-	int* textureOffsets;
-
 	struct GroundSquare {
 		int texLevel;
 		GLuint texture;
