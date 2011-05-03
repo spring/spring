@@ -38,7 +38,6 @@ private:
 	unsigned int specularTexIter;
 	bool mapSkyReflections;
 
-	float specExp;
 	unsigned char* specTexBuf;
 
 	FBO reflectionCubeFBO;
