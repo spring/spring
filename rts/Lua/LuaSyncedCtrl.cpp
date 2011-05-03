@@ -1781,7 +1781,7 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 {
 	const int argc = lua_gettop(L);
 
-	if (argc != 11 || argc != 14) {
+	if ((argc != 11) && (argc != 14)) {
 		return 0;
 	}
 
