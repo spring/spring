@@ -190,7 +190,7 @@ void CMapInfo::ReadLight()
 	light.unitSpecularColor = lightTable.GetFloat3("unitSpecularColor", light.unitSunColor);
 	light.unitShadowDensity = lightTable.GetFloat("unitShadowDensity", 0.8f);
 
-	light.specularExpontent = lightTable.GetFloat("pecularExpontent", 100.0f);
+	light.specularExponent = lightTable.GetFloat("specularExponent", 100.0f);
 }
 
 
