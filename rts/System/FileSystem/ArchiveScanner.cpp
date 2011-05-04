@@ -85,17 +85,18 @@ CArchiveScanner::ArchiveData::ArchiveData(const LuaTable& archiveTable)
 	for (key = keys.begin(); key != keys.end(); ++key) {
 		const std::string& keyLower = StringToLower(*key);
 		if (!ArchiveData::IsReservedKey(keyLower)) {
+			if (keyLower == "modtype") {
+				SetInfoItemValueInteger(*key, archiveTable.GetInt(*key, 0));
+				continue;
+			}
+			
 			const int luaType = archiveTable.GetType(*key);
 			switch (luaType) {
 				case LuaTable::STRING: {
 					SetInfoItemValueString(*key, archiveTable.GetString(*key, ""));
 				} break;
 				case LuaTable::NUMBER: {
-					if (keyLower == "modtype") {
-						SetInfoItemValueInteger(*key, archiveTable.GetInt(*key, 0));
-					} else {
-						SetInfoItemValueFloat(*key, archiveTable.GetFloat(*key, 0.0f));
-					}
+					SetInfoItemValueFloat(*key, archiveTable.GetFloat(*key, 0.0f));
 				} break;
 				case LuaTable::BOOLEAN: {
 					SetInfoItemValueBool(*key, archiveTable.GetBool(*key, false));
