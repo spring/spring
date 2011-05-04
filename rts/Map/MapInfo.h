@@ -119,7 +119,7 @@ public:
 		float4 unitSunColor;
 		float  unitShadowDensity;
 		float3 unitSpecularColor;
-		float  specularExpontent;
+		float  specularExponent;
 	} light;
 
 	/** settings read from "MAP\WATER" section
