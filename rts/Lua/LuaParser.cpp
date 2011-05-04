@@ -21,8 +21,9 @@
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
 #include "FileSystem/FileSystem.h"
-#include "Util.h"
+#include "System/BranchPrediction.h"
 #include "System/myTime.h"
+#include "System/Util.h"
 
 LuaParser* LuaParser::currentParser = NULL;
 
@@ -1121,11 +1122,11 @@ static bool ParseTableFloat(lua_State* L,
 {
 	lua_pushnumber(L, index);
 	lua_gettable(L, tableIndex);
-	if (!lua_isnumber(L, -1)) {
+	value = lua_tofloat(L, -1);
+	if (unlikely(value == 0) && !lua_isnumber(L, -1) && !lua_isstring(L, -1)) {
 		lua_pop(L, 1);
 		return false;
 	}
-	value = lua_tofloat(L, -1);
 	lua_pop(L, 1);
 	return true;
 }
@@ -1211,11 +1212,11 @@ int LuaTable::GetInt(const string& key, int def) const
 	if (!PushValue(key)) {
 		return def;
 	}
-	if (!lua_isnumber(L, -1)) {
+	const int value = lua_toint(L, -1);
+	if (unlikely(value == 0) && !lua_isnumber(L, -1) && !lua_isstring(L, -1)) {
 		lua_pop(L, 1);
 		return def;
 	}
-	const int value = lua_toint(L, -1);
 	lua_pop(L, 1);
 	return value;
 }
@@ -1241,11 +1242,11 @@ float LuaTable::GetFloat(const string& key, float def) const
 	if (!PushValue(key)) {
 		return def;
 	}
-	if (!lua_isnumber(L, -1)) {
+	const float value = lua_tofloat(L, -1);
+	if (unlikely(value == 0.f) && !lua_isnumber(L, -1) && !lua_isstring(L, -1)) {
 		lua_pop(L, 1);
 		return def;
 	}
-	const float value = lua_tofloat(L, -1);
 	lua_pop(L, 1);
 	return value;
 }
@@ -1308,11 +1309,11 @@ int LuaTable::GetInt(int key, int def) const
 	if (!PushValue(key)) {
 		return def;
 	}
-	if (!lua_isnumber(L, -1)) {
+	const int value = lua_toint(L, -1);
+	if (unlikely(value == 0) && !lua_isnumber(L, -1) && !lua_isstring(L, -1)) {
 		lua_pop(L, 1);
 		return def;
 	}
-	const int value = lua_toint(L, -1);
 	lua_pop(L, 1);
 	return value;
 }
@@ -1338,11 +1339,11 @@ float LuaTable::GetFloat(int key, float def) const
 	if (!PushValue(key)) {
 		return def;
 	}
-	if (!lua_isnumber(L, -1)) {
+	const float value = lua_tofloat(L, -1);
+	if (unlikely(value == 0) && !lua_isnumber(L, -1) && !lua_isstring(L, -1)) {
 		lua_pop(L, 1);
 		return def;
 	}
-	const float value = lua_tofloat(L, -1);
 	lua_pop(L, 1);
 	return value;
 }
