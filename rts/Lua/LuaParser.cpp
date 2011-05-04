@@ -771,18 +771,18 @@ LuaTable LuaTable::SubTableExpr(const string& expr) const
 	LuaTable nextTable;
 
 	if (expr[0] == '[') { // numeric key
-    endPos = expr.find(']');
-    if (endPos == string::npos) {
-      return LuaTable(); // missing brace
-    }
-    const char* startPtr = expr.c_str() + 1; // skip the '['
-    char* endPtr;
-    const int index = strtol(startPtr, &endPtr, 10);
-    if (endPtr == startPtr) {
-      return LuaTable(); // invalid index
-    }
-    endPos++; // eat the ']'
-    nextTable = SubTable(index);
+		endPos = expr.find(']');
+		if (endPos == string::npos) {
+			return LuaTable(); // missing brace
+		}
+		const char* startPtr = expr.c_str() + 1; // skip the '['
+		char* endPtr;
+		const int index = strtol(startPtr, &endPtr, 10);
+		if (endPtr == startPtr) {
+			return LuaTable(); // invalid index
+		}
+		endPos++; // eat the ']'
+		nextTable = SubTable(index);
 	}
 	else { // string key
 		endPos = expr.find_first_of(".[");
