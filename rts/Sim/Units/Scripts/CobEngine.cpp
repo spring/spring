@@ -126,7 +126,7 @@ void CCobEngine::Tick(int deltaTime)
 	wantToRun.clear();
 
 	//Check on the sleeping threads
-	if (sleeping.size() > 0) {
+	if (!sleeping.empty()) {
 		CCobThread *cur = sleeping.top();
 		while ((cur != NULL) && (cur->GetWakeTime() < GCurrentTime)) {
 
@@ -147,7 +147,7 @@ void CCobEngine::Tick(int deltaTime)
 			} else {
 				logOutput.Print("CobError: Sleeping thread strange state %d", cur->state);
 			}
-			if (sleeping.size() > 0)
+			if (!sleeping.empty())
 				cur = sleeping.top();
 			else
 				cur = NULL;

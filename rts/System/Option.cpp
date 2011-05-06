@@ -191,7 +191,7 @@ void parseOptions(
 		try {
 			parseOption(root, index, opt, *myOptionsSet);
 			options.push_back(opt);
-		} catch (content_error err) {
+		} catch (content_error& err) {
 			logOutput.Print(*logSubsystem,
 					"Failed parsing option %d from %s: %s",
 					index, fileName.c_str(), err.what());
@@ -256,7 +256,7 @@ void parseMapOptions(
 		try {
 			parseOption(root, index, opt, *myOptionsSet);
 			options.push_back(opt);
-		} catch (content_error err) {
+		} catch (content_error& err) {
 			logOutput.Print(*logSubsystem,
 					"Failed parsing map-option %d from %s for map %s: %s",
 					index, fileName.c_str(), mapName.c_str(), err.what());

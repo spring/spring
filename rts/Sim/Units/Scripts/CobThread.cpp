@@ -204,7 +204,7 @@ const int DROP   = 0x10084000;
 
 int CCobThread::POP(void)
 {
-	if (stack.size() > 0) {
+	if (!stack.empty()) {
 		int r = stack.back();
 		stack.pop_back();
 		return r;
@@ -757,7 +757,7 @@ void CCobThread::ShowError(const string& msg)
 	static int spamPrevention = 100;
 	if (spamPrevention < 0) return;
 	--spamPrevention;
-	if (callStack.size() == 0)
+	if (callStack.empty())
 		logOutput.Print("CobError: %s outside script execution (?)", msg.c_str());
 	else
 		logOutput.Print("CobError: %s (in %s:%s at %x)", msg.c_str(), script.name.c_str(), script.scriptNames[callStack.back().functionId].c_str(), PC - 1);
