@@ -117,7 +117,7 @@ EXPORT(const char* ) GetWritableDataDirectory();
 EXPORT(int         ) GetDataDirectoryCount();
 
 /**
- * @brief Get the abosulte path to i-th data directory
+ * @brief Get the absolute path to i-th data directory
  * @return NULL on error; the i-th data directory absolute path on success
  */
 EXPORT(const char* ) GetDataDirectory(int index);
@@ -422,7 +422,7 @@ EXPORT(const char* ) GetMapArchiveName(int index);
  * This checksum depends on Spring internals, and as such should not be expected
  * to remain stable between releases.
  *
- * (It is ment to check sync between clients in lobby, for example.)
+ * (It is meant to check sync between clients in lobby, for example.)
  */
 EXPORT(unsigned int) GetMapChecksum(int index);
 /**
@@ -479,7 +479,7 @@ EXPORT(int         ) GetInfoMap(const char* mapName, const char* name, unsigned 
 
 /**
  * @brief Retrieves the number of Skirmish AIs available
- * @return int Zero on error; The number of Skirmish AIs available on success
+ * @return Zero on error; The number of Skirmish AIs available on success
  * @see GetMapCount
  */
 EXPORT(int         ) GetSkirmishAICount();
@@ -510,7 +510,6 @@ EXPORT(const char* ) GetInfoKey(int index);
  *   which will be one of:
  *   "string", "integer", "float", "bool"
  * @see GetSkirmishAIInfoCount
- * @see GetInfoValue
  * @see GetInfoValueString
  * @see GetInfoValueInteger
  * @see GetInfoValueFloat
@@ -597,7 +596,7 @@ EXPORT(int         ) GetSkirmishAIOptionCount(int index);
 
 /**
  * @brief Retrieves the number of mods available
- * @return int Zero on error; The number of mods available on success
+ * @return Zero on error; The number of mods available on success
  * @see GetMapCount
  */
 EXPORT(int         ) GetPrimaryModCount();
