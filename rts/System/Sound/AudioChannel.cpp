@@ -42,7 +42,7 @@ void AudioChannel::Enable(bool newState)
 void AudioChannel::SoundSourceFinished(CSoundSource* sndSource)
 {
 	if (curStreamSrc == sndSource) {
-		if (streamQueue.size()>0) {
+		if (!streamQueue.empty()) {
 			StreamQueueItem& next = streamQueue.back();
 			StreamPlay(next.fileName, next.volume, false);
 			streamQueue.pop_back();
@@ -94,7 +94,7 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 			sound->numAbortedPlays++;
 
 		sndSource->Play(this, sndItem, pos, velocity, volume, relative);
-		CheckError("CSound::PlaySample");
+		CheckError("CSound::FindSourceAndPlay");
 
 		cur_sources[sndSource] = true;
 	}
