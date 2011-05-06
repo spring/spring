@@ -48,10 +48,10 @@ public:
 	void DrawCloakedUnits(bool noAdvShading = false);
 	void DrawShadowPass();
 
-	void DrawUnitRaw(CUnit* unit);
-	void DrawUnitRawModel(CUnit* unit);
+	static void DrawUnitRaw(CUnit* unit);
+	static void DrawUnitRawModel(CUnit* unit);
 	void DrawUnitWithLists(CUnit* unit, unsigned int preList, unsigned int postList);
-	void DrawUnitRawWithLists(CUnit* unit, unsigned int preList, unsigned int postList);
+	static void DrawUnitRawWithLists(CUnit* unit, unsigned int preList, unsigned int postList);
 
 	void SetTeamColour(int team, float alpha = 1.0f) const;
 	void SetupForUnitDrawing();
@@ -115,7 +115,7 @@ public:
 	void CreateSpecularFace(unsigned int glType, int size, float3 baseDir, float3 xDif, float3 yDif, float3 sunDir, float exponent, float3 sunColor);
 
 	void DrawBuildingSample(const UnitDef* unitdef, int side, float3 pos, int facing = 0);
-	void DrawUnitDef(const UnitDef* unitDef, int team);
+	static void DrawUnitDef(const UnitDef* unitDef, int team);
 
 	void UnitDrawingTexturesOff();
 	void UnitDrawingTexturesOn();
@@ -123,9 +123,9 @@ public:
 	/** CGame::DrawDirectControlHud,  **/
 	void DrawIndividual(CUnit* unit);
 
-	unsigned int CalcUnitLOD(const CUnit* unit, unsigned int lastLOD) const;
-	unsigned int CalcUnitShadowLOD(const CUnit* unit, unsigned int lastLOD) const;
-	void SetUnitLODCount(CUnit* unit, unsigned int count);
+	static unsigned int CalcUnitLOD(const CUnit* unit, unsigned int lastLOD);
+	static unsigned int CalcUnitShadowLOD(const CUnit* unit, unsigned int lastLOD);
+	static void SetUnitLODCount(CUnit* unit, unsigned int count);
 
 	const std::set<CUnit*>& GetUnsortedUnits() const { return unsortedUnits; }
 	IWorldObjectModelRenderer* GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
@@ -174,18 +174,18 @@ private:
 
 	// note: make these static?
 	void DrawUnitBeingBuilt(CUnit* unit);
-	inline void DrawUnitModel(CUnit* unit);
+	static void DrawUnitModel(CUnit* unit);
 	void DrawUnitNow(CUnit* unit);
 
 	void UpdateUnitIconState(CUnit* unit);
-	void UpdateUnitDrawPos(CUnit* unit);
+	static void UpdateUnitDrawPos(CUnit* unit);
 
-	void SetBasicTeamColour(int team, float alpha = 1.0f) const;
-	void SetupBasicS3OTexture0() const;
-	void SetupBasicS3OTexture1() const;
-	void CleanupBasicS3OTexture1() const;
-	void CleanupBasicS3OTexture0() const;
-	void DrawIcon(CUnit* unit, bool asRadarBlip);
+	static void SetBasicTeamColour(int team, float alpha = 1.0f);
+	static void SetupBasicS3OTexture0();
+	static void SetupBasicS3OTexture1();
+	static void CleanupBasicS3OTexture1();
+	static void CleanupBasicS3OTexture0();
+	static void DrawIcon(CUnit* unit, bool asRadarBlip);
 	void DrawCloakedUnitsHelper(int modelType);
 	void DrawCloakedUnit(CUnit* unit, int modelType, bool drawGhostBuildingsPass);
 
