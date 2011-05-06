@@ -1352,7 +1352,7 @@ void CUnitDrawer::SetTeamColour(int team, float alpha) const
 	}
 }
 
-void CUnitDrawer::SetBasicTeamColour(int team, float alpha) const
+void CUnitDrawer::SetBasicTeamColour(int team, float alpha)
 {
 	const unsigned char* col = teamHandler->Team(team)->color;
 	const float texConstant[] = {col[0] / 255.0f, col[1] / 255.0f, col[2] / 255.0f, alpha};
@@ -1373,7 +1373,7 @@ void CUnitDrawer::SetBasicTeamColour(int team, float alpha) const
  * - call SetBasicTeamColour to set the team colour to transform to.
  * - Replace the output alpha channel. If not, only the team-coloured bits will show, if that. Or something.
  */
-void CUnitDrawer::SetupBasicS3OTexture0() const
+void CUnitDrawer::SetupBasicS3OTexture0()
 {
 	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_TEXTURE_2D);
@@ -1399,7 +1399,7 @@ void CUnitDrawer::SetupBasicS3OTexture0() const
  * - Leaves glActivateTextureARB at the first unit.
  * - This doesn't tinker with the output alpha, either.
  */
-void CUnitDrawer::SetupBasicS3OTexture1() const
+void CUnitDrawer::SetupBasicS3OTexture1()
 {
 	glActiveTexture(GL_TEXTURE1);
 	glEnable(GL_TEXTURE_2D);
@@ -1419,7 +1419,7 @@ void CUnitDrawer::SetupBasicS3OTexture1() const
 }
 
 
-void CUnitDrawer::CleanupBasicS3OTexture1() const
+void CUnitDrawer::CleanupBasicS3OTexture1()
 {
 	// reset texture1 state
 	glActiveTexture(GL_TEXTURE1);
@@ -1429,7 +1429,7 @@ void CUnitDrawer::CleanupBasicS3OTexture1() const
 	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 }
 
-void CUnitDrawer::CleanupBasicS3OTexture0() const
+void CUnitDrawer::CleanupBasicS3OTexture0()
 {
 	// reset texture0 state
 	glActiveTexture(GL_TEXTURE0);
@@ -2277,7 +2277,7 @@ void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newS
 
 
 
-unsigned int CUnitDrawer::CalcUnitLOD(const CUnit* unit, unsigned int lastLOD) const
+unsigned int CUnitDrawer::CalcUnitLOD(const CUnit* unit, unsigned int lastLOD)
 {
 	if (lastLOD == 0) { return 0; }
 
@@ -2295,7 +2295,7 @@ unsigned int CUnitDrawer::CalcUnitLOD(const CUnit* unit, unsigned int lastLOD) c
 }
 
 // unused
-unsigned int CUnitDrawer::CalcUnitShadowLOD(const CUnit* unit, unsigned int lastLOD) const
+unsigned int CUnitDrawer::CalcUnitShadowLOD(const CUnit* unit, unsigned int lastLOD)
 {
 	return CalcUnitLOD(unit, lastLOD); // FIXME
 
