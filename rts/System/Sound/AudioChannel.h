@@ -27,11 +27,11 @@ public:
 	void SetVolume(float newVolume);
 
 	void PlaySample(size_t id, float volume = 1.0f);
-	void PlaySample(size_t id, const float3& p, float volume = 1.0f);
-	void PlaySample(size_t id, const float3& p, const float3& velocity, float volume = 1.0f);
+	void PlaySample(size_t id, const float3& pos, float volume = 1.0f);
+	void PlaySample(size_t id, const float3& pos, const float3& velocity, float volume = 1.0f);
 
-	void PlaySample(size_t id, const CUnit* u, float volume = 1.0f);
-	void PlaySample(size_t id, const CWorldObject* p, float volume = 1.0f);
+	void PlaySample(size_t id, const CUnit* unit, float volume = 1.0f);
+	void PlaySample(size_t id, const CWorldObject* obj, float volume = 1.0f);
 
 	void StreamPlay(const std::string& path, float volume = 1.0f, bool enqueue = false);
 
@@ -46,7 +46,7 @@ public:
 	float StreamGetPlayTime();
 
 protected:
-	void FindSourceAndPlay(size_t id, const float3& p, const float3& velocity, float volume, bool relative);
+	void FindSourceAndPlay(size_t id, const float3& pos, const float3& velocity, float volume, bool relative);
 
 	void SoundSourceFinished(CSoundSource* sndSource);
 	friend class CSoundSource;
@@ -57,8 +57,11 @@ public:
 	//! streams
 	struct StreamQueueItem {
 		StreamQueueItem() : volume(0.f) {}
-		StreamQueueItem(const std::string& f, float& v) : filename(f), volume(v) {}
-		std::string filename;
+		StreamQueueItem(const std::string& fileName, float& volume)
+			: fileName(fileName)
+			, volume(volume)
+		{}
+		std::string fileName;
 		float volume;
 	};
 	
