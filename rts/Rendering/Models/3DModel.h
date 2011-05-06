@@ -148,17 +148,17 @@ struct LocalModelPiece
 	void AddChild(LocalModelPiece* c) { childs.push_back(c); }
 	void SetParent(LocalModelPiece* p) { parent = p; }
 
-	void Draw() const;
-	void DrawLOD(unsigned int lod) const;
+	void Draw();
+	void DrawLOD(unsigned int lod);
 	void SetLODCount(unsigned int count);
 
-	void ApplyTransform() const;
+	void ApplyTransform();
 	void GetPiecePosIter(CMatrix44f* mat) const;
 	bool GetEmitDirPos(float3& pos, float3& dir) const;
 	float3 GetAbsolutePos() const;
 
-	void SetPosition(const float3& p) { pos = p; };
-	void SetRotation(const float3& r) { rot = r; };
+	void SetPosition(const float3& p) { pos = p;++updates; };
+	void SetRotation(const float3& r) { rot = r; ++updates; };
 	//void SetDirection(const float3&);
 	const float3& GetPosition() const { return pos; }
 	const float3& GetRotation() const { return rot; }
@@ -169,10 +169,20 @@ struct LocalModelPiece
 	      CollisionVolume* GetCollisionVolume()       { return colvol; }
 
 private:
+	void CheckUpdate();
+	void UpdateMatrix();
+
+private:
 	float3 pos;
 	float3 rot; //! in radians
 
 	CollisionVolume* colvol;
+
+	bool identity;
+	CMatrix44f transfMat;
+
+	unsigned updates;
+	unsigned last_matrix_update;
 
 public:
 	// TODO: add (visibility) maxradius!
