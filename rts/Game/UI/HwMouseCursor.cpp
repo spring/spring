@@ -75,6 +75,7 @@ class CHwWinCursor : public IHwCursor {
 	protected:
 		HCURSOR cursor;
 
+	#pragma push(pack,1)
 		struct CursorDirectoryHeader {
 			byte  xsize,ysize,ncolors,reserved1;
 			short hotx,hoty;
@@ -90,7 +91,8 @@ class CHwWinCursor : public IHwCursor {
 		struct AnihStructure {
 			DWORD size,images,frames,width,height,bpp,planes,rate,flags;
 		};
-
+	#pragma pop(pack)
+		
 	protected:
 		struct ImageData {
 			unsigned char* data;
