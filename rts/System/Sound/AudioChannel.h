@@ -38,7 +38,7 @@ public:
 	/**
 	 * @brief Stop playback
 	 * 
-	 * Don't call this if you just want to play another file (for performance).
+	 * Do not call this if you just want to play another file (for performance).
 	 */
 	void StreamStop();
 	void StreamPause();
@@ -49,9 +49,8 @@ protected:
 	void FindSourceAndPlay(size_t id, const float3& pos, const float3& velocity, float volume, bool relative);
 
 	void SoundSourceFinished(CSoundSource* sndSource);
-	friend class CSoundSource;
 
-public:
+private:
 	std::map<CSoundSource*, bool> cur_sources;
 
 	//! streams
