@@ -35,13 +35,22 @@ S3DModelPiece* S3DModel::FindPiece( std::string name )
 
 void S3DModelPiece::DrawStatic() const
 {
-	glPushMatrix();
-	glTranslatef(offset.x, offset.y, offset.z);
-	glCallList(dispListID);
-	for (std::vector<S3DModelPiece*>::const_iterator ci = childs.begin(); ci != childs.end(); ++ci) {
-		(*ci)->DrawStatic();
+	const bool needTrafo = (offset.SqLength() != 0.f);
+	if (needTrafo) {
+		glPushMatrix();
+		glTranslatef(offset.x, offset.y, offset.z);
 	}
-	glPopMatrix();
+
+		if (!isEmpty)
+			glCallList(dispListID);
+
+		for (std::vector<S3DModelPiece*>::const_iterator ci = childs.begin(); ci != childs.end(); ++ci) {
+			(*ci)->DrawStatic();
+		}
+
+	if (needTrafo) {
+		glPopMatrix();
+	}
 }
 
 
