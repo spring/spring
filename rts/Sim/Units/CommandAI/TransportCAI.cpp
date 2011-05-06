@@ -558,7 +558,7 @@ void CTransportCAI::UnloadUnits_Drop(Command& c, CTransportUnit* transport)
 	} else if (!dropSpots.empty() ) {
 		// make sure we check current spot infront of us each unload
 		pos = dropSpots.back(); // take last landing pos as new start spot
-		canUnload = dropSpots.size() > 0;
+		canUnload = !dropSpots.empty();
 	}
 
 	if (canUnload) {
