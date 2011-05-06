@@ -365,8 +365,7 @@ void LuaMaterial::Execute(const LuaMaterial& prev) const
 	}
 
 	if (shadowParamsLoc >= 0) {
-		const float4& shadowParams = shadowHandler->GetShadowParams();
-		glUniform4fv(shadowParamsLoc, 1, &(shadowParams.x));
+		glUniform4fv(shadowParamsLoc, 1, &(shadowHandler->GetShadowParams().x));
 	}
 
 	const int maxTex = std::max(texCount, prev.texCount);
