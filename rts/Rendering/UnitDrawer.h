@@ -38,6 +38,22 @@ struct GhostBuilding {
 class CUnitDrawer: public CEventClient
 {
 public:
+	//! CEventClient interface
+	bool WantsEvent(const std::string& eventName) {
+		return
+			(eventName == "RenderUnitCreated"      || eventName == "RenderUnitDestroyed") ||
+			(eventName == "RenderUnitCloakChanged" || eventName == "RenderUnitLOSChanged");
+	}
+	bool GetFullRead() const { return true; }
+	int GetReadAllyTeam() const { return AllAccessTeam; }
+
+	void RenderUnitCreated(const CUnit*, int cloaked);
+	void RenderUnitDestroyed(const CUnit*);
+
+	void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);
+	void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
+
+public:
 	CUnitDrawer();
 	~CUnitDrawer();
 
@@ -59,57 +75,11 @@ public:
 	void SetupForGhostDrawing() const;
 	void CleanUpGhostDrawing() const;
 
-
-
-	bool WantsEvent(const std::string& eventName) {
-		return
-			(eventName == "RenderUnitCreated"      || eventName == "RenderUnitDestroyed") ||
-			(eventName == "RenderUnitCloakChanged" || eventName == "RenderUnitLOSChanged");
-	}
-	bool GetFullRead() const { return true; }
-	int GetReadAllyTeam() const { return AllAccessTeam; }
-
-	void RenderUnitCreated(const CUnit*, int cloaked);
-	void RenderUnitDestroyed(const CUnit*);
-
-	void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);
-	void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
-
 	void SetUnitDrawDist(float dist);
 	void SetUnitIconDist(float dist);
 
 	int ShowUnitBuildSquare(const BuildInfo& buildInfo);
 	int ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands);
-
-
-	bool advShading;
-	bool advFade;
-
-	float LODScale;
-	float LODScaleShadow;
-	float LODScaleReflection;
-	float LODScaleRefraction;
-
-	float unitDrawDist;
-	float unitDrawDistSqr;
-	float unitIconDist;
-	float iconLength;
-
-	float3 unitAmbientColor;
-	float3 unitSunColor;
-
-	struct TempDrawUnit {
-		const UnitDef* unitdef;
-		int team;
-		float3 pos;
-		float rotation;
-		int facing;
-		bool drawBorder;
-	};
-	std::multimap<int, TempDrawUnit> tempDrawUnits;
-	std::multimap<int, TempDrawUnit> tempTransparentDrawUnits;
-
-	float3 camNorm; ///< used to draw far-textures
 
 	void UpdateSunDir();
 	void CreateSpecularFace(unsigned int glType, int size, float3 baseDir, float3 xDif, float3 yDif, float3 sunDir, float exponent, float3 sunColor);
@@ -191,6 +161,39 @@ private:
 
 	/// Returns true if the given unit should be drawn as icon in the current frame.
 	bool DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const;
+
+
+public:
+	bool advShading;
+	bool advFade;
+
+	float LODScale;
+	float LODScaleShadow;
+	float LODScaleReflection;
+	float LODScaleRefraction;
+
+	float unitDrawDist;
+	float unitDrawDistSqr;
+	float unitIconDist;
+	float iconLength;
+
+	float3 unitAmbientColor;
+	float3 unitSunColor;
+
+	struct TempDrawUnit {
+		const UnitDef* unitdef;
+		int team;
+		float3 pos;
+		float rotation;
+		int facing;
+		bool drawBorder;
+	};
+	std::multimap<int, TempDrawUnit> tempDrawUnits;
+	std::multimap<int, TempDrawUnit> tempTransparentDrawUnits;
+
+	float3 camNorm; ///< used to draw far-textures
+
+private:
 	bool useDistToGroundForIcons;
 	float sqCamDistToGroundForIcons;
 
