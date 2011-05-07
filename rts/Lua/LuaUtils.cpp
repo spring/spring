@@ -337,7 +337,8 @@ void LuaUtils::ParseCommand(lua_State* L, const char* caller,
 	if (!lua_isnumber(L, idIndex)) {
 		luaL_error(L, "%s(): bad command ID", caller);
 	}
-	cmd.id = lua_toint(L, idIndex);
+	const int id = lua_toint(L, idIndex);
+	cmd.SetID(id);
 
 	// params
 	const int paramTable = (idIndex + 1);
@@ -369,7 +370,8 @@ void LuaUtils::ParseCommandTable(lua_State* L, const char* caller,
 	if (!lua_isnumber(L, -1)) {
 		luaL_error(L, "%s(): bad command ID", caller);
 	}
-	cmd.id = lua_toint(L, -1);
+	const int id = lua_toint(L, -1);
+	cmd.SetID(id);
 	lua_pop(L, 1);
 
 	// params

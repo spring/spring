@@ -189,7 +189,7 @@ namespace
 	DECLARE_FILTER(Weapons, !unit->weapons.empty());
 	DECLARE_FILTER(Idle, unit->commandAI->commandQue.empty());
 	DECLARE_FILTER(Waiting, !unit->commandAI->commandQue.empty() &&
-	               (unit->commandAI->commandQue.front().id == CMD_WAIT));
+	               (unit->commandAI->commandQue.front().GetID() == CMD_WAIT));
 	DECLARE_FILTER(InHotkeyGroup, unit->group != NULL);
 	DECLARE_FILTER(Radar, unit->radarRadius || unit->sonarRadius || unit->jammerRadius);
 

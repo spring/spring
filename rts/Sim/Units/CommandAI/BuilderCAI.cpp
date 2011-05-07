@@ -211,7 +211,7 @@ void CBuilderCAI::PostLoad()
 		Command& c = commandQue.front();
 		float3 curPos = owner->pos;
 
-		map<int, string>::iterator boi = buildOptions.find(c.id);
+		map<int, string>::iterator boi = buildOptions.find(c.GetID());
 		if (boi != buildOptions.end()) {
 			build.Parse(c);
 			build.pos = helper->Pos2BuildPos(build);
@@ -250,7 +250,7 @@ inline bool CBuilderCAI::OutOfImmobileRange(const Command& cmd) const
 		}
 	}
 
-	switch (cmd.id) {
+	switch (cmd.GetID()) {
 		case CMD_REPAIR:
 		case CMD_RECLAIM:
 		case CMD_RESURRECT:
@@ -294,18 +294,18 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 	if (!AllowedCommand(c, fromSynced))
 		return;
 
-	if ((c.id == CMD_GUARD) &&
+	if ((c.GetID() == CMD_GUARD) &&
 	    (c.params.size() == 1) && ((int)c.params[0] == owner->id)) {
 		return;
 	}
 
-	if (!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.id) == nonQueingCommands.end()
-			&& c.id != CMD_WAIT) {
+	if (!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.GetID()) == nonQueingCommands.end()
+			&& c.GetID() != CMD_WAIT) {
 		building = false;
 		((CBuilder*) owner)->StopBuild();
 	}
 
-	map<int,string>::iterator boi = buildOptions.find(c.id);
+	map<int,string>::iterator boi = buildOptions.find(c.GetID());
 	if (boi != buildOptions.end()) {
 		if (c.params.size() < 3) {
 			return;
@@ -323,7 +323,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		if (!owner->unitDef->canmove) {
 			const CBuilder* builder = (CBuilder*)owner;
 			const float dist = f3Len(builder->pos - bi.pos);
-			const float radius = GetUnitDefRadius(bi.def, c.id);
+			const float radius = GetUnitDefRadius(bi.def, c.GetID());
 			if (dist > (builder->buildDistance + radius - 8.0f)) {
 				return;
 			}
@@ -338,11 +338,10 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				if((s=groundBlockingObjectMap->GroundBlocked(yardypos*gs->mapx+yardxpos)) &&
 				   (u=dynamic_cast<CUnit*>(s)) &&
 				   u->beingBuilt && (u->buildProgress == 0.0f) &&
-				   (!u->soloBuilder || (u->soloBuilder == owner))) {
-					Command c2;
-					c2.id = CMD_REPAIR;
+				   (!u->soloBuilder || (u->soloBuilder == owner)))
+				{
+					Command c2(CMD_REPAIR, c.options | INTERNAL_ORDER);
 					c2.params.push_back(u->id);
-					c2.options = c.options | INTERNAL_ORDER;
 					CMobileCAI::GiveCommandReal(c2);
 					CMobileCAI::GiveCommandReal(c);
 				}
@@ -375,10 +374,10 @@ void CBuilderCAI::SlowUpdate()
 		return;
 	}
 
-	map<int, string>::iterator boi = buildOptions.find(c.id);
+	map<int, string>::iterator boi = buildOptions.find(c.GetID());
 	if (!owner->beingBuilt && boi != buildOptions.end()) {
 		const UnitDef* ud = unitDefHandler->GetUnitDefByName(boi->second);
-		const float radius = GetUnitDefRadius(ud, c.id);
+		const float radius = GetUnitDefRadius(ud, c.GetID());
 
 		if (inCommand) {
 			if (building) {
@@ -484,7 +483,7 @@ void CBuilderCAI::SlowUpdate()
 		return;
 	}
 
-	switch (c.id) {
+	switch (c.GetID()) {
 		case CMD_STOP:      { ExecuteStop(c);      return; }
 		case CMD_REPAIR:    { ExecuteRepair(c);    return; }
 		case CMD_CAPTURE:   { ExecuteCapture(c);   return; }
@@ -511,9 +510,7 @@ void CBuilderCAI::ReclaimFeature(CFeature* f)
 		StopMove();
 		FinishCommand();
 	} else {
-		Command c2;
-		c2.id=CMD_RECLAIM;
-		c2.options=0;
+		Command c2(CMD_RECLAIM);
 		c2.params.push_back(f->id + uh->MaxUnits());
 		commandQue.push_front(c2);
 		SlowUpdate(); //this assumes that the reclaim command can never return directly without having reclaimed the target
@@ -728,10 +725,8 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 		if (pushRepairCommand) {
 			StopSlowGuard();
 
-			Command nc;
-				nc.id = CMD_REPAIR;
-				nc.options = c.options;
-				nc.params.push_back(b->curBuild->id);
+			Command nc(CMD_REPAIR, c.options);
+			nc.params.push_back(b->curBuild->id);
 
 			commandQue.push_front(nc);
 			inCommand = false;
@@ -750,10 +745,8 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 		if (pushRepairCommand) {
 			StopSlowGuard();
 
-			Command nc;
-				nc.id = CMD_REPAIR;
-				nc.options = c.options;
-				nc.params.push_back(fac->curBuild->id);
+			Command nc(CMD_REPAIR, c.options);
+			nc.params.push_back(fac->curBuild->id);
 
 			commandQue.push_front(nc);
 			inCommand = false;
@@ -792,10 +785,8 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 		if (pushRepairCommand) {
 			StopSlowGuard();
 
-			Command nc;
-				nc.id = CMD_REPAIR;
-				nc.options = c.options;
-				nc.params.push_back(guardee->id);
+			Command nc(CMD_REPAIR, c.options);
+			nc.params.push_back(guardee->id);
 
 			commandQue.push_front(nc);
 			inCommand = false;
@@ -961,8 +952,7 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 
 				if (builder->lastResurrected && uh->GetUnitUnsafe(builder->lastResurrected) != NULL && owner->unitDef->canRepair) {
 					// resurrection finished, start repair
-					c.id = CMD_REPAIR; // kind of hackery to overwrite the current order i suppose
-					c.params.clear();
+					c.SetID(CMD_REPAIR); // kind of hackery to overwrite the current order i suppose
 					c.params.push_back(builder->lastResurrected);
 					c.options |= INTERNAL_ORDER;
 					builder->lastResurrected = 0;
@@ -1009,18 +999,15 @@ void CBuilderCAI::ExecutePatrol(Command& c)
 		return;
 	}
 
-	Command temp;
-		temp.id = CMD_FIGHT;
-		temp.params.push_back(c.params[0]);
-		temp.params.push_back(c.params[1]);
-		temp.params.push_back(c.params[2]);
-		temp.options = c.options|INTERNAL_ORDER;
+	Command temp(CMD_FIGHT, c.options|INTERNAL_ORDER);
+	temp.params.push_back(c.params[0]);
+	temp.params.push_back(c.params[1]);
+	temp.params.push_back(c.params[2]);
 
 	commandQue.push_back(c);
 	commandQue.pop_front();
 	commandQue.push_front(temp);
-	Command tmpC;
-		tmpC.id = CMD_PATROL;
+	Command tmpC(CMD_PATROL);
 	eoh->CommandFinished(*owner, tmpC);
 	SlowUpdate();
 }
@@ -1230,7 +1217,7 @@ bool CBuilderCAI::IsUnitBeingReclaimed(CUnit* unit, CUnit *friendUnit)
 			continue;
 		}
 		const Command& c = (*it)->commandAI->commandQue.front();
-		if (c.id != CMD_RECLAIM || (c.params.size() != 1 && c.params.size() != 5)) {
+		if (c.GetID() != CMD_RECLAIM || (c.params.size() != 1 && c.params.size() != 5)) {
 			rm.push_back(*it);
 			continue;
 		}
@@ -1257,7 +1244,7 @@ bool CBuilderCAI::IsFeatureBeingReclaimed(int featureId, CUnit *friendUnit)
 			continue;
 		}
 		const Command& c = (*it)->commandAI->commandQue.front();
-		if (c.id != CMD_RECLAIM || (c.params.size() != 1 && c.params.size() != 5)) {
+		if (c.GetID() != CMD_RECLAIM || (c.params.size() != 1 && c.params.size() != 5)) {
 			rm.push_back(*it);
 			continue;
 		}
@@ -1284,7 +1271,7 @@ bool CBuilderCAI::IsFeatureBeingResurrected(int featureId, CUnit *friendUnit)
 			continue;
 		}
 		const Command& c = (*it)->commandAI->commandQue.front();
-		if (c.id != CMD_RESURRECT || c.params.size() != 1) {
+		if (c.GetID() != CMD_RESURRECT || c.params.size() != 1) {
 			rm.push_back(*it);
 			continue;
 		}
@@ -1416,9 +1403,7 @@ bool CBuilderCAI::FindReclaimTargetAndReclaim(const float3& pos,
 			PushOrUpdateReturnFight();
 		}
 
-		Command cmd;
-			cmd.options = options | INTERNAL_ORDER;
-			cmd.id = CMD_RECLAIM;
+		Command cmd(CMD_RECLAIM, options | INTERNAL_ORDER);
 			cmd.params.push_back(rid);
 			cmd.params.push_back(pos.x);
 			cmd.params.push_back(pos.y);
@@ -1467,10 +1452,8 @@ bool CBuilderCAI::FindResurrectableFeatureAndResurrect(const float3& pos,
 	}
 
 	if (best) {
-		Command c2;
-			c2.options = options | INTERNAL_ORDER;
-			c2.id = CMD_RESURRECT;
-			c2.params.push_back(uh->MaxUnits() + best->id);
+		Command c2(CMD_RESURRECT, options | INTERNAL_ORDER);
+		c2.params.push_back(uh->MaxUnits() + best->id);
 		commandQue.push_front(c2);
 		return true;
 	}
@@ -1518,10 +1501,8 @@ bool CBuilderCAI::FindCaptureTargetAndCapture(const float3& pos, float radius,
 	}
 
 	if (best) {
-		Command nc;
-			nc.id = CMD_CAPTURE;
-			nc.options = options | INTERNAL_ORDER;
-			nc.params.push_back(best->id);
+		Command nc(CMD_CAPTURE, options | INTERNAL_ORDER);
+		nc.params.push_back(best->id);
 		commandQue.push_front(nc);
 		return true;
 	}
@@ -1626,9 +1607,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 		if (attackEnemy) {
 			PushOrUpdateReturnFight();
 		}
-		Command cmd;
-			cmd.id = CMD_REPAIR;
-			cmd.options = options | INTERNAL_ORDER;
+		Command cmd(CMD_REPAIR, options | INTERNAL_ORDER);
 			cmd.params.push_back(best->id);
 			cmd.params.push_back(pos.x);
 			cmd.params.push_back(pos.y);
@@ -1638,10 +1617,8 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 	}
 	else {
 		PushOrUpdateReturnFight(); // attackEnemy must be true
-		Command cmd;
-			cmd.id = CMD_ATTACK;
-			cmd.options = options | INTERNAL_ORDER;
-			cmd.params.push_back(best->id);
+		Command cmd(CMD_ATTACK, options | INTERNAL_ORDER);
+		cmd.params.push_back(best->id);
 		commandQue.push_front(cmd);
 	}
 
@@ -1664,12 +1641,14 @@ void CBuilderCAI::DrawCommands(void)
 
 	CCommandQueue::iterator ci;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		if (ci->id < 0) {
-			map<int, string>::const_iterator boi = buildOptions.find(ci->id);
+		const int& cmd_id = ci->GetID();
+
+		if (cmd_id < 0) {
+			map<int, string>::const_iterator boi = buildOptions.find(cmd_id);
 
 			if (boi != buildOptions.end()) {
 				BuildInfo bi;
-				bi.def = unitDefHandler->GetUnitDefByID(-(ci->id));
+				bi.def = unitDefHandler->GetUnitDefByID(-(cmd_id));
 
 				if (ci->params.size() == 4) {
 					bi.buildFacing = int(abs(ci->params[3])) % NUM_FACINGS;
@@ -1678,7 +1657,7 @@ void CBuilderCAI::DrawCommands(void)
 				bi.pos = float3(ci->params[0], ci->params[1], ci->params[2]);
 				bi.pos = helper->Pos2BuildPos(bi);
 
-				cursorIcons.AddBuildIcon(ci->id, bi.pos, owner->team, bi.buildFacing);
+				cursorIcons.AddBuildIcon(cmd_id, bi.pos, owner->team, bi.buildFacing);
 				lineDrawer.DrawLine(bi.pos, cmdColors.build);
 
 				// draw metal extraction range
@@ -1698,20 +1677,20 @@ void CBuilderCAI::DrawCommands(void)
 			continue;
 		}
 
-		switch(ci->id) {
+		switch(cmd_id) {
 			case CMD_MOVE: {
 				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);
+				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.move);
 				break;
 			}
 			case CMD_FIGHT:{
 				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.fight);
+				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.fight);
 				break;
 			}
 			case CMD_PATROL: {
 				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.patrol);
+				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.patrol);
 				break;
 			}
 			case CMD_GUARD: {
@@ -1719,13 +1698,13 @@ void CBuilderCAI::DrawCommands(void)
 
 				if ((unit != NULL) && isTrackable(unit)) {
 					const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
-					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.guard);
+					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.guard);
 				}
 				break;
 			}
 			case CMD_RESTORE: {
 				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.restore);
+				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.restore);
 				lineDrawer.Break(endPos, cmdColors.restore);
 				glColor4fv(cmdColors.restore);
 				glSurfaceCircle(endPos, ci->params[3], 20);
@@ -1739,21 +1718,21 @@ void CBuilderCAI::DrawCommands(void)
 
 					if ((unit != NULL) && isTrackable(unit)) {
 						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
-						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
+						lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
 					}
 				} else {
 					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
+					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
 				}
 				break;
 			}
 			case CMD_RECLAIM:
 			case CMD_RESURRECT: {
-				const float* color = (ci->id == CMD_RECLAIM) ? cmdColors.reclaim
+				const float* color = (cmd_id == CMD_RECLAIM) ? cmdColors.reclaim
 				                                             : cmdColors.resurrect;
 				if (ci->params.size() == 4) {
 					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-					lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
+					lineDrawer.DrawLineAndIcon(cmd_id, endPos, color);
 					lineDrawer.Break(endPos, color);
 					glColor4fv(color);
 					glSurfaceCircle(endPos, ci->params[3], 20);
@@ -1762,7 +1741,7 @@ void CBuilderCAI::DrawCommands(void)
 					const int signedId = (int)ci->params[0];
 					if (signedId < 0) {
 						logOutput.Print("Trying to %s a feature or unit with id < 0 (%i), aborting.",
-								(ci->id == CMD_RECLAIM) ? "reclaim" : "resurrect",
+								(cmd_id == CMD_RECLAIM) ? "reclaim" : "resurrect",
 								signedId);
 						break;
 					}
@@ -1775,14 +1754,14 @@ void CBuilderCAI::DrawCommands(void)
 						CFeature* feature = featureHandler->GetFeature(id - uh->MaxUnits());
 						if (feature) {
 							const float3 endPos = feature->midPos;
-							lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
+							lineDrawer.DrawLineAndIcon(cmd_id, endPos, color);
 						}
 					} else {
 						const CUnit* unit = uh->GetUnitUnsafe(id);
 
 						if ((unit != NULL) && (unit != owner) && isTrackable(unit)) {
 							const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
-							lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
+							lineDrawer.DrawLineAndIcon(cmd_id, endPos, color);
 						}
 					}
 				}
@@ -1790,11 +1769,11 @@ void CBuilderCAI::DrawCommands(void)
 			}
 			case CMD_REPAIR:
 			case CMD_CAPTURE: {
-				const float* color = (ci->id == CMD_REPAIR) ? cmdColors.repair
+				const float* color = (ci->GetID() == CMD_REPAIR) ? cmdColors.repair
 				                                            : cmdColors.capture;
 				if (ci->params.size() == 4) {
 					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-					lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
+					lineDrawer.DrawLineAndIcon(cmd_id, endPos, color);
 					lineDrawer.Break(endPos, color);
 					glColor4fv(color);
 					glSurfaceCircle(endPos, ci->params[3], 20);
@@ -1805,7 +1784,7 @@ void CBuilderCAI::DrawCommands(void)
 
 						if ((unit != NULL) && isTrackable(unit)) {
 							const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
-							lineDrawer.DrawLineAndIcon(ci->id, endPos, color);
+							lineDrawer.DrawLineAndIcon(cmd_id, endPos, color);
 						}
 					}
 				}
@@ -1813,7 +1792,7 @@ void CBuilderCAI::DrawCommands(void)
 			}
 			case CMD_LOAD_ONTO: {
 				const CUnit* unit = uh->GetUnitUnsafe(ci->params[0]);
-				lineDrawer.DrawLineAndIcon(ci->id, unit->pos, cmdColors.load);
+				lineDrawer.DrawLineAndIcon(cmd_id, unit->pos, cmdColors.load);
 				break;
 			}
 			case CMD_WAIT: {
@@ -1821,7 +1800,7 @@ void CBuilderCAI::DrawCommands(void)
 				break;
 			}
 			case CMD_SELFD: {
-				lineDrawer.DrawIconAtLastPos(ci->id);
+				lineDrawer.DrawIconAtLastPos(ci->GetID());
 				break;
 			}
 			default: {
@@ -1845,7 +1824,7 @@ void CBuilderCAI::DrawQuedBuildingSquares(void)
 	int buildCommands = 0;
 	int underwaterCommands = 0;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		if (buildOptions.find(ci->id) != buildOptions.end()) {
+		if (buildOptions.find(ci->GetID()) != buildOptions.end()) {
 			++buildCommands;
 			BuildInfo bi(*ci);
 			bi.pos = helper->Pos2BuildPos(bi);
@@ -1865,7 +1844,7 @@ void CBuilderCAI::DrawQuedBuildingSquares(void)
 	int linecounter = 0;
 
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		if (buildOptions.find(ci->id) != buildOptions.end()) {
+		if (buildOptions.find(ci->GetID()) != buildOptions.end()) {
 			BuildInfo bi(*ci);
 			bi.pos = helper->Pos2BuildPos(bi);
 			const float xsize = bi.GetXSize()*4;

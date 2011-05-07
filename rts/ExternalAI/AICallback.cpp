@@ -214,8 +214,7 @@ int CAICallback::SendUnits(const std::vector<int>& unitIds, int receivingTeamId)
 				sentUnitIDs.push_back(short(unitId));
 
 				// stop whatever this unit is doing
-				Command c;
-				c.id = CMD_STOP;
+				Command c(CMD_STOP);
 				GiveOrder(unitId, &c);
 			}
 		}
@@ -382,7 +381,7 @@ int CAICallback::GiveOrder(int unitId, Command* c)
 		return -5;
 	}
 
-	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, unitId, c->id, c->aiCommandId, c->options, c->params));
+	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, unitId, c->GetID(), c->aiCommandId, c->options, c->params));
 
 	return 0;
 }

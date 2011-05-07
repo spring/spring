@@ -734,7 +734,7 @@ void CLuaHandle::UnitCommand(const CUnit* unit, const Command& command)
 	lua_pushnumber(L, unit->unitDef->id);
 	lua_pushnumber(L, unit->team);
 
-	lua_pushnumber(L, command.id);
+	lua_pushnumber(L, command.GetID());
 	lua_pushnumber(L, command.options);
 
 	const vector<float> &params = command.params;
@@ -1957,7 +1957,7 @@ bool CLuaHandle::CommandNotify(const Command& cmd)
 	}
 
 	// push the command id
-	lua_pushnumber(L, cmd.id);
+	lua_pushnumber(L, cmd.GetID());
 
 	// push the params list
 	lua_createtable(L, cmd.params.size(), 0);

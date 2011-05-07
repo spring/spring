@@ -388,9 +388,12 @@ void CGame::ClientReadNet()
 					if (!playerHandler->IsValidPlayer(player))
 						throw netcode::UnpackPacketException("Invalid player number");
 
-					Command c;
-					pckt >> c.id;
-					pckt >> c.options;
+					int cmd_id;
+					unsigned char cmd_opt;
+					pckt >> cmd_id;
+					pckt >> cmd_opt;
+	
+					Command c(cmd_id, cmd_opt);
 					for(int a = 0; a < ((psize-9)/4); ++a) {
 						float param;
 						pckt >> param;
@@ -452,9 +455,12 @@ void CGame::ClientReadNet()
 					if (unitid < 0 || static_cast<size_t>(unitid) >= uh->MaxUnits())
 						throw netcode::UnpackPacketException("Invalid unit ID");
 
-					Command c;
-					pckt >> c.id;
-					pckt >> c.options;
+					int cmd_id;
+					unsigned char cmd_opt;
+					pckt >> cmd_id;
+					pckt >> cmd_opt;
+	
+					Command c(cmd_id, cmd_opt);
 					if (packetCode == NETMSG_AICOMMAND_TRACKED) {
 						pckt >> c.aiCommandId;
 					}
@@ -496,9 +502,12 @@ void CGame::ClientReadNet()
 					short int commandCount;
 					pckt >> commandCount;
 					for (int c = 0; c < commandCount; c++) {
-						Command cmd;
-						pckt >> cmd.id;
-						pckt >> cmd.options;
+						int cmd_id;
+						unsigned char cmd_opt;
+						pckt >> cmd_id;
+						pckt >> cmd_opt;
+	
+						Command cmd(cmd_id, cmd_opt);
 						short int paramCount;
 						pckt >> paramCount;
 						for (int p = 0; p < paramCount; p++) {

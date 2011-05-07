@@ -364,8 +364,7 @@ void CShareBox::MouseRelease(int x, int y, int button)
 	if ((InBox(mx, my, box + okBox) || InBox(mx, my, box + applyBox)) &&
 			 shareTeam != -1 && !teamHandler->Team(shareTeam)->isDead && !teamHandler->Team(gu->myTeam)->isDead) {
 		if (shareUnits) {
-			Command c;
-			c.id = CMD_STOP;
+			Command c(CMD_STOP);
 			// make sure the units are stopped and that the selection is transmitted
 			selectedUnits.GiveCommand(c, false);
 		}

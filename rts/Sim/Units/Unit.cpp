@@ -525,8 +525,7 @@ void CUnit::PostInit(const CUnit* builder)
 			moveState = unitDef->moveState;
 		}
 
-		Command c;
-		c.id = CMD_MOVE_STATE;
+		Command c(CMD_MOVE_STATE);
 		c.params.push_back(moveState);
 		commandAI->GiveCommand(c);
 	}
@@ -543,8 +542,7 @@ void CUnit::PostInit(const CUnit* builder)
 			fireState = unitDef->fireState;
 		}
 
-		Command c;
-		c.id = CMD_FIRE_STATE;
+		Command c(CMD_FIRE_STATE);
 		c.params.push_back(fireState);
 		commandAI->GiveCommand(c);
 	}
@@ -1456,10 +1454,8 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 void CUnit::ChangeTeamReset()
 {
-	Command c;
-
 	// clear the commands (newUnitCommands for factories)
-	c.id = CMD_STOP;
+	Command c(CMD_STOP);
 	commandAI->GiveCommand(c);
 
 	// clear the build commands for factories
@@ -1471,7 +1467,7 @@ void CUnit::ChangeTeamReset()
 		std::vector<Command> clearCommands;
 		clearCommands.reserve(buildCommands.size());
 		for (it = buildCommands.begin(); it != buildCommands.end(); ++it) {
-			c.id = it->id;
+			c.SetID(it->GetID());
 			clearCommands.push_back(c);
 		}
 		for (int i = 0; i < (int)clearCommands.size(); i++) {
@@ -1479,43 +1475,41 @@ void CUnit::ChangeTeamReset()
 		}
 	}
 
+	//FIXME reset to unitdef defaults
+
 	// deactivate to prevent the old give metal maker trick
-	c.id = CMD_ONOFF;
+	c.SetID(CMD_ONOFF);
 	c.params.push_back(0); // always off
 	commandAI->GiveCommand(c);
-	c.params.clear();
+
 	// reset repeat state
-	c.id = CMD_REPEAT;
+	c.SetID(CMD_REPEAT);
 	c.params.push_back(0);
 	commandAI->GiveCommand(c);
-	c.params.clear();
+
 	// reset cloak state
 	if (unitDef->canCloak) {
-		c.id = CMD_CLOAK;
+		c.SetID(CMD_CLOAK);
 		c.params.push_back(0); // always off
 		commandAI->GiveCommand(c);
-		c.params.clear();
 	}
 	// reset move state
 	if (unitDef->canmove || unitDef->builder) {
-		c.id = CMD_MOVE_STATE;
+		c.SetID(CMD_MOVE_STATE);
 		c.params.push_back(MOVESTATE_MANEUVER);
 		commandAI->GiveCommand(c);
-		c.params.clear();
 	}
 	// reset fire state
 	if (commandAI->CanChangeFireState()) {
-		c.id = CMD_FIRE_STATE;
+		c.SetID(CMD_FIRE_STATE);
 		c.params.push_back(FIRESTATE_FIREATWILL);
 		commandAI->GiveCommand(c);
-		c.params.clear();
 	}
 	// reset trajectory state
 	if (unitDef->highTrajectoryType > 1) {
-		c.id = CMD_TRAJECTORY;
+		c.SetID(CMD_TRAJECTORY);
 		c.params.push_back(0);
 		commandAI->GiveCommand(c);
-		c.params.clear();
 	}
 }
 
