@@ -23,7 +23,7 @@
 #define CMD_ATTACK                20
 #define CMD_AREA_ATTACK           21
 #define CMD_GUARD                 25
-#define CMD_AISELECT              30
+#define CMD_AISELECT              30 //FIXME REMOVE
 #define CMD_GROUPSELECT           35
 #define CMD_GROUPADD              36
 #define CMD_GROUPCLEAR            37

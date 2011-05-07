@@ -82,7 +82,7 @@ enum CommandTopic {
 	COMMAND_UNIT_ATTACK                           = 45,
 	COMMAND_UNIT_ATTACK_AREA                      = 46,
 	COMMAND_UNIT_GUARD                            = 47,
-	COMMAND_UNIT_AI_SELECT                        = 48,
+	COMMAND_UNIT_AI_SELECT                        = 48, //FIXME REMOVE
 	COMMAND_UNIT_GROUP_ADD                        = 49,
 	COMMAND_UNIT_GROUP_CLEAR                      = 50,
 	COMMAND_UNIT_REPAIR                           = 51,

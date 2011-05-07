@@ -1348,14 +1348,6 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 			c->params.push_back(cmd->toGuardUnitId);
 			break;
 		}
-		case COMMAND_UNIT_AI_SELECT:
-		{
-			SAiSelectUnitCommand* cmd = (SAiSelectUnitCommand*) sUnitCommandData;
-			c->id = CMD_AISELECT;
-			c->options = cmd->options;
-			c->timeOut = cmd->timeOut;
-			break;
-		}
 		case COMMAND_UNIT_GROUP_ADD:
 		{
 			SGroupAddUnitCommand* cmd = (SGroupAddUnitCommand*) sUnitCommandData;
