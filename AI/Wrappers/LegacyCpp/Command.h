@@ -98,12 +98,30 @@ private:
 	CR_DECLARE_STRUCT(Command);
 
 public:
-	Command():
-		id(0),
-		aiCommandId(-1),
-		options(0),
-		tag(0),
-		timeOut(INT_MAX) {}
+	Command(const int cmd_id)
+		: aiCommandId(-1)
+		, options(0)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(cmd_id)
+	{}
+
+	Command(const int cmd_id, const unsigned char cmd_options)
+		: aiCommandId(-1)
+		, options(cmd_options)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(cmd_id)
+	{}
+
+	Command()
+		: aiCommandId(-1)
+		, options(0)
+		, tag(0)
+		, timeOut(INT_MAX)
+		, id(0)
+	{}
+	~Command() { params.clear(); }
 
 	bool IsAreaCommand() const {
 		if (id == CMD_REPAIR ||
@@ -124,21 +142,21 @@ public:
 		return false;
 	}
 
-	/// CMD_xxx code  (custom codes can also be used)
-	int id;
+	void SetID(int id) __attribute__ ((deprecated)) { id = id; params.clear(); }
+	const int& GetID() const { return id; }
+
+public:
 	/**
 	 * AI Command callback id (passed in on handleCommand, returned
 	 * in CommandFinished event)
 	 */
 	int aiCommandId;
-	/// option bits
+
+	/// option bits (RIGHT_MOUSE_KEY, ...)
 	unsigned char options;
+
 	/// command parameters
 	std::vector<float> params;
-	/// adds a value to this commands parameter list
-	void AddParam(float par) {
-		params.push_back(par);
-	}
 
 	/// unique id within a CCommandQueue
 	unsigned int tag;
@@ -153,6 +171,10 @@ public:
 	 * - currenFrame + 60
 	 */
 	int timeOut;
+
+private:
+	/// CMD_xxx code  (custom codes can also be used)
+	int id;
 };
 
 
