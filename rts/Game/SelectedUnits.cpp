@@ -220,21 +220,6 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 		}
 		return;
 	}
-	else if (c.id == CMD_AISELECT) {
-		if (gs->noHelperAIs) {
-			logOutput.Print("LuaUI control is disabled");
-			return;
-		}
-		if (c.params[0] != 0) {
-			CGroup* group = grouphandlers[gu->myTeam]->CreateNewGroup();
-
-			for (CUnitSet::iterator ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
-				(*ui)->SetGroup(group);
-			}
-			SelectGroup(group->id);
-		}
-		return;
-	}
 	else if (c.id == CMD_TIMEWAIT) {
 		waitCommandsAI.AddTimeWait(c);
 		return;
