@@ -1386,8 +1386,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 	switch (val) {
 		case ACTIVATION: {
 			if(unit->unitDef->onoffable) {
-				Command c;
-				c.id = CMD_ONOFF;
+				Command c(CMD_ONOFF);
 				c.params.push_back(param == 0 ? 0 : 1);
 				unit->commandAI->GiveCommand(c);
 			}
@@ -1403,8 +1402,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 		}
 		case STANDINGMOVEORDERS: {
 			if (param >= 0 && param <= 2) {
-				Command c;
-				c.id = CMD_MOVE_STATE;
+				Command c(CMD_MOVE_STATE);
 				c.params.push_back(param);
 				unit->commandAI->GiveCommand(c);
 			}
@@ -1412,8 +1410,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 		}
 		case STANDINGFIREORDERS: {
 			if (param >= 0 && param <= 2) {
-				Command c;
-				c.id = CMD_FIRE_STATE;
+				Command c(CMD_FIRE_STATE);
 				c.params.push_back(param);
 				unit->commandAI->GiveCommand(c);
 			}
@@ -1509,7 +1506,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 				for (CCommandQueue::iterator it = unit->commandAI->commandQue.begin();
 						it != unit->commandAI->commandQue.end(); ++it) {
 					Command &c = *it;
-					if (c.id == CMD_SET_WANTED_MAX_SPEED && c.params[0] == unit->maxSpeed) {
+					if (c.GetID() == CMD_SET_WANTED_MAX_SPEED && c.params[0] == unit->maxSpeed) {
 						c.params[0] = param/(float)COBSCALE;
 						break;
 					}

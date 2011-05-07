@@ -2373,7 +2373,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 	Command cmd;
 	LuaUtils::ParseCommand(L, __FUNCTION__, 2, cmd);
 
-	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, unit->id, cmd.id, cmd.aiCommandId, cmd.options, cmd.params));
+	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, unit->id, cmd.GetID(), cmd.aiCommandId, cmd.options, cmd.params));
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -2625,8 +2625,7 @@ int LuaUnsyncedCtrl::ShareResources(lua_State* L)
 	const string& type = lua_tostring(L, 2);
 	if (type == "units") {
 		// update the selection, and clear the unit command queues
-		Command c;
-		c.id = CMD_STOP;
+		Command c(CMD_STOP);
 		selectedUnits.GiveCommand(c, false);
 		net->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 1, 0.0f, 0.0f));
 		selectedUnits.ClearSelected();

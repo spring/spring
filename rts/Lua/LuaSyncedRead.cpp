@@ -3481,7 +3481,7 @@ static void PackCommand(lua_State* L, const Command& cmd)
 {
 	lua_createtable(L, 0, 4);
 
-	HSTR_PUSH_NUMBER(L, "id", cmd.id);
+	HSTR_PUSH_NUMBER(L, "id", cmd.GetID());
 
 	HSTR_PUSH(L, "params");
 	lua_createtable(L, cmd.params.size(), 0);
@@ -3617,7 +3617,7 @@ static void PackFactoryCounts(lua_State* L,
 			currentCount = 0;
 			break;
 		}
-		const int cmdID = it->id;
+		const int& cmdID = it->GetID();
 		if (noCmds && (cmdID >= 0)) {
 			continue;
 		}
@@ -3754,8 +3754,8 @@ static int PackBuildQueue(lua_State* L, bool canBuild, const char* caller)
 	int currentCount = 0;
 	CCommandQueue::const_iterator it;
 	for (it = commandQue.begin(); it != commandQue.end(); ++it) {
-		if (it->id < 0) { // a build command
-			const int unitDefID = -(it->id);
+		if (it->GetID() < 0) { // a build command
+			const int unitDefID = -(it->GetID());
 
 			if (canBuild) {
 				// skip build orders that this unit can not start

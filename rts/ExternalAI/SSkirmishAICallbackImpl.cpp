@@ -3253,7 +3253,7 @@ EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_getType(int skirmishAIId, int
 EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_getId(int skirmishAIId, int unitId, int commandId) {
 
 	const CCommandQueue* q = _intern_Unit_getCurrentCommandQueue(skirmishAIId, unitId);
-	return (CHECK_COMMAND_ID(q, commandId) ? q->at(commandId).id : 0);
+	return (CHECK_COMMAND_ID(q, commandId) ? q->at(commandId).GetID() : 0);
 }
 
 EXPORT(short) skirmishAiCallback_Unit_CurrentCommand_getOptions(int skirmishAIId, int unitId, int commandId) {
@@ -4424,7 +4424,7 @@ EXPORT(int) skirmishAiCallback_Group_OrderPreview_getId(int skirmishAIId, int gr
 
 	//TODO: need to add support for new gui
 	Command tmpCmd = guihandler->GetOrderPreview();
-	return tmpCmd.id;
+	return tmpCmd.GetID();
 }
 
 EXPORT(short) skirmishAiCallback_Group_OrderPreview_getOptions(int skirmishAIId, int groupId) {

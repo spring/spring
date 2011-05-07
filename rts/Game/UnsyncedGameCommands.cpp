@@ -1096,9 +1096,7 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 
 	else if (cmd == "controlunit") {
 		if (!gu->spectating) {
-			Command c;
-			c.id = CMD_STOP;
-			c.options = 0;
+			Command c(CMD_STOP);
 			// force it to update selection and clear order queue
 			selectedUnits.GiveCommand(c, false);
 			net->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));

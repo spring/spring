@@ -218,7 +218,7 @@ static void PushUnitAndCommand(lua_State* L, const CUnit* unit, const Command& c
 	lua_pushnumber(L, unit->team);
 
 	// push the command id
-	lua_pushnumber(L, cmd.id);
+	lua_pushnumber(L, cmd.GetID());
 
 	// push the params list
 	lua_newtable(L);

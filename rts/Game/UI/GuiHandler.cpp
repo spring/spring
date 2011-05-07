@@ -873,9 +873,8 @@ void CGuiHandler::GiveCommand(const Command& cmd, bool fromUser) const
 	selectedUnits.GiveCommand(cmd, fromUser);
 
 	if (gatherMode) {
-		if ((cmd.id == CMD_MOVE) || (cmd.id == CMD_FIGHT)) {
-			Command gatherCmd;
-			gatherCmd.id = CMD_GATHERWAIT;
+		if ((cmd.GetID() == CMD_MOVE) || (cmd.GetID() == CMD_FIGHT)) {
+			Command gatherCmd(CMD_GATHERWAIT);
 			GiveCommand(gatherCmd, false);
 		}
 	}
@@ -888,7 +887,7 @@ void CGuiHandler::ConvertCommands(std::vector<CommandDescription>& cmds)
 		const int count = (int)cmds.size();
 		for (int i = 0; i < count; i++) {
 			CommandDescription& cd = cmds[i];
-			if ((cd.id == CMD_ATTACK) && (cd.type == CMDTYPE_ICON_UNIT_OR_MAP)) {
+			if ((cd.id == CMD_ATTACK) && (cd.id == CMDTYPE_ICON_UNIT_OR_MAP)) {
 				if (attackRect) {
 					cd.type = CMDTYPE_ICON_UNIT_OR_RECTANGLE;
 				} else {
@@ -1125,12 +1124,12 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, floa
 	// not over a button, try to execute a command
 	Command c = GetCommand(x, y, button, false, camerapos, mousedir);
 
-	if (c.id == CMD_FAILED) { // indicates we should not finish the current command
+	if (c.GetID() == CMD_FAILED) { // indicates we should not finish the current command
 		Channels::UserInterface.PlaySample(failedSound, 5);
 		return;
 	}
 	// if cmd_stop is returned it indicates that no good command could be found
-	if (c.id != CMD_STOP) {
+	if (c.GetID() != CMD_STOP) {
 		GiveCommand(c);
 		lastKeySet.Reset();
 	}
@@ -1165,11 +1164,10 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 
 	switch (cd.type) {
 		case CMDTYPE_ICON: {
-			Command c;
-			c.id = cd.id;
-			if (c.id != CMD_STOP) {
+			Command c(cd.id);
+			if (cd.id != CMD_STOP) {
 				CreateOptions(c, rmb);
-				if (invertQueueKey && ((c.id < 0) || (c.id == CMD_STOCKPILE))) {
+				if (invertQueueKey && ((cd.id < 0) || (cd.id == CMD_STOCKPILE))) {
 					c.options = c.options ^ SHIFT_KEY;
 				}
 			}
@@ -1187,8 +1185,7 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 			SNPRINTF(t, 10, "%d", newMode);
 			cd.params[0] = t;
 
-			Command c;
-			c.id = cd.id;
+			Command c(cd.id);
 			c.params.push_back(newMode);
 			CreateOptions(c, rmb);
 			GiveCommand(c);
@@ -1827,10 +1824,8 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 
 		switch (cmdType) {
 			case CMDTYPE_ICON:{
-				Command c;
-				c.options = 0;
-				c.id = cmdDesc.id;
-				if ((c.id < 0) || (c.id == CMD_STOCKPILE)) {
+				Command c(cmdDesc.id);
+				if ((cmdDesc.id < 0) || (cmdDesc.id == CMD_STOCKPILE)) {
 					if (action.extra == "+5") {
 						c.options = SHIFT_KEY;
 					} else if (action.extra == "+20") {
@@ -1871,9 +1866,7 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 				SNPRINTF(t, 10, "%d", newMode);
 				cmdDesc.params[0] = t;
 
-				Command c;
-				c.options = 0;
-				c.id = cmdDesc.id;
+				Command c(cmdDesc.id);
 				c.params.push_back(newMode);
 				GiveCommand(c);
 				forceLayoutUpdate = true;
@@ -1888,12 +1881,10 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 					if (cd.params.size() >= 1) { minV = atof(cd.params[0].c_str()); }
 					if (cd.params.size() >= 2) { maxV = atof(cd.params[1].c_str()); }
 					value = std::max(std::min(value, maxV), minV);
-					Command c;
-					c.options = 0;
+					Command c(cd.id);
 					if (action.extra.find("queued") != std::string::npos) {
 						c.options = SHIFT_KEY;
 					}
-					c.id = cd.id;
 					c.params.push_back(value);
 					GiveCommand(c);
 					break;
@@ -2034,8 +2025,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 {
 	GML_RECMUTEX_LOCK(gui); // GetCommand - updates inCommand
 
-	Command defaultRet;
-	defaultRet.id=CMD_STOP;
+	Command defaultRet(CMD_STOP);
 
 	int button;
 	if (buttonHint >= SDL_BUTTON_LEFT) {
@@ -2065,15 +2055,13 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 
 		case CMDTYPE_NUMBER:{
 			const float value = GetNumberInput(commands[tempInCommand]);
-			Command c;
-			c.id = commands[tempInCommand].id;;
+			Command c(commands[tempInCommand].id);
 			c.params.push_back(value);
 			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 
 		case CMDTYPE_ICON:{
-			Command c;
-			c.id=commands[tempInCommand].id;
+			Command c(commands[tempInCommand].id);
 			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			if(button==SDL_BUTTON_LEFT && !preview)
 				logOutput.Print("CMDTYPE_ICON left button press in incommand test? This shouldnt happen");
@@ -2085,8 +2073,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				return defaultRet;
 			}
 			float3 pos=camerapos+mousedir*dist;
-			Command c;
-			c.id=commands[tempInCommand].id;
+			Command c(commands[tempInCommand].id);
 			c.params.push_back(pos.x);
 			c.params.push_back(pos.y);
 			c.params.push_back(pos.z);
@@ -2121,8 +2108,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			if(buildPos.size()==1) {
 				CFeature* feature; // TODO: Maybe also check out-of-range for immobile builder?
 				if (!uh->TestUnitBuildSquare(buildPos[0], feature, gu->myAllyTeam)) {
-					Command failedRet;
-					failedRet.id = CMD_FAILED;
+					Command failedRet(CMD_FAILED);
 					return failedRet;
 				}
 			}
@@ -2144,9 +2130,8 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 		case CMDTYPE_ICON_UNIT: {
 			CUnit* unit = NULL;
 			CFeature* feature = NULL;
-			Command c;
+			Command c(commands[tempInCommand].id);
 
-			c.id=commands[tempInCommand].id;
 			TraceRay::GuiTraceRay(camerapos, mousedir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
 			if (!unit) {
 				return defaultRet;
@@ -2157,8 +2142,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 
 		case CMDTYPE_ICON_UNIT_OR_MAP: {
 
-			Command c;
-			c.id=commands[tempInCommand].id;
+			Command c(commands[tempInCommand].id);
 
 			CUnit* unit = NULL;
 			CFeature* feature = NULL;
@@ -2181,16 +2165,16 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			return c;}
 
 		case CMDTYPE_ICON_FRONT:{
-			Command c;
-
 			float dist = ground->LineGroundCol(
 				mouse->buttons[button].camPos,
 				mouse->buttons[button].camPos + mouse->buttons[button].dir * globalRendering->viewRange * 1.4f);
 			if(dist<0){
 				return defaultRet;
 			}
+
 			float3 pos=mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
-			c.id=commands[tempInCommand].id;
+
+			Command c(commands[tempInCommand].id);
 			c.params.push_back(pos.x);
 			c.params.push_back(pos.y);
 			c.params.push_back(pos.z);
@@ -2229,8 +2213,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			if(commands[tempInCommand].params.size()==1)
 				maxRadius=atof(commands[tempInCommand].params[0].c_str());
 
-			Command c;
-			c.id=commands[tempInCommand].id;
+			Command c(commands[tempInCommand].id);
 
 			if (mouse->buttons[button].movement < 4) {
 
@@ -2257,7 +2240,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 					c.params.push_back(pos.y);
 					c.params.push_back(pos.z);
 					c.params.push_back(0);//zero radius
-					if(c.id == CMD_UNLOAD_UNITS)
+					if(c.GetID() == CMD_UNLOAD_UNITS)
 						c.params.push_back((float)buildFacing);
 				}
 			} else {	//created area
@@ -2276,15 +2259,14 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				}
 				float3 pos2=camerapos+mousedir*dist;
 				c.params.push_back(std::min(maxRadius,pos.distance2D(pos2)));
-				if(c.id == CMD_UNLOAD_UNITS)
+				if(c.GetID() ==CMD_UNLOAD_UNITS)
 					c.params.push_back((float)buildFacing);
 			}
 			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 
 		case CMDTYPE_ICON_UNIT_OR_RECTANGLE:{
-			Command c;
-			c.id=commands[tempInCommand].id;
+			Command c(commands[tempInCommand].id);
 
 			if (mouse->buttons[button].movement < 16) {
 				CUnit* unit;
@@ -2394,10 +2376,10 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 			other.buildFacing = unit->buildFacing;
 		} else {
 			Command c = uh->GetBuildCommand(camerapos,mousedir);
-			if(c.id < 0){
+			if(c.GetID() < 0){
 				assert(c.params.size()==4);
 				other.pos = float3(c.params[0],c.params[1],c.params[2]);
-				other.def = unitDefHandler->GetUnitDefByID(-c.id);
+				other.def = unitDefHandler->GetUnitDefByID(-c.GetID());
 				other.buildFacing = int(c.params[3]);
 			}
 		}
@@ -3705,8 +3687,8 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 	// draw range circles if attack orders are imminent
 	int defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty, camerapos, mousedir);
 	if ((inCommand>=0 && (size_t)inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) ||
-		(inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)){
-
+		(inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)
+	) {
 		GML_RECMUTEX_LOCK(sel); // DrawMapStuff
 
 		for(CUnitSet::iterator si=selectedUnits.selectedUnits.begin(); si!=selectedUnits.selectedUnits.end(); ++si) {
