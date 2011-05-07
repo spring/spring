@@ -142,17 +142,25 @@ public:
 		return false;
 	}
 
-	void SetID(int id) __attribute__ ((deprecated)) { id = id; params.clear(); }
+	/// adds a value to this commands parameter list
+	void AddParam(float par) {
+		params.push_back(par);
+	}
+
+	void SetID(int id) { id = id; params.clear(); }
 	const int& GetID() const { return id; }
 
 public:
+	/// CMD_xxx code  (custom codes can also be used)
+	int id;
+
 	/**
 	 * AI Command callback id (passed in on handleCommand, returned
 	 * in CommandFinished event)
 	 */
 	int aiCommandId;
 
-	/// option bits (RIGHT_MOUSE_KEY, ...)
+	/// option bits
 	unsigned char options;
 
 	/// command parameters
@@ -171,10 +179,6 @@ public:
 	 * - currenFrame + 60
 	 */
 	int timeOut;
-
-private:
-	/// CMD_xxx code  (custom codes can also be used)
-	int id;
 };
 
 
