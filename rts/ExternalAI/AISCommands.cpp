@@ -1207,7 +1207,7 @@ int extractAICommandTopic(const Command* engineCmd, int maxUnits) {
 
 Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 
-	Command* c;
+	Command* c = NULL;
 
 	switch (sCommandId) {
 		case COMMAND_UNIT_BUILD:
