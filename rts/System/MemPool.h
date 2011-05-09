@@ -24,7 +24,7 @@ public:
 
 private:
 	static bool UseExternalMemory(size_t numBytes) {
-		return !((numBytes > MAX_MEM_SIZE) || (numBytes < 4));
+		return (numBytes > MAX_MEM_SIZE) || (numBytes < 4);
 	}
 
 	void* nextFree[MAX_MEM_SIZE + 1];
