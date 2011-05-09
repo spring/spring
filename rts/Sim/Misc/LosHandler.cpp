@@ -101,7 +101,8 @@ CLosHandler::~CLosHandler()
 	for (int a = 0; a < LOSHANDLER_MAGIC_PRIME; ++a) {
 		for (std::list<LosInstance*>::iterator li = instanceHash[a].begin(); li != instanceHash[a].end(); ++li) {
 			LosInstance* i = *li;
-			delete i;
+			i->_DestructInstance(i);
+			mempool.Free(i, sizeof(LosInstance));
 		}
 	}
 
@@ -167,7 +168,7 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 			}
 		}
 
-		instance = new LosInstance(
+		instance = new(mempool.Alloc(sizeof(LosInstance))) LosInstance(
 			unit->losRadius,
 			unit->airLosRadius,
 			allyteam,
@@ -233,7 +234,8 @@ void CLosHandler::FreeInstance(LosInstance* instance)
 				for (lii = instanceHash[i->hashNum].begin(); lii != instanceHash[i->hashNum].end(); ++lii) {
 					if ((*lii) == i) {
 						instanceHash[i->hashNum].erase(lii);
-						delete i;
+						i->_DestructInstance(i);
+						mempool.Free(i, sizeof(LosInstance));
 						break;
 					}
 				}
