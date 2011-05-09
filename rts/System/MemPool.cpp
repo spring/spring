@@ -2,65 +2,67 @@
 
 #include "StdAfx.h"
 #include "MemPool.h"
-#include <assert.h>
-////#include "mmgr.h"
+//#include "mmgr.h"
 
 CMemPool mempool;
 
 CMemPool::CMemPool()
 {
-	for(size_t a=0; a < MAX_MEM_SIZE+1; a++){
-		nextFree[a]=0;
-		poolSize[a]=10;
+	for (size_t a = 0; a < (MAX_MEM_SIZE + 1); a++) {
+		nextFree[a] = NULL;
+		poolSize[a] = 10;
 	}
 }
 
-void* CMemPool::Alloc(size_t n)
+void* CMemPool::Alloc(size_t numBytes)
 {
-	if(n > MAX_MEM_SIZE || n<4) {
+	if (UseExternalMemory(numBytes)) {
 #ifdef USE_MMGR
-		return (void*)new char[n];
+		return (void*)new char[numBytes];
 #else
-		return ::operator new(n);
+		return ::operator new(numBytes);
 #endif
-	}
-	void* p=nextFree[n];
-
-	if (p) {
-		nextFree[n]=(*(void**)p);
 	} else {
-		#ifdef USE_MMGR
-		void* newBlock= (void*)new char[n*poolSize[n]];
-		#else
-		void* newBlock= ::operator new(n*poolSize[n]);
-		#endif
-		for (int i=0; i < poolSize[n]-1; ++i) {
-			*(void**)&((char*)newBlock)[(i)*n] = (void*)&((char*)newBlock)[(i+1)*n];
+		void* pnt = nextFree[numBytes];
+
+		if (pnt) {
+			nextFree[numBytes] = (*(void**)pnt);
+		} else {
+			#ifdef USE_MMGR
+			void* newBlock = (void*)new char[numBytes * poolSize[numBytes]];
+			#else
+			void* newBlock = ::operator new(numBytes * poolSize[numBytes]);
+			#endif
+			for (int i = 0; i < (poolSize[numBytes] - 1); ++i) {
+				*(void**)&((char*)newBlock)[(i) * numBytes] = (void*)&((char*)newBlock)[(i + 1) * numBytes];
+			}
+
+			*(void**)&((char*)newBlock)[(poolSize[numBytes] - 1) * numBytes] = 0;
+
+			pnt = newBlock;
+			nextFree[numBytes] = (*(void**)pnt);
+			poolSize[numBytes] *= 2;
 		}
-
-		*(void**)&((char*)newBlock)[(poolSize[n]-1)*n] = 0;
-
-		p = newBlock;
-		nextFree[n] = (*(void**)p);
-		poolSize[n] *= 2;
+		return pnt;
 	}
-	return p;
 }
 
-void CMemPool::Free(void* p,size_t n)
+void CMemPool::Free(void* pnt, size_t numBytes)
 {
-	if(p==0) return;
-
-	if(n>MAX_MEM_SIZE || n<4) {
-		#ifdef USE_MMGR
-		delete[] (char*)p;
-		#else
-		::operator delete(p);
-		#endif
+	if (pnt == NULL) {
 		return;
 	}
-	*(void**)p = nextFree[n];
-	nextFree[n] = p;
+
+	if (UseExternalMemory(numBytes)) {
+		#ifdef USE_MMGR
+		delete[] (char*)pnt;
+		#else
+		::operator delete(pnt);
+		#endif
+	} else {
+		*(void**)pnt = nextFree[numBytes];
+		nextFree[numBytes] = pnt;
+	}
 }
 
 CMemPool::~CMemPool()
