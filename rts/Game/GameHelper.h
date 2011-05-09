@@ -9,7 +9,6 @@
 
 #include "Sim/Misc/DamageArray.h"
 #include "System/float3.h"
-#include "System/MemPool.h"
 
 class CGame;
 class CUnit;
@@ -66,15 +65,7 @@ public:
 protected:
 	CStdExplosionGenerator* stdExplosionGenerator;
 
-	struct WaitingDamage{
-#if !defined(SYNCIFY) && !defined(USE_MMGR)
-		inline void* operator new(size_t size) {
-			return mempool.Alloc(size);
-		};
-		inline void operator delete(void* p, size_t size) {
-			mempool.Free(p, size);
-		};
-#endif
+	struct WaitingDamage {
 		WaitingDamage(int attacker, int target, const DamageArray& damage, const float3& impulse, const int weaponId)
 			:	target(target),
 				attacker(attacker),
