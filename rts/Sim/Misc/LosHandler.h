@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef LOSHANDLER_H
-#define LOSHANDLER_H
+#ifndef LOS_HANDLER_H
+#define LOS_HANDLER_H
 
 #include <vector>
 #include <list>
@@ -164,4 +164,4 @@ public:
 
 extern CLosHandler* loshandler;
 
-#endif /* LOSHANDLER_H */
+#endif /* LOS_HANDLER_H */
