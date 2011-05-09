@@ -98,30 +98,33 @@ private:
 	CR_DECLARE_STRUCT(Command);
 
 public:
-	Command(const int cmd_id)
-		: aiCommandId(-1)
+	Command(const int id)
+		: id(id)
+		, aiCommandId(-1)
 		, options(0)
 		, tag(0)
 		, timeOut(INT_MAX)
-		, id(cmd_id)
 	{}
 
-	Command(const int cmd_id, const unsigned char cmd_options)
-		: aiCommandId(-1)
-		, options(cmd_options)
+	Command(const int id, const unsigned char options)
+		: id(id)
+		, aiCommandId(-1)
+		, options(options)
 		, tag(0)
 		, timeOut(INT_MAX)
-		, id(cmd_id)
 	{}
 
 	Command()
-		: aiCommandId(-1)
+		: id(0)
+		, aiCommandId(-1)
 		, options(0)
 		, tag(0)
 		, timeOut(INT_MAX)
-		, id(0)
 	{}
-	~Command() { params.clear(); }
+
+	~Command() {
+		params.clear();
+	}
 
 	bool IsAreaCommand() const {
 		if (id == CMD_REPAIR ||
