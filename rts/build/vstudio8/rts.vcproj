@@ -4967,14 +4967,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\System\MemPool.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\MemPool.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\System\mmgr.cpp"
 				>
 			</File>
