@@ -22,6 +22,10 @@ class float3
 {
 public:
 	CR_DECLARE_STRUCT(float3);
+/*	inline void* operator new(size_t size) { return mempool.Alloc(size); }
+	inline void* operator new(size_t n, void* p) { return p; } // cp visual
+	inline void operator delete(void* p, size_t size) { mempool.Free(p, size); }
+*/
 
 #ifdef _MSC_VER
 	static const float CMP_EPS;

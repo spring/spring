@@ -11,6 +11,7 @@
 #include "Sim/Objects/WorldObject.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/RadarHandler.h"
+#include "System/MemPool.h"
 #include "System/Vec2.h"
 #include <assert.h>
 

@@ -3,6 +3,11 @@
 #ifndef FLYING_PIECE_H
 #define FLYING_PIECE_H
 
+#if !defined(USE_MMGR) && !(defined(USE_GML) && GML_ENABLE_SIM)
+#include "mmgr.h"
+#include "MemPool.h"
+#endif
+
 #include "System/float3.h"
 #include "System/GlobalUnsynced.h"
 
@@ -12,6 +17,10 @@ struct S3DOPiece;
 struct SS3OVertex;
 
 struct FlyingPiece {
+	#if !defined(USE_MMGR) && !(defined(USE_GML) && GML_ENABLE_SIM)
+	inline void* operator new(size_t size) { return mempool.Alloc(size); }
+	inline void operator delete(void* p, size_t size) { mempool.Free(p, size); }
+	#endif
 
 public:
 	FlyingPiece(int team, const float3& pos, const float3& speed, const S3DOPiece* _object, const S3DOPrimitive* piece)
