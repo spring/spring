@@ -1166,7 +1166,7 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 		case CMDTYPE_ICON: {
 			Command c(cd.id);
 			if (cd.id != CMD_STOP) {
-				CreateOptions(c, rmb);
+				c.options = CreateOptions(rmb);
 				if (invertQueueKey && ((cd.id < 0) || (cd.id == CMD_STOCKPILE))) {
 					c.options = c.options ^ SHIFT_KEY;
 				}
@@ -1185,9 +1185,8 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 			SNPRINTF(t, 10, "%d", newMode);
 			cd.params[0] = t;
 
-			Command c(cd.id);
+			Command c(cd.id, CreateOptions(rmb));
 			c.params.push_back(newMode);
-			CreateOptions(c, rmb);
 			GiveCommand(c);
 			forceLayoutUpdate = true;
 			break;
@@ -1444,11 +1443,12 @@ bool CGuiHandler::AboveGui(int x, int y)
 }
 
 
-void CGuiHandler::CreateOptions(Command& c, bool rmb)
+unsigned char CGuiHandler::CreateOptions(bool rightMouseButton)
 {
-	c.options = 0;
-	if (rmb) {
-		c.options |= RIGHT_MOUSE_KEY;
+	unsigned char options = 0;
+
+	if (rightMouseButton) {
+		options |= RIGHT_MOUSE_KEY;
 	}
 	if (GetQueueKeystate()) {
 		// allow mouse button 'rocker' movements to force
@@ -1456,12 +1456,18 @@ void CGuiHandler::CreateOptions(Command& c, bool rmb)
 		if (!invertQueueKey ||
 		    (!mouse->buttons[SDL_BUTTON_LEFT].pressed &&
 		     !mouse->buttons[SDL_BUTTON_RIGHT].pressed)) {
-			c.options |= SHIFT_KEY;
+			options |= SHIFT_KEY;
 		}
 	}
-	if (keyInput->IsKeyPressed(SDLK_LCTRL)) { c.options |= CONTROL_KEY; }
-	if (keyInput->IsKeyPressed(SDLK_LALT) ) { c.options |= ALT_KEY;     }
-	if (keyInput->IsKeyPressed(SDLK_LMETA)) { c.options |= META_KEY;    }
+	if (keyInput->IsKeyPressed(SDLK_LCTRL)) { options |= CONTROL_KEY; }
+	if (keyInput->IsKeyPressed(SDLK_LALT) ) { options |= ALT_KEY;     }
+	if (keyInput->IsKeyPressed(SDLK_LMETA)) { options |= META_KEY;    }
+
+	return options;
+}
+unsigned char CGuiHandler::CreateOptions(int button)
+{
+	return CreateOptions(button != SDL_BUTTON_LEFT);
 }
 
 
@@ -2055,14 +2061,12 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 
 		case CMDTYPE_NUMBER:{
 			const float value = GetNumberInput(commands[tempInCommand]);
-			Command c(commands[tempInCommand].id);
+			Command c(commands[tempInCommand].id, CreateOptions(button));
 			c.params.push_back(value);
-			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 
 		case CMDTYPE_ICON:{
-			Command c(commands[tempInCommand].id);
-			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
+			Command c(commands[tempInCommand].id, CreateOptions(button));
 			if(button==SDL_BUTTON_LEFT && !preview)
 				logOutput.Print("CMDTYPE_ICON left button press in incommand test? This shouldnt happen");
 			return c;}
@@ -2073,11 +2077,10 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				return defaultRet;
 			}
 			float3 pos=camerapos+mousedir*dist;
-			Command c(commands[tempInCommand].id);
+			Command c(commands[tempInCommand].id, CreateOptions(button));
 			c.params.push_back(pos.x);
 			c.params.push_back(pos.y);
 			c.params.push_back(pos.z);
-			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 
 		case CMDTYPE_ICON_BUILDING:{
@@ -2118,31 +2121,30 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				++a;
 				Command c;
 				bpi->FillCmd(c);
-				CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
+				c.options = CreateOptions(button);
 				if(!preview)
 					GiveCommand(c);
 			}
 			Command c;
 			buildPos.back().FillCmd(c);
-			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
+			c.options = CreateOptions(button);
 			return c;}
 
 		case CMDTYPE_ICON_UNIT: {
 			CUnit* unit = NULL;
 			CFeature* feature = NULL;
-			Command c(commands[tempInCommand].id);
+			Command c(commands[tempInCommand].id, CreateOptions(button));
 
 			TraceRay::GuiTraceRay(camerapos, mousedir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
 			if (!unit) {
 				return defaultRet;
 			}
 			c.params.push_back(unit->id);
-			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 
 		case CMDTYPE_ICON_UNIT_OR_MAP: {
 
-			Command c(commands[tempInCommand].id);
+			Command c(commands[tempInCommand].id, CreateOptions(button));
 
 			CUnit* unit = NULL;
 			CFeature* feature = NULL;
@@ -2161,7 +2163,6 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				c.params.push_back(pos.y);
 				c.params.push_back(pos.z);
 			}
-			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 
 		case CMDTYPE_ICON_FRONT:{
@@ -2174,7 +2175,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 
 			float3 pos=mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
 
-			Command c(commands[tempInCommand].id);
+			Command c(commands[tempInCommand].id, CreateOptions(button));
 			c.params.push_back(pos.x);
 			c.params.push_back(pos.y);
 			c.params.push_back(pos.z);
@@ -2203,7 +2204,6 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				c.params.push_back(pos2.y);
 				c.params.push_back(pos2.z);
 			}
-			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 
 		case CMDTYPE_ICON_UNIT_OR_AREA:
@@ -2213,7 +2213,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			if(commands[tempInCommand].params.size()==1)
 				maxRadius=atof(commands[tempInCommand].params[0].c_str());
 
-			Command c(commands[tempInCommand].id);
+			Command c(commands[tempInCommand].id, CreateOptions(button));
 
 			if (mouse->buttons[button].movement < 4) {
 
@@ -2262,11 +2262,10 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				if(c.GetID() ==CMD_UNLOAD_UNITS)
 					c.params.push_back((float)buildFacing);
 			}
-			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 
 		case CMDTYPE_ICON_UNIT_OR_RECTANGLE:{
-			Command c(commands[tempInCommand].id);
+			Command c(commands[tempInCommand].id, CreateOptions(button));
 
 			if (mouse->buttons[button].movement < 16) {
 				CUnit* unit;
@@ -2311,7 +2310,6 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				c.params.push_back(endPos.y);
 				c.params.push_back(endPos.z);
 			}
-			CreateOptions(c, (button == SDL_BUTTON_LEFT) ? 0 : 1);
 			return c;}
 
 		default:

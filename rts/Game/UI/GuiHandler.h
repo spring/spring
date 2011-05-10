@@ -97,7 +97,8 @@ private:
 	int  FindInCommandPage();
 	void RevertToCmdDesc(const CommandDescription& cmdDesc, bool defaultCommand, bool samePage);
 
-	void CreateOptions(Command& c,bool rmb);
+	unsigned char CreateOptions(bool rightMouseButton);
+	unsigned char CreateOptions(int button);
 	void FinishCommand(int button);
 	void SetShowingMetal(bool show);
 	float GetNumberInput(const CommandDescription& cmdDesc) const;
