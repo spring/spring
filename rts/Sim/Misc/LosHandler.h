@@ -29,7 +29,7 @@
  * LosInstances may be shared between multiple units. Reference counting is
  * used to track how many units currently use one instance.
  *
- * An instance will be shared if the other unit is in the same square
+ * An instance will be shared iff the other unit is in the same square
  * (basePos, baseSquare) on the LOS map, has the same LOS and air LOS
  * radius, is in the same ally-team and has the same base-height.
  */
