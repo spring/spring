@@ -2119,15 +2119,11 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			int a=0; // limit the number of max commands possible to send to avoid overflowing the network buffer
 			for(std::vector<BuildInfo>::iterator bpi=buildPos.begin();bpi!=--buildPos.end() && a<200;++bpi){
 				++a;
-				Command c;
-				bpi->FillCmd(c);
-				c.options = CreateOptions(button);
+				Command c = bpi->CreateCommand(CreateOptions(button));
 				if(!preview)
 					GiveCommand(c);
 			}
-			Command c;
-			buildPos.back().FillCmd(c);
-			c.options = CreateOptions(button);
+			Command c = buildPos.back().CreateCommand(CreateOptions(button));
 			return c;}
 
 		case CMDTYPE_ICON_UNIT: {
@@ -2328,8 +2324,7 @@ static bool WouldCancelAnyQueued(const BuildInfo& b)
 {
 	GML_RECMUTEX_LOCK(sel); // WouldCancelAnyQueued - called from DrawMapStuff -> GetBuildPos --> FillRowOfBuildPos
 
-	Command c;
-	b.FillCmd(c);
+	Command c = b.CreateCommand();
 	CUnitSet::iterator ui = selectedUnits.selectedUnits.begin();
 	for(;ui != selectedUnits.selectedUnits.end(); ++ui){
 		if((*ui)->commandAI->WillCancelQueued(c))
@@ -3653,8 +3648,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 
 						GML_RECMUTEX_LOCK(sel); // DrawMapStuff
 
-						Command c;
-						bpi->FillCmd(c);
+						Command c = bpi->CreateCommand();
 						std::vector<Command> temp;
 						CUnitSet::iterator ui = selectedUnits.selectedUnits.begin();
 						for (; ui != selectedUnits.selectedUnits.end(); ++ui) {

@@ -30,7 +30,10 @@ struct BuildInfo
 	int GetXSize() const;
 	int GetZSize() const;
 	bool Parse(const Command& c);
-	void FillCmd(Command& c) const;
+
+	int CreateCommandID() const;
+	void AddCommandParams(Command& cmd) const;
+	Command CreateCommand(unsigned char options = 0) const;
 
 	const UnitDef* def;
 	float3 pos;

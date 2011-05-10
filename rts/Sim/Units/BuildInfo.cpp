@@ -17,14 +17,25 @@ BuildInfo::BuildInfo(const std::string& name, const float3& pos, int facing)
 }
 
 
-void BuildInfo::FillCmd(Command& c) const
+int BuildInfo::CreateCommandID() const
 {
-	c.SetID(-def->id);
-	c.params.resize(4);
-	c.params[0] = pos.x;
-	c.params[1] = pos.y;
-	c.params[2] = pos.z;
-	c.params[3] = (float) buildFacing;
+	return -def->id;
+}
+
+void BuildInfo::AddCommandParams(Command& cmd) const
+{
+	cmd.params.reserve(cmd.params.size() + 4);
+	cmd.AddParam(pos.x);
+	cmd.AddParam(pos.y);
+	cmd.AddParam(pos.z);
+	cmd.AddParam((float) buildFacing);
+}
+
+Command BuildInfo::CreateCommand(unsigned char options) const
+{
+	Command cmd(CreateCommandID(), options);
+	AddCommandParams(cmd);
+	return cmd;
 }
 
 
