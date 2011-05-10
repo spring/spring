@@ -1478,6 +1478,7 @@ void CUnit::ChangeTeamReset()
 	//FIXME reset to unitdef defaults
 
 	// deactivate to prevent the old give metal maker trick
+	// TODO remove, because it is *A specific
 	c.SetID(CMD_ONOFF);
 	c.params.push_back(0); // always off
 	commandAI->GiveCommand(c);
