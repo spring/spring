@@ -321,8 +321,9 @@ bool CFactoryCAI::RemoveBuildCommand(CCommandQueue::iterator& it)
 		ExecuteStop(cmd);
 		return true;
 	}
-	//FIXME what does this do?
-	if (cmd.GetID() < 0) {
+	// XXX what does this do?
+	if (cmd.GetID() < 0) { // (id < 0) -> it is a build command
+		// convert the build-command into a stop command
 		cmd.SetID(CMD_STOP);
 		cmd.tag = 0;
 	}

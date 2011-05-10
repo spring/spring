@@ -952,7 +952,7 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 
 				if (builder->lastResurrected && uh->GetUnitUnsafe(builder->lastResurrected) != NULL && owner->unitDef->canRepair) {
 					// resurrection finished, start repair
-					c.SetID(CMD_REPAIR); // kind of hackery to overwrite the current order i suppose
+					c.SetID(CMD_REPAIR); // XXX kind of hackery to overwrite the current order i suppose
 					c.params.push_back(builder->lastResurrected);
 					c.options |= INTERNAL_ORDER;
 					builder->lastResurrected = 0;
