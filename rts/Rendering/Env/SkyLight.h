@@ -64,9 +64,12 @@ public:
 	bool GetLuaControl() const { return luaControl; }
 
 private:
-	inline float4 CalculateDir(float startAngle) const;
+	inline float4 CalculateSunPos(const float startAngle) const;
+	inline bool UpdateSunDir();
 
 	bool luaControl;
+
+	bool updateNeeded;
 
 	/**
 	 * @brief the sun normally starts where its peak elevation occurs, unless this offset angle is set
