@@ -15,11 +15,13 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "TimeProfiler.h"
-#include "ConfigHandler.h"
-#include "GlobalUnsynced.h"
-#include "Matrix44f.h"
-#include "LogOutput.h"
+#include "System/ConfigHandler.h"
+#include "System/GlobalUnsynced.h"
+#include "System/LogOutput.h"
+#include "System/Matrix44f.h"
+#include "System/myMath.h"
+#include "System/TimeProfiler.h"
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -34,7 +36,7 @@
 
 CBasicSky::CBasicSky()
 {
-	sunFlareList = 0;
+	sunFlareList = glGenLists(1);
 	skytexpart = new unsigned char[512][4];
 	skyTexUpdateIter = 0;
 
@@ -557,15 +559,11 @@ void CBasicSky::DrawSun()
 }
 
 void CBasicSky::UpdateSunFlare() {
-	if(sunFlareList)
-		glDeleteLists(sunFlareList, 1);
-
 	float3 ldir=modSunDir.cross(UpVector);
 	ldir.ANormalize();
 	float3 udir=modSunDir.cross(ldir);
 	udir.ANormalize();
 
-	sunFlareList=glGenLists(1);
 	glNewList(sunFlareList, GL_COMPILE);
 		glDisable(GL_FOG);
 		glBindTexture(GL_TEXTURE_2D, sunFlareTex);
@@ -712,7 +710,7 @@ void CBasicSky::UpdateSkyDir() {
 
 	skydir2.ANormalize();
 	skydir1 = skydir2.cross(UpVector);
-	skyAngle = fastmath::coords2angle(skydir2.x, skydir2.z) + PI / 2.0f;
+	skyAngle = GetRadFromXY(skydir2.x, skydir2.z) + PI / 2.0f; //FIXME Why the +PI/2???
 }
 
 void CBasicSky::UpdateSkyTexture() {
@@ -746,7 +744,7 @@ float3 CBasicSky::GetDirFromTexCoord(float x, float y)
 	dir.z = (y - 0.5f) * domeWidth;
 
 	const float hdist = math::sqrt(dir.x * dir.x + dir.z * dir.z);
-	const float ang = fastmath::coords2angle(dir.x, dir.z) + skyAngle;
+	const float ang = GetRadFromXY(dir.x, dir.z) + skyAngle;
 	const float fy = asin(hdist / 400);
 
 	dir.x = hdist * cos(ang);
