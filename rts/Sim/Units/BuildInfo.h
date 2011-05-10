@@ -6,8 +6,8 @@
 #include <string>
 
 #include "System/float3.h"
+#include "Sim/Units/CommandAI/Command.h"
 
-struct Command;
 struct UnitDef;
 
 /**
@@ -33,7 +33,13 @@ struct BuildInfo
 
 	int CreateCommandID() const;
 	void AddCommandParams(Command& cmd) const;
-	Command CreateCommand(unsigned char options = 0) const;
+	inline Command CreateCommand(unsigned char options = 0) const
+	{
+		// this is inlined to prevent copying of cmd on return
+		Command cmd(CreateCommandID(), options);
+		AddCommandParams(cmd);
+		return cmd;
+	}
 
 	const UnitDef* def;
 	float3 pos;

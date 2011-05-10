@@ -31,13 +31,6 @@ void BuildInfo::AddCommandParams(Command& cmd) const
 	cmd.AddParam((float) buildFacing);
 }
 
-Command BuildInfo::CreateCommand(unsigned char options) const
-{
-	Command cmd(CreateCommandID(), options);
-	AddCommandParams(cmd);
-	return cmd;
-}
-
 
 bool BuildInfo::Parse(const Command& c)
 {
