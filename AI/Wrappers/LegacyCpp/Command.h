@@ -150,7 +150,7 @@ public:
 		params.push_back(par);
 	}
 
-	void SetID(int id) { id = id; params.clear(); }
+	void SetID(int id) { this->id = id; params.clear(); }
 	const int& GetID() const { return id; }
 
 public:
