@@ -242,7 +242,7 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		if (c.options & ALT_KEY) {
 			for (unsigned int cmdNum = 0; cmdNum < commandQue.size() && numToErase; ++cmdNum) {
 				if (commandQue[cmdNum].GetID() == cmd_id) {
-					commandQue[cmdNum].SetID(CMD_STOP);
+					commandQue[cmdNum] = Command(CMD_STOP);
 					numToErase--;
 				}
 			}
@@ -250,7 +250,7 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		else {
 			for (int cmdNum = commandQue.size() - 1; cmdNum != -1 && numToErase; --cmdNum) {
 				if (commandQue[cmdNum].GetID() == cmd_id) {
-					commandQue[cmdNum].SetID(CMD_STOP);
+					commandQue[cmdNum] = Command(CMD_STOP);
 					numToErase--;
 				}
 			}
