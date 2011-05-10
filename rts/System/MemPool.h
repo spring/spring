@@ -9,9 +9,12 @@
 static const size_t MAX_MEM_SIZE = 200;
 
 /**
- * Allows Implementing some kind of garbage collector.
- * The implementation of this garbage collector was never even started, only
- * this basic framework was implemented, which by itself, serves no purpose.
+ * Speeds-up for memory-allocation of often allocated/deallocated structs
+ * or classes, or other memory blocks of equal size.
+ * You may think of this as something like a very primitive garbage collector.
+ * Instead of actually freeing memory, it is kept allocated, and is just
+ * reassigned next time an alloc of the same size is performed.
+ * The maximum memory held by this class is approximately MAX_MEM_SIZE^2 bytes.
  */
 class CMemPool
 {
