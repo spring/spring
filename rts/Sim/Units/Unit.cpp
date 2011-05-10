@@ -1461,14 +1461,13 @@ void CUnit::ChangeTeamReset()
 	// clear the build commands for factories
 	CFactoryCAI* facAI = dynamic_cast<CFactoryCAI*>(commandAI);
 	if (facAI) {
-		c.options = RIGHT_MOUSE_KEY; // clear option
+		const unsigned char options = RIGHT_MOUSE_KEY; // clear option
 		CCommandQueue& buildCommands = facAI->commandQue;
 		CCommandQueue::iterator it;
 		std::vector<Command> clearCommands;
 		clearCommands.reserve(buildCommands.size());
 		for (it = buildCommands.begin(); it != buildCommands.end(); ++it) {
-			c.SetID(it->GetID());
-			clearCommands.push_back(c);
+			clearCommands.push_back(Command(it->GetID(), options));
 		}
 		for (int i = 0; i < (int)clearCommands.size(); i++) {
 			facAI->GiveCommand(clearCommands[i]);
@@ -1479,36 +1478,36 @@ void CUnit::ChangeTeamReset()
 
 	// deactivate to prevent the old give metal maker trick
 	// TODO remove, because it is *A specific
-	c.SetID(CMD_ONOFF);
+	c = Command(CMD_ONOFF);
 	c.params.push_back(0); // always off
 	commandAI->GiveCommand(c);
 
 	// reset repeat state
-	c.SetID(CMD_REPEAT);
+	c = Command(CMD_REPEAT);
 	c.params.push_back(0);
 	commandAI->GiveCommand(c);
 
 	// reset cloak state
 	if (unitDef->canCloak) {
-		c.SetID(CMD_CLOAK);
+		c = Command(CMD_CLOAK);
 		c.params.push_back(0); // always off
 		commandAI->GiveCommand(c);
 	}
 	// reset move state
 	if (unitDef->canmove || unitDef->builder) {
-		c.SetID(CMD_MOVE_STATE);
+		c = Command(CMD_MOVE_STATE);
 		c.params.push_back(MOVESTATE_MANEUVER);
 		commandAI->GiveCommand(c);
 	}
 	// reset fire state
 	if (commandAI->CanChangeFireState()) {
-		c.SetID(CMD_FIRE_STATE);
+		c = Command(CMD_FIRE_STATE);
 		c.params.push_back(FIRESTATE_FIREATWILL);
 		commandAI->GiveCommand(c);
 	}
 	// reset trajectory state
 	if (unitDef->highTrajectoryType > 1) {
-		c.SetID(CMD_TRAJECTORY);
+		c = Command(CMD_TRAJECTORY);
 		c.params.push_back(0);
 		commandAI->GiveCommand(c);
 	}
