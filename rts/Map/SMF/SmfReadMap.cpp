@@ -2,7 +2,7 @@
 
 #include "StdAfx.h"
 #include "SmfReadMap.h"
-#ifdef OPENMP
+#ifdef _OPENMP
 	#include <omp.h>
 #endif
 

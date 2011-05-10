@@ -95,8 +95,14 @@ endif (WIN32)
 
 set(OPENMP FALSE CACHE BOOL "Enable local multithreading")
 if    (OPENMP)
-	add_definitions(-DOPENMP)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -lgomp")
+	include(FindOpenMP)
+	if(OPENMP_FOUND)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+		# Currently FindOpenMP fails and doesn't give _any_ linker flags
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fopenmp -lgomp")
+		set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fopenmp -lgomp")
+	endif(OPENMP_FOUND)
 endif (OPENMP)
 
 set(BUILTIN_DATADIRS "")
