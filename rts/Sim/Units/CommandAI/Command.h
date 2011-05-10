@@ -168,7 +168,7 @@ public:
 
 	const size_t GetParamsCount() const { return params.size(); }
 
-	void SetID(int id) __attribute__ ((deprecated)) { id = id; params.clear(); }
+	void SetID(int id) __attribute__ ((deprecated)) { this->id = id; params.clear(); }
 	const int& GetID() const { return id; }
 
 public:
