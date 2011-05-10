@@ -2,7 +2,7 @@
 
 #include "StdAfx.h"
 
-#ifdef OPENMP
+#ifdef _OPENMP
 	#include <omp.h>
 #endif
 #include <ostream>
@@ -579,9 +579,7 @@ void CBitmap::Blur(int iterations, float weight)
 	for (int i=0; i < iterations; ++i){
 		{
 			int j,y,x;
-#ifdef OPENMP
 			#pragma omp parallel for private(j,x,y)
-#endif
 			for (y=0; y < ysize; y++) {
 				for (x=0; x < xsize; x++) {
 					for (j=0; j < channels; j++) {
