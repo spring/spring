@@ -139,11 +139,10 @@ void DynamicSkyLight::SetLightParams(float4 newLightDir, float startAngle, float
 	sunRotation.LoadIdentity();
 	sunRotation.SetUpVector(newLightDir);
 
-	const float4& startDir = CalculateSunPos(sunStartAngle);
 	const float4& peakDir  = CalculateSunPos(0.0f);
 	const float peakElev   = std::max(0.01f, peakDir.y);
 
 	shadowDensityFactor = 1.0f / peakElev;
 
-	SetLightDir(startDir);
+	UpdateSunDir();
 }
