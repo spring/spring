@@ -7,6 +7,7 @@
 
 #include <StdAfx.h>
 #include <sstream>
+#include <boost/bind.hpp>
 #include "errorhandler.h"
 
 #include "Game/GameServer.h"

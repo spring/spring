@@ -887,7 +887,7 @@ void CGuiHandler::ConvertCommands(std::vector<CommandDescription>& cmds)
 		const int count = (int)cmds.size();
 		for (int i = 0; i < count; i++) {
 			CommandDescription& cd = cmds[i];
-			if ((cd.id == CMD_ATTACK) && (cd.id == CMDTYPE_ICON_UNIT_OR_MAP)) {
+			if ((cd.id == CMD_ATTACK) && (cd.type == CMDTYPE_ICON_UNIT_OR_MAP)) {
 				if (attackRect) {
 					cd.type = CMDTYPE_ICON_UNIT_OR_RECTANGLE;
 				} else {

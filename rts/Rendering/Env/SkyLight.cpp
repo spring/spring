@@ -9,7 +9,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "ConfigHandler.h"
+#include "System/ConfigHandler.h"
 
 StaticSkyLight::StaticSkyLight() {
 	const CMapInfo::light_t& light = mapInfo->light;

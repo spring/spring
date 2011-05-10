@@ -1041,7 +1041,7 @@ CCommandQueue::iterator CCommandAI::GetCancelQueued(const Command &c,
 		--ci; //iterate from the end and dont check the current order
 		const Command& c2 = *ci;
 		const int& cmd_id = c.GetID();
-		const int& cmd2_id = c.GetID();
+		const int& cmd2_id = c2.GetID();
 
 		if (((cmd_id == cmd2_id) || ((cmd_id < 0) && (cmd2_id < 0))
 				|| (cmd2_id == CMD_FIGHT && cmd_id == CMD_ATTACK && c2.params.size() == 1))
