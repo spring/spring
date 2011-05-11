@@ -1767,7 +1767,7 @@ void CGame::UpdateUI(bool updateCam)
 			writingPos = 0;
 		}
 
-		if (inMapDrawer->wantLabel && !userWriting) {
+		if (inMapDrawer->IsWantLabel() && !userWriting) {
 			if (userInput.size() > 200) {
 				// avoid troubles with long lines
 				userInput = userInput.substr(0, 200);

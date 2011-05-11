@@ -45,7 +45,7 @@ bool CGame::ActionReleased(const Action& action)
 	const string& cmd = action.command;
 
 	if (cmd == "drawinmap"){
-		inMapDrawer->keyPressed=false;
+		inMapDrawer->SetDrawMode(false);
 	}
 	else if (cmd == "moveforward") {
 		camMove[0]=false;

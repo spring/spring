@@ -66,7 +66,15 @@ public:
 	bool GetSpecMapDrawingAllowed() const { return allowSpecMapDrawing; }
 	bool GetLuaMapDrawingAllowed() const { return allowLuaMapDrawing; }
 
+	void SetDrawMode(bool drawMode) { this->drawMode = drawMode; }
+	bool IsDrawMode() const { return drawMode; }
+
+	// TODO choose a better name for these or refactor this away if possible (even better)
+	void SetWantLabel(bool wantLabel) { this->wantLabel = wantLabel; }
+	bool IsWantLabel() const { return wantLabel; }
+
 	float3 GetMouseMapPos();
+
 
 	struct MapDrawPrimitive {
 		CR_DECLARE_STRUCT(MapDrawPrimitive);
@@ -113,6 +121,10 @@ public:
 			, label(label)
 		{}
 
+		const float3& GetPos() const { return pos; }
+		const std::string& GetLabel() const { return label; }
+
+	private:
 		float3 pos;
 		std::string label;
 	};
@@ -121,16 +133,30 @@ public:
 		CR_DECLARE_STRUCT(MapLine);
 
 	public:
-		MapLine(bool spectator, int teamID, const TeamController* teamController, const float3& pos, const float3& pos2)
+		MapLine(bool spectator, int teamID, const TeamController* teamController, const float3& pos1, const float3& pos2)
 			: MapDrawPrimitive(spectator, teamID, teamController)
-			, pos(pos)
+			, pos1(pos1)
 			, pos2(pos2)
 		{}
 
-		float3 pos;
+		/**
+		 * The start position of the line.
+		 */
+		const float3& GetPos1() const { return pos1; }
+		/**
+		 * The end position of the line.
+		 */
+		const float3& GetPos2() const { return pos2; }
+
+	private:
+		float3 pos1;
 		float3 pos2;
 	};
 
+	/**
+	 * This is meant to be a QuadTree implementation, but in reality it is a
+	 * cell of a grid structure.
+	 */
 	struct DrawQuad {
 		CR_DECLARE_STRUCT(DrawQuad);
 		std::list<CInMapDraw::MapPoint> points;
@@ -139,10 +165,17 @@ public:
 
 	const DrawQuad* GetDrawQuad(int x, int y) const;
 
-	bool keyPressed;
+private:
+	/**
+	 * Whether we are in draw mode.
+	 * This is true for example, when the draw-mode-key is currently held down.
+	 */
+	bool drawMode;
+	/**
+	 * Whether the point currently beeing drawn is one with label or not??? TODO check this
+	 */
 	bool wantLabel;
 
-private:
 	int drawQuadsX;
 	int drawQuadsY;
 	std::vector<DrawQuad> drawQuads;

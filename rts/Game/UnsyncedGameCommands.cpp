@@ -135,13 +135,13 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 		}
 		return true;
 	}
-	else if ((action.command == "edit_escape") && (chatting || inMapDrawer->wantLabel)) {
+	else if ((action.command == "edit_escape") && (chatting || inMapDrawer->IsWantLabel())) {
 		if (chatting) {
 			consoleHistory->AddLine(userInput);
 		}
 		userWriting = false;
 		chatting = false;
-		inMapDrawer->wantLabel = false;
+		inMapDrawer->SetWantLabel(false);
 		userInput = "";
 		writingPos = 0;
 		return true;
@@ -402,12 +402,12 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 		}
 	}
 	else if (cmd == "drawinmap") {
-		inMapDrawer->keyPressed = true;
+		inMapDrawer->SetDrawMode(true);
 	}
 	else if (cmd == "drawlabel") {
 		float3 pos = inMapDrawer->GetMouseMapPos();
 		if (pos.x >= 0) {
-			inMapDrawer->keyPressed = false;
+			inMapDrawer->SetDrawMode(false);
 			inMapDrawer->PromptLabel(pos);
 			if ((key >= SDLK_SPACE) && (key <= SDLK_DELETE)) {
 				ignoreNextChar=true;

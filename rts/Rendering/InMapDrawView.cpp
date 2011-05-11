@@ -163,7 +163,7 @@ private:
 
 void InMapDraw_QuadDrawer::DrawPoint(const CInMapDraw::MapPoint* point) const
 {
-	const float3 pos = point->pos;
+	const float3& pos = point->GetPos();
 	const float3 dif = (pos - camera->pos).ANormalize();
 	const float3 dir1 = (dif.cross(UpVector)).ANormalize();
 	const float3 dir2 = (dif.cross(dir1));
@@ -196,7 +196,7 @@ void InMapDraw_QuadDrawer::DrawPoint(const CInMapDraw::MapPoint* point) const
 	pointsVa->AddVertexQTC(pos2 + dir1 * size - dir2 * size, 0.00f, 1, col);
 	pointsVa->AddVertexQTC(pos2 - dir1 * size - dir2 * size, 0.00f, 0, col);
 
-	if (!point->label.empty()) {
+	if (!point->GetLabel().empty()) {
 		visibleLabels->push_back(point);
 	}
 }
@@ -204,8 +204,8 @@ void InMapDraw_QuadDrawer::DrawPoint(const CInMapDraw::MapPoint* point) const
 void InMapDraw_QuadDrawer::DrawLine(const CInMapDraw::MapLine* line) const
 {
 	const unsigned char* color = line->IsBySpectator() ? color4::white : teamHandler->Team(line->GetTeamID())->color;
-	linesVa->AddVertexQC(line->pos - (line->pos - camera->pos).ANormalize() * 26, color);
-	linesVa->AddVertexQC(line->pos2 - (line->pos2 - camera->pos).ANormalize() * 26, color);
+	linesVa->AddVertexQC(line->GetPos1() - (line->GetPos1() - camera->pos).ANormalize() * 26, color);
+	linesVa->AddVertexQC(line->GetPos2() - (line->GetPos2() - camera->pos).ANormalize() * 26, color);
 }
 
 void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
@@ -274,12 +274,12 @@ void CInMapDrawView::Draw()
 
 		//! draw point labels
 		for (std::vector<const CInMapDraw::MapPoint*>::const_iterator pi = visibleLabels.begin(); pi != visibleLabels.end(); ++pi) {
-			float3 pos = (*pi)->pos;
+			float3 pos = (*pi)->GetPos();
 			pos.y += 111.0f;
 
 			const unsigned char* color = (*pi)->IsBySpectator() ? color4::white : teamHandler->Team((*pi)->GetTeamID())->color;
 			font->SetTextColor(color[0]/255.0f, color[1]/255.0f, color[2]/255.0f, 1.0f); //FIXME (overload!)
-			font->glWorldPrint(pos, 26.0f, (*pi)->label);
+			font->glWorldPrint(pos, 26.0f, (*pi)->GetLabel());
 		}
 
 		visibleLabels.clear();
