@@ -979,7 +979,7 @@ bool CGame::DrawWorld()
 
 	mouse->DrawSelectionBox();
 
-	guihandler->DrawMapStuff(0);
+	guihandler->DrawMapStuff(false);
 
 	if (globalRendering->drawMapMarks && !hideInterface) {
 		inMapDrawer->Draw();

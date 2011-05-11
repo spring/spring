@@ -26,7 +26,7 @@ public:
 	void Update();
 
 	void Draw();
-	void DrawMapStuff(int minimapLevel);
+	void DrawMapStuff(bool onMinimap);
 	void DrawCentroidCursor();
 
 	bool AboveGui(int x,int y);

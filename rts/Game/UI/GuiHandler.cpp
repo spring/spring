@@ -3301,7 +3301,7 @@ static inline void DrawWeaponArc(const CUnit* unit)
 }
 
 
-void CGuiHandler::DrawMapStuff(int onMinimap)
+void CGuiHandler::DrawMapStuff(bool onMinimap)
 {
 	if (!onMinimap) {
 		glEnable(GL_DEPTH_TEST);
@@ -3356,7 +3356,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 						if (cmdDesc.params.size() > 1) {
 							sizeDiv = atof(cmdDesc.params[1].c_str());
 						}
-						DrawFront(button, maxSize, sizeDiv, !!onMinimap, camerapos, mousedir);
+						DrawFront(button, maxSize, sizeDiv, onMinimap, camerapos, mousedir);
 					}
 					break;
 				}
