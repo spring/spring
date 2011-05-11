@@ -23,6 +23,12 @@ CR_REG_METADATA(CInMapDrawView, (
 ));
 
 
+/**
+ * @param a how far on the way between x and y [0.0f, 1.0f]
+ */
+static inline unsigned char smoothStep(int x, int y, int a) {
+	return (unsigned char)((x * (1.0f - a)) + (y * a));
+}
 
 CInMapDrawView::CInMapDrawView()
 {
@@ -36,8 +42,6 @@ CInMapDrawView::CInMapDrawView()
 		}
 	}
 
-	#define SMOOTHSTEP(x,y,a) (unsigned char)(x * (1.0f - a) + y * a)
-
 	for (int y = 0; y < 64; y++) {
 		// circular thingy
 		for (int x = 0; x < 64; x++) {
@@ -47,17 +51,17 @@ CInMapDrawView::CInMapDrawView()
 			} else if (dist > 30.0f) {
 				// interpolate (outline -> nothing)
 				float a = (dist - 30.0f);
-				tex[y][x][3] = SMOOTHSTEP(255,   0, a);
+				tex[y][x][3] = smoothStep(255,   0, a);
 			} else if (dist > 24.0f) {
 				// black outline
 				tex[y][x][3] = 255;
 			} else if (dist > 23.0f) {
 				// interpolate (inner -> outline)
 				float a = (dist - 23.0f);
-				tex[y][x][0] = SMOOTHSTEP(255,   0, a);
-				tex[y][x][1] = SMOOTHSTEP(255,   0, a);
-				tex[y][x][2] = SMOOTHSTEP(255,   0, a);
-				tex[y][x][3] = SMOOTHSTEP(200, 255, a);
+				tex[y][x][0] = smoothStep(255,   0, a);
+				tex[y][x][1] = smoothStep(255,   0, a);
+				tex[y][x][2] = smoothStep(255,   0, a);
+				tex[y][x][3] = smoothStep(200, 255, a);
 			} else {
 				tex[y][x][0] = 255;
 				tex[y][x][1] = 255;
@@ -75,17 +79,17 @@ CInMapDrawView::CInMapDrawView()
 			} else if (dist > 30.0f) {
 				// interpolate (outline -> nothing)
 				float a = (dist - 30.0f);
-				tex[y][x][3] = SMOOTHSTEP(255,   0, a);
+				tex[y][x][3] = smoothStep(255,   0, a);
 			} else if (dist > 24.0f) {
 				// black outline
 				tex[y][x][3] = 255;
 			} else if (dist > 23.0f) {
 				// interpolate (inner -> outline)
 				float a = (dist - 23.0f);
-				tex[y][x][0] = SMOOTHSTEP(255,   0, a);
-				tex[y][x][1] = SMOOTHSTEP(255,   0, a);
-				tex[y][x][2] = SMOOTHSTEP(255,   0, a);
-				tex[y][x][3] = SMOOTHSTEP(200, 255, a);
+				tex[y][x][0] = smoothStep(255,   0, a);
+				tex[y][x][1] = smoothStep(255,   0, a);
+				tex[y][x][2] = smoothStep(255,   0, a);
+				tex[y][x][3] = smoothStep(200, 255, a);
 			} else {
 				tex[y][x][0] = 255;
 				tex[y][x][1] = 255;
@@ -112,7 +116,7 @@ CInMapDrawView::~CInMapDrawView()
 
 static unsigned char DEFAULT_COLOR[4] = {0, 0, 0, 255};
 
-static void SerializeColor(creg::ISerializer &s, unsigned char** color)
+static void SerializeColor(creg::ISerializer& s, unsigned char** color)
 {
 	if (s.IsWriting()) {
 		char ColorType = 0;
@@ -146,68 +150,81 @@ static void SerializeColor(creg::ISerializer &s, unsigned char** color)
 
 struct InMapDraw_QuadDrawer: public CReadMap::IQuadDrawer
 {
-	CVertexArray* va;
-	CVertexArray* lineva;
-	CInMapDraw* imd;
-	std::vector<const CInMapDraw::MapPoint*>* visLabels;
+	CVertexArray* pointsVa;
+	CVertexArray* linesVa;
+	std::vector<const CInMapDraw::MapPoint*>* visibleLabels;
 
 	void DrawQuad(int x, int y);
+
+private:
+	void DrawPoint(const CInMapDraw::MapPoint* point) const;
+	void DrawLine(const CInMapDraw::MapLine* line) const;
 };
+
+void InMapDraw_QuadDrawer::DrawPoint(const CInMapDraw::MapPoint* point) const
+{
+	const float3 pos = point->pos;
+	const float3 dif = (pos - camera->pos).ANormalize();
+	const float3 dir1 = (dif.cross(UpVector)).ANormalize();
+	const float3 dir2 = (dif.cross(dir1));
+
+
+	const unsigned char* color = point->IsBySpectator() ? color4::white : teamHandler->Team(point->GetTeamID())->color;
+	const unsigned char col[4] = {
+		color[0],
+		color[1],
+		color[2],
+		200
+	};
+
+	const float size = 6.0f;
+	const float3 pos1(pos.x,  pos.y  +   5.0f, pos.z);
+	const float3 pos2(pos1.x, pos1.y + 100.0f, pos1.z);
+
+	pointsVa->AddVertexQTC(pos1 - dir1 * size,               0.25f, 0, col);
+	pointsVa->AddVertexQTC(pos1 + dir1 * size,               0.25f, 1, col);
+	pointsVa->AddVertexQTC(pos1 + dir1 * size + dir2 * size, 0.00f, 1, col);
+	pointsVa->AddVertexQTC(pos1 - dir1 * size + dir2 * size, 0.00f, 0, col);
+
+	pointsVa->AddVertexQTC(pos1 - dir1 * size,               0.75f, 0, col);
+	pointsVa->AddVertexQTC(pos1 + dir1 * size,               0.75f, 1, col);
+	pointsVa->AddVertexQTC(pos2 + dir1 * size,               0.75f, 1, col);
+	pointsVa->AddVertexQTC(pos2 - dir1 * size,               0.75f, 0, col);
+
+	pointsVa->AddVertexQTC(pos2 - dir1 * size,               0.25f, 0, col);
+	pointsVa->AddVertexQTC(pos2 + dir1 * size,               0.25f, 1, col);
+	pointsVa->AddVertexQTC(pos2 + dir1 * size - dir2 * size, 0.00f, 1, col);
+	pointsVa->AddVertexQTC(pos2 - dir1 * size - dir2 * size, 0.00f, 0, col);
+
+	if (!point->label.empty()) {
+		visibleLabels->push_back(point);
+	}
+}
+
+void InMapDraw_QuadDrawer::DrawLine(const CInMapDraw::MapLine* line) const
+{
+	const unsigned char* color = line->IsBySpectator() ? color4::white : teamHandler->Team(line->GetTeamID())->color;
+	linesVa->AddVertexQC(line->pos - (line->pos - camera->pos).ANormalize() * 26, color);
+	linesVa->AddVertexQC(line->pos2 - (line->pos2 - camera->pos).ANormalize() * 26, color);
+}
 
 void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 {
-	const CInMapDraw::DrawQuad* dq = imd->GetDrawQuad(x, y);
+	const CInMapDraw::DrawQuad* dq = inMapDrawer->GetDrawQuad(x, y);
 
-	va->EnlargeArrays(dq->points.size() * 12, 0, VA_SIZE_TC);
+	pointsVa->EnlargeArrays(dq->points.size() * 12, 0, VA_SIZE_TC);
 	//! draw point markers
 	for (std::list<CInMapDraw::MapPoint>::const_iterator pi = dq->points.begin(); pi != dq->points.end(); ++pi) {
-		if (pi->IsLocalPlayerAllowedToSee(imd)) {
-			const float3 pos = pi->pos;
-			const float3 dif = (pos - camera->pos).ANormalize();
-			const float3 dir1 = (dif.cross(UpVector)).ANormalize();
-			const float3 dir2 = (dif.cross(dir1));
-
-
-			const unsigned char* color = pi->IsBySpectator() ? color4::white : teamHandler->Team(pi->GetTeamID())->color;
-			const unsigned char col[4] = {
-				color[0],
-				color[1],
-				color[2],
-				200
-			};
-
-			const float size = 6.0f;
-			const float3 pos1(pos.x,  pos.y  +   5.0f, pos.z);
-			const float3 pos2(pos1.x, pos1.y + 100.0f, pos1.z);
-
-			va->AddVertexQTC(pos1 - dir1 * size,               0.25f, 0, col);
-			va->AddVertexQTC(pos1 + dir1 * size,               0.25f, 1, col);
-			va->AddVertexQTC(pos1 + dir1 * size + dir2 * size, 0.00f, 1, col);
-			va->AddVertexQTC(pos1 - dir1 * size + dir2 * size, 0.00f, 0, col);
-
-			va->AddVertexQTC(pos1 - dir1 * size,               0.75f, 0, col);
-			va->AddVertexQTC(pos1 + dir1 * size,               0.75f, 1, col);
-			va->AddVertexQTC(pos2 + dir1 * size,               0.75f, 1, col);
-			va->AddVertexQTC(pos2 - dir1 * size,               0.75f, 0, col);
-
-			va->AddVertexQTC(pos2 - dir1 * size,               0.25f, 0, col);
-			va->AddVertexQTC(pos2 + dir1 * size,               0.25f, 1, col);
-			va->AddVertexQTC(pos2 + dir1 * size - dir2 * size, 0.00f, 1, col);
-			va->AddVertexQTC(pos2 - dir1 * size - dir2 * size, 0.00f, 0, col);
-
-			if (!pi->label.empty()) {
-				visLabels->push_back(&*pi);
-			}
+		if (pi->IsLocalPlayerAllowedToSee(inMapDrawer)) {
+			DrawPoint(&*pi);
 		}
 	}
 
-	lineva->EnlargeArrays(dq->lines.size() * 2, 0, VA_SIZE_C);
+	linesVa->EnlargeArrays(dq->lines.size() * 2, 0, VA_SIZE_C);
 	//! draw line markers
 	for (std::list<CInMapDraw::MapLine>::const_iterator li = dq->lines.begin(); li != dq->lines.end(); ++li) {
-		if (li->IsLocalPlayerAllowedToSee(imd)) {
-			const unsigned char* color = li->IsBySpectator() ? color4::white : teamHandler->Team(li->GetTeamID())->color;
-			lineva->AddVertexQC(li->pos - (li->pos - camera->pos).ANormalize() * 26, color);
-			lineva->AddVertexQC(li->pos2 - (li->pos2 - camera->pos).ANormalize() * 26, color);
+		if (li->IsLocalPlayerAllowedToSee(inMapDrawer)) {
+			DrawLine(&*li);
 		}
 	}
 }
@@ -218,16 +235,15 @@ void CInMapDrawView::Draw()
 {
 	GML_STDMUTEX_LOCK(inmap); //! Draw
 
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-	CVertexArray* lineva = GetVertexArray();
-	lineva->Initialize();
+	CVertexArray* pointsVa = GetVertexArray();
+	pointsVa->Initialize();
+	CVertexArray* linesVa = GetVertexArray();
+	linesVa->Initialize();
 
 	InMapDraw_QuadDrawer drawer;
-	drawer.imd = inMapDrawer;
-	drawer.lineva = lineva;
-	drawer.va = va;
-	drawer.visLabels = &visibleLabels;
+	drawer.linesVa = linesVa;
+	drawer.pointsVa = pointsVa;
+	drawer.visibleLabels = &visibleLabels;
 
 	glDepthMask(0);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -238,20 +254,20 @@ void CInMapDrawView::Draw()
 
 	glDisable(GL_TEXTURE_2D);
 	glLineWidth(3.f);
-	lineva->DrawArrayC(GL_LINES); //! draw lines
+	linesVa->DrawArrayC(GL_LINES); //! draw lines
 
 	// XXX hopeless drivers, retest in a year or so...
 	// width greater than 2 causes GUI flicker on ATI hardware as of driver version 9.3
 	// so redraw lines with width 1
 	if (globalRendering->atiHacks) {
 		glLineWidth(1.f);
-		lineva->DrawArrayC(GL_LINES);
+		linesVa->DrawArrayC(GL_LINES);
 	}
 
 	// draw points
 	glLineWidth(1);
 	glEnable(GL_TEXTURE_2D);
-	va->DrawArrayTC(GL_QUADS); //! draw point markers 
+	pointsVa->DrawArrayTC(GL_QUADS); //! draw point markers 
 
 	if (!visibleLabels.empty()) {
 		font->SetColors(); //! default
