@@ -1070,7 +1070,7 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 }
 
 
-void CGuiHandler::MouseRelease(int x, int y, int button, float3& cameraPos, float3& mouseDir)
+void CGuiHandler::MouseRelease(int x, int y, int button, const float3& cameraPos, const float3& mouseDir)
 {
 	GML_RECMUTEX_LOCK(gui); // MouseRelease
 
@@ -1489,7 +1489,7 @@ float CGuiHandler::GetNumberInput(const CommandDescription& cd) const
 // DrawMapStuff --> GetDefaultCommand
 // CMouseHandler::DrawCursor --> DrawCentroidCursor --> GetDefaultCommand
 // LuaUnsyncedRead::GetDefaultCommand --> GetDefaultCommand
-int CGuiHandler::GetDefaultCommand(int x, int y, float3& cameraPos, float3& mouseDir) const
+int CGuiHandler::GetDefaultCommand(int x, int y, const float3& cameraPos, const float3& mouseDir) const
 {
 	CInputReceiver* ir = NULL;
 	if (!game->hideInterface) {
@@ -2027,7 +2027,7 @@ Command CGuiHandler::GetOrderPreview()
 }
 
 
-Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool preview, float3& cameraPos, float3& mouseDir)
+Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool preview, const float3& cameraPos, const float3& mouseDir)
 {
 	GML_RECMUTEX_LOCK(gui); // GetCommand - updates inCommand
 
@@ -2347,7 +2347,7 @@ static void FillRowOfBuildPos(const BuildInfo& startInfo, float x, float z, floa
 }
 
 // Assuming both builds have the same unitdef
-std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo, float3& cameraPos, float3& mouseDir)
+std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo, const float3& cameraPos, const float3& mouseDir)
 {
 	std::vector<BuildInfo> ret;
 
@@ -2447,7 +2447,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 }
 
 
-void CGuiHandler::ProcessFrontPositions(float3& pos0, float3& pos1)
+void CGuiHandler::ProcessFrontPositions(float3& pos0, const float3& pos1)
 {
 	if (!frontByEnds) {
 		return; // leave it centered
@@ -3716,7 +3716,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 }
 
 
-void CGuiHandler::DrawMiniMapMarker(float3& cameraPos)
+void CGuiHandler::DrawMiniMapMarker(const float3& cameraPos)
 {
 	const float w = 10.0f;
 	const float h = 30.0f;
@@ -3855,7 +3855,7 @@ void CGuiHandler::DrawArea(float3 pos, float radius, const float* color)
 }
 
 
-void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv, bool onMinimap, float3& cameraPos, float3& mouseDir)
+void CGuiHandler::DrawFront(int button, float maxSize, float sizeDiv, bool onMinimap, const float3& cameraPos, const float3& mouseDir)
 {
 	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[button];
 	if(bp.movement<5){
@@ -4072,7 +4072,7 @@ static void DrawMinMaxBox(const float3& mins, const float3& maxs)
 }
 
 
-void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1, float3& cameraPos)
+void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1, const float3& cameraPos)
 {
 	if (useStencil) {
 		StencilDrawSelectBox(pos0, pos1, invColorSelect);

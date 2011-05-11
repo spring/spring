@@ -33,15 +33,15 @@ public:
 	bool KeyPressed(unsigned short key, bool isRepeat);
 	bool KeyReleased(unsigned short key);
 	bool MousePress(int x, int y, int button);
-	void MouseRelease(int x, int y, int button, float3& cameraPos = ::camera->pos, float3& mouseDir = ::mouse->dir);
+	void MouseRelease(int x, int y, int button, const float3& cameraPos = ::camera->pos, const float3& mouseDir = ::mouse->dir);
 	bool IsAbove(int x, int y);
 	std::string GetTooltip(int x, int y);
 	std::string GetBuildTooltip() const;
 
 	Command GetOrderPreview();
-	Command GetCommand(int mouseX, int mouseY, int buttonHint, bool preview, float3& cameraPos = ::camera->pos, float3& mouseDir = ::mouse->dir);
+	Command GetCommand(int mouseX, int mouseY, int buttonHint, bool preview, const float3& cameraPos = ::camera->pos, const float3& mouseDir = ::mouse->dir);
 	std::vector<BuildInfo> GetBuildPos(const BuildInfo& startInfo,
-		const BuildInfo& endInfo, float3& cameraPos, float3& mouseDir); // startInfo.def has to be endInfo.def
+		const BuildInfo& endInfo, const float3& cameraPos, const float3& mouseDir); // startInfo.def has to be endInfo.def
 
 	bool ReloadConfig(const std::string& fileName);
 
@@ -62,7 +62,7 @@ public:
 
 	bool GetOutlineFonts() const { return outlineFonts; }
 
-	int  GetDefaultCommand(int x, int y, float3& cameraPos = ::camera->pos, float3& mouseDir = ::mouse->dir) const;
+	int  GetDefaultCommand(int x, int y, const float3& cameraPos = ::camera->pos, const float3& mouseDir = ::mouse->dir) const;
 
 	bool SetActiveCommand(int cmdIndex, bool rightMouseButton);
 	bool SetActiveCommand(int cmdIndex,
@@ -102,7 +102,7 @@ private:
 	void SetShowingMetal(bool show);
 	float GetNumberInput(const CommandDescription& cmdDesc) const;
 
-	void ProcessFrontPositions(float3& pos0, float3& pos1);
+	void ProcessFrontPositions(float3& pos0, const float3& pos1);
 
 	struct IconInfo;
 
@@ -123,10 +123,10 @@ private:
 	void DrawMenuName();
 	void DrawSelectionInfo();
 	void DrawNumberInput();
-	void DrawMiniMapMarker(float3& cameraPos);
-	void DrawFront(int button, float maxSize, float sizeDiv, bool onMinimap, float3& cameraPos, float3& mouseDir);
+	void DrawMiniMapMarker(const float3& cameraPos);
+	void DrawFront(int button, float maxSize, float sizeDiv, bool onMinimap, const float3& cameraPos, const float3& mouseDir);
 	void DrawArea(float3 pos, float radius, const float* color);
-	void DrawSelectBox(const float3& start, const float3& end, float3& cameraPos);
+	void DrawSelectBox(const float3& start, const float3& end, const float3& cameraPos);
 	void DrawSelectCircle(const float3& pos, float radius, const float* color);
 
 	void DrawStencilCone(const float3& pos, float radius, float height);
