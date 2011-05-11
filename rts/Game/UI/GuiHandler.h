@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef GUIHANDLER_H
-#define GUIHANDLER_H
+#ifndef GUI_HANDLER_H
+#define GUI_HANDLER_H
 
 #include <vector>
 #include <map>
@@ -34,17 +34,17 @@ public:
 	bool KeyReleased(unsigned short key);
 	bool MousePress(int x, int y, int button);
 	void MouseRelease(int x, int y, int button) {MouseRelease(x,y,button, ::camera->pos, ::mouse->dir);}
-	void MouseRelease(int x, int y, int button, float3& camerapos, float3& mousedir);
+	void MouseRelease(int x, int y, int button, float3& cameraPos, float3& mouseDir);
 	bool IsAbove(int x, int y);
 	std::string GetTooltip(int x, int y);
 	std::string GetBuildTooltip() const;
 
 	Command GetOrderPreview();
-	Command GetCommand(int mousex, int mousey, int buttonHint, bool preview, float3& camerapos=::camera->pos, float3& mousedir=::mouse->dir);
+	Command GetCommand(int mouseX, int mouseY, int buttonHint, bool preview, float3& cameraPos=::camera->pos, float3& mouseDir=::mouse->dir);
 	std::vector<BuildInfo> GetBuildPos(const BuildInfo& startInfo,
-		const BuildInfo& endInfo, float3& camerapos, float3& mousedir); // startInfo.def has to be endInfo.def
+		const BuildInfo& endInfo, float3& cameraPos, float3& mouseDir); // startInfo.def has to be endInfo.def
 
-	bool ReloadConfig(const std::string& filename);
+	bool ReloadConfig(const std::string& fileName);
 
 	void ForceLayoutUpdate() { forceLayoutUpdate = true; }
 
@@ -63,7 +63,7 @@ public:
 
 	bool GetOutlineFonts() const { return outlineFonts; }
 
-	int  GetDefaultCommand(int x, int y, float3& camerapos=::camera->pos, float3& mousedir=::mouse->dir) const;
+	int  GetDefaultCommand(int x, int y, float3& cameraPos=::camera->pos, float3& mouseDir=::mouse->dir) const;
 
 	bool SetActiveCommand(int cmdIndex, bool rmb);
 	bool SetActiveCommand(int cmdIndex,
@@ -77,7 +77,7 @@ public:
 	void SetBuildFacing(unsigned int facing);
 	void SetBuildSpacing(int spacing);
 
-	void PushLayoutCommand(const std::string&, bool luacmd = true);
+	void PushLayoutCommand(const std::string&, bool luaCmd = true);
 	void RunLayoutCommands();
 
 public:
@@ -124,10 +124,10 @@ private:
 	void DrawMenuName();
 	void DrawSelectionInfo();
 	void DrawNumberInput();
-	void DrawMiniMapMarker(float3& camerapos);
-	void DrawFront(int button, float maxSize, float sizeDiv, bool onMinimap, float3& camerapos, float3& mousedir);
+	void DrawMiniMapMarker(float3& cameraPos);
+	void DrawFront(int button, float maxSize, float sizeDiv, bool onMinimap, float3& cameraPos, float3& mouseDir);
 	void DrawArea(float3 pos, float radius, const float* color);
-	void DrawSelectBox(const float3& start, const float3& end, float3& camerapos);
+	void DrawSelectBox(const float3& start, const float3& end, float3& cameraPos);
 	void DrawSelectCircle(const float3& pos, float radius, const float* color);
 
 	void DrawStencilCone(const float3& pos, float radius, float height);
@@ -139,7 +139,7 @@ private:
 
 	void LoadDefaults();
 	void SanitizeConfig();
-	bool LoadConfig(const std::string& filename);
+	bool LoadConfig(const std::string& fileName);
 	void ParseFillOrder(const std::string& text);
 
 	bool ProcessLocalActions(const Action& action);
@@ -215,7 +215,7 @@ private:
 	unsigned int iconsSize;
 	int iconsCount;
 
-	std::map<std::string, unsigned int> textureMap; // filename, glTextureID
+	std::map<std::string, unsigned int> textureMap; // fileName, glTextureID
 
 	int failedSound;
 
@@ -227,4 +227,4 @@ private:
 extern CGuiHandler* guihandler;
 
 
-#endif /* GUIHANDLER_H */
+#endif /* GUI_HANDLER_H */
