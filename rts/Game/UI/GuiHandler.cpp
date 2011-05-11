@@ -1116,8 +1116,8 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& cameraPos, floa
 	}
 
 	if ((iconCmd >= 0) && ((size_t)iconCmd < commands.size())) {
-		const bool rmb = (button == SDL_BUTTON_RIGHT);
-		SetActiveCommand(iconCmd, rmb);
+		const bool rightMouseButton = (button == SDL_BUTTON_RIGHT);
+		SetActiveCommand(iconCmd, rightMouseButton);
 		return;
 	}
 
@@ -1138,7 +1138,7 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& cameraPos, floa
 }
 
 
-bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
+bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rightMouseButton)
 {
 	GML_RECMUTEX_LOCK(gui); // SetActiveCommand - updates inCommand
 
@@ -1166,7 +1166,7 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 		case CMDTYPE_ICON: {
 			Command c(cd.id);
 			if (cd.id != CMD_STOP) {
-				c.options = CreateOptions(rmb);
+				c.options = CreateOptions(rightMouseButton);
 				if (invertQueueKey && ((cd.id < 0) || (cd.id == CMD_STOCKPILE))) {
 					c.options = c.options ^ SHIFT_KEY;
 				}
@@ -1185,7 +1185,7 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 			SNPRINTF(t, 10, "%d", newMode);
 			cd.params[0] = t;
 
-			Command c(cd.id, CreateOptions(rmb));
+			Command c(cd.id, CreateOptions(rightMouseButton));
 			c.params.push_back(newMode);
 			GiveCommand(c);
 			forceLayoutUpdate = true;
@@ -1229,7 +1229,7 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 			break;
 		}
 		case CMDTYPE_CUSTOM: {
-			RunCustomCommands(cd.params, rmb);
+			RunCustomCommands(cd.params, rightMouseButton);
 			break;
 		}
 		default:
@@ -1241,10 +1241,10 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 
 
 bool CGuiHandler::SetActiveCommand(int cmdIndex, int button,
-                                   bool lmb, bool rmb,
+                                   bool leftMouseButton, bool rightMouseButton,
                                    bool alt, bool ctrl, bool meta, bool shift)
 {
-	// use the button value instead of rmb
+	// use the button value instead of rightMouseButton
 	const bool effectiveRMB = (button == SDL_BUTTON_LEFT) ? false : true;
 
 	// setup the mouse and key states
@@ -1255,8 +1255,8 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, int button,
 	const boost::uint8_t prevMeta  = keyInput->IsKeyPressed(SDLK_LMETA);
 	const boost::uint8_t prevShift = keyInput->IsKeyPressed(SDLK_LSHIFT);
 
-	mouse->buttons[SDL_BUTTON_LEFT].pressed  = lmb;
-	mouse->buttons[SDL_BUTTON_RIGHT].pressed = rmb;
+	mouse->buttons[SDL_BUTTON_LEFT].pressed  = leftMouseButton;
+	mouse->buttons[SDL_BUTTON_RIGHT].pressed = rightMouseButton;
 
 	keyInput->SetKeyState(SDLK_LALT,   alt);
 	keyInput->SetKeyState(SDLK_LCTRL,  ctrl);
@@ -1360,7 +1360,7 @@ static bool ParseCustomCmdMods(std::string& cmd, ModGroup& in, ModGroup& out)
 }
 
 
-static bool CheckCustomCmdMods(bool rmb, ModGroup& inMods)
+static bool CheckCustomCmdMods(bool rightMouseButton, ModGroup& inMods)
 {
 	if (((inMods.alt   == Required)  && !keyInput->IsKeyPressed(SDLK_LALT))   ||
 	    ((inMods.alt   == Forbidden) &&  keyInput->IsKeyPressed(SDLK_LALT))   ||
@@ -1370,15 +1370,15 @@ static bool CheckCustomCmdMods(bool rmb, ModGroup& inMods)
 	    ((inMods.meta  == Forbidden) &&  keyInput->IsKeyPressed(SDLK_LMETA))  ||
 	    ((inMods.shift == Required)  && !keyInput->IsKeyPressed(SDLK_LSHIFT)) ||
 	    ((inMods.shift == Forbidden) &&  keyInput->IsKeyPressed(SDLK_LSHIFT)) ||
-	    ((inMods.right == Required)  && !rmb) ||
-	    ((inMods.right == Forbidden) &&  rmb)) {
+	    ((inMods.right == Required)  && !rightMouseButton) ||
+	    ((inMods.right == Forbidden) &&  rightMouseButton)) {
 		return false;
 	}
 	return true;
 }
 
 
-void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool rmb)
+void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool rightMouseButton)
 {
 	GML_RECMUTEX_LOCK(gui); // RunCustomCommands - called from LuaUnsyncedCtrl::SendCommands
 
@@ -1393,7 +1393,7 @@ void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool r
 		ModGroup inMods;  // must match for the action to execute
 		ModGroup outMods; // controls the state of the modifiers  (ex: "group1")
 		if (ParseCustomCmdMods(copy, inMods, outMods)) {
-			if (CheckCustomCmdMods(rmb, inMods)) {
+			if (CheckCustomCmdMods(rightMouseButton, inMods)) {
 				const bool tmpAlt   = !!keyInput->GetKeyState(SDLK_LALT);
 				const bool tmpCtrl  = !!keyInput->GetKeyState(SDLK_LCTRL);
 				const bool tmpMeta  = !!keyInput->GetKeyState(SDLK_LMETA);
