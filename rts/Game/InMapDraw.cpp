@@ -55,7 +55,7 @@ CR_REG_METADATA_SUB(CInMapDraw, MapPoint, (
 CR_BIND(CInMapDraw::MapLine, (false, -1, NULL, ZeroVector, ZeroVector));
 
 CR_REG_METADATA_SUB(CInMapDraw, MapLine, (
-	CR_MEMBER(pos),
+	CR_MEMBER(pos1),
 	CR_MEMBER(pos2),
 	CR_RESERVED(4)
 ));
@@ -77,7 +77,7 @@ const float CInMapDraw::QUAD_SCALE = 1.0f / (DRAW_QUAD_SIZE * SQUARE_SIZE);
 
 
 CInMapDraw::CInMapDraw()
-	: keyPressed(false)
+	: drawMode(false)
 	, wantLabel(false)
 	, drawQuadsX(gs->mapx / DRAW_QUAD_SIZE)
 	, drawQuadsY(gs->mapy / DRAW_QUAD_SIZE)
@@ -301,7 +301,7 @@ void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label, in
 		// if we happen to be in drawAll mode, notify us now
 		// even if this message is not intented for our ears
 		logOutput.Print("%s added point: %s",
-		                sender->name.c_str(), point.label.c_str());
+		                sender->name.c_str(), point.GetLabel().c_str());
 		logOutput.SetLastMsgPos(pos);
 		Channels::UserInterface.PlaySample(blippSound, pos);
 		minimap->AddNotification(pos, float3(1.0f, 1.0f, 1.0f), 1.0f);
@@ -368,7 +368,7 @@ void CInMapDraw::LocalErase(const float3& constPos, int playerID)
 
 			std::list<MapPoint>::iterator pi;
 			for (pi = dq->points.begin(); pi != dq->points.end(); /* none */) {
-				if (pi->pos.SqDistance2D(pos) < (radius*radius) && (pi->IsBySpectator() == sender->spectator)) {
+				if (pi->GetPos().SqDistance2D(pos) < (radius*radius) && (pi->IsBySpectator() == sender->spectator)) {
 					pi = dq->points.erase(pi);
 				} else {
 					++pi;
@@ -376,7 +376,8 @@ void CInMapDraw::LocalErase(const float3& constPos, int playerID)
 			}
 			std::list<MapLine>::iterator li;
 			for (li = dq->lines.begin(); li != dq->lines.end(); /* none */) {
-				if (li->pos.SqDistance2D(pos) < (radius*radius) && (li->IsBySpectator() == sender->spectator)) {
+				// TODO maybe erase on pos2 too?
+				if (li->GetPos1().SqDistance2D(pos) < (radius*radius) && (li->IsBySpectator() == sender->spectator)) {
 					li = dq->lines.erase(li);
 				} else {
 					++li;
@@ -412,7 +413,7 @@ void CInMapDraw::SendWaitingInput(const std::string& label)
 	SendPoint(waitingPoint, label, false);
 
 	wantLabel = false;
-	keyPressed = false;
+	drawMode = false;
 }
 
 
@@ -454,9 +455,9 @@ unsigned int CInMapDraw::GetPoints(PointMarker* array, unsigned int maxPoints, c
 		for (point = points->begin(); (point != points->end()) && (numPoints < maxPoints); ++point) {
 			for (it = teamIDs.begin(); it != teamIDs.end(); ++it) {
 				if (point->GetTeamID() == *it) {
-					array[numPoints].pos   = point->pos;
+					array[numPoints].pos   = point->GetPos();
 					array[numPoints].color = teamHandler->Team(point->GetTeamID())->color;
-					array[numPoints].label = point->label.c_str();
+					array[numPoints].label = point->GetLabel().c_str();
 					numPoints++;
 					break;
 				}
@@ -481,8 +482,8 @@ unsigned int CInMapDraw::GetLines(LineMarker* array, unsigned int maxLines, cons
 		for (line = lines->begin(); (line != lines->end()) && (numLines < maxLines); ++line) {
 			for (it = teamIDs.begin(); it != teamIDs.end(); ++it) {
 				if (line->GetTeamID() == *it) {
-					array[numLines].pos   = line->pos;
-					array[numLines].pos2  = line->pos2;
+					array[numLines].pos   = line->GetPos1();
+					array[numLines].pos2  = line->GetPos2();
 					array[numLines].color = teamHandler->Team(line->GetTeamID())->color;
 					numLines++;
 					break;

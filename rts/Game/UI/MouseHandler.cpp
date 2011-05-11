@@ -208,7 +208,7 @@ void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 		activeReceiver->MouseMove(x, y, dx, dy, activeButton);
 	}
 
-	if (inMapDrawer && inMapDrawer->keyPressed){
+	if (inMapDrawer && inMapDrawer->IsDrawMode()){
 		inMapDrawer->MouseMove(x, y, dx, dy, activeButton);
 	}
 
@@ -246,7 +246,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	if (activeReceiver && activeReceiver->MousePress(x, y, button))
 		return;
 
-	if(inMapDrawer &&  inMapDrawer->keyPressed){
+	if(inMapDrawer && inMapDrawer->IsDrawMode()){
 		inMapDrawer->MousePress(x, y, button);
 		return;
 	}
@@ -309,7 +309,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	dir = hide ? camera->forward: camera->CalcPixelDir(x, y);
 	buttons[button].pressed = false;
 
-	if (inMapDrawer && inMapDrawer->keyPressed){
+	if (inMapDrawer && inMapDrawer->IsDrawMode()){
 		inMapDrawer->MouseRelease(x, y, button);
 		return;
 	}
@@ -515,7 +515,7 @@ void CMouseHandler::DrawSelectionBox()
 	}
 	if (buttons[SDL_BUTTON_LEFT].pressed && !buttons[SDL_BUTTON_LEFT].chorded &&
 	   (buttons[SDL_BUTTON_LEFT].movement > 4) &&
-	   (!inMapDrawer || !inMapDrawer->keyPressed)) {
+	   (!inMapDrawer || !inMapDrawer->IsDrawMode())) {
 
 		float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,
 		                                 buttons[SDL_BUTTON_LEFT].camPos
