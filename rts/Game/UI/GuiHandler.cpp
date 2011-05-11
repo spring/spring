@@ -175,9 +175,9 @@ static bool SafeAtoF(float& var, const std::string& value)
 }
 
 
-bool CGuiHandler::LoadConfig(const std::string& filename)
+bool CGuiHandler::LoadConfig(const std::string& fileName)
 {
-	CFileHandler ifs(filename);
+	CFileHandler ifs(fileName);
 	CSimpleParser parser(ifs);
 
 	std::string deadStr = "";
@@ -406,9 +406,9 @@ int CGuiHandler::ParseIconSlot(const std::string& text) const
 }
 
 
-bool CGuiHandler::ReloadConfig(const std::string& filename)
+bool CGuiHandler::ReloadConfig(const std::string& fileName)
 {
-	LoadConfig(filename);
+	LoadConfig(fileName);
 	activePage = 0;
 	selectedUnits.SetCommandPage(activePage);
 	LayoutIcons(false);
@@ -1070,7 +1070,7 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 }
 
 
-void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, float3& mousedir)
+void CGuiHandler::MouseRelease(int x, int y, int button, float3& cameraPos, float3& mouseDir)
 {
 	GML_RECMUTEX_LOCK(gui); // MouseRelease
 
@@ -1122,7 +1122,7 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, floa
 	}
 
 	// not over a button, try to execute a command
-	Command c = GetCommand(x, y, button, false, camerapos, mousedir);
+	Command c = GetCommand(x, y, button, false, cameraPos, mouseDir);
 
 	if (c.GetID() == CMD_FAILED) { // indicates we should not finish the current command
 		Channels::UserInterface.PlaySample(failedSound, 5);
@@ -1489,7 +1489,7 @@ float CGuiHandler::GetNumberInput(const CommandDescription& cd) const
 // DrawMapStuff --> GetDefaultCommand
 // CMouseHandler::DrawCursor --> DrawCentroidCursor --> GetDefaultCommand
 // LuaUnsyncedRead::GetDefaultCommand --> GetDefaultCommand
-int CGuiHandler::GetDefaultCommand(int x, int y, float3& camerapos, float3& mousedir) const
+int CGuiHandler::GetDefaultCommand(int x, int y, float3& cameraPos, float3& mouseDir) const
 {
 	CInputReceiver* ir = NULL;
 	if (!game->hideInterface) {
@@ -1509,8 +1509,8 @@ int CGuiHandler::GetDefaultCommand(int x, int y, float3& camerapos, float3& mous
 		unit = minimap->GetSelectUnit(minimap->GetMapPosition(x, y));
 	}
 	else {
-		const float3 camPos = camerapos;
-		const float3 camDir = mousedir;
+		const float3 camPos = cameraPos;
+		const float3 camDir = mouseDir;
 		const float viewRange = globalRendering->viewRange*1.4f;
 		const float dist = TraceRay::GuiTraceRay(camPos, camDir, viewRange, true, NULL, unit, feature);
 		const float3 hit = camPos + camDir*dist;
@@ -2027,7 +2027,7 @@ Command CGuiHandler::GetOrderPreview()
 }
 
 
-Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool preview, float3& camerapos, float3& mousedir)
+Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool preview, float3& cameraPos, float3& mouseDir)
 {
 	GML_RECMUTEX_LOCK(gui); // GetCommand - updates inCommand
 
@@ -2052,7 +2052,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 		if (mouse->buttons[SDL_BUTTON_RIGHT].pressed) {
 			tempInCommand = defaultCmdMemory;
 		} else {
-			tempInCommand = GetDefaultCommand(mousex, mousey, camerapos, mousedir);
+			tempInCommand = GetDefaultCommand(mouseX, mouseY, cameraPos, mouseDir);
 		}
 	}
 
@@ -2072,11 +2072,11 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			return c;}
 
 		case CMDTYPE_ICON_MAP:{
-			float dist=ground->LineGroundCol(camerapos,camerapos+mousedir*globalRendering->viewRange*1.4f);
+			float dist=ground->LineGroundCol(cameraPos,cameraPos+mouseDir*globalRendering->viewRange*1.4f);
 			if(dist<0){
 				return defaultRet;
 			}
-			float3 pos=camerapos+mousedir*dist;
+			float3 pos=cameraPos+mouseDir*dist;
 			Command c(commands[tempInCommand].id, CreateOptions(button));
 			c.params.push_back(pos.x);
 			c.params.push_back(pos.y);
@@ -2084,7 +2084,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			return c;}
 
 		case CMDTYPE_ICON_BUILDING:{
-			float dist=ground->LineGroundCol(camerapos,camerapos+mousedir*globalRendering->viewRange*1.4f);
+			float dist=ground->LineGroundCol(cameraPos,cameraPos+mouseDir*globalRendering->viewRange*1.4f);
 			if(dist<0){
 				return defaultRet;
 			}
@@ -2094,15 +2094,15 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				return defaultRet;
 			}
 
-			float3 pos=camerapos+mousedir*dist;
+			float3 pos=cameraPos+mouseDir*dist;
 			std::vector<BuildInfo> buildPos;
 			BuildInfo bi(unitdef, pos, buildFacing);
 			if(GetQueueKeystate() && button==SDL_BUTTON_LEFT){
 				float dist=ground->LineGroundCol(mouse->buttons[SDL_BUTTON_LEFT].camPos,mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*globalRendering->viewRange*1.4f);
 				float3 pos2=mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*dist;
-				buildPos=GetBuildPos(BuildInfo(unitdef,pos2,buildFacing),bi,camerapos,mousedir);
+				buildPos=GetBuildPos(BuildInfo(unitdef,pos2,buildFacing),bi,cameraPos,mouseDir);
 			} else
-				buildPos=GetBuildPos(bi,bi,camerapos,mousedir);
+				buildPos=GetBuildPos(bi,bi,cameraPos,mouseDir);
 
 			if(buildPos.empty()){
 				return defaultRet;
@@ -2131,7 +2131,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			CFeature* feature = NULL;
 			Command c(commands[tempInCommand].id, CreateOptions(button));
 
-			TraceRay::GuiTraceRay(camerapos, mousedir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
+			TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
 			if (!unit) {
 				return defaultRet;
 			}
@@ -2144,7 +2144,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 
 			CUnit* unit = NULL;
 			CFeature* feature = NULL;
-			float dist2 = TraceRay::GuiTraceRay(camerapos, mousedir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
+			float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
 			if(dist2 > (globalRendering->viewRange * 1.4f - 300)) {
 				return defaultRet;
 			}
@@ -2154,7 +2154,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				c.params.push_back(unit->id);
 			} else {
 				// clicked in map
-				float3 pos=camerapos+mousedir*dist2;
+				float3 pos=cameraPos+mouseDir*dist2;
 				c.params.push_back(pos.x);
 				c.params.push_back(pos.y);
 				c.params.push_back(pos.z);
@@ -2177,11 +2177,11 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			c.params.push_back(pos.z);
 
 			if(mouse->buttons[button].movement>30){		//only create the front if the mouse has moved enough
-				dist=ground->LineGroundCol(camerapos,camerapos+mousedir*globalRendering->viewRange*1.4f);
+				dist=ground->LineGroundCol(cameraPos,cameraPos+mouseDir*globalRendering->viewRange*1.4f);
 				if(dist<0){
 					return defaultRet;
 				}
-				float3 pos2 = camerapos + mousedir * dist;
+				float3 pos2 = cameraPos + mouseDir * dist;
 
 				ProcessFrontPositions(pos, pos2);
 
@@ -2218,7 +2218,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 
 				CUnit* unit = NULL;
 				CFeature* feature = NULL;
-				float dist2 = TraceRay::GuiTraceRay(camerapos, mousedir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
+				float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
 
 				if(dist2 > (globalRendering->viewRange * 1.4f - 300) && (commands[tempInCommand].type!=CMDTYPE_ICON_UNIT_FEATURE_OR_AREA)) {
 					return defaultRet;
@@ -2231,7 +2231,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				} else { // clicked in map
 					if(explicitCommand<0) // only attack ground if explicitly set the command
 						return defaultRet;
-					float3 pos=camerapos+mousedir*dist2;
+					float3 pos=cameraPos+mouseDir*dist2;
 					c.params.push_back(pos.x);
 					c.params.push_back(pos.y);
 					c.params.push_back(pos.z);
@@ -2249,11 +2249,11 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				c.params.push_back(pos.x);
 				c.params.push_back(pos.y);
 				c.params.push_back(pos.z);
-				dist = ground->LineGroundCol(camerapos, camerapos + mousedir*globalRendering->viewRange*1.4f);
+				dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir*globalRendering->viewRange*1.4f);
 				if(dist<0){
 					return defaultRet;
 				}
-				float3 pos2=camerapos+mousedir*dist;
+				float3 pos2=cameraPos+mouseDir*dist;
 				c.params.push_back(std::min(maxRadius,pos.distance2D(pos2)));
 				if(c.GetID() ==CMD_UNLOAD_UNITS)
 					c.params.push_back((float)buildFacing);
@@ -2266,7 +2266,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			if (mouse->buttons[button].movement < 16) {
 				CUnit* unit;
 				CFeature* feature;
-				float dist2 = TraceRay::GuiTraceRay(camerapos, mousedir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
+				float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
 
 				if (dist2 > (globalRendering->viewRange * 1.4f - 300)) {
 					return defaultRet;
@@ -2280,7 +2280,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 					if (explicitCommand < 0) { // only attack ground if explicitly set the command
 						return defaultRet;
 					}
-					float3 pos = camerapos + (mousedir * dist2);
+					float3 pos = cameraPos + (mouseDir * dist2);
 					c.params.push_back(pos.x);
 					c.params.push_back(pos.y);
 					c.params.push_back(pos.z);
@@ -2294,11 +2294,11 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 					return defaultRet;
 				}
 				float3 startPos = mouse->buttons[button].camPos + mouse->buttons[button].dir * dist;
-				dist = ground->LineGroundCol(camerapos, camerapos + mousedir*globalRendering->viewRange * 1.4f);
+				dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir*globalRendering->viewRange * 1.4f);
 				if(dist<0){
 					return defaultRet;
 				}
-				float3 endPos=camerapos+mousedir*dist;
+				float3 endPos=cameraPos+mouseDir*dist;
 				c.params.push_back(startPos.x);
 				c.params.push_back(startPos.y);
 				c.params.push_back(startPos.z);
@@ -2347,7 +2347,7 @@ static void FillRowOfBuildPos(const BuildInfo& startInfo, float x, float z, floa
 }
 
 // Assuming both builds have the same unitdef
-std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo, float3& camerapos, float3& mousedir)
+std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo, float3& cameraPos, float3& mouseDir)
 {
 	std::vector<BuildInfo> ret;
 
@@ -2361,14 +2361,14 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 
 		CUnit* unit;
 		CFeature* feature;
-		TraceRay::GuiTraceRay(camerapos, mousedir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
+		TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
 
 		if (unit) {
 			other.def = unit->unitDef;
 			other.pos = unit->pos;
 			other.buildFacing = unit->buildFacing;
 		} else {
-			Command c = uh->GetBuildCommand(camerapos,mousedir);
+			Command c = uh->GetBuildCommand(cameraPos,mouseDir);
 			if(c.GetID() < 0){
 				assert(c.params.size()==4);
 				other.pos = float3(c.params[0],c.params[1],c.params[2]);
@@ -3312,8 +3312,8 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 		glDisable(GL_ALPHA_TEST);
 	}
 
-	float3 camerapos=camera->pos;
-	float3 mousedir=mouse->dir;
+	float3 cameraPos=camera->pos;
+	float3 mouseDir=mouse->dir;
 
 	// setup for minimap proxying
 	const bool minimapCoords =
@@ -3321,11 +3321,11 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 		 ((activeReceiver != this) && !game->hideInterface &&
 		  (GetReceiverAt(mouse->lastx, mouse->lasty) == minimap)));
 	if (minimapCoords) {
-		camerapos = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
-		mousedir = float3(0.0f, -1.0f, 0.0f);
+		cameraPos = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
+		mouseDir = float3(0.0f, -1.0f, 0.0f);
 		if (miniMapMarker && minimap->FullProxy() &&
 		    !onMinimap && !minimap->GetMinimized()) {
-			DrawMiniMapMarker(camerapos);
+			DrawMiniMapMarker(cameraPos);
 		}
 	}
 
@@ -3356,7 +3356,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 						if (cmdDesc.params.size() > 1) {
 							sizeDiv = atof(cmdDesc.params[1].c_str());
 						}
-						DrawFront(button, maxSize, sizeDiv, onMinimap, camerapos, mousedir);
+						DrawFront(button, maxSize, sizeDiv, onMinimap, cameraPos, mouseDir);
 					}
 					break;
 				}
@@ -3373,11 +3373,11 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 							break;
 						}
 						float3 pos=mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
-						dist=ground->LineGroundCol(camerapos,camerapos+mousedir*globalRendering->viewRange*1.4f);
+						dist=ground->LineGroundCol(cameraPos,cameraPos+mouseDir*globalRendering->viewRange*1.4f);
 						if (dist < 0) {
 							break;
 						}
-						float3 pos2 = camerapos + mousedir * dist;
+						float3 pos2 = cameraPos + mouseDir * dist;
 						const float* color;
 						switch (cmdDesc.id) {
 							case CMD_ATTACK:
@@ -3422,13 +3422,13 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 							break;
 						}
 						const float3 pos1 = mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
-						dist=ground->LineGroundCol(camerapos,camerapos+mousedir*globalRendering->viewRange*1.4f);
+						dist=ground->LineGroundCol(cameraPos,cameraPos+mouseDir*globalRendering->viewRange*1.4f);
 						if (dist < 0) {
 							break;
 						}
-						const float3 pos2 = camerapos+mousedir*dist;
+						const float3 pos2 = cameraPos+mouseDir*dist;
 						if (!onMinimap) {
-							DrawSelectBox(pos1, pos2, camerapos);
+							DrawSelectBox(pos1, pos2, cameraPos);
 						} else {
 							glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
 							glBegin(GL_QUADS);
@@ -3463,10 +3463,10 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 		CFeature* feature = NULL;
 
 		if (minimapCoords) {
-			unit = minimap->GetSelectUnit(camerapos);
+			unit = minimap->GetSelectUnit(cameraPos);
 		} else {
 			// ignoring the returned distance
-			TraceRay::GuiTraceRay(camerapos, mousedir, globalRendering->viewRange*1.4f, false, NULL, unit, feature);
+			TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange*1.4f, false, NULL, unit, feature);
 		}
 
 		if (unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
@@ -3578,22 +3578,22 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 			}
 		}
 
-		float dist = ground->LineGroundCol(camerapos,camerapos+mousedir*globalRendering->viewRange*1.4f);
+		float dist = ground->LineGroundCol(cameraPos,cameraPos+mouseDir*globalRendering->viewRange*1.4f);
 		if (dist > 0) {
 			const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
 			if (unitdef) {
 				// get the build information
-				float3 pos = camerapos+mousedir*dist;
+				float3 pos = cameraPos+mouseDir*dist;
 				std::vector<BuildInfo> buildPos;
 				const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 				if (GetQueueKeystate() && bp.pressed) {
 					const float dist = ground->LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f);
 					const float3 pos2 = bp.camPos + bp.dir * dist;
 					buildPos = GetBuildPos(BuildInfo(unitdef, pos2, buildFacing),
-					                       BuildInfo(unitdef, pos, buildFacing), camerapos, mousedir);
+					                       BuildInfo(unitdef, pos, buildFacing), cameraPos, mouseDir);
 				} else {
 					BuildInfo bi(unitdef, pos, buildFacing);
-					buildPos = GetBuildPos(bi, bi, camerapos, mousedir);
+					buildPos = GetBuildPos(bi, bi, cameraPos, mouseDir);
 				}
 
 				for (std::vector<BuildInfo>::iterator bpi = buildPos.begin(); bpi != buildPos.end(); ++bpi) {
@@ -3677,7 +3677,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 	}
 
 	// draw range circles if attack orders are imminent
-	int defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty, camerapos, mousedir);
+	int defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty, cameraPos, mouseDir);
 	if ((inCommand>=0 && (size_t)inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) ||
 		(inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)
 	) {
@@ -3716,7 +3716,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 }
 
 
-void CGuiHandler::DrawMiniMapMarker(float3& camerapos)
+void CGuiHandler::DrawMiniMapMarker(float3& cameraPos)
 {
 	const float w = 10.0f;
 	const float h = 30.0f;
@@ -3734,13 +3734,13 @@ void CGuiHandler::DrawMiniMapMarker(float3& camerapos)
 		{ bc[0] * d[7],  bc[1] * d[7],  bc[2] * d[7],  bc[3] },
 	};
 
-	const float groundLevel = ground->GetHeightAboveWater(camerapos.x, camerapos.z);
+	const float groundLevel = ground->GetHeightAboveWater(cameraPos.x, cameraPos.z);
 
 	static float spinTime = 0.0f;
 	spinTime = fmod(spinTime + globalRendering->lastFrameTime, 60.0f);
 
 	glPushMatrix();
-	glTranslatef(camerapos.x, groundLevel, camerapos.z);
+	glTranslatef(cameraPos.x, groundLevel, cameraPos.z);
 	glRotatef(360.0f * (spinTime / 2.0f), 0.0f, 1.0f, 0.0f);
 
 	glEnable(GL_BLEND);
@@ -3855,7 +3855,7 @@ void CGuiHandler::DrawArea(float3 pos, float radius, const float* color)
 }
 
 
-void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv, bool onMinimap, float3& camerapos, float3& mousedir)
+void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv, bool onMinimap, float3& cameraPos, float3& mouseDir)
 {
 	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[button];
 	if(bp.movement<5){
@@ -3866,11 +3866,11 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv, bool onMinim
 		return;
 	}
 	float3 pos1=bp.camPos+bp.dir*dist;
-	dist=ground->LineGroundCol(camerapos,camerapos+mousedir*globalRendering->viewRange*1.4f);
+	dist=ground->LineGroundCol(cameraPos,cameraPos+mouseDir*globalRendering->viewRange*1.4f);
 	if(dist<0){
 		return;
 	}
-	float3 pos2 = camerapos + (mousedir * dist);
+	float3 pos2 = cameraPos + (mouseDir * dist);
 
 	ProcessFrontPositions(pos1, pos2);
 
@@ -4072,7 +4072,7 @@ static void DrawMinMaxBox(const float3& mins, const float3& maxs)
 }
 
 
-void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1, float3& camerapos)
+void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1, float3& cameraPos)
 {
 	if (useStencil) {
 		StencilDrawSelectBox(pos0, pos1, invColorSelect);
@@ -4101,9 +4101,9 @@ void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1, float3& 
 	glDisable(GL_CULL_FACE);
 
 	// do a full screen inversion if the camera is within the box
-	if ((camerapos.x > mins.x) && (camerapos.x < maxs.x) &&
-	    (camerapos.y > mins.y) && (camerapos.y < maxs.y) &&
-	    (camerapos.z > mins.z) && (camerapos.z < maxs.z)) {
+	if ((cameraPos.x > mins.x) && (cameraPos.x < maxs.x) &&
+	    (cameraPos.y > mins.y) && (cameraPos.y < maxs.y) &&
+	    (cameraPos.z > mins.z) && (cameraPos.z < maxs.z)) {
 		glDisable(GL_DEPTH_TEST);
 		FullScreenDraw();
 		glEnable(GL_DEPTH_TEST);
@@ -4216,27 +4216,27 @@ void CGuiHandler::SetBuildSpacing(int spacing)
 /******************************************************************************/
 
 
-void CGuiHandler::PushLayoutCommand(const std::string& cmd, bool luacmd) {
+void CGuiHandler::PushLayoutCommand(const std::string& cmd, bool luaCmd) {
 	GML_RECMUTEX_LOCK(laycmd); // PushLayoutCommand
 
 	layoutCommands.push_back(cmd);
-	if(luacmd)
+	if(luaCmd)
 		hasLuaUILayoutCommands = true;
 }
 
 void CGuiHandler::RunLayoutCommands() {
-	bool luacmd = false;
+	bool luaCmd = false;
 	std::vector<std::string> layoutCmds;
 
 	if (!layoutCommands.empty()) {
 		GML_RECMUTEX_LOCK(laycmd); // RunLayoutCommands
 
 		layoutCmds.swap(layoutCommands);
-		luacmd = hasLuaUILayoutCommands;
+		luaCmd = hasLuaUILayoutCommands;
 		hasLuaUILayoutCommands = false;
 	}
 
-	if(luacmd) {
+	if(luaCmd) {
 		GML_MSTMUTEX_LOCK(sim); // RunLayoutCommands
 
 		for (std::vector<std::string>::const_iterator cit = layoutCmds.begin(); cit != layoutCmds.end(); ++cit) {
