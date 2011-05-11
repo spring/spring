@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef INMAPDRAW_H
-#define INMAPDRAW_H
+#ifndef IN_MAP_DRAW_H
+#define IN_MAP_DRAW_H
 
 #include <string>
 #include <vector>
@@ -23,18 +23,18 @@ class CInMapDraw
 	CR_DECLARE_SUB(DrawQuad);
 
 public:
-	CInMapDraw(void);
-	~CInMapDraw(void);
+	CInMapDraw();
+	~CInMapDraw();
 	void PostLoad();
 
-	void Draw(void);
+	void Draw();
 
 	void MousePress(int x, int y, int button);
-	void MouseRelease(int x,int y,int button);
+	void MouseRelease(int x, int y, int button);
 	void MouseMove(int x, int y, int dx, int dy, int button);
-	bool AllowedMsg(const CPlayer*) const;
+	bool AllowedMsg(const CPlayer* sender) const;
 	/** @return playerId */
-	int GotNetMsg(boost::shared_ptr<const netcode::RawPacket> &packet);
+	int GotNetMsg(boost::shared_ptr<const netcode::RawPacket>& packet);
 	void ToggleAllMarksVisible() { drawAllMarks = !drawAllMarks; }
 	void SetAllMarksVisible(bool b) { drawAllMarks = b; }
 	void ClearMarks();
@@ -58,11 +58,11 @@ public:
 	bool GetSpecMapDrawingAllowed() const { return allowSpecMapDrawing; }
 	bool GetLuaMapDrawingAllowed() const { return allowLuaMapDrawing; }
 
-	float3 GetMouseMapPos(void);
+	float3 GetMouseMapPos();
 
 	struct MapPoint {
 		CR_DECLARE_STRUCT(MapPoint);
-		bool MaySee(CInMapDraw*) const;
+		bool MaySee(CInMapDraw* inMapDraw) const;
 
 		float3 pos;
 		const unsigned char* color;
@@ -74,7 +74,7 @@ public:
 
 	struct MapLine {
 		CR_DECLARE_STRUCT(MapLine);
-		bool MaySee(CInMapDraw*) const;
+		bool MaySee(CInMapDraw* inMapDraw) const;
 
 		float3 pos;
 		float3 pos2;
@@ -110,10 +110,12 @@ private:
 
 	std::vector<MapPoint*> visibleLabels;
 
-	bool allowSpecMapDrawing; //! if true, spectators can send out MAPDRAW net-messages (synced)
-	bool allowLuaMapDrawing;  //! if true, client ignores incoming Lua MAPDRAW net-messages (unsynced)
+	/// whether spectators can send out MAPDRAW net-messages (synced)
+	bool allowSpecMapDrawing; 
+	/// whether client ignores incoming Lua MAPDRAW net-messages (unsynced)
+	bool allowLuaMapDrawing;
 };
 
 extern CInMapDraw* inMapDrawer;
 
-#endif /* INMAPDRAW_H */
+#endif /* IN_MAP_DRAW_H */
