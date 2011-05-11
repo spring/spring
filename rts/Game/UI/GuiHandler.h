@@ -10,16 +10,16 @@
 #include "InputReceiver.h"
 #include "MouseHandler.h"
 #include "Game/Camera.h"
+#include "Sim/Units/CommandAI/Command.h"
 
 class CUnit;
 struct UnitDef;
 struct BuildInfo;
 class Action;
-struct Command;
 struct CommandDescription;
 
 /**
- * The C and part of V in MVC (Model-View-Controller).
+ * The C and part of the V in MVC (Model-View-Controller).
  */
 class CGuiHandler : public CInputReceiver {
 public:
@@ -36,13 +36,27 @@ public:
 	bool KeyPressed(unsigned short key, bool isRepeat);
 	bool KeyReleased(unsigned short key);
 	bool MousePress(int x, int y, int button);
-	void MouseRelease(int x, int y, int button, const float3& cameraPos = ::camera->pos, const float3& mouseDir = ::mouse->dir);
+	void MouseRelease(int x, int y, int button)
+	{
+		// We can not use default params for this,
+		// because they get initialized at compile-time,
+		// where camera and mouse are still undefined.
+		MouseRelease(x, y, button, ::camera->pos, ::mouse->dir);
+	}
+	void MouseRelease(int x, int y, int button, const float3& cameraPos, const float3& mouseDir);
 	bool IsAbove(int x, int y);
 	std::string GetTooltip(int x, int y);
 	std::string GetBuildTooltip() const;
 
 	Command GetOrderPreview();
-	Command GetCommand(int mouseX, int mouseY, int buttonHint, bool preview, const float3& cameraPos = ::camera->pos, const float3& mouseDir = ::mouse->dir);
+	Command GetCommand(int mouseX, int mouseY, int buttonHint, bool preview)
+	{
+		// We can not use default params for this,
+		// because they get initialized at compile-time,
+		// where camera and mouse are still undefined.
+		return GetCommand(mouseX, mouseY, buttonHint, preview, ::camera->pos, ::mouse->dir);
+	}
+	Command GetCommand(int mouseX, int mouseY, int buttonHint, bool preview, const float3& cameraPos, const float3& mouseDir);
 	/// startInfo.def has to be endInfo.def
 	std::vector<BuildInfo> GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo, const float3& cameraPos, const float3& mouseDir);
 
@@ -65,7 +79,14 @@ public:
 
 	bool GetOutlineFonts() const { return outlineFonts; }
 
-	int  GetDefaultCommand(int x, int y, const float3& cameraPos = ::camera->pos, const float3& mouseDir = ::mouse->dir) const;
+	int  GetDefaultCommand(int x, int y) const
+	{
+		// We can not use default params for this,
+		// because they get initialized at compile-time,
+		// where camera and mouse are still undefined.
+		return GetDefaultCommand(x, y, ::camera->pos, ::mouse->dir);
+	}
+	int  GetDefaultCommand(int x, int y, const float3& cameraPos, const float3& mouseDir) const;
 
 	bool SetActiveCommand(int cmdIndex, bool rightMouseButton);
 	bool SetActiveCommand(int cmdIndex, int button, bool leftMouseButton, bool rightMouseButton, bool alt, bool ctrl, bool meta, bool shift);
