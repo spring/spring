@@ -14,20 +14,28 @@
 class CPlayer;
 struct PointMarker;
 struct LineMarker;
+struct TeamController;
 
+/**
+ * The M & C in MVC for InMapDraw.
+ * @see CInMapDraw for V
+ */
 class CInMapDraw
 {
 	CR_DECLARE(CInMapDraw);
+	CR_DECLARE_SUB(MapDrawPrimitive);
 	CR_DECLARE_SUB(MapPoint);
 	CR_DECLARE_SUB(MapLine);
 	CR_DECLARE_SUB(DrawQuad);
 
 public:
+	static const size_t DRAW_QUAD_SIZE;
+	static const float QUAD_SCALE;
+
 	CInMapDraw();
 	~CInMapDraw();
-	void PostLoad();
 
-	void Draw();
+	void PostLoad();
 
 	void MousePress(int x, int y, int button);
 	void MouseRelease(int x, int y, int button);
@@ -50,8 +58,8 @@ public:
 
 	void PromptLabel(const float3& pos);
 
-	unsigned int GetPoints(PointMarker* array, unsigned int maxPoints, const std::list<const unsigned char*>& colors);
-	unsigned int GetLines(LineMarker* array, unsigned int maxLines, const std::list<const unsigned char*>& colors);
+	unsigned int GetPoints(PointMarker* array, unsigned int maxPoints, const std::list<int>& teamIDs);
+	unsigned int GetLines(LineMarker* array, unsigned int maxLines, const std::list<int>& teamIDs);
 
 	void SetSpecMapDrawingAllowed(bool state);
 	void SetLuaMapDrawingAllowed(bool state);
@@ -60,60 +68,97 @@ public:
 
 	float3 GetMouseMapPos();
 
-	struct MapPoint {
-		CR_DECLARE_STRUCT(MapPoint);
-		bool MaySee(CInMapDraw* inMapDraw) const;
+	struct MapDrawPrimitive {
+		CR_DECLARE_STRUCT(MapDrawPrimitive);
 
-		float3 pos;
-		const unsigned char* color;
-		std::string label;
+	public:
+		MapDrawPrimitive(bool spectator, int teamID, const TeamController* teamController)
+			: spectator(spectator)
+			, teamID(teamID)
+			, teamController(teamController)
+		{}
 
-		int senderAllyTeam;
-		bool senderSpectator;
+		bool IsLocalPlayerAllowedToSee(const CInMapDraw* inMapDraw) const;
+
+		/**
+		 * Was the creator of this map-drawing spectator at the time it was
+		 * created?
+		 * @see #GetTeamController
+		 */
+		bool IsBySpectator() const { return spectator; }
+		/**
+		 * The team-id of the creator of this map-drawing at the time of
+		 * creation.
+		 * @see #GetTeamController
+		 */
+		int GetTeamID() const { return teamID; }
+		/**
+		 * The team-controller that created this map-drawing.
+		 */
+		const TeamController* GetTeamController() const { return teamController; }
+
+	private:
+		bool spectator;
+		int teamID;
+		const TeamController* teamController;
 	};
 
-	struct MapLine {
+	struct MapPoint : public MapDrawPrimitive {
+		CR_DECLARE_STRUCT(MapPoint);
+
+	public:
+		MapPoint(bool spectator, int teamID, const TeamController* teamController, const float3& pos, const std::string& label)
+			: MapDrawPrimitive(spectator, teamID, teamController)
+			, pos(pos)
+			, label(label)
+		{}
+
+		float3 pos;
+		std::string label;
+	};
+
+	struct MapLine : public MapDrawPrimitive {
 		CR_DECLARE_STRUCT(MapLine);
-		bool MaySee(CInMapDraw* inMapDraw) const;
+
+	public:
+		MapLine(bool spectator, int teamID, const TeamController* teamController, const float3& pos, const float3& pos2)
+			: MapDrawPrimitive(spectator, teamID, teamController)
+			, pos(pos)
+			, pos2(pos2)
+		{}
 
 		float3 pos;
 		float3 pos2;
-		const unsigned char* color;
-
-		int senderAllyTeam;
-		bool senderSpectator;
 	};
 
 	struct DrawQuad {
 		CR_DECLARE_STRUCT(DrawQuad);
-		std::list<MapPoint> points;
-		std::list<MapLine> lines;
+		std::list<CInMapDraw::MapPoint> points;
+		std::list<CInMapDraw::MapLine> lines;
 	};
 
-	std::vector<DrawQuad> drawQuads;
-
-	int drawQuadsX;
-	int drawQuadsY;
+	const DrawQuad* GetDrawQuad(int x, int y) const;
 
 	bool keyPressed;
 	bool wantLabel;
 
 private:
+	int drawQuadsX;
+	int drawQuadsY;
+	std::vector<DrawQuad> drawQuads;
+
 	float lastLeftClickTime;
 	float lastDrawTime;
 	bool drawAllMarks;
 	float3 lastPos;
 	float3 waitingPoint;
 
-	unsigned int texture;
-	int blippSound;
-
-	std::vector<MapPoint*> visibleLabels;
-
 	/// whether spectators can send out MAPDRAW net-messages (synced)
 	bool allowSpecMapDrawing; 
 	/// whether client ignores incoming Lua MAPDRAW net-messages (unsynced)
 	bool allowLuaMapDrawing;
+
+	int blippSound;
 };
 
 extern CInMapDraw* inMapDrawer;

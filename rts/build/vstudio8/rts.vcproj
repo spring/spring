@@ -1077,6 +1077,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\InMapDraw.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\InMapDraw.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Game\LoadScreen.cpp"
 				>
 			</File>
@@ -2325,11 +2333,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Rendering\InMapDraw.cpp"
+				RelativePath="..\..\Rendering\InMapDrawView.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Rendering\InMapDraw.h"
+				RelativePath="..\..\Rendering\InMapDrawView.h"
 				>
 			</File>
 			<File
