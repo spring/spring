@@ -18,6 +18,9 @@ class Action;
 struct Command;
 struct CommandDescription;
 
+/**
+ * The C and part of V in MVC (Model-View-Controller).
+ */
 class CGuiHandler : public CInputReceiver {
 public:
 	CGuiHandler();
@@ -40,8 +43,8 @@ public:
 
 	Command GetOrderPreview();
 	Command GetCommand(int mouseX, int mouseY, int buttonHint, bool preview, const float3& cameraPos = ::camera->pos, const float3& mouseDir = ::mouse->dir);
-	std::vector<BuildInfo> GetBuildPos(const BuildInfo& startInfo,
-		const BuildInfo& endInfo, const float3& cameraPos, const float3& mouseDir); // startInfo.def has to be endInfo.def
+	/// startInfo.def has to be endInfo.def
+	std::vector<BuildInfo> GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo, const float3& cameraPos, const float3& mouseDir);
 
 	bool ReloadConfig(const std::string& fileName);
 
@@ -65,9 +68,7 @@ public:
 	int  GetDefaultCommand(int x, int y, const float3& cameraPos = ::camera->pos, const float3& mouseDir = ::mouse->dir) const;
 
 	bool SetActiveCommand(int cmdIndex, bool rightMouseButton);
-	bool SetActiveCommand(int cmdIndex,
-		int button, bool leftMouseButton, bool rightMouseButton,
-		bool alt, bool ctrl, bool meta, bool shift);
+	bool SetActiveCommand(int cmdIndex, int button, bool leftMouseButton, bool rightMouseButton, bool alt, bool ctrl, bool meta, bool shift);
 	bool SetActiveCommand(const Action& action, const CKeySet& ks, int actionIndex);
 
 	void SetDrawSelectionInfo(bool dsi) { drawSelectionInfo = dsi; }
