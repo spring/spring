@@ -29,7 +29,8 @@
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "Game/GameServer.h"
-#include "Rendering/InMapDraw.h"
+#include "Game/InMapDraw.h"
+#include "Rendering/InMapDrawView.h"
 #include "GlobalUnsynced.h"
 #include "Exceptions.h"
 
@@ -99,7 +100,8 @@ void CGameStateCollector::Serialize(creg::ISerializer& s)
 //	std::map<std::string, int> unitRestrictions;
 	s.SerializeObjectInstance(&waitCommandsAI, waitCommandsAI.GetClass());
 	s.SerializeObjectInstance(&wind, wind.GetClass());
-	s.SerializeObjectInstance(inMapDrawer,inMapDrawer->GetClass());
+	s.SerializeObjectInstance(inMapDrawer, inMapDrawer->GetClass());
+	s.SerializeObjectInstance(inMapDrawerView, inMapDrawerView->GetClass());
 	for (int a=0; a < teamHandler->ActiveTeams(); a++) {
 		s.SerializeObjectInstance(grouphandlers[a], grouphandlers[a]->GetClass());
 	}

@@ -13,13 +13,13 @@
 #include "TimeProfiler.h"
 #include "WordCompletion.h"
 #include "IVideoCapturing.h"
+#include "InMapDraw.h"
 #include "Game/UI/UnitTracker.h"
 #ifdef _WIN32
 #  include "winerror.h"
 #endif
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
-#include "Rendering/InMapDraw.h"
 #include "Lua/LuaRules.h"
 #include "UI/GameSetupDrawer.h"
 #include "UI/LuaUI.h"

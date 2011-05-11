@@ -6,16 +6,13 @@
 #include "mmgr.h"
 
 #include "InMapDraw.h"
-#include "Colors.h"
-#include "glFont.h"
-#include "GL/VertexArray.h"
 #include "ExternalAI/AILegacySupport.h" // {Point, Line}Marker
 #include "Game/Camera.h"
 #include "Game/Game.h"
 #include "Game/PlayerHandler.h"
+#include "Game/TeamController.h"
 #include "Game/UI/MiniMap.h"
 #include "Game/UI/MouseHandler.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Net/UnpackPacket.h"
@@ -29,8 +26,6 @@
 #include "System/creg/STL_List.h"
 
 
-#define DRAW_QUAD_SIZE 32
-
 CInMapDraw* inMapDrawer = NULL;
 
 CR_BIND(CInMapDraw, );
@@ -40,43 +35,52 @@ CR_REG_METADATA(CInMapDraw, (
 	CR_RESERVED(4)
 ));
 
-CR_BIND(CInMapDraw::MapPoint, );
+/**/CR_BIND(CInMapDraw::MapDrawPrimitive, (false, -1, NULL));
+
+CR_REG_METADATA_SUB(CInMapDraw, MapDrawPrimitive, (
+	CR_MEMBER(spectator),
+	CR_MEMBER(teamID),
+//	CR_MEMBER(teamController), // TODO this is only left out due to lazyness to creg-ify TeamController
+	CR_RESERVED(4)
+));
+
+CR_BIND(CInMapDraw::MapPoint, (false, -1, NULL, ZeroVector, ""));
 
 CR_REG_METADATA_SUB(CInMapDraw, MapPoint, (
 	CR_MEMBER(pos),
 	CR_MEMBER(label),
-	CR_MEMBER(senderAllyTeam),
-	CR_MEMBER(senderSpectator),
 	CR_RESERVED(4)
 ));
 
-CR_BIND(CInMapDraw::MapLine, );
+CR_BIND(CInMapDraw::MapLine, (false, -1, NULL, ZeroVector, ZeroVector));
 
 CR_REG_METADATA_SUB(CInMapDraw, MapLine, (
 	CR_MEMBER(pos),
 	CR_MEMBER(pos2),
-	CR_MEMBER(senderAllyTeam),
-	CR_MEMBER(senderSpectator),
 	CR_RESERVED(4)
 ));
 
 CR_BIND(CInMapDraw::DrawQuad, );
 
 CR_REG_METADATA_SUB(CInMapDraw, DrawQuad, (
-	CR_MEMBER(points),
-	CR_MEMBER(lines),
+//	CR_MEMBER(points), // TODO this is only left out due to lazyness
+//	CR_MEMBER(lines), // TODO this is only left out due to lazyness
 	CR_RESERVED(4)
 ));
 
 
-static const float QUAD_SCALE = 1.0f / (DRAW_QUAD_SIZE * SQUARE_SIZE);
+
+const size_t CInMapDraw::DRAW_QUAD_SIZE = 32;
+
+const float CInMapDraw::QUAD_SCALE = 1.0f / (DRAW_QUAD_SIZE * SQUARE_SIZE);
+
 
 
 CInMapDraw::CInMapDraw()
-	: drawQuadsX(gs->mapx / DRAW_QUAD_SIZE)
-	, drawQuadsY(gs->mapy / DRAW_QUAD_SIZE)
-	, keyPressed(false)
+	: keyPressed(false)
 	, wantLabel(false)
+	, drawQuadsX(gs->mapx / DRAW_QUAD_SIZE)
+	, drawQuadsY(gs->mapy / DRAW_QUAD_SIZE)
 	, lastLeftClickTime(0.0f)
 	, lastDrawTime(0.0f)
 	, drawAllMarks(false)
@@ -86,90 +90,12 @@ CInMapDraw::CInMapDraw()
 {
 	drawQuads.resize(drawQuadsX * drawQuadsY);
 
-	unsigned char tex[64][128][4];
-	for (int y = 0; y < 64; y++) {
-		for (int x = 0; x < 128; x++) {
-			tex[y][x][0] = 0;
-			tex[y][x][1] = 0;
-			tex[y][x][2] = 0;
-			tex[y][x][3] = 0;
-		}
-	}
-
-	#define SMOOTHSTEP(x,y,a) (unsigned char)(x * (1.0f - a) + y * a)
-
-	for (int y = 0; y < 64; y++) {
-		// circular thingy
-		for (int x = 0; x < 64; x++) {
-			float dist = sqrt((float)(x - 32) * (x - 32) + (y - 32) * (y - 32));
-			if (dist > 31.0f) {
-				// do nothing - leave transparent
-			} else if (dist > 30.0f) {
-				// interpolate (outline -> nothing)
-				float a = (dist - 30.0f);
-				tex[y][x][3] = SMOOTHSTEP(255,   0, a);
-			} else if (dist > 24.0f) {
-				// black outline
-				tex[y][x][3] = 255;
-			} else if (dist > 23.0f) {
-				// interpolate (inner -> outline)
-				float a = (dist - 23.0f);
-				tex[y][x][0] = SMOOTHSTEP(255,   0, a);
-				tex[y][x][1] = SMOOTHSTEP(255,   0, a);
-				tex[y][x][2] = SMOOTHSTEP(255,   0, a);
-				tex[y][x][3] = SMOOTHSTEP(200, 255, a);
-			} else {
-				tex[y][x][0] = 255;
-				tex[y][x][1] = 255;
-				tex[y][x][2] = 255;
-				tex[y][x][3] = 200;
-			}
-		}
-	}
-	for (int y = 0; y < 64; y++) {
-		// linear falloff
-		for (int x = 64; x < 128; x++) {
-			float dist = abs(y - 32);
-			if (dist > 31.0f) {
-				// do nothing - leave transparent
-			} else if (dist > 30.0f) {
-				// interpolate (outline -> nothing)
-				float a = (dist - 30.0f);
-				tex[y][x][3] = SMOOTHSTEP(255,   0, a);
-			} else if (dist > 24.0f) {
-				// black outline
-				tex[y][x][3] = 255;
-			} else if (dist > 23.0f) {
-				// interpolate (inner -> outline)
-				float a = (dist - 23.0f);
-				tex[y][x][0] = SMOOTHSTEP(255,   0, a);
-				tex[y][x][1] = SMOOTHSTEP(255,   0, a);
-				tex[y][x][2] = SMOOTHSTEP(255,   0, a);
-				tex[y][x][3] = SMOOTHSTEP(200, 255, a);
-			} else {
-				tex[y][x][0] = 255;
-				tex[y][x][1] = 255;
-				tex[y][x][2] = 255;
-				tex[y][x][3] = 200;
-			}
-		}
-	}
-
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, 128, 64, GL_RGBA, GL_UNSIGNED_BYTE, tex[0]);
-
 	blippSound = sound->GetSoundId("MapPoint", false);
 }
 
 
 CInMapDraw::~CInMapDraw()
 {
-	glDeleteTextures(1, &texture);
 }
 
 void CInMapDraw::PostLoad()
@@ -180,188 +106,16 @@ void CInMapDraw::PostLoad()
 	}
 }
 
-static unsigned char DEFAULT_COLOR[4] = {0, 0, 0, 255};
-
-static void SerializeColor(creg::ISerializer &s, unsigned char** color)
+bool CInMapDraw::MapDrawPrimitive::IsLocalPlayerAllowedToSee(const CInMapDraw* inMapDraw) const
 {
-	if (s.IsWriting()) {
-		char ColorType = 0;
-		char ColorId = 0;
-		if (!ColorType)
-			for (int a = 0; a < teamHandler->ActiveTeams(); ++a)
-				if (*color == teamHandler->Team(a)->color) {
-					ColorType = 1;
-					ColorId = a;
-					break;
-				}
-		s.Serialize(&ColorId, sizeof(ColorId));
-		s.Serialize(&ColorType, sizeof(ColorType));
-	} else {
-		char ColorType;
-		char ColorId;
-		s.Serialize(&ColorId, sizeof(ColorId));
-		s.Serialize(&ColorType, sizeof(ColorType));
-		switch (ColorType) {
-			case 0:{
-				*color = DEFAULT_COLOR;
-				break;
-			}
-			case 1:{
-				*color = teamHandler->Team(ColorId)->color;
-				break;
-			}
-		}
-	}
-}
-
-bool CInMapDraw::MapPoint::MaySee(CInMapDraw* inMapDraw) const
-{
-	const int allyteam = senderAllyTeam;
-	const bool spec = senderSpectator;
+	const int allyTeam = teamHandler->AllyTeam(teamID);
 	const bool allied =
-		(teamHandler->Ally(gu->myAllyTeam, allyteam) &&
-		teamHandler->Ally(allyteam, gu->myAllyTeam));
-	const bool maySee = (gu->spectating || (!spec && allied) || inMapDraw->drawAllMarks);
+		(teamHandler->Ally(gu->myAllyTeam, allyTeam) &&
+		teamHandler->Ally(allyTeam, gu->myAllyTeam));
+	const bool maySee = (gu->spectating || (!spectator && allied) || inMapDraw->drawAllMarks);
+
 	return maySee;
 }
-
-bool CInMapDraw::MapLine::MaySee(CInMapDraw* inMapDraw) const
-{
-	const int allyteam = senderAllyTeam;
-	const bool spec = senderSpectator;
-	const bool allied =
-		(teamHandler->Ally(gu->myAllyTeam, allyteam) &&
-		teamHandler->Ally(allyteam, gu->myAllyTeam));
-	const bool maySee = (gu->spectating || (!spec && allied) || inMapDraw->drawAllMarks);
-	return maySee;
-}
-
-
-
-struct InMapDraw_QuadDrawer: public CReadMap::IQuadDrawer
-{
-	CVertexArray *va, *lineva;
-	CInMapDraw* imd;
-	std::vector<CInMapDraw::MapPoint*>* visLabels;
-
-	void DrawQuad(int x, int y);
-};
-
-void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
-{
-	const int drawQuadsX = imd->drawQuadsX;
-	CInMapDraw::DrawQuad* dq = &imd->drawQuads[y * drawQuadsX + x];
-
-	va->EnlargeArrays(dq->points.size()*12,0,VA_SIZE_TC);
-	//! draw point markers
-	for (std::list<CInMapDraw::MapPoint>::iterator pi = dq->points.begin(); pi != dq->points.end(); ++pi) {
-		if (pi->MaySee(imd)) {
-			const float3 pos = pi->pos;
-			const float3 dif = (pos - camera->pos).ANormalize();
-			const float3 dir1 = (dif.cross(UpVector)).ANormalize();
-			const float3 dir2 = (dif.cross(dir1));
-
-			const unsigned char col[4] = {
-				pi->color[0],
-				pi->color[1],
-				pi->color[2],
-				200
-			};
-
-			const float size = 6.0f;
-			const float3 pos1(pos.x,  pos.y  +   5.0f, pos.z);
-			const float3 pos2(pos1.x, pos1.y + 100.0f, pos1.z);
-
-			va->AddVertexQTC(pos1 - dir1 * size,               0.25f, 0, col);
-			va->AddVertexQTC(pos1 + dir1 * size,               0.25f, 1, col);
-			va->AddVertexQTC(pos1 + dir1 * size + dir2 * size, 0.00f, 1, col);
-			va->AddVertexQTC(pos1 - dir1 * size + dir2 * size, 0.00f, 0, col);
-
-			va->AddVertexQTC(pos1 - dir1 * size,               0.75f, 0, col);
-			va->AddVertexQTC(pos1 + dir1 * size,               0.75f, 1, col);
-			va->AddVertexQTC(pos2 + dir1 * size,               0.75f, 1, col);
-			va->AddVertexQTC(pos2 - dir1 * size,               0.75f, 0, col);
-
-			va->AddVertexQTC(pos2 - dir1 * size,               0.25f, 0, col);
-			va->AddVertexQTC(pos2 + dir1 * size,               0.25f, 1, col);
-			va->AddVertexQTC(pos2 + dir1 * size - dir2 * size, 0.00f, 1, col);
-			va->AddVertexQTC(pos2 - dir1 * size - dir2 * size, 0.00f, 0, col);
-
-			if (!pi->label.empty()) {
-				visLabels->push_back(&*pi);
-			}
-		}
-	}
-
-	lineva->EnlargeArrays(dq->lines.size() * 2, 0, VA_SIZE_C);
-	//! draw line markers
-	for (std::list<CInMapDraw::MapLine>::iterator li = dq->lines.begin(); li != dq->lines.end(); ++li) {
-		if (li->MaySee(imd)) {
-			lineva->AddVertexQC(li->pos - (li->pos - camera->pos).ANormalize() * 26, li->color);
-			lineva->AddVertexQC(li->pos2 - (li->pos2 - camera->pos).ANormalize() * 26, li->color);
-		}
-	}
-}
-
-
-
-void CInMapDraw::Draw()
-{
-	GML_STDMUTEX_LOCK(inmap); //! Draw
-
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-	CVertexArray* lineva = GetVertexArray();
-	lineva->Initialize();
-
-	InMapDraw_QuadDrawer drawer;
-	drawer.imd = this;
-	drawer.lineva = lineva;
-	drawer.va = va;
-	drawer.visLabels = &visibleLabels;
-
-	glDepthMask(0);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_BLEND);
-	glBindTexture(GL_TEXTURE_2D, texture);
-
-	readmap->GridVisibility(camera, DRAW_QUAD_SIZE, 3000.0f, &drawer);
-
-	glDisable(GL_TEXTURE_2D);
-	glLineWidth(3.f);
-	lineva->DrawArrayC(GL_LINES); //! draw lines
-
-	// XXX hopeless drivers, retest in a year or so...
-	// width greater than 2 causes GUI flicker on ATI hardware as of driver version 9.3
-	// so redraw lines with width 1
-	if (globalRendering->atiHacks) {
-		glLineWidth(1.f);
-		lineva->DrawArrayC(GL_LINES);
-	}
-
-	// draw points
-	glLineWidth(1);
-	glEnable(GL_TEXTURE_2D);
-	va->DrawArrayTC(GL_QUADS); //! draw point markers 
-
-	if (!visibleLabels.empty()) {
-		font->SetColors(); //! default
-
-		//! draw point labels
-		for (std::vector<MapPoint*>::iterator pi = visibleLabels.begin(); pi != visibleLabels.end(); ++pi) {
-			float3 pos = (*pi)->pos;
-			pos.y += 111.0f;
-
-			font->SetTextColor((*pi)->color[0]/255.0f, (*pi)->color[1]/255.0f, (*pi)->color[2]/255.0f, 1.0f); //FIXME (overload!)
-			font->glWorldPrint(pos, 26.0f, (*pi)->label);
-		}
-
-		visibleLabels.clear();
-	}
-
-	glDepthMask(1);
-}
-
 
 
 void CInMapDraw::MousePress(int x, int y, int button)
@@ -536,12 +290,7 @@ void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label, in
 	// let the engine handle it (disallowed
 	// points added here are filtered while
 	// rendering the quads)
-	MapPoint point;
-	point.pos = pos;
-	point.color = sender->spectator ? color4::white : teamHandler->Team(sender->team)->color;
-	point.label = label;
-	point.senderAllyTeam = teamHandler->AllyTeam(sender->team);
-	point.senderSpectator = sender->spectator;
+	MapPoint point(sender->spectator, sender->team, sender, pos, label);
 
 	const int quad = int(pos.z * QUAD_SCALE) * drawQuadsX +
 	                 int(pos.x * QUAD_SCALE);
@@ -580,12 +329,7 @@ void CInMapDraw::LocalLine(const float3& constPos1, const float3& constPos2, int
 		return;
 	}
 
-	MapLine line;
-	line.pos  = pos1;
-	line.pos2 = pos2;
-	line.color = sender->spectator ? color4::white : teamHandler->Team(sender->team)->color;
-	line.senderAllyTeam = teamHandler->AllyTeam(sender->team);
-	line.senderSpectator = sender->spectator;
+	MapLine line(sender->spectator, sender->team, sender, pos1, pos2);
 
 	const int quad = int(pos1.z * QUAD_SCALE) * drawQuadsX +
 	                 int(pos1.x * QUAD_SCALE);
@@ -624,7 +368,7 @@ void CInMapDraw::LocalErase(const float3& constPos, int playerID)
 
 			std::list<MapPoint>::iterator pi;
 			for (pi = dq->points.begin(); pi != dq->points.end(); /* none */) {
-				if (pi->pos.SqDistance2D(pos) < (radius*radius) && (pi->senderSpectator == sender->spectator)) {
+				if (pi->pos.SqDistance2D(pos) < (radius*radius) && (pi->IsBySpectator() == sender->spectator)) {
 					pi = dq->points.erase(pi);
 				} else {
 					++pi;
@@ -632,7 +376,7 @@ void CInMapDraw::LocalErase(const float3& constPos, int playerID)
 			}
 			std::list<MapLine>::iterator li;
 			for (li = dq->lines.begin(); li != dq->lines.end(); /* none */) {
-				if (li->pos.SqDistance2D(pos) < (radius*radius) && (li->senderSpectator == sender->spectator)) {
+				if (li->pos.SqDistance2D(pos) < (radius*radius) && (li->IsBySpectator() == sender->spectator)) {
 					li = dq->lines.erase(li);
 				} else {
 					++li;
@@ -696,22 +440,22 @@ void CInMapDraw::SetLuaMapDrawingAllowed(bool state)
 
 
 
-unsigned int CInMapDraw::GetPoints(PointMarker* array, unsigned int maxPoints, const std::list<const unsigned char*>& colors)
+unsigned int CInMapDraw::GetPoints(PointMarker* array, unsigned int maxPoints, const std::list<int>& teamIDs)
 {
 	int numPoints = 0;
 
 	std::list<MapPoint>* points = NULL;
 	std::list<MapPoint>::const_iterator point;
-	std::list<const unsigned char*>::const_iterator ic;
+	std::list<int>::const_iterator it;
 
-	for (size_t i = 0; i < (drawQuadsX * drawQuadsY) && numPoints < maxPoints; i++) {
+	for (size_t i = 0; (i < (drawQuadsX * drawQuadsY)) && (numPoints < maxPoints); i++) {
 		points = &(drawQuads[i].points);
 
-		for (point = points->begin(); point != points->end() && numPoints < maxPoints; ++point) {
-			for (ic = colors.begin(); ic != colors.end(); ++ic) {
-				if (point->color == *ic) {
+		for (point = points->begin(); (point != points->end()) && (numPoints < maxPoints); ++point) {
+			for (it = teamIDs.begin(); it != teamIDs.end(); ++it) {
+				if (point->GetTeamID() == *it) {
 					array[numPoints].pos   = point->pos;
-					array[numPoints].color = point->color;
+					array[numPoints].color = teamHandler->Team(point->GetTeamID())->color;
 					array[numPoints].label = point->label.c_str();
 					numPoints++;
 					break;
@@ -723,23 +467,23 @@ unsigned int CInMapDraw::GetPoints(PointMarker* array, unsigned int maxPoints, c
 	return numPoints;
 }
 
-unsigned int CInMapDraw::GetLines(LineMarker* array, unsigned int maxLines, const std::list<const unsigned char*>& colors)
+unsigned int CInMapDraw::GetLines(LineMarker* array, unsigned int maxLines, const std::list<int>& teamIDs)
 {
 	unsigned int numLines = 0;
 
 	std::list<MapLine>* lines = NULL;
 	std::list<MapLine>::const_iterator line;
-	std::list<const unsigned char*>::const_iterator ic;
+	std::list<int>::const_iterator it;
 
 	for (size_t i = 0; (i < (drawQuadsX * drawQuadsY)) && (numLines < maxLines); i++) {
 		lines = &(drawQuads[i].lines);
 
 		for (line = lines->begin(); (line != lines->end()) && (numLines < maxLines); ++line) {
-			for (ic = colors.begin(); ic != colors.end(); ++ic) {
-				if (line->color == *ic) {
+			for (it = teamIDs.begin(); it != teamIDs.end(); ++it) {
+				if (line->GetTeamID() == *it) {
 					array[numLines].pos   = line->pos;
 					array[numLines].pos2  = line->pos2;
-					array[numLines].color = line->color;
+					array[numLines].color = teamHandler->Team(line->GetTeamID())->color;
 					numLines++;
 					break;
 				}
@@ -758,5 +502,12 @@ void CInMapDraw::ClearMarks()
 		drawQuads[n].lines.clear();
 	}
 
-	visibleLabels.clear();
+	// TODO check if this is needed
+	//visibleLabels.clear();
+}
+
+
+const CInMapDraw::DrawQuad* CInMapDraw::GetDrawQuad(int x, int y) const
+{
+	return &(drawQuads[(y * drawQuadsX) + x]);
 }

@@ -16,6 +16,7 @@
 #include "TimeProfiler.h"
 #include "IVideoCapturing.h"
 #include "WordCompletion.h"
+#include "InMapDraw.h"
 #ifdef _WIN32
 #  include "winerror.h"
 #endif
@@ -32,7 +33,6 @@
 #include "Rendering/glFont.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/HUDDrawer.h"
-#include "Rendering/InMapDraw.h"
 #include "Rendering/Screenshot.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"

@@ -12,7 +12,7 @@
 #include "NetProtocol.h"
 #include "Map/Ground.h"
 #include "Game/Camera.h"
-#include "Rendering/InMapDraw.h"
+#include "Game/InMapDraw.h"
 
 
 CStartPosSelecter* CStartPosSelecter::selector = NULL;

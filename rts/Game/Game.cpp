@@ -36,6 +36,7 @@
 #include "WordCompletion.h"
 #include "OSCStatsSender.h"
 #include "IVideoCapturing.h"
+#include "InMapDraw.h"
 #include "Game/UI/UnitTracker.h"
 #ifdef _WIN32
 #  include "winerror.h"
@@ -60,7 +61,7 @@
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/IPathDrawer.h"
 #include "Rendering/IconHandler.h"
-#include "Rendering/InMapDraw.h"
+#include "Rendering/InMapDrawView.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/TeamHighlight.h"
 #include "Rendering/VerticalSync.h"
@@ -336,6 +337,7 @@ CGame::~CGame()
 	SafeDelete(camera);
 	SafeDelete(cam2);
 	SafeDelete(icon::iconHandler);
+	SafeDelete(inMapDrawerView);
 	SafeDelete(inMapDrawer);
 	SafeDelete(geometricObjects);
 	SafeDelete(farTextureHandler);
@@ -544,6 +546,7 @@ void CGame::LoadRendering()
 	treeDrawer = CBaseTreeDrawer::GetTreeDrawer();
 
 	inMapDrawer = new CInMapDraw();
+	inMapDrawerView = new CInMapDrawView();
 	pathDrawer = IPathDrawer::GetInstance();
 
 	geometricObjects = new CGeometricObjects();
@@ -982,7 +985,7 @@ bool CGame::DrawWorld()
 	guihandler->DrawMapStuff(false);
 
 	if (globalRendering->drawMapMarks && !hideInterface) {
-		inMapDrawer->Draw();
+		inMapDrawerView->Draw();
 	}
 
 
