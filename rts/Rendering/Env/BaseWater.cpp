@@ -18,11 +18,11 @@ std::vector<int> CBaseWater::waterModes;
 std::vector<HeightmapChange> CBaseWater::heightmapChanges;
 bool CBaseWater::noWakeProjectiles = false;
 
-CBaseWater::CBaseWater(void)
+CBaseWater::CBaseWater()
+	: drawReflection(false)
+	, drawRefraction(false)
+ 	, drawSolid(false)
 {
-	drawReflection = false;
-	drawRefraction = false;
- 	drawSolid = false;
 }
 
 

@@ -1,15 +1,19 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __BASE_WATER_H__
-#define __BASE_WATER_H__
+#ifndef _BASE_WATER_H_
+#define _BASE_WATER_H_
 
 #include "float3.h"
 class CGame;
 
 struct HeightmapChange {
-	int x1,y1,x2,y2;
-	HeightmapChange(const int _x1, const int _y1, const int _x2, const int _y2):
-									x1(_x1), y1(_y1), x2(_x2), y2(_y2) {}
+	int x1, y1, x2, y2;
+	HeightmapChange(const int x1, const int y1, const int x2, const int y2)
+		: x1(x1)
+		, y1(y1)
+		, x2(x2)
+		, y2(y2)
+	{}
 };
 
 class CBaseWater
@@ -24,8 +28,8 @@ public:
 		NUM_WATER_RENDERERS       = 5,
 	};
 
-	CBaseWater(void);
-	virtual ~CBaseWater(void) {}
+	CBaseWater();
+	virtual ~CBaseWater() {}
 
 	virtual void Draw() {}
 	virtual void Update() {}
@@ -51,4 +55,4 @@ public:
 
 extern CBaseWater* water;
 
-#endif // __BASE_WATER_H__
+#endif // _BASE_WATER_H_
