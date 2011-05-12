@@ -947,6 +947,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\InMapDrawModel.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\InMapDrawModel.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Game\InMapDraw.cpp"
 				>
 			</File>

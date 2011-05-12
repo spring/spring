@@ -14,6 +14,7 @@
 #include "WordCompletion.h"
 #include "IVideoCapturing.h"
 #include "InMapDraw.h"
+#include "InMapDrawModel.h"
 #include "Game/UI/UnitTracker.h"
 #ifdef _WIN32
 #  include "winerror.h"
@@ -294,7 +295,7 @@ void CGame::ClientReadNet()
 						{
 							char label[128];
 							SNPRINTF(label, sizeof(label), "Start %i", team);
-							inMapDrawer->LocalPoint(pos, label, player);
+							inMapDrawerModel->AddPoint(pos, label, player);
 							// FIXME - erase old pos ?
 						}
 					}

@@ -37,6 +37,7 @@
 #include "OSCStatsSender.h"
 #include "IVideoCapturing.h"
 #include "InMapDraw.h"
+#include "InMapDrawModel.h"
 #include "Game/UI/UnitTracker.h"
 #ifdef _WIN32
 #  include "winerror.h"
@@ -339,6 +340,7 @@ CGame::~CGame()
 	SafeDelete(icon::iconHandler);
 	SafeDelete(inMapDrawerView);
 	SafeDelete(inMapDrawer);
+	SafeDelete(inMapDrawerModel);
 	SafeDelete(geometricObjects);
 	SafeDelete(farTextureHandler);
 	SafeDelete(texturehandler3DO);
@@ -545,6 +547,7 @@ void CGame::LoadRendering()
 	loadscreen->SetLoadMessage("Creating TreeDrawer");
 	treeDrawer = CBaseTreeDrawer::GetTreeDrawer();
 
+	inMapDrawerModel = new CInMapDrawModel();
 	inMapDrawer = new CInMapDraw();
 	inMapDrawerView = new CInMapDrawView();
 	pathDrawer = IPathDrawer::GetInstance();

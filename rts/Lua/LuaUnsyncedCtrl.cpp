@@ -29,6 +29,7 @@
 #include "Game/SelectedUnits.h"
 #include "Game/PlayerHandler.h"
 #include "Game/InMapDraw.h"
+#include "Game/InMapDrawModel.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
 #include "Game/UI/GuiHandler.h"
@@ -2687,7 +2688,7 @@ int LuaUnsyncedCtrl::MarkerAddPoint(lua_State* L)
 	const bool onlyLocal = bool(luaL_optnumber(L, 5, 1));
 
 	if (onlyLocal) {
-		inMapDrawer->LocalPoint(pos, text, gu->myPlayerNum);
+		inMapDrawerModel->AddPoint(pos, text, gu->myPlayerNum);
 	} else {
 		inMapDrawer->SendPoint(pos, text, true);
 	}
@@ -2721,9 +2722,9 @@ int LuaUnsyncedCtrl::MarkerAddLine(lua_State* L)
 	const bool onlyLocal = bool(luaL_optnumber(L, 7, 0));
 
 	if (onlyLocal) {
-		inMapDrawer->LocalLine(pos1, pos2, gu->myPlayerNum);
+		inMapDrawerModel->AddLine(pos1, pos2, gu->myPlayerNum);
 	} else {
-		inMapDrawer->SendLine(pos1, pos2, true);
+		inMapDrawerModel->AddLine(pos1, pos2, true);
 	}
 
 	return 0;
