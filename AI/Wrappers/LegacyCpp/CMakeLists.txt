@@ -63,7 +63,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME "${myName}")
 
 	# Compile the Legacy C++ AI wrapper static library with creg support
-	add_library(${myCregTarget} STATIC ${mySources} ${creg_SRC})
+	add_library(${myCregTarget} STATIC ${mySources} ${sources_engine_System_creg})
 	set_target_properties(${myCregTarget} PROPERTIES OUTPUT_NAME   "${myName}Creg")
 	set_target_properties(${myCregTarget} PROPERTIES COMPILE_FLAGS "-DUSING_CREG")
 endif (BUILD_${myName}_AIWRAPPER)

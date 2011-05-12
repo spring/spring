@@ -49,11 +49,9 @@ INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/7zip)
 
 
 ### Assemble sources
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Net/ net_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/FileSystem/ fs_files)
 SET(system_files
-	${fs_files}
-	${net_files}
+	${sources_engine_System_FileSystem}
+	${sources_engine_System_Net}
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/Misc
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/errorhandler
 	${ENGINE_SRC_ROOT_DIR}/System/TdfParser
@@ -74,11 +72,9 @@ IF    (WIN32)
 	LIST(APPEND system_files ${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/WinVersion)
 ENDIF (WIN32)
 
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Game/Server server_files)
-
 SET(engineDedicatedSources
 	${system_files}
-	${server_files}
+	${sources_engine_Game_Server}
 	${ENGINE_SRC_ROOT_DIR}/Game/GameServer
 	${ENGINE_SRC_ROOT_DIR}/Game/ClientSetup
 	${ENGINE_SRC_ROOT_DIR}/Game/GameSetup
