@@ -17,6 +17,7 @@
 #include "IVideoCapturing.h"
 #include "WordCompletion.h"
 #include "InMapDraw.h"
+#include "InMapDrawModel.h"
 #ifdef _WIN32
 #  include "winerror.h"
 #endif
@@ -1375,22 +1376,26 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 	}
 	else if (cmd == "allmapmarks") {
 		if (gs->cheatEnabled) {
+			bool allMarksVisible;
 			if (action.extra.empty()) {
-				inMapDrawer->ToggleAllMarksVisible();
+				allMarksVisible = !inMapDrawerModel->GetAllMarksVisible();
 			} else {
-				inMapDrawer->SetAllMarksVisible(!!atoi(action.extra.c_str()));
+				allMarksVisible = !!atoi(action.extra.c_str());
 			}
+			inMapDrawerModel->SetAllMarksVisible(allMarksVisible);
 		}
 	}
 	else if (cmd == "clearmapmarks") {
-		inMapDrawer->ClearMarks();
+		inMapDrawerModel->EraseAll();
 	}
 	else if (cmd == "noluadraw") {
+		bool luaMapDrawingAllowed;
 		if (action.extra.empty()) {
-			inMapDrawer->SetLuaMapDrawingAllowed(!inMapDrawer->GetLuaMapDrawingAllowed());
+			luaMapDrawingAllowed = !inMapDrawer->GetLuaMapDrawingAllowed();
 		} else {
-			inMapDrawer->SetLuaMapDrawingAllowed(!!atoi(action.extra.c_str()));
+			luaMapDrawingAllowed = !!atoi(action.extra.c_str());
 		}
+		inMapDrawer->SetLuaMapDrawingAllowed(luaMapDrawingAllowed);
 	}
 
 	else if (cmd == "luaui") {

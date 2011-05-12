@@ -10,17 +10,11 @@
 #include "Rendering/GlobalRendering.h"
 
 #include "Game/Camera.h"
-#include "Game/InMapDraw.h"
+#include "Game/InMapDrawModel.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/TeamHandler.h"
 
 CInMapDrawView* inMapDrawerView = NULL;
-
-CR_BIND(CInMapDrawView, );
-
-CR_REG_METADATA(CInMapDrawView, (
-	CR_RESERVED(4)
-));
 
 
 /**
@@ -152,16 +146,16 @@ struct InMapDraw_QuadDrawer: public CReadMap::IQuadDrawer
 {
 	CVertexArray* pointsVa;
 	CVertexArray* linesVa;
-	std::vector<const CInMapDraw::MapPoint*>* visibleLabels;
+	std::vector<const CInMapDrawModel::MapPoint*>* visibleLabels;
 
 	void DrawQuad(int x, int y);
 
 private:
-	void DrawPoint(const CInMapDraw::MapPoint* point) const;
-	void DrawLine(const CInMapDraw::MapLine* line) const;
+	void DrawPoint(const CInMapDrawModel::MapPoint* point) const;
+	void DrawLine(const CInMapDrawModel::MapLine* line) const;
 };
 
-void InMapDraw_QuadDrawer::DrawPoint(const CInMapDraw::MapPoint* point) const
+void InMapDraw_QuadDrawer::DrawPoint(const CInMapDrawModel::MapPoint* point) const
 {
 	const float3& pos = point->GetPos();
 	const float3 dif = (pos - camera->pos).ANormalize();
@@ -201,7 +195,7 @@ void InMapDraw_QuadDrawer::DrawPoint(const CInMapDraw::MapPoint* point) const
 	}
 }
 
-void InMapDraw_QuadDrawer::DrawLine(const CInMapDraw::MapLine* line) const
+void InMapDraw_QuadDrawer::DrawLine(const CInMapDrawModel::MapLine* line) const
 {
 	const unsigned char* color = line->IsBySpectator() ? color4::white : teamHandler->Team(line->GetTeamID())->color;
 	linesVa->AddVertexQC(line->GetPos1() - (line->GetPos1() - camera->pos).ANormalize() * 26, color);
@@ -210,20 +204,20 @@ void InMapDraw_QuadDrawer::DrawLine(const CInMapDraw::MapLine* line) const
 
 void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 {
-	const CInMapDraw::DrawQuad* dq = inMapDrawer->GetDrawQuad(x, y);
+	const CInMapDrawModel::DrawQuad* dq = inMapDrawerModel->GetDrawQuad(x, y);
 
 	pointsVa->EnlargeArrays(dq->points.size() * 12, 0, VA_SIZE_TC);
 	//! draw point markers
-	for (std::list<CInMapDraw::MapPoint>::const_iterator pi = dq->points.begin(); pi != dq->points.end(); ++pi) {
-		if (pi->IsLocalPlayerAllowedToSee(inMapDrawer)) {
+	for (std::list<CInMapDrawModel::MapPoint>::const_iterator pi = dq->points.begin(); pi != dq->points.end(); ++pi) {
+		if (pi->IsLocalPlayerAllowedToSee(inMapDrawerModel)) {
 			DrawPoint(&*pi);
 		}
 	}
 
 	linesVa->EnlargeArrays(dq->lines.size() * 2, 0, VA_SIZE_C);
 	//! draw line markers
-	for (std::list<CInMapDraw::MapLine>::const_iterator li = dq->lines.begin(); li != dq->lines.end(); ++li) {
-		if (li->IsLocalPlayerAllowedToSee(inMapDrawer)) {
+	for (std::list<CInMapDrawModel::MapLine>::const_iterator li = dq->lines.begin(); li != dq->lines.end(); ++li) {
+		if (li->IsLocalPlayerAllowedToSee(inMapDrawerModel)) {
 			DrawLine(&*li);
 		}
 	}
@@ -250,7 +244,7 @@ void CInMapDrawView::Draw()
 	glEnable(GL_BLEND);
 	glBindTexture(GL_TEXTURE_2D, texture);
 
-	readmap->GridVisibility(camera, CInMapDraw::DRAW_QUAD_SIZE, 3000.0f, &drawer);
+	readmap->GridVisibility(camera, CInMapDrawModel::DRAW_QUAD_SIZE, 3000.0f, &drawer);
 
 	glDisable(GL_TEXTURE_2D);
 	glLineWidth(3.f);
@@ -273,7 +267,7 @@ void CInMapDrawView::Draw()
 		font->SetColors(); //! default
 
 		//! draw point labels
-		for (std::vector<const CInMapDraw::MapPoint*>::const_iterator pi = visibleLabels.begin(); pi != visibleLabels.end(); ++pi) {
+		for (std::vector<const CInMapDrawModel::MapPoint*>::const_iterator pi = visibleLabels.begin(); pi != visibleLabels.end(); ++pi) {
 			float3 pos = (*pi)->GetPos();
 			pos.y += 111.0f;
 

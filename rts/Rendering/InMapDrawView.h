@@ -8,17 +8,15 @@
 #include <list>
 
 #include "System/float3.h"
-#include "System/creg/creg.h"
-#include "Game/InMapDraw.h"
+#include "Game/InMapDrawModel.h"
 
 /**
  * The V in MVC for InMapDraw.
- * @see CInMapDraw for M & C
+ * @see CInMapDrawModel for M
+ * @see CInMapDraw for C
  */
 class CInMapDrawView
 {
-	CR_DECLARE(CInMapDrawView);
-
 public:
 	CInMapDrawView();
 	~CInMapDrawView();
@@ -28,7 +26,7 @@ public:
 private:
 	unsigned int texture;
 
-	std::vector<const CInMapDraw::MapPoint*> visibleLabels;
+	std::vector<const CInMapDrawModel::MapPoint*> visibleLabels;
 };
 
 extern CInMapDrawView* inMapDrawerView;
