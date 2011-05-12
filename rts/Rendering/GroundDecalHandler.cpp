@@ -40,7 +40,8 @@ using std::max;
 CGroundDecalHandler* groundDecals = NULL;
 
 
-CGroundDecalHandler::CGroundDecalHandler(): CEventClient("[CGroundDecalHandler]", 314159, false)
+CGroundDecalHandler::CGroundDecalHandler()
+	: CEventClient("[CGroundDecalHandler]", 314159, false)
 {
 	eventHandler.AddClient(this);
 

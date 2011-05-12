@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __GAME_HELPER_H__
-#define __GAME_HELPER_H__
+#ifndef _GAME_HELPER_H_
+#define _GAME_HELPER_H_
 
 #include <list>
 #include <map>
@@ -28,7 +28,6 @@ public:
 	CGameHelper();
 	~CGameHelper();
 
-public:
 	void GetEnemyUnits(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
 	void GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
 	CUnit* GetClosestUnit(const float3& pos, float searchRadius);
@@ -38,7 +37,6 @@ public:
 	CUnit* GetClosestFriendlyUnit(const float3& pos, float searchRadius, int searchAllyteam);
 	CUnit* GetClosestEnemyAircraft(const float3& pos, float searchRadius, int searchAllyteam);
 
-public:
 	//get the position of a unit + eventuall error due to lack of los
 	float3 GetUnitErrorPos(const CUnit* unit, int allyteam);
 
@@ -51,7 +49,6 @@ public:
 	 */
 	float3 ClosestBuildSite(int team, const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing = 0);
 
-public:
 	void Update();
 	void GenerateWeaponTargets(const CWeapon* weapon, const CUnit* lastTargetUnit, std::multimap<float, CUnit*>& targets);
 	void DoExplosionDamage(CUnit* unit, const float3& expPos, float expRad, float expSpeed, bool ignoreOwner, CUnit* owner, float edgeEffectiveness, const DamageArray& damages, int weaponId);
@@ -63,7 +60,7 @@ public:
 		TEST_NEUTRAL = 2,
 	};
 
-protected:
+private:
 	CStdExplosionGenerator* stdExplosionGenerator;
 
 	struct WaitingDamage{
@@ -100,4 +97,4 @@ protected:
 
 extern CGameHelper* helper;
 
-#endif // __GAME_HELPER_H__
+#endif // _GAME_HELPER_H_

@@ -143,7 +143,7 @@ void CInMapDraw::MouseMove(int x, int y, int dx, int dy, int button)
 }
 
 
-float3 CInMapDraw::GetMouseMapPos()
+float3 CInMapDraw::GetMouseMapPos() // TODO move to some more global place?
 {
 	const float dist = ground->LineGroundCol(camera->pos, camera->pos + (mouse->dir * globalRendering->viewRange * 1.4f));
 	if (dist < 0) {

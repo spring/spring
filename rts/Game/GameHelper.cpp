@@ -948,7 +948,7 @@ float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 po
 	return float3(-1.0f, 0.0f, 0.0f);
 }
 
-void CGameHelper::Update(void)
+void CGameHelper::Update()
 {
 	std::list<WaitingDamage*>* wd = &waitingDamages[gs->frameNum&127];
 	while (!wd->empty()) {
