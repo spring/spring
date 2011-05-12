@@ -10,6 +10,7 @@
 
 #include "System/float3.h"
 #include "System/EventClient.h"
+#include "Sim/Projectiles/ExplosionListener.h"
 
 class CUnit;
 class CBuilding;
@@ -73,7 +74,7 @@ struct BuildingGroundDecal {
 };
 
 
-class CGroundDecalHandler: public CEventClient
+class CGroundDecalHandler: public CEventClient, public CExplosionListener
 {
 public:
 	CGroundDecalHandler();
@@ -103,6 +104,9 @@ public:
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
+
+	virtual void ExplosionOccurred(const CExplosionEvent& event);
+
 private:
 	void LoadDecalShaders();
 	void DrawBuildingDecals();

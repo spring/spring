@@ -4,6 +4,7 @@
 #define _BASE_WATER_H_
 
 #include "float3.h"
+#include "Sim/Projectiles/ExplosionListener.h"
 class CGame;
 
 struct HeightmapChange {
@@ -16,7 +17,7 @@ struct HeightmapChange {
 	{}
 };
 
-class CBaseWater
+class CBaseWater : public CExplosionListener
 {
 public:
 	enum {
@@ -29,7 +30,7 @@ public:
 	};
 
 	CBaseWater();
-	virtual ~CBaseWater() {}
+	virtual ~CBaseWater();
 
 	virtual void Draw() {}
 	virtual void Update() {}
@@ -39,6 +40,8 @@ public:
 	virtual void AddExplosion(const float3& pos, float strength, float size) {}
 	virtual int  GetID() const { return -1; }
 	virtual const char* GetName() const { return ""; }
+
+	virtual void ExplosionOccurred(const CExplosionEvent& event);
 
 	static void UpdateBaseWater(CGame* game);
 	static CBaseWater* GetWater(CBaseWater* currWaterRenderer, int nextWaterRenderMode);
