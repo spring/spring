@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "Sim/Misc/DamageArray.h"
+#include "Sim/Projectiles/ExplosionListener.h"
 #include "System/float3.h"
 #include "System/MemPool.h"
 
@@ -22,7 +23,7 @@ struct BuildInfo;
 class IExplosionGenerator;
 class CStdExplosionGenerator;
 
-class CGameHelper
+class CGameHelper : public CExplosionCreator
 {
 public:
 	CGameHelper();

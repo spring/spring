@@ -11,8 +11,6 @@
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
-#include "Rendering/Env/BaseWater.h"
-#include "Rendering/GroundDecalHandler.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/CollisionHandler.h"
@@ -26,6 +24,7 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
+#include "Sim/Projectiles/ExplosionListener.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/CommandAI/MobileCAI.h"
 #include "Sim/Units/UnitTypes/Factory.h"
@@ -293,8 +292,8 @@ void CGameHelper::Explosion(
 		explosionGenerator->Explosion(0, expPos, damages[0], expRad, owner, gfxMod, hitUnit, impactDir);
 	}
 
-	groundDecals->AddExplosion(expPos, damages[0], expRad, (wd != NULL && wd->visuals.explosionScar));
-	water->AddExplosion(expPos, damages[0], expRad);
+	CExplosionEvent explosionEvent(expPos, damages[0], expRad, wd);
+	FireExplosionEvent(explosionEvent);
 }
 
 

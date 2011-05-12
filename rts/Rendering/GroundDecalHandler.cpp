@@ -7,6 +7,7 @@
 
 #include "GroundDecalHandler.h"
 #include "Game/Camera.h"
+#include "Game/GameHelper.h"
 #include "Lua/LuaParser.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
@@ -24,6 +25,8 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/Building.h"
+#include "Sim/Projectiles/ExplosionListener.h"
+#include "Sim/Weapons/WeaponDef.h"
 #include "System/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
@@ -44,6 +47,7 @@ CGroundDecalHandler::CGroundDecalHandler()
 	: CEventClient("[CGroundDecalHandler]", 314159, false)
 {
 	eventHandler.AddClient(this);
+	helper->AddExplosionListener(this);
 
 	drawDecals = false;
 	decalLevel = std::max(0, configHandler->Get("GroundDecals", 1));
@@ -95,6 +99,7 @@ CGroundDecalHandler::CGroundDecalHandler()
 CGroundDecalHandler::~CGroundDecalHandler()
 {
 	eventHandler.RemoveClient(this);
+	helper->RemoveExplosionListener(this);
 
 	for (std::vector<TrackType*>::iterator tti = trackTypes.begin(); tti != trackTypes.end(); ++tti) {
 		for (set<UnitTrackStruct*>::iterator ti = (*tti)->tracks.begin(); ti != (*tti)->tracks.end(); ++ti) {
@@ -1220,4 +1225,8 @@ BuildingGroundDecal::~BuildingGroundDecal() {
 
 CGroundDecalHandler::Scar::~Scar() {
 	SafeDelete(va);
+}
+
+void CGroundDecalHandler::ExplosionOccurred(const CExplosionEvent& event) {
+	AddExplosion(event.GetPos(), event.GetDamage(), event.GetRadius(), ((event.GetWeaponDef() != NULL) && event.GetWeaponDef()->visuals.explosionScar));
 }

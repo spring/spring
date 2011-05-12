@@ -55,6 +55,7 @@ SET(sources_engine_Sim
 		"${CMAKE_CURRENT_SOURCE_DIR}/Path/Default/PathManager.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Path/IPathManager.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/ExpGenSpawner.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/ExplosionListener.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/ExplosionGenerator.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/FireProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/FlareProjectile.cpp"
