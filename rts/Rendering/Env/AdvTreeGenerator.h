@@ -4,6 +4,8 @@
 #define __ADV_TREE_GENERATOR_H__
 
 #include "Rendering/GL/myGL.h"
+
+// XXX This has a duplicate in ITreeDrawer.h
 #define MAX_TREE_HEIGHT 60
 
 class CVertexArray;

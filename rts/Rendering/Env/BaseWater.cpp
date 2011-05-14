@@ -80,7 +80,7 @@ void CBaseWater::UpdateBaseWater(CGame* game) {
 CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRendererMode)
 {
 	static CBaseWater  baseWaterRenderer;
-	       CBaseWater* nextWaterRenderer = NULL;
+	CBaseWater* nextWaterRenderer = NULL;
 
 	if (currWaterRenderer != NULL) {
 		assert(water == currWaterRenderer);
