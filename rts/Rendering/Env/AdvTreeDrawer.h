@@ -5,7 +5,7 @@
 
 #include <map>
 #include <list>
-#include "BaseTreeDrawer.h"
+#include "ITreeDrawer.h"
 
 class CVertexArray;
 class CGrassDrawer;
@@ -14,7 +14,7 @@ namespace Shader {
 	struct IProgramObject;
 }
 
-class CAdvTreeDrawer: public CBaseTreeDrawer
+class CAdvTreeDrawer: public ITreeDrawer
 {
 public:
 	CAdvTreeDrawer();

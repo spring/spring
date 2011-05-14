@@ -12,7 +12,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/Env/BaseSky.h"
-#include "Rendering/Env/BaseTreeDrawer.h"
+#include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"

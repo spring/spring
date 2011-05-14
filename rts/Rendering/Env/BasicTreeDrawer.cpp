@@ -25,7 +25,7 @@ static const float MAX_TREE_HEIGHT_3=MAX_TREE_HEIGHT*0.3f;
 static const float MAX_TREE_HEIGHT_36=MAX_TREE_HEIGHT*0.36f;
 static const float MAX_TREE_HEIGHT_6=MAX_TREE_HEIGHT*0.6f;
 
-CBasicTreeDrawer::CBasicTreeDrawer(): CBaseTreeDrawer()
+CBasicTreeDrawer::CBasicTreeDrawer(): ITreeDrawer()
 {
 	lastListClean = 0;
 

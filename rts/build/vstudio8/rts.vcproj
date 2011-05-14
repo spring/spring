@@ -2460,11 +2460,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseTreeDrawer.cpp"
+					RelativePath="..\..\Rendering\Env\ITreeDrawer.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseTreeDrawer.h"
+					RelativePath="..\..\Rendering\Env\ITreeDrawer.h"
 					>
 				</File>
 				<File

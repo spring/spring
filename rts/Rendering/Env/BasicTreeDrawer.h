@@ -4,12 +4,12 @@
 #define __BASIC_TREE_DRAWER_H__
 
 #include <map>
-#include "BaseTreeDrawer.h"
+#include "ITreeDrawer.h"
 #include "Rendering/GL/myGL.h"
 
 #define MAX_TREE_HEIGHT 60
 
-class CBasicTreeDrawer : public CBaseTreeDrawer
+class CBasicTreeDrawer : public ITreeDrawer
 {
 public:
 	CBasicTreeDrawer();
