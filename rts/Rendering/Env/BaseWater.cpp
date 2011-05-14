@@ -30,7 +30,7 @@ CBaseWater::CBaseWater()
 
 CBaseWater::~CBaseWater()
 {
-	helper->RemoveExplosionListener(this);
+	if (helper != NULL) helper->RemoveExplosionListener(this);
 }
 
 
