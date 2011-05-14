@@ -28,7 +28,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/DebugDrawerAI.h"
 #include "Rendering/Env/BaseSky.h"
-#include "Rendering/Env/BaseTreeDrawer.h"
+#include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/glFont.h"

@@ -14,7 +14,7 @@
 #include "ReadMap.h"
 #include "MapInfo.h"
 #include "Rendering/IPathDrawer.h"
-#include "Rendering/Env/BaseTreeDrawer.h"
+#include "Rendering/Env/ITreeDrawer.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "System/ConfigHandler.h"

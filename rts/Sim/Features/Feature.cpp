@@ -13,7 +13,7 @@
 #include "myMath.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/QuadField.h"
-#include "Rendering/Env/BaseTreeDrawer.h"
+#include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/ModInfo.h"

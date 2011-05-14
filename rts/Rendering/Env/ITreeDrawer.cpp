@@ -3,7 +3,7 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "BaseTreeDrawer.h"
+#include "ITreeDrawer.h"
 #include "BasicTreeDrawer.h"
 #include "AdvTreeDrawer.h"
 #include "Game/Camera.h"
@@ -16,21 +16,21 @@
 #include "System/LogOutput.h"
 #include "System/myMath.h"
 
-CBaseTreeDrawer* treeDrawer = 0;
+ITreeDrawer* treeDrawer = NULL;
 
-CBaseTreeDrawer::CBaseTreeDrawer()
+ITreeDrawer::ITreeDrawer()
 	: drawTrees(true)
 {
 	baseTreeDistance = configHandler->Get("TreeRadius", (unsigned int) (5.5f * 256)) / 256.0f;
 }
 
-CBaseTreeDrawer::~CBaseTreeDrawer() {
+ITreeDrawer::~ITreeDrawer() {
 	configHandler->Set("TreeRadius", (unsigned int) (baseTreeDistance * 256));
 }
 
 
 
-static void AddTrees(CBaseTreeDrawer* td)
+static void AddTrees(ITreeDrawer* td)
 {
 	for (int fID = 0; /* no test*/; fID++) {
 		const CFeature* f = featureHandler->GetFeature(fID);
@@ -45,9 +45,9 @@ static void AddTrees(CBaseTreeDrawer* td)
 	}
 }
 
-CBaseTreeDrawer* CBaseTreeDrawer::GetTreeDrawer()
+ITreeDrawer* ITreeDrawer::GetTreeDrawer()
 {
-	CBaseTreeDrawer* td = NULL;
+	ITreeDrawer* td = NULL;
 
 	try {
 		if (configHandler->Get("3DTrees", 1)) {
@@ -72,23 +72,23 @@ CBaseTreeDrawer* CBaseTreeDrawer::GetTreeDrawer()
 
 
 
-int CBaseTreeDrawer::AddFallingTree(float3 pos, float3 dir, int type)
+int ITreeDrawer::AddFallingTree(float3 pos, float3 dir, int type)
 {
 	return 0;
 }
 
-void CBaseTreeDrawer::DrawShadowPass()
+void ITreeDrawer::DrawShadowPass()
 {
 }
 
-void CBaseTreeDrawer::Draw(bool drawReflection)
+void ITreeDrawer::Draw(bool drawReflection)
 {
 	const float maxDistance = CGlobalRendering::MAX_VIEW_RANGE / (SQUARE_SIZE * TREE_SQUARE_SIZE);
 	const float treeDistance = Clamp(baseTreeDistance, 1.0f, maxDistance);
 	Draw(treeDistance, drawReflection);
 }
 
-void CBaseTreeDrawer::Update() {
+void ITreeDrawer::Update() {
 
 	GML_STDMUTEX_LOCK(tree); // Update
 

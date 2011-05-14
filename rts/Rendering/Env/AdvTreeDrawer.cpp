@@ -48,7 +48,7 @@ static const float HALF_MAX_TREE_HEIGHT   = MAX_TREE_HEIGHT * 0.5f;
 static const float DOUBLE_MAX_TREE_HEIGHT = MAX_TREE_HEIGHT * 2.0f;
 
 
-CAdvTreeDrawer::CAdvTreeDrawer(): CBaseTreeDrawer()
+CAdvTreeDrawer::CAdvTreeDrawer(): ITreeDrawer()
 {
 	if (!(GLEW_ARB_vertex_program && FBO::IsSupported()))
 		throw content_error("ADVTREE: missing OpenGL features!");

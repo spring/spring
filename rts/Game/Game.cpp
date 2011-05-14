@@ -46,7 +46,7 @@
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Rendering/Env/BaseSky.h"
-#include "Rendering/Env/BaseTreeDrawer.h"
+#include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/DebugColVolDrawer.h"
@@ -545,7 +545,7 @@ void CGame::LoadRendering()
 	readmap->NewGroundDrawer();
 
 	loadscreen->SetLoadMessage("Creating TreeDrawer");
-	treeDrawer = CBaseTreeDrawer::GetTreeDrawer();
+	treeDrawer = ITreeDrawer::GetTreeDrawer();
 
 	inMapDrawerModel = new CInMapDrawModel();
 	inMapDrawer = new CInMapDraw();
