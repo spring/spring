@@ -30,14 +30,14 @@ ITreeDrawer::~ITreeDrawer() {
 
 
 
-static void AddTrees(ITreeDrawer* td)
+void ITreeDrawer::AddTrees()
 {
 	for (int fID = 0; /* no test*/; fID++) {
 		const CFeature* f = featureHandler->GetFeature(fID);
 
 		if (f) {
 			if (f->def->drawType >= DRAWTYPE_TREE) {
-				td->AddTree(f->def->drawType - 1, f->pos, 1.0f);
+				AddTree(f->def->drawType - 1, f->pos, 1.0f);
 			}
 		} else {
 			break;
@@ -66,16 +66,12 @@ ITreeDrawer* ITreeDrawer::GetTreeDrawer()
 		td = new CBasicTreeDrawer();
 	}
 
-	AddTrees(td);
+	td->AddTrees();
+
 	return td;
 }
 
 
-
-int ITreeDrawer::AddFallingTree(float3 pos, float3 dir, int type)
-{
-	return 0;
-}
 
 void ITreeDrawer::DrawShadowPass()
 {
@@ -85,6 +81,7 @@ void ITreeDrawer::Draw(bool drawReflection)
 {
 	const float maxDistance = CGlobalRendering::MAX_VIEW_RANGE / (SQUARE_SIZE * TREE_SQUARE_SIZE);
 	const float treeDistance = Clamp(baseTreeDistance, 1.0f, maxDistance);
+	// call the subclasses draw method
 	Draw(treeDistance, drawReflection);
 }
 
