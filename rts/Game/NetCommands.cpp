@@ -978,7 +978,7 @@ void CGame::ClientReadNet()
 				try {
 					CommandMessage msg(packet);
 
-					ActionReceived(msg.action, msg.player);
+					ActionReceived(msg.GetAction(), msg.GetPlayerID());
 				} catch (netcode::UnpackPacketException &e) {
 					logOutput.Print("Got invalid CommandMessage: %s", e.err.c_str());
 				}

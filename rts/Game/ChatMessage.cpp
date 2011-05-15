@@ -11,7 +11,10 @@
 
 using namespace netcode;
 
-ChatMessage::ChatMessage(int from, int dest, const std::string& chat) : fromPlayer(from), destination(dest), msg(chat)
+ChatMessage::ChatMessage(int from, int dest, const std::string& chat)
+	: fromPlayer(from)
+	, destination(dest)
+	, msg(chat)
 {
 }
 
@@ -30,7 +33,7 @@ ChatMessage::ChatMessage(boost::shared_ptr<const netcode::RawPacket> data)
 
 const netcode::RawPacket* ChatMessage::Pack() const
 {
-	unsigned char size = 4*sizeof(unsigned char) + msg.size()+1;
+	unsigned char size = (4 * sizeof(unsigned char)) + (msg.size() + 1);
 	PackPacket* buffer = new PackPacket(size, NETMSG_CHAT);
 	*buffer << size;
 	*buffer << (unsigned char)fromPlayer;

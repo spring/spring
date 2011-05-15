@@ -11,6 +11,7 @@ class CConsoleHistory
 public:
 	CConsoleHistory();
 	~CConsoleHistory();
+
 	void ResetPosition();
 	bool AddLine(const std::string& msg);
 	std::string NextLine(const std::string& current);
@@ -19,10 +20,9 @@ public:
 protected:
 	bool AddLineRaw(const std::string& msg);
 
-protected:
 	std::list<std::string> lines;
 	std::list<std::string>::const_iterator pos;
-	static unsigned int MaxLines;
+	static const unsigned int MAX_LINES;
 };
 
 #endif /* CONSOLE_HISTORY_H */

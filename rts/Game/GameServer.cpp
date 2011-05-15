@@ -1489,18 +1489,18 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 			try {
 				CommandMessage msg(packet);
 
-				if (static_cast<unsigned>(msg.player) == a) {
-					if ((commandBlacklist.find(msg.action.command) != commandBlacklist.end()) && players[a].isLocal) {
+				if (static_cast<unsigned>(msg.GetPlayerID()) == a) {
+					if ((commandBlacklist.find(msg.GetAction().command) != commandBlacklist.end()) && players[a].isLocal) {
 						// command is restricted to server but player is allowed to execute it
-						PushAction(msg.action);
+						PushAction(msg.GetAction());
 					}
-					else if (commandBlacklist.find(msg.action.command) == commandBlacklist.end()) {
+					else if (commandBlacklist.find(msg.GetAction().command) == commandBlacklist.end()) {
 						// command is save
 						Broadcast(packet);
 					}
 					else {
 						// hack!
-						Message(str(boost::format(CommandNotAllowed) %msg.player %msg.action.command.c_str()));
+						Message(str(boost::format(CommandNotAllowed) %msg.GetPlayerID() %msg.GetAction().command.c_str()));
 					}
 				}
 			} catch (netcode::UnpackPacketException &e) {
