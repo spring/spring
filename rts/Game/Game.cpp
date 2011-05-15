@@ -25,7 +25,6 @@
 #include "GameHelper.h"
 #include "GameServer.h"
 #include "GameVersion.h"
-#include "CommandMessage.h"
 #include "GameSetup.h"
 #include "LoadScreen.h"
 #include "SelectedUnits.h"

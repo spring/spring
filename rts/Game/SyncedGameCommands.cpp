@@ -3,7 +3,7 @@
 #include "StdAfx.h"
 
 #include "Game.h"
-#include "CommandMessage.h"
+#include "Action.h"
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
 #include "InMapDraw.h"
