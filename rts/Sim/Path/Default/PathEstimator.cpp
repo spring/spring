@@ -135,11 +135,10 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 	InitVertices();
 	InitBlocks();
 
-	char calcMsg[512];
-	sprintf(calcMsg, "Reading Estimate PathCosts [%d]", BLOCK_SIZE);
-	loadscreen->SetLoadMessage(calcMsg);
-
 	if (!ReadFile(cacheFileName, map)) {
+		char calcMsg[512];
+		sprintf(calcMsg, "PathCosts: creating cache with %d threads", numThreads);
+		loadscreen->SetLoadMessage(calcMsg);
 		pathBarrier = new boost::barrier(numThreads);
 
 		// Start threads if applicable
@@ -771,7 +770,8 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 	sprintf(hashString, "%u", hash);
 
 	std::string filename = std::string(pathDir) + map + hashString + "." + cacheFileName + ".zip";
-
+	if (!filesystem.FileExists(filename))
+		return false;
 	// open file for reading from a suitable location (where the file exists)
 	CArchiveZip* pfile = new CArchiveZip(filesystem.LocateFile(filename));
 
@@ -779,6 +779,10 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 		delete pfile;
 		return false;
 	}
+
+	char calcMsg[512];
+	sprintf(calcMsg, "Reading Estimate PathCosts [%d]", BLOCK_SIZE);
+	loadscreen->SetLoadMessage(calcMsg);
 
 	std::auto_ptr<CArchiveZip> auto_pfile(pfile);
 	CArchiveZip& file(*pfile);
