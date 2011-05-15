@@ -658,7 +658,7 @@ void CGameServer::CheckSync()
 				}
 
 				// send spectator desyncs as private messages to reduce spam
-				for(std::map<int, unsigned>::const_iterator s = desyncSpecs.begin(); s != desyncSpecs.end(); ++s) {
+				for (std::map<int, unsigned>::const_iterator s = desyncSpecs.begin(); s != desyncSpecs.end(); ++s) {
 					int playerNum = s->first;
 					PrivateMessage(playerNum, str(format(SyncError) %players[playerNum].name %(*f) %(s->second ^ correctChecksum)));
 				}
@@ -862,7 +862,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 	switch (msgCode) {
 		case NETMSG_KEYFRAME: {
 			const int frameNum = *(int*)&inbuf[1];
-			if(frameNum <= serverFrameNum && frameNum > players[a].lastFrameResponse)
+			if (frameNum <= serverFrameNum && frameNum > players[a].lastFrameResponse)
 				players[a].lastFrameResponse = frameNum;
 			break;
 		}
@@ -1608,11 +1608,11 @@ void CGameServer::ServerReadNet()
 		}
 	}
 
-	float updateBandwidth = (float)(spring_gettime() - lastBandwidthUpdate) / (float)playerBandwidthInterval;
-	if(updateBandwidth >= 1.0f)
+	const float updateBandwidth = (float)(spring_gettime() - lastBandwidthUpdate) / (float)playerBandwidthInterval;
+	if (updateBandwidth >= 1.0f)
 		lastBandwidthUpdate = spring_gettime();
 
-	for(size_t a=0; a < players.size(); a++) {
+	for (size_t a=0; a < players.size(); a++) {
 		if (!players[a].link)
 			continue; // player not connected
 		if (players[a].link->CheckTimeout(0, !gameHasStarted)) {
@@ -1627,7 +1627,7 @@ void CGameServer::ServerReadNet()
 
 		bool bwLimitWasReached = (gc->linkIncomingPeakBandwidth > 0 && players[a].bandwidthUsage > gc->linkIncomingPeakBandwidth);
 
-		if(updateBandwidth >= 1.0f && gc->linkIncomingSustainedBandwidth > 0)
+		if (updateBandwidth >= 1.0f && gc->linkIncomingSustainedBandwidth > 0)
 			players[a].bandwidthUsage = std::max(0, players[a].bandwidthUsage - std::max(1, (int)((float)gc->linkIncomingSustainedBandwidth / (1000.0f / (playerBandwidthInterval * updateBandwidth)))));
 
 		int numDropped = 0;
@@ -1637,27 +1637,27 @@ void CGameServer::ServerReadNet()
 		int ahead = 0;
 		bool bwLimitIsReached = gc->linkIncomingPeakBandwidth > 0 && players[a].bandwidthUsage > gc->linkIncomingPeakBandwidth;
 		while(players[a].link) {
-			if(dropPacket)
+			if (dropPacket)
 				dropPacket = (packet = players[a].link->Peek(gc->linkIncomingMaxWaitingPackets));
 			packet = (!bwLimitIsReached || dropPacket) ? players[a].link->GetData() : players[a].link->Peek(ahead++);
-			if(!packet)
+			if (!packet)
 				break;
 			bool droppablePacket = (packet->length <= 0 || (packet->data[0] != NETMSG_SYNCRESPONSE && packet->data[0] != NETMSG_KEYFRAME));
-			if(dropPacket && droppablePacket)
+			if (dropPacket && droppablePacket)
 				++numDropped;
-			else if(!bwLimitIsReached || !droppablePacket) {
+			else if (!bwLimitIsReached || !droppablePacket) {
 				ProcessPacket(a, packet); // non droppable packets may be processed more than once, but this does no harm
-				if(gc->linkIncomingPeakBandwidth > 0 && droppablePacket) {
+				if (gc->linkIncomingPeakBandwidth > 0 && droppablePacket) {
 					players[a].bandwidthUsage += std::max((unsigned)linkMinPacketSize, packet->length);
-					if(!bwLimitIsReached)
+					if (!bwLimitIsReached)
 						bwLimitIsReached = (players[a].bandwidthUsage > gc->linkIncomingPeakBandwidth);
 				}
 			}
 		}
-		if(numDropped > 0)
+		if (numDropped > 0)
 			PrivateMessage(a, str(format("Warning: Waiting packet limit was reached for %s [packets dropped]") %players[a].name));
 
-		if(!bwLimitWasReached && bwLimitIsReached)
+		if (!bwLimitWasReached && bwLimitIsReached)
 			PrivateMessage(a, str(format("Warning: Bandwidth limit was reached for %s [packets delayed]") %players[a].name));
 	}
 

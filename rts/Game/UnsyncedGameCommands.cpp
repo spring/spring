@@ -67,10 +67,10 @@
 #include "System/Sound/SoundChannels.h"
 
 static std::vector<std::string> _local_strSpaceTokenize(const std::string& text) {
+	static const char* const SPACE_DELIMS = " \t";
 
 	std::vector<std::string> tokens;
 
-#define SPACE_DELIMS " \t"
 	// Skip delimiters at beginning.
 	std::string::size_type lastPos = text.find_first_not_of(SPACE_DELIMS, 0);
 	// Find first "non-delimiter".
@@ -84,7 +84,6 @@ static std::vector<std::string> _local_strSpaceTokenize(const std::string& text)
 		// Find next "non-delimiter"
 		pos = text.find_first_of(SPACE_DELIMS, lastPos);
 	}
-#undef SPACE_DELIMS
 
 	return tokens;
 }
@@ -417,19 +416,19 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 	}
 
 	else if (!isRepeat && cmd == "mouse1") {
-		mouse->MousePress (mouse->lastx, mouse->lasty, 1);
+		mouse->MousePress(mouse->lastx, mouse->lasty, 1);
 	}
 	else if (!isRepeat && cmd == "mouse2") {
-		mouse->MousePress (mouse->lastx, mouse->lasty, 2);
+		mouse->MousePress(mouse->lastx, mouse->lasty, 2);
 	}
 	else if (!isRepeat && cmd == "mouse3") {
-		mouse->MousePress (mouse->lastx, mouse->lasty, 3);
+		mouse->MousePress(mouse->lastx, mouse->lasty, 3);
 	}
 	else if (!isRepeat && cmd == "mouse4") {
-		mouse->MousePress (mouse->lastx, mouse->lasty, 4);
+		mouse->MousePress(mouse->lastx, mouse->lasty, 4);
 	}
 	else if (!isRepeat && cmd == "mouse5") {
-		mouse->MousePress (mouse->lastx, mouse->lasty, 5);
+		mouse->MousePress(mouse->lastx, mouse->lasty, 5);
 	}
 	else if (cmd == "viewselection") {
 
@@ -714,7 +713,7 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 			}
 		}
 	}
-	else if (cmd == "spectator"){
+	else if (cmd == "spectator") {
 		if (!gu->spectating)
 			net->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
 	}
@@ -974,9 +973,9 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 				unitDrawer->multiThreadDrawUnit = !!atoi(action.extra.c_str());
 				unitDrawer->multiThreadDrawUnitShadow = !!atoi(action.extra.c_str());
 			}
-			if(!gd->multiThreadDrawGround)
-				gd->multiThreadDrawGroundShadow=0;
-			logOutput.Print("Multithreaded rendering is %s", gd->multiThreadDrawGround?"enabled":"disabled");
+			if (!gd->multiThreadDrawGround)
+				gd->multiThreadDrawGroundShadow = 0;
+			logOutput.Print("Multithreaded rendering is %s", gd->multiThreadDrawGround ? "enabled" : "disabled");
 		}
 #	if GML_ENABLE_SIM
 		if (cmd == "multithread" || cmd == "multithreadsim") {
@@ -988,7 +987,7 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 				gmlMultiThreadSim = !!atoi(action.extra.c_str());
 			}
 			gmlStartSim=1;
-			logOutput.Print("Simulation threading is %s", gmlMultiThreadSim?"enabled":"disabled");
+			logOutput.Print("Simulation threading is %s", gmlMultiThreadSim ? "enabled" : "disabled");
 		}
 #	endif
 	}
@@ -996,7 +995,7 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 	else if (cmd == "speedcontrol") {
 		if (action.extra.empty()) {
 			++speedControl;
-			if(speedControl > 2)
+			if (speedControl > 2)
 				speedControl = -2;
 		}
 		else {
@@ -1066,10 +1065,10 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 
 	if (cmd == "speedup") {
 		float speed = gs->userSpeedFactor;
-		if(speed < 5) {
+		if (speed < 5) {
 			speed += (speed < 2) ? 0.1f : 0.2f;
 			float fpart = speed - (int)speed;
-			if(fpart < 0.01f || fpart > 0.99f)
+			if (fpart < 0.01f || fpart > 0.99f)
 				speed = round(speed);
 		} else if (speed < 10) {
 			speed += 0.5f;
@@ -1083,7 +1082,7 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 		if (speed <= 5) {
 			speed -= (speed <= 2) ? 0.1f : 0.2f;
 			float fpart = speed - (int)speed;
-			if(fpart < 0.01f || fpart > 0.99f)
+			if (fpart < 0.01f || fpart > 0.99f)
 				speed = round(speed);
 			if (speed < 0.1f)
 				speed = 0.1f;
@@ -1109,7 +1108,7 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 	else if (cmd == "showelevation") {
 		gd->SetHeightTexture();
 	}
-	else if (cmd == "toggleradarandjammer"){
+	else if (cmd == "toggleradarandjammer") {
 		gd->ToggleRadarAndJammer();
 	}
 	else if (cmd == "showmetalmap") {
@@ -1134,18 +1133,18 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 		gd->ToggleLosTexture();
 	}
 	else if (cmd == "sharedialog") {
-		if(!inputReceivers.empty() && dynamic_cast<CShareBox*>(inputReceivers.front())==0 && !gu->spectating)
+		if (!inputReceivers.empty() && dynamic_cast<CShareBox*>(inputReceivers.front()) == NULL && !gu->spectating)
 			new CShareBox();
 	}
 	else if (cmd == "quitmessage") {
-		if (!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front()) == 0) {
+		if (!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front()) == NULL) {
 			CKeyBindings::HotkeyList quitlist = keyBindings->GetHotkeys("quitmenu");
 			std::string quitkey = quitlist.empty() ? "<none>" : quitlist.front();
 			logOutput.Print(std::string("Press ") + quitkey + " to access the quit menu");
 		}
 	}
 	else if (cmd == "quitmenu") {
-		if (!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front()) == 0)
+		if (!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front()) == NULL)
 			new CQuitBox();
 	}
 	else if (cmd == "quitforce" || cmd == "quit") {
@@ -1456,7 +1455,7 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 		}
 	}
 	else if (cmd == "pastetext") {
-		if (userWriting){
+		if (userWriting) {
 			if (!action.extra.empty()) {
 				userInput.insert(writingPos, action.extra);
 				writingPos += action.extra.length();
@@ -1596,10 +1595,10 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 		CommandMessage pckt(Action(action.extra), gu->myPlayerNum);
 		net->Send(pckt.Pack());
 	}
-	else if (cmd == "savegame"){
+	else if (cmd == "savegame") {
 		SaveGame("Saves/QuickSave.ssf", true);
 	}
-	else if (cmd == "save") {// /save [-y ]<savename>
+	else if (cmd == "save") { // /save [-y ]<savename>
 		bool saveoverride = action.extra.find("-y ") == 0;
 		std::string savename(action.extra.c_str() + (saveoverride ? 3 : 0));
 		savename = "Saves/" + savename + ".ssf";

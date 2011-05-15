@@ -32,12 +32,12 @@ private:
 	CR_DECLARE(CGame);	// Do not use CGame pointer in CR_MEMBER()!!!
 
 public:
-	void LoadGame(const std::string& mapname);
+	void LoadGame(const std::string& mapName);
 	void SetupRenderingParams();
 
 private:
 	void LoadDefs();
-	void LoadSimulation(const std::string& mapname);
+	void LoadSimulation(const std::string& mapName);
 	void LoadRendering();
 	void LoadInterface();
 	void LoadLua();
@@ -45,13 +45,13 @@ private:
 	void PostLoad();
 
 public:
-	CGame(const std::string& mapname, const std::string& modName, ILoadSaveHandler* saveFile);
+	CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
 	virtual ~CGame();
 
 	bool Draw();
 	bool DrawMT();
 
-	static void DrawMTcb(void *c) {((CGame *)c)->DrawMT();}
+	static void DrawMTcb(void* c) { ((CGame *)c)->DrawMT(); }
 	bool Update();
 	/// Called when a key is released by the user
 	int KeyReleased(unsigned short k);
@@ -63,8 +63,8 @@ public:
 	bool ProcessCommandText(unsigned int key, const std::string& command);
 	bool ProcessKeyPressAction(unsigned int key, const Action& action);
 
-	bool ActionPressed(unsigned int key, const Action&, bool isRepeat);
-	bool ActionReleased(const Action&);
+	bool ActionPressed(unsigned int key, const Action& action, bool isRepeat);
+	bool ActionReleased(const Action& action);
 
 	bool HasLag() const;
 
@@ -125,7 +125,7 @@ public:
 
 	CInfoConsole* infoConsole;
 
-	void MakeMemDump(void);
+	void MakeMemDump();
 
 	CConsoleHistory* consoleHistory;
 	CWordCompletion* wordCompletion;
@@ -143,7 +143,7 @@ private:
 	void HandleChatMsg(const ChatMessage& msg);
 
 	/// synced actions (received from server) go in here
-	void ActionReceived(const Action&, int playernum);
+	void ActionReceived(const Action& action, int playernum);
 
 	void DrawInputText();
 	void ParseInputTextGeometry(const std::string& geo);

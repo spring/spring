@@ -218,7 +218,7 @@ CR_REG_METADATA(CGame,(
 
 
 
-CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHandler* saveFile) :
+CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile) :
 	gameDrawMode(gameNotDrawing),
 	defsParser(NULL),
 	fps(0),
@@ -393,12 +393,12 @@ CGame::~CGame()
 }
 
 
-void CGame::LoadGame(const std::string& mapname)
+void CGame::LoadGame(const std::string& mapName)
 {
 	Watchdog::RegisterThread("loadscreen");
 
 	if (!gu->globalQuit) LoadDefs();
-	if (!gu->globalQuit) LoadSimulation(mapname);
+	if (!gu->globalQuit) LoadSimulation(mapName);
 	if (!gu->globalQuit) LoadRendering();
 	if (!gu->globalQuit) LoadInterface();
 	if (!gu->globalQuit) LoadLua();
@@ -467,7 +467,7 @@ void CGame::LoadDefs()
 	}
 }
 
-void CGame::LoadSimulation(const std::string& mapname)
+void CGame::LoadSimulation(const std::string& mapName)
 {
 	// simulation components
 	helper = new CGameHelper();
@@ -475,7 +475,7 @@ void CGame::LoadSimulation(const std::string& mapname)
 
 	loadscreen->SetLoadMessage("Parsing Map Information");
 
-	readmap = CReadMap::LoadMap(mapname);
+	readmap = CReadMap::LoadMap(mapName);
 	groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
 
 	loadscreen->SetLoadMessage("Creating Smooth Height Mesh");
@@ -782,7 +782,7 @@ int CGame::KeyReleased(unsigned short k)
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
-		CInputReceiver* recv=*ri;
+		CInputReceiver* recv = *ri;
 		if (recv && recv->KeyReleased(k)) {
 			return 0;
 		}
@@ -796,7 +796,6 @@ int CGame::KeyReleased(unsigned short k)
 			return 0;
 		}
 	}
-
 
 	return 0;
 }
@@ -855,12 +854,12 @@ bool CGame::Update()
 		gameServer->CreateNewFrame(false, true);
 	}
 
-	if(gs->frameNum == 0 || gs->paused)
+	if (gs->frameNum == 0 || gs->paused)
 		eventHandler.UpdateObjects(); // we must add new rendering objects even if the game has not started yet
 
 	ClientReadNet();
 
-	if(net->NeedsReconnect() && !gameOver) {
+	if (net->NeedsReconnect() && !gameOver) {
 		extern ClientSetup* startsetup;
 		net->AttemptReconnect(startsetup->myPlayerName, startsetup->myPasswd, SpringVersion::GetFull());
 	}
@@ -1085,13 +1084,13 @@ bool CGame::Draw() {
 	//! timings and frame interpolation
 	const unsigned currentTime = SDL_GetTicks();
 
-	if(skipping) {
-		if(skipLastDraw + 500 > currentTime) // render at 2 FPS
+	if (skipping) {
+		if (skipLastDraw + 500 > currentTime) // render at 2 FPS
 			return true;
 		skipLastDraw = currentTime;
 #if defined(USE_GML) && GML_ENABLE_SIM
 		extern volatile int gmlMultiThreadSim;
-		if(!gmlMultiThreadSim)
+		if (!gmlMultiThreadSim)
 #endif
 		{
 			DrawSkip();
@@ -1352,12 +1351,12 @@ bool CGame::Draw() {
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 		int cit = (int)GML_DRAW_CALLIN_TIME() * (int)fps;
-		if(cit > luaDrawTime)
+		if (cit > luaDrawTime)
 			++luaDrawTime;
-		else if(cit < luaDrawTime)
+		else if (cit < luaDrawTime)
 			--luaDrawTime;
 
-		if(showMTInfo) {
+		if (showMTInfo) {
 			float drawPercent = (float)luaDrawTime / 10.0f;
 			char buf[32];
 			SNPRINTF(buf, sizeof(buf), "LUA-DRAW(MT): %2.0f%%", drawPercent);
@@ -1383,7 +1382,7 @@ bool CGame::Draw() {
 				const CPlayer* p = playerHandler->Player(indices[a]);
 				unsigned char color[3] = {255, 255, 255};
 				unsigned char allycolor[3] = {255, 255, 255};
-				if(p->ping != PATHING_FLAG || gs->frameNum != 0) {
+				if (p->ping != PATHING_FLAG || gs->frameNum != 0) {
 					if (p->spectator)
 						prefix = "S";
 					else {
@@ -1439,7 +1438,7 @@ bool CGame::Draw() {
 	}
 
 #if defined(USE_GML) && GML_ENABLE_SIM
-	if(skipping)
+	if (skipping)
 		DrawSkip(false);
 #endif
 
@@ -1589,7 +1588,7 @@ void CGame::StartPlaying()
 	eventHandler.GameStart();
 	net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, speedControl));
 #if defined(USE_GML) && GML_ENABLE_SIM
-	if(showMTInfo) {
+	if (showMTInfo) {
 		CKeyBindings::HotkeyList lslist = keyBindings->GetHotkeys("luaui selector");
 		std::string lskey = lslist.empty() ? "<none>" : lslist.front();
 		logOutput.Print("\n************** SPRING MULTITHREADING VERSION IMPORTANT NOTICE **************");
@@ -1616,7 +1615,7 @@ void CGame::SimFrame() {
 #endif
 
 #ifdef USE_MMGR
-	if(!(gs->frameNum & 31))
+	if (!(gs->frameNum & 31))
 		m_validateAllAllocUnits();
 #endif
 
@@ -1809,7 +1808,7 @@ void CGame::MakeMemDump(void)
 		file << "  xpos " << p->pos.x << " ypos " << p->pos.y << " zpos " << p->pos.z << "\n";
 		file << "  xspeed " << p->speed.x << " yspeed " << p->speed.y << " zspeed " << p->speed.z << "\n";
 	}
-	for(int a=0;a<teamHandler->ActiveTeams();++a){
+	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
 		file << "LOS-map for team " << a << "\n";
 		for (int y = 0; y < gs->mapy>>modInfo.losMipLevel; ++y) {
 			file << " ";
@@ -2022,7 +2021,7 @@ void CGame::EndSkip() {
 
 void CGame::DrawSkip(bool blackscreen) {
 	const int framesLeft = (skipEndFrame - gs->frameNum);
-	if(blackscreen) {
+	if (blackscreen) {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
