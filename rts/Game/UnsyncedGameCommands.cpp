@@ -1650,3 +1650,62 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 
 	return true;
 }
+
+
+bool CGame::ActionReleased(const Action& action)
+{
+	const string& cmd = action.command;
+
+	if (cmd == "drawinmap") {
+		inMapDrawer->SetDrawMode(false);
+	}
+	else if (cmd == "moveforward") {
+		camMove[0] = false;
+	}
+	else if (cmd == "moveback") {
+		camMove[1] = false;
+	}
+	else if (cmd == "moveleft") {
+		camMove[2] = false;
+	}
+	else if (cmd == "moveright") {
+		camMove[3] = false;
+	}
+	else if (cmd == "moveup") {
+		camMove[4] = false;
+	}
+	else if (cmd == "movedown") {
+		camMove[5] = false;
+	}
+	else if (cmd == "movefast") {
+		camMove[6] = false;
+	}
+	else if (cmd == "moveslow") {
+		camMove[7] = false;
+	}
+	else if (cmd == "mouse1") {
+		mouse->MouseRelease(mouse->lastx, mouse->lasty, 1);
+	}
+	else if (cmd == "mouse2") {
+		mouse->MouseRelease(mouse->lastx, mouse->lasty, 2);
+	}
+	else if (cmd == "mouse3") {
+		mouse->MouseRelease(mouse->lastx, mouse->lasty, 3);
+	}
+	else if (cmd == "mousestate") {
+		mouse->ToggleState();
+	}
+	else if (cmd == "gameinfoclose") {
+		CGameInfo::Disable();
+	}
+	// HACK   somehow weird things happen when MouseRelease is called for button 4 and 5.
+	// Note that SYS_WMEVENT on windows also only sends MousePress events for these buttons.
+// 	else if (cmd == "mouse4") {
+// 		mouse->MouseRelease (mouse->lastx, mouse->lasty, 4);
+//	}
+// 	else if (cmd == "mouse5") {
+// 		mouse->MouseRelease (mouse->lastx, mouse->lasty, 5);
+//	}
+
+	return 0;
+}
