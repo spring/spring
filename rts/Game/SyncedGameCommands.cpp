@@ -25,7 +25,7 @@
 #include "System/LogOutput.h"
 #include "System/FileSystem/SimpleParser.h"
 
-void SetBoolArg(bool& value, const std::string& str)
+static void SetBoolArg(bool& value, const std::string& str)
 {
 	if (str.empty()) // toggle
 	{
@@ -44,44 +44,44 @@ bool CGame::ActionReleased(const Action& action)
 {
 	const string& cmd = action.command;
 
-	if (cmd == "drawinmap"){
+	if (cmd == "drawinmap") {
 		inMapDrawer->SetDrawMode(false);
 	}
 	else if (cmd == "moveforward") {
-		camMove[0]=false;
+		camMove[0] = false;
 	}
 	else if (cmd == "moveback") {
-		camMove[1]=false;
+		camMove[1] = false;
 	}
 	else if (cmd == "moveleft") {
-		camMove[2]=false;
+		camMove[2] = false;
 	}
 	else if (cmd == "moveright") {
-		camMove[3]=false;
+		camMove[3] = false;
 	}
 	else if (cmd == "moveup") {
-		camMove[4]=false;
+		camMove[4] = false;
 	}
 	else if (cmd == "movedown") {
-		camMove[5]=false;
+		camMove[5] = false;
 	}
 	else if (cmd == "movefast") {
-		camMove[6]=false;
+		camMove[6] = false;
 	}
 	else if (cmd == "moveslow") {
-		camMove[7]=false;
+		camMove[7] = false;
 	}
 	else if (cmd == "mouse1") {
-		mouse->MouseRelease (mouse->lastx, mouse->lasty, 1);
+		mouse->MouseRelease(mouse->lastx, mouse->lasty, 1);
 	}
 	else if (cmd == "mouse2") {
-		mouse->MouseRelease (mouse->lastx, mouse->lasty, 2);
+		mouse->MouseRelease(mouse->lastx, mouse->lasty, 2);
 	}
 	else if (cmd == "mouse3") {
-		mouse->MouseRelease (mouse->lastx, mouse->lasty, 3);
+		mouse->MouseRelease(mouse->lastx, mouse->lasty, 3);
 	}
 	else if (cmd == "mousestate") {
-			mouse->ToggleState();
+		mouse->ToggleState();
 	}
 	else if (cmd == "gameinfoclose") {
 		CGameInfo::Disable();
