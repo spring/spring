@@ -1,6 +1,6 @@
 
 # This list was created using this *nix shell command:
-# > find . -name "*.cpp" | sort
+# > find . -name "*.cpp" -or -name "*.c" | sort
 # Then Sound/ stuff was removed, because it is now a separate static lib.
 SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/AutohostInterface.cpp"
