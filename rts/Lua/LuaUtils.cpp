@@ -700,3 +700,28 @@ void LuaUtils::PushStringVector(lua_State* L, const vector<string>& vec)
 
 /******************************************************************************/
 /******************************************************************************/
+
+void LuaUtils::PushCommandDesc(lua_State* L, const CommandDescription& cd)
+{
+	lua_createtable(L, 0, 12);
+
+	HSTR_PUSH_NUMBER(L, "id",          cd.id);
+	HSTR_PUSH_NUMBER(L, "type",        cd.type);
+	HSTR_PUSH_STRING(L, "name",        cd.name);
+	HSTR_PUSH_STRING(L, "action",      cd.action);
+	HSTR_PUSH_STRING(L, "tooltip",     cd.tooltip);
+	HSTR_PUSH_STRING(L, "texture",     cd.iconname);
+	HSTR_PUSH_STRING(L, "cursor",      cd.mouseicon);
+	HSTR_PUSH_BOOL(L,   "hidden",      cd.hidden);
+	HSTR_PUSH_BOOL(L,   "disabled",    cd.disabled);
+	HSTR_PUSH_BOOL(L,   "showUnique",  cd.showUnique);
+	HSTR_PUSH_BOOL(L,   "onlyTexture", cd.onlyTexture);
+
+	HSTR_PUSH(L, "params");
+	const int pCount = (int)cd.params.size();
+	lua_createtable(L, 0, pCount);
+	for (int p = 0; p < pCount; p++) {
+		lua_pushsstring(L, cd.params[p]);
+		lua_rawseti(L, -2, p + 1);
+	}
+}
