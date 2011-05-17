@@ -17,9 +17,9 @@
 #include "LuaUnsyncedRead.h"
 
 #include "LuaInclude.h"
-
 #include "LuaHandle.h"
 #include "LuaHashString.h"
+#include "LuaUtils.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/Game.h"
@@ -1609,33 +1609,6 @@ int LuaUnsyncedRead::GetDefaultCommand(lua_State* L)
 }
 
 
-// FIXME: duplicated in LuaSyncedRead.cpp
-static void PushCommandDesc(lua_State* L, const CommandDescription& cd)
-{
-	lua_createtable(L, 0, 12);
-
-	HSTR_PUSH_NUMBER(L, "id",          cd.id);
-	HSTR_PUSH_NUMBER(L, "type",        cd.type);
-	HSTR_PUSH_STRING(L, "name",        cd.name);
-	HSTR_PUSH_STRING(L, "action",      cd.action);
-	HSTR_PUSH_STRING(L, "tooltip",     cd.tooltip);
-	HSTR_PUSH_STRING(L, "texture",     cd.iconname);
-	HSTR_PUSH_STRING(L, "cursor",      cd.mouseicon);
-	HSTR_PUSH_BOOL(L,   "hidden",      cd.hidden);
-	HSTR_PUSH_BOOL(L,   "disabled",    cd.disabled);
-	HSTR_PUSH_BOOL(L,   "showUnique",  cd.showUnique);
-	HSTR_PUSH_BOOL(L,   "onlyTexture", cd.onlyTexture);
-
-	HSTR_PUSH(L, "params");
-	const int pCount = (int)cd.params.size();
-	lua_createtable(L, pCount, 0);
-	for (int p = 0; p < pCount; p++) {
-		lua_pushsstring(L, cd.params[p]);
-		lua_rawseti(L, -2, p + 1);
-	}
-}
-
-
 int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 {
 //	GML_RECMUTEX_LOCK(gui); // GetActiveCmdDescs - this mutex is already locked (lua)
@@ -1645,11 +1618,13 @@ int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 	}
 	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
+
 	const vector<CommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
+
 	for (int i = 0; i < cmdDescCount; i++) {
 		lua_pushnumber(L, i + CMD_INDEX_OFFSET);
-		PushCommandDesc(L, cmdDescs[i]);
+		LuaUtils::PushCommandDesc(L, cmdDescs[i]);
 		lua_rawset(L, -3);
 	}
 	HSTR_PUSH_NUMBER(L, "n", cmdDescCount);
@@ -1675,7 +1650,7 @@ int LuaUnsyncedRead::GetActiveCmdDesc(lua_State* L)
 	if ((cmdIndex < 0) || (cmdIndex >= cmdDescCount)) {
 		return 0;
 	}
-	PushCommandDesc(L, cmdDescs[cmdIndex]);
+	LuaUtils::PushCommandDesc(L, cmdDescs[cmdIndex]);
 	return 1;
 }
 

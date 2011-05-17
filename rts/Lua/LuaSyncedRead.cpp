@@ -77,7 +77,6 @@
 
 using namespace std;
 
-
 static const LuaHashString hs_n("n");
 
 
@@ -3510,7 +3509,7 @@ static void PackCommand(lua_State* L, const Command& cmd)
 
 static int PackCommandQueue(lua_State* L, const CCommandQueue& q, int count)
 {
-	lua_createtable(L, 0, q.size());
+	lua_createtable(L, q.size(), 0);
 
 	int i = 0;
 	CCommandQueue::const_iterator it;
@@ -3896,32 +3895,6 @@ int LuaSyncedRead::GetUnitRulesParam(lua_State* L)
 
 /******************************************************************************/
 
-static void PushCommandDesc(lua_State* L, const CommandDescription& cd)
-{
-	lua_createtable(L, 0, 12);
-
-	HSTR_PUSH_NUMBER(L, "id",          cd.id);
-	HSTR_PUSH_NUMBER(L, "type",        cd.type);
-	HSTR_PUSH_STRING(L, "name",        cd.name);
-	HSTR_PUSH_STRING(L, "action",      cd.action);
-	HSTR_PUSH_STRING(L, "tooltip",     cd.tooltip);
-	HSTR_PUSH_STRING(L, "texture",     cd.iconname);
-	HSTR_PUSH_STRING(L, "cursor",      cd.mouseicon);
-	HSTR_PUSH_BOOL(L,   "hidden",      cd.hidden);
-	HSTR_PUSH_BOOL(L,   "disabled",    cd.disabled);
-	HSTR_PUSH_BOOL(L,   "showUnique",  cd.showUnique);
-	HSTR_PUSH_BOOL(L,   "onlyTexture", cd.onlyTexture);
-
-	HSTR_PUSH(L, "params");
-	const int pCount = (int)cd.params.size();
-	lua_createtable(L, pCount, 0);
-	for (int p = 0; p < pCount; p++) {
-		lua_pushsstring(L, cd.params[p]);
-		lua_rawseti(L, -2, p + 1);
-	}
-}
-
-
 int LuaSyncedRead::GetUnitCmdDescs(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -3949,7 +3922,7 @@ int LuaSyncedRead::GetUnitCmdDescs(lua_State* L)
 	for (int i = startIndex; i <= endIndex; i++) {
 		count++;
 		lua_pushnumber(L, count);
-		PushCommandDesc(L, cmdDescs[i]);
+		LuaUtils::PushCommandDesc(L, cmdDescs[i]);
 		lua_rawset(L, -3);
 	}
 

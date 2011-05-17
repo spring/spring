@@ -82,6 +82,8 @@ class LuaUtils {
 		                             vector<string>& vec);
 
 		static void PushStringVector(lua_State* L, const vector<string>& vec);
+
+		static void PushCommandDesc(lua_State* L, const CommandDescription& cd);
 };
 
 
