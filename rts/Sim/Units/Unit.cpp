@@ -456,13 +456,8 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	modelParser->CreateLocalModel(this);
 
 	// copy the UnitDef volume instance
-	//
-	// aircraft still get half-size spheres for coldet purposes
-	// iif no custom volume is defined (unit->model->radius and
-	// unit->radius themselves are no longer altered)
-	//
 	// note: gets deleted in ~CSolidObject
-	collisionVolume = new CollisionVolume(unitDef->collisionVolume, model->radius * ((unitDef->canfly)? 0.5f: 1.0f));
+	collisionVolume = new CollisionVolume(unitDef->collisionVolume, model->radius);
 	moveType = MoveTypeFactory::GetMoveType(this, unitDef);
 	script = CUnitScriptFactory::CreateScript(unitDef->scriptPath, this);
 }
