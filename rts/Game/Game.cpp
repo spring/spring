@@ -8,6 +8,7 @@
 #include <cctype>
 #include <locale>
 #include <sstream>
+#include <stdexcept>
 
 #include <boost/thread/thread.hpp>
 #include <boost/bind.hpp>
@@ -37,6 +38,7 @@
 #include "IVideoCapturing.h"
 #include "InMapDraw.h"
 #include "InMapDrawModel.h"
+#include "SyncedGameCommands.h"
 #include "Game/UI/UnitTracker.h"
 #ifdef _WIN32
 #  include "winerror.h"
@@ -302,6 +304,12 @@ CGame::~CGame()
 	tracefile << "[" << __FUNCTION__ << "]";
 #endif
 
+	std::map<std::string, IActionExecutor*>::iterator aei;
+	for (aei = actionExecutors.begin(); aei != actionExecutors.end(); ++aei) {
+		SafeDelete(aei->second);
+	}
+	actionExecutors.clear();
+
 	CLoadScreen::DeleteInstance();
 	IVideoCapturing::FreeInstance();
 	ISound::Shutdown();
@@ -524,6 +532,8 @@ void CGame::LoadSimulation(const std::string& mapName)
 	pathManager = IPathManager::GetInstance();
 
 	wind.LoadWind(mapInfo->atmosphere.minWind, mapInfo->atmosphere.maxWind);
+
+	SyncedGameCommands::RegisterDefaultExecutors(this);
 
 	CCobInstance::InitVars(teamHandler->ActiveTeams(), teamHandler->ActiveAllyTeams());
 	CEngineOutHandler::Initialize();
@@ -1785,7 +1795,7 @@ void CGame::UpdateUI(bool updateCam)
 
 
 
-void CGame::MakeMemDump(void)
+void CGame::MakeMemDump()
 {
 	std::ofstream file(gameServer ? "memdump.txt" : "memdumpclient.txt");
 
@@ -2247,5 +2257,33 @@ void CGame::ReloadGame()
 	}
 	else {
 		logOutput.Print("Can only reload game when game has been started from a savegame");
+	}
+}
+
+
+void CGame::RegisterSyncedActionExecutor(IActionExecutor* actionExecutor)
+{
+	const std::string commandLower = StringToLower(actionExecutor->GetCommand());
+	const std::map<std::string, IActionExecutor*>::const_iterator aei
+			= actionExecutors.find(commandLower);
+
+	if (aei != actionExecutors.end()) {
+		throw std::runtime_error("Tried to register duplicate ActionExecutor for command: " + commandLower);
+	} else {
+		actionExecutors[commandLower] = actionExecutor;
+	}
+}
+
+void CGame::ActionReceived(const Action& action, int playerID)
+{
+	const std::map<std::string, IActionExecutor*>::const_iterator aei
+			= actionExecutors.find(action.command);
+
+	if (aei != actionExecutors.end()) {
+		// an executor for that action was found
+		aei->second->ExecuteAction(action, playerID);
+	} else if (gs->frameNum > 1) {
+		if (luaRules) luaRules->SyncedActionFallback(action.rawline, playerID);
+		if (luaGaia) luaGaia->SyncedActionFallback(action.rawline, playerID);
 	}
 }

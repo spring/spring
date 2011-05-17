@@ -22,6 +22,7 @@ class LuaParser;
 class LuaInputReceiver;
 class ILoadSaveHandler;
 class Action;
+class IActionExecutor;
 class ChatMessage;
 class SkirmishAIData;
 
@@ -132,6 +133,12 @@ public:
 
 	void SetHotBinding(const std::string& action) { hotBinding = action; }
 
+	/**
+	 * Register a new action-executor for a synced chat command.
+	 * @param actionExecutor has to be new'ed, will be delete'ed internally.
+	 */
+	void RegisterSyncedActionExecutor(IActionExecutor* actionExecutor);
+
 private:
 	/// Save the game state to file.
 	void SaveGame(const std::string& filename, bool overwrite);
@@ -143,7 +150,7 @@ private:
 	void HandleChatMsg(const ChatMessage& msg);
 
 	/// synced actions (received from server) go in here
-	void ActionReceived(const Action& action, int playernum);
+	void ActionReceived(const Action& action, int playerID);
 
 	void DrawInputText();
 	void ParseInputTextGeometry(const std::string& geo);
@@ -153,6 +160,7 @@ private:
 
 	void ReColorTeams();
 
+public:
 	void ReloadCOB(const std::string& msg, int player);
 	void ReloadCEGs(const std::string& tag);
 
@@ -160,6 +168,7 @@ private:
 	void DrawSkip(bool blackscreen = true);
 	void EndSkip();
 
+private:
 	std::string hotBinding;
 	float inputTextPosX;
 	float inputTextPosY;
@@ -171,6 +180,8 @@ private:
 	bool chatting;
 
 	unsigned lastFrameTime;
+
+	std::map<std::string, IActionExecutor*> actionExecutors;
 
 public:
 	struct PlayerTrafficInfo {
