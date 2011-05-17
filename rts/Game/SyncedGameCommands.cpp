@@ -9,7 +9,7 @@
 #include "PlayerHandler.h"
 #include "InMapDraw.h"
 #ifdef _WIN32
-#  include "winerror.h"
+#  include "winerror.h" // TODO someone on windows (MinGW? VS?) please check if this is required
 #endif
 
 #include "Lua/LuaGaia.h"
@@ -20,11 +20,10 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/Unit.h"
-#include "UI/GameInfo.h"
 #include "UI/LuaUI.h"
-#include "UI/MouseHandler.h"
-#include "System/LogOutput.h"
 #include "System/FileSystem/SimpleParser.h"
+#include "System/LogOutput.h"
+#include "System/GlobalUnsynced.h"
 
 #include <string>
 #include <vector>
