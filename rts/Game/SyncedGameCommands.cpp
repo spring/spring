@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 
+#include "SyncedGameCommands.h"
 #include "Game.h"
 #include "Action.h"
 #include "SelectedUnits.h"
@@ -25,6 +26,9 @@
 #include "System/LogOutput.h"
 #include "System/FileSystem/SimpleParser.h"
 
+#include <string>
+#include <vector>
+
 static void SetBoolArg(bool& value, const std::string& str)
 {
 	if (str.empty()) // toggle
@@ -39,66 +43,109 @@ static void SetBoolArg(bool& value, const std::string& str)
 }
 
 
-// FOR SYNCED MESSAGES
-void CGame::ActionReceived(const Action& action, int playerNum)
-{
-	if (action.command == "cheat") {
-		SetBoolArg(gs->cheatEnabled, action.extra);
+
+class CheatActionExecutor : public IActionExecutor {
+public:
+	CheatActionExecutor() : IActionExecutor("Cheat") {}
+
+	void Execute(const std::string& args, int playerID) const {
+		SetBoolArg(gs->cheatEnabled, args);
 		if (gs->cheatEnabled)
 			logOutput.Print("Cheating!");
 		else
 			logOutput.Print("No more cheating");
 	}
-	else if (action.command == "nohelp") {
-		SetBoolArg(gs->noHelperAIs, action.extra);
+};
+
+
+class NoHelpActionExecutor : public IActionExecutor {
+public:
+	NoHelpActionExecutor() : IActionExecutor("NoHelp") {}
+
+	void Execute(const std::string& args, int playerID) const {
+		SetBoolArg(gs->noHelperAIs, args);
 		selectedUnits.PossibleCommandChange(NULL);
 		logOutput.Print("LuaUI control is %s", gs->noHelperAIs ? "disabled" : "enabled");
 	}
-	else if (action.command == "nospecdraw") {
+};
+
+
+class NoSpecDrawActionExecutor : public IActionExecutor {
+public:
+	NoSpecDrawActionExecutor() : IActionExecutor("NoSpecDraw") {}
+
+	void Execute(const std::string& args, int playerID) const {
 		bool buf;
-		SetBoolArg(buf, action.extra);
+		SetBoolArg(buf, args);
 		inMapDrawer->SetSpecMapDrawingAllowed(buf);
 	}
-	else if (action.command == "godmode") {
-		if (!gs->cheatEnabled)
-			logOutput.Print("godmode requires /cheat");
-		else {
-			SetBoolArg(gs->godMode, action.extra);
-			CLuaUI::UpdateTeams();
-			if (gs->godMode) {
-				logOutput.Print("God Mode Enabled");
-			} else {
-				logOutput.Print("God Mode Disabled");
-			}
-			CPlayer::UpdateControlledTeams();
-		}
-	}
-	else if (action.command == "globallos") {
-		if (!gs->cheatEnabled) {
-			logOutput.Print("globallos requires /cheat");
+};
+
+
+class GodModeActionExecutor : public IActionExecutor {
+public:
+	GodModeActionExecutor() : IActionExecutor("GodMode", true) {}
+
+	void Execute(const std::string& args, int playerID) const {
+		SetBoolArg(gs->godMode, args);
+		CLuaUI::UpdateTeams();
+		if (gs->godMode) {
+			logOutput.Print("God Mode Enabled");
 		} else {
-			SetBoolArg(gs->globalLOS, action.extra);
-			if (gs->globalLOS) {
-				logOutput.Print("Global LOS Enabled");
-			} else {
-				logOutput.Print("Global LOS Disabled");
-			}
+			logOutput.Print("God Mode Disabled");
+		}
+		CPlayer::UpdateControlledTeams();
+	}
+};
+
+
+class GlobalLosActionExecutor : public IActionExecutor {
+public:
+	GlobalLosActionExecutor() : IActionExecutor("GlobalLOS", true) {}
+
+	void Execute(const std::string& args, int playerID) const {
+		SetBoolArg(gs->globalLOS, args);
+		if (gs->globalLOS) {
+			logOutput.Print("Global LOS Enabled");
+		} else {
+			logOutput.Print("Global LOS Disabled");
 		}
 	}
-	else if (action.command == "nocost" && gs->cheatEnabled) {
+};
+
+
+class NoCostActionExecutor : public IActionExecutor {
+public:
+	NoCostActionExecutor() : IActionExecutor("NoCost", true) {}
+
+	void Execute(const std::string& args, int playerID) const {
 		if (unitDefHandler->ToggleNoCost()) {
 			logOutput.Print("Everything is for free!");
 		} else {
 			logOutput.Print("Everything costs resources again!");
 		}
 	}
-	else if (action.command == "give" && gs->cheatEnabled) {
-		const vector<string>& args = CSimpleParser::Tokenize(action.extra, 0);
-		unitLoader->ParseAndExecuteGiveUnitsCommand(args, playerHandler->Player(playerNum)->team);
+};
+
+
+class GiveActionExecutor : public IActionExecutor {
+public:
+	GiveActionExecutor() : IActionExecutor("Give", true) {}
+
+	void Execute(const std::string& args, int playerID) const {
+		const std::vector<std::string>& parsedArgs = CSimpleParser::Tokenize(args, 0);
+		unitLoader->ParseAndExecuteGiveUnitsCommand(parsedArgs, playerHandler->Player(playerID)->team);
 	}
-	else if (action.command == "destroy" && gs->cheatEnabled) {
-		std::stringstream ss(action.extra);
-		logOutput.Print("Killing units: %s", action.extra.c_str());
+};
+
+
+class DestroyActionExecutor : public IActionExecutor {
+public:
+	DestroyActionExecutor() : IActionExecutor("Destroy", true) {}
+
+	void Execute(const std::string& args, int playerID) const {
+		std::stringstream ss(args);
+		logOutput.Print("Killing units: %s", args.c_str());
 
 		do {
 			unsigned int id; ss >> id;
@@ -112,19 +159,47 @@ void CGame::ActionReceived(const Action& action, int playerNum)
 				u->KillUnit(false, false, 0);
 		} while (true);
 	}
-	else if (action.command == "nospectatorchat") {
-		SetBoolArg(noSpectatorChat, action.extra);
-		logOutput.Print("Spectators %s chat", noSpectatorChat ? "can not" : "can");
+};
+
+
+class NoSpectatorChatActionExecutor : public IActionExecutor {
+public:
+	NoSpectatorChatActionExecutor() : IActionExecutor("NoSpectatorChat") {}
+
+	void Execute(const std::string& args, int playerID) const {
+		SetBoolArg(game->noSpectatorChat, args);
+		logOutput.Print("Spectators %s chat", game->noSpectatorChat ? "can not" : "can");
 	}
-	else if (action.command == "reloadcob" && gs->cheatEnabled) {
-		ReloadCOB(action.extra, playerNum);
+};
+
+
+class ReloadCobActionExecutor : public IActionExecutor {
+public:
+	ReloadCobActionExecutor() : IActionExecutor("ReloadCOB", true) {}
+
+	void Execute(const std::string& args, int playerID) const {
+		game->ReloadCOB(args, playerID);
 	}
-	else if (action.command == "reloadcegs" && gs->cheatEnabled) {
-		ReloadCEGs(action.extra);
+};
+
+
+class ReloadCegsActionExecutor : public IActionExecutor {
+public:
+	ReloadCegsActionExecutor() : IActionExecutor("ReloadCegs", true) {}
+
+	void Execute(const std::string& args, int playerID) const {
+		game->ReloadCEGs(args);
 	}
-	else if (action.command == "devlua" && gs->cheatEnabled) {
+};
+
+
+class DevLuaActionExecutor : public IActionExecutor {
+public:
+	DevLuaActionExecutor() : IActionExecutor("DevLua", true) {}
+
+	void Execute(const std::string& args, int playerID) const {
 		bool devMode = CLuaHandle::GetDevMode();
-		SetBoolArg(devMode, action.extra);
+		SetBoolArg(devMode, args);
 		CLuaHandle::SetDevMode(devMode);
 		if (devMode) {
 			logOutput.Print("Lua devmode enabled, this can cause desyncs");
@@ -132,72 +207,104 @@ void CGame::ActionReceived(const Action& action, int playerNum)
 			logOutput.Print("Lua devmode disabled");
 		}
 	}
-	else if (action.command == "editdefs" && gs->cheatEnabled) {
-		SetBoolArg(gs->editDefsEnabled, action.extra);
+};
+
+
+class EditDefsActionExecutor : public IActionExecutor {
+public:
+	EditDefsActionExecutor() : IActionExecutor("EditDefs", true) {}
+
+	void Execute(const std::string& args, int playerID) const {
+		SetBoolArg(gs->editDefsEnabled, args);
 		if (gs->editDefsEnabled)
 			logOutput.Print("Definition Editing!");
 		else
 			logOutput.Print("No definition Editing");
 	}
-	else if ((action.command == "luarules") && (gs->frameNum > 1)) {
-		if ((action.extra == "reload") && (playerNum == 0)) {
-			if (!gs->cheatEnabled) {
-				logOutput.Print("Cheating required to reload synced scripts");
-			} else {
-				CLuaRules::FreeHandler();
-				CLuaRules::LoadHandler();
-				if (luaRules) {
-					logOutput.Print("LuaRules reloaded");
-				} else {
-					logOutput.Print("LuaRules reload failed");
-				}
-			}
-		}
-		else if ((action.extra == "disable") && (playerNum == 0)) {
-			if (!gs->cheatEnabled) {
-				logOutput.Print("Cheating required to disable synced scripts");
-			} else {
-				CLuaRules::FreeHandler();
-				logOutput.Print("LuaRules disabled");
-			}
-		}
-		else {
-			if (luaRules) luaRules->GotChatMsg(action.extra, playerNum);
-		}
-	}
-	else if ((action.command == "luagaia") && (gs->frameNum > 1)) {
-		if (gs->useLuaGaia) {
-			if ((action.extra == "reload") && (playerNum == 0)) {
+};
+
+
+class LuaRulesActionExecutor : public IActionExecutor {
+public:
+	LuaRulesActionExecutor() : IActionExecutor("LuaRules") {}
+
+	void Execute(const std::string& args, int playerID) const {
+		if (gs->frameNum > 1) {
+			if ((args == "reload") && (playerID == 0)) {
 				if (!gs->cheatEnabled) {
 					logOutput.Print("Cheating required to reload synced scripts");
 				} else {
-					CLuaGaia::FreeHandler();
-					CLuaGaia::LoadHandler();
-					if (luaGaia) {
-						logOutput.Print("LuaGaia reloaded");
+					CLuaRules::FreeHandler();
+					CLuaRules::LoadHandler();
+					if (luaRules) {
+						logOutput.Print("LuaRules reloaded");
 					} else {
-						logOutput.Print("LuaGaia reload failed");
+						logOutput.Print("LuaRules reload failed");
 					}
 				}
 			}
-			else if ((action.extra == "disable") && (playerNum == 0)) {
+			else if ((args == "disable") && (playerID == 0)) {
 				if (!gs->cheatEnabled) {
 					logOutput.Print("Cheating required to disable synced scripts");
 				} else {
-					CLuaGaia::FreeHandler();
-					logOutput.Print("LuaGaia disabled");
+					CLuaRules::FreeHandler();
+					logOutput.Print("LuaRules disabled");
 				}
 			}
-			else if (luaGaia) {
-				luaGaia->GotChatMsg(action.extra, playerNum);
-			}
 			else {
-				logOutput.Print("LuaGaia is not enabled");
+				if (luaRules) luaRules->GotChatMsg(args, playerID);
 			}
 		}
 	}
+};
+
+
+class LuaGaiaActionExecutor : public IActionExecutor {
+public:
+	LuaGaiaActionExecutor() : IActionExecutor("LuaGaia") {}
+
+	void Execute(const std::string& args, int playerID) const {
+		if (gs->frameNum > 1) {
+			if (gs->useLuaGaia) {
+				if ((args == "reload") && (playerID == 0)) {
+					if (!gs->cheatEnabled) {
+						logOutput.Print("Cheating required to reload synced scripts");
+					} else {
+						CLuaGaia::FreeHandler();
+						CLuaGaia::LoadHandler();
+						if (luaGaia) {
+							logOutput.Print("LuaGaia reloaded");
+						} else {
+							logOutput.Print("LuaGaia reload failed");
+						}
+					}
+				}
+				else if ((args == "disable") && (playerID == 0)) {
+					if (!gs->cheatEnabled) {
+						logOutput.Print("Cheating required to disable synced scripts");
+					} else {
+						CLuaGaia::FreeHandler();
+						logOutput.Print("LuaGaia disabled");
+					}
+				}
+				else if (luaGaia) {
+					luaGaia->GotChatMsg(args, playerID);
+				}
+				else {
+					logOutput.Print("LuaGaia is not enabled");
+				}
+			}
+		}
+	}
+};
+
+
 #ifdef DEBUG
-	else if (action.command == "desync" && gs->cheatEnabled) {
+class DesyncActionExecutor : public IActionExecutor {
+public:
+	DesyncActionExecutor() : IActionExecutor("Desync", true) {}
+
+	void Execute(const std::string& args, int playerID) const {
 		ASSERT_SYNCED_PRIMITIVE(gu->myPlayerNum * 123.0f);
 		ASSERT_SYNCED_PRIMITIVE(gu->myPlayerNum * 123);
 		ASSERT_SYNCED_PRIMITIVE((short)(gu->myPlayerNum * 123 + 123));
@@ -205,7 +312,7 @@ void CGame::ActionReceived(const Action& action, int playerNum)
 
 		for (size_t i = uh->MaxUnits() - 1; i >= 0; --i) {
 			if (uh->units[i]) {
-				if (playerNum == gu->myPlayerNum) {
+				if (playerID == gu->myPlayerNum) {
 					++uh->units[i]->midPos.x; // and desync...
 					++uh->units[i]->midPos.x;
 				} else {
@@ -218,42 +325,88 @@ void CGame::ActionReceived(const Action& action, int playerNum)
 		}
 		logOutput.Print("Desyncing in frame %d.", gs->frameNum);
 	}
+};
 #endif // defined DEBUG
-	else if (action.command == "atm" && gs->cheatEnabled) {
-		const int team = playerHandler->Player(playerNum)->team;
+
+
+class AtmActionExecutor : public IActionExecutor {
+public:
+	AtmActionExecutor() : IActionExecutor("Atm", true) {}
+
+	void Execute(const std::string& args, int playerID) const {
+		const int team = playerHandler->Player(playerID)->team;
 		teamHandler->Team(team)->AddMetal(1000);
 		teamHandler->Team(team)->AddEnergy(1000);
 	}
-	else if (action.command == "take" && (!playerHandler->Player(playerNum)->spectator || gs->cheatEnabled)) {
-		const int sendTeam = playerHandler->Player(playerNum)->team;
-		for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
-			if (teamHandler->AlliedTeams(a, sendTeam)) {
-				bool hasPlayer = false;
-				for (int b = 0; b < playerHandler->ActivePlayers(); ++b) {
-					if (playerHandler->Player(b)->active && playerHandler->Player(b)->team==a && !playerHandler->Player(b)->spectator) {
-						hasPlayer = true;
-						break;
+};
+
+
+class TakeActionExecutor : public IActionExecutor {
+public:
+	TakeActionExecutor() : IActionExecutor("Take") {}
+
+	void Execute(const std::string& args, int playerID) const {
+		if (!playerHandler->Player(playerID)->spectator || gs->cheatEnabled) {
+			const int sendTeam = playerHandler->Player(playerID)->team;
+			for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
+				if (teamHandler->AlliedTeams(a, sendTeam)) {
+					bool hasPlayer = false;
+					for (int b = 0; b < playerHandler->ActivePlayers(); ++b) {
+						if (playerHandler->Player(b)->active && playerHandler->Player(b)->team==a && !playerHandler->Player(b)->spectator) {
+							hasPlayer = true;
+							break;
+						}
 					}
-				}
-				if (!hasPlayer) {
-					teamHandler->Team(a)->GiveEverythingTo(sendTeam);
+					if (!hasPlayer) {
+						teamHandler->Team(a)->GiveEverythingTo(sendTeam);
+					}
 				}
 			}
 		}
 	}
-	else if (action.command == "skip") {
-		if (action.extra.find_first_of("start") == 0) {
-			std::istringstream buf(action.extra.substr(6));
-			int targetframe;
-			buf >> targetframe;
-			StartSkip(targetframe);
+};
+
+
+class SkipActionExecutor : public IActionExecutor {
+public:
+	SkipActionExecutor() : IActionExecutor("Skip") {}
+
+	void Execute(const std::string& args, int playerID) const {
+		if (args.find_first_of("start") == 0) {
+			std::istringstream buf(args.substr(6));
+			int targetFrame;
+			buf >> targetFrame;
+			game->StartSkip(targetFrame);
 		}
-		else if (action.extra == "end") {
-			EndSkip();
+		else if (args == "end") {
+			game->EndSkip();
 		}
 	}
-	else if (gs->frameNum > 1) {
-		if (luaRules) luaRules->SyncedActionFallback(action.rawline, playerNum);
-		if (luaGaia) luaGaia->SyncedActionFallback(action.rawline, playerNum);
-	}
+};
+
+
+
+void SyncedGameCommands::RegisterDefaultExecutors(CGame* game) {
+	
+	game->RegisterSyncedActionExecutor(new CheatActionExecutor());
+	game->RegisterSyncedActionExecutor(new NoHelpActionExecutor());
+	game->RegisterSyncedActionExecutor(new NoSpecDrawActionExecutor());
+	game->RegisterSyncedActionExecutor(new GodModeActionExecutor());
+	game->RegisterSyncedActionExecutor(new GlobalLosActionExecutor());
+	game->RegisterSyncedActionExecutor(new NoCostActionExecutor());
+	game->RegisterSyncedActionExecutor(new GiveActionExecutor());
+	game->RegisterSyncedActionExecutor(new DestroyActionExecutor());
+	game->RegisterSyncedActionExecutor(new NoSpectatorChatActionExecutor());
+	game->RegisterSyncedActionExecutor(new ReloadCobActionExecutor());
+	game->RegisterSyncedActionExecutor(new ReloadCegsActionExecutor());
+	game->RegisterSyncedActionExecutor(new DevLuaActionExecutor());
+	game->RegisterSyncedActionExecutor(new EditDefsActionExecutor());
+	game->RegisterSyncedActionExecutor(new LuaRulesActionExecutor());
+	game->RegisterSyncedActionExecutor(new LuaGaiaActionExecutor());
+#ifdef DEBUG
+	game->RegisterSyncedActionExecutor(new DesyncActionExecutor());
+#endif // defined DEBUG
+	game->RegisterSyncedActionExecutor(new AtmActionExecutor());
+	game->RegisterSyncedActionExecutor(new TakeActionExecutor());
+	game->RegisterSyncedActionExecutor(new SkipActionExecutor());
 }
