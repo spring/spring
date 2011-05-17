@@ -19,7 +19,7 @@
 #include "InMapDraw.h"
 #include "InMapDrawModel.h"
 #ifdef _WIN32
-#  include "winerror.h"
+#  include "winerror.h" // TODO someone on windows (MinGW? VS?) please check if this is required
 #endif
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
