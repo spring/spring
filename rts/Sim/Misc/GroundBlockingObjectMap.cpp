@@ -11,6 +11,7 @@
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Path/IPathManager.h"
 #include "creg/STL_Map.h"
+#include "lib/gml/gmlmut.h"
 
 CGroundBlockingObjectMap* groundBlockingObjectMap;
 
@@ -33,6 +34,8 @@ inline static const int GetObjectID(CSolidObject* obj)
 
 void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 {
+	GML_STDMUTEX_LOCK(block); // AddGroundBlockingObject
+
 	const int objID = GetObjectID(object);
 
 	object->isMarkedOnBlockingMap = true;
@@ -70,6 +73,8 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 
 void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, const unsigned char* yardMap, unsigned char mask)
 {
+	GML_STDMUTEX_LOCK(block); // AddGroundBlockingObject
+
 	const int objID = GetObjectID(object);
 
 	object->isMarkedOnBlockingMap = true;
@@ -110,6 +115,8 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 
 void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 {
+	GML_STDMUTEX_LOCK(block); // RemoveGroundBlockingObject
+
 	const int objID = GetObjectID(object);
 
 	const int bx = object->mapPos.x;
@@ -157,6 +164,8 @@ void CGroundBlockingObjectMap::MoveGroundBlockingObject(CSolidObject* object, fl
   * pointer to the top-most / bottom-most blocking object is returned.
   */
 CSolidObject* CGroundBlockingObjectMap::GroundBlockedUnsafe(int mapSquare, bool topMost) {
+	GML_STDMUTEX_LOCK(block); // GroundBlockedUnsafe
+
 	if (groundBlockingMap[mapSquare].empty()) {
 		return NULL;
 	}
@@ -215,6 +224,8 @@ void CGroundBlockingObjectMap::CloseBlockingYard(CSolidObject* yard, const unsig
 
 bool CGroundBlockingObjectMap::CanCloseYard(CSolidObject* yard)
 {
+	GML_STDMUTEX_LOCK(block); // CanCloseYard
+
 	const int objID = GetObjectID(yard);
 
 	for (int z = yard->mapPos.y; z < yard->mapPos.y + yard->zsize; ++z) {
