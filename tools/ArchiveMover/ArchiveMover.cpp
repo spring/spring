@@ -20,8 +20,13 @@
 #include <iostream>
 #include <exception>
 #include <algorithm>
+
+#include "CUtils/SharedLibrary.h"
+
 using std::endl;
 
+
+#ifdef WIN32 //TODO: cleanup ifdef/defines
 
 #define ARCHIVE_MOVER_USE_WIN_API
 
@@ -39,7 +44,7 @@ using std::endl;
     #pragma comment(linker, "/SUBSYSTEM:CONSOLE")
   #endif
 #endif
-
+#endif
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_array.hpp>
@@ -78,7 +83,6 @@ extern "C" {
 #include "lib/7z/7zCrc.h"
 #include "lib/7z/7zFile.h"
 }
-
 
 #if defined(WIN32) && (defined(UNICODE) || defined(_UNICODE))
 
@@ -280,6 +284,33 @@ int main(int argc, const char* const* argv){
 }
 #endif
 
+typedef void( *myinit )(bool isinit,int bla);
+typedef const char*( *myfind )(void);
+
+String getWriteableDataDir(){
+	String res=_("");
+	char tmp[1024];
+	sharedLib_createFullLibName("unitsync", tmp, sizeof(tmp));
+	std::string lib(tmp);
+	//FIXME: LD_LIBRARY_PATH needs to be corretly set on unix if unitsync isn't in the same path
+	sharedLib_t unitsync = sharedLib_load(lib.c_str());
+	if (!sharedLib_isLoaded(unitsync)){
+		return res;
+	}
+	myinit func_init=(myinit)sharedLib_findAddress(unitsync, "Init");
+	myfind func_getdir=(myfind)sharedLib_findAddress(unitsync, "GetWritableDataDirectory");
+	(*func_init)(true,0);
+#if defined(WIN32) && (defined(UNICODE) || defined(_UNICODE))
+	std::string path=(*func_getdir)();
+	//convert string to unicode string
+	std::wstring ws( path.begin(), path.end() );
+#else
+	res = (*func_getdir)();
+#endif
+	sharedLib_unload(unitsync);
+	return res;
+}
+
 
 static int run(int argc, const Char* const* argv){
 
@@ -308,14 +339,12 @@ static int run(int argc, const Char* const* argv){
 			message<<_("Usage: ")<<fs::system_complete(argv[0]).leaf()<<_(" [--quiet] <filename>")<<endl<<endl;
 			return 1;
 		}
-
 		const Path source_file = fs::system_complete(source_file_arg);
-
-		// destination: My Documents/My Games/Spring
-		TCHAR strPath[MAX_PATH];
-		SHGetFolderPath( NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, strPath);
-
-		Path target_dir = fs::system_complete(strPath) / _("My Games") / _("Spring");
+		Path target_dir = getWriteableDataDir();
+		if (target_dir==_("")){
+			message << _("Couldn't get writeable dir from unitsync") << endl;
+			return 1;
+		}
 
 		if(!fs::exists(source_file)){
 			message<<source_file<<endl<<_("File not found.")<<endl;
@@ -395,7 +424,13 @@ static int run(int argc, const Char* const* argv){
 		}
 
 		target_dir /= source_file.leaf();
-		fs::rename(source_file, target_dir);
+		try{
+			fs::rename(source_file, target_dir);
+		}
+		catch (FilesystemPathError& error){ //rename failed, copy + delete it
+			fs::copy_file(source_file, target_dir);
+			fs::remove(source_file);
+		}
 
 		if (!quiet) {
 			message<<_("The ")<<(content == R_MAP? _("map '") : _("game '"))<<source_file.leaf()
@@ -518,8 +553,7 @@ static ArchiveType read_archive_content_sd7(const Path& filename){
 	String fn = filename.string();
 	int len   = 2*fn.size();
 	char tmpfn[len];
-
-#if defined(UNICODE) || defined(_UNICODE)
+#if defined(WIN32) && ( defined(UNICODE) || defined(_UNICODE))
 	WideCharToMultiByte(CP_ACP, 0, fn.c_str(), -1, tmpfn, len, NULL, NULL);
 #else
 	strcpy(tmpfn, fn.c_str());
@@ -588,3 +622,4 @@ static ArchiveType read_archive_content_sd7(const Path& filename){
 	File_Close(&stream.file);
 	return content;
 }
+
