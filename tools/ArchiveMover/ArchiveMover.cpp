@@ -276,34 +276,6 @@ int wmain(int argc, const wchar_t* const* argv){
 }
 #else
 int main(int argc, const char* const* argv){
-/*	//Untested
-	mbstate_t mbstate;
-	memset((void*)&mbstate, 0, sizeof(mbstate));
-
-	wchar_t** argvW = new wchar_t*[argc];
-	for(int i = 0; i < argc; i++){
-		const char *indirect_string = argv[i];
-		std::size_t num_chars = mbsrtowcs(NULL, &indirect_string, INT_MAX, &mbstate);
-		if(num_chars == -1){
-			return 1;
-		}
-
-		argvW[i] = new wchar_t[num_chars+1];
-		num_chars = mbsrtowcs(argvW[i], &indirect_string, num_chars+1, &mbstate);
-		if(num_chars == -1){
-			return 1;
-		}
-	}
-
-	int ret = run(argc, argvW);
-
-	for(int i = 0; i < argc; i++){
-		delete [] argvW[i];
-	}
-	delete [] argvW;
-
-	return ret;
-*/
 	return run(argc, argv);
 }
 #endif
@@ -372,14 +344,6 @@ static int run(int argc, const Char* const* argv){
 			return 1;
 		}
 
-
-		//for(Path test_path = source_file; test_path.has_root_directory(); ){
-		//	if(fs::equivalent(test_path, target_dir)){
-		//		message<<_("'")<<source_file.leaf()<<_("' already exists in the Spring directory.")<<endl;
-		//		return 1;
-		//	}
-		//	test_path = test_path.branch_path();
-		//}
 
 
 		if(content == R_MAP){
