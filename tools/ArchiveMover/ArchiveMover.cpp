@@ -291,7 +291,13 @@ String getWriteableDataDir(){
 	String res=_("");
 	char tmp[1024];
 	sharedLib_createFullLibName("unitsync", tmp, sizeof(tmp));
-	std::string lib(tmp);
+
+#if defined(WIN32) && (defined(UNICODE) || defined(_UNICODE))
+	std::string tmppath(tmp);
+	String lib(tmppath.begin(), tmppath.end());
+#else
+	String lib(tmp);
+#endif
 	//FIXME: LD_LIBRARY_PATH needs to be corretly set on unix if unitsync isn't in the same path
 	sharedLib_t unitsync = sharedLib_load(lib.c_str());
 	if (!sharedLib_isLoaded(unitsync)){
@@ -301,9 +307,9 @@ String getWriteableDataDir(){
 	myfind func_getdir=(myfind)sharedLib_findAddress(unitsync, "GetWritableDataDirectory");
 	(*func_init)(true,0);
 #if defined(WIN32) && (defined(UNICODE) || defined(_UNICODE))
-	std::string path=(*func_getdir)();
+	tmppath=(*func_getdir)();
 	//convert string to unicode string
-	std::wstring ws( path.begin(), path.end() );
+	std::wstring ws( tmppath.begin(), tmppath.end() );
 #else
 	res = (*func_getdir)();
 #endif
