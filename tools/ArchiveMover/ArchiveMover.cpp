@@ -299,7 +299,8 @@ String getWriteableDataDir(){
 	String lib(tmp);
 #endif
 	//FIXME: LD_LIBRARY_PATH needs to be corretly set on unix if unitsync isn't in the same path
-	sharedLib_t unitsync = sharedLib_load(lib.c_str());
+	//TODO: remove typecast and use LoadLibraryW
+	sharedLib_t unitsync = sharedLib_load((char*)lib.c_str());
 	if (!sharedLib_isLoaded(unitsync)){
 		return res;
 	}
