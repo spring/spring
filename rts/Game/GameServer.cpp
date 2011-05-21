@@ -1912,8 +1912,9 @@ void CGameServer::PushAction(const Action& action)
 
 				if (participantIter != players.end()) {
 					const GameParticipant::customOpts &opts = participantIter->GetAllValues();
-					if (opts.find("origpass") == opts.end()) {
-						GameParticipant::customOpts::const_iterator it = opts.find("password");
+					GameParticipant::customOpts::const_iterator it;
+					if ((it = opts.find("origpass")) == opts.end() || it->second == "") {
+						it = opts.find("password");
 						if(it != opts.end())
 							participantIter->SetValue("origpass", it->second);
 					}
@@ -2120,7 +2121,9 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		if (name == players[i].name) {
 			if (!players[i].isFromDemo) {
 				if (!players[i].link) {
-					if (canReconnect || !gameHasStarted)
+					if (reconnect)
+						errmsg = "User is not ingame";
+					else if (canReconnect || !gameHasStarted)
 						newPlayerNumber = i;
 					else
 						errmsg = "Game has already started";
@@ -2157,10 +2160,12 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		if (newPlayerNumber < players.size()) {
 			const GameParticipant::customOpts &opts = players[newPlayerNumber].GetAllValues();
 			GameParticipant::customOpts::const_iterator it;
-			if ((it = opts.find("password")) != opts.end() && passwd != it->second && 
-				((it = opts.find("origpass")) == opts.end() || passwd != it->second)) {
+			if ((it = opts.find("password")) != opts.end() && passwd != it->second) {
+				if ((!reconnect || (it = opts.find("origpass")) == opts.end() || it->second == "" || passwd != it->second))
 					errmsg = "Incorrect password";
 			}
+			else if (!reconnect) // forget about origpass whenever a real mid-game join succeeds
+				players[newPlayerNumber].SetValue("origpass", "");
 		}
 	}
 
