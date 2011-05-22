@@ -5,6 +5,7 @@
 #include "SyncedGameCommands.h"
 #include "Game.h"
 #include "Action.h"
+#include "SyncedActionExecutor.h"
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
 #include "InMapDraw.h"
@@ -43,9 +44,9 @@ static void SetBoolArg(bool& value, const std::string& str)
 
 
 
-class CheatActionExecutor : public IActionExecutor {
+class CheatActionExecutor : public ISyncedActionExecutor {
 public:
-	CheatActionExecutor() : IActionExecutor("Cheat") {}
+	CheatActionExecutor() : ISyncedActionExecutor("Cheat") {}
 
 	void Execute(const std::string& args, int playerID) const {
 		SetBoolArg(gs->cheatEnabled, args);
@@ -57,9 +58,9 @@ public:
 };
 
 
-class NoHelpActionExecutor : public IActionExecutor {
+class NoHelpActionExecutor : public ISyncedActionExecutor {
 public:
-	NoHelpActionExecutor() : IActionExecutor("NoHelp") {}
+	NoHelpActionExecutor() : ISyncedActionExecutor("NoHelp") {}
 
 	void Execute(const std::string& args, int playerID) const {
 		SetBoolArg(gs->noHelperAIs, args);
@@ -69,9 +70,9 @@ public:
 };
 
 
-class NoSpecDrawActionExecutor : public IActionExecutor {
+class NoSpecDrawActionExecutor : public ISyncedActionExecutor {
 public:
-	NoSpecDrawActionExecutor() : IActionExecutor("NoSpecDraw") {}
+	NoSpecDrawActionExecutor() : ISyncedActionExecutor("NoSpecDraw") {}
 
 	void Execute(const std::string& args, int playerID) const {
 		bool buf;
@@ -81,9 +82,9 @@ public:
 };
 
 
-class GodModeActionExecutor : public IActionExecutor {
+class GodModeActionExecutor : public ISyncedActionExecutor {
 public:
-	GodModeActionExecutor() : IActionExecutor("GodMode", true) {}
+	GodModeActionExecutor() : ISyncedActionExecutor("GodMode", true) {}
 
 	void Execute(const std::string& args, int playerID) const {
 		SetBoolArg(gs->godMode, args);
@@ -98,9 +99,9 @@ public:
 };
 
 
-class GlobalLosActionExecutor : public IActionExecutor {
+class GlobalLosActionExecutor : public ISyncedActionExecutor {
 public:
-	GlobalLosActionExecutor() : IActionExecutor("GlobalLOS", true) {}
+	GlobalLosActionExecutor() : ISyncedActionExecutor("GlobalLOS", true) {}
 
 	void Execute(const std::string& args, int playerID) const {
 		SetBoolArg(gs->globalLOS, args);
@@ -113,9 +114,9 @@ public:
 };
 
 
-class NoCostActionExecutor : public IActionExecutor {
+class NoCostActionExecutor : public ISyncedActionExecutor {
 public:
-	NoCostActionExecutor() : IActionExecutor("NoCost", true) {}
+	NoCostActionExecutor() : ISyncedActionExecutor("NoCost", true) {}
 
 	void Execute(const std::string& args, int playerID) const {
 		if (unitDefHandler->ToggleNoCost()) {
@@ -127,9 +128,9 @@ public:
 };
 
 
-class GiveActionExecutor : public IActionExecutor {
+class GiveActionExecutor : public ISyncedActionExecutor {
 public:
-	GiveActionExecutor() : IActionExecutor("Give", true) {}
+	GiveActionExecutor() : ISyncedActionExecutor("Give", true) {}
 
 	void Execute(const std::string& args, int playerID) const {
 		const std::vector<std::string>& parsedArgs = CSimpleParser::Tokenize(args, 0);
@@ -138,9 +139,9 @@ public:
 };
 
 
-class DestroyActionExecutor : public IActionExecutor {
+class DestroyActionExecutor : public ISyncedActionExecutor {
 public:
-	DestroyActionExecutor() : IActionExecutor("Destroy", true) {}
+	DestroyActionExecutor() : ISyncedActionExecutor("Destroy", true) {}
 
 	void Execute(const std::string& args, int playerID) const {
 		std::stringstream ss(args);
@@ -161,9 +162,9 @@ public:
 };
 
 
-class NoSpectatorChatActionExecutor : public IActionExecutor {
+class NoSpectatorChatActionExecutor : public ISyncedActionExecutor {
 public:
-	NoSpectatorChatActionExecutor() : IActionExecutor("NoSpectatorChat") {}
+	NoSpectatorChatActionExecutor() : ISyncedActionExecutor("NoSpectatorChat") {}
 
 	void Execute(const std::string& args, int playerID) const {
 		SetBoolArg(game->noSpectatorChat, args);
@@ -172,9 +173,9 @@ public:
 };
 
 
-class ReloadCobActionExecutor : public IActionExecutor {
+class ReloadCobActionExecutor : public ISyncedActionExecutor {
 public:
-	ReloadCobActionExecutor() : IActionExecutor("ReloadCOB", true) {}
+	ReloadCobActionExecutor() : ISyncedActionExecutor("ReloadCOB", true) {}
 
 	void Execute(const std::string& args, int playerID) const {
 		game->ReloadCOB(args, playerID);
@@ -182,9 +183,9 @@ public:
 };
 
 
-class ReloadCegsActionExecutor : public IActionExecutor {
+class ReloadCegsActionExecutor : public ISyncedActionExecutor {
 public:
-	ReloadCegsActionExecutor() : IActionExecutor("ReloadCegs", true) {}
+	ReloadCegsActionExecutor() : ISyncedActionExecutor("ReloadCegs", true) {}
 
 	void Execute(const std::string& args, int playerID) const {
 		game->ReloadCEGs(args);
@@ -192,9 +193,9 @@ public:
 };
 
 
-class DevLuaActionExecutor : public IActionExecutor {
+class DevLuaActionExecutor : public ISyncedActionExecutor {
 public:
-	DevLuaActionExecutor() : IActionExecutor("DevLua", true) {}
+	DevLuaActionExecutor() : ISyncedActionExecutor("DevLua", true) {}
 
 	void Execute(const std::string& args, int playerID) const {
 		bool devMode = CLuaHandle::GetDevMode();
@@ -209,9 +210,9 @@ public:
 };
 
 
-class EditDefsActionExecutor : public IActionExecutor {
+class EditDefsActionExecutor : public ISyncedActionExecutor {
 public:
-	EditDefsActionExecutor() : IActionExecutor("EditDefs", true) {}
+	EditDefsActionExecutor() : ISyncedActionExecutor("EditDefs", true) {}
 
 	void Execute(const std::string& args, int playerID) const {
 		SetBoolArg(gs->editDefsEnabled, args);
@@ -223,9 +224,9 @@ public:
 };
 
 
-class LuaRulesActionExecutor : public IActionExecutor {
+class LuaRulesActionExecutor : public ISyncedActionExecutor {
 public:
-	LuaRulesActionExecutor() : IActionExecutor("LuaRules") {}
+	LuaRulesActionExecutor() : ISyncedActionExecutor("LuaRules") {}
 
 	void Execute(const std::string& args, int playerID) const {
 		if (gs->frameNum > 1) {
@@ -258,9 +259,9 @@ public:
 };
 
 
-class LuaGaiaActionExecutor : public IActionExecutor {
+class LuaGaiaActionExecutor : public ISyncedActionExecutor {
 public:
-	LuaGaiaActionExecutor() : IActionExecutor("LuaGaia") {}
+	LuaGaiaActionExecutor() : ISyncedActionExecutor("LuaGaia") {}
 
 	void Execute(const std::string& args, int playerID) const {
 		if (gs->frameNum > 1) {
@@ -299,9 +300,9 @@ public:
 
 
 #ifdef DEBUG
-class DesyncActionExecutor : public IActionExecutor {
+class DesyncActionExecutor : public ISyncedActionExecutor {
 public:
-	DesyncActionExecutor() : IActionExecutor("Desync", true) {}
+	DesyncActionExecutor() : ISyncedActionExecutor("Desync", true) {}
 
 	void Execute(const std::string& args, int playerID) const {
 		ASSERT_SYNCED_PRIMITIVE(gu->myPlayerNum * 123.0f);
@@ -315,7 +316,8 @@ public:
 					++uh->units[i]->midPos.x; // and desync...
 					++uh->units[i]->midPos.x;
 				} else {
-					// execute the same amount of flops on any other player, but don't desync (it's a NOP)...
+					// execute the same amount of flops on any other player,
+					// but do not desync (it is a NOP)
 					++uh->units[i]->midPos.x;
 					--uh->units[i]->midPos.x;
 				}
@@ -328,9 +330,9 @@ public:
 #endif // defined DEBUG
 
 
-class AtmActionExecutor : public IActionExecutor {
+class AtmActionExecutor : public ISyncedActionExecutor {
 public:
-	AtmActionExecutor() : IActionExecutor("Atm", true) {}
+	AtmActionExecutor() : ISyncedActionExecutor("Atm", true) {}
 
 	void Execute(const std::string& args, int playerID) const {
 		const int team = playerHandler->Player(playerID)->team;
@@ -340,9 +342,9 @@ public:
 };
 
 
-class TakeActionExecutor : public IActionExecutor {
+class TakeActionExecutor : public ISyncedActionExecutor {
 public:
-	TakeActionExecutor() : IActionExecutor("Take") {}
+	TakeActionExecutor() : ISyncedActionExecutor("Take") {}
 
 	void Execute(const std::string& args, int playerID) const {
 		if (!playerHandler->Player(playerID)->spectator || gs->cheatEnabled) {
@@ -351,7 +353,10 @@ public:
 				if (teamHandler->AlliedTeams(a, sendTeam)) {
 					bool hasPlayer = false;
 					for (int b = 0; b < playerHandler->ActivePlayers(); ++b) {
-						if (playerHandler->Player(b)->active && playerHandler->Player(b)->team==a && !playerHandler->Player(b)->spectator) {
+						if (playerHandler->Player(b)->active
+								&& (playerHandler->Player(b)->team == a)
+								&& !playerHandler->Player(b)->spectator)
+						{
 							hasPlayer = true;
 							break;
 						}
@@ -366,9 +371,9 @@ public:
 };
 
 
-class SkipActionExecutor : public IActionExecutor {
+class SkipActionExecutor : public ISyncedActionExecutor {
 public:
-	SkipActionExecutor() : IActionExecutor("Skip") {}
+	SkipActionExecutor() : ISyncedActionExecutor("Skip") {}
 
 	void Execute(const std::string& args, int playerID) const {
 		if (args.find_first_of("start") == 0) {

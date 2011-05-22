@@ -22,7 +22,7 @@ class LuaParser;
 class LuaInputReceiver;
 class ILoadSaveHandler;
 class Action;
-class IActionExecutor;
+class ISyncedActionExecutor;
 class ChatMessage;
 class SkirmishAIData;
 
@@ -137,7 +137,7 @@ public:
 	 * Register a new action-executor for a synced chat command.
 	 * @param actionExecutor has to be new'ed, will be delete'ed internally.
 	 */
-	void RegisterSyncedActionExecutor(IActionExecutor* actionExecutor);
+	void RegisterSyncedActionExecutor(ISyncedActionExecutor* syncedActionExecutor);
 
 private:
 	/// Save the game state to file.
@@ -181,7 +181,7 @@ private:
 
 	unsigned lastFrameTime;
 
-	std::map<std::string, IActionExecutor*> actionExecutors;
+	std::map<std::string, ISyncedActionExecutor*> syncedActionExecutors;
 
 public:
 	struct PlayerTrafficInfo {
