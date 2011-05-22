@@ -22,6 +22,7 @@
 #include <algorithm>
 
 #include "CUtils/SharedLibrary.h"
+#include "System/exportdefines.h"
 
 using std::endl;
 
@@ -284,11 +285,16 @@ int main(int argc, const char* const* argv){
 }
 #endif
 
-typedef void( *myinit )(bool isinit,int bla);
-typedef const char*( *myfind )(void);
 
-String getWriteableDataDir(){
-	String res=_("");
+typedef void (CALLING_CONV_FUNC_POINTER *usyncInit)(bool isServer,int id);
+typedef void(CALLING_CONV_FUNC_POINTER *usyncUnInit)(void);
+typedef const char*(CALLING_CONV_FUNC_POINTER *usyncGetDataDir)(void);
+
+/**
+	@param res springs writeable dir
+	@return true if res was written
+*/
+bool getWriteableDataDir(Path& res){
 	char tmp[1024];
 	sharedLib_createFullLibName("unitsync", tmp, sizeof(tmp));
 
@@ -300,22 +306,28 @@ String getWriteableDataDir(){
 #endif
 	//FIXME: LD_LIBRARY_PATH needs to be corretly set on unix if unitsync isn't in the same path
 	//TODO: remove typecast and use LoadLibraryW
-	sharedLib_t unitsync = sharedLib_load((char*)lib.c_str());
+	sharedLib_t unitsync = sharedLib_load((const char*)lib.c_str());
 	if (!sharedLib_isLoaded(unitsync)){
-		return res;
+		return false;
 	}
-	myinit func_init=(myinit)sharedLib_findAddress(unitsync, "Init");
-	myfind func_getdir=(myfind)sharedLib_findAddress(unitsync, "GetWritableDataDirectory");
-	(*func_init)(true,0);
+	usyncInit func_init=(usyncInit)sharedLib_findAddress(unitsync, "Init");
+	usyncGetDataDir func_getdir=(usyncGetDataDir)sharedLib_findAddress(unitsync, "GetWritableDataDirectory");
+	usyncUnInit func_uninit=(usyncUnInit)sharedLib_findAddress(unitsync, "UnInit");
+	if ((func_init==NULL) || (func_uninit==NULL) || (func_getdir==NULL)){
+		return false;
+	}
+	func_init(true,0);
 #if defined(WIN32) && (defined(UNICODE) || defined(_UNICODE))
-	tmppath=(*func_getdir)();
+	tmppath=func_getdir();
 	//convert string to unicode string
-	std::wstring ws( tmppath.begin(), tmppath.end() );
+	String ws( tmppath.begin(), tmppath.end());
+	res=ws;
 #else
-	res = (*func_getdir)();
+	res = func_getdir();
 #endif
+	func_uninit();
 	sharedLib_unload(unitsync);
-	return res;
+	return true;
 }
 
 
@@ -347,14 +359,13 @@ static int run(int argc, const Char* const* argv){
 			return 1;
 		}
 		const Path source_file = fs::system_complete(source_file_arg);
-		Path target_dir = getWriteableDataDir();
-		if (target_dir==_("")){
-			message << _("Couldn't get writeable dir from unitsync") << endl;
-			return 1;
-		}
-
 		if(!fs::exists(source_file)){
 			message<<source_file<<endl<<_("File not found.")<<endl;
+			return 1;
+		}
+		Path target_dir;
+		if (!getWriteableDataDir(target_dir)){
+			message << _("Couldn't get writeable dir from unitsync") << endl;
 			return 1;
 		}
 
