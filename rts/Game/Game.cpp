@@ -38,6 +38,7 @@
 #include "IVideoCapturing.h"
 #include "InMapDraw.h"
 #include "InMapDrawModel.h"
+#include "SyncedActionExecutor.h"
 #include "SyncedGameCommands.h"
 #include "Game/UI/UnitTracker.h"
 #ifdef _WIN32
@@ -304,11 +305,11 @@ CGame::~CGame()
 	tracefile << "[" << __FUNCTION__ << "]";
 #endif
 
-	std::map<std::string, IActionExecutor*>::iterator aei;
-	for (aei = actionExecutors.begin(); aei != actionExecutors.end(); ++aei) {
-		SafeDelete(aei->second);
+	std::map<std::string, ISyncedActionExecutor*>::iterator saei;
+	for (saei = syncedActionExecutors.begin(); saei != syncedActionExecutors.end(); ++saei) {
+		SafeDelete(saei->second);
 	}
-	actionExecutors.clear();
+	syncedActionExecutors.clear();
 
 	CLoadScreen::DeleteInstance();
 	IVideoCapturing::FreeInstance();
@@ -2261,27 +2262,27 @@ void CGame::ReloadGame()
 }
 
 
-void CGame::RegisterSyncedActionExecutor(IActionExecutor* actionExecutor)
+void CGame::RegisterSyncedActionExecutor(ISyncedActionExecutor* syncedActionExecutor)
 {
-	const std::string commandLower = StringToLower(actionExecutor->GetCommand());
-	const std::map<std::string, IActionExecutor*>::const_iterator aei
-			= actionExecutors.find(commandLower);
+	const std::string commandLower = StringToLower(syncedActionExecutor->GetCommand());
+	const std::map<std::string, ISyncedActionExecutor*>::const_iterator saei
+			= syncedActionExecutors.find(commandLower);
 
-	if (aei != actionExecutors.end()) {
-		throw std::runtime_error("Tried to register duplicate ActionExecutor for command: " + commandLower);
+	if (saei != syncedActionExecutors.end()) {
+		throw std::runtime_error("Tried to register duplicate SyncedActionExecutor for command: " + commandLower);
 	} else {
-		actionExecutors[commandLower] = actionExecutor;
+		syncedActionExecutors[commandLower] = syncedActionExecutor;
 	}
 }
 
 void CGame::ActionReceived(const Action& action, int playerID)
 {
-	const std::map<std::string, IActionExecutor*>::const_iterator aei
-			= actionExecutors.find(action.command);
+	const std::map<std::string, ISyncedActionExecutor*>::const_iterator saei
+			= syncedActionExecutors.find(action.command);
 
-	if (aei != actionExecutors.end()) {
+	if (saei != syncedActionExecutors.end()) {
 		// an executor for that action was found
-		aei->second->ExecuteAction(action, playerID);
+		saei->second->ExecuteAction(action, playerID);
 	} else if (gs->frameNum > 1) {
 		if (luaRules) luaRules->SyncedActionFallback(action.rawline, playerID);
 		if (luaGaia) luaGaia->SyncedActionFallback(action.rawline, playerID);

@@ -8,8 +8,6 @@
 #include "mmgr.h"
 
 #include "Action.h"
-#include "Sim/Misc/GlobalSynced.h"
-#include "System/LogOutput.h"
 #include "System/FileSystem/SimpleParser.h"
 
 Action::Action(const std::string& line)
@@ -22,16 +20,5 @@ Action::Action(const std::string& line)
 	}
 	if (words.size() > 1) {
 		extra = words[1];
-	}
-}
-
-void IActionExecutor::ExecuteAction(const Action& action, int playerID) const
-{
-	//assert(action.command == GetCommand());
-
-	if (IsCheatRequired() && !gs->cheatEnabled) {
-		logOutput.Print("Synced chat command /" + GetCommand() + " requires /cheat");
-	} else {
-		Execute(action.extra, playerID);
 	}
 }
