@@ -104,7 +104,6 @@ public:
 
 	std::string name;
 	std::string humanName;
-	std::string filename;
 
 
 	int id;                 ///< unique id for this type of unit

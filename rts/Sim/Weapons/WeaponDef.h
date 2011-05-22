@@ -148,7 +148,6 @@ public:
 	std::string name;
 	std::string type;
 	std::string description;
-	std::string filename;
 	std::string cegTag;        ///< tag of CEG that projectiles fired by this weapon should use
 
 	GuiSoundSet firesound;

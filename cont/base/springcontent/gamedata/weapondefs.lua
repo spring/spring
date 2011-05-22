@@ -53,7 +53,6 @@ for _, filename in ipairs(tdfFiles) do
     Spring.Echo('Error parsing ' .. filename .. ': ' .. err)
   else
     for name, wd in pairs(wds) do
-      wd.filename = filename
       weaponDefs[name] = wd
     end
   end
@@ -83,7 +82,6 @@ for _, filename in ipairs(luaFiles) do
   else
     for wdName, wd in pairs(wds) do
       if ((type(wdName) == 'string') and (type(wd) == 'table')) then
-        wd.filename = filename
         weaponDefs[wdName] = wd
       end
     end

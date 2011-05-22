@@ -432,7 +432,6 @@ static bool InitParamMap()
 	ADD_INT("tdfId", wd.tdfId);
 
 	ADD_STRING("name",        wd.name);
-	ADD_STRING("filename",    wd.filename);
 	ADD_STRING("description", wd.description);
 	ADD_STRING("cegTag",      wd.cegTag);
 

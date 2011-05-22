@@ -28,7 +28,6 @@ struct FeatureDef
 
 	std::string myName;
 	std::string description;
-	std::string filename;
 
 	int id;
 

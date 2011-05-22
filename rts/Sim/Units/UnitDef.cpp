@@ -279,11 +279,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		const string errmsg = "missing 'name' parameter for the " + unitName + " unitdef";
 		throw content_error(errmsg);
 	}
-	filename  = udTable.GetString("filename", "");
-	if (filename.empty()) {
-		const string errmsg = "missing 'filename' parameter for the" + unitName + " unitdef";
-		throw content_error(errmsg);
-	}
+
 	tooltip = udTable.GetString("description", name);
 	buildPicName = udTable.GetString("buildPic", "");
 	decoyName = udTable.GetString("decoyFor", "");
