@@ -36,7 +36,6 @@ local function ProcessUnitDef(udName, ud)
     if (isstring(fdName) and istable(fd)) then
       local fullName = udName .. '_' .. fdName
       FeatureDefs[fullName] = fd
-      fd.filename = ud.filename
     end
   end
 

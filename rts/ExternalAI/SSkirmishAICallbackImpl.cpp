@@ -1997,7 +1997,7 @@ EXPORT(const char*) skirmishAiCallback_UnitDef_getHumanName(int skirmishAIId, in
 }
 
 EXPORT(const char*) skirmishAiCallback_UnitDef_getFileName(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->filename.c_str();
+	return "$$deprecated$$";
 }
 
 //EXPORT(int) skirmishAiCallback_UnitDef_getId(int skirmishAIId, int unitDefId) {
@@ -3569,7 +3569,7 @@ EXPORT(const char*) skirmishAiCallback_FeatureDef_getDescription(int skirmishAII
 }
 
 EXPORT(const char*) skirmishAiCallback_FeatureDef_getFileName(int skirmishAIId, int featureDefId) {
-	return getFeatureDefById(skirmishAIId, featureDefId)->filename.c_str();
+	return "$$deprecated$$";
 }
 
 //EXPORT(int) skirmishAiCallback_FeatureDef_getId(int skirmishAIId, int featureDefId) {
@@ -3807,7 +3807,7 @@ EXPORT(const char*) skirmishAiCallback_WeaponDef_getDescription(int skirmishAIId
 }
 
 EXPORT(const char*) skirmishAiCallback_WeaponDef_getFileName(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->filename.c_str();
+	return "$$deprecated$$";
 }
 
 EXPORT(const char*) skirmishAiCallback_WeaponDef_getCegTag(int skirmishAIId, int weaponDefId) {
