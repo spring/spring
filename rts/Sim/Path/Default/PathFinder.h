@@ -109,6 +109,8 @@ public:
 	}
 
 
+	// size of the memory-region we hold allocated (excluding sizeof(*this))
+	unsigned int GetMemFootPrint() const { return ((heatmap.size() * sizeof(HeatMapValue)) + squareStates.GetMemFootPrint()); }
 
 	PathNodeStateBuffer& GetNodeStateBuffer() { return squareStates; }
 
