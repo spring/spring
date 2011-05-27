@@ -68,18 +68,14 @@ void CUnitHandler::PostLoad()
 CUnitHandler::CUnitHandler()
 :
 	maxUnitRadius(0.0f),
-	morphUnitToFeature(true)
+	morphUnitToFeature(true),
+	maxUnits(0)
 {
 	// note: the number of active teams can change at run-time, so
 	// the team unit limit should be recalculated whenever one dies
 	// or spawns (but that would get complicated)
-	if (gs->useLuaGaia) {
-		maxUnits = MAX_UNITS;
-	} else {
-		maxUnits = teamHandler->ActiveTeams() * teamHandler->Team(0)->maxUnits;
-
-		// ensure each team can make at least one unit
-		assert(maxUnits >= teamHandler->ActiveTeams());
+	for (unsigned int n = 0; n < teamHandler->ActiveTeams(); n++) {
+		maxUnits += teamHandler->Team(n)->maxUnits;
 	}
 
 	units.resize(maxUnits, NULL);
