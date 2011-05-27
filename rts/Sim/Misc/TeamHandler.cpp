@@ -44,7 +44,10 @@ CTeamHandler::~CTeamHandler()
 
 void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 {
+	assert(setup->teamStartingData.size() >          0);
 	assert(setup->teamStartingData.size() <= MAX_TEAMS);
+	assert(setup->allyStartingData.size() <= MAX_TEAMS);
+
 	teams.resize(setup->teamStartingData.size());
 
 	for (size_t i = 0; i < teams.size(); ++i) {
@@ -53,32 +56,36 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		teams[i] = team;
 		*team = setup->teamStartingData[i];
 		team->teamNum = i;
+		team->maxUnits = std::min(setup->maxUnits, int(MAX_UNITS / teams.size()));
 		SetAllyTeam(i, team->teamAllyteam);
 	}
 
 	allyTeams = setup->allyStartingData;
-	assert(setup->allyStartingData.size() <= MAX_TEAMS);
+
 	if (gs->useLuaGaia) {
 		// Gaia adjustments
 		gaiaTeamID = static_cast<int>(teams.size());
 		gaiaAllyTeamID = static_cast<int>(allyTeams.size());
 
 		// Setup the gaia team
-		CTeam& team = *(new CTeam());
-		team.color[0] = 255;
-		team.color[1] = 255;
-		team.color[2] = 255;
-		team.color[3] = 255;
-		team.gaia = true;
-		team.teamNum = gaiaTeamID;
-		team.StartposMessage(float3(0.0, 0.0, 0.0));
-		team.teamAllyteam = gaiaAllyTeamID;
-		teams.push_back(&team);
+		CTeam* gaia = new CTeam();
+		gaia->color[0] = 255;
+		gaia->color[1] = 255;
+		gaia->color[2] = 255;
+		gaia->color[3] = 255;
+		gaia->gaia = true;
+		gaia->teamNum = gaiaTeamID;
+		gaia->maxUnits = MAX_UNITS - (teams.size() * teams[0]->maxUnits);
+		gaia->StartposMessage(ZeroVector);
+		gaia->teamAllyteam = gaiaAllyTeamID;
+		teams.push_back(gaia);
 
-		for (std::vector< ::AllyTeam >::iterator it = allyTeams.begin(); it != allyTeams.end(); ++it)
-		{
+		assert((teams[0]->maxUnits + gaia->maxUnits) == MAX_UNITS);
+
+		for (std::vector< ::AllyTeam >::iterator it = allyTeams.begin(); it != allyTeams.end(); ++it) {
 			it->allies.push_back(false); // enemy to everyone
 		}
+
 		::AllyTeam allyteam;
 		allyteam.allies.resize(allyTeams.size() + 1, false); // everyones enemy
 		allyteam.allies[gaiaAllyTeamID] = true; // peace with itself

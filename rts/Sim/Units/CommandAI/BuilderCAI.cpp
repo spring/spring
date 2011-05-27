@@ -423,7 +423,7 @@ void CBuilderCAI::SlowUpdate()
 						if (luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build.pos)) {
 							FinishCommand();
 						}
-						else if (uh->MaxUnitsPerTeam() > (int) teamHandler->Team(owner->team)->units.size()) {
+						else if (!teamHandler->Team(owner->team)->AtUnitLimit()) {
 							// unit-limit not yet reached
 							CFeature* f = NULL;
 							buildRetries++;

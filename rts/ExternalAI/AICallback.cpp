@@ -1405,7 +1405,7 @@ bool CAICallback::GetValue(int id, void *data)
 			}
 		}
 		case AIVAL_UNIT_LIMIT: {
-			*(int*) data = uh->MaxUnitsPerTeam();
+			*(int*) data = teamHandler->Team(team)->maxUnits;
 			return true;
 		}
 		case AIVAL_SCRIPT: {
