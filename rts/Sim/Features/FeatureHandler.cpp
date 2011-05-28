@@ -111,17 +111,14 @@ void CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const string& mi
 	FeatureDef* fd = new FeatureDef;
 
 	fd->myName = name;
-
-	fd->filename = fdTable.GetString("filename", "unknown");
-
 	fd->description = fdTable.GetString("description", "");
 
-	fd->blocking      =  fdTable.GetBool("blocking",       true);
-	fd->burnable      =  fdTable.GetBool("flammable",      false);
-	fd->destructable  = !fdTable.GetBool("indestructible", false);
-	fd->reclaimable   =  fdTable.GetBool("reclaimable",    fd->destructable);
-	fd->autoreclaim   =  fdTable.GetBool("autoreclaimable",    fd->autoreclaim);
-	fd->resurrectable =  fdTable.GetInt("resurrectable",   -1);
+	fd->blocking      =  fdTable.GetBool("blocking",        true);
+	fd->burnable      =  fdTable.GetBool("flammable",       false);
+	fd->destructable  = !fdTable.GetBool("indestructible",  false);
+	fd->reclaimable   =  fdTable.GetBool("reclaimable",     fd->destructable);
+	fd->autoreclaim   =  fdTable.GetBool("autoreclaimable", fd->autoreclaim);
+	fd->resurrectable =  fdTable.GetInt("resurrectable",    -1);
 
 	//this seem to be the closest thing to floating that ta wreckage contains
 	fd->floating = fdTable.GetBool("nodrawundergray", false);

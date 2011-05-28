@@ -3,6 +3,8 @@
 #ifndef UNIT_H
 #define UNIT_H
 
+#include "lib/gml/gml.h" // for GML_ENABLE_SIM
+
 #include <map>
 #include <vector>
 #include <string>

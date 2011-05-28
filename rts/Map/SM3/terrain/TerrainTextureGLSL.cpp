@@ -193,21 +193,27 @@ struct ShaderBuilder
 	ShadingMethod CalculateShadingMethod(ShaderDef* sd) const;
 
 	struct TexReq {
-		TexReq() { coords = units = 0; }
-		GLint coords, units;
+		TexReq()
+			: coords(0)
+			, units(0)
+		{}
+
 		void GetFromGL();
 		bool Fits(TexReq maxrq) const {
 			return ((coords <= maxrq.coords) && (units <= maxrq.units));
 		}
-		TexReq operator + (const TexReq& rq) {
+		TexReq operator + (const TexReq& rq) const {
 			TexReq r;
 			r.coords = coords + rq.coords;
 			r.units = units + rq.units;
 			return r;
 		}
+
+		GLint coords;
+		GLint units;
 	};
 	// Calculate the texturing requirements for the specified stages
-	TexReq CalcStagesTexReq (const vector<ShaderDef::Stage>& stages, uint startIndex) const;
+	TexReq CalcStagesTexReq(const vector<ShaderDef::Stage>& stages, uint startIndex) const;
 };
 
 
@@ -770,7 +776,7 @@ void GLSLShaderHandler::EndTexturing() {
 
 	if (curShader) {
 		curShader->Cleanup();
-		curShader = 0;
+		curShader = NULL;
 	}
 }
 
@@ -784,6 +790,7 @@ void GLSLShaderHandler::BeginPass(const std::vector<Blendmap*>& blendmaps, const
 	if (buffer) {
 		if ((buffer->width != globalRendering->viewSizeX) || (buffer->height != globalRendering->viewSizeY)) {
 			delete buffer;
+			buffer = NULL; // to prevent a dead-pointer in case of an out-of-memory exception on the next line
 			buffer = new BufferTexture;
 		}
 	}
@@ -804,7 +811,7 @@ bool GLSLShaderHandler::SetupShader(IShaderSetup* ps, NodeSetupParams& params)
 {
 	if (curShader) {
 		curShader->Cleanup();
-		curShader = 0;
+		curShader = NULL;
 	}
 
 	GLSLBaseShader* bs = static_cast<GLSLBaseShader*>(ps);
@@ -824,8 +831,8 @@ void GLSLShaderHandler::BeginBuild()
 	delete buffer;
 	delete scShader;
 
-	buffer = 0;
-	scShader = 0;
+	buffer = NULL;
+	scShader = NULL;
 
 	renderSetups.clear();
 }

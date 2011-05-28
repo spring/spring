@@ -8,16 +8,17 @@
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/GameHelper.h"
+#include "Game/TraceRay.h"
 #include "Game/GameSetup.h"
 #include "Game/PlayerHandler.h"
 #include "Game/SelectedUnits.h"
+#include "Game/InMapDraw.h"
 #include "Game/UI/MiniMap.h"
 #include "Lua/LuaRules.h"
 #include "Map/MapInfo.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "Rendering/DebugDrawerAI.h"
-#include "Rendering/InMapDraw.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/UnitDrawer.h"
 #include "Sim/Features/Feature.h"
@@ -213,8 +214,7 @@ int CAICallback::SendUnits(const std::vector<int>& unitIds, int receivingTeamId)
 				sentUnitIDs.push_back(short(unitId));
 
 				// stop whatever this unit is doing
-				Command c;
-				c.id = CMD_STOP;
+				Command c(CMD_STOP);
 				GiveOrder(unitId, &c);
 			}
 		}
@@ -381,7 +381,7 @@ int CAICallback::GiveOrder(int unitId, Command* c)
 		return -5;
 	}
 
-	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, unitId, c->id, c->aiCommandId, c->options, c->params));
+	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, unitId, c->GetID(), c->aiCommandId, c->options, c->params));
 
 	return 0;
 }
@@ -1405,7 +1405,7 @@ bool CAICallback::GetValue(int id, void *data)
 			}
 		}
 		case AIVAL_UNIT_LIMIT: {
-			*(int*) data = uh->MaxUnitsPerTeam();
+			*(int*) data = teamHandler->Team(team)->maxUnits;
 			return true;
 		}
 		case AIVAL_SCRIPT: {
@@ -1461,8 +1461,10 @@ int CAICallback::HandleCommand(int commandId, void* data)
 				const CUnit* srcUnit = uh->units[cmdData->srcUID];
 
 				if (srcUnit != NULL) {
-					const CUnit* hitUnit = NULL;
-					const float realLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags);
+					CUnit* hitUnit = NULL;
+					CFeature* hitFeature = NULL;
+					//FIXME add COLLISION_NOFEATURE?
+					const float realLen = TraceRay::TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, cmdData->flags, srcUnit, hitUnit, hitFeature);
 
 					if (hitUnit != NULL) {
 						const bool isUnitVisible = (hitUnit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS);
@@ -1484,9 +1486,10 @@ int CAICallback::HandleCommand(int commandId, void* data)
 				const CUnit* srcUnit = uh->units[cmdData->srcUID];
 
 				if (srcUnit != NULL) {
-					const CUnit* hitUnit = NULL;
-					const CFeature* hitFeature = NULL;
-					const float realLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags, &hitFeature);
+					CUnit* hitUnit = NULL;
+					CFeature* hitFeature = NULL;
+					//FIXME add COLLISION_NOENEMIES || COLLISION_NOFRIENDLIES || COLLISION_NONEUTRALS?
+					const float realLen = TraceRay::TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, cmdData->flags, srcUnit, hitUnit, hitFeature);
 
 					if (hitFeature != NULL) {
 						const bool isFeatureVisible = hitFeature->IsInLosForAllyTeam(teamHandler->AllyTeam(team));
@@ -1773,18 +1776,18 @@ int CAICallback::GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAllie
 	}
 	*/
 
-	std::list<const unsigned char*> includeColors;
-	// include our team color
-	includeColors.push_back(teamHandler->Team(team)->color);
+	std::list<int> includeTeamIDs;
+	// include our team
+	includeTeamIDs.push_back(team);
 
 	// include the team colors of all our allies
 	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
 		if (teamHandler->AlliedTeams(team, t)) {
-			includeColors.push_back(teamHandler->Team(t)->color);
+			includeTeamIDs.push_back(t);
 		}
 	}
 
-	return (inMapDrawer->GetPoints(pm, pm_sizeMax, includeColors));
+	return (inMapDrawer->GetPoints(pm, pm_sizeMax, includeTeamIDs));
 }
 
 int CAICallback::GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllies)
@@ -1800,18 +1803,18 @@ int CAICallback::GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllies)
 	}
 	*/
 
-	std::list<const unsigned char*> includeColors;
-	// include our team color
-	includeColors.push_back(teamHandler->Team(team)->color);
+	std::list<int> includeTeamIDs;
+	// include our team
+	includeTeamIDs.push_back(team);
 
 	// include the team colors of all our allies
 	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
 		if (teamHandler->AlliedTeams(team, t)) {
-			includeColors.push_back(teamHandler->Team(t)->color);
+			includeTeamIDs.push_back(t);
 		}
 	}
 
-	return (inMapDrawer->GetLines(lm, lm_sizeMax, includeColors));
+	return (inMapDrawer->GetLines(lm, lm_sizeMax, includeTeamIDs));
 }
 
 

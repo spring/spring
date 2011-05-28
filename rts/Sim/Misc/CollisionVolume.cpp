@@ -151,19 +151,17 @@ void CollisionVolume::Init(const float3& scales, const float3& offsets, int vTyp
 	// or zero; if the resulting vector is <1, 1, 1>,
 	// then the unit / feature loaders will override
 	// the (clone) scales with the model's radius
-	SetAxisScales(std::max(1.0f, scales.x), std::max(1.0f, scales.y), std::max(1.0f, scales.z));
+	const float3 adjScales(std::max(1.0f, scales.x), std::max(1.0f, scales.y), std::max(1.0f, scales.z));
 
 	if (volumeType == COLVOL_TYPE_ELLIPSOID) {
-		// if all axes (or half-axes) are equal in scale,
-		// volume is a sphere (a special-case ellipsoid)
-		if ((streflop::fabsf(axisHScales.x - axisHScales.y) < EPS) &&
-		    (streflop::fabsf(axisHScales.y - axisHScales.z) < EPS)) {
-
+		// if all axes are equal in scale, volume is a sphere (a special-case ellipsoid)
+		if ((streflop::fabsf(adjScales.x - adjScales.y) < EPS) &&
+		    (streflop::fabsf(adjScales.y - adjScales.z) < EPS))
+		{
 			logOutput.Print(LOG_COLVOL, "auto-converting spherical COLVOL_TYPE_ELLIPSOID to COLVOL_TYPE_SPHERE");
 			volumeType = COLVOL_TYPE_SPHERE;
 		}
 	}
-
 
 	// secondaryAxes[0] = (primaryAxis + 1) % COLVOL_NUM_AXES;
 	// secondaryAxes[1] = (primaryAxis + 2) % COLVOL_NUM_AXES;
@@ -183,8 +181,9 @@ void CollisionVolume::Init(const float3& scales, const float3& offsets, int vTyp
 		} break;
 	}
 
-	SetBoundingRadius();
+	SetAxisScales(adjScales.x,adjScales.y,adjScales.z);
 }
+
 
 void CollisionVolume::SetBoundingRadius() {
 	// set the radius of the minimum bounding sphere
@@ -220,7 +219,7 @@ void CollisionVolume::SetBoundingRadius() {
 	}
 }
 
-void CollisionVolume::SetAxisScales(float xs, float ys, float zs) {
+void CollisionVolume::SetAxisScales(const float& xs, const float& ys, const float& zs) {
 	axisScales.x = xs;
 	axisScales.y = ys;
 	axisScales.z = zs;
@@ -239,9 +238,11 @@ void CollisionVolume::SetAxisScales(float xs, float ys, float zs) {
 
 	// scale was unspecified
 	defaultScale = (xs == 1.0f && ys == 1.0f && zs == 1.0f);
+
+	SetBoundingRadius();
 }
 
-void CollisionVolume::RescaleAxes(float xs, float ys, float zs) {
+void CollisionVolume::RescaleAxes(const float& xs, const float& ys, const float& zs) {
 	axisScales.x *= xs; axisHScales.x *= xs;
 	axisScales.y *= ys; axisHScales.y *= ys;
 	axisScales.z *= zs; axisHScales.z *= zs;

@@ -15,6 +15,7 @@ CMatrix44f::CMatrix44f()
 	LoadIdentity();
 }
 
+
 CMatrix44f::CMatrix44f(const float3& pos, const float3& x, const float3& y, const float3& z)
 {
 	m[0]  = x.x;   m[1]  = x.y;   m[2]  = x.z;   m[3]  = 0.0f;
@@ -23,31 +24,13 @@ CMatrix44f::CMatrix44f(const float3& pos, const float3& x, const float3& y, cons
 	m[12] = pos.x; m[13] = pos.y; m[14] = pos.z; m[15] = 1.0f;
 }
 
+
 CMatrix44f::CMatrix44f(const float& rotX, const float& rotY, const float& rotZ)
 {
 	LoadIdentity();
 	RotateX(rotX);
 	RotateY(rotY);
 	RotateZ(rotZ);
-}
-
-
-CMatrix44f::CMatrix44f(const CMatrix44f& n)
-{
-	m[0]  = n[0];   m[1]  = n[1];   m[2]  = n[2];   m[3]  = n[3];
-	m[4]  = n[4];   m[5]  = n[5];   m[6]  = n[6];   m[7]  = n[7];
-	m[8]  = n[8];   m[9]  = n[9];   m[10] = n[10];  m[11] = n[11];
-	m[12] = n[12];  m[13] = n[13];  m[14] = n[14];  m[15] = n[15];
-}
-
-
-CMatrix44f& CMatrix44f::operator=(const CMatrix44f& n)
-{
-	m[0]  = n[0];   m[1]  = n[1];   m[2]  = n[2];   m[3]  = n[3];
-	m[4]  = n[4];   m[5]  = n[5];   m[6]  = n[6];   m[7]  = n[7];
-	m[8]  = n[8];   m[9]  = n[9];   m[10] = n[10];  m[11] = n[11];
-	m[12] = n[12];  m[13] = n[13];  m[14] = n[14];  m[15] = n[15];
-	return *this;
 }
 
 
@@ -181,107 +164,6 @@ void CMatrix44f::RotateZ(float rad)
 }
 
 
-void CMatrix44f::Translate(float x, float y, float z)
-{
-/*
-	CMatrix44f tm;
-
-	tm[12] = x;
-	tm[13] = y;
-	tm[14] = z;
-
-	*this = Mul(tm);
-*/
-
-	m[12] += x*m[0] + y*m[4] + z*m[8];
-	m[13] += x*m[1] + y*m[5] + z*m[9];
-	m[14] += x*m[2] + y*m[6] + z*m[10];
-	m[15] += x*m[3] + y*m[7] + z*m[11];
-}
-
-
-void CMatrix44f::Translate(const float3& pos)
-{
-/*
-	CMatrix44f tm;
-
-	tm[12] = pos.x;
-	tm[13] = pos.y;
-	tm[14] = pos.z;
-
-	*this = Mul(tm);
-*/
-
-	const float& x=pos.x;
-	const float& y=pos.y;
-	const float& z=pos.z;
-	m[12] += x*m[0] + y*m[4] + z*m[8];
-	m[13] += x*m[1] + y*m[5] + z*m[9];
-	m[14] += x*m[2] + y*m[6] + z*m[10];
-	m[15] += x*m[3] + y*m[7] + z*m[11];
-}
-
-
-CMatrix44f CMatrix44f::Mul(const CMatrix44f& m2) const
-{
-	CMatrix44f res;
-
-	float m20, m21, m22, m23;
-
-	for(int i = 0; i < 16; i += 4){
-		m20 = m2[i];
-		m21 = m2[i+1];
-		m22 = m2[i+2];
-		m23 = m2[i+3];
-
-		res[i]   = m[0]*m20 + m[4]*m21 + m[8]*m22  + m[12]*m23;
-		res[i+1] = m[1]*m20 + m[5]*m21 + m[9]*m22  + m[13]*m23;
-		res[i+2] = m[2]*m20 + m[6]*m21 + m[10]*m22 + m[14]*m23;
-		res[i+3] = m[3]*m20 + m[7]*m21 + m[11]*m22 + m[15]*m23;
-	}
-/*
-	for(int x=0;x<4;++x){
-		for(int y=0;y<4;++y){
-			res[x*4+y]=0;
-			for(int a=0;a<4;++a){
-				res[x*4+y]+=m[a*4+y]*other[x*4+a];
-			}
-		}
-	}
-/*/
-	return res;
-}
-
-
-float3 CMatrix44f::Mul(const float3& vect) const
-{
-	const float v0(vect[0]), v1(vect[1]), v2(vect[2]);
-	return float3(	v0*m[0] + v1*m[4] + v2*m[8] + m[12],
-				v0*m[1] + v1*m[5] + v2*m[9] + m[13],
-				v0*m[2] + v1*m[6] + v2*m[10] + m[14]);
-}
-
-
-void CMatrix44f::SetUpVector(float3& up)
-{
-	float3 zdir(m[8],m[9],m[10]);
-	float3 xdir(zdir.cross(up));
-	xdir.Normalize();
-	zdir=up.cross(xdir);
-	m[0]=xdir.x;
-	m[1]=xdir.y;
-	m[2]=xdir.z;
-
-	m[4]=up.x;
-	m[5]=up.y;
-	m[6]=up.z;
-
-	m[8]=zdir.x;
-	m[9]=zdir.y;
-	m[10]=zdir.z;
-}
-
-
 void CMatrix44f::Rotate(float rad, const float3& axis)
 {
 	const float sr = sin(rad);
@@ -303,20 +185,134 @@ void CMatrix44f::Rotate(float rad, const float3& axis)
 	}
 }
 
-// note: assumes this matrix only
-// does translation and rotation
-CMatrix44f& CMatrix44f::InvertInPlace()
+
+void CMatrix44f::Translate(float x, float y, float z)
 {
-	// transpose the rotation
+	m[12] += x*m[0] + y*m[4] + z*m[8];
+	m[13] += x*m[1] + y*m[5] + z*m[9];
+	m[14] += x*m[2] + y*m[6] + z*m[10];
+	m[15] += x*m[3] + y*m[7] + z*m[11];
+}
+
+
+void CMatrix44f::Translate(const float3& pos)
+{
+	const float& x=pos.x;
+	const float& y=pos.y;
+	const float& z=pos.z;
+	m[12] += x*m[0] + y*m[4] + z*m[8];
+	m[13] += x*m[1] + y*m[5] + z*m[9];
+	m[14] += x*m[2] + y*m[6] + z*m[10];
+	m[15] += x*m[3] + y*m[7] + z*m[11];
+}
+
+
+void CMatrix44f::SetPos(float x, float y, float z)
+{
+	m[12] = x*m[0] + y*m[4] + z*m[8];
+	m[13] = x*m[1] + y*m[5] + z*m[9];
+	m[14] = x*m[2] + y*m[6] + z*m[10];
+	m[15] = x*m[3] + y*m[7] + z*m[11];
+}
+
+
+void CMatrix44f::SetPos(const float3& pos)
+{
+	const float& x=pos.x;
+	const float& y=pos.y;
+	const float& z=pos.z;
+	m[12] = x*m[0] + y*m[4] + z*m[8];
+	m[13] = x*m[1] + y*m[5] + z*m[9];
+	m[14] = x*m[2] + y*m[6] + z*m[10];
+	m[15] = x*m[3] + y*m[7] + z*m[11];
+}
+
+
+CMatrix44f CMatrix44f::operator* (const CMatrix44f& m2) const
+{
+	CMatrix44f res(*this);
+	res *= m2;
+	return res;
+}
+
+
+CMatrix44f& CMatrix44f::operator*= (const CMatrix44f& m2)
+{
+	float m10, m11, m12, m13;
+
+	for(int i = 0; i < 16; i += 4){
+		m10 = m[i];
+		m11 = m[i+1];
+		m12 = m[i+2];
+		m13 = m[i+3];
+
+		m[i]   = m2[0]*m10 + m2[4]*m11 + m2[8]*m12  + m2[12]*m13;
+		m[i+1] = m2[1]*m10 + m2[5]*m11 + m2[9]*m12  + m2[13]*m13;
+		m[i+2] = m2[2]*m10 + m2[6]*m11 + m2[10]*m12 + m2[14]*m13;
+		m[i+3] = m2[3]*m10 + m2[7]*m11 + m2[11]*m12 + m2[15]*m13;
+	}
+
+	return (*this);
+}
+
+
+float3 CMatrix44f::Mul(const float3& vect) const
+{
+	const float v0(vect[0]), v1(vect[1]), v2(vect[2]);
+	return float3(
+		v0*m[0] + v1*m[4] + v2*m[8] + m[12],
+		v0*m[1] + v1*m[5] + v2*m[9] + m[13],
+		v0*m[2] + v1*m[6] + v2*m[10] + m[14]);
+}
+
+
+void CMatrix44f::SetUpVector(const float3& up)
+{
+	float3 zdir(m[8],m[9],m[10]);
+	float3 xdir(zdir.cross(up));
+	xdir.Normalize();
+	zdir=up.cross(xdir);
+	m[0]=xdir.x;
+	m[1]=xdir.y;
+	m[2]=xdir.z;
+
+	m[4]=up.x;
+	m[5]=up.y;
+	m[6]=up.z;
+
+	m[8]=zdir.x;
+	m[9]=zdir.y;
+	m[10]=zdir.z;
+}
+
+
+void CMatrix44f::Transpose()
+{
+	std::swap(md[0][1], md[1][0]);
+	std::swap(md[0][2], md[2][0]);
+	std::swap(md[0][3], md[3][0]);
+
+	std::swap(md[1][2], md[2][1]);
+	std::swap(md[1][3], md[3][1]);
+
+	std::swap(md[2][3], md[3][2]);
+}
+
+
+//! note: assumes this matrix only
+//! does translation and rotation
+CMatrix44f& CMatrix44f::InvertAffineInPlace()
+{
+	//! transpose the rotation
 	float tmp = 0.0f;
 	tmp = m[1]; m[1] = m[4]; m[4] = tmp;
 	tmp = m[2]; m[2] = m[8]; m[8] = tmp;
 	tmp = m[6]; m[6] = m[9]; m[9] = tmp;
 
-	// get the inverse translation
-	float3 t(-m[12], -m[13], -m[14]);
+	//! get the inverse translation
+	const float3 t(-m[12], -m[13], -m[14]);
 
-	// do the actual inversion
+	//! do the actual inversion
 	m[12] = t.x * m[0] + t.y * m[4] + t.z * m[ 8];
 	m[13] = t.x * m[1] + t.y * m[5] + t.z * m[ 9];
 	m[14] = t.x * m[2] + t.y * m[6] + t.z * m[10];
@@ -324,42 +320,26 @@ CMatrix44f& CMatrix44f::InvertInPlace()
 	return *this;
 }
 
-// note: assumes this matrix only
-// does translation and rotation;
-// m.Mul(m.Invert()) is identity
-CMatrix44f CMatrix44f::Invert() const
+
+CMatrix44f CMatrix44f::InvertAffine() const
 {
 	CMatrix44f mInv(*this);
-
-	// transpose the rotation
-	mInv[1] = m[4]; mInv[4] = m[1];
-	mInv[2] = m[8]; mInv[8] = m[2];
-	mInv[6] = m[9]; mInv[9] = m[6];
-
-	// get the inverse translation
-	float3 t(-m[12], -m[13], -m[14]);
-
-	// do the actual inversion
-	mInv[12] = t.x * mInv[0] + t.y * mInv[4] + t.z * mInv[ 8];
-	mInv[13] = t.x * mInv[1] + t.y * mInv[5] + t.z * mInv[ 9];
-	mInv[14] = t.x * mInv[2] + t.y * mInv[6] + t.z * mInv[10];
-
+	mInv.InvertAffineInPlace();
 	return mInv;
 }
 
 
-
-
-double CMatrix44f::CalculateCofactor(const double m[4][4], int ei, int ej)
+template<typename T>
+static inline T CalculateCofactor(const T m[4][4], int ei, int ej)
 {
-	int ai, bi, ci;
+	size_t ai, bi, ci;
 	switch (ei) {
 		case 0: { ai = 1; bi = 2; ci = 3; break; }
 		case 1: { ai = 0; bi = 2; ci = 3; break; }
 		case 2: { ai = 0; bi = 1; ci = 3; break; }
 		case 3: { ai = 0; bi = 1; ci = 2; break; }
 	}
-	int aj, bj, cj;
+	size_t aj, bj, cj;
 	switch (ej) {
 		case 0: { aj = 1; bj = 2; cj = 3; break; }
 		case 1: { aj = 0; bj = 2; cj = 3; break; }
@@ -367,10 +347,10 @@ double CMatrix44f::CalculateCofactor(const double m[4][4], int ei, int ej)
 		case 3: { aj = 0; bj = 1; cj = 2; break; }
 	}
 
-	const double val =
-		(m[ai][aj] * ((m[bi][bj] * m[ci][cj]) - (m[ci][bj] * m[bi][cj]))) -
-		(m[ai][bj] * ((m[bi][aj] * m[ci][cj]) - (m[ci][aj] * m[bi][cj]))) +
-		(m[ai][cj] * ((m[bi][aj] * m[ci][bj]) - (m[ci][aj] * m[bi][bj])));
+	const T val =
+		(m[ai][aj] * ((m[bi][bj] * m[ci][cj]) - (m[bi][cj] * m[ci][bj]))) +
+		(m[ai][bj] * ((m[bi][cj] * m[ci][aj]) - (m[bi][aj] * m[ci][cj]))) +
+		(m[ai][cj] * ((m[bi][aj] * m[ci][bj]) - (m[bi][bj] * m[ci][aj])));
 
 	if (((ei + ej) & 1) == 0) {
 		return +val;
@@ -379,40 +359,72 @@ double CMatrix44f::CalculateCofactor(const double m[4][4], int ei, int ej)
 	}
 }
 
-// generalized inverse for non-orthonormal 4x4 matrices
-// A^-1 = (1 / det(A)) (C^T)_{ij} = (1 / det(A)) C_{ji}
-bool CMatrix44f::Invert(const double m[4][4], double mInv[4][4])
+
+//! generalized inverse for non-orthonormal 4x4 matrices
+//! A^-1 = (1 / det(A)) (C^T)_{ij} = (1 / det(A)) C_{ji}
+bool CMatrix44f::InvertInPlace()
 {
-	double cofac[4][4];
+	float cofac[4][4];
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
-			cofac[i][j] = CMatrix44f::CalculateCofactor(m, i, j);
+			cofac[i][j] = CalculateCofactor(md, i, j);
 		}
 	}
 
-	const double det =
-		(m[0][0] * cofac[0][0]) +
-		(m[0][1] * cofac[0][1]) +
-		(m[0][2] * cofac[0][2]) +
-		(m[0][3] * cofac[0][3]);
+	const float det =
+		(md[0][0] * cofac[0][0]) +
+		(md[0][1] * cofac[0][1]) +
+		(md[0][2] * cofac[0][2]) +
+		(md[0][3] * cofac[0][3]);
 
-	if (det <= 1.0e-9) {
-		// singular matrix, set to identity?
-		for (int i = 0; i < 4; i++) {
-			for (int j = 0; j < 4; j++) {
-				mInv[i][j] = (i == j) ? 1.0 : 0.0;
-			}
-		}
+	if (det == 0.0f) {
+		//! singular matrix, set to identity?
+		LoadIdentity();
 		return false;
 	}
 
-	const double scale = 1.0 / det;
+	const float scale = 1.0f / det;
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
-			mInv[i][j] = cofac[j][i] * scale; // (adjoint / determinant)
-			                                  // (note the transposition in 'cofac')
+			//! (adjoint / determinant)
+			//! (note the transposition in 'cofac')
+			md[i][j] = cofac[j][i] * scale;
 		}
 	}
 
 	return true;
+}
+
+
+//! generalized inverse for non-orthonormal 4x4 matrices
+//! A^-1 = (1 / det(A)) (C^T)_{ij} = (1 / det(A)) C_{ji}
+CMatrix44f CMatrix44f::Invert(bool* status) const
+{
+	CMatrix44f mat;
+	CMatrix44f& cofac = mat;
+
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			cofac.md[i][j] = CalculateCofactor(md, i, j);
+		}
+	}
+
+	const float det =
+		(md[0][0] * cofac.md[0][0]) +
+		(md[0][1] * cofac.md[0][1]) +
+		(md[0][2] * cofac.md[0][2]) +
+		(md[0][3] * cofac.md[0][3]);
+
+	if (det == 0.0f) {
+		//! singular matrix, set to identity?
+		mat.LoadIdentity();
+		if (status) *status = false;
+		return mat;
+	}
+
+	mat *= 1.f / det;
+	mat.Transpose();
+
+	if (status) *status = true;
+	return mat;
 }

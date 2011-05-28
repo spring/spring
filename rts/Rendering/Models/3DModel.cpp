@@ -17,19 +17,40 @@
 #include "System/LogOutput.h"
 
 
-//////////////////////////////////////////////////////////////////////
-// S3DModelPiece
-//
+/** ****************************************************************************************************
+ * S3DModel
+ */
+
+S3DModelPiece* S3DModel::FindPiece( std::string name )
+{
+    const ModelPieceMap::const_iterator it = pieces.find(name);
+    if (it != pieces.end()) return it->second;
+    return NULL;
+}
+
+
+/** ****************************************************************************************************
+ * S3DModelPiece
+ */
 
 void S3DModelPiece::DrawStatic() const
 {
-	glPushMatrix();
-	glTranslatef(offset.x, offset.y, offset.z);
-	glCallList(dispListID);
-	for (std::vector<S3DModelPiece*>::const_iterator ci = childs.begin(); ci != childs.end(); ++ci) {
-		(*ci)->DrawStatic();
+	const bool needTrafo = (offset.SqLength() != 0.f);
+	if (needTrafo) {
+		glPushMatrix();
+		glTranslatef(offset.x, offset.y, offset.z);
 	}
-	glPopMatrix();
+
+		if (!isEmpty)
+			glCallList(dispListID);
+
+		for (std::vector<S3DModelPiece*>::const_iterator ci = childs.begin(); ci != childs.end(); ++ci) {
+			(*ci)->DrawStatic();
+		}
+
+	if (needTrafo) {
+		glPopMatrix();
+	}
 }
 
 
@@ -40,21 +61,23 @@ S3DModelPiece::~S3DModelPiece()
 }
 
 
+/** ****************************************************************************************************
+ * LocalModel
+ */
 
-/******************************************************************************/
-/******************************************************************************/
-//
-//  LocalModel
-//
-
-LocalModel::~LocalModel()
+LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParent, size_t pieceNum)
 {
-	// delete the local piece copies
-	for (std::vector<LocalModelPiece*>::iterator pi = pieces.begin(); pi != pieces.end(); ++pi) {
-		delete (*pi)->GetCollisionVolume();
-		delete (*pi);
+	LocalModelPiece* lmpParent = new LocalModelPiece(mpParent);
+	pieces.push_back(lmpParent);
+
+	LocalModelPiece* lmpChild = NULL;
+	for (unsigned int i = 0; i < mpParent->GetChildCount(); i++) {
+		lmpChild = CreateLocalModelPieces(mpParent->GetChild(i), ++pieceNum);
+		lmpChild->SetParent(lmpParent);
+		lmpParent->AddChild(lmpChild);
 	}
-	pieces.clear();
+
+	return lmpParent;
 }
 
 
@@ -73,7 +96,7 @@ void LocalModel::ApplyRawPieceTransform(int piecenum) const
 
 float3 LocalModel::GetRawPiecePos(int piecenum) const
 {
-	return pieces[piecenum]->GetPos();
+	return pieces[piecenum]->GetAbsolutePos();
 }
 
 
@@ -83,105 +106,129 @@ CMatrix44f LocalModel::GetRawPieceMatrix(int piecenum) const
 }
 
 
-
-
 void LocalModel::GetRawEmitDirPos(int piecenum, float3 &pos, float3 &dir) const
 {
 	pieces[piecenum]->GetEmitDirPos(pos, dir);
 }
 
 
-//Only useful for special pieces used for emit-sfx
+//! Only useful for special pieces. Used for emit-sfx.
 float3 LocalModel::GetRawPieceDirection(int piecenum) const
 {
 	return pieces[piecenum]->GetDirection();
 }
 
 
-
-void LocalModel::CreatePieces(S3DModelPiece* mpParent, unsigned int* pieceNum) {
-	LocalModelPiece* lmpParent = pieces[*pieceNum];
-	LocalModelPiece* lmpChild = NULL;
-
-	lmpParent->Init(mpParent);
-	lmpParent->SetCollisionVolume(new CollisionVolume(mpParent->GetCollisionVolume()));
-
-	for (unsigned int i = 0; i < mpParent->GetChildCount(); i++) {
-		lmpChild = pieces[ ++(*pieceNum) ];
-
-		lmpChild->SetParent(lmpParent);
-		lmpParent->AddChild(lmpChild);
-
-		CreatePieces(mpParent->GetChild(i), pieceNum);
-	}
-}
-
-
-
-/******************************************************************************/
-/******************************************************************************/
-//
-//  LocalModelPiece
-//
+/** ****************************************************************************************************
+ * LocalModelPiece
+ */
 
 static const float RADTOANG  = 180 / PI;
 
-void LocalModelPiece::Draw() const
+LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
+	: updates(1)
+	, last_matrix_update(0)
 {
-	if (!visible && childs.size()==0)
-		return;
+	assert(piece);
+	original   =  piece;
+	dispListID =  piece->dispListID;
+	visible    = !piece->isEmpty;
+	pos        =  piece->offset;
+	colvol     =  new CollisionVolume(piece->GetCollisionVolume());
+	childs.reserve(piece->childs.size());
 
-	glPushMatrix();
-
-	if (pos.x || pos.y || pos.z) { glTranslatef(pos.x, pos.y, pos.z); }
-	if (rot[1]) { glRotatef(rot[1] * RADTOANG, 0.0f, 1.0f, 0.0f); }
-	if (rot[0]) { glRotatef(rot[0] * RADTOANG, 1.0f, 0.0f, 0.0f); }
-	if (rot[2]) { glRotatef(rot[2] * RADTOANG, 0.0f, 0.0f, 1.0f); }
-
-	if (visible)
-		glCallList(dispListID);
-
-	for (unsigned int i = 0; i < childs.size(); i++) {
-		childs[i]->Draw();
-	}
-
-	glPopMatrix();
+	parent = NULL; //FIXME?
 }
 
 
-void LocalModelPiece::DrawLOD(unsigned int lod) const
+LocalModelPiece::~LocalModelPiece() {
+	delete colvol;
+}
+
+
+void LocalModelPiece::UpdateMatrix()
+{
+	last_matrix_update = updates;
+
+	transfMat.LoadIdentity();
+
+	identity = !(pos.SqLength() || rot.SqLength());
+
+	if (pos.SqLength()) { transfMat.Translate(pos.x, pos.y, pos.z); }
+	if (rot[1]) { transfMat.RotateY(-rot[1]); }
+	if (rot[0]) { transfMat.RotateX(-rot[0]); }
+	if (rot[2]) { transfMat.RotateZ(-rot[2]); }
+}
+
+
+inline void LocalModelPiece::CheckUpdate()
+{
+	if (last_matrix_update != updates) {
+		UpdateMatrix();
+	}
+}
+
+
+void LocalModelPiece::Draw()
 {
 	if (!visible && childs.empty())
 		return;
 
-	glPushMatrix();
+	CheckUpdate();
 
-	if (pos.x || pos.y || pos.z) { glTranslatef(pos.x, pos.y, pos.z); }
-	if (rot[1]) { glRotatef(rot[1] * RADTOANG, 0.0f, 1.0f, 0.0f); }
-	if (rot[0]) { glRotatef(rot[0] * RADTOANG, 1.0f, 0.0f, 0.0f); }
-	if (rot[2]) { glRotatef(rot[2] * RADTOANG, 0.0f, 0.0f, 1.0f); }
-
-	if (visible)
-		glCallList(lodDispLists[lod]);
-
-	for (unsigned int i = 0; i < childs.size(); i++) {
-		childs[i]->DrawLOD(lod);
+	if (!identity) {
+		glPushMatrix();
+		glMultMatrixf(transfMat);
 	}
 
-	glPopMatrix();
+		if (visible)
+			glCallList(dispListID);
+
+		for (unsigned int i = 0; i < childs.size(); i++) {
+			childs[i]->Draw();
+		}
+	
+	if (!identity) {
+		glPopMatrix();
+	}
 }
 
 
-void LocalModelPiece::ApplyTransform() const
+void LocalModelPiece::DrawLOD(unsigned int lod)
+{
+	if (!visible && childs.empty())
+		return;
+
+	CheckUpdate();
+	
+	if (!identity) {
+		glPushMatrix();
+		glMultMatrixf(transfMat);
+	}
+
+		if (visible)
+			glCallList(lodDispLists[lod]);
+
+		for (unsigned int i = 0; i < childs.size(); i++) {
+			childs[i]->DrawLOD(lod);
+		}
+	
+	if (!identity) {
+		glPopMatrix();
+	}
+}
+
+
+void LocalModelPiece::ApplyTransform()
 {
 	if (parent) {
 		parent->ApplyTransform();
 	}
 
-	if (pos.x || pos.y || pos.z) { glTranslatef(pos.x, pos.y, pos.z); }
-	if (rot[1]) { glRotatef(rot[1] * RADTOANG, 0.0f, 1.0f, 0.0f); }
-	if (rot[0]) { glRotatef(rot[0] * RADTOANG, 1.0f, 0.0f, 0.0f); }
-	if (rot[2]) { glRotatef(rot[2] * RADTOANG, 0.0f, 0.0f, 1.0f); }
+	CheckUpdate();
+	if (!identity) {
+		glMultMatrixf(transfMat);
+	}
 }
 
 
@@ -191,10 +238,13 @@ void LocalModelPiece::GetPiecePosIter(CMatrix44f* mat) const
 		parent->GetPiecePosIter(mat);
 	}
 
-	if (pos.x || pos.y || pos.z) { mat->Translate(pos.x, pos.y, pos.z); }
+/**/
+	if (pos.SqLength()) { mat->Translate(pos.x, pos.y, pos.z); }
 	if (rot[1]) { mat->RotateY(-rot[1]); }
 	if (rot[0]) { mat->RotateX(-rot[0]); }
 	if (rot[2]) { mat->RotateZ(-rot[2]); }
+/**/
+	//(*mat) *= transMat; //! Translate & Rotate are faster than matrix-mul!
 }
 
 
@@ -214,18 +264,18 @@ void LocalModelPiece::SetLODCount(unsigned int count)
 
 
 #if defined(USE_GML) && defined(__GNUC__) && (__GNUC__ == 4)
-// This is supposed to fix some GCC crashbug related to threading
-// The MOVAPS SSE instruction is otherwise getting misaligned data
+//! This is supposed to fix some GCC crashbug related to threading
+//! The MOVAPS SSE instruction is otherwise getting misaligned data
 __attribute__ ((force_align_arg_pointer))
 #endif
-float3 LocalModelPiece::GetPos() const
+float3 LocalModelPiece::GetAbsolutePos() const
 {
 	CMatrix44f mat;
 	GetPiecePosIter(&mat);
 
 	mat.Translate(original->GetPosOffset());
 
-	// we use a 'right' vector, and the positive x axis points to the left
+	//! we use a 'right' vector, and the positive x axis points to the left
 	float3 pos = mat.GetPos();
 	pos.x = -pos.x;
 	return pos;
@@ -236,7 +286,6 @@ CMatrix44f LocalModelPiece::GetMatrix() const
 {
 	CMatrix44f mat;
 	GetPiecePosIter(&mat);
-
 	return mat;
 }
 
@@ -280,7 +329,7 @@ bool LocalModelPiece::GetEmitDirPos(float3& pos, float3& dir) const
 		return false;
 	}
 
-	// we use a 'right' vector, and the positive x axis points to the left
+	//! we use a 'right' vector, and the positive x axis points to the left
 	pos.x = -pos.x;
 	dir.x = -dir.x;
 

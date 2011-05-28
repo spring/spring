@@ -27,9 +27,11 @@ CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
 
 	std::vector<InfoItem> tmpInfo;
 	parseInfo(tmpInfo, interfaceInfoFile);
-	std::vector<InfoItem>::const_iterator ii;
+	std::vector<InfoItem>::iterator ii;
 	for (ii = tmpInfo.begin(); ii != tmpInfo.end(); ++ii) {
-		SetInfo(ii->key, ii->value, ii->desc);
+		// TODO remove this, once we support non-string value types for AI Interface info
+		info_convertToStringValue(&(*ii));
+		SetInfo(ii->key, ii->valueTypeString, ii->desc);
 	}
 }
 

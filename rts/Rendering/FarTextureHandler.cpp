@@ -4,10 +4,10 @@
 
 #include "FarTextureHandler.h"
 
-#include "Map/MapInfo.h"
 #include "Game/Camera.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/Env/BaseSky.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -181,7 +181,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	unitDrawer->SetupForUnitDrawing();
 	unitDrawer->GetOpaqueModelRenderer(model->type)->PushRenderState();
 
-	if (model->type == MODELTYPE_S3O || model->type == MODELTYPE_OBJ) {
+	if (model->type == MODELTYPE_S3O || model->type == MODELTYPE_OBJ || model->type == MODELTYPE_ASS) {
 		// FIXME for some strange reason we need to invert the culling, why?
 		if (model->type == MODELTYPE_S3O) {
 			glCullFace(GL_FRONT);
@@ -303,10 +303,7 @@ void CFarTextureHandler::Draw()
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glNormal3fv((const GLfloat*) &unitDrawer->camNorm.x);
 
-	if (globalRendering->drawFog) {
-		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
-		glEnable(GL_FOG);
-	}
+	IBaseSky::SetFog();
 
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();

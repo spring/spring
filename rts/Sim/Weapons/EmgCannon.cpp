@@ -2,7 +2,7 @@
 
 #include "StdAfx.h"
 #include "EmgCannon.h"
-#include "Game/GameHelper.h"
+#include "Game/TraceRay.h"
 #include "Sim/Misc/Team.h"
 #include "Map/Ground.h"
 #include "Sim/MoveTypes/AirMoveType.h"
@@ -80,13 +80,13 @@ bool CEmgCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 		(accuracy + sprayAngle) *
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 
-	if (avoidFeature && helper->LineFeatureCol(weaponMuzzlePos, dir, length)) {
+	if (avoidFeature && TraceRay::LineFeatureCol(weaponMuzzlePos, dir, length)) {
 		return false;
 	}
-	if (avoidFriendly && helper->TestCone(weaponMuzzlePos, dir, length, spread, owner, CGameHelper::TEST_ALLIED)) {
+	if (avoidFriendly && TraceRay::TestAllyCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, owner)) {
 		return false;
 	}
-	if (avoidNeutral && helper->TestCone(weaponMuzzlePos, dir, length, spread, owner, CGameHelper::TEST_NEUTRAL)) {
+	if (avoidNeutral && TraceRay::TestNeutralCone(weaponMuzzlePos, dir, length, spread, owner)) {
 		return false;
 	}
 

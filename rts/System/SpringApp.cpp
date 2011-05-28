@@ -167,7 +167,6 @@ bool SpringApp::Initialize()
 	good_fpu_control_registers("::Run");
 
 	// log OS version
-	// TODO: improve version logging of non-Windows OSes
 	logOutput.Print("OS: %s", Platform::GetOS().c_str());
 	if (Platform::Is64Bit())
 		logOutput.Print("OS: 64bit native mode");
@@ -1065,9 +1064,9 @@ int SpringApp::Update()
 #if defined(USE_GML) && GML_ENABLE_SIM
 				!gmlMultiThreadSim &&
 #endif
-				(gs->frameNum - lastRequiredDraw) >= (float)MAX_CONSECUTIVE_SIMFRAMES * gs->userSpeedFactor)
+				(gs->frameNum - lastRequiredDraw) >= GAME_SPEED/float(gu->minFPS) * gs->userSpeedFactor)
 			{
-				ScopedTimer cputimer("CPU load"); // Update
+				ScopedTimer cputimer("CPU-DrawFrame load"); // Update
 
 				ret = activeController->Draw();
 				lastRequiredDraw = gs->frameNum;

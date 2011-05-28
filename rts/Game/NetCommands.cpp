@@ -13,13 +13,14 @@
 #include "TimeProfiler.h"
 #include "WordCompletion.h"
 #include "IVideoCapturing.h"
+#include "InMapDraw.h"
+#include "InMapDrawModel.h"
 #include "Game/UI/UnitTracker.h"
 #ifdef _WIN32
 #  include "winerror.h"
 #endif
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
-#include "Rendering/InMapDraw.h"
 #include "Lua/LuaRules.h"
 #include "UI/GameSetupDrawer.h"
 #include "UI/LuaUI.h"
@@ -42,7 +43,7 @@ void CGame::ClientReadNet()
 		lastCpuUsageTime = gu->gameTime;
 
 		if (playing) {
-			net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("CPU load")));
+			net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("CPU load") + profiler.GetPercent("CPU-DrawFrame load")));
 #if defined(USE_GML) && GML_ENABLE_SIM
 			net->Send(CBaseNetProtocol::Get().SendLuaDrawTime(gu->myPlayerNum, luaDrawTime));
 #endif
@@ -82,7 +83,7 @@ void CGame::ClientReadNet()
 	{
 		// make sure ClientReadNet returns at least every 15 game frames
 		// so CGame can process keyboard input, and render etc.
-		timeLeft = (float)MAX_CONSECUTIVE_SIMFRAMES * gs->userSpeedFactor;
+		timeLeft = GAME_SPEED/float(gu->minFPS) * gs->userSpeedFactor;
 	}
 
 	// always render at least 2FPS (will otherwise be highly unresponsive when catching up after a reconnection)
@@ -294,7 +295,7 @@ void CGame::ClientReadNet()
 						{
 							char label[128];
 							SNPRINTF(label, sizeof(label), "Start %i", team);
-							inMapDrawer->LocalPoint(pos, label, player);
+							inMapDrawerModel->AddPoint(pos, label, player);
 							// FIXME - erase old pos ?
 						}
 					}
@@ -388,9 +389,12 @@ void CGame::ClientReadNet()
 					if (!playerHandler->IsValidPlayer(player))
 						throw netcode::UnpackPacketException("Invalid player number");
 
-					Command c;
-					pckt >> c.id;
-					pckt >> c.options;
+					int cmd_id;
+					unsigned char cmd_opt;
+					pckt >> cmd_id;
+					pckt >> cmd_opt;
+	
+					Command c(cmd_id, cmd_opt);
 					for(int a = 0; a < ((psize-9)/4); ++a) {
 						float param;
 						pckt >> param;
@@ -452,9 +456,12 @@ void CGame::ClientReadNet()
 					if (unitid < 0 || static_cast<size_t>(unitid) >= uh->MaxUnits())
 						throw netcode::UnpackPacketException("Invalid unit ID");
 
-					Command c;
-					pckt >> c.id;
-					pckt >> c.options;
+					int cmd_id;
+					unsigned char cmd_opt;
+					pckt >> cmd_id;
+					pckt >> cmd_opt;
+	
+					Command c(cmd_id, cmd_opt);
 					if (packetCode == NETMSG_AICOMMAND_TRACKED) {
 						pckt >> c.aiCommandId;
 					}
@@ -496,9 +503,12 @@ void CGame::ClientReadNet()
 					short int commandCount;
 					pckt >> commandCount;
 					for (int c = 0; c < commandCount; c++) {
-						Command cmd;
-						pckt >> cmd.id;
-						pckt >> cmd.options;
+						int cmd_id;
+						unsigned char cmd_opt;
+						pckt >> cmd_id;
+						pckt >> cmd_opt;
+	
+						Command cmd(cmd_id, cmd_opt);
 						short int paramCount;
 						pckt >> paramCount;
 						for (int p = 0; p < paramCount; p++) {
@@ -760,7 +770,7 @@ void CGame::ClientReadNet()
 								}
 							}
 						}
-						logOutput.Print("Player %i resigned and is now spectating!", player);
+						logOutput.Print("Player %i (%s) resigned and is now spectating!", player, playerHandler->Player(player)->name.c_str());
 						selectedUnits.ClearNetSelect(player);
 						CPlayer::UpdateControlledTeams();
 						break;

@@ -21,6 +21,7 @@
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
+#include "Game/TraceRay.h"
 #include "Lua/LuaTextures.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
@@ -174,9 +175,9 @@ static bool SafeAtoF(float& var, const std::string& value)
 }
 
 
-bool CGuiHandler::LoadConfig(const std::string& filename)
+bool CGuiHandler::LoadConfig(const std::string& fileName)
 {
-	CFileHandler ifs(filename);
+	CFileHandler ifs(fileName);
 	CSimpleParser parser(ifs);
 
 	std::string deadStr = "";
@@ -405,9 +406,9 @@ int CGuiHandler::ParseIconSlot(const std::string& text) const
 }
 
 
-bool CGuiHandler::ReloadConfig(const std::string& filename)
+bool CGuiHandler::ReloadConfig(const std::string& fileName)
 {
-	LoadConfig(filename);
+	LoadConfig(fileName);
 	activePage = 0;
 	selectedUnits.SetCommandPage(activePage);
 	LayoutIcons(false);
@@ -424,6 +425,7 @@ void CGuiHandler::ResizeIconArray(unsigned int size)
 	if (iconsSize < minIconsSize) {
 		iconsSize = minIconsSize;
 		delete[] icons;
+		icons = NULL; // to prevent a dead-pointer in case of an out-of-memory exception on the next line
 		icons = new IconInfo[iconsSize];
 	}
 }
@@ -871,9 +873,8 @@ void CGuiHandler::GiveCommand(const Command& cmd, bool fromUser) const
 	selectedUnits.GiveCommand(cmd, fromUser);
 
 	if (gatherMode) {
-		if ((cmd.id == CMD_MOVE) || (cmd.id == CMD_FIGHT)) {
-			Command gatherCmd;
-			gatherCmd.id = CMD_GATHERWAIT;
+		if ((cmd.GetID() == CMD_MOVE) || (cmd.GetID() == CMD_FIGHT)) {
+			Command gatherCmd(CMD_GATHERWAIT);
 			GiveCommand(gatherCmd, false);
 		}
 	}
@@ -1069,7 +1070,7 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 }
 
 
-void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, float3& mousedir)
+void CGuiHandler::MouseRelease(int x, int y, int button, const float3& cameraPos, const float3& mouseDir)
 {
 	GML_RECMUTEX_LOCK(gui); // MouseRelease
 
@@ -1115,20 +1116,20 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, floa
 	}
 
 	if ((iconCmd >= 0) && ((size_t)iconCmd < commands.size())) {
-		const bool rmb = (button == SDL_BUTTON_RIGHT);
-		SetActiveCommand(iconCmd, rmb);
+		const bool rightMouseButton = (button == SDL_BUTTON_RIGHT);
+		SetActiveCommand(iconCmd, rightMouseButton);
 		return;
 	}
 
 	// not over a button, try to execute a command
-	Command c = GetCommand(x, y, button, false, camerapos, mousedir);
+	Command c = GetCommand(x, y, button, false, cameraPos, mouseDir);
 
-	if (c.id == CMD_FAILED) { // indicates we should not finish the current command
+	if (c.GetID() == CMD_FAILED) { // indicates we should not finish the current command
 		Channels::UserInterface.PlaySample(failedSound, 5);
 		return;
 	}
 	// if cmd_stop is returned it indicates that no good command could be found
-	if (c.id != CMD_STOP) {
+	if (c.GetID() != CMD_STOP) {
 		GiveCommand(c);
 		lastKeySet.Reset();
 	}
@@ -1137,7 +1138,7 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, floa
 }
 
 
-bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
+bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rightMouseButton)
 {
 	GML_RECMUTEX_LOCK(gui); // SetActiveCommand - updates inCommand
 
@@ -1163,11 +1164,10 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 
 	switch (cd.type) {
 		case CMDTYPE_ICON: {
-			Command c;
-			c.id = cd.id;
-			if (c.id != CMD_STOP) {
-				CreateOptions(c, rmb);
-				if (invertQueueKey && ((c.id < 0) || (c.id == CMD_STOCKPILE))) {
+			Command c(cd.id);
+			if (cd.id != CMD_STOP) {
+				c.options = CreateOptions(rightMouseButton);
+				if (invertQueueKey && ((cd.id < 0) || (cd.id == CMD_STOCKPILE))) {
 					c.options = c.options ^ SHIFT_KEY;
 				}
 			}
@@ -1185,10 +1185,8 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 			SNPRINTF(t, 10, "%d", newMode);
 			cd.params[0] = t;
 
-			Command c;
-			c.id = cd.id;
+			Command c(cd.id, CreateOptions(rightMouseButton));
 			c.params.push_back(newMode);
-			CreateOptions(c, rmb);
 			GiveCommand(c);
 			forceLayoutUpdate = true;
 			break;
@@ -1231,7 +1229,7 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 			break;
 		}
 		case CMDTYPE_CUSTOM: {
-			RunCustomCommands(cd.params, rmb);
+			RunCustomCommands(cd.params, rightMouseButton);
 			break;
 		}
 		default:
@@ -1243,10 +1241,10 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 
 
 bool CGuiHandler::SetActiveCommand(int cmdIndex, int button,
-                                   bool lmb, bool rmb,
+                                   bool leftMouseButton, bool rightMouseButton,
                                    bool alt, bool ctrl, bool meta, bool shift)
 {
-	// use the button value instead of rmb
+	// use the button value instead of rightMouseButton
 	const bool effectiveRMB = (button == SDL_BUTTON_LEFT) ? false : true;
 
 	// setup the mouse and key states
@@ -1257,8 +1255,8 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, int button,
 	const boost::uint8_t prevMeta  = keyInput->IsKeyPressed(SDLK_LMETA);
 	const boost::uint8_t prevShift = keyInput->IsKeyPressed(SDLK_LSHIFT);
 
-	mouse->buttons[SDL_BUTTON_LEFT].pressed  = lmb;
-	mouse->buttons[SDL_BUTTON_RIGHT].pressed = rmb;
+	mouse->buttons[SDL_BUTTON_LEFT].pressed  = leftMouseButton;
+	mouse->buttons[SDL_BUTTON_RIGHT].pressed = rightMouseButton;
 
 	keyInput->SetKeyState(SDLK_LALT,   alt);
 	keyInput->SetKeyState(SDLK_LCTRL,  ctrl);
@@ -1362,7 +1360,7 @@ static bool ParseCustomCmdMods(std::string& cmd, ModGroup& in, ModGroup& out)
 }
 
 
-static bool CheckCustomCmdMods(bool rmb, ModGroup& inMods)
+static bool CheckCustomCmdMods(bool rightMouseButton, ModGroup& inMods)
 {
 	if (((inMods.alt   == Required)  && !keyInput->IsKeyPressed(SDLK_LALT))   ||
 	    ((inMods.alt   == Forbidden) &&  keyInput->IsKeyPressed(SDLK_LALT))   ||
@@ -1372,15 +1370,15 @@ static bool CheckCustomCmdMods(bool rmb, ModGroup& inMods)
 	    ((inMods.meta  == Forbidden) &&  keyInput->IsKeyPressed(SDLK_LMETA))  ||
 	    ((inMods.shift == Required)  && !keyInput->IsKeyPressed(SDLK_LSHIFT)) ||
 	    ((inMods.shift == Forbidden) &&  keyInput->IsKeyPressed(SDLK_LSHIFT)) ||
-	    ((inMods.right == Required)  && !rmb) ||
-	    ((inMods.right == Forbidden) &&  rmb)) {
+	    ((inMods.right == Required)  && !rightMouseButton) ||
+	    ((inMods.right == Forbidden) &&  rightMouseButton)) {
 		return false;
 	}
 	return true;
 }
 
 
-void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool rmb)
+void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool rightMouseButton)
 {
 	GML_RECMUTEX_LOCK(gui); // RunCustomCommands - called from LuaUnsyncedCtrl::SendCommands
 
@@ -1395,7 +1393,7 @@ void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool r
 		ModGroup inMods;  // must match for the action to execute
 		ModGroup outMods; // controls the state of the modifiers  (ex: "group1")
 		if (ParseCustomCmdMods(copy, inMods, outMods)) {
-			if (CheckCustomCmdMods(rmb, inMods)) {
+			if (CheckCustomCmdMods(rightMouseButton, inMods)) {
 				const bool tmpAlt   = !!keyInput->GetKeyState(SDLK_LALT);
 				const bool tmpCtrl  = !!keyInput->GetKeyState(SDLK_LCTRL);
 				const bool tmpMeta  = !!keyInput->GetKeyState(SDLK_LMETA);
@@ -1445,11 +1443,12 @@ bool CGuiHandler::AboveGui(int x, int y)
 }
 
 
-void CGuiHandler::CreateOptions(Command& c, bool rmb)
+unsigned char CGuiHandler::CreateOptions(bool rightMouseButton)
 {
-	c.options = 0;
-	if (rmb) {
-		c.options |= RIGHT_MOUSE_KEY;
+	unsigned char options = 0;
+
+	if (rightMouseButton) {
+		options |= RIGHT_MOUSE_KEY;
 	}
 	if (GetQueueKeystate()) {
 		// allow mouse button 'rocker' movements to force
@@ -1457,12 +1456,18 @@ void CGuiHandler::CreateOptions(Command& c, bool rmb)
 		if (!invertQueueKey ||
 		    (!mouse->buttons[SDL_BUTTON_LEFT].pressed &&
 		     !mouse->buttons[SDL_BUTTON_RIGHT].pressed)) {
-			c.options |= SHIFT_KEY;
+			options |= SHIFT_KEY;
 		}
 	}
-	if (keyInput->IsKeyPressed(SDLK_LCTRL)) { c.options |= CONTROL_KEY; }
-	if (keyInput->IsKeyPressed(SDLK_LALT) ) { c.options |= ALT_KEY;     }
-	if (keyInput->IsKeyPressed(SDLK_LMETA)) { c.options |= META_KEY;    }
+	if (keyInput->IsKeyPressed(SDLK_LCTRL)) { options |= CONTROL_KEY; }
+	if (keyInput->IsKeyPressed(SDLK_LALT) ) { options |= ALT_KEY;     }
+	if (keyInput->IsKeyPressed(SDLK_LMETA)) { options |= META_KEY;    }
+
+	return options;
+}
+unsigned char CGuiHandler::CreateOptions(int button)
+{
+	return CreateOptions(button != SDL_BUTTON_LEFT);
 }
 
 
@@ -1484,7 +1489,7 @@ float CGuiHandler::GetNumberInput(const CommandDescription& cd) const
 // DrawMapStuff --> GetDefaultCommand
 // CMouseHandler::DrawCursor --> DrawCentroidCursor --> GetDefaultCommand
 // LuaUnsyncedRead::GetDefaultCommand --> GetDefaultCommand
-int CGuiHandler::GetDefaultCommand(int x, int y, float3& camerapos, float3& mousedir) const
+int CGuiHandler::GetDefaultCommand(int x, int y, const float3& cameraPos, const float3& mouseDir) const
 {
 	CInputReceiver* ir = NULL;
 	if (!game->hideInterface) {
@@ -1498,33 +1503,21 @@ int CGuiHandler::GetDefaultCommand(int x, int y, float3& camerapos, float3& mous
 	GML_RECMUTEX_LOCK(sel); // GetDefaultCommand - anti deadlock
 	GML_RECMUTEX_LOCK(quad); // GetDefaultCommand
 
-	const CUnit* unit = NULL;
-	const CFeature* feature = NULL;
+	CUnit* unit = NULL;
+	CFeature* feature = NULL;
 	if ((ir == minimap) && (minimap->FullProxy())) {
 		unit = minimap->GetSelectUnit(minimap->GetMapPosition(x, y));
 	}
 	else {
-		const float3 camPos = camerapos;
-		const float3 camDir = mousedir;
+		const float3 camPos = cameraPos;
+		const float3 camDir = mouseDir;
 		const float viewRange = globalRendering->viewRange*1.4f;
-		const float dist = helper->GuiTraceRay(camPos, camDir, viewRange, unit, true);
-		const float dist2 = helper->GuiTraceRayFeature(camPos, camDir, viewRange, feature);
+		const float dist = TraceRay::GuiTraceRay(camPos, camDir, viewRange, true, NULL, unit, feature);
 		const float3 hit = camPos + camDir*dist;
 
 		// make sure the ray hit in the map
-		if (unit == NULL && (hit.x < 0.f || hit.x > gs->mapx*SQUARE_SIZE
-				|| hit.z < 0.f || hit.z > gs->mapy*SQUARE_SIZE))
+		if (!unit && !feature && !hit.IsInBounds())
 			return -1;
-
-		if ((dist > viewRange - 300) && (dist2 > viewRange - 300) && (unit == NULL)) {
-			return -1;
-		}
-
-		if (dist > dist2) {
-			unit = NULL;
-		} else {
-			feature = NULL;
-		}
 	}
 
 	GML_RECMUTEX_LOCK(gui); // GetDefaultCommand
@@ -1837,10 +1830,8 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 
 		switch (cmdType) {
 			case CMDTYPE_ICON:{
-				Command c;
-				c.options = 0;
-				c.id = cmdDesc.id;
-				if ((c.id < 0) || (c.id == CMD_STOCKPILE)) {
+				Command c(cmdDesc.id);
+				if ((cmdDesc.id < 0) || (cmdDesc.id == CMD_STOCKPILE)) {
 					if (action.extra == "+5") {
 						c.options = SHIFT_KEY;
 					} else if (action.extra == "+20") {
@@ -1881,9 +1872,7 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 				SNPRINTF(t, 10, "%d", newMode);
 				cmdDesc.params[0] = t;
 
-				Command c;
-				c.options = 0;
-				c.id = cmdDesc.id;
+				Command c(cmdDesc.id);
 				c.params.push_back(newMode);
 				GiveCommand(c);
 				forceLayoutUpdate = true;
@@ -1898,12 +1887,10 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 					if (cd.params.size() >= 1) { minV = atof(cd.params[0].c_str()); }
 					if (cd.params.size() >= 2) { maxV = atof(cd.params[1].c_str()); }
 					value = std::max(std::min(value, maxV), minV);
-					Command c;
-					c.options = 0;
+					Command c(cd.id);
 					if (action.extra.find("queued") != std::string::npos) {
 						c.options = SHIFT_KEY;
 					}
-					c.id = cd.id;
 					c.params.push_back(value);
 					GiveCommand(c);
 					break;
@@ -2040,12 +2027,11 @@ Command CGuiHandler::GetOrderPreview()
 }
 
 
-Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool preview, float3& camerapos, float3& mousedir)
+Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool preview, const float3& cameraPos, const float3& mouseDir)
 {
 	GML_RECMUTEX_LOCK(gui); // GetCommand - updates inCommand
 
-	Command defaultRet;
-	defaultRet.id=CMD_STOP;
+	Command defaultRet(CMD_STOP);
 
 	int button;
 	if (buttonHint >= SDL_BUTTON_LEFT) {
@@ -2066,7 +2052,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 		if (mouse->buttons[SDL_BUTTON_RIGHT].pressed) {
 			tempInCommand = defaultCmdMemory;
 		} else {
-			tempInCommand = GetDefaultCommand(mousex, mousey, camerapos, mousedir);
+			tempInCommand = GetDefaultCommand(mouseX, mouseY, cameraPos, mouseDir);
 		}
 	}
 
@@ -2075,36 +2061,30 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 
 		case CMDTYPE_NUMBER:{
 			const float value = GetNumberInput(commands[tempInCommand]);
-			Command c;
-			c.id = commands[tempInCommand].id;;
+			Command c(commands[tempInCommand].id, CreateOptions(button));
 			c.params.push_back(value);
-			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 
 		case CMDTYPE_ICON:{
-			Command c;
-			c.id=commands[tempInCommand].id;
-			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
+			Command c(commands[tempInCommand].id, CreateOptions(button));
 			if(button==SDL_BUTTON_LEFT && !preview)
 				logOutput.Print("CMDTYPE_ICON left button press in incommand test? This shouldnt happen");
 			return c;}
 
 		case CMDTYPE_ICON_MAP:{
-			float dist=ground->LineGroundCol(camerapos,camerapos+mousedir*globalRendering->viewRange*1.4f);
+			float dist=ground->LineGroundCol(cameraPos,cameraPos+mouseDir*globalRendering->viewRange*1.4f);
 			if(dist<0){
 				return defaultRet;
 			}
-			float3 pos=camerapos+mousedir*dist;
-			Command c;
-			c.id=commands[tempInCommand].id;
+			float3 pos=cameraPos+mouseDir*dist;
+			Command c(commands[tempInCommand].id, CreateOptions(button));
 			c.params.push_back(pos.x);
 			c.params.push_back(pos.y);
 			c.params.push_back(pos.z);
-			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 
 		case CMDTYPE_ICON_BUILDING:{
-			float dist=ground->LineGroundCol(camerapos,camerapos+mousedir*globalRendering->viewRange*1.4f);
+			float dist=ground->LineGroundCol(cameraPos,cameraPos+mouseDir*globalRendering->viewRange*1.4f);
 			if(dist<0){
 				return defaultRet;
 			}
@@ -2114,15 +2094,15 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				return defaultRet;
 			}
 
-			float3 pos=camerapos+mousedir*dist;
+			float3 pos=cameraPos+mouseDir*dist;
 			std::vector<BuildInfo> buildPos;
 			BuildInfo bi(unitdef, pos, buildFacing);
 			if(GetQueueKeystate() && button==SDL_BUTTON_LEFT){
 				float dist=ground->LineGroundCol(mouse->buttons[SDL_BUTTON_LEFT].camPos,mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*globalRendering->viewRange*1.4f);
 				float3 pos2=mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*dist;
-				buildPos=GetBuildPos(BuildInfo(unitdef,pos2,buildFacing),bi,camerapos,mousedir);
+				buildPos=GetBuildPos(BuildInfo(unitdef,pos2,buildFacing),bi,cameraPos,mouseDir);
 			} else
-				buildPos=GetBuildPos(bi,bi,camerapos,mousedir);
+				buildPos=GetBuildPos(bi,bi,cameraPos,mouseDir);
 
 			if(buildPos.empty()){
 				return defaultRet;
@@ -2131,8 +2111,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			if(buildPos.size()==1) {
 				CFeature* feature; // TODO: Maybe also check out-of-range for immobile builder?
 				if (!uh->TestUnitBuildSquare(buildPos[0], feature, gu->myAllyTeam)) {
-					Command failedRet;
-					failedRet.id = CMD_FAILED;
+					Command failedRet(CMD_FAILED);
 					return failedRet;
 				}
 			}
@@ -2140,75 +2119,69 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			int a=0; // limit the number of max commands possible to send to avoid overflowing the network buffer
 			for(std::vector<BuildInfo>::iterator bpi=buildPos.begin();bpi!=--buildPos.end() && a<200;++bpi){
 				++a;
-				Command c;
-				bpi->FillCmd(c);
-				CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
+				Command c = bpi->CreateCommand(CreateOptions(button));
 				if(!preview)
 					GiveCommand(c);
 			}
-			Command c;
-			buildPos.back().FillCmd(c);
-			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
+			Command c = buildPos.back().CreateCommand(CreateOptions(button));
 			return c;}
 
 		case CMDTYPE_ICON_UNIT: {
-			const CUnit* unit = NULL;
-			Command c;
+			CUnit* unit = NULL;
+			CFeature* feature = NULL;
+			Command c(commands[tempInCommand].id, CreateOptions(button));
 
-			c.id=commands[tempInCommand].id;
-			helper->GuiTraceRay(camerapos,mousedir,globalRendering->viewRange*1.4f,unit,true);
+			TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
 			if (!unit) {
 				return defaultRet;
 			}
 			c.params.push_back(unit->id);
-			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 
 		case CMDTYPE_ICON_UNIT_OR_MAP: {
 
-			Command c;
-			c.id=commands[tempInCommand].id;
+			Command c(commands[tempInCommand].id, CreateOptions(button));
 
-			const CUnit* unit = NULL;
-			float dist2 = helper->GuiTraceRay(camerapos,mousedir,globalRendering->viewRange*1.4f,unit,true);
+			CUnit* unit = NULL;
+			CFeature* feature = NULL;
+			float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
 			if(dist2 > (globalRendering->viewRange * 1.4f - 300)) {
 				return defaultRet;
 			}
 
-			if (unit != NULL) {
+			if (unit) {
 				// clicked on unit
 				c.params.push_back(unit->id);
 			} else {
 				// clicked in map
-				float3 pos=camerapos+mousedir*dist2;
+				float3 pos=cameraPos+mouseDir*dist2;
 				c.params.push_back(pos.x);
 				c.params.push_back(pos.y);
 				c.params.push_back(pos.z);
 			}
-			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 
 		case CMDTYPE_ICON_FRONT:{
-			Command c;
-
 			float dist = ground->LineGroundCol(
 				mouse->buttons[button].camPos,
 				mouse->buttons[button].camPos + mouse->buttons[button].dir * globalRendering->viewRange * 1.4f);
 			if(dist<0){
 				return defaultRet;
 			}
+
 			float3 pos=mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
-			c.id=commands[tempInCommand].id;
+
+			Command c(commands[tempInCommand].id, CreateOptions(button));
 			c.params.push_back(pos.x);
 			c.params.push_back(pos.y);
 			c.params.push_back(pos.z);
 
 			if(mouse->buttons[button].movement>30){		//only create the front if the mouse has moved enough
-				dist=ground->LineGroundCol(camerapos,camerapos+mousedir*globalRendering->viewRange*1.4f);
+				dist=ground->LineGroundCol(cameraPos,cameraPos+mouseDir*globalRendering->viewRange*1.4f);
 				if(dist<0){
 					return defaultRet;
 				}
-				float3 pos2 = camerapos + mousedir * dist;
+				float3 pos2 = cameraPos + mouseDir * dist;
 
 				ProcessFrontPositions(pos, pos2);
 
@@ -2227,7 +2200,6 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				c.params.push_back(pos2.y);
 				c.params.push_back(pos2.z);
 			}
-			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 
 		case CMDTYPE_ICON_UNIT_OR_AREA:
@@ -2237,73 +2209,70 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			if(commands[tempInCommand].params.size()==1)
 				maxRadius=atof(commands[tempInCommand].params[0].c_str());
 
-			Command c;
-			c.id=commands[tempInCommand].id;
+			Command c(commands[tempInCommand].id, CreateOptions(button));
 
 			if (mouse->buttons[button].movement < 4) {
 
 				GML_RECMUTEX_LOCK(unit); // GetCommand
 				GML_RECMUTEX_LOCK(feat); // GetCommand
 
-				const CUnit* unit = NULL;
-				const CFeature* feature = NULL;
-				float dist2 = helper->GuiTraceRay(camerapos,mousedir,globalRendering->viewRange*1.4f,unit,true);
-				float dist3 = helper->GuiTraceRayFeature(camerapos,mousedir,globalRendering->viewRange*1.4f,feature);
+				CUnit* unit = NULL;
+				CFeature* feature = NULL;
+				float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
 
-				if(dist2 > (globalRendering->viewRange * 1.4f - 300) && (commands[tempInCommand].type!=CMDTYPE_ICON_UNIT_FEATURE_OR_AREA || dist3>globalRendering->viewRange*1.4f-300)) {
+				if(dist2 > (globalRendering->viewRange * 1.4f - 300) && (commands[tempInCommand].type!=CMDTYPE_ICON_UNIT_FEATURE_OR_AREA)) {
 					return defaultRet;
 				}
 
-				if (feature!=0 && dist3<dist2 && commands[tempInCommand].type==CMDTYPE_ICON_UNIT_FEATURE_OR_AREA) {  // clicked on feature
+				if (feature && commands[tempInCommand].type==CMDTYPE_ICON_UNIT_FEATURE_OR_AREA) {  // clicked on feature
 					c.params.push_back(uh->MaxUnits()+feature->id);
-				} else if (unit!=0 && commands[tempInCommand].type!=CMDTYPE_ICON_AREA) {  // clicked on unit
+				} else if (unit && commands[tempInCommand].type!=CMDTYPE_ICON_AREA) {  // clicked on unit
 					c.params.push_back(unit->id);
 				} else { // clicked in map
 					if(explicitCommand<0) // only attack ground if explicitly set the command
 						return defaultRet;
-					float3 pos=camerapos+mousedir*dist2;
+					float3 pos=cameraPos+mouseDir*dist2;
 					c.params.push_back(pos.x);
 					c.params.push_back(pos.y);
 					c.params.push_back(pos.z);
 					c.params.push_back(0);//zero radius
-					if(c.id == CMD_UNLOAD_UNITS)
+					if(c.GetID() == CMD_UNLOAD_UNITS)
 						c.params.push_back((float)buildFacing);
 				}
 			} else {	//created area
-				float dist=ground->LineGroundCol(mouse->buttons[button].camPos,mouse->buttons[button].camPos+mouse->buttons[button].dir*globalRendering->viewRange*1.4f);
+				float dist = ground->LineGroundCol(mouse->buttons[button].camPos, mouse->buttons[button].camPos + mouse->buttons[button].dir*globalRendering->viewRange*1.4f);
+
 				if(dist<0){
 					return defaultRet;
 				}
-				float3 pos=mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
+				float3 pos = mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
 				c.params.push_back(pos.x);
 				c.params.push_back(pos.y);
 				c.params.push_back(pos.z);
-				dist=ground->LineGroundCol(camerapos,camerapos+mousedir*globalRendering->viewRange*1.4f);
+				dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir*globalRendering->viewRange*1.4f);
 				if(dist<0){
 					return defaultRet;
 				}
-				float3 pos2=camerapos+mousedir*dist;
+				float3 pos2=cameraPos+mouseDir*dist;
 				c.params.push_back(std::min(maxRadius,pos.distance2D(pos2)));
-				if(c.id == CMD_UNLOAD_UNITS)
+				if(c.GetID() ==CMD_UNLOAD_UNITS)
 					c.params.push_back((float)buildFacing);
 			}
-			CreateOptions(c,(button==SDL_BUTTON_LEFT?0:1));
 			return c;}
 
 		case CMDTYPE_ICON_UNIT_OR_RECTANGLE:{
-			Command c;
-			c.id=commands[tempInCommand].id;
+			Command c(commands[tempInCommand].id, CreateOptions(button));
 
 			if (mouse->buttons[button].movement < 16) {
-				const CUnit* unit = NULL;
-
-				float dist2 = helper->GuiTraceRay(camerapos, mousedir, globalRendering->viewRange*1.4f, unit, true);
+				CUnit* unit;
+				CFeature* feature;
+				float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
 
 				if (dist2 > (globalRendering->viewRange * 1.4f - 300)) {
 					return defaultRet;
 				}
 
-				if (unit != NULL) {
+				if (unit) {
 					// clicked on unit
 					c.params.push_back(unit->id);
 				} else {
@@ -2311,7 +2280,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 					if (explicitCommand < 0) { // only attack ground if explicitly set the command
 						return defaultRet;
 					}
-					float3 pos = camerapos + (mousedir * dist2);
+					float3 pos = cameraPos + (mouseDir * dist2);
 					c.params.push_back(pos.x);
 					c.params.push_back(pos.y);
 					c.params.push_back(pos.z);
@@ -2325,11 +2294,11 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 					return defaultRet;
 				}
 				float3 startPos = mouse->buttons[button].camPos + mouse->buttons[button].dir * dist;
-				dist = ground->LineGroundCol(camerapos, camerapos + mousedir*globalRendering->viewRange * 1.4f);
+				dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir*globalRendering->viewRange * 1.4f);
 				if(dist<0){
 					return defaultRet;
 				}
-				float3 endPos=camerapos+mousedir*dist;
+				float3 endPos=cameraPos+mouseDir*dist;
 				c.params.push_back(startPos.x);
 				c.params.push_back(startPos.y);
 				c.params.push_back(startPos.z);
@@ -2337,7 +2306,6 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				c.params.push_back(endPos.y);
 				c.params.push_back(endPos.z);
 			}
-			CreateOptions(c, (button == SDL_BUTTON_LEFT) ? 0 : 1);
 			return c;}
 
 		default:
@@ -2356,8 +2324,7 @@ static bool WouldCancelAnyQueued(const BuildInfo& b)
 {
 	GML_RECMUTEX_LOCK(sel); // WouldCancelAnyQueued - called from DrawMapStuff -> GetBuildPos --> FillRowOfBuildPos
 
-	Command c;
-	b.FillCmd(c);
+	Command c = b.CreateCommand();
 	CUnitSet::iterator ui = selectedUnits.selectedUnits.begin();
 	for(;ui != selectedUnits.selectedUnits.end(); ++ui){
 		if((*ui)->commandAI->WillCancelQueued(c))
@@ -2380,7 +2347,7 @@ static void FillRowOfBuildPos(const BuildInfo& startInfo, float x, float z, floa
 }
 
 // Assuming both builds have the same unitdef
-std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo, float3& camerapos, float3& mousedir)
+std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo, const float3& cameraPos, const float3& mouseDir)
 {
 	std::vector<BuildInfo> ret;
 
@@ -2390,21 +2357,22 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 	BuildInfo other; // the unit around which buildings can be circled
 
 	if (GetQueueKeystate() && keyInput->IsKeyPressed(SDLK_LCTRL)) {
-		const CUnit* unit = NULL;
-
 		GML_RECMUTEX_LOCK(quad); // GetBuildCommand - accesses activeunits - called from DrawMapStuff -> GetBuildPos
 
-		helper->GuiTraceRay(camerapos,mousedir,globalRendering->viewRange*1.4f,unit,true);
+		CUnit* unit;
+		CFeature* feature;
+		TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange*1.4f, true, NULL, unit, feature);
+
 		if (unit) {
 			other.def = unit->unitDef;
 			other.pos = unit->pos;
 			other.buildFacing = unit->buildFacing;
 		} else {
-			Command c = uh->GetBuildCommand(camerapos,mousedir);
-			if(c.id < 0){
+			Command c = uh->GetBuildCommand(cameraPos,mouseDir);
+			if(c.GetID() < 0){
 				assert(c.params.size()==4);
 				other.pos = float3(c.params[0],c.params[1],c.params[2]);
-				other.def = unitDefHandler->GetUnitDefByID(-c.id);
+				other.def = unitDefHandler->GetUnitDefByID(-c.GetID());
 				other.buildFacing = int(c.params[3]);
 			}
 		}
@@ -2417,11 +2385,11 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 		int xsize=startInfo.GetXSize()*SQUARE_SIZE;
 		int zsize=startInfo.GetZSize()*SQUARE_SIZE;
 
-		start =end=helper->Pos2BuildPos(other);
-		start.x-=oxsize/2;
-		start.z-=ozsize/2;
-		end.x+=oxsize/2;
-		end.z+=ozsize/2;
+		start = end = helper->Pos2BuildPos(other);
+		start.x -= oxsize/2;
+		start.z -= ozsize/2;
+		end.x += oxsize/2;
+		end.z += ozsize/2;
 
 		int nvert=1+oxsize/xsize;
 		int nhori=1+ozsize/xsize;
@@ -2479,7 +2447,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 }
 
 
-void CGuiHandler::ProcessFrontPositions(float3& pos0, float3& pos1)
+void CGuiHandler::ProcessFrontPositions(float3& pos0, const float3& pos1)
 {
 	if (!frontByEnds) {
 		return; // leave it centered
@@ -3333,7 +3301,7 @@ static inline void DrawWeaponArc(const CUnit* unit)
 }
 
 
-void CGuiHandler::DrawMapStuff(int onMinimap)
+void CGuiHandler::DrawMapStuff(bool onMinimap)
 {
 	if (!onMinimap) {
 		glEnable(GL_DEPTH_TEST);
@@ -3344,8 +3312,8 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 		glDisable(GL_ALPHA_TEST);
 	}
 
-	float3 camerapos=camera->pos;
-	float3 mousedir=mouse->dir;
+	float3 cameraPos=camera->pos;
+	float3 mouseDir=mouse->dir;
 
 	// setup for minimap proxying
 	const bool minimapCoords =
@@ -3353,11 +3321,11 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 		 ((activeReceiver != this) && !game->hideInterface &&
 		  (GetReceiverAt(mouse->lastx, mouse->lasty) == minimap)));
 	if (minimapCoords) {
-		camerapos = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
-		mousedir = float3(0.0f, -1.0f, 0.0f);
+		cameraPos = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
+		mouseDir = float3(0.0f, -1.0f, 0.0f);
 		if (miniMapMarker && minimap->FullProxy() &&
 		    !onMinimap && !minimap->GetMinimized()) {
-			DrawMiniMapMarker(camerapos);
+			DrawMiniMapMarker(cameraPos);
 		}
 	}
 
@@ -3388,7 +3356,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 						if (cmdDesc.params.size() > 1) {
 							sizeDiv = atof(cmdDesc.params[1].c_str());
 						}
-						DrawFront(button, maxSize, sizeDiv, !!onMinimap, camerapos, mousedir);
+						DrawFront(button, maxSize, sizeDiv, onMinimap, cameraPos, mouseDir);
 					}
 					break;
 				}
@@ -3405,11 +3373,11 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 							break;
 						}
 						float3 pos=mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
-						dist=ground->LineGroundCol(camerapos,camerapos+mousedir*globalRendering->viewRange*1.4f);
+						dist=ground->LineGroundCol(cameraPos,cameraPos+mouseDir*globalRendering->viewRange*1.4f);
 						if (dist < 0) {
 							break;
 						}
-						float3 pos2 = camerapos + mousedir * dist;
+						float3 pos2 = cameraPos + mouseDir * dist;
 						const float* color;
 						switch (cmdDesc.id) {
 							case CMD_ATTACK:
@@ -3454,13 +3422,13 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 							break;
 						}
 						const float3 pos1 = mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
-						dist=ground->LineGroundCol(camerapos,camerapos+mousedir*globalRendering->viewRange*1.4f);
+						dist=ground->LineGroundCol(cameraPos,cameraPos+mouseDir*globalRendering->viewRange*1.4f);
 						if (dist < 0) {
 							break;
 						}
-						const float3 pos2 = camerapos+mousedir*dist;
+						const float3 pos2 = cameraPos+mouseDir*dist;
 						if (!onMinimap) {
-							DrawSelectBox(pos1, pos2, camerapos);
+							DrawSelectBox(pos1, pos2, cameraPos);
 						} else {
 							glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
 							glBegin(GL_QUADS);
@@ -3491,13 +3459,16 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 	GML_RECMUTEX_LOCK(unit); // DrawMapStuff
 
 	if (GetQueueKeystate()) {
-		const CUnit* unit = NULL;
+		CUnit* unit = NULL;
+		CFeature* feature = NULL;
+
 		if (minimapCoords) {
-			unit = minimap->GetSelectUnit(camerapos);
+			unit = minimap->GetSelectUnit(cameraPos);
 		} else {
 			// ignoring the returned distance
-			helper->GuiTraceRay(camerapos,mousedir,globalRendering->viewRange*1.4f,unit,false);
+			TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange*1.4f, false, NULL, unit, feature);
 		}
+
 		if (unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
 			pointedAt = unit;
 			const UnitDef* unitdef = unit->unitDef;
@@ -3607,28 +3578,28 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 			}
 		}
 
-		float dist = ground->LineGroundCol(camerapos,camerapos+mousedir*globalRendering->viewRange*1.4f);
+		float dist = ground->LineGroundCol(cameraPos,cameraPos+mouseDir*globalRendering->viewRange*1.4f);
 		if (dist > 0) {
 			const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
 			if (unitdef) {
 				// get the build information
-				float3 pos = camerapos+mousedir*dist;
+				float3 pos = cameraPos+mouseDir*dist;
 				std::vector<BuildInfo> buildPos;
 				const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 				if (GetQueueKeystate() && bp.pressed) {
 					const float dist = ground->LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f);
 					const float3 pos2 = bp.camPos + bp.dir * dist;
 					buildPos = GetBuildPos(BuildInfo(unitdef, pos2, buildFacing),
-					                       BuildInfo(unitdef, pos, buildFacing), camerapos, mousedir);
+					                       BuildInfo(unitdef, pos, buildFacing), cameraPos, mouseDir);
 				} else {
 					BuildInfo bi(unitdef, pos, buildFacing);
-					buildPos = GetBuildPos(bi, bi, camerapos, mousedir);
+					buildPos = GetBuildPos(bi, bi, cameraPos, mouseDir);
 				}
 
 				for (std::vector<BuildInfo>::iterator bpi = buildPos.begin(); bpi != buildPos.end(); ++bpi) {
 					const float3& buildpos = bpi->pos;
 					// draw weapon range
-					if (unitdef->weapons.size() > 0) {
+					if (!unitdef->weapons.empty()) {
 						glColor4fv(cmdColors.rangeAttack);
 						glBallisticCircle(buildpos, unitdef->weapons[0].def->range,
 						                  NULL, 40, unitdef->weapons[0].def->heightmod);
@@ -3677,8 +3648,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 
 						GML_RECMUTEX_LOCK(sel); // DrawMapStuff
 
-						Command c;
-						bpi->FillCmd(c);
+						Command c = bpi->CreateCommand();
 						std::vector<Command> temp;
 						CUnitSet::iterator ui = selectedUnits.selectedUnits.begin();
 						for (; ui != selectedUnits.selectedUnits.end(); ++ui) {
@@ -3707,10 +3677,10 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 	}
 
 	// draw range circles if attack orders are imminent
-	int defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty, camerapos, mousedir);
+	int defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty, cameraPos, mouseDir);
 	if ((inCommand>=0 && (size_t)inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) ||
-		(inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)){
-
+		(inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)
+	) {
 		GML_RECMUTEX_LOCK(sel); // DrawMapStuff
 
 		for(CUnitSet::iterator si=selectedUnits.selectedUnits.begin(); si!=selectedUnits.selectedUnits.end(); ++si) {
@@ -3721,7 +3691,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 			if (onMinimap && (unit->unitDef->speed > 0.0f)) {
 				continue;
 			}
-			if(unit->maxRange>0 && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)){
+			if(unit->maxRange>0 && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
 				glColor4fv(cmdColors.rangeAttack);
 				glBallisticCircle(unit->pos, unit->maxRange,
 				                  unit->weapons.front(), 40);
@@ -3746,7 +3716,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 }
 
 
-void CGuiHandler::DrawMiniMapMarker(float3& camerapos)
+void CGuiHandler::DrawMiniMapMarker(const float3& cameraPos)
 {
 	const float w = 10.0f;
 	const float h = 30.0f;
@@ -3764,13 +3734,13 @@ void CGuiHandler::DrawMiniMapMarker(float3& camerapos)
 		{ bc[0] * d[7],  bc[1] * d[7],  bc[2] * d[7],  bc[3] },
 	};
 
-	const float groundLevel = ground->GetHeightAboveWater(camerapos.x, camerapos.z);
+	const float groundLevel = ground->GetHeightAboveWater(cameraPos.x, cameraPos.z);
 
 	static float spinTime = 0.0f;
 	spinTime = fmod(spinTime + globalRendering->lastFrameTime, 60.0f);
 
 	glPushMatrix();
-	glTranslatef(camerapos.x, groundLevel, camerapos.z);
+	glTranslatef(cameraPos.x, groundLevel, cameraPos.z);
 	glRotatef(360.0f * (spinTime / 2.0f), 0.0f, 1.0f, 0.0f);
 
 	glEnable(GL_BLEND);
@@ -3885,7 +3855,7 @@ void CGuiHandler::DrawArea(float3 pos, float radius, const float* color)
 }
 
 
-void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv, bool onMinimap, float3& camerapos, float3& mousedir)
+void CGuiHandler::DrawFront(int button, float maxSize, float sizeDiv, bool onMinimap, const float3& cameraPos, const float3& mouseDir)
 {
 	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[button];
 	if(bp.movement<5){
@@ -3896,11 +3866,11 @@ void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv, bool onMinim
 		return;
 	}
 	float3 pos1=bp.camPos+bp.dir*dist;
-	dist=ground->LineGroundCol(camerapos,camerapos+mousedir*globalRendering->viewRange*1.4f);
+	dist=ground->LineGroundCol(cameraPos,cameraPos+mouseDir*globalRendering->viewRange*1.4f);
 	if(dist<0){
 		return;
 	}
-	float3 pos2 = camerapos + (mousedir * dist);
+	float3 pos2 = cameraPos + (mouseDir * dist);
 
 	ProcessFrontPositions(pos1, pos2);
 
@@ -4102,7 +4072,7 @@ static void DrawMinMaxBox(const float3& mins, const float3& maxs)
 }
 
 
-void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1, float3& camerapos)
+void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1, const float3& cameraPos)
 {
 	if (useStencil) {
 		StencilDrawSelectBox(pos0, pos1, invColorSelect);
@@ -4131,9 +4101,9 @@ void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1, float3& 
 	glDisable(GL_CULL_FACE);
 
 	// do a full screen inversion if the camera is within the box
-	if ((camerapos.x > mins.x) && (camerapos.x < maxs.x) &&
-	    (camerapos.y > mins.y) && (camerapos.y < maxs.y) &&
-	    (camerapos.z > mins.z) && (camerapos.z < maxs.z)) {
+	if ((cameraPos.x > mins.x) && (cameraPos.x < maxs.x) &&
+	    (cameraPos.y > mins.y) && (cameraPos.y < maxs.y) &&
+	    (cameraPos.z > mins.z) && (cameraPos.z < maxs.z)) {
 		glDisable(GL_DEPTH_TEST);
 		FullScreenDraw();
 		glEnable(GL_DEPTH_TEST);
@@ -4246,27 +4216,27 @@ void CGuiHandler::SetBuildSpacing(int spacing)
 /******************************************************************************/
 
 
-void CGuiHandler::PushLayoutCommand(const std::string& cmd, bool luacmd) {
+void CGuiHandler::PushLayoutCommand(const std::string& cmd, bool luaCmd) {
 	GML_RECMUTEX_LOCK(laycmd); // PushLayoutCommand
 
 	layoutCommands.push_back(cmd);
-	if(luacmd)
+	if(luaCmd)
 		hasLuaUILayoutCommands = true;
 }
 
 void CGuiHandler::RunLayoutCommands() {
-	bool luacmd = false;
+	bool luaCmd = false;
 	std::vector<std::string> layoutCmds;
 
 	if (!layoutCommands.empty()) {
 		GML_RECMUTEX_LOCK(laycmd); // RunLayoutCommands
 
 		layoutCmds.swap(layoutCommands);
-		luacmd = hasLuaUILayoutCommands;
+		luaCmd = hasLuaUILayoutCommands;
 		hasLuaUILayoutCommands = false;
 	}
 
-	if(luacmd) {
+	if(luaCmd) {
 		GML_MSTMUTEX_LOCK(sim); // RunLayoutCommands
 
 		for (std::vector<std::string>::const_iterator cit = layoutCmds.begin(); cit != layoutCmds.end(); ++cit) {

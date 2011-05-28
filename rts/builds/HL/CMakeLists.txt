@@ -39,6 +39,8 @@ LIST(APPEND engineHeadlessLibraries no-sound)
 
 LIST(APPEND engineHeadlessLibraries ${engineCommonLibraries})
 
+INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
+
 
 ### Assemble external incude dirs
 INCLUDE_DIRECTORIES(${DEVIL_INCLUDE_DIR})

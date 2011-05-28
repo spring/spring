@@ -32,11 +32,12 @@ struct S3DOPrimitive {
 struct S3DOPiece: public S3DModelPiece {
 	S3DOPiece() { parent = NULL; radius = 0; }
 
-	void DrawList() const;
+	void DrawForList() const;
 	void SetMinMaxExtends();
 	int GetVertexCount() const { return vertices.size(); }
 	const float3& GetVertexPos(int idx) const { return vertices[idx].pos; }
 	float3 GetPosOffset() const {
+		//FIXME merge into float3 offset???
 		float3 p = ZeroVector;
 
 		// fix for 3DO *A units with two-vertex pieces

@@ -16,6 +16,8 @@
 #include "TimeProfiler.h"
 #include "IVideoCapturing.h"
 #include "WordCompletion.h"
+#include "InMapDraw.h"
+#include "InMapDrawModel.h"
 #ifdef _WIN32
 #  include "winerror.h"
 #endif
@@ -26,13 +28,12 @@
 #include "Map/ReadMap.h"
 #include "Rendering/DebugDrawerAI.h"
 #include "Rendering/Env/BaseSky.h"
-#include "Rendering/Env/BaseTreeDrawer.h"
+#include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/HUDDrawer.h"
-#include "Rendering/InMapDraw.h"
 #include "Rendering/Screenshot.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
@@ -135,13 +136,13 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 		}
 		return true;
 	}
-	else if ((action.command == "edit_escape") && (chatting || inMapDrawer->wantLabel)) {
+	else if ((action.command == "edit_escape") && (chatting || inMapDrawer->IsWantLabel())) {
 		if (chatting) {
 			consoleHistory->AddLine(userInput);
 		}
 		userWriting = false;
 		chatting = false;
-		inMapDrawer->wantLabel = false;
+		inMapDrawer->SetWantLabel(false);
 		userInput = "";
 		writingPos = 0;
 		return true;
@@ -402,12 +403,12 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 		}
 	}
 	else if (cmd == "drawinmap") {
-		inMapDrawer->keyPressed = true;
+		inMapDrawer->SetDrawMode(true);
 	}
 	else if (cmd == "drawlabel") {
 		float3 pos = inMapDrawer->GetMouseMapPos();
 		if (pos.x >= 0) {
-			inMapDrawer->keyPressed = false;
+			inMapDrawer->SetDrawMode(false);
 			inMapDrawer->PromptLabel(pos);
 			if ((key >= SDLK_SPACE) && (key <= SDLK_DELETE)) {
 				ignoreNextChar=true;
@@ -514,7 +515,7 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 				badArgs = true;
 			} else {
 				const CSkirmishAIHandler::ids_t skirmishAIIds = skirmishAIHandler.GetSkirmishAIsInTeam(teamToKillId, gu->myPlayerNum);
-				if (skirmishAIIds.size() > 0) {
+				if (!skirmishAIIds.empty()) {
 					skirmishAIId = skirmishAIIds[0];
 				} else {
 					logOutput.Print("Team to %s: not a local Skirmish AI team: %i", actionName.c_str(), teamToKillId);
@@ -1096,9 +1097,7 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 
 	else if (cmd == "controlunit") {
 		if (!gu->spectating) {
-			Command c;
-			c.id = CMD_STOP;
-			c.options = 0;
+			Command c(CMD_STOP);
 			// force it to update selection and clear order queue
 			selectedUnits.GiveCommand(c, false);
 			net->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));
@@ -1294,7 +1293,7 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 
 			newFont = CglFont::LoadFont(action.extra, fontSize, outlineWidth, outlineWeight);
 			newSmallFont = CglFont::LoadFont(action.extra, smallFontSize, smallOutlineWidth, smallOutlineWeight);
-		} catch (std::exception e) {
+		} catch (std::exception& e) {
 			delete newFont;
 			delete newSmallFont;
 			newFont = newSmallFont = NULL;
@@ -1384,22 +1383,26 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 	}
 	else if (cmd == "allmapmarks") {
 		if (gs->cheatEnabled) {
+			bool allMarksVisible;
 			if (action.extra.empty()) {
-				inMapDrawer->ToggleAllMarksVisible();
+				allMarksVisible = !inMapDrawerModel->GetAllMarksVisible();
 			} else {
-				inMapDrawer->SetAllMarksVisible(!!atoi(action.extra.c_str()));
+				allMarksVisible = !!atoi(action.extra.c_str());
 			}
+			inMapDrawerModel->SetAllMarksVisible(allMarksVisible);
 		}
 	}
 	else if (cmd == "clearmapmarks") {
-		inMapDrawer->ClearMarks();
+		inMapDrawerModel->EraseAll();
 	}
 	else if (cmd == "noluadraw") {
+		bool luaMapDrawingAllowed;
 		if (action.extra.empty()) {
-			inMapDrawer->SetLuaMapDrawingAllowed(!inMapDrawer->GetLuaMapDrawingAllowed());
+			luaMapDrawingAllowed = !inMapDrawer->GetLuaMapDrawingAllowed();
 		} else {
-			inMapDrawer->SetLuaMapDrawingAllowed(!!atoi(action.extra.c_str()));
+			luaMapDrawingAllowed = !!atoi(action.extra.c_str());
 		}
+		inMapDrawer->SetLuaMapDrawingAllowed(luaMapDrawingAllowed);
 	}
 
 	else if (cmd == "luaui") {
@@ -1622,13 +1625,15 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 	else if (cmd == "benchmark-script") {
 		CUnitScript::BenchmarkScript(action.extra);
 	}
-	else if (cmd == "atm" ||
+	else if (cmd == "atm"
 #ifdef DEBUG
-			cmd == "desync" ||
+			|| cmd == "desync"
 #endif
-			cmd == "resync" ||
-			cmd == "take" ||
-			cmd == "luarules") {
+			|| cmd == "resync"
+			|| cmd == "take"
+			|| cmd == "luarules"
+			|| cmd == "luagaia"
+	) {
 		//these are synced commands, forward only
 		CommandMessage pckt(action, gu->myPlayerNum);
 		net->Send(pckt.Pack());

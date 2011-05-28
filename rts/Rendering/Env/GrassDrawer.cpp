@@ -104,7 +104,7 @@ CGrassDrawer::CGrassDrawer()
 
 	{
 		CBitmap grassBladeTexBM;
-		if (!grassBladeTexBM.Load(mapInfo->smf.grassBladeTexName)) {
+		if (!grassBladeTexBM.Load(mapInfo->grass.grassBladeTexName)) {
 			//! map didn't define a grasstex, so generate one
 			grassBladeTexBM.channels = 4;
 			grassBladeTexBM.Alloc(256,64);
@@ -499,7 +499,7 @@ void CGrassDrawer::Draw(void)
 
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
-		glMultMatrixd(camera->GetViewMat());
+		glMultMatrixf(camera->GetViewMatrix());
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
@@ -859,13 +859,18 @@ void CGrassDrawer::CreateGrassDispList(int listNum)
 
 void CGrassDrawer::CreateGrassBladeTex(unsigned char* buf)
 {
-	float3 col(0.59f+fRand(0.11f),0.81f+fRand(0.08f),0.57f+fRand(0.11f));
+	float3 col( mapInfo->grass.color + float3(fRand(0.11f),fRand(0.08f),fRand(0.11f)) );
+	col.x = Clamp(col.x, 0.f, 1.f);
+	col.y = Clamp(col.y, 0.f, 1.f);
+	col.z = Clamp(col.z, 0.f, 1.f);
+
 	for(int y=0;y<64;++y){
 		for(int x=0;x<16;++x){
-			buf[(y*256+x)*4+0]=(unsigned char) ((col.x*(0.4f+.6f*y/(64.0f)))*255);
-			buf[(y*256+x)*4+1]=(unsigned char) ((col.y*(0.4f+.6f*y/(64.0f)))*255);
-			buf[(y*256+x)*4+2]=(unsigned char) ((col.z*(0.4f+.6f*y/(64.0f)))*255);
-			buf[(y*256+x)*4+3]=1;
+			const float brightness = (0.4f + 0.6f * (y/64.0f)) * 255.f;
+			buf[(y*256+x)*4+0] = (unsigned char)(col.x * brightness);
+			buf[(y*256+x)*4+1] = (unsigned char)(col.y * brightness);
+			buf[(y*256+x)*4+2] = (unsigned char)(col.z * brightness);
+			buf[(y*256+x)*4+3] = 1;
 		}
 	}
 }

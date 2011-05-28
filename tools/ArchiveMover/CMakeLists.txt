@@ -1,9 +1,13 @@
 INCLUDE_DIRECTORIES(../../rts)
+INCLUDE_DIRECTORIES(../../AI/Wrappers)
 ADD_DEFINITIONS(-DUNICODE -D_UNICODE)
 
 FIND_PACKAGE(Boost 1.34.0 COMPONENTS filesystem REQUIRED)
 
-SET(mySources ArchiveMover)
+SET(mySources
+	ArchiveMover.cpp
+	../../AI/Wrappers/CUtils/SharedLibrary.c
+)
 
 ### Add icon to exe using windres
 IF    (MINGW)
@@ -26,7 +30,7 @@ ENDIF (MINGW)
 
 ADD_EXECUTABLE(ArchiveMover ${mySources})
 
-TARGET_LINK_LIBRARIES(ArchiveMover ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} 7zip minizip)
+TARGET_LINK_LIBRARIES(ArchiveMover ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} 7zip minizip ${CMAKE_DL_LIBS})
 
 
 INSTALL (TARGETS ArchiveMover RUNTIME DESTINATION ${BINDIR})

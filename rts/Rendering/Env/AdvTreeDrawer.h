@@ -1,11 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __ADV_TREE_DRAWER_H__
-#define __ADV_TREE_DRAWER_H__
+#ifndef _ADV_TREE_DRAWER_H_
+#define _ADV_TREE_DRAWER_H_
 
 #include <map>
 #include <list>
-#include "BaseTreeDrawer.h"
+#include "ITreeDrawer.h"
 
 class CVertexArray;
 class CGrassDrawer;
@@ -14,26 +14,28 @@ namespace Shader {
 	struct IProgramObject;
 }
 
-class CAdvTreeDrawer: public CBaseTreeDrawer
+class CAdvTreeDrawer: public ITreeDrawer
 {
 public:
 	CAdvTreeDrawer();
 	virtual ~CAdvTreeDrawer();
 
 	void LoadTreeShaders();
-	void Draw(float treeDistance,bool drawReflection);
+	void Draw(float treeDistance, bool drawReflection);
 	void Update();
 	void ResetPos(const float3& pos);
-	void AddTree(int type, float3 pos, float size);
-	void DeleteTree(float3 pos);
-	int AddFallingTree(float3 pos, float3 dir, int type);
-	void DrawGrass(void);
-	void AddGrass(float3 pos);
+	void AddTree(int type, const float3& pos, float size);
+	void DeleteTree(const float3& pos);
+	void AddFallingTree(const float3& pos, const float3& dir, int type);
+	void DrawGrass();
+	void AddGrass(const float3& pos);
 	void RemoveGrass(int x, int z);
-	void DrawShadowPass(void);
+	void DrawShadowPass();
 
-	int lastListClean;
-	float oldTreeDistance;
+	static void DrawTreeVertexA(CVertexArray* va, float3& ftpos, float dx, float dy);
+	static void DrawTreeVertex(CVertexArray* va, const float3& pos, float dx, float dy, bool enlarge = true);
+	static void DrawTreeVertexMid(CVertexArray* va, const float3& pos, float dx, float dy, bool enlarge = true);
+	static void DrawTreeVertexFar(CVertexArray* va, const float3& pos, const float3& swd, float dx, float dy, bool enlarge = true);
 
 	struct TreeStruct {
 		float3 pos;
@@ -54,13 +56,16 @@ public:
 	};
 
 	struct TreeSquareStruct {
-		unsigned int displist;
-		unsigned int farDisplist;
+		unsigned int dispList;
+		unsigned int farDispList;
 		int lastSeen;
 		int lastSeenFar;
 		float3 viewVector;
 		std::map<int, TreeStruct> trees;
 	};
+
+	int lastListClean;
+	float oldTreeDistance;
 
 	int treesX;
 	int treesY;
@@ -82,4 +87,4 @@ private:
 	CGrassDrawer* grassDrawer;
 };
 
-#endif // __ADV_TREE_DRAWER_H__
+#endif // _ADV_TREE_DRAWER_H_

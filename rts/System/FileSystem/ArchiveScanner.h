@@ -1,24 +1,27 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __ARCHIVE_SCANNER_H
-#define __ARCHIVE_SCANNER_H
+#ifndef _ARCHIVE_SCANNER_H
+#define _ARCHIVE_SCANNER_H
 
 #include <string>
 #include <vector>
 #include <map>
+#include "System/Info.h"
 
 class CArchiveBase;
 class IFileFilter;
 class LuaTable;
 
 /*
- * This class searches through a given directory and its subdirectories looking for archive files.
- * When it finds one, it figures out what kind of archive it is (i.e. if it is a map or a mod currently).
- * This information is cached, so that only modified archives are actually opened. The information can
- * then be retreived by the mod and map selectors.
+ * This class searches through a given directory and its sub-directories looking
+ * for archive files.
+ * When it finds one, it figures out what kind of archive it is (i.e. if it is a
+ * map or a mod currently). This information is cached, so that only modified
+ * archives are actually opened. The information can then be retreived by the
+ * mod and map selectors.
  *
- * The archive namespace is global, so it is not allowed to have an archive with the same name in more
- * than one folder.
+ * The archive namespace is global, so it is not allowed to have an archive with
+ * the same name in more than one folder.
  */
 
 namespace modtype
@@ -31,19 +34,64 @@ namespace modtype
 class CArchiveScanner
 {
 public:
-	struct ArchiveData
+	class ArchiveData
 	{
-		std::string name;							// ex:  Original Total Annihilation v2.3
-		std::string shortName;						// ex:  OTA
-		std::string version;						// ex:  v2.3
-		std::string mutator;						// ex:  deployment
-		std::string game;							// ex:  Total Annihilation
-		std::string shortGame;						// ex:  TA
-		std::string description;					// ex:  Little units blowing up other little units
-		std::string mapfile;						// in case its a map, store location of smf/sm3 file
-		int modType;
-		std::vector<std::string> dependencies;		// Archives it depends on
-		std::vector<std::string> replaces;			// This archive obsoletes these ones
+	public:
+		ArchiveData() {};
+		ArchiveData(const LuaTable& archiveTable);
+
+		/*
+		 * These methods are only here for convenience and compile time checks.
+		 * These are all the properties used engine internally.
+		 * With these methods, we prevent spreading key strings through the
+		 * code, which could provoke runtime bugs when edited wrong.
+		 * There may well be other info-times supplied by the archive.
+		 */
+		std::string GetName() const { return GetInfoValueString("name"); }               /// ex:  Original Total Annihilation v2.3
+		std::string GetShortName() const { return GetInfoValueString("shortName"); }     /// ex:  OTA
+		std::string GetVersion() const { return GetInfoValueString("version"); }         /// ex:  v2.3
+		std::string GetMutator() const { return GetInfoValueString("mutator"); }         /// ex:  deployment
+		std::string GetGame() const { return GetInfoValueString("game"); }               /// ex:  Total Annihilation
+		std::string GetShortGame() const { return GetInfoValueString("shortGame"); }     /// ex:  TA
+		std::string GetDescription() const { return GetInfoValueString("description"); } /// ex:  Little units blowing up other little units
+		std::string GetMapFile() const { return GetInfoValueString("mapFile"); }         /// in case its a map, store location of smf/sm3 file
+		int GetModType() const { return GetInfoValueInteger("modType"); }                /// 1=primary, 0=hidden, 3=map
+
+		const std::map<std::string, InfoItem>& GetInfo() const { return info; }
+		std::vector<InfoItem> GetInfoItems() const;
+
+		const std::vector<std::string>& GetDependencies() const { return dependencies; }
+		std::vector<std::string>& GetDependencies() { return dependencies; }
+
+		const std::vector<std::string>& GetReplaces() const { return replaces; }
+		std::vector<std::string>& GetReplaces() { return replaces; }
+
+		void SetInfoItemValueString(const std::string& key, const std::string& value);
+		void SetInfoItemValueInteger(const std::string& key, int value);
+		void SetInfoItemValueFloat(const std::string& key, float value);
+		void SetInfoItemValueBool(const std::string& key, bool value);
+
+		bool IsValid(std::string& error) const;
+
+		static bool IsReservedKey(const std::string& keyLower);
+		static std::string GetKeyDescription(const std::string& keyLower);
+
+	private:
+		InfoValueType GetInfoValueType(const std::string& key) const;
+		std::string GetInfoValueString(const std::string& key) const;
+		int GetInfoValueInteger(const std::string& key) const;
+		float GetInfoValueFloat(const std::string& key) const;
+		bool GetInfoValueBool(const std::string& key) const;
+
+		InfoItem* GetInfoItem(const std::string& key);
+		const InfoItem* GetInfoItem(const std::string& key) const;
+
+		InfoItem& EnsureInfoItem(const std::string& key);
+
+		std::map<std::string, InfoItem> info;
+		
+		std::vector<std::string> dependencies; /// Archives we depend on
+		std::vector<std::string> replaces;     /// This archive obsoletes these archives
 	};
 
 	CArchiveScanner();
@@ -94,12 +142,12 @@ private:
 	struct ArchiveInfo
 	{
 		std::string path;
-		std::string origName;					// Could be useful to have the non-lowercased name around
+		std::string origName;     ///< Could be useful to have the non-lowercased name around
 		unsigned int modified;
 		ArchiveData archiveData;
 		unsigned int checksum;
 		bool updated;
-		std::string replaced;					// If not empty, use that archive instead
+		std::string replaced;     ///< If not empty, use that archive instead
 	};
 	struct BrokenArchive
 	{
@@ -114,18 +162,17 @@ private:
 
 	void ScanArchive(const std::string& fullName, bool checksum = false);
 	/// scan mapinfo / modinfo lua files
-	bool ScanArchiveLua(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai);
+	bool ScanArchiveLua(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai, std::string& err);
 
 	void ReadCacheData(const std::string& filename);
 	void WriteCacheData(const std::string& filename);
 
 	std::map<std::string, ArchiveInfo> archiveInfo;
 	std::map<std::string, BrokenArchive> brokenArchives;
-	ArchiveData GetArchiveData(const LuaTable& archiveTable);
 	IFileFilter* CreateIgnoreFilter(CArchiveBase* ar);
 	/**
 	 * Get CRC of the data in the specified archive.
-     * Returns 0 if file could not be opened.
+	 * Returns 0 if file could not be opened.
 	 */
 	unsigned int GetCRC(const std::string& filename);
 	bool isDirty;
@@ -134,4 +181,4 @@ private:
 
 extern CArchiveScanner* archiveScanner;
 
-#endif
+#endif // _ARCHIVE_SCANNER_H

@@ -16,24 +16,57 @@ public:
 	CVFSHandler();
 	~CVFSHandler();
 
-	bool LoadFile(const std::string& name, std::vector<boost::uint8_t>& buffer);
+	/**
+	 * Checks whether a file exists in the VFS (does not work for dirs).
+	 * This is cheaper then calling LoadFile, if you do not require the contents
+	 * of the file.
+	 * @param filePath raw file path, for example "maps/myMap.smf",
+	 *   case-insensitive
+	 * @return true if the file exists in the VFS, false otherwise
+	 */
+	bool FileExists(const std::string& filePath);
+	/**
+	 * Reads the contents of a file from within the VFS.
+	 * @param filePath raw file path, for example "maps/myMap.smf",
+	 *   case-insensitive
+	 * @return true if the file exists in the VFS and was successfully read
+	 */
+	bool LoadFile(const std::string& filePath, std::vector<boost::uint8_t>& buffer);
 
+	/**
+	 * Returns all the files in the given (virtual) directory without the
+	 * preceeding pathname.
+	 * @param dir raw directory path, for example "maps/" or "maps",
+	 *   case-insensitive
+	 */
 	std::vector<std::string> GetFilesInDir(const std::string& dir);
+	/**
+	 * Returns all the sub-directories in the given (virtual) directory without
+	 * the preceeding pathname.
+	 * @param dir raw directory path, for example "maps/" or "maps",
+	 *   case-insensitive
+	 */
 	std::vector<std::string> GetDirsInDir(const std::string& dir);
 
 	/**
-	 * Override determines whether if conflicts overwrites
-	 * an existing entry in the virtual filesystem or not
+	 * Adds an archive to the VFS.
+	 * @param override determines whether in case of a  conflict, the existing
+	 *   entry in the VFS is overwritten or not.
 	 */
-	bool AddArchive(const std::string& arName, bool override, const std::string& type = "");
-	bool AddArchiveWithDeps(const std::string& mapName, bool override, const std::string& type = "");
+	bool AddArchive(const std::string& archiveName, bool override, const std::string& type = "");
+	/**
+	 * Adds an archive and all of its dependencies to the VFS.
+	 * @param override determines whether in case of a  conflict, the existing
+	 *   entry in the VFS is overwritten or not.
+	 */
+	bool AddArchiveWithDeps(const std::string& archiveName, bool override, const std::string& type = "");
 
 	/**
-	 * Returns true if the archive is not loaded,
-	 * so it may was not loaded in the first place or was unloaded
-	 * successfully.
+	 * Removes an archive from the VFS.
+	 * @return true if the archive is not loaded anymore; it may was not loaded
+	 *   in the first place, or was unloaded successfully.
 	 */
-	bool RemoveArchive(const std::string& arName);
+	bool RemoveArchive(const std::string& archiveName);
 
 protected:
 	struct FileData {
@@ -43,6 +76,10 @@ protected:
 	};
 	std::map<std::string, FileData> files; 
 	std::map<std::string, CArchiveBase*> archives;
+
+private:
+	std::string GetNormalizedPath(const std::string& rawPath);
+	const FileData* GetFileData(const std::string& normalizedFilePath);
 };
 
 extern CVFSHandler* vfsHandler;

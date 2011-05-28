@@ -120,6 +120,7 @@ CUnit::CUnit() : CSolidObject(),
 	stunned(false),
 	useHighTrajectory(false),
 	dontUseWeapons(false),
+	dontFire(false),
 	deathScriptFinished(false),
 	delayedWreckLevel(-1),
 	restTime(0),
@@ -200,7 +201,6 @@ CUnit::CUnit() : CSolidObject(),
 	commandShotCount(-1),
 	fireState(FIRESTATE_FIREATWILL),
 	moveState(MOVESTATE_MANEUVER),
-	dontFire(false),
 	activated(false),
 	crashing(false),
 	isDead(false),
@@ -233,6 +233,10 @@ CUnit::CUnit() : CSolidObject(),
 	myTrack(NULL),
 	lastFlareDrop(0),
 	currentFuel(0.0f),
+	maxSpeed(0.0f),
+	maxReverseSpeed(0.0f),
+	alphaThreshold(0.1f),
+	cegDamage(1),
 	luaDraw(false),
 	noDraw(false),
 	noSelect(false),
@@ -240,12 +244,8 @@ CUnit::CUnit() : CSolidObject(),
 	leaveTracks(false),
 	isIcon(false),
 	iconRadius(0.0f),
-	maxSpeed(0.0f),
-	maxReverseSpeed(0.0f),
 	lodCount(0),
-	currentLOD(0),
-	alphaThreshold(0.1f),
-	cegDamage(1)
+	currentLOD(0)
 #ifdef USE_GML
 	, lastDrawFrame(-30)
 #endif
@@ -456,13 +456,8 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	modelParser->CreateLocalModel(this);
 
 	// copy the UnitDef volume instance
-	//
-	// aircraft still get half-size spheres for coldet purposes
-	// iif no custom volume is defined (unit->model->radius and
-	// unit->radius themselves are no longer altered)
-	//
 	// note: gets deleted in ~CSolidObject
-	collisionVolume = new CollisionVolume(unitDef->collisionVolume, model->radius * ((unitDef->canfly)? 0.5f: 1.0f));
+	collisionVolume = new CollisionVolume(unitDef->collisionVolume, model->radius);
 	moveType = MoveTypeFactory::GetMoveType(this, unitDef);
 	script = CUnitScriptFactory::CreateScript(unitDef->scriptPath, this);
 }
@@ -525,8 +520,7 @@ void CUnit::PostInit(const CUnit* builder)
 			moveState = unitDef->moveState;
 		}
 
-		Command c;
-		c.id = CMD_MOVE_STATE;
+		Command c(CMD_MOVE_STATE);
 		c.params.push_back(moveState);
 		commandAI->GiveCommand(c);
 	}
@@ -543,8 +537,7 @@ void CUnit::PostInit(const CUnit* builder)
 			fireState = unitDef->fireState;
 		}
 
-		Command c;
-		c.id = CMD_FIRE_STATE;
+		Command c(CMD_FIRE_STATE);
 		c.params.push_back(fireState);
 		commandAI->GiveCommand(c);
 	}
@@ -1456,66 +1449,62 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 void CUnit::ChangeTeamReset()
 {
-	Command c;
-
 	// clear the commands (newUnitCommands for factories)
-	c.id = CMD_STOP;
+	Command c(CMD_STOP);
 	commandAI->GiveCommand(c);
 
 	// clear the build commands for factories
 	CFactoryCAI* facAI = dynamic_cast<CFactoryCAI*>(commandAI);
 	if (facAI) {
-		c.options = RIGHT_MOUSE_KEY; // clear option
+		const unsigned char options = RIGHT_MOUSE_KEY; // clear option
 		CCommandQueue& buildCommands = facAI->commandQue;
 		CCommandQueue::iterator it;
 		std::vector<Command> clearCommands;
 		clearCommands.reserve(buildCommands.size());
 		for (it = buildCommands.begin(); it != buildCommands.end(); ++it) {
-			c.id = it->id;
-			clearCommands.push_back(c);
+			clearCommands.push_back(Command(it->GetID(), options));
 		}
 		for (int i = 0; i < (int)clearCommands.size(); i++) {
 			facAI->GiveCommand(clearCommands[i]);
 		}
 	}
 
+	//FIXME reset to unitdef defaults
+
 	// deactivate to prevent the old give metal maker trick
-	c.id = CMD_ONOFF;
+	// TODO remove, because it is *A specific
+	c = Command(CMD_ONOFF);
 	c.params.push_back(0); // always off
 	commandAI->GiveCommand(c);
-	c.params.clear();
+
 	// reset repeat state
-	c.id = CMD_REPEAT;
+	c = Command(CMD_REPEAT);
 	c.params.push_back(0);
 	commandAI->GiveCommand(c);
-	c.params.clear();
+
 	// reset cloak state
 	if (unitDef->canCloak) {
-		c.id = CMD_CLOAK;
+		c = Command(CMD_CLOAK);
 		c.params.push_back(0); // always off
 		commandAI->GiveCommand(c);
-		c.params.clear();
 	}
 	// reset move state
 	if (unitDef->canmove || unitDef->builder) {
-		c.id = CMD_MOVE_STATE;
+		c = Command(CMD_MOVE_STATE);
 		c.params.push_back(MOVESTATE_MANEUVER);
 		commandAI->GiveCommand(c);
-		c.params.clear();
 	}
 	// reset fire state
 	if (commandAI->CanChangeFireState()) {
-		c.id = CMD_FIRE_STATE;
+		c = Command(CMD_FIRE_STATE);
 		c.params.push_back(FIRESTATE_FIREATWILL);
 		commandAI->GiveCommand(c);
-		c.params.clear();
 	}
 	// reset trajectory state
 	if (unitDef->highTrajectoryType > 1) {
-		c.id = CMD_TRAJECTORY;
+		c = Command(CMD_TRAJECTORY);
 		c.params.push_back(0);
 		commandAI->GiveCommand(c);
-		c.params.clear();
 	}
 }
 

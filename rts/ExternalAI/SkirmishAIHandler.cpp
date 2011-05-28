@@ -71,7 +71,8 @@ void CSkirmishAIHandler::LoadPreGame() {
 		for (std::vector<InfoItem>::const_iterator info = impl->begin();
 				info != impl->end(); ++info) {
 			if (info->key == SKIRMISH_AI_PROPERTY_SHORT_NAME) {
-				luaAIShortNames.insert(info->value);
+				assert(info->valueType == INFO_VALUE_TYPE_STRING);
+				luaAIShortNames.insert(info->valueTypeString);
 			}
 		}
 	}

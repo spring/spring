@@ -36,6 +36,9 @@ if    (BUILD_${myName}_AIWRAPPER)
 	GetLastPathPart(dirName ${myDir})
 	set(myName       "${dirName}")
 	set(myTarget     "${myName}-AIWrapper")
+	set(myJavaTarget "${myTarget}-java")
+	set(myPomTarget  "${myTarget}-pom")
+	set(myMavenInstallTarget "${myTarget}-mavenInstall")
 	set(mySourceDirRel     "src/main/java")
 	MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
@@ -227,11 +230,11 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(myDependLibFiles "${Java_AIINTERFACE_JAR_BIN}")
 	set_source_files_properties(${myDependLibFiles} PROPERTIES GENERATED TRUE)
 
-	add_custom_target(${myTarget} ALL
+	add_custom_target(${myJavaTarget}
 		DEPENDS
 			"${myBuildDir}/${myBinJarFile}"
 			"${myBuildDir}/${mySrcJarFile}")
-	add_dependencies(${myTarget} ${myDependTargets})
+	add_dependencies(${myJavaTarget} ${myDependTargets})
 
 
 	# generate sources: callback
@@ -340,29 +343,71 @@ if    (BUILD_${myName}_AIWRAPPER)
 			"  ${myTarget}: Creating sources archive ${mySrcJarFile}" VERBATIM
 		)
 
+	# This sets the version in pom.xml
+	# as we have no separate version for the wrapper:
+	set(myMavenProperties "-DmyVersion=${Java_AIINTERFACE_VERS}")
+	add_custom_command(
+		OUTPUT
+			"${myBuildDir}/pom-generated.xml"
+		COMMAND "${CMAKE_COMMAND}"
+			"-Dfile.in=${myDir}/pom.xml"
+			"-Dfile.out=${myBuildDir}/pom-generated.xml"
+			${myMavenProperties}
+			"-P" "${CMAKE_MODULES_SPRING}/ConfigureFile.cmake"
+		DEPENDS
+			"${myDir}/pom.xml"
+		WORKING_DIRECTORY
+			"${myDir}"
+		COMMENT
+			"  ${myTarget}: Configure pom.xml" VERBATIM
+		)
+	set_source_files_properties("${myBuildDir}/pom-generated.xml" PROPERTIES GENERATED TRUE)
+
+	add_custom_target(${myPomTarget}
+		DEPENDS
+			"${myBuildDir}/pom-generated.xml")
+
+	add_custom_target(${myTarget} ALL)
+
 	IsMavenInstalled(isMavenInstalled)
 	if    (isMavenInstalled)
-		set(myVersion "${Java_AIINTERFACE_VERS}")
-		add_custom_command(TARGET ${myTarget} POST_BUILD
-			COMMAND "${CMAKE_COMMAND}"
-				"-Dfile.in=${myDir}/pom.xml"
-				"-Dfile.out=${myBuildDir}/pom.xml"
-				"-DmyVersion=${myVersion}"
-				"-P" "${CMAKE_MODULES_SPRING}/ConfigureFile.cmake"
+		# This is required because the local Maven install does not create a
+		# file (whichs path we could know), and thus we would not be able to
+		# create a nice dependency chain without this.
+		set(myMavenInstallStubFile "${myBuildDir}/mavenInstallStub.txt")
+		set_source_files_properties("${myMavenInstallStubFile}" PROPERTIES GENERATED TRUE)
+		set_source_files_properties("${Java_AIINTERFACE_MVN_INST_STUB_FILE}" PROPERTIES GENERATED TRUE)
+		add_custom_command(
+			OUTPUT
+				"${myMavenInstallStubFile}"
 			COMMAND "mvn"
 				"install:install-file"
-				"-DpomFile=${myBuildDir}/pom.xml"
+				"-DpomFile=${myBuildDir}/pom-generated.xml"
 				"-Dfile=${myBuildDir}/${myBinJarFile}"
 				"-Dsources=${myBuildDir}/${mySrcJarFile}"
+			COMMAND "${CMAKE_COMMAND}"
+				"-E" "touch" "${myMavenInstallStubFile}"
 			DEPENDS
-				"${myDir}/pom.xml"
-				"${myBuildDir}/${myBinJarFile}"
-				"${myBuildDir}/${mySrcJarFile}"
+				"${Java_AIINTERFACE_MVN_INST_STUB_FILE}"
+				# We have to handle these through target level dependencies, or
+				# else their generating custom commands may be executed multiple
+				# times.
+				#"${myBuildDir}/pom-generated.xml"
+				#"${myBuildDir}/${myBinJarFile}"
+				#"${myBuildDir}/${mySrcJarFile}"
 			WORKING_DIRECTORY
 				"${myDir}"
 			COMMENT
 				"  ${myTarget}: Installing to local maven repository" VERBATIM
 			)
+		add_custom_target(${myMavenInstallTarget}
+			DEPENDS
+				"${myMavenInstallStubFile}"
+			)
+		add_dependencies(${myMavenInstallTarget} ${myJavaTarget} ${myPomTarget})
+		add_dependencies(${myTarget} ${myMavenInstallTarget})
+	else  (isMavenInstalled)
+		add_dependencies(${myTarget} ${myJavaTarget})
 	endif (isMavenInstalled)
 
 endif (BUILD_${myName}_AIWRAPPER)

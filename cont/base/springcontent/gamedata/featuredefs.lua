@@ -53,7 +53,6 @@ for _, filename in ipairs(tdfFiles) do
     Spring.Echo('Error parsing ' .. filename .. ': ' .. err)
   else
     for name, fd in pairs(fds) do
-      fd.filename = filename
       featureDefs[name] = fd
     end
   end
@@ -83,7 +82,6 @@ for _, filename in ipairs(luaFiles) do
   else
     for fdName, fd in pairs(fds) do
       if ((type(fdName) == 'string') and (type(fd) == 'table')) then
-        fd.filename = filename
         featureDefs[fdName] = fd
       end
     end

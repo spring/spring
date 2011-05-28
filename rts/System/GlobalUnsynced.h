@@ -30,6 +30,15 @@ public:
 	CPlayer* GetMyPlayer();
 
 	/**
+	 * @brief minimum FramesPerSecond
+	 *
+	 * Defines how many Frames per second
+	 * should be rendered. To reach it we
+	 * will delay simframes.
+	 */
+	static const int minFPS = 2;
+
+	/**
 	 * @brief mod game time
 	 *
 	 * How long the game has been going on

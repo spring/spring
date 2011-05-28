@@ -168,7 +168,7 @@ void CCameraHandler::PushMode()
 
 void CCameraHandler::PopMode()
 {
-	if (controllerStack.size() > 0) {
+	if (!controllerStack.empty()) {
 		SetCameraMode(controllerStack.top());
 		controllerStack.pop();
 	}

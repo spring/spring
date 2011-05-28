@@ -9,7 +9,7 @@
 #include "GLContext.h"
 
 #include <list>
-
+#include <cstddef> // for NULL
 
 using namespace std;
 

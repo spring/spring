@@ -30,6 +30,7 @@
 #include "LuaFBOs.h"
 #include "LuaRBOs.h"
 #include "LuaFonts.h"
+#include "LuaOpenGLUtils.h"
 #include "LuaDisplayLists.h"
 #include "Game/Camera.h"
 #include "Game/UI/CommandColors.h"
@@ -883,7 +884,7 @@ void LuaOpenGL::SetupScreenLighting()
 
 	// sun light -- needs the camera transformation
 	glPushMatrix();
-	glLoadMatrixd(camera->GetViewMat());
+	glLoadMatrixf(camera->GetViewMatrix());
 	glLightfv(GL_LIGHT1, GL_POSITION, sky->GetLight()->GetLightDir());
 
 	const float sunFactor = 1.0f;
@@ -943,11 +944,11 @@ void LuaOpenGL::ResetWorldMatrices()
 	}
 	glMatrixMode(GL_PROJECTION); {
 		ClearMatrixStack(GL_PROJECTION_STACK_DEPTH);
-		glLoadMatrixd(camera->GetProjMat());
+		glLoadMatrixf(camera->GetProjectionMatrix());
 	}
 	glMatrixMode(GL_MODELVIEW); {
 		ClearMatrixStack(GL_MODELVIEW_STACK_DEPTH);
-		glLoadMatrixd(camera->GetViewMat());
+		glLoadMatrixf(camera->GetViewMatrix());
 	}
 }
 
@@ -3649,7 +3650,7 @@ int LuaOpenGL::DeleteTextureFBO(lua_State* L)
 static bool PushUnitTextureInfo(lua_State* L, const string& texture)
 {
 	if (texture[1] == 0) {
-		lua_newtable(L);
+		lua_createtable(L, 0, 2);
 		HSTR_PUSH_NUMBER(L, "xsize", texturehandler3DO->GetAtlasTexSizeX());
 		HSTR_PUSH_NUMBER(L, "ysize", texturehandler3DO->GetAtlasTexSizeY());
 		return 1;
@@ -3678,13 +3679,13 @@ static bool PushUnitTextureInfo(lua_State* L, const string& texture)
 
 	endPtr++; // skip the ':'
 	if (*endPtr == '0') {
-		lua_newtable(L);
+		lua_createtable(L, 0, 2);
 		HSTR_PUSH_NUMBER(L, "xsize", stex->tex1SizeX);
 		HSTR_PUSH_NUMBER(L, "ysize", stex->tex1SizeY);
 		return 1;
 	}
 	else if (*endPtr == '1') {
-		lua_newtable(L);
+		lua_createtable(L, 0, 2);
 		HSTR_PUSH_NUMBER(L, "xsize", stex->tex2SizeX);
 		HSTR_PUSH_NUMBER(L, "ysize", stex->tex2SizeY);
 		return 1;
@@ -3714,7 +3715,7 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 		if (ud == NULL) {
 			return 0;
 		}
-		lua_newtable(L);
+		lua_createtable(L, 0, 2);
 		unitDefHandler->GetUnitDefImage(ud); // forced existance
 		HSTR_PUSH_NUMBER(L, "xsize", ud->buildPic->imageSizeX);
 		HSTR_PUSH_NUMBER(L, "ysize", ud->buildPic->imageSizeY);
@@ -3730,7 +3731,7 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 		if (ud == NULL) {
 			return 0;
 		}
-		lua_newtable(L);
+		lua_createtable(L, 0, 2);
 		HSTR_PUSH_NUMBER(L, "xsize", ud->iconType->GetSizeX());
 		HSTR_PUSH_NUMBER(L, "ysize", ud->iconType->GetSizeY());
 	}
@@ -3743,28 +3744,28 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 		if (tex == NULL) {
 			return 0;
 		}
-		lua_newtable(L);
+		lua_createtable(L, 0, 2);
 		HSTR_PUSH_NUMBER(L, "xsize", tex->xsize);
 		HSTR_PUSH_NUMBER(L, "ysize", tex->ysize);
 	}
 	else if (texture[0] == '$') {
 		if (texture == "$units") {
-			lua_newtable(L);
+			lua_createtable(L, 0, 2);
 			HSTR_PUSH_NUMBER(L, "xsize", texturehandler3DO->GetAtlasTexSizeX());
 			HSTR_PUSH_NUMBER(L, "ysize", texturehandler3DO->GetAtlasTexSizeY());
 		}
 		else if (texture == "$shadow") {
-			lua_newtable(L);
+			lua_createtable(L, 0, 2);
 			HSTR_PUSH_NUMBER(L, "xsize", shadowHandler->shadowMapSize);
 			HSTR_PUSH_NUMBER(L, "ysize", shadowHandler->shadowMapSize);
 		}
 		else if (texture == "$reflection") {
-			lua_newtable(L);
+			lua_createtable(L, 0, 2);
 			HSTR_PUSH_NUMBER(L, "xsize", cubeMapHandler->GetReflectionTextureSize());
 			HSTR_PUSH_NUMBER(L, "ysize", cubeMapHandler->GetReflectionTextureSize());
 		}
 		else if (texture == "$specular") {
-			lua_newtable(L);
+			lua_createtable(L, 0, 2);
 			HSTR_PUSH_NUMBER(L, "xsize", cubeMapHandler->GetSpecularTextureSize());
 			HSTR_PUSH_NUMBER(L, "ysize", cubeMapHandler->GetSpecularTextureSize());
 		}
@@ -3772,28 +3773,28 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 			if (!heightMapTexture.CheckTextureID()) {
 				return 0;
 			} else {
-				lua_newtable(L);
+				lua_createtable(L, 0, 2);
 				HSTR_PUSH_NUMBER(L, "xsize", heightMapTexture.GetSizeX());
 				HSTR_PUSH_NUMBER(L, "ysize", heightMapTexture.GetSizeY());
 			}
 		}
 		else if (texture == "$shading") {
-			lua_newtable(L);
+			lua_createtable(L, 0, 2);
 			HSTR_PUSH_NUMBER(L, "xsize", gs->pwr2mapx);
 			HSTR_PUSH_NUMBER(L, "ysize", gs->pwr2mapy);
 		}
 		else if (texture == "$grass") {
-			lua_newtable(L);
+			lua_createtable(L, 0, 2);
 			HSTR_PUSH_NUMBER(L, "xsize", 1024);
 			HSTR_PUSH_NUMBER(L, "ysize", 1024);
 		}
 		else if (texture == "$font") {
-			lua_newtable(L);
+			lua_createtable(L, 0, 2);
 			HSTR_PUSH_NUMBER(L, "xsize", font->GetTexWidth());
 			HSTR_PUSH_NUMBER(L, "ysize", font->GetTexHeight());
 		}
 		else if (texture == "$smallfont") {
-			lua_newtable(L);
+			lua_createtable(L, 0, 2);
 			HSTR_PUSH_NUMBER(L, "xsize", smallFont->GetTexWidth());
 			HSTR_PUSH_NUMBER(L, "ysize", smallFont->GetTexHeight());
 		}
@@ -3804,7 +3805,7 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 		if (texInfo == NULL) {
 			return 0;
 		}
-		lua_newtable(L);
+		lua_createtable(L, 0, 2);
 		HSTR_PUSH_NUMBER(L, "xsize", texInfo->xsize);
 		HSTR_PUSH_NUMBER(L, "ysize", texInfo->ysize);
 		// HSTR_PUSH_BOOL(L,   "alpha", texInfo->alpha);  FIXME
@@ -4359,58 +4360,33 @@ int LuaOpenGL::LoadIdentity(lua_State* L)
 }
 
 
-static const double* GetNamedMatrix(const string& name)
-{
-	if (name == "shadow") {
-		static double mat[16];
-		for (int i =0; i <16; i++) {
-			mat[i] = shadowHandler->shadowMatrix.m[i];
-		}
-		return mat;
-	}
-	else if (name == "camera") {
-		return camera->GetViewMat();
-	}
-	else if (name == "caminv") {
-		return camera->GetViewMatInv();
-	}
-	else if (name == "camprj") {
-		return camera->GetProjMat();
-	}
-	else if (name == "billboard") {
-		return camera->GetBBoardMat();
-	}
-	return NULL;
-}
-
-
 int LuaOpenGL::LoadMatrix(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	GLfloat matrix[16];
-
 	const int luaType = lua_type(L, 1);
 	if (luaType == LUA_TSTRING) {
-		const double* matptr = GetNamedMatrix(lua_tostring(L, 1));
+		const CMatrix44f* matptr = LuaOpenGLUtils::GetNamedMatrix(lua_tostring(L, 1));
 		if (matptr != NULL) {
-			glLoadMatrixd(matptr);
+			glLoadMatrixf(*matptr);
 		} else {
 			luaL_error(L, "Incorrect arguments to gl.LoadMatrix()");
 		}
 		return 0;
-	}
-	else if (luaType == LUA_TTABLE) {
-		if (ParseFloatArray(L, matrix, 16) != 16) {
-			luaL_error(L, "gl.LoadMatrix requires all 16 values");
+	} else {
+		GLfloat matrix[16];
+		if (luaType == LUA_TTABLE) {
+			if (ParseFloatArray(L, matrix, 16) != 16) {
+				luaL_error(L, "gl.LoadMatrix requires all 16 values");
+			}
 		}
-	}
-	else {
-		for (int i = 1; i <= 16; i++) {
-			matrix[i-1] = (GLfloat)luaL_checknumber(L, i);
+		else {
+			for (int i = 1; i <= 16; i++) {
+				matrix[i-1] = (GLfloat)luaL_checknumber(L, i);
+			}
 		}
+		glLoadMatrixf(matrix);
 	}
-	glLoadMatrixf(matrix);
 	return 0;
 }
 
@@ -4419,29 +4395,29 @@ int LuaOpenGL::MultMatrix(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	GLfloat matrix[16];
-
 	const int luaType = lua_type(L, 1);
 	if (luaType == LUA_TSTRING) {
-		const double* matptr = GetNamedMatrix(lua_tostring(L, 1));
+		const CMatrix44f* matptr = LuaOpenGLUtils::GetNamedMatrix(lua_tostring(L, 1));
 		if (matptr != NULL) {
-			glMultMatrixd(matptr);
+			glMultMatrixf(*matptr);
 		} else {
 			luaL_error(L, "Incorrect arguments to gl.MultMatrix()");
 		}
 		return 0;
-	}
-	else if (luaType == LUA_TTABLE) {
-		if (ParseFloatArray(L, matrix, 16) != 16) {
-			luaL_error(L, "gl.MultMatrix requires all 16 values");
+	} else {
+		GLfloat matrix[16];
+		if (luaType == LUA_TTABLE) {
+			if (ParseFloatArray(L, matrix, 16) != 16) {
+				luaL_error(L, "gl.LoadMatrix requires all 16 values");
+			}
 		}
-	}
-	else {
-		for (int i = 1; i <= 16; i++) {
-			matrix[i-1] = (GLfloat)luaL_checknumber(L, i);
+		else {
+			for (int i = 1; i <= 16; i++) {
+				matrix[i-1] = (GLfloat)luaL_checknumber(L, i);
+			}
 		}
+		glMultMatrixf(matrix);
 	}
-	glMultMatrixf(matrix);
 	return 0;
 }
 
@@ -4556,15 +4532,25 @@ int LuaOpenGL::GetMatrixData(lua_State* L)
 		return 16;
 	}
 	else if (luaType == LUA_TSTRING) {
-		const double* matptr = GetNamedMatrix(lua_tostring(L, 1));
-		if (matptr != NULL) {
-			for (int i = 0; i < 16; i++) {
-				lua_pushnumber(L, matptr[i]);
-			}
-		}
-		else {
+		const CMatrix44f* matptr = LuaOpenGLUtils::GetNamedMatrix(lua_tostring(L, 1));
+
+		if (!matptr) {
 			luaL_error(L, "Incorrect arguments to gl.GetMatrixData(name)");
 		}
+
+		if (lua_isnumber(L, 2)) {
+			const int index = lua_toint(L, 2);
+			if ((index < 0) || (index >= 16)) {
+				return 0;
+			}
+			lua_pushnumber(L, (*matptr)[index]);
+			return 1;
+		}
+
+		for (int i = 0; i < 16; i++) {
+			lua_pushnumber(L, (*matptr)[i]);
+		}
+
 		return 16;
 	}
 
@@ -4576,7 +4562,12 @@ int LuaOpenGL::GetMatrixData(lua_State* L)
 int LuaOpenGL::PushAttrib(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-	glPushAttrib((GLbitfield)luaL_optnumber(L, 1, GL_ALL_ATTRIB_BITS));
+	int mask = luaL_optnumber(L, 1, GL_ALL_ATTRIB_BITS);
+	if (mask < 0) {
+		mask = -mask;
+		mask |= GL_ALL_ATTRIB_BITS;
+	}
+	glPushAttrib((GLbitfield)mask);
 	return 0;
 }
 

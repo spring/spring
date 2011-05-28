@@ -38,6 +38,7 @@ CR_REG_METADATA(CTeam, (
 	// CR_MEMBER(customValues),
 	// from CTeam
 	CR_MEMBER(teamNum),
+	CR_MEMBER(maxUnits),
 	CR_MEMBER(isDead),
 	CR_MEMBER(gaia),
 	CR_MEMBER(origColor),
@@ -81,6 +82,7 @@ CR_REG_METADATA(CTeam, (
 
 CTeam::CTeam() :
 	teamNum(-1),
+	maxUnits(0),
 	isDead(false),
 	gaia(false),
 	metal(0.0f),

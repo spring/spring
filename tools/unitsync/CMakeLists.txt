@@ -26,12 +26,12 @@ ENDIF (MINGW)
 
 
 ADD_DEFINITIONS(-DUNITSYNC)
-ADD_DEFINITIONS(-DBITMAP_NO_OPENGL)
 ADD_DEFINITIONS(${PIC_FLAG})
 ADD_DEFINITIONS(-DNOT_USING_CREG)
 ADD_DEFINITIONS(-DHEADLESS)
 ADD_DEFINITIONS(-DNO_SOUND)
 ADD_DEFINITIONS(-DBITMAP_NO_OPENGL)
+
 
 INCLUDE_DIRECTORIES(${DEVIL_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(../../rts/lib/lua/include)
@@ -39,7 +39,6 @@ INCLUDE_DIRECTORIES(../../rts/lib/7zip)
 INCLUDE_DIRECTORIES(../../rts)
 INCLUDE_DIRECTORIES(../../rts/System)
 
-AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fs_files)
 set(main_files
 	../../rts/System/Platform/Misc
 	../../rts/System/ConfigHandler
@@ -65,7 +64,7 @@ if (WIN32)
 endif (WIN32)
 
 set(unitsync_files
-	${fs_files}
+	${sources_engine_System_FileSystem}
 	${main_files}
 	unitsync
 	LuaParserAPI

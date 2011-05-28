@@ -3,11 +3,13 @@
 #include "StdAfx.h"
 #include "BeamLaser.h"
 #include "Game/GameHelper.h"
+#include "Game/TraceRay.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Map/Ground.h"
 #include "Matrix44f.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/InterceptHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/BeamLaserProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/LargeBeamLaserProjectile.h"
@@ -129,15 +131,15 @@ bool CBeamLaser::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 		(accuracy + sprayAngle) *
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
 
-	if (avoidFeature && helper->LineFeatureCol(weaponMuzzlePos, dir, length)) {
+	if (avoidFeature && TraceRay::LineFeatureCol(weaponMuzzlePos, dir, length)) {
 		return false;
 	}
 	if (avoidFriendly) {
-		if (helper->TestCone(weaponMuzzlePos, dir, length, spread, owner, CGameHelper::TEST_ALLIED))
+		if (TraceRay::TestAllyCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, owner))
 			return false;
 	}
 	if (avoidNeutral) {
-		if (helper->TestCone(weaponMuzzlePos, dir, length, spread, owner, CGameHelper::TEST_NEUTRAL))
+		if (TraceRay::TestNeutralCone(weaponMuzzlePos, dir, length, spread, owner))
 			return false;
 	}
 
@@ -239,23 +241,9 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 	for (int tries = 0; tries < 5 && tryAgain; ++tries) {
 		tryAgain = false;
 
-		const CUnit* hitUnitPtr = hitUnit;
-		const CFeature* hitFeaturePtr = hitFeature;
-		float length = helper->TraceRay(
-			curPos,
-			dir,
-			maxLength - curLength,
-			weaponDef->damages[0],
-			owner,
-			hitUnitPtr,
-			collisionFlags,
-			&hitFeaturePtr
-		);
+		float length = TraceRay::TraceRay(curPos, dir, maxLength - curLength, collisionFlags, owner, hitUnit, hitFeature);
 
-		hitUnit = const_cast<CUnit*>(hitUnitPtr);
-		hitFeature = const_cast<CFeature*>(hitFeaturePtr);
-
-		if (hitUnit != NULL && hitUnit->allyteam == owner->allyteam && sweepFire) {
+		if (hitUnit && teamHandler->AlliedTeams(hitUnit->team, owner->team) && sweepFire) {
 			// never damage friendlies with sweepfire
 			lastFireFrame = 0;
 			return;

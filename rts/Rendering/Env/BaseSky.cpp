@@ -6,11 +6,12 @@
 #include "BaseSky.h"
 #include "BasicSky.h"
 #include "AdvSky.h"
-#include "ConfigHandler.h"
 #include "SkyBox.h"
 #include "Map/MapInfo.h"
-#include "Exceptions.h"
-#include "LogOutput.h"
+#include "Rendering/GlobalRendering.h"
+#include "System/ConfigHandler.h"
+#include "System/Exceptions.h"
+#include "System/LogOutput.h"
 
 IBaseSky* sky = NULL;
 
@@ -27,6 +28,22 @@ IBaseSky::IBaseSky()
 IBaseSky::~IBaseSky()
 {
 	delete skyLight;
+}
+
+
+
+void IBaseSky::SetFog() {
+	if (globalRendering->drawFog) {
+		glEnable(GL_FOG);
+	} else {
+		glDisable(GL_FOG);
+	}
+
+	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+	glFogi(GL_FOG_MODE,   GL_LINEAR);
+	glFogf(GL_FOG_START,  globalRendering->viewRange * mapInfo->atmosphere.fogStart);
+	glFogf(GL_FOG_END,    globalRendering->viewRange * mapInfo->atmosphere.fogEnd);
+	glFogf(GL_FOG_DENSITY, 1.0f);
 }
 
 

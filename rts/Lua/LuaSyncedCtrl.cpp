@@ -29,7 +29,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GroundDecalHandler.h"
-#include "Rendering/Env/BaseTreeDrawer.h"
+#include "Rendering/Env/ITreeDrawer.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
@@ -463,7 +463,6 @@ int LuaSyncedCtrl::KillTeam(lua_State* L)
 
 int LuaSyncedCtrl::GameOver(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
 	if (!lua_istable(L, 1)) {
 		luaL_error(L, "Incorrect arguments to GameOver()");
 	}
@@ -1782,46 +1781,41 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 {
 	const int argc = lua_gettop(L);
 
-	if (argc != 6 && argc != 14) {
+	if ((argc != 11) && (argc != 14)) {
 		return 0;
 	}
 
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-
 	if (unit == NULL) {
 		return 0;
 	}
 
-	if (!lua_isboolean(L, 3) || !lua_isboolean(L, 4)) { return 0; }
-	if (!lua_isboolean(L, 5) || !lua_isboolean(L, 6)) { return 0; }
-
 	LocalModel* localModel = unit->localmodel;
 
-	const int  pieceIndex   = luaL_checkint(L, 2);
-	const bool affectLocal  = lua_toboolean(L, 3);
-	const bool affectGlobal = lua_toboolean(L, 4);
-	const bool enableLocal  = lua_toboolean(L, 5);
-	const bool enableGlobal = lua_toboolean(L, 6);
+	const int  pieceIndex = luaL_checkint(L, 2);
+	bool enableLocal      = lua_toboolean(L, 3);
+	int arg = 4;
+	if (argc == 14) {
+		//! old syntax had 3 additional arguments that were dropped now
+		//! so skip 3rd, 4th & 6th argument
+		enableLocal = lua_toboolean(L, 5);
+		arg = 7;
+	}
 
 	if (pieceIndex < 0 || pieceIndex >= localModel->pieces.size()) {
 		return 0;
 	}
 
-	if (!affectLocal && !affectGlobal) {
-		return 0;
-	}
-
 	LocalModelPiece* lmp = localModel->pieces[pieceIndex];
-	S3DModelPiece*   omp = lmp->original;
 
-	const float xs  = luaL_checkfloat(L,  7);
-	const float ys  = luaL_checkfloat(L,  8);
-	const float zs  = luaL_checkfloat(L,  9);
-	const float xo  = luaL_checkfloat(L, 10);
-	const float yo  = luaL_checkfloat(L, 11);
-	const float zo  = luaL_checkfloat(L, 12);
-	const unsigned int vType = luaL_checkint(L, 13);
-	const unsigned int pAxis = luaL_checkint(L, 14);
+	const float xs  = luaL_checkfloat(L, arg++);
+	const float ys  = luaL_checkfloat(L, arg++);
+	const float zs  = luaL_checkfloat(L, arg++);
+	const float xo  = luaL_checkfloat(L, arg++);
+	const float yo  = luaL_checkfloat(L, arg++);
+	const float zo  = luaL_checkfloat(L, arg++);
+	const unsigned int vType = luaL_checkint(L, arg++);
+	const unsigned int pAxis = luaL_checkint(L, arg++);
 	const unsigned int tType = CollisionVolume::COLVOL_HITTEST_CONT;
 
 	const float3 scales(xs, ys, zs);
@@ -1830,24 +1824,12 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 	if (vType >= CollisionVolume::COLVOL_NUM_SHAPES) { return 0; }
 	if (pAxis >= CollisionVolume::COLVOL_NUM_AXES  ) { return 0; }
 
-	if (affectLocal) {
-		// affects this unit only
-		if (enableLocal) {
-			lmp->GetCollisionVolume()->Init(scales, offset, vType, tType, pAxis);
-			lmp->GetCollisionVolume()->Enable();
-		} else {
-			lmp->GetCollisionVolume()->Disable();
-		}
-	}
-
-	if (affectGlobal) {
-		// affects all future units with this model
-		if (enableGlobal) {
-			omp->GetCollisionVolume()->Init(scales, offset, vType, tType, pAxis);
-			omp->GetCollisionVolume()->Enable();
-		} else {
-			omp->GetCollisionVolume()->Disable();
-		}
+	//! affects this unit only
+	if (enableLocal) {
+		lmp->GetCollisionVolume()->Init(scales, offset, vType, tType, pAxis);
+		lmp->GetCollisionVolume()->Enable();
+	} else {
+		lmp->GetCollisionVolume()->Disable();
 	}
 
 	return 0;

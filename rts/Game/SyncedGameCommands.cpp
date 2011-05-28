@@ -6,11 +6,11 @@
 #include "CommandMessage.h"
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
+#include "InMapDraw.h"
 #ifdef _WIN32
 #  include "winerror.h"
 #endif
 
-#include "Rendering/InMapDraw.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -45,7 +45,7 @@ bool CGame::ActionReleased(const Action& action)
 	const string& cmd = action.command;
 
 	if (cmd == "drawinmap"){
-		inMapDrawer->keyPressed=false;
+		inMapDrawer->SetDrawMode(false);
 	}
 	else if (cmd == "moveforward") {
 		camMove[0]=false;

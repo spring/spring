@@ -279,11 +279,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		const string errmsg = "missing 'name' parameter for the " + unitName + " unitdef";
 		throw content_error(errmsg);
 	}
-	filename  = udTable.GetString("filename", "");
-	if (filename.empty()) {
-		const string errmsg = "missing 'filename' parameter for the" + unitName + " unitdef";
-		throw content_error(errmsg);
-	}
+
 	tooltip = udTable.GetString("description", name);
 	buildPicName = udTable.GetString("buildPic", "");
 	decoyName = udTable.GetString("decoyFor", "");
@@ -753,16 +749,13 @@ UnitDef::~UnitDef()
 
 S3DModel* UnitDef::LoadModel() const
 {
-	// not exactly kosher, but...
-	UnitDef* udef = const_cast<UnitDef*>(this);
-
-	if (udef->modelDef.model == NULL) {
-		udef->modelDef.model = modelParser->Load3DModel(udef->modelDef.modelPath, udef->modelCenterOffset);
-		udef->modelDef.modelTextures["tex1"] = udef->modelDef.model->tex1;
-		udef->modelDef.modelTextures["tex2"] = udef->modelDef.model->tex2;
+	if (this->modelDef.model == NULL) {
+		this->modelDef.model = modelParser->Load3DModel(this->modelDef.modelPath, this->modelCenterOffset);
+		this->modelDef.modelTextures["tex1"] = this->modelDef.model->tex1;
+		this->modelDef.modelTextures["tex2"] = this->modelDef.model->tex2;
 	}
 
-	return (udef->modelDef.model);
+	return (this->modelDef.model);
 }
 
 

@@ -42,7 +42,7 @@ public:
 	void Begin(const bool immediate = false, const bool resetColors = true);
 	void End();
 
-	void glWorldPrint(const float3 p, const float size, const std::string& str);
+	void glWorldPrint(const float3& p, const float size, const std::string& str);
 	/**
 	 * @param s  absolute font size, or relative scale, if option FONT_SCALE is set
 	 * @param options  FONT_SCALE | FONT_NORM |

@@ -11,8 +11,9 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/FarTextureHandler.h"
+#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/BaseWater.h"
-#include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -157,7 +158,7 @@ void CFeatureDrawer::Update()
 }
 
 
-void CFeatureDrawer::UpdateDrawPos(CFeature* f)
+inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 {
 //#if defined(USE_GML) && GML_ENABLE_SIM
 //	f->drawPos = f->pos + (f->speed * ((float)globalRendering->lastFrameStart - (float)f->lastUnitUpdate) * globalRendering->weightedSpeedFactor);
@@ -170,10 +171,7 @@ void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 
 void CFeatureDrawer::Draw()
 {
-	if(globalRendering->drawFog) {
-		glEnable(GL_FOG);
-		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
-	}
+	IBaseSky::SetFog();
 
 	GML_RECMUTEX_LOCK(feat); // Draw
 
@@ -229,7 +227,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 	FeatureSet::iterator featureSetIt;
 
 	for (featureBinIt = featureBin.begin(); featureBinIt != featureBin.end(); ++featureBinIt) {
-		if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ) {
+		if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ || modelType == MODELTYPE_ASS) {
 			texturehandlerS3O->SetS3oTexture(featureBinIt->first);
 		}
 
@@ -337,10 +335,7 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.5f);
 
-		if (globalRendering->drawFog) {
-			glEnable(GL_FOG);
-			glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
-		}
+		IBaseSky::SetFog();
 
 		{
 			GML_RECMUTEX_LOCK(feat); // DrawFadeFeatures
@@ -371,7 +366,7 @@ void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType) {
 		FeatureRenderBin& featureBin = cloakedModelRenderers[modelType]->GetFeatureBinMutable();
 
 		for (FeatureRenderBinIt it = featureBin.begin(); it != featureBin.end(); ++it) {
-			if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ) {
+			if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ || modelType == MODELTYPE_ASS) {
 				texturehandlerS3O->SetS3oTexture(it->first);
 			}
 

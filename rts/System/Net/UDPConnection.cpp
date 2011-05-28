@@ -66,7 +66,7 @@ class Packer
 public:
 	Packer(std::vector<uint8_t>& data) : data(data)
 	{
-		assert(data.size() == 0);
+		assert(data.empty());
 	}
 
 	template<typename T>

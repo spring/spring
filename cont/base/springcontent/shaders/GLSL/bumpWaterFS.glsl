@@ -187,7 +187,7 @@ void main(void) {
     vec3 octave3 = texture2D(normalmap,gl_TexCoord[2].st).rgb;
     vec3 octave4 = texture2D(normalmap,gl_TexCoord[2].pq).rgb;
 
-    const float a = PerlinAmp;
+    float a = PerlinAmp;
     octave1 = (octave1*2.0-1.0)*a;
     octave2 = (octave2*2.0-1.0)*a*a;
     octave3 = (octave3*2.0-1.0)*a*a*a;
@@ -204,7 +204,7 @@ void main(void) {
   // AMBIENT & DIFFUSE
     vec3 reflectDir   = reflect(normalize(-ligVec), normal);
     float specular    = angle * pow( max(dot(reflectDir,eVec), 0.0) , SpecularPower) * SpecularFactor * shallowScale;
-    const vec3 SunLow = SunDir * vec3(1.0,0.1,1.0);
+    vec3 SunLow       = SunDir * vec3(1.0,0.1,1.0);
     float diffuse     = pow( max( dot(normal,SunLow) ,0.0 ) ,3.0)*DiffuseFactor;
     float ambient     = smoothstep(-1.3,0.0,eyeNormalCos)*AmbientFactor;
     vec3 waterSurface = SurfaceColor.rgb + DiffuseColor*diffuse + vec3(ambient);
@@ -282,8 +282,8 @@ void main(void) {
     vec3 reflColor = texture2D(reflection,reftexcoord).rgb;
 
   #ifdef opt_blurreflection
-    const vec2  v = BlurBase;
-    const float s = BlurExponent;
+    vec2  v = BlurBase;
+    float s = BlurExponent;
     reflColor += texture2D(reflection,reftexcoord.st+v).rgb;
     reflColor += texture2D(reflection,reftexcoord.st+v*s).rgb;
     reflColor += texture2D(reflection,reftexcoord.st+v*s*s).rgb;

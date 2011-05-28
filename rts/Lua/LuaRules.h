@@ -58,11 +58,11 @@ class CLuaRules : public CLuaHandleSynced
 		void Cob2Lua(const LuaHashString& funcName, const CUnit* unit,
 		             int& argsCount, int args[MAX_LUA_COB_ARGS]);
 
-		bool AllowWeaponTargetCheck(
+		int AllowWeaponTargetCheck(
 			unsigned int attackerID,
 			unsigned int attackerWeaponNum,
 			unsigned int attackerWeaponDefID);
-		bool AllowWeaponTarget(
+		int AllowWeaponTarget(
 			unsigned int attackerID,
 			unsigned int targetID,
 			unsigned int attackerWeaponNum,

@@ -218,7 +218,7 @@ static void PushUnitAndCommand(lua_State* L, const CUnit* unit, const Command& c
 	lua_pushnumber(L, unit->team);
 
 	// push the command id
-	lua_pushnumber(L, cmd.id);
+	lua_pushnumber(L, cmd.GetID());
 
 	// push the params list
 	lua_newtable(L);
@@ -842,10 +842,10 @@ bool CLuaRules::ShieldPreDamaged(
 
 /******************************************************************************/
 
-bool CLuaRules::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int attackerWeaponNum, unsigned int attackerWeaponDefID)
+int CLuaRules::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int attackerWeaponNum, unsigned int attackerWeaponDefID)
 {
 	if (!haveAllowWeaponTargetCheck) {
-		return false;
+		return -1;
 	}
 
 	LUA_CALL_IN_CHECK(L);
@@ -854,7 +854,7 @@ bool CLuaRules::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int att
 	const int errfunc(SetupTraceback());
 	static const LuaHashString cmdStr("AllowWeaponTargetCheck");
 
-	bool ret = false;
+	int ret = -1;
 
 	if (!cmdStr.GetGlobalFunc(L)) {
 		if (errfunc) { lua_pop(L, 1); }
@@ -867,13 +867,13 @@ bool CLuaRules::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int att
 
 	RunCallInTraceback(cmdStr, 3, 1, errfunc);
 
-	ret = (lua_isboolean(L, -1) && lua_toboolean(L, -1));
+	ret = (lua_isboolean(L, -1) && lua_toboolean(L, -1))? 1: 0;
 	lua_pop(L, -1);
 
 	return ret;
 }
 
-bool CLuaRules::AllowWeaponTarget(
+int CLuaRules::AllowWeaponTarget(
 	unsigned int attackerID,
 	unsigned int targetID,
 	unsigned int attackerWeaponNum,
@@ -881,7 +881,7 @@ bool CLuaRules::AllowWeaponTarget(
 	float* targetPriority)
 {
 	if (!haveAllowWeaponTarget) {
-		return false;
+		return -1;
 	}
 
 	LUA_CALL_IN_CHECK(L);
@@ -890,7 +890,7 @@ bool CLuaRules::AllowWeaponTarget(
 	const int errfunc(SetupTraceback());
 	static const LuaHashString cmdStr("AllowWeaponTarget");
 
-	bool ret = false;
+	int ret = -1;
 
 	if (!cmdStr.GetGlobalFunc(L)) {
 		if (errfunc) { lua_pop(L, 1); }
@@ -904,7 +904,7 @@ bool CLuaRules::AllowWeaponTarget(
 
 	RunCallInTraceback(cmdStr, 4, 2, errfunc);
 
-	ret = (lua_isboolean(L, -2) && lua_toboolean(L, -2));
+	ret = (lua_isboolean(L, -2) && lua_toboolean(L, -2))? 1: 0;
 
 	if (targetPriority && lua_isnumber(L, -1)) {
 		*targetPriority = lua_tonumber(L, -1);

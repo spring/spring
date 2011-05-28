@@ -198,7 +198,6 @@ CMouseCursor* CCursorIcons::GetCursor(int cmd)
 		case CMD_RESTORE:         cursorName = "Restore";      break;
 /*
 		case CMD_STOP:
-		case CMD_AISELECT:
 		case CMD_GROUPSELECT:
 		case CMD_GROUPADD:
 		case CMD_GROUPCLEAR:

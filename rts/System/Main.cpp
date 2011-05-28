@@ -70,7 +70,7 @@ int Run(int argc, char* argv[])
 	//! check if Spring crashed, if so display an error message
 	Threading::Error* err = Threading::GetThreadError();
 	if (err)
-		ErrorMessageBox(err->message, err->caption, err->flags);
+		ErrorMessageBox("Error in main(): " + err->message, err->caption, err->flags);
 
 	return ret;
 }

@@ -9,6 +9,8 @@
 #include "BumpWater.h"
 #include "DynWater.h"
 #include "RefractWater.h"
+#include "Sim/Projectiles/ExplosionListener.h"
+#include "Game/GameHelper.h"
 #include "System/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
@@ -18,11 +20,17 @@ std::vector<int> CBaseWater::waterModes;
 std::vector<HeightmapChange> CBaseWater::heightmapChanges;
 bool CBaseWater::noWakeProjectiles = false;
 
-CBaseWater::CBaseWater(void)
+CBaseWater::CBaseWater()
+	: drawReflection(false)
+	, drawRefraction(false)
+ 	, drawSolid(false)
 {
-	drawReflection = false;
-	drawRefraction = false;
- 	drawSolid = false;
+	helper->AddExplosionListener(this);
+}
+
+CBaseWater::~CBaseWater()
+{
+	if (helper != NULL) helper->RemoveExplosionListener(this);
 }
 
 
@@ -72,7 +80,7 @@ void CBaseWater::UpdateBaseWater(CGame* game) {
 CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRendererMode)
 {
 	static CBaseWater  baseWaterRenderer;
-	       CBaseWater* nextWaterRenderer = NULL;
+	CBaseWater* nextWaterRenderer = NULL;
 
 	if (currWaterRenderer != NULL) {
 		assert(water == currWaterRenderer);
@@ -176,4 +184,8 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRen
 
 	configHandler->Set("ReflectiveWater", nextWaterRenderer->GetID());
 	return nextWaterRenderer;
+}
+
+void CBaseWater::ExplosionOccurred(const CExplosionEvent& event) {
+	AddExplosion(event.GetPos(), event.GetDamage(), event.GetRadius());
 }

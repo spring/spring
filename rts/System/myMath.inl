@@ -176,3 +176,19 @@ inline bool RadsAreEqual(const float f1, const float f2)
 {
 	return (fmod(f1 - f2, TWOPI) == 0.0f);
 }
+
+inline float GetRadFromXY(float dx, float dy) {
+	float a;
+	if(dx != 0) {
+		a = math::atan(dy / dx);
+		if(dx < 0)
+			a += PI;
+		else if(dy < 0)
+			a += 2.0f * PI;
+		return a;
+	}
+	a = PI / 2.0f;
+	if(dy < 0)
+		a += PI;
+	return a;
+}

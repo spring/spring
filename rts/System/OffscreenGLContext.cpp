@@ -9,7 +9,6 @@
 #include "maindefines.h"
 #include "lib/streflop/streflop_cond.h"
 #include "System/Platform/errorhandler.h"
-#include "System/Platform/Threading.h"
 
 
 #ifdef HEADLESS
@@ -221,7 +220,6 @@ COffscreenGLThread::~COffscreenGLThread()
 {
 	if (thread)
 		Join();
-	Threading::SetLoadingThread(NULL);
 	delete thread; thread = NULL;
 }
 
@@ -242,7 +240,6 @@ void COffscreenGLThread::Join()
 
 void COffscreenGLThread::WrapFunc(boost::function<void()> f)
 {
-	Threading::SetLoadingThread(thread);
 	glOffscreenCtx.WorkerThreadPost();
 
 #ifdef STREFLOP_H

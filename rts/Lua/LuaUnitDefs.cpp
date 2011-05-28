@@ -661,7 +661,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_STRING("name",      ud.name);
 	ADD_STRING("humanName", ud.humanName);
-	ADD_STRING("filename",  ud.filename);
 
 	ADD_STRING("tooltip", ud.tooltip);
 

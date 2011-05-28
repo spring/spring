@@ -125,6 +125,19 @@ private:
 	 */
 	static bool IsPortableMode();
 
+	/**
+	 * Determines whether a given path may be a data-dir for multiple engine
+	 * versions.
+	 * This is done by checking the precense of some dirs,
+	 * like "./maps/" and "./games/".
+	 * You may think of this as denoting multi-engine-version portable-mode.
+	 * This will return true on a default install on windows.
+	 * @param dirPath a path to a dir to check for whether it is a data-dir
+	 *   for multiple engine versions.
+	 * @returns whether dirPath may be a data-dir for multiple engine versions.
+	 */
+	static bool LooksLikeMultiVersionDataDir(const std::string& dirPath);
+
 	std::vector<DataDir> datadirs;
 	const DataDir* writedir;
 };

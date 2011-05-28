@@ -27,7 +27,13 @@ public:
 		return enabled;
 	}
 
+	/**
+	 * @param newVolume [0.0, 1.0]
+	 */
 	virtual void SetVolume(float newVolume) = 0;
+	/**
+	 * @return [0.0, 1.0]
+	 */
 	float GetVolume() const
 	{
 		return volume;

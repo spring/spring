@@ -56,7 +56,6 @@
 #include "MouseHandler.h"
 #include "Map/ReadMap.h"
 #include "Rendering/IconHandler.h"
-#include "Rendering/InMapDraw.h"
 #include "EventHandler.h"
 #include "LogOutput.h"
 #include "FileSystem/FileHandler.h"

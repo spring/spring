@@ -161,19 +161,21 @@ void CFactoryCAI::PostLoad()
 
 void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 {
+	const int& cmd_id = c.GetID();
+	
 	// move is always allowed for factories (passed to units it produces)
-	if ((c.id == CMD_SET_WANTED_MAX_SPEED) ||
-	    ((c.id != CMD_MOVE) && !AllowedCommand(c, fromSynced))) {
+	if ((cmd_id == CMD_SET_WANTED_MAX_SPEED) ||
+	    ((cmd_id != CMD_MOVE) && !AllowedCommand(c, fromSynced))) {
 		return;
 	}
 
-	map<int, BuildOption>::iterator boi = buildOptions.find(c.id);
+	map<int, BuildOption>::iterator boi = buildOptions.find(cmd_id);
 
 	// not a build order so queue it to built units
 	if (boi == buildOptions.end()) {
-		if ((nonQueingCommands.find(c.id) != nonQueingCommands.end()) ||
-		    (c.id == CMD_INSERT) || (c.id == CMD_REMOVE) ||
-		    (!(c.options & SHIFT_KEY) && ((c.id == CMD_WAIT) || (c.id == CMD_SELFD)))) {
+		if ((nonQueingCommands.find(cmd_id) != nonQueingCommands.end()) ||
+		    (cmd_id == CMD_INSERT) || (cmd_id == CMD_REMOVE) ||
+		    (!(c.options & SHIFT_KEY) && ((cmd_id == CMD_WAIT) || (cmd_id == CMD_SELFD)))) {
 			CCommandAI::GiveAllowedCommand(c);
 			return;
 		}
@@ -183,10 +185,10 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			newUnitCommands.clear();
 		}
 
-		if (c.id != CMD_STOP) {
-			if ((c.id == CMD_WAIT) || (c.id == CMD_SELFD)) {
-				if (!newUnitCommands.empty() && (newUnitCommands.back().id == c.id)) {
-					if (c.id == CMD_WAIT) {
+		if (cmd_id != CMD_STOP) {
+			if ((cmd_id == CMD_WAIT) || (cmd_id == CMD_SELFD)) {
+				if (!newUnitCommands.empty() && (newUnitCommands.back().GetID() == cmd_id)) {
+					if (cmd_id == CMD_WAIT) {
 						waitCommandsAI.RemoveWaitCommand(owner, c);
 					}
 					newUnitCommands.pop_back();
@@ -210,9 +212,9 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 		// the first new-unit build order can not be WAIT or SELFD
 		while (!newUnitCommands.empty()) {
-			const int id = newUnitCommands.front().id;
+			const int& id = newUnitCommands.front().GetID();
 			if ((id == CMD_WAIT) || (id == CMD_SELFD)) {
-				if (c.id == CMD_WAIT) {
+				if (cmd_id == CMD_WAIT) {
 					waitCommandsAI.RemoveWaitCommand(owner, c);
 				}
 				newUnitCommands.pop_front();
@@ -239,21 +241,21 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		int numToErase = numItems;
 		if (c.options & ALT_KEY) {
 			for (unsigned int cmdNum = 0; cmdNum < commandQue.size() && numToErase; ++cmdNum) {
-				if (commandQue[cmdNum].id == c.id) {
-					commandQue[cmdNum].id = CMD_STOP;
+				if (commandQue[cmdNum].GetID() == cmd_id) {
+					commandQue[cmdNum] = Command(CMD_STOP);
 					numToErase--;
 				}
 			}
 		}
 		else {
 			for (int cmdNum = commandQue.size() - 1; cmdNum != -1 && numToErase; --cmdNum) {
-				if (commandQue[cmdNum].id == c.id) {
-					commandQue[cmdNum].id = CMD_STOP;
+				if (commandQue[cmdNum].GetID() == cmd_id) {
+					commandQue[cmdNum] = Command(CMD_STOP);
 					numToErase--;
 				}
 			}
 		}
-		UpdateIconName(c.id,bo);
+		UpdateIconName(cmd_id,bo);
 		SlowUpdate();
 	}
 	else {
@@ -282,7 +284,7 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			}
 		}
 		bo.numQued += numItems;
-		UpdateIconName(c.id, bo);
+		UpdateIconName(cmd_id, bo);
 
 		SlowUpdate();
 	}
@@ -292,10 +294,10 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 void CFactoryCAI::InsertBuildCommand(CCommandQueue::iterator& it,
                                      const Command& newCmd)
 {
-	map<int, BuildOption>::iterator boi = buildOptions.find(newCmd.id);
+	map<int, BuildOption>::iterator boi = buildOptions.find(newCmd.GetID());
 	if (boi != buildOptions.end()) {
 		boi->second.numQued++;
-		UpdateIconName(newCmd.id, boi->second);
+		UpdateIconName(newCmd.GetID(), boi->second);
 	}
 	if (!commandQue.empty() && (it == commandQue.begin())) {
 		// ExecuteStop(), without the pop_front()
@@ -310,17 +312,19 @@ void CFactoryCAI::InsertBuildCommand(CCommandQueue::iterator& it,
 bool CFactoryCAI::RemoveBuildCommand(CCommandQueue::iterator& it)
 {
 	Command& cmd = *it;
-	map<int, BuildOption>::iterator boi = buildOptions.find(cmd.id);
+	map<int, BuildOption>::iterator boi = buildOptions.find(cmd.GetID());
 	if (boi != buildOptions.end()) {
 		boi->second.numQued--;
-		UpdateIconName(cmd.id, boi->second);
+		UpdateIconName(cmd.GetID(), boi->second);
 	}
 	if (!commandQue.empty() && (it == commandQue.begin())) {
 		ExecuteStop(cmd);
 		return true;
 	}
-	if (cmd.id < 0) {
-		cmd.id = CMD_STOP;
+	// XXX what does this do?
+	if (cmd.GetID() < 0) { // (id < 0) -> it is a build command
+		// convert the build-command into a stop command
+		cmd.SetID(CMD_STOP);
 		cmd.tag = 0;
 	}
 	return false;
@@ -339,7 +343,7 @@ void CFactoryCAI::CancelRestrictedUnit(const Command& c, BuildOption& buildOptio
 			}
 		}
 	}
-	UpdateIconName(c.id, buildOption);
+	UpdateIconName(c.GetID(), buildOption);
 	FinishCommand();
 }
 
@@ -360,7 +364,7 @@ void CFactoryCAI::SlowUpdate()
 		oldSize = commandQue.size();
 		map<int, BuildOption>::iterator boi;
 
-		if ((boi = buildOptions.find(c.id)) != buildOptions.end()) {
+		if ((boi = buildOptions.find(c.GetID())) != buildOptions.end()) {
 			const UnitDef* def = unitDefHandler->GetUnitDefByName(boi->second.name);
 
 			if (building) {
@@ -369,7 +373,7 @@ void CFactoryCAI::SlowUpdate()
 					if (!repeatOrders || c.options & DONT_REPEAT) {
 						boi->second.numQued--;
 					}
-					UpdateIconName(c.id,boi->second);
+					UpdateIconName(c.GetID(),boi->second);
 					FinishCommand();
 				}
 
@@ -386,20 +390,20 @@ void CFactoryCAI::SlowUpdate()
 					if(!repeatOrders || c.options & DONT_REPEAT){
 						boi->second.numQued--;
 					}
-					UpdateIconName(c.id,boi->second);
+					UpdateIconName(c.GetID(),boi->second);
 					FinishCommand();
 				}
 				else if (uh->unitsByDefs[owner->team][def->id].size() >= def->maxThisUnit) { //unit restricted?
 					CancelRestrictedUnit(c, boi->second);
 				}
-				else if(uh->MaxUnitsPerTeam() > teamHandler->Team(owner->team)->units.size()) {  //max unitlimit reached?
+				else if (!teamHandler->Team(owner->team)->AtUnitLimit()) {
 					fac->StartBuild(def);
-					building=true;
+					building = true;
 				}
 			}
 		}
 		else {
-			switch(c.id){
+			switch(c.GetID()){
 				case CMD_STOP: {
 					ExecuteStop(c);
 					break;
@@ -467,26 +471,27 @@ void CFactoryCAI::DrawCommands(void)
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
 	}
 
-	if (!commandQue.empty() && (commandQue.front().id == CMD_WAIT)) {
+	if (!commandQue.empty() && (commandQue.front().GetID() == CMD_WAIT)) {
 		DrawWaitIcon(commandQue.front());
 	}
 
 	CCommandQueue::iterator ci;
 	for(ci=newUnitCommands.begin();ci!=newUnitCommands.end();++ci){
-		switch(ci->id){
+		const int& cmd_id = ci->GetID();
+		switch(cmd_id){
 			case CMD_MOVE: {
 				const float3 endPos(ci->params[0], ci->params[1] + 3, ci->params[2]);
-				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);
+				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.move);
 				break;
 			}
 			case CMD_FIGHT: {
 				const float3 endPos(ci->params[0], ci->params[1] + 3, ci->params[2]);
-				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.fight);
+				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.fight);
 				break;
 			}
 			case CMD_PATROL: {
 				const float3 endPos(ci->params[0], ci->params[1] + 3, ci->params[2]);
-				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.patrol);
+				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.patrol);
 				break;
 			}
 			case CMD_ATTACK: {
@@ -495,11 +500,11 @@ void CFactoryCAI::DrawCommands(void)
 
 					if ((unit != NULL) && isTrackable(unit)) {
 						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
-						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
+						lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
 					}
 				} else {
 					const float3 endPos(ci->params[0],ci->params[1]+3,ci->params[2]);
-					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
+					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
 				}
 				break;
 			}
@@ -508,7 +513,7 @@ void CFactoryCAI::DrawCommands(void)
 
 				if ((unit != NULL) && isTrackable(unit)) {
 					const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
-					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.guard);
+					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.guard);
 				}
 				break;
 			}
@@ -517,7 +522,7 @@ void CFactoryCAI::DrawCommands(void)
 				break;
 			}
 			case CMD_SELFD: {
-				lineDrawer.DrawIconAtLastPos(ci->id);
+				lineDrawer.DrawIconAtLastPos(cmd_id);
 				break;
 			}
 			default:
@@ -525,16 +530,16 @@ void CFactoryCAI::DrawCommands(void)
 				break;
 		}
 
-		if ((ci->id < 0) && (ci->params.size() >= 3)) {
+		if ((cmd_id < 0) && (ci->params.size() >= 3)) {
 			BuildInfo bi;
-			bi.def = unitDefHandler->GetUnitDefByID(-(ci->id));
+			bi.def = unitDefHandler->GetUnitDefByID(-(cmd_id));
 			if (ci->params.size() == 4) {
 				bi.buildFacing = int(ci->params[3]);
 			}
 			bi.pos = float3(ci->params[0], ci->params[1], ci->params[2]);
 			bi.pos = helper->Pos2BuildPos(bi);
 
-			cursorIcons.AddBuildIcon(ci->id, bi.pos, owner->team, bi.buildFacing);
+			cursorIcons.AddBuildIcon(cmd_id, bi.pos, owner->team, bi.buildFacing);
 			lineDrawer.DrawLine(bi.pos, cmdColors.build);
 
 			// draw metal extraction range

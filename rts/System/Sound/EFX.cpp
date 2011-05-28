@@ -40,7 +40,10 @@ CEFX::CEFX(ALCdevice* device)
 
 	supported = alcIsExtensionPresent(device, "ALC_EXT_EFX");
 
-	// always allocate this
+	//! set default preset
+	eaxPresets["default"] = eaxPresets[default_preset];
+
+	//! always allocate this
 	sfxProperties = new EAXSfxProps();
 	*sfxProperties = eaxPresets[default_preset];
 
@@ -209,8 +212,6 @@ void CEFX::SetPreset(std::string name, bool verbose, bool commit)
 	if (!supported)
 		return;
 
-	if (name == "default")
-		name = default_preset;
 
 	std::map<std::string, EAXSfxProps>::const_iterator it = eaxPresets.find(name);
 	if (it != eaxPresets.end()) {
@@ -232,7 +233,7 @@ void CEFX::SetHeightRolloffModifer(const float& mod)
 
 	alEffectf(sfxReverb, AL_EAXREVERB_ROOM_ROLLOFF_FACTOR, sfxProperties->properties_f[AL_EAXREVERB_ROOM_ROLLOFF_FACTOR] * heightRolloffModifier);
 	alAuxiliaryEffectSloti(sfxSlot, AL_EFFECTSLOT_EFFECT, sfxReverb);
-};
+}
 
 
 void CEFX::CommitEffects()

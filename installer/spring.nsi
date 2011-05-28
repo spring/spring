@@ -13,10 +13,12 @@ SetCompressor /SOLID /FINAL lzma
 !include "WordFunc.nsh"
 !insertmacro VersionCompare
 
-; HM NIS Edit Wizard helper defines
+; this registry entry is deprecated (march 2011, use HKLM\Software\Spring\SpringEngine[Helper] instead)
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\spring.exe"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
+!define PRODUCT_ROOT_KEY "HKLM"
+!define PRODUCT_KEY "Software\Spring"
 
 ; MUI 1.67 compatible ------
 !include "MUI.nsh"
@@ -72,12 +74,10 @@ Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 ; if present this should hold defines with custom mingwlibs location, etc.
 !include /NONFATAL "custom_defines.nsi"
 
-
+; set output filename for installer
 OutFile "${SP_BASENAME}${SP_OUTSUFFIX1}.exe"
 InstallDir "$PROGRAMFILES\Spring"
-InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" "Path"
-;ShowInstDetails show ;fix graphical glitch
-;ShowUnInstDetails show ;fix graphical glitch
+InstallDirRegKey ${PRODUCT_ROOT_KEY} "${PRODUCT_DIR_REGKEY}" "Path"
 
 VAR REGISTRY ; if 1 registry values are written
 
@@ -179,10 +179,10 @@ SectionGroupEnd
 
 SectionGroup "Multiplayer battlerooms"
 	Section "SpringLobby" SEC_SPRINGLOBBY
-	!define INSTALL
-		${!echonow} "Processing: springlobby"
-		!include "sections\springlobby.nsh"
-	!undef INSTALL
+		!define INSTALL
+			${!echonow} "Processing: springlobby"
+			!include "sections\springlobby.nsh"
+		!undef INSTALL
 	SectionEnd
 
 	Section "Zero-K lobby" SEC_ZERO_K_LOBBY
@@ -264,10 +264,13 @@ SectionEnd
 
 Section -Post
 	${!echonow} "Processing: Registry entries"
-	WriteUninstaller "$INSTDIR\uninst.exe"
+	IntOp $R0 ${SEC_PORTABLE} & ${SF_SELECTED} ; check if in normal mode
+	${If} $R0 != ${SF_SELECTED}
+		WriteUninstaller "$INSTDIR\uninst.exe"
+	${EndIf}
 	${If} $REGISTRY = 1
-		WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "@" "$INSTDIR\spring.exe"
-		WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "Path" "$INSTDIR"
+		WriteRegStr ${PRODUCT_ROOT_KEY} "${PRODUCT_DIR_REGKEY}" "@" "$INSTDIR\spring.exe"
+		WriteRegStr ${PRODUCT_ROOT_KEY} "${PRODUCT_DIR_REGKEY}" "Path" "$INSTDIR"
 		WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
 		WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString" "$INSTDIR\uninst.exe"
 		WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\spring.exe"
@@ -335,6 +338,6 @@ Section Uninstall
 	RMDir "$INSTDIR"
 
 	DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
-	DeleteRegKey HKLM "${PRODUCT_DIR_REGKEY}"
+	DeleteRegKey ${PRODUCT_ROOT_KEY} "${PRODUCT_DIR_REGKEY}"
 	SetAutoClose true
 SectionEnd

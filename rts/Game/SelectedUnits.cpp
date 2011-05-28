@@ -179,6 +179,8 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 		return;
 	}
 
+	const int& cmd_id = c.GetID();
+
 	if (fromUser) { // add some statistics
 		playerHandler->Player(gu->myPlayerNum)->currentStats.numCommands++;
 		if (selectedGroup != -1) {
@@ -188,7 +190,7 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 		}
 	}
 
-	if (c.id == CMD_GROUPCLEAR) {
+	if (cmd_id == CMD_GROUPCLEAR) {
 		for (CUnitSet::iterator ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
 			if ((*ui)->group) {
 				(*ui)->SetGroup(0);
@@ -197,11 +199,11 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 		}
 		return;
 	}
-	else if (c.id == CMD_GROUPSELECT) {
+	else if (cmd_id == CMD_GROUPSELECT) {
 		SelectGroup((*selectedUnits.begin())->group->id);
 		return;
 	}
-	else if (c.id == CMD_GROUPADD) {
+	else if (cmd_id == CMD_GROUPADD) {
 		CGroup* group = NULL;
 		for (CUnitSet::iterator ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
 			if ((*ui)->group) {
@@ -220,34 +222,19 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 		}
 		return;
 	}
-	else if (c.id == CMD_AISELECT) {
-		if (gs->noHelperAIs) {
-			logOutput.Print("LuaUI control is disabled");
-			return;
-		}
-		if (c.params[0] != 0) {
-			CGroup* group = grouphandlers[gu->myTeam]->CreateNewGroup();
-
-			for (CUnitSet::iterator ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
-				(*ui)->SetGroup(group);
-			}
-			SelectGroup(group->id);
-		}
-		return;
-	}
-	else if (c.id == CMD_TIMEWAIT) {
+	else if (cmd_id == CMD_TIMEWAIT) {
 		waitCommandsAI.AddTimeWait(c);
 		return;
 	}
-	else if (c.id == CMD_DEATHWAIT) {
+	else if (cmd_id == CMD_DEATHWAIT) {
 		waitCommandsAI.AddDeathWait(c);
 		return;
 	}
-	else if (c.id == CMD_SQUADWAIT) {
+	else if (cmd_id == CMD_SQUADWAIT) {
 		waitCommandsAI.AddSquadWait(c);
 		return;
 	}
-	else if (c.id == CMD_GATHERWAIT) {
+	else if (cmd_id == CMD_GATHERWAIT) {
 		waitCommandsAI.AddGatherWait(c);
 		return;
 	}
@@ -792,6 +779,7 @@ void CSelectedUnits::SetCommandPage(int page)
 }
 
 
+//! deprecated
 void CSelectedUnits::SendSelection()
 {
 	GML_RECMUTEX_LOCK(sel); // SendSelection
@@ -814,7 +802,7 @@ void CSelectedUnits::SendCommand(const Command& c)
 		// send new selection
 		SendSelection();
 	}
-	net->Send(CBaseNetProtocol::Get().SendCommand(gu->myPlayerNum, c.id, c.options, c.params));
+	net->Send(CBaseNetProtocol::Get().SendCommand(gu->myPlayerNum, c.GetID(), c.options, c.params));
 }
 
 
@@ -864,7 +852,7 @@ void CSelectedUnits::SendCommandsToUnits(const std::vector<int>& unitIDs, const 
 	*packet << static_cast<unsigned short>(commandCount);
 	for (unsigned i = 0; i < commandCount; ++i) {
 		const Command& cmd = commands[i];
-		*packet << static_cast<unsigned int>(cmd.id)
+		*packet << static_cast<unsigned int>(cmd.GetID())
 		        << cmd.options
 		        << static_cast<unsigned short>(cmd.params.size()) << cmd.params;
 	}

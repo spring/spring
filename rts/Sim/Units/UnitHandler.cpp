@@ -1,20 +1,18 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
-#include <assert.h>
+#include <cassert>
 #include "mmgr.h"
 
 #include "lib/gml/gml.h"
 #include "UnitHandler.h"
 #include "Unit.h"
 #include "UnitDefHandler.h"
-#include "UnitLoader.h"
-#include "CommandAI/Command.h"
 #include "CommandAI/BuilderCAI.h"
+#include "CommandAI/Command.h"
 #include "Game/GameSetup.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/Ground.h"
-#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
@@ -29,7 +27,6 @@
 #include "System/LogOutput.h"
 #include "System/TimeProfiler.h"
 #include "System/myMath.h"
-#include "System/LoadSave/LoadSaveInterface.h"
 #include "System/Sync/SyncTracer.h"
 #include "System/creg/STL_Deque.h"
 #include "System/creg/STL_List.h"
@@ -50,7 +47,6 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(units),
 	CR_MEMBER(freeUnitIDs),
 	CR_MEMBER(maxUnits),
-	CR_MEMBER(maxUnitsPerTeam),
 	CR_MEMBER(maxUnitRadius),
 	CR_MEMBER(unitsToBeRemoved),
 	CR_MEMBER(morphUnitToFeature),
@@ -72,15 +68,15 @@ void CUnitHandler::PostLoad()
 CUnitHandler::CUnitHandler()
 :
 	maxUnitRadius(0.0f),
-	morphUnitToFeature(true)
+	morphUnitToFeature(true),
+	maxUnits(0)
 {
-	assert(teamHandler->ActiveTeams() > 0);
-
 	// note: the number of active teams can change at run-time, so
 	// the team unit limit should be recalculated whenever one dies
-	// or spawns (but would get complicated)
-	maxUnits = std::min(gameSetup->maxUnits * teamHandler->ActiveTeams(), MAX_UNITS);
-	maxUnitsPerTeam = maxUnits / teamHandler->ActiveTeams();
+	// or spawns (but that would get complicated)
+	for (unsigned int n = 0; n < teamHandler->ActiveTeams(); n++) {
+		maxUnits += teamHandler->Team(n)->maxUnits;
+	}
 
 	units.resize(maxUnits, NULL);
 	unitsByDefs.resize(teamHandler->ActiveTeams(), std::vector<CUnitSet>(unitDefHandler->unitDefs.size()));
@@ -90,7 +86,7 @@ CUnitHandler::CUnitHandler()
 
 		// id's are used as indices, so they must lie in [0, units.size() - 1]
 		// (furthermore all id's are treated equally, none have special status)
-		for (unsigned int id = 0; id < units.size(); id++) {
+		for (unsigned int id = 0; id < freeIDs.size(); id++) {
 			freeIDs[id] = id;
 		}
 
@@ -124,6 +120,10 @@ CUnitHandler::~CUnitHandler()
 bool CUnitHandler::AddUnit(CUnit *unit)
 {
 	if (freeUnitIDs.empty()) {
+		// should be unreachable (all code that goes through
+		// UnitLoader::LoadUnit --> Unit::PreInit checks the
+		// unit limit first)
+		assert(false);
 		return false;
 	}
 
@@ -132,10 +132,7 @@ bool CUnitHandler::AddUnit(CUnit *unit)
 
 	std::list<CUnit*>::iterator ui = activeUnits.begin();
 
-	if (activeUnits.empty()) {
-		// move to .end()
-		++ui;
-	} else {
+	if (ui != activeUnits.end()) {
 		// randomize this to make the slow-update order random (good if one
 		// builds say many buildings at once and then many mobile ones etc)
 		const unsigned int insertionPos = gs->randFloat() * activeUnits.size();
@@ -151,7 +148,7 @@ bool CUnitHandler::AddUnit(CUnit *unit)
 	teamHandler->Team(unit->team)->AddUnit(unit, CTeam::AddBuilt);
 	unitsByDefs[unit->team][unit->unitDef->id].insert(unit);
 
-	maxUnitRadius = max(unit->radius, maxUnitRadius);
+	maxUnitRadius = std::max(unit->radius, maxUnitRadius);
 	return true;
 }
 
@@ -511,7 +508,7 @@ Command CUnitHandler::GetBuildCommand(const float3& pos, const float3& dir) {
 		for (; ci != unit->commandAI->commandQue.end(); ++ci) {
 			const Command& cmd = *ci;
 
-			if (cmd.id < 0 && cmd.params.size() >= 3) {
+			if (cmd.GetID() < 0 && cmd.params.size() >= 3) {
 				BuildInfo bi(cmd);
 				tempF1 = pos + dir * ((bi.pos.y - pos.y) / dir.y) - bi.pos;
 
@@ -522,15 +519,14 @@ Command CUnitHandler::GetBuildCommand(const float3& pos, const float3& dir) {
 		}
 	}
 
-	Command c;
-	c.id = CMD_STOP;
+	Command c(CMD_STOP);
 	return c;
 }
 
 
-bool CUnitHandler::CanBuildUnit(const UnitDef* unitdef, int team)
+bool CUnitHandler::CanBuildUnit(const UnitDef* unitdef, int team) const
 {
-	if (teamHandler->Team(team)->units.size() >= maxUnitsPerTeam) {
+	if (teamHandler->Team(team)->AtUnitLimit()) {
 		return false;
 	}
 	if (unitsByDefs[team][unitdef->id].size() >= unitdef->maxThisUnit) {

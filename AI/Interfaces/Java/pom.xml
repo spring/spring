@@ -5,15 +5,18 @@
 
 	<!--
 		You may not use this file to build this project!
-		It acts only as a container for certain info, and is used with:
-		> mvn install:install-file -DpomFile=.../pom.xml -Dversion=X
+		It acts only as a container for certain meta-info, and is used with:
+		> mvn install:install-file -DpomFile=.../pom.xml -DmyVersion=X
 	-->
 
 	<groupId>com.springrts</groupId>
 	<artifactId>ai-interface-java</artifactId>
-	<version>${myVersion}</version> <!-- replaced by CMake or -DmyVersion=0.1 -->
+	<version>${myVersion}</version> <!-- replaced by CMake or -DmyVersion=X -->
 
 	<packaging>jar</packaging>
+	<prerequisites>
+		<maven>2.1</maven>
+	</prerequisites>
 
 	<organization>
 		<name>Spring RTS Community</name>

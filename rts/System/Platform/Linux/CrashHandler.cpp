@@ -13,6 +13,7 @@
 #include <cstdio>
 #include <inttypes.h> // for uintptr_t
 #include <boost/static_assert.hpp> // for BOOST_STATIC_ASSERT
+#include <SDL_events.h>
 
 #include "thread_backtrace.h"
 #include "FileSystem/FileSystemHandler.h"
@@ -22,6 +23,12 @@
 #include "System/myTime.h"
 #include "System/Platform/Misc.h"
 #include "System/Platform/errorhandler.h"
+
+
+static const int MAX_STACKTRACE_DEPTH = 10;
+static const std::string INVALID_LINE_INDICATOR = "#####";
+static const uintptr_t INVALID_ADDR_INDICATOR = 0xFFFFFFFF;
+
 
 /**
  * Returns the absolute version of a supplied relative path.
@@ -188,32 +195,141 @@ static void FindBaseMemoryAddresses(std::map<std::string,uintptr_t>& binPath_bas
 }
 
 
+/**
+ * extracts the library/binary paths from the output of backtrace_symbols()
+ */
+static std::string ExtractPath(const std::string& line)
+{
+	//! example paths: "./spring" "/usr/lib/AI/Skirmish/NTai/0.666/libSkirmishAI.so"
+	std::string path;
+	size_t end   = line.find_last_of('('); //! if there is a function name
+	if (end == std::string::npos) {
+		end = line.find_last_of('['); //! if there is only the memory address
+		if ((end != std::string::npos) && (end > 0)) {
+			end--; //! to get rid of the ' ' before the '['
+		}
+	}
+	if (end == std::string::npos) {
+		path = INVALID_LINE_INDICATOR;
+	} else {
+		size_t begin = 0;
+		path = line.substr(begin, end-begin);
+	}
+	return path;
+}
+
+
+/**
+ * extracts the debug addr's from the output of backtrace_symbols()
+ */
+static uintptr_t ExtractAddr(const std::string& line)
+{
+	//! example address: "0x89a8206"
+	uintptr_t addr = INVALID_ADDR_INDICATOR;
+	size_t begin = line.find_last_of('[');
+	size_t end = std::string::npos;
+	if (begin != std::string::npos) {
+		end = line.find_last_of(']');
+	}
+	if ((begin != std::string::npos) && (end != std::string::npos)) {
+		addr = HexToInt(line.substr(begin+1, end-begin-1).c_str());
+	}
+	return addr;
+}
+
+
+static void TranslateStackTrace(std::vector<std::string>* lines, const std::vector< std::pair<std::string,uintptr_t> >& paths)
+{
+	//! Check if addr2line is available
+	static int addr2line_found = -1;
+	if (addr2line_found < 0)
+	{
+		FILE* cmdOut = popen("addr2line --help", "r");
+		if (cmdOut == NULL) {
+			addr2line_found = false;
+		} else {
+			addr2line_found = true;
+			pclose(cmdOut);
+		}
+	}
+	if (!addr2line_found) {
+		logOutput.Print(" addr2line not found!");
+		logOutput.Flush();
+		return;
+	}
+
+	//! Detect BaseMemoryAddresses of all Lib's found in the stacktrace
+	std::map<std::string,uintptr_t> binPath_baseMemAddr;
+	for (std::vector< std::pair<std::string,uintptr_t> >::const_iterator it = paths.begin(); it != paths.end(); ++it) {
+		binPath_baseMemAddr[it->first] = 0;
+	}
+	FindBaseMemoryAddresses(binPath_baseMemAddr);
+
+	//! Finally translate it
+	for (std::map<std::string,uintptr_t>::const_iterator it = binPath_baseMemAddr.begin(); it != binPath_baseMemAddr.end(); ++it) {
+		const std::string symbolFile = LocateSymbolFile(it->first);
+		std::ostringstream buf;
+		buf << "addr2line " << "--exe=\"" << symbolFile << "\"";
+		const uintptr_t& baseLibAddr = it->second;
+
+		//! insert requested addresses that should be translated by addr2line
+		std::queue<size_t> indices;
+		for (size_t i = 0; i < paths.size(); ++i) {
+			const std::pair<std::string,uintptr_t>& pt = paths[i];
+			if (pt.first == it->first) {
+				buf << " " << std::hex << (pt.second - baseLibAddr);
+				indices.push(i);
+			}
+		}
+
+		//! execute command addr2line, read stdout and write to log-file
+		buf << " 2>/dev/null"; //! hide error output from spring's pipe
+		FILE* cmdOut = popen(buf.str().c_str(), "r");
+		if (cmdOut != NULL) {
+			const size_t line_sizeMax = 2048;
+			char line[line_sizeMax];
+			while (fgets(line, line_sizeMax, cmdOut) != NULL) {
+				const size_t i = indices.front();
+				indices.pop();
+				if (strcmp(line,"??:0\n") != 0) {
+					(*lines)[i] = std::string(line);
+				}
+			}
+			pclose(cmdOut);
+		}
+	}
+}
+
+
 
 namespace CrashHandler
 {
-	static void Stacktrace(bool* keepRunning, pthread_t* hThread = NULL)
+	static void Stacktrace(bool* keepRunning, pthread_t* hThread = NULL, const char* threadName = NULL)
 	{
-		static const int MAX_STACKTRACE_DEPTH = 10;
-		static const std::string INVALID_LINE_INDICATOR = "#####";
-
-		std::queue<std::string> paths;
-		std::queue<uintptr_t> addresses;
-		std::map<std::string,uintptr_t> binPath_baseMemAddr;
+		if (threadName) {
+			logOutput.Print("Stacktrace (%s):", threadName);
+		} else {
+			logOutput.Print("Stacktrace:");
+		}
 
 		bool _keepRunning = false;
 		if (!keepRunning)
 			keepRunning = &_keepRunning;
 		*keepRunning = false;
 		bool containsOglSo = false; //! OpenGL lib -> graphic problem
-		std::string containedAIInterfaceSo = "";
-		std::string containedSkirmishAISo  = "";
+		bool containedAIInterfaceSo = false;
+		bool containedSkirmishAISo  = false;
 
+		std::vector<std::string> stacktrace;
+		std::vector< std::pair<std::string,uintptr_t> > symbols;
+
+		//! Get untranslated stacktrace symbols
 		{
 			//! process and analyse the raw stack trace
 			std::vector<void*> buffer(MAX_STACKTRACE_DEPTH + 2);
 			int numLines;
 			if (hThread) {
-				logOutput.Print("(Note: This stacktrace is not 100%% accurate! It just gives an impression.)");
+				logOutput.Print("  (Note: This stacktrace is not 100%% accurate! It just gives an impression.)");
 				logOutput.Flush();
 				numLines = thread_backtrace(*hThread, &buffer[0], buffer.size());    //! stack pointers
 			} else {
@@ -224,160 +340,89 @@ namespace CrashHandler
 			}
 			numLines = (numLines > MAX_STACKTRACE_DEPTH) ? MAX_STACKTRACE_DEPTH : numLines;
 			char** lines = backtrace_symbols(&buffer[0], numLines); //! give them meaningfull names
-			if ((lines == NULL) || (numLines == 0)) {
-				logOutput.Print("Unable to create stacktrace\n");
-			} else {
-				for (int l = 0; l < numLines; l++) {
-					const std::string line(lines[l]);
 
-					//! example paths: "./spring" "/usr/lib/AI/Skirmish/NTai/0.666/libSkirmishAI.so"
-					std::string path;
-					size_t begin = 0;
-					size_t end   = line.find_last_of('('); //! if there is a function name
-					if (end == std::string::npos) {
-						end = line.find_last_of('['); //! if there is only the memory address
-						if ((end != std::string::npos) && (end > 0)) {
-							end--; //! to get rid of the ' ' before the '['
-						}
-					}
-					if (end == std::string::npos) {
-						path = INVALID_LINE_INDICATOR;
-					} else {
-						path = line.substr(begin, end-begin);
-					}
-
-					//! example address: "0x89a8206"
-					std::string addr;
-					begin = line.find_last_of('[');
-					end = std::string::npos;
-					if (begin != std::string::npos) {
-						end = line.find_last_of(']');
-					}
-					if ((begin == std::string::npos) || (end == std::string::npos)) {
-						addr = INVALID_LINE_INDICATOR;
-					} else {
-						addr = line.substr(begin+1, end-begin-1);
-					}
-
-					if (path == "") {
-						logOutput.Print("<%u> ?? %s\n", l, line.c_str());
-					} else if ((path == INVALID_LINE_INDICATOR) || (addr == INVALID_LINE_INDICATOR)) {
-						logOutput.Print("<%u> !? %s\n", l, line.c_str());
-					} else {
-						logOutput.Print("<%u> %s\n", l, line.c_str());
-						containsOglSo = (containsOglSo || (path.find("libGLcore.so") != std::string::npos));
-						containsOglSo = (containsOglSo || (path.find("psb_dri.so") != std::string::npos));
-						containsOglSo = (containsOglSo || (path.find("i965_dri.so") != std::string::npos));
-						containsOglSo = (containsOglSo || (path.find("fglrx_dri.so") != std::string::npos));
-						const std::string absPath = CreateAbsolutePath(path);
-						if (containedAIInterfaceSo.empty() && (absPath.find("Interfaces") != std::string::npos)) {
-							containedAIInterfaceSo = absPath;
-						}
-						if (containedSkirmishAISo.empty() && (absPath.find("Skirmish") != std::string::npos)) {
-							containedSkirmishAISo = absPath;
-						}
-						binPath_baseMemAddr[absPath] = 0;
-						paths.push(absPath);
-						const uintptr_t addr_num = HexToInt(addr.c_str());
-						addresses.push(addr_num);
-					}
-				}
-				free(lines);
-				lines = NULL;
-
-				//! if stack trace contains AI and AI Interface frames,
-				//! it is very likely that the problem lies in the AI only
-				if (!containedSkirmishAISo.empty()) {
-					containedAIInterfaceSo = "";
-				}
-
-				if (containsOglSo) {
-					logOutput.Print("This stack trace indicates a problem with your graphic card driver. "
-					                "Please try upgrading or downgrading it. "
-					                "Specifically recommended is the latest driver, and one that is as old as your graphic card. "
-					                "Also try lower graphic details and disabling Lua widgets in spring-settings.\n");
-				}
-				if (!containedAIInterfaceSo.empty()) {
-					logOutput.Print("This stack trace indicates a problem with an AI Interface library.\n");
-					*keepRunning = true;
-				}
-				if (!containedSkirmishAISo.empty()) {
-					logOutput.Print("This stack trace indicates a problem with a Skirmish AI library.\n");
-					*keepRunning = true;
-				}
+			stacktrace.reserve(numLines);
+			for (int l = 0; l < numLines; l++) {
+				stacktrace.push_back(lines[l]);
 			}
-			logOutput.Flush();
+			free(lines);
 		}
 
-		logOutput.Print("Translated Stacktrace:");
-		logOutput.Flush();
-
-		//! Check if addr2line is available
-		static int addr2line_found = -1;
-		if (addr2line_found < 0)
-		{
-			FILE* cmdOut = popen("addr2line --help", "r");
-			if (cmdOut == NULL) {
-				addr2line_found = false;
-			} else {
-				addr2line_found = true;
-				pclose(cmdOut);
-			}
-		}
-		if (!addr2line_found) {
-			logOutput.Print(" addr2line not found!");
-			logOutput.Flush();
+		if (stacktrace.empty()) {
+			logOutput.Print("  Unable to create stacktrace");
 			return;
 		}
 
-		//! translate the stack trace, and write it to the log file
-		FindBaseMemoryAddresses(binPath_baseMemAddr);
-		std::string lastPath;
-		const size_t line_sizeMax = 2048;
-		char line[line_sizeMax];
-		unsigned numLine = 1;
-		while (!paths.empty()) {
-			std::ostringstream buf;
-			lastPath = paths.front();
-			const std::string symbolFile = LocateSymbolFile(lastPath);
-			const uintptr_t baseAddress = binPath_baseMemAddr[lastPath];
-			buf << "addr2line " << "--exe=\"" << symbolFile << "\"";
-			//! add addresses as long as the path stays the same
-			while (!paths.empty() && (lastPath == paths.front())) {
-				uintptr_t addr_num = addresses.front();
-				if (paths.front() != Platform::GetModuleFile() && (addr_num > baseAddress)) {
-					//! shift the stack trace address by the value of
-					//! the libraries base address in process memory
-					//! for all binaries that are not the processes main binary
-					//! (which could be spring or spring-dedicated for example)
-					addr_num -= baseAddress;
+		//! Extract important data from backtrace_symbols' output
+		{
+			for (std::vector<std::string>::iterator it = stacktrace.begin(); it != stacktrace.end(); ++it) {
+				std::pair<std::string,uintptr_t> data;
+
+				//! prepare for TranslateStackTrace()
+				const std::string path    = ExtractPath(*it);
+				const std::string absPath = CreateAbsolutePath(path);
+				data.first  = absPath;
+				data.second = ExtractAddr(*it);
+				symbols.push_back(data);
+
+				//! check if there are known sources of fail on the stack
+				containsOglSo = (containsOglSo || (path.find("libGLcore.so") != std::string::npos));
+				containsOglSo = (containsOglSo || (path.find("psb_dri.so") != std::string::npos));
+				containsOglSo = (containsOglSo || (path.find("i965_dri.so") != std::string::npos));
+				containsOglSo = (containsOglSo || (path.find("fglrx_dri.so") != std::string::npos));
+				if (!containedAIInterfaceSo && (absPath.find("Interfaces") != std::string::npos)) {
+					containedAIInterfaceSo = true;
 				}
-				buf << " " << std::hex << addr_num;
-				lastPath = paths.front();
-				paths.pop();
-				addresses.pop();
-			}
-			//! execute command addr2line, read stdout and write to log-file
-			buf << " 2>/dev/null"; //! hide error output from spring's pipe
-			FILE* cmdOut = popen(buf.str().c_str(), "r");
-			if (cmdOut != NULL) {
-				while (fgets(line, line_sizeMax, cmdOut) != NULL) {
-					if ((!lastPath.empty()) && (strcmp(line,"??:0\n") == 0)) {
-						logOutput.Print("(%u) %s:??", numLine++, lastPath.c_str());
-					} else {
-						logOutput.Print("(%u) %s", numLine++, line);
-					}
-					logOutput.Flush();
+				if (!containedSkirmishAISo && (absPath.find("Skirmish") != std::string::npos)) {
+					containedSkirmishAISo = true;
 				}
-				pclose(cmdOut);
 			}
+
+			//! Linux Graphic drivers are known to fail with moderate OpenGL usage
+			if (containsOglSo) {
+				logOutput.Print("This stack trace indicates a problem with your graphic card driver. "
+						"Please try upgrading or downgrading it. "
+						"Specifically recommended is the latest driver, and one that is as old as your graphic card. "
+						"Also try lower graphic details and disabling Lua widgets in spring-settings.\n");
+			}
+
+			//! if stack trace contains AI and AI Interface frames,
+			//! it is very likely that the problem lies in the AI only
+			if (containedSkirmishAISo) {
+				containedAIInterfaceSo = false;
+			}
+			if (containedAIInterfaceSo) {
+				logOutput.Print("This stack trace indicates a problem with an AI Interface library.");
+				*keepRunning = true;
+			}
+			if (containedSkirmishAISo) {
+				logOutput.Print("This stack trace indicates a problem with a Skirmish AI library.");
+				*keepRunning = true;
+			}
+
+			logOutput.Flush();
 		}
+
+		//! Translate it
+		TranslateStackTrace(&stacktrace, symbols);
+
+		//! Print out the StackTrace
+		unsigned numLine = 0;
+		for (std::vector<std::string>::iterator it = stacktrace.begin(); it != stacktrace.end(); ++it) {
+			logOutput.Print("  <%u> %s", numLine++, it->c_str());
+		}
+		logOutput.Flush();
 	}
 
 
-	void Stacktrace(Threading::NativeThreadHandle thread, const char *threadName)
+	void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName)
 	{
-		Stacktrace(NULL, &thread);
+		if (!Threading::IsMainThread(thread)) {
+			logOutput.Print("Stacktrace (%s):", threadName.c_str());
+			logOutput.Print("  No Stacktraces for non-MainThread.");
+			return;
+		}
+		Stacktrace(NULL, &thread, threadName.c_str());
 	}
 
 	void PrepareStacktrace() {}
@@ -385,13 +430,20 @@ namespace CrashHandler
 
 	void HandleSignal(int signal)
 	{
-		static bool inExit = false;
-		static spring_time exitTime = spring_notime;
-		if (inExit) {
-			if (signal == SIGINT &&
-				(spring_gettime() > exitTime + spring_secs(3))
-			) {
-				exit(-1);
+		if (signal == SIGINT) {
+			static bool inExit = false;
+			static spring_time exitTime = spring_notime;
+			if (inExit) {
+				//! give Spring 3 seconds to cleanly exit
+				if (spring_gettime() > exitTime + spring_secs(3)) {
+					exit(-1);
+				}
+			} else {
+				inExit = true;
+				exitTime = spring_gettime();
+				SDL_Event event;
+				event.type = SDL_QUIT;
+				SDL_PushEvent(&event);
 			}
 			return;
 		}
@@ -413,7 +465,6 @@ namespace CrashHandler
 			error = "Unknown signal";
 		}
 		logOutput.Print("%s in spring %s\n", error.c_str(), SpringVersion::GetFull().c_str());
-		logOutput.Print("Stacktrace:\n");
 
 		//! print stacktrace
 		bool keepRunning = false;
@@ -451,9 +502,8 @@ namespace CrashHandler
 			}
 		}
 
+		//! exit app if we catched a critical one
 		if (!keepRunning) {
-			inExit = true;
-			exitTime = spring_gettime();
 			std::ostringstream buf;
 			buf << "Spring has crashed:\n"
 				<< error << ".\n\n"
@@ -469,7 +519,7 @@ namespace CrashHandler
 		signal(SIGPIPE, HandleSignal); //! maybe some network error
 		signal(SIGIO,   HandleSignal); //! who knows?
 		signal(SIGABRT, HandleSignal);
-		//signal(SIGINT,  HandleSignal);
+		signal(SIGINT,  HandleSignal);
 	}
 
 	void Remove() {
@@ -478,5 +528,6 @@ namespace CrashHandler
 		signal(SIGPIPE, SIG_DFL);
 		signal(SIGIO,   SIG_DFL);
 		signal(SIGABRT, SIG_DFL);
+		signal(SIGINT,  SIG_DFL);
 	}
 };

@@ -29,7 +29,6 @@ CubeMapHandler::CubeMapHandler() {
 	specularTexIter = 0;
 	mapSkyReflections = false;
 
-	specExp = configHandler->Get("CubeTexSpecularExponent", 100.0f);
 	specTexBuf = NULL;
 }
 
@@ -223,12 +222,13 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 
 
 void CubeMapHandler::UpdateSpecularTexture() {
-	if (specTexSize == 0)
+	if (!unitDrawer->advShading) {
 		return;
+	}
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, specularTexID);
 
-	int specularTexRow = specularTexIter / 3;
+	int specularTexRow = specularTexIter / 3; //FIXME WTF
 
 	switch (specularTexIter % 3) {
 		case 0: {
@@ -249,7 +249,8 @@ void CubeMapHandler::UpdateSpecularTexture() {
 	}
 
 	// update one face of one row per frame
-	specularTexIter = (specularTexIter + 1) % (specTexSize * 3);
+	++specularTexIter;
+	specularTexIter = specularTexIter % (specTexSize * 3);
 }
 
 void CubeMapHandler::CreateSpecularFacePart(
@@ -261,10 +262,11 @@ void CubeMapHandler::CreateSpecularFacePart(
 	unsigned int y,
 	unsigned char* buf)
 {
+	//todo: move to a shader
 	for (int x = 0; x < size; ++x) {
 		const float3 dir = (cdir + (xdif * (x + 0.5f)) / size + (ydif * (y + 0.5f)) / size).Normalize();
-		const float dot = std::max(0.0f, dir.dot(sky->GetLight()->GetLightDir()));
-		const float spec = std::min(1.0f, pow(dot, specExp) + pow(dot, 3.0f) * 0.25f);
+		const float dot  = std::max(0.0f, dir.dot(sky->GetLight()->GetLightDir()));
+		const float spec = std::min(1.0f, pow(dot, mapInfo->light.specularExponent) + pow(dot, 3.0f) * 0.25f);
 
 		buf[x * 4 + 0] = (mapInfo->light.unitSpecularColor.x * spec * 255);
 		buf[x * 4 + 1] = (mapInfo->light.unitSpecularColor.y * spec * 255);

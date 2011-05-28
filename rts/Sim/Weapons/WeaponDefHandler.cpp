@@ -8,19 +8,21 @@
 #include <iostream>
 #include <stdexcept>
 #include "WeaponDefHandler.h"
-#include "Sim/Misc/GlobalConstants.h"
+
 #include "Game/Game.h"
+#include "Game/TraceRay.h"
 #include "Lua/LuaParser.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TAPalette.h"
-#include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
+#include "Sim/Misc/DamageArrayHandler.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Projectiles/Projectile.h"
-#include "System/FileSystem/FileHandler.h"
 #include "System/LogOutput.h"
-#include "Sound/ISound.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/Sound/ISound.h"
 #include "Sim/Units/Scripts/CobInstance.h"
 
 using std::min;
@@ -71,7 +73,6 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	wd.tdfId = wdTable.GetInt("id", 0);
 
-	wd.filename    = wdTable.GetString("filename", "unknown");
 	wd.description = wdTable.GetString("name",     "Weapon");
 	wd.cegTag      = wdTable.GetString("cegTag",   "");
 
@@ -79,13 +80,14 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.avoidFeature  = wdTable.GetBool("avoidFeature",  true);
 	wd.avoidNeutral  = wdTable.GetBool("avoidNeutral",  false);
 
+	//FIXME may be smarter to merge the collideXYZ tags with avoidXYZ and removing the collisionFlags tag (and move the code into CWeapon)?
 	wd.collisionFlags = 0;
 	const bool collideFriendly = wdTable.GetBool("collideFriendly", true);
 	const bool collideFeature  = wdTable.GetBool("collideFeature",  true);
 	const bool collideNeutral  = wdTable.GetBool("collideNeutral",  true);
-	if (!collideFriendly) { wd.collisionFlags |= COLLISION_NOFRIENDLY; }
-	if (!collideFeature)  { wd.collisionFlags |= COLLISION_NOFEATURE;  }
-	if (!collideNeutral)  { wd.collisionFlags |= COLLISION_NONEUTRAL;  }
+	if (!collideFriendly) { wd.collisionFlags |= Collision::NOFRIENDLIES; }
+	if (!collideFeature)  { wd.collisionFlags |= Collision::NOFEATURES;  }
+	if (!collideNeutral)  { wd.collisionFlags |= Collision::NONEUTRALS;  }
 
 	wd.minIntensity = wdTable.GetFloat("minIntensity", 0.0f);
 
@@ -197,7 +199,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 		wd.edgeEffectiveness = 0.999f;
 	}
 
-	wd.projectilespeed = wdTable.GetFloat("weaponVelocity", 0.0f) / GAME_SPEED;
+	wd.projectilespeed = std::max(0.01f, wdTable.GetFloat("weaponVelocity", 0.0f) / GAME_SPEED);
 	wd.startvelocity = max(0.01f, wdTable.GetFloat("startVelocity", 0.0f) / GAME_SPEED);
 	wd.weaponacceleration = wdTable.GetFloat("weaponAcceleration", 0.0f) / GAME_SPEED / GAME_SPEED;
 	wd.reload = wdTable.GetFloat("reloadTime", 1.0f);
@@ -351,7 +353,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.uptime = wdTable.GetFloat("weaponTimer", 0.0f);
 	wd.flighttime = wdTable.GetFloat("flightTime", 0) * 32;
 
-	wd.turnrate = wdTable.GetFloat("turnRate", 0.0f) * PI / 0x7fff / 30.0f;
+	wd.turnrate = wdTable.GetFloat("turnRate", 0.0f) * TAANG2RAD / 30.0f;
 
 	if ((wd.type == "AircraftBomb") && !manualBombSettings) {
 		if (wd.reload < 0.5f) {

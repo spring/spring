@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
-#include "Game/GameHelper.h"
+#include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "MissileLauncher.h"
 #include "Sim/MoveTypes/AirMoveType.h"
@@ -117,10 +117,10 @@ bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 		if (gc > 0)
 			return false;
 
-		if (avoidFriendly && helper->TestTrajectoryCone(weaponMuzzlePos, flatdir, flatlength - 30, linear, quadratic, 0, 8, owner, CGameHelper::TEST_ALLIED)) {
+		if (avoidFriendly && TraceRay::TestTrajectoryAllyCone(weaponMuzzlePos, flatdir, flatlength - 30, linear, quadratic, 0, 8, owner->allyteam, owner)) {
 			return false;
 		}
-		if (avoidNeutral && helper->TestTrajectoryCone(weaponMuzzlePos, flatdir, flatlength - 30, linear, quadratic, 0, 8, owner, CGameHelper::TEST_NEUTRAL)) {
+		if (avoidNeutral && TraceRay::TestTrajectoryNeutralCone(weaponMuzzlePos, flatdir, flatlength - 30, linear, quadratic, 0, 8, owner)) {
 			return false;
 		}
 	} else {
@@ -142,10 +142,10 @@ bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 				return false;
 		}
 
-		if (avoidFriendly && helper->TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner, CGameHelper::TEST_ALLIED)) {
+		if (avoidFriendly && TraceRay::TestAllyCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, owner)) {
 			return false;
 		}
-		if (avoidNeutral && helper->TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner, CGameHelper::TEST_NEUTRAL)) {
+		if (avoidNeutral && TraceRay::TestNeutralCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner)) {
 			return false;
 		}
 	}

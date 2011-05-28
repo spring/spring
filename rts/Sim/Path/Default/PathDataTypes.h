@@ -31,6 +31,9 @@ struct PathNodeState {
 		parentNodePos.y = -1;
 	}
 
+	// size of the memory-region we hold allocated (excluding sizeof(*this))
+	unsigned int GetMemFootPrint() const { return (nodeOffsets.size() * sizeof(int2)); }
+
 	float fCost;
 	float gCost;
 
@@ -103,6 +106,9 @@ struct PathNodeStateBuffer {
 
 	void Clear() { buffer.clear(); }
 	unsigned int GetSize() const { return buffer.size(); }
+
+	// size of the memory-region we hold allocated (excluding sizeof(*this))
+	unsigned int GetMemFootPrint() const { return (GetSize() * (sizeof(PathNodeState) + buffer[0].GetMemFootPrint())); }
 
 	const std::vector<PathNodeState>& GetBuffer() const { return buffer; }
 	      std::vector<PathNodeState>& GetBuffer()       { return buffer; }

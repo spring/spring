@@ -18,7 +18,8 @@
 	@{ */
 
 /**
- * @brief Retrieve next error in queue of errors and removes this error from queue
+ * @brief Retrieves the next error in queue of errors and removes this error
+ *   from the queue
  * @return An error message, or NULL if there are no more errors in the queue
  *
  * Use this method to get a (short) description of errors that occurred in any
@@ -77,6 +78,8 @@ EXPORT(const char* ) GetSpringVersionPatchset();
 /**
  * @brief Initialize the unitsync library
  * @return Zero on error; non-zero on success
+ * @param isServer indicates whether the caller is hosting or joining a game
+ * @param id unused parameter TODO
  *
  * Call this function before calling any other function in unitsync.
  * In case unitsync was already initialized, it is uninitialized and then
@@ -87,7 +90,8 @@ EXPORT(const char* ) GetSpringVersionPatchset();
  * AddAllArchives() you have to call Init when you want to remove the archives
  * from the VFS and start with a clean state.
  *
- * The config handler won't be reset, it will however be initialised if it wasn't before (with SetSpringConfigFile())
+ * The config handler will not be reset. It will however, be initialised if it
+ * was not before (with SetSpringConfigFile()).
  */
 EXPORT(int         ) Init(bool isServer, int id);
 /**
@@ -98,12 +102,25 @@ EXPORT(int         ) Init(bool isServer, int id);
 EXPORT(void        ) UnInit();
 
 /**
- * @brief Get the main data directory that's used by unitsync and Spring
+ * @brief Get the main data directory that is used by unitsync and Spring
  * @return NULL on error; the data directory path on success
  *
- * This is the data directory which is used to write logs, screenshots, demos, etc.
+ * This is the data directory which is used to write logs, screen-shots, demos,
+ * etc.
  */
 EXPORT(const char* ) GetWritableDataDirectory();
+
+/**
+ * @brief Get the total number of readable data directories used by unitsync and Spring
+ * @return -1 if there was an error, otherwise integer >= 0
+ */
+EXPORT(int         ) GetDataDirectoryCount();
+
+/**
+ * @brief Get the absolute path to i-th data directory
+ * @return NULL on error; the i-th data directory absolute path on success
+ */
+EXPORT(const char* ) GetDataDirectory(int index);
 
 /**
  * @brief Process another unit and return how many are left to process
@@ -112,10 +129,10 @@ EXPORT(const char* ) GetWritableDataDirectory();
  * Call this function repeatedly until it returns 0 before calling any other
  * function related to units.
  *
- * Because of risk for infinite loops, this function can not return any error code.
- * It is advised to poll GetNextError() after calling this function.
+ * Because of risk for infinite loops, this function can not return any error
+ * code. It is advised to poll GetNextError() after calling this function.
  *
- * Before any units are available, you'll first need to map a mod's archives
+ * Before any units are available, you will first need to map a mod's archives
  * into the VFS using AddArchive() or AddAllArchives().
  */
 EXPORT(int         ) ProcessUnits();
@@ -143,7 +160,7 @@ EXPORT(int         ) GetUnitCount();
 /**
  * @brief Get the units internal mod name
  * @param unit The units id number
- * @return The units internal modname or NULL on error
+ * @return The units internal mod name or NULL on error
  *
  * This function returns the units internal mod name. For example it would
  * return 'armck' and not 'Arm Construction kbot'.
@@ -162,24 +179,28 @@ EXPORT(const char* ) GetFullUnitName(int unit);
 /**
  * @brief Adds an archive to the VFS (Virtual File System)
  *
- * After this, the contents of the archive are available to other unitsync functions,
- * for example: ProcessUnits(), OpenFileVFS(), ReadFileVFS(), FileSizeVFS(), etc.
+ * After this, the contents of the archive are available to other unitsync
+ * functions, for example:
+ * ProcessUnits(), OpenFileVFS(), ReadFileVFS(), FileSizeVFS(), etc.
  *
- * Don't forget to call RemoveAllArchives() before proceeding with other archives.
+ * Do not forget to call RemoveAllArchives() before proceeding with other
+ * archives.
  */
-EXPORT(void        ) AddArchive(const char* name);
+EXPORT(void        ) AddArchive(const char* archiveName);
 /**
- * @brief Adds an achive and all it's dependencies to the VFS
+ * @brief Adds an achive and all its dependencies to the VFS
  * @see AddArchive
  */
-EXPORT(void        ) AddAllArchives(const char* root);
+EXPORT(void        ) AddAllArchives(const char* rootArchiveName);
 /**
  * @brief Removes all archives from the VFS (Virtual File System)
  *
- * After this, the contents of the archives are not available to other unitsync functions anymore,
- * for example: ProcessUnits(), OpenFileVFS(), ReadFileVFS(), FileSizeVFS(), etc.
+ * After this, the contents of the archives are not available to other unitsync
+ * functions anymore, for example:
+ * ProcessUnits(), OpenFileVFS(), ReadFileVFS(), FileSizeVFS(), etc.
  *
- * In a lobby client, this may be used instead of Init() when switching mod archive.
+ * In a lobby-client, this may be used instead of Init() when switching mod
+ * archive.
  */
 EXPORT(void        ) RemoveAllArchives();
 /**
@@ -189,31 +210,34 @@ EXPORT(void        ) RemoveAllArchives();
  * This checksum depends only on the contents from the archive itself, and not
  * on the contents from dependencies of this archive (if any).
  */
-EXPORT(unsigned int) GetArchiveChecksum(const char* arname);
+EXPORT(unsigned int) GetArchiveChecksum(const char* archiveName);
 /**
  * @brief Gets the real path to the archive
  * @return NULL on error; a path to the archive on success
  */
-EXPORT(const char* ) GetArchivePath(const char* arname);
+EXPORT(const char* ) GetArchivePath(const char* archiveName);
 
 #if       !defined(PLAIN_API_STRUCTURE)
 /**
  * @brief Retrieve map info
  * @param mapName name of the map, e.g. "SmallDivide"
  * @param outInfo pointer to structure which is filled with map info
- * @param version this determines which fields of the MapInfo structure are filled
+ * @param version this determines which fields of the MapInfo structure are
+ *   filled
  * @return Zero on error; non-zero on success
  * @deprecated
  * @see GetMapCount
  *
  * If version >= 1, then the author field is filled.
  *
- * Important: the description and author fields must point to a valid, and sufficiently long buffer
- * to store their contents.  Description is max 255 chars, and author is max 200 chars. (including
- * terminating zero byte).
+ * Important: the description and author fields must point to a valid, and
+ * sufficiently long buffer to store their contents.
+ * Description is max 255 chars, and author is max 200 chars.
+ * (including terminating zero byte).
  *
- * If an error occurs (return value 0), the description is set to an error message.
- * However, using GetNextError() is the recommended way to get the error message.
+ * If an error occurs (return value 0), the description is set to an error
+ * message. However, using GetNextError() is the recommended way to get the
+ * error message.
  *
  * Example:
  *		@code
@@ -245,7 +269,8 @@ EXPORT(int         ) GetMapInfo(const char* mapName, MapInfo* outInfo);
  * @brief Get the number of maps available
  * @return Zero on error; the number of maps available on success
  *
- * Call this before any of the map functions which take a map index as parameter.
+ * Call this before any of the map functions which take a map index as
+ * parameter.
  * This function actually performs a relatively costly enumeration of all maps,
  * so you should resist from calling it repeatedly in a loop.  Rather use:
  *		@code
@@ -266,8 +291,9 @@ EXPORT(int         ) GetMapCount();
  */
 EXPORT(const char* ) GetMapName(int index);
 /**
- * @brief Get the filename of a map
- * @return NULL on error; the filename of the map (e.g. "maps/SmallDivide.smf") on success
+ * @brief Get the file-name of a map
+ * @return NULL on error; the file-name of the map (e.g. "maps/SmallDivide.smf")
+ *   on success
  */
 EXPORT(const char* ) GetMapFileName(int index);
 /**
@@ -396,7 +422,7 @@ EXPORT(const char* ) GetMapArchiveName(int index);
  * This checksum depends on Spring internals, and as such should not be expected
  * to remain stable between releases.
  *
- * (It is ment to check sync between clients in lobby, for example.)
+ * (It is meant to check sync between clients in lobby, for example.)
  */
 EXPORT(unsigned int) GetMapChecksum(int index);
 /**
@@ -408,10 +434,10 @@ EXPORT(unsigned int) GetMapChecksum(int index);
 EXPORT(unsigned int) GetMapChecksumFromName(const char* mapName);
 /**
  * @brief Retrieves a minimap image for a map.
- * @param filename The name of the map, including extension.
- * @param miplevel Which miplevel of the minimap to extract from the file.
- * Set miplevel to 0 to get the largest, 1024x1024 minimap. Each increment
- * divides the width and height by 2. The maximum miplevel is 8, resulting in a
+ * @param fileName The name of the map, including extension.
+ * @param mipLevel Which mip-level of the minimap to extract from the file.
+ * Set mip-level to 0 to get the largest, 1024x1024 minimap. Each increment
+ * divides the width and height by 2. The maximum mip-level is 8, resulting in a
  * 4x4 image.
  * @return A pointer to a static memory area containing the minimap as a 16 bit
  * packed RGB-565 (MSB to LSB: 5 bits red, 6 bits green, 5 bits blue) linear
@@ -420,14 +446,15 @@ EXPORT(unsigned int) GetMapChecksumFromName(const char* mapName);
  * An example usage would be GetMinimap("SmallDivide", 2).
  * This would return a 16 bit packed RGB-565 256x256 (= 1024/2^2) bitmap.
  */
-EXPORT(unsigned short*) GetMinimap(const char* filename, int miplevel);
+EXPORT(unsigned short*) GetMinimap(const char* fileName, int mipLevel);
 /**
  * @brief Retrieves dimensions of infomap for a map.
  * @param mapName  The name of the map, e.g. "SmallDivide".
  * @param name     Of which infomap to retrieve the dimensions.
  * @param width    This is set to the width of the infomap, or 0 on error.
  * @param height   This is set to the height of the infomap, or 0 on error.
- * @return Non-zero when the infomap was found with a non-zero size; zero on error.
+ * @return Non-zero when the infomap was found with a non-zero size; zero on
+ *   error.
  * @see GetInfoMap
  */
 EXPORT(int         ) GetInfoMapSize(const char* mapName, const char* name, int* width, int* height);
@@ -435,11 +462,12 @@ EXPORT(int         ) GetInfoMapSize(const char* mapName, const char* name, int* 
  * @brief Retrieves infomap data of a map.
  * @param mapName  The name of the map, e.g. "SmallDivide".
  * @param name     Which infomap to extract from the file.
- * @param data     Pointer to memory location with enough room to hold the infomap data.
+ * @param data     Pointer to a memory location with enough room to hold the
+ *   infomap data.
  * @param typeHint One of bm_grayscale_8 (or 1) and bm_grayscale_16 (or 2).
  * @return Non-zero if the infomap was successfully extracted (and optionally
- * converted), or zero on error (map wasn't found, infomap wasn't found, or
- * typeHint could not be honoured.)
+ * converted), or zero on error (map was not found, infomap was not found, or
+ * typeHint could not be honored.)
  *
  * This function extracts an infomap from a map. This can currently be one of:
  * "height", "metal", "grass", "type". The heightmap is natively in 16 bits per
@@ -449,22 +477,126 @@ EXPORT(int         ) GetInfoMapSize(const char* mapName, const char* name, int* 
  */
 EXPORT(int         ) GetInfoMap(const char* mapName, const char* name, unsigned char* data, int typeHint);
 
-// TODO documentation
+/**
+ * @brief Retrieves the number of Skirmish AIs available
+ * @return Zero on error; The number of Skirmish AIs available on success
+ * @see GetMapCount
+ */
 EXPORT(int         ) GetSkirmishAICount();
-// TODO documentation
+/**
+ * @brief Retrieves the number of info items available for a given Skirmish AI
+ * @param index Skirmish AI index/id
+ * @return Zero on error; the number of info items available on success
+ * @see GetSkirmishAICount
+ *
+ * Be sure to call GetSkirmishAICount() prior to using this function.
+ */
 EXPORT(int         ) GetSkirmishAIInfoCount(int index);
-// TODO documentation
+/**
+ * @brief Retrieves an info item's key
+ * @param index info item index/id
+ * @return NULL on error; the info item's key on success
+ * @see GetSkirmishAIInfoCount
+ *
+ * The key of an option is either one defined as SKIRMISH_AI_PROPERTY_* in
+ * ExternalAI/Interface/SSkirmishAILibrary.h, or a custom one.
+ * Be sure to call GetSkirmishAIInfoCount() prior to using this function.
+ */
 EXPORT(const char* ) GetInfoKey(int index);
-// TODO documentation
+/**
+ * @brief Retrieves an info item's value type
+ * @param index info item index/id
+ * @return NULL on error; the info item's value type on success,
+ *   which will be one of:
+ *   "string", "integer", "float", "bool"
+ * @see GetSkirmishAIInfoCount
+ * @see GetInfoValueString
+ * @see GetInfoValueInteger
+ * @see GetInfoValueFloat
+ * @see GetInfoValueBool
+ *
+ * Be sure to call GetSkirmishAIInfoCount() prior to using this function.
+ */
+EXPORT(const char* ) GetInfoType(int index);
+/**
+ * @brief Retrieves an info item's value as string
+ * @param index info item index/id
+ * @return NULL on error; the info item's value as string on success
+ * @see GetSkirmishAIInfoCount
+ * @see GetInfoType
+ * @see GetInfoValueString
+ * @see GetInfoValueInteger
+ * @see GetInfoValueFloat
+ * @see GetInfoValueBool
+ * @deprecated use GetInfoValue* instead
+ */
 EXPORT(const char* ) GetInfoValue(int index);
-// TODO documentation
+/**
+ * @brief Retrieves an info item's value of type string
+ * @param index info item index/id
+ * @return NULL on error; the info item's value on success
+ * @see GetSkirmishAIInfoCount
+ * @see GetInfoType
+ *
+ * Be sure to call GetSkirmishAIInfoCount() prior to using this function.
+ */
+EXPORT(const char* ) GetInfoValueString(int index);
+/**
+ * @brief Retrieves an info item's value of type integer
+ * @param index info item index/id
+ * @return NULL on error; the info item's value on success
+ * @see GetSkirmishAIInfoCount
+ * @see GetInfoType
+ *
+ * Be sure to call GetSkirmishAIInfoCount() prior to using this function.
+ */
+EXPORT(int         ) GetInfoValueInteger(int index);
+/**
+ * @brief Retrieves an info item's value of type float
+ * @param index info item index/id
+ * @return NULL on error; the info item's value on success
+ * @see GetSkirmishAIInfoCount
+ * @see GetInfoType
+ *
+ * Be sure to call GetSkirmishAIInfoCount() prior to using this function.
+ */
+EXPORT(float       ) GetInfoValueFloat(int index);
+/**
+ * @brief Retrieves an info item's value of type bool
+ * @param index info item index/id
+ * @return NULL on error; the info item's value on success
+ * @see GetSkirmishAIInfoCount
+ * @see GetInfoType
+ *
+ * Be sure to call GetSkirmishAIInfoCount() prior to using this function.
+ */
+EXPORT(bool        ) GetInfoValueBool(int index);
+/**
+ * @brief Retrieves an info item's description
+ * @param index info item index/id
+ * @return NULL on error; the info item's description on success
+ * @see GetSkirmishAIInfoCount
+ *
+ * Be sure to call GetSkirmishAIInfoCount() prior to using this function.
+ */
 EXPORT(const char* ) GetInfoDescription(int index);
-// TODO documentation
+/**
+ * @brief Retrieves the number of options available for a given Skirmish AI
+ * @param index Skirmish AI index/id
+ * @return Zero on error; the number of Skirmish AI options available on success
+ * @see GetSkirmishAICount
+ * @see GetOptionKey
+ * @see GetOptionName
+ * @see GetOptionDesc
+ * @see GetOptionType
+ *
+ * Be sure to call GetSkirmishAICount() prior to using this function.
+ */
 EXPORT(int         ) GetSkirmishAIOptionCount(int index);
 
 /**
  * @brief Retrieves the number of mods available
- * @return int Zero on error; The number of mods available on success
+ * @return Zero on error; The number of mods available on success
  * @see GetMapCount
  */
 EXPORT(int         ) GetPrimaryModCount();
@@ -473,8 +605,31 @@ EXPORT(int         ) GetPrimaryModCount();
  * @param index The mods index/id
  * @return NULL on error; The mods name on success
  *
- * Returns the name of the mod usually found in modinfo.tdf.
- * Be sure you've made a call to GetPrimaryModCount() prior to using this.
+ * Returns the name of the mod usually found in ModInfo.lua.
+ * Be sure you have made a call to GetPrimaryModCount() prior to using this.
+
+ * @brief Retrieves the number of info items available for this mod
+ * @param index The mods index/id
+ * @return Zero on error; the number of info items available on success
+ * @see GetPrimaryModCount
+ * @see GetInfoKey
+ * @see GetInfoType
+ * @see GetInfoDescription
+ *
+ * Be sure you have made a call to GetPrimaryModCount() prior to using this.
+ */
+EXPORT(int         ) GetPrimaryModInfoCount(int index);
+/**
+ * @brief Retrieves the human readable name of this mod
+ * @param index The mods index/id
+ * @return NULL on error; The mods name on success
+ *
+ * Returns the name of the mod usually found in ModInfo.lua.
+ * Be sure you have made a call to GetPrimaryModCount() prior to using this.
+ *
+ * @deprecated use the mod info item with key "name" instead
+ * @see GetPrimaryModInfoCount
+ * @see GetInfoKey
  */
 EXPORT(const char* ) GetPrimaryModName(int index);
 /**
@@ -482,8 +637,12 @@ EXPORT(const char* ) GetPrimaryModName(int index);
  * @param index The mods index/id
  * @return NULL on error; The mods abbrieviated name on success
  *
- * Returns the shortened name of the mod usually found in modinfo.tdf.
- * Be sure you've made a call GetPrimaryModCount() prior to using this.
+ * Returns the shortened name of the mod usually found in ModInfo.lua.
+ * Be sure you have made a call GetPrimaryModCount() prior to using this.
+ *
+ * @deprecated use the mod info item with key "shortName" instead
+ * @see GetPrimaryModInfoCount
+ * @see GetInfoKey
  */
 EXPORT(const char* ) GetPrimaryModShortName(int index);
 /**
@@ -491,8 +650,13 @@ EXPORT(const char* ) GetPrimaryModShortName(int index);
  * @param index The mods index/id
  * @return NULL on error; The mods version string on success
  *
- * Returns value of the mutator tag for the specified mod usually found in modinfo.tdf.
- * Be sure you've made a call to GetPrimaryModCount() prior to using this.
+ * Returns value of the mutator tag for the specified mod usually found in
+ * ModInfo.lua.
+ * Be sure you have made a call to GetPrimaryModCount() prior to using this.
+ *
+ * @deprecated use the mod info item with key "version" instead
+ * @see GetPrimaryModInfoCount
+ * @see GetInfoKey
  */
 EXPORT(const char* ) GetPrimaryModVersion(int index);
 /**
@@ -500,8 +664,13 @@ EXPORT(const char* ) GetPrimaryModVersion(int index);
  * @param index The mods index/id
  * @return NULL on error; The mods mutator name on success
  *
- * Returns value of the mutator tag for the specified mod usually found in modinfo.tdf.
- * Be sure you've made a call to GetPrimaryModCount() prior to using this.
+ * Returns value of the mutator tag for the specified mod usually found in
+ * ModInfo.lua.
+ * Be sure you have made a call to GetPrimaryModCount() prior to using this.
+ *
+ * @deprecated use the mod info item with key "mutator" instead
+ * @see GetPrimaryModInfoCount
+ * @see GetInfoKey
  */
 EXPORT(const char* ) GetPrimaryModMutator(int index);
 /**
@@ -509,8 +678,13 @@ EXPORT(const char* ) GetPrimaryModMutator(int index);
  * @param index The mods index/id
  * @return NULL on error; The mods game name on success
  *
- * Returns the name of the game this mod belongs to usually found in modinfo.tdf.
- * Be sure you've made a call to GetPrimaryModCount() prior to using this.
+ * Returns the name of the game this mod belongs to usually found in
+ * ModInfo.lua.
+ * Be sure you have made a call to GetPrimaryModCount() prior to using this.
+ *
+ * @deprecated use the mod info item with key "game" instead
+ * @see GetPrimaryModInfoCount
+ * @see GetInfoKey
  */
 EXPORT(const char* ) GetPrimaryModGame(int index);
 /**
@@ -518,8 +692,13 @@ EXPORT(const char* ) GetPrimaryModGame(int index);
  * @param index The mods index/id
  * @return NULL on error; The mods abbrieviated game name on success
  *
- * Returns the abbrieviated name of the game this mod belongs to usually found in modinfo.tdf.
- * Be sure you've made a call to GetPrimaryModCount() prior to using this.
+ * Returns the abbrieviated name of the game this mod belongs to usually found
+ * in ModInfo.lua.
+ * Be sure you have made a call to GetPrimaryModCount() prior to using this.
+ *
+ * @deprecated use the mod info item with key "shortGame" instead
+ * @see GetPrimaryModInfoCount
+ * @see GetInfoKey
  */
 EXPORT(const char* ) GetPrimaryModShortGame(int index);
 /**
@@ -527,8 +706,12 @@ EXPORT(const char* ) GetPrimaryModShortGame(int index);
  * @param index The mods index/id
  * @return NULL on error; The mods description on success
  *
- * Returns a description for the specified mod usually found in modinfo.tdf.
- * Be sure you've made a call to GetPrimaryModCount() prior to using this.
+ * Returns a description for the specified mod usually found in ModInfo.lua.
+ * Be sure you have made a call to GetPrimaryModCount() prior to using this.
+ *
+ * @deprecated use the mod info item with key "description" instead
+ * @see GetPrimaryModInfoCount
+ * @see GetInfoKey
  */
 EXPORT(const char* ) GetPrimaryModDescription(int index);
 /**
@@ -537,7 +720,7 @@ EXPORT(const char* ) GetPrimaryModDescription(int index);
  * @return NULL on error; The mods primary archive on success
  *
  * Returns the name of the primary archive of the mod.
- * Be sure you've made a call to GetPrimaryModCount() prior to using this.
+ * Be sure you have made a call to GetPrimaryModCount() prior to using this.
  */
 EXPORT(const char* ) GetPrimaryModArchive(int index);
 /**
@@ -551,8 +734,8 @@ EXPORT(const char* ) GetPrimaryModArchive(int index);
  * name of each archive.  In code:
  *		@code
  *		int count = GetPrimaryModArchiveCount(mod_index);
- *		for (int arnr = 0; arnr < count; ++arnr) {
- *			printf("primary mod archive: %s\n", GetPrimaryModArchiveList(arnr));
+ *		for (int archive = 0; archive < count; ++archive) {
+ *			printf("primary mod archive: %s\n", GetPrimaryModArchiveList(archive));
  *		}
  *		@endcode
  */
@@ -563,7 +746,7 @@ EXPORT(int         ) GetPrimaryModArchiveCount(int index);
  * @return NULL on error; the name of the archive on success
  * @see GetPrimaryModArchiveCount
  */
-EXPORT(const char* ) GetPrimaryModArchiveList(int arnr);
+EXPORT(const char* ) GetPrimaryModArchiveList(int archive);
 /**
  * @brief The reverse of GetPrimaryModName()
  * @param name The name of the mod
@@ -598,50 +781,76 @@ EXPORT(int         ) GetSideCount();
  * @brief Retrieve a side's name
  * @return NULL on error; the side's name on success
  *
- * Be sure you've made a call to GetSideCount() prior to using this.
+ * Be sure you have made a call to GetSideCount() prior to using this.
  */
 EXPORT(const char* ) GetSideName(int side);
 /**
  * @brief Retrieve a side's default starting unit
  * @return NULL on error; the side's starting unit name on success
  *
- * Be sure you've made a call to GetSideCount() prior to using this.
+ * Be sure you have made a call to GetSideCount() prior to using this.
  */
 EXPORT(const char* ) GetSideStartUnit(int side);
 
 /**
  * @brief Retrieve the number of map options available
- * @param mapName  the name of the map, e.g. "SmallDivide"
+ * @param mapName the name of the map, e.g. "SmallDivide"
  * @return Zero on error; the number of map options available on success
+ * @see GetOptionKey
+ * @see GetOptionName
+ * @see GetOptionDesc
+ * @see GetOptionType
  */
 EXPORT(int         ) GetMapOptionCount(const char* mapName);
 /**
  * @brief Retrieve the number of mod options available
  * @return Zero on error; the number of mod options available on success
+ * @see GetOptionKey
+ * @see GetOptionName
+ * @see GetOptionDesc
+ * @see GetOptionType
  *
  * Be sure to map the mod into the VFS using AddArchive() or AddAllArchives()
  * prior to using this function.
  */
 EXPORT(int         ) GetModOptionCount();
-// TODO documentation
-EXPORT(int         ) GetCustomOptionCount(const char* filename);
+/**
+ * @brief Returns the number of options available in a specific option file
+ * @param fileName the VFS path to a Lua file containing an options table
+ * @return Zero on error; the number of options available on success
+ * @see GetOptionKey
+ * @see GetOptionName
+ * @see GetOptionDesc
+ * @see GetOptionType
+ */
+EXPORT(int         ) GetCustomOptionCount(const char* fileName);
 /**
  * @brief Retrieve an option's key
  * @param optIndex option index/id
  * @return NULL on error; the option's key on success
  *
- * The key of an option is the name it should be given in the start script's
- * MODOPTIONS or MAPOPTIONS section.
- * Be sure you've made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
+ *
+ * For mods, maps or Skimrish AIs, the key of an option is the name it should be
+ * given in the start script (section [MODOPTIONS], [MAPOPTIONS] or
+ * [AI/OPTIONS]).
  */
 EXPORT(const char* ) GetOptionKey(int optIndex);
 /**
  * @brief Retrieve an option's scope
  * @param optIndex option index/id
- * @return NULL on error; the option's scope on success
+ * @return NULL on error; the option's scope on success, one of:
+ *   "global" (default), "player", "team", "allyteam"
  *
- * Will be either "global" (default), "player", "team" or "allyteam"
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(const char* ) GetOptionScope(int optIndex);
 /**
@@ -649,8 +858,11 @@ EXPORT(const char* ) GetOptionScope(int optIndex);
  * @param optIndex option index/id
  * @return NULL on error; the option's user visible name on success
  *
- * Be sure you've made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(const char* ) GetOptionName(int optIndex);
 /**
@@ -658,8 +870,11 @@ EXPORT(const char* ) GetOptionName(int optIndex);
  * @param optIndex option index/id
  * @return NULL on error; the option's section name on success
  *
- * Be sure you've made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(const char* ) GetOptionSection(int optIndex);
 /**
@@ -667,10 +882,13 @@ EXPORT(const char* ) GetOptionSection(int optIndex);
  * @param optIndex option index/id
  * @return NULL on error; the option's style on success
  *
- * The format of an option style string is currently undecided.
+ * XXX The format of an option style string is currently undecided.
  *
- * Be sure you've made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(const char* ) GetOptionStyle(int optIndex);
 /**
@@ -678,8 +896,11 @@ EXPORT(const char* ) GetOptionStyle(int optIndex);
  * @param optIndex option index/id
  * @return NULL on error; the option's description on success
  *
- * Be sure you've made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(const char* ) GetOptionDesc(int optIndex);
 /**
@@ -687,8 +908,11 @@ EXPORT(const char* ) GetOptionDesc(int optIndex);
  * @param optIndex option index/id
  * @return opt_error on error; the option's type on success
  *
- * Be sure you've made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(int         ) GetOptionType(int optIndex);
 
@@ -697,8 +921,11 @@ EXPORT(int         ) GetOptionType(int optIndex);
  * @param optIndex option index/id
  * @return Zero on error; the option's default value (0 or 1) on success
  *
- * Be sure you've made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(int         ) GetOptionBoolDef(int optIndex);
 
@@ -707,8 +934,11 @@ EXPORT(int         ) GetOptionBoolDef(int optIndex);
  * @param optIndex option index/id
  * @return Zero on error; the option's default value on success
  *
- * Be sure you've made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(float       ) GetOptionNumberDef(int optIndex);
 /**
@@ -716,8 +946,11 @@ EXPORT(float       ) GetOptionNumberDef(int optIndex);
  * @param optIndex option index/id
  * @return -1.0e30 on error; the option's minimum value on success
  *
- * Be sure you've made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(float       ) GetOptionNumberMin(int optIndex);
 /**
@@ -725,8 +958,11 @@ EXPORT(float       ) GetOptionNumberMin(int optIndex);
  * @param optIndex option index/id
  * @return +1.0e30 on error; the option's maximum value on success
  *
- * Be sure you've made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(float       ) GetOptionNumberMax(int optIndex);
 /**
@@ -734,8 +970,11 @@ EXPORT(float       ) GetOptionNumberMax(int optIndex);
  * @param optIndex option index/id
  * @return Zero on error; the option's step value on success
  *
- * Be sure you've made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(float       ) GetOptionNumberStep(int optIndex);
 
@@ -744,8 +983,11 @@ EXPORT(float       ) GetOptionNumberStep(int optIndex);
  * @param optIndex option index/id
  * @return NULL on error; the option's default value on success
  *
- * Be sure you've made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(const char* ) GetOptionStringDef(int optIndex);
 /**
@@ -753,8 +995,11 @@ EXPORT(const char* ) GetOptionStringDef(int optIndex);
  * @param optIndex option index/id
  * @return Zero on error; the option's maximum length on success
  *
- * Be sure you've made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(int         ) GetOptionStringMaxLen(int optIndex);
 
@@ -763,8 +1008,11 @@ EXPORT(int         ) GetOptionStringMaxLen(int optIndex);
  * @param optIndex option index/id
  * @return Zero on error; the option's number of available items on success
  *
- * Be sure you've made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(int         ) GetOptionListCount(int optIndex);
 /**
@@ -772,8 +1020,11 @@ EXPORT(int         ) GetOptionListCount(int optIndex);
  * @param optIndex option index/id
  * @return NULL on error; the option's default value (list item key) on success
  *
- * Be sure you've made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(const char* ) GetOptionListDef(int optIndex);
 /**
@@ -782,8 +1033,11 @@ EXPORT(const char* ) GetOptionListDef(int optIndex);
  * @param itemIndex list item index/id
  * @return NULL on error; the option item's key (list item key) on success
  *
- * Be sure you've made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(const char* ) GetOptionListItemKey(int optIndex, int itemIndex);
 /**
@@ -792,8 +1046,11 @@ EXPORT(const char* ) GetOptionListItemKey(int optIndex, int itemIndex);
  * @param itemIndex list item index/id
  * @return NULL on error; the option item's name on success
  *
- * Be sure you've made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(const char* ) GetOptionListItemName(int optIndex, int itemIndex);
 /**
@@ -802,8 +1059,11 @@ EXPORT(const char* ) GetOptionListItemName(int optIndex, int itemIndex);
  * @param itemIndex list item index/id
  * @return NULL on error; the option item's description on success
  *
- * Be sure you've made a call to either GetMapOptionCount()
- * or GetModOptionCount() prior to using this.
+ * Do not use this before having called Get*OptionCount().
+ * @see GetMapOptionCount
+ * @see GetModOptionCount
+ * @see GetSkirmishAIOptionCount
+ * @see GetCustomOptionCount
  */
 EXPORT(const char* ) GetOptionListItemDesc(int optIndex, int itemIndex);
 
@@ -821,7 +1081,7 @@ EXPORT(int         ) GetModValidMapCount();
  * @return NULL on error; the name of the map on success
  *
  * Map names should be complete  (including the .smf or .sm3 extension.)
- * Be sure you've made a call to GetModValidMapCount() prior to using this.
+ * Be sure you have made a call to GetModValidMapCount() prior to using this.
  */
 EXPORT(const char* ) GetModValidMap(int index);
 
@@ -839,51 +1099,76 @@ EXPORT(const char* ) GetModValidMap(int index);
 EXPORT(int         ) OpenFileVFS(const char* name);
 /**
  * @brief Close a file in the VFS
- * @param handle the file handle as returned by OpenFileVFS()
+ * @param file the file handle as returned by OpenFileVFS()
  */
-EXPORT(void        ) CloseFileVFS(int handle);
+EXPORT(void        ) CloseFileVFS(int file);
 /**
  * @brief Read some data from a file in the VFS
- * @param handle the file handle as returned by OpenFileVFS()
- * @param buf output buffer, must be at least length bytes
- * @param length how many bytes to read from the file
+ * @param file the file handle as returned by OpenFileVFS()
+ * @param buf output buffer, must be at least of size numBytes
+ * @param numBytes how many bytes to read from the file
  * @return -1 on error; the number of bytes read on success
  * (if this is less than length you reached the end of the file.)
  */
-EXPORT(int         ) ReadFileVFS(int handle, unsigned char* buf, int length);
+EXPORT(int         ) ReadFileVFS(int file, unsigned char* buf, int numBytes);
 /**
  * @brief Retrieve size of a file in the VFS
- * @param handle the file handle as returned by OpenFileVFS()
+ * @param file the file handle as returned by OpenFileVFS()
  * @return -1 on error; the size of the file on success
  */
-EXPORT(int         ) FileSizeVFS(int handle);
+EXPORT(int         ) FileSizeVFS(int file);
 
 /**
- * Does not currently support more than one call at a time.
- * (a new call to initfind destroys data from previous ones)
- * pass the returned handle to findfiles to get the results
+ * @brief Find files in VFS by glob
+ * Does not currently support more than one call at a time;
+ * a new call to this function destroys data from previous ones.
+ * Pass the returned handle to FindFilesVFS to get the results.
+ * @param pattern glob used to search for files, for example "*.png"
+ * @return handle to the first file found that matches the pattern, or 0 if no
+ *   file was found or an error occurred
+ * @see FindFilesVFS
  */
 EXPORT(int         ) InitFindVFS(const char* pattern);
 /**
- * Does not currently support more than one call at a time.
- * (a new call to initfind destroys data from previous ones)
- * pass the returned handle to findfiles to get the results
+ * @brief Find files in VFS by glob in a sub-directory
+ * Does not currently support more than one call at a time;
+ * a new call to this function destroys data from previous ones.
+ * Pass the returned handle to FindFilesVFS to get the results.
+ * @param path sub-directory to search in
+ * @param pattern glob used to search for files, for example "*.png"
+ * @param modes which archives to search, see System/FileSystem/VFSModes.h
+ * @return handle to the first file found that matches the pattern, or 0 if no
+ *   file was found or an error occurred
+ * @see FindFilesVFS
  */
 EXPORT(int         ) InitDirListVFS(const char* path, const char* pattern, const char* modes);
 /**
- * Does not currently support more than one call at a time.
- * (a new call to initfind destroys data from previous ones)
- * pass the returned handle to findfiles to get the results
+ * @brief Find directories in VFS by glob in a sub-directory
+ * Does not currently support more than one call at a time;
+ * a new call to this function destroys data from previous ones.
+ * Pass the returned handle to FindFilesVFS to get the results.
+ * @param path sub-directory to search in
+ * @param pattern glob used to search for directories, for example "iLove*"
+ * @param modes which archives to search, see System/FileSystem/VFSModes.h
+ * @return handle to the first file found that matches the pattern, or 0 if no
+ *   file was found or an error occurred
+ * @see FindFilesVFS
  */
 EXPORT(int         ) InitSubDirsVFS(const char* path, const char* pattern, const char* modes);
 /**
- * Find the next file.
- * On first call, pass handle from InitFindVFS().
+ * @brief Find the next file.
+ * On first call, pass a handle from any of the Init*VFS() functions.
  * On subsequent calls, pass the return value of this function.
- * @param size should be set to max namebuffer size on call
- * @return new handle or 0
+ * @param file the file handle as returned by any of the Init*VFS() functions or
+ *   this one.
+ * @param nameBuf out-param to contain the VFS file-path
+ * @param size should be set to the size of nameBuf
+ * @return new file handle or 0
+ * @see InitFindVFS
+ * @see InitDirListVFS
+ * @see InitSubDirsVFS
  */
-EXPORT(int         ) FindFilesVFS(int handle, char* nameBuf, int size);
+EXPORT(int         ) FindFilesVFS(int file, char* nameBuf, int size);
 
 /**
  * @brief Open an archive
@@ -894,16 +1179,21 @@ EXPORT(int         ) FindFilesVFS(int handle, char* nameBuf, int size);
 EXPORT(int         ) OpenArchive(const char* name);
 /**
  * @brief Open an archive
- * @param name the name of the archive (*.sd7, *.sdz, *.sdd, *.ccx, *.hpi, *.ufo, *.gp3, *.gp4, *.swx)
- * @param type the type of the archive (sd7, 7z, sdz, zip, sdd, dir, ccx, hpi, ufo, gp3, gp4, swx)
+ * @param name the name of the archive
+ *   (*.sd7, *.sdz, *.sdd, *.ccx, *.hpi, *.ufo, *.gp3, *.gp4, *.swx)
+ * @param type the type of the archive
+ *   (sd7, 7z, sdz, zip, sdd, dir, ccx, hpi, ufo, gp3, gp4, swx)
  * @return Zero on error; a non-zero archive handle on success.
  * @sa OpenArchive
  *
- * The list of supported types and recognized extensions may change at any time.
- * (But this list will always be the same as the file types recognized by the engine.)
+ * The list of supported types and recognized extensions may change at any time,
+ * but this list will always be the same as the file types recognized by the
+ * engine.
  *
- * This function is pointless, because OpenArchive() does the same and automatically
- * detects the file type based on it's extension.  Who added it anyway?
+ * FIXME This function is pointless, because OpenArchive() does the same and
+ * automatically detects the file type based on its extension.
+ * Who added it anyway?
+ * @deprecated
  */
 EXPORT(int         ) OpenArchiveType(const char* name, const char* type);
 /**
@@ -911,8 +1201,16 @@ EXPORT(int         ) OpenArchiveType(const char* name, const char* type);
  * @param archive the archive handle as returned by OpenArchive()
  */
 EXPORT(void        ) CloseArchive(int archive);
-// TODO documentation
-EXPORT(int         ) FindFilesArchive(int archive, int cur, char* nameBuf, int* size);
+/**
+ * @brief Browse through files in a VFS archive
+ * @param archive the archive handle as returned by OpenArchive()
+ * @param file the index of the file in the archive to fetch info for
+ * @param nameBuf out-param, will contain the name of the file on success
+ * @param size in&out-param, has to contain the size of nameBuf on input,
+ *   will contain the file-size as output on success
+ * @return Zero on error; a non-zero file handle on success.
+ */
+EXPORT(int         ) FindFilesArchive(int archive, int file, char* nameBuf, int* size);
 /**
  * @brief Open an archive member
  * @param archive the archive handle as returned by OpenArchive()
@@ -926,52 +1224,62 @@ EXPORT(int         ) OpenArchiveFile(int archive, const char* name);
 /**
  * @brief Read some data from an archive member
  * @param archive the archive handle as returned by OpenArchive()
- * @param handle the file handle as returned by OpenArchiveFile()
+ * @param file the file handle as returned by OpenArchiveFile()
  * @param buffer output buffer, must be at least numBytes bytes
  * @param numBytes how many bytes to read from the file
  * @return -1 on error; the number of bytes read on success
  * (if this is less than numBytes you reached the end of the file.)
  */
-EXPORT(int         ) ReadArchiveFile(int archive, int handle, unsigned char* buffer, int numBytes);
+EXPORT(int         ) ReadArchiveFile(int archive, int file, unsigned char* buffer, int numBytes);
 /**
  * @brief Close an archive member
  * @param archive the archive handle as returned by OpenArchive()
- * @param handle the file handle as returned by OpenArchiveFile()
+ * @param file the file handle as returned by OpenArchiveFile()
  */
-EXPORT(void        ) CloseArchiveFile(int archive, int handle);
+EXPORT(void        ) CloseArchiveFile(int archive, int file);
 /**
  * @brief Retrieve size of an archive member
  * @param archive the archive handle as returned by OpenArchive()
- * @param handle the file handle as returned by OpenArchiveFile()
+ * @param file the file handle as returned by OpenArchiveFile()
  * @return -1 on error; the size of the file on success
  */
-EXPORT(int         ) SizeArchiveFile(int archive, int handle);
+EXPORT(int         ) SizeArchiveFile(int archive, int file);
 
-// TODO documentation
-EXPORT(void        ) SetSpringConfigFile(const char* filenameAsAbsolutePath);
-// TODO documentation
+/**
+ * @brief (Re-)Loads the global config-handler
+ * @param fileNameAsAbsolutePath the config file to be used, if NULL, the
+ *   default one is used
+ * @see GetSpringConfigFile()
+ */
+EXPORT(void        ) SetSpringConfigFile(const char* fileNameAsAbsolutePath);
+/**
+ * @brief Returns the path to the config-file path
+ * @return the absolute path to the config-file in use by the config-handler
+ * @see SetSpringConfigFile()
+ */
 EXPORT(const char* ) GetSpringConfigFile();
 /**
  * @brief get string from Spring configuration
  * @param name name of key to get
- * @param defValue default string value to use if key is not found, may not be NULL
+ * @param defValue default string value to use if the key is not found, may not
+ *   be NULL
  * @return string value
  */
-EXPORT(const char* ) GetSpringConfigString(const char* name, const char* defvalue);
+EXPORT(const char* ) GetSpringConfigString(const char* name, const char* defValue);
 /**
  * @brief get integer from Spring configuration
  * @param name name of key to get
  * @param defValue default integer value to use if key is not found
  * @return integer value
  */
-EXPORT(int         ) GetSpringConfigInt(const char* name, const int defvalue);
+EXPORT(int         ) GetSpringConfigInt(const char* name, const int defValue);
 /**
  * @brief get float from Spring configuration
  * @param name name of key to get
  * @param defValue default float value to use if key is not found
  * @return float value
  */
-EXPORT(float       ) GetSpringConfigFloat( const char* name, const float defvalue );
+EXPORT(float       ) GetSpringConfigFloat(const char* name, const float defValue);
 /**
  * @brief set string in Spring configuration
  * @param name name of key to set
@@ -995,7 +1303,7 @@ EXPORT(void        ) SetSpringConfigFloat(const char* name, const float value);
 // from LuaParserAPI.cpp:
 
 EXPORT(void       ) lpClose();
-EXPORT(int        ) lpOpenFile(const char* filename, const char* fileModes, const char* accessModes);
+EXPORT(int        ) lpOpenFile(const char* fileName, const char* fileModes, const char* accessModes);
 EXPORT(int        ) lpOpenSource(const char* source, const char* accessModes);
 EXPORT(int        ) lpExecute();
 EXPORT(const char*) lpErrorLog();
@@ -1003,14 +1311,14 @@ EXPORT(const char*) lpErrorLog();
 EXPORT(void       ) lpAddTableInt(int key, int override);
 EXPORT(void       ) lpAddTableStr(const char* key, int override);
 EXPORT(void       ) lpEndTable();
-EXPORT(void       ) lpAddIntKeyIntVal(int key, int val);
-EXPORT(void       ) lpAddStrKeyIntVal(const char* key, int val);
-EXPORT(void       ) lpAddIntKeyBoolVal(int key, int val);
-EXPORT(void       ) lpAddStrKeyBoolVal(const char* key, int val);
-EXPORT(void       ) lpAddIntKeyFloatVal(int key, float val);
-EXPORT(void       ) lpAddStrKeyFloatVal(const char* key, float val);
-EXPORT(void       ) lpAddIntKeyStrVal(int key, const char* val);
-EXPORT(void       ) lpAddStrKeyStrVal(const char* key, const char* val);
+EXPORT(void       ) lpAddIntKeyIntVal(int key, int value);
+EXPORT(void       ) lpAddStrKeyIntVal(const char* key, int value);
+EXPORT(void       ) lpAddIntKeyBoolVal(int key, int value);
+EXPORT(void       ) lpAddStrKeyBoolVal(const char* key, int value);
+EXPORT(void       ) lpAddIntKeyFloatVal(int key, float value);
+EXPORT(void       ) lpAddStrKeyFloatVal(const char* key, float value);
+EXPORT(void       ) lpAddIntKeyStrVal(int key, const char* value);
+EXPORT(void       ) lpAddStrKeyStrVal(const char* key, const char* value);
 
 EXPORT(int        ) lpRootTable();
 EXPORT(int        ) lpRootTableExpr(const char* expr);
@@ -1030,14 +1338,14 @@ EXPORT(int        ) lpGetIntKeyListEntry(int index);
 EXPORT(int        ) lpGetStrKeyListCount();
 EXPORT(const char*) lpGetStrKeyListEntry(int index);
 
-EXPORT(int        ) lpGetIntKeyIntVal(int key, int defVal);
-EXPORT(int        ) lpGetStrKeyIntVal(const char* key, int defVal);
-EXPORT(int        ) lpGetIntKeyBoolVal(int key, int defVal);
-EXPORT(int        ) lpGetStrKeyBoolVal(const char* key, int defVal);
-EXPORT(float      ) lpGetIntKeyFloatVal(int key, float defVal);
-EXPORT(float      ) lpGetStrKeyFloatVal(const char* key, float defVal);
-EXPORT(const char*) lpGetIntKeyStrVal(int key, const char* defVal);
-EXPORT(const char*) lpGetStrKeyStrVal(const char* key, const char* defVal);
+EXPORT(int        ) lpGetIntKeyIntVal(int key, int defValue);
+EXPORT(int        ) lpGetStrKeyIntVal(const char* key, int defValue);
+EXPORT(int        ) lpGetIntKeyBoolVal(int key, int defValue);
+EXPORT(int        ) lpGetStrKeyBoolVal(const char* key, int defValue);
+EXPORT(float      ) lpGetIntKeyFloatVal(int key, float defValue);
+EXPORT(float      ) lpGetStrKeyFloatVal(const char* key, float defValue);
+EXPORT(const char*) lpGetIntKeyStrVal(int key, const char* defValue);
+EXPORT(const char*) lpGetStrKeyStrVal(const char* key, const char* defValue);
 
 /** @} */
 

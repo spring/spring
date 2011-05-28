@@ -2,7 +2,9 @@
 
 #include "StdAfx.h"
 
-//#include <omp.h>
+#ifdef _OPENMP
+	#include <omp.h>
+#endif
 #include <ostream>
 #include <fstream>
 #include <string.h>
@@ -280,11 +282,12 @@ bool CBitmap::LoadGrayscale(const std::string& filename)
 	ysize = ilGetInteger(IL_IMAGE_HEIGHT);
 
 	delete[] mem;
+	mem = NULL; // to prevent a dead-pointer in case of an out-of-memory exception on the next line
 	mem = new unsigned char[xsize * ysize];
 	memcpy(mem, ilGetData(), xsize * ysize);
-	
+
 	ilDeleteImages(1, &ImageName);
-	
+
 	return true;
 }
 
@@ -342,9 +345,7 @@ bool CBitmap::Save(std::string const& filename, bool opaque) const
 #ifndef BITMAP_NO_OPENGL
 const unsigned int CBitmap::CreateTexture(bool mipmaps) const
 {
-#ifndef BITMAP_NO_OPENGL
 	ScopedTimer timer("Textures::CBitmap::CreateTexture");
-#endif
 
 	if (type == BitmapTypeDDS) {
 		return CreateDDSTexture();
@@ -532,7 +533,8 @@ void CBitmap::Renormalize(float3 newCol)
 }
 
 
-inline void kernelBlur(CBitmap* dst, const unsigned char* src, int x, int y, int channel, float weight) {
+inline static void kernelBlur(CBitmap* dst, const unsigned char* src, int x, int y, int channel, float weight)
+{
 	float fragment = 0.0f;
 
 	const int pos = (x + y * dst->xsize) * dst->channels + channel;
@@ -573,13 +575,13 @@ void CBitmap::Blur(int iterations, float weight)
 	dst->Alloc(xsize,ysize);
 
 	for (int i=0; i < iterations; ++i){
-		#pragma omp parallel private(y,x,i)
 		{
-			#pragma omp for
-			for (int y=0; y < ysize; ++y) {
-				for (int x=0; x < xsize; ++x) {
-					for (int i=0; i < channels; ++i) {
-						kernelBlur(dst, src->mem, x, y, i, weight);
+			int j,y,x;
+			#pragma omp parallel for private(j,x,y)
+			for (y=0; y < ysize; y++) {
+				for (x=0; x < xsize; x++) {
+					for (j=0; j < channels; j++) {
+						kernelBlur(dst, src->mem, x, y, j, weight);
 					}
 				}
 			}
@@ -738,6 +740,18 @@ void CBitmap::InvertColors()
 }
 
 
+void CBitmap::InvertAlpha()
+{
+	if (type != BitmapTypeStandardRGBA) return; // Don't try to invert DDS
+	for (int y = 0; y < ysize; ++y) {
+		for (int x = 0; x < xsize; ++x) {
+			const int base = ((y * xsize) + x) * 4;
+			mem[base + 3] = 0xFF - mem[base + 3];
+		}
+	}
+}
+
+
 void CBitmap::GrayScale()
 {
 	if (type != BitmapTypeStandardRGBA) {
@@ -786,6 +800,7 @@ void CBitmap::Tint(const float tint[3])
 
 void CBitmap::ReverseYAxis()
 {
+    if (type != BitmapTypeStandardRGBA) return; // don't try to flip DDS
 	unsigned char* tmpLine = new unsigned char[channels * xsize];
 	for (int y=0; y < (ysize / 2); ++y) {
 		const int pixelLow  = (((y            ) * xsize) + 0) * channels;

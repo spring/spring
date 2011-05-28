@@ -7,6 +7,7 @@
 #include "GlobalSynced.h"
 #include "Sim/Units/Unit.h"
 #include "System/creg/STL_Map.h"
+#include "System/myMath.h"
 
 CR_BIND(CWind, );
 
@@ -26,6 +27,8 @@ CR_REG_METADATA(CWind, (
 	CR_RESERVED(12)
 ));
 
+
+static const int UpdateRate = 15 * GAME_SPEED; //! update all 15sec
 
 CWind wind;
 
@@ -83,6 +86,7 @@ void CWind::LoadWind(float min, float max)
 	minWind = min;
 	maxWind = max;
 	curWind = float3(minWind, 0.0f, 0.0f);
+	oldWind = curWind;
 }
 
 
@@ -90,28 +94,44 @@ void CWind::Update()
 {
 	if (status == 0) {
 		oldWind = curWind;
+		newWind = oldWind;
 
-		float ns = gs->randFloat() * (maxWind - minWind) + minWind;
-		float nd = gs->randFloat() * 2.0f * PI;
+		//! generate new wind direction
+		float len;
+		do {
+			newWind.x -= (gs->randFloat() - 0.5f) * maxWind;
+			newWind.z -= (gs->randFloat() - 0.5f) * maxWind;
+			len = newWind.Length();
+		} while (len == 0.f);
 
-		newWind = float3(sin(nd) * ns, 0.0f, cos(nd) * ns);
-
-		for (std::map<int, CUnit*>::iterator it = windGens.begin(); it != windGens.end(); ++it) {
-			(it->second)->UpdateWind(newWind.x, newWind.z, newWind.Length());
-		}
+		//! clamp: windMin <= strength <= windMax
+		newWind /= len;
+		len = Clamp(len, minWind, maxWind);
+		newWind *= len;
 
 		status++;
-	} else if (status <= (GAME_SPEED * GAME_SPEED)) {
-		const float mod = status / float(GAME_SPEED * GAME_SPEED);
+	} else if (status <= UpdateRate) {
+		float mod = status / float(UpdateRate);
+		mod = smoothstep(0.f, 1.f, mod);
 
-		curStrength = oldWind.Length() * (1.0 - mod) + newWind.Length() * mod; // strength changes ~ mod
-		curWind = oldWind * (1.0 - mod) + newWind * mod; // dir changes ~ arctan (mod)
-		curWind.SafeNormalize();
-		curDir = curWind;
-		curWind *= curStrength;
+		//! blend between old & new wind directions
+		#define blend(x,y,a) x * (1.0f - a) + y * a
+		curWind = blend(oldWind, newWind, mod);
+		curStrength = curWind.Length();
+		if (curStrength != 0.f) {
+			curDir = curWind / curStrength;
+		}
 
 		status++;
 	} else {
 		status = 0;
+	}
+	
+	if (status == UpdateRate / 3) {
+		//! update units
+		const float newStrength = newWind.Length();
+		for (std::map<int, CUnit*>::iterator it = windGens.begin(); it != windGens.end(); ++it) {
+			(it->second)->UpdateWind(newWind.x, newWind.z, newStrength);
+		}
 	}
 }

@@ -17,14 +17,18 @@ BuildInfo::BuildInfo(const std::string& name, const float3& pos, int facing)
 }
 
 
-void BuildInfo::FillCmd(Command& c) const
+int BuildInfo::CreateCommandID() const
 {
-	c.id = -def->id;
-	c.params.resize(4);
-	c.params[0] = pos.x;
-	c.params[1] = pos.y;
-	c.params[2] = pos.z;
-	c.params[3] = (float) buildFacing;
+	return -def->id;
+}
+
+void BuildInfo::AddCommandParams(Command& cmd) const
+{
+	cmd.params.reserve(cmd.params.size() + 4);
+	cmd.AddParam(pos.x);
+	cmd.AddParam(pos.y);
+	cmd.AddParam(pos.z);
+	cmd.AddParam((float) buildFacing);
 }
 
 
@@ -33,8 +37,8 @@ bool BuildInfo::Parse(const Command& c)
 	if (c.params.size() >= 3) {
 		pos = float3(c.params[0], c.params[1], c.params[2]);
 
-		if (c.id < 0) {
-			def = unitDefHandler->GetUnitDefByID(-c.id);
+		if (c.GetID() < 0) {
+			def = unitDefHandler->GetUnitDefByID(-c.GetID());
 			buildFacing = 0;
 
 			if (c.params.size() == 4) {
