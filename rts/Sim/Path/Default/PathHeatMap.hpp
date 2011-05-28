@@ -45,7 +45,7 @@ private:
 
 
 	bool enabled;
-	unsigned int heatMapOffset;          //! heatmap values are relative to this
+	unsigned int heatMapOffset;      //! heatmap values are relative to this
 
 	std::vector<HeatCell> heatMap;   //! resolution is hmapx*hmapy
 
