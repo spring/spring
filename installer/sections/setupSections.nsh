@@ -5,8 +5,7 @@
 ; 	${toggleSection} "PORTABLE" ${SEC_PORTABLE}
 ; is the /PORTABLE switch
 
-Push $0 ; save register
-Push $1
+System::Store "s" ; save all register
 
 !define toggleSection "!insertmacro toggleSection"
 !macro toggleSection ParameterName Section
@@ -63,6 +62,5 @@ ${Else}
 	IntOp $REGISTRY 0 + 1 ; default, write registry
 ${EndIf}
 
-Pop $1 ; restore register
-Pop $0
+System::Store "l" ; restore register
 

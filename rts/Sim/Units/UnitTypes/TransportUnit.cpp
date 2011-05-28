@@ -77,16 +77,19 @@ void CTransportUnit::Update()
 		if (unitDef->holdSteady) {
 			// slave transportee orientation to piece
 			if (ti->piece >= 0) {
+				const CMatrix44f& transMat = GetTransformMatrix(true);
 				const CMatrix44f& pieceMat = script->GetPieceMatrix(ti->piece);
-				const float3 pieceDir =
-					frontdir * pieceMat[10] +
-					updir    * pieceMat[ 6] +
-					rightdir * pieceMat[ 2];
+				const CMatrix44f slaveMat = pieceMat * transMat;
 
-				transportee->heading  = GetHeadingFromVector(pieceDir.x, pieceDir.z);
-				transportee->frontdir = pieceDir;
-				transportee->rightdir = transportee->frontdir.cross(UpVector);
-				transportee->updir    = transportee->rightdir.cross(transportee->frontdir);
+				SyncedFloat3& xdir = transportee->rightdir;
+				SyncedFloat3& ydir = transportee->updir;
+				SyncedFloat3& zdir = transportee->frontdir;
+
+				zdir.x = slaveMat[8]; zdir.y = slaveMat[9]; zdir.z = slaveMat[10];
+				xdir.x = slaveMat[0]; xdir.y = slaveMat[1]; xdir.z = slaveMat[ 2];
+				ydir.x = slaveMat[4]; ydir.y = slaveMat[5]; ydir.z = slaveMat[ 6];
+
+				transportee->heading = GetHeadingFromVector(zdir.x, zdir.z);
 			}
 		} else {
 			// slave transportee orientation to body
@@ -176,8 +179,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 			// issue a move order so that unit won't try to return to pick-up pos in IdleCheck()
 			if (dynamic_cast<CTAAirMoveType*>(moveType) && u->unitDef->canmove) {
 				const float3& pos = u->pos;
-				Command c;
-				c.id = CMD_MOVE;
+				Command c(CMD_MOVE);
 				c.params.push_back(pos.x);
 				c.params.push_back(ground->GetHeightAboveWater(pos.x, pos.z));
 				c.params.push_back(pos.z);
@@ -350,9 +352,8 @@ void CTransportUnit::DetachUnit(CUnit* unit)
 
 		// erase command queue unless it's a wait command
 		const CCommandQueue& queue = unit->commandAI->commandQue;
-		if (queue.empty() || (queue.front().id != CMD_WAIT)) {
-			Command c;
-			c.id = CMD_STOP;
+		if (queue.empty() || (queue.front().GetID() != CMD_WAIT)) {
+			Command c(CMD_STOP);
 			unit->commandAI->GiveCommand(c);
 		}
 	}
@@ -366,8 +367,7 @@ void CTransportUnit::DetachUnitFromAir(CUnit* unit, float3 pos)
 
 		//add an additional move command for after we land
 		if(unit->unitDef->canmove) {
-			Command c;
-			c.id = CMD_MOVE;
+			Command c(CMD_MOVE);
 			c.params.push_back(pos.x);
 			c.params.push_back(pos.y);
 			c.params.push_back(pos.z);

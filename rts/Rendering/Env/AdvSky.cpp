@@ -12,11 +12,12 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Exceptions.h"
-#include "FastMath.h"
+
 #include "LogOutput.h"
 #include "TimeProfiler.h"
 #include "ConfigHandler.h"
 #include "Matrix44f.h"
+#include "myMath.h"
 #include "GlobalUnsynced.h"
 
 #define Y_PART 10.0
@@ -210,16 +211,7 @@ void CAdvSky::Draw()
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
-	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
-	glFogf(GL_FOG_START,globalRendering->viewRange*fogStart);
-	glFogf(GL_FOG_END,globalRendering->viewRange);
-	glFogf(GL_FOG_DENSITY,1.0f);
-	glFogi(GL_FOG_MODE,GL_LINEAR);
-	if (globalRendering->drawFog) {
-		glEnable(GL_FOG);
-	} else {
-		glDisable(GL_FOG);
-	}
+	SetFog();
 }
 
 float3 CAdvSky::GetCoord(int x, int y)
@@ -819,7 +811,7 @@ void CAdvSky::UpdateSkyDir() {
 
 	skydir2.ANormalize();
 	skydir1 = skydir2.cross(UpVector);
-	skyAngle = fastmath::coords2angle(skydir2.x, skydir2.z) + PI / 2.0f;
+	skyAngle = GetRadFromXY(skydir2.x, skydir2.z) + PI / 2.0f;
 }
 
 void CAdvSky::UpdateSkyTexture() {
@@ -854,7 +846,7 @@ float3 CAdvSky::GetDirFromTexCoord(float x, float y)
 	dir.z = (y - 0.5f) * domeWidth;
 
 	const float hdist = math::sqrt(dir.x * dir.x + dir.z * dir.z);
-	const float ang = fastmath::coords2angle(dir.x, dir.z) + skyAngle;
+	const float ang = GetRadFromXY(dir.x, dir.z) + skyAngle;
 	const float fy = asin(hdist / 400);
 
 	dir.x = hdist * cos(ang);

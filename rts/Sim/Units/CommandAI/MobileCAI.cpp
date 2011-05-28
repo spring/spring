@@ -219,7 +219,7 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 	if (!AllowedCommand(c, fromSynced))
 		return;
 
-	if (owner->unitDef->canfly && c.id == CMD_AUTOREPAIRLEVEL) {
+	if (owner->unitDef->canfly && c.GetID() == CMD_AUTOREPAIRLEVEL) {
 		if (c.params.empty()) {
 			return;
 		}
@@ -248,7 +248,7 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 		return;
 	}
 
-	if (owner->unitDef->canfly && c.id == CMD_IDLEMODE) {
+	if (owner->unitDef->canfly && c.GetID() == CMD_IDLEMODE) {
 		if (c.params.empty()) {
 			return;
 		}
@@ -273,7 +273,7 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 		return;
 	}
 
-	if (!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.id) == nonQueingCommands.end()) {
+	if (!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.GetID()) == nonQueingCommands.end()) {
 		tempOrder = false;
 		StopSlowGuard();
 	}
@@ -388,7 +388,7 @@ void CMobileCAI::SlowUpdate()
 		IdleCheck();
 
 		//the attack order could terminate directly and thus cause a loop
-		if(commandQue.empty() || commandQue.front().id == CMD_ATTACK) {
+		if(commandQue.empty() || commandQue.front().GetID() == CMD_ATTACK) {
 			return;
 		}
 	}
@@ -399,7 +399,7 @@ void CMobileCAI::SlowUpdate()
 		CCommandQueue::iterator it = commandQue.begin();
 		++it;
 		const Command& c = *it;
-		if ((c.id == CMD_SET_WANTED_MAX_SPEED) && (c.params.size() >= 1)) {
+		if ((c.GetID()== CMD_SET_WANTED_MAX_SPEED) && (c.params.size() >= 1)) {
 			const float defMaxSpeed = owner->maxSpeed;
 			const float newMaxSpeed = std::min(c.params[0], defMaxSpeed);
 			if (newMaxSpeed > 0)
@@ -416,7 +416,7 @@ void CMobileCAI::SlowUpdate()
 void CMobileCAI::Execute()
 {
 	Command& c = commandQue.front();
-	switch (c.id) {
+	switch (c.GetID()) {
 		case CMD_SET_WANTED_MAX_SPEED: { ExecuteSetWantedMaxSpeed(c);	return; }
 		case CMD_MOVE:                 { ExecuteMove(c);				return; }
 		case CMD_PATROL:               { ExecutePatrol(c);				return; }
@@ -436,7 +436,7 @@ void CMobileCAI::Execute()
 void CMobileCAI::ExecuteSetWantedMaxSpeed(Command &c)
 {
 	if (repeatOrders && (commandQue.size() >= 2) &&
-			(commandQue.back().id != CMD_SET_WANTED_MAX_SPEED)) {
+			(commandQue.back().GetID() != CMD_SET_WANTED_MAX_SPEED)) {
 		commandQue.push_back(commandQue.front());
 	}
 	FinishCommand();
@@ -472,10 +472,8 @@ void CMobileCAI::ExecuteLoadUnits(Command &c) {
 
 	if (!inCommand) {
 		inCommand = true;
-		Command newCommand;
-		newCommand.id = CMD_LOAD_UNITS;
+		Command newCommand(CMD_LOAD_UNITS, INTERNAL_ORDER | SHIFT_KEY);
 		newCommand.params.push_back(owner->id);
-		newCommand.options = INTERNAL_ORDER | SHIFT_KEY;
 		tran->commandAI->GiveCommandReal(newCommand);
 	}
 	if (owner->transporter) {
@@ -510,17 +508,16 @@ void CMobileCAI::ExecutePatrol(Command &c)
 			owner->unitDef->humanName.c_str());
 		return;
 	}
-	Command temp;
-	temp.id = CMD_FIGHT;
+	Command temp(CMD_FIGHT, c.options | INTERNAL_ORDER);
 	temp.params.push_back(c.params[0]);
 	temp.params.push_back(c.params[1]);
 	temp.params.push_back(c.params[2]);
-	temp.options = c.options | INTERNAL_ORDER;
+
 	commandQue.push_back(c);
 	commandQue.pop_front();
 	commandQue.push_front(temp);
-	Command tmpC;
-	tmpC.id = CMD_PATROL;
+
+	Command tmpC(CMD_PATROL);
 	eoh->CommandFinished(*owner, tmpC);
 	ExecuteFight(temp);
 }
@@ -588,9 +585,7 @@ void CMobileCAI::ExecuteFight(Command &c)
 		const float searchRadius = owner->maxRange + 100 * owner->moveState * owner->moveState;
 		CUnit* enemy = helper->GetClosestValidTarget(curPosOnLine, searchRadius, owner->allyteam, this);
 		if (enemy != NULL) {
-			Command c2;
-			c2.id=CMD_FIGHT;
-			c2.options=c.options|INTERNAL_ORDER;
+			Command c2(CMD_FIGHT, c.options|INTERNAL_ORDER);
 			c2.params.push_back(enemy->id);
 			PushOrUpdateReturnFight();
 			commandQue.push_front(c2);
@@ -639,10 +634,8 @@ void CMobileCAI::ExecuteGuard(Command &c)
 		IsValidTarget(guardee->lastAttacker);
 
 	if (pushAttackCommand) {
-		Command nc;
-			nc.id = CMD_ATTACK;
-			nc.params.push_back(guardee->lastAttacker->id);
-			nc.options = c.options;
+		Command nc(CMD_ATTACK, c.options);
+		nc.params.push_back(guardee->lastAttacker->id);
 		commandQue.push_front(nc);
 
 		StopSlowGuard();
@@ -742,7 +735,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 	}
 	else if ((c.params.size() == 3) && (owner->commandShotCount > 0) && (commandQue.size() > 1)) {
 		// the trailing CMD_SET_WANTED_MAX_SPEED in a command pair does not count
-		if ((commandQue.size() > 2) || (commandQue.back().id != CMD_SET_WANTED_MAX_SPEED)) {
+		if ((commandQue.size() > 2) || (commandQue.back().GetID() != CMD_SET_WANTED_MAX_SPEED)) {
 			StopMove();
 			FinishCommand();
 			return;
@@ -777,7 +770,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			CWeapon* w = owner->weapons.front();
 			// if we have at least one weapon then check if we
 			// can hit target with our first (meanest) one
-			b2 = w->TryTargetRotate(orderTarget, c.id == CMD_DGUN);
+			b2 = w->TryTargetRotate(orderTarget, c.GetID() == CMD_DGUN);
 			b3 = Square(w->range - (w->relWeaponPos).Length())
 					> (orderTarget->pos.SqDistance(owner->pos));
 			b4 = w->TryTargetHeading(GetHeadingFromVector(-diff.x, -diff.z),
@@ -809,7 +802,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 								owner->maxRange * 0.9f), true);
 				}
 			}
-			owner->AttackUnit(orderTarget, c.id == CMD_DGUN);
+			owner->AttackUnit(orderTarget, c.GetID() == CMD_DGUN);
 		}
 
 		// if we're on hold pos in a temporary order, then none of the close-in
@@ -884,7 +877,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			CWeapon* w = owner->weapons.front();
 
 			// XXX hack - dgun overrides any checks
-			if (c.id == CMD_DGUN) {
+			if (c.GetID() == CMD_DGUN) {
 				float rr = owner->maxRange * owner->maxRange;
 
 				for (vector<CWeapon*>::iterator it = owner->weapons.begin();
@@ -896,16 +889,16 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 				if (diff.SqLength() < rr) {
 					StopMove();
-					owner->AttackGround(pos, c.id == CMD_DGUN);
+					owner->AttackGround(pos, c.GetID() == CMD_DGUN);
 					owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
 				}
 			} else {
-				const bool inAngle = w->TryTargetRotate(pos, c.id == CMD_DGUN);
+				const bool inAngle = w->TryTargetRotate(pos, c.GetID() == CMD_DGUN);
 				const bool inRange = diff.SqLength2D() < Square(w->range - (w->relWeaponPos).Length2D());
 
 				if (inAngle || inRange) {
 					StopMove();
-					owner->AttackGround(pos, c.id == CMD_DGUN);
+					owner->AttackGround(pos, c.GetID() == CMD_DGUN);
 					owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
 				}
 			}
@@ -977,21 +970,22 @@ void CMobileCAI::DrawCommands(void)
 
 	CCommandQueue::iterator ci;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		switch (ci->id) {
+		const int& cmd_id = ci->GetID();
+		switch (cmd_id) {
 			case CMD_MOVE: {
 				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);
+				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.move);
 				break;
 			}
 			case CMD_PATROL: {
 				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.patrol);
+				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.patrol);
 				break;
 			}
 			case CMD_FIGHT: {
 				if (ci->params.size() != 1) {
 					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.fight);
+					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.fight);
 					break;
 				}
 			}
@@ -1002,12 +996,12 @@ void CMobileCAI::DrawCommands(void)
 
 					if ((unit != NULL) && isTrackable(unit)) {
 						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
-						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
+						lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
 					}
 				}
 				else if (ci->params.size() >= 3) {
 					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
+					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
 				}
 				break;
 			}
@@ -1017,13 +1011,13 @@ void CMobileCAI::DrawCommands(void)
 				if ((unit != NULL) && isTrackable(unit)) {
 					const float3 endPos =
 						helper->GetUnitErrorPos(unit, owner->allyteam);
-					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.guard);
+					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.guard);
 				}
 				break;
 			}
 			case CMD_LOAD_ONTO: {
 				const CUnit* unit = uh->GetUnitUnsafe(ci->params[0]);
-				lineDrawer.DrawLineAndIcon(ci->id, unit->pos, cmdColors.load);
+				lineDrawer.DrawLineAndIcon(cmd_id, unit->pos, cmdColors.load);
 				break;
 			}
 			case CMD_WAIT: {
@@ -1031,7 +1025,7 @@ void CMobileCAI::DrawCommands(void)
 				break;
 			}
 			case CMD_SELFD: {
-				lineDrawer.DrawIconAtLastPos(ci->id);
+				lineDrawer.DrawIconAtLastPos(cmd_id);
 				break;
 			}
 			default: {
@@ -1070,9 +1064,8 @@ void CMobileCAI::NonMoving(void)
 		}
 		if (length < buggerOffRadius) {
 			float3 goalPos = buggerOffPos + dif * ((buggerOffRadius + 128) / length);
-			Command c;
-			c.id = CMD_MOVE;
-			c.options = 0;//INTERNAL_ORDER;
+			Command c(CMD_MOVE);
+			//c.options = INTERNAL_ORDER;
 			c.params.push_back(goalPos.x);
 			c.params.push_back(goalPos.y);
 			c.params.push_back(goalPos.z);
@@ -1100,8 +1093,7 @@ void CMobileCAI::IdleCheck(void)
 			owner->haveTarget = false;
 		} else if(owner->pos.SqDistance2D(owner->userTarget->pos) <
 				Square(owner->maxRange + 200*owner->moveState*owner->moveState)) {
-			Command c;
-			c.id = CMD_ATTACK;
+			Command c(CMD_ATTACK);
 			c.options=INTERNAL_ORDER;
 			c.params.push_back(owner->userTarget->id);
 			c.timeOut = gs->frameNum + 140;
@@ -1119,8 +1111,7 @@ void CMobileCAI::IdleCheck(void)
 			float3 apos=owner->lastAttacker->pos;
 			float dist=apos.SqDistance2D(owner->pos);
 			if(dist<Square(owner->maxRange+200*owner->moveState*owner->moveState)){
-				Command c;
-				c.id=CMD_ATTACK;
+				Command c(CMD_ATTACK);
 				c.options=INTERNAL_ORDER;
 				c.params.push_back(owner->lastAttacker->id);
 				c.timeOut=gs->frameNum+140;
@@ -1138,8 +1129,7 @@ void CMobileCAI::IdleCheck(void)
 		const float searchRadius = owner->maxRange + 150 * owner->moveState * owner->moveState;
 		CUnit* enemy = helper->GetClosestValidTarget(owner->pos, searchRadius, owner->allyteam, this);
 		if (enemy != NULL) {
-			Command c;
-			c.id=CMD_ATTACK;
+			Command c(CMD_ATTACK);
 			c.options=INTERNAL_ORDER;
 			c.params.push_back(enemy->id);
 			c.timeOut=gs->frameNum+140;
@@ -1158,9 +1148,7 @@ void CMobileCAI::IdleCheck(void)
 	    !owner->haveTarget && !dynamic_cast<CTAAirMoveType*>(owner->moveType)) {
 		//note that this is not internal order so that we dont keep generating
 		//new orders if we cant get to that pos
-		Command c;
-		c.id=CMD_MOVE;
-		c.options=0;
+		Command c(CMD_MOVE);
 		c.params.push_back(lastUserGoal.x);
 		c.params.push_back(lastUserGoal.y);
 		c.params.push_back(lastUserGoal.z);
@@ -1187,7 +1175,7 @@ void CMobileCAI::StartSlowGuard(float speed){
 			if (!commandQue.empty()) {
 				Command currCommand = commandQue.front();
 				if (commandQue.size() <= 1
-						|| commandQue[1].id != CMD_SET_WANTED_MAX_SPEED
+						|| commandQue[1].GetID() != CMD_SET_WANTED_MAX_SPEED
 						|| commandQue[1].params[0] > speed){
 					if (speed > 0)
 						owner->moveType->SetMaxSpeed(speed);

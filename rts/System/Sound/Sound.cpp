@@ -28,6 +28,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/myMath.h"
 #include "System/Platform/errorhandler.h"
+#include "System/Platform/Watchdog.h"
 
 #include "float3.h"
 
@@ -197,7 +198,11 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 	}
 	else if (key == "snd_filter")
 	{
-		efx->sfxProperties->filter_properties_f[AL_LOWPASS_GAIN] = std::atof(value.c_str());
+		float gainlf = 1.f;
+		float gainhf = 1.f;
+		sscanf(value.c_str(), "%f %f", &gainlf, &gainhf);
+		efx->sfxProperties->filter_properties_f[AL_LOWPASS_GAIN]   = gainlf;
+		efx->sfxProperties->filter_properties_f[AL_LOWPASS_GAINHF] = gainhf;
 		efx->CommitEffects();
 	}
 	else if (key == "UseEFX")
@@ -316,8 +321,6 @@ void CSound::StartThread(int maxSounds)
 			}
 		}
 
-		const bool airAbsorptionSupported = alcIsExtensionPresent(device, "ALC_EXT_EFX");
-
 		LogObject(LOG_SOUND) << "OpenAL info:\n";
 		if(alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
 		{
@@ -363,10 +366,15 @@ void CSound::StartThread(int maxSounds)
 	}
 	configHandler->Set("MaxSounds", maxSounds);
 
+	Watchdog::RegisterThread("audio");
+
 	while (!soundThreadQuit) {
 		boost::this_thread::sleep(boost::posix_time::millisec(50)); //! 20Hz
 		Update();
+		Watchdog::ClearTimer();
 	}
+
+	Watchdog::DeregisterThread("audio");
 
 	sources.clear(); // delete all sources
 	delete efx; // must happen after sources and before context

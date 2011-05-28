@@ -1997,7 +1997,7 @@ EXPORT(const char*) skirmishAiCallback_UnitDef_getHumanName(int skirmishAIId, in
 }
 
 EXPORT(const char*) skirmishAiCallback_UnitDef_getFileName(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->filename.c_str();
+	return "$$deprecated$$";
 }
 
 //EXPORT(int) skirmishAiCallback_UnitDef_getId(int skirmishAIId, int unitDefId) {
@@ -3026,7 +3026,9 @@ EXPORT(int) skirmishAiCallback_UnitDef_WeaponMount_getOnlyTargetCategory(int ski
 
 //########### BEGINN Unit
 EXPORT(int) skirmishAiCallback_Unit_getLimit(int skirmishAIId) {
-	return uh->MaxUnitsPerTeam();
+	const int team = skirmishAIId_teamId[skirmishAIId];
+	const int limit = teamHandler->Team(team)->maxUnits;
+	return limit;
 }
 
 EXPORT(int) skirmishAiCallback_Unit_getMax(int skirmishAIId) {
@@ -3253,7 +3255,7 @@ EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_getType(int skirmishAIId, int
 EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_getId(int skirmishAIId, int unitId, int commandId) {
 
 	const CCommandQueue* q = _intern_Unit_getCurrentCommandQueue(skirmishAIId, unitId);
-	return (CHECK_COMMAND_ID(q, commandId) ? q->at(commandId).id : 0);
+	return (CHECK_COMMAND_ID(q, commandId) ? q->at(commandId).GetID() : 0);
 }
 
 EXPORT(short) skirmishAiCallback_Unit_CurrentCommand_getOptions(int skirmishAIId, int unitId, int commandId) {
@@ -3569,7 +3571,7 @@ EXPORT(const char*) skirmishAiCallback_FeatureDef_getDescription(int skirmishAII
 }
 
 EXPORT(const char*) skirmishAiCallback_FeatureDef_getFileName(int skirmishAIId, int featureDefId) {
-	return getFeatureDefById(skirmishAIId, featureDefId)->filename.c_str();
+	return "$$deprecated$$";
 }
 
 //EXPORT(int) skirmishAiCallback_FeatureDef_getId(int skirmishAIId, int featureDefId) {
@@ -3807,7 +3809,7 @@ EXPORT(const char*) skirmishAiCallback_WeaponDef_getDescription(int skirmishAIId
 }
 
 EXPORT(const char*) skirmishAiCallback_WeaponDef_getFileName(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->filename.c_str();
+	return "$$deprecated$$";
 }
 
 EXPORT(const char*) skirmishAiCallback_WeaponDef_getCegTag(int skirmishAIId, int weaponDefId) {
@@ -4424,7 +4426,7 @@ EXPORT(int) skirmishAiCallback_Group_OrderPreview_getId(int skirmishAIId, int gr
 
 	//TODO: need to add support for new gui
 	Command tmpCmd = guihandler->GetOrderPreview();
-	return tmpCmd.id;
+	return tmpCmd.GetID();
 }
 
 EXPORT(short) skirmishAiCallback_Group_OrderPreview_getOptions(int skirmishAIId, int groupId) {

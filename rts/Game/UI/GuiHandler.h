@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef GUIHANDLER_H
-#define GUIHANDLER_H
+#ifndef GUI_HANDLER_H
+#define GUI_HANDLER_H
 
 #include <vector>
 #include <map>
@@ -10,14 +10,17 @@
 #include "InputReceiver.h"
 #include "MouseHandler.h"
 #include "Game/Camera.h"
+#include "Sim/Units/CommandAI/Command.h"
 
 class CUnit;
 struct UnitDef;
 struct BuildInfo;
 class Action;
-struct Command;
 struct CommandDescription;
 
+/**
+ * The C and part of the V in MVC (Model-View-Controller).
+ */
 class CGuiHandler : public CInputReceiver {
 public:
 	CGuiHandler();
@@ -26,25 +29,38 @@ public:
 	void Update();
 
 	void Draw();
-	void DrawMapStuff(int minimapLevel);
+	void DrawMapStuff(bool onMinimap);
 	void DrawCentroidCursor();
 
-	bool AboveGui(int x,int y);
+	bool AboveGui(int x, int y);
 	bool KeyPressed(unsigned short key, bool isRepeat);
 	bool KeyReleased(unsigned short key);
 	bool MousePress(int x, int y, int button);
-	void MouseRelease(int x, int y, int button) {MouseRelease(x,y,button, ::camera->pos, ::mouse->dir);}
-	void MouseRelease(int x, int y, int button, float3& camerapos, float3& mousedir);
+	void MouseRelease(int x, int y, int button)
+	{
+		// We can not use default params for this,
+		// because they get initialized at compile-time,
+		// where camera and mouse are still undefined.
+		MouseRelease(x, y, button, ::camera->pos, ::mouse->dir);
+	}
+	void MouseRelease(int x, int y, int button, const float3& cameraPos, const float3& mouseDir);
 	bool IsAbove(int x, int y);
 	std::string GetTooltip(int x, int y);
 	std::string GetBuildTooltip() const;
 
 	Command GetOrderPreview();
-	Command GetCommand(int mousex, int mousey, int buttonHint, bool preview, float3& camerapos=::camera->pos, float3& mousedir=::mouse->dir);
-	std::vector<BuildInfo> GetBuildPos(const BuildInfo& startInfo,
-		const BuildInfo& endInfo, float3& camerapos, float3& mousedir); // startInfo.def has to be endInfo.def
+	Command GetCommand(int mouseX, int mouseY, int buttonHint, bool preview)
+	{
+		// We can not use default params for this,
+		// because they get initialized at compile-time,
+		// where camera and mouse are still undefined.
+		return GetCommand(mouseX, mouseY, buttonHint, preview, ::camera->pos, ::mouse->dir);
+	}
+	Command GetCommand(int mouseX, int mouseY, int buttonHint, bool preview, const float3& cameraPos, const float3& mouseDir);
+	/// startInfo.def has to be endInfo.def
+	std::vector<BuildInfo> GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo, const float3& cameraPos, const float3& mouseDir);
 
-	bool ReloadConfig(const std::string& filename);
+	bool ReloadConfig(const std::string& fileName);
 
 	void ForceLayoutUpdate() { forceLayoutUpdate = true; }
 
@@ -52,7 +68,7 @@ public:
 	int GetActivePage() const { return activePage; }
 
 	void RunLayoutCommand(const std::string& command);
-	void RunCustomCommands(const std::vector<std::string>& cmds, bool rmb);
+	void RunCustomCommands(const std::vector<std::string>& cmds, bool rightMouseButton);
 
 	bool GetInvertQueueKey() const { return invertQueueKey; }
 	void SetInvertQueueKey(bool value) { invertQueueKey = value; }
@@ -63,12 +79,17 @@ public:
 
 	bool GetOutlineFonts() const { return outlineFonts; }
 
-	int  GetDefaultCommand(int x, int y, float3& camerapos=::camera->pos, float3& mousedir=::mouse->dir) const;
+	int  GetDefaultCommand(int x, int y) const
+	{
+		// We can not use default params for this,
+		// because they get initialized at compile-time,
+		// where camera and mouse are still undefined.
+		return GetDefaultCommand(x, y, ::camera->pos, ::mouse->dir);
+	}
+	int  GetDefaultCommand(int x, int y, const float3& cameraPos, const float3& mouseDir) const;
 
-	bool SetActiveCommand(int cmdIndex, bool rmb);
-	bool SetActiveCommand(int cmdIndex,
-		int button, bool lmb, bool rmb,
-		bool alt, bool ctrl, bool meta, bool shift);
+	bool SetActiveCommand(int cmdIndex, bool rightMouseButton);
+	bool SetActiveCommand(int cmdIndex, int button, bool leftMouseButton, bool rightMouseButton, bool alt, bool ctrl, bool meta, bool shift);
 	bool SetActiveCommand(const Action& action, const CKeySet& ks, int actionIndex);
 
 	void SetDrawSelectionInfo(bool dsi) { drawSelectionInfo = dsi; }
@@ -77,7 +98,7 @@ public:
 	void SetBuildFacing(unsigned int facing);
 	void SetBuildSpacing(int spacing);
 
-	void PushLayoutCommand(const std::string&, bool luacmd = true);
+	void PushLayoutCommand(const std::string& cmd, bool luaCmd = true);
 	void RunLayoutCommands();
 
 public:
@@ -92,17 +113,18 @@ private:
 	bool LayoutCustomIcons(bool useSelectionPage);
 	void ResizeIconArray(unsigned int size);
 	void AppendPrevAndNext(std::vector<CommandDescription>& cmds);
-	void ConvertCommands(std::vector<CommandDescription>&);
+	void ConvertCommands(std::vector<CommandDescription>& cmds);
 
 	int  FindInCommandPage();
 	void RevertToCmdDesc(const CommandDescription& cmdDesc, bool defaultCommand, bool samePage);
 
-	void CreateOptions(Command& c,bool rmb);
+	unsigned char CreateOptions(bool rightMouseButton);
+	unsigned char CreateOptions(int button);
 	void FinishCommand(int button);
 	void SetShowingMetal(bool show);
 	float GetNumberInput(const CommandDescription& cmdDesc) const;
 
-	void ProcessFrontPositions(float3& pos0, float3& pos1);
+	void ProcessFrontPositions(float3& pos0, const float3& pos1);
 
 	struct IconInfo;
 
@@ -123,22 +145,22 @@ private:
 	void DrawMenuName();
 	void DrawSelectionInfo();
 	void DrawNumberInput();
-	void DrawMiniMapMarker(float3& camerapos);
-	void DrawFront(int button, float maxSize, float sizeDiv, bool onMinimap, float3& camerapos, float3& mousedir);
+	void DrawMiniMapMarker(const float3& cameraPos);
+	void DrawFront(int button, float maxSize, float sizeDiv, bool onMinimap, const float3& cameraPos, const float3& mouseDir);
 	void DrawArea(float3 pos, float radius, const float* color);
-	void DrawSelectBox(const float3& start, const float3& end, float3& camerapos);
+	void DrawSelectBox(const float3& start, const float3& end, const float3& cameraPos);
 	void DrawSelectCircle(const float3& pos, float radius, const float* color);
 
 	void DrawStencilCone(const float3& pos, float radius, float height);
 	void DrawStencilRange(const float3& pos, float radius);
 
 
-	int  IconAtPos(int x,int y);
+	int  IconAtPos(int x, int y);
 	void SetCursorIcon() const;
 
 	void LoadDefaults();
 	void SanitizeConfig();
-	bool LoadConfig(const std::string& filename);
+	bool LoadConfig(const std::string& fileName);
 	void ParseFillOrder(const std::string& text);
 
 	bool ProcessLocalActions(const Action& action);
@@ -214,7 +236,7 @@ private:
 	unsigned int iconsSize;
 	int iconsCount;
 
-	std::map<std::string, unsigned int> textureMap; // filename, glTextureID
+	std::map<std::string, unsigned int> textureMap; // fileName, glTextureID
 
 	int failedSound;
 
@@ -222,8 +244,6 @@ private:
 	bool hasLuaUILayoutCommands;
 };
 
-
 extern CGuiHandler* guihandler;
 
-
-#endif /* GUIHANDLER_H */
+#endif /* GUI_HANDLER_H */

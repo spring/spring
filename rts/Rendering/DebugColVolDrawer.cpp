@@ -100,10 +100,11 @@ static inline void DrawFeatureColVol(const CFeature* f)
 
 static void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPiece* lap, int lapf, CMatrix44f mat)
 {
-	mat.Translate(p->pos.x, p->pos.y, p->pos.z);
-	mat.RotateY(-p->rot[1]);
-	mat.RotateX(-p->rot[0]);
-	mat.RotateZ(-p->rot[2]);
+	const float3& rot = p->GetRotation();
+	mat.Translate(p->GetPosition());
+	mat.RotateY(-rot[1]);
+	mat.RotateX(-rot[0]);
+	mat.RotateZ(-rot[2]);
 
 	glPushMatrix();
 		glMultMatrixf(mat.m);

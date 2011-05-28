@@ -8,9 +8,15 @@
 
 #include "IModelParser.h"
 #include "3DModel.h"
+#include "3DModelLog.h"
 #include "3DOParser.h"
 #include "S3OParser.h"
 #include "OBJParser.h"
+#ifdef _MSC_VER
+#define _INC_MATH // a hack to prevent ambiguous math calls
+#endif
+#include "AssParser.h"
+#include "assimp.hpp"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Units/Unit.h"
 #include "System/FileSystem/FileSystem.h"
@@ -18,9 +24,7 @@
 #include "System/LogOutput.h"
 #include "System/Exceptions.h"
 
-
 C3DModelLoader* modelParser = NULL;
-
 
 //////////////////////////////////////////////////////////////////////
 // C3DModelLoader
@@ -31,7 +35,26 @@ C3DModelLoader::C3DModelLoader()
 	// file-extension should be lowercase
 	parsers["3do"] = new C3DOParser();
 	parsers["s3o"] = new CS3OParser();
-	parsers["obj"] = new COBJParser();
+	//parsers["obj"] = new COBJParser(); // replaced by Assimp
+
+	// assimp library
+	CAssParser* unitassparser = new CAssParser();
+	std::string extensionlist;
+
+	Assimp::Importer importer;
+	importer.GetExtensionList(extensionlist); // get a ";" separated list of wildcards
+	char* charextensionlist = new char[extensionlist.size() +1];
+	strcpy (charextensionlist, extensionlist.c_str());
+	logOutput.Print("Assimp: Supported model formats: %s", extensionlist.c_str());
+	char* extensionchar = strtok( charextensionlist, ";" );
+	while( extensionchar )
+	{
+		std::string extension = extensionchar;
+		extension = extension.substr( 2 ); // strip wildcard and dot
+		parsers[extension] = unitassparser; // register extension
+		extensionchar = strtok( NULL, ";" );
+	}
+	delete[] charextensionlist;
 }
 
 
@@ -48,11 +71,15 @@ C3DModelLoader::~C3DModelLoader()
 	cache.clear();
 
 	// delete parsers
+	std::set<IModelParser*> dedupe_parsers; // this is to avoid deleting the same parser twice, if it's assigned to multiple model formats
 	std::map<std::string, IModelParser*>::iterator pi;
 	for (pi = parsers.begin(); pi != parsers.end(); ++pi) {
+		if ( dedupe_parsers.count( pi->second ) != 0 ) continue;
+		dedupe_parsers.insert( pi->second );
 		delete pi->second;
 	}
 	parsers.clear();
+	dedupe_parsers.clear();
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 	createLists.clear();
@@ -63,13 +90,15 @@ C3DModelLoader::~C3DModelLoader()
 
 
 
-inline int ModelExtToModelType(const std::string& ext) {
+static inline ModelType ModelExtToModelType(const std::string& ext) {
 	if (ext == "3do") { return MODELTYPE_3DO; }
 	if (ext == "s3o") { return MODELTYPE_S3O; }
 	if (ext == "obj") { return MODELTYPE_OBJ; }
-	return -1;
+	return MODELTYPE_ASS; // FIXME: Return -1 if Assimp cant handle extension
 }
-inline S3DModelPiece* ModelTypeToModelPiece(int type) {
+
+
+static inline S3DModelPiece* ModelTypeToModelPiece(const ModelType& type) {
 	if (type == MODELTYPE_3DO) { return (new S3DOPiece()); }
 	if (type == MODELTYPE_S3O) { return (new SS3OPiece()); }
 	if (type == MODELTYPE_OBJ) { return (new SOBJPiece()); }
@@ -176,28 +205,16 @@ void C3DModelLoader::CreateLocalModel(CUnit* unit)
 #if defined(USE_GML) && GML_ENABLE_SIM
 	GML_STDMUTEX_LOCK(model); // CreateLocalModel
 
-	unit->localmodel = CreateLocalModel(unit->model);
+	unit->localmodel = new LocalModel(unit->model);
 	fixLocalModels.insert(unit);
 #else
-	unit->localmodel = CreateLocalModel(unit->model);
+	unit->localmodel = new LocalModel(unit->model);
 	// FixLocalModel(unit);
 #endif
 }
 
 
-
-LocalModel* C3DModelLoader::CreateLocalModel(S3DModel* model)
-{
-	unsigned int pieceNum = 0;
-
-	LocalModel* lModel = new LocalModel(model);
-	lModel->CreatePieces(model->GetRootPiece(), &pieceNum);
-
-	return lModel;
-}
-
-
-void C3DModelLoader::FixLocalModel(CUnit* unit)
+void C3DModelLoader::FixLocalModel(CUnit* unit) //FIXME rename! (it adds (delayed) the DL-Ids to the localmodel)
 {
 	int piecenum = 0;
 	FixLocalModel(unit->model->GetRootPiece(), unit->localmodel, &piecenum);
@@ -218,7 +235,7 @@ void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 {
 	o->dispListID = glGenLists(1);
 	glNewList(o->dispListID, GL_COMPILE);
-	o->DrawList();
+		o->DrawForList();
 	glEndList();
 
 	for (std::vector<S3DModelPiece*>::iterator bs = o->childs.begin(); bs != o->childs.end(); ++bs) {

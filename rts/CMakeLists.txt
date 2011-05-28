@@ -50,7 +50,7 @@ LIST(APPEND engineCommonLibraries ${DEVIL_IL_LIBRARY})
 ### Find include directories and add platform specific libraries
 LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY})
 
-LIST(APPEND engineCommonLibraries lua 7zip oscpack minizip streflop lobby)
+LIST(APPEND engineCommonLibraries lua 7zip oscpack minizip streflop lobby assimp)
 
 IF    (UNIX)
 	# Needed for dynamically loading shared libraries (on some OS)
@@ -63,78 +63,27 @@ ENDIF (MINGW)
 
 
 ### Assemble engine sources
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Game game_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Game/Camera game_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Game/Server game_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Game/StartScripts game_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Game/UI game_files)
-
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Lua lua_files)
-
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/ExternalAI ai_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/ExternalAI/Interface ai_files)
-
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Map map_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Map/SM3 map_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Map/SM3/terrain map_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Map/SMF map_files)
-
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Rendering render_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Rendering/Env render_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Rendering/GL render_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Rendering/Shaders render_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Rendering/Textures render_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Rendering/Models render_files)
-
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/aGui render_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Menu render_files)
-
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim sim_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Features sim_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Misc sim_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/MoveTypes sim_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/MoveTypes/MoveMath sim_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Objects sim_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Path/ sim_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Path/Default sim_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Projectiles sim_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Projectiles/WeaponProjectiles sim_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Projectiles/Unsynced sim_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Units sim_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Units/Scripts sim_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Units/CommandAI sim_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Units/Groups sim_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Units/UnitTypes sim_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/Sim/Weapons sim_files)
-
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System sys_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Platform sys_files)
-### only use the target platform related directory
-IF    (UNIX)
-	AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux sys_files)
-ELSE  (UNIX)
-	AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Platform/Win sys_files)
-ENDIF (UNIX)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/FileSystem sys_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Net sys_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Script sys_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Sync sys_files)
-# Sound is now two static libs
-#AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Sound sys_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/creg sys_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/Input sys_files)
-AUX_SOURCE_DIRECTORY(${ENGINE_SRC_ROOT_DIR}/System/LoadSave sys_files)
+Add_Subdirectory(Game)
+Add_Subdirectory(Lua)
+Add_Subdirectory(ExternalAI)
+Add_Subdirectory(Rendering)
+Add_Subdirectory(aGui)
+Add_Subdirectory(Menu)
+Add_Subdirectory(Map)
+Add_Subdirectory(Sim)
+Add_Subdirectory(System)
 
 SET(engineSources
-		${game_files}
-		${lua_files}
-		${map_files}
-		${fs_files}
-		${render_files}
-		${sim_files}
-		${sys_files}
-		${ai_files}
-		${nedmalloc_obj}
+		${sources_engine_Game}
+		${sources_engine_Lua}
+		${sources_engine_Map}
+		${sources_engine_Rendering}
+		${sources_engine_aGui}
+		${sources_engine_Menu}
+		${sources_engine_Sim}
+		${sources_engine_System}
+		${sources_engine_ExternalAI}
+		${nedmalloc_obj} # TODO remove? (seems never to be set)
 	)
 
 ### Add headers for generated project files (e.g. Code::Blocks)

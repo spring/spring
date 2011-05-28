@@ -3,6 +3,7 @@
 #ifndef _CRASH_HANDLER_H_
 #define _CRASH_HANDLER_H_
 
+#include <string.h>
 #ifdef WIN32
 #include <windows.h>
 #endif
@@ -12,7 +13,7 @@ namespace CrashHandler {
 	void Install();
 	void Remove();
 
-	void Stacktrace(Threading::NativeThreadHandle thread, const char *threadName);
+	void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName);
 	void PrepareStacktrace();
 	void CleanupStacktrace();
 

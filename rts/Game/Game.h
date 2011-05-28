@@ -25,7 +25,6 @@ class Action;
 class ChatMessage;
 class SkirmishAIData;
 
-const int MAX_CONSECUTIVE_SIMFRAMES = 15;
 
 class CGame : public CGameController
 {

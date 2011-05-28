@@ -364,10 +364,11 @@ const CCommandQueue* CAIAICallback::GetCurrentUnitCommands(int unitId) {
 	CCommandQueue* cc = new CCommandQueue();
 	cc->queueType = (CCommandQueue::QueueType) type;
 	for (int c=0; c < numCmds; c++) {
-		Command command;
-		command.id = sAICallback->Unit_CurrentCommand_getId(skirmishAIId, unitId, c);
-		command.options = sAICallback->Unit_CurrentCommand_getOptions(skirmishAIId, unitId, c);
-		command.tag = sAICallback->Unit_CurrentCommand_getTag(skirmishAIId, unitId, c);
+		const int cmd_id            = sAICallback->Unit_CurrentCommand_getId(skirmishAIId, unitId, c);
+		const unsigned char cmd_opt = sAICallback->Unit_CurrentCommand_getOptions(skirmishAIId, unitId, c);
+
+		Command command(cmd_id, cmd_opt);
+		command.tag     = sAICallback->Unit_CurrentCommand_getTag(skirmishAIId, unitId, c);
 		command.timeOut = sAICallback->Unit_CurrentCommand_getTimeOut(skirmishAIId, unitId, c);
 
 		int numParams = sAICallback->Unit_CurrentCommand_getParams(skirmishAIId, unitId, c, NULL, 0);

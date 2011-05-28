@@ -11,6 +11,9 @@
 
 class LuaTable;
 class MapParser;
+#if !defined(HEADLESS) && !defined(NO_SOUND)
+	struct EAXSfxProps;
+#endif
 
 class CMapInfo
 {
@@ -76,6 +79,7 @@ public:
 	struct atmosphere_t {
 		float  cloudDensity;
 		float  fogStart;
+		float  fogEnd;
 		float4 fogColor;
 		float3 skyColor;
 		float3 skyDir;
@@ -98,6 +102,8 @@ public:
 		float bladeWidth;
 		float bladeHeight;    //! actual blades will be (bladeHeight + randf(0, bladeHeight)) tall
 		float bladeAngle;
+		float4 color;
+		std::string grassBladeTexName;    // defaults to internally-generated texture
 	} grass;
 
 	/** settings read from "MAP\LIGHT" section */
@@ -113,6 +119,7 @@ public:
 		float4 unitSunColor;
 		float  unitShadowDensity;
 		float3 unitSpecularColor;
+		float  specularExponent;
 	} light;
 
 	/** settings read from "MAP\WATER" section
@@ -159,7 +166,6 @@ public:
 		std::string specularTexName;      ///< "MAP\SpecularTex"
 		std::string splatDistrTexName;
 		std::string splatDetailTexName;
-		std::string grassBladeTexName;    // defaults to internally-generated texture
 		std::string grassShadingTexName;  // defaults to minimap texture
 		std::string skyReflectModTexName;
 		std::string detailNormalTexName;
@@ -193,6 +199,13 @@ public:
 		bool receiveTracks;
 	};
 	TerrainType terrainTypes[NUM_TERRAIN_TYPES];
+	
+	/**
+	 * Sound EFX param structure
+	 */
+#if !defined(HEADLESS) && !defined(NO_SOUND)
+	EAXSfxProps* efxprops;
+#endif
 
 private:
 	void ReadGlobal();
@@ -205,6 +218,7 @@ private:
 	void ReadSmf();
 	void ReadSm3();
 	void ReadTerrainTypes();
+	void ReadSound();
 
 	std::string mapInfoFile;
 	MapParser* parser; // map       parser root table

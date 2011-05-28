@@ -15,6 +15,7 @@
 #include "Map/MapInfo.h"
 #include "Game/Camera.h"
 #include "Game/Game.h"
+#include "Game/GameSetup.h"
 #include "Game/LoadScreen.h"
 #include "System/Exceptions.h"
 #include "System/FastMath.h"
@@ -23,6 +24,7 @@
 #include "System/mmgr.h"
 #include "System/TimeProfiler.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
 
 using std::sprintf;
 using std::string;
@@ -50,6 +52,7 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 	int curTile = 0;
 
 
+	const std::string smfDir = filesystem.GetDirectory(gameSetup->MapFile());
 	const CMapInfo::smf_t& smf = mapInfo->smf;
 	bool smtHeaderOverride = false;
 
@@ -75,9 +78,9 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 		numSmallTiles = swabdword(numSmallTiles);
 
 
-		std::string tileFileName, smtFileName;
+		std::string smtFilePath, smtFileName;
 
-		// eat the zero-terminated name
+		//! eat the zero-terminated name
 		while (true) {
 			char ch = 0;
 			ifs->Read(&ch, 1);
@@ -90,20 +93,30 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 		}
 
 		if (!smtHeaderOverride) {
-			tileFileName = "maps/" + smtFileName;
+			smtFilePath = smfDir + smtFileName;
 		} else {
-			tileFileName = "maps/" + smf.smtFileNames[a];
+			smtFilePath = smfDir + smf.smtFileNames[a];
 		}
 
-		//logOutput.Print("Loading .smt tile-file \"%s\"", tileFileName.c_str());
+		//logOutput.Print("Loading .smt tile-file \"%s\"", smtFilePath.c_str());
 
-		CFileHandler tileFile(tileFileName);
+		CFileHandler tileFile(smtFilePath);
+
+		if (!tileFile.FileExists()) {
+			//! try absolute path
+			if (!smtHeaderOverride) {
+				smtFilePath = smtFileName;
+			} else {
+				smtFilePath = smf.smtFileNames[a];
+			}
+			tileFile = CFileHandler(smtFilePath);
+		}
 
 		if (!tileFile.FileExists()) {
 			logOutput.Print(
 				"[CBFGroundTextures] could not find .smt tile-file "
 				"\"%s\" (all %d missing tiles will be colored red)",
-				tileFileName.c_str(), numSmallTiles
+				smtFilePath.c_str(), numSmallTiles
 			);
 			memset(&tiles[curTile * SMALL_TILE_SIZE], 0xaa, numSmallTiles * SMALL_TILE_SIZE);
 			curTile += numSmallTiles;
@@ -115,7 +128,7 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 
 		if (strcmp(tfh.magic, "spring tilefile") != 0 || tfh.version != 1 || tfh.tileSize != 32 || tfh.compressionType != 1) {
 			char t[500];
-			sprintf(t, "[CBFGroundTextures] file \"%s\" does not match .smt format", tileFileName.c_str());
+			sprintf(t, "[CBFGroundTextures] file \"%s\" does not match .smt format", smtFilePath.c_str());
 			throw content_error(t);
 		}
 

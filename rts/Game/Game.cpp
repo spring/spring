@@ -36,6 +36,8 @@
 #include "WordCompletion.h"
 #include "OSCStatsSender.h"
 #include "IVideoCapturing.h"
+#include "InMapDraw.h"
+#include "InMapDrawModel.h"
 #include "Game/UI/UnitTracker.h"
 #ifdef _WIN32
 #  include "winerror.h"
@@ -44,7 +46,7 @@
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Rendering/Env/BaseSky.h"
-#include "Rendering/Env/BaseTreeDrawer.h"
+#include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/DebugColVolDrawer.h"
@@ -60,7 +62,7 @@
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/IPathDrawer.h"
 #include "Rendering/IconHandler.h"
-#include "Rendering/InMapDraw.h"
+#include "Rendering/InMapDrawView.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/TeamHighlight.h"
 #include "Rendering/VerticalSync.h"
@@ -145,6 +147,7 @@
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/Net/PackPacket.h"
 #include "System/Platform/CrashHandler.h"
+#include "System/Platform/Watchdog.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncedPrimitiveIO.h"
@@ -217,7 +220,6 @@ CR_REG_METADATA(CGame,(
 
 
 CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHandler* saveFile) :
-	finishedLoading(false),
 	gameDrawMode(gameNotDrawing),
 	defsParser(NULL),
 	fps(0),
@@ -231,6 +233,7 @@ CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHa
 	gameOver(false),
 
 	noSpectatorChat(false),
+	finishedLoading(false),
 
 	infoConsole(NULL),
 	consoleHistory(NULL),
@@ -335,7 +338,9 @@ CGame::~CGame()
 	SafeDelete(camera);
 	SafeDelete(cam2);
 	SafeDelete(icon::iconHandler);
+	SafeDelete(inMapDrawerView);
 	SafeDelete(inMapDrawer);
+	SafeDelete(inMapDrawerModel);
 	SafeDelete(geometricObjects);
 	SafeDelete(farTextureHandler);
 	SafeDelete(texturehandler3DO);
@@ -391,6 +396,8 @@ CGame::~CGame()
 
 void CGame::LoadGame(const std::string& mapname)
 {
+	Watchdog::RegisterThread("loadscreen");
+
 	if (!gu->globalQuit) LoadDefs();
 	if (!gu->globalQuit) LoadSimulation(mapname);
 	if (!gu->globalQuit) LoadRendering();
@@ -402,6 +409,8 @@ void CGame::LoadGame(const std::string& mapname)
 		loadscreen->SetLoadMessage("Loading game");
 		saveFile->LoadGame();
 	}
+
+	Watchdog::DeregisterThread("loadscreen");
 }
 
 
@@ -536,9 +545,11 @@ void CGame::LoadRendering()
 	readmap->NewGroundDrawer();
 
 	loadscreen->SetLoadMessage("Creating TreeDrawer");
-	treeDrawer = CBaseTreeDrawer::GetTreeDrawer();
+	treeDrawer = ITreeDrawer::GetTreeDrawer();
 
+	inMapDrawerModel = new CInMapDrawModel();
 	inMapDrawer = new CInMapDraw();
+	inMapDrawerView = new CInMapDrawView();
 	pathDrawer = IPathDrawer::GetInstance();
 
 	geometricObjects = new CGeometricObjects();
@@ -561,12 +572,8 @@ void CGame::SetupRenderingParams()
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0);
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
 
-	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
-	glFogf(GL_FOG_START, globalRendering->viewRange * mapInfo->atmosphere.fogStart);
-	glFogf(GL_FOG_END, globalRendering->viewRange);
-	glFogf(GL_FOG_DENSITY, 1.0f);
-	glFogi(GL_FOG_MODE, GL_LINEAR);
-	glEnable(GL_FOG);
+	IBaseSky::SetFog();
+
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0.0f);
 }
 
@@ -978,10 +985,10 @@ bool CGame::DrawWorld()
 
 	mouse->DrawSelectionBox();
 
-	guihandler->DrawMapStuff(0);
+	guihandler->DrawMapStuff(false);
 
 	if (globalRendering->drawMapMarks && !hideInterface) {
-		inMapDrawer->Draw();
+		inMapDrawerView->Draw();
 	}
 
 
@@ -1131,21 +1138,26 @@ bool CGame::Draw() {
 
 	if (lastSimFrame != gs->frameNum) {
 		CInputReceiver::CollectGarbage();
-		if (!skipping) {
-			// TODO call only when camera changed
-			sound->UpdateListener(camera->pos, camera->forward, camera->up, globalRendering->lastFrameTime);
-		}
 	}
 
-	//! update extra texture even if paused (you can still give orders)
-	if (!skipping && (lastSimFrame != gs->frameNum || gs->paused)) {
-		static unsigned next_upd = lastUpdate + 1000/30;
+	//! always update ExtraTexture & SoundListener with <=30Hz (even when paused)
+	if (!skipping) {
+		bool newSimFrame = (lastSimFrame != gs->frameNum);
+		if (newSimFrame || gs->paused) {
+			static unsigned lastUpdate = SDL_GetTicks();
+			unsigned deltaMSec = currentTime - lastUpdate;
 
-		if (!gs->paused || next_upd <= lastUpdate) {
-			next_upd = lastUpdate + 1000/30;
+			if (!gs->paused || deltaMSec >= 1000/30.f) {
+				lastUpdate = currentTime;
 
-			SCOPED_TIMER("ExtraTexture");
-			gd->UpdateExtraTexture();
+				{
+					SCOPED_TIMER("ExtraTexture");
+					gd->UpdateExtraTexture();
+				}
+
+				// TODO call only when camera changed
+				sound->UpdateListener(camera->pos, camera->forward, camera->up, deltaMSec / 1000.f);
+			}
 		}
 	}
 
@@ -1609,9 +1621,12 @@ void CGame::SimFrame() {
 		m_validateAllAllocUnits();
 #endif
 
-	eventHandler.GameFrame(gs->frameNum);
-
-	gs->frameNum++;
+	// Important: gs->frameNum must be updated *before* GameFrame is called,
+	// or any call-outs called by Lua will see a stale gs->frameNum.
+	// (e.g. effective TTL of CEGs emitted in GameFrame will be reduced...)
+	// It must still be passed the old frameNum because Lua may depend on it.
+	// (e.g. initialization in frame 0...)
+	eventHandler.GameFrame(gs->frameNum++);
 
 	if (!skipping) {
 		infoConsole->Update();
@@ -1755,7 +1770,7 @@ void CGame::UpdateUI(bool updateCam)
 			writingPos = 0;
 		}
 
-		if (inMapDrawer->wantLabel && !userWriting) {
+		if (inMapDrawer->IsWantLabel() && !userWriting) {
 			if (userInput.size() > 200) {
 				// avoid troubles with long lines
 				userInput = userInput.substr(0, 200);

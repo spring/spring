@@ -21,8 +21,9 @@
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
 #include "FileSystem/FileSystem.h"
-#include "Util.h"
+#include "System/BranchPrediction.h"
 #include "System/myTime.h"
+#include "System/Util.h"
 
 LuaParser* LuaParser::currentParser = NULL;
 
@@ -770,18 +771,18 @@ LuaTable LuaTable::SubTableExpr(const string& expr) const
 	LuaTable nextTable;
 
 	if (expr[0] == '[') { // numeric key
-    endPos = expr.find(']');
-    if (endPos == string::npos) {
-      return LuaTable(); // missing brace
-    }
-    const char* startPtr = expr.c_str() + 1; // skip the '['
-    char* endPtr;
-    const int index = strtol(startPtr, &endPtr, 10);
-    if (endPtr == startPtr) {
-      return LuaTable(); // invalid index
-    }
-    endPos++; // eat the ']'
-    nextTable = SubTable(index);
+		endPos = expr.find(']');
+		if (endPos == string::npos) {
+			return LuaTable(); // missing brace
+		}
+		const char* startPtr = expr.c_str() + 1; // skip the '['
+		char* endPtr;
+		const int index = strtol(startPtr, &endPtr, 10);
+		if (endPtr == startPtr) {
+			return LuaTable(); // invalid index
+		}
+		endPos++; // eat the ']'
+		nextTable = SubTable(index);
 	}
 	else { // string key
 		endPos = expr.find_first_of(".[");
@@ -911,25 +912,39 @@ bool LuaTable::KeyExists(const string& key) const
 //  Value types
 //
 
-int LuaTable::GetType(int key) const
+LuaTable::DataType LuaTable::GetType(int key) const
 {
 	if (!PushValue(key)) {
-		return -1;
+		return NIL;
 	}
 	const int type = lua_type(L, -1);
 	lua_pop(L, 1);
-	return type;
+	
+	switch (type) {
+		case LUA_TBOOLEAN: return BOOLEAN;
+		case LUA_TNUMBER:  return NUMBER;
+		case LUA_TSTRING:  return STRING;
+		case LUA_TTABLE:   return TABLE;
+		default:           return NIL;
+	}
 }
 
 
-int LuaTable::GetType(const string& key) const
+LuaTable::DataType LuaTable::GetType(const string& key) const
 {
 	if (!PushValue(key)) {
-		return -1;
+		return NIL;
 	}
 	const int type = lua_type(L, -1);
 	lua_pop(L, 1);
-	return type;
+	
+	switch (type) {
+		case LUA_TBOOLEAN: return BOOLEAN;
+		case LUA_TNUMBER:  return NUMBER;
+		case LUA_TSTRING:  return STRING;
+		case LUA_TTABLE:   return TABLE;
+		default:           return NIL;
+	}
 }
 
 
@@ -1107,11 +1122,11 @@ static bool ParseTableFloat(lua_State* L,
 {
 	lua_pushnumber(L, index);
 	lua_gettable(L, tableIndex);
-	if (!lua_isnumber(L, -1)) {
+	value = lua_tofloat(L, -1);
+	if (unlikely(value == 0) && !lua_isnumber(L, -1) && !lua_isstring(L, -1)) {
 		lua_pop(L, 1);
 		return false;
 	}
-	value = lua_tofloat(L, -1);
 	lua_pop(L, 1);
 	return true;
 }
@@ -1197,11 +1212,11 @@ int LuaTable::GetInt(const string& key, int def) const
 	if (!PushValue(key)) {
 		return def;
 	}
-	if (!lua_isnumber(L, -1)) {
+	const int value = lua_toint(L, -1);
+	if (unlikely(value == 0) && !lua_isnumber(L, -1) && !lua_isstring(L, -1)) {
 		lua_pop(L, 1);
 		return def;
 	}
-	const int value = lua_toint(L, -1);
 	lua_pop(L, 1);
 	return value;
 }
@@ -1227,11 +1242,11 @@ float LuaTable::GetFloat(const string& key, float def) const
 	if (!PushValue(key)) {
 		return def;
 	}
-	if (!lua_isnumber(L, -1)) {
+	const float value = lua_tofloat(L, -1);
+	if (unlikely(value == 0.f) && !lua_isnumber(L, -1) && !lua_isstring(L, -1)) {
 		lua_pop(L, 1);
 		return def;
 	}
-	const float value = lua_tofloat(L, -1);
 	lua_pop(L, 1);
 	return value;
 }
@@ -1294,11 +1309,11 @@ int LuaTable::GetInt(int key, int def) const
 	if (!PushValue(key)) {
 		return def;
 	}
-	if (!lua_isnumber(L, -1)) {
+	const int value = lua_toint(L, -1);
+	if (unlikely(value == 0) && !lua_isnumber(L, -1) && !lua_isstring(L, -1)) {
 		lua_pop(L, 1);
 		return def;
 	}
-	const int value = lua_toint(L, -1);
 	lua_pop(L, 1);
 	return value;
 }
@@ -1324,11 +1339,11 @@ float LuaTable::GetFloat(int key, float def) const
 	if (!PushValue(key)) {
 		return def;
 	}
-	if (!lua_isnumber(L, -1)) {
+	const float value = lua_tofloat(L, -1);
+	if (unlikely(value == 0) && !lua_isnumber(L, -1) && !lua_isstring(L, -1)) {
 		lua_pop(L, 1);
 		return def;
 	}
-	const float value = lua_tofloat(L, -1);
 	lua_pop(L, 1);
 	return value;
 }

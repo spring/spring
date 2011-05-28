@@ -56,7 +56,7 @@ public:
 #endif
 
 private:
-	void UpdateDrawPos(CFeature* f);
+	static void UpdateDrawPos(CFeature* f);
 
 	void DrawOpaqueFeatures(int);
 	void DrawFarFeatures();

@@ -130,17 +130,17 @@ public:
 	#define CATCH_AI_EXCEPTION									\
 		catch (const std::exception& e) {						\
 			CEngineOutHandler::HandleAIException(e.what());		\
-			throw e;											\
+			throw;											\
 		} catch (const std::string& s) {						\
 			CEngineOutHandler::HandleAIException(s.c_str());	\
-			throw s;											\
+			throw;											\
 		} catch (const char* s) {								\
 			CEngineOutHandler::HandleAIException(s);			\
-			throw s;											\
+			throw;											\
 		} catch (int err) {										\
 			const std::string s = IntToString(err);				\
 			CEngineOutHandler::HandleAIException(s.c_str());	\
-			throw err;											\
+			throw;											\
 		} catch (...) {											\
 			CEngineOutHandler::HandleAIException("Unknown");	\
 			throw;												\

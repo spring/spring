@@ -17,17 +17,18 @@
 #include "LuaUnsyncedRead.h"
 
 #include "LuaInclude.h"
-
 #include "LuaHandle.h"
 #include "LuaHashString.h"
+#include "LuaUtils.h"
 #include "Game/Camera.h"
-#include "Game/Camera/CameraController.h"
+#include "Game/CameraHandler.h"
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
 #include "Game/PlayerHandler.h"
 #include "Game/PlayerRoster.h"
-#include "Game/CameraHandler.h"
+#include "Game/TraceRay.h"
+#include "Game/Camera/CameraController.h"
 #include "Game/UI/GuiHandler.h"
 #include "Game/UI/InfoConsole.h"
 #include "Game/UI/KeyCodes.h"
@@ -608,7 +609,7 @@ int LuaUnsyncedRead::GetUnitTransformMatrix(lua_State* L)
 	CMatrix44f m = unit->GetTransformMatrix(false, false);
 
 	if ((lua_isboolean(L, 2) && lua_toboolean(L, 2))) {
-		m = m.Invert();
+		m = m.InvertAffine();
 	}
 
 	for (int i = 0; i < 16; i += 4) {
@@ -1207,7 +1208,7 @@ int LuaUnsyncedRead::GetCameraVectors(lua_State* L)
 
 #define PACK_CAMERA_VECTOR(n) \
 	HSTR_PUSH(L, #n);           \
-	lua_newtable(L);            \
+	lua_createtable(L, 3, 0);            \
 	lua_pushnumber(L, cam-> n .x); lua_rawseti(L, -2, 1); \
 	lua_pushnumber(L, cam-> n .y); lua_rawseti(L, -2, 2); \
 	lua_pushnumber(L, cam-> n .z); lua_rawseti(L, -2, 3); \
@@ -1282,8 +1283,8 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 		return 0;
 	}
 
-	const CUnit* unit = NULL;
-	const CFeature* feature = NULL;
+	CUnit* unit = NULL;
+	CFeature* feature = NULL;
 	const float range = globalRendering->viewRange * 1.4f;
 	const float3& pos = camera->pos;
 	const float3 dir = camera->CalcPixelDir(wx, wy);
@@ -1291,12 +1292,11 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 
 // FIXME	const int origAllyTeam = gu->myAllyTeam;
 //	gu->myAllyTeam = readAllyTeam;
-	const float udist = helper->GuiTraceRay(pos, dir, range, unit, true);
-	const float fdist = helper->GuiTraceRayFeature(pos, dir, range, feature);
+	const float dist = TraceRay::GuiTraceRay(pos, dir, range, true, NULL, unit, feature);
 //	gu->myAllyTeam = origAllyTeam;
 
-	const float badRange = (range - 300.0f);
-	if ((udist > badRange) && (fdist > badRange) && (unit == NULL)) {
+	const float badRange = range - 300.0f;
+	if ((dist > badRange) && !unit && !feature) {
 		if (includeSky) {
 			lua_pushliteral(L, "sky");
 		} else {
@@ -1304,12 +1304,6 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 		}
 	} else {
 		if (!onlyCoords) {
-			if (udist > fdist) {
-				unit = NULL;
-			} else {
-				feature = NULL;
-			}
-	
 			if (unit) {
 				lua_pushliteral(L, "unit");
 				lua_pushnumber(L, unit->id);
@@ -1326,7 +1320,7 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 		lua_pushliteral(L, "ground");
 	}
 
-	const float3 groundPos = pos + (dir * udist);
+	const float3 groundPos = pos + (dir * dist);
 	lua_createtable(L, 3, 0);
 	lua_pushnumber(L, groundPos.x); lua_rawseti(L, -2, 1);
 	lua_pushnumber(L, groundPos.y); lua_rawseti(L, -2, 2);
@@ -1615,33 +1609,6 @@ int LuaUnsyncedRead::GetDefaultCommand(lua_State* L)
 }
 
 
-// FIXME: duplicated in LuaSyncedRead.cpp
-static void PushCommandDesc(lua_State* L, const CommandDescription& cd)
-{
-	lua_newtable(L);
-
-	HSTR_PUSH_NUMBER(L, "id",          cd.id);
-	HSTR_PUSH_NUMBER(L, "type",        cd.type);
-	HSTR_PUSH_STRING(L, "name",        cd.name);
-	HSTR_PUSH_STRING(L, "action",      cd.action);
-	HSTR_PUSH_STRING(L, "tooltip",     cd.tooltip);
-	HSTR_PUSH_STRING(L, "texture",     cd.iconname);
-	HSTR_PUSH_STRING(L, "cursor",      cd.mouseicon);
-	HSTR_PUSH_BOOL(L,   "hidden",      cd.hidden);
-	HSTR_PUSH_BOOL(L,   "disabled",    cd.disabled);
-	HSTR_PUSH_BOOL(L,   "showUnique",  cd.showUnique);
-	HSTR_PUSH_BOOL(L,   "onlyTexture", cd.onlyTexture);
-
-	HSTR_PUSH(L, "params");
-	lua_newtable(L);
-	const int pCount = (int)cd.params.size();
-	for (int p = 0; p < pCount; p++) {
-		lua_pushsstring(L, cd.params[p]);
-		lua_rawseti(L, -2, p + 1);
-	}
-}
-
-
 int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 {
 //	GML_RECMUTEX_LOCK(gui); // GetActiveCmdDescs - this mutex is already locked (lua)
@@ -1651,11 +1618,13 @@ int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 	}
 	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
+
 	const vector<CommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
+
 	for (int i = 0; i < cmdDescCount; i++) {
 		lua_pushnumber(L, i + CMD_INDEX_OFFSET);
-		PushCommandDesc(L, cmdDescs[i]);
+		LuaUtils::PushCommandDesc(L, cmdDescs[i]);
 		lua_rawset(L, -3);
 	}
 	HSTR_PUSH_NUMBER(L, "n", cmdDescCount);
@@ -1681,7 +1650,7 @@ int LuaUnsyncedRead::GetActiveCmdDesc(lua_State* L)
 	if ((cmdIndex < 0) || (cmdIndex >= cmdDescCount)) {
 		return 0;
 	}
-	PushCommandDesc(L, cmdDescs[cmdIndex]);
+	LuaUtils::PushCommandDesc(L, cmdDescs[cmdIndex]);
 	return 1;
 }
 

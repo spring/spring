@@ -1387,13 +1387,13 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			if (smfShaderCurGLSL != NULL) {
 				smfShaderCurGLSL->Enable();
 				smfShaderCurGLSL->SetUniform3fv(10, &camera->pos[0]);
-				smfShaderCurGLSL->SetUniformMatrix4fv(12, false, &shadowHandler->shadowMatrix.m[0]);
+				smfShaderCurGLSL->SetUniformMatrix4fv(12, false, shadowHandler->shadowMatrix);
 				smfShaderCurGLSL->SetUniform4fv(13, &(shadowHandler->GetShadowParams().x));
 
 				// already on the MV stack
 				glLoadIdentity();
 				lightHandler.Update(smfShaderCurGLSL);
-				glMultMatrixd(camera->GetViewMat());
+				glMultMatrixf(camera->GetViewMatrix());
 
 				glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, map->GetNormalsTexture());
 				glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, map->GetSpecularTexture());
@@ -1425,7 +1425,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 				smfShaderCurrARB->SetUniform4f(11, 0, 0, 0, sky->GetLight()->GetGroundShadowDensity());
 
 				glMatrixMode(GL_MATRIX0_ARB);
-				glLoadMatrixf(shadowHandler->shadowMatrix.m);
+				glLoadMatrixf(shadowHandler->shadowMatrix);
 				glMatrixMode(GL_MODELVIEW);
 
 				glActiveTexture(GL_TEXTURE4);

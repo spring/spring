@@ -2,7 +2,7 @@
 
 #include "StdAfx.h"
 #include "FlameThrower.h"
-#include "Game/GameHelper.h"
+#include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "Sim/Projectiles/WeaponProjectiles/FlameProjectile.h"
 #include "Sim/Units/Unit.h"
@@ -64,13 +64,13 @@ bool CFlameThrower::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
 	if (g > 0 && g < length * 0.9f)
 		return false;
 
-	if (avoidFeature && helper->LineFeatureCol(weaponMuzzlePos, dir, length)) {
+	if (avoidFeature && TraceRay::LineFeatureCol(weaponMuzzlePos, dir, length)) {
 		return false;
 	}
-	if (avoidFriendly && helper->TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner, CGameHelper::TEST_ALLIED)) {
+	if (avoidFriendly && TraceRay::TestAllyCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, owner)) {
 		return false;
 	}
-	if (avoidNeutral && helper->TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner, CGameHelper::TEST_NEUTRAL)) {
+	if (avoidNeutral && TraceRay::TestNeutralCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner)) {
 		return false;
 	}
 

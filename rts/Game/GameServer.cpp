@@ -86,7 +86,7 @@ const std::string commands[numCommands] = {
 	"nopause", "nohelp", "cheat", "godmode", "globallos",
 	"nocost", "forcestart", "nospectatorchat", "nospecdraw",
 	"skip", "reloadcob", "reloadcegs", "devlua", "editdefs",
-	"luagaia", "singlestep"
+	"singlestep"
 };
 using boost::format;
 
@@ -1911,6 +1911,13 @@ void CGameServer::PushAction(const Action& action)
 				std::vector<GameParticipant>::iterator participantIter = std::find(players.begin(), players.end(), gp);
 
 				if (participantIter != players.end()) {
+					const GameParticipant::customOpts &opts = participantIter->GetAllValues();
+					GameParticipant::customOpts::const_iterator it;
+					if ((it = opts.find("origpass")) == opts.end() || it->second == "") {
+						it = opts.find("password");
+						if(it != opts.end())
+							participantIter->SetValue("origpass", it->second);
+					}
 					participantIter->SetValue("password", password);
 					logOutput.Print("Changed player/spectator password: \"%s\" \"%s\"", name.c_str(), password.c_str());
 				} else {
@@ -2114,7 +2121,9 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		if (name == players[i].name) {
 			if (!players[i].isFromDemo) {
 				if (!players[i].link) {
-					if (canReconnect || !gameHasStarted)
+					if (reconnect)
+						errmsg = "User is not ingame";
+					else if (canReconnect || !gameHasStarted)
 						newPlayerNumber = i;
 					else
 						errmsg = "Game has already started";
@@ -2149,12 +2158,14 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 	// check for user's password
 	if (errmsg == "" && !isLocal) {
 		if (newPlayerNumber < players.size()) {
-			GameParticipant::customOpts::const_iterator it = players[newPlayerNumber].GetAllValues().find("password");
-			bool passwdFound = (it != players[newPlayerNumber].GetAllValues().end());
-			if (passwdFound) {
-				if (passwd != it->second)
+			const GameParticipant::customOpts &opts = players[newPlayerNumber].GetAllValues();
+			GameParticipant::customOpts::const_iterator it;
+			if ((it = opts.find("password")) != opts.end() && passwd != it->second) {
+				if ((!reconnect || (it = opts.find("origpass")) == opts.end() || it->second == "" || passwd != it->second))
 					errmsg = "Incorrect password";
 			}
+			else if (!reconnect) // forget about origpass whenever a real mid-game join succeeds
+				players[newPlayerNumber].SetValue("origpass", "");
 		}
 	}
 

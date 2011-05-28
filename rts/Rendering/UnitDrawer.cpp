@@ -459,10 +459,7 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	if (globalRendering->drawFog) {
-		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
-		glEnable(GL_FOG);
-	}
+	IBaseSky::SetFog();
 
 	if (drawReflection) {
 		SetUnitGlobalLODFactor(LODScale * LODScaleReflection);
@@ -519,7 +516,7 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 	UnitSet::const_iterator unitSetIt;
 
 	for (unitBinIt = unitBin.begin(); unitBinIt != unitBin.end(); ++unitBinIt) {
-		if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ) {
+		if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ || modelType == MODELTYPE_ASS) {
 			texturehandlerS3O->SetS3oTexture(unitBinIt->first);
 		}
 
@@ -779,13 +776,13 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 		#define S3O_TEX(model) \
 			texturehandlerS3O->GetS3oTex(model->textureType)
 		#define PUSH_SHADOW_TEXTURE_STATE(model)                                  \
-			if (model->type == MODELTYPE_S3O || model->type == MODELTYPE_OBJ) {   \
+			if (model->type == MODELTYPE_S3O || model->type == MODELTYPE_OBJ || model->type == MODELTYPE_ASS) {   \
 				glActiveTexture(GL_TEXTURE0);                                     \
 				glEnable(GL_TEXTURE_2D);                                          \
 				glBindTexture(GL_TEXTURE_2D, S3O_TEX(model)->tex2);               \
 			}
 		#define POP_SHADOW_TEXTURE_STATE(model)                                   \
-			if (model->type == MODELTYPE_S3O || model->type == MODELTYPE_OBJ) {   \
+			if (model->type == MODELTYPE_S3O || model->type == MODELTYPE_OBJ || model->type == MODELTYPE_ASS) {   \
 				glBindTexture(GL_TEXTURE_2D, 0);                                  \
 				glDisable(GL_TEXTURE_2D);                                         \
 				glActiveTexture(GL_TEXTURE0);                                     \
@@ -1042,7 +1039,7 @@ void CUnitDrawer::DrawCloakedUnitsHelper(int modelType)
 
 		// cloaked units
 		for (UnitRenderBinIt it = unitBin.begin(); it != unitBin.end(); ++it) {
-			if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ) {
+			if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ || modelType == MODELTYPE_ASS) {
 				texturehandlerS3O->SetS3oTexture(it->first);
 			}
 
@@ -1099,7 +1096,7 @@ inline void CUnitDrawer::DrawCloakedUnit(CUnit* unit, int modelType, bool drawGh
 		glTranslatef3(unit->pos);
 		glRotatef(unit->buildFacing * 90.0f, 0, 1, 0);
 
-		if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ) {
+		if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ || modelType == MODELTYPE_ASS) {
 			// the units in liveGhostedBuildings[modelType] are not
 			// sorted by textureType, but we cannot merge them with
 			// cloakedModelRenderers[modelType] since they are not
@@ -1183,7 +1180,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 				glTranslatef3((*it)->pos);
 				glRotatef((*it)->facing * 90.0f, 0, 1, 0);
 
-				if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ)
+				if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ || modelType == MODELTYPE_ASS)
 					texturehandlerS3O->SetS3oTexture((*it)->model->textureType);
 
 				SetTeamColour((*it)->team, cloakAlpha1);
@@ -1216,7 +1213,7 @@ void CUnitDrawer::SetupForUnitDrawing()
 	if (advShading && !water->drawReflection) {
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
-		glMultMatrixd(camera->GetViewMat());
+		glMultMatrixf(camera->GetViewMatrix());
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
@@ -1232,9 +1229,9 @@ void CUnitDrawer::SetupForUnitDrawing()
 
 		if (globalRendering->haveGLSL && shadowHandler->shadowsLoaded) {
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform3fv(6, &camera->pos[0]);
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4dv(7, false, camera->GetViewMat());
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4dv(8, false, camera->GetViewMatInv());
-			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(13, false, &shadowHandler->shadowMatrix.m[0]);
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(8, false, camera->GetViewMatrixInverse());
+			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniformMatrix4fv(13, false, shadowHandler->shadowMatrix);
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4fv(14, &(shadowHandler->GetShadowParams().x));
 
 			lightHandler.Update(modelShaders[MODEL_SHADER_S3O_ACTIVE]);
@@ -1249,7 +1246,7 @@ void CUnitDrawer::SetupForUnitDrawing()
 			modelShaders[MODEL_SHADER_S3O_ACTIVE]->SetUniform4f(11, unitAmbientColor.x, unitAmbientColor.y, unitAmbientColor.z, 1.0f);
 
 			glMatrixMode(GL_MATRIX0_ARB);
-			glLoadMatrixf(shadowHandler->shadowMatrix.m);
+			glLoadMatrixf(shadowHandler->shadowMatrix);
 			glMatrixMode(GL_MODELVIEW);
 		}
 
@@ -1355,7 +1352,7 @@ void CUnitDrawer::SetTeamColour(int team, float alpha) const
 	}
 }
 
-void CUnitDrawer::SetBasicTeamColour(int team, float alpha) const
+void CUnitDrawer::SetBasicTeamColour(int team, float alpha)
 {
 	const unsigned char* col = teamHandler->Team(team)->color;
 	const float texConstant[] = {col[0] / 255.0f, col[1] / 255.0f, col[2] / 255.0f, alpha};
@@ -1376,7 +1373,7 @@ void CUnitDrawer::SetBasicTeamColour(int team, float alpha) const
  * - call SetBasicTeamColour to set the team colour to transform to.
  * - Replace the output alpha channel. If not, only the team-coloured bits will show, if that. Or something.
  */
-void CUnitDrawer::SetupBasicS3OTexture0() const
+void CUnitDrawer::SetupBasicS3OTexture0()
 {
 	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_TEXTURE_2D);
@@ -1402,7 +1399,7 @@ void CUnitDrawer::SetupBasicS3OTexture0() const
  * - Leaves glActivateTextureARB at the first unit.
  * - This doesn't tinker with the output alpha, either.
  */
-void CUnitDrawer::SetupBasicS3OTexture1() const
+void CUnitDrawer::SetupBasicS3OTexture1()
 {
 	glActiveTexture(GL_TEXTURE1);
 	glEnable(GL_TEXTURE_2D);
@@ -1422,7 +1419,7 @@ void CUnitDrawer::SetupBasicS3OTexture1() const
 }
 
 
-void CUnitDrawer::CleanupBasicS3OTexture1() const
+void CUnitDrawer::CleanupBasicS3OTexture1()
 {
 	// reset texture1 state
 	glActiveTexture(GL_TEXTURE1);
@@ -1432,7 +1429,7 @@ void CUnitDrawer::CleanupBasicS3OTexture1() const
 	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 }
 
-void CUnitDrawer::CleanupBasicS3OTexture0() const
+void CUnitDrawer::CleanupBasicS3OTexture0()
 {
 	// reset texture0 state
 	glActiveTexture(GL_TEXTURE0);
@@ -1559,7 +1556,7 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 		SetupForUnitDrawing();
 		opaqueModelRenderers[MDL_TYPE(unit)]->PushRenderState();
 
-		if (MDL_TYPE(unit) == MODELTYPE_S3O || MDL_TYPE(unit) == MODELTYPE_OBJ) {
+		if (MDL_TYPE(unit) == MODELTYPE_S3O || MDL_TYPE(unit) == MODELTYPE_OBJ || MDL_TYPE(unit) == MODELTYPE_ASS) {
 			texturehandlerS3O->SetS3oTexture(TEX_TYPE(unit));
 		}
 
@@ -1599,7 +1596,8 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 po
 			texturehandler3DO->Set3doAtlases();
 		} break;
 		case MODELTYPE_S3O:
-		case MODELTYPE_OBJ: {
+		case MODELTYPE_OBJ:
+		case MODELTYPE_ASS: {
 			texturehandlerS3O->SetS3oTexture(model->textureType);
 		} break;
 		default: {
@@ -1987,7 +1985,7 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 #ifdef USE_GML
 		if (showHealthBars && !unit->noDraw &&
 			(unit->health < unit->maxHealth || unit->paralyzeDamage > 0.0f || unit->limExperience > 0.0f ||
-			unit->beingBuilt || unit->stockpileWeapon || unit->group) && 
+			unit->beingBuilt || unit->stockpileWeapon || unit->group) &&
 			((unit->pos - camera->pos).SqLength() < (unitDrawDistSqr * 500.0f)))
 			drawStat.insert(unit);
 #endif
@@ -2279,7 +2277,7 @@ void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newS
 
 
 
-unsigned int CUnitDrawer::CalcUnitLOD(const CUnit* unit, unsigned int lastLOD) const
+unsigned int CUnitDrawer::CalcUnitLOD(const CUnit* unit, unsigned int lastLOD)
 {
 	if (lastLOD == 0) { return 0; }
 
@@ -2297,7 +2295,7 @@ unsigned int CUnitDrawer::CalcUnitLOD(const CUnit* unit, unsigned int lastLOD) c
 }
 
 // unused
-unsigned int CUnitDrawer::CalcUnitShadowLOD(const CUnit* unit, unsigned int lastLOD) const
+unsigned int CUnitDrawer::CalcUnitShadowLOD(const CUnit* unit, unsigned int lastLOD)
 {
 	return CalcUnitLOD(unit, lastLOD); // FIXME
 

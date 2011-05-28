@@ -62,8 +62,8 @@ void main(void)
 	gl_TexCoord[5].st = ShadingPlane.xy*gl_Vertex.xz;
 
 	// COMPUTE WAVE TEXTURE COORDS
-	const float fstart = PerlinStartFreq;
-	const float f      = PerlinLacunarity;
+	float fstart = PerlinStartFreq;
+	float f      = PerlinLacunarity;
 	gl_TexCoord[1].st = (vec2(-1.0,-1.0) + gl_TexCoord[0].pq + 0.75) * fstart       + frame * WindSpeed * gl_MultiTexCoord1.st;
 	gl_TexCoord[1].pq = (vec2(-1.0, 1.0) + gl_TexCoord[0].pq + 0.50) * fstart*f     - frame * WindSpeed * gl_MultiTexCoord1.st;
 	gl_TexCoord[2].st = (vec2( 1.0,-1.0) + gl_TexCoord[0].pq + 0.25) * fstart*f*f   + frame * WindSpeed * gl_MultiTexCoord1.st;

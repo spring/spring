@@ -1,8 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
-#include "Game/GameHelper.h"
+#include "mmgr.h"
+
 #include "LightningCannon.h"
+#include "WeaponDefHandler.h"
+#include "Game/GameHelper.h"
+#include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "PlasmaRepulser.h"
 #include "Rendering/Models/3DModel.h"
@@ -10,8 +14,7 @@
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/LightningProjectile.h"
 #include "Sim/Units/Unit.h"
-#include "WeaponDefHandler.h"
-#include "mmgr.h"
+
 
 CR_BIND_DERIVED(CLightningCannon, CWeapon, (NULL));
 
@@ -68,13 +71,13 @@ bool CLightningCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 	if (g > 0 && g < length * 0.9f)
 		return false;
 
-	if (avoidFeature && helper->LineFeatureCol(weaponMuzzlePos, dir, length)) {
+	if (avoidFeature && TraceRay::LineFeatureCol(weaponMuzzlePos, dir, length)) {
 		return false;
 	}
-	if (avoidFriendly && helper->TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner, CGameHelper::TEST_ALLIED)) {
+	if (avoidFriendly && TraceRay::TestAllyCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner->allyteam, owner)) {
 		return false;
 	}
-	if (avoidNeutral && helper->TestCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner, CGameHelper::TEST_NEUTRAL)) {
+	if (avoidNeutral && TraceRay::TestNeutralCone(weaponMuzzlePos, dir, length, (accuracy + sprayAngle), owner)) {
 		return false;
 	}
 
@@ -97,16 +100,7 @@ void CLightningCannon::FireImpl()
 
 	CUnit* u = NULL;
 	CFeature* f = NULL;
-	float r = 0.0f;
-
-	{
-		const CUnit* cu = NULL;
-		const CFeature* cf = NULL;
-		r = helper->TraceRay(weaponMuzzlePos, dir, range, 0, (const CUnit*)owner, cu, collisionFlags, &cf);
-		u = const_cast<CUnit*>(cu);
-		f = const_cast<CFeature*>(cf);
-	}
-
+	float r = TraceRay::TraceRay(weaponMuzzlePos, dir, range, collisionFlags, owner, u, f);
 
 	float3 newDir;
 	CPlasmaRepulser* shieldHit = NULL;

@@ -168,7 +168,7 @@ void CFactory::Update()
 
 			const CCommandQueue& queue = commandAI->commandQue;
 
-			if(!queue.empty() && (queue.front().id == CMD_WAIT)) {
+			if(!queue.empty() && (queue.front().GetID() == CMD_WAIT)) {
 				curBuild->AddBuildPower(0, this);
 			} else {
 				if (curBuild->AddBuildPower(buildSpeed, this)) {
@@ -281,9 +281,7 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 		}
 	}
 
-	Command c;
-	c.id = CMD_MOVE;
-	c.options = 0;
+	Command c(CMD_MOVE);
 	c.params.push_back(foundPos.x);
 	c.params.push_back(foundPos.y);
 	c.params.push_back(foundPos.z);
@@ -299,8 +297,7 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 		return;
 	}
 
-	Command c;
-	c.id = CMD_MOVE;
+	Command c(CMD_MOVE);
 
 	if (!unit->unitDef->canfly) {
 

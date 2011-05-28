@@ -29,14 +29,15 @@
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "Game/GameServer.h"
-#include "Rendering/InMapDraw.h"
+#include "Game/InMapDrawModel.h"
 #include "GlobalUnsynced.h"
 #include "Exceptions.h"
 
-CCregLoadSaveHandler::CCregLoadSaveHandler(void)
+CCregLoadSaveHandler::CCregLoadSaveHandler()
+	: ifs(NULL)
 {}
 
-CCregLoadSaveHandler::~CCregLoadSaveHandler(void)
+CCregLoadSaveHandler::~CCregLoadSaveHandler()
 {}
 
 class CGameStateCollector
@@ -48,7 +49,8 @@ public:
 
 	void Serialize(creg::ISerializer& s);
 
-	std::string mapName, modName;
+	std::string mapName;
+	std::string modName;
 };
 
 CR_BIND(CGameStateCollector, );
@@ -64,7 +66,7 @@ static void WriteString(std::ostream& s, std::string& str)
 	}
 	// write the string-termination NULL char
 	c = '\0';
-	s.write(&c,sizeof(char));
+	s.write(&c, sizeof(char));
 }
 
 static void ReadString(std::istream& s, std::string& str)
@@ -97,7 +99,7 @@ void CGameStateCollector::Serialize(creg::ISerializer& s)
 //	std::map<std::string, int> unitRestrictions;
 	s.SerializeObjectInstance(&waitCommandsAI, waitCommandsAI.GetClass());
 	s.SerializeObjectInstance(&wind, wind.GetClass());
-	s.SerializeObjectInstance(inMapDrawer,inMapDrawer->GetClass());
+	s.SerializeObjectInstance(inMapDrawerModel, inMapDrawerModel->GetClass());
 	for (int a=0; a < teamHandler->ActiveTeams(); a++) {
 		s.SerializeObjectInstance(grouphandlers[a], grouphandlers[a]->GetClass());
 	}
@@ -105,12 +107,17 @@ void CGameStateCollector::Serialize(creg::ISerializer& s)
 //	s.Serialize()
 }
 
-static void PrintSize(const char *txt, int size)
+static void PrintSize(const char* txt, int size)
 {
-	if (size>1024*1024*1024) logOutput.Print("%s %.1f GB",txt,size/(1024.0f*1024*1024)); else
-	if (size>     1024*1024) logOutput.Print("%s %.1f MB",txt,size/(1024.0f*1024     )); else
-	if (size>          1024) logOutput.Print("%s %.1f KB",txt,size/(1024.0f          )); else
-	logOutput.Print("%s %u B",txt,size);
+	if (size > (1024 * 1024 * 1024)) {
+		logOutput.Print("%s %.1f GB", txt, size / (1024.0f * 1024 * 1024));
+	} else if (size >  (1024 * 1024)) {
+		logOutput.Print("%s %.1f MB", txt, size / (1024.0f * 1024));
+	} else if (size > 1024) {
+		logOutput.Print("%s %.1f KB", txt, size / (1024.0f));
+	} else {
+		logOutput.Print("%s %u B",    txt, size);
+	}
 }
 
 void CCregLoadSaveHandler::SaveGame(const std::string& file)
@@ -129,19 +136,19 @@ void CCregLoadSaveHandler::SaveGame(const std::string& file)
 		WriteString(ofs, modName);
 		WriteString(ofs, mapName);
 
-		CGameStateCollector *gsc = new CGameStateCollector();
+		CGameStateCollector* gsc = new CGameStateCollector();
 
 		creg::COutputStreamSerializer os;
 		os.SavePackage(&ofs, gsc, gsc->GetClass());
 		PrintSize("Game",ofs.tellp());
 		int aistart = ofs.tellp();
 		eoh->Save(&ofs);
-		PrintSize("AIs",((int)ofs.tellp())-aistart);
-	} catch (content_error &e) {
+		PrintSize("AIs", ((int)ofs.tellp())-aistart);
+	} catch (content_error& e) {
 		logOutput.Print("Save failed(content error): %s", e.what());
-	} catch (std::exception &e) {
+	} catch (std::exception& e) {
 		logOutput.Print("Save failed: %s", e.what());
-	} catch (char* &e) {
+	} catch (char*& e) {
 		logOutput.Print("Save failed: %s", e);
 	} catch (...) {
 		logOutput.Print("Save failed(unknown error)");
@@ -183,16 +190,18 @@ void CCregLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 void CCregLoadSaveHandler::LoadGame()
 {
 	creg::CInputStreamSerializer inputStream;
-	void *pGSC = 0;
-	creg::Class* gsccls = 0;
+	void* pGSC = NULL;
+	creg::Class* gsccls = NULL;
 	inputStream.LoadPackage(ifs, pGSC, gsccls);
 
 	assert (pGSC && gsccls == CGameStateCollector::StaticClass());
 
-	CGameStateCollector *gsc = (CGameStateCollector *)pGSC;
+	CGameStateCollector* gsc = (CGameStateCollector*)pGSC;
 	delete gsc; // the only job of gsc is to collect gamestate data
+	gsc = NULL;
 	eoh->Load(ifs);
 	delete ifs;
+	ifs = NULL;
 	//for (int a=0; a < teamHandler->ActiveTeams(); a++) { // For old savegames
 	//	if (teamHandler->Team(a)->isDead && eoh->IsSkirmishAI(a)) {
 	//		eoh->DestroySkirmishAI(skirmishAIId(a), 2 /* = team died */);

@@ -947,6 +947,22 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\InMapDrawModel.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\InMapDrawModel.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\InMapDraw.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\InMapDraw.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Game\DummyVideoCapturing.h"
 				>
 			</File>
@@ -1955,11 +1971,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Rendering\InMapDraw.cpp"
+				RelativePath="..\..\Rendering\InMapDrawView.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Rendering\InMapDraw.h"
+				RelativePath="..\..\Rendering\InMapDrawView.h"
 				>
 			</File>
 			<File
@@ -2070,11 +2086,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseTreeDrawer.cpp"
+					RelativePath="..\..\Rendering\Env\ITreeDrawer.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseTreeDrawer.h"
+					RelativePath="..\..\Rendering\Env\ITreeDrawer.h"
 					>
 				</File>
 				<File

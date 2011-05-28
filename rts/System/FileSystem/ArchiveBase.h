@@ -30,8 +30,19 @@ public:
 	
 	///@return The amount of files in the archive, does not change during lifetime
 	virtual unsigned NumFiles() const = 0;
-	///@return fileID of the file, NumFiles() if not found
-	unsigned FindFile(const std::string& name) const;
+	/**
+	 * Returns true if the file exists in this archive.
+	 * @param normalizedFilePath VFS path to the file in lower-case,
+	 *   using forward-slashes, for example "maps/mymap.smf"
+	 * @return true if the file exists in this archive, false otherwise
+	 */
+	bool FileExists(const std::string& normalizedFilePath) const;
+	/**
+	 * Returns the fileID of a file.
+	 * @param filePath VFS path to the file, for example "maps/myMap.smf"
+	 * @return fileID of the file, NumFiles() if not found
+	 */
+	unsigned FindFile(const std::string& filePath) const;
 	virtual bool GetFile(unsigned fid, std::vector<boost::uint8_t>& buffer) = 0;
 	virtual void FileInfo(unsigned fid, std::string& name, int& size) const = 0;
 	/**

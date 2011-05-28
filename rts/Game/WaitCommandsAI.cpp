@@ -195,7 +195,7 @@ void CWaitCommandsAI::AddGatherWait(const Command& cmd)
 
 void CWaitCommandsAI::AcknowledgeCommand(const Command& cmd)
 {
-	if ((cmd.id != CMD_WAIT) || (cmd.params.size() != 2)) {
+	if ((cmd.GetID() != CMD_WAIT) || (cmd.params.size() != 2)) {
 		return;
 	}
 	const KeyType key = Wait::GetKeyFromFloat(cmd.params[1]);
@@ -224,7 +224,7 @@ void CWaitCommandsAI::AddLocalUnit(CUnit* unit, const CUnit* builder)
 	CCommandQueue::const_iterator qit;
 	for (qit = dq.begin(); qit != dq.end(); ++qit) {
 		const Command& cmd = *qit;
-		if ((cmd.id != CMD_WAIT) || (cmd.params.size() != 2)) {
+		if ((cmd.GetID() != CMD_WAIT) || (cmd.params.size() != 2)) {
 			continue;
 		}
 
@@ -285,7 +285,7 @@ void CWaitCommandsAI::ClearUnitQueue(CUnit* unit, const CCommandQueue& queue)
 	CCommandQueue::const_iterator qit;
 	for (qit = queue.begin(); qit != queue.end(); ++qit) {
 		const Command& cmd = *qit;
-		if ((cmd.id == CMD_WAIT) && (cmd.params.size() == 2)) {
+		if ((cmd.GetID() == CMD_WAIT) && (cmd.params.size() == 2)) {
 			const KeyType key = Wait::GetKeyFromFloat(cmd.params[1]);
 			WaitMap::iterator wit = waitMap.find(key);
 			if (wit != waitMap.end()) {
@@ -351,7 +351,7 @@ void CWaitCommandsAI::AddIcon(const Command& cmd, const float3& pos) const
 	}
 	else if (code == CMD_WAITCODE_DEATHWAIT) {
 		lineDrawer.DrawIconAtLastPos(CMD_DEATHWAIT);
-    it->second->AddUnitPosition(pos);
+		it->second->AddUnitPosition(pos);
 	}
 	else if (code == CMD_WAITCODE_GATHERWAIT) {
 		lineDrawer.DrawIconAtLastPos(CMD_GATHERWAIT);
@@ -424,7 +424,7 @@ CWaitCommandsAI::Wait::WaitState
 		return Missing;
 	}
 	const Command& cmd = dq.front();
-	if ((cmd.id == CMD_WAIT) && (cmd.params.size() == 2) &&
+	if ((cmd.GetID() == CMD_WAIT) && (cmd.params.size() == 2) &&
 			(cmd.params[0] == code) &&
 			(GetKeyFromFloat(cmd.params[1]) == key)) {
 		return Active;
@@ -434,7 +434,7 @@ CWaitCommandsAI::Wait::WaitState
 	++it;
 	for ( ; it != dq.end(); ++it) {
 		const Command& qcmd = *it;
-		if ((qcmd.id == CMD_WAIT) && (qcmd.params.size() == 2) &&
+		if ((qcmd.GetID() == CMD_WAIT) && (qcmd.params.size() == 2) &&
 				(qcmd.params[0] == code) &&
 				(GetKeyFromFloat(qcmd.params[1]) == key)) {
 			return Queued;
@@ -451,7 +451,7 @@ bool CWaitCommandsAI::Wait::IsWaitingOn(const CUnit* unit) const
 		return false;
 	}
 	const Command& cmd = dq.front();
-	if ((cmd.id == CMD_WAIT) && (cmd.params.size() == 2) &&
+	if ((cmd.GetID() == CMD_WAIT) && (cmd.params.size() == 2) &&
 			(cmd.params[0] == code) &&
 			(GetKeyFromFloat(cmd.params[1]) == key)) {
 		return true;
@@ -494,8 +494,7 @@ void CWaitCommandsAI::Wait::SendCommand(const Command& cmd,
 
 void CWaitCommandsAI::Wait::SendWaitCommand(const CUnitSet& unitSet)
 {
-	Command waitCmd;
-	waitCmd.id = CMD_WAIT;
+	Command waitCmd(CMD_WAIT);
 	SendCommand(waitCmd, unitSet);
 }
 
@@ -554,9 +553,7 @@ CWaitCommandsAI::TimeWait::TimeWait(const Command& cmd, CUnit* _unit)
 	duration = GAME_SPEED * (int)cmd.params[0];
 	factory = (dynamic_cast<CFactory*>(unit) != NULL);
 
-	Command waitCmd;
-	waitCmd.id = CMD_WAIT;
-	waitCmd.options = cmd.options;
+	Command waitCmd(CMD_WAIT, cmd.options);
 	waitCmd.params.push_back(code);
 	waitCmd.params.push_back(GetFloatFromKey(key));
 
@@ -737,9 +734,7 @@ CWaitCommandsAI::DeathWait::DeathWait(const Command& cmd)
 
 	waitUnits = selUnits;
 
-	Command waitCmd;
-	waitCmd.id = CMD_WAIT;
-	waitCmd.options = cmd.options;
+	Command waitCmd(CMD_WAIT, cmd.options);
 	waitCmd.params.push_back(code);
 	waitCmd.params.push_back(GetFloatFromKey(key));
 	selectedUnits.GiveCommand(waitCmd);
@@ -950,9 +945,7 @@ CWaitCommandsAI::SquadWait::SquadWait(const Command& cmd)
 	valid = true;
 	key = GetNewKey();
 
-	Command waitCmd;
-	waitCmd.id = CMD_WAIT;
-	waitCmd.options = cmd.options;
+	Command waitCmd(CMD_WAIT, cmd.options);
 	waitCmd.params.push_back(code);
 	waitCmd.params.push_back(GetFloatFromKey(key));
 
@@ -1097,7 +1090,7 @@ CWaitCommandsAI::GatherWait::GatherWait(const Command& cmd)
 {
 	GML_RECMUTEX_LOCK(sel); // GatherWait
 
-	if (cmd.params.size() != 0) {
+	if (!cmd.params.empty()) {
 		return;
 	}
 
@@ -1119,9 +1112,7 @@ CWaitCommandsAI::GatherWait::GatherWait(const Command& cmd)
 	valid = true;
 	key = GetNewKey();
 
-	Command waitCmd;
-	waitCmd.id = CMD_WAIT;
-	waitCmd.options = SHIFT_KEY;
+	Command waitCmd(CMD_WAIT, SHIFT_KEY);
 	waitCmd.params.push_back(code);
 	waitCmd.params.push_back(GetFloatFromKey(key));
 	selectedUnits.GiveCommand(waitCmd, true);

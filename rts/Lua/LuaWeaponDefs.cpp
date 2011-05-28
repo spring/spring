@@ -17,6 +17,7 @@
 #include "LuaDefs.h"
 #include "LuaHandle.h"
 #include "LuaUtils.h"
+#include "Game/TraceRay.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -318,21 +319,21 @@ static int VisualsTable(lua_State* L, const void* data)
 static int NoFeatureCollide(lua_State* L, const void* data)
 {
 	const int bits = *((const int*) data);
-	lua_pushboolean(L, (bits & COLLISION_NOFEATURE));
+	lua_pushboolean(L, (bits & Collision::NOFEATURES));
 	return 1;
 }
 
 static int NoFriendlyCollide(lua_State* L, const void* data)
 {
 	const int bits = *((const int*) data);
-	lua_pushboolean(L, (bits & COLLISION_NOFRIENDLY));
+	lua_pushboolean(L, (bits & Collision::NOFRIENDLIES));
 	return 1;
 }
 
 static int NoNeutralCollide(lua_State* L, const void* data)
 {
 	const int bits = *((const int*) data);
-	lua_pushboolean(L, (bits & COLLISION_NONEUTRAL));
+	lua_pushboolean(L, (bits & Collision::NONEUTRALS));
 	return 1;
 }
 
@@ -431,7 +432,6 @@ static bool InitParamMap()
 	ADD_INT("tdfId", wd.tdfId);
 
 	ADD_STRING("name",        wd.name);
-	ADD_STRING("filename",    wd.filename);
 	ADD_STRING("description", wd.description);
 	ADD_STRING("cegTag",      wd.cegTag);
 

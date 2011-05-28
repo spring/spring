@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef LOSHANDLER_H
-#define LOSHANDLER_H
+#ifndef LOS_HANDLER_H
+#define LOS_HANDLER_H
 
 #include <vector>
 #include <list>
@@ -15,7 +15,24 @@
 #include "System/Vec2.h"
 #include <assert.h>
 
-
+/**
+ * CLosHandler specific data attached to each unit.
+ *
+ * The main goal of this object is to store the squares on the LOS map that
+ * have been incremented (CLosHandler::LosAdd) when the unit last moved.
+ * (CLosHandler::MoveUnit)
+ *
+ * These squares must be remembered because 1) ray-casting against the terrain
+ * is not particularly fast and more importantly 2) the terrain may have changed
+ * between the LosAdd and the moment we want to undo the LosAdd.
+ *
+ * LosInstances may be shared between multiple units. Reference counting is
+ * used to track how many units currently use one instance.
+ *
+ * An instance will be shared iff the other unit is in the same square
+ * (basePos, baseSquare) on the LOS map, has the same LOS and air LOS
+ * radius, is in the same ally-team and has the same base-height.
+ */
 struct LosInstance : public boost::noncopyable
 {
 private:
@@ -61,7 +78,27 @@ public:
 	bool toBeDeleted;
 };
 
-
+/**
+ * Handles line of sight (LOS) updates for all units and all ally-teams.
+ *
+ * Units have both LOS and air LOS. The former is ray-casted against the terrain
+ * so hills obstruct view (see CLosAlgorithm). The second is circular: air LOS
+ * is not influenced by terrain.
+ *
+ * LOS is implemented using CLosMap, which is a 2d array essentially containing
+ * a reference count. That is to say, each position on the map counts how many
+ * LosInstances "can see" that square. Units may share their "presence" on
+ * the LOS map through sharing a single LosInstance.
+ *
+ * To quickly find LosInstances that can be shared CLosHandler implements a
+ * hash table (instanceHash). Additionally, LosInstances that reach a refCount
+ * of 0 are not immediately deleted, but up to 500 of those are stored, in case
+ * they can be reused for a future unit.
+ *
+ * LOS is not removed immediately when a unit gets killed. Instead,
+ * DelayedFreeInstance is called. This keeps the LosInstance (including the
+ * actual sight) alive until 1.5 game seconds after the unit got killed.
+ */
 class CLosHandler : public boost::noncopyable
 {
 	CR_DECLARE(CLosHandler);
@@ -165,4 +202,4 @@ public:
 
 extern CLosHandler* loshandler;
 
-#endif /* LOSHANDLER_H */
+#endif /* LOS_HANDLER_H */

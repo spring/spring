@@ -100,7 +100,7 @@ public:
 		, dance(0.0f)
 		, trajectoryHeight(0.0f)
 		, largeBeamLaser(false)
-		, isShield(false)
+		, isShield(false) //FIXME REMOVE! (this information is/should be saved in the weapontype)
 		, shieldRepulser(false)
 		, smartShield(false)
 		, exteriorShield(false)
@@ -148,7 +148,6 @@ public:
 	std::string name;
 	std::string type;
 	std::string description;
-	std::string filename;
 	std::string cegTag;        ///< tag of CEG that projectiles fired by this weapon should use
 
 	GuiSoundSet firesound;

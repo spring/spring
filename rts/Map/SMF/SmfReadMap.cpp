@@ -2,6 +2,9 @@
 
 #include "StdAfx.h"
 #include "SmfReadMap.h"
+#ifdef _OPENMP
+	#include <omp.h>
+#endif
 
 #include "BFGroundTextures.h"
 #include "BFGroundDrawer.h"
@@ -50,7 +53,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 	height = header.mapy;
 
 	heightmap = new float[(width + 1) * (height + 1)];
-	groundDrawer = 0;
+	groundDrawer = NULL;
 
 	const CMapInfo::smf_t& smf = mapInfo->smf;
 	const float minH = smf.minHeightOverride ? smf.minHeight : header.minHeight;
@@ -178,8 +181,8 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 
 		glGenTextures(1, &minimapTex);
 		glBindTexture(GL_TEXTURE_2D, minimapTex);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, MINIMAP_NUM_MIPMAP - 1);
 		int offset = 0;
 		for (unsigned int i = 0; i < MINIMAP_NUM_MIPMAP; i++) {
@@ -320,7 +323,9 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 		// this can be done for diffuse lighting only
 		std::vector<unsigned char> pixels(xsize * ysize * 4, 0.0f);
 
-		for (int y = 0; y < ysize; ++y) {
+		int y;
+		#pragma omp parallel for private(y)
+		for (y = 0; y < ysize; ++y) {
 			UpdateShadingTexPart(y, x1, y1, xsize, &pixels[y * xsize * 4]);
 		}
 
@@ -355,7 +360,9 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 		std::vector<float> pixels((xsize + 1) * (zsize + 1) * 2, 0.0f);
 		#endif
 
-		for (int z = minz; z <= maxz; z++) {
+		int z;
+		#pragma omp parallel for private(z)
+		for (z = minz; z <= maxz; z++) {
 			for (int x = minx; x <= maxx; x++) {
 				const int vIdx = (z * W) + x;
 
@@ -432,9 +439,7 @@ void CSmfReadMap::UpdateShadingTexture() {
 		return;
 
 	y /= shadingTexUpdateRate;
-	y *= 2;
-	y += ((((ysize % 2) == 0) && (y >= (ysize / 2))) ? 1 : 0);
-	y %= ysize;
+	y = (y * 2 + ((((ysize % 2) == 0) && (y >= (ysize / 2))) ? 1 : 0)) % ysize;
 
 	UpdateShadingTexPart(y, 0, 0, xsize, &shadingTexPixelRow[0]);
 

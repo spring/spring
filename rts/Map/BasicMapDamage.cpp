@@ -8,7 +8,7 @@
 #include "MapInfo.h"
 #include "BaseGroundDrawer.h"
 #include "HeightMapTexture.h"
-#include "Rendering/Env/BaseTreeDrawer.h"
+#include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/BaseWater.h"
 #include "TimeProfiler.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"

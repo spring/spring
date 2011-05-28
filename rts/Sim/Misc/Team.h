@@ -29,6 +29,7 @@ public:
 	void AddEnergy(float amount, bool useIncomeMultiplier = true);
 	bool UseEnergy(float amount);
 	bool UseMetal(float amount);
+	bool AtUnitLimit() const { return (units.size() >= maxUnits); }
 
 	void GiveEverythingTo(const unsigned toTeam);
 
@@ -57,6 +58,8 @@ public:
 
 
 	int teamNum;
+	unsigned int maxUnits;
+
 	bool isDead;
 	bool gaia;
 

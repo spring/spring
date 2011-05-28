@@ -200,6 +200,7 @@ std::vector<std::string> FileSystem::FindFiles(std::string dir, const std::strin
 /**
  * @brief get the directory part of a path
  * "/home/user/.spring/test.txt" -> "/home/user/.spring/"
+ * "test.txt" -> ""
  */
 std::string FileSystem::GetDirectory(const std::string& path) const
 {
@@ -207,7 +208,7 @@ std::string FileSystem::GetDirectory(const std::string& path) const
 	if (s != std::string::npos) {
 		return path.substr(0, s + 1);
 	}
-	return path;
+	return ""; //FIXME return "./"? (a short test caused a crash because CFileHandler used in Lua couldn't find a file in the base-dir)
 }
 
 /**
@@ -240,6 +241,8 @@ std::string FileSystem::GetBasename(const std::string& path) const
 /**
  * @brief get the extension of the filename part of the path
  * "/home/user/.spring/test.txt" -> "txt"
+ * "/home/user/.spring/test.txt..." -> "txt"
+ * "/home/user/.spring/test.txt. . ." -> "txt"
  */
 std::string FileSystem::GetExtension(const std::string& path) const
 {

@@ -38,29 +38,7 @@ struct GhostBuilding {
 class CUnitDrawer: public CEventClient
 {
 public:
-	CUnitDrawer();
-	~CUnitDrawer();
-
-	void Update();
-
-	void Draw(bool drawReflection, bool drawRefraction = false);
-	/// cloaked units must be drawn after all others
-	void DrawCloakedUnits(bool noAdvShading = false);
-	void DrawShadowPass();
-
-	void DrawUnitRaw(CUnit* unit);
-	void DrawUnitRawModel(CUnit* unit);
-	void DrawUnitWithLists(CUnit* unit, unsigned int preList, unsigned int postList);
-	void DrawUnitRawWithLists(CUnit* unit, unsigned int preList, unsigned int postList);
-
-	void SetTeamColour(int team, float alpha = 1.0f) const;
-	void SetupForUnitDrawing();
-	void CleanUpUnitDrawing() const;
-	void SetupForGhostDrawing() const;
-	void CleanUpGhostDrawing() const;
-
-
-
+	//! CEventClient interface
 	bool WantsEvent(const std::string& eventName) {
 		return
 			(eventName == "RenderUnitCreated"      || eventName == "RenderUnitDestroyed") ||
@@ -75,47 +53,39 @@ public:
 	void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);
 	void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
 
+public:
+	CUnitDrawer();
+	~CUnitDrawer();
+
+	void Update();
+
+	void Draw(bool drawReflection, bool drawRefraction = false);
+	/// cloaked units must be drawn after all others
+	void DrawCloakedUnits(bool noAdvShading = false);
+	void DrawShadowPass();
+
+	static void DrawUnitRaw(CUnit* unit);
+	static void DrawUnitRawModel(CUnit* unit);
+	void DrawUnitWithLists(CUnit* unit, unsigned int preList, unsigned int postList);
+	static void DrawUnitRawWithLists(CUnit* unit, unsigned int preList, unsigned int postList);
+
+	void SetTeamColour(int team, float alpha = 1.0f) const;
+	void SetupForUnitDrawing();
+	void CleanUpUnitDrawing() const;
+	void SetupForGhostDrawing() const;
+	void CleanUpGhostDrawing() const;
+
 	void SetUnitDrawDist(float dist);
 	void SetUnitIconDist(float dist);
 
 	int ShowUnitBuildSquare(const BuildInfo& buildInfo);
 	int ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands);
 
-
-	bool advShading;
-	bool advFade;
-
-	float LODScale;
-	float LODScaleShadow;
-	float LODScaleReflection;
-	float LODScaleRefraction;
-
-	float unitDrawDist;
-	float unitDrawDistSqr;
-	float unitIconDist;
-	float iconLength;
-
-	float3 unitAmbientColor;
-	float3 unitSunColor;
-
-	struct TempDrawUnit {
-		const UnitDef* unitdef;
-		int team;
-		float3 pos;
-		float rotation;
-		int facing;
-		bool drawBorder;
-	};
-	std::multimap<int, TempDrawUnit> tempDrawUnits;
-	std::multimap<int, TempDrawUnit> tempTransparentDrawUnits;
-
-	float3 camNorm; ///< used to draw far-textures
-
 	void UpdateSunDir();
 	void CreateSpecularFace(unsigned int glType, int size, float3 baseDir, float3 xDif, float3 yDif, float3 sunDir, float exponent, float3 sunColor);
 
 	void DrawBuildingSample(const UnitDef* unitdef, int side, float3 pos, int facing = 0);
-	void DrawUnitDef(const UnitDef* unitDef, int team);
+	static void DrawUnitDef(const UnitDef* unitDef, int team);
 
 	void UnitDrawingTexturesOff();
 	void UnitDrawingTexturesOn();
@@ -123,9 +93,9 @@ public:
 	/** CGame::DrawDirectControlHud,  **/
 	void DrawIndividual(CUnit* unit);
 
-	unsigned int CalcUnitLOD(const CUnit* unit, unsigned int lastLOD) const;
-	unsigned int CalcUnitShadowLOD(const CUnit* unit, unsigned int lastLOD) const;
-	void SetUnitLODCount(CUnit* unit, unsigned int count);
+	static unsigned int CalcUnitLOD(const CUnit* unit, unsigned int lastLOD);
+	static unsigned int CalcUnitShadowLOD(const CUnit* unit, unsigned int lastLOD);
+	static void SetUnitLODCount(CUnit* unit, unsigned int count);
 
 	const std::set<CUnit*>& GetUnsortedUnits() const { return unsortedUnits; }
 	IWorldObjectModelRenderer* GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
@@ -174,23 +144,56 @@ private:
 
 	// note: make these static?
 	void DrawUnitBeingBuilt(CUnit* unit);
-	inline void DrawUnitModel(CUnit* unit);
+	static void DrawUnitModel(CUnit* unit);
 	void DrawUnitNow(CUnit* unit);
 
 	void UpdateUnitIconState(CUnit* unit);
-	void UpdateUnitDrawPos(CUnit* unit);
+	static void UpdateUnitDrawPos(CUnit* unit);
 
-	void SetBasicTeamColour(int team, float alpha = 1.0f) const;
-	void SetupBasicS3OTexture0() const;
-	void SetupBasicS3OTexture1() const;
-	void CleanupBasicS3OTexture1() const;
-	void CleanupBasicS3OTexture0() const;
-	void DrawIcon(CUnit* unit, bool asRadarBlip);
+	static void SetBasicTeamColour(int team, float alpha = 1.0f);
+	static void SetupBasicS3OTexture0();
+	static void SetupBasicS3OTexture1();
+	static void CleanupBasicS3OTexture1();
+	static void CleanupBasicS3OTexture0();
+	static void DrawIcon(CUnit* unit, bool asRadarBlip);
 	void DrawCloakedUnitsHelper(int modelType);
 	void DrawCloakedUnit(CUnit* unit, int modelType, bool drawGhostBuildingsPass);
 
 	/// Returns true if the given unit should be drawn as icon in the current frame.
 	bool DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const;
+
+
+public:
+	bool advShading;
+	bool advFade;
+
+	float LODScale;
+	float LODScaleShadow;
+	float LODScaleReflection;
+	float LODScaleRefraction;
+
+	float unitDrawDist;
+	float unitDrawDistSqr;
+	float unitIconDist;
+	float iconLength;
+
+	float3 unitAmbientColor;
+	float3 unitSunColor;
+
+	struct TempDrawUnit {
+		const UnitDef* unitdef;
+		int team;
+		float3 pos;
+		float rotation;
+		int facing;
+		bool drawBorder;
+	};
+	std::multimap<int, TempDrawUnit> tempDrawUnits;
+	std::multimap<int, TempDrawUnit> tempTransparentDrawUnits;
+
+	float3 camNorm; ///< used to draw far-textures
+
+private:
 	bool useDistToGroundForIcons;
 	float sqCamDistToGroundForIcons;
 

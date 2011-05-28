@@ -48,6 +48,6 @@ void InitializeSEH()
 #ifdef _MSC_VER
 	_set_se_translator(se_translator_function);
 #else
-// GCC/MinGW cannot handle win32 exceptions
+	//! GCC/MinGW cannot handle win32 exceptions
 #endif
 }

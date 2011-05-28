@@ -13,6 +13,7 @@ struct CollisionVolume
 {
 	CR_DECLARE_STRUCT(CollisionVolume);
 
+public:
 	enum COLVOL_SHAPE_TYPES {
 		COLVOL_TYPE_ELLIPSOID =  0,
 		COLVOL_TYPE_CYLINDER  =  1,
@@ -34,6 +35,7 @@ struct CollisionVolume
 		COLVOL_NUM_HITTESTS = 2     // number of hit-test types
 	};
 
+public:
 	CollisionVolume();
 	CollisionVolume(const CollisionVolume* v, float defaultRadius = 0.0f);
 	CollisionVolume(const std::string& volTypeStr, const float3& scales, const float3& offsets, int hitTestType);
@@ -44,6 +46,9 @@ struct CollisionVolume
 	 */
 	void Init(float r);
 	void Init(const float3& scales, const float3& offsets, int vType, int tType, int pAxis);
+
+	void RescaleAxes(const float& xs, const float& ys, const float& zs);
+	void SetAxisScales(const float& xs, const float& ys, const float& zs);
 
 	int GetVolumeType() const { return volumeType; }
 	int GetTestType() const { return testType; }
@@ -69,15 +74,12 @@ struct CollisionVolume
 	const float3& GetHScalesSq() const { return axisHScalesSq; }
 	const float3& GetHIScales() const { return axisHIScales; }
 
-	void RescaleAxes(float xs, float ys, float zs);
-
 	bool IsDisabled() const { return disabled; }
 	bool DefaultScale() const { return defaultScale; }
 	bool IsSphere() const { return volumeType == COLVOL_TYPE_SPHERE; }
 	bool UseFootprint() const { return volumeType == COLVOL_TYPE_FOOTPRINT; }
 
 private:
-	void SetAxisScales(float xs, float ys, float zs);
 	void SetBoundingRadius();
 
 	float3 axisScales;                  ///< full-length axis scales

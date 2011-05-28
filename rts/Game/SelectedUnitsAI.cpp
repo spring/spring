@@ -56,10 +56,8 @@ inline void CSelectedUnitsAI::AddUnitSetMaxSpeedCommand(CUnit* unit,
 	// sets the wanted speed of this unit to its max speed
 	CCommandAI* cai = unit->commandAI;
 	if (cai->CanSetMaxSpeed()) {
-		Command c;
-		c.id = CMD_SET_WANTED_MAX_SPEED;
-		c.options = options;
-		c.params.push_back(unit->maxSpeed);
+		Command c(CMD_SET_WANTED_MAX_SPEED, options);
+		c.AddParam(unit->maxSpeed);
 		cai->GiveCommand(c, false);
 	}
 }
@@ -73,10 +71,8 @@ inline void CSelectedUnitsAI::AddGroupSetMaxSpeedCommand(CUnit* unit,
 	// is already in units per frame)
 	CCommandAI* cai = unit->commandAI;
 	if (cai->CanSetMaxSpeed()) {
-		Command c;
-		c.id = CMD_SET_WANTED_MAX_SPEED;
-		c.options = options;
-		c.params.push_back(minMaxSpeed);
+		Command c(CMD_SET_WANTED_MAX_SPEED, options);
+		c.AddParam(minMaxSpeed);
 		cai->GiveCommand(c, false);
 	}
 }
@@ -84,7 +80,7 @@ inline void CSelectedUnitsAI::AddGroupSetMaxSpeedCommand(CUnit* unit,
 
 static inline bool MayRequireSetMaxSpeedCommand(const Command &c)
 {
-	switch (c.id) {
+	switch (c.GetID()) {
 		// this is not a complete list
 		case CMD_STOP:
 		case CMD_WAIT:
@@ -106,13 +102,16 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
 	std::vector<int>::const_iterator ui;
 
 	const int nbrOfSelectedUnits = netSelected.size();
+	const int& cmd_id = c.GetID();
 
 	if (nbrOfSelectedUnits < 1) {
 		// no units to command
 	}
-	else if ((c.id == CMD_ATTACK) &&
-			((c.params.size() == 6) ||
-			 ((c.params.size() == 4) && (c.params[3] > 0.001f)))) {
+	else if ((cmd_id == CMD_ATTACK) && (
+			(c.GetParamsCount() == 6) ||
+			(c.GetParam(3, -1.f) > 0.001f)
+		))
+	{
 		SelectAttack(c, player);
 	}
 	else if (nbrOfSelectedUnits == 1) {
@@ -123,7 +122,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
 			if (MayRequireSetMaxSpeedCommand(c)) {
 				AddUnitSetMaxSpeedCommand(unit, c.options);
 			}
-			if (c.id == CMD_WAIT) {
+			if (cmd_id == CMD_WAIT) {
 				if (player == gu->myPlayerNum) {
 					waitCommandsAI.AcknowledgeCommand(c);
 				}
@@ -147,7 +146,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
 	//   ALT+CTRL:  Group Locked       command  (maintain relative positions)
 	//
 
-	else if (((c.id == CMD_MOVE) || (c.id == CMD_FIGHT)) && (c.params.size() == 6)) {
+	else if (((cmd_id == CMD_MOVE) || (cmd_id == CMD_FIGHT)) && (c.GetParamsCount() == 6)) {
 		CalculateGroupData(player, !!(c.options & SHIFT_KEY));
 
 		MakeFrontMove(&c, player);
@@ -164,11 +163,11 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
 			}
 		}
 	}
-	else if ((c.id == CMD_MOVE) && (c.options & ALT_KEY)) {
+	else if ((cmd_id == CMD_MOVE) && (c.options & ALT_KEY)) {
 		CalculateGroupData(player, !!(c.options & SHIFT_KEY));
 
 		// use the vector from the middle of group to new pos as forward dir
-		const float3 pos(c.params[0], c.params[1], c.params[2]);
+		const float3 pos(c.GetParam(0, 0.f), c.GetParam(1, 0.f), c.GetParam(3, 0.f));
 		float3 frontdir = pos - centerCoor;
 		frontdir.y = 0.0f;
 		frontdir.ANormalize();
@@ -197,7 +196,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
 		}
 	}
 	else if ((c.options & CONTROL_KEY) &&
-	         ((c.id == CMD_MOVE) || (c.id == CMD_PATROL) || (c.id == CMD_FIGHT))) {
+	         ((cmd_id == CMD_MOVE) || (cmd_id == CMD_PATROL) || (cmd_id == CMD_FIGHT))) {
 		CalculateGroupData(player, !!(c.options & SHIFT_KEY));
 
 		const bool groupSpeed = !(c.options & ALT_KEY);
@@ -238,7 +237,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
 				}
 			}
 		}
-		if (c.id == CMD_WAIT) {
+		if (cmd_id == CMD_WAIT) {
 			if (player == gu->myPlayerNum) {
 				waitCommandsAI.AcknowledgeCommand(c);
 			}
@@ -444,12 +443,10 @@ float3 CSelectedUnitsAI::MoveToPos(int unit, float3 nextCornerPos, float3 dir, C
 	pos.z = rightPos.z + (movePos.x * (dir.z / dir.y)) + (movePos.z * (dir.x/dir.y));
 	pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
 
-	Command c;
-	c.id = command->id;
+	Command c(command->GetID(), command->options);
 	c.params.push_back(pos.x);
 	c.params.push_back(pos.y);
 	c.params.push_back(pos.z);
-	c.options = command->options;
 
 	frontcmds->push_back(std::pair<int, Command>(unit, c));
 
@@ -485,9 +482,7 @@ void CSelectedUnitsAI::SelectAttack(const Command& cmd, int player)
 		return;
 	}
 
-	Command attackCmd;
-	attackCmd.id = CMD_ATTACK;
-	attackCmd.options = cmd.options;
+	Command attackCmd(CMD_ATTACK, cmd.options);
 	attackCmd.params.push_back(0.0f); // dummy
 
 	// delete the attack commands and bail for CONTROL_KEY

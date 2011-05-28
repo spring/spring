@@ -736,7 +736,8 @@ function gadget:UnitCreated(unitID, unitDefID)
 end
 
 
-function gadget:GameFrame(n)
+function gadget:GameFrame()
+	local n = sp_GetGameFrame()
 	local zzz = sleepers[n]
 	if zzz then
 		sleepers[n] = nil

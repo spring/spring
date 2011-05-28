@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/vmg /MP /D_WIN32_WINNT=0x500"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
+				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include"
 				PreprocessorDefinitions="_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -131,7 +131,7 @@
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
+				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include"
 				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;NO_CATCH_EXCEPTIONS;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -226,7 +226,7 @@
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
+				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include"
 				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK"
 				StringPooling="true"
 				ExceptionHandling="2"
@@ -324,7 +324,7 @@
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
+				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include"
 				PreprocessorDefinitions="SYNCDEBUG;_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -418,7 +418,7 @@
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
+				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include"
 				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK;USE_GML;USE_GML_SIM;AVI_CAPTURING"
 				StringPooling="true"
 				ExceptionHandling="2"
@@ -513,7 +513,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/vmg /MP /D_WIN32_WINNT=0x500"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
+				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include"
 				PreprocessorDefinitions="_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;USE_GML;USE_GML_SIM"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -602,7 +602,7 @@
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
+				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include"
 				PreprocessorDefinitions="DEDICATED;_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE;SYNCCHECK;AVI_CAPTURING"
 				StringPooling="true"
 				ExceptionHandling="2"
@@ -698,7 +698,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/vmg /MP /D_WIN32_WINNT=0x500"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
+				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include"
 				PreprocessorDefinitions="_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -1069,6 +1069,22 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\InMapDraw.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\InMapDraw.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\InMapDrawModel.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\InMapDrawModel.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Game\IVideoCapturing.cpp"
 				>
 			</File>
@@ -1242,6 +1258,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Game\SyncedGameCommands.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\TraceRay.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\TraceRay.h"
 				>
 			</File>
 			<File
@@ -2317,11 +2341,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Rendering\InMapDraw.cpp"
+				RelativePath="..\..\Rendering\InMapDrawView.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\Rendering\InMapDraw.h"
+				RelativePath="..\..\Rendering\InMapDrawView.h"
 				>
 			</File>
 			<File
@@ -2436,14 +2460,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseTreeDrawer.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Env\BaseTreeDrawer.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\Rendering\Env\BaseWater.cpp"
 					>
 				</File>
@@ -2505,6 +2521,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Env\GrassDrawer.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Env\ITreeDrawer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Env\ITreeDrawer.h"
 					>
 				</File>
 				<File
@@ -2904,6 +2928,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Rendering\Models\3DModelLog.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Models\3DModelLog.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Rendering\Models\3DOParser.cpp"
 					>
 					<FileConfiguration
@@ -2981,6 +3013,22 @@
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Models\3DOParser.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Models\AssIO.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Models\AssIO.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Models\AssParser.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Models\AssParser.h"
 					>
 				</File>
 				<File
@@ -3481,6 +3529,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Projectiles\ExplosionGenerator.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Projectiles\ExplosionListener.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Projectiles\ExplosionListener.h"
 					>
 				</File>
 				<File
@@ -8133,6 +8189,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Lua\LuaOpenGL.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaOpenGLUtils.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaOpenGLUtils.h"
 				>
 			</File>
 			<File
@@ -13742,6 +13806,10 @@
 						>
 					</File>
 					<File
+						RelativePath="..\..\lib\streflop\libm\headers\SMath.h"
+						>
+					</File>
+					<File
 						RelativePath="..\..\lib\streflop\libm\headers\wchar.h"
 						>
 					</File>
@@ -16308,6 +16376,978 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\minizip\zip.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="assimp"
+				>
+				<File
+					RelativePath="..\..\lib\assimp\code\3DSConverter.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\3DSHelper.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\3DSLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\3DSLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ACLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ACLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\aiAssert.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ASELoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ASELoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ASEParser.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ASEParser.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\assbin_chunks.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\Assimp.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\AssimpPCH.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\AssimpPCH.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\B3DImporter.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\B3DImporter.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\BaseImporter.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\BaseImporter.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\BaseProcess.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\BaseProcess.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\BlenderDNA.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\BlenderDNA.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\BlenderIntermediate.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\BlenderLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\BlenderLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\BlenderModifier.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\BlenderModifier.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\BlenderScene.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\BlenderScene.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\BlenderSceneGen.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\BVHLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\BVHLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ByteSwap.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\CalcTangentsProcess.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\CalcTangentsProcess.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\COBLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\COBLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\COBScene.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ColladaHelper.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ColladaLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ColladaLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ColladaParser.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ColladaParser.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ComputeUVMappingProcess.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ComputeUVMappingProcess.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ConvertToLHProcess.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ConvertToLHProcess.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\contrib\ConvertUTF\ConvertUTF.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\contrib\ConvertUTF\ConvertUTF.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\CSMLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\CSMLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\contrib\irrXML\CXMLReaderImpl.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\DefaultIOStream.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\DefaultIOStream.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\DefaultIOSystem.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\DefaultIOSystem.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\DefaultLogger.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\DefaultProgressHandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\DXFLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\DXFLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\Exceptional.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\fast_atof.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\FileLogStream.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\FileSystemFilter.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\FindDegenerates.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\FindDegenerates.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\FindInstancesProcess.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\FindInstancesProcess.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\FindInvalidDataProcess.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\FindInvalidDataProcess.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\FixNormalsStep.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\FixNormalsStep.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\GenericProperty.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\GenFaceNormalsProcess.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\GenFaceNormalsProcess.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\GenVertexNormalsProcess.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\GenVertexNormalsProcess.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\HalfLifeFileData.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\Hash.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\contrib\irrXML\heapsort.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\HMPFileData.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\HMPLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\HMPLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\IFF.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\Importer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ImproveCacheLocality.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ImproveCacheLocality.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\contrib\irrXML\irrArray.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\IRRLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\IRRLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\IRRMeshLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\IRRMeshLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\IRRShared.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\IRRShared.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\contrib\irrXML\irrString.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\contrib\irrXML\irrTypes.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\contrib\irrXML\irrXML.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\contrib\irrXML\irrXML.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\irrXMLWrapper.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\JoinVerticesProcess.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\JoinVerticesProcess.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\LimitBoneWeightsProcess.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\LimitBoneWeightsProcess.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\LineSplitter.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\LWOAnimation.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\LWOAnimation.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\LWOBLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\LWOFileData.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\LWOLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\LWOLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\LWOMaterial.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\LWSLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\LWSLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MakeVerboseFormat.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MakeVerboseFormat.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MaterialSystem.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MaterialSystem.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MD2FileData.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MD2Loader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MD2Loader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MD2NormalTable.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MD3FileData.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MD3Loader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MD3Loader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MD4FileData.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MD5Loader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MD5Loader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MD5Parser.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MD5Parser.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MDCFileData.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MDCLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MDCLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MDCNormalTable.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MDLDefaultColorMap.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MDLFileData.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MDLLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MDLLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MDLMaterialLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MemoryIOWrapper.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MS3DLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\MS3DLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\NDOLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\NDOLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\NFFLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\NFFLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ObjFileData.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ObjFileImporter.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ObjFileImporter.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ObjFileMtlImporter.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ObjFileMtlImporter.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ObjFileParser.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ObjFileParser.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ObjTools.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\OFFLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\OFFLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\OgreImporter.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\OgreImporter.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\OgreImporterMaterial.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\OgreXmlHelper.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\OptimizeGraph.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\OptimizeGraph.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\OptimizeMeshes.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\OptimizeMeshes.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ParsingUtils.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\PlyLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\PlyLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\PlyParser.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\PlyParser.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\PretransformVertices.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\PretransformVertices.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ProcessHelper.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\Profiler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\pstdint.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\Q3BSPFileData.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\Q3BSPFileImporter.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\Q3BSPFileImporter.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\Q3BSPFileParser.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\Q3BSPFileParser.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\Q3BSPZipArchive.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\Q3BSPZipArchive.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\Q3DLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\Q3DLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\qnan.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\RawLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\RawLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\RemoveComments.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\RemoveComments.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\RemoveRedundantMaterials.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\RemoveRedundantMaterials.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\RemoveVCProcess.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\RemoveVCProcess.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\SceneCombiner.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\SceneCombiner.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ScenePreprocessor.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ScenePreprocessor.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\SGSpatialSort.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\SGSpatialSort.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\SkeletonMeshBuilder.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\SkeletonMeshBuilder.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\SMDLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\SMDLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\SmoothingGroups.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\SortByPTypeProcess.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\SortByPTypeProcess.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\SpatialSort.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\SpatialSort.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\SplitByBoneCountProcess.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\SplitByBoneCountProcess.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\SplitLargeMeshes.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\SplitLargeMeshes.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\StandardShapes.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\StandardShapes.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\StdOStreamLogStream.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\STLLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\STLLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\StreamReader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\StringComparison.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\Subdivision.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\Subdivision.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\TargetAnimation.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\TargetAnimation.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\TerragenLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\TerragenLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\TextureTransform.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\TextureTransform.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\TinyFormatter.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\TriangulateProcess.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\TriangulateProcess.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\UnrealLoader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\UnrealLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ValidateDataStructure.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ValidateDataStructure.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\Vertex.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\VertexTriangleAdjacency.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\VertexTriangleAdjacency.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\Win32DebugLogStream.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\XFileHelper.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\XFileImporter.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\XFileImporter.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\XFileParser.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\XFileParser.h"
 					>
 				</File>
 			</Filter>

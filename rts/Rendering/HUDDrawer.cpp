@@ -50,7 +50,7 @@ void HUDDrawer::DrawModel(const CUnit* unit)
 	glPushMatrix();
 		glMatrixMode(GL_PROJECTION);
 			glTranslatef(-0.8f, -0.4f, 0.0f);
-			glMultMatrixd(camera->GetProjMat());
+			glMultMatrixf(camera->GetProjectionMatrix());
 		glMatrixMode(GL_MODELVIEW);
 
 		glTranslatef(0.0f, 0.0f, -unit->radius);
@@ -193,10 +193,10 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 	// draw the reticle in world coordinates
 	glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		glMultMatrixd(camera->GetProjMat());
+		glMultMatrixf(camera->GetProjectionMatrix());
 	glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		glMultMatrixd(camera->GetViewMat());
+		glMultMatrixf(camera->GetViewMatrix());
 
 	glPushMatrix();
 

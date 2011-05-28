@@ -39,9 +39,9 @@ AAirMoveType::AAirMoveType(CUnit* unit) :
 	wantedHeight(80.0f),
 	collide(true),
 	useSmoothMesh(false),
+	autoLand(true),
 	lastColWarning(NULL),
 	lastColWarningType(0),
-	autoLand(true),
 	lastFuelUpdateFrame(0)
 {
 	useHeading = false;
@@ -59,7 +59,7 @@ bool AAirMoveType::UseSmoothMesh() const {
 	if (useSmoothMesh) {
 		const bool onTransportMission =
 			!owner->commandAI->commandQue.empty() &&
-			((owner->commandAI->commandQue.front().id == CMD_LOAD_UNITS) || (owner->commandAI->commandQue.front().id == CMD_UNLOAD_UNIT));
+			((owner->commandAI->commandQue.front().GetID() == CMD_LOAD_UNITS) || (owner->commandAI->commandQue.front().GetID() == CMD_UNLOAD_UNIT));
 		const bool repairing = reservedPad ? padStatus >= 1 : false;
 		const bool forceDisableSmooth =
 			repairing ||

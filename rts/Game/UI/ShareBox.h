@@ -31,6 +31,8 @@ private:
 	ContainerBox unitBox;
 	ContainerBox metalBox;
 	ContainerBox energyBox;
+	ContainerBox scrollbarBox;
+	ContainerBox scrollBox;
 
 	int shareTeam;
 	static int lastShareTeam;
@@ -42,6 +44,12 @@ private:
 	bool energyMove;
 	bool metalMove;
 	bool moveBox;
+
+	int startTeam;
+	int numTeamsDisp;
+	bool scrolling;
+	float scrollGrab;
+	bool hasScroll;
 };
 
 #endif /* SHARE_BOX_H */

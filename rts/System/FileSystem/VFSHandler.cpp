@@ -32,19 +32,19 @@ CVFSHandler::CVFSHandler()
 }
 
 
-bool CVFSHandler::AddArchive(const std::string& arName, bool override, const std::string& type)
+bool CVFSHandler::AddArchive(const std::string& archiveName, bool override, const std::string& type)
 {
 	logOutput.Print(LOG_VFS, "AddArchive(arName = \"%s\", override = %s, type = \"%s\")",
-	                arName.c_str(), override ? "true" : "false", type.c_str());
+			archiveName.c_str(), override ? "true" : "false", type.c_str());
 
-	CArchiveBase* ar = archives[arName];
+	CArchiveBase* ar = archives[archiveName];
 	if (!ar) {
-		ar = CArchiveFactory::OpenArchive(arName, type);
+		ar = CArchiveFactory::OpenArchive(archiveName, type);
 		if (!ar) {
-			logOutput.Print(LOG_VFS, "AddArchive: Failed to open archive '%s'.", arName.c_str());
+			logOutput.Print(LOG_VFS, "AddArchive: Failed to open archive '%s'.", archiveName.c_str());
 			return false;
 		}
-		archives[arName] = ar;
+		archives[archiveName] = ar;
 	}
 
 	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid)
@@ -78,21 +78,21 @@ bool CVFSHandler::AddArchiveWithDeps(const std::string& archiveName, bool overri
 {
 	const std::vector<std::string> &ars = archiveScanner->GetArchives(archiveName);
 	if (ars.empty())
-		throw content_error("Couldn't find any archives for '" + archiveName + "'.");
+		throw content_error("Could not find any archives for '" + archiveName + "'.");
 	std::vector<std::string>::const_iterator it;
 	for (it = ars.begin(); it != ars.end(); ++it)
 	{
 		if (!AddArchive(*it, override, type))
-			throw content_error("Couldn't load archive '" + *it + "' for '" + archiveName + "'.");
+			throw content_error("Failed loading archive '" + *it + "', dependency of '" + archiveName + "'.");
 	}
 	return true;
 }
 
-bool CVFSHandler::RemoveArchive(const std::string& arName)
+bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 {
-	logOutput.Print(LOG_VFS, "RemoveArchive(arName = \"%s\")", arName.c_str());
+	logOutput.Print(LOG_VFS, "RemoveArchive(archiveName = \"%s\")", archiveName.c_str());
 
-	CArchiveBase* ar = archives[arName];
+	CArchiveBase* ar = archives[archiveName];
 	if (ar == NULL) {
 		// archive is not loaded
 		return true;
@@ -108,7 +108,7 @@ bool CVFSHandler::RemoveArchive(const std::string& arName)
 			 ++f;
 	}
 	delete ar;
-	archives.erase(arName);
+	archives.erase(archiveName);
 
 	return true;
 }
@@ -122,36 +122,71 @@ CVFSHandler::~CVFSHandler()
 	}
 }
 
-bool CVFSHandler::LoadFile(const std::string& rawName, std::vector<boost::uint8_t>& buffer)
+std::string CVFSHandler::GetNormalizedPath(const std::string& rawPath)
 {
-	logOutput.Print(LOG_VFS, "LoadFile(rawName = \"%s\", )", rawName.c_str());
+	std::string path = StringToLower(rawPath);
+	filesystem.ForwardSlashes(path);
+	return path;
+}
 
-	std::string name = StringToLower(rawName);
-	filesystem.ForwardSlashes(name);
+const CVFSHandler::FileData* CVFSHandler::GetFileData(const std::string& normalizedFilePath)
+{
+	const FileData* fileData = NULL;
 
-	std::map<std::string, FileData>::iterator fi = files.find(name);
-	if (fi == files.end()) {
-		logOutput.Print(LOG_VFS, "LoadFile: File '%s' does not exist in VFS.", rawName.c_str());
+	const std::map<std::string, FileData>::const_iterator fi = files.find(normalizedFilePath);
+	if (fi != files.end()) {
+		fileData = &(fi->second);
+	}
+
+	return fileData;
+}
+
+bool CVFSHandler::LoadFile(const std::string& filePath, std::vector<boost::uint8_t>& buffer)
+{
+	logOutput.Print(LOG_VFS, "LoadFile(filePath = \"%s\", )", filePath.c_str());
+
+	const std::string normalizedPath = GetNormalizedPath(filePath);
+
+	const FileData* fileData = GetFileData(normalizedPath);
+	if (fileData == NULL) {
+		logOutput.Print(LOG_VFS, "LoadFile: File '%s' does not exist in VFS.", filePath.c_str());
 		return false;
 	}
-	FileData& fd = fi->second;
 
-	if (!fd.ar->GetFile(name, buffer))
+	if (!fileData->ar->GetFile(normalizedPath, buffer))
 	{
-		logOutput.Print(LOG_VFS, "LoadFile: File '%s' does not exist in archive.", rawName.c_str());
+		logOutput.Print(LOG_VFS, "LoadFile: File '%s' does not exist in archive.", filePath.c_str());
 		return false;
 	}
 	return true;
 }
 
-// Returns all the files in the given (virtual) directory without the preceeding pathname
+bool CVFSHandler::FileExists(const std::string& filePath)
+{
+	logOutput.Print(LOG_VFS, "FileExists(filePath = \"%s\", )", filePath.c_str());
+
+	const std::string normalizedPath = GetNormalizedPath(filePath);
+
+	const FileData* fileData = GetFileData(normalizedPath);
+	if (fileData == NULL) {
+		// the file does not exist in the VFS
+		return false;
+	}
+
+	if (fileData->ar->FileExists(normalizedPath)) {
+		// the file does not exist in the archive
+		return false;
+	}
+
+	return true;
+}
+
 std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir)
 {
 	logOutput.Print(LOG_VFS, "GetFilesInDir(rawDir = \"%s\")", rawDir.c_str());
 
 	std::vector<std::string> ret;
-	std::string dir = StringToLower(rawDir);
-	filesystem.ForwardSlashes(dir);
+	std::string dir = GetNormalizedPath(rawDir);
 
 	std::map<std::string, FileData>::const_iterator filesStart = files.begin();
 	std::map<std::string, FileData>::const_iterator filesEnd   = files.end();
@@ -193,14 +228,12 @@ std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir)
 }
 
 
-// Returns all the sub-directories in the given (virtual) directory without the preceeding pathname
 std::vector<std::string> CVFSHandler::GetDirsInDir(const std::string& rawDir)
 {
 	logOutput.Print(LOG_VFS, "GetDirsInDir(rawDir = \"%s\")", rawDir.c_str());
 
 	std::vector<std::string> ret;
-	std::string dir = StringToLower(rawDir);
-	filesystem.ForwardSlashes(dir);
+	std::string dir = GetNormalizedPath(rawDir);
 
 	std::map<std::string, FileData>::const_iterator filesStart = files.begin();
 	std::map<std::string, FileData>::const_iterator filesEnd   = files.end();

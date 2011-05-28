@@ -42,9 +42,9 @@ void AudioChannel::Enable(bool newState)
 void AudioChannel::SoundSourceFinished(CSoundSource* sndSource)
 {
 	if (curStreamSrc == sndSource) {
-		if (streamQueue.size()>0) {
+		if (!streamQueue.empty()) {
 			StreamQueueItem& next = streamQueue.back();
-			StreamPlay(next.filename, next.volume, false);
+			StreamPlay(next.fileName, next.volume, false);
 			streamQueue.pop_back();
 		} else {
 			curStreamSrc = NULL;
@@ -55,7 +55,7 @@ void AudioChannel::SoundSourceFinished(CSoundSource* sndSource)
 }
 
 
-void AudioChannel::FindSourceAndPlay(size_t id, const float3 &p, const float3& velocity, float volume, bool relative)
+void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3& velocity, float volume, bool relative)
 {
 	//boost::recursive_mutex::scoped_lock lck(soundMutex);
 
@@ -72,7 +72,7 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3 &p, const float3& v
 		return;
 	}
 
-	if (p.distance(sound->GetListenerPos()) > sndItem->MaxDistance())
+	if (pos.distance(sound->GetListenerPos()) > sndItem->MaxDistance())
 	{
 		if (!relative)
 			return;
@@ -93,8 +93,8 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3 &p, const float3& v
 		if (sndSource->IsPlaying())
 			sound->numAbortedPlays++;
 
-		sndSource->Play(this, sndItem, p, velocity, volume, relative);
-		CheckError("CSound::PlaySample");
+		sndSource->Play(this, sndItem, pos, velocity, volume, relative);
+		CheckError("CSound::FindSourceAndPlay");
 
 		cur_sources[sndSource] = true;
 	}
@@ -102,27 +102,27 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3 &p, const float3& v
 
 void AudioChannel::PlaySample(size_t id, float volume)
 {
-	FindSourceAndPlay(id, float3(0.0, 0.0, -1.0), ZeroVector, volume, true);
+	FindSourceAndPlay(id, float3(0.0f, 0.0f, -1.0f), ZeroVector, volume, true);
 }
 
-void AudioChannel::PlaySample(size_t id, const float3& p, float volume)
+void AudioChannel::PlaySample(size_t id, const float3& pos, float volume)
 {
-	FindSourceAndPlay(id, p, ZeroVector, volume, false);
+	FindSourceAndPlay(id, pos, ZeroVector, volume, false);
 }
 
-void AudioChannel::PlaySample(size_t id, const float3& p, const float3& velocity, float volume)
+void AudioChannel::PlaySample(size_t id, const float3& pos, const float3& velocity, float volume)
 {
-	FindSourceAndPlay(id, p, velocity, volume, false);
+	FindSourceAndPlay(id, pos, velocity, volume, false);
 }
 
-void AudioChannel::PlaySample(size_t id, const CUnit* u, float volume)
+void AudioChannel::PlaySample(size_t id, const CUnit* unit, float volume)
 {
-	FindSourceAndPlay(id, u->pos, u->speed, volume, false);
+	FindSourceAndPlay(id, unit->pos, unit->speed, volume, false);
 }
 
-void AudioChannel::PlaySample(size_t id, const CWorldObject* p, float volume)
+void AudioChannel::PlaySample(size_t id, const CWorldObject* obj, float volume)
 {
-	FindSourceAndPlay(id, p->pos, ZeroVector, volume, false);
+	FindSourceAndPlay(id, obj->pos, ZeroVector, volume, false);
 }
 
 void AudioChannel::StreamPlay(const std::string& filepath, float volume, bool enqueue)
@@ -166,7 +166,7 @@ float AudioChannel::StreamGetTime()
 	if (curStreamSrc)
 		return curStreamSrc->GetStreamTime();
 	else
-		return 0;
+		return 0.0f;
 }
 
 float AudioChannel::StreamGetPlayTime()
@@ -174,5 +174,5 @@ float AudioChannel::StreamGetPlayTime()
 	if (curStreamSrc)
 		return curStreamSrc->GetStreamPlayTime();
 	else
-		return 0;
+		return 0.0f;
 }

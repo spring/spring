@@ -31,6 +31,10 @@
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 
+#if !defined(HEADLESS) && !defined(NO_SOUND)
+	#include "System/Sound/EFX.h"
+	#include "System/Sound/EFXPresets.h"
+#endif
 
 CLoadScreen* CLoadScreen::singleton = NULL;
 
@@ -127,6 +131,12 @@ CLoadScreen::~CLoadScreen()
 		net->Send(CBaseNetProtocol::Get().SendPathCheckSum(gu->myPlayerNum, pathManager->GetPathCheckSum()));
 #endif
 		mouse->ShowMouse();
+		
+#if !defined(HEADLESS) && !defined(NO_SOUND)
+		*(efx->sfxProperties) = *(mapInfo->efxprops);
+		efx->CommitEffects();
+#endif
+		game->SetupRenderingParams();
 
 		activeController = game;
 	}
@@ -213,7 +223,6 @@ bool CLoadScreen::Update()
 	}
 
 	if (game->finishedLoading) {
-		game->SetupRenderingParams();
 		CLoadScreen::DeleteInstance();
 	}
 
@@ -223,6 +232,8 @@ bool CLoadScreen::Update()
 
 bool CLoadScreen::Draw()
 {
+	Watchdog::ClearTimer();
+	
 	//! Limit the Frames Per Second to not lock a singlethreaded CPU from loading the game
 	if (mt_loading) {
 		spring_time now = spring_gettime();
@@ -301,7 +312,7 @@ bool CLoadScreen::Draw()
 
 void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 {
-	Watchdog::ClearTimer("main");
+	Watchdog::ClearTimer();
 
 	boost::recursive_mutex::scoped_lock lck(mutex);
 

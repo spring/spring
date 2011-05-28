@@ -103,7 +103,10 @@ if    (BUILD_${myName}_AIINTERFACE)
 	SetGlobal(${myName}_AIINTERFACE_VERS   ${myVersion})
 	SetGlobal(${myName}_AIINTERFACE_TARGET ${myTarget})
 
-	aux_source_directory(${mySourceDir} mySources)
+	set(mySources
+			"${mySourceDir}/Interface.cpp"
+			"${mySourceDir}/InterfaceExport.cpp"
+		)
 	add_library(${myTarget} MODULE ${mySources} ${ai_common_SRC} ${CUtils_SRC} ${myVersionDepFile})
 	FixLibName(${myTarget})
 

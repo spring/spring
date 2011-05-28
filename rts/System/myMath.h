@@ -121,6 +121,11 @@ void ClampRad(float* f);
 bool RadsAreEqual(const float f1, const float f2) _const;
 
 
+/**
+ */
+float GetRadFromXY(const float dx, const float dy) _const;
+
+
 #include "myMath.inl"
 
 #undef _const

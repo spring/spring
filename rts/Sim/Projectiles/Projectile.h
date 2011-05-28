@@ -3,7 +3,7 @@
 #ifndef PROJECTILE_H
 #define PROJECTILE_H
 
-#include "Rendering/GL/myGL.h"
+#include "lib/gml/gml.h" // for GML_ENABLE_SIM
 
 #ifdef _MSC_VER
 #pragma warning(disable:4291)
@@ -17,9 +17,6 @@ class CUnit;
 class CFeature;
 class CVertexArray;
 
-#define COLLISION_NOFRIENDLY	1
-#define COLLISION_NOFEATURE		2
-#define COLLISION_NONEUTRAL		4
 
 class CProjectile: public CExpGenSpawnable
 {

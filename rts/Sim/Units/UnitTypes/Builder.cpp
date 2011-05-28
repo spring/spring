@@ -281,7 +281,7 @@ void CBuilder::Update()
 					}
 
 					if(adjBuildSpeed > 0 && !commandAI->commandQue.empty()
-							&& commandAI->commandQue.front().id == CMD_WAIT) {
+							&& commandAI->commandQue.front().GetID() == CMD_WAIT) {
 						curBuild->AddBuildPower(0, this);
 					} else if (adjBuildSpeed > 0 && curBuild->AddBuildPower(adjBuildSpeed, this)) {
 						CreateNanoParticle(curBuild->midPos, curBuild->radius * 0.5f, false);
@@ -333,7 +333,7 @@ void CBuilder::Update()
 							if (bld->commandAI->commandQue.empty())
 								continue;
 							const Command& c = bld->commandAI->commandQue.front();
-							if (c.id != CMD_RESURRECT || c.params.size() != 1)
+							if (c.GetID() != CMD_RESURRECT || c.params.size() != 1)
 								continue;
 							const int cmdFeatureId = (int)c.params[0];
 							if (cmdFeatureId - uh->MaxUnits() == curResurrect->id && teamHandler->Ally(allyteam, bld->allyteam))

@@ -396,8 +396,8 @@ void CTAAirMoveType::UpdateFlying()
 				bool noland = dontLand || !autoLand;
 				// should CMD_LOAD_ONTO be here?
 				bool hasLoadCmds = trans && !owner->commandAI->commandQue.empty()
-						&& (owner->commandAI->commandQue.front().id == CMD_LOAD_ONTO
-							|| owner->commandAI->commandQue.front().id == CMD_LOAD_UNITS);
+						&& (owner->commandAI->commandQue.front().GetID() == CMD_LOAD_ONTO
+							|| owner->commandAI->commandQue.front().GetID() == CMD_LOAD_UNITS);
 				if (noland || (trans && ++waitCounter < 55 && hasLoadCmds)) {
 					// transport aircraft need some time to detect that they can pickup
 					if (trans) {

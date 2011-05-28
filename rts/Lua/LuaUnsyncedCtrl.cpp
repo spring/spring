@@ -28,6 +28,8 @@
 #include "Game/Game.h"
 #include "Game/SelectedUnits.h"
 #include "Game/PlayerHandler.h"
+#include "Game/InMapDraw.h"
+#include "Game/InMapDrawModel.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/CursorIcons.h"
 #include "Game/UI/GuiHandler.h"
@@ -43,7 +45,6 @@
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/IconHandler.h"
-#include "Rendering/InMapDraw.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/WindowManagerHelper.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -2373,7 +2374,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 	Command cmd;
 	LuaUtils::ParseCommand(L, __FUNCTION__, 2, cmd);
 
-	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, unit->id, cmd.id, cmd.aiCommandId, cmd.options, cmd.params));
+	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, unit->id, cmd.GetID(), cmd.aiCommandId, cmd.options, cmd.params));
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -2625,8 +2626,7 @@ int LuaUnsyncedCtrl::ShareResources(lua_State* L)
 	const string& type = lua_tostring(L, 2);
 	if (type == "units") {
 		// update the selection, and clear the unit command queues
-		Command c;
-		c.id = CMD_STOP;
+		Command c(CMD_STOP);
 		selectedUnits.GiveCommand(c, false);
 		net->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 1, 0.0f, 0.0f));
 		selectedUnits.ClearSelected();
@@ -2688,7 +2688,7 @@ int LuaUnsyncedCtrl::MarkerAddPoint(lua_State* L)
 	const bool onlyLocal = bool(luaL_optnumber(L, 5, 1));
 
 	if (onlyLocal) {
-		inMapDrawer->LocalPoint(pos, text, gu->myPlayerNum);
+		inMapDrawerModel->AddPoint(pos, text, gu->myPlayerNum);
 	} else {
 		inMapDrawer->SendPoint(pos, text, true);
 	}
@@ -2722,9 +2722,9 @@ int LuaUnsyncedCtrl::MarkerAddLine(lua_State* L)
 	const bool onlyLocal = bool(luaL_optnumber(L, 7, 0));
 
 	if (onlyLocal) {
-		inMapDrawer->LocalLine(pos1, pos2, gu->myPlayerNum);
+		inMapDrawerModel->AddLine(pos1, pos2, gu->myPlayerNum);
 	} else {
-		inMapDrawer->SendLine(pos1, pos2, true);
+		inMapDrawerModel->AddLine(pos1, pos2, true);
 	}
 
 	return 0;

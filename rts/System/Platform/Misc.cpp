@@ -24,6 +24,10 @@
 
 #endif
 
+#if !defined(WIN32)
+#include <sys/utsname.h> // for uname()
+#endif
+
 #include <cstring>
 #include <cerrno>
 
@@ -227,15 +231,25 @@ std::string GetOS()
 	return "Microsoft Windows\n" +
 		GetOSDisplayString() + "\n" +
 		GetHardwareInfoString();
-#elif defined(__linux__)
-	return "Linux";
-#elif defined(__FreeBSD__)
-	return "FreeBSD";
-#elif defined(__APPLE__)
-	return "Mac OS X";
 #else
-	#warning improve this
-	return "unknown OS";
+	struct utsname info;
+	if (uname(&info) == 0) {
+		return std::string(info.sysname) + " "
+				+ info.release + " "
+				+ info.version + " "
+				+ info.machine;
+	} else {
+#if defined(__linux__)
+		return "Linux";
+#elif defined(__FreeBSD__)
+		return "FreeBSD";
+#elif defined(__APPLE__)
+		return "Mac OS X";
+#else
+		#warning improve this
+		return "unknown OS";
+#endif
+	}
 #endif
 }
 

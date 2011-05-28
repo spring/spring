@@ -94,20 +94,20 @@ CAirCAI::~CAirCAI(void)
 void CAirCAI::GiveCommandReal(const Command &c)
 {
 	// take care not to allow aircraft to be ordered to move out of the map
-	if (c.id != CMD_MOVE && !AllowedCommand(c, true))
+	if (c.GetID() != CMD_MOVE && !AllowedCommand(c, true))
 		return;
 
-	else if (c.id == CMD_MOVE && c.params.size() >= 3 &&
+	else if (c.GetID() == CMD_MOVE && c.params.size() >= 3 &&
 			(c.params[0] < 0.f || c.params[2] < 0.f
 			 || c.params[0] > gs->mapx*SQUARE_SIZE
 			 || c.params[2] > gs->mapy*SQUARE_SIZE))
 		return;
 
-	if (c.id == CMD_SET_WANTED_MAX_SPEED) {
+	if (c.GetID() == CMD_SET_WANTED_MAX_SPEED) {
 	  return;
 	}
 
-	if (c.id == CMD_AUTOREPAIRLEVEL) {
+	if (c.GetID() == CMD_AUTOREPAIRLEVEL) {
 		if (c.params.empty()) {
 			return;
 		}
@@ -136,7 +136,7 @@ void CAirCAI::GiveCommandReal(const Command &c)
 		return;
 	}
 
-	if (c.id == CMD_IDLEMODE) {
+	if (c.GetID() == CMD_IDLEMODE) {
 		if (c.params.empty()) {
 			return;
 		}
@@ -163,7 +163,7 @@ void CAirCAI::GiveCommandReal(const Command &c)
 		return;
 	}
 
-	if (c.id == CMD_LOOPBACKATTACK) {
+	if (c.GetID() == CMD_LOOPBACKATTACK) {
 		if (c.params.empty()) {
 			return;
 		}
@@ -191,14 +191,14 @@ void CAirCAI::GiveCommandReal(const Command &c)
 	}
 
 	if (!(c.options & SHIFT_KEY)
-			&& nonQueingCommands.find(c.id) == nonQueingCommands.end()) {
+			&& nonQueingCommands.find(c.GetID()) == nonQueingCommands.end()) {
 		activeCommand=0;
 		tempOrder=false;
 	}
 
-	if (c.id == CMD_AREA_ATTACK && c.params.size() < 4){
-		Command c2 = c;
-		c2.id = CMD_ATTACK;
+	if (c.GetID() == CMD_AREA_ATTACK && c.params.size() < 4){
+		Command c2(CMD_ATTACK, c.options);
+		c2.params = c.params;
 		CCommandAI::GiveAllowedCommand(c2);
 		return;
 	}
@@ -240,10 +240,8 @@ void CAirCAI::SlowUpdate()
 				CUnit* enemy=helper->GetClosestEnemyAircraft(
 					owner->pos + (owner->speed * 10), testRad, owner->allyteam);
 				if(IsValidTarget(enemy)) {
-					Command nc;
-					nc.id = CMD_ATTACK;
+					Command nc(CMD_ATTACK);
 					nc.params.push_back(enemy->id);
-					nc.options = 0;
 					commandQue.push_front(nc);
 					inCommand = false;
 					return;
@@ -253,10 +251,8 @@ void CAirCAI::SlowUpdate()
 			CUnit* enemy = helper->GetClosestValidTarget(
 				owner->pos + (owner->speed * 20), searchRadius, owner->allyteam, this);
 			if (enemy != NULL) {
-				Command nc;
-				nc.id = CMD_ATTACK;
+				Command nc(CMD_ATTACK);
 				nc.params.push_back(enemy->id);
-				nc.options = 0;
 				commandQue.push_front(nc);
 				inCommand = false;
 				return;
@@ -266,8 +262,9 @@ void CAirCAI::SlowUpdate()
 	}
 
 	Command& c = commandQue.front();
-
-	if (c.id == CMD_WAIT) {
+	const int& cmd_id = c.GetID();
+	
+	if (cmd_id == CMD_WAIT) {
 		if ((myPlane->aircraftState == AAirMoveType::AIRCRAFT_FLYING)
 		    && !owner->unitDef->DontLand() && myPlane->autoLand) {
 			StopMove();
@@ -276,13 +273,13 @@ void CAirCAI::SlowUpdate()
 		return;
 	}
 
-	if (c.id != CMD_STOP && c.id != CMD_AUTOREPAIRLEVEL
-			&& c.id != CMD_IDLEMODE && c.id != CMD_SET_WANTED_MAX_SPEED) {
+	if (cmd_id != CMD_STOP && cmd_id != CMD_AUTOREPAIRLEVEL
+			&& cmd_id != CMD_IDLEMODE && cmd_id != CMD_SET_WANTED_MAX_SPEED) {
 		myPlane->Takeoff();
 	}
 
 	if (wantToRefuel) {
-		switch (c.id) {
+		switch (cmd_id) {
 			case CMD_AREA_ATTACK:
 			case CMD_ATTACK:
 			case CMD_FIGHT:
@@ -290,7 +287,7 @@ void CAirCAI::SlowUpdate()
 		}
 	}
 
-	switch(c.id){
+	switch(cmd_id){
 		case CMD_AREA_ATTACK:{
 			ExecuteAreaAttack(c);
 			return;
@@ -418,10 +415,8 @@ void CAirCAI::ExecuteFight(Command &c)
 		if(IsValidTarget(enemy) && (owner->moveState != MOVESTATE_MANEUVER
 				|| LinePointDist(commandPos1, commandPos2, enemy->pos) < 1000))
 		{
-			Command nc;
-			nc.id=CMD_ATTACK;
+			Command nc(CMD_ATTACK, c.options|INTERNAL_ORDER);
 			nc.params.push_back(enemy->id);
-			nc.options=c.options|INTERNAL_ORDER;
 			commandQue.push_front(nc);
 			tempOrder=true;
 			inCommand=false;
@@ -436,10 +431,8 @@ void CAirCAI::ExecuteFight(Command &c)
 			const float searchRadius = 500 * owner->moveState;
 			enemy = helper->GetClosestValidTarget(curPosOnLine, searchRadius, owner->allyteam, this);
 			if (enemy != NULL) {
-				Command nc;
-				nc.id = CMD_ATTACK;
+				Command nc(CMD_ATTACK, c.options|INTERNAL_ORDER);
 				nc.params.push_back(enemy->id);
-				nc.options = c.options | INTERNAL_ORDER;
 				PushOrUpdateReturnFight();
 				commandQue.push_front(nc);
 				tempOrder = true;
@@ -605,17 +598,13 @@ void CAirCAI::ExecuteGuard(Command& c)
 		IsValidTarget(guardee->lastAttacker);
 
 	if (pushAttackCommand) {
-		Command nc;
-			nc.id = CMD_ATTACK;
-			nc.params.push_back(guardee->lastAttacker->id);
-			nc.options = c.options | INTERNAL_ORDER;
+		Command nc(CMD_ATTACK, c.options|INTERNAL_ORDER);
+		nc.params.push_back(guardee->lastAttacker->id);
 		commandQue.push_front(nc);
 		SlowUpdate();
 	} else {
-		Command c2;
-			c2.id = CMD_MOVE;
-			c2.options = c.options | INTERNAL_ORDER;
-			c2.timeOut = gs->frameNum + 60;
+		Command c2(CMD_MOVE, c.options|INTERNAL_ORDER);
+		c2.timeOut = gs->frameNum + 60;
 
 		if (guardee->pos.IsInBounds()) {
 			c2.params.push_back(guardee->pos.x);
@@ -666,20 +655,21 @@ void CAirCAI::DrawCommands(void)
 
 	CCommandQueue::iterator ci;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		switch (ci->id) {
+		const int& cmd_id = ci->GetID();
+		switch (cmd_id) {
 			case CMD_MOVE: {
 				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.move);
+				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.move);
 				break;
 			}
 			case CMD_FIGHT: {
 				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.fight);
+				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.fight);
 				break;
 			}
 			case CMD_PATROL: {
 				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.patrol);
+				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.patrol);
 				break;
 			}
 			case CMD_ATTACK: {
@@ -688,18 +678,18 @@ void CAirCAI::DrawCommands(void)
 
 					if ((unit != NULL) && isTrackable(unit)) {
 						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
-						lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
+						lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
 					}
 				} else {
 					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
+					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
 				}
 				break;
 			}
 			case CMD_AREA_ATTACK: {
 				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
 
-				lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.attack);
+				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
 				lineDrawer.Break(endPos, cmdColors.attack);
 				glColor4fv(cmdColors.attack);
 				glSurfaceCircle(endPos, ci->params[3], 20);
@@ -711,7 +701,7 @@ void CAirCAI::DrawCommands(void)
 
 				if ((unit != NULL) && isTrackable(unit)) {
 					const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
-					lineDrawer.DrawLineAndIcon(ci->id, endPos, cmdColors.guard);
+					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.guard);
 				}
 				break;
 			}
@@ -720,7 +710,7 @@ void CAirCAI::DrawCommands(void)
 				break;
 			}
 			case CMD_SELFD: {
-				lineDrawer.DrawIconAtLastPos(ci->id);
+				lineDrawer.DrawIconAtLastPos(cmd_id);
 				break;
 			}
 			default:

@@ -43,9 +43,6 @@ endif (WIN32)
 # Assemble common additional native AI sources
 list(APPEND ai_common_SRC ${rts}/Game/GameVersion)
 
-# Assemble the creg sources
-aux_source_directory("${rts}/System/creg" creg_SRC)
-
 
 # Set some Skirmish AI stuff here already,
 # cause it is used by NullPythonAI in Interfaces/Python

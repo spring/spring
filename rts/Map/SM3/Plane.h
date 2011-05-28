@@ -12,22 +12,29 @@ typedef float3 Vector3;
 class Plane
 {
 public:
-	float a,b,c,d;
-	Plane() { a=b=c=d=0; }
-	Plane(float ta,float tb,float tc,float td) { a=ta;b=tb;c=tc;d=td; }
-	Plane(Vector3 dir, float dis) { a=dir.x; b=dir.y;c=dir.z; d=dis; }
-	float Dist(const Vector3 *v) const { return a*v->x+b*v->y+c*v->z-d; }
-	float Dist(float x,float y,float z) const {  return a*x+b*y+z*c-d; }
-	bool EpsilonCompare (const Plane& pln, float epsilon);
-	bool operator==(const Plane &pln);
-	bool operator!=(const Plane &pln) { return !operator==(pln); }
-	void MakePlane(const Vector3& v1, const Vector3& v2,const Vector3& v3);
-	void Inverse() {a=-a; b=-b; c=-c; d=-d;} ///< Plane is the same, but is pointing to the inverse direction
-	void SetVec(Vector3 v) { a=v.x;b=v.y;c=v.z; }
+	float a;
+	float b;
+	float c;
+	float d;
+
+	Plane() : a(0.0f), b(0.0f), c(0.0f), d(0.0f) {}
+	Plane(float a, float b, float c, float d) : a(a), b(b), c(c), d(d) {}
+	Plane(const Vector3& dir, float dis) : a(dir.x), b(dir.y), c(dir.z), d(dis) {}
+
+	bool operator==(const Plane& pln) const;
+	bool operator!=(const Plane& pln) const { return !operator==(pln); }
+
+	float Dist(const Vector3* v) const { return a*v->x + b*v->y + c*v->z - d; }
+	float Dist(float x, float y, float z) const {  return a*x + b*y + z*c - d; }
+	bool EpsilonCompare(const Plane& pln, float epsilon);
+	void MakePlane(const Vector3& v1, const Vector3& v2, const Vector3& v3);
+	/// Plane is the same, but is pointing to the inverse direction
+	void Inverse() { a = -a; b = -b; c = -c; d = -d; }
+	void SetVec(const Vector3& v) { a = v.x; b = v.y; c = v.z; }
 	void CalcDist(const Vector3& p) { d = a*p.x + b*p.y + c*p.z; }
-	void copy (Plane *pl) { pl->a=a; pl->b=b; pl->c=c; pl->d=d; }
+	void copy(Plane* pl) const { pl->a = a; pl->b = b; pl->c = c; pl->d = d; }
 	Vector3& GetVector() { return *(Vector3*)this; }
-	Vector3 GetCenter() { return Vector3 (a*d,b*d,c*d); }
+	Vector3 GetCenter() const { return Vector3(a*d, b*d, c*d); }
 };
 
 #endif // _PLANE_H_
