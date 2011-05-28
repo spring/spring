@@ -76,7 +76,8 @@ public:
 
 
 	// size of the memory-region we hold allocated (excluding sizeof(*this))
-	unsigned int GetMemFootPrint() const { return ((heatmap.size() * sizeof(HeatMapValue)) + squareStates.GetMemFootPrint()); }
+	// (PathManager stores HeatMap and FlowMap, so we do not need to add them)
+	unsigned int GetMemFootPrint() const { return (squareStates.GetMemFootPrint()); }
 
 	PathNodeStateBuffer& GetNodeStateBuffer() { return squareStates; }
 
