@@ -139,10 +139,10 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 	if (!ReadFile(cacheFileName, map)) {
 		// start extra threads if applicable, but always keep the total
 		// memory-footprint made by CPathFinder instances within bounds
-		const unsigned int sumMemFootPrint = (sizeof(CPathFinder) + pathFinder->GetMemFootPrint()) * numThreads;
+		const unsigned int minMemFootPrint = sizeof(CPathFinder) + pathFinder->GetMemFootPrint();
 		const unsigned int maxMemFootPrint = configHandler->Get("MaxPathCostsMemoryFootPrint", 512 * 1024 * 1024);
-		const unsigned int maxExtraThreads = std::max(0, int(maxMemFootPrint / sumMemFootPrint) - 1);
-		const unsigned int numExtraThreads = std::min(numThreads - 1, maxExtraThreads);
+		const unsigned int numExtraThreads = std::min(int(numThreads - 1), std::max(0, int(maxMemFootPrint / minMemFootPrint) - 1));
+		const unsigned int reqMemFootPrint = minMemFootPrint * (numExtraThreads + 1);
 
 		{
 			char calcMsg[512];
@@ -150,7 +150,7 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 				"PathCosts: creating PE%u cache with %u PF threads (%u MB)":
 				"PathCosts: creating PE%u cache with %u PF thread (%u MB)";
 
-			sprintf(calcMsg, fmtString, BLOCK_SIZE, numExtraThreads + 1, sumMemFootPrint / (1024 * 1024));
+			sprintf(calcMsg, fmtString, BLOCK_SIZE, numExtraThreads + 1, reqMemFootPrint / (1024 * 1024));
 			loadscreen->SetLoadMessage(calcMsg);
 		}
 
