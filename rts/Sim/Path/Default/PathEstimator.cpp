@@ -112,7 +112,7 @@ CPathEstimator::~CPathEstimator()
 
 void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::string& map)
 {
-	size_t numThreads = std::max(0, configHandler->Get("HardwareThreadCount", 0));
+	unsigned int numThreads = std::max(0, configHandler->Get("HardwareThreadCount", 0));
 
 	if (numThreads == 0) {
 		// auto-detect
