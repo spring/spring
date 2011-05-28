@@ -80,7 +80,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		gaia->teamAllyteam = gaiaAllyTeamID;
 		teams.push_back(gaia);
 
-		assert((teams[0]->maxUnits + gaia->maxUnits) == MAX_UNITS);
+		assert(((teams.size() * teams[0]->maxUnits) + gaia->maxUnits) == MAX_UNITS);
 
 		for (std::vector< ::AllyTeam >::iterator it = allyTeams.begin(); it != allyTeams.end(); ++it) {
 			it->allies.push_back(false); // enemy to everyone
