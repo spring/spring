@@ -703,6 +703,7 @@ void LuaUtils::PushStringVector(lua_State* L, const vector<string>& vec)
 
 void LuaUtils::PushCommandDesc(lua_State* L, const CommandDescription& cd)
 {
+	lua_checkstack(L, 1 + 1 + 1);
 	lua_createtable(L, 0, 12);
 
 	HSTR_PUSH_NUMBER(L, "id",          cd.id);
@@ -719,7 +720,9 @@ void LuaUtils::PushCommandDesc(lua_State* L, const CommandDescription& cd)
 
 	HSTR_PUSH(L, "params");
 	const int pCount = (int)cd.params.size();
+
 	lua_createtable(L, 0, pCount);
+
 	for (int p = 0; p < pCount; p++) {
 		lua_pushsstring(L, cd.params[p]);
 		lua_rawseti(L, -2, p + 1);

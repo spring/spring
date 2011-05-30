@@ -1617,10 +1617,12 @@ int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 		return 0;
 	}
 	CheckNoArgs(L, __FUNCTION__);
-	lua_newtable(L);
 
 	const vector<CommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
+
+	lua_checkstack(L, 1 + 2);
+	lua_newtable(L);
 
 	for (int i = 0; i < cmdDescCount; i++) {
 		lua_pushnumber(L, i + CMD_INDEX_OFFSET);
