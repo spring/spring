@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef DATADIRLOCATER_H
-#define DATADIRLOCATER_H
+#ifndef DATA_DIR_LOCATER_H
+#define DATA_DIR_LOCATER_H
 
 #include <string>
 #include <vector>
@@ -13,7 +13,7 @@ struct DataDir
 	 *
 	 * Appends a slash to the end of the path if there isn't one already.
 	 */
-	DataDir(const std::string& p);
+	DataDir(const std::string& path);
 
 	std::string path;
 	bool writable;
@@ -34,8 +34,8 @@ public:
 	 *
 	 * Attempts to locate a writeable data dir, and then tries to
 	 * chdir to it.
-	 * As the writeable data dir will usually be the current dir already under windows,
-	 * the chdir will have no effect.
+	 * As the writeable data dir will usually be the current dir already under
+	 * windows, the chdir will have no effect.
 	 *
 	 * The first dir added will be the writeable data dir.
 	 *
@@ -43,11 +43,20 @@ public:
 	 * --------------------------
 	 * (descending priority -> first entry is searched first)
 	 *
+	 * If the environment variable SPRING_ISOLATED is present
+	 * _only_ Platform::GetProcessExecutablePath() (non-UNITSYNC)
+	 *     or Platform::GetModulePath() (UNITSYNC)
+	 * or the relative parent dir, in case of a multi-version engine install,
+	 * will be added.
+	 * If the var is not present, the following hierarchy is observed:
+	 *
 	 * Windows:
 	 * - SPRING_DATADIR env-variable (semi-colon separated list, like PATH)
 	 * - ./springsettings.cfg:SpringData=C:\data (semi-colon separated list)
-	 * - in portable mode only (usually: on): path to the current work-dir/module
-	 *   (either spring.exe or unitsync.dll)
+	 * - CWD; in portable mode only (usually: on):
+	 *   ~ path to the current work-dir/module,
+	 *     which is either spring.exe or unitsync.dll, or
+	 *   ~ the parent dir of the above, if it is a multi-version data-dir
 	 * - "C:/.../My Documents/My Games/Spring/"
 	 * - "C:/.../My Documents/Spring/"
 	 * - "C:/.../All Users/Applications/Spring/"
@@ -56,7 +65,12 @@ public:
 	 * Max OS X:
 	 * - SPRING_DATADIR env-variable (colon separated list, like PATH)
 	 * - ~/.springrc:SpringData=/path/to/data (colon separated list)
-	 * - path to the current work-dir/module (either spring(binary) or libunitsync.dylib)
+	 * - path to the current work-dir/module
+	 *   (either spring(binary) or libunitsync.dylib)
+	 * - CWD; allways:
+	 *   ~ path to the current work-dir/module,
+	 *     which is either the spring binary or libunitsync.so, or
+	 *   ~ the parent dir of the above, if it is a multi-version data-dir
 	 * - {module-path}/data/
 	 * - {module-path}/lib/
 	 * - SPRING_DATADIR compiler flag (colon separated list)
@@ -64,10 +78,13 @@ public:
 	 * Unixes:
 	 * - SPRING_DATADIR env-variable (colon separated list, like PATH)
 	 * - ~/.springrc:SpringData=/path/to/data (colon separated list)
-	 * - in portable mode only (usually: off): path to the current work-dir/module
-	 *   (either spring binary or libunitsync.so)
+	 * - CWD; in portable mode only (usually: off):
+	 *   ~ path to the current work-dir/module,
+	 *     which is either the spring binary or libunitsync.so, or
+	 *   ~ the parent dir of the above, if it is a multi-version data-dir
 	 * - "$HOME/.spring"
-	 * - from file '/etc/spring/datadir', preserving order (new-line separated list)
+	 * - from file '/etc/spring/datadir', preserving order
+	 *   (new-line separated list)
 	 * - SPRING_DATADIR compiler flag (colon separated list)
 	 *   This is set by the build system, and will usually contain dirs like:
 	 *   * /usr/share/games/spring/
@@ -85,19 +102,41 @@ public:
 	 */
 	void LocateDataDirs();
 
-	const std::vector<DataDir>& GetDataDirs() const { return datadirs; }
-	const DataDir* GetWriteDir() const { return writedir; }
+	const std::vector<DataDir>& GetDataDirs() const { return dataDirs; }
+	const DataDir* GetWriteDir() const { return writeDir; }
 
 private:
+
+	/**
+	 * Adds either the CWD "./", its parent dir "../" or none of the two as a
+	 * data dir.
+	 * If ../ seems to be a multi-version data-dir, it is added.
+	 * Otherwise, ./ is added, if it seems to be a portable data-dir,
+	 * or adding is forced.
+	 * Adding ../ is useful in case of multiple engine/unitsync versions
+	 * installed together in a sub-dir of the data-dir.
+	 * The data-dir structure then might look similar to this:
+	 * maps/
+	 * games/
+	 * engines/engine-0.83.0.0.exe
+	 * engines/engine-0.83.1.0.exe
+	 * unitsyncs/unitsync-0.83.0.0.exe
+	 * unitsyncs/unitsync-0.83.1.0.exe
+	 * @param curWorkDir the CWD to possibly add (or the relative ../)
+	 * @param forceAdd whether to always add either the parent or the CWD
+	 */
+	void AddCwdOrParentDir(const std::string& curWorkDir, bool forceAdd = false);
 	/**
 	 * @brief substitutes environment variables with their values
 	 */
 	std::string SubstEnvVars(const std::string& in) const;
 	/**
-	 * @brief Adds the directories from a colon separated string to the datadir handler.
-	 * @param  in colon separated string, use ';' on Windows and ':' on all other OSs)
+	 * @brief Adds the directories from a colon separated string to the data-dir
+	 *   handler.
+	 * @param dirs colon separated string, use ';' on Windows and ':' on all
+	 *   other OSs
 	 */
-	void AddDirs(const std::string& in);
+	void AddDirs(const std::string& dirs);
 	/**
 	 * @brief Adds a single directory to the datadir handler.
 	 * Will only add the directory if it was not already added,
@@ -106,10 +145,10 @@ private:
 	 */
 	void AddDir(const std::string& dir);
 	/**
-	 * @brief Figure out permissions we have for a single data directory d.
+	 * @brief Figure out permissions we have for a single data directory.
 	 * @returns whether we have permissions to read the data directory.
 	 */
-	bool DeterminePermissions(DataDir* d);
+	bool DeterminePermissions(DataDir* dataDir);
 	/**
 	 * @brief Figure out permissions we have for the data directories.
 	 */
@@ -138,8 +177,8 @@ private:
 	 */
 	static bool LooksLikeMultiVersionDataDir(const std::string& dirPath);
 
-	std::vector<DataDir> datadirs;
-	const DataDir* writedir;
+	std::vector<DataDir> dataDirs;
+	const DataDir* writeDir;
 };
 
-#endif // !defined(DATADIRLOCATER_H)
+#endif // !defined(DATA_DIR_LOCATER_H)
