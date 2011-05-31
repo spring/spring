@@ -64,10 +64,11 @@ CFeatureHandler::CFeatureHandler()
 	vector<string> keys;
 	rootTable.GetKeys(keys);
 	for (int i = 0; i < (int)keys.size(); i++) {
-		const string& name = keys[i];
-		const LuaTable& fdTable = rootTable.SubTable(name);
+		const string& nameMixedCase = keys[i];
+		const string& nameLowerCase = StringToLower(nameMixedCase);
+		const LuaTable& fdTable = rootTable.SubTable(nameMixedCase);
 
-		ParseFeatureDef(fdTable, name);
+		AddFeatureDef(nameLowerCase, CreateFeatureDef(fdTable, nameLowerCase));
 	}
 
 	//! add a default geovent FeatureDef if the game did not
@@ -95,6 +96,9 @@ CFeatureHandler::~CFeatureHandler()
 
 void CFeatureHandler::AddFeatureDef(const string& name, FeatureDef* fd)
 {
+	if (fd == NULL)
+		return;
+
 	map<string, const FeatureDef*>::const_iterator it = featureDefs.find(name);
 
 	if (it != featureDefs.end()) {
@@ -103,15 +107,16 @@ void CFeatureHandler::AddFeatureDef(const string& name, FeatureDef* fd)
 		fd->id = featureDefsVector.size();
 		featureDefsVector.push_back(fd);
 	}
+
 	featureDefs[name] = fd;
 }
 
 
-void CFeatureHandler::ParseFeatureDef(const LuaTable& fdTable, const string& mixedCase)
+FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const string& mixedCase) const
 {
-	const string name = StringToLower(mixedCase);
+	const string& name = StringToLower(mixedCase);
 	if (featureDefs.find(name) != featureDefs.end()) {
-		return;
+		return NULL;
 	}
 
 	FeatureDef* fd = new FeatureDef();
@@ -181,37 +186,8 @@ void CFeatureHandler::ParseFeatureDef(const LuaTable& fdTable, const string& mix
 	// custom parameters table
 	fdTable.SubTable("customParams").GetMap(fd->customParams);
 
-	AddFeatureDef(name, fd);
+	return fd;
 }
-
-
-const FeatureDef* CFeatureHandler::GetFeatureDef(string name, const bool showError)
-{
-	if (name.empty())
-		return NULL;
-
-	StringToLowerInPlace(name);
-	map<string, const FeatureDef*>::iterator fi = featureDefs.find(name);
-
-	if (fi != featureDefs.end()) {
-		return fi->second;
-	}
-
-	if (showError)
-		logOutput.Print("[%s] could not find FeatureDef \"%s\"", __FUNCTION__, name.c_str());
-
-	return NULL;
-}
-
-
-const FeatureDef* CFeatureHandler::GetFeatureDefByID(int id)
-{
-	if ((id < 1) || (static_cast<size_t>(id) >= featureDefsVector.size())) {
-		return NULL;
-	}
-	return featureDefsVector[id];
-}
-
 
 
 FeatureDef* CFeatureHandler::CreateDefaultTreeFeatureDef(const std::string& name) const {
@@ -255,6 +231,36 @@ FeatureDef* CFeatureHandler::CreateDefaultGeoFeatureDef(const std::string& name)
 	// geothermals have no collision volume at all
 	fd->collisionVolume = NULL;
 	return fd;
+}
+
+
+
+
+const FeatureDef* CFeatureHandler::GetFeatureDef(string name, const bool showError)
+{
+	if (name.empty())
+		return NULL;
+
+	StringToLowerInPlace(name);
+	map<string, const FeatureDef*>::iterator fi = featureDefs.find(name);
+
+	if (fi != featureDefs.end()) {
+		return fi->second;
+	}
+
+	if (showError)
+		logOutput.Print("[%s] could not find FeatureDef \"%s\"", __FUNCTION__, name.c_str());
+
+	return NULL;
+}
+
+
+const FeatureDef* CFeatureHandler::GetFeatureDefByID(int id)
+{
+	if ((id < 1) || (static_cast<size_t>(id) >= featureDefsVector.size())) {
+		return NULL;
+	}
+	return featureDefsVector[id];
 }
 
 
