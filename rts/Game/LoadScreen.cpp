@@ -131,10 +131,14 @@ CLoadScreen::~CLoadScreen()
 		net->Send(CBaseNetProtocol::Get().SendPathCheckSum(gu->myPlayerNum, pathManager->GetPathCheckSum()));
 #endif
 		mouse->ShowMouse();
-		
+
 #if !defined(HEADLESS) && !defined(NO_SOUND)
-		*(efx->sfxProperties) = *(mapInfo->efxprops);
-		efx->CommitEffects();
+		// sound is initialized at this point,
+		// but EFX support is *not* guaranteed
+		if (efx != NULL) {
+			*(efx->sfxProperties) = *(mapInfo->efxprops);
+			efx->CommitEffects();
+		}
 #endif
 		game->SetupRenderingParams();
 
