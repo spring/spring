@@ -46,8 +46,11 @@ public:
 	const CFeatureSet& GetActiveFeatures() const { return activeFeatures; }
 
 private:
+	FeatureDef* CreateDefaultTreeFeatureDef(const std::string& name) const;
+	FeatureDef* CreateDefaultGeoFeatureDef(const std::string& name) const;
+
 	void AddFeatureDef(const std::string& name, FeatureDef* feature);
-	void CreateFeatureDef(const LuaTable& luaTable, const std::string& name);
+	void ParseFeatureDef(const LuaTable& luaTable, const std::string& name);
 
 private:
 	std::map<std::string, const FeatureDef*> featureDefs;

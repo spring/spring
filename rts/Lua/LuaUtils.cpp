@@ -703,8 +703,11 @@ void LuaUtils::PushStringVector(lua_State* L, const vector<string>& vec)
 
 void LuaUtils::PushCommandDesc(lua_State* L, const CommandDescription& cd)
 {
-	lua_checkstack(L, 1 + 1 + 1);
-	lua_createtable(L, 0, 12);
+	const int numParams = cd.params.size();
+	const int numTblKeys = 12;
+
+	lua_checkstack(L, 1 + 1 + 1 + 1);
+	lua_createtable(L, 0, numTblKeys);
 
 	HSTR_PUSH_NUMBER(L, "id",          cd.id);
 	HSTR_PUSH_NUMBER(L, "type",        cd.type);
@@ -719,11 +722,10 @@ void LuaUtils::PushCommandDesc(lua_State* L, const CommandDescription& cd)
 	HSTR_PUSH_BOOL(L,   "onlyTexture", cd.onlyTexture);
 
 	HSTR_PUSH(L, "params");
-	const int pCount = (int)cd.params.size();
 
-	lua_createtable(L, 0, pCount);
+	lua_createtable(L, 0, numParams);
 
-	for (int p = 0; p < pCount; p++) {
+	for (int p = 0; p < numParams; p++) {
 		lua_pushsstring(L, cd.params[p]);
 		lua_rawseti(L, -2, p + 1);
 	}
