@@ -145,7 +145,11 @@ public:
 #define GML_MSTMUTEX_DOUNLOCK(name) name##mutex.Unlock()
 #define GML_STDMUTEX_LOCK_NOPROF(name) boost::mutex::scoped_lock name##lock(name##mutex)
 
-#else
+#endif
+
+#endif
+
+#if !defined(USE_GML) || !GML_ENABLE_SIM
 
 #define GML_STDMUTEX_LOCK(name)
 #define GML_RECMUTEX_LOCK(name)
@@ -154,8 +158,6 @@ public:
 #define GML_MSTMUTEX_LOCK(name)
 #define GML_MSTMUTEX_DOLOCK(name)
 #define GML_MSTMUTEX_DOUNLOCK(name)
-
-#endif
 
 #endif
 
