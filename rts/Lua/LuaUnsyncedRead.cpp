@@ -894,7 +894,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 		const CFeature& f = **featureIt;
 
 		if (noGeos) {
-			if (f.def->drawType <= DRAWTYPE_NONE) {
+			if (f.def->geoThermal) {
 				continue;
 			}
 		}
