@@ -22,7 +22,7 @@
 #include "UI/GameInfo.h"
 #include "UI/LuaUI.h"
 #include "UI/MouseHandler.h"
-#include "System/FPUCheck.h"
+#include "System/LogOutput.h"
 #include "System/FileSystem/SimpleParser.h"
 
 void SetBoolArg(bool& value, const std::string& str)
