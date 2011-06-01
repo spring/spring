@@ -4237,8 +4237,7 @@ int LuaOpenGL::Frustum(lua_State* L)
 int LuaOpenGL::Billboard(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-//	glMultMatrixd(camera->billboard);
-	glCallList(CCamera::billboardList);
+	glMultMatrixf(camera->GetBillBoardMatrix());
 	return 0;
 }
 
