@@ -3807,12 +3807,16 @@ static int PackBuildQueue(lua_State* L, bool canBuild, const char* caller)
 
 int LuaSyncedRead::GetFullBuildQueue(lua_State* L)
 {
+	GML_STDMUTEX_LOCK(cai); // GetFullBuildQueue
+
 	return PackBuildQueue(L, false, __FUNCTION__);
 }
 
 
 int LuaSyncedRead::GetRealBuildQueue(lua_State* L)
 {
+	GML_STDMUTEX_LOCK(cai); // GetRealBuildQueue
+
 	return PackBuildQueue(L, true, __FUNCTION__);
 }
 
