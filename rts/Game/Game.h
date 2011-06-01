@@ -112,6 +112,7 @@ public:
 	bool showClock;
 	bool showSpeed;
 	int showMTInfo;
+	int mtInfoCtrl;
 	/// Prevents spectator msgs from being seen by players
 	bool noSpectatorChat;
 
