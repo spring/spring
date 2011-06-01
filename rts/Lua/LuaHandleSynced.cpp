@@ -144,7 +144,7 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 	}
 
 	CLuaHandle* origHandle = GetActiveHandle();
-	SetActiveHandle();
+	SetActiveHandle(L);
 
 	SetAllowChanges(true, true);
 	SetSynced(true, true);
@@ -538,7 +538,7 @@ bool CLuaHandleSynced::LoadUnsyncedCode(lua_State *L, const string& code, const 
 	lua_setfenv(L, -2);
 
 	CLuaHandle* orig = GetActiveHandle();
-	SetActiveHandle();
+	SetActiveHandle(L);
 	error = lua_pcall(L, 0, 0, 0);
 	SetActiveHandle(orig);
 

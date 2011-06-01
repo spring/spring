@@ -287,6 +287,7 @@ class CLuaHandle : public CEventClient
 
 		inline void SetActiveHandle();
 		inline void SetActiveHandle(CLuaHandle* lh);
+		inline void SetActiveHandle(lua_State *L);
 		bool singleState;
 		// USE_LUA_MT inserted below mainly so that compiler can optimize code if USE_LUA_MT = 0
 		inline bool SingleState() const { return !USE_LUA_MT || singleState; } // Is this handle using a single Lua state?
@@ -449,6 +450,15 @@ inline void CLuaHandle::SetActiveHandle(CLuaHandle* lh)
 	}
 }
 
+inline void CLuaHandle::SetActiveHandle(lua_State *L)
+{
+	staticLuaContextData &slcd = GetStaticLuaContextData();
+	CLuaHandle* lh = slcd.activeHandle = L->lcd->owner;
+	if (lh) {
+		slcd.activeFullRead = lh->GetFullRead(L);
+		slcd.activeReadAllyTeam = lh->GetReadAllyTeam(L);
+	}
+}
 
 inline bool CLuaHandle::RunCallIn(const LuaHashString& hs, int inArgs, int outArgs)
 {
