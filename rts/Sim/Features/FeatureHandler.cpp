@@ -70,11 +70,6 @@ CFeatureHandler::CFeatureHandler()
 
 		AddFeatureDef(nameLowerCase, CreateFeatureDef(fdTable, nameLowerCase));
 	}
-
-	//! add a default geovent FeatureDef if the game did not
-	if (GetFeatureDef("geovent", false) == NULL) {
-		AddFeatureDef("geovent", CreateDefaultGeoFeatureDef("geovent"));
-	}
 }
 
 CFeatureHandler::~CFeatureHandler()
@@ -284,6 +279,11 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 				logOutput.Print("[%s] unknown map feature type \"%s\"", __FUNCTION__, name.c_str());
 			}
 		}
+	}
+
+	//! add a default geovent FeatureDef if the map did not
+	if (GetFeatureDef("geovent", false) == NULL) {
+		AddFeatureDef("geovent", CreateDefaultGeoFeatureDef("geovent"));
 	}
 
 	if (!onlyCreateDefs) {
