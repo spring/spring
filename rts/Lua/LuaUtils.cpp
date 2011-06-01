@@ -706,7 +706,7 @@ void LuaUtils::PushCommandDesc(lua_State* L, const CommandDescription& cd)
 	const int numParams = cd.params.size();
 	const int numTblKeys = 12;
 
-	lua_checkstack(L, 1 + 1 + 1 + 1);
+	lua_checkstack(L, 1 + 1 + 1 + 1 + 1);
 	lua_createtable(L, 0, numTblKeys);
 
 	HSTR_PUSH_NUMBER(L, "id",          cd.id);
@@ -729,6 +729,9 @@ void LuaUtils::PushCommandDesc(lua_State* L, const CommandDescription& cd)
 		lua_pushsstring(L, cd.params[p]);
 		lua_rawseti(L, -2, p + 1);
 	}
+
+	// params["n"] = numParams
+	HSTR_PUSH_NUMBER(L, "n", numParams);
 
 	// CmdDesc["params"] = {[1] = "string1", [2] = "string2", ...}
 	lua_settable(L, -3);
