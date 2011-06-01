@@ -191,6 +191,7 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(showClock),
 	CR_MEMBER(showSpeed),
 	CR_MEMBER(showMTInfo),
+	CR_MEMBER(mtInfoCtrl),
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(gameID),
 //	CR_MEMBER(script),
@@ -268,6 +269,7 @@ CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHa
 	showClock = !!configHandler->Get("ShowClock", 1);
 	showSpeed = !!configHandler->Get("ShowSpeed", 0);
 	showMTInfo = !!configHandler->Get("ShowMTInfo", 1);
+	mtInfoCtrl = 0;
 
 	speedControl = configHandler->Get("SpeedControl", 0);
 
@@ -1504,21 +1506,33 @@ bool CGame::Draw() {
 
 		if(showMTInfo == 1 || showMTInfo == 2) {
 			float lockPercent = (float)luaLockTime / 10.0f;
-			char buf[32];
-			SNPRINTF(buf, sizeof(buf), "LUA-SYNC-CPU(MT): %2.0f%%", lockPercent);
-			float4 warncol(lockPercent >= 10.0f && (currentTime & 128) ?
-				0.5f : std::max(0.0f, std::min(lockPercent / 5.0f, 1.0f)), std::max(0.0f, std::min(2.0f - lockPercent / 5.0f, 1.0f)), 0.0f, 1.0f);
-			smallFont->SetColors(&warncol, NULL);
-			smallFont->glPrint(0.99f, 0.88f, 1.0f, font_options, buf);
+			if(lockPercent >= 0.1f) {
+				if((mtInfoCtrl = std::min(mtInfoCtrl + 1, 5)) == 3) mtInfoCtrl = 5;
+			}
+			else if((mtInfoCtrl = std::max(mtInfoCtrl - 1, 0)) == 2) mtInfoCtrl = 0;
+			if(mtInfoCtrl >= 3) {
+				char buf[40];
+				SNPRINTF(buf, sizeof(buf), "LUA-SYNC-CPU(MT): %2.1f%%", lockPercent);
+				float4 warncol(lockPercent >= 10.0f && (currentTime & 128) ?
+					0.5f : std::max(0.0f, std::min(lockPercent / 5.0f, 1.0f)), std::max(0.0f, std::min(2.0f - lockPercent / 5.0f, 1.0f)), 0.0f, 1.0f);
+				smallFont->SetColors(&warncol, NULL);
+				smallFont->glPrint(0.99f, 0.88f, 1.0f, font_options, buf);
+			}
 		}
 		else if(showMTInfo == 3) {
-			int ek = luaExportSize / 1000;
-			char buf[32];
-			SNPRINTF(buf, sizeof(buf), "LUA-EXP-SIZE(MT): %dK", ek);
-			float4 warncol(ek >= 10 && (currentTime & 128) ?
-				0.5f : std::max(0.0f, std::min(ek / 5.0f, 1.0f)), std::max(0.0f, std::min(2.0f - ek / 5.0f, 1.0f)), 0.0f, 1.0f);
-			smallFont->SetColors(&warncol, NULL);
-			smallFont->glPrint(0.99f, 0.88f, 1.0f, font_options, buf);
+			float ek = (float)luaExportSize / 1000.0f;
+			if(ek >= 0.1f) {
+				if((mtInfoCtrl = std::min(mtInfoCtrl + 1, 5)) == 3) mtInfoCtrl = 5;
+			}
+			else if((mtInfoCtrl = std::max(mtInfoCtrl - 1, 0)) == 2) mtInfoCtrl = 0;
+			if(mtInfoCtrl >= 3) {
+				char buf[40];
+				SNPRINTF(buf, sizeof(buf), "LUA-EXP-SIZE(MT): %2.1fK", ek);
+				float4 warncol(ek >= 10.0f && (currentTime & 128) ?
+					0.5f : std::max(0.0f, std::min(ek / 5.0f, 1.0f)), std::max(0.0f, std::min(2.0f - ek / 5.0f, 1.0f)), 0.0f, 1.0f);
+				smallFont->SetColors(&warncol, NULL);
+				smallFont->glPrint(0.99f, 0.88f, 1.0f, font_options, buf);
+			}
 		}
 #endif
 
