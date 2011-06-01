@@ -133,14 +133,14 @@ void CLuaHandle::KillLua()
 {
 	if (L_Draw != NULL) {
 		CLuaHandle* orig = GetActiveHandle();
-		SetActiveHandle();
+		SetActiveHandle(L_Draw);
 		LUA_CLOSE(L_Draw);
 		SetActiveHandle(orig);
 		L_Draw = NULL;
 	}
 	if (L_Sim != NULL) {
 		CLuaHandle* orig = GetActiveHandle();
-		SetActiveHandle();
+		SetActiveHandle(L_Sim);
 		LUA_CLOSE(L_Sim);
 		SetActiveHandle(orig);
 		L_Sim = NULL;
@@ -218,7 +218,7 @@ bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 	}
 
 	CLuaHandle* orig = GetActiveHandle();
-	SetActiveHandle();
+	SetActiveHandle(L);
 	error = lua_pcall(L, 0, 0, 0);
 	SetActiveHandle(orig);
 
@@ -449,12 +449,12 @@ int CLuaHandle::RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, st
 	feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 #endif
 
+	SELECT_LUA_STATE();
 	CLuaHandle* orig = GetActiveHandle();
-	SetActiveHandle();
+	SetActiveHandle(L);
 	//! limit gc just to the time the correct ActiveHandle is bound,
 	//! because some object could use __gc and try to access the ActiveHandle
 	//! outside of SetActiveHandle this can be an incorrect enviroment or even null -> crash
-	SELECT_LUA_STATE();
 	lua_gc(L,LUA_GCRESTART,0);
 	const int error = lua_pcall(L, inArgs, outArgs, errfuncIndex);
 	lua_gc(L,LUA_GCSTOP,0);
