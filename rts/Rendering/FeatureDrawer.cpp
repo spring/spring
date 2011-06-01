@@ -264,7 +264,7 @@ void CFeatureDrawer::DrawFeatureStatBars(const CFeature* feature)
 
 	glPushMatrix();
 	glTranslatef(interPos.x, interPos.y, interPos.z);
-	glCallList(CCamera::billboardList);
+	glMultMatrixf(camera->GetBillBoardMatrix());
 
 	const float recl = feature->reclaimLeft;
 	const float rezp = feature->resurrectProgress;

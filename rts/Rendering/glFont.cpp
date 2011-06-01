@@ -1865,8 +1865,8 @@ void CglFont::glWorldPrint(const float3& p, const float size, const std::string&
 
 	glPushMatrix();
 		glTranslatef(p.x, p.y, p.z);
-		glCallList(CCamera::billboardList);
-		Begin(false,false);
+		glMultMatrixf(camera->GetBillBoardMatrix());
+		Begin(false, false);
 			glPrint(0.0f, 0.0f, size, FONT_DESCENDER | FONT_CENTER | FONT_OUTLINE, str);
 		End();
 	glPopMatrix();

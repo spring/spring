@@ -12,7 +12,6 @@ class CCamera
 {
 public:
 	CCamera();
-	~CCamera();
 
 	float3 CalcPixelDir(int x,int y) const;
 	float3 CalcWindowCoordinates(const float3& objPos) const;
@@ -53,8 +52,6 @@ public:
 	float lppScale;    ///< length-per-pixel scale
 
 	GLint viewport[4];
-
-	static GLuint billboardList;
 
 private:
 	void myGluPerspective(float aspect, float zNear, float zFar);

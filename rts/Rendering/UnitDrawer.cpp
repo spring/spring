@@ -1915,7 +1915,7 @@ void CUnitDrawer::DrawUnitStats(CUnit* unit)
 	// setup the billboard transformation
 	glPushMatrix();
 	glTranslatef(interPos.x, interPos.y, interPos.z);
-	glCallList(CCamera::billboardList);
+	glMultMatrixf(camera->GetBillBoardMatrix());
 
 	if (unit->health < unit->maxHealth || unit->paralyzeDamage > 0.0f) {
 		// black background for healthbar
