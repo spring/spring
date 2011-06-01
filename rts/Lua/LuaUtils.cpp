@@ -729,4 +729,7 @@ void LuaUtils::PushCommandDesc(lua_State* L, const CommandDescription& cd)
 		lua_pushsstring(L, cd.params[p]);
 		lua_rawseti(L, -2, p + 1);
 	}
+
+	// CmdDesc["params"] = {[1] = "string1", [2] = "string2", ...}
+	lua_settable(L, -3);
 }
