@@ -314,6 +314,12 @@ CGame::~CGame()
 	}
 	syncedActionExecutors.clear();
 
+	std::map<std::string, IUnsyncedActionExecutor*>::iterator uaei;
+	for (uaei = unsyncedActionExecutors.begin(); uaei != unsyncedActionExecutors.end(); ++uaei) {
+		SafeDelete(uaei->second);
+	}
+	unsyncedActionExecutors.clear();
+
 	CLoadScreen::DeleteInstance();
 	IVideoCapturing::FreeInstance();
 	ISound::Shutdown();
