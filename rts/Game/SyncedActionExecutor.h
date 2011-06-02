@@ -3,9 +3,33 @@
 #ifndef SYNCED_ACTION_EXECUTOR_H
 #define SYNCED_ACTION_EXECUTOR_H
 
+#include "Action.h"
+
 #include <string>
 
-class Action;
+
+class SyncedAction
+{
+public:
+	SyncedAction(const Action& action, int playerID)
+		: action(action)
+		, playerID(playerID)
+	{}
+
+	/**
+	 * Returns the action arguments.
+	 */
+	const std::string& GetArgs() const { return action.extra; }
+
+	/**
+	 * Returns the normalized key symbol.
+	 */
+	int GetPlayerID() const { return playerID; }
+
+private:
+	const Action& action;
+	int playerID;
+};
 
 class ISyncedActionExecutor
 {
@@ -32,13 +56,13 @@ public:
 	 * Executes one instance of an action of this type.
 	 * Does a few checks internally, and then calls Execute(args).
 	 */
-	void ExecuteAction(const Action& action, int playerID) const;
+	void ExecuteAction(const SyncedAction& action) const;
 
 protected:
 	/**
 	 * Executes one instance of an action of this type.
 	 */
-	virtual void Execute(const std::string& args, int playerID) const = 0;
+	virtual void Execute(const SyncedAction& action) const = 0;
 
 private:
 	std::string command;

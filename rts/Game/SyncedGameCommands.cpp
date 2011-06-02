@@ -48,8 +48,8 @@ class CheatActionExecutor : public ISyncedActionExecutor {
 public:
 	CheatActionExecutor() : ISyncedActionExecutor("Cheat") {}
 
-	void Execute(const std::string& args, int playerID) const {
-		SetBoolArg(gs->cheatEnabled, args);
+	void Execute(const SyncedAction& action) const {
+		SetBoolArg(gs->cheatEnabled, action.GetArgs());
 		if (gs->cheatEnabled)
 			logOutput.Print("Cheating!");
 		else
@@ -62,8 +62,8 @@ class NoHelpActionExecutor : public ISyncedActionExecutor {
 public:
 	NoHelpActionExecutor() : ISyncedActionExecutor("NoHelp") {}
 
-	void Execute(const std::string& args, int playerID) const {
-		SetBoolArg(gs->noHelperAIs, args);
+	void Execute(const SyncedAction& action) const {
+		SetBoolArg(gs->noHelperAIs, action.GetArgs());
 		selectedUnits.PossibleCommandChange(NULL);
 		logOutput.Print("LuaUI control is %s", gs->noHelperAIs ? "disabled" : "enabled");
 	}
@@ -74,9 +74,9 @@ class NoSpecDrawActionExecutor : public ISyncedActionExecutor {
 public:
 	NoSpecDrawActionExecutor() : ISyncedActionExecutor("NoSpecDraw") {}
 
-	void Execute(const std::string& args, int playerID) const {
+	void Execute(const SyncedAction& action) const {
 		bool buf;
-		SetBoolArg(buf, args);
+		SetBoolArg(buf, action.GetArgs());
 		inMapDrawer->SetSpecMapDrawingAllowed(buf);
 	}
 };
@@ -86,8 +86,8 @@ class GodModeActionExecutor : public ISyncedActionExecutor {
 public:
 	GodModeActionExecutor() : ISyncedActionExecutor("GodMode", true) {}
 
-	void Execute(const std::string& args, int playerID) const {
-		SetBoolArg(gs->godMode, args);
+	void Execute(const SyncedAction& action) const {
+		SetBoolArg(gs->godMode, action.GetArgs());
 		CLuaUI::UpdateTeams();
 		if (gs->godMode) {
 			logOutput.Print("God Mode Enabled");
@@ -103,8 +103,8 @@ class GlobalLosActionExecutor : public ISyncedActionExecutor {
 public:
 	GlobalLosActionExecutor() : ISyncedActionExecutor("GlobalLOS", true) {}
 
-	void Execute(const std::string& args, int playerID) const {
-		SetBoolArg(gs->globalLOS, args);
+	void Execute(const SyncedAction& action) const {
+		SetBoolArg(gs->globalLOS, action.GetArgs());
 		if (gs->globalLOS) {
 			logOutput.Print("Global LOS Enabled");
 		} else {
@@ -118,7 +118,7 @@ class NoCostActionExecutor : public ISyncedActionExecutor {
 public:
 	NoCostActionExecutor() : ISyncedActionExecutor("NoCost", true) {}
 
-	void Execute(const std::string& args, int playerID) const {
+	void Execute(const SyncedAction& action) const {
 		if (unitDefHandler->ToggleNoCost()) {
 			logOutput.Print("Everything is for free!");
 		} else {
@@ -132,9 +132,9 @@ class GiveActionExecutor : public ISyncedActionExecutor {
 public:
 	GiveActionExecutor() : ISyncedActionExecutor("Give", true) {}
 
-	void Execute(const std::string& args, int playerID) const {
-		const std::vector<std::string>& parsedArgs = CSimpleParser::Tokenize(args, 0);
-		unitLoader->ParseAndExecuteGiveUnitsCommand(parsedArgs, playerHandler->Player(playerID)->team);
+	void Execute(const SyncedAction& action) const {
+		const std::vector<std::string>& parsedArgs = CSimpleParser::Tokenize(action.GetArgs(), 0);
+		unitLoader->ParseAndExecuteGiveUnitsCommand(parsedArgs, playerHandler->Player(action.GetPlayerID())->team);
 	}
 };
 
@@ -143,9 +143,9 @@ class DestroyActionExecutor : public ISyncedActionExecutor {
 public:
 	DestroyActionExecutor() : ISyncedActionExecutor("Destroy", true) {}
 
-	void Execute(const std::string& args, int playerID) const {
-		std::stringstream ss(args);
-		logOutput.Print("Killing units: %s", args.c_str());
+	void Execute(const SyncedAction& action) const {
+		std::stringstream ss(action.GetArgs());
+		logOutput.Print("Killing units: %s", action.GetArgs().c_str());
 
 		do {
 			unsigned int id; ss >> id;
@@ -166,8 +166,8 @@ class NoSpectatorChatActionExecutor : public ISyncedActionExecutor {
 public:
 	NoSpectatorChatActionExecutor() : ISyncedActionExecutor("NoSpectatorChat") {}
 
-	void Execute(const std::string& args, int playerID) const {
-		SetBoolArg(game->noSpectatorChat, args);
+	void Execute(const SyncedAction& action) const {
+		SetBoolArg(game->noSpectatorChat, action.GetArgs());
 		logOutput.Print("Spectators %s chat", game->noSpectatorChat ? "can not" : "can");
 	}
 };
@@ -177,8 +177,8 @@ class ReloadCobActionExecutor : public ISyncedActionExecutor {
 public:
 	ReloadCobActionExecutor() : ISyncedActionExecutor("ReloadCOB", true) {}
 
-	void Execute(const std::string& args, int playerID) const {
-		game->ReloadCOB(args, playerID);
+	void Execute(const SyncedAction& action) const {
+		game->ReloadCOB(action.GetArgs(), action.GetPlayerID());
 	}
 };
 
@@ -187,8 +187,8 @@ class ReloadCegsActionExecutor : public ISyncedActionExecutor {
 public:
 	ReloadCegsActionExecutor() : ISyncedActionExecutor("ReloadCegs", true) {}
 
-	void Execute(const std::string& args, int playerID) const {
-		game->ReloadCEGs(args);
+	void Execute(const SyncedAction& action) const {
+		game->ReloadCEGs(action.GetArgs());
 	}
 };
 
@@ -197,9 +197,9 @@ class DevLuaActionExecutor : public ISyncedActionExecutor {
 public:
 	DevLuaActionExecutor() : ISyncedActionExecutor("DevLua", true) {}
 
-	void Execute(const std::string& args, int playerID) const {
+	void Execute(const SyncedAction& action) const {
 		bool devMode = CLuaHandle::GetDevMode();
-		SetBoolArg(devMode, args);
+		SetBoolArg(devMode, action.GetArgs());
 		CLuaHandle::SetDevMode(devMode);
 		if (devMode) {
 			logOutput.Print("Lua devmode enabled, this can cause desyncs");
@@ -214,8 +214,8 @@ class EditDefsActionExecutor : public ISyncedActionExecutor {
 public:
 	EditDefsActionExecutor() : ISyncedActionExecutor("EditDefs", true) {}
 
-	void Execute(const std::string& args, int playerID) const {
-		SetBoolArg(gs->editDefsEnabled, args);
+	void Execute(const SyncedAction& action) const {
+		SetBoolArg(gs->editDefsEnabled, action.GetArgs());
 		if (gs->editDefsEnabled)
 			logOutput.Print("Definition Editing!");
 		else
@@ -228,9 +228,9 @@ class LuaRulesActionExecutor : public ISyncedActionExecutor {
 public:
 	LuaRulesActionExecutor() : ISyncedActionExecutor("LuaRules") {}
 
-	void Execute(const std::string& args, int playerID) const {
+	void Execute(const SyncedAction& action) const {
 		if (gs->frameNum > 1) {
-			if ((args == "reload") && (playerID == 0)) {
+			if ((action.GetArgs() == "reload") && (action.GetPlayerID() == 0)) {
 				if (!gs->cheatEnabled) {
 					logOutput.Print("Cheating required to reload synced scripts");
 				} else {
@@ -243,7 +243,7 @@ public:
 					}
 				}
 			}
-			else if ((args == "disable") && (playerID == 0)) {
+			else if ((action.GetArgs() == "disable") && (action.GetPlayerID() == 0)) {
 				if (!gs->cheatEnabled) {
 					logOutput.Print("Cheating required to disable synced scripts");
 				} else {
@@ -252,7 +252,7 @@ public:
 				}
 			}
 			else {
-				if (luaRules) luaRules->GotChatMsg(args, playerID);
+				if (luaRules) luaRules->GotChatMsg(action.GetArgs(), action.GetPlayerID());
 			}
 		}
 	}
@@ -263,10 +263,10 @@ class LuaGaiaActionExecutor : public ISyncedActionExecutor {
 public:
 	LuaGaiaActionExecutor() : ISyncedActionExecutor("LuaGaia") {}
 
-	void Execute(const std::string& args, int playerID) const {
+	void Execute(const SyncedAction& action) const {
 		if (gs->frameNum > 1) {
 			if (gs->useLuaGaia) {
-				if ((args == "reload") && (playerID == 0)) {
+				if ((action.GetArgs() == "reload") && (action.GetPlayerID() == 0)) {
 					if (!gs->cheatEnabled) {
 						logOutput.Print("Cheating required to reload synced scripts");
 					} else {
@@ -279,7 +279,7 @@ public:
 						}
 					}
 				}
-				else if ((args == "disable") && (playerID == 0)) {
+				else if ((action.GetArgs() == "disable") && (action.GetPlayerID() == 0)) {
 					if (!gs->cheatEnabled) {
 						logOutput.Print("Cheating required to disable synced scripts");
 					} else {
@@ -288,7 +288,7 @@ public:
 					}
 				}
 				else if (luaGaia) {
-					luaGaia->GotChatMsg(args, playerID);
+					luaGaia->GotChatMsg(action.GetArgs(), action.GetPlayerID());
 				}
 				else {
 					logOutput.Print("LuaGaia is not enabled");
@@ -304,7 +304,7 @@ class DesyncActionExecutor : public ISyncedActionExecutor {
 public:
 	DesyncActionExecutor() : ISyncedActionExecutor("Desync", true) {}
 
-	void Execute(const std::string& args, int playerID) const {
+	void Execute(const SyncedAction& action) const {
 		ASSERT_SYNCED_PRIMITIVE(gu->myPlayerNum * 123.0f);
 		ASSERT_SYNCED_PRIMITIVE(gu->myPlayerNum * 123);
 		ASSERT_SYNCED_PRIMITIVE((short)(gu->myPlayerNum * 123 + 123));
@@ -312,7 +312,7 @@ public:
 
 		for (size_t i = uh->MaxUnits() - 1; i >= 0; --i) {
 			if (uh->units[i]) {
-				if (playerID == gu->myPlayerNum) {
+				if (action.GetPlayerID() == gu->myPlayerNum) {
 					++uh->units[i]->midPos.x; // and desync...
 					++uh->units[i]->midPos.x;
 				} else {
@@ -334,8 +334,8 @@ class AtmActionExecutor : public ISyncedActionExecutor {
 public:
 	AtmActionExecutor() : ISyncedActionExecutor("Atm", true) {}
 
-	void Execute(const std::string& args, int playerID) const {
-		const int team = playerHandler->Player(playerID)->team;
+	void Execute(const SyncedAction& action) const {
+		const int team = playerHandler->Player(action.GetPlayerID())->team;
 		teamHandler->Team(team)->AddMetal(1000);
 		teamHandler->Team(team)->AddEnergy(1000);
 	}
@@ -346,9 +346,9 @@ class TakeActionExecutor : public ISyncedActionExecutor {
 public:
 	TakeActionExecutor() : ISyncedActionExecutor("Take") {}
 
-	void Execute(const std::string& args, int playerID) const {
-		if (!playerHandler->Player(playerID)->spectator || gs->cheatEnabled) {
-			const int sendTeam = playerHandler->Player(playerID)->team;
+	void Execute(const SyncedAction& action) const {
+		if (!playerHandler->Player(action.GetPlayerID())->spectator || gs->cheatEnabled) {
+			const int sendTeam = playerHandler->Player(action.GetPlayerID())->team;
 			for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
 				if (teamHandler->AlliedTeams(a, sendTeam)) {
 					bool hasPlayer = false;
@@ -375,14 +375,14 @@ class SkipActionExecutor : public ISyncedActionExecutor {
 public:
 	SkipActionExecutor() : ISyncedActionExecutor("Skip") {}
 
-	void Execute(const std::string& args, int playerID) const {
-		if (args.find_first_of("start") == 0) {
-			std::istringstream buf(args.substr(6));
+	void Execute(const SyncedAction& action) const {
+		if (action.GetArgs().find_first_of("start") == 0) {
+			std::istringstream buf(action.GetArgs().substr(6));
 			int targetFrame;
 			buf >> targetFrame;
 			game->StartSkip(targetFrame);
 		}
-		else if (args == "end") {
+		else if (action.GetArgs() == "end") {
 			game->EndSkip();
 		}
 	}

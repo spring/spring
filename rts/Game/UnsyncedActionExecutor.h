@@ -3,9 +3,9 @@
 #ifndef UNSYNCED_ACTION_EXECUTOR_H
 #define UNSYNCED_ACTION_EXECUTOR_H
 
-#include <string>
-
 #include "Action.h"
+
+#include <string>
 
 
 class UnsyncedAction
