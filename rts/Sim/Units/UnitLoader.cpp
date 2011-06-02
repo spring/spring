@@ -259,15 +259,14 @@ CWeapon* CUnitLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* udw)
 
 
 
-void CUnitLoader::GiveUnits(const std::vector<std::string>& args, int team)
+void CUnitLoader::ParseAndExecuteGiveUnitsCommand(const std::vector<std::string>& args, int team)
 {
-	float3 pos;
-
-	if (args.size() < 3) {
+	if (args.size() < 2) {
 		logOutput.Print("[%s] not enough arguments (\"/give [amount] <objectName | 'all'> [team] [@x, y, z]\")", __FUNCTION__);
 		return;
 	}
 
+	float3 pos;
 	if (sscanf(args[args.size() - 1].c_str(), "@%f, %f, %f", &pos.x, &pos.y, &pos.z) != 3) {
 		logOutput.Print("[%s] invalid position argument (\"/give [amount] <objectName | 'all'> [team] [@x, y, z]\")", __FUNCTION__);
 		return;
@@ -277,15 +276,15 @@ void CUnitLoader::GiveUnits(const std::vector<std::string>& args, int team)
 	int amountArgIdx = -1;
 	int teamArgIdx = -1;
 
-	if (args.size() == 5) {
-		amountArgIdx = 1;
-		teamArgIdx = 3;
+	if (args.size() == 4) {
+		amountArgIdx = 0;
+		teamArgIdx = 2;
 	}
-	else if (args.size() == 4) {
-		if (args[1].find_first_not_of("0123456789") == std::string::npos) {
-			amountArgIdx = 1;
+	else if (args.size() == 3) {
+		if (args[0].find_first_not_of("0123456789") == std::string::npos) {
+			amountArgIdx = 0;
 		} else {
-			teamArgIdx = 2;
+			teamArgIdx = 1;
 		}
 	}
 
@@ -298,22 +297,32 @@ void CUnitLoader::GiveUnits(const std::vector<std::string>& args, int team)
 		}
 	}
 
+	int allyTeamFeatures = -1;
 	if (teamArgIdx >= 0) {
 		team = atoi(args[teamArgIdx].c_str());
+		allyTeamFeatures = teamHandler->AllyTeam(team);
 
 		if ((!teamHandler->IsValidTeam(team)) || (args[teamArgIdx].find_first_not_of("0123456789") != std::string::npos)) {
 			logOutput.Print("[%s] invalid team argument: %s", __FUNCTION__, args[teamArgIdx].c_str());
 			return;
 		}
+		allyTeamFeatures = teamHandler->AllyTeam(team);
 	}
 
-	const CTeam* receivingTeam = teamHandler->Team(team);
-	const std::string& objectName = (amountArgIdx >= 0) ? args[2] : args[1];
+	const std::string& objectName = (amountArgIdx >= 0) ? args[1] : args[0];
 
 	if (objectName.empty()) {
 		logOutput.Print("[%s] invalid object-name argument", __FUNCTION__);
 		return;
 	}
+
+	GiveUnits(objectName, pos, amount, team, allyTeamFeatures);
+}
+
+
+void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amount, int team, int allyTeamFeatures)
+{
+	const CTeam* receivingTeam = teamHandler->Team(team);
 
 	if (objectName == "all") {
 		unsigned int numRequestedUnits = unitDefHandler->unitDefs.size() - 1; /// defid=0 is not valid
@@ -402,13 +411,8 @@ void CUnitLoader::GiveUnits(const std::vector<std::string>& args, int team)
 		}
 
 		if (featureDef != NULL) {
-			int allyteam = -1;
-
-			if (teamArgIdx < 0) {
+			if (allyTeamFeatures < 0) {
 				team = -1; // default to world features
-				allyteam = -1;
-			} else {
-				allyteam = teamHandler->AllyTeam(team);
 			}
 
 			const int xsize = featureDef->xsize;
@@ -430,7 +434,7 @@ void CUnitLoader::GiveUnits(const std::vector<std::string>& args, int team)
 
 					CFeature* feature = new CFeature();
 					// Initialize() adds the feature to the FeatureHandler -> no memory-leak
-					feature->Initialize(featurePos, featureDef, 0, 0, team, allyteam, NULL);
+					feature->Initialize(featurePos, featureDef, 0, 0, team, allyTeamFeatures, NULL);
 
 					--total;
 				}
