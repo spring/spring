@@ -3,8 +3,13 @@
 #include "StdAfx.h"
 #include <string>
 #include <SDL.h>
-#include "mmgr.h"
 
+#if defined(WIN32) && !defined(HEADLESS)
+// for APIENTRY
+#include <windef.h>
+#endif
+
+#include "mmgr.h"
 #include "myGL.h"
 #include "VertexArray.h"
 #include "VertexArrayRange.h"
@@ -75,7 +80,7 @@ void PrintAvailableResolutions()
 }
 
 #ifdef GL_ARB_debug_output
-#ifdef WIN32
+#if defined(WIN32) && !defined(HEADLESS)
 	#define _APIENTRY APIENTRY
 #else
 	#define _APIENTRY
