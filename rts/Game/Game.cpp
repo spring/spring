@@ -1759,22 +1759,22 @@ void CGame::StartPlaying()
 #if defined(USE_GML) && GML_ENABLE_SIM
 	if(showMTInfo >= 1) {
 		logOutput.Print("\n************** SPRING MULTITHREADING VERSION IMPORTANT NOTICE **************");
-		logOutput.Print("Engine or mod settings have forced Spring MT to use compatibility mode %d", showMTInfo);
+		logOutput.Print("Engine or game settings have forced Spring MT to use compatibility mode %d", showMTInfo);
 		if(showMTInfo == 1) {
 			CKeyBindings::HotkeyList lslist = keyBindings->GetHotkeys("luaui selector");
 			std::string lskey = lslist.empty() ? "<none>" : lslist.front();
-			logOutput.Print("If your mod uses lua based rendering, it may run very slow with Spring MT");
+			logOutput.Print("If your game uses lua based rendering, it may run very slow with Spring MT");
 			logOutput.Print("Consider changing the engine setting 'MultiThreadLua' to 2 to improve performance,");
 			logOutput.Print("or try to disable LuaShaders and all rendering widgets (press " + lskey + ")");
-			logOutput.Print("The LUA-SYNC-CPU(MT) value in the upper right corner can be used for guidance\n");
+			logOutput.Print("A high LUA-SYNC-CPU(MT) value in the upper right corner could indicate a problem\n");
 		}
 		else if(showMTInfo == 2) {
-			logOutput.Print("If your mod uses lua gadget based rendering, it may run very slow with Spring MT");
-			logOutput.Print("The LUA-SYNC-CPU(MT) value in the upper right corner can be used for guidance\n");
+			logOutput.Print("If your game uses lua gadget based rendering, it may run very slow with Spring MT");
+			logOutput.Print("A high LUA-SYNC-CPU(MT) value in the upper right corner could indicate a problem\n");
 		}
 		else if(showMTInfo == 3) {
-			logOutput.Print("If your mod uses lua gadgets that export data, it may run very slow with Spring MT");
-			logOutput.Print("The LUA-EXP-SIZE(MT) value in the upper right corner can be used for guidance\n");
+			logOutput.Print("If your game uses lua gadgets that export data, it may run very slow with Spring MT");
+			logOutput.Print("A high LUA-EXP-SIZE(MT) value in the upper right corner could indicate a problem\n");
 		}
 	}
 #endif
