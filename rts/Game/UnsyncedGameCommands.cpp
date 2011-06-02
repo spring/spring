@@ -2639,27 +2639,30 @@ public:
 	void Execute(const UnsyncedAction& action) const {
 		if (gs->cheatEnabled) {
 			if (action.GetArgs().find('@') == string::npos) {
-				std::string msg = "give "; //FIXME lazyness
-				msg += action.GetArgs();
-				float3 p;
 				CInputReceiver* ir = NULL;
-				if (!game->hideInterface)
+				if (!game->hideInterface) {
 					ir = CInputReceiver::GetReceiverAt(mouse->lastx, mouse->lasty);
-				if (ir == minimap)
-					p = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
-				else {
+				}
+
+				float3 givePos;
+				if (ir == minimap) {
+					givePos = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
+				} else {
 					const float3& pos = camera->pos;
 					const float3& dir = mouse->dir;
 					const float dist = ground->LineGroundCol(pos, pos + (dir * 30000.0f));
-					p = pos + (dir * dist);
+					givePos = pos + (dir * dist);
 				}
-				char buf[128];
-				SNPRINTF(buf, sizeof(buf), " @%.0f,%.0f,%.0f", p.x, p.y, p.z);
-				msg += buf;
-				CommandMessage pckt(msg, gu->myPlayerNum);
+
+				char message[256];
+				SNPRINTF(message, sizeof(message),
+						"%s %s @%.0f,%.0f,%.0f",
+						GetCommand().c_str(), action.GetArgs().c_str(),
+						givePos.x, givePos.y, givePos.z);
+
+				CommandMessage pckt(message, gu->myPlayerNum);
 				net->Send(pckt.Pack());
-			}
-			else {
+			} else {
 				// forward (as synced command)
 				CommandMessage pckt(action.GetInnerAction(), gu->myPlayerNum);
 				net->Send(pckt.Pack());
@@ -2678,10 +2681,10 @@ public:
 		if (gs->cheatEnabled) {
 			// kill selected units
 			std::stringstream ss;
-			ss << "destroy";
+			ss << GetCommand();
 			for (CUnitSet::iterator it = selectedUnits.selectedUnits.begin();
-					it != selectedUnits.selectedUnits.end();
-					++it) {
+					it != selectedUnits.selectedUnits.end(); ++it)
+			{
 				ss << " " << (*it)->id;
 			}
 			CommandMessage pckt(ss.str(), gu->myPlayerNum);
