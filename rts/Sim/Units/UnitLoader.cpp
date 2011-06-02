@@ -297,16 +297,16 @@ void CUnitLoader::ParseAndExecuteGiveUnitsCommand(const std::vector<std::string>
 		}
 	}
 
-	int allyTeamFeatures = -1;
+	int featureAllyTeam = -1;
 	if (teamArgIdx >= 0) {
 		team = atoi(args[teamArgIdx].c_str());
-		allyTeamFeatures = teamHandler->AllyTeam(team);
+		featureAllyTeam = teamHandler->AllyTeam(team);
 
 		if ((!teamHandler->IsValidTeam(team)) || (args[teamArgIdx].find_first_not_of("0123456789") != std::string::npos)) {
 			logOutput.Print("[%s] invalid team argument: %s", __FUNCTION__, args[teamArgIdx].c_str());
 			return;
 		}
-		allyTeamFeatures = teamHandler->AllyTeam(team);
+		featureAllyTeam = teamHandler->AllyTeam(team);
 	}
 
 	const std::string& objectName = (amountArgIdx >= 0) ? args[1] : args[0];
@@ -316,11 +316,11 @@ void CUnitLoader::ParseAndExecuteGiveUnitsCommand(const std::vector<std::string>
 		return;
 	}
 
-	GiveUnits(objectName, pos, amount, team, allyTeamFeatures);
+	GiveUnits(objectName, pos, amount, team, featureAllyTeam);
 }
 
 
-void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amount, int team, int allyTeamFeatures)
+void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amount, int team, int featureAllyTeam)
 {
 	const CTeam* receivingTeam = teamHandler->Team(team);
 
@@ -372,7 +372,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		}
 
 		const UnitDef* unitDef = unitDefHandler->GetUnitDefByName(objectName);
-		const FeatureDef* featureDef = featureHandler->GetFeatureDef(objectName);
+		const FeatureDef* featureDef = featureHandler->GetFeatureDef(objectName, false);
 
 		if (unitDef == NULL && featureDef == NULL) {
 			logOutput.Print("[%s] %s is not a valid object-name", __FUNCTION__, objectName.c_str());
@@ -411,7 +411,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		}
 
 		if (featureDef != NULL) {
-			if (allyTeamFeatures < 0) {
+			if (featureAllyTeam < 0) {
 				team = -1; // default to world features
 			}
 
@@ -434,7 +434,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 
 					CFeature* feature = new CFeature();
 					// Initialize() adds the feature to the FeatureHandler -> no memory-leak
-					feature->Initialize(featurePos, featureDef, 0, 0, team, allyTeamFeatures, NULL);
+					feature->Initialize(featurePos, featureDef, 0, 0, team, featureAllyTeam, NULL);
 
 					--total;
 				}
