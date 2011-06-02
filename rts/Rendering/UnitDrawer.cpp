@@ -516,7 +516,7 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 	UnitSet::const_iterator unitSetIt;
 
 	for (unitBinIt = unitBin.begin(); unitBinIt != unitBin.end(); ++unitBinIt) {
-		if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ || modelType == MODELTYPE_ASS) {
+		if (modelType != MODELTYPE_3DO) {
 			texturehandlerS3O->SetS3oTexture(unitBinIt->first);
 		}
 
@@ -527,7 +527,7 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 			gmlProcessor->Work(
 				NULL, NULL, &CUnitDrawer::DrawOpaqueUnitMT, this, gmlThreadCount,
 				FALSE, &unitSet, unitSet.size(), 50, 100, TRUE
-				);
+			);
 		}
 		else
 #endif
@@ -775,17 +775,17 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	#ifdef UNIT_SHADOW_ALPHA_MASKING
 		#define S3O_TEX(model) \
 			texturehandlerS3O->GetS3oTex(model->textureType)
-		#define PUSH_SHADOW_TEXTURE_STATE(model)                                  \
-			if (model->type == MODELTYPE_S3O || model->type == MODELTYPE_OBJ || model->type == MODELTYPE_ASS) {   \
-				glActiveTexture(GL_TEXTURE0);                                     \
-				glEnable(GL_TEXTURE_2D);                                          \
-				glBindTexture(GL_TEXTURE_2D, S3O_TEX(model)->tex2);               \
+		#define PUSH_SHADOW_TEXTURE_STATE(model)                      \
+			if (model->type != MODELTYPE_3DO) {                       \
+				glActiveTexture(GL_TEXTURE0);                         \
+				glEnable(GL_TEXTURE_2D);                              \
+				glBindTexture(GL_TEXTURE_2D, S3O_TEX(model)->tex2);   \
 			}
-		#define POP_SHADOW_TEXTURE_STATE(model)                                   \
-			if (model->type == MODELTYPE_S3O || model->type == MODELTYPE_OBJ || model->type == MODELTYPE_ASS) {   \
-				glBindTexture(GL_TEXTURE_2D, 0);                                  \
-				glDisable(GL_TEXTURE_2D);                                         \
-				glActiveTexture(GL_TEXTURE0);                                     \
+		#define POP_SHADOW_TEXTURE_STATE(model)   \
+			if (model->type != MODELTYPE_3DO) {   \
+				glBindTexture(GL_TEXTURE_2D, 0);  \
+				glDisable(GL_TEXTURE_2D);         \
+				glActiveTexture(GL_TEXTURE0);     \
 			}
 	#else
 		#define PUSH_SHADOW_TEXTURE_STATE(model)
@@ -830,6 +830,35 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	#undef POP_SHADOW_TEXTURE_STATE
 }
 
+void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
+	typedef std::set<CUnit*> UnitSet;
+	typedef std::map<int, UnitSet> UnitBin;
+
+	const UnitBin& unitBin = opaqueModelRenderers[modelType]->GetUnitBin();
+
+	UnitBin::const_iterator unitBinIt;
+	UnitSet::const_iterator unitSetIt;
+
+	for (unitBinIt = unitBin.begin(); unitBinIt != unitBin.end(); ++unitBinIt) {
+		const UnitSet& unitSet = unitBinIt->second;
+
+#ifdef USE_GML
+		if (multiThreadDrawUnitShadow) {
+			gmlProcessor->Work(
+				NULL, NULL, &CUnitDrawer::DrawOpaqueUnitShadowMT, this, gmlThreadCount,
+				FALSE, &unitSet, unitSet.size(), 50, 100, TRUE
+			);
+		}
+		else
+#endif
+		{
+			for (unitSetIt = unitSet.begin(); unitSetIt != unitSet.end(); ++unitSetIt) {
+				DrawOpaqueUnitShadow(*unitSetIt);
+			}
+		}
+	}
+}
+
 void CUnitDrawer::DrawShadowPass()
 {
 	glColor3f(1.0f, 1.0f, 1.0f);
@@ -849,18 +878,19 @@ void CUnitDrawer::DrawShadowPass()
 
 	GML_RECMUTEX_LOCK(unit); // DrawShadowPass
 
-#ifdef USE_GML
-	if (multiThreadDrawUnitShadow) {
-		gmlProcessor->Work(
-			NULL, NULL, &CUnitDrawer::DrawOpaqueUnitShadowMT, this, gmlThreadCount,
-			FALSE, &unsortedUnits, unsortedUnits.size(), 50, 100, TRUE
-		);
-	}
-	else
-#endif
 	{
-		for (std::set<CUnit*>::iterator usi = unsortedUnits.begin(); usi != unsortedUnits.end(); ++usi) {
-			DrawOpaqueUnitShadow(*usi);
+		// 3DO's have clockwise-wound faces and
+		// (usually) holes, so disable backface
+		// culling for them
+		glDisable(GL_CULL_FACE);
+		DrawOpaqueUnitsShadow(MODELTYPE_3DO);
+		glEnable(GL_CULL_FACE);
+
+		for (int modelType = MODELTYPE_S3O; modelType < MODELTYPE_OTHER; modelType++) {
+			// note: just use DrawOpaqueUnits()? would
+			// save texture switches needed anyway for
+			// UNIT_SHADOW_ALPHA_MASKING
+			DrawOpaqueUnitsShadow(modelType);
 		}
 	}
 
@@ -1039,7 +1069,7 @@ void CUnitDrawer::DrawCloakedUnitsHelper(int modelType)
 
 		// cloaked units
 		for (UnitRenderBinIt it = unitBin.begin(); it != unitBin.end(); ++it) {
-			if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ || modelType == MODELTYPE_ASS) {
+			if (modelType != MODELTYPE_3DO) {
 				texturehandlerS3O->SetS3oTexture(it->first);
 			}
 
@@ -1096,7 +1126,7 @@ inline void CUnitDrawer::DrawCloakedUnit(CUnit* unit, int modelType, bool drawGh
 		glTranslatef3(unit->pos);
 		glRotatef(unit->buildFacing * 90.0f, 0, 1, 0);
 
-		if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ || modelType == MODELTYPE_ASS) {
+		if (modelType != MODELTYPE_3DO) {
 			// the units in liveGhostedBuildings[modelType] are not
 			// sorted by textureType, but we cannot merge them with
 			// cloakedModelRenderers[modelType] since they are not
@@ -1180,7 +1210,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 				glTranslatef3((*it)->pos);
 				glRotatef((*it)->facing * 90.0f, 0, 1, 0);
 
-				if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ || modelType == MODELTYPE_ASS)
+				if (modelType != MODELTYPE_3DO)
 					texturehandlerS3O->SetS3oTexture((*it)->model->textureType);
 
 				SetTeamColour((*it)->team, cloakAlpha1);
@@ -1556,7 +1586,7 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 		SetupForUnitDrawing();
 		opaqueModelRenderers[MDL_TYPE(unit)]->PushRenderState();
 
-		if (MDL_TYPE(unit) == MODELTYPE_S3O || MDL_TYPE(unit) == MODELTYPE_OBJ || MDL_TYPE(unit) == MODELTYPE_ASS) {
+		if (MDL_TYPE(unit) != MODELTYPE_3DO) {
 			texturehandlerS3O->SetS3oTexture(TEX_TYPE(unit));
 		}
 

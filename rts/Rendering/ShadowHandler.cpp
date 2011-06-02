@@ -314,10 +314,11 @@ void CShadowHandler::CreateShadows(void)
 
 
 	const ISkyLight* L = sky->GetLight();
-	const float3& D = L->GetLightDir();
 
-	cross1 = (D.cross(UpVector)).ANormalize();
-	cross2 = -cross1.cross(D);
+	// sun direction is in world-space, invert it
+	sunDirZ = -L->GetLightDir();
+	sunDirX = (sunDirZ.cross(UpVector)).ANormalize();
+	sunDirY = sunDirX.cross(sunDirZ);
 	centerPos = camera->pos;
 
 	//! derive the size of the shadow-map from the
@@ -327,7 +328,10 @@ void CShadowHandler::CreateShadows(void)
 	SetShadowMapSizeFactors();
 
 	// it should be possible to tweak a bit more shadow map resolution from this
-	const float maxLength = 12000.0f;
+	static const float Z_DIVIDE = 12000.0f;
+	static const float Z_OFFSET = 0.00001f;
+	static const float Z_LENGTH = 8000.0f;
+
 	const float maxLengthX = (shadowProjMinMax.y - shadowProjMinMax.x) * 1.5f;
 	const float maxLengthY = (shadowProjMinMax.w - shadowProjMinMax.z) * 1.5f;
 
@@ -344,18 +348,21 @@ void CShadowHandler::CreateShadows(void)
 	shadowProjCenter.y = 0.5f;
 	#endif
 
-	shadowMatrix[ 0] =   cross1.x / maxLengthX;
-	shadowMatrix[ 4] =   cross1.y / maxLengthX;
-	shadowMatrix[ 8] =   cross1.z / maxLengthX;
-	shadowMatrix[12] = -(cross1.dot(centerPos)) / maxLengthX;
-	shadowMatrix[ 1] =   cross2.x / maxLengthY;
-	shadowMatrix[ 5] =   cross2.y / maxLengthY;
-	shadowMatrix[ 9] =   cross2.z / maxLengthY;
-	shadowMatrix[13] = -(cross2.dot(centerPos)) / maxLengthY;
-	shadowMatrix[ 2] = -D.x / maxLength;
-	shadowMatrix[ 6] = -D.y / maxLength;
-	shadowMatrix[10] = -D.z / maxLength;
-	shadowMatrix[14] = ((centerPos.x * D.x + centerPos.z * D.z) / maxLength) + 0.5f;
+	shadowMatrix[ 0] = sunDirX.x / maxLengthX;
+	shadowMatrix[ 1] = sunDirY.x / maxLengthY;
+	shadowMatrix[ 2] = sunDirZ.x / Z_DIVIDE;
+
+	shadowMatrix[ 4] = sunDirX.y / maxLengthX;
+	shadowMatrix[ 5] = sunDirY.y / maxLengthY;
+	shadowMatrix[ 6] = sunDirZ.y / Z_DIVIDE;
+
+	shadowMatrix[ 8] = sunDirX.z / maxLengthX;
+	shadowMatrix[ 9] = sunDirY.z / maxLengthY;
+	shadowMatrix[10] = sunDirZ.z / Z_DIVIDE;
+
+	shadowMatrix[12] = -(sunDirX.dot(centerPos)) / maxLengthX;
+	shadowMatrix[13] = -(sunDirY.dot(centerPos)) / maxLengthY;
+	shadowMatrix[14] =  (sunDirZ.dot(centerPos)  / Z_DIVIDE) + 0.5f;
 
 	glLoadMatrixf(shadowMatrix.m);
 
@@ -379,9 +386,9 @@ void CShadowHandler::CreateShadows(void)
 		//! move view into sun-space
 		const float3 oldup = camera->up;
 
-		camera->right = cross1;
-		camera->up = cross2;
-		camera->pos2 = camera->pos + D * 8000.0f;
+		camera->right = sunDirX;
+		camera->up = sunDirY;
+		camera->pos2 = camera->pos - sunDirZ * Z_LENGTH;
 
 		DrawShadowPasses();
 
@@ -389,7 +396,7 @@ void CShadowHandler::CreateShadows(void)
 		camera->pos2 = camera->pos;
 	}
 
-	shadowMatrix[14] -= 0.00001f;
+	shadowMatrix[14] -= Z_OFFSET;
 
 	glShadeModel(GL_SMOOTH);
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -458,8 +465,8 @@ void CShadowHandler::CalcMinMaxView(void)
 				p[4] = float3(camera->pos.x, 0.0f, camera->pos.z);
 
 				for (int a = 0; a < 5; ++a) {
-					const float xd = (p[a] - centerPos).dot(cross1);
-					const float yd = (p[a] - centerPos).dot(cross2);
+					const float xd = (p[a] - centerPos).dot(sunDirX);
+					const float yd = (p[a] - centerPos).dot(sunDirY);
 
 					if (xd + borderSize > shadowProjMinMax.y) { shadowProjMinMax.y = xd + borderSize; }
 					if (xd - borderSize < shadowProjMinMax.x) { shadowProjMinMax.x = xd - borderSize; }

@@ -131,6 +131,7 @@ private:
 	bool DrawUnitLOD(CUnit* unit);
 	void DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
 	void DrawOpaqueUnitShadow(CUnit* unit);
+	void DrawOpaqueUnitsShadow(int modelType);
 
 	void DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
 	void DrawOpaqueShaderUnits();
