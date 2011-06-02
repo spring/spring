@@ -2281,8 +2281,9 @@ void CGame::RegisterSyncedActionExecutor(ISyncedActionExecutor* syncedActionExec
 
 void CGame::ActionReceived(const Action& action, int playerID)
 {
+	const std::string commandLower = StringToLower(action.command);
 	const std::map<std::string, ISyncedActionExecutor*>::const_iterator saei
-			= syncedActionExecutors.find(action.command);
+			= syncedActionExecutors.find(commandLower);
 
 	if (saei != syncedActionExecutors.end()) {
 		// an executor for that action was found
@@ -2310,8 +2311,9 @@ void CGame::RegisterUnsyncedActionExecutor(IUnsyncedActionExecutor* unsyncedActi
 
 bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 {
+	const std::string commandLower = StringToLower(action.command);
 	const std::map<std::string, IUnsyncedActionExecutor*>::const_iterator uaei
-			= unsyncedActionExecutors.find(action.command);
+			= unsyncedActionExecutors.find(commandLower);
 
 	if (uaei != unsyncedActionExecutors.end()) {
 		// an executor for that action was found
