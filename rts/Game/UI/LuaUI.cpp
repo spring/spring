@@ -217,7 +217,7 @@ CLuaUI::CLuaUI()
 
 CLuaUI::~CLuaUI()
 {
-#if USE_LUA_MT
+#if (LUA_MT_OPT & LUA_STATE)
 	for(int i = 0; i < delayedXCall.size(); ++i) {
 		DelayDataDump &ddp = delayedXCall[i];
 		if(ddp.dd.size() == 1 && ddp.dd[0].type == LUA_TSTRING)
@@ -831,7 +831,7 @@ bool CLuaUI::HasUnsyncedXCall(const string& funcName)
 }
 
 void CLuaUI::ExecuteDelayedXCalls() {
-#if USE_LUA_MT
+#if (LUA_MT_OPT & LUA_STATE)
 	std::vector<DelayDataDump> dxc;
 	{
 		GML_STDMUTEX_LOCK(xcall); // ExecuteDelayedXCalls
@@ -871,7 +871,7 @@ void CLuaUI::ExecuteDelayedXCalls() {
 
 int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 {
-#if USE_LUA_MT
+#if (LUA_MT_OPT & LUA_STATE)
 	{
 		SELECT_LUA_STATE();
 		if(srcState != L) {

@@ -2,6 +2,7 @@
 
 #ifndef GLOBALCONFIG_H
 #define GLOBALCONFIG_H
+#include "lib/gml/gmlcnf.h"
 
 
 class GlobalConfig {
@@ -82,7 +83,7 @@ public:
 	 */
 	int linkIncomingMaxWaitingPackets;
 
-#ifdef USE_GML
+#if (defined(USE_GML) && GML_ENABLE_SIM) || defined(USE_LUA_MT)
 	/**
 	 * @brief multiThreadLua
 	 *

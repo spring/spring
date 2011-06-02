@@ -5,10 +5,13 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Projectiles/Projectile.h"
 
-#if defined(USE_GML) && GML_ENABLE_SIM
-#define USE_LUA_MT 1 // allow parallel execution of separate lua_States
+#define LUA_MUTEX 1
+#define LUA_BATCH 2
+#define LUA_STATE 4
+#if (defined(USE_GML) && GML_ENABLE_SIM) || defined(USE_LUA_MT)
+#define LUA_MT_OPT ( LUA_MUTEX | LUA_BATCH | LUA_STATE ) // optimizations for faster parallel execution of separate lua_States
 #else
-#define USE_LUA_MT 0
+#define LUA_MT_OPT 0
 #endif
 
 enum UnitEvent {
@@ -107,7 +110,7 @@ struct LuaMiscEvent {
 	LuaMiscEvent(MiscEvent i, const std::string &s1, void *p) : id(i), str1(s1), ptr(p) {}
 };
 
-#if USE_LUA_MT
+#if (LUA_MT_OPT & LUA_BATCH)
 #define LUA_UNIT_BATCH_PUSH(r,...)\
 	if(UseEventBatch() && !execUnitBatch && Threading::IsSimThread()) {\
 		GML_STDMUTEX_LOCK(ulbatch);\
@@ -159,7 +162,7 @@ struct LuaMiscEvent {
 #define GML_MEASURE_LOCK_TIME(lock) lock
 #endif
 
-#if USE_LUA_MT
+#if (LUA_MT_OPT & LUA_STATE)
 #define BEGIN_ITERATE_LUA_STATES() lua_State *L_Cur = L_Sim; do { lua_State * const L = L_Cur
 #define END_ITERATE_LUA_STATES() if(SingleState() || L_Cur == L_Draw) break; L_Cur = L_Draw; } while(true)
 #ifndef LUA_SYNCED_ONLY
