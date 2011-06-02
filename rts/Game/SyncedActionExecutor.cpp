@@ -8,13 +8,13 @@
 #include "System/LogOutput.h"
 
 
-void ISyncedActionExecutor::ExecuteAction(const Action& action, int playerID) const
+void ISyncedActionExecutor::ExecuteAction(const SyncedAction& action) const
 {
 	//assert(action.command == GetCommand());
 
 	if (IsCheatRequired() && !gs->cheatEnabled) {
-		logOutput.Print("Chat command /" + GetCommand() + " (synced) requires /cheat");
+		logOutput.Print("Chat command /%s (synced) requires /cheat", GetCommand().c_str());
 	} else {
-		Execute(action.extra, playerID);
+		Execute(action);
 	}
 }

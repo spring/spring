@@ -2286,7 +2286,8 @@ void CGame::ActionReceived(const Action& action, int playerID)
 
 	if (saei != syncedActionExecutors.end()) {
 		// an executor for that action was found
-		saei->second->ExecuteAction(action, playerID);
+		SyncedAction syncedAction(action, playerID);
+		saei->second->ExecuteAction(syncedAction);
 	} else if (gs->frameNum > 1) {
 		if (luaRules) luaRules->SyncedActionFallback(action.rawline, playerID);
 		if (luaGaia) luaGaia->SyncedActionFallback(action.rawline, playerID);
