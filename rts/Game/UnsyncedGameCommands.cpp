@@ -274,6 +274,11 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 
 
 
+#if       GML_ENABLE_SIM
+extern volatile int gmlMultiThreadSim;
+extern volatile int gmlStartSim;
+#endif // GML_ENABLE_SIM
+
 namespace unsyncedActionExecutors {
 
 /* XXX
@@ -1469,8 +1474,6 @@ public:
 	void Execute(const UnsyncedAction& action) const {
 		const bool mtEnabled = MultiThreadDrawActionExecutor::IsMTEnabled();
 #	if GML_ENABLE_SIM
-		extern volatile int gmlMultiThreadSim;
-		extern volatile int gmlStartSim;
 		if (action.GetArgs().empty()) {
 			// HACK GetInnerAction() should not be used here
 			gmlMultiThreadSim = (StringToLower(action.GetInnerAction().command) == "multithread") ? !mtEnabled : !gmlMultiThreadSim;
