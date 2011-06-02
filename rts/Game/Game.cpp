@@ -1764,9 +1764,9 @@ void CGame::StartPlaying()
 			CKeyBindings::HotkeyList lslist = keyBindings->GetHotkeys("luaui selector");
 			std::string lskey = lslist.empty() ? "<none>" : lslist.front();
 			logOutput.Print("If your game uses lua based rendering, it may run very slow with Spring MT");
+			logOutput.Print("A high LUA-SYNC-CPU(MT) value in the upper right corner could indicate a problem");
 			logOutput.Print("Consider changing the engine setting 'MultiThreadLua' to 2 to improve performance,");
-			logOutput.Print("or try to disable LuaShaders and all rendering widgets (press " + lskey + ")");
-			logOutput.Print("A high LUA-SYNC-CPU(MT) value in the upper right corner could indicate a problem\n");
+			logOutput.Print("or try to disable LuaShaders and all rendering widgets (press " + lskey + ")\n");
 		}
 		else if(showMTInfo == 2) {
 			logOutput.Print("If your game uses lua gadget based rendering, it may run very slow with Spring MT");
