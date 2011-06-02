@@ -32,13 +32,15 @@ GlobalConfig::GlobalConfig() {
 		linkIncomingSustainedBandwidth = linkIncomingPeakBandwidth = 1024 * 1024;
 #if defined(USE_GML) && GML_ENABLE_SIM
 	enableDrawCallIns = !!configHandler->Get("EnableDrawCallIns", 1);
+#endif
+#if (defined(USE_GML) && GML_ENABLE_SIM) || defined(USE_LUA_MT)
 	multiThreadLua = configHandler->Get("MultiThreadLua", 0);
 #endif
 }
 
 
 int GlobalConfig::GetMultiThreadLua() {
-#if defined(USE_GML) && GML_ENABLE_SIM
+#if (defined(USE_GML) && GML_ENABLE_SIM) || defined(USE_LUA_MT)
 	return std::max(1, std::min((multiThreadLua == 0) ? modInfo.luaThreadingModel : multiThreadLua, 5));
 #else
 	return 0;

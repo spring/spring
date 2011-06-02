@@ -53,7 +53,7 @@ bool CLuaHandle::useDualStates = false;
 boost::recursive_mutex luaprimmutex, luasecmutex;
 
 boost::recursive_mutex* getLuaMutex(bool userMode, bool primary) {
-#if USE_LUA_MT
+#if (LUA_MT_OPT & LUA_MUTEX)
 	if(userMode)
 		return new boost::recursive_mutex();
 	else // LuaGaia & LuaRules will share mutexes to avoid deadlocks during XCalls etc.
