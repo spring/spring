@@ -13,7 +13,7 @@ void ISyncedActionExecutor::ExecuteAction(const Action& action, int playerID) co
 	//assert(action.command == GetCommand());
 
 	if (IsCheatRequired() && !gs->cheatEnabled) {
-		logOutput.Print("Synced chat command /" + GetCommand() + " requires /cheat");
+		logOutput.Print("Chat command /" + GetCommand() + " (synced) requires /cheat");
 	} else {
 		Execute(action.extra, playerID);
 	}

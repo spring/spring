@@ -22,6 +22,7 @@
 #include "CameraHandler.h"
 #include "ChatMessage.h"
 #include "ClientSetup.h"
+#include "CommandMessage.h"
 #include "ConsoleHistory.h"
 #include "GameHelper.h"
 #include "GameServer.h"
@@ -40,6 +41,8 @@
 #include "InMapDrawModel.h"
 #include "SyncedActionExecutor.h"
 #include "SyncedGameCommands.h"
+#include "UnsyncedActionExecutor.h"
+#include "UnsyncedGameCommands.h"
 #include "Game/UI/UnitTracker.h"
 #ifdef _WIN32
 #  include "winerror.h" // TODO someone on windows (MinGW? VS?) please check if this is required
@@ -535,6 +538,7 @@ void CGame::LoadSimulation(const std::string& mapName)
 	wind.LoadWind(mapInfo->atmosphere.minWind, mapInfo->atmosphere.maxWind);
 
 	SyncedGameCommands::RegisterDefaultExecutors(this);
+	UnsyncedGameCommands::RegisterDefaultExecutors(this);
 
 	CCobInstance::InitVars(teamHandler->ActiveTeams(), teamHandler->ActiveAllyTeams());
 	CEngineOutHandler::Initialize();
@@ -2269,7 +2273,7 @@ void CGame::RegisterSyncedActionExecutor(ISyncedActionExecutor* syncedActionExec
 			= syncedActionExecutors.find(commandLower);
 
 	if (saei != syncedActionExecutors.end()) {
-		throw std::runtime_error("Tried to register duplicate SyncedActionExecutor for command: " + commandLower);
+		throw std::runtime_error("Tried to register a duplicate SyncedActionExecutor for command: " + commandLower);
 	} else {
 		syncedActionExecutors[commandLower] = syncedActionExecutor;
 	}
@@ -2287,4 +2291,46 @@ void CGame::ActionReceived(const Action& action, int playerID)
 		if (luaRules) luaRules->SyncedActionFallback(action.rawline, playerID);
 		if (luaGaia) luaGaia->SyncedActionFallback(action.rawline, playerID);
 	}
+}
+
+
+void CGame::RegisterUnsyncedActionExecutor(IUnsyncedActionExecutor* unsyncedActionExecutor)
+{
+	const std::string commandLower = StringToLower(unsyncedActionExecutor->GetCommand());
+	const std::map<std::string, IUnsyncedActionExecutor*>::const_iterator uaei
+			= unsyncedActionExecutors.find(commandLower);
+
+	if (uaei != unsyncedActionExecutors.end()) {
+		throw std::runtime_error("Tried to register a duplicate UnsyncedActionExecutor for command: " + commandLower);
+	} else {
+		unsyncedActionExecutors[commandLower] = unsyncedActionExecutor;
+	}
+}
+
+bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
+{
+	const std::map<std::string, IUnsyncedActionExecutor*>::const_iterator uaei
+			= unsyncedActionExecutors.find(action.command);
+
+	if (uaei != unsyncedActionExecutors.end()) {
+		// an executor for that action was found
+		UnsyncedAction unsyncedAction(action, key, isRepeat);
+		uaei->second->ExecuteAction(unsyncedAction);
+	} else {
+		static std::set<std::string> serverCommands = std::set<std::string>(commands, commands+numCommands);
+		if (serverCommands.find(action.command) != serverCommands.end())
+		{
+			CommandMessage pckt(action, gu->myPlayerNum);
+			net->Send(pckt.Pack());
+		}
+
+		if (!Console::Instance().ExecuteAction(action))
+		{
+			if (guihandler != NULL) // maybe a widget is interested?
+				guihandler->PushLayoutCommand(action.rawline, false);
+			return false;
+		}
+	}
+
+	return false;
 }

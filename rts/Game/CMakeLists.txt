@@ -72,6 +72,7 @@ SET(sources_engine_Game_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/UI/StartPosSelecter.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UI/TooltipConsole.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UI/UnitTracker.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/UnsyncedActionExecutor.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UnsyncedGameCommands.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/WaitCommandsAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/WordCompletion.cpp"
