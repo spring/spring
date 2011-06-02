@@ -13,7 +13,7 @@ void IUnsyncedActionExecutor::ExecuteAction(const UnsyncedAction& action) const
 	//assert(action.GetAction().command == GetCommand());
 
 	if (IsCheatRequired() && !gs->cheatEnabled) {
-		logOutput.Print("Chat command /" + GetCommand() + " (unsynced) requires /cheat");
+		logOutput.Print("Chat command /%s (unsynced) requires /cheat", GetCommand().c_str());
 	} else {
 		Execute(action);
 	}
