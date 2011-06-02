@@ -360,9 +360,10 @@ void CShadowHandler::CreateShadows(void)
 	shadowMatrix[ 9] = sunDirY.z / maxLengthY;
 	shadowMatrix[10] = sunDirZ.z / Z_DIVIDE;
 
+	// rotate the camera position into sun-space for the translation
 	shadowMatrix[12] = -(sunDirX.dot(centerPos)) / maxLengthX;
 	shadowMatrix[13] = -(sunDirY.dot(centerPos)) / maxLengthY;
-	shadowMatrix[14] =  (sunDirZ.dot(centerPos)  / Z_DIVIDE) + 0.5f;
+	shadowMatrix[14] = -(sunDirZ.dot(centerPos)  / Z_DIVIDE) + 0.5f;
 
 	glLoadMatrixf(shadowMatrix.m);
 
