@@ -411,29 +411,27 @@ void CGame::RegisterSyncedActionExecutor(ISyncedActionExecutor* syncedActionExec
 
 void CGame::RegisterSyncedActionExecutors()
 {
-	using namespace syncedActionExecutors;
-
-	RegisterSyncedActionExecutor(new CheatActionExecutor());
-	RegisterSyncedActionExecutor(new NoHelpActionExecutor());
-	RegisterSyncedActionExecutor(new NoSpecDrawActionExecutor());
-	RegisterSyncedActionExecutor(new GodModeActionExecutor());
-	RegisterSyncedActionExecutor(new GlobalLosActionExecutor());
-	RegisterSyncedActionExecutor(new NoCostActionExecutor());
-	RegisterSyncedActionExecutor(new GiveActionExecutor());
-	RegisterSyncedActionExecutor(new DestroyActionExecutor());
-	RegisterSyncedActionExecutor(new NoSpectatorChatActionExecutor());
-	RegisterSyncedActionExecutor(new ReloadCobActionExecutor());
-	RegisterSyncedActionExecutor(new ReloadCegsActionExecutor());
-	RegisterSyncedActionExecutor(new DevLuaActionExecutor());
-	RegisterSyncedActionExecutor(new EditDefsActionExecutor());
-	RegisterSyncedActionExecutor(new LuaRulesActionExecutor());
-	RegisterSyncedActionExecutor(new LuaGaiaActionExecutor());
+	RegisterSyncedActionExecutor(new syncedActionExecutors::CheatActionExecutor());
+	RegisterSyncedActionExecutor(new syncedActionExecutors::NoHelpActionExecutor());
+	RegisterSyncedActionExecutor(new syncedActionExecutors::NoSpecDrawActionExecutor());
+	RegisterSyncedActionExecutor(new syncedActionExecutors::GodModeActionExecutor());
+	RegisterSyncedActionExecutor(new syncedActionExecutors::GlobalLosActionExecutor());
+	RegisterSyncedActionExecutor(new syncedActionExecutors::NoCostActionExecutor());
+	RegisterSyncedActionExecutor(new syncedActionExecutors::GiveActionExecutor());
+	RegisterSyncedActionExecutor(new syncedActionExecutors::DestroyActionExecutor());
+	RegisterSyncedActionExecutor(new syncedActionExecutors::NoSpectatorChatActionExecutor());
+	RegisterSyncedActionExecutor(new syncedActionExecutors::ReloadCobActionExecutor());
+	RegisterSyncedActionExecutor(new syncedActionExecutors::ReloadCegsActionExecutor());
+	RegisterSyncedActionExecutor(new syncedActionExecutors::DevLuaActionExecutor());
+	RegisterSyncedActionExecutor(new syncedActionExecutors::EditDefsActionExecutor());
+	RegisterSyncedActionExecutor(new syncedActionExecutors::LuaRulesActionExecutor());
+	RegisterSyncedActionExecutor(new syncedActionExecutors::LuaGaiaActionExecutor());
 #ifdef DEBUG
-	RegisterSyncedActionExecutor(new DesyncActionExecutor());
+	RegisterSyncedActionExecutor(new syncedActionExecutors::DesyncActionExecutor());
 #endif // defined DEBUG
-	RegisterSyncedActionExecutor(new AtmActionExecutor());
-	RegisterSyncedActionExecutor(new TakeActionExecutor());
-	RegisterSyncedActionExecutor(new SkipActionExecutor());
+	RegisterSyncedActionExecutor(new syncedActionExecutors::AtmActionExecutor());
+	RegisterSyncedActionExecutor(new syncedActionExecutors::TakeActionExecutor());
+	RegisterSyncedActionExecutor(new syncedActionExecutors::SkipActionExecutor());
 }
 
 void CGame::DeRegisterSyncedActionExecutors()
