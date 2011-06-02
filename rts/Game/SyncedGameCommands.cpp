@@ -93,11 +93,8 @@ void CGame::ActionReceived(const Action& action, int playerNum)
 		}
 	}
 	else if (action.command == "give" && gs->cheatEnabled) {
-		// FIXME lazyness
-		const std::string cmd = action.command + " " + action.extra;
-		const vector<string>& args = CSimpleParser::Tokenize(cmd, 0);
-
-		unitLoader->GiveUnits(args, playerHandler->Player(playerNum)->team);
+		const vector<string>& args = CSimpleParser::Tokenize(action.extra, 0);
+		unitLoader->ParseAndExecuteGiveUnitsCommand(args, playerHandler->Player(playerNum)->team);
 	}
 	else if (action.command == "destroy" && gs->cheatEnabled) {
 		std::stringstream ss(action.extra);

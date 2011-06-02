@@ -24,7 +24,8 @@ public:
 
 	CWeapon* LoadWeapon(CUnit* owner, const UnitDefWeapon* udw);
 
-	void GiveUnits(const std::vector<std::string>& args, int team);
+	void ParseAndExecuteGiveUnitsCommand(const std::vector<std::string>& args, int team);
+	void GiveUnits(const std::string& objectName, float3 pos, int amount, int team, int allyTeamFeatures);
 
 	void FlattenGround(const CUnit* unit);
 	void RestoreGround(const CUnit* unit);
