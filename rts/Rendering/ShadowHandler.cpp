@@ -317,7 +317,7 @@ void CShadowHandler::CreateShadows(void)
 	const float3& D = L->GetLightDir();
 
 	cross1 = (D.cross(UpVector)).ANormalize();
-	cross2 = cross1.cross(D);
+	cross2 = -cross1.cross(D);
 	centerPos = camera->pos;
 
 	//! derive the size of the shadow-map from the
