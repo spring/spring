@@ -22,7 +22,7 @@ public:
 	const std::string& GetArgs() const { return action.extra; }
 
 	/**
-	 * Returns the normalized key symbol.
+	 * Returns the player ID.
 	 */
 	int GetPlayerID() const { return playerID; }
 
