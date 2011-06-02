@@ -2,29 +2,18 @@
 
 #include "StdAfx.h"
 #include <string>
-#include <ostream>
-#include <fstream>
 #include <SDL.h>
 #include "mmgr.h"
 
 #include "myGL.h"
-#include "FBO.h"
 #include "VertexArray.h"
 #include "VertexArrayRange.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/Textures/Bitmap.h"
-#include "System/ConfigHandler.h"
 #include "System/LogOutput.h"
-#include "System/FPUCheck.h"
-#include "System/GlobalUnsynced.h"
-#include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/TimeProfiler.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/Platform/CrashHandler.h"
-#include "System/Platform/errorhandler.h"
 
-using namespace std;
 
 
 static CVertexArray* vertexArray1 = NULL;
