@@ -31,8 +31,9 @@ public:
 	bool drawTerrainShadow;
 
 	float3 centerPos;
-	float3 cross1;
-	float3 cross2;
+	float3 sunDirX;
+	float3 sunDirY;
+	float3 sunDirZ;
 
 	CMatrix44f shadowMatrix;
 	void CalcMinMaxView(void);
