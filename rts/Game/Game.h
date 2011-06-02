@@ -23,6 +23,7 @@ class LuaInputReceiver;
 class ILoadSaveHandler;
 class Action;
 class ISyncedActionExecutor;
+class IUnsyncedActionExecutor;
 class ChatMessage;
 class SkirmishAIData;
 
@@ -135,11 +136,17 @@ public:
 
 	/**
 	 * Register a new action-executor for a synced chat command.
-	 * @param actionExecutor has to be new'ed, will be delete'ed internally.
+	 * @param syncedActionExecutor has to be new'ed, will be delete'ed internally.
 	 */
 	void RegisterSyncedActionExecutor(ISyncedActionExecutor* syncedActionExecutor);
 
-private:
+	/**
+	 * Register a new action-executor for an unsynced chat command.
+	 * @param unsyncedActionExecutor has to be new'ed, will be delete'ed internally.
+	 */
+	void RegisterUnsyncedActionExecutor(IUnsyncedActionExecutor* unsyncedActionExecutor);
+
+public:
 	/// Save the game state to file.
 	void SaveGame(const std::string& filename, bool overwrite);
 	/// Re-load the game.
@@ -168,7 +175,7 @@ public:
 	void DrawSkip(bool blackscreen = true);
 	void EndSkip();
 
-private:
+public:
 	std::string hotBinding;
 	float inputTextPosX;
 	float inputTextPosY;
@@ -182,6 +189,7 @@ private:
 	unsigned lastFrameTime;
 
 	std::map<std::string, ISyncedActionExecutor*> syncedActionExecutors;
+	std::map<std::string, IUnsyncedActionExecutor*> unsyncedActionExecutors;
 
 public:
 	struct PlayerTrafficInfo {
@@ -193,7 +201,7 @@ public:
 		return playerTraffic;
 	}
 
-private:
+public:
 	void AddTraffic(int playerID, int packetCode, int length);
 	// <playerID, <packetCode, total bytes> >
 	std::map<int, PlayerTrafficInfo> playerTraffic;

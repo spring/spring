@@ -4,7 +4,10 @@
 
 #include <SDL_events.h>
 
+#include "UnsyncedGameCommands.h"
+#include "UnsyncedActionExecutor.h"
 #include "Game.h"
+#include "Action.h"
 #include "CameraHandler.h"
 #include "ConsoleHistory.h"
 #include "GameServer.h"
@@ -48,6 +51,7 @@
 #include "UI/GameInfo.h"
 #include "UI/GuiHandler.h"
 #include "UI/InfoConsole.h"
+#include "UI/InputReceiver.h"
 #include "UI/KeyBindings.h"
 #include "UI/LuaUI.h"
 #include "UI/MiniMap.h"
@@ -65,6 +69,7 @@
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
+#include "System/Util.h"
 
 static std::vector<std::string> _local_strSpaceTokenize(const std::string& text) {
 	static const char* const SPACE_DELIMS = " \t";
@@ -90,6 +95,7 @@ static std::vector<std::string> _local_strSpaceTokenize(const std::string& text)
 
 
 
+// TODO CGame stuff in UnsyncedGameCommands: refactor (or move)
 bool CGame::ProcessCommandText(unsigned int key, const std::string& command) {
 	if (command.size() <= 2)
 		return false;
@@ -105,6 +111,7 @@ bool CGame::ProcessCommandText(unsigned int key, const std::string& command) {
 	return false;
 }
 
+// TODO CGame stuff in UnsyncedGameCommands: refactor (or move)
 bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 	if (action.command == "edit_return") {
 		userWriting = false;
@@ -267,46 +274,165 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 
 
 
-// FOR UNSYNCED MESSAGES
-bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
-{
-	// we may need these later
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
+/* XXX
+ * An alternative way of dealing with the commands.
+ * Less overall code, but more ugly.
+ * In an extension not shown in this code, this could also be used to
+ * assemble a list of commands to register, by undefining and redefining a list
+ * object.
+ */
+/*
+#define ActExSpecial(CLS_NAME, command) \
+	class CLS_NAME##ActionExecutor : public IUnsyncedActionExecutor { \
+	public: \
+		CLS_NAME##ActionExecutor() : IUnsyncedActionExecutor(command) {} \
+		void Execute(const UnsyncedAction& action) const {
 
-	const string& cmd = action.command;
-	bool notfound1=false;
+#define ActEx(CLS_NAME) \
+	ActExSpecial(CLS_NAME, #CLS_NAME)
 
-	// process the action
-	if (cmd == "select") {
-		selectionKeys->DoSelection(action.extra);
+#define ActExClose() \
+		} \
+	};
+
+
+ActEx(Select)
+		selectionKeys->DoSelection(action.GetArgs());
+ActExClose()
+
+ActExSpecial(SetOverlay, "TSet")
+		selectionKeys->DoSelection(action.GetArgs());
+ActExClose()
+*/
+
+
+/**
+ * Special case executor which is used for creating aliases to other commands.
+ * The inner executor will be delet'ed in this executors dtor.
+ */
+class AliasActionExecutor : public IUnsyncedActionExecutor {
+public:
+	AliasActionExecutor(IUnsyncedActionExecutor* innerExecutor, const std::string& commandAlias)
+		: IUnsyncedActionExecutor(commandAlias)
+		, innerExecutor(innerExecutor)
+	{
+		assert(innerExecutor != NULL);
 	}
-	else if (cmd == "selectunits") {
-		SelectUnits(action.extra);
+	virtual ~AliasActionExecutor() {
+		delete innerExecutor;
 	}
-	else if (cmd == "selectcycle") {
-		SelectCycle(action.extra);
+
+	void Execute(const UnsyncedAction& action) const {
+		innerExecutor->ExecuteAction(action);
 	}
-	else if (cmd == "deselect") {
+
+private:
+	IUnsyncedActionExecutor* innerExecutor;
+};
+
+
+
+/**
+ * Special case executor which allows to combine multiple commands into one,
+ * by calling them sequentially.
+ * The inner executors will be delet'ed in this executors dtor.
+ */
+class SequentialActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SequentialActionExecutor(const std::string& command)
+		: IUnsyncedActionExecutor(command)
+	{}
+	virtual ~SequentialActionExecutor() {
+
+		std::vector<IUnsyncedActionExecutor*>::iterator ei;
+		for (ei = innerExecutors.begin(); ei != innerExecutors.end(); ++ei) {
+			delete *ei;
+		}
+	}
+
+	void AddExecutor(IUnsyncedActionExecutor* innerExecutor) {
+		innerExecutors.push_back(innerExecutor);
+	}
+
+	void Execute(const UnsyncedAction& action) const {
+
+		std::vector<IUnsyncedActionExecutor*>::const_iterator ei;
+		for (ei = innerExecutors.begin(); ei != innerExecutors.end(); ++ei) {
+			(*ei)->ExecuteAction(action);
+		}
+	}
+
+private:
+	std::vector<IUnsyncedActionExecutor*> innerExecutors;
+};
+
+
+
+class SelectActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SelectActionExecutor() : IUnsyncedActionExecutor("Select") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		selectionKeys->DoSelection(action.GetArgs());
+	}
+};
+
+
+
+class SelectUnitsActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SelectUnitsActionExecutor() : IUnsyncedActionExecutor("SelectUnits") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		game->SelectUnits(action.GetArgs());
+	}
+};
+
+
+
+class SelectCycleActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SelectCycleActionExecutor() : IUnsyncedActionExecutor("SelectCycle") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		game->SelectCycle(action.GetArgs());
+	}
+};
+
+
+
+class DeselectActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DeselectActionExecutor() : IUnsyncedActionExecutor("Deselect") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		selectedUnits.ClearSelected();
 	}
-	else if (cmd == "shadows") {
+};
+
+
+
+class ShadowsActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ShadowsActionExecutor() : IUnsyncedActionExecutor("Shadows") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		const int current = configHandler->Get("Shadows", 0);
 		if (current < 0) {
 			logOutput.Print("Shadows have been disabled with %i", current);
 			logOutput.Print("Change your configuration and restart to use them");
-			return true;
+			return;
 		}
 		else if (!shadowHandler->shadowsSupported) {
 			logOutput.Print("Your hardware/driver setup does not support shadows");
-			return true;
+			return;
 		}
 
-		delete shadowHandler;
+		delete shadowHandler; // XXX use SafeDelete() ?
 		int next = 0;
-		if (!action.extra.empty()) {
+		if (!action.GetArgs().empty()) {
 			int mapsize = 2048;
-			const char* args = action.extra.c_str();
+			const char* args = action.GetArgs().c_str();
 			const int argcount = sscanf(args, "%i %i", &next, &mapsize);
 			if (argcount > 1) {
 				configHandler->Set("ShadowMapSize", mapsize);
@@ -318,24 +444,39 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 		logOutput.Print("Set Shadows to %i", next);
 		shadowHandler = new CShadowHandler();
 	}
-	else if (cmd == "water") {
+};
+
+
+
+class WaterActionExecutor : public IUnsyncedActionExecutor {
+public:
+	WaterActionExecutor() : IUnsyncedActionExecutor("Water") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		int nextWaterRendererMode = 0;
 
-		if (!action.extra.empty()) {
-			nextWaterRendererMode = std::max(0, atoi(action.extra.c_str()) % CBaseWater::NUM_WATER_RENDERERS);
+		if (!action.GetArgs().empty()) {
+			nextWaterRendererMode = std::max(0, atoi(action.GetArgs().c_str()) % CBaseWater::NUM_WATER_RENDERERS);
 		} else {
 			nextWaterRendererMode = -1;
 		}
 
 		CBaseWater::PushWaterMode(nextWaterRendererMode);
 	}
+};
 
-	else if (cmd == "advmodelshading") {
+
+
+class AdvModelShadingActionExecutor : public IUnsyncedActionExecutor {
+public:
+	AdvModelShadingActionExecutor() : IUnsyncedActionExecutor("AdvModelShading") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		static bool canUseShaders = unitDrawer->advShading;
 
 		if (canUseShaders) {
-			if (!action.extra.empty()) {
-				unitDrawer->advShading = !!atoi(action.extra.c_str());
+			if (!action.GetArgs().empty()) {
+				unitDrawer->advShading = !!atoi(action.GetArgs().c_str());
 			} else {
 				unitDrawer->advShading = !unitDrawer->advShading;
 			}
@@ -343,12 +484,21 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 			logOutput.Print("model shaders %sabled", (unitDrawer->advShading? "en": "dis"));
 		}
 	}
-	else if (cmd == "advmapshading") {
+};
+
+
+
+class AdvMapShadingActionExecutor : public IUnsyncedActionExecutor {
+public:
+	AdvMapShadingActionExecutor() : IUnsyncedActionExecutor("AdvMapShading") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 		static bool canUseShaders = gd->advShading;
 
 		if (canUseShaders) {
-			if (!action.extra.empty()) {
-				gd->advShading = !!atoi(action.extra.c_str());
+			if (!action.GetArgs().empty()) {
+				gd->advShading = !!atoi(action.GetArgs().c_str());
 			} else {
 				gd->advShading = !gd->advShading;
 			}
@@ -356,82 +506,155 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 			logOutput.Print("map shaders %sabled", (gd->advShading? "en": "dis"));
 		}
 	}
+};
 
-	else if (cmd == "say") {
-		SendNetChat(action.extra);
+
+
+class SayActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SayActionExecutor() : IUnsyncedActionExecutor("Say") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		game->SendNetChat(action.GetArgs());
 	}
-	else if (cmd == "w") {
-		const std::string::size_type pos = action.extra.find_first_of(" ");
+};
+
+
+
+class SayPrivateActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SayPrivateActionExecutor() : IUnsyncedActionExecutor("W") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		const std::string::size_type pos = action.GetArgs().find_first_of(" ");
 		if (pos != std::string::npos) {
-			const int playernum = playerHandler->Player(action.extra.substr(0, pos));
+			const int playernum = playerHandler->Player(action.GetArgs().substr(0, pos));
 			if (playernum >= 0) {
-				SendNetChat(action.extra.substr(pos+1), playernum);
+				game->SendNetChat(action.GetArgs().substr(pos+1), playernum);
 			} else {
-				logOutput.Print("Player not found: %s", action.extra.substr(0, pos).c_str());
+				logOutput.Print("Player not found: %s", action.GetArgs().substr(0, pos).c_str());
 			}
 		}
 	}
-	else if (cmd == "wbynum") {
-		const std::string::size_type pos = action.extra.find_first_of(" ");
+};
+
+
+
+class SayPrivateByPlayerIDActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SayPrivateByPlayerIDActionExecutor() : IUnsyncedActionExecutor("WByNum") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		const std::string::size_type pos = action.GetArgs().find_first_of(" ");
 		if (pos != std::string::npos) {
-			std::istringstream buf(action.extra.substr(0, pos));
+			std::istringstream buf(action.GetArgs().substr(0, pos));
 			int playernum;
 			buf >> playernum;
 			if (playernum >= 0) {
-				SendNetChat(action.extra.substr(pos+1), playernum);
+				game->SendNetChat(action.GetArgs().substr(pos+1), playernum);
 			} else {
-				logOutput.Print("Playernumber invalid: %i", playernum);
+				logOutput.Print("Player-ID invalid: %i", playernum);
 			}
 		}
 	}
-	else if (cmd == "echo") {
-		logOutput.Print(action.extra);
+};
+
+
+
+class EchoActionExecutor : public IUnsyncedActionExecutor {
+public:
+	EchoActionExecutor() : IUnsyncedActionExecutor("Echo") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		logOutput.Print(action.GetArgs());
 	}
-	else if (cmd == "set") {
-		const std::string::size_type pos = action.extra.find_first_of(" ");
+};
+
+
+
+class SetActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SetActionExecutor() : IUnsyncedActionExecutor("Set") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		const std::string::size_type pos = action.GetArgs().find_first_of(" ");
 		if (pos != std::string::npos) {
-			const std::string varName = action.extra.substr(0, pos);
-			configHandler->SetString(varName, action.extra.substr(pos+1));
+			const std::string varName = action.GetArgs().substr(0, pos);
+			configHandler->SetString(varName, action.GetArgs().substr(pos+1));
 		}
 	}
-	else if (cmd == "tset") {
-		const std::string::size_type pos = action.extra.find_first_of(" ");
+};
+
+
+
+class SetOverlayActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SetOverlayActionExecutor() : IUnsyncedActionExecutor("TSet") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		const std::string::size_type pos = action.GetArgs().find_first_of(" ");
 		if (pos != std::string::npos) {
-			const std::string varName = action.extra.substr(0, pos);
-			configHandler->SetOverlay(varName, action.extra.substr(pos+1));
+			const std::string varName = action.GetArgs().substr(0, pos);
+			configHandler->SetOverlay(varName, action.GetArgs().substr(pos+1));
 		}
 	}
-	else if (cmd == "drawinmap") {
+};
+
+
+
+class EnableDrawInMapActionExecutor : public IUnsyncedActionExecutor {
+public:
+	EnableDrawInMapActionExecutor() : IUnsyncedActionExecutor("DrawInMap") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		inMapDrawer->SetDrawMode(true);
 	}
-	else if (cmd == "drawlabel") {
+};
+
+
+
+class DrawLabelActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DrawLabelActionExecutor() : IUnsyncedActionExecutor("DrawLabel") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		float3 pos = inMapDrawer->GetMouseMapPos();
 		if (pos.x >= 0) {
 			inMapDrawer->SetDrawMode(false);
 			inMapDrawer->PromptLabel(pos);
-			if ((key >= SDLK_SPACE) && (key <= SDLK_DELETE)) {
-				ignoreNextChar=true;
+			if ((action.GetKey() >= SDLK_SPACE) && (action.GetKey() <= SDLK_DELETE)) {
+				game->ignoreNextChar=true;
 			}
 		}
 	}
+};
 
-	else if (!isRepeat && cmd == "mouse1") {
-		mouse->MousePress(mouse->lastx, mouse->lasty, 1);
-	}
-	else if (!isRepeat && cmd == "mouse2") {
-		mouse->MousePress(mouse->lastx, mouse->lasty, 2);
-	}
-	else if (!isRepeat && cmd == "mouse3") {
-		mouse->MousePress(mouse->lastx, mouse->lasty, 3);
-	}
-	else if (!isRepeat && cmd == "mouse4") {
-		mouse->MousePress(mouse->lastx, mouse->lasty, 4);
-	}
-	else if (!isRepeat && cmd == "mouse5") {
-		mouse->MousePress(mouse->lastx, mouse->lasty, 5);
-	}
-	else if (cmd == "viewselection") {
 
+
+class MouseActionExecutor : public IUnsyncedActionExecutor {
+public:
+	MouseActionExecutor(int button)
+		: IUnsyncedActionExecutor("Mouse" + IntToString(button))
+		, button(button)
+	{}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (!action.IsRepeat()) {
+			mouse->MousePress(mouse->lastx, mouse->lasty, button);
+		}
+	}
+
+private:
+	int button;
+};
+
+
+
+class ViewSelectionActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ViewSelectionActionExecutor() : IUnsyncedActionExecutor("ViewSelection") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		GML_RECMUTEX_LOCK(sel); // ActionPressed
 
 		const CUnitSet& selUnits = selectedUnits.selectedUnits;
@@ -446,41 +669,48 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 			camHandler->CameraTransition(0.6f);
 		}
 	}
+};
 
-	else if (cmd == "moveforward") {
-		camMove[0]=true;
+
+
+class CameraMoveActionExecutor : public IUnsyncedActionExecutor {
+public:
+	CameraMoveActionExecutor(int dimension, const std::string& commandPostfix)
+		: IUnsyncedActionExecutor("Move" + commandPostfix)
+		, dimension(dimension)
+	{}
+
+	void Execute(const UnsyncedAction& action) const {
+		game->camMove[dimension] = true;
 	}
-	else if (cmd == "moveback") {
-		camMove[1]=true;
-	}
-	else if (cmd == "moveleft") {
-		camMove[2]=true;
-	}
-	else if (cmd == "moveright") {
-		camMove[3]=true;
-	}
-	else if (cmd == "moveup") {
-		camMove[4]=true;
-	}
-	else if (cmd == "movedown") {
-		camMove[5]=true;
-	}
-	else if (cmd == "movefast") {
-		camMove[6]=true;
-	}
-	else if (cmd == "moveslow") {
-		camMove[7]=true;
-	}
-	else if ((cmd == "aikill") || (cmd == "aireload")) {
+
+private:
+	int dimension;
+};
+
+
+
+class AIKillReloadActionExecutor : public IUnsyncedActionExecutor {
+public:
+	/**
+	 * @param kill whether this executor should function as the kill-
+	 * or the reload-AI command
+	 */
+	AIKillReloadActionExecutor(bool kill)
+		: IUnsyncedActionExecutor(kill ? "AIKill" : "AIReload")
+		, kill(kill)
+	{}
+
+	void Execute(const UnsyncedAction& action) const {
 		bool badArgs = false;
 
 		const CPlayer* fromPlayer     = playerHandler->Player(gu->myPlayerNum);
 		const int      fromTeamId     = (fromPlayer != NULL) ? fromPlayer->team : -1;
 		const bool cheating           = gs->cheatEnabled;
-		const bool hasArgs            = (action.extra.size() > 0);
-		const std::vector<std::string> &args = _local_strSpaceTokenize(action.extra);
+		const bool hasArgs            = (action.GetArgs().size() > 0);
+		const std::vector<std::string> &args = _local_strSpaceTokenize(action.GetArgs());
 		const bool singlePlayer       = (playerHandler->ActivePlayers() <= 1);
-		const std::string actionName  = cmd.substr(2);
+		const std::string actionName  = StringToLower(GetCommand()).substr(2);
 
 		if (hasArgs) {
 			size_t skirmishAIId           = 0; // will only be used if !badArgs
@@ -491,7 +721,7 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 			if (args.size() >= 1) {
 				teamToKillId = atoi(args[0].c_str());
 			}
-			if ((args.size() >= 2) && (actionName == "kill")) {
+			if ((args.size() >= 2) && kill) {
 				teamToReceiveUnitsId = atoi(args[1].c_str());
 				share = true;
 			}
@@ -541,7 +771,7 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 			}
 
 			if (!badArgs) {
-				if (actionName == "kill") {
+				if (kill) {
 					if (share) {
 						net->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, teamToReceiveUnitsId, teamToKillId));
 						// when the AIs team has no units left,
@@ -553,39 +783,52 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 							skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId, 3 /* = AI killed */);
 						}
 					}
-				} else if (actionName == "reload") {
+				} else {
+					// reload
 					net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_RELOADING));
 				}
 
 				logOutput.Print("Skirmish AI controlling team %i is beeing %sed ...", teamToKillId, actionName.c_str());
 			}
 		} else {
-			logOutput.Print("/%s: missing mandatory argument \"teamTo%s\"", action.command.c_str(), actionName.c_str());
+			logOutput.Print("/%s: missing mandatory argument \"teamTo%s\"", GetCommand().c_str(), actionName.c_str());
 			badArgs = true;
 		}
 
 		if (badArgs) {
-			if (actionName == "kill") {
+			if (kill) {
 				logOutput.Print("description: "
 				                "Kill a Skirmish AI controlling a team. The team itsself will remain alive, "
 				                "unless a second argument is given, which specifies an active team "
 				                "that will receive all the units of the AI team.");
-				logOutput.Print("usage:   /%s teamToKill [teamToReceiveUnits]", action.command.c_str());
-			} else if (actionName == "reload") {
+				logOutput.Print("usage:   /%s teamToKill [teamToReceiveUnits]", GetCommand().c_str());
+			} else {
+				// reload
 				logOutput.Print("description: "
 				                "Reload a Skirmish AI controlling a team."
 				                "The team itsself will remain alive during the process.");
-				logOutput.Print("usage:   /%s teamToReload", action.command.c_str());
+				logOutput.Print("usage:   /%s teamToReload", GetCommand().c_str());
 			}
 		}
 	}
-	else if (cmd == "aicontrol") {
+
+private:
+	bool kill;
+};
+
+
+
+class AIControlActionExecutor : public IUnsyncedActionExecutor {
+public:
+	AIControlActionExecutor() : IUnsyncedActionExecutor("AIControl") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		bool badArgs = false;
 
 		const CPlayer* fromPlayer     = playerHandler->Player(gu->myPlayerNum);
 		const int      fromTeamId     = (fromPlayer != NULL) ? fromPlayer->team : -1;
 		const bool cheating           = gs->cheatEnabled;
-		const bool hasArgs            = (action.extra.size() > 0);
+		const bool hasArgs            = (action.GetArgs().size() > 0);
 		const bool singlePlayer       = (playerHandler->ActivePlayers() <= 1);
 
 		if (hasArgs) {
@@ -595,14 +838,14 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 			std::string aiName          = "";
 			std::map<std::string, std::string> aiOptions;
 
-			const std::vector<std::string> &args = _local_strSpaceTokenize(action.extra);
+			const std::vector<std::string> &args = _local_strSpaceTokenize(action.GetArgs());
 			if (args.size() >= 1) {
 				teamToControlId = atoi(args[0].c_str());
 			}
 			if (args.size() >= 2) {
 				aiShortName = args[1];
 			} else {
-				logOutput.Print("/%s: missing mandatory argument \"aiShortName\"", action.command.c_str());
+				logOutput.Print("/%s: missing mandatory argument \"aiShortName\"", GetCommand().c_str());
 			}
 			if (args.size() >= 3) {
 				aiVersion = args[2];
@@ -676,17 +919,25 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 				}
 			}
 		} else {
-			logOutput.Print("/%s: missing mandatory arguments \"teamToControl\" and \"aiShortName\"", action.command.c_str());
+			logOutput.Print("/%s: missing mandatory arguments \"teamToControl\" and \"aiShortName\"", GetCommand().c_str());
 			badArgs = true;
 		}
 
 		if (badArgs) {
 			logOutput.Print("description: Let a Skirmish AI take over control of a team.");
-			logOutput.Print("usage:   /%s teamToControl aiShortName [aiVersion] [name] [options...]", action.command.c_str());
-			logOutput.Print("example: /%s 1 RAI 0.601 my_RAI_Friend difficulty=2 aggressiveness=3", action.command.c_str());
+			logOutput.Print("usage:   /%s teamToControl aiShortName [aiVersion] [name] [options...]", GetCommand().c_str());
+			logOutput.Print("example: /%s 1 RAI 0.601 my_RAI_Friend difficulty=2 aggressiveness=3", GetCommand().c_str());
 		}
 	}
-	else if (cmd == "ailist") {
+};
+
+
+
+class AIListActionExecutor : public IUnsyncedActionExecutor {
+public:
+	AIListActionExecutor() : IUnsyncedActionExecutor("AIList") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		const CSkirmishAIHandler::id_ai_t& ais  = skirmishAIHandler.GetAllSkirmishAIs();
 		if (ais.size() > 0) {
 			CSkirmishAIHandler::id_ai_t::const_iterator ai;
@@ -705,58 +956,113 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 			logOutput.Print("<There are no active Skirmish AIs in this game>");
 		}
 	}
-	else if (cmd == "team") {
+};
+
+
+
+class TeamActionExecutor : public IUnsyncedActionExecutor {
+public:
+	TeamActionExecutor() : IUnsyncedActionExecutor("Team") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		if (gs->cheatEnabled) {
-			const int teamId = atoi(action.extra.c_str());
+			const int teamId = atoi(action.GetArgs().c_str());
 			if (teamHandler->IsValidTeam(teamId)) {
 				net->Send(CBaseNetProtocol::Get().SendJoinTeam(gu->myPlayerNum, teamId));
 			}
 		}
 	}
-	else if (cmd == "spectator") {
-		if (!gu->spectating)
-			net->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
-	}
-	else if ((cmd == "specteam") && gu->spectating) {
-		const int teamId = atoi(action.extra.c_str());
-		if (teamHandler->IsValidTeam(teamId)) {
-			gu->myTeam = teamId;
-			gu->myAllyTeam = teamHandler->AllyTeam(teamId);
-		}
-		CLuaUI::UpdateTeams();
-	}
-	else if ((cmd == "specfullview") && gu->spectating) {
-		if (!action.extra.empty()) {
-			const int mode = atoi(action.extra.c_str());
-			gu->spectatingFullView   = !!(mode & 1);
-			gu->spectatingFullSelect = !!(mode & 2);
-		} else {
-			gu->spectatingFullView = !gu->spectatingFullView;
-			gu->spectatingFullSelect = gu->spectatingFullView;
-		}
-		CLuaUI::UpdateTeams();
-	}
-	else if (cmd == "ally" && !gu->spectating) {
-		if (action.extra.size() > 0) {
-			if (!gameSetup->fixedAllies) {
-				std::istringstream is(action.extra);
-				int otherAllyTeam = -1;
-				is >> otherAllyTeam;
-				int state = -1;
-				is >> state;
-				if (state >= 0 && state < 2 && otherAllyTeam >= 0 && otherAllyTeam != gu->myAllyTeam)
-					net->Send(CBaseNetProtocol::Get().SendSetAllied(gu->myPlayerNum, otherAllyTeam, state));
-				else
-					logOutput.Print("/ally: wrong parameters (usage: /ally <other team> [0|1])");
-			}
-			else {
-				logOutput.Print("No ingame alliances are allowed");
-			}
-		}
-	}
+};
 
-	else if (cmd == "group") {
-		const char* c = action.extra.c_str();
+
+
+class SpectatorActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SpectatorActionExecutor() : IUnsyncedActionExecutor("Spectator") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (!gu->spectating) {
+			net->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
+		}
+	}
+};
+
+
+
+class SpecTeamActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SpecTeamActionExecutor() : IUnsyncedActionExecutor("SpecTeam") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (gu->spectating) {
+			const int teamId = atoi(action.GetArgs().c_str());
+			if (teamHandler->IsValidTeam(teamId)) {
+				gu->myTeam = teamId;
+				gu->myAllyTeam = teamHandler->AllyTeam(teamId);
+			}
+			CLuaUI::UpdateTeams();
+		}
+	}
+};
+
+
+
+class SpecFullViewActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SpecFullViewActionExecutor() : IUnsyncedActionExecutor("SpecFullView") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (gu->spectating) {
+			if (!action.GetArgs().empty()) {
+				const int mode = atoi(action.GetArgs().c_str());
+				gu->spectatingFullView   = !!(mode & 1);
+				gu->spectatingFullSelect = !!(mode & 2);
+			} else {
+				gu->spectatingFullView = !gu->spectatingFullView;
+				gu->spectatingFullSelect = gu->spectatingFullView;
+			}
+			CLuaUI::UpdateTeams();
+		}
+	}
+};
+
+
+
+class AllyActionExecutor : public IUnsyncedActionExecutor {
+public:
+	AllyActionExecutor() : IUnsyncedActionExecutor("Ally") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (!gu->spectating) {
+			if (action.GetArgs().size() > 0) {
+				if (!gameSetup->fixedAllies) {
+					std::istringstream is(action.GetArgs());
+					int otherAllyTeam = -1;
+					is >> otherAllyTeam;
+					int state = -1;
+					is >> state;
+					if (state >= 0 && state < 2 && otherAllyTeam >= 0 && otherAllyTeam != gu->myAllyTeam)
+						net->Send(CBaseNetProtocol::Get().SendSetAllied(gu->myPlayerNum, otherAllyTeam, state));
+					else
+						logOutput.Print("/%s: wrong parameters (usage: /%s <other team> [0|1])", GetCommand().c_str(), GetCommand().c_str());
+				}
+				else {
+					logOutput.Print("No in-game alliances are allowed");
+				}
+			}
+		}
+	}
+};
+
+
+
+class GroupActionExecutor : public IUnsyncedActionExecutor {
+public:
+	GroupActionExecutor() : IUnsyncedActionExecutor("Group") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		// XXX ug.. code, at least document
+		const char* c = action.GetArgs().c_str();
 		const int t = c[0];
 		if ((t >= '0') && (t <= '9')) {
 			const int team = (t - '0');
@@ -764,101 +1070,179 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 			grouphandlers[gu->myTeam]->GroupCommand(team, c);
 		}
 	}
-	else if (cmd == "group0") {
-		grouphandlers[gu->myTeam]->GroupCommand(0);
-	}
-	else if (cmd == "group1") {
-		grouphandlers[gu->myTeam]->GroupCommand(1);
-	}
-	else if (cmd == "group2") {
-		grouphandlers[gu->myTeam]->GroupCommand(2);
-	}
-	else if (cmd == "group3") {
-		grouphandlers[gu->myTeam]->GroupCommand(3);
-	}
-	else if (cmd == "group4") {
-		grouphandlers[gu->myTeam]->GroupCommand(4);
-	}
-	else if (cmd == "group5") {
-		grouphandlers[gu->myTeam]->GroupCommand(5);
-	}
-	else if (cmd == "group6") {
-		grouphandlers[gu->myTeam]->GroupCommand(6);
-	}
-	else if (cmd == "group7") {
-		grouphandlers[gu->myTeam]->GroupCommand(7);
-	}
-	else if (cmd == "group8") {
-		grouphandlers[gu->myTeam]->GroupCommand(8);
-	}
-	else if (cmd == "group9") {
-		grouphandlers[gu->myTeam]->GroupCommand(9);
+};
+
+
+
+class GroupIDActionExecutor : public IUnsyncedActionExecutor {
+public:
+	GroupIDActionExecutor(int groupId)
+		: IUnsyncedActionExecutor("Group" + IntToString(groupId))
+		, groupId(groupId)
+	{}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (!action.IsRepeat()) {
+		grouphandlers[gu->myTeam]->GroupCommand(groupId);
+		}
 	}
 
-	else if (cmd == "lastmsgpos") {
+private:
+	int groupId;
+};
+
+
+
+class LastMessagePositionActionExecutor : public IUnsyncedActionExecutor {
+public:
+	LastMessagePositionActionExecutor() : IUnsyncedActionExecutor("LastMsgPos") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		// cycle through the positions
-		camHandler->GetCurrentController().SetPos(infoConsole->GetMsgPos());
+		camHandler->GetCurrentController().SetPos(game->infoConsole->GetMsgPos());
 		camHandler->CameraTransition(0.6f);
 	}
-	else if (((cmd == "chat")     || (cmd == "chatall") ||
-	         (cmd == "chatally") || (cmd == "chatspec")) &&
-	         // if chat is bound to enter and we're waiting for user to press enter to start game, ignore.
-				  (key != SDLK_RETURN || playing || !keyInput->IsKeyPressed(SDLK_LCTRL))) {
+};
 
-		if (cmd == "chatall")  { userInputPrefix = ""; }
-		if (cmd == "chatally") { userInputPrefix = "a:"; }
-		if (cmd == "chatspec") { userInputPrefix = "s:"; }
-		userWriting = true;
-		userPrompt = "Say: ";
-		userInput = userInputPrefix;
-		writingPos = (int)userInput.length();
-		chatting = true;
 
-		if (key != SDLK_RETURN) {
-			ignoreNextChar = true;
+
+class ChatActionExecutor : public IUnsyncedActionExecutor {
+
+	ChatActionExecutor(const std::string& command, const std::string& userInputPrefix, bool setUserInputPrefix)
+		: IUnsyncedActionExecutor(command)
+		, userInputPrefix(userInputPrefix)
+		, setUserInputPrefix(setUserInputPrefix)
+	{}
+
+public:
+	void Execute(const UnsyncedAction& action) const {
+		// if chat is bound to enter and we're waiting for user to press enter to start game, ignore.
+		if (action.GetKey() != SDLK_RETURN || game->playing || !keyInput->IsKeyPressed(SDLK_LCTRL)) {
+			if (setUserInputPrefix) {
+				game->userInputPrefix = userInputPrefix;
+			}
+			game->userWriting = true;
+			game->userPrompt = "Say: ";
+			game->userInput = game->userInputPrefix;
+			game->writingPos = (int)game->userInput.length();
+			game->chatting = true;
+
+			if (action.GetKey() != SDLK_RETURN) {
+				game->ignoreNextChar = true;
+			}
+
+			game->consoleHistory->ResetPosition();
 		}
-
-		consoleHistory->ResetPosition();
 	}
-	else if (cmd == "track") {
+
+	static void RegisterCommandVariants(CGame* game) {
+
+		game->RegisterUnsyncedActionExecutor(new ChatActionExecutor("Chat",     "",   false));
+		game->RegisterUnsyncedActionExecutor(new ChatActionExecutor("ChatAll",  "",   true));
+		game->RegisterUnsyncedActionExecutor(new ChatActionExecutor("ChatAlly", "a:", true));
+		game->RegisterUnsyncedActionExecutor(new ChatActionExecutor("ChatSpec", "s:", true));
+	}
+
+private:
+	const std::string userInputPrefix;
+	const bool setUserInputPrefix;
+};
+
+
+
+// TODO merge together with "TrackOff" to "Track 0|1", and deprecate the two old ones
+class TrackActionExecutor : public IUnsyncedActionExecutor {
+public:
+	TrackActionExecutor() : IUnsyncedActionExecutor("Track") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		unitTracker.Track();
 	}
-	else if (cmd == "trackoff") {
+};
+
+
+
+class TrackOffActionExecutor : public IUnsyncedActionExecutor {
+public:
+	TrackOffActionExecutor() : IUnsyncedActionExecutor("TrackOff") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		unitTracker.Disable();
 	}
-	else if (cmd == "trackmode") {
+};
+
+
+
+class TrackModeActionExecutor : public IUnsyncedActionExecutor {
+public:
+	TrackModeActionExecutor() : IUnsyncedActionExecutor("TrackMode") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		unitTracker.IncMode();
 	}
+};
+
+
+
 #ifdef USE_GML
-	else if (cmd == "showhealthbars") {
-		if (action.extra.empty()) {
+class ShowHealthBarsActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ShowHealthBarsActionExecutor() : IUnsyncedActionExecutor("ShowHealthBars") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
 			unitDrawer->showHealthBars = !unitDrawer->showHealthBars;
 		} else {
-			unitDrawer->showHealthBars = !!atoi(action.extra.c_str());
+			unitDrawer->showHealthBars = !!atoi(action.GetArgs().c_str());
 		}
 	}
-	else if (cmd == "showrezbars") {
-		if (action.extra.empty()) {
+};
+
+
+
+class ShowRezurectionBarsActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ShowRezurectionBarsActionExecutor() : IUnsyncedActionExecutor("ShowRezBars") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
 			featureDrawer->SetShowRezBars(!featureDrawer->GetShowRezBars());
 		} else {
-			featureDrawer->SetShowRezBars(!!atoi(action.extra.c_str()));
+			featureDrawer->SetShowRezBars(!!atoi(action.GetArgs().c_str()));
 		}
 	}
-#endif
-	else if (cmd == "pause") {
+};
+#endif // USE_GML
+
+
+
+class PauseActionExecutor : public IUnsyncedActionExecutor {
+public:
+	PauseActionExecutor() : IUnsyncedActionExecutor("Pause") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		// disallow pausing prior to start of game proper
-		if (playing) {
+		if (game->playing) {
 			bool newPause;
-			if (action.extra.empty()) {
+			if (action.GetArgs().empty()) {
 				newPause = !gs->paused;
 			} else {
-				newPause = !!atoi(action.extra.c_str());
+				newPause = !!atoi(action.GetArgs().c_str());
 			}
 			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, newPause));
-			lastframe = SDL_GetTicks(); // this required here?
+			game->lastframe = SDL_GetTicks(); // this required here?
 		}
 	}
-	else if (cmd == "debug") {
+
+};
+
+
+
+class DebugActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DebugActionExecutor() : IUnsyncedActionExecutor("Debug") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		if (globalRendering->drawdebug)
 		{
 			ProfileDrawer::Disable();
@@ -870,17 +1254,34 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 			globalRendering->drawdebug = true;
 		}
 	}
-	else if (cmd == "nosound") {
+};
+
+
+
+// XXX unlucky name; maybe make this "Sound {0|1}" instead (bool arg or toggle)
+class NoSoundActionExecutor : public IUnsyncedActionExecutor {
+public:
+	NoSoundActionExecutor() : IUnsyncedActionExecutor("NoSound") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		if (sound->Mute()) {
 			logOutput.Print("Sound disabled");
 		} else {
 			logOutput.Print("Sound enabled");
 		}
 	}
-	else if (cmd == "soundchannelenable") {
+};
+
+
+
+class SoundChannelEnableActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SoundChannelEnableActionExecutor() : IUnsyncedActionExecutor("SoundChannelEnable") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		std::string channel;
 		int enableInt, enable;
-		std::istringstream buf(action.extra);
+		std::istringstream buf(action.GetArgs());
 		buf >> channel;
 		buf >> enableInt;
 		if (enableInt == 0)
@@ -899,171 +1300,361 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 		else if (channel == "Music")
 			Channels::BGMusic.Enable(enable);
 	}
+};
 
-	else if (cmd == "createvideo") {
+
+
+class CreateVideoActionExecutor : public IUnsyncedActionExecutor {
+public:
+	CreateVideoActionExecutor() : IUnsyncedActionExecutor("CreateVideo") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		if (videoCapturing->IsCapturing()) {
 			videoCapturing->StopCapturing();
 		} else {
 			videoCapturing->StartCapturing();
 		}
 	}
-	else if (cmd == "drawtrees") {
-		if (action.extra.empty()) {
+};
+
+
+
+class DrawTreesActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DrawTreesActionExecutor() : IUnsyncedActionExecutor("DrawTrees") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
 			treeDrawer->drawTrees = !treeDrawer->drawTrees;
 		} else {
-			treeDrawer->drawTrees = !!atoi(action.extra.c_str());
+			treeDrawer->drawTrees = !!atoi(action.GetArgs().c_str());
 		}
 	}
-	else if (cmd == "dynamicsky") {
-		if (action.extra.empty()) {
+};
+
+
+
+class DynamicSkyActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DynamicSkyActionExecutor() : IUnsyncedActionExecutor("DynamicSky") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
 			sky->dynamicSky = !sky->dynamicSky;
 		} else {
-			sky->dynamicSky = !!atoi(action.extra.c_str());
+			sky->dynamicSky = !!atoi(action.GetArgs().c_str());
 		}
 	}
-	else if (cmd == "dynamicsun") {
-		if (action.extra.empty()) {
+};
+
+
+
+class DynamicSunActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DynamicSunActionExecutor() : IUnsyncedActionExecutor("DynamicSun") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
 			sky->SetLight(!sky->GetLight()->IsDynamic());
 		} else {
-			sky->SetLight(!!atoi(action.extra.c_str()));
+			sky->SetLight(!!atoi(action.GetArgs().c_str()));
 		}
 	}
+};
+
+
+
 #ifdef USE_GML
-	else if (cmd == "multithreaddrawground") {
-		if (action.extra.empty()) {
+class MultiThreadDrawGroundActionExecutor : public IUnsyncedActionExecutor {
+public:
+	MultiThreadDrawGroundActionExecutor() : IUnsyncedActionExecutor("MultiThreadDrawGround") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		if (action.GetArgs().empty()) {
 			gd->multiThreadDrawGround = !gd->multiThreadDrawGround;
 		} else {
-			gd->multiThreadDrawGround = !!atoi(action.extra.c_str());
+			gd->multiThreadDrawGround = !!atoi(action.GetArgs().c_str());
 		}
-		logOutput.Print("Multithreaded ground rendering is %s", gd->multiThreadDrawGround?"enabled":"disabled");
+		logOutput.Print("Multi threaded ground rendering is %s", gd->multiThreadDrawGround?"enabled":"disabled");
 	}
-	else if (cmd == "multithreaddrawgroundshadow") {
-		if (action.extra.empty()) {
+};
+
+
+
+class MultiThreadDrawGroundShadowActionExecutor : public IUnsyncedActionExecutor {
+public:
+	MultiThreadDrawGroundShadowActionExecutor() : IUnsyncedActionExecutor("MultiThreadDrawGroundShadow") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		if (action.GetArgs().empty()) {
 			gd->multiThreadDrawGroundShadow = !gd->multiThreadDrawGroundShadow;
 		} else {
-			gd->multiThreadDrawGroundShadow = !!atoi(action.extra.c_str());
+			gd->multiThreadDrawGroundShadow = !!atoi(action.GetArgs().c_str());
 		}
-		logOutput.Print("Multithreaded ground shadow rendering is %s", gd->multiThreadDrawGroundShadow?"enabled":"disabled");
+		logOutput.Print("Multi threaded ground shadow rendering is %s", gd->multiThreadDrawGroundShadow?"enabled":"disabled");
 	}
-	else if (cmd == "multithreaddrawunit") {
-		if (action.extra.empty()) {
+};
+
+
+
+class MultiThreadDrawUnitActionExecutor : public IUnsyncedActionExecutor {
+public:
+	MultiThreadDrawUnitActionExecutor() : IUnsyncedActionExecutor("MultiThreadDrawUnit") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
 			unitDrawer->multiThreadDrawUnit = !unitDrawer->multiThreadDrawUnit;
 		} else {
-			unitDrawer->multiThreadDrawUnit = !!atoi(action.extra.c_str());
+			unitDrawer->multiThreadDrawUnit = !!atoi(action.GetArgs().c_str());
 		}
-		logOutput.Print("Multithreaded unit rendering is %s", unitDrawer->multiThreadDrawUnit?"enabled":"disabled");
+		logOutput.Print("Multi threaded unit rendering is %s", unitDrawer->multiThreadDrawUnit?"enabled":"disabled");
 	}
-	else if (cmd == "multithreaddrawunitshadow") {
-		if (action.extra.empty()) {
+};
+
+
+
+class MultiThreadDrawUnitShadowActionExecutor : public IUnsyncedActionExecutor {
+public:
+	MultiThreadDrawUnitShadowActionExecutor() : IUnsyncedActionExecutor("MultiThreadDrawUnitShadow") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
 			unitDrawer->multiThreadDrawUnitShadow = !unitDrawer->multiThreadDrawUnitShadow;
 		} else {
-			unitDrawer->multiThreadDrawUnitShadow = !!atoi(action.extra.c_str());
+			unitDrawer->multiThreadDrawUnitShadow = !!atoi(action.GetArgs().c_str());
 		}
-		logOutput.Print("Multithreaded unit shadow rendering is %s", unitDrawer->multiThreadDrawUnitShadow?"enabled":"disabled");
+		logOutput.Print("Multi threaded unit shadow rendering is %s", unitDrawer->multiThreadDrawUnitShadow?"enabled":"disabled");
 	}
-	else if (cmd == "multithread" || cmd == "multithreaddraw" || cmd == "multithreadsim") {
-		const int mtenabled = gd->multiThreadDrawGround + unitDrawer->multiThreadDrawUnit + unitDrawer->multiThreadDrawUnitShadow > 1;
-		if (cmd == "multithread" || cmd == "multithreaddraw") {
-			if (action.extra.empty()) {
-				gd->multiThreadDrawGround = !mtenabled;
-				unitDrawer->multiThreadDrawUnit = !mtenabled;
-				unitDrawer->multiThreadDrawUnitShadow = !mtenabled;
-			} else {
-				gd->multiThreadDrawGround = !!atoi(action.extra.c_str());
-				unitDrawer->multiThreadDrawUnit = !!atoi(action.extra.c_str());
-				unitDrawer->multiThreadDrawUnitShadow = !!atoi(action.extra.c_str());
-			}
-			if (!gd->multiThreadDrawGround)
-				gd->multiThreadDrawGroundShadow = 0;
-			logOutput.Print("Multithreaded rendering is %s", gd->multiThreadDrawGround ? "enabled" : "disabled");
+};
+
+
+
+class MultiThreadDrawActionExecutor : public IUnsyncedActionExecutor {
+public:
+	MultiThreadDrawActionExecutor() : IUnsyncedActionExecutor("MultiThreadDraw") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		const bool mtEnabled = IsMTEnabled();
+		if (action.GetArgs().empty()) {
+			gd->multiThreadDrawGround = !mtEnabled;
+			unitDrawer->multiThreadDrawUnit = !mtEnabled;
+			unitDrawer->multiThreadDrawUnitShadow = !mtEnabled;
+		} else {
+			gd->multiThreadDrawGround = !!atoi(action.GetArgs().c_str());
+			unitDrawer->multiThreadDrawUnit = !!atoi(action.GetArgs().c_str());
+			unitDrawer->multiThreadDrawUnitShadow = !!atoi(action.GetArgs().c_str());
 		}
+		if (!gd->multiThreadDrawGround)
+			gd->multiThreadDrawGroundShadow = 0;
+		logOutput.Print("Multithreaded rendering is %s", gd->multiThreadDrawGround ? "enabled" : "disabled");
+	}
+
+	static bool IsMTEnabled() {
+		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		return gd->multiThreadDrawGround + unitDrawer->multiThreadDrawUnit + unitDrawer->multiThreadDrawUnitShadow > 1;
+	}
+};
+
+
+
+class MultiThreadSimActionExecutor : public IUnsyncedActionExecutor {
+public:
+	MultiThreadSimActionExecutor() : IUnsyncedActionExecutor("MultiThreadSim") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		const bool mtEnabled = MultiThreadDrawActionExecutor::IsMTEnabled();
 #	if GML_ENABLE_SIM
-		if (cmd == "multithread" || cmd == "multithreadsim") {
-			extern volatile int gmlMultiThreadSim;
-			extern volatile int gmlStartSim;
-			if (action.extra.empty()) {
-				gmlMultiThreadSim = (cmd == "multithread") ? !mtenabled : !gmlMultiThreadSim;
-			} else {
-				gmlMultiThreadSim = !!atoi(action.extra.c_str());
-			}
-			gmlStartSim=1;
-			logOutput.Print("Simulation threading is %s", gmlMultiThreadSim ? "enabled" : "disabled");
+		extern volatile int gmlMultiThreadSim;
+		extern volatile int gmlStartSim;
+		if (action.GetArgs().empty()) {
+			// HACK GetInnerAction() should not be used here
+			gmlMultiThreadSim = (StringToLower(action.GetInnerAction().command) == "multithread") ? !mtEnabled : !gmlMultiThreadSim;
+		} else {
+			gmlMultiThreadSim = !!atoi(action.GetArgs().c_str());
 		}
-#	endif
+		gmlStartSim=1;
+		logOutput.Print("Simulation threading is %s", gmlMultiThreadSim ? "enabled" : "disabled");
+#	endif // GML_ENABLE_SIM
 	}
-#endif
-	else if (cmd == "speedcontrol") {
-		if (action.extra.empty()) {
-			++speedControl;
-			if (speedControl > 2)
-				speedControl = -2;
+};
+
+
+
+class MultiThreadActionExecutor : public SequentialActionExecutor {
+public:
+	MultiThreadActionExecutor() : SequentialActionExecutor("MultiThread") {
+		AddExecutor(new MultiThreadDrawActionExecutor());
+		AddExecutor(new MultiThreadSimActionExecutor());
+	}
+};
+#endif // USE_GML
+
+
+
+class SpeedControlActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SpeedControlActionExecutor() : IUnsyncedActionExecutor("SpeedControl") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
+			++game->speedControl;
+			if (game->speedControl > 2)
+				game->speedControl = -2;
 		}
 		else {
-			speedControl = atoi(action.extra.c_str());
+			game->speedControl = atoi(action.GetArgs().c_str());
 		}
-		speedControl = std::max(-2, std::min(speedControl, 2));
-		net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, speedControl));
+		game->speedControl = std::max(-2, std::min(game->speedControl, 2));
+		net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, game->speedControl));
 		logOutput.Print("Speed Control: %s%s",
-			(speedControl == 0) ? "Default" : ((speedControl == 1 || speedControl == -1) ? "Average CPU" : "Maximum CPU"),
-			(speedControl < 0) ? " (server voting disabled)" : "");
-		configHandler->Set("SpeedControl", speedControl);
+			(game->speedControl == 0) ? "Default" : ((game->speedControl == 1 || game->speedControl == -1) ? "Average CPU" : "Maximum CPU"),
+			(game->speedControl < 0) ? " (server voting disabled)" : "");
+		configHandler->Set("SpeedControl", game->speedControl);
 		if (gameServer)
-			gameServer->UpdateSpeedControl(speedControl);
+			gameServer->UpdateSpeedControl(game->speedControl);
 	}
-	else if (!isRepeat && (cmd == "gameinfo")) {
-		if (!CGameInfo::IsActive()) {
-			CGameInfo::Enable();
-		} else {
-			CGameInfo::Disable();
+};
+
+
+
+class GameInfoActionExecutor : public IUnsyncedActionExecutor {
+public:
+	GameInfoActionExecutor() : IUnsyncedActionExecutor("GameInfo") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (!action.IsRepeat()) {
+			if (!CGameInfo::IsActive()) {
+				CGameInfo::Enable();
+			} else {
+				CGameInfo::Disable();
+			}
 		}
 	}
-	else if (cmd == "hideinterface") {
-		if (action.extra.empty()) {
-			hideInterface = !hideInterface;
+};
+
+
+
+class HideInterfaceActionExecutor : public IUnsyncedActionExecutor {
+public:
+	HideInterfaceActionExecutor() : IUnsyncedActionExecutor("HideInterface") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
+			game->hideInterface = !game->hideInterface;
 		} else {
-			hideInterface = !!atoi(action.extra.c_str());
+			game->hideInterface = !!atoi(action.GetArgs().c_str());
 		}
 	}
-	else if (cmd == "hardwarecursor") {
-		if (action.extra.empty()) {
+};
+
+
+
+class HardwareCursorActionExecutor : public IUnsyncedActionExecutor {
+public:
+	HardwareCursorActionExecutor() : IUnsyncedActionExecutor("HardwareCursor") {}
+
+	void Execute(const UnsyncedAction& action) const {
+// XXX one setting stored in two places (mouse->hardwareCursor & configHandler["HardwareCursor"]) -> refactor?
+		if (action.GetArgs().empty()) {
 			mouse->hardwareCursor = !mouse->hardwareCursor;
 		} else {
-			mouse->hardwareCursor = !!atoi(action.extra.c_str());
+			mouse->hardwareCursor = !!atoi(action.GetArgs().c_str());
 		}
 		mouse->UpdateHwCursor();
 		configHandler->Set("HardwareCursor", (int)mouse->hardwareCursor);
 	}
-	else if (cmd == "increaseviewradius") {
+};
+
+
+
+class IncreaseViewRadiusActionExecutor : public IUnsyncedActionExecutor {
+public:
+	IncreaseViewRadiusActionExecutor() : IUnsyncedActionExecutor("IncreaseViewRadius") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 		gd->IncreaseDetail();
 	}
-	else if (cmd == "decreaseviewradius") {
+};
+
+
+
+class DecreaseViewRadiusActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DecreaseViewRadiusActionExecutor() : IUnsyncedActionExecutor("DecreaseViewRadius") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 		gd->DecreaseDetail();
 	}
-	else if (cmd == "moretrees") {
+};
+
+
+
+class MoreTreesActionExecutor : public IUnsyncedActionExecutor {
+public:
+	MoreTreesActionExecutor() : IUnsyncedActionExecutor("MoreTrees") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		treeDrawer->baseTreeDistance += 0.2f;
+		ReportTreeDistance();
+	}
+	static void ReportTreeDistance() {
 		LogObject() << "Base tree distance " << treeDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
 	}
-	else if (cmd == "lesstrees") {
+};
+
+
+
+class LessTreesActionExecutor : public IUnsyncedActionExecutor {
+public:
+	LessTreesActionExecutor() : IUnsyncedActionExecutor("LessTrees") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		treeDrawer->baseTreeDistance -= 0.2f;
-		LogObject() << "Base tree distance " << treeDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
+		MoreTreesActionExecutor::ReportTreeDistance();
 	}
-	else if (cmd == "moreclouds") {
+};
+
+
+
+class MoreCloudsActionExecutor : public IUnsyncedActionExecutor {
+public:
+	MoreCloudsActionExecutor() : IUnsyncedActionExecutor("MoreClouds") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		sky->IncreaseCloudDensity();
 
+		ReportCloudDensity();
+	}
+	static void ReportCloudDensity() {
 		LogObject() << "Cloud density " << 1.0f / sky->GetCloudDensity() << "\n";
 	}
-	else if (cmd == "lessclouds") {
+};
+
+
+
+class LessCloudsActionExecutor : public IUnsyncedActionExecutor {
+public:
+	LessCloudsActionExecutor() : IUnsyncedActionExecutor("LessClouds") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		sky->DecreaseCloudDensity();
 
-		LogObject() << "Cloud density " << 1.0f / sky->GetCloudDensity() << "\n";
+		MoreCloudsActionExecutor::ReportCloudDensity();
 	}
+};
 
-	// Break up the if/else chain to workaround MSVC compiler limit
-	// "fatal error C1061: compiler limit : blocks nested too deeply"
-	else { notfound1=true; }
-	if (notfound1) { // BEGINN: MSVC limit workaround
 
-	if (cmd == "speedup") {
+
+class SpeedUpActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SpeedUpActionExecutor() : IUnsyncedActionExecutor("SpeedUp") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		float speed = gs->userSpeedFactor;
 		if (speed < 5) {
 			speed += (speed < 2) ? 0.1f : 0.2f;
@@ -1077,7 +1668,15 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 		}
 		net->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
 	}
-	else if (cmd == "slowdown") {
+};
+
+
+
+class SlowDownActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SlowDownActionExecutor() : IUnsyncedActionExecutor("SlowDown") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		float speed = gs->userSpeedFactor;
 		if (speed <= 5) {
 			speed -= (speed <= 2) ? 0.1f : 0.2f;
@@ -1093,8 +1692,15 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 		}
 		net->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
 	}
+};
 
-	else if (cmd == "controlunit") {
+
+
+class ControlUnitActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ControlUnitActionExecutor() : IUnsyncedActionExecutor("ControlUnit") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		if (!gu->spectating) {
 			Command c(CMD_STOP);
 			// force it to update selection and clear order queue
@@ -1102,71 +1708,209 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 			net->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));
 		}
 	}
-	else if (cmd == "showstandard") {
+};
+
+
+
+class ShowStandardActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ShowStandardActionExecutor() : IUnsyncedActionExecutor("ShowStandard") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 		gd->DisableExtraTexture();
 	}
-	else if (cmd == "showelevation") {
+};
+
+
+
+class ShowElevationActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ShowElevationActionExecutor() : IUnsyncedActionExecutor("ShowElevation") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 		gd->SetHeightTexture();
 	}
-	else if (cmd == "toggleradarandjammer") {
+};
+
+
+
+class ToggleRadarAndJammerActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ToggleRadarAndJammerActionExecutor() : IUnsyncedActionExecutor("ToggleRadarAndJammer") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 		gd->ToggleRadarAndJammer();
 	}
-	else if (cmd == "showmetalmap") {
+};
+
+
+
+class ShowMetalMapActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ShowMetalMapActionExecutor() : IUnsyncedActionExecutor("ShowMetalMap") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 		gd->SetMetalTexture(readmap->metalMap);
 	}
+};
 
-	else if (cmd == "showpathtraversability") {
+
+
+class ShowPathTraversabilityActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ShowPathTraversabilityActionExecutor() : IUnsyncedActionExecutor("ShowPathTraversability") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 		gd->TogglePathTraversabilityTexture();
 	}
-	else if (cmd == "showpathheat") {
+};
+
+
+
+class ShowPathHeatActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ShowPathHeatActionExecutor() : IUnsyncedActionExecutor("ShowPathHeat") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		if (gs->cheatEnabled) {
+			CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 			gd->TogglePathHeatTexture();
 		}
 	}
-	else if (cmd == "showpathcost") {
+};
+
+
+
+class ShowPathCostActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ShowPathCostActionExecutor() : IUnsyncedActionExecutor("ShowPathCost") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		if (gs->cheatEnabled) {
+			CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 			gd->TogglePathCostTexture();
 		}
 	}
+};
 
-	else if (cmd == "togglelos") {
+
+
+class ToggleLOSActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ToggleLOSActionExecutor() : IUnsyncedActionExecutor("ToggleLOS") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 		gd->ToggleLosTexture();
 	}
-	else if (cmd == "sharedialog") {
+};
+
+
+
+class ShareDialogActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ShareDialogActionExecutor() : IUnsyncedActionExecutor("ShareDialog") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 		if (!inputReceivers.empty() && dynamic_cast<CShareBox*>(inputReceivers.front()) == NULL && !gu->spectating)
 			new CShareBox();
 	}
-	else if (cmd == "quitmessage") {
+};
+
+
+
+class QuitMessageActionExecutor : public IUnsyncedActionExecutor {
+public:
+	QuitMessageActionExecutor() : IUnsyncedActionExecutor("QuitMessage") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 		if (!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front()) == NULL) {
 			CKeyBindings::HotkeyList quitlist = keyBindings->GetHotkeys("quitmenu");
 			std::string quitkey = quitlist.empty() ? "<none>" : quitlist.front();
 			logOutput.Print(std::string("Press ") + quitkey + " to access the quit menu");
 		}
 	}
-	else if (cmd == "quitmenu") {
+};
+
+
+
+class QuitMenuActionExecutor : public IUnsyncedActionExecutor {
+public:
+	QuitMenuActionExecutor() : IUnsyncedActionExecutor("QuitMenu") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 		if (!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front()) == NULL)
 			new CQuitBox();
 	}
-	else if (cmd == "quitforce" || cmd == "quit") {
+};
+
+
+
+class QuitActionExecutor : public IUnsyncedActionExecutor {
+public:
+	QuitActionExecutor() : IUnsyncedActionExecutor("Quit") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		Exit();
+	}
+	static void Exit() {
 		logOutput.Print("User exited");
 		gu->globalQuit = true;
 	}
-	else if (cmd == "incguiopacity") {
+};
+
+
+
+class IncreaseGUIOpacityActionExecutor : public IUnsyncedActionExecutor {
+public:
+	IncreaseGUIOpacityActionExecutor() : IUnsyncedActionExecutor("IncGUIOpacity") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		CInputReceiver::guiAlpha = std::min(CInputReceiver::guiAlpha+0.1f,1.0f);
 		configHandler->Set("GuiOpacity", CInputReceiver::guiAlpha);
 	}
-	else if (cmd == "decguiopacity") {
+};
+
+
+
+class DecreaseGUIOpacityActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DecreaseGUIOpacityActionExecutor() : IUnsyncedActionExecutor("DecGUIOpacity") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		CInputReceiver::guiAlpha = std::max(CInputReceiver::guiAlpha-0.1f,0.0f);
 		configHandler->Set("GuiOpacity", CInputReceiver::guiAlpha);
 	}
+};
 
-	else if (cmd == "screenshot") {
-		TakeScreenshot(action.extra);
+
+
+class ScreenShotActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ScreenShotActionExecutor() : IUnsyncedActionExecutor("ScreenShot") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		TakeScreenshot(action.GetArgs());
 	}
+};
 
-	else if (cmd == "grabinput") {
+
+
+class GrabInputActionExecutor : public IUnsyncedActionExecutor {
+public:
+	GrabInputActionExecutor() : IUnsyncedActionExecutor("GrabInput") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		SDL_GrabMode newMode;
-		if (action.extra.empty()) {
+		if (action.GetArgs().empty()) {
 			const SDL_GrabMode curMode = SDL_WM_GrabInput(SDL_GRAB_QUERY);
 			switch (curMode) {
 				default: // make compiler happy
@@ -1174,7 +1918,7 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 				case SDL_GRAB_ON:  newMode = SDL_GRAB_OFF; break;
 			}
 		} else {
-			if (atoi(action.extra.c_str())) {
+			if (atoi(action.GetArgs().c_str())) {
 				newMode = SDL_GRAB_ON;
 			} else {
 				newMode = SDL_GRAB_OFF;
@@ -1184,16 +1928,32 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 		logOutput.Print("Input grabbing %s",
 		                (newMode == SDL_GRAB_ON) ? "enabled" : "disabled");
 	}
-	else if (cmd == "clock") {
-		if (action.extra.empty()) {
-			showClock = !showClock;
+};
+
+
+
+class ClockActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ClockActionExecutor() : IUnsyncedActionExecutor("Clock") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
+			game->showClock = !game->showClock;
 		} else {
-			showClock = !!atoi(action.extra.c_str());
+			game->showClock = !!atoi(action.GetArgs().c_str());
 		}
-		configHandler->Set("ShowClock", showClock ? 1 : 0);
+		configHandler->Set("ShowClock", game->showClock ? 1 : 0);
 	}
-	else if (cmd == "cross") {
-		if (action.extra.empty()) {
+};
+
+
+
+class CrossActionExecutor : public IUnsyncedActionExecutor {
+public:
+	CrossActionExecutor() : IUnsyncedActionExecutor("Cross") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
 			if (mouse->crossSize > 0.0f) {
 				mouse->crossSize = -mouse->crossSize;
 			} else {
@@ -1201,7 +1961,7 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 			}
 		} else {
 			float size, alpha, scale;
-			const char* args = action.extra.c_str();
+			const char* args = action.GetArgs().c_str();
 			const int argcount = sscanf(args, "%f %f %f", &size, &alpha, &scale);
 			if (argcount > 1) {
 				mouse->crossAlpha = alpha;
@@ -1215,65 +1975,129 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 		}
 		configHandler->Set("CrossSize", mouse->crossSize);
 	}
-	else if (cmd == "fps") {
-		if (action.extra.empty()) {
-			showFPS = !showFPS;
+};
+
+
+
+class FPSActionExecutor : public IUnsyncedActionExecutor {
+public:
+	FPSActionExecutor() : IUnsyncedActionExecutor("FPS") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
+			game->showFPS = !game->showFPS;
 		} else {
-			showFPS = !!atoi(action.extra.c_str());
+			game->showFPS = !!atoi(action.GetArgs().c_str());
 		}
-		configHandler->Set("ShowFPS", showFPS ? 1 : 0);
+		configHandler->Set("ShowFPS", game->showFPS ? 1 : 0);
 	}
-	else if (cmd == "speed") {
-		if (action.extra.empty()) {
-			showSpeed = !showSpeed;
+};
+
+
+
+class SpeedActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SpeedActionExecutor() : IUnsyncedActionExecutor("Speed") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
+			game->showSpeed = !game->showSpeed;
 		} else {
-			showSpeed = !!atoi(action.extra.c_str());
+			game->showSpeed = !!atoi(action.GetArgs().c_str());
 		}
-		configHandler->Set("ShowSpeed", showSpeed ? 1 : 0);
+		configHandler->Set("ShowSpeed", game->showSpeed ? 1 : 0);
 	}
-	else if (cmd == "mtinfo") {
-		if (action.extra.empty()) {
-			showMTInfo = !showMTInfo;
+};
+
+
+
+class MTInfoActionExecutor : public IUnsyncedActionExecutor {
+public:
+	MTInfoActionExecutor() : IUnsyncedActionExecutor("MTInfo") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
+			game->showMTInfo = !game->showMTInfo;
 		} else {
-			showMTInfo = !!atoi(action.extra.c_str());
+			game->showMTInfo = !!atoi(action.GetArgs().c_str());
 		}
-		configHandler->Set("ShowMTInfo", showMTInfo ? 1 : 0);
+		configHandler->Set("ShowMTInfo", game->showMTInfo ? 1 : 0);
 	}
-	else if (cmd == "teamhighlight") {
-		if (action.extra.empty()) {
+};
+
+
+
+class TeamHighlightActionExecutor : public IUnsyncedActionExecutor {
+public:
+	TeamHighlightActionExecutor() : IUnsyncedActionExecutor("TeamHighlight") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
 			gc->teamHighlight = abs(gc->teamHighlight + 1) % 3;
 		} else {
-			gc->teamHighlight = abs(atoi(action.extra.c_str())) % 3;
+			gc->teamHighlight = abs(atoi(action.GetArgs().c_str())) % 3;
 		}
 		logOutput.Print("Team highlighting: %s", ((gc->teamHighlight == 1) ? "Players only" : ((gc->teamHighlight == 2) ? "Players and spectators" : "Disabled")));
 		configHandler->Set("TeamHighlight", gc->teamHighlight);
 	}
-	else if (cmd == "info") {
-		if (action.extra.empty()) {
+};
+
+
+
+class InfoActionExecutor : public IUnsyncedActionExecutor {
+public:
+	InfoActionExecutor() : IUnsyncedActionExecutor("Info") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
 			if (playerRoster.GetSortType() == PlayerRoster::Disabled) {
 				playerRoster.SetSortTypeByCode(PlayerRoster::Allies);
 			} else {
 				playerRoster.SetSortTypeByCode(PlayerRoster::Disabled);
 			}
 		} else {
-			playerRoster.SetSortTypeByName(action.extra);
+			playerRoster.SetSortTypeByName(action.GetArgs());
 		}
 		if (playerRoster.GetSortType() != PlayerRoster::Disabled) {
 			logOutput.Print("Sorting roster by %s", playerRoster.GetSortName());
 		}
 		configHandler->Set("ShowPlayerInfo", (int)playerRoster.GetSortType());
 	}
-	else if (cmd == "cmdcolors") {
-		const string name = action.extra.empty() ? "cmdcolors.txt" : action.extra;
+};
+
+
+
+class CmdColorsActionExecutor : public IUnsyncedActionExecutor {
+public:
+	CmdColorsActionExecutor() : IUnsyncedActionExecutor("CmdColors") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		const string name = action.GetArgs().empty() ? "cmdcolors.txt" : action.GetArgs();
 		cmdColors.LoadConfig(name);
 		logOutput.Print("Reloaded cmdcolors with: " + name);
 	}
-	else if (cmd == "ctrlpanel") {
-		const string name = action.extra.empty() ? "ctrlpanel.txt" : action.extra;
+};
+
+
+
+class CtrlPanelActionExecutor : public IUnsyncedActionExecutor {
+public:
+	CtrlPanelActionExecutor() : IUnsyncedActionExecutor("CtrlPanel") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		const string name = action.GetArgs().empty() ? "ctrlpanel.txt" : action.GetArgs();
 		guihandler->ReloadConfig(name);
 		logOutput.Print("Reloaded ctrlpanel with: " + name);
 	}
-	else if (cmd == "font") {
+};
+
+
+
+class FontActionExecutor : public IUnsyncedActionExecutor {
+public:
+	FontActionExecutor() : IUnsyncedActionExecutor("Font") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		CglFont *newFont = NULL, *newSmallFont = NULL;
 		try {
 			const int fontSize = configHandler->Get("FontSize", 23);
@@ -1283,8 +2107,8 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 			const int smallOutlineWidth = configHandler->Get("SmallFontOutlineWidth", 2);
 			const float smallOutlineWeight = configHandler->Get("SmallFontOutlineWeight", 10.0f);
 
-			newFont = CglFont::LoadFont(action.extra, fontSize, outlineWidth, outlineWeight);
-			newSmallFont = CglFont::LoadFont(action.extra, smallFontSize, smallOutlineWidth, smallOutlineWeight);
+			newFont = CglFont::LoadFont(action.GetArgs(), fontSize, outlineWidth, outlineWeight);
+			newSmallFont = CglFont::LoadFont(action.GetArgs(), smallFontSize, smallOutlineWidth, smallOutlineWeight);
 		} catch (std::exception& e) {
 			delete newFont;
 			delete newSmallFont;
@@ -1296,204 +2120,401 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 			delete smallFont;
 			font = newFont;
 			smallFont = newSmallFont;
-			logOutput.Print("Loaded font: %s\n", action.extra.c_str());
-			configHandler->SetString("FontFile", action.extra);
-			configHandler->SetString("SmallFontFile", action.extra);
+			logOutput.Print("Loaded font: %s\n", action.GetArgs().c_str());
+			configHandler->SetString("FontFile", action.GetArgs());
+			configHandler->SetString("SmallFontFile", action.GetArgs());
 		}
 	}
-	else if (cmd == "vsync") {
-		if (action.extra.empty()) {
+};
+
+
+
+class VSyncActionExecutor : public IUnsyncedActionExecutor {
+public:
+	VSyncActionExecutor() : IUnsyncedActionExecutor("VSync") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
 			VSync.SetFrames((VSync.GetFrames() <= 0) ? 1 : 0);
 		} else {
-			VSync.SetFrames(atoi(action.extra.c_str()));
+			VSync.SetFrames(atoi(action.GetArgs().c_str()));
 		}
 	}
-	else if (cmd == "safegl") {
-		if (action.extra.empty()) {
+};
+
+
+
+class SafeGLActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SafeGLActionExecutor() : IUnsyncedActionExecutor("SafeGL") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
 			LuaOpenGL::SetSafeMode(!LuaOpenGL::GetSafeMode());
 		} else {
-			LuaOpenGL::SetSafeMode(!!atoi(action.extra.c_str()));
+			LuaOpenGL::SetSafeMode(!!atoi(action.GetArgs().c_str()));
 		}
 	}
-	else if (cmd == "resbar") {
+};
+
+
+
+class ResBarActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ResBarActionExecutor() : IUnsyncedActionExecutor("ResBar") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		if (resourceBar) {
-			if (action.extra.empty()) {
+			if (action.GetArgs().empty()) {
 				resourceBar->disabled = !resourceBar->disabled;
 			} else {
-				resourceBar->disabled = !atoi(action.extra.c_str());
+				resourceBar->disabled = !atoi(action.GetArgs().c_str());
 			}
 		}
 	}
-	else if (cmd == "tooltip") {
+};
+
+
+
+class ToolTipActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ToolTipActionExecutor() : IUnsyncedActionExecutor("ToolTip") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		if (tooltip) {
-			if (action.extra.empty()) {
+			if (action.GetArgs().empty()) {
 				tooltip->disabled = !tooltip->disabled;
 			} else {
-				tooltip->disabled = !atoi(action.extra.c_str());
+				tooltip->disabled = !atoi(action.GetArgs().c_str());
 			}
 		}
 	}
-	else if (cmd == "console") {
-		if (infoConsole) {
-			if (action.extra.empty()) {
-				infoConsole->disabled = !infoConsole->disabled;
+};
+
+
+
+class ConsoleActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ConsoleActionExecutor() : IUnsyncedActionExecutor("Console") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (game->infoConsole) {
+			if (action.GetArgs().empty()) {
+				game->infoConsole->disabled = !game->infoConsole->disabled;
 			} else {
-				infoConsole->disabled = !atoi(action.extra.c_str());
+				game->infoConsole->disabled = !atoi(action.GetArgs().c_str());
 			}
 		}
 	}
-	else if (cmd == "endgraph") {
-		if (action.extra.empty()) {
+};
+
+
+
+class EndGraphActionExecutor : public IUnsyncedActionExecutor {
+public:
+	EndGraphActionExecutor() : IUnsyncedActionExecutor("EndGraph") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
 			CEndGameBox::disabled = !CEndGameBox::disabled;
 		} else {
-			CEndGameBox::disabled = !atoi(action.extra.c_str());
+			CEndGameBox::disabled = !atoi(action.GetArgs().c_str());
 		}
 	}
-	else if (cmd == "fpshud") {
-		if (action.extra.empty()) {
+};
+
+
+
+class FPSHudActionExecutor : public IUnsyncedActionExecutor {
+public:
+	FPSHudActionExecutor() : IUnsyncedActionExecutor("FPSHud") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
 			hudDrawer->SetDraw(!hudDrawer->GetDraw());
 		} else {
-			hudDrawer->SetDraw(!!atoi(action.extra.c_str()));
+			hudDrawer->SetDraw(!!atoi(action.GetArgs().c_str()));
 		}
 	}
-	else if (cmd == "debugdrawai") {
-		if (action.extra.empty()) {
+};
+
+
+
+class DebugDrawAIActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DebugDrawAIActionExecutor() : IUnsyncedActionExecutor("DebugDrawAI") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
 			debugDrawerAI->SetDraw(!debugDrawerAI->GetDraw());
 		} else {
-			debugDrawerAI->SetDraw(!!atoi(action.extra.c_str()));
+			debugDrawerAI->SetDraw(!!atoi(action.GetArgs().c_str()));
 		}
 
 		logOutput.Print("SkirmishAI debug drawing %s", (debugDrawerAI->GetDraw()? "enabled": "disabled"));
 	}
+};
 
-	else if (cmd == "mapmarks") {
-		if (action.extra.empty()) {
+
+
+class MapMarksActionExecutor : public IUnsyncedActionExecutor {
+public:
+	MapMarksActionExecutor() : IUnsyncedActionExecutor("MapMarks") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
 			globalRendering->drawMapMarks = !globalRendering->drawMapMarks;
 		} else {
-			globalRendering->drawMapMarks = !!atoi(action.extra.c_str());
+			globalRendering->drawMapMarks = !!atoi(action.GetArgs().c_str());
 		}
 	}
-	else if (cmd == "allmapmarks") {
+};
+
+
+
+class AllMapMarksActionExecutor : public IUnsyncedActionExecutor {
+public:
+	AllMapMarksActionExecutor() : IUnsyncedActionExecutor("AllMapMarks") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		if (gs->cheatEnabled) {
 			bool allMarksVisible;
-			if (action.extra.empty()) {
+			if (action.GetArgs().empty()) {
 				allMarksVisible = !inMapDrawerModel->GetAllMarksVisible();
 			} else {
-				allMarksVisible = !!atoi(action.extra.c_str());
+				allMarksVisible = !!atoi(action.GetArgs().c_str());
 			}
 			inMapDrawerModel->SetAllMarksVisible(allMarksVisible);
 		}
 	}
-	else if (cmd == "clearmapmarks") {
+};
+
+
+
+class ClearMapMarksActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ClearMapMarksActionExecutor() : IUnsyncedActionExecutor("ClearMapMarks") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		inMapDrawerModel->EraseAll();
 	}
-	else if (cmd == "noluadraw") {
+};
+
+
+
+class NoLuaDrawActionExecutor : public IUnsyncedActionExecutor {
+public:
+	NoLuaDrawActionExecutor() : IUnsyncedActionExecutor("NoLuaDraw") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		bool luaMapDrawingAllowed;
-		if (action.extra.empty()) {
+		if (action.GetArgs().empty()) {
 			luaMapDrawingAllowed = !inMapDrawer->GetLuaMapDrawingAllowed();
 		} else {
-			luaMapDrawingAllowed = !!atoi(action.extra.c_str());
+			luaMapDrawingAllowed = !!atoi(action.GetArgs().c_str());
 		}
 		inMapDrawer->SetLuaMapDrawingAllowed(luaMapDrawingAllowed);
 	}
+};
 
-	else if (cmd == "luaui") {
+
+
+class LuaUIActionExecutor : public IUnsyncedActionExecutor {
+public:
+	LuaUIActionExecutor() : IUnsyncedActionExecutor("LuaUI") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		if (guihandler != NULL) {
-			guihandler->PushLayoutCommand(action.extra);
+			guihandler->PushLayoutCommand(action.GetArgs());
 		}
 	}
-	else if (cmd == "luamoduictrl") {
+};
+
+
+
+class LuaModUICtrlActionExecutor : public IUnsyncedActionExecutor {
+public:
+	LuaModUICtrlActionExecutor() : IUnsyncedActionExecutor("LuaModUICtrl") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		bool modUICtrl;
-		if (action.extra.empty()) {
+		if (action.GetArgs().empty()) {
 			modUICtrl = !CLuaHandle::GetModUICtrl();
 		} else {
-			modUICtrl = !!atoi(action.extra.c_str());
+			modUICtrl = !!atoi(action.GetArgs().c_str());
 		}
 		CLuaHandle::SetModUICtrl(modUICtrl);
 		configHandler->Set("LuaModUICtrl", modUICtrl ? 1 : 0);
 	}
-	else if (cmd == "minimap") {
+};
+
+
+
+class MiniMapActionExecutor : public IUnsyncedActionExecutor {
+public:
+	MiniMapActionExecutor() : IUnsyncedActionExecutor("MiniMap") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		if (minimap != NULL) {
-			minimap->ConfigCommand(action.extra);
+			minimap->ConfigCommand(action.GetArgs());
 		}
 	}
-	else if (cmd == "grounddecals") {
+};
+
+
+
+class GroundDecalsActionExecutor : public IUnsyncedActionExecutor {
+public:
+	GroundDecalsActionExecutor() : IUnsyncedActionExecutor("GroundDecals") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		if (groundDecals) {
-			if (action.extra.empty()) {
+			if (action.GetArgs().empty()) {
 				groundDecals->SetDrawDecals(!groundDecals->GetDrawDecals());
 			} else {
-				groundDecals->SetDrawDecals(!!atoi(action.extra.c_str()));
+				groundDecals->SetDrawDecals(!!atoi(action.GetArgs().c_str()));
 			}
 		}
 		logOutput.Print("Ground decals are %s",
 		                groundDecals->GetDrawDecals() ? "enabled" : "disabled");
 	}
-	else if (cmd == "maxparticles") {
-		if (ph && !action.extra.empty()) {
-			const int value = std::max(1, atoi(action.extra.c_str()));
+};
+
+
+
+class MaxParticlesActionExecutor : public IUnsyncedActionExecutor {
+public:
+	MaxParticlesActionExecutor() : IUnsyncedActionExecutor("MaxParticles") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (ph && !action.GetArgs().empty()) {
+			const int value = std::max(1, atoi(action.GetArgs().c_str()));
 			ph->SetMaxParticles(value);
 			logOutput.Print("Set maximum particles to: %i", value);
 		}
 	}
-	else if (cmd == "maxnanoparticles") {
-		if (ph && !action.extra.empty()) {
-			const int value = std::max(1, atoi(action.extra.c_str()));
+};
+
+
+
+class MaxNanoParticlesActionExecutor : public IUnsyncedActionExecutor {
+public:
+	MaxNanoParticlesActionExecutor() : IUnsyncedActionExecutor("MaxNanoParticles") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (ph && !action.GetArgs().empty()) {
+			const int value = std::max(1, atoi(action.GetArgs().c_str()));
 			ph->SetMaxNanoParticles(value);
 			logOutput.Print("Set maximum nano-particles to: %i", value);
 		}
 	}
-	else if (cmd == "gathermode") {
+};
+
+
+
+class GatherModeActionExecutor : public IUnsyncedActionExecutor {
+public:
+	GatherModeActionExecutor() : IUnsyncedActionExecutor("GatherMode") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		if (guihandler != NULL) {
 			bool gatherMode;
-			if (action.extra.empty()) {
+			if (action.GetArgs().empty()) {
 				gatherMode = !guihandler->GetGatherMode();
 			} else {
-				gatherMode = !!atoi(action.extra.c_str());
+				gatherMode = !!atoi(action.GetArgs().c_str());
 			}
 			guihandler->SetGatherMode(gatherMode);
 			logOutput.Print("gathermode %s", gatherMode ? "enabled" : "disabled");
 		}
 	}
-	else if (cmd == "pastetext") {
-		if (userWriting) {
-			if (!action.extra.empty()) {
-				userInput.insert(writingPos, action.extra);
-				writingPos += action.extra.length();
+};
+
+
+
+class PasteTextActionExecutor : public IUnsyncedActionExecutor {
+public:
+	PasteTextActionExecutor() : IUnsyncedActionExecutor("PasteText") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (game->userWriting) {
+			if (!action.GetArgs().empty()) {
+				game->userInput.insert(game->writingPos, action.GetArgs());
+				game->writingPos += action.GetArgs().length();
 			} else {
-				PasteClipboard();
+				game->PasteClipboard();
 			}
-			return 0;
 		}
 	}
-	else if (cmd == "buffertext") {
-		if (!action.extra.empty()) {
-			consoleHistory->AddLine(action.extra);
+};
+
+
+
+class BufferTextActionExecutor : public IUnsyncedActionExecutor {
+public:
+	BufferTextActionExecutor() : IUnsyncedActionExecutor("BufferText") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (!action.GetArgs().empty()) {
+			game->consoleHistory->AddLine(action.GetArgs());
 		}
 	}
-	else if (cmd == "inputtextgeo") {
-		if (!action.extra.empty()) {
-			ParseInputTextGeometry(action.extra);
+};
+
+
+
+class InputTextGeoActionExecutor : public IUnsyncedActionExecutor {
+public:
+	InputTextGeoActionExecutor() : IUnsyncedActionExecutor("InputTextGeo") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (!action.GetArgs().empty()) {
+			game->ParseInputTextGeometry(action.GetArgs());
 		}
 	}
-	else if (cmd == "disticon") {
-		if (!action.extra.empty()) {
-			const int iconDist = atoi(action.extra.c_str());
+};
+
+
+
+class DistIconActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DistIconActionExecutor() : IUnsyncedActionExecutor("DistIcon") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (!action.GetArgs().empty()) {
+			const int iconDist = atoi(action.GetArgs().c_str());
 			unitDrawer->SetUnitIconDist((float)iconDist);
 			configHandler->Set("UnitIconDist", iconDist);
 			logOutput.Print("Set UnitIconDist to %i", iconDist);
 		}
 	}
-	else if (cmd == "distdraw") {
-		if (!action.extra.empty()) {
-			const int drawDist = atoi(action.extra.c_str());
+};
+
+
+
+class DistDrawActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DistDrawActionExecutor() : IUnsyncedActionExecutor("DistDraw") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (!action.GetArgs().empty()) {
+			const int drawDist = atoi(action.GetArgs().c_str());
 			unitDrawer->SetUnitDrawDist((float)drawDist);
 			configHandler->Set("UnitLodDist", drawDist);
 			logOutput.Print("Set UnitLodDist to %i", drawDist);
 		}
 	}
-	else if (cmd == "lodscale") {
-		if (!action.extra.empty()) {
-			const vector<string> &args = CSimpleParser::Tokenize(action.extra, 0);
+};
+
+
+
+class LODScaleActionExecutor : public IUnsyncedActionExecutor {
+public:
+	LODScaleActionExecutor() : IUnsyncedActionExecutor("LODScale") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (!action.GetArgs().empty()) {
+			const vector<string> &args = CSimpleParser::Tokenize(action.GetArgs(), 0);
 			if (args.size() == 1) {
 				const float value = (float)atof(args[0].c_str());
 				unitDrawer->LODScale = value;
@@ -1510,25 +2531,50 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 			}
 		}
 	}
-	else if (cmd == "wiremap") {
-		if (action.extra.empty()) {
+};
+
+
+
+class WireMapActionExecutor : public IUnsyncedActionExecutor {
+public:
+	WireMapActionExecutor() : IUnsyncedActionExecutor("WireMap") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		if (action.GetArgs().empty()) {
 			gd->wireframe  = !gd->wireframe;
 			sky->wireframe = gd->wireframe;
 		} else {
-			gd->wireframe  = !!atoi(action.extra.c_str());
+			gd->wireframe  = !!atoi(action.GetArgs().c_str());
 			sky->wireframe = gd->wireframe;
 		}
 	}
-	else if (cmd == "airmesh") {
-		if (action.extra.empty()) {
+};
+
+
+
+class AirMeshActionExecutor : public IUnsyncedActionExecutor {
+public:
+	AirMeshActionExecutor() : IUnsyncedActionExecutor("AirMesh") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs().empty()) {
 			smoothGround->drawEnabled = !smoothGround->drawEnabled;
 		} else {
-			smoothGround->drawEnabled = !!atoi(action.extra.c_str());
+			smoothGround->drawEnabled = !!atoi(action.GetArgs().c_str());
 		}
 	}
-	else if (cmd == "setgamma") {
+};
+
+
+
+class SetGammaActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SetGammaActionExecutor() : IUnsyncedActionExecutor("SetGamma") {}
+
+	void Execute(const UnsyncedAction& action) const {
 		float r, g, b;
-		const int count = sscanf(action.extra.c_str(), "%f %f %f", &r, &g, &b);
+		const int count = sscanf(action.GetArgs().c_str(), "%f %f %f", &r, &g, &b);
 		if (count == 1) {
 			SDL_SetGamma(r, r, r);
 			logOutput.Print("Set gamma value");
@@ -1541,115 +2587,200 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 			logOutput.Print("Unknown gamma format");
 		}
 	}
-	else if (cmd == "crash" && gs->cheatEnabled) {
-		int *a=0;
-		*a=0;
+};
+
+
+
+class CrashActionExecutor : public IUnsyncedActionExecutor {
+public:
+	CrashActionExecutor() : IUnsyncedActionExecutor("Crash") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (gs->cheatEnabled) {
+			int *a=0;
+			*a=0;
+		}
 	}
-	else if (cmd == "exception" && gs->cheatEnabled) {
-		throw std::runtime_error("Exception test");
+};
+
+
+
+class ExceptionActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ExceptionActionExecutor() : IUnsyncedActionExecutor("Exception") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (gs->cheatEnabled) {
+			throw std::runtime_error("Exception test");
+		}
 	}
-	else if (cmd == "divbyzero" && gs->cheatEnabled) {
-		float a = 0;
-		logOutput.Print("Result: %f", 1.0f/a);
+};
+
+
+
+class DivByZeroActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DivByZeroActionExecutor() : IUnsyncedActionExecutor("DivByZero") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (gs->cheatEnabled) {
+			float a = 0;
+			logOutput.Print("Result: %f", 1.0f/a);
+		}
 	}
-	else if (cmd == "give" && gs->cheatEnabled) {
-		if (action.extra.find('@') == string::npos) {
-			std::string msg = "give "; //FIXME lazyness
-			msg += action.extra;
-			float3 p;
-			CInputReceiver* ir = NULL;
-			if (!hideInterface)
-				ir = CInputReceiver::GetReceiverAt(mouse->lastx, mouse->lasty);
-			if (ir == minimap)
-				p = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
-			else {
-				const float3& pos = camera->pos;
-				const float3& dir = mouse->dir;
-				const float dist = ground->LineGroundCol(pos, pos + (dir * 30000.0f));
-				p = pos + (dir * dist);
+};
+
+
+
+class GiveActionExecutor : public IUnsyncedActionExecutor {
+public:
+	GiveActionExecutor() : IUnsyncedActionExecutor("Give") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (gs->cheatEnabled) {
+			if (action.GetArgs().find('@') == string::npos) {
+				std::string msg = "give "; //FIXME lazyness
+				msg += action.GetArgs();
+				float3 p;
+				CInputReceiver* ir = NULL;
+				if (!game->hideInterface)
+					ir = CInputReceiver::GetReceiverAt(mouse->lastx, mouse->lasty);
+				if (ir == minimap)
+					p = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
+				else {
+					const float3& pos = camera->pos;
+					const float3& dir = mouse->dir;
+					const float dist = ground->LineGroundCol(pos, pos + (dir * 30000.0f));
+					p = pos + (dir * dist);
+				}
+				char buf[128];
+				SNPRINTF(buf, sizeof(buf), " @%.0f,%.0f,%.0f", p.x, p.y, p.z);
+				msg += buf;
+				CommandMessage pckt(msg, gu->myPlayerNum);
+				net->Send(pckt.Pack());
 			}
-			char buf[128];
-			SNPRINTF(buf, sizeof(buf), " @%.0f,%.0f,%.0f", p.x, p.y, p.z);
-			msg += buf;
-			CommandMessage pckt(msg, gu->myPlayerNum);
+			else {
+				// forward (as synced command)
+				CommandMessage pckt(action.GetInnerAction(), gu->myPlayerNum);
+				net->Send(pckt.Pack());
+			}
+		}
+	}
+};
+
+
+
+class DestroyActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DestroyActionExecutor() : IUnsyncedActionExecutor("Destroy") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (gs->cheatEnabled) {
+			// kill selected units
+			std::stringstream ss;
+			ss << "destroy";
+			for (CUnitSet::iterator it = selectedUnits.selectedUnits.begin();
+					it != selectedUnits.selectedUnits.end();
+					++it) {
+				ss << " " << (*it)->id;
+			}
+			CommandMessage pckt(ss.str(), gu->myPlayerNum);
 			net->Send(pckt.Pack());
 		}
-		else {
-			CommandMessage pckt(action, gu->myPlayerNum);
-			net->Send(pckt.Pack());
-		}
 	}
-	else if (cmd == "destroy" && gs->cheatEnabled) {
-		// kill selected units
-		std::stringstream ss;
-		ss << "destroy";
-		for (CUnitSet::iterator it = selectedUnits.selectedUnits.begin();
-				it != selectedUnits.selectedUnits.end();
-				++it) {
-			ss << " " << (*it)->id;
-		}
-		CommandMessage pckt(ss.str(), gu->myPlayerNum);
+};
+
+
+
+class SendActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SendActionExecutor() : IUnsyncedActionExecutor("Send") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		CommandMessage pckt(Action(action.GetArgs()), gu->myPlayerNum);
 		net->Send(pckt.Pack());
 	}
-	else if (cmd == "send") {
-		CommandMessage pckt(Action(action.extra), gu->myPlayerNum);
-		net->Send(pckt.Pack());
+};
+
+
+
+class SaveGameActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SaveGameActionExecutor() : IUnsyncedActionExecutor("SaveGame") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		game->SaveGame("Saves/QuickSave.ssf", true);
 	}
-	else if (cmd == "savegame") {
-		SaveGame("Saves/QuickSave.ssf", true);
-	}
-	else if (cmd == "save") { // /save [-y ]<savename>
-		bool saveoverride = action.extra.find("-y ") == 0;
-		std::string savename(action.extra.c_str() + (saveoverride ? 3 : 0));
+};
+
+
+
+/// /save [-y ]<savename>
+class SaveActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SaveActionExecutor() : IUnsyncedActionExecutor("Save") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		bool saveoverride = action.GetArgs().find("-y ") == 0;
+		std::string savename(action.GetArgs().c_str() + (saveoverride ? 3 : 0));
 		savename = "Saves/" + savename + ".ssf";
-		SaveGame(savename, saveoverride);
+		game->SaveGame(savename, saveoverride);
 	}
-	else if (cmd == "reloadgame") {
-		ReloadGame();
+};
+
+
+
+class ReloadGameActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ReloadGameActionExecutor() : IUnsyncedActionExecutor("ReloadGame") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		game->ReloadGame();
 	}
-	else if (cmd == "debuginfo") {
-		if (action.extra == "sound") {
+};
+
+
+
+class DebugInfoActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DebugInfoActionExecutor() : IUnsyncedActionExecutor("DebugInfo") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		if (action.GetArgs() == "sound") {
 			sound->PrintDebugInfo();
-		} else if (action.extra == "profiling") {
+		} else if (action.GetArgs() == "profiling") {
 			profiler.PrintProfilingInfo();
 		}
 	}
-	else if (cmd == "benchmark-script") {
-		CUnitScript::BenchmarkScript(action.extra);
+};
+
+
+
+class BenchmarkScriptActionExecutor : public IUnsyncedActionExecutor {
+public:
+	BenchmarkScriptActionExecutor() : IUnsyncedActionExecutor("Benchmark-Script") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		CUnitScript::BenchmarkScript(action.GetArgs());
 	}
-	else if (cmd == "atm"
-#ifdef DEBUG
-			|| cmd == "desync"
-#endif
-			|| cmd == "resync"
-			|| cmd == "take"
-			|| cmd == "luarules"
-			|| cmd == "luagaia"
-	) {
-		//these are synced commands, forward only
-		CommandMessage pckt(action, gu->myPlayerNum);
+};
+
+
+
+class RedirectToSyncedActionExecutor : public IUnsyncedActionExecutor {
+public:
+	RedirectToSyncedActionExecutor(const std::string& command) : IUnsyncedActionExecutor(command) {}
+
+	void Execute(const UnsyncedAction& action) const {
+		// redirect as a synced command
+		CommandMessage pckt(action.GetInnerAction(), gu->myPlayerNum);
 		net->Send(pckt.Pack());
 	}
-	else {
-		static std::set<std::string> serverCommands = std::set<std::string>(commands, commands+numCommands);
-		if (serverCommands.find(cmd) != serverCommands.end())
-		{
-			CommandMessage pckt(action, gu->myPlayerNum);
-			net->Send(pckt.Pack());
-		}
+};
 
-		if (!Console::Instance().ExecuteAction(action))
-		{
-			if (guihandler != NULL) // maybe a widget is interested?
-				guihandler->PushLayoutCommand(action.rawline, false);
-			return false;
-		}
-	}
 
-	} // END: MSVC limit workaround
 
-	return true;
-}
+
 
 
 bool CGame::ActionReleased(const Action& action)
@@ -1708,4 +2839,173 @@ bool CGame::ActionReleased(const Action& action)
 //	}
 
 	return 0;
+}
+
+
+void UnsyncedGameCommands::RegisterDefaultExecutors(CGame* game) {
+
+	game->RegisterUnsyncedActionExecutor(new SelectActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new SelectUnitsActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new SelectCycleActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new DeselectActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new ShadowsActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new WaterActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new AdvModelShadingActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new AdvMapShadingActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new SayActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new SayPrivateActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new SayPrivateByPlayerIDActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new EchoActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new SetActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new SetOverlayActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new EnableDrawInMapActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new DrawLabelActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new MouseActionExecutor(1));
+	game->RegisterUnsyncedActionExecutor(new MouseActionExecutor(2));
+	game->RegisterUnsyncedActionExecutor(new MouseActionExecutor(3));
+	game->RegisterUnsyncedActionExecutor(new MouseActionExecutor(4));
+	game->RegisterUnsyncedActionExecutor(new MouseActionExecutor(5));
+	game->RegisterUnsyncedActionExecutor(new ViewSelectionActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new CameraMoveActionExecutor(0, "Forward"));
+	game->RegisterUnsyncedActionExecutor(new CameraMoveActionExecutor(1, "Back"));
+	game->RegisterUnsyncedActionExecutor(new CameraMoveActionExecutor(2, "Left"));
+	game->RegisterUnsyncedActionExecutor(new CameraMoveActionExecutor(3, "Right"));
+	game->RegisterUnsyncedActionExecutor(new CameraMoveActionExecutor(4, "Up"));
+	game->RegisterUnsyncedActionExecutor(new CameraMoveActionExecutor(5, "Down"));
+	game->RegisterUnsyncedActionExecutor(new CameraMoveActionExecutor(6, "Fast"));
+	game->RegisterUnsyncedActionExecutor(new CameraMoveActionExecutor(7, "Slow"));
+	game->RegisterUnsyncedActionExecutor(new AIKillReloadActionExecutor(true));
+	game->RegisterUnsyncedActionExecutor(new AIKillReloadActionExecutor(false));
+	game->RegisterUnsyncedActionExecutor(new AIControlActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new AIListActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new TeamActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new SpectatorActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new SpecTeamActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new SpecFullViewActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new AllyActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new GroupActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new GroupIDActionExecutor(0));
+	game->RegisterUnsyncedActionExecutor(new GroupIDActionExecutor(1));
+	game->RegisterUnsyncedActionExecutor(new GroupIDActionExecutor(2));
+	game->RegisterUnsyncedActionExecutor(new GroupIDActionExecutor(3));
+	game->RegisterUnsyncedActionExecutor(new GroupIDActionExecutor(4));
+	game->RegisterUnsyncedActionExecutor(new GroupIDActionExecutor(5));
+	game->RegisterUnsyncedActionExecutor(new GroupIDActionExecutor(6));
+	game->RegisterUnsyncedActionExecutor(new GroupIDActionExecutor(7));
+	game->RegisterUnsyncedActionExecutor(new GroupIDActionExecutor(8));
+	game->RegisterUnsyncedActionExecutor(new GroupIDActionExecutor(9));
+	game->RegisterUnsyncedActionExecutor(new LastMessagePositionActionExecutor());
+	ChatActionExecutor::RegisterCommandVariants(game);
+	game->RegisterUnsyncedActionExecutor(new TrackActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new TrackOffActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new TrackModeActionExecutor());
+#ifdef USE_GML
+	game->RegisterUnsyncedActionExecutor(new ShowHealthBarsActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new ShowRezurectionBarsActionExecutor());
+#endif // USE_GML
+	game->RegisterUnsyncedActionExecutor(new PauseActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new DebugActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new NoSoundActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new SoundChannelEnableActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new CreateVideoActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new DrawTreesActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new DynamicSkyActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new DynamicSunActionExecutor());
+#ifdef USE_GML
+	game->RegisterUnsyncedActionExecutor(new MultiThreadDrawGroundActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new MultiThreadDrawGroundShadowActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new MultiThreadDrawUnitActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new MultiThreadDrawUnitShadowActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new MultiThreadDrawActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new MultiThreadSimActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new MultiThreadActionExecutor());
+#endif // USE_GML
+	game->RegisterUnsyncedActionExecutor(new SpeedControlActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new GameInfoActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new HideInterfaceActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new HardwareCursorActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new IncreaseViewRadiusActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new DecreaseViewRadiusActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new MoreTreesActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new LessTreesActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new MoreCloudsActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new LessCloudsActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new SpeedUpActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new SlowDownActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new ControlUnitActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new ShowStandardActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new ShowElevationActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new ToggleRadarAndJammerActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new ShowMetalMapActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new ShowPathTraversabilityActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new ShowPathHeatActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new ShowPathCostActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new ToggleLOSActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new ShareDialogActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new QuitMessageActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new QuitMenuActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new QuitActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new AliasActionExecutor(new QuitActionExecutor(), "QuitForce"));
+	game->RegisterUnsyncedActionExecutor(new IncreaseGUIOpacityActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new DecreaseGUIOpacityActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new ScreenShotActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new GrabInputActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new ClockActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new CrossActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new FPSActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new SpeedActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new MTInfoActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new TeamHighlightActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new InfoActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new CmdColorsActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new CtrlPanelActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new FontActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new VSyncActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new SafeGLActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new ResBarActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new ToolTipActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new ConsoleActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new EndGraphActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new FPSHudActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new DebugDrawAIActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new MapMarksActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new AllMapMarksActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new ClearMapMarksActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new NoLuaDrawActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new LuaUIActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new LuaModUICtrlActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new MiniMapActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new GroundDecalsActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new MaxParticlesActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new MaxNanoParticlesActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new GatherModeActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new PasteTextActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new BufferTextActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new InputTextGeoActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new DistIconActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new DistDrawActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new LODScaleActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new WireMapActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new AirMeshActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new SetGammaActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new CrashActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new ExceptionActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new DivByZeroActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new GiveActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new DestroyActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new SendActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new SaveGameActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new SaveActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new ReloadGameActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new DebugInfoActionExecutor());
+	game->RegisterUnsyncedActionExecutor(new BenchmarkScriptActionExecutor());
+	// XXX are these redirects really required?
+	game->RegisterUnsyncedActionExecutor(new RedirectToSyncedActionExecutor("ATM"));
+#ifdef DEBUG
+	game->RegisterUnsyncedActionExecutor(new RedirectToSyncedActionExecutor("Desync"));
+#endif
+	game->RegisterUnsyncedActionExecutor(new RedirectToSyncedActionExecutor("Resync"));
+	game->RegisterUnsyncedActionExecutor(new RedirectToSyncedActionExecutor("Take"));
+	game->RegisterUnsyncedActionExecutor(new RedirectToSyncedActionExecutor("LuaRules"));
+	game->RegisterUnsyncedActionExecutor(new RedirectToSyncedActionExecutor("LuaGaia"));
 }

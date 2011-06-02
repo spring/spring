@@ -26,7 +26,6 @@ public:
 	std::string userInput;
 	std::string userPrompt;
 
-protected:
 	void PasteClipboard();
 };
 
