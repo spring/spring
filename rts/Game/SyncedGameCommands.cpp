@@ -2,6 +2,7 @@
 
 #include "StdAfx.h"
 
+#include "SyncedGameCommands.h"
 #include "Game.h"
 #include "Action.h"
 #include "SyncedActionExecutor.h"
@@ -21,11 +22,9 @@
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/Unit.h"
 #include "UI/LuaUI.h"
-#include "System/Exceptions.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/LogOutput.h"
 #include "System/GlobalUnsynced.h"
-#include "System/Util.h"
 
 #include <string>
 #include <vector>
@@ -395,50 +394,27 @@ public:
 
 
 
-
-void CGame::RegisterSyncedActionExecutor(ISyncedActionExecutor* syncedActionExecutor)
-{
-	const std::string commandLower = StringToLower(syncedActionExecutor->GetCommand());
-	const std::map<std::string, ISyncedActionExecutor*>::const_iterator saei
-			= syncedActionExecutors.find(commandLower);
-
-	if (saei != syncedActionExecutors.end()) {
-		throw std::runtime_error("Tried to register a duplicate SyncedActionExecutor for command: " + commandLower);
-	} else {
-		syncedActionExecutors[commandLower] = syncedActionExecutor;
-	}
-}
-
-void CGame::RegisterSyncedActionExecutors()
-{
-	RegisterSyncedActionExecutor(new syncedActionExecutors::CheatActionExecutor());
-	RegisterSyncedActionExecutor(new syncedActionExecutors::NoHelpActionExecutor());
-	RegisterSyncedActionExecutor(new syncedActionExecutors::NoSpecDrawActionExecutor());
-	RegisterSyncedActionExecutor(new syncedActionExecutors::GodModeActionExecutor());
-	RegisterSyncedActionExecutor(new syncedActionExecutors::GlobalLosActionExecutor());
-	RegisterSyncedActionExecutor(new syncedActionExecutors::NoCostActionExecutor());
-	RegisterSyncedActionExecutor(new syncedActionExecutors::GiveActionExecutor());
-	RegisterSyncedActionExecutor(new syncedActionExecutors::DestroyActionExecutor());
-	RegisterSyncedActionExecutor(new syncedActionExecutors::NoSpectatorChatActionExecutor());
-	RegisterSyncedActionExecutor(new syncedActionExecutors::ReloadCobActionExecutor());
-	RegisterSyncedActionExecutor(new syncedActionExecutors::ReloadCegsActionExecutor());
-	RegisterSyncedActionExecutor(new syncedActionExecutors::DevLuaActionExecutor());
-	RegisterSyncedActionExecutor(new syncedActionExecutors::EditDefsActionExecutor());
-	RegisterSyncedActionExecutor(new syncedActionExecutors::LuaRulesActionExecutor());
-	RegisterSyncedActionExecutor(new syncedActionExecutors::LuaGaiaActionExecutor());
+void SyncedGameCommands::RegisterDefaultExecutors(CGame* game) {
+	
+	game->RegisterSyncedActionExecutor(new syncedActionExecutors::CheatActionExecutor());
+	game->RegisterSyncedActionExecutor(new syncedActionExecutors::NoHelpActionExecutor());
+	game->RegisterSyncedActionExecutor(new syncedActionExecutors::NoSpecDrawActionExecutor());
+	game->RegisterSyncedActionExecutor(new syncedActionExecutors::GodModeActionExecutor());
+	game->RegisterSyncedActionExecutor(new syncedActionExecutors::GlobalLosActionExecutor());
+	game->RegisterSyncedActionExecutor(new syncedActionExecutors::NoCostActionExecutor());
+	game->RegisterSyncedActionExecutor(new syncedActionExecutors::GiveActionExecutor());
+	game->RegisterSyncedActionExecutor(new syncedActionExecutors::DestroyActionExecutor());
+	game->RegisterSyncedActionExecutor(new syncedActionExecutors::NoSpectatorChatActionExecutor());
+	game->RegisterSyncedActionExecutor(new syncedActionExecutors::ReloadCobActionExecutor());
+	game->RegisterSyncedActionExecutor(new syncedActionExecutors::ReloadCegsActionExecutor());
+	game->RegisterSyncedActionExecutor(new syncedActionExecutors::DevLuaActionExecutor());
+	game->RegisterSyncedActionExecutor(new syncedActionExecutors::EditDefsActionExecutor());
+	game->RegisterSyncedActionExecutor(new syncedActionExecutors::LuaRulesActionExecutor());
+	game->RegisterSyncedActionExecutor(new syncedActionExecutors::LuaGaiaActionExecutor());
 #ifdef DEBUG
-	RegisterSyncedActionExecutor(new syncedActionExecutors::DesyncActionExecutor());
+	game->RegisterSyncedActionExecutor(new syncedActionExecutors::DesyncActionExecutor());
 #endif // defined DEBUG
-	RegisterSyncedActionExecutor(new syncedActionExecutors::AtmActionExecutor());
-	RegisterSyncedActionExecutor(new syncedActionExecutors::TakeActionExecutor());
-	RegisterSyncedActionExecutor(new syncedActionExecutors::SkipActionExecutor());
-}
-
-void CGame::DeRegisterSyncedActionExecutors()
-{
-	std::map<std::string, ISyncedActionExecutor*>::iterator it;
-	for (it = syncedActionExecutors.begin(); it != syncedActionExecutors.end(); ++it) {
-		SafeDelete(it->second);
-	}
-	syncedActionExecutors.clear();
+	game->RegisterSyncedActionExecutor(new syncedActionExecutors::AtmActionExecutor());
+	game->RegisterSyncedActionExecutor(new syncedActionExecutors::TakeActionExecutor());
+	game->RegisterSyncedActionExecutor(new syncedActionExecutors::SkipActionExecutor());
 }
