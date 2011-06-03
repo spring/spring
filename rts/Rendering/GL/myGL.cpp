@@ -4,7 +4,7 @@
 #include <string>
 #include <SDL.h>
 
-#if defined(WIN32) && !defined(HEADLESS)
+#if defined(WIN32) && !defined(HEADLESS) && !defined(_MSC_VER)
 // for APIENTRY
 #include <windef.h>
 #endif
