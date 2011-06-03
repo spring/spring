@@ -91,8 +91,6 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, const float3& pos, int team,
 				throw content_error("Invalid team and no gaia team to put unit in");
 		}
 
-		CUnit* unit = NULL;
-
 		if (ud->IsTransportUnit()) {
 			unit = new CTransportUnit();
 		} else if (ud->IsFactoryUnit()) {

@@ -32,7 +32,7 @@ CR_REG_METADATA(CommandDescription, (
 				));
 
 #if USE_SAFE_VECTOR
-CR_BIND(safe_vector<float>, );
+CR_BIND_TEMPLATE(safe_vector<float>, );
 
 const float safe_vector<float>::defval = 0.0f;
 float safe_vector<float>::dummy = 0.0f;
