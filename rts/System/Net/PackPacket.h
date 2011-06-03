@@ -9,7 +9,7 @@
 #include <cstring>
 
 #include "RawPacket.h"
-#include "Sim\Units\CommandAI\Command.h"
+#include "Sim/Units/CommandAI/Command.h"
 
 namespace netcode
 {
