@@ -11,8 +11,6 @@
 #include "GameController.h"
 #include "creg/creg_cond.h"
 
-#include "lib/gml/gml.h"
-
 class CBaseWater;
 class CConsoleHistory;
 class CWordCompletion;
@@ -118,7 +116,8 @@ public:
 	bool showFPS;
 	bool showClock;
 	bool showSpeed;
-	bool showMTInfo;
+	int showMTInfo;
+	int mtInfoCtrl;
 	/// Prevents spectator msgs from being seen by players
 	bool noSpectatorChat;
 	volatile bool finishedLoading;
@@ -229,7 +228,8 @@ public:
 	unsigned skipLastDraw;
 
 	int speedControl;
-	int luaDrawTime;
+	int luaLockTime;
+	int luaExportSize;
 
 
 	/// for reloading the savefile

@@ -22,14 +22,17 @@
 #include "CommandAI/MobileCAI.h"
 #include "CommandAI/TransportCAI.h"
 
+#include "ExternalAI/EngineOutHandler.h"
+
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
 
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
-
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "Sim/Weapons/BeamLaser.h"
 #include "Sim/Weapons/bombdropper.h"
@@ -48,6 +51,7 @@
 #include "Sim/Weapons/TorpedoLauncher.h"
 
 #include "System/EventBatchHandler.h"
+#include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 #include "System/TimeProfiler.h"
@@ -73,63 +77,69 @@ CUnit* CUnitLoader::LoadUnit(const std::string& name, const float3& pos, int tea
 CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, const float3& pos, int team,
                              bool build, int facing, const CUnit* builder)
 {
-	GML_RECMUTEX_LOCK(sel); // LoadUnit - for anti deadlock purposes.
-	GML_RECMUTEX_LOCK(quad); // LoadUnit - make sure other threads cannot access an incomplete unit
+	CUnit* unit = NULL;
 
 	SCOPED_TIMER("UnitLoader::LoadUnit");
 
-	if (team < 0) {
-		team = teamHandler->GaiaTeamID(); // FIXME use gs->gaiaTeamID ?  (once it is always enabled)
-		if (team < 0)
-			throw content_error("Invalid team and no gaia team to put unit in");
-	}
+	{
+		GML_RECMUTEX_LOCK(sel); // LoadUnit - for anti deadlock purposes.
+		GML_RECMUTEX_LOCK(quad); // LoadUnit - make sure other threads cannot access an incomplete unit
 
-	CUnit* unit = NULL;
-
-	if (ud->IsTransportUnit()) {
-		unit = new CTransportUnit();
-	} else if (ud->IsFactoryUnit()) {
-		// special static builder structures that can always be given
-		// move orders (which are passed on to all mobile buildees)
-		unit = new CFactory();
-	} else if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit()) {
-		// all other types of non-structure "builders", including hubs and
-		// nano-towers (the latter should not have any build-options at all,
-		// whereas the former should be unable to build any mobile units)
-		unit = new CBuilder();
-	} else if (ud->IsBuildingUnit()) {
-		// static non-builder structures
-		if (ud->IsExtractorUnit()) {
-			unit = new CExtractorBuilding();
-		} else {
-			unit = new CBuilding();
+		if (team < 0) {
+			team = teamHandler->GaiaTeamID(); // FIXME use gs->gaiaTeamID ?  (once it is always enabled)
+			if (team < 0)
+				throw content_error("Invalid team and no gaia team to put unit in");
 		}
-	} else {
-		// regular mobile unit
-		unit = new CUnit();
-	}
 
-	unit->PreInit(ud, team, facing, pos, build);
+		CUnit* unit = NULL;
 
-	if (ud->IsTransportUnit()) {
-		new CTransportCAI(unit);
-	} else if (ud->IsFactoryUnit()) {
-		new CFactoryCAI(unit);
-	} else if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit()) {
-		new CBuilderCAI(unit);
-	} else if (ud->IsNonHoveringAirUnit()) {
-		// non-hovering fighter or bomber aircraft; coupled to AirMoveType
-		new CAirCAI(unit);
-	} else if (ud->IsAirUnit()) {
-		// all other aircraft
-		new CMobileCAI(unit);
-	} else if (ud->IsGroundUnit()) {
-		new CMobileCAI(unit);
-	} else {
-		new CCommandAI(unit);
+		if (ud->IsTransportUnit()) {
+			unit = new CTransportUnit();
+		} else if (ud->IsFactoryUnit()) {
+			// special static builder structures that can always be given
+			// move orders (which are passed on to all mobile buildees)
+			unit = new CFactory();
+		} else if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit()) {
+			// all other types of non-structure "builders", including hubs and
+			// nano-towers (the latter should not have any build-options at all,
+			// whereas the former should be unable to build any mobile units)
+			unit = new CBuilder();
+		} else if (ud->IsBuildingUnit()) {
+			// static non-builder structures
+			if (ud->IsExtractorUnit()) {
+				unit = new CExtractorBuilding();
+			} else {
+				unit = new CBuilding();
+			}
+		} else {
+			// regular mobile unit
+			unit = new CUnit();
+		}
+
+		unit->PreInit(ud, team, facing, pos, build);
+
+		if (ud->IsTransportUnit()) {
+			new CTransportCAI(unit);
+		} else if (ud->IsFactoryUnit()) {
+			new CFactoryCAI(unit);
+		} else if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit()) {
+			new CBuilderCAI(unit);
+		} else if (ud->IsNonHoveringAirUnit()) {
+			// non-hovering fighter or bomber aircraft; coupled to AirMoveType
+			new CAirCAI(unit);
+		} else if (ud->IsAirUnit()) {
+			// all other aircraft
+			new CMobileCAI(unit);
+		} else if (ud->IsGroundUnit()) {
+			new CMobileCAI(unit);
+		} else {
+			new CCommandAI(unit);
+		}
 	}
 
 	unit->PostInit(builder);
+	eventHandler.UnitCreated(unit, builder);
+	eoh->UnitCreated(*unit, builder);
 	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).enqueue(EventBatchHandler::UD(unit, unit->isCloaked));
 
 	return unit;

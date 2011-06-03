@@ -21,6 +21,7 @@ namespace CrashHandler {
 	//! used by seh
 	LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e);
 #endif
+	void OutputStacktrace();
 };
 
 #endif // _CRASH_HANDLER_H_

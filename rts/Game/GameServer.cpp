@@ -272,7 +272,7 @@ CGameServer::~CGameServer()
 
 void CGameServer::AddLocalClient(const std::string& myName, const std::string& myVersion)
 {
-	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
+	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
 	assert(!hasLocalClient);
 	hasLocalClient = true;
 	localClientNumber = BindConnection(myName, "", myVersion, true, boost::shared_ptr<netcode::CConnection>(new netcode::CLocalConnection()));
@@ -299,7 +299,7 @@ void CGameServer::AddAutohostInterface(const std::string& autohostIP, const int 
 
 void CGameServer::PostLoad(unsigned newlastTick, int newServerFrameNum)
 {
-	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
+	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
 #if SPRING_TIME
 	lastTick = newlastTick;
 #else
@@ -375,7 +375,7 @@ void CGameServer::UpdatePlayerNumberMap() {
 	for (int i = 0; i < 256; ++i, ++player) {
 		if (i < players.size() && !players[i].isFromDemo)
 			++player;
-		playerNumberMap[i] = (i < 250) ? player : i; // ignore SERVER_PLAYER, ChatMessage::TO_XXX etc
+		playerNumberMap[i] = (i < MAX_PLAYERS) ? player : i; // ignore SERVER_PLAYER, ChatMessage::TO_XXX etc
 	}
 }
 
@@ -714,7 +714,7 @@ void CGameServer::Update()
 						players[a].isReconn = false;
 					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, curPing));
 					float correctedCpu = players[a].isLocal ? players[a].cpuUsage :
-						std::max(0.0f, std::min(players[a].cpuUsage - 0.0025f * (float)players[a].luaDrawTime, 1.0f));
+						std::max(0.0f, std::min(players[a].cpuUsage - 0.0025f * (float)players[a].luaLockTime, 1.0f));
 					if (demoReader ? !players[a].isFromDemo : !players[a].spectator) {
 						if (!players[a].isReconn && correctedCpu > refCpu)
 							refCpu = correctedCpu;
@@ -922,7 +922,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					UpdateSpeedControl(speedControl);
 					break;
 				case CUSTOM_DATA_LUADRAWTIME:
-					players[a].luaDrawTime = *((int*)&inbuf[3]);
+					players[a].luaLockTime = *((int*)&inbuf[3]);
 					break;
 				default:
 					Message(str(format("Player %s sent invalid CustomData type %d") %players[a].name %inbuf[2]));
@@ -1955,7 +1955,7 @@ void CGameServer::PushAction(const Action& action)
 
 bool CGameServer::HasFinished() const
 {
-	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
+	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
 	return quitServer;
 }
 
@@ -1963,13 +1963,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 {
 	if (!demoReader) {
 		// use NEWFRAME_MSGes from demo otherwise
-#if BOOST_VERSION >= 103500
-		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex, boost::defer_lock);
-		if (!fromServerThread)
-			scoped_lock.lock();
-#else
-		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex, !fromServerThread);
-#endif
+		Threading::RecursiveScopedLock(gameServerMutex, !fromServerThread);
 
 		CheckSync();
 		int newFrames = 1;
@@ -2057,7 +2051,7 @@ void CGameServer::UpdateLoop()
 		if (UDPNet)
 			UDPNet->Update();
 
-		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
+		Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
 		ServerReadNet();
 		Update();
 	}

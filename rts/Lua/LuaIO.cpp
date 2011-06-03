@@ -74,7 +74,7 @@ bool LuaIO::SafeWritePath(const string& path)
 {
 	string prefix = ""; // FIXME
 #if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
-	const CLuaHandle* lh = CLuaHandle::GetActiveHandle();
+	const CLuaHandle* lh = ActiveHandle();
 	if (lh != NULL) {
 		prefix = lh->GetName() + "/" + "Write";
 	}

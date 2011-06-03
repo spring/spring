@@ -36,6 +36,7 @@ protected:
 	static bool SetSDLVideoMode();                  //!< Sets SDL video mode
 	static void SetProcessAffinity(int);
 	int Update();                                   //!< Run simulation and draw
+	bool UpdateSim(CGameController *ac);
 
 	static bool GetDisplayGeometry();
 	static void SetupViewportGeometry();

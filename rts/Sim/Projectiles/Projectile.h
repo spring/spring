@@ -38,7 +38,13 @@ public:
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 	virtual void DrawCallback() {}
 
-	CUnit* owner() const { return uh->units[ownerId]; }
+	inline CUnit* owner() const {
+		return
+#if defined(USE_GML) && GML_ENABLE_SIM
+		*(CUnit * volatile *)&
+#endif
+		uh->units[ownerId]; // Note: this death dependency optimization using "ownerId" is logically flawed, since ids are being reused it could return a unit that is not the original owner
+	}
 	int GetProjectileType() const { return projectileType; }
 
 

@@ -9,6 +9,7 @@
 
 #include "EventClient.h"
 #include "EventBatchHandler.h"
+#include "Game/UI/LuaUI.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -110,6 +111,8 @@ class CEventHandler
 		void DeleteSyncedFeatures();
 		void UpdateDrawFeatures();
 		void UpdateFeatures();
+
+		void DeleteSyncedObjects();
 
 		void ProjectileCreated(const CProjectile* proj, int allyTeam);
 		void ProjectileDestroyed(const CProjectile* proj, int allyTeam);
@@ -557,7 +560,11 @@ inline void CEventHandler::UnitFeatureCollision(const CUnit* collider, const CFe
 
 inline void CEventHandler::UpdateUnits(void) { eventBatchHandler->UpdateUnits(); }
 inline void CEventHandler::UpdateDrawUnits() { eventBatchHandler->UpdateDrawUnits(); }
-inline void CEventHandler::DeleteSyncedUnits() { eventBatchHandler->DeleteSyncedUnits(); }
+inline void CEventHandler::DeleteSyncedUnits() {
+	eventBatchHandler->DeleteSyncedUnits(); 
+	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedUnits
+	if(luaUI) luaUI->ExecuteUnitEventBatch();
+}
 
 
 
@@ -744,8 +751,16 @@ inline void CEventHandler::RenderFeatureMoved(const CFeature* feature)
 
 inline void CEventHandler::UpdateFeatures(void) { eventBatchHandler->UpdateFeatures(); }
 inline void CEventHandler::UpdateDrawFeatures() { eventBatchHandler->UpdateDrawFeatures(); }
-inline void CEventHandler::DeleteSyncedFeatures() { eventBatchHandler->DeleteSyncedFeatures(); }
+inline void CEventHandler::DeleteSyncedFeatures() {
+	eventBatchHandler->DeleteSyncedFeatures();
+	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedFeatures
+	if(luaUI) luaUI->ExecuteFeatEventBatch();
+}
 
+inline void CEventHandler::DeleteSyncedObjects() {
+	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedObjects
+	if(luaUI) luaUI->ExecuteObjEventBatch();
+}
 
 
 inline void CEventHandler::ProjectileCreated(const CProjectile* proj, int allyTeam)
@@ -817,7 +832,11 @@ inline void CEventHandler::RenderProjectileDestroyed(const CProjectile* proj)
 
 inline void CEventHandler::UpdateProjectiles() { eventBatchHandler->UpdateProjectiles(); }
 inline void CEventHandler::UpdateDrawProjectiles() { eventBatchHandler->UpdateDrawProjectiles(); }
-inline void CEventHandler::DeleteSyncedProjectiles() { eventBatchHandler->DeleteSyncedProjectiles(); }
+inline void CEventHandler::DeleteSyncedProjectiles() {
+	eventBatchHandler->DeleteSyncedProjectiles();
+	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedProjectiles
+	if(luaUI) luaUI->ExecuteProjEventBatch();
+}
 
 inline void CEventHandler::UpdateObjects() {
 	eventBatchHandler->UpdateObjects();

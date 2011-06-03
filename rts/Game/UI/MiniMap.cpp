@@ -902,12 +902,13 @@ std::string CMiniMap::GetTooltip(int x, int y)
 		return buildTip;
 	}
 
-	GML_RECMUTEX_LOCK(sel); // GetToolTip - anti deadlock
-	GML_RECMUTEX_LOCK(quad); // GetToolTip - called from TooltipConsole::Draw --> MouseHandler::GetCurrentTooltip
+	{
+		GML_THRMUTEX_LOCK(unit, GML_DRAW); // GetTooltip
 
-	const CUnit* unit = GetSelectUnit(GetMapPosition(x, y));
-	if (unit) {
-		return CTooltipConsole::MakeUnitString(unit);
+		const CUnit* unit = GetSelectUnit(GetMapPosition(x, y));
+		if (unit) {
+			return CTooltipConsole::MakeUnitString(unit);
+		}
 	}
 
 	const string selTip = selectedUnits.GetTooltip();

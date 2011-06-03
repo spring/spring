@@ -31,3 +31,28 @@ CR_REG_METADATA(CommandDescription, (
 				CR_RESERVED(32)
 				));
 
+#if USE_SAFE_VECTOR
+CR_BIND(safe_vector<float>, );
+
+const float safe_vector<float>::defval = 0.0f;
+float safe_vector<float>::dummy = 0.0f;
+bool safe_vector<float>::firsterror = true;
+
+const float& safe_vector<float>::safe_element() const {
+	if(firsterror) {
+		firsterror = false;
+		logOutput.Print("ERROR: Vector read attempt out of bounds!");
+		CrashHandler::OutputStacktrace();
+	}
+	return defval;
+}
+float& safe_vector<float>::safe_element() {
+	if(firsterror) {
+		firsterror = false;
+		logOutput.Print("ERROR: Vector assignment attempt out of bounds!");
+		CrashHandler::OutputStacktrace();
+	}
+	return dummy;
+}
+
+#endif

@@ -14,7 +14,7 @@
 #include <boost/regex.hpp>
 
 #include "mmgr.h"
-#include "lib/gml/gml.h"
+#include "lib/gml/gmlmut.h"
 #include "VFSHandler.h"
 #include "FileSystem.h"
 #include "System/Util.h"

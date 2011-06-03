@@ -575,12 +575,12 @@ static inline bool IsBetterLeader(const UnitDef* newDef, const UnitDef* oldDef)
 // LuaUnsyncedRead::GetDefaultCommand --> CGuiHandler::GetDefaultCommand --> GetDefaultCmd
 int CSelectedUnits::GetDefaultCmd(const CUnit* unit, const CFeature* feature)
 {
-	GML_RECMUTEX_LOCK(sel); // GetDefaultCmd
-
 	int luaCmd;
 	if (eventHandler.DefaultCommand(unit, feature, luaCmd)) {
 		return luaCmd;
 	}
+
+	GML_RECMUTEX_LOCK(sel); // GetDefaultCmd
 
 	// return the default if there are no units selected
 	CUnitSet::const_iterator ui = selectedUnits.begin();
@@ -676,25 +676,27 @@ void CSelectedUnits::DrawCommands()
 // CMouseHandler::GetCurrentTooltip --> GetTooltip
 std::string CSelectedUnits::GetTooltip()
 {
-	GML_RECMUTEX_LOCK(sel); // GetTooltip - called from TooltipConsole::Draw --> MouseHandler::GetCurrentTooltip --> GetTooltip
-
 	std::string s = "";
-	if (!selectedUnits.empty()) {
-		const CUnit* unit = (*selectedUnits.begin());
-		const CTeam* team = NULL;
+	{
+		GML_RECMUTEX_LOCK(sel); // GetTooltip - called from TooltipConsole::Draw --> MouseHandler::GetCurrentTooltip --> GetTooltip
 
-		// show the player name instead of unit name if it has FBI tag showPlayerName
-		if (unit->unitDef->showPlayerName) {
-			team = teamHandler->Team(unit->team);
-			s = team->GetControllerName();
-		} else {
-			s = (*selectedUnits.begin())->tooltip;
+		if (!selectedUnits.empty()) {
+			const CUnit* unit = (*selectedUnits.begin());
+			const CTeam* team = NULL;
+
+			// show the player name instead of unit name if it has FBI tag showPlayerName
+			if (unit->unitDef->showPlayerName) {
+				team = teamHandler->Team(unit->team);
+				s = team->GetControllerName();
+			} else {
+				s = (*selectedUnits.begin())->tooltip;
+			}
+
 		}
 
-	}
-
-	if (selectedUnits.empty()) {
-		return s;
+		if (selectedUnits.empty()) {
+			return s;
+		}
 	}
 
 	const string custom = eventHandler.WorldTooltip(NULL, NULL, NULL);
@@ -702,69 +704,73 @@ std::string CSelectedUnits::GetTooltip()
 		return custom;
 	}
 
-	char tmp[500];
-	int numFuel = 0;
-	float maxHealth = 0.0f, curHealth = 0.0f;
-	float maxFuel = 0.0f, curFuel = 0.0f;
-	float exp = 0.0f, cost = 0.0f, range = 0.0f;
-	float metalMake = 0.0f, metalUse = 0.0f, energyMake = 0.0f, energyUse = 0.0f;
+	{
+		GML_RECMUTEX_LOCK(sel); // GetTooltip
+
+		char tmp[500];
+		int numFuel = 0;
+		float maxHealth = 0.0f, curHealth = 0.0f;
+		float maxFuel = 0.0f, curFuel = 0.0f;
+		float exp = 0.0f, cost = 0.0f, range = 0.0f;
+		float metalMake = 0.0f, metalUse = 0.0f, energyMake = 0.0f, energyUse = 0.0f;
 
 #define NO_TEAM -32
 #define MULTI_TEAM -64
-	int ctrlTeam = NO_TEAM;
+		int ctrlTeam = NO_TEAM;
 
-	CUnitSet::const_iterator ui;
-	for (ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
-		const CUnit* unit = *ui;
-		maxHealth  += unit->maxHealth;
-		curHealth  += unit->health;
-		exp        += unit->experience;
-		cost       += unit->metalCost + (unit->energyCost / 60.0f);
-		range      += unit->maxRange;
-		metalMake  += unit->metalMake;
-		metalUse   += unit->metalUse;
-		energyMake += unit->energyMake;
-		energyUse  += unit->energyUse;
-		maxFuel    += unit->unitDef->maxFuel;
-		curFuel    += unit->currentFuel;
-		if (unit->unitDef->maxFuel > 0) {
-			numFuel++;
+		CUnitSet::const_iterator ui;
+		for (ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
+			const CUnit* unit = *ui;
+			maxHealth  += unit->maxHealth;
+			curHealth  += unit->health;
+			exp        += unit->experience;
+			cost       += unit->metalCost + (unit->energyCost / 60.0f);
+			range      += unit->maxRange;
+			metalMake  += unit->metalMake;
+			metalUse   += unit->metalUse;
+			energyMake += unit->energyMake;
+			energyUse  += unit->energyUse;
+			maxFuel    += unit->unitDef->maxFuel;
+			curFuel    += unit->currentFuel;
+			if (unit->unitDef->maxFuel > 0) {
+				numFuel++;
+			}
+			if (ctrlTeam == NO_TEAM) {
+				ctrlTeam = unit->team;
+			} else if (ctrlTeam != unit->team) {
+				ctrlTeam = MULTI_TEAM;
+			}
 		}
-		if (ctrlTeam == NO_TEAM) {
-			ctrlTeam = unit->team;
-		} else if (ctrlTeam != unit->team) {
-			ctrlTeam = MULTI_TEAM;
+		if ((numFuel > 0) && (maxFuel > 0.0f)) {
+			curFuel = curFuel / numFuel;
+			maxFuel = maxFuel / numFuel;
 		}
-	}
-	if ((numFuel > 0) && (maxFuel > 0.0f)) {
-		curFuel = curFuel / numFuel;
-		maxFuel = maxFuel / numFuel;
-	}
-	const float num = selectedUnits.size();
+		const float num = selectedUnits.size();
 
-	s += CTooltipConsole::MakeUnitStatsString(
-	       curHealth, maxHealth,
-	       curFuel,   maxFuel,
-	       (exp / num), cost, (range / num),
-	       metalMake,  metalUse,
-	       energyMake, energyUse);
+		s += CTooltipConsole::MakeUnitStatsString(
+			curHealth, maxHealth,
+			curFuel,   maxFuel,
+			(exp / num), cost, (range / num),
+			metalMake,  metalUse,
+			energyMake, energyUse);
 
-	if (gs->cheatEnabled && (num == 1)) {
-		const CUnit* unit = *selectedUnits.begin();
-		SNPRINTF(tmp, sizeof(tmp), "\xff\xc0\xc0\xff  [TechLevel %i]",
+		if (gs->cheatEnabled && (num == 1)) {
+			const CUnit* unit = *selectedUnits.begin();
+			SNPRINTF(tmp, sizeof(tmp), "\xff\xc0\xc0\xff  [TechLevel %i]",
 				unit->unitDef->techLevel);
-		s += tmp;
-	}
+			s += tmp;
+		}
 
-	std::string ctrlName = "";
-	if (ctrlTeam == MULTI_TEAM) {
-		ctrlName = "(Multiple teams)";
-	} else if (ctrlTeam != NO_TEAM) {
-		ctrlName = teamHandler->Team(ctrlTeam)->GetControllerName();
-	}
-	s += "\n\xff\xff\xff\xff" + ctrlName;
+		std::string ctrlName = "";
+		if (ctrlTeam == MULTI_TEAM) {
+			ctrlName = "(Multiple teams)";
+		} else if (ctrlTeam != NO_TEAM) {
+			ctrlName = teamHandler->Team(ctrlTeam)->GetControllerName();
+		}
+		s += "\n\xff\xff\xff\xff" + ctrlName;
 
-	return s;
+		return s;
+	}
 }
 
 

@@ -22,6 +22,8 @@
 	#include "StdAfx.h"
 #endif
 #include "lib/gml/gml.h"
+#include "lib/gml/gmlmut.h"
+#include "System/LogOutput.h"
 #include "System/Exceptions.h"
 
 #include "SpringApp.h"
