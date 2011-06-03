@@ -34,11 +34,11 @@ CR_REG_METADATA(CommandDescription, (
 #if USE_SAFE_VECTOR
 CR_BIND_TEMPLATE(safe_vector<float>, );
 
-const float safe_vector<float>::defval = 0.0f;
-float safe_vector<float>::dummy = 0.0f;
-bool safe_vector<float>::firsterror = true;
+template <> const float safe_vector<float>::defval = 0.0f;
+template <> float safe_vector<float>::dummy = 0.0f;
+template <> bool safe_vector<float>::firsterror = true;
 
-const float& safe_vector<float>::safe_element() const {
+template <> const float& safe_vector<float>::safe_element() const {
 	if(firsterror) {
 		firsterror = false;
 		logOutput.Print("ERROR: Vector read attempt out of bounds!");
@@ -46,7 +46,7 @@ const float& safe_vector<float>::safe_element() const {
 	}
 	return defval;
 }
-float& safe_vector<float>::safe_element() {
+template <> float& safe_vector<float>::safe_element() {
 	if(firsterror) {
 		firsterror = false;
 		logOutput.Print("ERROR: Vector assignment attempt out of bounds!");
