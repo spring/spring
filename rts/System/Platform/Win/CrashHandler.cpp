@@ -139,6 +139,7 @@ static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hT
 #ifdef _M_IX86
 		ZeroMemory( &c, sizeof( CONTEXT ) );
 		c.ContextFlags = CONTEXT_CONTROL;
+#ifdef _MSC_VER
 		__asm
 		{
 			call func;
@@ -147,6 +148,9 @@ static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hT
 			mov [c.Ebp], ebp;
 			mov [c.Esp], esp;
 		}
+#else
+		// FIXME
+#endif
 #else
 		RtlCaptureContext( &c );
 #endif
