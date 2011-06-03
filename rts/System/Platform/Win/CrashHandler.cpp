@@ -4,7 +4,7 @@
 #include "lib/gml/gml.h"
 #include <windows.h>
 #include <process.h>
-#include <imagehlp.h>
+#include <dbghelp.h>
 #include <signal.h>
 
 #include "System/Platform/CrashHandler.h"
@@ -104,7 +104,7 @@ static bool InitImageHlpDll()
 static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE)
 {
 	PIMAGEHLP_SYMBOL pSym;
-	STACKFRAME64 sf;
+	STACKFRAME sf;
 	HANDLE process, thread;
 	DWORD dwModBase, Disp, dwModAddrToPrint;
 	BOOL more = FALSE;
@@ -180,15 +180,15 @@ static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hT
 
 	bool containsOglDll = false;
 	while (true) {
-		more = StackWalk64(
+		more = StackWalk(
 			MachineType,
 			process,
 			thread,
 			&sf,
 			&c,
 			NULL,
-			SymFunctionTableAccess64,
-			SymGetModuleBase64,
+			SymFunctionTableAccess,
+			SymGetModuleBase,
 			NULL
 		);
 		if (!more || sf.AddrFrame.Offset == 0 || count > MAX_STACK_DEPTH) {
