@@ -119,22 +119,22 @@ public:
 	const T& safe_element() const;
 	T& safe_element();
 
-	const T& operator[] (const size_type i) const {
+	const T& operator[] (const typename std::vector<T>::size_type i) const {
 		if(i >= size())
 			return safe_element();
 		return std::vector<T>::operator[](i);
 	}
-	T& operator[] (const size_type i) {
+	T& operator[] (const typename std::vector<T>::size_type i) {
 		if(i >= size())
 			return safe_element();
 		return std::vector<T>::operator[](i);
 	}
-	const T& at (const size_type i) const {
+	const T& at (const typename std::vector<T>::size_type i) const {
 		if(i >= size())
 			return safe_element();
 		return std::vector<T>::at(i);
 	}
-	T& at (const size_type i) {
+	T& at (const typename std::vector<T>::size_type i) {
 		if(i >= size())
 			return safe_element();
 		return std::vector<T>::at(i);
