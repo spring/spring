@@ -14,7 +14,7 @@
 
 #include "LogOutput.h"
 #include "Util.h"
-#include "LuaCallInCheck.h"
+#include "LuaConfig.h"
 #include <boost/thread/recursive_mutex.hpp>
 
 static const int maxDepth = 256;

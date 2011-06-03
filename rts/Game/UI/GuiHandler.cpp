@@ -22,7 +22,7 @@
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
 #include "Game/TraceRay.h"
-#include "Lua/LuaCallInCheck.h"
+#include "Lua/LuaConfig.h"
 #include "Lua/LuaTextures.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
