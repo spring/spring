@@ -4,7 +4,7 @@
 #include "lib/gml/gml.h"
 #include <windows.h>
 #include <process.h>
-#include <dbghelp.h>
+#include <imagehlp.h>
 #include <signal.h>
 
 #include "System/Platform/CrashHandler.h"
