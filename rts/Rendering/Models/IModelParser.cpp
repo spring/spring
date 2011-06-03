@@ -81,7 +81,7 @@ C3DModelLoader::~C3DModelLoader()
 	parsers.clear();
 	dedupe_parsers.clear();
 
-#if defined(USE_GML) && GML_ENABLE_SIM
+#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
 	createLists.clear();
 	fixLocalModels.clear();
 	Update(); // delete remaining local models
@@ -109,7 +109,7 @@ static inline S3DModelPiece* ModelTypeToModelPiece(const ModelType& type) {
 
 S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffset)
 {
-	GML_STDMUTEX_LOCK(model); // Load3DModel
+	GML_RECMUTEX_LOCK(model); // Load3DModel
 
 	StringToLowerInPlace(name);
 
@@ -156,8 +156,8 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffs
 }
 
 void C3DModelLoader::Update() {
-#if defined(USE_GML) && GML_ENABLE_SIM
-	GML_STDMUTEX_LOCK(model); // Update
+#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
+	GML_RECMUTEX_LOCK(model); // Update
 
 	for (std::vector<S3DModelPiece*>::iterator it = createLists.begin(); it != createLists.end(); ++it) {
 		CreateListsNow(*it);
@@ -190,8 +190,8 @@ void C3DModelLoader::DeleteChilds(S3DModelPiece* o)
 
 void C3DModelLoader::DeleteLocalModel(CUnit* unit)
 {
-#if defined(USE_GML) && GML_ENABLE_SIM
-	GML_STDMUTEX_LOCK(model); // DeleteLocalModel
+#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
+	GML_RECMUTEX_LOCK(model); // DeleteLocalModel
 
 	fixLocalModels.erase(unit);
 	deleteLocalModels.push_back(unit->localmodel);
@@ -202,8 +202,8 @@ void C3DModelLoader::DeleteLocalModel(CUnit* unit)
 
 void C3DModelLoader::CreateLocalModel(CUnit* unit)
 {
-#if defined(USE_GML) && GML_ENABLE_SIM
-	GML_STDMUTEX_LOCK(model); // CreateLocalModel
+#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
+	GML_RECMUTEX_LOCK(model); // CreateLocalModel
 
 	unit->localmodel = new LocalModel(unit->model);
 	fixLocalModels.insert(unit);
@@ -245,7 +245,7 @@ void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 
 
 void C3DModelLoader::CreateLists(S3DModelPiece* o) {
-#if defined(USE_GML) && GML_ENABLE_SIM
+#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
 	createLists.push_back(o);
 #else
 	CreateListsNow(o);

@@ -38,6 +38,10 @@ namespace Threading {
 		std::string message;
 		unsigned int flags;
 	};
+
+	void SetSimThread(bool set);
+	bool IsSimThread();
+
 	void SetThreadError(const Error& err);
 	Error* GetThreadError();
 };

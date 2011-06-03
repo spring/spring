@@ -971,6 +971,16 @@ void SpringApp::Startup()
 	}
 }
 
+bool SpringApp::UpdateSim(CGameController *ac)
+{
+	GML_MSTMUTEX_LOCK(sim); // UpdateSim
+
+	Threading::SetSimThread(true);
+	bool ret = ac->Update();
+	Threading::SetSimThread(false);
+	return ret;
+}
+
 #if defined(USE_GML) && GML_ENABLE_SIM
 volatile int gmlMultiThreadSim;
 volatile int gmlStartSim;
@@ -999,12 +1009,8 @@ int SpringApp::Sim()
 				Watchdog::ClearTimer("sim");
 				gmlProcessor->ExpandAuxQueue();
 
-				{
-					GML_MSTMUTEX_LOCK(sim); // Sim
-
-					if(!activeController->Update())
-						return 0;
-				}
+				if(!UpdateSim(activeController))
+					return 0;
 
 				gmlProcessor->GetQueue();
 			}
@@ -1039,20 +1045,16 @@ int SpringApp::Update()
 #if defined(USE_GML) && GML_ENABLE_SIM
 		if (gmlMultiThreadSim) {
 			if (!gs->frameNum) {
-				GML_MSTMUTEX_LOCK(sim); // Update
-				
-				ret = activeController->Update();
+				ret = UpdateSim(activeController);
 				if (gs->frameNum) {
 					gmlStartSim = 1;
 				}
 			}
 		} else {
-			GML_MSTMUTEX_LOCK(sim); // Update
-			
-			ret = activeController->Update();
+			ret = UpdateSim(activeController);
 		}
 #else
-		ret = activeController->Update();
+		ret = UpdateSim(activeController);
 #endif
 		if (ret) {
 			globalRendering->drawFrame++;

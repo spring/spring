@@ -6,7 +6,7 @@
 #include <cstring>
 
 #include "mmgr.h"
-#include "lib/gml/gml.h"
+#include "lib/gml/gmlmut.h"
 #include "LogOutput.h"
 #include "UnsyncedRNG.h"
 

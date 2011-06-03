@@ -2028,6 +2028,7 @@ public:
 			game->showMTInfo = !!atoi(action.GetArgs().c_str());
 		}
 		configHandler->Set("ShowMTInfo", game->showMTInfo ? 1 : 0);
+		game->showMTInfo = (game->showMTInfo && gc->GetMultiThreadLua() <= 3) ? gc->GetMultiThreadLua() : 0;
 	}
 };
 

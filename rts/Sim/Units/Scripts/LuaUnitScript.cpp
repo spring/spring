@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #define DEBUG_LUA 0
+#define LUA_SYNCED_ONLY
 
 #include "LuaUnitScript.h"
 
@@ -14,6 +15,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
+#include "Lua/LuaHelper.h"
 
 
 using std::map;
@@ -167,7 +169,7 @@ CUnitScript* CLuaUnitScript::activeScript;
 
 CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
 	: CUnitScript(unit, unit->localmodel->pieces)
-	, handle(CLuaHandle::activeHandle), L(L)
+	, handle(ActiveHandle()), L(L)
 	, scriptIndex(LUAFN_Last, LUA_NOREF)
 	, inKilled(false)
 {
@@ -294,7 +296,7 @@ void CLuaUnitScript::RemoveCallIn(const string& fname)
 void CLuaUnitScript::ShowScriptError(const string& msg)
 {
 	// if we are in the same handle, we can truely raise an error
-	if (CLuaHandle::activeHandle == handle) {
+	if (ActiveHandle() == handle) {
 		luaL_error(L, "Lua UnitScript error: %s", msg.c_str());
 	}
 	else {
@@ -939,30 +941,6 @@ bool CLuaUnitScript::PushEntries(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 //
-//  Access helpers
-//
-
-// FIXME: this badly needs a clean up, it's duplicated
-
-static inline int CtrlTeam()
-{
-	return CLuaHandle::GetActiveHandle()->GetCtrlTeam();
-}
-
-
-static inline bool CanControlUnit(const CUnit* unit)
-{
-	const int ctrlTeam = CtrlTeam();
-	if (ctrlTeam < 0) {
-		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
-	}
-	return (ctrlTeam == unit->team);
-}
-
-
-/******************************************************************************/
-/******************************************************************************/
-//
 //  Parsing helpers
 //
 
@@ -987,7 +965,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 	if (unit == NULL) {
 		return NULL;
 	}
-	if (!CanControlUnit(unit)) {
+	if (!CanControlUnit(L, unit)) {
 		return NULL;
 	}
 	return unit;

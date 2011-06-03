@@ -125,6 +125,8 @@ lua_State *luaE_newthread (lua_State *L) {
   L1->hookmask = L->hookmask;
   L1->basehookcount = L->basehookcount;
   L1->hook = L->hook;
+	L1->luamutex = L->luamutex;
+	L1->lcd = L->lcd;
   resethookcount(L1);
   lua_assert(iswhite(obj2gco(L1)));
   return L1;

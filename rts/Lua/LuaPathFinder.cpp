@@ -68,7 +68,7 @@ static int path_next(lua_State* L)
 
 	const float minDist = luaL_optfloat(L, 5, 0.0f);
 
-	const bool synced = CLuaHandle::GetActiveHandle()->GetSynced();
+	const bool synced = CLuaHandle::GetSynced(L);
 	const float3 point = pathManager->NextWaypoint(pathID, callerPos, minDist, 0, 0, synced);
 
 	if ((point.x == -1.0f) &&
@@ -203,7 +203,7 @@ int LuaPathFinder::RequestPath(lua_State* L)
 
 	const float radius = luaL_optfloat(L, 8, 8.0f);
 
-	const bool synced = CLuaHandle::GetActiveHandle()->GetSynced();
+	const bool synced = CLuaHandle::GetSynced(L);
 	const int pathID = pathManager->RequestPath(moveData, start, end, radius, NULL, synced);
 
 	if (pathID == 0) {
@@ -322,7 +322,7 @@ int LuaPathFinder::SetPathNodeCost(lua_State* L)
 
 	if (vec.empty()) {
 		// invalid array ID (possibly created through operator[])
-		lua_pushboolean(L, pathManager->SetNodeExtraCost(hmx, hmz, cost, synced));
+		lua_pushboolean(L, pathManager->SetNodeExtraCost(hmx, hmz, cost, CLuaHandle::GetSynced(L)));
 	} else {
 		// modify only the cost-overlay (whether it is active or not)
 		if (index < vec.size())
@@ -338,7 +338,7 @@ int LuaPathFinder::GetPathNodeCost(lua_State* L)
 {
 	const unsigned int hmx = luaL_checkint(L, 1);
 	const unsigned int hmz = luaL_checkint(L, 2);
-	const bool synced = CLuaHandle::GetActiveHandle()->GetSynced();
+	const bool synced = CLuaHandle::GetSynced(L);
 
 	// reads from overlay if PathNodeStateBuffer::extraCosts != NULL
 	const float cost = pathManager->GetNodeExtraCost(hmx, hmz, synced);

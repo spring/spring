@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
-
 #include <set>
 #include <list>
 #include <cctype>
@@ -87,13 +86,6 @@ enum UnitAllegiance {
 	AllyUnits  = -3,
 	EnemyUnits = -4
 };
-
-
-/******************************************************************************/
-/******************************************************************************/
-
-static const bool& fullRead     = CLuaHandle::GetActiveFullRead();
-static const int&  readAllyTeam = CLuaHandle::GetActiveReadAllyTeam();
 
 
 /******************************************************************************/
@@ -319,64 +311,64 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 
 static inline bool IsAlliedTeam(int team)
 {
-	if (readAllyTeam < 0) {
-		return fullRead;
+	if (ActiveReadAllyTeam() < 0) {
+		return ActiveFullRead();
 	}
-	return (teamHandler->AllyTeam(team) == readAllyTeam);
+	return (teamHandler->AllyTeam(team) == ActiveReadAllyTeam());
 }
 
 
 static inline bool IsAlliedAllyTeam(int allyTeam)
 {
-	if (readAllyTeam < 0) {
-		return fullRead;
+	if (ActiveReadAllyTeam() < 0) {
+		return ActiveFullRead();
 	}
-	return (allyTeam == readAllyTeam);
+	return (allyTeam == ActiveReadAllyTeam());
 }
 
 
 static inline bool IsAllyUnit(const CUnit* unit)
 {
-	if (readAllyTeam < 0) {
-		return fullRead;
+	if (ActiveReadAllyTeam() < 0) {
+		return ActiveFullRead();
 	}
-	return (unit->allyteam == readAllyTeam);
+	return (unit->allyteam == ActiveReadAllyTeam());
 }
 
 
 static inline bool IsEnemyUnit(const CUnit* unit)
 {
-	if (readAllyTeam < 0) {
-		return !fullRead;
+	if (ActiveReadAllyTeam() < 0) {
+		return !ActiveFullRead();
 	}
-	return (unit->allyteam != readAllyTeam);
+	return (unit->allyteam != ActiveReadAllyTeam());
 }
 
 
 static inline bool IsUnitVisible(const CUnit* unit)
 {
-	if (readAllyTeam < 0) {
-		return fullRead;
+	if (ActiveReadAllyTeam() < 0) {
+		return ActiveFullRead();
 	}
-	return !!(unit->losStatus[readAllyTeam] & (LOS_INLOS | LOS_INRADAR));
+	return !!(unit->losStatus[ActiveReadAllyTeam()] & (LOS_INLOS | LOS_INRADAR));
 }
 
 
 static inline bool IsUnitInLos(const CUnit* unit)
 {
-	if (readAllyTeam < 0) {
-		return fullRead;
+	if (ActiveReadAllyTeam() < 0) {
+		return ActiveFullRead();
 	}
-	return (unit->losStatus[readAllyTeam] & LOS_INLOS);
+	return (unit->losStatus[ActiveReadAllyTeam()] & LOS_INLOS);
 }
 
 
 static inline bool IsUnitTyped(const CUnit* unit)
 {
-	if (readAllyTeam < 0) {
-		return fullRead;
+	if (ActiveReadAllyTeam() < 0) {
+		return ActiveFullRead();
 	}
-	const unsigned short losStatus = unit->losStatus[readAllyTeam];
+	const unsigned short losStatus = unit->losStatus[ActiveReadAllyTeam()];
 	const unsigned short prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
 	if ((losStatus & LOS_INLOS) ||
 	    ((losStatus & prevMask) == prevMask)) {
@@ -401,12 +393,12 @@ static inline const UnitDef* EffectiveUnitDef(const CUnit* unit)
 
 static inline bool IsFeatureVisible(const CFeature* feature)
 {
-	if (fullRead)
+	if (ActiveFullRead())
 		return true;
-	if (readAllyTeam < 0)
+	if (ActiveReadAllyTeam() < 0)
 		return false;
 
-	return feature->IsInLosForAllyTeam(readAllyTeam);
+	return feature->IsInLosForAllyTeam(ActiveReadAllyTeam());
 }
 
 
@@ -1161,14 +1153,12 @@ int LuaSyncedRead::GetTeamRulesParams(lua_State* L)
 		return 0;
 	}
 
-	const CLuaRules* lr = (const CLuaRules*)CLuaHandle::GetActiveHandle();
-
 	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC;
 
 	if (IsAlliedTeam(team->teamNum) || game->gameOver) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
-	else if (teamHandler->AlliedTeams(team->teamNum, lr->GetReadTeam()) || ((readAllyTeam < 0) && fullRead)) {
+	else if (teamHandler->AlliedTeams(team->teamNum, CLuaHandle::GetReadTeam(L)) || ((ActiveReadAllyTeam() < 0) && ActiveFullRead())) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	}
 
@@ -1186,14 +1176,12 @@ int LuaSyncedRead::GetTeamRulesParam(lua_State* L)
 		return 0;
 	}
 
-	const CLuaRules* lr = (const CLuaRules*)CLuaHandle::GetActiveHandle();
-
 	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC;
 
 	if (IsAlliedTeam(team->teamNum) || game->gameOver) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
-	else if (teamHandler->AlliedTeams(team->teamNum, lr->GetReadTeam()) || ((readAllyTeam < 0) && fullRead)) {
+	else if (teamHandler->AlliedTeams(team->teamNum, CLuaHandle::GetReadTeam(L)) || ((ActiveReadAllyTeam() < 0) && ActiveFullRead())) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	}
 
@@ -1365,8 +1353,8 @@ int LuaSyncedRead::GetPlayerControlledUnit(lua_State* L)
 		return 0;
 	}
 
-	if ((readAllyTeam == CEventClient::NoAccessTeam) ||
-	    ((readAllyTeam >= 0) && !teamHandler->Ally(unit->allyteam, readAllyTeam))) {
+	if ((ActiveReadAllyTeam() == CEventClient::NoAccessTeam) ||
+	    ((ActiveReadAllyTeam() >= 0) && !teamHandler->Ally(unit->allyteam, ActiveReadAllyTeam()))) {
 		return 0;
 	}
 
@@ -1398,7 +1386,7 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 	numVals += 3;
 
 	// no unsynced Skirmish AI info for synchronized scripts
-	if (CLuaHandle::GetActiveHandle()->GetSynced()) {
+	if (CLuaHandle::GetSynced(L)) {
 		HSTR_PUSH(L, "SYNCED_NOSHORTNAME");
 		HSTR_PUSH(L, "SYNCED_NOVERSION");
 		lua_newtable(L);
@@ -1482,7 +1470,7 @@ int LuaSyncedRead::GetAllUnits(lua_State* L)
 	CheckNoArgs(L, __FUNCTION__);
 	int count = 0;
 	std::list<CUnit*>::const_iterator uit;
-	if (fullRead) {
+	if (ActiveFullRead()) {
 		lua_createtable(L, uh->activeUnits.size(), 0);
 		for (uit = uh->activeUnits.begin(); uit != uh->activeUnits.end(); ++uit) {
 			lua_pushnumber(L, (*uit)->id);
@@ -1507,7 +1495,7 @@ int LuaSyncedRead::GetAllUnits(lua_State* L)
 
 int LuaSyncedRead::GetTeamUnits(lua_State* L)
 {
-	if (readAllyTeam == CEventClient::NoAccessTeam) {
+	if (ActiveReadAllyTeam() == CEventClient::NoAccessTeam) {
 		return 0;
 	}
 
@@ -1554,7 +1542,7 @@ int LuaSyncedRead::GetTeamUnits(lua_State* L)
 
 int LuaSyncedRead::GetTeamUnitsSorted(lua_State* L)
 {
-	if (readAllyTeam == CEventClient::NoAccessTeam) {
+	if (ActiveReadAllyTeam() == CEventClient::NoAccessTeam) {
 		return 0;
 	}
 
@@ -1622,7 +1610,7 @@ int LuaSyncedRead::GetTeamUnitsSorted(lua_State* L)
 
 int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 {
-	if (readAllyTeam == CEventClient::NoAccessTeam) {
+	if (ActiveReadAllyTeam() == CEventClient::NoAccessTeam) {
 		return 0;
 	}
 
@@ -1716,7 +1704,7 @@ static inline void InsertSearchUnitDefs(const UnitDef* ud, bool allied,
 
 int LuaSyncedRead::GetTeamUnitsByDefs(lua_State* L)
 {
-	if (readAllyTeam == CEventClient::NoAccessTeam) {
+	if (ActiveReadAllyTeam() == CEventClient::NoAccessTeam) {
 		return 0;
 	}
 
@@ -1775,7 +1763,7 @@ int LuaSyncedRead::GetTeamUnitsByDefs(lua_State* L)
 
 int LuaSyncedRead::GetTeamUnitDefCount(lua_State* L)
 {
-	if (readAllyTeam == CEventClient::NoAccessTeam) {
+	if (ActiveReadAllyTeam() == CEventClient::NoAccessTeam) {
 		return 0;
 	}
 
@@ -1843,7 +1831,7 @@ int LuaSyncedRead::GetTeamUnitDefCount(lua_State* L)
 
 int LuaSyncedRead::GetTeamUnitCount(lua_State* L)
 {
-	if (readAllyTeam == CEventClient::NoAccessTeam) {
+	if (ActiveReadAllyTeam() == CEventClient::NoAccessTeam) {
 		return 0;
 	}
 
@@ -1916,10 +1904,10 @@ int LuaSyncedRead::GetTeamUnitCount(lua_State* L)
 	if (unit->team != readTeam)   { continue; }
 
 #define ALLY_UNIT_TEST \
-	if (unit->allyteam != readAllyTeam) { continue; }
+	if (unit->allyteam != ActiveReadAllyTeam()) { continue; }
 
 #define ENEMY_UNIT_TEST \
-	if (unit->allyteam == readAllyTeam) { continue; } \
+	if (unit->allyteam == ActiveReadAllyTeam()) { continue; } \
 	if (!IsUnitVisible(unit))           { continue; }
 
 
@@ -1929,7 +1917,7 @@ static int ParseAllegiance(lua_State* L, const char* caller, int index)
 		return AllUnits;
 	}
 	const int teamID = lua_toint(L, index);
-	if (fullRead && (teamID < 0)) {
+	if (ActiveFullRead() && (teamID < 0)) {
 		// MyUnits, AllyUnits, and EnemyUnits do not apply to fullRead
 		return AllUnits;
 	}
@@ -1970,7 +1958,7 @@ int LuaSyncedRead::GetUnitsInRectangle(lua_State* L)
 		}
 	}
 	else if (allegiance == MyUnits) {
-		const int readTeam = CLuaHandle::GetActiveHandle()->GetReadTeam();
+		const int readTeam = CLuaHandle::GetReadTeam(L);
 		LOOP_UNIT_CONTAINER(MY_UNIT_TEST, RECTANGLE_TEST);
 	}
 	else if (allegiance == AllyUnits) {
@@ -2023,7 +2011,7 @@ int LuaSyncedRead::GetUnitsInBox(lua_State* L)
 		}
 	}
 	else if (allegiance == MyUnits) {
-		const int readTeam = CLuaHandle::GetActiveHandle()->GetReadTeam();
+		const int readTeam = CLuaHandle::GetReadTeam(L);
 		LOOP_UNIT_CONTAINER(MY_UNIT_TEST, BOX_TEST);
 	}
 	else if (allegiance == AllyUnits) {
@@ -2077,7 +2065,7 @@ int LuaSyncedRead::GetUnitsInCylinder(lua_State* L)
 		}
 	}
 	else if (allegiance == MyUnits) {
-		const int readTeam = CLuaHandle::GetActiveHandle()->GetReadTeam();
+		const int readTeam = CLuaHandle::GetReadTeam(L);
 		LOOP_UNIT_CONTAINER(MY_UNIT_TEST, CYLINDER_TEST);
 	}
 	else if (allegiance == AllyUnits) {
@@ -2135,7 +2123,7 @@ int LuaSyncedRead::GetUnitsInSphere(lua_State* L)
 		}
 	}
 	else if (allegiance == MyUnits) {
-		const int readTeam = CLuaHandle::GetActiveHandle()->GetReadTeam();
+		const int readTeam = CLuaHandle::GetReadTeam(L);
 		LOOP_UNIT_CONTAINER(MY_UNIT_TEST, SPHERE_TEST);
 	}
 	else if (allegiance == AllyUnits) {
@@ -2201,7 +2189,7 @@ int LuaSyncedRead::GetUnitsInPlanes(lua_State* L)
 		endTeam = allegiance;
 	}
 	else if (allegiance == MyUnits) {
-		const int readTeam = CLuaHandle::GetActiveHandle()->GetReadTeam();
+		const int readTeam = CLuaHandle::GetReadTeam(L);
 		startTeam = readTeam;
 		endTeam = readTeam;
 	}
@@ -2218,7 +2206,7 @@ int LuaSyncedRead::GetUnitsInPlanes(lua_State* L)
 	lua_newtable(L);
 	int count = 0;
 
-	const int readTeam = CLuaHandle::GetActiveHandle()->GetReadTeam();
+	const int readTeam = CLuaHandle::GetReadTeam(L);
 
 	for (int team = startTeam; team <= endTeam; team++) {
 		const CUnitSet& units = teamHandler->Team(team)->units;
@@ -2239,12 +2227,12 @@ int LuaSyncedRead::GetUnitsInPlanes(lua_State* L)
 			}
 		}
 		else if (allegiance == AllyUnits) {
-			if (readAllyTeam == teamHandler->AllyTeam(team)) {
+			if (ActiveReadAllyTeam() == teamHandler->AllyTeam(team)) {
 				LOOP_UNIT_CONTAINER(NULL_TEST, PLANES_TEST);
 			}
 		}
 		else if (allegiance == EnemyUnits) {
-			if (readAllyTeam != teamHandler->AllyTeam(team)) {
+			if (ActiveReadAllyTeam() != teamHandler->AllyTeam(team)) {
 				LOOP_UNIT_CONTAINER(VISIBLE_TEST, PLANES_TEST);
 			}
 		}
@@ -2290,7 +2278,7 @@ int LuaSyncedRead::GetUnitNearestEnemy(lua_State* L)
 	}
 	const float range = luaL_optnumber(L, 2, 1.0e9f);
 	const bool useLos =
-		!fullRead || !lua_isboolean(L, 3) || lua_toboolean(L, 3);
+		!ActiveFullRead() || !lua_isboolean(L, 3) || lua_toboolean(L, 3);
 	CUnit* target = NULL;
 	if (useLos) {
 		target = helper->GetClosestEnemyUnit(unit->pos, range, unit->allyteam);
@@ -2323,8 +2311,8 @@ int LuaSyncedRead::GetFeaturesInRectangle(lua_State* L)
 
 	lua_newtable(L);
 	int count = 0;
-	if (readAllyTeam < 0) {
-		if (fullRead) {
+	if (ActiveReadAllyTeam() < 0) {
+		if (ActiveFullRead()) {
 			for (int i = 0; i < rectFeatureCount; i++) {
 				const CFeature* feature = rectFeatures[i];
 				count++;
@@ -2542,7 +2530,7 @@ int LuaSyncedRead::GetUnitDefID(lua_State* L)
 		lua_pushnumber(L, unit->unitDef->id);
 	}
 	else {
-		const int losStatus = unit->losStatus[readAllyTeam];
+		const int losStatus = unit->losStatus[ActiveReadAllyTeam()];
 		const int prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
 		if (((losStatus & LOS_INLOS) == 0) &&
 				((losStatus & prevMask) != prevMask)) {
@@ -2710,7 +2698,7 @@ int LuaSyncedRead::GetUnitPosition(lua_State* L)
 	if (IsAllyUnit(unit)) {
 		pos = unit->midPos;
 	} else {
-		pos = helper->GetUnitErrorPos(unit, readAllyTeam);
+		pos = helper->GetUnitErrorPos(unit, ActiveReadAllyTeam());
 	}
 	lua_pushnumber(L, pos.x);
 	lua_pushnumber(L, pos.y);
@@ -2729,7 +2717,7 @@ int LuaSyncedRead::GetUnitBasePosition(lua_State* L)
 	if (IsAllyUnit(unit)) {
 		pos = unit->pos;
 	} else {
-		pos = helper->GetUnitErrorPos(unit, readAllyTeam);
+		pos = helper->GetUnitErrorPos(unit, ActiveReadAllyTeam());
 		pos = pos - (unit->midPos - unit->pos);
 	}
 	lua_pushnumber(L, pos.x);
@@ -3206,9 +3194,9 @@ int LuaSyncedRead::GetUnitLosState(lua_State* L)
 		return 0;
 	}
 
-	int allyTeam = readAllyTeam;
-	if (readAllyTeam < 0) {
-		if (!fullRead) {
+	int allyTeam = ActiveReadAllyTeam();
+	if (ActiveReadAllyTeam() < 0) {
+		if (!ActiveFullRead()) {
 			return 0;
 		}
 		allyTeam = luaL_checkint(L, 2);
@@ -3218,7 +3206,7 @@ int LuaSyncedRead::GetUnitLosState(lua_State* L)
 	}
 	const unsigned short losStatus = unit->losStatus[allyTeam];
 
-	if (fullRead && lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
+	if (ActiveFullRead() && lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
 		lua_pushnumber(L, losStatus); // return a numeric value
 		return 1;
 	}
@@ -3254,13 +3242,13 @@ int LuaSyncedRead::GetUnitSeparation(lua_State* L)
 	if (IsAllyUnit(unit1)) {
 		pos1 = unit1->midPos;
 	} else {
-		pos1 = helper->GetUnitErrorPos(unit1, readAllyTeam);
+		pos1 = helper->GetUnitErrorPos(unit1, ActiveReadAllyTeam());
 	}
 	float3 pos2;
 	if (IsAllyUnit(unit1)) {
 		pos2 = unit2->midPos;
 	} else {
-		pos2 = helper->GetUnitErrorPos(unit2, readAllyTeam);
+		pos2 = helper->GetUnitErrorPos(unit2, ActiveReadAllyTeam());
 	}
 
 	float dist;
@@ -3538,6 +3526,9 @@ int LuaSyncedRead::GetUnitCommands(lua_State* L)
 		luaL_error(L,
 			"Incorrect arguments to GetUnitCommands(unitID [, count])");
 	}
+
+	GML_STDMUTEX_LOCK(cai); // GetUnitCommands
+
 	const CCommandAI* commandAI = unit->commandAI;
 	if (commandAI == NULL) {
 		return 0;
@@ -3573,6 +3564,9 @@ int LuaSyncedRead::GetFactoryCommands(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
+
+	GML_STDMUTEX_LOCK(cai); // GetFactoryCommands
+
 	const CCommandAI* commandAI = unit->commandAI;
 	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
 	if (!factoryCAI) {
@@ -3664,6 +3658,8 @@ int LuaSyncedRead::GetFactoryCounts(lua_State* L)
 		return 0;
 	}
 
+	GML_STDMUTEX_LOCK(cai); // GetFactoryCounts
+
 	const CCommandAI* commandAI = unit->commandAI;
 	const CFactoryCAI* factoryCAI = dynamic_cast<const CFactoryCAI*>(commandAI);
 	if (!factoryCAI) {
@@ -3705,6 +3701,9 @@ int LuaSyncedRead::GetCommandQueue(lua_State* L)
 		luaL_error(L,
 			"Incorrect arguments to GetCommandQueue(unitID [, count])");
 	}
+
+	GML_STDMUTEX_LOCK(cai); // GetCommandQueue
+
 	const CCommandAI* commandAI = unit->commandAI;
 	if (commandAI == NULL) {
 		return 0;
@@ -3813,12 +3812,16 @@ static int PackBuildQueue(lua_State* L, bool canBuild, const char* caller)
 
 int LuaSyncedRead::GetFullBuildQueue(lua_State* L)
 {
+	GML_STDMUTEX_LOCK(cai); // GetFullBuildQueue
+
 	return PackBuildQueue(L, false, __FUNCTION__);
 }
 
 
 int LuaSyncedRead::GetRealBuildQueue(lua_State* L)
 {
+	GML_STDMUTEX_LOCK(cai); // GetRealBuildQueue
+
 	return PackBuildQueue(L, true, __FUNCTION__);
 }
 
@@ -3832,23 +3835,21 @@ int LuaSyncedRead::GetUnitRulesParams(lua_State* L)
 		return 0;
 	}
 
-	const CLuaRules* lr = (const CLuaRules*)CLuaHandle::GetActiveHandle();
-
 	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
 
 	if (IsAllyUnit(unit) || game->gameOver) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
-	else if (teamHandler->AlliedTeams(unit->team, lr->GetReadTeam()) || ((readAllyTeam < 0) && fullRead)) {
+	else if (teamHandler->AlliedTeams(unit->team, CLuaHandle::GetReadTeam(L)) || ((ActiveReadAllyTeam() < 0) && ActiveFullRead())) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	}
-	else if (readAllyTeam < 0) {
+	else if (ActiveReadAllyTeam() < 0) {
 		//! NoAccessTeam
 	}
-	else if (unit->losStatus[readAllyTeam] & LOS_INLOS) {
+	else if (unit->losStatus[ActiveReadAllyTeam()] & LOS_INLOS) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_INLOS_MASK;
 	}
-	else if (unit->losStatus[readAllyTeam] & LOS_INRADAR) {
+	else if (unit->losStatus[ActiveReadAllyTeam()] & LOS_INRADAR) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR_MASK;
 	}
 
@@ -3866,23 +3867,21 @@ int LuaSyncedRead::GetUnitRulesParam(lua_State* L)
 		return 0;
 	}
 
-	const CLuaRules* lr = (const CLuaRules*)CLuaHandle::GetActiveHandle();
-
 	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
 
 	if (IsAllyUnit(unit) || game->gameOver) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 	}
-	else if (teamHandler->AlliedTeams(unit->team, lr->GetReadTeam()) || ((readAllyTeam < 0) && fullRead)) {
+	else if (teamHandler->AlliedTeams(unit->team, CLuaHandle::GetReadTeam(L)) || ((ActiveReadAllyTeam() < 0) && ActiveFullRead())) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
 	}
-	else if (readAllyTeam < 0) {
+	else if (ActiveReadAllyTeam() < 0) {
 		//! NoAccessTeam
 	}
-	else if (unit->losStatus[readAllyTeam] & LOS_INLOS) {
+	else if (unit->losStatus[ActiveReadAllyTeam()] & LOS_INLOS) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_INLOS_MASK;
 	}
-	else if (unit->losStatus[readAllyTeam] & LOS_INRADAR) {
+	else if (unit->losStatus[ActiveReadAllyTeam()] & LOS_INRADAR) {
 		losMask |= LuaRulesParams::RULESPARAMLOS_INRADAR_MASK;
 	}
 
@@ -3983,11 +3982,11 @@ static inline bool IsProjectileVisible(const ProjectileMapPair& pp)
 	const CProjectile* pro = pp.first;
 	const int proAllyteam = pp.second;
 
-	if (readAllyTeam < 0) {
-		return fullRead;
+	if (ActiveReadAllyTeam() < 0) {
+		return ActiveFullRead();
 	}
-	if ((readAllyTeam != proAllyteam) &&
-	    (!loshandler->InLos(pro->pos, readAllyTeam))) {
+	if ((ActiveReadAllyTeam() != proAllyteam) &&
+	    (!loshandler->InLos(pro->pos, ActiveReadAllyTeam()))) {
 		return false;
 	}
 	return true;
@@ -4033,7 +4032,7 @@ int LuaSyncedRead::GetAllFeatures(lua_State* L)
 	int count = 0;
 	const CFeatureSet& activeFeatures = featureHandler->GetActiveFeatures();
 	CFeatureSet::const_iterator fit;
-	if (fullRead) {
+	if (ActiveFullRead()) {
 		lua_createtable(L, activeFeatures.size(), 0);
 		for (fit = activeFeatures.begin(); fit != activeFeatures.end(); ++fit) {
 			lua_pushnumber(L, (*fit)->id);
@@ -4433,7 +4432,7 @@ static void ParseMapCoords(lua_State* L, const char* caller,
 
 int LuaSyncedRead::GetGroundBlocked(lua_State* L)
 {
-	if ((readAllyTeam < 0) && !fullRead) {
+	if ((ActiveReadAllyTeam() < 0) && !ActiveFullRead()) {
 		return 0;
 	}
 
@@ -4457,7 +4456,7 @@ int LuaSyncedRead::GetGroundBlocked(lua_State* L)
 
 			const CUnit* unit = dynamic_cast<const CUnit*>(s);
 			if (unit) {
-				if (fullRead || (unit->losStatus[readAllyTeam] & LOS_INLOS)) {
+				if (ActiveFullRead() || (unit->losStatus[ActiveReadAllyTeam()] & LOS_INLOS)) {
 					HSTR_PUSH(L, "unit");
 					lua_pushnumber(L, unit->id);
 					return 2;
@@ -4517,7 +4516,7 @@ int LuaSyncedRead::TestBuildOrder(lua_State* L)
 	bi.pos = helper->Pos2BuildPos(bi);
 	CFeature* feature;
 	// negative allyTeam values have full visibility in TestUnitBuildSquare()
-	int retval = uh->TestUnitBuildSquare(bi, feature, readAllyTeam);
+	int retval = uh->TestUnitBuildSquare(bi, feature, ActiveReadAllyTeam());
 	// 0 - blocked
 	// 1 - mobile unit in the way
 	// 2 - free  (or if feature is != 0 then with a
@@ -4559,10 +4558,10 @@ int LuaSyncedRead::Pos2BuildPos(lua_State* L)
 static int GetEffectiveLosAllyTeam(lua_State* L, int arg)
 {
 	if (lua_isnoneornil(L, arg)) {
-		return readAllyTeam;
+		return ActiveReadAllyTeam();
 	}
-	const bool isGaia = (readAllyTeam == teamHandler->GaiaAllyTeamID());
-	if (fullRead || isGaia) {
+	const bool isGaia = (ActiveReadAllyTeam() == teamHandler->GaiaAllyTeamID());
+	if (ActiveFullRead() || isGaia) {
 		const int at = luaL_checkint(L, arg);
 		if (at >= teamHandler->ActiveAllyTeams()) {
 			luaL_error(L, "Invalid allyTeam");
@@ -4572,10 +4571,10 @@ static int GetEffectiveLosAllyTeam(lua_State* L, int arg)
 		}
 		return at;
 	}
-	else if (readAllyTeam < 0) {
+	else if (ActiveReadAllyTeam() < 0) {
 		luaL_error(L, "Invalid access");
 	}
-	return readAllyTeam;
+	return ActiveReadAllyTeam();
 }
 
 

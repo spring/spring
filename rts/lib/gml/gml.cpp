@@ -9,9 +9,11 @@
 
 // GML works by "patching" all OpenGL calls. It is injected via a #include "gml.h" statement located in myGL.h.
 // All files that need GL should therefore include myGL.h. INCLUDING gl.h, glu.h, glext.h ... IS FORBIDDEN.
-// When a client thread (gmlThreadNumber > 0) executes a GL call, it is redirected into a queue.
+// When a client thread (gmlThreadNumber > 2) executes a GL call, it is redirected into a queue.
 // The server thread (gmlThreadNumber = 0) will then consume GL calls from the queues of each thread.
 // When the server thread makes a GL call, it calls directly into OpenGL of course.
+// The game load thread (gmlThreadNumber = 1) can also make GL calls.
+// The sim thread (gmlThreadNumber = 2) is allowed to make GL calls only if GML_SHARE_LISTS is enabled.
 
 // Since a single server thread makes all GL calls, there is no point in multithreading code that contains
 // lots of GL calls but almost no CPU intensive calculations. Also, there is no point in multithreading
@@ -35,11 +37,15 @@
 #include "StdAfx.h"
 
 #ifdef USE_GML
+
+#include <GL/glew.h>
 #include "gmlcls.h"
+#include "gmlque.h"
+
 #include "LogOutput.h"
 
 const char *gmlProfMutex = "lua";
-unsigned drawCallInTime = 0;
+unsigned gmlLockTime = 0;
 
 #define EXEC_RUN (BYTE *)NULL
 #define EXEC_SYNC (BYTE *)-1
@@ -168,8 +174,6 @@ EXTERN inline GLhandleARB glCreateShaderObjectARB_GEOMETRY_EXT() {
 }
 gmlQueue gmlQueues[GML_MAX_NUM_THREADS];
 
-boost::thread *gmlThreads[GML_MAX_NUM_THREADS];
-
 gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_VERTEX(&glCreateShader_VERTEX, 2, 0);
 gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_FRAGMENT(&glCreateShader_FRAGMENT, 2, 0);
 gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_GEOMETRY_EXT(&glCreateShader_GEOMETRY_EXT, 2, 0);
@@ -211,7 +215,6 @@ gmlMultiItemServer<GLuint, GLsizei, void (GML_GLAPIENTRY *)(GLsizei, GLuint *)> 
 boost::mutex caimutex;
 boost::mutex decalmutex;
 boost::mutex treemutex;
-boost::mutex modelmutex;
 boost::mutex mapmutex;
 boost::mutex inmapmutex;
 boost::mutex tempmutex;
@@ -225,17 +228,27 @@ boost::mutex watermutex;
 boost::mutex dquemutex;
 boost::mutex scarmutex;
 boost::mutex trackmutex;
-boost::mutex projmutex;
 boost::mutex rprojmutex;
 boost::mutex rflashmutex;
 boost::mutex rpiecemutex;
 boost::mutex rfeatmutex;
 boost::mutex drawmutex;
+boost::mutex recvmutex;
+boost::mutex ulbatchmutex;
+boost::mutex flbatchmutex;
+boost::mutex olbatchmutex;
+boost::mutex plbatchmutex;
+boost::mutex glbatchmutex;
+boost::mutex mlbatchmutex;
+boost::mutex cmdmutex;
+boost::mutex luauimutex;
+boost::mutex xcallmutex;
+boost::mutex blockmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 boost::recursive_mutex unitmutex;
 boost::recursive_mutex selmutex;
-boost::recursive_mutex &luamutex=selmutex;
+//boost::recursive_mutex luamutex;
 boost::recursive_mutex quadmutex;
 boost::recursive_mutex featmutex;
 boost::recursive_mutex grassmutex;
@@ -245,10 +258,20 @@ boost::recursive_mutex &qnummutex=quadmutex;
 boost::recursive_mutex &groupmutex=selmutex;
 boost::recursive_mutex &grpselmutex=selmutex;
 boost::recursive_mutex laycmdmutex;
+//boost::recursive_mutex luadrawmutex;
+boost::recursive_mutex projmutex;
+boost::recursive_mutex objmutex;
+boost::recursive_mutex modelmutex;
 
 gmlMutex simmutex;
+
+#if GML_DEBUG_MUTEX
+boost::mutex lmmutex;
+std::map<std::string, int> lockmaps[GML_MAX_NUM_THREADS];
+std::map<boost::recursive_mutex *, int> lockmmaps[GML_MAX_NUM_THREADS];
 #endif
 
+#endif
 // GMLqueue implementation
 gmlQueue::gmlQueue():
 ReadPos(0),WritePos(0),WriteSize(0),Read(0),Write(0),Locked1(FALSE),Locked2(FALSE),Reloc(FALSE),Sync(EXEC_RUN),WasSynced(FALSE),
@@ -709,7 +732,7 @@ const char *gmlNOPDummy=(gmlFunctionNames[GML_NOP]="gmlNOP");
 gmlItemSequenceServer<GLuint, GLsizei,GLuint (GML_GLAPIENTRY *)(GLsizei)> gmlListServer(&glGenLists, &gmlDeleteLists, 100, 25, 20, 5);
 
 #if GML_CALL_DEBUG
-lua_State *gmlCurrentLuaState = NULL;
+lua_State *gmlCurrentLuaStates[GML_MAX_NUM_THREADS] = { NULL };
 #endif
 
 // queue handler - exequtes one GL command from queue (pointed to by p)
