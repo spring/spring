@@ -9,7 +9,7 @@
 
 #include <string>
 
-template<class action_t> class IActionExecutor
+template<class action_t, bool synced_v> class IActionExecutor
 {
 protected:
 	IActionExecutor(const std::string& command, bool cheatRequired = false)
@@ -26,6 +26,11 @@ public:
 	const std::string& GetCommand() const { return command; }
 
 	/**
+	 * Returns whether this executor handles synced or unsynced commands.
+	 */
+	bool IsSynced() const { return synced_v; }
+
+	/**
 	 * Returns the command string that is unique for this executor.
 	 */
 	bool IsCheatRequired() const { return cheatRequired; }
@@ -38,10 +43,9 @@ public:
 		//assert(action.GetAction().command == GetCommand());
 
 		if (IsCheatRequired() && !gs->cheatEnabled) {
-//			logOutput.Print("Chat command /%s (%s) requires /cheat",
-//					GetCommand().c_str(),
-//					(IsSynced() ? "synced" : "unsynced"));
-			logOutput.Print("Chat command /%s requires /cheat", GetCommand().c_str());
+			logOutput.Print("Chat command /%s (%s) requires /cheat",
+					GetCommand().c_str(),
+					(IsSynced() ? "synced" : "unsynced"));
 		} else {
 			Execute(action);
 		}

@@ -42,11 +42,11 @@ private:
 };
 
 
-class IUnsyncedActionExecutor : public IActionExecutor<UnsyncedAction>
+class IUnsyncedActionExecutor : public IActionExecutor<UnsyncedAction, false>
 {
 protected:
 	IUnsyncedActionExecutor(const std::string& command, bool cheatRequired = false)
-		: IActionExecutor<UnsyncedAction>(command, cheatRequired)
+		: IActionExecutor<UnsyncedAction, false>(command, cheatRequired)
 	{}
 
 public:
