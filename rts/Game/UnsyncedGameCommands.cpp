@@ -975,14 +975,12 @@ public:
 
 class TeamActionExecutor : public IUnsyncedActionExecutor {
 public:
-	TeamActionExecutor() : IUnsyncedActionExecutor("Team") {}
+	TeamActionExecutor() : IUnsyncedActionExecutor("Team", true) {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (gs->cheatEnabled) {
-			const int teamId = atoi(action.GetArgs().c_str());
-			if (teamHandler->IsValidTeam(teamId)) {
-				net->Send(CBaseNetProtocol::Get().SendJoinTeam(gu->myPlayerNum, teamId));
-			}
+		const int teamId = atoi(action.GetArgs().c_str());
+		if (teamHandler->IsValidTeam(teamId)) {
+			net->Send(CBaseNetProtocol::Get().SendJoinTeam(gu->myPlayerNum, teamId));
 		}
 	}
 };
@@ -1786,13 +1784,11 @@ public:
 
 class ShowPathHeatActionExecutor : public IUnsyncedActionExecutor {
 public:
-	ShowPathHeatActionExecutor() : IUnsyncedActionExecutor("ShowPathHeat") {}
+	ShowPathHeatActionExecutor() : IUnsyncedActionExecutor("ShowPathHeat", true) {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (gs->cheatEnabled) {
-			CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-			gd->TogglePathHeatTexture();
-		}
+		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		gd->TogglePathHeatTexture();
 	}
 };
 
@@ -1800,13 +1796,11 @@ public:
 
 class ShowPathCostActionExecutor : public IUnsyncedActionExecutor {
 public:
-	ShowPathCostActionExecutor() : IUnsyncedActionExecutor("ShowPathCost") {}
+	ShowPathCostActionExecutor() : IUnsyncedActionExecutor("ShowPathCost", true) {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (gs->cheatEnabled) {
-			CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-			gd->TogglePathCostTexture();
-		}
+		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+		gd->TogglePathCostTexture();
 	}
 };
 
@@ -2287,18 +2281,16 @@ public:
 
 class AllMapMarksActionExecutor : public IUnsyncedActionExecutor {
 public:
-	AllMapMarksActionExecutor() : IUnsyncedActionExecutor("AllMapMarks") {}
+	AllMapMarksActionExecutor() : IUnsyncedActionExecutor("AllMapMarks", true) {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (gs->cheatEnabled) {
-			bool allMarksVisible;
-			if (action.GetArgs().empty()) {
-				allMarksVisible = !inMapDrawerModel->GetAllMarksVisible();
-			} else {
-				allMarksVisible = !!atoi(action.GetArgs().c_str());
-			}
-			inMapDrawerModel->SetAllMarksVisible(allMarksVisible);
+		bool allMarksVisible;
+		if (action.GetArgs().empty()) {
+			allMarksVisible = !inMapDrawerModel->GetAllMarksVisible();
+		} else {
+			allMarksVisible = !!atoi(action.GetArgs().c_str());
 		}
+		inMapDrawerModel->SetAllMarksVisible(allMarksVisible);
 	}
 };
 
@@ -2606,13 +2598,11 @@ public:
 
 class CrashActionExecutor : public IUnsyncedActionExecutor {
 public:
-	CrashActionExecutor() : IUnsyncedActionExecutor("Crash") {}
+	CrashActionExecutor() : IUnsyncedActionExecutor("Crash", true) {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (gs->cheatEnabled) {
-			int *a=0;
-			*a=0;
-		}
+		int *a=0;
+		*a=0;
 	}
 };
 
@@ -2620,12 +2610,10 @@ public:
 
 class ExceptionActionExecutor : public IUnsyncedActionExecutor {
 public:
-	ExceptionActionExecutor() : IUnsyncedActionExecutor("Exception") {}
+	ExceptionActionExecutor() : IUnsyncedActionExecutor("Exception", true) {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (gs->cheatEnabled) {
-			throw std::runtime_error("Exception test");
-		}
+		throw std::runtime_error("Exception test");
 	}
 };
 
@@ -2633,13 +2621,11 @@ public:
 
 class DivByZeroActionExecutor : public IUnsyncedActionExecutor {
 public:
-	DivByZeroActionExecutor() : IUnsyncedActionExecutor("DivByZero") {}
+	DivByZeroActionExecutor() : IUnsyncedActionExecutor("DivByZero", true) {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (gs->cheatEnabled) {
-			float a = 0;
-			logOutput.Print("Result: %f", 1.0f/a);
-		}
+		float a = 0;
+		logOutput.Print("Result: %f", 1.0f/a);
 	}
 };
 
@@ -2647,39 +2633,37 @@ public:
 
 class GiveActionExecutor : public IUnsyncedActionExecutor {
 public:
-	GiveActionExecutor() : IUnsyncedActionExecutor("Give") {}
+	GiveActionExecutor() : IUnsyncedActionExecutor("Give", true) {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (gs->cheatEnabled) {
-			if (action.GetArgs().find('@') == string::npos) {
-				CInputReceiver* ir = NULL;
-				if (!game->hideInterface) {
-					ir = CInputReceiver::GetReceiverAt(mouse->lastx, mouse->lasty);
-				}
-
-				float3 givePos;
-				if (ir == minimap) {
-					givePos = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
-				} else {
-					const float3& pos = camera->pos;
-					const float3& dir = mouse->dir;
-					const float dist = ground->LineGroundCol(pos, pos + (dir * 30000.0f));
-					givePos = pos + (dir * dist);
-				}
-
-				char message[256];
-				SNPRINTF(message, sizeof(message),
-						"%s %s @%.0f,%.0f,%.0f",
-						GetCommand().c_str(), action.GetArgs().c_str(),
-						givePos.x, givePos.y, givePos.z);
-
-				CommandMessage pckt(message, gu->myPlayerNum);
-				net->Send(pckt.Pack());
-			} else {
-				// forward (as synced command)
-				CommandMessage pckt(action.GetInnerAction(), gu->myPlayerNum);
-				net->Send(pckt.Pack());
+		if (action.GetArgs().find('@') == string::npos) {
+			CInputReceiver* ir = NULL;
+			if (!game->hideInterface) {
+				ir = CInputReceiver::GetReceiverAt(mouse->lastx, mouse->lasty);
 			}
+
+			float3 givePos;
+			if (ir == minimap) {
+				givePos = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
+			} else {
+				const float3& pos = camera->pos;
+				const float3& dir = mouse->dir;
+				const float dist = ground->LineGroundCol(pos, pos + (dir * 30000.0f));
+				givePos = pos + (dir * dist);
+			}
+
+			char message[256];
+			SNPRINTF(message, sizeof(message),
+					"%s %s @%.0f,%.0f,%.0f",
+					GetCommand().c_str(), action.GetArgs().c_str(),
+					givePos.x, givePos.y, givePos.z);
+
+			CommandMessage pckt(message, gu->myPlayerNum);
+			net->Send(pckt.Pack());
+		} else {
+			// forward (as synced command)
+			CommandMessage pckt(action.GetInnerAction(), gu->myPlayerNum);
+			net->Send(pckt.Pack());
 		}
 	}
 };
@@ -2688,21 +2672,19 @@ public:
 
 class DestroyActionExecutor : public IUnsyncedActionExecutor {
 public:
-	DestroyActionExecutor() : IUnsyncedActionExecutor("Destroy") {}
+	DestroyActionExecutor() : IUnsyncedActionExecutor("Destroy", true) {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (gs->cheatEnabled) {
-			// kill selected units
-			std::stringstream ss;
-			ss << GetCommand();
-			for (CUnitSet::iterator it = selectedUnits.selectedUnits.begin();
-					it != selectedUnits.selectedUnits.end(); ++it)
-			{
-				ss << " " << (*it)->id;
-			}
-			CommandMessage pckt(ss.str(), gu->myPlayerNum);
-			net->Send(pckt.Pack());
+		// kill selected units
+		std::stringstream ss;
+		ss << GetCommand();
+		for (CUnitSet::iterator it = selectedUnits.selectedUnits.begin();
+				it != selectedUnits.selectedUnits.end(); ++it)
+		{
+			ss << " " << (*it)->id;
 		}
+		CommandMessage pckt(ss.str(), gu->myPlayerNum);
+		net->Send(pckt.Pack());
 	}
 };
 
