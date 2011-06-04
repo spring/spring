@@ -12,8 +12,10 @@
 template<class action_t, bool synced_v> class IActionExecutor
 {
 protected:
-	IActionExecutor(const std::string& command, bool cheatRequired = false)
+	IActionExecutor(const std::string& command,
+			const std::string& description = "", bool cheatRequired = false)
 		: command(command)
+		, description(description)
 		, cheatRequired(cheatRequired)
 	{}
 
@@ -24,6 +26,13 @@ public:
 	 * Returns the command string that is unique for this executor.
 	 */
 	const std::string& GetCommand() const { return command; }
+
+	/**
+	 * Returns a human readable description of the command handled by this
+	 * executor.
+	 * This text will eventually be shown to end-users of the engine (gamers).
+	 */
+	const std::string& GetDescription() const { return description; }
 
 	/**
 	 * Returns whether this executor handles synced or unsynced commands.
@@ -59,6 +68,7 @@ protected:
 
 private:
 	std::string command;
+	std::string description;
 	bool cheatRequired;
 };
 

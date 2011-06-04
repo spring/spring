@@ -35,8 +35,11 @@ private:
 class ISyncedActionExecutor : public IActionExecutor<SyncedAction, true>
 {
 protected:
+	ISyncedActionExecutor(const std::string& command, const std::string& description, bool cheatRequired = false)
+		: IActionExecutor<SyncedAction, true>(command, description, cheatRequired)
+	{}
 	ISyncedActionExecutor(const std::string& command, bool cheatRequired = false)
-		: IActionExecutor<SyncedAction, true>(command, cheatRequired)
+		: IActionExecutor<SyncedAction, true>(command, "", cheatRequired)
 	{}
 
 public:
