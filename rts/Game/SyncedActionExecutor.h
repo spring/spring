@@ -32,11 +32,11 @@ private:
 	int playerID;
 };
 
-class ISyncedActionExecutor : public IActionExecutor<SyncedAction>
+class ISyncedActionExecutor : public IActionExecutor<SyncedAction, true>
 {
 protected:
 	ISyncedActionExecutor(const std::string& command, bool cheatRequired = false)
-		: IActionExecutor<SyncedAction>(command, cheatRequired)
+		: IActionExecutor<SyncedAction, true>(command, cheatRequired)
 	{}
 
 public:
