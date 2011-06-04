@@ -75,6 +75,8 @@ CallInsList = {
   "Explosion",
   "ShockFront",
 
+  "AICallIn",
+
   "GameFrame",
   "CobCallback",
   "AllowCommand",

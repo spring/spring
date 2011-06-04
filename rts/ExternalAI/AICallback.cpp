@@ -13,6 +13,7 @@
 #include "Game/PlayerHandler.h"
 #include "Game/SelectedUnits.h"
 #include "Game/InMapDraw.h"
+#include "Game/UI/LuaUI.h"
 #include "Game/UI/MiniMap.h"
 #include "Lua/LuaRules.h"
 #include "Map/MapInfo.h"
@@ -1845,10 +1846,16 @@ const float3* CAICallback::GetStartPos()
 }
 
 
-const char* CAICallback::CallLuaRules(const char* data, int inSize)
-{
-	if (luaRules == NULL) {
-		return NULL;
+
+#define AICALLBACK_CALL_LUA(HandleName)                                              \
+	const char* CAICallback::CallLua ## HandleName(const char* inData, int inSize) { \
+		if (lua ## HandleName == NULL) {                                             \
+			return NULL;                                                             \
+		}                                                                            \
+		return lua ## HandleName->AICallIn(inData, inSize);                          \
 	}
-	return luaRules->AICallIn(data, inSize);
-}
+
+AICALLBACK_CALL_LUA(Rules)
+AICALLBACK_CALL_LUA(UI)
+
+#undef AICALLBACK_CALL_LUA
