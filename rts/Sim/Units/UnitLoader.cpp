@@ -22,8 +22,6 @@
 #include "CommandAI/MobileCAI.h"
 #include "CommandAI/TransportCAI.h"
 
-#include "ExternalAI/EngineOutHandler.h"
-
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
@@ -51,7 +49,6 @@
 #include "Sim/Weapons/TorpedoLauncher.h"
 
 #include "System/EventBatchHandler.h"
-#include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 #include "System/TimeProfiler.h"
@@ -136,8 +133,6 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, const float3& pos, int team,
 	}
 
 	unit->PostInit(builder);
-	eventHandler.UnitCreated(unit, builder);
-	eoh->UnitCreated(*unit, builder);
 	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).enqueue(EventBatchHandler::UD(unit, unit->isCloaked));
 
 	return unit;
