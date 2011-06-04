@@ -159,7 +159,7 @@ public:
 	/**
 	* @brief definition editing enabled
 	*
-	* Whether definition editing is enabled
+	* Whether editing of unit-, feature- and weapon-defs through Lua is enabled.
 	*/
 	bool editDefsEnabled;
 
