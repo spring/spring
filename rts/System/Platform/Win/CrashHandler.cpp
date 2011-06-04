@@ -149,7 +149,13 @@ static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hT
 			mov [c.Esp], esp;
 		}
 #else
-		// FIXME
+		DWORD eip, esp, ebp;
+		__asm__ __volatile__ ("call func; func: pop %%eax; mov %%eax, %0;" : "=m" (eip) : : "%eax" );
+		__asm__ __volatile__ ("mov %%ebp, %0;" : "=m" (ebp) : : );
+		__asm__ __volatile__ ("mov %%esp, %0;" : "=m" (esp) : : );
+		c.Eip=eip;
+		c.Ebp=ebp;
+		c.Esp=esp;
 #endif
 #else
 		RtlCaptureContext( &c );
