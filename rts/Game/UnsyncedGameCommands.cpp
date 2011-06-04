@@ -71,6 +71,12 @@
 #include "System/Sound/SoundChannels.h"
 #include "System/Util.h"
 
+
+UnsyncedGameCommands::~UnsyncedGameCommands() {
+	RemoveAllActionExecutors();
+}
+
+
 static std::vector<std::string> _local_strSpaceTokenize(const std::string& text) {
 	static const char* const SPACE_DELIMS = " \t";
 
@@ -1142,13 +1148,13 @@ public:
 		}
 	}
 
-	static void RegisterCommandVariants(CGame* game) {
+	static void RegisterCommandVariants() {
 		using namespace unsyncedActionExecutors;
 
-		game->RegisterUnsyncedActionExecutor(new ChatActionExecutor("Chat",     "",   false));
-		game->RegisterUnsyncedActionExecutor(new ChatActionExecutor("ChatAll",  "",   true));
-		game->RegisterUnsyncedActionExecutor(new ChatActionExecutor("ChatAlly", "a:", true));
-		game->RegisterUnsyncedActionExecutor(new ChatActionExecutor("ChatSpec", "s:", true));
+		unsyncedGameCommands->AddActionExecutor(new ChatActionExecutor("Chat",     "",   false));
+		unsyncedGameCommands->AddActionExecutor(new ChatActionExecutor("ChatAll",  "",   true));
+		unsyncedGameCommands->AddActionExecutor(new ChatActionExecutor("ChatAlly", "a:", true));
+		unsyncedGameCommands->AddActionExecutor(new ChatActionExecutor("ChatSpec", "s:", true));
 	}
 
 private:
@@ -2794,6 +2800,7 @@ public:
 
 
 
+// TODO CGame stuff in UnsyncedGameCommands: refactor (or move)
 bool CGame::ActionReleased(const Action& action)
 {
 	const string& cmd = action.command;
@@ -2853,172 +2860,255 @@ bool CGame::ActionReleased(const Action& action)
 }
 
 
-void UnsyncedGameCommands::RegisterDefaultExecutors(CGame* game) {
+
+
+void UnsyncedGameCommands::AddActionExecutor(IUnsyncedActionExecutor* executor)
+{
+	const std::string commandLower = StringToLower(executor->GetCommand());
+	const std::map<std::string, IUnsyncedActionExecutor*>::const_iterator aei
+			= actionExecutors.find(commandLower);
+
+	if (aei != actionExecutors.end()) {
+		throw std::logic_error("Tried to register a duplicate UnsyncedActionExecutor for command: " + commandLower);
+	} else {
+		actionExecutors[commandLower] = executor;
+	}
+}
+
+void UnsyncedGameCommands::RemoveActionExecutor(const std::string& command)
+{
+	const std::string commandLower = StringToLower(command);
+	const std::map<std::string, IUnsyncedActionExecutor*>::iterator aei
+			= actionExecutors.find(commandLower);
+
+	if (aei != actionExecutors.end()) {
+		// an executor for this command is registered
+		// -> remove and delete
+		IUnsyncedActionExecutor* executor = aei->second;
+		actionExecutors.erase(aei);
+		delete executor;
+	}
+}
+
+void UnsyncedGameCommands::RemoveAllActionExecutors()
+{
+	// by copy - clear - delete in copy,
+	// we ensure that no deleted executor may be used.
+	std::map<std::string, IUnsyncedActionExecutor*> actionExecutorsCopy = actionExecutors;
+	actionExecutors.clear();
+	std::map<std::string, IUnsyncedActionExecutor*>::iterator aei;
+	for (aei = actionExecutorsCopy.begin(); aei != actionExecutorsCopy.end(); ++aei) {
+		SafeDelete(aei->second);
+	}
+}
+
+const IUnsyncedActionExecutor* UnsyncedGameCommands::GetActionExecutor(const std::string& command) const
+{
+	const IUnsyncedActionExecutor* executor = NULL;
+
+	const std::string commandLower = StringToLower(command);
+	const std::map<std::string, IUnsyncedActionExecutor*>::const_iterator aei
+			= actionExecutors.find(commandLower);
+
+	if (aei != actionExecutors.end()) {
+		// an executor for this command is registered
+		executor = aei->second;
+	}
+
+	return executor;
+}
+
+
+void UnsyncedGameCommands::AddDefaultActionExecutors() {
 
 	using namespace unsyncedActionExecutors;
 
-	game->RegisterUnsyncedActionExecutor(new SelectActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new SelectUnitsActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new SelectCycleActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new DeselectActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new ShadowsActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new WaterActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new AdvModelShadingActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new AdvMapShadingActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new SayActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new SayPrivateActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new SayPrivateByPlayerIDActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new EchoActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new SetActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new SetOverlayActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new EnableDrawInMapActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new DrawLabelActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new MouseActionExecutor(1));
-	game->RegisterUnsyncedActionExecutor(new MouseActionExecutor(2));
-	game->RegisterUnsyncedActionExecutor(new MouseActionExecutor(3));
-	game->RegisterUnsyncedActionExecutor(new MouseActionExecutor(4));
-	game->RegisterUnsyncedActionExecutor(new MouseActionExecutor(5));
-	game->RegisterUnsyncedActionExecutor(new ViewSelectionActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new CameraMoveActionExecutor(0, "Forward"));
-	game->RegisterUnsyncedActionExecutor(new CameraMoveActionExecutor(1, "Back"));
-	game->RegisterUnsyncedActionExecutor(new CameraMoveActionExecutor(2, "Left"));
-	game->RegisterUnsyncedActionExecutor(new CameraMoveActionExecutor(3, "Right"));
-	game->RegisterUnsyncedActionExecutor(new CameraMoveActionExecutor(4, "Up"));
-	game->RegisterUnsyncedActionExecutor(new CameraMoveActionExecutor(5, "Down"));
-	game->RegisterUnsyncedActionExecutor(new CameraMoveActionExecutor(6, "Fast"));
-	game->RegisterUnsyncedActionExecutor(new CameraMoveActionExecutor(7, "Slow"));
-	game->RegisterUnsyncedActionExecutor(new AIKillReloadActionExecutor(true));
-	game->RegisterUnsyncedActionExecutor(new AIKillReloadActionExecutor(false));
-	game->RegisterUnsyncedActionExecutor(new AIControlActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new AIListActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new TeamActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new SpectatorActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new SpecTeamActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new SpecFullViewActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new AllyActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new GroupActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new GroupIDActionExecutor(0));
-	game->RegisterUnsyncedActionExecutor(new GroupIDActionExecutor(1));
-	game->RegisterUnsyncedActionExecutor(new GroupIDActionExecutor(2));
-	game->RegisterUnsyncedActionExecutor(new GroupIDActionExecutor(3));
-	game->RegisterUnsyncedActionExecutor(new GroupIDActionExecutor(4));
-	game->RegisterUnsyncedActionExecutor(new GroupIDActionExecutor(5));
-	game->RegisterUnsyncedActionExecutor(new GroupIDActionExecutor(6));
-	game->RegisterUnsyncedActionExecutor(new GroupIDActionExecutor(7));
-	game->RegisterUnsyncedActionExecutor(new GroupIDActionExecutor(8));
-	game->RegisterUnsyncedActionExecutor(new GroupIDActionExecutor(9));
-	game->RegisterUnsyncedActionExecutor(new LastMessagePositionActionExecutor());
-	ChatActionExecutor::RegisterCommandVariants(game);
-	game->RegisterUnsyncedActionExecutor(new TrackActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new TrackOffActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new TrackModeActionExecutor());
+	AddActionExecutor(new SelectActionExecutor());
+	AddActionExecutor(new SelectUnitsActionExecutor());
+	AddActionExecutor(new SelectCycleActionExecutor());
+	AddActionExecutor(new DeselectActionExecutor());
+	AddActionExecutor(new ShadowsActionExecutor());
+	AddActionExecutor(new WaterActionExecutor());
+	AddActionExecutor(new AdvModelShadingActionExecutor());
+	AddActionExecutor(new AdvMapShadingActionExecutor());
+	AddActionExecutor(new SayActionExecutor());
+	AddActionExecutor(new SayPrivateActionExecutor());
+	AddActionExecutor(new SayPrivateByPlayerIDActionExecutor());
+	AddActionExecutor(new EchoActionExecutor());
+	AddActionExecutor(new SetActionExecutor());
+	AddActionExecutor(new SetOverlayActionExecutor());
+	AddActionExecutor(new EnableDrawInMapActionExecutor());
+	AddActionExecutor(new DrawLabelActionExecutor());
+	AddActionExecutor(new MouseActionExecutor(1));
+	AddActionExecutor(new MouseActionExecutor(2));
+	AddActionExecutor(new MouseActionExecutor(3));
+	AddActionExecutor(new MouseActionExecutor(4));
+	AddActionExecutor(new MouseActionExecutor(5));
+	AddActionExecutor(new ViewSelectionActionExecutor());
+	AddActionExecutor(new CameraMoveActionExecutor(0, "Forward"));
+	AddActionExecutor(new CameraMoveActionExecutor(1, "Back"));
+	AddActionExecutor(new CameraMoveActionExecutor(2, "Left"));
+	AddActionExecutor(new CameraMoveActionExecutor(3, "Right"));
+	AddActionExecutor(new CameraMoveActionExecutor(4, "Up"));
+	AddActionExecutor(new CameraMoveActionExecutor(5, "Down"));
+	AddActionExecutor(new CameraMoveActionExecutor(6, "Fast"));
+	AddActionExecutor(new CameraMoveActionExecutor(7, "Slow"));
+	AddActionExecutor(new AIKillReloadActionExecutor(true));
+	AddActionExecutor(new AIKillReloadActionExecutor(false));
+	AddActionExecutor(new AIControlActionExecutor());
+	AddActionExecutor(new AIListActionExecutor());
+	AddActionExecutor(new TeamActionExecutor());
+	AddActionExecutor(new SpectatorActionExecutor());
+	AddActionExecutor(new SpecTeamActionExecutor());
+	AddActionExecutor(new SpecFullViewActionExecutor());
+	AddActionExecutor(new AllyActionExecutor());
+	AddActionExecutor(new GroupActionExecutor());
+	AddActionExecutor(new GroupIDActionExecutor(0));
+	AddActionExecutor(new GroupIDActionExecutor(1));
+	AddActionExecutor(new GroupIDActionExecutor(2));
+	AddActionExecutor(new GroupIDActionExecutor(3));
+	AddActionExecutor(new GroupIDActionExecutor(4));
+	AddActionExecutor(new GroupIDActionExecutor(5));
+	AddActionExecutor(new GroupIDActionExecutor(6));
+	AddActionExecutor(new GroupIDActionExecutor(7));
+	AddActionExecutor(new GroupIDActionExecutor(8));
+	AddActionExecutor(new GroupIDActionExecutor(9));
+	AddActionExecutor(new LastMessagePositionActionExecutor());
+	ChatActionExecutor::RegisterCommandVariants();
+	AddActionExecutor(new TrackActionExecutor());
+	AddActionExecutor(new TrackOffActionExecutor());
+	AddActionExecutor(new TrackModeActionExecutor());
 #ifdef USE_GML
-	game->RegisterUnsyncedActionExecutor(new ShowHealthBarsActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new ShowRezurectionBarsActionExecutor());
+	AddActionExecutor(new ShowHealthBarsActionExecutor());
+	AddActionExecutor(new ShowRezurectionBarsActionExecutor());
 #endif // USE_GML
-	game->RegisterUnsyncedActionExecutor(new PauseActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new DebugActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new NoSoundActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new SoundChannelEnableActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new CreateVideoActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new DrawTreesActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new DynamicSkyActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new DynamicSunActionExecutor());
+	AddActionExecutor(new PauseActionExecutor());
+	AddActionExecutor(new DebugActionExecutor());
+	AddActionExecutor(new NoSoundActionExecutor());
+	AddActionExecutor(new SoundChannelEnableActionExecutor());
+	AddActionExecutor(new CreateVideoActionExecutor());
+	AddActionExecutor(new DrawTreesActionExecutor());
+	AddActionExecutor(new DynamicSkyActionExecutor());
+	AddActionExecutor(new DynamicSunActionExecutor());
 #ifdef USE_GML
-	game->RegisterUnsyncedActionExecutor(new MultiThreadDrawGroundActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new MultiThreadDrawGroundShadowActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new MultiThreadDrawUnitActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new MultiThreadDrawUnitShadowActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new MultiThreadDrawActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new MultiThreadSimActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new MultiThreadActionExecutor());
+	AddActionExecutor(new MultiThreadDrawGroundActionExecutor());
+	AddActionExecutor(new MultiThreadDrawGroundShadowActionExecutor());
+	AddActionExecutor(new MultiThreadDrawUnitActionExecutor());
+	AddActionExecutor(new MultiThreadDrawUnitShadowActionExecutor());
+	AddActionExecutor(new MultiThreadDrawActionExecutor());
+	AddActionExecutor(new MultiThreadSimActionExecutor());
+	AddActionExecutor(new MultiThreadActionExecutor());
 #endif // USE_GML
-	game->RegisterUnsyncedActionExecutor(new SpeedControlActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new GameInfoActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new HideInterfaceActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new HardwareCursorActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new IncreaseViewRadiusActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new DecreaseViewRadiusActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new MoreTreesActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new LessTreesActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new MoreCloudsActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new LessCloudsActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new SpeedUpActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new SlowDownActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new ControlUnitActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new ShowStandardActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new ShowElevationActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new ToggleRadarAndJammerActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new ShowMetalMapActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new ShowPathTraversabilityActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new ShowPathHeatActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new ShowPathCostActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new ToggleLOSActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new ShareDialogActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new QuitMessageActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new QuitMenuActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new QuitActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new AliasActionExecutor(new QuitActionExecutor(), "QuitForce"));
-	game->RegisterUnsyncedActionExecutor(new IncreaseGUIOpacityActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new DecreaseGUIOpacityActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new ScreenShotActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new GrabInputActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new ClockActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new CrossActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new FPSActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new SpeedActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new MTInfoActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new TeamHighlightActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new InfoActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new CmdColorsActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new CtrlPanelActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new FontActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new VSyncActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new SafeGLActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new ResBarActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new ToolTipActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new ConsoleActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new EndGraphActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new FPSHudActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new DebugDrawAIActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new MapMarksActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new AllMapMarksActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new ClearMapMarksActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new NoLuaDrawActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new LuaUIActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new LuaModUICtrlActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new MiniMapActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new GroundDecalsActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new MaxParticlesActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new MaxNanoParticlesActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new GatherModeActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new PasteTextActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new BufferTextActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new InputTextGeoActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new DistIconActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new DistDrawActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new LODScaleActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new WireMapActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new AirMeshActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new SetGammaActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new CrashActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new ExceptionActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new DivByZeroActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new GiveActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new DestroyActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new SendActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new SaveGameActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new SaveActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new ReloadGameActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new DebugInfoActionExecutor());
-	game->RegisterUnsyncedActionExecutor(new BenchmarkScriptActionExecutor());
+	AddActionExecutor(new SpeedControlActionExecutor());
+	AddActionExecutor(new GameInfoActionExecutor());
+	AddActionExecutor(new HideInterfaceActionExecutor());
+	AddActionExecutor(new HardwareCursorActionExecutor());
+	AddActionExecutor(new IncreaseViewRadiusActionExecutor());
+	AddActionExecutor(new DecreaseViewRadiusActionExecutor());
+	AddActionExecutor(new MoreTreesActionExecutor());
+	AddActionExecutor(new LessTreesActionExecutor());
+	AddActionExecutor(new MoreCloudsActionExecutor());
+	AddActionExecutor(new LessCloudsActionExecutor());
+	AddActionExecutor(new SpeedUpActionExecutor());
+	AddActionExecutor(new SlowDownActionExecutor());
+	AddActionExecutor(new ControlUnitActionExecutor());
+	AddActionExecutor(new ShowStandardActionExecutor());
+	AddActionExecutor(new ShowElevationActionExecutor());
+	AddActionExecutor(new ToggleRadarAndJammerActionExecutor());
+	AddActionExecutor(new ShowMetalMapActionExecutor());
+	AddActionExecutor(new ShowPathTraversabilityActionExecutor());
+	AddActionExecutor(new ShowPathHeatActionExecutor());
+	AddActionExecutor(new ShowPathCostActionExecutor());
+	AddActionExecutor(new ToggleLOSActionExecutor());
+	AddActionExecutor(new ShareDialogActionExecutor());
+	AddActionExecutor(new QuitMessageActionExecutor());
+	AddActionExecutor(new QuitMenuActionExecutor());
+	AddActionExecutor(new QuitActionExecutor());
+	AddActionExecutor(new AliasActionExecutor(new QuitActionExecutor(), "QuitForce"));
+	AddActionExecutor(new IncreaseGUIOpacityActionExecutor());
+	AddActionExecutor(new DecreaseGUIOpacityActionExecutor());
+	AddActionExecutor(new ScreenShotActionExecutor());
+	AddActionExecutor(new GrabInputActionExecutor());
+	AddActionExecutor(new ClockActionExecutor());
+	AddActionExecutor(new CrossActionExecutor());
+	AddActionExecutor(new FPSActionExecutor());
+	AddActionExecutor(new SpeedActionExecutor());
+	AddActionExecutor(new MTInfoActionExecutor());
+	AddActionExecutor(new TeamHighlightActionExecutor());
+	AddActionExecutor(new InfoActionExecutor());
+	AddActionExecutor(new CmdColorsActionExecutor());
+	AddActionExecutor(new CtrlPanelActionExecutor());
+	AddActionExecutor(new FontActionExecutor());
+	AddActionExecutor(new VSyncActionExecutor());
+	AddActionExecutor(new SafeGLActionExecutor());
+	AddActionExecutor(new ResBarActionExecutor());
+	AddActionExecutor(new ToolTipActionExecutor());
+	AddActionExecutor(new ConsoleActionExecutor());
+	AddActionExecutor(new EndGraphActionExecutor());
+	AddActionExecutor(new FPSHudActionExecutor());
+	AddActionExecutor(new DebugDrawAIActionExecutor());
+	AddActionExecutor(new MapMarksActionExecutor());
+	AddActionExecutor(new AllMapMarksActionExecutor());
+	AddActionExecutor(new ClearMapMarksActionExecutor());
+	AddActionExecutor(new NoLuaDrawActionExecutor());
+	AddActionExecutor(new LuaUIActionExecutor());
+	AddActionExecutor(new LuaModUICtrlActionExecutor());
+	AddActionExecutor(new MiniMapActionExecutor());
+	AddActionExecutor(new GroundDecalsActionExecutor());
+	AddActionExecutor(new MaxParticlesActionExecutor());
+	AddActionExecutor(new MaxNanoParticlesActionExecutor());
+	AddActionExecutor(new GatherModeActionExecutor());
+	AddActionExecutor(new PasteTextActionExecutor());
+	AddActionExecutor(new BufferTextActionExecutor());
+	AddActionExecutor(new InputTextGeoActionExecutor());
+	AddActionExecutor(new DistIconActionExecutor());
+	AddActionExecutor(new DistDrawActionExecutor());
+	AddActionExecutor(new LODScaleActionExecutor());
+	AddActionExecutor(new WireMapActionExecutor());
+	AddActionExecutor(new AirMeshActionExecutor());
+	AddActionExecutor(new SetGammaActionExecutor());
+	AddActionExecutor(new CrashActionExecutor());
+	AddActionExecutor(new ExceptionActionExecutor());
+	AddActionExecutor(new DivByZeroActionExecutor());
+	AddActionExecutor(new GiveActionExecutor());
+	AddActionExecutor(new DestroyActionExecutor());
+	AddActionExecutor(new SendActionExecutor());
+	AddActionExecutor(new SaveGameActionExecutor());
+	AddActionExecutor(new SaveActionExecutor());
+	AddActionExecutor(new ReloadGameActionExecutor());
+	AddActionExecutor(new DebugInfoActionExecutor());
+	AddActionExecutor(new BenchmarkScriptActionExecutor());
 	// XXX are these redirects really required?
-	game->RegisterUnsyncedActionExecutor(new RedirectToSyncedActionExecutor("ATM"));
+	AddActionExecutor(new RedirectToSyncedActionExecutor("ATM"));
 #ifdef DEBUG
-	game->RegisterUnsyncedActionExecutor(new RedirectToSyncedActionExecutor("Desync"));
+	AddActionExecutor(new RedirectToSyncedActionExecutor("Desync"));
 #endif
-	game->RegisterUnsyncedActionExecutor(new RedirectToSyncedActionExecutor("Resync"));
-	game->RegisterUnsyncedActionExecutor(new RedirectToSyncedActionExecutor("Take"));
-	game->RegisterUnsyncedActionExecutor(new RedirectToSyncedActionExecutor("LuaRules"));
-	game->RegisterUnsyncedActionExecutor(new RedirectToSyncedActionExecutor("LuaGaia"));
+	AddActionExecutor(new RedirectToSyncedActionExecutor("Resync"));
+	AddActionExecutor(new RedirectToSyncedActionExecutor("Take"));
+	AddActionExecutor(new RedirectToSyncedActionExecutor("LuaRules"));
+	AddActionExecutor(new RedirectToSyncedActionExecutor("LuaGaia"));
+}
+
+
+UnsyncedGameCommands* UnsyncedGameCommands::singleton = NULL;
+
+void UnsyncedGameCommands::CreateInstance() {
+
+	if (singleton == NULL) {
+		singleton = new UnsyncedGameCommands();
+	} else {
+		throw std::logic_error("UnsyncedGameCommands singleton is already initialized");
+	}
+}
+
+void UnsyncedGameCommands::DestroyInstance() {
+
+	if (singleton != NULL) {
+		// SafeDelete
+		UnsyncedGameCommands* tmp = singleton;
+		singleton = NULL;
+		delete tmp;
+	} else {
+		throw std::logic_error("UnsyncedGameCommands singleton is already destroyed");
+	}
 }
