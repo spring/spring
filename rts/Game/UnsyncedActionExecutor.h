@@ -4,6 +4,7 @@
 #define UNSYNCED_ACTION_EXECUTOR_H
 
 #include "Action.h"
+#include "IActionExecutor.h"
 
 #include <string>
 
@@ -41,42 +42,15 @@ private:
 };
 
 
-class IUnsyncedActionExecutor
+class IUnsyncedActionExecutor : public IActionExecutor<UnsyncedAction>
 {
 protected:
 	IUnsyncedActionExecutor(const std::string& command, bool cheatRequired = false)
-		: command(command)
-		, cheatRequired(cheatRequired)
+		: IActionExecutor<UnsyncedAction>(command, cheatRequired)
 	{}
 
 public:
 	virtual ~IUnsyncedActionExecutor() {}
-
-	/**
-	 * Returns the command string that is unique for this executor.
-	 */
-	const std::string& GetCommand() const { return command; }
-
-	/**
-	 * Returns the command string that is unique for this executor.
-	 */
-	bool IsCheatRequired() const { return cheatRequired; }
-
-	/**
-	 * Executes one instance of an action of this type.
-	 * Does a few checks internally, and then calls Execute(args).
-	 */
-	void ExecuteAction(const UnsyncedAction& action) const;
-
-protected:
-	/**
-	 * Executes one instance of an action of this type.
-	 */
-	virtual void Execute(const UnsyncedAction& action) const = 0;
-
-private:
-	std::string command;
-	bool cheatRequired;
 };
 
 #endif // UNSYNCED_ACTION_EXECUTOR_H
