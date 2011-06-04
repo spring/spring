@@ -25,9 +25,17 @@
 #include "System/FileSystem/SimpleParser.h"
 #include "System/LogOutput.h"
 #include "System/GlobalUnsynced.h"
+#include "System/Util.h"
 
 #include <string>
 #include <vector>
+#include <stdexcept>
+
+
+SyncedGameCommands::~SyncedGameCommands() {
+	RemoveAllActionExecutors();
+}
+
 
 static void SetBoolArg(bool& value, const std::string& str)
 {
@@ -394,29 +402,112 @@ public:
 
 
 
-void SyncedGameCommands::RegisterDefaultExecutors(CGame* game) {
+
+
+void SyncedGameCommands::AddActionExecutor(ISyncedActionExecutor* executor)
+{
+	const std::string commandLower = StringToLower(executor->GetCommand());
+	const std::map<std::string, ISyncedActionExecutor*>::const_iterator aei
+			= actionExecutors.find(commandLower);
+
+	if (aei != actionExecutors.end()) {
+		throw std::logic_error("Tried to register a duplicate SyncedActionExecutor for command: " + commandLower);
+	} else {
+		actionExecutors[commandLower] = executor;
+	}
+}
+
+void SyncedGameCommands::RemoveActionExecutor(const std::string& command)
+{
+	const std::string commandLower = StringToLower(command);
+	const std::map<std::string, ISyncedActionExecutor*>::iterator aei
+			= actionExecutors.find(commandLower);
+
+	if (aei != actionExecutors.end()) {
+		// an executor for this command is registered
+		// -> remove and delete
+		ISyncedActionExecutor* executor = aei->second;
+		actionExecutors.erase(aei);
+		delete executor;
+	}
+}
+
+void SyncedGameCommands::RemoveAllActionExecutors()
+{
+	// by copy - clear - delete in copy,
+	// we ensure that no deleted executor may be used.
+	std::map<std::string, ISyncedActionExecutor*> actionExecutorsCopy = actionExecutors;
+	actionExecutors.clear();
+	std::map<std::string, ISyncedActionExecutor*>::iterator aei;
+	for (aei = actionExecutorsCopy.begin(); aei != actionExecutorsCopy.end(); ++aei) {
+		SafeDelete(aei->second);
+	}
+}
+
+const ISyncedActionExecutor* SyncedGameCommands::GetActionExecutor(const std::string& command) const
+{
+	const ISyncedActionExecutor* executor = NULL;
+
+	const std::string commandLower = StringToLower(command);
+	const std::map<std::string, ISyncedActionExecutor*>::const_iterator aei
+			= actionExecutors.find(commandLower);
+
+	if (aei != actionExecutors.end()) {
+		// an executor for this command is registered
+		executor = aei->second;
+	}
+
+	return executor;
+}
+
+
+void SyncedGameCommands::AddDefaultActionExecutors() {
 
 	using namespace syncedActionExecutors;
 	
-	game->RegisterSyncedActionExecutor(new CheatActionExecutor());
-	game->RegisterSyncedActionExecutor(new NoHelpActionExecutor());
-	game->RegisterSyncedActionExecutor(new NoSpecDrawActionExecutor());
-	game->RegisterSyncedActionExecutor(new GodModeActionExecutor());
-	game->RegisterSyncedActionExecutor(new GlobalLosActionExecutor());
-	game->RegisterSyncedActionExecutor(new NoCostActionExecutor());
-	game->RegisterSyncedActionExecutor(new GiveActionExecutor());
-	game->RegisterSyncedActionExecutor(new DestroyActionExecutor());
-	game->RegisterSyncedActionExecutor(new NoSpectatorChatActionExecutor());
-	game->RegisterSyncedActionExecutor(new ReloadCobActionExecutor());
-	game->RegisterSyncedActionExecutor(new ReloadCegsActionExecutor());
-	game->RegisterSyncedActionExecutor(new DevLuaActionExecutor());
-	game->RegisterSyncedActionExecutor(new EditDefsActionExecutor());
-	game->RegisterSyncedActionExecutor(new LuaRulesActionExecutor());
-	game->RegisterSyncedActionExecutor(new LuaGaiaActionExecutor());
+	AddActionExecutor(new CheatActionExecutor());
+	AddActionExecutor(new NoHelpActionExecutor());
+	AddActionExecutor(new NoSpecDrawActionExecutor());
+	AddActionExecutor(new GodModeActionExecutor());
+	AddActionExecutor(new GlobalLosActionExecutor());
+	AddActionExecutor(new NoCostActionExecutor());
+	AddActionExecutor(new GiveActionExecutor());
+	AddActionExecutor(new DestroyActionExecutor());
+	AddActionExecutor(new NoSpectatorChatActionExecutor());
+	AddActionExecutor(new ReloadCobActionExecutor());
+	AddActionExecutor(new ReloadCegsActionExecutor());
+	AddActionExecutor(new DevLuaActionExecutor());
+	AddActionExecutor(new EditDefsActionExecutor());
+	AddActionExecutor(new LuaRulesActionExecutor());
+	AddActionExecutor(new LuaGaiaActionExecutor());
 #ifdef DEBUG
-	game->RegisterSyncedActionExecutor(new DesyncActionExecutor());
+	AddActionExecutor(new DesyncActionExecutor());
 #endif // defined DEBUG
-	game->RegisterSyncedActionExecutor(new AtmActionExecutor());
-	game->RegisterSyncedActionExecutor(new TakeActionExecutor());
-	game->RegisterSyncedActionExecutor(new SkipActionExecutor());
+	AddActionExecutor(new AtmActionExecutor());
+	AddActionExecutor(new TakeActionExecutor());
+	AddActionExecutor(new SkipActionExecutor());
+}
+
+
+SyncedGameCommands* SyncedGameCommands::singleton = NULL;
+
+void SyncedGameCommands::CreateInstance() {
+
+	if (singleton == NULL) {
+		singleton = new SyncedGameCommands();
+	} else {
+		throw std::logic_error("SyncedGameCommands singleton is already initialized");
+	}
+}
+
+void SyncedGameCommands::DestroyInstance() {
+
+	if (singleton != NULL) {
+		// SafeDelete
+		SyncedGameCommands* tmp = singleton;
+		singleton = NULL;
+		delete tmp;
+	} else {
+		throw std::logic_error("SyncedGameCommands singleton is already destroyed");
+	}
 }
