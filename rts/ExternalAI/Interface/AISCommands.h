@@ -56,67 +56,68 @@ enum CommandTopic {
 	COMMAND_PATH_FREE                             = 19,
 	COMMAND_CHEATS_GIVE_ME_RESOURCE               = 20,
 	COMMAND_CALL_LUA_RULES                        = 21,
-	COMMAND_DRAWER_ADD_NOTIFICATION               = 22,
-	COMMAND_DRAWER_DRAW_UNIT                      = 23,
-	COMMAND_DRAWER_PATH_START                     = 24,
-	COMMAND_DRAWER_PATH_FINISH                    = 25,
-	COMMAND_DRAWER_PATH_DRAW_LINE                 = 26,
-	COMMAND_DRAWER_PATH_DRAW_LINE_AND_ICON        = 27,
-	COMMAND_DRAWER_PATH_DRAW_ICON_AT_LAST_POS     = 28,
-	COMMAND_DRAWER_PATH_BREAK                     = 29,
-	COMMAND_DRAWER_PATH_RESTART                   = 30,
-	COMMAND_DRAWER_FIGURE_CREATE_SPLINE           = 31,
-	COMMAND_DRAWER_FIGURE_CREATE_LINE             = 32,
-	COMMAND_DRAWER_FIGURE_SET_COLOR               = 33,
-	COMMAND_DRAWER_FIGURE_DELETE                  = 34,
-	COMMAND_UNIT_BUILD                            = 35,
-	COMMAND_UNIT_STOP                             = 36,
-	COMMAND_UNIT_WAIT                             = 37,
-	COMMAND_UNIT_WAIT_TIME                        = 38,
-	COMMAND_UNIT_WAIT_DEATH                       = 39,
-	COMMAND_UNIT_WAIT_SQUAD                       = 40,
-	COMMAND_UNIT_WAIT_GATHER                      = 41,
-	COMMAND_UNIT_MOVE                             = 42,
-	COMMAND_UNIT_PATROL                           = 43,
-	COMMAND_UNIT_FIGHT                            = 44,
-	COMMAND_UNIT_ATTACK                           = 45,
-	COMMAND_UNIT_ATTACK_AREA                      = 46,
-	COMMAND_UNIT_GUARD                            = 47,
-	COMMAND_UNIT_AI_SELECT                        = 48, //FIXME REMOVE
-	COMMAND_UNIT_GROUP_ADD                        = 49,
-	COMMAND_UNIT_GROUP_CLEAR                      = 50,
-	COMMAND_UNIT_REPAIR                           = 51,
-	COMMAND_UNIT_SET_FIRE_STATE                   = 52,
-	COMMAND_UNIT_SET_MOVE_STATE                   = 53,
-	COMMAND_UNIT_SET_BASE                         = 54,
-	COMMAND_UNIT_SELF_DESTROY                     = 55,
-	COMMAND_UNIT_SET_WANTED_MAX_SPEED             = 56,
-	COMMAND_UNIT_LOAD_UNITS                       = 57,
-	COMMAND_UNIT_LOAD_UNITS_AREA                  = 58,
-	COMMAND_UNIT_LOAD_ONTO                        = 59,
-	COMMAND_UNIT_UNLOAD_UNITS_AREA                = 60,
-	COMMAND_UNIT_UNLOAD_UNIT                      = 61,
-	COMMAND_UNIT_SET_ON_OFF                       = 62,
-	COMMAND_UNIT_RECLAIM_UNIT                     = 63,
-	COMMAND_UNIT_RECLAIM_AREA                     = 64,
-	COMMAND_UNIT_CLOAK                            = 65,
-	COMMAND_UNIT_STOCKPILE                        = 66,
-	COMMAND_UNIT_D_GUN                            = 67,
-	COMMAND_UNIT_D_GUN_POS                        = 68,
-	COMMAND_UNIT_RESTORE_AREA                     = 69,
-	COMMAND_UNIT_SET_REPEAT                       = 70,
-	COMMAND_UNIT_SET_TRAJECTORY                   = 71,
-	COMMAND_UNIT_RESURRECT                        = 72,
-	COMMAND_UNIT_RESURRECT_AREA                   = 73,
-	COMMAND_UNIT_CAPTURE                          = 74,
-	COMMAND_UNIT_CAPTURE_AREA                     = 75,
-	COMMAND_UNIT_SET_AUTO_REPAIR_LEVEL            = 76,
-	COMMAND_UNIT_SET_IDLE_MODE                    = 77,
-	COMMAND_UNIT_CUSTOM                           = 78,
-	COMMAND_CHEATS_GIVE_ME_NEW_UNIT               = 79,
-	COMMAND_TRACE_RAY                             = 80,
-	COMMAND_PAUSE                                 = 81,
-	COMMAND_UNIT_RECLAIM_FEATURE                  = 82,
+	COMMAND_CALL_LUA_UI                           = 22,
+	COMMAND_DRAWER_ADD_NOTIFICATION               = 23,
+	COMMAND_DRAWER_DRAW_UNIT                      = 24,
+	COMMAND_DRAWER_PATH_START                     = 25,
+	COMMAND_DRAWER_PATH_FINISH                    = 26,
+	COMMAND_DRAWER_PATH_DRAW_LINE                 = 27,
+	COMMAND_DRAWER_PATH_DRAW_LINE_AND_ICON        = 28,
+	COMMAND_DRAWER_PATH_DRAW_ICON_AT_LAST_POS     = 29,
+	COMMAND_DRAWER_PATH_BREAK                     = 30,
+	COMMAND_DRAWER_PATH_RESTART                   = 31,
+	COMMAND_DRAWER_FIGURE_CREATE_SPLINE           = 32,
+	COMMAND_DRAWER_FIGURE_CREATE_LINE             = 33,
+	COMMAND_DRAWER_FIGURE_SET_COLOR               = 34,
+	COMMAND_DRAWER_FIGURE_DELETE                  = 35,
+	COMMAND_UNIT_BUILD                            = 36,
+	COMMAND_UNIT_STOP                             = 37,
+	COMMAND_UNIT_WAIT                             = 38,
+	COMMAND_UNIT_WAIT_TIME                        = 39,
+	COMMAND_UNIT_WAIT_DEATH                       = 40,
+	COMMAND_UNIT_WAIT_SQUAD                       = 41,
+	COMMAND_UNIT_WAIT_GATHER                      = 42,
+	COMMAND_UNIT_MOVE                             = 43,
+	COMMAND_UNIT_PATROL                           = 44,
+	COMMAND_UNIT_FIGHT                            = 45,
+	COMMAND_UNIT_ATTACK                           = 46,
+	COMMAND_UNIT_ATTACK_AREA                      = 47,
+	COMMAND_UNIT_GUARD                            = 48,
+	COMMAND_UNIT_AI_SELECT                        = 49, //FIXME REMOVE
+	COMMAND_UNIT_GROUP_ADD                        = 50,
+	COMMAND_UNIT_GROUP_CLEAR                      = 51,
+	COMMAND_UNIT_REPAIR                           = 52,
+	COMMAND_UNIT_SET_FIRE_STATE                   = 53,
+	COMMAND_UNIT_SET_MOVE_STATE                   = 54,
+	COMMAND_UNIT_SET_BASE                         = 55,
+	COMMAND_UNIT_SELF_DESTROY                     = 56,
+	COMMAND_UNIT_SET_WANTED_MAX_SPEED             = 57,
+	COMMAND_UNIT_LOAD_UNITS                       = 58,
+	COMMAND_UNIT_LOAD_UNITS_AREA                  = 59,
+	COMMAND_UNIT_LOAD_ONTO                        = 60,
+	COMMAND_UNIT_UNLOAD_UNITS_AREA                = 61,
+	COMMAND_UNIT_UNLOAD_UNIT                      = 62,
+	COMMAND_UNIT_SET_ON_OFF                       = 63,
+	COMMAND_UNIT_RECLAIM_UNIT                     = 64,
+	COMMAND_UNIT_RECLAIM_AREA                     = 65,
+	COMMAND_UNIT_CLOAK                            = 66,
+	COMMAND_UNIT_STOCKPILE                        = 67,
+	COMMAND_UNIT_D_GUN                            = 68,
+	COMMAND_UNIT_D_GUN_POS                        = 69,
+	COMMAND_UNIT_RESTORE_AREA                     = 70,
+	COMMAND_UNIT_SET_REPEAT                       = 71,
+	COMMAND_UNIT_SET_TRAJECTORY                   = 72,
+	COMMAND_UNIT_RESURRECT                        = 73,
+	COMMAND_UNIT_RESURRECT_AREA                   = 74,
+	COMMAND_UNIT_CAPTURE                          = 75,
+	COMMAND_UNIT_CAPTURE_AREA                     = 76,
+	COMMAND_UNIT_SET_AUTO_REPAIR_LEVEL            = 77,
+	COMMAND_UNIT_SET_IDLE_MODE                    = 78,
+	COMMAND_UNIT_CUSTOM                           = 79,
+	COMMAND_CHEATS_GIVE_ME_NEW_UNIT               = 80,
+	COMMAND_TRACE_RAY                             = 81,
+	COMMAND_PAUSE                                 = 82,
+	COMMAND_UNIT_RECLAIM_FEATURE                  = 83,
 //const int COMMAND_UNIT_ATTACK_POS
 //const int COMMAND_UNIT_INSERT
 //const int COMMAND_UNIT_REMOVE
@@ -124,21 +125,21 @@ enum CommandTopic {
 //const int COMMAND_UNIT_ATTACK_LOOPBACK
 //const int COMMAND_UNIT_GROUP_SELECT
 //const int COMMAND_UNIT_INTERNAL
-	COMMAND_DEBUG_DRAWER_GRAPH_SET_POS            = 83,
-	COMMAND_DEBUG_DRAWER_GRAPH_SET_SIZE           = 84,
-	COMMAND_DEBUG_DRAWER_GRAPH_LINE_ADD_POINT     = 85,
-	COMMAND_DEBUG_DRAWER_GRAPH_LINE_DELETE_POINTS = 86,
-	COMMAND_DEBUG_DRAWER_GRAPH_LINE_SET_COLOR     = 87,
-	COMMAND_DEBUG_DRAWER_GRAPH_LINE_SET_LABEL     = 88,
-	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_ADD       = 89,
-	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_UPDATE    = 90,
-	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_DELETE    = 91,
-	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_POS   = 92,
-	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_SIZE  = 93,
-	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_LABEL = 94,
-	COMMAND_TRACE_RAY_FEATURE                     = 95,
+	COMMAND_DEBUG_DRAWER_GRAPH_SET_POS            = 84,
+	COMMAND_DEBUG_DRAWER_GRAPH_SET_SIZE           = 85,
+	COMMAND_DEBUG_DRAWER_GRAPH_LINE_ADD_POINT     = 86,
+	COMMAND_DEBUG_DRAWER_GRAPH_LINE_DELETE_POINTS = 87,
+	COMMAND_DEBUG_DRAWER_GRAPH_LINE_SET_COLOR     = 88,
+	COMMAND_DEBUG_DRAWER_GRAPH_LINE_SET_LABEL     = 89,
+	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_ADD       = 90,
+	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_UPDATE    = 91,
+	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_DELETE    = 92,
+	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_POS   = 93,
+	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_SIZE  = 94,
+	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_LABEL = 95,
+	COMMAND_TRACE_RAY_FEATURE                     = 96,
 };
-const int NUM_CMD_TOPICS = 96;
+const int NUM_CMD_TOPICS = 97;
 
 
 /**
@@ -178,6 +179,7 @@ enum UnitCommandOptions {
 		+ sizeof(struct SGetNextWaypointPathCommand) \
 		+ sizeof(struct SFreePathCommand) \
 		+ sizeof(struct SCallLuaRulesCommand) \
+		+ sizeof(struct SCallLuaUICommand) \
 		+ sizeof(struct SSendStartPosCommand) \
 		+ sizeof(struct SAddNotificationDrawerCommand) \
 		+ sizeof(struct SAddPointDrawCommand) \
@@ -404,12 +406,21 @@ struct SFreePathCommand {
 
 struct SCallLuaRulesCommand {
 	/// Can be set to NULL to skip passing in a string
-	const char* data;
+	const char* inData;
 	/// If this is less than 0, the data size is calculated using strlen()
 	int inSize;
 	/// this is subject to Lua garbage collection, copy it if you wish to continue using it
 	const char* ret_outData;
 }; //$ COMMAND_CALL_LUA_RULES Lua_callRules
+
+struct SCallLuaUICommand {
+	/// Can be set to NULL to skip passing in a string
+	const char* inData;
+	/// If this is less than 0, the data size is calculated using strlen()
+	int inSize;
+	/// this is subject to Lua garbage collection, copy it if you wish to continue using it
+	const char* ret_outData;
+}; //$ COMMAND_CALL_LUA_UI Lua_callUI
 
 struct SSendStartPosCommand {
 	bool ready;

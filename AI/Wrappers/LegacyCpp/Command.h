@@ -98,18 +98,18 @@ private:
 	CR_DECLARE_STRUCT(Command);
 
 public:
-	Command(const int id)
-		: id(id)
+	Command(const int cmdID)
+		: id(cmdID)
 		, aiCommandId(-1)
 		, options(0)
 		, tag(0)
 		, timeOut(INT_MAX)
 	{}
 
-	Command(const int id, const unsigned char options)
-		: id(id)
+	Command(const int cmdID, const unsigned char cmdOptions)
+		: id(cmdID)
 		, aiCommandId(-1)
-		, options(options)
+		, options(cmdOptions)
 		, tag(0)
 		, timeOut(INT_MAX)
 	{}

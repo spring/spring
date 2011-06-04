@@ -412,13 +412,28 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 			clb->FreePath(cmd->pathId);
 			break;
 		}
-		case COMMAND_CALL_LUA_RULES:
-		{
-			SCallLuaRulesCommand* cmd = (SCallLuaRulesCommand*) commandData;
-			// TODO: FIXME: should strcpy() this
-			cmd->ret_outData = clb->CallLuaRules(cmd->data, cmd->inSize);
-			break;
-		}
+
+
+		#define SSAICALLBACK_CALL_LUA(HandleName)                                                      \
+			SCallLua ## HandleName ## Command* cmd = (SCallLua ## HandleName ## Command*) commandData; \
+			// TODO: FIXME: should strcpy() this                                                       \
+			// const char* outData = clb->CallLua ## HandleName(cmd->inData, cmd->inSize);             \
+			//                                                                                         \
+			// if (outData != NULL)                                                                    \
+			//     strcpy((cmd->ret_outData = new char[strlen(outData) + 1]), outData);                \
+			// else                                                                                    \
+			//     cmd->ret_outData = NULL;                                                            \
+			//                                                                                         \
+			cmd->ret_outData = clb->CallLua ## HandleName(cmd->inData, cmd->inSize);
+
+		case COMMAND_CALL_LUA_RULES: {
+			SSAICALLBACK_CALL_LUA(Rules)
+		} break;
+		case COMMAND_CALL_LUA_UI: {
+			SSAICALLBACK_CALL_LUA(UI)
+		} break;
+
+		#undef SSAICALLBACK_CALL_LUA
 
 
 		case COMMAND_DRAWER_ADD_NOTIFICATION:

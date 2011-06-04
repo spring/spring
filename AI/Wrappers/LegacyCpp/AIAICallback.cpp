@@ -2083,13 +2083,27 @@ bool CAIAICallback::ReadFile(const char* filename, void* buffer, int bufferLen) 
 	return sAICallback->File_getContent(skirmishAIId, filename, buffer, bufferLen);
 }
 
-const char* CAIAICallback::CallLuaRules(const char* data, int inSize, int* outSize) {
 
-	SCallLuaRulesCommand cmd = {data, inSize};
-	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_CALL_LUA_RULES, &cmd);
-	*outSize = strlen(cmd.ret_outData);
-	return cmd.ret_outData;
-}
+#define AIAICALLBACK_CALL_LUA(HandleName, HANDLENAME)                                                                     \
+	const char* CAIAICallback::CallLua ## HandleName(const char* inData, int inSize, int* outSize) {                      \
+		SCallLua ## HandleName ## Command cmd = {inData, inSize};                                                         \
+		sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_CALL_LUA_ ## HANDLENAME, &cmd); \
+                                                                                                                          \
+		if (cmd.ret_outData != NULL) {                                                                                    \
+			*outSize = strlen(cmd.ret_outData);                                                                           \
+		} else {                                                                                                          \
+			*outSize = -1;                                                                                                \
+		}                                                                                                                 \
+                                                                                                                          \
+		return cmd.ret_outData;                                                                                           \
+	}
+
+AIAICALLBACK_CALL_LUA(Rules, RULES)
+AIAICALLBACK_CALL_LUA(UI, UI)
+
+#undef AIAICALLBACK_CALL_LUA
+
+
 
 std::map<std::string, std::string> CAIAICallback::GetMyInfo()
 {

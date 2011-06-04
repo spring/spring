@@ -8,7 +8,6 @@
 #include <map>
 
 #include "Lua/LuaHandle.h"
-//#include "Sim/Units/CommandAI/Command.h"
 
 
 class CUnit;
@@ -64,6 +63,7 @@ class CLuaUI : public CLuaHandle
 
 		bool ConfigCommand(const string& command);
 
+		const char* AICallIn(const char* inData, int inSize);
 		void ShockFront(float power, const float3& pos, float areaOfEffect);
 
 	public: // custom call-in

@@ -148,7 +148,8 @@ local flexCallIns = {
   'DrawWorldReflection',
   'DrawWorldRefraction',
   'DrawScreenEffects',
-  'DrawInMiniMap'
+  'DrawInMiniMap',
+  'AICallIn',
 }
 local flexCallInMap = {}
 for _,ci in ipairs(flexCallIns) do
@@ -1620,6 +1621,14 @@ function widgetHandler:ShockFront(power, dx, dy, dz)
   return
 end
 
+function widgetHandler:AICallIn(dataStr)
+  for _,w in ipairs(self.AICallInList) do
+    local dataRet = w:AICallIn(dataStr)
+    if (dataRet) then
+      return dataRet
+    end
+  end
+end
 
 function widgetHandler:WorldTooltip(ttType, ...)
   for _,w in ipairs(self.WorldTooltipList) do
