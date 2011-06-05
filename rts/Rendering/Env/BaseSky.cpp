@@ -22,7 +22,7 @@ IBaseSky::IBaseSky()
 	, skyLight(NULL)
 	, cloudDensity(0.0f)
 {
-	SetLight(configHandler->Get("DynamicSun", true));
+	SetLight(configHandler->Get("DynamicSun", false));
 }
 
 IBaseSky::~IBaseSky()
