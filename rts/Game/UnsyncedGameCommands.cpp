@@ -72,11 +72,6 @@
 #include "System/Util.h"
 
 
-UnsyncedGameCommands::~UnsyncedGameCommands() {
-	RemoveAllActionExecutors();
-}
-
-
 static std::vector<std::string> _local_strSpaceTokenize(const std::string& text) {
 	static const char* const SPACE_DELIMS = " \t";
 
@@ -2842,63 +2837,6 @@ bool CGame::ActionReleased(const Action& action)
 }
 
 
-
-
-void UnsyncedGameCommands::AddActionExecutor(IUnsyncedActionExecutor* executor)
-{
-	const std::string commandLower = StringToLower(executor->GetCommand());
-	const std::map<std::string, IUnsyncedActionExecutor*>::const_iterator aei
-			= actionExecutors.find(commandLower);
-
-	if (aei != actionExecutors.end()) {
-		throw std::logic_error("Tried to register a duplicate UnsyncedActionExecutor for command: " + commandLower);
-	} else {
-		actionExecutors[commandLower] = executor;
-	}
-}
-
-void UnsyncedGameCommands::RemoveActionExecutor(const std::string& command)
-{
-	const std::string commandLower = StringToLower(command);
-	const std::map<std::string, IUnsyncedActionExecutor*>::iterator aei
-			= actionExecutors.find(commandLower);
-
-	if (aei != actionExecutors.end()) {
-		// an executor for this command is registered
-		// -> remove and delete
-		IUnsyncedActionExecutor* executor = aei->second;
-		actionExecutors.erase(aei);
-		delete executor;
-	}
-}
-
-void UnsyncedGameCommands::RemoveAllActionExecutors()
-{
-	// by copy - clear - delete in copy,
-	// we ensure that no deleted executor may be used.
-	std::map<std::string, IUnsyncedActionExecutor*> actionExecutorsCopy = actionExecutors;
-	actionExecutors.clear();
-	std::map<std::string, IUnsyncedActionExecutor*>::iterator aei;
-	for (aei = actionExecutorsCopy.begin(); aei != actionExecutorsCopy.end(); ++aei) {
-		SafeDelete(aei->second);
-	}
-}
-
-const IUnsyncedActionExecutor* UnsyncedGameCommands::GetActionExecutor(const std::string& command) const
-{
-	const IUnsyncedActionExecutor* executor = NULL;
-
-	const std::string commandLower = StringToLower(command);
-	const std::map<std::string, IUnsyncedActionExecutor*>::const_iterator aei
-			= actionExecutors.find(commandLower);
-
-	if (aei != actionExecutors.end()) {
-		// an executor for this command is registered
-		executor = aei->second;
-	}
-
-	return executor;
-}
 
 
 void UnsyncedGameCommands::AddDefaultActionExecutors() {
