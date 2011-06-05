@@ -3,24 +3,20 @@
 #ifndef SYNCED_ACTION_EXECUTOR_H
 #define SYNCED_ACTION_EXECUTOR_H
 
-#include "Action.h"
 #include "IActionExecutor.h"
 
 #include <string>
 
+class Action;
 
-class SyncedAction
+
+class SyncedAction : public IAction
 {
 public:
 	SyncedAction(const Action& action, int playerID)
-		: action(action)
+		: IAction(action)
 		, playerID(playerID)
 	{}
-
-	/**
-	 * Returns the action arguments.
-	 */
-	const std::string& GetArgs() const { return action.extra; }
 
 	/**
 	 * Returns the normalized key symbol.
@@ -28,7 +24,6 @@ public:
 	int GetPlayerID() const { return playerID; }
 
 private:
-	const Action& action;
 	int playerID;
 };
 

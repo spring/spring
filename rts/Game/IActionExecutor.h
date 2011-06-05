@@ -3,11 +3,31 @@
 #ifndef I_ACTION_EXECUTOR_H
 #define I_ACTION_EXECUTOR_H
 
-//#include "Action.h"
+#include "Action.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/LogOutput.h"
 
 #include <string>
+
+class IAction
+{
+protected:
+	IAction(const Action& action)
+		: action(action)
+	{}
+	virtual ~IAction() {}
+
+public:
+	/**
+	 * Returns the action arguments.
+	 */
+	const std::string& GetArgs() const { return action.extra; }
+
+	const Action& GetInnerAction() const { return action; }
+
+private:
+	const Action& action;
+};
 
 template<class action_t, bool synced_v>
 class IActionExecutor

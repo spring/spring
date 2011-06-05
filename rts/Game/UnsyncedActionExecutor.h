@@ -3,25 +3,21 @@
 #ifndef UNSYNCED_ACTION_EXECUTOR_H
 #define UNSYNCED_ACTION_EXECUTOR_H
 
-#include "Action.h"
 #include "IActionExecutor.h"
 
 #include <string>
 
+class Action;
 
-class UnsyncedAction
+
+class UnsyncedAction : public IAction
 {
 public:
 	UnsyncedAction(const Action& action, unsigned int key, bool repeat)
-		: action(action)
+		: IAction(action)
 		, key(key)
 		, repeat(repeat)
 	{}
-
-	/**
-	 * Returns the action arguments.
-	 */
-	const std::string& GetArgs() const { return action.extra; }
 
 	/**
 	 * Returns the normalized key symbol.
@@ -33,10 +29,7 @@ public:
 	 */
 	bool IsRepeat() const { return repeat; }
 
-	const Action& GetInnerAction() const { return action; }
-
 private:
-	const Action& action;
 	unsigned int key;
 	bool repeat;
 };
