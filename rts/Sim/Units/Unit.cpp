@@ -543,8 +543,8 @@ void CUnit::PostInit(const CUnit* builder)
 	}
 
 	// these must precede UnitFinished from FinishedBuilding
-	eventHandler.UnitCreated(unit, builder);
-	eoh->UnitCreated(*unit, builder);
+	eventHandler.UnitCreated(this, builder);
+	eoh->UnitCreated(*this, builder);
 
 	if (!beingBuilt) {
 		FinishedBuilding();
