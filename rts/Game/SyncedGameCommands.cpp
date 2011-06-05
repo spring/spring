@@ -32,11 +32,6 @@
 #include <stdexcept>
 
 
-SyncedGameCommands::~SyncedGameCommands() {
-	RemoveAllActionExecutors();
-}
-
-
 static void SetBoolArg(bool& value, const std::string& str) {
 
 	if (str.empty())  {
@@ -418,64 +413,6 @@ public:
 } // namespace syncedActionExecutors
 
 
-
-
-
-void SyncedGameCommands::AddActionExecutor(ISyncedActionExecutor* executor)
-{
-	const std::string commandLower = StringToLower(executor->GetCommand());
-	const std::map<std::string, ISyncedActionExecutor*>::const_iterator aei
-			= actionExecutors.find(commandLower);
-
-	if (aei != actionExecutors.end()) {
-		throw std::logic_error("Tried to register a duplicate SyncedActionExecutor for command: " + commandLower);
-	} else {
-		actionExecutors[commandLower] = executor;
-	}
-}
-
-void SyncedGameCommands::RemoveActionExecutor(const std::string& command)
-{
-	const std::string commandLower = StringToLower(command);
-	const std::map<std::string, ISyncedActionExecutor*>::iterator aei
-			= actionExecutors.find(commandLower);
-
-	if (aei != actionExecutors.end()) {
-		// an executor for this command is registered
-		// -> remove and delete
-		ISyncedActionExecutor* executor = aei->second;
-		actionExecutors.erase(aei);
-		delete executor;
-	}
-}
-
-void SyncedGameCommands::RemoveAllActionExecutors()
-{
-	// by copy - clear - delete in copy,
-	// we ensure that no deleted executor may be used.
-	std::map<std::string, ISyncedActionExecutor*> actionExecutorsCopy = actionExecutors;
-	actionExecutors.clear();
-	std::map<std::string, ISyncedActionExecutor*>::iterator aei;
-	for (aei = actionExecutorsCopy.begin(); aei != actionExecutorsCopy.end(); ++aei) {
-		SafeDelete(aei->second);
-	}
-}
-
-const ISyncedActionExecutor* SyncedGameCommands::GetActionExecutor(const std::string& command) const
-{
-	const ISyncedActionExecutor* executor = NULL;
-
-	const std::string commandLower = StringToLower(command);
-	const std::map<std::string, ISyncedActionExecutor*>::const_iterator aei
-			= actionExecutors.find(commandLower);
-
-	if (aei != actionExecutors.end()) {
-		// an executor for this command is registered
-		executor = aei->second;
-	}
-
-	return executor;
-}
 
 
 void SyncedGameCommands::AddDefaultActionExecutors() {
