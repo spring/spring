@@ -1208,6 +1208,7 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 					//! last word W is larger than 0.5 * maxLineWidth, split it into
 					//! get 'L'eft and 'R'ight parts of the split (wL becomes Left, *wi becomes R)
 
+					bool restart = (currLine->start == wi);
 					//! turns *wi into R
 					word wL = SplitWord(*wi, freeWordSpace);
 
@@ -1223,6 +1224,8 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 
 					//! insert the L-part right before R
 					wi = words.insert(wi, wL);
+					if(restart)
+						currLine->start = wi;
 					++wi;
 				}
 
