@@ -37,21 +37,28 @@ SyncedGameCommands::~SyncedGameCommands() {
 }
 
 
-static void SetBoolArg(bool& value, const std::string& str)
-{
-	if (str.empty()) // toggle
-	{
+static void SetBoolArg(bool& value, const std::string& str) {
+
+	if (str.empty())  {
+		// toggle
 		value = !value;
-	}
-	else // set
-	{
+	} else {
+		// set
 		const int num = atoi(str.c_str());
 		value = (num != 0);
 	}
 }
 
+static void LogSystemStatus(const std::string& system, bool status) {
+
+	logOutput.Print("%s is %s!", system.c_str(),
+			(status ? "enabled" : "disabled"));
+}
 
 
+
+// This namespace is required to prevent conflicts with equally named classes
+// for unsynced ActionExecutor's.
 namespace syncedActionExecutors {
 
 class CheatActionExecutor : public ISyncedActionExecutor {
@@ -60,10 +67,7 @@ public:
 
 	void Execute(const SyncedAction& action) const {
 		SetBoolArg(gs->cheatEnabled, action.GetArgs());
-		if (gs->cheatEnabled)
-			logOutput.Print("Cheating!");
-		else
-			logOutput.Print("No more cheating");
+		LogSystemStatus("Cheating", gs->cheatEnabled);
 	}
 };
 
@@ -75,7 +79,7 @@ public:
 	void Execute(const SyncedAction& action) const {
 		SetBoolArg(gs->noHelperAIs, action.GetArgs());
 		selectedUnits.PossibleCommandChange(NULL);
-		logOutput.Print("LuaUI control is %s", gs->noHelperAIs ? "disabled" : "enabled");
+		LogSystemStatus("LuaUI control", gs->noHelperAIs);
 	}
 };
 
@@ -99,11 +103,7 @@ public:
 	void Execute(const SyncedAction& action) const {
 		SetBoolArg(gs->godMode, action.GetArgs());
 		CLuaUI::UpdateTeams();
-		if (gs->godMode) {
-			logOutput.Print("God Mode Enabled");
-		} else {
-			logOutput.Print("God Mode Disabled");
-		}
+		LogSystemStatus("God-Mode", gs->godMode);
 		CPlayer::UpdateControlledTeams();
 	}
 };
@@ -115,11 +115,7 @@ public:
 
 	void Execute(const SyncedAction& action) const {
 		SetBoolArg(gs->globalLOS, action.GetArgs());
-		if (gs->globalLOS) {
-			logOutput.Print("Global LOS Enabled");
-		} else {
-			logOutput.Print("Global LOS Disabled");
-		}
+		LogSystemStatus("Global LOS", gs->globalLOS);
 	}
 };
 
@@ -129,11 +125,9 @@ public:
 	NoCostActionExecutor() : ISyncedActionExecutor("NoCost", true) {}
 
 	void Execute(const SyncedAction& action) const {
-		if (unitDefHandler->ToggleNoCost()) {
-			logOutput.Print("Everything is for free!");
-		} else {
-			logOutput.Print("Everything costs resources again!");
-		}
+		const bool isFree = unitDefHandler->ToggleNoCost();
+		LogSystemStatus("Everything-for-free (no resource costs for building)",
+				isFree);
 	}
 };
 
@@ -154,19 +148,22 @@ public:
 	DestroyActionExecutor() : ISyncedActionExecutor("Destroy", true) {}
 
 	void Execute(const SyncedAction& action) const {
-		std::stringstream ss(action.GetArgs());
+		std::stringstream argsStream(action.GetArgs());
 		logOutput.Print("Killing units: %s", action.GetArgs().c_str());
 
+		unsigned int unitId;
 		do {
-			unsigned int id; ss >> id;
+			argsStream >> unitId;
 
-			if (!ss)
+			if (!argsStream) {
 				break;
+			}
 
-			CUnit* u = uh->GetUnit(id);
+			CUnit* unit = uh->GetUnit(unitId);
 
-			if (u != NULL)
-				u->KillUnit(false, false, 0);
+			if (unit != NULL) {
+				unit->KillUnit(false, false, 0);
+			}
 		} while (true);
 	}
 };
@@ -178,7 +175,7 @@ public:
 
 	void Execute(const SyncedAction& action) const {
 		SetBoolArg(game->noSpectatorChat, action.GetArgs());
-		logOutput.Print("Spectators %s chat", game->noSpectatorChat ? "can not" : "can");
+		LogSystemStatus("Spectators chat", !game->noSpectatorChat);
 	}
 };
 
@@ -211,11 +208,7 @@ public:
 		bool devMode = CLuaHandle::GetDevMode();
 		SetBoolArg(devMode, action.GetArgs());
 		CLuaHandle::SetDevMode(devMode);
-		if (devMode) {
-			logOutput.Print("Lua devmode enabled, this can cause desyncs");
-		} else {
-			logOutput.Print("Lua devmode disabled");
-		}
+		LogSystemStatus("Lua dev-mode (can cause desyncs if enabled)", devMode);
 	}
 };
 
@@ -226,10 +219,8 @@ public:
 
 	void Execute(const SyncedAction& action) const {
 		SetBoolArg(gs->editDefsEnabled, action.GetArgs());
-		if (gs->editDefsEnabled)
-			logOutput.Print("Definition Editing!");
-		else
-			logOutput.Print("No definition Editing");
+		LogSystemStatus("Unit-, Feature- & Weapon-Def editing",
+				gs->editDefsEnabled);
 	}
 };
 
@@ -252,16 +243,14 @@ public:
 						logOutput.Print("LuaRules reload failed");
 					}
 				}
-			}
-			else if ((action.GetArgs() == "disable") && (action.GetPlayerID() == 0)) {
+			} else if ((action.GetArgs() == "disable") && (action.GetPlayerID() == 0)) {
 				if (!gs->cheatEnabled) {
 					logOutput.Print("Cheating required to disable synced scripts");
 				} else {
 					CLuaRules::FreeHandler();
 					logOutput.Print("LuaRules disabled");
 				}
-			}
-			else {
+			} else {
 				if (luaRules) luaRules->GotChatMsg(action.GetArgs(), action.GetPlayerID());
 			}
 		}
@@ -288,19 +277,16 @@ public:
 							logOutput.Print("LuaGaia reload failed");
 						}
 					}
-				}
-				else if ((action.GetArgs() == "disable") && (action.GetPlayerID() == 0)) {
+				} else if ((action.GetArgs() == "disable") && (action.GetPlayerID() == 0)) {
 					if (!gs->cheatEnabled) {
 						logOutput.Print("Cheating required to disable synced scripts");
 					} else {
 						CLuaGaia::FreeHandler();
 						logOutput.Print("LuaGaia disabled");
 					}
-				}
-				else if (luaGaia) {
+				} else if (luaGaia) {
 					luaGaia->GotChatMsg(action.GetArgs(), action.GetPlayerID());
-				}
-				else {
+				} else {
 					logOutput.Print("LuaGaia is not enabled");
 				}
 			}
