@@ -63,7 +63,9 @@ namespace syncedActionExecutors {
 
 class CheatActionExecutor : public ISyncedActionExecutor {
 public:
-	CheatActionExecutor() : ISyncedActionExecutor("Cheat") {}
+	CheatActionExecutor() : ISyncedActionExecutor("Cheat",
+			"Enables/Disables cheating, which is required for a lot of other"
+			" commands to be usable") {}
 
 	void Execute(const SyncedAction& action) const {
 		SetBoolArg(gs->cheatEnabled, action.GetArgs());
@@ -74,7 +76,8 @@ public:
 
 class NoHelpActionExecutor : public ISyncedActionExecutor {
 public:
-	NoHelpActionExecutor() : ISyncedActionExecutor("NoHelp") {}
+	NoHelpActionExecutor() : ISyncedActionExecutor("NoHelp",
+			"Enables/Disables widgets (LuaUI control)") {}
 
 	void Execute(const SyncedAction& action) const {
 		SetBoolArg(gs->noHelperAIs, action.GetArgs());
@@ -86,7 +89,8 @@ public:
 
 class NoSpecDrawActionExecutor : public ISyncedActionExecutor {
 public:
-	NoSpecDrawActionExecutor() : ISyncedActionExecutor("NoSpecDraw") {}
+	NoSpecDrawActionExecutor() : ISyncedActionExecutor("NoSpecDraw",
+			"Allows/Disallows spectators to draw on the map") {}
 
 	void Execute(const SyncedAction& action) const {
 		bool buf;
@@ -98,7 +102,9 @@ public:
 
 class GodModeActionExecutor : public ISyncedActionExecutor {
 public:
-	GodModeActionExecutor() : ISyncedActionExecutor("GodMode", true) {}
+	GodModeActionExecutor() : ISyncedActionExecutor("GodMode",
+			"Enabled/Disables god-mode, which allows all players"
+			" (even spectators) to control all units", true) {}
 
 	void Execute(const SyncedAction& action) const {
 		SetBoolArg(gs->godMode, action.GetArgs());
@@ -111,7 +117,9 @@ public:
 
 class GlobalLosActionExecutor : public ISyncedActionExecutor {
 public:
-	GlobalLosActionExecutor() : ISyncedActionExecutor("GlobalLOS", true) {}
+	GlobalLosActionExecutor() : ISyncedActionExecutor("GlobalLOS",
+			"Enables/Disables global line-of-sight, which makes the whole map"
+			" permanently visible to everyone", true) {}
 
 	void Execute(const SyncedAction& action) const {
 		SetBoolArg(gs->globalLOS, action.GetArgs());
@@ -122,7 +130,9 @@ public:
 
 class NoCostActionExecutor : public ISyncedActionExecutor {
 public:
-	NoCostActionExecutor() : ISyncedActionExecutor("NoCost", true) {}
+	NoCostActionExecutor() : ISyncedActionExecutor("NoCost",
+			"Enables/Disables everything-for-free, which allows everyone"
+			" to build everything for zero resource costs", true) {}
 
 	void Execute(const SyncedAction& action) const {
 		const bool isFree = unitDefHandler->ToggleNoCost();
@@ -134,7 +144,9 @@ public:
 
 class GiveActionExecutor : public ISyncedActionExecutor {
 public:
-	GiveActionExecutor() : ISyncedActionExecutor("Give", true) {}
+	GiveActionExecutor() : ISyncedActionExecutor("Give",
+			"Places one or multiple units of a single or multiple types on the"
+			" map, instantly; by default to your own team", true) {}
 
 	void Execute(const SyncedAction& action) const {
 		const std::vector<std::string>& parsedArgs = CSimpleParser::Tokenize(action.GetArgs(), 0);
@@ -145,7 +157,8 @@ public:
 
 class DestroyActionExecutor : public ISyncedActionExecutor {
 public:
-	DestroyActionExecutor() : ISyncedActionExecutor("Destroy", true) {}
+	DestroyActionExecutor() : ISyncedActionExecutor("Destroy",
+			"Destroys one or multiple units by unit-ID, instantly", true) {}
 
 	void Execute(const SyncedAction& action) const {
 		std::stringstream argsStream(action.GetArgs());
@@ -171,7 +184,8 @@ public:
 
 class NoSpectatorChatActionExecutor : public ISyncedActionExecutor {
 public:
-	NoSpectatorChatActionExecutor() : ISyncedActionExecutor("NoSpectatorChat") {}
+	NoSpectatorChatActionExecutor() : ISyncedActionExecutor("NoSpectatorChat",
+			"Enables/Disables spectators to use the chat") {}
 
 	void Execute(const SyncedAction& action) const {
 		SetBoolArg(game->noSpectatorChat, action.GetArgs());
@@ -182,7 +196,8 @@ public:
 
 class ReloadCobActionExecutor : public ISyncedActionExecutor {
 public:
-	ReloadCobActionExecutor() : ISyncedActionExecutor("ReloadCOB", true) {}
+	ReloadCobActionExecutor() : ISyncedActionExecutor("ReloadCOB",
+			"Reloads COB scripts", true) {}
 
 	void Execute(const SyncedAction& action) const {
 		game->ReloadCOB(action.GetArgs(), action.GetPlayerID());
@@ -192,7 +207,8 @@ public:
 
 class ReloadCegsActionExecutor : public ISyncedActionExecutor {
 public:
-	ReloadCegsActionExecutor() : ISyncedActionExecutor("ReloadCegs", true) {}
+	ReloadCegsActionExecutor() : ISyncedActionExecutor("ReloadCegs",
+			"Reloads Ceg scripts", true) {}
 
 	void Execute(const SyncedAction& action) const {
 		game->ReloadCEGs(action.GetArgs());
@@ -202,7 +218,9 @@ public:
 
 class DevLuaActionExecutor : public ISyncedActionExecutor {
 public:
-	DevLuaActionExecutor() : ISyncedActionExecutor("DevLua", true) {}
+	DevLuaActionExecutor() : ISyncedActionExecutor("DevLua",
+			"Enables/Disables Lua dev-mode (can cause desyncs if enabled)",
+			true) {}
 
 	void Execute(const SyncedAction& action) const {
 		bool devMode = CLuaHandle::GetDevMode();
@@ -215,7 +233,9 @@ public:
 
 class EditDefsActionExecutor : public ISyncedActionExecutor {
 public:
-	EditDefsActionExecutor() : ISyncedActionExecutor("EditDefs", true) {}
+	EditDefsActionExecutor() : ISyncedActionExecutor("EditDefs",
+			"Allows/Disallows editing of unit-, feature- and weapon-defs"
+			" through Lua", true) {}
 
 	void Execute(const SyncedAction& action) const {
 		SetBoolArg(gs->editDefsEnabled, action.GetArgs());
@@ -227,7 +247,9 @@ public:
 
 class LuaRulesActionExecutor : public ISyncedActionExecutor {
 public:
-	LuaRulesActionExecutor() : ISyncedActionExecutor("LuaRules") {}
+	LuaRulesActionExecutor() : ISyncedActionExecutor("LuaRules",
+			"Allows to reload or disable Lua-rules, or alternatively to send"
+			" a chat message to Lua-rules") {}
 
 	void Execute(const SyncedAction& action) const {
 		if (gs->frameNum > 1) {
@@ -260,7 +282,9 @@ public:
 
 class LuaGaiaActionExecutor : public ISyncedActionExecutor {
 public:
-	LuaGaiaActionExecutor() : ISyncedActionExecutor("LuaGaia") {}
+	LuaGaiaActionExecutor() : ISyncedActionExecutor("LuaGaia",
+			"Allows to reload or disable Lua-Gaia, or alternatively to send"
+			" a chat message to Lua-Gaia") {}
 
 	void Execute(const SyncedAction& action) const {
 		if (gs->frameNum > 1) {
@@ -298,7 +322,9 @@ public:
 #ifdef DEBUG
 class DesyncActionExecutor : public ISyncedActionExecutor {
 public:
-	DesyncActionExecutor() : ISyncedActionExecutor("Desync", true) {}
+	DesyncActionExecutor() : ISyncedActionExecutor("Desync",
+			"Allows to create an artificial desync of the local client with"
+			" the rest of the participating hosts", true) {}
 
 	void Execute(const SyncedAction& action) const {
 		ASSERT_SYNCED_PRIMITIVE(gu->myPlayerNum * 123.0f);
@@ -328,7 +354,9 @@ public:
 
 class AtmActionExecutor : public ISyncedActionExecutor {
 public:
-	AtmActionExecutor() : ISyncedActionExecutor("Atm", true) {}
+	AtmActionExecutor() : ISyncedActionExecutor("Atm",
+			"Gives 1000 metal and 1000 energy to the issuing players team",
+			true) {}
 
 	void Execute(const SyncedAction& action) const {
 		const int team = playerHandler->Player(action.GetPlayerID())->team;
@@ -340,7 +368,9 @@ public:
 
 class TakeActionExecutor : public ISyncedActionExecutor {
 public:
-	TakeActionExecutor() : ISyncedActionExecutor("Take") {}
+	TakeActionExecutor() : ISyncedActionExecutor("Take",
+			"Transfers all units of allied teams without active controller to"
+			" the issuing players team") {}
 
 	void Execute(const SyncedAction& action) const {
 		if (!playerHandler->Player(action.GetPlayerID())->spectator || gs->cheatEnabled) {
@@ -369,7 +399,8 @@ public:
 
 class SkipActionExecutor : public ISyncedActionExecutor {
 public:
-	SkipActionExecutor() : ISyncedActionExecutor("Skip") {}
+	SkipActionExecutor() : ISyncedActionExecutor("Skip",
+			"Fast-forwards to a given frame, or stops fast-forwarding") {}
 
 	void Execute(const SyncedAction& action) const {
 		if (action.GetArgs().find_first_of("start") == 0) {
