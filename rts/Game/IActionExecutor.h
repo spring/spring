@@ -9,7 +9,8 @@
 
 #include <string>
 
-template<class action_t, bool synced_v> class IActionExecutor
+template<class action_t, bool synced_v>
+class IActionExecutor
 {
 protected:
 	IActionExecutor(const std::string& command,
@@ -18,10 +19,9 @@ protected:
 		, description(description)
 		, cheatRequired(cheatRequired)
 	{}
-
-public:
 	virtual ~IActionExecutor() {}
 
+public:
 	/**
 	 * Returns the command string that is unique for this executor.
 	 */
@@ -48,17 +48,7 @@ public:
 	 * Executes one instance of an action of this type.
 	 * Does a few checks internally, and then calls Execute(args).
 	 */
-	void ExecuteAction(const action_t& action) const {
-		//assert(action.GetAction().command == GetCommand());
-
-		if (IsCheatRequired() && !gs->cheatEnabled) {
-			logOutput.Print("Chat command /%s (%s) requires /cheat",
-					GetCommand().c_str(),
-					(IsSynced() ? "synced" : "unsynced"));
-		} else {
-			Execute(action);
-		}
-	}
+	void ExecuteAction(const action_t& action) const;
 
 protected:
 	/**
@@ -71,5 +61,26 @@ private:
 	std::string description;
 	bool cheatRequired;
 };
+
+
+
+/*
+ * Because this is a template enabled class,
+ * the implementations have to be in the same file.
+ */
+
+template<class action_t, bool synced_v>
+void IActionExecutor<action_t, synced_v>::ExecuteAction(const action_t& action) const {
+	//assert(action.GetAction().command == GetCommand());
+
+	if (IsCheatRequired() && !gs->cheatEnabled) {
+		logOutput.Print("Chat command /%s (%s) requires /cheat",
+				GetCommand().c_str(),
+				(IsSynced() ? "synced" : "unsynced"));
+	} else {
+		Execute(action);
+	}
+}
+
 
 #endif // I_ACTION_EXECUTOR_H
