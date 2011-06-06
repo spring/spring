@@ -9,7 +9,7 @@
 #include <cstring>
 
 #include "RawPacket.h"
-#include "Sim/Units/CommandAI/Command.h"
+#include "System/SafeVector.h"
 
 namespace netcode
 {
@@ -42,7 +42,7 @@ public:
 		return *this;
 	}
 
-#if USE_SAFE_VECTOR
+#ifdef USE_SAFE_VECTOR
 	template <typename element>
 	PackPacket& operator<<(const safe_vector<element>& vec) {
 		const size_t size = vec.size()* sizeof(element);

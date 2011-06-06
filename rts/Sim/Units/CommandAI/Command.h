@@ -4,13 +4,12 @@
 #define COMMAND_H
 
 #include <string>
-#include <vector>
-#include <limits.h> // for INT_MAX
-#include "System/creg/creg_cond.h"
-#include "System/LogOutput.h"
-#include "System/Platform/CrashHandler.h"
+#include <climits> // for INT_MAX
 
-// cmds lower than 0 is reserved for build options (cmd -x = unitdefs[x])
+#include "System/creg/creg_cond.h"
+#include "System/SafeVector.h"
+
+// ID's lower than 0 are reserved for build options (cmd -x = unitdefs[x])
 #define CMD_STOP                   0
 #define CMD_INSERT                 1
 #define CMD_REMOVE                 2
@@ -106,44 +105,6 @@ enum {
 	FIRESTATE_FIREATWILL =  2,
 };
 
-#define USE_SAFE_VECTOR 1
-
-#if USE_SAFE_VECTOR
-template<class T>
-class safe_vector : public std::vector<T> {
-	CR_DECLARE_STRUCT(safe_vector);
-	static T dummy;
-	static const T defval;
-	static bool firsterror;
-public:
-	const T& safe_element() const;
-	T& safe_element();
-
-	const T& operator[] (const typename std::vector<T>::size_type i) const {
-		if(i >= std::vector<T>::size())
-			return safe_element();
-		return std::vector<T>::operator[](i);
-	}
-	T& operator[] (const typename std::vector<T>::size_type i) {
-		if(i >= std::vector<T>::size())
-			return safe_element();
-		return std::vector<T>::operator[](i);
-	}
-	const T& at (const typename std::vector<T>::size_type i) const {
-		if(i >= std::vector<T>::size())
-			return safe_element();
-		return std::vector<T>::at(i);
-	}
-	T& at (const typename std::vector<T>::size_type i) {
-		if(i >= std::vector<T>::size())
-			return safe_element();
-		return std::vector<T>::at(i);
-	}
-};
-#else
-#define safe_vector std::vector
-#endif
-
 struct Command
 {
 private:
@@ -157,20 +118,20 @@ private:
 */
 
 public:
-	Command(const int cmd_id)
+	Command(const int cmdID)
 		: aiCommandId(-1)
 		, options(0)
 		, tag(0)
 		, timeOut(INT_MAX)
-		, id(cmd_id)
+		, id(cmdID)
 	{}
 
-	Command(const int cmd_id, const unsigned char cmd_options)
+	Command(const int cmdID, const unsigned char cmdOptions)
 		: aiCommandId(-1)
-		, options(cmd_options)
+		, options(cmdOptions)
 		, tag(0)
 		, timeOut(INT_MAX)
-		, id(cmd_id)
+		, id(cmdID)
 	{}
 
 	Command()
@@ -201,17 +162,10 @@ public:
 		return false;
 	}
 
-	/// adds a value to this commands parameter list
 	void AddParam(float par) { params.push_back(par); }
+	const float& GetParam(size_t idx) const { return params[idx]; }
 
-	const std::vector<float>& GetParams() const { return params; }
-	const float& GetParam(size_t idx, const float& def = -1.f) const
-	{
-		if (idx >= params.size())
-			return def;
-		return params[idx];
-	}
-
+	/// const safe_vector<float>& GetParams() const { return params; }
 	const size_t GetParamsCount() const { return params.size(); }
 
 	void SetID(int id) 
@@ -267,7 +221,7 @@ public:
 		showUnique(false),
 		onlyTexture(false) {}
 
-	/// CMD_xxx     code (custom codes can also be used)
+	/// CMD_xxx code (custom codes can also be used)
 	int id;
 	/// CMDTYPE_xxx code
 	int type;
