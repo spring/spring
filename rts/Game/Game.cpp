@@ -420,8 +420,7 @@ CGame::~CGame()
 void CGame::LoadGame(const std::string& mapName)
 {
 #ifdef USE_GML
-	//FIXME make this function safe, if called multiple times in the _same_ thread
-	//set_threadnum(GML_LOAD_THREAD_NUM);
+	set_threadnum(GML_LOAD_THREAD_NUM);
 #endif
 
 	Watchdog::RegisterThread("loadscreen");
