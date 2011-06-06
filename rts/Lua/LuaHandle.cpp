@@ -228,6 +228,7 @@ bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 
 void CLuaHandle::CheckStack()
 {
+	//FIXME WTF this has NOTHING to do with the stack! esp. it should called AFTER the stack was checked
 	ExecuteRecvFromSynced();
 	ExecuteUnitEventBatch();
 	ExecuteFeatEventBatch();
