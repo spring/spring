@@ -1638,7 +1638,7 @@ void CGame::StartPlaying()
 
 		if (a == gu->myTeam) {
 			minimap->AddNotification(team->startPos, float3(1.0f, 1.0f, 1.0f), 1.0f);
-			game->infoConsole->SetLastMsgPos(team->startPos);
+			infoConsole->SetLastMsgPos(team->startPos);
 		}
 	}
 
