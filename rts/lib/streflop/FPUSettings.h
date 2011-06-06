@@ -132,9 +132,9 @@ enum FPU_RoundMode {
 
 // plan for portability
 #ifdef __APPLE__
-#define STREFLOP_FSTCW(cw) do { short tmp; asm volatile ("fstcw %0" : "=m" (tmp) : ); (cw) = tmp; } while (0)
+#define STREFLOP_FSTCW(cw) do { short* dest = (short*)&(cw); short tmp; asm volatile ("fstcw %0" : "=m" (tmp) : ); *dest = tmp; } while (0)
 #define STREFLOP_FLDCW(cw) do { short tmp = (cw); asm volatile ("fclex \n fldcw %0" : : "m" (tmp) ); } while (0)
-#define STREFLOP_STMXCSR(cw) do { int tmp; asm volatile ("stmxcsr %0" : "=m" (tmp) : ); (cw) = tmp; } while (0)
+#define STREFLOP_STMXCSR(cw) do { int* dest = (int*)&(cw); int tmp; asm volatile ("stmxcsr %0" : "=m" (tmp) : ); *dest = tmp; } while (0)
 #define STREFLOP_LDMXCSR(cw) do { int tmp = (cw); asm volatile ("ldmxcsr %0" : : "m" (tmp) ); } while (0)
 #elif defined(_MSC_VER)
 #define STREFLOP_FSTCW(cw) do { short tmp; __asm { fstcw tmp }; (cw) = tmp; } while (0)
