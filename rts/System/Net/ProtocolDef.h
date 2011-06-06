@@ -30,7 +30,6 @@ private:
 	};
 
 	MsgType msg[256];
-	static ProtocolDef* instance_ptr;
 };
 
 } // namespace netcode
