@@ -68,7 +68,8 @@
 #ifdef WIN32
 	#include "Platform/Win/win32.h"
 	#include "Platform/Win/WinVersion.h"
-#elif defined(__APPLE__) || defined(HEADLESS)
+#elif defined(__APPLE__)
+#elif defined(HEADLESS)
 #else
 	#include <X11/Xlib.h>
 	#include <sched.h>
@@ -259,6 +260,8 @@ void SpringApp::SetProcessAffinity(int affinity)
 	}
 #elif defined(__APPLE__)
 	// no-op
+#elif defined(HEADLESS)
+	// no-op
 #else
 	if (affinity > 0) {
 		cpu_set_t cpusSystem; CPU_ZERO(&cpusSystem);
@@ -445,10 +448,7 @@ bool SpringApp::SetSDLVideoMode()
 // origin for our coordinates is the bottom left corner
 bool SpringApp::GetDisplayGeometry()
 {
-#if       defined(HEADLESS)
-	return false;
-
-#else  // defined(HEADLESS)
+#ifndef HEADLESS
 	//! not really needed, but makes it safer against unknown windowmanager behaviours
 	if (globalRendering->fullScreen) {
 		globalRendering->screenSizeX = globalRendering->viewSizeX;
@@ -565,10 +565,7 @@ bool SpringApp::GetDisplayGeometry()
  */
 void SpringApp::RestoreWindowPosition()
 {
-#if       defined(HEADLESS)
-	return;
-
-#else  // defined(HEADLESS)
+#ifndef HEADLESS
 	if (!globalRendering->fullScreen) {
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
@@ -622,10 +619,7 @@ void SpringApp::RestoreWindowPosition()
  */
 void SpringApp::SaveWindowPosition()
 {
-#if       defined(HEADLESS)
-	return;
-
-#else
+#ifndef HEADLESS
 	if (!globalRendering->fullScreen) {
 		GetDisplayGeometry();
 		configHandler->Set("WindowPosX",  globalRendering->winPosX);
@@ -633,7 +627,7 @@ void SpringApp::SaveWindowPosition()
 		configHandler->Set("WindowState", globalRendering->winState);
 
 	}
-#endif // defined(HEADLESS)
+#endif
 }
 
 
@@ -1094,9 +1088,8 @@ int SpringApp::Update()
 
 static void ResetScreenSaverTimeout()
 {
-#if   defined(HEADLESS)
-	return;
-#elif defined(WIN32)
+#ifndef HEADLESS
+  #if defined(WIN32)
 	static unsigned lastreset = 0;
 	unsigned curreset = SDL_GetTicks();
 	if(globalRendering->active && (curreset - lastreset > 1000)) {
@@ -1105,10 +1098,10 @@ static void ResetScreenSaverTimeout()
 		if(SystemParametersInfo(SPI_GETSCREENSAVETIMEOUT, 0, &timeout, 0))
 			SystemParametersInfo(SPI_SETSCREENSAVETIMEOUT, timeout, NULL, 0);
 	}
-#elif defined(__APPLE__)
+  #elif defined(__APPLE__)
 	// TODO: implement
 	return;
-#else
+  #else
 	static unsigned lastreset = 0;
 	unsigned curreset = SDL_GetTicks();
 	if(globalRendering->active && (curreset - lastreset > 1000)) {
@@ -1119,6 +1112,7 @@ static void ResetScreenSaverTimeout()
 			XForceScreenSaver(info.info.x11.display, ScreenSaverReset);
 		}
 	}
+  #endif
 #endif
 }
 
