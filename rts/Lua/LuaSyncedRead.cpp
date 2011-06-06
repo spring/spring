@@ -725,7 +725,7 @@ int LuaSyncedRead::GetGameFrame(lua_State* L)
 int LuaSyncedRead::GetGameSeconds(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	const float seconds = ((float)gs->frameNum / 30.0f);
+	const float seconds = gs->frameNum / (float)GAME_SPEED;
 	lua_pushnumber(L, seconds);
 	return 1;
 }
