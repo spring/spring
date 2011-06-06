@@ -131,17 +131,22 @@ enum FPU_RoundMode {
 */
 
 // plan for portability
-#ifdef __GNUC__
-#define STREFLOP_FSTCW(cw) do { asm volatile ("fstcw %0" : "=m" (cw) : ); } while (0)
-#define STREFLOP_FLDCW(cw) do { asm volatile ("fclex \n fldcw %0" : : "m" (cw)); } while (0)
-#define STREFLOP_STMXCSR(cw) do { asm volatile ("stmxcsr %0" : "=m" (cw) : ); } while (0)
-#define STREFLOP_LDMXCSR(cw) do { asm volatile ("ldmxcsr %0" : : "m" (cw) ); } while (0)
-#else // defined(__GNUC__)
+#ifdef __APPLE__
+#define STREFLOP_FSTCW(cw) do { short tmp; asm volatile ("fstcw %0" : "=m" (tmp) : ); (cw) = tmp; } while (0)
+#define STREFLOP_FLDCW(cw) do { short tmp = (cw); asm volatile ("fclex \n fldcw %0" : : "m" (tmp) ); } while (0)
+#define STREFLOP_STMXCSR(cw) do { int tmp; asm volatile ("stmxcsr %0" : "=m" (tmp) : ); (cw) = tmp; } while (0)
+#define STREFLOP_LDMXCSR(cw) do { int tmp = (cw); asm volatile ("ldmxcsr %0" : : "m" (tmp) ); } while (0)
+#elif defined(_MSC_VER)
 #define STREFLOP_FSTCW(cw) do { short tmp; __asm { fstcw tmp }; (cw) = tmp; } while (0)
 #define STREFLOP_FLDCW(cw) do { short tmp = (cw); __asm { fclex }; __asm { fldcw tmp }; } while (0)
 #define STREFLOP_STMXCSR(cw) do { int tmp; __asm { stmxcsr tmp }; (cw) = tmp; } while (0)
 #define STREFLOP_LDMXCSR(cw) do { int tmp = (cw); __asm { ldmxcsr tmp }; } while (0)
-#endif // defined(__GNUC__)
+#else //defined(__GNUC__)
+#define STREFLOP_FSTCW(cw) do { asm volatile ("fstcw %0" : "=m" (cw) : ); } while (0)
+#define STREFLOP_FLDCW(cw) do { asm volatile ("fclex \n fldcw %0" : : "m" (cw)); } while (0)
+#define STREFLOP_STMXCSR(cw) do { asm volatile ("stmxcsr %0" : "=m" (cw) : ); } while (0)
+#define STREFLOP_LDMXCSR(cw) do { asm volatile ("ldmxcsr %0" : : "m" (cw) ); } while (0)
+#endif
 
 // Subset of all C99 functions
 
