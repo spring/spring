@@ -104,92 +104,87 @@ struct LuaMiscEvent {
 };
 
 #if (LUA_MT_OPT & LUA_BATCH)
-#define LUA_UNIT_BATCH_PUSH(r,...)\
-	if(UseEventBatch() && !execUnitBatch && Threading::IsSimThread()) {\
-		GML_STDMUTEX_LOCK(ulbatch);\
-		luaUnitEventBatch.push_back(LuaUnitEvent(__VA_ARGS__));\
-		return r;\
-	}
-#define LUA_FEAT_BATCH_PUSH(...)\
-	if(UseEventBatch() && !execFeatBatch && Threading::IsSimThread()) {\
-		GML_STDMUTEX_LOCK(flbatch);\
-		luaFeatEventBatch.push_back(LuaFeatEvent(__VA_ARGS__));\
-		return;\
-	}
-#define LUA_OBJ_BATCH_PUSH(...)\
-	if(UseEventBatch() && !execObjBatch && Threading::IsSimThread()) {\
-		GML_STDMUTEX_LOCK(olbatch);\
-		luaObjEventBatch.push_back(LuaObjEvent(__VA_ARGS__));\
-		return;\
-	}
-#define LUA_PROJ_BATCH_PUSH(...)\
-	if(UseEventBatch() && !execProjBatch && Threading::IsSimThread()) {\
-		GML_STDMUTEX_LOCK(plbatch);\
-		luaProjEventBatch.push_back(LuaProjEvent(__VA_ARGS__));\
-		return;\
-	}
-#define LUA_FRAME_BATCH_PUSH(...)\
-	if(UseEventBatch() && !execFrameBatch && Threading::IsSimThread()) {\
-		GML_STDMUTEX_LOCK(glbatch);\
-		luaFrameEventBatch.push_back(__VA_ARGS__);\
-		return;\
-	}
-#define LUA_MISC_BATCH_PUSH(r,...)\
-	if(UseEventBatch() && !execMiscBatch && Threading::IsSimThread()) {\
-		GML_STDMUTEX_LOCK(mlbatch);\
-		luaMiscEventBatch.push_back(LuaMiscEvent(__VA_ARGS__));\
-		return r;\
-	}
+	#define LUA_UNIT_BATCH_PUSH(r,...)\
+		if(UseEventBatch() && !execUnitBatch && Threading::IsSimThread()) {\
+			GML_STDMUTEX_LOCK(ulbatch);\
+			luaUnitEventBatch.push_back(LuaUnitEvent(__VA_ARGS__));\
+			return r;\
+		}
+	#define LUA_FEAT_BATCH_PUSH(...)\
+		if(UseEventBatch() && !execFeatBatch && Threading::IsSimThread()) {\
+			GML_STDMUTEX_LOCK(flbatch);\
+			luaFeatEventBatch.push_back(LuaFeatEvent(__VA_ARGS__));\
+			return;\
+		}
+	#define LUA_OBJ_BATCH_PUSH(...)\
+		if(UseEventBatch() && !execObjBatch && Threading::IsSimThread()) {\
+			GML_STDMUTEX_LOCK(olbatch);\
+			luaObjEventBatch.push_back(LuaObjEvent(__VA_ARGS__));\
+			return;\
+		}
+	#define LUA_PROJ_BATCH_PUSH(...)\
+		if(UseEventBatch() && !execProjBatch && Threading::IsSimThread()) {\
+			GML_STDMUTEX_LOCK(plbatch);\
+			luaProjEventBatch.push_back(LuaProjEvent(__VA_ARGS__));\
+			return;\
+		}
+	#define LUA_FRAME_BATCH_PUSH(...)\
+		if(UseEventBatch() && !execFrameBatch && Threading::IsSimThread()) {\
+			GML_STDMUTEX_LOCK(glbatch);\
+			luaFrameEventBatch.push_back(__VA_ARGS__);\
+			return;\
+		}
+	#define LUA_MISC_BATCH_PUSH(r,...)\
+		if(UseEventBatch() && !execMiscBatch && Threading::IsSimThread()) {\
+			GML_STDMUTEX_LOCK(mlbatch);\
+			luaMiscEventBatch.push_back(LuaMiscEvent(__VA_ARGS__));\
+			return r;\
+		}
 #else
-#define LUA_UNIT_BATCH_PUSH(r,...)
-#define LUA_FEAT_BATCH_PUSH(...)
-#define LUA_OBJ_BATCH_PUSH(...)
-#define LUA_PROJ_BATCH_PUSH(...)
-#define LUA_FRAME_BATCH_PUSH(...)
-#define LUA_MISC_BATCH_PUSH(r,...)
+	#define LUA_UNIT_BATCH_PUSH(r,...)
+	#define LUA_FEAT_BATCH_PUSH(...)
+	#define LUA_OBJ_BATCH_PUSH(...)
+	#define LUA_PROJ_BATCH_PUSH(...)
+	#define LUA_FRAME_BATCH_PUSH(...)
+	#define LUA_MISC_BATCH_PUSH(r,...)
 #endif
 
 #if defined(USE_GML) && GML_ENABLE_SIM
-#define GML_MEASURE_LOCK_TIME(lock) unsigned luatime = SDL_GetTicks(); lock; luatime = SDL_GetTicks() - luatime; if(luatime >= 1) gmlLockTime += luatime
+	#define GML_MEASURE_LOCK_TIME(lock) unsigned luatime = SDL_GetTicks(); lock; luatime = SDL_GetTicks() - luatime; if(luatime >= 1) gmlLockTime += luatime
 #else
-#define GML_MEASURE_LOCK_TIME(lock) lock
+	#define GML_MEASURE_LOCK_TIME(lock) lock
 #endif
 
 #if (LUA_MT_OPT & LUA_STATE)
-#define BEGIN_ITERATE_LUA_STATES() lua_State *L_Cur = L_Sim; do { lua_State * const L = L_Cur
-#define END_ITERATE_LUA_STATES() if(SingleState() || L_Cur == L_Draw) break; L_Cur = L_Draw; } while(true)
-#ifndef LUA_SYNCED_ONLY
-#define SELECT_LUA_STATE() lua_State * const L = (SingleState() || Threading::IsSimThread()) ? L_Sim : L_Draw
-#define SELECT_UNSYNCED_LUA_STATE() lua_State * const L = SingleState() ? L_Sim : L_Draw
+	#define BEGIN_ITERATE_LUA_STATES() lua_State *L_Cur = L_Sim; do { lua_State * const L = L_Cur
+	#define END_ITERATE_LUA_STATES() if(SingleState() || L_Cur == L_Draw) break; L_Cur = L_Draw; } while(true)
+	#ifndef LUA_SYNCED_ONLY
+		#define SELECT_LUA_STATE() lua_State * const L = (SingleState() || Threading::IsSimThread()) ? L_Sim : L_Draw
+		#define SELECT_UNSYNCED_LUA_STATE() lua_State * const L = SingleState() ? L_Sim : L_Draw
+	#else
+		#define SELECT_LUA_STATE()
+		#define SELECT_UNSYNCED_LUA_STATE()
+	#endif
+	#if defined(USE_GML) && GML_ENABLE_SIM
+		#if GML_DEBUG_MUTEX
+			#define GML_LOCK_TEST(nme) { std::map<std::string, int>::iterator locki = lockmaps[gmlThreadNumber].find(#nme); if((lockmi==lockmmaps[gmlThreadNumber].end() || (*lockmi).second == 0) && locki!=lockmaps[gmlThreadNumber].end() && (*locki).second>0) while(1); }
+			#define GML_DEBUG_LOCK(name) { GML_STDMUTEX_LOCK(lm); std::map<boost::recursive_mutex *, int>::iterator lockmi = lockmmaps[gmlThreadNumber].find(L->##name##mutex); GML_LOCK_TEST(sel); GML_LOCK_TEST(group); GML_LOCK_TEST(grpsel); GML_LOCK_TEST(gui); GML_LOCK_TEST(quad); GML_LOCK_TEST(qnum); }
+		#else
+			#define GML_DEBUG_LOCK(name)
+		#endif
+		#define GML_DRCMUTEX_LOCK(name) GML_DEBUG_LOCK(name); GML_MEASURE_LOCK_TIME(GML_THRMUTEX_LOCK(name, GML_DRAW|GML_SIM, *L->))
+	#else
+		#define GML_DRCMUTEX_LOCK(name)
+	#endif
 #else
-#define SELECT_LUA_STATE()
-#define SELECT_UNSYNCED_LUA_STATE()
-#endif
-#if defined(USE_GML) && GML_ENABLE_SIM
-
-#if GML_DEBUG_MUTEX
-#define GML_LOCK_TEST(nme) { std::map<std::string, int>::iterator locki = lockmaps[gmlThreadNumber].find(#nme); if((lockmi==lockmmaps[gmlThreadNumber].end() || (*lockmi).second == 0) && locki!=lockmaps[gmlThreadNumber].end() && (*locki).second>0) while(1); }
-#define GML_DEBUG_LOCK(name) { GML_STDMUTEX_LOCK(lm); std::map<boost::recursive_mutex *, int>::iterator lockmi = lockmmaps[gmlThreadNumber].find(L->##name##mutex); GML_LOCK_TEST(sel); GML_LOCK_TEST(group); GML_LOCK_TEST(grpsel); GML_LOCK_TEST(gui); GML_LOCK_TEST(quad); GML_LOCK_TEST(qnum); }
-#else
-#define GML_DEBUG_LOCK(name)
-#endif
-#define GML_DRCMUTEX_LOCK(name) GML_DEBUG_LOCK(name); GML_MEASURE_LOCK_TIME(GML_THRMUTEX_LOCK(name, GML_DRAW|GML_SIM, *L->))
-
-#else
-#define GML_DRCMUTEX_LOCK(name)
-#endif
-
-#else
-
-#define BEGIN_ITERATE_LUA_STATES() lua_State * const L = L_Sim
-#define END_ITERATE_LUA_STATES()
-#ifndef LUA_SYNCED_ONLY
-#define SELECT_LUA_STATE() lua_State * const L = L_Sim
-#define SELECT_UNSYNCED_LUA_STATE() lua_State * const L = L_Sim
-#else
-#define SELECT_LUA_STATE()
-#define SELECT_UNSYNCED_LUA_STATE()
-#endif
-#define GML_DRCMUTEX_LOCK(name) GML_MEASURE_LOCK_TIME(GML_THRMUTEX_LOCK(name, GML_DRAW|GML_SIM, *L->))
-
+	#define BEGIN_ITERATE_LUA_STATES() lua_State * const L = L_Sim
+	#define END_ITERATE_LUA_STATES()
+	#ifndef LUA_SYNCED_ONLY
+		#define SELECT_LUA_STATE() lua_State * const L = L_Sim
+		#define SELECT_UNSYNCED_LUA_STATE() lua_State * const L = L_Sim
+	#else
+		#define SELECT_LUA_STATE()
+		#define SELECT_UNSYNCED_LUA_STATE()
+	#endif
+	#define GML_DRCMUTEX_LOCK(name) GML_MEASURE_LOCK_TIME(GML_THRMUTEX_LOCK(name, GML_DRAW|GML_SIM, *L->))
 #endif
