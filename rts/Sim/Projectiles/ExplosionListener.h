@@ -7,7 +7,7 @@
 
 #include <set>
 
-class WeaponDef;
+struct WeaponDef;
 
 
 class CExplosionEvent {
