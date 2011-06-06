@@ -1220,7 +1220,10 @@ void SpringApp::Shutdown()
 
 	DeleteAndNull(gs);
 	DeleteAndNull(gu);
+	DeleteAndNull(globalRendering);
 	DeleteAndNull(startsetup);
+
+	FileSystemHandler::Cleanup();
 
 	Watchdog::Uninstall();
 
