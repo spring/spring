@@ -106,10 +106,10 @@ bool CArchiveZip::GetFileImpl(unsigned fid, std::vector<boost::uint8_t>& buffer)
 	buffer.resize(fi.uncompressed_size);
 
 	bool ret = true;
-	if (buffer.size() > 0 && unzReadCurrentFile(zip, &buffer[0], buffer.size()) < 0)
+	if (unzReadCurrentFile(zip, &buffer[0], fi.uncompressed_size) != fi.uncompressed_size)
 		ret = false;
 
-	if(unzCloseCurrentFile(zip) == UNZ_CRCERROR)
+	if (unzCloseCurrentFile(zip) == UNZ_CRCERROR)
 		ret = false;
 
 	if (!ret)
