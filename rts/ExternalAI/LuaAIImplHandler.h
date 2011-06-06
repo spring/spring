@@ -31,9 +31,6 @@ public:
 	static CLuaAIImplHandler& GetInstance();
 
 	std::vector< std::vector<InfoItem> > LoadInfos();
-
-private:
-	static CLuaAIImplHandler* mySingleton;
 };
 
 #define luaAIImplHandler CLuaAIImplHandler::GetInstance()

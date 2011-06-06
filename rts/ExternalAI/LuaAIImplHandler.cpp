@@ -17,15 +17,10 @@
 //));
 
 
-CLuaAIImplHandler* CLuaAIImplHandler::mySingleton = NULL;
-
-CLuaAIImplHandler& CLuaAIImplHandler::GetInstance() {
-
-	if (mySingleton == NULL) {
-		mySingleton = new CLuaAIImplHandler();
-	}
-
-	return *mySingleton;
+CLuaAIImplHandler& CLuaAIImplHandler::GetInstance()
+{
+	static CLuaAIImplHandler mySingleton;
+	return mySingleton;
 }
 
 CLuaAIImplHandler::CLuaAIImplHandler()
