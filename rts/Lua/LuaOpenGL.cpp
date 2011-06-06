@@ -4650,15 +4650,10 @@ int LuaOpenGL::CreateList(lua_State* L)
 int LuaOpenGL::CallList(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, 1)) {
-		luaL_error(L, "Incorrect arguments to gl.CallList(list)");
-	}
-	const unsigned int listIndex = (unsigned int)lua_tonumber(L, 1);
-	CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
-	const unsigned int dlist = displayLists.GetDList(listIndex);
-	if (dlist != 0) {
+	const unsigned int listIndex = luaL_checkint(L, 1);
+	const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
+	const unsigned int& dlist = displayLists.GetDList(listIndex);
+	if (dlist) {
 		glCallList(dlist);
 	}
 	return 0;
