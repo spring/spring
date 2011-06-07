@@ -328,33 +328,33 @@ extern fpenv_t FE_DFL_ENV;
 
 /// Get FP env into the given structure
 inline int fegetenv(fpenv_t *envp) {
+    fpenv_t def_env = FE_DFL_ENV;
     // check that default env exists, otherwise save it now
-    short int& x87_mode = FE_DFL_ENV.x87_mode;
-    if (!FE_DFL_ENV.x87_mode) STREFLOP_FSTCW(x87_mode);
+    if (!def_env.x87_mode) STREFLOP_FSTCW(def_env.x87_mode);
     // Now store env into argument
     STREFLOP_FSTCW(envp->x87_mode);
 
     // For SSE
-    int& sse_mode = FE_DFL_ENV.sse_mode;
-    if (!FE_DFL_ENV.sse_mode) STREFLOP_STMXCSR(sse_mode);
+    if (!def_env.sse_mode) STREFLOP_STMXCSR(def_env.sse_mode);
     // Now store env into argument
     STREFLOP_STMXCSR(envp->sse_mode);
+    FE_DFL_ENV = def_env;
     return 0;
 }
 
 /// Sets FP env from the given structure
 inline int fesetenv(const fpenv_t *envp) {
+    fpenv_t def_env = FE_DFL_ENV;
     // check that default env exists, otherwise save it now
-    short int& x87_mode = FE_DFL_ENV.x87_mode;
-    if (!FE_DFL_ENV.x87_mode) STREFLOP_FSTCW(x87_mode);
+    if (!def_env.x87_mode) STREFLOP_FSTCW(def_env.x87_mode);
     // Now overwrite current env by argument
     STREFLOP_FLDCW(envp->x87_mode);
 
     // For SSE
-    int& sse_mode = FE_DFL_ENV.sse_mode;
-    if (!FE_DFL_ENV.sse_mode) STREFLOP_STMXCSR(sse_mode);
+    if (!def_env.sse_mode) STREFLOP_STMXCSR(def_env.sse_mode);
     // Now overwrite current env by argument
     STREFLOP_LDMXCSR(envp->sse_mode);
+    FE_DFL_ENV = def_env;
     return 0;
 }
 
