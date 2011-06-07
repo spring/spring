@@ -554,9 +554,9 @@ bool SpringApp::GetDisplayGeometry()
 	info.info.x11.unlock_func();
 
   #endif // defined(__APPLE__)
+#endif // defined(HEADLESS)
 
 	return true;
-#endif // defined(HEADLESS)
 }
 
 
