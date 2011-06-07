@@ -131,22 +131,17 @@ enum FPU_RoundMode {
 */
 
 // plan for portability
-#ifdef __APPLE__
-#define STREFLOP_FSTCW(cw) do { short tmp; asm volatile ("fstcw %0" : "=m" (tmp) : ); (cw) = tmp; } while (0)
-#define STREFLOP_FLDCW(cw) do { short tmp = (cw); asm volatile ("fclex \n fldcw %0" : : "m" (tmp) ); } while (0)
-#define STREFLOP_STMXCSR(cw) do { int tmp; asm volatile ("stmxcsr %0" : "=m" (tmp) : ); (cw) = tmp; } while (0)
-#define STREFLOP_LDMXCSR(cw) do { int tmp = (cw); asm volatile ("ldmxcsr %0" : : "m" (tmp) ); } while (0)
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER)
 #define STREFLOP_FSTCW(cw) do { short tmp; __asm { fstcw tmp }; (cw) = tmp; } while (0)
 #define STREFLOP_FLDCW(cw) do { short tmp = (cw); __asm { fclex }; __asm { fldcw tmp }; } while (0)
 #define STREFLOP_STMXCSR(cw) do { int tmp; __asm { stmxcsr tmp }; (cw) = tmp; } while (0)
 #define STREFLOP_LDMXCSR(cw) do { int tmp = (cw); __asm { ldmxcsr tmp }; } while (0)
-#else //defined(__GNUC__)
+#else
 #define STREFLOP_FSTCW(cw) do { asm volatile ("fstcw %0" : "=m" (cw) : ); } while (0)
 #define STREFLOP_FLDCW(cw) do { asm volatile ("fclex \n fldcw %0" : : "m" (cw)); } while (0)
 #define STREFLOP_STMXCSR(cw) do { asm volatile ("stmxcsr %0" : "=m" (cw) : ); } while (0)
 #define STREFLOP_LDMXCSR(cw) do { asm volatile ("ldmxcsr %0" : : "m" (cw) ); } while (0)
-#endif
+#endif // defined(_MSC_VER)
 
 // Subset of all C99 functions
 
@@ -328,33 +323,29 @@ extern fpenv_t FE_DFL_ENV;
 
 /// Get FP env into the given structure
 inline int fegetenv(fpenv_t *envp) {
-    fpenv_t def_env = FE_DFL_ENV;
     // check that default env exists, otherwise save it now
-    if (!def_env.x87_mode) STREFLOP_FSTCW(def_env.x87_mode);
+    if (!FE_DFL_ENV.x87_mode) STREFLOP_FSTCW(FE_DFL_ENV.x87_mode);
     // Now store env into argument
     STREFLOP_FSTCW(envp->x87_mode);
 
     // For SSE
-    if (!def_env.sse_mode) STREFLOP_STMXCSR(def_env.sse_mode);
+    if (!FE_DFL_ENV.sse_mode) STREFLOP_STMXCSR(FE_DFL_ENV.sse_mode);
     // Now store env into argument
     STREFLOP_STMXCSR(envp->sse_mode);
-    FE_DFL_ENV = def_env;
     return 0;
 }
 
 /// Sets FP env from the given structure
 inline int fesetenv(const fpenv_t *envp) {
-    fpenv_t def_env = FE_DFL_ENV;
     // check that default env exists, otherwise save it now
-    if (!def_env.x87_mode) STREFLOP_FSTCW(def_env.x87_mode);
+    if (!FE_DFL_ENV.x87_mode) STREFLOP_FSTCW(FE_DFL_ENV.x87_mode);
     // Now overwrite current env by argument
     STREFLOP_FLDCW(envp->x87_mode);
 
     // For SSE
-    if (!def_env.sse_mode) STREFLOP_STMXCSR(def_env.sse_mode);
+    if (!FE_DFL_ENV.sse_mode) STREFLOP_STMXCSR(FE_DFL_ENV.sse_mode);
     // Now overwrite current env by argument
     STREFLOP_LDMXCSR(envp->sse_mode);
-    FE_DFL_ENV = def_env;
     return 0;
 }
 
