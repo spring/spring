@@ -62,6 +62,12 @@ public:
 	 */
 	const actionExecutor_t* GetActionExecutor(const std::string& command) const;
 
+	/**
+	 * Returns the map of currently registered lower-case commands with their
+	 * respective action-executors.
+	 */
+	const actionExecutorsMap_t& GetActionExecutors() const { return actionExecutors; }
+
 private:
 	// XXX maybe use a hash_map here, for faster lookup
 	actionExecutorsMap_t actionExecutors;

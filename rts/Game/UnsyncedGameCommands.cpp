@@ -6,6 +6,8 @@
 
 #include "UnsyncedGameCommands.h"
 #include "UnsyncedActionExecutor.h"
+#include "SyncedGameCommands.h"
+#include "SyncedActionExecutor.h"
 #include "Game.h"
 #include "Action.h"
 #include "CameraHandler.h"
@@ -2932,6 +2934,49 @@ public:
 	}
 };
 
+
+
+class CommandListActionExecutor : public IUnsyncedActionExecutor {
+public:
+	CommandListActionExecutor() : IUnsyncedActionExecutor("CommandList",
+			"Prints all the available chat commands with description"
+			" (if available) to the console") {}
+
+	void Execute(const UnsyncedAction& action) const {
+
+		logOutput.Print("Chat commands plus description");
+		logOutput.Print("==============================");
+		PrintToConsole(syncedGameCommands->GetActionExecutors());
+		PrintToConsole(unsyncedGameCommands->GetActionExecutors());
+	}
+
+private:
+	template<class action_t, bool synced_v>
+	static void PrintExecutorToConsole(const IActionExecutor<action_t, synced_v>* executor) {
+
+		logOutput.Print("/%-30s  %s  %s",
+				executor->GetCommand().c_str(),
+				(executor->IsSynced() ? "(synced)  " : "(unsynced)"),
+				executor->GetDescription().c_str());
+	}
+
+	void PrintToConsole(const std::map<std::string, ISyncedActionExecutor*>& executors) const {
+
+		std::map<std::string, ISyncedActionExecutor*>::const_iterator aei;
+		for (aei = executors.begin(); aei != executors.end(); ++aei) {
+			PrintExecutorToConsole(aei->second);
+		}
+	}
+
+	void PrintToConsole(const std::map<std::string, IUnsyncedActionExecutor*>& executors) const {
+
+		std::map<std::string, IUnsyncedActionExecutor*>::const_iterator aei;
+		for (aei = executors.begin(); aei != executors.end(); ++aei) {
+			PrintExecutorToConsole(aei->second);
+		}
+	}
+};
+
 } // namespace syncedActionExecutors
 
 
@@ -3168,6 +3213,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new RedirectToSyncedActionExecutor("Take"));
 	AddActionExecutor(new RedirectToSyncedActionExecutor("LuaRules"));
 	AddActionExecutor(new RedirectToSyncedActionExecutor("LuaGaia"));
+	AddActionExecutor(new CommandListActionExecutor());
 }
 
 
