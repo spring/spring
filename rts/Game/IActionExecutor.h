@@ -80,6 +80,20 @@ protected:
 		this->description = description;
 	}
 
+	/**
+	 * Sets a bool according to the value encoded in a string.
+	 * The conversion works like this:
+	 * - ""  -> toggle-value
+	 * - "0" -> false
+	 * - "1" -> true
+	 */
+	static void SetBoolArg(bool& container, const std::string& newValue);
+
+	/**
+	 * Logs the enabled/disabled status of a sub-system of the engine.
+	 */
+	static void LogSystemStatus(const std::string& system, bool status);
+
 private:
 	std::string command;
 	std::string description;
@@ -104,6 +118,26 @@ void IActionExecutor<action_t, synced_v>::ExecuteAction(const action_t& action) 
 	} else {
 		Execute(action);
 	}
+}
+
+template<class action_t, bool synced_v>
+void IActionExecutor<action_t, synced_v>::SetBoolArg(bool& container, const std::string& newValue) {
+
+	if (newValue.empty())  {
+		// toggle
+		container = !container;
+	} else {
+		// set
+		const int num = atoi(newValue.c_str());
+		container = (num != 0);
+	}
+}
+
+template<class action_t, bool synced_v>
+void IActionExecutor<action_t, synced_v>::LogSystemStatus(const std::string& system, bool status) {
+
+	logOutput.Print("%s is %s!", system.c_str(),
+			(status ? "enabled" : "disabled"));
 }
 
 
