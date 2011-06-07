@@ -132,9 +132,9 @@ enum FPU_RoundMode {
 
 // plan for portability
 #ifdef __APPLE__
-#define STREFLOP_FSTCW(cw) do { short* dest = (short*)&(cw); short tmp; asm volatile ("fstcw %0" : "=m" (tmp) : ); *dest = tmp; } while (0)
+#define STREFLOP_FSTCW(cw) do { short tmp; asm volatile ("fstcw %0" : "=m" (tmp) : ); (cw) = tmp; } while (0)
 #define STREFLOP_FLDCW(cw) do { short tmp = (cw); asm volatile ("fclex \n fldcw %0" : : "m" (tmp) ); } while (0)
-#define STREFLOP_STMXCSR(cw) do { int* dest = (int*)&(cw); int tmp; asm volatile ("stmxcsr %0" : "=m" (tmp) : ); *dest = tmp; } while (0)
+#define STREFLOP_STMXCSR(cw) do { int tmp; asm volatile ("stmxcsr %0" : "=m" (tmp) : ); (cw) = tmp; } while (0)
 #define STREFLOP_LDMXCSR(cw) do { int tmp = (cw); asm volatile ("ldmxcsr %0" : : "m" (tmp) ); } while (0)
 #elif defined(_MSC_VER)
 #define STREFLOP_FSTCW(cw) do { short tmp; __asm { fstcw tmp }; (cw) = tmp; } while (0)
@@ -329,12 +329,14 @@ extern fpenv_t FE_DFL_ENV;
 /// Get FP env into the given structure
 inline int fegetenv(fpenv_t *envp) {
     // check that default env exists, otherwise save it now
-    if (!FE_DFL_ENV.x87_mode) STREFLOP_FSTCW(FE_DFL_ENV.x87_mode);
+    short int& x87_mode = FE_DFL_ENV.x87_mode;
+    if (!FE_DFL_ENV.x87_mode) STREFLOP_FSTCW(x87_mode);
     // Now store env into argument
     STREFLOP_FSTCW(envp->x87_mode);
 
     // For SSE
-    if (!FE_DFL_ENV.sse_mode) STREFLOP_STMXCSR(FE_DFL_ENV.sse_mode);
+    int& sse_mode = FE_DFL_ENV.sse_mode;
+    if (!FE_DFL_ENV.sse_mode) STREFLOP_STMXCSR(dest_sse);
     // Now store env into argument
     STREFLOP_STMXCSR(envp->sse_mode);
     return 0;
@@ -343,12 +345,14 @@ inline int fegetenv(fpenv_t *envp) {
 /// Sets FP env from the given structure
 inline int fesetenv(const fpenv_t *envp) {
     // check that default env exists, otherwise save it now
-    if (!FE_DFL_ENV.x87_mode) STREFLOP_FSTCW(FE_DFL_ENV.x87_mode);
+    short int& x87_mode = FE_DFL_ENV.x87_mode;
+    if (!FE_DFL_ENV.x87_mode) STREFLOP_FSTCW(x87_mode);
     // Now overwrite current env by argument
     STREFLOP_FLDCW(envp->x87_mode);
 
     // For SSE
-    if (!FE_DFL_ENV.sse_mode) STREFLOP_STMXCSR(FE_DFL_ENV.sse_mode);
+    int& sse_mode = FE_DFL_ENV.sse_mode;
+    if (!FE_DFL_ENV.sse_mode) STREFLOP_STMXCSR(dest_sse);
     // Now overwrite current env by argument
     STREFLOP_LDMXCSR(envp->sse_mode);
     return 0;
