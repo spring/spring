@@ -23,6 +23,8 @@
 
 #define GML_QUOTE(x) #x
 
+extern bool ThreadRegistered();
+
 // memory barriers for different platforms
 #if defined(__APPLE__) || defined(__FreeBSD__)
 #	include <libkern/OSAtomic.h>
@@ -104,6 +106,9 @@ inline int get_threadnum(void) {
 #			define gmlThreadNumber get_threadnum()
 #			undef set_threadnum
 inline void set_threadnum(int val) {
+	if (ThreadRegistered())
+		return;
+
 	__asm {
 		mov EAX, [val]
 #			if !defined(_WIN64) || !GML_64BIT_USE_GS
@@ -134,6 +139,9 @@ inline int get_threadnum(void) {
 #			define gmlThreadNumber get_threadnum()
 #			undef set_threadnum
 inline void set_threadnum(int val) {
+	if (ThreadRegistered())
+		return;
+
 #			if GML_USE_SPEEDY_TLS
 	if (speedy_tls_init(sizeof(int))<0) { // this works because we only set the thread number once per thread
 		handleerror(NULL, "Failed to initialize Thread Local Storage", "GML error:", MBF_OK | MBF_EXCL);

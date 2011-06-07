@@ -43,6 +43,8 @@
 #include "gmlque.h"
 
 #include "LogOutput.h"
+#include "System/Platform/Threading.h"
+
 
 const char *gmlProfMutex = "lua";
 unsigned gmlLockTime = 0;
@@ -73,6 +75,7 @@ int gmlItemsConsumed=0;
 int gmlNextTickUpdate=0;
 unsigned gmlCurrentTicks;
 
+std::set<Threading::NativeThreadId> threadnums;
 
 // gmlCPUCount returns the number of CPU cores
 // it was taken from the latest version of boost
@@ -244,6 +247,7 @@ boost::mutex cmdmutex;
 boost::mutex luauimutex;
 boost::mutex xcallmutex;
 boost::mutex blockmutex;
+boost::mutex tnummutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 boost::recursive_mutex unitmutex;
@@ -272,6 +276,15 @@ std::map<boost::recursive_mutex *, int> lockmmaps[GML_MAX_NUM_THREADS];
 #endif
 
 #endif
+
+bool ThreadRegistered() {
+	boost::mutex::scoped_lock tnumlock(tnummutex);
+	Threading::NativeThreadId thid = Threading::GetCurrentThreadId();
+	if (threadnums.find(thid) != threadnums.end())
+		return true;
+	threadnums.insert(thid);
+	return false;
+}
 // GMLqueue implementation
 gmlQueue::gmlQueue():
 ReadPos(0),WritePos(0),WriteSize(0),Read(0),Write(0),Locked1(FALSE),Locked2(FALSE),Reloc(FALSE),Sync(EXEC_RUN),WasSynced(FALSE),
