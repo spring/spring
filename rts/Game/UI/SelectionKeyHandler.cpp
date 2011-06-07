@@ -96,8 +96,7 @@ void CSelectionKeyHandler::LoadSelectionKeys()
 std::string CSelectionKeyHandler::ReadToken(std::string& str)
 {
 	std::string ret;
-/*
-	// this algorithm avoids repeated substr calls -> faster
+
 	size_t index = 0;
 	while ((index < str.length()) && (str[index] != '_') && (str[index] != '+')) {
 		index++;
@@ -105,16 +104,6 @@ std::string CSelectionKeyHandler::ReadToken(std::string& str)
 
 	ret = str.substr(0, index);
 	str = str.substr(index, std::string::npos);
-*/
-
-	if (!str.empty()) {
-		char c = str[0];
-		while (c && (c != '_') && (c != '+')) {
-			str = str.substr(1, std::string::npos);
-			ret += c;
-			c = str[0];
-		}
-	}
 
 	return ret;
 }
