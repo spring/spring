@@ -34,7 +34,7 @@ class IActionExecutor
 {
 protected:
 	IActionExecutor(const std::string& command,
-			const std::string& description = "", bool cheatRequired = false)
+			const std::string& description, bool cheatRequired = false)
 		: command(command)
 		, description(description)
 		, cheatRequired(cheatRequired)
@@ -75,6 +75,10 @@ protected:
 	 * Executes one instance of an action of this type.
 	 */
 	virtual void Execute(const action_t& action) const = 0;
+
+	void SetDescription(const std::string& description) {
+		this->description = description;
+	}
 
 private:
 	std::string command;
