@@ -12,7 +12,7 @@
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
-#include <boost/thread/shared_mutex.hpp>
+#include <boost/thread/recursive_mutex.hpp>
 
 #include "Game/GameVersion.h"
 #include "System/ConfigHandler.h"
@@ -30,13 +30,14 @@ namespace Watchdog
 		Threading::NativeThreadHandle thread;
 		volatile spring_time timer;
 		std::vector<std::string> names;
+		bool primary;
 	};
 	typedef std::map<Threading::NativeThreadId, WatchDogThreadInfo> ThreadsMap;
 	typedef std::map<std::string, Threading::NativeThreadId> ThreadNameToIdMap;
 	static ThreadsMap registeredThreads;
 	static ThreadNameToIdMap threadNameToId;
 
-	static boost::shared_mutex mutex;
+	static boost::recursive_mutex mutex;
 	static boost::thread* hangdetectorthread = NULL;
 	static spring_time hangTimeout = spring_msecs(0);
 
@@ -44,7 +45,7 @@ namespace Watchdog
 	{
 		while (!boost::this_thread::interruption_requested()) {
 			{
-				boost::shared_lock<boost::shared_mutex> lock(mutex);
+				boost::recursive_mutex::scoped_lock lock(mutex);
 				const spring_time curtime = spring_gettime();
 				bool hangDetected = false;
 				for (ThreadsMap::iterator it=registeredThreads.begin(); it != registeredThreads.end(); ++it) {
@@ -77,22 +78,23 @@ namespace Watchdog
 	}
 
 
-	void RegisterThread(std::string name)
+	void RegisterThread(std::string name, bool primary)
 	{
-		boost::unique_lock<boost::shared_mutex> lock(mutex);
+		boost::recursive_mutex::scoped_lock lock(mutex);
 		Threading::NativeThreadHandle thread = Threading::GetCurrentThread();
 		Threading::NativeThreadId threadId = Threading::GetCurrentThreadId();
 		WatchDogThreadInfo& th_info = registeredThreads[threadId];
 		th_info.thread = thread;
 		th_info.timer = spring_gettime();
 		th_info.names.push_back(name);
+		th_info.primary = primary;
 		threadNameToId[name] = threadId;
 	}
 
 
 	void DeregisterThread(std::string name)
 	{
-		boost::unique_lock<boost::shared_mutex> lock(mutex);
+		boost::recursive_mutex::scoped_lock lock(mutex);
 		ThreadNameToIdMap::iterator it = threadNameToId.find(name);
 		if (it == threadNameToId.end()) {
 			logOutput.Print("[Watchdog::DeregisterThread] No thread found named \"%s\".", name.c_str());
@@ -109,10 +111,8 @@ namespace Watchdog
 		//logOutput.Print("[Watchdog::DeregisterThread] thread removed \"%s\".", name.c_str());
 	}
 
-
-	void ClearTimer(bool disable, Threading::NativeThreadId* _threadId)
+	inline void DoClearTimer(bool disable, Threading::NativeThreadId* _threadId)
 	{
-		boost::shared_lock<boost::shared_mutex> lock(mutex);
 		if (!hangdetectorthread)
 			return; //! Watchdog isn't running
 		Threading::NativeThreadId threadId;
@@ -131,10 +131,16 @@ namespace Watchdog
 		th_info.timer = disable ? spring_notime : spring_gettime();
 	}
 
+	void ClearTimer(bool disable, Threading::NativeThreadId* _threadId)
+	{
+		boost::recursive_mutex::scoped_lock lock(mutex);
+		DoClearTimer(disable, _threadId);
+	}
+
 
 	void ClearTimer(const std::string& name, bool disable)
 	{
-		boost::shared_lock<boost::shared_mutex> lock(mutex);
+		boost::recursive_mutex::scoped_lock lock(mutex);
 		if (!hangdetectorthread)
 			return; //! Watchdog isn't running
 		ThreadNameToIdMap::iterator it = threadNameToId.find(name);
@@ -142,7 +148,21 @@ namespace Watchdog
 			logOutput.Print("[Watchdog::ClearTimer] No thread found named \"%s\".", name.c_str());
 			return;
 		}
-		ClearTimer(disable, &(it->second));
+		DoClearTimer(disable, &(it->second));
+	}
+
+
+	void ClearPrimaryTimers(bool disable)
+	{
+		boost::recursive_mutex::scoped_lock lock(mutex);
+		if (!hangdetectorthread)
+			return; //! Watchdog isn't running
+
+		for (ThreadsMap::iterator it=registeredThreads.begin(); it != registeredThreads.end(); ++it) {
+			WatchDogThreadInfo& th_info = it->second;
+			if (th_info.primary)
+				th_info.timer = disable ? spring_notime : spring_gettime();
+		}
 	}
 
 
@@ -179,7 +199,7 @@ namespace Watchdog
 		hangdetectorthread = new boost::thread(&HangDetector);
 
 		//! register (this) mainthread
-		RegisterThread("main");
+		RegisterThread("main", true);
 
 		logOutput.Print("[Watchdog] Installed (timeout: %isec)", hangTimeoutSecs);
 	}
@@ -193,7 +213,7 @@ namespace Watchdog
 			delete hangdetectorthread;
 			hangdetectorthread = NULL;
 
-			boost::unique_lock<boost::shared_mutex> lock(mutex);
+			boost::recursive_mutex::scoped_lock lock(mutex);
 			registeredThreads.clear();
 			threadNameToId.clear();
 		}

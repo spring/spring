@@ -1257,14 +1257,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Game\SyncedActionExecutor.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Game\SyncedActionExecutor.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Game\SyncedGameCommands.cpp"
 				>
 			</File>
@@ -1274,14 +1266,6 @@
 			</File>
 			<File
 				RelativePath="..\..\Game\TraceRay.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Game\UnsyncedActionExecutor.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Game\UnsyncedActionExecutor.h"
 				>
 			</File>
 			<File
@@ -4913,6 +4897,26 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Dedicated Server (Debug)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\builds\DS\main.cpp"
 				>
 				<FileConfiguration
@@ -4991,26 +4995,6 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Dedicated Server (Debug)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>

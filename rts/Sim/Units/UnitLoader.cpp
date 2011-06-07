@@ -51,6 +51,7 @@
 #include "System/EventBatchHandler.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
+#include "System/Platform/Watchdog.h"
 #include "System/TimeProfiler.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -344,6 +345,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		pos.z = std::max(sqHalfMapSize, std::min(pos.z, float3::maxzpos - sqHalfMapSize - 1));
 
 		for (int a = 1; a <= numRequestedUnits; ++a) {
+			Watchdog::ClearPrimaryTimers(); // the other thread may be waiting for a mutex held by this one, triggering hang detection
 			const float px = pos.x + (a % sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
 			const float pz = pos.z + (a / sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
 			const float3 unitPos = float3(px, ground->GetHeightReal(px, pz), pz);
@@ -400,6 +402,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 					const float pz = squarePos.z + z * zsize * SQUARE_SIZE;
 
 					const float3 unitPos = float3(px, ground->GetHeightReal(px, pz), pz);
+					Watchdog::ClearPrimaryTimers();
 					const CUnit* unit = LoadUnit(unitDef, unitPos, team, false, 0, NULL);
 
 					if (unit != NULL) {
@@ -435,6 +438,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 					const float pz = squarePos.z + z * zsize * SQUARE_SIZE;
 					const float3 featurePos = float3(px, ground->GetHeightReal(px, pz), pz);
 
+					Watchdog::ClearPrimaryTimers();
 					CFeature* feature = new CFeature();
 					// Initialize() adds the feature to the FeatureHandler -> no memory-leak
 					feature->Initialize(featurePos, featureDef, 0, 0, team, featureAllyTeam, NULL);
