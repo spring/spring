@@ -129,16 +129,16 @@ namespace GL {
 	private:
 		float4  position;         // world-space, w == 1 (non-directional)
 		float3  direction;        // world-space
-		float4  ambientColor;     // RGBA
-		float4  diffuseColor;     // RGBA
-		float4  specularColor;    // RGBA
-		float3  intensityWeight;  // x=ambient, y=diffuse, z=specular
-		float3  attenuation;      // x=constant, y=linear, z=quadratic
+		float4  ambientColor;     // RGB[A]
+		float4  diffuseColor;     // RGB[A]
+		float4  specularColor;    // RGB[A]
+		float3  intensityWeight;  // x=ambientRGB, y=diffuseRGB, z=specularRGB
+		float3  attenuation;      // x=constantAtt, y=linearAtt, z=quadraticAtt
 
-		float3 ambientDecayRate;  // x=ambient, y=diffuse, z=specular
-		float3 diffuseDecayRate;  // x=ambient, y=diffuse, z=specular
-		float3 specularDecayRate; // x=ambient, y=diffuse, z=specular
-		float3 decayFunctionType; // x=ambient, y=diffuse, z=specular (0.0f=linear, 1.0f=exponential)
+		float3 ambientDecayRate;  // x=ambientR,  y=ambientG,  z=ambientB (per-frame decay of ambientColor)
+		float3 diffuseDecayRate;  // x=diffuseR,  y=diffuseG,  z=diffuseB (per-frame decay of diffuseColor)
+		float3 specularDecayRate; // x=specularR, y=specularG, z=specularB (per-frame decay of specularColor)
+		float3 decayFunctionType; // x=ambientDT, y=diffuseDT, z=specularDT (0.0f=linear, 1.0f=exponential)
 
 		float radius;             // elmos
 		float fov;                // degrees ([0.0 - 90.0] or 180.0)
