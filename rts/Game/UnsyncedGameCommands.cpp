@@ -1126,7 +1126,7 @@ public:
 
 	void Execute(const UnsyncedAction& action) const {
 		if (!action.IsRepeat()) {
-		grouphandlers[gu->myTeam]->GroupCommand(groupId);
+			grouphandlers[gu->myTeam]->GroupCommand(groupId);
 		}
 	}
 
@@ -2418,6 +2418,7 @@ public:
 
 
 
+// XXX unlucky command-name, remove the "No"
 class NoLuaDrawActionExecutor : public IUnsyncedActionExecutor {
 public:
 	NoLuaDrawActionExecutor() : IUnsyncedActionExecutor("NoLuaDraw",
@@ -2904,6 +2905,7 @@ public:
 
 class BenchmarkScriptActionExecutor : public IUnsyncedActionExecutor {
 public:
+	// XXX '-' in command name is inconsistent with the rest of the commands, which only use "[a-zA-Z]" -> remove it
 	BenchmarkScriptActionExecutor() : IUnsyncedActionExecutor("Benchmark-Script",
 			"Runs the benchmark-script for a given unit-type") {}
 
