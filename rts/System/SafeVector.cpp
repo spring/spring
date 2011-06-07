@@ -5,6 +5,7 @@
 #ifdef USE_SAFE_VECTOR
 #include "LogOutput.h"
 #include "Platform/CrashHandler.h"
+#include "maindefines.h"
 
 CR_BIND_TEMPLATE(safe_vector<float>, );
 
@@ -13,7 +14,7 @@ template <> const float& safe_vector<float>::safe_element(size_t idx) const {
 
 	if (showError) {
 		showError = false;
-		logOutput.Print("[%s const] ERROR: index %u out of bounds! (size %u)", __FUNCTION__, idx, size());
+		logOutput.Print("[%s const] ERROR: index "_STPF_" out of bounds! (size "_STPF_")", __FUNCTION__, idx, size());
 		CrashHandler::OutputStacktrace();
 	}
 
@@ -25,11 +26,11 @@ template <> float& safe_vector<float>::safe_element(size_t idx) {
 
 	if (showError) {
 		showError = false;
-		logOutput.Print("[%s] ERROR: index %u out of bounds! (size %u)", __FUNCTION__, idx, size());
+		logOutput.Print("[%s] ERROR: index "_STPF_" out of bounds! (size "_STPF_")", __FUNCTION__, idx, size());
 		CrashHandler::OutputStacktrace();
 	}
 
 	return def;
 }
 
-#endif
+#endif // USE_SAFE_VECTOR
