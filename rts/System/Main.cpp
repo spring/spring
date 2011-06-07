@@ -12,8 +12,6 @@
 #include <sstream>
 #include <boost/system/system_error.hpp>
 #include <boost/bind.hpp>
-//SDL_main.h contains a macro that replaces the main function, see SDL_main.h for details
-#include <SDL_main.h>
 
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
@@ -31,6 +29,12 @@
 #ifdef WIN32
 	#include "Platform/Win/win32.h"
 #endif
+
+#ifndef __APPLE__
+	// SDL_main.h contains a macro that replaces the main function on some OS, see SDL_main.h for details
+	#include <SDL_main.h>
+#endif
+
 
 void MainFunc(int argc, char** argv, int* ret) {
 #ifdef __MINGW32__
