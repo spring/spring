@@ -1415,6 +1415,7 @@ static bool AddLightTrackingTarget(lua_State* L, GL::Light* light, bool trackEna
 	bool ret = false;
 
 	if (trackUnit) {
+		// interpret argument #2 as a unit ID
 		CUnit* unit = ParseAllyUnit(L, caller, 2);
 
 		if (unit != NULL) {
@@ -1436,6 +1437,8 @@ static bool AddLightTrackingTarget(lua_State* L, GL::Light* light, bool trackEna
 			}
 		}
 	} else {
+		// interpret argument #2 as a projectile ID
+		//
 		// only track synced projectiles (LuaSynced
 		// does not know about unsynced ID's anyway)
 		CProjectile* proj = ParseRawProjectile(L, caller, 2, true);
