@@ -34,36 +34,27 @@ CR_REG_METADATA(CGroupHandler, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CGroupHandler::CGroupHandler(int team)
-		: team(team),
-		firstUnusedGroup(10)
+CGroupHandler::CGroupHandler(int teamId)
+		: team(teamId),
+		firstUnusedGroup(FIRST_SPECIAL_GROUP)
 {
-	for (int g = 0; g < 10; ++g) {
+	for (int g = 0; g < FIRST_SPECIAL_GROUP; ++g) {
 		groups.push_back(new CGroup(g, this));
 	}
 }
 
 CGroupHandler::~CGroupHandler()
 {
-	for(int g = 0; g < firstUnusedGroup; ++g) {
+	for (int g = 0; g < firstUnusedGroup; ++g) {
 		delete groups[g];
 	}
 }
 
 void CGroupHandler::Update()
 {
-	for (std::vector<CGroup*>::iterator g = groups.begin(); g != groups.end(); ++g) {
-		if ((*g) != NULL) {
-			(*g)->Update();
-		}
-	}
-}
-
-void CGroupHandler::DrawCommands()
-{
-	for (std::vector<CGroup*>::iterator g = groups.begin(); g != groups.end(); ++g) {
-		if ((*g) != NULL) {
-			(*g)->DrawCommands();
+	for (std::vector<CGroup*>::iterator gi = groups.begin(); gi != groups.end(); ++gi) {
+		if ((*gi) != NULL) {
+			(*gi)->Update();
 		}
 	}
 }
@@ -93,53 +84,51 @@ void CGroupHandler::GroupCommand(int num, const std::string& cmd)
 {
 	GML_RECMUTEX_LOCK(grpsel); // GroupCommand
 
+	CGroup* group = groups[num];
+
 	if ((cmd == "set") || (cmd == "add")) {
 		if (cmd == "set") {
-			groups[num]->ClearUnits();
+			group->ClearUnits();
 		}
 		const CUnitSet& selUnits = selectedUnits.selectedUnits;
 		CUnitSet::const_iterator ui;
 		for(ui = selUnits.begin(); ui != selUnits.end(); ++ui) {
-			(*ui)->SetGroup(groups[num]);
+			(*ui)->SetGroup(group);
 		}
 	}
 	else if (cmd == "selectadd")  {
 		// do not select the group, just add its members to the current selection
-		CUnitSet::const_iterator gi;
-		for (gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
-			selectedUnits.AddUnit(*gi);
+		CUnitSet::const_iterator ui;
+		for (ui = group->units.begin(); ui != group->units.end(); ++ui) {
+			selectedUnits.AddUnit(*ui);
 		}
 		return;
 	}
 	else if (cmd == "selectclear")  {
 		// do not select the group, just remove its members from the current selection
-		CUnitSet::const_iterator gi;
-		for (gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
-			selectedUnits.RemoveUnit(*gi);
+		CUnitSet::const_iterator ui;
+		for (ui = group->units.begin(); ui != group->units.end(); ++ui) {
+			selectedUnits.RemoveUnit(*ui);
 		}
 		return;
 	}
 	else if (cmd == "selecttoggle")  {
 		// do not select the group, just toggle its members with the current selection
 		const CUnitSet& selUnits = selectedUnits.selectedUnits;
-		CUnitSet::const_iterator gi;
-		for (gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
-			if (selUnits.find(*gi) == selUnits.end()) {
-				selectedUnits.AddUnit(*gi);
+		CUnitSet::const_iterator ui;
+		for (ui = group->units.begin(); ui != group->units.end(); ++ui) {
+			if (selUnits.find(*ui) == selUnits.end()) {
+				selectedUnits.AddUnit(*ui);
 			} else {
-				selectedUnits.RemoveUnit(*gi);
+				selectedUnits.RemoveUnit(*ui);
 			}
 		}
 		return;
 	}
 
-	if ((selectedUnits.selectedGroup == num) && !groups[num]->units.empty()) {
-		float3 p(0.0f, 0.0f, 0.0f);
-		for (CUnitSet::iterator gi = groups[num]->units.begin(); gi != groups[num]->units.end(); ++gi) {
-			p += (*gi)->pos;
-		}
-		p /= groups[num]->units.size();
-		camHandler->GetCurrentController().SetPos(p);
+	if ((selectedUnits.selectedGroup == num) && !group->units.empty()) {
+		const float3 groupCenter = group->CalculateCenter();
+		camHandler->GetCurrentController().SetPos(groupCenter);
 	}
 
 	selectedUnits.SelectGroup(num);
@@ -166,8 +155,8 @@ void CGroupHandler::RemoveGroup(CGroup* group)
 {
 	GML_RECMUTEX_LOCK(grpsel); // RemoveGroup
 
-	if (group->id < 10) {
-		logOutput.Print("Warning trying to remove hotkey group %i", group->id);
+	if (group->id < FIRST_SPECIAL_GROUP) {
+		logOutput.Print("Warning: Trying to remove hot-key group %i", group->id);
 		return;
 	}
 	if (selectedUnits.selectedGroup == group->id) {

@@ -1,25 +1,24 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
+
 #include "Group.h"
 #include "GroupHandler.h"
-#include "Game/SelectedUnits.h"
-#include "Sim/Units/Unit.h"
-#include "GlobalUnsynced.h"
-#include "EventHandler.h"
-#include "LogOutput.h"
-#include "Platform/errorhandler.h"
-#include "mmgr.h"
-#include "creg/STL_List.h"
-#include "creg/STL_Set.h"
+//#include "Game/SelectedUnits.h"
+//#include "Sim/Units/Unit.h"
+#include "System/GlobalUnsynced.h"
+#include "System/EventHandler.h"
+#include "System/LogOutput.h"
+#include "System/Platform/errorhandler.h"
+#include "System/mmgr.h"
+#include "System/creg/STL_Set.h"
+#include "System/float3.h"
 
-CR_BIND(CGroup, (0,NULL))
+CR_BIND(CGroup, (0, NULL))
 
 CR_REG_METADATA(CGroup, (
 				CR_MEMBER(id),
 				CR_MEMBER(units),
-				CR_MEMBER(myCommands),
-				CR_MEMBER(lastCommandPage),
 				CR_MEMBER(handler),
 				CR_POSTLOAD(PostLoad)
 				));
@@ -28,16 +27,15 @@ CR_REG_METADATA(CGroup, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CGroup::CGroup(int id, CGroupHandler* grouphandler)
-		: id(id),
-		lastCommandPage(0),
-		handler(grouphandler)
+CGroup::CGroup(int id, CGroupHandler* groupHandler)
+		: id(id)
+		, handler(groupHandler)
 {
 }
 
 CGroup::~CGroup()
 {
-	// should not have any units left but just to be sure
+	// should not have any units left, but just to be sure
 	ClearUnits();
 }
 
@@ -47,13 +45,13 @@ void CGroup::PostLoad()
 {
 	CUnitSet unitBackup = units;
 
-	for(CUnitSet::iterator ui = unitBackup.begin(); ui != unitBackup.end(); ++ui) {
+	for (CUnitSet::const_iterator ui = unitBackup.begin(); ui != unitBackup.end(); ++ui) {
 		units.erase(*ui);
 		(*ui)->group = NULL;
 	}
 }
 
-bool CGroup::AddUnit(CUnit *unit)
+bool CGroup::AddUnit(CUnit* unit)
 {
 	GML_RECMUTEX_LOCK(group); // AddUnit
 
@@ -63,7 +61,7 @@ bool CGroup::AddUnit(CUnit *unit)
 	return true;
 }
 
-void CGroup::RemoveUnit(CUnit *unit)
+void CGroup::RemoveUnit(CUnit* unit)
 {
 	GML_RECMUTEX_LOCK(group); // RemoveUnit
 
@@ -71,41 +69,23 @@ void CGroup::RemoveUnit(CUnit *unit)
 	units.erase(unit);
 }
 
+void CGroup::RemoveIfEmptySpecialGroup()
+{
+	if (units.empty()
+			&& (id >= CGroupHandler::FIRST_SPECIAL_GROUP)
+			/*&& (handler == grouphandler)*/
+			&& (handler->team == gu->myTeam)) // HACK so Global AI groups do not get erased DEPRECATED
+	{
+		handler->RemoveGroup(this);
+	}
+}
+
 void CGroup::Update()
 {
-	// last check is a hack so Global AI groups dont get erased
-	if (units.empty() && (id >= 10) && /*(handler == grouphandler) && */(handler->team == gu->myTeam)) {
-		handler->RemoveGroup(this);
-		return;
-	}
+	RemoveIfEmptySpecialGroup();
 }
 
-void CGroup::DrawCommands()
-{
-	// last check is a hack so Global AI groups dont get erased
-	if (units.empty() && (id >= 10) && /*(handler == grouphandler) && */(handler->team == gu->myTeam)) {
-		handler->RemoveGroup(this);
-		return;
-	}
-}
-
-const vector<CommandDescription>& CGroup::GetPossibleCommands()
-{
-	CommandDescription c;
-
-	myCommands.clear();
-
-	// here, Group AI commands were added, when they still existed
-
-	return myCommands;
-}
-
-int CGroup::GetDefaultCmd(const CUnit *unit, const CFeature* feature) const
-{
-	return CMD_STOP;
-}
-
-void CGroup::ClearUnits(void)
+void CGroup::ClearUnits()
 {
 	GML_RECMUTEX_LOCK(group); // ClearUnits
 
@@ -113,4 +93,19 @@ void CGroup::ClearUnits(void)
 	while (!units.empty()) {
 		(*units.begin())->SetGroup(0);
 	}
+}
+
+float3 CGroup::CalculateCenter() const
+{
+	float3 center = ZeroVector;
+
+	if (!units.empty()) {
+		CUnitSet::const_iterator ui;
+		for (ui = units.begin(); ui != units.end(); ++ui) {
+			center += (*ui)->pos;
+		}
+		center /= units.size();
+	}
+
+	return center;
 }
