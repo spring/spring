@@ -55,6 +55,7 @@
 #include "System/Input/KeyInput.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
+#include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 
 //////////////////////////////////////////////////////////////////////
