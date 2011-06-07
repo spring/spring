@@ -2950,7 +2950,6 @@ public:
 		PrintToConsole(unsyncedGameCommands->GetActionExecutors());
 	}
 
-private:
 	template<class action_t, bool synced_v>
 	static void PrintExecutorToConsole(const IActionExecutor<action_t, synced_v>* executor) {
 
@@ -2960,6 +2959,7 @@ private:
 				executor->GetDescription().c_str());
 	}
 
+private:
 	void PrintToConsole(const std::map<std::string, ISyncedActionExecutor*>& executors) const {
 
 		std::map<std::string, ISyncedActionExecutor*>::const_iterator aei;
@@ -2974,6 +2974,49 @@ private:
 		for (aei = executors.begin(); aei != executors.end(); ++aei) {
 			PrintExecutorToConsole(aei->second);
 		}
+	}
+};
+
+
+
+class CommandHelpActionExecutor : public IUnsyncedActionExecutor {
+public:
+	CommandHelpActionExecutor() : IUnsyncedActionExecutor("CommandHelp",
+			"Prints info about a specific chat command"
+			" (so far only synced/unsynced and the description)") {}
+
+	void Execute(const UnsyncedAction& action) const {
+
+		const std::vector<std::string> args = CSimpleParser::Tokenize(action.GetArgs(), 1);
+		if (!args.empty()) {
+			const std::string commandLower = StringToLower(args[0]);
+
+			// try if an unsynced chat command with this name is available
+			const IUnsyncedActionExecutor* unsyncedExecutor = unsyncedGameCommands->GetActionExecutor(commandLower);
+			if (unsyncedExecutor != NULL) {
+				PrintExecutorHelpToConsole(unsyncedExecutor);
+				return;
+			}
+
+			// try if a synced chat command with this name is available
+			const ISyncedActionExecutor* syncedExecutor = syncedGameCommands->GetActionExecutor(commandLower);
+			if (syncedExecutor != NULL) {
+				PrintExecutorHelpToConsole(syncedExecutor);
+				return;
+			}
+
+			logOutput.Print("No chat command registered with name \"%s\" (case-insensitive)", args[0].c_str());
+		} else {
+			logOutput.Print("missing command-name");
+		}
+	}
+
+private:
+	template<class action_t, bool synced_v>
+	static void PrintExecutorHelpToConsole(const IActionExecutor<action_t, synced_v>* executor) {
+
+		// XXX extend this in case more info about commands are available (for example "Usage: name {args}")
+		CommandListActionExecutor::PrintExecutorToConsole(executor);
 	}
 };
 
@@ -3214,6 +3257,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new RedirectToSyncedActionExecutor("LuaRules"));
 	AddActionExecutor(new RedirectToSyncedActionExecutor("LuaGaia"));
 	AddActionExecutor(new CommandListActionExecutor());
+	AddActionExecutor(new CommandHelpActionExecutor());
 }
 
 
