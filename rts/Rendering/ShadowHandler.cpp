@@ -35,7 +35,7 @@ bool CShadowHandler::shadowsSupported = false;
 bool CShadowHandler::firstInstance = true;
 
 
-CShadowHandler::CShadowHandler(void)
+CShadowHandler::CShadowHandler()
 {
 	const bool tmpFirstInstance = firstInstance;
 	firstInstance = false;
@@ -112,7 +112,7 @@ CShadowHandler::CShadowHandler(void)
 	LoadShadowGenShaderProgs();
 }
 
-CShadowHandler::~CShadowHandler(void)
+CShadowHandler::~CShadowHandler()
 {
 	if (shadowsLoaded) {
 		glDeleteTextures(1, &shadowTexture);
@@ -245,7 +245,7 @@ bool CShadowHandler::InitDepthTarget()
 	return status;
 }
 
-void CShadowHandler::DrawShadowPasses(void)
+void CShadowHandler::DrawShadowPasses()
 {
 	inShadowPass = true;
 
@@ -284,7 +284,7 @@ void CShadowHandler::SetShadowMapSizeFactors()
 	#endif
 }
 
-void CShadowHandler::CreateShadows(void)
+void CShadowHandler::CreateShadows()
 {
 	fb.Bind();
 
@@ -408,7 +408,7 @@ void CShadowHandler::CreateShadows(void)
 }
 
 
-void CShadowHandler::CalcMinMaxView(void)
+void CShadowHandler::CalcMinMaxView()
 {
 	left.clear();
 
