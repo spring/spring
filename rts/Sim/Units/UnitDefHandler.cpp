@@ -50,11 +50,11 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 	unitDefs.push_back(nullDef);
 
 	for (unsigned int a = 0; a < unitDefNames.size(); ++a) {
-		const string unitName = unitDefNames[a];
+		const string& unitName = unitDefNames[a];
 		LuaTable udTable = rootTable.SubTable(unitName);
 
 		// parse the unitdef data (but don't load buildpics, etc...)
-		PushNewUnitDef(unitName, udTable);
+		PushNewUnitDef(StringToLower(unitName), udTable);
 	}
 
 	CleanBuildOptions();

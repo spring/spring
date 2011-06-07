@@ -275,11 +275,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 , buildingDecalType(-1)
 {
 	humanName = udTable.GetString("name", "");
-	if (humanName.empty()) {
-		const string errmsg = "missing 'name' parameter for the " + unitName + " unitdef";
-		throw content_error(errmsg);
-	}
-
 	tooltip = udTable.GetString("description", name);
 	buildPicName = udTable.GetString("buildPic", "");
 	decoyName = udTable.GetString("decoyFor", "");
@@ -300,8 +295,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	energyMake   = udTable.GetFloat("energyMake", 0.0f);
 
 	health       = udTable.GetFloat("maxDamage",  0.0f);
-	autoHeal     = udTable.GetFloat("autoHeal",      0.0f) * (16.0f / GAME_SPEED);
-	idleAutoHeal = udTable.GetFloat("idleAutoHeal", 10.0f) * (16.0f / GAME_SPEED);
+	autoHeal     = udTable.GetFloat("autoHeal",      0.0f) * (UNIT_SLOWUPDATE_RATE / float(GAME_SPEED));
+	idleAutoHeal = udTable.GetFloat("idleAutoHeal", 10.0f) * (UNIT_SLOWUPDATE_RATE / float(GAME_SPEED));
 	idleTime     = udTable.GetInt("idleTime", 600);
 
 	losHeight = 20;
@@ -508,10 +503,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	minAirBasePower = udTable.GetFloat("minAirBasePower", 0.0f);
 	maxThisUnit = udTable.GetInt("unitRestricted", MAX_UNITS);
 
-	const string lname = StringToLower(name);
-
-	if (gameSetup->restrictedUnits.find(lname) != gameSetup->restrictedUnits.end()) {
-		maxThisUnit = std::min(maxThisUnit, gameSetup->restrictedUnits.find(lname)->second);
+	if (gameSetup->restrictedUnits.find(name) != gameSetup->restrictedUnits.end()) {
+		maxThisUnit = std::min(maxThisUnit, gameSetup->restrictedUnits.find(name)->second);
 	}
 
 	categoryString = udTable.GetString("category", "");
@@ -728,7 +721,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 UnitDef::~UnitDef()
 {
-	for (int u = 0; u < 4; u++) {
+	for (int u = 0; u < NUM_FACINGS; u++) {
 		yardmaps[u].clear();
 	}
 
