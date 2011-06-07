@@ -336,7 +336,7 @@ inline int fegetenv(fpenv_t *envp) {
 
     // For SSE
     int& sse_mode = FE_DFL_ENV.sse_mode;
-    if (!FE_DFL_ENV.sse_mode) STREFLOP_STMXCSR(dest_sse);
+    if (!FE_DFL_ENV.sse_mode) STREFLOP_STMXCSR(sse_mode);
     // Now store env into argument
     STREFLOP_STMXCSR(envp->sse_mode);
     return 0;
@@ -352,7 +352,7 @@ inline int fesetenv(const fpenv_t *envp) {
 
     // For SSE
     int& sse_mode = FE_DFL_ENV.sse_mode;
-    if (!FE_DFL_ENV.sse_mode) STREFLOP_STMXCSR(dest_sse);
+    if (!FE_DFL_ENV.sse_mode) STREFLOP_STMXCSR(sse_mode);
     // Now overwrite current env by argument
     STREFLOP_LDMXCSR(envp->sse_mode);
     return 0;
