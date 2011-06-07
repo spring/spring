@@ -660,7 +660,6 @@ void CSelectedUnits::DrawCommands()
 	}
 
 	// draw the commands from AIs
-	grouphandlers[gu->myTeam]->DrawCommands();
 	waitCommandsAI.DrawCommands();
 
 	glLineWidth(1.0f);
