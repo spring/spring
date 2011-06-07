@@ -93,42 +93,40 @@ void CSelectionKeyHandler::LoadSelectionKeys()
 	}
 }
 
-std::string CSelectionKeyHandler::ReadToken(std::string& s)
+std::string CSelectionKeyHandler::ReadToken(std::string& str)
 {
 	std::string ret;
-	// change made.  avoiding repeated substr calls...
-/*	int index = 0;
-	//char c=s[index];
+/*
+	// this algorithm avoids repeated substr calls -> faster
+	size_t index = 0;
+	while ((index < str.length()) && (str[index] != '_') && (str[index] != '+')) {
+		index++;
+	}
 
-	while ( index < s.length() && s[index] != '_' && s[index++] != '+' );
-
-	ret = s.substr(0, index);
-	if ( index == s.length() )
-		s.clear();
-	else
-		s = s.substr(index, std::string::npos);
+	ret = str.substr(0, index);
+	str = str.substr(index, std::string::npos);
 */
-	if (s.empty())
-		return std::string();
 
-	char c=s[0];
-	while(c && c!='_' && c!='+'){
-		s=s.substr(1,std::string::npos);
-		ret+=c;
-		c=s[0];
+	if (!str.empty()) {
+		char c = str[0];
+		while (c && (c != '_') && (c != '+')) {
+			str = str.substr(1, std::string::npos);
+			ret += c;
+			c = str[0];
+		}
 	}
 
 	return ret;
 }
 
 
-std::string CSelectionKeyHandler::ReadDelimiter(std::string& s)
+std::string CSelectionKeyHandler::ReadDelimiter(std::string& str)
 {
-	std::string ret = s.substr(0, 1);
-	if (s.size() >= 1) {
-		s = s.substr(1, std::string::npos);
+	std::string ret = str.substr(0, 1);
+	if (str.size() >= 1) {
+		str = str.substr(1, std::string::npos);
 	} else {
-		s = "";
+		str = "";
 	}
 	return ret;
 }
@@ -155,8 +153,10 @@ namespace
 			assert(false);
 		}
 
-		/// Actual filtering, should return false if unit should be removed
-		/// from proposed selection.
+		/**
+		 * Actual filtering, should return false if unit should be removed
+		 * from proposed selection.
+		 */
 		virtual bool ShouldIncludeUnit(const CUnit* unit) const = 0;
 
 		/// Number of arguments this filter has.
