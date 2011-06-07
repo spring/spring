@@ -2897,6 +2897,8 @@ public:
 			sound->PrintDebugInfo();
 		} else if (action.GetArgs() == "profiling") {
 			profiler.PrintProfilingInfo();
+		} else {
+			logOutput.Print("Give either of these as argument: sound, profiling");
 		}
 	}
 };
