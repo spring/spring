@@ -32,26 +32,6 @@
 #include <stdexcept>
 
 
-static void SetBoolArg(bool& value, const std::string& str) {
-
-	if (str.empty())  {
-		// toggle
-		value = !value;
-	} else {
-		// set
-		const int num = atoi(str.c_str());
-		value = (num != 0);
-	}
-}
-
-static void LogSystemStatus(const std::string& system, bool status) {
-
-	logOutput.Print("%s is %s!", system.c_str(),
-			(status ? "enabled" : "disabled"));
-}
-
-
-
 // This namespace is required to prevent conflicts with equally named classes
 // for unsynced ActionExecutor's.
 namespace syncedActionExecutors {
