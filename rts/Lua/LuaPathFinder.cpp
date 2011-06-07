@@ -17,8 +17,27 @@ using namespace std;
 #include "Sim/Path/IPathManager.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 
-static std::map<unsigned int, std::vector<float> > costArrayMapSynced;
-static std::map<unsigned int, std::vector<float> > costArrayMapUnsynced;
+
+struct NodeCostOverlay {
+	NodeCostOverlay(): sizex(0), sizez(0) {}
+
+	void Init(unsigned int sx, unsigned int sz) {
+		costs.resize(sx * sz, 0.0f);
+		sizex = sx;
+		sizez = sz;
+	}
+	void Clear() { costs.clear(); }
+	bool Empty() const { return costs.empty(); }
+	unsigned int Size() const { return costs.size(); }
+
+	std::vector<float> costs;
+
+	unsigned int sizex;
+	unsigned int sizez;
+};
+
+static std::map<unsigned int, NodeCostOverlay> costArrayMapSynced;
+static std::map<unsigned int, NodeCostOverlay> costArrayMapUnsynced;
 
 static void CreatePathMetatable(lua_State* L);
 
@@ -43,7 +62,7 @@ bool LuaPathFinder::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetPathNodeCost);
 	REGISTER_LUA_CFUNC(GetPathNodeCost);
 
-	return true;	
+	return true;
 }
 
 
@@ -228,23 +247,22 @@ int LuaPathFinder::InitPathNodeCostsArray(lua_State* L)
 	const unsigned int sizez = luaL_checkint(L, 3);
 	const bool synced = CLuaHandle::GetActiveHandle()->GetSynced();
 
-	std::map<unsigned int, std::vector<float> >& map = synced?
+	std::map<unsigned int, NodeCostOverlay>& map = synced?
 		costArrayMapSynced:
 		costArrayMapUnsynced;
-	std::vector<float>& vec = map[array];
+	NodeCostOverlay& overlay = map[array];
 
 	if (sizex == 0 || sizez == 0) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
-	if (!vec.empty()) {
-		// no resizing
+	if (!overlay.Empty()) {
+		// no resizing of existing overlays
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
-	vec.resize(sizex * sizez, 0.0f);
-
+	overlay.Init(sizex, sizez);
 	lua_pushboolean(L, true);
 	return 1;
 }
@@ -254,22 +272,23 @@ int LuaPathFinder::FreePathNodeCostsArray(lua_State* L)
 	const unsigned int array = luaL_checkint(L, 1);
 	const bool synced = CLuaHandle::GetActiveHandle()->GetSynced();
 
-	std::map<unsigned int, std::vector<float> >& map = synced?
+	std::map<unsigned int, NodeCostOverlay>& map = synced?
 		costArrayMapSynced:
 		costArrayMapUnsynced;
-	std::vector<float>& vec = map[array];
+	NodeCostOverlay& overlay = map[array];
 
-	if (vec.empty()) {
+	if (overlay.Empty()) {
+		// not an existing overlay
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
-	// nullify the active cost-overlay
-	if (pathManager->GetNodeExtraCosts(synced) == &vec[0]) {
+	// nullify the active cost-overlay if we are freeing it
+	if (pathManager->GetNodeExtraCosts(synced) == &overlay.costs[0]) {
 		pathManager->SetNodeExtraCosts(NULL, 1, 1, synced);
 	}
 
-	vec.clear();
+	overlay.Clear();
 	map.erase(array);
 
 	lua_pushboolean(L, true);
@@ -280,22 +299,20 @@ int LuaPathFinder::FreePathNodeCostsArray(lua_State* L)
 int LuaPathFinder::SetPathNodeCosts(lua_State* L)
 {
 	const unsigned int array = luaL_checkint(L, 1);
-	const unsigned int sizex = luaL_checkint(L, 2);
-	const unsigned int sizez = luaL_checkint(L, 3);
 	const bool synced = CLuaHandle::GetActiveHandle()->GetSynced();
 
-	std::map<unsigned int, std::vector<float> >& map = synced?
+	std::map<unsigned int, NodeCostOverlay>& map = synced?
 		costArrayMapSynced:
 		costArrayMapUnsynced;
-	std::vector<float>& vec = map[array];
+	NodeCostOverlay& overlay = map[array];
 
-	if (vec.empty()) {
+	if (overlay.Empty()) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
-	// set the active cost-overlay to <vec>
-	lua_pushboolean(L, pathManager->SetNodeExtraCosts(&vec[0], sizex, sizez, synced));
+	// set the active cost-overlay to <overlay>
+	lua_pushboolean(L, pathManager->SetNodeExtraCosts(&overlay.costs[0], overlay.sizex, overlay.sizez, synced));
 	return 1;
 }
 
@@ -310,25 +327,24 @@ int LuaPathFinder::SetPathNodeCost(lua_State* L)
 {
 	const unsigned int array = luaL_checkint(L, 1);
 	const unsigned int index = luaL_checkint(L, 2);
-	const unsigned int hmx = luaL_checkint(L, 3);
-	const unsigned int hmz = luaL_checkint(L, 4);
-	const float cost = luaL_checkfloat(L, 5);
+	const float cost = luaL_checkfloat(L, 3);
 	const bool synced = CLuaHandle::GetActiveHandle()->GetSynced();
 
-	std::map<unsigned int, std::vector<float> >& map = synced?
+	std::map<unsigned int, NodeCostOverlay>& map = synced?
 		costArrayMapSynced:
 		costArrayMapUnsynced;
-	std::vector<float>& vec = map[array];
+	NodeCostOverlay& overlay = map[array];
 
-	if (vec.empty()) {
-		// invalid array ID (possibly created through operator[])
-		lua_pushboolean(L, pathManager->SetNodeExtraCost(hmx, hmz, cost, CLuaHandle::GetSynced(L)));
+	if (overlay.Empty()) {
+		// invalid array ID (possibly created through map::operator[]), fallback
+		// lua_pushboolean(L, pathManager->SetNodeExtraCost(hmx, hmz, cost, synced));
+		lua_pushboolean(L, false);
 	} else {
 		// modify only the cost-overlay (whether it is active or not)
-		if (index < vec.size())
-			vec[index] = cost;
+		if (index < overlay.Size())
+			overlay.costs[index] = cost;
 
-		lua_pushboolean(L, (index < vec.size()));
+		lua_pushboolean(L, (index < overlay.Size()));
 	}
 
 	return 1;
