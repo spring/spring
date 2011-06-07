@@ -108,39 +108,6 @@ CInMapDrawView::~CInMapDrawView()
 	glDeleteTextures(1, &texture);
 }
 
-static unsigned char DEFAULT_COLOR[4] = {0, 0, 0, 255};
-
-static void SerializeColor(creg::ISerializer& s, unsigned char** color)
-{
-	if (s.IsWriting()) {
-		char ColorType = 0;
-		char ColorId = 0;
-		if (!ColorType)
-			for (int a = 0; a < teamHandler->ActiveTeams(); ++a)
-				if (*color == teamHandler->Team(a)->color) {
-					ColorType = 1;
-					ColorId = a;
-					break;
-				}
-		s.Serialize(&ColorId, sizeof(ColorId));
-		s.Serialize(&ColorType, sizeof(ColorType));
-	} else {
-		char ColorType;
-		char ColorId;
-		s.Serialize(&ColorId, sizeof(ColorId));
-		s.Serialize(&ColorType, sizeof(ColorType));
-		switch (ColorType) {
-			case 0:{
-				*color = DEFAULT_COLOR;
-				break;
-			}
-			case 1:{
-				*color = teamHandler->Team(ColorId)->color;
-				break;
-			}
-		}
-	}
-}
 
 struct InMapDraw_QuadDrawer: public CReadMap::IQuadDrawer
 {
