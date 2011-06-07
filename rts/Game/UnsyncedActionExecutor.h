@@ -41,9 +41,6 @@ protected:
 	IUnsyncedActionExecutor(const std::string& command, const std::string& description, bool cheatRequired = false)
 		: IActionExecutor<UnsyncedAction, false>(command, description, cheatRequired)
 	{}
-	IUnsyncedActionExecutor(const std::string& command, bool cheatRequired = false)
-		: IActionExecutor<UnsyncedAction, false>(command, "", cheatRequired)
-	{}
 
 public:
 	virtual ~IUnsyncedActionExecutor() {}
