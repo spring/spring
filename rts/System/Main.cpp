@@ -5,26 +5,18 @@
  * everything else
  */
 
-
-#ifdef _MSC_VER
-	#include "StdAfx.h"
-#endif
 #include <sstream>
 #include <boost/system/system_error.hpp>
 #include <boost/bind.hpp>
 
-#include "System/Platform/errorhandler.h"
-#include "System/Platform/Threading.h"
+#include "SpringApp.h"
 
-#ifndef _MSC_VER
-	#include "StdAfx.h"
-#endif
 #include "lib/gml/gml.h"
 #include "lib/gml/gmlmut.h"
-#include "System/LogOutput.h"
 #include "System/Exceptions.h"
-
-#include "SpringApp.h"
+#include "System/LogOutput.h"
+#include "System/Platform/errorhandler.h"
+#include "System/Platform/Threading.h"
 
 #ifdef WIN32
 	#include "Platform/Win/win32.h"
