@@ -19,9 +19,10 @@ namespace Watchdog
 	inline void ClearTimer(const char* name, bool disable = false) {
 		ClearTimer(std::string(name), disable);
 	}
+	void ClearPrimaryTimers(bool disable = false);
 
 	//! Call these in the threads you want to monitor
-	void RegisterThread(std::string name);
+	void RegisterThread(std::string name, bool primary = false);
 	void DeregisterThread(std::string name);
 }
 
