@@ -17,7 +17,7 @@ public:
 
 	virtual void RenderFrame() = 0;
 
-	void SetCapturing(bool enabled);
+	static void SetCapturing(bool enabled);
 
 	/**
 	 * Indicates whether it is possible/supported to capture a video.
@@ -37,8 +37,6 @@ protected:
 	virtual void StartCapturing() = 0;
 	virtual void StopCapturing() = 0;
 
-private:
-	static IVideoCapturing* instance;
 };
 
 #define videoCapturing IVideoCapturing::GetInstance()
