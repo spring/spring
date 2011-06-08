@@ -1298,16 +1298,13 @@ public:
 			"Enable/Disable debug info rendering mode") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (globalRendering->drawdebug)
-		{
-			ProfileDrawer::Disable();
-			globalRendering->drawdebug = false;
-		}
-		else
-		{
-			ProfileDrawer::Enable();
-			globalRendering->drawdebug = true;
-		}
+
+		// toggle
+		const bool drawDebug = !globalRendering->drawdebug;
+		ProfileDrawer::SetEnabled(drawDebug);
+		globalRendering->drawdebug = drawDebug;
+
+		LogSystemStatus("debug info rendering mode", globalRendering->drawdebug);
 	}
 };
 
