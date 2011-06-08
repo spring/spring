@@ -87,6 +87,7 @@ public:
 	bool HasFinished() const;
 
 	void UpdateSpeedControl(int speedCtrl);
+	static std::string SpeedControlToString(int speedCtrl);
 
 	#ifdef DEDICATED
 	const boost::scoped_ptr<CDemoRecorder>& GetDemoRecorder() const { return demoRecorder; }
@@ -180,6 +181,15 @@ private:
 	float medianCpu;
 	int medianPing;
 	int curSpeedCtrl;
+
+	/**
+	 * throttles speed based on:
+	 * 0 : players (max cpu)
+	 * 1 : players (median cpu)
+	 * 2 : (same as 0)
+	 * -x: same as x, but ignores votes from players that may change
+	 *     the speed-control mode
+	 */
 	int speedControl;
 	/////////////////// game settings ///////////////////
 	boost::scoped_ptr<const CGameSetup> setup;

@@ -212,6 +212,9 @@ public:
 	float skipOldUserSpeed;
 	unsigned skipLastDraw;
 
+	/**
+	 * @see CGameServer#speedControl
+	 */
 	int speedControl;
 	int luaLockTime;
 	int luaExportSize;
