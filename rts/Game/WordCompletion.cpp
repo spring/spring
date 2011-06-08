@@ -1,7 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 //  TODO: replace 'WordProperties' with regex/glob expressions
-//        ex: '.give [0-9]* armcom'
+//        ex: '/give [0-9]* [_0-9a-zA-Z]+'
+//        or even create a domain specific language
+//        ex: '/give <ammount> {unitname} <team-ID>'
+//        user-input: '/give 10 armcom 1'
 
 #include "StdAfx.h"
 #include "mmgr.h"
@@ -11,13 +14,11 @@
 CWordCompletion::CWordCompletion()
 {
 	Reset();
-	return;
 }
 
 
 CWordCompletion::~CWordCompletion()
 {
-	return;
 }
 
 
@@ -95,6 +96,7 @@ void CWordCompletion::Reset()
 	// remote commands
 	// TODO those commans are registered in Console, get the list from there
 	// This is best done with a new command class (eg. ConsoleCommand)
+	// deprecated idea, use I*ActionExecutor's instead
 	words["/atm"] = sl;
 	words["/cheat "] = sl;
 	words["/devlua "] = sl;
@@ -121,8 +123,6 @@ void CWordCompletion::Reset()
 	words["/take"] = sl;
 	words["/team "] = sl;
 	// words[".crash"] = sl; // don't make it too easy
-
-	return;
 }
 
 
@@ -132,7 +132,6 @@ void CWordCompletion::AddWord(const std::string& word,
 	if (!word.empty()) {
 		words[word] = WordProperties(startOfLine, unitName, minimap);
 	}
-	return;
 }
 
 void CWordCompletion::RemoveWord(const std::string& word)

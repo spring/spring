@@ -346,9 +346,9 @@ void CGameServer::SkipTo(int targetFrame)
 		lastUpdate = spring_gettime();
 	}
 
-	// note: unnecessary, pause-commands from
-	// demos are not broadcast anyway so /skip
-	// cannot change the state
+	// NOTE: unnecessary, pause-commands from
+	// demos are not broadcasted anyway,
+	// so /skip can not change the state
 	isPaused = wasPaused;
 }
 
