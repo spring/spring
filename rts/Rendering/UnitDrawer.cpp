@@ -148,8 +148,8 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 
 #ifdef USE_GML
 	showHealthBars = !!configHandler->Get("ShowHealthBars", 1);
-	multiThreadDrawUnit = configHandler->Get("MultiThreadDrawUnit", 1);
-	multiThreadDrawUnitShadow = configHandler->Get("MultiThreadDrawUnitShadow", 1);
+	multiThreadDrawUnit = !!configHandler->Get("MultiThreadDrawUnit", 1);
+	multiThreadDrawUnitShadow = !!configHandler->Get("MultiThreadDrawUnitShadow", 1);
 #endif
 
 	lightHandler.Init(2U, configHandler->Get("MaxDynamicModelLights", 4U));
@@ -193,8 +193,8 @@ CUnitDrawer::~CUnitDrawer()
 	}
 
 #ifdef USE_GML
-	configHandler->Set("MultiThreadDrawUnit", multiThreadDrawUnit);
-	configHandler->Set("MultiThreadDrawUnitShadow", multiThreadDrawUnitShadow);
+	configHandler->Set("MultiThreadDrawUnit", multiThreadDrawUnit ? 1 : 0);
+	configHandler->Set("MultiThreadDrawUnitShadow", multiThreadDrawUnitShadow ? 1 : 0);
 #endif
 
 

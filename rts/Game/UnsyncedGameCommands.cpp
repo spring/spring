@@ -1521,7 +1521,12 @@ public:
 
 	static bool IsMTEnabled() {
 		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-		return gd->multiThreadDrawGround + unitDrawer->multiThreadDrawUnit + unitDrawer->multiThreadDrawUnitShadow > 1;
+		// XXX does this make sense? why would we need a random 2 of these 3?
+		return
+				((gd->multiThreadDrawGround ? 1 : 0)
+				+ (unitDrawer->multiThreadDrawUnit ? 1 : 0)
+				+ (unitDrawer->multiThreadDrawUnitShadow ? 1 : 0))
+				> 1;
 	}
 };
 

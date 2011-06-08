@@ -104,8 +104,8 @@ public:
 	GL::LightHandler* GetLightHandler() { return &lightHandler; }
 
 #ifdef USE_GML
-	int multiThreadDrawUnit;
-	int multiThreadDrawUnitShadow;
+	bool multiThreadDrawUnit;
+	bool multiThreadDrawUnitShadow;
 
 	volatile bool mt_drawReflection;
 	volatile bool mt_drawRefraction;
