@@ -8,8 +8,10 @@
 
 class Action;
 
+// TODO convert existing CommandReceiver's to use IUnsyncedActionExecutor's instead
 /**
-@brief this class can recieve commands (actions)
+ * @brief this class can recieve commands (actions)
+ * @deprecated Use IUnsyncedActionExecutor instead
  */
 class CommandReceiver
 {
@@ -18,42 +20,43 @@ public:
 	virtual ~CommandReceiver() {}
 	
 	/**
-	@brief callback function for all registered commands
-	*/
+	 * @brief callback function for all registered commands
+	 */
 	virtual void PushAction(const Action& action) = 0;
 
 protected:
 	/**
-	@brief register a command
-
-	PushAction will be called if this command is received by the console
-	*/
+	 * @brief register a command
+	 *
+	 * PushAction will be called if this command is received by the console
+	 */
 	void RegisterAction(const std::string& name);
 };
 
 /**
-@brief handles and forward commands
-*/
+ * @brief handles and forwards commands
+ */
 class Console
 {
 public:
 	static Console& Instance();
 	
 	/**
-	@brief register a command
-	@param name the name of the command (e.g. "cheat")
-	@param rec the CommandReceiver who want to recieve the command
-	*/
+	 * @brief register a command
+	 * @param name the name of the command (e.g. "cheat")
+	 * @param rec the CommandReceiver who want to recieve the command
+	 */
 	void AddCommandReceiver(const std::string& name, CommandReceiver* rec);
 	
 	/**
-	@brief Execute an action
-	*/
+	 * @brief Execute an action
+	 */
 	bool ExecuteAction(const Action&);
 
 private:
 	Console();
 	~Console();
+
 	std::map<const std::string, CommandReceiver*> commandMap;
 };
 
