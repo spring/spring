@@ -449,14 +449,14 @@ public:
 		delete shadowHandler; // XXX use SafeDelete() ?
 		int next = 0;
 		if (!action.GetArgs().empty()) {
-			int mapsize = 2048;
+			int mapSize = 2048;
 			const char* args = action.GetArgs().c_str();
-			const int argcount = sscanf(args, "%i %i", &next, &mapsize);
+			const int argcount = sscanf(args, "%i %i", &next, &mapSize);
 			if (argcount > 1) {
-				configHandler->Set("ShadowMapSize", mapsize);
+				configHandler->Set("ShadowMapSize", mapSize);
 			}
 		} else {
-			next = (current+1)%3;
+			next = (current + 1) % 3;
 		}
 		configHandler->Set("Shadows", next);
 		logOutput.Print("Set Shadows to %i", next);
@@ -473,8 +473,8 @@ public:
 			", 3=reflective&refractive?, 4=bump-mapped") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		int nextWaterRendererMode = 0;
 
+		int nextWaterRendererMode = 0;
 		if (!action.GetArgs().empty()) {
 			nextWaterRendererMode = std::max(0, atoi(action.GetArgs().c_str()) % CBaseWater::NUM_WATER_RENDERERS);
 		} else {
@@ -493,16 +493,11 @@ public:
 			"Set or toggle advanced model shading mode") {}
 
 	void Execute(const UnsyncedAction& action) const {
+
 		static bool canUseShaders = unitDrawer->advShading;
-
 		if (canUseShaders) {
-			if (!action.GetArgs().empty()) {
-				unitDrawer->advShading = !!atoi(action.GetArgs().c_str());
-			} else {
-				unitDrawer->advShading = !unitDrawer->advShading;
-			}
-
-			logOutput.Print("model shaders %sabled", (unitDrawer->advShading? "en": "dis"));
+			SetBoolArg(unitDrawer->advShading, action.GetArgs());
+			LogSystemStatus("model shaders", unitDrawer->advShading);
 		}
 	}
 };
@@ -515,17 +510,12 @@ public:
 			"Set or toggle advanced map shading mode") {}
 
 	void Execute(const UnsyncedAction& action) const {
+
 		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 		static bool canUseShaders = gd->advShading;
-
 		if (canUseShaders) {
-			if (!action.GetArgs().empty()) {
-				gd->advShading = !!atoi(action.GetArgs().c_str());
-			} else {
-				gd->advShading = !gd->advShading;
-			}
-
-			logOutput.Print("map shaders %sabled", (gd->advShading? "en": "dis"));
+			SetBoolArg(gd->advShading, action.GetArgs());
+			LogSystemStatus("map shaders", gd->advShading);
 		}
 	}
 };
@@ -552,9 +542,9 @@ public:
 	void Execute(const UnsyncedAction& action) const {
 		const std::string::size_type pos = action.GetArgs().find_first_of(" ");
 		if (pos != std::string::npos) {
-			const int playernum = playerHandler->Player(action.GetArgs().substr(0, pos));
-			if (playernum >= 0) {
-				game->SendNetChat(action.GetArgs().substr(pos+1), playernum);
+			const int playerID = playerHandler->Player(action.GetArgs().substr(0, pos));
+			if (playerID >= 0) {
+				game->SendNetChat(action.GetArgs().substr(pos+1), playerID);
 			} else {
 				logOutput.Print("Player not found: %s", action.GetArgs().substr(0, pos).c_str());
 			}
@@ -573,12 +563,12 @@ public:
 		const std::string::size_type pos = action.GetArgs().find_first_of(" ");
 		if (pos != std::string::npos) {
 			std::istringstream buf(action.GetArgs().substr(0, pos));
-			int playernum;
-			buf >> playernum;
-			if (playernum >= 0) {
-				game->SendNetChat(action.GetArgs().substr(pos+1), playernum);
+			int playerID;
+			buf >> playerID;
+			if (playerID >= 0) {
+				game->SendNetChat(action.GetArgs().substr(pos+1), playerID);
 			} else {
-				logOutput.Print("Player-ID invalid: %i", playernum);
+				logOutput.Print("Player-ID invalid: %i", playerID);
 			}
 		}
 	}
@@ -646,10 +636,10 @@ public:
 class DrawLabelActionExecutor : public IUnsyncedActionExecutor {
 public:
 	DrawLabelActionExecutor() : IUnsyncedActionExecutor("DrawLabel",
-			"Draws a label on map at the current mouse-pointer position") {}
+			"Draws a label on the map at the current mouse-pointer position") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		float3 pos = inMapDrawer->GetMouseMapPos();
+		const float3 pos = inMapDrawer->GetMouseMapPos();
 		if (pos.x >= 0) {
 			inMapDrawer->SetDrawMode(false);
 			inMapDrawer->PromptLabel(pos);
@@ -692,10 +682,11 @@ public:
 
 		const CUnitSet& selUnits = selectedUnits.selectedUnits;
 		if (!selUnits.empty()) {
+			// XXX this code is duplicated in CGroup::CalculateCenter(), move to CUnitSet maybe
 			float3 pos(0.0f, 0.0f, 0.0f);
-			CUnitSet::const_iterator it;
-			for (it = selUnits.begin(); it != selUnits.end(); ++it) {
-				pos += (*it)->midPos;
+			CUnitSet::const_iterator ui;
+			for (ui = selUnits.begin(); ui != selUnits.end(); ++ui) {
+				pos += (*ui)->midPos;
 			}
 			pos /= (float)selUnits.size();
 			camHandler->GetCurrentController().SetPos(pos);
@@ -1090,7 +1081,7 @@ public:
 						logOutput.Print("/%s: wrong parameters (usage: /%s <other team> [0|1])", GetCommand().c_str(), GetCommand().c_str());
 				}
 				else {
-					logOutput.Print("No in-game alliances are allowed");
+					logOutput.Print("In-game alliances are not allowed");
 				}
 			}
 		}
@@ -1105,13 +1096,15 @@ public:
 			"Allows modifying the members of a group") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		// XXX ug.. code, at least document
-		const char* c = action.GetArgs().c_str();
-		const int t = c[0];
-		if ((t >= '0') && (t <= '9')) {
-			const int team = (t - '0');
-			do { c++; } while ((c[0] != 0) && isspace(c[0]));
-			grouphandlers[gu->myTeam]->GroupCommand(team, c);
+
+		const char firstChar = action.GetArgs()[0];
+		if ((firstChar >= '0') && (firstChar <= '9')) {
+			const int teamId = (int) (firstChar - '0');
+			size_t firstCmdChar = action.GetArgs().find_first_not_of(" \t\n\r", 1);
+			if (firstCmdChar != std::string::npos) {
+				const std::string command = action.GetArgs().substr(firstCmdChar);
+				grouphandlers[gu->myTeam]->GroupCommand(teamId, command);
+			}
 		}
 	}
 };
@@ -1242,11 +1235,8 @@ public:
 			"Enable/Disable rendering of health-bars for units") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (action.GetArgs().empty()) {
-			unitDrawer->showHealthBars = !unitDrawer->showHealthBars;
-		} else {
-			unitDrawer->showHealthBars = !!atoi(action.GetArgs().c_str());
-		}
+		SetBoolArg(unitDrawer->showHealthBars, action.GetArgs());
+		LogSystemStatus("rendering of health-bars", unitDrawer->showHealthBars);
 	}
 };
 
@@ -1255,14 +1245,14 @@ public:
 class ShowRezurectionBarsActionExecutor : public IUnsyncedActionExecutor {
 public:
 	ShowRezurectionBarsActionExecutor() : IUnsyncedActionExecutor("ShowRezBars",
-			"Enable/Disable rendering of resurection-progress-bars for units") {}
+			"Enable/Disable rendering of resource-bars for features") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (action.GetArgs().empty()) {
-			featureDrawer->SetShowRezBars(!featureDrawer->GetShowRezBars());
-		} else {
-			featureDrawer->SetShowRezBars(!!atoi(action.GetArgs().c_str()));
-		}
+
+		bool showResBars = featureDrawer->GetShowRezBars();
+		SetBoolArg(showResBars, action.GetArgs());
+		featureDrawer->SetShowRezBars(showResBars);
+		LogSystemStatus("rendering of resource-bars for features", featureDrawer->GetShowRezBars());
 	}
 };
 #endif // USE_GML
@@ -1277,14 +1267,10 @@ public:
 	void Execute(const UnsyncedAction& action) const {
 		// disallow pausing prior to start of game proper
 		if (game->playing) {
-			bool newPause;
-			if (action.GetArgs().empty()) {
-				newPause = !gs->paused;
-			} else {
-				newPause = !!atoi(action.GetArgs().c_str());
-			}
+			bool newPause = gs->paused;
+			SetBoolArg(newPause, action.GetArgs());
 			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, newPause));
-			game->lastframe = SDL_GetTicks(); // this required here?
+			game->lastframe = SDL_GetTicks(); // XXX this required here?
 		}
 	}
 
@@ -1317,11 +1303,11 @@ public:
 			"Enable/Disable the sound system") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (sound->Mute()) {
-			logOutput.Print("Sound disabled");
-		} else {
-			logOutput.Print("Sound enabled");
-		}
+
+		// toggle
+		sound->Mute();
+
+		LogSystemStatus("Sound", sound->IsMuted());
 	}
 };
 
@@ -1380,11 +1366,9 @@ public:
 			"Enable/Disable rendering of engine trees") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (action.GetArgs().empty()) {
-			treeDrawer->drawTrees = !treeDrawer->drawTrees;
-		} else {
-			treeDrawer->drawTrees = !!atoi(action.GetArgs().c_str());
-		}
+
+		SetBoolArg(treeDrawer->drawTrees, action.GetArgs());
+		LogSystemStatus("rendering of engine trees", treeDrawer->drawTrees);
 	}
 };
 
@@ -1396,11 +1380,9 @@ public:
 			"Enable/Disable rendering of the dynamic sky") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (action.GetArgs().empty()) {
-			sky->dynamicSky = !sky->dynamicSky;
-		} else {
-			sky->dynamicSky = !!atoi(action.GetArgs().c_str());
-		}
+
+		SetBoolArg(sky->dynamicSky, action.GetArgs());
+		LogSystemStatus("rendering of the dynamic sky", sky->dynamicSky);
 	}
 };
 
@@ -1412,11 +1394,11 @@ public:
 			"Enable/Disable rendering of dynamic sun") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (action.GetArgs().empty()) {
-			sky->SetLight(!sky->GetLight()->IsDynamic());
-		} else {
-			sky->SetLight(!!atoi(action.GetArgs().c_str()));
-		}
+
+		bool dynamicSun = sky->GetLight()->IsDynamic();
+		SetBoolArg(dynamicSun, action.GetArgs());
+		sky->SetLight(dynamicSun);
+		LogSystemStatus("rendering of the dynamic sun", sky->GetLight()->IsDynamic());
 	}
 };
 
@@ -1429,13 +1411,10 @@ public:
 			"Enable/Disable multi threaded ground rendering") {}
 
 	void Execute(const UnsyncedAction& action) const {
+
 		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-		if (action.GetArgs().empty()) {
-			gd->multiThreadDrawGround = !gd->multiThreadDrawGround;
-		} else {
-			gd->multiThreadDrawGround = !!atoi(action.GetArgs().c_str());
-		}
-		logOutput.Print("Multi threaded ground rendering is %s", gd->multiThreadDrawGround?"enabled":"disabled");
+		SetBoolArg(gd->multiThreadDrawGround, action.GetArgs());
+		LogSystemStatus("Multi threaded ground rendering", gd->multiThreadDrawGround);
 	}
 };
 
@@ -1447,13 +1426,10 @@ public:
 			"Enable/Disable multi threaded ground shadow rendering") {}
 
 	void Execute(const UnsyncedAction& action) const {
+
 		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-		if (action.GetArgs().empty()) {
-			gd->multiThreadDrawGroundShadow = !gd->multiThreadDrawGroundShadow;
-		} else {
-			gd->multiThreadDrawGroundShadow = !!atoi(action.GetArgs().c_str());
-		}
-		logOutput.Print("Multi threaded ground shadow rendering is %s", gd->multiThreadDrawGroundShadow?"enabled":"disabled");
+		SetBoolArg(gd->multiThreadDrawGroundShadow, action.GetArgs());
+		LogSystemStatus("Multi threaded ground shadow rendering", gd->multiThreadDrawGroundShadow);
 	}
 };
 
@@ -1465,12 +1441,9 @@ public:
 			"Enable/Disable multi threaded unit rendering") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (action.GetArgs().empty()) {
-			unitDrawer->multiThreadDrawUnit = !unitDrawer->multiThreadDrawUnit;
-		} else {
-			unitDrawer->multiThreadDrawUnit = !!atoi(action.GetArgs().c_str());
-		}
-		logOutput.Print("Multi threaded unit rendering is %s", unitDrawer->multiThreadDrawUnit?"enabled":"disabled");
+
+		SetBoolArg(unitDrawer->multiThreadDrawUnit, action.GetArgs());
+		LogSystemStatus("Multi threaded unit rendering", unitDrawer->multiThreadDrawUnit);
 	}
 };
 
@@ -1482,12 +1455,9 @@ public:
 			"Enable/Disable multi threaded unit shadow rendering") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (action.GetArgs().empty()) {
-			unitDrawer->multiThreadDrawUnitShadow = !unitDrawer->multiThreadDrawUnitShadow;
-		} else {
-			unitDrawer->multiThreadDrawUnitShadow = !!atoi(action.GetArgs().c_str());
-		}
-		logOutput.Print("Multi threaded unit shadow rendering is %s", unitDrawer->multiThreadDrawUnitShadow?"enabled":"disabled");
+
+		SetBoolArg(unitDrawer->multiThreadDrawUnitShadow, action.GetArgs());
+		LogSystemStatus("Multi threaded unit shadow rendering", unitDrawer->multiThreadDrawUnitShadow);
 	}
 };
 
@@ -1499,20 +1469,18 @@ public:
 			"Enable/Disable multi threaded rendering") {}
 
 	void Execute(const UnsyncedAction& action) const {
+
 		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-		const bool mtEnabled = IsMTEnabled();
-		if (action.GetArgs().empty()) {
-			gd->multiThreadDrawGround = !mtEnabled;
-			unitDrawer->multiThreadDrawUnit = !mtEnabled;
-			unitDrawer->multiThreadDrawUnitShadow = !mtEnabled;
-		} else {
-			gd->multiThreadDrawGround = !!atoi(action.GetArgs().c_str());
-			unitDrawer->multiThreadDrawUnit = !!atoi(action.GetArgs().c_str());
-			unitDrawer->multiThreadDrawUnitShadow = !!atoi(action.GetArgs().c_str());
+
+		bool mtEnabled = IsMTEnabled();
+		SetBoolArg(mtEnabled, action.GetArgs());
+		gd->multiThreadDrawGround = mtEnabled;
+		unitDrawer->multiThreadDrawUnit = mtEnabled;
+		unitDrawer->multiThreadDrawUnitShadow = mtEnabled;
+		if (!mtEnabled) {
+			gd->multiThreadDrawGroundShadow = false;
 		}
-		if (!gd->multiThreadDrawGround)
-			gd->multiThreadDrawGroundShadow = 0;
-		logOutput.Print("Multithreaded rendering is %s", gd->multiThreadDrawGround ? "enabled" : "disabled");
+		LogSystemStatus("Multithreaded rendering", IsMTEnabled());
 	}
 
 	static bool IsMTEnabled() {
@@ -1534,16 +1502,17 @@ public:
 			"Enable/Disable simulation multi threading") {} // FIXME misleading description
 
 	void Execute(const UnsyncedAction& action) const {
-		const bool mtEnabled = MultiThreadDrawActionExecutor::IsMTEnabled();
+
 #	if GML_ENABLE_SIM
-		if (action.GetArgs().empty()) {
-			// HACK GetInnerAction() should not be used here
-			gmlMultiThreadSim = (StringToLower(action.GetInnerAction().command) == "multithread") ? !mtEnabled : !gmlMultiThreadSim;
-		} else {
-			gmlMultiThreadSim = !!atoi(action.GetArgs().c_str());
-		}
-		gmlStartSim=1;
-		logOutput.Print("Simulation threading is %s", gmlMultiThreadSim ? "enabled" : "disabled");
+		const bool mtEnabled = MultiThreadDrawActionExecutor::IsMTEnabled();
+
+		// HACK GetInnerAction() should not be used here
+		bool mtSim = (StringToLower(action.GetInnerAction().command) == "multithread") ? mtEnabled : gmlMultiThreadSim;
+		SetBoolArg(mtSim, action.GetArgs());
+		gmlMultiThreadSim = mtSim;
+		gmlStartSim = 1;
+
+		LogSystemStatus("Simulation threading", gmlMultiThreadSim);
 #	endif // GML_ENABLE_SIM
 	}
 };
@@ -1567,22 +1536,26 @@ public:
 			"Set the speed-control mode to one of: 0=Default, 1=Average_CPU, 2=Maximum_CPU") {}
 
 	void Execute(const UnsyncedAction& action) const {
+
 		if (action.GetArgs().empty()) {
+			// switch to next value
 			++game->speedControl;
-			if (game->speedControl > 2)
+			if (game->speedControl > 2) {
 				game->speedControl = -2;
-		}
-		else {
+			}
+		} else {
+			// set value
 			game->speedControl = atoi(action.GetArgs().c_str());
 		}
+		// constrain to bounds
 		game->speedControl = std::max(-2, std::min(game->speedControl, 2));
+
 		net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, game->speedControl));
-		logOutput.Print("Speed Control: %s%s",
-			(game->speedControl == 0) ? "Default" : ((game->speedControl == 1 || game->speedControl == -1) ? "Average CPU" : "Maximum CPU"),
-			(game->speedControl < 0) ? " (server voting disabled)" : "");
+		logOutput.Print("Speed Control: %s", CGameServer::SpeedControlToString(game->speedControl).c_str());
 		configHandler->Set("SpeedControl", game->speedControl);
-		if (gameServer)
+		if (gameServer) {
 			gameServer->UpdateSpeedControl(game->speedControl);
+		}
 	}
 };
 
@@ -1612,11 +1585,7 @@ public:
 			"Hide/Show the GUI controlls") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (action.GetArgs().empty()) {
-			game->hideInterface = !game->hideInterface;
-		} else {
-			game->hideInterface = !!atoi(action.GetArgs().c_str());
-		}
+		SetBoolArg(game->hideInterface, action.GetArgs());
 	}
 };
 
@@ -1629,13 +1598,10 @@ public:
 
 	void Execute(const UnsyncedAction& action) const {
 // XXX one setting stored in two places (mouse->hardwareCursor & configHandler["HardwareCursor"]) -> refactor?
-		if (action.GetArgs().empty()) {
-			mouse->hardwareCursor = !mouse->hardwareCursor;
-		} else {
-			mouse->hardwareCursor = !!atoi(action.GetArgs().c_str());
-		}
+		SetBoolArg(mouse->hardwareCursor, action.GetArgs());
 		mouse->UpdateHwCursor();
 		configHandler->Set("HardwareCursor", (int)mouse->hardwareCursor);
+		LogSystemStatus("Hardware mouse-cursor", mouse->hardwareCursor);
 	}
 };
 
@@ -1647,8 +1613,7 @@ public:
 			"Increase the view radius (lower performance, nicer view)") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-		gd->IncreaseDetail();
+		readmap->GetGroundDrawer()->IncreaseDetail();
 	}
 };
 
@@ -1660,8 +1625,7 @@ public:
 			"Decrease the view radius (higher performance, uglier view)") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-		gd->DecreaseDetail();
+		readmap->GetGroundDrawer()->DecreaseDetail();
 	}
 };
 
@@ -1674,11 +1638,13 @@ public:
 			" shown (lower performance)") {}
 
 	void Execute(const UnsyncedAction& action) const {
+
 		treeDrawer->baseTreeDistance += 0.2f;
 		ReportTreeDistance();
 	}
 	static void ReportTreeDistance() {
-		LogObject() << "Base tree distance " << treeDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
+		logOutput.Print("Base tree distance %f",
+				treeDrawer->baseTreeDistance * 2 * SQUARE_SIZE * TREE_SQUARE_SIZE);
 	}
 };
 
@@ -1691,6 +1657,7 @@ public:
 			" shown (higher performance)") {}
 
 	void Execute(const UnsyncedAction& action) const {
+
 		treeDrawer->baseTreeDistance -= 0.2f;
 		MoreTreesActionExecutor::ReportTreeDistance();
 	}
@@ -1704,12 +1671,13 @@ public:
 			"Increases the density of clouds (lower performance)") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		sky->IncreaseCloudDensity();
 
+		sky->IncreaseCloudDensity();
 		ReportCloudDensity();
 	}
+
 	static void ReportCloudDensity() {
-		LogObject() << "Cloud density " << 1.0f / sky->GetCloudDensity() << "\n";
+		logOutput.Print("Cloud density %f", 1.0f / sky->GetCloudDensity());
 	}
 };
 
@@ -1721,8 +1689,8 @@ public:
 			"Decreases the density of clouds (higher performance)") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		sky->DecreaseCloudDensity();
 
+		sky->DecreaseCloudDensity();
 		MoreCloudsActionExecutor::ReportCloudDensity();
 	}
 };
@@ -1739,8 +1707,8 @@ public:
 		float speed = gs->userSpeedFactor;
 		if (speed < 5) {
 			speed += (speed < 2) ? 0.1f : 0.2f;
-			float fpart = speed - (int)speed;
-			if (fpart < 0.01f || fpart > 0.99f)
+			float fPart = speed - (int)speed;
+			if (fPart < 0.01f || fPart > 0.99f)
 				speed = round(speed);
 		} else if (speed < 10) {
 			speed += 0.5f;
@@ -1763,8 +1731,8 @@ public:
 		float speed = gs->userSpeedFactor;
 		if (speed <= 5) {
 			speed -= (speed <= 2) ? 0.1f : 0.2f;
-			float fpart = speed - (int)speed;
-			if (fpart < 0.01f || fpart > 0.99f)
+			float fPart = speed - (int)speed;
+			if (fPart < 0.01f || fPart > 0.99f)
 				speed = round(speed);
 			if (speed < 0.1f)
 				speed = 0.1f;
@@ -1802,8 +1770,7 @@ public:
 			"Disable rendering of all auxiliary map overlays") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-		gd->DisableExtraTexture();
+		readmap->GetGroundDrawer()->DisableExtraTexture();
 	}
 };
 
@@ -1815,8 +1782,7 @@ public:
 			"Enable rendering of the auxiliary height-map overlay") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-		gd->SetHeightTexture();
+		readmap->GetGroundDrawer()->SetHeightTexture();
 	}
 };
 
@@ -1828,8 +1794,7 @@ public:
 			"Enable/Disable rendering of the auxiliary radar- & jammer-map overlay") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-		gd->ToggleRadarAndJammer();
+		readmap->GetGroundDrawer()->ToggleRadarAndJammer();
 	}
 };
 
@@ -1841,8 +1806,7 @@ public:
 			"Enable rendering of the auxiliary metal-map overlay") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-		gd->SetMetalTexture(readmap->metalMap);
+		readmap->GetGroundDrawer()->SetMetalTexture(readmap->metalMap);
 	}
 };
 
@@ -1854,8 +1818,7 @@ public:
 			"Enable rendering of the auxiliary traversability-map (slope-map) overlay") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-		gd->TogglePathTraversabilityTexture();
+		readmap->GetGroundDrawer()->TogglePathTraversabilityTexture();
 	}
 };
 
@@ -1867,8 +1830,7 @@ public:
 			"Enable/Disable rendering of the path heat map overlay", true) {}
 
 	void Execute(const UnsyncedAction& action) const {
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-		gd->TogglePathHeatTexture();
+		readmap->GetGroundDrawer()->TogglePathHeatTexture();
 	}
 };
 
@@ -1880,8 +1842,7 @@ public:
 			"Enable rendering of the path costs map overlay", true) {}
 
 	void Execute(const UnsyncedAction& action) const {
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-		gd->TogglePathCostTexture();
+		readmap->GetGroundDrawer()->TogglePathCostTexture();
 	}
 };
 
@@ -1893,8 +1854,7 @@ public:
 			"Enable rendering of the auxiliary LOS-map overlay") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-		gd->ToggleLosTexture();
+		readmap->GetGroundDrawer()->ToggleLosTexture();
 	}
 };
 
@@ -1907,9 +1867,11 @@ public:
 			" resources to other players") {}
 
 	void Execute(const UnsyncedAction& action) const {
+
 		std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-		if (!inputReceivers.empty() && dynamic_cast<CShareBox*>(inputReceivers.front()) == NULL && !gu->spectating)
+		if (!inputReceivers.empty() && (dynamic_cast<CShareBox*>(inputReceivers.front()) == NULL) && !gu->spectating) {
 			new CShareBox();
+		}
 	}
 };
 
@@ -1922,10 +1884,10 @@ public:
 
 	void Execute(const UnsyncedAction& action) const {
 		std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-		if (!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front()) == NULL) {
-			CKeyBindings::HotkeyList quitlist = keyBindings->GetHotkeys("quitmenu");
-			std::string quitkey = quitlist.empty() ? "<none>" : quitlist.front();
-			logOutput.Print(std::string("Press ") + quitkey + " to access the quit menu");
+		if (!inputReceivers.empty() && (dynamic_cast<CQuitBox*>(inputReceivers.front())) == NULL) {
+			const CKeyBindings::HotkeyList quitList = keyBindings->GetHotkeys("quitmenu");
+			const std::string quitKey = quitList.empty() ? "<none>" : quitList.front();
+			logOutput.Print("Press %s to access the quit menu", quitKey.c_str());
 		}
 	}
 };
@@ -1939,8 +1901,9 @@ public:
 
 	void Execute(const UnsyncedAction& action) const {
 		std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
-		if (!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front()) == NULL)
+		if (!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front()) == NULL) {
 			new CQuitBox();
+		}
 	}
 };
 
@@ -1968,7 +1931,8 @@ public:
 			"Increases the the opacity(see-through-ness) of GUI elements") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		CInputReceiver::guiAlpha = std::min(CInputReceiver::guiAlpha+0.1f,1.0f);
+
+		CInputReceiver::guiAlpha = std::min(CInputReceiver::guiAlpha + 0.1f, 1.0f);
 		configHandler->Set("GuiOpacity", CInputReceiver::guiAlpha);
 	}
 };
@@ -1981,7 +1945,8 @@ public:
 			"Decreases the the opacity(see-through-ness) of GUI elements") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		CInputReceiver::guiAlpha = std::max(CInputReceiver::guiAlpha-0.1f,0.0f);
+
+		CInputReceiver::guiAlpha = std::max(CInputReceiver::guiAlpha - 0.1f, 0.0f);
 		configHandler->Set("GuiOpacity", CInputReceiver::guiAlpha);
 	}
 };
@@ -2022,8 +1987,7 @@ public:
 			}
 		}
 		SDL_WM_GrabInput(newMode);
-		logOutput.Print("Input grabbing %s",
-		                (newMode == SDL_GRAB_ON) ? "enabled" : "disabled");
+		LogSystemStatus("Input grabbing", (newMode == SDL_GRAB_ON));
 	}
 };
 
@@ -2035,12 +1999,10 @@ public:
 			"Shows a small digital clock indicating the local time") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (action.GetArgs().empty()) {
-			game->showClock = !game->showClock;
-		} else {
-			game->showClock = !!atoi(action.GetArgs().c_str());
-		}
+
+		SetBoolArg(game->showClock, action.GetArgs());
 		configHandler->Set("ShowClock", game->showClock ? 1 : 0);
+		LogSystemStatus("small digital clock", game->showClock);
 	}
 };
 
@@ -2085,12 +2047,10 @@ public:
 			"Shows/Hides the frames-per-second indicator") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (action.GetArgs().empty()) {
-			game->showFPS = !game->showFPS;
-		} else {
-			game->showFPS = !!atoi(action.GetArgs().c_str());
-		}
+
+		SetBoolArg(game->showFPS, action.GetArgs());
 		configHandler->Set("ShowFPS", game->showFPS ? 1 : 0);
+		LogSystemStatus("frames-per-second indicator", game->showFPS);
 	}
 };
 
@@ -2102,12 +2062,10 @@ public:
 			"Shows/Hides the simulation speed indicator") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (action.GetArgs().empty()) {
-			game->showSpeed = !game->showSpeed;
-		} else {
-			game->showSpeed = !!atoi(action.GetArgs().c_str());
-		}
+
+		SetBoolArg(game->showSpeed, action.GetArgs());
 		configHandler->Set("ShowSpeed", game->showSpeed ? 1 : 0);
+		LogSystemStatus("simulation speed indicator", game->showSpeed);
 	}
 };
 
@@ -2119,13 +2077,11 @@ public:
 			"Shows/Hides the multi threading info panel") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (action.GetArgs().empty()) {
-			game->showMTInfo = !game->showMTInfo;
-		} else {
-			game->showMTInfo = !!atoi(action.GetArgs().c_str());
-		}
-		configHandler->Set("ShowMTInfo", game->showMTInfo ? 1 : 0);
-		game->showMTInfo = (game->showMTInfo && gc->GetMultiThreadLua() <= 3) ? gc->GetMultiThreadLua() : 0;
+
+		bool showMTInfo = (game->showMTInfo != 0);
+		SetBoolArg(showMTInfo, action.GetArgs());
+		configHandler->Set("ShowMTInfo", showMTInfo ? 1 : 0);
+		game->showMTInfo = (showMTInfo && (gc->GetMultiThreadLua() <= 3)) ? gc->GetMultiThreadLua() : 0;
 	}
 };
 
@@ -2142,7 +2098,10 @@ public:
 		} else {
 			gc->teamHighlight = abs(atoi(action.GetArgs().c_str())) % 3;
 		}
-		logOutput.Print("Team highlighting: %s", ((gc->teamHighlight == 1) ? "Players only" : ((gc->teamHighlight == 2) ? "Players and spectators" : "Disabled")));
+		logOutput.Print("Team highlighting: %s",
+				((gc->teamHighlight == 1) ? "Players only"
+				: ((gc->teamHighlight == 2) ? "Players and spectators"
+				: "Disabled")));
 		configHandler->Set("TeamHighlight", gc->teamHighlight);
 	}
 };
@@ -2179,9 +2138,10 @@ public:
 			"Reloads cmdcolors.txt") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		const string name = action.GetArgs().empty() ? "cmdcolors.txt" : action.GetArgs();
-		cmdColors.LoadConfig(name);
-		logOutput.Print("Reloaded cmdcolors with: " + name);
+
+		const std::string fileName = action.GetArgs().empty() ? "cmdcolors.txt" : action.GetArgs();
+		cmdColors.LoadConfig(fileName);
+		logOutput.Print("Reloaded cmdcolors from file: %s", fileName.c_str());
 	}
 };
 
@@ -2193,9 +2153,10 @@ public:
 			"Reloads ctrlpanel.txt") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		const string name = action.GetArgs().empty() ? "ctrlpanel.txt" : action.GetArgs();
-		guihandler->ReloadConfig(name);
-		logOutput.Print("Reloaded ctrlpanel with: " + name);
+
+		const std::string fileName = action.GetArgs().empty() ? "ctrlpanel.txt" : action.GetArgs();
+		guihandler->ReloadConfig(fileName);
+		logOutput.Print("Reloaded ctrlpanel from file: %s", fileName.c_str());
 	}
 };
 
@@ -2229,7 +2190,7 @@ public:
 			delete smallFont;
 			font = newFont;
 			smallFont = newSmallFont;
-			logOutput.Print("Loaded font: %s\n", action.GetArgs().c_str());
+			logOutput.Print("Loaded font: %s", action.GetArgs().c_str());
 			configHandler->SetString("FontFile", action.GetArgs());
 			configHandler->SetString("SmallFontFile", action.GetArgs());
 		}
@@ -2260,11 +2221,11 @@ public:
 			"Enables/Disables OpenGL save-mode") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (action.GetArgs().empty()) {
-			LuaOpenGL::SetSafeMode(!LuaOpenGL::GetSafeMode());
-		} else {
-			LuaOpenGL::SetSafeMode(!!atoi(action.GetArgs().c_str()));
-		}
+
+		bool saveMode = LuaOpenGL::GetSafeMode();
+		SetBoolArg(saveMode, action.GetArgs());
+		LuaOpenGL::SetSafeMode(saveMode);
+		LogSystemStatus("OpenGL save-mode", LuaOpenGL::GetSafeMode());
 	}
 };
 
@@ -2331,11 +2292,10 @@ public:
 			"Enables/Disables HUD (GUI interface) shown in first-person-control mode") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (action.GetArgs().empty()) {
-			hudDrawer->SetDraw(!hudDrawer->GetDraw());
-		} else {
-			hudDrawer->SetDraw(!!atoi(action.GetArgs().c_str()));
-		}
+
+		bool drawHUD = hudDrawer->GetDraw();
+		SetBoolArg(drawHUD, action.GetArgs());
+		hudDrawer->SetDraw(drawHUD);
 	}
 };
 
@@ -2347,13 +2307,11 @@ public:
 			"Enables/Disables debug drawing for AIs") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (action.GetArgs().empty()) {
-			debugDrawerAI->SetDraw(!debugDrawerAI->GetDraw());
-		} else {
-			debugDrawerAI->SetDraw(!!atoi(action.GetArgs().c_str()));
-		}
 
-		logOutput.Print("SkirmishAI debug drawing %s", (debugDrawerAI->GetDraw()? "enabled": "disabled"));
+		bool aiDebugDraw = debugDrawerAI->GetDraw();
+		SetBoolArg(aiDebugDraw, action.GetArgs());
+		debugDrawerAI->SetDraw(aiDebugDraw);
+		LogSystemStatus("SkirmishAI debug drawing", debugDrawerAI->GetDraw());
 	}
 };
 
@@ -2365,11 +2323,9 @@ public:
 			"Enables/Disables map marks rendering") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (action.GetArgs().empty()) {
-			globalRendering->drawMapMarks = !globalRendering->drawMapMarks;
-		} else {
-			globalRendering->drawMapMarks = !!atoi(action.GetArgs().c_str());
-		}
+
+		SetBoolArg(globalRendering->drawMapMarks, action.GetArgs());
+		LogSystemStatus("map marks rendering", globalRendering->drawMapMarks);
 	}
 };
 
@@ -2381,12 +2337,9 @@ public:
 			"Show/Hide all map marks drawn so far", true) {}
 
 	void Execute(const UnsyncedAction& action) const {
-		bool allMarksVisible;
-		if (action.GetArgs().empty()) {
-			allMarksVisible = !inMapDrawerModel->GetAllMarksVisible();
-		} else {
-			allMarksVisible = !!atoi(action.GetArgs().c_str());
-		}
+
+		bool allMarksVisible = inMapDrawerModel->GetAllMarksVisible();
+		SetBoolArg(allMarksVisible, action.GetArgs());
 		inMapDrawerModel->SetAllMarksVisible(allMarksVisible);
 	}
 };
@@ -2412,12 +2365,9 @@ public:
 			"Allow/Disallow Lua to draw on the map") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		bool luaMapDrawingAllowed;
-		if (action.GetArgs().empty()) {
-			luaMapDrawingAllowed = !inMapDrawer->GetLuaMapDrawingAllowed();
-		} else {
-			luaMapDrawingAllowed = !!atoi(action.GetArgs().c_str());
-		}
+
+		bool luaMapDrawingAllowed = inMapDrawer->GetLuaMapDrawingAllowed();
+		SetBoolArg(luaMapDrawingAllowed, action.GetArgs());
 		inMapDrawer->SetLuaMapDrawingAllowed(luaMapDrawingAllowed);
 	}
 };
@@ -2445,12 +2395,9 @@ public:
 			" keyboard- and joystick-events") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		bool modUICtrl;
-		if (action.GetArgs().empty()) {
-			modUICtrl = !CLuaHandle::GetModUICtrl();
-		} else {
-			modUICtrl = !!atoi(action.GetArgs().c_str());
-		}
+
+		bool modUICtrl = CLuaHandle::GetModUICtrl();
+		SetBoolArg(modUICtrl, action.GetArgs());
 		CLuaHandle::SetModUICtrl(modUICtrl);
 		configHandler->Set("LuaModUICtrl", modUICtrl ? 1 : 0);
 	}
@@ -2481,14 +2428,11 @@ public:
 
 	void Execute(const UnsyncedAction& action) const {
 		if (groundDecals) {
-			if (action.GetArgs().empty()) {
-				groundDecals->SetDrawDecals(!groundDecals->GetDrawDecals());
-			} else {
-				groundDecals->SetDrawDecals(!!atoi(action.GetArgs().c_str()));
-			}
+			bool drawDecals = groundDecals->GetDrawDecals();
+			SetBoolArg(drawDecals, action.GetArgs());
+			groundDecals->SetDrawDecals(drawDecals);
 		}
-		logOutput.Print("Ground decals are %s",
-		                groundDecals->GetDrawDecals() ? "enabled" : "disabled");
+		LogSystemStatus("Ground-decals rendering", groundDecals->GetDrawDecals());
 	}
 };
 
@@ -2533,14 +2477,10 @@ public:
 
 	void Execute(const UnsyncedAction& action) const {
 		if (guihandler != NULL) {
-			bool gatherMode;
-			if (action.GetArgs().empty()) {
-				gatherMode = !guihandler->GetGatherMode();
-			} else {
-				gatherMode = !!atoi(action.GetArgs().c_str());
-			}
+			bool gatherMode = guihandler->GetGatherMode();
+			SetBoolArg(gatherMode, action.GetArgs());
 			guihandler->SetGatherMode(gatherMode);
-			logOutput.Print("gathermode %s", gatherMode ? "enabled" : "disabled");
+			LogSystemStatus("Gather-Mode", guihandler->GetGatherMode());
 		}
 	}
 };
@@ -2667,14 +2607,11 @@ public:
 			"Enable/Disable drawing of the map as wire-frame (no textures) (Graphic setting)") {}
 
 	void Execute(const UnsyncedAction& action) const {
+
 		CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-		if (action.GetArgs().empty()) {
-			gd->wireframe  = !gd->wireframe;
-			sky->wireframe = gd->wireframe;
-		} else {
-			gd->wireframe  = !!atoi(action.GetArgs().c_str());
-			sky->wireframe = gd->wireframe;
-		}
+		SetBoolArg(gd->wireframe, action.GetArgs());
+		sky->wireframe = gd->wireframe;
+		LogSystemStatus("drawing of the map as wire-frame", gd->wireframe);
 	}
 };
 
@@ -2686,11 +2623,8 @@ public:
 			"Show/Hide the smooth air-mesh map overlay") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (action.GetArgs().empty()) {
-			smoothGround->drawEnabled = !smoothGround->drawEnabled;
-		} else {
-			smoothGround->drawEnabled = !!atoi(action.GetArgs().c_str());
-		}
+		SetBoolArg(smoothGround->drawEnabled, action.GetArgs());
+		LogSystemStatus("smooth air-mesh map overlay", smoothGround->drawEnabled);
 	}
 };
 
@@ -2707,12 +2641,10 @@ public:
 		if (count == 1) {
 			SDL_SetGamma(r, r, r);
 			logOutput.Print("Set gamma value");
-		}
-		else if (count == 3) {
+		} else if (count == 3) {
 			SDL_SetGamma(r, g, b);
 			logOutput.Print("Set gamma values");
-		}
-		else {
+		} else {
 			logOutput.Print("Unknown gamma format");
 		}
 	}
@@ -2726,8 +2658,8 @@ public:
 			"Invoke an artificial crash through a NULL-pointer dereference (SIGSEGV)", true) {}
 
 	void Execute(const UnsyncedAction& action) const {
-		int *a=0;
-		*a=0;
+		int* a = 0;
+		*a = 0;
 	}
 };
 
@@ -2852,10 +2784,11 @@ public:
 			"Save the game state to a specific file (BROKEN)") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		bool saveoverride = action.GetArgs().find("-y ") == 0;
-		std::string savename(action.GetArgs().c_str() + (saveoverride ? 3 : 0));
-		savename = "Saves/" + savename + ".ssf";
-		game->SaveGame(savename, saveoverride);
+
+		const bool saveOverride = action.GetArgs().find("-y ") == 0;
+		const std::string saveName(action.GetArgs().c_str() + (saveOverride ? 3 : 0));
+		const std::string saveFileName = "Saves/" + saveName + ".ssf";
+		game->SaveGame(saveFileName, saveOverride);
 	}
 };
 
