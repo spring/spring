@@ -139,11 +139,6 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 
 	medianCpu = 0.0f;
 	medianPing = 0;
-	// speedControl - throttles speed based on:
-	// 0 : players (max cpu)
-	// 1 : players (median cpu)
-	// 2 : (same as 0)
-	// -x: same as x, but ignores votes from players that may change the speed control mode
 	curSpeedCtrl = 0;
 	speedControl = configHandler->Get("SpeedControl", 0);
 	UpdateSpeedControl(--speedControl + 1);
@@ -2019,28 +2014,52 @@ void CGameServer::UpdateSpeedControl(int speedCtrl) {
 	}
 	if (speedControl >= 0) {
 		int oldSpeedCtrl = curSpeedCtrl;
-		int avgvotes = 0;
-		int maxvotes = 0;
+		int avgVotes = 0;
+		int maxVotes = 0;
 		for (size_t i = 0; i < players.size(); ++i) {
 			if (players[i].link) {
 				int sc = players[i].speedControl;
 				if (sc == 1 || sc == -1)
-					++avgvotes;
+					++avgVotes;
 				else if (sc == 2 || sc == -2)
-					++maxvotes;
+					++maxVotes;
 			}
 		}
 
-		if (avgvotes > maxvotes)
+		if (avgVotes > maxVotes)
 			curSpeedCtrl = 1;
-		else if (avgvotes < maxvotes)
+		else if (avgVotes < maxVotes)
 			curSpeedCtrl = 0;
 		else
 			curSpeedCtrl = (speedControl == 1) ? 1 : 0;
 
-		if (curSpeedCtrl != oldSpeedCtrl)
-			Message(str(format("Server speed control: %s CPU [%d/%d]") %(curSpeedCtrl ? "Average" : "Maximum") %(curSpeedCtrl ? avgvotes : maxvotes) %(avgvotes + maxvotes)));
+		if (curSpeedCtrl != oldSpeedCtrl) {
+			Message(str(format("Server speed control: %s CPU [%d/%d]")
+					%(curSpeedCtrl ? "Average" : "Maximum")
+					%(curSpeedCtrl ? avgVotes : maxVotes)
+					%(avgVotes + maxVotes)));
+		}
 	}
+}
+
+std::string CGameServer::SpeedControlToString(int speedCtrl) {
+
+	std::string desc;
+	if (speedCtrl == 0) {
+		desc = "Default";
+	} else if ((speedCtrl == 1) || (speedCtrl == -1)) {
+		desc = "Average CPU";
+	} else if ((speedCtrl == 2) || (speedCtrl == -2)) {
+		desc = "Maximum CPU";
+	} else {
+		desc = "<invalid>";
+	}
+
+	if (speedCtrl < 0) {
+		desc += " (server voting disabled)";
+	}
+
+	return desc;
 }
 
 void CGameServer::UpdateLoop()
