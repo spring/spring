@@ -2281,11 +2281,7 @@ public:
 
 	void Execute(const UnsyncedAction& action) const {
 		if (resourceBar) {
-			if (action.GetArgs().empty()) {
-				resourceBar->disabled = !resourceBar->disabled;
-			} else {
-				resourceBar->disabled = !atoi(action.GetArgs().c_str());
-			}
+			SetBoolArg(resourceBar->enabled, action.GetArgs());
 		}
 	}
 };
@@ -2300,11 +2296,7 @@ public:
 
 	void Execute(const UnsyncedAction& action) const {
 		if (tooltip) {
-			if (action.GetArgs().empty()) {
-				tooltip->disabled = !tooltip->disabled;
-			} else {
-				tooltip->disabled = !atoi(action.GetArgs().c_str());
-			}
+			SetBoolArg(tooltip->enabled, action.GetArgs());
 		}
 	}
 };
@@ -2318,11 +2310,7 @@ public:
 
 	void Execute(const UnsyncedAction& action) const {
 		if (game->infoConsole) {
-			if (action.GetArgs().empty()) {
-				game->infoConsole->disabled = !game->infoConsole->disabled;
-			} else {
-				game->infoConsole->disabled = !atoi(action.GetArgs().c_str());
-			}
+			SetBoolArg(game->infoConsole->enabled, action.GetArgs());
 		}
 	}
 };
@@ -2335,11 +2323,7 @@ public:
 			"Enables/Disables the statistics graphs shown at the end of the game") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (action.GetArgs().empty()) {
-			CEndGameBox::disabled = !CEndGameBox::disabled;
-		} else {
-			CEndGameBox::disabled = !atoi(action.GetArgs().c_str());
-		}
+		SetBoolArg(CEndGameBox::enabled, action.GetArgs());
 	}
 };
 

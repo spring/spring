@@ -29,7 +29,7 @@ class CTooltipConsole : public CInputReceiver {
 			float metalMake,  float metalUse,
 			float energyMake, float energyUse);
 
-		bool disabled;
+		bool enabled;
 
 	protected:
 		float x, y, w, h;

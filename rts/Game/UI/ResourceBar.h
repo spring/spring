@@ -24,7 +24,7 @@ public:
 	ContainerBox energyBox;
 
 	bool moveBox;
-	bool disabled;
+	bool enabled;
 };
 
 extern CResourceBar* resourceBar;

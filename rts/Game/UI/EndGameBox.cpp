@@ -42,7 +42,7 @@ static std::string FloatToSmallString(float num, float mul = 1) {
 };
 
 
-bool CEndGameBox::disabled = false;
+bool CEndGameBox::enabled = true;
 
 
 CEndGameBox::CEndGameBox(const std::vector<unsigned char>& winningAllyTeams)
@@ -93,7 +93,7 @@ CEndGameBox::~CEndGameBox()
 
 bool CEndGameBox::MousePress(int x, int y, int button)
 {
-	if (disabled) {
+	if (!enabled) {
 		return false;
 	}
 
@@ -124,7 +124,7 @@ bool CEndGameBox::MousePress(int x, int y, int button)
 
 void CEndGameBox::MouseMove(int x, int y, int dx, int dy, int button)
 {
-	if (disabled) {
+	if (!enabled) {
 		return;
 	}
 
@@ -138,7 +138,7 @@ void CEndGameBox::MouseMove(int x, int y, int dx, int dy, int button)
 
 void CEndGameBox::MouseRelease(int x, int y, int button)
 {
-	if (disabled) {
+	if (!enabled) {
 		return;
 	}
 
@@ -179,7 +179,7 @@ void CEndGameBox::MouseRelease(int x, int y, int button)
 
 bool CEndGameBox::IsAbove(int x, int y)
 {
-	if (disabled) {
+	if (!enabled) {
 		return false;
 	}
 
@@ -194,7 +194,7 @@ void CEndGameBox::Draw()
 		graphTex = bm.CreateTexture();
 	}
 
-	if (disabled) {
+	if (!enabled) {
 		return;
 	}
 
@@ -435,7 +435,7 @@ void CEndGameBox::Draw()
 
 std::string CEndGameBox::GetTooltip(int x, int y)
 {
-	if (disabled) {
+	if (!enabled) {
 		return "";
 	}
 

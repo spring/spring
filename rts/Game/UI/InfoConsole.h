@@ -39,7 +39,7 @@ public:
 	float height;
 	float fontScale;
 	float fontSize;
-	bool disabled;
+	bool enabled;
 
 public:
 	static const size_t maxLastMsgPos;
