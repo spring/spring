@@ -1368,11 +1368,10 @@ public:
 			"Start/Stop capturing a video of the game in progress") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		if (videoCapturing->IsCapturing()) {
-			videoCapturing->StopCapturing();
-		} else {
-			videoCapturing->StartCapturing();
-		}
+
+		// toggle
+		videoCapturing->SetCapturing(!videoCapturing->IsCapturing());
+		LogSystemStatus("Video capturing", videoCapturing->IsCapturing());
 	}
 };
 
