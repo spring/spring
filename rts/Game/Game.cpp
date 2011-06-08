@@ -488,6 +488,10 @@ void CGame::LoadDefs()
 
 void CGame::LoadSimulation(const std::string& mapName)
 {
+	// after this, other components are able to register chat action-executors
+	SyncedGameCommands::CreateInstance();
+	UnsyncedGameCommands::CreateInstance();
+
 	// simulation components
 	helper = new CGameHelper();
 	ground = new CGround();
@@ -544,14 +548,11 @@ void CGame::LoadSimulation(const std::string& mapName)
 
 	wind.LoadWind(mapInfo->atmosphere.minWind, mapInfo->atmosphere.maxWind);
 
-	SyncedGameCommands::CreateInstance();
-	syncedGameCommands->AddDefaultActionExecutors();
-
-	UnsyncedGameCommands::CreateInstance();
-	unsyncedGameCommands->AddDefaultActionExecutors();
-
 	CCobInstance::InitVars(teamHandler->ActiveTeams(), teamHandler->ActiveAllyTeams());
 	CEngineOutHandler::Initialize();
+
+	syncedGameCommands->AddDefaultActionExecutors();
+	unsyncedGameCommands->AddDefaultActionExecutors();
 }
 
 void CGame::LoadRendering()
