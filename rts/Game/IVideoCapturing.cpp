@@ -42,3 +42,12 @@ IVideoCapturing::IVideoCapturing() {
 
 IVideoCapturing::~IVideoCapturing() {
 }
+
+void IVideoCapturing::SetCapturing(bool enabled) {
+
+	if (!IsCapturing() && enabled) {
+		instance->StopCapturing();
+	} else if (IsCapturing() && !enabled) {
+		instance->StopCapturing();
+	}
+}
