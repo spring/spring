@@ -31,11 +31,11 @@ public:
 	 *
 	 * @return	true if a video is currently being captured
 	 */
-	virtual bool IsCapturing() const = 0;
+	virtual bool IsCapturing() const { return false; }
 
 protected:
-	virtual void StartCapturing() = 0;
-	virtual void StopCapturing() = 0;
+	virtual void StartCapturing() {}
+	virtual void StopCapturing() {}
 
 };
 
