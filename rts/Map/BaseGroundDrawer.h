@@ -99,8 +99,8 @@ public:
 	int extraTextureUpdateRate;
 
 #ifdef USE_GML
-	int multiThreadDrawGround;
-	int multiThreadDrawGroundShadow;
+	bool multiThreadDrawGround;
+	bool multiThreadDrawGroundShadow;
 #endif
 
 	CHeightLinePalette* heightLinePal;
