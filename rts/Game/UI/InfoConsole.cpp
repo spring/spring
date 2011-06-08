@@ -40,7 +40,7 @@ CInfoConsole::CInfoConsole() :
 	lifetime = configHandler->Get("InfoMessageTime", 400);
 
 	const std::string geo = configHandler->GetString("InfoConsoleGeometry",
-                                                  "0.26 0.96 0.41 0.205");
+			"0.26 0.96 0.41 0.205");
 	const int vars = sscanf(geo.c_str(), "%f %f %f %f",
 	                        &xpos, &ypos, &width, &height);
 	if (vars != 4) {
@@ -65,7 +65,7 @@ void CInfoConsole::Draw()
 	if (disabled) return;
 	if (!smallFont) return;
 
-	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex); //is this really needed?
+	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex); // XXX is this really needed?
 
 	if(!data.empty() && (guihandler && !guihandler->GetOutlineFonts())){
 		glDisable(GL_TEXTURE_2D);
