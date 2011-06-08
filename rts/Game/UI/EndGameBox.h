@@ -31,7 +31,7 @@ public:
 	virtual bool IsAbove(int x, int y);
 	virtual std::string GetTooltip(int x, int y);
 
-	static bool disabled;
+	static bool enabled;
 
 protected:
 	void FillTeamStats();

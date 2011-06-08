@@ -28,7 +28,7 @@ CTooltipConsole* tooltip = NULL;
 
 
 CTooltipConsole::CTooltipConsole()
-	: disabled(false)
+	: enabled(true)
 {
 	const std::string geo = configHandler->GetString("TooltipGeometry",
 			"0.0 0.0 0.41 0.1");
@@ -51,7 +51,7 @@ CTooltipConsole::~CTooltipConsole()
 
 void CTooltipConsole::Draw()
 {
-	if (disabled) {
+	if (!enabled) {
 		return;
 	}
 
@@ -87,7 +87,7 @@ void CTooltipConsole::Draw()
 
 bool CTooltipConsole::IsAbove(int x, int y)
 {
-	if (disabled) {
+	if (!enabled) {
 		return false;
 	}
 

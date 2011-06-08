@@ -29,7 +29,7 @@ const size_t CInfoConsole::maxLastMsgPos = 10;
 
 CInfoConsole::CInfoConsole() :
 	  fontScale(1.0f)
-	, disabled(false)
+	, enabled(true)
 	, lastMsgIter(lastMsgPositions.begin())
 	, newLines(0)
 	, rawId(0)
@@ -62,7 +62,7 @@ CInfoConsole::~CInfoConsole()
 
 void CInfoConsole::Draw()
 {
-	if (disabled) return;
+	if (!enabled) return;
 	if (!smallFont) return;
 
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex); // XXX is this really needed?
