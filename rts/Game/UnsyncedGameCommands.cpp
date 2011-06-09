@@ -1307,7 +1307,7 @@ public:
 		// toggle
 		sound->Mute();
 
-		LogSystemStatus("Sound", sound->IsMuted());
+		LogSystemStatus("Sound", !sound->IsMuted());
 	}
 };
 
