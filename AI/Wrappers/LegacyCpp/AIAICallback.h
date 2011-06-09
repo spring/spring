@@ -85,6 +85,8 @@ public:
 	const std::vector<CommandDescription>* GetUnitCommands(int unitid);
 	const CCommandQueue* GetCurrentUnitCommands(int unitid);
 
+	int GetMaxUnits();
+
 	int GetUnitAiHint(int unitid);
 	int GetUnitTeam(int unitid);
 	int GetUnitAllyTeam(int unitid);
