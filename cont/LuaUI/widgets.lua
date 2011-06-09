@@ -1621,9 +1621,9 @@ function widgetHandler:ShockFront(power, dx, dy, dz)
   return
 end
 
-function widgetHandler:RecvSkirmishAIMessage(dataStr)
+function widgetHandler:RecvSkirmishAIMessage(aiTeam, dataStr)
   for _,w in ipairs(self.RecvSkirmishAIMessageList) do
-    local dataRet = w:RecvSkirmishAIMessage(dataStr)
+    local dataRet = w:RecvSkirmishAIMessage(aiTeam, dataStr)
     if (dataRet) then
       return dataRet
     end

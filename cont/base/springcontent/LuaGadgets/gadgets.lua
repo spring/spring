@@ -1078,9 +1078,9 @@ function gadgetHandler:DrawFeature(featureID, drawMode)
   return false
 end
 
-function gadgetHandler:RecvSkirmishAIMessage(dataStr)
+function gadgetHandler:RecvSkirmishAIMessage(aiTeam, dataStr)
   for _,g in ipairs(self.RecvSkirmishAIMessageList) do
-    local dataRet = g:RecvSkirmishAIMessage(dataStr)
+    local dataRet = g:RecvSkirmishAIMessage(aiTeam, dataStr)
     if (dataRet) then
       return dataRet
     end
