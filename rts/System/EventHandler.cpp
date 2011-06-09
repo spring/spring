@@ -143,9 +143,9 @@ CEventHandler::CEventHandler()
 	SetupEvent("Shutdown", NULL, 0);
 	SetupEvent("RecvLuaMsg", NULL, 0);
 
-	SetupEvent("AICallIn", NULL, UNSYNCED_BIT);
 	SetupEvent("DrawUnit", NULL, UNSYNCED_BIT);
 	SetupEvent("DrawFeature", NULL, UNSYNCED_BIT);
+	SetupEvent("RecvSkirmishAIMessage", NULL, UNSYNCED_BIT);
 
 	// LuaUI
 	SetupEvent("ConfigureLayout", NULL, UNSYNCED_BIT | CONTROL_BIT);

@@ -2836,13 +2836,13 @@ int LuaUnsyncedCtrl::SendSkirmishAIMessage(lua_State* L) {
 		return 0;
 	}
 
-	const int aiID = luaL_checkint(L, 1);
+	const int aiTeam = luaL_checkint(L, 1);
 	const char* inData = luaL_checkstring(L, 2);
 
 	std::vector<const char*> outData;
 
 	lua_checkstack(L, outData.size() + 1);
-	lua_pushboolean(L, eoh->SendLuaMessages(aiID, inData, outData));
+	lua_pushboolean(L, eoh->SendLuaMessages(aiTeam, inData, outData));
 
 	// push the response(s)
 	for (unsigned int n = 0; n < outData.size(); n++) {

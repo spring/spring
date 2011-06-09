@@ -149,7 +149,7 @@ local flexCallIns = {
   'DrawWorldRefraction',
   'DrawScreenEffects',
   'DrawInMiniMap',
-  'AICallIn',
+  'RecvSkirmishAIMessage',
 }
 local flexCallInMap = {}
 for _,ci in ipairs(flexCallIns) do
@@ -1621,9 +1621,9 @@ function widgetHandler:ShockFront(power, dx, dy, dz)
   return
 end
 
-function widgetHandler:AICallIn(dataStr)
-  for _,w in ipairs(self.AICallInList) do
-    local dataRet = w:AICallIn(dataStr)
+function widgetHandler:RecvSkirmishAIMessage(dataStr)
+  for _,w in ipairs(self.RecvSkirmishAIMessageList) do
+    local dataRet = w:RecvSkirmishAIMessage(dataStr)
     if (dataRet) then
       return dataRet
     end

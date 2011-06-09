@@ -159,7 +159,7 @@ local callInLists = {
 	-- unsynced
 	"DrawUnit",
 	"DrawFeature",
-	"AICallIn",
+	"RecvSkirmishAIMessage",
 
 	-- COB CallIn  (FIXME?)
 	"CobCallback",
@@ -1078,9 +1078,9 @@ function gadgetHandler:DrawFeature(featureID, drawMode)
   return false
 end
 
-function gadgetHandler:AICallIn(dataStr)
-  for _,g in ipairs(self.AICallInList) do
-    local dataRet = g:AICallIn(dataStr)
+function gadgetHandler:RecvSkirmishAIMessage(dataStr)
+  for _,g in ipairs(self.RecvSkirmishAIMessageList) do
+    local dataRet = g:RecvSkirmishAIMessage(dataStr)
     if (dataRet) then
       return dataRet
     end

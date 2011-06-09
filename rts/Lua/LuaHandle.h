@@ -226,7 +226,7 @@ class CLuaHandle : public CEventClient
 		bool GameSetup(const string& state, bool& ready,
 		               const map<int, string>& playerStates);
 
-		const char* RecvSkirmishAIMessage(const char* data, int inSize);
+		const char* RecvSkirmishAIMessage(int aiID, const char* data, int inSize);
 
 		string WorldTooltip(const CUnit* unit,
 		                    const CFeature* feature,

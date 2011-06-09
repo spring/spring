@@ -2708,13 +2708,12 @@ bool CLuaHandle::GameSetup(const string& state, bool& ready,
 
 
 
-const char* CLuaHandle::RecvSkirmishAIMessage(const char* inData, int inSize)
+const char* CLuaHandle::RecvSkirmishAIMessage(int aiTeam, const char* inData, int inSize)
 {
-	// TODO: pass the ID of the SkirmishAI that called us?
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
+	lua_checkstack(L, 4);
 
-	static const LuaHashString cmdStr("AICallIn");
+	static const LuaHashString cmdStr("RecvSkirmishAIMessage");
 
 	// <this> is either CLuaRules* or CLuaUI*,
 	// but the AI call-in is always unsynced!
@@ -2722,7 +2721,9 @@ const char* CLuaHandle::RecvSkirmishAIMessage(const char* inData, int inSize)
 		return NULL;
 	}
 
-	int argCount = 0;
+	lua_pushnumber(L, aiTeam);
+
+	int argCount = 1;
 	const char* outData = NULL;
 
 	if (inData != NULL) {
@@ -2730,7 +2731,7 @@ const char* CLuaHandle::RecvSkirmishAIMessage(const char* inData, int inSize)
 			inSize = strlen(inData);
 		}
 		lua_pushlstring(L, inData, inSize);
-		argCount = 1;
+		argCount = 2;
 	}
 
 	if (!RunCallIn(cmdStr, argCount, 1)) {

@@ -497,7 +497,7 @@ void CEngineOutHandler::GotChatMsg(const char* msg, int fromPlayerId) {
 	DO_FOR_SKIRMISH_AIS(GotChatMsg(msg, fromPlayerId))
 }
 
-bool CEngineOutHandler::SendLuaMessages(int aiID, const char* inData, std::vector<const char*>& outData) {
+bool CEngineOutHandler::SendLuaMessages(int aiTeam, const char* inData, std::vector<const char*>& outData) {
 	SCOPED_TIMER("AI Total");
 
 	if (id_skirmishAI.empty()) {
@@ -505,21 +505,39 @@ bool CEngineOutHandler::SendLuaMessages(int aiID, const char* inData, std::vecto
 	}
 
 	id_ai_t::iterator it;
+	unsigned int n = 0;
 
-	if (aiID != -1) {
-		outData.resize(1, "");
+	if (aiTeam != -1) {
+		// get the AI's for team <aiTeam>
+		const team_ais_t::iterator aiTeamIter = team_skirmishAIs.find(aiTeam);
 
-		if ((it = id_skirmishAI.find(aiID)) == id_skirmishAI.end()) {
+		if (aiTeamIter == team_skirmishAIs.end()) {
 			return false;
 		}
 
-		(it->second)->SendLuaMessage(inData, &outData[0]);
+		// get the vector of ID's for the AI's
+		ids_t& aiIDs = aiTeamIter->second;
+		ids_t::iterator aiIDsIter;
+
+		outData.resize(aiIDs.size(), "");
+
+		// send only to AI's in team <aiTeam>
+		for (aiIDsIter = aiIDs.begin(); aiIDsIter != aiIDs.end(); ++aiIDsIter) {
+			const size_t aiID = aiIDs[*aiIDsIter];
+
+			CSkirmishAIWrapper* aiWrapper = id_skirmishAI[aiID];
+			aiWrapper->SendLuaMessage(inData, &outData[n++]);
+		}
 	} else {
 		outData.resize(id_skirmishAI.size(), "");
 
-		// broadcast
+		// broadcast to all AI's across all teams
+		//
+		// since neither AI ID's nor AI teams are
+		// necessarily consecutive, store responses
+		// in calling order
 		for (it = id_skirmishAI.begin(); it != id_skirmishAI.end(); ++it) {
-			(it->second)->SendLuaMessage(inData, &outData[it->first]);
+			(it->second)->SendLuaMessage(inData, &outData[n++]);
 		}
 	}
 }
