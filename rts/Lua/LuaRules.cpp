@@ -121,7 +121,7 @@ CLuaRules::CLuaRules()
 
 	SetupUnsyncedFunction(L, "DrawUnit");
 	SetupUnsyncedFunction(L, "DrawFeature");
-	SetupUnsyncedFunction(L, "AICallIn");
+	SetupUnsyncedFunction(L, "RecvSkirmishAIMessage");
 
 	END_ITERATE_LUA_STATES();
 }

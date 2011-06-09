@@ -581,7 +581,7 @@ bool CLuaHandleSynced::HasCallIn(lua_State *L, const string& name)
 	int tableIndex;
 	if ((name != "DrawUnit") &&
 	    (name != "DrawFeature") &&
-	    (name != "AICallIn") &&
+	    (name != "RecvSkirmishAIMessage") &&
 	    (name != "RecvFromSynced") &&
 	    !eventHandler.IsUnsynced(name)) {
 		tableIndex = LUA_GLOBALSINDEX;  // synced call-ins in GLOBAL
