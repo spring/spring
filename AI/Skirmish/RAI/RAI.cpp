@@ -518,7 +518,7 @@ void cRAI::UnitIdle(int unit)
 	if( RAIDEBUGGING ) *l<<"#";
 }
 
-void cRAI::GotChatMsg(const char* msg,int player)
+void cRAI::GotChatMessage(const char* msg,int player)
 {
 
 }

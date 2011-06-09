@@ -491,10 +491,10 @@ void CEngineOutHandler::CommandFinished(const CUnit& unit, const Command& comman
 	DO_FOR_TEAM_SKIRMISH_AIS(CommandFinished(unitId, command.aiCommandId, aiCommandTopicId), teamId);
 }
 
-void CEngineOutHandler::GotChatMsg(const char* msg, int fromPlayerId) {
+void CEngineOutHandler::SendChatMessage(const char* msg, int fromPlayerId) {
 	AI_EVT_MTH();
 
-	DO_FOR_SKIRMISH_AIS(GotChatMsg(msg, fromPlayerId))
+	DO_FOR_SKIRMISH_AIS(SendChatMessage(msg, fromPlayerId))
 }
 
 bool CEngineOutHandler::SendLuaMessages(int aiTeam, const char* inData, std::vector<const char*>& outData) {
@@ -525,8 +525,8 @@ bool CEngineOutHandler::SendLuaMessages(int aiTeam, const char* inData, std::vec
 		for (aiIDsIter = aiIDs.begin(); aiIDsIter != aiIDs.end(); ++aiIDsIter) {
 			const size_t aiID = aiIDs[*aiIDsIter];
 
-			CSkirmishAIWrapper* aiWrapper = id_skirmishAI[aiID];
-			aiWrapper->SendLuaMessage(inData, &outData[n++]);
+			CSkirmishAIWrapper* wrapperAI = id_skirmishAI[aiID];
+			wrapperAI->SendLuaMessage(inData, &outData[n++]);
 		}
 	} else {
 		outData.resize(id_skirmishAI.size(), "");
@@ -537,7 +537,8 @@ bool CEngineOutHandler::SendLuaMessages(int aiTeam, const char* inData, std::vec
 		// necessarily consecutive, store responses
 		// in calling order
 		for (it = id_skirmishAI.begin(); it != id_skirmishAI.end(); ++it) {
-			(it->second)->SendLuaMessage(inData, &outData[n++]);
+			CSkirmishAIWrapper* wrapperAI = it->second;
+			wrapperAI->SendLuaMessage(inData, &outData[n++]);
 		}
 	}
 

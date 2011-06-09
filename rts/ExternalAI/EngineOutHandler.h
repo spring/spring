@@ -69,7 +69,7 @@ public:
 	 * might be a good idea to give new orders to it.
 	*/
 	void CommandFinished(const CUnit& unit, const Command& command);
-	void GotChatMsg(const char* msg, int playerId);
+	void SendChatMessage(const char* msg, int playerId);
 
 	/// send a raw string from unsynced Lua to one or all active skirmish AI's
 	bool SendLuaMessages(int aiTeam, const char* inData, std::vector<const char*>& outData);
