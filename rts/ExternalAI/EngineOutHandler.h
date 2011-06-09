@@ -63,12 +63,16 @@ public:
 	void SeismicPing(int allyTeamId, const CUnit& unit, const float3& pos, float strength);
 	void WeaponFired(const CUnit& unit, const WeaponDef& def);
 	void PlayerCommandGiven(const std::vector<int>& selectedUnitIds, const Command& c, int playerId);
+
 	/**
 	 * A specific unit has finished a specific command,
 	 * might be a good idea to give new orders to it.
 	*/
 	void CommandFinished(const CUnit& unit, const Command& command);
 	void GotChatMsg(const char* msg, int playerId);
+
+	/// send a raw string from unsynced Lua to one or all active skirmish AI's
+	bool SendLuaMessages(const char* inData, int aiID, std::vector<const char*>& outData);
 
 
 	// Skirmish AI stuff

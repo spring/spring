@@ -497,6 +497,33 @@ void CEngineOutHandler::GotChatMsg(const char* msg, int fromPlayerId) {
 	DO_FOR_SKIRMISH_AIS(GotChatMsg(msg, fromPlayerId))
 }
 
+bool CEngineOutHandler::SendLuaMessages(const char* inData, int aiID, std::vector<const char*>& outData) {
+	SCOPED_TIMER("AI Total");
+
+	if (id_skirmishAI.empty()) {
+		return false;
+	}
+
+	id_ai_t::iterator it;
+
+	if (aiID != -1) {
+		outData.resize(1, "");
+
+		if ((it = id_skirmishAI.find(aiID)) == id_skirmishAI.end()) {
+			return false;
+		}
+
+		(it->second)->SendLuaMessage(inData, &outData[0]);
+	} else {
+		outData.resize(id_skirmishAI.size(), "");
+
+		// broadcast
+		for (it = id_skirmishAI.begin(); it != id_skirmishAI.end(); ++it) {
+			(it->second)->SendLuaMessage(inData, &outData[it->first]);
+		}
+	}
+}
+
 
 
 void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
