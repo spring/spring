@@ -2085,14 +2085,16 @@ bool springLegacyAI::CAIAICallback::ReadFile(const char* filename, void* buffer,
 
 
 #define AIAICALLBACK_CALL_LUA(HandleName, HANDLENAME)                                                                     \
-	const char* springLegacyAI::CAIAICallback::CallLua ## HandleName(const char* inData, int inSize, int* outSize) {                      \
+	const char* springLegacyAI::CAIAICallback::CallLua ## HandleName(const char* inData, int inSize, int* outSize) {      \
 		SCallLua ## HandleName ## Command cmd = {inData, inSize};                                                         \
 		sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_CALL_LUA_ ## HANDLENAME, &cmd); \
                                                                                                                           \
-		if (cmd.ret_outData != NULL) {                                                                                    \
-			*outSize = strlen(cmd.ret_outData);                                                                           \
-		} else {                                                                                                          \
-			*outSize = -1;                                                                                                \
+		if (outSize != NULL) {                                                                                            \
+			if (cmd.ret_outData != NULL) {                                                                                \
+				*outSize = strlen(cmd.ret_outData);                                                                       \
+			} else {                                                                                                      \
+				*outSize = -1;                                                                                            \
+			}                                                                                                             \
 		}                                                                                                                 \
                                                                                                                           \
 		return cmd.ret_outData;                                                                                           \
