@@ -34,7 +34,8 @@
 #include "AIReleaseEvent.h"
 #include "AIUpdateEvent.h"
 
-#include "AIMessageEvent.h"
+#include "AIChatMessageEvent.h"
+#include "AILuaMessageEvent.h"
 
 #include "AIUnitCreatedEvent.h"
 #include "AIUnitFinishedEvent.h"
