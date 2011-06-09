@@ -540,6 +540,8 @@ bool CEngineOutHandler::SendLuaMessages(int aiTeam, const char* inData, std::vec
 			(it->second)->SendLuaMessage(inData, &outData[n++]);
 		}
 	}
+
+	return true;
 }
 
 
