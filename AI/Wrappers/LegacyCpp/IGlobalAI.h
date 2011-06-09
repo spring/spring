@@ -10,9 +10,6 @@
 #include "Command.h"
 #include "System/float3.h"
 
-class IGlobalAICallback;
-struct WeaponDef;
-
 #define GLOBAL_AI_INTERFACE_VERSION (19 + AI_INTERFACE_GENERATED_VERSION)
 
 #define AI_EVENT_UNITGIVEN       1 // ChangeTeamEvent
@@ -20,6 +17,12 @@ struct WeaponDef;
 #define AI_EVENT_WEAPON_FIRED    3 // WeaponFireEvent
 #define AI_EVENT_PLAYER_COMMAND  4 // PlayerCommandEvent
 #define AI_EVENT_SEISMIC_PING    5 // SeismicPingEvent
+
+
+namespace springLegacyAI {
+
+class IGlobalAICallback;
+struct WeaponDef;
 
 class IGlobalAI
 {
@@ -110,5 +113,7 @@ public:
 	// in the class
 	virtual ~IGlobalAI() {}
 };
+
+} // namespace springLegacyAI
 
 #endif // I_GLOBAL_AI_H

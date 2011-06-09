@@ -18,10 +18,13 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AIMESSAGEEVENT_H
-#define	_AIMESSAGEEVENT_H
+#ifndef _AI_MESSAGE_EVENT_H
+#define	_AI_MESSAGE_EVENT_H
 
 #include "AIEvent.h"
+
+
+namespace springLegacyAI {
 
 class CAIMessageEvent : public CAIEvent {
 public:
@@ -36,4 +39,6 @@ private:
 	SMessageEvent event;
 };
 
-#endif // _AIMESSAGEEVENT_H
+} // namespace springLegacyAI
+
+#endif // _AI_MESSAGE_EVENT_H

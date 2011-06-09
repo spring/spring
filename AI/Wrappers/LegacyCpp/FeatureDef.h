@@ -13,6 +13,9 @@
 #define DRAWTYPE_TREE 1 // >= different types of trees
 #define DRAWTYPE_NONE -1
 
+
+namespace springLegacyAI {
+
 struct FeatureDef
 {
 	CR_DECLARE_STRUCT(FeatureDef);
@@ -68,5 +71,7 @@ struct FeatureDef
 
 	std::map<std::string, std::string> customParams;
 };
+
+} // namespace springLegacyAI
 
 #endif // FEATURE_DEF_H

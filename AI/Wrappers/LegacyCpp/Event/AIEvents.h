@@ -18,8 +18,8 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AIEVENTS_H
-#define _AIEVENTS_H
+#ifndef _AI_EVENTS_H
+#define _AI_EVENTS_H
 
 #include "../AIAI.h"
 
@@ -58,4 +58,4 @@
 #include "AIPlayerCommandEvent.h"
 #include "AISeismicPingEvent.h"
 
-#endif // _AIEVENTS_H
+#endif // _AI_EVENTS_H

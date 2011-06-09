@@ -11,6 +11,9 @@
 #include <vector>
 #include <map>
 
+
+namespace springLegacyAI {
+
 struct Command;
 struct UnitDef;
 struct FeatureDef;
@@ -522,5 +525,7 @@ public:
 	// in the class
 	virtual ~IAICallback() {}
 };
+
+} // namespace springLegacyAI
 
 #endif // I_AI_CALLBACK_H

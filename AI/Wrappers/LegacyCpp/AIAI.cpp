@@ -20,12 +20,12 @@
 #include "IGlobalAI.h"
 #include "ExternalAI/Interface/AISEvents.h"
 
-CAIAI::CAIAI(IGlobalAI* gAI):
+springLegacyAI::CAIAI::CAIAI(springLegacyAI::IGlobalAI* gAI):
 	ai(gAI),
 	globalAICallback(NULL) {
 }
 
-CAIAI::~CAIAI() {
+springLegacyAI::CAIAI::~CAIAI() {
 
 	delete ai;
 	ai = NULL;
@@ -35,7 +35,7 @@ CAIAI::~CAIAI() {
 }
 
 
-int CAIAI::handleEvent(int topic, const void* data) {
+int springLegacyAI::CAIAI::handleEvent(int topic, const void* data) {
 
 	int ret = -1; // if this values remains, something went wrong
 
