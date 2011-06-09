@@ -1852,7 +1852,7 @@ const float3* CAICallback::GetStartPos()
 		if (lua ## HandleName == NULL) {                                             \
 			return NULL;                                                             \
 		}                                                                            \
-		return lua ## HandleName->AICallIn(inData, inSize);                          \
+		return lua ## HandleName->RecvSkirmishAIMessage(inData, inSize);             \
 	}
 
 AICALLBACK_CALL_LUA(Rules)
