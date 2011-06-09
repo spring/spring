@@ -2027,7 +2027,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 		}
 	}
 
-	eoh->GotChatMsg(msg.msg.c_str(), msg.fromPlayer);
+	eoh->SendChatMessage(msg.msg.c_str(), msg.fromPlayer);
 }
 
 

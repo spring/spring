@@ -87,7 +87,10 @@ public:
 	virtual void UnitIdle(int unit) = 0;
 
 	/// called when someone writes a chat msg
-	virtual void GotChatMsg(const char* msg, int player) = 0;
+	virtual void GotChatMessage(const char* msg, int player) = 0;
+
+	/// called when a Lua script sends a message to this AI
+	virtual void GotLuaMessage(const char* inData, const char** outData) = 0;
 
 	/// called when one of your units are damaged
 	virtual void UnitDamaged(int damaged, int attacker, float damage, float3 dir) = 0;
