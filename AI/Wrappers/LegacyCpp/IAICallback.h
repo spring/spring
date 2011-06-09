@@ -221,8 +221,8 @@ public:
 	/*
 	 * The following function return the units into arrays that must be
 	 * allocated by the dll
-	 * - 10000 is currently the max amount of units so that should be a safe
-	 *   size for the array
+	 * - 30000 is currently the max amount of units (June 2011) so that should
+	 *   be a safe size for the array
 	 * - the return value indicates how many units were returned, the rest of
 	 *   the array is unchanged
 	 * - all forms of GetEnemyUnits and GetFriendlyUnits filter out any
