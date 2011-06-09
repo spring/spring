@@ -22,6 +22,8 @@
 #include "LuaUtils.h"
 #include "LuaTextures.h"
 
+#include "ExternalAI/EngineOutHandler.h"
+
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/Camera/CameraController.h"
@@ -220,6 +222,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetSunParameters);
 	REGISTER_LUA_CFUNC(SetSunManualControl);
 	REGISTER_LUA_CFUNC(SetSunDirection);
+
+	REGISTER_LUA_CFUNC(SendSkirmishAIMessage);
 
 	REGISTER_LUA_CFUNC(ClearWatchDogTimer);
 
@@ -2820,6 +2824,33 @@ int LuaUnsyncedCtrl::SetSunDirection(lua_State* L)
 }
 
 
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaUnsyncedCtrl::SendSkirmishAIMessage(lua_State* L) {
+	if (CLuaHandle::GetSynced(L)) {
+		return 0;
+	}
+	if (lua_gettop(L) != 2) {
+		return 0;
+	}
+
+	const char* inData = luaL_checkstring(L, 1);
+	const int aiID = luaL_checkint(L, 2);
+
+	std::vector<const char*> outData;
+
+	lua_checkstack(L, outData.size() + 1);
+	lua_pushboolean(L, eoh->SendLuaMessages(inData, aiID, outData));
+
+	// push the response(s)
+	for (unsigned int n = 0; n < outData.size(); n++) {
+		lua_pushstring(L, outData[n]);
+	}
+
+	return (outData.size() + 1);
+}
 
 /******************************************************************************/
 /******************************************************************************/

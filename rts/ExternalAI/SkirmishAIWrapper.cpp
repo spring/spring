@@ -384,6 +384,12 @@ void CSkirmishAIWrapper::GotChatMsg(const char* msg, int fromPlayerId) {
 	ai->HandleEvent(EVENT_MESSAGE, &evtData);
 }
 
+void CSkirmishAIWrapper::SendLuaMessage(const char* inData, const char** outData) {
+	// FIXME: create an EVENT_LUA_MESSAGE event and put outData in it
+	SMessageEvent evtData = {-1, inData};
+	ai->HandleEvent(EVENT_MESSAGE, &evtData);
+}
+
 void CSkirmishAIWrapper::WeaponFired(int unitId, int weaponDefId) {
 	SWeaponFiredEvent evtData = {unitId, weaponDefId};
 	ai->HandleEvent(EVENT_WEAPON_FIRED, &evtData);
