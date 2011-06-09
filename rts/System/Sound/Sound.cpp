@@ -32,6 +32,9 @@
 
 #include "float3.h"
 
+boost::recursive_mutex soundMutex;
+
+
 CSound::CSound()
 	: myPos(0., 0., 0.)
 	, prevVelocity(0., 0., 0.)
