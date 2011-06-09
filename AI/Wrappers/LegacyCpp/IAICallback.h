@@ -150,6 +150,12 @@ public:
 	 */
 
 	/**
+	 * Returns the maximum number of units to be in-game.
+	 * The maximum unit-ID is this vaue -1.
+	 */
+	virtual int GetMaxUnits() = 0;
+
+	/**
 	 * Returns a number telling something about the units main function.
 	 * Note: not implemented yet!
 	 */

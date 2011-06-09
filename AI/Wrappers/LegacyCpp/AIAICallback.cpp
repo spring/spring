@@ -391,6 +391,10 @@ const springLegacyAI::CCommandQueue* springLegacyAI::CAIAICallback::GetCurrentUn
 	return cc;
 }
 
+int springLegacyAI::CAIAICallback::GetMaxUnits() {
+	return sAICallback->Unit_getMax(skirmishAIId);
+}
+
 int springLegacyAI::CAIAICallback::GetUnitAiHint(int unitId) {
 	return sAICallback->Unit_getAiHint(skirmishAIId, unitId);
 }
