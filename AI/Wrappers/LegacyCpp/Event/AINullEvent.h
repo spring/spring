@@ -18,10 +18,13 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AINULLEVENT_H
-#define	_AINULLEVENT_H
+#ifndef _AI_NULL_EVENT_H
+#define	_AI_NULL_EVENT_H
 
 #include "AIEvent.h"
+
+
+namespace springLegacyAI {
 
 class CAINullEvent : public CAIEvent {
 public:
@@ -31,4 +34,6 @@ public:
 	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {}
 };
 
-#endif // _AINULLEVENT_H
+} // namespace springLegacyAI
+
+#endif // _AI_NULL_EVENT_H

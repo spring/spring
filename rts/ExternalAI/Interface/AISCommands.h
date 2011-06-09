@@ -1585,7 +1585,14 @@ void initSUnitCommand(void* sUnitCommand);
 
 
 #ifdef	__cplusplus
+#ifdef    BUILDING_AI
+namespace springLegacyAI {
+	struct Command;
+}
+using namespace springLegacyAI;
+#else  // BUILDING_AI
 struct Command;
+#endif // BUILDING_AI
 
 // legacy support functions
 

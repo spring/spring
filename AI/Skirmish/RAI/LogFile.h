@@ -10,7 +10,10 @@
 #include <string>
 
 using std::string;
-class IAICallback;
+namespace springLegacyAI {
+	class IAICallback;
+}
+using namespace springLegacyAI;
 
 
 class cLogFile

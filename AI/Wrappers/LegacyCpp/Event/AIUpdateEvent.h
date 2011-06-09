@@ -18,10 +18,13 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AIUPDATEEVENT_H
-#define	_AIUPDATEEVENT_H
+#ifndef _AI_UPDATE_EVENT_H
+#define	_AI_UPDATE_EVENT_H
 
 #include "AIEvent.h"
+
+
+namespace springLegacyAI {
 
 class CAIUpdateEvent : public CAIEvent {
 public:
@@ -36,4 +39,6 @@ private:
 	SUpdateEvent event;
 };
 
-#endif // _AIUPDATEEVENT_H
+} // namespace springLegacyAI
+
+#endif // _AI_UPDATE_EVENT_H

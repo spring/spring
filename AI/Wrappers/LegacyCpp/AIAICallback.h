@@ -22,6 +22,9 @@
 
 struct SSkirmishAICallback;
 
+
+namespace springLegacyAI {
+
 /**
  * The AI side wrapper over the C AI interface for IAICallback.
  */
@@ -283,5 +286,7 @@ private:
 	static unsigned short* jammerMap;
 	static unsigned char* metalMap;
 };
+
+} // namespace springLegacyAI
 
 #endif // _AI_AI_CALLBACK_H

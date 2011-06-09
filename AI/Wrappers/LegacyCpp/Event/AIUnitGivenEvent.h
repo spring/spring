@@ -17,10 +17,13 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AIUNITGIVENEVENT_H
-#define	_AIUNITGIVENEVENT_H
+#ifndef _AI_UNIT_GIVEN_EVENT_H
+#define	_AI_UNIT_GIVEN_EVENT_H
 
 #include "AIEvent.h"
+
+
+namespace springLegacyAI {
 
 class CAIUnitGivenEvent : public CAIEvent {
 public:
@@ -38,4 +41,6 @@ private:
 	SUnitGivenEvent event;
 };
 
-#endif // _AIUNITGIVENEVENT_H
+} // namespace springLegacyAI
+
+#endif // _AI_UNIT_GIVEN_EVENT_H

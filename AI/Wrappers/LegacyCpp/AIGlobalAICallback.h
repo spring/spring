@@ -21,6 +21,10 @@
 #include "IGlobalAICallback.h"
 
 struct SSkirmishAICallback;
+
+
+namespace springLegacyAI {
+
 class CAIAICallback;
 class CAIAICheats;
 
@@ -44,5 +48,7 @@ private:
 	CAIAICallback* wrappedAICallback;
 	CAIAICheats* wrappedAICheats;
 };
+
+} // namespace springLegacyAI
 
 #endif // _AI_GLOBAL_AI_CALLBACK_H

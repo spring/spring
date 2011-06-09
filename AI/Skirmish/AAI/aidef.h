@@ -29,6 +29,7 @@
 #include "AAIConfig.h"
 #include "AIExport.h"
 
+using namespace springLegacyAI;
 
 
 #ifdef _MSC_VER
