@@ -143,12 +143,12 @@ public:
 	{}
 
 	Command(const Command& c)
-		: id(c.id)
-		, aiCommandId(c.aiCommandId)
+		: aiCommandId(c.aiCommandId)
 		, options(c.options)
+		, params(c.params)
 		, tag(c.tag)
 		, timeOut(c.timeOut)
-		, params(c.params)
+		, id(c.id)
 	{}
 
 	Command& operator = (const Command& c) {
