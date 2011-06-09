@@ -497,7 +497,7 @@ void CEngineOutHandler::GotChatMsg(const char* msg, int fromPlayerId) {
 	DO_FOR_SKIRMISH_AIS(GotChatMsg(msg, fromPlayerId))
 }
 
-bool CEngineOutHandler::SendLuaMessages(const char* inData, int aiID, std::vector<const char*>& outData) {
+bool CEngineOutHandler::SendLuaMessages(int aiID, const char* inData, std::vector<const char*>& outData) {
 	SCOPED_TIMER("AI Total");
 
 	if (id_skirmishAI.empty()) {

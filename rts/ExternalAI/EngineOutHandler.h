@@ -72,7 +72,7 @@ public:
 	void GotChatMsg(const char* msg, int playerId);
 
 	/// send a raw string from unsynced Lua to one or all active skirmish AI's
-	bool SendLuaMessages(const char* inData, int aiID, std::vector<const char*>& outData);
+	bool SendLuaMessages(int aiID, const char* inData, std::vector<const char*>& outData);
 
 
 	// Skirmish AI stuff
