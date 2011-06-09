@@ -2707,6 +2707,44 @@ bool CLuaHandle::GameSetup(const string& state, bool& ready,
 }
 
 
+
+const char* CLuaHandle::RecvSkirmishAIMessage(const char* inData, int inSize)
+{
+	// TODO: pass the ID of the SkirmishAI that called us?
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
+
+	static const LuaHashString cmdStr("AICallIn");
+
+	// <this> is either CLuaRules* or CLuaUI*,
+	// but the AI call-in is always unsynced!
+	if (!PushUnsyncedCallIn(L, cmdStr)) {
+		return NULL;
+	}
+
+	int argCount = 0;
+	const char* outData = NULL;
+
+	if (inData != NULL) {
+		if (inSize < 0) {
+			inSize = strlen(inData);
+		}
+		lua_pushlstring(L, inData, inSize);
+		argCount = 1;
+	}
+
+	if (!RunCallIn(cmdStr, argCount, 1)) {
+		return NULL;
+	}
+
+	if (lua_isstring(L, -1))
+		outData = lua_tolstring(L, -1, NULL);
+
+	lua_pop(L, 1);
+	return outData;
+}
+
+
 /******************************************************************************/
 /******************************************************************************/
 

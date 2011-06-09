@@ -2089,10 +2089,12 @@ bool CAIAICallback::ReadFile(const char* filename, void* buffer, int bufferLen) 
 		SCallLua ## HandleName ## Command cmd = {inData, inSize};                                                         \
 		sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_CALL_LUA_ ## HANDLENAME, &cmd); \
                                                                                                                           \
-		if (cmd.ret_outData != NULL) {                                                                                    \
-			*outSize = strlen(cmd.ret_outData);                                                                           \
-		} else {                                                                                                          \
-			*outSize = -1;                                                                                                \
+		if (outSize != NULL) {                                                                                            \
+			if (cmd.ret_outData != NULL) {                                                                                \
+				*outSize = strlen(cmd.ret_outData);                                                                       \
+			} else {                                                                                                      \
+				*outSize = -1;                                                                                            \
+			}                                                                                                             \
 		}                                                                                                                 \
                                                                                                                           \
 		return cmd.ret_outData;                                                                                           \
