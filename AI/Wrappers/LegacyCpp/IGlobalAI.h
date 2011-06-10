@@ -91,11 +91,11 @@ public:
 	 * @see #GotChatMessage
 	 */
 	virtual void GotChatMsg(const char* msg, int player) {}
-	/// called when someone writes a chat msg
+	/// called when a player sends a chat message
 	virtual void GotChatMessage(const char* msg, int player) { GotChatMsg(msg, player); }
 
 	/// called when a Lua widget or unsynced gadget sends a message to this AI
-	virtual void GotLuaMessage(const char* inData, const char** outData) { outData = NULL; }
+	virtual void GotLuaMessage(const char* inData, const char** outData) { *outData = inData; }
 
 	/// called when one of your units are damaged
 	virtual void UnitDamaged(int damaged, int attacker, float damage, float3 dir) = 0;
@@ -103,7 +103,7 @@ public:
 	virtual void UnitMoveFailed(int unit) = 0;
 
 	/// general messaging function to be used for future API extensions.
-	virtual int HandleEvent (int msg, const void *data) = 0;
+	virtual int HandleEvent(int msg, const void *data) = 0;
 
 	/// called every frame
 	virtual void Update() = 0;
