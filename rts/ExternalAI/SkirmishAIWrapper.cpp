@@ -380,8 +380,8 @@ void CSkirmishAIWrapper::Update(int frame) {
 }
 
 void CSkirmishAIWrapper::SendChatMessage(const char* msg, int fromPlayerId) {
-	SMessageEvent evtData = {fromPlayerId, msg};
-	ai->HandleEvent(EVENT_MESSAGE, &evtData);
+	SChatMessageEvent evtData = {fromPlayerId, msg};
+	ai->HandleEvent(EVENT_CHAT_MESSAGE, &evtData);
 }
 
 void CSkirmishAIWrapper::SendLuaMessage(const char* inData, const char** outData) {

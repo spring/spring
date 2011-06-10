@@ -55,7 +55,6 @@ enum CommandTopic {
 	COMMAND_PATH_GET_NEXT_WAYPOINT                = 18,
 	COMMAND_PATH_FREE                             = 19,
 	COMMAND_CHEATS_GIVE_ME_RESOURCE               = 20,
-	COMMAND_CALL_LUA_RULES                        = 21,
 	COMMAND_DRAWER_ADD_NOTIFICATION               = 22,
 	COMMAND_DRAWER_DRAW_UNIT                      = 23,
 	COMMAND_DRAWER_PATH_START                     = 24,
@@ -137,6 +136,7 @@ enum CommandTopic {
 	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_SIZE  = 93,
 	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_LABEL = 94,
 	COMMAND_TRACE_RAY_FEATURE                     = 95,
+	COMMAND_CALL_LUA_RULES                        = 21,
 	COMMAND_CALL_LUA_UI                           = 96,
 };
 const int NUM_CMD_TOPICS = 97;
