@@ -196,6 +196,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"${myGeneratedSourceDir}/${myPkg}/evt/InitAIEvent.java"
 		"${myGeneratedSourceDir}/${myPkg}/evt/LoadAIEvent.java"
 		"${myGeneratedSourceDir}/${myPkg}/evt/MessageAIEvent.java"
+		"${myGeneratedSourceDir}/${myPkg}/evt/LuaMessageAIEvent.java"
 		"${myGeneratedSourceDir}/${myPkg}/evt/PlayerCommandAIEvent.java"
 		"${myGeneratedSourceDir}/${myPkg}/evt/ReleaseAIEvent.java"
 		"${myGeneratedSourceDir}/${myPkg}/evt/SaveAIEvent.java"

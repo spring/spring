@@ -230,7 +230,6 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		clbCheat = skirmishAIId_cheatCallback[skirmishAIId];
 	}
 
-
 	switch (commandTopic) {
 
 		case COMMAND_CHEATS_SET_MY_INCOME_MULTIPLIER:
@@ -414,24 +413,22 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		}
 
 
-		#define SSAICALLBACK_CALL_LUA(HandleName)                                                      \
-			SCallLua ## HandleName ## Command* cmd = (SCallLua ## HandleName ## Command*) commandData; \
-			// TODO: FIXME: should strcpy() this                                                       \
-			// const char* outData = clb->CallLua ## HandleName(cmd->inData, cmd->inSize);             \
-			//                                                                                         \
-			// if (outData != NULL)                                                                    \
-			//     strcpy((cmd->ret_outData = new char[strlen(outData) + 1]), outData);                \
-			// else                                                                                    \
-			//     cmd->ret_outData = NULL;                                                            \
-			//                                                                                         \
-			cmd->ret_outData = clb->CallLua ## HandleName(cmd->inData, cmd->inSize);
+		// TODO: FIXME: should strcpy() this
+		// const char* outData = clb->CallLua ## HandleName ## (cmd->inData, cmd->inSize);
+		//
+		// if (outData != NULL)
+		//     strcpy((cmd->ret_outData = new char[strlen(outData) + 1]), outData);
+		// else
+		//     cmd->ret_outData = NULL;
+		//
+		#define SSAICALLBACK_CALL_LUA(HandleName, HANDLENAME)                                               \
+			case COMMAND_CALL_LUA_ ## HANDLENAME: {                                                         \
+				SCallLua ## HandleName ## Command* cmd = (SCallLua ## HandleName ## Command*) commandData;  \
+				cmd->ret_outData = clb->CallLua ## HandleName(cmd->inData, cmd->inSize);                    \
+			} break;
 
-		case COMMAND_CALL_LUA_RULES: {
-			SSAICALLBACK_CALL_LUA(Rules)
-		} break;
-		case COMMAND_CALL_LUA_UI: {
-			SSAICALLBACK_CALL_LUA(UI)
-		} break;
+		SSAICALLBACK_CALL_LUA(Rules, RULES)
+		SSAICALLBACK_CALL_LUA(UI, UI)
 
 		#undef SSAICALLBACK_CALL_LUA
 

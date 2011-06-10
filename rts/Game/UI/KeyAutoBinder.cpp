@@ -24,6 +24,7 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
+#include "System/FileSystem/FileHandler.h"
 #include "FileSystem/SimpleParser.h"
 #include "LogOutput.h"
 #include "Util.h"

@@ -3,14 +3,33 @@
 #ifndef SYNCED_GAME_COMMANDS_H
 #define SYNCED_GAME_COMMANDS_H
 
-class CGame;
+#include <map>
+#include <string>
 
-class SyncedGameCommands
+#include "IGameCommands.h"
+
+class ISyncedActionExecutor;
+
+
+class SyncedGameCommands : public IGameCommands<ISyncedActionExecutor>
 {
-	/// Private ctor, so the clas can not be instantiated
 	SyncedGameCommands() {}
+
 public:
-	static void RegisterDefaultExecutors(CGame* game);
+	/**
+	 * This function initialized a singleton instance,
+	 * if not yet done by a call to GetInstance()
+	 */
+	static void CreateInstance();
+	static SyncedGameCommands* GetInstance() { return singleton; }
+	static void DestroyInstance();
+
+	void AddDefaultActionExecutors();
+
+private:
+	static SyncedGameCommands* singleton;
 };
+
+#define syncedGameCommands SyncedGameCommands::GetInstance()
 
 #endif // SYNCED_GAME_COMMANDS_H

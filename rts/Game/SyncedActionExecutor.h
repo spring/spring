@@ -3,23 +3,20 @@
 #ifndef SYNCED_ACTION_EXECUTOR_H
 #define SYNCED_ACTION_EXECUTOR_H
 
-#include "Action.h"
+#include "IActionExecutor.h"
 
 #include <string>
 
+class Action;
 
-class SyncedAction
+
+class SyncedAction : public IAction
 {
 public:
 	SyncedAction(const Action& action, int playerID)
-		: action(action)
+		: IAction(action)
 		, playerID(playerID)
 	{}
-
-	/**
-	 * Returns the action arguments.
-	 */
-	const std::string& GetArgs() const { return action.extra; }
 
 	/**
 	 * Returns the normalized key symbol.
@@ -27,46 +24,18 @@ public:
 	int GetPlayerID() const { return playerID; }
 
 private:
-	const Action& action;
 	int playerID;
 };
 
-class ISyncedActionExecutor
+class ISyncedActionExecutor : public IActionExecutor<SyncedAction, true>
 {
 protected:
-	ISyncedActionExecutor(const std::string& command, bool cheatRequired = false)
-		: command(command)
-		, cheatRequired(cheatRequired)
+	ISyncedActionExecutor(const std::string& command, const std::string& description, bool cheatRequired = false)
+		: IActionExecutor<SyncedAction, true>(command, description, cheatRequired)
 	{}
 
 public:
 	virtual ~ISyncedActionExecutor() {}
-
-	/**
-	 * Returns the command string that is unique for this executor.
-	 */
-	const std::string& GetCommand() const { return command; }
-
-	/**
-	 * Returns the command string that is unique for this executor.
-	 */
-	bool IsCheatRequired() const { return cheatRequired; }
-
-	/**
-	 * Executes one instance of an action of this type.
-	 * Does a few checks internally, and then calls Execute(args).
-	 */
-	void ExecuteAction(const SyncedAction& action) const;
-
-protected:
-	/**
-	 * Executes one instance of an action of this type.
-	 */
-	virtual void Execute(const SyncedAction& action) const = 0;
-
-private:
-	std::string command;
-	bool cheatRequired;
 };
 
 #endif // SYNCED_ACTION_EXECUTOR_H

@@ -92,6 +92,8 @@
 #define INTERNAL_ORDER  (DONT_REPEAT)
 
 
+namespace springLegacyAI {
+
 struct Command
 {
 private:
@@ -226,5 +228,6 @@ public:
 	std::vector<std::string> params;
 };
 
+} // namespace springLegacyAI
 
 #endif // COMMAND_H

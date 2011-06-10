@@ -3,24 +3,21 @@
 #ifndef UNSYNCED_ACTION_EXECUTOR_H
 #define UNSYNCED_ACTION_EXECUTOR_H
 
-#include "Action.h"
+#include "IActionExecutor.h"
 
 #include <string>
 
+class Action;
 
-class UnsyncedAction
+
+class UnsyncedAction : public IAction
 {
 public:
 	UnsyncedAction(const Action& action, unsigned int key, bool repeat)
-		: action(action)
+		: IAction(action)
 		, key(key)
 		, repeat(repeat)
 	{}
-
-	/**
-	 * Returns the action arguments.
-	 */
-	const std::string& GetArgs() const { return action.extra; }
 
 	/**
 	 * Returns the normalized key symbol.
@@ -32,51 +29,21 @@ public:
 	 */
 	bool IsRepeat() const { return repeat; }
 
-	const Action& GetInnerAction() const { return action; }
-
 private:
-	const Action& action;
 	unsigned int key;
 	bool repeat;
 };
 
 
-class IUnsyncedActionExecutor
+class IUnsyncedActionExecutor : public IActionExecutor<UnsyncedAction, false>
 {
 protected:
-	IUnsyncedActionExecutor(const std::string& command, bool cheatRequired = false)
-		: command(command)
-		, cheatRequired(cheatRequired)
+	IUnsyncedActionExecutor(const std::string& command, const std::string& description, bool cheatRequired = false)
+		: IActionExecutor<UnsyncedAction, false>(command, description, cheatRequired)
 	{}
 
 public:
 	virtual ~IUnsyncedActionExecutor() {}
-
-	/**
-	 * Returns the command string that is unique for this executor.
-	 */
-	const std::string& GetCommand() const { return command; }
-
-	/**
-	 * Returns the command string that is unique for this executor.
-	 */
-	bool IsCheatRequired() const { return cheatRequired; }
-
-	/**
-	 * Executes one instance of an action of this type.
-	 * Does a few checks internally, and then calls Execute(args).
-	 */
-	void ExecuteAction(const UnsyncedAction& action) const;
-
-protected:
-	/**
-	 * Executes one instance of an action of this type.
-	 */
-	virtual void Execute(const UnsyncedAction& action) const = 0;
-
-private:
-	std::string command;
-	bool cheatRequired;
 };
 
 #endif // UNSYNCED_ACTION_EXECUTOR_H

@@ -10,6 +10,9 @@
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
 
+
+namespace springLegacyAI {
+
 struct WeaponDef
 {
 private:
@@ -426,5 +429,7 @@ public:
 
 	std::map<std::string, std::string> customParams;
 };
+
+} // namespace springLegacyAI
 
 #endif // _WEAPON_DEF_H

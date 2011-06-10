@@ -17,10 +17,13 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AIRELEASEEVENT_H
-#define _AIRELEASEEVENT_H
+#ifndef _AI_RELEASE_EVENT_H
+#define _AI_RELEASE_EVENT_H
 
 #include "AIEvent.h"
+
+
+namespace springLegacyAI {
 
 class CAIReleaseEvent : public CAIEvent {
 public:
@@ -35,4 +38,6 @@ private:
 	SReleaseEvent event;
 };
 
-#endif // _AIRELEASEEVENT_H
+} // namespace springLegacyAI
+
+#endif // _AI_RELEASE_EVENT_H

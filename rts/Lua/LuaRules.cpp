@@ -118,11 +118,10 @@ CLuaRules::CLuaRules()
 
 	haveDrawUnit    = HasCallIn(L, "DrawUnit");
 	haveDrawFeature = HasCallIn(L, "DrawFeature");
-	haveAICallIn    = HasCallIn(L, "AICallIn");
 
 	SetupUnsyncedFunction(L, "DrawUnit");
 	SetupUnsyncedFunction(L, "DrawFeature");
-	SetupUnsyncedFunction(L, "AICallIn");
+	SetupUnsyncedFunction(L, "RecvSkirmishAIMessage");
 
 	END_ITERATE_LUA_STATES();
 }
@@ -208,7 +207,6 @@ bool CLuaRules::UnsyncedUpdateCallIn(lua_State *L, const string& name)
 {
 	     if (name == "DrawUnit"   ) { haveDrawUnit    = HasCallIn(L, "DrawUnit"   ); }
 	else if (name == "DrawFeature") { haveDrawFeature = HasCallIn(L, "DrawFeature"); }
-	else if (name == "AICallIn"   ) { haveAICallIn    = HasCallIn(L, "AICallIn"   ); }
 
 	return CLuaHandleSynced::UnsyncedUpdateCallIn(L, name);
 }
@@ -998,45 +996,6 @@ bool CLuaRules::DrawFeature(int featureID)
 	return retval;
 }
 
-
-
-const char* CLuaRules::AICallIn(const char* data, int inSize)
-{
-	if (!haveAICallIn) {
-		return NULL;
-	}
-
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
-	static const LuaHashString cmdStr("AICallIn");
-	if (!cmdStr.GetRegistryFunc(L)) {
-		return NULL;
-	}
-
-	int argCount = 0;
-	if (data != NULL) {
-		if (inSize < 0) {
-			inSize = strlen(data);
-		}
-		lua_pushlstring(L, data, inSize);
-		argCount = 1;
-	}
-
-	if (!RunCallIn(cmdStr, argCount, 1)) {
-		return NULL;
-	}
-
-	if (!lua_isstring(L, -1)) {
-		lua_pop(L, 1);
-		return NULL;
-	}
-
-	const char* outData = lua_tolstring(L, -1, NULL);
-
-	lua_pop(L, 1);
-
-	return outData;
-}
 
 
 /******************************************************************************/

@@ -17,11 +17,14 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AISEISMICPINGEVENT_H
-#define _AISEISMICPINGEVENT_H
+#ifndef _AI_SEISMIC_PING_EVENT_H
+#define _AI_SEISMIC_PING_EVENT_H
 
 #include "AIEvent.h"
 #include "System/float3.h"
+
+
+namespace springLegacyAI {
 
 class CAISeismicPingEvent : public CAIEvent {
 public:
@@ -38,4 +41,6 @@ private:
 	SSeismicPingEvent event;
 };
 
-#endif // _AISEISMICPINGEVENT_H
+} // namespace springLegacyAI
+
+#endif // _AI_SEISMIC_PING_EVENT_H

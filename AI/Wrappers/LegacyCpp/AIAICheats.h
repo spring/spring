@@ -21,6 +21,10 @@
 #include "IAICheats.h"
 
 struct SSkirmishAICallback;
+
+
+namespace springLegacyAI {
+
 class CAIAICallback;
 
 /**
@@ -88,5 +92,7 @@ private:
 	 */
 	void SetCheatsEnabled(bool enable);
 };
+
+} // namespace springLegacyAI
 
 #endif // _AI_AI_CHEATS_H

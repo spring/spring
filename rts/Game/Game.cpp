@@ -314,17 +314,8 @@ CGame::~CGame()
 	tracefile << "[" << __FUNCTION__ << "]";
 #endif
 
-	std::map<std::string, ISyncedActionExecutor*>::iterator saei;
-	for (saei = syncedActionExecutors.begin(); saei != syncedActionExecutors.end(); ++saei) {
-		SafeDelete(saei->second);
-	}
-	syncedActionExecutors.clear();
-
-	std::map<std::string, IUnsyncedActionExecutor*>::iterator uaei;
-	for (uaei = unsyncedActionExecutors.begin(); uaei != unsyncedActionExecutors.end(); ++uaei) {
-		SafeDelete(uaei->second);
-	}
-	unsyncedActionExecutors.clear();
+	UnsyncedGameCommands::DestroyInstance();
+	SyncedGameCommands::DestroyInstance();
 
 	CLoadScreen::DeleteInstance();
 	IVideoCapturing::FreeInstance();
@@ -497,6 +488,10 @@ void CGame::LoadDefs()
 
 void CGame::LoadSimulation(const std::string& mapName)
 {
+	// after this, other components are able to register chat action-executors
+	SyncedGameCommands::CreateInstance();
+	UnsyncedGameCommands::CreateInstance();
+
 	// simulation components
 	helper = new CGameHelper();
 	ground = new CGround();
@@ -553,11 +548,11 @@ void CGame::LoadSimulation(const std::string& mapName)
 
 	wind.LoadWind(mapInfo->atmosphere.minWind, mapInfo->atmosphere.maxWind);
 
-	SyncedGameCommands::RegisterDefaultExecutors(this);
-	UnsyncedGameCommands::RegisterDefaultExecutors(this);
-
 	CCobInstance::InitVars(teamHandler->ActiveTeams(), teamHandler->ActiveAllyTeams());
 	CEngineOutHandler::Initialize();
+
+	syncedGameCommands->AddDefaultActionExecutors();
+	unsyncedGameCommands->AddDefaultActionExecutors();
 }
 
 void CGame::LoadRendering()
@@ -2032,7 +2027,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 		}
 	}
 
-	eoh->GotChatMsg(msg.msg.c_str(), msg.fromPlayer);
+	eoh->SendChatMessage(msg.msg.c_str(), msg.fromPlayer);
 }
 
 
@@ -2317,29 +2312,15 @@ void CGame::ReloadGame()
 }
 
 
-void CGame::RegisterSyncedActionExecutor(ISyncedActionExecutor* syncedActionExecutor)
-{
-	const std::string commandLower = StringToLower(syncedActionExecutor->GetCommand());
-	const std::map<std::string, ISyncedActionExecutor*>::const_iterator saei
-			= syncedActionExecutors.find(commandLower);
-
-	if (saei != syncedActionExecutors.end()) {
-		throw std::runtime_error("Tried to register a duplicate SyncedActionExecutor for command: " + commandLower);
-	} else {
-		syncedActionExecutors[commandLower] = syncedActionExecutor;
-	}
-}
 
 void CGame::ActionReceived(const Action& action, int playerID)
 {
-	const std::string commandLower = StringToLower(action.command);
-	const std::map<std::string, ISyncedActionExecutor*>::const_iterator saei
-			= syncedActionExecutors.find(commandLower);
+	const ISyncedActionExecutor* executor = syncedGameCommands->GetActionExecutor(action.command);
 
-	if (saei != syncedActionExecutors.end()) {
+	if (executor != NULL) {
 		// an executor for that action was found
 		SyncedAction syncedAction(action, playerID);
-		saei->second->ExecuteAction(syncedAction);
+		executor->ExecuteAction(syncedAction);
 	} else if (gs->frameNum > 1) {
 		if (luaRules) luaRules->SyncedActionFallback(action.rawline, playerID);
 		if (luaGaia) luaGaia->SyncedActionFallback(action.rawline, playerID);
@@ -2347,29 +2328,14 @@ void CGame::ActionReceived(const Action& action, int playerID)
 }
 
 
-void CGame::RegisterUnsyncedActionExecutor(IUnsyncedActionExecutor* unsyncedActionExecutor)
-{
-	const std::string commandLower = StringToLower(unsyncedActionExecutor->GetCommand());
-	const std::map<std::string, IUnsyncedActionExecutor*>::const_iterator uaei
-			= unsyncedActionExecutors.find(commandLower);
-
-	if (uaei != unsyncedActionExecutors.end()) {
-		throw std::runtime_error("Tried to register a duplicate UnsyncedActionExecutor for command: " + commandLower);
-	} else {
-		unsyncedActionExecutors[commandLower] = unsyncedActionExecutor;
-	}
-}
-
 bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 {
-	const std::string commandLower = StringToLower(action.command);
-	const std::map<std::string, IUnsyncedActionExecutor*>::const_iterator uaei
-			= unsyncedActionExecutors.find(commandLower);
+	const IUnsyncedActionExecutor* executor = unsyncedGameCommands->GetActionExecutor(action.command);
 
-	if (uaei != unsyncedActionExecutors.end()) {
+	if (executor != NULL) {
 		// an executor for that action was found
 		UnsyncedAction unsyncedAction(action, key, isRepeat);
-		uaei->second->ExecuteAction(unsyncedAction);
+		executor->ExecuteAction(unsyncedAction);
 	} else {
 		static std::set<std::string> serverCommands = std::set<std::string>(commands, commands+numCommands);
 		if (serverCommands.find(action.command) != serverCommands.end())

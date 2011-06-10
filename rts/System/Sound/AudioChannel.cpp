@@ -10,6 +10,9 @@
 #include "Sim/Objects/WorldObject.h"
 #include "Sim/Units/Unit.h"
 
+extern boost::recursive_mutex soundMutex;
+boost::recursive_mutex chanMutex;
+
 const size_t AudioChannel::MAX_STREAM_QUEUESIZE = 10;
 
 
@@ -22,6 +25,8 @@ AudioChannel::AudioChannel()
 void AudioChannel::SetVolume(float newVolume)
 {
 	volume = newVolume;
+
+	boost::recursive_mutex::scoped_lock lck(chanMutex);
 
 	for (std::map<CSoundSource*, bool>::iterator it = cur_sources.begin(); it != cur_sources.end(); ++it)
 		it->first->UpdateVolume();
@@ -41,6 +46,8 @@ void AudioChannel::Enable(bool newState)
 
 void AudioChannel::SoundSourceFinished(CSoundSource* sndSource)
 {
+	boost::recursive_mutex::scoped_lock lck(chanMutex);
+
 	if (curStreamSrc == sndSource) {
 		if (!streamQueue.empty()) {
 			StreamQueueItem& next = streamQueue.back();
@@ -57,13 +64,13 @@ void AudioChannel::SoundSourceFinished(CSoundSource* sndSource)
 
 void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3& velocity, float volume, bool relative)
 {
-	//boost::recursive_mutex::scoped_lock lck(soundMutex);
-
 	if (!enabled)
 		return;
 
 	if (volume <= 0.0f)
 		return;
+
+	boost::recursive_mutex::scoped_lock slck(soundMutex);
 
 	SoundItem* sndItem = sound->GetSoundItem(id);
 	if (!sndItem)
@@ -95,6 +102,8 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 
 		sndSource->Play(this, sndItem, pos, velocity, volume, relative);
 		CheckError("CSound::FindSourceAndPlay");
+
+		boost::recursive_mutex::scoped_lock lck(chanMutex);
 
 		cur_sources[sndSource] = true;
 	}
@@ -130,6 +139,13 @@ void AudioChannel::StreamPlay(const std::string& filepath, float volume, bool en
 	if (!enabled)
 		return;
 
+	CSoundSource *newStreamSrc = NULL;
+
+	if (!curStreamSrc) // this is kept outside the mutex, to avoid deadlocks
+		newStreamSrc = sound->GetNextBestSource(); //! may return 0 if no sources available
+
+	boost::recursive_mutex::scoped_lock lck(chanMutex);
+
 	if (curStreamSrc && enqueue) {
 		if (streamQueue.size() > MAX_STREAM_QUEUESIZE) {
 			streamQueue.resize(MAX_STREAM_QUEUESIZE);
@@ -140,8 +156,8 @@ void AudioChannel::StreamPlay(const std::string& filepath, float volume, bool en
 		return;
 	}
 
-	if (!curStreamSrc)
-		curStreamSrc = sound->GetNextBestSource(); //! may return 0 if no sources available
+	if (!curStreamSrc && newStreamSrc)
+		curStreamSrc = newStreamSrc;
 
 	if (curStreamSrc) {
 		curStreamSrc->PlayStream(this, filepath, volume);
@@ -151,18 +167,24 @@ void AudioChannel::StreamPlay(const std::string& filepath, float volume, bool en
 
 void AudioChannel::StreamPause()
 {
+	boost::recursive_mutex::scoped_lock lck(chanMutex);
+
 	if (curStreamSrc)
 		curStreamSrc->StreamPause();
 }
 
 void AudioChannel::StreamStop()
 {
+	boost::recursive_mutex::scoped_lock lck(chanMutex);
+
 	if (curStreamSrc)
 		curStreamSrc->StreamStop();
 }
 
 float AudioChannel::StreamGetTime()
 {
+	boost::recursive_mutex::scoped_lock lck(chanMutex);
+
 	if (curStreamSrc)
 		return curStreamSrc->GetStreamTime();
 	else
@@ -171,6 +193,8 @@ float AudioChannel::StreamGetTime()
 
 float AudioChannel::StreamGetPlayTime()
 {
+	boost::recursive_mutex::scoped_lock lck(chanMutex);
+
 	if (curStreamSrc)
 		return curStreamSrc->GetStreamPlayTime();
 	else

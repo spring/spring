@@ -87,10 +87,11 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* _cb, cLogFile* l, GlobalTerrai
 	int fSize = 0;
 	if( UDGeoResource )
 	{
-		fList = new int[10000]; // Feature List
-//		int fSize = cb->GetFeatures(fList,10000); // Crashes:  Spring-Version(v0.75b2-v0.76b1)
-		fSize = cb->GetFeatures(fList,10000,float3(1,1,1),999999); // Crash Work-Around
-		if( fSize == 10000 )
+		int maxFeatures = cb->GetMaxUnits();
+		fList = new int[maxFeatures]; // Feature List
+//		int fSize = cb->GetFeatures(fList,maxFeatures); // Crashes:  Spring-Version(v0.75b2-v0.76b1)
+		fSize = cb->GetFeatures(fList,maxFeatures,float3(1,1,1),999999); // Crash Work-Around
+		if( fSize == maxFeatures )
 		{
 			cb->SendTextMsg("WARNING: not all features will be searched for Geo Build Options",0);
 			*l<<"\nWARNING: not all features will be searched for Geo Build Options";

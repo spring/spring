@@ -8,8 +8,8 @@
 class ProfileDrawer : public CInputReceiver
 {
 public:
-	static void Enable();
-	static void Disable();
+	static void SetEnabled(bool enable);
+	static bool IsEnabled();
 
 	virtual void Draw();
 	virtual bool MousePress(int x, int y, int button);
@@ -21,6 +21,5 @@ private:
 
 	static ProfileDrawer* instance;
 };
-
 
 #endif // PROFILE_DRAWER

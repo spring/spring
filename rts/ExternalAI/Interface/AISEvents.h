@@ -53,8 +53,9 @@ enum EventTopic {
 	EVENT_SAVE                         = 24,
 	EVENT_ENEMY_CREATED                = 25,
 	EVENT_ENEMY_FINISHED               = 26,
+	EVENT_LUA_MESSAGE                  = 27,
 };
-const int NUM_EVENTS          = 27;
+const int NUM_EVENTS = 28;
 
 
 #define AIINTERFACE_EVENTS_ABI_VERSION     ( \
@@ -62,6 +63,7 @@ const int NUM_EVENTS          = 27;
 		+ sizeof(struct SReleaseEvent) \
 		+ sizeof(struct SUpdateEvent) \
 		+ sizeof(struct SMessageEvent) \
+		+ sizeof(struct SLuaMessageEvent) \
 		+ sizeof(struct SUnitCreatedEvent) \
 		+ sizeof(struct SUnitFinishedEvent) \
 		+ sizeof(struct SUnitIdleEvent) \
@@ -129,6 +131,15 @@ struct SMessageEvent {
 	int player;
 	const char* message;
 }; //$ EVENT_MESSAGE
+
+/**
+ * This AI event triggers whenever any message
+ * is sent by a Lua widget or unsynced gadget.
+ */
+struct SLuaMessageEvent {
+	const char* inData;
+	const char** outData;
+}; //$ EVENT_LUA_MESSAGE
 
 /**
  * This AI event is sent whenever a unit of this team is created, and contains

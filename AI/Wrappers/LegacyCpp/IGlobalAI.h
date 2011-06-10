@@ -10,9 +10,6 @@
 #include "Command.h"
 #include "System/float3.h"
 
-class IGlobalAICallback;
-struct WeaponDef;
-
 #define GLOBAL_AI_INTERFACE_VERSION (19 + AI_INTERFACE_GENERATED_VERSION)
 
 #define AI_EVENT_UNITGIVEN       1 // ChangeTeamEvent
@@ -20,6 +17,12 @@ struct WeaponDef;
 #define AI_EVENT_WEAPON_FIRED    3 // WeaponFireEvent
 #define AI_EVENT_PLAYER_COMMAND  4 // PlayerCommandEvent
 #define AI_EVENT_SEISMIC_PING    5 // SeismicPingEvent
+
+
+namespace springLegacyAI {
+
+class IGlobalAICallback;
+struct WeaponDef;
 
 class IGlobalAI
 {
@@ -83,8 +86,16 @@ public:
 	/// called when a unit go idle and is not assigned to any group
 	virtual void UnitIdle(int unit) = 0;
 
+	/**
+	 * @deprecated
+	 * @see #GotChatMessage
+	 */
+	virtual void GotChatMsg(const char* msg, int player) {}
 	/// called when someone writes a chat msg
-	virtual void GotChatMsg(const char* msg, int player) = 0;
+	virtual void GotChatMessage(const char* msg, int player) { GotChatMsg(msg, player); }
+
+	/// called when a Lua widget or unsynced gadget sends a message to this AI
+	virtual void GotLuaMessage(const char* inData, const char** outData) { outData = NULL; }
 
 	/// called when one of your units are damaged
 	virtual void UnitDamaged(int damaged, int attacker, float damage, float3 dir) = 0;
@@ -110,5 +121,7 @@ public:
 	// in the class
 	virtual ~IGlobalAI() {}
 };
+
+} // namespace springLegacyAI
 
 #endif // I_GLOBAL_AI_H

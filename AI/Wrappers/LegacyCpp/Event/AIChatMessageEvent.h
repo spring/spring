@@ -18,37 +18,27 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AIAI_H
-#define _AIAI_H
+#ifndef _AI_CHAT_MESSAGE_EVENT_H
+#define	_AI_CHAT_MESSAGE_EVENT_H
+
+#include "AIEvent.h"
+
 
 namespace springLegacyAI {
 
-class IGlobalAI;
-class IGlobalAICallback;
-
-class CAIAI {
+class CAIChatMessageEvent : public CAIEvent {
 public:
-	CAIAI(IGlobalAI* gAI);
-	virtual ~CAIAI();
+	CAIChatMessageEvent(const SMessageEvent& event) : event(event) {}
+	~CAIChatMessageEvent() {}
 
-	/**
-	 * Through this function, the AI receives events from the engine.
-	 * For details about events that may arrive here, see file AISEvents.h.
-	 *
-	 * @param	topic	unique identifyer of a message
-	 *					(see EVENT_* defines in AISEvents.h)
-	 * @param	data	an topic specific struct, which contains the data
-	 *					associatedwith the event
-	 *					(see S*Event structs in AISEvents.h)
-	 * @return	ok: 0, error: != 0
-	 */
-	virtual int handleEvent(int topic, const void* data);
+	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
+		ai.GotChatMessage(event.message, event.player);
+	}
 
-protected:
-	IGlobalAI* ai;
-	IGlobalAICallback* globalAICallback;
+private:
+	SMessageEvent event;
 };
 
 } // namespace springLegacyAI
 
-#endif // _AIAI_H
+#endif // _AI_CHAT_MESSAGE_EVENT_H

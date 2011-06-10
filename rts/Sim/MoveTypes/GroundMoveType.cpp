@@ -729,7 +729,6 @@ void CGroundMoveType::UpdateSkid()
 void CGroundMoveType::UpdateControlledDrop()
 {
 	float3& speed = owner->speed;
-	float3& pos = owner->pos;
 	SyncedFloat3& midPos = owner->midPos;
 
 	if (owner->falling) {
@@ -753,7 +752,6 @@ void CGroundMoveType::UpdateControlledDrop()
 
 void CGroundMoveType::CheckCollisionSkid()
 {
-	float3& pos = owner->pos;
 	SyncedFloat3& midPos = owner->midPos;
 
 	const UnitDef* ownerUD = owner->unitDef;

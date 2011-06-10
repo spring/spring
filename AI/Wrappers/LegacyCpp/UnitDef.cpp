@@ -5,7 +5,7 @@
 
 /******************************************************************************/
 
-UnitDef::UnitDefWeapon::UnitDefWeapon()
+springLegacyAI::UnitDef::UnitDefWeapon::UnitDefWeapon()
 : name("NOWEAPON")
 , def(NULL)
 , slavedTo(0)
@@ -17,7 +17,7 @@ UnitDef::UnitDefWeapon::UnitDefWeapon()
 {
 }
 
-UnitDef::UnitDefWeapon::UnitDefWeapon(
+springLegacyAI::UnitDef::UnitDefWeapon::UnitDefWeapon(
 	std::string name, const WeaponDef* def, int slavedTo, float3 mainDir, float maxAngleDif,
 	unsigned int badTargetCat, unsigned int onlyTargetCat, float fuelUse)
 : name(name)
@@ -34,7 +34,7 @@ UnitDef::UnitDefWeapon::UnitDefWeapon(
 
 /******************************************************************************/
 
-UnitDef::UnitDef()
+springLegacyAI::UnitDef::UnitDef()
 : valid(true)
 , id(-1)
 , decoyDef(NULL)
@@ -251,7 +251,7 @@ UnitDef::UnitDef()
 }
 
 
-UnitDef::~UnitDef()
+springLegacyAI::UnitDef::~UnitDef()
 {
 	delete movedata; movedata = NULL;
 

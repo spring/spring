@@ -26,42 +26,79 @@
 
 C3DModelLoader* modelParser = NULL;
 
-//////////////////////////////////////////////////////////////////////
-// C3DModelLoader
-//
+
+
+static inline ModelType ModelExtToModelType(const C3DModelLoader::ParserMap& parsers, const std::string& ext) {
+	if (ext == "3do") { return MODELTYPE_3DO; }
+	if (ext == "s3o") { return MODELTYPE_S3O; }
+	if (ext == "obj") { return MODELTYPE_OBJ; }
+
+	if (parsers.find(ext) != parsers.end()) {
+		return MODELTYPE_ASS;
+	}
+
+	// FIXME: this should be a content error?
+	return MODELTYPE_OTHER;
+}
+
+static inline S3DModelPiece* ModelTypeToModelPiece(const ModelType& type) {
+	if (type == MODELTYPE_3DO) { return (new S3DOPiece()); }
+	if (type == MODELTYPE_S3O) { return (new SS3OPiece()); }
+	if (type == MODELTYPE_OBJ) { return (new SOBJPiece()); }
+	// FIXME: SAssPiece is not yet fully implemented
+	// if (type == MODELTYPE_ASS) { return (new SAssPiece()); }
+	return NULL;
+}
+
+static void RegisterAssImpModelParsers(C3DModelLoader::ParserMap& parsers, CAssParser* assParser) {
+	std::string extension;
+	std::string extensions;
+	Assimp::Importer importer;
+
+	// get a ";" separated list of format extensions ("*.3ds;*.lwo;*.mesh.xml;...")
+	importer.GetExtensionList(extensions);
+
+	// do not ignore the last extension
+	extensions += ";";
+
+	logOutput.Print("[%s] supported AssImp model formats: %s", __FUNCTION__, extensions.c_str());
+
+	size_t i = 0;
+	size_t j = 0;
+
+	// split the list, strip off the "*." extension prefixes
+	while ((j = extensions.find(";", i)) != std::string::npos) {
+		extension = extensions.substr(i, j - i);
+		extension = extension.substr(extension.find("*.") + 2);
+
+		StringToLowerInPlace(extension);
+
+		if (parsers.find(extension) == parsers.end()) {
+			parsers[extension] = assParser;
+		}
+
+		i = j + 1;
+	}
+}
+
+
 
 C3DModelLoader::C3DModelLoader()
 {
 	// file-extension should be lowercase
 	parsers["3do"] = new C3DOParser();
 	parsers["s3o"] = new CS3OParser();
-	//parsers["obj"] = new COBJParser(); // replaced by Assimp
+	parsers["obj"] = new COBJParser();
 
-	// assimp library
-	CAssParser* unitassparser = new CAssParser();
-	std::string extensionlist;
-
-	Assimp::Importer importer;
-	importer.GetExtensionList(extensionlist); // get a ";" separated list of wildcards
-	char* charextensionlist = new char[extensionlist.size() +1];
-	strcpy (charextensionlist, extensionlist.c_str());
-	logOutput.Print("Assimp: Supported model formats: %s", extensionlist.c_str());
-	char* extensionchar = strtok( charextensionlist, ";" );
-	while( extensionchar )
-	{
-		std::string extension = extensionchar;
-		extension = extension.substr( 2 ); // strip wildcard and dot
-		parsers[extension] = unitassparser; // register extension
-		extensionchar = strtok( NULL, ";" );
-	}
-	delete[] charextensionlist;
+	// FIXME: unify the metadata formats of CAssParser and COBJParser
+	RegisterAssImpModelParsers(parsers, new CAssParser());
 }
 
 
 C3DModelLoader::~C3DModelLoader()
 {
 	// delete model cache
-	std::map<std::string, S3DModel*>::iterator ci;
+	ModelMap::iterator ci;
 	for (ci = cache.begin(); ci != cache.end(); ++ci) {
 		S3DModel* model = ci->second;
 
@@ -70,39 +107,24 @@ C3DModelLoader::~C3DModelLoader()
 	}
 	cache.clear();
 
-	// delete parsers
-	std::set<IModelParser*> dedupe_parsers; // this is to avoid deleting the same parser twice, if it's assigned to multiple model formats
-	std::map<std::string, IModelParser*>::iterator pi;
-	for (pi = parsers.begin(); pi != parsers.end(); ++pi) {
-		if ( dedupe_parsers.count( pi->second ) != 0 ) continue;
-		dedupe_parsers.insert( pi->second );
+	// get rid of Spring's native parsers
+	delete parsers["3do"]; parsers.erase("3do");
+	delete parsers["s3o"]; parsers.erase("s3o");
+	delete parsers["obj"]; parsers.erase("obj");
+
+	if (!parsers.empty()) {
+		// delete the shared AssImp parser
+		ParserMap::iterator pi = parsers.begin();
 		delete pi->second;
 	}
+
 	parsers.clear();
-	dedupe_parsers.clear();
 
 #if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
 	createLists.clear();
 	fixLocalModels.clear();
 	Update(); // delete remaining local models
 #endif
-}
-
-
-
-static inline ModelType ModelExtToModelType(const std::string& ext) {
-	if (ext == "3do") { return MODELTYPE_3DO; }
-	if (ext == "s3o") { return MODELTYPE_S3O; }
-	if (ext == "obj") { return MODELTYPE_OBJ; }
-	return MODELTYPE_ASS; // FIXME: Return -1 if Assimp cant handle extension
-}
-
-
-static inline S3DModelPiece* ModelTypeToModelPiece(const ModelType& type) {
-	if (type == MODELTYPE_3DO) { return (new S3DOPiece()); }
-	if (type == MODELTYPE_S3O) { return (new SS3OPiece()); }
-	if (type == MODELTYPE_OBJ) { return (new SOBJPiece()); }
-	return NULL;
 }
 
 
@@ -114,14 +136,14 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffs
 	StringToLowerInPlace(name);
 
 	//! search in cache first
-	std::map<std::string, S3DModel*>::iterator ci;
+	ModelMap::iterator ci;
 	if ((ci = cache.find(name)) != cache.end()) {
 		return ci->second;
 	}
 
 	//! not found in cache, create the model and cache it
 	const std::string& fileExt = filesystem.GetExtension(name);
-	const std::map<std::string, IModelParser*>::iterator pi = parsers.find(fileExt);
+	const ParserMap::iterator pi = parsers.find(fileExt);
 
 	if (pi != parsers.end()) {
 		IModelParser* p = pi->second;
@@ -134,7 +156,7 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffs
 		} catch (const content_error& e) {
 			// crash-dummy
 			model = new S3DModel();
-			model->type = ModelExtToModelType(StringToLower(fileExt));
+			model->type = ModelExtToModelType(parsers, StringToLower(fileExt));
 			model->numPieces = 1;
 			model->SetRootPiece(ModelTypeToModelPiece(model->type));
 			model->GetRootPiece()->SetCollisionVolume(new CollisionVolume("box", UpVector * -1.0f, ZeroVector, CollisionVolume::COLVOL_HITTEST_CONT));
@@ -165,7 +187,7 @@ void C3DModelLoader::Update() {
 	createLists.clear();
 
 	for (std::set<CUnit*>::iterator i = fixLocalModels.begin(); i != fixLocalModels.end(); ++i) {
-		FixLocalModel(*i);
+		SetLocalModelPieceDisplayLists(*i);
 	}
 	fixLocalModels.clear();
 
@@ -209,24 +231,24 @@ void C3DModelLoader::CreateLocalModel(CUnit* unit)
 	fixLocalModels.insert(unit);
 #else
 	unit->localmodel = new LocalModel(unit->model);
-	// FixLocalModel(unit);
+	// SetLocalModelPieceDisplayLists(unit);
 #endif
 }
 
 
-void C3DModelLoader::FixLocalModel(CUnit* unit) //FIXME rename! (it adds (delayed) the DL-Ids to the localmodel)
+void C3DModelLoader::SetLocalModelPieceDisplayLists(CUnit* unit)
 {
 	int piecenum = 0;
-	FixLocalModel(unit->model->GetRootPiece(), unit->localmodel, &piecenum);
+	SetLocalModelPieceDisplayLists(unit->model->GetRootPiece(), unit->localmodel, &piecenum);
 }
 
-void C3DModelLoader::FixLocalModel(S3DModelPiece* model, LocalModel* lmodel, int* piecenum)
+void C3DModelLoader::SetLocalModelPieceDisplayLists(S3DModelPiece* model, LocalModel* lmodel, int* piecenum)
 {
 	lmodel->pieces[*piecenum]->dispListID = model->dispListID;
 
 	for (unsigned int i = 0; i < model->childs.size(); i++) {
 		(*piecenum)++;
-		FixLocalModel(model->childs[i], lmodel, piecenum);
+		SetLocalModelPieceDisplayLists(model->childs[i], lmodel, piecenum);
 	}
 }
 

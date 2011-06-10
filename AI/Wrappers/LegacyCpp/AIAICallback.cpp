@@ -91,27 +91,27 @@ static const int numFeatDefs = MAX_UNITS; // featureHandler->numFeatureDefs;
 static const int numWeapDefs = MAX_UNITS; // weaponDefHandler->numWeaponDefs;
 
 
-size_t CAIAICallback::numClbInstances = 0;
-float* CAIAICallback::heightMap = NULL;
-float* CAIAICallback::cornersHeightMap = NULL;
-float* CAIAICallback::slopeMap = NULL;
-unsigned short* CAIAICallback::losMap = NULL;
-unsigned short* CAIAICallback::radarMap = NULL;
-unsigned short* CAIAICallback::jammerMap = NULL;
-unsigned char* CAIAICallback::metalMap = NULL;
+size_t springLegacyAI::CAIAICallback::numClbInstances = 0;
+float* springLegacyAI::CAIAICallback::heightMap = NULL;
+float* springLegacyAI::CAIAICallback::cornersHeightMap = NULL;
+float* springLegacyAI::CAIAICallback::slopeMap = NULL;
+unsigned short* springLegacyAI::CAIAICallback::losMap = NULL;
+unsigned short* springLegacyAI::CAIAICallback::radarMap = NULL;
+unsigned short* springLegacyAI::CAIAICallback::jammerMap = NULL;
+unsigned char* springLegacyAI::CAIAICallback::metalMap = NULL;
 
 
-CAIAICallback::CAIAICallback()
+springLegacyAI::CAIAICallback::CAIAICallback()
 	: IAICallback(), skirmishAIId(-1), sAICallback(NULL) {
 	init();
 }
 
-CAIAICallback::CAIAICallback(int skirmishAIId, const SSkirmishAICallback* sAICallback)
+springLegacyAI::CAIAICallback::CAIAICallback(int skirmishAIId, const SSkirmishAICallback* sAICallback)
 	: IAICallback(), skirmishAIId(skirmishAIId), sAICallback(sAICallback) {
 	init();
 }
 
-CAIAICallback::~CAIAICallback() {
+springLegacyAI::CAIAICallback::~CAIAICallback() {
 
 	numClbInstances--;
 
@@ -175,7 +175,7 @@ CAIAICallback::~CAIAICallback() {
 }
 
 
-void CAIAICallback::init() {
+void springLegacyAI::CAIAICallback::init() {
 
 	numClbInstances++;
 
@@ -203,7 +203,7 @@ void CAIAICallback::init() {
 }
 
 
-bool CAIAICallback::PosInCamera(float3 pos, float radius) {
+bool springLegacyAI::CAIAICallback::PosInCamera(float3 pos, float radius) {
 
 	float pos_param[3];
 	pos.copyInto(pos_param);
@@ -211,87 +211,87 @@ bool CAIAICallback::PosInCamera(float3 pos, float radius) {
 	return sAICallback->Map_isPosInCamera(skirmishAIId, pos_param, radius);
 }
 
-int CAIAICallback::GetCurrentFrame() {
+int springLegacyAI::CAIAICallback::GetCurrentFrame() {
 	return sAICallback->Game_getCurrentFrame(skirmishAIId);
 }
 
-int CAIAICallback::GetMySkirmishAIId() {
+int springLegacyAI::CAIAICallback::GetMySkirmishAIId() {
 	return skirmishAIId;
 }
 
-int CAIAICallback::GetMyTeam() {
+int springLegacyAI::CAIAICallback::GetMyTeam() {
 	return sAICallback->Game_getMyTeam(skirmishAIId);
 }
 
-int CAIAICallback::GetMyAllyTeam() {
+int springLegacyAI::CAIAICallback::GetMyAllyTeam() {
 	return sAICallback->Game_getMyAllyTeam(skirmishAIId);
 }
 
-int CAIAICallback::GetPlayerTeam(int player) {
+int springLegacyAI::CAIAICallback::GetPlayerTeam(int player) {
 	return sAICallback->Game_getPlayerTeam(skirmishAIId, player);
 }
 
-int CAIAICallback::GetTeams() {
+int springLegacyAI::CAIAICallback::GetTeams() {
 	return sAICallback->Game_getTeams(skirmishAIId);
 }
 
-const char* CAIAICallback::GetTeamSide(int otherTeamId) {
+const char* springLegacyAI::CAIAICallback::GetTeamSide(int otherTeamId) {
 	return sAICallback->Game_getTeamSide(skirmishAIId, otherTeamId);
 }
 
-int CAIAICallback::GetTeamAllyTeam(int otherTeamId) {
+int springLegacyAI::CAIAICallback::GetTeamAllyTeam(int otherTeamId) {
 	return sAICallback->Game_getTeamAllyTeam(skirmishAIId, otherTeamId);
 }
 
-float CAIAICallback::GetTeamMetalCurrent(int otherTeamId) {
+float springLegacyAI::CAIAICallback::GetTeamMetalCurrent(int otherTeamId) {
 	static int m = getResourceId_Metal(sAICallback, skirmishAIId);
 	return sAICallback->Game_getTeamResourceCurrent(skirmishAIId, otherTeamId, m);
 }
 
-float CAIAICallback::GetTeamMetalIncome(int otherTeamId) {
+float springLegacyAI::CAIAICallback::GetTeamMetalIncome(int otherTeamId) {
 	static int m = getResourceId_Metal(sAICallback, skirmishAIId);
 	return sAICallback->Game_getTeamResourceIncome(skirmishAIId, otherTeamId, m);
 }
 
-float CAIAICallback::GetTeamMetalUsage(int otherTeamId) {
+float springLegacyAI::CAIAICallback::GetTeamMetalUsage(int otherTeamId) {
 	static int m = getResourceId_Metal(sAICallback, skirmishAIId);
 	return sAICallback->Game_getTeamResourceUsage(skirmishAIId, otherTeamId, m);
 }
 
-float CAIAICallback::GetTeamMetalStorage(int otherTeamId) {
+float springLegacyAI::CAIAICallback::GetTeamMetalStorage(int otherTeamId) {
 	static int m = getResourceId_Metal(sAICallback, skirmishAIId);
 	return sAICallback->Game_getTeamResourceStorage(skirmishAIId, otherTeamId, m);
 }
 
-float CAIAICallback::GetTeamEnergyCurrent(int otherTeamId) {
+float springLegacyAI::CAIAICallback::GetTeamEnergyCurrent(int otherTeamId) {
 	static int e = getResourceId_Energy(sAICallback, skirmishAIId);
 	return sAICallback->Game_getTeamResourceCurrent(skirmishAIId, otherTeamId, e);
 }
 
-float CAIAICallback::GetTeamEnergyIncome(int otherTeamId) {
+float springLegacyAI::CAIAICallback::GetTeamEnergyIncome(int otherTeamId) {
 	static int e = getResourceId_Energy(sAICallback, skirmishAIId);
 	return sAICallback->Game_getTeamResourceIncome(skirmishAIId, otherTeamId, e);
 }
 
-float CAIAICallback::GetTeamEnergyUsage(int otherTeamId) {
+float springLegacyAI::CAIAICallback::GetTeamEnergyUsage(int otherTeamId) {
 	static int e = getResourceId_Energy(sAICallback, skirmishAIId);
 	return sAICallback->Game_getTeamResourceUsage(skirmishAIId, otherTeamId, e);
 }
 
-float CAIAICallback::GetTeamEnergyStorage(int otherTeamId) {
+float springLegacyAI::CAIAICallback::GetTeamEnergyStorage(int otherTeamId) {
 	static int e = getResourceId_Energy(sAICallback, skirmishAIId);
 	return sAICallback->Game_getTeamResourceStorage(skirmishAIId, otherTeamId, e);
 }
 
-bool CAIAICallback::IsAllied(int firstAllyTeamId, int secondAllyTeamId) {
+bool springLegacyAI::CAIAICallback::IsAllied(int firstAllyTeamId, int secondAllyTeamId) {
 	return sAICallback->Game_isAllied(skirmishAIId, firstAllyTeamId, secondAllyTeamId);
 }
 
-int CAIAICallback::GetUnitGroup(int unitId) {
+int springLegacyAI::CAIAICallback::GetUnitGroup(int unitId) {
 	return sAICallback->Unit_getGroup(skirmishAIId, unitId);
 }
 
-const std::vector<CommandDescription>* CAIAICallback::GetGroupCommands(int groupId) {
+const std::vector<springLegacyAI::CommandDescription>* springLegacyAI::CAIAICallback::GetGroupCommands(int groupId) {
 
 	int numCmds = sAICallback->Group_getSupportedCommands(skirmishAIId, groupId);
 
@@ -324,7 +324,7 @@ const std::vector<CommandDescription>* CAIAICallback::GetGroupCommands(int group
 }
 
 
-const std::vector<CommandDescription>* CAIAICallback::GetUnitCommands(int unitId) {
+const std::vector<springLegacyAI::CommandDescription>* springLegacyAI::CAIAICallback::GetUnitCommands(int unitId) {
 
 	int numCmds = sAICallback->Unit_getSupportedCommands(skirmishAIId, unitId);
 
@@ -356,7 +356,7 @@ const std::vector<CommandDescription>* CAIAICallback::GetUnitCommands(int unitId
 	return cmdDescVec;
 }
 
-const CCommandQueue* CAIAICallback::GetCurrentUnitCommands(int unitId) {
+const springLegacyAI::CCommandQueue* springLegacyAI::CAIAICallback::GetCurrentUnitCommands(int unitId) {
 
 	const int numCmds = sAICallback->Unit_getCurrentCommands(skirmishAIId, unitId);
 	const int type = sAICallback->Unit_CurrentCommand_getType(skirmishAIId, unitId);
@@ -391,65 +391,69 @@ const CCommandQueue* CAIAICallback::GetCurrentUnitCommands(int unitId) {
 	return cc;
 }
 
-int CAIAICallback::GetUnitAiHint(int unitId) {
+int springLegacyAI::CAIAICallback::GetMaxUnits() {
+	return sAICallback->Unit_getMax(skirmishAIId);
+}
+
+int springLegacyAI::CAIAICallback::GetUnitAiHint(int unitId) {
 	return sAICallback->Unit_getAiHint(skirmishAIId, unitId);
 }
 
-int CAIAICallback::GetUnitTeam(int unitId) {
+int springLegacyAI::CAIAICallback::GetUnitTeam(int unitId) {
 	return sAICallback->Unit_getTeam(skirmishAIId, unitId);
 }
 
-int CAIAICallback::GetUnitAllyTeam(int unitId) {
+int springLegacyAI::CAIAICallback::GetUnitAllyTeam(int unitId) {
 	return sAICallback->Unit_getAllyTeam(skirmishAIId, unitId);
 }
 
-float CAIAICallback::GetUnitHealth(int unitId) {
+float springLegacyAI::CAIAICallback::GetUnitHealth(int unitId) {
 	return sAICallback->Unit_getHealth(skirmishAIId, unitId);
 }
 
-float CAIAICallback::GetUnitMaxHealth(int unitId) {
+float springLegacyAI::CAIAICallback::GetUnitMaxHealth(int unitId) {
 	return sAICallback->Unit_getMaxHealth(skirmishAIId, unitId);
 }
 
-float CAIAICallback::GetUnitSpeed(int unitId) {
+float springLegacyAI::CAIAICallback::GetUnitSpeed(int unitId) {
 	return sAICallback->Unit_getSpeed(skirmishAIId, unitId);
 }
 
-float CAIAICallback::GetUnitPower(int unitId) {
+float springLegacyAI::CAIAICallback::GetUnitPower(int unitId) {
 	return sAICallback->Unit_getPower(skirmishAIId, unitId);
 }
 
-float CAIAICallback::GetUnitExperience(int unitId) {
+float springLegacyAI::CAIAICallback::GetUnitExperience(int unitId) {
 	return sAICallback->Unit_getExperience(skirmishAIId, unitId);
 }
 
-float CAIAICallback::GetUnitMaxRange(int unitId) {
+float springLegacyAI::CAIAICallback::GetUnitMaxRange(int unitId) {
 	return sAICallback->Unit_getMaxRange(skirmishAIId, unitId);
 }
 
-bool CAIAICallback::IsUnitActivated(int unitId) {
+bool springLegacyAI::CAIAICallback::IsUnitActivated(int unitId) {
 	return sAICallback->Unit_isActivated(skirmishAIId, unitId);
 }
 
-bool CAIAICallback::UnitBeingBuilt(int unitId) {
+bool springLegacyAI::CAIAICallback::UnitBeingBuilt(int unitId) {
 	return sAICallback->Unit_isBeingBuilt(skirmishAIId, unitId);
 }
 
-const UnitDef* CAIAICallback::GetUnitDef(int unitId) {
+const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDef(int unitId) {
 	int unitDefId = sAICallback->Unit_getDef(skirmishAIId, unitId);
 	return this->GetUnitDefById(unitDefId);
 }
 
 
 
-float3 CAIAICallback::GetUnitPos(int unitId) {
+float3 springLegacyAI::CAIAICallback::GetUnitPos(int unitId) {
 
 	float pos_cache[3];
 	sAICallback->Unit_getPos(skirmishAIId, unitId, pos_cache);
 	return pos_cache;
 }
 
-float3 CAIAICallback::GetUnitVel(int unitId) {
+float3 springLegacyAI::CAIAICallback::GetUnitVel(int unitId) {
 
 	float pos_cache[3];
 	sAICallback->Unit_getVel(skirmishAIId, unitId, pos_cache);
@@ -458,23 +462,23 @@ float3 CAIAICallback::GetUnitVel(int unitId) {
 
 
 
-int CAIAICallback::GetBuildingFacing(int unitId) {
+int springLegacyAI::CAIAICallback::GetBuildingFacing(int unitId) {
 	return sAICallback->Unit_getBuildingFacing(skirmishAIId, unitId);
 }
 
-bool CAIAICallback::IsUnitCloaked(int unitId) {
+bool springLegacyAI::CAIAICallback::IsUnitCloaked(int unitId) {
 	return sAICallback->Unit_isCloaked(skirmishAIId, unitId);
 }
 
-bool CAIAICallback::IsUnitParalyzed(int unitId) {
+bool springLegacyAI::CAIAICallback::IsUnitParalyzed(int unitId) {
 	return sAICallback->Unit_isParalyzed(skirmishAIId, unitId);
 }
 
-bool CAIAICallback::IsUnitNeutral(int unitId) {
+bool springLegacyAI::CAIAICallback::IsUnitNeutral(int unitId) {
 	return sAICallback->Unit_isNeutral(skirmishAIId, unitId);
 }
 
-bool CAIAICallback::GetUnitResourceInfo(int unitId, UnitResourceInfo* resourceInfo) {
+bool springLegacyAI::CAIAICallback::GetUnitResourceInfo(int unitId, UnitResourceInfo* resourceInfo) {
 
 	static int m = getResourceId_Metal(sAICallback, skirmishAIId);
 	static int e = getResourceId_Energy(sAICallback, skirmishAIId);
@@ -486,13 +490,13 @@ bool CAIAICallback::GetUnitResourceInfo(int unitId, UnitResourceInfo* resourceIn
 	return true;
 }
 
-const UnitDef* CAIAICallback::GetUnitDef(const char* unitName) {
+const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDef(const char* unitName) {
 	int unitDefId = sAICallback->getUnitDefByName(skirmishAIId, unitName);
 	return this->GetUnitDefById(unitDefId);
 }
 
 
-const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
+const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int unitDefId) {
 	//logT("entering: GetUnitDefById sAICallback");
 	static int m = getResourceId_Metal(sAICallback, skirmishAIId);
 	static int e = getResourceId_Energy(sAICallback, skirmishAIId);
@@ -800,11 +804,11 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 	return unitDefs[unitDefId];
 }
 
-int CAIAICallback::GetEnemyUnits(int* unitIds, int unitIds_max) {
+int springLegacyAI::CAIAICallback::GetEnemyUnits(int* unitIds, int unitIds_max) {
 	return sAICallback->getEnemyUnits(skirmishAIId, unitIds, unitIds_max);
 }
 
-int CAIAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max) {
+int springLegacyAI::CAIAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max) {
 
 	float pos_param[3];
 	pos.copyInto(pos_param);
@@ -812,15 +816,15 @@ int CAIAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius, 
 	return sAICallback->getEnemyUnitsIn(skirmishAIId, pos_param, radius, unitIds, unitIds_max);
 }
 
-int CAIAICallback::GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max) {
+int springLegacyAI::CAIAICallback::GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max) {
 	return sAICallback->getEnemyUnitsInRadarAndLos(skirmishAIId, unitIds, unitIds_max);
 }
 
-int CAIAICallback::GetFriendlyUnits(int* unitIds, int unitIds_max) {
+int springLegacyAI::CAIAICallback::GetFriendlyUnits(int* unitIds, int unitIds_max) {
 	return sAICallback->getFriendlyUnits(skirmishAIId, unitIds, unitIds_max);
 }
 
-int CAIAICallback::GetFriendlyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max) {
+int springLegacyAI::CAIAICallback::GetFriendlyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max) {
 
 	float pos_param[3];
 	pos.copyInto(pos_param);
@@ -828,11 +832,11 @@ int CAIAICallback::GetFriendlyUnits(int* unitIds, const float3& pos, float radiu
 	return sAICallback->getFriendlyUnitsIn(skirmishAIId, pos_param, radius, unitIds, unitIds_max);
 }
 
-int CAIAICallback::GetNeutralUnits(int* unitIds, int unitIds_max) {
+int springLegacyAI::CAIAICallback::GetNeutralUnits(int* unitIds, int unitIds_max) {
 	return sAICallback->getNeutralUnits(skirmishAIId, unitIds, unitIds_max);
 }
 
-int CAIAICallback::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max) {
+int springLegacyAI::CAIAICallback::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max) {
 
 	float pos_param[3];
 	pos.copyInto(pos_param);
@@ -840,15 +844,15 @@ int CAIAICallback::GetNeutralUnits(int* unitIds, const float3& pos, float radius
 	return sAICallback->getNeutralUnitsIn(skirmishAIId, pos_param, radius, unitIds, unitIds_max);
 }
 
-int CAIAICallback::GetMapWidth() {
+int springLegacyAI::CAIAICallback::GetMapWidth() {
 	return sAICallback->Map_getWidth(skirmishAIId);
 }
 
-int CAIAICallback::GetMapHeight() {
+int springLegacyAI::CAIAICallback::GetMapHeight() {
 	return sAICallback->Map_getHeight(skirmishAIId);
 }
 
-const float* CAIAICallback::GetHeightMap() {
+const float* springLegacyAI::CAIAICallback::GetHeightMap() {
 
 	if (heightMap == NULL) {
 		const int size = sAICallback->Map_getHeightMap(skirmishAIId, NULL, 0);
@@ -859,7 +863,7 @@ const float* CAIAICallback::GetHeightMap() {
 	return heightMap;
 }
 
-const float* CAIAICallback::GetCornersHeightMap() {
+const float* springLegacyAI::CAIAICallback::GetCornersHeightMap() {
 
 	if (cornersHeightMap == NULL) {
 		const int size = sAICallback->Map_getCornersHeightMap(skirmishAIId, NULL, 0);
@@ -870,15 +874,15 @@ const float* CAIAICallback::GetCornersHeightMap() {
 	return cornersHeightMap;
 }
 
-float CAIAICallback::GetMinHeight() {
+float springLegacyAI::CAIAICallback::GetMinHeight() {
 	return sAICallback->Map_getMinHeight(skirmishAIId);
 }
 
-float CAIAICallback::GetMaxHeight() {
+float springLegacyAI::CAIAICallback::GetMaxHeight() {
 	return sAICallback->Map_getMaxHeight(skirmishAIId);
 }
 
-const float* CAIAICallback::GetSlopeMap() {
+const float* springLegacyAI::CAIAICallback::GetSlopeMap() {
 
 	if (slopeMap == NULL) {
 		const int size = sAICallback->Map_getSlopeMap(skirmishAIId, NULL, 0);
@@ -889,7 +893,7 @@ const float* CAIAICallback::GetSlopeMap() {
 	return slopeMap;
 }
 
-const unsigned short* CAIAICallback::GetLosMap() {
+const unsigned short* springLegacyAI::CAIAICallback::GetLosMap() {
 
 	if (losMap == NULL) {
 		const int size = sAICallback->Map_getLosMap(skirmishAIId, NULL, 0);
@@ -903,7 +907,7 @@ const unsigned short* CAIAICallback::GetLosMap() {
 	return losMap;
 }
 
-int CAIAICallback::GetLosMapResolution() {
+int springLegacyAI::CAIAICallback::GetLosMapResolution() {
 
 	int fullSize = GetMapWidth() * GetMapHeight();
 	int losSize = sAICallback->Map_getLosMap(skirmishAIId, NULL, 0);
@@ -911,7 +915,7 @@ int CAIAICallback::GetLosMapResolution() {
 	return fullSize / losSize;
 }
 
-const unsigned short* CAIAICallback::GetRadarMap() {
+const unsigned short* springLegacyAI::CAIAICallback::GetRadarMap() {
 
 	if (radarMap == NULL) {
 		const int size = sAICallback->Map_getRadarMap(skirmishAIId, NULL, 0);
@@ -925,7 +929,7 @@ const unsigned short* CAIAICallback::GetRadarMap() {
 	return radarMap;
 }
 
-const unsigned short* CAIAICallback::GetJammerMap() {
+const unsigned short* springLegacyAI::CAIAICallback::GetJammerMap() {
 
 	if (jammerMap == NULL) {
 		const int size = sAICallback->Map_getJammerMap(skirmishAIId, NULL, 0);
@@ -939,7 +943,7 @@ const unsigned short* CAIAICallback::GetJammerMap() {
 	return jammerMap;
 }
 
-const unsigned char* CAIAICallback::GetMetalMap() {
+const unsigned char* springLegacyAI::CAIAICallback::GetMetalMap() {
 
 	static const int m = getResourceId_Metal(sAICallback, skirmishAIId);
 
@@ -955,61 +959,61 @@ const unsigned char* CAIAICallback::GetMetalMap() {
 	return metalMap;
 }
 
-int CAIAICallback::GetMapHash() {
+int springLegacyAI::CAIAICallback::GetMapHash() {
 	return sAICallback->Map_getHash(skirmishAIId);
 }
 
-const char* CAIAICallback::GetMapName() {
+const char* springLegacyAI::CAIAICallback::GetMapName() {
 	return sAICallback->Map_getName(skirmishAIId);
 }
 
-const char* CAIAICallback::GetMapHumanName() {
+const char* springLegacyAI::CAIAICallback::GetMapHumanName() {
 	return sAICallback->Map_getHumanName(skirmishAIId);
 }
 
-int CAIAICallback::GetModHash() {
+int springLegacyAI::CAIAICallback::GetModHash() {
 	return sAICallback->Mod_getHash(skirmishAIId);
 }
 
-const char* CAIAICallback::GetModName() {
+const char* springLegacyAI::CAIAICallback::GetModName() {
 	return sAICallback->Mod_getFileName(skirmishAIId);
 }
 
-const char* CAIAICallback::GetModHumanName() {
+const char* springLegacyAI::CAIAICallback::GetModHumanName() {
 	return sAICallback->Mod_getHumanName(skirmishAIId);
 }
 
-const char* CAIAICallback::GetModShortName() {
+const char* springLegacyAI::CAIAICallback::GetModShortName() {
 	return sAICallback->Mod_getShortName(skirmishAIId);
 }
 
-const char* CAIAICallback::GetModVersion() {
+const char* springLegacyAI::CAIAICallback::GetModVersion() {
 	return sAICallback->Mod_getVersion(skirmishAIId);
 }
 
-float CAIAICallback::GetElevation(float x, float z) {
+float springLegacyAI::CAIAICallback::GetElevation(float x, float z) {
 	return sAICallback->Map_getElevationAt(skirmishAIId, x, z);
 }
 
 
-float CAIAICallback::GetMaxMetal() const {
+float springLegacyAI::CAIAICallback::GetMaxMetal() const {
 	static const int m = getResourceId_Metal(sAICallback, skirmishAIId);
 	return sAICallback->Map_getMaxResource(skirmishAIId, m);
 }
-float CAIAICallback::GetExtractorRadius() const {
+float springLegacyAI::CAIAICallback::GetExtractorRadius() const {
 	static const int m = getResourceId_Metal(sAICallback, skirmishAIId);
 	return sAICallback->Map_getExtractorRadius(skirmishAIId, m);
 }
 
-float CAIAICallback::GetMinWind() const { return sAICallback->Map_getMinWind(skirmishAIId); }
-float CAIAICallback::GetMaxWind() const { return sAICallback->Map_getMaxWind(skirmishAIId); }
-float CAIAICallback::GetCurWind() const { return sAICallback->Map_getCurWind(skirmishAIId); }
+float springLegacyAI::CAIAICallback::GetMinWind() const { return sAICallback->Map_getMinWind(skirmishAIId); }
+float springLegacyAI::CAIAICallback::GetMaxWind() const { return sAICallback->Map_getMaxWind(skirmishAIId); }
+float springLegacyAI::CAIAICallback::GetCurWind() const { return sAICallback->Map_getCurWind(skirmishAIId); }
 
-float CAIAICallback::GetTidalStrength() const  { return sAICallback->Map_getTidalStrength(skirmishAIId); }
-float CAIAICallback::GetGravity() const { return sAICallback->Map_getGravity(skirmishAIId); }
+float springLegacyAI::CAIAICallback::GetTidalStrength() const  { return sAICallback->Map_getTidalStrength(skirmishAIId); }
+float springLegacyAI::CAIAICallback::GetGravity() const { return sAICallback->Map_getGravity(skirmishAIId); }
 
 
-bool CAIAICallback::CanBuildAt(const UnitDef* unitDef, float3 pos, int facing) {
+bool springLegacyAI::CAIAICallback::CanBuildAt(const UnitDef* unitDef, float3 pos, int facing) {
 
 	float pos_param[3];
 	pos.copyInto(pos_param);
@@ -1017,7 +1021,7 @@ bool CAIAICallback::CanBuildAt(const UnitDef* unitDef, float3 pos, int facing) {
 	return sAICallback->Map_isPossibleToBuildAt(skirmishAIId, unitDef->id, pos_param, facing);
 }
 
-float3 CAIAICallback::ClosestBuildSite(const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing) {
+float3 springLegacyAI::CAIAICallback::ClosestBuildSite(const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing) {
 
 	float pos_param[3];
 	pos.copyInto(pos_param);
@@ -1028,12 +1032,12 @@ float3 CAIAICallback::ClosestBuildSite(const UnitDef* unitDef, float3 pos, float
 }
 
 /*
-bool CAIAICallback::GetProperty(int id, int property, void* dst) {
+bool springLegacyAI::CAIAICallback::GetProperty(int id, int property, void* dst) {
 //	return sAICallback->getProperty(skirmishAIId, id, property, dst);
 	return false;
 }
 */
-bool CAIAICallback::GetProperty(int unitId, int propertyId, void *data)
+bool springLegacyAI::CAIAICallback::GetProperty(int unitId, int propertyId, void *data)
 {
 	switch (propertyId) {
 		case AIVAL_UNITDEF: {
@@ -1062,12 +1066,12 @@ bool CAIAICallback::GetProperty(int unitId, int propertyId, void *data)
 }
 
 /*
-bool CAIAICallback::GetValue(int valueId, void* dst) {
+bool springLegacyAI::CAIAICallback::GetValue(int valueId, void* dst) {
 //	return sAICallback->getValue(skirmishAIId, valueId, dst);
 	return false;
 }
 */
-bool CAIAICallback::GetValue(int valueId, void *data)
+bool springLegacyAI::CAIAICallback::GetValue(int valueId, void *data)
 {
 	switch (valueId) {
 		case AIVAL_NUMDAMAGETYPES:{
@@ -1135,22 +1139,22 @@ bool CAIAICallback::GetValue(int valueId, void *data)
 	}
 }
 
-int CAIAICallback::GetFileSize(const char* name) {
+int springLegacyAI::CAIAICallback::GetFileSize(const char* name) {
 	return sAICallback->File_getSize(skirmishAIId, name);
 }
 
-int CAIAICallback::GetSelectedUnits(int* unitIds, int unitIds_max) {
+int springLegacyAI::CAIAICallback::GetSelectedUnits(int* unitIds, int unitIds_max) {
 	return sAICallback->getSelectedUnits(skirmishAIId, unitIds, unitIds_max);
 }
 
-float3 CAIAICallback::GetMousePos() {
+float3 springLegacyAI::CAIAICallback::GetMousePos() {
 
 	float pos_cache[3];
 	sAICallback->Map_getMousePos(skirmishAIId, pos_cache);
 	return pos_cache;
 }
 
-int CAIAICallback::GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAllies) {
+int springLegacyAI::CAIAICallback::GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAllies) {
 
 	const int numPoints = sAICallback->Map_getPoints(skirmishAIId, includeAllies);
 	float pos_cache[3];
@@ -1170,7 +1174,7 @@ int CAIAICallback::GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAll
 	return numPoints;
 }
 
-int CAIAICallback::GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllies) {
+int springLegacyAI::CAIAICallback::GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllies) {
 
 	const int numLines = sAICallback->Map_getLines(skirmishAIId, includeAllies);
 	float pos_cache[3];
@@ -1191,63 +1195,63 @@ int CAIAICallback::GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllie
 	return numLines;
 }
 
-float CAIAICallback::GetMetal() {
+float springLegacyAI::CAIAICallback::GetMetal() {
 	int m = getResourceId_Metal(sAICallback, skirmishAIId);
 	return sAICallback->Economy_getCurrent(skirmishAIId, m);
 }
 
-float CAIAICallback::GetMetalIncome() {
+float springLegacyAI::CAIAICallback::GetMetalIncome() {
 	int m = getResourceId_Metal(sAICallback, skirmishAIId);
 	return sAICallback->Economy_getIncome(skirmishAIId, m);
 }
 
-float CAIAICallback::GetMetalUsage() {
+float springLegacyAI::CAIAICallback::GetMetalUsage() {
 	int m = getResourceId_Metal(sAICallback, skirmishAIId);
 	return sAICallback->Economy_getUsage(skirmishAIId, m);
 }
 
-float CAIAICallback::GetMetalStorage() {
+float springLegacyAI::CAIAICallback::GetMetalStorage() {
 	int m = getResourceId_Metal(sAICallback, skirmishAIId);
 	return sAICallback->Economy_getStorage(skirmishAIId, m);
 }
 
-float CAIAICallback::GetEnergy() {
+float springLegacyAI::CAIAICallback::GetEnergy() {
 	int e = getResourceId_Energy(sAICallback, skirmishAIId);
 	return sAICallback->Economy_getCurrent(skirmishAIId, e);
 }
 
-float CAIAICallback::GetEnergyIncome() {
+float springLegacyAI::CAIAICallback::GetEnergyIncome() {
 	int e = getResourceId_Energy(sAICallback, skirmishAIId);
 	return sAICallback->Economy_getIncome(skirmishAIId, e);
 }
 
-float CAIAICallback::GetEnergyUsage() {
+float springLegacyAI::CAIAICallback::GetEnergyUsage() {
 	int e = getResourceId_Energy(sAICallback, skirmishAIId);
 	return sAICallback->Economy_getUsage(skirmishAIId, e);
 }
 
-float CAIAICallback::GetEnergyStorage() {
+float springLegacyAI::CAIAICallback::GetEnergyStorage() {
 	int e = getResourceId_Energy(sAICallback, skirmishAIId);
 	return sAICallback->Economy_getStorage(skirmishAIId, e);
 }
 
-int CAIAICallback::GetFeatures(int* featureIds, int featureIds_max) {
+int springLegacyAI::CAIAICallback::GetFeatures(int* featureIds, int featureIds_max) {
 	return sAICallback->getFeatures(skirmishAIId, featureIds, featureIds_max);
 }
 
-int CAIAICallback::GetFeatures(int *featureIds, int featureIds_max, const float3& pos, float radius) {
+int springLegacyAI::CAIAICallback::GetFeatures(int *featureIds, int featureIds_max, const float3& pos, float radius) {
 
 	float aiPos[3];
 	pos.copyInto(aiPos);
 	return sAICallback->getFeaturesIn(skirmishAIId, aiPos, radius, featureIds, featureIds_max);
 }
 
-const FeatureDef* CAIAICallback::GetFeatureDef(int featureId) {
+const springLegacyAI::FeatureDef* springLegacyAI::CAIAICallback::GetFeatureDef(int featureId) {
 	int featureDefId = sAICallback->Feature_getDef(skirmishAIId, featureId);
 	return this->GetFeatureDefById(featureDefId);
 }
 
-const FeatureDef* CAIAICallback::GetFeatureDefById(int featureDefId) {
+const springLegacyAI::FeatureDef* springLegacyAI::CAIAICallback::GetFeatureDefById(int featureDefId) {
 
 	static int m = getResourceId_Metal(sAICallback, skirmishAIId);
 	static int e = getResourceId_Energy(sAICallback, skirmishAIId);
@@ -1309,26 +1313,26 @@ featureDef->zsize = sAICallback->FeatureDef_getZSize(skirmishAIId, featureDefId)
 	return featureDefs[featureDefId];
 }
 
-float CAIAICallback::GetFeatureHealth(int featureId) {
+float springLegacyAI::CAIAICallback::GetFeatureHealth(int featureId) {
 	return sAICallback->Feature_getHealth(skirmishAIId, featureId);
 }
 
-float CAIAICallback::GetFeatureReclaimLeft(int featureId) {
+float springLegacyAI::CAIAICallback::GetFeatureReclaimLeft(int featureId) {
 	return sAICallback->Feature_getReclaimLeft(skirmishAIId, featureId);
 }
 
-float3 CAIAICallback::GetFeaturePos(int featureId) {
+float3 springLegacyAI::CAIAICallback::GetFeaturePos(int featureId) {
 	
 	float pos_cache[3];
 	sAICallback->Feature_getPosition(skirmishAIId, featureId, pos_cache);
 	return pos_cache;
 }
 
-int CAIAICallback::GetNumUnitDefs() {
+int springLegacyAI::CAIAICallback::GetNumUnitDefs() {
 	return sAICallback->getUnitDefs(skirmishAIId, NULL, NULL);
 }
 
-void CAIAICallback::GetUnitDefList(const UnitDef** list) {
+void springLegacyAI::CAIAICallback::GetUnitDefList(const UnitDef** list) {
 
 	int size = sAICallback->getUnitDefs(skirmishAIId, NULL, NULL);
 	int* unitDefIds = new int[size];
@@ -1343,20 +1347,20 @@ void CAIAICallback::GetUnitDefList(const UnitDef** list) {
 	delete[] unitDefIds;
 }
 
-float CAIAICallback::GetUnitDefHeight(int def) {
+float springLegacyAI::CAIAICallback::GetUnitDefHeight(int def) {
 	return sAICallback->UnitDef_getHeight(skirmishAIId, def);
 }
 
-float CAIAICallback::GetUnitDefRadius(int def) {
+float springLegacyAI::CAIAICallback::GetUnitDefRadius(int def) {
 	return sAICallback->UnitDef_getRadius(skirmishAIId, def);
 }
 
-const WeaponDef* CAIAICallback::GetWeapon(const char* weaponName) {
+const springLegacyAI::WeaponDef* springLegacyAI::CAIAICallback::GetWeapon(const char* weaponName) {
 	int weaponDefId = sAICallback->getWeaponDefByName(skirmishAIId, weaponName);
 	return this->GetWeaponDefById(weaponDefId);
 }
 
-const WeaponDef* CAIAICallback::GetWeaponDefById(int weaponDefId) {
+const springLegacyAI::WeaponDef* springLegacyAI::CAIAICallback::GetWeaponDefById(int weaponDefId) {
 
 	static int m = getResourceId_Metal(sAICallback, skirmishAIId);
 	static int e = getResourceId_Energy(sAICallback, skirmishAIId);
@@ -1553,7 +1557,7 @@ weaponDef->dynDamageInverted = sAICallback->WeaponDef_isDynDamageInverted(skirmi
 	return weaponDefs[weaponDefId];
 }
 
-const float3* CAIAICallback::GetStartPos() {
+const float3* springLegacyAI::CAIAICallback::GetStartPos() {
 
 	float pos_cache[3];
 	sAICallback->Map_getStartPos(skirmishAIId, pos_cache);
@@ -1562,15 +1566,15 @@ const float3* CAIAICallback::GetStartPos() {
 	return &startPos;
 }
 
-unsigned int CAIAICallback::GetCategoryFlag(const char* categoryName) {
+unsigned int springLegacyAI::CAIAICallback::GetCategoryFlag(const char* categoryName) {
 	return sAICallback->Game_getCategoryFlag(skirmishAIId, categoryName);
 }
 
-unsigned int CAIAICallback::GetCategoriesFlag(const char* categoryNames) {
+unsigned int springLegacyAI::CAIAICallback::GetCategoriesFlag(const char* categoryNames) {
 	return sAICallback->Game_getCategoriesFlag(skirmishAIId, categoryNames);
 }
 
-void CAIAICallback::GetCategoryName(int categoryFlag, char* name, int name_sizeMax) {
+void springLegacyAI::CAIAICallback::GetCategoryName(int categoryFlag, char* name, int name_sizeMax) {
 	sAICallback->Game_getCategoryName(skirmishAIId, categoryFlag, name, name_sizeMax);
 }
 
@@ -1580,13 +1584,13 @@ void CAIAICallback::GetCategoryName(int categoryFlag, char* name, int name_sizeM
 
 
 
-void CAIAICallback::SendTextMsg(const char* text, int zone) {
+void springLegacyAI::CAIAICallback::SendTextMsg(const char* text, int zone) {
 
 	SSendTextMessageCommand cmd = {text, zone};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SEND_TEXT_MESSAGE, &cmd);
 }
 
-void CAIAICallback::SetLastMsgPos(float3 pos) {
+void springLegacyAI::CAIAICallback::SetLastMsgPos(float3 pos) {
 
 	float pos_f3[3];
 	pos.copyInto(pos_f3);
@@ -1595,7 +1599,7 @@ void CAIAICallback::SetLastMsgPos(float3 pos) {
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SET_LAST_POS_MESSAGE, &cmd);
 }
 
-void CAIAICallback::AddNotification(float3 pos, float3 color, float alpha) {
+void springLegacyAI::CAIAICallback::AddNotification(float3 pos, float3 color, float alpha) {
 
 	float pos_f3[3];
 	pos.copyInto(pos_f3);
@@ -1609,14 +1613,14 @@ void CAIAICallback::AddNotification(float3 pos, float3 color, float alpha) {
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_ADD_NOTIFICATION, &cmd);
 }
 
-bool CAIAICallback::SendResources(float mAmount, float eAmount, int receivingTeam) {
+bool springLegacyAI::CAIAICallback::SendResources(float mAmount, float eAmount, int receivingTeam) {
 
 	SSendResourcesCommand cmd = {mAmount, eAmount, receivingTeam};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SEND_RESOURCES, &cmd);
 	return cmd.ret_isExecuted;
 }
 
-int CAIAICallback::SendUnits(const std::vector<int>& unitIds, int receivingTeam) {
+int springLegacyAI::CAIAICallback::SendUnits(const std::vector<int>& unitIds, int receivingTeam) {
 
 	int* arr_unitIds = (int*) calloc(unitIds.size(), sizeof(int));
 	for (size_t i=0; i < unitIds.size(); ++i) {
@@ -1628,7 +1632,7 @@ int CAIAICallback::SendUnits(const std::vector<int>& unitIds, int receivingTeam)
 	return cmd.ret_sentUnits;
 }
 
-void* CAIAICallback::CreateSharedMemArea(char* name, int size) {
+void* springLegacyAI::CAIAICallback::CreateSharedMemArea(char* name, int size) {
 
 	//SCreateSharedMemAreaCommand cmd = {name, size};
 	//sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SHARED_MEM_AREA_CREATE, &cmd);
@@ -1638,7 +1642,7 @@ void* CAIAICallback::CreateSharedMemArea(char* name, int size) {
 	return NULL;
 }
 
-void CAIAICallback::ReleasedSharedMemArea(char* name) {
+void springLegacyAI::CAIAICallback::ReleasedSharedMemArea(char* name) {
 
 	//SReleaseSharedMemAreaCommand cmd = {name};
 	//sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SHARED_MEM_AREA_RELEASE, &cmd);
@@ -1646,42 +1650,42 @@ void CAIAICallback::ReleasedSharedMemArea(char* name) {
 	assert(!deprecatedMethod);
 }
 
-int CAIAICallback::CreateGroup() {
+int springLegacyAI::CAIAICallback::CreateGroup() {
 
 	SCreateGroupCommand cmd = {};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_GROUP_CREATE, &cmd);
 	return cmd.ret_groupId;
 }
 
-void CAIAICallback::EraseGroup(int groupId) {
+void springLegacyAI::CAIAICallback::EraseGroup(int groupId) {
 
 	SEraseGroupCommand cmd = {groupId};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_GROUP_ERASE, &cmd);
 }
 
-bool CAIAICallback::AddUnitToGroup(int unitId, int groupId) {
+bool springLegacyAI::CAIAICallback::AddUnitToGroup(int unitId, int groupId) {
 
 	SGroupAddUnitCommand cmd = {unitId, -1, 0, 0, groupId};
 	const int ret = sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_GROUP_ADD, &cmd);
 	return (ret == 0);
 }
 
-bool CAIAICallback::RemoveUnitFromGroup(int unitId) {
+bool springLegacyAI::CAIAICallback::RemoveUnitFromGroup(int unitId) {
 
 	SGroupAddUnitCommand cmd = {unitId, -1, 0, 0};
 	const int ret = sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_GROUP_CLEAR, &cmd);
 	return (ret == 0);
 }
 
-int CAIAICallback::GiveGroupOrder(int groupId, Command* c) {
+int springLegacyAI::CAIAICallback::GiveGroupOrder(int groupId, springLegacyAI::Command* c) {
 	return this->Internal_GiveOrder(-1, groupId, c);
 }
 
-int CAIAICallback::GiveOrder(int unitId, Command* c) {
+int springLegacyAI::CAIAICallback::GiveOrder(int unitId, springLegacyAI::Command* c) {
 	return this->Internal_GiveOrder(unitId, -1, c);
 }
 
-int CAIAICallback::Internal_GiveOrder(int unitId, int groupId, Command* c) {
+int springLegacyAI::CAIAICallback::Internal_GiveOrder(int unitId, int groupId, springLegacyAI::Command* c) {
 
 	const int maxUnits = sAICallback->Unit_getMax(skirmishAIId);
 
@@ -1695,7 +1699,7 @@ int CAIAICallback::Internal_GiveOrder(int unitId, int groupId, Command* c) {
 	return ret;
 }
 
-int CAIAICallback::InitPath(float3 start, float3 end, int pathType, float goalRadius) {
+int springLegacyAI::CAIAICallback::InitPath(float3 start, float3 end, int pathType, float goalRadius) {
 
 	float start_f3[3];
 	start.copyInto(start_f3);
@@ -1707,7 +1711,7 @@ int CAIAICallback::InitPath(float3 start, float3 end, int pathType, float goalRa
 	return cmd.ret_pathId;
 }
 
-float3 CAIAICallback::GetNextWaypoint(int pathId) {
+float3 springLegacyAI::CAIAICallback::GetNextWaypoint(int pathId) {
 
 	float ret_posF3[3];
 	SGetNextWaypointPathCommand cmd = {pathId, ret_posF3};
@@ -1715,7 +1719,7 @@ float3 CAIAICallback::GetNextWaypoint(int pathId) {
 	return float3(cmd.ret_nextWaypoint_posF3_out);
 }
 
-float CAIAICallback::GetPathLength(float3 start, float3 end, int pathType, float goalRadius) {
+float springLegacyAI::CAIAICallback::GetPathLength(float3 start, float3 end, int pathType, float goalRadius) {
 
 	float start_f3[3];
 	start.copyInto(start_f3);
@@ -1726,13 +1730,13 @@ float CAIAICallback::GetPathLength(float3 start, float3 end, int pathType, float
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_GET_APPROXIMATE_LENGTH, &cmd); return cmd.ret_approximatePathLength;
 }
 
-void CAIAICallback::FreePath(int pathId) {
+void springLegacyAI::CAIAICallback::FreePath(int pathId) {
 
 	SFreePathCommand cmd = {pathId};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_FREE, &cmd);
 }
 
-void CAIAICallback::LineDrawerStartPath(const float3& pos, const float* color) {
+void springLegacyAI::CAIAICallback::LineDrawerStartPath(const float3& pos, const float* color) {
 
 	float pos_f3[3];
 	pos.copyInto(pos_f3);
@@ -1746,13 +1750,13 @@ void CAIAICallback::LineDrawerStartPath(const float3& pos, const float* color) {
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_START, &cmd);
 }
 
-void CAIAICallback::LineDrawerFinishPath() {
+void springLegacyAI::CAIAICallback::LineDrawerFinishPath() {
 
 	SFinishPathDrawerCommand cmd = {};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_FINISH, &cmd);
 }
 
-void CAIAICallback::LineDrawerDrawLine(const float3& endPos, const float* color) {
+void springLegacyAI::CAIAICallback::LineDrawerDrawLine(const float3& endPos, const float* color) {
 
 	float endPos_f3[3];
 	endPos.copyInto(endPos_f3);
@@ -1766,7 +1770,7 @@ void CAIAICallback::LineDrawerDrawLine(const float3& endPos, const float* color)
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_DRAW_LINE, &cmd);
 }
 
-void CAIAICallback::LineDrawerDrawLineAndIcon(int cmdId, const float3& endPos, const float* color) {
+void springLegacyAI::CAIAICallback::LineDrawerDrawLineAndIcon(int cmdId, const float3& endPos, const float* color) {
 
 	float endPos_f3[3];
 	endPos.copyInto(endPos_f3);
@@ -1780,13 +1784,13 @@ void CAIAICallback::LineDrawerDrawLineAndIcon(int cmdId, const float3& endPos, c
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_DRAW_LINE_AND_ICON, &cmd);
 }
 
-void CAIAICallback::LineDrawerDrawIconAtLastPos(int cmdId) {
+void springLegacyAI::CAIAICallback::LineDrawerDrawIconAtLastPos(int cmdId) {
 
 	SDrawIconAtLastPosPathDrawerCommand cmd = {cmdId};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_DRAW_ICON_AT_LAST_POS, &cmd);
 }
 
-void CAIAICallback::LineDrawerBreak(const float3& endPos, const float* color) {
+void springLegacyAI::CAIAICallback::LineDrawerBreak(const float3& endPos, const float* color) {
 
 	float endPos_f3[3];
 	endPos.copyInto(endPos_f3);
@@ -1800,19 +1804,19 @@ void CAIAICallback::LineDrawerBreak(const float3& endPos, const float* color) {
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_BREAK, &cmd);
 }
 
-void CAIAICallback::LineDrawerRestart() {
+void springLegacyAI::CAIAICallback::LineDrawerRestart() {
 
 	SRestartPathDrawerCommand cmd = {false};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_RESTART, &cmd);
 }
 
-void CAIAICallback::LineDrawerRestartSameColor() {
+void springLegacyAI::CAIAICallback::LineDrawerRestartSameColor() {
 
 	SRestartPathDrawerCommand cmd = {true};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_RESTART, &cmd);
 }
 
-int CAIAICallback::CreateSplineFigure(float3 pos1, float3 pos2, float3 pos3, float3 pos4, float width, int arrow, int lifeTime, int figureGroupId) {
+int springLegacyAI::CAIAICallback::CreateSplineFigure(float3 pos1, float3 pos2, float3 pos3, float3 pos4, float width, int arrow, int lifeTime, int figureGroupId) {
 
 	float pos1_f3[3];
 	pos1.copyInto(pos1_f3);
@@ -1838,7 +1842,7 @@ int CAIAICallback::CreateSplineFigure(float3 pos1, float3 pos2, float3 pos3, flo
 	return cmd.ret_newFigureGroupId;
 }
 
-int CAIAICallback::CreateLineFigure(float3 pos1, float3 pos2, float width, int arrow, int lifeTime, int figureGroupId) {
+int springLegacyAI::CAIAICallback::CreateLineFigure(float3 pos1, float3 pos2, float width, int arrow, int lifeTime, int figureGroupId) {
 
 	float pos1_f3[3];
 	pos1.copyInto(pos1_f3);
@@ -1858,7 +1862,7 @@ int CAIAICallback::CreateLineFigure(float3 pos1, float3 pos2, float width, int a
 	return cmd.ret_newFigureGroupId;
 }
 
-void CAIAICallback::SetFigureColor(int figureGroupId, float red, float green, float blue, float alpha) {
+void springLegacyAI::CAIAICallback::SetFigureColor(int figureGroupId, float red, float green, float blue, float alpha) {
 
 	short color_s3[3];
 	color_s3[0] = (short) red * 256;
@@ -1870,13 +1874,13 @@ void CAIAICallback::SetFigureColor(int figureGroupId, float red, float green, fl
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_SET_COLOR, &cmd);
 }
 
-void CAIAICallback::DeleteFigureGroup(int figureGroupId) {
+void springLegacyAI::CAIAICallback::DeleteFigureGroup(int figureGroupId) {
 
 	SDeleteFigureDrawerCommand cmd = {figureGroupId};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_DELETE, &cmd);
 }
 
-void CAIAICallback::DrawUnit(const char* name, float3 pos, float rotation, int lifeTime, int unitTeamId, bool transparent, bool drawBorder, int facing) {
+void springLegacyAI::CAIAICallback::DrawUnit(const char* name, float3 pos, float rotation, int lifeTime, int unitTeamId, bool transparent, bool drawBorder, int facing) {
 
 	float pos_f3[3];
 	pos.copyInto(pos_f3);
@@ -1896,28 +1900,28 @@ void CAIAICallback::DrawUnit(const char* name, float3 pos, float rotation, int l
 
 
 
-bool CAIAICallback::IsDebugDrawerEnabled() const {
+bool springLegacyAI::CAIAICallback::IsDebugDrawerEnabled() const {
 	return sAICallback->Debug_GraphDrawer_isEnabled(skirmishAIId);
 }
 
-void CAIAICallback::DebugDrawerAddGraphPoint(int lineId, float x, float y) {
+void springLegacyAI::CAIAICallback::DebugDrawerAddGraphPoint(int lineId, float x, float y) {
 	SAddPointLineGraphDrawerDebugCommand cmd = {lineId, x, y};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_GRAPH_LINE_ADD_POINT, &cmd);
 }
-void CAIAICallback::DebugDrawerDelGraphPoints(int lineId, int numPoints) {
+void springLegacyAI::CAIAICallback::DebugDrawerDelGraphPoints(int lineId, int numPoints) {
 	SDeletePointsLineGraphDrawerDebugCommand cmd = {lineId, numPoints};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_GRAPH_LINE_DELETE_POINTS, &cmd);
 }
 
-void CAIAICallback::DebugDrawerSetGraphPos(float x, float y) {
+void springLegacyAI::CAIAICallback::DebugDrawerSetGraphPos(float x, float y) {
 	SSetPositionGraphDrawerDebugCommand cmd = {x, y};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_GRAPH_SET_POS, &cmd);
 }
-void CAIAICallback::DebugDrawerSetGraphSize(float w, float h) {
+void springLegacyAI::CAIAICallback::DebugDrawerSetGraphSize(float w, float h) {
 	SSetSizeGraphDrawerDebugCommand cmd = {w, h};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_GRAPH_SET_SIZE, &cmd);
 }
-void CAIAICallback::DebugDrawerSetGraphLineColor(int lineId, const float3& color) {
+void springLegacyAI::CAIAICallback::DebugDrawerSetGraphLineColor(int lineId, const float3& color) {
 
 	short color_s3[3];
 	color_s3[0] = (short) color[0] * 256;
@@ -1927,40 +1931,40 @@ void CAIAICallback::DebugDrawerSetGraphLineColor(int lineId, const float3& color
 	SSetColorLineGraphDrawerDebugCommand cmd = {lineId, color_s3};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_GRAPH_LINE_SET_COLOR, &cmd);
 }
-void CAIAICallback::DebugDrawerSetGraphLineLabel(int lineId, const char* label) {
+void springLegacyAI::CAIAICallback::DebugDrawerSetGraphLineLabel(int lineId, const char* label) {
 	SSetLabelLineGraphDrawerDebugCommand cmd = {lineId, label};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_GRAPH_LINE_SET_LABEL, &cmd);
 }
 
-int CAIAICallback::DebugDrawerAddOverlayTexture(const float* texData, int w, int h) {
+int springLegacyAI::CAIAICallback::DebugDrawerAddOverlayTexture(const float* texData, int w, int h) {
 	SAddOverlayTextureDrawerDebugCommand cmd = {0, texData, w, h};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_ADD, &cmd);
 	return cmd.ret_overlayTextureId;
 }
-void CAIAICallback::DebugDrawerUpdateOverlayTexture(int overlayTextureId, const float* texData, int x, int y, int w, int h) {
+void springLegacyAI::CAIAICallback::DebugDrawerUpdateOverlayTexture(int overlayTextureId, const float* texData, int x, int y, int w, int h) {
 	SUpdateOverlayTextureDrawerDebugCommand cmd = {overlayTextureId, texData, x, y, w, h};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_UPDATE, &cmd);
 }
-void CAIAICallback::DebugDrawerDelOverlayTexture(int overlayTextureId) {
+void springLegacyAI::CAIAICallback::DebugDrawerDelOverlayTexture(int overlayTextureId) {
 	SDeleteOverlayTextureDrawerDebugCommand cmd = {overlayTextureId};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_DELETE, &cmd);
 }
-void CAIAICallback::DebugDrawerSetOverlayTexturePos(int overlayTextureId, float x, float y) {
+void springLegacyAI::CAIAICallback::DebugDrawerSetOverlayTexturePos(int overlayTextureId, float x, float y) {
 	SSetPositionOverlayTextureDrawerDebugCommand cmd = {overlayTextureId, x, y};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_POS, &cmd);
 }
-void CAIAICallback::DebugDrawerSetOverlayTextureSize(int overlayTextureId, float w, float h) {
+void springLegacyAI::CAIAICallback::DebugDrawerSetOverlayTextureSize(int overlayTextureId, float w, float h) {
 	SSetSizeOverlayTextureDrawerDebugCommand cmd = {overlayTextureId, w, h};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_SIZE, &cmd);
 }
-void CAIAICallback::DebugDrawerSetOverlayTextureLabel(int overlayTextureId, const char* texLabel) {
+void springLegacyAI::CAIAICallback::DebugDrawerSetOverlayTextureLabel(int overlayTextureId, const char* texLabel) {
 	SSetLabelOverlayTextureDrawerDebugCommand cmd = {overlayTextureId, texLabel};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_LABEL, &cmd);
 }
 
 
 
-int CAIAICallback::HandleCommand(int commandId, void* data) {
+int springLegacyAI::CAIAICallback::HandleCommand(int commandId, void* data) {
 	int ret = -99;
 
 	switch (commandId) {
@@ -2076,7 +2080,7 @@ int CAIAICallback::HandleCommand(int commandId, void* data) {
 	return ret;
 }
 
-bool CAIAICallback::ReadFile(const char* filename, void* buffer, int bufferLen) {
+bool springLegacyAI::CAIAICallback::ReadFile(const char* filename, void* buffer, int bufferLen) {
 
 //	SReadFileCommand cmd = {name, buffer, bufferLen};
 //	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_READ_FILE, &cmd); return cmd.ret_isExecuted;
@@ -2085,14 +2089,16 @@ bool CAIAICallback::ReadFile(const char* filename, void* buffer, int bufferLen) 
 
 
 #define AIAICALLBACK_CALL_LUA(HandleName, HANDLENAME)                                                                     \
-	const char* CAIAICallback::CallLua ## HandleName(const char* inData, int inSize, int* outSize) {                      \
+	const char* springLegacyAI::CAIAICallback::CallLua ## HandleName(const char* inData, int inSize, int* outSize) {      \
 		SCallLua ## HandleName ## Command cmd = {inData, inSize};                                                         \
 		sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_CALL_LUA_ ## HANDLENAME, &cmd); \
                                                                                                                           \
-		if (cmd.ret_outData != NULL) {                                                                                    \
-			*outSize = strlen(cmd.ret_outData);                                                                           \
-		} else {                                                                                                          \
-			*outSize = -1;                                                                                                \
+		if (outSize != NULL) {                                                                                            \
+			if (cmd.ret_outData != NULL) {                                                                                \
+				*outSize = strlen(cmd.ret_outData);                                                                       \
+			} else {                                                                                                      \
+				*outSize = -1;                                                                                            \
+			}                                                                                                             \
 		}                                                                                                                 \
                                                                                                                           \
 		return cmd.ret_outData;                                                                                           \
@@ -2105,7 +2111,7 @@ AIAICALLBACK_CALL_LUA(UI, UI)
 
 
 
-std::map<std::string, std::string> CAIAICallback::GetMyInfo()
+std::map<std::string, std::string> springLegacyAI::CAIAICallback::GetMyInfo()
 {
 	std::map<std::string, std::string> info;
 
@@ -2121,7 +2127,7 @@ std::map<std::string, std::string> CAIAICallback::GetMyInfo()
 	return info;
 }
 
-std::map<std::string, std::string> CAIAICallback::GetMyOptionValues()
+std::map<std::string, std::string> springLegacyAI::CAIAICallback::GetMyOptionValues()
 {
 	std::map<std::string, std::string> optionVals;
 

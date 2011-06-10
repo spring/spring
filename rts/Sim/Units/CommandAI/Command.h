@@ -141,6 +141,26 @@ public:
 		, timeOut(INT_MAX)
 		, id(0)
 	{}
+
+	Command(const Command& c)
+		: aiCommandId(c.aiCommandId)
+		, options(c.options)
+		, params(c.params)
+		, tag(c.tag)
+		, timeOut(c.timeOut)
+		, id(c.id)
+	{}
+
+	Command& operator = (const Command& c) {
+		id = c.id;
+		aiCommandId = c.aiCommandId;
+		options = c.options;
+		tag = c.tag;
+		timeOut = c.timeOut;
+		params = c.params;
+		return *this;
+	}
+
 	~Command() { params.clear(); }
 
 	bool IsAreaCommand() const {

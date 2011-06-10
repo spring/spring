@@ -78,7 +78,6 @@ class CLuaRules : public CLuaHandleSynced
 		// unsynced
 		bool DrawUnit(int unitID);
 		bool DrawFeature(int featureID);
-		const char* AICallIn(const char* data, int inSize);
 
 	private:
 		CLuaRules();
@@ -114,7 +113,6 @@ class CLuaRules : public CLuaHandleSynced
 
 		bool haveDrawUnit;
 		bool haveDrawFeature;
-		bool haveAICallIn;
 
 	private:
 		static const int* currentCobArgs;

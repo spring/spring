@@ -133,18 +133,6 @@ public:
 
 	void SetHotBinding(const std::string& action) { hotBinding = action; }
 
-	/**
-	 * Register a new action-executor for a synced chat command.
-	 * @param syncedActionExecutor has to be new'ed, will be delete'ed internally.
-	 */
-	void RegisterSyncedActionExecutor(ISyncedActionExecutor* syncedActionExecutor);
-
-	/**
-	 * Register a new action-executor for an unsynced chat command.
-	 * @param unsyncedActionExecutor has to be new'ed, will be delete'ed internally.
-	 */
-	void RegisterUnsyncedActionExecutor(IUnsyncedActionExecutor* unsyncedActionExecutor);
-
 public:
 	/// Save the game state to file.
 	void SaveGame(const std::string& filename, bool overwrite);
@@ -187,9 +175,6 @@ public:
 
 	unsigned lastFrameTime;
 
-	std::map<std::string, ISyncedActionExecutor*> syncedActionExecutors;
-	std::map<std::string, IUnsyncedActionExecutor*> unsyncedActionExecutors;
-
 public:
 	struct PlayerTrafficInfo {
 		PlayerTrafficInfo() : total(0) {}
@@ -227,6 +212,9 @@ public:
 	float skipOldUserSpeed;
 	unsigned skipLastDraw;
 
+	/**
+	 * @see CGameServer#speedControl
+	 */
 	int speedControl;
 	int luaLockTime;
 	int luaExportSize;

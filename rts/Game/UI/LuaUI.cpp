@@ -422,41 +422,6 @@ void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect)
 }
 
 
-const char* CLuaUI::AICallIn(const char* inData, int inSize)
-{
-	// FIXME: near-duplicate of LuaRules::AICallIn
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
-
-	static const LuaHashString cmdStr("AICallIn");
-
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return NULL; // the call is not defined
-	}
-
-	int argCount = 0;
-	const char* outData = NULL;
-
-	if (inData != NULL) {
-		if (inSize < 0) {
-			inSize = strlen(inData);
-		}
-		lua_pushlstring(L, inData, inSize);
-		argCount = 1;
-	}
-
-	if (!RunCallIn(cmdStr, argCount, 1)) {
-		return NULL;
-	}
-
-	if (lua_isstring(L, -1))
-		outData = lua_tolstring(L, -1, NULL);
-
-	lua_pop(L, 1);
-	return outData;
-}
-
-
 /******************************************************************************/
 
 bool CLuaUI::HasLayoutButtons()

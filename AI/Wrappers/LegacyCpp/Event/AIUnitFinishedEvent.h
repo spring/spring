@@ -18,10 +18,13 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AIUNITFINISHEDEVENT_H
-#define	_AIUNITFINISHEDEVENT_H
+#ifndef _AI_UNIT_FINISHED_EVENT_H
+#define	_AI_UNIT_FINISHED_EVENT_H
 
 #include "AIEvent.h"
+
+
+namespace springLegacyAI {
 
 class CAIUnitFinishedEvent : public CAIEvent {
 public:
@@ -36,4 +39,6 @@ private:
 	SUnitFinishedEvent event;
 };
 
-#endif // _AIUNITFINISHEDEVENT_H
+} // namespace springLegacyAI
+
+#endif // _AI_UNIT_FINISHED_EVENT_H

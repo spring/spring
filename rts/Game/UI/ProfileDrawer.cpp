@@ -13,17 +13,21 @@
 
 ProfileDrawer* ProfileDrawer::instance = NULL;
 
-void ProfileDrawer::Enable()
+void ProfileDrawer::SetEnabled(bool enable)
 {
-	assert(instance == NULL);
-	instance = new ProfileDrawer();
+	if (enable) {
+		assert(instance == NULL);
+		instance = new ProfileDrawer();
+	} else {
+		ProfileDrawer* tmpInstance = instance;
+		instance = NULL;
+		delete tmpInstance;
+	}
 }
 
-
-void ProfileDrawer::Disable()
+bool ProfileDrawer::IsEnabled()
 {
-	delete instance;
-	instance = NULL;
+	return (instance != NULL);
 }
 
 static const float start_x = 0.6f;

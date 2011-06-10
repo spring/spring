@@ -4,6 +4,9 @@
 
 #include "System/creg/creg_cond.h"
 
+
+namespace springLegacyAI {
+
 CR_BIND(Command, );
 CR_REG_METADATA(Command, (
 				CR_MEMBER(id),
@@ -30,4 +33,6 @@ CR_REG_METADATA(CommandDescription, (
 				CR_MEMBER(params),
 				CR_RESERVED(32)
 				));
+
+} // namespace springLegacyAI
 
