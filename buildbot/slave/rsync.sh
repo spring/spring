@@ -3,6 +3,7 @@ set -e
 . buildbot/slave/prepare.sh
 
 REMOTE_HOST=springrts.com
+REMOTE_USER=buildbot
 REMOTE_BASE=/home/buildbot/www
 BASE_ARCHIVE="${TMP_PATH}/${VERSION}_base.7z"
 MINGWLIBS_ARCHIVE="${TMP_PATH}/${VERSION}_mingwlibs.7z"
@@ -79,7 +80,7 @@ cd ${PWDOLD}
 if [ ${REMOTE_HOST} = localhost ] && [ -w ${REMOTE_BASE} ]; then
 	${CMD} ${TMP_BASE}/ ${REMOTE_BASE}/
 else
-	${CMD} ${TMP_BASE}/ ${REMOTE_HOST}:${REMOTE_BASE}/
+	${CMD} ${TMP_BASE}/ ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_BASE}/
 fi
 
 # Clean up.
