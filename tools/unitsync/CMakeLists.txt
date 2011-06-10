@@ -80,12 +80,29 @@ set(unitsync_files
 	${CMAKE_CURRENT_SOURCE_DIR}/Syncer.cpp
 	)
 
-ADD_LIBRARY(unitsync MODULE ${unitsync_files})
+ADD_LIBRARY(unitsync SHARED ${unitsync_files})
 TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs})
 if (MINGW)
 	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--add-stdcall-alias)
 endif (MINGW)
 FixLibName(unitsync)
+
+#add only if pybindgen and stuff was found
+find_package(PythonLibs)
+
+ADD_CUSTOM_TARGET(unitsync-python-wrapper)
+ADD_CUSTOM_Command( TARGET unitsync-python-wrapper 
+	COMMAND ${CMAKE_SOURCE_DIR}/tools/unitsync/binding_generator.py ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR}/rts 
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tools/unitsync )
+ADD_CUSTOM_Command( TARGET unitsync-python-wrapper 	
+	COMMAND python generate_unitsync_python_wrapper.py > unitsync_python_wrapper.cc 
+		WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
+INCLUDE_DIRECTORIES( ${PYTHON_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/tools/unitsync )
+SET_SOURCE_FILES_PROPERTIES(${CMAKE_BINARY_DIR}/unitsync_python_wrapper.cc PROPERTIES GENERATED TRUE)
+ADD_LIBRARY( pyunitsync MODULE ${CMAKE_BINARY_DIR}/unitsync_python_wrapper.cc )
+SET_TARGET_PROPERTIES(pyunitsync PROPERTIES PREFIX "")
+ADD_DEPENDENCIES(pyunitsync unitsync-python-wrapper )
+TARGET_LINK_LIBRARIES( pyunitsync unitsync)
 
 install (TARGETS unitsync DESTINATION ${LIBDIR})
 
