@@ -2,7 +2,7 @@
 set -e
 . buildbot/slave/prepare.sh
 
-REMOTE_HOST=localhost
+REMOTE_HOST=springrts.com
 REMOTE_BASE=/home/buildbot/www
 BASE_ARCHIVE="${TMP_PATH}/${VERSION}_base.7z"
 MINGWLIBS_ARCHIVE="${TMP_PATH}/${VERSION}_mingwlibs.7z"
@@ -20,7 +20,7 @@ PWDOLD=$(pwd)
 
 for i in BUILDDIR CONTENT_DIR MINGWLIBS_DIR ; do
 	eval echo Using $i: \$$i
-done  
+done
 
 # Usage: zip <file> <name>
 function zip() {
