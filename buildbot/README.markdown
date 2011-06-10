@@ -15,7 +15,7 @@ Add to the end of /etc/schroot/schroot.conf:
 	root-groups=root
 	personality=linux32
 	run-setup-scripts=true
-	script-config=script-buildbot
+	script-config=script-defaults
 
 ## Building and entering the chroot
 
@@ -44,7 +44,7 @@ Add to the end of /etc/schroot/schroot.conf:
 
 Build dependencies for Windows build (except MinGW, see below):
 
-	apt-get install cmake nsis p7zip-full unzip wget
+	apt-get install cmake nsis p7zip-full unzip wget pandoc
 	apt-get install openjdk-6-jdk   #to enable building of Java AIs
 
 Build dependencies for Linux build:
@@ -125,3 +125,18 @@ Substitute MASTER with host:port of the buildmaster and SLAVENAME and PASSWORD w
 ## ccache
 
 To install ccache simply run `apt-get install ccache` (inside the chroot) and (optionally) tweak the settings (cache size etc.)
+
+# Outside the chroot again
+
+Get the Makefile from the Spring repository that can be used to start/stop the slave easily:
+
+	wget https://raw.github.com/spring/spring/master/buildbot/master/buildbot.mk -O Makefile
+
+Then you can use:
+
+	make start-slave    # creates schroot session and starts buildslave in it
+	make stop-slave     # stops buildslave and remove schroot session
+	make enter-chroot   # enter the schroot as buildbot user
+
+Make sure you review the Makefile and fix the chroot name, paths, etc. before using it!
+(That applies to anything in this readme really.)
