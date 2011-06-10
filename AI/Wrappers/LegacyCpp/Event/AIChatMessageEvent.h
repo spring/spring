@@ -28,7 +28,7 @@ namespace springLegacyAI {
 
 class CAIChatMessageEvent : public CAIEvent {
 public:
-	CAIChatMessageEvent(const SMessageEvent& event) : event(event) {}
+	CAIChatMessageEvent(const SChatMessageEvent& event) : event(event) {}
 	~CAIChatMessageEvent() {}
 
 	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
@@ -36,7 +36,7 @@ public:
 	}
 
 private:
-	SMessageEvent event;
+	SChatMessageEvent event;
 };
 
 } // namespace springLegacyAI

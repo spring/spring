@@ -68,8 +68,8 @@ int springLegacyAI::CAIAI::handleEvent(int topic, const void* data) {
 				break;
 			}
 
-			case EVENT_MESSAGE: {
-				e = new CAIChatMessageEvent(*((const SMessageEvent*) data));
+			case EVENT_CHAT_MESSAGE: {
+				e = new CAIChatMessageEvent(*((const SChatMessageEvent*) data));
 			} break;
 			case EVENT_LUA_MESSAGE: {
 				e = new CAILuaMessageEvent(*((const SLuaMessageEvent*) data));
