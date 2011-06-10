@@ -496,7 +496,7 @@ EXPORT(unsigned int) GetMapChecksumFromName(const char* mapName);
  * An example usage would be GetMinimap("SmallDivide", 2).
  * This would return a 16 bit packed RGB-565 256x256 (= 1024/2^2) bitmap.
  */
-EXPORT(unsigned short*) GetMinimap(const char* fileName, int mipLevel);
+EXPORT(short unsigned int*) GetMinimap(const char* fileName, int mipLevel);
 /**
  * @brief Retrieves dimensions of infomap for a map.
  * @param mapName  The name of the map, e.g. "SmallDivide".
@@ -507,6 +507,8 @@ EXPORT(unsigned short*) GetMinimap(const char* fileName, int mipLevel);
  *   the infomap's size (>= 0) on success
  * @see GetInfoMap
  */
+// -#- @width(transfer_ownership=true, direction=out) -#-
+// -#- @height(transfer_ownership=true, direction=out) -#-
 EXPORT(int         ) GetInfoMapSize(const char* mapName, const char* name, int* width, int* height);
 /**
  * @brief Retrieves infomap data of a map.
@@ -526,6 +528,7 @@ EXPORT(int         ) GetInfoMapSize(const char* mapName, const char* name, int* 
  * this function to convert from one format to another. Currently only the
  * conversion from 16 bpp to 8 bpp is implemented.
  */
+// -#- @data(transfer_ownership=true, direction=out) -#-
 EXPORT(int         ) GetInfoMap(const char* mapName, const char* name, unsigned char* data, int typeHint);
 
 /**
@@ -1180,6 +1183,7 @@ EXPORT(void        ) CloseFileVFS(int file);
  * @return -1 on error; the number of bytes read on success
  * (if this is less than length, you reached the end of the file.)
  */
+// -#- @buf(transfer_ownership=false, direction=out) -#-
 EXPORT(int         ) ReadFileVFS(int file, unsigned char* buf, int numBytes);
 /**
  * @brief Retrieve size of a file in the VFS
@@ -1280,6 +1284,7 @@ EXPORT(void        ) CloseArchive(int archive);
  *   will contain the file-size as output on success
  * @return Zero on error; a non-zero file handle on success.
  */
+// -#- @size(transfer_ownership=true, direction=inout) -#-
 EXPORT(int         ) FindFilesArchive(int archive, int file, char* nameBuf, int* size);
 /**
  * @brief Open an archive member
@@ -1301,6 +1306,7 @@ EXPORT(int         ) OpenArchiveFile(int archive, const char* name);
  * @return -1 on error; the number of bytes read on success
  * (if this is less than numBytes you reached the end of the file.)
  */
+// -#- @buffer(transfer_ownership=false, direction=out) -#-
 EXPORT(int         ) ReadArchiveFile(int archive, int file, unsigned char* buffer, int numBytes);
 /**
  * @brief Close an archive member
