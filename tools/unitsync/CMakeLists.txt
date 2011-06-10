@@ -80,7 +80,7 @@ set(unitsync_files
 	${CMAKE_CURRENT_SOURCE_DIR}/Syncer.cpp
 	)
 
-ADD_LIBRARY(unitsync SHARED ${unitsync_files})
+ADD_LIBRARY(unitsync MODULE ${unitsync_files})
 TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs})
 if (MINGW)
 	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--add-stdcall-alias)
@@ -99,10 +99,10 @@ ADD_CUSTOM_Command( TARGET unitsync-python-wrapper
 		WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
 INCLUDE_DIRECTORIES( ${PYTHON_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/tools/unitsync )
 SET_SOURCE_FILES_PROPERTIES(${CMAKE_BINARY_DIR}/unitsync_python_wrapper.cc PROPERTIES GENERATED TRUE)
-ADD_LIBRARY( pyunitsync MODULE ${CMAKE_BINARY_DIR}/unitsync_python_wrapper.cc )
+ADD_LIBRARY( pyunitsync MODULE ${CMAKE_BINARY_DIR}/unitsync_python_wrapper.cc ${unitsync_files} )
 SET_TARGET_PROPERTIES(pyunitsync PROPERTIES PREFIX "")
 ADD_DEPENDENCIES(pyunitsync unitsync-python-wrapper )
-TARGET_LINK_LIBRARIES( pyunitsync unitsync)
+TARGET_LINK_LIBRARIES( pyunitsync ${unitsync_libs})
 
 install (TARGETS unitsync DESTINATION ${LIBDIR})
 
