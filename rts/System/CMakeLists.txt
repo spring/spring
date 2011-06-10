@@ -49,7 +49,6 @@ SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/SyncTracer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/SyncedFloat3.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/backtrace.c"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/bget.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/get_executable_name.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/TdfParser.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/TimeProfiler.cpp"
