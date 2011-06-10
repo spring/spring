@@ -50,7 +50,8 @@ Build dependencies for Windows build (except MinGW, see below):
 Build dependencies for Linux build:
 
 	apt-get install libboost-all-dev libdevil-dev libfreetype6-dev libopenal-dev \
-		libogg-dev libvorbis-dev libglew-dev libsdl-dev libxcursor-dev
+		libogg-dev libvorbis-dev libglew-dev libsdl-dev libxcursor-dev \
+		cppcheck
 
 ## Recompile MinGW package with dwarf2 exceptions instead of sjlj exceptions (as root)
 
