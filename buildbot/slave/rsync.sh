@@ -10,7 +10,8 @@ MINGWLIBS_ARCHIVE="${TMP_PATH}/${VERSION}_mingwlibs.7z"
 AIS_ARCHIVE="${TMP_PATH}/${VERSION}_ais.z7"
 CONTENT_DIR=${SOURCEDIR}/cont
 MINGWLIBS_DIR=${SOURCEDIR}/../../mingwlibs/dll
-CMD="rsync -avz --chmod=D+rx,F+r"
+RSYNC="rsync -avz --chmod=D+rx,F+r"
+REMOTE_RSYNC="nice -19 ionice -c3 rsync" #prevent QQ about rsync killing server
 #Ultra settings
 SEVENZIP="7za u -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on"
 
@@ -78,9 +79,9 @@ cd ${PWDOLD}
 
 # Rsync archives to a world-visible location.
 if [ ${REMOTE_HOST} = localhost ] && [ -w ${REMOTE_BASE} ]; then
-	${CMD} ${TMP_BASE}/ ${REMOTE_BASE}/
+	${RSYNC} ${TMP_BASE}/ ${REMOTE_BASE}/
 else
-	${CMD} ${TMP_BASE}/ ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_BASE}/
+	${RSYNC} --rsync-path="${REMOTE_RSYNC}" ${TMP_BASE}/ ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_BASE}/
 fi
 
 # Clean up.
