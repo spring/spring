@@ -69,7 +69,6 @@ if    (UNITSYNC_PYTHON_WRAPPER)
 				endif(EXISTS ../${file})
 			endif(IS_ABSOLUTE ${file} )
 		ENDFOREACH( file ${unitsync_files} )
-		message( STATUS  ${transformed_unitsync_files} )
 		
 		ADD_LIBRARY(${pythonUnitsyncTarget} MODULE "${pythonWrapperCpp}" ${transformed_unitsync_files})
 		SET_TARGET_PROPERTIES(${pythonUnitsyncTarget} PROPERTIES PREFIX "")
