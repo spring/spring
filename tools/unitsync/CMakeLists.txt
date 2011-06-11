@@ -82,28 +82,67 @@ set(unitsync_files
 
 ADD_LIBRARY(unitsync MODULE ${unitsync_files})
 TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs})
-if (MINGW)
+if    (MINGW)
 	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--add-stdcall-alias)
 endif (MINGW)
 FixLibName(unitsync)
 
-#add only if pybindgen and stuff was found
-find_package(PythonLibs)
+install(TARGETS unitsync DESTINATION ${LIBDIR})
 
-ADD_CUSTOM_TARGET(unitsync-python-wrapper)
-ADD_CUSTOM_Command( TARGET unitsync-python-wrapper 
-	COMMAND ${CMAKE_SOURCE_DIR}/tools/unitsync/binding_generator.py ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR}/rts 
-		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tools/unitsync )
-ADD_CUSTOM_Command( TARGET unitsync-python-wrapper 	
-	COMMAND python generate_unitsync_python_wrapper.py > unitsync_python_wrapper.cc 
-		WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
-INCLUDE_DIRECTORIES( ${PYTHON_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/tools/unitsync )
-SET_SOURCE_FILES_PROPERTIES(${CMAKE_BINARY_DIR}/unitsync_python_wrapper.cc PROPERTIES GENERATED TRUE)
-ADD_LIBRARY( pyunitsync MODULE ${CMAKE_BINARY_DIR}/unitsync_python_wrapper.cc ${unitsync_files} )
-SET_TARGET_PROPERTIES(pyunitsync PROPERTIES PREFIX "")
-ADD_DEPENDENCIES(pyunitsync unitsync-python-wrapper )
-TARGET_LINK_LIBRARIES( pyunitsync ${unitsync_libs})
+set(UNITSYNC_PYTHON_WRAPPER TRUE CACHE BOOL "Create a python wrapper for unitsync, if python is found on the system")
+if    (UNITSYNC_PYTHON_WRAPPER)
+	FIND_PACKAGE(PythonLibs)
+	FIND_PACKAGE(PythonInterp)
 
-install (TARGETS unitsync DESTINATION ${LIBDIR})
+	if    (PYTHONLIBS_FOUND AND PYTHONINTERP_FOUND)
+		MESSAGE(STATUS "Python unitsync wrapper will be created")
+
+		SET(pythonUnitsyncTarget    pyunitsync)
+		SET(pythonWrapperGenerator "${CMAKE_CURRENT_SOURCE_DIR}/binding_generator.py")
+		SET(pythonWrapperScript    "${CMAKE_CURRENT_BINARY_DIR}/generate_unitsync_python_wrapper.py")
+		SET(pythonWrapperCpp       "${CMAKE_CURRENT_BINARY_DIR}/unitsync_python_wrapper.cc")
+		SET_SOURCE_FILES_PROPERTIES("${pythonWrapperScript}" "${pythonWrapperCpp}" PROPERTIES GENERATED TRUE)
+
+		ADD_CUSTOM_COMMAND(
+			OUTPUT
+				"${CMAKE_CURRENT_SOURCE_DIR}/unitsync_api.h"
+				"${pythonWrapperScript}"
+			COMMAND
+				"${PYTHON_EXECUTABLE}" "${pythonWrapperGenerator}"
+				"${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/rts"
+			DEPENDS
+				"${pythonWrapperGenerator}"
+			WORKING_DIRECTORY
+				"${CMAKE_CURRENT_BINARY_DIR}"
+			COMMENT
+				"  ${pythonUnitsyncTarget}: Generating the wrapper script" VERBATIM
+			)
+
+		ADD_CUSTOM_COMMAND(
+			OUTPUT
+				"${pythonWrapperCpp}"
+			COMMAND
+				"${PYTHON_EXECUTABLE}" "${pythonWrapperScript}"
+				">" "${pythonWrapperCpp}"
+			DEPENDS
+				"${pythonWrapperScript}"
+			WORKING_DIRECTORY
+				"${CMAKE_CURRENT_BINARY_DIR}"
+			COMMENT
+				"  ${pythonUnitsyncTarget}: Generating the wrapper C++ sources" VERBATIM
+			)
+
+		# TODO move the whole unitsync python wrapper into a sub-dir
+		INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_DIRS} "${CMAKE_CURRENT_SOURCE_DIR}")
+
+		ADD_LIBRARY(${pythonUnitsyncTarget} MODULE "${pythonWrapperCpp}" ${unitsync_files})
+		SET_TARGET_PROPERTIES(${pythonUnitsyncTarget} PROPERTIES PREFIX "")
+		TARGET_LINK_LIBRARIES(${pythonUnitsyncTarget} ${unitsync_libs})
+
+		#INSTALL(TARGETS ${pythonUnitsyncTarget} DESTINATION ${LIBDIR})
+	else  (PYTHONLIBS_FOUND AND PYTHONINTERP_FOUND)
+		MESSAGE(STATUS "Python unitsync wrapper will NOT be created")
+	endif (PYTHONLIBS_FOUND AND PYTHONINTERP_FOUND)
+endif (UNITSYNC_PYTHON_WRAPPER)
 
 Add_Subdirectory(test)
