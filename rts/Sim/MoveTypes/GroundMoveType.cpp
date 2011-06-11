@@ -464,9 +464,13 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 			const bool moreCommands = owner->commandAI->HasMoreMoveCommands();
 			const bool startBreaking = (haveFinalWaypoint && !atGoal);
 
-			const float reqTurnAngle = streflop::acosf(waypointDir.dot(flatFrontDir)) * (180.0f / PI);
+			const float reqTurnAngle = reversing?
+				(streflop::acosf(waypointDir.dot(-flatFrontDir)) * (180.0f / PI)):
+				(streflop::acosf(waypointDir.dot( flatFrontDir)) * (180.0f / PI));
 			const float maxTurnAngle = (turnRate / SPRING_CIRCLE_DIVS) * 360.0f;
-			const float reducedSpeed = maxSpeed * (maxTurnAngle / reqTurnAngle);
+			const float reducedSpeed = reversing?
+				(maxReverseSpeed * (maxTurnAngle / reqTurnAngle)):
+				(maxSpeed * (maxTurnAngle / reqTurnAngle));
 
 			if (startBreaking) {
 				// at this point, Update() will no longer call GetNextWaypoint()
@@ -476,7 +480,7 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 
 			if (!ud->turnInPlace) {
 				if (waypointDir.SqLength() > 0.1f) {
-					if (!wantReverse && (reqTurnAngle > maxTurnAngle)) {
+					if (reqTurnAngle > maxTurnAngle) {
 						wSpeed = std::min(wSpeed, std::max(ud->turnInPlaceSpeedLimit, reducedSpeed));
 					}
 				}
