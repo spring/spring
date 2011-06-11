@@ -292,6 +292,7 @@ EXPORT(const char* ) GetArchivePath(const char* archiveName);
  *		}
  *		@endcode
  */
+// -#- ignore -#-
 EXPORT(int         ) GetMapInfoEx(const char* mapName, MapInfo* outInfo, int version);
 /**
  * @brief Retrieve map info, equivalent to GetMapInfoEx(name, outInfo, 0)
@@ -301,6 +302,7 @@ EXPORT(int         ) GetMapInfoEx(const char* mapName, MapInfo* outInfo, int ver
  * @deprecated
  * @see GetMapCount
  */
+// -#- ignore -#-
 EXPORT(int         ) GetMapInfo(const char* mapName, MapInfo* outInfo);
 #endif // !defined(PLAIN_API_STRUCTURE)
 
@@ -496,7 +498,7 @@ EXPORT(unsigned int) GetMapChecksumFromName(const char* mapName);
  * An example usage would be GetMinimap("SmallDivide", 2).
  * This would return a 16 bit packed RGB-565 256x256 (= 1024/2^2) bitmap.
  */
-EXPORT(short unsigned int*) GetMinimap(const char* fileName, int mipLevel);
+EXPORT(unsigned short*) GetMinimap(const char* fileName, int mipLevel);
 /**
  * @brief Retrieves dimensions of infomap for a map.
  * @param mapName  The name of the map, e.g. "SmallDivide".
