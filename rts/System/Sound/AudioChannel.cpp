@@ -11,7 +11,6 @@
 #include "Sim/Units/Unit.h"
 
 extern boost::recursive_mutex soundMutex;
-boost::recursive_mutex chanMutex;
 
 const size_t AudioChannel::MAX_STREAM_QUEUESIZE = 10;
 
