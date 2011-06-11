@@ -588,6 +588,7 @@ EXPORT(const char* ) GetInfoType(int index);
  * @see GetInfoValueBool
  * @deprecated use GetInfoValue* instead
  */
+// -#- ignore -#-
 EXPORT(const char* ) GetInfoValue(int index);
 /**
  * @brief Retrieves an info item's value of type string

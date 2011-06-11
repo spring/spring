@@ -52,8 +52,15 @@ if    (UNITSYNC_PYTHON_WRAPPER)
 			WORKING_DIRECTORY
 				"${CMAKE_BINARY_DIR}"
 			)
+		ADD_CUSTOM_TARGET( "test-${pythonUnitsyncTarget}-all" 
+			COMMAND 
+				"${PYTHON_EXECUTABLE}" "${pythonWrapperTest}" "1"
+			DEPENDS
+				${pythonUnitsyncTarget}
+			WORKING_DIRECTORY
+				"${CMAKE_BINARY_DIR}"
+			)
 
-		# TODO move the whole unitsync python wrapper into a sub-dir
 		INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_DIRS} "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}")
 		
 		#this part can prolly be done in a much more elegant and sane way..
