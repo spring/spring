@@ -1,22 +1,21 @@
 #! /usr/bin/env python
 
-import sys
+import sys,os,shutil
 import pybindgen
 from pybindgen import FileCodeSink
 from pybindgen.gccxmlparser import ModuleParser
 from pybindgen.typehandlers import base as typehandlers
-import shutil
 
-def my_module_gen():
+def my_module_gen(inputdir,outputdir,includedirs):
 	aliases = [ ('uint8_t*', 'unsigned char*'),('uint16_t*', 'unsigned short*'),
 		('uint16_t*', 'unsigned short int*')]
 	for alias in aliases:
 		typehandlers.add_type_alias( alias[0], alias[1] )
-	generator_fn = '%s/generate_unitsync_python_wrapper.py'%sys.argv[1]
+	generator_fn = os.path.join( outputdir, 'generate_unitsync_python_wrapper.py' )
 	module_parser = ModuleParser('pyunitsync')
 	with open(generator_fn,'wb') as output:#ensures file is closed after output
-		module_parser.parse(['unitsync_api.h'], include_paths=sys.argv[2:] ,
-				includes=['"unitsync.h"','"unitsync_api.h"'],
+		module_parser.parse([os.path.join( inputdir, 'unitsync_api.h')], include_paths=includedirs ,
+				includes=['"../unitsync.h"','"../unitsync_api.h"'],
 				pygen_sink=FileCodeSink(output))
 	#we have to manually insert the type aliases into the generator
 	with open(generator_fn+'~','wb') as tmp:
@@ -29,4 +28,4 @@ def my_module_gen():
 	shutil.move(generator_fn+'~',generator_fn)
 
 if __name__ == '__main__':
-	my_module_gen()
+	my_module_gen(sys.argv[1],sys.argv[2],sys.argv[3:])
