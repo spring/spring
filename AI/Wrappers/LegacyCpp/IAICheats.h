@@ -8,6 +8,9 @@
 #include "Sim/Misc/GlobalConstants.h" // needed for MAX_UNITS
 #include "System/float3.h"
 
+
+namespace springLegacyAI {
+
 struct UnitDef;
 struct UnitResourceInfo;
 
@@ -87,5 +90,7 @@ public:
 	// in the class
 	virtual ~IAICheats() {}
 };
+
+} // namespace springLegacyAI
 
 #endif // I_AI_CHEATS_H

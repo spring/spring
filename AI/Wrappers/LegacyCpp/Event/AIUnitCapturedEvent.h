@@ -17,10 +17,13 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AIUNITCAPTUREDEVENT_H
-#define	_AIUNITCAPTUREDEVENT_H
+#ifndef _AI_UNIT_CAPTURED_EVENT_H
+#define	_AI_UNIT_CAPTURED_EVENT_H
 
 #include "AIEvent.h"
+
+
+namespace springLegacyAI {
 
 class CAIUnitCapturedEvent : public CAIEvent {
 public:
@@ -38,4 +41,6 @@ private:
 	SUnitCapturedEvent event;
 };
 
-#endif // _AIUNITCAPTUREDEVENT_H
+} // namespace springLegacyAI
+
+#endif // _AI_UNIT_CAPTURED_EVENT_H

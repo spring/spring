@@ -11,6 +11,13 @@
 extern "C" {
 #endif
 
+/**
+  * aliases to keep event-names (though not
+  * ID's) consistent, without breaking ABI
+  */
+#define EVENT_CHAT_MESSAGE  EVENT_MESSAGE
+#define SChatMessageEvent   SMessageEvent
+
 #include "SSkirmishAICallback.h"
 
 /**
@@ -30,7 +37,6 @@ enum EventTopic {
 	EVENT_INIT                         =  1,
 	EVENT_RELEASE                      =  2,
 	EVENT_UPDATE                       =  3,
-	EVENT_MESSAGE                      =  4,
 	EVENT_UNIT_CREATED                 =  5,
 	EVENT_UNIT_FINISHED                =  6,
 	EVENT_UNIT_IDLE                    =  7,
@@ -53,15 +59,19 @@ enum EventTopic {
 	EVENT_SAVE                         = 24,
 	EVENT_ENEMY_CREATED                = 25,
 	EVENT_ENEMY_FINISHED               = 26,
+	EVENT_CHAT_MESSAGE                 =  4,
+	EVENT_LUA_MESSAGE                  = 27,
 };
-const int NUM_EVENTS          = 27;
+const int NUM_EVENTS = 28;
+
 
 
 #define AIINTERFACE_EVENTS_ABI_VERSION     ( \
 		  sizeof(struct SInitEvent) \
 		+ sizeof(struct SReleaseEvent) \
 		+ sizeof(struct SUpdateEvent) \
-		+ sizeof(struct SMessageEvent) \
+		+ sizeof(struct SChatMessageEvent) \
+		+ sizeof(struct SLuaMessageEvent) \
 		+ sizeof(struct SUnitCreatedEvent) \
 		+ sizeof(struct SUnitFinishedEvent) \
 		+ sizeof(struct SUnitIdleEvent) \
@@ -129,6 +139,15 @@ struct SMessageEvent {
 	int player;
 	const char* message;
 }; //$ EVENT_MESSAGE
+
+/**
+ * This AI event triggers whenever any message
+ * is sent by a Lua widget or unsynced gadget.
+ */
+struct SLuaMessageEvent {
+	const char* inData;
+	const char** outData;
+}; //$ EVENT_LUA_MESSAGE
 
 /**
  * This AI event is sent whenever a unit of this team is created, and contains

@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
-
+#include "StdAfx.h"
 #include "Threading.h"
+#include "Rendering/GL/myGL.h"
 
 #include <boost/thread.hpp>
 #ifdef WIN32
@@ -14,6 +15,13 @@ namespace Threading {
 	static boost::thread::id mainThreadID;
 	static NativeThreadId nativeMainThreadID;
 	static Error* threadError = NULL;
+#ifdef USE_GML
+	static int const noThreadID = -1;
+	static int simThreadID = noThreadID;
+#else
+	static boost::thread::id noThreadID;
+	static boost::thread::id simThreadID;
+#endif	
 
 
 	NativeThreadHandle GetCurrentThread()
@@ -70,6 +78,20 @@ namespace Threading {
 		return NativeThreadIdsEqual(threadID, Threading::nativeMainThreadID);
 	}
 
+	void SetSimThread(bool set) {
+#ifdef USE_GML // gmlThreadNumber is likely to be much faster than boost::this_thread::get_id()
+		simThreadID = set ? gmlThreadNumber : noThreadID;
+#else
+		simThreadID = set ? boost::this_thread::get_id() : noThreadID;
+#endif
+	}
+	bool IsSimThread() {
+#ifdef USE_GML
+		return gmlThreadNumber == simThreadID;
+#else
+		return boost::this_thread::get_id() == simThreadID;
+#endif
+	}
 
 	void SetThreadError(const Error& err)
 	{

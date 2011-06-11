@@ -73,7 +73,6 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	wd.tdfId = wdTable.GetInt("id", 0);
 
-	wd.filename    = wdTable.GetString("filename", "unknown");
 	wd.description = wdTable.GetString("name",     "Weapon");
 	wd.cegTag      = wdTable.GetString("cegTag",   "");
 

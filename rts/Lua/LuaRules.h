@@ -32,8 +32,8 @@ class CLuaRules : public CLuaHandleSynced
 		static void FreeHandler();
 
 	public: // call-ins
-		bool SyncedUpdateCallIn(const string& name);
-		bool UnsyncedUpdateCallIn(const string& name);
+		bool SyncedUpdateCallIn(lua_State *L, const string& name);
+		bool UnsyncedUpdateCallIn(lua_State *L, const string& name);
 
 		bool CommandFallback(const CUnit* unit, const Command& cmd);
 		bool AllowCommand(const CUnit* unit, const Command& cmd, bool fromSynced);
@@ -58,11 +58,11 @@ class CLuaRules : public CLuaHandleSynced
 		void Cob2Lua(const LuaHashString& funcName, const CUnit* unit,
 		             int& argsCount, int args[MAX_LUA_COB_ARGS]);
 
-		bool AllowWeaponTargetCheck(
+		int AllowWeaponTargetCheck(
 			unsigned int attackerID,
 			unsigned int attackerWeaponNum,
 			unsigned int attackerWeaponDefID);
-		bool AllowWeaponTarget(
+		int AllowWeaponTarget(
 			unsigned int attackerID,
 			unsigned int targetID,
 			unsigned int attackerWeaponNum,
@@ -78,15 +78,14 @@ class CLuaRules : public CLuaHandleSynced
 		// unsynced
 		bool DrawUnit(int unitID);
 		bool DrawFeature(int featureID);
-		const char* AICallIn(const char* data, int inSize);
 
 	private:
 		CLuaRules();
 		~CLuaRules();
 
 	protected:
-		bool AddSyncedCode();
-		bool AddUnsyncedCode();
+		bool AddSyncedCode(lua_State *L);
+		bool AddUnsyncedCode(lua_State *L);
 
 		int UnpackCobArg(lua_State* L);
 
@@ -114,7 +113,6 @@ class CLuaRules : public CLuaHandleSynced
 
 		bool haveDrawUnit;
 		bool haveDrawFeature;
-		bool haveAICallIn;
 
 	private:
 		static const int* currentCobArgs;

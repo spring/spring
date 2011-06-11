@@ -9,14 +9,10 @@
 
 namespace netcode {
 
-ProtocolDef* ProtocolDef::instance_ptr = NULL;
-
 ProtocolDef* ProtocolDef::GetInstance()
 {
-	if (!instance_ptr) {
-		instance_ptr = new ProtocolDef();
-	}
-	return instance_ptr;
+	static ProtocolDef instance;
+	return &instance;
 }
 
 ProtocolDef::ProtocolDef()

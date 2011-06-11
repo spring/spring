@@ -302,7 +302,8 @@ static int DrawTypeString(lua_State* L, const void* data)
 	switch (drawType) {
 		case DRAWTYPE_MODEL: { HSTR_PUSH(L,   "model"); break; }
 		case DRAWTYPE_NONE:  { HSTR_PUSH(L,    "none"); break; }
-		default:             {
+
+		default: {
 			if (drawType >= DRAWTYPE_TREE) {
 				HSTR_PUSH(L,    "tree");
 			} else {
@@ -446,7 +447,6 @@ static bool InitParamMap()
 
 	ADD_STRING("name",     fd.myName);
 	ADD_STRING("tooltip",  fd.description);
-	ADD_STRING("filename", fd.filename);
 
 	ADD_FLOAT("metal",       fd.metal);
 	ADD_FLOAT("energy",      fd.energy);

@@ -18,11 +18,14 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AIUNITDAMAGEDEVENT_H
-#define _AIUNITDAMAGEDEVENT_H
+#ifndef _AI_UNIT_DAMAGED_EVENT_H
+#define _AI_UNIT_DAMAGED_EVENT_H
 
 #include "AIEvent.h"
 #include "System/float3.h"
+
+
+namespace springLegacyAI {
 
 class CAIUnitDamagedEvent : public CAIEvent {
 public:
@@ -37,4 +40,6 @@ private:
 	SUnitDamagedEvent event;
 };
 
-#endif // _AIUNITDAMAGEDEVENT_H
+} // namespace springLegacyAI
+
+#endif // _AI_UNIT_DAMAGED_EVENT_H

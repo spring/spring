@@ -57,7 +57,6 @@ for _, filename in ipairs(fbiFiles) do
   elseif (ud.unitname == nil) then
     Spring.Echo('Missing unitName in ' .. filename)
   else
-    ud.filename = filename
     ud.unitname = string.lower(ud.unitname)
     unitDefs[ud.unitname] = ud
   end
@@ -88,7 +87,6 @@ for _, filename in ipairs(luaFiles) do
   else
     for udName, ud in pairs(uds) do
       if ((type(udName) == 'string') and (type(ud) == 'table')) then
-        ud.filename = filename
         unitDefs[udName] = ud
       else
         Spring.Echo('Bad return table entry from: ' .. filename)

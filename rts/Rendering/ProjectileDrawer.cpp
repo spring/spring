@@ -526,8 +526,9 @@ void CProjectileDrawer::DrawProjectilesSetShadow(std::set<CProjectile*>& project
 
 void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 {
+	const CUnit* owner = p->owner();
 	if ((gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam) ||
-		(p->owner() && teamHandler->Ally(p->owner()->allyteam, gu->myAllyTeam)))) {
+		(owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)))) {
 
 		if (!DrawProjectileModel(p, true)) {
 			if (p->castShadow) {
@@ -543,7 +544,7 @@ void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 
 void CProjectileDrawer::DrawProjectilesMiniMap()
 {
-	GML_STDMUTEX_LOCK(proj); // DrawProjectilesMiniMap
+	GML_RECMUTEX_LOCK(proj); // DrawProjectilesMiniMap
 
 	typedef std::set<CProjectile*> ProjectileSet;
 	typedef std::set<CProjectile*>::const_iterator ProjectileSetIt;
@@ -594,7 +595,8 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 		for (std::set<CProjectile*>::iterator it = renderProjectiles.begin(); it != renderProjectiles.end(); ++it) {
 			CProjectile* p = *it;
 
-			if ((p->owner() && (p->owner()->allyteam == gu->myAllyTeam)) ||
+			const CUnit* owner = p->owner();
+			if ((owner && (owner->allyteam == gu->myAllyTeam)) ||
 				gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
 				p->DrawOnMinimap(*lines, *points);
 			}
@@ -664,7 +666,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	Update();
 
 	{
-		GML_STDMUTEX_LOCK(proj); // Draw
+		GML_RECMUTEX_LOCK(proj); // Draw
 
 		unitDrawer->SetupForUnitDrawing();
 
@@ -740,7 +742,7 @@ void CProjectileDrawer::DrawShadowPass()
 	CProjectile::va->Initialize();
 
 	{
-		GML_STDMUTEX_LOCK(proj); // DrawShadowPass
+		GML_RECMUTEX_LOCK(proj); // DrawShadowPass
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			DrawProjectilesShadow(modelType);

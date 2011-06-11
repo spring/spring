@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __END_GAME_BOX_H__
-#define __END_GAME_BOX_H__
+#ifndef _END_GAME_BOX_H_
+#define _END_GAME_BOX_H_
 
 #include "InputReceiver.h"
 #include "Rendering/GL/myGL.h"
@@ -31,7 +31,7 @@ public:
 	virtual bool IsAbove(int x, int y);
 	virtual std::string GetTooltip(int x, int y);
 
-	static bool disabled;
+	static bool enabled;
 
 protected:
 	void FillTeamStats();
@@ -80,4 +80,4 @@ protected:
 	CBitmap bm;
 };
 
-#endif // __END_GAME_BOX_H__
+#endif // _END_GAME_BOX_H_

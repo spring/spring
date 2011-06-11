@@ -19,6 +19,7 @@
 #include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
+#include "System/Platform/Threading.h"
 
 static CLogSubsystem LOG_TEXTURE("Texture");
 
@@ -48,8 +49,8 @@ CS3OTextureHandler::~CS3OTextureHandler()
 }
 
 void CS3OTextureHandler::LoadS3OTexture(S3DModel* model) {
-#if defined(USE_GML) && GML_ENABLE_SIM
-	model->textureType = -1;
+#if defined(USE_GML) && GML_ENABLE_SIM // even though glShareLists is now in place, this delayed loading is good because eliminates the need for locking
+	model->textureType = Threading::IsSimThread() ? -1 : LoadS3OTextureNow(model);
 #else
 	model->textureType = LoadS3OTextureNow(model);
 #endif
@@ -60,7 +61,7 @@ void CS3OTextureHandler::Update() {
 
 int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 {
-	GML_STDMUTEX_LOCK(model); // LoadS3OTextureNow
+	GML_RECMUTEX_LOCK(model); // LoadS3OTextureNow
 	logOutput.Print(LOG_TEXTURE, "Load S3O texture now (Flip Y Axis: %s, Invert Team Alpha: %s)", 
 		model->flipTexY ? "yes" : "no",
 		model->invertTexAlpha ? "yes" : "no"

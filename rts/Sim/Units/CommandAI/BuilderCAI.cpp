@@ -423,7 +423,7 @@ void CBuilderCAI::SlowUpdate()
 						if (luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build.pos)) {
 							FinishCommand();
 						}
-						else if (uh->MaxUnitsPerTeam() > (int) teamHandler->Team(owner->team)->units.size()) {
+						else if (!teamHandler->Team(owner->team)->AtUnitLimit()) {
 							// unit-limit not yet reached
 							CFeature* f = NULL;
 							buildRetries++;
@@ -538,8 +538,11 @@ void CBuilderCAI::ExecuteStop(Command& c)
 
 void CBuilderCAI::ExecuteRepair(Command& c)
 {
+	// not all builders are repair-capable by default
+	if (!owner->unitDef->canRepair)
+		return;
+
 	CBuilder* builder = (CBuilder*) owner;
-	assert(owner->unitDef->canRepair || owner->unitDef->canAssist);
 
 	if (c.params.size() == 1 || c.params.size() == 5) {
 		// repair unit
@@ -616,7 +619,10 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 
 void CBuilderCAI::ExecuteCapture(Command& c)
 {
-	assert(owner->unitDef->canCapture);
+	// not all builders are capture-capable by default
+	if (!owner->unitDef->canCapture)
+		return;
+
 	CBuilder* builder = (CBuilder*) owner;
 
 	if (c.params.size() == 1 || c.params.size() == 5) {
@@ -678,7 +684,9 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 
 void CBuilderCAI::ExecuteGuard(Command& c)
 {
-	assert(owner->unitDef->canGuard);
+	if (!owner->unitDef->canGuard)
+		return;
+
 	CBuilder* builder = (CBuilder*) owner;
 	CUnit* guardee = uh->GetUnit(c.params[0]);
 
@@ -808,7 +816,10 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 void CBuilderCAI::ExecuteReclaim(Command& c)
 {
 	CBuilder* builder = (CBuilder*) owner;
-	assert(owner->unitDef->canReclaim);
+
+	// not all builders are reclaim-capable by default
+	if (!owner->unitDef->canReclaim)
+		return;
 
 	if (c.params.size() == 1 || c.params.size() == 5) {
 		const int signedId = (int) c.params[0];
@@ -902,7 +913,6 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 		RemoveUnitFromFeatureReclaimers(owner);
 		FinishCommand();
 	}
-	return;
 }
 
 
@@ -928,7 +938,10 @@ bool CBuilderCAI::ResurrectObject(CFeature *feature) {
 
 void CBuilderCAI::ExecuteResurrect(Command& c)
 {
-	assert(owner->unitDef->canResurrect);
+	// not all builders are resurrect-capable by default
+	if (!owner->unitDef->canResurrect)
+		return;
+
 	CBuilder* builder = (CBuilder*) owner;
 
 	if (c.params.size() == 1) {
@@ -991,11 +1004,10 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 
 void CBuilderCAI::ExecutePatrol(Command& c)
 {
-	assert(owner->unitDef->canPatrol);
+	if (!owner->unitDef->canPatrol)
+		return;
+
 	if (c.params.size() < 3) {
-		// this shouldnt happen but anyway ...
-		logOutput.Print("Error: got patrol cmd with less than 3 params on %s in buildercai",
-			owner->unitDef->humanName.c_str());
 		return;
 	}
 
@@ -1104,7 +1116,9 @@ void CBuilderCAI::ExecuteFight(Command& c)
 
 void CBuilderCAI::ExecuteRestore(Command& c)
 {
-	assert(owner->unitDef->canRestore);
+	if (!owner->unitDef->canRestore)
+		return;
+
 	CBuilder* builder = (CBuilder*) owner;
 
 	if (inCommand) {

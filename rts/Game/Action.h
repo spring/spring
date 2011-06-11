@@ -8,7 +8,7 @@
 class Action
 {
 public:
-	Action() {};
+	Action() {}
 	Action(const std::string& line);
 
 	std::string command;   ///< first word, lowercase

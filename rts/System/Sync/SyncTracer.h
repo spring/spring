@@ -8,8 +8,9 @@
 
 #include <fstream>
 #include <deque>
+#include <string>
 
-class CSyncTracer  
+class CSyncTracer
 {
 	bool init();
 public:
@@ -19,6 +20,7 @@ public:
 	CSyncTracer();
 	virtual ~CSyncTracer();
 
+	CSyncTracer& operator<<(const std::string& s);
 	CSyncTracer& operator<<(const char* c);
 	CSyncTracer& operator<<(const int i);
 	CSyncTracer& operator<<(const unsigned i);

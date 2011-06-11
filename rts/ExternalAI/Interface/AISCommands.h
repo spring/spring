@@ -55,7 +55,6 @@ enum CommandTopic {
 	COMMAND_PATH_GET_NEXT_WAYPOINT                = 18,
 	COMMAND_PATH_FREE                             = 19,
 	COMMAND_CHEATS_GIVE_ME_RESOURCE               = 20,
-	COMMAND_CALL_LUA_RULES                        = 21,
 	COMMAND_DRAWER_ADD_NOTIFICATION               = 22,
 	COMMAND_DRAWER_DRAW_UNIT                      = 23,
 	COMMAND_DRAWER_PATH_START                     = 24,
@@ -82,7 +81,7 @@ enum CommandTopic {
 	COMMAND_UNIT_ATTACK                           = 45,
 	COMMAND_UNIT_ATTACK_AREA                      = 46,
 	COMMAND_UNIT_GUARD                            = 47,
-	COMMAND_UNIT_AI_SELECT                        = 48, //FIXME REMOVE
+	COMMAND_UNIT_AI_SELECT                        = 48,
 	COMMAND_UNIT_GROUP_ADD                        = 49,
 	COMMAND_UNIT_GROUP_CLEAR                      = 50,
 	COMMAND_UNIT_REPAIR                           = 51,
@@ -137,8 +136,10 @@ enum CommandTopic {
 	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_SIZE  = 93,
 	COMMAND_DEBUG_DRAWER_OVERLAYTEXTURE_SET_LABEL = 94,
 	COMMAND_TRACE_RAY_FEATURE                     = 95,
+	COMMAND_CALL_LUA_RULES                        = 21,
+	COMMAND_CALL_LUA_UI                           = 96,
 };
-const int NUM_CMD_TOPICS = 96;
+const int NUM_CMD_TOPICS = 97;
 
 
 /**
@@ -178,6 +179,7 @@ enum UnitCommandOptions {
 		+ sizeof(struct SGetNextWaypointPathCommand) \
 		+ sizeof(struct SFreePathCommand) \
 		+ sizeof(struct SCallLuaRulesCommand) \
+		+ sizeof(struct SCallLuaUICommand) \
 		+ sizeof(struct SSendStartPosCommand) \
 		+ sizeof(struct SAddNotificationDrawerCommand) \
 		+ sizeof(struct SAddPointDrawCommand) \
@@ -404,12 +406,21 @@ struct SFreePathCommand {
 
 struct SCallLuaRulesCommand {
 	/// Can be set to NULL to skip passing in a string
-	const char* data;
+	const char* inData;
 	/// If this is less than 0, the data size is calculated using strlen()
 	int inSize;
 	/// this is subject to Lua garbage collection, copy it if you wish to continue using it
 	const char* ret_outData;
 }; //$ COMMAND_CALL_LUA_RULES Lua_callRules
+
+struct SCallLuaUICommand {
+	/// Can be set to NULL to skip passing in a string
+	const char* inData;
+	/// If this is less than 0, the data size is calculated using strlen()
+	int inSize;
+	/// this is subject to Lua garbage collection, copy it if you wish to continue using it
+	const char* ret_outData;
+}; //$ COMMAND_CALL_LUA_UI Lua_callUI
 
 struct SSendStartPosCommand {
 	bool ready;
@@ -1574,7 +1585,14 @@ void initSUnitCommand(void* sUnitCommand);
 
 
 #ifdef	__cplusplus
+#ifdef    BUILDING_AI
+namespace springLegacyAI {
+	struct Command;
+}
+using namespace springLegacyAI;
+#else  // BUILDING_AI
 struct Command;
+#endif // BUILDING_AI
 
 // legacy support functions
 

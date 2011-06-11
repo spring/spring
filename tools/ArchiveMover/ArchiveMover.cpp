@@ -20,8 +20,14 @@
 #include <iostream>
 #include <exception>
 #include <algorithm>
+
+#include "CUtils/SharedLibrary.h"
+#include "System/exportdefines.h"
+
 using std::endl;
 
+
+#ifdef WIN32 //TODO: cleanup ifdef/defines
 
 #define ARCHIVE_MOVER_USE_WIN_API
 
@@ -39,7 +45,7 @@ using std::endl;
     #pragma comment(linker, "/SUBSYSTEM:CONSOLE")
   #endif
 #endif
-
+#endif
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_array.hpp>
@@ -78,7 +84,6 @@ extern "C" {
 #include "lib/7z/7zCrc.h"
 #include "lib/7z/7zFile.h"
 }
-
 
 #if defined(WIN32) && (defined(UNICODE) || defined(_UNICODE))
 
@@ -276,37 +281,54 @@ int wmain(int argc, const wchar_t* const* argv){
 }
 #else
 int main(int argc, const char* const* argv){
-/*	//Untested
-	mbstate_t mbstate;
-	memset((void*)&mbstate, 0, sizeof(mbstate));
-
-	wchar_t** argvW = new wchar_t*[argc];
-	for(int i = 0; i < argc; i++){
-		const char *indirect_string = argv[i];
-		std::size_t num_chars = mbsrtowcs(NULL, &indirect_string, INT_MAX, &mbstate);
-		if(num_chars == -1){
-			return 1;
-		}
-
-		argvW[i] = new wchar_t[num_chars+1];
-		num_chars = mbsrtowcs(argvW[i], &indirect_string, num_chars+1, &mbstate);
-		if(num_chars == -1){
-			return 1;
-		}
-	}
-
-	int ret = run(argc, argvW);
-
-	for(int i = 0; i < argc; i++){
-		delete [] argvW[i];
-	}
-	delete [] argvW;
-
-	return ret;
-*/
 	return run(argc, argv);
 }
 #endif
+
+
+typedef void (CALLING_CONV_FUNC_POINTER *usyncInit)(bool isServer,int id);
+typedef void(CALLING_CONV_FUNC_POINTER *usyncUnInit)(void);
+typedef const char*(CALLING_CONV_FUNC_POINTER *usyncGetDataDir)(void);
+
+/**
+	@param res springs writeable dir
+	@return true if res was written
+*/
+bool getWriteableDataDir(Path& res){
+	char tmp[1024];
+	sharedLib_createFullLibName("unitsync", tmp, sizeof(tmp));
+
+#if defined(WIN32) && (defined(UNICODE) || defined(_UNICODE))
+	std::string tmppath(tmp);
+	String lib(tmppath.begin(), tmppath.end());
+#else
+	String lib(tmp);
+#endif
+	//FIXME: LD_LIBRARY_PATH needs to be corretly set on unix if unitsync isn't in the same path
+	//TODO: remove typecast and use LoadLibraryW
+	sharedLib_t unitsync = sharedLib_load((const char*)lib.c_str());
+	if (!sharedLib_isLoaded(unitsync)){
+		return false;
+	}
+	usyncInit func_init=(usyncInit)sharedLib_findAddress(unitsync, "Init");
+	usyncGetDataDir func_getdir=(usyncGetDataDir)sharedLib_findAddress(unitsync, "GetWritableDataDirectory");
+	usyncUnInit func_uninit=(usyncUnInit)sharedLib_findAddress(unitsync, "UnInit");
+	if ((func_init==NULL) || (func_uninit==NULL) || (func_getdir==NULL)){
+		return false;
+	}
+	func_init(true,0);
+#if defined(WIN32) && (defined(UNICODE) || defined(_UNICODE))
+	tmppath=func_getdir();
+	//convert string to unicode string
+	String ws( tmppath.begin(), tmppath.end());
+	res=ws;
+#else
+	res = func_getdir();
+#endif
+	func_uninit();
+	sharedLib_unload(unitsync);
+	return true;
+}
 
 
 static int run(int argc, const Char* const* argv){
@@ -336,17 +358,14 @@ static int run(int argc, const Char* const* argv){
 			message<<_("Usage: ")<<fs::system_complete(argv[0]).leaf()<<_(" [--quiet] <filename>")<<endl<<endl;
 			return 1;
 		}
-
 		const Path source_file = fs::system_complete(source_file_arg);
-
-		// destination: My Documents/My Games/Spring
-		TCHAR strPath[MAX_PATH];
-		SHGetFolderPath( NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, strPath);
-
-		Path target_dir = fs::system_complete(strPath) / _("My Games") / _("Spring");
-
 		if(!fs::exists(source_file)){
 			message<<source_file<<endl<<_("File not found.")<<endl;
+			return 1;
+		}
+		Path target_dir;
+		if (!getWriteableDataDir(target_dir)){
+			message << _("Couldn't get writeable dir from unitsync") << endl;
 			return 1;
 		}
 
@@ -372,14 +391,6 @@ static int run(int argc, const Char* const* argv){
 			return 1;
 		}
 
-
-		//for(Path test_path = source_file; test_path.has_root_directory(); ){
-		//	if(fs::equivalent(test_path, target_dir)){
-		//		message<<_("'")<<source_file.leaf()<<_("' already exists in the Spring directory.")<<endl;
-		//		return 1;
-		//	}
-		//	test_path = test_path.branch_path();
-		//}
 
 
 		if(content == R_MAP){
@@ -431,7 +442,13 @@ static int run(int argc, const Char* const* argv){
 		}
 
 		target_dir /= source_file.leaf();
-		fs::rename(source_file, target_dir);
+		try{
+			fs::rename(source_file, target_dir);
+		}
+		catch (FilesystemPathError& error){ //rename failed, copy + delete it
+			fs::copy_file(source_file, target_dir);
+			fs::remove(source_file);
+		}
 
 		if (!quiet) {
 			message<<_("The ")<<(content == R_MAP? _("map '") : _("game '"))<<source_file.leaf()
@@ -554,8 +571,7 @@ static ArchiveType read_archive_content_sd7(const Path& filename){
 	String fn = filename.string();
 	int len   = 2*fn.size();
 	char tmpfn[len];
-
-#if defined(UNICODE) || defined(_UNICODE)
+#if defined(WIN32) && ( defined(UNICODE) || defined(_UNICODE))
 	WideCharToMultiByte(CP_ACP, 0, fn.c_str(), -1, tmpfn, len, NULL, NULL);
 #else
 	strcpy(tmpfn, fn.c_str());
@@ -624,3 +640,4 @@ static ArchiveType read_archive_content_sd7(const Path& filename){
 	File_Close(&stream.file);
 	return content;
 }
+

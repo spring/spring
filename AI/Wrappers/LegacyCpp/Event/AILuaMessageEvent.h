@@ -18,22 +18,27 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AIMESSAGEEVENT_H
-#define	_AIMESSAGEEVENT_H
+#ifndef _AI_LUA_MESSAGE_EVENT_H
+#define	_AI_LUA_MESSAGE_EVENT_H
 
 #include "AIEvent.h"
 
-class CAIMessageEvent : public CAIEvent {
+
+namespace springLegacyAI {
+
+class CAILuaMessageEvent : public CAIEvent {
 public:
-	CAIMessageEvent(const SMessageEvent& event) : event(event) {}
-	~CAIMessageEvent() {}
+	CAILuaMessageEvent(const SLuaMessageEvent& event) : event(event) {}
+	~CAILuaMessageEvent() {}
 
 	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
-		ai.GotChatMsg(event.message, event.player);
+		ai.GotLuaMessage(event.inData, event.outData);
 	}
 
 private:
-	SMessageEvent event;
+	SLuaMessageEvent event;
 };
 
-#endif // _AIMESSAGEEVENT_H
+} // namespace springLegacyAI
+
+#endif // _AI_CHAT_MESSAGE_EVENT_H

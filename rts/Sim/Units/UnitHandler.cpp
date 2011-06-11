@@ -47,7 +47,6 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(units),
 	CR_MEMBER(freeUnitIDs),
 	CR_MEMBER(maxUnits),
-	CR_MEMBER(maxUnitsPerTeam),
 	CR_MEMBER(maxUnitRadius),
 	CR_MEMBER(unitsToBeRemoved),
 	CR_MEMBER(morphUnitToFeature),
@@ -69,19 +68,15 @@ void CUnitHandler::PostLoad()
 CUnitHandler::CUnitHandler()
 :
 	maxUnitRadius(0.0f),
-	morphUnitToFeature(true)
+	morphUnitToFeature(true),
+	maxUnits(0)
 {
-	assert(teamHandler->ActiveTeams() > 0);
-
 	// note: the number of active teams can change at run-time, so
 	// the team unit limit should be recalculated whenever one dies
-	// or spawns (but would get complicated)
-	maxUnits = std::min(gameSetup->maxUnits * teamHandler->ActiveTeams(), MAX_UNITS);
-	maxUnitsPerTeam = maxUnits / teamHandler->ActiveTeams();
-
-	// ensure each team can make at least one unit
-	assert(maxUnits >= teamHandler->ActiveTeams());
-	assert(maxUnitsPerTeam >= 1);
+	// or spawns (but that would get complicated)
+	for (unsigned int n = 0; n < teamHandler->ActiveTeams(); n++) {
+		maxUnits += teamHandler->Team(n)->maxUnits;
+	}
 
 	units.resize(maxUnits, NULL);
 	unitsByDefs.resize(teamHandler->ActiveTeams(), std::vector<CUnitSet>(unitDefHandler->unitDefs.size()));
@@ -91,7 +86,7 @@ CUnitHandler::CUnitHandler()
 
 		// id's are used as indices, so they must lie in [0, units.size() - 1]
 		// (furthermore all id's are treated equally, none have special status)
-		for (unsigned int id = 0; id < units.size(); id++) {
+		for (unsigned int id = 0; id < freeIDs.size(); id++) {
 			freeIDs[id] = id;
 		}
 
@@ -153,7 +148,7 @@ bool CUnitHandler::AddUnit(CUnit *unit)
 	teamHandler->Team(unit->team)->AddUnit(unit, CTeam::AddBuilt);
 	unitsByDefs[unit->team][unit->unitDef->id].insert(unit);
 
-	maxUnitRadius = max(unit->radius, maxUnitRadius);
+	maxUnitRadius = std::max(unit->radius, maxUnitRadius);
 	return true;
 }
 
@@ -191,7 +186,6 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 			teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
 
 			unitsByDefs[delTeam][delType].erase(delUnit);
-
 			delete delUnit;
 			break;
 		}
@@ -216,12 +210,18 @@ void CUnitHandler::Update()
 		GML_STDMUTEX_LOCK(runit); // Update
 
 		if (!unitsToBeRemoved.empty()) {
-			GML_RECMUTEX_LOCK(unit); // Update - for anti-deadlock purposes.
-			GML_RECMUTEX_LOCK(sel);  // Update - unit is removed from selectedUnits in ~CObject, which is too late.
-			GML_RECMUTEX_LOCK(quad); // Update - make sure unit does not get partially deleted before before being removed from the quadfield
-			GML_STDMUTEX_LOCK(proj); // Update - projectile drawing may access owner() and lead to crash
+			GML_RECMUTEX_LOCK(obj); // Update
+
+			eventHandler.DeleteSyncedObjects();
+
+			GML_RECMUTEX_LOCK(unit); // Update
 
 			eventHandler.DeleteSyncedUnits();
+
+			GML_RECMUTEX_LOCK(proj); // Update - projectile drawing may access owner() and lead to crash
+
+			GML_RECMUTEX_LOCK(sel);  // Update - unit is removed from selectedUnits in ~CObject, which is too late.
+			GML_RECMUTEX_LOCK(quad); // Update - make sure unit does not get partially deleted before before being removed from the quadfield
 
 			while (!unitsToBeRemoved.empty()) {
 				CUnit* delUnit = unitsToBeRemoved.back();
@@ -529,9 +529,9 @@ Command CUnitHandler::GetBuildCommand(const float3& pos, const float3& dir) {
 }
 
 
-bool CUnitHandler::CanBuildUnit(const UnitDef* unitdef, int team)
+bool CUnitHandler::CanBuildUnit(const UnitDef* unitdef, int team) const
 {
-	if (teamHandler->Team(team)->units.size() >= maxUnitsPerTeam) {
+	if (teamHandler->Team(team)->AtUnitLimit()) {
 		return false;
 	}
 	if (unitsByDefs[team][unitdef->id].size() >= unitdef->maxThisUnit) {

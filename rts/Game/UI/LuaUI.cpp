@@ -81,9 +81,11 @@ void CLuaUI::LoadHandler()
 		return;
 	}
 
+	GML_STDMUTEX_LOCK(luaui); // LoadHandler
+
 	new CLuaUI();
 
-	if (luaUI->L == NULL) {
+	if (!luaUI->IsValid()) {
 		delete luaUI;
 	}
 }
@@ -93,6 +95,9 @@ void CLuaUI::FreeHandler()
 {
 	static bool inFree = false;
 	if (!inFree) {
+
+		GML_STDMUTEX_LOCK(luaui); // FreeHandler
+
 		inFree = true;
 		delete luaUI;
 		inFree = false;
@@ -107,7 +112,9 @@ CLuaUI::CLuaUI()
 {
 	luaUI = this;
 
-	if (L == NULL) {
+	BEGIN_ITERATE_LUA_STATES();
+
+	if (!IsValid()) {
 		return;
 	}
 
@@ -158,7 +165,7 @@ CLuaUI::CLuaUI()
 
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
 
-	AddBasicCalls(); // into Global
+	AddBasicCalls(L); // into Global
 
 	lua_pushstring(L, "Script");
 	lua_rawget(L, -2);
@@ -189,7 +196,7 @@ CLuaUI::CLuaUI()
 	}
 
 	lua_settop(L, 0);
-	if (!LoadCode(code, "luaui.lua")) {
+	if (!LoadCode(L, code, "luaui.lua")) {
 		KillLua();
 		return;
 	}
@@ -198,16 +205,27 @@ CLuaUI::CLuaUI()
 	eventHandler.AddClient(this);
 
 	// update extra call-ins
-	UnsyncedUpdateCallIn("WorldTooltip");
-	UnsyncedUpdateCallIn("MapDrawCmd");
+	UnsyncedUpdateCallIn(L, "WorldTooltip");
+	UnsyncedUpdateCallIn(L, "MapDrawCmd");
 
 	lua_settop(L, 0);
+
+	END_ITERATE_LUA_STATES();
 }
 
 
 CLuaUI::~CLuaUI()
 {
-	if (L != NULL) {
+#if (LUA_MT_OPT & LUA_STATE)
+	for(int i = 0; i < delayedXCall.size(); ++i) {
+		DelayDataDump &ddp = delayedXCall[i];
+		if(ddp.dd.size() == 1 && ddp.dd[0].type == LUA_TSTRING)
+			delete ddp.dd[0].data.str;
+	}
+	delayedXCall.clear();
+#endif
+
+	if (L_Sim != NULL || L_Draw != NULL) {
 		Shutdown();
 		KillLua();
 	}
@@ -239,9 +257,9 @@ string CLuaUI::LoadFile(const string& filename) const
 }
 
 
-bool CLuaUI::HasCallIn(const string& name)
+bool CLuaUI::HasCallIn(lua_State *L, const string& name)
 {
-	if (L == NULL) {
+	if (!IsValid()) {
 		return false;
 	}
 
@@ -260,14 +278,14 @@ bool CLuaUI::HasCallIn(const string& name)
 }
 
 
-bool CLuaUI::UnsyncedUpdateCallIn(const string& name)
+bool CLuaUI::UnsyncedUpdateCallIn(lua_State *L, const string& name)
 {
 	// never allow this call-in
 	if (name == "Explosion") {
 		return false;
 	}
 
-	if (HasCallIn(name)) {
+	if (HasCallIn(L, name)) {
 		eventHandler.InsertEvent(this, name);
 	} else {
 		eventHandler.RemoveEvent(this, name);
@@ -279,13 +297,13 @@ bool CLuaUI::UnsyncedUpdateCallIn(const string& name)
 void CLuaUI::UpdateTeams()
 {
 	if (luaUI) {
-		luaUI->fullCtrl = gs->godMode;
-		luaUI->ctrlTeam = gs->godMode ? AllAccessTeam :
-		                  (gu->spectating ? NoAccessTeam : gu->myTeam);
-		luaUI->fullRead = gu->spectatingFullView;
-		luaUI->readTeam = luaUI->fullRead ? AllAccessTeam : gu->myTeam;
-		luaUI->readAllyTeam = luaUI->fullRead ? AllAccessTeam : gu->myAllyTeam;
-		luaUI->selectTeam = gu->spectatingFullSelect ? AllAccessTeam : gu->myTeam;
+		luaUI->SetFullCtrl(gs->godMode, true);
+		luaUI->SetCtrlTeam(gs->godMode ? AllAccessTeam :
+		                  (gu->spectating ? NoAccessTeam : gu->myTeam), true);
+		luaUI->SetFullRead(gu->spectatingFullView, true);
+		luaUI->SetReadTeam(luaUI->GetFullRead() ? AllAccessTeam : gu->myTeam, true);
+		luaUI->SetReadAllyTeam(luaUI->GetFullRead() ? AllAccessTeam : gu->myAllyTeam, true);
+		luaUI->SetSelectTeam(gu->spectatingFullSelect ? AllAccessTeam : gu->myTeam, true);
 	}
 }
 
@@ -303,6 +321,7 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 	lua_rawset(L, -3)
 
 	REGISTER_LUA_CFUNC(SetShockFrontFactors);
+	REGISTER_LUA_CFUNC(SendToUnsynced);
 
 	lua_setglobal(L, "Spring");
 
@@ -394,7 +413,7 @@ void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect)
 	lua_pushnumber(L, dir.y);
 	lua_pushnumber(L, dir.z);
 
-	// call the routinea
+	// call the routine
 	if (!RunCallIn(cmdStr, 4, 0)) {
 		return;
 	}
@@ -407,7 +426,8 @@ void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect)
 
 bool CLuaUI::HasLayoutButtons()
 {
-	GML_RECMUTEX_LOCK(lua); // HasLayoutButtons
+	SELECT_LUA_STATE();
+	GML_DRCMUTEX_LOCK(lua); // HasLayoutButtons
 
 	lua_checkstack(L, 2);
 
@@ -766,15 +786,88 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 
 bool CLuaUI::HasUnsyncedXCall(const string& funcName)
 {
+	SELECT_LUA_STATE();
+
 	lua_getglobal(L, funcName.c_str());
 	const bool haveFunc = lua_isfunction(L, -1);
 	lua_pop(L, 1);
 	return haveFunc;
 }
 
+void CLuaUI::ExecuteDelayedXCalls() {
+#if (LUA_MT_OPT & LUA_STATE)
+	std::vector<DelayDataDump> dxc;
+	{
+		GML_STDMUTEX_LOCK(xcall); // ExecuteDelayedXCalls
+
+		delayedXCall.swap(dxc);
+	}
+
+	GML_RECMUTEX_LOCK(unit); // ExecuteDelayedXCalls
+	GML_RECMUTEX_LOCK(feat); // ExecuteDelayedXCalls
+
+	for(int i = 0; i < dxc.size(); ++i) {
+		DelayDataDump &ddp = dxc[i];
+
+		LUA_CALL_IN_CHECK(L);
+
+		if(ddp.dd.size() == 1) {
+			DelayData dd = ddp.dd[0];
+			if(dd.type == LUA_TSTRING) {
+				const LuaHashString funcHash(*dd.data.str);
+				delete dd.data.str;
+				if (!funcHash.GetGlobalFunc(L))
+					return;
+
+				const int top = lua_gettop(L) - 1;
+
+				LuaUtils::Restore(ddp.com, L);
+
+				if (!RunCallIn(funcHash, ddp.com.size(), LUA_MULTRET))
+					return;
+
+				lua_settop(L, top);
+			}
+		}
+	}
+#endif
+}
 
 int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 {
+#if (LUA_MT_OPT & LUA_STATE)
+	{
+		SELECT_LUA_STATE();
+		if(srcState != L) {
+			DelayDataDump ddmp;
+
+			DelayData ddata;
+			ddata.type = LUA_TSTRING;
+
+			size_t len = funcName.length();
+			ddata.data.str = new std::string;
+			if (len > 0) {
+				ddata.data.str->resize(len);
+				memcpy(&(*ddata.data.str)[0], funcName.c_str(), len);
+			}
+			ddmp.dd.push_back(ddata);
+
+			LuaUtils::Backup(ddmp.com, srcState, lua_gettop(srcState));
+
+			lua_settop(srcState, 0);
+
+			GML_STDMUTEX_LOCK(xcall);
+
+			DelayDataDump ddtemp;
+			delayedXCall.push_back(ddtemp);
+			delayedXCall.back().dd.swap(ddmp.dd);
+			delayedXCall.back().com.swap(ddmp.com);
+
+			return 0;
+		}
+	}
+#endif
+
 	LUA_CALL_IN_CHECK(L);
 	const LuaHashString funcHash(funcName);
 	if (!funcHash.GetGlobalFunc(L)) {

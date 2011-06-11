@@ -107,7 +107,6 @@ local function ProcessUnitDef(udName, ud)
     if (isstring(wdName) and istable(wd)) then
       local fullName = udName .. '_' .. wdName
       WeaponDefs[fullName] = wd
-      wd.filename = ud.filename
     end
   end
 

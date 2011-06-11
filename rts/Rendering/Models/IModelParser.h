@@ -12,19 +12,15 @@
 #include "3DModel.h"
 
 
-class CUnit;
-class C3DOParser;
-class CS3OParser;
-class C3DModelLoader;
-extern C3DModelLoader* modelParser;
-
-
 class IModelParser
 {
 public:
 	virtual S3DModel* Load(const std::string& name) = 0;
 };
 
+
+class CUnit;
+class CAssParser;
 
 class C3DModelLoader
 {
@@ -37,14 +33,16 @@ public:
 
 	void DeleteLocalModel(CUnit* unit);
 	void CreateLocalModel(CUnit* unit);
-	void FixLocalModel(CUnit* unit);
+
+	typedef std::map<std::string, S3DModel*> ModelMap;
+	typedef std::map<std::string, IModelParser*> ParserMap;
 
 private:
-//FIXME make some static?
-	std::map<std::string, S3DModel*> cache;
-	std::map<std::string, IModelParser*> parsers;
+	// FIXME make some static?
+	ModelMap cache;
+	ParserMap parsers;
 
-#if defined(USE_GML) && GML_ENABLE_SIM
+#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
 	std::vector<S3DModelPiece*> createLists;
 
 	std::set<CUnit*> fixLocalModels;
@@ -56,7 +54,10 @@ private:
 
 	void DeleteChilds(S3DModelPiece* o);
 
-	void FixLocalModel(S3DModelPiece* model, LocalModel* lmodel, int* piecenum);
+	void SetLocalModelPieceDisplayLists(CUnit* unit);
+	void SetLocalModelPieceDisplayLists(S3DModelPiece* model, LocalModel* lmodel, int* piecenum);
 };
+
+extern C3DModelLoader* modelParser;
 
 #endif /* IMODELPARSER_H */

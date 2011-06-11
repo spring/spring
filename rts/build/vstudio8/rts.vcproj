@@ -5115,6 +5115,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\SafeVector.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\SafeVector.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\System\SpringApp.cpp"
 				>
 			</File>
@@ -15971,6 +15979,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\gml\gmlcnf.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\gml\gmlcnt.h"
 					>
 				</File>
@@ -15984,6 +15996,14 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\gml\gmlimp.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\gml\gmlmut.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\gml\gmlque.h"
 					>
 				</File>
 				<File

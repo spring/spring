@@ -1142,7 +1142,7 @@ function doWrappOO(funcFullName_dw, params_dw, metaComment_dw) {
 
 	doWrapp_dw = 1;
 
-	doWrapp_dw = doWrapp_dw && !match(funcFullName_dw, /Lua_callRules/);
+	doWrapp_dw = doWrapp_dw && !match(funcFullName_dw, /Lua_callRules/) && !match(funcFullName_dw, /Lua_callUI/);
 
 	return doWrapp_dw;
 }

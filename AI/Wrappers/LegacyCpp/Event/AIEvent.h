@@ -18,11 +18,14 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AIEVENT_H
-#define _AIEVENT_H
+#ifndef _AI_EVENT_H
+#define _AI_EVENT_H
 
 #include "../IGlobalAI.h"
 #include "../IGlobalAICallback.h"
+
+
+namespace springLegacyAI {
 
 class CAIEvent {
 public:
@@ -31,4 +34,6 @@ public:
 			IGlobalAICallback* globalAICallback = NULL) = 0;
 };
 
-#endif // _AIEVENT_H
+} // namespace springLegacyAI
+
+#endif // _AI_EVENT_H

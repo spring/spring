@@ -14,13 +14,22 @@ public:
 
 	void LoadSelectionKeys();
 
-	std::string ReadToken(std::string& s);
-	std::string ReadDelimiter(std::string& s);
-
 	void DoSelection(std::string selectString);
 
 private:
-	int selectNumber; ///< used to go through all possible units when selecting only a few
+	/**
+	 * Removes and returns the first part of the string.
+	 * Using the first of the encountered delimitters: '_', '+', end-of-string
+	 */
+	static std::string ReadToken(std::string& str);
+	/**
+	 * Removes and returns a delimiter (the first char of the string),
+	 * or the empty string, if str is empty.
+	 */
+	static std::string ReadDelimiter(std::string& str);
+
+	/// used to go through all possible units when selecting only a few
+	int selectNumber;
 };
 
 extern CSelectionKeyHandler* selectionKeys;

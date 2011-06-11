@@ -9,6 +9,9 @@
 
 #include "System/creg/creg_cond.h"
 
+
+namespace springLegacyAI {
+
 struct MoveData {
 	CR_DECLARE_STRUCT(MoveData);
 
@@ -96,5 +99,7 @@ struct MoveData {
 	/// heat produced by a path
 	int heatProduced;
 };
+
+} // namespace springLegacyAI
 
 #endif // _MOVE_DATA_H

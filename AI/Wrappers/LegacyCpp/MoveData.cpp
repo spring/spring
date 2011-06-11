@@ -5,6 +5,9 @@
 #include "System/creg/STL_Deque.h"
 #include "System/creg/STL_Map.h"
 
+
+namespace springLegacyAI {
+
 CR_BIND(MoveData, );
 
 CR_REG_METADATA(MoveData, (
@@ -35,4 +38,6 @@ CR_REG_METADATA(MoveData, (
 
 	CR_RESERVED(16)
 ));
+
+} // namespace springLegacyAI
 

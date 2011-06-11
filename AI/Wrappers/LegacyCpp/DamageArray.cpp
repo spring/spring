@@ -5,6 +5,8 @@
 #include "System/creg/creg_cond.h"
 
 #ifdef USING_CREG
+namespace springLegacyAI {
+
 CR_BIND(DamageArray, );
 
 CR_REG_METADATA(DamageArray, (
@@ -18,14 +20,15 @@ CR_REG_METADATA(DamageArray, (
 		CR_SERIALIZER(creg_Serialize) // damages
 ));
 
+} // namespace springLegacyAI
 
-void DamageArray::creg_Serialize(creg::ISerializer& s)
+void springLegacyAI::DamageArray::creg_Serialize(creg::ISerializer& s)
 {
 	s.Serialize(damages, numTypes * sizeof(damages[0]));
 }
 #endif // USING_CREG
 
-DamageArray::DamageArray() : paralyzeDamageTime(0),
+springLegacyAI::DamageArray::DamageArray() : paralyzeDamageTime(0),
 			impulseFactor(1.0f), impulseBoost(0.0f),
 			craterMult(1.0f), craterBoost(0.0f),
 			numTypes(1)
@@ -36,7 +39,7 @@ DamageArray::DamageArray() : paralyzeDamageTime(0),
 	}
 }
 
-DamageArray::DamageArray(const float mult) : paralyzeDamageTime(0),
+springLegacyAI::DamageArray::DamageArray(const float mult) : paralyzeDamageTime(0),
 			impulseFactor(1.0f), impulseBoost(0.0f),
 			craterMult(1.0f), craterBoost(0.0f),
 			numTypes(1) 
@@ -47,7 +50,7 @@ DamageArray::DamageArray(const float mult) : paralyzeDamageTime(0),
 	}
 }
 
-DamageArray::DamageArray(int numTypes, const float* typeDamages) :
+springLegacyAI::DamageArray::DamageArray(int numTypes, const float* typeDamages) :
 			numTypes(numTypes)
 {
 	damages = new float[numTypes];
@@ -56,7 +59,7 @@ DamageArray::DamageArray(int numTypes, const float* typeDamages) :
 	}
 }
 
-DamageArray::DamageArray(const DamageArray& other)
+springLegacyAI::DamageArray::DamageArray(const springLegacyAI::DamageArray& other)
 {
 	paralyzeDamageTime = other.paralyzeDamageTime;
 	impulseBoost = other.impulseBoost;
@@ -69,7 +72,7 @@ DamageArray::DamageArray(const DamageArray& other)
 		damages[a] = other.damages[a];
 }
 
-DamageArray::~DamageArray()
+springLegacyAI::DamageArray::~DamageArray()
 {
 	delete[] damages;
 }

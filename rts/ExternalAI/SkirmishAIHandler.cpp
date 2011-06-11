@@ -30,15 +30,10 @@ CR_REG_METADATA(CSkirmishAIHandler, (
 ));
 
 
-CSkirmishAIHandler* CSkirmishAIHandler::mySingleton = NULL;
-
-CSkirmishAIHandler& CSkirmishAIHandler::GetInstance() {
-
-	if (mySingleton == NULL) {
-		mySingleton = new CSkirmishAIHandler();
-	}
-
-	return *mySingleton;
+CSkirmishAIHandler& CSkirmishAIHandler::GetInstance()
+{
+	static CSkirmishAIHandler mySingleton;
+	return mySingleton;
 }
 
 CSkirmishAIHandler::CSkirmishAIHandler():

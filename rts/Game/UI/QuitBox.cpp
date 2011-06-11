@@ -21,6 +21,8 @@
 
 #define MAX_QUIT_TEAMS (teamHandler->ActiveTeams() - 1)
 
+#undef CreateDirectory
+
 CQuitBox::CQuitBox(void)
 {
 	box.x1 = 0.34f;

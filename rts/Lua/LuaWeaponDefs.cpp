@@ -394,7 +394,7 @@ static int GuiSoundSetTable(lua_State* L, const void* data)
 		const GuiSoundSet::Data& sound = soundSet.sounds[i];
 		HSTR_PUSH_STRING(L, "name",   sound.name);
 		HSTR_PUSH_NUMBER(L, "volume", sound.volume);
-		if (!CLuaHandle::GetActiveHandle()->GetSynced()) {
+		if (!CLuaHandle::GetSynced(L)) {
 			HSTR_PUSH_NUMBER(L, "id", sound.id);
 		}
 		lua_rawset(L, -3);
@@ -432,7 +432,6 @@ static bool InitParamMap()
 	ADD_INT("tdfId", wd.tdfId);
 
 	ADD_STRING("name",        wd.name);
-	ADD_STRING("filename",    wd.filename);
 	ADD_STRING("description", wd.description);
 	ADD_STRING("cegTag",      wd.cegTag);
 

@@ -11,6 +11,9 @@
 #include <vector>
 #include <map>
 
+
+namespace springLegacyAI {
+
 struct Command;
 struct UnitDef;
 struct FeatureDef;
@@ -147,6 +150,12 @@ public:
 	 */
 
 	/**
+	 * Returns the maximum number of units to be in-game.
+	 * The maximum unit-ID is this vaue -1.
+	 */
+	virtual int GetMaxUnits() = 0;
+
+	/**
 	 * Returns a number telling something about the units main function.
 	 * Note: not implemented yet!
 	 */
@@ -212,8 +221,8 @@ public:
 	/*
 	 * The following function return the units into arrays that must be
 	 * allocated by the dll
-	 * - 10000 is currently the max amount of units so that should be a safe
-	 *   size for the array
+	 * - 30000 is currently the max amount of units (June 2011) so that should
+	 *   be a safe size for the array
 	 * - the return value indicates how many units were returned, the rest of
 	 *   the array is unchanged
 	 * - all forms of GetEnemyUnits and GetFriendlyUnits filter out any
@@ -503,12 +512,13 @@ public:
 	void GetCategoryName(int categoryFlag, char* name, int name_sizeMax);
 
 	/**
-	 * 1. 'data' can be setup to NULL to skip passing in a string
+	 * 1. 'inData' can be setup to NULL to skip passing in a string
 	 * 2. if inSize is less than 0, the data size is calculated using strlen()
 	 * 3. the return data is subject to lua garbage collection,
 	 *    copy it if you wish to continue using it
 	 */
-	virtual const char* CallLuaRules(const char* data, int inSize = -1, int* outSize = NULL) = 0;
+	virtual const char* CallLuaRules(const char* inData, int inSize = -1, int* outSize = NULL) = 0;
+	virtual const char* CallLuaUI(const char* inData, int inSize = -1, int* outSize = NULL) = 0;
 
 	virtual std::map<std::string, std::string> GetMyInfo() = 0;
 	virtual std::map<std::string, std::string> GetMyOptionValues() = 0;
@@ -521,5 +531,7 @@ public:
 	// in the class
 	virtual ~IAICallback() {}
 };
+
+} // namespace springLegacyAI
 
 #endif // I_AI_CALLBACK_H

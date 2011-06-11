@@ -43,8 +43,8 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 	extractDepthMap = NULL;
 
 #ifdef USE_GML	
-	multiThreadDrawGroundShadow=0;
-	multiThreadDrawGround=0;
+	multiThreadDrawGroundShadow = false;
+	multiThreadDrawGround = false;
 #endif
 
 	extraTexPBO.Bind();

@@ -542,6 +542,7 @@ void CUnit::PostInit(const CUnit* builder)
 		commandAI->GiveCommand(c);
 	}
 
+	// these must precede UnitFinished from FinishedBuilding
 	eventHandler.UnitCreated(this, builder);
 	eoh->UnitCreated(*this, builder);
 

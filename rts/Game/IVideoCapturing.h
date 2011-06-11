@@ -15,6 +15,10 @@ public:
 	static IVideoCapturing* GetInstance();
 	static void FreeInstance();
 
+	virtual void RenderFrame() = 0;
+
+	static void SetCapturing(bool enabled);
+
 	/**
 	 * Indicates whether it is possible/supported to capture a video.
 	 *
@@ -27,14 +31,12 @@ public:
 	 *
 	 * @return	true if a video is currently being captured
 	 */
-	virtual bool IsCapturing() const = 0;
-	virtual void StartCapturing() = 0;
-	virtual void StopCapturing() = 0;
+	virtual bool IsCapturing() const { return false; }
 
-	virtual void RenderFrame() = 0;
+protected:
+	virtual void StartCapturing() {}
+	virtual void StopCapturing() {}
 
-private:
-	static IVideoCapturing* instance;
 };
 
 #define videoCapturing IVideoCapturing::GetInstance()

@@ -66,6 +66,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "myMath.h"
 #include "LogOutput.h"
+#include "LuaHelper.h"
 
 using namespace std;
 
@@ -95,8 +96,7 @@ static float smoothMeshAmountChanged;
 
 inline void LuaSyncedCtrl::CheckAllowGameChanges(lua_State* L)
 {
-	const CLuaHandleSynced* lhs =
-		dynamic_cast<const CLuaHandleSynced*>(CLuaHandle::GetActiveHandle());
+	const CLuaHandleSynced* lhs = CLuaHandleSynced::GetActiveHandle(L);
 
 	if (lhs == NULL) {
 		luaL_error(L, "Internal lua error, unsynced script using synced calls");
@@ -262,96 +262,6 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 //
-//  Access helpers
-//
-
-static inline bool FullCtrl()
-{
-	return CLuaHandle::GetActiveHandle()->GetFullCtrl();
-}
-
-
-static inline int CtrlTeam()
-{
-	return CLuaHandle::GetActiveHandle()->GetCtrlTeam();
-}
-
-
-static inline int CtrlAllyTeam()
-{
-	const int ctrlTeam = CtrlTeam();
-	if (ctrlTeam < 0) {
-		return ctrlTeam;
-	}
-	return teamHandler->AllyTeam(ctrlTeam);
-}
-
-
-static inline bool CanControlTeam(int teamID)
-{
-	const int ctrlTeam = CtrlTeam();
-	if (ctrlTeam < 0) {
-		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
-	}
-	return (ctrlTeam == teamID);
-}
-
-
-static inline bool CanControlAllyTeam(int allyTeamID)
-{
-	const int ctrlTeam = CtrlTeam();
-	if (ctrlTeam < 0) {
-		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
-	}
-	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
-}
-
-
-static inline bool CanControlUnit(const CUnit* unit)
-{
-	const int ctrlTeam = CtrlTeam();
-	if (ctrlTeam < 0) {
-		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
-	}
-	return (ctrlTeam == unit->team);
-}
-
-
-static inline bool CanControlFeatureAllyTeam(int allyTeamID)
-{
-	const int ctrlTeam = CtrlTeam();
-	if (ctrlTeam < 0) {
-		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
-	}
-	if (allyTeamID < 0) {
-		return (ctrlTeam == teamHandler->GaiaTeamID());
-	}
-	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
-}
-
-
-static inline bool CanControlFeature(const CFeature* feature)
-{
-	return CanControlFeatureAllyTeam(feature->allyteam);
-}
-
-
-static inline bool CanControlProjectileAllyTeam(int allyTeamID)
-{
-	const int ctrlTeam = CtrlTeam();
-	if (ctrlTeam < 0) {
-		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
-	}
-	if (allyTeamID < 0) {
-		return false;
-	}
-	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
-}
-
-
-/******************************************************************************/
-/******************************************************************************/
-//
 //  Parsing helpers
 //
 
@@ -378,7 +288,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 	if (unit == NULL) {
 		return NULL;
 	}
-	if (!CanControlUnit(unit)) {
+	if (!CanControlUnit(L, unit)) {
 		return NULL;
 	}
 	return unit;
@@ -397,7 +307,7 @@ static inline CFeature* ParseFeature(lua_State* L,
 	if (!f)
 		return NULL;
 
-	if (!CanControlFeature(f)) {
+	if (!CanControlFeature(L, f)) {
 		return NULL;
 	}
 	return f;
@@ -414,7 +324,7 @@ static inline CProjectile* ParseProjectile(lua_State* L,
 	if (pmp == NULL) {
 		return NULL;
 	}
-	if (!CanControlProjectileAllyTeam(pmp->second)) {
+	if (!CanControlProjectileAllyTeam(L, pmp->second)) {
 		return NULL;
 	}
 	return pmp->first;
@@ -489,7 +399,7 @@ int LuaSyncedCtrl::AddTeamResource(lua_State* L)
 	if (!teamHandler->IsValidTeam(teamID)) {
 		return 0;
 	}
-	if (!CanControlTeam(teamID)) {
+	if (!CanControlTeam(L, teamID)) {
 		return 0;
 	}
 	CTeam* team = teamHandler->Team(teamID);
@@ -517,7 +427,7 @@ int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 	if (!teamHandler->IsValidTeam(teamID)) {
 		return 0;
 	}
-	if (!CanControlTeam(teamID)) {
+	if (!CanControlTeam(L, teamID)) {
 		return 0;
 	}
 	CTeam* team = teamHandler->Team(teamID);
@@ -580,7 +490,7 @@ int LuaSyncedCtrl::SetTeamResource(lua_State* L)
 	if (!teamHandler->IsValidTeam(teamID)) {
 		return 0;
 	}
-	if (!CanControlTeam(teamID)) {
+	if (!CanControlTeam(L, teamID)) {
 		return 0;
 	}
 	CTeam* team = teamHandler->Team(teamID);
@@ -616,7 +526,7 @@ int LuaSyncedCtrl::SetTeamShareLevel(lua_State* L)
 	if (!teamHandler->IsValidTeam(teamID)) {
 		return 0;
 	}
-	if (!CanControlTeam(teamID)) {
+	if (!CanControlTeam(L, teamID)) {
 		return 0;
 	}
 	CTeam* team = teamHandler->Team(teamID);
@@ -644,7 +554,7 @@ int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
 	if (!teamHandler->IsValidTeam(teamID1)) {
 		luaL_error(L, "Incorrect arguments to ShareTeamResource(teamID1, teamID2, type, amount)");
 	}
-	if (!CanControlTeam(teamID1)) {
+	if (!CanControlTeam(L, teamID1)) {
 		return 0;
 	}
 	CTeam* team1 = teamHandler->Team(teamID1);
@@ -956,7 +866,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	const bool beingBuilt = (lua_isboolean(L, 7) && lua_toboolean(L, 7)); // default false
 	const bool flattenGround = (lua_isboolean(L, 8) && lua_toboolean(L, 8)) || lua_isnone(L, 8); // default true
 
-	int teamID = CtrlTeam();
+	int teamID = CtrlTeam(L);
 	if (lua_israwnumber(L, 6)) {
 		teamID = lua_toint(L, 6);
 	}
@@ -964,7 +874,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		luaL_error(L, "[%s()]: invalid team number (%d)", __FUNCTION__, teamID);
 		return 0;
 	}
-	if (!FullCtrl() && (CtrlTeam() != teamID)) {
+	if (!FullCtrl(L) && (CtrlTeam(L) != teamID)) {
 		luaL_error(L, "[%s()]: not a controllable team (%d)", __FUNCTION__, teamID);
 		return 0;
 	}
@@ -1045,7 +955,7 @@ int LuaSyncedCtrl::TransferUnit(lua_State* L)
 	}
 
 	bool given = true;
-	if (FullCtrl() && lua_isboolean(L, 3)) {
+	if (FullCtrl(L) && lua_isboolean(L, 3)) {
 		given = lua_toboolean(L, 3);
 	}
 
@@ -2223,7 +2133,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	}
 
 	int facing = GetFacingFromHeading(heading);
-	int team = CtrlTeam();
+	int team = CtrlTeam(L);
 	if (team < 0) {
 		team = -1; // default to global for AllAccessTeam
 	}
@@ -2240,7 +2150,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	}
 
 	const int allyTeam = (team < 0) ? -1 : teamHandler->AllyTeam(team);
-	if (!CanControlFeatureAllyTeam(allyTeam)) {
+	if (!CanControlFeatureAllyTeam(L, allyTeam)) {
 		luaL_error(L, "CreateFeature() bad team permission %d", team);
 	}
 
@@ -2622,7 +2532,7 @@ int LuaSyncedCtrl::GiveOrderToUnit(lua_State* L)
 	Command cmd;
 	LuaUtils::ParseCommand(L, __FUNCTION__, 2, cmd);
 
-	if (!CanControlUnit(unit)) {
+	if (!CanControlUnit(L, unit)) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
@@ -2665,7 +2575,7 @@ int LuaSyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 	int count = 0;
 	for (int i = 0; i < unitCount; i++) {
 		CUnit* unit = units[i];
-		if (CanControlUnit(unit)) {
+		if (CanControlUnit(L, unit)) {
 			unit->commandAI->GiveCommand(cmd);
 			count++;
 		}
@@ -2702,7 +2612,7 @@ int LuaSyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 	int count = 0;
 	for (int i = 0; i < unitCount; i++) {
 		CUnit* unit = units[i];
-		if (CanControlUnit(unit)) {
+		if (CanControlUnit(L, unit)) {
 			unit->commandAI->GiveCommand(cmd);
 			count++;
 		}
@@ -2742,7 +2652,7 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitMap(lua_State* L)
 	int count = 0;
 	for (int u = 0; u < unitCount; u++) {
 		CUnit* unit = units[u];
-		if (CanControlUnit(unit)) {
+		if (CanControlUnit(L, unit)) {
 			for (int c = 0; c < commandCount; c++) {
 				unit->commandAI->GiveCommand(commands[c]);
 			}
@@ -2783,7 +2693,7 @@ int LuaSyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 	int count = 0;
 	for (int u = 0; u < unitCount; u++) {
 		CUnit* unit = units[u];
-		if (CanControlUnit(unit)) {
+		if (CanControlUnit(L, unit)) {
 			for (int c = 0; c < commandCount; c++) {
 				unit->commandAI->GiveCommand(commands[c]);
 			}
@@ -3316,7 +3226,7 @@ int LuaSyncedCtrl::SpawnCEG(lua_State* L)
 
 int LuaSyncedCtrl::SetNoPause(lua_State* L)
 {
-	if (!FullCtrl()) {
+	if (!FullCtrl(L)) {
 		return 0;
 	}
 	if (!lua_isboolean(L, 1)) {
@@ -3332,7 +3242,7 @@ int LuaSyncedCtrl::SetNoPause(lua_State* L)
 
 int LuaSyncedCtrl::SetUnitToFeature(lua_State* L)
 {
-	if (!FullCtrl()) {
+	if (!FullCtrl(L)) {
 		return 0;
 	}
 	if (!lua_isboolean(L, 1)) {
@@ -3345,7 +3255,7 @@ int LuaSyncedCtrl::SetUnitToFeature(lua_State* L)
 
 int LuaSyncedCtrl::SetExperienceGrade(lua_State* L)
 {
-	if (!FullCtrl()) {
+	if (!FullCtrl(L)) {
 		return 0;
 	}
 	const float expGrade = luaL_checkfloat(L, 1);
@@ -3475,7 +3385,7 @@ static bool ParseCommandDescription(lua_State* L, int table,
 
 int LuaSyncedCtrl::EditUnitCmdDesc(lua_State* L)
 {
-	if (!FullCtrl()) {
+	if (!FullCtrl(L)) {
 		return 0;
 	}
 
@@ -3500,7 +3410,7 @@ int LuaSyncedCtrl::EditUnitCmdDesc(lua_State* L)
 
 int LuaSyncedCtrl::InsertUnitCmdDesc(lua_State* L)
 {
-	if (!FullCtrl()) {
+	if (!FullCtrl(L)) {
 		return 0;
 	}
 	const int args = lua_gettop(L); // number of arguments
@@ -3547,7 +3457,7 @@ int LuaSyncedCtrl::InsertUnitCmdDesc(lua_State* L)
 
 int LuaSyncedCtrl::RemoveUnitCmdDesc(lua_State* L)
 {
-	if (!FullCtrl()) {
+	if (!FullCtrl(L)) {
 		return 0;
 	}
 

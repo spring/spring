@@ -530,4 +530,8 @@ namespace CrashHandler
 		signal(SIGABRT, SIG_DFL);
 		signal(SIGINT,  SIG_DFL);
 	}
+
+	void OutputStacktrace() {
+		// FIXME: This is supposed to output a stacktrace of the current thread
+	}
 };

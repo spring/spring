@@ -75,6 +75,8 @@ CallInsList = {
   "Explosion",
   "ShockFront",
 
+  "RecvSkirmishAIMessage",
+
   "GameFrame",
   "CobCallback",
   "AllowCommand",

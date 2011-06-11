@@ -18,10 +18,13 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AIENEMYDESTROYEDEVENT_H
-#define _AIENEMYDESTROYEDEVENT_H
+#ifndef _AI_ENEMY_DESTROYED_EVENT_H
+#define _AI_ENEMY_DESTROYED_EVENT_H
 
 #include "AIEvent.h"
+
+
+namespace springLegacyAI {
 
 class CAIEnemyDestroyedEvent : public CAIEvent {
 public:
@@ -36,4 +39,6 @@ private:
 	SEnemyDestroyedEvent event;
 };
 
-#endif // _AIENEMYDESTROYEDEVENT_H
+} // namespace springLegacyAI
+
+#endif // _AI_ENEMY_DESTROYED_EVENT_H

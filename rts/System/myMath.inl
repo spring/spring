@@ -145,7 +145,7 @@ inline float Square(const float x)
 
 inline int Round(const float f)
 {
-	return floor(f + 0.5f);
+	return math::floor(f + 0.5f);
 }
 
 inline float Clamp(const float& v, const float& min, const float& max)
@@ -161,23 +161,24 @@ inline T Clamp(const T& v, const T& min, const T& max)
 
 inline float ClampRad(float f)
 {
-	f = fmod(f, TWOPI);
+	f = math::fmod(f, TWOPI);
 	if (f < 0.0f) f += TWOPI;
 	return f;
 }
 
 inline void ClampRad(float* f)
 {
-	*f = fmod(*f, TWOPI);
+	*f = math::fmod(*f, TWOPI);
 	if (*f < 0.0f) *f += TWOPI;
 }
 
 inline bool RadsAreEqual(const float f1, const float f2)
 {
-	return (fmod(f1 - f2, TWOPI) == 0.0f);
+	return (math::fmod(f1 - f2, TWOPI) == 0.0f);
 }
 
-inline float GetRadFromXY(float dx, float dy) {
+inline float GetRadFromXY(const float dx, const float dy)
+{
 	float a;
 	if(dx != 0) {
 		a = math::atan(dy / dx);

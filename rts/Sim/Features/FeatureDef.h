@@ -8,9 +8,12 @@
 
 #include "System/float3.h"
 
-#define DRAWTYPE_MODEL 0
-#define DRAWTYPE_TREE 1 // >= different types of trees
-#define DRAWTYPE_NONE -1
+enum {
+	DRAWTYPE_MODEL = 0,
+	DRAWTYPE_TREE  = 1, // >= different types of trees
+	DRAWTYPE_NONE = -1,
+};
+
 
 
 struct S3DModel;
@@ -28,7 +31,6 @@ struct FeatureDef
 
 	std::string myName;
 	std::string description;
-	std::string filename;
 
 	int id;
 
@@ -36,17 +38,15 @@ struct FeatureDef
 	float energy;
 	float maxHealth;
 	float reclaimTime;
-
 	/// used to see if the object can be overrun
 	float mass;
 
-	bool upright;
 	int drawType;
 	mutable S3DModel* model;
 	std::string modelname;
 
 	/// -1 := only if it is the 1st wreckage of the unitdef (default), 0 := no it isn't, 1 := yes it is
-	int  resurrectable;
+	int resurrectable;
 
 	int smokeTime;
 
@@ -57,15 +57,15 @@ struct FeatureDef
 	bool burnable;
 	bool floating;
 	bool noSelect;
-
 	bool geoThermal;
+	bool upright;
 
 	/// name of feature that this turn into when killed (not reclaimed)
 	std::string deathFeature;
 
-	/// each size is 8 units
+	/// each size is SQUARE_SIZE units
 	int xsize;
-	/// each size is 8 units
+	/// each size is SQUARE_SIZE units
 	int zsize;
 
 	std::map<std::string, std::string> customParams;

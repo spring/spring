@@ -559,8 +559,12 @@ void CWeapon::HoldFire()
 
 inline bool CWeapon::AllowWeaponTargetCheck() const
 {
-	if (luaRules && luaRules->AllowWeaponTargetCheck(owner->id, weaponNum, weaponDef->id)) {
-		return true;
+	if (luaRules != NULL) {
+		const int checkAllowed = luaRules->AllowWeaponTargetCheck(owner->id, weaponNum, weaponDef->id);
+
+		if (checkAllowed >= 0) {
+			return checkAllowed;
+		}
 	}
 
 	if (weaponDef->noAutoTarget)                 { return false; }

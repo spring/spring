@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef COMMANDMESSAGE_H
-#define COMMANDMESSAGE_H
+#ifndef COMMAND_MESSAGE_H
+#define COMMAND_MESSAGE_H
 
 #include <string>
 #include <boost/shared_ptr.hpp>
@@ -16,16 +16,19 @@ namespace netcode {
 class CommandMessage
 {
 public:
-	CommandMessage(const std::string& cmd, int playernum);
-	CommandMessage(const Action& action, int playernum);
-	CommandMessage(boost::shared_ptr<const netcode::RawPacket>);
+	CommandMessage(const std::string& cmd, int playerID);
+	CommandMessage(const Action& action, int playerID);
+	CommandMessage(boost::shared_ptr<const netcode::RawPacket> pckt);
 
 	const netcode::RawPacket* Pack() const;
 
-	Action action;
-	int player;
+	const Action& GetAction() const { return action; }
+	int GetPlayerID() const { return playerID; }
+
 private:
+	Action action;
+	int playerID;
 };
 
-#endif
+#endif // COMMAND_MESSAGE_H
  

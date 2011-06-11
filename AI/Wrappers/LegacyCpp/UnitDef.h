@@ -10,6 +10,8 @@
 #include "System/float3.h"
 
 
+namespace springLegacyAI {
+
 struct MoveData;
 struct WeaponDef;
 
@@ -340,5 +342,7 @@ private:
 	float realEnergyUpkeep;
 	float realBuildTime;
 };
+
+} // namespace springLegacyAI
 
 #endif /* UNIT_DEF_H */

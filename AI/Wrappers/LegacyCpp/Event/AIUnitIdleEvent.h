@@ -18,10 +18,13 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AIUNITIDLEEVENT_H
-#define	_AIUNITIDLEEVENT_H
+#ifndef _AI_UNIT_IDLE_EVENT_H
+#define	_AI_UNIT_IDLE_EVENT_H
 
 #include "AIEvent.h"
+
+
+namespace springLegacyAI {
 
 class CAIUnitIdleEvent : public CAIEvent {
 public:
@@ -36,4 +39,6 @@ private:
 	SUnitIdleEvent event;
 };
 
-#endif // _AIUNITIDLEEVENT_H
+} // namespace springLegacyAI
+
+#endif // _AI_UNIT_IDLE_EVENT_H
