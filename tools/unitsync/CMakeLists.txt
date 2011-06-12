@@ -81,7 +81,9 @@ set(unitsync_files
 	)
 
 ADD_LIBRARY(unitsync MODULE ${unitsync_files})
+ADD_LIBRARY(static-unitsync STATIC ${unitsync_files})
 TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs})
+TARGET_LINK_LIBRARIES(static-unitsync ${unitsync_libs})
 if    (MINGW)
 	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--add-stdcall-alias)
 endif (MINGW)
