@@ -498,6 +498,7 @@ EXPORT(unsigned int) GetMapChecksumFromName(const char* mapName);
  * An example usage would be GetMinimap("SmallDivide", 2).
  * This would return a 16 bit packed RGB-565 256x256 (= 1024/2^2) bitmap.
  */
+// -#- ignore -#-
 EXPORT(unsigned short*) GetMinimap(const char* fileName, int mipLevel);
 /**
  * @brief Retrieves dimensions of infomap for a map.

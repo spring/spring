@@ -1,9 +1,16 @@
 #! /usr/bin/env python
 
 import pyunitsync as unitsync
-import unittest, random,string,os,sys
+import unittest, random,string,os,sys,tempfile
 
 testRangeSwitch = None
+
+try:
+	from PIL import Image
+	import numpy
+	testMinimap = True
+except:
+	testMinimap = False
 
 def testRange(count):
 	if testRangeSwitch == 0:
@@ -130,10 +137,18 @@ class MapTest(UnitsyncTestCase):
 		if self._no_maps():
 			return
 		for mapidx in testRange(mapcount):
-			for mipLevel in range(8):
-				minimap = unitsync.GetMinimap( unitsync.GetMapName( mapidx ), mipLevel )
-				#print minimap
+			for miplevel in range(9):#max miplevel is 8
+				#miplevel = 2
+				mapname = unitsync.GetMapName( mapidx )
+				minimap = unitsync.GetMinimap( mapname, miplevel )
 				self.assertTrue(None!=minimap)
+				if testMinimap:
+					size = ( 1 << ( 10 - miplevel ), 1 << ( 10 - miplevel ) )
+					arr = numpy.frombuffer(minimap, numpy.uint16).astype(numpy.uint32)
+					arr = 0xFF000000 + ((arr & 0xF800) >> 8 ) + ((arr & 0x07E0) << 5) + ((arr & 0x001F) << 19)
+					image = Image.frombuffer('RGBA', size, arr, 'raw', 'RGBA', 0,1)
+					image.save( os.path.join(  tempfile.gettempdir(), 'pyusync_%s_mip-%02d.png'%(mapname,miplevel) ) )
+
 
 class ModTest(UnitsyncTestCase):
 	checked_count = False
