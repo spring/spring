@@ -1,5 +1,6 @@
 set(UNITSYNC_PYTHON_WRAPPER TRUE CACHE BOOL "Create a python wrapper for unitsync, if python is found on the system")
 if    (UNITSYNC_PYTHON_WRAPPER)
+	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "../../..")
 	FIND_PACKAGE(PythonLibs)
 	FIND_PACKAGE(PythonInterp)
 	INCLUDE(CheckPythonModule.cmake)
@@ -34,7 +35,7 @@ if    (UNITSYNC_PYTHON_WRAPPER)
 			DEPENDS
 				${pythonUnitsyncTarget}
 			WORKING_DIRECTORY
-				"${CMAKE_BINARY_DIR}/tools"
+				"${CMAKE_BINARY_DIR}"
 			)
 		ADD_CUSTOM_TARGET( "test-${pythonUnitsyncTarget}-all" 
 			COMMAND 
@@ -42,7 +43,7 @@ if    (UNITSYNC_PYTHON_WRAPPER)
 			DEPENDS
 				${pythonUnitsyncTarget}
 			WORKING_DIRECTORY
-				"${CMAKE_BINARY_DIR}/tools"
+				"${CMAKE_BINARY_DIR}"
 			)
 
 		INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_DIRS} "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}")		
