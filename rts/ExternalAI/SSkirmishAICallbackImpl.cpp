@@ -2307,8 +2307,9 @@ EXPORT(float) skirmishAiCallback_UnitDef_getSlideTolerance(int skirmishAIId, int
 	return getUnitDefById(skirmishAIId, unitDefId)->slideTolerance;
 }
 
+// DEPRECATED
 EXPORT(float) skirmishAiCallback_UnitDef_getMaxSlope(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->maxSlope;
+	return 0.0f;
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_getMaxHeightDif(int skirmishAIId, int unitDefId) {
