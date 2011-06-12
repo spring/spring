@@ -124,6 +124,16 @@ class MapTest(UnitsyncTestCase):
 			checksum = unitsync.GetMapChecksum( mapidx )
 			self.assertTrue( checksum > 0 )
 			self.assertEqual( checksum, unitsync.GetMapChecksumFromName( unitsync.GetMapName(mapidx) ) )
+			
+	def test_minimap(self):
+		mapcount = unitsync.GetMapCount()
+		if self._no_maps():
+			return
+		for mapidx in testRange(mapcount):
+			for mipLevel in range(8):
+				minimap = unitsync.GetMinimap( unitsync.GetMapName( mapidx ), mipLevel )
+				#print minimap
+				self.assertTrue(None!=minimap)
 
 class ModTest(UnitsyncTestCase):
 	checked_count = False
@@ -166,7 +176,7 @@ class ModTest(UnitsyncTestCase):
 			modoptcount = unitsync.GetModOptionCount()
 			self.optiontest( modoptcount )
 			unitsync.RemoveAllArchives()
-		
+	
 class AiTest(UnitsyncTestCase):
 	checked_count = False
 	
@@ -202,5 +212,5 @@ if __name__ == '__main__':
 	modSuite = unittest.TestLoader().loadTestsFromTestCase(ModTest)
 	aiSuite = unittest.TestLoader().loadTestsFromTestCase(AiTest)
 	unittest.TextTestRunner(verbosity=4).run(unittest.TestSuite([basicSuite,mapSuite,modSuite,aiSuite]))
-	#unittest.TextTestRunner(verbosity=4).run(unittest.TestSuite(modSuite))
+	#unittest.TextTestRunner(verbosity=4).run(unittest.TestSuite(mapSuite))
  
