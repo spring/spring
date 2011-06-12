@@ -356,10 +356,10 @@ int CUnitHandler::TestUnitBuildSquare(
 	const int zsize = buildInfo.GetZSize();
 	const float3 pos = buildInfo.pos;
 
-	const int x1 = (int) (pos.x - (xsize * 0.5f * SQUARE_SIZE));
-	const int x2 = x1 + xsize * SQUARE_SIZE;
-	const int z1 = (int) (pos.z - (zsize * 0.5f * SQUARE_SIZE));
+	const int x1 = (pos.x - (xsize * 0.5f * SQUARE_SIZE));
+	const int z1 = (pos.z - (zsize * 0.5f * SQUARE_SIZE));
 	const int z2 = z1 + zsize * SQUARE_SIZE;
+	const int x2 = x1 + xsize * SQUARE_SIZE;
 	const float bh = GetBuildHeight(pos, buildInfo.def);
 
 	int canBuild = 2;
