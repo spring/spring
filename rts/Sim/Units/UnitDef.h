@@ -159,6 +159,7 @@ public:
 	float losRadius;
 	float airLosRadius;
 	float losHeight;
+	float radarHeight;
 
 	int radarRadius;
 	int sonarRadius;
