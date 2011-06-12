@@ -186,7 +186,6 @@ public:
 	bool strafeToAttack;  /// should the unit move sideways when it can't shoot?
 	float minCollisionSpeed;
 	float slideTolerance;
-	float maxSlope;
 	float maxHeightDif;   /// maximum terraform height this building allows
 	float minWaterDepth;
 	float waterline;

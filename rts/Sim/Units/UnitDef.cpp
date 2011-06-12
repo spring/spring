@@ -113,7 +113,6 @@ UnitDef::UnitDef()
 , strafeToAttack(false)
 , minCollisionSpeed(0.0f)
 , slideTolerance(0.0f)
-, maxSlope(0.0f)
 , maxHeightDif(0.0f)
 , minWaterDepth(0.0f)
 , waterline(0.0f)
@@ -367,9 +366,12 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	collide = udTable.GetBool("collide", true);
 	onoffable = udTable.GetBool("onoffable", false);
 
-	maxSlope = Clamp(udTable.GetFloat("maxSlope", 0.0f), 0.0f, 89.0f);
-	maxHeightDif = 40 * tan(maxSlope * (PI / 180));
-	maxSlope = cos(maxSlope * (PI / 180));
+	const float maxSlopeDeg = Clamp(udTable.GetFloat("maxSlope", 0.0f), 0.0f, 89.0f);
+	const float maxSlopeRad = maxSlopeDeg * (PI / 180.0f);
+
+	// FIXME: kill the magic constant
+	maxHeightDif = 40.0f * math::tanf(maxSlopeRad);
+
 	minWaterDepth = udTable.GetFloat("minWaterDepth", -10e6f);
 	maxWaterDepth = udTable.GetFloat("maxWaterDepth", +10e6f);
 	waterline = udTable.GetFloat("waterline", 0.0f);
