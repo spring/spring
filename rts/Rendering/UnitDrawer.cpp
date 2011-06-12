@@ -152,7 +152,7 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	multiThreadDrawUnitShadow = !!configHandler->Get("MultiThreadDrawUnitShadow", 1);
 #endif
 
-	lightHandler.Init(2U, configHandler->Get("MaxDynamicModelLights", 4U));
+	lightHandler.Init(2U, configHandler->Get("MaxDynamicModelLights", 1U));
 
 	advFade = GLEW_NV_vertex_program2;
 	advShading = (LoadModelShaders() && cubeMapHandler->Init());

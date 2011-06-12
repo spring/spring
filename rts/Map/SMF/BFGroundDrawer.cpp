@@ -75,7 +75,7 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 	multiThreadDrawGroundShadow = !!configHandler->Get("MultiThreadDrawGroundShadow", 0);
 #endif
 
-	lightHandler.Init(2U, configHandler->Get("MaxDynamicMapLights", 4U));
+	lightHandler.Init(2U, configHandler->Get("MaxDynamicMapLights", 1U));
 	advShading = LoadMapShaders();
 }
 
