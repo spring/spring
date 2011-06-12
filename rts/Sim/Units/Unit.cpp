@@ -141,8 +141,9 @@ CUnit::CUnit() : CSolidObject(),
 	mapSquare(-1),
 	losRadius(0),
 	airLosRadius(0),
-	losHeight(0.0f),
 	lastLosUpdate(0),
+	losHeight(0.0f),
+	radarHeight(0.0f),
 	radarRadius(0),
 	sonarRadius(0),
 	jammerRadius(0),
@@ -388,6 +389,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	maxHealth = unitDef->health;
 	health = unitDef->health;
 	losHeight = unitDef->losHeight;
+	radarHeight = unitDef->radarHeight;
 	metalCost = unitDef->metalCost;
 	energyCost = unitDef->energyCost;
 	buildTime = unitDef->buildTime;
@@ -474,7 +476,6 @@ void CUnit::PostInit(const CUnit* builder)
 	script->Create();
 
 	relMidPos = model->relMidPos;
-	losHeight = relMidPos.y + (radius * 0.5f);
 	height = model->height;
 
 	UpdateMidPos();
@@ -2268,8 +2269,9 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(mapSquare),
 	CR_MEMBER(losRadius),
 	CR_MEMBER(airLosRadius),
-	CR_MEMBER(losHeight),
 	CR_MEMBER(lastLosUpdate),
+	CR_MEMBER(losHeight),
+	CR_MEMBER(radarHeight),
 	CR_MEMBER(radarRadius),
 	CR_MEMBER(sonarRadius),
 	CR_MEMBER(jammerRadius),

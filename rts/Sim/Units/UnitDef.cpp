@@ -90,6 +90,7 @@ UnitDef::UnitDef()
 , losRadius(0.0f)
 , airLosRadius(0.0f)
 , losHeight(0.0f)
+, radarHeight(0.0f)
 , radarRadius(0.0f)
 , sonarRadius(0.0f)
 , jammerRadius(0.0f)
@@ -299,7 +300,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	idleAutoHeal = udTable.GetFloat("idleAutoHeal", 10.0f) * (UNIT_SLOWUPDATE_RATE / float(GAME_SPEED));
 	idleTime     = udTable.GetInt("idleTime", 600);
 
-	losHeight = 20;
 	metalCost = udTable.GetFloat("buildCostMetal", 0.0f);
 	if (metalCost < 1.0f) {
 		metalCost = 1.0f; //avoid some nasty divide by 0 etc
@@ -407,6 +407,9 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	armoredMultiple = udTable.GetFloat("damageModifier", 1.0f);
 	armorType = damageArrayHandler->GetTypeFromName(name);
+
+	losHeight = udTable.GetFloat("losEmitHeight", 20.0f);
+	radarHeight = udTable.GetFloat("radarEmitHeight", 20.0f);
 
 	radarRadius    = udTable.GetInt("radarDistance",    0);
 	sonarRadius    = udTable.GetInt("sonarDistance",    0);
