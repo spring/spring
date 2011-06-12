@@ -156,11 +156,11 @@ public:
 	bool upright;
 	bool collide;
 
-	float losRadius;
-	float airLosRadius;
 	float losHeight;
 	float radarHeight;
 
+	float losRadius;
+	float airLosRadius;
 	int radarRadius;
 	int sonarRadius;
 	int jammerRadius;
