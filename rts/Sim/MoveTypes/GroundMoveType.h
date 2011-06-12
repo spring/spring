@@ -101,7 +101,8 @@ protected:
 
 	bool atGoal;
 	bool haveFinalWaypoint;
-	float currentDistanceToWaypoint;
+	float currWayPointDist;
+	float prevWayPointDist;
 
 	bool skidding;
 	bool flying;

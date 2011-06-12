@@ -36,7 +36,7 @@
 #include "System/Sync/SyncTracer.h"
 
 #define MIN_WAYPOINT_DISTANCE (SQUARE_SIZE << 1)
-#define MAX_IDLING_SLOWUPDATES 15
+#define MAX_IDLING_SLOWUPDATES 16
 #define DEBUG_OUTPUT 0
 #define PLAY_SOUNDS 1
 
@@ -61,7 +61,8 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(nextWaypoint),
 	CR_MEMBER(atGoal),
 	CR_MEMBER(haveFinalWaypoint),
-	CR_MEMBER(currentDistanceToWaypoint),
+	CR_MEMBER(currWayPointDist),
+	CR_MEMBER(prevWayPointDist),
 
 	CR_MEMBER(pathRequestDelay),
 
@@ -121,7 +122,8 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	nextWaypoint(ZeroVector),
 	atGoal(false),
 	haveFinalWaypoint(false),
-	currentDistanceToWaypoint(0),
+	currWayPointDist(0.0f),
+	prevWayPointDist(0.0f),
 
 	skidding(false),
 	flying(false),
@@ -216,7 +218,8 @@ bool CGroundMoveType::Update()
 				ASSERT_SYNCED_FLOAT3(waypoint);
 				ASSERT_SYNCED_FLOAT3(owner->pos);
 
-				currentDistanceToWaypoint = owner->pos.distance2D(waypoint);
+				prevWayPointDist = currWayPointDist;
+				currWayPointDist = owner->pos.distance2D(waypoint);
 				atGoal = ((owner->pos - goalPos).SqLength2D() < Square(MIN_WAYPOINT_DISTANCE));
 
 				if (!atGoal) {
@@ -228,13 +231,6 @@ bool CGroundMoveType::Update()
 						// obstacle), which unlike actual immobilization
 						// should be ignored
 						numIdlingUpdates = std::min(SHORTINT_MAXVALUE, int(numIdlingUpdates + 1));
-
-						#if (DEBUG_OUTPUT == 1)
-						logOutput.Print(
-							"[CGMT::U] ETA failure for unit %i with pathID %i (at goal: %i)",
-							owner->id, pathId, atGoal
-						);
-						#endif
 					}
 				}
 
@@ -293,12 +289,17 @@ bool CGroundMoveType::Update()
 		TestNewTerrainSquare();
 		HandleObjectCollisions();
 
+		// note: HandleObjectCollisions() may have negated the position set
+		// by UpdateOwnerPos() (so that owner->pos is again equal to oldPos)
 		owner->speed = owner->pos - oldPos;
 		owner->UpdateMidPos();
 
-		// HandleObjectCollisions() may have negated the position set by
-		// UpdateOwnerPos() (so that owner->pos is again equal to oldPos)
-		idling = (owner->speed.SqLength() < (accRate * accRate));
+		// too many false negatives: speed is unreliable if stuck behind an obstacle
+		// idling = (owner->speed.SqLength() < (accRate * accRate));
+		// too many false positives: waypoint-distance delta and speed vary too much
+		// idling = (Square(currWayPointDist - prevWayPointDist) < owner->speed.SqLength());
+
+		idling = (Square(currWayPointDist - prevWayPointDist) < 1.0f);
 		oldPos = owner->pos;
 		hasMoved = true;
 	} else {
@@ -328,7 +329,7 @@ void CGroundMoveType::SlowUpdate()
 			if (numIdlingUpdates > (SHORTINT_MAXVALUE / turnRate)) {
 				// case A: we have a path but are not moving
 				#if (DEBUG_OUTPUT == 1)
-				logOutput.Print("[CGMT::SU] unit %i has path %i but %i ETA failures", owner->id, pathId, numIdlingUpdates);
+				logOutput.Print("[CGMT::SU] unit %i has pathID %i but %i ETA failures", owner->id, pathId, numIdlingUpdates);
 				#endif
 
 				if (numIdlingSlowUpdates < MAX_IDLING_SLOWUPDATES) {
@@ -397,7 +398,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float _goalRadius, float s
 	numIdlingSlowUpdates = 0;
 
 	#if (DEBUG_OUTPUT == 1)
-	logOutput.Print("[CGMT::StartMove] starting engine for unit %i", owner->id);
+	logOutput.Print("[CGMT::StartMoving] starting engine for unit %i", owner->id);
 	#endif
 
 	StartEngine();
@@ -421,7 +422,7 @@ void CGroundMoveType::StopMoving() {
 #endif
 
 	#if (DEBUG_OUTPUT == 1)
-	logOutput.Print("[CGMT::StopMove] stopping engine for unit %i", owner->id);
+	logOutput.Print("[CGMT::StopMoving] stopping engine for unit %i", owner->id);
 	#endif
 
 	StopEngine();
@@ -475,7 +476,7 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 			if (startBreaking) {
 				// at this point, Update() will no longer call GetNextWaypoint()
 				// and we must slow down to prevent entering an infinite circle
-				wSpeed = std::min(wSpeed, fastmath::apxsqrt(currentDistanceToWaypoint * decRate));
+				wSpeed = std::min(wSpeed, fastmath::apxsqrt(currWayPointDist * decRate));
 			}
 
 			if (!ud->turnInPlace) {
@@ -502,7 +503,7 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 	if (!wantReverse &&  reversing) { speedDif = -currentSpeed; }
 
 	// limit speed change according to acceleration
-	if (fabs(speedDif) < 0.05f) {
+	if (math::fabs(speedDif) < 0.05f) {
 		// we are already going (mostly) how fast we want to go
 		deltaSpeed = speedDif * 0.125f;
 		nextDeltaSpeedUpdate = gs->frameNum + 8;
@@ -718,7 +719,7 @@ void CGroundMoveType::UpdateSkid()
 			if (dot > 0.0f) {
 				speed *= 0.95f;
 			} else {
-				speed += (normal * (fabs(speed.dot(normal)) + 0.1f)) * 1.9f;
+				speed += (normal * (math::fabs(speed.dot(normal)) + 0.1f)) * 1.9f;
 				speed *= 0.8f;
 			}
 		}
@@ -981,7 +982,7 @@ float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
 						// (or not yet fully apart), then the object is on the path of the unit
 						// and they are not collided.
 						if (objectToUnit.dot(avoidanceDir) < radiusSum &&
-							fabs(objectDistToAvoidDirCenter) < radiusSum &&
+							math::fabs(objectDistToAvoidDirCenter) < radiusSum &&
 							(o->mobility || Distance2D(owner, o) >= 0)) {
 
 							// Avoid collision by turning the heading to left or right.
@@ -1003,7 +1004,7 @@ float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
 								rightOfAvoid = avoidanceDir.cross(float3(0.0f, 1.0f, 0.0f));
 							} else {
 								avoidLeft +=
-									(radiusSum - fabs(objectDistToAvoidDirCenter)) *
+									(radiusSum - math::fabs(objectDistToAvoidDirCenter)) *
 									AVOIDANCE_STRENGTH * fastmath::isqrt2(distanceToObjectSq);
 								avoidanceDir -= (rightOfAvoid * avoidLeft);
 								avoidanceDir.Normalize();
@@ -1064,8 +1065,8 @@ float CGroundMoveType::Distance2D(CSolidObject* object1, CSolidObject* object2, 
 	} else {
 		// Pytagorean sum of the x and z distance.
 		float3 distVec;
-		float xdiff = streflop::fabs(object1->midPos.x - object2->midPos.x);
-		float zdiff = streflop::fabs(object1->midPos.z - object2->midPos.z);
+		float xdiff = math::fabs(object1->midPos.x - object2->midPos.x);
+		float zdiff = math::fabs(object1->midPos.z - object2->midPos.z);
 
 		distVec.x = xdiff - (object1->xsize + object2->xsize) * SQUARE_SIZE / 2 + 2 * marginal;
 		distVec.z = zdiff - (object1->zsize + object2->zsize) * SQUARE_SIZE / 2 + 2 * marginal;
@@ -1133,10 +1134,10 @@ void CGroundMoveType::GetNextWaypoint()
 		const float turnFrames = SPRING_CIRCLE_DIVS / turnRate;
 		const float turnRadius = (owner->speed.Length() * turnFrames) / (PI + PI);
 
-		if ((currentDistanceToWaypoint) > (turnRadius * 2.0f)) {
+		if (currWayPointDist > (turnRadius * 2.0f)) {
 			return;
 		}
-		if (currentDistanceToWaypoint > MIN_WAYPOINT_DISTANCE && waypointDir.dot(flatFrontDir) >= 0.995f) {
+		if (currWayPointDist > MIN_WAYPOINT_DISTANCE && waypointDir.dot(flatFrontDir) >= 0.995f) {
 			return;
 		}
 	}
@@ -1253,7 +1254,7 @@ void CGroundMoveType::Arrived()
 		owner->commandAI->SlowUpdate();
 
 		#if (DEBUG_OUTPUT == 1)
-		logOutput.Print("[CGMT::Arrive] unit %i arrived", owner->id);
+		logOutput.Print("[CGMT::Arrived] unit %i arrived", owner->id);
 		#endif
 	}
 }
@@ -1548,8 +1549,8 @@ void CGroundMoveType::CreateLineTable()
 					}
 
 					keepgoing =
-						fabs(xp - start.x) < fabs(to.x - start.x) &&
-						fabs(zp - start.z) < fabs(to.z - start.z);
+						math::fabs(xp - start.x) < math::fabs(to.x - start.x) &&
+						math::fabs(zp - start.z) < math::fabs(to.z - start.z);
 
 					lineTable[yt][xt].push_back( int2(int(floor(xp)), int(floor(zp))) );
 				}
@@ -1583,7 +1584,7 @@ void CGroundMoveType::TestNewTerrainSquare()
 		const MoveData& md = *(owner->unitDef->movedata);
 		const float cmod = movemath->GetPosSpeedMod(md, moveSquareX * 2, moveSquareY * 2);
 
-		if (fabs(owner->frontdir.x) < fabs(owner->frontdir.z)) {
+		if (math::fabs(owner->frontdir.x) < math::fabs(owner->frontdir.z)) {
 			if (newMoveSquareX > moveSquareX) {
 				const float nmod = movemath->GetPosSpeedMod(md, newMoveSquareX * 2, newMoveSquareY * 2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
