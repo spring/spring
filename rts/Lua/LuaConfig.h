@@ -1,3 +1,5 @@
+#include "lib/gml/gmlcnf.h"
+
 #define LUA_MUTEX 1
 #define LUA_BATCH 2
 #define LUA_STATE 4
