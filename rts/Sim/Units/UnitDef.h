@@ -403,11 +403,9 @@ public:
 	float refuelTime;								///< time to fully refuel unit
 	float minAirBasePower;							///< min build power for airbases that this aircraft can land on
 
-	std::vector<std::string> sfxExplGenNames;
-	std::vector<IExplosionGenerator*> sfxExplGens;	//< list of explosion generators for use in scripts
-
-	std::string pieceTrailCEGTag;					//< base tag (eg. "flame") of CEG attached to pieces of exploding units
-	int pieceTrailCEGRange;							//< range of piece CEGs (0-based, range 8 ==> tags "flame0", ..., "flame7")
+	std::vector<std::string> pieceCEGTags;
+	std::vector<std::string> modelCEGTags;
+	std::vector<IExplosionGenerator*> sfxExplGens;	///< list of explosion generators for use in scripts
 
 	int maxThisUnit;								///< number of units of this type allowed simultaneously in the game
 
