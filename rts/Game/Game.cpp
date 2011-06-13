@@ -645,10 +645,17 @@ void CGame::LoadInterface()
 			wordCompletion->AddWord(*sn + " ", false, false, false);
 		}
 
-		const std::map<std::string, int>& unitMap = unitDefHandler->unitDefIDsByName;
+		const std::map<std::string, int>& unitDefs = unitDefHandler->unitDefIDsByName;
+		const std::map<std::string, const FeatureDef*>& featureDefs = featureHandler->GetFeatureDefs();
+
 		std::map<std::string, int>::const_iterator uit;
-		for (uit = unitMap.begin(); uit != unitMap.end(); ++uit) {
+		std::map<std::string, const FeatureDef*>::const_iterator fit;
+
+		for (uit = unitDefs.begin(); uit != unitDefs.end(); ++uit) {
 			wordCompletion->AddWord(uit->first + " ", false, true, false);
+		}
+		for (fit = featureDefs.begin(); fit != featureDefs.end(); ++fit) {
+			wordCompletion->AddWord(fit->first + " ", false, true, false);
 		}
 	}
 
