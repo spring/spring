@@ -295,11 +295,13 @@ bool CGroundMoveType::Update()
 		owner->UpdateMidPos();
 
 		// too many false negatives: speed is unreliable if stuck behind an obstacle
-		// idling = (owner->speed.SqLength() < (accRate * accRate));
+		//   idling = (owner->speed.SqLength() < (accRate * accRate));
 		// too many false positives: waypoint-distance delta and speed vary too much
-		// idling = (Square(currWayPointDist - prevWayPointDist) < owner->speed.SqLength());
+		//   idling = (Square(currWayPointDist - prevWayPointDist) < owner->speed.SqLength());
+		// too many false positives: many slow units cannot even manage 1 elmo/frame
+		//   idling = (Square(currWayPointDist - prevWayPointDist) < 1.0f);
 
-		idling = (Square(currWayPointDist - prevWayPointDist) < 1.0f);
+		idling = (Square(currWayPointDist - prevWayPointDist) < (owner->speed.SqLength() - 0.05f));
 		oldPos = owner->pos;
 		hasMoved = true;
 	} else {
@@ -396,6 +398,9 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float _goalRadius, float s
 
 	numIdlingUpdates = 0;
 	numIdlingSlowUpdates = 0;
+
+	currWayPointDist = 0.0f;
+	prevWayPointDist = 0.0f;
 
 	#if (DEBUG_OUTPUT == 1)
 	logOutput.Print("[CGMT::StartMoving] starting engine for unit %i", owner->id);
