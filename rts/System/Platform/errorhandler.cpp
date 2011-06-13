@@ -87,7 +87,6 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 	//! MT thread has crashed or deviated from its normal execution path by throwing an exception
 	boost::thread* forcedExitThread = new boost::thread(boost::bind(&ForcedExit, msg, caption, flags));
 //#endif
-#endif
 
 	//! Non-MainThread. Inform main one and then interrupt it.
 	if (!Threading::IsMainThread()) {
@@ -98,6 +97,8 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 		//! terminate thread // FIXME: only the (separate) loading thread can catch thread_interrupted
 		throw boost::thread_interrupted();
 	}
+
+#endif
 
 #ifdef DEDICATED
 	SafeDelete(gameServer);
