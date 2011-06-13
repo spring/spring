@@ -252,7 +252,6 @@ UnitDef::UnitDef()
 , maxFuel(0.0f)
 , refuelTime(0.0f)
 , minAirBasePower(0.0f)
-, pieceTrailCEGRange(-1)
 , maxThisUnit(0)
 , realMetalCost(0.0f)
 , realEnergyCost(0.0f)
@@ -701,23 +700,19 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		}
 	}
 
-	LuaTable sfxTable = udTable.SubTable("SFXTypes");
-	LuaTable expTable = sfxTable.SubTable("explosionGenerators");
+	const LuaTable& sfxTable = udTable.SubTable("SFXTypes");
+	const LuaTable& modelCEGTable = sfxTable.SubTable(     "explosionGenerators");
+	const LuaTable& pieceCEGTable = sfxTable.SubTable("pieceExplosionGenerators");
 
-	for (int expNum = 1; expNum <= 1024; expNum++) {
-		std::string expsfx = expTable.GetString(expNum, "");
+	std::vector<int> modelCEGKeys; modelCEGTable.GetKeys(modelCEGKeys);
+	std::vector<int> pieceCEGKeys; pieceCEGTable.GetKeys(pieceCEGKeys);
 
-		if (expsfx == "") {
-			break;
-		} else {
-			sfxExplGenNames.push_back(expsfx);
-		}
+	for (unsigned int n = 0; n < modelCEGKeys.size(); n++) {
+		modelCEGTags.push_back(modelCEGTable.GetString(modelCEGKeys[n], ""));
 	}
-
-	// we use range in a modulo operation, so it needs to be >= 1
-	pieceTrailCEGTag = udTable.GetString("pieceTrailCEGTag", "");
-	pieceTrailCEGRange = udTable.GetInt("pieceTrailCEGRange", 1);
-	pieceTrailCEGRange = std::max(pieceTrailCEGRange, 1);
+	for (unsigned int n = 0; n < pieceCEGKeys.size(); n++) {
+		pieceCEGTags.push_back(pieceCEGTable.GetString(pieceCEGKeys[n], ""));
+	}
 
 	// custom parameters table
 	udTable.SubTable("customParams").GetMap(customParams);
