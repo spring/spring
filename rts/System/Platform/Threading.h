@@ -42,6 +42,9 @@ namespace Threading {
 	void SetSimThread(bool set);
 	bool IsSimThread();
 
+	void SetBatchThread(bool set);
+	bool IsBatchThread();
+
 	void SetThreadError(const Error& err);
 	Error* GetThreadError();
 };

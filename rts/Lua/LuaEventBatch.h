@@ -105,37 +105,37 @@ struct LuaMiscEvent {
 
 #if (LUA_MT_OPT & LUA_BATCH)
 	#define LUA_UNIT_BATCH_PUSH(r,...)\
-		if(UseEventBatch() && !execUnitBatch && Threading::IsSimThread()) {\
+		if(UseEventBatch() && Threading::IsBatchThread()) {\
 			GML_STDMUTEX_LOCK(ulbatch);\
 			luaUnitEventBatch.push_back(LuaUnitEvent(__VA_ARGS__));\
 			return r;\
 		}
 	#define LUA_FEAT_BATCH_PUSH(...)\
-		if(UseEventBatch() && !execFeatBatch && Threading::IsSimThread()) {\
+		if(UseEventBatch() && Threading::IsBatchThread()) {\
 			GML_STDMUTEX_LOCK(flbatch);\
 			luaFeatEventBatch.push_back(LuaFeatEvent(__VA_ARGS__));\
 			return;\
 		}
 	#define LUA_OBJ_BATCH_PUSH(...)\
-		if(UseEventBatch() && !execObjBatch && Threading::IsSimThread()) {\
+		if(UseEventBatch() && Threading::IsBatchThread()) {\
 			GML_STDMUTEX_LOCK(olbatch);\
 			luaObjEventBatch.push_back(LuaObjEvent(__VA_ARGS__));\
 			return;\
 		}
 	#define LUA_PROJ_BATCH_PUSH(...)\
-		if(UseEventBatch() && !execProjBatch && Threading::IsSimThread()) {\
+		if(UseEventBatch() && Threading::IsBatchThread()) {\
 			GML_STDMUTEX_LOCK(plbatch);\
 			luaProjEventBatch.push_back(LuaProjEvent(__VA_ARGS__));\
 			return;\
 		}
 	#define LUA_FRAME_BATCH_PUSH(...)\
-		if(UseEventBatch() && (Threading::IsSimThread() || !execFrameBatch)) {\
+		if(UseEventBatch() && Threading::IsBatchThread()) {\
 			GML_STDMUTEX_LOCK(glbatch);\
 			luaFrameEventBatch.push_back(__VA_ARGS__);\
 			return;\
 		}
 	#define LUA_MISC_BATCH_PUSH(r,...)\
-		if(UseEventBatch() && (Threading::IsSimThread() || !execMiscBatch)) {\
+		if(UseEventBatch() && Threading::IsBatchThread()) {\
 			GML_STDMUTEX_LOCK(mlbatch);\
 			luaMiscEventBatch.push_back(LuaMiscEvent(__VA_ARGS__));\
 			return r;\

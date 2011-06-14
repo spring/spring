@@ -414,12 +414,6 @@ class CLuaHandle : public CEventClient
 		std::vector<LuaProjEvent>luaProjEventBatch;
 		std::vector<int>luaFrameEventBatch;
 		std::vector<LuaMiscEvent>luaMiscEventBatch;
-		bool execUnitBatch;
-		bool execFeatBatch;
-		bool execObjBatch;
-		bool execProjBatch;
-		bool execFrameBatch;
-		bool execMiscBatch;
 
 		// FIXME: because CLuaUnitScript needs to access RunCallIn / activeHandle
 		friend class CLuaUnitScript;
