@@ -10,7 +10,6 @@
 	File "${BUILD_OR_DIST_DIR}\unitsync.dll"
 	CreateDirectory "$INSTDIR\maps"
 	CreateDirectory "$INSTDIR\games"
-	CreateDirectory "$INSTDIR\mods" ; deprecated
 	SetOutPath "$INSTDIR"
 
 	${!echonow} "Processing: main: DLLs (mingwlibs)"
