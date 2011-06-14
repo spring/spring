@@ -129,13 +129,13 @@ struct LuaMiscEvent {
 			return;\
 		}
 	#define LUA_FRAME_BATCH_PUSH(...)\
-		if(UseEventBatch() && !execFrameBatch && Threading::IsSimThread()) {\
+		if(UseEventBatch() && (Threading::IsSimThread() || !execFrameBatch)) {\
 			GML_STDMUTEX_LOCK(glbatch);\
 			luaFrameEventBatch.push_back(__VA_ARGS__);\
 			return;\
 		}
 	#define LUA_MISC_BATCH_PUSH(r,...)\
-		if(UseEventBatch() && !execMiscBatch && Threading::IsSimThread()) {\
+		if(UseEventBatch() && (Threading::IsSimThread() || !execMiscBatch)) {\
 			GML_STDMUTEX_LOCK(mlbatch);\
 			luaMiscEventBatch.push_back(LuaMiscEvent(__VA_ARGS__));\
 			return r;\

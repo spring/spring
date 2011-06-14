@@ -1513,8 +1513,16 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 	std::vector<LuaUnitEvent> lueb;
 	{
 		GML_STDMUTEX_LOCK(ulbatch);
+
+		if(luaUnitEventBatch.empty())
+			return;
+
 		luaUnitEventBatch.swap(lueb);
 	}
+
+	SELECT_LUA_STATE();
+	GML_DRCMUTEX_LOCK(lua); // ExecuteUnitEventBatch
+
 	execUnitBatch = true;
 	for(std::vector<LuaUnitEvent>::iterator i = lueb.begin(); i != lueb.end(); ++i) {
 		LuaUnitEvent &e = *i;
@@ -1620,8 +1628,16 @@ void CLuaHandle::ExecuteFeatEventBatch() {
 	std::vector<LuaFeatEvent> lfeb;
 	{
 		GML_STDMUTEX_LOCK(flbatch);
+
+		if(luaFeatEventBatch.empty())
+			return;
+
 		luaFeatEventBatch.swap(lfeb);
 	}
+
+	SELECT_LUA_STATE();
+	GML_DRCMUTEX_LOCK(lua); // ExecuteFeatEventBatch
+
 	execFeatBatch = true;
 	for(std::vector<LuaFeatEvent>::iterator i = lfeb.begin(); i != lfeb.end(); ++i) {
 		LuaFeatEvent &e = *i;
@@ -1649,8 +1665,16 @@ void CLuaHandle::ExecuteObjEventBatch() {
 	std::vector<LuaObjEvent> loeb;
 	{
 		GML_STDMUTEX_LOCK(olbatch);
+
+		if(luaObjEventBatch.empty())
+			return;
+
 		luaObjEventBatch.swap(loeb);
 	}
+
+	SELECT_LUA_STATE();
+	GML_DRCMUTEX_LOCK(lua); // ExecuteObjEventBatch
+
 	execObjBatch = true;
 	for(std::vector<LuaObjEvent>::iterator i = loeb.begin(); i != loeb.end(); ++i) {
 		LuaObjEvent &e = *i;
@@ -1675,8 +1699,16 @@ void CLuaHandle::ExecuteProjEventBatch() {
 	std::vector<LuaProjEvent> lpeb;
 	{
 		GML_STDMUTEX_LOCK(plbatch);
+
+		if(luaProjEventBatch.empty())
+			return;
+
 		luaProjEventBatch.swap(lpeb);
 	}
+
+	SELECT_LUA_STATE();
+	GML_DRCMUTEX_LOCK(lua); // ExecuteProjEventBatch
+
 	execProjBatch = true;
 	for(std::vector<LuaProjEvent>::iterator i = lpeb.begin(); i != lpeb.end(); ++i) {
 		LuaProjEvent &e = *i;
@@ -1699,14 +1731,19 @@ void CLuaHandle::ExecuteProjEventBatch() {
 void CLuaHandle::ExecuteFrameEventBatch() {
 	if(!UseEventBatch()) return;
 
-	SELECT_LUA_STATE();
-	GML_DRCMUTEX_LOCK(lua); // ExecuteFrameEventBatch
-
 	std::vector<int> lgeb;
 	{
 		GML_STDMUTEX_LOCK(glbatch);
+
+		if(luaFrameEventBatch.empty())
+			return;
+
 		luaFrameEventBatch.swap(lgeb);
 	}
+
+	SELECT_LUA_STATE();
+	GML_DRCMUTEX_LOCK(lua); // ExecuteFrameEventBatch
+
 	execFrameBatch = true;
 	for(std::vector<int>::iterator i = lgeb.begin(); i != lgeb.end(); ++i) {
 		GameFrame(*i);
@@ -1718,14 +1755,19 @@ void CLuaHandle::ExecuteFrameEventBatch() {
 void CLuaHandle::ExecuteMiscEventBatch() {
 	if(!UseEventBatch()) return;
 
-	SELECT_LUA_STATE();
-	GML_DRCMUTEX_LOCK(lua); // ExecuteMiscEventBatch
-
 	std::vector<LuaMiscEvent> lmeb;
 	{
 		GML_STDMUTEX_LOCK(mlbatch);
+
+		if(luaMiscEventBatch.empty())
+			return;
+
 		luaMiscEventBatch.swap(lmeb);
 	}
+
+	SELECT_LUA_STATE();
+	GML_DRCMUTEX_LOCK(lua); // ExecuteMiscEventBatch
+
 	execMiscBatch = true;
 	for(std::vector<LuaMiscEvent>::iterator i = lmeb.begin(); i != lmeb.end(); ++i) {
 		LuaMiscEvent &e = *i;
