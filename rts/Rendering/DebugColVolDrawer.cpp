@@ -193,11 +193,10 @@ namespace DebugColVolDrawer
 {
 	void Draw()
 	{
+#ifndef USE_GML // DebugColVolDrawer is not thread-safe
 		if (!globalRendering->drawdebug)
+#endif
 			return;
-
-		GML_RECMUTEX_LOCK(unit);
-		GML_RECMUTEX_LOCK(feat);
 
 		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
 			glDisable(GL_LIGHTING);
