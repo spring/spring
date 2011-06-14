@@ -65,12 +65,6 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
   callinErrors(0)
 {
 	UpdateThreading();
-	execUnitBatch = false;
-	execFeatBatch = false;
-	execObjBatch = false;
-	execProjBatch = false;
-	execFrameBatch = false;
-	execMiscBatch = false;
 
 	SetSynced(false, true);
 	D_Sim.owner = this;
@@ -1523,7 +1517,8 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 	SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteUnitEventBatch
 
-	execUnitBatch = true;
+	if(Threading::IsSimThread())
+		Threading::SetBatchThread(false);
 	for(std::vector<LuaUnitEvent>::iterator i = lueb.begin(); i != lueb.end(); ++i) {
 		LuaUnitEvent &e = *i;
 		switch(e.id) {
@@ -1616,7 +1611,8 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 				break;
 		}
 	}
-	execUnitBatch = false;
+	if(Threading::IsSimThread())
+		Threading::SetBatchThread(true);
 }
 
 
@@ -1638,7 +1634,8 @@ void CLuaHandle::ExecuteFeatEventBatch() {
 	SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteFeatEventBatch
 
-	execFeatBatch = true;
+	if(Threading::IsSimThread())
+		Threading::SetBatchThread(false);
 	for(std::vector<LuaFeatEvent>::iterator i = lfeb.begin(); i != lfeb.end(); ++i) {
 		LuaFeatEvent &e = *i;
 		switch(e.id) {
@@ -1653,7 +1650,8 @@ void CLuaHandle::ExecuteFeatEventBatch() {
 				break;
 		}
 	}
-	execFeatBatch = false;
+	if(Threading::IsSimThread())
+		Threading::SetBatchThread(true);
 }
 
 
@@ -1675,7 +1673,8 @@ void CLuaHandle::ExecuteObjEventBatch() {
 	SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteObjEventBatch
 
-	execObjBatch = true;
+	if(Threading::IsSimThread())
+		Threading::SetBatchThread(false);
 	for(std::vector<LuaObjEvent>::iterator i = loeb.begin(); i != loeb.end(); ++i) {
 		LuaObjEvent &e = *i;
 		switch(e.id) {
@@ -1687,7 +1686,8 @@ void CLuaHandle::ExecuteObjEventBatch() {
 				break;
 		}
 	}
-	execObjBatch = false;
+	if(Threading::IsSimThread())
+		Threading::SetBatchThread(true);
 }
 
 
@@ -1709,7 +1709,8 @@ void CLuaHandle::ExecuteProjEventBatch() {
 	SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteProjEventBatch
 
-	execProjBatch = true;
+	if(Threading::IsSimThread())
+		Threading::SetBatchThread(false);
 	for(std::vector<LuaProjEvent>::iterator i = lpeb.begin(); i != lpeb.end(); ++i) {
 		LuaProjEvent &e = *i;
 		switch(e.id) {
@@ -1724,7 +1725,8 @@ void CLuaHandle::ExecuteProjEventBatch() {
 				break;
 		}
 	}
-	execProjBatch = false;
+	if(Threading::IsSimThread())
+		Threading::SetBatchThread(true);
 }
 
 
@@ -1744,11 +1746,13 @@ void CLuaHandle::ExecuteFrameEventBatch() {
 	SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteFrameEventBatch
 
-	execFrameBatch = true;
+	if(Threading::IsSimThread())
+		Threading::SetBatchThread(false);
 	for(std::vector<int>::iterator i = lgeb.begin(); i != lgeb.end(); ++i) {
 		GameFrame(*i);
 	}
-	execFrameBatch = false;
+	if(Threading::IsSimThread())
+		Threading::SetBatchThread(true);
 }
 
 
@@ -1768,7 +1772,8 @@ void CLuaHandle::ExecuteMiscEventBatch() {
 	SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // ExecuteMiscEventBatch
 
-	execMiscBatch = true;
+	if(Threading::IsSimThread())
+		Threading::SetBatchThread(false);
 	for(std::vector<LuaMiscEvent>::iterator i = lmeb.begin(); i != lmeb.end(); ++i) {
 		LuaMiscEvent &e = *i;
 		switch(e.id) {
@@ -1780,7 +1785,8 @@ void CLuaHandle::ExecuteMiscEventBatch() {
 				break;
 		}
 	}
-	execMiscBatch = false;
+	if(Threading::IsSimThread())
+		Threading::SetBatchThread(true);
 }
 
 

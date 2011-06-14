@@ -18,9 +18,11 @@ namespace Threading {
 #ifdef USE_GML
 	static int const noThreadID = -1;
 	static int simThreadID = noThreadID;
+	static int batchThreadID = noThreadID;
 #else
 	static boost::thread::id noThreadID;
 	static boost::thread::id simThreadID;
+	static boost::thread::id batchThreadID;
 #endif	
 
 
@@ -80,9 +82,9 @@ namespace Threading {
 
 	void SetSimThread(bool set) {
 #ifdef USE_GML // gmlThreadNumber is likely to be much faster than boost::this_thread::get_id()
-		simThreadID = set ? gmlThreadNumber : noThreadID;
+		batchThreadID = simThreadID = set ? gmlThreadNumber : noThreadID;
 #else
-		simThreadID = set ? boost::this_thread::get_id() : noThreadID;
+		batchThreadID = simThreadID = set ? boost::this_thread::get_id() : noThreadID;
 #endif
 	}
 	bool IsSimThread() {
@@ -90,6 +92,21 @@ namespace Threading {
 		return gmlThreadNumber == simThreadID;
 #else
 		return boost::this_thread::get_id() == simThreadID;
+#endif
+	}
+
+	void SetBatchThread(bool set) {
+#ifdef USE_GML // gmlThreadNumber is likely to be much faster than boost::this_thread::get_id()
+		batchThreadID = set ? gmlThreadNumber : noThreadID;
+#else
+		batchThreadID = set ? boost::this_thread::get_id() : noThreadID;
+#endif
+	}
+	bool IsBatchThread() {
+#ifdef USE_GML
+		return gmlThreadNumber == batchThreadID;
+#else
+		return boost::this_thread::get_id() == batchThreadID;
 #endif
 	}
 
