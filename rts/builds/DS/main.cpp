@@ -30,6 +30,11 @@
 extern "C" {
 #endif
 
+#ifdef __APPLE__
+//FIXME: hack for SDL because of sdl-stubs
+#undef main
+#endif
+
 int main(int argc, char* argv[])
 {
 #ifdef _WIN32
