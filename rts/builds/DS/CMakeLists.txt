@@ -14,11 +14,16 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
+FIND_PACKAGE(SDL REQUIRED)
+INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
+
+
 
 ### Assemble libraries
 LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 LIST(APPEND engineDedicatedLibraries 7zip minizip lua)
 LIST(APPEND engineDedicatedLibraries headlessStubs)
+LIST(APPEND engineDedicatedLibraries ${SDL_LIBRARY})
 IF    (UNIX)
 	# Needed for dynamically loading shared libraries (on some OS)
 	LIST(APPEND engineDedicatedLibraries dl)
