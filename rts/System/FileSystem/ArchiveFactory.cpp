@@ -13,16 +13,14 @@
 
 #include "Util.h"
 
-/// Returns true if the indicated file is in fact an archive
 bool CArchiveFactory::IsScanArchive(const std::string& fileName)
 {
-	std::string ext = filesystem.GetExtension(fileName);
+	const std::string ext = filesystem.GetExtension(fileName);
 
 	return  (ext == "sd7") || (ext == "sdz") || (ext == "sdd") || (ext == "sdp");
 }
 
 
-/// Returns a pointer to a newly created suitable subclass of CArchiveBase
 CArchiveBase* CArchiveFactory::OpenArchive(const std::string& fileName, const std::string& type)
 {
 	std::string ext = type;

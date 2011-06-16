@@ -11,26 +11,27 @@
 #include "Util.h"
 #include "mmgr.h"
 
-CArchiveDir::CArchiveDir(const std::string& archivename) :
-		CArchiveBase(archivename),
-		archiveName(archivename + '/')
+CArchiveDir::CArchiveDir(const std::string& archiveName)
+	: CArchiveBase(archiveName)
+	, dirName(archiveName + '/')
 {
-	const std::vector<std::string> &found = filesystem.FindFiles(archiveName, "*", FileSystem::RECURSE);
+	const std::vector<std::string>& found = filesystem.FindFiles(dirName, "*", FileSystem::RECURSE);
 
 	// because spring expects the contents of archives to be case independent,
 	// we convert filenames to lowercase in every function, and keep a std::map
 	// lcNameToOrigName to convert back from lowercase to original case.
-	for (std::vector<std::string>::const_iterator it = found.begin(); it != found.end(); ++it) {
+	std::vector<std::string>::const_iterator fi;
+	for (fi = found.begin(); fi != found.end(); ++fi) {
 		// strip our own name off.. & convert to forward slashes
-		std::string origName(*it, archiveName.length());
+		std::string origName(*fi, dirName.length());
 		filesystem.ForwardSlashes(origName);
 		// convert to lowercase and store
 		searchFiles.push_back(origName);
-		lcNameIndex[StringToLower(origName)] = searchFiles.size()-1;
+		lcNameIndex[StringToLower(origName)] = searchFiles.size() - 1;
 	}
 }
 
-CArchiveDir::~CArchiveDir(void)
+CArchiveDir::~CArchiveDir()
 {
 }
 
@@ -39,42 +40,40 @@ bool CArchiveDir::IsOpen()
 	return true;
 }
 
-unsigned CArchiveDir::NumFiles() const
+unsigned int CArchiveDir::NumFiles() const
 {
 	return searchFiles.size();
 }
 
-bool CArchiveDir::GetFile(unsigned fid, std::vector<boost::uint8_t>& buffer)
+bool CArchiveDir::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
 {
 	assert(fid >= 0 && fid < NumFiles());
 
-	const std::string rawpath = filesystem.LocateFile(archiveName+searchFiles[fid]);
+	const std::string rawpath = filesystem.LocateFile(dirName + searchFiles[fid]);
 	std::ifstream ifs(rawpath.c_str(), std::ios::in | std::ios::binary);
-	if (!ifs.bad() && ifs.is_open())
-	{
+	if (!ifs.bad() && ifs.is_open()) {
 		ifs.seekg(0, std::ios_base::end);
 		buffer.resize(ifs.tellg());
 		ifs.seekg(0, std::ios_base::beg);
 		ifs.clear();
 		ifs.read((char*)&buffer[0], buffer.size());
 		return true;
-	}
-	else
+	} else {
 		return false;
+	}
 }
 
-void CArchiveDir::FileInfo(unsigned fid, std::string& name, int& size) const
+void CArchiveDir::FileInfo(unsigned int fid, std::string& name, int& size) const
 {
 	assert(fid >= 0 && fid < NumFiles());
 
 	name = searchFiles[fid];
-	const std::string rawpath = filesystem.LocateFile(archiveName+name);
-	std::ifstream ifs(rawpath.c_str(), std::ios::in | std::ios::binary);
-	if (!ifs.bad() && ifs.is_open())
-	{
+	const std::string rawPath = filesystem.LocateFile(dirName + name);
+	std::ifstream ifs(rawPath.c_str(), std::ios::in | std::ios::binary);
+	if (!ifs.bad() && ifs.is_open()) {
 		ifs.seekg(0, std::ios_base::end);
 		size = ifs.tellg();
-	}
-	else
+	} else {
 		size = 0;
+	}
 }

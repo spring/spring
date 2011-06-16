@@ -10,7 +10,6 @@ extern "C" {
 static bool crcTableInitialized;
 
 
-/** @brief Construct a new CRC object. */
 CRC::CRC()
 {
 	crc = CRC_INIT_VAL;
@@ -21,7 +20,6 @@ CRC::CRC()
 }
 
 
-/** @brief Get the final CRC digest. */
 unsigned int CRC::GetDigest() const
 {
 	// make a temporary copy to get away with the const
@@ -30,7 +28,6 @@ unsigned int CRC::GetDigest() const
 }
 
 
-/** @brief Update CRC over the data. */
 CRC& CRC::Update(const void* data, unsigned int size)
 {
 	crc = CrcUpdate(crc, data, size);
@@ -38,7 +35,6 @@ CRC& CRC::Update(const void* data, unsigned int size)
 }
 
 
-/** @brief Update CRC over the 4 bytes of data. */
 CRC& CRC::Update(unsigned int data)
 {
 	crc = CrcUpdate(crc, &data, sizeof(unsigned));
