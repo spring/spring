@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __FACTORY_AI_H__
-#define __FACTORY_AI_H__
+#ifndef _FACTORY_AI_H_
+#define _FACTORY_AI_H_
 
 #include "CommandAI.h"
 #include "CommandQueue.h"
@@ -57,4 +57,4 @@ private:
 	void CancelRestrictedUnit(const Command& c, BuildOption& buildOption);
 };
 
-#endif // __FACTORY_AI_H__
+#endif // _FACTORY_AI_H_

@@ -501,7 +501,6 @@ void CBuilderCAI::SlowUpdate()
 }
 
 
-/// add a command to reclaim a feature that is blocking our buildsite
 void CBuilderCAI::ReclaimFeature(CFeature* f)
 {
 	if (!owner->unitDef->canReclaim || !f->def->reclaimable) {
@@ -513,12 +512,14 @@ void CBuilderCAI::ReclaimFeature(CFeature* f)
 		Command c2(CMD_RECLAIM);
 		c2.params.push_back(f->id + uh->MaxUnits());
 		commandQue.push_front(c2);
-		SlowUpdate(); //this assumes that the reclaim command can never return directly without having reclaimed the target
+		// this assumes that the reclaim command can never return directly
+		// without having reclaimed the target
+		SlowUpdate();
 	}
 }
 
 
-void CBuilderCAI::FinishCommand(void)
+void CBuilderCAI::FinishCommand()
 {
 	if (commandQue.front().timeOut == INT_MAX) {
 		buildRetries = 0;
@@ -574,7 +575,7 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 			}
 		}
 
-		// don't consider units under construction irreparable
+		// do not consider units under construction irreparable
 		// even if they can be repaired
 		if ((unit->beingBuilt || unit->unitDef->repairable)
 		    && (unit->health < unit->maxHealth) &&
@@ -1211,15 +1212,17 @@ void CBuilderCAI::RemoveUnitFromResurrecters(CUnit* unit)
 }
 
 
-/** check if a unit is being reclaimed by a friendly con.
-
-we assume that there won't be a lot of reclaimers because performance would suck
-if there were. ideally reclaimers should be assigned on a per-unit basis, but
-this requires tracking of deaths, which albeit already done isn't exactly simple
-to follow.
-
-TODO easy: store reclaiming units per allyteam
-TODO harder: update reclaimers as they start/finish reclaims and/or die */
+/**
+ * Checks if a unit is being reclaimed by a friendly con.
+ *
+ * We assume that there will not be a lot of reclaimers, because performance
+ * would suck if there were. Ideally, reclaimers should be assigned on a
+ * per-unit basis, but this requires tracking of deaths, which albeit
+ * already done, is not exactly simple to follow.
+ *
+ * TODO easy: store reclaiming units per allyteam
+ * TODO harder: update reclaimers as they start/finish reclaims and/or die
+ */
 bool CBuilderCAI::IsUnitBeingReclaimed(CUnit* unit, CUnit *friendUnit)
 {
 	bool retval = false;
@@ -1645,7 +1648,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 //  Drawing routines
 //
 
-void CBuilderCAI::DrawCommands(void)
+void CBuilderCAI::DrawCommands()
 {
 	lineDrawer.StartPath(owner->drawMidPos, cmdColors.start);
 
@@ -1710,7 +1713,7 @@ void CBuilderCAI::DrawCommands(void)
 			case CMD_GUARD: {
 				const CUnit* unit = uh->GetUnit(ci->params[0]);
 
-				if ((unit != NULL) && isTrackable(unit)) {
+				if ((unit != NULL) && IsTrackable(unit)) {
 					const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.guard);
 				}
@@ -1730,7 +1733,7 @@ void CBuilderCAI::DrawCommands(void)
 				if (ci->params.size() == 1) {
 					const CUnit* unit = uh->GetUnit(ci->params[0]);
 
-					if ((unit != NULL) && isTrackable(unit)) {
+					if ((unit != NULL) && IsTrackable(unit)) {
 						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
 					}
@@ -1773,7 +1776,7 @@ void CBuilderCAI::DrawCommands(void)
 					} else {
 						const CUnit* unit = uh->GetUnitUnsafe(id);
 
-						if ((unit != NULL) && (unit != owner) && isTrackable(unit)) {
+						if ((unit != NULL) && (unit != owner) && IsTrackable(unit)) {
 							const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 							lineDrawer.DrawLineAndIcon(cmd_id, endPos, color);
 						}
@@ -1796,7 +1799,7 @@ void CBuilderCAI::DrawCommands(void)
 					if (ci->params.size() >= 1) {
 						const CUnit* unit = uh->GetUnit(ci->params[0]);
 
-						if ((unit != NULL) && isTrackable(unit)) {
+						if ((unit != NULL) && IsTrackable(unit)) {
 							const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 							lineDrawer.DrawLineAndIcon(cmd_id, endPos, color);
 						}
@@ -1830,7 +1833,7 @@ void CBuilderCAI::DrawCommands(void)
 
 
 // XXX move away from this class
-void CBuilderCAI::DrawQuedBuildingSquares(void)
+void CBuilderCAI::DrawQuedBuildingSquares()
 {
 	CCommandQueue::const_iterator ci;
 	// worst case - 2 squares per building (when underwater) - 8 vertices * 3 floats
