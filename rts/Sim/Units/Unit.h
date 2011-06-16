@@ -497,6 +497,7 @@ public:
 #ifdef USE_GML
 	/// last draw frame
 	int lastDrawFrame;
+	boost::recursive_mutex lodmutex;
 #endif
 #if defined(USE_GML) && GML_ENABLE_SIM
 	unsigned lastUnitUpdate;

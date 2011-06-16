@@ -248,6 +248,8 @@ boost::mutex luauimutex;
 boost::mutex xcallmutex;
 boost::mutex blockmutex;
 boost::mutex tnummutex;
+boost::mutex ntexmutex;
+boost::mutex lodmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 boost::recursive_mutex unitmutex;
