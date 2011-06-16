@@ -49,6 +49,8 @@ extern boost::mutex luauimutex;
 extern boost::mutex xcallmutex;
 extern boost::mutex blockmutex;
 extern boost::mutex tnummutex;
+extern boost::mutex ntexmutex;
+extern boost::mutex lodmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 extern boost::recursive_mutex unitmutex;
@@ -161,5 +163,7 @@ public:
 #define GML_MSTMUTEX_DOUNLOCK(name)
 
 #endif
+
+#define GML_LODMUTEX_LOCK(unit) GML_THRMUTEX_LOCK(lod, GML_DRAW|GML_SIM, unit->)
 
 #endif

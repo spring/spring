@@ -374,6 +374,8 @@ void CUnitDrawer::Update()
 //! only called by DrawOpaqueUnit
 inline bool CUnitDrawer::DrawUnitLOD(CUnit* unit)
 {
+	GML_LODMUTEX_LOCK(unit); // DrawUnitLOD
+
 	if (unit->lodCount > 0) {
 		if (unit->isCloaked) {
 			const LuaMatType matType = (water->drawReflection)?
@@ -630,9 +632,15 @@ static void DrawLuaMatBins(LuaMatType type)
 		const int count = (int)units.size();
 		for (int i = 0; i < count; i++) {
 			CUnit* unit = units[i];
+
+			GML_LODMUTEX_LOCK(unit); // DrawLuaMatBins
+
 			const LuaUnitMaterial& unitMat = unit->luaMats[type];
 			const LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(unit->currentLOD);
-
+#ifdef USE_GML
+			if (!lodMat || !lodMat->IsActive())
+				continue;
+#endif
 			lodMat->uniforms.Execute(unit);
 
 			unitDrawer->SetTeamColour(unit->team);
@@ -806,6 +814,8 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	if (sqDist >= farLength) { return; }
 	if (unit->isCloaked) { return; }
 	if (DrawAsIcon(unit, sqDist)) { return; }
+
+	GML_LODMUTEX_LOCK(unit); // DrawOpaqueUnitShadow
 
 	if (unit->lodCount <= 0) {
 		PUSH_SHADOW_TEXTURE_STATE(unit->model);
@@ -1557,6 +1567,8 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 
 	LuaUnitLODMaterial* lodMat = NULL;
 
+	GML_LODMUTEX_LOCK(unit); // DrawIndividual
+
 	if (unit->lodCount > 0) {
 		const LuaMatType matType = (water->drawReflection)?
 			LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
@@ -1839,6 +1851,13 @@ inline void CUnitDrawer::DrawUnitModel(CUnit* unit) {
 	if (unit->lodCount <= 0) {
 		unit->localmodel->Draw();
 	} else {
+
+		GML_LODMUTEX_LOCK(unit); // DrawUnitModel
+#ifdef USE_GML
+		if (unit->lodCount <= 0) // re-read the value inside the mutex
+			unit->localmodel->Draw();
+		else
+#endif
 		unit->localmodel->DrawLOD(unit->currentLOD);
 	}
 }
@@ -1908,6 +1927,13 @@ void CUnitDrawer::DrawUnitRawModel(CUnit* unit)
 	if (unit->lodCount <= 0) {
 		unit->localmodel->Draw();
 	} else {
+
+		GML_LODMUTEX_LOCK(unit); // DrawUnitRawModel
+#ifdef USE_GML
+		if (unit->lodCount <= 0)
+			unit->localmodel->Draw();
+		else
+#endif
 		unit->localmodel->DrawLOD(unit->currentLOD);
 	}
 }
@@ -2352,6 +2378,8 @@ unsigned int CUnitDrawer::CalcUnitShadowLOD(const CUnit* unit, unsigned int last
 
 void CUnitDrawer::SetUnitLODCount(CUnit* unit, unsigned int count)
 {
+	GML_LODMUTEX_LOCK(unit); // SetUnitLODCount
+
 	const unsigned int oldCount = unit->lodCount;
 
 	unit->lodCount = count;
@@ -2365,4 +2393,8 @@ void CUnitDrawer::SetUnitLODCount(CUnit* unit, unsigned int count)
 	for (int m = 0; m < LUAMAT_TYPE_COUNT; m++) {
 		unit->luaMats[m].SetLODCount(count);
 	}
+#ifdef USE_GML
+	if (unit->currentLOD >= count)
+		unit->currentLOD = (count == 0) ? 0 : count - 1;
+#endif
 }
