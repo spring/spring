@@ -85,7 +85,9 @@ VAR REGISTRY ; if 1 registry values are written
 !include "include\fileassoc.nsh"
 !include "include\fileExistChecks.nsh"
 !include "include\fileMisc.nsh"
+!ifndef SLIM
 !include "include\checkrunning.nsh"
+!endif
 !include "include\aiHelpers.nsh"
 !include "include\getParameterValue.nsh"
 
@@ -177,6 +179,7 @@ SectionGroup /e "!Engine"
 SectionGroupEnd
 
 
+!ifndef SLIM
 SectionGroup "Multiplayer battlerooms"
 	Section "SpringLobby" SEC_SPRINGLOBBY
 		!define INSTALL
@@ -211,7 +214,9 @@ Section "Desktop shortcuts" SEC_DESKTOP
 		!undef INSTALL
 	${EndIf}
 SectionEnd
+!endif
 
+!ifndef SLIM
 SectionGroup "Tools"
 	Section "Easy content installation" SEC_ARCHIVEMOVER
 		!define INSTALL
@@ -228,6 +233,7 @@ SectionGroup "Tools"
 	SectionEnd
 SectionGroupEnd
 
+!endif
 
 Section "Start menu shortcuts" SEC_START
 	!define INSTALL
@@ -255,12 +261,14 @@ SectionGroupEnd
 
 !include "sections\sectiondesc.nsh"
 
+!ifndef SLIM
 Section -Documentation
 	!define INSTALL
 		${!echonow} "Processing: docs"
 		!include "sections\docs.nsh"
 	!undef INSTALL
 SectionEnd
+!endif
 
 Section -Post
 	${!echonow} "Processing: Registry entries"
@@ -282,6 +290,7 @@ SectionEnd
 
 Function .onInit
 	${!echonow} ""
+!ifndef SLIM
 	IfSilent skiprunchecks ; don't check for running apps, the calling app has to do it
 	; check if we need to exit some processes which may be using unitsync
 	${CheckExecutableRunning} "TASClient.exe" "TASClient"
@@ -295,6 +304,7 @@ Function .onInit
 	IntOp $0 ${SEC_MAIN} | ${SF_RO}
 	SectionSetFlags ${SEC_MAIN} $0 ; make the core section read only
 
+!endif
 	; enable/disable sections depending on parameters
 	!include "sections/SetupSections.nsh"
 FunctionEnd
@@ -322,16 +332,20 @@ Section Uninstall
 	!include "sections\docs.nsh"
 	!include "sections\shortcuts_startMenu.nsh"
 	!include "sections\shortcuts_desktop.nsh"
+!ifndef SLIM
 	!include "sections\archivemover.nsh"
 	!include "sections\portable.nsh"
 	!include "sections\zeroK.nsh"
 	!include "sections\tasServer.nsh"
 	!include "sections\rapid.nsh"
+!endif
 	!insertmacro DeleteSkirmishAI "AAI"
 	!insertmacro DeleteSkirmishAI "KAIK"
 	!insertmacro DeleteSkirmishAI "RAI"
 	!insertmacro DeleteSkirmishAI "E323AI"
+!ifndef SLIM
 	!include "sections\springlobby.nsh"
+!endif
 	!include "sections\luaui.nsh"
 
 	; All done
