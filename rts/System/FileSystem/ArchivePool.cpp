@@ -67,7 +67,7 @@ CArchivePool::CArchivePool(const std::string& name)
 		f->size = parse_int32(c_size);
 
 		files.push_back(f);
-		lcNameIndex[f->name] = files.size()-1;
+		lcNameIndex[f->name] = files.size() - 1;
 	}
 	gzclose(in);
 }
