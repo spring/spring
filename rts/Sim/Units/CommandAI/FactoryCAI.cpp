@@ -463,7 +463,7 @@ void CFactoryCAI::UpdateIconName(int id,BuildOption& bo)
 }
 
 
-void CFactoryCAI::DrawCommands(void)
+void CFactoryCAI::DrawCommands()
 {
 	lineDrawer.StartPath(owner->drawMidPos, cmdColors.start);
 
@@ -498,7 +498,7 @@ void CFactoryCAI::DrawCommands(void)
 				if (ci->params.size() == 1) {
 					const CUnit* unit = uh->GetUnit(ci->params[0]);
 
-					if ((unit != NULL) && isTrackable(unit)) {
+					if ((unit != NULL) && IsTrackable(unit)) {
 						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
 					}
@@ -511,7 +511,7 @@ void CFactoryCAI::DrawCommands(void)
 			case CMD_GUARD: {
 				const CUnit* unit = uh->GetUnit(ci->params[0]);
 
-				if ((unit != NULL) && isTrackable(unit)) {
+				if ((unit != NULL) && IsTrackable(unit)) {
 					const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.guard);
 				}

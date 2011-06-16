@@ -87,7 +87,7 @@ CAirCAI::CAirCAI(CUnit* owner)
 	goalPos=owner->pos;
 }
 
-CAirCAI::~CAirCAI(void)
+CAirCAI::~CAirCAI()
 {
 }
 
@@ -645,7 +645,7 @@ bool CAirCAI::IsValidTarget(const CUnit* enemy) const {
 		&& (((CAirMoveType*)owner->moveType)->isFighter || !enemy->unitDef->canfly);
 }
 
-void CAirCAI::DrawCommands(void)
+void CAirCAI::DrawCommands()
 {
 	lineDrawer.StartPath(owner->drawMidPos, cmdColors.start);
 
@@ -676,7 +676,7 @@ void CAirCAI::DrawCommands(void)
 				if (ci->params.size() == 1) {
 					const CUnit* unit = uh->GetUnit(ci->params[0]);
 
-					if ((unit != NULL) && isTrackable(unit)) {
+					if ((unit != NULL) && IsTrackable(unit)) {
 						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
 					}
@@ -699,7 +699,7 @@ void CAirCAI::DrawCommands(void)
 			case CMD_GUARD: {
 				const CUnit* unit = uh->GetUnit(ci->params[0]);
 
-				if ((unit != NULL) && isTrackable(unit)) {
+				if ((unit != NULL) && IsTrackable(unit)) {
 					const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.guard);
 				}
@@ -721,13 +721,13 @@ void CAirCAI::DrawCommands(void)
 	lineDrawer.FinishPath();
 }
 
-void CAirCAI::FinishCommand(void)
+void CAirCAI::FinishCommand()
 {
 	targetAge=0;
 	CCommandAI::FinishCommand();
 }
 
-void CAirCAI::BuggerOff(float3 pos, float radius)
+void CAirCAI::BuggerOff(const float3& pos, float radius)
 {
 	AAirMoveType* myPlane = dynamic_cast<AAirMoveType*>(owner->moveType);
 	if(myPlane) {

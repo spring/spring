@@ -36,22 +36,47 @@ public:
 	virtual void DrawCommands();
 	virtual void FinishCommand();
 	virtual void WeaponFired(CWeapon* weapon);
-	virtual void BuggerOff(float3 pos, float radius);
+	virtual void BuggerOff(const float3& pos, float radius);
 	virtual void LoadSave(CLoadSaveInterface* file, bool loading);
-	virtual bool WillCancelQueued(Command& c);
+	/**
+	 * @brief Determins if c will cancel a queued command
+	 * @return true if c will cancel a queued command
+	 */
+	virtual bool WillCancelQueued(const Command& c);
 	virtual bool CanSetMaxSpeed() const { return false; }
 	virtual void StopMove() { return; }
 	virtual bool HasMoreMoveCommands();
+	/**
+	 * Removes attack commands targeted at our new ally.
+	 */
 	virtual void StopAttackingAllyTeam(int ally);
 
 	int CancelCommands(const Command& c, CCommandQueue& queue, bool& first);
+	/**
+	 * @brief Finds the queued command that would be canceled by the Command c
+	 * @return An iterator pointing at the command, or commandQue.end(),
+	 *   if no such queued command exsists
+	 */
 	CCommandQueue::iterator GetCancelQueued(const Command& c,
 	                                        CCommandQueue& queue);
+	/**
+	 * @brief Returns commands that overlap c, but will not be canceled by c
+	 * @return a vector containing commands that overlap c
+	 */
 	std::vector<Command> GetOverlapQueued(const Command& c);
 	std::vector<Command> GetOverlapQueued(const Command& c,
 	                                      CCommandQueue& queue);
+	/**
+	 * @brief Causes this CommandAI to execute the attack order c
+	 */
 	virtual void ExecuteAttack(Command& c);
+	/**
+	 * @brief executes the DGun command c
+	 */
 	virtual void ExecuteDGun(Command& c);
+	/**
+	 * @brief executes the stop command c
+	 */
 	virtual void ExecuteStop(Command& c);
 
 	void SetCommandDescParam0(const Command& c);
@@ -89,12 +114,18 @@ public:
 	bool unimportantMove;
 
 protected:
-	bool isTrackable(const CUnit* unit) const;
-	bool isAttackCapable() const;
+	bool IsTrackable(const CUnit* unit) const;
+	bool IsAttackCapable() const;
 	virtual bool AllowedCommand(const Command& c, bool fromSynced);
 	bool SkipParalyzeTarget(const CUnit* target);
 	void GiveAllowedCommand(const Command& c, bool fromSynced = true);
 	void GiveWaitCommand(const Command& c);
+	/**
+	 * @brief Returns the command that keeps the unit close to the path
+	 * @return a Fight Command with 6 arguments, the first three being where to
+	 *   return to (the current position of the unit), and the second being
+	 *   the location of the origional command.
+	 */
 	void PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2);
 	int UpdateTargetLostTimer(int unitid);
 	void DrawWaitIcon(const Command& cmd) const;

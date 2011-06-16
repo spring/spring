@@ -664,29 +664,20 @@ void CMobileCAI::ExecuteGuard(Command &c)
 	}
 }
 
-/**
-* @brief Executes the stop command c
-*/
+
 void CMobileCAI::ExecuteStop(Command &c)
 {
 	StopMove();
 	return CCommandAI::ExecuteStop(c);
 }
 
-/**
-* @brief Executes the DGun command c
-*/
+
 void CMobileCAI::ExecuteDGun(Command &c)
 {
 	ExecuteAttack(c);
 }
 
 
-
-
-/**
-* @brief Causes this CMobileCAI to execute the attack order c
-*/
 void CMobileCAI::ExecuteAttack(Command &c)
 {
 	assert(owner->unitDef->canAttack);
@@ -876,7 +867,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			// to be meanest) one
 			CWeapon* w = owner->weapons.front();
 
-			// XXX hack - dgun overrides any checks
+			// XXX HACK - dgun overrides any checks
 			if (c.GetID() == CMD_DGUN) {
 				float rr = owner->maxRange * owner->maxRange;
 
@@ -960,7 +951,7 @@ void CMobileCAI::StopMove()
 	goalPos = owner->pos;
 }
 
-void CMobileCAI::DrawCommands(void)
+void CMobileCAI::DrawCommands()
 {
 	lineDrawer.StartPath(owner->drawMidPos, cmdColors.start);
 
@@ -994,7 +985,7 @@ void CMobileCAI::DrawCommands(void)
 				if (ci->params.size() == 1) {
 					const CUnit* unit = uh->GetUnit(ci->params[0]);
 
-					if ((unit != NULL) && isTrackable(unit)) {
+					if ((unit != NULL) && IsTrackable(unit)) {
 						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
 					}
@@ -1008,7 +999,7 @@ void CMobileCAI::DrawCommands(void)
 			case CMD_GUARD: {
 				const CUnit* unit = uh->GetUnit(ci->params[0]);
 
-				if ((unit != NULL) && isTrackable(unit)) {
+				if ((unit != NULL) && IsTrackable(unit)) {
 					const float3 endPos =
 						helper->GetUnitErrorPos(unit, owner->allyteam);
 					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.guard);
@@ -1038,7 +1029,7 @@ void CMobileCAI::DrawCommands(void)
 }
 
 
-void CMobileCAI::BuggerOff(float3 pos, float radius)
+void CMobileCAI::BuggerOff(const float3& pos, float radius)
 {
 	if(radius < 0.0f) {
 		lastBuggerOffTime = gs->frameNum - BUGGER_OFF_TTL;
@@ -1049,17 +1040,17 @@ void CMobileCAI::BuggerOff(float3 pos, float radius)
 	buggerOffRadius = radius + owner->radius;
 }
 
-void CMobileCAI::NonMoving(void)
+void CMobileCAI::NonMoving()
 {
 	if (owner->usingScriptMoveType) {
 		return;
 	}
-	if(lastBuggerOffTime > gs->frameNum - BUGGER_OFF_TTL){
-		float3 dif=owner->pos-buggerOffPos;
-		dif.y=0;
+	if (lastBuggerOffTime > gs->frameNum - BUGGER_OFF_TTL) {
+		float3 dif = owner->pos-buggerOffPos;
+		dif.y = 0.0f;
 		float length=dif.Length();
-		if(!length) {
-			length=0.1f;
+		if (!length) {
+			length = 0.1f;
 			dif = float3(0.1f, 0.0f, 0.0f);
 		}
 		if (length < buggerOffRadius) {
@@ -1076,7 +1067,7 @@ void CMobileCAI::NonMoving(void)
 	}
 }
 
-void CMobileCAI::FinishCommand(void)
+void CMobileCAI::FinishCommand()
 {
 	if (!(commandQue.front().options & INTERNAL_ORDER)) {
 		lastUserGoal = owner->pos;
@@ -1085,7 +1076,7 @@ void CMobileCAI::FinishCommand(void)
 	CCommandAI::FinishCommand();
 }
 
-void CMobileCAI::IdleCheck(void)
+void CMobileCAI::IdleCheck()
 {
 	if (owner->unitDef->canAttack && owner->fireState > FIRESTATE_HOLDFIRE
 			&& !owner->weapons.empty() && owner->haveTarget) {
