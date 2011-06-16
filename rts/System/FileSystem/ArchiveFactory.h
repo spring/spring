@@ -13,7 +13,7 @@ public:
 	/// Returns true if the indicated file is in fact an archive
 	static bool IsScanArchive(const std::string& fileName);
 
-	/// Returns a pointer to a newly created suitable subclass of CArchiveBase
+	/// Returns a pointer to a new'ed suitable subclass of CArchiveBase
 	static CArchiveBase* OpenArchive(const std::string& fileName,
 	                                 const std::string& type = "");
 };

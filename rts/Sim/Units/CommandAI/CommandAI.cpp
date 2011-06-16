@@ -1047,7 +1047,7 @@ CCommandQueue::iterator CCommandAI::GetCancelQueued(const Command &c,
 				|| (cmd2_id == CMD_FIGHT && cmd_id == CMD_ATTACK && c2.params.size() == 1))
 				&& (c2.params.size() == c.params.size())) {
 			if (c.params.size() == 1) {
-			  // assume the param is a unit of feature id
+				// assume the param is a unit-ID or feature-ID
 				if ((c2.params[0] == c.params[0]) &&
 				    (cmd2_id != CMD_SET_WANTED_MAX_SPEED)) {
 					return ci;
