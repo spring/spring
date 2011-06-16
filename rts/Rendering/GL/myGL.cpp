@@ -235,7 +235,7 @@ void LoadExtensions()
 		handleerror(0, errorMsg, "Update graphic drivers", 0);
 	}
 
-#ifdef GL_ARB_debug_output //! it's not defined in older GLEW versions
+#if defined(GL_ARB_debug_output) && !defined(HEADLESS) //! it's not defined in older GLEW versions
 	if (GLEW_ARB_debug_output) {
 		logOutput.Print("Installing OpenGL-DebugMessageHandler");
 		glDebugMessageCallbackARB(&OpenGLDebugMessageCallback, NULL);
