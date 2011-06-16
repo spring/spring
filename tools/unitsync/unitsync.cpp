@@ -308,12 +308,15 @@ EXPORT(const char*) GetWritableDataDirectory()
 
 EXPORT(int) GetDataDirectoryCount()
 {
+	int count = -1;
+
 	try {
 		CheckInit();
-		return int( FileSystemHandler::GetInstance().GetDataDirectories().size() );
+		count = (int) FileSystemHandler::GetInstance().GetDataDirectories().size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return -1;
+
+	return count;
 }
 
 EXPORT(const char*) GetDataDirectory(int index)
@@ -331,12 +334,15 @@ EXPORT(const char*) GetDataDirectory(int index)
 
 EXPORT(int) ProcessUnits()
 {
+	int leftToProcess = 0; // FIXME error return should be -1
+
 	try {
 		logOutput.Print(LOG_UNITSYNC, "syncer: process units\n");
-		return syncer->ProcessUnits();
+		leftToProcess = syncer->ProcessUnits();
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return 0;
+
+	return leftToProcess;
 }
 
 
@@ -348,12 +354,15 @@ EXPORT(int) ProcessUnitsNoChecksum()
 
 EXPORT(int) GetUnitCount()
 {
+	int count = 0; // FIXME error return should be -1
+
 	try {
 		logOutput.Print(LOG_UNITSYNC, "syncer: get unit count\n");
-		return syncer->GetUnitCount();
+		count = syncer->GetUnitCount();
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return 0;
+
+	return count;
 }
 
 
@@ -645,6 +654,8 @@ static vector<string> mapNames;
 
 EXPORT(int) GetMapCount()
 {
+	int count = 0; // FIXME error return should be -1
+
 	try {
 		CheckInit();
 
@@ -656,10 +667,11 @@ EXPORT(int) GetMapCount()
 
 		sort(mapNames.begin(), mapNames.end());
 
-		return mapNames.size();
+		count = mapNames.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return 0;
+
+	return count;
 }
 
 EXPORT(const char*) GetMapName(int index)
@@ -850,12 +862,14 @@ EXPORT(int) GetMapResourceExtractorRadius(int index, int resourceIndex) {
 
 EXPORT(int) GetMapPosCount(int index) {
 
+	int count = -1;
+
 	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
-		return mapInfo->xPos.size();
+		count = mapInfo->xPos.size();
 	}
 
-	return -1;
+	return count;
 }
 
 //FIXME: rename to GetMapStartPosX ?
@@ -931,15 +945,18 @@ static vector<string> mapArchives;
 
 EXPORT(int) GetMapArchiveCount(const char* mapName)
 {
+	int count = 0; // FIXME error return should be -1
+
 	try {
 		CheckInit();
 		CheckNullOrEmpty(mapName);
 
 		mapArchives = archiveScanner->GetArchives(mapName);
-		return mapArchives.size();
+		count = mapArchives.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return 0;
+
+	return count;
 }
 
 EXPORT(const char*) GetMapArchiveName(int index)
@@ -1147,6 +1164,8 @@ EXPORT(int) GetInfoMapSize(const char* mapName, const char* name, int* width, in
 
 EXPORT(int) GetInfoMap(const char* mapName, const char* name, unsigned char* data, int typeHint)
 {
+	int ret = 0; // FIXME error return should be -1
+
 	try {
 		CheckInit();
 		CheckNullOrEmpty(mapName);
@@ -1161,35 +1180,33 @@ EXPORT(int) GetInfoMap(const char* mapName, const char* name, unsigned char* dat
 		int actualType = (n == "height" ? bm_grayscale_16 : bm_grayscale_8);
 
 		if (actualType == typeHint) {
-			return file.ReadInfoMap(n, data);
+			ret = file.ReadInfoMap(n, data);
 		}
 		else if (actualType == bm_grayscale_16 && typeHint == bm_grayscale_8) {
 			// convert from 16 bits per pixel to 8 bits per pixel
 			MapBitmapInfo bmInfo = file.GetInfoMapSize(name);
 			const int size = bmInfo.width * bmInfo.height;
-			if (size <= 0) return 0;
-
-			unsigned short* temp = new unsigned short[size];
-			if (!file.ReadInfoMap(n, temp)) {
+			if (size > 0) {
+				unsigned short* temp = new unsigned short[size];
+				if (file.ReadInfoMap(n, temp)) {
+					const unsigned short* inp = temp;
+					const unsigned short* inp_end = temp + size;
+					unsigned char* outp = data;
+					for (; inp < inp_end; ++inp, ++outp) {
+						*outp = *inp >> 8;
+					}
+					ret = 1;
+				}
 				delete[] temp;
-				return 0;
 			}
-
-			const unsigned short* inp = temp;
-			const unsigned short* inp_end = temp + size;
-			unsigned char* outp = data;
-			for (; inp < inp_end; ++inp, ++outp) {
-				*outp = *inp >> 8;
-			}
-			delete[] temp;
-			return 1;
 		}
 		else if (actualType == bm_grayscale_8 && typeHint == bm_grayscale_16) {
 			throw content_error("converting from 8 bits per pixel to 16 bits per pixel is unsupported");
 		}
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return 0;
+
+	return ret;
 }
 
 
@@ -1200,17 +1217,22 @@ vector<CArchiveScanner::ArchiveData> modData;
 
 EXPORT(int) GetPrimaryModCount()
 {
+	int count = 0; // FIXME error return should be -1
+
 	try {
 		CheckInit();
 
 		modData = archiveScanner->GetPrimaryMods();
-		return modData.size();
+		count = modData.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return 0;
+
+	return count;
 }
 
 EXPORT(int) GetPrimaryModInfoCount(int modIndex) {
+
+	int count = 0; // FIXME error return should be -1
 
 	try {
 		CheckInit();
@@ -1221,13 +1243,13 @@ EXPORT(int) GetPrimaryModInfoCount(int modIndex) {
 		std::vector<InfoItem> modInfoItems = modData[modIndex].GetInfoItems();
 		info.insert(info.end(), modInfoItems.begin(), modInfoItems.end());
 
-		return (int)info.size();
+		count = (int)info.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
 	info.clear();
 
-	return 0;
+	return count;
 }
 EXPORT(const char*) GetPrimaryModName(int index) // deprecated
 {
@@ -1338,15 +1360,18 @@ vector<string> primaryArchives;
 
 EXPORT(int) GetPrimaryModArchiveCount(int index)
 {
+	int count = 0; // FIXME error return should be -1
+
 	try {
 		CheckInit();
 		CheckBounds(index, modData.size());
 
 		primaryArchives = archiveScanner->GetArchives(modData[index].GetDependencies()[0]);
-		return primaryArchives.size();
+		count = primaryArchives.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return 0;
+
+	return count;
 }
 
 EXPORT(const char*) GetPrimaryModArchiveList(int archiveNr)
@@ -1375,7 +1400,6 @@ EXPORT(int) GetPrimaryModIndex(const char* name)
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
-	// if it returns -1, make sure you call GetPrimaryModCount before GetPrimaryModIndex.
 	return -1;
 }
 
@@ -1408,16 +1432,19 @@ EXPORT(unsigned int) GetPrimaryModChecksumFromName(const char* name)
 
 EXPORT(int) GetSideCount()
 {
+	int count = 0; // FIXME error return should be -1
+
 	try {
 		CheckInit();
 
 		if (!sideParser.Load()) {
 			throw content_error("failed: " + sideParser.GetErrorLog());
 		}
-		return sideParser.GetCount();
+		count = sideParser.GetCount();
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return 0;
+
+	return count;
 }
 
 EXPORT(const char*) GetSideName(int side)
@@ -1485,6 +1512,8 @@ static void CheckOptionType(int optIndex, int type)
 
 EXPORT(int) GetMapOptionCount(const char* name)
 {
+	int count = 0; // FIXME error return should be -1
+
 	try {
 		CheckInit();
 		CheckNullOrEmpty(name);
@@ -1499,19 +1528,21 @@ EXPORT(int) GetMapOptionCount(const char* name)
 
 		optionsSet.clear();
 
-		return options.size();
+		count = options.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
 	options.clear();
 	optionsSet.clear();
 
-	return 0;
+	return count;
 }
 
 
 EXPORT(int) GetModOptionCount()
 {
+	int count = 0; // FIXME error return should be -1
+
 	try {
 		CheckInit();
 
@@ -1532,7 +1563,7 @@ EXPORT(int) GetModOptionCount()
 
 		optionsSet.clear();
 
-		return options.size();
+		count = options.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
@@ -1540,11 +1571,13 @@ EXPORT(int) GetModOptionCount()
 	options.clear();
 	optionsSet.clear();
 
-	return 0;
+	return count;
 }
 
 EXPORT(int) GetCustomOptionCount(const char* fileName)
 {
+	int count = 0; // FIXME error return should be -1
+
 	try {
 		CheckInit();
 
@@ -1558,7 +1591,7 @@ EXPORT(int) GetCustomOptionCount(const char* fileName)
 
 		optionsSet.clear();
 
-		return options.size();
+		count = options.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
@@ -1566,7 +1599,7 @@ EXPORT(int) GetCustomOptionCount(const char* fileName)
 	options.clear();
 	optionsSet.clear();
 
-	return 0;
+	return count;
 }
 
 //////////////////////////
@@ -1610,6 +1643,8 @@ static vector<std::string> skirmishAIDataDirs;
 
 EXPORT(int) GetSkirmishAICount() {
 
+	int count = 0; // FIXME error return should be -1
+
 	try {
 		CheckInit();
 
@@ -1634,11 +1669,11 @@ EXPORT(int) GetSkirmishAICount() {
 		int luaAIs = GetNumberOfLuaAIs();
 
 //logOutput.Print(LOG_UNITSYNC, "GetSkirmishAICount: luaAIs: %i / skirmishAIs: %u", luaAIs, skirmishAIDataDirs.size());
-		return skirmishAIDataDirs.size() + luaAIs;
+		count = skirmishAIDataDirs.size() + luaAIs;
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
-	return 0;
+	return count;
 }
 
 
@@ -1666,6 +1701,8 @@ static int ToPureLuaAIIndex(int aiIndex) {
 
 EXPORT(int) GetSkirmishAIInfoCount(int aiIndex) {
 
+	int count = 0; // FIXME error return should be -1
+
 	try {
 		CheckSkirmishAIIndex(aiIndex);
 
@@ -1681,13 +1718,13 @@ EXPORT(int) GetSkirmishAIInfoCount(int aiIndex) {
 			infoSet.clear();
 		}
 
-		return (int)info.size();
+		count = (int)info.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
 	info.clear();
 
-	return 0;
+	return count;
 }
 
 static const InfoItem* GetInfoItem(int infoIndex) {
@@ -1756,7 +1793,7 @@ EXPORT(const char*) GetInfoValueString(int infoIndex) {
 }
 EXPORT(int) GetInfoValueInteger(int infoIndex) {
 
-	int value = 0;
+	int value = 0; // FIXME error return should be -1
 
 	try {
 		const InfoItem* infoItem = GetInfoItem(infoIndex);
@@ -1769,7 +1806,7 @@ EXPORT(int) GetInfoValueInteger(int infoIndex) {
 }
 EXPORT(float) GetInfoValueFloat(int infoIndex) {
 
-	float value = 0.0f;
+	float value = 0.0f; // FIXME error return should be -1.0f
 
 	try {
 		const InfoItem* infoItem = GetInfoItem(infoIndex);
@@ -1807,12 +1844,14 @@ EXPORT(const char*) GetInfoDescription(int infoIndex) {
 
 EXPORT(int) GetSkirmishAIOptionCount(int aiIndex) {
 
+	int count = 0; // FIXME error return should be -1
+
 	try {
 		CheckSkirmishAIIndex(aiIndex);
 
 		if (IsLuaAIIndex(aiIndex)) {
 			// lua AIs do not have options
-			return 0;
+			count = 0;
 		} else {
 			options.clear();
 			optionsSet.clear();
@@ -1824,7 +1863,7 @@ EXPORT(int) GetSkirmishAIOptionCount(int aiIndex) {
 
 			GetLuaAIInfo();
 
-			return options.size();
+			count = options.size();
 		}
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -1832,7 +1871,7 @@ EXPORT(int) GetSkirmishAIOptionCount(int aiIndex) {
 	options.clear();
 	optionsSet.clear();
 
-	return 0;
+	return count;
 }
 
 
@@ -1900,12 +1939,15 @@ EXPORT(const char*) GetOptionDesc(int optIndex)
 
 EXPORT(int) GetOptionType(int optIndex)
 {
+	int type = 0; // FIXME error return should be -1
+
 	try {
 		CheckOptionIndex(optIndex);
-		return options[optIndex].typeCode;
+		type = options[optIndex].typeCode;
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return 0;
+
+	return type;
 }
 
 
@@ -1926,42 +1968,54 @@ EXPORT(int) GetOptionBoolDef(int optIndex)
 
 EXPORT(float) GetOptionNumberDef(int optIndex)
 {
+	float numDef = 0.0f; // FIXME error return should be -1.0f
+
 	try {
 		CheckOptionType(optIndex, opt_number);
-		return options[optIndex].numberDef;
+		numDef = options[optIndex].numberDef;
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return 0.0f;
+
+	return numDef;
 }
 
 EXPORT(float) GetOptionNumberMin(int optIndex)
 {
+	float numMin = -1.0e30f; // FIXME error return should be -1.0f, or use FLOAT_MIN ?
+
 	try {
 		CheckOptionType(optIndex, opt_number);
-		return options[optIndex].numberMin;
+		numMin = options[optIndex].numberMin;
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return -1.0e30f; // FIXME ?
+
+	return numMin;
 }
 
 EXPORT(float) GetOptionNumberMax(int optIndex)
 {
+	float numMax = +1.0e30f; // FIXME error return should be -1.0f, or use FLOAT_MAX ?
+
 	try {
 		CheckOptionType(optIndex, opt_number);
-		return options[optIndex].numberMax;
+		numMax = options[optIndex].numberMax;
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return +1.0e30f; // FIXME ?
+
+	return numMax;
 }
 
 EXPORT(float) GetOptionNumberStep(int optIndex)
 {
+	float numStep = 0.0f; // FIXME error return should be -1.0f
+
 	try {
 		CheckOptionType(optIndex, opt_number);
-		return options[optIndex].numberStep;
+		numStep = options[optIndex].numberStep;
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return 0.0f;
+
+	return numStep;
 }
 
 
@@ -1979,12 +2033,15 @@ EXPORT(const char*) GetOptionStringDef(int optIndex)
 
 EXPORT(int) GetOptionStringMaxLen(int optIndex)
 {
+	int count = 0; // FIXME error return should be -1
+
 	try {
 		CheckOptionType(optIndex, opt_string);
-		return options[optIndex].stringMaxLen;
+		count = options[optIndex].stringMaxLen;
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return 0;
+
+	return count;
 }
 
 
@@ -1992,12 +2049,15 @@ EXPORT(int) GetOptionStringMaxLen(int optIndex)
 
 EXPORT(int) GetOptionListCount(int optIndex)
 {
+	int count = 0; // FIXME error return should be -1
+
 	try {
 		CheckOptionType(optIndex, opt_list);
-		return options[optIndex].list.size();
+		count = options[optIndex].list.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return 0;
+
+	return count;
 }
 
 EXPORT(const char*) GetOptionListDef(int optIndex)
@@ -2124,6 +2184,8 @@ static int LuaGetMapInfo(lua_State* L)
 
 EXPORT(int) GetModValidMapCount()
 {
+	int count = 0; // FIXME error return should be -1
+
 	try {
 		CheckInit();
 
@@ -2150,10 +2212,11 @@ EXPORT(int) GetModValidMapCount()
 			}
 		}
 
-		return modValidMaps.size();
+		count = modValidMaps.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return 0;
+
+	return count;
 }
 
 EXPORT(const char*) GetModValidMap(int index)
