@@ -11,6 +11,8 @@
 .PHONY : start-github stop-github
 .PHONY : start-stacktrace-translator stop-stacktrace-translator
 
+USER:=buildbot
+
 start-master:
 	env -i PATH=$$PATH buildbot start master
 
@@ -21,21 +23,21 @@ start-slave:
 	##### Not using schroot
 	#env -i PATH=$$PATH nice -19 ionice -c3 buildslave start slaves/testslave
 	##### Using schroot
-	schroot --begin-session --chroot buildbot-maverick > ~/run/slave_schroot_session
+	schroot --begin-session --chroot buildbot-maverick --user=${USER} > ~/run/slave_schroot_session
 	## `ionice -c3' sets the process to idle IO priority.
 	## This is only useful when using CFQ IO scheduler on the relevant disk.
-	schroot --run-session --chroot `cat ~/run/slave_schroot_session` -- env -i PATH=/usr/lib/ccache:/usr/local/bin:/usr/bin:/bin nice -19 ionice -c3 buildslave start /slave
+	schroot --run-session --chroot `cat ~/run/slave_schroot_session` --user=${USER} -- env -i PATH=/usr/lib/ccache:/usr/local/bin:/usr/bin:/bin nice -19 ionice -c3 buildslave start /slave
 
 stop-slave:
 	##### Not using schroot
 	#buildbot stop slaves/testslave
 	##### Using schroot
-	schroot --run-session --chroot `cat ~/run/slave_schroot_session` buildslave stop /slave
-	schroot --end-session --chroot `cat ~/run/slave_schroot_session`
+	schroot --run-session --chroot `cat ~/run/slave_schroot_session` --user=${USER} buildslave stop /slave
+	schroot --end-session --chroot `cat ~/run/slave_schroot_session` --user=${USER}
 	rm ~/run/slave_schroot_session
 
 enter-chroot:
-	schroot --run-session --chroot `cat ~/run/slave_schroot_session`
+	schroot --run-session --chroot `cat ~/run/slave_schroot_session` --user=${USER}
 
 start-github:
 	env -i PATH=$$PATH buildbot/master/contrib/github_buildbot.py -m localhost:9989 -p 9987 -l ~/log/github_buildbot.log -L debug --pidfile ~/run/github_buildbot.pid &
