@@ -51,16 +51,6 @@ namespace Threading {
 	}
 
 
-	bool NativeThreadIdsEqual(const NativeThreadId& thID1, const NativeThreadId& thID2)
-	{
-	#ifdef WIN32
-		return (thID1 == thID2);
-	#else
-		return pthread_equal(thID1, thID2);
-	#endif
-	}
-
-
 	void SetMainThread()
 	{
 		if (!haveMainThreadID) {

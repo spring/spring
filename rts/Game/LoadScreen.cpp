@@ -121,7 +121,7 @@ CLoadScreen::~CLoadScreen()
 		netHeartbeatThread->join();
 	delete netHeartbeatThread; netHeartbeatThread = NULL;
 
-	Watchdog::ClearTimer();
+	Watchdog::ClearTimer(WDT_LOAD);
 
 	if (!gu->globalQuit) {
 		//! sending your playername to the server indicates that you are finished loading
@@ -236,7 +236,7 @@ bool CLoadScreen::Update()
 
 bool CLoadScreen::Draw()
 {
-	Watchdog::ClearTimer();
+	Watchdog::ClearTimer(WDT_LOAD);
 	
 	//! Limit the Frames Per Second to not lock a singlethreaded CPU from loading the game
 	if (mt_loading) {
@@ -316,7 +316,7 @@ bool CLoadScreen::Draw()
 
 void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 {
-	Watchdog::ClearTimer();
+	Watchdog::ClearTimer(WDT_LOAD);
 
 	boost::recursive_mutex::scoped_lock lck(mutex);
 

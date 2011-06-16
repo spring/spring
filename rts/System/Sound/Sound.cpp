@@ -369,15 +369,15 @@ void CSound::StartThread(int maxSounds)
 	}
 	configHandler->Set("MaxSounds", maxSounds);
 
-	Watchdog::RegisterThread("audio");
+	Watchdog::RegisterThread(WDT_AUDIO);
 
 	while (!soundThreadQuit) {
 		boost::this_thread::sleep(boost::posix_time::millisec(50)); //! 20Hz
 		Update();
-		Watchdog::ClearTimer();
+		Watchdog::ClearTimer(WDT_AUDIO);
 	}
 
-	Watchdog::DeregisterThread("audio");
+	Watchdog::DeregisterThread(WDT_AUDIO);
 
 	sources.clear(); // delete all sources
 	delete efx; // must happen after sources and before context
