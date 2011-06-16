@@ -37,10 +37,12 @@
 
 	Delete "$INSTDIR\settingstemplate.xml"
 
+!ifndef SLIM
 	; New Settings Program
 	${!echonow} "Processing: main: springsettings"
 	File "..\installer\Springlobby\SettingsDlls\springsettings.exe"
 	File /r "..\installer\Springlobby\SettingsDlls\*.dll"
+!endif
 
 	${!echonow} "Processing: main: DLLs 2 (mingwlibs)"
 	; DLLs
