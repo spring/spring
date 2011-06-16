@@ -23,7 +23,7 @@ public:
 	virtual ~CArchiveBase();
 
 	virtual bool IsOpen() = 0;
-	std::string GetArchiveName() const;
+	const std::string& GetArchiveName() const;
 	
 	/**
 	 * @return The amount of files in the archive, does not change during
