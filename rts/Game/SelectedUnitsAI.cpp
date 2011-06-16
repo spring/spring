@@ -109,7 +109,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
 	}
 	else if ((cmd_id == CMD_ATTACK) && (
 			(c.GetParamsCount() == 6) ||
-			(c.GetParam(3) > 0.001f)
+			((c.GetParamsCount() == 4) && (c.GetParam(3) > 0.001f))
 		))
 	{
 		SelectAttack(c, player);
