@@ -142,8 +142,10 @@ EXPORT(const char* ) GetDataDirectory(int index);
  */
 EXPORT(int         ) ProcessUnits();
 /**
- * @brief Identical to ProcessUnits(), neither generates checksum anymore
+ * Identical to ProcessUnits().
+ * Neither generates checksum anymore.
  * @see ProcessUnits
+ * @deprecated in June 2011
  */
 EXPORT(int         ) ProcessUnitsNoChecksum();
 
@@ -153,20 +155,20 @@ EXPORT(int         ) ProcessUnitsNoChecksum();
  *   the number of units available (>= 0) on success
  *
  * Will return the number of units. Remember to call ProcessUnits() beforehand
- * until it returns 0.  As ProcessUnits() is called the number of processed
+ * until it returns 0. As ProcessUnits() is called the number of processed
  * units goes up, and so will the value returned by this function.
  *
  * Example:
  *		@code
- *		while (ProcessUnits() != 0) {}
- *		int unit_number = GetUnitCount();
+ *		while (ProcessUnits() > 0) {}
+ *		int numUnits = GetUnitCount();
  *		@endcode
  */
 EXPORT(int         ) GetUnitCount();
 /**
  * @brief Get the units internal mod name
  * @param unit The units id number
- * @return The units internal mod name or NULL on error
+ * @return The units internal mod name, or NULL on error
  *
  * This function returns the units internal mod name. For example it would
  * return 'armck' and not 'Arm Construction kbot'.
@@ -298,7 +300,7 @@ EXPORT(int         ) GetMapCount();
  */
 EXPORT(const char* ) GetMapName(int index);
 /**
- * @brief Get the file-name of a map
+ * @brief Get the file-name (+ VFS-path) of a map
  * @return NULL on error; the file-name of the map (e.g. "maps/SmallDivide.smf")
  *   on success
  */
@@ -351,7 +353,7 @@ EXPORT(int         ) GetMapWindMax(int index);
  */
 EXPORT(int         ) GetMapGravity(int index);
 /**
- * @brief Get the number of resources supported available
+ * @brief Get the number of supported resources
  * @return negative integer (< 0) on error;
  *   the number of supported resources (>= 0) on success
  */
@@ -395,18 +397,19 @@ EXPORT(float       ) GetMapPosZ(int index, int posIndex);
 /**
  * @brief return the map's minimum height
  * @param mapName name of the map, e.g. "SmallDivide"
+ * @return 0.0f on error; the map's minimum height on success
  *
  * Together with maxHeight, this determines the
  * range of the map's height values in-game. The
  * conversion formula for any raw 16-bit height
  * datum <code>h</code> is
- *
  *    <code>minHeight + (h * (maxHeight - minHeight) / 65536.0f)</code>
  */
 EXPORT(float       ) GetMapMinHeight(const char* mapName);
 /**
  * @brief return the map's maximum height
  * @param mapName name of the map, e.g. "SmallDivide"
+ * @return 0.0f on error; the map's maximum height on success
  *
  * Together with minHeight, this determines the
  * range of the map's height values in-game. See
@@ -563,7 +566,7 @@ EXPORT(const char* ) GetInfoValueString(int index);
 /**
  * @brief Retrieves an info item's value of type integer
  * @param index info item index/id
- * @return NULL on error; the info item's value on success
+ * @return the info item's value; -1 might imply a value of -1 or an error
  * @see GetSkirmishAIInfoCount
  * @see GetInfoType
  *
@@ -573,7 +576,7 @@ EXPORT(int         ) GetInfoValueInteger(int index);
 /**
  * @brief Retrieves an info item's value of type float
  * @param index info item index/id
- * @return NULL on error; the info item's value on success
+ * @return the info item's value; -1.0f might imply a value of -1.0f or an error
  * @see GetSkirmishAIInfoCount
  * @see GetInfoType
  *
@@ -583,7 +586,7 @@ EXPORT(float       ) GetInfoValueFloat(int index);
 /**
  * @brief Retrieves an info item's value of type bool
  * @param index info item index/id
- * @return NULL on error; the info item's value on success
+ * @return the info item's value; false might imply the value false or an error
  * @see GetSkirmishAIInfoCount
  * @see GetInfoType
  *
@@ -1144,7 +1147,7 @@ EXPORT(void        ) CloseFileVFS(int file);
  * @param buf output buffer, must be at least of size numBytes
  * @param numBytes how many bytes to read from the file
  * @return -1 on error; the number of bytes read on success
- * (if this is less than length you reached the end of the file.)
+ * (if this is less than length, you reached the end of the file.)
  */
 EXPORT(int         ) ReadFileVFS(int file, unsigned char* buf, int numBytes);
 /**
@@ -1199,7 +1202,7 @@ EXPORT(int         ) InitSubDirsVFS(const char* path, const char* pattern, const
  *   this one.
  * @param nameBuf out-param to contain the VFS file-path
  * @param size should be set to the size of nameBuf
- * @return new file handle or 0
+ * @return new file handle or 0 on error
  * @see InitFindVFS
  * @see InitDirListVFS
  * @see InitSubDirsVFS
