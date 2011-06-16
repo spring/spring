@@ -127,4 +127,4 @@ if ($distDir eq "") {
 
 
 # Generate the installer
-system("makensis -V3 $nsisDefines $allVersStr installer/spring.nsi");
+system("makensis -V3 $nsisDefines $allVersStr @ARGV installer/spring.nsi");
