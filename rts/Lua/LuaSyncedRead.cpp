@@ -3495,23 +3495,21 @@ static void PackCommand(lua_State* L, const Command& cmd)
 }
 
 
-static int PackCommandQueue(lua_State* L, const CCommandQueue& q, int count)
+static void PackCommandQueue(lua_State* L, const CCommandQueue& commands, size_t count)
 {
-	lua_createtable(L, q.size(), 0);
+	lua_createtable(L, commands.size(), 0);
 
-	int i = 0;
-	CCommandQueue::const_iterator it;
-	for (it = q.begin(); it != q.end(); ++it) {
-		if (i >= count) {
+	size_t c = 0;
+	CCommandQueue::const_iterator ci;
+	for (ci = commands.begin(); ci != commands.end(); ++ci) {
+		if (c >= count) {
 			break;
 		}
-		i++;
-		lua_pushnumber(L, i);
-		PackCommand(L, *it);
+		c++;
+		lua_pushnumber(L, c);
+		PackCommand(L, *ci);
 		lua_rawset(L, -3);
 	}
-
-	return 1;
 }
 
 
