@@ -92,21 +92,21 @@ unsigned int CArchivePool::NumFiles() const
 
 void CArchivePool::FileInfo(unsigned int fid, std::string& name, int& size) const
 {
-	assert(fid >= 0 && fid < NumFiles());
+	assert(IsFileId(fid));
 	name = files[fid]->name;
 	size = files[fid]->size;
 }
 
 unsigned int CArchivePool::GetCrc32(unsigned int fid)
 {
-	assert(fid >= 0 && fid < NumFiles());
+	assert(IsFileId(fid));
 	return files[fid]->crc32;
 }
 
 
 bool CArchivePool::GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& buffer)
 {
-	assert(fid >= 0 && fid < NumFiles());
+	assert(IsFileId(fid));
 
 	FileData* f = files[fid];
 
