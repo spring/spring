@@ -1225,8 +1225,6 @@ EXPORT(int) GetPrimaryModCount()
 
 EXPORT(int) GetPrimaryModInfoCount(int modIndex) {
 
-	int count = 0; // FIXME error return should be -1
-
 	try {
 		CheckInit();
 		CheckBounds(modIndex, modData.size());
@@ -1236,13 +1234,13 @@ EXPORT(int) GetPrimaryModInfoCount(int modIndex) {
 		std::vector<InfoItem> modInfoItems = modData[modIndex].GetInfoItems();
 		info.insert(info.end(), modInfoItems.begin(), modInfoItems.end());
 
-		count = (int)info.size();
+		return (int)info.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
 	info.clear();
 
-	return count;
+	return 0; // FIXME error return should be -1
 }
 EXPORT(const char*) GetPrimaryModName(int index) // deprecated
 {
@@ -1503,8 +1501,6 @@ static void CheckOptionType(int optIndex, int type)
 
 EXPORT(int) GetMapOptionCount(const char* name)
 {
-	int count = 0; // FIXME error return should be -1
-
 	try {
 		CheckInit();
 		CheckNullOrEmpty(name);
@@ -1519,21 +1515,19 @@ EXPORT(int) GetMapOptionCount(const char* name)
 
 		optionsSet.clear();
 
-		count = options.size();
+		return options.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
 	options.clear();
 	optionsSet.clear();
 
-	return count;
+	return 0; // FIXME error return should be -1
 }
 
 
 EXPORT(int) GetModOptionCount()
 {
-	int count = 0; // FIXME error return should be -1
-
 	try {
 		CheckInit();
 
@@ -1554,7 +1548,7 @@ EXPORT(int) GetModOptionCount()
 
 		optionsSet.clear();
 
-		count = options.size();
+		return options.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
@@ -1562,13 +1556,11 @@ EXPORT(int) GetModOptionCount()
 	options.clear();
 	optionsSet.clear();
 
-	return count;
+	return 0; // FIXME error return should be -1
 }
 
 EXPORT(int) GetCustomOptionCount(const char* fileName)
 {
-	int count = 0; // FIXME error return should be -1
-
 	try {
 		CheckInit();
 
@@ -1582,7 +1574,7 @@ EXPORT(int) GetCustomOptionCount(const char* fileName)
 
 		optionsSet.clear();
 
-		count = options.size();
+		return options.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
@@ -1590,7 +1582,7 @@ EXPORT(int) GetCustomOptionCount(const char* fileName)
 	options.clear();
 	optionsSet.clear();
 
-	return count;
+	return 0; // FIXME error return should be -1
 }
 
 //////////////////////////
@@ -1692,8 +1684,6 @@ static int ToPureLuaAIIndex(int aiIndex) {
 
 EXPORT(int) GetSkirmishAIInfoCount(int aiIndex) {
 
-	int count = 0; // FIXME error return should be -1
-
 	try {
 		CheckSkirmishAIIndex(aiIndex);
 
@@ -1709,13 +1699,13 @@ EXPORT(int) GetSkirmishAIInfoCount(int aiIndex) {
 			infoSet.clear();
 		}
 
-		count = (int)info.size();
+		return (int)info.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
 	info.clear();
 
-	return count;
+	return 0; // FIXME error return should be -1
 }
 
 static const InfoItem* GetInfoItem(int infoIndex) {
@@ -1835,18 +1825,16 @@ EXPORT(const char*) GetInfoDescription(int infoIndex) {
 
 EXPORT(int) GetSkirmishAIOptionCount(int aiIndex) {
 
-	int count = 0; // FIXME error return should be -1
-
 	try {
 		CheckSkirmishAIIndex(aiIndex);
 
+		options.clear();
+		optionsSet.clear();
+
 		if (IsLuaAIIndex(aiIndex)) {
 			// lua AIs do not have options
-			count = 0;
+			return 0;
 		} else {
-			options.clear();
-			optionsSet.clear();
-
 			ParseOptions(skirmishAIDataDirs[aiIndex] + "/AIOptions.lua",
 					SPRING_VFS_RAW, SPRING_VFS_RAW);
 
@@ -1854,7 +1842,7 @@ EXPORT(int) GetSkirmishAIOptionCount(int aiIndex) {
 
 			GetLuaAIInfo();
 
-			count = options.size();
+			return options.size();
 		}
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -1862,7 +1850,7 @@ EXPORT(int) GetSkirmishAIOptionCount(int aiIndex) {
 	options.clear();
 	optionsSet.clear();
 
-	return count;
+	return 0; // FIXME error return should be -1
 }
 
 
