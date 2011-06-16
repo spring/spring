@@ -313,7 +313,7 @@ std::string AutohostInterface::GetChatMessage()
 
 		if ((bytes_avail = autohost.available()) > 0) {
 			std::vector<boost::uint8_t> buffer(bytes_avail+1, 0);
-			size_t bytesReceived = autohost.receive(boost::asio::buffer(buffer));
+			/*const size_t bytesReceived = */autohost.receive(boost::asio::buffer(buffer));
 			return std::string((char*)(&buffer[0]));
 		}
 	}
