@@ -94,7 +94,7 @@ CArchive7Zip::CArchive7Zip(const std::string& name) :
 	}
 
 	// Get contents of archive and store name->int mapping
-	for (unsigned i = 0; i < db.db.NumFiles; ++i) {
+	for (unsigned int i = 0; i < db.db.NumFiles; ++i) {
 		CSzFileItem* f = db.db.Files + i;
 		if ((f->Size >= 0) && !f->IsDir) {
 			std::string fileName = f->Name;
@@ -139,12 +139,12 @@ bool CArchive7Zip::IsOpen()
 	return isOpen;
 }
 
-unsigned CArchive7Zip::NumFiles() const
+unsigned int CArchive7Zip::NumFiles() const
 {
 	return fileData.size();
 }
 
-bool CArchive7Zip::GetFile(unsigned fid, std::vector<boost::uint8_t>& buffer)
+bool CArchive7Zip::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
 {
 	boost::mutex::scoped_lock lck(archiveLock);
 	CHECK_FILE_ID(fid);
@@ -164,7 +164,7 @@ bool CArchive7Zip::GetFile(unsigned fid, std::vector<boost::uint8_t>& buffer)
 	}
 }
 
-void CArchive7Zip::FileInfo(unsigned fid, std::string& name, int& size) const
+void CArchive7Zip::FileInfo(unsigned int fid, std::string& name, int& size) const
 {
 	CHECK_FILE_ID(fid);
 	name = fileData[fid].origName;
@@ -175,7 +175,7 @@ void CArchive7Zip::FileInfo(unsigned fid, std::string& name, int& size) const
 const size_t CArchive7Zip::COST_LIMIT_UNPACK_OVERSIZE = 32 * 1024;
 const size_t CArchive7Zip::COST_LIMIT_DISC_READ       = 32 * 1024;
 
-bool CArchive7Zip::HasLowReadingCost(unsigned fid) const
+bool CArchive7Zip::HasLowReadingCost(unsigned int fid) const
 {
 	CHECK_FILE_ID(fid);
 	const FileData& fd = fileData[fid];
@@ -190,7 +190,7 @@ bool CArchive7Zip::HasLowReadingCost(unsigned fid) const
 			|| (fd.packedSize <= COST_LIMIT_DISC_READ));
 }
 
-unsigned CArchive7Zip::GetCrc32(unsigned fid)
+unsigned int CArchive7Zip::GetCrc32(unsigned int fid)
 {
 	CHECK_FILE_ID(fid);
 	return fileData[fid].crc;

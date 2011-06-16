@@ -5,7 +5,7 @@
 
 #include <string>
 
-/** @brief Object representing an updateable CRC-32 checksum. */
+/** @brief An updateable CRC-32 checksum. */
 class CRC
 {
 private:
@@ -16,11 +16,15 @@ private:
 	}
 
 public:
+	/** @brief Construct a new CRC object. */
 	CRC();
 
+	/** @brief Get the final CRC digest. */
 	unsigned int GetDigest() const;
 
+	/** @brief Update CRC over the data. */
 	CRC& Update(const void* data, unsigned int size);
+	/** @brief Update CRC over the 4 bytes of data. */
 	CRC& Update(unsigned int data);
 
 	CRC& operator<<(int data)      { return Up(data); }

@@ -26,15 +26,14 @@ static unsigned int parse_int32(unsigned char c[4])
 	return i;
 }
 
-static bool gz_really_read(gzFile file, voidp buf, unsigned len)
+static bool gz_really_read(gzFile file, voidp buf, unsigned int len)
 {
-	return gzread(file, (char *)buf, len) == len;
+	return gzread(file, (char*)buf, len) == len;
 }
 
-CArchivePool::CArchivePool(const std::string& name):
-	CArchiveBuffered(name),
-	isOpen(false)
-
+CArchivePool::CArchivePool(const std::string& name)
+	: CArchiveBuffered(name)
+	, isOpen(false)
 {
 	char c_name[255];
 	unsigned char c_md5[16];
@@ -61,7 +60,7 @@ CArchivePool::CArchivePool(const std::string& name):
 		if (!gz_really_read(in, &c_crc32, 4)) break;
 		if (!gz_really_read(in, &c_size, 4)) break;
 
-		FileData *f = new FileData;
+		FileData* f = new FileData;
 		f->name = std::string(c_name, length);
 		std::memcpy(&f->md5, &c_md5, 16);
 		f->crc32 = parse_int32(c_crc32);
@@ -73,10 +72,12 @@ CArchivePool::CArchivePool(const std::string& name):
 	gzclose(in);
 }
 
-CArchivePool::~CArchivePool(void)
+CArchivePool::~CArchivePool()
 {
-	std::vector<FileData *>::iterator i = files.begin();
-	for(; i < files.end(); ++i) delete *i;
+	std::vector<FileData*>::iterator fi;
+	for (fi = files.begin(); fi < files.end(); ++fi) {
+		delete *fi;
+	}
 }
 
 bool CArchivePool::IsOpen()
@@ -84,39 +85,39 @@ bool CArchivePool::IsOpen()
 	return isOpen;
 }
 
-unsigned CArchivePool::NumFiles() const
+unsigned int CArchivePool::NumFiles() const
 {
 	return files.size();
 }
 
-void CArchivePool::FileInfo(unsigned fid, std::string& name, int& size) const
+void CArchivePool::FileInfo(unsigned int fid, std::string& name, int& size) const
 {
 	assert(fid >= 0 && fid < NumFiles());
 	name = files[fid]->name;
 	size = files[fid]->size;
 }
 
-unsigned CArchivePool::GetCrc32(unsigned fid)
+unsigned int CArchivePool::GetCrc32(unsigned int fid)
 {
 	assert(fid >= 0 && fid < NumFiles());
 	return files[fid]->crc32;
 }
 
 
-bool CArchivePool::GetFileImpl(unsigned fid, std::vector<boost::uint8_t>& buffer)
+bool CArchivePool::GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& buffer)
 {
 	assert(fid >= 0 && fid < NumFiles());
 
-	FileData *f = files[fid];
+	FileData* f = files[fid];
 
 	char table[] = "0123456789abcdef";
 	char c_hex[32];
 	for (int i = 0; i < 16; ++i) {
-		c_hex[2 * i] = table[(f->md5[i] >> 4) & 0xf];
-		c_hex[2 * i + 1] = table[f->md5[i] & 0xf];
+		c_hex[2 * i]     = table[(f->md5[i] >> 4) & 0xf];
+		c_hex[2 * i + 1] = table[ f->md5[i]       & 0xf];
 	}
-	std::string prefix(c_hex, 2);
-	std::string postfix(c_hex+2, 30);
+	std::string prefix(c_hex,      2);
+	std::string postfix(c_hex + 2, 30);
 
 	std::ostringstream accu;
 	accu << "pool/" << prefix << "/" << postfix << ".gz";
@@ -134,7 +135,7 @@ bool CArchivePool::GetFileImpl(unsigned fid, std::vector<boost::uint8_t>& buffer
 	int bytesread = (len == 0) ? 0 : gzread(in, (char *)&buffer[0], len);
 	gzclose(in);
 
-	if(bytesread != len) {
+	if (bytesread != len) {
 		buffer.clear();
 		return false;
 	}
