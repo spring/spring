@@ -2,9 +2,6 @@
 
 #include "StdAfx.h"
 
-#ifdef _OPENMP
-	#include <omp.h>
-#endif
 #include <ostream>
 #include <fstream>
 #include <string.h>
@@ -25,7 +22,8 @@
 #include "GlobalUnsynced.h"
 #include "Bitmap.h"
 #include "bitops.h"
-#include "LogOutput.h"
+#include "System/LogOutput.h"
+#include "System/OpenMP_cond.h"
 
 
 boost::mutex devilMutex; // devil functions, whilst expensive, aren't thread-save
@@ -577,7 +575,7 @@ void CBitmap::Blur(int iterations, float weight)
 	for (int i=0; i < iterations; ++i){
 		{
 			int j,y,x;
-			#pragma omp parallel for private(j,x,y)
+			PRAGMA_OPEN_MP(parallel for private(j,x,y))
 			for (y=0; y < ysize; y++) {
 				for (x=0; x < xsize; x++) {
 					for (j=0; j < channels; j++) {

@@ -2,9 +2,6 @@
 
 #include "StdAfx.h"
 #include "SmfReadMap.h"
-#ifdef _OPENMP
-	#include <omp.h>
-#endif
 
 #include "BFGroundTextures.h"
 #include "BFGroundDrawer.h"
@@ -21,6 +18,7 @@
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/GlobalUnsynced.h"
+#include "System/OpenMP_cond.h"
 #include "System/LogOutput.h"
 #include "System/mmgr.h"
 #include "System/myMath.h"
@@ -324,7 +322,7 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 		std::vector<unsigned char> pixels(xsize * ysize * 4, 0.0f);
 
 		int y;
-		#pragma omp parallel for private(y)
+		PRAGMA_OPEN_MP(parallel for private(y))
 		for (y = 0; y < ysize; ++y) {
 			UpdateShadingTexPart(y, x1, y1, xsize, &pixels[y * xsize * 4]);
 		}
@@ -361,7 +359,7 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 		#endif
 
 		int z;
-		#pragma omp parallel for private(z)
+		PRAGMA_OPEN_MP(parallel for private(z))
 		for (z = minz; z <= maxz; z++) {
 			for (int x = minx; x <= maxx; x++) {
 				const int vIdx = (z * W) + x;
