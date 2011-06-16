@@ -5,6 +5,7 @@
 
 #include "ArchiveFactory.h"
 
+#include "ArchiveBase.h"
 #include "ArchivePool.h"
 #include "ArchiveDir.h"
 #include "ArchiveZip.h"

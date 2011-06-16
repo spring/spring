@@ -4,7 +4,8 @@
 #define _ARCHIVE_FACTORY_H
 
 #include <string>
-#include "ArchiveBase.h"
+
+class CArchiveBase;
 
 class CArchiveFactory
 {

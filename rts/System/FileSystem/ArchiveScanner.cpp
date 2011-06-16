@@ -14,6 +14,7 @@
 
 #include "ArchiveFactory.h"
 #include "CRC.h"
+#include "ArchiveBase.h"
 #include "FileFilter.h"
 #include "FileSystem.h"
 #include "FileSystemHandler.h"
