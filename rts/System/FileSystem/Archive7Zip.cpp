@@ -18,9 +18,6 @@ extern "C" {
 #include "mmgr.h"
 #include "LogOutput.h"
 
-#define CHECK_FILE_ID(fileId) \
-	assert((fileId >= 0) && (fileId < NumFiles()));
-
 
 CArchive7Zip::CArchive7Zip(const std::string& name) :
 	CArchiveBase(name),
@@ -147,7 +144,7 @@ unsigned int CArchive7Zip::NumFiles() const
 bool CArchive7Zip::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
 {
 	boost::mutex::scoped_lock lck(archiveLock);
-	CHECK_FILE_ID(fid);
+	assert(IsFileId(fid));
 	
 	// Get 7zip to decompress it
 	size_t offset;
@@ -166,7 +163,7 @@ bool CArchive7Zip::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer
 
 void CArchive7Zip::FileInfo(unsigned int fid, std::string& name, int& size) const
 {
-	CHECK_FILE_ID(fid);
+	assert(IsFileId(fid));
 	name = fileData[fid].origName;
 	size = fileData[fid].size;
 }
@@ -177,7 +174,7 @@ const size_t CArchive7Zip::COST_LIMIT_DISC_READ       = 32 * 1024;
 
 bool CArchive7Zip::HasLowReadingCost(unsigned int fid) const
 {
-	CHECK_FILE_ID(fid);
+	assert(IsFileId(fid));
 	const FileData& fd = fileData[fid];
 	// The cost is high, if the to-be-unpacked data is
 	// more then 32KB larger then the file alone,
@@ -192,6 +189,6 @@ bool CArchive7Zip::HasLowReadingCost(unsigned int fid) const
 
 unsigned int CArchive7Zip::GetCrc32(unsigned int fid)
 {
-	CHECK_FILE_ID(fid);
+	assert(IsFileId(fid));
 	return fileData[fid].crc;
 }

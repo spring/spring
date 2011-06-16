@@ -31,6 +31,13 @@ public:
 	 */
 	virtual unsigned int NumFiles() const = 0;
 	/**
+	 * Returns whether the supplied fileId is valid and available in this
+	 * archive.
+	 */
+	inline bool IsFileId(unsigned int fileId) const {
+		return (fileId >= 0) && (fileId < NumFiles());
+	}
+	/**
 	 * Returns true if the file exists in this archive.
 	 * @param normalizedFilePath VFS path to the file in lower-case,
 	 *   using forward-slashes, for example "maps/mymap.smf"

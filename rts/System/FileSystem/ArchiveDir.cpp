@@ -47,7 +47,7 @@ unsigned int CArchiveDir::NumFiles() const
 
 bool CArchiveDir::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
 {
-	assert(fid >= 0 && fid < NumFiles());
+	assert(IsFileId(fid));
 
 	const std::string rawpath = filesystem.LocateFile(dirName + searchFiles[fid]);
 	std::ifstream ifs(rawpath.c_str(), std::ios::in | std::ios::binary);
@@ -65,7 +65,7 @@ bool CArchiveDir::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
 
 void CArchiveDir::FileInfo(unsigned int fid, std::string& name, int& size) const
 {
-	assert(fid >= 0 && fid < NumFiles());
+	assert(IsFileId(fid));
 
 	name = searchFiles[fid];
 	const std::string rawPath = filesystem.LocateFile(dirName + name);

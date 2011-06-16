@@ -17,7 +17,7 @@ CArchiveBuffered::~CArchiveBuffered()
 bool CArchiveBuffered::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
 {
 	boost::mutex::scoped_lock lck(archiveLock);
-	assert(fid >= 0 && fid < NumFiles());
+	assert(IsFileId(fid));
 
 	if (fid >= cache.size()) {
 		cache.resize(fid + 1);

@@ -73,7 +73,7 @@ unsigned int CArchiveZip::NumFiles() const
 
 void CArchiveZip::FileInfo(unsigned int fid, std::string& name, int& size) const
 {
-	assert(fid >= 0 && fid < NumFiles());
+	assert(IsFileId(fid));
 
 	name = fileData[fid].origName;
 	size = fileData[fid].size;
@@ -81,7 +81,7 @@ void CArchiveZip::FileInfo(unsigned int fid, std::string& name, int& size) const
 
 unsigned int CArchiveZip::GetCrc32(unsigned int fid)
 {
-	assert(fid >= 0 && fid < NumFiles());
+	assert(IsFileId(fid));
 
 	return fileData[fid].crc;
 }
@@ -95,7 +95,7 @@ bool CArchiveZip::GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& buf
 	if (!zip) {
 		return false;
 	}
-	assert(fid >= 0 && fid < NumFiles());
+	assert(IsFileId(fid));
 
 	unzGoToFilePos(zip, &fileData[fid].fp);
 
