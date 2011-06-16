@@ -101,7 +101,12 @@ public:
 
 	std::vector<ArchiveData> GetPrimaryMods() const;
 	std::vector<ArchiveData> GetAllMods() const;
-	std::vector<std::string> GetArchives(const std::string& root, int depth = 0) const;
+	std::vector<std::string> GetArchives(const std::string& root) const {
+		return GetArchives(root, 0);
+	}
+private:
+	std::vector<std::string> GetArchives(const std::string& root, int depth) const;
+public:
 	/**
 	 * Returns the (human-readable) map names.
 	 */
