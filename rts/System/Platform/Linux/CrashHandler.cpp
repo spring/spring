@@ -532,6 +532,7 @@ namespace CrashHandler
 	}
 
 	void OutputStacktrace() {
-		// FIXME: This is supposed to output a stacktrace of the current thread
+		bool keepRunning = true;
+		Stacktrace(&keepRunning);
 	}
 };
