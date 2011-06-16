@@ -1514,7 +1514,9 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 		luaUnitEventBatch.swap(lueb);
 	}
 
+#if defined(USE_GML) && GML_ENABLE_SIM
 	SELECT_LUA_STATE();
+#endif
 	GML_DRCMUTEX_LOCK(lua); // ExecuteUnitEventBatch
 
 	if(Threading::IsSimThread())
@@ -1631,7 +1633,9 @@ void CLuaHandle::ExecuteFeatEventBatch() {
 		luaFeatEventBatch.swap(lfeb);
 	}
 
+#if defined(USE_GML) && GML_ENABLE_SIM
 	SELECT_LUA_STATE();
+#endif
 	GML_DRCMUTEX_LOCK(lua); // ExecuteFeatEventBatch
 
 	if(Threading::IsSimThread())
@@ -1670,7 +1674,9 @@ void CLuaHandle::ExecuteObjEventBatch() {
 		luaObjEventBatch.swap(loeb);
 	}
 
+#if defined(USE_GML) && GML_ENABLE_SIM
 	SELECT_LUA_STATE();
+#endif
 	GML_DRCMUTEX_LOCK(lua); // ExecuteObjEventBatch
 
 	if(Threading::IsSimThread())
@@ -1706,7 +1712,9 @@ void CLuaHandle::ExecuteProjEventBatch() {
 		luaProjEventBatch.swap(lpeb);
 	}
 
+#if defined(USE_GML) && GML_ENABLE_SIM
 	SELECT_LUA_STATE();
+#endif
 	GML_DRCMUTEX_LOCK(lua); // ExecuteProjEventBatch
 
 	if(Threading::IsSimThread())
