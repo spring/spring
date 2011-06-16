@@ -45,15 +45,15 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, const std::s
 	BLOCK_SIZE(BSIZE),
 	BLOCK_PIXEL_SIZE(BSIZE * SQUARE_SIZE),
 	BLOCKS_TO_UPDATE(SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1),
-	pathFinder(pf),
 	nbrOfBlocksX(gs->mapx / BLOCK_SIZE),
 	nbrOfBlocksZ(gs->mapy / BLOCK_SIZE),
+	blockStates(int2(nbrOfBlocksX, nbrOfBlocksZ), int2(gs->mapx, gs->mapy)),
+	pathFinder(pf),
 	pathChecksum(0),
 	offsetBlockNum(nbrOfBlocksX * nbrOfBlocksZ),
 	costBlockNum(nbrOfBlocksX * nbrOfBlocksZ),
 	nextOffsetMessage(-1),
-	nextCostMessage(-1),
-	blockStates(int2(nbrOfBlocksX, nbrOfBlocksZ), int2(gs->mapx, gs->mapy))
+	nextCostMessage(-1)
 {
 	// these give the changes in (x, z) coors
 	// when moving one step in given direction
