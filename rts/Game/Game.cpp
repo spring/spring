@@ -414,7 +414,7 @@ void CGame::LoadGame(const std::string& mapName)
 	set_threadnum(GML_LOAD_THREAD_NUM);
 #endif
 
-	Watchdog::RegisterThread("loadscreen");
+	Watchdog::RegisterThread(WDT_LOAD);
 
 	if (!gu->globalQuit) LoadDefs();
 	if (!gu->globalQuit) LoadSimulation(mapName);
@@ -428,7 +428,7 @@ void CGame::LoadGame(const std::string& mapName)
 		saveFile->LoadGame();
 	}
 
-	Watchdog::DeregisterThread("loadscreen");
+	Watchdog::DeregisterThread(WDT_LOAD);
 }
 
 

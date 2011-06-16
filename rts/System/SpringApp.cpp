@@ -167,6 +167,10 @@ bool SpringApp::Initialize()
 	CMyMath::Init();
 	good_fpu_control_registers("::Run");
 
+	Watchdog::Install();
+	//! register (this) mainthread
+	Watchdog::RegisterThread(WDT_MAIN, true);
+
 	// log OS version
 	logOutput.Print("OS: %s", Platform::GetOS().c_str());
 	if (Platform::Is64Bit())
@@ -218,8 +222,6 @@ bool SpringApp::Initialize()
 	InitJoystick();
 
 	SetProcessAffinity(configHandler->Get("SetCoreAffinity", 0));
-
-	Watchdog::Install();
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
@@ -986,21 +988,21 @@ int SpringApp::Sim()
 		if(GML_SHARE_LISTS)
 			ogc->WorkerThreadPost();
 
-		Watchdog::ClearTimer("sim",true);
+		Watchdog::ClearTimer(WDT_SIM, true);
 
 		while(gmlKeepRunning && !gmlStartSim)
 			SDL_Delay(100);
 
-		Watchdog::ClearTimer("sim");
+		Watchdog::ClearTimer(WDT_SIM);
 
 		while(gmlKeepRunning) {
 			if(!gmlMultiThreadSim) {
-				Watchdog::ClearTimer("sim",true);
+				Watchdog::ClearTimer(WDT_SIM, true);
 				while(!gmlMultiThreadSim && gmlKeepRunning)
 					SDL_Delay(200);
 			}
 			else if (activeController) {
-				Watchdog::ClearTimer("sim");
+				Watchdog::ClearTimer(WDT_SIM);
 				gmlProcessor->ExpandAuxQueue();
 
 				if(!UpdateSim(activeController))
@@ -1035,7 +1037,7 @@ int SpringApp::Update()
 
 	int ret = 1;
 	if (activeController) {
-		Watchdog::ClearTimer("main");
+		Watchdog::ClearTimer(WDT_MAIN);
 #if defined(USE_GML) && GML_ENABLE_SIM
 		if (gmlMultiThreadSim) {
 			if (!gs->frameNum) {
@@ -1232,7 +1234,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 		case SDL_VIDEORESIZE: {
 			GML_MSTMUTEX_LOCK(sim); // MainEventHandler
 
-			Watchdog::ClearTimer("main",true);
+			Watchdog::ClearTimer(WDT_MAIN, true);
 			globalRendering->viewSizeX = event.resize.w;
 			globalRendering->viewSizeY = event.resize.h;
 #ifndef WIN32
@@ -1248,7 +1250,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 		case SDL_VIDEOEXPOSE: {
 			GML_MSTMUTEX_LOCK(sim); // MainEventHandler
 
-			Watchdog::ClearTimer("main",true);
+			Watchdog::ClearTimer(WDT_MAIN, true);
 			// re-initialize the stencil
 			glClearStencil(0);
 			glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
@@ -1262,7 +1264,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			break;
 		}
 		case SDL_ACTIVEEVENT: {
-			Watchdog::ClearTimer("main",true);
+			Watchdog::ClearTimer(WDT_MAIN, true);
 
 			//! deactivate sounds and other
 			if (event.active.state & (SDL_APPACTIVE | (globalRendering->fullScreen ? SDL_APPINPUTFOCUS : 0))) {

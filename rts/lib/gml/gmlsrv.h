@@ -440,7 +440,7 @@ public:
 	}
 
 	void gmlClientAux() {
-		Watchdog::RegisterThread("sim", true);
+		Watchdog::RegisterThread(WDT_SIM, true);
 		set_threadnum(GML_SIM_THREAD_NUM);
 		streflop_init<streflop::Simple>();
 		while(dorun) {
