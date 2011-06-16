@@ -23,12 +23,13 @@
 
 static CVertexArray* vertexArray1 = NULL;
 static CVertexArray* vertexArray2 = NULL;
-static CVertexArray* currentVertexArray = NULL;
 
 #ifdef USE_GML
 static CVertexArray vertexArrays1[GML_MAX_NUM_THREADS];
 static CVertexArray vertexArrays2[GML_MAX_NUM_THREADS];
 static CVertexArray* currentVertexArrays[GML_MAX_NUM_THREADS];
+#else
+static CVertexArray* currentVertexArray = NULL;
 #endif
 //BOOL gmlVertexArrayEnable=0;
 /******************************************************************************/

@@ -1743,7 +1743,9 @@ void CLuaHandle::ExecuteFrameEventBatch() {
 		luaFrameEventBatch.swap(lgeb);
 	}
 
+#if defined(USE_GML) && GML_ENABLE_SIM
 	SELECT_LUA_STATE();
+#endif
 	GML_DRCMUTEX_LOCK(lua); // ExecuteFrameEventBatch
 
 	if(Threading::IsSimThread())
@@ -1769,7 +1771,9 @@ void CLuaHandle::ExecuteMiscEventBatch() {
 		luaMiscEventBatch.swap(lmeb);
 	}
 
+#if defined(USE_GML) && GML_ENABLE_SIM
 	SELECT_LUA_STATE();
+#endif
 	GML_DRCMUTEX_LOCK(lua); // ExecuteMiscEventBatch
 
 	if(Threading::IsSimThread())
