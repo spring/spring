@@ -14,12 +14,13 @@ my @possDistDirs = ("dist", "game");
 
 my $defineDistDir = 1;
 if ($#ARGV >= 0) {
-	if ($ARGV[0]) {
+	if ($ARGV[0]!=0) {
 		# Use the first argument to this script as posible dist-dir
 		unshift(@possDistDirs, "$ARGV[0]"); # adds to the beginning
 	} else {
-		# If the first argument to this script is false (0, "0" or "")
+		# If the first argument to this script is 0
 		# we will not define DIST_DIR.
+		shift(@ARGV);
 		$defineDistDir = 0;
 	}
 }
