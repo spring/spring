@@ -31,7 +31,7 @@ def ReadLines(logName):
 
 def WriteLines(logName, logLines):
 	try:
-		strFilename=logName + ".colorized"
+		strFilename = logName + ".colorized"
 		logFile = open(strFilename, 'w')
 		logFile.write(logLines)
 		logFile = logFile.close()

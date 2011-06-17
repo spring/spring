@@ -3,20 +3,19 @@
 #ifndef TA_PALETTE_H
 #define TA_PALETTE_H
 
-class CTAPalette
-{
+class CFileHandler;
+class CTAPalette {
 public:
+	enum { NUM_PALETTE_ENTRIES = 256 };
+
 	CTAPalette();
-	~CTAPalette();
 
-	inline unsigned char* operator[] (int a) {
-		return p[a];
-	}
+	inline const unsigned char* operator[] (int a) const { return p[a]; }
 
-	int NumTeamColors() const { return 10; }
-	void Init();
+	void Init(CFileHandler&);
 
-	unsigned char p[256][4];
+private:
+	unsigned char p[NUM_PALETTE_ENTRIES][4];
 };
 
 extern CTAPalette palette;

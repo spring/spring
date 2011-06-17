@@ -37,7 +37,6 @@
 #include "Rendering/GLContext.h"
 #include "Rendering/VerticalSync.h"
 #include "Rendering/WindowManagerHelper.h"
-#include "Rendering/Textures/TAPalette.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -206,7 +205,6 @@ bool SpringApp::Initialize()
 
 	InitOpenGL();
 	agui::InitGui();
-	palette.Init();
 	LoadFonts();
 
 	globalRendering->PostInit();

@@ -15,7 +15,6 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "TAPalette.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"

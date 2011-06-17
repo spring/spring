@@ -13,7 +13,6 @@
 #include "Game/TraceRay.h"
 #include "Lua/LuaParser.h"
 #include "Rendering/Textures/ColorMap.h"
-#include "Rendering/Textures/TAPalette.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
