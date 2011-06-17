@@ -471,6 +471,9 @@ void CQuadField::RemoveFeature(CFeature* feature)
 
 void CQuadField::MovedProjectile(CProjectile* p)
 {
+	if (!p->synced)
+		return;
+
 	int2 oldCellCoors = p->GetQuadFieldCellCoors();
 	int2 newCellCoors;
 	newCellCoors.x = std::max(0, std::min(int(p->pos.x / QUAD_SIZE), numQuadsX - 1));
@@ -484,8 +487,7 @@ void CQuadField::MovedProjectile(CProjectile* p)
 
 void CQuadField::AddProjectile(CProjectile* p)
 {
-	if (!p->synced)
-		return;
+	assert(p->synced);
 
 	// projectiles are point-objects, so
 	// they exist in a single cell only
@@ -504,8 +506,7 @@ void CQuadField::AddProjectile(CProjectile* p)
 
 void CQuadField::RemoveProjectile(CProjectile* p)
 {
-	if (!p->synced)
-		return;
+	assert(p->synced);
 
 	const int2& cellCoors = p->GetQuadFieldCellCoors();
 	const int cellIdx = numQuadsX * cellCoors.y + cellCoors.x;

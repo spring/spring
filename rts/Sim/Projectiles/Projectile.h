@@ -28,7 +28,7 @@ class CProjectile: public CExpGenSpawnable
 
 public:
 	CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece);
-	virtual ~CProjectile() {}
+	virtual ~CProjectile();
 
 	virtual void Collision();
 	virtual void Collision(CUnit* unit);
