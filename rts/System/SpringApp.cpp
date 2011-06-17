@@ -37,7 +37,6 @@
 #include "Rendering/GLContext.h"
 #include "Rendering/VerticalSync.h"
 #include "Rendering/WindowManagerHelper.h"
-#include "Rendering/Textures/TAPalette.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -68,7 +67,8 @@
 #ifdef WIN32
 	#include "Platform/Win/win32.h"
 	#include "Platform/Win/WinVersion.h"
-#elif defined(__APPLE__) || defined(HEADLESS)
+#elif defined(__APPLE__)
+#elif defined(HEADLESS)
 #else
 	#include <X11/Xlib.h>
 	#include <sched.h>
@@ -166,6 +166,10 @@ bool SpringApp::Initialize()
 	CMyMath::Init();
 	good_fpu_control_registers("::Run");
 
+	Watchdog::Install();
+	//! register (this) mainthread
+	Watchdog::RegisterThread(WDT_MAIN, true);
+
 	// log OS version
 	logOutput.Print("OS: %s", Platform::GetOS().c_str());
 	if (Platform::Is64Bit())
@@ -201,7 +205,6 @@ bool SpringApp::Initialize()
 
 	InitOpenGL();
 	agui::InitGui();
-	palette.Init();
 	LoadFonts();
 
 	globalRendering->PostInit();
@@ -217,8 +220,6 @@ bool SpringApp::Initialize()
 	InitJoystick();
 
 	SetProcessAffinity(configHandler->Get("SetCoreAffinity", 0));
-
-	Watchdog::Install();
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
@@ -258,6 +259,8 @@ void SpringApp::SetProcessAffinity(int affinity)
 		}
 	}
 #elif defined(__APPLE__)
+	// no-op
+#elif defined(HEADLESS)
 	// no-op
 #else
 	if (affinity > 0) {
@@ -445,10 +448,7 @@ bool SpringApp::SetSDLVideoMode()
 // origin for our coordinates is the bottom left corner
 bool SpringApp::GetDisplayGeometry()
 {
-#if       defined(HEADLESS)
-	return false;
-
-#else  // defined(HEADLESS)
+#ifndef HEADLESS
 	//! not really needed, but makes it safer against unknown windowmanager behaviours
 	if (globalRendering->fullScreen) {
 		globalRendering->screenSizeX = globalRendering->viewSizeX;
@@ -554,9 +554,9 @@ bool SpringApp::GetDisplayGeometry()
 	info.info.x11.unlock_func();
 
   #endif // defined(__APPLE__)
+#endif // defined(HEADLESS)
 
 	return true;
-#endif // defined(HEADLESS)
 }
 
 
@@ -565,10 +565,7 @@ bool SpringApp::GetDisplayGeometry()
  */
 void SpringApp::RestoreWindowPosition()
 {
-#if       defined(HEADLESS)
-	return;
-
-#else  // defined(HEADLESS)
+#ifndef HEADLESS
 	if (!globalRendering->fullScreen) {
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
@@ -622,10 +619,7 @@ void SpringApp::RestoreWindowPosition()
  */
 void SpringApp::SaveWindowPosition()
 {
-#if       defined(HEADLESS)
-	return;
-
-#else
+#ifndef HEADLESS
 	if (!globalRendering->fullScreen) {
 		GetDisplayGeometry();
 		configHandler->Set("WindowPosX",  globalRendering->winPosX);
@@ -633,7 +627,7 @@ void SpringApp::SaveWindowPosition()
 		configHandler->Set("WindowState", globalRendering->winState);
 
 	}
-#endif // defined(HEADLESS)
+#endif
 }
 
 
@@ -971,6 +965,16 @@ void SpringApp::Startup()
 	}
 }
 
+bool SpringApp::UpdateSim(CGameController *ac)
+{
+	GML_MSTMUTEX_LOCK(sim); // UpdateSim
+
+	Threading::SetSimThread(true);
+	bool ret = ac->Update();
+	Threading::SetSimThread(false);
+	return ret;
+}
+
 #if defined(USE_GML) && GML_ENABLE_SIM
 volatile int gmlMultiThreadSim;
 volatile int gmlStartSim;
@@ -982,29 +986,25 @@ int SpringApp::Sim()
 		if(GML_SHARE_LISTS)
 			ogc->WorkerThreadPost();
 
-		Watchdog::ClearTimer("sim",true);
+		Watchdog::ClearTimer(WDT_SIM, true);
 
 		while(gmlKeepRunning && !gmlStartSim)
 			SDL_Delay(100);
 
-		Watchdog::ClearTimer("sim");
+		Watchdog::ClearTimer(WDT_SIM);
 
 		while(gmlKeepRunning) {
 			if(!gmlMultiThreadSim) {
-				Watchdog::ClearTimer("sim",true);
+				Watchdog::ClearTimer(WDT_SIM, true);
 				while(!gmlMultiThreadSim && gmlKeepRunning)
 					SDL_Delay(200);
 			}
 			else if (activeController) {
-				Watchdog::ClearTimer("sim");
+				Watchdog::ClearTimer(WDT_SIM);
 				gmlProcessor->ExpandAuxQueue();
 
-				{
-					GML_MSTMUTEX_LOCK(sim); // Sim
-
-					if(!activeController->Update())
-						return 0;
-				}
+				if(!UpdateSim(activeController))
+					return 0;
 
 				gmlProcessor->GetQueue();
 			}
@@ -1035,24 +1035,20 @@ int SpringApp::Update()
 
 	int ret = 1;
 	if (activeController) {
-		Watchdog::ClearTimer("main");
+		Watchdog::ClearTimer(WDT_MAIN);
 #if defined(USE_GML) && GML_ENABLE_SIM
 		if (gmlMultiThreadSim) {
 			if (!gs->frameNum) {
-				GML_MSTMUTEX_LOCK(sim); // Update
-				
-				ret = activeController->Update();
+				ret = UpdateSim(activeController);
 				if (gs->frameNum) {
 					gmlStartSim = 1;
 				}
 			}
 		} else {
-			GML_MSTMUTEX_LOCK(sim); // Update
-			
-			ret = activeController->Update();
+			ret = UpdateSim(activeController);
 		}
 #else
-		ret = activeController->Update();
+		ret = UpdateSim(activeController);
 #endif
 		if (ret) {
 			globalRendering->drawFrame++;
@@ -1092,9 +1088,8 @@ int SpringApp::Update()
 
 static void ResetScreenSaverTimeout()
 {
-#if   defined(HEADLESS)
-	return;
-#elif defined(WIN32)
+#ifndef HEADLESS
+  #if defined(WIN32)
 	static unsigned lastreset = 0;
 	unsigned curreset = SDL_GetTicks();
 	if(globalRendering->active && (curreset - lastreset > 1000)) {
@@ -1103,10 +1098,10 @@ static void ResetScreenSaverTimeout()
 		if(SystemParametersInfo(SPI_GETSCREENSAVETIMEOUT, 0, &timeout, 0))
 			SystemParametersInfo(SPI_SETSCREENSAVETIMEOUT, timeout, NULL, 0);
 	}
-#elif defined(__APPLE__)
+  #elif defined(__APPLE__)
 	// TODO: implement
 	return;
-#else
+  #else
 	static unsigned lastreset = 0;
 	unsigned curreset = SDL_GetTicks();
 	if(globalRendering->active && (curreset - lastreset > 1000)) {
@@ -1117,6 +1112,7 @@ static void ResetScreenSaverTimeout()
 			XForceScreenSaver(info.info.x11.display, ScreenSaverReset);
 		}
 	}
+  #endif
 #endif
 }
 
@@ -1218,7 +1214,10 @@ void SpringApp::Shutdown()
 
 	DeleteAndNull(gs);
 	DeleteAndNull(gu);
+	DeleteAndNull(globalRendering);
 	DeleteAndNull(startsetup);
+
+	FileSystemHandler::Cleanup();
 
 	Watchdog::Uninstall();
 
@@ -1233,7 +1232,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 		case SDL_VIDEORESIZE: {
 			GML_MSTMUTEX_LOCK(sim); // MainEventHandler
 
-			Watchdog::ClearTimer("main",true);
+			Watchdog::ClearTimer(WDT_MAIN, true);
 			globalRendering->viewSizeX = event.resize.w;
 			globalRendering->viewSizeY = event.resize.h;
 #ifndef WIN32
@@ -1249,7 +1248,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 		case SDL_VIDEOEXPOSE: {
 			GML_MSTMUTEX_LOCK(sim); // MainEventHandler
 
-			Watchdog::ClearTimer("main",true);
+			Watchdog::ClearTimer(WDT_MAIN, true);
 			// re-initialize the stencil
 			glClearStencil(0);
 			glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
@@ -1263,7 +1262,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			break;
 		}
 		case SDL_ACTIVEEVENT: {
-			Watchdog::ClearTimer("main",true);
+			Watchdog::ClearTimer(WDT_MAIN, true);
 
 			//! deactivate sounds and other
 			if (event.active.state & (SDL_APPACTIVE | (globalRendering->fullScreen ? SDL_APPINPUTFOCUS : 0))) {

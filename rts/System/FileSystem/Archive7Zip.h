@@ -19,11 +19,11 @@ public:
 
 	virtual bool IsOpen();
 	
-	virtual unsigned NumFiles() const;
-	virtual bool GetFile(unsigned fid, std::vector<boost::uint8_t>& buffer);
-	virtual void FileInfo(unsigned fid, std::string& name, int& size) const;
-	virtual bool HasLowReadingCost(unsigned fid) const;
-	virtual unsigned GetCrc32(unsigned fid);
+	virtual unsigned int NumFiles() const;
+	virtual bool GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer);
+	virtual void FileInfo(unsigned int fid, std::string& name, int& size) const;
+	virtual bool HasLowReadingCost(unsigned int fid) const;
+	virtual unsigned GetCrc32(unsigned int fid);
 
 private:
 	boost::mutex archiveLock;

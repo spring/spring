@@ -82,21 +82,22 @@ void ForcedExit(const std::string& msg, const std::string& caption, unsigned int
 void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags)
 {
 #ifndef DEDICATED
+//#ifdef USE_GML
+	//! SpringApp::Shutdown is extremely likely to deadlock or end up waiting indefinitely if any 
+	//! MT thread has crashed or deviated from its normal execution path by throwing an exception
+	boost::thread* forcedExitThread = new boost::thread(boost::bind(&ForcedExit, msg, caption, flags));
+//#endif
+
 	//! Non-MainThread. Inform main one and then interrupt it.
 	if (!Threading::IsMainThread()) {
 		gu->globalQuit = true;
 		Threading::Error err(caption, msg, flags);
 		Threading::SetThreadError(err);
 
-		//! terminate thread
+		//! terminate thread // FIXME: only the (separate) loading thread can catch thread_interrupted
 		throw boost::thread_interrupted();
 	}
 
-//#ifdef USE_GML
-	//! SpringApp::Shutdown is extremely likely to deadlock or end up waiting indefinitely if any 
-	//! MT thread has crashed or deviated from its normal execution path by throwing an exception
-	boost::thread* forcedExitThread = new boost::thread(boost::bind(&ForcedExit, msg, caption, flags));
-//#endif
 #endif
 
 #ifdef DEDICATED

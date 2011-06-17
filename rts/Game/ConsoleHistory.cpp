@@ -8,7 +8,7 @@
 #include "ConsoleHistory.h"
 
 
-unsigned int CConsoleHistory::MaxLines = 256;
+const unsigned int CConsoleHistory::MAX_LINES = 256;
 
 
 CConsoleHistory::CConsoleHistory()
@@ -57,7 +57,7 @@ bool CConsoleHistory::AddLineRaw(const std::string& msg)
 		return false; // do not save duplicates
 	}
 	  
-	if (lines.size() >= MaxLines) {
+	if (lines.size() >= MAX_LINES) {
 		if (pos != lines.begin()) {
 			lines.pop_front();
 		} else {

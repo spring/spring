@@ -2,6 +2,7 @@
 # Author: Tobi Vollebregt
 #
 # Usage: builder.sh
+echo "this script is obsolete and only kept for historical purposes"
 
 # Compilers to test.
 GCCS="gcc-3.4 gcc-4.0 gcc-4.1 i586-mingw32msvc-gcc"

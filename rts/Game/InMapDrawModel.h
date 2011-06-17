@@ -11,7 +11,7 @@
 #include "System/creg/creg.h"
 
 class CPlayer;
-struct TeamController;
+class TeamController;
 
 /**
  * The M in MVC for InMapDraw.

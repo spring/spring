@@ -70,14 +70,6 @@ using namespace std;
 
 const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
-
-/******************************************************************************/
-/******************************************************************************/
-
-static const bool& fullRead     = CLuaHandle::GetActiveFullRead();
-static const int&  readAllyTeam = CLuaHandle::GetActiveReadAllyTeam();
-
-
 /******************************************************************************/
 /******************************************************************************/
 
@@ -238,10 +230,10 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 	if (unit == NULL) {
 		return NULL;
 	}
-	if (readAllyTeam < 0) {
-		return fullRead ? unit : NULL;
+	if (ActiveReadAllyTeam() < 0) {
+		return ActiveFullRead() ? unit : NULL;
 	}
-	if ((unit->losStatus[readAllyTeam] & (LOS_INLOS | LOS_INRADAR)) == 0) {
+	if ((unit->losStatus[ActiveReadAllyTeam()] & (LOS_INLOS | LOS_INRADAR)) == 0) {
 		return NULL;
 	}
 	return unit;
@@ -256,10 +248,10 @@ static inline CFeature* ParseFeature(lua_State* L, const char* caller, int index
 	const int featureID = lua_toint(L, index);
 	CFeature* feature = featureHandler->GetFeature(featureID);
 
-	if (fullRead) { return feature; }
-	if (readAllyTeam < 0) { return NULL; }
+	if (ActiveFullRead()) { return feature; }
+	if (ActiveReadAllyTeam() < 0) { return NULL; }
 	if (feature == NULL) { return NULL; }
-	if (feature->IsInLosForAllyTeam(readAllyTeam)) { return feature; }
+	if (feature->IsInLosForAllyTeam(ActiveReadAllyTeam())) { return feature; }
 
 	return NULL;
 }
@@ -460,10 +452,10 @@ int LuaUnsyncedRead::IsUnitAllied(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (readAllyTeam < 0) {
-		lua_pushboolean(L, fullRead);
+	if (ActiveReadAllyTeam() < 0) {
+		lua_pushboolean(L, ActiveFullRead());
 	} else {
-		lua_pushboolean(L, (unit->allyteam == readAllyTeam));
+		lua_pushboolean(L, (unit->allyteam == ActiveReadAllyTeam()));
 	}
 	return 1;
 }
@@ -499,8 +491,8 @@ int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 	const float radius = luaL_optnumber(L, 2, unit->radius);
 	const bool checkIcon = lua_toboolean(L, 3);
 
-	if (readAllyTeam < 0) {
-		if (!fullRead) {
+	if (ActiveReadAllyTeam() < 0) {
+		if (!ActiveFullRead()) {
 			lua_pushboolean(L, false);
 		} else {
 			lua_pushboolean(L,
@@ -509,7 +501,7 @@ int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 		}
 	}
 	else {
-		if ((unit->losStatus[readAllyTeam] & LOS_INLOS) == 0) {
+		if ((unit->losStatus[ActiveReadAllyTeam()] & LOS_INLOS) == 0) {
 			lua_pushboolean(L, false);
 		} else {
 			lua_pushboolean(L,
@@ -534,7 +526,7 @@ int LuaUnsyncedRead::IsUnitIcon(lua_State* L)
 
 int LuaUnsyncedRead::IsUnitSelected(lua_State* L)
 {
-//	GML_RECMUTEX_LOCK(sel); // IsUnitSelected - this mutex is already locked (lua)
+	GML_RECMUTEX_LOCK(sel); // IsUnitSelected
 
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
@@ -698,19 +690,19 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	//! arg 1 - teamID
 	int teamID = luaL_optint(L, 1, -1);
 	if (teamID == MyUnits) {
-		const int scriptTeamID = CLuaHandle::GetActiveHandle()->GetReadTeam();
+		const int scriptTeamID = CLuaHandle::GetReadTeam(L);
 		if (scriptTeamID >= 0) {
 			teamID = scriptTeamID;
 		} else {
 			teamID = AllUnits;
 		}
 	}
-	int allyTeamID = readAllyTeam;
+	int allyTeamID = ActiveReadAllyTeam();
 	if (teamID >= 0) {
 		allyTeamID = teamHandler->AllyTeam(teamID);
 	}
 	if (allyTeamID < 0) {
-		if (!fullRead) {
+		if (!ActiveFullRead()) {
 			return 0;
 		}
 	}
@@ -834,8 +826,8 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	}
 	if (allyTeamID < 0) {
 		allyTeamID = -1;
-		if (!fullRead) {
-			allyTeamID = CLuaHandle::GetActiveHandle()->GetReadAllyTeam();
+		if (!ActiveFullRead()) {
+			allyTeamID = CLuaHandle::GetReadAllyTeam(L);
 		}
 	}
 
@@ -894,7 +886,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 		const CFeature& f = **featureIt;
 
 		if (noGeos) {
-			if (f.def->drawType <= DRAWTYPE_NONE) {
+			if (f.def->geoThermal) {
 				continue;
 			}
 		}
@@ -969,7 +961,7 @@ int LuaUnsyncedRead::GetSpectatingState(lua_State* L)
 
 int LuaUnsyncedRead::GetSelectedUnits(lua_State* L)
 {
-//	GML_RECMUTEX_LOCK(sel); // GetSelectedUnits - this mutex is already locked (lua)
+	GML_RECMUTEX_LOCK(sel); // GetSelectedUnits
 
 	CheckNoArgs(L, __FUNCTION__);
 	lua_newtable(L);
@@ -989,7 +981,7 @@ int LuaUnsyncedRead::GetSelectedUnits(lua_State* L)
 
 int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 {
-//	GML_RECMUTEX_LOCK(sel); // GetSelectedUnitsSorted - this mutex is already locked (lua)
+	GML_RECMUTEX_LOCK(sel); // GetSelectedUnitsSorted
 
 	CheckNoArgs(L, __FUNCTION__);
 
@@ -1024,7 +1016,7 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 
 int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 {
-//	GML_RECMUTEX_LOCK(sel); // GetSelectedUnitsCounts - this mutex is already locked (lua)
+	GML_RECMUTEX_LOCK(sel); // GetSelectedUnitsCounts
 
 	CheckNoArgs(L, __FUNCTION__);
 
@@ -1563,7 +1555,7 @@ int LuaUnsyncedRead::GetFPS(lua_State* L)
 
 int LuaUnsyncedRead::GetActiveCommand(lua_State* L)
 {
-//	GML_RECMUTEX_LOCK(gui); // GetActiveCommand - this mutex is already locked (lua)
+	GML_RECMUTEX_LOCK(gui); // GetActiveCommand
 
 	if (guihandler == NULL) {
 		return 0;
@@ -1587,7 +1579,7 @@ int LuaUnsyncedRead::GetActiveCommand(lua_State* L)
 
 int LuaUnsyncedRead::GetDefaultCommand(lua_State* L)
 {
-//	GML_RECMUTEX_LOCK(gui); // GetDefaultCommand - this mutex is already locked (lua)
+	GML_RECMUTEX_LOCK(gui); // GetDefaultCommand
 
 	if (guihandler == NULL) {
 		return 0;
@@ -1611,16 +1603,18 @@ int LuaUnsyncedRead::GetDefaultCommand(lua_State* L)
 
 int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 {
-//	GML_RECMUTEX_LOCK(gui); // GetActiveCmdDescs - this mutex is already locked (lua)
+	GML_RECMUTEX_LOCK(gui); // GetActiveCmdDescs
 
 	if (guihandler == NULL) {
 		return 0;
 	}
 	CheckNoArgs(L, __FUNCTION__);
-	lua_newtable(L);
 
 	const vector<CommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
+
+	lua_checkstack(L, 1 + 2);
+	lua_newtable(L);
 
 	for (int i = 0; i < cmdDescCount; i++) {
 		lua_pushnumber(L, i + CMD_INDEX_OFFSET);
@@ -1634,7 +1628,7 @@ int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 
 int LuaUnsyncedRead::GetActiveCmdDesc(lua_State* L)
 {
-//	GML_RECMUTEX_LOCK(gui); // GetActiveCmdDesc - this mutex is already locked (lua)
+	GML_RECMUTEX_LOCK(gui); // GetActiveCmdDesc
 
 	if (guihandler == NULL) {
 		return 0;
@@ -1657,7 +1651,7 @@ int LuaUnsyncedRead::GetActiveCmdDesc(lua_State* L)
 
 int LuaUnsyncedRead::GetCmdDescIndex(lua_State* L)
 {
-//	GML_RECMUTEX_LOCK(gui); // GetCmdDescIndex - this mutex is already locked (lua)
+	GML_RECMUTEX_LOCK(gui); // GetCmdDescIndex
 
 	if (guihandler == NULL) {
 		return 0;
@@ -1995,7 +1989,7 @@ int LuaUnsyncedRead::GetActionHotKeys(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupList(lua_State* L)
 {
-//	GML_RECMUTEX_LOCK(group); // GetGroupList - this mutex is already locked (lua)
+	GML_RECMUTEX_LOCK(group); // GetGroupList
 
 	CheckNoArgs(L, __FUNCTION__);
 	if (grouphandlers[gu->myTeam] == NULL) {
@@ -2045,7 +2039,7 @@ int LuaUnsyncedRead::GetUnitGroup(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupUnits(lua_State* L)
 {
-//	GML_RECMUTEX_LOCK(group); // GetGroupUnits - this mutex is already locked (lua)
+	GML_RECMUTEX_LOCK(group); // GetGroupUnits
 
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
@@ -2072,7 +2066,7 @@ int LuaUnsyncedRead::GetGroupUnits(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupUnitsSorted(lua_State* L)
 {
-//	GML_RECMUTEX_LOCK(group); // GetGroupUnitsSorted - this mutex is already locked (lua)
+	GML_RECMUTEX_LOCK(group); // GetGroupUnitsSorted
 
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
@@ -2113,7 +2107,7 @@ int LuaUnsyncedRead::GetGroupUnitsSorted(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupUnitsCounts(lua_State* L)
 {
-//	GML_RECMUTEX_LOCK(group); // GetGroupUnitsCounts - this mutex is already locked (lua)
+	GML_RECMUTEX_LOCK(group); // GetGroupUnitsCounts
 
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
@@ -2151,7 +2145,7 @@ int LuaUnsyncedRead::GetGroupUnitsCounts(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupUnitsCount(lua_State* L)
 {
-//	GML_RECMUTEX_LOCK(group); // GetGroupUnitsCount - this mutex is already locked (lua)
+	GML_RECMUTEX_LOCK(group); // GetGroupUnitsCount
 
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;

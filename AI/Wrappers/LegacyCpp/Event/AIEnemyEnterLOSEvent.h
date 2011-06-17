@@ -18,10 +18,13 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AIENEMYENTERLOSEVENT_H
-#define _AIENEMYENTERLOSEVENT_H
+#ifndef _AI_ENEMY_ENTER_LOS_EVENT_H
+#define _AI_ENEMY_ENTER_LOS_EVENT_H
 
 #include "AIEvent.h"
+
+
+namespace springLegacyAI {
 
 class CAIEnemyEnterLOSEvent : public CAIEvent {
 public:
@@ -36,4 +39,6 @@ private:
 	SEnemyEnterLOSEvent event;
 };
 
-#endif // _AIENEMYENTERLOSEVENT_H
+} // namespace springLegacyAI
+
+#endif // _AI_ENEMY_ENTER_LOS_EVENT_H

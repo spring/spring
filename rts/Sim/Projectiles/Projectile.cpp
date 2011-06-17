@@ -12,21 +12,29 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Units/Unit.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "System/GlobalUnsynced.h"
+#include "Sim/Misc/QuadField.h"
+#include "Sim/Units/Unit.h"
 
 CR_BIND_DERIVED(CProjectile, CExpGenSpawnable, );
 
 CR_REG_METADATA(CProjectile,
 (
+	CR_MEMBER(synced),
+	CR_MEMBER(weapon),
+	CR_MEMBER(piece),
+
+	CR_MEMBER(luaMoveCtrl),
 	CR_MEMBER(checkCol),
-	CR_MEMBER(castShadow),
+	CR_MEMBER(deleteMe),
+	CR_MEMBER(castShadow), // unsynced
+
 	CR_MEMBER(ownerId),
 	CR_MEMBER(projectileType),
-	CR_MEMBER(synced),
-//	CR_MEMBER(drawPos),
-//	CR_RESERVED(4),
+	CR_MEMBER(collisionFlags),
+
+	CR_MEMBER(quadFieldCellCoors),
+
 	CR_MEMBER(mygravity),
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(speed),
@@ -40,6 +48,7 @@ CR_REG_METADATA(CProjectile,
 bool CProjectile::inArray = false;
 CVertexArray* CProjectile::va = NULL;
 
+
 CProjectile::CProjectile():
 	synced(false),
 	weapon(false),
@@ -48,30 +57,16 @@ CProjectile::CProjectile():
 	checkCol(true),
 	deleteMe(false),
 	castShadow(false),
-	collisionFlags(0),
 	speed(ZeroVector),
 	mygravity(mapInfo? mapInfo->map.gravity: 0.0f),
-	ownerId(0)
+	ownerId(0),
+	projectileType(-1U),
+	collisionFlags(0)
 {
 	GML_GET_TICKS(lastProjUpdate);
 }
 
-
-void CProjectile::Init(const float3& explosionPos, CUnit* owner)
-{
-	if (owner) {
-		ownerId = owner->id;
-	}
-	if (!(weapon || piece)) {
-		ph->AddProjectile(this);
-	}
-
-	pos += explosionPos;
-	SetRadius(1.7f);
-}
-
-
-CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece):
+CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece):
 	CExpGenSpawnable(pos),
 	synced(isSynced),
 	weapon(isWeapon),
@@ -80,28 +75,42 @@ CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, b
 	checkCol(true),
 	deleteMe(false),
 	castShadow(false),
-	collisionFlags(0),
-	speed(speed),
+	speed(spd),
 	mygravity(mapInfo? mapInfo->map.gravity: 0.0f),
-	ownerId(0)
+	ownerId(0),
+	projectileType(-1U),
+	collisionFlags(0)
 {
-	if (owner) {
+	Init(ZeroVector, owner);
+	GML_GET_TICKS(lastProjUpdate);
+}
+
+CProjectile::~CProjectile() {
+	if (synced) {
+		qf->RemoveProjectile(this);
+	}
+}
+
+void CProjectile::Init(const float3& offset, CUnit* owner)
+{
+	if (owner != NULL) {
+		//! must be set before the AddProjectile call
 		ownerId = owner->id;
 	}
-	if (!(isWeapon || isPiece)) {
+	if (!(weapon || piece)) {
 		//! we need to be able to dynacast to derived
 		//! types, but this throws away too much RTTI
 		ph->AddProjectile(this);
 	}
+	if (synced) {
+		qf->AddProjectile(this);
+	}
+
+	pos += offset;
 
 	SetRadius(1.7f);
-
-	GML_GET_TICKS(lastProjUpdate);
 }
 
-CProjectile::~CProjectile()
-{
-}
 
 void CProjectile::Update()
 {

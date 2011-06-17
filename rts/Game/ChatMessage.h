@@ -29,4 +29,4 @@ public:
 	std::string msg;
 };
 
-#endif
+#endif // CHAT_MESSAGE_H

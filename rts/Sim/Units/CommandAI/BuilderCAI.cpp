@@ -501,7 +501,6 @@ void CBuilderCAI::SlowUpdate()
 }
 
 
-/// add a command to reclaim a feature that is blocking our buildsite
 void CBuilderCAI::ReclaimFeature(CFeature* f)
 {
 	if (!owner->unitDef->canReclaim || !f->def->reclaimable) {
@@ -513,12 +512,14 @@ void CBuilderCAI::ReclaimFeature(CFeature* f)
 		Command c2(CMD_RECLAIM);
 		c2.params.push_back(f->id + uh->MaxUnits());
 		commandQue.push_front(c2);
-		SlowUpdate(); //this assumes that the reclaim command can never return directly without having reclaimed the target
+		// this assumes that the reclaim command can never return directly
+		// without having reclaimed the target
+		SlowUpdate();
 	}
 }
 
 
-void CBuilderCAI::FinishCommand(void)
+void CBuilderCAI::FinishCommand()
 {
 	if (commandQue.front().timeOut == INT_MAX) {
 		buildRetries = 0;
@@ -538,8 +539,11 @@ void CBuilderCAI::ExecuteStop(Command& c)
 
 void CBuilderCAI::ExecuteRepair(Command& c)
 {
+	// not all builders are repair-capable by default
+	if (!owner->unitDef->canRepair)
+		return;
+
 	CBuilder* builder = (CBuilder*) owner;
-	assert(owner->unitDef->canRepair || owner->unitDef->canAssist);
 
 	if (c.params.size() == 1 || c.params.size() == 5) {
 		// repair unit
@@ -571,7 +575,7 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 			}
 		}
 
-		// don't consider units under construction irreparable
+		// do not consider units under construction irreparable
 		// even if they can be repaired
 		if ((unit->beingBuilt || unit->unitDef->repairable)
 		    && (unit->health < unit->maxHealth) &&
@@ -616,7 +620,10 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 
 void CBuilderCAI::ExecuteCapture(Command& c)
 {
-	assert(owner->unitDef->canCapture);
+	// not all builders are capture-capable by default
+	if (!owner->unitDef->canCapture)
+		return;
+
 	CBuilder* builder = (CBuilder*) owner;
 
 	if (c.params.size() == 1 || c.params.size() == 5) {
@@ -678,7 +685,9 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 
 void CBuilderCAI::ExecuteGuard(Command& c)
 {
-	assert(owner->unitDef->canGuard);
+	if (!owner->unitDef->canGuard)
+		return;
+
 	CBuilder* builder = (CBuilder*) owner;
 	CUnit* guardee = uh->GetUnit(c.params[0]);
 
@@ -808,7 +817,10 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 void CBuilderCAI::ExecuteReclaim(Command& c)
 {
 	CBuilder* builder = (CBuilder*) owner;
-	assert(owner->unitDef->canReclaim);
+
+	// not all builders are reclaim-capable by default
+	if (!owner->unitDef->canReclaim)
+		return;
 
 	if (c.params.size() == 1 || c.params.size() == 5) {
 		const int signedId = (int) c.params[0];
@@ -902,7 +914,6 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 		RemoveUnitFromFeatureReclaimers(owner);
 		FinishCommand();
 	}
-	return;
 }
 
 
@@ -928,7 +939,10 @@ bool CBuilderCAI::ResurrectObject(CFeature *feature) {
 
 void CBuilderCAI::ExecuteResurrect(Command& c)
 {
-	assert(owner->unitDef->canResurrect);
+	// not all builders are resurrect-capable by default
+	if (!owner->unitDef->canResurrect)
+		return;
+
 	CBuilder* builder = (CBuilder*) owner;
 
 	if (c.params.size() == 1) {
@@ -991,11 +1005,10 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 
 void CBuilderCAI::ExecutePatrol(Command& c)
 {
-	assert(owner->unitDef->canPatrol);
+	if (!owner->unitDef->canPatrol)
+		return;
+
 	if (c.params.size() < 3) {
-		// this shouldnt happen but anyway ...
-		logOutput.Print("Error: got patrol cmd with less than 3 params on %s in buildercai",
-			owner->unitDef->humanName.c_str());
 		return;
 	}
 
@@ -1104,7 +1117,9 @@ void CBuilderCAI::ExecuteFight(Command& c)
 
 void CBuilderCAI::ExecuteRestore(Command& c)
 {
-	assert(owner->unitDef->canRestore);
+	if (!owner->unitDef->canRestore)
+		return;
+
 	CBuilder* builder = (CBuilder*) owner;
 
 	if (inCommand) {
@@ -1197,15 +1212,17 @@ void CBuilderCAI::RemoveUnitFromResurrecters(CUnit* unit)
 }
 
 
-/** check if a unit is being reclaimed by a friendly con.
-
-we assume that there won't be a lot of reclaimers because performance would suck
-if there were. ideally reclaimers should be assigned on a per-unit basis, but
-this requires tracking of deaths, which albeit already done isn't exactly simple
-to follow.
-
-TODO easy: store reclaiming units per allyteam
-TODO harder: update reclaimers as they start/finish reclaims and/or die */
+/**
+ * Checks if a unit is being reclaimed by a friendly con.
+ *
+ * We assume that there will not be a lot of reclaimers, because performance
+ * would suck if there were. Ideally, reclaimers should be assigned on a
+ * per-unit basis, but this requires tracking of deaths, which albeit
+ * already done, is not exactly simple to follow.
+ *
+ * TODO easy: store reclaiming units per allyteam
+ * TODO harder: update reclaimers as they start/finish reclaims and/or die
+ */
 bool CBuilderCAI::IsUnitBeingReclaimed(CUnit* unit, CUnit *friendUnit)
 {
 	bool retval = false;
@@ -1631,7 +1648,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 //  Drawing routines
 //
 
-void CBuilderCAI::DrawCommands(void)
+void CBuilderCAI::DrawCommands()
 {
 	lineDrawer.StartPath(owner->drawMidPos, cmdColors.start);
 
@@ -1696,7 +1713,7 @@ void CBuilderCAI::DrawCommands(void)
 			case CMD_GUARD: {
 				const CUnit* unit = uh->GetUnit(ci->params[0]);
 
-				if ((unit != NULL) && isTrackable(unit)) {
+				if ((unit != NULL) && IsTrackable(unit)) {
 					const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.guard);
 				}
@@ -1716,7 +1733,7 @@ void CBuilderCAI::DrawCommands(void)
 				if (ci->params.size() == 1) {
 					const CUnit* unit = uh->GetUnit(ci->params[0]);
 
-					if ((unit != NULL) && isTrackable(unit)) {
+					if ((unit != NULL) && IsTrackable(unit)) {
 						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
 					}
@@ -1759,7 +1776,7 @@ void CBuilderCAI::DrawCommands(void)
 					} else {
 						const CUnit* unit = uh->GetUnitUnsafe(id);
 
-						if ((unit != NULL) && (unit != owner) && isTrackable(unit)) {
+						if ((unit != NULL) && (unit != owner) && IsTrackable(unit)) {
 							const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 							lineDrawer.DrawLineAndIcon(cmd_id, endPos, color);
 						}
@@ -1782,7 +1799,7 @@ void CBuilderCAI::DrawCommands(void)
 					if (ci->params.size() >= 1) {
 						const CUnit* unit = uh->GetUnit(ci->params[0]);
 
-						if ((unit != NULL) && isTrackable(unit)) {
+						if ((unit != NULL) && IsTrackable(unit)) {
 							const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 							lineDrawer.DrawLineAndIcon(cmd_id, endPos, color);
 						}
@@ -1816,7 +1833,7 @@ void CBuilderCAI::DrawCommands(void)
 
 
 // XXX move away from this class
-void CBuilderCAI::DrawQuedBuildingSquares(void)
+void CBuilderCAI::DrawQuedBuildingSquares()
 {
 	CCommandQueue::const_iterator ci;
 	// worst case - 2 squares per building (when underwater) - 8 vertices * 3 floats

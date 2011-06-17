@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
-
+#include "StdAfx.h"
 #include "Threading.h"
+#include "Rendering/GL/myGL.h"
 
 #include <boost/thread.hpp>
 #ifdef WIN32
@@ -14,6 +15,15 @@ namespace Threading {
 	static boost::thread::id mainThreadID;
 	static NativeThreadId nativeMainThreadID;
 	static Error* threadError = NULL;
+#ifdef USE_GML
+	static int const noThreadID = -1;
+	static int simThreadID = noThreadID;
+	static int batchThreadID = noThreadID;
+#else
+	static boost::thread::id noThreadID;
+	static boost::thread::id simThreadID;
+	static boost::thread::id batchThreadID;
+#endif	
 
 
 	NativeThreadHandle GetCurrentThread()
@@ -41,16 +51,6 @@ namespace Threading {
 	}
 
 
-	bool NativeThreadIdsEqual(const NativeThreadId& thID1, const NativeThreadId& thID2)
-	{
-	#ifdef WIN32
-		return (thID1 == thID2);
-	#else
-		return pthread_equal(thID1, thID2);
-	#endif
-	}
-
-
 	void SetMainThread()
 	{
 		if (!haveMainThreadID) {
@@ -70,6 +70,35 @@ namespace Threading {
 		return NativeThreadIdsEqual(threadID, Threading::nativeMainThreadID);
 	}
 
+	void SetSimThread(bool set) {
+#ifdef USE_GML // gmlThreadNumber is likely to be much faster than boost::this_thread::get_id()
+		batchThreadID = simThreadID = set ? gmlThreadNumber : noThreadID;
+#else
+		batchThreadID = simThreadID = set ? boost::this_thread::get_id() : noThreadID;
+#endif
+	}
+	bool IsSimThread() {
+#ifdef USE_GML
+		return gmlThreadNumber == simThreadID;
+#else
+		return boost::this_thread::get_id() == simThreadID;
+#endif
+	}
+
+	void SetBatchThread(bool set) {
+#ifdef USE_GML // gmlThreadNumber is likely to be much faster than boost::this_thread::get_id()
+		batchThreadID = set ? gmlThreadNumber : noThreadID;
+#else
+		batchThreadID = set ? boost::this_thread::get_id() : noThreadID;
+#endif
+	}
+	bool IsBatchThread() {
+#ifdef USE_GML
+		return gmlThreadNumber == batchThreadID;
+#else
+		return boost::this_thread::get_id() == batchThreadID;
+#endif
+	}
 
 	void SetThreadError(const Error& err)
 	{

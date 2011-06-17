@@ -21,6 +21,8 @@
 #ifndef _AIAI_H
 #define _AIAI_H
 
+namespace springLegacyAI {
+
 class IGlobalAI;
 class IGlobalAICallback;
 
@@ -46,5 +48,7 @@ protected:
 	IGlobalAI* ai;
 	IGlobalAICallback* globalAICallback;
 };
+
+} // namespace springLegacyAI
 
 #endif // _AIAI_H

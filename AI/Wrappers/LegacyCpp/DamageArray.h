@@ -1,10 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __DAMAGE_ARRAY_H__
-#define __DAMAGE_ARRAY_H__
+#ifndef _DAMAGE_ARRAY_H_
+#define _DAMAGE_ARRAY_H_
 
 #include <algorithm>
 #include "System/creg/creg_cond.h"
+
+
+namespace springLegacyAI {
 
 struct DamageArray
 {
@@ -58,4 +61,6 @@ private:
 	float* damages;
 };
 
-#endif // __DAMAGE_ARRAY_H__
+} // namespace springLegacyAI
+
+#endif // _DAMAGE_ARRAY_H_

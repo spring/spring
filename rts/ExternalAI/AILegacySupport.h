@@ -7,10 +7,6 @@
 
 #include <string>
 
-struct UnitDef;
-struct FeatureDef;
-struct WeaponDef;
-
 // GetProperty() constants ------------ data type that buffer will be filled with:
 #define AIVAL_UNITDEF					1 // const UnitDef*
 #define AIVAL_CURRENT_FUEL				2 // float
@@ -35,6 +31,16 @@ struct WeaponDef;
 #define AIVAL_LOCATE_FILE_W				16 // char*
 #define AIVAL_UNIT_LIMIT				17 // int
 #define AIVAL_SCRIPT					18 // const char* - buffer for pointer to char
+
+
+#ifdef    BUILDING_AI
+namespace springLegacyAI {
+#endif // BUILDING_AI
+
+struct UnitDef;
+struct FeatureDef;
+struct WeaponDef;
+
 
 struct UnitResourceInfo
 {
@@ -184,5 +190,9 @@ struct AIHCDebugDraw
 	int texHandle;        // in/out-param
 	const float* texData; // in-param
 };
+
+#ifdef    BUILDING_AI
+} // namespace springLegacyAI
+#endif // BUILDING_AI
 
 #endif // AI_LEGACY_SUPPORT_H

@@ -19,6 +19,7 @@ void initSUnitCommand(void* sUnitCommand) {
 #ifdef __cplusplus
 #ifdef    BUILDING_AI
 #include "LegacyCpp/Command.h"
+using namespace springLegacyAI;
 #else  // BUILDING_AI
 #include "Sim/Units/CommandAI/Command.h"
 #endif // BUILDING_AI

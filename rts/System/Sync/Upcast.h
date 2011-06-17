@@ -11,6 +11,9 @@ namespace upcast {
 	template<class T> struct UnaryUpcast {};
 	template<class U, class V> struct BinaryUpcast {};
 
+	/* Get rid of const modifier */
+	template<class T> struct UnaryUpcast<const T> { typedef typename UnaryUpcast<T>::type type; };
+
 	/* To reduce size of the BinaryUpcast matrix, UnaryUpcast small types
 	to (unsigned) int before attempting to BinaryUpcast them. */
 	template<> struct UnaryUpcast<          bool  > { typedef   signed int  type; };

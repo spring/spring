@@ -22,6 +22,9 @@
 
 struct SSkirmishAICallback;
 
+
+namespace springLegacyAI {
+
 /**
  * The AI side wrapper over the C AI interface for IAICallback.
  */
@@ -81,6 +84,8 @@ public:
 
 	const std::vector<CommandDescription>* GetUnitCommands(int unitid);
 	const CCommandQueue* GetCurrentUnitCommands(int unitid);
+
+	int GetMaxUnits();
 
 	int GetUnitAiHint(int unitid);
 	int GetUnitTeam(int unitid);
@@ -247,7 +252,8 @@ public:
 	void GetCategoryName(int categoryFlag, char* name, int name_sizeMax);
 
 
-	const char* CallLuaRules(const char* data, int inSize, int* outSize);
+	const char* CallLuaRules(const char* inData, int inSize, int* outSize);
+	const char* CallLuaUI(const char* inData, int inSize, int* outSize);
 
 	std::map<std::string, std::string> GetMyInfo();
 	std::map<std::string, std::string> GetMyOptionValues();
@@ -282,5 +288,7 @@ private:
 	static unsigned short* jammerMap;
 	static unsigned char* metalMap;
 };
+
+} // namespace springLegacyAI
 
 #endif // _AI_AI_CALLBACK_H

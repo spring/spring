@@ -12,6 +12,7 @@
 #include "ExplosionGenerator.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/float3.h"
+#include "System/Vec2.h"
 
 class CUnit;
 class CFeature;
@@ -27,10 +28,11 @@ class CProjectile: public CExpGenSpawnable
 
 public:
 	CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece);
+	virtual ~CProjectile();
+
 	virtual void Collision();
 	virtual void Collision(CUnit* unit);
 	virtual void Collision(CFeature* feature);
-	virtual ~CProjectile();
 	virtual void Update();
 	virtual void Init(const float3& pos, CUnit* owner);
 
@@ -38,8 +40,23 @@ public:
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 	virtual void DrawCallback() {}
 
-	CUnit* owner() const { return uh->units[ownerId]; }
-	int GetProjectileType() const { return projectileType; }
+	inline CUnit* owner() const {
+		return
+#if defined(USE_GML) && GML_ENABLE_SIM
+		*(CUnit * volatile *)&
+#endif
+		uh->units[ownerId]; // Note: this death dependency optimization using "ownerId" is logically flawed, since ids are being reused it could return a unit that is not the original owner
+	}
+
+
+	void SetQuadFieldCellCoors(const int2 cell) { quadFieldCellCoors = cell; }
+	int2 GetQuadFieldCellCoors() const { return quadFieldCellCoors; }
+
+	void SetQuadFieldCellIter(const std::list<CProjectile*>::iterator& it) { quadFieldCellIter = it; }
+	const std::list<CProjectile*>::iterator& GetQuadFieldCellIter() { return quadFieldCellIter; }
+
+	unsigned int GetProjectileType() const { return projectileType; }
+	unsigned int GetCollisionFlags() const { return collisionFlags; }
 
 
 	static bool inArray;
@@ -54,22 +71,25 @@ public:
 	bool checkCol;
 	bool deleteMe;
 	bool castShadow;
-	unsigned int collisionFlags;
 
-	float3 drawPos;
 #if defined(USE_GML) && GML_ENABLE_SIM
 	unsigned lastProjUpdate;
 #endif
 
 	float3 dir;
 	float3 speed;
-	float mygravity;
+	float3 drawPos;
 
+	float mygravity;
 	float tempdist; ///< temp distance used for sorting when rendering
 	
 protected:
-	int ownerId;
-	int projectileType;
+	unsigned int ownerId;
+	unsigned int projectileType;
+	unsigned int collisionFlags;
+
+	int2 quadFieldCellCoors;
+	std::list<CProjectile*>::iterator quadFieldCellIter;
 };
 
 #endif /* PROJECTILE_H */

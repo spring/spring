@@ -227,7 +227,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 	FeatureSet::iterator featureSetIt;
 
 	for (featureBinIt = featureBin.begin(); featureBinIt != featureBin.end(); ++featureBinIt) {
-		if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ || modelType == MODELTYPE_ASS) {
+		if (modelType != MODELTYPE_3DO) {
 			texturehandlerS3O->SetS3oTexture(featureBinIt->first);
 		}
 
@@ -264,7 +264,7 @@ void CFeatureDrawer::DrawFeatureStatBars(const CFeature* feature)
 
 	glPushMatrix();
 	glTranslatef(interPos.x, interPos.y, interPos.z);
-	glCallList(CCamera::billboardList);
+	glMultMatrixf(camera->GetBillBoardMatrix());
 
 	const float recl = feature->reclaimLeft;
 	const float rezp = feature->resurrectProgress;
@@ -366,7 +366,7 @@ void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType) {
 		FeatureRenderBin& featureBin = cloakedModelRenderers[modelType]->GetFeatureBinMutable();
 
 		for (FeatureRenderBinIt it = featureBin.begin(); it != featureBin.end(); ++it) {
-			if (modelType == MODELTYPE_S3O || modelType == MODELTYPE_OBJ || modelType == MODELTYPE_ASS) {
+			if (modelType != MODELTYPE_3DO) {
 				texturehandlerS3O->SetS3oTexture(it->first);
 			}
 
@@ -380,7 +380,7 @@ void CFeatureDrawer::DrawFadeFeaturesSet(FeatureSet& fadeFeatures, int modelType
 	for (FeatureSet::iterator fi = fadeFeatures.begin(); fi != fadeFeatures.end(); ) {
 		const float cols[] = {1.0f, 1.0f, 1.0f, fi->second};
 
-		if (modelType == MODELTYPE_S3O) {
+		if (modelType != MODELTYPE_3DO) {
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, cols);
 		}
 
@@ -401,7 +401,6 @@ void CFeatureDrawer::DrawFadeFeaturesSet(FeatureSet& fadeFeatures, int modelType
 
 void CFeatureDrawer::DrawShadowPass()
 {
-	glDisable(GL_CULL_FACE); //FIXME: enable culling for s3o models
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
@@ -431,7 +430,14 @@ void CFeatureDrawer::DrawShadowPass()
 		// (we are just interested in the 255 alpha here)
 		glBindTexture(GL_TEXTURE_2D, 0);
 
-		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		// 3DO's have clockwise-wound faces and
+		// (usually) holes, so disable backface
+		// culling for them
+		glDisable(GL_CULL_FACE);
+		DrawOpaqueFeatures(MODELTYPE_3DO);
+		glEnable(GL_CULL_FACE);
+
+		for (int modelType = MODELTYPE_S3O; modelType < MODELTYPE_OTHER; modelType++) {
 			DrawOpaqueFeatures(modelType);
 		}
 
@@ -442,7 +448,6 @@ void CFeatureDrawer::DrawShadowPass()
 	po->Disable();
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	glEnable(GL_CULL_FACE);
 }
 
 

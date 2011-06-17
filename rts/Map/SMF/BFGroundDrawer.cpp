@@ -71,11 +71,11 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 	}
 
 #ifdef USE_GML
-	multiThreadDrawGround = configHandler->Get("MultiThreadDrawGround", 1);
-	multiThreadDrawGroundShadow = configHandler->Get("MultiThreadDrawGroundShadow", 0);
+	multiThreadDrawGround = !!configHandler->Get("MultiThreadDrawGround", 1);
+	multiThreadDrawGroundShadow = !!configHandler->Get("MultiThreadDrawGroundShadow", 0);
 #endif
 
-	lightHandler.Init(2U, configHandler->Get("MaxDynamicMapLights", 4U));
+	lightHandler.Init(2U, configHandler->Get("MaxDynamicMapLights", 1U));
 	advShading = LoadMapShaders();
 }
 
@@ -93,8 +93,8 @@ CBFGroundDrawer::~CBFGroundDrawer(void)
 	}
 
 #ifdef USE_GML
-	configHandler->Set("MultiThreadDrawGround", multiThreadDrawGround);
-	configHandler->Set("MultiThreadDrawGroundShadow", multiThreadDrawGroundShadow);
+	configHandler->Set("MultiThreadDrawGround", multiThreadDrawGround ? 1 : 0);
+	configHandler->Set("MultiThreadDrawGroundShadow", multiThreadDrawGroundShadow ? 1 : 0);
 #endif
 
 	lightHandler.Kill();

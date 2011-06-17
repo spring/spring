@@ -1,10 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __COMMAND_QUEUE_H__
-#define __COMMAND_QUEUE_H__
+#ifndef _COMMAND_QUEUE_H_
+#define _COMMAND_QUEUE_H_
 
 #include <deque>
 #include "Command.h"
+
+
+namespace springLegacyAI {
 
 /// A wrapper class for std::deque<Command> to keep track of commands
 class CCommandQueue {
@@ -102,8 +105,10 @@ class CCommandQueue {
 		int tagCounter;
 };
 
+} // namespace springLegacyAI
 
-inline int CCommandQueue::GetNextTag()
+
+inline int springLegacyAI::CCommandQueue::GetNextTag()
 {
 	tagCounter++;
 	if (tagCounter >= maxTagValue) {
@@ -113,22 +118,22 @@ inline int CCommandQueue::GetNextTag()
 }
 
 
-inline void CCommandQueue::push_back(const Command& cmd)
+inline void springLegacyAI::CCommandQueue::push_back(const Command& cmd)
 {
 	queue.push_back(cmd);
 	queue.back().tag = GetNextTag();
 }
 
 
-inline void CCommandQueue::push_front(const Command& cmd)
+inline void springLegacyAI::CCommandQueue::push_front(const Command& cmd)
 {
 	queue.push_front(cmd);
 	queue.front().tag = GetNextTag();
 }
 
 
-inline CCommandQueue::iterator CCommandQueue::insert(iterator pos,
-                                                     const Command& cmd)
+inline springLegacyAI::CCommandQueue::iterator springLegacyAI::CCommandQueue::insert(
+		iterator pos, const Command& cmd)
 {
 	Command tmpCmd = cmd;
 	tmpCmd.tag = GetNextTag();
@@ -136,4 +141,4 @@ inline CCommandQueue::iterator CCommandQueue::insert(iterator pos,
 }
 
 
-#endif // __COMMAND_QUEUE_H__
+#endif // _COMMAND_QUEUE_H_

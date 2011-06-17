@@ -21,6 +21,7 @@ namespace CrashHandler {
 	void ClearDrawWDT(bool disable) {}
 	void ClearSimWDT(bool disable) {}
 	void GameLoading(bool) {}
+	void OutputStacktrace() {}
 };
 
 // ### Fallback CrashHandler (old Apple) END

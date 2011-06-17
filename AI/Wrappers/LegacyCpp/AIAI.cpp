@@ -20,12 +20,12 @@
 #include "IGlobalAI.h"
 #include "ExternalAI/Interface/AISEvents.h"
 
-CAIAI::CAIAI(IGlobalAI* gAI):
+springLegacyAI::CAIAI::CAIAI(springLegacyAI::IGlobalAI* gAI):
 	ai(gAI),
 	globalAICallback(NULL) {
 }
 
-CAIAI::~CAIAI() {
+springLegacyAI::CAIAI::~CAIAI() {
 
 	delete ai;
 	ai = NULL;
@@ -35,7 +35,7 @@ CAIAI::~CAIAI() {
 }
 
 
-int CAIAI::handleEvent(int topic, const void* data) {
+int springLegacyAI::CAIAI::handleEvent(int topic, const void* data) {
 
 	int ret = -1; // if this values remains, something went wrong
 
@@ -67,10 +67,14 @@ int CAIAI::handleEvent(int topic, const void* data) {
 				e = new CAIUpdateEvent(*((const SUpdateEvent*) data));
 				break;
 			}
-			case EVENT_MESSAGE: {
-				e = new CAIMessageEvent(*((const SMessageEvent*) data));
-				break;
-			}
+
+			case EVENT_CHAT_MESSAGE: {
+				e = new CAIChatMessageEvent(*((const SChatMessageEvent*) data));
+			} break;
+			case EVENT_LUA_MESSAGE: {
+				e = new CAILuaMessageEvent(*((const SLuaMessageEvent*) data));
+			} break;
+
 			case EVENT_UNIT_CREATED: {
 				e = new CAIUnitCreatedEvent(*((const SUnitCreatedEvent*) data));
 				break;

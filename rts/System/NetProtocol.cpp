@@ -11,7 +11,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "mmgr.h"
-#include "lib/gml/gml.h"
+#include "lib/gml/gmlmut.h"
 
 #include "NetProtocol.h"
 

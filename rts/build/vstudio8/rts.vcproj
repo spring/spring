@@ -65,7 +65,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dsound.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
+				AdditionalDependencies="freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
 				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;../../../vclibs/freetype/objs;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlib/lib;../../../vclibs/SDL/lib;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
@@ -156,7 +156,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dsound.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
+				AdditionalDependencies="freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
 				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
@@ -253,7 +253,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dsound.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
+				AdditionalDependencies="freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
 				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -349,7 +349,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dsound.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
+				AdditionalDependencies="freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
 				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -445,7 +445,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dsound.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
+				AdditionalDependencies="freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
 				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -536,7 +536,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dsound.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
+				AdditionalDependencies="freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
 				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;../../../vclibs/freetype/objs;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlib/lib;../../../vclibs/SDL/lib;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
@@ -629,7 +629,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="sdlmain.lib dsound.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
+				AdditionalDependencies="sdlmain.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
 				OutputFile="..\..\..\dist\spring-dedicated.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -721,7 +721,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="sdlmain.lib dsound.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
+				AdditionalDependencies="sdlmain.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
 				OutputFile="..\..\..\dist\spring-dedicated.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;../../../vclibs/freetype/objs;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlib/lib;../../../vclibs/SDL/lib;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
@@ -5115,6 +5115,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\SafeVector.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\SafeVector.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\System\SpringApp.cpp"
 				>
 			</File>
@@ -6821,14 +6829,6 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\System\Sync\bget.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Sync\bget.h"
-					>
 				</File>
 				<File
 					RelativePath="..\..\System\Sync\get_executable_name.c"
@@ -15971,6 +15971,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\gml\gmlcnf.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\gml\gmlcnt.h"
 					>
 				</File>
@@ -15984,6 +15988,14 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\gml\gmlimp.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\gml\gmlmut.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\gml\gmlque.h"
 					>
 				</File>
 				<File

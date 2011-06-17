@@ -10,7 +10,6 @@
 	File "${BUILD_OR_DIST_DIR}\unitsync.dll"
 	CreateDirectory "$INSTDIR\maps"
 	CreateDirectory "$INSTDIR\games"
-	CreateDirectory "$INSTDIR\mods" ; deprecated
 	SetOutPath "$INSTDIR"
 
 	${!echonow} "Processing: main: DLLs (mingwlibs)"
@@ -38,10 +37,12 @@
 
 	Delete "$INSTDIR\settingstemplate.xml"
 
+!ifndef SLIM
 	; New Settings Program
 	${!echonow} "Processing: main: springsettings"
 	File "..\installer\Springlobby\SettingsDlls\springsettings.exe"
 	File /r "..\installer\Springlobby\SettingsDlls\*.dll"
+!endif
 
 	${!echonow} "Processing: main: DLLs 2 (mingwlibs)"
 	; DLLs

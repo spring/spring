@@ -76,18 +76,12 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 	checkCol = false;
 
 	if (owner) {
-		// choose a (synced) random tag-postfix string k from the
-		// range given in UnitDef and stick it onto pieceTrailCEGTag
-		// (assumes all possible "tag + k" CEG identifiers are valid)
-		// if this piece does not override the FBI and wants a trail
 		if ((flags & PF_NoCEGTrail) == 0) {
-			if (!owner->unitDef->pieceTrailCEGTag.empty()) {
-				std::stringstream cegTagStr;
+			const std::vector<std::string>& pieceCEGs = owner->unitDef->pieceCEGTags;
+			const std::string& cegTag = !pieceCEGs.empty()? pieceCEGs[gs->randInt() % pieceCEGs.size()]: "";
 
-				cegTagStr << (owner->unitDef->pieceTrailCEGTag);
-				cegTagStr << (gs->randInt() % owner->unitDef->pieceTrailCEGRange);
-
-				cegID = gCEG->Load(explGenHandler, cegTagStr.str());
+			if (!cegTag.empty()) {
+				cegID = gCEG->Load(explGenHandler, cegTag.c_str());
 			} else {
 				flags |= PF_NoCEGTrail;
 			}

@@ -93,7 +93,6 @@ private:
 	soundItemDefMap soundItemDefs;
 
 	boost::thread* soundThread;
-	boost::recursive_mutex soundMutex;
 
 	volatile bool soundThreadQuit;
 };

@@ -3,7 +3,6 @@
 #ifndef _GAME_SERVER_H
 #define _GAME_SERVER_H
 
-#include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <string>
@@ -18,6 +17,8 @@
 #include "System/UnsyncedRNG.h"
 #include "System/float3.h"
 #include "System/myTime.h"
+#include "System/Platform/Synchro.h"
+
 
 namespace netcode
 {
@@ -86,6 +87,7 @@ public:
 	bool HasFinished() const;
 
 	void UpdateSpeedControl(int speedCtrl);
+	static std::string SpeedControlToString(int speedCtrl);
 
 	#ifdef DEDICATED
 	const boost::scoped_ptr<CDemoRecorder>& GetDemoRecorder() const { return demoRecorder; }
@@ -179,6 +181,15 @@ private:
 	float medianCpu;
 	int medianPing;
 	int curSpeedCtrl;
+
+	/**
+	 * throttles speed based on:
+	 * 0 : players (max cpu)
+	 * 1 : players (median cpu)
+	 * 2 : (same as 0)
+	 * -x: same as x, but ignores votes from players that may change
+	 *     the speed-control mode
+	 */
 	int speedControl;
 	/////////////////// game settings ///////////////////
 	boost::scoped_ptr<const CGameSetup> setup;
@@ -225,7 +236,8 @@ private:
 	boost::scoped_ptr<AutohostInterface> hostif;
 	UnsyncedRNG rng;
 	boost::thread* thread;
-	mutable boost::recursive_mutex gameServerMutex;
+
+	mutable Threading::RecursiveMutex gameServerMutex;
 
 	bool canReconnect;
 	volatile bool gameHasStarted;

@@ -316,7 +316,7 @@ static int WeaponDefToID(lua_State* L, const void* data)
 static int SafeIconType(lua_State* L, const void* data)
 {
 	// the iconType is unsynced because LuaUI has SetUnitDefIcon()
-	if (!CLuaHandle::GetActiveHandle()->GetSynced()) {
+	if (!CLuaHandle::GetSynced(L)) {
 		const icon::CIcon& iconType = *((const icon::CIcon*)data);
 		lua_pushsstring(L, iconType->GetName());
 		return 1;
@@ -442,7 +442,7 @@ static void PushGuiSoundSet(lua_State* L, const string& name,
 		const GuiSoundSet::Data& sound = soundSet.sounds[i];
 		HSTR_PUSH_STRING(L, "name",   sound.name);
 		HSTR_PUSH_NUMBER(L, "volume", sound.volume);
-		if (!CLuaHandle::GetActiveHandle()->GetSynced()) {
+		if (!CLuaHandle::GetSynced(L)) {
 			HSTR_PUSH_NUMBER(L, "id", sound.id);
 		}
 		lua_rawset(L, -3);
@@ -726,7 +726,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 
 	ADD_FLOAT("mass", ud.mass);
 
-	ADD_FLOAT("maxSlope",      ud.maxSlope);
+	ADD_FLOAT("maxSlope",      ud.maxHeightDif); // NOTE: deprecated, remove after 0.83.*
 	ADD_FLOAT("maxHeightDif",  ud.maxHeightDif);
 	ADD_FLOAT("minWaterDepth", ud.minWaterDepth);
 	ADD_FLOAT("waterline",     ud.waterline);
@@ -912,9 +912,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("nanoColorR",   ud.nanoColor.x);
 	ADD_FLOAT("nanoColorG",   ud.nanoColor.y);
 	ADD_FLOAT("nanoColorB",   ud.nanoColor.z);
-
-	ADD_STRING("pieceTrailCEGTag",   ud.pieceTrailCEGTag);
-	ADD_INT(   "pieceTrailCEGRange", ud.pieceTrailCEGRange);
 
 	ADD_STRING("scriptName", ud.scriptName);
 	ADD_STRING("scriptPath", ud.scriptPath);

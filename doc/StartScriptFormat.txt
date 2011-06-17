@@ -2,8 +2,10 @@
 
 // == IP Support ==
 // IP properties accept:
-// - IP v4 addresses like 127.0.0.1 or 123.123.123.123
-// - IP v6 addresses like ::  or fe80::1
+// - IP v4 addresses like 192.168.0.20 or 123.123.123.123
+// - IP v6 addresses like 2001:0db8:85a3:8a2e:: or fe80::1
+// - IP v4 any addresses 0.0.0.0 (allows incomming connections on all local IPv4 IPs)
+// - IP v6 any addresses ::      (allows incomming connections on all local IPv6 IPs)
 // - NO host-names
 
 // A minimal client example

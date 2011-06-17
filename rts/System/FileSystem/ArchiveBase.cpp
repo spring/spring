@@ -5,7 +5,8 @@
 #include "CRC.h"
 #include "Util.h"
 
-CArchiveBase::CArchiveBase(const std::string& archiveName) : archiveFile(archiveName)
+CArchiveBase::CArchiveBase(const std::string& archiveName)
+	: archiveFile(archiveName)
 {
 }
 
@@ -13,7 +14,7 @@ CArchiveBase::~CArchiveBase()
 {
 }
 
-std::string CArchiveBase::GetArchiveName() const
+const std::string& CArchiveBase::GetArchiveName() const
 {
 	return archiveFile;
 }
@@ -23,10 +24,10 @@ bool CArchiveBase::FileExists(const std::string& normalizedFilePath) const
 	return (lcNameIndex.find(normalizedFilePath) != lcNameIndex.end());
 }
 
-unsigned CArchiveBase::FindFile(const std::string& filePath) const
+unsigned int CArchiveBase::FindFile(const std::string& filePath) const
 {
 	const std::string normalizedFilePath = StringToLower(filePath);
-	const std::map<std::string, unsigned>::const_iterator it = lcNameIndex.find(normalizedFilePath);
+	const std::map<std::string, unsigned int>::const_iterator it = lcNameIndex.find(normalizedFilePath);
 	if (it != lcNameIndex.end()) {
 		return it->second;
 	} else {
@@ -34,29 +35,31 @@ unsigned CArchiveBase::FindFile(const std::string& filePath) const
 	}
 }
 
-bool CArchiveBase::HasLowReadingCost(unsigned fid) const
+bool CArchiveBase::HasLowReadingCost(unsigned int fid) const
 {
 	return true;
 }
 
-unsigned CArchiveBase::GetCrc32(unsigned fid)
+unsigned int CArchiveBase::GetCrc32(unsigned int fid)
 {
 	CRC crc;
 	std::vector<boost::uint8_t> buffer;
-	if (GetFile(fid, buffer))
+	if (GetFile(fid, buffer)) {
 		crc.Update(&buffer[0], buffer.size());
+	}
 
 	return crc.GetDigest();
 }
 
 bool CArchiveBase::GetFile(const std::string& name, std::vector<boost::uint8_t>& buffer)
 {
-	unsigned fid = FindFile(name);
-	if (fid < NumFiles())
-	{
+	const unsigned int fid = FindFile(name);
+	const bool found = (fid < NumFiles());
+
+	if (found) {
 		GetFile(fid, buffer);
 		return true;
 	}
-	else
-		return false;
+
+	return found;
 }

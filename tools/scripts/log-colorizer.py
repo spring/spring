@@ -31,9 +31,11 @@ def ReadLines(logName):
 
 def WriteLines(logName, logLines):
 	try:
-		logFile = open(logName + ".colorized", 'w')
+		strFilename = logName + ".colorized"
+		logFile = open(strFilename, 'w')
 		logFile.write(logLines)
 		logFile = logFile.close()
+		print "[WriteLines] wrote %s" % strFilename
 	except IOError:
 		print "[WriteLines] cannot open file \"%s\" for writing " % logName
 

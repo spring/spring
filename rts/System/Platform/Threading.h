@@ -26,8 +26,14 @@ namespace Threading {
 
 	NativeThreadHandle GetCurrentThread();
 	NativeThreadId GetCurrentThreadId();
-	bool NativeThreadIdsEqual(const NativeThreadId& thID1, const NativeThreadId& thID2);
-
+	inline bool NativeThreadIdsEqual(const NativeThreadId thID1, const NativeThreadId thID2)
+	{
+	#ifdef WIN32
+		return (thID1 == thID2);
+	#else
+		return pthread_equal(thID1, thID2);
+	#endif
+	}
 	void SetMainThread();
 	bool IsMainThread();
 	bool IsMainThread(NativeThreadId threadID);
@@ -38,6 +44,13 @@ namespace Threading {
 		std::string message;
 		unsigned int flags;
 	};
+
+	void SetSimThread(bool set);
+	bool IsSimThread();
+
+	void SetBatchThread(bool set);
+	bool IsBatchThread();
+
 	void SetThreadError(const Error& err);
 	Error* GetThreadError();
 };

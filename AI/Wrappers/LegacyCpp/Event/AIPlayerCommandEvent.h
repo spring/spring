@@ -17,12 +17,15 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AIPLAYERCOMMANDEVENT_H
-#define _AIPLAYERCOMMANDEVENT_H
+#ifndef _AI_PLAYER_COMMAND_EVENT_H
+#define _AI_PLAYER_COMMAND_EVENT_H
 
 #include "AIEvent.h"
 #include "ExternalAI/Interface/AISCommands.h"
 #include "../CommandQueue.h"
+
+
+namespace springLegacyAI {
 
 class CAIPlayerCommandEvent : public CAIEvent {
 public:
@@ -55,4 +58,6 @@ private:
 	SPlayerCommandEvent event;
 };
 
-#endif // _AIPLAYERCOMMANDEVENT_H
+} // namespace springLegacyAI
+
+#endif // _AI_PLAYER_COMMAND_EVENT_H

@@ -546,18 +546,33 @@ void CResourceMapAnalyzer::GetResourcePoints() {
 }
 
 
+template<typename T>
+static inline void writeToFile(const T& value, FILE* file) {
+
+	if (fwrite(&value, sizeof(T), 1, file) != 1) {
+		throw std::runtime_error("failed to write value to file");
+	}
+}
+
 void CResourceMapAnalyzer::SaveResourceMap() {
 
-	std::string map = GetCacheFileName();
-	FILE* saveFile = fopen(map.c_str(), "wb");
+	const std::string cacheFileName = GetCacheFileName();
+	FILE* saveFile = fopen(cacheFileName.c_str(), "wb");
 
-	assert(saveFile != NULL);
+	try {
+		if (saveFile == NULL) {
+			throw std::runtime_error("failed to open file for writing");
+		}
 
-	fwrite(&numSpotsFound, sizeof(int), 1, saveFile);
-	fwrite(&averageIncome, sizeof(float), 1, saveFile);
-
-	for (int i = 0; i < numSpotsFound; i++) {
-		fwrite(&vectoredSpots[i], sizeof(float3), 1, saveFile);
+		writeToFile(numSpotsFound, saveFile);
+		writeToFile(averageIncome, saveFile);
+		for (int i = 0; i < numSpotsFound; i++) {
+			writeToFile(vectoredSpots[i], saveFile);
+		}
+	} catch (const std::runtime_error& err) {
+		logOutput.Print(
+				"Failed to save the analyzed resource-map to file %s, reason: %s",
+				cacheFileName.c_str(), err.what());
 	}
 
 	fclose(saveFile);

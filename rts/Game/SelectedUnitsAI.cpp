@@ -109,7 +109,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
 	}
 	else if ((cmd_id == CMD_ATTACK) && (
 			(c.GetParamsCount() == 6) ||
-			(c.GetParam(3, -1.f) > 0.001f)
+			((c.GetParamsCount() == 4) && (c.GetParam(3) > 0.001f))
 		))
 	{
 		SelectAttack(c, player);
@@ -167,7 +167,7 @@ void CSelectedUnitsAI::GiveCommandNet(Command &c, int player)
 		CalculateGroupData(player, !!(c.options & SHIFT_KEY));
 
 		// use the vector from the middle of group to new pos as forward dir
-		const float3 pos(c.GetParam(0, 0.f), c.GetParam(1, 0.f), c.GetParam(3, 0.f));
+		const float3 pos(c.GetParam(0), c.GetParam(1), c.GetParam(3));
 		float3 frontdir = pos - centerCoor;
 		frontdir.y = 0.0f;
 		frontdir.ANormalize();

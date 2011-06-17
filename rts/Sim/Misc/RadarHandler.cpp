@@ -84,7 +84,7 @@ CRadarHandler::~CRadarHandler()
 }
 
 
-// todo: add the optimizations that is in loshandler
+// TODO: add the LosHandler optimizations (instance-sharing)
 void CRadarHandler::MoveUnit(CUnit* unit)
 {
 	SCOPED_TIMER("RadarHandler::MoveUnit");
@@ -116,7 +116,7 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 		if (unit->radarRadius) {
 			airRadarMaps[unit->allyteam].AddMapArea(newPos, unit->radarRadius, 1);
 			if (!circularRadar) {
-				radarAlgo.LosAdd(newPos, unit->radarRadius, unit->height, unit->radarSquares);
+				radarAlgo.LosAdd(newPos, unit->radarRadius, unit->radarHeight, unit->radarSquares);
 				radarMaps[unit->allyteam].AddMapSquares(unit->radarSquares, 1);
 			}
 		}

@@ -195,8 +195,6 @@ private:
 
 	bool gameInitialized;
 	std::set<std::string> luaAIShortNames;
-
-	static CSkirmishAIHandler* mySingleton;
 };
 
 #define skirmishAIHandler CSkirmishAIHandler::GetInstance()

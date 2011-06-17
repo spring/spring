@@ -299,8 +299,6 @@ void CMouseHandler::MousePress(int x, int y, int button)
 
 void CMouseHandler::MouseRelease(int x, int y, int button)
 {
-	GML_RECMUTEX_LOCK(sel); // MouseRelease
-
 	if (button > NUM_BUTTONS)
 		return;
 
@@ -320,6 +318,8 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			activeReceiver = NULL;
 		return;
 	}
+
+	GML_RECMUTEX_LOCK(sel); // MouseRelease
 
 	//! Switch camera mode on a middle click that wasn't a middle mouse drag scroll.
 	//! the latter is determined by the time the mouse was held down:
@@ -606,20 +606,24 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 		return buildTip;
 	}
 
-	GML_RECMUTEX_LOCK(sel); // GetCurrentTooltip - anti deadlock
-	GML_RECMUTEX_LOCK(quad); // GetCurrentTooltip - called from ToolTipConsole::Draw --> MouseHandler::GetCurrentTooltip
-
 	const float range = (globalRendering->viewRange * 1.4f);
+
 	CUnit* unit;
 	CFeature* feature;
-	float dist = TraceRay::GuiTraceRay(camera->pos, dir, range, true, NULL, unit, feature);
+	float dist;
+	{
+		GML_THRMUTEX_LOCK(unit, GML_DRAW); // GetCurrentTooltip
+		GML_THRMUTEX_LOCK(feat, GML_DRAW); // GetCurrentTooltip
 
-	if (unit) {
-		return CTooltipConsole::MakeUnitString(unit);
-	}
+		dist = TraceRay::GuiTraceRay(camera->pos, dir, range, true, NULL, unit, feature);
 
-	if (feature) {
-		return CTooltipConsole::MakeFeatureString(feature);
+		if (unit) {
+			return CTooltipConsole::MakeUnitString(unit);
+		}
+
+		if (feature) {
+			return CTooltipConsole::MakeFeatureString(feature);
+		}
 	}
 
 	const string selTip = selectedUnits.GetTooltip();

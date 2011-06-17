@@ -2,9 +2,6 @@
 
 #include "StdAfx.h"
 #include "SmfReadMap.h"
-#ifdef _OPENMP
-	#include <omp.h>
-#endif
 
 #include "BFGroundTextures.h"
 #include "BFGroundDrawer.h"
@@ -21,6 +18,7 @@
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/GlobalUnsynced.h"
+#include "System/OpenMP_cond.h"
 #include "System/LogOutput.h"
 #include "System/mmgr.h"
 #include "System/myMath.h"
@@ -439,7 +437,7 @@ void CSmfReadMap::UpdateShadingTexture() {
 		return;
 
 	y /= shadingTexUpdateRate;
-	y = (y * 2 + ((((ysize % 2) == 0) && (y >= (ysize / 2))) ? 1 : 0)) % ysize;
+//	y = (y * 2 + ((((ysize % 2) == 0) && (y >= (ysize / 2))) ? 1 : 0)) % ysize;
 
 	UpdateShadingTexPart(y, 0, 0, xsize, &shadingTexPixelRow[0]);
 

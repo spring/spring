@@ -12,6 +12,8 @@
 #include "myMath.h"
 #include <assert.h>
 
+#undef far // avoid collision with windef.h
+#undef near
 
 static inline float Interpolate(float x, float y, const float* heightmap)
 {

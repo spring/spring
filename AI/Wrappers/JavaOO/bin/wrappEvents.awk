@@ -346,7 +346,12 @@ function printEventOO(ind_evt_em) {
 
 	printFunctionComment_Common(myOOAIFile, evts_docComment, ind_evt_em, "\t");
 	print("\t" "@Override") >> myOOAIFile;
-	print("\t" "public abstract " retType_em " " name_em "(" ooParams_em ");") >> myOOAIFile;
+	if (retType_em == "int") {
+		print("\t" "public " retType_em " " name_em "(" ooParams_em ") { return 0; }") >> myOOAIFile;
+	} else {
+		print("Warning: No default return value given for event return-type " retType_em);
+		print("\t" "public abstract " retType_em " " name_em "(" ooParams_em ");") >> myOOAIFile;
+	}
 
 	ooParamsCleaned_em = ooParams_em;
 	gsub(/ oo_/, " ", ooParamsCleaned_em);

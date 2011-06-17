@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef RESOURCEBAR_H
-#define RESOURCEBAR_H
+#ifndef RESOURCE_BAR_H
+#define RESOURCE_BAR_H
 
 #include "InputReceiver.h"
 
@@ -9,24 +9,24 @@ class CResourceBar :
 	public CInputReceiver
 {
 public:
-	CResourceBar(void);
-	virtual ~CResourceBar(void);
-	void Draw(void);
+	CResourceBar();
+	virtual ~CResourceBar();
+	void Draw();
 
 	bool IsAbove(int x, int y);
 	std::string GetTooltip(int x, int y);
 
 	bool MousePress(int x, int y, int button);
-	void MouseMove(int x, int y, int dx,int dy, int button);
+	void MouseMove(int x, int y, int dx, int dy, int button);
 
 	ContainerBox box;
 	ContainerBox metalBox;
 	ContainerBox energyBox;
 
 	bool moveBox;
-	bool disabled;
+	bool enabled;
 };
 
 extern CResourceBar* resourceBar;
 
-#endif /* RESOURCEBAR_H */
+#endif /* RESOURCE_BAR_H */

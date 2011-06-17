@@ -317,47 +317,38 @@ EXTERN inline int gmlSizeOf(int datatype) {
 
 #if GML_CALL_DEBUG
 #include "lib/lua/include/lauxlib.h"
-extern unsigned drawCallInTime;
-extern lua_State *gmlCurrentLuaState;
+extern unsigned gmlLockTime;
+extern lua_State *gmlCurrentLuaStates[GML_MAX_NUM_THREADS];
 class gmlCallDebugger {
 public:
-	bool set;
-	unsigned drawtime;
-	gmlCallDebugger(lua_State *L) { 
-		if(!gmlCurrentLuaState) {
-			gmlCurrentLuaState = L;
-			set=true;
-			if(gmlThreadNumber == 0)
-				drawtime = SDL_GetTicks();
-			else
-				drawtime = 0;
-		} 
-		else 
-			set = false;
+	lua_State ** currentLuaState;
+	gmlCallDebugger(lua_State *L) {
+		currentLuaState = &gmlCurrentLuaStates[gmlThreadNumber]; 		
+		if(!*currentLuaState)
+			*currentLuaState = L;
+		else
+			currentLuaState = NULL;
 	}
 	~gmlCallDebugger() {
-		if(set) {
-			gmlCurrentLuaState = NULL;
-			if(drawtime) {
-				drawCallInTime += (SDL_GetTicks() - drawtime);
-				drawtime = 0;
-			}
+		if(currentLuaState) {
+			*currentLuaState = NULL;
 		}
 	}
-	static unsigned getDrawCallInTime() {
+	static unsigned getLockTime() {
 		extern volatile int gmlMultiThreadSim, gmlStartSim;
 		unsigned ret = 0;
 		if(gmlMultiThreadSim && gmlStartSim)
-			ret = drawCallInTime;
-		drawCallInTime = 0;
+			ret = gmlLockTime;
+		gmlLockTime = 0;
 		return ret;
 	}
 };
-#define GML_CURRENT_LUA() (gmlCurrentLuaState ? "LUA" : "Unknown")
+#define GML_CURRENT_LUA(currentLuaState) (currentLuaState ? "LUA" : "Unknown")
 #define GML_THREAD_ERROR(msg, ret)\
-	logOutput.Print("GML error: Sim thread called %s (%s)", msg, GML_CURRENT_LUA());\
-	if(gmlCurrentLuaState)\
-		luaL_error(gmlCurrentLuaState, "Invalid call");\
+	lua_State *currentLuaState = gmlCurrentLuaStates[gmlThreadNumber];\
+	logOutput.Print("GML error: Sim thread called %s (%s)", msg, GML_CURRENT_LUA(currentLuaState));\
+	if(currentLuaState)\
+		luaL_error(currentLuaState, "Invalid call");\
 	ret
 #define GML_ITEMLOG_PRINT() GML_THREAD_ERROR(GML_FUNCTION,)
 #define GML_DUMMYRET() return;
@@ -425,7 +416,7 @@ EXTERN inline void gmlSync(gmlQueue *qd) {
 #define GML_FUN(ftype,name,...) };\
 	EXTERN const int gml##name##Enum=(__LINE__-__FIRSTLINE__);\
 	GML_MAKENAME(name)\
-	EXTERN inline ftype gml##name(__VA_ARGS__)
+	EXTERN inline ftype GML_GLAPIENTRY gml##name(__VA_ARGS__)
 
 
 #if GML_ENABLE_ITEMSERVER_CHECK
@@ -1306,8 +1297,8 @@ GML_MAKEFUN1V(Normal3fv,const GLfloat,GLfloat,3)
 GML_MAKEFUN2(RasterPos2i,GLint,GLint,)
 GML_MAKEFUN1(ReadBuffer,GLenum)
 GML_MAKEFUN4(Scissor,GLint,GLint,GLsizei,GLsizei)
-GML_MAKEFUN4VSS(ShaderSource,GLuint,GLsizei,const GLchar,GLint,B)
-GML_MAKEFUN4VSS(ShaderSourceARB,GLhandleARB,GLsizei,const GLcharARB,GLint,B)
+GML_MAKEFUN4VSS(ShaderSource,GLuint,GLsizei,const GLchar,const GLint,B)
+GML_MAKEFUN4VSS(ShaderSourceARB,GLhandleARB,GLsizei,const GLcharARB,const GLint,B)
 GML_MAKEFUN1V(TexCoord2fv,const GLfloat,GLfloat,2)
 GML_MAKEFUN3V(TexParameterfv,GLenum,GLenum,const GLfloat,GLfloat,gmlNumArgsTexParam(B))
 GML_MAKEFUN3(Translated,GLdouble,GLdouble,GLdouble,)
@@ -1344,7 +1335,7 @@ GML_MAKEFUN2R(GetUniformLocationARB,GLhandleARB,const GLcharARB *, GLint)
 GML_MAKEFUN7(ReadPixels,GLint,GLint,GLsizei,GLsizei,GLenum,GLenum,GLvoid *,GML_SYNC())
 GML_MAKEFUN0R(GetError,GLenum,GML_DEFAULT_ERROR())
 GML_MAKEFUN3(GetObjectParameterivARB,GLhandleARB,GLenum,GLint *,GML_DEFAULT(B==GL_OBJECT_COMPILE_STATUS_ARB || B==GL_OBJECT_LINK_STATUS_ARB,*C=GL_TRUE),GML_SYNC())
-GML_MAKEFUN2R(GetUniformLocation,GLint,const GLchar *, GLint)
+GML_MAKEFUN2R(GetUniformLocation,GLuint,const GLchar *, GLint)
 GML_MAKEFUN2(GetDoublev,GLenum, GLdouble *,,GML_SYNC())
 GML_MAKEFUN3(GetProgramiv,GLuint,GLenum,GLint *,,GML_SYNC())
 GML_MAKEFUN7(GetActiveUniform,GLuint,GLuint,GLsizei,GLsizei *,GLint *,GLenum *,GLchar *,GML_SYNC())

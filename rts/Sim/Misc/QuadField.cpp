@@ -10,17 +10,20 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Projectiles/Projectile.h"
 #include "System/creg/STL_List.h"
+
+#define REMOVE_PROJECTILE_FAST
 
 CR_BIND(CQuadField, );
 CR_REG_METADATA(CQuadField, (
-//		CR_MEMBER(baseQuads),
-		CR_MEMBER(numQuadsX),
-		CR_MEMBER(numQuadsZ),
-//		CR_MEMBER(tempQuads),
-		CR_RESERVED(8),
-		CR_SERIALIZER(Serialize)
-		));
+	// CR_MEMBER(baseQuads),
+	CR_MEMBER(numQuadsX),
+	CR_MEMBER(numQuadsZ),
+	// CR_MEMBER(tempQuads),
+	CR_RESERVED(8),
+	CR_SERIALIZER(Serialize)
+));
 
 
 CQuadField::Quad::Quad() : teamUnits(teamHandler->ActiveAllyTeams())
@@ -44,7 +47,8 @@ CR_BIND(CQuadField::Quad, );
 CR_REG_METADATA_SUB(CQuadField, Quad, (
 	CR_MEMBER(units),
 	CR_MEMBER(teamUnits),
-	CR_MEMBER(features)
+	CR_MEMBER(features),
+	CR_MEMBER(projectiles)
 ));
 
 
@@ -117,7 +121,9 @@ void CQuadField::GetQuads(float3 pos, float radius, int*& dst) const
 	const float maxSqLength = (radius + QUAD_SIZE * 0.72f) * (radius + QUAD_SIZE * 0.72f);
 	for (int z = minz; z <= maxz; ++z) {
 		for (int x = minx; x <= maxx; ++x) {
-			if ((pos - float3(x * QUAD_SIZE + QUAD_SIZE * 0.5f, 0, z * QUAD_SIZE + QUAD_SIZE * 0.5f)).SqLength2D() < maxSqLength) {
+			const float3 quadCenterPos = float3(x * QUAD_SIZE + QUAD_SIZE * 0.5f, 0, z * QUAD_SIZE + QUAD_SIZE * 0.5f);
+
+			if ((pos - quadCenterPos).SqLength2D() < maxSqLength) {
 				*dst = z * numQuadsX + x;
 				++dst;
 			}
@@ -125,25 +131,28 @@ void CQuadField::GetQuads(float3 pos, float radius, int*& dst) const
 	}
 }
 
+
+
 std::vector<CUnit*> CQuadField::GetUnits(const float3& pos, float radius)
 {
 	GML_RECMUTEX_LOCK(qnum); // GetUnits
 
-	std::vector<CUnit*> units;
+	const int tempNum = gs->tempNum++;
 
 	int* endQuad = tempQuads;
 	GetQuads(pos, radius, endQuad);
-	const int tempNum = gs->tempNum++;
 
+	std::vector<CUnit*> units;
 	std::list<CUnit*>::iterator ui;
+
 	for (int* a = tempQuads; a != endQuad; ++a) {
 		Quad& quad = baseQuads[*a];
 
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			if ((*ui)->tempNum != tempNum) {
-				(*ui)->tempNum = tempNum;
-				units.push_back(*ui);
-			}
+			if ((*ui)->tempNum == tempNum) { continue; }
+
+			(*ui)->tempNum = tempNum;
+			units.push_back(*ui);
 		}
 	}
 
@@ -154,29 +163,30 @@ std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos, float radius, b
 {
 	GML_RECMUTEX_LOCK(qnum); // GetUnitsExact
 
-	std::vector<CUnit*> units;
+	const int tempNum = gs->tempNum++;
 
 	int* endQuad = tempQuads;
 	GetQuads(pos, radius, endQuad);
-	const int tempNum = gs->tempNum++;
 
+	std::vector<CUnit*> units;
 	std::list<CUnit*>::iterator ui;
+
 	for (int* a = tempQuads; a != endQuad; ++a) {
 		Quad& quad = baseQuads[*a];
 
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			if ((*ui)->tempNum != tempNum) {
-				const float totRad       = radius + (*ui)->radius;
-				const float totRadSq     = totRad * totRad;
-				const float posUnitDstSq = spherical?
-						(pos - (*ui)->midPos).SqLength():
-						(pos - (*ui)->midPos).SqLength2D();
+			if ((*ui)->tempNum == tempNum) { continue; }
 
-				if (posUnitDstSq < totRadSq) {
-					(*ui)->tempNum = tempNum;
-					units.push_back(*ui);
-				}
-			}
+			const float totRad       = radius + (*ui)->radius;
+			const float totRadSq     = totRad * totRad;
+			const float posUnitDstSq = spherical?
+				(pos - (*ui)->midPos).SqLength():
+				(pos - (*ui)->midPos).SqLength2D();
+
+			if (posUnitDstSq >= totRadSq) { continue; }
+
+			(*ui)->tempNum = tempNum;
+			units.push_back(*ui);
 		}
 	}
 
@@ -187,30 +197,33 @@ std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& 
 {
 	GML_RECMUTEX_LOCK(qnum); // GetUnitsExact
 
-	std::vector<CUnit*> units;
-
 	const std::vector<int>& quads = GetQuadsRectangle(mins, maxs);
 	const int tempNum = gs->tempNum++;
 
+	std::vector<CUnit*> units;
 	std::vector<int>::const_iterator qi;
+
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
 		std::list<CUnit*>& quadUnits = baseQuads[*qi].units;
 		std::list<CUnit*>::iterator ui;
+
 		for (ui = quadUnits.begin(); ui != quadUnits.end(); ++ui) {
 			CUnit* unit = *ui;
 			const float3& pos = unit->midPos;
-			if ((unit->tempNum != tempNum)
-					&& (pos.x > mins.x) && (pos.x < maxs.x)
-					&& (pos.z > mins.z) && (pos.z < maxs.z))
-			{
-				unit->tempNum = tempNum;
-				units.push_back(unit);
-			}
+
+			if (unit->tempNum == tempNum) { continue; }
+			if (pos.x < mins.x || pos.x > maxs.x) { continue; }
+			if (pos.z < mins.z || pos.z > maxs.z) { continue; }
+			
+			unit->tempNum = tempNum;
+			units.push_back(unit);
 		}
 	}
 
 	return units;
 }
+
+
 
 std::vector<int> CQuadField::GetQuadsOnRay(const float3& start, float3 dir, float length)
 {
@@ -359,6 +372,8 @@ void CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length, int*& dst
 	}
 }
 
+
+
 void CQuadField::MovedUnit(CUnit* unit)
 {
 	const std::vector<int>& newQuads = GetQuads(unit->pos,unit->radius);
@@ -426,6 +441,8 @@ void CQuadField::RemoveUnit(CUnit* unit)
 	unit->quads.clear();
 }
 
+
+
 void CQuadField::AddFeature(CFeature* feature)
 {
 	GML_RECMUTEX_LOCK(quad); // AddFeature
@@ -450,26 +467,99 @@ void CQuadField::RemoveFeature(CFeature* feature)
 	}
 }
 
+
+
+void CQuadField::MovedProjectile(CProjectile* p)
+{
+	if (!p->synced)
+		return;
+
+	int2 oldCellCoors = p->GetQuadFieldCellCoors();
+	int2 newCellCoors;
+	newCellCoors.x = std::max(0, std::min(int(p->pos.x / QUAD_SIZE), numQuadsX - 1));
+	newCellCoors.y = std::max(0, std::min(int(p->pos.z / QUAD_SIZE), numQuadsZ - 1));
+
+	if (newCellCoors.x != oldCellCoors.x || newCellCoors.y != oldCellCoors.y) {
+		RemoveProjectile(p);
+		AddProjectile(p);
+	}
+}
+
+void CQuadField::AddProjectile(CProjectile* p)
+{
+	assert(p->synced);
+
+	// projectiles are point-objects, so
+	// they exist in a single cell only
+	int2 cellCoors;
+	cellCoors.x = std::max(0, std::min(int(p->pos.x / QUAD_SIZE), numQuadsX - 1));
+	cellCoors.y = std::max(0, std::min(int(p->pos.z / QUAD_SIZE), numQuadsZ - 1));
+
+	GML_RECMUTEX_LOCK(quad);
+
+	Quad& q = baseQuads[numQuadsX * cellCoors.y + cellCoors.x];
+	std::list<CProjectile*>& projectiles = q.projectiles;
+
+	p->SetQuadFieldCellCoors(cellCoors);
+	p->SetQuadFieldCellIter(projectiles.insert(projectiles.end(), p));
+}
+
+void CQuadField::RemoveProjectile(CProjectile* p)
+{
+	assert(p->synced);
+
+	const int2& cellCoors = p->GetQuadFieldCellCoors();
+	const int cellIdx = numQuadsX * cellCoors.y + cellCoors.x;
+
+	GML_RECMUTEX_LOCK(quad);
+
+	Quad& q = baseQuads[cellIdx];
+
+	std::list<CProjectile*>& projectiles = q.projectiles;
+	std::list<CProjectile*>::iterator pi = p->GetQuadFieldCellIter();
+
+	#ifdef REMOVE_PROJECTILE_FAST
+	if (pi != projectiles.end()) {
+		// this is O(1) instead of O(n) and crucially
+		// important for projectiles, but less clean
+		projectiles.erase(pi);
+	} else {
+		assert(false);
+	}
+	#else
+	for (pi = projectiles.begin(); pi != projectiles.end(); ++pi) {
+		if ((*pi) == p) {
+			projectiles.erase(pi);
+			break;
+		}
+	}
+	#endif
+
+	p->SetQuadFieldCellIter(projectiles.end());
+}
+
+
+
 std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos, float radius)
 {
 	GML_RECMUTEX_LOCK(qnum); // GetFeaturesExact
 
-	std::vector<CFeature*> features;
-
 	const std::vector<int>& quads = GetQuads(pos, radius);
 	const int tempNum = gs->tempNum++;
 
+	std::vector<CFeature*> features;
 	std::vector<int>::const_iterator qi;
 	std::list<CFeature*>::iterator fi;
+
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
 		for (fi = baseQuads[*qi].features.begin(); fi != baseQuads[*qi].features.end(); ++fi) {
 			const float totRad = radius + (*fi)->radius;
-			if ((*fi)->tempNum != tempNum
-					&& ((pos - (*fi)->midPos).SqLength() < (totRad * totRad)))
-			{
-				(*fi)->tempNum = tempNum;
-				features.push_back(*fi);
-			}
+
+			if ((*fi)->tempNum == tempNum) { continue; }
+			if ((pos - (*fi)->midPos).SqLength() >= (totRad * totRad)) { continue; }
+
+			(*fi)->tempNum = tempNum;
+			features.push_back(*fi);
 		}
 	}
 
@@ -480,84 +570,140 @@ std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& mins, const fl
 {
 	GML_RECMUTEX_LOCK(qnum); // GetFeaturesExact
 
-	std::vector<CFeature*> features;
-
 	const std::vector<int>& quads = GetQuadsRectangle(mins, maxs);
 	const int tempNum = gs->tempNum++;
 
+	std::vector<CFeature*> features;
 	std::vector<int>::const_iterator qi;
 	std::list<CFeature*>::iterator fi;
+
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
 		std::list<CFeature*>& quadFeatures = baseQuads[*qi].features;
+
 		for (fi = quadFeatures.begin(); fi != quadFeatures.end(); ++fi) {
 			CFeature* feature = *fi;
 			const float3& pos = feature->midPos;
-			if ((feature->tempNum != tempNum)
-					&& (pos.x > mins.x) && (pos.x < maxs.x)
-					&& (pos.z > mins.z) && (pos.z < maxs.z))
-			{
-				feature->tempNum = tempNum;
-				features.push_back(feature);
-			}
+
+			if (feature->tempNum == tempNum) { continue; }
+			if (pos.x < mins.x || pos.x > maxs.x) { continue; }
+			if (pos.z < mins.z || pos.z > maxs.z) { continue; }
+
+			feature->tempNum = tempNum;
+			features.push_back(feature);
 		}
 	}
 
 	return features;
 }
 
+
+
+std::vector<CProjectile*> CQuadField::GetProjectilesExact(const float3& pos, float radius)
+{
+	GML_RECMUTEX_LOCK(qnum);
+
+	const std::vector<int>& quads = GetQuads(pos, radius);
+
+	std::vector<CProjectile*> projectiles;
+	std::vector<int>::const_iterator qi;
+	std::list<CProjectile*>::iterator pi;
+
+	for (qi = quads.begin(); qi != quads.end(); ++qi) {
+		std::list<CProjectile*>& quadProjectiles = baseQuads[*qi].projectiles;
+
+		for (pi = quadProjectiles.begin(); pi != quadProjectiles.end(); ++pi) {
+			const float totRad = radius + (*pi)->radius;
+
+			if ((pos - (*pi)->pos).SqLength() >= (totRad * totRad)) {
+				continue;
+			}
+
+			projectiles.push_back(*pi);
+		}
+	}
+
+	return projectiles;
+}
+
+std::vector<CProjectile*> CQuadField::GetProjectilesExact(const float3& mins, const float3& maxs)
+{
+	GML_RECMUTEX_LOCK(qnum);
+
+	const std::vector<int>& quads = GetQuadsRectangle(mins, maxs);
+
+	std::vector<CProjectile*> projectiles;
+	std::vector<int>::const_iterator qi;
+	std::list<CProjectile*>::iterator pi;
+
+	for (qi = quads.begin(); qi != quads.end(); ++qi) {
+		std::list<CProjectile*>& quadProjectiles = baseQuads[*qi].projectiles;
+
+		for (pi = quadProjectiles.begin(); pi != quadProjectiles.end(); ++pi) {
+			CProjectile* projectile = *pi;
+			const float3& pos = projectile->pos;
+
+			if (pos.x < mins.x || pos.x > maxs.x) { continue; }
+			if (pos.z < mins.z || pos.z > maxs.z) { continue; }
+
+			projectiles.push_back(projectile);
+		}
+	}
+
+	return projectiles;
+}
+
+
+
 std::vector<CSolidObject*> CQuadField::GetSolidsExact(const float3& pos, float radius)
 {
 	GML_RECMUTEX_LOCK(qnum); // GetSolidsExact
 
-	std::vector<CSolidObject*> solids;
-
 	const std::vector<int>& quads = GetQuads(pos, radius);
 	const int tempNum = gs->tempNum++;
 
+	std::vector<CSolidObject*> solids;
 	std::vector<int>::const_iterator qi;
 	std::list<CUnit*>::iterator ui;
+
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
 		for (ui = baseQuads[*qi].units.begin(); ui != baseQuads[*qi].units.end(); ++ui) {
-			if (!(*ui)->blocking) {
-				continue;
-			}
-
 			const float totRad = radius + (*ui)->radius;
-			if ((*ui)->tempNum != tempNum
-					&& (pos - (*ui)->midPos).SqLength() < (totRad * totRad))
-			{
-				(*ui)->tempNum = tempNum;
-				solids.push_back(*ui);
-			}
+
+			if (!(*ui)->blocking) { continue; }
+			if ((*ui)->tempNum == tempNum) { continue; }
+			if ((pos - (*ui)->midPos).SqLength() >= (totRad * totRad)) { continue; }
+
+			(*ui)->tempNum = tempNum;
+			solids.push_back(*ui);
 		}
 
 		std::list<CFeature*>::iterator fi;
 		for (fi = baseQuads[*qi].features.begin(); fi != baseQuads[*qi].features.end(); ++fi) {
-			if (!(*fi)->blocking) {
-				continue;
-			}
-
 			const float totRad = radius + (*fi)->radius;
-			if ((*fi)->tempNum!=tempNum && (pos - (*fi)->midPos).SqLength() < (totRad * totRad))
-			{
-				(*fi)->tempNum = tempNum;
-				solids.push_back(*fi);
-			}
+
+			if (!(*fi)->blocking) { continue; }
+			if ((*fi)->tempNum == tempNum) { continue; }
+			if ((pos - (*fi)->midPos).SqLength() >= (totRad * totRad)) { continue; }
+
+			(*fi)->tempNum = tempNum;
+			solids.push_back(*fi);
 		}
 	}
 
 	return solids;
 }
 
+
+
 std::vector<int> CQuadField::GetQuadsRectangle(const float3& pos,const float3& pos2) const
 {
 	std::vector<int> ret;
 
-	int maxx = std::max(0, std::min(((int)(pos2.x)) / QUAD_SIZE + 1, numQuadsX - 1));
-	int maxz = std::max(0, std::min(((int)(pos2.z)) / QUAD_SIZE + 1, numQuadsZ - 1));
+	const int maxx = std::max(0, std::min(((int)(pos2.x)) / QUAD_SIZE + 1, numQuadsX - 1));
+	const int maxz = std::max(0, std::min(((int)(pos2.z)) / QUAD_SIZE + 1, numQuadsZ - 1));
 
-	int minx = std::max(0, std::min(((int)(pos.x)) / QUAD_SIZE, numQuadsX - 1));
-	int minz = std::max(0, std::min(((int)(pos.z)) / QUAD_SIZE, numQuadsZ - 1));
+	const int minx = std::max(0, std::min(((int)(pos.x)) / QUAD_SIZE, numQuadsX - 1));
+	const int minz = std::max(0, std::min(((int)(pos.z)) / QUAD_SIZE, numQuadsZ - 1));
 
 	if (maxz < minz || maxx < minx)
 		return ret;
@@ -572,37 +718,41 @@ std::vector<int> CQuadField::GetQuadsRectangle(const float3& pos,const float3& p
 	return ret;
 }
 
+
+
 // optimization specifically for projectile collisions
 void CQuadField::GetUnitsAndFeaturesExact(const float3& pos, float radius, CUnit**& dstUnit, CFeature**& dstFeature)
 {
 	GML_RECMUTEX_LOCK(qnum); // GetUnitsAndFeaturesExact
 
+	const int tempNum = gs->tempNum++;
+
 	int* endQuad = tempQuads;
 	GetQuads(pos, radius, endQuad);
-	const int tempNum = gs->tempNum++;
 
 	std::list<CUnit*>::iterator ui;
 	std::list<CFeature*>::iterator fi;
+
 	for (int* a = tempQuads; a != endQuad; ++a) {
 		Quad& quad = baseQuads[*a];
+
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			if ((*ui)->tempNum != tempNum) {
-				(*ui)->tempNum = tempNum;
-				*dstUnit = *ui;
-				++dstUnit;
-			}
+			if ((*ui)->tempNum == tempNum) { continue; }
+
+			(*ui)->tempNum = tempNum;
+			*dstUnit = *ui;
+			++dstUnit;
 		}
 
 		for (fi = quad.features.begin(); fi != quad.features.end(); ++fi) {
 			const float totRad = radius + (*fi)->radius;
-			if ((*fi)->tempNum != tempNum
-					&& (pos - (*fi)->midPos).SqLength() < (totRad * totRad))
-			{
-				(*fi)->tempNum = tempNum;
-				*dstFeature = *fi;
-				++dstFeature;
-			}
+
+			if ((*fi)->tempNum == tempNum) { continue; }
+			if ((pos - (*fi)->midPos).SqLength() >= (totRad * totRad)) { continue; }
+
+			(*fi)->tempNum = tempNum;
+			*dstFeature = *fi;
+			++dstFeature;
 		}
 	}
 }
-

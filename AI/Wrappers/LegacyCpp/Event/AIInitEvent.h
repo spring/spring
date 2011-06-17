@@ -18,12 +18,15 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AIINITEVENT_H
-#define _AIINITEVENT_H
+#ifndef _AI_INIT_EVENT_H
+#define _AI_INIT_EVENT_H
 
 #include "AIEvent.h"
 #include "../IGlobalAICallback.h"
 #include "../AIGlobalAICallback.h"
+
+
+namespace springLegacyAI {
 
 class CAIInitEvent : public CAIEvent {
 public:
@@ -52,4 +55,6 @@ private:
 	CAIGlobalAICallback* wrappedClb;
 };
 
-#endif // _AIINITEVENT_H
+} // namespace springLegacyAI
+
+#endif // _AI_INIT_EVENT_H

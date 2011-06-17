@@ -81,6 +81,8 @@ const CMatrix44f* LuaOpenGLUtils::GetNamedMatrix(const std::string& name)
 			return &camera->GetViewProjectionMatrixInverse();
 		case LUAMATRICES_BILLBOARD:
 			return &camera->GetBillBoardMatrix();
+		case LUAMATRICES_NONE:
+			break;
 	}
 
 	return NULL;

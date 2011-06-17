@@ -17,7 +17,7 @@
 #include "InMapDrawModel.h"
 #include "Game/UI/UnitTracker.h"
 #ifdef _WIN32
-#  include "winerror.h"
+#  include "winerror.h" // TODO someone on windows (MinGW? VS?) please check if this is required
 #endif
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
@@ -28,7 +28,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "System/EventHandler.h"
-#include "System/FPUCheck.h"
+#include "System/LogOutput.h"
 #include "System/myMath.h"
 #include "System/NetProtocol.h"
 #include "System/LoadSave/DemoRecorder.h"
@@ -45,7 +45,7 @@ void CGame::ClientReadNet()
 		if (playing) {
 			net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("CPU load") + profiler.GetPercent("CPU-DrawFrame load")));
 #if defined(USE_GML) && GML_ENABLE_SIM
-			net->Send(CBaseNetProtocol::Get().SendLuaDrawTime(gu->myPlayerNum, luaDrawTime));
+			net->Send(CBaseNetProtocol::Get().SendLuaDrawTime(gu->myPlayerNum, luaLockTime));
 #endif
 		} else {
 			// the CPU-load percentage is undefined prior to SimFrame()
@@ -76,7 +76,7 @@ void CGame::ClientReadNet()
 			++ahead;
 		}
 
-		if(que < leastQue)
+		if (que < leastQue)
 			leastQue = que;
 	}
 	else
@@ -395,7 +395,7 @@ void CGame::ClientReadNet()
 					pckt >> cmd_opt;
 	
 					Command c(cmd_id, cmd_opt);
-					for(int a = 0; a < ((psize-9)/4); ++a) {
+					for (int a = 0; a < ((psize-9)/4); ++a) {
 						float param;
 						pckt >> param;
 						c.params.push_back(param);
@@ -570,7 +570,7 @@ void CGame::ClientReadNet()
 					for (int i = 0, j = fixedLen;  i < numUnitIDs;  i++, j += sizeof(short)) {
 						short int unitID;
 						pckt >> unitID;
-						if(unitID >= uh->MaxUnits() || unitID < 0)
+						if (unitID >= uh->MaxUnits() || unitID < 0)
 							throw netcode::UnpackPacketException("Invalid unit ID");
 
 						CUnit* u = uh->units[unitID];
@@ -590,7 +590,7 @@ void CGame::ClientReadNet()
 					netcode::UnpackPacket unpack(packet, 1);
 					boost::uint16_t size;
 					unpack >> size;
-					if(size != packet->length)
+					if (size != packet->length)
 						throw netcode::UnpackPacketException("Invalid size");
 					boost::uint8_t playerNum;
 					unpack >> playerNum;
@@ -691,7 +691,7 @@ void CGame::ClientReadNet()
 			}
 			case NETMSG_MAPDRAW: {
 				int player = inMapDrawer->GotNetMsg(packet);
-				if(player >= 0)
+				if (player >= 0)
 					AddTraffic(player, packetCode, dataLength);
 				break;
 			}
@@ -978,7 +978,7 @@ void CGame::ClientReadNet()
 				try {
 					CommandMessage msg(packet);
 
-					ActionReceived(msg.action, msg.player);
+					ActionReceived(msg.GetAction(), msg.GetPlayerID());
 				} catch (netcode::UnpackPacketException &e) {
 					logOutput.Print("Got invalid CommandMessage: %s", e.err.c_str());
 				}

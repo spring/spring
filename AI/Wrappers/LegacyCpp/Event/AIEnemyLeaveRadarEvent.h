@@ -18,10 +18,13 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AIENEMYLEAVERADAREVENT_H
-#define _AIENEMYLEAVERADAREVENT_H
+#ifndef _AI_ENEMY_LEAVE_RADAR_EVENT_H
+#define _AI_ENEMY_LEAVE_RADAR_EVENT_H
 
 #include "AIEvent.h"
+
+
+namespace springLegacyAI {
 
 class CAIEnemyLeaveRadarEvent : public CAIEvent {
 public:
@@ -37,4 +40,6 @@ private:
 	SEnemyLeaveRadarEvent event;
 };
 
-#endif // _AIENEMYLEAVERADAREVENT_H
+} // namespace springLegacyAI
+
+#endif // _AI_ENEMY_LEAVE_RADAR_EVENT_H

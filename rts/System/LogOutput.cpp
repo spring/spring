@@ -14,7 +14,7 @@
 #include <windows.h>
 #endif
 
-#include "lib/gml/gml.h"
+#include "lib/gml/gmlmut.h"
 #include "Util.h"
 #include "float3.h"
 #include "Sim/Misc/GlobalSynced.h"
