@@ -11,6 +11,18 @@
 #include "Util.h"
 #include "mmgr.h"
 
+
+CDirArchiveFactory::CDirArchiveFactory()
+	: IArchiveFactory("sdd")
+{
+}
+
+CArchiveBase* CDirArchiveFactory::DoCreateArchive(const std::string& filePath) const
+{
+	return new CArchiveDir(filePath);
+}
+
+
 CArchiveDir::CArchiveDir(const std::string& archiveName)
 	: CArchiveBase(archiveName)
 	, dirName(archiveName + '/')

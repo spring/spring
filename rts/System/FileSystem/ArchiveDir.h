@@ -5,11 +5,25 @@
 
 #include <map>
 
+#include "ArchiveFactory.h"
 #include "ArchiveBase.h"
 
+
 /**
- * Archive implementation which falls back to the regular filesystem.
- * ie. a directory and all it's contents are treated as an archive by this
+ * Creates file-system/dir oriented archives.
+ * @see CArchiveDir
+ */
+class CDirArchiveFactory : public IArchiveFactory {
+public:
+	CDirArchiveFactory();
+private:
+	CArchiveBase* DoCreateArchive(const std::string& filePath) const;
+};
+
+
+/**
+ * Archive implementation which falls back to the regular file-system.
+ * ie. a directory and all its contents are treated as an archive by this
  * class.
  */
 class CArchiveDir : public CArchiveBase

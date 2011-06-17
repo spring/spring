@@ -12,6 +12,17 @@
 #include "LogOutput.h"
 
 
+CZipArchiveFactory::CZipArchiveFactory()
+	: IArchiveFactory("sdz")
+{
+}
+
+CArchiveBase* CZipArchiveFactory::DoCreateArchive(const std::string& filePath) const
+{
+	return new CArchiveZip(filePath);
+}
+
+
 CArchiveZip::CArchiveZip(const std::string& archiveName)
 	: CArchiveBuffered(archiveName)
 {

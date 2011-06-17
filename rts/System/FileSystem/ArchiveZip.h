@@ -3,6 +3,7 @@
 #ifndef _ARCHIVE_ZIP
 #define _ARCHIVE_ZIP
 
+#include "ArchiveFactory.h"
 #include "ArchiveBuffered.h"
 #include "lib/minizip/unzip.h"
 
@@ -18,6 +19,22 @@
 #include <string>
 #include <vector>
 
+
+/**
+ * Creates zip compressed, single-file archives.
+ * @see CArchiveZip
+ */
+class CZipArchiveFactory : public IArchiveFactory {
+public:
+	CZipArchiveFactory();
+private:
+	CArchiveBase* DoCreateArchive(const std::string& filePath) const;
+};
+
+
+/**
+ * A zip compressed, single-file archive.
+ */
 class CArchiveZip : public CArchiveBuffered
 {
 public:

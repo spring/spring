@@ -19,6 +19,17 @@ extern "C" {
 #include "LogOutput.h"
 
 
+CSevenZipArchiveFactory::CSevenZipArchiveFactory()
+	: IArchiveFactory("sd7")
+{
+}
+
+CArchiveBase* CSevenZipArchiveFactory::DoCreateArchive(const std::string& filePath) const
+{
+	return new CArchive7Zip(filePath);
+}
+
+
 CArchive7Zip::CArchive7Zip(const std::string& name) :
 	CArchiveBase(name),
 	isOpen(false)
