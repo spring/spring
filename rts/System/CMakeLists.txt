@@ -71,7 +71,7 @@ SET(sources_engine_System_FileSystem
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveBase.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveBuffered.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveDir.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveFactory.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveLoader.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchivePool.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveScanner.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveZip.cpp"

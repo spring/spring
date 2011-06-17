@@ -19,7 +19,7 @@
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "ExternalAI/LuaAIImplHandler.h"
 #include "System/FileSystem/ArchiveBase.h"
-#include "System/FileSystem/ArchiveFactory.h"
+#include "System/FileSystem/ArchiveLoader.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
@@ -2378,7 +2378,7 @@ EXPORT(int) OpenArchive(const char* name)
 		CheckInit();
 		CheckNullOrEmpty(name);
 
-		CArchiveBase* a = CArchiveFactory::OpenArchive(name);
+		CArchiveBase* a = archiveLoader.OpenArchive(name);
 
 		if (!a) {
 			throw content_error("Archive '" + std::string(name) + "' could not be opened");
@@ -2399,7 +2399,7 @@ EXPORT(int) OpenArchiveType(const char* name, const char* type)
 		CheckNullOrEmpty(name);
 		CheckNullOrEmpty(type);
 
-		CArchiveBase* a = CArchiveFactory::OpenArchive(name, type);
+		CArchiveBase* a = archiveLoader.OpenArchive(name, type);
 
 		if (!a) {
 			throw content_error("Archive '" + std::string(name) + "' could not be opened");
