@@ -471,8 +471,15 @@ void CQuadField::RemoveFeature(CFeature* feature)
 
 void CQuadField::MovedProjectile(CProjectile* p)
 {
-	RemoveProjectile(p);
-	AddProjectile(p);
+	int2 oldCellCoors = p->GetQuadFieldCellCoors();
+	int2 newCellCoors;
+	newCellCoors.x = std::max(0, std::min(int(p->pos.x / QUAD_SIZE), numQuadsX - 1));
+	newCellCoors.y = std::max(0, std::min(int(p->pos.z / QUAD_SIZE), numQuadsZ - 1));
+
+	if (newCellCoors.x != oldCellCoors.x || newCellCoors.y != oldCellCoors.y) {
+		RemoveProjectile(p);
+		AddProjectile(p);
+	}
 }
 
 void CQuadField::AddProjectile(CProjectile* p)
@@ -480,16 +487,16 @@ void CQuadField::AddProjectile(CProjectile* p)
 	if (!p->synced)
 		return;
 
-	GML_RECMUTEX_LOCK(quad);
-
 	// projectiles are point-objects, so
 	// they exist in a single cell only
 	int2 cellCoors;
 	cellCoors.x = std::max(0, std::min(int(p->pos.x / QUAD_SIZE), numQuadsX - 1));
 	cellCoors.y = std::max(0, std::min(int(p->pos.z / QUAD_SIZE), numQuadsZ - 1));
 
-	Quad& quad = baseQuads[numQuadsX * cellCoors.y + cellCoors.x];
-	std::list<CProjectile*>& projectiles = quad.projectiles;
+	GML_RECMUTEX_LOCK(quad);
+
+	Quad& q = baseQuads[numQuadsX * cellCoors.y + cellCoors.x];
+	std::list<CProjectile*>& projectiles = q.projectiles;
 
 	p->SetQuadFieldCellCoors(cellCoors);
 	p->SetQuadFieldCellIter(projectiles.insert(projectiles.end(), p));
@@ -500,14 +507,14 @@ void CQuadField::RemoveProjectile(CProjectile* p)
 	if (!p->synced)
 		return;
 
-	GML_RECMUTEX_LOCK(quad);
-
 	const int2& cellCoors = p->GetQuadFieldCellCoors();
 	const int cellIdx = numQuadsX * cellCoors.y + cellCoors.x;
 
-	Quad& quad = baseQuads[cellIdx];
+	GML_RECMUTEX_LOCK(quad);
 
-	std::list<CProjectile*>& projectiles = quad.projectiles;
+	Quad& q = baseQuads[cellIdx];
+
+	std::list<CProjectile*>& projectiles = q.projectiles;
 	std::list<CProjectile*>::iterator pi = p->GetQuadFieldCellIter();
 
 	#ifdef REMOVE_PROJECTILE_FAST
