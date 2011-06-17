@@ -9,7 +9,7 @@
 #include <set>
 #include <cstring>
 
-#include "ArchiveFactory.h"
+#include "ArchiveLoader.h"
 #include "ArchiveBase.h"
 #include "ArchiveDir.h" // for FileData::dynamic
 #include "LogOutput.h"
@@ -39,7 +39,7 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool override, cons
 
 	CArchiveBase* ar = archives[archiveName];
 	if (!ar) {
-		ar = CArchiveFactory::OpenArchive(archiveName, type);
+		ar = archiveLoader.OpenArchive(archiveName, type);
 		if (!ar) {
 			logOutput.Print(LOG_VFS, "AddArchive: Failed to open archive '%s'.", archiveName.c_str());
 			return false;

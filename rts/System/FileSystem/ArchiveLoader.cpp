@@ -3,7 +3,7 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "ArchiveFactory.h"
+#include "ArchiveLoader.h"
 
 #include "ArchiveBase.h"
 #include "ArchivePool.h"
@@ -14,7 +14,15 @@
 
 #include "Util.h"
 
-bool CArchiveFactory::IsScanArchive(const std::string& fileName)
+
+const CArchiveLoader& CArchiveLoader::GetInstance()
+{
+	static const CArchiveLoader singleton;
+	return singleton;
+}
+
+
+bool CArchiveLoader::IsArchiveFile(const std::string& fileName) const
 {
 	const std::string ext = filesystem.GetExtension(fileName);
 
@@ -22,7 +30,7 @@ bool CArchiveFactory::IsScanArchive(const std::string& fileName)
 }
 
 
-CArchiveBase* CArchiveFactory::OpenArchive(const std::string& fileName, const std::string& type)
+CArchiveBase* CArchiveLoader::OpenArchive(const std::string& fileName, const std::string& type) const
 {
 	std::string ext = type;
 	if (type.empty()) {
