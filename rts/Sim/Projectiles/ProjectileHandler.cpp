@@ -187,8 +187,12 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 #endif
 				pci = pc.erase_delete(pci);
 			}
+
+			qf->RemoveProjectile(p);
 		} else {
 			p->Update();
+			qf->MovedProjectile(p);
+
 			GML_GET_TICKS(p->lastProjUpdate);
 			++pci;
 		}
@@ -345,11 +349,11 @@ void CProjectileHandler::CheckUnitCollisions(
 		// if this unit fired this projectile or (this unit is in the
 		// same allyteam as the unit that shot this projectile and we
 		// are ignoring friendly collisions)
-		if (p->owner() == unit || ((p->collisionFlags & Collision::NOFRIENDLIES) && friendlyShot)) {
+		if (p->owner() == unit || ((p->GetCollisionFlags() & Collision::NOFRIENDLIES) && friendlyShot)) {
 			continue;
 		}
 
-		if (p->collisionFlags & Collision::NONEUTRALS) {
+		if (p->GetCollisionFlags() & Collision::NONEUTRALS) {
 			if (unit->IsNeutral()) { continue; }
 		}
 
@@ -389,7 +393,7 @@ void CProjectileHandler::CheckFeatureCollisions(
 {
 	CollisionQuery q;
 
-	if (p->collisionFlags & Collision::NOFEATURES) {
+	if (p->GetCollisionFlags() & Collision::NOFEATURES) {
 		return;
 	}
 
