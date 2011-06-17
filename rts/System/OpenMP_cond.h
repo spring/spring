@@ -10,9 +10,11 @@
 
 #ifdef _OPENMP
 	#include <omp.h>
-	#define PRAGMA_OPEN_MP(params) #pragma omp params
 #else
-	#define PRAGMA_OPEN_MP(params)
+	// For GCC, unknown pragma warnings are disabled globally
+	// with "-Wno-unknown-pragmas".
+	// On MSVC, we can disable unknown pragma warnings locally:
+	#pragma warning (disable : 4068 )
 #endif
 
 #endif // _OPEN_MP_COND_H
