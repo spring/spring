@@ -84,6 +84,7 @@ class LuaSyncedRead {
 		static int GetUnitNearestEnemy(lua_State* L);
 
 		static int GetFeaturesInRectangle(lua_State* L);
+		static int GetProjectilesInRectangle(lua_State* L);
 
 		static int ValidUnitID(lua_State* L);
 		static int GetUnitTooltip(lua_State* L);
