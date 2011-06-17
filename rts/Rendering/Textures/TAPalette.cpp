@@ -18,11 +18,11 @@ CTAPalette::CTAPalette()
 	}
 }
 
-void CTAPalette::Init(CFileHandler& palette)
+void CTAPalette::Init(CFileHandler& paletteFile)
 {
 	for (unsigned c = 0; c < NUM_PALETTE_ENTRIES; ++c) {
 		for (unsigned c2 = 0; c2 < 4; ++c2) {
-			palette.Read(&p[c][c2], 1);
+			paletteFile.Read(&p[c][c2], 1);
 		}
 		p[c][3] = 255;
 	}
