@@ -3,11 +3,8 @@
 #ifndef UNITHANDLER_H
 #define UNITHANDLER_H
 
-#include <set>
 #include <vector>
 #include <list>
-#include <stack>
-#include <string>
 
 #include "UnitDef.h"
 #include "UnitSet.h"

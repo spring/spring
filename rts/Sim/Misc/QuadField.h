@@ -14,6 +14,7 @@
 class CUnit;
 class CWorldObject;
 class CFeature;
+class CProjectile;
 class CSolidObject;
 
 class CQuadField : boost::noncopyable
@@ -54,12 +55,21 @@ public:
 
 	std::vector<CFeature*> GetFeaturesExact(const float3& pos, float radius);
 	std::vector<CFeature*> GetFeaturesExact(const float3& mins, const float3& maxs);
+
+	std::vector<CProjectile*> GetProjectilesExact(const float3& pos, float radius);
+	std::vector<CProjectile*> GetProjectilesExact(const float3& mins, const float3& maxs);
+
 	std::vector<CSolidObject*> GetSolidsExact(const float3& pos, float radius);
 
 	void MovedUnit(CUnit* unit);
 	void RemoveUnit(CUnit* unit);
+
 	void AddFeature(CFeature* feature);
 	void RemoveFeature(CFeature* feature);
+
+	void MovedProjectile(CProjectile* projectile);
+	void AddProjectile(CProjectile* projectile);
+	void RemoveProjectile(CProjectile* projectile);
 
 	struct Quad {
 		CR_DECLARE_STRUCT(Quad);
@@ -67,6 +77,7 @@ public:
 		std::list<CUnit*> units;
 		std::vector< std::list<CUnit*> > teamUnits;
 		std::list<CFeature*> features;
+		std::list<CProjectile*> projectiles;
 	};
 
 	const Quad& GetQuad(int i) const {
