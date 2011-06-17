@@ -3,9 +3,11 @@
 #ifndef _ARCHIVE_LOADER_H
 #define _ARCHIVE_LOADER_H
 
+#include <map>
 #include <string>
 
 class CArchiveBase;
+class IArchiveFactory;
 
 /**
  * Engine side interface for loading of different archive types.
@@ -14,9 +16,11 @@ class CArchiveBase;
  */
 class CArchiveLoader
 {
-	CArchiveLoader() {}
+	CArchiveLoader();
+	~CArchiveLoader();
+
 public:
-	static const CArchiveLoader& GetInstance();
+	static CArchiveLoader& GetInstance();
 
 	/// Returns true if the indicated file is in fact an archive
 	bool IsArchiveFile(const std::string& fileName) const;
@@ -24,6 +28,16 @@ public:
 	/// Returns a pointer to a new'ed suitable subclass of CArchiveBase
 	CArchiveBase* OpenArchive(const std::string& fileName,
 			const std::string& type = "") const;
+
+	/**
+	 * Registers an archive factory, which handles a single type of archive.
+	 * @param archiveFactory has to be new'ed, will be delete'ed
+	 */
+	void AddFactory(IArchiveFactory* archiveFactory);
+
+private:
+	/// maps the default-extension to the corresponding archive factory
+	std::map<std::string, IArchiveFactory*> archiveFactories;
 };
 
 #define archiveLoader CArchiveLoader::GetInstance()

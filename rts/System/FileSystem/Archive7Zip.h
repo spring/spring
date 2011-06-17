@@ -9,8 +9,25 @@ extern "C" {
 #include "lib/7z/Archive/7z/7zIn.h"
 };
 
+#include "ArchiveFactory.h"
 #include "ArchiveBase.h"
 
+
+/**
+ * Creates LZMA/7zip compressed, single-file archives.
+ * @see CArchive7Zip
+ */
+class CSevenZipArchiveFactory : public IArchiveFactory {
+public:
+	CSevenZipArchiveFactory();
+private:
+	CArchiveBase* DoCreateArchive(const std::string& filePath) const;
+};
+
+
+/**
+ * An LZMA/7zip compressed, single-file archive.
+ */
 class CArchive7Zip : public CArchiveBase
 {
 public:

@@ -16,6 +16,18 @@
 #include "mmgr.h"
 #include "LogOutput.h"
 
+
+CPoolArchiveFactory::CPoolArchiveFactory()
+	: IArchiveFactory("sdp")
+{
+}
+
+CArchiveBase* CPoolArchiveFactory::DoCreateArchive(const std::string& filePath) const
+{
+	return new CArchivePool(filePath);
+}
+
+
 static unsigned int parse_int32(unsigned char c[4])
 {
 	unsigned int i = 0;

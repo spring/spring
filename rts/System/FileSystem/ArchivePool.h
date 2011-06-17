@@ -5,7 +5,21 @@
 
 #include <zlib.h>
 
+#include "ArchiveFactory.h"
 #include "ArchiveBuffered.h"
+
+
+/**
+ * Creates pool (aka rapid) archives.
+ * @see CArchivePool
+ */
+class CPoolArchiveFactory : public IArchiveFactory {
+public:
+	CPoolArchiveFactory();
+private:
+	CArchiveBase* DoCreateArchive(const std::string& filePath) const;
+};
+
 
 /**
  * The pool archive format (aka rapid) is specifically developed for spring.
