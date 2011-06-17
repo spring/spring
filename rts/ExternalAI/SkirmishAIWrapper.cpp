@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "StdAfx.h"
 #include "SkirmishAIWrapper.h"
 
 #include "System/StdAfx.h"
@@ -27,6 +28,8 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
+
+#undef DeleteFile
 
 CR_BIND_DERIVED(CSkirmishAIWrapper, CObject, )
 CR_REG_METADATA(CSkirmishAIWrapper, (
@@ -376,9 +379,14 @@ void CSkirmishAIWrapper::Update(int frame) {
 	ai->HandleEvent(EVENT_UPDATE, &evtData);
 }
 
-void CSkirmishAIWrapper::GotChatMsg(const char* msg, int fromPlayerId) {
-	SMessageEvent evtData = {fromPlayerId, msg};
-	ai->HandleEvent(EVENT_MESSAGE, &evtData);
+void CSkirmishAIWrapper::SendChatMessage(const char* msg, int fromPlayerId) {
+	SChatMessageEvent evtData = {fromPlayerId, msg};
+	ai->HandleEvent(EVENT_CHAT_MESSAGE, &evtData);
+}
+
+void CSkirmishAIWrapper::SendLuaMessage(const char* inData, const char** outData) {
+	SLuaMessageEvent evtData = {inData, outData};
+	ai->HandleEvent(EVENT_LUA_MESSAGE, &evtData);
 }
 
 void CSkirmishAIWrapper::WeaponFired(int unitId, int weaponDefId) {

@@ -291,8 +291,10 @@ public:
 
 	int losRadius;
 	int airLosRadius;
-	float losHeight;
 	int lastLosUpdate;
+
+	float losHeight;
+	float radarHeight;
 
 	int radarRadius;
 	int sonarRadius;
@@ -495,6 +497,7 @@ public:
 #ifdef USE_GML
 	/// last draw frame
 	int lastDrawFrame;
+	boost::recursive_mutex lodmutex;
 #endif
 #if defined(USE_GML) && GML_ENABLE_SIM
 	unsigned lastUnitUpdate;

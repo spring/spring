@@ -530,4 +530,9 @@ namespace CrashHandler
 		signal(SIGABRT, SIG_DFL);
 		signal(SIGINT,  SIG_DFL);
 	}
+
+	void OutputStacktrace() {
+		bool keepRunning = true;
+		Stacktrace(&keepRunning);
+	}
 };

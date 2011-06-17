@@ -41,7 +41,7 @@
 #include "GlobalUnsynced.h"
 #include "Util.h"
 
-const int TARGET_LOST_TIMER =120;	// in calls to SlowUpdate() (approx. once every second)
+static const int TARGET_LOST_TIMER = 120; // in calls to SlowUpdate() (approx. twice every second)
 
 CR_BIND(CCommandQueue, );
 CR_REG_METADATA(CCommandQueue, (
@@ -116,7 +116,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 	c.tooltip = "Stop: Cancel the units current actions";
 	possibleCommands.push_back(c);
 
-	if (isAttackCapable()) {
+	if (IsAttackCapable()) {
 		c.id = CMD_ATTACK;
 		c.action = "attack";
 		c.type = CMDTYPE_ICON_UNIT_OR_MAP;
@@ -332,7 +332,7 @@ vector<CommandDescription>& CCommandAI::GetPossibleCommands()
 }
 
 
-bool CCommandAI::isAttackCapable() const
+bool CCommandAI::IsAttackCapable() const
 {
 	const UnitDef* ud = owner->unitDef;
 	const bool b = (!ud->weapons.empty() || ud->canKamikaze || (ud->IsFactoryUnit()));
@@ -371,7 +371,7 @@ static inline bool IsCommandInMap(const Command& c)
 
 bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 {
-	// check if the command is in the map first
+	// TODO check if the command is in the map first, for more commands
 	switch (c.GetID()) {
 		case CMD_MOVE:
 		case CMD_ATTACK:
@@ -407,7 +407,7 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 				return false;
 
 		case CMD_ATTACK: {
-			if (!isAttackCapable())
+			if (!IsAttackCapable())
 				return false;
 
 			if (c.params.size() == 1) {
@@ -926,8 +926,6 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 	if (!owner->stunned) {
 		SlowUpdate();
 	}
-
-	return;
 }
 
 
@@ -1018,22 +1016,13 @@ void CCommandAI::ExecuteRemove(const Command& c)
 }
 
 
-/**
-* @brief Determins if c will cancel a queued command
-* @return true if c will cancel a queued command
-**/
-bool CCommandAI::WillCancelQueued(Command &c)
+bool CCommandAI::WillCancelQueued(const Command& c)
 {
-	return (this->GetCancelQueued(c, commandQue) != this->commandQue.end());
+	return (GetCancelQueued(c, commandQue) != commandQue.end());
 }
 
 
-/**
-* @brief Finds the queued command that would be canceled by the Command c
-* @return An iterator located at the command, or commandQue.end() if no such queued command exsists
-**/
-CCommandQueue::iterator CCommandAI::GetCancelQueued(const Command &c,
-                                                          CCommandQueue& q)
+CCommandQueue::iterator CCommandAI::GetCancelQueued(const Command& c, CCommandQueue& q)
 {
 	CCommandQueue::iterator ci = q.end();
 
@@ -1047,7 +1036,7 @@ CCommandQueue::iterator CCommandAI::GetCancelQueued(const Command &c,
 				|| (cmd2_id == CMD_FIGHT && cmd_id == CMD_ATTACK && c2.params.size() == 1))
 				&& (c2.params.size() == c.params.size())) {
 			if (c.params.size() == 1) {
-			  // assume the param is a unit of feature id
+				// assume the param is a unit-ID or feature-ID
 				if ((c2.params[0] == c.params[0]) &&
 				    (cmd2_id != CMD_SET_WANTED_MAX_SPEED)) {
 					return ci;
@@ -1077,8 +1066,7 @@ CCommandQueue::iterator CCommandAI::GetCancelQueued(const Command &c,
 }
 
 
-int CCommandAI::CancelCommands(const Command &c, CCommandQueue& q,
-                               bool& first)
+int CCommandAI::CancelCommands(const Command &c, CCommandQueue& q, bool& first)
 {
 	first = false;
 	int cancelCount = 0;
@@ -1120,18 +1108,13 @@ int CCommandAI::CancelCommands(const Command &c, CCommandQueue& q,
 }
 
 
-/**
-* @brief Returns commands that overlap c, but will not be canceled by c
-* @return a vector containing commands that overlap c
-*/
-std::vector<Command> CCommandAI::GetOverlapQueued(const Command &c)
+std::vector<Command> CCommandAI::GetOverlapQueued(const Command& c)
 {
 	return GetOverlapQueued(c, commandQue);
 }
 
 
-std::vector<Command> CCommandAI::GetOverlapQueued(const Command &c,
-                                                  CCommandQueue& q)
+std::vector<Command> CCommandAI::GetOverlapQueued(const Command& c, CCommandQueue& q)
 {
 	CCommandQueue::iterator ci = q.end();
 	std::vector<Command> v;
@@ -1191,10 +1174,8 @@ int CCommandAI::UpdateTargetLostTimer(int unitID)
 	return targetLostTimer;
 }
 
-/**
-* @brief Causes this CommandAI to execute the attack order c
-*/
-void CCommandAI::ExecuteAttack(Command &c)
+
+void CCommandAI::ExecuteAttack(Command& c)
 {
 	assert(owner->unitDef->canAttack);
 
@@ -1239,9 +1220,7 @@ void CCommandAI::ExecuteAttack(Command &c)
 	}
 }
 
-/**
-* @brief executes the stop command c
-*/
+
 void CCommandAI::ExecuteStop(Command &c)
 {
 	owner->AttackUnit(0,true);
@@ -1252,14 +1231,13 @@ void CCommandAI::ExecuteStop(Command &c)
 	FinishCommand();
 }
 
-/**
-* @brief executes the DGun command c
-*/
+
 void CCommandAI::ExecuteDGun(Command &c)
 {
 	ExecuteAttack(c);
 	return;
 }
+
 
 void CCommandAI::SlowUpdate()
 {
@@ -1315,7 +1293,7 @@ int CCommandAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 {
 	if (pointed) {
 		if (!teamHandler->Ally(gu->myAllyTeam, pointed->allyteam)) {
-			if (isAttackCapable()) {
+			if (IsAttackCapable()) {
 				return CMD_ATTACK;
 			}
 		}
@@ -1323,16 +1301,16 @@ int CCommandAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 	return CMD_STOP;
 }
 
-void CCommandAI::DependentDied(CObject *o)
+void CCommandAI::DependentDied(CObject* o)
 {
-	if(o==orderTarget){
-		targetDied=true;
-		orderTarget=0;
+	if (o == orderTarget) {
+		targetDied = true;
+		orderTarget = NULL;
 	}
 }
 
 
-bool CCommandAI::isTrackable(const CUnit* unit) const
+bool CCommandAI::IsTrackable(const CUnit* unit) const
 {
 	return ((unit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)) != 0) ||
 	       (unit->unitDef->speed <= 0.0f);
@@ -1345,7 +1323,7 @@ void CCommandAI::DrawWaitIcon(const Command& cmd) const
 }
 
 
-void CCommandAI::DrawCommands(void)
+void CCommandAI::DrawCommands()
 {
 	lineDrawer.StartPath(owner->drawMidPos, cmdColors.start);
 
@@ -1361,7 +1339,7 @@ void CCommandAI::DrawCommands(void)
 				if (ci->params.size() == 1) {
 					const CUnit* unit = uh->GetUnit(ci->params[0]);
 
-					if ((unit != NULL) && isTrackable(unit)) {
+					if ((unit != NULL) && IsTrackable(unit)) {
 						const float3 endPos =
 							helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(ci->GetID(), endPos, cmdColors.attack);
@@ -1403,7 +1381,7 @@ void CCommandAI::DrawDefaultCommand(const Command& c) const
 	if (paramsCount == 1) {
 		const CUnit* unit = uh->GetUnit(c.params[0]);
 
-		if ((unit != NULL) && isTrackable(unit)) {
+		if ((unit != NULL) && IsTrackable(unit)) {
 			const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 			lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
 		}
@@ -1430,7 +1408,7 @@ void CCommandAI::DrawDefaultCommand(const Command& c) const
 }
 
 
-void CCommandAI::FinishCommand(void)
+void CCommandAI::FinishCommand()
 {
 	assert(!commandQue.empty());
 	const Command cmd = commandQue.front();
@@ -1487,7 +1465,7 @@ void CCommandAI::StockpileChanged(CWeapon* weapon)
 	UpdateStockpileIcon();
 }
 
-void CCommandAI::UpdateStockpileIcon(void)
+void CCommandAI::UpdateStockpileIcon()
 {
 	vector<CommandDescription>::iterator pci;
 	for(pci=possibleCommands.begin();pci!=possibleCommands.end();++pci){
@@ -1515,29 +1493,29 @@ void CCommandAI::WeaponFired(CWeapon* weapon)
 	}
 }
 
-void CCommandAI::BuggerOff(float3 pos, float radius)
+void CCommandAI::BuggerOff(const float3& pos, float radius)
 {
 }
 
 void CCommandAI::LoadSave(CLoadSaveInterface* file, bool loading)
 {
-	int queSize=commandQue.size();
+	int queSize = commandQue.size();
 	file->lsInt(queSize);
-	for(int a=0;a<queSize;++a){
-		if(loading){
+	for (int a = 0; a < queSize; ++a) {
+		if (loading) {
 			commandQue.push_back(Command());
 		}
-		Command& c=commandQue[a];
+		Command& c = commandQue[a];
 		int cmd_id = c.GetID();
 		file->lsInt(cmd_id);
 		file->lsUChar(c.options);
 		file->lsInt(c.timeOut);
 
-		int paramSize=c.params.size();
+		int paramSize = c.params.size();
 		file->lsInt(paramSize);
-		for(int b=0;b<paramSize;++b){
-			if(loading){
-				c.params.push_back(0);
+		for (int b = 0; b < paramSize; ++b) {
+			if (loading) {
+				c.params.push_back(0.0f);
 			}
 			file->lsFloat(c.params[b]);
 		}
@@ -1545,11 +1523,6 @@ void CCommandAI::LoadSave(CLoadSaveInterface* file, bool loading)
 }
 
 
-/**
- * @brief gets the command that keeps the unit close to the path
- * @return a Fight Command with 6 arguments, the first three being where to return to (the current position of the
- *	unit), and the second being the location of the origional command.
- **/
 void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2)
 {
 	float3 pos = ClosestPointOnLine(cmdPos1, cmdPos2, owner->pos);
@@ -1626,7 +1599,7 @@ bool CCommandAI::CanChangeFireState() {
 	return (ud->canFireControl && b);
 }
 
-/// remove attack commands targeted at our new ally
+
 void CCommandAI::StopAttackingAllyTeam(int ally)
 {
 	std::vector<int> todel;

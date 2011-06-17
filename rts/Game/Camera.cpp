@@ -20,7 +20,6 @@
 CCamera* camera;
 CCamera* cam2;
 
-unsigned int CCamera::billboardList = 0;
 
 
 inline void GetGLdoubleMatrix(const CMatrix44f& m, GLdouble* dm)
@@ -52,20 +51,13 @@ CCamera::CCamera()
 	// stuff that will not change can be initialised here,
 	// so it does not need to be reinitialised every update
 	projectionMatrix[15] = 0.0f;
+	billboardMatrix[15] = 1.0f;
 
 	SetFov(45.0f);
 
 	up = UpVector;
-
-	if (billboardList == 0) {
-		billboardList = glGenLists(1);
-	}
 }
 
-CCamera::~CCamera()
-{
-	glDeleteLists(billboardList, 1);
-}
 
 void CCamera::Update(bool freeze, bool resetUp)
 {
@@ -153,12 +145,9 @@ void CCamera::Update(bool freeze, bool resetUp)
 
 	// Billboard Matrix
 	billboardMatrix = viewMatrix;
-	billboardMatrix.SetPos(0.f,0.f,0.f);
-	billboardMatrix.Transpose(); //! := Inverse
-
-	glNewList(billboardList, GL_COMPILE);
-	glMultMatrixf(billboardMatrix);
-	glEndList();
+	billboardMatrix.SetPos(ZeroVector);
+	billboardMatrix.Transpose(); //! viewMatrix is affine, equals inverse
+	billboardMatrix[15] = 1.0f; //! SetPos() touches m[15]
 
 	// viewport
 	viewport[0] = 0;

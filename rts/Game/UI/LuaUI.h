@@ -8,7 +8,6 @@
 #include <map>
 
 #include "Lua/LuaHandle.h"
-//#include "Sim/Units/CommandAI/Command.h"
 
 
 class CUnit;
@@ -43,8 +42,8 @@ class CLuaUI : public CLuaHandle
 		};
 
 	public: // call-ins
-		bool HasCallIn(const string& name);
-		bool UnsyncedUpdateCallIn(const string& name);
+		bool HasCallIn(lua_State *L, const string& name);
+		bool UnsyncedUpdateCallIn(lua_State *L, const string& name);
 
 		void Shutdown();
 
@@ -69,6 +68,7 @@ class CLuaUI : public CLuaHandle
 	public: // custom call-in
 		bool HasUnsyncedXCall(const string& funcName);
 		int UnsyncedXCall(lua_State* srcState, const string& funcName);
+		void ExecuteDelayedXCalls();
 
 	protected:
 		CLuaUI();
@@ -102,6 +102,8 @@ class CLuaUI : public CLuaHandle
 
 	private: // call-outs
 		static int SetShockFrontFactors(lua_State* L);
+
+		std::vector<DelayDataDump> delayedXCall;
 };
 
 

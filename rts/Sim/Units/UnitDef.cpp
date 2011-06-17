@@ -87,9 +87,10 @@ UnitDef::UnitDef()
 , turnInPlaceSpeedLimit(0.0f)
 , upright(false)
 , collide(false)
+, losHeight(0.0f)
+, radarHeight(0.0f)
 , losRadius(0.0f)
 , airLosRadius(0.0f)
-, losHeight(0.0f)
 , radarRadius(0.0f)
 , sonarRadius(0.0f)
 , jammerRadius(0.0f)
@@ -112,7 +113,6 @@ UnitDef::UnitDef()
 , strafeToAttack(false)
 , minCollisionSpeed(0.0f)
 , slideTolerance(0.0f)
-, maxSlope(0.0f)
 , maxHeightDif(0.0f)
 , minWaterDepth(0.0f)
 , waterline(0.0f)
@@ -252,7 +252,6 @@ UnitDef::UnitDef()
 , maxFuel(0.0f)
 , refuelTime(0.0f)
 , minAirBasePower(0.0f)
-, pieceTrailCEGRange(-1)
 , maxThisUnit(0)
 , realMetalCost(0.0f)
 , realEnergyCost(0.0f)
@@ -275,11 +274,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 , buildingDecalType(-1)
 {
 	humanName = udTable.GetString("name", "");
-	if (humanName.empty()) {
-		const string errmsg = "missing 'name' parameter for the " + unitName + " unitdef";
-		throw content_error(errmsg);
-	}
-
 	tooltip = udTable.GetString("description", name);
 	buildPicName = udTable.GetString("buildPic", "");
 	decoyName = udTable.GetString("decoyFor", "");
@@ -300,11 +294,10 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	energyMake   = udTable.GetFloat("energyMake", 0.0f);
 
 	health       = udTable.GetFloat("maxDamage",  0.0f);
-	autoHeal     = udTable.GetFloat("autoHeal",      0.0f) * (16.0f / GAME_SPEED);
-	idleAutoHeal = udTable.GetFloat("idleAutoHeal", 10.0f) * (16.0f / GAME_SPEED);
+	autoHeal     = udTable.GetFloat("autoHeal",      0.0f) * (UNIT_SLOWUPDATE_RATE / float(GAME_SPEED));
+	idleAutoHeal = udTable.GetFloat("idleAutoHeal", 10.0f) * (UNIT_SLOWUPDATE_RATE / float(GAME_SPEED));
 	idleTime     = udTable.GetInt("idleTime", 600);
 
-	losHeight = 20;
 	metalCost = udTable.GetFloat("buildCostMetal", 0.0f);
 	if (metalCost < 1.0f) {
 		metalCost = 1.0f; //avoid some nasty divide by 0 etc
@@ -372,9 +365,12 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	collide = udTable.GetBool("collide", true);
 	onoffable = udTable.GetBool("onoffable", false);
 
-	maxSlope = Clamp(udTable.GetFloat("maxSlope", 0.0f), 0.0f, 89.0f);
-	maxHeightDif = 40 * tan(maxSlope * (PI / 180));
-	maxSlope = cos(maxSlope * (PI / 180));
+	const float maxSlopeDeg = Clamp(udTable.GetFloat("maxSlope", 0.0f), 0.0f, 89.0f);
+	const float maxSlopeRad = maxSlopeDeg * (PI / 180.0f);
+
+	// FIXME: kill the magic constant
+	maxHeightDif = 40.0f * math::tanf(maxSlopeRad);
+
 	minWaterDepth = udTable.GetFloat("minWaterDepth", -10e6f);
 	maxWaterDepth = udTable.GetFloat("maxWaterDepth", +10e6f);
 	waterline = udTable.GetFloat("waterline", 0.0f);
@@ -412,6 +408,9 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	armoredMultiple = udTable.GetFloat("damageModifier", 1.0f);
 	armorType = damageArrayHandler->GetTypeFromName(name);
+
+	losHeight = udTable.GetFloat("losEmitHeight", 20.0f);
+	radarHeight = udTable.GetFloat("radarEmitHeight", 20.0f);
 
 	radarRadius    = udTable.GetInt("radarDistance",    0);
 	sonarRadius    = udTable.GetInt("sonarDistance",    0);
@@ -508,10 +507,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	minAirBasePower = udTable.GetFloat("minAirBasePower", 0.0f);
 	maxThisUnit = udTable.GetInt("unitRestricted", MAX_UNITS);
 
-	const string lname = StringToLower(name);
-
-	if (gameSetup->restrictedUnits.find(lname) != gameSetup->restrictedUnits.end()) {
-		maxThisUnit = std::min(maxThisUnit, gameSetup->restrictedUnits.find(lname)->second);
+	if (gameSetup->restrictedUnits.find(name) != gameSetup->restrictedUnits.end()) {
+		maxThisUnit = std::min(maxThisUnit, gameSetup->restrictedUnits.find(name)->second);
 	}
 
 	categoryString = udTable.GetString("category", "");
@@ -703,23 +700,19 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		}
 	}
 
-	LuaTable sfxTable = udTable.SubTable("SFXTypes");
-	LuaTable expTable = sfxTable.SubTable("explosionGenerators");
+	const LuaTable& sfxTable = udTable.SubTable("SFXTypes");
+	const LuaTable& modelCEGTable = sfxTable.SubTable(     "explosionGenerators");
+	const LuaTable& pieceCEGTable = sfxTable.SubTable("pieceExplosionGenerators");
 
-	for (int expNum = 1; expNum <= 1024; expNum++) {
-		std::string expsfx = expTable.GetString(expNum, "");
+	std::vector<int> modelCEGKeys; modelCEGTable.GetKeys(modelCEGKeys);
+	std::vector<int> pieceCEGKeys; pieceCEGTable.GetKeys(pieceCEGKeys);
 
-		if (expsfx == "") {
-			break;
-		} else {
-			sfxExplGenNames.push_back(expsfx);
-		}
+	for (unsigned int n = 0; n < modelCEGKeys.size(); n++) {
+		modelCEGTags.push_back(modelCEGTable.GetString(modelCEGKeys[n], ""));
 	}
-
-	// we use range in a modulo operation, so it needs to be >= 1
-	pieceTrailCEGTag = udTable.GetString("pieceTrailCEGTag", "");
-	pieceTrailCEGRange = udTable.GetInt("pieceTrailCEGRange", 1);
-	pieceTrailCEGRange = std::max(pieceTrailCEGRange, 1);
+	for (unsigned int n = 0; n < pieceCEGKeys.size(); n++) {
+		pieceCEGTags.push_back(pieceCEGTable.GetString(pieceCEGKeys[n], ""));
+	}
 
 	// custom parameters table
 	udTable.SubTable("customParams").GetMap(customParams);
@@ -728,7 +721,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 UnitDef::~UnitDef()
 {
-	for (int u = 0; u < 4; u++) {
+	for (int u = 0; u < NUM_FACINGS; u++) {
 		yardmaps[u].clear();
 	}
 

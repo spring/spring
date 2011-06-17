@@ -10,28 +10,20 @@ CTAPalette palette;
 
 CTAPalette::CTAPalette()
 {
-	for (unsigned c = 0; c < 256; ++c) {
+	for (unsigned c = 0; c < NUM_PALETTE_ENTRIES; ++c) {
 		p[c][0] = 0;
 		p[c][1] = 0;
-		p[c][2] = 0;		
+		p[c][2] = 0;
 		p[c][3] = 255;
 	}
 }
 
-CTAPalette::~CTAPalette()
+void CTAPalette::Init(CFileHandler& paletteFile)
 {
-}
-
-void CTAPalette::Init()
-{
-	CFileHandler pal("PALETTE.PAL");
-
-	if (pal.FileExists()) {
-		for (unsigned c = 0; c < 256; ++c) {
-			for (unsigned c2 = 0; c2 < 4; ++c2) {
-				pal.Read(&p[c][c2], 1);
-			}
-			p[c][3] = 255;
+	for (unsigned c = 0; c < NUM_PALETTE_ENTRIES; ++c) {
+		for (unsigned c2 = 0; c2 < 4; ++c2) {
+			paletteFile.Read(&p[c][c2], 1);
 		}
+		p[c][3] = 255;
 	}
 }

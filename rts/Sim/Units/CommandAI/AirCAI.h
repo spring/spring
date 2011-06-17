@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __AIR_CAI_H__
-#define __AIR_CAI_H__
+#ifndef _AIR_CAI_H_
+#define _AIR_CAI_H_
 
 #include "MobileCAI.h"
 
@@ -23,7 +23,7 @@ public:
 	void DrawCommands();
 	void AddUnit(CUnit* unit);
 	void FinishCommand();
-	void BuggerOff(float3 pos, float radius);
+	void BuggerOff(const float3& pos, float radius);
 //	void StopMove();
 	
 	void SetGoal(const float3& pos, const float3& curPos, float goalRadius = SQUARE_SIZE);
@@ -52,4 +52,4 @@ protected:
 	}
 };
 
-#endif // __AIR_CAI_H__
+#endif // _AIR_CAI_H_

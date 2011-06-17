@@ -954,7 +954,7 @@ void CTransportCAI::DrawCommands()
 				if (ci->params.size() == 1) {
 					const CUnit* unit = uh->GetUnit(ci->params[0]);
 
-					if ((unit != NULL) && isTrackable(unit)) {
+					if ((unit != NULL) && IsTrackable(unit)) {
 						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
 					}
@@ -966,7 +966,7 @@ void CTransportCAI::DrawCommands()
 			}
 			case CMD_GUARD: {
 				const CUnit* unit = uh->GetUnit(ci->params[0]);
-				if ((unit != NULL) && isTrackable(unit)) {
+				if ((unit != NULL) && IsTrackable(unit)) {
 					const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.guard);
 				}
@@ -983,7 +983,7 @@ void CTransportCAI::DrawCommands()
 					lineDrawer.RestartWithColor(cmdColors.load);
 				} else {
 					const CUnit* unit = uh->GetUnit(ci->params[0]);
-					if ((unit != NULL) && isTrackable(unit)) {
+					if ((unit != NULL) && IsTrackable(unit)) {
 						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
 						lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.load);
 					}

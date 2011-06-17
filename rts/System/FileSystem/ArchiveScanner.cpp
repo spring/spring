@@ -14,6 +14,7 @@
 
 #include "ArchiveFactory.h"
 #include "CRC.h"
+#include "ArchiveBase.h"
 #include "FileFilter.h"
 #include "FileSystem.h"
 #include "FileSystemHandler.h"
@@ -971,7 +972,7 @@ std::vector<std::string> CArchiveScanner::GetArchives(const std::string& root, i
 	if (aii == archiveInfo.end()) {
 		//! unresolved dep
 		if (!ret.empty()) {
-			//! add anyway so we get propper errorhandling (only when it is not the main-archive!)
+			//! add anyway so we get propper error-handling (only when it is not the main-archive!)
 			ret.push_back(lcname);
 		}
 		return ret;

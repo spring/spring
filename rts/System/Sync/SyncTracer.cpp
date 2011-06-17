@@ -87,6 +87,13 @@ void CSyncTracer::DeleteInterval()
 		firstActive=0;
 }
 
+CSyncTracer& CSyncTracer::operator<<(const std::string& s)
+{
+	traces[nowActive] += s;
+	if (init()) (*logfile) << s;
+	return *this;
+}
+
 CSyncTracer& CSyncTracer::operator<<(const char* c)
 {
 	traces[nowActive]+=c;
@@ -120,4 +127,3 @@ CSyncTracer& CSyncTracer::operator<<(const float f)
 	if (init()) (*logfile) << f;
 	return *this;
 }
-

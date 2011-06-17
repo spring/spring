@@ -2,9 +2,6 @@
 
 #include "StdAfx.h"
 
-#ifdef _OPENMP
-	#include <omp.h>
-#endif
 #include <ostream>
 #include <fstream>
 #include <string.h>
@@ -25,7 +22,8 @@
 #include "GlobalUnsynced.h"
 #include "Bitmap.h"
 #include "bitops.h"
-#include "LogOutput.h"
+#include "System/LogOutput.h"
+#include "System/OpenMP_cond.h"
 
 
 boost::mutex devilMutex; // devil functions, whilst expensive, aren't thread-save

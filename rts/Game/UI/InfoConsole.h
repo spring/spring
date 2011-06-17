@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef INFOCONSOLE_H
-#define INFOCONSOLE_H
+#ifndef INFO_CONSOLE_H
+#define INFO_CONSOLE_H
 
 #include <deque>
 #include <vector>
@@ -21,13 +21,13 @@ public:
 	void Update();
 	void Draw();
 
-	// ILogSubscriber interface implementation
+	/// ILogSubscriber interface implementation
 	void NotifyLogMsg(const CLogSubsystem& subsystem, const std::string& txt);
 
 
 	void SetLastMsgPos(const float3& pos);
 	const float3& GetMsgPos();
-	int GetMsgPosCount() const{
+	int GetMsgPosCount() const {
 		return lastMsgPositions.size();
 	}
 
@@ -39,7 +39,7 @@ public:
 	float height;
 	float fontScale;
 	float fontSize;
-	bool disabled;
+	bool enabled;
 
 public:
 	static const size_t maxLastMsgPos;
@@ -47,7 +47,7 @@ public:
 
 	struct RawLine {
 		RawLine(const std::string& text, const CLogSubsystem* subsystem, int id)
-		: text(text), subsystem(subsystem), id(id), time(0) {}
+				: text(text), subsystem(subsystem), id(id), time(0) {}
 		std::string text;
 		const CLogSubsystem* subsystem;
 		int id;
@@ -75,4 +75,4 @@ private:
 	mutable boost::recursive_mutex infoConsoleMutex;
 };
 
-#endif /* INFOCONSOLE_H */
+#endif /* INFO_CONSOLE_H */

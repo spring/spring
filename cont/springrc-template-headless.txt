@@ -17,8 +17,9 @@
 # "C:\Dokumente und Einstellungen\MyUser\Anwendungsdaten".
 #
 # Note: These comments will be gone after the first launch of spring.
-# 
+#
 
+Headless=1
 AdvSky=0
 AdvUnitShading=0
 AtiHacks=0

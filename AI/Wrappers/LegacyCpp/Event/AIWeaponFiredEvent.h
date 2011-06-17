@@ -17,11 +17,14 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AIWEAPONFIREDEVENT_H
-#define	_AIWEAPONFIREDEVENT_H
+#ifndef _AI_WEAPON_FIRED_EVENT_H
+#define	_AI_WEAPON_FIRED_EVENT_H
 
 #include "AIEvent.h"
 #include "../IAICallback.h"
+
+
+namespace springLegacyAI {
 
 class CAIWeaponFiredEvent : public CAIEvent {
 public:
@@ -56,4 +59,6 @@ private:
 	SWeaponFiredEvent event;
 };
 
-#endif // _AIWEAPONFIREDEVENT_H
+} // namespace springLegacyAI
+
+#endif // _AI_WEAPON_FIRED_EVENT_H

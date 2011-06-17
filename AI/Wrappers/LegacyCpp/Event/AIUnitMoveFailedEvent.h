@@ -18,10 +18,13 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AIUNITMOVEFAILEDEVENT_H
-#define	_AIUNITMOVEFAILEDEVENT_H
+#ifndef _AI_UNIT_MOVE_FAILED_EVENT_H
+#define	_AI_UNIT_MOVE_FAILED_EVENT_H
 
 #include "AIEvent.h"
+
+
+namespace springLegacyAI {
 
 class CAIUnitMoveFailedEvent : public CAIEvent {
 public:
@@ -36,4 +39,6 @@ private:
 	SUnitMoveFailedEvent event;
 };
 
-#endif // _AIUNITMOVEFAILEDEVENT_H
+} // namespace springLegacyAI
+
+#endif // _AI_UNIT_MOVE_FAILED_EVENT_H

@@ -26,7 +26,7 @@ public:
 	void SlowUpdate();
 	void GiveCommandReal(const Command& c, bool fromSynced = true);
 	void DrawCommands();
-	void BuggerOff(float3 pos, float radius);
+	void BuggerOff(const float3& pos, float radius);
 	void NonMoving();
 	void FinishCommand();
 	void IdleCheck();
@@ -58,7 +58,8 @@ public:
 	int lastIdleCheck;
 	bool tempOrder;
 
-	int lastPC; ///< helps avoid infinate loops
+	/// helps avoid infinate loops
+	int lastPC;
 
 //	unsigned int patrolTime;
 
@@ -68,7 +69,10 @@ public:
 	float3 buggerOffPos;
 	float buggerOffRadius;
 
-	float3 commandPos1; ///< used to avoid stuff in maneuvre mode moving to far away from patrol path
+	/**
+	 * Used to avoid stuff in maneuvre mode moving too far away from patrol path
+	 */
+	float3 commandPos1;
 	float3 commandPos2;
 
 protected:

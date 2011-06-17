@@ -4,11 +4,12 @@
 #define COMMAND_H
 
 #include <string>
-#include <vector>
-#include <limits.h> // for INT_MAX
-#include "System/creg/creg_cond.h"
+#include <climits> // for INT_MAX
 
-// cmds lower than 0 is reserved for build options (cmd -x = unitdefs[x])
+#include "System/creg/creg_cond.h"
+#include "System/SafeVector.h"
+
+// ID's lower than 0 are reserved for build options (cmd -x = unitdefs[x])
 #define CMD_STOP                   0
 #define CMD_INSERT                 1
 #define CMD_REMOVE                 2
@@ -104,7 +105,6 @@ enum {
 	FIRESTATE_FIREATWILL =  2,
 };
 
-
 struct Command
 {
 private:
@@ -118,20 +118,20 @@ private:
 */
 
 public:
-	Command(const int cmd_id)
+	Command(const int cmdID)
 		: aiCommandId(-1)
 		, options(0)
 		, tag(0)
 		, timeOut(INT_MAX)
-		, id(cmd_id)
+		, id(cmdID)
 	{}
 
-	Command(const int cmd_id, const unsigned char cmd_options)
+	Command(const int cmdID, const unsigned char cmdOptions)
 		: aiCommandId(-1)
-		, options(cmd_options)
+		, options(cmdOptions)
 		, tag(0)
 		, timeOut(INT_MAX)
-		, id(cmd_id)
+		, id(cmdID)
 	{}
 
 	Command()
@@ -141,6 +141,26 @@ public:
 		, timeOut(INT_MAX)
 		, id(0)
 	{}
+
+	Command(const Command& c)
+		: aiCommandId(c.aiCommandId)
+		, options(c.options)
+		, params(c.params)
+		, tag(c.tag)
+		, timeOut(c.timeOut)
+		, id(c.id)
+	{}
+
+	Command& operator = (const Command& c) {
+		id = c.id;
+		aiCommandId = c.aiCommandId;
+		options = c.options;
+		tag = c.tag;
+		timeOut = c.timeOut;
+		params = c.params;
+		return *this;
+	}
+
 	~Command() { params.clear(); }
 
 	bool IsAreaCommand() const {
@@ -162,17 +182,10 @@ public:
 		return false;
 	}
 
-	/// adds a value to this commands parameter list
 	void AddParam(float par) { params.push_back(par); }
+	const float& GetParam(size_t idx) const { return params[idx]; }
 
-	const std::vector<float>& GetParams() const { return params; }
-	const float& GetParam(size_t idx, const float& def = -1.f) const
-	{
-		if (idx >= params.size())
-			return def;
-		return params[idx];
-	}
-
+	/// const safe_vector<float>& GetParams() const { return params; }
 	const size_t GetParamsCount() const { return params.size(); }
 
 	void SetID(int id) 
@@ -193,7 +206,7 @@ public:
 	unsigned char options;
 
 	/// command parameters
-	std::vector<float> params;
+	safe_vector<float> params;
 
 	/// unique id within a CCommandQueue
 	unsigned int tag;
@@ -228,7 +241,7 @@ public:
 		showUnique(false),
 		onlyTexture(false) {}
 
-	/// CMD_xxx     code (custom codes can also be used)
+	/// CMD_xxx code (custom codes can also be used)
 	int id;
 	/// CMDTYPE_xxx code
 	int type;

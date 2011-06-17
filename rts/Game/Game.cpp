@@ -8,6 +8,7 @@
 #include <cctype>
 #include <locale>
 #include <sstream>
+#include <stdexcept>
 
 #include <boost/thread/thread.hpp>
 #include <boost/bind.hpp>
@@ -21,11 +22,11 @@
 #include "CameraHandler.h"
 #include "ChatMessage.h"
 #include "ClientSetup.h"
+#include "CommandMessage.h"
 #include "ConsoleHistory.h"
 #include "GameHelper.h"
 #include "GameServer.h"
 #include "GameVersion.h"
-#include "CommandMessage.h"
 #include "GameSetup.h"
 #include "LoadScreen.h"
 #include "SelectedUnits.h"
@@ -38,9 +39,13 @@
 #include "IVideoCapturing.h"
 #include "InMapDraw.h"
 #include "InMapDrawModel.h"
+#include "SyncedActionExecutor.h"
+#include "SyncedGameCommands.h"
+#include "UnsyncedActionExecutor.h"
+#include "UnsyncedGameCommands.h"
 #include "Game/UI/UnitTracker.h"
 #ifdef _WIN32
-#  include "winerror.h"
+#  include "winerror.h" // TODO someone on windows (MinGW? VS?) please check if this is required
 #endif
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/IAILibraryManager.h"
@@ -194,6 +199,7 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(showClock),
 	CR_MEMBER(showSpeed),
 	CR_MEMBER(showMTInfo),
+	CR_MEMBER(mtInfoCtrl),
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(gameID),
 //	CR_MEMBER(script),
@@ -219,7 +225,7 @@ CR_REG_METADATA(CGame,(
 
 
 
-CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHandler* saveFile) :
+CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile) :
 	gameDrawMode(gameNotDrawing),
 	defsParser(NULL),
 	fps(0),
@@ -247,7 +253,8 @@ CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHa
 	leastQue(0),
 	timeLeft(0.0f),
 	consumeSpeed(1.0f),
-	luaDrawTime(0),
+	luaLockTime(0),
+	luaExportSize(0),
 
 	saveFile(saveFile)
 {
@@ -270,6 +277,7 @@ CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHa
 	showClock = !!configHandler->Get("ShowClock", 1);
 	showSpeed = !!configHandler->Get("ShowSpeed", 0);
 	showMTInfo = !!configHandler->Get("ShowMTInfo", 1);
+	mtInfoCtrl = 0;
 
 	speedControl = configHandler->Get("SpeedControl", 0);
 
@@ -288,9 +296,12 @@ CGame::CGame(const std::string& mapname, const std::string& modName, ILoadSaveHa
 	CLuaHandle::SetModUICtrl(!!configHandler->Get("LuaModUICtrl", 1));
 
 	modInfo.Init(modName.c_str());
+
 	if (!mapInfo) {
 		mapInfo = new CMapInfo(gameSetup->MapFile(), gameSetup->mapName);
 	}
+
+	showMTInfo = (showMTInfo && gc->GetMultiThreadLua() <= 3) ? gc->GetMultiThreadLua() : 0;
 
 	if (!sideParser.Load()) {
 		throw content_error(sideParser.GetErrorLog());
@@ -302,6 +313,9 @@ CGame::~CGame()
 #ifdef TRACE_SYNC
 	tracefile << "[" << __FUNCTION__ << "]";
 #endif
+
+	UnsyncedGameCommands::DestroyInstance();
+	SyncedGameCommands::DestroyInstance();
 
 	CLoadScreen::DeleteInstance();
 	IVideoCapturing::FreeInstance();
@@ -394,12 +408,16 @@ CGame::~CGame()
 }
 
 
-void CGame::LoadGame(const std::string& mapname)
+void CGame::LoadGame(const std::string& mapName)
 {
-	Watchdog::RegisterThread("loadscreen");
+#ifdef USE_GML
+	set_threadnum(GML_LOAD_THREAD_NUM);
+#endif
+
+	Watchdog::RegisterThread(WDT_LOAD);
 
 	if (!gu->globalQuit) LoadDefs();
-	if (!gu->globalQuit) LoadSimulation(mapname);
+	if (!gu->globalQuit) LoadSimulation(mapName);
 	if (!gu->globalQuit) LoadRendering();
 	if (!gu->globalQuit) LoadInterface();
 	if (!gu->globalQuit) LoadLua();
@@ -410,7 +428,7 @@ void CGame::LoadGame(const std::string& mapname)
 		saveFile->LoadGame();
 	}
 
-	Watchdog::DeregisterThread("loadscreen");
+	Watchdog::DeregisterThread(WDT_LOAD);
 }
 
 
@@ -468,15 +486,19 @@ void CGame::LoadDefs()
 	}
 }
 
-void CGame::LoadSimulation(const std::string& mapname)
+void CGame::LoadSimulation(const std::string& mapName)
 {
+	// after this, other components are able to register chat action-executors
+	SyncedGameCommands::CreateInstance();
+	UnsyncedGameCommands::CreateInstance();
+
 	// simulation components
 	helper = new CGameHelper();
 	ground = new CGround();
 
 	loadscreen->SetLoadMessage("Parsing Map Information");
 
-	readmap = CReadMap::LoadMap(mapname);
+	readmap = CReadMap::LoadMap(mapName);
 	groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
 
 	loadscreen->SetLoadMessage("Creating Smooth Height Mesh");
@@ -528,6 +550,9 @@ void CGame::LoadSimulation(const std::string& mapname)
 
 	CCobInstance::InitVars(teamHandler->ActiveTeams(), teamHandler->ActiveAllyTeams());
 	CEngineOutHandler::Initialize();
+
+	syncedGameCommands->AddDefaultActionExecutors();
+	unsyncedGameCommands->AddDefaultActionExecutors();
 }
 
 void CGame::LoadRendering()
@@ -620,10 +645,17 @@ void CGame::LoadInterface()
 			wordCompletion->AddWord(*sn + " ", false, false, false);
 		}
 
-		const std::map<std::string, int>& unitMap = unitDefHandler->unitDefIDsByName;
+		const std::map<std::string, int>& unitDefs = unitDefHandler->unitDefIDsByName;
+		const std::map<std::string, const FeatureDef*>& featureDefs = featureHandler->GetFeatureDefs();
+
 		std::map<std::string, int>::const_iterator uit;
-		for (uit = unitMap.begin(); uit != unitMap.end(); ++uit) {
+		std::map<std::string, const FeatureDef*>::const_iterator fit;
+
+		for (uit = unitDefs.begin(); uit != unitDefs.end(); ++uit) {
 			wordCompletion->AddWord(uit->first + " ", false, true, false);
+		}
+		for (fit = featureDefs.begin(); fit != featureDefs.end(); ++fit) {
+			wordCompletion->AddWord(fit->first + " ", false, true, false);
 		}
 	}
 
@@ -783,7 +815,7 @@ int CGame::KeyReleased(unsigned short k)
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::deque<CInputReceiver*>::iterator ri;
 	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
-		CInputReceiver* recv=*ri;
+		CInputReceiver* recv = *ri;
 		if (recv && recv->KeyReleased(k)) {
 			return 0;
 		}
@@ -797,7 +829,6 @@ int CGame::KeyReleased(unsigned short k)
 			return 0;
 		}
 	}
-
 
 	return 0;
 }
@@ -832,7 +863,11 @@ bool CGame::Update()
 		thisFps = 0;
 
 		starttime = fpstimer;
-
+#if defined(USE_GML) && GML_ENABLE_SIM
+		extern int backupSize;
+		luaExportSize = backupSize;
+		backupSize = 0;
+#endif
 		if (!gameServer) {
 			consumeSpeed = ((float)(GAME_SPEED * gs->speedFactor + leastQue - 2));
 			leastQue = 10000;
@@ -856,12 +891,12 @@ bool CGame::Update()
 		gameServer->CreateNewFrame(false, true);
 	}
 
-	if(gs->frameNum == 0 || gs->paused)
+	if (gs->frameNum == 0 || gs->paused)
 		eventHandler.UpdateObjects(); // we must add new rendering objects even if the game has not started yet
 
 	ClientReadNet();
 
-	if(net->NeedsReconnect() && !gameOver) {
+	if (net->NeedsReconnect() && !gameOver) {
 		extern ClientSetup* startsetup;
 		net->AttemptReconnect(startsetup->myPlayerName, startsetup->myPasswd, SpringVersion::GetFull());
 	}
@@ -1086,13 +1121,13 @@ bool CGame::Draw() {
 	//! timings and frame interpolation
 	const unsigned currentTime = SDL_GetTicks();
 
-	if(skipping) {
-		if(skipLastDraw + 500 > currentTime) // render at 2 FPS
+	if (skipping) {
+		if (skipLastDraw + 500 > currentTime) // render at 2 FPS
 			return true;
 		skipLastDraw = currentTime;
 #if defined(USE_GML) && GML_ENABLE_SIM
 		extern volatile int gmlMultiThreadSim;
-		if(!gmlMultiThreadSim)
+		if (!gmlMultiThreadSim)
 #endif
 		{
 			DrawSkip();
@@ -1168,7 +1203,7 @@ bool CGame::Draw() {
 
 	SetDrawMode(gameNormalDraw);
 
- 	if (luaUI)    { luaUI->CheckStack(); }
+ 	if (luaUI)    { luaUI->CheckStack(); luaUI->ExecuteDelayedXCalls(); }
 	if (luaGaia)  { luaGaia->CheckStack(); }
 	if (luaRules) { luaRules->CheckStack(); }
 
@@ -1352,20 +1387,41 @@ bool CGame::Draw() {
 		}
 
 #if defined(USE_GML) && GML_ENABLE_SIM
-		int cit = (int)GML_DRAW_CALLIN_TIME() * (int)fps;
-		if(cit > luaDrawTime)
-			++luaDrawTime;
-		else if(cit < luaDrawTime)
-			--luaDrawTime;
+		int cit = (int)GML_LOCK_TIME() * (int)fps;
+		if (cit > luaLockTime)
+			++luaLockTime;
+		else if (cit < luaLockTime)
+			--luaLockTime;
 
-		if(showMTInfo) {
-			float drawPercent = (float)luaDrawTime / 10.0f;
-			char buf[32];
-			SNPRINTF(buf, sizeof(buf), "LUA-DRAW(MT): %2.0f%%", drawPercent);
-			float4 warncol(drawPercent >= 10.0f && (currentTime & 128) ?
-				0.5f : std::max(0.0f, std::min(drawPercent / 5.0f, 1.0f)), std::max(0.0f, std::min(2.0f - drawPercent / 5.0f, 1.0f)), 0.0f, 1.0f);
-			smallFont->SetColors(&warncol, NULL);
-			smallFont->glPrint(0.99f, 0.88f, 1.0f, font_options, buf);
+		if (showMTInfo == 1 || showMTInfo == 2) {
+			float lockPercent = (float)luaLockTime / 10.0f;
+			if (lockPercent >= 0.1f) {
+				if((mtInfoCtrl = std::min(mtInfoCtrl + 1, 5)) == 3) mtInfoCtrl = 5;
+			}
+			else if((mtInfoCtrl = std::max(mtInfoCtrl - 1, 0)) == 2) mtInfoCtrl = 0;
+			if (mtInfoCtrl >= 3) {
+				char buf[40];
+				SNPRINTF(buf, sizeof(buf), "LUA-SYNC-CPU(MT): %2.1f%%", lockPercent);
+				float4 warncol(lockPercent >= 10.0f && (currentTime & 128) ?
+					0.5f : std::max(0.0f, std::min(lockPercent / 5.0f, 1.0f)), std::max(0.0f, std::min(2.0f - lockPercent / 5.0f, 1.0f)), 0.0f, 1.0f);
+				smallFont->SetColors(&warncol, NULL);
+				smallFont->glPrint(0.99f, 0.88f, 1.0f, font_options, buf);
+			}
+		}
+		else if (showMTInfo == 3) {
+			float ek = (float)luaExportSize / 1000.0f;
+			if (ek >= 0.1f) {
+				if((mtInfoCtrl = std::min(mtInfoCtrl + 1, 5)) == 3) mtInfoCtrl = 5;
+			}
+			else if ((mtInfoCtrl = std::max(mtInfoCtrl - 1, 0)) == 2) mtInfoCtrl = 0;
+			if (mtInfoCtrl >= 3) {
+				char buf[40];
+				SNPRINTF(buf, sizeof(buf), "LUA-EXP-SIZE(MT): %2.1fK", ek);
+				float4 warncol(ek >= 10.0f && (currentTime & 128) ?
+					0.5f : std::max(0.0f, std::min(ek / 5.0f, 1.0f)), std::max(0.0f, std::min(2.0f - ek / 5.0f, 1.0f)), 0.0f, 1.0f);
+				smallFont->SetColors(&warncol, NULL);
+				smallFont->glPrint(0.99f, 0.88f, 1.0f, font_options, buf);
+			}
 		}
 #endif
 
@@ -1384,7 +1440,7 @@ bool CGame::Draw() {
 				const CPlayer* p = playerHandler->Player(indices[a]);
 				unsigned char color[3] = {255, 255, 255};
 				unsigned char allycolor[3] = {255, 255, 255};
-				if(p->ping != PATHING_FLAG || gs->frameNum != 0) {
+				if (p->ping != PATHING_FLAG || gs->frameNum != 0) {
 					if (p->spectator)
 						prefix = "S";
 					else {
@@ -1440,7 +1496,7 @@ bool CGame::Draw() {
 	}
 
 #if defined(USE_GML) && GML_ENABLE_SIM
-	if(skipping)
+	if (skipping)
 		DrawSkip(false);
 #endif
 
@@ -1583,22 +1639,32 @@ void CGame::StartPlaying()
 
 		if (a == gu->myTeam) {
 			minimap->AddNotification(team->startPos, float3(1.0f, 1.0f, 1.0f), 1.0f);
-			game->infoConsole->SetLastMsgPos(team->startPos);
+			infoConsole->SetLastMsgPos(team->startPos);
 		}
 	}
 
 	eventHandler.GameStart();
 	net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, speedControl));
 #if defined(USE_GML) && GML_ENABLE_SIM
-	if(showMTInfo) {
-		CKeyBindings::HotkeyList lslist = keyBindings->GetHotkeys("luaui selector");
-		std::string lskey = lslist.empty() ? "<none>" : lslist.front();
+	if (showMTInfo >= 1) {
 		logOutput.Print("\n************** SPRING MULTITHREADING VERSION IMPORTANT NOTICE **************");
-		logOutput.Print("LUA BASED GRAPHICS WILL CAUSE HIGH CPU LOAD AND SEVERE SLOWDOWNS");
-		logOutput.Print("For best results disable LuaShaders in SpringSettings or the Edit Settings menu");
-		logOutput.Print("Press " + lskey + " to open the widget list, which allows specific widgets to be disabled");
-		logOutput.Print("The LUA-DRAW(MT) value in the upper right corner can be used for guidance");
-		logOutput.Print("Safe to use: Autoquit, ImmobileBuilder, MetalMakers, MiniMap Start Boxes\n");
+		logOutput.Print("Engine or game settings have forced Spring MT to use compatibility mode %d", showMTInfo);
+		if(showMTInfo == 1) {
+			CKeyBindings::HotkeyList lslist = keyBindings->GetHotkeys("luaui selector");
+			std::string lskey = lslist.empty() ? "<none>" : lslist.front();
+			logOutput.Print("If your game uses lua based rendering, it may run very slow with Spring MT");
+			logOutput.Print("A high LUA-SYNC-CPU(MT) value in the upper right corner could indicate a problem");
+			logOutput.Print("Consider changing the engine setting 'MultiThreadLua' to 2 to improve performance,");
+			logOutput.Print("or try to disable LuaShaders and all rendering widgets (press " + lskey + ")\n");
+		}
+		else if(showMTInfo == 2) {
+			logOutput.Print("If your game uses lua gadget based rendering, it may run very slow with Spring MT");
+			logOutput.Print("A high LUA-SYNC-CPU(MT) value in the upper right corner could indicate a problem\n");
+		}
+		else if(showMTInfo == 3) {
+			logOutput.Print("If your game uses lua gadgets that export data, it may run very slow with Spring MT");
+			logOutput.Print("A high LUA-EXP-SIZE(MT) value in the upper right corner could indicate a problem\n");
+		}
 	}
 #endif
 }
@@ -1617,7 +1683,7 @@ void CGame::SimFrame() {
 #endif
 
 #ifdef USE_MMGR
-	if(!(gs->frameNum & 31))
+	if (!(gs->frameNum & 31))
 		m_validateAllAllocUnits();
 #endif
 
@@ -1787,7 +1853,7 @@ void CGame::UpdateUI(bool updateCam)
 
 
 
-void CGame::MakeMemDump(void)
+void CGame::MakeMemDump()
 {
 	std::ofstream file(gameServer ? "memdump.txt" : "memdumpclient.txt");
 
@@ -1810,7 +1876,7 @@ void CGame::MakeMemDump(void)
 		file << "  xpos " << p->pos.x << " ypos " << p->pos.y << " zpos " << p->pos.z << "\n";
 		file << "  xspeed " << p->speed.x << " yspeed " << p->speed.y << " zspeed " << p->speed.z << "\n";
 	}
-	for(int a=0;a<teamHandler->ActiveTeams();++a){
+	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
 		file << "LOS-map for team " << a << "\n";
 		for (int y = 0; y < gs->mapy>>modInfo.losMipLevel; ++y) {
 			file << " ";
@@ -1968,7 +2034,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 		}
 	}
 
-	eoh->GotChatMsg(msg.msg.c_str(), msg.fromPlayer);
+	eoh->SendChatMessage(msg.msg.c_str(), msg.fromPlayer);
 }
 
 
@@ -2023,7 +2089,7 @@ void CGame::EndSkip() {
 
 void CGame::DrawSkip(bool blackscreen) {
 	const int framesLeft = (skipEndFrame - gs->frameNum);
-	if(blackscreen) {
+	if (blackscreen) {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
@@ -2250,4 +2316,48 @@ void CGame::ReloadGame()
 	else {
 		logOutput.Print("Can only reload game when game has been started from a savegame");
 	}
+}
+
+
+
+void CGame::ActionReceived(const Action& action, int playerID)
+{
+	const ISyncedActionExecutor* executor = syncedGameCommands->GetActionExecutor(action.command);
+
+	if (executor != NULL) {
+		// an executor for that action was found
+		SyncedAction syncedAction(action, playerID);
+		executor->ExecuteAction(syncedAction);
+	} else if (gs->frameNum > 1) {
+		if (luaRules) luaRules->SyncedActionFallback(action.rawline, playerID);
+		if (luaGaia) luaGaia->SyncedActionFallback(action.rawline, playerID);
+	}
+}
+
+
+bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
+{
+	const IUnsyncedActionExecutor* executor = unsyncedGameCommands->GetActionExecutor(action.command);
+
+	if (executor != NULL) {
+		// an executor for that action was found
+		UnsyncedAction unsyncedAction(action, key, isRepeat);
+		executor->ExecuteAction(unsyncedAction);
+	} else {
+		static std::set<std::string> serverCommands = std::set<std::string>(commands, commands+numCommands);
+		if (serverCommands.find(action.command) != serverCommands.end())
+		{
+			CommandMessage pckt(action, gu->myPlayerNum);
+			net->Send(pckt.Pack());
+		}
+
+		if (!Console::Instance().ExecuteAction(action))
+		{
+			if (guihandler != NULL) // maybe a widget is interested?
+				guihandler->PushLayoutCommand(action.rawline, false);
+			return false;
+		}
+	}
+
+	return false;
 }

@@ -1,32 +1,34 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __GAME_CONTROLLER_H__
-#define __GAME_CONTROLLER_H__
+#ifndef _GAME_CONTROLLER_H_
+#define _GAME_CONTROLLER_H_
 
 #include <string>
 
 class CGameController
 {
 public:
-	CGameController(void);
-	virtual ~CGameController(void);
-	virtual bool Draw(void);
-	virtual bool Update(void);
-	virtual int KeyPressed(unsigned short k,bool isRepeat);
-	virtual int KeyReleased(unsigned short k);
-	virtual void ResizeEvent() { return; }
+	CGameController();
+	virtual ~CGameController();
 
-	bool userWriting; // true if user is writing
-	int  writingPos;  // current writing position
+	virtual bool Draw();
+	virtual bool Update();
+	virtual int KeyPressed(unsigned short key, bool isRepeat);
+	virtual int KeyReleased(unsigned short key);
+	virtual void ResizeEvent() {}
+
+	/// true if user is writing
+	bool userWriting;
+	/// current writing position
+	int  writingPos;
 	bool ignoreNextChar;
 	char ignoreChar;
 	std::string userInput;
 	std::string userPrompt;
 
-protected:
 	void PasteClipboard();
 };
 
 extern CGameController* activeController;
 
-#endif // __GAME_CONTROLLER_H__
+#endif // _GAME_CONTROLLER_H_

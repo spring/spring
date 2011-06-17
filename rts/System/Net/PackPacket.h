@@ -9,6 +9,7 @@
 #include <cstring>
 
 #include "RawPacket.h"
+#include "System/SafeVector.h"
 
 namespace netcode
 {
@@ -40,6 +41,19 @@ public:
 		}
 		return *this;
 	}
+
+#ifdef USE_SAFE_VECTOR
+	template <typename element>
+	PackPacket& operator<<(const safe_vector<element>& vec) {
+		const size_t size = vec.size()* sizeof(element);
+		assert(size + pos <= length);
+		if (size > 0) {
+			std::memcpy((data+pos), (void*)(&vec[0]), size);
+			pos += size;
+		}
+		return *this;
+	}
+#endif
 
 	unsigned char* GetWritingPos() {
 		return data+pos;

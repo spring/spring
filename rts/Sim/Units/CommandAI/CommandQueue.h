@@ -3,7 +3,7 @@
 #ifndef __COMMAND_QUEUE_H__
 #define __COMMAND_QUEUE_H__
 
-#include "lib/gml/gml.h"
+#include "lib/gml/gmlmut.h"
 
 #include <deque>
 #include "Command.h"

@@ -6,6 +6,8 @@
 #include <vector>
 #include <deque>
 
+namespace springLegacyAI {
+
 class IAICheats;
 class IAICallback;
 
@@ -31,5 +33,7 @@ public:
 	// in the class
 	virtual ~IGlobalAICallback() {}
 };
+
+} // namespace springLegacyAI
 
 #endif // I_GLOBAL_AI_CALLBACK_H

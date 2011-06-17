@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __BUILDER_CAI_H__
-#define __BUILDER_CAI_H__
+#ifndef _BUILDER_CAI_H_
+#define _BUILDER_CAI_H_
 
 #include <map>
 #include <string>
@@ -110,6 +110,7 @@ private:
 	void CancelRestrictedUnit(const std::string& buildOption);
 	bool ObjInBuildRange(const CWorldObject* obj) const;
 	bool OutOfImmobileRange(const Command& cmd) const;
+	/// add a command to reclaim a feature that is blocking our build-site
 	void ReclaimFeature(CFeature* f);
 
 	/// fix for patrolling cons repairing/resurrecting stuff that's being reclaimed
@@ -124,11 +125,12 @@ private:
 	static void AddUnitToResurrecters(CUnit*);
 	static void RemoveUnitFromResurrecters(CUnit*);
 public:
+	/**
+	 * Checks if a unit is being reclaimed by a friendly con.
+	 */
 	static bool IsUnitBeingReclaimed(CUnit* unit, CUnit* friendUnit = NULL);
 	static bool IsFeatureBeingReclaimed(int featureId, CUnit* friendUnit = NULL);
 	static bool IsFeatureBeingResurrected(int featureId, CUnit* friendUnit = NULL);
-
-private:
 };
 
-#endif // __BUILDER_CAI_H__
+#endif // _BUILDER_CAI_H_

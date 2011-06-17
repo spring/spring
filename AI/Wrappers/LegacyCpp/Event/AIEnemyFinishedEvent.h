@@ -5,6 +5,9 @@
 
 #include "AIEvent.h"
 
+
+namespace springLegacyAI {
+
 class CAIEnemyFinishedEvent : public CAIEvent {
 public:
 	CAIEnemyFinishedEvent(const SEnemyFinishedEvent& event) : event(event) {}
@@ -17,5 +20,7 @@ public:
 private:
 	SEnemyFinishedEvent event;
 };
+
+} // namespace springLegacyAI
 
 #endif // _AI_ENEMY_FINISHED_EVENT_H

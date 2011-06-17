@@ -41,11 +41,13 @@ static int CompareTatex2(const void *arg1, const void *arg2) {
 
 C3DOTextureHandler::C3DOTextureHandler()
 {
-	CFileHandler file("unittextures/tatex/teamtex.txt");
-	CSimpleParser parser(file);
+	CFileHandler teamTexFile("unittextures/tatex/teamtex.txt");
+	CFileHandler paletteFile("unittextures/tatex/palette.pal");
+
+	CSimpleParser parser(teamTexFile);
 
 	std::set<std::string> teamTexes;
-	while(!file.Eof()) {
+	while (!teamTexFile.Eof()) {
 		teamTexes.insert(StringToLower(parser.GetCleanLine()));
 	}
 
@@ -54,9 +56,9 @@ C3DOTextureHandler::C3DOTextureHandler()
 	int numfiles = 0;
 	int totalSize = 0;
 
-	const std::vector<std::string> &filesBMP = CFileHandler::FindFiles("unittextures/tatex/", "*.bmp");
+	const std::vector<std::string>& filesBMP = CFileHandler::FindFiles("unittextures/tatex/", "*.bmp");
 	std::vector<std::string> files    = CFileHandler::FindFiles("unittextures/tatex/", "*.tga");
-	files.insert(files.end(),filesBMP.begin(),filesBMP.end());
+	files.insert(files.end(), filesBMP.begin(), filesBMP.end());
 
 	std::set<string> usedNames;
 	for (std::vector<std::string>::iterator fi = files.begin(); fi != files.end(); ++fi) {
@@ -83,15 +85,16 @@ C3DOTextureHandler::C3DOTextureHandler()
 		}
 	}
 
-	// "TAPalette.h"
-	for (unsigned a = 0; a < 256; ++a) {
-		string name = "ta_color";
-		char t[50];
-		sprintf(t, "%i", a);
-		name+=t;
+	if (paletteFile.FileExists()) {
+		palette.Init(paletteFile);
+	}
+
+	for (unsigned a = 0; a < CTAPalette::NUM_PALETTE_ENTRIES; ++a) {
+		const std::string name = "ta_color" + IntToString(a, "%i");
+
 		TexFile* tex = new TexFile;
 		tex->name = name;
-		tex->tex.Alloc(1,1);
+		tex->tex.Alloc(1, 1);
 		tex->tex.mem[0] = palette[a][0];
 		tex->tex.mem[1] = palette[a][1];
 		tex->tex.mem[2] = palette[a][2];

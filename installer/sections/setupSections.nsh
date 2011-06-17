@@ -29,6 +29,7 @@ ${toggleSection} "NOMULTITHREAD" ${SEC_GML}
 ; portable mode
 ${toggleSection} "PORTABLE" ${SEC_PORTABLE}
 
+!ifndef SLIM
 ; lobbies
 ${toggleSection} "NOSPRINGLOBBY" ${SEC_SPRINGLOBBY}
 ${toggleSection} "NOZEROK" ${SEC_ZERO_K_LOBBY}
@@ -43,6 +44,7 @@ ${toggleSection} "NODESKTOPLINK" ${SEC_DESKTOP}
 ${toggleSection} "NOARCHIVEMOVER" ${SEC_ARCHIVEMOVER}
 ${toggleSection} "NORAPID" ${SEC_RAPID}
 
+!endif
 ; startmenu
 ${toggleSection} "NOSTARTMENU" ${SEC_START}
 

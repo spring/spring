@@ -12,6 +12,8 @@
 #include "LuaHashString.h"
 #include "LuaUtils.h"
 
+#include "lib/gml/gmlmut.h"
+
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -120,6 +122,8 @@ int LuaUnitRendering::SetLODLength(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
+	GML_LODMUTEX_LOCK(unit);
+
 	const unsigned int lod = (unsigned int)luaL_checknumber(L, 2) - 1;
 	if (lod >= unit->lodCount) {
 		return 0;
@@ -135,6 +139,9 @@ int LuaUnitRendering::SetLODDistance(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
+
+	GML_LODMUTEX_LOCK(unit); // SetLODDistance
+
 	const unsigned int lod = (unsigned int)luaL_checknumber(L, 2) - 1;
 	if (lod >= unit->lodCount) {
 		return 0;
@@ -155,6 +162,9 @@ int LuaUnitRendering::SetPieceList(lua_State* L)
 	if ((unit == NULL) || (unit->localmodel == NULL)) {
 		return 0;
 	}
+
+	GML_LODMUTEX_LOCK(unit); // SetPieceList
+
 	const LocalModel* localModel = unit->localmodel;
 
 	const unsigned int lod   = (unsigned int)luaL_checknumber(L, 2) - 1;
@@ -170,7 +180,7 @@ int LuaUnitRendering::SetPieceList(lua_State* L)
 	unsigned int dlist = 0;
 	if (lua_isnumber(L, 4)) {
 		const unsigned int ilist = (unsigned int)luaL_checknumber(L, 4);
-		CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists();
+		CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
 		dlist = displayLists.GetDList(ilist);
 	} else {
 		dlist = localPiece->dispListID; // set to the default
@@ -229,7 +239,7 @@ static void ParseShader(lua_State* L, const char* caller, int index,
 	const int luaType = lua_type(L, index);
 	if (luaType == LUA_TNUMBER) {
 		const unsigned int ishdr = (unsigned int)luaL_checknumber(L, index);
-		const LuaShaders& shaders = CLuaHandle::GetActiveShaders();
+		const LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
 		const unsigned int id = shaders.GetProgramName(ishdr);
 		if (id == 0) {
 			shader.openglID = 0;
@@ -323,7 +333,7 @@ static GLuint ParseUnitTexture(const string& texture)
 }
 
 
-static void ParseTextureImage(LuaMatTexture& texUnit, const string& image)
+static void ParseTextureImage(lua_State *L, LuaMatTexture& texUnit, const string& image)
 {
 	GLuint texID = 0;
 
@@ -346,7 +356,7 @@ static void ParseTextureImage(LuaMatTexture& texUnit, const string& image)
 	}
 	else if (image[0] == LuaTextures::prefix) {
 		// dynamic texture
-		LuaTextures& textures = CLuaHandle::GetActiveTextures();
+		LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
 		const LuaTextures::Texture* texInfo = textures.GetInfo(image);
 		if (texInfo != NULL) {
 			texID = texInfo->id;
@@ -397,7 +407,7 @@ static void ParseTexture(lua_State* L, const char* caller, int index,
 
 	if (lua_isstring(L, index)) {
 		const string texName = lua_tostring(L, index);
-		ParseTextureImage(texUnit, texName);
+		ParseTextureImage(L, texUnit, texName);
 		texUnit.enable = true;
 		return;
 	}
@@ -414,7 +424,7 @@ static void ParseTexture(lua_State* L, const char* caller, int index,
 		const string key = StringToLower(lua_tostring(L, -2));
 		if (key == "tex") {
 			const string texName = lua_tostring(L, -1);
-			ParseTextureImage(texUnit, texName);
+			ParseTextureImage(L, texUnit, texName);
 		}
 		else if (key == "enable") {
 			if (lua_isboolean(L, -1)) {
@@ -429,7 +439,7 @@ static GLuint ParseDisplayList(lua_State* L, const char* caller, int index)
 {
 	if (lua_isnumber(L, index)) {
 		const unsigned int ilist = (unsigned int)luaL_checknumber(L, index);
-		const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists();
+		const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
 		return displayLists.GetDList(ilist);
 	}
 	return 0;
@@ -600,6 +610,9 @@ int LuaUnitRendering::SetMaterial(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
+
+	GML_LODMUTEX_LOCK(unit); // SetMaterial
+
 	const unsigned int lod = (unsigned int)luaL_checknumber(L, 2) - 1;
 	const string matName = luaL_checkstring(L, 3);
 	const LuaMatType matType = ParseMaterialType(matName);
@@ -629,6 +642,9 @@ int LuaUnitRendering::SetMaterialLastLOD(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
+
+	GML_LODMUTEX_LOCK(unit); // SetMaterialLastLod
+
 	const string matName = luaL_checkstring(L, 2);
 	LuaUnitMaterial* unitMat = GetUnitMaterial(unit, matName);
 	if (unitMat == NULL) {
@@ -646,6 +662,9 @@ int LuaUnitRendering::SetMaterialDisplayLists(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
+
+	GML_LODMUTEX_LOCK(unit); // SetMaterialDisplayLists
+
 	const unsigned int lod = (unsigned int)luaL_checknumber(L, 2) - 1;
 	const string matName = luaL_checkstring(L, 3);
 	LuaUnitMaterial* unitMat = GetUnitMaterial(unit, matName);
@@ -669,6 +688,9 @@ int LuaUnitRendering::SetUnitUniform(lua_State* L) // FIXME
 	if (unit == NULL) {
 		return 0;
 	}
+
+	GML_LODMUTEX_LOCK(unit); // SetUnitUniform
+
 	const string matName = luaL_checkstring(L, 2);
 	LuaUnitMaterial* unitMat = GetUnitMaterial(unit, matName);
 	if (unitMat == NULL) {
@@ -728,8 +750,10 @@ int LuaUnitRendering::SetFeatureLuaDraw(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static void PrintUnitLOD(const CUnit* unit, int lod)
+static void PrintUnitLOD(CUnit* unit, int lod)
 {
+	GML_LODMUTEX_LOCK(unit); // PrintUnitLOD
+
 	logOutput.Print("  LOD %i:\n", lod);
 	logOutput.Print("    LodLength = %f\n", unit->lodLengths[lod]);
 	for (int type = 0; type < LUAMAT_TYPE_COUNT; type++) {
@@ -754,6 +778,9 @@ int LuaUnitRendering::Debug(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
+
+	GML_LODMUTEX_LOCK(unit); // Debug
+
 	logOutput.Print("\n");
 	logOutput.Print("UnitID      = %i\n", unit->id);
 	logOutput.Print("UnitDefID   = %i\n", unit->unitDef->id);

@@ -2,39 +2,34 @@
 
 #include "StdAfx.h"
 #include <string>
-#include <ostream>
-#include <fstream>
 #include <SDL.h>
-#include "mmgr.h"
 
+#if defined(WIN32) && !defined(HEADLESS) && !defined(_MSC_VER)
+// for APIENTRY
+#include <windef.h>
+#endif
+
+#include "mmgr.h"
 #include "myGL.h"
-#include "FBO.h"
 #include "VertexArray.h"
 #include "VertexArrayRange.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/Textures/Bitmap.h"
-#include "System/ConfigHandler.h"
 #include "System/LogOutput.h"
-#include "System/FPUCheck.h"
-#include "System/GlobalUnsynced.h"
-#include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/TimeProfiler.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/Platform/CrashHandler.h"
-#include "System/Platform/errorhandler.h"
 
-using namespace std;
 
 
 static CVertexArray* vertexArray1 = NULL;
 static CVertexArray* vertexArray2 = NULL;
-static CVertexArray* currentVertexArray = NULL;
 
 #ifdef USE_GML
 static CVertexArray vertexArrays1[GML_MAX_NUM_THREADS];
 static CVertexArray vertexArrays2[GML_MAX_NUM_THREADS];
 static CVertexArray* currentVertexArrays[GML_MAX_NUM_THREADS];
+#else
+static CVertexArray* currentVertexArray = NULL;
 #endif
 //BOOL gmlVertexArrayEnable=0;
 /******************************************************************************/
@@ -86,7 +81,7 @@ void PrintAvailableResolutions()
 }
 
 #ifdef GL_ARB_debug_output
-#ifdef WIN32
+#if defined(WIN32) && !defined(HEADLESS)
 	#define _APIENTRY APIENTRY
 #else
 	#define _APIENTRY
@@ -240,7 +235,7 @@ void LoadExtensions()
 		handleerror(0, errorMsg, "Update graphic drivers", 0);
 	}
 
-#ifdef GL_ARB_debug_output //! it's not defined in older GLEW versions
+#if defined(GL_ARB_debug_output) && !defined(HEADLESS) //! it's not defined in older GLEW versions
 	if (GLEW_ARB_debug_output) {
 		logOutput.Print("Installing OpenGL-DebugMessageHandler");
 		glDebugMessageCallbackARB(&OpenGLDebugMessageCallback, NULL);
@@ -282,7 +277,7 @@ void glBuildMipmaps(const GLenum target,GLint internalFormat,const GLsizei width
 
 	// create mipmapped texture
 
-	if (glGenerateMipmapEXT_NONGML && !globalRendering->atiHacks) {
+	if (glGenerateMipmapEXT && !globalRendering->atiHacks) {
 		// newest method
 		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
 		if (globalRendering->atiHacks) {

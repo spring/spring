@@ -13,33 +13,33 @@
 
 using namespace netcode;
 
-CommandMessage::CommandMessage(const std::string& cmd, int playernum)
+CommandMessage::CommandMessage(const std::string& cmd, int playerID)
+	: action(Action(cmd))
+	, playerID(playerID)
 {
-	action = Action(cmd);
-	player = playernum;
 }
 
-CommandMessage::CommandMessage(const Action& myaction, int playernum)
+CommandMessage::CommandMessage(const Action& action, int playerID)
+	: action(action)
+	, playerID(playerID)
 {
-	action = myaction;
-	player = playernum;
 }
 
 CommandMessage::CommandMessage(boost::shared_ptr<const netcode::RawPacket> pckt)
 {
 	assert(pckt->data[0] == NETMSG_CCOMMAND);
 	UnpackPacket packet(pckt, 3);
-	packet >> player;
+	packet >> playerID;
 	packet >> action.command;
 	packet >> action.extra;
 }
 
 const netcode::RawPacket* CommandMessage::Pack() const
 {
-	unsigned short size = 3 + sizeof(player) + action.command.size() + action.extra.size() + 2;
+	unsigned short size = 3 + sizeof(playerID) + action.command.size() + action.extra.size() + 2;
 	PackPacket* buffer = new PackPacket(size, NETMSG_CCOMMAND);
 	*buffer << size;
-	*buffer << player;
+	*buffer << playerID;
 	*buffer << action.command;
 	*buffer << action.extra;
 	return buffer;

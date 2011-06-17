@@ -1,2 +1,0 @@
-1 ICON "rts/spring.ico"
-CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "rts/spring.exe.manifest"

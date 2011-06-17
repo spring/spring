@@ -8,7 +8,7 @@
 #include "ArchiveBuffered.h"
 
 /**
- * The Pool archive format is specifically developed for spring.
+ * The pool archive format (aka rapid) is specifically developed for spring.
  * It is tailored at incremental downloading of content.
  *
  * Practical example
@@ -61,16 +61,16 @@ class CArchivePool : public CArchiveBuffered
 {
 public:
 	CArchivePool(const std::string& name);
-	virtual ~CArchivePool(void);
+	virtual ~CArchivePool();
 
 	virtual bool IsOpen();
 
 	virtual unsigned NumFiles() const;
-	virtual void FileInfo(unsigned fid, std::string& name, int& size) const;
-	virtual unsigned GetCrc32(unsigned fid);
+	virtual void FileInfo(unsigned int fid, std::string& name, int& size) const;
+	virtual unsigned GetCrc32(unsigned int fid);
 
 protected:
-	virtual bool GetFileImpl(unsigned fid, std::vector<boost::uint8_t>& buffer);
+	virtual bool GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& buffer);
 
 	struct FileData {
 		std::string name;
@@ -79,8 +79,9 @@ protected:
 		unsigned int size;
 	};
 
+private:
 	bool isOpen;
 	std::vector<FileData*> files;
 };
 
-#endif
+#endif // ARCHIVE_POOL_H

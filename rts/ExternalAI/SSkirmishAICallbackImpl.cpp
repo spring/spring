@@ -1,4 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+#include "StdAfx.h"
 
 #include "ExternalAI/AICallback.h"
 #include "ExternalAI/AICheats.h"
@@ -229,7 +230,6 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		clbCheat = skirmishAIId_cheatCallback[skirmishAIId];
 	}
 
-
 	switch (commandTopic) {
 
 		case COMMAND_CHEATS_SET_MY_INCOME_MULTIPLIER:
@@ -411,13 +411,26 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 			clb->FreePath(cmd->pathId);
 			break;
 		}
-		case COMMAND_CALL_LUA_RULES:
-		{
-			SCallLuaRulesCommand* cmd = (SCallLuaRulesCommand*) commandData;
-			// TODO: FIXME: should strcpy() this
-			cmd->ret_outData = clb->CallLuaRules(cmd->data, cmd->inSize);
-			break;
-		}
+
+
+		// TODO: FIXME: should strcpy() this
+		// const char* outData = clb->CallLua ## HandleName ## (cmd->inData, cmd->inSize);
+		//
+		// if (outData != NULL)
+		//     strcpy((cmd->ret_outData = new char[strlen(outData) + 1]), outData);
+		// else
+		//     cmd->ret_outData = NULL;
+		//
+		#define SSAICALLBACK_CALL_LUA(HandleName, HANDLENAME)                                               \
+			case COMMAND_CALL_LUA_ ## HANDLENAME: {                                                         \
+				SCallLua ## HandleName ## Command* cmd = (SCallLua ## HandleName ## Command*) commandData;  \
+				cmd->ret_outData = clb->CallLua ## HandleName(cmd->inData, cmd->inSize);                    \
+			} break;
+
+		SSAICALLBACK_CALL_LUA(Rules, RULES)
+		SSAICALLBACK_CALL_LUA(UI, UI)
+
+		#undef SSAICALLBACK_CALL_LUA
 
 
 		case COMMAND_DRAWER_ADD_NOTIFICATION:
@@ -2294,8 +2307,9 @@ EXPORT(float) skirmishAiCallback_UnitDef_getSlideTolerance(int skirmishAIId, int
 	return getUnitDefById(skirmishAIId, unitDefId)->slideTolerance;
 }
 
+// DEPRECATED
 EXPORT(float) skirmishAiCallback_UnitDef_getMaxSlope(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->maxSlope;
+	return 0.0f;
 }
 
 EXPORT(float) skirmishAiCallback_UnitDef_getMaxHeightDif(int skirmishAIId, int unitDefId) {

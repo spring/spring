@@ -189,6 +189,8 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 			}
 		} else {
 			p->Update();
+			qf->MovedProjectile(p);
+
 			GML_GET_TICKS(p->lastProjUpdate);
 			++pci;
 		}
@@ -217,7 +219,7 @@ void CProjectileHandler::Update()
 			GML_STDMUTEX_LOCK(rproj); // Update
 
 			if (syncedProjectiles.can_delete_synced()) {
-				GML_STDMUTEX_LOCK(proj); // Update
+				GML_RECMUTEX_LOCK(proj); // Update
 
 				eventHandler.DeleteSyncedProjectiles();
 				//! delete all projectiles that were
@@ -345,11 +347,11 @@ void CProjectileHandler::CheckUnitCollisions(
 		// if this unit fired this projectile or (this unit is in the
 		// same allyteam as the unit that shot this projectile and we
 		// are ignoring friendly collisions)
-		if (p->owner() == unit || ((p->collisionFlags & Collision::NOFRIENDLIES) && friendlyShot)) {
+		if (p->owner() == unit || ((p->GetCollisionFlags() & Collision::NOFRIENDLIES) && friendlyShot)) {
 			continue;
 		}
 
-		if (p->collisionFlags & Collision::NONEUTRALS) {
+		if (p->GetCollisionFlags() & Collision::NONEUTRALS) {
 			if (unit->IsNeutral()) { continue; }
 		}
 
@@ -389,7 +391,7 @@ void CProjectileHandler::CheckFeatureCollisions(
 {
 	CollisionQuery q;
 
-	if (p->collisionFlags & Collision::NOFEATURES) {
+	if (p->GetCollisionFlags() & Collision::NOFEATURES) {
 		return;
 	}
 

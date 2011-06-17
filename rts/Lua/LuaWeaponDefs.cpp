@@ -394,7 +394,7 @@ static int GuiSoundSetTable(lua_State* L, const void* data)
 		const GuiSoundSet::Data& sound = soundSet.sounds[i];
 		HSTR_PUSH_STRING(L, "name",   sound.name);
 		HSTR_PUSH_NUMBER(L, "volume", sound.volume);
-		if (!CLuaHandle::GetActiveHandle()->GetSynced()) {
+		if (!CLuaHandle::GetSynced(L)) {
 			HSTR_PUSH_NUMBER(L, "id", sound.id);
 		}
 		lua_rawset(L, -3);

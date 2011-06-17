@@ -11,18 +11,19 @@ CGameController* activeController = NULL;
 
 
 CGameController::CGameController()
+	: userWriting(false)
+	, writingPos(0)
+	, ignoreNextChar(false)
+	, ignoreChar(0)
 {
-	userWriting = false;
-	writingPos = 0;
-	ignoreNextChar = false;
-	ignoreChar = 0;
 }
 
 
 CGameController::~CGameController()
 {
-	if (activeController == this)
+	if (activeController == this) {
 		activeController = NULL;
+	}
 }
 
 
@@ -38,13 +39,13 @@ bool CGameController::Update()
 }
 
 
-int CGameController::KeyPressed(unsigned short k,bool isRepeat)
+int CGameController::KeyPressed(unsigned short key, bool isRepeat)
 {
 	return 0;
 }
 
 
-int CGameController::KeyReleased(unsigned short k)
+int CGameController::KeyReleased(unsigned short key)
 {
 	return 0;
 }

@@ -24,13 +24,14 @@
 #include "ConfigHandler.h"
 #include "Util.h"
 
-CTooltipConsole* tooltip = 0;
+CTooltipConsole* tooltip = NULL;
 
 
-CTooltipConsole::CTooltipConsole(void) : disabled(false)
+CTooltipConsole::CTooltipConsole()
+	: enabled(true)
 {
 	const std::string geo = configHandler->GetString("TooltipGeometry",
-	                                                "0.0 0.0 0.41 0.1");
+			"0.0 0.0 0.41 0.1");
 	const int vars = sscanf(geo.c_str(), "%f %f %f %f", &x, &y, &w, &h);
 	if (vars != 4) {
 		x = 0.00f;
@@ -43,14 +44,14 @@ CTooltipConsole::CTooltipConsole(void) : disabled(false)
 }
 
 
-CTooltipConsole::~CTooltipConsole(void)
+CTooltipConsole::~CTooltipConsole()
 {
 }
 
 
-void CTooltipConsole::Draw(void)
+void CTooltipConsole::Draw()
 {
-	if (disabled) {
+	if (!enabled) {
 		return;
 	}
 
@@ -84,9 +85,9 @@ void CTooltipConsole::Draw(void)
 }
 
 
-bool CTooltipConsole::IsAbove(int x,int y)
+bool CTooltipConsole::IsAbove(int x, int y)
 {
-	if (disabled) {
+	if (!enabled) {
 		return false;
 	}
 

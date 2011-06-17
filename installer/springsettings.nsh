@@ -5,7 +5,11 @@
 !endif
 
 !define PRODUCT_VERSION "${VERSION_TAG}"
+!ifndef SLIM
 !define SP_BASENAME "spring_${PRODUCT_VERSION}"
+!else
+!define SP_BASENAME "spring-engineonly_${PRODUCT_VERSION}"
+!endif
 
 !define PRODUCT_PUBLISHER "Spring team"
 !define PRODUCT_WEB_SITE "http://www.springrts.com"

@@ -12,33 +12,38 @@
 //#include "System/LogOutput.h"
 #include <cstdlib> // for NULL
 
-
-IVideoCapturing* IVideoCapturing::instance;
-
-IVideoCapturing* IVideoCapturing::GetInstance() {
-
-	if (instance == NULL) {
+IVideoCapturing* IVideoCapturing::GetInstance()
+{
 #if       defined AVI_CAPTURING
-		instance = new AviVideoCapturing();
+	static AviVideoCapturing instance;
 #else  // defined AVI_CAPTURING
-		instance = new DummyVideoCapturing();
+	static DummyVideoCapturing instance;
 #endif // defined AVI_CAPTURING
+
+	return &instance;
+}
+
+
+void IVideoCapturing::FreeInstance()
+{
+	SetCapturing(false);
+}
+
+
+IVideoCapturing::IVideoCapturing()
+{
+}
+
+IVideoCapturing::~IVideoCapturing()
+{
+	FreeInstance();
+}
+
+void IVideoCapturing::SetCapturing(bool enabled) {
+
+	if (!GetInstance()->IsCapturing() && enabled) {
+		GetInstance()->StartCapturing();
+	} else if (GetInstance()->IsCapturing() && !enabled) {
+		GetInstance()->StopCapturing();
 	}
-	return instance;
-}
-
-void IVideoCapturing::FreeInstance() {
-	if (instance && instance->IsCapturing()) {
-		instance->StopCapturing();
-	}
-
-	delete instance;
-	instance = NULL;
-}
-
-
-IVideoCapturing::IVideoCapturing() {
-}
-
-IVideoCapturing::~IVideoCapturing() {
 }
