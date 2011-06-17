@@ -85,6 +85,12 @@ CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, boo
 	GML_GET_TICKS(lastProjUpdate);
 }
 
+CProjectile::~CProjectile() {
+	if (synced) {
+		qf->RemoveProjectile(this);
+	}
+}
+
 void CProjectile::Init(const float3& offset, CUnit* owner)
 {
 	if (owner != NULL) {
@@ -96,11 +102,13 @@ void CProjectile::Init(const float3& offset, CUnit* owner)
 		//! types, but this throws away too much RTTI
 		ph->AddProjectile(this);
 	}
+	if (synced) {
+		qf->AddProjectile(this);
+	}
 
 	pos += offset;
 
 	SetRadius(1.7f);
-	qf->AddProjectile(this);
 }
 
 

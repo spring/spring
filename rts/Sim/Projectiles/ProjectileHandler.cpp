@@ -187,8 +187,6 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 #endif
 				pci = pc.erase_delete(pci);
 			}
-
-			qf->RemoveProjectile(p);
 		} else {
 			p->Update();
 			qf->MovedProjectile(p);
