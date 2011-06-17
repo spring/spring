@@ -5,7 +5,7 @@ UnitCount=24
 Type=3
 Ver=1
 ObjFiles=
-Includes=..\..\..\..\rts;..\..\..\..\rts\system;..\..\..\..\..\mingwlibs\include
+Includes=..\..\..\..\..\rts;..\..\..\..\..\rts\system;..\..\..\..\..\..\mingwlibs\include
 Libs=
 PrivateResource=
 ResourceIncludes=
@@ -30,7 +30,7 @@ CompilerSet=0
 CompilerSettings=0011000000010000010100
 
 [Unit11]
-FileName=..\PowerManager.cpp
+FileName=..\..\PowerManager.cpp
 CompileCpp=1
 Folder=Source
 Compile=1
@@ -40,7 +40,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit13]
-FileName=..\RAI.cpp
+FileName=..\..\RAI.cpp
 CompileCpp=1
 Folder=Source
 Compile=1
@@ -50,7 +50,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit15]
-FileName=..\SWeaponManager.cpp
+FileName=..\..\SWeaponManager.cpp
 CompileCpp=1
 Folder=Source
 Compile=1
@@ -60,7 +60,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit20]
-FileName=..\GResourceMap.h
+FileName=..\..\GResourceMap.h
 CompileCpp=1
 Folder=Header
 Compile=1
@@ -70,7 +70,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit21]
-FileName=..\DLLExportRAI.cpp
+FileName=..\..\DLLExportRAI.cpp
 CompileCpp=1
 Folder=Source
 Compile=1
@@ -80,7 +80,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit22]
-FileName=..\BasicArray.h
+FileName=..\..\BasicArray.h
 CompileCpp=1
 Folder=Header
 Compile=1
@@ -90,7 +90,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit23]
-FileName=..\UnitDefHandler.cpp
+FileName=..\..\UnitDefHandler.cpp
 CompileCpp=1
 Folder=Source
 Compile=1
@@ -100,7 +100,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit28]
-FileName=..\Krogs Metal Class v0.4\MetalMap.cpp
+FileName=..\..\Krogs Metal Class v0.4\MetalMap.cpp
 CompileCpp=1
 Folder=RAI
 Compile=1
@@ -110,7 +110,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit29]
-FileName=..\Krogs Metal Class v0.4\MetalMap.h
+FileName=..\..\Krogs Metal Class v0.4\MetalMap.h
 CompileCpp=1
 Folder=RAI
 Compile=1
@@ -138,7 +138,7 @@ ProductVersion=
 AutoIncBuildNr=0
 
 [Unit31]
-FileName=..\TaskTransport.cpp
+FileName=..\..\TaskTransport.cpp
 CompileCpp=1
 Folder=Source
 Compile=1
@@ -148,7 +148,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit32]
-FileName=..\TaskTransport.h
+FileName=..\..\TaskTransport.h
 CompileCpp=1
 Folder=Header
 Compile=1
@@ -158,7 +158,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit34]
-FileName=..\Krogs Metal Class v0.4\MetalMap.h
+FileName=..\..\Krogs Metal Class v0.4\MetalMap.h
 CompileCpp=1
 Folder=Krogs Metal Class v0.4
 Compile=1
@@ -168,7 +168,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit33]
-FileName=..\Krogs Metal Class v0.4\MetalMap.cpp
+FileName=..\..\Krogs Metal Class v0.4\MetalMap.cpp
 CompileCpp=1
 Folder=Krogs Metal Class v0.4
 Compile=1
@@ -178,7 +178,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit14]
-FileName=..\RAI.h
+FileName=..\..\RAI.h
 CompileCpp=1
 Folder=Header
 Compile=1
@@ -188,7 +188,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit1]
-FileName=..\Builder.cpp
+FileName=..\..\Builder.cpp
 CompileCpp=1
 Folder=Source
 Compile=1
@@ -198,7 +198,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit2]
-FileName=..\Builder.h
+FileName=..\..\Builder.h
 CompileCpp=1
 Folder=Header
 Compile=1
@@ -208,7 +208,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit3]
-FileName=..\BuilderPlacement.cpp
+FileName=..\..\BuilderPlacement.cpp
 CompileCpp=1
 Folder=Source
 Compile=1
@@ -218,7 +218,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit4]
-FileName=..\BuilderPlacement.h
+FileName=..\..\BuilderPlacement.h
 CompileCpp=1
 Folder=Header
 Compile=1
@@ -228,7 +228,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit5]
-FileName=..\CombatManager.cpp
+FileName=..\..\CombatManager.cpp
 CompileCpp=1
 Folder=Source
 Compile=1
@@ -238,7 +238,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit6]
-FileName=..\CombatManager.h
+FileName=..\..\CombatManager.h
 CompileCpp=1
 Folder=Header
 Compile=1
@@ -248,7 +248,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit7]
-FileName=..\GTerrainMap.cpp
+FileName=..\..\GTerrainMap.cpp
 CompileCpp=1
 Folder=Source
 Compile=1
@@ -258,7 +258,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit8]
-FileName=..\GTerrainMap.h
+FileName=..\..\GTerrainMap.h
 CompileCpp=1
 Folder=Header
 Compile=1
@@ -268,7 +268,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit9]
-FileName=..\LogFile.cpp
+FileName=..\..\LogFile.cpp
 CompileCpp=1
 Folder=Source
 Compile=1
@@ -278,7 +278,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit10]
-FileName=..\LogFile.h
+FileName=..\..\LogFile.h
 CompileCpp=1
 Folder=Header
 Compile=1
@@ -288,7 +288,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit12]
-FileName=..\PowerManager.h
+FileName=..\..\PowerManager.h
 CompileCpp=1
 Folder=Header
 Compile=1
@@ -298,7 +298,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit16]
-FileName=..\SWeaponManager.h
+FileName=..\..\SWeaponManager.h
 CompileCpp=1
 Folder=Header
 Compile=1
@@ -308,7 +308,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit17]
-FileName=..\UnitManager.cpp
+FileName=..\..\UnitManager.cpp
 CompileCpp=1
 Folder=Source
 Compile=1
@@ -318,7 +318,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit18]
-FileName=..\UnitManager.h
+FileName=..\..\UnitManager.h
 CompileCpp=1
 Folder=Header
 Compile=1
@@ -328,7 +328,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit19]
-FileName=..\GResourceMap.cpp
+FileName=..\..\GResourceMap.cpp
 CompileCpp=1
 Folder=Source
 Compile=1
@@ -338,7 +338,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit26]
-FileName=..\KrogsMetalClass-v0.4\MetalMap.h
+FileName=..\..\KrogsMetalClass-v0.4\MetalMap.h
 CompileCpp=1
 Folder=RAI
 Compile=1
@@ -348,7 +348,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit27]
-FileName=..\GPathfinder.h
+FileName=..\..\GPathfinder.h
 CompileCpp=1
 Folder=Header
 Compile=1
@@ -358,7 +358,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit30]
-FileName=..\BasicArray.h
+FileName=..\..\BasicArray.h
 CompileCpp=1
 Folder=Header
 Compile=1
@@ -368,7 +368,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit24]
-FileName=..\UnitDefHandler.h
+FileName=..\..\UnitDefHandler.h
 CompileCpp=1
 Folder=Header
 Compile=1
@@ -378,7 +378,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit25]
-FileName=..\KrogsMetalClass-v0.4\MetalMap.cpp
+FileName=..\..\KrogsMetalClass-v0.4\MetalMap.cpp
 CompileCpp=1
 Folder=RAI
 Compile=1
