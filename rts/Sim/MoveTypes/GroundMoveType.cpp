@@ -301,7 +301,7 @@ bool CGroundMoveType::Update()
 		// too many false positives: many slow units cannot even manage 1 elmo/frame
 		//   idling = (Square(currWayPointDist - prevWayPointDist) < 1.0f);
 
-		idling = (Square(currWayPointDist - prevWayPointDist) < (owner->speed.SqLength() - 0.05f));
+		idling = (Square(currWayPointDist - prevWayPointDist) < (owner->speed.SqLength() * 0.5f));
 		oldPos = owner->pos;
 		hasMoved = true;
 	} else {
