@@ -1391,6 +1391,18 @@ void CLuaHandle::FeatureDestroyed(const CFeature* feature)
 
 void CLuaHandle::ProjectileCreated(const CProjectile* p)
 {
+	if (!p->synced) { return; }
+	if (!p->weapon && !p->piece) { return; }
+	if (p->weapon) {
+		const CWeaponProjectile* wp = dynamic_cast<const CWeaponProjectile*>(p);
+		const WeaponDef* wd = wp->weaponDef;
+
+		// if this weapon-type is not being watched, bail
+		if (wd == NULL || !watchWeapons[wd->id]) {
+			return;
+		}
+	}
+
 	LUA_PROJ_BATCH_PUSH(PROJ_CREATED, p);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
@@ -1401,32 +1413,30 @@ void CLuaHandle::ProjectileCreated(const CProjectile* p)
 		return; // the call is not defined
 	}
 
-	if (p->synced && (p->weapon || p->piece)) {
-		if (p->weapon) {
-			const CWeaponProjectile* wp = dynamic_cast<const CWeaponProjectile*>(p);
-			const WeaponDef* wd = wp->weaponDef;
+	const CUnit* owner = p->owner();
 
-			// if this weapon-type is not being watched, bail
-			if (wd == NULL || !watchWeapons[wd->id]) {
-				return;
-			}
-		}
+	lua_pushnumber(L, p->id);
+	lua_pushnumber(L, (owner? owner->id: -1));
 
-		const CUnit* owner = p->owner();
-
-		lua_pushnumber(L, p->id);
-		lua_pushnumber(L, (owner? owner->id: -1));
-
-		// call the routine
-		RunCallIn(cmdStr, 2, 0);
-	}
-
-	return;
+	// call the routine
+	RunCallIn(cmdStr, 2, 0);
 }
 
 
 void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 {
+	if (!p->synced) { return; }
+	if (!p->weapon && !p->piece) { return; }
+	if (p->weapon) {
+		const CWeaponProjectile* wp = dynamic_cast<const CWeaponProjectile*>(p);
+		const WeaponDef* wd = wp->weaponDef;
+
+		// if this weapon-type is not being watched, bail
+		if (wd == NULL || !watchWeapons[wd->id]) {
+			return;
+		}
+	}
+
 	LUA_PROJ_BATCH_PUSH(PROJ_DESTROYED, p);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
@@ -1437,24 +1447,10 @@ void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 		return; // the call is not defined
 	}
 
-	if (p->synced && (p->weapon || p->piece)) {
-		if (p->weapon) {
-			const CWeaponProjectile* wp = dynamic_cast<const CWeaponProjectile*>(p);
-			const WeaponDef* wd = wp->weaponDef;
+	lua_pushnumber(L, p->id);
 
-			// if this weapon-type is not being watched, bail
-			if (wd == NULL || !watchWeapons[wd->id]) {
-				return;
-			}
-		}
-
-		lua_pushnumber(L, p->id);
-
-		// call the routine
-		RunCallIn(cmdStr, 1, 0);
-	}
-
-	return;
+	// call the routine
+	RunCallIn(cmdStr, 1, 0);
 }
 
 /******************************************************************************/
