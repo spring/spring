@@ -1163,7 +1163,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 		const float maxParalysisDamage = baseHealth + sumParalysisDamage - paralyzeDamage;
 
 		if (damage > 0.0f) {
-			// clamp the dealt paralysis-damage to [0, maxParaDamage]
+			// clamp the dealt paralysis-damage to [0, maxParalysisDamage]
 			damage = std::min(damage, std::max(0.0f, maxParalysisDamage));
 
 			if (stunned) {
