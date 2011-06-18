@@ -1,9 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _ARCHIVE_ZIP
-#define _ARCHIVE_ZIP
+#ifndef _ZIP_ARCHIVE_H
+#define _ZIP_ARCHIVE_H
 
-#include "ArchiveBuffered.h"
+#include "ArchiveFactory.h"
+#include "BufferedArchive.h"
 #include "lib/minizip/unzip.h"
 
 #ifdef _WIN32
@@ -18,11 +19,27 @@
 #include <string>
 #include <vector>
 
-class CArchiveZip : public CArchiveBuffered
+
+/**
+ * Creates zip compressed, single-file archives.
+ * @see CZipArchive
+ */
+class CZipArchiveFactory : public IArchiveFactory {
+public:
+	CZipArchiveFactory();
+private:
+	IArchive* DoCreateArchive(const std::string& filePath) const;
+};
+
+
+/**
+ * A zip compressed, single-file archive.
+ */
+class CZipArchive : public CBufferedArchive
 {
 public:
-	CArchiveZip(const std::string& archiveName);
-	virtual ~CArchiveZip();
+	CZipArchive(const std::string& archiveName);
+	virtual ~CZipArchive();
 
 	virtual bool IsOpen();
 
@@ -44,4 +61,4 @@ protected:
 	virtual bool GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& buffer);
 };
 
-#endif // _ARCHIVE_ZIP
+#endif // _ZIP_ARCHIVE_H

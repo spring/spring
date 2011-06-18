@@ -71,7 +71,7 @@ Add_Subdirectory(aGui)
 Add_Subdirectory(Menu)
 Add_Subdirectory(Map)
 Add_Subdirectory(Sim)
-Add_Subdirectory(System)
+#Add_Subdirectory(System) # this is already added in ../
 
 SET(engineSources
 		${sources_engine_Game}

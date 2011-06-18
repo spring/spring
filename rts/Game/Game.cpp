@@ -268,6 +268,14 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	for (int a = 0; a < 8; ++a) { camMove[a] = false; }
 	for (int a = 0; a < 4; ++a) { camRot[a] = false; }
 
+	// set "Headless" in config overlay (not persisted)
+	const bool isHeadless =
+#ifdef HEADLESS
+			true;
+#else
+			false;
+#endif
+	configHandler->Set("Headless", isHeadless ? 1 : 0, true);
 
 	//FIXME move to MouseHandler!
 	windowedEdgeMove   = !!configHandler->Get("WindowedEdgeMove",   1);
@@ -397,7 +405,7 @@ CGame::~CGame()
 	}
 	grouphandlers.clear();
 
-	SafeDelete(saveFile); // ILoadSaveHandler, depends on vfsHandler via ~CArchiveBase
+	SafeDelete(saveFile); // ILoadSaveHandler, depends on vfsHandler via ~IArchive
 	SafeDelete(vfsHandler);
 	SafeDelete(archiveScanner);
 

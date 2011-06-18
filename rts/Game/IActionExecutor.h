@@ -71,11 +71,6 @@ public:
 	void ExecuteAction(const action_t& action) const;
 
 protected:
-	/**
-	 * Executes one instance of an action of this type.
-	 */
-	virtual void Execute(const action_t& action) const = 0;
-
 	void SetDescription(const std::string& description) {
 		this->description = description;
 	}
@@ -95,6 +90,11 @@ protected:
 	static void LogSystemStatus(const std::string& system, bool status);
 
 private:
+	/**
+	 * Executes one instance of an action of this type.
+	 */
+	virtual void Execute(const action_t& action) const = 0;
+
 	std::string command;
 	std::string description;
 	bool cheatRequired;

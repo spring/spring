@@ -1254,7 +1254,8 @@ EXPORT(int         ) FindFilesArchive(int archive, int file, char* nameBuf, int*
  * @brief Open an archive member
  * @param archive the archive handle as returned by OpenArchive()
  * @param name the name of the file
- * @return Zero on error; a non-zero file handle on success.
+ * @return negative integer (< 0) on error;
+ *   the file-ID/-handle within the archive (>= 0) on success
  *
  * The returned file handle is needed for subsequent calls to ReadArchiveFile(),
  * CloseArchiveFile() and SizeArchiveFile().

@@ -16,11 +16,13 @@
  * 	//stuff
  * }
  */
-class CArchiveBase
+class IArchive
 {
+protected:
+	IArchive(const std::string& archiveName);
+
 public:
-	CArchiveBase(const std::string& archiveName);
-	virtual ~CArchiveBase();
+	virtual ~IArchive();
 
 	virtual bool IsOpen() = 0;
 	const std::string& GetArchiveName() const;

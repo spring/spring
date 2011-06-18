@@ -97,9 +97,7 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 	}
 
 	if (GetFullCtrl()) {
-		for (int w = 0; w < weaponDefHandler->numWeaponDefs; w++) {
-			watchWeapons.push_back(false);
-		}
+		watchWeapons.resize(weaponDefHandler->numWeaponDefs, false);
 	}
 
 	const string syncedCode   = LoadFile(syncedFile, modes);
@@ -1136,11 +1134,11 @@ int CLuaHandleSynced::RemoveSyncedActionFallback(lua_State* L)
 int CLuaHandleSynced::GetWatchWeapon(lua_State* L)
 {
 	CLuaHandleSynced* lhs = GetActiveHandle(L);
-	const int weaponID = luaL_checkint(L, 1);
-	if ((weaponID < 0) || (weaponID >= (int)lhs->watchWeapons.size())) {
+	const int weaponDefID = luaL_checkint(L, 1);
+	if ((weaponDefID < 0) || (weaponDefID >= (int)lhs->watchWeapons.size())) {
 		return 0;
 	}
-	lua_pushboolean(L, lhs->watchWeapons[weaponID]);
+	lua_pushboolean(L, lhs->watchWeapons[weaponDefID]);
 	return 1;
 }
 
@@ -1148,14 +1146,14 @@ int CLuaHandleSynced::GetWatchWeapon(lua_State* L)
 int CLuaHandleSynced::SetWatchWeapon(lua_State* L)
 {
 	CLuaHandleSynced* lhs = GetActiveHandle(L);
-	const int weaponID = luaL_checkint(L, 1);
-	if ((weaponID < 0) || (weaponID >= (int)lhs->watchWeapons.size())) {
+	const int weaponDefID = luaL_checkint(L, 1);
+	if ((weaponDefID < 0) || (weaponDefID >= (int)lhs->watchWeapons.size())) {
 		return 0;
 	}
 	if (!lua_isboolean(L, 2)) {
 		luaL_error(L, "Incorrect arguments to SetWatchWeapon()");
 	}
-	lhs->watchWeapons[weaponID] = lua_toboolean(L, 2);
+	lhs->watchWeapons[weaponDefID] = lua_toboolean(L, 2);
 	return 0;
 }
 

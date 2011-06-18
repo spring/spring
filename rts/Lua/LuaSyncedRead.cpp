@@ -78,7 +78,6 @@ using namespace std;
 
 static const LuaHashString hs_n("n");
 
-
 // 0 and positive numbers are teams (not allyTeams)
 enum UnitAllegiance {
 	AllUnits   = -1,
@@ -176,6 +175,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitsInCylinder);
 
 	REGISTER_LUA_CFUNC(GetFeaturesInRectangle);
+	REGISTER_LUA_CFUNC(GetProjectilesInRectangle);
 
 	REGISTER_LUA_CFUNC(GetUnitNearestAlly);
 	REGISTER_LUA_CFUNC(GetUnitNearestEnemy);
@@ -401,6 +401,21 @@ static inline bool IsFeatureVisible(const CFeature* feature)
 	return feature->IsInLosForAllyTeam(ActiveReadAllyTeam());
 }
 
+static inline bool IsProjectileVisible(const ProjectileMapPair& pp)
+{
+	const CProjectile* pro = pp.first;
+	const int proAllyteam = pp.second;
+
+	if (ActiveReadAllyTeam() < 0) {
+		return ActiveFullRead();
+	}
+	if ((ActiveReadAllyTeam() != proAllyteam) &&
+	    (!loshandler->InLos(pro->pos, ActiveReadAllyTeam()))) {
+		return false;
+	}
+	return true;
+}
+
 
 /******************************************************************************/
 /******************************************************************************/
@@ -470,6 +485,29 @@ static inline CUnit* ParseTypedUnit(lua_State* L, const char* caller, int index)
 		return NULL;
 	}
 	return IsUnitTyped(unit) ? unit : NULL;
+}
+
+
+static CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isnumber(L, index)) {
+		if (caller != NULL) {
+			luaL_error(L, "Incorrect arguments to %s(projectileID)", caller);
+		} else {
+			return NULL;
+		}
+	}
+	const int proID = (int) lua_tonumber(L, index);
+	ProjectileMap::iterator it = ph->syncedProjectileIDs.find(proID);
+
+	if (it == ph->syncedProjectileIDs.end()) {
+		// not an assigned synced projectile ID
+		return NULL;
+	}
+
+	const ProjectileMapPair& pp = it->second;
+	return IsProjectileVisible(pp)? pp.first: NULL;
 }
 
 
@@ -2306,36 +2344,90 @@ int LuaSyncedRead::GetFeaturesInRectangle(lua_State* L)
 	const float3 mins(xmin, 0.0f, zmin);
 	const float3 maxs(xmax, 0.0f, zmax);
 
-	const vector<CFeature*> &rectFeatures = qf->GetFeaturesExact(mins, maxs);
-	const int rectFeatureCount = (int)rectFeatures.size();
+	const vector<CFeature*>& rectFeatures = qf->GetFeaturesExact(mins, maxs);
+	const unsigned int rectFeatureCount = rectFeatures.size();
+	unsigned int arrayIndex = 1;
 
-	lua_newtable(L);
-	int count = 0;
+	lua_createtable(L, rectFeatureCount, 0);
+
 	if (ActiveReadAllyTeam() < 0) {
 		if (ActiveFullRead()) {
-			for (int i = 0; i < rectFeatureCount; i++) {
+			for (unsigned int i = 0; i < rectFeatureCount; i++) {
 				const CFeature* feature = rectFeatures[i];
-				count++;
-				lua_pushnumber(L, count);
+
+				lua_pushnumber(L, arrayIndex++);
 				lua_pushnumber(L, feature->id);
 				lua_rawset(L, -3);
 			}
 		}
-	}
-	else {
-		for (int i = 0; i < rectFeatureCount; i++) {
+	} else {
+		for (unsigned int i = 0; i < rectFeatureCount; i++) {
 			const CFeature* feature = rectFeatures[i];
+
 			if (!IsFeatureVisible(feature)) {
 				continue;
 			}
-			count++;
-			lua_pushnumber(L, count);
+
+			lua_pushnumber(L, arrayIndex++);
 			lua_pushnumber(L, feature->id);
 			lua_rawset(L, -3);
 		}
 	}
 
-	hs_n.PushNumber(L, count);
+	return 1;
+}
+
+
+int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
+{
+	const float xmin = luaL_checkfloat(L, 1);
+	const float zmin = luaL_checkfloat(L, 2);
+	const float xmax = luaL_checkfloat(L, 3);
+	const float zmax = luaL_checkfloat(L, 4);
+
+	const bool excludeWeaponProjectiles = lua_isboolean(L, 5)? lua_toboolean(L, 5): false;
+	const bool excludePieceProjectiles = lua_isboolean(L, 6)? lua_toboolean(L, 6): false;
+
+	const float3 mins(xmin, 0.0f, zmin);
+	const float3 maxs(xmax, 0.0f, zmax);
+
+	const vector<CProjectile*>& rectProjectiles = qf->GetProjectilesExact(mins, maxs);
+	const unsigned int rectProjectileCount = rectProjectiles.size();
+	unsigned int arrayIndex = 1;
+
+	lua_createtable(L, rectProjectileCount, 0);
+
+	if (ActiveReadAllyTeam() < 0) {
+		if (ActiveFullRead()) {
+			for (unsigned int i = 0; i < rectProjectileCount; i++) {
+				const CProjectile* pro = rectProjectiles[i];
+
+				if (pro->weapon && excludeWeaponProjectiles) { continue; }
+				if (pro->piece && excludePieceProjectiles) { continue; }
+
+				lua_pushnumber(L, arrayIndex++);
+				lua_pushnumber(L, pro->id);
+				lua_rawset(L, -3);
+			}
+		}
+	} else {
+		for (unsigned int i = 0; i < rectProjectileCount; i++) {
+			const CProjectile* pro = rectProjectiles[i];
+			const CUnit* unit = pro->owner();
+			const ProjectileMapPair proPair(const_cast<CProjectile*>(pro), ((unit != NULL)? unit->allyteam: ActiveReadAllyTeam()));
+
+			if (pro->weapon && excludeWeaponProjectiles) { continue; }
+			if (pro->piece && excludePieceProjectiles) { continue; }
+
+			if (!IsProjectileVisible(proPair)) {
+				continue;
+			}
+
+			lua_pushnumber(L, arrayIndex++);
+			lua_pushnumber(L, pro->id);
+			lua_rawset(L, -3);
+		}
+	}
 
 	return 1;
 }
@@ -3969,47 +4061,6 @@ static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 		return NULL;
 	}
 	return feature;
-}
-
-
-/******************************************************************************/
-/******************************************************************************/
-
-static inline bool IsProjectileVisible(const ProjectileMapPair& pp)
-{
-	const CProjectile* pro = pp.first;
-	const int proAllyteam = pp.second;
-
-	if (ActiveReadAllyTeam() < 0) {
-		return ActiveFullRead();
-	}
-	if ((ActiveReadAllyTeam() != proAllyteam) &&
-	    (!loshandler->InLos(pro->pos, ActiveReadAllyTeam()))) {
-		return false;
-	}
-	return true;
-}
-
-static CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, index)) {
-		if (caller != NULL) {
-			luaL_error(L, "Incorrect arguments to %s(projectileID)", caller);
-		} else {
-			return NULL;
-		}
-	}
-	const int proID = (int) lua_tonumber(L, index);
-	ProjectileMap::iterator it = ph->syncedProjectileIDs.find(proID);
-
-	if (it == ph->syncedProjectileIDs.end()) {
-		// not an assigned synced projectile ID
-		return NULL;
-	}
-
-	const ProjectileMapPair& pp = it->second;
-	return IsProjectileVisible(pp)? pp.first: NULL;
 }
 
 

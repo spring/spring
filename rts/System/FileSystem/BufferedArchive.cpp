@@ -2,19 +2,19 @@
 
 #include "StdAfx.h"
 
-#include "ArchiveBuffered.h"
+#include "BufferedArchive.h"
 
 
-CArchiveBuffered::CArchiveBuffered(const std::string& name)
-	: CArchiveBase(name)
+CBufferedArchive::CBufferedArchive(const std::string& name)
+	: IArchive(name)
 {
 }
 
-CArchiveBuffered::~CArchiveBuffered()
+CBufferedArchive::~CBufferedArchive()
 {
 }
 
-bool CArchiveBuffered::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
+bool CBufferedArchive::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
 {
 	boost::mutex::scoped_lock lck(archiveLock);
 	assert(IsFileId(fid));

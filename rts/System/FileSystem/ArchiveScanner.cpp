@@ -12,9 +12,9 @@
 
 #include "ArchiveScanner.h"
 
-#include "ArchiveFactory.h"
+#include "ArchiveLoader.h"
 #include "CRC.h"
-#include "ArchiveBase.h"
+#include "IArchive.h"
 #include "FileFilter.h"
 #include "FileSystem.h"
 #include "FileSystemHandler.h"
@@ -410,7 +410,7 @@ void CArchiveScanner::Scan(const std::string& curPath, bool doChecksum)
 		}
 
 		// Is this an archive we should look into?
-		if (CArchiveFactory::IsScanArchive(fullName)) {
+		if (archiveLoader.IsArchiveFile(fullName)) {
 			ScanArchive(fullName, doChecksum);
 		}
 	}
@@ -500,7 +500,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 		if (doChecksum && (aii->second.checksum == 0))
 			aii->second.checksum = GetCRC(fullName);
 	} else {
-		CArchiveBase* ar = CArchiveFactory::OpenArchive(fullName);
+		IArchive* ar = archiveLoader.OpenArchive(fullName);
 		if (!ar || !ar->IsOpen()) {
 			logOutput.Print("Unable to open archive: %s", fullName.c_str());
 			return;
@@ -612,7 +612,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	}
 }
 
-bool CArchiveScanner::ScanArchiveLua(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai,  std::string& err)
+bool CArchiveScanner::ScanArchiveLua(IArchive* ar, const std::string& fileName, ArchiveInfo& ai,  std::string& err)
 {
 	std::vector<boost::uint8_t> buf;
 	if (!ar->GetFile(fileName, buf)) {
@@ -635,7 +635,7 @@ bool CArchiveScanner::ScanArchiveLua(CArchiveBase* ar, const std::string& fileNa
 	return true;
 }
 
-IFileFilter* CArchiveScanner::CreateIgnoreFilter(CArchiveBase* ar)
+IFileFilter* CArchiveScanner::CreateIgnoreFilter(IArchive* ar)
 {
 	IFileFilter* ignore = IFileFilter::Create();
 	std::vector<boost::uint8_t> buf;
@@ -657,11 +657,11 @@ IFileFilter* CArchiveScanner::CreateIgnoreFilter(CArchiveBase* ar)
 unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 {
 	CRC crc;
-	CArchiveBase* ar;
+	IArchive* ar;
 	std::list<std::string> files;
 
 	//! Try to open an archive
-	ar = CArchiveFactory::OpenArchive(arcName);
+	ar = archiveLoader.OpenArchive(arcName);
 	if (!ar) {
 		return 0; // It wasn't an archive
 	}
