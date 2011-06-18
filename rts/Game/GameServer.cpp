@@ -911,7 +911,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				Message(str(format(WrongPlayer) %msgCode %a %playerNum));
 				break;
 			}
-			switch(inbuf[2]) {
+			const enum CustomData dataType = (enum CustomData)inbuf[2];
+			switch (dataType) {
 				case CUSTOM_DATA_SPEEDCONTROL:
 					players[a].speedControl = *((int*)&inbuf[3]);
 					UpdateSpeedControl(speedControl);
@@ -920,7 +921,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					players[a].luaLockTime = *((int*)&inbuf[3]);
 					break;
 				default:
-					Message(str(format("Player %s sent invalid CustomData type %d") %players[a].name %inbuf[2]));
+					Message(str(format("Player %s sent invalid CustomData type %d") %players[a].name %dataType));
 			}
 			break;
 		}

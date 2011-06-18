@@ -1,14 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __VFS_HANDLER_H
-#define __VFS_HANDLER_H
+#ifndef _VFS_HANDLER_H
+#define _VFS_HANDLER_H
 
 #include <map>
 #include <string>
 #include <vector>
 #include <boost/cstdint.hpp>
 
-class CArchiveBase;
+class IArchive;
 
 class CVFSHandler
 {
@@ -70,12 +70,11 @@ public:
 
 protected:
 	struct FileData {
-		CArchiveBase *ar;
+		IArchive* ar;
 		int size;
-		bool dynamic;
 	};
 	std::map<std::string, FileData> files; 
-	std::map<std::string, CArchiveBase*> archives;
+	std::map<std::string, IArchive*> archives;
 
 private:
 	std::string GetNormalizedPath(const std::string& rawPath);
@@ -84,4 +83,4 @@ private:
 
 extern CVFSHandler* vfsHandler;
 
-#endif // __VFS_HANDLER_H
+#endif // _VFS_HANDLER_H

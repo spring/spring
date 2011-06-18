@@ -31,10 +31,12 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Projectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Weapons/Weapon.h"
-#include "System/BaseNetProtocol.h"
+#include "Sim/Weapons/WeaponDef.h"
+#include "System/BaseNetProtocol.h" // FIXME: for MAPDRAW_*
 #include "System/EventHandler.h"
 #include "System/LogOutput.h"
 #include "System/Input/KeyInput.h"
@@ -503,7 +505,7 @@ void CLuaHandle::Shutdown()
 	return;
 }
 
-void CLuaHandle::Load(CArchiveBase* archive)
+void CLuaHandle::Load(IArchive* archive)
 {
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
@@ -1389,60 +1391,80 @@ void CLuaHandle::FeatureDestroyed(const CFeature* feature)
 
 void CLuaHandle::ProjectileCreated(const CProjectile* p)
 {
+	if (!p->synced) { return; }
+	if (!p->weapon && !p->piece) { return; }
+	if (p->weapon) {
+		const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
+		const WeaponDef* wd = wp->weaponDef;
+
+		// if this weapon-type is not being watched, bail
+		if (wd == NULL || !watchWeapons[wd->id]) {
+			return;
+		}
+	}
+
 	LUA_PROJ_BATCH_PUSH(PROJ_CREATED, p);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
+
 	static const LuaHashString cmdStr("ProjectileCreated");
+
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return; // the call is not defined
 	}
 
-	if (p->synced && (p->weapon || p->piece)) {
-		const CUnit* owner = p->owner();
+	const CUnit* owner = p->owner();
 
-		lua_pushnumber(L, p->id);
-		lua_pushnumber(L, (owner? owner->id: -1));
+	lua_pushnumber(L, p->id);
+	lua_pushnumber(L, (owner? owner->id: -1));
 
-		// call the routine
-		RunCallIn(cmdStr, 2, 0);
-	}
-
-	return;
+	// call the routine
+	RunCallIn(cmdStr, 2, 0);
 }
 
 
 void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 {
+	if (!p->synced) { return; }
+	if (!p->weapon && !p->piece) { return; }
+	if (p->weapon) {
+		const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
+		const WeaponDef* wd = wp->weaponDef;
+
+		// if this weapon-type is not being watched, bail
+		if (wd == NULL || !watchWeapons[wd->id]) {
+			return;
+		}
+	}
+
 	LUA_PROJ_BATCH_PUSH(PROJ_DESTROYED, p);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
+
 	static const LuaHashString cmdStr("ProjectileDestroyed");
+
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return; // the call is not defined
 	}
 
-	if (p->synced && (p->weapon || p->piece)) {
-		lua_pushnumber(L, p->id);
+	lua_pushnumber(L, p->id);
 
-		// call the routine
-		RunCallIn(cmdStr, 1, 0);
-	}
-
-	return;
+	// call the routine
+	RunCallIn(cmdStr, 1, 0);
 }
 
 /******************************************************************************/
 
-bool CLuaHandle::Explosion(int weaponID, const float3& pos, const CUnit* owner)
+bool CLuaHandle::Explosion(int weaponDefID, const float3& pos, const CUnit* owner)
 {
-	if ((weaponID >= (int)watchWeapons.size()) || (weaponID < 0)) {
+	if ((weaponDefID >= (int)watchWeapons.size()) || (weaponDefID < 0)) {
 		return false;
 	}
-	if (!watchWeapons[weaponID]) {
+	if (!watchWeapons[weaponDefID]) {
 		return false;
 	}
 
-	LUA_UNIT_BATCH_PUSH(false, UNIT_EXPLOSION, weaponID, pos, owner);
+	LUA_UNIT_BATCH_PUSH(false, UNIT_EXPLOSION, weaponDefID, pos, owner);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 7);
 	static const LuaHashString cmdStr("Explosion");
@@ -1450,7 +1472,7 @@ bool CLuaHandle::Explosion(int weaponID, const float3& pos, const CUnit* owner)
 		return false; // the call is not defined
 	}
 
-	lua_pushnumber(L, weaponID);
+	lua_pushnumber(L, weaponDefID);
 	lua_pushnumber(L, pos.x);
 	lua_pushnumber(L, pos.y);
 	lua_pushnumber(L, pos.z);

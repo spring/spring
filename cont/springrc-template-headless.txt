@@ -18,8 +18,10 @@
 #
 # Note: These comments will be gone after the first launch of spring.
 #
+# This will be set by the engine itself at runtime:
+# Headless=1
+#
 
-Headless=1
 AdvSky=0
 AdvUnitShading=0
 AtiHacks=0

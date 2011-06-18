@@ -307,26 +307,29 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 				weaponDef->dynDamageInverted
 			);
 		}
-		
-		helper->Explosion(
+
+		DamageArray damageArray = weaponDef->dynDamageExp > 0?
+			dynDamages * (hitIntensity * damageMul):
+			weaponDef->damages * (hitIntensity * damageMul);
+		CGameHelper::ExplosionParams params = {
 			hitPos,
-			weaponDef->dynDamageExp > 0?
-				dynDamages * (hitIntensity * damageMul):
-				weaponDef->damages * (hitIntensity * damageMul),
+			dir,
+			damageArray,
+			weaponDef,
+			weaponDef->explosionGenerator,
+			owner,
+			hitUnit,
+			hitFeature,
 			areaOfEffect,
 			weaponDef->edgeEffectiveness,
 			weaponDef->explosionSpeed,
-			owner,
-			true,
-			1.0f,
-			weaponDef->noExplode || weaponDef->noSelfDamage, /*false*/
-			weaponDef->impactOnly,                           /*false*/
-			weaponDef->explosionGenerator,
-			hitUnit,
-			dir,
-			weaponDef->id,
-			hitFeature
-		);
+			1.0f,                                             // gfxMod
+			weaponDef->impactOnly,
+			weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner
+			true                                              // damageGround
+		};
+
+		helper->Explosion(params);
 	}
 
 	if (targetUnit) {

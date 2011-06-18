@@ -2,7 +2,7 @@
 
 #include "StdAfx.h"
 
-#include "ArchiveDir.h"
+#include "DirArchive.h"
 
 #include <assert.h>
 #include <fstream>
@@ -11,8 +11,20 @@
 #include "Util.h"
 #include "mmgr.h"
 
-CArchiveDir::CArchiveDir(const std::string& archiveName)
-	: CArchiveBase(archiveName)
+
+CDirArchiveFactory::CDirArchiveFactory()
+	: IArchiveFactory("sdd")
+{
+}
+
+IArchive* CDirArchiveFactory::DoCreateArchive(const std::string& filePath) const
+{
+	return new CDirArchive(filePath);
+}
+
+
+CDirArchive::CDirArchive(const std::string& archiveName)
+	: IArchive(archiveName)
 	, dirName(archiveName + '/')
 {
 	const std::vector<std::string>& found = filesystem.FindFiles(dirName, "*", FileSystem::RECURSE);
@@ -31,21 +43,21 @@ CArchiveDir::CArchiveDir(const std::string& archiveName)
 	}
 }
 
-CArchiveDir::~CArchiveDir()
+CDirArchive::~CDirArchive()
 {
 }
 
-bool CArchiveDir::IsOpen()
+bool CDirArchive::IsOpen()
 {
 	return true;
 }
 
-unsigned int CArchiveDir::NumFiles() const
+unsigned int CDirArchive::NumFiles() const
 {
 	return searchFiles.size();
 }
 
-bool CArchiveDir::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
+bool CDirArchive::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
 {
 	assert(IsFileId(fid));
 
@@ -63,7 +75,7 @@ bool CArchiveDir::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
 	}
 }
 
-void CArchiveDir::FileInfo(unsigned int fid, std::string& name, int& size) const
+void CDirArchive::FileInfo(unsigned int fid, std::string& name, int& size) const
 {
 	assert(IsFileId(fid));
 

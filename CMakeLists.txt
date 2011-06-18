@@ -250,6 +250,9 @@ if    (NOT "${AI_TYPES}" STREQUAL "NONE")
 	Add_Subdirectory(AI)
 endif (NOT "${AI_TYPES}" STREQUAL "NONE")
 
+# As tools/unitsync/ depends on sources from here, we add this one first
+Add_Subdirectory(rts/System)
+
 # additional tools
 Add_Subdirectory(tools)
 

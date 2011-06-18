@@ -2,7 +2,7 @@
 
 #include "StdAfx.h"
 
-#include "ArchiveZip.h"
+#include "ZipArchive.h"
 
 #include <algorithm>
 #include <stdexcept>
@@ -12,8 +12,19 @@
 #include "LogOutput.h"
 
 
-CArchiveZip::CArchiveZip(const std::string& archiveName)
-	: CArchiveBuffered(archiveName)
+CZipArchiveFactory::CZipArchiveFactory()
+	: IArchiveFactory("sdz")
+{
+}
+
+IArchive* CZipArchiveFactory::DoCreateArchive(const std::string& filePath) const
+{
+	return new CZipArchive(filePath);
+}
+
+
+CZipArchive::CZipArchive(const std::string& archiveName)
+	: CBufferedArchive(archiveName)
 {
 #ifdef USEWIN32IOAPI
 	zlib_filefunc_def ffunc;
@@ -54,24 +65,24 @@ CArchiveZip::CArchiveZip(const std::string& archiveName)
 	}
 }
 
-CArchiveZip::~CArchiveZip()
+CZipArchive::~CZipArchive()
 {
 	if (zip) {
 		unzClose(zip);
 	}
 }
 
-bool CArchiveZip::IsOpen()
+bool CZipArchive::IsOpen()
 {
 	return (zip != NULL);
 }
 
-unsigned int CArchiveZip::NumFiles() const
+unsigned int CZipArchive::NumFiles() const
 {
 	return fileData.size();
 }
 
-void CArchiveZip::FileInfo(unsigned int fid, std::string& name, int& size) const
+void CZipArchive::FileInfo(unsigned int fid, std::string& name, int& size) const
 {
 	assert(IsFileId(fid));
 
@@ -79,7 +90,7 @@ void CArchiveZip::FileInfo(unsigned int fid, std::string& name, int& size) const
 	size = fileData[fid].size;
 }
 
-unsigned int CArchiveZip::GetCrc32(unsigned int fid)
+unsigned int CZipArchive::GetCrc32(unsigned int fid)
 {
 	assert(IsFileId(fid));
 
@@ -89,7 +100,7 @@ unsigned int CArchiveZip::GetCrc32(unsigned int fid)
 // To simplify things, files are always read completely into memory from
 // the zip-file, since zlib does not provide any way of reading more
 // than one file at a time
-bool CArchiveZip::GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& buffer)
+bool CZipArchive::GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& buffer)
 {
 	// Prevent opening files on missing/invalid archives
 	if (!zip) {

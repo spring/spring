@@ -20,7 +20,7 @@ class CProjectile;
 struct Command;
 class CLogSubsystem;
 typedef void* zipFile;
-class CArchiveBase;
+class IArchive;
 
 class CEventClient
 {
@@ -58,7 +58,7 @@ class CEventClient
 
 	public:
 		// Synced events
-		virtual void Load(CArchiveBase* archive) {}
+		virtual void Load(IArchive* archive) {}
 
 		virtual void GamePreload() {}
 		virtual void GameStart() {}

@@ -623,22 +623,25 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 					Channels::Battle.PlaySample(weaponDef->soundhit.getID(0), unit, weaponDef->soundhit.getVolume(0));
 				}
 
-				helper->Explosion(
+				CGameHelper::ExplosionParams params = {
 					pos,
+					ZeroVector,
 					weaponDef->damages,
+					weaponDef,
+					weaponDef->explosionGenerator,
+					unit,                              // owner
+					NULL,                              // hitUnit
+					NULL,                              // hitFeature
 					weaponDef->areaOfEffect,
 					weaponDef->edgeEffectiveness,
 					weaponDef->explosionSpeed,
-					unit,
-					true,
-					1.0f,
-					weaponDef->noSelfDamage,
+					1.0f,                              // gfxMod
 					weaponDef->impactOnly,
-					weaponDef->explosionGenerator,
-					NULL,
-					ZeroVector,
-					weaponDef->id
-				);
+					weaponDef->noSelfDamage,           // ignoreOwner
+					true,                              // damageGround
+				};
+
+				helper->Explosion(params);
 			}
 		} break;
 	}

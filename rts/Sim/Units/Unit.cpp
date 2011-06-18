@@ -260,7 +260,7 @@ CUnit::~CUnit()
 	DisableScriptMoveType();
 
 	if (delayedWreckLevel >= 0) {
-		// note: could also do this in Update() or even in CUnitKilledCB()
+		// NOTE: could also do this in Update() or even in CUnitKilledCB()
 		// where we wouldn't need deathSpeed, but not in KillUnit() since
 		// we have to wait for deathScriptFinished (but we want the delay
 		// in frames between CUnitKilledCB() and the CreateWreckage() call
@@ -458,7 +458,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	modelParser->CreateLocalModel(this);
 
 	// copy the UnitDef volume instance
-	// note: gets deleted in ~CSolidObject
+	// NOTE: gets deleted in ~CSolidObject
 	collisionVolume = new CollisionVolume(unitDef->collisionVolume, model->radius);
 	moveType = MoveTypeFactory::GetMoveType(this, unitDef);
 	script = CUnitScriptFactory::CreateScript(unitDef->scriptPath, this);
@@ -494,8 +494,8 @@ void CUnit::PostInit(const CUnit* builder)
 	// all units are blocking (ie. register on the blk-map
 	// when not flying) except mines, since their position
 	// would be given away otherwise by the PF, etc.
-	// note: this does mean that mines can be stacked (would
-	// need an extra yardmap character to prevent)
+	// NOTE: this does mean that mines can be stacked (an
+	// extra yardmap character is needed to prevent this)
 	immobile = unitDef->IsImmobileUnit();
 	blocking = !(immobile && unitDef->canKamikaze);
 
@@ -864,11 +864,14 @@ void CUnit::SlowUpdate()
 
 	repairAmount = 0.0f;
 
-	if (paralyzeDamage > 0) {
-		paralyzeDamage -= maxHealth * 0.5f * CUnit::empDecline;
-		if (paralyzeDamage < 0) {
-			paralyzeDamage = 0;
-		}
+	if (paralyzeDamage > 0.0f) {
+		// NOTE: the paralysis degradation-rate has to vary, because
+		// when units are paralyzed based on their current health (in
+		// DoDamage) we potentially start decaying from a lower damage
+		// level and would otherwise be de-paralyzed more quickly than
+		// specified by <paralyzeTime>
+		paralyzeDamage -= ((modInfo.paralyzeOnMaxHealth? maxHealth: health) * 0.5f * CUnit::empDecline);
+		paralyzeDamage = std::max(paralyzeDamage, 0.0f);
 	}
 
 	UpdateResources();
@@ -1144,39 +1147,48 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 				stunned = false;
 			}
 		}
-	} else { // paralyzation
-		experienceMod *= 0.1f; // reduced experience
+	} else {
+		// paralyzation damage (adds reduced experience for the attacker)
+		experienceMod *= 0.1f;
+
+		// paralyzeDamage may not get higher than baseHealth * (paralyzeTime + 1),
+		// which means the unit will be destunned after <paralyzeTime> seconds.
+		// (maximum paralyzeTime of all paralyzer weapons which recently hit it ofc)
+		//
+		// rate of paralysis-damage reduction is lower if the unit has less than
+		// maximum health to ensure stun-time is always equal to <paralyzeTime>
+		const float baseHealth = (modInfo.paralyzeOnMaxHealth? maxHealth: health);
+		const float paralysisDecayRate = baseHealth * CUnit::empDecline;
+		const float sumParalysisDamage = paralysisDecayRate * paralyzeTime;
+		const float maxParalysisDamage = baseHealth + sumParalysisDamage - paralyzeDamage;
+
 		if (damage > 0.0f) {
-			// paralyzeDamage may not get higher than maxHealth * (paralyzeTime + 1),
-			// which means the unit will be destunned after paralyzeTime seconds.
-			// (maximum paralyzeTime of all paralyzer weapons which recently hit it ofc)
-			const float maxParaDmg = (modInfo.paralyzeOnMaxHealth? maxHealth: health) + maxHealth * CUnit::empDecline * paralyzeTime - paralyzeDamage;
-			if (damage > maxParaDmg) {
-				if (maxParaDmg > 0.0f) {
-					damage = maxParaDmg;
-				} else {
-					damage = 0.0f;
-				}
-			}
+			// clamp the dealt paralysis-damage to [0, maxParalysisDamage]
+			damage = std::min(damage, std::max(0.0f, maxParalysisDamage));
+
 			if (stunned) {
+				// no attacker gains experience from a stunned target
 				experienceMod = 0.0f;
 			}
-			paralyzeDamage += damage;
-			if (paralyzeDamage > (modInfo.paralyzeOnMaxHealth? maxHealth: health)) {
-				stunned = true;
-			}
-		}
-		else { // paralyzation healing
-			if (paralyzeDamage <= 0.0f) {
-				experienceMod = 0.0f;
-			}
+
+			// increase the current level of paralysis-damage
 			paralyzeDamage += damage;
 
-			if (paralyzeDamage < (modInfo.paralyzeOnMaxHealth? maxHealth: health)) {
+			if (paralyzeDamage >= baseHealth) {
+				stunned = true;
+			}
+		} else {
+			if (paralyzeDamage <= 0.0f) {
+				// no experience from healing a non-stunned target
+				experienceMod = 0.0f;
+			}
+
+			// decrease ("heal") the current level of paralysis-damage
+			paralyzeDamage += damage;
+			paralyzeDamage = std::max(paralyzeDamage, 0.0f);
+
+			if (paralyzeDamage <= baseHealth) {
 				stunned = false;
-				if (paralyzeDamage < 0.0f) {
-					paralyzeDamage = 0.0f;
-				}
 			}
 		}
 	}
@@ -1863,26 +1875,38 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 
 	if (showDeathSequence && (!reclaimed && !beingBuilt)) {
 		const std::string& exp = (selfDestruct) ? unitDef->selfDExplosion : unitDef->deathExplosion;
+		const WeaponDef* wd = weaponDefHandler->GetWeapon(exp);
 
-		if (!exp.empty()) {
-			const WeaponDef* wd = weaponDefHandler->GetWeapon(exp);
-			if (wd) {
-				helper->Explosion(
-					midPos, wd->damages, wd->areaOfEffect, wd->edgeEffectiveness,
-					wd->explosionSpeed, this, true, wd->damages[0] > 500 ? 1 : 2,
-					false, false, wd->explosionGenerator, 0, ZeroVector, wd->id
-				);
+		if (wd != NULL) {
+			CGameHelper::ExplosionParams params = {
+				pos,
+				ZeroVector,
+				wd->damages,
+				wd,
+				wd->explosionGenerator,
+				this,                              // owner
+				NULL,                              // hitUnit
+				NULL,                              // hitFeature
+				wd->areaOfEffect,
+				wd->edgeEffectiveness,
+				wd->explosionSpeed,
+				wd->damages[0] > 500? 1.0f: 2.0f,  // gfxMod
+				false,                             // impactOnly
+				false,                             // ignoreOwner
+				true,                              // damageGround
+			};
 
-				#if (PLAY_SOUNDS == 1)
-				// play explosion sound
-				if (wd->soundhit.getID(0) > 0) {
-					// HACK: loading code doesn't set sane defaults for explosion sounds, so we do it here
-					// NOTE: actually no longer true, loading code always ensures that sound volume != -1
-					const float volume = wd->soundhit.getVolume(0);
-					Channels::Battle.PlaySample(wd->soundhit.getID(0), pos, (volume == -1) ? 1.0f : volume);
-				}
-				#endif
+			helper->Explosion(params);
+
+			#if (PLAY_SOUNDS == 1)
+			// play explosion sound
+			if (wd->soundhit.getID(0) > 0) {
+				// HACK: loading code doesn't set sane defaults for explosion sounds, so we do it here
+				// NOTE: actually no longer true, loading code always ensures that sound volume != -1
+				const float volume = wd->soundhit.getVolume(0);
+				Channels::Battle.PlaySample(wd->soundhit.getID(0), pos, (volume == -1) ? 1.0f : volume);
 			}
+			#endif
 		}
 
 		if (selfDestruct) {

@@ -135,7 +135,7 @@ class CLuaHandle : public CEventClient
 
 		void Shutdown();
 
-		void Load(CArchiveBase* archive);
+		void Load(IArchive* archive);
 
 		void GamePreload();
 		void GameStart();
