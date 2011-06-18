@@ -72,7 +72,6 @@ protected:
 	struct FileData {
 		CArchiveBase *ar;
 		int size;
-		bool dynamic;
 	};
 	std::map<std::string, FileData> files; 
 	std::map<std::string, CArchiveBase*> archives;
