@@ -13,8 +13,9 @@
 #include "Lua/LuaZip.h"
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
+#include "System/FileSystem/ArchiveBase.h"
+#include "System/FileSystem/ArchiveLoader.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/FileSystem/ZipArchive.h"
 #include "System/Platform/byteorder.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
@@ -174,7 +175,7 @@ void CLuaLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 	const std::string realfile = filesystem.LocateFile(FindSaveFile(file)).c_str();
 
 	filename = file;
-	loadfile = new CZipArchive(realfile); // FIXME use ArchiveLoader isntead
+	loadfile = archiveLoader.OpenArchive(realfile, "sdz");
 
 	if (!loadfile->IsOpen()) {
 		logOutput.Print("Unable to open save file \"" + filename + "\"");
