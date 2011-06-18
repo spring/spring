@@ -6,7 +6,7 @@
 
 
 CBufferedArchive::CBufferedArchive(const std::string& name)
-	: CArchiveBase(name)
+	: IArchive(name)
 {
 }
 

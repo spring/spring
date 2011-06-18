@@ -17,7 +17,7 @@ CZipArchiveFactory::CZipArchiveFactory()
 {
 }
 
-CArchiveBase* CZipArchiveFactory::DoCreateArchive(const std::string& filePath) const
+IArchive* CZipArchiveFactory::DoCreateArchive(const std::string& filePath) const
 {
 	return new CZipArchive(filePath);
 }

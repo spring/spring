@@ -39,7 +39,7 @@ class CEventHandler
 
 	public:
 		// Synced events
-		void Load(CArchiveBase* archive);
+		void Load(IArchive* archive);
 
 		void GamePreload();
 		void GameStart();

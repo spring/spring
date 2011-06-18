@@ -8,7 +8,7 @@
 #include <vector>
 #include <boost/cstdint.hpp>
 
-class CArchiveBase;
+class IArchive;
 
 class CVFSHandler
 {
@@ -70,11 +70,11 @@ public:
 
 protected:
 	struct FileData {
-		CArchiveBase *ar;
+		IArchive* ar;
 		int size;
 	};
 	std::map<std::string, FileData> files; 
-	std::map<std::string, CArchiveBase*> archives;
+	std::map<std::string, IArchive*> archives;
 
 private:
 	std::string GetNormalizedPath(const std::string& rawPath);

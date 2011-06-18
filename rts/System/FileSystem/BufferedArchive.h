@@ -6,13 +6,13 @@
 #include <map>
 #include <boost/thread/mutex.hpp>
 
-#include "ArchiveBase.h"
+#include "IArchive.h"
 
 /**
  * Provides a helper implementation for archive types that can only uncompress
  * one file to memory at a time.
  */
-class CBufferedArchive : public CArchiveBase
+class CBufferedArchive : public IArchive
 {
 public:
 	CBufferedArchive(const std::string& name);

@@ -18,7 +18,7 @@
 #include "ExternalAI/Interface/aidefines.h"
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "ExternalAI/LuaAIImplHandler.h"
-#include "System/FileSystem/ArchiveBase.h"
+#include "System/FileSystem/IArchive.h"
 #include "System/FileSystem/ArchiveLoader.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"
@@ -2358,7 +2358,7 @@ EXPORT(int) FindFilesVFS(int file, char* nameBuf, int size)
 //////////////////////////
 //////////////////////////
 
-static std::map<int, CArchiveBase*> openArchives;
+static std::map<int, IArchive*> openArchives;
 static int nextArchive = 0;
 
 
@@ -2378,7 +2378,7 @@ EXPORT(int) OpenArchive(const char* name)
 		CheckInit();
 		CheckNullOrEmpty(name);
 
-		CArchiveBase* a = archiveLoader.OpenArchive(name);
+		IArchive* a = archiveLoader.OpenArchive(name);
 
 		if (!a) {
 			throw content_error("Archive '" + std::string(name) + "' could not be opened");
@@ -2399,7 +2399,7 @@ EXPORT(int) OpenArchiveType(const char* name, const char* type)
 		CheckNullOrEmpty(name);
 		CheckNullOrEmpty(type);
 
-		CArchiveBase* a = archiveLoader.OpenArchive(name, type);
+		IArchive* a = archiveLoader.OpenArchive(name, type);
 
 		if (!a) {
 			throw content_error("Archive '" + std::string(name) + "' could not be opened");
@@ -2431,7 +2431,7 @@ EXPORT(int) FindFilesArchive(int archive, int file, char* nameBuf, int* size)
 		CheckNull(nameBuf);
 		CheckNull(size);
 
-		CArchiveBase* arch = openArchives[archive];
+		IArchive* arch = openArchives[archive];
 
 		logOutput.Print(LOG_UNITSYNC, "FindFilesArchive: %d\n", archive);
 
@@ -2464,7 +2464,7 @@ EXPORT(int) OpenArchiveFile(int archive, const char* name)
 		CheckArchiveHandle(archive);
 		CheckNullOrEmpty(name);
 
-		CArchiveBase* a = openArchives[archive];
+		IArchive* a = openArchives[archive];
 		return a->FindFile(name);
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -2478,7 +2478,7 @@ EXPORT(int) ReadArchiveFile(int archive, int file, unsigned char* buffer, int nu
 		CheckNull(buffer);
 		CheckPositive(numBytes);
 
-		CArchiveBase* a = openArchives[archive];
+		IArchive* a = openArchives[archive];
 		std::vector<uint8_t> buf;
 		if (!a->GetFile(file, buf))
 			return -1;
@@ -2502,7 +2502,7 @@ EXPORT(int) SizeArchiveFile(int archive, int file)
 	try {
 		CheckArchiveHandle(archive);
 
-		CArchiveBase* a = openArchives[archive];
+		IArchive* a = openArchives[archive];
 		std::string name;
 		int s;
 		a->FileInfo(file, name, s);

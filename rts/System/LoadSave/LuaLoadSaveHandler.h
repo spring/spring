@@ -5,7 +5,7 @@
 
 #include "LoadSaveHandler.h"
 
-class CArchiveBase;
+class IArchive;
 typedef void* zipFile;
 
 class CLuaLoadSaveHandler : public ILoadSaveHandler
@@ -31,7 +31,7 @@ protected:
 
 	std::string filename;
 	zipFile savefile;
-	CArchiveBase* loadfile;
+	IArchive* loadfile;
 };
 
 #endif // LUALOADSAVEHANDLER_H

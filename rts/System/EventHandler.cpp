@@ -430,7 +430,7 @@ void CEventHandler::PlayerRemoved(int playerID, int reason)
 /******************************************************************************/
 /******************************************************************************/
 
-void CEventHandler::Load(CArchiveBase* archive)
+void CEventHandler::Load(IArchive* archive)
 {
 	const int count = listLoad.size();
 

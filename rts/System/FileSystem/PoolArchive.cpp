@@ -22,7 +22,7 @@ CPoolArchiveFactory::CPoolArchiveFactory()
 {
 }
 
-CArchiveBase* CPoolArchiveFactory::DoCreateArchive(const std::string& filePath) const
+IArchive* CPoolArchiveFactory::DoCreateArchive(const std::string& filePath) const
 {
 	return new CPoolArchive(filePath);
 }

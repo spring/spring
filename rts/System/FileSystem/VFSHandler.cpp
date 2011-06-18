@@ -10,7 +10,7 @@
 #include <cstring>
 
 #include "ArchiveLoader.h"
-#include "ArchiveBase.h"
+#include "IArchive.h"
 #include "LogOutput.h"
 #include "FileSystem.h"
 #include "ArchiveScanner.h"
@@ -36,7 +36,7 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool override, cons
 	logOutput.Print(LOG_VFS, "AddArchive(arName = \"%s\", override = %s, type = \"%s\")",
 			archiveName.c_str(), override ? "true" : "false", type.c_str());
 
-	CArchiveBase* ar = archives[archiveName];
+	IArchive* ar = archives[archiveName];
 	if (!ar) {
 		ar = archiveLoader.OpenArchive(archiveName, type);
 		if (!ar) {
@@ -90,7 +90,7 @@ bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 {
 	logOutput.Print(LOG_VFS, "RemoveArchive(archiveName = \"%s\")", archiveName.c_str());
 
-	CArchiveBase* ar = archives[archiveName];
+	IArchive* ar = archives[archiveName];
 	if (ar == NULL) {
 		// archive is not loaded
 		return true;
@@ -115,7 +115,7 @@ CVFSHandler::~CVFSHandler()
 {
 	logOutput.Print(LOG_VFS, "CVFSHandler::~CVFSHandler()");
 
-	for (std::map<std::string, CArchiveBase*>::iterator i = archives.begin(); i != archives.end(); ++i) {
+	for (std::map<std::string, IArchive*>::iterator i = archives.begin(); i != archives.end(); ++i) {
 		delete i->second;
 	}
 }

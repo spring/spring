@@ -6,7 +6,7 @@
 #include <map>
 #include <string>
 
-class CArchiveBase;
+class IArchive;
 
 /**
  * Specific archive type side interface for loading of archives.
@@ -34,7 +34,7 @@ public:
 	/**
 	 * Parses a single archive, denoted by a path.
 	 */
-	CArchiveBase* CreateArchive(const std::string& filePath) const {
+	IArchive* CreateArchive(const std::string& filePath) const {
 		return DoCreateArchive(filePath);
 	}
 
@@ -42,7 +42,7 @@ private:
 	/**
 	 * Parses a single archive of a specific type.
 	 */
-	virtual CArchiveBase* DoCreateArchive(const std::string& filePath) const = 0;
+	virtual IArchive* DoCreateArchive(const std::string& filePath) const = 0;
 
 	const std::string defaultExtension;
 };

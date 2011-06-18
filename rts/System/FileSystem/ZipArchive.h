@@ -28,7 +28,7 @@ class CZipArchiveFactory : public IArchiveFactory {
 public:
 	CZipArchiveFactory();
 private:
-	CArchiveBase* DoCreateArchive(const std::string& filePath) const;
+	IArchive* DoCreateArchive(const std::string& filePath) const;
 };
 
 

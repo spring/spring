@@ -17,7 +17,7 @@ class CPoolArchiveFactory : public IArchiveFactory {
 public:
 	CPoolArchiveFactory();
 private:
-	CArchiveBase* DoCreateArchive(const std::string& filePath) const;
+	IArchive* DoCreateArchive(const std::string& filePath) const;
 };
 
 
