@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef BASENETPROTOCOL_H
-#define BASENETPROTOCOL_H
+#ifndef _BASE_NET_PROTOCOL_H
+#define _BASE_NET_PROTOCOL_H
 
 #include <boost/shared_ptr.hpp>
 #include <boost/cstdint.hpp>
@@ -17,18 +17,19 @@ struct PlayerStatistics;
 const unsigned short NETWORK_VERSION = 2;
 
 /*
-Comment behind NETMSG enumeration constant gives the extra data belonging to
-the net message. An empty comment means no extra data (message is only 1 byte).
-Messages either consist of:
- 1. uchar command; (NETMSG_* constant) and the specified extra data; or
- 2. uchar command; uchar messageSize; and the specified extra data, for messages
-    that contain a trailing std::string in the extra data; or
- 3. uchar command; short messageSize; and the specified extra data, for messages
-    that contain a trailing std::vector in the extra data.
-Note that NETMSG_MAPDRAW can behave like 1. or 2. depending on the
-CInMapDraw::NET_* command. messageSize is always the size of the entire message
-including `command' and `messageSize'.
-*/
+ * Comment behind NETMSG enumeration constant gives the extra data belonging to
+ * the net message.
+ * An empty comment means no extra data (message is only 1 byte).
+ * Messages either consist of:
+ *  1. uchar command; (NETMSG_* constant) and the specified extra data; or
+ *  2. uchar command; uchar messageSize; and the specified extra data,
+ *     for messages that contain a trailing std::string in the extra data; or
+ *  3. uchar command; short messageSize; and the specified extra data,
+ *     for messages that contain a trailing std::vector in the extra data.
+ * Note that NETMSG_MAPDRAW can behave like 1. or 2. depending on the
+ * MapDrawAction::NET_* command. messageSize is always the size of the entire
+ * message in bytes, including 'command' and 'messageSize'.
+ */
 
 enum NETMSG {
 	NETMSG_KEYFRAME         = 1,  // int framenum
@@ -62,9 +63,9 @@ enum NETMSG {
 	NETMSG_SENDPLAYERSTAT   = 28, //
 	NETMSG_PLAYERSTAT       = 29, // uchar myPlayerNum; CPlayer::Statistics currentStats;
 	NETMSG_GAMEOVER         = 30, // uchar myPlayerNum; std::vector<uchar> winningAllyTeams
-	NETMSG_MAPDRAW          = 31, // uchar messageSize =  8, myPlayerNum, command = CInMapDraw::NET_ERASE; short x, z;
-	                              // uchar messageSize = 12, myPlayerNum, command = CInMapDraw::NET_LINE; short x1, z1, x2, z2;
-	                              // /*messageSize*/   uchar myPlayerNum, command = CInMapDraw::NET_POINT; short x, z; std::string label;
+	NETMSG_MAPDRAW          = 31, // uchar messageSize =  8, myPlayerNum, command = MapDrawAction::NET_ERASE; short x, z;
+	                              // uchar messageSize = 12, myPlayerNum, command = MapDrawAction::NET_LINE; short x1, z1, x2, z2;
+	                              // /*messageSize*/   uchar myPlayerNum, command = MapDrawAction::NET_POINT; short x, z; std::string label;
 	NETMSG_SYNCRESPONSE     = 33, // uchar myPlayerNum; int frameNum; uint checksum;
 	NETMSG_SYSTEMMSG        = 35, // uchar myPlayerNum, std::string message;
 	NETMSG_STARTPOS         = 36, // uchar myPlayerNum, uchar myTeam, ready /*0: not ready, 1: ready, 2: don't update readiness*/; float x, y, z;
@@ -125,9 +126,9 @@ enum MapDrawAction {
 };
 
 /**
-@brief A factory used to make often-used network messages.
-
-Use this if you want to create a network message. Implemented as a singleton.
+ * @brief A factory used to make often-used network messages.
+ *
+ * Use this if you want to create a network message. Implemented as a singleton.
  */
 class CBaseNetProtocol
 {
@@ -141,7 +142,8 @@ public:
 	PacketType SendKeyFrame(int frameNum);
 	PacketType SendNewFrame();
 	PacketType SendQuit(const std::string& reason);
-	PacketType SendStartPlaying(unsigned countdown); ///< client can send these to force-start the game
+	/// client can send these to force-start the game
+	PacketType SendStartPlaying(unsigned countdown);
 	PacketType SendSetPlayerNum(uchar myPlayerNum);
 	PacketType SendPlayerName(uchar myPlayerNum, const std::string& playerName);
 	PacketType SendRandSeed(uint randSeed);
@@ -203,7 +205,7 @@ public:
 
 	PacketType SendSetAllied(uchar myPlayerNum, uchar whichAllyTeam, uchar state);
 
-	PacketType SendCreateNewPlayer( uchar playerNum, bool spectator, uchar teamNum, std::string playerName );
+	PacketType SendCreateNewPlayer( uchar playerNum, bool spectator, uchar teamNum, std::string playerName);
 
 #ifdef SYNCDEBUG
 	PacketType SendSdCheckrequest(int frameNum);
@@ -217,5 +219,5 @@ private:
 	~CBaseNetProtocol();
 };
 
-#endif // BASENETPROTOCOL_H
+#endif // _BASE_NET_PROTOCOL_H
 
