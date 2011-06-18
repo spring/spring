@@ -12,7 +12,6 @@
 #include "float3.h"
 
 class CUnit;
-class CWorldObject;
 class CFeature;
 class CProjectile;
 class CSolidObject;

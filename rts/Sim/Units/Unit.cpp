@@ -1863,26 +1863,38 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 
 	if (showDeathSequence && (!reclaimed && !beingBuilt)) {
 		const std::string& exp = (selfDestruct) ? unitDef->selfDExplosion : unitDef->deathExplosion;
+		const WeaponDef* wd = weaponDefHandler->GetWeapon(exp);
 
-		if (!exp.empty()) {
-			const WeaponDef* wd = weaponDefHandler->GetWeapon(exp);
-			if (wd) {
-				helper->Explosion(
-					midPos, wd->damages, wd->areaOfEffect, wd->edgeEffectiveness,
-					wd->explosionSpeed, this, true, wd->damages[0] > 500 ? 1 : 2,
-					false, false, wd->explosionGenerator, 0, ZeroVector, wd->id
-				);
+		if (wd != NULL) {
+			CGameHelper::ExplosionParams params = {
+				pos,
+				ZeroVector,
+				wd->damages,
+				wd,
+				wd->explosionGenerator,
+				this,                              // owner
+				NULL,                              // hitUnit
+				NULL,                              // hitFeature
+				wd->areaOfEffect,
+				wd->edgeEffectiveness,
+				wd->explosionSpeed,
+				wd->damages[0] > 500? 1.0f: 2.0f,  // gfxMod
+				false,                             // impactOnly
+				false,                             // ignoreOwner
+				true,                              // damageGround
+			};
 
-				#if (PLAY_SOUNDS == 1)
-				// play explosion sound
-				if (wd->soundhit.getID(0) > 0) {
-					// HACK: loading code doesn't set sane defaults for explosion sounds, so we do it here
-					// NOTE: actually no longer true, loading code always ensures that sound volume != -1
-					const float volume = wd->soundhit.getVolume(0);
-					Channels::Battle.PlaySample(wd->soundhit.getID(0), pos, (volume == -1) ? 1.0f : volume);
-				}
-				#endif
+			helper->Explosion(params);
+
+			#if (PLAY_SOUNDS == 1)
+			// play explosion sound
+			if (wd->soundhit.getID(0) > 0) {
+				// HACK: loading code doesn't set sane defaults for explosion sounds, so we do it here
+				// NOTE: actually no longer true, loading code always ensures that sound volume != -1
+				const float volume = wd->soundhit.getVolume(0);
+				Channels::Battle.PlaySample(wd->soundhit.getID(0), pos, (volume == -1) ? 1.0f : volume);
 			}
+			#endif
 		}
 
 		if (selfDestruct) {
