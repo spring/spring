@@ -8,7 +8,7 @@
 
 
 typedef void* zipFile;
-class CArchiveBase;
+class IArchive;
 struct lua_State;
 
 
@@ -37,7 +37,7 @@ public:
 
 	static bool PushSynced(lua_State* L);
 	static bool PushUnsynced(lua_State* L);
-	static bool PushNew(lua_State* L, const std::string& filename, CArchiveBase* archive);
+	static bool PushNew(lua_State* L, const std::string& filename, IArchive* archive);
 
 private: // metatable methods
 	static bool CreateMetatable(lua_State* L);

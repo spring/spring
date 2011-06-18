@@ -17,14 +17,14 @@ CDirArchiveFactory::CDirArchiveFactory()
 {
 }
 
-CArchiveBase* CDirArchiveFactory::DoCreateArchive(const std::string& filePath) const
+IArchive* CDirArchiveFactory::DoCreateArchive(const std::string& filePath) const
 {
 	return new CDirArchive(filePath);
 }
 
 
 CDirArchive::CDirArchive(const std::string& archiveName)
-	: CArchiveBase(archiveName)
+	: IArchive(archiveName)
 	, dirName(archiveName + '/')
 {
 	const std::vector<std::string>& found = filesystem.FindFiles(dirName, "*", FileSystem::RECURSE);

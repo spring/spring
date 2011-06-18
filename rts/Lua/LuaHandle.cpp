@@ -503,7 +503,7 @@ void CLuaHandle::Shutdown()
 	return;
 }
 
-void CLuaHandle::Load(CArchiveBase* archive)
+void CLuaHandle::Load(IArchive* archive)
 {
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);

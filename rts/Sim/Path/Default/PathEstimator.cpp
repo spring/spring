@@ -24,7 +24,7 @@
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "System/FileSystem/ArchiveBase.h"
+#include "System/FileSystem/IArchive.h"
 #include "System/FileSystem/ArchiveLoader.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/LogOutput.h"
@@ -789,7 +789,7 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 	if (!filesystem.FileExists(filename))
 		return false;
 	// open file for reading from a suitable location (where the file exists)
-	CArchiveBase* pfile = archiveLoader.OpenArchive(filesystem.LocateFile(filename), "sdz");
+	IArchive* pfile = archiveLoader.OpenArchive(filesystem.LocateFile(filename), "sdz");
 
 	if (!pfile || !pfile->IsOpen()) {
 		delete pfile;
@@ -800,8 +800,8 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 	sprintf(calcMsg, "Reading Estimate PathCosts [%d]", BLOCK_SIZE);
 	loadscreen->SetLoadMessage(calcMsg);
 
-	std::auto_ptr<CArchiveBase> auto_pfile(pfile);
-	CArchiveBase& file(*pfile);
+	std::auto_ptr<IArchive> auto_pfile(pfile);
+	IArchive& file(*pfile);
 
 	const unsigned fid = file.FindFile("pathinfo");
 
@@ -881,15 +881,15 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 
 
 		// get the CRC over the written path data
-		CArchiveBase* pfile = archiveLoader.OpenArchive(filesystem.LocateFile(filename), "sdz");
+		IArchive* pfile = archiveLoader.OpenArchive(filesystem.LocateFile(filename), "sdz");
 
 		if (!pfile || !pfile->IsOpen()) {
 			delete pfile;
 			return;
 		}
 
-		std::auto_ptr<CArchiveBase> auto_pfile(pfile);
-		CArchiveBase& file(*pfile);
+		std::auto_ptr<IArchive> auto_pfile(pfile);
+		IArchive& file(*pfile);
 		
 		const unsigned fid = file.FindFile("pathinfo");
 		assert(fid < file.NumFiles());

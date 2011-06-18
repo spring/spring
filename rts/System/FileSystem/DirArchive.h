@@ -6,7 +6,7 @@
 #include <map>
 
 #include "ArchiveFactory.h"
-#include "ArchiveBase.h"
+#include "IArchive.h"
 
 
 /**
@@ -17,7 +17,7 @@ class CDirArchiveFactory : public IArchiveFactory {
 public:
 	CDirArchiveFactory();
 private:
-	CArchiveBase* DoCreateArchive(const std::string& filePath) const;
+	IArchive* DoCreateArchive(const std::string& filePath) const;
 };
 
 
@@ -26,7 +26,7 @@ private:
  * ie. a directory and all its contents are treated as an archive by this
  * class.
  */
-class CDirArchive : public CArchiveBase
+class CDirArchive : public IArchive
 {
 public:
 	CDirArchive(const std::string& archiveName);

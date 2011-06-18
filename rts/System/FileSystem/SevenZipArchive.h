@@ -10,7 +10,7 @@ extern "C" {
 };
 
 #include "ArchiveFactory.h"
-#include "ArchiveBase.h"
+#include "IArchive.h"
 
 
 /**
@@ -21,14 +21,14 @@ class CSevenZipArchiveFactory : public IArchiveFactory {
 public:
 	CSevenZipArchiveFactory();
 private:
-	CArchiveBase* DoCreateArchive(const std::string& filePath) const;
+	IArchive* DoCreateArchive(const std::string& filePath) const;
 };
 
 
 /**
  * An LZMA/7zip compressed, single-file archive.
  */
-class CSevenZipArchive : public CArchiveBase
+class CSevenZipArchive : public IArchive
 {
 public:
 	CSevenZipArchive(const std::string& name);

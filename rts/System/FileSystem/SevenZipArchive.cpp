@@ -24,14 +24,14 @@ CSevenZipArchiveFactory::CSevenZipArchiveFactory()
 {
 }
 
-CArchiveBase* CSevenZipArchiveFactory::DoCreateArchive(const std::string& filePath) const
+IArchive* CSevenZipArchiveFactory::DoCreateArchive(const std::string& filePath) const
 {
 	return new CSevenZipArchive(filePath);
 }
 
 
 CSevenZipArchive::CSevenZipArchive(const std::string& name) :
-	CArchiveBase(name),
+	IArchive(name),
 	isOpen(false)
 {
 	blockIndex = 0xFFFFFFFF;

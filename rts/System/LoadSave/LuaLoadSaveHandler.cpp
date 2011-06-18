@@ -13,7 +13,7 @@
 #include "Lua/LuaZip.h"
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
-#include "System/FileSystem/ArchiveBase.h"
+#include "System/FileSystem/IArchive.h"
 #include "System/FileSystem/ArchiveLoader.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Platform/byteorder.h"

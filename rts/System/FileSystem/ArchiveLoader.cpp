@@ -7,7 +7,7 @@
 
 #include "ArchiveFactory.h"
 
-#include "ArchiveBase.h"
+#include "IArchive.h"
 #include "PoolArchive.h"
 #include "DirArchive.h"
 #include "ZipArchive.h"
@@ -51,9 +51,9 @@ bool CArchiveLoader::IsArchiveFile(const std::string& fileName) const
 }
 
 
-CArchiveBase* CArchiveLoader::OpenArchive(const std::string& fileName, const std::string& type) const
+IArchive* CArchiveLoader::OpenArchive(const std::string& fileName, const std::string& type) const
 {
-	CArchiveBase* ret = NULL;
+	IArchive* ret = NULL;
 
 	const std::string ext = type.empty() ? filesystem.GetExtension(fileName) : type;
 	const std::string filePath = filesystem.LocateFile(fileName);

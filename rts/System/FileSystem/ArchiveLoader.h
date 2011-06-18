@@ -6,7 +6,7 @@
 #include <map>
 #include <string>
 
-class CArchiveBase;
+class IArchive;
 class IArchiveFactory;
 
 /**
@@ -25,8 +25,8 @@ public:
 	/// Returns true if the indicated file is in fact an archive
 	bool IsArchiveFile(const std::string& fileName) const;
 
-	/// Returns a pointer to a new'ed suitable subclass of CArchiveBase
-	CArchiveBase* OpenArchive(const std::string& fileName,
+	/// Returns a pointer to a new'ed suitable subclass of IArchive
+	IArchive* OpenArchive(const std::string& fileName,
 			const std::string& type = "") const;
 
 	/**

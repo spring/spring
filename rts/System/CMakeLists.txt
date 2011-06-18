@@ -67,7 +67,7 @@ SET(sources_engine_System_creg
 		"${CMAKE_CURRENT_SOURCE_DIR}/creg/creg.cpp"
 	)
 SET(sources_engine_System_FileSystem
-		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveBase.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/IArchive.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveLoader.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveScanner.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/BufferedArchive.cpp"

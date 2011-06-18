@@ -8,7 +8,7 @@
 #include <map>
 #include "System/Info.h"
 
-class CArchiveBase;
+class IArchive;
 class IFileFilter;
 class LuaTable;
 
@@ -170,14 +170,14 @@ private:
 
 	void ScanArchive(const std::string& fullName, bool checksum = false);
 	/// scan mapinfo / modinfo lua files
-	bool ScanArchiveLua(CArchiveBase* ar, const std::string& fileName, ArchiveInfo& ai, std::string& err);
+	bool ScanArchiveLua(IArchive* ar, const std::string& fileName, ArchiveInfo& ai, std::string& err);
 
 	void ReadCacheData(const std::string& filename);
 	void WriteCacheData(const std::string& filename);
 
 	std::map<std::string, ArchiveInfo> archiveInfo;
 	std::map<std::string, BrokenArchive> brokenArchives;
-	IFileFilter* CreateIgnoreFilter(CArchiveBase* ar);
+	IFileFilter* CreateIgnoreFilter(IArchive* ar);
 	/**
 	 * Get CRC of the data in the specified archive.
 	 * Returns 0 if file could not be opened.

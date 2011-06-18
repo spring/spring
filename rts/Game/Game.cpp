@@ -405,7 +405,7 @@ CGame::~CGame()
 	}
 	grouphandlers.clear();
 
-	SafeDelete(saveFile); // ILoadSaveHandler, depends on vfsHandler via ~CArchiveBase
+	SafeDelete(saveFile); // ILoadSaveHandler, depends on vfsHandler via ~IArchive
 	SafeDelete(vfsHandler);
 	SafeDelete(archiveScanner);
 
