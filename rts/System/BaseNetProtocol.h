@@ -100,9 +100,11 @@ enum NETMSG {
 	NETMSG_AICOMMAND_TRACKED= 76  // uchar myPlayerNum; short unitID; int id; uchar options; int aiCommandId, std::vector<float> params;
 };
 
-// Data types for NETMSG_CUSTOM_DATA
-#define CUSTOM_DATA_SPEEDCONTROL 0
-#define CUSTOM_DATA_LUADRAWTIME 1
+/// Data types for NETMSG_CUSTOM_DATA
+enum CustomData {
+	CUSTOM_DATA_SPEEDCONTROL = 0,
+	CUSTOM_DATA_LUADRAWTIME  = 1
+};
 
 /// sub-action-types of NETMSG_TEAM
 enum TEAMMSG {
