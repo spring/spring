@@ -168,7 +168,25 @@ void CPieceProjectile::Collision()
 		pos += norm * 0.1f;
 	} else {
 		if (flags & PF_Explode) {
-			helper->Explosion(pos, DamageArray(50), 5, 0, 10, owner(), false, 1.0f, false, false, 0, 0, ZeroVector, -1);
+			CGameHelper::ExplosionParams params = {
+				pos,
+				ZeroVector,
+				DamageArray(50),
+				NULL,              // weaponDef
+				NULL,              // explosionGenerator
+				owner(),
+				NULL,              // hitUnit
+				NULL,              // hitFeature
+				5.0f,              // areaOfEffect
+				0.0f,              // edgeEffectiveness
+				10.0f,             // explosionSpeed
+				1.0f,              // gfxMod
+				false,             // impactOnly
+				false,             // ignoreOwner
+				true               // damageGround
+			};
+
+			helper->Explosion(params);
 		}
 		if (flags & PF_Smoke) {
 			if (flags & PF_NoCEGTrail) {
@@ -193,7 +211,23 @@ void CPieceProjectile::Collision(CUnit* unit)
 		return;
 	}
 	if (flags & PF_Explode) {
-		helper->Explosion(pos, DamageArray(50), 5, 0, 10, owner(), false, 1.0f, false, false, 0, unit, ZeroVector, -1);
+		CGameHelper::ExplosionParams params = {
+			pos,
+			ZeroVector,
+			DamageArray(50),
+			NULL,                                            // weaponDef
+			NULL,                                            // explosionGenerator
+			owner(),
+			unit,                                            // hitUnit
+			NULL,                                            // hitFeature
+			5.0f,                                            // areaOfEffect
+			0.0f,                                            // edgeEffectiveness
+			10.0f,                                           // explosionSpeed
+			1.0f,                                            // gfxMod
+			false,                                           // impactOnly
+			false,                                           // ignoreOwner
+			true                                             // damageGround
+		};
 	}
 	if (flags & PF_Smoke) {
 		if (flags & PF_NoCEGTrail) {

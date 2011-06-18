@@ -129,7 +129,7 @@ class CEventHandler
 
 		void UpdateObjects();
 
-		bool Explosion(int weaponID, const float3& pos, const CUnit* owner);
+		bool Explosion(int weaponDefID, const float3& pos, const CUnit* owner);
 
 		void StockpileChanged(const CUnit* unit,
 		                      const CWeapon* weapon, int oldCount);
@@ -842,14 +842,14 @@ inline void CEventHandler::UpdateObjects() {
 	eventBatchHandler->UpdateObjects();
 }
 
-inline bool CEventHandler::Explosion(int weaponID, const float3& pos, const CUnit* owner)
+inline bool CEventHandler::Explosion(int weaponDefID, const float3& pos, const CUnit* owner)
 {
 	const int count = listExplosion.size();
 	bool noGfx = false;
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listExplosion[i];
 		if (ec->GetFullRead()) {
-			noGfx = noGfx || ec->Explosion(weaponID, pos, owner);
+			noGfx = noGfx || ec->Explosion(weaponDefID, pos, owner);
 		}
 	}
 	return noGfx;

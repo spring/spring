@@ -70,10 +70,12 @@ CGameHelper::~CGameHelper()
 // Explosions/Damage
 //////////////////////////////////////////////////////////////////////
 
-void CGameHelper::DoExplosionDamage(CUnit* unit,
+void CGameHelper::DoExplosionDamage(
+	CUnit* unit,
+	CUnit* owner,
 	const float3& expPos, float expRad, float expSpeed,
-	bool ignoreOwner, CUnit* owner, float edgeEffectiveness,
-	const DamageArray& damages, int weaponId)
+	bool ignoreOwner, float edgeEffectiveness,
+	const DamageArray& damages, int weaponDefID)
 {
 	if (ignoreOwner && (unit == owner)) {
 		return;
@@ -156,9 +158,9 @@ void CGameHelper::DoExplosionDamage(CUnit* unit,
 	const float3 addedImpulse = diffPos * (damages.impulseFactor * mod * (damages[0] + damages.impulseBoost) * 3.2f);
 
 	if (expDist2 < (expSpeed * 4.0f)) { // damage directly
-		unit->DoDamage(damageDone, owner, addedImpulse, weaponId);
+		unit->DoDamage(damageDone, owner, addedImpulse, weaponDefID);
 	} else { // damage later
-		WaitingDamage* wd = new WaitingDamage((owner? owner->id: -1), unit->id, damageDone, addedImpulse, weaponId);
+		WaitingDamage* wd = new WaitingDamage((owner? owner->id: -1), unit->id, damageDone, addedImpulse, weaponDefID);
 		waitingDamages[(gs->frameNum + int(expDist2 / expSpeed) - 3) & 127].push_front(wd);
 	}
 }
@@ -192,44 +194,51 @@ void CGameHelper::DoExplosionDamage(CFeature* feature,
 
 
 
-void CGameHelper::Explosion(
-	float3 expPos, const DamageArray& damages,
-	float expRad, float edgeEffectiveness,
-	float expSpeed, CUnit* owner,
-	bool damageGround, float gfxMod,
-	bool ignoreOwner, bool impactOnly,
-	IExplosionGenerator* explosionGenerator,
-	CUnit* hitUnit,
-	const float3& impactDir, int weaponId,
-	CFeature* hitFeature
-) {
-	const WeaponDef* wd = weaponDefHandler->GetWeaponById(weaponId);
+void CGameHelper::Explosion(const ExplosionParams& params) {
+	const float3& pos = params.pos;
+	const float3& dir = params.dir;
+	const DamageArray& damages = params.damages;
 
-	if (luaUI) {
-		if (wd != NULL && wd->cameraShake > 0.0f) {
-			luaUI->ShockFront(wd->cameraShake, expPos, expRad);
-		}
-	}
+	const WeaponDef* weaponDef = params.weaponDef;
+	const int weaponDefID = (weaponDef != NULL)? weaponDef->id: -1;
+
+	IExplosionGenerator* explosionGenerator = weaponDef->explosionGenerator;
+	CUnit* owner = params.owner;
+	CUnit* hitUnit = params.hitUnit;
+	CFeature* hitFeature = params.hitFeature;
+
+	const float expRad = std::max(1.0f, params.areaOfEffect);
+	const float edgeEffectiveness = params.edgeEffectiveness;
+	const float expSpeed = params.explosionSpeed;
+	const float gfxMod = params.gfxMod;
+	const float realHeight = ground->GetHeightReal(pos.x, pos.z);
+
+	const float3 expPos = float3(pos.x, std::max(pos.y, realHeight), pos.z);
+
+	const bool impactOnly = params.impactOnly;
+	const bool ignoreOwner = params.ignoreOwner;
+	const bool damageGround = params.damageGround;
+	const bool noGfx = eventHandler.Explosion(weaponDefID, expPos, owner);
 
 #ifdef TRACE_SYNC
 	tracefile << "Explosion: ";
 	tracefile << expPos.x << " " << damages[0] <<  " " << expRad << "\n";
 #endif
 
-	const bool noGfx = eventHandler.Explosion(weaponId, expPos, owner);
-	const float h2 = ground->GetHeightReal(expPos.x, expPos.z);
-
-	expPos.y = std::max(expPos.y, h2);
-	expRad = std::max(expRad, 1.0f);
+	if (luaUI) {
+		if (weaponDef != NULL && weaponDef->cameraShake > 0.0f) {
+			luaUI->ShockFront(weaponDef->cameraShake, expPos, expRad);
+		}
+	}
 
 	if (impactOnly) {
 		if (hitUnit) {
-			DoExplosionDamage(hitUnit, expPos, expRad, expSpeed, ignoreOwner, owner, edgeEffectiveness, damages, weaponId);
+			DoExplosionDamage(hitUnit, owner, expPos, expRad, expSpeed, ignoreOwner, edgeEffectiveness, damages, weaponDefID);
 		} else if (hitFeature) {
 			DoExplosionDamage(hitFeature, expPos, expRad, damages);
 		}
 	} else {
-		float height = std::max(expPos.y - h2, 0.0f);
+		const float height = std::max(expPos.y - realHeight, 0.0f);
 
 		{
 			// damage all units within the explosion radius
@@ -243,14 +252,14 @@ void CGameHelper::Explosion(
 					hitUnitDamaged = true;
 				}
 
-				DoExplosionDamage(unit, expPos, expRad, expSpeed, ignoreOwner, owner, edgeEffectiveness, damages, weaponId);
+				DoExplosionDamage(unit, owner, expPos, expRad, expSpeed, ignoreOwner, edgeEffectiveness, damages, weaponDefID);
 			}
 
 			// HACK: for a unit with an offset coldet volume, the explosion
 			// (from an impacting projectile) position might not correspond
 			// to its quadfield position so we need to damage it separately
 			if (hitUnit != NULL && !hitUnitDamaged) {
-				DoExplosionDamage(hitUnit, expPos, expRad, expSpeed, ignoreOwner, owner, edgeEffectiveness, damages, weaponId);
+				DoExplosionDamage(hitUnit, owner, expPos, expRad, expSpeed, ignoreOwner, edgeEffectiveness, damages, weaponDefID);
 			}
 		}
 
@@ -289,10 +298,10 @@ void CGameHelper::Explosion(
 		if (explosionGenerator == NULL) {
 			explosionGenerator = stdExplosionGenerator;
 		}
-		explosionGenerator->Explosion(0, expPos, damages[0], expRad, owner, gfxMod, hitUnit, impactDir);
+		explosionGenerator->Explosion(0, expPos, damages[0], expRad, owner, gfxMod, hitUnit, dir);
 	}
 
-	CExplosionEvent explosionEvent(expPos, damages[0], expRad, wd);
+	CExplosionEvent explosionEvent(expPos, damages[0], expRad, weaponDef);
 	FireExplosionEvent(explosionEvent);
 }
 

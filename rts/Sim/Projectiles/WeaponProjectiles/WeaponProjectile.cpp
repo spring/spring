@@ -129,32 +129,38 @@ void CWeaponProjectile::Collision(CFeature* feature)
 		impactDir.Normalize();
 
 		// Dynamic Damage
-		DamageArray dynDamages;
-		if (weaponDef->dynDamageExp > 0)
-			dynDamages = weaponDefHandler->DynamicDamages(weaponDef->damages,
-					startpos, pos, (weaponDef->dynDamageRange > 0)
-							? weaponDef->dynDamageRange
-							: weaponDef->range,
-					weaponDef->dynDamageExp, weaponDef->dynDamageMin,
-					weaponDef->dynDamageInverted);
+		DamageArray damageArray;
+		if (weaponDef->dynDamageExp > 0) {
+			damageArray = weaponDefHandler->DynamicDamages(
+				weaponDef->damages,
+				startpos, pos,
+				(weaponDef->dynDamageRange > 0)
+					? weaponDef->dynDamageRange
+					: weaponDef->range,
+				weaponDef->dynDamageExp, weaponDef->dynDamageMin,
+				weaponDef->dynDamageInverted);
+		} else {
+			damageArray = weaponDef->damages;
+		}
 
-		helper->Explosion(
+		CGameHelper::ExplosionParams params = {
 			pos,
-			(weaponDef->dynDamageExp > 0)? dynDamages: weaponDef->damages,
+			impactDir,
+			damageArray,
+			weaponDef,
+			weaponDef->explosionGenerator,
+			owner(),
+			NULL,                                             // hitUnit
+			feature,
 			weaponDef->areaOfEffect,
 			weaponDef->edgeEffectiveness,
 			weaponDef->explosionSpeed,
-			owner(),
-			true,
-			weaponDef->noExplode? 0.3f: 1.0f,
-			weaponDef->noExplode || weaponDef->noSelfDamage,
+			weaponDef->noExplode? 0.3f: 1.0f,                 // gfxMod
 			weaponDef->impactOnly,
-			weaponDef->explosionGenerator,
-			0,
-			impactDir,
-			weaponDef->id,
-			feature
-		);
+			weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner
+			true                                              // damgeGround
+		};
+		helper->Explosion(params);
 	}
 
 	if (weaponDef->soundhit.getID(0) > 0) {
@@ -179,35 +185,38 @@ void CWeaponProjectile::Collision(CUnit* unit)
 		impactDir.Normalize();
 
 		// Dynamic Damage
-		DamageArray damages;
+		DamageArray damageArray;
 		if (weaponDef->dynDamageExp > 0) {
-			damages = weaponDefHandler->DynamicDamages(weaponDef->damages,
-					startpos, pos,
-					weaponDef->dynDamageRange > 0?
-						weaponDef->dynDamageRange:
-						weaponDef->range,
-					weaponDef->dynDamageExp, weaponDef->dynDamageMin,
-					weaponDef->dynDamageInverted);
+			damageArray = weaponDefHandler->DynamicDamages(
+				weaponDef->damages,
+				startpos, pos,
+				weaponDef->dynDamageRange > 0?
+					weaponDef->dynDamageRange:
+					weaponDef->range,
+				weaponDef->dynDamageExp, weaponDef->dynDamageMin,
+				weaponDef->dynDamageInverted);
 		} else {
-			damages = weaponDef->damages;
+			damageArray = weaponDef->damages;
 		}
 
-		helper->Explosion(
+		CGameHelper::ExplosionParams params = {
 			pos,
-			damages,
+			impactDir,
+			damageArray,
+			weaponDef,
+			weaponDef->explosionGenerator,
+			owner(),
+			unit,
+			NULL,                                            // hitFeature
 			weaponDef->areaOfEffect,
 			weaponDef->edgeEffectiveness,
 			weaponDef->explosionSpeed,
-			owner(),
-			true,
-			weaponDef->noExplode? 0.3f: 1.0f,
-			weaponDef->noExplode || weaponDef->noSelfDamage,
+			weaponDef->noExplode? 0.3f: 1.0f,                 // gfxMod
 			weaponDef->impactOnly,
-			weaponDef->explosionGenerator,
-			unit,
-			impactDir,
-			weaponDef->id
-		);
+			weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner
+			true                                              // damageGround
+		};
+		helper->Explosion(params);
 	}
 
 	if (weaponDef->soundhit.getID(0) > 0) {
