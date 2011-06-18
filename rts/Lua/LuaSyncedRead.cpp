@@ -2384,8 +2384,9 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 	const float zmin = luaL_checkfloat(L, 2);
 	const float xmax = luaL_checkfloat(L, 3);
 	const float zmax = luaL_checkfloat(L, 4);
-	const bool includeWeaponProjectiles = lua_isboolean(L, 5)? lua_toboolean(L, 5): true;
-	const bool includePieceProjectiles = lua_isboolean(L, 6)? lua_toboolean(L, 6): true;
+
+	const bool excludeWeaponProjectiles = lua_isboolean(L, 5)? lua_toboolean(L, 5): false;
+	const bool excludePieceProjectiles = lua_isboolean(L, 6)? lua_toboolean(L, 6): false;
 
 	const float3 mins(xmin, 0.0f, zmin);
 	const float3 maxs(xmax, 0.0f, zmax);
@@ -2401,8 +2402,8 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 			for (unsigned int i = 0; i < rectProjectileCount; i++) {
 				const CProjectile* pro = rectProjectiles[i];
 
-				if (pro->weapon && !includeWeaponProjectiles) { continue; }
-				if (pro->piece && !includePieceProjectiles) { continue; }
+				if (pro->weapon && excludeWeaponProjectiles) { continue; }
+				if (pro->piece && excludePieceProjectiles) { continue; }
 
 				lua_pushnumber(L, arrayIndex++);
 				lua_pushnumber(L, pro->id);
@@ -2415,8 +2416,8 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 			const CUnit* unit = pro->owner();
 			const ProjectileMapPair proPair(const_cast<CProjectile*>(pro), ((unit != NULL)? unit->allyteam: ActiveReadAllyTeam()));
 
-			if (pro->weapon && !includeWeaponProjectiles) { continue; }
-			if (pro->piece && !includePieceProjectiles) { continue; }
+			if (pro->weapon && excludeWeaponProjectiles) { continue; }
+			if (pro->piece && excludePieceProjectiles) { continue; }
 
 			if (!IsProjectileVisible(proPair)) {
 				continue;
