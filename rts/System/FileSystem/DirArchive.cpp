@@ -2,7 +2,7 @@
 
 #include "StdAfx.h"
 
-#include "ArchiveDir.h"
+#include "DirArchive.h"
 
 #include <assert.h>
 #include <fstream>
@@ -19,11 +19,11 @@ CDirArchiveFactory::CDirArchiveFactory()
 
 CArchiveBase* CDirArchiveFactory::DoCreateArchive(const std::string& filePath) const
 {
-	return new CArchiveDir(filePath);
+	return new CDirArchive(filePath);
 }
 
 
-CArchiveDir::CArchiveDir(const std::string& archiveName)
+CDirArchive::CDirArchive(const std::string& archiveName)
 	: CArchiveBase(archiveName)
 	, dirName(archiveName + '/')
 {
@@ -43,21 +43,21 @@ CArchiveDir::CArchiveDir(const std::string& archiveName)
 	}
 }
 
-CArchiveDir::~CArchiveDir()
+CDirArchive::~CDirArchive()
 {
 }
 
-bool CArchiveDir::IsOpen()
+bool CDirArchive::IsOpen()
 {
 	return true;
 }
 
-unsigned int CArchiveDir::NumFiles() const
+unsigned int CDirArchive::NumFiles() const
 {
 	return searchFiles.size();
 }
 
-bool CArchiveDir::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
+bool CDirArchive::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
 {
 	assert(IsFileId(fid));
 
@@ -75,7 +75,7 @@ bool CArchiveDir::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
 	}
 }
 
-void CArchiveDir::FileInfo(unsigned int fid, std::string& name, int& size) const
+void CDirArchive::FileInfo(unsigned int fid, std::string& name, int& size) const
 {
 	assert(IsFileId(fid));
 

@@ -8,10 +8,10 @@
 #include "ArchiveFactory.h"
 
 #include "ArchiveBase.h"
-#include "ArchivePool.h"
-#include "ArchiveDir.h"
-#include "ArchiveZip.h"
-#include "Archive7Zip.h"
+#include "PoolArchive.h"
+#include "DirArchive.h"
+#include "ZipArchive.h"
+#include "SevenZipArchive.h"
 
 #include "FileSystem.h"
 

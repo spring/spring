@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _ARCHIVE_7ZIP_H
-#define _ARCHIVE_7ZIP_H
+#ifndef _7ZIP_ARCHIVE_H
+#define _7ZIP_ARCHIVE_H
 
 #include <boost/thread/mutex.hpp>
 extern "C" {
@@ -15,7 +15,7 @@ extern "C" {
 
 /**
  * Creates LZMA/7zip compressed, single-file archives.
- * @see CArchive7Zip
+ * @see CSevenZipArchive
  */
 class CSevenZipArchiveFactory : public IArchiveFactory {
 public:
@@ -28,11 +28,11 @@ private:
 /**
  * An LZMA/7zip compressed, single-file archive.
  */
-class CArchive7Zip : public CArchiveBase
+class CSevenZipArchive : public CArchiveBase
 {
 public:
-	CArchive7Zip(const std::string& name);
-	virtual ~CArchive7Zip();
+	CSevenZipArchive(const std::string& name);
+	virtual ~CSevenZipArchive();
 
 	virtual bool IsOpen();
 	
@@ -104,4 +104,4 @@ private:
 	bool isOpen;
 };
 
-#endif // _ARCHIVE_7ZIP_H
+#endif // _7ZIP_ARCHIVE_H

@@ -1,17 +1,17 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef ARCHIVE_POOL_H
-#define ARCHIVE_POOL_H
+#ifndef _POOL_ARCHIVE_H
+#define _POOL_ARCHIVE_H
 
 #include <zlib.h>
 
 #include "ArchiveFactory.h"
-#include "ArchiveBuffered.h"
+#include "BufferedArchive.h"
 
 
 /**
  * Creates pool (aka rapid) archives.
- * @see CArchivePool
+ * @see CPoolArchive
  */
 class CPoolArchiveFactory : public IArchiveFactory {
 public:
@@ -71,11 +71,11 @@ private:
  *
  * @author Chris Clearwater (det) <chris@detrino.org>
  */
-class CArchivePool : public CArchiveBuffered
+class CPoolArchive : public CBufferedArchive
 {
 public:
-	CArchivePool(const std::string& name);
-	virtual ~CArchivePool();
+	CPoolArchive(const std::string& name);
+	virtual ~CPoolArchive();
 
 	virtual bool IsOpen();
 
@@ -98,4 +98,4 @@ private:
 	std::vector<FileData*> files;
 };
 
-#endif // ARCHIVE_POOL_H
+#endif // _POOL_ARCHIVE_H

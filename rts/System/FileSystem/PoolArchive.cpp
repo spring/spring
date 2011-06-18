@@ -2,7 +2,7 @@
 
 #include "StdAfx.h"
 
-#include "ArchivePool.h"
+#include "PoolArchive.h"
 
 #include <algorithm>
 #include <stdexcept>
@@ -24,7 +24,7 @@ CPoolArchiveFactory::CPoolArchiveFactory()
 
 CArchiveBase* CPoolArchiveFactory::DoCreateArchive(const std::string& filePath) const
 {
-	return new CArchivePool(filePath);
+	return new CPoolArchive(filePath);
 }
 
 
@@ -43,8 +43,8 @@ static bool gz_really_read(gzFile file, voidp buf, unsigned int len)
 	return gzread(file, (char*)buf, len) == len;
 }
 
-CArchivePool::CArchivePool(const std::string& name)
-	: CArchiveBuffered(name)
+CPoolArchive::CPoolArchive(const std::string& name)
+	: CBufferedArchive(name)
 	, isOpen(false)
 {
 	char c_name[255];
@@ -84,7 +84,7 @@ CArchivePool::CArchivePool(const std::string& name)
 	gzclose(in);
 }
 
-CArchivePool::~CArchivePool()
+CPoolArchive::~CPoolArchive()
 {
 	std::vector<FileData*>::iterator fi;
 	for (fi = files.begin(); fi < files.end(); ++fi) {
@@ -92,31 +92,31 @@ CArchivePool::~CArchivePool()
 	}
 }
 
-bool CArchivePool::IsOpen()
+bool CPoolArchive::IsOpen()
 {
 	return isOpen;
 }
 
-unsigned int CArchivePool::NumFiles() const
+unsigned int CPoolArchive::NumFiles() const
 {
 	return files.size();
 }
 
-void CArchivePool::FileInfo(unsigned int fid, std::string& name, int& size) const
+void CPoolArchive::FileInfo(unsigned int fid, std::string& name, int& size) const
 {
 	assert(IsFileId(fid));
 	name = files[fid]->name;
 	size = files[fid]->size;
 }
 
-unsigned int CArchivePool::GetCrc32(unsigned int fid)
+unsigned int CPoolArchive::GetCrc32(unsigned int fid)
 {
 	assert(IsFileId(fid));
 	return files[fid]->crc32;
 }
 
 
-bool CArchivePool::GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& buffer)
+bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& buffer)
 {
 	assert(IsFileId(fid));
 
