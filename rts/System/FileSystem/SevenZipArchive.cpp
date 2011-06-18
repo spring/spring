@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "Archive7Zip.h"
+#include "SevenZipArchive.h"
 
 #include <algorithm>
 #include <boost/system/error_code.hpp>
@@ -26,11 +26,11 @@ CSevenZipArchiveFactory::CSevenZipArchiveFactory()
 
 CArchiveBase* CSevenZipArchiveFactory::DoCreateArchive(const std::string& filePath) const
 {
-	return new CArchive7Zip(filePath);
+	return new CSevenZipArchive(filePath);
 }
 
 
-CArchive7Zip::CArchive7Zip(const std::string& name) :
+CSevenZipArchive::CSevenZipArchive(const std::string& name) :
 	CArchiveBase(name),
 	isOpen(false)
 {
@@ -131,7 +131,7 @@ CArchive7Zip::CArchive7Zip(const std::string& name) :
 	delete [] folderUnpackSizes;
 }
 
-CArchive7Zip::~CArchive7Zip()
+CSevenZipArchive::~CSevenZipArchive()
 {
 	if (outBuffer) {
 		IAlloc_Free(&allocImp, outBuffer);
@@ -142,17 +142,17 @@ CArchive7Zip::~CArchive7Zip()
 	SzArEx_Free(&db, &allocImp);
 }
 
-bool CArchive7Zip::IsOpen()
+bool CSevenZipArchive::IsOpen()
 {
 	return isOpen;
 }
 
-unsigned int CArchive7Zip::NumFiles() const
+unsigned int CSevenZipArchive::NumFiles() const
 {
 	return fileData.size();
 }
 
-bool CArchive7Zip::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
+bool CSevenZipArchive::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
 {
 	boost::mutex::scoped_lock lck(archiveLock);
 	assert(IsFileId(fid));
@@ -172,7 +172,7 @@ bool CArchive7Zip::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer
 	}
 }
 
-void CArchive7Zip::FileInfo(unsigned int fid, std::string& name, int& size) const
+void CSevenZipArchive::FileInfo(unsigned int fid, std::string& name, int& size) const
 {
 	assert(IsFileId(fid));
 	name = fileData[fid].origName;
@@ -180,10 +180,10 @@ void CArchive7Zip::FileInfo(unsigned int fid, std::string& name, int& size) cons
 }
 
 
-const size_t CArchive7Zip::COST_LIMIT_UNPACK_OVERSIZE = 32 * 1024;
-const size_t CArchive7Zip::COST_LIMIT_DISC_READ       = 32 * 1024;
+const size_t CSevenZipArchive::COST_LIMIT_UNPACK_OVERSIZE = 32 * 1024;
+const size_t CSevenZipArchive::COST_LIMIT_DISC_READ       = 32 * 1024;
 
-bool CArchive7Zip::HasLowReadingCost(unsigned int fid) const
+bool CSevenZipArchive::HasLowReadingCost(unsigned int fid) const
 {
 	assert(IsFileId(fid));
 	const FileData& fd = fileData[fid];
@@ -198,7 +198,7 @@ bool CArchive7Zip::HasLowReadingCost(unsigned int fid) const
 			|| (fd.packedSize <= COST_LIMIT_DISC_READ));
 }
 
-unsigned int CArchive7Zip::GetCrc32(unsigned int fid)
+unsigned int CSevenZipArchive::GetCrc32(unsigned int fid)
 {
 	assert(IsFileId(fid));
 	return fileData[fid].crc;

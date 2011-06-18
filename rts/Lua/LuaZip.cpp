@@ -28,7 +28,7 @@
 #include "LuaZip.h"
 #include "LuaInclude.h"
 #include "LuaHashString.h"
-#include "System/FileSystem/ArchiveZip.h"
+#include "System/FileSystem/ZipArchive.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/LogOutput.h"
@@ -287,7 +287,7 @@ bool LuaZipFileReader::PushNew(lua_State* L, const string& filename, CArchiveBas
 	else {
 		string realname = filesystem.LocateFile(filename);
 		if (!realname.empty()) {
-			udata->archive = new CArchiveZip(realname);
+			udata->archive = new CZipArchive(realname); // FIXME use ArchiveLoader instead
 		}
 	}
 

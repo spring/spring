@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _ARCHIVE_DIR_H
-#define _ARCHIVE_DIR_H
+#ifndef _DIR_ARCHIVE_H
+#define _DIR_ARCHIVE_H
 
 #include <map>
 
@@ -11,7 +11,7 @@
 
 /**
  * Creates file-system/dir oriented archives.
- * @see CArchiveDir
+ * @see CDirArchive
  */
 class CDirArchiveFactory : public IArchiveFactory {
 public:
@@ -26,11 +26,11 @@ private:
  * ie. a directory and all its contents are treated as an archive by this
  * class.
  */
-class CArchiveDir : public CArchiveBase
+class CDirArchive : public CArchiveBase
 {
 public:
-	CArchiveDir(const std::string& archiveName);
-	virtual ~CArchiveDir();
+	CDirArchive(const std::string& archiveName);
+	virtual ~CDirArchive();
 	
 	virtual bool IsOpen();
 	
@@ -45,4 +45,4 @@ private:
 	std::vector<std::string> searchFiles;
 };
 
-#endif // _ARCHIVE_DIR_H
+#endif // _DIR_ARCHIVE_H

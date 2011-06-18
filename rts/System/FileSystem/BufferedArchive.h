@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _ARCHIVE_BUFFERED_H
-#define _ARCHIVE_BUFFERED_H
+#ifndef _BUFFERED_ARCHIVE_H
+#define _BUFFERED_ARCHIVE_H
 
 #include <map>
 #include <boost/thread/mutex.hpp>
@@ -12,11 +12,11 @@
  * Provides a helper implementation for archive types that can only uncompress
  * one file to memory at a time.
  */
-class CArchiveBuffered : public CArchiveBase
+class CBufferedArchive : public CArchiveBase
 {
 public:
-	CArchiveBuffered(const std::string& name);
-	virtual ~CArchiveBuffered();
+	CBufferedArchive(const std::string& name);
+	virtual ~CBufferedArchive();
 
 	virtual bool GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer);
 
@@ -34,4 +34,4 @@ protected:
 	std::vector<FileBuffer> cache; // cache[fileId]
 };
 
-#endif // _ARCHIVE_BUFFERED_H
+#endif // _BUFFERED_ARCHIVE_H

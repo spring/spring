@@ -14,7 +14,7 @@
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/FileSystem/ArchiveZip.h"
+#include "System/FileSystem/ZipArchive.h"
 #include "System/Platform/byteorder.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
@@ -174,7 +174,7 @@ void CLuaLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 	const std::string realfile = filesystem.LocateFile(FindSaveFile(file)).c_str();
 
 	filename = file;
-	loadfile = new CArchiveZip(realfile);
+	loadfile = new CZipArchive(realfile); // FIXME use ArchiveLoader isntead
 
 	if (!loadfile->IsOpen()) {
 		logOutput.Print("Unable to open save file \"" + filename + "\"");
@@ -195,7 +195,7 @@ void CLuaLoadSaveHandler::LoadGame()
 
 void CLuaLoadSaveHandler::LoadEventClients()
 {
-	// FIXME: need some way to 'chroot' them into a single directory?
+	// FIXME: need some way to 'chroot' them into a single directory? absolute-ify & check path-prefix?
 	eventHandler.Load(loadfile);
 }
 

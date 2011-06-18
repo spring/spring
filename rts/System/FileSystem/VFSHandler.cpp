@@ -11,7 +11,7 @@
 
 #include "ArchiveLoader.h"
 #include "ArchiveBase.h"
-#include "ArchiveDir.h" // for FileData::dynamic
+#include "DirArchive.h" // for FileData::dynamic TODO remove
 #include "LogOutput.h"
 #include "FileSystem.h"
 #include "ArchiveScanner.h"
@@ -60,7 +60,7 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool override, cons
 				continue;
 			}
 			else
-				logOutput.Print(LOG_VFS_DETAIL, "%s (adding, doesn't exist)", name.c_str());
+				logOutput.Print(LOG_VFS_DETAIL, "%s (adding, does not exist)", name.c_str());
 		}
 		else
 			logOutput.Print(LOG_VFS_DETAIL, "%s (overriding)", name.c_str());
@@ -68,7 +68,7 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool override, cons
 		FileData d;
 		d.ar = ar;
 		d.size = size;
-		d.dynamic = !!dynamic_cast<CArchiveDir*>(ar);
+		d.dynamic = !!dynamic_cast<CDirArchive*>(ar); // FIXME introduce IsDynamic() in CArchiveBase
 		files[name] = d;
 	}
 	return true;
