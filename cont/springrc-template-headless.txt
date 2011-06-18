@@ -18,7 +18,7 @@
 #
 # Note: These comments will be gone after the first launch of spring.
 #
-# This will be set by the engine its self at runtime:
+# This will be set by the engine itself at runtime:
 # Headless=1
 #
 
