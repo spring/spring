@@ -1394,7 +1394,7 @@ void CLuaHandle::ProjectileCreated(const CProjectile* p)
 	if (!p->synced) { return; }
 	if (!p->weapon && !p->piece) { return; }
 	if (p->weapon) {
-		const CWeaponProjectile* wp = dynamic_cast<const CWeaponProjectile*>(p);
+		const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
 		const WeaponDef* wd = wp->weaponDef;
 
 		// if this weapon-type is not being watched, bail
@@ -1428,7 +1428,7 @@ void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 	if (!p->synced) { return; }
 	if (!p->weapon && !p->piece) { return; }
 	if (p->weapon) {
-		const CWeaponProjectile* wp = dynamic_cast<const CWeaponProjectile*>(p);
+		const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
 		const WeaponDef* wd = wp->weaponDef;
 
 		// if this weapon-type is not being watched, bail
