@@ -2460,15 +2460,21 @@ EXPORT(int) FindFilesArchive(int archive, int file, char* nameBuf, int* size)
 
 EXPORT(int) OpenArchiveFile(int archive, const char* name)
 {
+	int fileID = -1;
+
 	try {
 		CheckArchiveHandle(archive);
 		CheckNullOrEmpty(name);
 
-		IArchive* a = openArchives[archive];
-		return a->FindFile(name);
+		IArchive* arch = openArchives[archive];
+		fileID = arch->FindFile(name);
+		if (fileID == arch->NumFiles()) {
+			fileID = -2;
+		}
 	}
 	UNITSYNC_CATCH_BLOCKS;
-	return 0;
+
+	return fileID;
 }
 
 EXPORT(int) ReadArchiveFile(int archive, int file, unsigned char* buffer, int numBytes)
