@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __VFS_HANDLER_H
-#define __VFS_HANDLER_H
+#ifndef _VFS_HANDLER_H
+#define _VFS_HANDLER_H
 
 #include <map>
 #include <string>
@@ -83,4 +83,4 @@ private:
 
 extern CVFSHandler* vfsHandler;
 
-#endif // __VFS_HANDLER_H
+#endif // _VFS_HANDLER_H
