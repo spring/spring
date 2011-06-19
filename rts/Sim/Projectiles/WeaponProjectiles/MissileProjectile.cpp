@@ -94,7 +94,7 @@ CMissileProjectile::CMissileProjectile(
 	SetRadius(0.0f);
 
 	if (weaponDef) {
-		model = LoadModel(weaponDef);
+		model = weaponDef->LoadModel();
 		if (model) {
 			SetRadius(model->radius);
 		}

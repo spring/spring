@@ -39,12 +39,6 @@ private:
 };
 
 
-//not very sweet, but still better than replacing "const WeaponDef" _everywhere_
-inline S3DModel* LoadModel(const WeaponDef* wdef)
-{
-	return const_cast<WeaponDef*>(wdef)->LoadModel();
-}
-
 
 extern CWeaponDefHandler* weaponDefHandler;
 
