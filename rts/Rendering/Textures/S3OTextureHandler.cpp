@@ -37,7 +37,7 @@ CS3OTextureHandler::CS3OTextureHandler()
 	s3oTextures.push_back(new S3oTex());
 	s3oTextures.push_back(new S3oTex());
 #if defined(USE_GML) && GML_ENABLE_SIM && GML_SHARE_LISTS
-	UpdateDraw();
+	DoUpdateDraw();
 #endif
 }
 
@@ -72,6 +72,10 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 	const string totalName = model->tex1 + model->tex2;
 
 	if (s3oTextureNames.find(totalName) != s3oTextureNames.end()) {
+#if defined(USE_GML) && GML_ENABLE_SIM && GML_SHARE_LISTS
+		if (!Threading::IsSimThread())
+			DoUpdateDraw();
+#endif
 		return s3oTextureNames[totalName];
 	}
 
@@ -121,7 +125,7 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 
 #if defined(USE_GML) && GML_ENABLE_SIM && GML_SHARE_LISTS
 	if (!Threading::IsSimThread())
-		UpdateDraw();
+		DoUpdateDraw();
 #endif
 
 	return tex->num;
@@ -157,7 +161,6 @@ void CS3OTextureHandler::UpdateDraw() {
 #if defined(USE_GML) && GML_ENABLE_SIM && GML_SHARE_LISTS
 	GML_RECMUTEX_LOCK(model); // UpdateDraw
 
-	while (s3oTexturesDraw.size() < s3oTextures.size())
-		s3oTexturesDraw.push_back(s3oTextures[s3oTexturesDraw.size()]);
+	DoUpdateDraw();
 #endif
 }
