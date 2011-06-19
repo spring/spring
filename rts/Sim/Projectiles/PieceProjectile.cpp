@@ -173,7 +173,6 @@ void CPieceProjectile::Collision()
 				ZeroVector,
 				DamageArray(50),
 				NULL,              // weaponDef
-				NULL,              // explosionGenerator
 				owner(),
 				NULL,              // hitUnit
 				NULL,              // hitFeature

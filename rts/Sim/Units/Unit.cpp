@@ -1883,7 +1883,6 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 				ZeroVector,
 				wd->damages,
 				wd,
-				wd->explosionGenerator,
 				this,                              // owner
 				NULL,                              // hitUnit
 				NULL,                              // hitFeature
