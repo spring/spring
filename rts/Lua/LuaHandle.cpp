@@ -502,7 +502,6 @@ void CLuaHandle::Shutdown()
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 0, 0, errfunc);
-	return;
 }
 
 void CLuaHandle::Load(IArchive* archive)
@@ -524,7 +523,6 @@ void CLuaHandle::Load(IArchive* archive)
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 1, 0, errfunc);
-	return;
 }
 
 void CLuaHandle::GamePreload()
@@ -543,7 +541,6 @@ void CLuaHandle::GamePreload()
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 0, 0, errfunc);
-	return;
 }
 
 void CLuaHandle::GameStart()
@@ -562,7 +559,6 @@ void CLuaHandle::GameStart()
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 0, 0, errfunc);
-	return;
 }
 
 void CLuaHandle::GameOver(const std::vector<unsigned char>& winningAllyTeams)
@@ -588,7 +584,6 @@ void CLuaHandle::GameOver(const std::vector<unsigned char>& winningAllyTeams)
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 1, 0, errfunc);
-	return;
 }
 
 
@@ -611,8 +606,6 @@ void CLuaHandle::GamePaused(int playerID, bool paused)
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 2, 0, errfunc);
-
-	return;
 }
 
 
@@ -647,8 +640,6 @@ void CLuaHandle::GameFrame(int frameNum)
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 1, 0, errfunc);
-
-	return;
 }
 
 
@@ -670,7 +661,6 @@ void CLuaHandle::TeamDied(int teamID)
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 1, 0, errfunc);
-	return;
 }
 
 
@@ -692,7 +682,6 @@ void CLuaHandle::TeamChanged(int teamID)
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 1, 0, errfunc);
-	return;
 }
 
 
@@ -714,7 +703,6 @@ void CLuaHandle::PlayerChanged(int playerID)
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 1, 0, errfunc);
-	return;
 }
 
 
@@ -736,7 +724,6 @@ void CLuaHandle::PlayerAdded(int playerID)
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 1, 0, errfunc);
-	return;
 }
 
 
@@ -759,7 +746,6 @@ void CLuaHandle::PlayerRemoved(int playerID, int reason)
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 2, 0, errfunc);
-	return;
 }
 
 
@@ -783,8 +769,6 @@ inline void CLuaHandle::UnitCallIn(const LuaHashString& hs, const CUnit* unit)
 
 	// call the routine
 	RunCallInTraceback(hs, 3, 0, errfunc);
-
-	return;
 }
 
 
@@ -813,7 +797,6 @@ void CLuaHandle::UnitCreated(const CUnit* unit, const CUnit* builder)
 	int args = (builder != NULL) ? 4 : 3;
 	// call the routine
 	RunCallInTraceback(cmdStr, args, 0, errfunc);
-	return;
 }
 
 
@@ -822,7 +805,6 @@ void CLuaHandle::UnitFinished(const CUnit* unit)
 	LUA_UNIT_BATCH_PUSH(,UNIT_FINISHED, unit);
 	static const LuaHashString cmdStr("UnitFinished");
 	UnitCallIn(cmdStr, unit);
-	return;
 }
 
 
@@ -851,7 +833,6 @@ void CLuaHandle::UnitFromFactory(const CUnit* unit,
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 6, 0, errfunc);
-	return;
 }
 
 
@@ -883,7 +864,6 @@ void CLuaHandle::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
 
 	// call the routine
 	RunCallInTraceback(cmdStr, argCount, 0, errfunc);
-	return;
 }
 
 
@@ -908,7 +888,6 @@ void CLuaHandle::UnitTaken(const CUnit* unit, int newTeam)
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 4, 0, errfunc);
-	return;
 }
 
 
@@ -933,7 +912,6 @@ void CLuaHandle::UnitGiven(const CUnit* unit, int oldTeam)
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 4, 0, errfunc);
-	return;
 }
 
 
@@ -942,7 +920,6 @@ void CLuaHandle::UnitIdle(const CUnit* unit)
 	LUA_UNIT_BATCH_PUSH(,UNIT_IDLE, unit);
 	static const LuaHashString cmdStr("UnitIdle");
 	UnitCallIn(cmdStr, unit);
-	return;
 }
 
 
@@ -978,7 +955,6 @@ void CLuaHandle::UnitCommand(const CUnit* unit, const Command& command)
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 6, 0, errfunc);
-	return;
 }
 
 
@@ -1005,7 +981,6 @@ void CLuaHandle::UnitCmdDone(const CUnit* unit, int cmdID, int cmdTag)
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 5, 0, errfunc);
-	return;
 }
 
 
@@ -1044,7 +1019,6 @@ void CLuaHandle::UnitDamaged(const CUnit* unit, const CUnit* attacker,
 
 	// call the routine
 	RunCallInTraceback(cmdStr, argCount, 0, errfunc);
-	return;
 }
 
 
@@ -1071,7 +1045,6 @@ void CLuaHandle::UnitExperience(const CUnit* unit, float oldExperience)
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 5, 0, errfunc);
-	return;
 }
 
 
@@ -1105,7 +1078,6 @@ void CLuaHandle::UnitSeismicPing(const CUnit* unit, int allyTeam,
 
 	// call the routine
 	RunCallIn(cmdStr, GetFullRead(L) ? 7 : 4, 0);
-	return;
 }
 
 
@@ -1129,7 +1101,6 @@ void CLuaHandle::LosCallIn(const LuaHashString& hs,
 
 	// call the routine
 	RunCallIn(hs, GetFullRead(L) ? 4 : 2, 0);
-	return;
 }
 
 
@@ -1190,7 +1161,6 @@ void CLuaHandle::UnitLoaded(const CUnit* unit, const CUnit* transport)
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 5, 0, errfunc);
-	return;
 }
 
 
@@ -1217,7 +1187,6 @@ void CLuaHandle::UnitUnloaded(const CUnit* unit, const CUnit* transport)
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 5, 0, errfunc);
-	return;
 }
 
 
@@ -1228,7 +1197,6 @@ void CLuaHandle::UnitEnteredWater(const CUnit* unit)
 	LUA_UNIT_BATCH_PUSH(,UNIT_ENTERED_WATER, unit);
 	static const LuaHashString cmdStr("UnitEnteredWater");
 	UnitCallIn(cmdStr, unit);
-	return;
 }
 
 
@@ -1237,7 +1205,6 @@ void CLuaHandle::UnitEnteredAir(const CUnit* unit)
 	LUA_UNIT_BATCH_PUSH(,UNIT_ENTERED_AIR, unit);
 	static const LuaHashString cmdStr("UnitEnteredAir");
 	UnitCallIn(cmdStr, unit);
-	return;
 }
 
 
@@ -1246,7 +1213,6 @@ void CLuaHandle::UnitLeftWater(const CUnit* unit)
 	LUA_UNIT_BATCH_PUSH(,UNIT_LEFT_WATER, unit);
 	static const LuaHashString cmdStr("UnitLeftWater");
 	UnitCallIn(cmdStr, unit);
-	return;
 }
 
 
@@ -1255,7 +1221,6 @@ void CLuaHandle::UnitLeftAir(const CUnit* unit)
 	LUA_UNIT_BATCH_PUSH(,UNIT_LEFT_AIR, unit);
 	static const LuaHashString cmdStr("UnitLeftAir");
 	UnitCallIn(cmdStr, unit);
-	return;
 }
 
 
@@ -1266,7 +1231,6 @@ void CLuaHandle::UnitCloaked(const CUnit* unit)
 	LUA_UNIT_BATCH_PUSH(,UNIT_CLOAKED, unit);
 	static const LuaHashString cmdStr("UnitCloaked");
 	UnitCallIn(cmdStr, unit);
-	return;
 }
 
 
@@ -1275,7 +1239,6 @@ void CLuaHandle::UnitDecloaked(const CUnit* unit)
 	LUA_UNIT_BATCH_PUSH(,UNIT_DECLOAKED, unit);
 	static const LuaHashString cmdStr("UnitDecloaked");
 	UnitCallIn(cmdStr, unit);
-	return;
 }
 
 
@@ -1333,7 +1296,6 @@ void CLuaHandle::UnitMoveFailed(const CUnit* unit)
 	LUA_UNIT_BATCH_PUSH(,UNIT_MOVE_FAILED, unit);
 	static const LuaHashString cmdStr("UnitMoveFailed");
 	UnitCallIn(cmdStr, unit);
-	return;
 }
 
 
@@ -1359,7 +1321,6 @@ void CLuaHandle::FeatureCreated(const CFeature* feature)
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 2, 0, errfunc);
-	return;
 }
 
 
@@ -1383,7 +1344,6 @@ void CLuaHandle::FeatureDestroyed(const CFeature* feature)
 
 	// call the routine
 	RunCallInTraceback(cmdStr, 2, 0, errfunc);
-	return;
 }
 
 
@@ -1516,8 +1476,6 @@ void CLuaHandle::StockpileChanged(const CUnit* unit,
 
 	// call the routine
 	RunCallIn(cmdStr, 6, 0);
-
-	return;
 }
 
 
@@ -1933,8 +1891,6 @@ void CLuaHandle::Save(zipFile archive)
 
 	// call the routine
 	RunCallInUnsynced(cmdStr, 1, 0);
-
-	return;
 }
 
 
@@ -1949,8 +1905,6 @@ void CLuaHandle::Update()
 
 	// call the routine
 	RunCallInUnsynced(cmdStr, 0, 0);
-
-	return;
 }
 
 
@@ -1981,8 +1935,6 @@ void CLuaHandle::ViewResize()
 
 	// call the routine
 	RunCallInUnsynced(cmdStr, 1, 0);
-
-	return;
 }
 
 
@@ -2048,8 +2000,6 @@ void CLuaHandle::DrawGenesis()
 
 	// call the routine
 	RunCallInUnsynced(cmdStr, 0, 0);
-
-	return;
 }
 
 
@@ -2064,8 +2014,6 @@ void CLuaHandle::DrawWorld()
 
 	// call the routine
 	RunCallInUnsynced(cmdStr, 0, 0);
-
-	return;
 }
 
 
@@ -2080,8 +2028,6 @@ void CLuaHandle::DrawWorldPreUnit()
 
 	// call the routine
 	RunCallInUnsynced(cmdStr, 0, 0);
-
-	return;
 }
 
 
@@ -2096,8 +2042,6 @@ void CLuaHandle::DrawWorldShadow()
 
 	// call the routine
 	RunCallInUnsynced(cmdStr, 0, 0);
-
-	return;
 }
 
 
@@ -2112,8 +2056,6 @@ void CLuaHandle::DrawWorldReflection()
 
 	// call the routine
 	RunCallInUnsynced(cmdStr, 0, 0);
-
-	return;
 }
 
 
@@ -2128,8 +2070,6 @@ void CLuaHandle::DrawWorldRefraction()
 
 	// call the routine
 	RunCallInUnsynced(cmdStr, 0, 0);
-
-	return;
 }
 
 
@@ -2147,8 +2087,6 @@ void CLuaHandle::DrawScreen()
 
 	// call the routine
 	RunCallInUnsynced(cmdStr, 2, 0);
-
-	return;
 }
 
 
@@ -2166,8 +2104,6 @@ void CLuaHandle::DrawScreenEffects()
 
 	// call the routine
 	RunCallInUnsynced(cmdStr, 2, 0);
-
-	return;
 }
 
 
@@ -2193,8 +2129,6 @@ void CLuaHandle::DrawInMiniMap()
 
 	// call the routine
 	RunCallInUnsynced(cmdStr, 2, 0);
-
-	return;
 }
 
 
@@ -2211,8 +2145,6 @@ void CLuaHandle::GameProgress(int frameNum )
 
 	// call the routine
 	RunCallInUnsynced(cmdStr, 1, 0);
-
-	return;
 }
 
 
