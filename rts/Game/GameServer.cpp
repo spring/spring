@@ -81,6 +81,10 @@ const unsigned serverKeyframeIntervall = 16;
 /// players incoming bandwidth new allowance every X milliseconds
 const unsigned playerBandwidthInterval = 100;
 
+/// every 10 sec we'll broadcast current frame in a message that skips queue & cache
+/// to let clients that are fast-forwarding to current point to know their loading %
+const unsigned notificationFrameInterval = GAME_SPEED * 10;
+
 const std::string commands[numCommands] = {
 	"kick", "kickbynum", "setminspeed", "setmaxspeed",
 	"nopause", "nohelp", "cheat", "godmode", "globallos",
@@ -1997,6 +2001,14 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 					Broadcast(CBaseNetProtocol::Get().SendKeyFrame(serverFrameNum));
 				else
 					Broadcast(CBaseNetProtocol::Get().SendNewFrame());
+
+				// every notificationFrameInterval, we broadcast current frame in a special message that doesn't get cached and skips normal queue, to let players know their loading %
+				if ((serverFrameNum%notificationFrameInterval) == 0) {
+					CBaseNetProtocol::PacketType progressPacket = CBaseNetProtocol::Get().SendCurrentFrameProgress(serverFrameNum);
+					// we cannot use broadcast here, since we want to skip caching
+					for (size_t p = 0; p < players.size(); ++p)
+						players[p].SendData(progressPacket);
+				}
 #ifdef SYNCCHECK
 				outstandingSyncFrames.insert(serverFrameNum);
 #endif

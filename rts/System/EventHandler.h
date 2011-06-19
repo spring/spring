@@ -183,6 +183,10 @@ class CEventHandler
 		void DrawScreen();
 		void DrawInMiniMap();
 
+		/// @brief this UNSYNCED event is generated every minute, skips network queuing and caching and it's useful
+		/// to calculate the current fast-forwarding % compared to the real game
+		void GameProgress(int gameFrame);
+
 		// FIXME: void ShockFront(float power, const float3& pos, float areaOfEffect);
 
 	private:
@@ -335,6 +339,8 @@ class CEventHandler
 		EventClientList listDrawScreenEffects;
 		EventClientList listDrawScreen;
 		EventClientList listDrawInMiniMap;
+
+		EventClientList listGameProgress;
 };
 
 
@@ -510,7 +516,7 @@ inline void CEventHandler::UnitCloaked(const CUnit* unit)
 		CEventClient* ec = listUnitCloaked[i];
 		if (ec->CanReadAllyTeam(unitAllyTeam)) {
 			ec->UnitCloaked(unit);
-		} 
+		}
 	}
 }
 
@@ -524,7 +530,7 @@ inline void CEventHandler::UnitDecloaked(const CUnit* unit)
 		CEventClient* ec = listUnitDecloaked[i];
 		if (ec->CanReadAllyTeam(unitAllyTeam)) {
 			ec->UnitDecloaked(unit);
-		} 
+		}
 	}
 }
 
@@ -561,7 +567,7 @@ inline void CEventHandler::UnitFeatureCollision(const CUnit* collider, const CFe
 inline void CEventHandler::UpdateUnits(void) { eventBatchHandler->UpdateUnits(); }
 inline void CEventHandler::UpdateDrawUnits() { eventBatchHandler->UpdateDrawUnits(); }
 inline void CEventHandler::DeleteSyncedUnits() {
-	eventBatchHandler->DeleteSyncedUnits(); 
+	eventBatchHandler->DeleteSyncedUnits();
 	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedUnits
 	if(luaUI) luaUI->ExecuteUnitEventBatch();
 }
@@ -889,3 +895,4 @@ inline bool CEventHandler::DefaultCommand(const CUnit* unit,
 
 
 #endif /* EVENT_HANDLER_H */
+

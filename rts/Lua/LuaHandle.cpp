@@ -95,7 +95,7 @@ CLuaHandle::~CLuaHandle()
 	for(int i = 0; i < delayedRecvFromSynced.size(); ++i) {
 		DelayDataDump &ddp = delayedRecvFromSynced[i];
 		for(int d = 0; d < ddp.dd.size(); ++d) {
-			DelayData &ddt = ddp.dd[d]; 
+			DelayData &ddt = ddp.dd[d];
 			if(ddt.type == LUA_TSTRING)
 				delete ddt.data.str;
 		}
@@ -381,7 +381,7 @@ void CLuaHandle::ExecuteRecvFromSynced() {
 			lua_checkstack(L, ddsize + 2);
 
 			for(int d = 0; d < ddsize; ++d) {
-				DelayData &ddt = ddp.dd[d]; 
+				DelayData &ddt = ddp.dd[d];
 				switch (ddt.type) {
 					case LUA_TBOOLEAN: {
 						lua_pushboolean(L, ddt.data.bol);
@@ -2197,6 +2197,25 @@ void CLuaHandle::DrawInMiniMap()
 	return;
 }
 
+
+void CLuaHandle::GameProgress(int frameNum )
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
+	static const LuaHashString cmdStr("GameProgress");
+	if (!PushUnsyncedCallIn(L, cmdStr)) {
+		return;
+	}
+
+	lua_pushnumber(L, frameNum);
+
+	// call the routine
+	RunCallInUnsynced(cmdStr, 1, 0);
+
+	return;
+}
+
+
 /******************************************************************************/
 /******************************************************************************/
 
@@ -2992,3 +3011,4 @@ int CLuaHandle::CallOutUnsyncedUpdateCallIn(lua_State* L)
 
 /******************************************************************************/
 /******************************************************************************/
+
