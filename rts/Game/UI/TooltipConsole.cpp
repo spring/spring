@@ -5,14 +5,15 @@
 
 #include "TooltipConsole.h"
 #include "MouseHandler.h"
-#include "Rendering/GL/myGL.h"
-#include "Rendering/glFont.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/PlayerHandler.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/glFont.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/LosHandler.h"
@@ -20,9 +21,9 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "EventHandler.h"
-#include "ConfigHandler.h"
-#include "Util.h"
+#include "System/EventHandler.h"
+#include "System/ConfigHandler.h"
+#include "System/Util.h"
 
 CTooltipConsole* tooltip = NULL;
 

@@ -18,6 +18,7 @@
 #include "GameServer.h"
 #include "GameSetup.h"
 #include "GameVersion.h"
+#include "GlobalUnsynced.h"
 #include "LoadScreen.h"
 #include "Player.h"
 #include "PlayerHandler.h"

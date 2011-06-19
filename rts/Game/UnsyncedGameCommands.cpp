@@ -15,6 +15,7 @@
 #include "GameServer.h"
 #include "CommandMessage.h"
 #include "GameSetup.h"
+#include "GlobalUnsynced.h"
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
 #include "PlayerRoster.h"

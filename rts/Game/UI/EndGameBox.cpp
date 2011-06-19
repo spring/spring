@@ -9,6 +9,7 @@
 #include "MouseHandler.h"
 #include "Game/PlayerHandler.h"
 #include "Game/Game.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"

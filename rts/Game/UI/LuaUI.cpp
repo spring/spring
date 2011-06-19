@@ -43,6 +43,7 @@
 #include "Game/Camera/CameraController.h"
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/PlayerRoster.h"
 #include "Game/SelectedUnits.h"
 #include "CommandColors.h"

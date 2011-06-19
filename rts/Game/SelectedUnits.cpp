@@ -9,6 +9,7 @@
 #include "SelectedUnits.h"
 #include "SelectedUnitsAI.h"
 #include "Camera.h"
+#include "GlobalUnsynced.h"
 #include "WaitCommandsAI.h"
 #include "PlayerHandler.h"
 #include "UI/CommandColors.h"
