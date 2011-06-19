@@ -101,7 +101,7 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 
 		alwaysVisible = weaponDef->visuals.alwaysVisible;
 
-		model = LoadModel(weaponDef);
+		model = weaponDef->LoadModel();
 
 		collisionFlags = weaponDef->collisionFlags;
 	}
@@ -313,18 +313,7 @@ void CWeaponProjectile::PostLoad()
 //	if(weaponDef->interceptedByShieldType)
 //		interceptHandler.AddShieldInterceptableProjectile(this);
 
-	if (!weaponDef->visuals.modelName.empty()) {
-		if (weaponDef->visuals.model == NULL) {
-			std::string modelname = "objects3d/" + weaponDef->visuals.modelName;
-			if (modelname.find(".") == std::string::npos) {
-				modelname += ".3do";
-			}
-			const_cast<WeaponDef*>(weaponDef)->visuals.model = modelParser->Load3DModel(modelname);
-		}
-		if (weaponDef->visuals.model) {
-			model = weaponDef->visuals.model;
-		}
-	}
+	model = weaponDef->LoadModel();
 
 //	collisionFlags = weaponDef->collisionFlags;
 }

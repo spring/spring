@@ -23,3 +23,9 @@ S3DModel* WeaponDef::LoadModel()
 	}
 	return visuals.model;
 }
+
+S3DModel* WeaponDef::LoadModel() const {
+	//not very sweet, but still better than replacing "const WeaponDef" _everywhere_
+	return const_cast<WeaponDef*>(this)->LoadModel();
+}
+
