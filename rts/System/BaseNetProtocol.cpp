@@ -430,6 +430,13 @@ PacketType CBaseNetProtocol::SendSdBlockrequest(unsigned short begin, unsigned s
 
 }
 
+PacketType CBaseNetProtocol::SendCurrentFrameProgress(int frameNum)
+{
+	PackPacket* packet = new PackPacket(5, NETMSG_GAME_FRAME_PROGRESS);
+	*packet << frameNum;
+	return PacketType(packet);
+}
+
 
 PacketType CBaseNetProtocol::SendSdBlockresponse(uchar myPlayerNum, std::vector<unsigned> checksums)
 {
@@ -503,6 +510,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 
 	proto->AddType(NETMSG_AI_CREATED, -1);
 	proto->AddType(NETMSG_AI_STATE_CHANGED, 7);
+	proto->AddType(NETMSG_GAME_FRAME_PROGRESS,5);
 
 #ifdef SYNCDEBUG
 	proto->AddType(NETMSG_SD_CHKREQUEST, 5);

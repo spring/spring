@@ -45,7 +45,7 @@ class CLogSubsystem;
 class CLuaHandle;
 
 struct luaContextData {
-	luaContextData() : fullCtrl(false), fullRead(false), ctrlTeam(CEventClient::NoAccessTeam), 
+	luaContextData() : fullCtrl(false), fullRead(false), ctrlTeam(CEventClient::NoAccessTeam),
 		readTeam(0), readAllyTeam(0), selectTeam(CEventClient::NoAccessTeam), synced(false), owner(NULL) {}
 	bool fullCtrl;
 	bool fullRead;
@@ -248,6 +248,10 @@ class CLuaHandle : public CEventClient
 		void DrawScreenEffects();
 		void DrawScreen();
 		void DrawInMiniMap();
+
+		/// @brief this UNSYNCED event is generated every minute, skips network queuing and caching and it's useful
+		/// to calculate the current fast-forwarding % compared to the real game
+		void GameProgress(int frameNum);
 
 	public: // custom call-in  (inter-script calls)
 		virtual bool HasSyncedXCall(const string& funcName) { return false; }
@@ -481,3 +485,4 @@ inline int ActiveReadAllyTeam() { return CLuaHandle::GetActiveReadAllyTeam(); }
 
 
 #endif /* LUA_HANDLE_H */
+
