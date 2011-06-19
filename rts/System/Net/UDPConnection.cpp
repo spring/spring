@@ -17,9 +17,8 @@
 
 #include "Socket.h"
 #include "ProtocolDef.h"
-#include "Exception.h"
+#include "System/Exception.h"
 #include "System/ConfigHandler.h"
-#include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 
 namespace netcode {

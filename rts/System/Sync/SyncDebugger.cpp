@@ -7,9 +7,9 @@
 #include <boost/format.hpp>
 
 #include "LogOutput.h"
-#include "GlobalUnsynced.h"
-#include "Sim/Misc/GlobalSynced.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/PlayerHandler.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "BaseNetProtocol.h"
 #include "NetProtocol.h"
 #include "SyncDebugger.h"

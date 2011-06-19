@@ -10,7 +10,6 @@ SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/EventClient.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/EventHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GlobalConfig.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/GlobalUnsynced.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Info.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Input/InputHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Input/Joystick.cpp"
