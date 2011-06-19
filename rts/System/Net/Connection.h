@@ -33,6 +33,13 @@ public:
 	virtual boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const = 0;
 
 	/**
+	 * @brief Deletes a packet from the buffer
+	 * @param queue index number
+	 * useful for messages that skips queuing and needs to be processed immediately
+	 */
+	virtual void DeleteAt(unsigned index) = 0;
+
+	/**
 	 * @brief New method of data gathering
 	 * @return A RawPacket holding the data, or 0 if no data
 	 */
@@ -59,3 +66,4 @@ protected:
 } // namespace netcode
 
 #endif // CONNECTION_H
+
