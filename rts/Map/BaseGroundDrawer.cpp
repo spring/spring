@@ -299,8 +299,8 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 		return true;
 	}
 
-	const unsigned short* myLos         = &loshandler->losMap[gu->myAllyTeam].front();
-	const unsigned short* myAirLos      = &loshandler->airLosMap[gu->myAllyTeam].front();
+	const unsigned short* myLos         = &loshandler->losMaps[gu->myAllyTeam].front();
+	const unsigned short* myAirLos      = &loshandler->airLosMaps[gu->myAllyTeam].front();
 	const unsigned short* myRadar       = &radarhandler->radarMaps[gu->myAllyTeam].front();
 	const unsigned short* myJammer      = &radarhandler->jammerMaps[gu->myAllyTeam].front();
 #ifdef SONAR_JAMMER_MAPS
@@ -369,7 +369,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 					const int y_pwr2mapx = y * gs->pwr2mapx;
 					const int y_mapx     = y * gs->mapx;
 					for (int x = 0; x  < gs->mapx; ++x) {
-						const float height = readmap->centerheightmap[y_mapx + x];
+						const float height = readmap->GetCenterHeightMapSynced()[y_mapx + x];
 						const unsigned int value = (((unsigned int)(height * 8.0f)) % 255) * 3;
 						const int i = (y_pwr2mapx + x) * 4 - offset;
 						infoTexMem[i + COLOR_R] = 64 + (extraTexPal[value]     >> 1);

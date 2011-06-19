@@ -26,10 +26,10 @@ SET(sources_engine_Map
 		"${CMAKE_CURRENT_SOURCE_DIR}/SM3/terrain/TerrainUtil.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SM3/terrain/TerrainVertexBuffer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SM3/terrain/Textures.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/BFGroundDrawer.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/BFGroundTextures.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/SmfMapFile.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/SmfReadMap.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/SMFGroundDrawer.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/SMFGroundTextures.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/SMFMapFile.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/SMFReadMap.cpp"
 	)
 
 MakeGlobal(sources_engine_Map)

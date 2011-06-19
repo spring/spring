@@ -1888,8 +1888,8 @@ void CGame::MakeMemDump()
 		file << "LOS-map for team " << a << "\n";
 		for (int y = 0; y < gs->mapy>>modInfo.losMipLevel; ++y) {
 			file << " ";
-			for (int x = 0; x < gs->mapx>>modInfo.losMipLevel; ++x) {
-				file << loshandler->losMap[a][y * (gs->mapx>>modInfo.losMipLevel) + x] << " ";
+			for (int x = 0; x < gs->mapx >> modInfo.losMipLevel; ++x) {
+				file << loshandler->losMaps[a][y * (gs->mapx >> modInfo.losMipLevel) + x] << " ";
 			}
 			file << "\n";
 		}

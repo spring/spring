@@ -78,7 +78,9 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 	e->y2 = std::min((int) (pos.z + radius) / SQUARE_SIZE, gs->mapy - 3);
 	e->squares.reserve((e->y2 - e->y1 + 1) * (e->x2 - e->x1 + 1));
 
-	const float* heightmap = readmap->GetHeightmap();
+	const float* curHeightMap = readmap->GetCornerHeightMapSynced();
+	const float* orgHeightMap = readmap->GetOriginalHeightMapSynced();
+	const unsigned char* typeMap = readmap->GetTypeMapSynced();
 	const float baseStrength = -pow(strength, 0.6f) * 3 / mapHardness;
 	const float invRadius = 1.0f / radius;
 
@@ -99,12 +101,12 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 
 			float dif =
 				baseStrength * craterTable[tableIdx] *
-				invHardness[readmap->typemap[(y / 2) * gs->hmapx + x / 2]];
+				invHardness[typeMap[(y / 2) * gs->hmapx + x / 2]];
 
 			// FIXME: compensate for flattened ground under dead buildings
 			const float prevDif =
-				heightmap[y * (gs->mapx + 1) + x] -
-				readmap->orgheightmap[y * (gs->mapx + 1) + x];
+				curHeightMap[y * (gs->mapx + 1) + x] -
+				orgHeightMap[y * (gs->mapx + 1) + x];
 
 			if (prevDif * dif > 0.0f) {
 				dif /= fabs(prevDif) * 0.1f + 1;
@@ -137,10 +139,10 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 
 				float dif =
 					baseStrength * craterTable[tableIdx] *
-					invHardness[readmap->typemap[(z / 2) * gs->hmapx + x / 2]];
+					invHardness[typeMap[(z / 2) * gs->hmapx + x / 2]];
 				const float prevDif =
-					heightmap[z * (gs->mapx + 1) + x] -
-					readmap->orgheightmap[z * (gs->mapx + 1) + x];
+					curHeightMap[z * (gs->mapx + 1) + x] -
+					orgHeightMap[z * (gs->mapx + 1) + x];
 
 				if (prevDif * dif > 0.0f) {
 					dif /= fabs(prevDif) * 0.1f + 1;

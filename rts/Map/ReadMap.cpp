@@ -11,7 +11,7 @@
 #include "MapInfo.h"
 #include "MetalMap.h"
 #include "SM3/Sm3Map.h"
-#include "SMF/SmfReadMap.h"
+#include "SMF/SMFReadMap.h"
 #include "Game/LoadScreen.h"
 #include "System/bitops.h"
 #include "System/ConfigHandler.h"
@@ -82,8 +82,8 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 
 	if (typemapPtr && tbi.width == (rm->width >> 1) && tbi.height == (rm->height >> 1)) {
 		assert(gs->hmapx == tbi.width && gs->hmapy == tbi.height);
-		rm->typemap = new unsigned char[tbi.width * tbi.height];
-		memcpy(rm->typemap, typemapPtr, tbi.width * tbi.height);
+		rm->typeMap.resize(tbi.width * tbi.height);
+		memcpy(&rm->typeMap[0], typemapPtr, tbi.width * tbi.height);
 	} else
 		throw content_error("Bad/no terrain type map.");
 
@@ -97,8 +97,10 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 void CReadMap::Serialize(creg::ISerializer& s)
 {
 	// remove the const
-	float* hm = (float*) GetHeightmap();
-	s.Serialize(hm, 4 * (gs->mapx + 1) * (gs->mapy + 1));
+	const float* cshm = GetCornerHeightMapSynced();
+	      float*  shm = const_cast<float*>(cshm);
+
+	s.Serialize(shm, 4 * (gs->mapx + 1) * (gs->mapy + 1));
 
 	if (!s.IsWriting())
 		mapDamage->RecalcArea(2, gs->mapx - 3, 2, gs->mapy - 3);
@@ -106,12 +108,6 @@ void CReadMap::Serialize(creg::ISerializer& s)
 
 
 CReadMap::CReadMap():
-	orgheightmap(NULL),
-	centerheightmap(NULL),
-	slopemap(NULL),
-	facenormals(NULL),
-	centernormals(NULL),
-	typemap(NULL),
 	metalMap(NULL),
 	width(0),
 	height(0),
@@ -121,28 +117,27 @@ CReadMap::CReadMap():
 	currMaxHeight(0.0f),
 	mapChecksum(0)
 {
-	memset(mipHeightmap, 0, sizeof(mipHeightmap));
 }
 
 
 CReadMap::~CReadMap()
 {
 	delete metalMap;
-	delete[] typemap;
-	delete[] slopemap;
 
-	delete[] facenormals;
-	delete[] centernormals;
+	typeMap.clear();
+	slopeMap.clear();
 
-	delete[] centerheightmap;
 	for (int i = 1; i < numHeightMipMaps; i++) {
-		// don't delete mipHeightmap[0] since it points to centerheightmap
-		delete[] mipHeightmap[i];
+		// don't delete mipHeightMaps[0] since it points to centerHeightMap
+		delete[] mipHeightMaps[i];
 	}
 
-	delete[] orgheightmap;
-
+	mipHeightMaps.clear();
+	centerHeightMap.clear();
+	originalHeightMap.clear();
 	vertexNormals.clear();
+	faceNormals.clear();
+	centerNormals.clear();
 }
 
 
@@ -162,16 +157,19 @@ void CReadMap::Initialize()
 	float3::maxxpos = gs->mapx * SQUARE_SIZE - 1;
 	float3::maxzpos = gs->mapy * SQUARE_SIZE - 1;
 
-	orgheightmap = new float[(gs->mapx + 1) * (gs->mapy + 1)];
-	facenormals = new float3[gs->mapx * gs->mapy * 2];
-	centernormals = new float3[gs->mapx * gs->mapy];
-	centerheightmap = new float[gs->mapx * gs->mapy];
-	mipHeightmap[0] = centerheightmap;
+	originalHeightMap.resize((gs->mapx + 1) * (gs->mapy + 1));
+	faceNormals.resize(gs->mapx * gs->mapy * 2);
+	centerNormals.resize(gs->mapx * gs->mapy);
+	centerHeightMap.resize(gs->mapx * gs->mapy);
+
+	mipHeightMaps.resize(numHeightMipMaps);
+	mipHeightMaps[0] = &centerHeightMap[0];
+
 	for (int i = 1; i < numHeightMipMaps; i++) {
-		mipHeightmap[i] = new float[(gs->mapx >> i) * (gs->mapy >> i)];
+		mipHeightMaps[i] = new float[(gs->mapx >> i) * (gs->mapy >> i)];
 	}
 
-	slopemap = new float[gs->hmapx * gs->hmapy];
+	slopeMap.resize(gs->hmapx * gs->hmapy);
 	vertexNormals.resize((gs->mapx + 1) * (gs->mapy + 1));
 
 	CalcHeightmapChecksum();
@@ -181,14 +179,14 @@ void CReadMap::Initialize()
 
 void CReadMap::CalcHeightmapChecksum()
 {
-	const float* heightmap = GetHeightmap();
+	const float* heightmap = GetCornerHeightMapSynced();
 
 	minheight = +123456.0f;
 	maxheight = -123456.0f;
 
 	mapChecksum = 0;
 	for (int i = 0; i < ((gs->mapx + 1) * (gs->mapy + 1)); ++i) {
-		orgheightmap[i] = heightmap[i];
+		originalHeightMap[i] = heightmap[i];
 		if (heightmap[i] < minheight) { minheight = heightmap[i]; }
 		if (heightmap[i] > maxheight) { maxheight = heightmap[i]; }
 		mapChecksum +=  (unsigned int) (heightmap[i] * 100);
@@ -202,7 +200,8 @@ void CReadMap::CalcHeightmapChecksum()
 
 void CReadMap::UpdateHeightmapSynced(int x1, int y1, int x2, int y2)
 {
-	const float* heightmap = GetHeightmap();
+	const float* heightmapSynced = GetCornerHeightMapSynced();
+	      float* heightmapUnsynced = GetCornerHeightMapUnsynced();
 
 	x1 = std::max(           0, x1 - 1);
 	y1 = std::max(           0, y1 - 1);
@@ -211,11 +210,17 @@ void CReadMap::UpdateHeightmapSynced(int x1, int y1, int x2, int y2)
 
 	for (int y = y1; y <= y2; y++) {
 		for (int x = x1; x <= x2; x++) {
-			float height = heightmap[(y) * (gs->mapx + 1) + x];
-			height += heightmap[(y    ) * (gs->mapx + 1) + x + 1];
-			height += heightmap[(y + 1) * (gs->mapx + 1) + x    ];
-			height += heightmap[(y + 1) * (gs->mapx + 1) + x + 1];
-			centerheightmap[y * gs->mapx + x] = height * 0.25f;
+			const int idxTL = (y    ) * (gs->mapx + 1) + x;
+			const int idxTR = (y    ) * (gs->mapx + 1) + x + 1;
+			const int idxBL = (y + 1) * (gs->mapx + 1) + x;
+			const int idxBR = (y + 1) * (gs->mapx + 1) + x + 1;
+
+			const float height =
+				heightmapSynced[idxTL] +
+				heightmapSynced[idxTR] +
+				heightmapSynced[idxBL] +
+				heightmapSynced[idxBR];
+			centerHeightMap[y * gs->mapx + x] = height * 0.25f;
 		}
 	}
 
@@ -223,11 +228,12 @@ void CReadMap::UpdateHeightmapSynced(int x1, int y1, int x2, int y2)
 		int hmapx = gs->mapx >> i;
 		for (int y = ((y1 >> i) & (~1)); y < (y2 >> i); y += 2) {
 			for (int x = ((x1 >> i) & (~1)); x < (x2 >> i); x += 2) {
-				float height = mipHeightmap[i][(x) + (y) * hmapx];
-				height += mipHeightmap[i][(x    ) + (y + 1) * hmapx];
-				height += mipHeightmap[i][(x + 1) + (y    ) * hmapx];
-				height += mipHeightmap[i][(x + 1) + (y + 1) * hmapx];
-				mipHeightmap[i + 1][(x / 2) + (y / 2) * hmapx / 2] = height * 0.25f;
+				const float height =
+					mipHeightMaps[i][(x    ) + (y    ) * hmapx] +
+					mipHeightMaps[i][(x    ) + (y + 1) * hmapx] +
+					mipHeightMaps[i][(x + 1) + (y    ) * hmapx] +
+					mipHeightMaps[i][(x + 1) + (y + 1) * hmapx];
+				mipHeightMaps[i + 1][(x / 2) + (y / 2) * hmapx / 2] = height * 0.25f;
 			}
 		}
 	}
@@ -243,24 +249,24 @@ void CReadMap::UpdateHeightmapSynced(int x1, int y1, int x2, int y2)
 			const int idx0 = (y    ) * (gs->mapx + 1) + x;
 			const int idx1 = (y + 1) * (gs->mapx + 1) + x;
 
-			float3 e1(-SQUARE_SIZE, heightmap[idx0] - heightmap[idx0 + 1],            0);
-			float3 e2(           0, heightmap[idx0] - heightmap[idx1    ], -SQUARE_SIZE);
+			float3 e1(-SQUARE_SIZE, heightmapSynced[idx0] - heightmapSynced[idx0 + 1],            0);
+			float3 e2(           0, heightmapSynced[idx0] - heightmapSynced[idx1    ], -SQUARE_SIZE);
 
 			const float3 n1 = e2.cross(e1).Normalize();
 
 			//! triangle topright
-			facenormals[(y * gs->mapx + x) * 2] = n1;
+			faceNormals[(y * gs->mapx + x) * 2] = n1;
 
-			e1 = float3( SQUARE_SIZE, heightmap[idx1 + 1] - heightmap[idx1    ],           0);
-			e2 = float3(           0, heightmap[idx1 + 1] - heightmap[idx0 + 1], SQUARE_SIZE);
+			e1 = float3( SQUARE_SIZE, heightmapSynced[idx1 + 1] - heightmapSynced[idx1    ],           0);
+			e2 = float3(           0, heightmapSynced[idx1 + 1] - heightmapSynced[idx0 + 1], SQUARE_SIZE);
 
 			const float3 n2 = e2.cross(e1).Normalize();
 
 			//! triangle bottomleft
-			facenormals[(y * gs->mapx + x) * 2 + 1] = n2;
+			faceNormals[(y * gs->mapx + x) * 2 + 1] = n2;
 
 			//! face normal
-			centernormals[y * gs->mapx + x] = (n1 + n2).Normalize();
+			centerNormals[y * gs->mapx + x] = (n1 + n2).Normalize();
 		}
 	}
 
@@ -269,31 +275,31 @@ void CReadMap::UpdateHeightmapSynced(int x1, int y1, int x2, int y2)
 			const int idx0 = (y*2    ) * (gs->mapx) + x*2;
 			const int idx1 = (y*2 + 1) * (gs->mapx) + x*2;
 
-			float avgslope = 0;
-			avgslope += facenormals[(idx0    ) * 2    ].y;
-			avgslope += facenormals[(idx0    ) * 2 + 1].y;
-			avgslope += facenormals[(idx0 + 1) * 2    ].y;
-			avgslope += facenormals[(idx0 + 1) * 2 + 1].y;
-			avgslope += facenormals[(idx1    ) * 2    ].y;
-			avgslope += facenormals[(idx1    ) * 2 + 1].y;
-			avgslope += facenormals[(idx1 + 1) * 2    ].y;
-			avgslope += facenormals[(idx1 + 1) * 2 + 1].y;
-			avgslope /= 8;
+			float avgslope = 0.0f;
+			avgslope += faceNormals[(idx0    ) * 2    ].y;
+			avgslope += faceNormals[(idx0    ) * 2 + 1].y;
+			avgslope += faceNormals[(idx0 + 1) * 2    ].y;
+			avgslope += faceNormals[(idx0 + 1) * 2 + 1].y;
+			avgslope += faceNormals[(idx1    ) * 2    ].y;
+			avgslope += faceNormals[(idx1    ) * 2 + 1].y;
+			avgslope += faceNormals[(idx1 + 1) * 2    ].y;
+			avgslope += faceNormals[(idx1 + 1) * 2 + 1].y;
+			avgslope /= 8.0f;
 
-			float maxslope =              facenormals[(idx0    ) * 2    ].y;
-			maxslope = std::min(maxslope, facenormals[(idx0    ) * 2 + 1].y);
-			maxslope = std::min(maxslope, facenormals[(idx0 + 1) * 2    ].y);
-			maxslope = std::min(maxslope, facenormals[(idx0 + 1) * 2 + 1].y);
-			maxslope = std::min(maxslope, facenormals[(idx1    ) * 2    ].y);
-			maxslope = std::min(maxslope, facenormals[(idx1    ) * 2 + 1].y);
-			maxslope = std::min(maxslope, facenormals[(idx1 + 1) * 2    ].y);
-			maxslope = std::min(maxslope, facenormals[(idx1 + 1) * 2 + 1].y);
+			float maxslope =              faceNormals[(idx0    ) * 2    ].y;
+			maxslope = std::min(maxslope, faceNormals[(idx0    ) * 2 + 1].y);
+			maxslope = std::min(maxslope, faceNormals[(idx0 + 1) * 2    ].y);
+			maxslope = std::min(maxslope, faceNormals[(idx0 + 1) * 2 + 1].y);
+			maxslope = std::min(maxslope, faceNormals[(idx1    ) * 2    ].y);
+			maxslope = std::min(maxslope, faceNormals[(idx1    ) * 2 + 1].y);
+			maxslope = std::min(maxslope, faceNormals[(idx1 + 1) * 2    ].y);
+			maxslope = std::min(maxslope, faceNormals[(idx1 + 1) * 2 + 1].y);
 
 			//! smooth it a bit, so small holes don't block huge tanks
 			const float lerp = maxslope / avgslope;
 			const float slope = maxslope * (1.0f - lerp) + avgslope * lerp;
 
-			slopemap[y * gs->hmapx + x] = 1.0f - slope;
+			slopeMap[y * gs->hmapx + x] = 1.0f - slope;
 		}
 	}
 }
@@ -318,7 +324,4 @@ void CReadMap::HeightmapUpdated(const int& x1, const int& y1, const int& x2, con
 		//! unsynced
 		heightmapUpdates.push_back(HeightmapUpdate(x1, x2, y1, y2));
 	}
-}
-
-CReadMap::IQuadDrawer::~IQuadDrawer() {
 }

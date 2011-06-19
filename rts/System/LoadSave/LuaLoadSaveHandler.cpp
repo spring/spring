@@ -132,8 +132,8 @@ void CLuaLoadSaveHandler::SaveHeightmap()
 	// For every heightmap pixel the bits are XOR'ed with the orig bits,
 	// so that unmodified terrain comes out as 0.
 	// Big chunks of 0s are then very well compressed by zip.
-	const int* currHeightmap = (const int*) (const char*) readmap->GetHeightmap();
-	const int* origHeightmap = (const int*) (const char*) readmap->orgheightmap;
+	const int* currHeightmap = (const int*) (const char*) readmap->GetCornerHeightMapSynced();
+	const int* origHeightmap = (const int*) (const char*) readmap->GetOriginalHeightMapSynced();
 	const int size = (gs->mapx + 1) * (gs->mapy + 1);
 	int* temp = new int[size];
 	for (int i = 0; i < size; ++i) {
@@ -215,7 +215,7 @@ void CLuaLoadSaveHandler::LoadHeightmap()
 	if (loadfile->GetFile(FILE_HEIGHTMAP, buf)) {
 		const int size = (gs->mapx + 1) * (gs->mapy + 1);
 		const int* temp = (const int*) (const char*) &*buf.begin();
-		const int* origHeightmap = (const int*) (const char*) readmap->orgheightmap;
+		const int* origHeightmap = (const int*) (const char*) readmap->GetOriginalHeightMapSynced();
 
 		for (int i = 0; i < size; ++i) {
 			const int newHeightBits = swabdword(temp[i]) ^ origHeightmap[i];
