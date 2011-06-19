@@ -4,20 +4,21 @@
 #include <SDL_keysym.h>
 #include "mmgr.h"
 
-#include "Sim/Misc/TeamHandler.h"
-#include "Sim/Misc/GlobalSynced.h"
-#include "LogOutput.h"
 #include "MouseHandler.h"
-#include "NetProtocol.h"
 #include "QuitBox.h"
 #include "Game/PlayerHandler.h"
 #include "Game/GameSetup.h"
-#include "LoadSave/LoadSaveHandler.h"
-#include "TimeUtil.h"
-#include "FileSystem/FileSystem.h"
-#include "Sim/Misc/ModInfo.h"
+#include "Game/GlobalUnsynced.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/ModInfo.h"
+#include "Sim/Misc/TeamHandler.h"
+#include "System/LogOutput.h"
+#include "System/NetProtocol.h"
+#include "System/TimeUtil.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/LoadSave/LoadSaveHandler.h"
 
 #define MAX_QUIT_TEAMS (teamHandler->ActiveTeams() - 1)
 

@@ -5,8 +5,8 @@
 #include <vector>
 #include <SDL.h>
 
-#include "LoadScreen.h"
 #include "Rendering/GL/myGL.h"
+#include "LoadScreen.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Game.h"
 #include "GameVersion.h"
