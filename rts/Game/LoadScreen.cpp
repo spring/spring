@@ -105,7 +105,6 @@ void CLoadScreen::Init()
 	}
 
 	if (!mt_loading) {
-		Draw();
 		game->LoadGame(mapName);
 	}
 }
@@ -113,6 +112,8 @@ void CLoadScreen::Init()
 
 CLoadScreen::~CLoadScreen()
 {
+	// at this point, the thread running CGame::LoadGame
+	// has finished and deregistered itself from WatchDog
 	delete gameLoadThread; gameLoadThread = NULL;
 
 	if (net)
@@ -120,8 +121,6 @@ CLoadScreen::~CLoadScreen()
 	if (netHeartbeatThread)
 		netHeartbeatThread->join();
 	delete netHeartbeatThread; netHeartbeatThread = NULL;
-
-	Watchdog::ClearTimer(WDT_LOAD);
 
 	if (!gu->globalQuit) {
 		//! sending your playername to the server indicates that you are finished loading
