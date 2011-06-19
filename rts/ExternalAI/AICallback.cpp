@@ -8,6 +8,7 @@
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/GameHelper.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/TraceRay.h"
 #include "Game/GameSetup.h"
 #include "Game/PlayerHandler.h"

@@ -13,13 +13,15 @@
 #include "mmgr.h"
 #include "lib/gml/gmlmut.h"
 
+// NOTE: these _must_ be included before NetProtocol.h due to some ambiguity in
+// Boost hash_float.hpp ("call of overloaded ‘ldexp(float&, int&)’ is ambiguous")
+#include "System/Net/UDPConnection.h"
+#include "System/Net/LocalConnection.h"
 #include "NetProtocol.h"
 
 #include "Game/GameData.h"
 #include "Game/GlobalUnsynced.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "System/Net/UDPConnection.h"
-#include "System/Net/LocalConnection.h"
 #include "System/Net/UnpackPacket.h"
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/ConfigHandler.h"
