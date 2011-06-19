@@ -249,7 +249,7 @@ class CLuaHandle : public CEventClient
 		void DrawScreen();
 		void DrawInMiniMap();
 
-		/// @brief this UNSYNCED event is generated every minute, skips network queuing and caching and it's useful
+		/// @brief this UNSYNCED event is generated every gameProgressFrameInterval ( defined in gameserver.cpp ), skips network queuing and caching and it's useful
 		/// to calculate the current fast-forwarding % compared to the real game
 		void GameProgress(int frameNum);
 
