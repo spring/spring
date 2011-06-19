@@ -16,6 +16,7 @@
 #include "NetProtocol.h"
 
 #include "Game/GameData.h"
+#include "Game/GlobalUnsynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Net/UDPConnection.h"
 #include "System/Net/LocalConnection.h"
@@ -23,7 +24,6 @@
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/ConfigHandler.h"
 #include "System/LogOutput.h"
-#include "System/GlobalUnsynced.h"
 
 
 CNetProtocol::CNetProtocol() : loading(false), disableDemo(false)
