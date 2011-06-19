@@ -2,8 +2,9 @@
 set +e
 
 # TODO: add suppressions instead of excluding rts/lib completely
-
-INCLUDE="-I rts -I rts/System"
+# disabled checking of headers because it increases time to check x10 and
+# its currently many spam, reenable when to few warnings are found :)
+#INCLUDE="-I rts -I rts/System"
 
 find rts AI/Wrappers AI/Interfaces -name *\.cpp -or -name *\.c \
 |grep -v '^rts/lib' \
