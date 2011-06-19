@@ -65,7 +65,7 @@ public:
 	 * @param queue index number
 	 * useful for messages that skips queuing and needs to be processed immediately
 	 */
-	void DeleteAt(unsigned index);
+	void DeleteBufferPacketAt(unsigned index);
 
 	/**
 	 * @brief Receive a single message (and remove it from the recieve buffer)

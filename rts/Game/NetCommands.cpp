@@ -76,14 +76,14 @@ void CGame::ClientReadNet()
 
 			// this special packet skips queue entirely, so gets processed here
 			// it's meant to indicate current game progress for clients fast-forwarding to current point the game
-			// NOTE: this event should be unsynced, since it's time reference frame is not related to the current
+			// NOTE: this event should be unsynced, since its time reference frame is not related to the current
 			// progress of the game from the client's point of view
 			if ( packet->data[0] == NETMSG_GAME_FRAME_PROGRESS ) {
 				int serverframenum = *(int*)(packet->data+1);
 				// send the event to lua call-in
 				eventHandler.GameProgress(serverframenum);
 				// pop it out of the net buffer
-				net->DeleteAt(ahead);
+				net->DeleteBufferPacketAt(ahead);
 			}
 			else
 				++ahead;

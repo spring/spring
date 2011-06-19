@@ -88,7 +88,7 @@ public:
 	 * @param queue index number
 	 * useful for messages that skips queuing and needs to be processed immediately
 	 */
-	virtual void DeleteAt(unsigned index);
+	void DeleteBufferPacketAt(unsigned index);
 
 	/**
 	 * @brief use this to recieve ready data

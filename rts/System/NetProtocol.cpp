@@ -95,11 +95,11 @@ boost::shared_ptr<const netcode::RawPacket> CNetProtocol::Peek(unsigned ahead) c
 	return serverConn->Peek(ahead);
 }
 
-void CNetProtocol::DeleteAt(unsigned index)
+void CNetProtocol::DeleteBufferPacketAt(unsigned index)
 {
-	GML_STDMUTEX_LOCK(net); // DeleteAt
+	GML_STDMUTEX_LOCK(net); // DeleteBufferPacketAt
 
-	return serverConn->DeleteAt(index);
+	return serverConn->DeleteBufferPacketAt(index);
 }
 
 boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int framenum)

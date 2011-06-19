@@ -57,12 +57,12 @@ boost::shared_ptr<const RawPacket> CLocalConnection::Peek(unsigned ahead) const
 	}
 }
 
-void CLocalConnection::DeleteAt(unsigned index)
+void CLocalConnection::DeleteBufferPacketAt(unsigned index)
 {
 	boost::mutex::scoped_lock scoped_lock(Mutex[instance]);
 
 	if (index < Data[instance].size())
-		Data[instance].erase(Data[instance].begin()+index);
+		Data[instance].erase(Data[instance].begin() + index);
 }
 
 boost::shared_ptr<const RawPacket> CLocalConnection::GetData()
