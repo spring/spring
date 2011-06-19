@@ -10,6 +10,7 @@
 #include "Game/PlayerHandler.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
 #include "Game/UI/MouseHandler.h"
 #include "Lua/LuaRules.h"
@@ -19,7 +20,6 @@
 #include "Sim/Units/UnitHandler.h"
 #include "System/myMath.h"
 #include "System/EventHandler.h"
-#include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 
 CR_BIND(CPlayer,);

@@ -19,7 +19,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/ConfigHandler.h"
-#include "System/GlobalUnsynced.h"
 #include "System/EventHandler.h"
 #include "System/LogOutput.h"
 #include "System/TimeProfiler.h"

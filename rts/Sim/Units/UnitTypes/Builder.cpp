@@ -6,7 +6,7 @@
 #include "Builder.h"
 #include "Building.h"
 #include "Game/GameHelper.h"
-#include "LogOutput.h"
+#include "Game/GlobalUnsynced.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
@@ -27,8 +27,8 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
-#include "System/GlobalUnsynced.h"
 #include "System/EventHandler.h"
+#include "System/LogOutput.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/mmgr.h"
 

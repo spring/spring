@@ -21,7 +21,6 @@
 #include "System/myMath.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/GlobalUnsynced.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/mmgr.h"

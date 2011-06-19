@@ -10,7 +10,6 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CBitmapMuzzleFlame, CProjectile, );
 

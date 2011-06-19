@@ -22,7 +22,6 @@
 #include "Rendering/Shaders/ShaderHandler.hpp"
 #include "System/ConfigHandler.h"
 #include "System/EventHandler.h"
-#include "System/GlobalUnsynced.h"
 #include "System/Matrix44f.h"
 #include "System/LogOutput.h"
 

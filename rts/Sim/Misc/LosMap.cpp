@@ -9,7 +9,7 @@
 #include "System/float3.h"
 
 #ifdef USE_UNSYNCED_HEIGHTMAP
-#include "System/GlobalUnsynced.h" // for myAllyTeam
+#include "Game/GlobalUnsynced.h" // for myAllyTeam
 #endif
 
 #include <algorithm>

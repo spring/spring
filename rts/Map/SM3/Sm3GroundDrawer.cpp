@@ -15,7 +15,6 @@
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/GL/myGL.h"
-#include "System/GlobalUnsynced.h"
 #include "System/ConfigHandler.h"
 
 #include <SDL_keysym.h>

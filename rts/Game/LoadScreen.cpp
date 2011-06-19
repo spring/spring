@@ -5,12 +5,13 @@
 #include <vector>
 #include <SDL.h>
 
-#include "Rendering/GL/myGL.h"
 #include "LoadScreen.h"
+#include "Rendering/GL/myGL.h"
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "Game.h"
 #include "GameVersion.h"
+#include "Game/GlobalUnsynced.h"
 #include "PlayerHandler.h"
-#include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/UI/MouseHandler.h"
 #include "Game/UI/InputReceiver.h"
 #include "Map/MapInfo.h"
@@ -23,7 +24,6 @@
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/FPUCheck.h"
-#include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 #include "System/NetProtocol.h"
 #include "System/FileSystem/FileHandler.h"

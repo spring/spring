@@ -21,7 +21,6 @@
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 #include "System/Sync/SyncTracer.h"
-#include "System/GlobalUnsynced.h"
 
 const float CMissileProjectile::SMOKE_TIME = 60.0f;
 

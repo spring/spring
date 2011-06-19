@@ -7,10 +7,10 @@
 
 #include "PlayerRoster.h"
 #include "PlayerHandler.h"
+#include "Game/GlobalUnsynced.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Util.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "GlobalUnsynced.h"
+#include "System/Util.h"
 
 static int CompareAllies     (const void* a, const void* b);
 static int CompareTeamIDs    (const void* a, const void* b);

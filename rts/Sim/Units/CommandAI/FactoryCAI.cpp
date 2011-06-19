@@ -9,6 +9,7 @@
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameHelper.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
 #include "Game/WaitCommandsAI.h"
 #include "Game/UI/CommandColors.h"
@@ -23,11 +24,10 @@
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitTypes/Factory.h"
-#include "LogOutput.h"
-#include "creg/STL_Map.h"
-#include "GlobalUnsynced.h"
-#include "Util.h"
-#include "Exceptions.h"
+#include "System/LogOutput.h"
+#include "System/creg/STL_Map.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 CR_BIND_DERIVED(CFactoryCAI ,CCommandAI , );
 

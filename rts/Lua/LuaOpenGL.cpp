@@ -69,7 +69,6 @@
 #include "System/LogOutput.h"
 #include "System/Matrix44f.h"
 #include "System/ConfigHandler.h"
-#include "System/GlobalUnsynced.h"
 
 using std::max;
 using std::string;

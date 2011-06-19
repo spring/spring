@@ -11,6 +11,15 @@
 #include "ExternalAI/Interface/AISCommands.h"
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
+#include "Game/GlobalUnsynced.h" // for myTeam
+#include "Game/GameSetup.h"
+#include "Game/GameVersion.h"
+#include "Game/SelectedUnits.h"
+#include "Game/UI/GuiHandler.h" //TODO: fix some switch for new gui
+#include "Map/ReadMap.h"
+#include "Map/MetalMap.h"
+#include "Map/MapInfo.h"
+#include "Lua/LuaRulesParams.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
@@ -30,17 +39,8 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h" // for qf->GetFeaturesExact(pos, radius)
-#include "Map/ReadMap.h"
-#include "Map/MetalMap.h"
-#include "Map/MapInfo.h"
-#include "Game/SelectedUnits.h"
-#include "Game/UI/GuiHandler.h" //TODO: fix some switch for new gui
-#include "Game/GameSetup.h"
-#include "Game/GameVersion.h"
-#include "Lua/LuaRulesParams.h"
-#include "FileSystem/ArchiveScanner.h"
-#include "GlobalUnsynced.h" // for myTeam
-#include "LogOutput.h"
+#include "System/FileSystem/ArchiveScanner.h"
+#include "System/LogOutput.h"
 
 
 static const char* SKIRMISH_AIS_VERSION_COMMON = "common";

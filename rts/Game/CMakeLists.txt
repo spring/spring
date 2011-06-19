@@ -29,6 +29,7 @@ SET(sources_engine_Game_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/GameServer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GameSetup.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GameVersion.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/GlobalUnsynced.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/IVideoCapturing.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/InMapDraw.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/InMapDrawModel.cpp"

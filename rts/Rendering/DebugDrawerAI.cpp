@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "ExternalAI/SkirmishAIHandler.h"
+#include "Game/GlobalUnsynced.h"
 #include "Rendering/DebugDrawerAI.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GlobalRendering.h"
@@ -8,7 +9,6 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "System/bitops.h"
-#include "System/GlobalUnsynced.h"
 
 static const float3 GRAPH_MIN_SCALE = float3( 1e9,  1e9, 0.0f);
 static const float3 GRAPH_MAX_SCALE = float3(-1e9, -1e9, 0.0f);

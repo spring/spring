@@ -5,9 +5,8 @@
 
 #include <vector>
 
-#include "Rendering/GL/myGL.h"
-#include "GlobalUnsynced.h"
 #include "Game/UI/CursorIcons.h"
+#include "Rendering/GL/myGL.h"
 
 class CLineDrawer {
 	public:

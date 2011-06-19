@@ -4,9 +4,8 @@
 
 #include "Group.h"
 #include "GroupHandler.h"
-//#include "Game/SelectedUnits.h"
-//#include "Sim/Units/Unit.h"
-#include "System/GlobalUnsynced.h"
+#include "Game/GlobalUnsynced.h"
+// #include "Game/SelectedUnits.h"
 #include "System/EventHandler.h"
 #include "System/LogOutput.h"
 #include "System/Platform/errorhandler.h"

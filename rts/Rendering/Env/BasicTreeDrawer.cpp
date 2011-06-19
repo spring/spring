@@ -14,7 +14,6 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "System/LogOutput.h"
 #include "System/Exceptions.h"
-#include "System/GlobalUnsynced.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

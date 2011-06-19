@@ -20,7 +20,6 @@
 #include "Sim/Misc/SmoothHeightMesh.h"
 #include "System/ConfigHandler.h"
 #include "System/FastMath.h"
-#include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"
 #include "System/mmgr.h"

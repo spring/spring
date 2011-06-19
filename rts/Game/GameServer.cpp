@@ -28,16 +28,12 @@
 
 #include "GameServer.h"
 
-#include "LogOutput.h"
 #include "GameSetup.h"
 #include "Action.h"
 #include "ChatMessage.h"
 #include "CommandMessage.h"
 #include "BaseNetProtocol.h"
 #include "PlayerHandler.h"
-#include "Net/LocalConnection.h"
-#include "Net/UnpackPacket.h"
-#include "LoadSave/DemoReader.h"
 #ifdef DEDICATED
 	#include "LoadSave/DemoRecorder.h"
 #endif
@@ -46,9 +42,7 @@
 #include "TdfParser.h"
 #include "GlobalUnsynced.h" // for syncdebug
 #include "Sim/Misc/GlobalConstants.h"
-#include "ConfigHandler.h"
-#include "FileSystem/CRC.h"
-#include "FileSystem/SimpleParser.h"
+
 #include "Player.h"
 #include "IVideoCapturing.h"
 #include "Server/GameParticipant.h"
@@ -60,6 +54,14 @@
 	#undef interface
 #endif
 #include "Server/MsgStrings.h"
+#include "System/ConfigHandler.h"
+#include "System/LogOutput.h"
+#include "System/FileSystem/CRC.h"
+#include "System/FileSystem/SimpleParser.h"
+#include "System/Net/LocalConnection.h"
+#include "System/Net/UnpackPacket.h"
+#include "System/LoadSave/DemoReader.h"
+
 
 #define PKTCACHE_VECSIZE 1000
 

@@ -18,7 +18,6 @@
 #include "Game/LoadScreen.h"
 #include "System/Exceptions.h"
 #include "System/FastMath.h"
-#include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 #include "System/mmgr.h"
 #include "System/TimeProfiler.h"

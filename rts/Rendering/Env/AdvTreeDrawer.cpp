@@ -25,7 +25,6 @@
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 #include "System/Matrix44f.h"
-#include "System/GlobalUnsynced.h"
 
 static const float TEX_LEAF_START_Y1 = 0.001f;
 static const float TEX_LEAF_END_Y1   = 0.124f;

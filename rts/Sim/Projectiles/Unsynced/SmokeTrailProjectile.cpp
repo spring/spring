@@ -14,7 +14,6 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
 #include "System/myMath.h"
-#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, (ZeroVector, ZeroVector, ZeroVector, ZeroVector, NULL, false, false, 0.0f, 0, 0.0f, false, NULL, NULL));
 
