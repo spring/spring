@@ -16,7 +16,6 @@
 #include "Rendering/Models/IModelParser.h"
 #include "Map/Ground.h"
 #include "System/Matrix44f.h"
-#include "System/GlobalUnsynced.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/LogOutput.h"
 #ifdef TRACE_SYNC

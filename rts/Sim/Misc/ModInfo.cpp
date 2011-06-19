@@ -11,7 +11,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "Rendering/GlobalRendering.h"
-#include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 #include "System/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"

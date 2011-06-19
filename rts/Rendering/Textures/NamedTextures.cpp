@@ -6,10 +6,9 @@
 #include "NamedTextures.h"
 
 #include "Rendering/GL/myGL.h"
-#include "bitops.h"
 #include "Bitmap.h"
 #include "Rendering/GlobalRendering.h"
-#include "System/GlobalUnsynced.h"
+#include "System/bitops.h"
 #include "System/TimeProfiler.h"
 #include "System/Vec2.h"
 

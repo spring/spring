@@ -12,9 +12,8 @@
 #include "Rendering/GlobalRendering.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "ConfigHandler.h"
-#include "GlobalUnsynced.h"
-#include "LogOutput.h"
+#include "System/ConfigHandler.h"
+#include "System/LogOutput.h"
 
 
 CUnitTracker unitTracker;

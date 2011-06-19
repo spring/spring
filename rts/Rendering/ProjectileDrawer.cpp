@@ -3,6 +3,7 @@
 #include "ProjectileDrawer.hpp"
 
 #include "Game/Camera.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/LoadScreen.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapInfo.h"
@@ -33,7 +34,6 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
-#include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"
 

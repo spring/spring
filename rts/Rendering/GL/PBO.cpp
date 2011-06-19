@@ -13,8 +13,6 @@
 #include "PBO.h"
 
 #include "Rendering/GlobalRendering.h"
-#include "System/LogOutput.h"
-#include "System/GlobalUnsynced.h"
 #include "System/ConfigHandler.h"
 
 

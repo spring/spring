@@ -9,6 +9,7 @@
 #include "Game/CameraHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/Player.h"
 #include "Game/UI/MiniMap.h"
 #include "Lua/LuaMaterial.h"
@@ -53,7 +54,6 @@
 
 #include "System/ConfigHandler.h"
 #include "System/EventHandler.h"
-#include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 #include "System/myMath.h"
 #include "System/Util.h"

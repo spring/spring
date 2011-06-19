@@ -7,8 +7,8 @@
 #include "TransportCAI.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "LineDrawer.h"
-#include "Sim/Units/Groups/Group.h"
 #include "Game/GameHelper.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
 #include "Game/UI/CommandColors.h"
 #include "Map/Ground.h"
@@ -21,15 +21,15 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/DGunWeapon.h"
-#include "LogOutput.h"
-#include "myMath.h"
+#include "System/LogOutput.h"
+#include "System/myMath.h"
+#include "System/Util.h"
 #include <assert.h>
-#include "Util.h"
-#include "GlobalUnsynced.h"
 
 #define BUGGER_OFF_TTL 200
 #define MAX_CLOSE_IN_RETRY_TICKS 30

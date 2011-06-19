@@ -11,10 +11,9 @@
 #include "mmgr.h"
 
 #include "FBO.h"
-#include "LogOutput.h"
-#include "GlobalUnsynced.h"
-#include "ConfigHandler.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "System/LogOutput.h"
+#include "System/ConfigHandler.h"
 
 std::vector<FBO*> FBO::fboList;
 std::map<GLuint,FBO::TexData*> FBO::texBuf;

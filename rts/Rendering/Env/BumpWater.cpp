@@ -13,6 +13,7 @@
 #include "BaseSky.h"
 #include "Game/Game.h"
 #include "Game/Camera.h"
+#include "Game/GlobalUnsynced.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
@@ -33,7 +34,6 @@
 #include "System/ConfigHandler.h"
 #include "System/TimeProfiler.h"
 #include "System/LogOutput.h"
-#include "System/GlobalUnsynced.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"
 

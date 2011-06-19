@@ -6,7 +6,6 @@
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/AIInterfaceKey.h"
 #include "System/LogOutput.h"
-#include "System/GlobalUnsynced.h"
 
 #include <string>
 

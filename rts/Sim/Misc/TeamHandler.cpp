@@ -7,12 +7,12 @@
 
 #include "Game/GameSetup.h"
 #include "Lua/LuaGaia.h"
-#include "Sim/Misc/GlobalConstants.h"
 #include "mmgr.h"
-#include "Util.h"
-#include "LogOutput.h"
-#include "GlobalUnsynced.h"
-#include "GlobalSynced.h"
+#include "Sim/Misc/GlobalConstants.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "System/Util.h"
+#include "System/LogOutput.h"
+
 
 CR_BIND(CTeamHandler, );
 

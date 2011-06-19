@@ -8,13 +8,12 @@
 #include <boost/thread.hpp>
 
 #include "Rendering/GL/myGL.h"
-#include "FileSystem/FileSystem.h"
-#include "FileSystem/FileHandler.h"
-#include "ConfigHandler.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "GlobalUnsynced.h"
-#include "LogOutput.h"
+#include "System/ConfigHandler.h"
+#include "System/LogOutput.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/FileHandler.h"
 
 #undef CreateDirectory
 

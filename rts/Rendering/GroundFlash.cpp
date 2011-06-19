@@ -12,7 +12,6 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CGroundFlash, CExpGenSpawnable, );
 

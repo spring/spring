@@ -13,7 +13,6 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/Unit.h"
 #include "System/EventHandler.h"
-#include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 
 #define MODEL_DRAWER_DEBUG 2

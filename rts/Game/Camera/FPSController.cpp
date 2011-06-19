@@ -5,12 +5,12 @@
 
 #include "FPSController.h"
 
-#include "ConfigHandler.h"
 #include "Game/Camera.h"
-#include "LogOutput.h"
+#include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
-#include "GlobalUnsynced.h"
-#include "myMath.h"
+#include "System/ConfigHandler.h"
+#include "System/LogOutput.h"
+#include "System/myMath.h"
 
 using std::min;
 using std::max;
@@ -54,8 +54,7 @@ void CFPSController::MouseWheelMove(float move)
 
 float3 CFPSController::GetPos()
 {
-	if (!gu->fpsMode)
-	{
+	if (!gu->fpsMode) {
 		const float margin = 0.01f;
 		const float xMin = margin;
 		const float zMin = margin;
@@ -90,8 +89,7 @@ void CFPSController::SetPos(const float3& newPos)
 {
 	CCameraController::SetPos(newPos);
 
-	if (!gu->fpsMode)
-	{
+	if (!gu->fpsMode) {
 		pos.y = ground->GetHeightAboveWater(pos.x, pos.z) + oldHeight;
 	}
 }

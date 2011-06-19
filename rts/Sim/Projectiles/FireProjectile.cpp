@@ -4,11 +4,12 @@
 #include "mmgr.h"
 
 #include "FireProjectile.h"
+#include "Game/Camera.h"
+#include "Game/GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "Game/Camera.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Features/Feature.h"
@@ -16,7 +17,6 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
-#include "System/GlobalUnsynced.h"
 #include "System/creg/STL_List.h"
 
 CR_BIND_DERIVED(CFireProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,0,0,0));

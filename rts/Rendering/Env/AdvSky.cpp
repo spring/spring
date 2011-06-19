@@ -7,18 +7,14 @@
 
 #include "Game/Camera.h"
 #include "Map/MapInfo.h"
-#include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Exceptions.h"
-
-#include "LogOutput.h"
-#include "TimeProfiler.h"
-#include "ConfigHandler.h"
-#include "Matrix44f.h"
-#include "myMath.h"
-#include "GlobalUnsynced.h"
+#include "System/ConfigHandler.h"
+#include "System/Exceptions.h"
+#include "System/TimeProfiler.h"
+#include "System/Matrix44f.h"
+#include "System/myMath.h"
 
 #define Y_PART 10.0
 #define X_PART 10.0

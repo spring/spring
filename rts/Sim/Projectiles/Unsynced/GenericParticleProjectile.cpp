@@ -5,7 +5,6 @@
 
 #include "Game/Camera.h"
 #include "GenericParticleProjectile.h"
-#include "GlobalUnsynced.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
