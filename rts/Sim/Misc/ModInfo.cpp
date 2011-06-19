@@ -127,7 +127,7 @@ void CModInfo::Init(const char* modArchive)
 	requireSonarUnderWater = sensors.GetBool("requireSonarUnderWater", true);
 	/// LoS
 	const LuaTable los = sensors.SubTable("los");
-	// losMipLevel is used as index to readmap->mipHeightmap,
+	// losMipLevel is used as index to readmap->mipHeightmaps,
 	// so the max value is CReadMap::numHeightMipMaps - 1
 	losMipLevel = los.GetInt("losMipLevel", 1);
 	losMul = los.GetFloat("losMul", 1.0f);

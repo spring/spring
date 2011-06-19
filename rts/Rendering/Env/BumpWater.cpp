@@ -872,7 +872,7 @@ void CBumpWater::UploadCoastline(const bool forceFull)
 
 	//! create an texture atlas for the to be updated areas
 	CTextureAtlas atlas(next_power_of_2(gs->mapx+10),next_power_of_2(gs->mapy+10));
-	const float* heightMap = readmap->GetHeightmap();
+	const float* heightMap = readmap->GetCornerHeightMapSynced();
 
 	for (size_t i = 0; i < coastmapAtlasRects.size(); i++) {
 		CoastAtlasRect& r = coastmapAtlasRects[i];

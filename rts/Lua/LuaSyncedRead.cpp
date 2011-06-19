@@ -4433,7 +4433,7 @@ int LuaSyncedRead::GetGroundInfo(lua_State* L)
 
 	const int maxIndex = (gs->hmapx * gs->hmapy) - 1;
 	const int index = min(maxIndex, (gs->hmapx * iz) + ix);
-	const int typeIndex = readmap->typemap[index];
+	const int typeIndex = readmap->GetTypeMapSynced()[index];
 	const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[typeIndex];
 
 	lua_pushsstring(L, tt.name);

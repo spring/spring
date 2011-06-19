@@ -289,7 +289,8 @@ void CUnitHandler::Update()
 // against which to compare all footprint squares
 float CUnitHandler::GetBuildHeight(const float3& pos, const UnitDef* unitdef)
 {
-	const float* heightmap = readmap->GetHeightmap();
+	const float* curHeightMap = readmap->GetCornerHeightMapSynced();
+	const float* orgHeightMap = readmap->GetOriginalHeightMapSynced();
 	const float difH = unitdef->maxHeightDif;
 
 	float minH = readmap->currMinHeight;
@@ -312,8 +313,8 @@ float CUnitHandler::GetBuildHeight(const float3& pos, const UnitDef* unitdef)
 
 	for (int x = x1; x <= x2; x++) {
 		for (int z = z1; z <= z2; z++) {
-			const float sqOrgH = readmap->orgheightmap[z * (gs->mapx + 1) + x];
-			const float sqCurH =             heightmap[z * (gs->mapx + 1) + x];
+			const float sqOrgH = orgHeightMap[z * (gs->mapx + 1) + x];
+			const float sqCurH = curHeightMap[z * (gs->mapx + 1) + x];
 			const float sqMinH = std::min(sqCurH, sqOrgH);
 			const float sqMaxH = std::max(sqCurH, sqOrgH);
 
@@ -464,11 +465,11 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 	if (!unitdef->floater || groundHeight > 0.0f) {
 		// if we are capable of floating, only test local
 		// height difference if terrain is above sea-level
-		const float* heightmap = readmap->GetHeightmap();
+		const float* heightmap = readmap->GetCornerHeightMapSynced();
 		const int sqx = (int) (pos.x / SQUARE_SIZE);
 		const int sqz = (int) (pos.z / SQUARE_SIZE);
-		const float orgH = readmap->orgheightmap[sqz * (gs->mapx + 1) + sqx];
-		const float curH =             heightmap[sqz * (gs->mapx + 1) + sqx];
+		const float orgH = readmap->GetOriginalHeightMapSynced()[sqz * (gs->mapx + 1) + sqx];
+		const float curH = readmap->GetCornerHeightMapSynced()[sqz * (gs->mapx + 1) + sqx];
 		const float difH = unitdef->maxHeightDif;
 
 		if (pos.y > std::max(orgH + difH, curH + difH)) { return 0; }

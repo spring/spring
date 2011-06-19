@@ -312,13 +312,21 @@ std::string CTooltipConsole::MakeGroundString(const float3& pos)
 	}
 
 	char tmp[512];
-	const CMapInfo::TerrainType* tt = &mapInfo->terrainTypes[readmap->typemap[std::min(gs->hmapx*gs->hmapy-1, std::max(0,((int)pos.z/16)*gs->hmapx+((int)pos.x/16)))]];
-	string ttype = tt->name;
-	sprintf(tmp, "Pos %.0f %.0f Elevation %.0f\nTerrain type: %s\n"
-	             "Speeds T/K/H/S %.2f %.2f %.2f %.2f\nHardness %.0f Metal %.1f",
-	        pos.x, pos.z, pos.y, ttype.c_str(),
-	        tt->tankSpeed, tt->kbotSpeed, tt->hoverSpeed, tt->shipSpeed,
-	        tt->hardness * mapDamage->mapHardness,
-	        readmap->metalMap->GetMetalAmount((int)(pos.x/16), (int)(pos.z/16)));
+	const int px = pos.x / 16;
+	const int pz = pos.z / 16;
+	const int typeMapIdx = std::min(gs->hmapx * gs->hmapy - 1, std::max(0, pz * gs->hmapx + px));
+	const unsigned char* typeMap = readmap->GetTypeMapSynced();
+	const CMapInfo::TerrainType* tt = &mapInfo->terrainTypes[typeMap[typeMapIdx]];
+
+	sprintf(tmp,
+		"Pos %.0f %.0f Elevation %.0f\n"
+		"Terrain type: %s\n"
+		"Speeds T/K/H/S %.2f %.2f %.2f %.2f\n"
+		"Hardness %.0f Metal %.1f",
+		pos.x, pos.z, pos.y, tt->name.c_str(),
+		tt->tankSpeed, tt->kbotSpeed, tt->hoverSpeed, tt->shipSpeed,
+		tt->hardness * mapDamage->mapHardness,
+		readmap->metalMap->GetMetalAmount(px, pz)
+	);
 	return tmp;
 }

@@ -1063,7 +1063,7 @@ void CUnit::DoWaterDamage()
 	const int  pz            = pos.z / (SQUARE_SIZE * 2);
 	const bool isFloating    = (physicalState == CSolidObject::Floating);
 	const bool onGround      = (physicalState == CSolidObject::OnGround);
-	const bool isWaterSquare = (readmap->mipHeightmap[1][pz * gs->hmapx + px] <= 0.0f);
+	const bool isWaterSquare = (readmap->GetMIPHeightMapSynced(1)[pz * gs->hmapx + px] <= 0.0f);
 
 	if ((pos.y <= 0.0f) && isWaterSquare && (isFloating || onGround)) {
 		DoDamage(DamageArray(mapInfo->water.damage), 0, ZeroVector, -1);

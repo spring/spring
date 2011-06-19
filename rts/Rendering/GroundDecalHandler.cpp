@@ -222,7 +222,7 @@ inline void CGroundDecalHandler::DrawBuildingDecal(BuildingGroundDecal* decal)
 		return;
 	}
 
-	const float* hm = readmap->GetHeightmap();
+	const float* hm = readmap->GetCornerHeightMapSynced();
 	const int gsmx = gs->mapx;
 	const int gsmx1 = gsmx + 1;
 	const int gsmy = gs->mapy;
@@ -331,7 +331,7 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 		return;
 	}
 
-	const float* hm = readmap->GetHeightmap();
+	const float* hm = readmap->GetCornerHeightMapSynced();
 	const int gsmx = gs->mapx;
 	const int gsmx1 = gsmx + 1;
 
@@ -804,7 +804,7 @@ void CGroundDecalHandler::UnitMovedNow(CUnit* unit)
 	const int xp = (int(unit->pos.x) / SQUARE_SIZE * 2);
 	const int mp = Clamp(zp * gs->hmapx + xp, 0, (gs->mapSquares / 4) - 1);
 
-	if (!mapInfo->terrainTypes[readmap->typemap[mp]].receiveTracks)
+	if (!mapInfo->terrainTypes[readmap->GetTypeMapSynced()[mp]].receiveTracks)
 		return;
 
 	const float3 pos = unit->pos + unit->frontdir * unit->unitDef->trackOffset;

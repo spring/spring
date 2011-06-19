@@ -991,12 +991,12 @@ float CAICallback::GetGravity() const {
 
 const float* CAICallback::GetHeightMap()
 {
-	return readmap->centerheightmap;
+	return &readmap->GetCenterHeightMapSynced()[0];
 }
 
 const float* CAICallback::GetCornersHeightMap()
 {
-	return readmap->GetHeightmap();
+	return readmap->GetCornerHeightMapSynced();
 }
 
 float CAICallback::GetMinHeight()
@@ -1011,12 +1011,12 @@ float CAICallback::GetMaxHeight()
 
 const float* CAICallback::GetSlopeMap()
 {
-	return readmap->slopemap;
+	return readmap->GetSlopeMapSynced();
 }
 
 const unsigned short* CAICallback::GetLosMap()
 {
-	return &loshandler->losMap[teamHandler->AllyTeam(team)].front();
+	return &loshandler->losMaps[teamHandler->AllyTeam(team)].front();
 }
 
 const unsigned short* CAICallback::GetRadarMap()
