@@ -37,7 +37,6 @@ public:
 		const DamageArray& damages;
 		const WeaponDef* weaponDef;
 
-		IExplosionGenerator* explosionGenerator;
 		CUnit* owner;
 		CUnit* hitUnit;
 		CFeature* hitFeature;

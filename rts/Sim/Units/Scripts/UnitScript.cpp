@@ -628,7 +628,6 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 					ZeroVector,
 					weaponDef->damages,
 					weaponDef,
-					weaponDef->explosionGenerator,
 					unit,                              // owner
 					NULL,                              // hitUnit
 					NULL,                              // hitFeature

@@ -202,7 +202,6 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	const WeaponDef* weaponDef = params.weaponDef;
 	const int weaponDefID = (weaponDef != NULL)? weaponDef->id: -1;
 
-	IExplosionGenerator* explosionGenerator = params.explosionGenerator;
 	CUnit* owner = params.owner;
 	CUnit* hitUnit = params.hitUnit;
 	CFeature* hitFeature = params.hitFeature;
@@ -285,18 +284,20 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 
 		// deform the map
 		if (damageGround && !mapDamage->disabled && (expRad > height) && (damages.craterMult > 0.0f)) {
-			float damage = damages[0] * (1.0f - (height / expRad));
-			if (damage > (expRad * 10.0f)) {
-				damage = expRad * 10.0f; // limit the depth somewhat
-			}
-			mapDamage->Explosion(expPos, (damage + damages.craterBoost) * damages.craterMult, expRad - height);
+			// limit the depth somewhat
+			const float craterDepth = damages[0] * (1.0f - (height / expRad));
+			const float damageDepth = std::min(expRad * 10.0f, craterDepth);
+
+			mapDamage->Explosion(expPos, (damageDepth + damages.craterBoost) * damages.craterMult, expRad - height);
 		}
 	}
 
 	if (!noGfx) {
-		if (explosionGenerator == NULL) {
-			// use CStdExplosionGenerator by default
-			explosionGenerator = stdExplosionGenerator;
+		// use CStdExplosionGenerator by default
+		IExplosionGenerator* explosionGenerator = stdExplosionGenerator;
+
+		if (weaponDef != NULL && weaponDef->explosionGenerator != NULL) {
+			explosionGenerator = weaponDef->explosionGenerator;
 		}
 
 		explosionGenerator->Explosion(0, expPos, damages[0], expRad, owner, gfxMod, hitUnit, dir);

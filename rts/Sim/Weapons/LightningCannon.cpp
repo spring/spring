@@ -142,7 +142,6 @@ void CLightningCannon::FireImpl()
 		dir,
 		damageArray,
 		weaponDef,
-		weaponDef->explosionGenerator,
 		owner,
 		u,                                                // hitUnit
 		f,                                                // hitFeature

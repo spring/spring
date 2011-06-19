@@ -148,7 +148,6 @@ void CWeaponProjectile::Collision(CFeature* feature)
 			impactDir,
 			damageArray,
 			weaponDef,
-			weaponDef->explosionGenerator,
 			owner(),
 			NULL,                                             // hitUnit
 			feature,
@@ -204,7 +203,6 @@ void CWeaponProjectile::Collision(CUnit* unit)
 			impactDir,
 			damageArray,
 			weaponDef,
-			weaponDef->explosionGenerator,
 			owner(),
 			unit,
 			NULL,                                            // hitFeature
