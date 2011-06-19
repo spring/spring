@@ -209,6 +209,12 @@ boost::shared_ptr<const RawPacket> UDPConnection::Peek(unsigned ahead) const
 	}
 }
 
+void UDPConnection::DeleteAt(unsigned index)
+{
+	if (index < msgQueue.size())
+		msgQueue.erase(msgQueue.begin()+index);
+}
+
 boost::shared_ptr<const RawPacket> UDPConnection::GetData()
 {
 	if (!msgQueue.empty()) {
@@ -542,7 +548,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 				}
 				nak = 0; // 1 request is enought
 			}
-			
+
 			while (true) {
 				if (!resendRequested.empty() && buf.GetSize() + resendRequested[0]->GetSize() <= mtu) {
 					buf.chunks.push_back(resendRequested[0]);
@@ -647,3 +653,4 @@ float UDPConnection::BandwidthUsage::GetAverage(bool prel) const
 }
 
 } // namespace netcode
+

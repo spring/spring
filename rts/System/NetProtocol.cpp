@@ -39,12 +39,12 @@ CNetProtocol::~CNetProtocol()
 void CNetProtocol::InitClient(const char* server_addr, unsigned portnum, const std::string& myName, const std::string& myPasswd, const std::string& myVersion)
 {
 	GML_STDMUTEX_LOCK(net); // InitClient
-	
+
 	netcode::UDPConnection* conn = new netcode::UDPConnection(configHandler->Get("SourcePort", 0), server_addr, portnum);
 	serverConn.reset(conn);
 	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion));
 	serverConn->Flush(true);
-	
+
 	logOutput.Print("Connecting to %s:%i using name %s", server_addr, portnum, myName.c_str());
 }
 
@@ -70,7 +70,7 @@ void CNetProtocol::InitLocalClient()
 
 	serverConn.reset(new netcode::CLocalConnection);
 	serverConn->Flush();
-	
+
 	logOutput.Print("Connecting to local server");
 }
 
@@ -93,6 +93,13 @@ boost::shared_ptr<const netcode::RawPacket> CNetProtocol::Peek(unsigned ahead) c
 	GML_STDMUTEX_LOCK(net); // Peek
 
 	return serverConn->Peek(ahead);
+}
+
+void CNetProtocol::DeleteAt(unsigned index)
+{
+	GML_STDMUTEX_LOCK(net); // DeleteAt
+
+	return serverConn->DeleteAt(index);
 }
 
 boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int framenum)
@@ -157,3 +164,4 @@ void CNetProtocol::DisableDemoRecording()
 }
 
 CNetProtocol* net = NULL;
+
