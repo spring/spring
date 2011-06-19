@@ -202,7 +202,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	const WeaponDef* weaponDef = params.weaponDef;
 	const int weaponDefID = (weaponDef != NULL)? weaponDef->id: -1;
 
-	IExplosionGenerator* explosionGenerator = weaponDef->explosionGenerator;
+	IExplosionGenerator* explosionGenerator = params.explosionGenerator;
 	CUnit* owner = params.owner;
 	CUnit* hitUnit = params.hitUnit;
 	CFeature* hitFeature = params.hitFeature;
@@ -293,17 +293,19 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 		}
 	}
 
-	// use CStdExplosionGenerator by default
 	if (!noGfx) {
 		if (explosionGenerator == NULL) {
+			// use CStdExplosionGenerator by default
 			explosionGenerator = stdExplosionGenerator;
 		}
+
 		explosionGenerator->Explosion(0, expPos, damages[0], expRad, owner, gfxMod, hitUnit, dir);
 	}
 
 	CExplosionEvent explosionEvent(expPos, damages[0], expRad, weaponDef);
 	FireExplosionEvent(explosionEvent);
 }
+
 
 
 //////////////////////////////////////////////////////////////////////
