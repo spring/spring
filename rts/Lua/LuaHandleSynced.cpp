@@ -34,7 +34,6 @@
 #include "LuaZip.h"
 
 #include "ConfigHandler.h"
-#include "Game/Game.h"
 #include "Game/WordCompletion.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -1089,7 +1088,7 @@ int CLuaHandleSynced::AddSyncedActionFallback(lua_State* L)
 
 	CLuaHandleSynced* lhs = GetActiveHandle(L);
 	lhs->textCommands[cmd] = lua_tostring(L, 2);
-	game->wordCompletion->AddWord(cmdRaw, true, false, false);
+	wordCompletion->AddWord(cmdRaw, true, false, false);
 	lua_pushboolean(L, true);
 	return 1;
 }
@@ -1120,7 +1119,7 @@ int CLuaHandleSynced::RemoveSyncedActionFallback(lua_State* L)
 	map<string, string>::iterator it = lhs->textCommands.find(cmd);
 	if (it != lhs->textCommands.end()) {
 		lhs->textCommands.erase(it);
-		game->wordCompletion->RemoveWord(cmdRaw);
+		wordCompletion->RemoveWord(cmdRaw);
 		lua_pushboolean(L, true);
 	} else {
 		lua_pushboolean(L, false);
