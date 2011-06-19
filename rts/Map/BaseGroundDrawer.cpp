@@ -6,6 +6,7 @@
 #include "BaseGroundDrawer.h"
 
 #include "Game/Camera.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
 #include "Game/UI/GuiHandler.h"
 #include "Ground.h"

@@ -56,32 +56,32 @@ void CTeamHighlight::Update(int frameNum) {
 			if (t->isDead) { continue; }
 			if (t->units.empty()) { continue; }
 			if (!skirmishAIHandler.GetSkirmishAIsInTeam(ti).empty()) { continue; }
+			if (!gu->spectatingFullView && !teamHandler->AlliedTeams(gu->myTeam, ti)) { continue; }
 
-			if (gu->spectatingFullView || teamHandler->AlliedTeams(gu->myTeam, ti) {
-				int minPing = INT_MAX;
-				bool hasPlayers = false;
+			int minPing = INT_MAX;
+			bool hasPlayers = false;
 
-				for (int pi = 0; pi < playerHandler->ActivePlayers(); ++pi) {
-					CPlayer* p = playerHandler->Player(pi);
+			for (int pi = 0; pi < playerHandler->ActivePlayers(); ++pi) {
+				CPlayer* p = playerHandler->Player(pi);
 
-					if (!p->active) { continue; }
-					if (p->spectator) { continue; }
-					if ((p->team != ti)) { continue; }
+				if (!p->active) { continue; }
+				if (p->spectator) { continue; }
+				if ((p->team != ti)) { continue; }
 
-					hasPlayers = true;
+				hasPlayers = true;
 
-					if (p->ping != PATHING_FLAG && p->ping >= 0) {
-						const int ping = (int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor));
-						minPing = std::min(ping, minPing);
-					}
+				if (p->ping != PATHING_FLAG && p->ping >= 0) {
+					const int speed = GAME_SPEED * gs->speedFactor;
+					const int ping = (p->ping * 1000) / speed;
+					minPing = std::min(ping, minPing);
 				}
-				if (!hasPlayers || t->leader < 0)
-					teamhighlight = 1.0f;
-				else if (minPing != INT_MAX && minPing > 1000)
-					teamhighlight = std::max(0, std::min(minPing, maxhl)) / float(maxhl);
-				if (teamhighlight > 0.0f)
-					hl = true;
 			}
+			if (!hasPlayers || t->leader < 0)
+				teamhighlight = 1.0f;
+			else if (minPing != INT_MAX && minPing > 1000)
+				teamhighlight = std::max(0, std::min(minPing, maxhl)) / float(maxhl);
+			if (teamhighlight > 0.0f)
+				hl = true;
 
 			*(volatile float *)&t->highlight = teamhighlight;
 		}

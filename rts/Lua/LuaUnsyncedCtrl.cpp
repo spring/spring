@@ -28,6 +28,7 @@
 #include "Game/CameraHandler.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/Game.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
 #include "Game/PlayerHandler.h"
 #include "Game/InMapDraw.h"

@@ -10,6 +10,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "System/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/TimeProfiler.h"
