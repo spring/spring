@@ -84,6 +84,13 @@ public:
 	virtual boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
 
 	/**
+	 * @brief Deletes a packet from the buffer
+	 * @param queue index number
+	 * useful for messages that skips queuing and needs to be processed immediately
+	 */
+	virtual void DeleteAt(unsigned index);
+
+	/**
 	 * @brief use this to recieve ready data
 	 * @return a network message encapsulated in a RawPacket,
 	 * or NULL if there are no more messages available.
@@ -124,7 +131,7 @@ public:
 	/// do we have these address?
 	bool CheckAddress(const boost::asio::ip::udp::endpoint&) const;
 	std::string GetFullAddress() const;
-	
+
 	void SetMTU(unsigned mtu);
 
 private:
@@ -210,3 +217,4 @@ private:
 } // namespace netcode
 
 #endif // _REMOTE_CONNECTION_H
+
