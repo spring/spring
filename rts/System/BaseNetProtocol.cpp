@@ -400,6 +400,14 @@ PacketType CBaseNetProtocol::SendCreateNewPlayer( uchar playerNum, bool spectato
 
 }
 
+PacketType CBaseNetProtocol::SendCurrentFrameProgress(int frameNum)
+{
+	PackPacket* packet = new PackPacket(5, NETMSG_GAME_FRAME_PROGRESS);
+	*packet << frameNum;
+	return PacketType(packet);
+}
+
+
 
 #ifdef SYNCDEBUG
 PacketType CBaseNetProtocol::SendSdCheckrequest(int frameNum)
@@ -428,13 +436,6 @@ PacketType CBaseNetProtocol::SendSdBlockrequest(unsigned short begin, unsigned s
 	*packet << begin << length << requestSize;
 	return PacketType(packet);
 
-}
-
-PacketType CBaseNetProtocol::SendCurrentFrameProgress(int frameNum)
-{
-	PackPacket* packet = new PackPacket(5, NETMSG_GAME_FRAME_PROGRESS);
-	*packet << frameNum;
-	return PacketType(packet);
 }
 
 
