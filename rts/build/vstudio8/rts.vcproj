@@ -4897,26 +4897,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Dedicated Server (Debug)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\builds\DS\main.cpp"
 				>
 				<FileConfiguration
@@ -4995,6 +4975,26 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Dedicated Server (Debug)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>
@@ -5370,115 +5370,15 @@
 				Name="FileSystem"
 				>
 				<File
-					RelativePath="..\..\System\FileSystem\SevenZipArchive.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\FileSystem\SevenZipArchive.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\FileSystem\IArchive.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Release)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Dedicated Server (Debug)|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\System\FileSystem\IArchive.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\FileSystem\BufferedArchive.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\FileSystem\BufferedArchive.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\FileSystem\DirArchive.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\FileSystem\DirArchive.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\FileSystem\ArchiveFactory.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\..\System\FileSystem\ArchiveFactory.h"
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\PoolArchive.cpp"
+					RelativePath="..\..\System\FileSystem\ArchiveLoader.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\PoolArchive.h"
+					RelativePath="..\..\System\FileSystem\ArchiveLoader.h"
 					>
 				</File>
 				<File
@@ -5554,11 +5454,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\ZipArchive.cpp"
+					RelativePath="..\..\System\FileSystem\BufferedArchive.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\ZipArchive.h"
+					RelativePath="..\..\System\FileSystem\BufferedArchive.h"
 					>
 				</File>
 				<File
@@ -5647,6 +5547,14 @@
 				</File>
 				<File
 					RelativePath="..\..\System\FileSystem\DataDirLocater.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\DirArchive.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\DirArchive.h"
 					>
 				</File>
 				<File
@@ -5746,6 +5654,94 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\FileSystem\IArchive.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug+MT|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Dedicated Server (Release)|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Dedicated Server (Debug)|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\IArchive.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\PoolArchive.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\PoolArchive.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\SevenZipArchive.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\SevenZipArchive.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\FileSystem\SimpleParser.cpp"
 					>
 					<FileConfiguration
@@ -5831,6 +5827,14 @@
 				</File>
 				<File
 					RelativePath="..\..\System\FileSystem\VFSHandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\ZipArchive.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\ZipArchive.h"
 					>
 				</File>
 				<Filter
