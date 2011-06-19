@@ -215,7 +215,6 @@ void CPieceProjectile::Collision(CUnit* unit)
 			ZeroVector,
 			DamageArray(50),
 			NULL,                                            // weaponDef
-			NULL,                                            // explosionGenerator
 			owner(),
 			unit,                                            // hitUnit
 			NULL,                                            // hitFeature
