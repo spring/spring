@@ -12,7 +12,7 @@
 #include "Game/GameVersion.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
-#include "Map/SMF/SmfMapFile.h"
+#include "Map/SMF/SMFMapFile.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/SideParser.h"
 #include "ExternalAI/Interface/aidefines.h"
