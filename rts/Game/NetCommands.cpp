@@ -1030,7 +1030,6 @@ void CGame::ClientReadNet()
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
-
 			case NETMSG_SETPLAYERNUM:
 			case NETMSG_ATTEMPTCONNECT: {
 				AddTraffic(-1, packetCode, dataLength);
@@ -1061,6 +1060,10 @@ void CGame::ClientReadNet()
 				} catch (netcode::UnpackPacketException &e) {
 					logOutput.Print("Got invalid New player message: %s", e.err.c_str());
 				}
+				break;
+			}
+			// drop NETMSG_GAME_FRAME_PROGRESS, if we recieved it here, it means we're the host ( so message wasn't processed ), so discard it
+			case NETMSG_GAME_FRAME_PROGRESS: {
 				break;
 			}
 			default: {
