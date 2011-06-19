@@ -13,7 +13,6 @@
 
 class CBaseWater;
 class CConsoleHistory;
-class CWordCompletion;
 class CKeySet;
 class CInfoConsole;
 class LuaParser;
@@ -129,7 +128,6 @@ public:
 	void MakeMemDump();
 
 	CConsoleHistory* consoleHistory;
-	CWordCompletion* wordCompletion;
 
 	void SetHotBinding(const std::string& action) { hotBinding = action; }
 

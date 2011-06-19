@@ -206,7 +206,6 @@ CR_REG_METADATA(CGame,(
 //	CR_MEMBER(script),
 //	CR_MEMBER(infoConsole),
 //	CR_MEMBER(consoleHistory),
-//	CR_MEMBER(wordCompletion),
 //	CR_MEMBER(hotBinding),
 //	CR_MEMBER(inputTextPosX),
 //	CR_MEMBER(inputTextPosY),
@@ -244,7 +243,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 
 	infoConsole(NULL),
 	consoleHistory(NULL),
-	wordCompletion(NULL),
 
 	skipping(false),
 	playing(false),
@@ -326,6 +324,8 @@ CGame::~CGame()
 	UnsyncedGameCommands::DestroyInstance();
 	SyncedGameCommands::DestroyInstance();
 
+	CWordCompletion::DestroyInstance();
+
 	CLoadScreen::DeleteInstance();
 	IVideoCapturing::FreeInstance();
 	ISound::Shutdown();
@@ -344,7 +344,6 @@ CGame::~CGame()
 	SafeDelete(tooltip); // CTooltipConsole*
 	SafeDelete(infoConsole);
 	SafeDelete(consoleHistory);
-	SafeDelete(wordCompletion);
 	SafeDelete(keyBindings);
 	SafeDelete(keyCodes);
 	SafeDelete(selectionKeys); // CSelectionKeyHandler*
@@ -501,6 +500,8 @@ void CGame::LoadSimulation(const std::string& mapName)
 	SyncedGameCommands::CreateInstance();
 	UnsyncedGameCommands::CreateInstance();
 
+	CWordCompletion::CreateInstance();
+
 	// simulation components
 	helper = new CGameHelper();
 	ground = new CGround();
@@ -630,7 +631,6 @@ void CGame::LoadInterface()
 	{
 		ScopedOnceTimer timer("Loading console");
 		consoleHistory = new CConsoleHistory;
-		wordCompletion = new CWordCompletion;
 		for (int pp = 0; pp < playerHandler->ActivePlayers(); pp++) {
 			wordCompletion->AddWord(playerHandler->Player(pp)->name, false, false, false);
 		}
