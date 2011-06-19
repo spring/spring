@@ -222,7 +222,12 @@ inline void CGroundDecalHandler::DrawBuildingDecal(BuildingGroundDecal* decal)
 		return;
 	}
 
-	const float* hm = readmap->GetCornerHeightMapSynced();
+	const float* hm =
+		#ifdef USE_UNSYNCED_HEIGHTMAP
+		readmap->GetCornerHeightMapUnsynced();
+		#else
+		readmap->GetCornerHeightMapSynced();
+		#endif
 	const int gsmx = gs->mapx;
 	const int gsmx1 = gsmx + 1;
 	const int gsmy = gs->mapy;
@@ -331,7 +336,12 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 		return;
 	}
 
-	const float* hm = readmap->GetCornerHeightMapSynced();
+	const float* hm =
+		#ifdef USE_UNSYNCED_HEIGHTMAP
+		readmap->GetCornerHeightMapUnsynced();
+		#else
+		readmap->GetCornerHeightMapSynced();
+		#endif
 	const int gsmx = gs->mapx;
 	const int gsmx1 = gsmx + 1;
 
