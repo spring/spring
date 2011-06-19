@@ -209,10 +209,10 @@ boost::shared_ptr<const RawPacket> UDPConnection::Peek(unsigned ahead) const
 	}
 }
 
-void UDPConnection::DeleteAt(unsigned index)
+void UDPConnection::DeleteBufferPacketAt(unsigned index)
 {
 	if (index < msgQueue.size())
-		msgQueue.erase(msgQueue.begin()+index);
+		msgQueue.erase(msgQueue.begin() + index);
 }
 
 boost::shared_ptr<const RawPacket> UDPConnection::GetData()

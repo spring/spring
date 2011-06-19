@@ -37,7 +37,7 @@ public:
 	 * @param queue index number
 	 * useful for messages that skips queuing and needs to be processed immediately
 	 */
-	virtual void DeleteAt(unsigned index) = 0;
+	virtual void DeleteBufferPacketAt(unsigned index) = 0;
 
 	/**
 	 * @brief New method of data gathering
