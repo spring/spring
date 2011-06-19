@@ -25,6 +25,7 @@
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/PlayerHandler.h"
 #include "Game/PlayerRoster.h"
 #include "Game/TraceRay.h"
