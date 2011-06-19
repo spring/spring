@@ -35,6 +35,10 @@ public:
 	void SetS3oTexture(int num);
 
 private:
+	inline void DoUpdateDraw() {
+		while (s3oTexturesDraw.size() < s3oTextures.size())
+			s3oTexturesDraw.push_back(s3oTextures[s3oTexturesDraw.size()]);
+	}
 	const S3oTex* DoGetS3oTex(int num, std::vector<S3oTex *>& s3oTex) {
 		if ((num < 0) || (num >= (int)s3oTex.size())) {
 			return NULL;
