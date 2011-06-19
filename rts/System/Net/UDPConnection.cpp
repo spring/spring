@@ -17,7 +17,7 @@
 
 #include "Socket.h"
 #include "ProtocolDef.h"
-#include "System/Exception.h"
+#include "Exception.h"
 #include "System/ConfigHandler.h"
 #include "System/LogOutput.h"
 
