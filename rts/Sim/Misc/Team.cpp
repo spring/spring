@@ -232,7 +232,7 @@ void CTeam::AddPlayer(int playerNum)
 		leader = playerNum;
 	}
 
-	playerHandler->Player(playerNum)->StopSpectating(teamNum);
+	playerHandler->Player(playerNum)->JoinTeam(teamNum);
 	playerHandler->Player(playerNum)->SetControlledTeams();
 }
 

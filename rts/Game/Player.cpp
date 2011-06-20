@@ -121,13 +121,9 @@ void CPlayer::StartSpectating()
 	eventHandler.PlayerChanged(playerNum);
 }
 
-void CPlayer::StopSpectating(int newTeam)
+void CPlayer::JoinTeam(int newTeam)
 {
-	if (!spectator) {
-		return;
-	}
-
-	// a player that stops spectating always joins a team
+	// a player that joins a team always stops spectating
 	spectator = false;
 	team = newTeam;
 

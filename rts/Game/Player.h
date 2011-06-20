@@ -30,7 +30,7 @@ public:
 	static void UpdateControlledTeams();
 
 	void StartSpectating();
-	void StopSpectating(int newTeam);
+	void JoinTeam(int newTeam);
 	void GameFrame(int frameNum);
 
 	CPlayer& operator=(const PlayerBase& base) { PlayerBase::operator=(base); return *this; }
