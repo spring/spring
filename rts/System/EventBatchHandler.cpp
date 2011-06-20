@@ -11,6 +11,9 @@
 #include "Rendering/ProjectileDrawer.hpp"
 #endif
 
+#include "lib/gml/gmlcnf.h"
+#include "Rendering/Textures/S3OTextureHandler.h"
+#include "System/Platform/Threading.h"
 
 void EventBatchHandler::ProjectileCreatedDestroyedEvent::Add(const CProjectile* p) { eventHandler.RenderProjectileCreated(p); }
 void EventBatchHandler::ProjectileCreatedDestroyedEvent::Remove(const CProjectile* p) { eventHandler.RenderProjectileDestroyed(p); }
@@ -107,4 +110,12 @@ void EventBatchHandler::UpdateObjects() {
 
 		UpdateProjectiles();
 	}
+}
+
+void EventBatchHandler::LoadedModelRequested() {
+#if defined(USE_GML) && GML_ENABLE_SIM && GML_SHARE_LISTS 
+	// Make sure the requested model is available to the calling thread
+	if (!Threading::IsSimThread()) 
+		texturehandlerS3O->UpdateDraw();
+#endif
 }
