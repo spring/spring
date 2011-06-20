@@ -103,11 +103,15 @@ void CGlobalRendering::PostInit() {
 
 	supportNPOTs = GLEW_ARB_texture_non_power_of_two;
 	haveARB = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
+	// not enough: we want OpenGL 2.0 core functions
+	// haveGLSL = GL_ARB_vertex_shader && GL_ARB_fragment_shader;
 	haveGLSL = !!GLEW_VERSION_2_0;
 
 	{
-		const std::string vendor = StringToLower(std::string((char*) glGetString(GL_VENDOR)));
-		const std::string renderer = StringToLower(std::string((char*) glGetString(GL_RENDERER)));
+		const char* glVendor = (const char*) glGetString(GL_VENDOR);
+		const char* glRenderer = (const char*) glGetString(GL_RENDERER);
+		const std::string vendor = (glVendor != NULL)? StringToLower(std::string(glVendor)): "";
+		const std::string renderer = (glRenderer != NULL)? StringToLower(std::string(glRenderer)): "";
 
 		haveATI = (vendor.find("ati ") != std::string::npos);
 
