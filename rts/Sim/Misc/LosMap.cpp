@@ -36,6 +36,8 @@ void CLosMap::AddMapArea(int2 pos, int allyteam, int radius, int amount)
 
 	static const int LOS2HEIGHT_X = gs->mapx / size.x;
 	static const int LOS2HEIGHT_Z = gs->mapy / size.y;
+
+	const bool updateUnsyncedHeightMap = (allyteam == gu->myAllyTeam || gu->spectatingFullView);
 	#endif
 
 	const int sx = std::max(         0, pos.x - radius);
@@ -64,12 +66,11 @@ void CLosMap::AddMapArea(int2 pos, int allyteam, int radius, int amount)
 			//     update the unsynced heightmap from LosHandler
 			//     (by checking if allyteam >= 0)
 			//
-			if (allyteam < 0) { continue; }
-			if (allyteam != gu->myAllyTeam) { continue; }
-
-			for (int hmx = lmx * LOS2HEIGHT_X; hmx < (lmx + 1) * LOS2HEIGHT_X; hmx++) {
-				for (int hmz = lmz * LOS2HEIGHT_Z; hmz < (lmz + 1) * LOS2HEIGHT_Z; hmz++) {
-					uhm[hmz * (gs->mapx + 1) + hmx] = shm[hmz * (gs->mapx + 1) + hmx];
+			if (updateUnsyncedHeightMap) {
+				for (int hmx = lmx * LOS2HEIGHT_X; hmx < (lmx + 1) * LOS2HEIGHT_X; hmx++) {
+					for (int hmz = lmz * LOS2HEIGHT_Z; hmz < (lmz + 1) * LOS2HEIGHT_Z; hmz++) {
+						uhm[hmz * (gs->mapx + 1) + hmx] = shm[hmz * (gs->mapx + 1) + hmx];
+					}
 				}
 			}
 			#endif
@@ -85,6 +86,8 @@ void CLosMap::AddMapSquares(const std::vector<int>& squares, int allyteam, int a
 
 	static const int LOS2HEIGHT_X = gs->mapx / size.x;
 	static const int LOS2HEIGHT_Z = gs->mapy / size.y;
+
+	const bool updateUnsyncedHeightMap = (allyteam == gu->myAllyTeam || gu->spectatingFullView);
 	#endif
 
 	std::vector<int>::const_iterator lsi;
@@ -92,15 +95,14 @@ void CLosMap::AddMapSquares(const std::vector<int>& squares, int allyteam, int a
 		map[*lsi] += amount;
 
 		#ifdef USE_UNSYNCED_HEIGHTMAP
-		if (allyteam < 0) { continue; }
-		if (allyteam != gu->myAllyTeam) { continue; }
+		if (updateUnsyncedHeightMap) {
+			const int lmx = (*lsi) % size.x;
+			const int lmz = (*lsi) / size.x;
 
-		const int lmx = (*lsi) % size.x;
-		const int lmz = (*lsi) / size.x;
-
-		for (int hmx = lmx * LOS2HEIGHT_X; hmx < (lmx + 1) * LOS2HEIGHT_X; hmx++) {
-			for (int hmz = lmz * LOS2HEIGHT_Z; hmz < (lmz + 1) * LOS2HEIGHT_Z; hmz++) {
-				uhm[hmz * (gs->mapx + 1) + hmx] = shm[hmz * (gs->mapx + 1) + hmx];
+			for (int hmx = lmx * LOS2HEIGHT_X; hmx < (lmx + 1) * LOS2HEIGHT_X; hmx++) {
+				for (int hmz = lmz * LOS2HEIGHT_Z; hmz < (lmz + 1) * LOS2HEIGHT_Z; hmz++) {
+					uhm[hmz * (gs->mapx + 1) + hmx] = shm[hmz * (gs->mapx + 1) + hmx];
+				}
 			}
 		}
 		#endif

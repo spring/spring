@@ -242,7 +242,12 @@ void CBFGroundTextures::SetTexture(int x, int y)
 }
 
 inline bool CBFGroundTextures::TexSquareInView(int btx, int bty) {
-	static const float* shm = map->GetCornerHeightMapSynced();
+	static const float* hm =
+		#ifdef USE_UNSYNCED_HEIGHTMAP
+		readmap->GetCornerHeightMapUnsynced();
+		#else
+		readmap->GetCornerHeightMapSynced();
+		#endif
 
 	static const int heightMapSizeX = gs->mapx + 1;
 	static const int bigTexW = (gs->mapx << 3) / numBigTexX;
@@ -252,7 +257,7 @@ inline bool CBFGroundTextures::TexSquareInView(int btx, int bty) {
 	const int x = btx * bigTexW + (bigTexW >> 1);
 	const int y = bty * bigTexH + (bigTexH >> 1);
 	const int idx = (y >> 3) * heightMapSizeX + (x >> 3);
-	const float3 bigTexSquarePos(x, shm[idx], y);
+	const float3 bigTexSquarePos(x, hm[idx], y);
 
 	return (cam2->InView(bigTexSquarePos, bigTexSquareRadius));
 }
