@@ -8,7 +8,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 
-// #define USE_UNSYNCED_HEIGHTMAP
+#define USE_UNSYNCED_HEIGHTMAP
 
 class CMetalMap;
 class CCamera;
