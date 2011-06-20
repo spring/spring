@@ -159,8 +159,8 @@ CBumpWater::CBumpWater()
 	reflectTexture = 0;
 
 	/** CHECK HARDWARE **/
-	if (!GL_ARB_shading_language_100)
-		throw content_error("BumpWater: your hardware/driver setup does not support GLSL.");
+	if (!globalRendering->haveGLSL)
+		throw content_error("BumpWater: your hardware/driver setup does not support GLSL 2.0");
 
 	shoreWaves = shoreWaves && (GLEW_EXT_framebuffer_object);
 	dynWaves   = dynWaves && (GLEW_EXT_framebuffer_object && GLEW_ARB_imaging);
