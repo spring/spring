@@ -16,14 +16,11 @@
 #include "Sim/Units/CommandAI/Command.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/Models/IModelParser.h"
+#include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 #include "System/myMath.h"
 #include "System/Util.h"
-#include "lib/gml/gmlcnf.h"
-#include "Rendering/Textures/S3OTextureHandler.h"
-#include "System/Platform/Threading.h"
-
 
 /******************************************************************************/
 
@@ -750,10 +747,9 @@ S3DModel* UnitDef::LoadModel() const
 		this->modelDef.modelTextures["tex1"] = this->modelDef.model->tex1;
 		this->modelDef.modelTextures["tex2"] = this->modelDef.model->tex2;
 	}
-#if defined(USE_GML) && GML_ENABLE_SIM && GML_SHARE_LISTS 
-	else if (!Threading::IsSimThread())
-		texturehandlerS3O->UpdateDraw();
-#endif
+	else {
+		eventHandler.LoadedModelRequested();
+	}
 
 	return (this->modelDef.model);
 }

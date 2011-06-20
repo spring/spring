@@ -3,9 +3,7 @@
 #include "FeatureDef.h"
 #include "Rendering/Models/IModelParser.h"
 #include "Sim/Misc/CollisionVolume.h"
-#include "lib/gml/gmlcnf.h"
-#include "Rendering/Textures/S3OTextureHandler.h"
-#include "System/Platform/Threading.h"
+#include "System/EventHandler.h"
 
 CR_BIND(FeatureDef, );
 
@@ -69,13 +67,10 @@ FeatureDef::~FeatureDef() {
 
 S3DModel* FeatureDef::LoadModel() const
 {
-	if (this->model == NULL) {
+	if (this->model == NULL)
 		this->model = modelParser->Load3DModel(modelname);
-	}
-#if defined(USE_GML) && GML_ENABLE_SIM && GML_SHARE_LISTS 
-	else if (!Threading::IsSimThread())
-		texturehandlerS3O->UpdateDraw();
-#endif
+	else
+		eventHandler.LoadedModelRequested();
 
 	return (this->model);
 }

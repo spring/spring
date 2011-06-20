@@ -4,9 +4,7 @@
 
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Rendering/Models/IModelParser.h"
-#include "lib/gml/gmlcnf.h"
-#include "Rendering/Textures/S3OTextureHandler.h"
-#include "System/Platform/Threading.h"
+#include "System/EventHandler.h"
 
 WeaponDef::~WeaponDef()
 {
@@ -24,10 +22,10 @@ S3DModel* WeaponDef::LoadModel()
 		}
 		visuals.model = modelParser->Load3DModel(modelname);
 	}
-#if defined(USE_GML) && GML_ENABLE_SIM && GML_SHARE_LISTS 
-	else if (!Threading::IsSimThread())
-		texturehandlerS3O->UpdateDraw();
-#endif
+	else {
+		eventHandler.LoadedModelRequested();
+	}
+
 	return visuals.model;
 }
 

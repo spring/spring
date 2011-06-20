@@ -188,6 +188,7 @@ class CEventHandler
 		void GameProgress(int gameFrame);
 
 		// FIXME: void ShockFront(float power, const float3& pos, float areaOfEffect);
+		inline void LoadedModelRequested();
 
 	private:
 		typedef vector<CEventClient*> EventClientList;
@@ -893,6 +894,9 @@ inline bool CEventHandler::DefaultCommand(const CUnit* unit,
 	return false;
 }
 
+inline void CEventHandler::LoadedModelRequested() {
+	eventBatchHandler->LoadedModelRequested();
+}
 
 #endif /* EVENT_HANDLER_H */
 
