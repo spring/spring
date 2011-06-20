@@ -375,7 +375,7 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 				const int vIdx = (z * W) + x;
 
 				#ifdef USE_UNSYNCED_HEIGHTMAP
-				if (loshandler->InLos(x, z, gu->myAllyTeam)) {
+				if (gu->spectatingFullView || loshandler->InLos(x, z, gu->myAllyTeam)) {
 					uhm[vIdx] = shm[vIdx];
 				}
 				#endif
