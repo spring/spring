@@ -16,7 +16,6 @@
 #include "IVideoCapturing.h"
 #include "InMapDraw.h"
 #include "InMapDrawModel.h"
-#include "Game/UI/UnitTracker.h"
 #ifdef _WIN32
 #  include "winerror.h" // TODO someone on windows (MinGW? VS?) please check if this is required
 #endif
@@ -760,11 +759,7 @@ void CGame::ClientReadNet()
 					}
 					case TEAMMSG_RESIGN: {
 						playerHandler->Player(player)->StartSpectating();
-						if (player == gu->myPlayerNum) {
-							selectedUnits.ClearSelected();
-							unitTracker.Disable();
-							CLuaUI::UpdateTeams();
-						}
+
 						// actualize all teams of which the player is leader
 						for (size_t t = 0; t < teamHandler->ActiveTeams(); ++t) {
 							CTeam* team = teamHandler->Team(t);
@@ -796,23 +791,7 @@ void CGame::ClientReadNet()
 							break;
 						}
 
-						playerHandler->Player(player)->team      = newTeam;
-						playerHandler->Player(player)->spectator = false;
-						if (player == gu->myPlayerNum) {
-							gu->myPlayingTeam = gu->myTeam = newTeam;
-							gu->myPlayingAllyTeam = gu->myAllyTeam = teamHandler->AllyTeam(gu->myTeam);
-							gu->spectating           = false;
-							gu->spectatingFullView   = false;
-							gu->spectatingFullSelect = false;
-							selectedUnits.ClearSelected();
-							unitTracker.Disable();
-							CLuaUI::UpdateTeams();
-						}
-						if (teamHandler->Team(newTeam)->leader == -1) {
-							teamHandler->Team(newTeam)->leader = player;
-						}
-						CPlayer::UpdateControlledTeams();
-						eventHandler.PlayerChanged(player);
+						teamHandler->Team(newTeam)->AddPlayer(player);
 						break;
 					}
 					case TEAMMSG_TEAM_DIED: {

@@ -13,6 +13,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
 #include "Game/UI/MouseHandler.h"
+#include "Game/UI/UnitTracker.h"
 #include "Lua/LuaRules.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -78,7 +79,7 @@ void CPlayer::SetControlledTeams()
 	// AI teams
 	const CSkirmishAIHandler::id_ai_t aiIds = skirmishAIHandler.GetAllSkirmishAIs();
 	for (CSkirmishAIHandler::id_ai_t::const_iterator ai = aiIds.begin(); ai != aiIds.end(); ++ai) {
-		const bool isHostedByUs   = (ai->second.hostPlayer == playerNum);
+		const bool isHostedByUs = (ai->second.hostPlayer == playerNum);
 		if (isHostedByUs) {
 			controlledTeams.insert(ai->second.team);
 		}
@@ -105,13 +106,45 @@ void CPlayer::StartSpectating()
 
 	spectator = true;
 
-	if (gu->myPlayerNum == this->playerNum) { //TODO bad hack
+	if (gu->myPlayerNum == this->playerNum) {
+		// HACK: unsynced code should just listen for the PlayerChanged event
 		gu->spectating           = true;
 		gu->spectatingFullView   = true;
 		gu->spectatingFullSelect = true;
+
+		CLuaUI::UpdateTeams();
+		selectedUnits.ClearSelected();
+		unitTracker.Disable();
 	}
 
 	StopControllingUnit();
+	eventHandler.PlayerChanged(playerNum);
+}
+
+void CPlayer::StopSpectating(int newTeam)
+{
+	if (!spectator) {
+		return;
+	}
+
+	// a player that stops spectating always joins a team
+	spectator = false;
+	team = newTeam;
+
+	if (gu->myPlayerNum == this->playerNum) {
+		// HACK: see StartSpectating
+		gu->myPlayingTeam = gu->myTeam = newTeam;
+		gu->myPlayingAllyTeam = gu->myAllyTeam = teamHandler->AllyTeam(gu->myTeam);
+
+		gu->spectating           = false;
+		gu->spectatingFullView   = false;
+		gu->spectatingFullSelect = false;
+
+		CLuaUI::UpdateTeams();
+		selectedUnits.ClearSelected();
+		unitTracker.Disable();
+	}
+
 	eventHandler.PlayerChanged(playerNum);
 }
 
