@@ -173,11 +173,11 @@ void LoadExtensions()
 		SDL_Linked_Version()->major,
 		SDL_Linked_Version()->minor,
 		SDL_Linked_Version()->patch);
-	logOutput.Print("GL:   %s\n", glVersion);
-	logOutput.Print("GL:   %s\n", glVendor);
-	logOutput.Print("GL:   %s\n", glRenderer);
-	logOutput.Print("GLSL: %s\n", glslVersion); // only non-NULL as of OpenGL 2.0
-	logOutput.Print("GLEW: %s\n", glewVersion);
+	logOutput.Print("GL version:   %s\n", glVersion);
+	logOutput.Print("GL vendor:    %s\n", glVendor);
+	logOutput.Print("GL renderer:  %s\n", glRenderer);
+	logOutput.Print("GLSL version: %s\n", glslVersion); // only non-NULL as of OpenGL 2.0
+	logOutput.Print("GLEW version: %s\n", glewVersion);
 
 #if       !defined DEBUG
 	{
