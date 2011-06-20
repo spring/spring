@@ -60,7 +60,7 @@ CShadowHandler::CShadowHandler()
 		drawTerrainShadow = false;
 
 	if (configValue < 0) {
-		logOutput.Print("[%s] shadow rendering is disabled (config-value %d)", __FUNCION__, configValue);
+		logOutput.Print("[%s] shadow rendering is disabled (config-value %d)", __FUNCTION__, configValue);
 		return;
 	}
 
@@ -72,7 +72,8 @@ CShadowHandler::CShadowHandler()
 	if (!globalRendering->haveGLSL) {
 		if (!GLEW_ARB_shadow || !GLEW_ARB_depth_texture || !GLEW_ARB_texture_env_combine) {
 			logOutput.Print("[%s] required OpenGL ARB-extensions missing for shadow rendering", __FUNCTION__);
-			return;
+			// NOTE: these should only be relevant for FFP shadows
+			// return;
 		}
 		if (!GLEW_ARB_shadow_ambient) {
 			// can't use arbitrary texvals in case the depth comparison op fails (only 0)
