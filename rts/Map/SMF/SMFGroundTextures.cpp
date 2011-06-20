@@ -199,7 +199,7 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 						 1.0f * hdata[(y2-1) * mx + x2+1] ;
 
 					// linear sum, no need for fancy sqrt
-					const float g = (std::fabs(gx) + std::fabs(gy)) / mipSquareSize;
+					const float g = (fabs(gx) + fabs(gy)) / mipSquareSize;
 
 					/*
 					square to amplify large stretches of height.

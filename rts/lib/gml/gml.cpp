@@ -243,6 +243,7 @@ boost::mutex olbatchmutex;
 boost::mutex plbatchmutex;
 boost::mutex glbatchmutex;
 boost::mutex mlbatchmutex;
+boost::mutex llbatchmutex;
 boost::mutex cmdmutex;
 boost::mutex luauimutex;
 boost::mutex xcallmutex;

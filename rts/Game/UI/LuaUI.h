@@ -63,12 +63,13 @@ class CLuaUI : public CLuaHandle
 
 		bool ConfigCommand(const string& command);
 
-		void ShockFront(float power, const float3& pos, float areaOfEffect);
+		void ShockFront(float power, const float3& pos, float areaOfEffect, float *distadj = NULL);
 
 	public: // custom call-in
 		bool HasUnsyncedXCall(const string& funcName);
 		int UnsyncedXCall(lua_State* srcState, const string& funcName);
 		void ExecuteDelayedXCalls();
+		void ExecuteUIEventBatch();
 
 	protected:
 		CLuaUI();
@@ -104,6 +105,7 @@ class CLuaUI : public CLuaHandle
 		static int SetShockFrontFactors(lua_State* L);
 
 		std::vector<DelayDataDump> delayedXCall;
+		std::vector<LuaUIEvent> luaUIEventBatch;
 };
 
 

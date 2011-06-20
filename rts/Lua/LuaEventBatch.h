@@ -55,6 +55,10 @@ enum MiscEvent {
 	ADD_CONSOLE_LINE
 };
 
+enum UIEvent {
+	SHOCK_FRONT
+};
+
 struct LuaUnitEvent {
 	UnitEvent id;
 	const CUnit *unit1, *unit2;
@@ -103,6 +107,13 @@ struct LuaMiscEvent {
 	LuaMiscEvent(MiscEvent i, const std::string &s1, void *p) : id(i), str1(s1), ptr(p) {}
 };
 
+struct LuaUIEvent {
+	UIEvent id;
+	float flt1, flt2, flt3;
+	float3 pos1;
+	LuaUIEvent(UIEvent i, const float f1, const float3& p1, const float f2, const float f3) : id(i), flt1(f1), pos1(p1), flt2(f2), flt3(f3) {}
+};
+
 #if (LUA_MT_OPT & LUA_BATCH)
 	#define LUA_UNIT_BATCH_PUSH(r,...)\
 		if(UseEventBatch() && Threading::IsBatchThread()) {\
@@ -140,6 +151,12 @@ struct LuaMiscEvent {
 			luaMiscEventBatch.push_back(LuaMiscEvent(__VA_ARGS__));\
 			return r;\
 		}
+	#define LUA_UI_BATCH_PUSH(...)\
+		if(UseEventBatch() && Threading::IsBatchThread()) {\
+			GML_STDMUTEX_LOCK(llbatch);\
+			luaUIEventBatch.push_back(LuaUIEvent(__VA_ARGS__));\
+			return;\
+		}
 #else
 	#define LUA_UNIT_BATCH_PUSH(r,...)
 	#define LUA_FEAT_BATCH_PUSH(...)
@@ -147,6 +164,7 @@ struct LuaMiscEvent {
 	#define LUA_PROJ_BATCH_PUSH(...)
 	#define LUA_FRAME_BATCH_PUSH(...)
 	#define LUA_MISC_BATCH_PUSH(r,...)
+	#define LUA_UI_BATCH_PUSH(...)
 #endif
 
 #if defined(USE_GML) && GML_ENABLE_SIM
