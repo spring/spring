@@ -49,11 +49,6 @@ CShadowHandler::CShadowHandler()
 		return;
 	}
 
-	const bool haveShadowExts =
-		GLEW_ARB_vertex_program &&
-		GLEW_ARB_shadow &&
-		GLEW_ARB_depth_texture &&
-		GLEW_ARB_texture_env_combine;
 	//! Shadows possible values:
 	//! -1 : disable and don't try to initialize
 	//!  0 : disable, but still check if the hardware is able to run them
@@ -64,34 +59,31 @@ CShadowHandler::CShadowHandler()
 	if (configValue >= 2)
 		drawTerrainShadow = false;
 
-	if (configValue < 0 || !haveShadowExts) {
-		logOutput.Print("shadows disabled or required OpenGL extension missing");
+	if (configValue < 0) {
+		logOutput.Print("[%s] shadow rendering is disabled (config-value %d)", __FUNCION__, configValue);
 		return;
+	}
+
+	if (!globalRendering->haveARB && !globalRendering->haveGLSL) {
+		logOutput.Print("[%s] GPU does not support either ARB or GLSL shaders for shadow rendering", __FUNCTION__);
+		return;
+	}
+
+	if (!globalRendering->haveGLSL) {
+		if (!GLEW_ARB_shadow || !GLEW_ARB_depth_texture || !GLEW_ARB_texture_env_combine) {
+			logOutput.Print("[%s] required OpenGL ARB-extensions missing for shadow rendering", __FUNCTION__);
+			return;
+		}
+		if (!GLEW_ARB_shadow_ambient) {
+			// can't use arbitrary texvals in case the depth comparison op fails (only 0)
+			logOutput.Print("[%s] \"ARB_shadow_ambient\" extension missing (will probably make shadows darker than they should be)", __FUNCTION__);
+		}
 	}
 
 	shadowMapSize = configHandler->Get("ShadowMapSize", DEFAULT_SHADOWMAPSIZE);
 
-	if (tmpFirstInstance) {
-		// this already checks for GLEW_ARB_fragment_program
-		if (!ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "ARB/units3o.fp")) {
-			logOutput.Print("Your GFX card does not support the fragment programs needed for shadows");
-			return;
-		}
-
-		// this was previously set to true (redundantly since
-		// it was actually never made false anywhere) if either
-		//      1. (!GLEW_ARB_texture_env_crossbar && haveShadowExts)
-		//      2. (!GLEW_ARB_shadow_ambient && GLEW_ARB_shadow)
-		// but the non-FP result isn't nice anyway so just always
-		// use the program if we are guaranteed of shadow support
-
-		if (!GLEW_ARB_shadow_ambient) {
-			// can't use arbitrary texvals in case the depth comparison op fails (only 0)
-			logOutput.Print("You are missing the \"ARB_shadow_ambient\" extension (this will probably make shadows darker than they should be)");
-		}
-	}
-
 	if (!InitDepthTarget()) {
+		logOutput.Print("[%s] failed to initialize depth-texture FBO", __FUNCTION__);
 		return;
 	}
 
@@ -197,7 +189,7 @@ bool CShadowHandler::InitDepthTarget()
 	// it turns the shadow render buffer in a buffer with color
 	bool useColorTexture = false;
 	if (!fb.IsValid()) {
-		logOutput.Print("Warning: ShadowHandler: framebuffer not valid!");
+		logOutput.Print("[%s] framebuffer not valid!", __FUNCTION__);
 		return false;
 	}
 	glGenTextures(1,&shadowTexture);
