@@ -36,8 +36,10 @@ public:
 
 private:
 	inline void DoUpdateDraw() {
+#if defined(USE_GML) && GML_ENABLE_SIM && GML_SHARE_LISTS
 		while (s3oTexturesDraw.size() < s3oTextures.size())
 			s3oTexturesDraw.push_back(s3oTextures[s3oTexturesDraw.size()]);
+#endif
 	}
 	const S3oTex* DoGetS3oTex(int num, std::vector<S3oTex *>& s3oTex) {
 		if ((num < 0) || (num >= (int)s3oTex.size())) {

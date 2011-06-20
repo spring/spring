@@ -1069,6 +1069,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\GlobalUnsynced.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\GlobalUnsynced.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Game\InMapDraw.cpp"
 				>
 			</File>
@@ -4873,14 +4881,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\GlobalUnsynced.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\GlobalUnsynced.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\System\Info.cpp"
 				>
 			</File>
@@ -4895,6 +4895,26 @@
 			<File
 				RelativePath="..\..\System\LogOutput.h"
 				>
+			</File>
+			<File
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Dedicated Server (Debug)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\builds\DS\main.cpp"
@@ -4975,26 +4995,6 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Dedicated Server (Debug)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>
@@ -7863,23 +7863,23 @@
 				Name="SMF"
 				>
 				<File
-					RelativePath="..\..\Map\Smf\BFGroundDrawer.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Map\Smf\BFGroundDrawer.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Map\Smf\BFGroundTextures.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Map\Smf\BFGroundTextures.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\Map\Smf\mapfile.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\SMF\SMFGroundDrawer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\SMF\SMFGroundDrawer.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\SMF\SMFGroundTextures.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Map\SMF\SMFGroundTextures.h"
 					>
 				</File>
 				<File
@@ -8101,6 +8101,10 @@
 			</File>
 			<File
 				RelativePath="..\..\Lua\LuaDisplayLists.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaEventBatch.h"
 				>
 			</File>
 			<File

@@ -412,12 +412,12 @@ class CLuaHandle : public CEventClient
 		static bool devMode; // allows real file access
 		static bool modUICtrl; // allows non-user scripts to use UI controls
 
-		std::vector<LuaUnitEvent>luaUnitEventBatch;
-		std::vector<LuaFeatEvent>luaFeatEventBatch;
-		std::vector<LuaObjEvent>luaObjEventBatch;
-		std::vector<LuaProjEvent>luaProjEventBatch;
-		std::vector<int>luaFrameEventBatch;
-		std::vector<LuaMiscEvent>luaMiscEventBatch;
+		std::vector<LuaUnitEvent> luaUnitEventBatch;
+		std::vector<LuaFeatEvent> luaFeatEventBatch;
+		std::vector<LuaObjEvent> luaObjEventBatch;
+		std::vector<LuaProjEvent> luaProjEventBatch;
+		std::vector<int> luaFrameEventBatch;
+		std::vector<LuaMiscEvent> luaMiscEventBatch;
 
 		// FIXME: because CLuaUnitScript needs to access RunCallIn / activeHandle
 		friend class CLuaUnitScript;
