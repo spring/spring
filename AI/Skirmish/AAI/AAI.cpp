@@ -114,7 +114,6 @@ AAI::~AAI()
 	fclose(file);
 }
 
-void AAI::GotChatMessage(const char *msg, int player) {}
 
 void AAI::EnemyDamaged(int damaged,int attacker,float damage,float3 dir) {}
 

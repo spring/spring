@@ -124,8 +124,8 @@ public:
 	void EnemyRemove(int enemy, EnemyInfo* E);
 	void EnemyDamaged(int damaged,int attacker,float damage,float3 dir); // called when an enemy inside los or radar is damaged
 	void UnitIdle(int unit);						// called when a unit go idle and is not assigned to any group
-	void GotChatMessage(const char* msg,int player);	// called when someone writes a chat msg
-	void GotLuaMessage(const char* inData, const char** outData) {}
+	void RecvChatMessage(const char* msg,int player) {};	// called when someone writes a chat msg
+	void RecvLuaMessage(const char* inData, const char** outData) {}
 	void UnitDamaged(int damaged,int attacker,float damage,float3 dir); // called when one of your units are damaged
 	void UnitMoveFailed(int unit);
 	int HandleEvent(int msg,const void* data);

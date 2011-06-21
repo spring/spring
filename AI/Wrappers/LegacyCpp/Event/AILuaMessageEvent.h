@@ -32,7 +32,7 @@ public:
 	~CAILuaMessageEvent() {}
 
 	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
-		ai.GotLuaMessage(event.inData, event.outData);
+		ai.RecvLuaMessage(event.inData, event.outData);
 	}
 
 private:
