@@ -78,7 +78,7 @@ public:
 class GodModeActionExecutor : public ISyncedActionExecutor {
 public:
 	GodModeActionExecutor() : ISyncedActionExecutor("GodMode",
-			"Enabled/Disables god-mode, which allows all players"
+			"Enables/Disables god-mode, which allows all players"
 			" (even spectators) to control all units", true) {}
 
 	void Execute(const SyncedAction& action) const {

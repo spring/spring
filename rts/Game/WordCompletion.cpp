@@ -55,59 +55,25 @@ void CWordCompletion::Reset()
 	words.clear();
 	WordProperties sl(true, false, false);
 
-	// local commands
-	words["/aikill "] = sl;
-	words["/aireload "] = sl;
-	words["/aicontrol "] = sl;
-	words["/ailist"] = sl;
-	words["/advmodelshading "] = sl;
-	words["/advmapshading "] = sl;
-	words["/hardwarecursor "] = sl;
-	words["/clock"] = sl;
-	words["/cmdcolors "] = sl;
-	words["/ctrlpanel "] = sl;
-	words["/distdraw "] = sl;
-	words["/disticon "] = sl;
-	words["/debugdrawai"] = sl;
-	words["/debuginfo sound"] = sl;
-	words["/debuginfo profiling"] = sl;
-	words["/incguiopacity "] = sl;
-	words["/decguiopacity "] = sl;
-	words["/echo "] = sl;
-	words["/font "] = sl;
-	words["/gameinfo"] = sl;
-	words["/gathermode"] = sl;
-	words["/grounddecals "] = sl;
-	words["/info "] = sl;
-	words["/luaui "] = sl;
-	words["/maxparticles "] = sl;
-	words["/maxnanoparticles "] = sl;
-	words["/minimap "] = sl;
-	words["/say "] = sl;
-	words["/shadows "] = sl;
-	words["/specfullview "] = sl;
-	words["/water "] = sl;
+	// key bindings (Game/UI/KeyBindings.cpp)
 	words["/bind "] = sl;
 	words["/unbind "] = sl;
-	words["/unbindall"] = sl;
+	words["/unbindall "] = sl;
 	words["/unbindaction "] = sl;
 	words["/unbindkeyset "] = sl;
-	words["/keyload"] = sl;
-	words["/keyreload"] = sl;
-	words["/keysave"] = sl;
-	words["/keysyms"] = sl;
-	words["/keycodes"] = sl;
-	words["/keyprint"] = sl;
-	words["/keydebug"] = sl;
+	words["/keyload "] = sl;
+	words["/keyreload "] = sl;
+	words["/keysave "] = sl;
+	words["/keysyms "] = sl;
+	words["/keycodes "] = sl;
+	words["/keyprint "] = sl;
+	words["/keydebug "] = sl;
 	words["/fakemeta "] = sl;
-	words["/volume "] = sl;
-	words["/unitreplyvolume "] = sl;
-	words["/viewtaflip "] = sl;
-	words["/vsync "] = sl;
-	words["/wiremap "] = sl;
-	words["/airmesh "] = sl;
 
-	// miniMap sub-commands
+	// camera handler (Game/CameraHandler.cpp)
+	words["/viewtaflip "] = sl;
+
+	// mini-map (Game/UI/MiniMap.cpp)
 	WordProperties mm(false, false, true);
 	words["fullproxy "] = mm;
 	words["drawcommands "] = mm;
@@ -121,36 +87,36 @@ void CWordCompletion::Reset()
 	words["maximize "] = mm;
 	words["maxspect "] = mm;
 
-	// remote commands
+	// remote commands (Game/GameServer.cpp)
 	// TODO those commans are registered in Console, get the list from there
 	// This is best done with a new command class (eg. ConsoleCommand)
 	// deprecated idea, use *ActionExecutor's instead
 	words["/atm"] = sl;
-	words["/cheat "] = sl;
 	words["/devlua "] = sl;
 	words["/editdefs "] = sl;
 	words["/give "] = sl;
-	words["/kick "] = sl;
-	words["/kickbynum "] = sl;
 	words["/luagaia "] = sl;
 	words["/luarules "] = sl;
 	words["/nocost"] = sl;
-	words["/nohelp "] = sl;
-	words["/nopause "] = sl;
 	words["/nospectatorchat "] = sl;
 	words["/reloadcob "] = sl;
 	words["/reloadcegs "] = sl;
 	words["/save "] = sl;
-	words["/setmaxspeed "] = sl;
-	words["/setminspeed "] = sl;
 	words["/skip "] = sl;
 	words["/skip +"] = sl;
 	words["/skip f"] = sl;
 	words["/skip f+"] = sl;
-	words["/spectator"] = sl;
-	words["/take"] = sl;
+	words["/spectator "] = sl;
+	words["/take "] = sl;
 	words["/team "] = sl;
-	// words[".crash"] = sl; // don't make it too easy
+
+	words["/cheat "] = sl;
+	words["/nohelp "] = sl;
+	words["/nopause "] = sl;
+	words["/setmaxspeed "] = sl;
+	words["/setminspeed "] = sl;
+	words["/kick "] = sl;
+	words["/kickbynum "] = sl;
 }
 
 

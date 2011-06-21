@@ -29,7 +29,7 @@ CMetalMap::CMetalMap(unsigned char* map, int sizeX, int sizeZ, float metalScale)
 
 	int whichPalette = configHandler->Get("MetalMapPalette", 0);
 
-	if (whichPalette == 1){
+	if (whichPalette == 1) {
 		/* Swap the green and blue channels. making metal go
 		   black -> blue -> cyan,
 		   rather than the usual black -> green -> cyan. */
@@ -38,9 +38,8 @@ CMetalMap::CMetalMap(unsigned char* map, int sizeX, int sizeZ, float metalScale)
 			metalPal[a * 3 + 1] = std::max(0, a * 2 - 255);
 			metalPal[a * 3 + 2] = std::min(255, a * 2);
 		}
-	}
-	else {
-		for(int a = 0; a < 256; ++a) {
+	} else {
+		for (int a = 0; a < 256; ++a) {
 			metalPal[a * 3 + 0] = a;
 			metalPal[a * 3 + 1] = std::min(255, a * 2);
 			metalPal[a * 3 + 2] = std::max(0, a * 2 - 255);
