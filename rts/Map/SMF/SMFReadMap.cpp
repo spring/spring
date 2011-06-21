@@ -639,7 +639,7 @@ const char* CSmfReadMap::GetFeatureTypeName (int typeID)
 unsigned char* CSmfReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* bmInfo)
 {
 	// get size
-	*bmInfo = file.GetInfoMapSize(name);
+	file.GetInfoMapSize(name, bmInfo);
 	if (bmInfo->width <= 0) return NULL;
 
 	// get data
