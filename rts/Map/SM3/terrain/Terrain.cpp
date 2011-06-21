@@ -291,7 +291,7 @@ namespace terrain {
 			heightmap = heightmap->lowDetail;
 			delete p;
 		}
-		for (size_t a=0;a<qmaps.size();a++)
+		for (size_t a = 0; a < qmaps.size(); a++)
 			delete qmaps[a];
 		qmaps.clear();
 		delete quadtree;
@@ -533,21 +533,21 @@ namespace terrain {
 		glDisable (GL_TEXTURE_2D);
 	}
 
-	void DrawNormals (TQuad *q, Heightmap *hm)
+	void DrawNormals(TQuad *q, const Heightmap* hm)
 	{
 		glBegin (GL_LINES);
-		for (int y=q->hmPos.y;y<q->hmPos.y+QUAD_W;y++)
-			for (int x=q->hmPos.x;x<q->hmPos.x+QUAD_W;x++)
+		for (int y = q->hmPos.y; y < q->hmPos.y + QUAD_W; y++)
+			for (int x = q->hmPos.x; x < q->hmPos.x + QUAD_W; x++)
 			{
-				Vector3 origin (x * hm->squareSize, hm->HeightAt (x,y), y * hm->squareSize);
+				Vector3 origin(x * hm->squareSize, hm->atSynced(x, y), y * hm->squareSize);
 
 				Vector3 tangent, binormal;
 				CalculateTangents(hm, x,y, tangent, binormal);
 
 				Vector3 normal = binormal.cross(tangent);
 				normal.ANormalize();
-				binormal.ANormalize ();
-				tangent.ANormalize ();
+				binormal.ANormalize();
+				tangent.ANormalize();
 
 				glColor3f (1,1,0);
 				glVertex3fv(&origin[0]);
@@ -670,20 +670,24 @@ namespace terrain {
 	}
 
 #ifndef TERRAINRENDERERLIB_EXPORTS
-	void Terrain::DebugPrint (IFontRenderer *fr)
+	void Terrain::DebugPrint(IFontRenderer* fr)
 	{
-		if (fr != NULL) { 
+		if (fr != NULL) {
 			const float s = 16.0f;
+
 			if (debugQuad) {
 				fr->printf(0, 30, s, "Selected quad: (%d,%d) on depth %d. Lod=%3.3f",
-					debugQuad->qmPos.x, debugQuad->qmPos.y, debugQuad->depth, config.detailMod * debugQuad->CalcLod(activeRC->cam->pos));
+				debugQuad->qmPos.x, debugQuad->qmPos.y, debugQuad->depth, config.detailMod * debugQuad->CalcLod(activeRC->cam->pos));
 			}
+
 			RenderStats stats;
 			CalcRenderStats(stats);
+
 			fr->printf(0, 46, s, "Rendered nodes: %d, tris: %d, VBufSize: %d(kb), TotalRenderData(kb): %d, DetailMod: %g, CacheTextureMemory: %d",
 				activeRC->quads.size(), stats.tris, VertexBuffer::TotalSize()/1024, stats.renderDataSize/1024, config.detailMod, stats.cacheTextureSize);
 			fr->printf(0, 60, s, "NodeUpdateCount: %d, RenderDataAlloc: %d, #RenderData: %d",
 				nodeUpdateCount, renderDataManager->normalDataAllocates, renderDataManager->QuadRenderDataCount());
+
 			texturing->DebugPrint(fr);
 		}
 	}
@@ -840,8 +844,10 @@ namespace terrain {
 		float hmOffset = atof (tdf.SGetValueDef ("0", "MAP\\TERRAIN\\HeightOffset").c_str());
 
 		// apply scaling and offset to the heightmap
-		for (int y = 0; y < heightmap->w * heightmap->h; y++)
-			heightmap->data[y] = heightmap->data[y] * hmScale + hmOffset;
+		for (int y = 0; y < heightmap->w * heightmap->h; y++) {
+			heightmap->dataSynced[y] = heightmap->dataSynced[y] * hmScale + hmOffset;
+			heightmap->dataUnsynced[y] = heightmap->dataSynced[y];
+		}
 
 		if (cb) cb->PrintMsg ("initializing heightmap renderer...");
 
@@ -855,7 +861,7 @@ namespace terrain {
 			w/=2;
 		}
 		lowdetailhm = prev;
-		assert((1<<quadTreeDepth)*(lowdetailhm->w-1) == heightmap->w-1);
+		assert((1 << quadTreeDepth) * (lowdetailhm->w - 1) == heightmap->w - 1);
 
 		// set heightmap squareSize for all lod's
 		heightmap->squareSize = SquareSize;
@@ -921,7 +927,7 @@ namespace terrain {
 			heightmap = LoadHeightmapFromImage(heightMapName, cb);
 		}
 
-		if (!GetHeightmap()) {
+		if (heightmap->dataSynced == NULL) {
 			throw content_error("Failed to load heightmap " + heightMapName);
 		}
 
@@ -939,6 +945,7 @@ namespace terrain {
 	{
 		texturing->ReloadShaders (quadtree, &config);
 	}
+
 
 	void FindRAWProps(int len, int& width, int& bytespp, ILoadCallback* cb)
 	{
@@ -971,28 +978,35 @@ namespace terrain {
 
 		int len = fh.FileSize();
 
-		int w=-1, bits;
+		int w = -1, bits;
 		FindRAWProps(len, w, bits, cb);
-		bits*=8;
-		if (w<0) return 0;
+		bits *= 8;
+		if (w < 0) return 0;
 
-		Heightmap *hm = new Heightmap;
-		hm->Alloc (w,w);
+		Heightmap* hm = new Heightmap;
+		hm->Alloc(w, w);
 
-		if (bits==16) {
-			ushort *tmp=new ushort[w*w];
-			fh.Read (tmp, len);
-			for (int y=0;y<w*w;y++) hm->data[y]=float(tmp[y]) / float((1<<16)-1);
+		if (bits == 16) {
+			ushort* tmp = new ushort[w * w];
+			fh.Read(tmp, len);
+
+			for (int y = 0; y < w * w; y++) {
+				hm->dataSynced[y] = float(tmp[y]) / float((1 << 16) - 1);
+				hm->dataUnsynced[y] = hm->dataSynced[y];
+			}
 #ifdef SWAP_SHORT
 			char *p = (char*)hm->data;
-			for (int x=0;x<len;x+=2, p+=2)
-				std::swap (p[0],p[1]);
+			for (int x = 0; x < len; x += 2, p += 2)
+				std::swap(p[0], p[1]);
 #endif
 		} else {
-			uchar *buf=new uchar[len], *p=buf;
-			fh.Read(buf,len);
-			for (w=w*w-1;w>=0;w--)
-				hm->data[w]=*(p++)/255.0f;
+			uchar* buf = new uchar[len], *p = buf;
+			fh.Read(buf, len);
+
+			for (w = w * w - 1; w >= 0; w--) {
+				hm->dataSynced[w] = *(p++) / 255.0f;
+				hm->dataUnsynced[w] = hm->dataSynced[w];
+			}
 			delete[] buf;
 		}
 
@@ -1048,15 +1062,17 @@ namespace terrain {
 		}
 
 		// copy the data into the highest detail heightmap
-		Heightmap *hm = new Heightmap;
-		hm->Alloc (hmWidth,hmHeight);
-		ushort* data=(ushort*)ilGetData ();
+		Heightmap* hm = new Heightmap;
+		hm->Alloc(hmWidth, hmHeight);
+		ushort* imgData = (ushort*) ilGetData();
 
-		for (int y=0;y<hmWidth*hmHeight;y++)
-			hm->data[y]=data[y]/float((1<<16)-1);
+		for (int y = 0; y < hmWidth * hmHeight; y++) {
+			hm->dataSynced[y] = imgData[y] / float((1 << 16) - 1);
+			hm->dataUnsynced[y] = hm->dataSynced[y];
+		}
 
 		// heightmap is copied, so the original image can be deleted
-		ilDeleteImages (1,&ilheightmap);
+		ilDeleteImages(1, &ilheightmap);
 		return hm;
 	}
 
@@ -1073,8 +1089,11 @@ namespace terrain {
 		texturing->SetShaderParams (dir, eyevec);
 	}
 
+
+
+
 	// heightmap blitting
-	void Terrain::HeightmapUpdated(int sx,int sy,int w,int h)
+	void Terrain::HeightMapUpdatedUnsynced(int sx, int sy, int w, int h)
 	{
 		// clip
 		if (sx < 0) sx = 0;
@@ -1083,45 +1102,24 @@ namespace terrain {
 		if (sy + h > heightmap->h) h = heightmap->h - sy;
 
 		// mark for vertex buffer update
-		renderDataManager->UpdateRect(sx,sy,w,h);
+		renderDataManager->UpdateRect(sx, sy, w, h);
 
 		// update heightmap mipmap chain
-		heightmap->UpdateLower(sx,sy,w,h);
+		// NOTE:
+		//     this writes to dataSynced for all heightmaps in the
+		//     lowDetail-chain at depth > 0, but these are _NEVER_
+		//     accessed in synced context (neither are any nodes
+		//     in the highDetail chain) -- ONLY the top-level node
+		//     of this->heightmap carries the actual sync-relevant
+		//     height values
+		heightmap->UpdateLowerUnsynced(sx, sy, w, h);
 
 		Update();
 		CacheTextures();
 	}
 
-	void Terrain::GetHeightmap(int sx,int sy,int w,int h, float *dest)
-	{
-		// clip
-		if (sx < 0) sx = 0;
-		if (sy < 0) sy = 0;
-		if (sx + w > heightmap->w) w = heightmap->w - sx;
-		if (sy + h > heightmap->h) h = heightmap->h - sy;
-
-		for (int y=sy;y<sy+h;y++)
-			for (int x=sx;x<sx+w;x++)
-				*(dest++) = heightmap->HeightAt (x,y);
-	}
-
-	float* Terrain::GetHeightmap()
-	{
-		return heightmap->data;
-	}
-
-	//TODO: Interpolate
-	float Terrain::GetHeight (float x, float z)
-	{
-		const float s = 1.0f / SquareSize;
-		int px = (int)(x*s);
-		if (px < 0) px=0;
-		if (px >= heightmap->w) px=heightmap->w-1;
-		int pz = (int)(z*s);
-		if (pz < 0) pz=0;
-		if (pz >= heightmap->h) pz=heightmap->h-1;
-		return heightmap->HeightAt (px,pz);
-	}
+	const float* Terrain::GetCornerHeightMapSynced() const { return heightmap->dataSynced; }
+	      float* Terrain::GetCornerHeightMapUnsynced()     { return heightmap->dataUnsynced; }
 
 
 	void Terrain::SetShadowParams(ShadowMapParams *smp)
