@@ -576,9 +576,6 @@ int UnpackType(lua_State* L)
 			lua_pushnumber(L, value);
 			lua_rawseti(L, -2, (i + 1));
 		}
-		lua_pushstring(L, "n");
-		lua_pushnumber(L, tableCount);
-		lua_rawset(L, -3);
 		return 1;
 	}
 
