@@ -8,6 +8,7 @@
 // These two are required for the destructors
 #include "SyncedActionExecutor.h"
 #include "UnsyncedActionExecutor.h"
+#include "WordCompletion.h"
 
 #include <map>
 #include <string>
@@ -96,6 +97,7 @@ void IGameCommands<actionExecutor_t>::AddActionExecutor(actionExecutor_t* execut
 		throw std::logic_error("Tried to register a duplicate action-executor for command: " + commandLower);
 	} else {
 		actionExecutors[commandLower] = executor;
+		wordCompletion->AddWord("/" + commandLower + " ", true, false, false);
 	}
 }
 
@@ -111,6 +113,7 @@ void IGameCommands<actionExecutor_t>::RemoveActionExecutor(const std::string& co
 		// -> remove and delete
 		actionExecutor_t* executor = aei->second;
 		actionExecutors.erase(aei);
+		wordCompletion->RemoveWord("/" + commandLower + " ");
 		delete executor;
 	}
 }
@@ -118,13 +121,8 @@ void IGameCommands<actionExecutor_t>::RemoveActionExecutor(const std::string& co
 template<class actionExecutor_t>
 void IGameCommands<actionExecutor_t>::RemoveAllActionExecutors() {
 
-	// by copy - clear - delete in copy,
-	// we ensure that no deleted executor may be used.
-	actionExecutorsMap_t actionExecutorsCopy = actionExecutors;
-	actionExecutors.clear();
-	typename actionExecutorsMap_t::iterator aei;
-	for (aei = actionExecutorsCopy.begin(); aei != actionExecutorsCopy.end(); ++aei) {
-		SafeDelete(aei->second);
+	while (!actionExecutors.empty()) {
+		RemoveActionExecutor(actionExecutors.begin()->first);
 	}
 }
 
