@@ -123,7 +123,7 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 	fd->burnable      =  fdTable.GetBool("flammable",       false);
 	fd->destructable  = !fdTable.GetBool("indestructible",  false);
 	fd->reclaimable   =  fdTable.GetBool("reclaimable",     fd->destructable);
-	fd->autoreclaim   =  fdTable.GetBool("autoreclaimable", fd->autoreclaim);
+	fd->autoreclaim   =  fdTable.GetBool("autoreclaimable", fd->reclaimable);
 	fd->resurrectable =  fdTable.GetInt("resurrectable",    -1);
 	fd->geoThermal    =  fdTable.GetBool("geoThermal",      false);
 
