@@ -9,10 +9,6 @@
 
 namespace po = boost::program_options;
 
-/**
- * The base constructor sets up the default help and
- * version options that should be available on all platforms.
- */
 BaseCmd::BaseCmd(int _argc, char* _argv[]) : desc("Allowed options")
 {
 	argc = _argc;
@@ -22,9 +18,6 @@ BaseCmd::BaseCmd(int _argc, char* _argv[]) : desc("Allowed options")
 	AddSwitch('V', "version", "Display program version");
 }
 
-/**
- * The destructor currently does nothing
- */
 BaseCmd::~BaseCmd()
 {
 }
@@ -61,9 +54,6 @@ void BaseCmd::AddInt(const char shortopt, std::string longopt, std::string desc)
 	all.add_options()(longopt.c_str(), po::value<int>(), desc.c_str());
 }
 
-/**
- * Iterates through and processes arguments
- */
 void BaseCmd::Parse()
 {
 	desc.add(all);
@@ -75,10 +65,6 @@ void BaseCmd::Parse()
 	po::notify(vm);
 }
 
-/**
- * Print out usage information, along with a list of commandline
- * options that have been set up for this commandline parser.
- */
 void BaseCmd::PrintUsage(std::string program, std::string version)
 {
 	if (!program.empty()) {

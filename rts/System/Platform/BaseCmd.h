@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef BASECMD_H
-#define BASECMD_H
+#ifndef _BASE_CMD_H
+#define _BASE_CMD_H
 
 #ifdef __APPLE__
 #pragma GCC visibility push(default)
@@ -12,21 +12,30 @@
 #include <boost/program_options.hpp>
 
 /**
- * @brief Commandline parser
- * Base structure for commandline parser class definition
+ * @brief Command-line parser
+ * Serves the same purpose as the getopt library.
  */
 class BaseCmd
 {
 
 public:
+	/**
+	 * The base constructor sets up the default help and
+	 * version options that should be available on all platforms.
+	 */
 	BaseCmd(int argc, char* argv[]);
 	~BaseCmd();
 
-	/// Get the script, or demofile given on cmdline
+	/// Returns the script or demofile given on the command-line
+	/**
+	 * @return the script or demofile given on the command-line,
+	 *   or "" if none was given.
+	 */
 	std::string GetInputFile();
 
 	/**
-	 * @brief usage
+	 * Print out usage information, along with a list of command-line
+	 * options that have been set up for this command-line parser.
 	 * @param program name of the program
 	 * @param version version of this program
 	 */
@@ -43,7 +52,7 @@ public:
 	void AddInt(const char shortopt, std::string longopt, std::string desc);
 
 	/**
-	 * @brief parse
+	 * @brief Iterates through and processes arguments
 	 *
 	 * This will read the parameters and search for recognized strings.
 	 */
@@ -80,14 +89,15 @@ protected:
 	 *
 	 * Stores the C string array given at initialization
 	 */
-	char **argv;
+	char** argv;
 
 	boost::program_options::variables_map vm;
 	boost::program_options::options_description desc;
 	boost::program_options::options_description all;
 };
 
-#endif
+#endif // _BASE_CMD_H
+
 #ifdef __APPLE__
 #pragma GCC visibility pop
 #endif
