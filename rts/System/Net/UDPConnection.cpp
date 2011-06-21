@@ -250,7 +250,7 @@ void UDPConnection::Update()
 				continue;
 			}
 			Packet data(&buffer[0], bytesReceived);
-			if (CheckAddress(sender_endpoint)) {
+			if (IsUsingAddress(sender_endpoint)) {
 				ProcessRawPacket(data);
 			}
 			// not likely, but make sure we do not get stuck here
@@ -391,12 +391,12 @@ void UDPConnection::Flush(const bool forced)
 	SendIfNecessary(forced);
 }
 
-bool UDPConnection::CheckTimeout(int nsecs, bool initial) const {
+bool UDPConnection::CheckTimeout(int seconds, bool initial) const {
 	spring_duration timeout;
-	if (nsecs == 0) {
+	if (seconds == 0) {
 		timeout = spring_secs((dataRecv && !initial) ? gc->networkTimeout : gc->initialNetworkTimeout);
-	} else if (nsecs > 0) {
-		timeout = spring_secs(nsecs);
+	} else if (seconds > 0) {
+		timeout = spring_secs(seconds);
 	} else {
 		timeout = spring_secs(gc->reconnectTimeout);
 	}
@@ -436,7 +436,7 @@ std::string UDPConnection::Statistics() const
 	return msg;
 }
 
-bool UDPConnection::CheckAddress(const boost::asio::ip::udp::endpoint& from) const
+bool UDPConnection::IsUsingAddress(const boost::asio::ip::udp::endpoint& from) const
 {
 	return (addr == from);
 }
