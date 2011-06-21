@@ -182,14 +182,14 @@ inline float3 SquareToFloat3(int xSquare, int zSquare) {
 
 /// TODO: use in SM3 renderer also
 inline float GetVisibleVertexHeight(int idx) {
-	static const float* shm = readmap->GetCornerHeightMapSynced();
-	static const float* uhm = readmap->GetCornerHeightMapUnsynced();
 
 	#ifdef USE_UNSYNCED_HEIGHTMAP
-	return uhm[idx];
+	static const float* hm = readmap->GetCornerHeightMapUnsynced();
 	#else
-	return shm[idx];
+	static const float* hm = readmap->GetCornerHeightMapSynced();
 	#endif
+
+	return hm[idx];
 }
 
 
