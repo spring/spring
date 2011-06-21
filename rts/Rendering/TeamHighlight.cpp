@@ -3,13 +3,13 @@
 #include "StdAfx.h"
 #include "TeamHighlight.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/PlayerHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/ConfigHandler.h"
-#include "System/GlobalUnsynced.h"
 #include "ExternalAI/SkirmishAIHandler.h"
-#include <limits.h>
+#include <climits>
 
 bool CTeamHighlight::highlight = false;
 std::map<int, int> CTeamHighlight::oldColors;
@@ -41,40 +41,51 @@ void CTeamHighlight::Disable() {
 }
 
 void CTeamHighlight::Update(int frameNum) {
-	if (frameNum & (TEAM_SLOWUPDATE_RATE-1))
+	if (frameNum & (TEAM_SLOWUPDATE_RATE - 1))
 		return;
 
 	bool hl = false;
-	if((gc->teamHighlight == 1 && !gu->spectatingFullView) || gc->teamHighlight == 2) {
+	if ((gc->teamHighlight == 1 && !gu->spectatingFullView) || gc->teamHighlight == 2) {
 		int maxhl = 1000 * (gc->networkTimeout + 1);
-		for(int ti = 0; ti < teamHandler->ActiveTeams(); ++ti) {
-			CTeam *t = teamHandler->Team(ti);
+
+		for (int ti = 0; ti < teamHandler->ActiveTeams(); ++ti) {
+			CTeam* t = teamHandler->Team(ti);
 			float teamhighlight = 0.0f;
-			if(!t->isDead && !t->units.empty() &&
-				(gu->spectatingFullView || teamHandler->AlliedTeams(gu->myTeam, ti)) && 
-				!t->gaia && skirmishAIHandler.GetSkirmishAIsInTeam(ti).empty()) {
-					int minPing = INT_MAX;
-					bool hasPlayers = false;
-					for(int pi = 0; pi < playerHandler->ActivePlayers(); ++pi) {
-						CPlayer *p = playerHandler->Player(pi);
-						if (p->active && !p->spectator && (p->team == ti)) {
-							hasPlayers = true;
-							if(p->ping != PATHING_FLAG && p->ping >= 0) {
-								int ping = (int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor));
-								if(ping < minPing)
-									minPing = ping;
-							}
-						}
-					}
-					if(!hasPlayers || t->leader < 0)
-						teamhighlight = 1.0f;
-					else if(minPing != INT_MAX && minPing > 1000)
-						teamhighlight = (float)std::max(0, std::min(minPing, maxhl)) / (float)maxhl;
-					if(teamhighlight > 0.0f)
-						hl = true;
+
+			if (t->gaia) { continue; }
+			if (t->isDead) { continue; }
+			if (t->units.empty()) { continue; }
+			if (!skirmishAIHandler.GetSkirmishAIsInTeam(ti).empty()) { continue; }
+			if (!gu->spectatingFullView && !teamHandler->AlliedTeams(gu->myTeam, ti)) { continue; }
+
+			int minPing = INT_MAX;
+			bool hasPlayers = false;
+
+			for (int pi = 0; pi < playerHandler->ActivePlayers(); ++pi) {
+				CPlayer* p = playerHandler->Player(pi);
+
+				if (!p->active) { continue; }
+				if (p->spectator) { continue; }
+				if ((p->team != ti)) { continue; }
+
+				hasPlayers = true;
+
+				if (p->ping != PATHING_FLAG && p->ping >= 0) {
+					const int speed = GAME_SPEED * gs->speedFactor;
+					const int ping = (p->ping * 1000) / speed;
+					minPing = std::min(ping, minPing);
+				}
 			}
+			if (!hasPlayers || t->leader < 0)
+				teamhighlight = 1.0f;
+			else if (minPing != INT_MAX && minPing > 1000)
+				teamhighlight = std::max(0, std::min(minPing, maxhl)) / float(maxhl);
+			if (teamhighlight > 0.0f)
+				hl = true;
+
 			*(volatile float *)&t->highlight = teamhighlight;
 		}
 	}
+
 	*(volatile bool *)&highlight = hl;
 }

@@ -14,15 +14,15 @@
 #endif
 
 #include "OSCStatsSender.h"
-#include "Sim/Misc/TeamHandler.h"
-#include "Game/Game.h"
 #include "lib/oscpack/OscOutboundPacketStream.h"
-#include "System/Net/Socket.h"
+#include "Game/Game.h"
 #include "Game/GameVersion.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/PlayerHandler.h"
-#include "GlobalUnsynced.h"
-#include "ConfigHandler.h"
-#include "LogOutput.h"
+#include "Sim/Misc/TeamHandler.h"
+#include "System/ConfigHandler.h"
+#include "System/LogOutput.h"
+#include "System/Net/Socket.h"
 
 COSCStatsSender* COSCStatsSender::singleton = NULL;
 

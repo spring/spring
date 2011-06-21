@@ -2,16 +2,15 @@
 
 #include "StdAfx.h"
 
-#include "Map/SMF/BFGroundTextures.h"
-
 #include <cmath>
 #include <cstdlib>
 #include <cstdio>
 
+#include "SMFGroundTextures.h"
 #include "Rendering/GL/PBO.h"
 #include "Rendering/GlobalRendering.h"
 #include "Map/SMF/mapfile.h"
-#include "Map/SMF/SmfReadMap.h"
+#include "Map/SMF/SMFReadMap.h"
 #include "Map/MapInfo.h"
 #include "Game/Camera.h"
 #include "Game/Game.h"
@@ -19,7 +18,6 @@
 #include "Game/LoadScreen.h"
 #include "System/Exceptions.h"
 #include "System/FastMath.h"
-#include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 #include "System/mmgr.h"
 #include "System/TimeProfiler.h"
@@ -162,50 +160,57 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 
 
 	ScopedOnceTimer timer("generating MipMaps");
+
+	const float* hdata = map->GetMIPHeightMapSynced(1);
+	const int mx = header->mapx / 2;
+	const int nbx = numBigTexX;
 	const int nb = numBigTexX * numBigTexY;
-	heightMaxes = new float[nb];
-	heightMins = new float[nb];
-	stretchFactors = new float[nb];
-	const float * hdata= map->mipHeightmap[1];
-	const int mx=header->mapx/2;
-	const int nbx=numBigTexX;
+
+	// 64 is the heightmap square-size at MIP level 1
+	static const int mipSquareSize = 64;
+
+	heightMaxima.resize(nb, readmap->currMinHeight);
+	heightMinima.resize(nb, readmap->currMaxHeight);
+	stretchFactors.resize(nb, 0.0f);
 
 	for (int y = 0; y < numBigTexY; ++y) {
 		for (int x = 0; x < numBigTexX; ++x) {
-			heightMaxes[y*numBigTexX+x]	=-100000;
-			heightMins[y*numBigTexX+x]	=100000;
-			stretchFactors[y*numBigTexX+x]=0;
-			for (int x2=x*64+1;x2<(x+1)*64-1;x2++){ //64 is the mipped heightmap square size
-				for (int y2=y*64+1;y2<(y+1)*64-1;y2++){ //we leave out the borders on sampling because it is easier to do the Sobel kernel convolution
-					heightMaxes[y*nbx+x] = max( hdata[y2*mx+x2] , heightMaxes[y*nbx+x]	);
-					heightMins[y*nbx+x] =  min( hdata[y2*mx+x2] , heightMins[y*nbx+x]	);
-					float gx =	-1 * hdata[(y2-1) * mx + x2-1] + //Gx sobel kernel
-								-2 * hdata[(y2  ) * mx + x2-1] +
-								-1 * hdata[(y2+1) * mx + x2-1] +
-								 1 * hdata[(y2-1) * mx + x2+1] +
-								 2 * hdata[(y2  ) * mx + x2+1] +
-								 1 * hdata[(y2+1) * mx + x2+1] ;
-					gx = fabs(gx);
 
-					float gy =	-1 * hdata[(y2+1) * mx + x2-1] + //Gy sobel kernel
-								-2 * hdata[(y2+1) * mx + x2  ] +
-								-1 * hdata[(y2+1) * mx + x2+1] +
-								 1 * hdata[(y2-1) * mx + x2-1] +
-								 2 * hdata[(y2-1) * mx + x2  ] +
-								 1 * hdata[(y2-1) * mx + x2+1] ;
-					gy = fabs(gy);
+			// NOTE: we leave out the borders on sampling because it is easier to do the Sobel kernel convolution
+			for (int x2 = x * mipSquareSize + 1; x2 < (x + 1) * mipSquareSize - 1; x2++) {
+				for (int y2 = y * mipSquareSize + 1; y2 < (y + 1) * mipSquareSize - 1; y2++) {
 
-					float g = (gx+gy)/64; //linear sum, no need for fancy sqrt
-					g *= g;
-					/*square to amplify large stretches of height.
+					heightMaxima[y * nbx + x] = std::max( hdata[y2 * mx + x2], heightMaxima[y * nbx + x]);
+					heightMinima[y * nbx + x] = std::min( hdata[y2 * mx + x2], heightMinima[y * nbx + x]);
+
+					const float gx =
+						-1.0f * hdata[(y2-1) * mx + x2-1] + // Gx sobel kernel
+						-2.0f * hdata[(y2  ) * mx + x2-1] +
+						-1.0f * hdata[(y2+1) * mx + x2-1] +
+						 1.0f * hdata[(y2-1) * mx + x2+1] +
+						 2.0f * hdata[(y2  ) * mx + x2+1] +
+						 1.0f * hdata[(y2+1) * mx + x2+1] ;
+					const float gy =
+						-1.0f * hdata[(y2+1) * mx + x2-1] + // Gy sobel kernel
+						-2.0f * hdata[(y2+1) * mx + x2  ] +
+						-1.0f * hdata[(y2+1) * mx + x2+1] +
+						 1.0f * hdata[(y2-1) * mx + x2-1] +
+						 2.0f * hdata[(y2-1) * mx + x2  ] +
+						 1.0f * hdata[(y2-1) * mx + x2+1] ;
+
+					// linear sum, no need for fancy sqrt
+					const float g = (fabs(gx) + fabs(gy)) / mipSquareSize;
+
+					/*
+					square to amplify large stretches of height.
 					in fact, this should probably be different,
 					as g of 64 (8*(1+2+1+1+2+1) would mean a 45 degree angle (which is what I think is streched),
 					we should divide by 64 before squarification to supress lower values*/ 
-					stretchFactors[y*nbx+x] += g;
-
+					stretchFactors[y * nbx + x] += (g * g);
 				}
 			}
-			stretchFactors[y*nbx+x]++;
+
+			stretchFactors[y * nbx + x] += 1.0f;
 		}
 	}
 }
@@ -220,9 +225,9 @@ CBFGroundTextures::~CBFGroundTextures(void)
 	delete[] tileMap;
 	delete[] tiles;
 
-	delete[] heightMaxes;
-	delete[] heightMins;
-	delete[] stretchFactors;
+	heightMaxima.clear();
+	heightMinima.clear();
+	stretchFactors.clear();
 }
 
 
@@ -237,16 +242,22 @@ void CBFGroundTextures::SetTexture(int x, int y)
 }
 
 inline bool CBFGroundTextures::TexSquareInView(int btx, int bty) {
-	const float* heightData = map->GetHeightmap();
-	static const int heightDataX = gs->mapx + 1;
+	static const float* hm =
+		#ifdef USE_UNSYNCED_HEIGHTMAP
+		readmap->GetCornerHeightMapUnsynced();
+		#else
+		readmap->GetCornerHeightMapSynced();
+		#endif
+
+	static const int heightMapSizeX = gs->mapx + 1;
 	static const int bigTexW = (gs->mapx << 3) / numBigTexX;
 	static const int bigTexH = (gs->mapy << 3) / numBigTexY;
 	static const float bigTexSquareRadius = fastmath::apxsqrt(float(bigTexW * bigTexW + bigTexH * bigTexH));
 
 	const int x = btx * bigTexW + (bigTexW >> 1);
 	const int y = bty * bigTexH + (bigTexH >> 1);
-	const int idx = (y >> 3) * heightDataX + (x >> 3);
-	const float3 bigTexSquarePos(x, heightData[idx], y);
+	const int idx = (y >> 3) * heightMapSizeX + (x >> 3);
+	const float3 bigTexSquarePos(x, hm[idx], y);
 
 	return (cam2->InView(bigTexSquarePos, bigTexSquareRadius));
 }
@@ -282,7 +293,7 @@ void CBFGroundTextures::DrawUpdate(void)
 				(SQUARE_SIZE << 6);
 			dx = max(0.0f, float(fabs(dx) - (SQUARE_SIZE << 6)));
 
-			const float dz = max(cam2->pos.y - (heightMaxes[y * numBigTexX + x] + heightMins[y * numBigTexX + x]) / 2, 0.0f);
+			const float dz = max(cam2->pos.y - (heightMaxima[y * numBigTexX + x] + heightMinima[y * numBigTexX + x]) / 2, 0.0f);
 			const float dist = fastmath::apxsqrt(dx * dx + dy * dy + dz * dz);
 
 			// we work under the following assumptions:
@@ -295,7 +306,7 @@ void CBFGroundTextures::DrawUpdate(void)
 			//
 			//    half (vertical) FOV is 45 degs, for default and most other camera modes
 			int wantedLevel = 0;
-			float heightDiff = heightMaxes[y * numBigTexX + x] - heightMins[y * numBigTexX + x];
+			float heightDiff = heightMaxima[y * numBigTexX + x] - heightMinima[y * numBigTexX + x];
 			int screenPixels = 1024;
 
 			if (dist > 0.0f) {

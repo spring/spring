@@ -7,23 +7,22 @@
 #include "TeamHandler.h"
 
 #include "GlobalSynced.h"
-#include "LogOutput.h"
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/PlayerHandler.h"
 #include "Game/GameSetup.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/Messages.h"
-#include "GlobalUnsynced.h"
 #include "Game/UI/LuaUI.h"
 #include "Lua/LuaRules.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
-#include "ExternalAI/SkirmishAIHandler.h"
-#include "EventHandler.h"
-#include "GlobalUnsynced.h"
-#include "creg/STL_List.h"
-#include "creg/STL_Map.h"
-#include "creg/STL_Set.h"
-#include "NetProtocol.h"
+#include "System/EventHandler.h"
+#include "System/LogOutput.h"
+#include "System/NetProtocol.h"
+#include "System/creg/STL_List.h"
+#include "System/creg/STL_Map.h"
+#include "System/creg/STL_Set.h"
 
 CR_BIND(CTeam,);
 CR_REG_METADATA(CTeam, (
@@ -195,13 +194,15 @@ void CTeam::Died()
 	if (isDead)
 		return;
 
-	if (leader >= 0) {
-		logOutput.Print(CMessages::Tr("Team%i(%s) is no more").c_str(),
-		                teamNum, playerHandler->Player(leader)->name.c_str());
-	} else {
-		logOutput.Print(CMessages::Tr("Team%i is no more").c_str(), teamNum);
-	}
 	isDead = true;
+
+	if (leader >= 0) {
+		const CPlayer* leadPlayer = playerHandler->Player(leader);
+		const char* leaderName = leadPlayer->name.c_str();
+		logOutput.Print(CMessages::Tr("Team %i (lead by %s) is no more").c_str(), teamNum, leaderName);
+	} else {
+		logOutput.Print(CMessages::Tr("Team %i is no more").c_str(), teamNum);
+	}
 
 	CSkirmishAIHandler::ids_t localTeamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(teamNum, gu->myPlayerNum);
 	for (CSkirmishAIHandler::ids_t::const_iterator ai = localTeamAIs.begin(); ai != localTeamAIs.end(); ++ai) {
@@ -211,16 +212,30 @@ void CTeam::Died()
 	// this message is not relayed to clients, it's only for the server
 	net->Send(CBaseNetProtocol::Get().SendTeamDied(gu->myPlayerNum, teamNum));
 
+	// demote all players in _this_ team to spectators
 	for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {
 		if (playerHandler->Player(a)->team == teamNum) {
 			playerHandler->Player(a)->StartSpectating();
+			playerHandler->Player(a)->SetControlledTeams();
 		}
 	}
 
-	CLuaUI::UpdateTeams();
-	CPlayer::UpdateControlledTeams();
 	eventHandler.TeamDied(teamNum);
 }
+
+void CTeam::AddPlayer(int playerNum)
+{
+	// note: does it matter if this team was already dead?
+	isDead = false;
+
+	if (leader == -1) {
+		leader = playerNum;
+	}
+
+	playerHandler->Player(playerNum)->JoinTeam(teamNum);
+	playerHandler->Player(playerNum)->SetControlledTeams();
+}
+
 
 
 CTeam& CTeam::operator=(const TeamBase& base)

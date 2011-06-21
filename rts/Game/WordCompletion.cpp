@@ -11,14 +11,42 @@
 
 #include "WordCompletion.h"
 
+#include <stdexcept>
+
+
 CWordCompletion::CWordCompletion()
 {
 	Reset();
 }
 
-
 CWordCompletion::~CWordCompletion()
 {
+}
+
+
+CWordCompletion* CWordCompletion::singleton = NULL;
+
+void CWordCompletion::CreateInstance() {
+
+	if (singleton == NULL) {
+		singleton = new CWordCompletion();
+	} else {
+		throw std::logic_error(
+				"CWordCompletion singleton is already initialized");
+	}
+}
+
+void CWordCompletion::DestroyInstance() {
+
+	if (singleton != NULL) {
+		// SafeDelete
+		CWordCompletion* tmp = singleton;
+		singleton = NULL;
+		delete tmp;
+	} else {
+		throw std::logic_error(
+				"CWordCompletion singleton is already destroyed");
+	}
 }
 
 
@@ -79,7 +107,7 @@ void CWordCompletion::Reset()
 	words["/wiremap "] = sl;
 	words["/airmesh "] = sl;
 
-	// minimap sub-commands
+	// miniMap sub-commands
 	WordProperties mm(false, false, true);
 	words["fullproxy "] = mm;
 	words["drawcommands "] = mm;
@@ -96,7 +124,7 @@ void CWordCompletion::Reset()
 	// remote commands
 	// TODO those commans are registered in Console, get the list from there
 	// This is best done with a new command class (eg. ConsoleCommand)
-	// deprecated idea, use I*ActionExecutor's instead
+	// deprecated idea, use *ActionExecutor's instead
 	words["/atm"] = sl;
 	words["/cheat "] = sl;
 	words["/devlua "] = sl;
@@ -126,11 +154,11 @@ void CWordCompletion::Reset()
 }
 
 
-void CWordCompletion::AddWord(const std::string& word,
-                              bool startOfLine, bool unitName, bool minimap)
+void CWordCompletion::AddWord(const std::string& word, bool startOfLine,
+		bool unitName, bool miniMap)
 {
 	if (!word.empty()) {
-		words[word] = WordProperties(startOfLine, unitName, minimap);
+		words[word] = WordProperties(startOfLine, unitName, miniMap);
 	}
 }
 
@@ -145,7 +173,7 @@ std::vector<std::string> CWordCompletion::Complete(std::string& msg) const
 	std::vector<std::string> partials;
 
 	const bool unitName = (msg.find("/give ") == 0);
-	const bool minimap = (msg.find("/minimap ") == 0);
+	const bool miniMap = (msg.find("/minimap ") == 0);
 
 	// strip "a:" and "s:" prefixes
 	std::string prefix, rawmsg;
@@ -178,7 +206,7 @@ std::vector<std::string> CWordCompletion::Complete(std::string& msg) const
 		if (cmp > 0) break;
 		if ((!it->second.startOfLine || startOfLine) &&
 		    (!it->second.unitName    || unitName)    &&
-		    (!it->second.minimap     || minimap)) {
+		    (!it->second.miniMap     || miniMap)) {
 			partials.push_back(it->first);
 		}
 	}

@@ -34,6 +34,7 @@ public:
 	void GiveEverythingTo(const unsigned toTeam);
 
 	void Died();
+	void AddPlayer(int playerNum);
 
 	void StartposMessage(const float3& pos) { startPos = pos; }
 

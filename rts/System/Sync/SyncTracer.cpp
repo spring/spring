@@ -3,9 +3,9 @@
 #include "StdAfx.h"
 #include "SyncTracer.h"
 #include <stdio.h>
-#include "LogOutput.h"
-#include "GlobalUnsynced.h"
-#include "mmgr.h"
+#include "Game/GlobalUnsynced.h"
+#include "System/LogOutput.h"
+#include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

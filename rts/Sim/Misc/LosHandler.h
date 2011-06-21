@@ -109,7 +109,7 @@ public:
 	void MoveUnit(CUnit* unit, bool redoCurrent);
 	void FreeInstance(LosInstance* instance);
 
-	inline bool InLos(const CWorldObject* object, int allyTeam) {
+	inline bool InLos(const CWorldObject* object, int allyTeam) const {
 		if (object->alwaysVisible || gs->globalLOS) {
 			return true;
 		} else if (object->useAirLos) {
@@ -119,7 +119,7 @@ public:
 		}
 	}
 
-	inline bool InLos(const CUnit* unit, int allyTeam) {
+	inline bool InLos(const CUnit* unit, int allyTeam) const {
 		// NOTE: units are treated differently than world objects in 2 ways:
 		//       1. they can be cloaked
 		//       2. when underwater, they only get LOS if they also have sonar
@@ -139,25 +139,39 @@ public:
 		}
 	}
 
-	inline bool InLos(const float3& pos, int allyTeam) {
+	inline bool InLos(const float3& pos, int allyTeam) const {
 		if (gs->globalLOS) { return true; }
-		const int gx = int(pos.x * invLosDiv);
-		const int gz = int(pos.z * invLosDiv);
-		return !!losMap[allyTeam].At(gx, gz);
+		const int gx = pos.x * invLosDiv;
+		const int gz = pos.z * invLosDiv;
+		return !!losMaps[allyTeam].At(gx, gz);
 	}
 
-	inline bool InAirLos(const float3& pos, int allyTeam) {
+	inline bool InAirLos(const float3& pos, int allyTeam) const {
 		if (gs->globalLOS) { return true; }
-		const int gx = int(pos.x * invAirDiv);
-		const int gz = int(pos.z * invAirDiv);
-		return !!airLosMap[allyTeam].At(gx, gz);
+		const int gx = pos.x * invAirDiv;
+		const int gz = pos.z * invAirDiv;
+		return !!airLosMaps[allyTeam].At(gx, gz);
+	}
+
+
+	inline bool InLos(int hmx, int hmz, int allyTeam) const {
+		if (gs->globalLOS) { return true; }
+		const int gx = hmx * SQUARE_SIZE * invLosDiv;
+		const int gz = hmz * SQUARE_SIZE * invLosDiv;
+		return !!losMaps[allyTeam].At(gx, gz);
+	}
+	inline bool InAirLos(int hmx, int hmz, int allyTeam) const {
+		if (gs->globalLOS) { return true; }
+		const int gx = hmx * SQUARE_SIZE * invAirDiv;
+		const int gz = hmz * SQUARE_SIZE * invAirDiv;
+		return !!airLosMaps[allyTeam].At(gx, gz);
 	}
 
 	CLosHandler();
 	~CLosHandler();
 
-	std::vector<CLosMap> losMap;
-	std::vector<CLosMap> airLosMap;
+	std::vector<CLosMap> losMaps;
+	std::vector<CLosMap> airLosMaps;
 
 	const int losMipLevel;
 	const int airMipLevel;

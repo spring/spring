@@ -23,7 +23,6 @@
 #include "System/myMath.h"
 #include "System/ConfigHandler.h"
 #include "System/Exceptions.h"
-#include "System/GlobalUnsynced.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 

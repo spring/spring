@@ -3,13 +3,13 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "Rendering/GL/myGL.h"
-#include "Game/Camera.h"
 #include "LargeBeamLaserProjectile.h"
+#include "Game/Camera.h"
+#include "Game/GlobalUnsynced.h"
+#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CLargeBeamLaserProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, ZeroVector, ZeroVector, NULL, NULL));
 

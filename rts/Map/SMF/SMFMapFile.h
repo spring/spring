@@ -33,7 +33,7 @@ public:
 
 	const SMFHeader& GetHeader() const { return header; }
 
-	// todo: do not use, just here for backward compatibility with BFGroundTextures.cpp
+	// todo: do not use, just here for backward compatibility with SMFGroundTextures.cpp
 	CFileHandler* GetFileHandler() { return &ifs; }
 
 private:

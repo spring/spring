@@ -28,6 +28,7 @@
 #include "GameServer.h"
 #include "GameVersion.h"
 #include "GameSetup.h"
+#include "GlobalUnsynced.h"
 #include "LoadScreen.h"
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
@@ -205,7 +206,6 @@ CR_REG_METADATA(CGame,(
 //	CR_MEMBER(script),
 //	CR_MEMBER(infoConsole),
 //	CR_MEMBER(consoleHistory),
-//	CR_MEMBER(wordCompletion),
 //	CR_MEMBER(hotBinding),
 //	CR_MEMBER(inputTextPosX),
 //	CR_MEMBER(inputTextPosY),
@@ -243,7 +243,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 
 	infoConsole(NULL),
 	consoleHistory(NULL),
-	wordCompletion(NULL),
 
 	skipping(false),
 	playing(false),
@@ -325,6 +324,8 @@ CGame::~CGame()
 	UnsyncedGameCommands::DestroyInstance();
 	SyncedGameCommands::DestroyInstance();
 
+	CWordCompletion::DestroyInstance();
+
 	CLoadScreen::DeleteInstance();
 	IVideoCapturing::FreeInstance();
 	ISound::Shutdown();
@@ -343,7 +344,6 @@ CGame::~CGame()
 	SafeDelete(tooltip); // CTooltipConsole*
 	SafeDelete(infoConsole);
 	SafeDelete(consoleHistory);
-	SafeDelete(wordCompletion);
 	SafeDelete(keyBindings);
 	SafeDelete(keyCodes);
 	SafeDelete(selectionKeys); // CSelectionKeyHandler*
@@ -500,6 +500,8 @@ void CGame::LoadSimulation(const std::string& mapName)
 	SyncedGameCommands::CreateInstance();
 	UnsyncedGameCommands::CreateInstance();
 
+	CWordCompletion::CreateInstance();
+
 	// simulation components
 	helper = new CGameHelper();
 	ground = new CGround();
@@ -629,7 +631,6 @@ void CGame::LoadInterface()
 	{
 		ScopedOnceTimer timer("Loading console");
 		consoleHistory = new CConsoleHistory;
-		wordCompletion = new CWordCompletion;
 		for (int pp = 0; pp < playerHandler->ActivePlayers(); pp++) {
 			wordCompletion->AddWord(playerHandler->Player(pp)->name, false, false, false);
 		}
@@ -1211,7 +1212,7 @@ bool CGame::Draw() {
 
 	SetDrawMode(gameNormalDraw);
 
- 	if (luaUI)    { luaUI->CheckStack(); luaUI->ExecuteDelayedXCalls(); }
+ 	if (luaUI)    { luaUI->CheckStack(); luaUI->ExecuteDelayedXCalls(); luaUI->ExecuteUIEventBatch(); }
 	if (luaGaia)  { luaGaia->CheckStack(); }
 	if (luaRules) { luaRules->CheckStack(); }
 
@@ -1888,8 +1889,8 @@ void CGame::MakeMemDump()
 		file << "LOS-map for team " << a << "\n";
 		for (int y = 0; y < gs->mapy>>modInfo.losMipLevel; ++y) {
 			file << " ";
-			for (int x = 0; x < gs->mapx>>modInfo.losMipLevel; ++x) {
-				file << loshandler->losMap[a][y * (gs->mapx>>modInfo.losMipLevel) + x] << " ";
+			for (int x = 0; x < gs->mapx >> modInfo.losMipLevel; ++x) {
+				file << loshandler->losMaps[a][y * (gs->mapx >> modInfo.losMipLevel) + x] << " ";
 			}
 			file << "\n";
 		}

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _REMOTE_CONNECTION_H
-#define _REMOTE_CONNECTION_H
+#ifndef _UDP_CONNECTION_H
+#define _UDP_CONNECTION_H
 
 #include <boost/ptr_container/ptr_map.hpp>
 #include <boost/shared_ptr.hpp>
@@ -54,15 +54,15 @@ public:
 };
 
 /*
- * How Spring protocolheader looks like (size in bytes):
- * - 4 (int): number of packet (continuous)
+ * How Spring protocol-header looks like (size in bytes):
+ * - 4 (int): number of the packet (continuous index)
  * - 4 (int): last in order (tell the client we received all packages with
  *   packetNumber less or equal)
  * - 1 (unsigned char): nak (we missed x packets, starting with firstUnacked)
  */
 
 /**
- * @brief Communication class over UDP
+ * @brief Communication class for sending and receiving over UDP
  */
 class UDPConnection : public CConnection
 {
@@ -74,27 +74,27 @@ public:
 	UDPConnection(CConnection& conn);
 	virtual ~UDPConnection();
 
-	/**
-	 * @brief Send packet to other instance
-	 */
-	virtual void SendData(boost::shared_ptr<const RawPacket> data);
+	// START overriding CConnection
 
-	virtual bool HasIncomingData() const;
+	void SendData(boost::shared_ptr<const RawPacket> data);
+	bool HasIncomingData() const;
+	boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
+	void DeleteBufferPacketAt(unsigned index);
+	boost::shared_ptr<const RawPacket> GetData();
+	void Flush(const bool forced);
+	bool CheckTimeout(int seconds = 0, bool initial = false) const;
 
-	virtual boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
+	void ReconnectTo(CConnection &conn);
+	bool CanReconnect() const;
+	bool NeedsReconnect();
 
-	/**
-	 * @brief use this to recieve ready data
-	 * @return a network message encapsulated in a RawPacket,
-	 * or NULL if there are no more messages available.
-	 */
-	virtual boost::shared_ptr<const RawPacket> GetData();
+	std::string Statistics() const;
+	std::string GetFullAddress() const;
 
-	/**
-	 * @brief update internals
-	 * Check for unack'd packets, timeout etc.
-	 */
-	virtual void Update();
+	void Update();
+
+	// END overriding CConnection
+
 
 	/**
 	 * @brief strip and parse header data and add data to waitingPackets
@@ -103,31 +103,19 @@ public:
 	 */
 	void ProcessRawPacket(Packet& packet);
 
-	/// send all data waiting in char outgoingData[]
-	virtual void Flush(const bool forced = false);
+	int GetReconnectSecs() const;
 
-	virtual bool CheckTimeout(int nsecs = 0, bool initial = false) const;
+	/// Are we using this address?
+	bool IsUsingAddress(const boost::asio::ip::udp::endpoint& from) const;
 
+private:
 	void InitConnection(boost::asio::ip::udp::endpoint address,
 			boost::shared_ptr<boost::asio::ip::udp::socket> socket);
 
-	void CopyConnection(UDPConnection &conn);
+	void CopyConnection(UDPConnection& conn);
 
-	virtual void ReconnectTo(CConnection &conn);
-
-	bool NeedsReconnect();
-	bool CanReconnect() const;
-	int GetReconnectSecs() const;
-
-	virtual std::string Statistics() const;
-
-	/// do we have these address?
-	bool CheckAddress(const boost::asio::ip::udp::endpoint&) const;
-	std::string GetFullAddress() const;
-	
 	void SetMTU(unsigned mtu);
 
-private:
 	void Init();
 
 	/// add header to data and send it
@@ -209,4 +197,5 @@ private:
 
 } // namespace netcode
 
-#endif // _REMOTE_CONNECTION_H
+#endif // _UDP_CONNECTION_H
+

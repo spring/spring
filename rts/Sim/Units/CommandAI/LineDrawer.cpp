@@ -8,7 +8,6 @@
 
 #include "Rendering/GlobalRendering.h"
 #include "Game/UI/CommandColors.h"
-#include "System/GlobalUnsynced.h"
 
 CLineDrawer lineDrawer;
 

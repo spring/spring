@@ -28,10 +28,10 @@ float CMoveMath::GetPosSpeedMod(const MoveData& moveData, int xSquare, int zSqua
 	}
 
 	const int square = (xSquare >> 1) + ((zSquare >> 1) * gs->hmapx);
-	const int squareTerrType = readmap->typemap[square];
+	const int squareTerrType = readmap->GetTypeMapSynced()[square];
 
-	const float height  = readmap->mipHeightmap[1][square];
-	const float slope   = readmap->slopemap[square];
+	const float height  = readmap->GetMIPHeightMapSynced(1)[square];
+	const float slope   = readmap->GetSlopeMapSynced()[square];
 
 	const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[squareTerrType];
 
@@ -51,15 +51,15 @@ float CMoveMath::GetPosSpeedMod(const MoveData& moveData, int xSquare, int zSqua
 		return 0.0f;
 	}
 
-	const int square         = (xSquare >> 1) + ((zSquare >> 1) * gs->hmapx);
-	const int squareTerrType = readmap->typemap[square];
+	const int square = (xSquare >> 1) + ((zSquare >> 1) * gs->hmapx);
+	const int squareTerrType = readmap->GetTypeMapSynced()[square];
 
-	const float height  = readmap->mipHeightmap[1][square];
-	const float slope   = readmap->slopemap[square];
+	const float height  = readmap->GetMIPHeightMapSynced(1)[square];
+	const float slope   = readmap->GetSlopeMapSynced()[square];
 
 	const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[squareTerrType];
 
-	float3 flatNorm = readmap->centernormals[xSquare + zSquare * gs->mapx];
+	float3 flatNorm = readmap->GetCenterNormalsSynced()[xSquare + zSquare * gs->mapx];
 		flatNorm.y = 0.0f;
 		flatNorm.SafeNormalize();
 
@@ -145,7 +145,7 @@ bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obst
 	const int hx = int(obstacle->pos.x / SQUARE_SIZE);
 	const int hz = int(obstacle->pos.z / SQUARE_SIZE);
 	const int hi = (hx >> 1) + (hz >> 1) * gs->hmapx;
-	const int hj = (gs->mapx >> 1) * (gs->mapy >> 1); // sizeof(mipHeightmap[1])
+	const int hj = (gs->mapx >> 1) * (gs->mapy >> 1); // sizeof(GetMIPHeightMapSynced(1))
 
 	if (hi < 0 || hi >= hj) {
 		// unit is out of map bounds, so cannot be blocked
@@ -181,7 +181,7 @@ bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obst
 	// as non-blocking
 	const float oy = obstacle->pos.y;
 	const float oh = std::max(obstacle->height, -obstacle->height);
-	const float gy = readmap->mipHeightmap[1][hi];
+	const float gy = readmap->GetMIPHeightMapSynced(1)[hi];
 
 	// remaining conditions under which obstacle does NOT block unit
 	//   1.

@@ -2,7 +2,8 @@
 
 #include "StdAfx.h" // TODO: ugh
 #include <assert.h>
-#include "SmfMapFile.h"
+
+#include "SMFMapFile.h"
 #include "mapfile.h"
 #include "mmgr.h"
 #include "Exceptions.h"

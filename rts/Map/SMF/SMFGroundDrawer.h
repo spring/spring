@@ -79,9 +79,10 @@ private:
 	const int numBigTexX;
 	const int numBigTexY;
 	const int maxIdx;
+	const int heightMapSizeX;
 
-	int mapWidth;
-	int mapHeight;
+	int mapSizeX;
+	int mapSizeZ;
 	int bigTexH;
 
 	int viewRadius;
@@ -89,9 +90,6 @@ private:
 
 	GLuint waterPlaneCamOutDispList;
 	GLuint waterPlaneCamInDispList;
-
-	float* heightData;
-	const int heightDataX;
 
 	Shader::IProgramObject* smfShaderBaseARB;   //! default (V+F) SMF ARB shader
 	Shader::IProgramObject* smfShaderReflARB;   //! shader (V+F) for the DynamicWater reflection pass

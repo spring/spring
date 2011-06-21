@@ -42,9 +42,9 @@
 #if !defined BUILDING_AI
 #include "Rendering/GL/myGL.h"
 #endif // !defined BUILDING_AI
-#include "float3.h"
-#include "Util.h"
-#include "GlobalUnsynced.h"
+#include "System/float3.h"
+#include "System/Util.h"
+#include "Game/GlobalUnsynced.h"
 #if !defined BUILDING_AI
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"

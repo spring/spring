@@ -4,15 +4,19 @@
 
 #include "StdAfx.h"
 #include "LosMap.h"
+#include "Map/ReadMap.h"
+#include "System/myMath.h"
+#include "System/float3.h"
+
+#ifdef USE_UNSYNCED_HEIGHTMAP
+#include "Game/GlobalUnsynced.h" // for myAllyTeam
+#endif
 
 #include <algorithm>
 #include <cstring>
 
-#include "myMath.h"
-#include "float3.h"
 
 
-//////////////////////////////////////////////////////////////////////
 
 
 void CLosMap::SetSize(int2 newSize)
@@ -23,33 +27,96 @@ void CLosMap::SetSize(int2 newSize)
 }
 
 
-void CLosMap::AddMapArea(int2 pos, int radius, int amount)
+
+void CLosMap::AddMapArea(int2 pos, int allyteam, int radius, int amount)
 {
-	const int sx = std::max(0, pos.x - radius);
+	#ifdef USE_UNSYNCED_HEIGHTMAP
+	static const float* shm = readmap->GetCornerHeightMapSynced();
+	static       float* uhm = readmap->GetCornerHeightMapUnsynced();
+
+	static const int LOS2HEIGHT_X = gs->mapx / size.x;
+	static const int LOS2HEIGHT_Z = gs->mapy / size.y;
+
+	const bool updateUnsyncedHeightMap = (allyteam >= 0 && (allyteam == gu->myAllyTeam || gu->spectatingFullView));
+	#endif
+
+	const int sx = std::max(         0, pos.x - radius);
 	const int ex = std::min(size.x - 1, pos.x + radius);
-	const int sy = std::max(0, pos.y - radius);
+	const int sy = std::max(         0, pos.y - radius);
 	const int ey = std::min(size.y - 1, pos.y + radius);
 
 	const int rr = (radius * radius);
 
-	for (int y = sy; y <= ey; ++y) {
-		const int rrx = rr - Square(pos.y - y);
-		for (int x = sx; x <= ex; ++x) {
-			if (Square(pos.x - x) <= rrx) {
-				map[(y * size.x) + x] += amount;
+	for (int lmz = sy; lmz <= ey; ++lmz) {
+		const int rrx = rr - Square(pos.y - lmz);
+		for (int lmx = sx; lmx <= ex; ++lmx) {
+			const int losMapSquareIdx = (lmz * size.x) + lmx;
+			const bool squareEnteredLOS = (map[losMapSquareIdx] == 0 && amount > 0);
+
+			if (Square(pos.x - lmx) > rrx) {
+				continue;
 			}
+
+			map[losMapSquareIdx] += amount;
+
+			#ifdef USE_UNSYNCED_HEIGHTMAP
+			// update unsynced heightmap for all squares that
+			// cover LOSmap square <x, y> (LOSmap resolution
+			// is never greater than that of the heightmap)
+			//
+			// NOTE:
+			//     CLosMap is also used by RadarHandler, so only
+			//     update the unsynced heightmap from LosHandler
+			//     (by checking if allyteam >= 0)
+			//
+			if (!updateUnsyncedHeightMap) { continue; }
+			if (!squareEnteredLOS) { continue; }
+
+			for (int hmx = lmx * LOS2HEIGHT_X; hmx < (lmx + 1) * LOS2HEIGHT_X; hmx++) {
+				for (int hmz = lmz * LOS2HEIGHT_Z; hmz < (lmz + 1) * LOS2HEIGHT_Z; hmz++) {
+					uhm[hmz * (gs->mapx + 1) + hmx] = shm[hmz * (gs->mapx + 1) + hmx];
+				}
+			}
+			#endif
 		}
 	}
 }
 
-
-void CLosMap::AddMapSquares(const std::vector<int>& squares, int amount)
+void CLosMap::AddMapSquares(const std::vector<int>& squares, int allyteam, int amount)
 {
+	#ifdef USE_UNSYNCED_HEIGHTMAP
+	static const float* shm = readmap->GetCornerHeightMapSynced();
+	static       float* uhm = readmap->GetCornerHeightMapUnsynced();
+
+	static const int LOS2HEIGHT_X = gs->mapx / size.x;
+	static const int LOS2HEIGHT_Z = gs->mapy / size.y;
+
+	const bool updateUnsyncedHeightMap = (allyteam >= 0 && (allyteam == gu->myAllyTeam || gu->spectatingFullView));
+	#endif
+
 	std::vector<int>::const_iterator lsi;
 	for (lsi = squares.begin(); lsi != squares.end(); ++lsi) {
-		map[*lsi] += amount;
+		const int losMapSquareIdx = *lsi;
+		const bool squareEnteredLOS = (map[losMapSquareIdx] == 0 && amount > 0);
+
+		map[losMapSquareIdx] += amount;
+
+		#ifdef USE_UNSYNCED_HEIGHTMAP
+		if (!updateUnsyncedHeightMap) { continue; }
+		if (!squareEnteredLOS) { continue; }
+
+		const int lmx = losMapSquareIdx % size.x;
+		const int lmz = losMapSquareIdx / size.x;
+
+		for (int hmx = lmx * LOS2HEIGHT_X; hmx < (lmx + 1) * LOS2HEIGHT_X; hmx++) {
+			for (int hmz = lmz * LOS2HEIGHT_Z; hmz < (lmz + 1) * LOS2HEIGHT_Z; hmz++) {
+				uhm[hmz * (gs->mapx + 1) + hmx] = shm[hmz * (gs->mapx + 1) + hmx];
+			}
+		}
+		#endif
 	}
 }
+
 
 
 //////////////////////////////////////////////////////////////////////

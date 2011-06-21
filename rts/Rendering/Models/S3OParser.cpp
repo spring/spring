@@ -7,12 +7,12 @@
 
 #include "S3OParser.h"
 #include "s3o.h"
+#include "Game/GlobalUnsynced.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/Exceptions.h"
-#include "System/GlobalUnsynced.h"
 #include "System/Util.h"
 #include "System/Vec2.h"
 #include "System/FileSystem/FileHandler.h"

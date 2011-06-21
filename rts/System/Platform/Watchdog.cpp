@@ -181,7 +181,7 @@ namespace Watchdog
 				break;
 		WatchDogThreadInfo* th_info;
 		if (num >= WDT_LAST || !(th_info = registeredThreads[num])->numreg) {
-			logOutput.Print("[Watchdog::ClearTimer] Invalid thread");
+			logOutput.Print("[Watchdog::ClearTimer] Invalid thread %d", num);
 			return;
 		}
 
@@ -195,7 +195,7 @@ namespace Watchdog
 			return; //! Watchdog isn't running
 		WatchDogThreadInfo* th_info;
 		if (num >= WDT_LAST || !(th_info = registeredThreads[num])->numreg) {
-			logOutput.Print("[Watchdog::ClearTimer] Invalid thread number");
+			logOutput.Print("[Watchdog::ClearTimer] Invalid thread number %d", num);
 			return;
 		}
 

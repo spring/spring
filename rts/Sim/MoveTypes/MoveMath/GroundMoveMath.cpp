@@ -64,7 +64,7 @@ Gives the ground-level of given square.
 */
 float CGroundMoveMath::yLevel(int xSquare, int zSquare) const
 {
-	return readmap->centerheightmap[xSquare + zSquare * gs->mapx];
+	return readmap->GetCenterHeightMapSynced()[xSquare + zSquare * gs->mapx];
 }
 
 float CGroundMoveMath::yLevel(const float3& pos) const

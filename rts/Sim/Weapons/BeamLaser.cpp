@@ -316,7 +316,6 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 			dir,
 			damageArray,
 			weaponDef,
-			weaponDef->explosionGenerator,
 			owner,
 			hitUnit,
 			hitFeature,

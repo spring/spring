@@ -6,7 +6,7 @@
 #include "Builder.h"
 #include "Building.h"
 #include "Game/GameHelper.h"
-#include "LogOutput.h"
+#include "Game/GlobalUnsynced.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
@@ -27,8 +27,8 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
-#include "System/GlobalUnsynced.h"
 #include "System/EventHandler.h"
+#include "System/LogOutput.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/mmgr.h"
 
@@ -136,7 +136,7 @@ void CBuilder::Update()
 {
 	if (!beingBuilt && !stunned) {
 		if (terraforming && inBuildStance) {
-			const float* heightmap = readmap->GetHeightmap();
+			const float* heightmap = readmap->GetCornerHeightMapSynced();
 			assert(!mapDamage->disabled); // The map should not be deformed in the first place.
 			float terraformScale = 0.1;
 
@@ -191,7 +191,7 @@ void CBuilder::Update()
 						for (int x = tx1; x <= tx2; x++) {
 							int idx = z * (gs->mapx + 1) + x;
 							float ch = heightmap[idx];
-							float oh = readmap->orgheightmap[idx];
+							float oh = readmap->GetOriginalHeightMapSynced()[idx];
 
 							readmap->AddHeight(idx, (oh - ch) * terraformScale);
 						}
@@ -493,15 +493,16 @@ void CBuilder::StartRestore(float3 centerPos, float radius)
 	tz2 = (int)min((float)gs->mapy,(centerPos.z+radius)/SQUARE_SIZE);
 
 	float tcost = 0.0f;
-	const float* heightmap = readmap->GetHeightmap();
+	const float* curHeightMap = readmap->GetCornerHeightMapSynced();
+	const float* orgHeightMap = readmap->GetOriginalHeightMapSynced();
 
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {
-			float delta = readmap->orgheightmap[z * (gs->mapx + 1) + x] - heightmap[z * (gs->mapx + 1) + x];
+			float delta = orgHeightMap[z * (gs->mapx + 1) + x] - curHeightMap[z * (gs->mapx + 1) + x];
 			tcost += fabs(delta);
 		}
 	}
-	myTerraformLeft=tcost;
+	myTerraformLeft = tcost;
 
 	SetBuildStanceToward(centerPos);
 }
@@ -636,17 +637,18 @@ float CBuilder::CalculateBuildTerraformCost(BuildInfo& buildInfo)
 	float3& buildPos=buildInfo.pos;
 
 	float tcost = 0.0f;
-	const float* heightmap = readmap->GetHeightmap();
+	const float* curHeightMap = readmap->GetCornerHeightMapSynced();
+	const float* orgHeightMap = readmap->GetOriginalHeightMapSynced();
 
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {
-			int idx = z * (gs->mapx + 1) + x;
-			float delta = buildPos.y - heightmap[idx];
+			const int idx = z * (gs->mapx + 1) + x;
+			float delta = buildPos.y - curHeightMap[idx];
 			float cost;
 			if (delta > 0) {
-				cost = max(3.0f, heightmap[idx]-readmap->orgheightmap[idx] + delta * 0.5f);
+				cost = max(3.0f, curHeightMap[idx] - orgHeightMap[idx] + delta * 0.5f);
 			} else {
-				cost = max(3.0f, readmap->orgheightmap[idx] - heightmap[idx] - delta * 0.5f);
+				cost = max(3.0f, orgHeightMap[idx] - curHeightMap[idx] - delta * 0.5f);
 			}
 			tcost += fabs(delta) * cost;
 		}

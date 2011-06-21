@@ -21,7 +21,6 @@
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 #include "System/Sync/SyncTracer.h"
-#include "System/GlobalUnsynced.h"
 
 const float CMissileProjectile::SMOKE_TIME = 60.0f;
 
@@ -94,7 +93,7 @@ CMissileProjectile::CMissileProjectile(
 	SetRadius(0.0f);
 
 	if (weaponDef) {
-		model = LoadModel(weaponDef);
+		model = weaponDef->LoadModel();
 		if (model) {
 			SetRadius(model->radius);
 		}

@@ -11,7 +11,7 @@
 #ifndef _CONSOLE
 
 #include "Game/GameHelper.h"
-#include "LogOutput.h"
+#include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
@@ -38,8 +38,8 @@
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "System/GlobalUnsynced.h"
 #include "System/Util.h"
+#include "System/LogOutput.h"
 #include "System/myMath.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"

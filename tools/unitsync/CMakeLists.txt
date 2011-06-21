@@ -56,7 +56,7 @@ set(main_files
 	../../rts/Lua/LuaUtils
 	../../rts/Lua/LuaIO
 	../../rts/Map/MapParser
-	../../rts/Map/SMF/SmfMapFile
+	../../rts/Map/SMF/SMFMapFile
 	../../rts/Rendering/Textures/Bitmap
 	)
 if (WIN32)

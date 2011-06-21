@@ -4,11 +4,11 @@
 #include "mmgr.h"
 
 #include "InMapDrawModel.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/PlayerHandler.h"
 #include "Game/TeamController.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "System/GlobalUnsynced.h"
 #include "System/EventHandler.h"
 #include "System/BaseNetProtocol.h"
 #include "System/creg/STL_List.h"

@@ -18,10 +18,9 @@
 #include "Camera/OverviewController.h"
 #include "Camera/TWController.h"
 #include "Camera/OrbitController.h"
-#include "ConfigHandler.h"
-#include "LogOutput.h"
-#include "GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
+#include "System/ConfigHandler.h"
+#include "System/LogOutput.h"
 
 
 CCameraHandler* camHandler = NULL;

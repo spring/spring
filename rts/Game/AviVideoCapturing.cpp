@@ -1,18 +1,16 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #if       defined AVI_CAPTURING
-
+#include "StdAfx.h"
 #include "AviVideoCapturing.h"
 
 
+#include "Rendering/AVIGenerator.h"
+#include "Rendering/GlobalRendering.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "System/LogOutput.h"
-
-#include "System/GlobalUnsynced.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
-#include "Sim/Misc/GlobalConstants.h"
-#include "Rendering/GlobalRendering.h"
-#include "Rendering/AVIGenerator.h"
 #include "lib/streflop/streflop_cond.h"
 #include <SDL_mouse.h>
 #include <SDL_events.h>

@@ -4,6 +4,7 @@
 
 #include "Factory.h"
 #include "Game/GameHelper.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/WaitCommandsAI.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
@@ -20,7 +21,6 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "System/GlobalUnsynced.h"
 #include "System/EventHandler.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"

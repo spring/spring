@@ -57,6 +57,14 @@ boost::shared_ptr<const RawPacket> CLocalConnection::Peek(unsigned ahead) const
 	}
 }
 
+void CLocalConnection::DeleteBufferPacketAt(unsigned index)
+{
+	boost::mutex::scoped_lock scoped_lock(Mutex[instance]);
+
+	if (index < Data[instance].size())
+		Data[instance].erase(Data[instance].begin() + index);
+}
+
 boost::shared_ptr<const RawPacket> CLocalConnection::GetData()
 {
 	boost::mutex::scoped_lock scoped_lock(Mutex[instance]);
@@ -76,7 +84,7 @@ void CLocalConnection::Flush(const bool forced)
 {
 }
 
-bool CLocalConnection::CheckTimeout(int nsecs, bool initial) const
+bool CLocalConnection::CheckTimeout(int seconds, bool initial) const
 {
 	return false;
 }
@@ -97,6 +105,11 @@ std::string CLocalConnection::Statistics() const
 	msg += str( boost::format("Received: %1% bytes\n") %dataRecv );
 	msg += str( boost::format("Sent: %1% bytes\n") %dataSent );
 	return msg;
+}
+
+std::string CLocalConnection::GetFullAddress() const
+{
+	return "shared memory";
 }
 
 bool CLocalConnection::HasIncomingData() const

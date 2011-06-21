@@ -6,7 +6,6 @@
 #include <deque>
 #include <string>
 
-#include "GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
 
 class CInputReceiver

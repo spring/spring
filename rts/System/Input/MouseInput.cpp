@@ -25,17 +25,17 @@
 
 #include <boost/bind.hpp>
 #include <SDL_events.h>
+#include "Game/GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/FBO.h"
-#include "GlobalUnsynced.h"
 #ifdef _WIN32
 	#include <SDL_syswm.h>
 	#include "Platform/Win/win32.h"
 	#include "Platform/Win/wsdl.h"
 #endif
-#include "MouseInput.h"
-#include "InputHandler.h"
-#include "LogOutput.h"
+#include "System/Input/MouseInput.h"
+#include "System/Input/InputHandler.h"
+#include "System/LogOutput.h"
 
 
 

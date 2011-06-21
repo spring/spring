@@ -5,14 +5,15 @@
 
 #include "StartPosSelecter.h"
 #include "MouseHandler.h"
-#include "Rendering/GL/myGL.h"
-#include "Rendering/glFont.h"
 #include "Game/GameSetup.h"
-#include "Sim/Misc/Team.h"
-#include "NetProtocol.h"
-#include "Map/Ground.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/Camera.h"
 #include "Game/InMapDraw.h"
+#include "Map/Ground.h"
+#include "Rendering/GL/myGL.h"
+#include "Rendering/glFont.h"
+#include "Sim/Misc/Team.h"
+#include "System/NetProtocol.h"
 
 
 CStartPosSelecter* CStartPosSelecter::selector = NULL;

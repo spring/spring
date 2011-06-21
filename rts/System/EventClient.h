@@ -179,7 +179,10 @@ class CEventClient
 		virtual void DrawScreenEffects();
 		virtual void DrawScreen();
 		virtual void DrawInMiniMap();
+
+		virtual void GameProgress(int gameFrame) {}
 };
 
 
 #endif /* EVENT_CLIENT_H */
+

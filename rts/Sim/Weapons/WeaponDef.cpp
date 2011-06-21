@@ -4,6 +4,7 @@
 
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Rendering/Models/IModelParser.h"
+#include "System/EventHandler.h"
 
 WeaponDef::~WeaponDef()
 {
@@ -21,5 +22,15 @@ S3DModel* WeaponDef::LoadModel()
 		}
 		visuals.model = modelParser->Load3DModel(modelname);
 	}
+	else {
+		eventHandler.LoadedModelRequested();
+	}
+
 	return visuals.model;
 }
+
+S3DModel* WeaponDef::LoadModel() const {
+	//not very sweet, but still better than replacing "const WeaponDef" _everywhere_
+	return const_cast<WeaponDef*>(this)->LoadModel();
+}
+

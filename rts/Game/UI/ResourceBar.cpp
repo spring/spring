@@ -6,12 +6,13 @@
 #include "ResourceBar.h"
 #include "MouseHandler.h"
 #include "GuiHandler.h"
+#include "Game/GlobalUnsynced.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/glFont.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Rendering/glFont.h"
-#include "NetProtocol.h"
-#include "TimeProfiler.h"
+#include "System/NetProtocol.h"
+#include "System/TimeProfiler.h"
 
 CResourceBar* resourceBar = NULL;
 

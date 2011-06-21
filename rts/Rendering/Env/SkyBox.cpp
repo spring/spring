@@ -12,7 +12,6 @@
 #include "Map/ReadMap.h"
 #include "System/Exceptions.h"
 #include "System/float3.h"
-#include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 
 CSkyBox::CSkyBox(const std::string& texture)

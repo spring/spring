@@ -98,7 +98,9 @@ enum NETMSG {
 
 	NETMSG_CREATE_NEWPLAYER = 75, // uchar myPlayerNum, uchar spectator, uchar teamNum, std::string playerName #used for players not preset in script.txt#
 
-	NETMSG_AICOMMAND_TRACKED= 76  // uchar myPlayerNum; short unitID; int id; uchar options; int aiCommandId, std::vector<float> params;
+	NETMSG_AICOMMAND_TRACKED= 76,  // uchar myPlayerNum; short unitID; int id; uchar options; int aiCommandId, std::vector<float> params;
+
+	NETMSG_GAME_FRAME_PROGRESS= 77 // int frameNum # this special packet skips queue & cache entirely, indicates current game progress for clients fast-forwarding to current point the game #
 };
 
 /// Data types for NETMSG_CUSTOM_DATA
@@ -179,6 +181,7 @@ public:
 	PacketType SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping);
 	PacketType SendPlayerLeft(uchar myPlayerNum, uchar bIntended);
 	PacketType SendLuaMsg(uchar myPlayerNum, unsigned short script, uchar mode, const std::vector<boost::uint8_t>& msg);
+	PacketType SendCurrentFrameProgress(int frameNum);
 
 	PacketType SendGiveAwayEverything(uchar myPlayerNum, uchar giveToTeam);
 	/**

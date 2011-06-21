@@ -10,6 +10,7 @@
 #include "ExternalAI/AILegacySupport.h" // {Point, Line}Marker
 #include "Game/Camera.h"
 #include "Game/Game.h"
+#include "GlobalUnsynced.h"
 #include "Game/PlayerHandler.h"
 #include "Game/UI/MiniMap.h"
 #include "Game/UI/MouseHandler.h"

@@ -3,6 +3,7 @@
 #include "ProjectileDrawer.hpp"
 
 #include "Game/Camera.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/LoadScreen.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapInfo.h"
@@ -33,7 +34,6 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
-#include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"
 
@@ -1041,7 +1041,9 @@ void CProjectileDrawer::GenerateNoiseTex(unsigned int tex, int size)
 
 void CProjectileDrawer::RenderProjectileCreated(const CProjectile* p)
 {
-#if defined(USE_GML) && GML_ENABLE_SIM
+	texturehandlerS3O->UpdateDraw();
+
+#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
 	if(p->model && TEX_TYPE(p) < 0)
 		TEX_TYPE(p) = texturehandlerS3O->LoadS3OTextureNow(p->model);
 #endif

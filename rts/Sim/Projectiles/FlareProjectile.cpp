@@ -14,7 +14,6 @@
 #include "Sim/Projectiles/WeaponProjectiles/MissileProjectile.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
-#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CFlareProjectile, CProjectile, (ZeroVector, ZeroVector, 0, 0));
 

@@ -9,7 +9,6 @@
 #endif
 
 #include "System/float3.h"
-#include "System/GlobalUnsynced.h"
 
 class CVertexArray;
 struct S3DOPrimitive;
@@ -61,22 +60,7 @@ public:
 	size_t team;
 
 private:
-	void Init(int _team, const float3& _pos, const float3& _speed)
-	{
-		prim   = NULL;
-		object = NULL;
-		verts  = NULL;
-
-		pos   = _pos;
-		speed = _speed;
-
-		texture = 0;
-		team    = _team;
-
-		rotAxis  = gu->usRandVector().ANormalize();
-		rotSpeed = gu->usRandFloat() * 0.1f;
-		rot = 0;
-	}
+	void Init(int _team, const float3& _pos, const float3& _speed);
 };
 
 #endif // FLYING_PIECE_H

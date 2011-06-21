@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "FlyingPiece.hpp"
+#include "Game/GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/UnitDrawer.h"
@@ -9,11 +10,27 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/Models/3DOParser.h"
 #include "Rendering/Models/S3OParser.h"
-#include "System/GlobalUnsynced.h"
 #include "System/Matrix44f.h"
 
 FlyingPiece::~FlyingPiece() {
 	delete[] verts;
+}
+
+void FlyingPiece::Init(int _team, const float3& _pos, const float3& _speed)
+{
+	prim   = NULL;
+	object = NULL;
+	verts  = NULL;
+
+	pos   = _pos;
+	speed = _speed;
+
+	texture = 0;
+	team    = _team;
+
+	rotAxis  = gu->usRandVector().ANormalize();
+	rotSpeed = gu->usRandFloat() * 0.1f;
+	rot = 0;
 }
 
 void FlyingPiece::Draw(int modelType, size_t* lastTeam, size_t* lastTex, CVertexArray* va) {

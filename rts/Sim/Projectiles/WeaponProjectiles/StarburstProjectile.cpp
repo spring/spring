@@ -17,7 +17,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/Sync/SyncTracer.h"
-#include "System/GlobalUnsynced.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 

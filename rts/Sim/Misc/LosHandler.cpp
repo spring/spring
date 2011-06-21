@@ -73,9 +73,9 @@ CLosHandler* loshandler;
 
 
 CLosHandler::CLosHandler() :
-	losMap(teamHandler->ActiveAllyTeams()),
-	airLosMap(teamHandler->ActiveAllyTeams()),
-	//airAlgo(int2(airSizeX, airSizeY), -1e6f, 15, readmap->mipHeightmap[airMipLevel]),
+	losMaps(teamHandler->ActiveAllyTeams()),
+	airLosMaps(teamHandler->ActiveAllyTeams()),
+	// airAlgo(int2(airSizeX, airSizeY), -1e6f, 15, readmap->GetMIPHeightMapSynced(airMipLevel)),
 	losMipLevel(modInfo.losMipLevel),
 	airMipLevel(modInfo.airMipLevel),
 	losDiv(SQUARE_SIZE * (1 << losMipLevel)),
@@ -87,11 +87,11 @@ CLosHandler::CLosHandler() :
 	losSizeX(std::max(1, gs->mapx >> losMipLevel)),
 	losSizeY(std::max(1, gs->mapy >> losMipLevel)),
 	requireSonarUnderWater(modInfo.requireSonarUnderWater),
-	losAlgo(int2(losSizeX, losSizeY), -1e6f, 15, readmap->mipHeightmap[losMipLevel])
+	losAlgo(int2(losSizeX, losSizeY), -1e6f, 15, readmap->GetMIPHeightMapSynced(losMipLevel))
 {
 	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
-		losMap[a].SetSize(losSizeX, losSizeY);
-		airLosMap[a].SetSize(airSizeX, airSizeY);
+		losMaps[a].SetSize(losSizeX, losSizeY);
+		airLosMaps[a].SetSize(airSizeX, airSizeY);
 	}
 }
 
@@ -193,8 +193,8 @@ void CLosHandler::LosAdd(LosInstance* instance)
 
 	losAlgo.LosAdd(instance->basePos, instance->losSize, instance->baseHeight, instance->losSquares);
 
-	if (instance->losSize > 0) { losMap[instance->allyteam].AddMapSquares(instance->losSquares, 1); }
-	if (instance->airLosSize > 0) { airLosMap[instance->allyteam].AddMapArea(instance->baseAirPos, instance->airLosSize, 1); }
+	if (instance->losSize > 0) { losMaps[instance->allyteam].AddMapSquares(instance->losSquares, instance->allyteam, 1); }
+	if (instance->airLosSize > 0) { airLosMaps[instance->allyteam].AddMapArea(instance->baseAirPos, instance->allyteam, instance->airLosSize, 1); }
 }
 
 
@@ -266,8 +266,8 @@ void CLosHandler::AllocInstance(LosInstance* instance)
 
 void CLosHandler::CleanupInstance(LosInstance* instance)
 {
-	if (instance->losSize > 0) { losMap[instance->allyteam].AddMapSquares(instance->losSquares, -1); }
-	if (instance->airLosSize > 0) { airLosMap[instance->allyteam].AddMapArea(instance->baseAirPos, instance->airLosSize, -1); }
+	if (instance->losSize > 0) { losMaps[instance->allyteam].AddMapSquares(instance->losSquares, instance->allyteam, -1); }
+	if (instance->airLosSize > 0) { airLosMaps[instance->allyteam].AddMapArea(instance->baseAirPos, instance->allyteam, instance->airLosSize, -1); }
 }
 
 
