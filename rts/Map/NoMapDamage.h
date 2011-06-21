@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __NO_MAP_DAMAGE_H__
-#define __NO_MAP_DAMAGE_H__
+#ifndef _NO_MAP_DAMAGE_H
+#define _NO_MAP_DAMAGE_H
 
 #include "MapDamage.h"
 
@@ -17,4 +17,4 @@ public:
 	void Update();
 };
 
-#endif // __NO_MAP_DAMAGE_H__
+#endif // _NO_MAP_DAMAGE_H

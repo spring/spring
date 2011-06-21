@@ -3,7 +3,6 @@
 #include "StdAfx.h"
 #include "MapDamage.h"
 #include "NoMapDamage.h"
-#include "float3.h"
 
 /* Do no deformation. (Maybe I should've left all this in the header?) */
 
