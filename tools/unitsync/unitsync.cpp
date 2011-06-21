@@ -12,6 +12,7 @@
 #include "Game/GameVersion.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
+#include "Map/ReadMap.h"
 #include "Map/SMF/SMFMapFile.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/SideParser.h"
@@ -509,7 +510,7 @@ static bool internal_GetMapInfo(const char* mapName, InternalMapInfo* outInfo)
 		const std::string extension = filesystem.GetExtension(mapFile);
 		if (extension == "smf") {
 			try {
-				CSmfMapFile file(mapFile);
+				const CSmfMapFile file(mapFile);
 				const SMFHeader& mh = file.GetHeader();
 
 				outInfo->width  = mh.mapx * SQUARE_SIZE;
@@ -1140,8 +1141,9 @@ EXPORT(int) GetInfoMapSize(const char* mapName, const char* name, int* width, in
 		const std::string mapFile = GetMapFile(mapName);
 		ScopedMapLoader mapLoader(mapName, mapFile);
 		CSmfMapFile file(mapFile);
+		MapBitmapInfo bmInfo;
 
-		MapBitmapInfo bmInfo = file.GetInfoMapSize(name);
+		file.GetInfoMapSize(name, &bmInfo);
 
 		*width = bmInfo.width;
 		*height = bmInfo.height;
@@ -1178,7 +1180,9 @@ EXPORT(int) GetInfoMap(const char* mapName, const char* name, unsigned char* dat
 			ret = file.ReadInfoMap(n, data);
 		} else if (actualType == bm_grayscale_16 && typeHint == bm_grayscale_8) {
 			// convert from 16 bits per pixel to 8 bits per pixel
-			MapBitmapInfo bmInfo = file.GetInfoMapSize(name);
+			MapBitmapInfo bmInfo;
+			file.GetInfoMapSize(name, &bmInfo);
+
 			const int size = bmInfo.width * bmInfo.height;
 			if (size > 0) {
 				unsigned short* temp = new unsigned short[size];

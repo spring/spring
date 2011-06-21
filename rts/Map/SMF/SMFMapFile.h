@@ -4,11 +4,12 @@
 #define SMFMAPFILE_H
 
 #include "FileSystem/FileHandler.h"
-#include "Map/ReadMap.h"
 #include "mapfile.h"
 #include <string>
 #include <vector>
 
+struct MapFeatureInfo;
+struct MapBitmapInfo;
 
 class CSmfMapFile
 {
@@ -23,7 +24,7 @@ public:
 	void ReadHeightmap(float* heightmap, float base, float mod);
 	void ReadFeatureInfo();
 	void ReadFeatureInfo(MapFeatureInfo* f);
-	MapBitmapInfo GetInfoMapSize(const std::string& name) const;
+	void GetInfoMapSize(const std::string& name, MapBitmapInfo*) const;
 	bool ReadInfoMap(const std::string& name, void* data);
 
 	int GetNumFeatures()     const { return featureHeader.numFeatures; }

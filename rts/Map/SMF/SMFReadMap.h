@@ -3,6 +3,7 @@
 #ifndef SMFREADMAP_H
 #define SMFREADMAP_H
 
+#include "Map/ReadMap.h"
 #include "SMFMapFile.h"
 
 class CBFGroundDrawer;
