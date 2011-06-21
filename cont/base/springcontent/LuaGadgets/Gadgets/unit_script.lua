@@ -674,14 +674,14 @@ function gadget:UnitCreated(unitID, unitDefID)
 			local name = weapon_funcs[j]
 			local dispatch = {}
 			local n = 0
-			for i=1,ud.weapons.n do
+			for i=1,#ud.weapons do
 				local fun = callins[name .. i]
 				if fun then
 					dispatch[i] = fun
 					n = n + 1
 				end
 			end
-			if (n == ud.weapons.n) then
+			if (n == #ud.weapons) then
 				-- optimized case
 				callins[name] = function(w, ...)
 					return dispatch[w](...)
