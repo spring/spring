@@ -1109,8 +1109,8 @@ namespace terrain {
 		//     this writes to dataSynced for all heightmaps in the
 		//     lowDetail-chain at depth > 0, but these are _NEVER_
 		//     accessed in synced context (neither are any nodes
-		//     in the highDetail chain) -- ONLY the top-level node
-		//     of this->heightmap carries the actual sync-relevant
+		//     in the highDetail chain) - ONLY the top-level node
+		//     (this->heightmap) carries the actual sync-relevant
 		//     height values
 		heightmap->UpdateLowerUnsynced(sx, sy, w, h);
 
