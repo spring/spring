@@ -619,6 +619,8 @@ static int PushRulesParams(lua_State* L, const char* caller,
 		LuaPushNamedNumber(L, name, param.value);
 		lua_rawset(L, -3);
 	}
+
+	// <i> is not consecutive due to the "continue"
 	hs_n.PushNumber(L, pCount);
 
 	return 1;
@@ -966,7 +968,7 @@ int LuaSyncedRead::GetAllyTeamList(lua_State* L)
 		lua_pushnumber(L, at);
 		lua_rawset(L, -3);
 	}
-	hs_n.PushNumber(L, count);
+
 	return 1;
 }
 
@@ -999,7 +1001,6 @@ int LuaSyncedRead::GetTeamList(lua_State* L)
 			lua_rawset(L, -3);
 		}
 	}
-	hs_n.PushNumber(L, count);
 
 	return 1;
 }
@@ -1044,7 +1045,6 @@ int LuaSyncedRead::GetPlayerList(lua_State* L)
 			lua_rawset(L, -3);
 		}
 	}
-	hs_n.PushNumber(L, count);
 
 	return 1;
 }
@@ -1310,7 +1310,7 @@ int LuaSyncedRead::GetTeamStatsHistory(lua_State* L)
 			lua_rawset(L, -3);
 		}
 	}
-	hs_n.PushNumber(L, count);
+
 	return 1;
 }
 
@@ -1511,11 +1511,11 @@ int LuaSyncedRead::GetAllUnits(lua_State* L)
 	if (ActiveFullRead()) {
 		lua_createtable(L, uh->activeUnits.size(), 0);
 		for (uit = uh->activeUnits.begin(); uit != uh->activeUnits.end(); ++uit) {
+			// t[count] = id
 			lua_pushnumber(L, (*uit)->id);
 			lua_rawseti(L, -2, ++count);
 		}
-	}
-	else {
+	} else {
 		lua_newtable(L);
 		for (uit = uh->activeUnits.begin(); uit != uh->activeUnits.end(); ++uit) {
 			if (IsUnitVisible(*uit)) {
@@ -1526,7 +1526,7 @@ int LuaSyncedRead::GetAllUnits(lua_State* L)
 			}
 		}
 	}
-	hs_n.PushNumber(L, count);
+
 	return 1;
 }
 
@@ -1557,7 +1557,7 @@ int LuaSyncedRead::GetTeamUnits(lua_State* L)
 			lua_pushnumber(L, (*uit)->id);
 			lua_rawset(L, -3);
 		}
-		hs_n.PushNumber(L, count);
+
 		return 1;
 	}
 
@@ -1573,7 +1573,7 @@ int LuaSyncedRead::GetTeamUnits(lua_State* L)
 			lua_rawset(L, -3);
 		}
 	}
-	hs_n.PushNumber(L, count);
+
 	return 1;
 }
 
@@ -1637,10 +1637,11 @@ int LuaSyncedRead::GetTeamUnitsSorted(lua_State* L)
 				lua_pushnumber(L, unit->id);
 				lua_rawset(L, -3);
 			}
-			hs_n.PushNumber(L, v.size());
 		}
 		lua_rawset(L, -3);
 	}
+
+	// UnitDef ID keys are not consecutive, so add the "n"
 	hs_n.PushNumber(L, unitDefMap.size());
 	return 1;
 }
@@ -1663,6 +1664,7 @@ int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 	if (IsAlliedTeam(teamID)) {
 		lua_newtable(L);
 		int defCount = 0;
+
 		for (int udID = 0; udID < unitDefHandler->unitDefs.size(); udID++) {
 			const int unitCount = uh->unitsByDefs[teamID][udID].size();
 			if (unitCount > 0) {
@@ -1672,28 +1674,35 @@ int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 				defCount++;
 			}
 		}
+		// keys are not necessarily consecutive here
+		// due to the unitCount check, so add the "n"
 		hs_n.PushNumber(L, defCount);
 		return 1;
 	}
 
 	// tally the counts for enemies
-	map<int, int> unitDefCounts; // use the unitDef->id for ordering
+	map<int, int> unitDefCounts;
+	map<int, int>::const_iterator mit;
+
 	const CUnitSet& unitSet = team->units;
 	CUnitSet::const_iterator uit;
+
 	int unknownCount = 0;
 	for (uit = unitSet.begin(); uit != unitSet.end(); ++uit) {
 		const CUnit* unit = *uit;
-		if (IsUnitVisible(unit)) {
-			if (!IsUnitTyped(unit)) {
-				unknownCount++;
+
+		if (!IsUnitVisible(unit)) {
+			continue;
+		}
+		if (!IsUnitTyped(unit)) {
+			unknownCount++;
+		} else {
+			const UnitDef* ud = EffectiveUnitDef(unit);
+			map<int, int>::iterator mit = unitDefCounts.find(ud->id);
+			if (mit == unitDefCounts.end()) {
+				unitDefCounts[ud->id] = 1;
 			} else {
-				const UnitDef* ud = EffectiveUnitDef(unit);
-				map<int, int>::iterator mit = unitDefCounts.find(ud->id);
-				if (mit == unitDefCounts.end()) {
-					unitDefCounts[ud->id] = 1;
-				} else {
-					unitDefCounts[ud->id] = mit->second + 1;
-				}
+				unitDefCounts[ud->id] = mit->second + 1;
 			}
 		}
 	}
@@ -1701,7 +1710,7 @@ int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 	// push the counts
 	lua_newtable(L);
 	int defCount = 0;
-	map<int, int>::const_iterator mit;
+
 	for (mit = unitDefCounts.begin(); mit != unitDefCounts.end(); ++mit) {
 		lua_pushnumber(L, mit->first);
 		lua_pushnumber(L, mit->second);
@@ -1712,6 +1721,8 @@ int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 		HSTR_PUSH_NUMBER(L, "unknown", unknownCount);
 		defCount++;
 	}
+
+	// unitDef->id is used for ordering, so not consecutive
 	hs_n.PushNumber(L, defCount);
 	return 1;
 }
@@ -1793,7 +1804,6 @@ int LuaSyncedRead::GetTeamUnitsByDefs(lua_State* L)
 			}
 		}
 	}
-	hs_n.PushNumber(L, count);
 
 	return 1;
 }
@@ -2009,8 +2019,6 @@ int LuaSyncedRead::GetUnitsInRectangle(lua_State* L)
 		LOOP_UNIT_CONTAINER(VISIBLE_TEST, RECTANGLE_TEST);
 	}
 
-	hs_n.PushNumber(L, count);
-
 	return 1;
 }
 
@@ -2061,8 +2069,6 @@ int LuaSyncedRead::GetUnitsInBox(lua_State* L)
 	else { // AllUnits
 		LOOP_UNIT_CONTAINER(VISIBLE_TEST, BOX_TEST);
 	}
-
-	hs_n.PushNumber(L, count);
 
 	return 1;
 }
@@ -2115,8 +2121,6 @@ int LuaSyncedRead::GetUnitsInCylinder(lua_State* L)
 	else { // AllUnits
 		LOOP_UNIT_CONTAINER(VISIBLE_TEST, CYLINDER_TEST);
 	}
-
-	hs_n.PushNumber(L, count);
 
 	return 1;
 }
@@ -2173,8 +2177,6 @@ int LuaSyncedRead::GetUnitsInSphere(lua_State* L)
 	else { // AllUnits
 		LOOP_UNIT_CONTAINER(VISIBLE_TEST, SPHERE_TEST);
 	}
-
-	hs_n.PushNumber(L, count);
 
 	return 1;
 }
@@ -2282,8 +2284,6 @@ int LuaSyncedRead::GetUnitsInPlanes(lua_State* L)
 			}
 		}
 	}
-
-	hs_n.PushNumber(L, count);
 
 	return 1;
 }
@@ -2947,7 +2947,7 @@ int LuaSyncedRead::GetUnitIsTransporting(lua_State* L)
 		lua_pushnumber(L, carried->id);
 		lua_rawset(L, -3);
 	}
-	hs_n.PushNumber(L, count);
+
 	return 1;
 }
 
@@ -3561,16 +3561,17 @@ static void PackCommand(lua_State* L, const Command& cmd)
 	lua_createtable(L, 0, 4);
 
 	HSTR_PUSH_NUMBER(L, "id", cmd.GetID());
-
 	HSTR_PUSH(L, "params");
+
 	lua_createtable(L, cmd.params.size(), 0);
 	for (size_t p = 0; p < cmd.params.size(); p++) {
 		lua_pushnumber(L, p + 1);
 		lua_pushnumber(L, cmd.params[p]);
 		lua_rawset(L, -3);
 	}
-	hs_n.PushNumber(L, cmd.params.size());
-	lua_rawset(L, -3); // params table
+
+	// t["params"] = {[1] = param1, ...}
+	lua_rawset(L, -3);
 
 	HSTR_PUSH(L, "options");
 	lua_createtable(L, 0, 7);

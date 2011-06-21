@@ -849,7 +849,7 @@ void LuaUtils::PushCommandDesc(lua_State* L, const CommandDescription& cd)
 	const int numParams = cd.params.size();
 	const int numTblKeys = 12;
 
-	lua_checkstack(L, 1 + 1 + 1 + 1 + 1);
+	lua_checkstack(L, 1 + 1 + 1 + 1);
 	lua_createtable(L, 0, numTblKeys);
 
 	HSTR_PUSH_NUMBER(L, "id",          cd.id);

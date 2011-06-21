@@ -518,10 +518,6 @@ void cRAI::UnitIdle(int unit)
 	if( RAIDEBUGGING ) *l<<"#";
 }
 
-void cRAI::GotChatMessage(const char* msg,int player)
-{
-
-}
 
 void cRAI::UnitDamaged(int unit,int attacker,float damage,float3 dir)
 {
