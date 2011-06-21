@@ -16,12 +16,14 @@ static const char* BAD_CHARS = "\t _#";
 static const std::string DEFAULT_VALUE = "";
 
 CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
-		const CSkirmishAILibraryInfo& aiInfo) :
-		info_keyLower_key(aiInfo.info_keyLower_key),
-		info_key_value(aiInfo.info_key_value),
-		info_key_description(aiInfo.info_key_description),
-		options(aiInfo.options)
-		{}
+		const CSkirmishAILibraryInfo& aiInfo)
+	: info_keys(aiInfo.info_keys)
+	, info_keyLower_key(aiInfo.info_keyLower_key)
+	, info_key_value(aiInfo.info_key_value)
+	, info_key_description(aiInfo.info_key_description)
+	, options(aiInfo.options)
+{
+}
 
 CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 		const std::string& aiInfoFile,

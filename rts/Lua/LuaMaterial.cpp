@@ -80,20 +80,23 @@ void LuaUnitUniforms::SetCustomCount(int count)
 
 LuaUnitUniforms& LuaUnitUniforms::operator=(const LuaUnitUniforms& u)
 {
-	delete[] customData;
-	customData = NULL;
+	// do not assign to self
+	if (this != &u) {
+		delete[] customData;
+		customData = NULL;
 
-	haveUniforms = u.haveUniforms;
-	speedLoc     = u.speedLoc;
-	healthLoc    = u.healthLoc;
-	unitIDLoc    = u.unitIDLoc;
-	teamIDLoc    = u.teamIDLoc;
-	customLoc    = u.customLoc;
-	customCount  = u.customCount;
+		haveUniforms = u.haveUniforms;
+		speedLoc     = u.speedLoc;
+		healthLoc    = u.healthLoc;
+		unitIDLoc    = u.unitIDLoc;
+		teamIDLoc    = u.teamIDLoc;
+		customLoc    = u.customLoc;
+		customCount  = u.customCount;
 
-	if (customCount > 0) {
-		customData = new GLfloat[customCount];
-		memcpy(customData, u.customData, customCount * sizeof(GLfloat));
+		if (customCount > 0) {
+			customData = new GLfloat[customCount];
+			memcpy(customData, u.customData, customCount * sizeof(GLfloat));
+		}
 	}
 
 	return *this;
