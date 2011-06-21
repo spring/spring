@@ -68,16 +68,16 @@ struct LuaUnitEvent {
 	float float1;
 	float3 pos1;
 
-	LuaUnitEvent(UnitEvent i, const CUnit *u1) : id(i), unit1(u1) {}
+	LuaUnitEvent(UnitEvent i, const CUnit *u1) : id(i), unit1(u1), unit2(NULL) {}
 	LuaUnitEvent(UnitEvent i, const CUnit *u1, const CUnit *u2) : id(i), unit1(u1), unit2(u2) {}
 	LuaUnitEvent(UnitEvent i, const CUnit *u1, const CUnit *u2, bool b1) : id(i), unit1(u1), unit2(u2), bool1(b1) {}
-	LuaUnitEvent(UnitEvent i, const CUnit *u1, int i1) : id(i), unit1(u1), int1(i1) {}
-	LuaUnitEvent(UnitEvent i, const CUnit *u1, const Command &c1) : id(i), unit1(u1), cmd1(c1) {}
-	LuaUnitEvent(UnitEvent i, const CUnit *u1, int i1, int i2) : id(i), unit1(u1), int1(i1), int2(i2) {}
+	LuaUnitEvent(UnitEvent i, const CUnit *u1, int i1) : id(i), unit1(u1), unit2(NULL), int1(i1) {}
+	LuaUnitEvent(UnitEvent i, const CUnit *u1, const Command &c1) : id(i), unit1(u1), unit2(NULL), cmd1(c1) {}
+	LuaUnitEvent(UnitEvent i, const CUnit *u1, int i1, int i2) : id(i), unit1(u1), unit2(NULL), int1(i1), int2(i2) {}
 	LuaUnitEvent(UnitEvent i, const CUnit *u1, const CUnit *u2, float f1, int i1, bool b1) : id(i), unit1(u1), unit2(u2), bool1(b1), int1(i1), float1(f1) {}
-	LuaUnitEvent(UnitEvent i, const CUnit *u1, float f1) : id(i), unit1(u1), float1(f1) {}
-	LuaUnitEvent(UnitEvent i, const CUnit *u1, int i1, const float3& p1, float f1) : id(i), unit1(u1), int1(i1),  float1(f1), pos1(p1)  {}
-	LuaUnitEvent(UnitEvent i, int i1, const float3& p1, const CUnit *u1) : id(i), unit1(u1), int1(i1), pos1(p1) {}
+	LuaUnitEvent(UnitEvent i, const CUnit *u1, float f1) : id(i), unit1(u1), unit2(NULL), float1(f1) {}
+	LuaUnitEvent(UnitEvent i, const CUnit *u1, int i1, const float3& p1, float f1) : id(i), unit1(u1), unit2(NULL), int1(i1),  float1(f1), pos1(p1)  {}
+	LuaUnitEvent(UnitEvent i, int i1, const float3& p1, const CUnit *u1) : id(i), unit1(u1), unit2(NULL), int1(i1), pos1(p1) {}
 	LuaUnitEvent(UnitEvent i, const CUnit *u1, const CWeapon *u2, int i1) : id(i), unit1(u1), unit2((CUnit *)u2), int1(i1) {}
 };
 

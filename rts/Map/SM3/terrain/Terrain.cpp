@@ -672,18 +672,20 @@ namespace terrain {
 #ifndef TERRAINRENDERERLIB_EXPORTS
 	void Terrain::DebugPrint (IFontRenderer *fr)
 	{
-		const float s=16.0f;
-		if (debugQuad) {
-			fr->printf (0, 30, s, "Selected quad: (%d,%d) on depth %d. Lod=%3.3f",
-				debugQuad->qmPos.x, debugQuad->qmPos.y, debugQuad->depth, config.detailMod * debugQuad->CalcLod (activeRC->cam->pos));
+		if (fr != NULL) { 
+			const float s = 16.0f;
+			if (debugQuad) {
+				fr->printf(0, 30, s, "Selected quad: (%d,%d) on depth %d. Lod=%3.3f",
+					debugQuad->qmPos.x, debugQuad->qmPos.y, debugQuad->depth, config.detailMod * debugQuad->CalcLod(activeRC->cam->pos));
+			}
+			RenderStats stats;
+			CalcRenderStats(stats);
+			fr->printf(0, 46, s, "Rendered nodes: %d, tris: %d, VBufSize: %d(kb), TotalRenderData(kb): %d, DetailMod: %g, CacheTextureMemory: %d",
+				activeRC->quads.size(), stats.tris, VertexBuffer::TotalSize()/1024, stats.renderDataSize/1024, config.detailMod, stats.cacheTextureSize);
+			fr->printf(0, 60, s, "NodeUpdateCount: %d, RenderDataAlloc: %d, #RenderData: %d",
+				nodeUpdateCount, renderDataManager->normalDataAllocates, renderDataManager->QuadRenderDataCount());
+			texturing->DebugPrint(fr);
 		}
-		RenderStats stats;
-		CalcRenderStats(stats);
-		fr->printf (0, 46, s, "Rendered nodes: %d, tris: %d, VBufSize: %d(kb), TotalRenderData(kb): %d, DetailMod: %g, CacheTextureMemory: %d",
-			activeRC->quads.size(), stats.tris, VertexBuffer::TotalSize()/1024, stats.renderDataSize/1024, config.detailMod, stats.cacheTextureSize);
-		fr->printf (0, 60, s, "NodeUpdateCount: %d, RenderDataAlloc: %d, #RenderData: %d",
-			nodeUpdateCount, renderDataManager->normalDataAllocates, renderDataManager->QuadRenderDataCount ());
-		texturing->DebugPrint(fr);
 	}
 #endif
 

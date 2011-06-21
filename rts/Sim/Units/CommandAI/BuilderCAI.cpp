@@ -328,7 +328,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				return;
 			}
 		}
-		CFeature* feature;
+		CFeature* feature = NULL;
 		if(!uh->TestUnitBuildSquare(bi,feature,owner->allyteam)) {
 			if (!feature && owner->unitDef->canAssist) {
 				int yardxpos=int(bi.pos.x+4)/SQUARE_SIZE;

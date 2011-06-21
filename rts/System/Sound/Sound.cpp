@@ -86,7 +86,7 @@ CSound::~CSound()
 	SoundBuffer::Deinitialise();
 }
 
-bool CSound::HasSoundItem(const std::string& name)
+bool CSound::HasSoundItem(const std::string& name) const
 {
 	soundMapT::const_iterator it = soundMap.find(name);
 	if (it != soundMap.end())

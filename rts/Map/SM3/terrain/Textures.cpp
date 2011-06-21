@@ -111,9 +111,10 @@ namespace terrain {
 	}
 
 	Blendmap::Blendmap ()
+		: generatorInfo(NULL)
+		, image(NULL)
+		, curAreaResult(AlphaImage::AREA_ONE)
 	{
-		generatorInfo = 0;
-		image = 0;
 	}
 
 	Blendmap::~Blendmap ()

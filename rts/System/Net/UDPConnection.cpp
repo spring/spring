@@ -622,7 +622,11 @@ void UDPConnection::RequestResend(ChunkPtr ptr)
 	resendRequested.push_back(ptr);
 }
 
-UDPConnection::BandwidthUsage::BandwidthUsage() : lastTime(0), trafficSinceLastTime(1), average(0.0)
+UDPConnection::BandwidthUsage::BandwidthUsage()
+	: lastTime(0)
+	, trafficSinceLastTime(1)
+	, prelTrafficSinceLastTime(0)
+	, average(0.0)
 {
 }
 

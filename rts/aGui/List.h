@@ -25,7 +25,7 @@ public:
 	void MouseRelease(int x, int y, int button);
 	virtual void DrawSelf();
 	virtual bool HandleEventSelf(const SDL_Event& ev);
-	std::string GetTooltip(int x,int y) { return tooltip; }
+	std::string GetTooltip(int x, int y) const { return tooltip; }
 
 	void RemoveAllItems();
 	void AddItem(const std::string& name,const std::string& description);
