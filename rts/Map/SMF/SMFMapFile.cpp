@@ -141,8 +141,9 @@ void CSmfMapFile::GetInfoMapSize(const string& name, MapBitmapInfo* info) const
 	else if (name == "type") {
 		*info = MapBitmapInfo(header.mapx / 2, header.mapy / 2);
 	}
-
-	*info = MapBitmapInfo(0, 0);
+	else {
+		*info = MapBitmapInfo(0, 0);
+	}
 }
 
 
