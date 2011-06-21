@@ -23,7 +23,6 @@
 
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Lua/LuaCallInCheck.h"
-#include "Lua/LuaUtils.h"
 #include "Lua/LuaConstGL.h"
 #include "Lua/LuaConstCMD.h"
 #include "Lua/LuaConstCMDTYPE.h"
@@ -36,6 +35,7 @@
 #include "Lua/LuaWeaponDefs.h"
 #include "Lua/LuaScream.h"
 #include "Lua/LuaOpenGL.h"
+#include "Lua/LuaUtils.h"
 #include "Lua/LuaVFS.h"
 #include "Lua/LuaIO.h"
 #include "Lua/LuaZip.h"
@@ -618,26 +618,7 @@ bool CLuaUI::BuildCmdDescTable(lua_State* L,
 	const int cmdDescCount = (int)cmds.size();
 	for (int i = 0; i < cmdDescCount; i++) {
 		lua_pushnumber(L, i + CMD_INDEX_OFFSET);
-		lua_newtable(L); {
-			HSTR_PUSH_NUMBER(L, "id",       cmds[i].id);
-			HSTR_PUSH_NUMBER(L, "type",     cmds[i].type);
-			HSTR_PUSH_STRING(L, "name",     cmds[i].name);
-			HSTR_PUSH_STRING(L, "tooltip",  cmds[i].tooltip);
-			HSTR_PUSH_STRING(L, "action",   cmds[i].action);
-			HSTR_PUSH_STRING(L, "texture",  cmds[i].iconname);
-			HSTR_PUSH_BOOL(L,   "hidden",   cmds[i].hidden);
-			HSTR_PUSH_BOOL(L,   "disabled", cmds[i].disabled);
-			HSTR_PUSH_BOOL(L,"onlyTexture", cmds[i].onlyTexture);
-
-			HSTR_PUSH(L, "params");
-			lua_newtable(L);
-			for (unsigned int p = 0; p < cmds[i].params.size(); p++) {
-				lua_pushnumber(L, p + 1);
-				lua_pushstring(L, cmds[i].params[p].c_str());
-				lua_rawset(L, -3);
-			}
-			lua_rawset(L, -3);
-		}
+		LuaUtils::PushCommandDesc(L, cmds[i]);
 		lua_rawset(L, -3);
 	}
 	return true;
