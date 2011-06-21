@@ -59,12 +59,12 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 	tilesize.y = orghm->h-1;
 	name = "lightmap";
 
-	Heightmap *hm;
+	const Heightmap* hm = NULL;
 	int w;
 
 	for(;;) {
 		hm = orghm->GetLevel(-level);
-		w=hm->w-1;
+		w = hm->w - 1;
 
 		GLint maxw;
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxw);
@@ -74,7 +74,7 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 	}
 
 	shadowLevelDif=0;
-	Heightmap *shadowhm = orghm->GetLevel(-(level+shadowLevelDif));
+	const Heightmap* shadowhm = orghm->GetLevel(-(level + shadowLevelDif));
 	int shadowScale=1<<shadowLevelDif;
 	int shadowW=shadowhm->w-1;
 	assert (w/shadowW == shadowScale);
@@ -85,7 +85,7 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 	Vector3 *shading = new Vector3[w*w];
 	for (int y=0;y<w;y++)
 		for (int x=0;x<w;x++) {
-			centerhm[y*w+x] =/* hm->scale * */ 0.25f * ( (int)hm->at(x,y)+ (int)hm->at(x+1,y)+ (int)hm->at(x,y+1) + (int)hm->at(x+1,y+1) ); //+ hm->offset;
+			centerhm[y*w+x] =/* hm->scale * */ 0.25f * ( (int)hm->atSynced(x,y)+ (int)hm->atSynced(x+1,y)+ (int)hm->atSynced(x,y+1) + (int)hm->atSynced(x+1,y+1) ); //+ hm->offset;
 			shading[y*w+x] = li->ambient;
 		}
 
@@ -118,7 +118,7 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 				else
 					wp = l->position - Vector3((x+0.5f)*hm->squareSize,centerhm[y*w+x],(y+0.5f)*hm->squareSize);
 
-				uchar* normal = hm->GetNormal (x,y);
+				const uchar* normal = hm->GetNormal(x, y);
 				Vector3 normv((2 * (int)normal[0] - 256)/255.0f, (2 * (int)normal[1] - 256)/255.0f, (2 * (int)normal[2] - 256)/255.0f);
 
 				wp.ANormalize();

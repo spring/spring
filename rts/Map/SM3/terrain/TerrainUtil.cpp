@@ -20,57 +20,68 @@ namespace terrain {
 
 	Heightmap::Heightmap()
 	{ 
-		w=h=0;data=0; lowDetail=highDetail=0; normalData=0; squareSize=0.0f; 
+		w = h = 0;
+		dataSynced = 0;
+		dataUnsynced = 0;
+		lowDetail = highDetail = 0;
+		normalData = 0;
+		squareSize = 0.0f; 
 	}
 	Heightmap::~Heightmap()
 	{ 
-		delete[] data; 
-		delete[] normalData; 
+		delete[] dataSynced;
+		delete[] dataUnsynced;
+		delete[] normalData;
 	}
 
-	void Heightmap::Alloc (int W,int H)
+	void Heightmap::Alloc(int W, int H)
 	{
-		w=W; h=H;
-		data=new float[w*h];
+		w = W; h = H;
+		dataSynced = new float[w * h];
+		dataUnsynced = new float[w * h];
 	}
 
-	void Heightmap::LodScaleDown (Heightmap* dst)
+	void Heightmap::LodScaleDown(Heightmap* dst)
 	{
 		// reduce 33x33 to 17x17
-		dst->Alloc ((w-1)/2+1,(h-1)/2+1);
-		
-		for (int y=0;y<dst->h;y++) {
-			float *srcrow = &data[y*2*w];
-			for (int x=0;x<dst->w;x++)
-				dst->at (x,y) = srcrow [x*2];
+		dst->Alloc((w - 1) / 2 + 1, (h - 1) / 2 + 1);
+
+		for (int y = 0; y < dst->h; y++) {
+			const float* srcrowSynced = &dataSynced[y * 2 * w];
+			const float* srcrowUnsynced = &dataUnsynced[y * 2 * w];
+
+			for (int x = 0; x < dst->w; x++) {
+				dst->dataSynced[y * dst->w + x] = srcrowSynced[x * 2];
+				dst->dataUnsynced[y * dst->w + x] = srcrowUnsynced[x * 2];
+			}
 		}
 	}
 
-	Heightmap* Heightmap::CreateLowDetailHM ()
+	Heightmap* Heightmap::CreateLowDetailHM()
 	{
 		lowDetail = new Heightmap;
-		LodScaleDown (lowDetail);
+		LodScaleDown(lowDetail);
 		lowDetail->highDetail = this;
 		return lowDetail;
 	}
 
-	void Heightmap::FindMinMax (int2 st, int2 size, float& minH, float& maxH)
+
+	void Heightmap::FindMinMax(int2 st, int2 size, float& minH, float& maxH)
 	{
-		//float minH,maxH;
-		minH = maxH = at (st.x,st.y);
-		for (int y=st.y;y<st.y+size.y;y++)
-			for (int x=st.x;x<st.x+size.x;x++) {
-				float v = at (x,y);
-				if (minH > v) minH = v;
-				if (maxH < v) maxH = v;
+		minH = maxH = atSynced(st.x, st.y);
+		for (int y = st.y; y < st.y + size.y; y++)
+			for (int x = st.x; x < st.x + size.x; x++) {
+				const float v = atSynced(x, y);
+				if (v < minH) minH = v;
+				if (v > maxH) maxH = v;
 			}
 	}
 
 	// level > 0 returns a high detail HM
 	// level < 0 returns a lower detail HM
-	Heightmap *Heightmap::GetLevel (int level) 
+	const Heightmap* Heightmap::GetLevel(int level) 
 	{
-		Heightmap *hm = this;
+		Heightmap* hm = this;
 		if (level > 0)
 			while (hm->highDetail && level > 0) {
 				hm = hm->highDetail;
@@ -86,16 +97,16 @@ namespace terrain {
 
 	void Heightmap::GenerateNormals ()
 	{
-		normalData = new uchar [3 * w * h];
+		normalData = new uchar[3 * w * h];
 
-		uchar *cnorm = normalData;
-		for (int y=0;y<h;y++)
-			for (int x=0;x<w;x++) {
+		uchar* cnorm = normalData;
+		for (int y = 0; y < h;y++)
+			for (int x = 0; x < w; x++) {
 				Vector3 tangent, binormal;
-				CalculateTangents(this, x,y,tangent,binormal);
+				CalculateTangents(this, x, y, tangent, binormal);
 
 				Vector3 normal = binormal.cross(tangent);
-				normal.ANormalize ();
+				normal.ANormalize();
 
 				*(cnorm++) = (uchar)((normal.x * 0.5f + 0.5f) * 255);
 				*(cnorm++) = (uchar)((normal.y * 0.5f + 0.5f) * 255);
@@ -104,18 +115,21 @@ namespace terrain {
 	}
 
 
-	void Heightmap::UpdateLower(int sx, int sy,int w,int h)
+	void Heightmap::UpdateLowerUnsynced(int sx, int sy, int w, int h)
 	{
-		if(!lowDetail)
+		if (!lowDetail)
 			return;
 
-		for (int x=sx/2;x<(sx+w)/2;x++)
-			for (int y=sy/2;y<(sy+h)/2;y++)
-				lowDetail->at(x,y)=at(x*2,y*2);
+		for (int x = sx / 2; x < (sx + w) / 2; x++)
+			for (int y = sy / 2; y < (sy + h) / 2; y++) {
+				lowDetail->dataSynced[y * lowDetail->w + x] = atSynced(x * 2, y * 2);
+				lowDetail->dataUnsynced[y * lowDetail->w + x] = atUnsynced(x * 2, y * 2);
+			}
 
-		if (lowDetail)
-			lowDetail->UpdateLower(sx/2,sy/2,w/2,h/2);
+		lowDetail->UpdateLowerUnsynced(sx / 2, sy / 2, w / 2, h / 2);
 	}
+
+
 
 //-----------------------------------------------------------------------
 // Index calculater

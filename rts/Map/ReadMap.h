@@ -63,13 +63,13 @@ protected:
 	void Initialize();
 
 	std::vector<HeightmapUpdate> heightmapUpdates;
-	virtual void UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2) = 0;
+	virtual void UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2) = 0;
 
 	/**
 	 * calculates derived heightmap information
 	 * such as normals, centerheightmap and slopemap
 	 */
-	void UpdateHeightmapSynced(int x1, int y1, int x2, int y2);
+	void UpdateHeightMapSynced(int x1, int y1, int x2, int y2);
 	void CalcHeightmapChecksum();
 
 public:
@@ -97,10 +97,25 @@ public:
 	 */
 	virtual unsigned int GetShadingTexture() const = 0;
 
-	/// if you modify the heightmap, call HeightmapUpdated
-	virtual void SetHeight(const int& idx, const float& h) = 0;
-	virtual void AddHeight(const int& idx, const float& a) = 0;
-	void HeightmapUpdated(const int& x1, const int& y1, const int& x2, const int& y2);
+
+	/// if you modify the heightmap, call HeightMapUpdatedSynced
+	inline void SetHeight(const int& idx, const float& h) {
+		static float* hm = const_cast<float*>(GetCornerHeightMapSynced());
+
+		hm[idx] = h;
+		currMinHeight = std::min(h, currMinHeight);
+		currMaxHeight = std::max(h, currMaxHeight);
+	}
+	inline void AddHeight(const int& idx, const float& a) {
+		static float* hm = const_cast<float*>(GetCornerHeightMapSynced());
+
+		hm[idx] += a;
+		currMinHeight = std::min(hm[idx], currMinHeight);
+		currMaxHeight = std::max(hm[idx], currMaxHeight);
+	}
+
+
+	void HeightMapUpdatedSynced(const int& x1, const int& y1, const int& x2, const int& y2);
 
 	/// number of heightmap mipmaps, including full resolution
 	static const int numHeightMipMaps = 7;
