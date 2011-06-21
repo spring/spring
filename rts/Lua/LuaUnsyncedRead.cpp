@@ -1008,6 +1008,9 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 		}
 		lua_rawset(L, -3);
 	}
+
+	// UnitDef ID keys are not necessarily consecutive
+	HSTR_PUSH_NUMBER(L, "n", unitDefMap.size());
 	return 1;
 }
 
@@ -1039,6 +1042,9 @@ int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 		lua_pushnumber(L, mit->second); // push the UnitDef unit count
 		lua_rawset(L, -3);
 	}
+
+	// UnitDef ID keys are not necessarily consecutive
+	HSTR_PUSH_NUMBER(L, "n", countMap.size());
 	return 1;
 }
 
