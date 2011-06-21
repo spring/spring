@@ -140,7 +140,7 @@ void UDPListener::Update()
 		for (std::list< boost::weak_ptr<UDPConnection> >::iterator i = conn.begin(); i != conn.end(); ++i)
 		{
 			boost::shared_ptr<UDPConnection> locked(*i);
-			if (locked->CheckAddress(sender_endpoint))
+			if (locked->IsUsingAddress(sender_endpoint))
 			{
 				locked->ProcessRawPacket(data);
 				processed = true;

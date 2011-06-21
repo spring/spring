@@ -84,7 +84,7 @@ void CLocalConnection::Flush(const bool forced)
 {
 }
 
-bool CLocalConnection::CheckTimeout(int nsecs, bool initial) const
+bool CLocalConnection::CheckTimeout(int seconds, bool initial) const
 {
 	return false;
 }
@@ -105,6 +105,11 @@ std::string CLocalConnection::Statistics() const
 	msg += str( boost::format("Received: %1% bytes\n") %dataRecv );
 	msg += str( boost::format("Sent: %1% bytes\n") %dataSent );
 	return msg;
+}
+
+std::string CLocalConnection::GetFullAddress() const
+{
+	return "shared memory";
 }
 
 bool CLocalConnection::HasIncomingData() const
