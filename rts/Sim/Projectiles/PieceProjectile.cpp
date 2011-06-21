@@ -226,6 +226,8 @@ void CPieceProjectile::Collision(CUnit* unit)
 			false,                                           // ignoreOwner
 			true                                             // damageGround
 		};
+
+		helper->Explosion(params);
 	}
 	if (flags & PF_Smoke) {
 		if (flags & PF_NoCEGTrail) {
