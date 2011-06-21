@@ -152,15 +152,15 @@ namespace terrain {
 		Vector3 *v = (Vector3*)rd->vertexBuffer.LockData ();
 
 		uint vda = q->textureSetup->vertexDataReq; 		// vertex data requirements
-		Heightmap *hm = roothm->GetLevel (q->depth); // get the right heightmap level
+		const Heightmap* hm = roothm->GetLevel (q->depth); // get the right heightmap level
 
 		for(int y=q->hmPos.y;y<=q->hmPos.y+QUAD_W;y++)
 			for(int x=q->hmPos.x;x<=q->hmPos.x+QUAD_W;x++)
 			{
-				*(v++) = Vector3(x * hm->squareSize, hm->HeightAt (x,y), y * hm->squareSize);
+				*(v++) = Vector3(x * hm->squareSize, hm->atSynced(x, y), y * hm->squareSize);
 
 				Vector3 tangent, binormal;
-				CalculateTangents (hm, x,y, tangent, binormal);
+				CalculateTangents(hm, x,y, tangent, binormal);
 				Vector3 normal = binormal.cross(tangent);
 				normal.ANormalize ();
 
@@ -242,7 +242,7 @@ namespace terrain {
 
 		// calculate normals
 		for (size_t y=0; y<h; y++) {
-			uchar *src = hm->GetNormal (startx,y + q->hmPos.y * scale);
+			const uchar* src = hm->GetNormal(startx, y + q->hmPos.y * scale);
 			memcpy (&normals [3 * y * texw], src, 3 * w);
 		}
 

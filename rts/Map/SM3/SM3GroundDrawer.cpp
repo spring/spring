@@ -2,8 +2,8 @@
 
 #include "StdAfx.h"
 
-#include "Sm3GroundDrawer.h"
-#include "Sm3Map.h"
+#include "SM3GroundDrawer.h"
+#include "SM3Map.h"
 #include "terrain/TerrainNode.h"
 
 #include "Game/Camera.h"

@@ -4792,7 +4792,6 @@ int LuaSyncedRead::GetUnitPieceList(lua_State* L)
 		lua_pushsstring(L, lp.original->name);
 		lua_rawset(L, -3);
 	}
-	HSTR_PUSH_NUMBER(L, "n", localModel->pieces.size());
 	return 1;
 }
 
@@ -4810,7 +4809,6 @@ static int GetUnitPieceInfo(lua_State* L, const ModelType& op)
 		lua_pushsstring(L, op.childs[c]->name);
 		lua_rawset(L, -3);
 	}
-	HSTR_PUSH_NUMBER(L, "n", op.childs.size());
 	lua_rawset(L, -3);
 
 	HSTR_PUSH(L, "isEmpty");

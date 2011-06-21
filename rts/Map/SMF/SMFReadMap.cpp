@@ -311,7 +311,7 @@ void CSmfReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigne
 	}
 }
 
-void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
+void CSmfReadMap::UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2)
 {
 	{
 		// discretize x1 and y1 to step-sizes of 4

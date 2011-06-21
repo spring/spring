@@ -3,6 +3,7 @@
 #ifndef JC_TERRAIN_H
 #define JC_TERRAIN_H
 
+class CSm3Map;
 class TdfParser;
 
 namespace terrain {
@@ -134,11 +135,12 @@ namespace terrain {
 		void SetShadowParams (ShadowMapParams *smp);
 
 		// Heightmap interface, for dynamically changing heightmaps
-		void GetHeightmap (int x,int y,int w,int h, float *dest);
-		float* GetHeightmap (); // if you change the heightmap, call HeightmapUpdated
-		void HeightmapUpdated (int x,int y,int w,int h);
-		float GetHeight (float x,float y); // get height from world coordinates 
-		float GetHeightAtPixel (int x,int y);
+		void GetHeightMapSynced(int x, int y, int w, int h, float *dest);
+		void HeightMapUpdatedUnsynced(int x,int y,int w,int h);
+
+		// these return the top-level heightmaps
+		const float* GetCornerHeightMapSynced() const;
+		      float* GetCornerHeightMapUnsynced();
 
 		Vector3 TerrainSize ();
 		int GetHeightmapWidth() const;
@@ -155,6 +157,7 @@ namespace terrain {
 
 		Heightmap *heightmap; // list of heightmaps, starting from highest detail level
 		Heightmap *lowdetailhm; // end of heightmap list, representing lowest detail level
+
 		TQuad *quadtree;
 		std::vector<QuadMap*> qmaps; // list of quadmaps, starting from lowest detail level
 		std::vector<TQuad*> updatequads; // temporary list of quads that are being updated
@@ -179,9 +182,10 @@ namespace terrain {
 		void ForceQueue (TQuad *q);
 
 		// Heightmap loading using DevIL
-		Heightmap* LoadHeightmapFromImage (const std::string& file, ILoadCallback *cb);
+		Heightmap* LoadHeightmapFromImage(const std::string& file, ILoadCallback *cb);
 		// RAW 16 bit heightmap loading 
-		Heightmap* LoadHeightmapFromRAW (const std::string& file, ILoadCallback *cb);
+		Heightmap* LoadHeightmapFromRAW(const std::string& file, ILoadCallback *cb);
+
 		bool IsShadowed (int x, int y);
 
 		inline void CheckNabourLod (TQuad *q, int xOfs, int yOfs);

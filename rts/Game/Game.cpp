@@ -324,8 +324,6 @@ CGame::~CGame()
 	UnsyncedGameCommands::DestroyInstance();
 	SyncedGameCommands::DestroyInstance();
 
-	CWordCompletion::DestroyInstance();
-
 	CLoadScreen::DeleteInstance();
 	IVideoCapturing::FreeInstance();
 	ISound::Shutdown();
@@ -337,6 +335,8 @@ CGame::~CGame()
 	CColorMap::DeleteColormaps();
 	CEngineOutHandler::Destroy();
 	CResourceHandler::FreeInstance();
+
+	CWordCompletion::DestroyInstance();
 
 	SafeDelete(guihandler);
 	SafeDelete(minimap);

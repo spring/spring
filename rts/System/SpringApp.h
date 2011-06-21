@@ -6,7 +6,7 @@
 #include <string>
 #include <boost/cstdint.hpp>
 
-class BaseCmd;
+class CmdLineParams;
 class CGameController;
 class COffscreenGLContext;
 union SDL_Event;
@@ -54,7 +54,7 @@ protected:
 	 *
 	 * Pointer to instance of commandline parser
 	 */
-	BaseCmd *cmdline;
+	CmdLineParams* cmdline;
 
 	/**
 	 * @brief last required draw

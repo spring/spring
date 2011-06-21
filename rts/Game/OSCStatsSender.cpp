@@ -105,7 +105,7 @@ bool COSCStatsSender::SendInit() {
 			return SendInitialInfo()
 					&& SendTeamStatsTitles()
 					&& SendPlayerStatsTitles();
-		} catch (boost::system::system_error ex) {
+		} catch (const boost::system::system_error& ex) {
 			logOutput.Print("Failed sending OSC Stats init: %s", ex.what());
 			return false;
 		}
@@ -121,7 +121,7 @@ bool COSCStatsSender::Update(int frameNum) {
 			// Try to send team stats first, as they are more important,
 			// more interesting.
 			return SendTeamStats() && SendPlayerStats();
-		} catch (boost::system::system_error ex) {
+		} catch (const boost::system::system_error& ex) {
 			logOutput.Print("Failed sending OSC Stats init: %s", ex.what());
 			return false;
 		}

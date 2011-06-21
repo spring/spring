@@ -229,7 +229,6 @@ static void PushUnitAndCommand(lua_State* L, const CUnit* unit, const Command& c
 		lua_pushnumber(L, cmd.params[p]);
 		lua_rawset(L, -3);
 	}
-	HSTR_PUSH_NUMBER(L, "n", cmd.params.size());
 
 	// push the options table
 	lua_newtable(L);

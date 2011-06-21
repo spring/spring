@@ -15,9 +15,9 @@ public:
 	CSmfReadMap(std::string mapname);
 	~CSmfReadMap();
 
-	void UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2);
+	void UpdateShadingTexture();
+	void UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2);
 	inline void UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigned char *pixels);
-	virtual void UpdateShadingTexture();
 
 	inline unsigned int GetDetailTexture() const { return detailTex; }
 	inline unsigned int GetShadingTexture() const { return shadingTex; }
@@ -36,20 +36,6 @@ public:
 	void NewGroundDrawer();
 	inline CBaseGroundDrawer* GetGroundDrawer();
 
-	const float* GetCornerHeightMapSynced() const { return &cornerHeightMapSynced[0]; }
-	      float* GetCornerHeightMapUnsynced()     { return &cornerHeightMapUnsynced[0]; }
-
-	inline void SetHeight(const int& idx, const float& h) {
-		cornerHeightMapSynced[idx] = h;
-		currMinHeight = std::min(h, currMinHeight);
-		currMaxHeight = std::max(h, currMaxHeight);
-	}
-	inline void AddHeight(const int& idx, const float& a) {
-		cornerHeightMapSynced[idx] += a;
-		currMinHeight = std::min(cornerHeightMapSynced[idx], currMinHeight);
-		currMaxHeight = std::max(cornerHeightMapSynced[idx], currMaxHeight);
-	}
-
 	int GetNumFeatureTypes();
 	int GetNumFeatures();
 	void GetFeatureInfo(MapFeatureInfo* f); // returns all feature info in MapFeatureInfo[NumFeatures]
@@ -61,10 +47,13 @@ public:
 	// NOTE: do not use, just here for backward compatibility with SMFGroundTextures.cpp
 	CSmfMapFile& GetFile() { return file; }
 
-	float anisotropy;
+	const float* GetCornerHeightMapSynced() const { return &cornerHeightMapSynced[0]; }
+	      float* GetCornerHeightMapUnsynced()     { return &cornerHeightMapUnsynced[0]; }
+
+	void ConfigureAnisotropy();
+	float GetAnisotropy() const { return anisotropy; }
 
 protected:
-	void ConfigureAnisotropy();
 
 	CSmfMapFile file;
 
@@ -85,9 +74,6 @@ protected:
 
 	unsigned char waterHeightColors[1024 * 4];
 
-	std::vector<float> cornerHeightMapSynced;
-	std::vector<float> cornerHeightMapUnsynced;
-
 	float DiffuseSunCoeff(const int& x, const int& y) const;
 	float3 GetLightValue(const int& x, const int& y) const;
 	void ParseSMD(std::string filename);
@@ -96,9 +82,14 @@ protected:
 	CBFGroundDrawer* groundDrawer;
 
 private:
+	std::vector<float> cornerHeightMapSynced;
+	std::vector<float> cornerHeightMapUnsynced;
+
 	std::vector<unsigned char> shadingTexPixelRow;
 	unsigned int shadingTexUpdateIter;
 	unsigned int shadingTexUpdateRate;
+
+	float anisotropy;
 };
 
 #endif
