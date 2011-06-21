@@ -1011,7 +1011,7 @@ void CGuiHandler::SetCursorIcon() const
 			bi.pos = helper->Pos2BuildPos(bi);
 			// if an unit (enemy), is not in LOS, then TestUnitBuildSquare()
 			// does not consider it when checking for position blocking
-			CFeature* feature;
+			CFeature* feature = NULL;
 			if(!uh->TestUnitBuildSquare(bi, feature, gu->myAllyTeam)) {
 				newCursor="BuildBad";
 			} else {
@@ -2143,7 +2143,8 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			}
 
 			if(buildPos.size()==1) {
-				CFeature* feature; // TODO: Maybe also check out-of-range for immobile builder?
+				CFeature* feature = NULL;
+				// TODO: Maybe also check out-of-range for immobile builder?
 				if (!uh->TestUnitBuildSquare(buildPos[0], feature, gu->myAllyTeam)) {
 					Command failedRet(CMD_FAILED);
 					return failedRet;

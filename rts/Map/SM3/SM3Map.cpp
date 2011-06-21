@@ -2,8 +2,8 @@
 
 #include "StdAfx.h"
 
-#include "Sm3Map.h"
-#include "Sm3GroundDrawer.h"
+#include "SM3Map.h"
+#include "SM3GroundDrawer.h"
 #include "terrain/TerrainNode.h"
 
 #include "Game/Camera.h"
@@ -151,7 +151,7 @@ void CSm3ReadMap::NewGroundDrawer() {
 }
 
 
-void CSm3ReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
+void CSm3ReadMap::UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2)
 {
 	// heightmap is [width+1][height+1]
 	x1 -= 2; x2 += 2;
@@ -167,12 +167,10 @@ void CSm3ReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 	if (y2 <     0) y2 =      0;
 	if (y2 > width) y2 = height;
 
-	renderer->HeightmapUpdated(x1, y1, x2 - x1, y2 - y1);
+	renderer->HeightMapUpdatedUnsynced(x1, y1, x2 - x1, y2 - y1);
 }
 
-void CSm3ReadMap::Update() {}
-void CSm3ReadMap::Explosion(float x, float y, float strength) {}
-GLuint CSm3ReadMap::GetShadingTexture() const { return 0; } // a texture with RGB for shading and A for height
+
 void CSm3ReadMap::DrawMinimap() const
 {
 	if (!minimapTexture)

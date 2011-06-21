@@ -4984,11 +4984,11 @@
 				Name="Platform"
 				>
 				<File
-					RelativePath="..\..\System\Platform\BaseCmd.cpp"
+					RelativePath="..\..\System\Platform\CmdLineParams.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\Platform\BaseCmd.h"
+					RelativePath="..\..\System\Platform\CmdLineParams.h"
 					>
 				</File>
 				<File

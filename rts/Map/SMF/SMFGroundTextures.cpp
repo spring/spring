@@ -379,8 +379,8 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
-	if (map->anisotropy != 0.0f)
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, map->anisotropy);
+	if (map->GetAnisotropy() != 0.0f)
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, map->GetAnisotropy());
 	if (level<2) {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_PRIORITY, 1);
 	} else {

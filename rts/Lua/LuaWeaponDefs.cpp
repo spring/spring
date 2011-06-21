@@ -399,7 +399,6 @@ static int GuiSoundSetTable(lua_State* L, const void* data)
 		}
 		lua_rawset(L, -3);
 	}
-	HSTR_PUSH_NUMBER(L, "n", soundCount);
 	return 1;
 }
 

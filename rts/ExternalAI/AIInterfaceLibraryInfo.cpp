@@ -16,11 +16,13 @@ static const std::string DEFAULT_VALUE = "";
 
 
 CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
-		const CAIInterfaceLibraryInfo& interfaceInfo) :
-		keyLower_key(interfaceInfo.keyLower_key),
-		key_value(interfaceInfo.key_value),
-		key_description(interfaceInfo.key_description)
-		{}
+		const CAIInterfaceLibraryInfo& interfaceInfo)
+	: keys(interfaceInfo.keys)
+	, keyLower_key(interfaceInfo.keyLower_key)
+	, key_value(interfaceInfo.key_value)
+	, key_description(interfaceInfo.key_description)
+{
+}
 
 CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
 		const std::string& interfaceInfoFile) {

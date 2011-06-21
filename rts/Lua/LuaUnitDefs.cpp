@@ -356,7 +356,6 @@ static int BuildOptions(lua_State* L, const void* data)
 			lua_rawset(L, -3);
 		}
 	}
-	HSTR_PUSH_NUMBER(L, "n", count);
 	return 1;
 }
 
@@ -424,7 +423,6 @@ static int WeaponsTable(lua_State* L, const void* data)
 		}
 		lua_rawset(L, -3);
 	}
-	HSTR_PUSH_NUMBER(L, "n", weaponCount);
 
 	return 1;
 }
@@ -447,7 +445,6 @@ static void PushGuiSoundSet(lua_State* L, const string& name,
 		}
 		lua_rawset(L, -3);
 	}
-	HSTR_PUSH_NUMBER(L, "n", soundCount);
 	lua_rawset(L, -3);
 }
 

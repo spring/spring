@@ -30,7 +30,7 @@ public:
 	CSound();
 	virtual ~CSound();
 
-	virtual bool HasSoundItem(const std::string& name);
+	virtual bool HasSoundItem(const std::string& name) const;
 	virtual size_t GetSoundId(const std::string& name, bool hardFail = true);
 	SoundItem* GetSoundItem(size_t id) const;
 

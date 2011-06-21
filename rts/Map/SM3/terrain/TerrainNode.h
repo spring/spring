@@ -159,32 +159,36 @@ namespace terrain
 		QuadMap* rootQMap;
 	};
 
+
+
+
 //-----------------------------------------------------------------------
 // Heightmap
 //-----------------------------------------------------------------------
 	struct Heightmap {
-		Heightmap ();
-		~Heightmap ();
+		Heightmap();
+		~Heightmap();
 
-		void Alloc (int W,int H);
-		void LodScaleDown (Heightmap * dst);
-		void FindMinMax (int2 st, int2 size, float& minH, float& maxH);
-		Heightmap *CreateLowDetailHM ();
-		void GenerateNormals ();
-		void UpdateLower (int sx,int sy,int w,int h);
-		Heightmap *GetLevel (int level); // level > 0 returns a high detail HM
+		void Alloc(int W, int H);
+		void LodScaleDown(Heightmap* dst);
+		void FindMinMax(int2 st, int2 size, float& minH, float& maxH);
+		Heightmap* CreateLowDetailHM();
+		void GenerateNormals();
+		void UpdateLowerUnsynced(int sx, int sy, int w, int h);
+		const Heightmap* GetLevel(int level); // level > 0 returns a high detail HM
 										// level < 0 returns a lower detail HM
 
-		float& at(int x,int y) { return data[y*w+x]; }
-		uchar* GetNormal(int x,int y) { return &normalData[3*(y*w+x)]; }
-		float HeightAt(int x,int y) const { return data[y*w+x]; }// * scale + offset; }
+		float atSynced(int x, int y) const { return dataSynced[y * w + x]; }
+		float atUnsynced(int x, int y) const { return dataUnsynced[y * w + x]; }
+		const uchar* GetNormal(int x, int y) const { return &normalData[3 * (y * w + x)]; }
 
-		int w,h;
-		float *data;
-		//float scale, offset;
+		int w, h;
+		float* dataSynced;
+		float* dataUnsynced;
+		// float scale, offset;
 		float squareSize;
 
-        uchar *normalData; // optional heightmap normals, stored as compressed vectors (3 bytes per normal)
+        uchar* normalData; // optional heightmap normals, stored as compressed vectors (3 bytes per normal)
 
 		Heightmap *lowDetail, *highDetail; // geomipmap chain links
 	};
@@ -217,7 +221,7 @@ namespace terrain
 
 	
 	// Applies a "sobel" filter to the heightmap to find the slope in X and Z(Y in heightmap) direction
-	inline void CalculateTangents (Heightmap *hm, int x, int y, Vector3& tangent, Vector3& binormal)
+	inline void CalculateTangents(const Heightmap* hm, int x, int y, Vector3& tangent, Vector3& binormal)
 	{
 		int xp = (x < hm->w-1) ? x+1 : x;
 		int xm = (x > 0) ? x-1 : x;
@@ -228,14 +232,10 @@ namespace terrain
 		//-1 0 1
 		//-2 0 2
 		//-1 0 1
-		/*float dhdx = -hm->HeightAt (xm,ym) + hm->HeightAt (xp, ym);
-		dhdx += 2.0f * (-hm->HeightAt (xm,y) + hm->HeightAt (xp, y));
-		dhdx += -hm->HeightAt (xm,yp) + hm->HeightAt (xp, yp);
-		dhdx *= 0.25f;*/
-
-		int dhdx = int(-hm->at (xm,ym) + hm->at (xp, ym));
-		dhdx += int(2 * (-hm->at (xm,y) + hm->at (xp, y)));
-		dhdx += int(-hm->at (xm,yp) + hm->at (xp, yp));
+		const int dhdx =
+			int     (-hm->atSynced(xm, ym) + hm->atSynced(xp, ym)) +
+			int(2 * (-hm->atSynced(xm, y)  + hm->atSynced(xp, y))) +
+			int(     -hm->atSynced(xm, yp) + hm->atSynced(xp, yp));
 
 		// 
 		//Z filter:
@@ -243,11 +243,9 @@ namespace terrain
 		//0  0  0
 		//1  2  1
 		//
-		/*float dhdz = hm->HeightAt (xm, yp) + 2.0f * hm->HeightAt (x, yp) + hm->HeightAt (xp, yp);
-		dhdz -= hm->HeightAt (xm, ym) + 2.0f * hm->HeightAt (x, ym) + hm->HeightAt (xp, ym);
-		dhdz *= 0.25f;*/
-		int dhdz = int(hm->at (xm, yp) + 2 * hm->at (x, yp) + hm->at (xp, yp));
-		dhdz -= int(hm->at (xm, ym) + 2 * hm->at (x, ym) + hm->at (xp, ym));
+		const int dhdz =
+			int(hm->atSynced(xm, yp) + 2 * hm->atSynced(x, yp) + hm->atSynced(xp, yp)) -
+			int(hm->atSynced(xm, ym) + 2 * hm->atSynced(x, ym) + hm->atSynced(xp, ym));
 
 		tangent = Vector3(hm->squareSize * 2.0f, /*hm->scale * */ dhdx * 0.25f, 0.0f);
 		binormal = Vector3(0.0f, dhdz * /*hm->scale * */ 0.25f, hm->squareSize * 2.0f);

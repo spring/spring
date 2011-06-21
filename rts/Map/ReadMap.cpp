@@ -10,7 +10,7 @@
 #include "MapDamage.h"
 #include "MapInfo.h"
 #include "MetalMap.h"
-#include "SM3/Sm3Map.h"
+#include "SM3/SM3Map.h"
 #include "SMF/SMFReadMap.h"
 #include "Game/LoadScreen.h"
 #include "System/bitops.h"
@@ -173,7 +173,7 @@ void CReadMap::Initialize()
 	vertexNormals.resize((gs->mapx + 1) * (gs->mapy + 1));
 
 	CalcHeightmapChecksum();
-	HeightmapUpdated(0, 0, gs->mapx, gs->mapy);
+	HeightMapUpdatedSynced(0, 0, gs->mapx, gs->mapy);
 }
 
 
@@ -198,7 +198,32 @@ void CReadMap::CalcHeightmapChecksum()
 }
 
 
-void CReadMap::UpdateHeightmapSynced(int x1, int y1, int x2, int y2)
+
+void CReadMap::UpdateDraw() {
+	GML_STDMUTEX_LOCK(map); // UpdateDraw
+
+	for (std::vector<HeightmapUpdate>::iterator i = heightmapUpdates.begin(); i != heightmapUpdates.end(); ++i)
+		UpdateHeightMapUnsynced(i->x1, i->y1, i->x2, i->y2);
+
+	heightmapUpdates.clear();
+}
+
+void CReadMap::HeightMapUpdatedSynced(const int& x1, const int& y1, const int& x2, const int& y2) {
+	GML_STDMUTEX_LOCK(map); // HeightMapUpdatedSynced
+
+	// only update the heightmap if the affected area has a size > 0
+	if ((x1 < x2) && (y1 < y2)) {
+		//! synced
+		UpdateHeightMapSynced(x1, y1, x2, y2);
+
+		//! unsynced
+		heightmapUpdates.push_back(HeightmapUpdate(x1, x2, y1, y2));
+	}
+}
+
+
+
+void CReadMap::UpdateHeightMapSynced(int x1, int y1, int x2, int y2)
 {
 	const float* heightmapSynced = GetCornerHeightMapSynced();
 	      float* heightmapUnsynced = GetCornerHeightMapUnsynced();
@@ -301,27 +326,5 @@ void CReadMap::UpdateHeightmapSynced(int x1, int y1, int x2, int y2)
 
 			slopeMap[y * gs->hmapx + x] = 1.0f - slope;
 		}
-	}
-}
-
-void CReadMap::UpdateDraw() {
-	GML_STDMUTEX_LOCK(map); // UpdateDraw
-
-	for (std::vector<HeightmapUpdate>::iterator i = heightmapUpdates.begin(); i != heightmapUpdates.end(); ++i)
-		UpdateHeightmapUnsynced(i->x1, i->y1, i->x2, i->y2);
-
-	heightmapUpdates.clear();
-}
-
-void CReadMap::HeightmapUpdated(const int& x1, const int& y1, const int& x2, const int& y2) {
-	GML_STDMUTEX_LOCK(map); // HeightmapUpdated
-
-	// only update the heightmap if the affected area has a size > 0
-	if ((x1 < x2) && (y1 < y2)) {
-		//! synced
-		UpdateHeightmapSynced(x1, y1, x2, y2);
-
-		//! unsynced
-		heightmapUpdates.push_back(HeightmapUpdate(x1, x2, y1, y2));
 	}
 }

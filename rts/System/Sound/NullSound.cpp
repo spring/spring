@@ -12,7 +12,7 @@ NullSound::NullSound() {
 NullSound::~NullSound() {
 }
 
-bool NullSound::HasSoundItem(const std::string& name) {
+bool NullSound::HasSoundItem(const std::string& name) const {
 	return false;
 }
 

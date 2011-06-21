@@ -264,9 +264,6 @@ void CResourceMapAnalyzer::GetResourcePoints() {
 						}
 					}
 				}
-
-				// comment out for debug
-				totalResources = totalResources;
 			}
 
 			// set that spot's resource making ability
