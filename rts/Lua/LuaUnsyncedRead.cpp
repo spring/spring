@@ -975,7 +975,6 @@ int LuaUnsyncedRead::GetSelectedUnits(lua_State* L)
 		lua_pushnumber(L, (*it)->id);
 		lua_rawset(L, -3);
 	}
-	HSTR_PUSH_NUMBER(L, "n", count);
 	return 1;
 }
 
@@ -1006,11 +1005,9 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 				lua_pushnumber(L, unit->id);
 				lua_rawset(L, -3);
 			}
-			HSTR_PUSH_NUMBER(L, "n", v.size());
 		}
 		lua_rawset(L, -3);
 	}
-	HSTR_PUSH_NUMBER(L, "n", unitDefMap.size());
 	return 1;
 }
 
@@ -1042,7 +1039,6 @@ int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 		lua_pushnumber(L, mit->second); // push the UnitDef unit count
 		lua_rawset(L, -3);
 	}
-	HSTR_PUSH_NUMBER(L, "n", countMap.size());
 	return 1;
 }
 
@@ -1622,7 +1618,6 @@ int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 		LuaUtils::PushCommandDesc(L, cmdDescs[i]);
 		lua_rawset(L, -3);
 	}
-	HSTR_PUSH_NUMBER(L, "n", cmdDescCount);
 	return 1;
 }
 
@@ -1894,9 +1889,6 @@ int LuaUnsyncedRead::GetConsoleBuffer(lua_State* L)
 		}
 		lua_rawset(L, -3);
 	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, count);
-	lua_rawset(L, -3);
 
 	return 1;
 }
@@ -1958,9 +1950,6 @@ int LuaUnsyncedRead::GetKeyBindings(lua_State* L)
 		lua_rawset(L, -3);
 		lua_rawset(L, -3);
 	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, actions.size());
-	lua_rawset(L, -3);
 	return 1;
 }
 
@@ -1980,9 +1969,6 @@ int LuaUnsyncedRead::GetActionHotKeys(lua_State* L)
 		lua_pushsstring(L, hotkey);
 		lua_rawset(L, -3);
 	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, hotkeys.size());
-	lua_rawset(L, -3);
 	return 1;
 }
 
@@ -2059,7 +2045,6 @@ int LuaUnsyncedRead::GetGroupUnits(lua_State* L)
 		lua_pushnumber(L, (*it)->id);
 		lua_rawset(L, -3);
 	}
-	HSTR_PUSH_NUMBER(L, "n", count);
 
 	return 1;
 }
@@ -2096,11 +2081,9 @@ int LuaUnsyncedRead::GetGroupUnitsSorted(lua_State* L)
 				lua_pushnumber(L, unit->id);
 				lua_rawset(L, -3);
 			}
-			HSTR_PUSH_NUMBER(L, "n", v.size());
 		}
 		lua_rawset(L, -3);
 	}
-	HSTR_PUSH_NUMBER(L, "n", unitDefMap.size());
 
 	return 1;
 }
@@ -2138,7 +2121,6 @@ int LuaUnsyncedRead::GetGroupUnitsCounts(lua_State* L)
 		lua_pushnumber(L, mit->second); // push the UnitDef unit count
 		lua_rawset(L, -3);
 	}
-	HSTR_PUSH_NUMBER(L, "n", countMap.size());
 
 	return 1;
 }
