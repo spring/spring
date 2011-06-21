@@ -91,11 +91,11 @@ public:
 	 * @deprecated
 	 * @see #RecvChatMessage
 	 */
-	virtual void GotChatMsg(const char*, int) {}
+	virtual void GotChatMsg(const char* message, int player) {}
 
 
 	/// called when a player sends a chat message
-	virtual void RecvChatMessage(const char* message, int player) { GotChatMsg(msg, player); }
+	virtual void RecvChatMessage(const char* message, int player) { GotChatMsg(message, player); }
 
 	/// called when a Lua widget or unsynced gadget sends a message to this AI
 	virtual void RecvLuaMessage(const char* inData, const char** outData) { *outData = inData; }
