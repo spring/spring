@@ -4,7 +4,6 @@
 #define SMFMAPFILE_H
 
 #include "FileSystem/FileHandler.h"
-#include "Map/ReadMap.h"
 #include "mapfile.h"
 #include <string>
 #include <vector>
