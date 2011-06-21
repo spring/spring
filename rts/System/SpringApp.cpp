@@ -54,7 +54,7 @@
 #include "System/Util.h"
 #include "System/FileSystem/FileSystemHandler.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/Platform/BaseCmd.h"
+#include "System/Platform/CmdLineParams.h"
 #include "System/Platform/Misc.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/CrashHandler.h"
@@ -1126,7 +1126,7 @@ static void ResetScreenSaverTimeout()
  */
 int SpringApp::Run(int argc, char *argv[])
 {
-	cmdline = new BaseCmd(argc, argv);
+	cmdline = new CmdLineParams(argc, argv);
 
 	if (!Initialize())
 		return -1;

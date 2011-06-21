@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
-#include "BaseCmd.h"
+#include "CmdLineParams.h"
 
 #include <iostream>
 #include <cstdlib>
@@ -9,7 +9,7 @@
 
 namespace po = boost::program_options;
 
-BaseCmd::BaseCmd(int _argc, char* _argv[]) : desc("Allowed options")
+CmdLineParams::CmdLineParams(int _argc, char* _argv[]) : desc("Allowed options")
 {
 	argc = _argc;
 	argv = _argv;
@@ -18,11 +18,11 @@ BaseCmd::BaseCmd(int _argc, char* _argv[]) : desc("Allowed options")
 	AddSwitch('V', "version", "Display program version");
 }
 
-BaseCmd::~BaseCmd()
+CmdLineParams::~CmdLineParams()
 {
 }
 
-std::string BaseCmd::GetInputFile()
+std::string CmdLineParams::GetInputFile()
 {
 	if (vm.count("input-file"))
 		return vm["input-file"].as<std::string>();
@@ -30,7 +30,7 @@ std::string BaseCmd::GetInputFile()
 		return "";
 }
 
-void BaseCmd::AddSwitch(const char shortopt, std::string longopt, std::string desc)
+void CmdLineParams::AddSwitch(const char shortopt, std::string longopt, std::string desc)
 {
 	if (shortopt) {
 		longopt += std::string(",") + shortopt;
@@ -38,7 +38,7 @@ void BaseCmd::AddSwitch(const char shortopt, std::string longopt, std::string de
 	all.add_options()(longopt.c_str(), desc.c_str());
 }
 
-void BaseCmd::AddString(const char shortopt, std::string longopt, std::string desc)
+void CmdLineParams::AddString(const char shortopt, std::string longopt, std::string desc)
 {
 	if (shortopt) {
 		longopt += std::string(",") + shortopt;
@@ -46,7 +46,7 @@ void BaseCmd::AddString(const char shortopt, std::string longopt, std::string de
 	all.add_options()(longopt.c_str(), po::value<std::string>(), desc.c_str());
 }
 
-void BaseCmd::AddInt(const char shortopt, std::string longopt, std::string desc)
+void CmdLineParams::AddInt(const char shortopt, std::string longopt, std::string desc)
 {
 	if (shortopt) {
 		longopt += std::string(",") + shortopt;
@@ -54,7 +54,7 @@ void BaseCmd::AddInt(const char shortopt, std::string longopt, std::string desc)
 	all.add_options()(longopt.c_str(), po::value<int>(), desc.c_str());
 }
 
-void BaseCmd::Parse()
+void CmdLineParams::Parse()
 {
 	desc.add(all);
 	all.add_options()("input-file", po::value<std::string>(), "input file");
@@ -65,7 +65,7 @@ void BaseCmd::Parse()
 	po::notify(vm);
 }
 
-void BaseCmd::PrintUsage(std::string program, std::string version)
+void CmdLineParams::PrintUsage(std::string program, std::string version)
 {
 	if (!program.empty()) {
 		std::cout << program;
@@ -77,7 +77,7 @@ void BaseCmd::PrintUsage(std::string program, std::string version)
 	std::cout << desc << std::endl;
 }
 
-bool BaseCmd::IsSet(const std::string& var) const
+bool CmdLineParams::IsSet(const std::string& var) const
 {
 	if (vm.count(var))
 		return true;
@@ -85,7 +85,7 @@ bool BaseCmd::IsSet(const std::string& var) const
 		return false;
 }
 
-std::string BaseCmd::GetString(const std::string& var) const
+std::string CmdLineParams::GetString(const std::string& var) const
 {
 	if (vm.count(var))
 		return vm[var].as<std::string>();
@@ -93,7 +93,7 @@ std::string BaseCmd::GetString(const std::string& var) const
 		return "";
 }
 
-int BaseCmd::GetInt(const std::string& var) const
+int CmdLineParams::GetInt(const std::string& var) const
 {
 	if (vm.count(var))
 		return vm[var].as<int>();

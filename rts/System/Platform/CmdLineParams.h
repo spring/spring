@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _BASE_CMD_H
-#define _BASE_CMD_H
+#ifndef _CMD_LINE_PARAMS_H
+#define _CMD_LINE_PARAMS_H
 
 #ifdef __APPLE__
 #pragma GCC visibility push(default)
@@ -15,7 +15,7 @@
  * @brief Command-line parser
  * Serves the same purpose as the getopt library.
  */
-class BaseCmd
+class CmdLineParams
 {
 
 public:
@@ -23,8 +23,8 @@ public:
 	 * The base constructor sets up the default help and
 	 * version options that should be available on all platforms.
 	 */
-	BaseCmd(int argc, char* argv[]);
-	~BaseCmd();
+	CmdLineParams(int argc, char* argv[]);
+	~CmdLineParams();
 
 	/// Returns the script or demofile given on the command-line
 	/**
@@ -96,7 +96,7 @@ protected:
 	boost::program_options::options_description all;
 };
 
-#endif // _BASE_CMD_H
+#endif // _CMD_LINE_PARAMS_H
 
 #ifdef __APPLE__
 #pragma GCC visibility pop
