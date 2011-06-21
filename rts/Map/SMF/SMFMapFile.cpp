@@ -5,6 +5,7 @@
 
 #include "SMFMapFile.h"
 #include "mapfile.h"
+#include "Map/ReadMap.h"
 #include "mmgr.h"
 #include "Exceptions.h"
 
@@ -126,21 +127,22 @@ const char* CSmfMapFile::GetFeatureTypeName(int typeID) const
 }
 
 
-MapBitmapInfo CSmfMapFile::GetInfoMapSize(const string& name) const
+void CSmfMapFile::GetInfoMapSize(const string& name, MapBitmapInfo* info) const
 {
 	if (name == "height") {
-		return MapBitmapInfo(header.mapx + 1, header.mapy + 1);
+		*info = MapBitmapInfo(header.mapx + 1, header.mapy + 1);
 	}
 	else if (name == "grass") {
-		return MapBitmapInfo(header.mapx / 4, header.mapy / 4);
+		*info = MapBitmapInfo(header.mapx / 4, header.mapy / 4);
 	}
 	else if (name == "metal") {
-		return MapBitmapInfo(header.mapx / 2, header.mapy / 2);
+		*info = MapBitmapInfo(header.mapx / 2, header.mapy / 2);
 	}
 	else if (name == "type") {
-		return MapBitmapInfo(header.mapx / 2, header.mapy / 2);
+		*info = MapBitmapInfo(header.mapx / 2, header.mapy / 2);
 	}
-	return MapBitmapInfo(0, 0);
+
+	*info = MapBitmapInfo(0, 0);
 }
 
 
