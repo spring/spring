@@ -42,18 +42,17 @@ public:
 	 */
 	void  RemoveExtraction(int x, int z, float depth);
 
+	int GetSizeX() const { return sizeX; }
+	int GetSizeZ() const { return sizeZ; }
+
 	unsigned char* metalMap;
 	unsigned char  metalPal[768];
 	std::vector<float> extractionMap;
-
-	int GetSizeX() const { return sizeX; }
-	int GetSizeZ() const { return sizeZ; }
 
 protected:
 	float metalScale;
 	int sizeX;
 	int sizeZ;
 };
-
 
 #endif /* METAL_MAP_H */
