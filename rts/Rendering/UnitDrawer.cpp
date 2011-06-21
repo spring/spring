@@ -227,7 +227,7 @@ bool CUnitDrawer::LoadModelShaders()
 		logOutput.Print("[LoadModelShaders] OpenGL ARB extensions missing for advanced unit shading");
 		return false;
 	}
-	if (configHandler->Get("AdvUnitShading", 1) == 0) {
+	if (configHandler->Get("AdvUnitShading", 0) == 0) {
 		// not allowed to do shader-based model rendering
 		return false;
 	}
