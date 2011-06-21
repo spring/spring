@@ -12,6 +12,7 @@
 #include "Game/GameVersion.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
+#include "Map/ReadMap.h"
 #include "Map/SMF/SMFMapFile.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/SideParser.h"
@@ -509,7 +510,7 @@ static bool internal_GetMapInfo(const char* mapName, InternalMapInfo* outInfo)
 		const std::string extension = filesystem.GetExtension(mapFile);
 		if (extension == "smf") {
 			try {
-				CSmfMapFile file(mapFile);
+				const CSmfMapFile file(mapFile);
 				const SMFHeader& mh = file.GetHeader();
 
 				outInfo->width  = mh.mapx * SQUARE_SIZE;
