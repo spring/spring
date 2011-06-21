@@ -3,7 +3,7 @@
 #ifndef SMFREADMAP_H
 #define SMFREADMAP_H
 
-#include "SmfMapFile.h"
+#include "SMFMapFile.h"
 
 class CBFGroundDrawer;
 
@@ -36,17 +36,18 @@ public:
 	void NewGroundDrawer();
 	inline CBaseGroundDrawer* GetGroundDrawer();
 
-	const float* GetHeightmap() const { return heightmap; }
+	const float* GetCornerHeightMapSynced() const { return &cornerHeightMapSynced[0]; }
+	      float* GetCornerHeightMapUnsynced()     { return &cornerHeightMapUnsynced[0]; }
 
 	inline void SetHeight(const int& idx, const float& h) {
-		heightmap[idx] = h;
+		cornerHeightMapSynced[idx] = h;
 		currMinHeight = std::min(h, currMinHeight);
 		currMaxHeight = std::max(h, currMaxHeight);
 	}
 	inline void AddHeight(const int& idx, const float& a) {
-		heightmap[idx] += a;
-		currMinHeight = std::min(heightmap[idx], currMinHeight);
-		currMaxHeight = std::max(heightmap[idx], currMaxHeight);
+		cornerHeightMapSynced[idx] += a;
+		currMinHeight = std::min(cornerHeightMapSynced[idx], currMinHeight);
+		currMaxHeight = std::max(cornerHeightMapSynced[idx], currMaxHeight);
 	}
 
 	int GetNumFeatureTypes();
@@ -57,7 +58,7 @@ public:
 	unsigned char* GetInfoMap(const std::string& name, MapBitmapInfo* bm);
 	void FreeInfoMap(const std::string& name, unsigned char* data);
 
-	// NOTE: do not use, just here for backward compatibility with BFGroundTextures.cpp
+	// NOTE: do not use, just here for backward compatibility with SMFGroundTextures.cpp
 	CSmfMapFile& GetFile() { return file; }
 
 	float anisotropy;
@@ -83,7 +84,9 @@ protected:
 	bool haveSplatTexture;
 
 	unsigned char waterHeightColors[1024 * 4];
-	float* heightmap;
+
+	std::vector<float> cornerHeightMapSynced;
+	std::vector<float> cornerHeightMapUnsynced;
 
 	float DiffuseSunCoeff(const int& x, const int& y) const;
 	float3 GetLightValue(const int& x, const int& y) const;

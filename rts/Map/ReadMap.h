@@ -8,6 +8,8 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 
+#define USE_UNSYNCED_HEIGHTMAP
+
 class CMetalMap;
 class CCamera;
 class CFileHandler;
@@ -69,9 +71,21 @@ protected:
 	 */
 	void UpdateHeightmapSynced(int x1, int y1, int x2, int y2);
 	void CalcHeightmapChecksum();
+
 public:
-	/// Returns a float[(mapx + 1) * (mapy + 1)]
-	virtual const float* GetHeightmap() const = 0;
+	virtual const float* GetCornerHeightMapSynced() const = 0;
+	virtual       float* GetCornerHeightMapUnsynced() = 0;
+
+	const float* GetOriginalHeightMapSynced() const { return &originalHeightMap[0]; }
+	const float* GetCenterHeightMapSynced() const { return &centerHeightMap[0]; }
+	const float* GetMIPHeightMapSynced(unsigned int mip) const { return &mipHeightMaps[mip][0]; }
+	const float* GetSlopeMapSynced() const { return &slopeMap[0]; }
+	const unsigned char* GetTypeMapSynced() const { return &typeMap[0]; }
+	      unsigned char* GetTypeMapSynced()       { return &typeMap[0]; }
+	const float3* GetVertexNormalsUnsynced() const { return &vertexNormals[0]; }
+	const float3* GetFaceNormalsSynced() const { return &faceNormals[0]; }
+	const float3* GetCenterNormalsSynced() const { return &centerNormals[0]; }
+
 
 	virtual void NewGroundDrawer() = 0;
 	virtual CBaseGroundDrawer* GetGroundDrawer() { return 0; }
@@ -88,35 +102,8 @@ public:
 	virtual void AddHeight(const int& idx, const float& a) = 0;
 	void HeightmapUpdated(const int& x1, const int& y1, const int& x2, const int& y2);
 
-	/// size: (mapx+1)*(mapy+1) (per vertex)
-	float* orgheightmap;
-	/// size: (mapx)*(mapy)     (per face)
-	float* centerheightmap;
 	/// number of heightmap mipmaps, including full resolution
 	static const int numHeightMipMaps = 7;
-	/**
-	 * array of pointers to heightmap in different resolutions,
-	 * mipHeightmap[0] is full resolution,
-	 * mipHeightmap[n+1] is half resolution of mipHeightmap[n]
-	 */
-	float* mipHeightmap[numHeightMipMaps];
-	/// size: (mapx/2)*(mapy/2) (1.0 - interpolate(centernomal[i]).y)
-	float* slopemap;
-	/// size: 2*mapx*mapy (contains 2 normals per quad -> triangle strip)
-	float3* facenormals;
-	/**
-	 * size: mapx*mapy (contains interpolated 1 normal per quad, same as
-	 * (facenormal0+facenormal1).Normalize())
-	 */
-	float3* centernormals;
-
-	/**
-	 * size: (mapx + 1) * (mapy + 1),
-	 * contains one vertex normal per heightmap pixel
-	 */
-	std::vector<float3> vertexNormals;
-
-	unsigned char* typemap;
 
 	/// Metal-density/height-map
 	CMetalMap* metalMap;
@@ -159,17 +146,51 @@ public:
 	/// Determine visibility for a rectangular grid
 	struct IQuadDrawer
 	{
-		virtual ~IQuadDrawer();
+		virtual ~IQuadDrawer() {}
 		virtual void DrawQuad (int x,int y) = 0;
 	};
 	virtual void GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize = 0) = 0;
+
+protected:
+	std::vector<float> originalHeightMap;    /// size: (mapx+1)*(mapy+1) (per vertex) [SYNCED, does NOT update on terrain deformation]
+	std::vector<float> centerHeightMap;      /// size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
+
+	/**
+	 * array of pointers to heightmap in different resolutions,
+	 * mipHeightmap[0] is full resolution,
+	 * mipHeightmap[n+1] is half resolution of mipHeightmap[n]
+	 */
+	std::vector< float* > mipHeightMaps;
+
+	std::vector<float3> vertexNormals;  /// size:  (mapx + 1) * (mapy + 1), contains one vertex normal per heightmap pixel [UNSYNCED]
+	std::vector<float3> faceNormals;    /// size: 2*mapx*mapy (contains 2 normals per quad -> triangle strip) [SYNCED]
+	std::vector<float3> centerNormals;  /// size:   mapx*mapy (contains 1 interpolated normal per quad, same as (facenormal0+facenormal1).Normalize()) [SYNCED]
+
+	std::vector<float> slopeMap;        /// size: (mapx/2)*(mapy/2) (1.0 - interpolate(centernomal[i]).y) [SYNCED]
+	std::vector<unsigned char> typeMap;
 };
 
 extern CReadMap* readmap;
 
+
 /// Converts a map-square into a float3-position.
 inline float3 SquareToFloat3(int xSquare, int zSquare) {
-	return float3(xSquare * SQUARE_SIZE, readmap->centerheightmap[(zSquare * gs->mapx) + xSquare], zSquare * SQUARE_SIZE);
+	const float* hm = readmap->GetCenterHeightMapSynced();
+	const float& h = hm[(zSquare * gs->mapx) + xSquare];
+	return float3(xSquare * SQUARE_SIZE, h, zSquare * SQUARE_SIZE);
 }
+
+/// TODO: use in SM3 renderer also
+inline float GetVisibleVertexHeight(int idx) {
+
+	#ifdef USE_UNSYNCED_HEIGHTMAP
+	static const float* hm = readmap->GetCornerHeightMapUnsynced();
+	#else
+	static const float* hm = readmap->GetCornerHeightMapSynced();
+	#endif
+
+	return hm[idx];
+}
+
 
 #endif /* READ_MAP_H */

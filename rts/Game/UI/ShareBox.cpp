@@ -6,13 +6,14 @@
 
 #include "ShareBox.h"
 #include "MouseHandler.h"
-#include "Rendering/GL/myGL.h"
-#include "Sim/Misc/TeamHandler.h"
-#include "Game/PlayerHandler.h"
-#include "Sim/Misc/GlobalSynced.h"
-#include "Rendering/glFont.h"
-#include "NetProtocol.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
+#include "Game/PlayerHandler.h"
+#include "Rendering/glFont.h"
+#include "Rendering/GL/myGL.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/TeamHandler.h"
+#include "System/NetProtocol.h"
 
 #define MAX_SHARE_TEAMS (teamHandler->ActiveTeams() - 1)
 int CShareBox::lastShareTeam = 0;

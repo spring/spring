@@ -3,12 +3,13 @@
 #include "StdAfx.h"
 
 #include "SyncedGameCommands.h"
-#include "Game.h"
 #include "Action.h"
-#include "SyncedActionExecutor.h"
-#include "SelectedUnits.h"
-#include "PlayerHandler.h"
+#include "Game.h"
+#include "GlobalUnsynced.h"
 #include "InMapDraw.h"
+#include "PlayerHandler.h"
+#include "SelectedUnits.h"
+#include "SyncedActionExecutor.h"
 #ifdef _WIN32
 #  include "winerror.h" // TODO someone on windows (MinGW? VS?) please check if this is required
 #endif
@@ -24,7 +25,6 @@
 #include "UI/LuaUI.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/LogOutput.h"
-#include "System/GlobalUnsynced.h"
 #include "System/Util.h"
 
 #include <string>

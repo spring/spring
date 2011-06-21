@@ -14,6 +14,7 @@
 #include <SDL_timer.h>
 
 #include "Game/GameHelper.h"
+#include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
@@ -39,7 +40,6 @@
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "System/GlobalUnsynced.h"
 #include "System/FastMath.h"
 #include "System/myMath.h"
 #include "System/LogOutput.h"
@@ -628,7 +628,6 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 					ZeroVector,
 					weaponDef->damages,
 					weaponDef,
-					weaponDef->explosionGenerator,
 					unit,                              // owner
 					NULL,                              // hitUnit
 					NULL,                              // hitFeature

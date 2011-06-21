@@ -502,13 +502,13 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 		const int tz2 = std::min(gs->mapy, tz1 + bi.GetZSize());
 
 
-		const float* heightmap = readmap->GetHeightmap();
+		const float* heightmap = readmap->GetCornerHeightMapSynced();
 		int num = 0;
 		float heightdiff = 0.0f;
 		for (int z = tz1; z <= tz2; z++) {
 			for (int x = tx1; x <= tx2; x++) {
 				int index = z * (gs->mapx + 1) + x;
-				heightdiff += heightmap[index] - readmap->orgheightmap[index];
+				heightdiff += heightmap[index] - readmap->GetOriginalHeightMapSynced()[index];
 				++num;
 			}
 		}
@@ -518,7 +518,7 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 		for (int z = tz1; z <= tz2; z++) {
 			for (int x = tx1; x <= tx2; x++) {
 				int index = z * (gs->mapx + 1) + x;
-				readmap->SetHeight(index, heightdiff + readmap->orgheightmap[index]);
+				readmap->SetHeight(index, heightdiff + readmap->GetOriginalHeightMapSynced()[index]);
 			}
 		}
 		// but without affecting the build height

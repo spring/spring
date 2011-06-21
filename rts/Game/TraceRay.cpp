@@ -5,6 +5,7 @@
 
 #include "Camera.h"
 #include "GameSetup.h"
+#include "GlobalUnsynced.h"
 #include "TraceRay.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
@@ -18,7 +19,6 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/UnitTypes/Factory.h"
-#include "System/GlobalUnsynced.h"
 #include "System/myMath.h"
 #include "System/LogOutput.h"
 

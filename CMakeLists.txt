@@ -241,6 +241,20 @@ IF (MINGW)
 	FIND_PACKAGE(Win32Libs REQUIRED)
 ENDIF (MINGW)
 
+# add -flto to linker if gcc>=4.5
+if (CMAKE_COMPILER_IS_GNUCC)
+	execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+	if (GCC_VERSION VERSION_GREATER 4.5 OR GCC_VERSION VERSION_EQUAL 4.5)
+		message(STATUS "Found gcc >=4.5, enabled linker flag -flto")
+		set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
+		set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -flto")
+		set (CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -flto")
+	else()
+		message(STATUS "WARNING gcc<4.5 found, not enabling -flto linking")
+	endif()
+endif(CMAKE_COMPILER_IS_GNUCC)
+
+
 ### Where the other CMakeLists.txt are
 
 # As the libs are required by all the other sub-projects, we add them first

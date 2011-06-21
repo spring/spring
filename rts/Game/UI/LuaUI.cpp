@@ -43,6 +43,7 @@
 #include "Game/Camera/CameraController.h"
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/PlayerRoster.h"
 #include "Game/SelectedUnits.h"
 #include "CommandColors.h"
@@ -374,23 +375,26 @@ static inline float fuzzRand(float fuzz)
 }
 
 
-void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect)
+void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect, float *distadj)
 {
 	if (!haveShockFront) {
 		return;
 	}
-	if (areaOfEffect < shockFrontMinArea) {
+	if (areaOfEffect < shockFrontMinArea && !distadj) {
 		return;
 	}
-
+#if defined(USE_GML) && GML_ENABLE_SIM
+	float shockFrontDistAdj = distadj ? *distadj : this->shockFrontDistAdj;
+#endif
 	float3 gap = (camera->pos - pos);
 	float dist = gap.Length() + shockFrontDistAdj;
 
 	power = power / (dist * dist);
-	if (power < shockFrontMinPower) {
+	if (power < shockFrontMinPower && !distadj) {
 		return;
 	}
 
+	LUA_UI_BATCH_PUSH(SHOCK_FRONT, power, pos, areaOfEffect, shockFrontDistAdj);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 6);
 	static const LuaHashString cmdStr("ShockFront");
@@ -421,6 +425,41 @@ void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect)
 	return;
 }
 
+
+void CLuaUI::ExecuteUIEventBatch() {
+	if(!UseEventBatch()) return;
+
+	std::vector<LuaUIEvent> lleb;
+	{
+		GML_STDMUTEX_LOCK(llbatch);
+
+		if(luaUIEventBatch.empty())
+			return;
+
+		luaUIEventBatch.swap(lleb);
+	}
+
+#if defined(USE_GML) && GML_ENABLE_SIM
+	SELECT_LUA_STATE();
+#endif
+	GML_DRCMUTEX_LOCK(lua); // ExecuteUIEventBatch
+
+	if(Threading::IsSimThread())
+		Threading::SetBatchThread(false);
+	for(std::vector<LuaUIEvent>::iterator i = lleb.begin(); i != lleb.end(); ++i) {
+		LuaUIEvent &e = *i;
+		switch(e.id) {
+			case SHOCK_FRONT:
+				ShockFront(e.flt1, e.pos1, e.flt2, &e.flt3);
+				break;
+			default:
+				logOutput.Print("%s: Invalid Event %d", __FUNCTION__, e.id);
+				break;
+		}
+	}
+	if(Threading::IsSimThread())
+		Threading::SetBatchThread(true);
+}
 
 /******************************************************************************/
 
@@ -460,6 +499,9 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 	onlyTextureCmds.clear();
 	buttonList.clear();
 	menuName = "";
+
+	GML_RECMUTEX_LOCK(unit); // LayoutButtons
+	GML_RECMUTEX_LOCK(feat); // LayoutButtons
 
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 6);

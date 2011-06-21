@@ -4,11 +4,11 @@
 #include "mmgr.h"
 
 #include "Game/Camera.h"
+#include "Game/GlobalUnsynced.h"
 #include "MuzzleFlame.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "System/GlobalUnsynced.h"
 
 
 CR_BIND_DERIVED(CMuzzleFlame, CProjectile, (ZeroVector, ZeroVector, ZeroVector, 0));

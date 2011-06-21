@@ -10,6 +10,7 @@
 
 #include "ExplosionGenerator.h"
 #include "Game/Camera.h"
+#include "Game/GlobalUnsynced.h"
 #include "Lua/LuaParser.h"
 #include "Map/Ground.h"
 #include "Rendering/GroundFlash.h"
@@ -28,7 +29,6 @@
 #include "Sim/Projectiles/Unsynced/WreckProjectile.h"
 
 #include "System/ConfigHandler.h"
-#include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 #include "System/Exceptions.h"
 #include "System/creg/VarTypes.h"

@@ -1,9 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
-#include "SmfReadMap.h"
-#include "BFGroundDrawer.h"
-#include "BFGroundTextures.h"
+#include "SMFReadMap.h"
+#include "SMFGroundDrawer.h"
+#include "SMFGroundTextures.h"
 #include "Game/Camera.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -20,14 +20,13 @@
 #include "Sim/Misc/SmoothHeightMesh.h"
 #include "System/ConfigHandler.h"
 #include "System/FastMath.h"
-#include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"
 #include "System/mmgr.h"
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
-extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
+extern gmlClientServer<void, int, CUnit*> *gmlProcessor;
 #endif
 
 using std::min;
@@ -38,15 +37,13 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 	numBigTexX(gs->mapx / bigSquareSize),
 	numBigTexY(gs->mapy / bigSquareSize),
 	maxIdx(((gs->mapx + 1) * (gs->mapy + 1)) - 1),
-	heightDataX(gs->mapx + 1)
+	heightMapSizeX(gs->mapx + 1)
 {
-	mapWidth = (gs->mapx * SQUARE_SIZE);
-	mapHeight = (gs->mapy * SQUARE_SIZE);
-	bigTexH = mapHeight / numBigTexY;
+	mapSizeX = (gs->mapx * SQUARE_SIZE);
+	mapSizeZ = (gs->mapy * SQUARE_SIZE);
+	bigTexH = mapSizeZ / numBigTexY;
 
 	map = rm;
-	heightData = map->heightmap;
-
 	textures = new CBFGroundTextures(map);
 
 	viewRadius = configHandler->Get("GroundDetail", 40);
@@ -269,8 +266,8 @@ void CBFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 	glDisable(GL_TEXTURE_2D);
 	glDepthMask(GL_FALSE);
 
-	const float xsize = (mapWidth) >> 2;
-	const float ysize = (mapHeight) >> 2;
+	const float xsize = (mapSizeX) >> 2;
+	const float ysize = (mapSizeZ) >> 2;
 	const float size = std::min(xsize, ysize);
 
 	CVertexArray* va = GetVertexArray();
@@ -336,9 +333,9 @@ inline void CBFGroundDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y)
 {
 	//! don't send the normals as vertex attributes
 	//! (DLOD'ed triangles mess with interpolation)
-	//! const float3& n = readmap->vertexNormals[(y * heightDataX) + x];
+	//! const float3& n = readmap->vertexNormals[(y * heightMapSizeX) + x];
 
-	DrawVertexAQ(ma, x, y, heightData[y * heightDataX + x]);
+	DrawVertexAQ(ma, x, y, GetVisibleVertexHeight(y * heightMapSizeX + x));
 }
 
 inline void CBFGroundDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y, float height)
@@ -365,7 +362,7 @@ inline void CBFGroundDrawer::DrawGroundVertexArrayQ(CVertexArray * &ma)
 
 inline bool CBFGroundDrawer::BigTexSquareRowVisible(int bty) {
 	const int minx =             0;
-	const int maxx =      mapWidth;
+	const int maxx =      mapSizeX;
 	const int minz = bty * bigTexH;
 	const int maxz = minz + bigTexH;
 	const float miny = readmap->currMinHeight;
@@ -529,9 +526,9 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 
 				ma->EnlargeArrays((52 * nloop), 14 * nloop + 1);
 
-				int yhdx = y * heightDataX;
-				int ylhdx = yhdx + lod * heightDataX;
-				int yhhdx = yhdx + hlod * heightDataX;
+				int yhdx = y * heightMapSizeX;
+				int ylhdx = yhdx + lod * heightMapSizeX;
+				int yhhdx = yhdx + hlod * heightMapSizeX;
 
 				for (x = xs; x < xe; x += lod) {
 					int xlod = x + lod;
@@ -556,10 +553,10 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 							int idx1 = CLAMP(yhdx + x),  idx1LOD = CLAMP(idx1 + lod), idx1HLOD = CLAMP(idx1 + hlod);
 							int idx2 = CLAMP(ylhdx + x), idx2LOD = CLAMP(idx2 + lod), idx2HLOD = CLAMP(idx2 + hlod);
 							int idx3 = CLAMP(yhhdx + x),                              idx3HLOD = CLAMP(idx3 + hlod);
-							float h1 = (heightData[idx1] + heightData[idx2   ]) * hmocxp + heightData[idx3    ] * oldcamxpart;
-							float h2 = (heightData[idx1] + heightData[idx1LOD]) * hmocxp + heightData[idx1HLOD] * oldcamxpart;
-							float h3 = (heightData[idx2] + heightData[idx1LOD]) * hmocxp + heightData[idx3HLOD] * oldcamxpart;
-							float h4 = (heightData[idx2] + heightData[idx2LOD]) * hmocxp + heightData[idx2HLOD] * oldcamxpart;
+							float h1 = (GetVisibleVertexHeight(idx1) + GetVisibleVertexHeight(idx2)) * hmocxp + GetVisibleVertexHeight(idx3) * oldcamxpart;
+							float h2 = (GetVisibleVertexHeight(idx1) + GetVisibleVertexHeight(idx1LOD)) * hmocxp + GetVisibleVertexHeight(idx1HLOD) * oldcamxpart;
+							float h3 = (GetVisibleVertexHeight(idx2) + GetVisibleVertexHeight(idx1LOD)) * hmocxp + GetVisibleVertexHeight(idx3HLOD) * oldcamxpart;
+							float h4 = (GetVisibleVertexHeight(idx2) + GetVisibleVertexHeight(idx2LOD)) * hmocxp + GetVisibleVertexHeight(idx2HLOD) * oldcamxpart;
 
 							if (inStrip) {
 								EndStripQ(ma);
@@ -588,10 +585,10 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 							int idx1 = CLAMP(yhdx + x),  idx1LOD = CLAMP(idx1 + lod), idx1HLOD = CLAMP(idx1 + hlod);
 							int idx2 = CLAMP(ylhdx + x), idx2LOD = CLAMP(idx2 + lod), idx2HLOD = CLAMP(idx2 + hlod);
 							int idx3 = CLAMP(yhhdx + x), idx3LOD = CLAMP(idx3 + lod), idx3HLOD = CLAMP(idx3 + hlod);
-							float h1 = (heightData[idx1LOD] + heightData[idx2LOD]) * hocxp + heightData[idx3LOD ] * mocxp;
-							float h2 = (heightData[idx1   ] + heightData[idx1LOD]) * hocxp + heightData[idx1HLOD] * mocxp;
-							float h3 = (heightData[idx2   ] + heightData[idx1LOD]) * hocxp + heightData[idx3HLOD] * mocxp;
-							float h4 = (heightData[idx2   ] + heightData[idx2LOD]) * hocxp + heightData[idx2HLOD] * mocxp;
+							float h1 = (GetVisibleVertexHeight(idx1LOD) + GetVisibleVertexHeight(idx2LOD)) * hocxp + GetVisibleVertexHeight(idx3LOD ) * mocxp;
+							float h2 = (GetVisibleVertexHeight(idx1   ) + GetVisibleVertexHeight(idx1LOD)) * hocxp + GetVisibleVertexHeight(idx1HLOD) * mocxp;
+							float h3 = (GetVisibleVertexHeight(idx2   ) + GetVisibleVertexHeight(idx1LOD)) * hocxp + GetVisibleVertexHeight(idx3HLOD) * mocxp;
+							float h4 = (GetVisibleVertexHeight(idx2   ) + GetVisibleVertexHeight(idx2LOD)) * hocxp + GetVisibleVertexHeight(idx2HLOD) * mocxp;
 
 							if (inStrip) {
 								EndStripQ(ma);
@@ -621,10 +618,10 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 							int idx1 = yhdx + x,  idx1LOD = CLAMP(idx1 + lod), idx1HLOD = CLAMP(idx1 + hlod);
 							int idx2 = ylhdx + x, idx2LOD = CLAMP(idx2 + lod);
 							int idx3 = yhhdx + x, idx3LOD = CLAMP(idx3 + lod), idx3HLOD = CLAMP(idx3 + hlod);
-							float h1 = (heightData[idx1   ] + heightData[idx1LOD]) * hmocyp + heightData[idx1HLOD] * oldcamypart;
-							float h2 = (heightData[idx1   ] + heightData[idx2   ]) * hmocyp + heightData[idx3    ] * oldcamypart;
-							float h3 = (heightData[idx2   ] + heightData[idx1LOD]) * hmocyp + heightData[idx3HLOD] * oldcamypart;
-							float h4 = (heightData[idx2LOD] + heightData[idx1LOD]) * hmocyp + heightData[idx3LOD ] * oldcamypart;
+							float h1 = (GetVisibleVertexHeight(idx1   ) + GetVisibleVertexHeight(idx1LOD)) * hmocyp + GetVisibleVertexHeight(idx1HLOD) * oldcamypart;
+							float h2 = (GetVisibleVertexHeight(idx1   ) + GetVisibleVertexHeight(idx2   )) * hmocyp + GetVisibleVertexHeight(idx3    ) * oldcamypart;
+							float h3 = (GetVisibleVertexHeight(idx2   ) + GetVisibleVertexHeight(idx1LOD)) * hmocyp + GetVisibleVertexHeight(idx3HLOD) * oldcamypart;
+							float h4 = (GetVisibleVertexHeight(idx2LOD) + GetVisibleVertexHeight(idx1LOD)) * hmocyp + GetVisibleVertexHeight(idx3LOD ) * oldcamypart;
 
 							if (inStrip) {
 								EndStripQ(ma);
@@ -650,10 +647,10 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 							int idx1 = CLAMP(yhdx + x),  idx1LOD = CLAMP(idx1 + lod);
 							int idx2 = CLAMP(ylhdx + x), idx2LOD = CLAMP(idx2 + lod), idx2HLOD = CLAMP(idx2 + hlod);
 							int idx3 = CLAMP(yhhdx + x), idx3LOD = CLAMP(idx3 + lod), idx3HLOD = CLAMP(idx3 + hlod);
-							float h1 = (heightData[idx2   ] + heightData[idx2LOD]) * hocyp + heightData[idx2HLOD] * mocyp;
-							float h2 = (heightData[idx1   ] + heightData[idx2   ]) * hocyp + heightData[idx3    ] * mocyp;
-							float h3 = (heightData[idx2   ] + heightData[idx1LOD]) * hocyp + heightData[idx3HLOD] * mocyp;
-							float h4 = (heightData[idx2LOD] + heightData[idx1LOD]) * hocyp + heightData[idx3LOD ] * mocyp;
+							float h1 = (GetVisibleVertexHeight(idx2   ) + GetVisibleVertexHeight(idx2LOD)) * hocyp + GetVisibleVertexHeight(idx2HLOD) * mocyp;
+							float h2 = (GetVisibleVertexHeight(idx1   ) + GetVisibleVertexHeight(idx2   )) * hocyp + GetVisibleVertexHeight(idx3    ) * mocyp;
+							float h3 = (GetVisibleVertexHeight(idx2   ) + GetVisibleVertexHeight(idx1LOD)) * hocyp + GetVisibleVertexHeight(idx3HLOD) * mocyp;
+							float h4 = (GetVisibleVertexHeight(idx2LOD) + GetVisibleVertexHeight(idx1LOD)) * hocyp + GetVisibleVertexHeight(idx3LOD ) * mocyp;
 
 							if (inStrip) {
 								EndStripQ(ma);
@@ -699,17 +696,17 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 					DrawVertexAQ(ma, x, y + lod);
 
 					if (y % dlod) {
-						int idx1 = CLAMP((y      ) * heightDataX + x), idx1LOD = CLAMP(idx1 + lod);
-						int idx2 = CLAMP((y + lod) * heightDataX + x), idx2LOD = CLAMP(idx2 + lod);
-						int idx3 = CLAMP((y - lod) * heightDataX + x), idx3LOD = CLAMP(idx3 + lod);
-						float h = (heightData[idx3LOD] + heightData[idx2LOD]) * hmcxp +	heightData[idx1LOD] * camxpart;
+						const int idx1 = CLAMP((y      ) * heightMapSizeX + x), idx1LOD = CLAMP(idx1 + lod);
+						const int idx2 = CLAMP((y + lod) * heightMapSizeX + x), idx2LOD = CLAMP(idx2 + lod);
+						const int idx3 = CLAMP((y - lod) * heightMapSizeX + x), idx3LOD = CLAMP(idx3 + lod);
+						const float h = (GetVisibleVertexHeight(idx3LOD) + GetVisibleVertexHeight(idx2LOD)) * hmcxp +	GetVisibleVertexHeight(idx1LOD) * camxpart;
 						DrawVertexAQ(ma, xlod, y, h);
 						DrawVertexAQ(ma, xlod, y + lod);
 					} else {
-						int idx1 = CLAMP((y       ) * heightDataX + x), idx1LOD = CLAMP(idx1 + lod);
-						int idx2 = CLAMP((y +  lod) * heightDataX + x), idx2LOD = CLAMP(idx2 + lod);
-						int idx3 = CLAMP((y + dlod) * heightDataX + x), idx3LOD = CLAMP(idx3 + lod);
-						float h = (heightData[idx1LOD] + heightData[idx3LOD]) * hmcxp + heightData[idx2LOD] * camxpart;
+						const int idx1 = CLAMP((y       ) * heightMapSizeX + x), idx1LOD = CLAMP(idx1 + lod);
+						const int idx2 = CLAMP((y +  lod) * heightMapSizeX + x), idx2LOD = CLAMP(idx2 + lod);
+						const int idx3 = CLAMP((y + dlod) * heightMapSizeX + x), idx3LOD = CLAMP(idx3 + lod);
+						const float h = (GetVisibleVertexHeight(idx1LOD) + GetVisibleVertexHeight(idx3LOD)) * hmcxp + GetVisibleVertexHeight(idx2LOD) * camxpart;
 						DrawVertexAQ(ma, xlod, y);
 						DrawVertexAQ(ma, xlod, y + lod, h);
 					}
@@ -722,17 +719,17 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 				int xlod = x + lod;
 				for (y = yst; y < yed; y += lod) {
 					if (y % dlod) {
-						int idx1 = CLAMP((y      ) * heightDataX + x);
-						int idx2 = CLAMP((y + lod) * heightDataX + x);
-						int idx3 = CLAMP((y - lod) * heightDataX + x);
-						float h = (heightData[idx3] + heightData[idx2]) * hcxp + heightData[idx1] * mcxp;
+						int idx1 = CLAMP((y      ) * heightMapSizeX + x);
+						int idx2 = CLAMP((y + lod) * heightMapSizeX + x);
+						int idx3 = CLAMP((y - lod) * heightMapSizeX + x);
+						float h = (GetVisibleVertexHeight(idx3) + GetVisibleVertexHeight(idx2)) * hcxp + GetVisibleVertexHeight(idx1) * mcxp;
 						DrawVertexAQ(ma, x, y, h);
 						DrawVertexAQ(ma, x, y + lod);
 					} else {
-						int idx1 = CLAMP((y       ) * heightDataX + x);
-						int idx2 = CLAMP((y +  lod) * heightDataX + x);
-						int idx3 = CLAMP((y + dlod) * heightDataX + x);
-						float h = (heightData[idx1] + heightData[idx3]) * hcxp + heightData[idx2] * mcxp;
+						int idx1 = CLAMP((y       ) * heightMapSizeX + x);
+						int idx2 = CLAMP((y +  lod) * heightMapSizeX + x);
+						int idx3 = CLAMP((y + dlod) * heightMapSizeX + x);
+						float h = (GetVisibleVertexHeight(idx1) + GetVisibleVertexHeight(idx3)) * hcxp + GetVisibleVertexHeight(idx2) * mcxp;
 						DrawVertexAQ(ma, x, y);
 						DrawVertexAQ(ma, x, y + lod, h);
 					}
@@ -752,13 +749,13 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 					x = xs;
 					int ylod = y + lod;
 					int nloop = (xe - xs) / lod + 2; //! one extra for if statment
-					int ylhdx = (y + lod) * heightDataX;
+					int ylhdx = (y + lod) * heightMapSizeX;
 
 					ma->EnlargeArrays((2 * nloop), 1);
 
 					if (x % dlod) {
 						int idx2 = CLAMP(ylhdx + x), idx2PLOD = CLAMP(idx2 + lod), idx2MLOD = CLAMP(idx2 - lod);
-						float h = (heightData[idx2MLOD] + heightData[idx2PLOD]) * hmcyp + heightData[idx2] * camypart;
+						float h = (GetVisibleVertexHeight(idx2MLOD) + GetVisibleVertexHeight(idx2PLOD)) * hmcyp + GetVisibleVertexHeight(idx2) * camypart;
 						DrawVertexAQ(ma, x, y);
 						DrawVertexAQ(ma, x, ylod, h);
 					} else {
@@ -771,7 +768,7 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 							DrawVertexAQ(ma, x + lod, ylod);
 						} else {
 							int idx2 = CLAMP(ylhdx + x), idx2PLOD  = CLAMP(idx2 +  lod), idx2PLOD2 = CLAMP(idx2 + dlod);
-							float h = (heightData[idx2PLOD2] + heightData[idx2]) * hmcyp + heightData[idx2PLOD] * camypart;
+							float h = (GetVisibleVertexHeight(idx2PLOD2) + GetVisibleVertexHeight(idx2)) * hmcyp + GetVisibleVertexHeight(idx2PLOD) * camypart;
 							DrawVertexAQ(ma, x + lod, y);
 							DrawVertexAQ(ma, x + lod, ylod, h);
 						}
@@ -789,14 +786,14 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 				if (xs < xe) {
 					x = xs;
 					int ylod = y + lod;
-					int yhdx = y * heightDataX;
+					int yhdx = y * heightMapSizeX;
 					int nloop = (xe - xs) / lod + 2; //! one extra for if statment
 
 					ma->EnlargeArrays((2 * nloop), 1);
 
 					if (x % dlod) {
 						int idx1 = CLAMP(yhdx + x), idx1PLOD = CLAMP(idx1 + lod), idx1MLOD = CLAMP(idx1 - lod);
-						float h = (heightData[idx1MLOD] + heightData[idx1PLOD]) * hcyp + heightData[idx1] * mcyp;
+						float h = (GetVisibleVertexHeight(idx1MLOD) + GetVisibleVertexHeight(idx1PLOD)) * hcyp + GetVisibleVertexHeight(idx1) * mcyp;
 						DrawVertexAQ(ma, x, y, h);
 						DrawVertexAQ(ma, x, ylod);
 					} else {
@@ -810,7 +807,7 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 							DrawVertexAQ(ma, x + lod, ylod);
 						} else {
 							int idx1 = CLAMP(yhdx + x), idx1PLOD  = CLAMP(idx1 +  lod), idx1PLOD2 = CLAMP(idx1 + dlod);
-							float h = (heightData[idx1PLOD2] + heightData[idx1]) * hcyp + heightData[idx1PLOD] * mcyp;
+							float h = (GetVisibleVertexHeight(idx1PLOD2) + GetVisibleVertexHeight(idx1)) * hcyp + GetVisibleVertexHeight(idx1PLOD) * mcyp;
 							DrawVertexAQ(ma, x + lod, y, h);
 							DrawVertexAQ(ma, x + lod, ylod);
 						}
@@ -962,9 +959,9 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 	const int xstart = std::max(minlx, mintx), xend   = std::min(maxlx, maxtx);
 	const int ystart = std::max(minly, minty), yend   = std::min(maxly, maxty);
 
-	const int lhdx = lod * heightDataX;
-	const int hhdx = hlod * heightDataX;
-	const int dhdx = dlod * heightDataX;
+	const int lhdx = lod * heightMapSizeX;
+	const int hhdx = hlod * heightMapSizeX;
+	const int dhdx = dlod * heightMapSizeX;
 
 	const float mcxp  = 1.0f - camxpart, mcyp  = 1.0f - camypart;
 	const float hcxp  = 0.5f * camxpart, hcyp  = 0.5f * camypart;
@@ -984,7 +981,7 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 
 		int ylod = y + lod;
 		int yhlod = y + hlod;
-		int ydx = y * heightDataX;
+		int ydx = y * heightMapSizeX;
 		int nloop = (xe - xs) / lod + 1;
 
 		//! EnlargeArrays(nVertices, nStrips [, stripSize])
@@ -998,11 +995,11 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 				(x > cx + vrhlod) || (x < cx - vrhlod) ||
 				(y > cy + vrhlod) || (y < cy - vrhlod)) {
 					if (!inStrip) {
-						DrawVertexAQ(ma, x, y      );
+						DrawVertexAQ(ma, x, y   );
 						DrawVertexAQ(ma, x, ylod);
 						inStrip = true;
 					}
-					DrawVertexAQ(ma, xlod, y      );
+					DrawVertexAQ(ma, xlod, y   );
 					DrawVertexAQ(ma, xlod, ylod);
 			}
 			else {  //! inre begr?sning mot f?eg?nde lod
@@ -1010,11 +1007,11 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 				int ylhdx=yhdx+lhdx;
 				int yhhdx=yhdx+hhdx;
 
-				if(x>=cx+vrhlod){
-					float h1=(heightData[yhdx ] + heightData[ylhdx    ]) * hmocxp + heightData[yhhdx     ] * oldcamxpart;
-					float h2=(heightData[yhdx ] + heightData[yhdx+lod ]) * hmocxp + heightData[yhdx+hlod ] * oldcamxpart;
-					float h3=(heightData[ylhdx] + heightData[yhdx+lod ]) * hmocxp + heightData[yhhdx+hlod] * oldcamxpart;
-					float h4=(heightData[ylhdx] + heightData[ylhdx+lod]) * hmocxp + heightData[ylhdx+hlod] * oldcamxpart;
+				if ( x>= cx + vrhlod) {
+					const float h1 = (GetVisibleVertexHeight(yhdx ) + GetVisibleVertexHeight(ylhdx    )) * hmocxp + GetVisibleVertexHeight(yhhdx     ) * oldcamxpart;
+					const float h2 = (GetVisibleVertexHeight(yhdx ) + GetVisibleVertexHeight(yhdx+lod )) * hmocxp + GetVisibleVertexHeight(yhdx+hlod ) * oldcamxpart;
+					const float h3 = (GetVisibleVertexHeight(ylhdx) + GetVisibleVertexHeight(yhdx+lod )) * hmocxp + GetVisibleVertexHeight(yhhdx+hlod) * oldcamxpart;
+					const float h4 = (GetVisibleVertexHeight(ylhdx) + GetVisibleVertexHeight(ylhdx+lod)) * hmocxp + GetVisibleVertexHeight(ylhdx+hlod) * oldcamxpart;
 
 					if(inStrip){
 						EndStripQ(ma);
@@ -1037,11 +1034,11 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 					DrawVertexAQ(ma, xhlod,y,h2);
 					EndStripQ(ma);
 				}
-				if(x<=cx-vrhlod){
-					float h1=(heightData[yhdx+lod] + heightData[ylhdx+lod]) * hocxp + heightData[yhhdx+lod ] * mocxp;
-					float h2=(heightData[yhdx    ] + heightData[yhdx+lod ]) * hocxp + heightData[yhdx+hlod ] * mocxp;
-					float h3=(heightData[ylhdx   ] + heightData[yhdx+lod ]) * hocxp + heightData[yhhdx+hlod] * mocxp;
-					float h4=(heightData[ylhdx   ] + heightData[ylhdx+lod]) * hocxp + heightData[ylhdx+hlod] * mocxp;
+				if (x <= cx - vrhlod) {
+					const float h1 = (GetVisibleVertexHeight(yhdx+lod) + GetVisibleVertexHeight(ylhdx+lod)) * hocxp + GetVisibleVertexHeight(yhhdx+lod ) * mocxp;
+					const float h2 = (GetVisibleVertexHeight(yhdx    ) + GetVisibleVertexHeight(yhdx+lod )) * hocxp + GetVisibleVertexHeight(yhdx+hlod ) * mocxp;
+					const float h3 = (GetVisibleVertexHeight(ylhdx   ) + GetVisibleVertexHeight(yhdx+lod )) * hocxp + GetVisibleVertexHeight(yhhdx+hlod) * mocxp;
+					const float h4 = (GetVisibleVertexHeight(ylhdx   ) + GetVisibleVertexHeight(ylhdx+lod)) * hocxp + GetVisibleVertexHeight(ylhdx+hlod) * mocxp;
 
 					if(inStrip){
 						EndStripQ(ma);
@@ -1064,11 +1061,11 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 					DrawVertexAQ(ma, xhlod,ylod,h4);
 					EndStripQ(ma);
 				}
-				if(y>=cy+vrhlod){
-					float h1=(heightData[yhdx     ] + heightData[yhdx+lod]) * hmocyp + heightData[yhdx+hlod ] * oldcamypart;
-					float h2=(heightData[yhdx     ] + heightData[ylhdx   ]) * hmocyp + heightData[yhhdx     ] * oldcamypart;
-					float h3=(heightData[ylhdx    ] + heightData[yhdx+lod]) * hmocyp + heightData[yhhdx+hlod] * oldcamypart;
-					float h4=(heightData[ylhdx+lod] + heightData[yhdx+lod]) * hmocyp + heightData[yhhdx+lod ] * oldcamypart;
+				if (y >= cy + vrhlod) {
+					const float h1 = (GetVisibleVertexHeight(yhdx     ) + GetVisibleVertexHeight(yhdx+lod)) * hmocyp + GetVisibleVertexHeight(yhdx+hlod ) * oldcamypart;
+					const float h2 = (GetVisibleVertexHeight(yhdx     ) + GetVisibleVertexHeight(ylhdx   )) * hmocyp + GetVisibleVertexHeight(yhhdx     ) * oldcamypart;
+					const float h3 = (GetVisibleVertexHeight(ylhdx    ) + GetVisibleVertexHeight(yhdx+lod)) * hmocyp + GetVisibleVertexHeight(yhhdx+hlod) * oldcamypart;
+					const float h4 = (GetVisibleVertexHeight(ylhdx+lod) + GetVisibleVertexHeight(yhdx+lod)) * hmocyp + GetVisibleVertexHeight(yhhdx+lod ) * oldcamypart;
 
 					if(inStrip){
 						EndStripQ(ma);
@@ -1088,11 +1085,11 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 					DrawVertexAQ(ma, xlod,yhlod,h4);
 					EndStripQ(ma);
 				}
-				if(y<=cy-vrhlod){
-					float h1=(heightData[ylhdx    ] + heightData[ylhdx+lod]) * hocyp + heightData[ylhdx+hlod] * mocyp;
-					float h2=(heightData[yhdx     ] + heightData[ylhdx    ]) * hocyp + heightData[yhhdx     ] * mocyp;
-					float h3=(heightData[ylhdx    ] + heightData[yhdx+lod ]) * hocyp + heightData[yhhdx+hlod] * mocyp;
-					float h4=(heightData[ylhdx+lod] + heightData[yhdx+lod ]) * hocyp + heightData[yhhdx+lod ] * mocyp;
+				if (y <= cy - vrhlod) {
+					const float h1 = (GetVisibleVertexHeight(ylhdx    ) + GetVisibleVertexHeight(ylhdx+lod)) * hocyp + GetVisibleVertexHeight(ylhdx+hlod) * mocyp;
+					const float h2 = (GetVisibleVertexHeight(yhdx     ) + GetVisibleVertexHeight(ylhdx    )) * hocyp + GetVisibleVertexHeight(yhhdx     ) * mocyp;
+					const float h3 = (GetVisibleVertexHeight(ylhdx    ) + GetVisibleVertexHeight(yhdx+lod )) * hocyp + GetVisibleVertexHeight(yhhdx+hlod) * mocyp;
+					const float h4 = (GetVisibleVertexHeight(ylhdx+lod) + GetVisibleVertexHeight(yhdx+lod )) * hocyp + GetVisibleVertexHeight(yhhdx+lod ) * mocyp;
 
 					if (inStrip) {
 						EndStripQ(ma);
@@ -1135,14 +1132,14 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 		for (y = yst; y < yed; y += lod) {
 			DrawVertexAQ(ma, x, y      );
 			DrawVertexAQ(ma, x, y + lod);
-			const int yhdx = y * heightDataX + x;
+			const int yhdx = y * heightMapSizeX + x;
 
 			if (y % dlod) {
-				float h = (heightData[yhdx - lhdx + lod] + heightData[yhdx + lhdx + lod]) * hmcxp + heightData[yhdx+lod] * camxpart;
+				const float h = (GetVisibleVertexHeight(yhdx - lhdx + lod) + GetVisibleVertexHeight(yhdx + lhdx + lod)) * hmcxp + GetVisibleVertexHeight(yhdx+lod) * camxpart;
 				DrawVertexAQ(ma, xlod, y, h);
 				DrawVertexAQ(ma, xlod, y + lod);
 			} else {
-				float h=(heightData[yhdx+lod]+heightData[yhdx+dhdx+lod]) * hmcxp + heightData[yhdx+lhdx+lod] * camxpart;
+				const float h = (GetVisibleVertexHeight(yhdx+lod) + GetVisibleVertexHeight(yhdx+dhdx+lod)) * hmcxp + GetVisibleVertexHeight(yhdx+lhdx+lod) * camxpart;
 				DrawVertexAQ(ma, xlod,y);
 				DrawVertexAQ(ma, xlod,y+lod,h);
 			}
@@ -1151,17 +1148,17 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 	}
 
 	if (minlx > mintx && minlx < maxtx) {
-		x = minlx-lod;
+		x = minlx - lod;
 		const int xlod = x + lod;
 
 		for(y = yst; y < yed; y += lod) {
-			int yhdx=y*heightDataX+x;
+			int yhdx = y * heightMapSizeX + x;
 			if(y%dlod){
-				float h=(heightData[yhdx-lhdx]+heightData[yhdx+lhdx]) * hcxp + heightData[yhdx] * mcxp;
+				const float h = (GetVisibleVertexHeight(yhdx-lhdx) + GetVisibleVertexHeight(yhdx+lhdx)) * hcxp + GetVisibleVertexHeight(yhdx) * mcxp;
 				DrawVertexAQ(ma, x,y,h);
 				DrawVertexAQ(ma, x,y+lod);
 			} else {
-				float h=(heightData[yhdx]+heightData[yhdx+dhdx]) * hcxp + heightData[yhdx+lhdx] * mcxp;
+				const float h = (GetVisibleVertexHeight(yhdx) + GetVisibleVertexHeight(yhdx+dhdx)) * hcxp + GetVisibleVertexHeight(yhdx+lhdx) * mcxp;
 				DrawVertexAQ(ma, x,y);
 				DrawVertexAQ(ma, x,y+lod,h);
 			}
@@ -1170,71 +1167,75 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 			EndStripQ(ma);
 		}
 	}
-	if(maxly<maxty && maxly>minty){
-		y=maxly;
-		int xs = std::max(xstart -lod, mintx);
-		int xe = std::min(xend + lod, maxtx);
+	if (maxly < maxty && maxly > minty) {
+		y = maxly;
+		const int xs = std::max(xstart -lod, mintx);
+		const int xe = std::min(xend + lod, maxtx);
+
 		if (xs < xe) {
 			x = xs;
-			int ylod = y + lod;
-			int ydx = y * heightDataX;
-			int nloop = (xe - xs) / lod + 2; //! two extra for if statment
+			const int ylod = y + lod;
+			const int ydx = y * heightMapSizeX;
+			const int nloop = (xe - xs) / lod + 2; //! two extra for if statment
 
 			ma->EnlargeArrays((2 * nloop), 1);
 
 			if (x % dlod) {
-				int ylhdx=ydx+x+lhdx;
-				float h=(heightData[ylhdx-lod]+heightData[ylhdx+lod]) * hmcyp + heightData[ylhdx] * camypart;
-				DrawVertexAQ(ma, x,y);
-				DrawVertexAQ(ma, x,ylod,h);
+				const int ylhdx = ydx + x + lhdx;
+				const float h = (GetVisibleVertexHeight(ylhdx-lod) + GetVisibleVertexHeight(ylhdx+lod)) * hmcyp + GetVisibleVertexHeight(ylhdx) * camypart;
+				DrawVertexAQ(ma, x, y);
+				DrawVertexAQ(ma, x, ylod, h);
 			} else {
-				DrawVertexAQ(ma, x,y);
-				DrawVertexAQ(ma, x,ylod);
+				DrawVertexAQ(ma, x, y);
+				DrawVertexAQ(ma, x, ylod);
 			}
-			for(x=xs;x<xe;x+=lod){
-				if(x%dlod){
-					DrawVertexAQ(ma, x+lod,y);
-					DrawVertexAQ(ma, x+lod,ylod);
+
+			for (x = xs; x < xe; x += lod) {
+				if (x % dlod) {
+					DrawVertexAQ(ma, x + lod, y);
+					DrawVertexAQ(ma, x + lod, ylod);
 				} else {
 					DrawVertexAQ(ma, x+lod,y);
-					int ylhdx=ydx+x+lhdx;
-					float h=(heightData[ylhdx+dlod]+heightData[ylhdx]) * hmcyp + heightData[ylhdx+lod] * camypart;
+					const int ylhdx = ydx + x + lhdx;
+					const float h = (GetVisibleVertexHeight(ylhdx+dlod) + GetVisibleVertexHeight(ylhdx)) * hmcyp + GetVisibleVertexHeight(ylhdx+lod) * camypart;
 					DrawVertexAQ(ma, x+lod,ylod,h);
 				}
 			}
 			EndStripQ(ma);
 		}
 	}
-	if(minly>minty && minly<maxty){
-		y=minly-lod;
-		int xs = std::max(xstart - lod, mintx);
-		int xe = std::min(xend + lod, maxtx);
-		if(xs<xe){
-			x=xs;
-			int ylod = y + lod;
-			int ydx = y * heightDataX;
-			int nloop = (xe - xs) / lod + 2; //! two extra for if statment
+	if (minly > minty && minly < maxty) {
+		y = minly - lod;
+		const int xs = std::max(xstart - lod, mintx);
+		const int xe = std::min(xend + lod, maxtx);
+
+		if (xs < xe) {
+			x = xs;
+			const int ylod = y + lod;
+			const int ydx = y * heightMapSizeX;
+			const int nloop = (xe - xs) / lod + 2; //! two extra for if statment
 
 			ma->EnlargeArrays((2 * nloop), 1);
 
 			if (x % dlod) {
-				int yhdx=ydx+x;
-				float h=(heightData[yhdx-lod]+heightData[yhdx+lod]) * hcyp + heightData[yhdx] * mcyp;
-				DrawVertexAQ(ma, x,y,h);
-				DrawVertexAQ(ma, x,ylod);
+				const int yhdx = ydx + x;
+				const float h = (GetVisibleVertexHeight(yhdx-lod) + GetVisibleVertexHeight(yhdx + lod)) * hcyp + GetVisibleVertexHeight(yhdx) * mcyp;
+				DrawVertexAQ(ma, x, y, h);
+				DrawVertexAQ(ma, x, ylod);
 			} else {
-				DrawVertexAQ(ma, x,y);
-				DrawVertexAQ(ma, x,ylod);
+				DrawVertexAQ(ma, x, y);
+				DrawVertexAQ(ma, x, ylod);
 			}
-			for(x=xs;x<xe;x+=lod){
-				if(x%dlod){
-					DrawVertexAQ(ma, x+lod,y);
-					DrawVertexAQ(ma, x+lod,ylod);
+
+			for (x = xs; x < xe; x += lod) {
+				if (x % dlod) {
+					DrawVertexAQ(ma, x + lod, y);
+					DrawVertexAQ(ma, x + lod, ylod);
 				} else {
-					int yhdx=ydx+x;
-					float h=(heightData[yhdx+dlod]+heightData[yhdx]) * hcyp + heightData[yhdx+lod] * mcyp;
-					DrawVertexAQ(ma, x+lod,y,h);
-					DrawVertexAQ(ma, x+lod,ylod);
+					const int yhdx = ydx + x;
+					const float h = (GetVisibleVertexHeight(yhdx+dlod) + GetVisibleVertexHeight(yhdx)) * hcyp + GetVisibleVertexHeight(yhdx+lod) * mcyp;
+					DrawVertexAQ(ma, x + lod, y, h);
+					DrawVertexAQ(ma, x + lod, ylod);
 				}
 			}
 			EndStripQ(ma);

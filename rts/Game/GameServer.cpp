@@ -28,16 +28,12 @@
 
 #include "GameServer.h"
 
-#include "LogOutput.h"
 #include "GameSetup.h"
 #include "Action.h"
 #include "ChatMessage.h"
 #include "CommandMessage.h"
 #include "BaseNetProtocol.h"
 #include "PlayerHandler.h"
-#include "Net/LocalConnection.h"
-#include "Net/UnpackPacket.h"
-#include "LoadSave/DemoReader.h"
 #ifdef DEDICATED
 	#include "LoadSave/DemoRecorder.h"
 #endif
@@ -46,9 +42,7 @@
 #include "TdfParser.h"
 #include "GlobalUnsynced.h" // for syncdebug
 #include "Sim/Misc/GlobalConstants.h"
-#include "ConfigHandler.h"
-#include "FileSystem/CRC.h"
-#include "FileSystem/SimpleParser.h"
+
 #include "Player.h"
 #include "IVideoCapturing.h"
 #include "Server/GameParticipant.h"
@@ -60,6 +54,14 @@
 	#undef interface
 #endif
 #include "Server/MsgStrings.h"
+#include "System/ConfigHandler.h"
+#include "System/LogOutput.h"
+#include "System/FileSystem/CRC.h"
+#include "System/FileSystem/SimpleParser.h"
+#include "System/Net/LocalConnection.h"
+#include "System/Net/UnpackPacket.h"
+#include "System/LoadSave/DemoReader.h"
+
 
 #define PKTCACHE_VECSIZE 1000
 
@@ -80,6 +82,10 @@ const unsigned serverKeyframeIntervall = 16;
 
 /// players incoming bandwidth new allowance every X milliseconds
 const unsigned playerBandwidthInterval = 100;
+
+/// every 10 sec we'll broadcast current frame in a message that skips queue & cache
+/// to let clients that are fast-forwarding to current point to know their loading %
+const unsigned gameProgressFrameInterval = GAME_SPEED * 10;
 
 const std::string commands[numCommands] = {
 	"kick", "kickbynum", "setminspeed", "setmaxspeed",
@@ -1997,6 +2003,14 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 					Broadcast(CBaseNetProtocol::Get().SendKeyFrame(serverFrameNum));
 				else
 					Broadcast(CBaseNetProtocol::Get().SendNewFrame());
+
+				// every gameProgressFrameInterval, we broadcast current frame in a special message that doesn't get cached and skips normal queue, to let players know their loading %
+				if ((serverFrameNum%gameProgressFrameInterval) == 0) {
+					CBaseNetProtocol::PacketType progressPacket = CBaseNetProtocol::Get().SendCurrentFrameProgress(serverFrameNum);
+					// we cannot use broadcast here, since we want to skip caching
+					for (size_t p = 0; p < players.size(); ++p)
+						players[p].SendData(progressPacket);
+				}
 #ifdef SYNCCHECK
 				outstandingSyncFrames.insert(serverFrameNum);
 #endif

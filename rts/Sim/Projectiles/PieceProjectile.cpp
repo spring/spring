@@ -5,6 +5,7 @@
 
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
+#include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
@@ -21,7 +22,6 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/SmokeTrailProjectile.h"
 #include "Sim/Units/Unit.h"
-#include "System/GlobalUnsynced.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 #include "System/Sync/SyncTracer.h"
@@ -173,7 +173,6 @@ void CPieceProjectile::Collision()
 				ZeroVector,
 				DamageArray(50),
 				NULL,              // weaponDef
-				NULL,              // explosionGenerator
 				owner(),
 				NULL,              // hitUnit
 				NULL,              // hitFeature
@@ -216,7 +215,6 @@ void CPieceProjectile::Collision(CUnit* unit)
 			ZeroVector,
 			DamageArray(50),
 			NULL,                                            // weaponDef
-			NULL,                                            // explosionGenerator
 			owner(),
 			unit,                                            // hitUnit
 			NULL,                                            // hitFeature

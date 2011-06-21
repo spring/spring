@@ -12,9 +12,10 @@ namespace netcode {
 
 /**
  * @brief Class for local connection between server / client
- * Directly connects to each others inputbuffer to increase performance.
- * The server and the client have to run in one instance of spring
- * for this to work, otherwise a normal UDP connection had to be used.
+ * Directly connects the respective input-buffers, to increase performance.
+ * The server and the client have to run in one instance (same process)
+ * of spring for this to work.
+ * Otherwise, a normal UDP connection had to be used.
  * IMPORTANT: You must not have more than two instances of this.
  */
 class CLocalConnection : public CConnection
@@ -27,35 +28,24 @@ public:
 	CLocalConnection();
 	virtual ~CLocalConnection();
 
-	/**
-	 * @brief Send packet to other instance
-	 *
-	 * Use this, since it does not need memcpy'ing
-	 */
-	virtual void SendData(boost::shared_ptr<const RawPacket> data);
+	// START overriding CConnection
 
-	virtual boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
+	void SendData(boost::shared_ptr<const RawPacket> data);
+	bool HasIncomingData() const;
+	boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
+	void DeleteBufferPacketAt(unsigned index);
+	boost::shared_ptr<const RawPacket> GetData();
+	void Flush(const bool forced);
+	bool CheckTimeout(int seconds, bool initial) const;
 
-	/**
-	 * @brief Get data
-	 */
-	virtual boost::shared_ptr<const RawPacket> GetData();
+	void ReconnectTo(CConnection& conn) {}
+	bool CanReconnect() const;
+	bool NeedsReconnect();
 
-	/// does nothing
-	virtual void Flush(const bool forced = false);
+	std::string Statistics() const;
+	std::string GetFullAddress() const;
 
-	/// is always false
-	virtual bool CheckTimeout(int nsecs = 0, bool initial = false) const;
-
-	virtual void ReconnectTo(CConnection& conn) {}
-	virtual bool CanReconnect() const;
-	virtual bool NeedsReconnect();
-
-	virtual std::string Statistics() const;
-	virtual std::string GetFullAddress() const {
-		return "shared memory";
-	}
-	virtual bool HasIncomingData() const;
+	// END overriding CConnection
 
 private:
 	static std::deque< boost::shared_ptr<const RawPacket> > Data[2];
@@ -72,3 +62,4 @@ private:
 } // namespace netcode
 
 #endif // _LOCAL_CONNECTION_H
+

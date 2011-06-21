@@ -38,9 +38,10 @@ protected:
 	int tileMapXSize;
 	int tileMapYSize;
 
-	float* heightMaxes;
-	float* heightMins;
-	float* stretchFactors;
+	// FIXME? these are not updated at runtime
+	std::vector<float> heightMaxima;
+	std::vector<float> heightMinima;
+	std::vector<float> stretchFactors;
 
 	//! use Pixel Buffer Objects for async. uploading (DMA)
 	PBO pbo;

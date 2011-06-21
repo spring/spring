@@ -5,7 +5,6 @@
 
 #include "TracerProjectile.h"
 #include "Rendering/GL/myGL.h"
-#include "GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CTracerProjectile, CProjectile, )
 

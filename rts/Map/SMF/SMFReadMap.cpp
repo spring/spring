@@ -1,28 +1,33 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
-#include "SmfReadMap.h"
 
-#include "BFGroundTextures.h"
-#include "BFGroundDrawer.h"
+#include "SMFReadMap.h"
+#include "SMFGroundTextures.h"
+#include "SMFGroundDrawer.h"
 #include "mapfile.h"
 #include "Map/MapInfo.h"
 #include "Game/Camera.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/LoadScreen.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Sim/Misc/LosHandler.h"
 #include "System/bitops.h"
 #include "System/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/GlobalUnsynced.h"
 #include "System/OpenMP_cond.h"
 #include "System/LogOutput.h"
 #include "System/mmgr.h"
 #include "System/myMath.h"
 #include "System/Util.h"
+
+#ifdef USE_UNSYNCED_HEIGHTMAP
+#include "Sim/Misc/LosHandler.h"
+#endif
 
 #define SSMF_UNCOMPRESSED_NORMALS 0
 
@@ -50,7 +55,8 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 	width  = header.mapx;
 	height = header.mapy;
 
-	heightmap = new float[(width + 1) * (height + 1)];
+	cornerHeightMapSynced.resize((width + 1) * (height + 1));
+	cornerHeightMapUnsynced.resize((width + 1) * (height + 1));
 	groundDrawer = NULL;
 
 	const CMapInfo::smf_t& smf = mapInfo->smf;
@@ -60,7 +66,8 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 	const float base = minH;
 	const float mod = (maxH - minH) / 65536.0f;
 
-	file.ReadHeightmap(heightmap, base, mod);
+	file.ReadHeightmap(&cornerHeightMapSynced[0], base, mod);
+	std::copy(cornerHeightMapSynced.begin(), cornerHeightMapSynced.end(), cornerHeightMapUnsynced.begin());
 
 	CReadMap::Initialize();
 
@@ -248,7 +255,9 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 CSmfReadMap::~CSmfReadMap()
 {
 	delete groundDrawer;
-	delete[] heightmap;
+
+	cornerHeightMapSynced.clear();
+	cornerHeightMapUnsynced.clear();
 
 	if (detailTex        != 0) { glDeleteTextures(1, &detailTex       ); }
 	if (specularTex      != 0) { glDeleteTextures(1, &specularTex     ); }
@@ -271,7 +280,7 @@ CBaseGroundDrawer* CSmfReadMap::GetGroundDrawer() { return (CBaseGroundDrawer*) 
 void CSmfReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigned char* pixelRow) {
 	for (int x = 0; x < xsize; ++x) {
 		const int xi = x1 + x, yi = y1 + y;
-		const float& height = centerheightmap[(xi) + (yi) * gs->mapx];
+		const float& height = centerHeightMap[(xi) + (yi) * gs->mapx];
 
 		if (height < 0.0f) {
 			const int h = (int) - height & 1023; //! waterHeightColors array just holds 1024 colors
@@ -336,7 +345,8 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 
 	if (globalRendering->haveGLSL) {
 		// update the vertex normals
-		const float* hm = heightmap;
+		const float* shm = &cornerHeightMapSynced[0];
+		      float* uhm = &cornerHeightMapUnsynced[0];
 
 		static const int W = gs->mapx + 1;
 		static const int H = gs->mapy + 1;
@@ -364,6 +374,12 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 			for (int x = minx; x <= maxx; x++) {
 				const int vIdx = (z * W) + x;
 
+				#ifdef USE_UNSYNCED_HEIGHTMAP
+				if (gu->spectatingFullView || loshandler->InLos(x, z, gu->myAllyTeam)) {
+					uhm[vIdx] = shm[vIdx];
+				}
+				#endif
+
 				const bool hasNgbL = (x >     0); const int xOffL = hasNgbL? 1: 0;
 				const bool hasNgbR = (x < W - 1); const int xOffR = hasNgbR? 1: 0;
 				const bool hasNgbT = (z >     0); const int zOffT = hasNgbT? 1: 0;
@@ -374,17 +390,17 @@ void CSmfReadMap::UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2)
 				// then average the 8 normals (this stays closest to the
 				// heightmap data)
 				// if edge vertex, don't add virtual neighbor normals to vn
-				const float3 vtl = float3((x - 1) * SS,  hm[((z - zOffT) * W) + (x - xOffL)],  (z - 1) * SS);
-				const float3 vtm = float3((x    ) * SS,  hm[((z - zOffT) * W) + (x        )],  (z - 1) * SS);
-				const float3 vtr = float3((x + 1) * SS,  hm[((z - zOffT) * W) + (x + xOffR)],  (z - 1) * SS);
+				const float3 vtl = float3((x - 1) * SS,  shm[((z - zOffT) * W) + (x - xOffL)],  (z - 1) * SS);
+				const float3 vtm = float3((x    ) * SS,  shm[((z - zOffT) * W) + (x        )],  (z - 1) * SS);
+				const float3 vtr = float3((x + 1) * SS,  shm[((z - zOffT) * W) + (x + xOffR)],  (z - 1) * SS);
 
-				const float3 vml = float3((x - 1) * SS,  hm[((z        ) * W) + (x - xOffL)],  (z    ) * SS);
-				const float3 vmm = float3((x    ) * SS,  hm[((z        ) * W) + (x        )],  (z    ) * SS);
-				const float3 vmr = float3((x + 1) * SS,  hm[((z        ) * W) + (x + xOffR)],  (z    ) * SS);
+				const float3 vml = float3((x - 1) * SS,  shm[((z        ) * W) + (x - xOffL)],  (z    ) * SS);
+				const float3 vmm = float3((x    ) * SS,  shm[((z        ) * W) + (x        )],  (z    ) * SS);
+				const float3 vmr = float3((x + 1) * SS,  shm[((z        ) * W) + (x + xOffR)],  (z    ) * SS);
 
-				const float3 vbl = float3((x - 1) * SS,  hm[((z + zOffB) * W) + (x - xOffL)],  (z + 1) * SS);
-				const float3 vbm = float3((x    ) * SS,  hm[((z + zOffB) * W) + (x        )],  (z + 1) * SS);
-				const float3 vbr = float3((x + 1) * SS,  hm[((z + zOffB) * W) + (x + xOffR)],  (z + 1) * SS);
+				const float3 vbl = float3((x - 1) * SS,  shm[((z + zOffB) * W) + (x - xOffL)],  (z + 1) * SS);
+				const float3 vbm = float3((x    ) * SS,  shm[((z + zOffB) * W) + (x        )],  (z + 1) * SS);
+				const float3 vbr = float3((x + 1) * SS,  shm[((z + zOffB) * W) + (x + xOffR)],  (z + 1) * SS);
 
 				float3 vn = ZeroVector;
 				float3 tn = ZeroVector;
@@ -449,7 +465,7 @@ void CSmfReadMap::UpdateShadingTexture() {
 
 float CSmfReadMap::DiffuseSunCoeff(const int& x, const int& y) const
 {
-	const float3& N = centernormals[(y * gs->mapx) + x];
+	const float3& N = centerNormals[(y * gs->mapx) + x];
 	const float3& L = sky->GetLight()->GetLightDir();
 	return Clamp(L.dot(N), 0.0f, 1.0f);
 }

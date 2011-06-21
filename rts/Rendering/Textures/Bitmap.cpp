@@ -16,14 +16,13 @@
 	#include "System/TimeProfiler.h"
 #endif // !BITMAP_NO_OPENGL
 
-#include "Rendering/GlobalRendering.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/FileSystem.h"
-#include "GlobalUnsynced.h"
 #include "Bitmap.h"
-#include "bitops.h"
+#include "Rendering/GlobalRendering.h"
+#include "System/bitops.h"
 #include "System/LogOutput.h"
 #include "System/OpenMP_cond.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
 
 
 boost::mutex devilMutex; // devil functions, whilst expensive, aren't thread-save

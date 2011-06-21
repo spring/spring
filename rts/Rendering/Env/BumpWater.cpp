@@ -13,6 +13,7 @@
 #include "BaseSky.h"
 #include "Game/Game.h"
 #include "Game/Camera.h"
+#include "Game/GlobalUnsynced.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
@@ -33,7 +34,6 @@
 #include "System/ConfigHandler.h"
 #include "System/TimeProfiler.h"
 #include "System/LogOutput.h"
-#include "System/GlobalUnsynced.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"
 
@@ -159,8 +159,8 @@ CBumpWater::CBumpWater()
 	reflectTexture = 0;
 
 	/** CHECK HARDWARE **/
-	if (!GL_ARB_shading_language_100)
-		throw content_error("BumpWater: your hardware/driver setup does not support GLSL.");
+	if (!globalRendering->haveGLSL)
+		throw content_error("BumpWater: your hardware/driver setup does not support GLSL");
 
 	shoreWaves = shoreWaves && (GLEW_EXT_framebuffer_object);
 	dynWaves   = dynWaves && (GLEW_EXT_framebuffer_object && GLEW_ARB_imaging);
@@ -872,7 +872,12 @@ void CBumpWater::UploadCoastline(const bool forceFull)
 
 	//! create an texture atlas for the to be updated areas
 	CTextureAtlas atlas(next_power_of_2(gs->mapx+10),next_power_of_2(gs->mapy+10));
-	const float* heightMap = readmap->GetHeightmap();
+	const float* heightMap =
+		#ifdef USE_UNSYNCED_HEIGHTMAP
+		readmap->GetCornerHeightMapUnsynced();
+		#else
+		readmap->GetCornerHeightMapSynced();
+		#endif
 
 	for (size_t i = 0; i < coastmapAtlasRects.size(); i++) {
 		CoastAtlasRect& r = coastmapAtlasRects[i];

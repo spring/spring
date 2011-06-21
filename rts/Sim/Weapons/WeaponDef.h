@@ -144,6 +144,7 @@ public:
 	~WeaponDef();
 
 	S3DModel* LoadModel();
+	S3DModel* LoadModel() const;
 
 	std::string name;
 	std::string type;

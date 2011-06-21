@@ -5,6 +5,7 @@
 #include "DebugColVolDrawer.h"
 
 #include "Game/Camera.h"
+#include "Game/GlobalUnsynced.h"
 #include "Map/ReadMap.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GlobalRendering.h"
@@ -14,7 +15,6 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
-#include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 
 static float3 defaultColVolColor(0.45f, 0.0f, 0.45f);

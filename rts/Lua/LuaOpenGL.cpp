@@ -69,7 +69,6 @@
 #include "System/LogOutput.h"
 #include "System/Matrix44f.h"
 #include "System/ConfigHandler.h"
-#include "System/GlobalUnsynced.h"
 
 using std::max;
 using std::string;
@@ -1859,7 +1858,12 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 	}
 	const int mapxi = (gs->mapx + 1);
 	const int mapzi = (gs->mapy + 1);
-	const float* heightmap = readmap->GetHeightmap();
+	const float* heightmap =
+		#ifdef USE_UNSYNCED_HEIGHTMAP
+		readmap->GetCornerHeightMapUnsynced();
+		#else
+		readmap->GetCornerHeightMapSynced();
+		#endif
 
 	const float xs = std::max(0.0f, std::min(float3::maxxpos, x0)); // x start
 	const float xe = std::max(0.0f, std::min(float3::maxxpos, x1)); // x end

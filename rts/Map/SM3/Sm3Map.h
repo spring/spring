@@ -27,7 +27,9 @@ public:
 	CBaseGroundDrawer* GetGroundDrawer();
 
 	void UpdateHeightmapUnsynced(int x1, int y1, int x2, int y2);
-	inline const float* GetHeightmap() const { return renderer->GetHeightmap(); }
+
+	const float* GetCornerHeightMapSynced() const { return renderer->GetHeightmap(); }
+	      float* GetCornerHeightMapUnsynced()     { return NULL; } // FIXME
 
 	inline void SetHeight(const int& idx, const float& h) {
 		renderer->GetHeightmap()[idx] = h;

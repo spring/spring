@@ -20,6 +20,7 @@
 #include "Game/Camera.h"
 #include "Game/Game.h"
 #include "Game/GameHelper.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
 #include "Game/TraceRay.h"
 #include "Lua/LuaConfig.h"

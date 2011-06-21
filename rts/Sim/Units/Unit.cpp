@@ -27,6 +27,7 @@
 #include "ExternalAI/EngineOutHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/Player.h"
 #include "Game/SelectedUnits.h"
 #include "Lua/LuaRules.h"
@@ -59,7 +60,6 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
-#include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
@@ -1063,7 +1063,7 @@ void CUnit::DoWaterDamage()
 	const int  pz            = pos.z / (SQUARE_SIZE * 2);
 	const bool isFloating    = (physicalState == CSolidObject::Floating);
 	const bool onGround      = (physicalState == CSolidObject::OnGround);
-	const bool isWaterSquare = (readmap->mipHeightmap[1][pz * gs->hmapx + px] <= 0.0f);
+	const bool isWaterSquare = (readmap->GetMIPHeightMapSynced(1)[pz * gs->hmapx + px] <= 0.0f);
 
 	if ((pos.y <= 0.0f) && isWaterSquare && (isFloating || onGround)) {
 		DoDamage(DamageArray(mapInfo->water.damage), 0, ZeroVector, -1);
@@ -1883,7 +1883,6 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 				ZeroVector,
 				wd->damages,
 				wd,
-				wd->explosionGenerator,
 				this,                              // owner
 				NULL,                              // hitUnit
 				NULL,                              // hitFeature

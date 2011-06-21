@@ -24,7 +24,7 @@ public:
 	/// Returns the real height at the specified position, can be below 0
 	float GetHeightReal(float x, float y) const;
 	float GetOrigHeight(float x, float y) const;
-	float3& GetNormal(float x, float y) const;
+	const float3& GetNormal(float x, float y) const;
 	float3 GetSmoothNormal(float x, float y) const;
 	float LineGroundCol(float3 from, float3 to) const;
 	float TrajectoryGroundCol(float3 from, const float3& flatdir, float length, float linear, float quadratic) const;

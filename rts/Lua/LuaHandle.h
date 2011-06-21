@@ -45,7 +45,7 @@ class CLogSubsystem;
 class CLuaHandle;
 
 struct luaContextData {
-	luaContextData() : fullCtrl(false), fullRead(false), ctrlTeam(CEventClient::NoAccessTeam), 
+	luaContextData() : fullCtrl(false), fullRead(false), ctrlTeam(CEventClient::NoAccessTeam),
 		readTeam(0), readAllyTeam(0), selectTeam(CEventClient::NoAccessTeam), synced(false), owner(NULL) {}
 	bool fullCtrl;
 	bool fullRead;
@@ -249,6 +249,10 @@ class CLuaHandle : public CEventClient
 		void DrawScreen();
 		void DrawInMiniMap();
 
+		/// @brief this UNSYNCED event is generated every gameProgressFrameInterval ( defined in gameserver.cpp ), skips network queuing and caching and it's useful
+		/// to calculate the current fast-forwarding % compared to the real game
+		void GameProgress(int frameNum);
+
 	public: // custom call-in  (inter-script calls)
 		virtual bool HasSyncedXCall(const string& funcName) { return false; }
 		virtual bool HasUnsyncedXCall(const string& funcName) { return false; }
@@ -408,12 +412,12 @@ class CLuaHandle : public CEventClient
 		static bool devMode; // allows real file access
 		static bool modUICtrl; // allows non-user scripts to use UI controls
 
-		std::vector<LuaUnitEvent>luaUnitEventBatch;
-		std::vector<LuaFeatEvent>luaFeatEventBatch;
-		std::vector<LuaObjEvent>luaObjEventBatch;
-		std::vector<LuaProjEvent>luaProjEventBatch;
-		std::vector<int>luaFrameEventBatch;
-		std::vector<LuaMiscEvent>luaMiscEventBatch;
+		std::vector<LuaUnitEvent> luaUnitEventBatch;
+		std::vector<LuaFeatEvent> luaFeatEventBatch;
+		std::vector<LuaObjEvent> luaObjEventBatch;
+		std::vector<LuaProjEvent> luaProjEventBatch;
+		std::vector<int> luaFrameEventBatch;
+		std::vector<LuaMiscEvent> luaMiscEventBatch;
 
 		// FIXME: because CLuaUnitScript needs to access RunCallIn / activeHandle
 		friend class CLuaUnitScript;
@@ -481,3 +485,4 @@ inline int ActiveReadAllyTeam() { return CLuaHandle::GetActiveReadAllyTeam(); }
 
 
 #endif /* LUA_HANDLE_H */
+

@@ -11,7 +11,6 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/SimpleParticleSystem.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "GlobalUnsynced.h"
 
 #ifdef TRACE_SYNC
 	#include "Sync/SyncTracer.h"

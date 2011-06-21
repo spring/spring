@@ -14,7 +14,6 @@
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Models/WorldObjectModelRenderer.h"
 #include "Sim/Objects/SolidObject.h"
-#include "System/GlobalUnsynced.h"
 #include "System/myMath.h"
 #include "System/LogOutput.h"
 #include "System/bitops.h"
@@ -181,8 +180,8 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	unitDrawer->SetupForUnitDrawing();
 	unitDrawer->GetOpaqueModelRenderer(model->type)->PushRenderState();
 
-	if (model->type == MODELTYPE_S3O || model->type == MODELTYPE_OBJ || model->type == MODELTYPE_ASS) {
-		// FIXME for some strange reason we need to invert the culling, why?
+	if (model->type != MODELTYPE_3DO) {
+		// FIXME: for some strange reason we need to invert the culling, why?
 		if (model->type == MODELTYPE_S3O) {
 			glCullFace(GL_FRONT);
 		}

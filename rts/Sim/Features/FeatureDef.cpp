@@ -3,6 +3,7 @@
 #include "FeatureDef.h"
 #include "Rendering/Models/IModelParser.h"
 #include "Sim/Misc/CollisionVolume.h"
+#include "System/EventHandler.h"
 
 CR_BIND(FeatureDef, );
 
@@ -66,9 +67,10 @@ FeatureDef::~FeatureDef() {
 
 S3DModel* FeatureDef::LoadModel() const
 {
-	if (this->model == NULL) {
+	if (this->model == NULL)
 		this->model = modelParser->Load3DModel(modelname);
-	}
+	else
+		eventHandler.LoadedModelRequested();
 
 	return (this->model);
 }

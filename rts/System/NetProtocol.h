@@ -34,7 +34,7 @@ public:
 	 * @brief Initialise in client mode (remote server)
 	*/
 	void InitClient(const char* server, unsigned portnum, const std::string& myName, const std::string& myPasswd, const std::string& myVersion);
-	
+
 	/**
 	 * @brief Initialise in client mode (local server)
 	 */
@@ -61,6 +61,13 @@ public:
 	boost::shared_ptr<const netcode::RawPacket> Peek(unsigned ahead) const;
 
 	/**
+	 * @brief Deletes a packet from the buffer
+	 * @param queue index number
+	 * useful for messages that skips queuing and needs to be processed immediately
+	 */
+	void DeleteBufferPacketAt(unsigned index);
+
+	/**
 	 * @brief Receive a single message (and remove it from the recieve buffer)
 	 * @return The first data packet from the buffer, or 0 if there is no data
 	 *
@@ -70,14 +77,14 @@ public:
 	 * When a demo recorder is present it will be recorded.
 	 */
 	boost::shared_ptr<const netcode::RawPacket> GetData(int framenum);
-	
+
 	/**
 	 * @brief Send a message to the server
 	 */
 	void Send(boost::shared_ptr<const netcode::RawPacket> pkt);
 	/// @overload
 	void Send(const netcode::RawPacket* pkt);
-	
+
 	CDemoRecorder* GetDemoRecorder() const { return record.get(); }
 
 	/**
@@ -85,10 +92,10 @@ public:
 	 * Runs until \a loading is false.
 	 */
 	void UpdateLoop();
-	
+
 	/// Must be called to send / recieve packets
 	void Update();
-	
+
 	void DisableDemoRecording();
 
 
@@ -103,3 +110,4 @@ private:
 extern CNetProtocol* net;
 
 #endif // NET_PROTOCOL_H
+

@@ -139,6 +139,8 @@ CEventHandler::CEventHandler()
 	SETUP_EVENT(RenderProjectileCreated,   MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(RenderProjectileDestroyed, MANAGED_BIT | UNSYNCED_BIT);
 
+	SETUP_EVENT(GameProgress,  MANAGED_BIT | UNSYNCED_BIT);
+
 	// unmanaged call-ins
 	SetupEvent("Shutdown", NULL, 0);
 	SetupEvent("RecvLuaMsg", NULL, 0);
@@ -486,6 +488,16 @@ void CEventHandler::ViewResize()
 }
 
 
+void CEventHandler::GameProgress(int gameFrame)
+{
+	const int count = listGameProgress.size();
+	for (int i = 0; i < count; i++) {
+		CEventClient* ec = listGameProgress[i];
+		ec->GameProgress(gameFrame);
+	}
+}
+
+
 #define DRAW_CALLIN(name)                         \
   void CEventHandler:: Draw ## name ()            \
   {                                               \
@@ -746,3 +758,4 @@ bool CEventHandler::MapDrawCmd(int playerID, int type,
 
 /******************************************************************************/
 /******************************************************************************/
+

@@ -2806,8 +2806,8 @@ int LuaSyncedCtrl::RevertHeightMap(lua_State* L)
 	int x1, x2, z1, z2;
 	ParseMapParams(L, __FUNCTION__, origFactor, x1, z1, x2, z2);
 
-	const float* origMap = readmap->orgheightmap;
-	const float* currMap = readmap->GetHeightmap();
+	const float* origMap = readmap->GetOriginalHeightMapSynced();
+	const float* currMap = readmap->GetCornerHeightMapSynced();
 
 	if (origFactor == 1.0f) {
 		for (int z = z1; z <= z2; z++) {
@@ -2858,7 +2858,7 @@ int LuaSyncedCtrl::AddHeightMap(lua_State* L)
 	}
 
 	const int index = (z * (gs->mapx + 1)) + x;
-	const float oldHeight = readmap->GetHeightmap()[index];
+	const float oldHeight = readmap->GetCornerHeightMapSynced()[index];
 	heightMapAmountChanged += streflop::fabsf(h);
 
 	// update RecalcArea()
@@ -2895,7 +2895,7 @@ int LuaSyncedCtrl::SetHeightMap(lua_State* L)
 	}
 
 	const int index = (z * (gs->mapx + 1)) + x;
-	const float oldHeight = readmap->GetHeightmap()[index];
+	const float oldHeight = readmap->GetCornerHeightMapSynced()[index];
 	float height = oldHeight;
 
 	if (lua_israwnumber(L, 4)) {
@@ -3147,10 +3147,10 @@ int LuaSyncedCtrl::SetMapSquareTerrainType(lua_State* L)
 	const int tx = hx >> 1;
 	const int tz = hz >> 1;
 
-	const int ott = readmap->typemap[tz * gs->hmapx + tx];
+	const int ott = readmap->GetTypeMapSynced()[tz * gs->hmapx + tx];
 	const int ntt = luaL_checkint(L, 3);
 
-	readmap->typemap[tz * gs->hmapx + tx] = std::max(0, std::min(ntt, (CMapInfo::NUM_TERRAIN_TYPES - 1)));
+	readmap->GetTypeMapSynced()[tz * gs->hmapx + tx] = std::max(0, std::min(ntt, (CMapInfo::NUM_TERRAIN_TYPES - 1)));
 	pathManager->TerrainChange(hx, hz,  hx + 1, hz + 1);
 
 	lua_pushnumber(L, ott);
@@ -3185,10 +3185,12 @@ int LuaSyncedCtrl::SetTerrainTypeData(lua_State* L)
 	}
 	*/
 
+	const unsigned char* typeMap = readmap->GetTypeMapSynced();
+
 	// update all map-squares set to this terrain-type (slow)
 	for (int tx = 0; tx < gs->hmapx; tx++) {
 		for (int tz = 0; tz < gs->hmapy; tz++) {
-			if (readmap->typemap[tz * gs->hmapx + tx] == tti) {
+			if (typeMap[tz * gs->hmapx + tx] == tti) {
 				pathManager->TerrainChange((tx << 1), (tz << 1),  (tx << 1) + 1, (tz << 1) + 1);
 			}
 		}

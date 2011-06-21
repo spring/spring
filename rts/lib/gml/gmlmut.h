@@ -44,6 +44,7 @@ extern boost::mutex olbatchmutex;
 extern boost::mutex plbatchmutex;
 extern boost::mutex glbatchmutex;
 extern boost::mutex mlbatchmutex;
+extern boost::mutex llbatchmutex;
 extern boost::mutex cmdmutex;
 extern boost::mutex luauimutex;
 extern boost::mutex xcallmutex;

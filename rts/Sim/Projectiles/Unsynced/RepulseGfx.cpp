@@ -10,7 +10,6 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Units/Unit.h"
-#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CRepulseGfx, CProjectile, (NULL, NULL, 0.0f, ZeroVector));
 

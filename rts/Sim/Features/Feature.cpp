@@ -5,12 +5,11 @@
 
 #include "Feature.h"
 #include "FeatureHandler.h"
-#include "LogOutput.h"
+#include "Game/GlobalUnsynced.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Map/MapInfo.h"
-#include "myMath.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/QuadField.h"
 #include "Rendering/Env/ITreeDrawer.h"
@@ -25,7 +24,8 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "System/EventHandler.h"
-#include "GlobalUnsynced.h"
+#include "System/LogOutput.h"
+#include "System/myMath.h"
 #include <assert.h>
 
 CR_BIND_DERIVED(CFeature, CSolidObject, )

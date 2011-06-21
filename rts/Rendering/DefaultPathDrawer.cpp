@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 #include "StdAfx.h"
 
+#include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
 #include "Game/UI/GuiHandler.h"
 #include "Map/BaseGroundDrawer.h"
@@ -31,7 +32,6 @@
 #include "Rendering/DefaultPathDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
-#include "System/GlobalUnsynced.h"
 #include "System/myMath.h"
 
 DefaultPathDrawer::DefaultPathDrawer() {

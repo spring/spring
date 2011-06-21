@@ -16,7 +16,6 @@
 #include "Rendering/Models/IModelParser.h"
 #include "Map/Ground.h"
 #include "System/Matrix44f.h"
-#include "System/GlobalUnsynced.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/LogOutput.h"
 #ifdef TRACE_SYNC
@@ -101,7 +100,7 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 
 		alwaysVisible = weaponDef->visuals.alwaysVisible;
 
-		model = LoadModel(weaponDef);
+		model = weaponDef->LoadModel();
 
 		collisionFlags = weaponDef->collisionFlags;
 	}
@@ -148,7 +147,6 @@ void CWeaponProjectile::Collision(CFeature* feature)
 			impactDir,
 			damageArray,
 			weaponDef,
-			weaponDef->explosionGenerator,
 			owner(),
 			NULL,                                             // hitUnit
 			feature,
@@ -204,7 +202,6 @@ void CWeaponProjectile::Collision(CUnit* unit)
 			impactDir,
 			damageArray,
 			weaponDef,
-			weaponDef->explosionGenerator,
 			owner(),
 			unit,
 			NULL,                                            // hitFeature
@@ -313,18 +310,7 @@ void CWeaponProjectile::PostLoad()
 //	if(weaponDef->interceptedByShieldType)
 //		interceptHandler.AddShieldInterceptableProjectile(this);
 
-	if (!weaponDef->visuals.modelName.empty()) {
-		if (weaponDef->visuals.model == NULL) {
-			std::string modelname = "objects3d/" + weaponDef->visuals.modelName;
-			if (modelname.find(".") == std::string::npos) {
-				modelname += ".3do";
-			}
-			const_cast<WeaponDef*>(weaponDef)->visuals.model = modelParser->Load3DModel(modelname);
-		}
-		if (weaponDef->visuals.model) {
-			model = weaponDef->visuals.model;
-		}
-	}
+	model = weaponDef->LoadModel();
 
 //	collisionFlags = weaponDef->collisionFlags;
 }

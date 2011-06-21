@@ -8,6 +8,7 @@
 #include "GroundDecalHandler.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
+#include "Game/GlobalUnsynced.h"
 #include "Lua/LuaParser.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
@@ -30,7 +31,6 @@
 #include "System/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
-#include "System/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 #include "System/myMath.h"
 #include "System/Util.h"
@@ -222,7 +222,12 @@ inline void CGroundDecalHandler::DrawBuildingDecal(BuildingGroundDecal* decal)
 		return;
 	}
 
-	const float* hm = readmap->GetHeightmap();
+	const float* hm =
+		#ifdef USE_UNSYNCED_HEIGHTMAP
+		readmap->GetCornerHeightMapUnsynced();
+		#else
+		readmap->GetCornerHeightMapSynced();
+		#endif
 	const int gsmx = gs->mapx;
 	const int gsmx1 = gsmx + 1;
 	const int gsmy = gs->mapy;
@@ -331,7 +336,12 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 		return;
 	}
 
-	const float* hm = readmap->GetHeightmap();
+	const float* hm =
+		#ifdef USE_UNSYNCED_HEIGHTMAP
+		readmap->GetCornerHeightMapUnsynced();
+		#else
+		readmap->GetCornerHeightMapSynced();
+		#endif
 	const int gsmx = gs->mapx;
 	const int gsmx1 = gsmx + 1;
 
@@ -804,7 +814,7 @@ void CGroundDecalHandler::UnitMovedNow(CUnit* unit)
 	const int xp = (int(unit->pos.x) / SQUARE_SIZE * 2);
 	const int mp = Clamp(zp * gs->hmapx + xp, 0, (gs->mapSquares / 4) - 1);
 
-	if (!mapInfo->terrainTypes[readmap->typemap[mp]].receiveTracks)
+	if (!mapInfo->terrainTypes[readmap->GetTypeMapSynced()[mp]].receiveTracks)
 		return;
 
 	const float3 pos = unit->pos + unit->frontdir * unit->unitDef->trackOffset;

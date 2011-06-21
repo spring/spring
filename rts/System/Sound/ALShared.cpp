@@ -10,7 +10,12 @@ bool CheckError(const char* msg)
 	ALenum e = alGetError();
 	if (e != AL_NO_ERROR)
 	{
-		LogObject(LOG_SOUND) << msg << ": " << (char*)alGetString(e);
+		char *alerr = (char*)alGetString(e);
+		std::string err = msg;
+		err += ": ";
+		err += (alerr != NULL) ? alerr : "Unknown error";
+
+		LogObject(LOG_SOUND) << err.c_str();
 		return false;
 	}
 	return true;

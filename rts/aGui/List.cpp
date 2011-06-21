@@ -7,13 +7,13 @@
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
 
+#include "Rendering/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/UI/MouseHandler.h"
 #include "Gui.h"
-#include "Rendering/glFont.h"
-#include "Util.h"
-#include "GlobalUnsynced.h"
+#include "System/Util.h"
 
 namespace agui
 {

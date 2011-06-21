@@ -11,7 +11,7 @@
 #include "errorhandler.h"
 
 #include "Game/GameServer.h"
-#include "System/GlobalUnsynced.h"
+#include "Game/GlobalUnsynced.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"
 

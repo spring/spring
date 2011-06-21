@@ -9,7 +9,6 @@
 #include "System/myMath.h"
 #include "System/float3.h"
 #include "System/Matrix44f.h"
-#include "System/GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
 
 

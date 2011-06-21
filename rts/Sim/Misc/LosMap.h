@@ -18,10 +18,10 @@ public:
 	void SetSize(int w, int h) { SetSize(int2(w, h)); }
 
 	/// circular area, for airLosMap, circular radar maps, jammer maps, ...
-	void AddMapArea(int2 pos, int radius, int amount);
+	void AddMapArea(int2 pos, int allyteam, int radius, int amount);
 
 	/// arbitrary area, for losMap, non-circular radar maps, ...
-	void AddMapSquares(const std::vector<int>& squares, int amount);
+	void AddMapSquares(const std::vector<int>& squares, int allyteam, int amount);
 
 	int operator[] (int square) const { return map[square]; }
 

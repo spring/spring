@@ -5,6 +5,7 @@
 #include "FeatureDrawer.h"
 
 #include "Game/Camera.h"
+#include "Game/GlobalUnsynced.h"
 #include "Lua/LuaRules.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -28,7 +29,6 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/ConfigHandler.h"
 #include "System/EventHandler.h"
-#include "System/GlobalUnsynced.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 
@@ -87,7 +87,9 @@ CFeatureDrawer::~CFeatureDrawer()
 void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 {
 	CFeature* f = const_cast<CFeature*>(feature);
-#if defined(USE_GML) && GML_ENABLE_SIM
+	texturehandlerS3O->UpdateDraw();
+
+#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
 	if(f->model && TEX_TYPE(f) < 0)
 		TEX_TYPE(f) = texturehandlerS3O->LoadS3OTextureNow(f->model);
 #endif

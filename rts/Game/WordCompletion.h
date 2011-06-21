@@ -9,29 +9,50 @@
 
 class CWordCompletion
 {
-	public:
-		CWordCompletion();
-		~CWordCompletion();
-		void Reset();
-		void AddWord(const std::string& word,
-		             bool startOfLine, bool unitName, bool minimap);
-		void RemoveWord(const std::string& word);
-		/// Returns partial matches
-		std::vector<std::string> Complete(std::string& msg) const;
+	CWordCompletion();
+	~CWordCompletion();
 
-	protected:
-		class WordProperties {
-			public:
-				WordProperties()
-				: startOfLine(false), unitName(false), minimap(false) {}
-				WordProperties(bool sol, bool un, bool mm)
-				: startOfLine(sol), unitName(un), minimap(mm) {}
-			public:
-				bool startOfLine;
-				bool unitName;
-				bool minimap;
-		};
-		std::map<std::string, WordProperties> words;
+public:
+	/**
+	 * This function initialized a singleton instance,
+	 * if not yet done by a call to GetInstance()
+	 */
+	static void CreateInstance();
+	static CWordCompletion* GetInstance() { return singleton; }
+	static void DestroyInstance();
+
+	void AddWord(const std::string& word, bool startOfLine, bool unitName,
+			bool miniMap);
+	void RemoveWord(const std::string& word);
+	/// Returns partial matches
+	std::vector<std::string> Complete(std::string& msg) const;
+
+private:
+	void Reset();
+
+	class WordProperties {
+		public:
+			WordProperties()
+				: startOfLine(false)
+				, unitName(false)
+				, miniMap(false)
+			{}
+			WordProperties(bool startOfLine, bool unitName, bool miniMap)
+				: startOfLine(startOfLine)
+				, unitName(unitName)
+				, miniMap(miniMap)
+			{}
+
+			bool startOfLine;
+			bool unitName;
+			bool miniMap;
+	};
+
+	static CWordCompletion* singleton;
+
+	std::map<std::string, WordProperties> words;
 };
+
+#define wordCompletion CWordCompletion::GetInstance()
 
 #endif /* WORD_COMPLETION_H */

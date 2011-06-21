@@ -2,15 +2,15 @@
 
 #include "SkirmishAIHandler.h"
 
-#include "Game/GameSetup.h"
-#include "System/NetProtocol.h"
-#include "System/GlobalUnsynced.h"
 #include "ExternalAI/SkirmishAIKey.h"
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/LuaAIImplHandler.h"
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
-#include "Option.h"
+#include "Game/GameSetup.h"
+#include "Game/GlobalUnsynced.h"
+#include "System/NetProtocol.h"
+#include "System/Option.h"
 
 #include "creg/STL_Map.h"
 #include "creg/STL_Set.h"

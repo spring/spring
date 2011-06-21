@@ -6,13 +6,13 @@
 #include "SmokeProjectile.h"
 
 #include "Game/Camera.h"
+#include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
-#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CSmokeProjectile, CProjectile, );
 

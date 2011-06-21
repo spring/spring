@@ -10,11 +10,11 @@
 #include <map>
 #include "mmgr.h"
 
-#include "GlobalUnsynced.h"
-#include "LogOutput.h"
 #include "Messages.h"
+#include "Game/GlobalUnsynced.h"
 #include "Lua/LuaParser.h"
-#include "Util.h"
+#include "System/LogOutput.h"
+#include "System/Util.h"
 
 using std::string;
 using std::vector;

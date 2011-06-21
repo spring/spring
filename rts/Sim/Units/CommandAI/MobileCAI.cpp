@@ -7,8 +7,8 @@
 #include "TransportCAI.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "LineDrawer.h"
-#include "Sim/Units/Groups/Group.h"
 #include "Game/GameHelper.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
 #include "Game/UI/CommandColors.h"
 #include "Map/Ground.h"
@@ -21,15 +21,15 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/DGunWeapon.h"
-#include "LogOutput.h"
-#include "myMath.h"
+#include "System/LogOutput.h"
+#include "System/myMath.h"
+#include "System/Util.h"
 #include <assert.h>
-#include "Util.h"
-#include "GlobalUnsynced.h"
 
 #define BUGGER_OFF_TTL 200
 #define MAX_CLOSE_IN_RETRY_TICKS 30
@@ -752,20 +752,28 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		float edgeFactor = 0.f; // percent offset to target center
 		float3 diff = owner->pos - orderTarget->midPos;
 
-		if (owner->weapons.size() > 0) {
+		if (!owner->weapons.empty()) {
 			if (!(c.options & ALT_KEY) && SkipParalyzeTarget(orderTarget)) {
 				StopMove();
 				FinishCommand();
 				return;
 			}
+
 			CWeapon* w = owner->weapons.front();
+	
+			if (c.GetID() == CMD_DGUN) {
+				for (vector<CWeapon*>::iterator it = owner->weapons.begin(); it != owner->weapons.end(); ++it) {
+					if (dynamic_cast<CDGunWeapon*>(*it)) { // wd->type == "DGun"
+						w = *it; break;
+					}
+				}
+			}
+
 			// if we have at least one weapon then check if we
 			// can hit target with our first (meanest) one
 			b2 = w->TryTargetRotate(orderTarget, c.GetID() == CMD_DGUN);
-			b3 = Square(w->range - (w->relWeaponPos).Length())
-					> (orderTarget->pos.SqDistance(owner->pos));
-			b4 = w->TryTargetHeading(GetHeadingFromVector(-diff.x, -diff.z),
-					orderTarget->pos, orderTarget != NULL, orderTarget);
+			b3 = Square(w->range - (w->relWeaponPos).Length()) > (orderTarget->pos.SqDistance(owner->pos));
+			b4 = w->TryTargetHeading(GetHeadingFromVector(-diff.x, -diff.z), orderTarget->pos, orderTarget != NULL, orderTarget);
 			edgeFactor = fabs(w->targetBorder);
 		}
 
@@ -861,7 +869,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		const float3 pos(c.params[0], c.params[1], c.params[2]);
 		const float3 diff = owner->pos - pos;
 
-		if (owner->weapons.size() > 0) {
+		if (!owner->weapons.empty()) {
 			// if we have at least one weapon then check if
 			// we can hit position with our first (assumed
 			// to be meanest) one
@@ -871,11 +879,10 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			if (c.GetID() == CMD_DGUN) {
 				float rr = owner->maxRange * owner->maxRange;
 
-				for (vector<CWeapon*>::iterator it = owner->weapons.begin();
-						it != owner->weapons.end(); ++it) {
-
-					if (dynamic_cast<CDGunWeapon*>(*it))
-						rr = (*it)->range * (*it)->range;
+				for (vector<CWeapon*>::iterator it = owner->weapons.begin(); it != owner->weapons.end(); ++it) {
+					if (dynamic_cast<CDGunWeapon*>(*it)) {
+						rr = (*it)->range * (*it)->range; break;
+					}
 				}
 
 				if (diff.SqLength() < rr) {

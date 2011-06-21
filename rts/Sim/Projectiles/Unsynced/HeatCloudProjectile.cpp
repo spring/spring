@@ -9,7 +9,6 @@
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "System/GlobalUnsynced.h"
 
 CR_BIND_DERIVED(CHeatCloudProjectile, CProjectile, );
 

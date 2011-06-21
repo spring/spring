@@ -7,6 +7,7 @@
 #include "GameServer.h"
 #include "CommandMessage.h"
 #include "GameSetup.h"
+#include "GlobalUnsynced.h"
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
 #include "ChatMessage.h"
@@ -15,7 +16,6 @@
 #include "IVideoCapturing.h"
 #include "InMapDraw.h"
 #include "InMapDrawModel.h"
-#include "Game/UI/UnitTracker.h"
 #ifdef _WIN32
 #  include "winerror.h" // TODO someone on windows (MinGW? VS?) please check if this is required
 #endif
@@ -73,7 +73,20 @@ void CGame::ClientReadNet()
 		while ((packet = net->Peek(ahead))) {
 			if (packet->data[0] == NETMSG_NEWFRAME || packet->data[0] == NETMSG_KEYFRAME)
 				++que;
-			++ahead;
+
+			// this special packet skips queue entirely, so gets processed here
+			// it's meant to indicate current game progress for clients fast-forwarding to current point the game
+			// NOTE: this event should be unsynced, since its time reference frame is not related to the current
+			// progress of the game from the client's point of view
+			if ( packet->data[0] == NETMSG_GAME_FRAME_PROGRESS ) {
+				int serverframenum = *(int*)(packet->data+1);
+				// send the event to lua call-in
+				eventHandler.GameProgress(serverframenum);
+				// pop it out of the net buffer
+				net->DeleteBufferPacketAt(ahead);
+			}
+			else
+				++ahead;
 		}
 
 		if (que < leastQue)
@@ -393,7 +406,7 @@ void CGame::ClientReadNet()
 					unsigned char cmd_opt;
 					pckt >> cmd_id;
 					pckt >> cmd_opt;
-	
+
 					Command c(cmd_id, cmd_opt);
 					for (int a = 0; a < ((psize-9)/4); ++a) {
 						float param;
@@ -460,7 +473,7 @@ void CGame::ClientReadNet()
 					unsigned char cmd_opt;
 					pckt >> cmd_id;
 					pckt >> cmd_opt;
-	
+
 					Command c(cmd_id, cmd_opt);
 					if (packetCode == NETMSG_AICOMMAND_TRACKED) {
 						pckt >> c.aiCommandId;
@@ -507,7 +520,7 @@ void CGame::ClientReadNet()
 						unsigned char cmd_opt;
 						pckt >> cmd_id;
 						pckt >> cmd_opt;
-	
+
 						Command cmd(cmd_id, cmd_opt);
 						short int paramCount;
 						pckt >> paramCount;
@@ -746,11 +759,7 @@ void CGame::ClientReadNet()
 					}
 					case TEAMMSG_RESIGN: {
 						playerHandler->Player(player)->StartSpectating();
-						if (player == gu->myPlayerNum) {
-							selectedUnits.ClearSelected();
-							unitTracker.Disable();
-							CLuaUI::UpdateTeams();
-						}
+
 						// actualize all teams of which the player is leader
 						for (size_t t = 0; t < teamHandler->ActiveTeams(); ++t) {
 							CTeam* team = teamHandler->Team(t);
@@ -782,23 +791,7 @@ void CGame::ClientReadNet()
 							break;
 						}
 
-						playerHandler->Player(player)->team      = newTeam;
-						playerHandler->Player(player)->spectator = false;
-						if (player == gu->myPlayerNum) {
-							gu->myPlayingTeam = gu->myTeam = newTeam;
-							gu->myPlayingAllyTeam = gu->myAllyTeam = teamHandler->AllyTeam(gu->myTeam);
-							gu->spectating           = false;
-							gu->spectatingFullView   = false;
-							gu->spectatingFullSelect = false;
-							selectedUnits.ClearSelected();
-							unitTracker.Disable();
-							CLuaUI::UpdateTeams();
-						}
-						if (teamHandler->Team(newTeam)->leader == -1) {
-							teamHandler->Team(newTeam)->leader = player;
-						}
-						CPlayer::UpdateControlledTeams();
-						eventHandler.PlayerChanged(player);
+						teamHandler->Team(newTeam)->AddPlayer(player);
 						break;
 					}
 					case TEAMMSG_TEAM_DIED: {
@@ -1017,7 +1010,6 @@ void CGame::ClientReadNet()
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
-
 			case NETMSG_SETPLAYERNUM:
 			case NETMSG_ATTEMPTCONNECT: {
 				AddTraffic(-1, packetCode, dataLength);
@@ -1048,6 +1040,10 @@ void CGame::ClientReadNet()
 				} catch (netcode::UnpackPacketException &e) {
 					logOutput.Print("Got invalid New player message: %s", e.err.c_str());
 				}
+				break;
+			}
+			// drop NETMSG_GAME_FRAME_PROGRESS, if we recieved it here, it means we're the host ( so message wasn't processed ), so discard it
+			case NETMSG_GAME_FRAME_PROGRESS: {
 				break;
 			}
 			default: {
