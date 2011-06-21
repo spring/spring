@@ -170,7 +170,7 @@ void CSm3ReadMap::UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2)
 	renderer->HeightMapUpdatedUnsynced(x1, y1, x2 - x1, y2 - y1);
 }
 
-void CSm3ReadMap::Update() {}
+
 void CSm3ReadMap::DrawMinimap() const
 {
 	if (!minimapTexture)
