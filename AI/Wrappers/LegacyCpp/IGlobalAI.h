@@ -86,16 +86,20 @@ public:
 	/// called when a unit go idle and is not assigned to any group
 	virtual void UnitIdle(int unit) = 0;
 
+
 	/**
 	 * @deprecated
-	 * @see #GotChatMessage
+	 * @see #RecvChatMessage
 	 */
-	virtual void GotChatMsg(const char* msg, int player) {}
+	virtual void GotChatMsg(const char*, int) {}
+
+
 	/// called when a player sends a chat message
-	virtual void GotChatMessage(const char* msg, int player) { GotChatMsg(msg, player); }
+	virtual void RecvChatMessage(const char* message, int player) { GotChatMsg(msg, player); }
 
 	/// called when a Lua widget or unsynced gadget sends a message to this AI
-	virtual void GotLuaMessage(const char* inData, const char** outData) { *outData = inData; }
+	virtual void RecvLuaMessage(const char* inData, const char** outData) { *outData = inData; }
+
 
 	/// called when one of your units are damaged
 	virtual void UnitDamaged(int damaged, int attacker, float damage, float3 dir) = 0;

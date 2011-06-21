@@ -32,7 +32,7 @@ public:
 	~CAIChatMessageEvent() {}
 
 	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
-		ai.GotChatMessage(event.message, event.player);
+		ai.RecvChatMessage(event.message, event.player);
 	}
 
 private:
