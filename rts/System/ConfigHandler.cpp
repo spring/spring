@@ -9,6 +9,9 @@
 #include "Platform/ConfigLocater.h"
 #include "Platform/ScopedFileLock.h"
 #include "LogOutput.h"
+#ifdef _MSC_VER
+#include <io.h>
+#endif
 
 using std::string;
 
