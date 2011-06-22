@@ -14,6 +14,7 @@
 #endif
 
 using std::string;
+using std::vector;
 
 ConfigHandler* configHandler = NULL;
 
@@ -56,10 +57,15 @@ std::string ConfigHandler::Instantiate(std::string configSource)
 {
 	Deallocate();
 
-	if (configSource.empty()) {
-		configSource = ConfigLocater::GetDefaultLocation();
+	vector<string> locations;
+
+	if (!configSource.empty()) {
+		locations.push_back(configSource);
 	}
-	configHandler = new ConfigHandler(configSource);
+	ConfigLocater::GetDefaultLocations(locations);
+
+	// FIXME: use more locations
+	configHandler = new ConfigHandler(locations.front());
 
 	return configSource;
 }

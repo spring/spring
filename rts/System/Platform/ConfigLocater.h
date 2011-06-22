@@ -4,12 +4,13 @@
 #define CONFIG_LOCATER_H
 
 #include <string>
+#include <vector>
 
 namespace ConfigLocater {
 	/**
 	 * @brief Get the name of the default configuration file
 	 */
-	std::string GetDefaultLocation();
+	void GetDefaultLocations(std::vector<std::string>& locations);
 };
 
 #endif // CONFIG_LOCATER_H
