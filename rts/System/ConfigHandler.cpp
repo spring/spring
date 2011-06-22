@@ -9,7 +9,7 @@
 #include "Platform/ConfigLocater.h"
 #include "Platform/ScopedFileLock.h"
 #include "LogOutput.h"
-#ifdef _MSC_VER
+#ifdef WIN32
 #include <io.h>
 #endif
 
