@@ -58,7 +58,7 @@ cBuilder::cBuilder(IAICallback* callback, cRAI* global)
 	ConMetalRate=0;
 	ConEnergyStorage=0;
 	ConMetalStorage=0;
-	memset(BQ, NULL, BUILD_QUARRY_SIZE);
+	memset(BQ, 0, BUILD_QUARRY_SIZE);
 	BuilderMetalDebug = 0;
 	BuilderEnergyDebug = 0;
 	ECostLimit = 0;
