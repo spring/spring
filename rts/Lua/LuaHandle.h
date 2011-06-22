@@ -255,7 +255,7 @@ class CLuaHandle : public CEventClient
 
 	public: // custom call-in  (inter-script calls)
 		virtual bool HasSyncedXCall(const string& funcName) { return false; }
-		virtual bool HasUnsyncedXCall(const string& funcName) { return false; }
+		virtual bool HasUnsyncedXCall(lua_State* srcState, const string& funcName) { return false; }
 		virtual int SyncedXCall(lua_State* srcState, const string& funcName) {
 			return 0;
 		}

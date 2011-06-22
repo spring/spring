@@ -66,7 +66,7 @@ class CLuaUI : public CLuaHandle
 		void ShockFront(float power, const float3& pos, float areaOfEffect, float *distadj = NULL);
 
 	public: // custom call-in
-		bool HasUnsyncedXCall(const string& funcName);
+		bool HasUnsyncedXCall(lua_State* srcState, const string& funcName);
 		int UnsyncedXCall(lua_State* srcState, const string& funcName);
 		void ExecuteDelayedXCalls();
 		void ExecuteUIEventBatch();
