@@ -3,83 +3,16 @@
 #include "StdAfx.h"
 #include "ConfigHandler.h"
 
-#include <fcntl.h>
-#include <stdlib.h>
 #include <string.h>
 #include <stdexcept>
-#ifndef WIN32
-	#include <unistd.h>
-	#include <sys/stat.h>
-	#include <sys/types.h>
-#else
-	#include <io.h>
-	#include <direct.h>
-	#include <windows.h>
-	#include <shlobj.h>
-	#include <shlwapi.h>
-	#ifndef SHGFP_TYPE_CURRENT
-		#define SHGFP_TYPE_CURRENT 0
-	#endif
-#endif
 
-#include "Game/GameVersion.h"
-#include "Platform/Misc.h"
+#include "Platform/ConfigLocater.h"
+#include "Platform/ScopedFileLock.h"
 #include "LogOutput.h"
 
 using std::string;
 
 ConfigHandler* configHandler = NULL;
-
-/**
- * @brief POSIX file locking class
- */
-class ScopedFileLock
-{
-public:
-	ScopedFileLock(int fd, bool write);
-	~ScopedFileLock();
-private:
-	int filedes;
-};
-
-/**
- * @brief lock fd
- *
- * Lock file descriptor fd for reading (write == false) or writing
- * (write == true).
- */
-ScopedFileLock::ScopedFileLock(int fd, bool write) : filedes(fd)
-{
-#ifndef _WIN32
-	struct flock lock;
-	lock.l_type = write ? F_WRLCK : F_RDLCK;
-	lock.l_whence = SEEK_SET;
-	lock.l_start = 0;
-	lock.l_len = 0;
-	if (fcntl(filedes, F_SETLKW, &lock)) {
-		// not a fatal error
-		//handleerror(0, "Could not lock config file", "DotfileHandler", 0);
-	}
-#endif
-}
-
-/**
- * @brief unlock fd
- */
-ScopedFileLock::~ScopedFileLock()
-{
-#ifndef _WIN32
-	struct flock lock;
-	lock.l_type = F_UNLCK;
-	lock.l_whence = SEEK_SET;
-	lock.l_start = 0;
-	lock.l_len = 0;
-	if (fcntl(filedes, F_SETLKW, &lock)) {
-		// not a fatal error
-		//handleerror(0, "Could not unlock config file", "DotfileHandler", 0);
-	}
-#endif
-}
 
 void ConfigHandler::Delete(const std::string& name, bool inOverlay)
 {
@@ -121,7 +54,7 @@ std::string ConfigHandler::Instantiate(std::string configSource)
 	Deallocate();
 
 	if (configSource.empty()) {
-		configSource = GetDefaultConfig();
+		configSource = ConfigLocater::GetDefaultLocation();
 	}
 	configHandler = new ConfigHandler(configSource);
 
@@ -270,54 +203,6 @@ void ConfigHandler::Update()
 void ConfigHandler::SetOverlay(std::string name, std::string value)
 {
 	SetString(name, value, true);
-}
-
-/**
- * @brief Get the name of the default configuration file
- */
-string ConfigHandler::GetDefaultConfig()
-{
-	string binaryPath = Platform::GetProcessExecutablePath() + "/";
-	std::string portableConfPath = binaryPath + "springsettings.cfg";
-	if (access(portableConfPath.c_str(), 6) != -1) {
-		return portableConfPath;
-	}
-
-	string cfg;
-
-#ifndef _WIN32
-	const string base = ".springrc";
-	const string home = getenv("HOME");
-
-	const string defCfg = home + "/" + base;
-	const string verCfg = defCfg + "-" + SpringVersion::Get();
-
-	struct stat st;
-	if (stat(verCfg.c_str(), &st) == 0) { // check if file exists
-		cfg = verCfg; // use the versionned config file
-	} else {
-		cfg = defCfg; // use the default config file
-	}
-#else
-	// first, check if there exists a config file in the same directory as the exe
-	// and if the file is writable (otherwise it can fail/segfault/end up in virtualstore...)
-	// _access modes: 0 - exists; 2 - write; 4 - read; 6 - r/w
-	// doesn't work on directories (precisely, mode is always 0)
-	TCHAR strPath[MAX_PATH+1];
-	SHGetFolderPath( NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, strPath);
-	const std::string userDir = strPath;
-	const std::string verConfigPath = userDir + "\\springsettings-" + SpringVersion::Get() + ".cfg";
-	if (_access(verConfigPath.c_str(), 6) != -1) { // check for read & write access
-		cfg = verConfigPath;
-	} else {
-		cfg = strPath;
-		cfg += "\\springsettings.cfg"; // e.g. F:\Documents and Settings\MyUser\Local Settings\App Data
-	}
-	// log here so unitsync shows configuration source, too
-	logOutput.Print("default config file: " + cfg + "\n");
-#endif
-
-	return cfg;
 }
 
 /**
