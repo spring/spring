@@ -348,6 +348,9 @@ void CLuaHandle::ExecuteRecvFromSynced() {
 	{
 		GML_STDMUTEX_LOCK(recv); // ExecuteRecvFromSynced
 
+		if(delayedRecvFromSynced.empty())
+			return;
+
 		delayedRecvFromSynced.swap(drfs);
 	}
 

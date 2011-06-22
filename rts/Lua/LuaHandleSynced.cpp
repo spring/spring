@@ -810,7 +810,7 @@ bool CLuaHandleSynced::HasSyncedXCall(const string& funcName)
 }
 
 
-bool CLuaHandleSynced::HasUnsyncedXCall(const string& funcName)
+bool CLuaHandleSynced::HasUnsyncedXCall(lua_State* srcState, const string& funcName)
 {
 	SELECT_UNSYNCED_LUA_STATE();
 
