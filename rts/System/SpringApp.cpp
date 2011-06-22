@@ -47,6 +47,7 @@
 #include "System/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/FPUCheck.h"
+#include "System/GlobalConfig.h"
 #include "System/LogOutput.h"
 #include "System/myMath.h"
 #include "System/OffscreenGLContext.h"
@@ -182,7 +183,7 @@ bool SpringApp::Initialize()
 	FileSystemHandler::Initialize(true);
 
 	UpdateOldConfigs();
-	
+
 	if (!InitWindow(("Spring " + SpringVersion::Get()).c_str())) {
 		SDL_Quit();
 		return false;
@@ -191,7 +192,7 @@ bool SpringApp::Initialize()
 	mouseInput = IMouseInput::GetInstance();
 	keyInput = KeyInput::GetInstance();
 	input.AddHandler(boost::bind(&SpringApp::MainEventHandler, this, _1));
-	
+
 	// Global structures
 	gs = new CGlobalSynced();
 	gu = new CGlobalUnsynced();
@@ -371,12 +372,12 @@ bool SpringApp::SetSDLVideoMode()
 		globalRendering->viewSizeX = 1024;
 		globalRendering->viewSizeY = 768;
 	}
-	
+
 	//! screen will be freed by SDL_Quit()
 	//! from: http://sdl.beuc.net/sdl.wiki/SDL_SetVideoMode
 	//! Note 3: This function should be called in the main thread of your application.
 	//! User note 1: Some have found that enabling OpenGL attributes like SDL_GL_STENCIL_SIZE (the stencil buffer size) before the video mode has been set causes the application to simply ignore those attributes, while enabling attributes after the video mode has been set works fine.
-	//! User note 2: Also note that, in Windows, setting the video mode resets the current OpenGL context. You must execute again the OpenGL initialization code (set the clear color or the shade model, or reload textures, for example) after calling SDL_SetVideoMode. In Linux, however, it works fine, and the initialization code only needs to be executed after the first call to SDL_SetVideoMode (although there is no harm in executing the initialization code after each call to SDL_SetVideoMode, for example for a multiplatform application). 
+	//! User note 2: Also note that, in Windows, setting the video mode resets the current OpenGL context. You must execute again the OpenGL initialization code (set the clear color or the shade model, or reload textures, for example) after calling SDL_SetVideoMode. In Linux, however, it works fine, and the initialization code only needs to be executed after the first call to SDL_SetVideoMode (although there is no harm in executing the initialization code after each call to SDL_SetVideoMode, for example for a multiplatform application).
 	SDL_Surface* screen = SDL_SetVideoMode(globalRendering->viewSizeX, globalRendering->viewSizeY, 32, sdlflags);
 	if (!screen) {
 		char buf[1024];
@@ -723,7 +724,7 @@ void SpringApp::UpdateOldConfigs()
 		configHandler->Set("Version",4);
 	}
 	if (cfgVersion < 5) {
-		const int xres = configHandler->Get("XResolution", 0); 
+		const int xres = configHandler->Get("XResolution", 0);
 		const int yres = configHandler->Get("YResolution", 0);
 		if ((xres == 1024) && (yres == 768)) { //! old default res (use desktop res now by default)
 			configHandler->Delete("XResolution");
@@ -823,6 +824,7 @@ void SpringApp::ParseCmdLine()
 	} else {
 		logOutput.Print("using default configuration source \"" + ConfigHandler::Instantiate() + "\"");
 	}
+	GlobalConfig::Instantiate();
 
 	// mutually exclusive options that cause spring to quit immediately
 	// and require the configHandler
@@ -1200,6 +1202,7 @@ void SpringApp::Shutdown()
 	DeleteAndNull(smallFont);
 	CNamedTextures::Kill();
 	GLContext::Free();
+	GlobalConfig::Deallocate();
 	ConfigHandler::Deallocate();
 	UnloadExtensions();
 
@@ -1281,8 +1284,8 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			if (mouse && mouse->locked) {
 				mouse->ToggleState();
 			}
-			
-			//! release all keyboard keys		
+
+			//! release all keyboard keys
 			if ((event.active.state & (SDL_APPACTIVE | SDL_APPINPUTFOCUS)) && !event.active.gain) {
 				for (boost::uint16_t i = 1; i < SDLK_LAST; ++i) {
 					if (keyInput->IsKeyPressed(i)) {
@@ -1297,7 +1300,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 					}
 				}
 			}
-			
+
 			//! simulate mouse release to prevent hung buttons
 			if ((event.active.state & (SDL_APPACTIVE | SDL_APPMOUSEFOCUS)) && !event.active.gain) {
 				for (int i = 1; i <= NUM_BUTTONS; ++i) {

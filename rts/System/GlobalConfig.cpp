@@ -3,9 +3,10 @@
 #include "StdAfx.h"
 #include "Rendering/GL/myGL.h"
 #include "ConfigHandler.h"
+#include "GlobalConfig.h"
 #include "Sim/Misc/ModInfo.h"
 
-GlobalConfig* gc = NULL;
+GlobalConfig* globalConfig = NULL;
 
 GlobalConfig::GlobalConfig() {
 	// Recommended semantics for "expert" type config values:
@@ -50,10 +51,10 @@ int GlobalConfig::GetMultiThreadLua() {
 
 void GlobalConfig::Instantiate() {
 	Deallocate();
-	gc = new GlobalConfig();
+	globalConfig = new GlobalConfig();
 }
 
 void GlobalConfig::Deallocate() {
-	delete gc;
-	gc = NULL;
+	delete globalConfig;
+	globalConfig = NULL;
 }

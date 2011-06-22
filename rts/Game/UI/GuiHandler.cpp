@@ -50,6 +50,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "System/ConfigHandler.h"
 #include "System/EventHandler.h"
+#include "System/GlobalConfig.h"
 #include "System/LogOutput.h"
 #include "System/myMath.h"
 #include "System/Util.h"
@@ -1654,7 +1655,7 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 
 void CGuiHandler::RunLayoutCommand(const std::string& command)
 {
-	if (command == "reload" || ((LUA_MT_OPT & LUA_STATE) && gc->GetMultiThreadLua() >= 5 && command == "update")) {
+	if (command == "reload" || ((LUA_MT_OPT & LUA_STATE) && globalConfig->GetMultiThreadLua() >= 5 && command == "update")) {
 		if (CLuaHandle::GetActiveHandle() != NULL) {
 			// NOTE: causes a SEGV through RunCallIn()
 			logOutput.Print("Can not reload from within LuaUI, yet");

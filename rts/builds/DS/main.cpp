@@ -27,7 +27,8 @@
 #include "System/UnsyncedRNG.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #ifdef __APPLE__
@@ -59,6 +60,7 @@ int main(int argc, char* argv[])
 	SDL_Init(SDL_INIT_TIMER);
 
 	ConfigHandler::Instantiate(); // use the default config file
+	GlobalConfig::Instantiate();
 	FileSystemHandler::Initialize(false);
 
 	CGameServer* server = NULL;
@@ -136,10 +138,7 @@ int main(int argc, char* argv[])
 			printf("[DS] recording demo: %s\n", (demoRec->GetName()).c_str());
 			printf("[DS] using mod: %s\n", (gameSetup->modName).c_str());
 			printf("[DS] using map: %s\n", (gameSetup->mapName).c_str());
-			printf("[DS] GameID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
-				gameID[ 0], gameID[ 1], gameID[ 2], gameID[ 3], gameID[ 4], gameID[ 5], gameID[ 6], gameID[ 7],
-				gameID[ 8], gameID[ 9], gameID[10], gameID[11], gameID[12], gameID[13], gameID[14], gameID[15]
-			);
+			printf("[DS] GameID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n", gameID[0], gameID[1], gameID[2], gameID[3], gameID[4], gameID[5], gameID[6], gameID[7], gameID[8], gameID[9], gameID[10], gameID[11], gameID[12], gameID[13], gameID[14], gameID[15]);
 		}
 
 		// wait 1 second between checks
@@ -153,13 +152,14 @@ int main(int argc, char* argv[])
 	delete server;
 
 	FileSystemHandler::Cleanup();
+	GlobalConfig::Deallocate();
 	ConfigHandler::Deallocate();
 
 #ifdef _WIN32
-	} catch (const std::exception& err) {
-		printf("[DS] exception raised: %s\n", err.what());
-		return 1;
-	}
+} catch (const std::exception& err) {
+	printf("[DS] exception raised: %s\n", err.what());
+	return 1;
+}
 #endif
 
 	return 0;

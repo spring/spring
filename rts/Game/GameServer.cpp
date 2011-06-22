@@ -55,6 +55,7 @@
 #endif
 #include "Server/MsgStrings.h"
 #include "System/ConfigHandler.h"
+#include "System/GlobalConfig.h"
 #include "System/LogOutput.h"
 #include "System/FileSystem/CRC.h"
 #include "System/FileSystem/SimpleParser.h"
@@ -230,7 +231,7 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	}
 
 	canReconnect = false;
-	linkMinPacketSize = gc->linkIncomingMaxPacketRate > 0 ? (gc->linkIncomingSustainedBandwidth / gc->linkIncomingMaxPacketRate) : 1;
+	linkMinPacketSize = globalConfig->linkIncomingMaxPacketRate > 0 ? (globalConfig->linkIncomingSustainedBandwidth / globalConfig->linkIncomingMaxPacketRate) : 1;
 	lastBandwidthUpdate = spring_gettime();
 
 	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
@@ -794,7 +795,7 @@ void CGameServer::Update()
 		}
 	}
 
-	if (spring_gettime() > serverStartTime + spring_secs(gc->initialNetworkTimeout) || gameHasStarted) {
+	if (spring_gettime() > serverStartTime + spring_secs(globalConfig->initialNetworkTimeout) || gameHasStarted) {
 		bool hasPlayers = false;
 		for (size_t i = 0; i < players.size(); ++i) {
 			if (players[i].link) {
@@ -1627,20 +1628,20 @@ void CGameServer::ServerReadNet()
 			continue;
 		}
 
-		bool bwLimitWasReached = (gc->linkIncomingPeakBandwidth > 0 && players[a].bandwidthUsage > gc->linkIncomingPeakBandwidth);
+		bool bwLimitWasReached = (globalConfig->linkIncomingPeakBandwidth > 0 && players[a].bandwidthUsage > globalConfig->linkIncomingPeakBandwidth);
 
-		if (updateBandwidth >= 1.0f && gc->linkIncomingSustainedBandwidth > 0)
-			players[a].bandwidthUsage = std::max(0, players[a].bandwidthUsage - std::max(1, (int)((float)gc->linkIncomingSustainedBandwidth / (1000.0f / (playerBandwidthInterval * updateBandwidth)))));
+		if (updateBandwidth >= 1.0f && globalConfig->linkIncomingSustainedBandwidth > 0)
+			players[a].bandwidthUsage = std::max(0, players[a].bandwidthUsage - std::max(1, (int)((float)globalConfig->linkIncomingSustainedBandwidth / (1000.0f / (playerBandwidthInterval * updateBandwidth)))));
 
 		int numDropped = 0;
 		boost::shared_ptr<const RawPacket> packet;
 
-		bool dropPacket = gc->linkIncomingMaxWaitingPackets > 0 && (gc->linkIncomingPeakBandwidth <= 0 || bwLimitWasReached);
+		bool dropPacket = globalConfig->linkIncomingMaxWaitingPackets > 0 && (globalConfig->linkIncomingPeakBandwidth <= 0 || bwLimitWasReached);
 		int ahead = 0;
-		bool bwLimitIsReached = gc->linkIncomingPeakBandwidth > 0 && players[a].bandwidthUsage > gc->linkIncomingPeakBandwidth;
+		bool bwLimitIsReached = globalConfig->linkIncomingPeakBandwidth > 0 && players[a].bandwidthUsage > globalConfig->linkIncomingPeakBandwidth;
 		while(players[a].link) {
 			if (dropPacket)
-				dropPacket = (packet = players[a].link->Peek(gc->linkIncomingMaxWaitingPackets));
+				dropPacket = (packet = players[a].link->Peek(globalConfig->linkIncomingMaxWaitingPackets));
 			packet = (!bwLimitIsReached || dropPacket) ? players[a].link->GetData() : players[a].link->Peek(ahead++);
 			if (!packet)
 				break;
@@ -1649,10 +1650,10 @@ void CGameServer::ServerReadNet()
 				++numDropped;
 			else if (!bwLimitIsReached || !droppablePacket) {
 				ProcessPacket(a, packet); // non droppable packets may be processed more than once, but this does no harm
-				if (gc->linkIncomingPeakBandwidth > 0 && droppablePacket) {
+				if (globalConfig->linkIncomingPeakBandwidth > 0 && droppablePacket) {
 					players[a].bandwidthUsage += std::max((unsigned)linkMinPacketSize, packet->length);
 					if (!bwLimitIsReached)
-						bwLimitIsReached = (players[a].bandwidthUsage > gc->linkIncomingPeakBandwidth);
+						bwLimitIsReached = (players[a].bandwidthUsage > globalConfig->linkIncomingPeakBandwidth);
 				}
 			}
 		}
