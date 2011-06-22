@@ -166,7 +166,7 @@ bool LuaParser::Execute()
 		}
 	}
 	else {
-		errorLog = "no source file or text";
+		errorLog = "invalid format or empty file";
 		LUA_CLOSE(L);
 		L = NULL;
 		return false;
