@@ -447,7 +447,7 @@ void CEventHandler::Load(IArchive* archive)
 
 
 #ifdef USE_GML
-	#define GML_DRAW_CALLIN_SELECTOR() if(!gc->enableDrawCallIns) return
+	#define GML_DRAW_CALLIN_SELECTOR() if(!globalConfig->enableDrawCallIns) return
 #else
 	#define GML_DRAW_CALLIN_SELECTOR()
 #endif

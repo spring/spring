@@ -23,6 +23,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/ConfigHandler.h"
+#include "System/GlobalConfig.h"
 #include "System/Exceptions.h"
 #include "System/UnsyncedRNG.h"
 
