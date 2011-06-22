@@ -6,6 +6,7 @@
 #include "Lua/LuaOpenGL.h"  // FIXME -- should be moved
 #include "System/ConfigHandler.h"
 #include "System/Platform/Threading.h"
+#include "System/GlobalConfig.h"
 
 using std::string;
 using std::vector;
