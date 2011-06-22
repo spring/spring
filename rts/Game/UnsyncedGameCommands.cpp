@@ -67,6 +67,7 @@
 #include "UI/ProfileDrawer.h"
 #include "System/ConfigHandler.h"
 #include "System/EventHandler.h"
+#include "System/GlobalConfig.h"
 #include "System/NetProtocol.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/SimpleParser.h"
@@ -2082,7 +2083,7 @@ public:
 		bool showMTInfo = (game->showMTInfo != 0);
 		SetBoolArg(showMTInfo, action.GetArgs());
 		configHandler->Set("ShowMTInfo", showMTInfo ? 1 : 0);
-		game->showMTInfo = (showMTInfo && (gc->GetMultiThreadLua() <= 3)) ? gc->GetMultiThreadLua() : 0;
+		game->showMTInfo = (showMTInfo && (globalConfig->GetMultiThreadLua() <= 3)) ? globalConfig->GetMultiThreadLua() : 0;
 	}
 };
 
@@ -2095,15 +2096,15 @@ public:
 
 	void Execute(const UnsyncedAction& action) const {
 		if (action.GetArgs().empty()) {
-			gc->teamHighlight = abs(gc->teamHighlight + 1) % 3;
+			globalConfig->teamHighlight = abs(globalConfig->teamHighlight + 1) % 3;
 		} else {
-			gc->teamHighlight = abs(atoi(action.GetArgs().c_str())) % 3;
+			globalConfig->teamHighlight = abs(atoi(action.GetArgs().c_str())) % 3;
 		}
 		logOutput.Print("Team highlighting: %s",
-				((gc->teamHighlight == 1) ? "Players only"
-				: ((gc->teamHighlight == 2) ? "Players and spectators"
+				((globalConfig->teamHighlight == 1) ? "Players only"
+				: ((globalConfig->teamHighlight == 2) ? "Players and spectators"
 				: "Disabled")));
-		configHandler->Set("TeamHighlight", gc->teamHighlight);
+		configHandler->Set("TeamHighlight", globalConfig->teamHighlight);
 	}
 };
 

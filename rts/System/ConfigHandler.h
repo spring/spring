@@ -3,7 +3,6 @@
 #ifndef CONFIGHANDLER_H
 #define CONFIGHANDLER_H
 
-#include "GlobalConfig.h"
 #include <string>
 #include <map>
 #include <list>

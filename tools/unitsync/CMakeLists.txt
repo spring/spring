@@ -42,7 +42,6 @@ INCLUDE_DIRECTORIES(../../rts/System)
 set(main_files
 	../../rts/System/Platform/Misc
 	../../rts/System/ConfigHandler
-	../../rts/System/GlobalConfig
 	../../rts/System/LogOutput
 	../../rts/System/TdfParser
 	../../rts/System/Info

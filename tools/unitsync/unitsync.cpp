@@ -250,14 +250,15 @@ static void _UnInit()
 EXPORT(int) Init(bool isServer, int id)
 {
 	try {
-		if (!logOutputInitialised)
+		if (!logOutputInitialised) {
 			logOutput.SetFileName("unitsync.log");
-		if (!configHandler)
+		}
+		if (!configHandler) {
 			ConfigHandler::Instantiate(); // use the default config file
+		}
 		FileSystemHandler::Initialize(false);
 
-		if (!logOutputInitialised)
-		{
+		if (!logOutputInitialised) {
 			logOutput.Initialize();
 			logOutputInitialised = true;
 		}
@@ -610,7 +611,7 @@ static bool _GetMapInfoEx(const char* mapName, MapInfo* outInfo, int version)
 	} else {
 		// contains the error message
 		safe_strzcpy(outInfo->description, internalMapInfo.description, 255);
- 
+
  		// Fill in stuff so TASClient does not crash
  		outInfo->posCount = 0;
 		if (version >= 1) {

@@ -101,6 +101,6 @@ public:
 	int GetMultiThreadLua();
 };
 
-extern GlobalConfig* gc;
+extern GlobalConfig* globalConfig;
 
 #endif // GLOBALCONFIG_H
