@@ -9,7 +9,6 @@
 
 #include "lib/streflop/streflop_cond.h"
 #include "SyncedPrimitive.h"
-#include "FastMath.h" //SSE (I)SQRT
 
 /**
  * @brief SyncedFloat3 class
