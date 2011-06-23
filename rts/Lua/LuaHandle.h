@@ -399,7 +399,7 @@ class CLuaHandle : public CEventClient
 		static void HandleLuaMsg(int playerID, int script, int mode,
 			const std::vector<boost::uint8_t>& msg);
 		static inline bool IsDrawCallIn() {
-			return (LUA_MT_OPT & LUA_STATE) && !Threading::IsSimThread();
+			return (LUA_MT_OPT & LUA_MUTEX) && !Threading::IsSimThread();
 		}
 		void ExecuteUnitEventBatch();
 		void ExecuteFeatEventBatch();
@@ -423,15 +423,20 @@ class CLuaHandle : public CEventClient
 		friend class CLuaUnitScript;
 	private:
 		struct staticLuaContextData {
-			staticLuaContextData() : activeFullRead(false), activeReadAllyTeam(CEventClient::NoAccessTeam), activeHandle(NULL) {}
+			staticLuaContextData() : activeFullRead(false), activeReadAllyTeam(CEventClient::NoAccessTeam), 
+				activeHandle(NULL), drawingEnabled(false) {}
 			bool activeFullRead;
 			int  activeReadAllyTeam;
 			CLuaHandle* activeHandle;
+			bool drawingEnabled;
 		};
 		static staticLuaContextData S_Sim;
 		static staticLuaContextData S_Draw;
 
+	protected:
 		static staticLuaContextData &GetStaticLuaContextData(bool draw = IsDrawCallIn()) { return draw ? S_Draw : S_Sim; }
+
+		friend class LuaOpenGL; // to access staticLuaContextData::drawingEnabled
 };
 
 

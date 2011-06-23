@@ -5,6 +5,7 @@
 
 #include <string>
 #include <set>
+#include "Lua/LuaHandle.h"
 
 
 struct lua_State;
@@ -30,8 +31,8 @@ class LuaOpenGL {
 
 		static bool PushEntries(lua_State* L);
 
-		static bool IsDrawingEnabled() { return drawingEnabled; }
-		static void SetDrawingEnabled(bool value) { drawingEnabled = value; }
+		static bool IsDrawingEnabled() { return CLuaHandle::GetStaticLuaContextData().drawingEnabled; }
+		static void SetDrawingEnabled(bool value) { CLuaHandle::GetStaticLuaContextData().drawingEnabled = value; }
 
 		static bool CanUseShaders() { return canUseShaders; }
 
@@ -100,7 +101,6 @@ class LuaOpenGL {
 	private:
 		static DrawMode drawMode;
 		static DrawMode prevDrawMode; // for minimap (when drawn in Screen mode)
-		static bool drawingEnabled;
 		static bool safeMode;
 		static bool canUseShaders;
 		static float screenWidth;
