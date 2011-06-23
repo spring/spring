@@ -127,12 +127,12 @@ CReadMap::~CReadMap()
 	typeMap.clear();
 	slopeMap.clear();
 
-	for (int i = 1; i < numHeightMipMaps; i++) {
-		// don't delete mipHeightMaps[0] since it points to centerHeightMap
-		delete[] mipHeightMaps[i];
+	for (unsigned int n = 0; n < mipCenterHeightMaps.size(); n++) {
+		mipCenterHeightMaps[n].clear();
 	}
 
-	mipHeightMaps.clear();
+	mipCenterHeightMaps.clear();
+	mipPointerHeightMaps.clear();
 	centerHeightMap.clear();
 	originalHeightMap.clear();
 	vertexNormals.clear();
@@ -162,11 +162,13 @@ void CReadMap::Initialize()
 	centerNormals.resize(gs->mapx * gs->mapy);
 	centerHeightMap.resize(gs->mapx * gs->mapy);
 
-	mipHeightMaps.resize(numHeightMipMaps);
-	mipHeightMaps[0] = &centerHeightMap[0];
+	mipCenterHeightMaps.resize(numHeightMipMaps - 1);
+	mipPointerHeightMaps.resize(numHeightMipMaps);
+	mipPointerHeightMaps[0] = &centerHeightMap[0];
 
 	for (int i = 1; i < numHeightMipMaps; i++) {
-		mipHeightMaps[i] = new float[(gs->mapx >> i) * (gs->mapy >> i)];
+		mipCenterHeightMaps[i - 1].resize((gs->mapx >> i) * (gs->mapy >> i));
+		mipPointerHeightMaps[i] = &mipCenterHeightMaps[i - 1][0];
 	}
 
 	slopeMap.resize(gs->hmapx * gs->hmapy);
@@ -250,15 +252,16 @@ void CReadMap::UpdateHeightMapSynced(int x1, int y1, int x2, int y2)
 	}
 
 	for (int i = 0; i < numHeightMipMaps - 1; i++) {
-		int hmapx = gs->mapx >> i;
+		const int hmapx = gs->mapx >> i;
+
 		for (int y = ((y1 >> i) & (~1)); y < (y2 >> i); y += 2) {
 			for (int x = ((x1 >> i) & (~1)); x < (x2 >> i); x += 2) {
 				const float height =
-					mipHeightMaps[i][(x    ) + (y    ) * hmapx] +
-					mipHeightMaps[i][(x    ) + (y + 1) * hmapx] +
-					mipHeightMaps[i][(x + 1) + (y    ) * hmapx] +
-					mipHeightMaps[i][(x + 1) + (y + 1) * hmapx];
-				mipHeightMaps[i + 1][(x / 2) + (y / 2) * hmapx / 2] = height * 0.25f;
+					mipPointerHeightMaps[i][(x    ) + (y    ) * hmapx] +
+					mipPointerHeightMaps[i][(x    ) + (y + 1) * hmapx] +
+					mipPointerHeightMaps[i][(x + 1) + (y    ) * hmapx] +
+					mipPointerHeightMaps[i][(x + 1) + (y + 1) * hmapx];
+				mipPointerHeightMaps[i + 1][(x / 2) + (y / 2) * hmapx / 2] = height * 0.25f;
 			}
 		}
 	}
