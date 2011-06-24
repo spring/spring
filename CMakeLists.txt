@@ -105,20 +105,6 @@ if    (OPENMP)
 	endif(OPENMP_FOUND)
 endif (OPENMP)
 
-set(LTO FALSE CACHE BOOL "Link Time Optimizations")
-if    (LTO)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto")
-	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
-	set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -flto")
-endif (LTO)
-
-set(LTO-WHOPR FALSE CACHE BOOL "Link Time Optimizations - WHOle Program optimizeR")
-if    (LTO-WHOPR)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fwhopr")
-	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fwhopr")
-	set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fwhopr")
-endif (LTO-WHOPR)
-
 set(BUILTIN_DATADIRS "")
 if    (NOT MINGW)
 	set (SPRING_DATADIR CACHE STRING "Path to game content (in addition to /etc/spring/datadir)")
@@ -198,6 +184,11 @@ else  ($ENV{CXX} MATCHES "icpc")
 
 	set(CXX_FLAGS_DEBUG_ADDITIONAL "")
 endif ($ENV{CXX} MATCHES "icpc")
+
+# Add Link-Time-Optimization flags, if supported (GCC >= 4.5) and enabled
+Set(CMAKE_CXX_FLAGS           "${CMAKE_CXX_FLAGS}           ${LTO_FLAGS}")
+Set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    ${LTO_FLAGS}")
+Set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LTO_FLAGS}")
 
 set(SIGNAL_NANS FALSE CACHE BOOL "Enable NaN-Signalling")
 if (SIGNAL_NANS)
