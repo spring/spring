@@ -9,7 +9,7 @@
 
 #include "float3.h"
 
-#if __APPLE__
+#ifdef __APPLE__
 //defined in X11/X.h
 #undef KeyPress
 #undef KeyRelease
