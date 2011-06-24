@@ -22,6 +22,7 @@
 #include "Game/SelectedUnits.h"
 #include "Game/TraceRay.h"
 #include "Game/Camera/CameraController.h"
+#include "Game/UI/LuaUI.h" // FIXME: for GML
 #include "Game/UI/UnitTracker.h"
 #include "Lua/LuaInputReceiver.h"
 #include "Map/Ground.h"
