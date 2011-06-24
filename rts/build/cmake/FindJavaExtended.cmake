@@ -27,6 +27,8 @@
 # @author Jan Engels, DESY, hoijui
 ################################################################################
 
+INCLUDE(FindPackageHandleStandardArgs)
+
 SET( JAVA_FOUND FALSE )
 
 IF ("${CMAKE_BUILD_TYPE}" STREQUAL "RELEASE")
