@@ -60,3 +60,26 @@ If    (NOT DEFINED IEEE_FP_FLAG)
 	EndIf (HAS_IEEE_FP_FLAG)
 EndIf (NOT DEFINED IEEE_FP_FLAG)
 
+
+If    (NOT DEFINED LTO_FLAGS)
+	Set(LTO_FLAGS "")
+
+	Set(LTO       FALSE CACHE BOOL "Link Time Optimizations (LTO)")
+	If    (LTO)
+		CHECK_CXX_ACCEPTS_FLAG("-flto" HAS_LTO_FLAG)
+		If    (HAS_LTO_FLAG)
+			Set(LTO_FLAGS "${LTO_FLAGS} -flto")
+		Else  (HAS_LTO_FLAG)
+			Set(LTO_FLAGS "${LTO_FLAGS} -flto")
+		EndIf (HAS_LTO_FLAG)
+	EndIf (LTO)
+
+	Set(LTO_WHOPR FALSE CACHE BOOL "Link Time Optimizations (LTO) - Whole program optimizer (WHOPR)")
+	If    (LTO_WHOPR)
+		CHECK_CXX_ACCEPTS_FLAG("-fwhopr" HAS_LTO_WHOPR_FLAG)
+		If    (HAS_LTO_WHOPR_FLAG)
+			Set(LTO_FLAGS "${LTO_FLAGS} -fwhopr")
+		EndIf (HAS_LTO_WHOPR_FLAG)
+	EndIf (LTO_WHOPR)
+EndIf (NOT DEFINED LTO_FLAGS)
+
