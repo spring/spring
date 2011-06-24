@@ -5846,14 +5846,6 @@
 				Name="Platform"
 				>
 				<File
-					RelativePath="..\..\System\Platform\CmdLineParams.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Platform\CmdLineParams.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\System\Platform\byteorder.h"
 					>
 				</File>
@@ -5863,6 +5855,22 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\Clipboard.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Platform\CmdLineParams.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Platform\CmdLineParams.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Platform\ConfigLocater.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Platform\ConfigLocater.h"
 					>
 				</File>
 				<File
@@ -5879,6 +5887,14 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\Misc.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Platform\ScopedFileLock.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Platform\ScopedFileLock.h"
 					>
 				</File>
 				<File

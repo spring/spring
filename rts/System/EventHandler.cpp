@@ -2,10 +2,14 @@
 
 #include "StdAfx.h"
 #include "EventHandler.h"
+
+#include "Game/UI/LuaUI.h"  // FIXME -- should be moved
 #include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaOpenGL.h"  // FIXME -- should be moved
+
 #include "System/ConfigHandler.h"
 #include "System/Platform/Threading.h"
+#include "System/GlobalConfig.h"
 
 using std::string;
 using std::vector;
@@ -447,7 +451,7 @@ void CEventHandler::Load(IArchive* archive)
 
 
 #ifdef USE_GML
-	#define GML_DRAW_CALLIN_SELECTOR() if(!gc->enableDrawCallIns) return
+	#define GML_DRAW_CALLIN_SELECTOR() if(!globalConfig->enableDrawCallIns) return
 #else
 	#define GML_DRAW_CALLIN_SELECTOR()
 #endif
@@ -475,6 +479,18 @@ void CEventHandler::Update()
 		ec->Update();
 	}
 }
+
+
+
+void CEventHandler::UpdateUnits(void) { eventBatchHandler->UpdateUnits(); }
+void CEventHandler::UpdateDrawUnits() { eventBatchHandler->UpdateDrawUnits(); }
+void CEventHandler::DeleteSyncedUnits() {
+	eventBatchHandler->DeleteSyncedUnits();
+	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedUnits
+	if (luaUI) luaUI->ExecuteUnitEventBatch();
+}
+
+
 
 
 void CEventHandler::ViewResize()

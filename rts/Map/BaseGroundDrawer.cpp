@@ -177,7 +177,7 @@ void CBaseGroundDrawer::SetMetalTexture(const CMetalMap* map)
 		SetDrawMode(drawMetal);
 
 		highResInfoTexWanted = false;
-		extraTex = map->metalMap;
+		extraTex = &map->metalMap[0];
 		extraTexPal = map->metalPal;
 		extractDepthMap = &map->extractionMap[0];
 		updateTextureState = 0;

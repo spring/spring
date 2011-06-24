@@ -185,6 +185,11 @@ else  ($ENV{CXX} MATCHES "icpc")
 	set(CXX_FLAGS_DEBUG_ADDITIONAL "")
 endif ($ENV{CXX} MATCHES "icpc")
 
+# Add Link-Time-Optimization flags, if supported (GCC >= 4.5) and enabled
+Set(CMAKE_CXX_FLAGS           "${CMAKE_CXX_FLAGS}           ${LTO_FLAGS}")
+Set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    ${LTO_FLAGS}")
+Set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LTO_FLAGS}")
+
 set(SIGNAL_NANS FALSE CACHE BOOL "Enable NaN-Signalling")
 if (SIGNAL_NANS)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsignaling-nans")
@@ -240,19 +245,6 @@ endif  (MINGW)
 IF (MINGW)
 	FIND_PACKAGE(Win32Libs REQUIRED)
 ENDIF (MINGW)
-
-# add -flto to linker if gcc>=4.5
-if (CMAKE_COMPILER_IS_GNUCC)
-	execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
-	if (GCC_VERSION VERSION_GREATER 4.5 OR GCC_VERSION VERSION_EQUAL 4.5)
-		message(STATUS "Found gcc >=4.5, enabled linker flag -flto")
-		set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
-		set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -flto")
-		set (CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -flto")
-	else()
-		message(STATUS "WARNING gcc<4.5 found, not enabling -flto linking")
-	endif()
-endif(CMAKE_COMPILER_IS_GNUCC)
 
 
 ### Where the other CMakeLists.txt are

@@ -44,6 +44,7 @@
 #include "Sim/Units/Scripts/LuaUnitScript.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "EventHandler.h"
+#include "GlobalConfig.h"
 #include "LogOutput.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystem.h"
@@ -80,9 +81,9 @@ CLuaHandleSynced::~CLuaHandleSynced()
 
 
 void CLuaHandleSynced::UpdateThreading() {
-	useDualStates = (gc->GetMultiThreadLua() >= 3);
-	singleState = (gc->GetMultiThreadLua() <= 2);
-	copyExportTable = (gc->GetMultiThreadLua() == 3);
+	useDualStates = (globalConfig->GetMultiThreadLua() >= 3);
+	singleState = (globalConfig->GetMultiThreadLua() <= 2);
+	copyExportTable = (globalConfig->GetMultiThreadLua() == 3);
 	useEventBatch = false;
 }
 
@@ -809,7 +810,7 @@ bool CLuaHandleSynced::HasSyncedXCall(const string& funcName)
 }
 
 
-bool CLuaHandleSynced::HasUnsyncedXCall(const string& funcName)
+bool CLuaHandleSynced::HasUnsyncedXCall(lua_State* srcState, const string& funcName)
 {
 	SELECT_UNSYNCED_LUA_STATE();
 

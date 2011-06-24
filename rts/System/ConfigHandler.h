@@ -3,9 +3,7 @@
 #ifndef CONFIGHANDLER_H
 #define CONFIGHANDLER_H
 
-#include "GlobalConfig.h"
 #include <string>
-#include <sstream>
 #include <map>
 #include <list>
 #include <stdio.h>
@@ -14,16 +12,8 @@
 #include <boost/bind.hpp>
 #include <boost/thread/mutex.hpp>
 
-#ifdef __FreeBSD__
-#include <sys/stat.h>
-#endif
-
 /**
  * @brief config handler base
- *
- * This is the abstract configuration handler class used
- * for polymorphic configuration.  Platform-specifics should derive
- * from this.
  */
 class ConfigHandler
 {
@@ -142,11 +132,6 @@ private:
 	 * when the game ends.
 	 */
 	std::map<std::string, std::string> overlay;
-
-	/**
-	 * @brief Get the name of the default configuration file
-	 */
-	static std::string GetDefaultConfig();
 
 	// helper functions
 	void Read(FILE* file);

@@ -78,7 +78,7 @@ public:
 
 	const float* GetOriginalHeightMapSynced() const { return &originalHeightMap[0]; }
 	const float* GetCenterHeightMapSynced() const { return &centerHeightMap[0]; }
-	const float* GetMIPHeightMapSynced(unsigned int mip) const { return &mipHeightMaps[mip][0]; }
+	const float* GetMIPHeightMapSynced(unsigned int mip) const { return mipPointerHeightMaps[mip]; }
 	const float* GetSlopeMapSynced() const { return &slopeMap[0]; }
 	const unsigned char* GetTypeMapSynced() const { return &typeMap[0]; }
 	      unsigned char* GetTypeMapSynced()       { return &typeMap[0]; }
@@ -169,13 +169,14 @@ public:
 protected:
 	std::vector<float> originalHeightMap;    /// size: (mapx+1)*(mapy+1) (per vertex) [SYNCED, does NOT update on terrain deformation]
 	std::vector<float> centerHeightMap;      /// size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
+	std::vector< std::vector<float> > mipCenterHeightMaps;
 
 	/**
-	 * array of pointers to heightmap in different resolutions,
-	 * mipHeightmap[0] is full resolution,
-	 * mipHeightmap[n+1] is half resolution of mipHeightmap[n]
+	 * array of pointers to heightmaps in different resolutions,
+	 * mipPointerHeightMaps[0  ] is full resolution (centerHeightMap),
+	 * mipPointerHeightMaps[n+1] is half resolution of mipPointerHeightMaps[n] (mipCenterHeightMaps[n - 1])
 	 */
-	std::vector< float* > mipHeightMaps;
+	std::vector< float* > mipPointerHeightMaps;
 
 	std::vector<float3> vertexNormals;  /// size:  (mapx + 1) * (mapy + 1), contains one vertex normal per heightmap pixel [UNSYNCED]
 	std::vector<float3> faceNormals;    /// size: 2*mapx*mapy (contains 2 normals per quad -> triangle strip) [SYNCED]

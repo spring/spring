@@ -9,6 +9,12 @@
 
 #include "float3.h"
 
+#ifdef __APPLE__
+//defined in X11/X.h
+#undef KeyPress
+#undef KeyRelease
+#endif
+
 using std::string;
 using std::vector;
 using std::map;
