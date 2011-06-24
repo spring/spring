@@ -745,20 +745,6 @@ inline void CEventHandler::RenderFeatureMoved(const CFeature* feature)
 
 
 
-inline void CEventHandler::UpdateFeatures(void) { eventBatchHandler->UpdateFeatures(); }
-inline void CEventHandler::UpdateDrawFeatures() { eventBatchHandler->UpdateDrawFeatures(); }
-inline void CEventHandler::DeleteSyncedFeatures() {
-	eventBatchHandler->DeleteSyncedFeatures();
-	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedFeatures
-	if(luaUI) luaUI->ExecuteFeatEventBatch();
-}
-
-inline void CEventHandler::DeleteSyncedObjects() {
-	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedObjects
-	if(luaUI) luaUI->ExecuteObjEventBatch();
-}
-
-
 inline void CEventHandler::ProjectileCreated(const CProjectile* proj, int allyTeam)
 {
 	if (proj->synced) {
@@ -825,18 +811,6 @@ inline void CEventHandler::RenderProjectileDestroyed(const CProjectile* proj)
 }
 
 
-
-inline void CEventHandler::UpdateProjectiles() { eventBatchHandler->UpdateProjectiles(); }
-inline void CEventHandler::UpdateDrawProjectiles() { eventBatchHandler->UpdateDrawProjectiles(); }
-inline void CEventHandler::DeleteSyncedProjectiles() {
-	eventBatchHandler->DeleteSyncedProjectiles();
-	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedProjectiles
-	if(luaUI) luaUI->ExecuteProjEventBatch();
-}
-
-inline void CEventHandler::UpdateObjects() {
-	eventBatchHandler->UpdateObjects();
-}
 
 inline bool CEventHandler::Explosion(int weaponDefID, const float3& pos, const CUnit* owner)
 {
