@@ -18,7 +18,7 @@ class CMetalMap
 
 public:
 	/** Receiving a map over all metal, and creating a map over extraction. */
-	CMetalMap(unsigned char* map, int sizeX, int sizeZ, float metalScale);
+	CMetalMap(const unsigned char* map, int sizeX, int sizeZ, float metalScale);
 	/** Frees the memory used by maps. */
 	virtual ~CMetalMap();
 
@@ -40,13 +40,14 @@ public:
 	 * back to the extraction-map. To be available for other
 	 * extractors to use.
 	 */
-	void  RemoveExtraction(int x, int z, float depth);
+	void RemoveExtraction(int x, int z, float depth);
 
 	int GetSizeX() const { return sizeX; }
 	int GetSizeZ() const { return sizeZ; }
 
-	unsigned char* metalMap;
-	unsigned char  metalPal[768];
+	unsigned char metalPal[768];
+
+	std::vector<unsigned char> metalMap;
 	std::vector<float> extractionMap;
 
 protected:

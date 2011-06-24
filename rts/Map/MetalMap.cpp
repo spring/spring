@@ -10,26 +10,24 @@
 CR_BIND(CMetalMap,(NULL, 0, 0, 0.0f));
 
 CR_REG_METADATA(CMetalMap,(
-				CR_MEMBER(extractionMap)
-				));
+	CR_MEMBER(extractionMap)
+));
 
-CMetalMap::CMetalMap(unsigned char* map, int sizeX, int sizeZ, float metalScale)
-	: metalMap(map)
-	, metalScale(metalScale)
-	, sizeX(sizeX)
-	, sizeZ(sizeZ)
+CMetalMap::CMetalMap(const unsigned char* map, int _sizeX, int _sizeZ, float _metalScale)
+	: metalScale(_metalScale)
+	, sizeX(_sizeX)
+	, sizeZ(_sizeZ)
 {
-	// Creating an empty map over extraction.
-//	extractionMap = new float[sizeX * sizeZ];
 	extractionMap.resize(sizeX * sizeZ, 0.0f);
-//	int i;
-//	for(i = 0; i < (sizeX * sizeZ); i++) {
-//		extractionMap[i] = 0.0f;
-//	}
+	metalMap.resize(sizeX * sizeZ, 0);
 
-	int whichPalette = configHandler->Get("MetalMapPalette", 0);
+	if (map != NULL) {
+		memcpy(&metalMap[0], map, sizeX * sizeZ);
+	} else {
+		metalScale = 1.0f;
+	}
 
-	if (whichPalette == 1) {
+	if (configHandler->Get("MetalMapPalette", 0) == 1) {
 		/* Swap the green and blue channels. making metal go
 		   black -> blue -> cyan,
 		   rather than the usual black -> green -> cyan. */
@@ -51,8 +49,8 @@ CMetalMap::CMetalMap(unsigned char* map, int sizeX, int sizeZ, float metalScale)
 
 CMetalMap::~CMetalMap()
 {
-	delete[] metalMap;
-//	delete[] extractionMap;
+	extractionMap.clear();
+	metalMap.clear();
 }
 
 
@@ -119,4 +117,3 @@ void CMetalMap::RemoveExtraction(int x, int z, float depth)
 
 	extractionMap[(z * sizeX) + x] -= depth;
 }
-

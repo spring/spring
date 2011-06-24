@@ -19,6 +19,7 @@
 #include "ProtocolDef.h"
 #include "Exception.h"
 #include "System/ConfigHandler.h"
+#include "System/GlobalConfig.h"
 #include "System/LogOutput.h"
 
 namespace netcode {
@@ -361,7 +362,7 @@ void UDPConnection::Flush(const bool forced)
 		bool sendMore = true;
 
 		do {
-			sendMore = outgoing.GetAverage(true) <= gc->linkOutgoingBandwidth || gc->linkOutgoingBandwidth <= 0 || partialPacket || forced;
+			sendMore = outgoing.GetAverage(true) <= globalConfig->linkOutgoingBandwidth || globalConfig->linkOutgoingBandwidth <= 0 || partialPacket || forced;
 			if (!outgoingData.empty() && sendMore) {
 				packetList::iterator it = outgoingData.begin();
 				if (!partialPacket && !ProtocolDef::GetInstance()->IsValidPacket((*it)->data, (*it)->length)) {
@@ -394,11 +395,11 @@ void UDPConnection::Flush(const bool forced)
 bool UDPConnection::CheckTimeout(int seconds, bool initial) const {
 	spring_duration timeout;
 	if (seconds == 0) {
-		timeout = spring_secs((dataRecv && !initial) ? gc->networkTimeout : gc->initialNetworkTimeout);
+		timeout = spring_secs((dataRecv && !initial) ? globalConfig->networkTimeout : globalConfig->initialNetworkTimeout);
 	} else if (seconds > 0) {
 		timeout = spring_secs(seconds);
 	} else {
-		timeout = spring_secs(gc->reconnectTimeout);
+		timeout = spring_secs(globalConfig->reconnectTimeout);
 	}
 
 	return (timeout > 0 && (lastReceiveTime + timeout) < spring_gettime());
@@ -408,7 +409,7 @@ bool UDPConnection::NeedsReconnect() {
 
 	if (CanReconnect()) {
 		if (!CheckTimeout(-1)) {
-			reconnectTime = gc->reconnectTimeout;
+			reconnectTime = globalConfig->reconnectTimeout;
 		} else if (CheckTimeout(reconnectTime)) {
 			++reconnectTime;
 			return true;
@@ -419,7 +420,7 @@ bool UDPConnection::NeedsReconnect() {
 }
 
 bool UDPConnection::CanReconnect() const {
-	return gc->reconnectTimeout > 0;
+	return globalConfig->reconnectTimeout > 0;
 }
 
 int UDPConnection::GetReconnectSecs() const {
@@ -469,8 +470,8 @@ void UDPConnection::Init()
 	resentChunks = 0;
 	sentPackets = recvPackets = 0;
 	droppedChunks = 0;
-	mtu = gc->mtu;
-	reconnectTime = gc->reconnectTimeout;
+	mtu = globalConfig->mtu;
+	reconnectTime = globalConfig->reconnectTimeout;
 	lastChunkCreated = spring_gettime();
 }
 
@@ -537,7 +538,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 	if (flushed || !newChunks.empty() || !resendRequested.empty() || nak > 0 || lastSendTime + spring_msecs(200) < curTime)
 	{
 		bool todo = true;
-		while (todo && (outgoing.GetAverage() <= gc->linkOutgoingBandwidth || gc->linkOutgoingBandwidth <= 0))
+		while (todo && (outgoing.GetAverage() <= globalConfig->linkOutgoingBandwidth || globalConfig->linkOutgoingBandwidth <= 0))
 		{
 			Packet buf(lastInOrder, nak);
 			if (nak > 0) {

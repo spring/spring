@@ -9,7 +9,6 @@
 
 #include "EventClient.h"
 #include "EventBatchHandler.h"
-#include "Game/UI/LuaUI.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -561,16 +560,6 @@ inline void CEventHandler::UnitFeatureCollision(const CUnit* collider, const CFe
 			ec->UnitFeatureCollision(collider, collidee);
 		}
 	}
-}
-
-
-
-inline void CEventHandler::UpdateUnits(void) { eventBatchHandler->UpdateUnits(); }
-inline void CEventHandler::UpdateDrawUnits() { eventBatchHandler->UpdateDrawUnits(); }
-inline void CEventHandler::DeleteSyncedUnits() {
-	eventBatchHandler->DeleteSyncedUnits();
-	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedUnits
-	if(luaUI) luaUI->ExecuteUnitEventBatch();
 }
 
 

@@ -74,7 +74,7 @@ static int CallHook(lua_State* L)
 		if (lh == NULL) {
 			return 0; // not running
 		}
-		lua_pushboolean(L, lh->HasUnsyncedXCall(funcName));
+		lua_pushboolean(L, lh->HasUnsyncedXCall(L, funcName));
 		return 1;
 	}
 	return 0;

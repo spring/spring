@@ -60,19 +60,13 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 	MapBitmapInfo mbi;
 	unsigned char* metalmapPtr = rm->GetInfoMap("metal", &mbi);
 
-	if (metalmapPtr && mbi.width == (rm->width >> 1) && mbi.height == (rm->height >> 1)) {
-		int size = mbi.width * mbi.height;
-		unsigned char* mtlMap = new unsigned char[size];
-		memcpy(mtlMap, metalmapPtr, size);
-		rm->metalMap = new CMetalMap(mtlMap, mbi.width, mbi.height, mapInfo->map.maxMetal);
-	}
-	if (metalmapPtr)
-		rm->FreeInfoMap("metal", metalmapPtr);
+	assert(mbi.width == (rm->width >> 1));
+	assert(mbi.height == (rm->height >> 1));
 
-	if (!rm->metalMap) {
-		unsigned char* mtlMap = new unsigned char[rm->width * rm->height / 4];
-		memset(mtlMap, 0, rm->width * rm->height / 4);
-		rm->metalMap = new CMetalMap(mtlMap, rm->width / 2,rm->height / 2, 1.0f);
+	rm->metalMap = new CMetalMap(metalmapPtr, mbi.width, mbi.height, mapInfo->map.maxMetal);
+
+	if (metalmapPtr != NULL) {
+		rm->FreeInfoMap("metal", metalmapPtr);
 	}
 
 
@@ -127,12 +121,12 @@ CReadMap::~CReadMap()
 	typeMap.clear();
 	slopeMap.clear();
 
-	for (int i = 1; i < numHeightMipMaps; i++) {
-		// don't delete mipHeightMaps[0] since it points to centerHeightMap
-		delete[] mipHeightMaps[i];
+	for (unsigned int n = 0; n < mipCenterHeightMaps.size(); n++) {
+		mipCenterHeightMaps[n].clear();
 	}
 
-	mipHeightMaps.clear();
+	mipCenterHeightMaps.clear();
+	mipPointerHeightMaps.clear();
 	centerHeightMap.clear();
 	originalHeightMap.clear();
 	vertexNormals.clear();
@@ -143,9 +137,7 @@ CReadMap::~CReadMap()
 
 void CReadMap::Initialize()
 {
-	loadscreen->SetLoadMessage("Loading Map");
-
-	// set global map info
+	// set global map info (TODO: move these to ReadMap!)
 	gs->mapx = width;
 	gs->mapy = height;
 	gs->mapSquares = gs->mapx * gs->mapy;
@@ -153,6 +145,29 @@ void CReadMap::Initialize()
 	gs->hmapy = gs->mapy >> 1;
 	gs->pwr2mapx = next_power_of_2(gs->mapx);
 	gs->pwr2mapy = next_power_of_2(gs->mapy);
+
+	{
+		char loadMsg[512];
+		const char* fmtString = "Loading Map (%u MB)";
+		unsigned int reqMemFootPrintKB =
+			((( gs->mapx + 1) * (gs->mapy + 1) * 2 * sizeof(float))         / 1024) +   // cornerHeightMap{Synced, Unsynced}
+			((( gs->mapx + 1) * (gs->mapy + 1) *     sizeof(float))         / 1024) +   // originalHeightMap
+			((  gs->mapx      *  gs->mapy      * 2 * sizeof(float3))        / 1024) +   // faceNormals
+			((  gs->mapx      *  gs->mapy          * sizeof(float3))        / 1024) +   // centerNormals
+			((( gs->mapx + 1) * (gs->mapy + 1)     * sizeof(float3))        / 1024) +   // vertexNormals
+			((  gs->mapx      *  gs->mapy          * sizeof(float))         / 1024) +   // centerHeightMap
+			((  gs->hmapx     *  gs->hmapy         * sizeof(float))         / 1024) +   // slopeMap
+			((  gs->hmapx     *  gs->hmapy         * sizeof(float))         / 1024) +   // MetalMap::extractionMap
+			((  gs->hmapx     *  gs->hmapy         * sizeof(unsigned char)) / 1024);    // MetalMap::metalMap
+
+		// mipCenterHeightMaps[i]
+		for (int i = 1; i < numHeightMipMaps; i++) {
+			reqMemFootPrintKB += ((((gs->mapx >> i) * (gs->mapy >> i)) * sizeof(float)) / 1024);
+		}
+
+		sprintf(loadMsg, fmtString, reqMemFootPrintKB / 1024);
+		loadscreen->SetLoadMessage(loadMsg);
+	}
 
 	float3::maxxpos = gs->mapx * SQUARE_SIZE - 1;
 	float3::maxzpos = gs->mapy * SQUARE_SIZE - 1;
@@ -162,11 +177,13 @@ void CReadMap::Initialize()
 	centerNormals.resize(gs->mapx * gs->mapy);
 	centerHeightMap.resize(gs->mapx * gs->mapy);
 
-	mipHeightMaps.resize(numHeightMipMaps);
-	mipHeightMaps[0] = &centerHeightMap[0];
+	mipCenterHeightMaps.resize(numHeightMipMaps - 1);
+	mipPointerHeightMaps.resize(numHeightMipMaps, NULL);
+	mipPointerHeightMaps[0] = &centerHeightMap[0];
 
 	for (int i = 1; i < numHeightMipMaps; i++) {
-		mipHeightMaps[i] = new float[(gs->mapx >> i) * (gs->mapy >> i)];
+		mipCenterHeightMaps[i - 1].resize((gs->mapx >> i) * (gs->mapy >> i));
+		mipPointerHeightMaps[i] = &mipCenterHeightMaps[i - 1][0];
 	}
 
 	slopeMap.resize(gs->hmapx * gs->hmapy);
@@ -250,15 +267,16 @@ void CReadMap::UpdateHeightMapSynced(int x1, int y1, int x2, int y2)
 	}
 
 	for (int i = 0; i < numHeightMipMaps - 1; i++) {
-		int hmapx = gs->mapx >> i;
+		const int hmapx = gs->mapx >> i;
+
 		for (int y = ((y1 >> i) & (~1)); y < (y2 >> i); y += 2) {
 			for (int x = ((x1 >> i) & (~1)); x < (x2 >> i); x += 2) {
 				const float height =
-					mipHeightMaps[i][(x    ) + (y    ) * hmapx] +
-					mipHeightMaps[i][(x    ) + (y + 1) * hmapx] +
-					mipHeightMaps[i][(x + 1) + (y    ) * hmapx] +
-					mipHeightMaps[i][(x + 1) + (y + 1) * hmapx];
-				mipHeightMaps[i + 1][(x / 2) + (y / 2) * hmapx / 2] = height * 0.25f;
+					mipPointerHeightMaps[i][(x    ) + (y    ) * hmapx] +
+					mipPointerHeightMaps[i][(x    ) + (y + 1) * hmapx] +
+					mipPointerHeightMaps[i][(x + 1) + (y    ) * hmapx] +
+					mipPointerHeightMaps[i][(x + 1) + (y + 1) * hmapx];
+				mipPointerHeightMaps[i + 1][(x / 2) + (y / 2) * hmapx / 2] = height * 0.25f;
 			}
 		}
 	}

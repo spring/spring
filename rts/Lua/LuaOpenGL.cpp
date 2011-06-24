@@ -92,7 +92,6 @@ set<unsigned int> LuaOpenGL::occlusionQueries;
 LuaOpenGL::DrawMode LuaOpenGL::drawMode = LuaOpenGL::DRAW_NONE;
 LuaOpenGL::DrawMode LuaOpenGL::prevDrawMode = LuaOpenGL::DRAW_NONE;
 
-bool  LuaOpenGL::drawingEnabled = false;
 bool  LuaOpenGL::safeMode = true;
 bool  LuaOpenGL::canUseShaders = false;
 float LuaOpenGL::screenWidth = 0.36f;
@@ -449,7 +448,7 @@ inline void LuaOpenGL::EnableCommon(DrawMode mode)
 {
 	assert(drawMode == DRAW_NONE);
 	drawMode = mode;
-	drawingEnabled = true;
+	SetDrawingEnabled(true);
 	if (safeMode) {
 		glPushAttrib(AttribBits);
 		glCallList(resetStateList);
@@ -466,7 +465,7 @@ inline void LuaOpenGL::DisableCommon(DrawMode mode)
 	// FIXME  --  not needed by shadow or minimap
 	glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR);
 	drawMode = DRAW_NONE;
-	drawingEnabled = false;
+	SetDrawingEnabled(false);
 	if (safeMode) {
 		glPopAttrib();
 	}
@@ -1024,7 +1023,7 @@ static inline bool CheckModUICtrl()
 
 inline void LuaOpenGL::CheckDrawingEnabled(lua_State* L, const char* caller)
 {
-	if (!drawingEnabled) {
+	if (!IsDrawingEnabled()) {
 		luaL_error(L, "%s(): OpenGL calls can only be used in Draw() "
 		              "call-ins, or while creating display lists", caller);
 	}
@@ -4629,8 +4628,8 @@ int LuaOpenGL::CreateList(lua_State* L)
 	}
 
 	// save the current state
-	const bool origDrawingEnabled = drawingEnabled;
-	drawingEnabled = true;
+	const bool origDrawingEnabled = IsDrawingEnabled();
+	SetDrawingEnabled(true);
 
 	// build the list with the specified lua call/args
 	glNewList(list, GL_COMPILE);
@@ -4650,7 +4649,7 @@ int LuaOpenGL::CreateList(lua_State* L)
 	}
 
 	// restore the state
-	drawingEnabled = origDrawingEnabled;
+	SetDrawingEnabled(origDrawingEnabled);
 
 	return 1;
 }

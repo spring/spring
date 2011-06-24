@@ -1032,7 +1032,7 @@ const unsigned short* CAICallback::GetJammerMap()
 
 const unsigned char* CAICallback::GetMetalMap()
 {
-	return readmap->metalMap->metalMap;
+	return &readmap->metalMap->metalMap[0];
 }
 
 float CAICallback::GetElevation(float x, float z)

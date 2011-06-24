@@ -39,6 +39,7 @@
 #include "System/BaseNetProtocol.h" // FIXME: for MAPDRAW_*
 #include "System/ConfigHandler.h"
 #include "System/EventHandler.h"
+#include "System/GlobalConfig.h"
 #include "System/LogOutput.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/FileHandler.h"
@@ -106,10 +107,10 @@ CLuaHandle::~CLuaHandle()
 
 
 void CLuaHandle::UpdateThreading() {
-	useDualStates = (gc->GetMultiThreadLua() >= 3);
-	singleState = (gc->GetMultiThreadLua() <= 4);
+	useDualStates = (globalConfig->GetMultiThreadLua() >= 3);
+	singleState = (globalConfig->GetMultiThreadLua() <= 4);
 	copyExportTable = false;
-	useEventBatch = singleState && (gc->GetMultiThreadLua() >= 2);
+	useEventBatch = singleState && (globalConfig->GetMultiThreadLua() >= 2);
 }
 
 
@@ -346,6 +347,9 @@ void CLuaHandle::ExecuteRecvFromSynced() {
 	std::vector<DelayDataDump> drfs;
 	{
 		GML_STDMUTEX_LOCK(recv); // ExecuteRecvFromSynced
+
+		if(delayedRecvFromSynced.empty())
+			return;
 
 		delayedRecvFromSynced.swap(drfs);
 	}

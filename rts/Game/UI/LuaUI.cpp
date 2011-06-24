@@ -806,9 +806,15 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 // Custom Call-in
 //
 
-bool CLuaUI::HasUnsyncedXCall(const string& funcName)
+bool CLuaUI::HasUnsyncedXCall(lua_State* srcState, const string& funcName)
 {
 	SELECT_LUA_STATE();
+#if defined(USE_GML) && GML_ENABLE_SIM && (LUA_MT_OPT & LUA_MUTEX)
+	// FIXME FIXME, very ugly deadlock prevention hack for MT
+	if (srcState != L && SingleState()) // With MT, synced Lua is not allowed to directly invoke LuaUI
+		return true; // Therefore need to keep some kind of cache of all LuaUI global funcs,
+	// or change the API so that unsynced xcalls have to be explicitly registered
+#endif
 
 	lua_getglobal(L, funcName.c_str());
 	const bool haveFunc = lua_isfunction(L, -1);
@@ -821,6 +827,9 @@ void CLuaUI::ExecuteDelayedXCalls() {
 	std::vector<DelayDataDump> dxc;
 	{
 		GML_STDMUTEX_LOCK(xcall); // ExecuteDelayedXCalls
+
+		if(delayedXCall.empty())
+			return;
 
 		delayedXCall.swap(dxc);
 	}
@@ -838,17 +847,15 @@ void CLuaUI::ExecuteDelayedXCalls() {
 			if(dd.type == LUA_TSTRING) {
 				const LuaHashString funcHash(*dd.data.str);
 				delete dd.data.str;
-				if (!funcHash.GetGlobalFunc(L))
-					return;
+				if (funcHash.GetGlobalFunc(L)) {
+					const int top = lua_gettop(L) - 1;
 
-				const int top = lua_gettop(L) - 1;
+					LuaUtils::Restore(ddp.com, L);
 
-				LuaUtils::Restore(ddp.com, L);
+					RunCallIn(funcHash, ddp.com.size(), LUA_MULTRET);
 
-				if (!RunCallIn(funcHash, ddp.com.size(), LUA_MULTRET))
-					return;
-
-				lua_settop(L, top);
+					lua_settop(L, top);
+				}
 			}
 		}
 	}

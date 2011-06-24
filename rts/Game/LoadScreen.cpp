@@ -235,8 +235,6 @@ bool CLoadScreen::Update()
 
 bool CLoadScreen::Draw()
 {
-	Watchdog::ClearTimer(WDT_LOAD);
-	
 	//! Limit the Frames Per Second to not lock a singlethreaded CPU from loading the game
 	if (mt_loading) {
 		spring_time now = spring_gettime();

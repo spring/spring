@@ -25,8 +25,8 @@ cUnitManager::cUnitManager(IAICallback* callback, cRAI* Global)
 	AttackOrders=false;
 	SLSize=0;
 	MaxGroupMSize=0;
-	memset(SL, NULL, SCOUT_POSITON_LIST_SIZE);
-	memset(Group, NULL, RAI_GROUP_SIZE);
+	memset(SL, 0, SCOUT_POSITON_LIST_SIZE);
+	memset(Group, 0, RAI_GROUP_SIZE);
 }
 
 void cUnitManager::UnitFinished(int unit,UnitInfo *U)
