@@ -84,10 +84,9 @@ public:
 	/**
 	 * @brief instantiate global configHandler
 	 * @param configSource the config file to be used, using the default one if empty
-	 * @return name of the configfile used
 	 * @see GetDefaultConfig()
 	 */
-	static std::string Instantiate(std::string configSource = "");
+	static void Instantiate(std::string configSource = "");
 
 	std::string GetConfigFile() const
 	{

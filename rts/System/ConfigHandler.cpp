@@ -53,7 +53,7 @@ void ConfigHandler::Delete(const std::string& name, bool inOverlay)
  * Instantiates a copy of the current platform's config class.
  * Re-instantiates if the configHandler already existed.
  */
-std::string ConfigHandler::Instantiate(std::string configSource)
+void ConfigHandler::Instantiate(std::string configSource)
 {
 	Deallocate();
 
@@ -64,10 +64,15 @@ std::string ConfigHandler::Instantiate(std::string configSource)
 	}
 	ConfigLocater::GetDefaultLocations(locations);
 
+	// log here so unitsync shows configuration source(s), too
+	vector<string>::const_iterator loc = locations.begin();
+	logOutput.Print("Using configuration source: \"" + *loc + "\"\n");
+	for (++loc; loc != locations.end(); ++loc) {
+		logOutput.Print("Using additional configuration source: \"" + *loc + "\"\n");
+	}
+
 	// FIXME: use more locations
 	configHandler = new ConfigHandler(locations.front());
-
-	return configSource;
 }
 
 

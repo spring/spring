@@ -17,7 +17,6 @@
 #include <stdlib.h>
 #include "Game/GameVersion.h"
 #include "System/Platform/Misc.h"
-#include "System/LogOutput.h"
 #include "ConfigLocater.h"
 
 
@@ -75,12 +74,5 @@ void ConfigLocater::GetDefaultLocations(vector<string>& locations)
 	// no extra sources when a portable source has been found!
 	if (locations.empty()) {
 		GetPlatformLocations(locations);
-	}
-
-	// log here so unitsync shows configuration source(s), too
-	vector<string>::const_iterator loc = locations.begin();
-	logOutput.Print("default config file: " + *loc + "\n");
-	for (++loc; loc != locations.end(); ++loc) {
-		logOutput.Print("additional config file: " + *loc + "\n");
 	}
 }
