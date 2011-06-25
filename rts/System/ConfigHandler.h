@@ -79,7 +79,7 @@ public:
 
 	bool IsSet(const std::string& key) const;
 
-	void Delete(const std::string& name, bool inOverlay = false);
+	void Delete(const std::string& name);
 
 	/**
 	 * @brief instantiate global configHandler

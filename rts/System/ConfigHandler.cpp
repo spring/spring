@@ -18,34 +18,32 @@ using std::vector;
 
 ConfigHandler* configHandler = NULL;
 
-void ConfigHandler::Delete(const std::string& name, bool inOverlay)
+void ConfigHandler::Delete(const std::string& name)
 {
-	if (inOverlay) {
-		std::map<std::string, std::string>::iterator pos = overlay.find(name);
-		if (pos != overlay.end()) {
-			overlay.erase(pos);
-		}
-	} else {
-		FILE* file = fopen(filename.c_str(), "r+");
-		if (file) {
-			ScopedFileLock scoped_lock(fileno(file), true);
-			Read(file);
-			std::map<std::string, std::string>::iterator pos = data.find(name);
-			if (pos != data.end()) {
-				data.erase(pos);
-			}
-			Write(file);
-		} else {
-			std::map<std::string, std::string>::iterator pos = data.find(name);
-			if (pos != data.end()) {
-				data.erase(pos);
-			}
-		}
+	std::map<std::string, std::string>::iterator pos = overlay.find(name);
+	if (pos != overlay.end()) {
+		overlay.erase(pos);
+	}
 
-		// must be outside above 'if (file)' block because of the lock.
-		if (file) {
-			fclose(file);
+	FILE* file = fopen(filename.c_str(), "r+");
+	if (file) {
+		ScopedFileLock scoped_lock(fileno(file), true);
+		Read(file);
+		std::map<std::string, std::string>::iterator pos = data.find(name);
+		if (pos != data.end()) {
+			data.erase(pos);
 		}
+		Write(file);
+	} else {
+		std::map<std::string, std::string>::iterator pos = data.find(name);
+		if (pos != data.end()) {
+			data.erase(pos);
+		}
+	}
+
+	// must be outside above 'if (file)' block because of the lock.
+	if (file) {
+		fclose(file);
 	}
 }
 
