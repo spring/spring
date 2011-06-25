@@ -59,10 +59,12 @@ void ConfigHandler::Instantiate(std::string configSource)
 
 	vector<string> locations;
 
-	if (!configSource.empty()) {
+	if (configSource.empty()) {
+		ConfigLocater::GetDefaultLocations(locations);
+	}
+	else {
 		locations.push_back(configSource);
 	}
-	ConfigLocater::GetDefaultLocations(locations);
 
 	// log here so unitsync shows configuration source(s), too
 	vector<string>::const_iterator loc = locations.begin();
