@@ -12,6 +12,7 @@
 #include "Game/CameraHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
+#include "Game/UI/LuaUI.h"
 #include "Game/UI/MouseHandler.h"
 #include "Game/UI/UnitTracker.h"
 #include "Lua/LuaRules.h"

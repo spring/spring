@@ -490,6 +490,30 @@ void CEventHandler::DeleteSyncedUnits() {
 	if (luaUI) luaUI->ExecuteUnitEventBatch();
 }
 
+void CEventHandler::UpdateFeatures(void) { eventBatchHandler->UpdateFeatures(); }
+void CEventHandler::UpdateDrawFeatures() { eventBatchHandler->UpdateDrawFeatures(); }
+void CEventHandler::DeleteSyncedFeatures() {
+	eventBatchHandler->DeleteSyncedFeatures();
+	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedFeatures
+	if (luaUI) luaUI->ExecuteFeatEventBatch();
+}
+
+void CEventHandler::UpdateProjectiles() { eventBatchHandler->UpdateProjectiles(); }
+void CEventHandler::UpdateDrawProjectiles() { eventBatchHandler->UpdateDrawProjectiles(); }
+void CEventHandler::DeleteSyncedProjectiles() {
+	eventBatchHandler->DeleteSyncedProjectiles();
+	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedProjectiles
+	if(luaUI) luaUI->ExecuteProjEventBatch();
+}
+
+void CEventHandler::UpdateObjects() {
+	eventBatchHandler->UpdateObjects();
+}
+void CEventHandler::DeleteSyncedObjects() {
+	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedObjects
+	if (luaUI) luaUI->ExecuteObjEventBatch();
+}
+
 
 
 
