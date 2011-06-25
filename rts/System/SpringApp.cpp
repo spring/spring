@@ -820,9 +820,9 @@ void SpringApp::ParseCmdLine()
 
 	if (cmdline->IsSet("config")) {
 		string configSource = cmdline->GetString("config");
-		logOutput.Print("using configuration source \"" + ConfigHandler::Instantiate(configSource) + "\"");
+		ConfigHandler::Instantiate(configSource);
 	} else {
-		logOutput.Print("using default configuration source \"" + ConfigHandler::Instantiate() + "\"");
+		ConfigHandler::Instantiate();
 	}
 	GlobalConfig::Instantiate();
 
