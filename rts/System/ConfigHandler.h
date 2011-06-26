@@ -45,16 +45,6 @@ public:
 		SetString(key, buffer.str(), useOverlay);
 	}
 
-	/// @see GetString
-	template<typename T>
-	T Get(const std::string& key) const
-	{
-		std::istringstream buf(GetString(key));
-		T temp;
-		buf >> temp;
-		return temp;
-	}
-
 	bool  GetBool(const std::string& key)  const { return Get<bool>(key); }
 	int   GetInt(const std::string& key)   const { return Get<int>(key); }
 	float GetFloat(const std::string& key) const { return Get<float>(key); }
@@ -94,6 +84,17 @@ protected:
 	typedef boost::function<void(const std::string&, const std::string&)> ConfigNotifyCallback;
 
 	virtual void AddObserver(ConfigNotifyCallback observer) = 0;
+
+private:
+	/// @see GetString
+	template<typename T>
+	T Get(const std::string& key) const
+	{
+		std::istringstream buf(GetString(key));
+		T temp;
+		buf >> temp;
+		return temp;
+	}
 };
 
 extern ConfigHandler* configHandler;
