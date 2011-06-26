@@ -19,34 +19,16 @@
 #include "Platform/ScopedFileLock.h"
 #include "LogOutput.h"
 
+/******************************************************************************/
+
 using std::list;
 using std::map;
 using std::string;
 using std::vector;
 
+typedef map<string, string> StringMap;
+
 ConfigHandler* configHandler = NULL;
-
-/******************************************************************************/
-
-/**
- * @brief The data associated with one configuration key.
- * That is: a value and all preceding comments.
- */
-class ConfigValue
-{
-public:
-	ConfigValue(const string& value = string(), const string& comment = string()):
-		comment(comment), value(value) {}
-
-	const string& GetValue() const { return value; }
-	const string& GetComment() const { return comment; }
-
-	void SetValue(const string& newValue) { value = newValue; }
-
-private:
-	string value;
-	string comment;
-};
 
 /******************************************************************************/
 
@@ -56,28 +38,39 @@ private:
 class ConfigSource
 {
 public:
-	ConfigSource(const string& filename);
+	virtual ~ConfigSource() {}
 
-	/**
-	 * The overlay will not be written to file,
-	 * and will thus be discarded when the game ends.
-	 */
-	bool IsOverlay() const { return filename.empty(); }
+	virtual bool IsSet(const string& key) const;
+	virtual string GetString(const string& key) const;
+	virtual void SetString(const string& key, const string& value);
+	virtual void Delete(const string& key);
 
-	bool IsSet(const string& key) const;
-	string GetString(const string& key) const;
+	const StringMap& GetData() const { return data; }
+
+protected:
+	StringMap data;
+};
+
+class OverlayConfigSource : public ConfigSource
+{
+};
+
+class FileConfigSource : public ConfigSource
+{
+public:
+	FileConfigSource(const string& filename);
+
 	void SetString(const string& key, const string& value);
 	void Delete(const string& key);
 
 	string GetFilename() const { return filename; }
 
 private:
-	void SetStringInternal(const string& key, const string& value);
 	void DeleteInternal(const string& key);
 	void ReadModifyWrite(boost::function<void ()> modify);
 
 	string filename;
-	map<string, ConfigValue> data;
+	StringMap comments;
 
 	// helper functions
 	void Read(FILE* file);
@@ -98,52 +91,24 @@ public:
 	bool IsSet(const string& key) const;
 	void Delete(const string& key);
 	string GetConfigFile() const;
-	const map<string, string>& GetData() const;
+	const StringMap GetData() const;
 	void Update();
 
 protected:
 	void AddObserver(ConfigNotifyCallback observer);
 
 private:
-	ConfigSource& GetOverlay() { return sources.front(); }
-	const ConfigSource& GetOverlay() const { return sources.front(); }
-	ConfigSource& GetSink() { return sources.at(1); }
-	const ConfigSource& GetSink() const { return sources.at(1); }
-
-	/**
-	 * @brief config file names
-	 */
-	vector<ConfigSource> sources;
-
-	/**
-	 * @brief data map
-	 *
-	 * Map used to internally cache data
-	 * instead of constantly rereading from the file.
-	 * This is to mirror the config file.
-	 */
-	map<string, string> data;
+	OverlayConfigSource* overlay;
+	FileConfigSource* writableSource;
+	vector<ConfigSource*> sources;
 
 	// observer related
 	list<ConfigNotifyCallback> observers;
 	boost::mutex observerMutex;
-	map<string, string> changedValues;
+	StringMap changedValues;
 };
 
 /******************************************************************************/
-
-ConfigSource::ConfigSource(const string& filename) : filename(filename) {
-	FILE* file;
-
-	if ((file = fopen(filename.c_str(), "r"))) {
-		ScopedFileLock scoped_lock(fileno(file), false);
-		Read(file);
-	} else {
-		if (!(file = fopen(filename.c_str(), "a")))
-			throw std::runtime_error("ConfigSource: Error: Could not write to config file \"" + filename + "\"");
-	}
-	fclose(file);
-}
 
 bool ConfigSource::IsSet(const string& key) const
 {
@@ -152,60 +117,72 @@ bool ConfigSource::IsSet(const string& key) const
 
 string ConfigSource::GetString(const string& key) const
 {
-	map<string, ConfigValue>::const_iterator pos = data.find(key);
+	StringMap::const_iterator pos = data.find(key);
 	if (pos == data.end()) {
 		throw std::runtime_error("ConfigSource: Error: Key does not exist: " + key);
 	}
-	return pos->second.GetValue();
-}
-
-void ConfigSource::SetStringInternal(const string& key, const string& value)
-{
-	map<string, ConfigValue>::iterator pos = data.find(key);
-	if (pos == data.end()) {
-		data[key] = ConfigValue(value);
-	}
-	else {
-		pos->second.SetValue(value);
-	}
+	return pos->second;
 }
 
 void ConfigSource::SetString(const string& key, const string& value)
 {
-	ReadModifyWrite(boost::bind(&ConfigSource::SetStringInternal, this, key, value));
-}
-
-void ConfigSource::DeleteInternal(const string& key)
-{
-	data.erase(key);
+	data[key] = value;
 }
 
 void ConfigSource::Delete(const string& key)
 {
-	ReadModifyWrite(boost::bind(&ConfigSource::DeleteInternal, this, key));
+	data.erase(key);
 }
 
-void ConfigSource::ReadModifyWrite(boost::function<void ()> modify) {
-	if (IsOverlay()) {
-		modify();
+/******************************************************************************/
+
+FileConfigSource::FileConfigSource(const string& filename) : filename(filename)
+{
+	FILE* file;
+
+	if ((file = fopen(filename.c_str(), "r"))) {
+		ScopedFileLock scoped_lock(fileno(file), false);
+		Read(file);
 	}
 	else {
-		FILE* file = fopen(filename.c_str(), "r+");
+		if (!(file = fopen(filename.c_str(), "a")))
+			throw std::runtime_error("FileConfigSource: Error: Could not write to config file \"" + filename + "\"");
+	}
+	fclose(file);
+}
 
-		if (file) {
-			ScopedFileLock scoped_lock(fileno(file), true);
-			Read(file);
-			modify();
-			Write(file);
-		}
-		else {
-			modify();
-		}
+void FileConfigSource::SetString(const string& key, const string& value)
+{
+	ReadModifyWrite(boost::bind(&ConfigSource::SetString, this, key, value));
+}
 
-		// must be outside above 'if (file)' block because of the lock.
-		if (file) {
-			fclose(file);
-		}
+void FileConfigSource::DeleteInternal(const string& key)
+{
+	ConfigSource::Delete(key);
+	comments.erase(key);
+}
+
+void FileConfigSource::Delete(const string& key)
+{
+	ReadModifyWrite(boost::bind(&FileConfigSource::DeleteInternal, this, key));
+}
+
+void FileConfigSource::ReadModifyWrite(boost::function<void ()> modify) {
+	FILE* file = fopen(filename.c_str(), "r+");
+
+	if (file) {
+		ScopedFileLock scoped_lock(fileno(file), true);
+		Read(file);
+		modify();
+		Write(file);
+	}
+	else {
+		modify();
+	}
+
+	// must be outside above 'if (file)' block because of the lock.
+	if (file) {
+		fclose(file);
 	}
 }
 
@@ -214,12 +191,12 @@ void ConfigSource::ReadModifyWrite(boost::function<void ()> modify) {
  *
  * Strips whitespace off the string [begin, end] by setting the first
  * non-whitespace character from the end to 0 and returning a pointer
- * to the first non-whitespace character from the begining.
+ * to the first non-whitespace character from the beginning.
  *
  * Precondition: end must point to the last character of the string,
- * ie. the one before the terminating '\0'.
+ * i.e. the one before the terminating '\0'.
  */
-char* ConfigSource::Strip(char* begin, char* end) {
+char* FileConfigSource::Strip(char* begin, char* end) {
 	while (isspace(*begin)) ++begin;
 	while (end >= begin && isspace(*end)) --end;
 	*(end + 1) = '\0';
@@ -229,7 +206,7 @@ char* ConfigSource::Strip(char* begin, char* end) {
 /**
  * @brief Rewind file and re-read it.
  */
-void ConfigSource::Read(FILE* file)
+void FileConfigSource::Read(FILE* file)
 {
 	std::ostringstream commentBuffer;
 	char line[500];
@@ -247,7 +224,8 @@ void ConfigSource::Read(FILE* file)
 				// a "key=value" line
 				char* key = Strip(line_stripped, eq - 1);
 				char* value = Strip(eq + 1, strchr(eq + 1, '\0') - 1);
-				data[key] = ConfigValue(value, commentBuffer.str());
+				data[key] = value;
+				comments[key] = commentBuffer.str();
 				// reset the ostringstream
 				commentBuffer.clear();
 				commentBuffer.str("");
@@ -263,7 +241,7 @@ void ConfigSource::Read(FILE* file)
 /**
  * @brief Truncate file and write data to it.
  */
-void ConfigSource::Write(FILE* file)
+void FileConfigSource::Write(FILE* file)
 {
 	rewind(file);
 #ifdef WIN32
@@ -272,36 +250,58 @@ void ConfigSource::Write(FILE* file)
 	int err = ftruncate(fileno(file), 0);
 #endif
 	if (err != 0) {
-		logOutput.Print("ConfigSource: Error: Failed truncating config file.");
+		logOutput.Print("FileConfigSource: Error: Failed truncating config file.");
 	}
-	for(map<string, ConfigValue>::const_iterator iter = data.begin(); iter != data.end(); ++iter) {
-		fputs(iter->second.GetComment().c_str(), file);
-		fprintf(file, "%s = %s\n", iter->first.c_str(), iter->second.GetValue().c_str());
+	for(StringMap::const_iterator iter = data.begin(); iter != data.end(); ++iter) {
+		StringMap::const_iterator comment = comments.find(iter->first);
+		if (comment != comments.end()) {
+			fputs(comment->second.c_str(), file);
+		}
+		fprintf(file, "%s = %s\n", iter->first.c_str(), iter->second.c_str());
 	}
 }
 
 /******************************************************************************/
 
+#define for_each_source(it) \
+	for (vector<ConfigSource*>::iterator it = sources.begin(); it != sources.end(); ++it)
+
+#define for_each_source_const(it) \
+	for (vector<ConfigSource*>::const_iterator it = sources.begin(); it != sources.end(); ++it)
+
 ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations)
 {
+	overlay = new OverlayConfigSource();
+	writableSource = new FileConfigSource(locations.front());
+
 	sources.reserve(1 + locations.size());
-	sources.push_back(ConfigSource("")); // overlay
-	for (vector<string>::const_iterator loc = locations.begin(); loc != locations.end(); ++loc) {
-		sources.push_back(ConfigSource(*loc));
+	sources.push_back(overlay);
+	sources.push_back(writableSource);
+
+	vector<string>::const_iterator loc = locations.begin();
+	for (++loc; loc != locations.end(); ++loc) {
+		sources.push_back(new FileConfigSource(*loc));
+	}
+}
+
+ConfigHandlerImpl::~ConfigHandlerImpl()
+{
+	for_each_source(it) {
+		delete (*it);
 	}
 }
 
 void ConfigHandlerImpl::Delete(const string& key)
 {
-	for (vector<ConfigSource>::iterator it = sources.begin(); it != sources.end(); ++it) {
-		it->Delete(key);
+	for_each_source(it) {
+		(*it)->Delete(key);
 	}
 }
 
 bool ConfigHandlerImpl::IsSet(const string& key) const
 {
-	for (vector<ConfigSource>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
-		if (it->IsSet(key)) {
+	for_each_source_const(it) {
+		if ((*it)->IsSet(key)) {
 			return true;
 		}
 	}
@@ -316,9 +316,9 @@ bool ConfigHandlerImpl::IsSet(const string& key) const
  */
 string ConfigHandlerImpl::GetString(const string& key) const
 {
-	for (vector<ConfigSource>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
-		if (it->IsSet(key)) {
-			return it->GetString(key);
+	for_each_source_const(it) {
+		if ((*it)->IsSet(key)) {
+			return (*it)->GetString(key);
 		}
 	}
 	throw std::runtime_error("ConfigHandler: Error: Key does not exist: " + key +
@@ -351,16 +351,16 @@ void ConfigHandlerImpl::SetString(const string& key, const string& value, bool u
 	}
 
 	if (useOverlay) {
-		GetOverlay().SetString(key, value);
+		overlay->SetString(key, value);
 	}
 	else {
 		// if we set something to be persisted,
 		// we do want to override the overlay value
-		GetOverlay().Delete(key);
+		overlay->Delete(key);
 
 		// FIXME: this needs more subtle code
 		// i.e. delete the key from overriding config files when it becomes equal to the default specified in another source
-		GetSink().SetString(key, value);
+		writableSource->SetString(key, value);
 	}
 
 	boost::mutex::scoped_lock lck(observerMutex);
@@ -373,7 +373,7 @@ void ConfigHandlerImpl::SetString(const string& key, const string& value, bool u
 void ConfigHandlerImpl::Update()
 {
 	boost::mutex::scoped_lock lck(observerMutex);
-	for (map<string, string>::const_iterator ut = changedValues.begin(); ut != changedValues.end(); ++ut) {
+	for (StringMap::const_iterator ut = changedValues.begin(); ut != changedValues.end(); ++ut) {
 		const string& key = ut->first;
 		const string& value = ut->second;
 		for (list<ConfigNotifyCallback>::const_iterator it = observers.begin(); it != observers.end(); ++it) {
@@ -383,16 +383,19 @@ void ConfigHandlerImpl::Update()
 	changedValues.clear();
 }
 
-
 string ConfigHandlerImpl::GetConfigFile() const {
-	return GetSink().GetFilename();
+	return writableSource->GetFilename();
 }
 
-
-const map<string, string>& ConfigHandlerImpl::GetData() const {
+const StringMap ConfigHandlerImpl::GetData() const {
+	StringMap data;
+	for_each_source_const(it) {
+		const StringMap& sourceData = (*it)->GetData();
+		// insert doesn't overwrite, so this preserves correct overrides
+		data.insert(sourceData.begin(), sourceData.end());
+	}
 	return data;
 }
-
 
 void ConfigHandlerImpl::AddObserver(ConfigNotifyCallback observer) {
 	boost::mutex::scoped_lock lck(observerMutex);
@@ -427,7 +430,6 @@ void ConfigHandler::Instantiate(string configSource)
 
 	configHandler = new ConfigHandlerImpl(locations);
 }
-
 
 /**
  * Destroys existing ConfigHandler instance.
