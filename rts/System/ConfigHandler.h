@@ -11,6 +11,23 @@
 #include <boost/bind.hpp>
 
 /**
+ * @brief Configuration value declaration
+ */
+class ConfigValue
+{
+public:
+	ConfigValue(const std::string& key, const std::string& value, const std::string& comment = "");
+
+private:
+	static ConfigValue* head;
+	ConfigValue* next;
+	std::string key;
+	std::string value;
+	std::string comment;
+	friend class ConfigHandler;
+};
+
+/**
  * @brief config handler base
  */
 class ConfigHandler

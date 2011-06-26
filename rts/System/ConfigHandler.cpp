@@ -43,7 +43,8 @@ using std::vector;
 
 typedef map<string, string> StringMap;
 
-ConfigHandler* configHandler = NULL;
+ConfigValue* ConfigValue::head;
+ConfigHandler* configHandler;
 
 /******************************************************************************/
 
@@ -276,6 +277,14 @@ void ConfigHandler::Instantiate(string configSource)
 void ConfigHandler::Deallocate()
 {
 	SafeDelete(configHandler);
+}
+
+/******************************************************************************/
+
+ConfigValue::ConfigValue(const string& key, const string& value, const string& comment):
+		next(head), key(key), value(value), comment(comment)
+{
+	head = this;
 }
 
 /******************************************************************************/
