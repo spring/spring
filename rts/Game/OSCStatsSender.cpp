@@ -39,7 +39,7 @@ COSCStatsSender::COSCStatsSender(const std::string& dstAddress,
 		network(NULL),
 		oscOutputBuffer(NULL), oscPacker(NULL)
 {
-	SetEnabled(configHandler->Get("OscStatsSenderEnabled", false));
+	SetEnabled(configHandler->GetBool("OscStatsSenderEnabled"));
 }
 COSCStatsSender::~COSCStatsSender() {
 	SetEnabled(false);

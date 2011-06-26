@@ -23,7 +23,7 @@ void ISound::Initialize()
 {
 	if (singleton == NULL) {
 #ifndef NO_SOUND
-		const bool noSound = configHandler->Get("NoSound", false);
+		const bool noSound = configHandler->GetBool("NoSound");
 		if (!noSound) {
 			singleton = new CSound();
 		} else

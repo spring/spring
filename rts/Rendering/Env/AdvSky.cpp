@@ -61,7 +61,7 @@ CAdvSky::CAdvSky()
 
 	dynamicSky = true;
 	CreateClouds();
-	dynamicSky = configHandler->Get("DynamicSky", false);
+	dynamicSky = configHandler->GetBool("DynamicSky");
 
 	oldCoverBaseX=-5;
 

@@ -45,7 +45,7 @@ CSound::CSound()
 	mute = false;
 	appIsIconified = false;
 	int maxSounds = configHandler->GetInt("MaxSounds");
-	pitchAdjust = configHandler->Get("PitchAdjust", false);
+	pitchAdjust = configHandler->GetBool("PitchAdjust");
 
 	masterVolume = configHandler->GetInt("snd_volmaster") * 0.01f;
 	Channels::General.SetVolume(configHandler->GetInt("snd_volgeneral") * 0.01f);

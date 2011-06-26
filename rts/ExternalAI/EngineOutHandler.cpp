@@ -550,7 +550,7 @@ bool CEngineOutHandler::SendLuaMessages(int aiTeam, const char* inData, std::vec
 void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 	SCOPED_TIMER("AI Total");
 
-	//const bool unpauseAfterAIInit = configHandler->Get("AI_UnpauseAfterInit", true);
+	//const bool unpauseAfterAIInit = configHandler->GetBool("AI_UnpauseAfterInit");
 
 	// Pause the game for letting the AI initialize,
 	// as this can take quite some time.

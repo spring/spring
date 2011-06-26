@@ -67,7 +67,7 @@ void CLoadScreen::Init()
 #ifdef HEADLESS
 	mt_loading = false;
 #else
-	mt_loading = configHandler->Get("LoadingMT", true);
+	mt_loading = configHandler->GetBool("LoadingMT");
 #endif
 
 	//! Create a thread during the loading that pings the host/server, so it knows that this client is still alive/loading

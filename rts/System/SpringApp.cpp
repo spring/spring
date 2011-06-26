@@ -717,7 +717,7 @@ void SpringApp::UpdateOldConfigs()
 		configHandler->Set("Version",3);
 	}
 	if (cfgVersion < 4) {
-		const bool fsaaEnabled = configHandler->Get("FSAA", false);
+		const bool fsaaEnabled = configHandler->GetBool("FSAA");
 		if (!fsaaEnabled)
 			configHandler->Set("FSAALevel", 0);
 		configHandler->Delete("FSAA");
