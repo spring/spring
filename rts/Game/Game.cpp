@@ -67,6 +67,7 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/DebugDrawerAI.h"
 #include "Rendering/HUDDrawer.h"
+#include "Rendering/SmoothHeightMeshDrawer.h"
 #include "Rendering/IPathDrawer.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/InMapDrawView.h"
@@ -946,8 +947,7 @@ bool CGame::DrawWorld()
 
 	if (globalRendering->drawGround) {
 		gd->Draw();
-		if (smoothGround->DrawEnabled())
-			smoothGround->DrawWireFrame(1);
+		smoothHeightMeshDrawer->Draw(1.0f);
 		treeDrawer->DrawGrass();
 		gd->DrawTrees();
 	}
