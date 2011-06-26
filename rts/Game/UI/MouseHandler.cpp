@@ -99,12 +99,12 @@ CMouseHandler::CMouseHandler()
 	LoadCursors();
 
 #ifndef __APPLE__
-	hardwareCursor = !!configHandler->Get("HardwareCursor", 0);
+	hardwareCursor = !!configHandler->GetInt("HardwareCursor");
 #endif
 
 	soundMultiselID = sound->GetSoundId("MultiSelect", false);
 
-	invertMouse = !!configHandler->Get("InvertMouse",0);
+	invertMouse = !!configHandler->GetInt("InvertMouse");
 	doubleClickTime = configHandler->Get("DoubleClickTime", 200.0f) / 1000.0f;
 
 	scrollWheelSpeed = configHandler->Get("ScrollWheelSpeed", 25.0f);

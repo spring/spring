@@ -27,7 +27,7 @@ COrbitController::COrbitController():
 	rotation(0.0f), cRotation(0.0f),
 	elevation(0.0f), cElevation(0.0f)
 {
-	enabled = !!configHandler->Get("OrbitControllerEnabled", 1);
+	enabled = !!configHandler->GetInt("OrbitControllerEnabled");
 
 	orbitSpeedFact = configHandler->Get("OrbitControllerOrbitSpeed", 0.25f);
 	panSpeedFact   = configHandler->Get("OrbitControllerPanSpeed",   2.00f);

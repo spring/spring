@@ -60,7 +60,7 @@ CSelectedUnits::~CSelectedUnits()
 
 void CSelectedUnits::Init(unsigned numPlayers)
 {
-	buildIconsFirst = !!configHandler->Get("BuildIconsFirst", 0);
+	buildIconsFirst = !!configHandler->GetInt("BuildIconsFirst");
 	netSelected.resize(numPlayers);
 }
 

@@ -256,7 +256,7 @@ namespace Watchdog
 			}
 		}
 	#endif
-		int hangTimeoutSecs = configHandler->Get("HangTimeout", 0);
+		int hangTimeoutSecs = configHandler->GetInt("HangTimeout");
 
 		//! HangTimeout = -1 to force disable hang detection
 		if (hangTimeoutSecs < 0) {

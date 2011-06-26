@@ -93,13 +93,13 @@ CGuiHandler::CGuiHandler():
 	LoadDefaults();
 	LoadConfig("ctrlpanel.txt");
 
-	miniMapMarker = !!configHandler->Get("MiniMapMarker", 1);
-	invertQueueKey = !!configHandler->Get("InvertQueueKey", 0);
+	miniMapMarker = !!configHandler->GetInt("MiniMapMarker");
+	invertQueueKey = !!configHandler->GetInt("InvertQueueKey");
 
 	autoShowMetal = mapInfo->gui.autoShowMetal;
 
 	useStencil = false;
-	if (GLEW_NV_depth_clamp && !!configHandler->Get("StencilBufferBits", 1)) {
+	if (GLEW_NV_depth_clamp && !!configHandler->GetInt("StencilBufferBits")) {
 		GLint stencilBits;
 		glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
 		useStencil = (stencilBits >= 1);

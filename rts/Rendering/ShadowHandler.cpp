@@ -54,7 +54,7 @@ CShadowHandler::CShadowHandler()
 	//!  0 : disable, but still check if the hardware is able to run them
 	//!  1 : enable (full detail)
 	//!  2 : enable (no terrain)
-	const int configValue = configHandler->Get("Shadows", 0);
+	const int configValue = configHandler->GetInt("Shadows");
 
 	if (configValue >= 2)
 		drawTerrainShadow = false;
@@ -81,7 +81,7 @@ CShadowHandler::CShadowHandler()
 		}
 	}
 
-	shadowMapSize = configHandler->Get("ShadowMapSize", DEFAULT_SHADOWMAPSIZE);
+	shadowMapSize = configHandler->GetInt("ShadowMapSize");
 
 	if (!InitDepthTarget()) {
 		logOutput.Print("[%s] failed to initialize depth-texture FBO", __FUNCTION__);

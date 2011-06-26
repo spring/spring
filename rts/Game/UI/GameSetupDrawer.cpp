@@ -54,7 +54,7 @@ void GameSetupDrawer::StartCountdown(unsigned time)
 		if (!modeName.empty()) {
 			camHandler->SetCameraMode(modeName);
 		} else {
-			const int modeIndex = configHandler->Get("CamMode", 1);
+			const int modeIndex = configHandler->GetInt("CamMode");
 			camHandler->SetCameraMode(modeIndex);
 		}
 	}

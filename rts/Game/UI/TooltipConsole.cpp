@@ -40,7 +40,7 @@ CTooltipConsole::CTooltipConsole()
 		h = 0.10f;
 	}
 
-	outFont = !!configHandler->Get("TooltipOutlineFont", 1);
+	outFont = !!configHandler->GetInt("TooltipOutlineFont");
 }
 
 

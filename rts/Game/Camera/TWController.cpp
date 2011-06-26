@@ -18,8 +18,8 @@
 
 CTWController::CTWController()
 {
-	scrollSpeed = configHandler->Get("TWScrollSpeed",10) * 0.1f;
-	enabled = !!configHandler->Get("TWEnabled",1);
+	scrollSpeed = configHandler->GetInt("TWScrollSpeed") * 0.1f;
+	enabled = !!configHandler->GetInt("TWEnabled");
 	fov = configHandler->Get("TWFOV", 45.0f);
 }
 

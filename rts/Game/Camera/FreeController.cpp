@@ -45,9 +45,9 @@ CFreeController::CFreeController()
 	}
 	pos -= (dir * 1000.0f);
 
-	enabled     = !!configHandler->Get("CamFreeEnabled",   0);
-	invertAlt   = !!configHandler->Get("CamFreeInvertAlt", 0);
-	goForward   = !!configHandler->Get("CamFreeGoForward", 0);
+	enabled     = !!configHandler->GetInt("CamFreeEnabled");
+	invertAlt   = !!configHandler->GetInt("CamFreeInvertAlt");
+	goForward   = !!configHandler->GetInt("CamFreeGoForward");
 	fov         = configHandler->Get("CamFreeFOV",           45.0f);
 	scrollSpeed = configHandler->Get("CamFreeScrollSpeed",  500.0f);
 	gravity     = configHandler->Get("CamFreeGravity",     -500.0f);

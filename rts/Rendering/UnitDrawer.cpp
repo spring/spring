@@ -95,8 +95,8 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 {
 	eventHandler.AddClient(this);
 
-	SetUnitDrawDist((float)configHandler->Get("UnitLodDist",  1000));
-	SetUnitIconDist((float)configHandler->Get("UnitIconDist", 10000));
+	SetUnitDrawDist((float)configHandler->GetInt("UnitLodDist"));
+	SetUnitIconDist((float)configHandler->GetInt("UnitIconDist"));
 
 	LODScale           = GetLODFloat("LODScale",           1.0f);
 	LODScaleShadow     = GetLODFloat("LODScaleShadow",     1.0f);
@@ -147,12 +147,12 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	unitRadarIcons.resize(teamHandler->ActiveAllyTeams());
 
 #ifdef USE_GML
-	showHealthBars = !!configHandler->Get("ShowHealthBars", 1);
-	multiThreadDrawUnit = !!configHandler->Get("MultiThreadDrawUnit", 1);
-	multiThreadDrawUnitShadow = !!configHandler->Get("MultiThreadDrawUnitShadow", 1);
+	showHealthBars = !!configHandler->GetInt("ShowHealthBars");
+	multiThreadDrawUnit = !!configHandler->GetInt("MultiThreadDrawUnit");
+	multiThreadDrawUnitShadow = !!configHandler->GetInt("MultiThreadDrawUnitShadow");
 #endif
 
-	lightHandler.Init(2U, configHandler->Get("MaxDynamicModelLights", 1U));
+	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicModelLights"));
 
 	advFade = GLEW_NV_vertex_program2;
 	advShading = (LoadModelShaders() && cubeMapHandler->Init());
@@ -227,7 +227,7 @@ bool CUnitDrawer::LoadModelShaders()
 		logOutput.Print("[LoadModelShaders] OpenGL ARB extensions missing for advanced unit shading");
 		return false;
 	}
-	if (configHandler->Get("AdvUnitShading", 1) == 0) {
+	if (configHandler->GetInt("AdvUnitShading") == 0) {
 		// not allowed to do shader-based model rendering
 		return false;
 	}

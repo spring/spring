@@ -437,7 +437,7 @@ public:
 			" 1=unit&feature-shadows, 2=+terrain-shadows") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		const int current = configHandler->Get("Shadows", 0);
+		const int current = configHandler->GetInt("Shadows");
 		if (current < 0) {
 			logOutput.Print("Shadows have been disabled with %i", current);
 			logOutput.Print("Change your configuration and restart to use them");
@@ -2172,11 +2172,11 @@ public:
 	void Execute(const UnsyncedAction& action) const {
 		CglFont *newFont = NULL, *newSmallFont = NULL;
 		try {
-			const int fontSize = configHandler->Get("FontSize", 23);
-			const int smallFontSize = configHandler->Get("SmallFontSize", 14);
-			const int outlineWidth = configHandler->Get("FontOutlineWidth", 3);
+			const int fontSize = configHandler->GetInt("FontSize");
+			const int smallFontSize = configHandler->GetInt("SmallFontSize");
+			const int outlineWidth = configHandler->GetInt("FontOutlineWidth");
 			const float outlineWeight = configHandler->Get("FontOutlineWeight", 25.0f);
-			const int smallOutlineWidth = configHandler->Get("SmallFontOutlineWidth", 2);
+			const int smallOutlineWidth = configHandler->GetInt("SmallFontOutlineWidth");
 			const float smallOutlineWeight = configHandler->Get("SmallFontOutlineWeight", 10.0f);
 
 			newFont = CglFont::LoadFont(action.GetArgs(), fontSize, outlineWidth, outlineWeight);

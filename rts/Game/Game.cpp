@@ -278,18 +278,18 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	configHandler->Set("Headless", isHeadless ? 1 : 0, true);
 
 	//FIXME move to MouseHandler!
-	windowedEdgeMove   = !!configHandler->Get("WindowedEdgeMove",   1);
-	fullscreenEdgeMove = !!configHandler->Get("FullscreenEdgeMove", 1);
+	windowedEdgeMove   = !!configHandler->GetInt("WindowedEdgeMove");
+	fullscreenEdgeMove = !!configHandler->GetInt("FullscreenEdgeMove");
 
-	showFPS   = !!configHandler->Get("ShowFPS",   0);
-	showClock = !!configHandler->Get("ShowClock", 1);
-	showSpeed = !!configHandler->Get("ShowSpeed", 0);
-	showMTInfo = !!configHandler->Get("ShowMTInfo", 1);
+	showFPS   = !!configHandler->GetInt("ShowFPS");
+	showClock = !!configHandler->GetInt("ShowClock");
+	showSpeed = !!configHandler->GetInt("ShowSpeed");
+	showMTInfo = !!configHandler->GetInt("ShowMTInfo");
 	mtInfoCtrl = 0;
 
-	speedControl = configHandler->Get("SpeedControl", 0);
+	speedControl = configHandler->GetInt("SpeedControl");
 
-	playerRoster.SetSortTypeByCode((PlayerRoster::SortType)configHandler->Get("ShowPlayerInfo", 1));
+	playerRoster.SetSortTypeByCode((PlayerRoster::SortType)configHandler->GetInt("ShowPlayerInfo"));
 
 	CInputReceiver::guiAlpha = configHandler->Get("GuiOpacity",  0.8f);
 
@@ -301,7 +301,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	writingPos = 0;
 	userPrompt = "";
 
-	CLuaHandle::SetModUICtrl(!!configHandler->Get("LuaModUICtrl", 1));
+	CLuaHandle::SetModUICtrl(!!configHandler->GetInt("LuaModUICtrl"));
 
 	modInfo.Init(modName.c_str());
 

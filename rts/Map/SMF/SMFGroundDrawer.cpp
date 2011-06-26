@@ -46,7 +46,7 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 	map = rm;
 	textures = new CBFGroundTextures(map);
 
-	viewRadius = configHandler->Get("GroundDetail", 40);
+	viewRadius = configHandler->GetInt("GroundDetail");
 	viewRadius += (viewRadius & 1); //! we need a multiple of 2
 
 	useShaders = false;
@@ -68,11 +68,11 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 	}
 
 #ifdef USE_GML
-	multiThreadDrawGround = !!configHandler->Get("MultiThreadDrawGround", 1);
-	multiThreadDrawGroundShadow = !!configHandler->Get("MultiThreadDrawGroundShadow", 0);
+	multiThreadDrawGround = !!configHandler->GetInt("MultiThreadDrawGround");
+	multiThreadDrawGroundShadow = !!configHandler->GetInt("MultiThreadDrawGroundShadow");
 #endif
 
-	lightHandler.Init(2U, configHandler->Get("MaxDynamicMapLights", 1U));
+	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
 	advShading = LoadMapShaders();
 }
 
@@ -109,7 +109,7 @@ bool CBFGroundDrawer::LoadMapShaders() {
 	smfShaderAdvGLSL = NULL;
 	smfShaderCurGLSL = NULL;
 
-	if (configHandler->Get("AdvMapShading", 1) == 0) {
+	if (configHandler->GetInt("AdvMapShading") == 0) {
 		// not allowed to do shader-based map rendering
 		return false;
 	}

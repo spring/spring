@@ -33,8 +33,8 @@ CubeMapHandler::CubeMapHandler() {
 }
 
 bool CubeMapHandler::Init() {
-	specTexSize = configHandler->Get("CubeTexSizeSpecular", 128);
-	reflTexSize = configHandler->Get("CubeTexSizeReflection", 128);
+	specTexSize = configHandler->GetInt("CubeTexSizeSpecular");
+	reflTexSize = configHandler->GetInt("CubeTexSizeReflection");
 	specTexBuf = new unsigned char[specTexSize * 4];
 
 	mapSkyReflections = !(mapInfo->smf.skyReflectModTexName.empty());

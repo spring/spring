@@ -50,8 +50,8 @@ CGroundDecalHandler::CGroundDecalHandler()
 	helper->AddExplosionListener(this);
 
 	drawDecals = false;
-	decalLevel = std::max(0, configHandler->Get("GroundDecals", 1));
-	groundScarAlphaFade = (configHandler->Get("GroundScarAlphaFade", 0) != 0);
+	decalLevel = std::max(0, configHandler->GetInt("GroundDecals"));
+	groundScarAlphaFade = (configHandler->GetInt("GroundScarAlphaFade") != 0);
 
 	if (decalLevel == 0) {
 		return;

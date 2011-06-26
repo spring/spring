@@ -26,9 +26,9 @@ COverheadController::COverheadController()
 	, maxHeight(10000)
 {
 	middleClickScrollSpeed = configHandler->Get("MiddleClickScrollSpeed", 0.01f);
-	scrollSpeed = configHandler->Get("OverheadScrollSpeed",10)*0.1f;
+	scrollSpeed = configHandler->GetInt("OverheadScrollSpeed")*0.1f;
 	tiltSpeed = configHandler->Get("OverheadTiltSpeed",1.0f);
-	enabled = !!configHandler->Get("OverheadEnabled",1);
+	enabled = !!configHandler->GetInt("OverheadEnabled");
 	fov = configHandler->Get("OverheadFOV", 45.0f);
 }
 

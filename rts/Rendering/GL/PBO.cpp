@@ -21,7 +21,7 @@
  */
 bool PBO::IsSupported()
 {
-	return (GLEW_EXT_pixel_buffer_object && GLEW_ARB_map_buffer_range && !!configHandler->Get("UsePBO", 1));
+	return (GLEW_EXT_pixel_buffer_object && GLEW_ARB_map_buffer_range && !!configHandler->GetInt("UsePBO"));
 }
 
 

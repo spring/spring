@@ -27,7 +27,7 @@ CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap *m)
 	tr = map->renderer;
 	rc = tr->AddRenderContext (&cam, true);
 
-	tr->config.detailMod = configHandler->Get("SM3TerrainDetail", 200) / 100.0f;
+	tr->config.detailMod = configHandler->GetInt("SM3TerrainDetail") / 100.0f;
 
 	if (shadowHandler->shadowsSupported) {
 		shadowrc = tr->AddRenderContext(&shadowCam,false);

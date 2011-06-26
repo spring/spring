@@ -6,7 +6,7 @@
 
 CHeightLinePalette::CHeightLinePalette()
 {
-	if (configHandler->Get("ColorElev", 1)) {
+	if (configHandler->GetInt("ColorElev")) {
 		for(int a = 0; a < 86; ++a) {
 			heightLinePal[a*3 + 0] = 255 - a*3;
 			heightLinePal[a*3 + 1] = a*3;

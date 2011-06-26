@@ -220,7 +220,7 @@ bool SpringApp::Initialize()
 	ISound::Initialize();
 	InitJoystick();
 
-	SetProcessAffinity(configHandler->Get("SetCoreAffinity", 0));
+	SetProcessAffinity(configHandler->GetInt("SetCoreAffinity"));
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
@@ -348,13 +348,13 @@ bool SpringApp::SetSDLVideoMode()
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8); //! enable alpha channel ???
 
-	globalRendering->depthBufferBits = configHandler->Get("DepthBufferBits", 24);
+	globalRendering->depthBufferBits = configHandler->GetInt("DepthBufferBits");
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, globalRendering->depthBufferBits);
-	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler->Get("StencilBufferBits", 8));
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler->GetInt("StencilBufferBits"));
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 	//! FullScreen AntiAliasing
-	globalRendering->FSAA = Clamp(configHandler->Get("FSAALevel", 0), 0, 8);
+	globalRendering->FSAA = Clamp(configHandler->GetInt("FSAALevel"), 0, 8);
 	if (globalRendering->FSAA > 0) {
 		make_even_number(globalRendering->FSAA);
 		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
@@ -394,7 +394,7 @@ bool SpringApp::SetSDLVideoMode()
 
 	//! setup GL smoothing
 	const int defaultSmooth = 0; //! FSAA ? 0 : 3;  // until a few things get fixed
-	const int lineSmoothing = configHandler->Get("SmoothLines", defaultSmooth);
+	const int lineSmoothing = configHandler->GetInt("SmoothLines");
 	if (lineSmoothing > 0) {
 		GLenum hint = GL_FASTEST;
 		if (lineSmoothing >= 3) {
@@ -405,7 +405,7 @@ bool SpringApp::SetSDLVideoMode()
 		glEnable(GL_LINE_SMOOTH);
 		glHint(GL_LINE_SMOOTH_HINT, hint);
 	}
-	const int pointSmoothing = configHandler->Get("SmoothPoints", defaultSmooth);
+	const int pointSmoothing = configHandler->GetInt("SmoothPoints");
 	if (pointSmoothing > 0) {
 		GLenum hint = GL_FASTEST;
 		if (pointSmoothing >= 3) {
@@ -424,7 +424,7 @@ bool SpringApp::SetSDLVideoMode()
 	}
 
 	//! there must be a way to see if this is necessary, compare old/new context pointers?
-	if (!!configHandler->Get("FixAltTab", 0)) {
+	if (!!configHandler->GetInt("FixAltTab")) {
 		//! free GL resources
 		GLContext::Free();
 
@@ -643,10 +643,10 @@ void SpringApp::SetupViewportGeometry()
 		globalRendering->winPosY = 0;
 	}
 
-	globalRendering->dualScreenMode = !!configHandler->Get("DualScreenMode", 0);
+	globalRendering->dualScreenMode = !!configHandler->GetInt("DualScreenMode");
 	if (globalRendering->dualScreenMode) {
 		globalRendering->dualScreenMiniMapOnLeft =
-			!!configHandler->Get("DualScreenMiniMapOnLeft", 0);
+			!!configHandler->GetInt("DualScreenMiniMapOnLeft");
 	} else {
 		globalRendering->dualScreenMiniMapOnLeft = false;
 	}
@@ -702,7 +702,7 @@ void SpringApp::InitOpenGL()
 
 void SpringApp::UpdateOldConfigs()
 {
-	const int cfgVersion = configHandler->Get("Version",0);
+	const int cfgVersion = configHandler->GetInt("Version");
 	if (cfgVersion < 2) {
 		// force an update to new defaults
 		configHandler->Delete("FontFile");
@@ -724,8 +724,8 @@ void SpringApp::UpdateOldConfigs()
 		configHandler->Set("Version",4);
 	}
 	if (cfgVersion < 5) {
-		const int xres = configHandler->Get("XResolution", 0);
-		const int yres = configHandler->Get("YResolution", 0);
+		const int xres = configHandler->GetInt("XResolution");
+		const int yres = configHandler->GetInt("YResolution");
 		if ((xres == 1024) && (yres == 768)) { //! old default res (use desktop res now by default)
 			configHandler->Delete("XResolution");
 			configHandler->Delete("YResolution");
@@ -740,11 +740,11 @@ void SpringApp::LoadFonts()
 	// Initialize font
 	const std::string fontFile = configHandler->GetString("FontFile");
 	const std::string smallFontFile = configHandler->GetString("SmallFontFile");
-	const int fontSize = configHandler->Get("FontSize", 23);
-	const int smallFontSize = configHandler->Get("SmallFontSize", 14);
-	const int outlineWidth = configHandler->Get("FontOutlineWidth", 3);
+	const int fontSize = configHandler->GetInt("FontSize");
+	const int smallFontSize = configHandler->GetInt("SmallFontSize");
+	const int outlineWidth = configHandler->GetInt("FontOutlineWidth");
 	const float outlineWeight = configHandler->Get("FontOutlineWeight", 25.0f);
-	const int smallOutlineWidth = configHandler->Get("SmallFontOutlineWidth", 2);
+	const int smallOutlineWidth = configHandler->GetInt("SmallFontOutlineWidth");
 	const float smallOutlineWeight = configHandler->Get("SmallFontOutlineWeight", 10.0f);
 
 	SafeDelete(font);
@@ -839,7 +839,7 @@ void SpringApp::ParseCmdLine()
 #ifdef _DEBUG
 	globalRendering->fullScreen = false;
 #else
-	globalRendering->fullScreen = !!configHandler->Get("Fullscreen", 1);
+	globalRendering->fullScreen = !!configHandler->GetInt("Fullscreen");
 #endif
 	// flags
 	if (cmdline->IsSet("window")) {
@@ -859,24 +859,24 @@ void SpringApp::ParseCmdLine()
 		}
 	}
 
-	globalRendering->viewSizeX = configHandler->Get("XResolution", 0);
+	globalRendering->viewSizeX = configHandler->GetInt("XResolution");
 	if (cmdline->IsSet("xresolution"))
 		globalRendering->viewSizeX = std::max(cmdline->GetInt("xresolution"), 640);
 
-	globalRendering->viewSizeY = configHandler->Get("YResolution", 0);
+	globalRendering->viewSizeY = configHandler->GetInt("YResolution");
 	if (cmdline->IsSet("yresolution"))
 		globalRendering->viewSizeY = std::max(cmdline->GetInt("yresolution"), 480);
 
-	globalRendering->winPosX  = configHandler->Get("WindowPosX", 32);
-	globalRendering->winPosY  = configHandler->Get("WindowPosY", 32);
-	globalRendering->winState = configHandler->Get("WindowState", 0);
+	globalRendering->winPosX  = configHandler->GetInt("WindowPosX");
+	globalRendering->winPosY  = configHandler->GetInt("WindowPosY");
+	globalRendering->winState = configHandler->GetInt("WindowState");
 
 #ifdef USE_GML
-	gmlThreadCountOverride = configHandler->Get("HardwareThreadCount", 0);
+	gmlThreadCountOverride = configHandler->GetInt("HardwareThreadCount");
 	gmlThreadCount=GML_CPU_COUNT;
 #if GML_ENABLE_SIM
 	extern volatile int gmlMultiThreadSim;
-	gmlMultiThreadSim=configHandler->Get("MultiThreadSim", 1);
+	gmlMultiThreadSim=configHandler->GetInt("MultiThreadSim");
 #endif
 #endif
 }

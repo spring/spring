@@ -110,7 +110,7 @@ void LuaOpenGL::Init()
 
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
-	if (globalRendering->haveGLSL && !!configHandler->Get("LuaShaders", 1)) {
+	if (globalRendering->haveGLSL && !!configHandler->GetInt("LuaShaders")) {
 		canUseShaders = true;
 	}
 }

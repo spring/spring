@@ -237,7 +237,7 @@ void CUnitTracker::SetCam()
 {
 	if (firstUpdate) {
 		firstUpdate = false;
-		doRoll = !configHandler->Get("ReflectiveWater", 1);
+		doRoll = !configHandler->GetInt("ReflectiveWater");
 	}
 
 	CUnit* u = GetTrackUnit();

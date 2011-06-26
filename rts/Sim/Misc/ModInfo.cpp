@@ -56,7 +56,7 @@ void CModInfo::Init(const char* modArchive)
 	allowTeamColors = nanosprayTbl.GetBool("allow_team_colors", true);
 	if (allowTeamColors) {
 		// Load the users preference for team coloured nanospray
-		globalRendering->teamNanospray = !!configHandler->Get("TeamNanoSpray", 1);
+		globalRendering->teamNanospray = !!configHandler->GetInt("TeamNanoSpray");
 	}
 
 	// constructions

@@ -55,7 +55,7 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 	highResInfoTexWanted = false;
 
 	highResLosTex = configHandler->Get("HighResLos", false);
-	extraTextureUpdateRate = std::max(4, configHandler->Get("ExtraTextureUpdateRate", 45) - 1);
+	extraTextureUpdateRate = std::max(4, configHandler->GetInt("ExtraTextureUpdateRate") - 1);
 
 	jamColor[0] = (int)(losColorScale * 0.25f);
 	jamColor[1] = (int)(losColorScale * 0.0f);

@@ -51,7 +51,7 @@ CCameraHandler::CCameraHandler()
 	if (!modeName.empty()) {
 		modeIndex = GetModeIndex(modeName);
 	} else {
-		modeIndex = configHandler->Get("CamMode", 5);
+		modeIndex = configHandler->GetInt("CamMode");
 	}
 
 	const unsigned int mode =
