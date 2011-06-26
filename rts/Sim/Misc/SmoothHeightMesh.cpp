@@ -55,8 +55,7 @@ static float Interpolate(float x, float y, int maxx, int maxy, float res, const 
 }
 
 SmoothHeightMesh::SmoothHeightMesh(const CGround* ground, float mx, float my, float res, float smoothRad)
-	: drawEnabled(false)
-	, maxx((mx / res) + 1)
+	: maxx((mx / res) + 1)
 	, maxy((my / res) + 1)
 	, fmaxx(mx)
 	, fmaxy(my)
