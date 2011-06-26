@@ -279,7 +279,8 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations)
 	sources.push_back(writableSource);
 
 	vector<string>::const_iterator loc = locations.begin();
-	for (++loc; loc != locations.end(); ++loc) {
+	++loc; // skip writableSource
+	for (; loc != locations.end(); ++loc) {
 		sources.push_back(new FileConfigSource(*loc));
 	}
 }
@@ -345,6 +346,12 @@ string ConfigHandlerImpl::GetString(const string& key) const
  */
 void ConfigHandlerImpl::SetString(const string& key, const string& value, bool useOverlay)
 {
+	// if we set something to be persisted,
+	// we do want to override the overlay value
+	if (!useOverlay) {
+		overlay->Delete(key);
+	}
+
 	// Don't do anything if value didn't change.
 	if (IsSet(key) && GetString(key) == value) {
 		return;
@@ -354,13 +361,28 @@ void ConfigHandlerImpl::SetString(const string& key, const string& value, bool u
 		overlay->SetString(key, value);
 	}
 	else {
-		// if we set something to be persisted,
-		// we do want to override the overlay value
-		overlay->Delete(key);
+		vector<ConfigSource*>::const_iterator it = sources.begin();
+		bool deleted = false;
 
-		// FIXME: this needs more subtle code
-		// i.e. delete the key from overriding config files when it becomes equal to the default specified in another source
-		writableSource->SetString(key, value);
+		++it; // skip overlay
+		++it; // skip writableSource
+
+		for (; it != sources.end(); ++it) {
+			if ((*it)->IsSet(key)) {
+				if ((*it)->GetString(key) == value) {
+					// key is being set to the default value,
+					// delete the key instead of setting it.
+					writableSource->Delete(key);
+					deleted = true;
+				}
+				break;
+			}
+		}
+
+		if (!deleted) {
+			// set key to the specified non-default value
+			writableSource->SetString(key, value);
+		}
 	}
 
 	boost::mutex::scoped_lock lck(observerMutex);
