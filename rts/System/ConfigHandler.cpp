@@ -74,7 +74,7 @@ public:
 private:
 	void SetStringInternal(const string& key, const string& value);
 	void DeleteInternal(const string& key);
-	void ReadModifyWrite(void* modify); // FIXME
+	void ReadModifyWrite(boost::function<void ()> modify);
 
 	string filename;
 	map<string, ConfigValue> data;
@@ -172,27 +172,7 @@ void ConfigSource::SetStringInternal(const string& key, const string& value)
 
 void ConfigSource::SetString(const string& key, const string& value)
 {
-	if (IsOverlay()) {
-		SetStringInternal(key, value);
-	}
-	else {
-		FILE* file = fopen(filename.c_str(), "r+");
-
-		if (file) {
-			ScopedFileLock scoped_lock(fileno(file), true);
-			Read(file);
-			SetStringInternal(key, value);
-			Write(file);
-		}
-		else {
-			SetStringInternal(key, value);
-		}
-
-		// must be outside above 'if (file)' block because of the lock.
-		if (file) {
-			fclose(file);
-		}
-	}
+	ReadModifyWrite(boost::bind(&ConfigSource::SetStringInternal, this, key, value));
 }
 
 void ConfigSource::DeleteInternal(const string& key)
@@ -202,8 +182,12 @@ void ConfigSource::DeleteInternal(const string& key)
 
 void ConfigSource::Delete(const string& key)
 {
+	ReadModifyWrite(boost::bind(&ConfigSource::DeleteInternal, this, key));
+}
+
+void ConfigSource::ReadModifyWrite(boost::function<void ()> modify) {
 	if (IsOverlay()) {
-		DeleteInternal(key);
+		modify();
 	}
 	else {
 		FILE* file = fopen(filename.c_str(), "r+");
@@ -211,11 +195,11 @@ void ConfigSource::Delete(const string& key)
 		if (file) {
 			ScopedFileLock scoped_lock(fileno(file), true);
 			Read(file);
-			DeleteInternal(key);
+			modify();
 			Write(file);
 		}
 		else {
-			DeleteInternal(key);
+			modify();
 		}
 
 		// must be outside above 'if (file)' block because of the lock.
