@@ -9,20 +9,12 @@
 
 #include "TransportCAI.h"
 #include "ExternalAI/EngineOutHandler.h"
-#include "LineDrawer.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/UI/CommandColors.h"
-#include "Game/UI/CursorIcons.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
-#include "Rendering/UnitDrawer.h"
-#include "Rendering/GL/myGL.h"
-#include "Rendering/GL/glExtra.h"
-#include "Rendering/GL/VertexArray.h"
-#include "Rendering/Models/3DModel.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
@@ -265,13 +257,13 @@ inline bool CBuilderCAI::OutOfImmobileRange(const Command& cmd) const
 }
 
 
-float CBuilderCAI::GetUnitDefRadius(const UnitDef* ud, int cmdId)
+float CBuilderCAI::GetBuildOptionRadius(const UnitDef* ud, int cmdId)
 {
 	float radius;
 	if (cachedRadiusId == cmdId) {
 		radius = cachedRadius;
 	} else {
-		radius = (ud->LoadModel())->radius;
+		radius = ud->GetModelRadius();
 		cachedRadius = radius;
 		cachedRadiusId = cmdId;
 	}
@@ -323,7 +315,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		if (!owner->unitDef->canmove) {
 			const CBuilder* builder = (CBuilder*)owner;
 			const float dist = f3Len(builder->pos - bi.pos);
-			const float radius = GetUnitDefRadius(bi.def, c.GetID());
+			const float radius = GetBuildOptionRadius(bi.def, c.GetID());
 			if (dist > (builder->buildDistance + radius - 8.0f)) {
 				return;
 			}
@@ -377,7 +369,7 @@ void CBuilderCAI::SlowUpdate()
 	map<int, string>::iterator boi = buildOptions.find(c.GetID());
 	if (!owner->beingBuilt && boi != buildOptions.end()) {
 		const UnitDef* ud = unitDefHandler->GetUnitDefByName(boi->second);
-		const float radius = GetUnitDefRadius(ud, c.GetID());
+		const float radius = GetBuildOptionRadius(ud, c.GetID());
 
 		if (inCommand) {
 			if (building) {
@@ -1641,331 +1633,3 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 
 	return true;
 }
-
-
-/******************************************************************************/
-//
-//  Drawing routines
-//
-
-void CBuilderCAI::DrawCommands()
-{
-	lineDrawer.StartPath(owner->drawMidPos, cmdColors.start);
-
-	if (owner->selfDCountdown != 0) {
-		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
-	}
-
-	CCommandQueue::iterator ci;
-	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		const int& cmd_id = ci->GetID();
-
-		if (cmd_id < 0) {
-			map<int, string>::const_iterator boi = buildOptions.find(cmd_id);
-
-			if (boi != buildOptions.end()) {
-				BuildInfo bi;
-				bi.def = unitDefHandler->GetUnitDefByID(-(cmd_id));
-
-				if (ci->params.size() == 4) {
-					bi.buildFacing = int(abs(ci->params[3])) % NUM_FACINGS;
-				}
-
-				bi.pos = float3(ci->params[0], ci->params[1], ci->params[2]);
-				bi.pos = helper->Pos2BuildPos(bi);
-
-				cursorIcons.AddBuildIcon(cmd_id, bi.pos, owner->team, bi.buildFacing);
-				lineDrawer.DrawLine(bi.pos, cmdColors.build);
-
-				// draw metal extraction range
-				if (bi.def->extractRange > 0) {
-					lineDrawer.Break(bi.pos, cmdColors.build);
-					glColor4fv(cmdColors.rangeExtract);
-
-					if (bi.def->extractSquare) {
-						glSurfaceSquare(bi.pos, bi.def->extractRange, bi.def->extractRange);
-					} else {
-						glSurfaceCircle(bi.pos, bi.def->extractRange, 40);
-					}
-
-					lineDrawer.Restart();
-				}
-			}
-			continue;
-		}
-
-		switch(cmd_id) {
-			case CMD_MOVE: {
-				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.move);
-				break;
-			}
-			case CMD_FIGHT:{
-				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.fight);
-				break;
-			}
-			case CMD_PATROL: {
-				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.patrol);
-				break;
-			}
-			case CMD_GUARD: {
-				const CUnit* unit = uh->GetUnit(ci->params[0]);
-
-				if ((unit != NULL) && IsTrackable(unit)) {
-					const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
-					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.guard);
-				}
-				break;
-			}
-			case CMD_RESTORE: {
-				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.restore);
-				lineDrawer.Break(endPos, cmdColors.restore);
-				glColor4fv(cmdColors.restore);
-				glSurfaceCircle(endPos, ci->params[3], 20);
-				lineDrawer.RestartWithColor(cmdColors.restore);
-				break;
-			}
-			case CMD_ATTACK:
-			case CMD_DGUN: {
-				if (ci->params.size() == 1) {
-					const CUnit* unit = uh->GetUnit(ci->params[0]);
-
-					if ((unit != NULL) && IsTrackable(unit)) {
-						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
-						lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
-					}
-				} else {
-					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
-				}
-				break;
-			}
-			case CMD_RECLAIM:
-			case CMD_RESURRECT: {
-				const float* color = (cmd_id == CMD_RECLAIM) ? cmdColors.reclaim
-				                                             : cmdColors.resurrect;
-				if (ci->params.size() == 4) {
-					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-					lineDrawer.DrawLineAndIcon(cmd_id, endPos, color);
-					lineDrawer.Break(endPos, color);
-					glColor4fv(color);
-					glSurfaceCircle(endPos, ci->params[3], 20);
-					lineDrawer.RestartWithColor(color);
-				} else {
-					const int signedId = (int)ci->params[0];
-					if (signedId < 0) {
-						logOutput.Print("Trying to %s a feature or unit with id < 0 (%i), aborting.",
-								(cmd_id == CMD_RECLAIM) ? "reclaim" : "resurrect",
-								signedId);
-						break;
-					}
-
-					const unsigned int id = signedId;
-
-					if (id >= uh->MaxUnits()) {
-						GML_RECMUTEX_LOCK(feat); // DrawCommands
-
-						CFeature* feature = featureHandler->GetFeature(id - uh->MaxUnits());
-						if (feature) {
-							const float3 endPos = feature->midPos;
-							lineDrawer.DrawLineAndIcon(cmd_id, endPos, color);
-						}
-					} else {
-						const CUnit* unit = uh->GetUnitUnsafe(id);
-
-						if ((unit != NULL) && (unit != owner) && IsTrackable(unit)) {
-							const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
-							lineDrawer.DrawLineAndIcon(cmd_id, endPos, color);
-						}
-					}
-				}
-				break;
-			}
-			case CMD_REPAIR:
-			case CMD_CAPTURE: {
-				const float* color = (ci->GetID() == CMD_REPAIR) ? cmdColors.repair
-				                                            : cmdColors.capture;
-				if (ci->params.size() == 4) {
-					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-					lineDrawer.DrawLineAndIcon(cmd_id, endPos, color);
-					lineDrawer.Break(endPos, color);
-					glColor4fv(color);
-					glSurfaceCircle(endPos, ci->params[3], 20);
-					lineDrawer.RestartWithColor(color);
-				} else {
-					if (ci->params.size() >= 1) {
-						const CUnit* unit = uh->GetUnit(ci->params[0]);
-
-						if ((unit != NULL) && IsTrackable(unit)) {
-							const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
-							lineDrawer.DrawLineAndIcon(cmd_id, endPos, color);
-						}
-					}
-				}
-				break;
-			}
-			case CMD_LOAD_ONTO: {
-				const CUnit* unit = uh->GetUnitUnsafe(ci->params[0]);
-				lineDrawer.DrawLineAndIcon(cmd_id, unit->pos, cmdColors.load);
-				break;
-			}
-			case CMD_WAIT: {
-				DrawWaitIcon(*ci);
-				break;
-			}
-			case CMD_SELFD: {
-				lineDrawer.DrawIconAtLastPos(ci->GetID());
-				break;
-			}
-			default: {
-				DrawDefaultCommand(*ci);
-				break;
-			}
-		}
-
-	}
-	lineDrawer.FinishPath();
-}
-
-
-
-// XXX move away from this class
-void CBuilderCAI::DrawQuedBuildingSquares()
-{
-	CCommandQueue::const_iterator ci;
-	// worst case - 2 squares per building (when underwater) - 8 vertices * 3 floats
-
-	int buildCommands = 0;
-	int underwaterCommands = 0;
-	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		if (buildOptions.find(ci->GetID()) != buildOptions.end()) {
-			++buildCommands;
-			BuildInfo bi(*ci);
-			bi.pos = helper->Pos2BuildPos(bi);
-			if (bi.pos.y < 0.f)
-				++underwaterCommands;
-		}
-	}
-	std::vector<GLfloat> vertices_quads(buildCommands * 12);
-	std::vector<GLfloat> vertices_quads_uw(buildCommands * 12); // underwater
-	// 4 vertical lines
-	std::vector<GLfloat> vertices_lines(underwaterCommands * 24);
-	// colors for lines
-	std::vector<GLfloat> colors_lines(underwaterCommands * 48);
-
-	int quadcounter = 0;
-	int uwqcounter = 0;
-	int linecounter = 0;
-
-	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		if (buildOptions.find(ci->GetID()) != buildOptions.end()) {
-			BuildInfo bi(*ci);
-			bi.pos = helper->Pos2BuildPos(bi);
-			const float xsize = bi.GetXSize()*4;
-			const float zsize = bi.GetZSize()*4;
-
-			const float h = bi.pos.y;
-			const float x1 = bi.pos.x - xsize;
-			const float z1 = bi.pos.z - zsize;
-			const float x2 = bi.pos.x + xsize;
-			const float z2 = bi.pos.z + zsize;
-
-			vertices_quads[quadcounter + 0] = x1;
-			vertices_quads[quadcounter + 1] = h + 1;
-			vertices_quads[quadcounter + 2] = z1;
-			vertices_quads[quadcounter + 3] = x1;
-			vertices_quads[quadcounter + 4] = h + 1;
-			vertices_quads[quadcounter + 5] = z2;
-			vertices_quads[quadcounter + 6] = x2;
-			vertices_quads[quadcounter + 7] = h + 1;
-			vertices_quads[quadcounter + 8] = z2;
-			vertices_quads[quadcounter + 9] = x2;
-			vertices_quads[quadcounter +10] = h + 1;
-			vertices_quads[quadcounter +11] = z1;
-
-			quadcounter += 12;
-
-			if (bi.pos.y < 0.0f) {
-				const float col[8] = { 0.0f, 0.0f, 1.0f, 0.5f, // start color
-						       0.0f, 0.5f, 1.0f, 1.0f }; // end color
-
-				vertices_quads_uw[uwqcounter + 0] = x1;
-				vertices_quads_uw[uwqcounter + 1] = 0.f;
-				vertices_quads_uw[uwqcounter + 2] = z1;
-				vertices_quads_uw[uwqcounter + 3] = x1;
-				vertices_quads_uw[uwqcounter + 4] = 0.f;
-				vertices_quads_uw[uwqcounter + 5] = z2;
-				vertices_quads_uw[uwqcounter + 6] = x2;
-				vertices_quads_uw[uwqcounter + 7] = 0.f;
-				vertices_quads_uw[uwqcounter + 8] = z2;
-				vertices_quads_uw[uwqcounter + 9] = x2;
-				vertices_quads_uw[uwqcounter +10] = 0.f;
-				vertices_quads_uw[uwqcounter +11] = z1;
-
-				uwqcounter += 12;
-
-				for (int i = 0; i<4; ++i) {
-					std::copy(col, col + 8, colors_lines.begin() + linecounter * 2 + i * 8);
-				}
-
-				vertices_lines[linecounter + 0] = x1;
-				vertices_lines[linecounter + 1] = h;
-				vertices_lines[linecounter + 2] = z1;
-				vertices_lines[linecounter + 3] = x1;
-				vertices_lines[linecounter + 4] = 0;
-				vertices_lines[linecounter + 5] = z1;
-
-				vertices_lines[linecounter + 6] = x2;
-				vertices_lines[linecounter + 7] = h;
-				vertices_lines[linecounter + 8] = z1;
-				vertices_lines[linecounter + 9] = x2;
-				vertices_lines[linecounter +10] = 0;
-				vertices_lines[linecounter +11] = z1;
-
-				vertices_lines[linecounter +12] = x2;
-				vertices_lines[linecounter +13] = h;
-				vertices_lines[linecounter +14] = z2;
-				vertices_lines[linecounter +15] = x2;
-				vertices_lines[linecounter +16] = 0;
-				vertices_lines[linecounter +17] = z2;
-
-				vertices_lines[linecounter +18] = x1;
-				vertices_lines[linecounter +19] = h;
-				vertices_lines[linecounter +20] = z2;
-				vertices_lines[linecounter +21] = x1;
-				vertices_lines[linecounter +22] = 0;
-				vertices_lines[linecounter +23] = z2;
-
-				linecounter += 24;
-			}
-		}
-	}
-	if (quadcounter) {
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINES);
-		glVertexPointer(3, GL_FLOAT, 0, &vertices_quads[0]);
-		glDrawArrays(GL_QUADS, 0, quadcounter/3);
-
-		if (linecounter) {
-			glPushAttrib(GL_CURRENT_BIT);
-			glColor4f(0.0f, 0.5f, 1.0f, 1.0f); // same as end color of lines
-			glVertexPointer(3, GL_FLOAT, 0, &vertices_quads_uw[0]);
-			glDrawArrays(GL_QUADS, 0, uwqcounter/3);
-			glPopAttrib();
-
-			glEnableClientState(GL_COLOR_ARRAY);
-			glColorPointer(4, GL_FLOAT, 0, &colors_lines[0]);
-			glVertexPointer(3, GL_FLOAT, 0, &vertices_lines[0]);
-			glDrawArrays(GL_LINES, 0, linecounter/3);
-			glDisableClientState(GL_COLOR_ARRAY);
-		}
-		glDisableClientState(GL_VERTEX_ARRAY);
-	}
-}
-
-
-/******************************************************************************/
-/******************************************************************************/

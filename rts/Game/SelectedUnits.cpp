@@ -16,6 +16,8 @@
 #include "UI/GuiHandler.h"
 #include "UI/TooltipConsole.h"
 #include "ExternalAI/EngineOutHandler.h"
+#include "Rendering/CommandDrawer.h"
+#include "Rendering/LineDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -26,7 +28,6 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
@@ -427,14 +428,14 @@ void CSelectedUnits::Draw()
 						glColor4fv(cmdColors.buildBox);
 						myColor = true;
 					}
-					builder->DrawQuedBuildingSquares();
+					commandDrawer->DrawQuedBuildingSquares(builder);
 				}
 				else if (teamHandler->AlliedTeams(builder->owner->team, gu->myTeam)) {
 					if (myColor) {
 						glColor4fv(cmdColors.allyBuildBox);
 						myColor = false;
 					}
-					builder->DrawQuedBuildingSquares();
+					commandDrawer->DrawQuedBuildingSquares(builder);
 				}
 			}
 		}
@@ -652,11 +653,11 @@ void CSelectedUnits::DrawCommands()
 	if (selectedGroup != -1) {
 		CUnitSet& groupUnits = grouphandlers[gu->myTeam]->groups[selectedGroup]->units;
 		for(ui = groupUnits.begin(); ui != groupUnits.end(); ++ui) {
-			(*ui)->commandAI->DrawCommands();
+			commandDrawer->Draw((*ui)->commandAI);
 		}
 	} else {
 		for(ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
-			(*ui)->commandAI->DrawCommands();
+			commandDrawer->Draw((*ui)->commandAI);
 		}
 	}
 

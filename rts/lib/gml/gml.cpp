@@ -151,8 +151,9 @@ void gmlInit() {
 		gmlGetFloatvCache[gmlFloatParams[i]]=fi;
 	}
 	for(int i=0; i<sizeof(gmlStringParams)/sizeof(GLenum); ++i) {
-		std::string si=(char *)glGetString(gmlStringParams[i]);
-		gmlGetStringCache[gmlStringParams[i]]=si;
+		const char* pstring = (const char*) glGetString(gmlStringParams[i]);
+		const std::string si = (pstring != NULL)? pstring: "[NULL]";
+		gmlGetStringCache[gmlStringParams[i]] = si;
 	}
 	gmlInited=TRUE;
 }

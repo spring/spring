@@ -25,7 +25,6 @@ public:
 	int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
 	void SlowUpdate();
 	void GiveCommandReal(const Command& c, bool fromSynced = true);
-	void DrawCommands();
 	void BuggerOff(const float3& pos, float radius);
 	void NonMoving();
 	void FinishCommand();

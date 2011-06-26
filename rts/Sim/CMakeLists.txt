@@ -101,7 +101,6 @@ SET(sources_engine_Sim
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/Command.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/CommandAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/FactoryCAI.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/LineDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/MobileCAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/TransportCAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/Groups/Group.cpp"
