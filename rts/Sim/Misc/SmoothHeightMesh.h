@@ -10,22 +10,9 @@ class CGround;
  */
 class SmoothHeightMesh
 {
-protected:
-	int maxx, maxy;
-	float fmaxx, fmaxy;
-	float resolution;
-	float smoothRadius;
-
-	float* mesh;
-	float* origMesh;
-
 public:
-	bool drawEnabled;
-
 	SmoothHeightMesh(const CGround* ground, float mx, float my, float res, float smoothRad);
 	~SmoothHeightMesh();
-
-	void MakeSmoothMesh(const CGround* ground);
 
 	float GetHeight(float x, float y);
 	float GetHeightAboveWater(float x, float y);
@@ -37,12 +24,26 @@ public:
 	int GetMaxY() const { return maxy; }
 	float GetResolution() const { return resolution; }
 
-	float* GetMeshData() { return mesh; }
-	float* GetOriginalMeshData() { return origMesh; }
+	const float* GetMeshData() const { return &mesh[0]; }
+	const float* GetOriginalMeshData() const { return &origMesh[0]; }
 
-	void DrawWireframe(float yoffset);
+	bool& DrawEnabled() { return drawEnabled; }
+	void DrawWireFrame(float yoffset);
+
+private:
+	void MakeSmoothMesh(const CGround* ground);
+
+	bool drawEnabled;
+
+	const int maxx, maxy;
+	const float fmaxx, fmaxy;
+	const float resolution;
+	const float smoothRadius;
+
+	std::vector<float> mesh;
+	std::vector<float> origMesh;
 };
 
 extern SmoothHeightMesh* smoothGround;
 
-#endif // SMOOTH_HEIGHT_MESH_H
+#endif

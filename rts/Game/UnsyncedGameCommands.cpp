@@ -2625,8 +2625,8 @@ public:
 			"Show/Hide the smooth air-mesh map overlay") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		SetBoolArg(smoothGround->drawEnabled, action.GetArgs());
-		LogSystemStatus("smooth air-mesh map overlay", smoothGround->drawEnabled);
+		SetBoolArg(smoothGround->DrawEnabled(), action.GetArgs());
+		LogSystemStatus("smooth air-mesh map overlay", smoothGround->DrawEnabled());
 	}
 };
 
