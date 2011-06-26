@@ -18,6 +18,7 @@
 #include "Util.h"
 #include "ConfigHandler.h"
 #include "ConfigSource.h"
+#include "DefaultConfigSource.h"
 
 #ifdef WIN32
 	#include <io.h>
@@ -66,6 +67,7 @@ protected:
 private:
 	OverlayConfigSource* overlay;
 	FileConfigSource* writableSource;
+	DefaultConfigSource* defaultSource;
 	vector<ConfigSource*> sources;
 
 	// observer related
@@ -87,7 +89,7 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations)
 	overlay = new OverlayConfigSource();
 	writableSource = new FileConfigSource(locations.front());
 
-	sources.reserve(1 + locations.size());
+	sources.reserve(2 + locations.size());
 	sources.push_back(overlay);
 	sources.push_back(writableSource);
 
@@ -96,6 +98,8 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations)
 	for (; loc != locations.end(); ++loc) {
 		sources.push_back(new FileConfigSource(*loc));
 	}
+
+	sources.push_back(new DefaultConfigSource());
 }
 
 ConfigHandlerImpl::~ConfigHandlerImpl()
