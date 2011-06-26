@@ -163,7 +163,7 @@ CEFX::CEFX(ALCdevice* device)
 	supported = true;
 
 	//! User may disable it (performance reasons?)
-	if (!configHandler->Get("UseEFX", true)) {
+	if (!configHandler->GetBool("UseEFX")) {
 		LogObject(LOG_SOUND) << "  EFX Enabled: no";
 		return;
 	}

@@ -85,7 +85,7 @@ void CPreGame::LoadSetupscript(const std::string& script)
 void CPreGame::LoadDemo(const std::string& demo)
 {
 	assert(settings->isHost);
-	if (!configHandler->Get("DemoFromDemo", false))
+	if (!configHandler->GetBool("DemoFromDemo"))
 		net->DisableDemoRecording();
 	ReadDataFromDemo(demo);
 }

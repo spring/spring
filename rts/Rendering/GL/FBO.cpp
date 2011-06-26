@@ -108,7 +108,7 @@ void FBO::DownloadAttachment(const GLenum attachment)
 		glGetTexLevelParameteriv(target, 0, GL_TEXTURE_DEPTH_SIZE, &_cbits); bits += _cbits;
 	}
 
-	if (configHandler->Get("AtiSwapRBFix",false)) {
+	if (configHandler->GetBool("AtiSwapRBFix")) {
 		if (tex->format == GL_RGBA) {
 			tex->format = GL_BGRA;
 		} else if (tex->format == GL_RGB) {
