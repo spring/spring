@@ -15,7 +15,7 @@
 
 LobbyConnection::LobbyConnection() : upwin(NULL)
 {
-	Connect(configHandler->GetString("LobbyServer", "taspringmaster.clan-sy.com"), 8200);
+	Connect(configHandler->GetString("LobbyServer"), 8200);
 }
 
 LobbyConnection::~LobbyConnection()

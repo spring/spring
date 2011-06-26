@@ -287,7 +287,7 @@ void CSound::StartThread(int maxSounds)
 		// so we do it like this ...
 		if (configHandler->IsSet("snd_device"))
 		{
-			configDeviceName = configHandler->GetString("snd_device", "YOU_SHOULD_NOT_EVER_SEE_THIS");
+			configDeviceName = configHandler->GetString("snd_device");
 			deviceName = configDeviceName.c_str();
 		}
 

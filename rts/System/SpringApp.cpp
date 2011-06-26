@@ -738,8 +738,8 @@ void SpringApp::UpdateOldConfigs()
 void SpringApp::LoadFonts()
 {
 	// Initialize font
-	const std::string fontFile = configHandler->GetString("FontFile", "fonts/FreeSansBold.otf");
-	const std::string smallFontFile = configHandler->GetString("SmallFontFile", "fonts/FreeSansBold.otf");
+	const std::string fontFile = configHandler->GetString("FontFile");
+	const std::string smallFontFile = configHandler->GetString("SmallFontFile");
 	const int fontSize = configHandler->Get("FontSize", 23);
 	const int smallFontSize = configHandler->Get("SmallFontSize", 14);
 	const int outlineWidth = configHandler->Get("FontOutlineWidth", 3);
@@ -905,7 +905,7 @@ void SpringApp::Startup()
 	else if (inputFile.rfind("sdf") == inputFile.size() - 3)
 	{
 		std::string demoFileName = inputFile;
-		std::string demoPlayerName = configHandler->GetString("name", "UnnamedPlayer");
+		std::string demoPlayerName = configHandler->GetString("name");
 
 		if (demoPlayerName.empty()) {
 			demoPlayerName = "UnnamedPlayer";
@@ -931,7 +931,7 @@ void SpringApp::Startup()
 		std::string savefile = inputFile;
 		startsetup = new ClientSetup();
 		startsetup->isHost = true;
-		startsetup->myPlayerName = configHandler->GetString("name", "unnamed");
+		startsetup->myPlayerName = configHandler->GetString("name");
 #ifdef SYNCDEBUG
 		CSyncDebugger::GetInstance()->Initialize(true, 64); //FIXME: add actual number of player
 #endif

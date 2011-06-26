@@ -50,7 +50,7 @@ void GameSetupDrawer::StartCountdown(unsigned time)
 	if (instance) {
 		instance->lastTick = SDL_GetTicks();
 		instance->readyCountdown = (int)time;
-		const std::string modeName = configHandler->GetString("CamModeName", "");
+		const std::string modeName = configHandler->GetString("CamModeName");
 		if (!modeName.empty()) {
 			camHandler->SetCameraMode(modeName);
 		} else {

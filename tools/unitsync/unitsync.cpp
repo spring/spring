@@ -2570,7 +2570,7 @@ EXPORT(const char*) GetSpringConfigString(const char* name, const char* defValue
 {
 	try {
 		CheckConfigHandler();
-		std::string res = configHandler->GetString(name, defValue);
+		std::string res = configHandler->GetString(name);
 		return GetStr(res);
 	}
 	UNITSYNC_CATCH_BLOCKS;

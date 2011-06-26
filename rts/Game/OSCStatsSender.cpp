@@ -86,7 +86,7 @@ COSCStatsSender* COSCStatsSender::GetInstance() {
 
 	if (COSCStatsSender::singleton == NULL) {
 		std::string dstAddress = configHandler->GetString(
-				"OscStatsSenderDestinationAddress", "127.0.0.1");
+				"OscStatsSenderDestinationAddress");
 		unsigned int dstPort   = configHandler->Get(
 				"OscStatsSenderDestinationPort", (unsigned int) 6447);
 

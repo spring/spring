@@ -66,7 +66,7 @@ public:
 		address = new agui::LineEdit(input);
 		address->DefaultAction.connect(boost::bind(&ConnectWindow::Finish, this, true));
 		address->SetFocus(true);
-		address->SetContent(configHandler->GetString("address", ""));
+		address->SetContent(configHandler->GetString("address"));
 		HorizontalLayout* buttons = new HorizontalLayout(wndLayout);
 		Button* connect = new Button("Connect", buttons);
 		connect->Clicked.connect(boost::bind(&ConnectWindow::Finish, this, true));
@@ -103,7 +103,7 @@ public:
 		value = new agui::LineEdit(input);
 		value->DefaultAction.connect(boost::bind(&SettingsWindow::Finish, this, true));
 		value->SetFocus(true);
-		value->SetContent(configHandler->GetString(name, ""));
+		value->SetContent(configHandler->GetString(name));
 		HorizontalLayout* buttons = new HorizontalLayout(wndLayout);
 		Button* ok = new Button("OK", buttons);
 		ok->Clicked.connect(boost::bind(&SettingsWindow::Finish, this, true));
@@ -193,7 +193,7 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWind
 	mySettings = new ClientSetup();
 
 	mySettings->isHost = server;
-	mySettings->myPlayerName = configHandler->GetString("name", "UnnamedPlayer");
+	mySettings->myPlayerName = configHandler->GetString("name");
 	if (mySettings->myPlayerName.empty()) {
 		mySettings->myPlayerName = "UnnamedPlayer";
 	} else {
@@ -222,7 +222,7 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWind
 		Button* update = new Button("Lobby connect (WIP)", menu);
 		update->Clicked.connect(boost::bind(&SelectMenu::ShowUpdateWindow, this, true));
 
-		userSetting = configHandler->GetString("LastSelectedSetting", "");
+		userSetting = configHandler->GetString("LastSelectedSetting");
 		Button* editsettings = new Button("Edit settings", menu);
 		editsettings->Clicked.connect(boost::bind(&SelectMenu::ShowSettingsList, this));
 
@@ -312,9 +312,9 @@ void SelectMenu::Settings()
 void SelectMenu::Multi()
 {
 #ifdef __unix__
-	const std::string defLobby = configHandler->GetString("DefaultLobby", "springlobby");
+	const std::string defLobby = configHandler->GetString("DefaultLobby");
 #else
-	const std::string defLobby = configHandler->GetString("DefaultLobby", "springlobby.exe");
+	const std::string defLobby = configHandler->GetString("DefaultLobby");
 #endif
 	EXECLP(defLobby.c_str(), Quote(defLobby).c_str(), NULL);
 }
@@ -392,7 +392,7 @@ void SelectMenu::ShowSettingsList()
 	for(std::map<std::string,std::string>::const_iterator iter = data.begin(); iter != data.end(); ++iter)
 		curSelect->list->AddItem(iter->first + " = " + iter->second, "");
 	if(data.find(userSetting) != data.end())
-		curSelect->list->SetCurrentItem(userSetting + " = " + configHandler->GetString(userSetting, ""));
+		curSelect->list->SetCurrentItem(userSetting + " = " + configHandler->GetString(userSetting));
 	curSelect->list->RefreshQuery();
 }
 

@@ -39,8 +39,7 @@ CInfoConsole::CInfoConsole() :
 
 	lifetime = configHandler->Get("InfoMessageTime", 400);
 
-	const std::string geo = configHandler->GetString("InfoConsoleGeometry",
-			"0.26 0.96 0.41 0.205");
+	const std::string geo = configHandler->GetString("InfoConsoleGeometry");
 	const int vars = sscanf(geo.c_str(), "%f %f %f %f",
 	                        &xpos, &ypos, &width, &height);
 	if (vars != 4) {

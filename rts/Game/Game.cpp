@@ -293,7 +293,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 
 	CInputReceiver::guiAlpha = configHandler->Get("GuiOpacity",  0.8f);
 
-	const string inputTextGeo = configHandler->GetString("InputTextGeo", "");
+	const string inputTextGeo = configHandler->GetString("InputTextGeo");
 	ParseInputTextGeometry("default");
 	ParseInputTextGeometry(inputTextGeo);
 

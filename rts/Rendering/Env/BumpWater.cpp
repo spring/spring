@@ -145,7 +145,7 @@ CBumpWater::CBumpWater()
 	reflTexSize  = next_power_of_2(configHandler->Get("BumpWaterTexSizeReflection", 512));
 	reflection   = configHandler->Get("BumpWaterReflection", 1);
 	refraction   = configHandler->Get("BumpWaterRefraction", 1);  /// 0:=off, 1:=screencopy, 2:=own rendering cycle
-	anisotropy   = atof(configHandler->GetString("BumpWaterAnisotropy", "0.0").c_str());
+	anisotropy   = atof(configHandler->GetString("BumpWaterAnisotropy").c_str());
 	depthCopy    = !!configHandler->Get("BumpWaterUseDepthTexture", 1);
 	depthBits    = configHandler->Get("BumpWaterDepthBits", (globalRendering->atiHacks)?16:24);
 	blurRefl     = !!configHandler->Get("BumpWaterBlurReflection", 0);

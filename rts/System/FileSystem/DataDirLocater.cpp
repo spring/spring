@@ -280,7 +280,7 @@ void DataDirLocater::LocateDataDirs()
 		AddDirs(dd_env);    // ENV{SPRING_DATADIR}
 		// user defined in spring config handler
 		// (Linux: ~/.springrc, Windows: .\springsettings.cfg)
-		AddDirs(SubstEnvVars(configHandler->GetString("SpringData", "")));
+		AddDirs(SubstEnvVars(configHandler->GetString("SpringData")));
 
 #ifdef WIN32
 		// All MS Windows variants
