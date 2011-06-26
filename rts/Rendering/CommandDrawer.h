@@ -10,6 +10,7 @@ class CBuilderCAI;
 class CFactoryCAI;
 class CMobileCAI;
 class CTransportCAI;
+class CUnit;
 
 struct CommandDrawer {
 public:
@@ -27,7 +28,7 @@ private:
 	void DrawTransportCAICommands(const CTransportCAI*) const;
 
 	void DrawWaitIcon(const Command&) const;
-	void DrawDefaultCommand(const Command&) const;
+	void DrawDefaultCommand(const Command&, const CUnit*) const;
 };
 
 #define commandDrawer (CommandDrawer::GetInstance())
