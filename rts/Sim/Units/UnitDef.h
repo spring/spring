@@ -58,6 +58,7 @@ public:
 	~UnitDef();
 
 	S3DModel* LoadModel() const;
+	float GetModelRadius() const;
 
 	bool DontLand() const { return dlHoverFactor >= 0.0f; }
 	void SetNoCost(bool noCost);

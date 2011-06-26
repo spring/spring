@@ -29,9 +29,7 @@ public:
 	int GetDefaultCmd(const CUnit* unit, const CFeature* feature);
 	void SlowUpdate();
 
-	void DrawCommands();
 	void GiveCommandReal(const Command& c, bool fromSynced = true);
-	void DrawQuedBuildingSquares();
 
 	/**
 	 * @param noResCheck no resources check
@@ -77,7 +75,7 @@ public:
 
 	int cachedRadiusId;
 	float cachedRadius;
-	float GetUnitDefRadius(const UnitDef* unitdef, int cmdId);
+	float GetBuildOptionRadius(const UnitDef* unitdef, int cmdId);
 
 	int buildRetries;
 

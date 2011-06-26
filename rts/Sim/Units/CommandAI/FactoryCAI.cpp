@@ -5,18 +5,12 @@
 
 #include "FactoryCAI.h"
 #include "ExternalAI/EngineOutHandler.h"
-#include "LineDrawer.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
 #include "Game/WaitCommandsAI.h"
-#include "Game/UI/CommandColors.h"
-#include "Game/UI/CursorIcons.h"
-#include "Rendering/UnitDrawer.h"
-#include "Rendering/GL/myGL.h"
-#include "Rendering/GL/glExtra.h"
 #include "Lua/LuaRules.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/BuildInfo.h"
@@ -460,102 +454,4 @@ void CFactoryCAI::UpdateIconName(int id,BuildOption& bo)
 		}
 	}
 	selectedUnits.PossibleCommandChange(owner);
-}
-
-
-void CFactoryCAI::DrawCommands()
-{
-	lineDrawer.StartPath(owner->drawMidPos, cmdColors.start);
-
-	if (owner->selfDCountdown != 0) {
-		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
-	}
-
-	if (!commandQue.empty() && (commandQue.front().GetID() == CMD_WAIT)) {
-		DrawWaitIcon(commandQue.front());
-	}
-
-	CCommandQueue::iterator ci;
-	for(ci=newUnitCommands.begin();ci!=newUnitCommands.end();++ci){
-		const int& cmd_id = ci->GetID();
-		switch(cmd_id){
-			case CMD_MOVE: {
-				const float3 endPos(ci->params[0], ci->params[1] + 3, ci->params[2]);
-				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.move);
-				break;
-			}
-			case CMD_FIGHT: {
-				const float3 endPos(ci->params[0], ci->params[1] + 3, ci->params[2]);
-				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.fight);
-				break;
-			}
-			case CMD_PATROL: {
-				const float3 endPos(ci->params[0], ci->params[1] + 3, ci->params[2]);
-				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.patrol);
-				break;
-			}
-			case CMD_ATTACK: {
-				if (ci->params.size() == 1) {
-					const CUnit* unit = uh->GetUnit(ci->params[0]);
-
-					if ((unit != NULL) && IsTrackable(unit)) {
-						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
-						lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
-					}
-				} else {
-					const float3 endPos(ci->params[0],ci->params[1]+3,ci->params[2]);
-					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
-				}
-				break;
-			}
-			case CMD_GUARD: {
-				const CUnit* unit = uh->GetUnit(ci->params[0]);
-
-				if ((unit != NULL) && IsTrackable(unit)) {
-					const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
-					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.guard);
-				}
-				break;
-			}
-			case CMD_WAIT: {
-				DrawWaitIcon(*ci);
-				break;
-			}
-			case CMD_SELFD: {
-				lineDrawer.DrawIconAtLastPos(cmd_id);
-				break;
-			}
-			default:
-				DrawDefaultCommand(*ci);
-				break;
-		}
-
-		if ((cmd_id < 0) && (ci->params.size() >= 3)) {
-			BuildInfo bi;
-			bi.def = unitDefHandler->GetUnitDefByID(-(cmd_id));
-			if (ci->params.size() == 4) {
-				bi.buildFacing = int(ci->params[3]);
-			}
-			bi.pos = float3(ci->params[0], ci->params[1], ci->params[2]);
-			bi.pos = helper->Pos2BuildPos(bi);
-
-			cursorIcons.AddBuildIcon(cmd_id, bi.pos, owner->team, bi.buildFacing);
-			lineDrawer.DrawLine(bi.pos, cmdColors.build);
-
-			// draw metal extraction range
-			if (bi.def->extractRange > 0) {
-				lineDrawer.Break(bi.pos, cmdColors.build);
-				glColor4fv(cmdColors.rangeExtract);
-
-				if (bi.def->extractSquare) {
-					glSurfaceSquare(bi.pos, bi.def->extractRange, bi.def->extractRange);
-				} else {
-					glSurfaceCircle(bi.pos, bi.def->extractRange, 40);
-				}
-
-				lineDrawer.Restart();
-			}
-		}
-	}
-	lineDrawer.FinishPath();
 }

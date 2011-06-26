@@ -4,13 +4,9 @@
 #include "mmgr.h"
 
 #include "TransportCAI.h"
-#include "LineDrawer.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/UI/CommandColors.h"
 #include "Map/Ground.h"
-#include "Rendering/GL/myGL.h"
-#include "Rendering/GL/glExtra.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h"
@@ -920,108 +916,6 @@ int CTransportCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 //		return CMD_UNLOAD_UNITS;
 }
 
-
-void CTransportCAI::DrawCommands()
-{
-	lineDrawer.StartPath(owner->drawMidPos, cmdColors.start);
-
-	if (owner->selfDCountdown != 0) {
-		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
-	}
-
-	CCommandQueue::iterator ci;
-	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		const int& cmd_id = ci->GetID();
-		switch (cmd_id) {
-			case CMD_MOVE: {
-				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.move);
-				break;
-			}
-			case CMD_FIGHT: {
-				if (ci->params.size() >= 3) {
-					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.fight);
-				}
-				break;
-			}
-			case CMD_PATROL: {
-				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.patrol);
-				break;
-			}
-			case CMD_ATTACK: {
-				if (ci->params.size() == 1) {
-					const CUnit* unit = uh->GetUnit(ci->params[0]);
-
-					if ((unit != NULL) && IsTrackable(unit)) {
-						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
-						lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
-					}
-				} else {
-					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
-				}
-				break;
-			}
-			case CMD_GUARD: {
-				const CUnit* unit = uh->GetUnit(ci->params[0]);
-				if ((unit != NULL) && IsTrackable(unit)) {
-					const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
-					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.guard);
-				}
-				break;
-			}
-			case CMD_LOAD_UNITS: {
-				if (ci->params.size() == 4) {
-					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-
-					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.load);
-					lineDrawer.Break(endPos, cmdColors.load);
-					glColor4fv(cmdColors.load);
-					glSurfaceCircle(endPos, ci->params[3], 20);
-					lineDrawer.RestartWithColor(cmdColors.load);
-				} else {
-					const CUnit* unit = uh->GetUnit(ci->params[0]);
-					if ((unit != NULL) && IsTrackable(unit)) {
-						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
-						lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.load);
-					}
-				}
-				break;
-			}
-			case CMD_UNLOAD_UNITS: {
-				if (ci->params.size() == 5) {
-					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-
-					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.unload);
-					lineDrawer.Break(endPos, cmdColors.unload);
-					glColor4fv(cmdColors.unload);
-					glSurfaceCircle(endPos, ci->params[3], 20);
-					lineDrawer.RestartWithColor(cmdColors.unload);
-				}
-				break;
-			}
-			case CMD_UNLOAD_UNIT: {
-				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.unload);
-				break;
-			}
-			case CMD_WAIT: {
-				DrawWaitIcon(*ci);
-				break;
-			}
-			case CMD_SELFD: {
-				lineDrawer.DrawIconAtLastPos(cmd_id);
-				break;
-			}
-			default:
-				DrawDefaultCommand(*ci);
-				break;
-		}
-	}
-	lineDrawer.FinishPath();
-}
 
 
 void CTransportCAI::FinishCommand()
