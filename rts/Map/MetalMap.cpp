@@ -27,7 +27,7 @@ CMetalMap::CMetalMap(const unsigned char* map, int _sizeX, int _sizeZ, float _me
 		metalScale = 1.0f;
 	}
 
-	if (configHandler->Get("MetalMapPalette", 0) == 1) {
+	if (configHandler->GetInt("MetalMapPalette") == 1) {
 		/* Swap the green and blue channels. making metal go
 		   black -> blue -> cyan,
 		   rather than the usual black -> green -> cyan. */

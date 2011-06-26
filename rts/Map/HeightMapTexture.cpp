@@ -35,7 +35,7 @@ void HeightMapTexture::Init()
 	}
 	init = true;
 
-	if (!configHandler->Get("HeightMapTexture", 1)) {
+	if (!configHandler->GetInt("HeightMapTexture")) {
 		return;
 	}
 

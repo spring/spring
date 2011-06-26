@@ -43,7 +43,7 @@ inline float fRand(float size)
 
 CGrassDrawer::CGrassDrawer()
 {
-	const int detail = configHandler->Get("GrassDetail", 3);
+	const int detail = configHandler->GetInt("GrassDetail");
 
 	if (detail == 0) {
 		grassOff = true;

@@ -95,18 +95,18 @@ CMiniMap::CMiniMap()
 		ParseGeometry(geo);
 	}
 
-	fullProxy = !!configHandler->Get("MiniMapFullProxy", 1);
-	buttonSize = configHandler->Get("MiniMapButtonSize", 16);
+	fullProxy = !!configHandler->GetInt("MiniMapFullProxy");
+	buttonSize = configHandler->GetInt("MiniMapButtonSize");
 
 	unitBaseSize = configHandler->Get("MiniMapUnitSize", 2.5f);
 	unitBaseSize = std::max(0.0f, unitBaseSize);
 	unitExponent = configHandler->Get("MiniMapUnitExp", 0.25f);
 
 	cursorScale = configHandler->Get("MiniMapCursorScale", -0.5f);
-	useIcons = !!configHandler->Get("MiniMapIcons", 1);
-	drawCommands = std::max(0, configHandler->Get("MiniMapDrawCommands", 1));
-	drawProjectiles = !!configHandler->Get("MiniMapDrawProjectiles", 1);
-	simpleColors = !!configHandler->Get("SimpleMiniMapColors", 0);
+	useIcons = !!configHandler->GetInt("MiniMapIcons");
+	drawCommands = std::max(0, configHandler->GetInt("MiniMapDrawCommands"));
+	drawProjectiles = !!configHandler->GetInt("MiniMapDrawProjectiles");
+	simpleColors = !!configHandler->GetInt("SimpleMiniMapColors");
 
 	myColor[0]    = (unsigned char)(0.2f * 255);
 	myColor[1]    = (unsigned char)(0.9f * 255);

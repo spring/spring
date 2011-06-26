@@ -116,7 +116,7 @@ void TakeScreenshot(std::string type)
 		if (args.x % 4)
 			args.x += (4 - args.x % 4);
 		
-		for (int a = configHandler->Get("ScreenshotCounter", 0); a <= 99999; ++a)
+		for (int a = configHandler->GetInt("ScreenshotCounter"); a <= 99999; ++a)
 		{
 			std::ostringstream fname;
 			fname << "screenshots/screen" << std::setfill('0') << std::setw(5) << a << '.' << type;

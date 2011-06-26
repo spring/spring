@@ -35,7 +35,7 @@ Joystick::Joystick()
 	const int numSticks = SDL_NumJoysticks();
 	LogObject() << "Joysticks found: " << numSticks;
 	
-	const int stickNum = configHandler->Get("JoystickUse", 0);
+	const int stickNum = configHandler->GetInt("JoystickUse");
 	myStick =  SDL_JoystickOpen(stickNum);
 	
 	if (myStick)

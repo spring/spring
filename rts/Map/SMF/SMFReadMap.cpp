@@ -230,7 +230,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 		#else
 		GLenum texFormat = GL_LUMINANCE_ALPHA16F_ARB;
 
-		if (!!configHandler->Get("GroundNormalTextureHighPrecision", 0)) {
+		if (!!configHandler->GetInt("GroundNormalTextureHighPrecision")) {
 			texFormat = GL_LUMINANCE_ALPHA32F_ARB;
 		}
 		#endif

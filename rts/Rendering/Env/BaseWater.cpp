@@ -103,7 +103,7 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRen
 	}
 
 	if (nextWaterRendererMode < CBaseWater::WATER_RENDERER_BASIC) {
-		nextWaterRendererMode = configHandler->Get("ReflectiveWater", int(CBaseWater::WATER_RENDERER_REFLECTIVE));
+		nextWaterRendererMode = configHandler->GetInt("ReflectiveWater");
 	}
 
 	switch (nextWaterRendererMode) {

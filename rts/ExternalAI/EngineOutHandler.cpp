@@ -55,7 +55,7 @@ bool CEngineOutHandler::IsCatchExceptions() {
 	static bool isCatchExceptions;
 
 	if (!init) {
-		isCatchExceptions = (configHandler->Get("CatchAIExceptions", 1) != 0);
+		isCatchExceptions = (configHandler->GetInt("CatchAIExceptions") != 0);
 		init = true;
 	}
 

@@ -44,16 +44,16 @@ CSound::CSound()
 	boost::recursive_mutex::scoped_lock lck(soundMutex);
 	mute = false;
 	appIsIconified = false;
-	int maxSounds = configHandler->Get("MaxSounds", 128);
+	int maxSounds = configHandler->GetInt("MaxSounds");
 	pitchAdjust = configHandler->Get("PitchAdjust", false);
 
-	masterVolume = configHandler->Get("snd_volmaster", 60) * 0.01f;
-	Channels::General.SetVolume(configHandler->Get("snd_volgeneral", 100 ) * 0.01f);
-	Channels::UnitReply.SetVolume(configHandler->Get("snd_volunitreply", 100 ) * 0.01f);
+	masterVolume = configHandler->GetInt("snd_volmaster") * 0.01f;
+	Channels::General.SetVolume(configHandler->GetInt("snd_volgeneral") * 0.01f);
+	Channels::UnitReply.SetVolume(configHandler->GetInt("snd_volunitreply") * 0.01f);
 	Channels::UnitReply.SetMaxEmmits(1);
-	Channels::Battle.SetVolume(configHandler->Get("snd_volbattle", 100 ) * 0.01f);
-	Channels::UserInterface.SetVolume(configHandler->Get("snd_volui", 100 ) * 0.01f);
-	Channels::BGMusic.SetVolume(configHandler->Get("snd_volmusic", 100 ) * 0.01f);
+	Channels::Battle.SetVolume(configHandler->GetInt("snd_volbattle") * 0.01f);
+	Channels::UserInterface.SetVolume(configHandler->GetInt("snd_volui") * 0.01f);
+	Channels::BGMusic.SetVolume(configHandler->GetInt("snd_volmusic") * 0.01f);
 
 	SoundBuffer::Initialise();
 	soundItemDef temp;
@@ -524,7 +524,7 @@ bool CSound::LoadSoundDefs(const std::string& fileName)
 size_t CSound::LoadSoundBuffer(const std::string& path, bool hardFail)
 {
 	const size_t id = SoundBuffer::GetId(path);
-	
+
 	if (id > 0) {
 		return id; // file is loaded already
 	} else {

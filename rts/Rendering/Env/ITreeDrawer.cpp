@@ -21,7 +21,7 @@ ITreeDrawer* treeDrawer = NULL;
 ITreeDrawer::ITreeDrawer()
 	: drawTrees(true)
 {
-	baseTreeDistance = configHandler->Get("TreeRadius", (unsigned int) (5.5f * 256)) / 256.0f;
+	baseTreeDistance = configHandler->GetInt("TreeRadius") / 256.0f;
 }
 
 ITreeDrawer::~ITreeDrawer() {
@@ -50,7 +50,7 @@ ITreeDrawer* ITreeDrawer::GetTreeDrawer()
 	ITreeDrawer* td = NULL;
 
 	try {
-		if (configHandler->Get("3DTrees", 1)) {
+		if (configHandler->GetInt("3DTrees")) {
 			td = new CAdvTreeDrawer();
 		}
 	} catch (content_error& e) {

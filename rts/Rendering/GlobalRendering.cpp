@@ -125,7 +125,7 @@ void CGlobalRendering::PostInit() {
 	if (GLEW_ARB_texture_compression) {
 		//! we don't even need to check it, 'cos groundtextures must have that extension
 		//! default to off because it reduces quality (smallest mipmap level is bigger)
-		compressTextures = !!configHandler->Get("CompressTextures", 0);
+		compressTextures = !!configHandler->GetInt("CompressTextures");
 	}
 
 	//! maximum 2D texture size
@@ -134,7 +134,7 @@ void CGlobalRendering::PostInit() {
 	}
 
 	//! use some ATI bugfixes?
-	const int atiHacksCfg = configHandler->Get("AtiHacks", -1);
+	const int atiHacksCfg = configHandler->GetInt("AtiHacks");
 	atiHacks = haveATI && (atiHacksCfg < 0); //! runtime detect
 	atiHacks |= (atiHacksCfg > 0); //! user override
 	if (atiHacks) {

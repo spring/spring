@@ -42,7 +42,7 @@ void CNetProtocol::InitClient(const char* server_addr, unsigned portnum, const s
 {
 	GML_STDMUTEX_LOCK(net); // InitClient
 
-	netcode::UDPConnection* conn = new netcode::UDPConnection(configHandler->Get("SourcePort", 0), server_addr, portnum);
+	netcode::UDPConnection* conn = new netcode::UDPConnection(configHandler->GetInt("SourcePort"), server_addr, portnum);
 	serverConn.reset(conn);
 	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion));
 	serverConn->Flush(true);

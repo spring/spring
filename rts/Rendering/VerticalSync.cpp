@@ -37,7 +37,7 @@ CVerticalSync::~CVerticalSync()
 
 void CVerticalSync::Init()
 {
-	SetFrames(configHandler->Get("VSync", -1));
+	SetFrames(configHandler->GetInt("VSync"));
 }
 
 

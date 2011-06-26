@@ -147,7 +147,7 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	medianCpu = 0.0f;
 	medianPing = 0;
 	curSpeedCtrl = 0;
-	speedControl = configHandler->Get("SpeedControl", 0);
+	speedControl = configHandler->GetInt("SpeedControl");
 	UpdateSpeedControl(--speedControl + 1);
 
 	allowAdditionalPlayers = configHandler->Get("AllowAdditionalPlayers", false);
@@ -164,7 +164,7 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 		// added 7. January 2011, to be removed in ~ 1 year
 		autohostip = "127.0.0.1";
 	}
-	const int autohostport = configHandler->Get("AutohostPort", 0);
+	const int autohostport = configHandler->GetInt("AutohostPort");
 
 	if (autohostport > 0) {
 		AddAutohostInterface(autohostip, autohostport);
