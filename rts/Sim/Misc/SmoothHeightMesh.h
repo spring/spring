@@ -22,18 +22,15 @@ public:
 
 	int GetMaxX() const { return maxx; }
 	int GetMaxY() const { return maxy; }
+	float GetFMaxX() const { return fmaxx; }
+	float GetFMaxY() const { return fmaxy; }
 	float GetResolution() const { return resolution; }
 
 	const float* GetMeshData() const { return &mesh[0]; }
 	const float* GetOriginalMeshData() const { return &origMesh[0]; }
 
-	bool& DrawEnabled() { return drawEnabled; }
-	void DrawWireFrame(float yoffset);
-
 private:
 	void MakeSmoothMesh(const CGround* ground);
-
-	bool drawEnabled;
 
 	const int maxx, maxy;
 	const float fmaxx, fmaxy;

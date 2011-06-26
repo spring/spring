@@ -6,7 +6,6 @@
 
 #include "SmoothHeightMesh.h"
 
-#include "Rendering/GL/VertexArray.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "System/float3.h"
@@ -462,44 +461,4 @@ void SmoothHeightMesh::MakeSmoothMesh(const CGround* ground)
 	// copy <mesh> into <origMesh>, then <smoothed> into <mesh>
 	std::copy(mesh.begin(), mesh.end(), origMesh.begin());
 	std::copy(smoothed.begin(), smoothed.end(), mesh.begin());
-}
-
-
-
-// TODO: move this to Rendering
-void SmoothHeightMesh::DrawWireFrame(float yoffset)
-{
-	if (mesh.empty())
-		return;
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glLineWidth(1.0f);
-	glDisable(GL_TEXTURE_2D);
-	glActiveTexture(GL_TEXTURE0);
-	glDisable(GL_TEXTURE_1D);
-	glDisable(GL_CULL_FACE);
-
-	const unsigned char color[4] = {0, 255, 0, 255};
-	const float inc = 4 * resolution;
-
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays((this->fmaxx / inc) * (this->fmaxy / inc) * 4, 0, VA_SIZE_C);
-
-	for (float z = 0; z < this->fmaxy; z += inc) {
-		for (float x = 0; x < this->fmaxx; x += inc) {
-			const float h1 = this->GetHeightAboveWater(x,       z      );
-			const float h2 = this->GetHeightAboveWater(x + inc, z      );
-			const float h3 = this->GetHeightAboveWater(x + inc, z + inc);
-			const float h4 = this->GetHeightAboveWater(x,       z + inc);
-
-			va->AddVertexQC(float3(x,       h1 + yoffset, z      ), color);
-			va->AddVertexQC(float3(x + inc, h2 + yoffset, z      ), color);
-			va->AddVertexQC(float3(x + inc, h3 + yoffset, z + inc), color);
-			va->AddVertexQC(float3(x,       h4 + yoffset, z + inc), color);
-		}
-	}
-
-	va->DrawArrayC(GL_QUADS);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
