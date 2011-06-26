@@ -2570,7 +2570,7 @@ EXPORT(const char*) GetSpringConfigString(const char* name, const char* defValue
 {
 	try {
 		CheckConfigHandler();
-		std::string res = configHandler->GetString(name);
+		std::string res = configHandler->IsSet(name) ? configHandler->GetString(name) : defValue;
 		return GetStr(res);
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -2581,7 +2581,7 @@ EXPORT(int) GetSpringConfigInt(const char* name, const int defValue)
 {
 	try {
 		CheckConfigHandler();
-		return configHandler->Get(name, defValue);
+		return configHandler->IsSet(name) ? configHandler->GetInt(name) : defValue;
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return defValue;
@@ -2591,7 +2591,7 @@ EXPORT(float) GetSpringConfigFloat(const char* name, const float defValue)
 {
 	try {
 		CheckConfigHandler();
-		return configHandler->Get(name, defValue);
+		return configHandler->IsSet(name) ? configHandler->GetFloat(name) : defValue;
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return defValue;
