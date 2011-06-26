@@ -4,54 +4,39 @@
 #define CONFIGHANDLER_H
 
 #include <string>
+#include <sstream>
 #include <map>
 #include <list>
 #include <stdio.h>
 
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
-#include <boost/thread/mutex.hpp>
 
 /**
  * @brief config handler base
  */
 class ConfigHandler
 {
-	typedef boost::function<void(const std::string&, const std::string&)> ConfigNotifyCallback;
+public:
+	/**
+	 * @brief instantiate global configHandler
+	 * @param configSource the config file to be used, using the default one if empty
+	 * @see GetDefaultConfig()
+	 */
+	static void Instantiate(std::string configSource = "");
+
+	/**
+	 * @brief deallocate
+	 */
+	static void Deallocate();
+
 public:
 	template<class T>
 	void NotifyOnChange(T* observer)
 	{
 		// issues: still needs to call configHandler->Get() on startup, automate it
-		boost::mutex::scoped_lock lck(observerMutex);
-		observers.push_back(boost::bind(&T::ConfigNotify, observer, _1, _2));
+		AddObserver(boost::bind(&T::ConfigNotify, observer, _1, _2));
 	};
-
-	/**
-	 * @brief set string
-	 * @param name name of key to set
-	 * @param value string value to set
-	 * @param useOverlay if true, the value will only be set in memory,
-	 *        and therefore be lost for the next game
-	 */
-	void SetString(std::string name, std::string value, bool useOverlay = false);
-
-	/**
-	 * @brief set configure option for this instance only
-	 * @deprecated use instead: SetString(name, value, true)
-	 */
-	void SetOverlay(std::string name, std::string value);
-
-	/**
-	 * @brief get string
-	 * @param name name of key to get
-	 * @param def default string value to use if key is not found
-	 * @param setInOverlay if true, the value will only be set in memory,
-	 *        and therefore be lost for the next game.
-	 *        This only has an effect if the value was not yet set.
-	 * @return string value
-	 */
-	std::string GetString(std::string name, std::string def, bool setInOverlay = false);
 
 	/// @see SetString
 	template<typename T>
@@ -77,71 +62,51 @@ public:
 		}
 	}
 
-	bool IsSet(const std::string& key) const;
-
-	void Delete(const std::string& name);
+public:
+	/**
+	 * @brief set string
+	 * @param name name of key to set
+	 * @param value string value to set
+	 * @param useOverlay if true, the value will only be set in memory,
+	 *        and therefore be lost for the next game
+	 */
+	virtual void SetString(std::string name, std::string value, bool useOverlay = false) = 0;
 
 	/**
-	 * @brief instantiate global configHandler
-	 * @param configSource the config file to be used, using the default one if empty
-	 * @see GetDefaultConfig()
+	 * @brief set configure option for this instance only
+	 * @deprecated use instead: SetString(name, value, true)
 	 */
-	static void Instantiate(std::string configSource = "");
-
-	std::string GetConfigFile() const
-	{
-		return filename;
-	}
+	virtual void SetOverlay(std::string name, std::string value) = 0;
 
 	/**
-	 * @brief deallocate
+	 * @brief get string
+	 * @param name name of key to get
+	 * @param def default string value to use if key is not found
+	 * @param setInOverlay if true, the value will only be set in memory,
+	 *        and therefore be lost for the next game.
+	 *        This only has an effect if the value was not yet set.
+	 * @return string value
 	 */
-	static void Deallocate();
+	virtual std::string GetString(std::string name, std::string def, bool setInOverlay = false) = 0;
 
-	const std::map<std::string, std::string>& GetData() const;
+	virtual bool IsSet(const std::string& key) const = 0;
+
+	virtual void Delete(const std::string& name) = 0;
+
+	virtual std::string GetConfigFile() const = 0;
+
+	virtual const std::map<std::string, std::string>& GetData() const = 0;
 
 	/**
 	 * @brief update
 	 * calls observers if configs changed
 	 */
-	void Update();
+	virtual void Update() = 0;
 
-private:
-	ConfigHandler(const std::string& configFile);
-	~ConfigHandler();
+protected:
+	typedef boost::function<void(const std::string&, const std::string&)> ConfigNotifyCallback;
 
-	/**
-	 * @brief config file name
-	 */
-	std::string filename;
-
-	/**
-	 * @brief data map
-	 *
-	 * Map used to internally cache data
-	 * instead of constantly rereading from the file.
-	 * This is to mirror the config file.
-	 */
-	std::map<std::string, std::string> data;
-
-	/**
-	 * @brief config overlay
-	 *
-	 * Will not be written to file, and will thus be discarded
-	 * when the game ends.
-	 */
-	std::map<std::string, std::string> overlay;
-
-	// helper functions
-	void Read(FILE* file);
-	void Write(FILE* file);
-	char* Strip(char* begin, char* end);
-	void AppendLine(char* line);
-
-	// observer related
-	std::list<ConfigNotifyCallback> observers;
-	boost::mutex observerMutex;
-	std::map<std::string, std::string> changedValues;
+	virtual void AddObserver(ConfigNotifyCallback observer) = 0;
 };
 
 extern ConfigHandler* configHandler;
