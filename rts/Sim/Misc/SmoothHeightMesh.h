@@ -3,6 +3,8 @@
 #ifndef SMOOTH_HEIGHT_MESH_H
 #define SMOOTH_HEIGHT_MESH_H
 
+#include <vector>
+
 class CGround;
 
 /**
