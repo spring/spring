@@ -6,8 +6,6 @@
 #include <string>
 #include <sstream>
 #include <map>
-#include <list>
-#include <stdio.h>
 
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
@@ -70,7 +68,7 @@ public:
 	 * @param useOverlay if true, the value will only be set in memory,
 	 *        and therefore be lost for the next game
 	 */
-	virtual void SetString(std::string name, std::string value, bool useOverlay = false) = 0;
+	virtual void SetString(const std::string& name, const std::string& value, bool useOverlay = false) = 0;
 
 	/**
 	 * @brief get string
@@ -81,11 +79,11 @@ public:
 	 *        This only has an effect if the value was not yet set.
 	 * @return string value
 	 */
-	virtual std::string GetString(std::string name, std::string def, bool setInOverlay = false) = 0;
+	virtual std::string GetString(const std::string& key, const std::string& def, bool setInOverlay = false) = 0;
 
 	virtual bool IsSet(const std::string& key) const = 0;
 
-	virtual void Delete(const std::string& name) = 0;
+	virtual void Delete(const std::string& key) = 0;
 
 	virtual std::string GetConfigFile() const = 0;
 
