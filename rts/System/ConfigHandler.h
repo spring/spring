@@ -73,12 +73,6 @@ public:
 	virtual void SetString(std::string name, std::string value, bool useOverlay = false) = 0;
 
 	/**
-	 * @brief set configure option for this instance only
-	 * @deprecated use instead: SetString(name, value, true)
-	 */
-	virtual void SetOverlay(std::string name, std::string value) = 0;
-
-	/**
 	 * @brief get string
 	 * @param name name of key to get
 	 * @param def default string value to use if key is not found

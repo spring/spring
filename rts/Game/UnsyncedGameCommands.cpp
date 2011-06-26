@@ -616,7 +616,7 @@ public:
 		const std::string::size_type pos = action.GetArgs().find_first_of(" ");
 		if (pos != std::string::npos) {
 			const std::string varName = action.GetArgs().substr(0, pos);
-			configHandler->SetOverlay(varName, action.GetArgs().substr(pos+1));
+			configHandler->SetString(varName, action.GetArgs().substr(pos+1), true);
 		}
 	}
 };

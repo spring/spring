@@ -28,7 +28,6 @@ public:
 	~ConfigHandlerImpl();
 
 	void SetString(std::string name, std::string value, bool useOverlay);
-	void SetOverlay(std::string name, std::string value);
 	std::string GetString(std::string name, std::string def, bool setInOverlay);
 	bool IsSet(const std::string& key) const;
 	void Delete(const std::string& name);
@@ -266,11 +265,6 @@ void ConfigHandlerImpl::Update()
 		}
 	}
 	changedValues.clear();
-}
-
-void ConfigHandlerImpl::SetOverlay(std::string name, std::string value)
-{
-	SetString(name, value, true);
 }
 
 /**
