@@ -946,8 +946,8 @@ bool CGame::DrawWorld()
 
 	if (globalRendering->drawGround) {
 		gd->Draw();
-		if (smoothGround->drawEnabled)
-			smoothGround->DrawWireframe(1);
+		if (smoothGround->DrawEnabled())
+			smoothGround->DrawWireFrame(1);
 		treeDrawer->DrawGrass();
 		gd->DrawTrees();
 	}

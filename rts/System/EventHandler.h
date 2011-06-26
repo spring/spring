@@ -65,9 +65,9 @@ class CEventHandler
 		void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
 		void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);
 
-		void DeleteSyncedUnits();
-		void UpdateDrawUnits();
 		void UpdateUnits();
+		void UpdateDrawUnits();
+		void DeleteSyncedUnits();
 
 		void UnitIdle(const CUnit* unit);
 		void UnitCommand(const CUnit* unit, const Command& command);
@@ -107,11 +107,9 @@ class CEventHandler
 		void RenderFeatureDestroyed(const CFeature* feature);
 		void RenderFeatureMoved(const CFeature* feature);
 
-		void DeleteSyncedFeatures();
-		void UpdateDrawFeatures();
 		void UpdateFeatures();
-
-		void DeleteSyncedObjects();
+		void UpdateDrawFeatures();
+		void DeleteSyncedFeatures();
 
 		void ProjectileCreated(const CProjectile* proj, int allyTeam);
 		void ProjectileDestroyed(const CProjectile* proj, int allyTeam);
@@ -122,11 +120,12 @@ class CEventHandler
 		void UnsyncedProjectileCreated(const CProjectile* proj);
 		void UnsyncedProjectileDestroyed(const CProjectile* proj);
 
-		void DeleteSyncedProjectiles();
-		void UpdateDrawProjectiles();
 		void UpdateProjectiles();
+		void UpdateDrawProjectiles();
+		void DeleteSyncedProjectiles();
 
 		void UpdateObjects();
+		void DeleteSyncedObjects();
 
 		bool Explosion(int weaponDefID, const float3& pos, const CUnit* owner);
 
