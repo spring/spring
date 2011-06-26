@@ -291,7 +291,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 
 	playerRoster.SetSortTypeByCode((PlayerRoster::SortType)configHandler->GetInt("ShowPlayerInfo"));
 
-	CInputReceiver::guiAlpha = configHandler->Get("GuiOpacity",  0.8f);
+	CInputReceiver::guiAlpha = configHandler->GetFloat("GuiOpacity");
 
 	const string inputTextGeo = configHandler->GetString("InputTextGeo");
 	ParseInputTextGeometry("default");

@@ -98,11 +98,11 @@ CMiniMap::CMiniMap()
 	fullProxy = !!configHandler->GetInt("MiniMapFullProxy");
 	buttonSize = configHandler->GetInt("MiniMapButtonSize");
 
-	unitBaseSize = configHandler->Get("MiniMapUnitSize", 2.5f);
+	unitBaseSize = configHandler->GetFloat("MiniMapUnitSize");
 	unitBaseSize = std::max(0.0f, unitBaseSize);
-	unitExponent = configHandler->Get("MiniMapUnitExp", 0.25f);
+	unitExponent = configHandler->GetFloat("MiniMapUnitExp");
 
-	cursorScale = configHandler->Get("MiniMapCursorScale", -0.5f);
+	cursorScale = configHandler->GetFloat("MiniMapCursorScale");
 	useIcons = !!configHandler->GetInt("MiniMapIcons");
 	drawCommands = std::max(0, configHandler->GetInt("MiniMapDrawCommands"));
 	drawProjectiles = !!configHandler->GetInt("MiniMapDrawProjectiles");

@@ -20,7 +20,7 @@ CTWController::CTWController()
 {
 	scrollSpeed = configHandler->GetInt("TWScrollSpeed") * 0.1f;
 	enabled = !!configHandler->GetInt("TWEnabled");
-	fov = configHandler->Get("TWFOV", 45.0f);
+	fov = configHandler->GetFloat("TWFOV");
 }
 
 

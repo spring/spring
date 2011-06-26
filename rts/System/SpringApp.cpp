@@ -418,7 +418,7 @@ bool SpringApp::SetSDLVideoMode()
 	}
 
 	//! setup LOD bias factor
-	const float lodBias = Clamp(configHandler->Get("TextureLODBias", 0.0f), -4.f, 4.f);
+	const float lodBias = Clamp(configHandler->GetFloat("TextureLODBias"), -4.f, 4.f);
 	if (fabs(lodBias)>0.01f) {
 		glTexEnvf(GL_TEXTURE_FILTER_CONTROL,GL_TEXTURE_LOD_BIAS, lodBias );
 	}
@@ -743,9 +743,9 @@ void SpringApp::LoadFonts()
 	const int fontSize = configHandler->GetInt("FontSize");
 	const int smallFontSize = configHandler->GetInt("SmallFontSize");
 	const int outlineWidth = configHandler->GetInt("FontOutlineWidth");
-	const float outlineWeight = configHandler->Get("FontOutlineWeight", 25.0f);
+	const float outlineWeight = configHandler->GetFloat("FontOutlineWeight");
 	const int smallOutlineWidth = configHandler->GetInt("SmallFontOutlineWidth");
-	const float smallOutlineWeight = configHandler->Get("SmallFontOutlineWeight", 10.0f);
+	const float smallOutlineWeight = configHandler->GetFloat("SmallFontOutlineWeight");
 
 	SafeDelete(font);
 	SafeDelete(smallFont);

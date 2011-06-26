@@ -27,11 +27,11 @@ SmoothController::SmoothController()
 	, maxHeight(10000)
 	, speedFactor(1)
 {
-	middleClickScrollSpeed = configHandler->Get("MiddleClickScrollSpeed", 0.01f);
+	middleClickScrollSpeed = configHandler->GetFloat("MiddleClickScrollSpeed");
 	scrollSpeed = configHandler->GetInt("SmoothScrollSpeed")*0.1f;
-	tiltSpeed = configHandler->Get("SmoothTiltSpeed",1.0f);
+	tiltSpeed = configHandler->GetFloat("SmoothTiltSpeed");
 	enabled = !!configHandler->GetInt("SmoothEnabled");
-	fov = configHandler->Get("SmoothFOV", 45.0f);
+	fov = configHandler->GetFloat("SmoothFOV");
 	lastSource = Noone;
 }
 

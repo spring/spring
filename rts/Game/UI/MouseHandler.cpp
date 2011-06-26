@@ -105,16 +105,16 @@ CMouseHandler::CMouseHandler()
 	soundMultiselID = sound->GetSoundId("MultiSelect", false);
 
 	invertMouse = !!configHandler->GetInt("InvertMouse");
-	doubleClickTime = configHandler->Get("DoubleClickTime", 200.0f) / 1000.0f;
+	doubleClickTime = configHandler->GetFloat("DoubleClickTime") / 1000.0f;
 
-	scrollWheelSpeed = configHandler->Get("ScrollWheelSpeed", 25.0f);
+	scrollWheelSpeed = configHandler->GetFloat("ScrollWheelSpeed");
 	scrollWheelSpeed = Clamp(scrollWheelSpeed,-255.f,255.f);
 
-	crossSize      = configHandler->Get("CrossSize", 12.0f);
-	crossAlpha     = configHandler->Get("CrossAlpha", 0.5f);
-	crossMoveScale = configHandler->Get("CrossMoveScale", 1.0f) * 0.005f;
+	crossSize      = configHandler->GetFloat("CrossSize");
+	crossAlpha     = configHandler->GetFloat("CrossAlpha");
+	crossMoveScale = configHandler->GetFloat("CrossMoveScale") * 0.005f;
 
-	dragScrollThreshold = configHandler->Get("MouseDragScrollThreshold", 0.3f);
+	dragScrollThreshold = configHandler->GetFloat("MouseDragScrollThreshold");
 
 	configHandler->NotifyOnChange(this);
 }

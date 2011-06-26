@@ -2175,9 +2175,9 @@ public:
 			const int fontSize = configHandler->GetInt("FontSize");
 			const int smallFontSize = configHandler->GetInt("SmallFontSize");
 			const int outlineWidth = configHandler->GetInt("FontOutlineWidth");
-			const float outlineWeight = configHandler->Get("FontOutlineWeight", 25.0f);
+			const float outlineWeight = configHandler->GetFloat("FontOutlineWeight");
 			const int smallOutlineWidth = configHandler->GetInt("SmallFontOutlineWidth");
-			const float smallOutlineWeight = configHandler->Get("SmallFontOutlineWeight", 10.0f);
+			const float smallOutlineWeight = configHandler->GetFloat("SmallFontOutlineWeight");
 
 			newFont = CglFont::LoadFont(action.GetArgs(), fontSize, outlineWidth, outlineWeight);
 			newSmallFont = CglFont::LoadFont(action.GetArgs(), smallFontSize, smallOutlineWidth, smallOutlineWeight);

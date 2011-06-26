@@ -19,9 +19,9 @@ CFPSController::CFPSController()
 	: oldHeight(300)
 {
 	scrollSpeed = configHandler->GetInt("FPSScrollSpeed") * 0.1f;
-	mouseScale = configHandler->Get("FPSMouseScale", 0.01f);
+	mouseScale = configHandler->GetFloat("FPSMouseScale");
 	enabled = !!configHandler->GetInt("FPSEnabled");
-	fov = configHandler->Get("FPSFOV", 45.0f);
+	fov = configHandler->GetFloat("FPSFOV");
 }
 
 
