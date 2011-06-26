@@ -38,27 +38,26 @@ public:
 
 	/// @see SetString
 	template<typename T>
-	void Set(const std::string& name, const T& value, bool useOverlay = false)
+	void Set(const std::string& key, const T& value, bool useOverlay = false)
 	{
 		std::ostringstream buffer;
 		buffer << value;
-		SetString(name, buffer.str(), useOverlay);
+		SetString(key, buffer.str(), useOverlay);
 	}
 
 	/// @see GetString
 	template<typename T>
-	T Get(const std::string& name, const T& def, bool setInOverlay = false)
+	T Get(const std::string& key) const
 	{
-		if (IsSet(name)) {
-			std::istringstream buf(GetString(name, ""/* will not be used */, setInOverlay));
-			T temp;
-			buf >> temp;
-			return temp;
-		} else {
-			Set(name, def, setInOverlay);
-			return def;
-		}
+		std::istringstream buf(GetString(key));
+		T temp;
+		buf >> temp;
+		return temp;
 	}
+
+	bool  GetBool(const std::string& key)  const { return Get<bool>(key); }
+	int   GetInt(const std::string& key)   const { return Get<int>(key); }
+	float GetFloat(const std::string& key) const { return Get<float>(key); }
 
 public:
 	/**
@@ -73,13 +72,9 @@ public:
 	/**
 	 * @brief get string
 	 * @param name name of key to get
-	 * @param def default string value to use if key is not found
-	 * @param setInOverlay if true, the value will only be set in memory,
-	 *        and therefore be lost for the next game.
-	 *        This only has an effect if the value was not yet set.
 	 * @return string value
 	 */
-	virtual std::string GetString(const std::string& key, const std::string& def, bool setInOverlay = false) = 0;
+	virtual std::string GetString(const std::string& key) const = 0;
 
 	virtual bool IsSet(const std::string& key) const = 0;
 
