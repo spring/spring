@@ -257,13 +257,13 @@ inline bool CBuilderCAI::OutOfImmobileRange(const Command& cmd) const
 }
 
 
-float CBuilderCAI::GetUnitDefRadius(const UnitDef* ud, int cmdId)
+float CBuilderCAI::GetBuildOptionRadius(const UnitDef* ud, int cmdId)
 {
 	float radius;
 	if (cachedRadiusId == cmdId) {
 		radius = cachedRadius;
 	} else {
-		radius = (ud->LoadModel())->radius;
+		radius = ud->GetModelRadius();
 		cachedRadius = radius;
 		cachedRadiusId = cmdId;
 	}
@@ -315,7 +315,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		if (!owner->unitDef->canmove) {
 			const CBuilder* builder = (CBuilder*)owner;
 			const float dist = f3Len(builder->pos - bi.pos);
-			const float radius = GetUnitDefRadius(bi.def, c.GetID());
+			const float radius = GetBuildOptionRadius(bi.def, c.GetID());
 			if (dist > (builder->buildDistance + radius - 8.0f)) {
 				return;
 			}
@@ -369,7 +369,7 @@ void CBuilderCAI::SlowUpdate()
 	map<int, string>::iterator boi = buildOptions.find(c.GetID());
 	if (!owner->beingBuilt && boi != buildOptions.end()) {
 		const UnitDef* ud = unitDefHandler->GetUnitDefByName(boi->second);
-		const float radius = GetUnitDefRadius(ud, c.GetID());
+		const float radius = GetBuildOptionRadius(ud, c.GetID());
 
 		if (inCommand) {
 			if (building) {

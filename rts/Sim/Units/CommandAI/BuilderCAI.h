@@ -75,7 +75,7 @@ public:
 
 	int cachedRadiusId;
 	float cachedRadius;
-	float GetUnitDefRadius(const UnitDef* unitdef, int cmdId);
+	float GetBuildOptionRadius(const UnitDef* unitdef, int cmdId);
 
 	int buildRetries;
 
