@@ -28,10 +28,12 @@ void SmoothHeightMeshDrawer::Draw(float yoffset) {
 
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
-	va->EnlargeArrays(numQuadsX * numQuadsZ * 4, 0, VA_SIZE_C);
+	va->EnlargeArrays((numQuadsX + 1) * (numQuadsZ + 1) * 4, 0, VA_SIZE_C);
 
-	for (float z = 0; z < smoothGround->GetFMaxY(); z += quadSize) {
-		for (float x = 0; x < smoothGround->GetFMaxX(); x += quadSize) {
+	for (unsigned int zq = 0; zq <= numQuadsZ; zq++) {
+		for (unsigned int xq = 0; xq <= numQuadsX; xq++) {
+			const float x = xq * quadSize;
+			const float z = zq * quadSize;
 			const float h1 = smoothGround->GetHeightAboveWater(x,            z           ) + yoffset;
 			const float h2 = smoothGround->GetHeightAboveWater(x + quadSize, z           ) + yoffset;
 			const float h3 = smoothGround->GetHeightAboveWater(x + quadSize, z + quadSize) + yoffset;
