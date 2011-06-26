@@ -35,7 +35,7 @@ CEFX::CEFX(ALCdevice* device)
 	,maxSlots(0)
 	,maxSlotsPerSource(0)
 {
-	airAbsorptionFactor = configHandler->Get("snd_airAbsorption", AL_DEFAULT_AIR_ABSORPTION_FACTOR);
+	airAbsorptionFactor = configHandler->GetFloat("snd_airAbsorption");
 	airAbsorptionFactor = Clamp(airAbsorptionFactor, AL_MIN_AIR_ABSORPTION_FACTOR, AL_MAX_AIR_ABSORPTION_FACTOR);
 
 	supported = alcIsExtensionPresent(device, "ALC_EXT_EFX");

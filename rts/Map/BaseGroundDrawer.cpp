@@ -24,9 +24,9 @@
 
 CBaseGroundDrawer::CBaseGroundDrawer(void)
 {
-	LODScaleReflection = configHandler->Get("GroundLODScaleReflection", 1.0f);
-	LODScaleRefraction = configHandler->Get("GroundLODScaleRefraction", 1.0f);
-	LODScaleUnitReflection = configHandler->Get("GroundLODScaleUnitReflection", 1.0f);
+	LODScaleReflection = configHandler->GetFloat("GroundLODScaleReflection");
+	LODScaleRefraction = configHandler->GetFloat("GroundLODScaleRefraction");
+	LODScaleUnitReflection = configHandler->GetFloat("GroundLODScaleUnitReflection");
 
 	infoTexAlpha = 0.25f;
 	infoTex = 0;

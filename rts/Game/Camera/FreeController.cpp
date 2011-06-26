@@ -48,18 +48,18 @@ CFreeController::CFreeController()
 	enabled     = !!configHandler->GetInt("CamFreeEnabled");
 	invertAlt   = !!configHandler->GetInt("CamFreeInvertAlt");
 	goForward   = !!configHandler->GetInt("CamFreeGoForward");
-	fov         = configHandler->Get("CamFreeFOV",           45.0f);
-	scrollSpeed = configHandler->Get("CamFreeScrollSpeed",  500.0f);
-	gravity     = configHandler->Get("CamFreeGravity",     -500.0f);
-	slide       = configHandler->Get("CamFreeSlide",          0.5f);
-	gndOffset   = configHandler->Get("CamFreeGroundOffset",  16.0f);
-	tiltSpeed   = configHandler->Get("CamFreeTiltSpeed",    150.0f);
+	fov         = configHandler->GetFloat("CamFreeFOV");
+	scrollSpeed = configHandler->GetFloat("CamFreeScrollSpeed");
+	gravity     = configHandler->GetFloat("CamFreeGravity");
+	slide       = configHandler->GetFloat("CamFreeSlide");
+	gndOffset   = configHandler->GetFloat("CamFreeGroundOffset");
+	tiltSpeed   = configHandler->GetFloat("CamFreeTiltSpeed");
 	tiltSpeed   = tiltSpeed * (PI / 180.0);
-	autoTilt    = configHandler->Get("CamFreeAutoTilt",     150.0f);
+	autoTilt    = configHandler->GetFloat("CamFreeAutoTilt");
 	autoTilt    = autoTilt * (PI / 180.0);
-	velTime     = configHandler->Get("CamFreeVelTime",        1.5f);
+	velTime     = configHandler->GetFloat("CamFreeVelTime");
 	velTime     = max(0.1f, velTime);
-	avelTime    = configHandler->Get("CamFreeAngVelTime",     1.0f);
+	avelTime    = configHandler->GetFloat("CamFreeAngVelTime");
 	avelTime    = max(0.1f, avelTime);
 }
 

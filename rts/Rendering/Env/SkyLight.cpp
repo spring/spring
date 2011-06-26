@@ -35,7 +35,7 @@ DynamicSkyLight::DynamicSkyLight()
 	lightIntensity = 1.0f;
 	groundShadowDensity = light.groundShadowDensity;
 	unitShadowDensity = light.unitShadowDensity;
-	orbitMinSunHeight = configHandler->Get("DynamicSunMinElevation", 0.1f); //FIXME mapinfo option???
+	orbitMinSunHeight = configHandler->GetFloat("DynamicSunMinElevation"); //FIXME mapinfo option???
 	orbitMinSunHeight = Clamp(orbitMinSunHeight, -1.0f, 1.0f);
 
 	// light.sunDir has already been normalized (in 3D) in MapInfo

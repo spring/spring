@@ -106,7 +106,7 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	unitAmbientColor = mapInfo->light.unitAmbientColor;
 	unitSunColor = mapInfo->light.unitSunColor;
 
-	cloakAlpha  = std::max(0.11f, std::min(1.0f, 1.0f - configHandler->Get("UnitTransparency", 0.7f)));
+	cloakAlpha  = std::max(0.11f, std::min(1.0f, 1.0f - configHandler->GetFloat("UnitTransparency")));
 	cloakAlpha1 = std::min(1.0f, cloakAlpha + 0.1f);
 	cloakAlpha2 = std::min(1.0f, cloakAlpha + 0.2f);
 	cloakAlpha3 = std::min(1.0f, cloakAlpha + 0.4f);
