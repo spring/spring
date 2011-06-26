@@ -1945,6 +1945,15 @@ int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+#define SET_IN_OVERLAY_WARNING \
+	if (lua_isboolean(L, 3)) { \
+		static bool shown = false; \
+		if (!shown) { \
+			logOutput.Print("%s: Warning: third parameter \"setInOverlay\" is deprecated", __FUNCTION__); \
+			shown = true; \
+		} \
+	}
+
 int LuaUnsyncedCtrl::GetConfigInt(lua_State* L)
 {
 	if (!CheckModUICtrl()) {
@@ -1952,8 +1961,8 @@ int LuaUnsyncedCtrl::GetConfigInt(lua_State* L)
 	}
 	const string name = luaL_checkstring(L, 1);
 	const int def     = luaL_optint(L, 2, 0);
-	const bool setInOverlay = lua_isboolean(L, 3) ? lua_toboolean(L, 3) : false;
-	const int value = configHandler->Get(name, def, setInOverlay);
+	SET_IN_OVERLAY_WARNING;
+	const int value = configHandler->IsSet(name) ? configHandler->GetInt(name) : def;
 	lua_pushnumber(L, value);
 	return 1;
 }
@@ -1979,8 +1988,8 @@ int LuaUnsyncedCtrl::GetConfigString(lua_State* L)
 	}
 	const string name = luaL_checkstring(L, 1);
 	const string def  = luaL_optstring(L, 2, "");
-	const bool setInOverlay = lua_isboolean(L, 3) ? lua_toboolean(L, 3) : false;
-	const string value = configHandler->GetString(name);
+	SET_IN_OVERLAY_WARNING;
+	const string value = configHandler->IsSet(name) ? configHandler->GetString(name) : def;
 	lua_pushsstring(L, value);
 	return 1;
 }
@@ -2777,7 +2786,7 @@ int LuaUnsyncedCtrl::SetSunParameters(lua_State* L)
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args != 6 ||
-		!lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || 
+		!lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3) ||
 		!lua_isnumber(L, 4) || !lua_isnumber(L, 5) || !lua_isnumber(L, 6)) {
 		luaL_error(L, "Incorrect arguments to SetSunParameters(float, float, float, float, float, float)");
 	}
