@@ -5,6 +5,7 @@
 
 #include <string.h>
 #include <stdexcept>
+#include <boost/thread/mutex.hpp>
 
 #include "Platform/ConfigLocater.h"
 #include "Platform/ScopedFileLock.h"
@@ -18,7 +19,64 @@ using std::vector;
 
 ConfigHandler* configHandler = NULL;
 
-void ConfigHandler::Delete(const std::string& name)
+/******************************************************************************/
+
+class ConfigHandlerImpl : public ConfigHandler
+{
+public:
+	ConfigHandlerImpl(const std::string& configFile);
+	~ConfigHandlerImpl();
+
+	void SetString(std::string name, std::string value, bool useOverlay);
+	void SetOverlay(std::string name, std::string value);
+	std::string GetString(std::string name, std::string def, bool setInOverlay);
+	bool IsSet(const std::string& key) const;
+	void Delete(const std::string& name);
+	std::string GetConfigFile() const;
+	const std::map<std::string, std::string>& GetData() const;
+	void Update();
+
+protected:
+	void AddObserver(ConfigNotifyCallback observer);
+
+private:
+	/**
+	 * @brief config file name
+	 */
+	std::string filename;
+
+	/**
+	 * @brief data map
+	 *
+	 * Map used to internally cache data
+	 * instead of constantly rereading from the file.
+	 * This is to mirror the config file.
+	 */
+	std::map<std::string, std::string> data;
+
+	/**
+	 * @brief config overlay
+	 *
+	 * Will not be written to file, and will thus be discarded
+	 * when the game ends.
+	 */
+	std::map<std::string, std::string> overlay;
+
+	// helper functions
+	void Read(FILE* file);
+	void Write(FILE* file);
+	char* Strip(char* begin, char* end);
+	void AppendLine(char* line);
+
+	// observer related
+	std::list<ConfigNotifyCallback> observers;
+	boost::mutex observerMutex;
+	std::map<std::string, std::string> changedValues;
+};
+
+/******************************************************************************/
+
+void ConfigHandlerImpl::Delete(const std::string& name)
 {
 	std::map<std::string, std::string>::iterator pos = overlay.find(name);
 	if (pos != overlay.end()) {
@@ -72,7 +130,7 @@ void ConfigHandler::Instantiate(std::string configSource)
 	}
 
 	// FIXME: use more locations
-	configHandler = new ConfigHandler(locations.front());
+	configHandler = new ConfigHandlerImpl(locations.front());
 }
 
 
@@ -86,7 +144,7 @@ void ConfigHandler::Deallocate()
 	configHandler = NULL;
 }
 
-ConfigHandler::ConfigHandler(const std::string& configFile)
+ConfigHandlerImpl::ConfigHandlerImpl(const std::string& configFile)
 {
 	filename = configFile;
 	FILE* file;
@@ -101,12 +159,12 @@ ConfigHandler::ConfigHandler(const std::string& configFile)
 	fclose(file);
 }
 
-ConfigHandler::~ConfigHandler()
+ConfigHandlerImpl::~ConfigHandlerImpl()
 {
 }
 
 
-bool ConfigHandler::IsSet(const std::string& key) const
+bool ConfigHandlerImpl::IsSet(const std::string& key) const
 {
 	return ((overlay.find(key) != overlay.end()) || (data.find(key) != data.end()));
 }
@@ -118,7 +176,7 @@ bool ConfigHandler::IsSet(const std::string& key) const
  * If string value isn't set, it returns def AND it sets data[name] = def,
  * so the defaults end up in the config file.
  */
-string ConfigHandler::GetString(const string name, const string def, bool setInOverlay)
+string ConfigHandlerImpl::GetString(const string name, const string def, bool setInOverlay)
 {
 	std::map<string,string>::iterator pos;
 	pos = overlay.find(name);
@@ -153,7 +211,7 @@ string ConfigHandler::GetString(const string name, const string def, bool setInO
  * This would happen if e.g. unitsync and spring would access
  * the config file at the same time, if we would not lock.
  */
-void ConfigHandler::SetString(const string name, const string value, bool useOverlay)
+void ConfigHandlerImpl::SetString(const string name, const string value, bool useOverlay)
 {
 	// if we set something to be persisted,
 	// we do want to override the overlay value
@@ -197,7 +255,7 @@ void ConfigHandler::SetString(const string name, const string value, bool useOve
 /**
  * @brief call observers if a config changed
  */
-void ConfigHandler::Update()
+void ConfigHandlerImpl::Update()
 {
 	boost::mutex::scoped_lock lck(observerMutex);
 	for (std::map<std::string, std::string>::const_iterator ut = changedValues.begin(); ut != changedValues.end(); ++ut) {
@@ -210,7 +268,7 @@ void ConfigHandler::Update()
 	changedValues.clear();
 }
 
-void ConfigHandler::SetOverlay(std::string name, std::string value)
+void ConfigHandlerImpl::SetOverlay(std::string name, std::string value)
 {
 	SetString(name, value, true);
 }
@@ -225,7 +283,7 @@ void ConfigHandler::SetOverlay(std::string name, std::string value)
  * Precondition: end must point to the last character of the string,
  * ie. the one before the terminating '\0'.
  */
-char* ConfigHandler::Strip(char* begin, char* end) {
+char* ConfigHandlerImpl::Strip(char* begin, char* end) {
 	while (isspace(*begin)) ++begin;
 	while (end >= begin && isspace(*end)) --end;
 	*(end + 1) = '\0';
@@ -237,7 +295,7 @@ char* ConfigHandler::Strip(char* begin, char* end) {
  *
  * Parses the 'key=value' assignment in line and sets data[key] to value.
  */
-void ConfigHandler::AppendLine(char* line) {
+void ConfigHandlerImpl::AppendLine(char* line) {
 
 	char* line_stripped = Strip(line, strchr(line, '\0'));
 
@@ -261,7 +319,7 @@ void ConfigHandler::AppendLine(char* line) {
 /**
  * @brief Rewind file and re-read it.
  */
-void ConfigHandler::Read(FILE* file)
+void ConfigHandlerImpl::Read(FILE* file)
 {
 	char buf[500];
 	rewind(file);
@@ -272,7 +330,7 @@ void ConfigHandler::Read(FILE* file)
 /**
  * @brief Truncate file and write data to it.
  */
-void ConfigHandler::Write(FILE* file)
+void ConfigHandlerImpl::Write(FILE* file)
 {
 	rewind(file);
 #ifdef WIN32
@@ -288,6 +346,17 @@ void ConfigHandler::Write(FILE* file)
 }
 
 
-const std::map<std::string, std::string> &ConfigHandler::GetData() const {
+std::string ConfigHandlerImpl::GetConfigFile() const {
+	return filename;
+}
+
+
+const std::map<std::string, std::string>& ConfigHandlerImpl::GetData() const {
 	return data;
+}
+
+
+void ConfigHandlerImpl::AddObserver(ConfigNotifyCallback observer) {
+	boost::mutex::scoped_lock lck(observerMutex);
+	observers.push_back(observer);
 }
