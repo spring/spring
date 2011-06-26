@@ -20,7 +20,7 @@
 #include "Sim/Units/CommandAI/TransportCAI.h"
 #include "Sim/Units/UnitHandler.h"
 
-bool IsUnitTrackable(const CUnit* unit) const
+static bool IsUnitTrackable(const CUnit* unit) const
 {
 	if ((unit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)) != 0) return true;
 	if (unit->unitDef->speed <= 0.0f) return true;
@@ -32,6 +32,8 @@ CommandDrawer* CommandDrawer::GetInstance() {
 	static CommandDrawer drawer;
 	return &drawer;
 }
+
+
 
 void CommandDrawer::Draw(const CCommandAI* cai) const {
 	if ((      CAirCAI* aCAI = dynamic_cast<const       CAirCAI*>(cai)) != NULL) {       DrawAirCAICommands(aCAI); return; }
