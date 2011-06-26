@@ -36,6 +36,7 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/GlobalRendering.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GroundDecalHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GroundFlash.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/CommandDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/HUDDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/IPathDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/IconHandler.cpp"

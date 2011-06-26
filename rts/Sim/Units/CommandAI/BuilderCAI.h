@@ -29,9 +29,7 @@ public:
 	int GetDefaultCmd(const CUnit* unit, const CFeature* feature);
 	void SlowUpdate();
 
-	void DrawCommands();
 	void GiveCommandReal(const Command& c, bool fromSynced = true);
-	void DrawQuedBuildingSquares();
 
 	/**
 	 * @param noResCheck no resources check

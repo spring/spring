@@ -33,7 +33,6 @@ public:
 	virtual void SlowUpdate();
 	virtual void GiveCommandReal(const Command& c, bool fromSynced = true);
 	virtual std::vector<CommandDescription>& GetPossibleCommands();
-	virtual void DrawCommands();
 	virtual void FinishCommand();
 	virtual void WeaponFired(CWeapon* weapon);
 	virtual void BuggerOff(const float3& pos, float radius);
@@ -114,7 +113,6 @@ public:
 	bool unimportantMove;
 
 protected:
-	bool IsTrackable(const CUnit* unit) const;
 	bool IsAttackCapable() const;
 	virtual bool AllowedCommand(const Command& c, bool fromSynced);
 	bool SkipParalyzeTarget(const CUnit* target);
@@ -128,7 +126,6 @@ protected:
 	 */
 	void PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2);
 	int UpdateTargetLostTimer(int unitid);
-	void DrawWaitIcon(const Command& cmd) const;
 	void DrawDefaultCommand(const Command& c) const;
 
 private:

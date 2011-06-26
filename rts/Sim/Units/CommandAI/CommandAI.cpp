@@ -5,20 +5,15 @@
 
 #include "CommandAI.h"
 #include "FactoryCAI.h"
-#include "LineDrawer.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
 #include "Game/WaitCommandsAI.h"
-#include "Game/UI/CommandColors.h"
-#include "Game/UI/CursorIcons.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
-#include "Rendering/GL/myGL.h"
-#include "Rendering/GL/glExtra.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -1309,103 +1304,6 @@ void CCommandAI::DependentDied(CObject* o)
 	}
 }
 
-
-bool CCommandAI::IsTrackable(const CUnit* unit) const
-{
-	return ((unit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)) != 0) ||
-	       (unit->unitDef->speed <= 0.0f);
-}
-
-
-void CCommandAI::DrawWaitIcon(const Command& cmd) const
-{
-	waitCommandsAI.AddIcon(cmd, lineDrawer.GetLastPos());
-}
-
-
-void CCommandAI::DrawCommands()
-{
-	lineDrawer.StartPath(owner->drawMidPos, cmdColors.start);
-
-	if (owner->selfDCountdown != 0) {
-		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
-	}
-
-	CCommandQueue::iterator ci;
-	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		switch (ci->GetID()) {
-			case CMD_ATTACK:
-			case CMD_DGUN: {
-				if (ci->params.size() == 1) {
-					const CUnit* unit = uh->GetUnit(ci->params[0]);
-
-					if ((unit != NULL) && IsTrackable(unit)) {
-						const float3 endPos =
-							helper->GetUnitErrorPos(unit, owner->allyteam);
-						lineDrawer.DrawLineAndIcon(ci->GetID(), endPos, cmdColors.attack);
-					}
-				} else {
-					const float3 endPos(ci->params[0],ci->params[1]+3,ci->params[2]);
-					lineDrawer.DrawLineAndIcon(ci->GetID(), endPos, cmdColors.attack);
-				}
-				break;
-			}
-			case CMD_WAIT:{
-				DrawWaitIcon(*ci);
-				break;
-			}
-			case CMD_SELFD:{
-				lineDrawer.DrawIconAtLastPos(ci->GetID());
-				break;
-			}
-			default:{
-				DrawDefaultCommand(*ci);
-				break;
-			}
-		}
-	}
-
-	lineDrawer.FinishPath();
-}
-
-
-void CCommandAI::DrawDefaultCommand(const Command& c) const
-{
-	// TODO add Lua callin perhaps, for more elaborate needs?
-	const CCommandColors::DrawData* dd = cmdColors.GetCustomCmdData(c.GetID());
-	if (dd == NULL) {
-		return;
-	}
-	const int paramsCount = c.params.size();
-
-	if (paramsCount == 1) {
-		const CUnit* unit = uh->GetUnit(c.params[0]);
-
-		if ((unit != NULL) && IsTrackable(unit)) {
-			const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
-			lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
-		}
-
-		return;
-	}
-
-	if (paramsCount < 3) {
-		return;
-	}
-
-	const float3 endPos(c.params[0], c.params[1] + 3.0f, c.params[2]);
-
-	if (!dd->showArea || (paramsCount < 4)) {
-		lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
-	}
-	else {
-		const float radius = c.params[3];
-		lineDrawer.DrawLineAndIcon(dd->cmdIconID, endPos, dd->color);
-		lineDrawer.Break(endPos, dd->color);
-		glSurfaceCircle(endPos, radius, 20);
-		lineDrawer.RestartWithColor(dd->color);
-	}
-}
 
 
 void CCommandAI::FinishCommand()

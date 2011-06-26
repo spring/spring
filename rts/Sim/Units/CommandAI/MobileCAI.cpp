@@ -6,11 +6,9 @@
 #include "MobileCAI.h"
 #include "TransportCAI.h"
 #include "ExternalAI/EngineOutHandler.h"
-#include "LineDrawer.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
-#include "Game/UI/CommandColors.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/LosHandler.h"
@@ -958,82 +956,6 @@ void CMobileCAI::StopMove()
 	goalPos = owner->pos;
 }
 
-void CMobileCAI::DrawCommands()
-{
-	lineDrawer.StartPath(owner->drawMidPos, cmdColors.start);
-
-	if (owner->selfDCountdown != 0) {
-		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
-	}
-
-	CCommandQueue::iterator ci;
-	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		const int& cmd_id = ci->GetID();
-		switch (cmd_id) {
-			case CMD_MOVE: {
-				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.move);
-				break;
-			}
-			case CMD_PATROL: {
-				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-				lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.patrol);
-				break;
-			}
-			case CMD_FIGHT: {
-				if (ci->params.size() != 1) {
-					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.fight);
-					break;
-				}
-			}
-			case CMD_ATTACK:
-			case CMD_DGUN: {
-				if (ci->params.size() == 1) {
-					const CUnit* unit = uh->GetUnit(ci->params[0]);
-
-					if ((unit != NULL) && IsTrackable(unit)) {
-						const float3 endPos = helper->GetUnitErrorPos(unit, owner->allyteam);
-						lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
-					}
-				}
-				else if (ci->params.size() >= 3) {
-					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.attack);
-				}
-				break;
-			}
-			case CMD_GUARD: {
-				const CUnit* unit = uh->GetUnit(ci->params[0]);
-
-				if ((unit != NULL) && IsTrackable(unit)) {
-					const float3 endPos =
-						helper->GetUnitErrorPos(unit, owner->allyteam);
-					lineDrawer.DrawLineAndIcon(cmd_id, endPos, cmdColors.guard);
-				}
-				break;
-			}
-			case CMD_LOAD_ONTO: {
-				const CUnit* unit = uh->GetUnitUnsafe(ci->params[0]);
-				lineDrawer.DrawLineAndIcon(cmd_id, unit->pos, cmdColors.load);
-				break;
-			}
-			case CMD_WAIT: {
-				DrawWaitIcon(*ci);
-				break;
-			}
-			case CMD_SELFD: {
-				lineDrawer.DrawIconAtLastPos(cmd_id);
-				break;
-			}
-			default: {
-				DrawDefaultCommand(*ci);
-				break;
-			}
-		}
-	}
-	lineDrawer.FinishPath();
-}
 
 
 void CMobileCAI::BuggerOff(const float3& pos, float radius)
