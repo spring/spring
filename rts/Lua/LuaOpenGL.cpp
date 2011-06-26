@@ -1079,7 +1079,14 @@ int LuaOpenGL::GetNumber(lua_State* L)
 int LuaOpenGL::GetString(lua_State* L)
 {
 	const GLenum pname = (GLenum) luaL_checknumber(L, 1);
-	lua_pushstring(L, (const char*)glGetString(pname));
+	const char* pstring = (const char*) glGetString(pname);
+
+	if (pstring != NULL) {
+		lua_pushstring(L, pstring);
+	} else {
+		lua_pushstring(L, "[NULL]");
+	}
+
 	return 1;
 }
 
