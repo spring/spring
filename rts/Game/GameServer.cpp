@@ -157,7 +157,7 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 		UDPNet.reset(new netcode::UDPListener(hostPort, hostIP));
 	}
 
-	std::string autohostip = configHandler->Get("AutohostIP", std::string("127.0.0.1"));
+	std::string autohostip = configHandler->GetString("AutohostIP");
 	if (StringToLower(autohostip) == "localhost") {
 		// FIXME temporary hack: we do not support (host-)names.
 		// "localhost" was the only name supported in the past.

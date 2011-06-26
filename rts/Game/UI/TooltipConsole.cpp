@@ -31,8 +31,7 @@ CTooltipConsole* tooltip = NULL;
 CTooltipConsole::CTooltipConsole()
 	: enabled(true)
 {
-	const std::string geo = configHandler->GetString("TooltipGeometry",
-			"0.0 0.0 0.41 0.1");
+	const std::string geo = configHandler->GetString("TooltipGeometry");
 	const int vars = sscanf(geo.c_str(), "%f %f %f %f", &x, &y, &w, &h);
 	if (vars != 4) {
 		x = 0.00f;

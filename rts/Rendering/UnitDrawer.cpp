@@ -80,7 +80,7 @@ static float GetLODFloat(const string& name, float def)
 	// NOTE: the inverse of the value is used
 	char buf[64];
 	SNPRINTF(buf, sizeof(buf), "%.3f", def);
-	const string valueStr = configHandler->GetString(name, buf);
+	const string valueStr = configHandler->GetString(name);
 	char* end;
 	float value = (float)strtod(valueStr.c_str(), &end);
 	if ((end == valueStr.c_str()) || (value <= 0.0f)) {

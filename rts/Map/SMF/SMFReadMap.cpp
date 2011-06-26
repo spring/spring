@@ -664,7 +664,7 @@ void CSmfReadMap::ConfigureAnisotropy()
 
 	const char* SMFTexAniso = "SMFTexAniso";
 
-	anisotropy = atof(configHandler->GetString(SMFTexAniso, "0.0").c_str());
+	anisotropy = atof(configHandler->GetString(SMFTexAniso).c_str());
 
 	if (anisotropy < 1.0f) {
 		anisotropy = 0.0f; // disabled

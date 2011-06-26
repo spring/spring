@@ -91,7 +91,7 @@ CMiniMap::CMiniMap()
 	}
 	else {
 		const std::string geodef = "2 2 200 200";
-		const std::string geo = configHandler->GetString("MiniMapGeometry", geodef);
+		const std::string geo = configHandler->GetString("MiniMapGeometry");
 		ParseGeometry(geo);
 	}
 

@@ -101,7 +101,7 @@ CLogOutput::CLogOutput()
 	bool doRotateLogFiles = false;
 	std::string rotatePolicy = "auto";
 	if (configHandler != NULL) {
-		rotatePolicy = configHandler->GetString("RotateLogFiles", "auto");
+		rotatePolicy = configHandler->GetString("RotateLogFiles");
 	}
 	if (rotatePolicy == "always") {
 		doRotateLogFiles = true;
@@ -249,7 +249,7 @@ void CLogOutput::InitializeSubsystems()
 	// and the ones specified in the configuration file.
 	// configHandler cannot be accessed here in unitsync since it may not exist.
 #ifndef UNITSYNC
-	string subsystems = "," + StringToLower(configHandler->GetString("LogSubsystems", "")) + ",";
+	string subsystems = "," + StringToLower(configHandler->GetString("LogSubsystems")) + ",";
 #else
 #  ifdef DEBUG
 	// unitsync logging in debug mode always on

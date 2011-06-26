@@ -28,7 +28,7 @@ UpdaterWindow::UpdaterWindow(Connection* _con) : agui::Window("Lobby connection"
 	agui::HorizontalLayout* usrLayout = new agui::HorizontalLayout(wndLayout);
 	new agui::TextElement(std::string("Username:"), usrLayout);
 	user = new agui::LineEdit(usrLayout);
-	user->SetContent(configHandler->GetString("name", "UnnamedPlayer"));
+	user->SetContent(configHandler->GetString("name"));
 	user->SetWeight(2);
 	agui::HorizontalLayout* pwdLayout = new agui::HorizontalLayout(wndLayout);
 	new agui::TextElement(std::string("Password:"), pwdLayout);
