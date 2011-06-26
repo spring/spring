@@ -94,9 +94,9 @@ public:
 	~ConfigHandlerImpl();
 
 	void SetString(const string& key, const string& value, bool useOverlay);
-	string GetString(const string& key, const string& def, bool setInOverlay);
+	string GetString(const string& key) const;
 	bool IsSet(const string& key) const;
-	void Delete(const string& name);
+	void Delete(const string& key);
 	string GetConfigFile() const;
 	const map<string, string>& GetData() const;
 	void Update();
@@ -314,17 +314,15 @@ bool ConfigHandlerImpl::IsSet(const string& key) const
  * If string value isn't set, it returns def AND it sets data[name] = def,
  * so the defaults end up in the config file.
  */
-string ConfigHandlerImpl::GetString(const string& key, const string& def, bool setInOverlay)
+string ConfigHandlerImpl::GetString(const string& key) const
 {
 	for (vector<ConfigSource>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
 		if (it->IsSet(key)) {
 			return it->GetString(key);
 		}
 	}
-	if (setInOverlay) {
-		GetOverlay().SetString(key, def);
-	}
-	return def;
+	throw std::runtime_error("ConfigHandler: Error: Key does not exist: " + key +
+			"\nPlease add the key to the list of allowed configuration values.");
 }
 
 /**
@@ -348,7 +346,7 @@ string ConfigHandlerImpl::GetString(const string& key, const string& def, bool s
 void ConfigHandlerImpl::SetString(const string& key, const string& value, bool useOverlay)
 {
 	// Don't do anything if value didn't change.
-	if (GetString(key, "", false) == value) {
+	if (IsSet(key) && GetString(key) == value) {
 		return;
 	}
 
