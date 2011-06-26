@@ -7,6 +7,7 @@ SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/BaseNetProtocol.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/ConfigHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/ConfigSource.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/DefaultConfigSource.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/EventBatchHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/EventClient.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/EventHandler.cpp"
