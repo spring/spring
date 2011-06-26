@@ -40,6 +40,7 @@
 #include "Rendering/glFont.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/HUDDrawer.h"
+#include "Rendering/SmoothHeightMeshDrawer.h"
 #include "Rendering/Screenshot.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
@@ -48,7 +49,6 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Groups/GroupHandler.h"
-#include "Sim/Misc/SmoothHeightMesh.h"
 #include "UI/CommandColors.h"
 #include "UI/EndGameBox.h"
 #include "UI/GameInfo.h"
@@ -2631,8 +2631,8 @@ public:
 			"Show/Hide the smooth air-mesh map overlay") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		SetBoolArg(smoothGround->drawEnabled, action.GetArgs());
-		LogSystemStatus("smooth air-mesh map overlay", smoothGround->drawEnabled);
+		SetBoolArg(smoothHeightMeshDrawer->DrawEnabled(), action.GetArgs());
+		LogSystemStatus("smooth air-mesh map overlay", smoothHeightMeshDrawer->DrawEnabled());
 	}
 };
 
