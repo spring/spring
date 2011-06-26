@@ -6,8 +6,10 @@
 struct SmoothHeightMeshDrawer {
 public:
 	static SmoothHeightMeshDrawer* GetInstance();
-	void Draw(float yoffset);
 
+	SmoothHeightMeshDrawer(): drawEnabled(false) {}
+
+	void Draw(float yoffset);
 	bool& DrawEnabled() { return drawEnabled; }
 
 private:
