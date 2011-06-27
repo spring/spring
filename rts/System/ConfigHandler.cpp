@@ -43,7 +43,7 @@ using std::vector;
 
 typedef map<string, string> StringMap;
 
-ConfigValue* ConfigValue::head;
+ConfigVariable* ConfigVariable::head;
 ConfigHandler* configHandler;
 
 /******************************************************************************/

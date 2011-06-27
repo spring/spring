@@ -10,54 +10,7 @@
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 
-namespace cfg
-{
-	class _NoDefault {};
-	const _NoDefault NoDefault = _NoDefault();
-}
-
-/**
- * @brief Configuration value declaration
- */
-class ConfigValue
-{
-public:
-	template<typename T>
-	ConfigValue(const std::string& key, const T& value, const std::string& comment = ""):
-			next(head), key(key), defaultValue(ToString(value)), comment(comment), hasDefaultValue(true)
-	{
-		head = this;
-	}
-
-private:
-	template<typename T>
-	static std::string ToString(const T& value)
-	{
-		std::ostringstream buffer;
-		buffer << value;
-		return buffer.str();
-	}
-
-	static ConfigValue* head;
-
-private:
-	ConfigValue* next;
-	std::string key;
-	std::string defaultValue;
-	std::string comment;
-	bool hasDefaultValue;
-
-	friend class ConfigHandler;
-};
-
-// note: explicit specialization has to be at the namespace scope
-template<>
-inline ConfigValue::ConfigValue<cfg::_NoDefault>(const std::string& key, const cfg::_NoDefault& value, const std::string& comment):
-		next(head), key(key), comment(comment), hasDefaultValue(false)
-{
-	head = this;
-}
-
+#include "ConfigVariable.h"
 
 /**
  * @brief config handler base
