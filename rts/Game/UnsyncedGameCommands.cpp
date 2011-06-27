@@ -284,7 +284,7 @@ extern volatile int gmlMultiThreadSim;
 extern volatile int gmlStartSim;
 #endif // GML_ENABLE_SIM
 
-namespace unsyncedActionExecutors {
+namespace { // prevents linking problems in case of duplicate symbols
 
 /* XXX
  * An alternative way of dealing with the commands.
@@ -1178,7 +1178,6 @@ public:
 	}
 
 	static void RegisterCommandVariants() {
-		using namespace unsyncedActionExecutors;
 
 		unsyncedGameCommands->AddActionExecutor(new ChatActionExecutor("",     "",   false));
 		unsyncedGameCommands->AddActionExecutor(new ChatActionExecutor("All",  "",   true));
@@ -2940,7 +2939,7 @@ private:
 	}
 };
 
-} // namespace syncedActionExecutors
+} // namespace (unnamed)
 
 
 
@@ -3009,8 +3008,6 @@ bool CGame::ActionReleased(const Action& action)
 
 
 void UnsyncedGameCommands::AddDefaultActionExecutors() {
-
-	using namespace unsyncedActionExecutors;
 
 	AddActionExecutor(new SelectActionExecutor());
 	AddActionExecutor(new SelectUnitsActionExecutor());
