@@ -40,7 +40,6 @@
 #include "Rendering/glFont.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/HUDDrawer.h"
-#include "Rendering/SmoothHeightMeshDrawer.h"
 #include "Rendering/Screenshot.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
@@ -2618,19 +2617,6 @@ public:
 
 
 
-class AirMeshActionExecutor : public IUnsyncedActionExecutor {
-public:
-	AirMeshActionExecutor() : IUnsyncedActionExecutor("AirMesh",
-			"Show/Hide the smooth air-mesh map overlay") {}
-
-	void Execute(const UnsyncedAction& action) const {
-		SetBoolArg(smoothHeightMeshDrawer->DrawEnabled(), action.GetArgs());
-		LogSystemStatus("smooth air-mesh map overlay", smoothHeightMeshDrawer->DrawEnabled());
-	}
-};
-
-
-
 class SetGammaActionExecutor : public IUnsyncedActionExecutor {
 public:
 	SetGammaActionExecutor() : IUnsyncedActionExecutor("SetGamma",
@@ -3151,7 +3137,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DistDrawActionExecutor());
 	AddActionExecutor(new LODScaleActionExecutor());
 	AddActionExecutor(new WireMapActionExecutor());
-	AddActionExecutor(new AirMeshActionExecutor());
 	AddActionExecutor(new SetGammaActionExecutor());
 	AddActionExecutor(new CrashActionExecutor());
 	AddActionExecutor(new ExceptionActionExecutor());
