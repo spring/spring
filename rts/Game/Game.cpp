@@ -56,8 +56,8 @@
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/DebugColVolDrawer.h"
-#include "Rendering/FarTextureHandler.h"
 #include "Rendering/glFont.h"
+#include "Rendering/FeatureDrawer.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/Screenshot.h"
 #include "Rendering/GroundDecalHandler.h"
@@ -366,7 +366,6 @@ CGame::~CGame()
 	SafeDelete(cam2);
 	SafeDelete(icon::iconHandler);
 	SafeDelete(geometricObjects);
-	SafeDelete(farTextureHandler);
 	SafeDelete(texturehandler3DO);
 	SafeDelete(texturehandlerS3O);
 
@@ -525,10 +524,10 @@ void CGame::LoadSimulation(const std::string& mapName)
 		modelParser = new C3DModelLoader();
 
 		loadscreen->SetLoadMessage("Creating Unit Textures");
-		texturehandler3DO = new C3DOTextureHandler;
-		texturehandlerS3O = new CS3OTextureHandler;
+		texturehandler3DO = new C3DOTextureHandler();
+		texturehandlerS3O = new CS3OTextureHandler();
 
-		farTextureHandler = new CFarTextureHandler();
+		featureDrawer = new CFeatureDrawer();
 	}
 
 	loadscreen->SetLoadMessage("Loading Weapon Definitions");
