@@ -58,11 +58,14 @@ CWorldDrawer::CWorldDrawer()
 	inMapDrawerView = new CInMapDrawView();
 	pathDrawer = IPathDrawer::GetInstance();
 
+	farTextureHandler = new CFarTextureHandler();
+
 	loadscreen->SetLoadMessage("Creating ProjectileDrawer & UnitDrawer");
 	projectileDrawer = new CProjectileDrawer();
 	projectileDrawer->LoadWeaponTextures();
 	unitDrawer = new CUnitDrawer();
-	featureDrawer = new CFeatureDrawer();
+	// FIXME: see CGame::LoadSimulation (we only delete it)
+	// featureDrawer = new CFeatureDrawer();
 	modelDrawer = IModelDrawer::GetInstance();
 
 	loadscreen->SetLoadMessage("Creating Water");
@@ -83,6 +86,7 @@ CWorldDrawer::~CWorldDrawer()
 	SafeDelete(featureDrawer);
 	SafeDelete(unitDrawer); // depends on unitHandler, cubeMapHandler, groundDecals
 	SafeDelete(projectileDrawer);
+	SafeDelete(farTextureHandler);
 
 	SafeDelete(cubeMapHandler);
 	SafeDelete(groundDecals);
@@ -144,14 +148,16 @@ void CWorldDrawer::Draw()
 	static const double plane_below[4] = {0.0f, -1.0f, 0.0f, 0.0f};
 	static const double plane_above[4] = {0.0f,  1.0f, 0.0f, 0.0f};
 
-	glClipPlane(GL_CLIP_PLANE3, plane_below);
-	glEnable(GL_CLIP_PLANE3);
+	{
+		glClipPlane(GL_CLIP_PLANE3, plane_below);
+		glEnable(GL_CLIP_PLANE3);
 
-		//! draw cloaked part below surface
+		//! draw cloaked objects below water surface
 		unitDrawer->DrawCloakedUnits(noAdvShading);
 		featureDrawer->DrawFadeFeatures(noAdvShading);
 
-	glDisable(GL_CLIP_PLANE3);
+		glDisable(GL_CLIP_PLANE3);
+	}
 
 	//! draw water
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
@@ -166,14 +172,16 @@ void CWorldDrawer::Draw()
 		}
 	}
 
-	glClipPlane(GL_CLIP_PLANE3, plane_above);
-	glEnable(GL_CLIP_PLANE3);
+	{
+		glClipPlane(GL_CLIP_PLANE3, plane_above);
+		glEnable(GL_CLIP_PLANE3);
 
-		//! draw cloaked part above surface
+		//! draw cloaked objects above water surface
 		unitDrawer->DrawCloakedUnits(noAdvShading);
 		featureDrawer->DrawFadeFeatures(noAdvShading);
 
-	glDisable(GL_CLIP_PLANE3);
+		glDisable(GL_CLIP_PLANE3);
+	}
 
 	projectileDrawer->Draw(false);
 
