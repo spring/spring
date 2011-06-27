@@ -323,6 +323,7 @@ CGame::~CGame()
 	tracefile << "[" << __FUNCTION__ << "]";
 #endif
 
+	// TODO move these to the end of this dtor, once all action-executors are registered by their respective engine sub-parts
 	UnsyncedGameCommands::DestroyInstance();
 	SyncedGameCommands::DestroyInstance();
 
