@@ -212,7 +212,7 @@ macro    (GetNativeSourcesRecursive _var _dir _relDir)
 endmacro (GetNativeSourcesRecursive _var _dir _relDir)
 
 
-
+# Check if the CMake version used is >= "major.minor.patch".
 macro    (CheckMinCMakeVersion res_var major minor patch)
 	SET(${res_var} FALSE)
 	IF     (${CMAKE_MAJOR_VERSION} GREATER ${major})
