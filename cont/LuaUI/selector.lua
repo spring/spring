@@ -550,7 +550,9 @@ function widget:MouseRelease(x, y, button)
     if maxx - 50 < x and x < maxx and miny - 20 < y and y < miny then
       for _,namedata in ipairs(fullWidgetsList) do
         widgetHandler:DisableWidget(namedata[1])
+        widgetHandler.orderList[namedata[1]] = 0
       end
+      widgetHandler:SaveConfigData()    
       return -1
     end
   end
@@ -573,7 +575,7 @@ function widget:MouseRelease(x, y, button)
     else
       widgetHandler:RaiseWidget(w)
     end
-    widgetHandler:SaveOrderList()
+    widgetHandler:SaveConfigData()
   end
   return -1
 end
