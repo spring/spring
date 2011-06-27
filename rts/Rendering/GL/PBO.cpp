@@ -15,7 +15,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "System/ConfigHandler.h"
 
-static ConfigValue cfgUsePBO("UsePBO", 1);
+CONFIG(UsePBO, 1);
 
 /**
  * Returns if the current gpu drivers support Pixelbuffer Objects

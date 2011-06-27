@@ -27,7 +27,7 @@
 #include "maindefines.h" // for sPS, cPS, cPD
 #include "Platform/Misc.h"
 
-static ConfigValue cfgSpringData("SpringData", "");
+CONFIG(SpringData, "");
 
 DataDir::DataDir(const std::string& path)
 	: path(path)

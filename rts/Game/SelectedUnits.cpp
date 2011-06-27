@@ -41,7 +41,7 @@
 
 #define PLAY_SOUNDS 1
 
-static ConfigValue cfgBuildIconsFirst("BuildIconsFirst", 0);
+CONFIG(BuildIconsFirst, 0);
 
 CSelectedUnits selectedUnits;
 

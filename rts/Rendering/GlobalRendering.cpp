@@ -14,8 +14,8 @@
 
 #include <string>
 
-static ConfigValue cfgCompressTextures("CompressTextures", 0);
-static ConfigValue cfgAtiHacks("AtiHacks", -1);
+CONFIG(CompressTextures, 0);
+CONFIG(AtiHacks, -1);
 
 /**
  * @brief global rendering

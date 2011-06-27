@@ -85,35 +85,35 @@
 #endif
 
 
-static ConfigValue cfgSetCoreAffinity("SetCoreAffinity", 0);
-static ConfigValue cfgDepthBufferBits("DepthBufferBits", 24);
-static ConfigValue cfgStencilBufferBits("StencilBufferBits", 8);
-static ConfigValue cfgFSAALevel("FSAALevel", 0);
-static ConfigValue cfgSmoothLines("SmoothLines", 0); //! FSAA ? 0 : 3;  // until a few things get fixed
-static ConfigValue cfgSmoothPoints("SmoothPoints", 0); //! FSAA ? 0 : 3;
-static ConfigValue cfgTextureLODBias("TextureLODBias", 0.0f);
-static ConfigValue cfgFixAltTab("FixAltTab", 0);
-static ConfigValue cfgDualScreenMode("DualScreenMode", 0);
-static ConfigValue cfgDualScreenMiniMapOnLeft("DualScreenMiniMapOnLeft", 0);
-static ConfigValue cfgVersion("Version",0);
-static ConfigValue cfgFSAA("FSAA", false);
-static ConfigValue cfgFontFile("FontFile", "fonts/FreeSansBold.otf");
-static ConfigValue cfgSmallFontFile("SmallFontFile", "fonts/FreeSansBold.otf");
-static ConfigValue cfgFontSize("FontSize", 23);
-static ConfigValue cfgSmallFontSize("SmallFontSize", 14);
-static ConfigValue cfgFontOutlineWidth("FontOutlineWidth", 3);
-static ConfigValue cfgFontOutlineWeight("FontOutlineWeight", 25.0f);
-static ConfigValue cfgSmallFontOutlineWidth("SmallFontOutlineWidth", 2);
-static ConfigValue cfgSmallFontOutlineWeight("SmallFontOutlineWeight", 10.0f);
-static ConfigValue cfgFullscreen("Fullscreen", 1);
-static ConfigValue cfgXResolution("XResolution", 0);
-static ConfigValue cfgYResolution("YResolution", 0);
-static ConfigValue cfgWindowPosX("WindowPosX", 32);
-static ConfigValue cfgWindowPosY("WindowPosY", 32);
-static ConfigValue cfgWindowState("WindowState", 0);
-static ConfigValue cfgHardwareThreadCount("HardwareThreadCount", 0);
-static ConfigValue cfgMultiThreadSim("MultiThreadSim", 1);
-static ConfigValue cfgName("name", "UnnamedPlayer");
+CONFIG(SetCoreAffinity, 0);
+CONFIG(DepthBufferBits, 24);
+CONFIG(StencilBufferBits, 8);
+CONFIG(FSAALevel, 0);
+CONFIG(SmoothLines, 0); //! FSAA ? 0 : 3;  // until a few things get fixed
+CONFIG(SmoothPoints, 0); //! FSAA ? 0 : 3;
+CONFIG(TextureLODBias, 0.0f);
+CONFIG(FixAltTab, 0);
+CONFIG(DualScreenMode, 0);
+CONFIG(DualScreenMiniMapOnLeft, 0);
+CONFIG(Version,0);
+CONFIG(FSAA, false);
+CONFIG(FontFile, "fonts/FreeSansBold.otf");
+CONFIG(SmallFontFile, "fonts/FreeSansBold.otf");
+CONFIG(FontSize, 23);
+CONFIG(SmallFontSize, 14);
+CONFIG(FontOutlineWidth, 3);
+CONFIG(FontOutlineWeight, 25.0f);
+CONFIG(SmallFontOutlineWidth, 2);
+CONFIG(SmallFontOutlineWeight, 10.0f);
+CONFIG(Fullscreen, 1);
+CONFIG(XResolution, 0);
+CONFIG(YResolution, 0);
+CONFIG(WindowPosX, 32);
+CONFIG(WindowPosY, 32);
+CONFIG(WindowState, 0);
+CONFIG(HardwareThreadCount, 0);
+CONFIG(MultiThreadSim, 1);
+CONFIG(name, "UnnamedPlayer");
 
 
 ClientSetup* startsetup = NULL;

@@ -26,7 +26,7 @@
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 
-static ConfigValue cfgGrassDetail("GrassDetail", 3);
+CONFIG(GrassDetail, 3);
 
 static const float turfSize        = 20.0f;            // single turf size
 static const float partTurfSize    = turfSize * 0.6f;  // single turf size

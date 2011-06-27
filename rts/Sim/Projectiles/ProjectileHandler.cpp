@@ -27,8 +27,8 @@
 
 using namespace std;
 
-static ConfigValue cfgMaxParticles("MaxParticles", 1000);
-static ConfigValue cfgMaxNanoParticles("MaxNanoParticles", 2500);
+CONFIG(MaxParticles, 1000);
+CONFIG(MaxNanoParticles, 2500);
 
 CProjectileHandler* ph;
 

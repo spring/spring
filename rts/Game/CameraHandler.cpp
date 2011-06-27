@@ -22,10 +22,10 @@
 #include "System/ConfigHandler.h"
 #include "System/LogOutput.h"
 
-static ConfigValue cfgCamModeName("CamModeName", "");
-static ConfigValue cfgCamMode("CamMode", 5);
-static ConfigValue cfgCamTimeFactor("CamTimeFactor", 1.0f);
-static ConfigValue cfgCamTimeExponent("CamTimeExponent", 4.0f);
+CONFIG(CamModeName, "");
+CONFIG(CamMode, 5);
+CONFIG(CamTimeFactor, 1.0f);
+CONFIG(CamTimeExponent, 4.0f);
 
 
 CCameraHandler* camHandler = NULL;

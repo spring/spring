@@ -78,7 +78,7 @@ using std::set;
 #undef far // avoid collision with windef.h
 #undef near
 
-static ConfigValue cfgLuaShaders("LuaShaders", 1);
+CONFIG(LuaShaders, 1);
 
 static const int MAX_TEXTURE_UNITS = 32;
 

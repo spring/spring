@@ -11,7 +11,7 @@
 #include "System/LogOutput.h"
 #include "System/ConfigHandler.h"
 
-static ConfigValue cfgNoSound("NoSound", false);
+CONFIG(NoSound, false);
 
 ISound* ISound::singleton = NULL;
 

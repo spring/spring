@@ -20,7 +20,7 @@
 #include <SDL_keysym.h>
 extern unsigned char *keys;
 
-static ConfigValue cfgSM3TerrainDetail("SM3TerrainDetail", 200);
+CONFIG(SM3TerrainDetail, 200);
 
 CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap *m)
 {

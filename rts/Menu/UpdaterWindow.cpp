@@ -16,7 +16,7 @@
 #include "aGui/Button.h"
 #include "aGui/Gui.h"
 
-static ConfigValue cfgName("name", "UnnamedPlayer");
+CONFIG(name, "UnnamedPlayer");
 
 UpdaterWindow::UpdaterWindow(Connection* _con) : agui::Window("Lobby connection"), agreement(NULL), con(_con)
 {

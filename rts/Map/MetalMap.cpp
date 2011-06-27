@@ -7,7 +7,7 @@
 #include "ReadMap.h"
 #include "ConfigHandler.h"
 
-static ConfigValue cfgMetalMapPalette("MetalMapPalette", 0);
+CONFIG(MetalMapPalette, 0);
 
 CR_BIND(CMetalMap,(NULL, 0, 0, 0.0f));
 

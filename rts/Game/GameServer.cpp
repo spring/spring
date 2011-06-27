@@ -68,11 +68,11 @@
 
 using netcode::RawPacket;
 
-static ConfigValue cfgSpeedControl("SpeedControl", 0);
-static ConfigValue cfgAllowAdditionalPlayers("AllowAdditionalPlayers", false);
-static ConfigValue cfgWhiteListAdditionalPlayers("WhiteListAdditionalPlayers", true);
-static ConfigValue cfgAutohostIP("AutohostIP", "127.0.0.1");
-static ConfigValue cfgAutohostPort("AutohostPort", 0);
+CONFIG(SpeedControl, 0);
+CONFIG(AllowAdditionalPlayers, false);
+CONFIG(WhiteListAdditionalPlayers, true);
+CONFIG(AutohostIP, "127.0.0.1");
+CONFIG(AutohostPort, 0);
 
 /// frames until a syncchech will time out and a warning is given out
 const unsigned SYNCCHECK_TIMEOUT = 300;

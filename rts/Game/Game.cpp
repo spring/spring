@@ -170,17 +170,17 @@ extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 #endif
 
 
-static ConfigValue cfgWindowedEdgeMove("WindowedEdgeMove", 1);
-static ConfigValue cfgFullscreenEdgeMove("FullscreenEdgeMove", 1);
-static ConfigValue cfgShowFPS("ShowFPS", 0);
-static ConfigValue cfgShowClock("ShowClock", 1);
-static ConfigValue cfgShowSpeed("ShowSpeed", 0);
-static ConfigValue cfgShowMTInfo("ShowMTInfo", 1);
-static ConfigValue cfgSpeedControl("SpeedControl", 0);
-static ConfigValue cfgShowPlayerInfo("ShowPlayerInfo", 1);
-static ConfigValue cfgGuiOpacity("GuiOpacity",  0.8f);
-static ConfigValue cfgInputTextGeo("InputTextGeo", "");
-static ConfigValue cfgLuaModUICtrl("LuaModUICtrl", 1);
+CONFIG(WindowedEdgeMove, 1);
+CONFIG(FullscreenEdgeMove, 1);
+CONFIG(ShowFPS, 0);
+CONFIG(ShowClock, 1);
+CONFIG(ShowSpeed, 0);
+CONFIG(ShowMTInfo, 1);
+CONFIG(SpeedControl, 0);
+CONFIG(ShowPlayerInfo, 1);
+CONFIG(GuiOpacity,  0.8f);
+CONFIG(InputTextGeo, "");
+CONFIG(LuaModUICtrl, 1);
 
 
 CGame* game = NULL;

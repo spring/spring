@@ -33,8 +33,8 @@
 
 #define PATHDEBUG false
 
-static ConfigValue cfgHardwareThreadCount("HardwareThreadCount", 0);
-static ConfigValue cfgMaxPathCostsMemoryFootPrint("MaxPathCostsMemoryFootPrint", 512 * 1024 * 1024);
+CONFIG(HardwareThreadCount, 0);
+CONFIG(MaxPathCostsMemoryFootPrint, 512 * 1024 * 1024);
 
 const std::string pathDir = "cache/paths/";
 

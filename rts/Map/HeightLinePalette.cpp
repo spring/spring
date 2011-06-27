@@ -4,7 +4,7 @@
 
 #include "ConfigHandler.h"
 
-static ConfigValue cfgColorElev("ColorElev", 1);
+CONFIG(ColorElev, 1);
 
 CHeightLinePalette::CHeightLinePalette()
 {

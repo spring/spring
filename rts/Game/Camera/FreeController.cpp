@@ -17,18 +17,18 @@
 using std::max;
 using std::min;
 
-static ConfigValue cfgCamFreeEnabled("CamFreeEnabled", 0);
-static ConfigValue cfgCamFreeInvertAlt("CamFreeInvertAlt", 0);
-static ConfigValue cfgCamFreeGoForward("CamFreeGoForward", 0);
-static ConfigValue cfgCamFreeFOV("CamFreeFOV", 45.0f);
-static ConfigValue cfgCamFreeScrollSpeed("CamFreeScrollSpeed", 500.0f);
-static ConfigValue cfgCamFreeGravity("CamFreeGravity", -500.0f);
-static ConfigValue cfgCamFreeSlide("CamFreeSlide", 0.5f);
-static ConfigValue cfgCamFreeGroundOffset("CamFreeGroundOffset", 16.0f);
-static ConfigValue cfgCamFreeTiltSpeed("CamFreeTiltSpeed", 150.0f);
-static ConfigValue cfgCamFreeAutoTilt("CamFreeAutoTilt", 150.0f);
-static ConfigValue cfgCamFreeVelTime("CamFreeVelTime", 1.5f);
-static ConfigValue cfgCamFreeAngVelTime("CamFreeAngVelTime", 1.0f);
+CONFIG(CamFreeEnabled, 0);
+CONFIG(CamFreeInvertAlt, 0);
+CONFIG(CamFreeGoForward, 0);
+CONFIG(CamFreeFOV, 45.0f);
+CONFIG(CamFreeScrollSpeed, 500.0f);
+CONFIG(CamFreeGravity, -500.0f);
+CONFIG(CamFreeSlide, 0.5f);
+CONFIG(CamFreeGroundOffset, 16.0f);
+CONFIG(CamFreeTiltSpeed, 150.0f);
+CONFIG(CamFreeAutoTilt, 150.0f);
+CONFIG(CamFreeVelTime, 1.5f);
+CONFIG(CamFreeAngVelTime, 1.0f);
 
 /******************************************************************************/
 /******************************************************************************/

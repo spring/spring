@@ -24,8 +24,8 @@
 #include <stdexcept>
 #include <fstream>
 
-static ConfigValue cfgSM3ForceFallbackTex("SM3ForceFallbackTex", 0);
-static ConfigValue cfgSM3MaxTextureStages("SM3MaxTextureStages", 10);
+CONFIG(SM3ForceFallbackTex, 0);
+CONFIG(SM3MaxTextureStages, 10);
 
 struct Sm3LoadCB: terrain::ILoadCallback
 {
