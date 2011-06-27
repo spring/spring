@@ -4,6 +4,8 @@
 
 #include "ConfigHandler.h"
 
+static ConfigValue cfgColorElev("ColorElev", 1);
+
 CHeightLinePalette::CHeightLinePalette()
 {
 	if (configHandler->GetInt("ColorElev")) {

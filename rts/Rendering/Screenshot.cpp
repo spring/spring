@@ -17,6 +17,8 @@
 
 #undef CreateDirectory
 
+static ConfigValue cfgScreenshotCounter("ScreenshotCounter", 0);
+
 struct FunctionArgs
 {
 	boost::uint8_t* buf;
@@ -37,7 +39,7 @@ public:
 			delete myThread;
 		}
 	};
-	
+
 	void AddTask(FunctionArgs arg)
 	{
 		{
@@ -45,14 +47,14 @@ public:
 			tasks.push_back(arg);
 			Update();
 		}
-		
+
 		if (!myThread)
 		{
 			finished = false;
 			myThread = new boost::thread(boost::bind(&SaverThread::SaveStuff, this));
 		}
 	};
-	
+
 	void Update()
 	{
 		if (finished && myThread)
@@ -63,7 +65,7 @@ public:
 			finished = false;
 		}
 	};
-	
+
 private:
 	bool GetTask(FunctionArgs& args)
 	{
@@ -79,7 +81,7 @@ private:
 			return false;
 		}
 	}
-	
+
 	void SaveStuff()
 	{
 		FunctionArgs args;
@@ -93,7 +95,7 @@ private:
 		}
 		finished = true;
 	};
-	
+
 	boost::mutex myMutex;
 	boost::thread* myThread;
 	volatile bool finished;
@@ -115,7 +117,7 @@ void TakeScreenshot(std::string type)
 
 		if (args.x % 4)
 			args.x += (4 - args.x % 4);
-		
+
 		for (int a = configHandler->GetInt("ScreenshotCounter"); a <= 99999; ++a)
 		{
 			std::ostringstream fname;

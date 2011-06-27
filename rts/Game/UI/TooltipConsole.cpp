@@ -25,6 +25,9 @@
 #include "System/ConfigHandler.h"
 #include "System/Util.h"
 
+static ConfigValue cfgTooltipGeometry("TooltipGeometry", "0.0 0.0 0.41 0.1");
+static ConfigValue cfgTooltipOutlineFont("TooltipOutlineFont", 1);
+
 CTooltipConsole* tooltip = NULL;
 
 

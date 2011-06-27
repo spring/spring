@@ -32,6 +32,9 @@ using std::vector;
 /******************************************************************************/
 /******************************************************************************/
 
+static ConfigValue cfgRotateLogFiles("RotateLogFiles", "auto");
+static ConfigValue cfgLogSubsystems("LogSubsystems", "");
+
 CLogSubsystem* CLogSubsystem::linkedList;
 static CLogSubsystem LOG_DEFAULT("", true);
 

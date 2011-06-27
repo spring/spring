@@ -50,6 +50,8 @@
 using netcode::RawPacket;
 using std::string;
 
+static ConfigValue cfgDemoFromDemo("DemoFromDemo", false);
+
 CPreGame* pregame = NULL;
 
 CPreGame::CPreGame(const ClientSetup* setup) :
@@ -218,7 +220,7 @@ void CPreGame::UpdateClientNet()
 					handleerror(NULL, "Remote requested quit: " + message, "Quit message", MBF_OK | MBF_EXCL);
 				} catch (netcode::UnpackPacketException &e) {
 					logOutput.Print("Got invalid QuitMessage: %s", e.err.c_str());
-				}		
+				}
 				break;
 			}
 			case NETMSG_CREATE_NEWPLAYER: {

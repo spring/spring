@@ -76,6 +76,15 @@
 #include "System/Util.h"
 
 
+static ConfigValue cfgShadows("Shadows", 0);
+static ConfigValue cfgFontSize("FontSize", 23);
+static ConfigValue cfgSmallFontSize("SmallFontSize", 14);
+static ConfigValue cfgFontOutlineWidth("FontOutlineWidth", 3);
+static ConfigValue cfgFontOutlineWeight("FontOutlineWeight", 25.0f);
+static ConfigValue cfgSmallFontOutlineWidth("SmallFontOutlineWidth", 2);
+static ConfigValue cfgSmallFontOutlineWeight("SmallFontOutlineWeight", 10.0f);
+
+
 static std::vector<std::string> _local_strSpaceTokenize(const std::string& text) {
 	static const char* const SPACE_DELIMS = " \t";
 

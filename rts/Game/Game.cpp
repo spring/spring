@@ -169,6 +169,20 @@
 extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 #endif
 
+
+static ConfigValue cfgWindowedEdgeMove("WindowedEdgeMove", 1);
+static ConfigValue cfgFullscreenEdgeMove("FullscreenEdgeMove", 1);
+static ConfigValue cfgShowFPS("ShowFPS", 0);
+static ConfigValue cfgShowClock("ShowClock", 1);
+static ConfigValue cfgShowSpeed("ShowSpeed", 0);
+static ConfigValue cfgShowMTInfo("ShowMTInfo", 1);
+static ConfigValue cfgSpeedControl("SpeedControl", 0);
+static ConfigValue cfgShowPlayerInfo("ShowPlayerInfo", 1);
+static ConfigValue cfgGuiOpacity("GuiOpacity",  0.8f);
+static ConfigValue cfgInputTextGeo("InputTextGeo", "");
+static ConfigValue cfgLuaModUICtrl("LuaModUICtrl", 1);
+
+
 CGame* game = NULL;
 
 

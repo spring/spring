@@ -14,6 +14,8 @@
 
 #include <string>
 
+static ConfigValue cfgCompressTextures("CompressTextures", 0);
+static ConfigValue cfgAtiHacks("AtiHacks", -1);
 
 /**
  * @brief global rendering
@@ -54,7 +56,7 @@ CGlobalRendering::CGlobalRendering() {
 	pixelX = 0.01f;
 	pixelY = 0.01f;
 	aspectRatio = 1.0f;
-	
+
 	FSAA = 0;
 
 	drawSky      = true;
@@ -80,21 +82,21 @@ CGlobalRendering::CGlobalRendering() {
 	supportNPOTs = false;
 	haveATI = false;
 	depthBufferBits = false;
-	
+
 	viewPosX = 0;
 	viewPosY = 0;
-	
+
 	winState = 0;
-	
+
 	winSizeX = 0;
 	winSizeY = 0;
-	
+
 	winPosX = 0;
 	winPosY = 0;
-	
+
 	screenSizeX = 0;
 	screenSizeY = 0;
-	
+
 	weightedSpeedFactor = 0.0f;
 	lastFrameStart = 0;
 }

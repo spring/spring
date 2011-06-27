@@ -36,6 +36,8 @@
 	#include "System/Sound/EFXPresets.h"
 #endif
 
+static ConfigValue cfgLoadingMT("LoadingMT", true);
+
 CLoadScreen* CLoadScreen::singleton = NULL;
 
 /******************************************************************************/

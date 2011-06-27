@@ -42,6 +42,8 @@ using std::max;
 
 CGroundDecalHandler* groundDecals = NULL;
 
+static ConfigValue cfgGroundDecals("GroundDecals", 1);
+static ConfigValue cfgGroundScarAlphaFade("GroundScarAlphaFade", 0);
 
 CGroundDecalHandler::CGroundDecalHandler()
 	: CEventClient("[CGroundDecalHandler]", 314159, false)
@@ -638,7 +640,7 @@ void CGroundDecalHandler::AddScars() {
 			}
 		}
 
-		scars.push_back(s); 
+		scars.push_back(s);
 	}
 }
 

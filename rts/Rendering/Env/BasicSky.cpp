@@ -21,6 +21,7 @@
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
 
+static ConfigValue cfgDynamicSky("DynamicSky", false);
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

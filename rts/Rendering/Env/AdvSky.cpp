@@ -23,6 +23,8 @@
 #define CLOUD_DETAIL 6
 #define CLOUD_MASK (CLOUD_SIZE-1)
 
+static ConfigValue cfgDynamicSky("DynamicSky", false);
+
 
 CAdvSky::CAdvSky()
 {
@@ -293,7 +295,7 @@ void CAdvSky::CreateClouds()
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8, CLOUD_SIZE, CLOUD_SIZE,0,GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	
+
 	fbo.reloadOnAltTab = true;
 	fbo.Bind();
 	fbo.AttachTexture(cdtex);

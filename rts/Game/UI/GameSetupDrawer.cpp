@@ -27,6 +27,9 @@
 #include "KeyBindings.h"
 #include "EventHandler.h"
 
+static ConfigValue cfgCamModeName("CamModeName", "");
+static ConfigValue cfgCamMode("CamMode", 1);
+
 GameSetupDrawer* GameSetupDrawer::instance = NULL;
 
 

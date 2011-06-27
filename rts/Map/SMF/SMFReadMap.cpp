@@ -33,6 +33,9 @@
 
 using namespace std;
 
+static ConfigValue cfgGroundNormalTextureHighPrecision("GroundNormalTextureHighPrecision", 0);
+static ConfigValue cfgSMFTexAniso("SMFTexAniso", 0.0f);
+
 CR_BIND_DERIVED(CSmfReadMap, CReadMap, (""))
 
 
@@ -662,9 +665,7 @@ void CSmfReadMap::ConfigureAnisotropy()
 		return;
 	}
 
-	const char* SMFTexAniso = "SMFTexAniso";
-
-	anisotropy = atof(configHandler->GetString(SMFTexAniso).c_str());
+	anisotropy = configHandler->GetFloat("SMFTexAniso");
 
 	if (anisotropy < 1.0f) {
 		anisotropy = 0.0f; // disabled
@@ -673,9 +674,7 @@ void CSmfReadMap::ConfigureAnisotropy()
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
 		if (anisotropy > maxAniso) {
 			anisotropy = maxAniso;
-			char buf[64];
-			SNPRINTF(buf, sizeof(buf), "%f", anisotropy);
-			configHandler->SetString(SMFTexAniso, buf);
+			configHandler->Set("SMFTexAniso", anisotropy);
 		}
 	}
 }

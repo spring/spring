@@ -16,6 +16,9 @@
 /******************************************************************************/
 /******************************************************************************/
 
+static ConfigValue cfgsnd_airAbsorption("snd_airAbsorption", AL_DEFAULT_AIR_ABSORPTION_FACTOR);
+static ConfigValue cfgUseEFX("UseEFX", true);
+
 static std::string default_preset = "outdoors_valley";//"bathroom";
 
 /******************************************************************************/

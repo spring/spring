@@ -42,6 +42,19 @@ using std::vector;
 using std::min;
 using std::max;
 
+static ConfigValue cfgBumpWaterTexSizeReflection("BumpWaterTexSizeReflection", 512);
+static ConfigValue cfgBumpWaterReflection("BumpWaterReflection", 1);
+static ConfigValue cfgBumpWaterRefraction("BumpWaterRefraction", 1); // 0:=off, 1:=screencopy, 2:=own rendering cycle
+static ConfigValue cfgBumpWaterAnisotropy("BumpWaterAnisotropy", 0.0f);
+static ConfigValue cfgBumpWaterUseDepthTexture("BumpWaterUseDepthTexture", 1);
+static ConfigValue cfgBumpWaterDepthBits("BumpWaterDepthBits", cfg::NoDefault);
+static ConfigValue cfgBumpWaterBlurReflection("BumpWaterBlurReflection", 0);
+static ConfigValue cfgBumpWaterShoreWaves("BumpWaterShoreWaves", 1);
+static ConfigValue cfgBumpWaterEndlessOcean("BumpWaterEndlessOcean", 1);
+static ConfigValue cfgBumpWaterDynamicWaves("BumpWaterDynamicWaves", 1);
+static ConfigValue cfgBumpWaterUseUniforms("BumpWaterUseUniforms", 0);
+static ConfigValue cfgBumpWaterOcclusionQuery("BumpWaterOcclusionQuery", 1);
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// HELPER FUNCTIONS
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -144,10 +157,15 @@ CBumpWater::CBumpWater()
 	/** LOAD USER CONFIGS **/
 	reflTexSize  = next_power_of_2(configHandler->GetInt("BumpWaterTexSizeReflection"));
 	reflection   = configHandler->GetInt("BumpWaterReflection");
-	refraction   = configHandler->GetInt("BumpWaterRefraction");  /// 0:=off, 1:=screencopy, 2:=own rendering cycle
-	anisotropy   = atof(configHandler->GetString("BumpWaterAnisotropy").c_str());
+	refraction   = configHandler->GetInt("BumpWaterRefraction");
+	anisotropy   = configHandler->GetFloat("BumpWaterAnisotropy");
 	depthCopy    = !!configHandler->GetInt("BumpWaterUseDepthTexture");
-	depthBits    = configHandler->GetInt("BumpWaterDepthBits");
+	if (configHandler->IsSet("BumpWaterDepthBits")) {
+		depthBits = configHandler->GetInt("BumpWaterDepthBits");
+	}
+	else {
+		depthBits = (globalRendering->atiHacks) ? 16 : 24;
+	}
 	blurRefl     = !!configHandler->GetInt("BumpWaterBlurReflection");
 	shoreWaves   = (!!configHandler->GetInt("BumpWaterShoreWaves")) && mapInfo->water.shoreWaves;
 	endlessOcean = (!!configHandler->GetInt("BumpWaterEndlessOcean")) && mapInfo->water.hasWaterPlane

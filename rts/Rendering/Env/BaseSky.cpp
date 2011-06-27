@@ -13,6 +13,9 @@
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 
+static ConfigValue cfgDynamicSun("DynamicSun", false);
+static ConfigValue cfgAdvSky("AdvSky", true);
+
 IBaseSky* sky = NULL;
 
 IBaseSky::IBaseSky()

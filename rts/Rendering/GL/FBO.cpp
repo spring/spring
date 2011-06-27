@@ -15,6 +15,8 @@
 #include "System/LogOutput.h"
 #include "System/ConfigHandler.h"
 
+static ConfigValue cfgAtiSwapRBFix("AtiSwapRBFix", false);
+
 std::vector<FBO*> FBO::fboList;
 std::map<GLuint,FBO::TexData*> FBO::texBuf;
 

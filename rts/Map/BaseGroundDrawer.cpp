@@ -22,6 +22,12 @@
 #include "System/FastMath.h"
 #include "System/myMath.h"
 
+static ConfigValue cfgGroundLODScaleReflection("GroundLODScaleReflection", 1.0f);
+static ConfigValue cfgGroundLODScaleRefraction("GroundLODScaleRefraction", 1.0f);
+static ConfigValue cfgGroundLODScaleUnitReflection("GroundLODScaleUnitReflection", 1.0f);
+static ConfigValue cfgHighResLos("HighResLos", false);
+static ConfigValue cfgExtraTextureUpdateRate("ExtraTextureUpdateRate", 45);
+
 CBaseGroundDrawer::CBaseGroundDrawer(void)
 {
 	LODScaleReflection = configHandler->GetFloat("GroundLODScaleReflection");
@@ -43,7 +49,7 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 	extraTexPal = NULL;
 	extractDepthMap = NULL;
 
-#ifdef USE_GML	
+#ifdef USE_GML
 	multiThreadDrawGroundShadow = false;
 	multiThreadDrawGround = false;
 #endif

@@ -85,6 +85,37 @@
 #endif
 
 
+static ConfigValue cfgSetCoreAffinity("SetCoreAffinity", 0);
+static ConfigValue cfgDepthBufferBits("DepthBufferBits", 24);
+static ConfigValue cfgStencilBufferBits("StencilBufferBits", 8);
+static ConfigValue cfgFSAALevel("FSAALevel", 0);
+static ConfigValue cfgSmoothLines("SmoothLines", 0); //! FSAA ? 0 : 3;  // until a few things get fixed
+static ConfigValue cfgSmoothPoints("SmoothPoints", 0); //! FSAA ? 0 : 3;
+static ConfigValue cfgTextureLODBias("TextureLODBias", 0.0f);
+static ConfigValue cfgFixAltTab("FixAltTab", 0);
+static ConfigValue cfgDualScreenMode("DualScreenMode", 0);
+static ConfigValue cfgDualScreenMiniMapOnLeft("DualScreenMiniMapOnLeft", 0);
+static ConfigValue cfgVersion("Version",0);
+static ConfigValue cfgFSAA("FSAA", false);
+static ConfigValue cfgFontFile("FontFile", "fonts/FreeSansBold.otf");
+static ConfigValue cfgSmallFontFile("SmallFontFile", "fonts/FreeSansBold.otf");
+static ConfigValue cfgFontSize("FontSize", 23);
+static ConfigValue cfgSmallFontSize("SmallFontSize", 14);
+static ConfigValue cfgFontOutlineWidth("FontOutlineWidth", 3);
+static ConfigValue cfgFontOutlineWeight("FontOutlineWeight", 25.0f);
+static ConfigValue cfgSmallFontOutlineWidth("SmallFontOutlineWidth", 2);
+static ConfigValue cfgSmallFontOutlineWeight("SmallFontOutlineWeight", 10.0f);
+static ConfigValue cfgFullscreen("Fullscreen", 1);
+static ConfigValue cfgXResolution("XResolution", 0);
+static ConfigValue cfgYResolution("YResolution", 0);
+static ConfigValue cfgWindowPosX("WindowPosX", 32);
+static ConfigValue cfgWindowPosY("WindowPosY", 32);
+static ConfigValue cfgWindowState("WindowState", 0);
+static ConfigValue cfgHardwareThreadCount("HardwareThreadCount", 0);
+static ConfigValue cfgMultiThreadSim("MultiThreadSim", 1);
+static ConfigValue cfgName("name", "UnnamedPlayer");
+
+
 ClientSetup* startsetup = NULL;
 COffscreenGLContext* SpringApp::ogc = NULL;
 
@@ -393,7 +424,6 @@ bool SpringApp::SetSDLVideoMode()
 #endif
 
 	//! setup GL smoothing
-	const int defaultSmooth = 0; //! FSAA ? 0 : 3;  // until a few things get fixed
 	const int lineSmoothing = configHandler->GetInt("SmoothLines");
 	if (lineSmoothing > 0) {
 		GLenum hint = GL_FASTEST;
