@@ -147,7 +147,7 @@ inline static void AdvanceMaximaRows(
 				maximaRows[x] = y;
 			}
 
-			assert(h <= colsMaxima[x]);
+			assert(curh <= colsMaxima[x]);
 		}
 	}
 }
