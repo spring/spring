@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef GLOBALCONFIG_H
-#define GLOBALCONFIG_H
+#ifndef GLOBAL_CONFIG_H
+#define GLOBAL_CONFIG_H
 #include "lib/gml/gmlcnf.h"
 
 
@@ -103,4 +103,4 @@ public:
 
 extern GlobalConfig* globalConfig;
 
-#endif // GLOBALCONFIG_H
+#endif // GLOBAL_CONFIG_H
