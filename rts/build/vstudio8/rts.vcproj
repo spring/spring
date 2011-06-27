@@ -2249,6 +2249,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Rendering\CommandDrawer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\CommandDrawer.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Rendering\DebugColVolDrawer.cpp"
 				>
 			</File>
@@ -2386,6 +2394,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Rendering\ShadowHandler.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\SmoothHeightMeshDrawer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\SmoothHeightMeshDrawer.h"
 				>
 			</File>
 			<File
@@ -4897,26 +4913,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Dedicated Server (Debug)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\builds\DS\main.cpp"
 				>
 				<FileConfiguration
@@ -4995,6 +4991,26 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Dedicated Server (Debug)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>
