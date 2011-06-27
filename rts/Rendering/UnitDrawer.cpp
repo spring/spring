@@ -67,6 +67,19 @@ extern gmlClientServer<void, int, CUnit*> *gmlProcessor;
 
 CUnitDrawer* unitDrawer;
 
+static ConfigValue cfgUnitLodDist("UnitLodDist", 1000);
+static ConfigValue cfgUnitIconDist("UnitIconDist", 10000);
+static ConfigValue cfgUnitTransparency("UnitTransparency", 0.7f);
+static ConfigValue cfgShowHealthBars("ShowHealthBars", 1);
+static ConfigValue cfgMultiThreadDrawUnit("MultiThreadDrawUnit", 1);
+static ConfigValue cfgMultiThreadDrawUnitShadow("MultiThreadDrawUnitShadow", 1);
+static ConfigValue cfgMaxDynamicModelLights("MaxDynamicModelLights", 1U);
+static ConfigValue cfgAdvUnitShading("AdvUnitShading", 1);
+static ConfigValue cfgLODScale("LODScale", 1.0f);
+static ConfigValue cfgLODScaleShadow("LODScaleShadow", 1.0f);
+static ConfigValue cfgLODScaleReflection("LODScaleReflection", 1.0f);
+static ConfigValue cfgLODScaleRefraction("LODScaleRefraction", 1.0f);
+
 static bool LUA_DRAWING = false; // FIXME
 static float UNIT_GLOBAL_LOD_FACTOR = 1.0f;
 
@@ -75,16 +88,14 @@ inline static void SetUnitGlobalLODFactor(float value)
 	UNIT_GLOBAL_LOD_FACTOR = (value * camera->lppScale);
 }
 
-static float GetLODFloat(const string& name, float def)
+static float GetLODFloat(const string& name)
 {
 	// NOTE: the inverse of the value is used
-	char buf[64];
-	SNPRINTF(buf, sizeof(buf), "%.3f", def);
-	const string valueStr = configHandler->GetString(name);
 	char* end;
+	const string valueStr = configHandler->GetString(name);
 	float value = (float)strtod(valueStr.c_str(), &end);
 	if ((end == valueStr.c_str()) || (value <= 0.0f)) {
-		return (1.0f / def);
+		return 1.0f;
 	}
 	return (1.0f / value);
 }
@@ -98,10 +109,10 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	SetUnitDrawDist((float)configHandler->GetInt("UnitLodDist"));
 	SetUnitIconDist((float)configHandler->GetInt("UnitIconDist"));
 
-	LODScale           = GetLODFloat("LODScale",           1.0f);
-	LODScaleShadow     = GetLODFloat("LODScaleShadow",     1.0f);
-	LODScaleReflection = GetLODFloat("LODScaleReflection", 1.0f);
-	LODScaleRefraction = GetLODFloat("LODScaleRefraction", 1.0f);
+	LODScale           = GetLODFloat("LODScale");
+	LODScaleShadow     = GetLODFloat("LODScaleShadow");
+	LODScaleReflection = GetLODFloat("LODScaleReflection");
+	LODScaleRefraction = GetLODFloat("LODScaleRefraction");
 
 	unitAmbientColor = mapInfo->light.unitAmbientColor;
 	unitSunColor = mapInfo->light.unitSunColor;

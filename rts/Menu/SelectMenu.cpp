@@ -51,6 +51,16 @@ using std::string;
 using agui::Button;
 using agui::HorizontalLayout;
 
+static ConfigValue cfgAddress("address", "");
+static ConfigValue cfgNoHelperAIs("NoHelperAIs", 0);
+static ConfigValue cfgLastSelectedSetting("LastSelectedSetting", "");
+
+#ifdef WIN32
+	static ConfigValue cfgDefaultLobby("DefaultLobby", "springlobby.exe");
+#else
+	static ConfigValue cfgDefaultLobby("DefaultLobby", "springlobby");
+#endif
+
 class ConnectWindow : public agui::Window
 {
 public:
@@ -103,7 +113,8 @@ public:
 		value = new agui::LineEdit(input);
 		value->DefaultAction.connect(boost::bind(&SettingsWindow::Finish, this, true));
 		value->SetFocus(true);
-		value->SetContent(configHandler->GetString(name));
+		if (configHandler->IsSet(name))
+			value->SetContent(configHandler->GetString(name));
 		HorizontalLayout* buttons = new HorizontalLayout(wndLayout);
 		Button* ok = new Button("OK", buttons);
 		ok->Clicked.connect(boost::bind(&SettingsWindow::Finish, this, true));
@@ -311,11 +322,7 @@ void SelectMenu::Settings()
 
 void SelectMenu::Multi()
 {
-#ifdef __unix__
 	const std::string defLobby = configHandler->GetString("DefaultLobby");
-#else
-	const std::string defLobby = configHandler->GetString("DefaultLobby");
-#endif
 	EXECLP(defLobby.c_str(), Quote(defLobby).c_str(), NULL);
 }
 

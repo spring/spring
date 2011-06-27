@@ -14,6 +14,11 @@
 #include "System/ConfigHandler.h"
 #include "System/Input/KeyInput.h"
 
+static ConfigValue cfgOrbitControllerEnabled("OrbitControllerEnabled", 1);
+static ConfigValue cfgOrbitControllerOrbitSpeed("OrbitControllerOrbitSpeed", 0.25f);
+static ConfigValue cfgOrbitControllerPanSpeed("OrbitControllerPanSpeed", 2.00f);
+static ConfigValue cfgOrbitControllerZoomSpeed("OrbitControllerZoomSpeed", 5.00f);
+
 #define DEG2RAD(a) ((a) * (3.141592653f / 180.0f))
 #define RAD2DEG(a) ((a) * (180.0f / 3.141592653f))
 static const float3 YVEC(0.0f, 1.0f, 0.0f);

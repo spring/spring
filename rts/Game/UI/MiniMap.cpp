@@ -58,6 +58,17 @@
 
 #define PLAY_SOUNDS 1
 
+static ConfigValue cfgMiniMapGeometry("MiniMapGeometry", "2 2 200 200");
+static ConfigValue cfgMiniMapFullProxy("MiniMapFullProxy", 1);
+static ConfigValue cfgMiniMapButtonSize("MiniMapButtonSize", 16);
+static ConfigValue cfgMiniMapUnitSize("MiniMapUnitSize", 2.5f);
+static ConfigValue cfgMiniMapUnitExp("MiniMapUnitExp", 0.25f);
+static ConfigValue cfgMiniMapCursorScale("MiniMapCursorScale", -0.5f);
+static ConfigValue cfgMiniMapIcons("MiniMapIcons", 1);
+static ConfigValue cfgMiniMapDrawCommands("MiniMapDrawCommands", 1);
+static ConfigValue cfgMiniMapDrawProjectiles("MiniMapDrawProjectiles", 1);
+static ConfigValue cfgSimpleMiniMapColors("SimpleMiniMapColors", 0);
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -90,7 +101,6 @@ CMiniMap::CMiniMap()
 		ypos = 0;
 	}
 	else {
-		const std::string geodef = "2 2 200 200";
 		const std::string geo = configHandler->GetString("MiniMapGeometry");
 		ParseGeometry(geo);
 	}

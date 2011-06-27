@@ -6,6 +6,19 @@
 #include "GlobalConfig.h"
 #include "Sim/Misc/ModInfo.h"
 
+static ConfigValue cfgInitialNetworkTimeout("InitialNetworkTimeout", 30);
+static ConfigValue cfgNetworkTimeout("NetworkTimeout", 120);
+static ConfigValue cfgReconnectTimeout("ReconnectTimeout", 15);
+static ConfigValue cfgMaximumTransmissionUnit("MaximumTransmissionUnit", 1400);
+static ConfigValue cfgLinkOutgoingBandwidth("LinkOutgoingBandwidth", 64 * 1024);
+static ConfigValue cfgLinkIncomingSustainedBandwidth("LinkIncomingSustainedBandwidth", 2 * 1024);
+static ConfigValue cfgLinkIncomingPeakBandwidth("LinkIncomingPeakBandwidth", 32 * 1024);
+static ConfigValue cfgLinkIncomingMaxPacketRate("LinkIncomingMaxPacketRate", 64); // maximum lag induced by command-
+static ConfigValue cfgLinkIncomingMaxWaitingPackets("LinkIncomingMaxWaitingPackets", 512); // -spam is 512/64=8 seconds
+static ConfigValue cfgTeamHighlight("TeamHighlight", 1);
+static ConfigValue cfgEnableDrawCallIns("EnableDrawCallIns", 1);
+static ConfigValue cfgMultiThreadLua("MultiThreadLua", 0);
+
 GlobalConfig* globalConfig = NULL;
 
 GlobalConfig::GlobalConfig() {

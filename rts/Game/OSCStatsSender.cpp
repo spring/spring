@@ -24,6 +24,10 @@
 #include "System/LogOutput.h"
 #include "System/Net/Socket.h"
 
+static ConfigValue cfgOscStatsSenderEnabled("OscStatsSenderEnabled", false);
+static ConfigValue cfgOscStatsSenderDestinationAddress("OscStatsSenderDestinationAddress", "127.0.0.1");
+static ConfigValue cfgOscStatsSenderDestinationPort("OscStatsSenderDestinationPort", (unsigned int) 6447);
+
 COSCStatsSender* COSCStatsSender::singleton = NULL;
 
 struct COSCStatsSender::NetStruct
@@ -85,8 +89,7 @@ bool COSCStatsSender::IsEnabled() const {
 COSCStatsSender* COSCStatsSender::GetInstance() {
 
 	if (COSCStatsSender::singleton == NULL) {
-		std::string dstAddress = configHandler->GetString(
-				"OscStatsSenderDestinationAddress");
+		std::string dstAddress = configHandler->GetString("OscStatsSenderDestinationAddress");
 		unsigned int dstPort   = configHandler->GetInt("OscStatsSenderDestinationPort");
 
 		static COSCStatsSender instance(dstAddress, dstPort);

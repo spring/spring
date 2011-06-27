@@ -16,7 +16,11 @@
 #include "System/LogOutput.h"
 #include "System/myMath.h"
 
+static ConfigValue cfgTreeRadius("TreeRadius", (unsigned int) (5.5f * 256));
+static ConfigValue cfg3DTrees("3DTrees", 1);
+
 ITreeDrawer* treeDrawer = NULL;
+
 
 ITreeDrawer::ITreeDrawer()
 	: drawTrees(true)

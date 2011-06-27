@@ -16,6 +16,7 @@
 #include "LogOutput.h"
 #include "ConfigHandler.h"
 
+static ConfigValue cfgVSync("VSync", -1);
 
 CVerticalSync VSync;
 
@@ -44,7 +45,7 @@ void CVerticalSync::Init()
 void CVerticalSync::SetFrames(int f)
 {
 	configHandler->Set("VSync", f);
-	
+
 	frames = f;
 
 #if !defined(WIN32) && !defined(__APPLE__)

@@ -20,6 +20,9 @@
 
 #define border 7
 
+static ConfigValue cfgInfoMessageTime("InfoMessageTime", 400);
+static ConfigValue cfgInfoConsoleGeometry("InfoConsoleGeometry", "0.26 0.96 0.41 0.205");
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////

@@ -12,6 +12,8 @@
 #include "System/ConfigHandler.h"
 #include "System/myMath.h"
 
+static ConfigValue cfgDynamicSunMinElevation("DynamicSunMinElevation", 0.1f);
+
 
 StaticSkyLight::StaticSkyLight() {
 	const CMapInfo::light_t& light = mapInfo->light;

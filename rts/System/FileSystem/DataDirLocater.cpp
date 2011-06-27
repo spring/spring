@@ -27,6 +27,8 @@
 #include "maindefines.h" // for sPS, cPS, cPD
 #include "Platform/Misc.h"
 
+static ConfigValue cfgSpringData("SpringData", "");
+
 DataDir::DataDir(const std::string& path)
 	: path(path)
 	, writable(false)

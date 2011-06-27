@@ -6,6 +6,10 @@
 #include "CameraController.h"
 #include "System/ConfigHandler.h"
 
+
+static ConfigValue cfgUseDistToGroundForIcons("UseDistToGroundForIcons", 0.95f);
+
+
 CCameraController::CCameraController()
 {
 	// switchVal:

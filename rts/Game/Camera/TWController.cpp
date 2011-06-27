@@ -16,6 +16,11 @@
 #include "System/myMath.h"
 #include "System/Input/KeyInput.h"
 
+static ConfigValue cfgTWScrollSpeed("TWScrollSpeed", 10);
+static ConfigValue cfgTWEnabled("TWEnabled", 1);
+static ConfigValue cfgTWFOV("TWFOV", 45.0f);
+
+
 CTWController::CTWController()
 {
 	scrollSpeed = configHandler->GetInt("TWScrollSpeed") * 0.1f;

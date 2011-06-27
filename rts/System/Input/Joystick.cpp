@@ -10,6 +10,9 @@
 #include "LogOutput.h"
 #include "EventHandler.h"
 
+static ConfigValue cfgJoystickEnabled("JoystickEnabled", true);
+static ConfigValue cfgJoystickUse("JoystickUse", 0);
+
 Joystick* stick = NULL;
 
 void InitJoystick()
@@ -34,10 +37,10 @@ Joystick::Joystick()
 {
 	const int numSticks = SDL_NumJoysticks();
 	LogObject() << "Joysticks found: " << numSticks;
-	
+
 	const int stickNum = configHandler->GetInt("JoystickUse");
 	myStick =  SDL_JoystickOpen(stickNum);
-	
+
 	if (myStick)
 	{
 		LogObject() << "Using joystick " << stickNum << ": " << SDL_JoystickName(stickNum);

@@ -9,6 +9,8 @@
 #include "ConfigHandler.h"
 
 
+static ConfigValue cfgHeightMapTexture("HeightMapTexture", 1);
+
 HeightMapTexture heightMapTexture;
 
 
@@ -46,7 +48,7 @@ void HeightMapTexture::Init()
 
 	xSize = (gs->mapx + 1);
 	ySize = (gs->mapy + 1);
-	
+
 	glGenTextures(1, &texID);
 	glBindTexture(GL_TEXTURE_2D, texID);
 

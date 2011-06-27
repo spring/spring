@@ -25,9 +25,12 @@
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_List.h"
 
-CProjectileHandler* ph;
-
 using namespace std;
+
+static ConfigValue cfgMaxParticles("MaxParticles", 1000);
+static ConfigValue cfgMaxNanoParticles("MaxNanoParticles", 2500);
+
+CProjectileHandler* ph;
 
 
 CR_BIND_TEMPLATE(ProjectileContainer, )

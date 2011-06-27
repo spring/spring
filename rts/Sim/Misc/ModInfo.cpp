@@ -16,6 +16,7 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Exceptions.h"
 
+static ConfigValue cfgTeamNanoSpray("TeamNanoSpray", 1);
 
 CModInfo modInfo;
 

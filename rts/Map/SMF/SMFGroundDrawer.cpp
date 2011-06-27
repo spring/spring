@@ -32,6 +32,12 @@ extern gmlClientServer<void, int, CUnit*> *gmlProcessor;
 using std::min;
 using std::max;
 
+static ConfigValue cfgGroundDetail("GroundDetail", 40);
+static ConfigValue cfgMultiThreadDrawGround("MultiThreadDrawGround", 1);
+static ConfigValue cfgMultiThreadDrawGroundShadow("MultiThreadDrawGroundShadow", 0);
+static ConfigValue cfgMaxDynamicMapLights("MaxDynamicMapLights", 1U);
+static ConfigValue cfgAdvMapShading("AdvMapShading", 1);
+
 CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 	bigSquareSize(128),
 	numBigTexX(gs->mapx / bigSquareSize),
