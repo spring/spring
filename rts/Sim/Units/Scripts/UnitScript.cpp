@@ -330,7 +330,7 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 
 	//Turns override spins.. Not sure about the other way around? If so the system should probably be redesigned
 	//to only have two types of anims.. turns and moves, with spin as a bool
-	//todo: optimize, atm RemoveAnim and FindAnim search twice through all anims
+	// TODO optimize, atm RemoveAnim and FindAnim search twice through all anims
 	if (type == ATurn)
 		RemoveAnim(ASpin, piece, axis);
 	if (type == ASpin)

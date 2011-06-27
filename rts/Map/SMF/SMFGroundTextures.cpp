@@ -34,7 +34,7 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 	numBigTexX(gs->mapx / bigSquareSize),
 	numBigTexY(gs->mapy / bigSquareSize)
 {
-	// todo: refactor: put reading code in CSmfFile and keep errorhandling/progress reporting here..
+	// TODO refactor: put reading code in CSmfFile and keep error-handling/progress reporting here
 	map = rm;
 	CFileHandler* ifs = rm->GetFile().GetFileHandler();
 	const SMFHeader* header = &map->GetFile().GetHeader();

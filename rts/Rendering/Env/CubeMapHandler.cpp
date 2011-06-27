@@ -262,7 +262,7 @@ void CubeMapHandler::CreateSpecularFacePart(
 	unsigned int y,
 	unsigned char* buf)
 {
-	//todo: move to a shader
+	// TODO move to a shader
 	for (int x = 0; x < size; ++x) {
 		const float3 dir = (cdir + (xdif * (x + 0.5f)) / size + (ydif * (y + 0.5f)) / size).Normalize();
 		const float dot  = std::max(0.0f, dir.dot(sky->GetLight()->GetLightDir()));
