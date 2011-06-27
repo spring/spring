@@ -135,7 +135,7 @@ void CBaseGroundDrawer::DrawTrees(bool drawReflection) const
 
 
 
-//todo: this part of extra textures is a mess really ...
+// XXX this part of extra textures is a mess really ...
 void CBaseGroundDrawer::DisableExtraTexture()
 {
 	if (drawLineOfSight) {
@@ -469,7 +469,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 			glGenTextures(1,&infoTex);
 			glBindTexture(GL_TEXTURE_2D, infoTex);
 
-			//todo: maybe use GL_RGB5 as internalformat?
+			// XXX maybe use GL_RGB5 as internalformat?
 			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
