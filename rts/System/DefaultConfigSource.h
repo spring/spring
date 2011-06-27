@@ -6,6 +6,8 @@
 #include <sstream>
 #include "ConfigSource.h"
 
+class ConfigVariable;
+
 /**
  * @brief Configuration source that holds static defaults
  *
@@ -18,14 +20,7 @@ public:
 	DefaultConfigSource();
 
 private:
-	template<typename T>
-	void Add(const std::string& key, const T& value, const std::string& comment = "")
-	{
-		// note: comment is ignored at this moment
-		std::ostringstream buffer;
-		buffer << value;
-		SetString(key, buffer.str());
-	}
+	std::map<std::string, const ConfigVariable*> vars;
 };
 
 #endif // DEFAULT_CONFIG_SOURCE_H
