@@ -10,6 +10,12 @@
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 
+namespace cfg
+{
+	class _NoDefault {};
+	const _NoDefault NoDefault = _NoDefault();
+}
+
 /**
  * @brief Configuration value declaration
  */
@@ -18,7 +24,7 @@ class ConfigValue
 public:
 	template<typename T>
 	ConfigValue(const std::string& key, const T& value, const std::string& comment = ""):
-			next(head), key(key), value(ToString(value)), comment(comment)
+			next(head), key(key), defaultValue(ToString(value)), comment(comment), hasDefaultValue(true)
 	{
 		head = this;
 	}
@@ -37,11 +43,21 @@ private:
 private:
 	ConfigValue* next;
 	std::string key;
-	std::string value;
+	std::string defaultValue;
 	std::string comment;
+	bool hasDefaultValue;
 
 	friend class ConfigHandler;
 };
+
+// note: explicit specialization has to be at the namespace scope
+template<>
+inline ConfigValue::ConfigValue<cfg::_NoDefault>(const std::string& key, const cfg::_NoDefault& value, const std::string& comment):
+		next(head), key(key), comment(comment), hasDefaultValue(false)
+{
+	head = this;
+}
+
 
 /**
  * @brief config handler base
@@ -78,8 +94,11 @@ public:
 		SetString(key, buffer.str(), useOverlay);
 	}
 
+	/// @brief Get bool, throw if key not present
 	bool  GetBool(const std::string& key)  const { return Get<bool>(key); }
+	/// @brief Get int, throw if key not present
 	int   GetInt(const std::string& key)   const { return Get<int>(key); }
+	/// @brief Get float, throw if key not present
 	float GetFloat(const std::string& key) const { return Get<float>(key); }
 
 public:
