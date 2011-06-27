@@ -7,7 +7,7 @@
 #include "System/ConfigHandler.h"
 
 
-static ConfigValue cfgUseDistToGroundForIcons("UseDistToGroundForIcons", 0.95f);
+CONFIG(UseDistToGroundForIcons, 0.95f);
 
 
 CCameraController::CCameraController()

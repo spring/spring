@@ -9,7 +9,7 @@
 #include "ConfigHandler.h"
 
 
-static ConfigValue cfgHeightMapTexture("HeightMapTexture", 1);
+CONFIG(HeightMapTexture, 1);
 
 HeightMapTexture heightMapTexture;
 

@@ -15,9 +15,9 @@ const std::string SelectionWidget::NoModSelect = "No game selected";
 const std::string SelectionWidget::NoMapSelect = "No map selected";
 const std::string SelectionWidget::NoScriptSelect = "No script selected";
 
-static ConfigValue cfgLastSelectedMod("LastSelectedMod", SelectionWidget::NoModSelect);
-static ConfigValue cfgLastSelectedMap("LastSelectedMap", SelectionWidget::NoMapSelect);
-static ConfigValue cfgLastSelectedScript("LastSelectedScript", SelectionWidget::NoScriptSelect);
+CONFIG(LastSelectedMod, SelectionWidget::NoModSelect);
+CONFIG(LastSelectedMap, SelectionWidget::NoMapSelect);
+CONFIG(LastSelectedScript, SelectionWidget::NoScriptSelect);
 
 SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(parent)
 {

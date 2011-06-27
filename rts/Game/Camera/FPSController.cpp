@@ -15,10 +15,10 @@
 using std::min;
 using std::max;
 
-static ConfigValue cfgFPSScrollSpeed("FPSScrollSpeed", 10);
-static ConfigValue cfgFPSMouseScale("FPSMouseScale", 0.01f);
-static ConfigValue cfgFPSEnabled("FPSEnabled", 1);
-static ConfigValue cfgFPSFOV("FPSFOV", 45.0f);
+CONFIG(FPSScrollSpeed, 10);
+CONFIG(FPSMouseScale, 0.01f);
+CONFIG(FPSEnabled, 1);
+CONFIG(FPSFOV, 45.0f);
 
 
 CFPSController::CFPSController()

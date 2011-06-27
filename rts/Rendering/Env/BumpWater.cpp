@@ -42,18 +42,18 @@ using std::vector;
 using std::min;
 using std::max;
 
-static ConfigValue cfgBumpWaterTexSizeReflection("BumpWaterTexSizeReflection", 512);
-static ConfigValue cfgBumpWaterReflection("BumpWaterReflection", 1);
-static ConfigValue cfgBumpWaterRefraction("BumpWaterRefraction", 1); // 0:=off, 1:=screencopy, 2:=own rendering cycle
-static ConfigValue cfgBumpWaterAnisotropy("BumpWaterAnisotropy", 0.0f);
-static ConfigValue cfgBumpWaterUseDepthTexture("BumpWaterUseDepthTexture", 1);
-static ConfigValue cfgBumpWaterDepthBits("BumpWaterDepthBits", cfg::NoDefault);
-static ConfigValue cfgBumpWaterBlurReflection("BumpWaterBlurReflection", 0);
-static ConfigValue cfgBumpWaterShoreWaves("BumpWaterShoreWaves", 1);
-static ConfigValue cfgBumpWaterEndlessOcean("BumpWaterEndlessOcean", 1);
-static ConfigValue cfgBumpWaterDynamicWaves("BumpWaterDynamicWaves", 1);
-static ConfigValue cfgBumpWaterUseUniforms("BumpWaterUseUniforms", 0);
-static ConfigValue cfgBumpWaterOcclusionQuery("BumpWaterOcclusionQuery", 1);
+CONFIG(BumpWaterTexSizeReflection, 512);
+CONFIG(BumpWaterReflection, 1);
+CONFIG(BumpWaterRefraction, 1); // 0:=off, 1:=screencopy, 2:=own rendering cycle
+CONFIG(BumpWaterAnisotropy, 0.0f);
+CONFIG(BumpWaterUseDepthTexture, 1);
+CONFIG(BumpWaterDepthBits, cfg::NoDefault);
+CONFIG(BumpWaterBlurReflection, 0);
+CONFIG(BumpWaterShoreWaves, 1);
+CONFIG(BumpWaterEndlessOcean, 1);
+CONFIG(BumpWaterDynamicWaves, 1);
+CONFIG(BumpWaterUseUniforms, 0);
+CONFIG(BumpWaterOcclusionQuery, 1);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// HELPER FUNCTIONS

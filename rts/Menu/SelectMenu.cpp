@@ -51,14 +51,14 @@ using std::string;
 using agui::Button;
 using agui::HorizontalLayout;
 
-static ConfigValue cfgAddress("address", "");
-static ConfigValue cfgNoHelperAIs("NoHelperAIs", 0);
-static ConfigValue cfgLastSelectedSetting("LastSelectedSetting", "");
+CONFIG(address, "");
+CONFIG(NoHelperAIs, 0);
+CONFIG(LastSelectedSetting, "");
 
 #ifdef WIN32
-	static ConfigValue cfgDefaultLobby("DefaultLobby", "springlobby.exe");
+	CONFIG(DefaultLobby, "springlobby.exe");
 #else
-	static ConfigValue cfgDefaultLobby("DefaultLobby", "springlobby");
+	CONFIG(DefaultLobby, "springlobby");
 #endif
 
 class ConnectWindow : public agui::Window

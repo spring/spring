@@ -10,8 +10,8 @@
 #include "LogOutput.h"
 #include "EventHandler.h"
 
-static ConfigValue cfgJoystickEnabled("JoystickEnabled", true);
-static ConfigValue cfgJoystickUse("JoystickUse", 0);
+CONFIG(JoystickEnabled, true);
+CONFIG(JoystickUse, 0);
 
 Joystick* stick = NULL;
 

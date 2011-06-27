@@ -18,11 +18,11 @@
 #include "System/myMath.h"
 #include "System/Input/KeyInput.h"
 
-static ConfigValue cfgMiddleClickScrollSpeed("MiddleClickScrollSpeed", 0.01f);
-static ConfigValue cfgSmoothScrollSpeed("SmoothScrollSpeed", 10);
-static ConfigValue cfgSmoothTiltSpeed("SmoothTiltSpeed", 1.0f);
-static ConfigValue cfgSmoothEnabled("SmoothEnabled", 1);
-static ConfigValue cfgSmoothFOV("SmoothFOV", 45.0f);
+CONFIG(MiddleClickScrollSpeed, 0.01f);
+CONFIG(SmoothScrollSpeed, 10);
+CONFIG(SmoothTiltSpeed, 1.0f);
+CONFIG(SmoothEnabled, 1);
+CONFIG(SmoothFOV, 45.0f);
 
 SmoothController::SmoothController()
 	: flipped(false)

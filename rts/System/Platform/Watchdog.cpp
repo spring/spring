@@ -22,7 +22,7 @@
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Threading.h"
 
-static ConfigValue cfgHangTimeout("HangTimeout", 0);
+CONFIG(HangTimeout, 0);
 
 namespace Watchdog
 {

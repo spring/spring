@@ -15,7 +15,7 @@
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 
-static ConfigValue cfgReflectiveWater("ReflectiveWater", int(CBaseWater::WATER_RENDERER_REFLECTIVE));
+CONFIG(ReflectiveWater, int(CBaseWater::WATER_RENDERER_REFLECTIVE));
 
 CBaseWater* water = NULL;
 std::vector<int> CBaseWater::waterModes;

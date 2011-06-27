@@ -67,18 +67,18 @@ extern gmlClientServer<void, int, CUnit*> *gmlProcessor;
 
 CUnitDrawer* unitDrawer;
 
-static ConfigValue cfgUnitLodDist("UnitLodDist", 1000);
-static ConfigValue cfgUnitIconDist("UnitIconDist", 10000);
-static ConfigValue cfgUnitTransparency("UnitTransparency", 0.7f);
-static ConfigValue cfgShowHealthBars("ShowHealthBars", 1);
-static ConfigValue cfgMultiThreadDrawUnit("MultiThreadDrawUnit", 1);
-static ConfigValue cfgMultiThreadDrawUnitShadow("MultiThreadDrawUnitShadow", 1);
-static ConfigValue cfgMaxDynamicModelLights("MaxDynamicModelLights", 1U);
-static ConfigValue cfgAdvUnitShading("AdvUnitShading", 1);
-static ConfigValue cfgLODScale("LODScale", 1.0f);
-static ConfigValue cfgLODScaleShadow("LODScaleShadow", 1.0f);
-static ConfigValue cfgLODScaleReflection("LODScaleReflection", 1.0f);
-static ConfigValue cfgLODScaleRefraction("LODScaleRefraction", 1.0f);
+CONFIG(UnitLodDist, 1000);
+CONFIG(UnitIconDist, 10000);
+CONFIG(UnitTransparency, 0.7f);
+CONFIG(ShowHealthBars, 1);
+CONFIG(MultiThreadDrawUnit, 1);
+CONFIG(MultiThreadDrawUnitShadow, 1);
+CONFIG(MaxDynamicModelLights, 1U);
+CONFIG(AdvUnitShading, 1);
+CONFIG(LODScale, 1.0f);
+CONFIG(LODScaleShadow, 1.0f);
+CONFIG(LODScaleReflection, 1.0f);
+CONFIG(LODScaleRefraction, 1.0f);
 
 static bool LUA_DRAWING = false; // FIXME
 static float UNIT_GLOBAL_LOD_FACTOR = 1.0f;

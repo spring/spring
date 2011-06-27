@@ -56,14 +56,14 @@
 
 #define PLAY_SOUNDS 1
 
-static ConfigValue cfgHardwareCursor("HardwareCursor", 0);
-static ConfigValue cfgInvertMouse("InvertMouse", 0);
-static ConfigValue cfgDoubleClickTime("DoubleClickTime", 200.0f);
-static ConfigValue cfgScrollWheelSpeed("ScrollWheelSpeed", 25.0f);
-static ConfigValue cfgCrossSize("CrossSize", 12.0f);
-static ConfigValue cfgCrossAlpha("CrossAlpha", 0.5f);
-static ConfigValue cfgCrossMoveScale("CrossMoveScale", 1.0f);
-static ConfigValue cfgMouseDragScrollThreshold("MouseDragScrollThreshold", 0.3f);
+CONFIG(HardwareCursor, 0);
+CONFIG(InvertMouse, 0);
+CONFIG(DoubleClickTime, 200.0f);
+CONFIG(ScrollWheelSpeed, 25.0f);
+CONFIG(CrossSize, 12.0f);
+CONFIG(CrossAlpha, 0.5f);
+CONFIG(CrossMoveScale, 1.0f);
+CONFIG(MouseDragScrollThreshold, 0.3f);
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

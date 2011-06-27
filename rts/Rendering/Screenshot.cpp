@@ -17,7 +17,7 @@
 
 #undef CreateDirectory
 
-static ConfigValue cfgScreenshotCounter("ScreenshotCounter", 0);
+CONFIG(ScreenshotCounter, 0);
 
 struct FunctionArgs
 {
