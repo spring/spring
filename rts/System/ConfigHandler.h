@@ -16,14 +16,30 @@
 class ConfigValue
 {
 public:
-	ConfigValue(const std::string& key, const std::string& value, const std::string& comment = "");
+	template<typename T>
+	ConfigValue(const std::string& key, const T& value, const std::string& comment = ""):
+			next(head), key(key), value(ToString(value)), comment(comment)
+	{
+		head = this;
+	}
 
 private:
+	template<typename T>
+	static std::string ToString(const T& value)
+	{
+		std::ostringstream buffer;
+		buffer << value;
+		return buffer.str();
+	}
+
 	static ConfigValue* head;
+
+private:
 	ConfigValue* next;
 	std::string key;
 	std::string value;
 	std::string comment;
+
 	friend class ConfigHandler;
 };
 

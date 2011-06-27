@@ -280,11 +280,3 @@ void ConfigHandler::Deallocate()
 }
 
 /******************************************************************************/
-
-ConfigValue::ConfigValue(const string& key, const string& value, const string& comment):
-		next(head), key(key), value(value), comment(comment)
-{
-	head = this;
-}
-
-/******************************************************************************/
