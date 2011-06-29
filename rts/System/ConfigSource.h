@@ -9,22 +9,30 @@
 #include <boost/function.hpp>
 
 /**
- * @brief Abstraction of a configuration source
+ * @brief Abstraction of a read-only configuration source
  */
-class ConfigSource
+class ReadOnlyConfigSource
 {
 public:
-	virtual ~ConfigSource() {}
+	virtual ~ReadOnlyConfigSource() {}
 
 	virtual bool IsSet(const std::string& key) const;
 	virtual std::string GetString(const std::string& key) const;
-	virtual void SetString(const std::string& key, const std::string& value);
-	virtual void Delete(const std::string& key);
 
 	const std::map<std::string, std::string>& GetData() const { return data; }
 
 protected:
 	std::map<std::string, std::string> data;
+};
+
+/**
+ * @brief Abstraction of a writable configuration source
+ */
+class ReadWriteConfigSource : public ReadOnlyConfigSource
+{
+public:
+	virtual void SetString(const std::string& key, const std::string& value);
+	virtual void Delete(const std::string& key);
 };
 
 /**
@@ -34,14 +42,14 @@ protected:
  * of the start script will be put into the overlay and Lua scripts can choose
  * to put certain sections into the overlay.
  */
-class OverlayConfigSource : public ConfigSource
+class OverlayConfigSource : public ReadWriteConfigSource
 {
 };
 
 /**
  * @brief File-backed configuration source
  */
-class FileConfigSource : public ConfigSource
+class FileConfigSource : public ReadWriteConfigSource
 {
 public:
 	FileConfigSource(const std::string& filename);
@@ -52,6 +60,7 @@ public:
 	std::string GetFilename() const { return filename; }
 
 private:
+	void SetStringInternal(const std::string& key, const std::string& value);
 	void DeleteInternal(const std::string& key);
 	void ReadModifyWrite(boost::function<void ()> modify);
 

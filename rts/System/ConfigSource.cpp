@@ -22,12 +22,12 @@ typedef map<string, string> StringMap;
 
 /******************************************************************************/
 
-bool ConfigSource::IsSet(const string& key) const
+bool ReadOnlyConfigSource::IsSet(const string& key) const
 {
 	return data.find(key) != data.end();
 }
 
-string ConfigSource::GetString(const string& key) const
+string ReadOnlyConfigSource::GetString(const string& key) const
 {
 	StringMap::const_iterator pos = data.find(key);
 	if (pos == data.end()) {
@@ -36,12 +36,14 @@ string ConfigSource::GetString(const string& key) const
 	return pos->second;
 }
 
-void ConfigSource::SetString(const string& key, const string& value)
+/******************************************************************************/
+
+void ReadWriteConfigSource::SetString(const string& key, const string& value)
 {
 	data[key] = value;
 }
 
-void ConfigSource::Delete(const string& key)
+void ReadWriteConfigSource::Delete(const string& key)
 {
 	data.erase(key);
 }
@@ -63,14 +65,19 @@ FileConfigSource::FileConfigSource(const string& filename) : filename(filename)
 	fclose(file);
 }
 
+void FileConfigSource::SetStringInternal(const std::string& key, const std::string& value)
+{
+	ReadWriteConfigSource::SetString(key, value);
+}
+
 void FileConfigSource::SetString(const string& key, const string& value)
 {
-	ReadModifyWrite(boost::bind(&ConfigSource::SetString, this, key, value));
+	ReadModifyWrite(boost::bind(&FileConfigSource::SetStringInternal, this, key, value));
 }
 
 void FileConfigSource::DeleteInternal(const string& key)
 {
-	ConfigSource::Delete(key);
+	ReadWriteConfigSource::Delete(key);
 	comments.erase(key);
 }
 
