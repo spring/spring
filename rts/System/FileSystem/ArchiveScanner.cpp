@@ -22,7 +22,9 @@
 #include "System/LogOutput.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
+#ifndef DEDICATED
 #include "System/Platform/Watchdog.h"
+#endif // DEDICATED
 
 
 CLogSubsystem LOG_ARCHIVESCANNER("ArchiveScanner");
@@ -410,7 +412,9 @@ void CArchiveScanner::Scan(const std::string& curPath, bool doChecksum)
 			continue;
 		}
 
+#ifndef DEDICATED
 		Watchdog::ClearTimer(WDT_MAIN);
+#endif // DEDICATED
 		// Is this an archive we should look into?
 		if (archiveLoader.IsArchiveFile(fullName)) {
 			ScanArchive(fullName, doChecksum);
