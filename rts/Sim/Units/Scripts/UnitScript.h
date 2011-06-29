@@ -169,7 +169,7 @@ public:
 
 	bool IsInAnimation(AnimType type, int piece, int axis) {
 		const AnimInfo* ai = FindAnim(type, piece, axis);
-		return ai && !ai->interpolated;
+		return ai && !ai->interpolated; //FIXME why check interpolated? (AddAnimListener doesn't do this check!)
 	}
 
 	// checks for callin existence
