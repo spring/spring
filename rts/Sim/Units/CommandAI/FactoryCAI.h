@@ -41,7 +41,6 @@ public:
 
 	void ExecuteStop(Command &c);
 
-	void DrawCommands();
 	void UpdateIconName(int id, BuildOption& bo);
 
 	CCommandQueue newUnitCommands;

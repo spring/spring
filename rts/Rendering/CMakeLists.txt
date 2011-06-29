@@ -36,10 +36,13 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/GlobalRendering.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GroundDecalHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GroundFlash.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/CommandDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/HUDDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/IPathDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/IconHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/InMapDrawView.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/LineDrawer.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/SmoothHeightMeshDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Models/3DModel.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Models/3DModelLog.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Models/3DOParser.cpp"
@@ -67,6 +70,7 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/UnitDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/VerticalSync.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/WindowManagerHelper.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/WorldDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/glFont.cpp"
 	)
 

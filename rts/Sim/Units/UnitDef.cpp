@@ -238,7 +238,6 @@ UnitDef::UnitDef()
 , flareTime(0)
 , flareSalvoSize(0)
 , flareSalvoDelay(0)
-, smoothAnim(false)
 , canLoopbackAttack(false)
 , levelGround(false)
 , useBuildingGroundDecal(false)
@@ -655,7 +654,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	flareSalvoSize  = udTable.GetInt("flareSalvoSize",  4);
 	flareSalvoDelay = udTable.GetInt("flareSalvoDelay", 0) * GAME_SPEED;
 
-	smoothAnim = udTable.GetBool("smoothAnim", false);
 	canLoopbackAttack = udTable.GetBool("canLoopbackAttack", false);
 	canCrash = udTable.GetBool("canCrash", true);
 	levelGround = udTable.GetBool("levelGround", true);
@@ -746,12 +744,16 @@ S3DModel* UnitDef::LoadModel() const
 		this->modelDef.model = modelParser->Load3DModel(this->modelDef.modelPath, this->modelCenterOffset);
 		this->modelDef.modelTextures["tex1"] = this->modelDef.model->tex1;
 		this->modelDef.modelTextures["tex2"] = this->modelDef.model->tex2;
-	}
-	else {
+	} else {
 		eventHandler.LoadedModelRequested();
 	}
 
 	return (this->modelDef.model);
+}
+
+float UnitDef::GetModelRadius() const
+{
+	return (LoadModel()->radius);
 }
 
 

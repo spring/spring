@@ -44,7 +44,6 @@
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/FactoryCAI.h"
-#include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "LogOutput.h"
@@ -892,8 +891,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_INT(  "flareTime",        ud.flareTime);
 	ADD_INT(  "flareSalvoSize",   ud.flareSalvoSize);
 	ADD_INT(  "flareSalvoDelay",  ud.flareSalvoDelay);
-
-	ADD_BOOL("smoothAnim", ud.smoothAnim);
 
 	ADD_BOOL("levelGround", ud.levelGround);
 	ADD_BOOL("strafeToAttack", ud.strafeToAttack);

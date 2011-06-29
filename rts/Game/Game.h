@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __GAME_H__
-#define __GAME_H__
+#ifndef _GAME_H
+#define _GAME_H
 
 #include <time.h>
 #include <string>
@@ -23,6 +23,7 @@ class ISyncedActionExecutor;
 class IUnsyncedActionExecutor;
 class ChatMessage;
 class SkirmishAIData;
+class CWorldDrawer;
 
 
 class CGame : public CGameController
@@ -190,7 +191,6 @@ public:
 
 	void ClientReadNet();
 	void UpdateUI(bool cam);
-	bool DrawWorld();
 
 	void SimFrame();
 	void StartPlaying();
@@ -220,10 +220,13 @@ public:
 
 	/// for reloading the savefile
 	ILoadSaveHandler* saveFile;
+
+private:
+	CWorldDrawer* worldDrawer;
 };
 
 
 extern CGame* game;
 
 
-#endif // __GAME_H__
+#endif // _GAME_H

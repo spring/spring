@@ -1274,7 +1274,7 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 
 void CglFont::WrapTextKnuth(std::list<word>& words, float maxWidth, float maxHeight) const
 {
-	//todo: FINISH ME!!! (Knuths algorithm would try to share deadspace between lines, with the smallest sum of (deadspace of line)^2)
+	// TODO FINISH ME!!! (Knuths algorithm would try to share deadspace between lines, with the smallest sum of (deadspace of line)^2)
 }
 
 
@@ -1432,7 +1432,7 @@ void CglFont::RemergeColorCodes(std::list<word>* words, std::list<colorcode>& co
 
 int CglFont::WrapInPlace(std::string& text, float _fontSize, const float maxWidth, const float maxHeight) const
 {
-	//todo: make an option to insert '-' for word wrappings (and perhaps try to syllabificate)
+	// TODO make an option to insert '-' for word wrappings (and perhaps try to syllabificate)
 
 	if (_fontSize <= 0.0f)
 		_fontSize = fontSize;
@@ -1473,7 +1473,7 @@ int CglFont::WrapInPlace(std::string& text, float _fontSize, const float maxWidt
 
 std::list<std::string> CglFont::Wrap(const std::string& text, float _fontSize, const float maxWidth, const float maxHeight) const
 {
-	//todo: make an option to insert '-' for word wrappings (and perhaps try to syllabificate)
+	// TODO make an option to insert '-' for word wrappings (and perhaps try to syllabificate)
 
 	if (_fontSize <= 0.0f)
 		_fontSize = fontSize;

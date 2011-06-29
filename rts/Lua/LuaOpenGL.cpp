@@ -42,6 +42,7 @@
 #include "Rendering/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/IconHandler.h"
+#include "Rendering/LineDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/BaseSky.h"
@@ -65,7 +66,6 @@
 #include "Sim/Units/UnitDefImage.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
-#include "Sim/Units/CommandAI/LineDrawer.h"
 #include "System/LogOutput.h"
 #include "System/Matrix44f.h"
 #include "System/ConfigHandler.h"
@@ -1080,7 +1080,14 @@ int LuaOpenGL::GetNumber(lua_State* L)
 int LuaOpenGL::GetString(lua_State* L)
 {
 	const GLenum pname = (GLenum) luaL_checknumber(L, 1);
-	lua_pushstring(L, (const char*)glGetString(pname));
+	const char* pstring = (const char*) glGetString(pname);
+
+	if (pstring != NULL) {
+		lua_pushstring(L, pstring);
+	} else {
+		lua_pushstring(L, "[NULL]");
+	}
+
 	return 1;
 }
 
@@ -1635,7 +1642,7 @@ int LuaOpenGL::FeatureShape(lua_State* L)
 	if (model == NULL) {
 		return 0;
 	}
-	//todo: teamcolor?
+	// TODO teamcolor?
 	model->DrawStatic(); // FIXME: finish this, 3do/s3o, copy DrawIndividual...
 
 	return 0;

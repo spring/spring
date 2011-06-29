@@ -47,7 +47,9 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/CommandDrawer.h"
 #include "Rendering/IconHandler.h"
+#include "Rendering/LineDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/WindowManagerHelper.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -58,7 +60,6 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "System/ConfigHandler.h"
@@ -393,13 +394,15 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 
 	const CUnitSet& units = drawCmdQueueUnits;
 	CUnitSet::const_iterator ui;
+
 	for (ui = units.begin(); ui != units.end(); ++ui) {
 		CUnit* unit = *ui;
-		if (unit) {
-			CCommandAI *cai=unit->commandAI;
-			if(cai)
-				cai->DrawCommands();
+
+		if (unit == NULL || unit->commandAI == NULL) {
+			continue;
 		}
+
+		commandDrawer->Draw(unit->commandAI);
 	}
 
 	glLineWidth(1.0f);
@@ -2103,13 +2106,22 @@ int LuaUnsyncedCtrl::SetWMIcon(lua_State* L)
 int LuaUnsyncedCtrl::SetWMCaption(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isstring(L, 1)) {
-		luaL_error(L, "Incorrect arguments to SetWMCaption(caption)");
+	if ((args < 1) || !lua_isstring(L, 1)
+			|| (args > 2) || ((args >= 2) && !lua_isstring(L, 2)))
+	{
+		luaL_error(L, "Incorrect arguments to SetWMCaption(title[, titleShort])");
 	}
 
-	const std::string caption = luaL_checkstring(L, 1);
+	const std::string title = luaL_checkstring(L, 1);
 
-	WindowManagerHelper::SetCaption(caption);
+	std::string titleShort;
+	if (args >= 2) {
+		titleShort = luaL_checkstring(L, 2);
+	} else {
+		titleShort = title;
+	}
+
+	WindowManagerHelper::SetCaption(title, titleShort);
 
 	return 0;
 }

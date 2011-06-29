@@ -35,7 +35,6 @@ public:
 	bool FindEmptyFloodSpots(float3 startpos, float3 endpos, std::list<float3>& dropSpots, std::vector<float3> exitDirs);
 	CUnit* FindUnitToTransport(float3 center, float radius);
 	int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
-	void DrawCommands();
 	void FinishCommand();
 	bool LoadStillValid(CUnit* unit);
 

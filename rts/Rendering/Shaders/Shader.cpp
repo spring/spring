@@ -23,7 +23,9 @@ namespace Shader {
 			glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorPos);
 			glGetProgramivARB(type, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &isNative);
 
-			log = std::string((const char*) glGetString(GL_PROGRAM_ERROR_STRING_ARB));
+			const char* err = (const char*) glGetString(GL_PROGRAM_ERROR_STRING_ARB);
+
+			log = std::string((err != NULL)? err: "[NULL]");
 			valid = (errorPos == -1 && isNative != 0);
 
 			glBindProgramARB(type, 0);

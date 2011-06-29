@@ -48,7 +48,6 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Groups/GroupHandler.h"
-#include "Sim/Misc/SmoothHeightMesh.h"
 #include "UI/CommandColors.h"
 #include "UI/EndGameBox.h"
 #include "UI/GameInfo.h"
@@ -293,7 +292,7 @@ extern volatile int gmlMultiThreadSim;
 extern volatile int gmlStartSim;
 #endif // GML_ENABLE_SIM
 
-namespace unsyncedActionExecutors {
+namespace { // prevents linking problems in case of duplicate symbols
 
 /* XXX
  * An alternative way of dealing with the commands.
@@ -1187,7 +1186,6 @@ public:
 	}
 
 	static void RegisterCommandVariants() {
-		using namespace unsyncedActionExecutors;
 
 		unsyncedGameCommands->AddActionExecutor(new ChatActionExecutor("",     "",   false));
 		unsyncedGameCommands->AddActionExecutor(new ChatActionExecutor("All",  "",   true));
@@ -2628,19 +2626,6 @@ public:
 
 
 
-class AirMeshActionExecutor : public IUnsyncedActionExecutor {
-public:
-	AirMeshActionExecutor() : IUnsyncedActionExecutor("AirMesh",
-			"Show/Hide the smooth air-mesh map overlay") {}
-
-	void Execute(const UnsyncedAction& action) const {
-		SetBoolArg(smoothGround->drawEnabled, action.GetArgs());
-		LogSystemStatus("smooth air-mesh map overlay", smoothGround->drawEnabled);
-	}
-};
-
-
-
 class SetGammaActionExecutor : public IUnsyncedActionExecutor {
 public:
 	SetGammaActionExecutor() : IUnsyncedActionExecutor("SetGamma",
@@ -2949,7 +2934,7 @@ private:
 	}
 };
 
-} // namespace syncedActionExecutors
+} // namespace (unnamed)
 
 
 
@@ -3018,8 +3003,6 @@ bool CGame::ActionReleased(const Action& action)
 
 
 void UnsyncedGameCommands::AddDefaultActionExecutors() {
-
-	using namespace unsyncedActionExecutors;
 
 	AddActionExecutor(new SelectActionExecutor());
 	AddActionExecutor(new SelectUnitsActionExecutor());
@@ -3163,7 +3146,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DistDrawActionExecutor());
 	AddActionExecutor(new LODScaleActionExecutor());
 	AddActionExecutor(new WireMapActionExecutor());
-	AddActionExecutor(new AirMeshActionExecutor());
 	AddActionExecutor(new SetGammaActionExecutor());
 	AddActionExecutor(new CrashActionExecutor());
 	AddActionExecutor(new ExceptionActionExecutor());

@@ -227,7 +227,7 @@ EXPORT(const char*) GetSpringVersion()
 
 EXPORT(const char*) GetSpringVersionPatchset()
 {
-	return GetStr(SpringVersion::Patchset);
+	return GetStr(SpringVersion::GetPatchSet());
 }
 
 
