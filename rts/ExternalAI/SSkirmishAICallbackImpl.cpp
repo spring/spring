@@ -2801,10 +2801,6 @@ EXPORT(int) skirmishAiCallback_UnitDef_getFlareSalvoDelay(int skirmishAIId, int 
 	return getUnitDefById(skirmishAIId, unitDefId)->flareSalvoDelay;
 }
 
-//EXPORT(bool) skirmishAiCallback_UnitDef_isSmoothAnim(int skirmishAIId, int unitDefId) {
-//	return getUnitDefById(skirmishAIId, unitDefId)->smoothAnim;
-//}
-
 EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToLoopbackAttack(int skirmishAIId, int unitDefId) {
 	return getUnitDefById(skirmishAIId, unitDefId)->canLoopbackAttack;
 }

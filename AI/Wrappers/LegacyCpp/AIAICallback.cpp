@@ -710,7 +710,6 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 		unitDef->flareTime = sAICallback->UnitDef_getFlareTime(skirmishAIId, unitDefId);
 		unitDef->flareSalvoSize = sAICallback->UnitDef_getFlareSalvoSize(skirmishAIId, unitDefId);
 		unitDef->flareSalvoDelay = sAICallback->UnitDef_getFlareSalvoDelay(skirmishAIId, unitDefId);
-		//unitDef->smoothAnim = sAICallback->UnitDef_isSmoothAnim(skirmishAIId, unitDefId);
 		unitDef->smoothAnim = false;
 		unitDef->canLoopbackAttack = sAICallback->UnitDef_isAbleToLoopbackAttack(skirmishAIId, unitDefId);
 		unitDef->levelGround = sAICallback->UnitDef_isLevelGround(skirmishAIId, unitDefId);
@@ -1322,7 +1321,7 @@ float springLegacyAI::CAIAICallback::GetFeatureReclaimLeft(int featureId) {
 }
 
 float3 springLegacyAI::CAIAICallback::GetFeaturePos(int featureId) {
-	
+
 	float pos_cache[3];
 	sAICallback->Feature_getPosition(skirmishAIId, featureId, pos_cache);
 	return pos_cache;

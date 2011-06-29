@@ -230,7 +230,6 @@ int CCobThread::Tick(int deltaTime)
 	CCobThread *thread;
 
 	execTrace.clear();
-	delayedAnims.clear();
 	//list<int>::iterator ei;
 	vector<int>::iterator ei;
 
@@ -410,7 +409,6 @@ int CCobThread::Tick(int deltaTime)
 					stack.push_back(luaArgs[r1 - LUA0]);
 					break;
 				}
-				ForceCommitAllAnims();			// getunitval could possibly read piece locations
 				r1 = owner->GetUnitVal(r1, 0, 0, 0, 0);
 				stack.push_back(r1);
 				break;
@@ -549,7 +547,6 @@ int CCobThread::Tick(int deltaTime)
 				r3 = GET_LONG_PC();
 				r4 = GET_LONG_PC();
 				//logOutput.Print("Turning piece %s axis %d to %d speed %d", script.pieceNames[r3].c_str(), r4, r2, r1);
-				ForceCommitAnim(1, r3, r4);
 				owner->Turn(r3, r4, r1, r2);
 				break;
 			case GET:
@@ -562,7 +559,6 @@ int CCobThread::Tick(int deltaTime)
 					stack.push_back(luaArgs[r1 - LUA0]);
 					break;
 				}
-				ForceCommitAllAnims();
 				r6 = owner->GetUnitVal(r1, r2, r3, r4, r5);
 				stack.push_back(r6);
 				break;
@@ -603,46 +599,19 @@ int CCobThread::Tick(int deltaTime)
 				r2 = GET_LONG_PC();
 				r4 = POP();
 				r3 = POP();
-				ForceCommitAnim(2, r1, r2);
 				owner->Move(r1, r2, r3, r4);
 				break;
 			case MOVE_NOW:{
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
 				r3 = POP();
-
-				if (owner->smoothAnim) {
-					DelayedAnim a;
-					a.type = 2;
-					a.piece = r1;
-					a.axis = r2;
-					a.dest = r3;
-					delayedAnims.push_back(a);
-
-					//logOutput.Print("Delayed move %s %d %d", owner->pieces[r1].name.c_str(), r2, r3);
-				}
-				else {
-					owner->MoveNow(r1, r2, r3);
-				}
-
+				owner->MoveNow(r1, r2, r3);
 				break;}
 			case TURN_NOW:{
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
 				r3 = POP();
-
-				if (owner->smoothAnim) {
-					DelayedAnim a;
-					a.type = 1;
-					a.piece = r1;
-					a.axis = r2;
-					a.dest = r3;
-					delayedAnims.push_back(a);
-				}
-				else {
-					owner->TurnNow(r1, r2, r3);
-				}
-
+				owner->TurnNow(r1, r2, r3);
 				break;}
 			case WAIT_TURN:
 				r1 = GET_LONG_PC();
@@ -843,70 +812,6 @@ void CCobThread::DependentDied(CObject* o)
 	if(o==owner)
 		owner=0;
 }
-
-void CCobThread::CommitAnims(int deltaTime)
-{
-	for (vector<DelayedAnim>::iterator anim = delayedAnims.begin(); anim != delayedAnims.end(); ++anim) {
-
-		//Only consider smoothing when the thread is sleeping for a short while, but not too short
-		int delta = wakeTime - GCurrentTime;
-		bool smooth = (state == Sleep) && (delta < 300) && (delta > deltaTime);
-
-//		logOutput.Print("Commiting %s type %d %d", owner->pieces[anim->piece].name.c_str(), smooth, anim->dest);
-
-		switch (anim->type) {
-			case 1:
-				if (smooth)
-					owner->TurnSmooth(anim->piece, anim->axis, anim->dest, delta, deltaTime);
-				else
-					owner->TurnNow(anim->piece, anim->axis, anim->dest);
-				break;
-			case 2:
-				if (smooth)
-					owner->MoveSmooth(anim->piece, anim->axis, anim->dest, delta, deltaTime);
-				else
-					owner->MoveNow(anim->piece, anim->axis, anim->dest);
-				break;
-		}
-	}
-	delayedAnims.clear();
-}
-
-void CCobThread::ForceCommitAnim(int type, int piece, int axis)
-{
-	for (vector<DelayedAnim>::iterator anim = delayedAnims.begin(); anim != delayedAnims.end(); ++anim) {
-		if ((anim->type == type) && (anim->piece == piece) && (anim->axis == axis)) {
-			switch (type) {
-				case 1:
-					owner->TurnNow(piece, axis, anim->dest);
-					break;
-				case 2:
-					owner->MoveNow(piece, axis, anim->dest);
-					break;
-			}
-
-			//Remove it so it does not interfere later
-			delayedAnims.erase(anim);
-			return;
-		}
-	}
-}
-
-void CCobThread::ForceCommitAllAnims()
-{
-	for (vector<DelayedAnim>::iterator anim = delayedAnims.begin(); anim != delayedAnims.end(); ++anim) {
-		switch (anim->type) {
-			case 1:
-				owner->TurnNow(anim->piece, anim->axis, anim->dest);
-				break;
-			case 2:
-				owner->MoveNow(anim->piece, anim->axis, anim->dest);
-				break;
-		}
-	}
-	delayedAnims.clear();
-}
-
 
 /******************************************************************************/
 

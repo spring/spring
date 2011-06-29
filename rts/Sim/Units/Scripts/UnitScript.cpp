@@ -313,7 +313,7 @@ void CUnitScript::RemoveAnim(AnimType type, int piece, int axis)
 //Overwrites old information. This means that threads blocking on turn completion
 //will now wait for this new turn instead. Not sure if this is the expected behaviour
 //Other option would be to kill them. Or perhaps unblock them.
-void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float dest, float accel, bool interpolated)
+void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float dest, float accel)
 {
 	if (!PieceExists(piece)) {
 		ShowScriptError("Invalid piecenumber");
@@ -357,7 +357,6 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 	ai->dest  = destf;
 	ai->speed = speed;
 	ai->accel = accel;
-	ai->interpolated = interpolated;
 }
 
 
@@ -405,15 +404,15 @@ void CUnitScript::StopSpin(int piece, int axis, float decel)
 }
 
 
-void CUnitScript::Turn(int piece, int axis, float speed, float destination, bool interpolated)
+void CUnitScript::Turn(int piece, int axis, float speed, float destination)
 {
-	AddAnim(ATurn, piece, axis, speed, destination, 0, interpolated);
+	AddAnim(ATurn, piece, axis, speed, destination, 0);
 }
 
 
-void CUnitScript::Move(int piece, int axis, float speed, float destination, bool interpolated)
+void CUnitScript::Move(int piece, int axis, float speed, float destination)
 {
-	AddAnim(AMove, piece, axis, speed, destination, 0, interpolated);
+	AddAnim(AMove, piece, axis, speed, destination, 0);
 }
 
 
@@ -791,56 +790,6 @@ void CUnitScript::ShowFlare(int piece)
 
 	new CMuzzleFlame(pos, unit->speed, dir, size);
 #endif
-}
-
-
-void CUnitScript::MoveSmooth(int piece, int axis, float destination, int delta, int deltaTime)
-{
-	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber");
-		return;
-	}
-
-	//Make sure we do not overwrite animations of non-interpolated origin
-	AnimInfo *ai = FindAnim(AMove, piece, axis);
-	if (ai) {
-		if (!ai->interpolated) {
-			MoveNow(piece, axis, destination);
-			return;
-		}
-	}
-
-	float cur = pieces[piece]->GetPosition()[axis] - pieces[piece]->original->offset[axis];
-	float dist = streflop::fabsf(destination - cur);
-	int timeFactor = (1000 * 1000) / (deltaTime * deltaTime);
-	float speed = (dist * timeFactor) / delta;
-
-	Move(piece, axis, speed, destination, true);
-}
-
-
-void CUnitScript::TurnSmooth(int piece, int axis, float destination, int delta, int deltaTime)
-{
-	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber");
-		return;
-	}
-
-	AnimInfo *ai = FindAnim(ATurn, piece, axis);
-	if (ai) {
-		if (!ai->interpolated) {
-			TurnNow(piece, axis, destination);
-			return;
-		}
-	}
-
-	// not sure the ClampRad() call is necessary here
-	float cur = ClampRad(pieces[piece]->GetRotation()[axis]);
-	float dist = streflop::fabsf(destination - cur);
-	int timeFactor = (1000 * 1000) / (deltaTime * deltaTime);
-	float speed = (dist * timeFactor) / delta;
-
-	Turn(piece, axis, speed, destination, true);
 }
 
 

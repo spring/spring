@@ -70,7 +70,6 @@ protected:
 		float speed;
 		float dest;		//means final position when turning or moving, final speed when spinning
 		float accel;		//used for spinning, can be negative
-		bool interpolated;	//true if this animation is a result of interpolating a direct move/turn
 		std::list<IAnimListener *> listeners;
 	};
 
@@ -88,7 +87,7 @@ protected:
 
 	struct AnimInfo *FindAnim(AnimType anim, int piece, int axis);
 	void RemoveAnim(AnimType anim, int piece, int axis);
-	void AddAnim(AnimType type, int piece, int axis, float speed, float dest, float accel, bool interpolated = false);
+	void AddAnim(AnimType type, int piece, int axis, float speed, float dest, float accel);
 
 	virtual void ShowScriptError(const std::string& msg) = 0;
 
@@ -145,14 +144,10 @@ public:
 	// animation, used by CCobThread
 	void Spin(int piece, int axis, float speed, float accel);
 	void StopSpin(int piece, int axis, float decel);
-	void Turn(int piece, int axis, float speed, float destination, bool interpolated = false);
-	void Move(int piece, int axis, float speed, float destination, bool interpolated = false);
+	void Turn(int piece, int axis, float speed, float destination);
+	void Move(int piece, int axis, float speed, float destination);
 	void MoveNow(int piece, int axis, float destination);
 	void TurnNow(int piece, int axis, float destination);
-
-	// for smoothing turn-now / move-now animations
-	void MoveSmooth(int piece, int axis, float destination, int delta, int deltaTime);
-	void TurnSmooth(int piece, int axis, float destination, int delta, int deltaTime);
 
 	bool AddAnimListener(AnimType type, int piece, int axis, IAnimListener* listener);
 
@@ -168,8 +163,7 @@ public:
 	void SetUnitVal(int val, int param);
 
 	bool IsInAnimation(AnimType type, int piece, int axis) {
-		const AnimInfo* ai = FindAnim(type, piece, axis);
-		return ai && !ai->interpolated; //FIXME why check interpolated? (AddAnimListener doesn't do this check!)
+		return FindAnim(type, piece, axis) != NULL;
 	}
 
 	// checks for callin existence
