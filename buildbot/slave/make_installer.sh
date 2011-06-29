@@ -70,7 +70,7 @@ for TYPE in $(find ${INSTALLDIR}/AI -maxdepth 1 -mindepth 1 -type d) ; do
 	done
 done
 
-cd $OLDPWD
+cd ${SOURCEDIR}
 
 echo "!define MINGWLIBS_DIR \"${MINGWLIBS_PATH}\"" > installer/custom_defines.nsi
 echo "!define BUILD_DIR \"${BUILDDIR}\"" >> installer/custom_defines.nsi

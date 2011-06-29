@@ -11,6 +11,9 @@ REMOTE_RSYNC="nice -19 ionice -c3 rsync" #prevent QQ about rsync killing server
 
 umask 022
 
+#cleanup installed files before rsyncing
+rm -rf ${TMP_BASE}/inst/*
+
 # Rsync archives to a world-visible location.
 if [ ${REMOTE_HOST} = localhost ] && [ -w ${REMOTE_BASE} ]; then
 	${RSYNC} ${TMP_BASE}/ ${REMOTE_BASE}/
