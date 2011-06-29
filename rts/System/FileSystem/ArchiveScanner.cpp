@@ -22,9 +22,9 @@
 #include "System/LogOutput.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
-#ifndef DEDICATED
+#if       !defined(DEDICATED) && !defined(UNITSYNC)
 #include "System/Platform/Watchdog.h"
-#endif // DEDICATED
+#endif // !defined(DEDICATED) && !defined(UNITSYNC)
 
 
 CLogSubsystem LOG_ARCHIVESCANNER("ArchiveScanner");
@@ -412,9 +412,9 @@ void CArchiveScanner::Scan(const std::string& curPath, bool doChecksum)
 			continue;
 		}
 
-#ifndef DEDICATED
+#if       !defined(DEDICATED) && !defined(UNITSYNC)
 		Watchdog::ClearTimer(WDT_MAIN);
-#endif // DEDICATED
+#endif // !defined(DEDICATED) && !defined(UNITSYNC)
 		// Is this an archive we should look into?
 		if (archiveLoader.IsArchiveFile(fullName)) {
 			ScanArchive(fullName, doChecksum);
