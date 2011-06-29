@@ -14,7 +14,7 @@ class ConfigVariable;
  * Keys and default values for each engine configuration variable
  * are declared in and exposed by this class.
  */
-class DefaultConfigSource : public ConfigSource
+class DefaultConfigSource : public ReadOnlyConfigSource
 {
 public:
 	DefaultConfigSource();

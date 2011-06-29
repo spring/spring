@@ -69,7 +69,7 @@ private:
 	OverlayConfigSource* overlay;
 	FileConfigSource* writableSource;
 	DefaultConfigSource* defaultSource;
-	vector<ConfigSource*> sources;
+	vector<ReadOnlyConfigSource*> sources;
 
 	// observer related
 	list<ConfigNotifyCallback> observers;
@@ -80,10 +80,10 @@ private:
 /******************************************************************************/
 
 #define for_each_source(it) \
-	for (vector<ConfigSource*>::iterator it = sources.begin(); it != sources.end(); ++it)
+	for (vector<ReadOnlyConfigSource*>::iterator it = sources.begin(); it != sources.end(); ++it)
 
 #define for_each_source_const(it) \
-	for (vector<ConfigSource*>::const_iterator it = sources.begin(); it != sources.end(); ++it)
+	for (vector<ReadOnlyConfigSource*>::const_iterator it = sources.begin(); it != sources.end(); ++it)
 
 ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations)
 {
@@ -113,7 +113,13 @@ ConfigHandlerImpl::~ConfigHandlerImpl()
 void ConfigHandlerImpl::Delete(const string& key)
 {
 	for_each_source(it) {
-		(*it)->Delete(key);
+		// The alternative to the dynamic cast is to merge ReadWriteConfigSource
+		// with ReadOnlyConfigSource, but then DefaultConfigSource would have to
+		// violate Liskov Substitution Principle... (by blocking modifications)
+		ReadWriteConfigSource* rwcs = dynamic_cast<ReadWriteConfigSource*> (*it);
+		if (rwcs != NULL) {
+			rwcs->Delete(key);
+		}
 	}
 }
 
@@ -179,7 +185,7 @@ void ConfigHandlerImpl::SetString(const string& key, const string& value, bool u
 		overlay->SetString(key, value);
 	}
 	else {
-		vector<ConfigSource*>::const_iterator it = sources.begin();
+		vector<ReadOnlyConfigSource*>::const_iterator it = sources.begin();
 		bool deleted = false;
 
 		++it; // skip overlay
