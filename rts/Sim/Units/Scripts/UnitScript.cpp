@@ -249,13 +249,17 @@ int CUnitScript::Tick(int deltaTime)
 		++it;
 	}
 
-	//Tell listeners to unblock?
-	for (std::vector<struct AnimInfo *>::iterator it = remove.begin(); it != remove.end(); ++it) {
-		UnblockAll(*it); //! NOTE: UnblockAll might result in new anims being added
-	}
-
+	//! Remove finished anims from the unit/script
+	//! NOTE: _must_ happen before calling the listeners of such an anim!
+	//! Else the callback function can call AddAnimListener() and append the currently called
+	//! callback function again at the end of the listeners list. Causing an endless loop!
 	for (std::vector<struct AnimInfo *>::iterator it = remove.begin(); it != remove.end(); ++it) {
 		anims.remove(*it);
+	}
+
+	//! Tell listeners to unblock?
+	for (std::vector<struct AnimInfo *>::iterator it = remove.begin(); it != remove.end(); ++it) {
+		UnblockAll(*it); //! NOTE: UnblockAll might result in new anims being added
 		delete *it;
 	}
 
@@ -683,8 +687,7 @@ void CUnitScript::DropUnit(int u)
 //Returns true if there was an animation to listen to
 bool CUnitScript::AddAnimListener(AnimType type, int piece, int axis, IAnimListener *listener)
 {
-	struct AnimInfo *ai;
-	ai = FindAnim(type, piece, axis);
+	AnimInfo* ai = FindAnim(type, piece, axis);
 	if (ai) {
 		ai->listeners.push_back(listener);
 		return true;
