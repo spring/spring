@@ -12,6 +12,7 @@ SEVENZIP="7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on"
 MINGWLIBS_PATH=${1}
 MINGW_HOST=i586-mingw32msvc-
 
+cd ${BUILDDIR}
 make install DESTDIR=${DEST}
 
 function zip() {
