@@ -238,7 +238,6 @@ UnitDef::UnitDef()
 , flareTime(0)
 , flareSalvoSize(0)
 , flareSalvoDelay(0)
-, smoothAnim(false)
 , canLoopbackAttack(false)
 , levelGround(false)
 , useBuildingGroundDecal(false)
@@ -655,7 +654,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	flareSalvoSize  = udTable.GetInt("flareSalvoSize",  4);
 	flareSalvoDelay = udTable.GetInt("flareSalvoDelay", 0) * GAME_SPEED;
 
-	smoothAnim = udTable.GetBool("smoothAnim", false);
 	canLoopbackAttack = udTable.GetBool("canLoopbackAttack", false);
 	canCrash = udTable.GetBool("canCrash", true);
 	levelGround = udTable.GetBool("levelGround", true);
