@@ -3,8 +3,11 @@ set -e
 . buildbot/slave/prepare.sh
 
 
-DEST=${TMP_BASE}/${CONFIG}/inst
-INSTALLDIR=${DEST}/${BUILDDIR}
+DEST=${TMP_BASE}/inst
+#FIXME: remove hardcoded /usr/local
+INSTALLDIR=${DEST}/usr/local
+
+echo "Installing into $DEST"
 
 #Ultra settings
 SEVENZIP="7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on"
