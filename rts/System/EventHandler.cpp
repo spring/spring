@@ -503,7 +503,7 @@ void CEventHandler::UpdateDrawProjectiles() { eventBatchHandler->UpdateDrawProje
 void CEventHandler::DeleteSyncedProjectiles() {
 	eventBatchHandler->DeleteSyncedProjectiles();
 	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedProjectiles
-	if(luaUI) luaUI->ExecuteProjEventBatch();
+	if (luaUI) luaUI->ExecuteProjEventBatch();
 }
 
 void CEventHandler::UpdateObjects() {

@@ -2249,6 +2249,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Rendering\CommandDrawer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\CommandDrawer.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Rendering\DebugColVolDrawer.cpp"
 				>
 			</File>
@@ -2389,6 +2397,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Rendering\SmoothHeightMeshDrawer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\SmoothHeightMeshDrawer.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Rendering\TeamHighlight.cpp"
 				>
 			</File>
@@ -2418,6 +2434,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Rendering\WindowManagerHelper.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\WorldDrawer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\WorldDrawer.h"
 				>
 			</File>
 			<Filter

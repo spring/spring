@@ -58,6 +58,7 @@ public:
 	~UnitDef();
 
 	S3DModel* LoadModel() const;
+	float GetModelRadius() const;
 
 	bool DontLand() const { return dlHoverFactor >= 0.0f; }
 	void SetNoCost(bool noCost);
@@ -384,7 +385,6 @@ public:
 	int flareSalvoSize;
 	int flareSalvoDelay;
 
-	bool smoothAnim;         ///< True if the unit should use interpolated animation
 	bool canLoopbackAttack;  ///< only matters for fighter aircraft
 	bool levelGround;        ///< only matters for buildings
 

@@ -59,13 +59,12 @@
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/FactoryCAI.h"
-#include "Sim/Units/CommandAI/LineDrawer.h"
 #include "Sim/Units/UnitTypes/ExtractorBuilding.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "myMath.h"
-#include "LogOutput.h"
+#include "System/myMath.h"
+#include "System/LogOutput.h"
 #include "LuaHelper.h"
 
 using namespace std;

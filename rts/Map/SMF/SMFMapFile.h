@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef SMFMAPFILE_H
-#define SMFMAPFILE_H
+#ifndef _SMF_MAP_FILE_H
+#define _SMF_MAP_FILE_H
 
 #include "FileSystem/FileHandler.h"
 #include "mapfile.h"
@@ -18,7 +18,7 @@ public:
 	CSmfMapFile(const std::string& mapFileName);
 
 	void ReadMinimap(void* data);
-	/// @return mipsize
+	/// @return mip size
 	int ReadMinimap(std::vector<boost::uint8_t>& data, unsigned miplevel);
 	void ReadHeightmap(unsigned short* heightmap);
 	void ReadHeightmap(float* heightmap, float base, float mod);
@@ -34,11 +34,13 @@ public:
 
 	const SMFHeader& GetHeader() const { return header; }
 
-	// todo: do not use, just here for backward compatibility with SMFGroundTextures.cpp
+	/**
+	 * @deprecated do not use, just here for backward compatibility
+	 *   with SMFGroundTextures.cpp
+	 */
 	CFileHandler* GetFileHandler() { return &ifs; }
 
 private:
-
 	void ReadGrassMap(void* data);
 
 	SMFHeader header;
@@ -49,4 +51,4 @@ private:
 	int featureFileOffset;
 };
 
-#endif // SMFMAPFILE_H
+#endif // _SMF_MAP_FILE_H

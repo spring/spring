@@ -181,7 +181,7 @@ void FBO::GLContextReinit()
 
 		if (glIsTexture(tex->id)) {
 			glBindTexture(tex->target,tex->id);
-			//todo: regen mipmaps?
+			// TODO regen mipmaps?
 			switch (tex->target) {
 				case GL_TEXTURE_3D:
 					//glTexSubImage3D(tex->target, 0, 0,0,0, tex->xsize, tex->ysize, tex->zsize, /*FIXME?*/GL_RGBA, /*FIXME?*/GL_UNSIGNED_BYTE, tex->pixels);
@@ -195,8 +195,8 @@ void FBO::GLContextReinit()
 					//glTexSubImage2D(tex->target, 0, 0,0, tex->xsize, tex->ysize, /*FIXME?*/GL_RGBA, /*FIXME?*/GL_UNSIGNED_BYTE, tex->pixels);
 					glTexImage2D(tex->target, 0, tex->format, tex->xsize, tex->ysize, 0, /*FIXME?*/GL_RGBA, /*FIXME?*/GL_UNSIGNED_BYTE, tex->pixels);
 			}
-		}else if (glIsRenderbufferEXT(tex->id)) {
-			//FIXME
+		} else if (glIsRenderbufferEXT(tex->id)) {
+			// FIXME implement rendering buffer context init
 		}
 
 		delete[] tex->pixels;

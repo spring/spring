@@ -104,6 +104,8 @@ class CLuaUI : public CLuaHandle
 	private: // call-outs
 		static int SetShockFrontFactors(lua_State* L);
 
+		int UpdateUnsyncedXCalls(lua_State* L);
+		std::set<std::string> unsyncedXCalls;
 		std::vector<DelayDataDump> delayedXCall;
 		std::vector<LuaUIEvent> luaUIEventBatch;
 };

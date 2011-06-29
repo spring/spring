@@ -8,30 +8,30 @@
 namespace SpringVersion
 {
 	/// major revision number (e.g. 0.77)
-	extern const char* const Major;
+	extern const std::string& GetMajor();
 
 	/// minor revision / bugfix which breaks sync between clients
-	extern const char* const Minor;
+	extern const std::string& GetMinor();
 
 	/**
 	 * @brief bug fixes which preserves sync between clients
 	 * Clients with the same Major.Minor can still play together.
 	 * Demos should also be compatible between patch-sets.
 	 */
-	extern const char* const Patchset;
+	extern const std::string& GetPatchSet();
 
 	/// additional information (compiler flags, SCM revision etc.)
-	extern const char* const Additional;
+	extern const std::string& GetAdditional();
 
 	/// time of build
-	extern const char* const BuildTime;
+	extern const std::string& GetBuildTime();
 
 	/**
 	 * @return "Major.Minor"
 	 * @see Major
 	 * @see Minor
 	 */
-	extern std::string Get();
+	extern const std::string& Get();
 
 	/**
 	 * @return "Major.Minor.Patchset (Additional)"
@@ -40,7 +40,7 @@ namespace SpringVersion
 	 * @see Patchset
 	 * @see Additional
 	 */
-	extern std::string GetFull();
+	extern const std::string& GetFull();
 };
 
 #endif // GAME_VERSION_H

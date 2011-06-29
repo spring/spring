@@ -50,8 +50,9 @@ namespace Watchdog
 
 	static std::map<std::string, unsigned int> threadNameToNum;
 
-	static boost::thread* hangdetectorthread = NULL;
+	static boost::thread* hangDetectorThread = NULL;
 	static spring_time hangTimeout = spring_msecs(0);
+	static volatile bool hangDetectorThreadInterrupted = false;
 
 	static inline void UpdateActiveThreads(Threading::NativeThreadId num) {
 		unsigned int active = WDT_LAST;
@@ -67,16 +68,20 @@ namespace Watchdog
 			threadSlots[active].active = true;
 	}
 
-	static void HangDetector()
+
+	static void HangDetectorLoop()
 	{
-		while (!boost::this_thread::interruption_requested()) {
+		while (!hangDetectorThreadInterrupted) {
 			spring_time curtime = spring_gettime();
 			bool hangDetected = false;
+
 			for (unsigned int i = 0; i < WDT_LAST; ++i) {
 				if (!threadSlots[i].active)
 					continue;
+
 				WatchDogThreadInfo* th_info = registeredThreads[i];
 				spring_time curwdt = th_info->timer;
+
 				if (spring_istime(curwdt) && curtime > curwdt && (curtime - curwdt) > hangTimeout) {
 					if (!hangDetected) {
 						logOutput.Print("[Watchdog] Hang detection triggered for Spring %s.", SpringVersion::GetFull().c_str());
@@ -90,17 +95,22 @@ namespace Watchdog
 					th_info->timer = curtime;
 				}
 			}
+
 			if (hangDetected) {
 				CrashHandler::PrepareStacktrace();
+
 				for (unsigned int i = 0; i < WDT_LAST; ++i) {
 					if (!threadSlots[i].active)
 						continue;
+
 					WatchDogThreadInfo* th_info = registeredThreads[i];
 					CrashHandler::Stacktrace(th_info->thread, threadNames[i]);
 					logOutput.Flush();
 				}
+
 				CrashHandler::CleanupStacktrace();
 			}
+
 			boost::this_thread::sleep(boost::posix_time::seconds(1));
 		}
 	}
@@ -169,8 +179,9 @@ namespace Watchdog
 
 	void ClearTimer(bool disable, Threading::NativeThreadId* _threadId)
 	{
-		if (!hangdetectorthread)
+		if (hangDetectorThread == NULL)
 			return; //! Watchdog isn't running
+
 		Threading::NativeThreadId threadId;
 		if (_threadId)
 			threadId = *_threadId;
@@ -192,8 +203,9 @@ namespace Watchdog
 
 	void ClearTimer(WatchdogThreadnum num, bool disable)
 	{
-		if (!hangdetectorthread)
+		if (hangDetectorThread == NULL)
 			return; //! Watchdog isn't running
+
 		WatchDogThreadInfo* th_info;
 		if (num >= WDT_LAST || !(th_info = registeredThreads[num])->numreg) {
 			logOutput.Print("[Watchdog::ClearTimer] Invalid thread number %d", num);
@@ -205,8 +217,9 @@ namespace Watchdog
 
 	void ClearTimer(const std::string &name, bool disable)
 	{
-		if (!hangdetectorthread)
+		if (hangDetectorThread == NULL)
 			return; //! Watchdog isn't running
+
 		std::map<std::string, unsigned int>::iterator i = threadNameToNum.find(name);
 		unsigned int num;
 		WatchDogThreadInfo* th_info;
@@ -220,7 +233,7 @@ namespace Watchdog
 
 	void ClearPrimaryTimers(bool disable)
 	{
-		if (!hangdetectorthread)
+		if (hangDetectorThread == NULL)
 			return; //! Watchdog isn't running
 
 		for (unsigned int i = 0; i < WDT_LAST; ++i) {
@@ -270,7 +283,7 @@ namespace Watchdog
 		hangTimeout = spring_secs(hangTimeoutSecs);
 
 		//! start the watchdog thread
-		hangdetectorthread = new boost::thread(&HangDetector);
+		hangDetectorThread = new boost::thread(&HangDetectorLoop);
 
 		logOutput.Print("[Watchdog] Installed (timeout: %isec)", hangTimeoutSecs);
 	}
@@ -278,19 +291,21 @@ namespace Watchdog
 
 	void Uninstall()
 	{
+		if (hangDetectorThread == NULL) {
+			return;
+		}
+
 		boost::mutex::scoped_lock lock(wdmutex);
 
-		if (hangdetectorthread) {
-			hangdetectorthread->interrupt();
-			hangdetectorthread->join();
-			delete hangdetectorthread;
-			hangdetectorthread = NULL;
+		hangDetectorThreadInterrupted = true;
+		hangDetectorThread->join();
+		delete hangDetectorThread;
+		hangDetectorThread = NULL;
 
-			memset(registeredThreadsData, 0, sizeof(registeredThreadsData));
-			for (unsigned int i = 0; i < WDT_LAST; ++i)
-				registeredThreads[i] = &registeredThreadsData[WDT_LAST];
-			memset(threadSlots, 0, sizeof(threadSlots));
-			threadNameToNum.clear();
-		}
+		memset(registeredThreadsData, 0, sizeof(registeredThreadsData));
+		for (unsigned int i = 0; i < WDT_LAST; ++i)
+			registeredThreads[i] = &registeredThreadsData[WDT_LAST];
+		memset(threadSlots, 0, sizeof(threadSlots));
+		threadNameToNum.clear();
 	}
 }
