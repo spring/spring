@@ -44,7 +44,13 @@ ${SEVENZIP} ${TMP_PATH}/${VERSION}_portable.7z ${INSTALLDIR}/* -x!AI -x!spring-d
 
 #create archives for translate_stacktrace.py
 for tocompress in ${EXECUTABLES}; do
-	name=$(basename $(dirname ${tocompress})) #get parent directory name of file
+	#get parent-parent-directory name of file
+	name=$(basename $(dirname $(dirname ${tocompress})))
+
+	#set to filename without suffix if no parent dir
+	if [ ${name} == "." ]; then
+		name=$(basename ${tocompress})
+	fi
 	debugfile=${tocompress%.*}.dbg
 	archive_debug="${TMP_PATH}/${VERSION}_${name}_dbg.7z"
 	[ ! -f ${debugfile} ] || ${SEVENZIP} "${archive_debug}" ${debugfile}
