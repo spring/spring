@@ -12,7 +12,7 @@
 #include "Game/GameVersion.h"
 #include "aGui/Gui.h"
 
-CONFIG(LobbyServer, "taspringmaster.clan-sy.com");
+CONFIG(std::string, LobbyServer).defaultValue("taspringmaster.clan-sy.com");
 
 LobbyConnection::LobbyConnection() : upwin(NULL)
 {

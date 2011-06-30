@@ -21,7 +21,7 @@
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
 
-CONFIG(DynamicSky, false);
+CONFIG(bool, DynamicSky).defaultValue(false);
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

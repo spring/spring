@@ -20,8 +20,8 @@
 
 #define border 7
 
-CONFIG(InfoMessageTime, 400);
-CONFIG(InfoConsoleGeometry, "0.26 0.96 0.41 0.205");
+CONFIG(int, InfoMessageTime).defaultValue(400);
+CONFIG(std::string, InfoConsoleGeometry).defaultValue("0.26 0.96 0.41 0.205");
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

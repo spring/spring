@@ -17,18 +17,18 @@
 using std::max;
 using std::min;
 
-CONFIG(CamFreeEnabled, 0);
-CONFIG(CamFreeInvertAlt, 0);
-CONFIG(CamFreeGoForward, 0);
-CONFIG(CamFreeFOV, 45.0f);
-CONFIG(CamFreeScrollSpeed, 500.0f);
-CONFIG(CamFreeGravity, -500.0f);
-CONFIG(CamFreeSlide, 0.5f);
-CONFIG(CamFreeGroundOffset, 16.0f);
-CONFIG(CamFreeTiltSpeed, 150.0f);
-CONFIG(CamFreeAutoTilt, 150.0f);
-CONFIG(CamFreeVelTime, 1.5f);
-CONFIG(CamFreeAngVelTime, 1.0f);
+CONFIG(int, CamFreeEnabled).defaultValue(0);
+CONFIG(int, CamFreeInvertAlt).defaultValue(0);
+CONFIG(int, CamFreeGoForward).defaultValue(0);
+CONFIG(float, CamFreeFOV).defaultValue(45.0f);
+CONFIG(float, CamFreeScrollSpeed).defaultValue(500.0f);
+CONFIG(float, CamFreeGravity).defaultValue(-500.0f);
+CONFIG(float, CamFreeSlide).defaultValue(0.5f);
+CONFIG(float, CamFreeGroundOffset).defaultValue(16.0f);
+CONFIG(float, CamFreeTiltSpeed).defaultValue(150.0f);
+CONFIG(float, CamFreeAutoTilt).defaultValue(150.0f);
+CONFIG(float, CamFreeVelTime).defaultValue(1.5f);
+CONFIG(float, CamFreeAngVelTime).defaultValue(1.0f);
 
 /******************************************************************************/
 /******************************************************************************/

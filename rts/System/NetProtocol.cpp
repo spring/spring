@@ -27,7 +27,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 
-CONFIG(SourcePort, 0);
+CONFIG(int, SourcePort).defaultValue(0);
 
 CNetProtocol::CNetProtocol() : loading(false), disableDemo(false)
 {

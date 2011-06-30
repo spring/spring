@@ -32,15 +32,15 @@
 
 #include "float3.h"
 
-CONFIG(MaxSounds, 128);
-CONFIG(PitchAdjust, false);
-CONFIG(snd_volmaster, 60);
-CONFIG(snd_volgeneral, 100);
-CONFIG(snd_volunitreply, 100);
-CONFIG(snd_volbattle, 100);
-CONFIG(snd_volui, 100);
-CONFIG(snd_volmusic, 100);
-CONFIG(snd_device, cfg::NoDefault);
+CONFIG(int, MaxSounds).defaultValue(128);
+CONFIG(bool, PitchAdjust).defaultValue(false);
+CONFIG(int, snd_volmaster).defaultValue(60);
+CONFIG(int, snd_volgeneral).defaultValue(100);
+CONFIG(int, snd_volunitreply).defaultValue(100);
+CONFIG(int, snd_volbattle).defaultValue(100);
+CONFIG(int, snd_volui).defaultValue(100);
+CONFIG(int, snd_volmusic).defaultValue(100);
+CONFIG(std::string, snd_device);
 
 boost::recursive_mutex soundMutex;
 

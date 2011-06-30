@@ -11,10 +11,10 @@
 #include "Map/Ground.h"
 #include "myMath.h"
 
-CONFIG(RotOverheadMouseScale, 0.01f);
-CONFIG(RotOverheadScrollSpeed,10);
-CONFIG(RotOverheadEnabled,1);
-CONFIG(RotOverheadFOV, 45.0f);
+CONFIG(float, RotOverheadMouseScale).defaultValue(0.01f);
+CONFIG(int, RotOverheadScrollSpeed).defaultValue(10);
+CONFIG(int, RotOverheadEnabled).defaultValue(1);
+CONFIG(float, RotOverheadFOV).defaultValue(45.0f);
 
 
 CRotOverheadController::CRotOverheadController()

@@ -42,18 +42,18 @@ using std::vector;
 using std::min;
 using std::max;
 
-CONFIG(BumpWaterTexSizeReflection, 512);
-CONFIG(BumpWaterReflection, 1);
-CONFIG(BumpWaterRefraction, 1); // 0:=off, 1:=screencopy, 2:=own rendering cycle
-CONFIG(BumpWaterAnisotropy, 0.0f);
-CONFIG(BumpWaterUseDepthTexture, 1);
-CONFIG(BumpWaterDepthBits, cfg::NoDefault);
-CONFIG(BumpWaterBlurReflection, 0);
-CONFIG(BumpWaterShoreWaves, 1);
-CONFIG(BumpWaterEndlessOcean, 1);
-CONFIG(BumpWaterDynamicWaves, 1);
-CONFIG(BumpWaterUseUniforms, 0);
-CONFIG(BumpWaterOcclusionQuery, 1);
+CONFIG(int, BumpWaterTexSizeReflection).defaultValue(512);
+CONFIG(int, BumpWaterReflection).defaultValue(1);
+CONFIG(int, BumpWaterRefraction).defaultValue(1); // 0:=off, 1:=screencopy, 2:=own rendering cycle
+CONFIG(float, BumpWaterAnisotropy).defaultValue(0.0f);
+CONFIG(int, BumpWaterUseDepthTexture).defaultValue(1);
+CONFIG(int, BumpWaterDepthBits);
+CONFIG(int, BumpWaterBlurReflection).defaultValue(0);
+CONFIG(int, BumpWaterShoreWaves).defaultValue(1);
+CONFIG(int, BumpWaterEndlessOcean).defaultValue(1);
+CONFIG(int, BumpWaterDynamicWaves).defaultValue(1);
+CONFIG(int, BumpWaterUseUniforms).defaultValue(0);
+CONFIG(int, BumpWaterOcclusionQuery).defaultValue(1);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// HELPER FUNCTIONS

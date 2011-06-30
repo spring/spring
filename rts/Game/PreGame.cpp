@@ -50,7 +50,7 @@
 using netcode::RawPacket;
 using std::string;
 
-CONFIG(DemoFromDemo, false);
+CONFIG(bool, DemoFromDemo).defaultValue(false);
 
 CPreGame* pregame = NULL;
 

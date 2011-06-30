@@ -24,9 +24,9 @@
 #include "System/LogOutput.h"
 #include "System/Net/Socket.h"
 
-CONFIG(OscStatsSenderEnabled, false);
-CONFIG(OscStatsSenderDestinationAddress, "127.0.0.1");
-CONFIG(OscStatsSenderDestinationPort, (unsigned int) 6447);
+CONFIG(bool, OscStatsSenderEnabled).defaultValue(false);
+CONFIG(std::string, OscStatsSenderDestinationAddress).defaultValue("127.0.0.1");
+CONFIG(unsigned int, OscStatsSenderDestinationPort).defaultValue((unsigned int) 6447);
 
 COSCStatsSender* COSCStatsSender::singleton = NULL;
 

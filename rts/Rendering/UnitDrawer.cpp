@@ -67,18 +67,18 @@ extern gmlClientServer<void, int, CUnit*> *gmlProcessor;
 
 CUnitDrawer* unitDrawer;
 
-CONFIG(UnitLodDist, 1000);
-CONFIG(UnitIconDist, 10000);
-CONFIG(UnitTransparency, 0.7f);
-CONFIG(ShowHealthBars, 1);
-CONFIG(MultiThreadDrawUnit, 1);
-CONFIG(MultiThreadDrawUnitShadow, 1);
-CONFIG(MaxDynamicModelLights, 1U);
-CONFIG(AdvUnitShading, 1);
-CONFIG(LODScale, 1.0f);
-CONFIG(LODScaleShadow, 1.0f);
-CONFIG(LODScaleReflection, 1.0f);
-CONFIG(LODScaleRefraction, 1.0f);
+CONFIG(int, UnitLodDist).defaultValue(1000);
+CONFIG(int, UnitIconDist).defaultValue(10000);
+CONFIG(float, UnitTransparency).defaultValue(0.7f);
+CONFIG(int, ShowHealthBars).defaultValue(1);
+CONFIG(int, MultiThreadDrawUnit).defaultValue(1);
+CONFIG(int, MultiThreadDrawUnitShadow).defaultValue(1);
+CONFIG(unsigned int, MaxDynamicModelLights).defaultValue(1U);
+CONFIG(int, AdvUnitShading).defaultValue(1);
+CONFIG(float, LODScale).defaultValue(1.0f);
+CONFIG(float, LODScaleShadow).defaultValue(1.0f);
+CONFIG(float, LODScaleReflection).defaultValue(1.0f);
+CONFIG(float, LODScaleRefraction).defaultValue(1.0f);
 
 static bool LUA_DRAWING = false; // FIXME
 static float UNIT_GLOBAL_LOD_FACTOR = 1.0f;

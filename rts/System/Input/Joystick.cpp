@@ -10,8 +10,8 @@
 #include "LogOutput.h"
 #include "EventHandler.h"
 
-CONFIG(JoystickEnabled, true);
-CONFIG(JoystickUse, 0);
+CONFIG(bool, JoystickEnabled).defaultValue(true);
+CONFIG(int, JoystickUse).defaultValue(0);
 
 Joystick* stick = NULL;
 

@@ -42,8 +42,8 @@ using std::max;
 
 CGroundDecalHandler* groundDecals = NULL;
 
-CONFIG(GroundDecals, 1);
-CONFIG(GroundScarAlphaFade, 0);
+CONFIG(int, GroundDecals).defaultValue(1);
+CONFIG(int, GroundScarAlphaFade).defaultValue(0);
 
 CGroundDecalHandler::CGroundDecalHandler()
 	: CEventClient("[CGroundDecalHandler]", 314159, false)

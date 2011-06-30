@@ -17,7 +17,7 @@
 
 #undef CreateDirectory
 
-CONFIG(ScreenshotCounter, 0);
+CONFIG(int, ScreenshotCounter).defaultValue(0);
 
 struct FunctionArgs
 {

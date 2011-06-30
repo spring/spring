@@ -16,7 +16,7 @@
 #include "LogOutput.h"
 #include "System/Config/ConfigHandler.h"
 
-CONFIG(VSync, -1);
+CONFIG(int, VSync).defaultValue(-1);
 
 CVerticalSync VSync;
 

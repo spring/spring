@@ -13,8 +13,8 @@
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 
-CONFIG(DynamicSun, false);
-CONFIG(AdvSky, true);
+CONFIG(bool, DynamicSun).defaultValue(false);
+CONFIG(bool, AdvSky).defaultValue(true);
 
 IBaseSky* sky = NULL;
 

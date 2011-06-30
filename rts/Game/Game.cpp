@@ -170,17 +170,17 @@ extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 #endif
 
 
-CONFIG(WindowedEdgeMove, 1);
-CONFIG(FullscreenEdgeMove, 1);
-CONFIG(ShowFPS, 0);
-CONFIG(ShowClock, 1);
-CONFIG(ShowSpeed, 0);
-CONFIG(ShowMTInfo, 1);
-CONFIG(SpeedControl, 0);
-CONFIG(ShowPlayerInfo, 1);
-CONFIG(GuiOpacity,  0.8f);
-CONFIG(InputTextGeo, "");
-CONFIG(LuaModUICtrl, 1);
+CONFIG(int, WindowedEdgeMove).defaultValue(1);
+CONFIG(int, FullscreenEdgeMove).defaultValue(1);
+CONFIG(int, ShowFPS).defaultValue(0);
+CONFIG(int, ShowClock).defaultValue(1);
+CONFIG(int, ShowSpeed).defaultValue(0);
+CONFIG(int, ShowMTInfo).defaultValue(1);
+CONFIG(int, SpeedControl).defaultValue(0);
+CONFIG(int, ShowPlayerInfo).defaultValue(1);
+CONFIG(float, GuiOpacity).defaultValue(0.8f);
+CONFIG(std::string, InputTextGeo).defaultValue("");
+CONFIG(int, LuaModUICtrl).defaultValue(1);
 
 
 CGame* game = NULL;

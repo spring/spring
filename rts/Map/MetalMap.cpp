@@ -7,7 +7,7 @@
 #include "ReadMap.h"
 #include "System/Config/ConfigHandler.h"
 
-CONFIG(MetalMapPalette, 0);
+CONFIG(int, MetalMapPalette).defaultValue(0);
 
 CR_BIND(CMetalMap,(NULL, 0, 0, 0.0f));
 

@@ -85,35 +85,35 @@
 #endif
 
 
-CONFIG(SetCoreAffinity, 0);
-CONFIG(DepthBufferBits, 24);
-CONFIG(StencilBufferBits, 8);
-CONFIG(FSAALevel, 0);
-CONFIG(SmoothLines, 0); //! FSAA ? 0 : 3;  // until a few things get fixed
-CONFIG(SmoothPoints, 0); //! FSAA ? 0 : 3;
-CONFIG(TextureLODBias, 0.0f);
-CONFIG(FixAltTab, 0);
-CONFIG(DualScreenMode, 0);
-CONFIG(DualScreenMiniMapOnLeft, 0);
-CONFIG(Version,0);
-CONFIG(FSAA, false);
-CONFIG(FontFile, "fonts/FreeSansBold.otf");
-CONFIG(SmallFontFile, "fonts/FreeSansBold.otf");
-CONFIG(FontSize, 23);
-CONFIG(SmallFontSize, 14);
-CONFIG(FontOutlineWidth, 3);
-CONFIG(FontOutlineWeight, 25.0f);
-CONFIG(SmallFontOutlineWidth, 2);
-CONFIG(SmallFontOutlineWeight, 10.0f);
-CONFIG(Fullscreen, 1);
-CONFIG(XResolution, 0);
-CONFIG(YResolution, 0);
-CONFIG(WindowPosX, 32);
-CONFIG(WindowPosY, 32);
-CONFIG(WindowState, 0);
-CONFIG(HardwareThreadCount, 0);
-CONFIG(MultiThreadSim, 1);
-CONFIG(name, "UnnamedPlayer");
+CONFIG(int, SetCoreAffinity).defaultValue(0);
+CONFIG(int, DepthBufferBits).defaultValue(24);
+CONFIG(int, StencilBufferBits).defaultValue(8);
+CONFIG(int, FSAALevel).defaultValue(0);
+CONFIG(int, SmoothLines).defaultValue(0); //! FSAA ? 0 : 3;  // until a few things get fixed
+CONFIG(int, SmoothPoints).defaultValue(0); //! FSAA ? 0 : 3;
+CONFIG(float, TextureLODBias).defaultValue(0.0f);
+CONFIG(int, FixAltTab).defaultValue(0);
+CONFIG(int, DualScreenMode).defaultValue(0);
+CONFIG(int, DualScreenMiniMapOnLeft).defaultValue(0);
+CONFIG(int, Version).defaultValue(0);
+CONFIG(bool, FSAA).defaultValue(false);
+CONFIG(std::string, FontFile).defaultValue("fonts/FreeSansBold.otf");
+CONFIG(std::string, SmallFontFile).defaultValue("fonts/FreeSansBold.otf");
+CONFIG(int, FontSize).defaultValue(23);
+CONFIG(int, SmallFontSize).defaultValue(14);
+CONFIG(int, FontOutlineWidth).defaultValue(3);
+CONFIG(float, FontOutlineWeight).defaultValue(25.0f);
+CONFIG(int, SmallFontOutlineWidth).defaultValue(2);
+CONFIG(float, SmallFontOutlineWeight).defaultValue(10.0f);
+CONFIG(int, Fullscreen).defaultValue(1);
+CONFIG(int, XResolution).defaultValue(0);
+CONFIG(int, YResolution).defaultValue(0);
+CONFIG(int, WindowPosX).defaultValue(32);
+CONFIG(int, WindowPosY).defaultValue(32);
+CONFIG(int, WindowState).defaultValue(0);
+CONFIG(int, HardwareThreadCount).defaultValue(0);
+CONFIG(int, MultiThreadSim).defaultValue(1);
+CONFIG(std::string, name).defaultValue("UnnamedPlayer");
 
 
 ClientSetup* startsetup = NULL;

@@ -23,7 +23,7 @@
 #define CLOUD_DETAIL 6
 #define CLOUD_MASK (CLOUD_SIZE-1)
 
-CONFIG(DynamicSky, false);
+CONFIG(bool, DynamicSky).defaultValue(false);
 
 
 CAdvSky::CAdvSky()

@@ -16,8 +16,8 @@
 /******************************************************************************/
 /******************************************************************************/
 
-CONFIG(snd_airAbsorption, AL_DEFAULT_AIR_ABSORPTION_FACTOR);
-CONFIG(UseEFX, true);
+CONFIG(float, snd_airAbsorption).defaultValue(AL_DEFAULT_AIR_ABSORPTION_FACTOR);
+CONFIG(bool, UseEFX).defaultValue(true);
 
 static std::string default_preset = "outdoors_valley";//"bathroom";
 

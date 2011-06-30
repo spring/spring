@@ -16,7 +16,7 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Exceptions.h"
 
-CONFIG(TeamNanoSpray, 1);
+CONFIG(int, TeamNanoSpray).defaultValue(1);
 
 CModInfo modInfo;
 

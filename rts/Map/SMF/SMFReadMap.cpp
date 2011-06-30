@@ -33,8 +33,8 @@
 
 using namespace std;
 
-CONFIG(GroundNormalTextureHighPrecision, 0);
-CONFIG(SMFTexAniso, 0.0f);
+CONFIG(int, GroundNormalTextureHighPrecision).defaultValue(0);
+CONFIG(float, SMFTexAniso).defaultValue(0.0f);
 
 CR_BIND_DERIVED(CSmfReadMap, CReadMap, (""))
 

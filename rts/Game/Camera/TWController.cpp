@@ -16,9 +16,9 @@
 #include "System/myMath.h"
 #include "System/Input/KeyInput.h"
 
-CONFIG(TWScrollSpeed, 10);
-CONFIG(TWEnabled, 1);
-CONFIG(TWFOV, 45.0f);
+CONFIG(int, TWScrollSpeed).defaultValue(10);
+CONFIG(int, TWEnabled).defaultValue(1);
+CONFIG(float, TWFOV).defaultValue(45.0f);
 
 
 CTWController::CTWController()

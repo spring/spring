@@ -12,7 +12,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/myMath.h"
 
-CONFIG(DynamicSunMinElevation, 0.1f);
+CONFIG(float, DynamicSunMinElevation).defaultValue(0.1f);
 
 
 StaticSkyLight::StaticSkyLight() {

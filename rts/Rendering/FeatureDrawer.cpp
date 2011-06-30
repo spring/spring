@@ -34,7 +34,7 @@
 
 #define DRAW_QUAD_SIZE 32
 
-CONFIG(ShowRezBars, 1);
+CONFIG(int, ShowRezBars).defaultValue(1);
 
 CFeatureDrawer* featureDrawer = NULL;
 
