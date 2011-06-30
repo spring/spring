@@ -15,10 +15,12 @@
  */
 
 #include "StdAfx.h"
-#include "Util.h"
 #include "ConfigHandler.h"
+#include "ConfigLocater.h"
 #include "ConfigSource.h"
 #include "DefaultConfigSource.h"
+#include "System/Util.h"
+#include "System/LogOutput.h"
 
 #ifdef WIN32
 	#include <io.h>
@@ -30,9 +32,6 @@
 #include <stdexcept>
 
 #include <boost/thread/mutex.hpp>
-
-#include "Platform/ConfigLocater.h"
-#include "LogOutput.h"
 
 /******************************************************************************/
 

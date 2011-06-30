@@ -2,7 +2,7 @@
 
 #include "HeightLinePalette.h"
 
-#include "ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 
 CONFIG(ColorElev, 1);
 

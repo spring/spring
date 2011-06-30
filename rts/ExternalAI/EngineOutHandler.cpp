@@ -19,7 +19,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/NetProtocol.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"
 #include "System/TimeProfiler.h"

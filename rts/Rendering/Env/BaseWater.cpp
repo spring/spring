@@ -11,7 +11,7 @@
 #include "RefractWater.h"
 #include "Sim/Projectiles/ExplosionListener.h"
 #include "Game/GameHelper.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 

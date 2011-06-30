@@ -14,7 +14,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/GL/myGL.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 #include "System/TdfParser.h"
 #include "System/Util.h"

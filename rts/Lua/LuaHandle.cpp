@@ -37,7 +37,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/BaseNetProtocol.h" // FIXME: for MAPDRAW_*
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/LogOutput.h"

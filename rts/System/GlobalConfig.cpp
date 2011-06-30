@@ -2,7 +2,7 @@
 
 #include "StdAfx.h"
 #include "Rendering/GL/myGL.h"
-#include "ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "GlobalConfig.h"
 #include "Sim/Misc/ModInfo.h"
 

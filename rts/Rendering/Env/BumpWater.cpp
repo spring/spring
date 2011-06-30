@@ -31,7 +31,7 @@
 #include "System/FastMath.h"
 #include "System/myMath.h"
 #include "System/EventHandler.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/TimeProfiler.h"
 #include "System/LogOutput.h"
 #include "System/Exceptions.h"

@@ -15,7 +15,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"

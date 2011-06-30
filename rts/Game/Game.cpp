@@ -136,7 +136,7 @@
 #include "UI/ShareBox.h"
 #include "UI/TooltipConsole.h"
 #include "UI/ProfileDrawer.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/FPUCheck.h"

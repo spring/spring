@@ -19,7 +19,7 @@
 #include "float3.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameVersion.h"
-#include "ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "FileSystem/FileSystemHandler.h"
 #include "mmgr.h"
 

@@ -10,7 +10,7 @@
 #include "Game/Camera.h"
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 #include "System/Input/KeyInput.h"
 

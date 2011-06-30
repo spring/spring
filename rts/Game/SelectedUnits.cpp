@@ -31,7 +31,7 @@
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"

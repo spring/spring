@@ -5,7 +5,7 @@
 
 #include "RotOverheadController.h"
 
-#include "ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "Game/Camera.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"

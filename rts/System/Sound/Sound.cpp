@@ -20,7 +20,7 @@
 
 #include "LogOutput.h"
 #include "TimeProfiler.h"
-#include "ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "Exceptions.h"
 #include "FileSystem/FileHandler.h"
 #include "Lua/LuaParser.h"

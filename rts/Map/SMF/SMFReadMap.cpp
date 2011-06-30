@@ -16,7 +16,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "System/bitops.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/OpenMP_cond.h"

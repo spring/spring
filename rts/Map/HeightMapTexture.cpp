@@ -6,7 +6,7 @@
 #include "HeightMapTexture.h"
 
 #include "ReadMap.h"
-#include "ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 
 
 CONFIG(HeightMapTexture, 1);

@@ -7,7 +7,7 @@
 #include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaOpenGL.h"  // FIXME -- should be moved
 
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Platform/Threading.h"
 #include "System/GlobalConfig.h"
 

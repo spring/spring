@@ -2,6 +2,8 @@
 
 #include "StdAfx.h"
 #include "ConfigSource.h"
+#include "ScopedFileLock.h"
+#include "System/LogOutput.h"
 
 #ifdef WIN32
 	#include <io.h>
@@ -9,9 +11,6 @@
 #include <string.h>
 #include <stdexcept>
 #include <boost/bind.hpp>
-
-#include "Platform/ScopedFileLock.h"
-#include "LogOutput.h"
 
 /******************************************************************************/
 

@@ -15,7 +15,7 @@
 #include "Game/GameServer.h"
 
 #include "NetProtocol.h"
-#include "ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "Game/CameraHandler.h"
 #include "Game/PlayerHandler.h"
 #include "Game/GameSetup.h"

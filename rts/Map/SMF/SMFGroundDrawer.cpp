@@ -18,7 +18,7 @@
 #include "Rendering/Shaders/ShaderHandler.hpp"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Sim/Misc/SmoothHeightMesh.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/FastMath.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"

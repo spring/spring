@@ -8,7 +8,7 @@
 #include <boost/bind.hpp>
 
 #include "UpdaterWindow.h"
-#include "ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "Game/GameVersion.h"
 #include "aGui/Gui.h"
 

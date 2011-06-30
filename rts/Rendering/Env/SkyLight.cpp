@@ -9,7 +9,7 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/myMath.h"
 
 CONFIG(DynamicSunMinElevation, 0.1f);

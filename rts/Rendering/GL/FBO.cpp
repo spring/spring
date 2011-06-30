@@ -13,7 +13,7 @@
 #include "FBO.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/LogOutput.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 
 CONFIG(AtiSwapRBFix, false);
 

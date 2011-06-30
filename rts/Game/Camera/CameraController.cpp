@@ -4,7 +4,7 @@
 #include "mmgr.h"
 
 #include "CameraController.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 
 
 CONFIG(UseDistToGroundForIcons, 0.95f);

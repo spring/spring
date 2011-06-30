@@ -9,7 +9,7 @@
 #include "EFXfuncs.h"
 
 #include "SoundLog.h"
-#include "ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "myMath.h"
 
 

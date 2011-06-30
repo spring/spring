@@ -7,7 +7,7 @@
 #include "Game/PlayerHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include <climits>

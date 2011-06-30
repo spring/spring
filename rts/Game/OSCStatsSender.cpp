@@ -20,7 +20,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/PlayerHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 #include "System/Net/Socket.h"
 

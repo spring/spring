@@ -28,7 +28,7 @@
 #include "System/FileSystem/ArchiveLoader.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/LogOutput.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/NetProtocol.h"
 
 #define PATHDEBUG false

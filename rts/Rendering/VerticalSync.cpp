@@ -14,7 +14,7 @@
 #include "VerticalSync.h"
 #include "GL/myGL.h"
 #include "LogOutput.h"
-#include "ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 
 CONFIG(VSync, -1);
 

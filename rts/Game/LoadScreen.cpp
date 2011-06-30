@@ -20,7 +20,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/FPUCheck.h"

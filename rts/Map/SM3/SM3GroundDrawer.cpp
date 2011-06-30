@@ -15,7 +15,7 @@
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/GL/myGL.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 
 #include <SDL_keysym.h>
 extern unsigned char *keys;

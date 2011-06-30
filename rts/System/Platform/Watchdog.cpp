@@ -15,7 +15,7 @@
 #include <boost/thread/recursive_mutex.hpp>
 
 #include "Game/GameVersion.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 #include "System/maindefines.h"
 #include "System/myTime.h"

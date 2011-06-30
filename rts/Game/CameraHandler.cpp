@@ -19,7 +19,7 @@
 #include "Camera/TWController.h"
 #include "Camera/OrbitController.h"
 #include "Rendering/GlobalRendering.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 
 CONFIG(CamModeName, "");

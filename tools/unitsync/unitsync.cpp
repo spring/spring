@@ -26,7 +26,7 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileSystemHandler.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"

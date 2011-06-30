@@ -9,7 +9,7 @@
 
 #include "SoundLog.h"
 #include "System/LogOutput.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 
 CONFIG(NoSound, false);
 

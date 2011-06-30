@@ -54,7 +54,7 @@
 	#undef interface
 #endif
 #include "Server/MsgStrings.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/LogOutput.h"
 #include "System/FileSystem/CRC.h"

@@ -10,7 +10,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileHandler.h"
