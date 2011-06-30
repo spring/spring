@@ -26,8 +26,8 @@
 
 #include "creg/STL_Map.h"
 
-CONFIG(CatchAIExceptions, 1);
-CONFIG(AI_UnpauseAfterInit, true);
+CONFIG(int, CatchAIExceptions).defaultValue(1);
+CONFIG(bool, AI_UnpauseAfterInit).defaultValue(true);
 
 CR_BIND_DERIVED(CEngineOutHandler, CObject, )
 

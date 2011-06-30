@@ -28,8 +28,8 @@
 #define DEFAULT_SHADOWMAPSIZE 2048
 #define SHADOWMATRIX_NONLINEAR 0
 
-CONFIG(Shadows, 0);
-CONFIG(ShadowMapSize, DEFAULT_SHADOWMAPSIZE);
+CONFIG(int, Shadows).defaultValue(0);
+CONFIG(int, ShadowMapSize).defaultValue(DEFAULT_SHADOWMAPSIZE);
 
 CShadowHandler* shadowHandler = NULL;
 

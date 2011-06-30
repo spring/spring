@@ -14,8 +14,8 @@
 
 #include <string>
 
-CONFIG(CompressTextures, 0);
-CONFIG(AtiHacks, -1);
+CONFIG(int, CompressTextures).defaultValue(0);
+CONFIG(int, AtiHacks).defaultValue(-1);
 
 /**
  * @brief global rendering

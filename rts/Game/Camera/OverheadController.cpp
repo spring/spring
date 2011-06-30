@@ -17,11 +17,11 @@
 #include "System/myMath.h"
 #include "System/Input/KeyInput.h"
 
-CONFIG(MiddleClickScrollSpeed, 0.01f);
-CONFIG(OverheadScrollSpeed, 10);
-CONFIG(OverheadTiltSpeed, 1.0f);
-CONFIG(OverheadEnabled, 1);
-CONFIG(OverheadFOV, 45.0f);
+CONFIG(float, MiddleClickScrollSpeed).defaultValue(0.01f);
+CONFIG(int, OverheadScrollSpeed).defaultValue(10);
+CONFIG(float, OverheadTiltSpeed).defaultValue(1.0f);
+CONFIG(int, OverheadEnabled).defaultValue(1);
+CONFIG(float, OverheadFOV).defaultValue(45.0f);
 
 COverheadController::COverheadController()
 	: flipped(false)

@@ -22,7 +22,7 @@
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Threading.h"
 
-CONFIG(HangTimeout, 0);
+CONFIG(int, HangTimeout).defaultValue(0);
 
 namespace Watchdog
 {

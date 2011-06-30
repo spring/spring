@@ -56,14 +56,14 @@
 
 #define PLAY_SOUNDS 1
 
-CONFIG(HardwareCursor, 0);
-CONFIG(InvertMouse, 0);
-CONFIG(DoubleClickTime, 200.0f);
-CONFIG(ScrollWheelSpeed, 25.0f);
-CONFIG(CrossSize, 12.0f);
-CONFIG(CrossAlpha, 0.5f);
-CONFIG(CrossMoveScale, 1.0f);
-CONFIG(MouseDragScrollThreshold, 0.3f);
+CONFIG(int, HardwareCursor).defaultValue(0);
+CONFIG(int, InvertMouse).defaultValue(0);
+CONFIG(float, DoubleClickTime).defaultValue(200.0f);
+CONFIG(float, ScrollWheelSpeed).defaultValue(25.0f);
+CONFIG(float, CrossSize).defaultValue(12.0f);
+CONFIG(float, CrossAlpha).defaultValue(0.5f);
+CONFIG(float, CrossMoveScale).defaultValue(1.0f);
+CONFIG(float, MouseDragScrollThreshold).defaultValue(0.3f);
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

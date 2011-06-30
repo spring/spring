@@ -32,11 +32,11 @@ extern gmlClientServer<void, int, CUnit*> *gmlProcessor;
 using std::min;
 using std::max;
 
-CONFIG(GroundDetail, 40);
-CONFIG(MultiThreadDrawGround, 1);
-CONFIG(MultiThreadDrawGroundShadow, 0);
-CONFIG(MaxDynamicMapLights, 1U);
-CONFIG(AdvMapShading, 1);
+CONFIG(int, GroundDetail).defaultValue(40);
+CONFIG(int, MultiThreadDrawGround).defaultValue(1);
+CONFIG(int, MultiThreadDrawGroundShadow).defaultValue(0);
+CONFIG(unsigned int, MaxDynamicMapLights).defaultValue(1U);
+CONFIG(int, AdvMapShading).defaultValue(1);
 
 CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 	bigSquareSize(128),

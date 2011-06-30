@@ -75,13 +75,13 @@
 #include "System/Util.h"
 
 
-CONFIG(Shadows, 0);
-CONFIG(FontSize, 23);
-CONFIG(SmallFontSize, 14);
-CONFIG(FontOutlineWidth, 3);
-CONFIG(FontOutlineWeight, 25.0f);
-CONFIG(SmallFontOutlineWidth, 2);
-CONFIG(SmallFontOutlineWeight, 10.0f);
+CONFIG(int, Shadows).defaultValue(0);
+CONFIG(int, FontSize).defaultValue(23);
+CONFIG(int, SmallFontSize).defaultValue(14);
+CONFIG(int, FontOutlineWidth).defaultValue(3);
+CONFIG(float, FontOutlineWeight).defaultValue(25.0f);
+CONFIG(int, SmallFontOutlineWidth).defaultValue(2);
+CONFIG(float, SmallFontOutlineWeight).defaultValue(10.0f);
 
 
 static std::vector<std::string> _local_strSpaceTokenize(const std::string& text) {

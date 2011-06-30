@@ -27,8 +27,8 @@
 #include "KeyBindings.h"
 #include "EventHandler.h"
 
-CONFIG(CamModeName, "");
-CONFIG(CamMode, 1);
+CONFIG(std::string, CamModeName).defaultValue("");
+CONFIG(int, CamMode).defaultValue(1);
 
 GameSetupDrawer* GameSetupDrawer::instance = NULL;
 

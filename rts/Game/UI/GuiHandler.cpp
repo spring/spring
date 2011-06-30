@@ -60,9 +60,9 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 
-CONFIG(MiniMapMarker, 1);
-CONFIG(InvertQueueKey, 0);
-CONFIG(StencilBufferBits, 1);
+CONFIG(int, MiniMapMarker).defaultValue(1);
+CONFIG(int, InvertQueueKey).defaultValue(0);
+CONFIG(int, StencilBufferBits).defaultValue(1);
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

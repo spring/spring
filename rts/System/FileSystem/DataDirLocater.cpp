@@ -27,7 +27,7 @@
 #include "maindefines.h" // for sPS, cPS, cPD
 #include "Platform/Misc.h"
 
-CONFIG(SpringData, "");
+CONFIG(std::string, SpringData).defaultValue("");
 
 DataDir::DataDir(const std::string& path)
 	: path(path)

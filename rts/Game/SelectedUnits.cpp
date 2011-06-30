@@ -42,7 +42,7 @@
 
 #define PLAY_SOUNDS 1
 
-CONFIG(BuildIconsFirst, 0);
+CONFIG(int, BuildIconsFirst).defaultValue(0);
 
 CSelectedUnits selectedUnits;
 

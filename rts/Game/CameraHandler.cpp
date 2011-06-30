@@ -22,10 +22,10 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 
-CONFIG(CamModeName, "");
-CONFIG(CamMode, 5);
-CONFIG(CamTimeFactor, 1.0f);
-CONFIG(CamTimeExponent, 4.0f);
+CONFIG(std::string, CamModeName).defaultValue("");
+CONFIG(int, CamMode).defaultValue(5);
+CONFIG(float, CamTimeFactor).defaultValue(1.0f);
+CONFIG(float, CamTimeExponent).defaultValue(4.0f);
 
 
 CCameraHandler* camHandler = NULL;

@@ -16,7 +16,7 @@
 #include "aGui/Button.h"
 #include "aGui/Gui.h"
 
-CONFIG(name, "UnnamedPlayer");
+CONFIG(std::string, name).defaultValue("UnnamedPlayer");
 
 UpdaterWindow::UpdaterWindow(Connection* _con) : agui::Window("Lobby connection"), agreement(NULL), con(_con)
 {

@@ -22,11 +22,11 @@
 #include "System/FastMath.h"
 #include "System/myMath.h"
 
-CONFIG(GroundLODScaleReflection, 1.0f);
-CONFIG(GroundLODScaleRefraction, 1.0f);
-CONFIG(GroundLODScaleUnitReflection, 1.0f);
-CONFIG(HighResLos, false);
-CONFIG(ExtraTextureUpdateRate, 45);
+CONFIG(float, GroundLODScaleReflection).defaultValue(1.0f);
+CONFIG(float, GroundLODScaleRefraction).defaultValue(1.0f);
+CONFIG(float, GroundLODScaleUnitReflection).defaultValue(1.0f);
+CONFIG(bool, HighResLos).defaultValue(false);
+CONFIG(int, ExtraTextureUpdateRate).defaultValue(45);
 
 CBaseGroundDrawer::CBaseGroundDrawer(void)
 {
