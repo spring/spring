@@ -49,7 +49,7 @@ for tocompress in ${EXECUTABLES}; do
 
 	#set to filename without suffix if no parent dir
 	if [ ${name} == "." ]; then
-		name=$(basename ${tocompress})
+		name=${tocompress%.*}
 	fi
 	debugfile=${tocompress%.*}.dbg
 	archive_debug="${TMP_PATH}/${VERSION}_${name}_dbg.7z"
