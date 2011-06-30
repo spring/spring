@@ -40,10 +40,12 @@ INCLUDE_DIRECTORIES(../../rts)
 INCLUDE_DIRECTORIES(../../rts/System)
 
 set(main_files
-	../../rts/System/Platform/ConfigLocater
+	../../rts/System/Config/ConfigHandler
+	../../rts/System/Config/ConfigLocater
+	../../rts/System/Config/ConfigSource
+	../../rts/System/Config/DefaultConfigSource
+	../../rts/System/Config/ScopedFileLock
 	../../rts/System/Platform/Misc
-	../../rts/System/Platform/ScopedFileLock
-	../../rts/System/ConfigHandler
 	../../rts/System/LogOutput
 	../../rts/System/TdfParser
 	../../rts/System/Info

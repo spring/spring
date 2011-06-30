@@ -52,12 +52,14 @@ INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/7zip)
 SET(system_files
 	${sources_engine_System_FileSystem}
 	${sources_engine_System_Net}
+	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigHandler
+	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigLocater
+	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigSource
+	${ENGINE_SRC_ROOT_DIR}/System/Config/DefaultConfigSource
+	${ENGINE_SRC_ROOT_DIR}/System/Config/ScopedFileLock
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/Misc
-	${ENGINE_SRC_ROOT_DIR}/System/Platform/ConfigLocater
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/errorhandler
-	${ENGINE_SRC_ROOT_DIR}/System/Platform/ScopedFileLock
 	${ENGINE_SRC_ROOT_DIR}/System/TdfParser
-	${ENGINE_SRC_ROOT_DIR}/System/ConfigHandler
 	${ENGINE_SRC_ROOT_DIR}/System/GlobalConfig
 	${ENGINE_SRC_ROOT_DIR}/System/Info
 	${ENGINE_SRC_ROOT_DIR}/System/LogOutput
