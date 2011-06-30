@@ -17,8 +17,8 @@
 #include "System/LogOutput.h"
 
 CBaseWater* water = NULL;
-std::vector<int> CBaseWater::waterModes;
-std::vector<HeightMapUpdate> CBaseWater::heightmapChanges;
+static std::vector<int> waterModes;
+static std::vector<HeightMapUpdate> heightmapChanges;
 bool CBaseWater::noWakeProjectiles = false;
 
 CBaseWater::CBaseWater()
