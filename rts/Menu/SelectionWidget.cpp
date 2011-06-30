@@ -8,7 +8,7 @@
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileSystem.h"
 #include "Exceptions.h"
-#include "ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "ScriptHandler.h"
 
 const std::string SelectionWidget::NoModSelect = "No game selected";

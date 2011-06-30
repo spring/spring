@@ -14,7 +14,7 @@
 #include "SMF/SMFReadMap.h"
 #include "Game/LoadScreen.h"
 #include "System/bitops.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 #include "System/LoadSave/LoadSaveInterface.h"

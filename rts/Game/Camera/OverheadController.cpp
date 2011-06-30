@@ -7,7 +7,7 @@
 
 #include "OverheadController.h"
 
-#include "ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/UI/MouseHandler.h"

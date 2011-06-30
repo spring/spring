@@ -15,7 +15,7 @@
 #endif
 
 #include "Sync/SyncTracer.h"
-#include "ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "InputReceiver.h"
 
 #define border 7

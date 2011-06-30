@@ -3,7 +3,7 @@
 #include "StdAfx.h"
 #include "DefaultConfigSource.h"
 #include "ConfigVariable.h"
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 
 using std::map;
 using std::string;

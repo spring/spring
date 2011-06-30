@@ -5,7 +5,7 @@
 
 #include "MetalMap.h"
 #include "ReadMap.h"
-#include "ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 
 CONFIG(MetalMapPalette, 0);
 

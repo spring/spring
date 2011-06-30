@@ -27,7 +27,7 @@
 #include "Game/PreGame.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 #include "System/TdfParser.h"

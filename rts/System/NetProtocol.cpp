@@ -24,7 +24,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Net/UnpackPacket.h"
 #include "System/LoadSave/DemoRecorder.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 
 CONFIG(SourcePort, 0);

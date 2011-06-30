@@ -6,7 +6,7 @@
 #include <SDL.h>
 
 #include "InputHandler.h"
-#include "ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "LogOutput.h"
 #include "EventHandler.h"
 

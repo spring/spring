@@ -5,7 +5,7 @@
 #include "TdfParser.h"
 #include "Exceptions.h"
 #include "LogOutput.h"
-#include "ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "Util.h"
 #ifdef DEDICATED
 #include "Platform/errorhandler.h"

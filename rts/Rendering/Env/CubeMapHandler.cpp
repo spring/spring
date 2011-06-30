@@ -11,7 +11,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Env/CubeMapHandler.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 
 CONFIG(CubeTexSizeSpecular, 128);
 CONFIG(CubeTexSizeReflection, 128);

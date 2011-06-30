@@ -13,7 +13,7 @@
 #include "PBO.h"
 
 #include "Rendering/GlobalRendering.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 
 CONFIG(UsePBO, 1);
 

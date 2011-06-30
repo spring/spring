@@ -62,7 +62,7 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 #include "System/NetProtocol.h"
 #include "System/Util.h"

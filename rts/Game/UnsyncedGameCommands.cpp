@@ -64,7 +64,7 @@
 #include "UI/TooltipConsole.h"
 #include "UI/UnitTracker.h"
 #include "UI/ProfileDrawer.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/NetProtocol.h"

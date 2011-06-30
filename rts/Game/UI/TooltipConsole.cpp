@@ -22,7 +22,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/EventHandler.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Util.h"
 
 CONFIG(TooltipGeometry, "0.0 0.0 0.41 0.1");

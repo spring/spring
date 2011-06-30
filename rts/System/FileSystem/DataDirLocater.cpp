@@ -18,7 +18,7 @@
 #include <string.h>
 
 #include "LogOutput.h"
-#include "ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "FileSystemHandler.h"
 #include "FileSystem.h"
 #include "CacheDir.h"

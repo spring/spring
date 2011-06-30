@@ -18,7 +18,7 @@
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/FastMath.h"
 #include "System/myMath.h"
 

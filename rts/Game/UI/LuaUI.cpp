@@ -61,7 +61,7 @@
 #include "LogOutput.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
-#include "ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "Util.h"
 

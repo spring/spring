@@ -7,7 +7,7 @@
 
 #include <boost/bind.hpp>
 
-#include "ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "lib/lobby/Connection.h"
 #include "aGui/LineEdit.h"
 #include "aGui/VerticalLayout.h"
