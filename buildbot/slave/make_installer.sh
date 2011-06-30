@@ -56,7 +56,8 @@ ${SEVENZIP} ${TMP_PATH}/${VERSION}_portable.7z ${INSTALLDIR}/* -x!AI -x!spring-d
 
 #create archives
 for tocompress in ${EXECUTABLES}; do
-	zip ${tocompress} $(basename ${tocompress})
+	filename=$(basename ${tocompress})
+	zip ${tocompress} ${filename%.*}
 done
 
 #create 7z's for AI's and Interface
