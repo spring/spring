@@ -18,18 +18,6 @@ MINGW_HOST=i586-mingw32msvc-
 cd ${BUILDDIR}
 make install DESTDIR=${DEST}
 
-function zip() {
-	file=$1
-	name=$2
-	if [ -f ${file} ]; then
-		debugfile=${file%.*}.dbg
-		archive="${TMP_PATH}/${VERSION}_${name}.7z"
-		archive_debug="${TMP_PATH}/${VERSION}_${name}_dbg.7z"
-		${SEVENZIP} "${archive}" ${file}
-		[ ! -f ${debugfile} ] || ${SEVENZIP} "${archive_debug}" ${debugfile}
-	fi
-}
-
 #strip symbols and archive them
 cd ${INSTALLDIR}
 EXECUTABLES="spring.exe spring-dedicated.exe spring-multithreaded.exe spring-headless.exe unitsync.dll ArchiveMover.exe $(find AI/Skirmish -name SkirmishAI.dll) $(find AI/Interfaces -name AIInterface.dll)"
@@ -54,10 +42,12 @@ mkdir -p ${TMP_PATH}
 touch ${INSTALLDIR}/springsettings.cfg
 ${SEVENZIP} ${TMP_PATH}/${VERSION}_portable.7z ${INSTALLDIR}/* -x!AI -x!spring-dedicated.exe -x!spring-headless.exe -x!ArchiveMover.exe -xr!*.dbg
 
-#create archives
+#create archives for translate_stacktrace.py
 for tocompress in ${EXECUTABLES}; do
-	filename=$(basename ${tocompress})
-	zip ${tocompress} ${filename%.*}
+	name=$(basename $(dirname ${tocompress})) #get parent directory name of file
+	debugfile=${tocompress%.*}.dbg
+	archive_debug="${TMP_PATH}/${VERSION}_${name}_dbg.7z"
+	[ ! -f ${debugfile} ] || ${SEVENZIP} "${archive_debug}" ${debugfile}
 done
 
 #create 7z's for AI's and Interface
