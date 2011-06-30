@@ -9,6 +9,7 @@
 #include "BumpWater.h"
 #include "DynWater.h"
 #include "RefractWater.h"
+#include "Map/ReadMap.h" // struct HeightMapUpdate
 #include "Sim/Projectiles/ExplosionListener.h"
 #include "Game/GameHelper.h"
 #include "System/ConfigHandler.h"
@@ -17,7 +18,7 @@
 
 CBaseWater* water = NULL;
 std::vector<int> CBaseWater::waterModes;
-std::vector<HeightmapChange> CBaseWater::heightmapChanges;
+std::vector<HeightMapUpdate> CBaseWater::heightmapChanges;
 bool CBaseWater::noWakeProjectiles = false;
 
 CBaseWater::CBaseWater()
@@ -43,12 +44,13 @@ void CBaseWater::PushWaterMode(int nextWaterRenderMode) {
 void CBaseWater::PushHeightmapChange(const int x1, const int y1, const int x2, const int y2) {
 	GML_STDMUTEX_LOCK(water); // PushHeightMapChange
 
-	heightmapChanges.push_back(HeightmapChange(x1,y1,x2,y2));
+	heightmapChanges.push_back(HeightMapUpdate(x1, y1, x2, y2));
 }
+
 
 void CBaseWater::ApplyPushedChanges(CGame* game) {
 	std::vector<int> wm;
-	std::vector<HeightmapChange> hc;
+	std::vector<HeightMapUpdate> hc;
 
 	{
 		GML_STDMUTEX_LOCK(water); // UpdateBaseWater
@@ -67,15 +69,15 @@ void CBaseWater::ApplyPushedChanges(CGame* game) {
 		logOutput.Print("Set water rendering mode to %i (%s)", nextWaterRendererMode, water->GetName());
 	}
 
-	for (std::vector<HeightmapChange>::iterator i = hc.begin(); i != hc.end(); ++i) {
-		const HeightmapChange& h = *i;
+	for (std::vector<HeightMapUpdate>::iterator i = hc.begin(); i != hc.end(); ++i) {
+		const HeightMapUpdate& h = *i;
 		water->HeightmapChanged(h.x1, h.y1, h.x2, h.y2);
 	}
 }
 
 CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRendererMode)
 {
-	static CBaseWater  baseWaterRenderer;
+	static CBaseWater baseWaterRenderer;
 	CBaseWater* nextWaterRenderer = NULL;
 
 	if (currWaterRenderer != NULL) {
