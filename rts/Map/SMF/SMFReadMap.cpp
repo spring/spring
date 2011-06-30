@@ -346,8 +346,8 @@ void CSmfReadMap::UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2)
 		// update the vertex normals
 		const float* shm = &cornerHeightMapSynced[0];
 		      float* uhm = &cornerHeightMapUnsynced[0];
-		const float3* rvn = &rawVertexNormals[0];
-		      float3* vvn = &visVertexNormals[0];
+		float3* rvn = &rawVertexNormals[0];
+		float3* vvn = &visVertexNormals[0];
 
 		static const int W = gs->mapx + 1;
 		static const int H = gs->mapy + 1;
