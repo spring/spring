@@ -52,7 +52,7 @@ mkdir -p ${TMP_PATH}
 
 #create portable spring
 touch ${INSTALLDIR}/springsettings.cfg
-${SEVENZIP} ${TMP_PATH}/${VERSION}_portable.7z ${INSTALLDIR}/* -x!AI -x!spring-dedicated.exe -x!spring-headless.exe -x!ArchiveMover.exe -x!*.dbg
+${SEVENZIP} ${TMP_PATH}/${VERSION}_portable.7z ${INSTALLDIR}/* -x!AI -x!spring-dedicated.exe -x!spring-headless.exe -x!ArchiveMover.exe -xr!*.dbg
 
 #create archives
 for tocompress in ${EXECUTABLES}; do
@@ -61,12 +61,12 @@ for tocompress in ${EXECUTABLES}; do
 done
 
 #create 7z's for AI's and Interface
-for TYPE in $(find ${INSTALLDIR}/AI -maxdepth 1 -mindepth 1 -type d) ; do
+for TYPE in $(find AI -maxdepth 1 -mindepth 1 -type d) ; do
 	echo ${TYPE}
 	type=$(basename ${TYPE})
-	echo "Packing ${type}"
 	for DIR in $(find ${TYPE} -maxdepth 1 -mindepth 1 -type d); do
 		NAME=$(basename ${DIR})
+		echo "Packing ${type} from ${DIR}"
 		${SEVENZIP} ${TMP_PATH}/$(basename ${VERSION}_${type}-${NAME}.7z) ${DIR} -xr!*.dbg
 	done
 done
