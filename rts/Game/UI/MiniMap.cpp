@@ -991,7 +991,7 @@ void CMiniMap::Draw()
 
 void CMiniMap::DrawForReal(bool use_geo)
 {
-	SCOPED_TIMER("Draw minimap");
+	SCOPED_TIMER("MiniMap::DrawForReal");
 
 	//glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

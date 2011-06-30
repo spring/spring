@@ -46,35 +46,31 @@ void CBaseWater::PushHeightmapChange(const int x1, const int y1, const int x2, c
 	heightmapChanges.push_back(HeightmapChange(x1,y1,x2,y2));
 }
 
-void CBaseWater::UpdateBaseWater(CGame* game) {
+void CBaseWater::ApplyPushedChanges(CGame* game) {
 	std::vector<int> wm;
+	std::vector<HeightmapChange> hc;
+
 	{
 		GML_STDMUTEX_LOCK(water); // UpdateBaseWater
 
 		wm.swap(waterModes);
+		hc.swap(heightmapChanges);
 	}
 
-	for(std::vector<int>::iterator i = wm.begin(); i != wm.end(); ++i) {
+	for (std::vector<int>::iterator i = wm.begin(); i != wm.end(); ++i) {
 		int nextWaterRendererMode = *i;
-		if(nextWaterRendererMode < 0)
+
+		if (nextWaterRendererMode < 0)
 			nextWaterRendererMode = (std::max(0, water->GetID()) + 1) % CBaseWater::NUM_WATER_RENDERERS;
+
 		water = GetWater(water, nextWaterRendererMode);
 		logOutput.Print("Set water rendering mode to %i (%s)", nextWaterRendererMode, water->GetName());
 	}
 
-	std::vector<HeightmapChange> hc;
-	{
-		GML_STDMUTEX_LOCK(water); // UpdateBaseWater
-
-		hc.swap(heightmapChanges);
+	for (std::vector<HeightmapChange>::iterator i = hc.begin(); i != hc.end(); ++i) {
+		const HeightmapChange& h = *i;
+		water->HeightmapChanged(h.x1, h.y1, h.x2, h.y2);
 	}
-
-	for(std::vector<HeightmapChange>::iterator i = hc.begin(); i != hc.end(); ++i) {
-		HeightmapChange &h = *i;
-		water->HeightmapChanged(h.x1,h.y1,h.x2,h.y2);
-	}
-
-	water->UpdateWater(game);
 }
 
 CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRendererMode)
