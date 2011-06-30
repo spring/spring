@@ -85,7 +85,6 @@ void CCobEngine::TickThread(int deltaTime, CCobThread* thread)
 	curThread = thread; // for error messages originating in CUnitScript
 
 	int res = thread->Tick(deltaTime);
-	thread->CommitAnims(deltaTime);
 
 	if (res == -1)
 		delete thread;
@@ -96,7 +95,7 @@ void CCobEngine::TickThread(int deltaTime, CCobThread* thread)
 
 void CCobEngine::Tick(int deltaTime)
 {
-	SCOPED_TIMER("Scripts");
+	SCOPED_TIMER("CobEngine::Tick");
 
 	GCurrentTime += deltaTime;
 

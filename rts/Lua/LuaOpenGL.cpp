@@ -1641,7 +1641,7 @@ int LuaOpenGL::FeatureShape(lua_State* L)
 	if (model == NULL) {
 		return 0;
 	}
-	//todo: teamcolor?
+	// TODO teamcolor?
 	model->DrawStatic(); // FIXME: finish this, 3do/s3o, copy DrawIndividual...
 
 	return 0;

@@ -50,19 +50,19 @@ EXPORT(int) aiInterfaceCallback_Engine_AIInterface_ABIVersion_getWarningPart(int
 }
 
 EXPORT(const char*) aiInterfaceCallback_Engine_Version_getMajor(int UNUSED_interfaceId) {
-	return SpringVersion::Major;
+	return SpringVersion::GetMajor().c_str();
 }
 EXPORT(const char*) aiInterfaceCallback_Engine_Version_getMinor(int UNUSED_interfaceId) {
-	return SpringVersion::Minor;
+	return SpringVersion::GetMinor().c_str();
 }
 EXPORT(const char*) aiInterfaceCallback_Engine_Version_getPatchset(int UNUSED_interfaceId) {
-	return SpringVersion::Patchset;
+	return SpringVersion::GetPatchSet().c_str();
 }
 EXPORT(const char*) aiInterfaceCallback_Engine_Version_getAdditional(int UNUSED_interfaceId) {
-	return SpringVersion::Additional;
+	return SpringVersion::GetAdditional().c_str();
 }
 EXPORT(const char*) aiInterfaceCallback_Engine_Version_getBuildTime(int UNUSED_interfaceId) {
-	return SpringVersion::BuildTime;
+	return SpringVersion::GetBuildTime().c_str();
 }
 EXPORT(const char*) aiInterfaceCallback_Engine_Version_getNormal(int UNUSED_interfaceId) {
 	return SpringVersion::Get().c_str();

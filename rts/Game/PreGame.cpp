@@ -161,7 +161,7 @@ bool CPreGame::Update()
 void CPreGame::StartServer(const std::string& setupscript)
 {
 	assert(!gameServer);
-	ScopedOnceTimer startserver("Starting GameServer");
+	ScopedOnceTimer startserver("PreGame::StartServer");
 	GameData* startupData = new GameData();
 	CGameSetup* setup = new CGameSetup();
 	setup->Init(setupscript);
@@ -292,7 +292,7 @@ void CPreGame::UpdateClientNet()
 
 void CPreGame::ReadDataFromDemo(const std::string& demoName)
 {
-	ScopedOnceTimer startserver("Reading demo data");
+	ScopedOnceTimer startserver("PreGame::ReadDataFromDemo");
 	assert(!gameServer);
 	logOutput.Print("Pre-scanning demo file for game data...");
 	CDemoReader scanner(demoName, 0);
@@ -393,7 +393,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 
 void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet)
 {
-	ScopedOnceTimer startserver("Loading client data");
+	ScopedOnceTimer startserver("PreGame::GameDataReceived");
 
 	try {
 		GameData *data = new GameData(packet);

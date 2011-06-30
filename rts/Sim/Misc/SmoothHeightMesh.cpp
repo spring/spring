@@ -147,7 +147,7 @@ inline static void AdvanceMaximaRows(
 				maximaRows[x] = y;
 			}
 
-			assert(h <= colsMaxima[x]);
+			assert(curh <= colsMaxima[x]);
 		}
 	}
 }
@@ -424,7 +424,7 @@ inline static void CheckInvariants(
 
 void SmoothHeightMesh::MakeSmoothMesh(const CGround* ground)
 {
-	ScopedOnceTimer timer("Creating Smooth Mesh");
+	ScopedOnceTimer timer("SmoothHeightMesh::MakeSmoothMesh");
 
 	const size_t size = (this->maxx + 1) * (this->maxy + 1);
 	// use sliding window of maximums to reduce computational complexity

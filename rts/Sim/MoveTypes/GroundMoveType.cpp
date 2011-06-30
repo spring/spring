@@ -204,7 +204,7 @@ bool CGroundMoveType::Update()
 
 	if (owner->stunned || owner->beingBuilt) {
 		owner->script->StopMoving();
-		owner->speed = ZeroVector;
+		SetDeltaSpeed(0.0f, false);
 	} else {
 		if (owner->fpsControlPlayer != NULL) {
 			wantReverse = UpdateDirectControl();

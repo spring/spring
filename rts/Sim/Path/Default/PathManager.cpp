@@ -89,7 +89,7 @@ unsigned int CPathManager::RequestPath(
 	CSolidObject* caller,
 	bool synced
 ) {
-	SCOPED_TIMER("PFS");
+	SCOPED_TIMER("PathManager::RequestPath");
 
 	MoveData* moveData = moveinfo->moveData[md->pathType];
 	moveData->tempOwner = caller;
@@ -286,7 +286,7 @@ float3 CPathManager::NextWaypoint(
 	int ownerId,
 	bool synced
 ) const {
-	SCOPED_TIMER("PFS");
+	SCOPED_TIMER("PathManager::NextWaypoint");
 
 	// 0 indicates a no-path id
 	if (pathId == 0)
@@ -386,7 +386,7 @@ void CPathManager::TerrainChange(unsigned int x1, unsigned int z1, unsigned int 
 
 void CPathManager::Update()
 {
-	SCOPED_TIMER("PFS Update");
+	SCOPED_TIMER("PathManager::Update");
 
 	pathFlowMap->Update();
 	pathHeatMap->Update();

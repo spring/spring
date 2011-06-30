@@ -792,7 +792,7 @@ CUnit* CMiniMap::GetSelectUnit(const float3& pos) const
 
 float3 CMiniMap::GetMapPosition(int x, int y) const
 {
-	const float mapHeight = readmap->maxheight + 1000.0f;
+	const float mapHeight = readmap->initMaxHeight + 1000.0f;
 	const float mapX = gs->mapx * SQUARE_SIZE;
 	const float mapY = gs->mapy * SQUARE_SIZE;
 	const float3 pos(mapX * float(x - xpos) / width, mapHeight,
@@ -810,7 +810,7 @@ void CMiniMap::ProxyMousePress(int x, int y, int button)
 			mapPos = unit->midPos;
 		} else {
 			mapPos = helper->GetUnitErrorPos(unit, gu->myAllyTeam);
-			mapPos.y = readmap->maxheight + 1000.0f;
+			mapPos.y = readmap->initMaxHeight + 1000.0f;
 		}
 	}
 
@@ -837,7 +837,7 @@ void CMiniMap::ProxyMouseRelease(int x, int y, int button)
 			mapPos = unit->midPos;
 		} else {
 			mapPos = helper->GetUnitErrorPos(unit, gu->myAllyTeam);
-			mapPos.y = readmap->maxheight + 1000.0f;
+			mapPos.y = readmap->initMaxHeight + 1000.0f;
 		}
 	}
 
@@ -991,7 +991,7 @@ void CMiniMap::Draw()
 
 void CMiniMap::DrawForReal(bool use_geo)
 {
-	SCOPED_TIMER("Draw minimap");
+	SCOPED_TIMER("MiniMap::DrawForReal");
 
 	//glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

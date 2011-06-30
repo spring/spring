@@ -99,6 +99,10 @@ static bool InitImageHlpDll()
 	}
 #endif // _MSC_VER >= 1500
 
+static DWORD __stdcall AllocTest(void *param) {
+	GlobalFree(GlobalAlloc(GMEM_FIXED, 16384));
+	return 0;
+}
 
 /** Print out a stacktrace. */
 static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE)
@@ -124,13 +128,31 @@ static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hT
 		c = *e->ContextRecord;
 		thread = GetCurrentThread();
 	} else if (hThread != INVALID_HANDLE_VALUE) {
-		SuspendThread(hThread);
+		for (int allocIter = 0; ; ++allocIter) {
+			HANDLE allocThread = CreateThread(NULL, 0, &AllocTest, NULL, CREATE_SUSPENDED, NULL);
+			SuspendThread(hThread);
+			ResumeThread(allocThread);
+			if (WaitForSingleObject(allocThread, 10) == WAIT_OBJECT_0) {
+				CloseHandle(allocThread);
+				break;
+			}
+			ResumeThread(hThread);
+			if (WaitForSingleObject(allocThread, 10) != WAIT_OBJECT_0)
+				TerminateThread(allocThread, 0);
+			CloseHandle(allocThread);
+			if (allocIter < 10)
+				continue;
+			PRINT("Error: Stacktrace failed, allocator deadlock");
+			return;
+		}
+
 		suspended = true;
 		memset(&c, 0, sizeof(CONTEXT));
 		c.ContextFlags = CONTEXT_FULL;
 
 		if (!GetThreadContext(hThread, &c)) {
 			ResumeThread(hThread);
+			PRINT("Error: Stacktrace failed, failed to get context");
 			return;
 		}
 		thread = hThread;
@@ -185,8 +207,6 @@ static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hT
 	// use globalalloc to reduce risk for allocator related deadlock
 	pSym = (PIMAGEHLP_SYMBOL)GlobalAlloc(GMEM_FIXED, 16384);
 	char* printstrings = (char*)GlobalAlloc(GMEM_FIXED, 0);
-
-	EnterCriticalSection( &stackLock );
 
 	bool containsOglDll = false;
 	while (true) {
@@ -246,8 +266,6 @@ static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hT
 		++count;
 	}
 
-	LeaveCriticalSection( &stackLock );
-
 	if (suspended) {
 		ResumeThread(hThread);
 	}
@@ -274,6 +292,8 @@ void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadN
 }
 
 void PrepareStacktrace() {
+	EnterCriticalSection( &stackLock );
+
 	InitImageHlpDll();
 
 	// Record list of loaded DLLs.
@@ -284,6 +304,9 @@ void PrepareStacktrace() {
 void CleanupStacktrace() {
 	// Unintialize IMAGEHLP.DLL
 	SymCleanup(GetCurrentProcess());
+
+	LeaveCriticalSection( &stackLock );
+
 }
 
 void OutputStacktrace() {

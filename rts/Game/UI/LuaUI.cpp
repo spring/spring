@@ -209,6 +209,8 @@ CLuaUI::CLuaUI()
 	UnsyncedUpdateCallIn(L, "WorldTooltip");
 	UnsyncedUpdateCallIn(L, "MapDrawCmd");
 
+	UpdateUnsyncedXCalls(L);
+
 	lua_settop(L, 0);
 
 	END_ITERATE_LUA_STATES();
@@ -291,6 +293,9 @@ bool CLuaUI::UnsyncedUpdateCallIn(lua_State *L, const string& name)
 	} else {
 		eventHandler.RemoveEvent(this, name);
 	}
+
+	UpdateUnsyncedXCalls(L);
+
 	return true;
 }
 
@@ -810,10 +815,11 @@ bool CLuaUI::HasUnsyncedXCall(lua_State* srcState, const string& funcName)
 {
 	SELECT_LUA_STATE();
 #if defined(USE_GML) && GML_ENABLE_SIM && (LUA_MT_OPT & LUA_MUTEX)
-	// FIXME FIXME, very ugly deadlock prevention hack for MT
-	if (srcState != L && SingleState()) // With MT, synced Lua is not allowed to directly invoke LuaUI
-		return true; // Therefore need to keep some kind of cache of all LuaUI global funcs,
-	// or change the API so that unsynced xcalls have to be explicitly registered
+	if (srcState != L && SingleState()) {
+		GML_STDMUTEX_LOCK(xcall); // HasUnsyncedXCall
+
+		return unsyncedXCalls.find(funcName) != unsyncedXCalls.end();
+	}
 #endif
 
 	lua_getglobal(L, funcName.c_str());
@@ -963,6 +969,34 @@ int CLuaUI::SetShockFrontFactors(lua_State* L)
 	return 0;
 }
 
+int CLuaUI::UpdateUnsyncedXCalls(lua_State* L)
+{
+#if defined(USE_GML) && GML_ENABLE_SIM && (LUA_MT_OPT & LUA_MUTEX)
+	if (!SingleState() || L != L_Sim)
+#endif
+		return 0;
+
+	GML_STDMUTEX_LOCK(xcall); // UpdateUnsyncedXCalls
+
+	unsyncedXCalls.clear();
+
+	for (lua_pushnil(L); lua_next(L, LUA_GLOBALSINDEX) != 0; lua_pop(L, 1)) {
+		const int ktype = lua_type(L, -2);
+		const int vtype = lua_type(L, -1);
+		if (ktype == LUA_TSTRING && vtype == LUA_TFUNCTION) {
+			size_t len = 0;
+			const char* data = lua_tolstring(L, -2, &len);
+			if (len > 0) {
+				std::string name;
+				name.resize(len);
+				memcpy(&name[0], data, len);
+				unsyncedXCalls.insert(name);
+			}
+		}
+	}
+
+	return 0;
+}
 
 /******************************************************************************/
 /******************************************************************************/
