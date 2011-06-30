@@ -159,7 +159,7 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 	}
 
 
-	ScopedOnceTimer timer("generating MipMaps");
+	ScopedOnceTimer timer("CBFGroundTextures::ConvolveHeightMap");
 
 	const float* hdata = map->GetMIPHeightMapSynced(1);
 	const int mx = header->mapx / 2;
@@ -179,7 +179,6 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 			// NOTE: we leave out the borders on sampling because it is easier to do the Sobel kernel convolution
 			for (int x2 = x * mipSquareSize + 1; x2 < (x + 1) * mipSquareSize - 1; x2++) {
 				for (int y2 = y * mipSquareSize + 1; y2 < (y + 1) * mipSquareSize - 1; y2++) {
-
 					heightMaxima[y * nbx + x] = std::max( hdata[y2 * mx + x2], heightMaxima[y * nbx + x]);
 					heightMinima[y * nbx + x] = std::min( hdata[y2 * mx + x2], heightMinima[y * nbx + x]);
 

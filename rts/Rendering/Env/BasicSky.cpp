@@ -339,7 +339,7 @@ void CBasicSky::Update()
 	if (!dynamicSky)
 		return;
 
-	SCOPED_TIMER("Sky Update");
+	SCOPED_TIMER("BasicSky::Update");
 
 	static int kernel[CLOUD_SIZE/4*CLOUD_SIZE/4];
 

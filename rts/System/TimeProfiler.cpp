@@ -15,29 +15,19 @@ BasicTimer::BasicTimer(const char* const myname) : name(myname), starttime(SDL_G
 {
 }
 
-ScopedTimer::ScopedTimer(const char* const myname) : BasicTimer(myname)
-{
-}
+
 
 ScopedTimer::~ScopedTimer()
 {
-	const unsigned stoptime = SDL_GetTicks();
-	profiler.AddTime(name, stoptime - starttime);
-}
-
-ScopedOnceTimer::ScopedOnceTimer(const char* const myname) : BasicTimer(myname)
-{
-}
-
-ScopedOnceTimer::ScopedOnceTimer(const std::string& myname): BasicTimer(myname.c_str())
-{
+	profiler.AddTime(name, SDL_GetTicks() - starttime, autoShowGraph);
 }
 
 ScopedOnceTimer::~ScopedOnceTimer()
 {
-	const unsigned stoptime = SDL_GetTicks();
-	LogObject() << name << ": " << stoptime - starttime << " ms";
+	LogObject() << name << ": " << (SDL_GetTicks() - starttime) << " ms";
 }
+
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -87,7 +77,7 @@ float CTimeProfiler::GetPercent(const char *name)
 	return profile[name].percent;
 }
 
-void CTimeProfiler::AddTime(const std::string& name, unsigned time)
+void CTimeProfiler::AddTime(const std::string& name, unsigned time, bool showGraph)
 {
 	GML_STDMUTEX_LOCK_NOPROF(time); // AddTime
 
@@ -108,8 +98,7 @@ void CTimeProfiler::AddTime(const std::string& name, unsigned time)
 		profile[name].color.x = rand.RandFloat();
 		profile[name].color.y = rand.RandFloat();
 		profile[name].color.z = rand.RandFloat();
-		// only show "CPU load" by default
-		profile[name].showGraph = (name == "CPU load");
+		profile[name].showGraph = showGraph;
 	}
 }
 

@@ -621,7 +621,7 @@ void CBumpWater::Update()
 	if (!shoreWaves)
 		return;
 
-	SCOPED_TIMER("Coastmap");
+	SCOPED_TIMER("BumpWater::Update (Coastmap)");
 
 	if ((gs->frameNum % 10)==5 && !coastmapUpdates.empty()) {
 		UploadCoastline();
@@ -639,7 +639,7 @@ void CBumpWater::UpdateWater(CGame* game)
 		return;
 
 	if (occlusionQuery && !wasLastFrameVisible) {
-		SCOPED_TIMER("Water Occlcheck");
+		SCOPED_TIMER("BumpWater::UpdateWater (Occlcheck)");
 
 		//glGetQueryObjectuiv(occlusionQuery,GL_QUERY_RESULT_AVAILABLE,&occlusionQueryResult);
 		//if (!occlusionQueryResult)

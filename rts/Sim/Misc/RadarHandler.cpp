@@ -134,7 +134,7 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 
 void CRadarHandler::RemoveUnit(CUnit* unit)
 {
-	SCOPED_TIMER("Radar");
+	SCOPED_TIMER("RadarHandler::RemoveUnit");
 
 	if (!unit->hasRadarCapacity) {
 		return;
