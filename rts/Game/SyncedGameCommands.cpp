@@ -32,9 +32,7 @@
 #include <stdexcept>
 
 
-// This namespace is required to prevent conflicts with equally named classes
-// for unsynced ActionExecutor's.
-namespace syncedActionExecutors {
+namespace { // prevents linking problems in case of duplicate symbols
 
 class CheatActionExecutor : public ISyncedActionExecutor {
 public:
@@ -390,14 +388,12 @@ public:
 	}
 };
 
-} // namespace syncedActionExecutors
+} // namespace (unnamed)
 
 
 
 
 void SyncedGameCommands::AddDefaultActionExecutors() {
-
-	using namespace syncedActionExecutors;
 	
 	AddActionExecutor(new CheatActionExecutor());
 	AddActionExecutor(new NoHelpActionExecutor());

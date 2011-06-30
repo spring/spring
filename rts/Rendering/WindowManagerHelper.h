@@ -22,12 +22,23 @@ public:
 	static void SetIcon(const CBitmap* icon);
 
 	/**
-	 * Sets the window-manager caption/title for the running process.
-	 * It will be displayed in the OS task-bar, for example.
-	 * @param caption example: "Spring 0.82.6.1 - MyMod 1.0"
+	 * Sets the window-manager captions/titles for the running process.
+	 * @param title will be displayed in the window title (in windowed mode)
+	 *   example: "MyGame 1.0 - Chicken Mode (Spring 0.83.0.1)"
+	 * @param titleShort will be displayed in the OS task-bar
+	 *   example: "MyGame"
 	 * @see SDL_WM_SetCaption()
 	 */
-	static void SetCaption(const std::string& caption);
+	static void SetCaption(const std::string& title,
+			const std::string& titleShort);
+	/**
+	 * Sets the window-manager caption/title for the running process.
+	 * @param title will be displayed in the window title (in windowed mode)
+	 *   and in the OS task-bar
+	 *   example: "MyGame"
+	 * @see #SetCaption(const std::string&, const std::string&)
+	 */
+	static void SetCaption(const std::string& title);
 
 private:
 	static SDL_Surface* currentIcon;

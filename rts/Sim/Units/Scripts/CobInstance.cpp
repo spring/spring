@@ -60,7 +60,6 @@ inline bool CCobInstance::HasFunction(int id) const
 CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
 	: CUnitScript(_unit, pieces)
 	, script(_script)
-	, smoothAnim(unit->unitDef->smoothAnim)
 {
 	staticVars.reserve(script.numStaticVars);
 	for (int i = 0; i < script.numStaticVars; ++i) {
@@ -477,7 +476,6 @@ int CCobInstance::RealCall(int functionId, vector<int> &args, CBCobThreadFinish 
 #endif
 
 	int res = t->Tick(30);
-	t->CommitAnims(30);
 
 	// Make sure this is run even if the call terminates instantly
 	if (cb)

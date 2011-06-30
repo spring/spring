@@ -105,8 +105,8 @@ CReadMap::CReadMap():
 	metalMap(NULL),
 	width(0),
 	height(0),
-	minheight(0.0f),
-	maxheight(0.0f),
+	initMinHeight(0.0f),
+	initMaxHeight(0.0f),
 	currMinHeight(0.0f),
 	currMaxHeight(0.0f),
 	mapChecksum(0)
@@ -129,7 +129,8 @@ CReadMap::~CReadMap()
 	mipPointerHeightMaps.clear();
 	centerHeightMap.clear();
 	originalHeightMap.clear();
-	vertexNormals.clear();
+	rawVertexNormals.clear();
+	visVertexNormals.clear();
 	faceNormals.clear();
 	centerNormals.clear();
 }
@@ -154,7 +155,7 @@ void CReadMap::Initialize()
 			((( gs->mapx + 1) * (gs->mapy + 1) *     sizeof(float))         / 1024) +   // originalHeightMap
 			((  gs->mapx      *  gs->mapy      * 2 * sizeof(float3))        / 1024) +   // faceNormals
 			((  gs->mapx      *  gs->mapy          * sizeof(float3))        / 1024) +   // centerNormals
-			((( gs->mapx + 1) * (gs->mapy + 1)     * sizeof(float3))        / 1024) +   // vertexNormals
+			((( gs->mapx + 1) * (gs->mapy + 1) * 2 * sizeof(float3))        / 1024) +   // {raw, vis}VertexNormals
 			((  gs->mapx      *  gs->mapy          * sizeof(float))         / 1024) +   // centerHeightMap
 			((  gs->hmapx     *  gs->hmapy         * sizeof(float))         / 1024) +   // slopeMap
 			((  gs->hmapx     *  gs->hmapy         * sizeof(float))         / 1024) +   // MetalMap::extractionMap
@@ -187,10 +188,11 @@ void CReadMap::Initialize()
 	}
 
 	slopeMap.resize(gs->hmapx * gs->hmapy);
-	vertexNormals.resize((gs->mapx + 1) * (gs->mapy + 1));
+	rawVertexNormals.resize((gs->mapx + 1) * (gs->mapy + 1));
+	visVertexNormals.resize((gs->mapx + 1) * (gs->mapy + 1));
 
 	CalcHeightmapChecksum();
-	HeightMapUpdatedSynced(0, 0, gs->mapx, gs->mapy);
+	UpdateHeightMapSynced(0, 0, gs->mapx, gs->mapy);
 }
 
 
@@ -198,20 +200,20 @@ void CReadMap::CalcHeightmapChecksum()
 {
 	const float* heightmap = GetCornerHeightMapSynced();
 
-	minheight = +123456.0f;
-	maxheight = -123456.0f;
+	initMinHeight =  std::numeric_limits<float>::max();
+	initMaxHeight = -std::numeric_limits<float>::max();
 
 	mapChecksum = 0;
 	for (int i = 0; i < ((gs->mapx + 1) * (gs->mapy + 1)); ++i) {
 		originalHeightMap[i] = heightmap[i];
-		if (heightmap[i] < minheight) { minheight = heightmap[i]; }
-		if (heightmap[i] > maxheight) { maxheight = heightmap[i]; }
+		if (heightmap[i] < initMinHeight) { initMinHeight = heightmap[i]; }
+		if (heightmap[i] > initMaxHeight) { initMaxHeight = heightmap[i]; }
 		mapChecksum +=  (unsigned int) (heightmap[i] * 100);
 		mapChecksum ^= *(unsigned int*) &heightmap[i];
 	}
 
-	currMinHeight = minheight;
-	currMaxHeight = maxheight;
+	currMinHeight = initMinHeight;
+	currMaxHeight = initMaxHeight;
 }
 
 
@@ -219,38 +221,31 @@ void CReadMap::CalcHeightmapChecksum()
 void CReadMap::UpdateDraw() {
 	GML_STDMUTEX_LOCK(map); // UpdateDraw
 
-	for (std::vector<HeightmapUpdate>::iterator i = heightmapUpdates.begin(); i != heightmapUpdates.end(); ++i)
+	for (std::vector<HeightMapUpdate>::iterator i = unsyncedHeightMapUpdates.begin(); i != unsyncedHeightMapUpdates.end(); ++i)
 		UpdateHeightMapUnsynced(i->x1, i->y1, i->x2, i->y2);
 
-	heightmapUpdates.clear();
-}
-
-void CReadMap::HeightMapUpdatedSynced(const int& x1, const int& y1, const int& x2, const int& y2) {
-	GML_STDMUTEX_LOCK(map); // HeightMapUpdatedSynced
-
-	// only update the heightmap if the affected area has a size > 0
-	if ((x1 < x2) && (y1 < y2)) {
-		//! synced
-		UpdateHeightMapSynced(x1, y1, x2, y2);
-
-		//! unsynced
-		heightmapUpdates.push_back(HeightmapUpdate(x1, x2, y1, y2));
-	}
+	unsyncedHeightMapUpdates.clear();
 }
 
 
 
-void CReadMap::UpdateHeightMapSynced(int x1, int y1, int x2, int y2)
+void CReadMap::UpdateHeightMapSynced(int x1, int z1, int x2, int z2)
 {
+	GML_STDMUTEX_LOCK(map); // UpdateHeightMapSynced
+
+	if ((x1 >= x2) || (z1 >= z2)) {
+		// do not bother with zero-area updates
+		return;
+	}
+
 	const float* heightmapSynced = GetCornerHeightMapSynced();
-	      float* heightmapUnsynced = GetCornerHeightMapUnsynced();
 
 	x1 = std::max(           0, x1 - 1);
-	y1 = std::max(           0, y1 - 1);
+	z1 = std::max(           0, z1 - 1);
 	x2 = std::min(gs->mapx - 1, x2 + 1);
-	y2 = std::min(gs->mapy - 1, y2 + 1);
+	z2 = std::min(gs->mapy - 1, z2 + 1);
 
-	for (int y = y1; y <= y2; y++) {
+	for (int y = z1; y <= z2; y++) {
 		for (int x = x1; x <= x2; x++) {
 			const int idxTL = (y    ) * (gs->mapx + 1) + x;
 			const int idxTR = (y    ) * (gs->mapx + 1) + x + 1;
@@ -269,7 +264,7 @@ void CReadMap::UpdateHeightMapSynced(int x1, int y1, int x2, int y2)
 	for (int i = 0; i < numHeightMipMaps - 1; i++) {
 		const int hmapx = gs->mapx >> i;
 
-		for (int y = ((y1 >> i) & (~1)); y < (y2 >> i); y += 2) {
+		for (int y = ((z1 >> i) & (~1)); y < (z2 >> i); y += 2) {
 			for (int x = ((x1 >> i) & (~1)); x < (x2 >> i); x += 2) {
 				const float height =
 					mipPointerHeightMaps[i][(x    ) + (y    ) * hmapx] +
@@ -281,8 +276,8 @@ void CReadMap::UpdateHeightMapSynced(int x1, int y1, int x2, int y2)
 		}
 	}
 
-	const int decy = std::max(           0, y1 - 1);
-	const int incy = std::min(gs->mapy - 1, y2 + 1);
+	const int decy = std::max(           0, z1 - 1);
+	const int incy = std::min(gs->mapy - 1, z2 + 1);
 	const int decx = std::max(           0, x1 - 1);
 	const int incx = std::min(gs->mapx - 1, x2 + 1);
 
@@ -313,8 +308,8 @@ void CReadMap::UpdateHeightMapSynced(int x1, int y1, int x2, int y2)
 		}
 	}
 
-	for (int y = std::max(0, (y1/2)-1); y <= std::min(gs->hmapy - 1, (y2/2)+1); y++) {
-		for (int x = std::max(0, (x1/2)-1); x <= std::min(gs->hmapx - 1, (x2/2)+1); x++) {
+	for (int y = std::max(0, (z1 / 2) - 1); y <= std::min(gs->hmapy - 1, (z2 / 2) + 1); y++) {
+		for (int x = std::max(0, (x1 / 2) - 1); x <= std::min(gs->hmapx - 1, (x2 / 2) + 1); x++) {
 			const int idx0 = (y*2    ) * (gs->mapx) + x*2;
 			const int idx1 = (y*2 + 1) * (gs->mapx) + x*2;
 
@@ -345,4 +340,27 @@ void CReadMap::UpdateHeightMapSynced(int x1, int y1, int x2, int y2)
 			slopeMap[y * gs->hmapx + x] = 1.0f - slope;
 		}
 	}
+
+	//! push the unsynced update
+	unsyncedHeightMapUpdates.push_back(HeightMapUpdate(x1, x2, z1, z2));
+}
+
+void CReadMap::UpdateVisibleHeightMap(int x1, int z1, int x2, int z2)
+{
+	#ifdef USE_UNSYNCED_HEIGHTMAP
+	const float* shm = GetCornerHeightMapSynced();
+	      float* uhm = GetCornerHeightMapUnsynced();
+	const float3* rvn = &rawVertexNormals[0];
+	      float3* vvn = &visVertexNormals[0];
+
+	for (int hmx = x1; hmx < x2; hmx++) {
+		for (int hmz = z1; hmz < z2; hmz++) {
+			const int vIdx = hmz * (gs->mapx + 1) + hmx;
+
+			//! NOTE: ARB shaders still use centerNormals via the shading-texture
+			uhm[vIdx] = shm[vIdx];
+			vvn[vIdx] = rvn[vIdx];
+		}
+	}
+	#endif
 }

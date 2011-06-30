@@ -14,7 +14,6 @@
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Sim/Misc/LosHandler.h"
 #include "System/bitops.h"
 #include "System/ConfigHandler.h"
 #include "System/Exceptions.h"
@@ -347,6 +346,8 @@ void CSmfReadMap::UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2)
 		// update the vertex normals
 		const float* shm = &cornerHeightMapSynced[0];
 		      float* uhm = &cornerHeightMapUnsynced[0];
+		const float3* rvn = &rawVertexNormals[0];
+		      float3* vvn = &visVertexNormals[0];
 
 		static const int W = gs->mapx + 1;
 		static const int H = gs->mapy + 1;
@@ -373,12 +374,6 @@ void CSmfReadMap::UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2)
 		for (z = minz; z <= maxz; z++) {
 			for (int x = minx; x <= maxx; x++) {
 				const int vIdx = (z * W) + x;
-
-				#ifdef USE_UNSYNCED_HEIGHTMAP
-				if (gu->spectatingFullView || loshandler->InLos(x, z, gu->myAllyTeam)) {
-					uhm[vIdx] = shm[vIdx];
-				}
-				#endif
 
 				const bool hasNgbL = (x >     0); const int xOffL = hasNgbL? 1: 0;
 				const bool hasNgbR = (x < W - 1); const int xOffR = hasNgbR? 1: 0;
@@ -413,7 +408,7 @@ void CSmfReadMap::UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2)
 					tn = (hasNgbB && hasNgbL)? (vbl - vmm).cross((vml - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
 					tn = (hasNgbL           )? (vml - vmm).cross((vtl - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
 
-				vertexNormals[vIdx] = vn.ANormalize();
+				rvn[vIdx] = vn.ANormalize();
 
 				// compress the range [-1, 1] to [0, 1] to prevent clamping
 				// (ideally, should use an FBO with FP32 texture attachment)
@@ -428,6 +423,13 @@ void CSmfReadMap::UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2)
 				//!   upwards, so we can reconstruct it in the shader.
 				pixels[((z - minz) * xsize + (x - minx)) * 2 + 0] = ((vn.x + 1.0f) * 0.5f);
 				pixels[((z - minz) * xsize + (x - minx)) * 2 + 1] = ((vn.z + 1.0f) * 0.5f);
+				#endif
+
+				#ifdef USE_UNSYNCED_HEIGHTMAP
+				if (gu->spectatingFullView || loshandler->InLos(x, z, gu->myAllyTeam)) {
+					uhm[vIdx] = shm[vIdx];
+					vvn[vIdx] = rvn[vIdx];
+				}
 				#endif
 			}
 		}

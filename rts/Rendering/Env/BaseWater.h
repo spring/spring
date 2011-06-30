@@ -7,16 +7,6 @@
 #include "Sim/Projectiles/ExplosionListener.h"
 class CGame;
 
-struct HeightmapChange {
-	int x1, y1, x2, y2;
-	HeightmapChange(const int x1, const int y1, const int x2, const int y2)
-		: x1(x1)
-		, y1(y1)
-		, x2(x2)
-		, y2(y2)
-	{}
-};
-
 class CBaseWater : public CExplosionListener
 {
 public:
@@ -43,12 +33,11 @@ public:
 
 	virtual void ExplosionOccurred(const CExplosionEvent& event);
 
-	static void UpdateBaseWater(CGame* game);
 	static CBaseWater* GetWater(CBaseWater* currWaterRenderer, int nextWaterRenderMode);
+	static void ApplyPushedChanges(CGame* game);
 	static void PushWaterMode(int nextWaterRenderMode);
 	static void PushHeightmapChange(const int x1, const int y1, const int x2, const int y2);
-	static std::vector<int> waterModes;
-	static std::vector<HeightmapChange> heightmapChanges;
+
  	static bool noWakeProjectiles;
 
 	bool drawReflection;

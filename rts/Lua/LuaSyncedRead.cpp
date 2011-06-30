@@ -4524,8 +4524,8 @@ int LuaSyncedRead::GetGroundBlocked(lua_State* L)
 int LuaSyncedRead::GetGroundExtremes(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
-	lua_pushnumber(L, readmap->minheight);
-	lua_pushnumber(L, readmap->maxheight);
+	lua_pushnumber(L, readmap->initMinHeight);
+	lua_pushnumber(L, readmap->initMaxHeight);
 	return 2;
 }
 

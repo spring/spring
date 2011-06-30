@@ -892,8 +892,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_INT(  "flareSalvoSize",   ud.flareSalvoSize);
 	ADD_INT(  "flareSalvoDelay",  ud.flareSalvoDelay);
 
-	ADD_BOOL("smoothAnim", ud.smoothAnim);
-
 	ADD_BOOL("levelGround", ud.levelGround);
 	ADD_BOOL("strafeToAttack", ud.strafeToAttack);
 

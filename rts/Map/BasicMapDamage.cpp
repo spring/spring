@@ -202,7 +202,7 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 		}
 	}
 
-	readmap->HeightMapUpdatedSynced(x1, y1, x2, y2);
+	readmap->UpdateHeightMapSynced(x1, y1, x2, y2);
 	pathManager->TerrainChange(x1, y1, x2, y2);
 	featureHandler->TerrainChanged(x1, y1, x2, y2);
 	CBaseWater::PushHeightmapChange(x1, y1, x2, y2);
@@ -212,7 +212,7 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 
 void CBasicMapDamage::Update()
 {
-	SCOPED_TIMER("Map damage");
+	SCOPED_TIMER("BasicMapDamage::Update");
 
 	std::deque<Explo*>::iterator ei;
 

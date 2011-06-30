@@ -1,4 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "WindowManagerHelper.h"
 
@@ -44,6 +45,10 @@ void WindowManagerHelper::SetIcon(const CBitmap* icon) {
 	}
 }
 
-void WindowManagerHelper::SetCaption(const std::string& caption) {
-	SDL_WM_SetCaption(caption.c_str(), caption.c_str());
+void WindowManagerHelper::SetCaption(const std::string& title, const std::string& titleShort) {
+	SDL_WM_SetCaption(title.c_str(), titleShort.c_str());
+}
+
+void WindowManagerHelper::SetCaption(const std::string& title) {
+	SetCaption(title, title);
 }

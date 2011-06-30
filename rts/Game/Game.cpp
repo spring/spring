@@ -29,12 +29,10 @@
 #include "GameVersion.h"
 #include "GameSetup.h"
 #include "GlobalUnsynced.h"
-#include "GlobalConfig.h"
 #include "LoadScreen.h"
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
 #include "PlayerRoster.h"
-#include "TimeProfiler.h"
 #include "WaitCommandsAI.h"
 #include "WordCompletion.h"
 #include "OSCStatsSender.h"
@@ -52,20 +50,19 @@
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
+#include "Rendering/WorldDrawer.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/DebugColVolDrawer.h"
-#include "Rendering/FarTextureHandler.h"
 #include "Rendering/glFont.h"
+#include "Rendering/FeatureDrawer.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/Screenshot.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.hpp"
-#include "Rendering/UnitDrawer.h"
 #include "Rendering/DebugDrawerAI.h"
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/SmoothHeightMeshDrawer.h"
@@ -143,6 +140,7 @@
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/FPUCheck.h"
+#include "System/GlobalConfig.h"
 #include "System/NetProtocol.h"
 #include "System/SpringApp.h"
 #include "System/Util.h"
@@ -160,6 +158,7 @@
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncedPrimitiveIO.h"
 #include "System/Sync/SyncTracer.h"
+#include "System/TimeProfiler.h"
 
 #include <boost/cstdint.hpp>
 
@@ -257,7 +256,9 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	luaLockTime(0),
 	luaExportSize(0),
 
-	saveFile(saveFile)
+	saveFile(saveFile),
+
+	worldDrawer(NULL)
 {
 	game = this;
 
@@ -323,6 +324,7 @@ CGame::~CGame()
 	tracefile << "[" << __FUNCTION__ << "]";
 #endif
 
+	// TODO move these to the end of this dtor, once all action-executors are registered by their respective engine sub-parts
 	UnsyncedGameCommands::DestroyInstance();
 	SyncedGameCommands::DestroyInstance();
 
@@ -340,6 +342,7 @@ CGame::~CGame()
 
 	CWordCompletion::DestroyInstance();
 
+	SafeDelete(worldDrawer);
 	SafeDelete(guihandler);
 	SafeDelete(minimap);
 	SafeDelete(resourceBar);
@@ -362,23 +365,15 @@ CGame::~CGame()
 	SafeDelete(camera);
 	SafeDelete(cam2);
 	SafeDelete(icon::iconHandler);
-	SafeDelete(inMapDrawerView);
-	SafeDelete(inMapDrawer);
-	SafeDelete(inMapDrawerModel);
 	SafeDelete(geometricObjects);
-	SafeDelete(farTextureHandler);
 	SafeDelete(texturehandler3DO);
 	SafeDelete(texturehandlerS3O);
 
-	SafeDelete(featureDrawer);
 	SafeDelete(featureHandler); // depends on unitHandler (via ~CFeature)
-	SafeDelete(unitDrawer); // depends on unitHandler, cubeMapHandler, groundDecals
 	SafeDelete(uh); // CUnitHandler*, depends on modelParser (via ~CUnit)
-	SafeDelete(projectileDrawer);
 	SafeDelete(ph); // CProjectileHandler*
 
 	SafeDelete(cubeMapHandler);
-	SafeDelete(groundDecals);
 	SafeDelete(modelParser);
 
 	SafeDelete(unitLoader);
@@ -450,7 +445,7 @@ void CGame::LoadDefs()
 	}
 
 	{
-		ScopedOnceTimer timer("Loading GameData Definitions");
+		ScopedOnceTimer timer("Game::LoadDefs (GameData)");
 		loadscreen->SetLoadMessage("Loading GameData Definitions");
 
 		defsParser = new LuaParser("gamedata/defs.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
@@ -488,7 +483,7 @@ void CGame::LoadDefs()
 	}
 
 	{
-		ScopedOnceTimer timer("Loading Sound Definitions");
+		ScopedOnceTimer timer("Game::LoadDefs (Sound)");
 		loadscreen->SetLoadMessage("Loading Sound Definitions");
 
 		sound->LoadSoundDefs("gamedata/sounds.lua");
@@ -529,10 +524,9 @@ void CGame::LoadSimulation(const std::string& mapName)
 		modelParser = new C3DModelLoader();
 
 		loadscreen->SetLoadMessage("Creating Unit Textures");
-		texturehandler3DO = new C3DOTextureHandler;
-		texturehandlerS3O = new CS3OTextureHandler;
+		texturehandler3DO = new C3DOTextureHandler();
+		texturehandlerS3O = new CS3OTextureHandler();
 
-		farTextureHandler = new CFarTextureHandler();
 		featureDrawer = new CFeatureDrawer();
 	}
 
@@ -563,42 +557,18 @@ void CGame::LoadSimulation(const std::string& mapName)
 	CCobInstance::InitVars(teamHandler->ActiveTeams(), teamHandler->ActiveAllyTeams());
 	CEngineOutHandler::Initialize();
 
+	geometricObjects = new CGeometricObjects();
+
+	inMapDrawerModel = new CInMapDrawModel();
+	inMapDrawer = new CInMapDraw();
+
 	syncedGameCommands->AddDefaultActionExecutors();
 	unsyncedGameCommands->AddDefaultActionExecutors();
 }
 
 void CGame::LoadRendering()
 {
-	// rendering components
-	loadscreen->SetLoadMessage("Creating Sky");
-	sky = IBaseSky::GetSky();
-
-	loadscreen->SetLoadMessage("Creating ShadowHandler & DecalHandler");
-	cubeMapHandler = new CubeMapHandler();
-	shadowHandler = new CShadowHandler();
-	groundDecals = new CGroundDecalHandler();
-
-	loadscreen->SetLoadMessage("Creating GroundDrawer");
-	readmap->NewGroundDrawer();
-
-	loadscreen->SetLoadMessage("Creating TreeDrawer");
-	treeDrawer = ITreeDrawer::GetTreeDrawer();
-
-	inMapDrawerModel = new CInMapDrawModel();
-	inMapDrawer = new CInMapDraw();
-	inMapDrawerView = new CInMapDrawView();
-	pathDrawer = IPathDrawer::GetInstance();
-
-	geometricObjects = new CGeometricObjects();
-
-	loadscreen->SetLoadMessage("Creating ProjectileDrawer & UnitDrawer");
-	projectileDrawer = new CProjectileDrawer();
-	projectileDrawer->LoadWeaponTextures();
-	unitDrawer = new CUnitDrawer();
-	modelDrawer = IModelDrawer::GetInstance();
-
-	loadscreen->SetLoadMessage("Creating Water");
-	water = CBaseWater::GetWater(NULL, -1);
+	worldDrawer = new CWorldDrawer();
 }
 
 void CGame::SetupRenderingParams()
@@ -617,7 +587,7 @@ void CGame::SetupRenderingParams()
 void CGame::LoadInterface()
 {
 	{
-		ScopedOnceTimer timer("Camera and mouse");
+		ScopedOnceTimer timer("Game::LoadInterface (Camera&Mouse)");
 		camera = new CCamera();
 		cam2 = new CCamera();
 		mouse = new CMouseHandler();
@@ -631,7 +601,7 @@ void CGame::LoadInterface()
 	cmdColors.LoadConfig("cmdcolors.txt");
 
 	{
-		ScopedOnceTimer timer("Loading console");
+		ScopedOnceTimer timer("Game::LoadInterface (Console)");
 		consoleHistory = new CConsoleHistory;
 		for (int pp = 0; pp < playerHandler->ActivePlayers(); pp++) {
 			wordCompletion->AddWord(playerHandler->Player(pp)->name, false, false, false);
@@ -935,180 +905,6 @@ bool CGame::Update()
 }
 
 
-bool CGame::DrawWorld()
-{
-	SCOPED_TIMER("Draw world");
-
-	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
-
-	if (globalRendering->drawSky) {
-		sky->Draw();
-	}
-
-	if (globalRendering->drawGround) {
-		gd->Draw();
-		smoothHeightMeshDrawer->Draw(1.0f);
-		treeDrawer->DrawGrass();
-		gd->DrawTrees();
-	}
-
-	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
-		SCOPED_TIMER("Water");
-
-		water->OcclusionQuery();
-		if (water->drawSolid) {
-			water->UpdateBaseWater(this);
-			water->Draw();
-		}
-	}
-
-	selectedUnits.Draw();
-	eventHandler.DrawWorldPreUnit();
-
-	DebugColVolDrawer::Draw();
-	unitDrawer->Draw(false);
-	modelDrawer->Draw();
-	featureDrawer->Draw();
-	pathDrawer->Draw();
-
-	//! transparent stuff
-	glEnable(GL_BLEND);
-	glDepthFunc(GL_LEQUAL);
-
-	const bool noAdvShading = shadowHandler->shadowsLoaded;
-
-	static const double plane_below[4] = {0.0f, -1.0f, 0.0f, 0.0f};
-	static const double plane_above[4] = {0.0f,  1.0f, 0.0f, 0.0f};
-
-	glClipPlane(GL_CLIP_PLANE3, plane_below);
-	glEnable(GL_CLIP_PLANE3);
-
-		//! draw cloaked part below surface
-		unitDrawer->DrawCloakedUnits(noAdvShading);
-		featureDrawer->DrawFadeFeatures(noAdvShading);
-
-	glDisable(GL_CLIP_PLANE3);
-
-	//! draw water
-	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
-		SCOPED_TIMER("Water");
-
-		if (!water->drawSolid) {
-			//! Water rendering will overwrite features, so save them
-			featureDrawer->SwapFeatures();
-			water->UpdateBaseWater(this);
-			water->Draw();
-			featureDrawer->SwapFeatures();
-		}
-	}
-
-	glClipPlane(GL_CLIP_PLANE3, plane_above);
-	glEnable(GL_CLIP_PLANE3);
-
-		//! draw cloaked part above surface
-		unitDrawer->DrawCloakedUnits(noAdvShading);
-		featureDrawer->DrawFadeFeatures(noAdvShading);
-
-	glDisable(GL_CLIP_PLANE3);
-
-	projectileDrawer->Draw(false);
-
-	if (globalRendering->drawSky) {
-		sky->DrawSun();
-	}
-
-	eventHandler.DrawWorld();
-
-	LuaUnsyncedCtrl::DrawUnitCommandQueues();
-	if (cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate()) {
-		selectedUnits.DrawCommands();
-	}
-
-	lineDrawer.DrawAll();
-	cursorIcons.Draw();
-	cursorIcons.Clear();
-
-	mouse->DrawSelectionBox();
-
-	guihandler->DrawMapStuff(false);
-
-	if (globalRendering->drawMapMarks && !hideInterface) {
-		inMapDrawerView->Draw();
-	}
-
-
-	//! underwater overlay
-	if (camera->pos.y < 0.0f) {
-		glEnableClientState(GL_VERTEX_ARRAY);
-		const float3& cpos = camera->pos;
-		const float vr = globalRendering->viewRange * 0.5f;
-		glDepthMask(GL_FALSE);
-		glDisable(GL_TEXTURE_2D);
-		glColor4f(0.0f, 0.5f, 0.3f, 0.50f);
-		{
-			float3 verts[] = {
-				float3(cpos.x - vr, 0.0f, cpos.z - vr),
-				float3(cpos.x - vr, 0.0f, cpos.z + vr),
-				float3(cpos.x + vr, 0.0f, cpos.z + vr),
-				float3(cpos.x + vr, 0.0f, cpos.z - vr)
-			};
-			glVertexPointer(3, GL_FLOAT, 0, verts);
-			glDrawArrays(GL_QUADS, 0, 4);
-		}
-
-		{
-			float3 verts[] = {
-				float3(cpos.x - vr, 0.0f, cpos.z - vr),
-				float3(cpos.x - vr,  -vr, cpos.z - vr),
-				float3(cpos.x - vr, 0.0f, cpos.z + vr),
-				float3(cpos.x - vr,  -vr, cpos.z + vr),
-				float3(cpos.x + vr, 0.0f, cpos.z + vr),
-				float3(cpos.x + vr,  -vr, cpos.z + vr),
-				float3(cpos.x + vr, 0.0f, cpos.z - vr),
-				float3(cpos.x + vr,  -vr, cpos.z - vr),
-				float3(cpos.x - vr, 0.0f, cpos.z - vr),
-				float3(cpos.x - vr,  -vr, cpos.z - vr),
-			};
-			glVertexPointer(3, GL_FLOAT, 0, verts);
-			glDrawArrays(GL_QUAD_STRIP, 0, 10);
-		}
-
-		glDepthMask(GL_TRUE);
-		glDisableClientState(GL_VERTEX_ARRAY);
-	}
-
-	//reset fov
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluOrtho2D(0,1,0,1);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	glEnable(GL_BLEND);
-	glDisable(GL_DEPTH_TEST);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	// underwater overlay, part 2
-	if (camera->pos.y < 0.0f) {
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glDisable(GL_TEXTURE_2D);
-		glColor4f(0.0f, 0.2f, 0.8f, 0.333f);
-		float3 verts[] = {
-			float3 (0.f, 0.f, -1.f),
-			float3 (1.f, 0.f, -1.f),
-			float3 (1.f, 1.f, -1.f),
-			float3 (0.f, 1.f, -1.f),
-		};
-		glVertexPointer(3, GL_FLOAT, 0, verts);
-		glDrawArrays(GL_QUADS, 0, 4);
-		glDisableClientState(GL_VERTEX_ARRAY);
-	}
-
-	return true;
-}
-
-
-
 #if defined(USE_GML) && GML_ENABLE_DRAW
 bool CGame::Draw() {
 	gmlProcessor->Work(&CGame::DrawMTcb,NULL,NULL,this,gmlThreadCount,TRUE,NULL,1,2,2,FALSE);
@@ -1168,7 +964,7 @@ bool CGame::Draw() {
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 	if (doDrawWorld) {
 		{
-			SCOPED_TIMER("Ground Update");
+			SCOPED_TIMER("GroundDrawer::Update");
 			gd->Update();
 		}
 
@@ -1196,7 +992,7 @@ bool CGame::Draw() {
 				lastUpdate = currentTime;
 
 				{
-					SCOPED_TIMER("ExtraTexture");
+					SCOPED_TIMER("GroundDrawer::UpdateExtraTex");
 					gd->UpdateExtraTexture();
 				}
 
@@ -1232,14 +1028,10 @@ bool CGame::Draw() {
 	CNamedTextures::Update();
 	texturehandlerS3O->Update();
 	modelParser->Update();
-	treeDrawer->Update();
-	readmap->UpdateDraw();
-	unitDrawer->Update();
-	featureDrawer->Update();
+	worldDrawer->Update();
 	mouse->UpdateCursors();
 	mouse->EmptyMsgQueUpdate();
 	guihandler->Update();
-	lineDrawer.UpdateLineStipple();
 
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();
 	eventHandler.Update();
@@ -1257,21 +1049,32 @@ bool CGame::Draw() {
 	}
 
 	if (doDrawWorld) {
-		SCOPED_TIMER("Shadows/Reflections");
-
 		if (shadowHandler->shadowsLoaded && (gd->drawMode != CBaseGroundDrawer::drawLos)) {
 			// NOTE: shadows don't work in LOS mode, gain a few fps (until it's fixed)
+			SCOPED_TIMER("ShadowHandler::CreateShadows");
 			SetDrawMode(gameShadowDraw);
 			shadowHandler->CreateShadows();
 			SetDrawMode(gameNormalDraw);
 		}
 
-		cubeMapHandler->UpdateReflectionTexture();
+		{
+			SCOPED_TIMER("CubeMapHandler::UpdateReflTex");
+			cubeMapHandler->UpdateReflectionTexture();
+		}
 
 		if (sky->GetLight()->IsDynamic()) {
-			cubeMapHandler->UpdateSpecularTexture();
-			sky->UpdateSkyTexture();
-			readmap->UpdateShadingTexture();
+			{
+				SCOPED_TIMER("CubeMapHandler::UpdateSpecTex");
+				cubeMapHandler->UpdateSpecularTexture();
+			}
+			{
+				SCOPED_TIMER("Sky::UpdateSkyTex");
+				sky->UpdateSkyTexture();
+			}
+			{
+				SCOPED_TIMER("ReadMap::UpdateShadingTex");
+				readmap->UpdateShadingTexture();
+			}
 		}
 
 		if (FBO::IsSupported())
@@ -1289,9 +1092,8 @@ bool CGame::Draw() {
 	camera->Update(false);
 
 	if (doDrawWorld) {
-		DrawWorld();
-	}
-	else {
+		worldDrawer->Draw();
+	} else {
 		//reset fov
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
@@ -1316,11 +1118,9 @@ bool CGame::Draw() {
 	glEnable(GL_TEXTURE_2D);
 
 	{
-		SCOPED_TIMER("Draw interface");
-		if (hideInterface) {
-			//luaInputReceiver->Draw();
-		}
-		else {
+		SCOPED_TIMER("InputReceivers::Draw");
+
+		if (!hideInterface) {
 			std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 			std::deque<CInputReceiver*>::reverse_iterator ri;
 			for (ri = inputReceivers.rbegin(); ri != inputReceivers.rend(); ++ri) {
@@ -1682,7 +1482,7 @@ void CGame::StartPlaying()
 
 
 void CGame::SimFrame() {
-	ScopedTimer cputimer("CPU load"); // SimFrame
+	ScopedTimer cputimer("Game::SimFrame", true); // SimFrame
 
 	good_fpu_control_registers("CGame::SimFrame");
 	lastFrameTime = SDL_GetTicks();
@@ -1721,7 +1521,8 @@ void CGame::SimFrame() {
 	}
 
 	// everything from here is simulation
-	ScopedTimer forced("Sim time"); // don't use SCOPED_TIMER here because this is the only timer needed always
+	// don't use SCOPED_TIMER here because this is the only timer needed always
+	ScopedTimer forced("Game::SimFrame (Update)");
 
 	helper->Update();
 	mapDamage->Update();

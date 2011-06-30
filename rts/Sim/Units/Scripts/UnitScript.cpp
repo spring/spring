@@ -249,13 +249,17 @@ int CUnitScript::Tick(int deltaTime)
 		++it;
 	}
 
-	//Tell listeners to unblock?
-	for (std::vector<struct AnimInfo *>::iterator it = remove.begin(); it != remove.end(); ++it) {
-		UnblockAll(*it); //! NOTE: UnblockAll might result in new anims being added
-	}
-
+	//! Remove finished anims from the unit/script
+	//! NOTE: _must_ happen before calling the listeners of such an anim!
+	//! Else the callback function can call AddAnimListener() and append the currently called
+	//! callback function again at the end of the listeners list. Causing an endless loop!
 	for (std::vector<struct AnimInfo *>::iterator it = remove.begin(); it != remove.end(); ++it) {
 		anims.remove(*it);
+	}
+
+	//! Tell listeners to unblock?
+	for (std::vector<struct AnimInfo *>::iterator it = remove.begin(); it != remove.end(); ++it) {
+		UnblockAll(*it); //! NOTE: UnblockAll might result in new anims being added
 		delete *it;
 	}
 
@@ -309,7 +313,7 @@ void CUnitScript::RemoveAnim(AnimType type, int piece, int axis)
 //Overwrites old information. This means that threads blocking on turn completion
 //will now wait for this new turn instead. Not sure if this is the expected behaviour
 //Other option would be to kill them. Or perhaps unblock them.
-void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float dest, float accel, bool interpolated)
+void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float dest, float accel)
 {
 	if (!PieceExists(piece)) {
 		ShowScriptError("Invalid piecenumber");
@@ -330,7 +334,7 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 
 	//Turns override spins.. Not sure about the other way around? If so the system should probably be redesigned
 	//to only have two types of anims.. turns and moves, with spin as a bool
-	//todo: optimize, atm RemoveAnim and FindAnim search twice through all anims
+	// TODO optimize, atm RemoveAnim and FindAnim search twice through all anims
 	if (type == ATurn)
 		RemoveAnim(ASpin, piece, axis);
 	if (type == ASpin)
@@ -353,7 +357,6 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 	ai->dest  = destf;
 	ai->speed = speed;
 	ai->accel = accel;
-	ai->interpolated = interpolated;
 }
 
 
@@ -401,15 +404,15 @@ void CUnitScript::StopSpin(int piece, int axis, float decel)
 }
 
 
-void CUnitScript::Turn(int piece, int axis, float speed, float destination, bool interpolated)
+void CUnitScript::Turn(int piece, int axis, float speed, float destination)
 {
-	AddAnim(ATurn, piece, axis, speed, destination, 0, interpolated);
+	AddAnim(ATurn, piece, axis, speed, destination, 0);
 }
 
 
-void CUnitScript::Move(int piece, int axis, float speed, float destination, bool interpolated)
+void CUnitScript::Move(int piece, int axis, float speed, float destination)
 {
-	AddAnim(AMove, piece, axis, speed, destination, 0, interpolated);
+	AddAnim(AMove, piece, axis, speed, destination, 0);
 }
 
 
@@ -683,8 +686,7 @@ void CUnitScript::DropUnit(int u)
 //Returns true if there was an animation to listen to
 bool CUnitScript::AddAnimListener(AnimType type, int piece, int axis, IAnimListener *listener)
 {
-	struct AnimInfo *ai;
-	ai = FindAnim(type, piece, axis);
+	AnimInfo* ai = FindAnim(type, piece, axis);
 	if (ai) {
 		ai->listeners.push_back(listener);
 		return true;
@@ -788,56 +790,6 @@ void CUnitScript::ShowFlare(int piece)
 
 	new CMuzzleFlame(pos, unit->speed, dir, size);
 #endif
-}
-
-
-void CUnitScript::MoveSmooth(int piece, int axis, float destination, int delta, int deltaTime)
-{
-	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber");
-		return;
-	}
-
-	//Make sure we do not overwrite animations of non-interpolated origin
-	AnimInfo *ai = FindAnim(AMove, piece, axis);
-	if (ai) {
-		if (!ai->interpolated) {
-			MoveNow(piece, axis, destination);
-			return;
-		}
-	}
-
-	float cur = pieces[piece]->GetPosition()[axis] - pieces[piece]->original->offset[axis];
-	float dist = streflop::fabsf(destination - cur);
-	int timeFactor = (1000 * 1000) / (deltaTime * deltaTime);
-	float speed = (dist * timeFactor) / delta;
-
-	Move(piece, axis, speed, destination, true);
-}
-
-
-void CUnitScript::TurnSmooth(int piece, int axis, float destination, int delta, int deltaTime)
-{
-	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber");
-		return;
-	}
-
-	AnimInfo *ai = FindAnim(ATurn, piece, axis);
-	if (ai) {
-		if (!ai->interpolated) {
-			TurnNow(piece, axis, destination);
-			return;
-		}
-	}
-
-	// not sure the ClampRad() call is necessary here
-	float cur = ClampRad(pieces[piece]->GetRotation()[axis]);
-	float dist = streflop::fabsf(destination - cur);
-	int timeFactor = (1000 * 1000) / (deltaTime * deltaTime);
-	float speed = (dist * timeFactor) / delta;
-
-	Turn(piece, axis, speed, destination, true);
 }
 
 

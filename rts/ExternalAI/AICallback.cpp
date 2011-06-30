@@ -1002,12 +1002,12 @@ const float* CAICallback::GetCornersHeightMap()
 
 float CAICallback::GetMinHeight()
 {
-	return readmap->minheight;
+	return readmap->initMinHeight;
 }
 
 float CAICallback::GetMaxHeight()
 {
-	return readmap->maxheight;
+	return readmap->initMaxHeight;
 }
 
 const float* CAICallback::GetSlopeMap()
