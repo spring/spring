@@ -410,26 +410,26 @@ void CSmfReadMap::UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2)
 
 				rvn[vIdx] = vn.ANormalize();
 
-				// compress the range [-1, 1] to [0, 1] to prevent clamping
-				// (ideally, should use an FBO with FP32 texture attachment)
-				#if (SSMF_UNCOMPRESSED_NORMALS == 1)
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 0] = ((vn.x + 1.0f) * 0.5f);
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 1] = ((vn.y + 1.0f) * 0.5f);
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 2] = ((vn.z + 1.0f) * 0.5f);
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 3] = 1.0f;
-				#else
-				//! note: y-coord is regenerated in the shader via "sqrt(1 - x*x - z*z)",
-				//!   this gives us 2 solutions but we know that the y-coord always points
-				//!   upwards, so we can reconstruct it in the shader.
-				pixels[((z - minz) * xsize + (x - minx)) * 2 + 0] = ((vn.x + 1.0f) * 0.5f);
-				pixels[((z - minz) * xsize + (x - minx)) * 2 + 1] = ((vn.z + 1.0f) * 0.5f);
-				#endif
-
 				#ifdef USE_UNSYNCED_HEIGHTMAP
 				if (gu->spectatingFullView || loshandler->InLos(x, z, gu->myAllyTeam)) {
 					uhm[vIdx] = shm[vIdx];
 					vvn[vIdx] = rvn[vIdx];
 				}
+				#endif
+
+				// compress the range [-1, 1] to [0, 1] to prevent clamping
+				// (ideally, should use an FBO with FP32 texture attachment)
+				#if (SSMF_UNCOMPRESSED_NORMALS == 1)
+				pixels[((z - minz) * xsize + (x - minx)) * 4 + 0] = ((vvn[vIdx].x + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 4 + 1] = ((vvn[vIdx].y + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 4 + 2] = ((vvn[vIdx].z + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 4 + 3] = 1.0f;
+				#else
+				//! note: y-coord is regenerated in the shader via "sqrt(1 - x*x - z*z)",
+				//!   this gives us 2 solutions but we know that the y-coord always points
+				//!   upwards, so we can reconstruct it in the shader.
+				pixels[((z - minz) * xsize + (x - minx)) * 2 + 0] = ((vvn[vIdx].x + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 2 + 1] = ((vvn[vIdx].z + 1.0f) * 0.5f);
 				#endif
 			}
 		}

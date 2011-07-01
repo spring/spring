@@ -1703,7 +1703,7 @@ void CGame::MakeMemDump()
 
 
 
-void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams )
+void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams)
 {
 	if (!gameOver) {
 		gameOver = true;
