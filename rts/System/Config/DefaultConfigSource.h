@@ -3,10 +3,7 @@
 #ifndef DEFAULT_CONFIG_SOURCE_H
 #define DEFAULT_CONFIG_SOURCE_H
 
-#include <sstream>
 #include "ConfigSource.h"
-
-class ConfigVariable;
 
 /**
  * @brief Configuration source that holds static defaults
@@ -18,9 +15,6 @@ class DefaultConfigSource : public ReadOnlyConfigSource
 {
 public:
 	DefaultConfigSource();
-
-private:
-	std::map<std::string, const ConfigVariable*> vars;
 };
 
 #endif // DEFAULT_CONFIG_SOURCE_H
