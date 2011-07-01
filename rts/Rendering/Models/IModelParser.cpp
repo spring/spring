@@ -50,7 +50,7 @@ static inline S3DModelPiece* ModelTypeToModelPiece(const ModelType& type) {
 	return NULL;
 }
 
-static void RegisterAssImpModelParsers(C3DModelLoader::ParserMap& parsers, CAssParser* assParser) {
+static void RegisterAssimpModelParsers(C3DModelLoader::ParserMap& parsers, CAssParser* assParser) {
 	std::string extension;
 	std::string extensions;
 	Assimp::Importer importer;
@@ -61,7 +61,7 @@ static void RegisterAssImpModelParsers(C3DModelLoader::ParserMap& parsers, CAssP
 	// do not ignore the last extension
 	extensions += ";";
 
-	logOutput.Print("[%s] supported AssImp model formats: %s", __FUNCTION__, extensions.c_str());
+	logOutput.Print("[%s] supported Assimp model formats: %s", __FUNCTION__, extensions.c_str());
 
 	size_t i = 0;
 	size_t j = 0;
@@ -91,7 +91,7 @@ C3DModelLoader::C3DModelLoader()
 	parsers["obj"] = new COBJParser();
 
 	// FIXME: unify the metadata formats of CAssParser and COBJParser
-	RegisterAssImpModelParsers(parsers, new CAssParser());
+	RegisterAssimpModelParsers(parsers, new CAssParser());
 }
 
 
@@ -113,7 +113,7 @@ C3DModelLoader::~C3DModelLoader()
 	delete parsers["obj"]; parsers.erase("obj");
 
 	if (!parsers.empty()) {
-		// delete the shared AssImp parser
+		// delete the shared Assimp parser
 		ParserMap::iterator pi = parsers.begin();
 		delete pi->second;
 	}
