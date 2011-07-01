@@ -307,14 +307,22 @@ float CGround::GetApproximateHeight(float x, float y) const
 	return readmap->GetCenterHeightMapSynced()[xsquare + ysquare * gs->mapx];
 }
 
-float CGround::GetHeightAboveWater(float x, float y) const
+float CGround::GetHeightAboveWater(float x, float y, bool synced) const
 {
-	return std::max(0.0f, GetHeightReal(x, y));
+	return std::max(0.0f, GetHeightReal(x, y, synced));
 }
 
-float CGround::GetHeightReal(float x, float y) const
+float CGround::GetHeightReal(float x, float y, bool synced) const
 {
+	#ifdef USE_UNSYNCED_HEIGHTMAP
+	if (synced) {
+		return Interpolate(x, y, readmap->GetCornerHeightMapSynced());
+	} else {
+		return Interpolate(x, y, readmap->GetCornerHeightMapUnsynced());
+	}
+	#else
 	return Interpolate(x, y, readmap->GetCornerHeightMapSynced());
+	#endif
 }
 
 float CGround::GetOrigHeight(float x, float y) const

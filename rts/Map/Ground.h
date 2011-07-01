@@ -17,15 +17,18 @@ public:
 	~CGround();
 
 	float GetSlope(float x, float y) const;
+
 	/// similar to GetHeightReal, but uses nearest filtering instead of interpolating the heightmap
 	float GetApproximateHeight(float x, float y) const;
 	/// Returns the height at the specified position, cropped to a non-negative value
-	float GetHeightAboveWater(float x, float y) const;
+	float GetHeightAboveWater(float x, float y, bool synced = true) const;
 	/// Returns the real height at the specified position, can be below 0
-	float GetHeightReal(float x, float y) const;
+	float GetHeightReal(float x, float y, bool synced = true) const;
 	float GetOrigHeight(float x, float y) const;
+
 	const float3& GetNormal(float x, float y) const;
 	float3 GetSmoothNormal(float x, float y) const;
+
 	float LineGroundCol(float3 from, float3 to) const;
 	float TrajectoryGroundCol(float3 from, const float3& flatdir, float length, float linear, float quadratic) const;
 
