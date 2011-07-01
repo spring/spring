@@ -185,7 +185,7 @@
 	!insertmacro DeleteAIInterface "Java"
 	!insertmacro DeleteAIInterface "Python"
 
-	RmDir /r "$INSTDIR\AI"
+	RmDir "$INSTDIR\AI"
 
 	; base content
 	Delete "$INSTDIR\base\spring\bitmaps.sdz"
