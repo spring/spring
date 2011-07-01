@@ -27,12 +27,14 @@
 // Local/Helper functions
 //////////////////////////////////////////////////////////////////////
 
-/** helper for TestAllyCone and TestNeutralCone
-    @return true if the unit u is in the firing cone, false otherwise */
+/**
+ * helper for TestAllyCone and TestNeutralCone
+ * @return true if the unit u is in the firing cone, false otherwise
+ */
 inline bool TestConeHelper(const float3& from, const float3& weaponDir, float length, float spread, const CSolidObject* obj)
 {
 	// account for any offset, since we want to know if our shots might hit
-	float3 unitDir = (obj->midPos + obj->collisionVolume->GetOffsets()) - from;
+	const float3 unitDir = (obj->midPos + obj->collisionVolume->GetOffsets()) - from;
 
 	// weaponDir defines the center of the cone
 	float closeLength = unitDir.dot(weaponDir);
@@ -42,24 +44,26 @@ inline bool TestConeHelper(const float3& from, const float3& weaponDir, float le
 	if (closeLength > length)
 		closeLength = length;
 
-	float3 closeVect = unitDir - weaponDir * closeLength;
+	const float3 closeVect = unitDir - weaponDir * closeLength;
 
 	// NOTE: same caveat wrt. use of volumeBoundingRadius
 	// as for ::Explosion(), this will result in somewhat
 	// over-conservative tests for non-spherical volumes
-	float r = obj->collisionVolume->GetBoundingRadius() + spread * closeLength + 1;
+	const float r = obj->collisionVolume->GetBoundingRadius() + spread * closeLength + 1;
 
 	return (closeVect.SqLength() < r * r);
 }
 
 
-/** helper for TestTrajectoryAllyCone and TestTrajectoryNeutralCone
-    @return true if the unit u is in the firing trajectory, false otherwise */
+/**
+ * helper for TestTrajectoryAllyCone and TestTrajectoryNeutralCone
+ * @return true if the unit u is in the firing trajectory, false otherwise
+ */
 inline bool TestTrajectoryConeHelper(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, const CUnit* u)
 {
 	const CollisionVolume* cv = u->collisionVolume;
 	float3 dif = (u->midPos + cv->GetOffsets()) - from;
-	float3 flatdif(dif.x, 0, dif.z);
+	const float3 flatdif(dif.x, 0, dif.z);
 	float closeFlatLength = flatdif.dot(flatdir);
 
 	if (closeFlatLength <= 0)
@@ -72,8 +76,8 @@ inline bool TestTrajectoryConeHelper(const float3& from, const float3& flatdir, 
 		dif.y -= (linear + quadratic * closeFlatLength) * closeFlatLength;
 
 		// NOTE: overly conservative for non-spherical volumes
-		float3 closeVect = dif - flatdir * closeFlatLength;
-		float r = cv->GetBoundingRadius() + spread * closeFlatLength + baseSize;
+		const float3 closeVect = dif - flatdir * closeFlatLength;
+		const float r = cv->GetBoundingRadius() + spread * closeFlatLength + baseSize;
 		if (closeVect.SqLength() < r * r) {
 			return true;
 		}
@@ -85,11 +89,11 @@ inline bool TestTrajectoryConeHelper(const float3& from, const float3& flatdir, 
 		dir.Normalize();
 
 		dif = (u->midPos + cv->GetOffsets()) - newfrom;
-		float closeLength = dif.dot(dir);
+		const float closeLength = dif.dot(dir);
 
 		// NOTE: overly conservative for non-spherical volumes
-		float3 closeVect = dif - dir * closeLength;
-		float r = cv->GetBoundingRadius() + spread * closeFlatLength + baseSize;
+		const float3 closeVect = dif - dir * closeLength;
+		const float r = cv->GetBoundingRadius() + spread * closeFlatLength + baseSize;
 		if (closeVect.SqLength() < r * r) {
 			return true;
 		}
@@ -257,7 +261,7 @@ float GuiTraceRay(const float3 &start, const float3 &dir, float length, bool use
 								hitUnit = unit;
 								hitFeature = NULL;
 							}
-						} else if (!isfactory && hover_factory) { //FIXME still check if the unit is BEHIND (and not IN) the factory!
+						} else if (!isfactory && hover_factory) { // FIXME still check if the unit is BEHIND (and not IN) the factory!
 							//! give an unit in a factory a higher priority than the factory itself
 							hover_factory = isfactory;
 							length = len;
@@ -295,7 +299,7 @@ float GuiTraceRay(const float3 &start, const float3 &dir, float length, bool use
 						length = len;
 						hitFeature = f;
 						hitUnit = NULL;
-					} else if (hover_factory) { //FIXME still check if the unit is BEHIND (and not IN) the factory!
+					} else if (hover_factory) { // FIXME still check if the unit is BEHIND (and not IN) the factory!
 						//! give features in a factory a higher priority than the factory itself
 						hover_factory = false;
 						length = len;
@@ -353,8 +357,6 @@ bool LineFeatureCol(const float3& start, const float3& dir, float length)
 }
 
 
-/** @return true if there is an allied unit within
-    the firing cone of <owner> (that might be hit) */
 bool TestAllyCone(const float3& from, const float3& weaponDir, float length, float spread, int allyteam, CUnit* owner)
 {
 	int quads[1000];
@@ -376,7 +378,6 @@ bool TestAllyCone(const float3& from, const float3& weaponDir, float length, flo
 	return false;
 }
 
-/** same as TestAllyCone, but looks for neutral units */
 bool TestNeutralCone(const float3& from, const float3& weaponDir, float length, float spread, CUnit* owner)
 {
 	int quads[1000];
@@ -402,8 +403,6 @@ bool TestNeutralCone(const float3& from, const float3& weaponDir, float length, 
 }
 
 
-/** @return true if there is an allied unit within
-    the firing trajectory of <owner> (that might be hit) */
 bool TestTrajectoryAllyCone(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, int allyteam, CUnit* owner)
 {
 	int quads[1000];
@@ -425,12 +424,11 @@ bool TestTrajectoryAllyCone(const float3& from, const float3& flatdir, float len
 	return false;
 }
 
-/** same as TestTrajectoryAllyCone, but looks for neutral units */
 bool TestTrajectoryNeutralCone(const float3& from, const float3& flatdir, float length, float linear, float quadratic, float spread, float baseSize, CUnit* owner)
 {
 	int quads[1000];
 	int* endQuad = quads;
-	qf->GetQuadsOnRay(from, flatdir, length, endQuad); //FIXME we need a version with `spread`
+	qf->GetQuadsOnRay(from, flatdir, length, endQuad); // FIXME we need a version with `spread`
 
 	for (int* qi = quads; qi != endQuad; ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
