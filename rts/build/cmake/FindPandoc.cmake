@@ -12,8 +12,10 @@
 #
 # See Markdown (FindMarkdown.cmake), for a more lightweight utility.
 #
-#  PANDOC_BIN   - will be set to the Pandoc executable (eg. pandoc.exe)
-#  PANDOC_FOUND - TRUE if Pandoc was found
+#  PANDOC_BIN      - will be set to the Pandoc executable (eg. pandoc.exe)
+#  PANDOC_FOUND    - TRUE if Pandoc was found
+#  Pandoc_MdToHtml - creates a string that may be executed on the cmd-line
+#                    for converting a markdown file to HTML
 
 Include(FindPackageHandleStandardArgs)
 
@@ -34,3 +36,16 @@ find_program(PANDOC_BIN
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(Pandoc DEFAULT_MSG PANDOC_BIN)
 
 MARK_AS_ADVANCED(PANDOC_BIN)
+
+If    (PANDOC_FOUND)
+	Macro    (Pandoc_MdToHtml var_command fileSrc fileDst title)
+		Set("${var_command}"
+				"${PANDOC_BIN}"
+				--from=markdown
+				--to=html
+				-s --variable="pagetitle:${title}"
+				-o "${fileDst}"
+				"${fileSrc}"
+				PARENT_SCOPE)
+	EndMacro (Pandoc_MdToHtml)
+EndIf (PANDOC_FOUND)
