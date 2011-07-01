@@ -504,6 +504,8 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 	float speedDif = wSpeed - currentSpeed;
 
 	// make the forward/reverse transitions more fluid
+	// (iff we are already moving in one direction and
+	// want to go the opposite)
 	if ( wantReverse && !reversing) { speedDif = -currentSpeed; }
 	if (!wantReverse &&  reversing) { speedDif = -currentSpeed; }
 
@@ -1903,11 +1905,11 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 	if (wantedSpeed > 0.0f || currentSpeed != 0.0f) {
 		if (wantReverse) {
 			if (!reversing) {
-				reversing = (currentSpeed <= 0.0f);
+				reversing = (currentSpeed <= accRate);
 			}
 		} else {
 			if (reversing) {
-				reversing = (currentSpeed > 0.0f);
+				reversing = (currentSpeed > accRate);
 			}
 		}
 
