@@ -152,6 +152,19 @@ ${!echonow} "Using MINGWLIBS_DIR: ${MINGWLIBS_DIR}"
 	!define BUILD_OR_DIST_DIR "${BUILD_DIR}"
 !endif
 
+!ifndef PORTABLE_ARCHIVE
+	!error "PORTABLE_ARCHIVE undefined: please specifiy where portable 7z-archive which contains the spring-engine is"
+!else
+	${!echonow} "Using PORTABLE_ARCHIVE:      ${PORTABLE_ARCHIVE}"
+!endif
+
+!ifndef ARCHIVEMOVER
+	!warning "ARCHIVEMOVER not defined"
+!else
+	${!echonow} "Using ARCHIVEMOVER:      ${ARCHIVEMOVER}"
+!endif
+
+
 SectionGroup /e "!Engine"
 	Section "Main application (req)" SEC_MAIN
 		; make this section read-only -> user can not deselect it
@@ -160,8 +173,10 @@ SectionGroup /e "!Engine"
 		!define INSTALL
 			${!echonow} "Processing: main"
 			!include "sections\main.nsh"
-			${!echonow} "Processing: luaui"
-			!include "sections\luaui.nsh"
+			${!echonow} "Processing: springsettings"
+			!include "sections\springsettings.nsh"
+			${!echonow} "Processing: deprecated"
+		        !include "sections\deprecated.nsh"
 		!undef INSTALL
 	SectionEnd
 
@@ -250,14 +265,6 @@ Section /o "Portable" SEC_PORTABLE
 SectionEnd
 
 
-SectionGroup "Skirmish AI plugins (Bots)"
-	!insertmacro SkirmishAIInstSection "AAI"
-	!insertmacro SkirmishAIInstSection "KAIK"
-	!insertmacro SkirmishAIInstSection "RAI"
-	!insertmacro SkirmishAIInstSection "E323AI"
-SectionGroupEnd
-
-
 !include "sections\sectiondesc.nsh"
 
 !ifndef SLIM
@@ -325,6 +332,8 @@ Section Uninstall
 	${!echonow} "Processing: Uninstall"
 
 	!include "sections\main.nsh"
+	!include "sections\deprecated.nsh"
+	!include "sections\springsettings.nsh"
 
 	Delete "$INSTDIR\spring-multithreaded.exe"
 
@@ -345,8 +354,6 @@ Section Uninstall
 !ifndef SLIM
 	!include "sections\springlobby.nsh"
 !endif
-	!include "sections\luaui.nsh"
-
 	; All done
 	RMDir "$INSTDIR"
 

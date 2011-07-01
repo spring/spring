@@ -1,10 +1,12 @@
 !ifdef INSTALL
 	SetOutPath "$INSTDIR"
 
-	!ifdef USE_BUILD_DIR 
-		File "${BUILD_DIR}\tools\ArchiveMover\ArchiveMover.exe"
-	!else
-		File "${DIST_DIR}\ArchiveMover.exe"
+	!ifdef ARCHIVEMOVER
+	        SetCompress Off
+	        File /oname=archivemover.7z "${ARCHIVEMOVER}"
+	        SetCompress Force
+	        Nsis7z::Extract "$INSTDIR\archivemover.7z"
+	        Delete "$INSTDIR\archivemover.7z"
 	!endif
 
 	; Archive file associations
