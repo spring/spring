@@ -44,6 +44,7 @@ public:
 	virtual ~ConfigVariableData() {}
 	virtual std::string GetDefaultValue() const = 0;
 	virtual bool HasDefaultValue() const = 0;
+	virtual std::string Clamp(const std::string& value) const = 0;
 
 public:
 	std::string key;
@@ -61,9 +62,7 @@ class ConfigVariableTypedData : public ConfigVariableData
 public:
 	std::string GetDefaultValue() const
 	{
-		std::ostringstream buf;
-		buf << defaultValue;
-		return buf.str();
+		return ToString(defaultValue.Get());
 	}
 
 	bool HasDefaultValue() const
@@ -71,10 +70,43 @@ public:
 		return defaultValue.IsSet();
 	}
 
+	std::string Clamp(const std::string& value) const
+	{
+		if (minimumValue.IsSet() || maximumValue.IsSet()) {
+			T temp = FromString(value);
+			if (minimumValue.IsSet()) {
+				temp = std::max(temp, minimumValue.Get());
+			}
+			if (maximumValue.IsSet()) {
+				temp = std::min(temp, maximumValue.Get());
+			}
+			return ToString(temp);
+		}
+		else {
+			return value;
+		}
+	}
+
 public:
 	Optional<T> defaultValue;
 	Optional<T> minimumValue;
 	Optional<T> maximumValue;
+
+private:
+	static std::string ToString(T value)
+	{
+		std::ostringstream buf;
+		buf << value;
+		return buf.str();
+	}
+
+	static T FromString(const std::string& value)
+	{
+		std::istringstream buf(value);
+		T temp;
+		buf >> temp;
+		return temp;
+	}
 };
 
 /**

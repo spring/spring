@@ -139,9 +139,15 @@ bool ConfigHandlerImpl::IsSet(const string& key) const
  */
 string ConfigHandlerImpl::GetString(const string& key) const
 {
+	const ConfigVariableData* meta = ConfigVariable::GetMetaData(key);
+
 	for_each_source_const(it) {
 		if ((*it)->IsSet(key)) {
-			return (*it)->GetString(key);
+			std::string value = (*it)->GetString(key);
+			if (meta != NULL) {
+				value = meta->Clamp(value);
+			}
+			return value;
 		}
 	}
 	throw std::runtime_error("ConfigHandler: Error: Key does not exist: " + key +
