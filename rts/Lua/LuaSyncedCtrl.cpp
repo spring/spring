@@ -395,13 +395,9 @@ int LuaSyncedCtrl::GameOver(lua_State* L)
 		winningAllyTeams.push_back(allyTeamID);
 	}
 
-	if (winningAllyTeams.empty()) {
-		lua_pushboolean(L, false);
-	} else {
-		game->GameEnd(winningAllyTeams);
-		lua_pushboolean(L, true);
-	}
-
+	game->GameEnd(winningAllyTeams);
+	// push the number of accepted allyteams
+	lua_pushnumber(L, winningAllyTeams.size());
 	return 1;
 }
 
