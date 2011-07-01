@@ -75,7 +75,7 @@ public:
 	 * such as normals, centerheightmap and slopemap
 	 */
 	void UpdateHeightMapSynced(int x1, int z1, int x2, int z2);
-	void UpdateVisibleHeightMap(int x1, int z1, int x2, int z2);
+	void PushVisibleHeightMapUpdate(int x1, int z1, int x2, int z2);
 	void UpdateDraw();
 
 	virtual ~CReadMap();
