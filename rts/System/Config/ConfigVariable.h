@@ -11,10 +11,10 @@
  * @brief Wraps a value and detects whether it has been assigned to.
  */
 template<typename T>
-class Nullable : public boost::noncopyable
+class Optional : public boost::noncopyable
 {
 public:
-	Nullable() : isSet(false) {}
+	Optional() : isSet(false) {}
 	void operator=(const T& x) { value = x; isSet = true; }
 	const T& Get() const { return value; }
 	bool IsSet() const { return isSet; }
@@ -25,7 +25,7 @@ private:
 };
 
 template<typename T>
-std::ostream& operator<<(std::ostream& stream, const Nullable<T>& o)
+std::ostream& operator<<(std::ostream& stream, const Optional<T>& o)
 {
 	if (o.IsSet()) {
 		stream << o.Get();
@@ -47,7 +47,7 @@ public:
 	std::string key;
 	const char* declarationFile;
 	int declarationLine;
-	Nullable<std::string> description;
+	Optional<std::string> description;
 };
 
 /**
@@ -70,9 +70,9 @@ public:
 	}
 
 public:
-	Nullable<T> defaultValue;
-	Nullable<T> minimumValue;
-	Nullable<T> maximumValue;
+	Optional<T> defaultValue;
+	Optional<T> minimumValue;
+	Optional<T> maximumValue;
 };
 
 /**
