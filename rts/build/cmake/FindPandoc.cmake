@@ -10,21 +10,23 @@
 # groff man pages, and S5 HTML slide shows.
 # http://johnmacfarlane.net/pandoc/
 #
+# See Markdown (FindMarkdown.cmake), for a more lightweight utility.
+#
 #  PANDOC_BIN   - will be set to the Pandoc executable (eg. pandoc.exe)
 #  PANDOC_FOUND - TRUE if Pandoc was found
 
-INCLUDE(FindPackageHandleStandardArgs)
+Include(FindPackageHandleStandardArgs)
 
-IF    (PANDOC_BIN)
+If    (PANDOC_BIN)
 	# Already in cache, be silent
-	SET(Pandoc_FIND_QUIETLY TRUE)
-ENDIF (PANDOC_BIN)
+	Set(Pandoc_FIND_QUIETLY TRUE)
+EndIf (PANDOC_BIN)
 
 find_program(PANDOC_BIN
-	NAMES pandoc
-	HINTS "${MINGWDIR}" "${CMAKE_SOURCE_DIR}/installer"
-	PATH_SUFFIXES bin
-	DOC "Pandoc executable"
+		NAMES pandoc
+		HINTS "${MINGWDIR}" "${CMAKE_SOURCE_DIR}/installer"
+		PATH_SUFFIXES bin
+		DOC "Pandoc executable"
 	)
 
 # handle the QUIETLY and REQUIRED arguments and set PANDOC_FOUND to TRUE if
