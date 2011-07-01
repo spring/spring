@@ -43,6 +43,7 @@ set(main_files
 	../../rts/System/Config/ConfigHandler
 	../../rts/System/Config/ConfigLocater
 	../../rts/System/Config/ConfigSource
+	../../rts/System/Config/ConfigVariable
 	../../rts/System/Config/DefaultConfigSource
 	../../rts/System/Config/ScopedFileLock
 	../../rts/System/Platform/Misc

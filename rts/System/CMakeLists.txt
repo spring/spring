@@ -8,6 +8,7 @@ SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigLocater.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigSource.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigVariable.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/DefaultConfigSource.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ScopedFileLock.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/EventBatchHandler.cpp"

@@ -5,7 +5,9 @@
 
 #include <assert.h>
 #include <boost/utility.hpp>
+#include <map>
 #include <sstream>
+#include <string>
 
 /**
  * @brief Wraps a value and detects whether it has been assigned to.
@@ -107,36 +109,27 @@ private:
 };
 
 /**
- * @brief Configuration variable meta data
+ * @brief Configuration variable
  */
 class ConfigVariable
 {
 public:
-	/// @brief Implicit conversion from ConfigVariableBuilder<T>.
-	template<typename T>
-	ConfigVariable(const ConfigVariableBuilder<T>& builder) :
-		next(NULL), data(builder.GetData())
-	{
-	}
+	typedef std::map<std::string, const ConfigVariableData*> MetaDataMap;
 
-	/// @brief Copy constructor
-	ConfigVariable(const ConfigVariable& other) :
-		next(head), data(other.data)
-	{
-		assert(other.next == NULL);
-		head = this;
-	}
-
-public:
-	static ConfigVariable* head;
-
-public:
-	const ConfigVariable* next;
-	const ConfigVariableData* data;
+	static const MetaDataMap& GetMetaDataMap();
+	static const ConfigVariableData* GetMetaData(const std::string& key);
 
 private:
-	/// @brief No assignment allowed
-	ConfigVariable& operator=(const ConfigVariable&);
+	static MetaDataMap& GetMutableMetaDataMap();
+	static void AddMetaData(const ConfigVariableData* data);
+
+public:
+	/// @brief Implicit conversion from ConfigVariableBuilder<T>.
+	template<typename T>
+	ConfigVariable(const ConfigVariableBuilder<T>& builder)
+	{
+		AddMetaData(builder.GetData());
+	}
 };
 
 #define CONFIG(T, name) \
