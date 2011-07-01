@@ -38,14 +38,17 @@ done
 
 mkdir -p ${TMP_PATH}
 
-#create portable spring
+#create portable spring excluding shard (ask AF why its excluded)
 touch ${INSTALLDIR}/springsettings.cfg
-${SEVENZIP} ${TMP_PATH}/${VERSION}_portable.7z ${INSTALLDIR}/* -x!AI -x!spring-dedicated.exe -x!spring-headless.exe -x!ArchiveMover.exe -xr!*.dbg
+${SEVENZIP} ${TMP_PATH}/spring_${VERSION}_portable.7z ${INSTALLDIR}/* -x!spring-dedicated.exe -x!spring-headless.exe -x!ArchiveMover.exe -xr!*.dbg -x!AI/Skirmish/Shard
 # compress files excluded from portable archive
 for file in spring-dedicated.exe spring-headless.exe ArchiveMover.exe; do
 	name=${file%.*}
 	${SEVENZIP} ${TMP_PATH}/${VERSION}_${name}.7z ${file}
 done
+
+#compress shard
+${SEVENZIP} ${TMP_PATH}/${VERSION}_Shard.7z AI/Skirmish/Shard -xr!*.dbg
 
 #create archives for translate_stacktrace.py
 for tocompress in ${EXECUTABLES}; do
@@ -59,17 +62,6 @@ for tocompress in ${EXECUTABLES}; do
 	debugfile=${tocompress%.*}.dbg
 	archive_debug="${TMP_PATH}/${VERSION}_${name}_dbg.7z"
 	[ ! -f ${debugfile} ] || ${SEVENZIP} "${archive_debug}" ${debugfile}
-done
-
-#create 7z's for AI's and Interface
-for TYPE in $(find AI -maxdepth 1 -mindepth 1 -type d) ; do
-	echo ${TYPE}
-	type=$(basename ${TYPE})
-	for DIR in $(find ${TYPE} -maxdepth 1 -mindepth 1 -type d); do
-		NAME=$(basename ${DIR})
-		echo "Packing ${type} from ${DIR}"
-		${SEVENZIP} ${TMP_PATH}/$(basename ${VERSION}_${type}-${NAME}.7z) ${DIR} -xr!*.dbg
-	done
 done
 
 cd ${SOURCEDIR}
