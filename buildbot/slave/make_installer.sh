@@ -41,6 +41,11 @@ mkdir -p ${TMP_PATH}
 #create portable spring
 touch ${INSTALLDIR}/springsettings.cfg
 ${SEVENZIP} ${TMP_PATH}/${VERSION}_portable.7z ${INSTALLDIR}/* -x!AI -x!spring-dedicated.exe -x!spring-headless.exe -x!ArchiveMover.exe -xr!*.dbg
+# compress files excluded from portable archive
+for file in spring-dedicated.exe spring-headless.exe ArchiveMover.exe; do
+	name=${file%.*}
+	${SEVENZIP} ${TMP_PATH}/${VERSION}_${name}.7z
+done
 
 #create archives for translate_stacktrace.py
 for tocompress in ${EXECUTABLES}; do
