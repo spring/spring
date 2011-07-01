@@ -70,7 +70,7 @@ echo "!define MINGWLIBS_DIR \"${MINGWLIBS_PATH}\"" > installer/custom_defines.ns
 echo "!define BUILD_DIR \"${BUILDDIR}\"" >> installer/custom_defines.nsi
 
 # The 0 means: do not define DIST_DIR
-./installer/make_installer.pl 0
+./installer/make_installer.pl 0 -DPORTABLE_ARCHIVE=${TMP_PATH}/spring_${VERSION}_portable.7z -DARCHIVEMOVER=${TMP_PATH}/${VERSION}_ArchiveMover.7z
 
 mv ./installer/spring*.exe ${TMP_PATH}
 
