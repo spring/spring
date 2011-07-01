@@ -3,8 +3,7 @@
 !addPluginDir "nsis_plugins"
 
 ; Use the 7zip-like compressor
-SetCompress force
-SetCompressor /SOLID /FINAL lzma
+SetCompressor lzma
 
 
 !include "springsettings.nsh"
@@ -35,7 +34,7 @@ SetCompressor /SOLID /FINAL lzma
 ; Welcome page
 !insertmacro MUI_PAGE_WELCOME
 ; Licensepage
-!insertmacro MUI_PAGE_LICENSE "..\doc\gpl-2.0.txt"
+!insertmacro MUI_PAGE_LICENSE "..\gpl-2.0.txt"
 
 ; Components page
 !insertmacro MUI_PAGE_COMPONENTS
