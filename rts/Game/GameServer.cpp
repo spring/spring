@@ -1533,12 +1533,11 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					break;
 				}
 
-				if (totalSize <= fixedSize) {
-					throw netcode::UnpackPacketException("invalid size for NETMSG_GAMEOVER (no winning allyteams received)");
+				if (totalSize > fixedSize) {
+					// if empty, the game has no defined winner(s)
+					winningAllyTeams.resize(totalSize - fixedSize);
+					pckt >> winningAllyTeams;
 				}
-
-				winningAllyTeams.resize(totalSize - fixedSize);
-				pckt >> winningAllyTeams;
 
 				if (hostif)
 					hostif->SendGameOver(playerNum, winningAllyTeams);
