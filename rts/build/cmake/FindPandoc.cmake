@@ -45,7 +45,6 @@ If    (PANDOC_FOUND)
 				--to=html
 				-s --variable="pagetitle:${title}"
 				-o "${fileDst}"
-				"${fileSrc}"
-				PARENT_SCOPE)
+				"${fileSrc}")
 	EndMacro (Pandoc_MdToHtml)
 EndIf (PANDOC_FOUND)
