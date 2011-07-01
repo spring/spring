@@ -44,7 +44,7 @@ ${SEVENZIP} ${TMP_PATH}/${VERSION}_portable.7z ${INSTALLDIR}/* -x!AI -x!spring-d
 # compress files excluded from portable archive
 for file in spring-dedicated.exe spring-headless.exe ArchiveMover.exe; do
 	name=${file%.*}
-	${SEVENZIP} ${TMP_PATH}/${VERSION}_${name}.7z
+	${SEVENZIP} ${TMP_PATH}/${VERSION}_${name}.7z ${file}
 done
 
 #create archives for translate_stacktrace.py
