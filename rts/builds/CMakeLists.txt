@@ -18,6 +18,8 @@ macro    (CreateEngineBuildAndInstallTarget targetName)
 	set(myBuildTarget spring-${targetName})
 	set(${targetName}-Deps
 			engine-${targetName}
+			manpages
+			userdocs
 			gamedata
 			unitsync
 			${DEPS_AI_ALL}
@@ -36,6 +38,7 @@ macro    (CreateEngineBuildAndInstallTarget targetName)
 	# Only install spring-<targetName> executable & dependencies
 	set(${targetName}-InstallDirs
 			"${relSrcDirPath}"
+			"doc"
 			"tools/unitsync"
 			"cont"
 			"AI"
