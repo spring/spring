@@ -66,7 +66,6 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 	const float mod = (maxH - minH) / 65536.0f;
 
 	file.ReadHeightmap(&cornerHeightMapSynced[0], base, mod);
-	std::copy(cornerHeightMapSynced.begin(), cornerHeightMapSynced.end(), cornerHeightMapUnsynced.begin());
 
 	CReadMap::Initialize();
 
@@ -411,7 +410,7 @@ void CSmfReadMap::UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2)
 				rvn[vIdx] = vn.ANormalize();
 
 				#ifdef USE_UNSYNCED_HEIGHTMAP
-				if (gu->spectatingFullView || loshandler->InLos(x, z, gu->myAllyTeam)) {
+				if (gs->frameNum <= 0 || gu->spectatingFullView || loshandler->InLos(x, z, gu->myAllyTeam)) {
 					uhm[vIdx] = shm[vIdx];
 					vvn[vIdx] = rvn[vIdx];
 				}
