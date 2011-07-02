@@ -86,7 +86,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 
 							GML_RECMUTEX_LOCK(quad); // UpdateExtraTexture - testunitbuildsquare accesses features in the quadfield
 
-							if (uh->TestUnitBuildSquare(bi, f, gu->myAllyTeam)) {
+							if (uh->TestUnitBuildSquare(bi, f, gu->myAllyTeam, false)) {
 								if (f != NULL) {
 									m = 0.5f;
 								} else {
