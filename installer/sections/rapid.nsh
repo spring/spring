@@ -1,10 +1,7 @@
 !ifdef INSTALL
 
 	SetOutPath "$INSTDIR"
-	; don't compress already compressed file
-	SetCompress Off
 	File "downloads\rapid-spring-latest-win32.7z"
-	SetCompress Force
 
 	SetOutPath "$INSTDIR\rapid"
 	Nsis7z::Extract "$INSTDIR\rapid-spring-latest-win32.7z"
