@@ -100,19 +100,25 @@ ${!echonow} "Base dir:   <engine-source-root>/installer/"
 !ifndef MIN_PORTABLE_ARCHIVE
 	!error "MIN_PORTABLE_ARCHIVE undefined: please specifiy where minimal-portable 7z-archive which contains the spring-engine is"
 !else
-	${!echonow} "Using MIN_PORTABLE_ARCHIVE:      ${MIN_PORTABLE_ARCHIVE}"
+	${!echonow} "Using MIN_PORTABLE_ARCHIVE: ${MIN_PORTABLE_ARCHIVE}"
 !endif
 
 !ifndef ARCHIVEMOVER
 	!warning "ARCHIVEMOVER not defined"
 !else
-	${!echonow} "Using ARCHIVEMOVER:      ${ARCHIVEMOVER}"
+	${!echonow} "Using ARCHIVEMOVER:         ${ARCHIVEMOVER}"
 !endif
 
 !ifndef RAPID_ARCHIVE
 	!warning "RAPID_ARCHIVE not defined"
 !else
-	${!echonow} "Using RAPID_ARCHIVE:      ${RAPID_ARCHIVE}"
+	${!echonow} "Using RAPID_ARCHIVE:        ${RAPID_ARCHIVE}"
+!endif
+
+!ifndef NSI_UNINSTALL_FILES
+	!warning "NSI_UNINSTALL_FILES not defined"
+!else
+	${!echonow} "Using NSI_UNINSTALL_FILES:  ${NSI_UNINSTALL_FILES}"
 !endif
 
 
@@ -282,10 +288,9 @@ Section Uninstall
 	!include "sections\tasServer.nsh"
 	!include "sections\rapid.nsh"
 !endif
-	!insertmacro DeleteSkirmishAI "AAI"
-	!insertmacro DeleteSkirmishAI "KAIK"
-	!insertmacro DeleteSkirmishAI "RAI"
-	!insertmacro DeleteSkirmishAI "E323AI"
+	!ifdef NSI_UNINSTALL_FILES
+	!include "${NSI_UNINSTALL_FILES}"
+	!endif
 !ifndef SLIM
 	!include "sections\springlobby.nsh"
 !endif
