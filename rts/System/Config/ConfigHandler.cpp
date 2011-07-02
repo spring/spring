@@ -85,6 +85,36 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations)
 	}
 
 	sources.push_back(new DefaultConfigSource());
+
+	// Remove config variables that are set to their default value.
+	// Algorithm is as follows:
+	// 1) Take all defaults from the DefaultConfigSource
+	// 2) Go in reverse through the FileConfigSources
+	// 3) For each one:
+	//    3a) delete setting if equal to the one in `defaults'
+	//    3b) add new value to `defaults' if different
+	StringMap defaults = sources.back()->GetData();
+	vector<ReadOnlyConfigSource*>::const_reverse_iterator rsource = sources.rbegin();
+	for (; rsource != sources.rend(); ++rsource) {
+		FileConfigSource* source = dynamic_cast<FileConfigSource*> (*rsource);
+		if (source != NULL) {
+			// Copy the map; we modify the original while iterating over the copy.
+			StringMap file = source->GetData();
+			for (StringMap::const_iterator it = file.begin(); it != file.end(); ++it) {
+				// Does the key exist in `defaults'?
+				StringMap::const_iterator pos = defaults.find(it->first);
+				if (pos != defaults.end() && pos->second == it->second) {
+					// Exists and value is equal => Delete.
+					source->Delete(it->first);
+				}
+				else {
+					// Doesn't exist or is not equal => Store new default.
+					// (It will be the default for the next FileConfigSource.)
+					defaults[it->first] = it->second;
+				}
+			}
+		}
+	}
 }
 
 ConfigHandlerImpl::~ConfigHandlerImpl()
