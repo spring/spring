@@ -47,6 +47,10 @@ EXPORT(const char* ) GetNextError();
  *   - 0.82+.5: some test-version from after the 6th release of 0.82
  *   - 0.82+.0: some dev-version from after the 1st release of 0.82
  *     (on the main dev branch)
+ *   - 0.83.0-: some dev-version during the preparation phase for
+ *     the 1st release of 0.83 (may be on any but the master or hotfix branch)
+ *   - 0.83.0+: some dev-version after the 1st release of 0.83
+ *     (may be on any but the master or hotfix branch)
  *
  * Returns a string specifying the synced part of the version of Spring used to
  * build this library with.
@@ -55,23 +59,48 @@ EXPORT(const char* ) GetNextError();
  * With Major=0.82 and Minor=6, the returned version would be "0.82.6".
  * It was added to aid in lobby creation, to check if the engine version in use
  * is sync-compatible with the current stable one.
+ *
+ * The branching model and versioning scheme before and after the 0.83 release
+ * are slightly different. Before 0.83, test versions look like "0.82+.5",
+ * while later they are either "0.83.0+" or  "0.83.1-".
+ *
+ * To find out whether a version is an official release or an
+ * intermediate/test/development/unstable version, you may follow one of
+ * these rules (all backwards compatible):
+ * - if the version matches the regex
+ *   "^[0-9]+[.][0-9]+[.][0-9]+$", it is a release build
+ *   This rule is recommended, because it is more likely to be feature proof.
+ * - if the version contains '+' or '-', it is a development build
  */
 EXPORT(const char* ) GetSpringVersion();
 
 /**
- * @brief Retrieve the unsynced/patch-set part of the version of Spring,
+ * @brief Returns the unsynced/patch-set part of the version of Spring,
  *   this unitsync was compiled with.
  * @return The unsynced/patch-set Spring/unitsync version,
  *   for example "1" if the whole spring version is "0.82.6.1".
  *
- * Returns a string specifying the unsynced/patch-set part of the version of
- * Spring used to build this library with.
- *
- * The You may use this together with GetSpringVersion(), to form the whole
+ * You may want to use this together with GetSpringVersion() to form the whole
  * version like this:
  * GetSpringVersion() + "." + GetSpringVersionPatchset()
- * This will provide you with a version of the format "Major.Minor.Patchset",
- * for example "0.82.6.0" or "0.82.6.1".
+ * This will provide you with a version of the format "Major.Minor.Patchset";
+ * examples:
+ * - 0.82.6.0                in this case, the 0 is usually omitted -> 0.82.6
+ * - 0.82.6.1                release
+ * - 0.82+.6.1               dev build
+ * - 0.83.0.1                release
+ * - 0.83.0-.release         release candidate
+ * - 0.83.0-.develop         dev build during release preparation
+ * - 0.83.0+.develop         dev build after a release
+ * - 0.83.0-.myCoolFeature   feature branch during release preparation
+ * - 0.83.0+.myCoolFeature   feature branch after a release
+ *
+ * The branching model and versioning scheme before and after the 0.83 release
+ * are slightly different. Before 0.83, test patch-set always was a pure number,
+ * for example "1" or "2", while now it may also be the name of a VCS branch.
+ * All master and hotfix builds (this equals releases) always use pure numbers,
+ * while all other builds (equals in-development stuff) always use the branch
+ * name as patch-set version part.
  */
 EXPORT(const char* ) GetSpringVersionPatchset();
 
