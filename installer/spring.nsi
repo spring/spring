@@ -165,21 +165,19 @@ ${!echonow} "Using MINGWLIBS_DIR: ${MINGWLIBS_DIR}"
 !endif
 
 
-SectionGroup /e "!Engine"
-	Section "Main application (req)" SEC_MAIN
-		; make this section read-only -> user can not deselect it
-		SectionIn RO
+Section "Engine" SEC_MAIN
+	; make this section read-only -> user can not deselect it
+	SectionIn RO
 
-		!define INSTALL
-			${!echonow} "Processing: main"
-			!include "sections\main.nsh"
-			${!echonow} "Processing: springsettings"
-			!include "sections\springsettings.nsh"
-			${!echonow} "Processing: deprecated"
-		        !include "sections\deprecated.nsh"
-		!undef INSTALL
-	SectionEnd
-SectionGroupEnd
+	!define INSTALL
+		${!echonow} "Processing: main"
+		!include "sections\main.nsh"
+		${!echonow} "Processing: springsettings"
+		!include "sections\springsettings.nsh"
+		${!echonow} "Processing: deprecated"
+	        !include "sections\deprecated.nsh"
+	!undef INSTALL
+SectionEnd
 
 
 !ifndef SLIM
@@ -294,10 +292,6 @@ Function .onInit
 	${CheckExecutableRunning} "CADownloader.exe" "CA Downloader"
 	${CheckExecutableRunning} "springsettings.exe" "Spring Settings"
 	skiprunchecks:
-
-	; The core cannot be deselected
-	IntOp $0 ${SEC_MAIN} | ${SF_RO}
-	SectionSetFlags ${SEC_MAIN} $0 ; make the core section read only
 
 !endif
 	; enable/disable sections depending on parameters
