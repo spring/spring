@@ -152,10 +152,10 @@ ${!echonow} "Using MINGWLIBS_DIR: ${MINGWLIBS_DIR}"
 	!define BUILD_OR_DIST_DIR "${BUILD_DIR}"
 !endif
 
-!ifndef PORTABLE_ARCHIVE
-	!error "PORTABLE_ARCHIVE undefined: please specifiy where portable 7z-archive which contains the spring-engine is"
+!ifndef MIN_PORTABLE_ARCHIVE
+	!error "MIN_PORTABLE_ARCHIVE undefined: please specifiy where minimal-portable 7z-archive which contains the spring-engine is"
 !else
-	${!echonow} "Using PORTABLE_ARCHIVE:      ${PORTABLE_ARCHIVE}"
+	${!echonow} "Using MIN_PORTABLE_ARCHIVE:      ${MIN_PORTABLE_ARCHIVE}"
 !endif
 
 !ifndef ARCHIVEMOVER

@@ -38,9 +38,12 @@ done
 
 mkdir -p ${TMP_PATH}
 
+#absolute path to the minimal portable (engine, unitsync + ais)
+MIN_PORTABLE_ARCHIVE=${TMP_PATH}/spring_${VERSION}_minimal-portable.7z
+
 #create portable spring excluding shard (ask AF why its excluded)
 touch ${INSTALLDIR}/springsettings.cfg
-${SEVENZIP} ${TMP_PATH}/spring_${VERSION}_portable.7z ${INSTALLDIR}/* -x!spring-dedicated.exe -x!spring-headless.exe -x!ArchiveMover.exe -xr!*.dbg -x!AI/Skirmish/Shard
+${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -x!spring-dedicated.exe -x!spring-headless.exe -x!ArchiveMover.exe -xr!*.dbg -x!AI/Skirmish/Shard
 # compress files excluded from portable archive
 for file in spring-dedicated.exe spring-headless.exe ArchiveMover.exe; do
 	name=${file%.*}
@@ -70,7 +73,7 @@ echo "!define MINGWLIBS_DIR \"${MINGWLIBS_PATH}\"" > installer/custom_defines.ns
 echo "!define BUILD_DIR \"${BUILDDIR}\"" >> installer/custom_defines.nsi
 
 # The 0 means: do not define DIST_DIR
-./installer/make_installer.pl 0 -DPORTABLE_ARCHIVE=${TMP_PATH}/spring_${VERSION}_portable.7z -DARCHIVEMOVER=${TMP_PATH}/${VERSION}_ArchiveMover.7z
+./installer/make_installer.pl 0 -DMIN_PORTABLE_ARCHIVE=${MIN_PORTABLE_ARCHIVE} -DARCHIVEMOVER=${TMP_PATH}/${VERSION}_ArchiveMover.7z
 
 mv ./installer/spring*.exe ${TMP_PATH}
 
