@@ -403,9 +403,11 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				const int airSizeY = loshandler->airSizeY;
 				const int losMipLevel = loshandler->losMipLevel + lowRes;
 				const int airMipLevel = loshandler->airMipLevel + lowRes;
+
 				if (drawRadarAndJammer) {
 					const int rxsize = radarhandler->xsize;
 					const int rzsize = radarhandler->zsize;
+
 					for (int y = starty; y < endy; ++y) {
 						for (int x = 0; x < endx; ++x) {
 							int totalLos = 255;
@@ -415,7 +417,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 								totalLos = inLos + inAir;
 							}
 #ifdef SONAR_JAMMER_MAPS
-							const bool useRadar = (ground->GetHeightReal(xPos, zPos) >= 0.0f);
+							const bool useRadar = (ground->GetHeightReal(xPos, zPos, false) >= 0.0f);
 							const unsigned short* radarMap  = useRadar ? myRadar  : mySonar;
 							const unsigned short* jammerMap = useRadar ? myJammer : mySonarJammer;
 #else
