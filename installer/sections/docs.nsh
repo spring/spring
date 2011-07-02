@@ -1,11 +1,4 @@
 !ifdef INSTALL
-	SetOutPath "$INSTDIR\docs"
-	File "..\LICENSE.html"
-	File "..\doc\changelog.txt"
-	File "..\doc\cmds.txt"
-	File "..\doc\SelectionKeys.txt"
-	File /nonfatal "${BUILD_OR_DIST_DIR}\userdocs\README.html"
-
 !else
 	; Documentation
 	Delete "$INSTDIR\docs\readme.html"

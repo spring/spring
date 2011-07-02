@@ -61,11 +61,7 @@ bool AAirMoveType::UseSmoothMesh() const {
 			!owner->commandAI->commandQue.empty() &&
 			((owner->commandAI->commandQue.front().GetID() == CMD_LOAD_UNITS) || (owner->commandAI->commandQue.front().GetID() == CMD_UNLOAD_UNIT));
 		const bool repairing = reservedPad ? padStatus >= 1 : false;
-		const bool forceDisableSmooth =
-			repairing ||
-			aircraftState == AIRCRAFT_LANDING ||
-			aircraftState == AIRCRAFT_LANDED ||
-			onTransportMission;
+		const bool forceDisableSmooth = repairing || onTransportMission || (aircraftState != AIRCRAFT_FLYING);
 		return !forceDisableSmooth;
 	} else {
 		return false;

@@ -353,7 +353,7 @@ void CEventHandler::GameStart()
 }
 
 
-void CEventHandler::GameOver( std::vector<unsigned char> winningAllyTeams )
+void CEventHandler::GameOver(const std::vector<unsigned char>& winningAllyTeams)
 {
 	const int count = listGameOver.size();
 	for (int i = 0; i < count; i++) {

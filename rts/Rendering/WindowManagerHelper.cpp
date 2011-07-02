@@ -15,7 +15,7 @@ SDL_Surface* WindowManagerHelper::currentIcon = NULL;
 void WindowManagerHelper::SetIcon(const CBitmap* icon) {
 
 	if (icon != NULL) {
-		// 24bit RGB or 32bit RBA
+		// 24bit RGB or 32bit RGBA
 		if (((icon->channels != 3) && (icon->channels != 4)) 
 #ifdef    WIN32
 			// on windows, the icon has to be 32x32
@@ -46,6 +46,10 @@ void WindowManagerHelper::SetIcon(const CBitmap* icon) {
 }
 
 void WindowManagerHelper::SetCaption(const std::string& title, const std::string& titleShort) {
+
+	// titleShort may only ever be used under X11, but not QT(KDE) or Windows
+	// for more details, see:
+	// http://www.gpwiki.org/index.php/SDL:Tutorials:Initializing_SDL_Libraries#About_the_icon_.28.22Icon_Title.22.29_parameter_on_different_window-managers
 	SDL_WM_SetCaption(title.c_str(), titleShort.c_str());
 }
 

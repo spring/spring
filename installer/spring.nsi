@@ -3,8 +3,7 @@
 !addPluginDir "nsis_plugins"
 
 ; Use the 7zip-like compressor
-SetCompress force
-SetCompressor /SOLID /FINAL lzma
+SetCompressor /FINAL /SOLID lzma
 
 
 !include "springsettings.nsh"
@@ -35,7 +34,7 @@ SetCompressor /SOLID /FINAL lzma
 ; Welcome page
 !insertmacro MUI_PAGE_WELCOME
 ; Licensepage
-!insertmacro MUI_PAGE_LICENSE "..\doc\gpl-2.0.txt"
+!insertmacro MUI_PAGE_LICENSE "..\gpl-2.0.txt"
 
 ; Components page
 !insertmacro MUI_PAGE_COMPONENTS
@@ -85,6 +84,7 @@ VAR REGISTRY ; if 1 registry values are written
 !include "include\fileassoc.nsh"
 !include "include\fileExistChecks.nsh"
 !include "include\fileMisc.nsh"
+!include "include\extractFile.nsh"
 !ifndef SLIM
 !include "include\checkrunning.nsh"
 !endif
@@ -97,86 +97,38 @@ VAR REGISTRY ; if 1 registry values are written
 ${!echonow} ""
 ${!echonow} "Base dir:   <engine-source-root>/installer/"
 
-; Set default values for undefined vars
-!ifndef CONTENT_DIR
-	!define CONTENT_DIR "..\cont"
-!endif
-${!defineifdirexists} CONTENT_DIR_EXISTS "${CONTENT_DIR}"
-!ifndef CONTENT_DIR_EXISTS
-	!error "Could not find the content dir at '${CONTENT_DIR}', try setting CONTENT_DIR manually."
-	!undef CONTENT_DIR_EXISTS
-!endif
-${!echonow} "Using CONTENT_DIR:   ${CONTENT_DIR}"
-!ifndef DOC_DIR
-	!define DOC_DIR "..\doc"
-!endif
-${!defineifdirexists} DOC_DIR_EXISTS "${DOC_DIR}"
-!ifndef DOC_DIR_EXISTS
-	!error "Could not find the documentation dir at '${DOC_DIR}', try setting DOC_DIR manually."
-	!undef DOC_DIR_EXISTS
-!endif
-${!echonow} "Using DOC_DIR:       ${DOC_DIR}"
-!ifndef MINGWLIBS_DIR
-	!define MINGWLIBS_DIR "..\mingwlibs"
-!endif
-${!defineifdirexists} MINGWLIBS_DIR_EXISTS "${MINGWLIBS_DIR}"
-!ifndef MINGWLIBS_DIR_EXISTS
-	!error "Could not find the MinGW libraries dir at '${MINGWLIBS_DIR}', try setting MINGWLIBS_DIR manually."
-	!undef MINGWLIBS_DIR_EXISTS
-!endif
-${!echonow} "Using MINGWLIBS_DIR: ${MINGWLIBS_DIR}"
-!ifndef BUILD_DIR
-	!ifndef DIST_DIR
-		!error "Neither BUILD_DIR nor DIST_DIR are defined. Define only one of the two, depending on whether you want to generate the installer from the install- or the build-directory."
-	!endif
-	${!defineifdirexists} DIST_DIR_EXISTS "${DIST_DIR}"
-	!ifndef DIST_DIR_EXISTS
-		!error "Could not find the distribution dir at '${DIST_DIR}'. Make sure you defined DIST_DIR correctly."
-		!undef DIST_DIR_EXISTS
-	!endif
-	${!echonow} "Using DIST_DIR:      ${DIST_DIR}"
-	!define BUILD_OR_DIST_DIR "${DIST_DIR}"
-!endif
-!ifdef BUILD_DIR
-	!ifdef DIST_DIR
-		!error "Both BUILD_DIR and DIST_DIR are defined. Define only one of the two, depending on whether you want to generate the installer from the install- or the build-directory."
-	!endif
-	${!defineifdirexists} BUILD_DIR_EXISTS "${BUILD_DIR}"
-	!ifndef BUILD_DIR_EXISTS
-		!error "Could not find the build dir at '${BUILD_DIR}'. Make sure you defined BUILD_DIR correctly."
-		!undef BUILD_DIR_EXISTS
-	!endif
-	${!echonow} "Using BUILD_DIR:     ${BUILD_DIR}"
-	; This allows us to easily use build products from an out of source build,
-	; without the need to run 'make install'
-	!define USE_BUILD_DIR
-	!define BUILD_OR_DIST_DIR "${BUILD_DIR}"
+!ifndef MIN_PORTABLE_ARCHIVE
+	!error "MIN_PORTABLE_ARCHIVE undefined: please specifiy where minimal-portable 7z-archive which contains the spring-engine is"
+!else
+	${!echonow} "Using MIN_PORTABLE_ARCHIVE:      ${MIN_PORTABLE_ARCHIVE}"
 !endif
 
-SectionGroup /e "!Engine"
-	Section "Main application (req)" SEC_MAIN
-		; make this section read-only -> user can not deselect it
-		SectionIn RO
+!ifndef ARCHIVEMOVER
+	!warning "ARCHIVEMOVER not defined"
+!else
+	${!echonow} "Using ARCHIVEMOVER:      ${ARCHIVEMOVER}"
+!endif
 
-		!define INSTALL
-			${!echonow} "Processing: main"
-			!include "sections\main.nsh"
-			${!echonow} "Processing: luaui"
-			!include "sections\luaui.nsh"
-		!undef INSTALL
-	SectionEnd
+!ifndef RAPID_ARCHIVE
+	!warning "RAPID_ARCHIVE not defined"
+!else
+	${!echonow} "Using RAPID_ARCHIVE:      ${RAPID_ARCHIVE}"
+!endif
 
-	${!defineiffileexists} GML_BUILD_EXISTS "${BUILD_OR_DIST_DIR}\spring-multithreaded.exe"
-	!ifdef GML_BUILD_EXISTS
-		Section "Multi-threaded executable" SEC_GML
-			${!echonow} "Processing: spring-multithreaded.exe"
-			SetOutPath "$INSTDIR"
-			SetOverWrite on
-			File "${BUILD_OR_DIST_DIR}\spring-multithreaded.exe"
-		SectionEnd
-		!undef GML_BUILD_EXISTS
-	!endif
-SectionGroupEnd
+
+Section "Engine" SEC_MAIN
+	; make this section read-only -> user can not deselect it
+	SectionIn RO
+
+	!define INSTALL
+		${!echonow} "Processing: main"
+		!include "sections\main.nsh"
+		${!echonow} "Processing: springsettings"
+		!include "sections\springsettings.nsh"
+		${!echonow} "Processing: deprecated"
+	        !include "sections\deprecated.nsh"
+	!undef INSTALL
+SectionEnd
 
 
 !ifndef SLIM
@@ -224,13 +176,14 @@ SectionGroup "Tools"
 			!include "sections\archivemover.nsh"
 		!undef INSTALL
 	SectionEnd
-
+!ifdef RAPID_ARCHIVE
 	Section "Simple spring-rapid downloader" SEC_RAPID
 		!define INSTALL
 			${!echonow} "Processing: rapid"
 			!include "sections\rapid.nsh"
 		!undef INSTALL
 	SectionEnd
+!endif
 SectionGroupEnd
 
 !endif
@@ -249,14 +202,6 @@ Section /o "Portable" SEC_PORTABLE
 		!include "sections\portable.nsh"
 	!undef INSTALL
 SectionEnd
-
-
-SectionGroup "Skirmish AI plugins (Bots)"
-	!insertmacro SkirmishAIInstSection "AAI"
-	!insertmacro SkirmishAIInstSection "KAIK"
-	!insertmacro SkirmishAIInstSection "RAI"
-	!insertmacro SkirmishAIInstSection "E323AI"
-SectionGroupEnd
 
 
 !include "sections\sectiondesc.nsh"
@@ -300,10 +245,6 @@ Function .onInit
 	${CheckExecutableRunning} "springsettings.exe" "Spring Settings"
 	skiprunchecks:
 
-	; The core cannot be deselected
-	IntOp $0 ${SEC_MAIN} | ${SF_RO}
-	SectionSetFlags ${SEC_MAIN} $0 ; make the core section read only
-
 !endif
 	; enable/disable sections depending on parameters
 	!include "sections/SetupSections.nsh"
@@ -326,6 +267,8 @@ Section Uninstall
 	${!echonow} "Processing: Uninstall"
 
 	!include "sections\main.nsh"
+	!include "sections\deprecated.nsh"
+	!include "sections\springsettings.nsh"
 
 	Delete "$INSTDIR\spring-multithreaded.exe"
 
@@ -346,8 +289,6 @@ Section Uninstall
 !ifndef SLIM
 	!include "sections\springlobby.nsh"
 !endif
-	!include "sections\luaui.nsh"
-
 	; All done
 	RMDir "$INSTDIR"
 

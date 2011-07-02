@@ -169,7 +169,7 @@ CBumpWater::CBumpWater()
 	blurRefl     = configHandler->GetBool("BumpWaterBlurReflection");
 	shoreWaves   = (configHandler->GetBool("BumpWaterShoreWaves")) && mapInfo->water.shoreWaves;
 	endlessOcean = (configHandler->GetBool("BumpWaterEndlessOcean")) && mapInfo->water.hasWaterPlane
-	               && ((readmap->minheight <= 0.0f) || (mapInfo->water.forceRendering));
+	               && ((readmap->initMinHeight <= 0.0f) || (mapInfo->water.forceRendering));
 	dynWaves     = (configHandler->GetBool("BumpWaterDynamicWaves")) && (mapInfo->water.numTiles>1);
 	useUniforms  = (configHandler->GetBool("BumpWaterUseUniforms"));
 
@@ -639,7 +639,7 @@ void CBumpWater::Update()
 	if (!shoreWaves)
 		return;
 
-	SCOPED_TIMER("Coastmap");
+	SCOPED_TIMER("BumpWater::Update (Coastmap)");
 
 	if ((gs->frameNum % 10)==5 && !coastmapUpdates.empty()) {
 		UploadCoastline();
@@ -657,7 +657,7 @@ void CBumpWater::UpdateWater(CGame* game)
 		return;
 
 	if (occlusionQuery && !wasLastFrameVisible) {
-		SCOPED_TIMER("Water Occlcheck");
+		SCOPED_TIMER("BumpWater::UpdateWater (Occlcheck)");
 
 		//glGetQueryObjectuiv(occlusionQuery,GL_QUERY_RESULT_AVAILABLE,&occlusionQueryResult);
 		//if (!occlusionQueryResult)

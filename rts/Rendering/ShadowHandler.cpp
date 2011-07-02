@@ -456,8 +456,8 @@ void CShadowHandler::CalcMinMaxView()
 				float3 p[5];
 				p[0] = float3(fli->base + fli->dir * fli->minz, 0.0, fli->minz);
 				p[1] = float3(fli->base + fli->dir * fli->maxz, 0.0f, fli->maxz);
-				p[2] = float3(fli->base + fli->dir * fli->minz, readmap->maxheight + 200, fli->minz);
-				p[3] = float3(fli->base + fli->dir * fli->maxz, readmap->maxheight + 200, fli->maxz);
+				p[2] = float3(fli->base + fli->dir * fli->minz, readmap->initMaxHeight + 200, fli->minz);
+				p[3] = float3(fli->base + fli->dir * fli->maxz, readmap->initMaxHeight + 200, fli->maxz);
 				p[4] = float3(camera->pos.x, 0.0f, camera->pos.z);
 
 				for (int a = 0; a < 5; ++a) {

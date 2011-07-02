@@ -387,7 +387,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	mass = (beingBuilt)? mass: unitDef->mass;
 	power = unitDef->power;
 	maxHealth = unitDef->health;
-	health = unitDef->health;
+	health = beingBuilt? 0.1f: unitDef->health;
 	losHeight = unitDef->losHeight;
 	radarHeight = unitDef->radarHeight;
 	metalCost = unitDef->metalCost;
@@ -443,17 +443,11 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 
 	useHighTrajectory = (unitDef->highTrajectoryType == 1);
 
-	if (build) {
-		ChangeLos(1, 1);
-		health = 0.1f;
-	} else {
-		ChangeLos(realLosRadius, realAirLosRadius);
-	}
-
 	energyTickMake =
 		unitDef->energyMake +
 		unitDef->tidalGenerator * mapInfo->map.tidalStrength;
 
+	ChangeLos(realLosRadius, realAirLosRadius);
 	SetRadius((model = unitDef->LoadModel())->radius);
 	modelParser->CreateLocalModel(this);
 

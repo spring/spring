@@ -1,15 +1,8 @@
 !ifdef INSTALL
 
-	SetOutPath "$INSTDIR"
-	File "downloads\rapid-spring-latest-win32.7z"
-
 	SetOutPath "$INSTDIR\rapid"
-	Nsis7z::Extract "$INSTDIR\rapid-spring-latest-win32.7z"
-	Delete "$INSTDIR\rapid-spring-latest-win32.7z"
-
-	; FIXME: remove this when rapid-spring-latest-win32.7z contains these files
-	File "${MINGWLIBS_DIR}\dll\MSVCR71.dll"
-	File "${MINGWLIBS_DIR}\dll\zlib1.dll"
+	!insertmacro extractFile "${RAPID_ARCHIVE}" "rapid-spring-latest-win32.7z"
+	SetOutPath "$INSTDIR"
 
 !else
 	Delete "$INSTDIR\rapid\bitarray._bitarray.pyd"
