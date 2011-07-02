@@ -459,7 +459,7 @@ void CGame::LoadDefs()
 	}
 
 	{
-		ScopedOnceTimer timer("Loading GameData Definitions");
+		ScopedOnceTimer timer("Game::LoadDefs (GameData)");
 		loadscreen->SetLoadMessage("Loading GameData Definitions");
 
 		defsParser = new LuaParser("gamedata/defs.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
@@ -497,7 +497,7 @@ void CGame::LoadDefs()
 	}
 
 	{
-		ScopedOnceTimer timer("Loading Sound Definitions");
+		ScopedOnceTimer timer("Game::LoadDefs (Sound)");
 		loadscreen->SetLoadMessage("Loading Sound Definitions");
 
 		sound->LoadSoundDefs("gamedata/sounds.lua");
@@ -601,7 +601,7 @@ void CGame::SetupRenderingParams()
 void CGame::LoadInterface()
 {
 	{
-		ScopedOnceTimer timer("Camera and mouse");
+		ScopedOnceTimer timer("Game::LoadInterface (Camera&Mouse)");
 		camera = new CCamera();
 		cam2 = new CCamera();
 		mouse = new CMouseHandler();
@@ -615,7 +615,7 @@ void CGame::LoadInterface()
 	cmdColors.LoadConfig("cmdcolors.txt");
 
 	{
-		ScopedOnceTimer timer("Loading console");
+		ScopedOnceTimer timer("Game::LoadInterface (Console)");
 		consoleHistory = new CConsoleHistory;
 		for (int pp = 0; pp < playerHandler->ActivePlayers(); pp++) {
 			wordCompletion->AddWord(playerHandler->Player(pp)->name, false, false, false);
@@ -978,7 +978,7 @@ bool CGame::Draw() {
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 	if (doDrawWorld) {
 		{
-			SCOPED_TIMER("Ground Update");
+			SCOPED_TIMER("GroundDrawer::Update");
 			gd->Update();
 		}
 
@@ -1006,7 +1006,7 @@ bool CGame::Draw() {
 				lastUpdate = currentTime;
 
 				{
-					SCOPED_TIMER("ExtraTexture");
+					SCOPED_TIMER("GroundDrawer::UpdateExtraTex");
 					gd->UpdateExtraTexture();
 				}
 
@@ -1063,21 +1063,32 @@ bool CGame::Draw() {
 	}
 
 	if (doDrawWorld) {
-		SCOPED_TIMER("Shadows/Reflections");
-
 		if (shadowHandler->shadowsLoaded && (gd->drawMode != CBaseGroundDrawer::drawLos)) {
 			// NOTE: shadows don't work in LOS mode, gain a few fps (until it's fixed)
+			SCOPED_TIMER("ShadowHandler::CreateShadows");
 			SetDrawMode(gameShadowDraw);
 			shadowHandler->CreateShadows();
 			SetDrawMode(gameNormalDraw);
 		}
 
-		cubeMapHandler->UpdateReflectionTexture();
+		{
+			SCOPED_TIMER("CubeMapHandler::UpdateReflTex");
+			cubeMapHandler->UpdateReflectionTexture();
+		}
 
 		if (sky->GetLight()->IsDynamic()) {
-			cubeMapHandler->UpdateSpecularTexture();
-			sky->UpdateSkyTexture();
-			readmap->UpdateShadingTexture();
+			{
+				SCOPED_TIMER("CubeMapHandler::UpdateSpecTex");
+				cubeMapHandler->UpdateSpecularTexture();
+			}
+			{
+				SCOPED_TIMER("Sky::UpdateSkyTex");
+				sky->UpdateSkyTexture();
+			}
+			{
+				SCOPED_TIMER("ReadMap::UpdateShadingTex");
+				readmap->UpdateShadingTexture();
+			}
 		}
 
 		if (FBO::IsSupported())
@@ -1096,8 +1107,7 @@ bool CGame::Draw() {
 
 	if (doDrawWorld) {
 		worldDrawer->Draw();
-	}
-	else {
+	} else {
 		//reset fov
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
@@ -1122,11 +1132,9 @@ bool CGame::Draw() {
 	glEnable(GL_TEXTURE_2D);
 
 	{
-		SCOPED_TIMER("Draw interface");
-		if (hideInterface) {
-			//luaInputReceiver->Draw();
-		}
-		else {
+		SCOPED_TIMER("InputReceivers::Draw");
+
+		if (!hideInterface) {
 			std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
 			std::deque<CInputReceiver*>::reverse_iterator ri;
 			for (ri = inputReceivers.rbegin(); ri != inputReceivers.rend(); ++ri) {
@@ -1488,7 +1496,7 @@ void CGame::StartPlaying()
 
 
 void CGame::SimFrame() {
-	ScopedTimer cputimer("CPU load"); // SimFrame
+	ScopedTimer cputimer("Game::SimFrame", true); // SimFrame
 
 	good_fpu_control_registers("CGame::SimFrame");
 	lastFrameTime = SDL_GetTicks();
@@ -1527,7 +1535,8 @@ void CGame::SimFrame() {
 	}
 
 	// everything from here is simulation
-	ScopedTimer forced("Sim time"); // don't use SCOPED_TIMER here because this is the only timer needed always
+	// don't use SCOPED_TIMER here because this is the only timer needed always
+	ScopedTimer forced("Game::SimFrame (Update)");
 
 	helper->Update();
 	mapDamage->Update();
@@ -1708,7 +1717,7 @@ void CGame::MakeMemDump()
 
 
 
-void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams )
+void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams)
 {
 	if (!gameOver) {
 		gameOver = true;

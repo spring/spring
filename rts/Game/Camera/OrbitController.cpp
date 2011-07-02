@@ -48,7 +48,7 @@ void COrbitController::Init(const float3& p, const float3& tar)
 	CCamera* cam = camera;
 
 	const float l = (tar == ZeroVector)?
-		std::max(ground->LineGroundCol(p, p + cam->forward * 1024.0f), 512.0f):
+		std::max(ground->LineGroundCol(p, p + cam->forward * 1024.0f, false), 512.0f):
 		(p - tar).Length();
 
 	const float3 t = (tar == ZeroVector)? (p + cam->forward * l): tar;
@@ -158,7 +158,7 @@ void COrbitController::Orbit()
 	CCamera* cam = camera;
 
 	cam->pos = cen + GetOrbitPos();
-	cam->pos.y = std::max(cam->pos.y, ground->GetHeightReal(cam->pos.x, cam->pos.z));
+	cam->pos.y = std::max(cam->pos.y, ground->GetHeightReal(cam->pos.x, cam->pos.z, false));
 	cam->forward = (cen - cam->pos).ANormalize();
 	cam->up = YVEC;
 }
@@ -177,8 +177,8 @@ void COrbitController::Pan(int rdx, int rdy)
 
 
 	// don't allow orbit center or ourselves to drop below the terrain
-	const float camGH = ground->GetHeightReal(cam->pos.x, cam->pos.z);
-	const float cenGH = ground->GetHeightReal(cen.x, cen.z);
+	const float camGH = ground->GetHeightReal(cam->pos.x, cam->pos.z, false);
+	const float cenGH = ground->GetHeightReal(cen.x, cen.z, false);
 
 	if (cam->pos.y < camGH) {
 		cam->pos.y = camGH;
@@ -234,7 +234,7 @@ void COrbitController::SetPos(const float3& newPos)
 
 	cen.x += dx;
 	cen.z += dz;
-	cen.y = ground->GetHeightReal(cen.x, cen.z);
+	cen.y = ground->GetHeightReal(cen.x, cen.z, false);
 
 	camera->pos.x += dx;
 	camera->pos.z += dz;

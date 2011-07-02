@@ -350,7 +350,7 @@ void CAdvSky::Update()
 	if (!dynamicSky)
 		return;
 
-	SCOPED_TIMER("Sky Update");
+	SCOPED_TIMER("AdvSky::Update");
 
 	CreateDetailTex();
 

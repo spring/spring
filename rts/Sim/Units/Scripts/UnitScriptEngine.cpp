@@ -71,7 +71,7 @@ void CUnitScriptEngine::RemoveInstance(CUnitScript *instance)
 
 void CUnitScriptEngine::Tick(int deltaTime)
 {
-	SCOPED_TIMER("Scripts");
+	SCOPED_TIMER("UnitScriptEngine::Tick");
 
 	// Tick all instances that have registered themselves as animating
 	for (std::list<CUnitScript*>::iterator it = animating.begin(); it != animating.end(); ) {

@@ -95,7 +95,7 @@ void CCobEngine::TickThread(int deltaTime, CCobThread* thread)
 
 void CCobEngine::Tick(int deltaTime)
 {
-	SCOPED_TIMER("Scripts");
+	SCOPED_TIMER("CobEngine::Tick");
 
 	GCurrentTime += deltaTime;
 

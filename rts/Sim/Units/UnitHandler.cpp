@@ -287,10 +287,18 @@ void CUnitHandler::Update()
 
 // find the reference height for a build-position
 // against which to compare all footprint squares
-float CUnitHandler::GetBuildHeight(const float3& pos, const UnitDef* unitdef)
+float CUnitHandler::GetBuildHeight(const float3& pos, const UnitDef* unitdef, bool synced)
 {
-	const float* curHeightMap = readmap->GetCornerHeightMapSynced();
 	const float* orgHeightMap = readmap->GetOriginalHeightMapSynced();
+	const float* curHeightMap = readmap->GetCornerHeightMapSynced();
+
+	#ifdef USE_UNSYNCED_HEIGHTMAP
+	if (!synced) {
+		orgHeightMap = readmap->GetCornerHeightMapUnsynced();
+		curHeightMap = readmap->GetCornerHeightMapUnsynced();
+	}
+	#endif
+
 	const float difH = unitdef->maxHeightDif;
 
 	float minH = readmap->currMinHeight;
@@ -346,6 +354,7 @@ int CUnitHandler::TestUnitBuildSquare(
 	const BuildInfo& buildInfo,
 	CFeature*& feature,
 	int allyteam,
+	bool synced,
 	std::vector<float3>* canbuildpos,
 	std::vector<float3>* featurepos,
 	std::vector<float3>* nobuildpos,
@@ -361,7 +370,7 @@ int CUnitHandler::TestUnitBuildSquare(
 	const int z1 = (pos.z - (zsize * 0.5f * SQUARE_SIZE));
 	const int z2 = z1 + zsize * SQUARE_SIZE;
 	const int x2 = x1 + xsize * SQUARE_SIZE;
-	const float bh = GetBuildHeight(pos, buildInfo.def);
+	const float bh = GetBuildHeight(pos, buildInfo.def, synced);
 
 	int canBuild = 2;
 
@@ -381,10 +390,12 @@ int CUnitHandler::TestUnitBuildSquare(
 	}
 
 	if (commands != NULL) {
-		//! unsynced code
+		//! this is only called in unsynced context (ShowUnitBuildSquare)
+		assert(!synced);
+
 		for (int x = x1; x < x2; x += SQUARE_SIZE) {
 			for (int z = z1; z < z2; z += SQUARE_SIZE) {
-				int tbs = TestBuildSquare(float3(x, pos.y, z), buildInfo.def, feature, gu->myAllyTeam);
+				int tbs = TestBuildSquare(float3(x, pos.y, z), buildInfo.def, feature, gu->myAllyTeam, synced);
 
 				if (tbs) {
 					std::vector<Command>::const_iterator ci = commands->begin();
@@ -415,9 +426,10 @@ int CUnitHandler::TestUnitBuildSquare(
 			}
 		}
 	} else {
+		//! this can be called in either context
 		for (int x = x1; x < x2; x += SQUARE_SIZE) {
 			for (int z = z1; z < z2; z += SQUARE_SIZE) {
-				canBuild = std::min(canBuild, TestBuildSquare(float3(x, bh, z), buildInfo.def, feature, allyteam));
+				canBuild = std::min(canBuild, TestBuildSquare(float3(x, bh, z), buildInfo.def, feature, allyteam, synced));
 
 				if (canBuild == 0) {
 					return 0;
@@ -430,7 +442,7 @@ int CUnitHandler::TestUnitBuildSquare(
 }
 
 
-int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFeature*& feature, int allyteam)
+int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFeature*& feature, int allyteam, bool synced)
 {
 	if (pos.x < 0 || pos.x >= gs->mapx * SQUARE_SIZE || pos.z < 0 || pos.z >= gs->mapy * SQUARE_SIZE) {
 		return 0;
@@ -460,16 +472,25 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 		}
 	}
 
-	const float groundHeight = ground->GetHeightReal(pos.x, pos.z);
+	const float groundHeight = ground->GetHeightReal(pos.x, pos.z, synced);
 
 	if (!unitdef->floater || groundHeight > 0.0f) {
 		// if we are capable of floating, only test local
 		// height difference if terrain is above sea-level
-		const float* heightmap = readmap->GetCornerHeightMapSynced();
-		const int sqx = (int) (pos.x / SQUARE_SIZE);
-		const int sqz = (int) (pos.z / SQUARE_SIZE);
-		const float orgH = readmap->GetOriginalHeightMapSynced()[sqz * (gs->mapx + 1) + sqx];
-		const float curH = readmap->GetCornerHeightMapSynced()[sqz * (gs->mapx + 1) + sqx];
+		const float* orgHeightMap = readmap->GetOriginalHeightMapSynced();
+		const float* curHeightMap = readmap->GetCornerHeightMapSynced();
+
+		#ifdef USE_UNSYNCED_HEIGHTMAP
+		if (!synced) {
+			orgHeightMap = readmap->GetCornerHeightMapUnsynced();
+			curHeightMap = readmap->GetCornerHeightMapUnsynced();
+		}
+		#endif
+
+		const int sqx = pos.x / SQUARE_SIZE;
+		const int sqz = pos.z / SQUARE_SIZE;
+		const float orgH = orgHeightMap[sqz * (gs->mapx + 1) + sqx];
+		const float curH = curHeightMap[sqz * (gs->mapx + 1) + sqx];
 		const float difH = unitdef->maxHeightDif;
 
 		if (pos.y > std::max(orgH + difH, curH + difH)) { return 0; }

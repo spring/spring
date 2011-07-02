@@ -203,14 +203,10 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 
 void CProjectileHandler::Update()
 {
-	{
-		SCOPED_TIMER("Projectile Collisions");
-		CheckCollisions();
-	}
+	CheckCollisions();
 
 	{
-		SCOPED_TIMER("Projectile Update");
-
+		SCOPED_TIMER("ProjectileHandler::Update");
 		GML_UPDATE_TICKS();
 
 		UpdateProjectileContainer(syncedProjectiles, true);
@@ -465,6 +461,8 @@ void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc) {
 
 void CProjectileHandler::CheckCollisions()
 {
+	SCOPED_TIMER("ProjectileHandler::CheckCollisions");
+
 	CheckUnitFeatureCollisions(syncedProjectiles); //! changes simulation state
 	CheckUnitFeatureCollisions(unsyncedProjectiles); //! does not change simulation state
 

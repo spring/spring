@@ -23,9 +23,6 @@ System::Store "s" ; save all register
 	${EndIf}
 !macroend
 
-; multithreaded
-${toggleSection} "NOMULTITHREAD" ${SEC_GML}
-
 ; portable mode
 ${toggleSection} "PORTABLE" ${SEC_PORTABLE}
 
@@ -41,18 +38,16 @@ ${toggleSection} "NOTASSERVER" ${SEC_TASSERVER}
 ${toggleSection} "NODESKTOPLINK" ${SEC_DESKTOP}
 
 ; tools
+!ifdef ARCHIVEMOVER
 ${toggleSection} "NOARCHIVEMOVER" ${SEC_ARCHIVEMOVER}
+!endif
+!ifdef RAPID_ARCHIVE
 ${toggleSection} "NORAPID" ${SEC_RAPID}
+!endif
 
 !endif
 ; startmenu
 ${toggleSection} "NOSTARTMENU" ${SEC_START}
-
-; ais
-${toggleSection} "NOAAI" ${SEC_AAI}
-${toggleSection} "NOKAIK" ${SEC_KAIK}
-${toggleSection} "NORAI" ${SEC_RAI}
-${toggleSection} "NOE323AI" ${SEC_E323AI}
 
 ; disable registry writes
 ${getParameterValue} "NOREGISTRY" "false"

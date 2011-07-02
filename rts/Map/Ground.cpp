@@ -65,13 +65,20 @@ static inline float Interpolate(float x, float y, const float* heightmap)
 }
 
 
-static inline float LineGroundSquareCol(const float3& from, const float3& to, int xs, int ys)
+static inline float LineGroundSquareCol(const float3& from, const float3& to, int xs, int ys, bool synced = true)
 {
 	if ((xs < 0) || (ys < 0) || (xs >= gs->mapx - 1) || (ys >= gs->mapy - 1))
 		return -1;
 
 	float3 tri;
+
 	const float* heightmap = readmap->GetCornerHeightMapSynced();
+
+	#ifdef USE_UNSYNCED_HEIGHTMAP
+	if (!synced) {
+		heightmap = readmap->GetCornerHeightMapUnsynced();
+	}
+	#endif
 
 	//! Info:
 	//! The terrain grid is constructed by a triangle strip
@@ -171,7 +178,7 @@ void CGround::CheckColSquare(CProjectile* p, int x, int y)
 }
 
 
-float CGround::LineGroundCol(float3 from, float3 to) const
+float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 {
 	float savedLength = 0.0f;
 
@@ -208,7 +215,7 @@ float CGround::LineGroundCol(float3 from, float3 to) const
 	bool keepgoing=true;
 
 	if((floor(from.x/SQUARE_SIZE)==floor(to.x/SQUARE_SIZE)) && (floor(from.z/SQUARE_SIZE)==floor(to.z/SQUARE_SIZE))){
-		ret = LineGroundSquareCol(from,to,(int)floor(from.x/SQUARE_SIZE),(int)floor(from.z/SQUARE_SIZE));
+		ret = LineGroundSquareCol(from, to, (int)floor(from.x/SQUARE_SIZE), (int)floor(from.z/SQUARE_SIZE), synced);
 		if(ret>=0){
 			return ret;
 		}
@@ -216,7 +223,7 @@ float CGround::LineGroundCol(float3 from, float3 to) const
 		float zp = from.z/SQUARE_SIZE;
 		int xp = (int)floor(from.x/SQUARE_SIZE);
 		while(keepgoing){
-			ret = LineGroundSquareCol(from, to, xp, (int)floor(zp));
+			ret = LineGroundSquareCol(from, to, xp, (int)floor(zp), synced);
 			if(ret>=0){
 				return ret+savedLength;
 			}
@@ -232,7 +239,7 @@ float CGround::LineGroundCol(float3 from, float3 to) const
 		float xp=from.x/SQUARE_SIZE;
 		int zp = (int)floor(from.z/SQUARE_SIZE);
 		while(keepgoing){
-			ret = LineGroundSquareCol(from,to,(int)floor(xp), zp);
+			ret = LineGroundSquareCol(from,to,(int)floor(xp), zp, synced);
 			if(ret>=0){
 				return ret+savedLength;
 			}
@@ -261,7 +268,7 @@ float CGround::LineGroundCol(float3 from, float3 to) const
 			if (dz>0) zs = floor(zp*1.0000001f/SQUARE_SIZE);
 			else      zs = floor(zp*0.9999999f/SQUARE_SIZE);
 
-			ret = LineGroundSquareCol(from, to, (int)xs, (int)zs);
+			ret = LineGroundSquareCol(from, to, (int)xs, (int)zs, synced);
 			if(ret>=0){
 				return ret+savedLength;
 			}
@@ -307,14 +314,22 @@ float CGround::GetApproximateHeight(float x, float y) const
 	return readmap->GetCenterHeightMapSynced()[xsquare + ysquare * gs->mapx];
 }
 
-float CGround::GetHeightAboveWater(float x, float y) const
+float CGround::GetHeightAboveWater(float x, float y, bool synced) const
 {
-	return std::max(0.0f, GetHeightReal(x, y));
+	return std::max(0.0f, GetHeightReal(x, y, synced));
 }
 
-float CGround::GetHeightReal(float x, float y) const
+float CGround::GetHeightReal(float x, float y, bool synced) const
 {
-	return Interpolate(x, y, readmap->GetCornerHeightMapSynced());
+	const float* heightmap = readmap->GetCornerHeightMapSynced();
+
+	#ifdef USE_UNSYNCED_HEIGHTMAP
+	if (!synced) {
+		heightmap = readmap->GetCornerHeightMapUnsynced();
+	}
+	#endif
+
+	return Interpolate(x, y, heightmap);
 }
 
 float CGround::GetOrigHeight(float x, float y) const

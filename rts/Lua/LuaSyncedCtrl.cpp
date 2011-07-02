@@ -374,21 +374,31 @@ int LuaSyncedCtrl::GameOver(lua_State* L)
 {
 	if (!lua_istable(L, 1)) {
 		luaL_error(L, "Incorrect arguments to GameOver()");
+		return 0;
 	}
+
 	std::vector<unsigned char> winningAllyTeams;
-	const int table = 1;
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
+
+	static const int tableIdx = 1;
+
+	for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
 		if (!lua_israwnumber(L, -1)) {
 			continue;
 		}
-		unsigned char AllyTeamID = lua_toint( L, -1 );
-		if ( !teamHandler->ValidAllyTeam(AllyTeamID) ) {
+
+		const unsigned char allyTeamID = lua_toint(L, -1);
+
+		if (!teamHandler->ValidAllyTeam(allyTeamID)) {
 			continue;
 		}
-		winningAllyTeams.push_back( AllyTeamID );
+
+		winningAllyTeams.push_back(allyTeamID);
 	}
-	game->GameEnd( winningAllyTeams );
-	return 0;
+
+	game->GameEnd(winningAllyTeams);
+	// push the number of accepted allyteams
+	lua_pushnumber(L, winningAllyTeams.size());
+	return 1;
 }
 
 

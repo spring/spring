@@ -105,7 +105,7 @@ void CWorldDrawer::Update()
 
 void CWorldDrawer::Draw()
 {
-	SCOPED_TIMER("Draw world");
+	SCOPED_TIMER("WorldDrawer::Draw");
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 
@@ -121,11 +121,12 @@ void CWorldDrawer::Draw()
 	}
 
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
-		SCOPED_TIMER("Water");
+		SCOPED_TIMER("Water::{UpdateWater,Draw} (solid)");
 
 		water->OcclusionQuery();
 		if (water->drawSolid) {
-			water->UpdateBaseWater(game);
+			CBaseWater::ApplyPushedChanges(game);
+			water->UpdateWater(game);
 			water->Draw();
 		}
 	}
@@ -161,12 +162,13 @@ void CWorldDrawer::Draw()
 
 	//! draw water
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
-		SCOPED_TIMER("Water");
+		SCOPED_TIMER("Water::{UpdateWater,Draw} (!solid)");
 
 		if (!water->drawSolid) {
 			//! Water rendering will overwrite features, so save them
 			featureDrawer->SwapFeatures();
-			water->UpdateBaseWater(game);
+			CBaseWater::ApplyPushedChanges(game);
+			water->UpdateWater(game);
 			water->Draw();
 			featureDrawer->SwapFeatures();
 		}

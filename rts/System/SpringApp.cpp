@@ -1083,10 +1083,7 @@ int SpringApp::Update()
 		ret = UpdateSim(activeController);
 #endif
 		if (ret) {
-			globalRendering->drawFrame++;
-			if (globalRendering->drawFrame == 0) {
-				globalRendering->drawFrame++;
-			}
+			globalRendering->drawFrame = std::max(1U, globalRendering->drawFrame + 1);
 
 			if (
 #if defined(USE_GML) && GML_ENABLE_SIM
@@ -1094,7 +1091,7 @@ int SpringApp::Update()
 #endif
 				(gs->frameNum - lastRequiredDraw) >= GAME_SPEED/float(gu->minFPS) * gs->userSpeedFactor)
 			{
-				ScopedTimer cputimer("CPU-DrawFrame load"); // Update
+				ScopedTimer cputimer("GameController::Draw"); // Update
 
 				ret = activeController->Draw();
 				lastRequiredDraw = gs->frameNum;
@@ -1179,7 +1176,7 @@ int SpringApp::Run(int argc, char *argv[])
 		ResetScreenSaverTimeout();
 
 		{
-			SCOPED_TIMER("Input");
+			SCOPED_TIMER("InputHandler::PushEvents");
 			SDL_Event event;
 
 			while (SDL_PollEvent(&event)) {
