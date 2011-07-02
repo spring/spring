@@ -62,7 +62,7 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 		return !Ready();
 	}
 
-	float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*globalRendering->viewRange*1.4f);
+	float dist = ground->LineGroundCol(camera->pos, camera->pos + mouse->dir * globalRendering->viewRange * 1.4f, false);
 	if(dist<0)
 		return true;
 

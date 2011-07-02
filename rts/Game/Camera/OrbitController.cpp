@@ -43,7 +43,7 @@ void COrbitController::Init(const float3& p, const float3& tar)
 	CCamera* cam = camera;
 
 	const float l = (tar == ZeroVector)?
-		std::max(ground->LineGroundCol(p, p + cam->forward * 1024.0f), 512.0f):
+		std::max(ground->LineGroundCol(p, p + cam->forward * 1024.0f, false), 512.0f):
 		(p - tar).Length();
 
 	const float3 t = (tar == ZeroVector)? (p + cam->forward * l): tar;

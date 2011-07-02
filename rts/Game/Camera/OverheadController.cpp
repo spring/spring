@@ -79,7 +79,7 @@ void COverheadController::MouseWheelMove(float move)
 				dif = (height - oldAltHeight) / mouse->dir.y * dir.y;
 			}
 			float3 wantedPos = cpos + mouse->dir * dif;
-			float newHeight = ground->LineGroundCol(wantedPos, wantedPos + dir * 15000);
+			float newHeight = ground->LineGroundCol(wantedPos, wantedPos + dir * 15000, false);
 			if (newHeight < 0) {
 				newHeight = height* (1.0f + move * 0.007f * (keyInput->IsKeyPressed(SDLK_LSHIFT) ? 3:1));
 			}

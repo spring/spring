@@ -2107,7 +2107,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			return c;}
 
 		case CMDTYPE_ICON_MAP:{
-			float dist=ground->LineGroundCol(cameraPos,cameraPos+mouseDir*globalRendering->viewRange*1.4f);
+			float dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
 			if(dist<0){
 				return defaultRet;
 			}
@@ -2119,7 +2119,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			return c;}
 
 		case CMDTYPE_ICON_BUILDING:{
-			float dist=ground->LineGroundCol(cameraPos,cameraPos+mouseDir*globalRendering->viewRange*1.4f);
+			float dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
 			if(dist<0){
 				return defaultRet;
 			}
@@ -2133,7 +2133,12 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			std::vector<BuildInfo> buildPos;
 			BuildInfo bi(unitdef, pos, buildFacing);
 			if(GetQueueKeystate() && button==SDL_BUTTON_LEFT){
-				float dist=ground->LineGroundCol(mouse->buttons[SDL_BUTTON_LEFT].camPos,mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*globalRendering->viewRange*1.4f);
+				float dist = ground->LineGroundCol(
+					mouse->buttons[SDL_BUTTON_LEFT].camPos,
+					mouse->buttons[SDL_BUTTON_LEFT].camPos +
+					mouse->buttons[SDL_BUTTON_LEFT].dir * globalRendering->viewRange * 1.4f,
+					false
+				);
 				float3 pos2=mouse->buttons[SDL_BUTTON_LEFT].camPos+mouse->buttons[SDL_BUTTON_LEFT].dir*dist;
 				buildPos=GetBuildPos(BuildInfo(unitdef,pos2,buildFacing),bi,cameraPos,mouseDir);
 			} else
@@ -2200,7 +2205,10 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		case CMDTYPE_ICON_FRONT:{
 			float dist = ground->LineGroundCol(
 				mouse->buttons[button].camPos,
-				mouse->buttons[button].camPos + mouse->buttons[button].dir * globalRendering->viewRange * 1.4f);
+				mouse->buttons[button].camPos +
+				mouse->buttons[button].dir * globalRendering->viewRange * 1.4f,
+				false
+			);
 			if(dist<0){
 				return defaultRet;
 			}
@@ -2213,7 +2221,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			c.params.push_back(pos.z);
 
 			if(mouse->buttons[button].movement>30){		//only create the front if the mouse has moved enough
-				dist=ground->LineGroundCol(cameraPos,cameraPos+mouseDir*globalRendering->viewRange*1.4f);
+				dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
 				if(dist<0){
 					return defaultRet;
 				}
@@ -2276,7 +2284,12 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 						c.params.push_back((float)buildFacing);
 				}
 			} else {	//created area
-				float dist = ground->LineGroundCol(mouse->buttons[button].camPos, mouse->buttons[button].camPos + mouse->buttons[button].dir*globalRendering->viewRange*1.4f);
+				float dist = ground->LineGroundCol(
+					mouse->buttons[button].camPos,
+					mouse->buttons[button].camPos +
+					mouse->buttons[button].dir * globalRendering->viewRange * 1.4f,
+					false
+				);
 
 				if(dist<0){
 					return defaultRet;
@@ -2285,7 +2298,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				c.params.push_back(pos.x);
 				c.params.push_back(pos.y);
 				c.params.push_back(pos.z);
-				dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir*globalRendering->viewRange*1.4f);
+				dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
 				if(dist<0){
 					return defaultRet;
 				}
@@ -2325,12 +2338,15 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				// created rectangle
 				float dist = ground->LineGroundCol(
 					mouse->buttons[button].camPos,
-					mouse->buttons[button].camPos + mouse->buttons[button].dir * globalRendering->viewRange*1.4f);
+					mouse->buttons[button].camPos +
+					mouse->buttons[button].dir * globalRendering->viewRange * 1.4f,
+					false
+				);
 				if(dist<0){
 					return defaultRet;
 				}
 				float3 startPos = mouse->buttons[button].camPos + mouse->buttons[button].dir * dist;
-				dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir*globalRendering->viewRange * 1.4f);
+				dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
 				if(dist<0){
 					return defaultRet;
 				}
@@ -3404,12 +3420,17 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 						maxRadius = atof(cmdDesc.params[0].c_str());
 					}
 					if (mouse->buttons[button].movement > 4) {
-						float dist=ground->LineGroundCol(mouse->buttons[button].camPos,mouse->buttons[button].camPos+mouse->buttons[button].dir*globalRendering->viewRange*1.4f);
+						float dist = ground->LineGroundCol(
+							mouse->buttons[button].camPos,
+							mouse->buttons[button].camPos +
+							mouse->buttons[button].dir * globalRendering->viewRange * 1.4f,
+							false
+						);
 						if(dist<0){
 							break;
 						}
 						float3 pos=mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
-						dist=ground->LineGroundCol(cameraPos,cameraPos+mouseDir*globalRendering->viewRange*1.4f);
+						dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
 						if (dist < 0) {
 							break;
 						}
@@ -3453,12 +3474,17 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				}
 				case CMDTYPE_ICON_UNIT_OR_RECTANGLE:{
 					if (mouse->buttons[button].movement >= 16) {
-						float dist=ground->LineGroundCol(mouse->buttons[button].camPos,mouse->buttons[button].camPos+mouse->buttons[button].dir*globalRendering->viewRange*1.4f);
+						float dist = ground->LineGroundCol(
+							mouse->buttons[button].camPos,
+							mouse->buttons[button].camPos +
+							mouse->buttons[button].dir * globalRendering->viewRange * 1.4f,
+							false
+						);
 						if (dist < 0) {
 							break;
 						}
 						const float3 pos1 = mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
-						dist=ground->LineGroundCol(cameraPos,cameraPos+mouseDir*globalRendering->viewRange*1.4f);
+						dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
 						if (dist < 0) {
 							break;
 						}
@@ -3614,7 +3640,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 			}
 		}
 
-		float dist = ground->LineGroundCol(cameraPos,cameraPos+mouseDir*globalRendering->viewRange*1.4f);
+		float dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
 		if (dist > 0) {
 			const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
 			if (unitdef) {
@@ -3623,7 +3649,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				std::vector<BuildInfo> buildPos;
 				const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 				if (GetQueueKeystate() && bp.pressed) {
-					const float dist = ground->LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f);
+					const float dist = ground->LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f, false);
 					const float3 pos2 = bp.camPos + bp.dir * dist;
 					buildPos = GetBuildPos(BuildInfo(unitdef, pos2, buildFacing),
 					                       BuildInfo(unitdef, pos, buildFacing), cameraPos, mouseDir);
@@ -3897,12 +3923,12 @@ void CGuiHandler::DrawFront(int button, float maxSize, float sizeDiv, bool onMin
 	if(bp.movement<5){
 		return;
 	}
-	float dist=ground->LineGroundCol(bp.camPos,bp.camPos+bp.dir*globalRendering->viewRange*1.4f);
+	float dist = ground->LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f, false);
 	if(dist<0){
 		return;
 	}
 	float3 pos1=bp.camPos+bp.dir*dist;
-	dist=ground->LineGroundCol(cameraPos,cameraPos+mouseDir*globalRendering->viewRange*1.4f);
+	dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
 	if(dist<0){
 		return;
 	}
