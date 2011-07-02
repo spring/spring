@@ -4395,7 +4395,7 @@ int LuaSyncedRead::GetGroundHeight(lua_State* L)
 {
 	const float x = luaL_checkfloat(L, 1);
 	const float z = luaL_checkfloat(L, 2);
-	lua_pushnumber(L, ground->GetHeightReal(x, z));
+	lua_pushnumber(L, ground->GetHeightReal(x, z, CLuaHandle::GetSynced(L)));
 	return 1;
 }
 
@@ -4562,10 +4562,10 @@ int LuaSyncedRead::TestBuildOrder(lua_State* L)
 	bi.buildFacing = facing;
 	bi.def = unitDef;
 	bi.pos = pos;
-	bi.pos = helper->Pos2BuildPos(bi);
+	bi.pos = helper->Pos2BuildPos(bi, CLuaHandle::GetSynced(L));
 	CFeature* feature;
 	// negative allyTeam values have full visibility in TestUnitBuildSquare()
-	int retval = uh->TestUnitBuildSquare(bi, feature, ActiveReadAllyTeam());
+	const int retval = uh->TestUnitBuildSquare(bi, feature, ActiveReadAllyTeam(), CLuaHandle::GetSynced(L));
 	// 0 - blocked
 	// 1 - mobile unit in the way
 	// 2 - free  (or if feature is != 0 then with a
@@ -4591,7 +4591,7 @@ int LuaSyncedRead::Pos2BuildPos(lua_State* L)
 	                 luaL_checkfloat(L, 3),
 	                 luaL_checkfloat(L, 4));
 
-	const float3 buildPos = helper->Pos2BuildPos(pos, ud);
+	const float3 buildPos = helper->Pos2BuildPos(pos, ud, CLuaHandle::GetSynced(L));
 
 	lua_pushnumber(L, buildPos.x);
 	lua_pushnumber(L, buildPos.y);

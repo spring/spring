@@ -488,7 +488,7 @@ void CMiniMap::MoveView(int x, int y)
 {
 	const float3& pos = camera->pos;
 	const float3& dir = camera->forward;
-	float dist = ground->LineGroundCol(pos, pos + (dir * globalRendering->viewRange * 1.4f));
+	float dist = ground->LineGroundCol(pos, pos + (dir * globalRendering->viewRange * 1.4f), false);
 	float3 dif(0,0,0);
 	if (dist > 0) {
 		dif = dir * dist;

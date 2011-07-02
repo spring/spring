@@ -1141,8 +1141,8 @@ bool CAICallback::CanBuildAt(const UnitDef* unitDef, const float3& pos, int faci
 {
 	CFeature* blockingF = NULL;
 	BuildInfo bi(unitDef, pos, facing);
-	bi.pos = helper->Pos2BuildPos(bi);
-	const int canBuildState = uh->TestUnitBuildSquare(bi, blockingF, teamHandler->AllyTeam(team));
+	bi.pos = helper->Pos2BuildPos(bi, false);
+	const int canBuildState = uh->TestUnitBuildSquare(bi, blockingF, teamHandler->AllyTeam(team), false);
 	return (canBuildState != 0);
 }
 

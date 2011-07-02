@@ -345,12 +345,18 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 
 		if (buttons[SDL_BUTTON_LEFT].movement > 4) {
 			// select box
-			float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*globalRendering->viewRange*1.4f);
+			float dist = ground->LineGroundCol(
+				buttons[SDL_BUTTON_LEFT].camPos,
+				buttons[SDL_BUTTON_LEFT].camPos +
+				buttons[SDL_BUTTON_LEFT].dir * globalRendering->viewRange * 1.4f,
+				false
+			);
+
 			if(dist<0)
 				dist=globalRendering->viewRange*1.4f;
 			float3 pos1=buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*dist;
 
-			dist=ground->LineGroundCol(camera->pos,camera->pos+dir*globalRendering->viewRange*1.4f);
+			dist = ground->LineGroundCol(camera->pos, camera->pos + dir * globalRendering->viewRange * 1.4f, false);
 			if(dist<0)
 				dist=globalRendering->viewRange*1.4f;
 			float3 pos2=camera->pos+dir*dist;
@@ -519,14 +525,18 @@ void CMouseHandler::DrawSelectionBox()
 	   (buttons[SDL_BUTTON_LEFT].movement > 4) &&
 	   (!inMapDrawer || !inMapDrawer->IsDrawMode())) {
 
-		float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,
-		                                 buttons[SDL_BUTTON_LEFT].camPos
-		                                 + buttons[SDL_BUTTON_LEFT].dir*globalRendering->viewRange*1.4f);
+		float dist = ground->LineGroundCol(
+			buttons[SDL_BUTTON_LEFT].camPos,
+			buttons[SDL_BUTTON_LEFT].camPos +
+			buttons[SDL_BUTTON_LEFT].dir * globalRendering->viewRange * 1.4f,
+			false
+		);
+
 		if(dist<0)
 			dist=globalRendering->viewRange*1.4f;
 		float3 pos1=buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*dist;
 
-		dist=ground->LineGroundCol(camera->pos,camera->pos+dir*globalRendering->viewRange*1.4f);
+		dist = ground->LineGroundCol(camera->pos, camera->pos + dir * globalRendering->viewRange * 1.4f, false);
 		if(dist<0)
 			dist=globalRendering->viewRange*1.4f;
 		float3 pos2=camera->pos+dir*dist;
