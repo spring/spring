@@ -367,7 +367,6 @@ void CReadMap::PushVisibleHeightMapUpdate(int x1, int z1, int x2, int z2)
 	//! NOTE: UpdateHeightMapUnsynced performs a LOS-check, but we already
 	//! know the area (x1, z1)-(x2, z2) is in LOS so uhm and vvn still get
 	//! updated properly in UpdateHeightMapUnsynced
-	//! NOTE: ARB shaders still use centerNormals via the shading-texture
 	unsyncedHeightMapUpdates.push_back(HeightMapUpdate(x1, x2, z1, z2));
 	#endif
 }
