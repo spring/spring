@@ -46,14 +46,14 @@ CONFIG(int, BumpWaterTexSizeReflection).defaultValue(512);
 CONFIG(int, BumpWaterReflection).defaultValue(1);
 CONFIG(int, BumpWaterRefraction).defaultValue(1); // 0:=off, 1:=screencopy, 2:=own rendering cycle
 CONFIG(float, BumpWaterAnisotropy).defaultValue(0.0f);
-CONFIG(int, BumpWaterUseDepthTexture).defaultValue(1);
+CONFIG(bool, BumpWaterUseDepthTexture).defaultValue(true);
 CONFIG(int, BumpWaterDepthBits);
-CONFIG(int, BumpWaterBlurReflection).defaultValue(0);
-CONFIG(int, BumpWaterShoreWaves).defaultValue(1);
-CONFIG(int, BumpWaterEndlessOcean).defaultValue(1);
-CONFIG(int, BumpWaterDynamicWaves).defaultValue(1);
-CONFIG(int, BumpWaterUseUniforms).defaultValue(0);
-CONFIG(int, BumpWaterOcclusionQuery).defaultValue(1);
+CONFIG(bool, BumpWaterBlurReflection).defaultValue(false);
+CONFIG(bool, BumpWaterShoreWaves).defaultValue(true);
+CONFIG(bool, BumpWaterEndlessOcean).defaultValue(true);
+CONFIG(bool, BumpWaterDynamicWaves).defaultValue(true);
+CONFIG(bool, BumpWaterUseUniforms).defaultValue(false);
+CONFIG(bool, BumpWaterOcclusionQuery).defaultValue(true);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// HELPER FUNCTIONS
@@ -159,19 +159,19 @@ CBumpWater::CBumpWater()
 	reflection   = configHandler->GetInt("BumpWaterReflection");
 	refraction   = configHandler->GetInt("BumpWaterRefraction");
 	anisotropy   = configHandler->GetFloat("BumpWaterAnisotropy");
-	depthCopy    = !!configHandler->GetInt("BumpWaterUseDepthTexture");
+	depthCopy    = configHandler->GetBool("BumpWaterUseDepthTexture");
 	if (configHandler->IsSet("BumpWaterDepthBits")) {
 		depthBits = configHandler->GetInt("BumpWaterDepthBits");
 	}
 	else {
 		depthBits = (globalRendering->atiHacks) ? 16 : 24;
 	}
-	blurRefl     = !!configHandler->GetInt("BumpWaterBlurReflection");
-	shoreWaves   = (!!configHandler->GetInt("BumpWaterShoreWaves")) && mapInfo->water.shoreWaves;
-	endlessOcean = (!!configHandler->GetInt("BumpWaterEndlessOcean")) && mapInfo->water.hasWaterPlane
+	blurRefl     = configHandler->GetBool("BumpWaterBlurReflection");
+	shoreWaves   = (configHandler->GetBool("BumpWaterShoreWaves")) && mapInfo->water.shoreWaves;
+	endlessOcean = (configHandler->GetBool("BumpWaterEndlessOcean")) && mapInfo->water.hasWaterPlane
 	               && ((readmap->minheight <= 0.0f) || (mapInfo->water.forceRendering));
-	dynWaves     = (!!configHandler->GetInt("BumpWaterDynamicWaves")) && (mapInfo->water.numTiles>1);
-	useUniforms  = (!!configHandler->GetInt("BumpWaterUseUniforms"));
+	dynWaves     = (configHandler->GetBool("BumpWaterDynamicWaves")) && (mapInfo->water.numTiles>1);
+	useUniforms  = (configHandler->GetBool("BumpWaterUseUniforms"));
 
 	refractTexture = 0;
 	reflectTexture = 0;
@@ -519,7 +519,7 @@ CBumpWater::CBumpWater()
 	occlusionQuery = 0;
 	occlusionQueryResult = GL_TRUE;
 	wasLastFrameVisible = true;
-	bool useOcclQuery  = (!!configHandler->GetInt("BumpWaterOcclusionQuery"));
+	bool useOcclQuery  = (configHandler->GetBool("BumpWaterOcclusionQuery"));
 	if (useOcclQuery && GLEW_ARB_occlusion_query && refraction<2) { //! in the case of a separate refraction pass, there isn't enough time for a occlusion query
 		GLint bitsSupported;
 		glGetQueryiv(GL_SAMPLES_PASSED, GL_QUERY_COUNTER_BITS, &bitsSupported);

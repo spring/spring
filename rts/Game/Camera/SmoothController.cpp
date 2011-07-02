@@ -21,7 +21,7 @@
 CONFIG(float, MiddleClickScrollSpeed).defaultValue(0.01f);
 CONFIG(int, SmoothScrollSpeed).defaultValue(10);
 CONFIG(float, SmoothTiltSpeed).defaultValue(1.0f);
-CONFIG(int, SmoothEnabled).defaultValue(1);
+CONFIG(bool, SmoothEnabled).defaultValue(true);
 CONFIG(float, SmoothFOV).defaultValue(45.0f);
 
 SmoothController::SmoothController()
@@ -36,7 +36,7 @@ SmoothController::SmoothController()
 	middleClickScrollSpeed = configHandler->GetFloat("MiddleClickScrollSpeed");
 	scrollSpeed = configHandler->GetInt("SmoothScrollSpeed")*0.1f;
 	tiltSpeed = configHandler->GetFloat("SmoothTiltSpeed");
-	enabled = !!configHandler->GetInt("SmoothEnabled");
+	enabled = configHandler->GetBool("SmoothEnabled");
 	fov = configHandler->GetFloat("SmoothFOV");
 	lastSource = Noone;
 }

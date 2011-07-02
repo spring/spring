@@ -56,8 +56,8 @@
 
 #define PLAY_SOUNDS 1
 
-CONFIG(int, HardwareCursor).defaultValue(0);
-CONFIG(int, InvertMouse).defaultValue(0);
+CONFIG(bool, HardwareCursor).defaultValue(false);
+CONFIG(bool, InvertMouse).defaultValue(false);
 CONFIG(float, DoubleClickTime).defaultValue(200.0f);
 CONFIG(float, ScrollWheelSpeed).defaultValue(25.0f);
 CONFIG(float, CrossSize).defaultValue(12.0f);
@@ -107,12 +107,12 @@ CMouseHandler::CMouseHandler()
 	LoadCursors();
 
 #ifndef __APPLE__
-	hardwareCursor = !!configHandler->GetInt("HardwareCursor");
+	hardwareCursor = configHandler->GetBool("HardwareCursor");
 #endif
 
 	soundMultiselID = sound->GetSoundId("MultiSelect", false);
 
-	invertMouse = !!configHandler->GetInt("InvertMouse");
+	invertMouse = configHandler->GetBool("InvertMouse");
 	doubleClickTime = configHandler->GetFloat("DoubleClickTime") / 1000.0f;
 
 	scrollWheelSpeed = configHandler->GetFloat("ScrollWheelSpeed");

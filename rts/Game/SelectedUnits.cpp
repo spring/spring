@@ -42,7 +42,7 @@
 
 #define PLAY_SOUNDS 1
 
-CONFIG(int, BuildIconsFirst).defaultValue(0);
+CONFIG(bool, BuildIconsFirst).defaultValue(false);
 
 CSelectedUnits selectedUnits;
 
@@ -63,7 +63,7 @@ CSelectedUnits::~CSelectedUnits()
 
 void CSelectedUnits::Init(unsigned numPlayers)
 {
-	buildIconsFirst = !!configHandler->GetInt("BuildIconsFirst");
+	buildIconsFirst = configHandler->GetBool("BuildIconsFirst");
 	netSelected.resize(numPlayers);
 }
 

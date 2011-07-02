@@ -92,9 +92,9 @@ CONFIG(int, FSAALevel).defaultValue(0);
 CONFIG(int, SmoothLines).defaultValue(0); //! FSAA ? 0 : 3;  // until a few things get fixed
 CONFIG(int, SmoothPoints).defaultValue(0); //! FSAA ? 0 : 3;
 CONFIG(float, TextureLODBias).defaultValue(0.0f);
-CONFIG(int, FixAltTab).defaultValue(0);
-CONFIG(int, DualScreenMode).defaultValue(0);
-CONFIG(int, DualScreenMiniMapOnLeft).defaultValue(0);
+CONFIG(bool, FixAltTab).defaultValue(false);
+CONFIG(bool, DualScreenMode).defaultValue(false);
+CONFIG(bool, DualScreenMiniMapOnLeft).defaultValue(false);
 CONFIG(int, Version).defaultValue(0);
 CONFIG(bool, FSAA).defaultValue(false);
 CONFIG(std::string, FontFile).defaultValue("fonts/FreeSansBold.otf");
@@ -105,7 +105,7 @@ CONFIG(int, FontOutlineWidth).defaultValue(3);
 CONFIG(float, FontOutlineWeight).defaultValue(25.0f);
 CONFIG(int, SmallFontOutlineWidth).defaultValue(2);
 CONFIG(float, SmallFontOutlineWeight).defaultValue(10.0f);
-CONFIG(int, Fullscreen).defaultValue(1);
+CONFIG(bool, Fullscreen).defaultValue(true);
 CONFIG(int, XResolution).defaultValue(0);
 CONFIG(int, YResolution).defaultValue(0);
 CONFIG(int, WindowPosX).defaultValue(32);
@@ -454,7 +454,7 @@ bool SpringApp::SetSDLVideoMode()
 	}
 
 	//! there must be a way to see if this is necessary, compare old/new context pointers?
-	if (!!configHandler->GetInt("FixAltTab")) {
+	if (configHandler->GetBool("FixAltTab")) {
 		//! free GL resources
 		GLContext::Free();
 
@@ -673,10 +673,10 @@ void SpringApp::SetupViewportGeometry()
 		globalRendering->winPosY = 0;
 	}
 
-	globalRendering->dualScreenMode = !!configHandler->GetInt("DualScreenMode");
+	globalRendering->dualScreenMode = configHandler->GetBool("DualScreenMode");
 	if (globalRendering->dualScreenMode) {
 		globalRendering->dualScreenMiniMapOnLeft =
-			!!configHandler->GetInt("DualScreenMiniMapOnLeft");
+			configHandler->GetBool("DualScreenMiniMapOnLeft");
 	} else {
 		globalRendering->dualScreenMiniMapOnLeft = false;
 	}
@@ -869,7 +869,7 @@ void SpringApp::ParseCmdLine()
 #ifdef _DEBUG
 	globalRendering->fullScreen = false;
 #else
-	globalRendering->fullScreen = !!configHandler->GetInt("Fullscreen");
+	globalRendering->fullScreen = configHandler->GetBool("Fullscreen");
 #endif
 	// flags
 	if (cmdline->IsSet("window")) {

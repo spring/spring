@@ -59,15 +59,15 @@
 #define PLAY_SOUNDS 1
 
 CONFIG(std::string, MiniMapGeometry).defaultValue("2 2 200 200");
-CONFIG(int, MiniMapFullProxy).defaultValue(1);
+CONFIG(bool, MiniMapFullProxy).defaultValue(true);
 CONFIG(int, MiniMapButtonSize).defaultValue(16);
 CONFIG(float, MiniMapUnitSize).defaultValue(2.5f);
 CONFIG(float, MiniMapUnitExp).defaultValue(0.25f);
 CONFIG(float, MiniMapCursorScale).defaultValue(-0.5f);
-CONFIG(int, MiniMapIcons).defaultValue(1);
+CONFIG(bool, MiniMapIcons).defaultValue(true);
 CONFIG(int, MiniMapDrawCommands).defaultValue(1);
-CONFIG(int, MiniMapDrawProjectiles).defaultValue(1);
-CONFIG(int, SimpleMiniMapColors).defaultValue(0);
+CONFIG(bool, MiniMapDrawProjectiles).defaultValue(true);
+CONFIG(bool, SimpleMiniMapColors).defaultValue(false);
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -105,7 +105,7 @@ CMiniMap::CMiniMap()
 		ParseGeometry(geo);
 	}
 
-	fullProxy = !!configHandler->GetInt("MiniMapFullProxy");
+	fullProxy = configHandler->GetBool("MiniMapFullProxy");
 	buttonSize = configHandler->GetInt("MiniMapButtonSize");
 
 	unitBaseSize = configHandler->GetFloat("MiniMapUnitSize");
@@ -113,10 +113,10 @@ CMiniMap::CMiniMap()
 	unitExponent = configHandler->GetFloat("MiniMapUnitExp");
 
 	cursorScale = configHandler->GetFloat("MiniMapCursorScale");
-	useIcons = !!configHandler->GetInt("MiniMapIcons");
+	useIcons = configHandler->GetBool("MiniMapIcons");
 	drawCommands = std::max(0, configHandler->GetInt("MiniMapDrawCommands"));
-	drawProjectiles = !!configHandler->GetInt("MiniMapDrawProjectiles");
-	simpleColors = !!configHandler->GetInt("SimpleMiniMapColors");
+	drawProjectiles = configHandler->GetBool("MiniMapDrawProjectiles");
+	simpleColors = configHandler->GetBool("SimpleMiniMapColors");
 
 	myColor[0]    = (unsigned char)(0.2f * 255);
 	myColor[1]    = (unsigned char)(0.9f * 255);

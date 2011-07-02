@@ -70,9 +70,9 @@ CUnitDrawer* unitDrawer;
 CONFIG(int, UnitLodDist).defaultValue(1000);
 CONFIG(int, UnitIconDist).defaultValue(10000);
 CONFIG(float, UnitTransparency).defaultValue(0.7f);
-CONFIG(int, ShowHealthBars).defaultValue(1);
-CONFIG(int, MultiThreadDrawUnit).defaultValue(1);
-CONFIG(int, MultiThreadDrawUnitShadow).defaultValue(1);
+CONFIG(bool, ShowHealthBars).defaultValue(true);
+CONFIG(bool, MultiThreadDrawUnit).defaultValue(true);
+CONFIG(bool, MultiThreadDrawUnitShadow).defaultValue(true);
 CONFIG(unsigned int, MaxDynamicModelLights).defaultValue(1U);
 CONFIG(int, AdvUnitShading).defaultValue(1);
 CONFIG(float, LODScale).defaultValue(1.0f);
@@ -158,9 +158,9 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	unitRadarIcons.resize(teamHandler->ActiveAllyTeams());
 
 #ifdef USE_GML
-	showHealthBars = !!configHandler->GetInt("ShowHealthBars");
-	multiThreadDrawUnit = !!configHandler->GetInt("MultiThreadDrawUnit");
-	multiThreadDrawUnitShadow = !!configHandler->GetInt("MultiThreadDrawUnitShadow");
+	showHealthBars = configHandler->GetBool("ShowHealthBars");
+	multiThreadDrawUnit = configHandler->GetBool("MultiThreadDrawUnit");
+	multiThreadDrawUnitShadow = configHandler->GetBool("MultiThreadDrawUnitShadow");
 #endif
 
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicModelLights"));

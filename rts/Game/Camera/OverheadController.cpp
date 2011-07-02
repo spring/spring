@@ -20,7 +20,7 @@
 CONFIG(float, MiddleClickScrollSpeed).defaultValue(0.01f);
 CONFIG(int, OverheadScrollSpeed).defaultValue(10);
 CONFIG(float, OverheadTiltSpeed).defaultValue(1.0f);
-CONFIG(int, OverheadEnabled).defaultValue(1);
+CONFIG(bool, OverheadEnabled).defaultValue(true);
 CONFIG(float, OverheadFOV).defaultValue(45.0f);
 
 COverheadController::COverheadController()
@@ -34,7 +34,7 @@ COverheadController::COverheadController()
 	middleClickScrollSpeed = configHandler->GetFloat("MiddleClickScrollSpeed");
 	scrollSpeed = configHandler->GetInt("OverheadScrollSpeed")*0.1f;
 	tiltSpeed = configHandler->GetFloat("OverheadTiltSpeed");
-	enabled = !!configHandler->GetInt("OverheadEnabled");
+	enabled = configHandler->GetBool("OverheadEnabled");
 	fov = configHandler->GetFloat("OverheadFOV");
 }
 

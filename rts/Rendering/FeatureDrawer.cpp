@@ -34,7 +34,7 @@
 
 #define DRAW_QUAD_SIZE 32
 
-CONFIG(int, ShowRezBars).defaultValue(1);
+CONFIG(bool, ShowRezBars).defaultValue(true);
 
 CFeatureDrawer* featureDrawer = NULL;
 
@@ -59,7 +59,7 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 	drawQuadsY = gs->mapy/DRAW_QUAD_SIZE;
 	drawQuads.resize(drawQuadsX * drawQuadsY);
 #ifdef USE_GML
-	showRezBars = !!configHandler->GetInt("ShowRezBars");
+	showRezBars = configHandler->GetBool("ShowRezBars");
 #endif
 	opaqueModelRenderers.resize(MODELTYPE_OTHER, NULL);
 	cloakedModelRenderers.resize(MODELTYPE_OTHER, NULL);

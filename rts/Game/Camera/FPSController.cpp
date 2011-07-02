@@ -17,7 +17,7 @@ using std::max;
 
 CONFIG(int, FPSScrollSpeed).defaultValue(10);
 CONFIG(float, FPSMouseScale).defaultValue(0.01f);
-CONFIG(int, FPSEnabled).defaultValue(1);
+CONFIG(bool, FPSEnabled).defaultValue(true);
 CONFIG(float, FPSFOV).defaultValue(45.0f);
 
 
@@ -26,7 +26,7 @@ CFPSController::CFPSController()
 {
 	scrollSpeed = configHandler->GetInt("FPSScrollSpeed") * 0.1f;
 	mouseScale = configHandler->GetFloat("FPSMouseScale");
-	enabled = !!configHandler->GetInt("FPSEnabled");
+	enabled = configHandler->GetBool("FPSEnabled");
 	fov = configHandler->GetFloat("FPSFOV");
 }
 

@@ -33,7 +33,7 @@
 
 using namespace std;
 
-CONFIG(int, GroundNormalTextureHighPrecision).defaultValue(0);
+CONFIG(bool, GroundNormalTextureHighPrecision).defaultValue(false);
 CONFIG(float, SMFTexAniso).defaultValue(0.0f);
 
 CR_BIND_DERIVED(CSmfReadMap, CReadMap, (""))
@@ -233,7 +233,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 		#else
 		GLenum texFormat = GL_LUMINANCE_ALPHA16F_ARB;
 
-		if (!!configHandler->GetInt("GroundNormalTextureHighPrecision")) {
+		if (configHandler->GetBool("GroundNormalTextureHighPrecision")) {
 			texFormat = GL_LUMINANCE_ALPHA32F_ARB;
 		}
 		#endif

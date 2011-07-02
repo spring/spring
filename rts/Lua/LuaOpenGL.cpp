@@ -78,7 +78,7 @@ using std::set;
 #undef far // avoid collision with windef.h
 #undef near
 
-CONFIG(int, LuaShaders).defaultValue(1);
+CONFIG(bool, LuaShaders).defaultValue(true);
 
 static const int MAX_TEXTURE_UNITS = 32;
 
@@ -111,7 +111,7 @@ void LuaOpenGL::Init()
 
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
-	if (globalRendering->haveGLSL && !!configHandler->GetInt("LuaShaders")) {
+	if (globalRendering->haveGLSL && configHandler->GetBool("LuaShaders")) {
 		canUseShaders = true;
 	}
 }
