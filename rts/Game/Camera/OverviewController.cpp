@@ -53,9 +53,9 @@ void COverviewController::SetPos(const float3& newPos)
 
 float3 COverviewController::SwitchFrom() const
 {
-	float3 dir=mouse->dir;
-	float length=ground->LineGroundCol(pos,pos+dir*50000);
-	float3 rpos=pos+dir*length;
+	float3 dir = mouse->dir;
+	float length = ground->LineGroundCol(pos, pos + dir * 50000, false);
+	float3 rpos = pos + dir * length;
 
 	if (!globalRendering->dualScreenMode) {
 		minimap->SetMinimized(minimizeMinimap);

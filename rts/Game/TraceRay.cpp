@@ -312,7 +312,7 @@ float GuiTraceRay(const float3 &start, const float3 &dir, float length, bool use
 	}
 
 	//! ground intersection
-	float groundLen = ground->LineGroundCol(start, start + dir * length);
+	float groundLen = ground->LineGroundCol(start, start + dir * length, false);
 	if (groundLen > 0.0f) {
 		if (groundLen+200.0f < length) {
 			length     = groundLen;
