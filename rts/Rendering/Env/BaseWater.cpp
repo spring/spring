@@ -44,7 +44,7 @@ void CBaseWater::PushWaterMode(int nextWaterRenderMode) {
 void CBaseWater::PushHeightmapChange(const int x1, const int y1, const int x2, const int y2) {
 	GML_STDMUTEX_LOCK(water); // PushHeightMapChange
 
-	heightmapChanges.push_back(HeightMapUpdate(x1, y1, x2, y2));
+	heightmapChanges.push_back(HeightMapUpdate(x1, x2,  y1, y2));
 }
 
 
