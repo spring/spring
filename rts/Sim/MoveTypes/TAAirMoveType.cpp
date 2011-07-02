@@ -290,7 +290,7 @@ void CTAAirMoveType::UpdateLanded()
 
 	if (padStatus == 0) {
 		if (owner->unitDef->canSubmerge) {
-			pos.y = std::max(pos.y, ground->GetApproximateHeight(pos.x, pos.z));
+			pos.y = std::max(pos.y, ground->GetHeightReal(pos.x, pos.z));
 		} else {
 			pos.y = std::max(pos.y, ground->GetHeightAboveWater(pos.x, pos.z));
 		}
@@ -301,20 +301,20 @@ void CTAAirMoveType::UpdateLanded()
 
 void CTAAirMoveType::UpdateTakeoff()
 {
-	float3 &pos = owner->pos;
+	float3& pos = owner->pos;
 	wantedSpeed = ZeroVector;
 	wantedHeight = orgWantedHeight;
 
 	UpdateAirPhysics();
 
-	float h = 0.0f;
+	float altitude = 0.0f;
 	if (owner->unitDef->canSubmerge) {
-		h = pos.y - ground->GetApproximateHeight(pos.x, pos.z);
+		altitude = pos.y - ground->GetHeightReal(pos.x, pos.z);
 	} else {
-		h = pos.y - ground->GetHeightAboveWater(pos.x, pos.z);
+		altitude = pos.y - ground->GetHeightAboveWater(pos.x, pos.z);
 	}
 
-	if (h > orgWantedHeight * 0.8f) {
+	if (altitude > orgWantedHeight * 0.8f) {
 		SetState(AIRCRAFT_FLYING);
 	}
 }
@@ -545,24 +545,24 @@ void CTAAirMoveType::UpdateLanding()
 	}
 
 	// We have stopped, time to land
-	const float gah = ground->GetApproximateHeight(pos.x, pos.z);
-	float h = 0.0f;
+	const float gh = ground->GetHeightReal(pos.x, pos.z);
+	float altitude = 0.0f;
 
 	// if aircraft submergible and above water we want height of ocean floor
-	if ((owner->unitDef->canSubmerge) && (gah < 0.0f)) {
-		h = pos.y - gah;
-		wantedHeight = gah;
+	if ((owner->unitDef->canSubmerge) && (gh < 0.0f)) {
+		altitude = pos.y - gh;
+		wantedHeight = gh;
 	} else {
-		h = pos.y - ground->GetHeightAboveWater(pos.x, pos.z);
+		altitude = pos.y - ground->GetHeightAboveWater(pos.x, pos.z);
 		wantedHeight = -2.0;
 	}
 
 	UpdateAirPhysics();
 
-	if (h <= 0.0f) {
+	if (altitude <= 0.0f) {
 		SetState(AIRCRAFT_LANDED);
 
-		pos.y = gah;
+		pos.y = gh;
 	}
 }
 
