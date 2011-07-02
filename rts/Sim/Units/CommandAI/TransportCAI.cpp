@@ -358,7 +358,7 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius
 				float3 pos(x, ground->GetApproximateHeight(x, y), y);
 
 				if (dynamic_cast<const CBuilding *>(unitToUnload)) {
-					pos = helper->Pos2BuildPos(BuildInfo(unitToUnload->unitDef, pos, unitToUnload->buildFacing), false);
+					pos = helper->Pos2BuildPos(BuildInfo(unitToUnload->unitDef, pos, unitToUnload->buildFacing), true);
 				}
 
 				if (!((CTransportUnit *)owner)->CanLoadUnloadAtPos(pos, unitToUnload)) {
