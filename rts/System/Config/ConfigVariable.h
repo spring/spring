@@ -72,19 +72,14 @@ public:
 
 	std::string Clamp(const std::string& value) const
 	{
-		if (minimumValue.IsSet() || maximumValue.IsSet()) {
-			T temp = FromString(value);
-			if (minimumValue.IsSet()) {
-				temp = std::max(temp, minimumValue.Get());
-			}
-			if (maximumValue.IsSet()) {
-				temp = std::min(temp, maximumValue.Get());
-			}
-			return ToString(temp);
+		T temp = FromString(value);
+		if (minimumValue.IsSet()) {
+			temp = std::max(temp, minimumValue.Get());
 		}
-		else {
-			return value;
+		if (maximumValue.IsSet()) {
+			temp = std::min(temp, maximumValue.Get());
 		}
+		return ToString(temp);
 	}
 
 public:

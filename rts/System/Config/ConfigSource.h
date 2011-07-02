@@ -40,7 +40,7 @@ public:
  *
  * Overlay settings get lost after the game ends. Values in the OPTIONS section
  * of the start script will be put into the overlay and Lua scripts can choose
- * to put certain sections into the overlay.
+ * to put certain values into the overlay.
  */
 class OverlayConfigSource : public ReadWriteConfigSource
 {
