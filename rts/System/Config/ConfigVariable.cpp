@@ -25,8 +25,6 @@ const ConfigVariable::MetaDataMap& ConfigVariable::GetMetaDataMap()
 
 void ConfigVariable::AddMetaData(const ConfigVariableMetaData* data)
 {
-	LOG_VAR(data) << "ConfigVariable(\"" << data->key << "\", \"" << data->GetDefaultValue() << "\")\n";
-
 	MetaDataMap& vars = GetMutableMetaDataMap();
 	MetaDataMap::const_iterator pos = vars.find(data->key);
 
