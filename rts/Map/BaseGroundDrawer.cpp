@@ -366,11 +366,23 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 
 			case drawHeight: {
 				extraTexPal = heightLinePal->GetData();
+
+				// the extraTexture is guaranteed to be larger than the
+				// corner heightmap (gs->pwr2map* are always set to the
+				// next power of 2 of gs->map*, so > (gs->map* + 1))
+				const float* heightMap =
+					#ifdef USE_UNSYNCED_HEIGHTMAP
+					readmap->GetCornerHeightMapUnsynced();
+					#else
+					readmap->GetCornerHeightMapSynced();
+					#endif
+
 				for (int y = starty; y < endy; ++y) {
 					const int y_pwr2mapx = y * gs->pwr2mapx;
-					const int y_mapx     = y * gs->mapx;
-					for (int x = 0; x  < gs->mapx; ++x) {
-						const float height = readmap->GetCenterHeightMapSynced()[y_mapx + x];
+					const int y_mapx     = y * (gs->mapx + 1);
+
+					for (int x = 0; x < gs->mapx + 1; ++x) {
+						const float height = heightMap[y_mapx + x];
 						const unsigned int value = (((unsigned int)(height * 8.0f)) % 255) * 3;
 						const int i = (y_pwr2mapx + x) * 4 - offset;
 						infoTexMem[i + COLOR_R] = 64 + (extraTexPal[value]     >> 1);
