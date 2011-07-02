@@ -537,11 +537,11 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitst
 {
 	StopBuild(false);
 
-	buildInfo.pos = helper->Pos2BuildPos(buildInfo);
+	buildInfo.pos = helper->Pos2BuildPos(buildInfo, true);
 
 	// Pass -1 as allyteam to behave like we have maphack.
 	// This is needed to prevent building on top of cloaked stuff.
-	const int canBuild = uh->TestUnitBuildSquare(buildInfo, feature, -1);
+	const int canBuild = uh->TestUnitBuildSquare(buildInfo, feature, -1, true);
 
 	if (canBuild < 2) {
 		// the ground is blocked at the position we want
