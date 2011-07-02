@@ -64,7 +64,7 @@ static void GetPlatformLocations(vector<string>& locations)
 }
 
 /**
- * @brief Get the name of the default configuration file
+ * @brief Get the names of the default configuration files
  */
 void ConfigLocater::GetDefaultLocations(vector<string>& locations)
 {
