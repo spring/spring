@@ -7,9 +7,7 @@
 	CreateDirectory "$INSTDIR\maps"
 	CreateDirectory "$INSTDIR\games"
 
-	SetCompress Off
 	File /oname=spring_engine.7z "${PORTABLE_ARCHIVE}"
-	SetCompress Force
 	Nsis7z::Extract "$INSTDIR\spring_engine.7z"
 	Delete "$INSTDIR\spring_engine.7z"
 

@@ -2,9 +2,7 @@
 	SetOutPath "$INSTDIR"
 
 	!ifdef ARCHIVEMOVER
-	        SetCompress Off
 	        File /oname=archivemover.7z "${ARCHIVEMOVER}"
-	        SetCompress Force
 	        Nsis7z::Extract "$INSTDIR\archivemover.7z"
 	        Delete "$INSTDIR\archivemover.7z"
 	!endif
