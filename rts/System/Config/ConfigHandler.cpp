@@ -1,19 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-/*
- * Stack of maps
- *
- * - Maps earlier in the chain override later ones
- * - Last one contains the static defaults
- * - First one is what is now called the "overlay"
- * - A value identical to the value later in the chain is not stored
- *
- * The sources are (later sources override earlier sources):
- * - Static defaults (might still differ per user/PC)
- * - Sources from ConfigLocater::GetDefaultLocations()
- * - Overlay (i.e. config values from start script)
- */
-
 #include "StdAfx.h"
 #include "ConfigHandler.h"
 #include "ConfigLocater.h"
@@ -139,7 +125,7 @@ bool ConfigHandlerImpl::IsSet(const string& key) const
  */
 string ConfigHandlerImpl::GetString(const string& key) const
 {
-	const ConfigVariableData* meta = ConfigVariable::GetMetaData(key);
+	const ConfigVariableMetaData* meta = ConfigVariable::GetMetaData(key);
 
 	for_each_source_const(it) {
 		if ((*it)->IsSet(key)) {

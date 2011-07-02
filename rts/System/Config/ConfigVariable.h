@@ -36,14 +36,23 @@ std::ostream& operator<<(std::ostream& stream, const Optional<T>& o)
 }
 
 /**
- * @brief Data members for config variable that don't depend on type.
+ * @brief Untyped configuration variable meta data.
+ *
+ * That is, meta data of a type that does not depend on the declared type
+ * of the config variable.
  */
-class ConfigVariableData : public boost::noncopyable
+class ConfigVariableMetaData : public boost::noncopyable
 {
 public:
-	virtual ~ConfigVariableData() {}
+	virtual ~ConfigVariableMetaData() {}
+
+	/// @brief Get the default value of this config variable as a string.
 	virtual std::string GetDefaultValue() const = 0;
+
+	/// @brief Returns true if and only if a default value has been set.
 	virtual bool HasDefaultValue() const = 0;
+
+	/// @brief Clamp a value using the declared minimum and maximum value.
 	virtual std::string Clamp(const std::string& value) const = 0;
 
 public:
@@ -54,10 +63,13 @@ public:
 };
 
 /**
- * @brief Data members for config variable that do depend on type.
+ * @brief Typed configuration variable meta data.
+ *
+ * That is, meta data of the same type as the declared type
+ * of the config variable.
  */
 template<typename T>
-class ConfigVariableTypedData : public ConfigVariableData
+class ConfigVariableTypedMetaData : public ConfigVariableMetaData
 {
 public:
 	std::string GetDefaultValue() const
@@ -70,6 +82,19 @@ public:
 		return defaultValue.IsSet();
 	}
 
+	/**
+	 * @brief Clamp a value using the declared minimum and maximum value.
+	 *
+	 * Even though the input and the output is passed as string, the clamping
+	 * happens in the domain of the declared type of the config variable.
+	 * This may be a different type than what is read from the ConfigHandler.
+	 *
+	 * For example: a config variable declared as int will be clamped in the
+	 * int domain even if ConfigHandler::GetString is used to fetch it.
+	 *
+	 * This guarantees the value will always be in range, even if Lua, a client
+	 * of unitsync or erroneous Spring code uses the wrong getter.
+	 */
 	std::string Clamp(const std::string& value) const
 	{
 		T temp = FromString(value);
@@ -105,15 +130,22 @@ private:
 };
 
 /**
- * @brief Fluent interface to construct ConfigVariables
- * Uses method chaining.
+ * @brief Fluent interface to declare meta data of config variables
+ *
+ * Uses method chaining so that a config variable can be declared like this:
+ *
+ * CONFIG(Example)
+ *   .defaultValue(6)
+ *   .minimumValue(1)
+ *   .maximumValue(10)
+ *   .description("This is an example");
  */
 template<typename T>
 class ConfigVariableBuilder : public boost::noncopyable
 {
 public:
-	ConfigVariableBuilder(ConfigVariableTypedData<T>& data) : data(&data) {}
-	const ConfigVariableData* GetData() const { return data; }
+	ConfigVariableBuilder(ConfigVariableTypedMetaData<T>& data) : data(&data) {}
+	const ConfigVariableMetaData* GetData() const { return data; }
 
 #define MAKE_CHAIN_METHOD(property, type) \
 	ConfigVariableBuilder& property(type const& x) { \
@@ -132,23 +164,27 @@ public:
 #undef MAKE_CHAIN_METHOD
 
 private:
-	ConfigVariableTypedData<T>* data;
+	ConfigVariableTypedMetaData<T>* data;
 };
 
 /**
- * @brief Configuration variable
+ * @brief Configuration variable declaration
+ *
+ * The only purpose of this class is to store the meta data created by a
+ * ConfigVariableBuilder in a global map of meta data as it is assigned to
+ * an instance of this class.
  */
 class ConfigVariable
 {
 public:
-	typedef std::map<std::string, const ConfigVariableData*> MetaDataMap;
+	typedef std::map<std::string, const ConfigVariableMetaData*> MetaDataMap;
 
 	static const MetaDataMap& GetMetaDataMap();
-	static const ConfigVariableData* GetMetaData(const std::string& key);
+	static const ConfigVariableMetaData* GetMetaData(const std::string& key);
 
 private:
 	static MetaDataMap& GetMutableMetaDataMap();
-	static void AddMetaData(const ConfigVariableData* data);
+	static void AddMetaData(const ConfigVariableMetaData* data);
 
 public:
 	/// @brief Implicit conversion from ConfigVariableBuilder<T>.
@@ -159,9 +195,13 @@ public:
 	}
 };
 
+/**
+ * @brief Macro to start the method chain used to declare a config variable.
+ * @see ConfigVariableBuilder
+ */
 #define CONFIG(T, name) \
-	static ConfigVariableTypedData<T> cfgdata##name; \
-	static const ConfigVariable cfg##name = ConfigVariableBuilder<T>(cfgdata##name) \
+	static ConfigVariableTypedMetaData<T> cfgdata##name; \
+	static ConfigVariable cfg##name = ConfigVariableBuilder<T>(cfgdata##name) \
 		.key(#name).declarationFile(__FILE__).declarationLine(__LINE__)
 
 #endif // CONFIG_VALUE_H

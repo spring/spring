@@ -9,7 +9,7 @@
  * @brief Configuration source that holds static defaults
  *
  * Keys and default values for each engine configuration variable
- * are declared in and exposed by this class.
+ * are exposed by this class.
  */
 class DefaultConfigSource : public ReadOnlyConfigSource
 {
