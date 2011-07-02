@@ -206,7 +206,7 @@ void CBuilderCAI::PostLoad()
 		map<int, string>::iterator boi = buildOptions.find(c.GetID());
 		if (boi != buildOptions.end()) {
 			build.Parse(c);
-			build.pos = helper->Pos2BuildPos(build);
+			build.pos = helper->Pos2BuildPos(build, true);
 		}
 	}
 }
@@ -310,7 +310,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			bi.buildFacing = int(abs(c.params[3])) % NUM_FACINGS;
 
 		bi.def = unitDefHandler->GetUnitDefByName(boi->second);
-		bi.pos = helper->Pos2BuildPos(bi);
+		bi.pos = helper->Pos2BuildPos(bi, true);
 
 		if (!owner->unitDef->canmove) {
 			const CBuilder* builder = (CBuilder*)owner;
@@ -321,7 +321,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			}
 		}
 		CFeature* feature = NULL;
-		if(!uh->TestUnitBuildSquare(bi,feature,owner->allyteam)) {
+		if (!uh->TestUnitBuildSquare(bi, feature, owner->allyteam, true)) {
 			if (!feature && owner->unitDef->canAssist) {
 				int yardxpos=int(bi.pos.x+4)/SQUARE_SIZE;
 				int yardypos=int(bi.pos.z+4)/SQUARE_SIZE;
@@ -405,7 +405,7 @@ void CBuilderCAI::SlowUpdate()
 					CancelRestrictedUnit(boi->second);
 					StopMove();
 				} else {
-					build.pos = helper->Pos2BuildPos(build);
+					build.pos = helper->Pos2BuildPos(build, true);
 					const float sqdist = f3SqDist(build.pos, builder->pos);
 
 					if ((sqdist < Square(builder->buildDistance * 0.6f + radius)) ||
@@ -463,7 +463,7 @@ void CBuilderCAI::SlowUpdate()
 			bi.def = unitDefHandler->GetUnitDefByName(boi->second);
 
 			CFeature* f = 0;
-			uh->TestUnitBuildSquare(bi, f, owner->allyteam);
+			uh->TestUnitBuildSquare(bi, f, owner->allyteam, true);
 
 			if (f) {
 				ReclaimFeature(f);

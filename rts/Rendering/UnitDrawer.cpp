@@ -1178,7 +1178,7 @@ void CUnitDrawer::DrawCloakedAIUnits()
 			SetTeamColour(ti->second.team, cloakAlpha3);
 
 			BuildInfo bi(unitdef, pos, ti->second.facing);
-			pos = helper->Pos2BuildPos(bi);
+			pos = helper->Pos2BuildPos(bi, false);
 
 			const float xsize = bi.GetXSize() * 4;
 			const float zsize = bi.GetZSize() * 4;
@@ -2125,6 +2125,7 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 		buildInfo,
 		feature,
 		-1,
+		false,
 		&canbuildpos,
 		&featurepos,
 		&nobuildpos,

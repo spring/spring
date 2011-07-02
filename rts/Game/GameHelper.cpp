@@ -836,12 +836,12 @@ void CGameHelper::BuggerOff(float3 pos, float radius, bool spherical, bool force
 }
 
 
-float3 CGameHelper::Pos2BuildPos(const float3& pos, const UnitDef* ud)
+float3 CGameHelper::Pos2BuildPos(const float3& pos, const UnitDef* ud, bool synced)
 {
-	return Pos2BuildPos(BuildInfo(ud,pos,0));
+	return Pos2BuildPos(BuildInfo(ud, pos, 0), synced);
 }
 
-float3 CGameHelper::Pos2BuildPos(const BuildInfo& buildInfo)
+float3 CGameHelper::Pos2BuildPos(const BuildInfo& buildInfo, bool synced)
 {
 	float3 pos;
 	if (buildInfo.GetXSize() & 2)
@@ -854,7 +854,7 @@ float3 CGameHelper::Pos2BuildPos(const BuildInfo& buildInfo)
 	else
 		pos.z = floor((buildInfo.pos.z + 8) / (SQUARE_SIZE * 2)) * SQUARE_SIZE * 2;
 
-	pos.y = uh->GetBuildHeight(pos,buildInfo.def);
+	pos.y = uh->GetBuildHeight(pos, buildInfo.def, synced);
 	if (buildInfo.def->floater && pos.y < 0)
 		pos.y = -buildInfo.def->waterline;
 
@@ -911,9 +911,9 @@ float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 po
 		const float z = pos.z + ofs[so].dy * SQUARE_SIZE * 2;
 
 		BuildInfo bi(unitDef, float3(x, 0.0f, z), facing);
-		bi.pos = Pos2BuildPos(bi);
+		bi.pos = Pos2BuildPos(bi, false);
 
-		if (uh->TestUnitBuildSquare(bi, feature, allyTeam) && (!feature || feature->allyteam != allyTeam)) {
+		if (uh->TestUnitBuildSquare(bi, feature, allyTeam, false) && (!feature || feature->allyteam != allyTeam)) {
 			const int xs = (int) (x / SQUARE_SIZE);
 			const int zs = (int) (z / SQUARE_SIZE);
 			const int xsize = bi.GetXSize();
