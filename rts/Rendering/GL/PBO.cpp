@@ -15,14 +15,14 @@
 #include "Rendering/GlobalRendering.h"
 #include "System/Config/ConfigHandler.h"
 
-CONFIG(int, UsePBO).defaultValue(1);
+CONFIG(bool, UsePBO).defaultValue(true);
 
 /**
  * Returns if the current gpu drivers support Pixelbuffer Objects
  */
 bool PBO::IsSupported()
 {
-	return (GLEW_EXT_pixel_buffer_object && GLEW_ARB_map_buffer_range && !!configHandler->GetInt("UsePBO"));
+	return (GLEW_EXT_pixel_buffer_object && GLEW_ARB_map_buffer_range && configHandler->GetBool("UsePBO"));
 }
 
 

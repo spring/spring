@@ -33,8 +33,8 @@ using std::min;
 using std::max;
 
 CONFIG(int, GroundDetail).defaultValue(40);
-CONFIG(int, MultiThreadDrawGround).defaultValue(1);
-CONFIG(int, MultiThreadDrawGroundShadow).defaultValue(0);
+CONFIG(bool, MultiThreadDrawGround).defaultValue(true);
+CONFIG(bool, MultiThreadDrawGroundShadow).defaultValue(false);
 CONFIG(unsigned int, MaxDynamicMapLights).defaultValue(1U);
 CONFIG(int, AdvMapShading).defaultValue(1);
 
@@ -74,8 +74,8 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 	}
 
 #ifdef USE_GML
-	multiThreadDrawGround = !!configHandler->GetInt("MultiThreadDrawGround");
-	multiThreadDrawGroundShadow = !!configHandler->GetInt("MultiThreadDrawGroundShadow");
+	multiThreadDrawGround = configHandler->GetBool("MultiThreadDrawGround");
+	multiThreadDrawGroundShadow = configHandler->GetBool("MultiThreadDrawGroundShadow");
 #endif
 
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));

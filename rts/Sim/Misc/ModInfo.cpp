@@ -16,7 +16,7 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Exceptions.h"
 
-CONFIG(int, TeamNanoSpray).defaultValue(1);
+CONFIG(bool, TeamNanoSpray).defaultValue(true);
 
 CModInfo modInfo;
 
@@ -57,7 +57,7 @@ void CModInfo::Init(const char* modArchive)
 	allowTeamColors = nanosprayTbl.GetBool("allow_team_colors", true);
 	if (allowTeamColors) {
 		// Load the users preference for team coloured nanospray
-		globalRendering->teamNanospray = !!configHandler->GetInt("TeamNanoSpray");
+		globalRendering->teamNanospray = configHandler->GetBool("TeamNanoSpray");
 	}
 
 	// constructions

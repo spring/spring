@@ -14,7 +14,7 @@
 
 #include <string>
 
-CONFIG(int, CompressTextures).defaultValue(0);
+CONFIG(bool, CompressTextures).defaultValue(false);
 CONFIG(int, AtiHacks).defaultValue(-1);
 
 /**
@@ -127,7 +127,7 @@ void CGlobalRendering::PostInit() {
 	if (GLEW_ARB_texture_compression) {
 		//! we don't even need to check it, 'cos groundtextures must have that extension
 		//! default to off because it reduces quality (smallest mipmap level is bigger)
-		compressTextures = !!configHandler->GetInt("CompressTextures");
+		compressTextures = configHandler->GetBool("CompressTextures");
 	}
 
 	//! maximum 2D texture size

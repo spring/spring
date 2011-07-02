@@ -14,7 +14,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Input/KeyInput.h"
 
-CONFIG(int, OrbitControllerEnabled).defaultValue(1);
+CONFIG(bool, OrbitControllerEnabled).defaultValue(true);
 CONFIG(float, OrbitControllerOrbitSpeed).defaultValue(0.25f);
 CONFIG(float, OrbitControllerPanSpeed).defaultValue(2.00f);
 CONFIG(float, OrbitControllerZoomSpeed).defaultValue(5.00f);
@@ -32,7 +32,7 @@ COrbitController::COrbitController():
 	rotation(0.0f), cRotation(0.0f),
 	elevation(0.0f), cElevation(0.0f)
 {
-	enabled = !!configHandler->GetInt("OrbitControllerEnabled");
+	enabled = configHandler->GetBool("OrbitControllerEnabled");
 
 	orbitSpeedFact = configHandler->GetFloat("OrbitControllerOrbitSpeed");
 	panSpeedFact   = configHandler->GetFloat("OrbitControllerPanSpeed");

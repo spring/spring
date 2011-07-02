@@ -60,9 +60,9 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 
-CONFIG(int, MiniMapMarker).defaultValue(1);
-CONFIG(int, InvertQueueKey).defaultValue(0);
-CONFIG(int, StencilBufferBits).defaultValue(1);
+CONFIG(bool, MiniMapMarker).defaultValue(true);
+CONFIG(bool, InvertQueueKey).defaultValue(false);
+CONFIG(bool, StencilBufferBits).defaultValue(true);
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -97,13 +97,13 @@ CGuiHandler::CGuiHandler():
 	LoadDefaults();
 	LoadConfig("ctrlpanel.txt");
 
-	miniMapMarker = !!configHandler->GetInt("MiniMapMarker");
-	invertQueueKey = !!configHandler->GetInt("InvertQueueKey");
+	miniMapMarker = configHandler->GetBool("MiniMapMarker");
+	invertQueueKey = configHandler->GetBool("InvertQueueKey");
 
 	autoShowMetal = mapInfo->gui.autoShowMetal;
 
 	useStencil = false;
-	if (GLEW_NV_depth_clamp && !!configHandler->GetInt("StencilBufferBits")) {
+	if (GLEW_NV_depth_clamp && configHandler->GetBool("StencilBufferBits")) {
 		GLint stencilBits;
 		glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
 		useStencil = (stencilBits >= 1);

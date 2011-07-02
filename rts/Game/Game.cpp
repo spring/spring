@@ -170,17 +170,17 @@ extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 #endif
 
 
-CONFIG(int, WindowedEdgeMove).defaultValue(1);
-CONFIG(int, FullscreenEdgeMove).defaultValue(1);
-CONFIG(int, ShowFPS).defaultValue(0);
-CONFIG(int, ShowClock).defaultValue(1);
-CONFIG(int, ShowSpeed).defaultValue(0);
-CONFIG(int, ShowMTInfo).defaultValue(1);
+CONFIG(bool, WindowedEdgeMove).defaultValue(true);
+CONFIG(bool, FullscreenEdgeMove).defaultValue(true);
+CONFIG(bool, ShowFPS).defaultValue(false);
+CONFIG(bool, ShowClock).defaultValue(true);
+CONFIG(bool, ShowSpeed).defaultValue(false);
+CONFIG(bool, ShowMTInfo).defaultValue(true);
 CONFIG(int, SpeedControl).defaultValue(0);
 CONFIG(int, ShowPlayerInfo).defaultValue(1);
 CONFIG(float, GuiOpacity).defaultValue(0.8f);
 CONFIG(std::string, InputTextGeo).defaultValue("");
-CONFIG(int, LuaModUICtrl).defaultValue(1);
+CONFIG(bool, LuaModUICtrl).defaultValue(true);
 
 
 CGame* game = NULL;
@@ -294,13 +294,13 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	configHandler->Set("Headless", isHeadless ? 1 : 0, true);
 
 	//FIXME move to MouseHandler!
-	windowedEdgeMove   = !!configHandler->GetInt("WindowedEdgeMove");
-	fullscreenEdgeMove = !!configHandler->GetInt("FullscreenEdgeMove");
+	windowedEdgeMove   = configHandler->GetBool("WindowedEdgeMove");
+	fullscreenEdgeMove = configHandler->GetBool("FullscreenEdgeMove");
 
-	showFPS   = !!configHandler->GetInt("ShowFPS");
-	showClock = !!configHandler->GetInt("ShowClock");
-	showSpeed = !!configHandler->GetInt("ShowSpeed");
-	showMTInfo = !!configHandler->GetInt("ShowMTInfo");
+	showFPS   = configHandler->GetBool("ShowFPS");
+	showClock = configHandler->GetBool("ShowClock");
+	showSpeed = configHandler->GetBool("ShowSpeed");
+	showMTInfo = configHandler->GetBool("ShowMTInfo");
 	mtInfoCtrl = 0;
 
 	speedControl = configHandler->GetInt("SpeedControl");
@@ -317,7 +317,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	writingPos = 0;
 	userPrompt = "";
 
-	CLuaHandle::SetModUICtrl(!!configHandler->GetInt("LuaModUICtrl"));
+	CLuaHandle::SetModUICtrl(configHandler->GetBool("LuaModUICtrl"));
 
 	modInfo.Init(modName.c_str());
 

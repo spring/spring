@@ -17,9 +17,9 @@
 using std::max;
 using std::min;
 
-CONFIG(int, CamFreeEnabled).defaultValue(0);
-CONFIG(int, CamFreeInvertAlt).defaultValue(0);
-CONFIG(int, CamFreeGoForward).defaultValue(0);
+CONFIG(bool, CamFreeEnabled).defaultValue(false);
+CONFIG(bool, CamFreeInvertAlt).defaultValue(false);
+CONFIG(bool, CamFreeGoForward).defaultValue(false);
 CONFIG(float, CamFreeFOV).defaultValue(45.0f);
 CONFIG(float, CamFreeScrollSpeed).defaultValue(500.0f);
 CONFIG(float, CamFreeGravity).defaultValue(-500.0f);
@@ -58,9 +58,9 @@ CFreeController::CFreeController()
 	}
 	pos -= (dir * 1000.0f);
 
-	enabled     = !!configHandler->GetInt("CamFreeEnabled");
-	invertAlt   = !!configHandler->GetInt("CamFreeInvertAlt");
-	goForward   = !!configHandler->GetInt("CamFreeGoForward");
+	enabled     = configHandler->GetBool("CamFreeEnabled");
+	invertAlt   = configHandler->GetBool("CamFreeInvertAlt");
+	goForward   = configHandler->GetBool("CamFreeGoForward");
 	fov         = configHandler->GetFloat("CamFreeFOV");
 	scrollSpeed = configHandler->GetFloat("CamFreeScrollSpeed");
 	gravity     = configHandler->GetFloat("CamFreeGravity");

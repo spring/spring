@@ -13,7 +13,7 @@
 
 CONFIG(float, RotOverheadMouseScale).defaultValue(0.01f);
 CONFIG(int, RotOverheadScrollSpeed).defaultValue(10);
-CONFIG(int, RotOverheadEnabled).defaultValue(1);
+CONFIG(bool, RotOverheadEnabled).defaultValue(true);
 CONFIG(float, RotOverheadFOV).defaultValue(45.0f);
 
 
@@ -22,7 +22,7 @@ CRotOverheadController::CRotOverheadController()
 {
 	mouseScale = configHandler->GetFloat("RotOverheadMouseScale");
 	scrollSpeed = configHandler->GetInt("RotOverheadScrollSpeed")*0.1f;
-	enabled=!!configHandler->GetInt("RotOverheadEnabled");
+	enabled=configHandler->GetBool("RotOverheadEnabled");
 	fov = configHandler->GetFloat("RotOverheadFOV");
 }
 

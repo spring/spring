@@ -24,7 +24,7 @@
 #include <stdexcept>
 #include <fstream>
 
-CONFIG(int, SM3ForceFallbackTex).defaultValue(0);
+CONFIG(bool, SM3ForceFallbackTex).defaultValue(false);
 CONFIG(int, SM3MaxTextureStages).defaultValue(10);
 
 struct Sm3LoadCB: terrain::ILoadCallback
@@ -113,7 +113,7 @@ void CSm3ReadMap::ConfigNotify(const std::string& key, const std::string& value)
 CBaseGroundDrawer* CSm3ReadMap::GetGroundDrawer() { return groundDrawer; }
 void CSm3ReadMap::NewGroundDrawer() {
 	renderer->config.cacheTextures = false;
-	renderer->config.forceFallbackTexturing = !!configHandler->GetInt("SM3ForceFallbackTex");
+	renderer->config.forceFallbackTexturing = configHandler->GetBool("SM3ForceFallbackTex");
 
 	if (!renderer->config.forceFallbackTexturing && GLEW_ARB_fragment_shader && GLEW_ARB_shading_language_100) {
 		renderer->config.useBumpMaps = true;

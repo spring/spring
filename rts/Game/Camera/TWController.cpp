@@ -17,14 +17,14 @@
 #include "System/Input/KeyInput.h"
 
 CONFIG(int, TWScrollSpeed).defaultValue(10);
-CONFIG(int, TWEnabled).defaultValue(1);
+CONFIG(bool, TWEnabled).defaultValue(true);
 CONFIG(float, TWFOV).defaultValue(45.0f);
 
 
 CTWController::CTWController()
 {
 	scrollSpeed = configHandler->GetInt("TWScrollSpeed") * 0.1f;
-	enabled = !!configHandler->GetInt("TWEnabled");
+	enabled = configHandler->GetBool("TWEnabled");
 	fov = configHandler->GetFloat("TWFOV");
 }
 
