@@ -128,4 +128,4 @@ if ($distDir eq "") {
 
 
 # Generate the installer
-system("makensis -V3 $nsisDefines $allVersStr @ARGV installer/spring.nsi");
+system("makensis -V3 $nsisDefines $allVersStr @ARGV -DRAPID_ARCHIVE=downloads/rapid-spring-latest-win32.7z installer/spring.nsi");

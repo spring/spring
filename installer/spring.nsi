@@ -84,6 +84,7 @@ VAR REGISTRY ; if 1 registry values are written
 !include "include\fileassoc.nsh"
 !include "include\fileExistChecks.nsh"
 !include "include\fileMisc.nsh"
+!include "include\extractFile.nsh"
 !ifndef SLIM
 !include "include\checkrunning.nsh"
 !endif
@@ -164,6 +165,12 @@ ${!echonow} "Using MINGWLIBS_DIR: ${MINGWLIBS_DIR}"
 	${!echonow} "Using ARCHIVEMOVER:      ${ARCHIVEMOVER}"
 !endif
 
+!ifndef RAPID_ARCHIVE
+	!warning "RAPID_ARCHIVE not defined"
+!else
+	${!echonow} "Using RAPID_ARCHIVE:      ${RAPID_ARCHIVE}"
+!endif
+
 
 Section "Engine" SEC_MAIN
 	; make this section read-only -> user can not deselect it
@@ -225,13 +232,14 @@ SectionGroup "Tools"
 			!include "sections\archivemover.nsh"
 		!undef INSTALL
 	SectionEnd
-
+!ifdef RAPID_ARCHIVE
 	Section "Simple spring-rapid downloader" SEC_RAPID
 		!define INSTALL
 			${!echonow} "Processing: rapid"
 			!include "sections\rapid.nsh"
 		!undef INSTALL
 	SectionEnd
+!endif
 SectionGroupEnd
 
 !endif
