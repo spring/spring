@@ -97,62 +97,6 @@ VAR REGISTRY ; if 1 registry values are written
 ${!echonow} ""
 ${!echonow} "Base dir:   <engine-source-root>/installer/"
 
-; Set default values for undefined vars
-!ifndef CONTENT_DIR
-	!define CONTENT_DIR "..\cont"
-!endif
-${!defineifdirexists} CONTENT_DIR_EXISTS "${CONTENT_DIR}"
-!ifndef CONTENT_DIR_EXISTS
-	!error "Could not find the content dir at '${CONTENT_DIR}', try setting CONTENT_DIR manually."
-	!undef CONTENT_DIR_EXISTS
-!endif
-${!echonow} "Using CONTENT_DIR:   ${CONTENT_DIR}"
-!ifndef DOC_DIR
-	!define DOC_DIR "..\doc"
-!endif
-${!defineifdirexists} DOC_DIR_EXISTS "${DOC_DIR}"
-!ifndef DOC_DIR_EXISTS
-	!error "Could not find the documentation dir at '${DOC_DIR}', try setting DOC_DIR manually."
-	!undef DOC_DIR_EXISTS
-!endif
-${!echonow} "Using DOC_DIR:       ${DOC_DIR}"
-!ifndef MINGWLIBS_DIR
-	!define MINGWLIBS_DIR "..\mingwlibs"
-!endif
-${!defineifdirexists} MINGWLIBS_DIR_EXISTS "${MINGWLIBS_DIR}"
-!ifndef MINGWLIBS_DIR_EXISTS
-	!error "Could not find the MinGW libraries dir at '${MINGWLIBS_DIR}', try setting MINGWLIBS_DIR manually."
-	!undef MINGWLIBS_DIR_EXISTS
-!endif
-${!echonow} "Using MINGWLIBS_DIR: ${MINGWLIBS_DIR}"
-!ifndef BUILD_DIR
-	!ifndef DIST_DIR
-		!error "Neither BUILD_DIR nor DIST_DIR are defined. Define only one of the two, depending on whether you want to generate the installer from the install- or the build-directory."
-	!endif
-	${!defineifdirexists} DIST_DIR_EXISTS "${DIST_DIR}"
-	!ifndef DIST_DIR_EXISTS
-		!error "Could not find the distribution dir at '${DIST_DIR}'. Make sure you defined DIST_DIR correctly."
-		!undef DIST_DIR_EXISTS
-	!endif
-	${!echonow} "Using DIST_DIR:      ${DIST_DIR}"
-	!define BUILD_OR_DIST_DIR "${DIST_DIR}"
-!endif
-!ifdef BUILD_DIR
-	!ifdef DIST_DIR
-		!error "Both BUILD_DIR and DIST_DIR are defined. Define only one of the two, depending on whether you want to generate the installer from the install- or the build-directory."
-	!endif
-	${!defineifdirexists} BUILD_DIR_EXISTS "${BUILD_DIR}"
-	!ifndef BUILD_DIR_EXISTS
-		!error "Could not find the build dir at '${BUILD_DIR}'. Make sure you defined BUILD_DIR correctly."
-		!undef BUILD_DIR_EXISTS
-	!endif
-	${!echonow} "Using BUILD_DIR:     ${BUILD_DIR}"
-	; This allows us to easily use build products from an out of source build,
-	; without the need to run 'make install'
-	!define USE_BUILD_DIR
-	!define BUILD_OR_DIST_DIR "${BUILD_DIR}"
-!endif
-
 !ifndef MIN_PORTABLE_ARCHIVE
 	!error "MIN_PORTABLE_ARCHIVE undefined: please specifiy where minimal-portable 7z-archive which contains the spring-engine is"
 !else
