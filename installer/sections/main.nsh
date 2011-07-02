@@ -4,12 +4,15 @@
 	SetOverWrite on
 
 	${!echonow} "Processing: engine"
-	CreateDirectory "$INSTDIR\maps"
-	CreateDirectory "$INSTDIR\games"
 
 	File /oname=spring_engine.7z "${PORTABLE_ARCHIVE}"
 	Nsis7z::Extract "$INSTDIR\spring_engine.7z"
 	Delete "$INSTDIR\spring_engine.7z"
+	; archive is portable, make it normal
+	Delete "$INSTDIR\springsettings.cfg"
+
+	CreateDirectory "$INSTDIR\maps"
+	CreateDirectory "$INSTDIR\games"
 
 	${!echonow} "Processing: main: demo file association"
 	${If} $REGISTRY = 1
