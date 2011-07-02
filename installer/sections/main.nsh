@@ -5,7 +5,7 @@
 
 	${!echonow} "Processing: engine"
 
-	File /oname=spring_engine.7z "${PORTABLE_ARCHIVE}"
+	File /oname=spring_engine.7z "${MIN_PORTABLE_ARCHIVE}"
 	Nsis7z::Extract "$INSTDIR\spring_engine.7z"
 	Delete "$INSTDIR\spring_engine.7z"
 	; archive is portable, make it normal
