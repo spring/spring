@@ -39,7 +39,7 @@ struct MapBitmapInfo
 };
 
 struct HeightMapUpdate {
-	HeightMapUpdate(int x, int xx, int y, int yy): x1(x), x2(xx), y1(y), y2(yy) {
+	HeightMapUpdate(int tlx, int brx,  int tly, int bry): x1(tlx), x2(brx), y1(tly), y2(bry) {
 	}
 
 	int x1, x2;
