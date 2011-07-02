@@ -3,7 +3,7 @@
 !addPluginDir "nsis_plugins"
 
 ; Use the 7zip-like compressor
-SetCompressor lzma
+SetCompressor /FINAL /SOLID lzma
 
 
 !include "springsettings.nsh"
@@ -179,17 +179,6 @@ SectionGroup /e "!Engine"
 		        !include "sections\deprecated.nsh"
 		!undef INSTALL
 	SectionEnd
-
-	${!defineiffileexists} GML_BUILD_EXISTS "${BUILD_OR_DIST_DIR}\spring-multithreaded.exe"
-	!ifdef GML_BUILD_EXISTS
-		Section "Multi-threaded executable" SEC_GML
-			${!echonow} "Processing: spring-multithreaded.exe"
-			SetOutPath "$INSTDIR"
-			SetOverWrite on
-			File "${BUILD_OR_DIST_DIR}\spring-multithreaded.exe"
-		SectionEnd
-		!undef GML_BUILD_EXISTS
-	!endif
 SectionGroupEnd
 
 

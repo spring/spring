@@ -15,7 +15,7 @@ SDL_Surface* WindowManagerHelper::currentIcon = NULL;
 void WindowManagerHelper::SetIcon(const CBitmap* icon) {
 
 	if (icon != NULL) {
-		// 24bit RGB or 32bit RBA
+		// 24bit RGB or 32bit RGBA
 		if (((icon->channels != 3) && (icon->channels != 4)) 
 #ifdef    WIN32
 			// on windows, the icon has to be 32x32
