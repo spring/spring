@@ -109,7 +109,7 @@ CStandardGroundFlash::CStandardGroundFlash(const float3& p, float circleAlpha, f
 	}
 
 	float3 fw = camera->forward * -1000.0f;
-	this->pos.y = ground->GetHeightReal(p.x, p.z) + 1;
+	this->pos.y = ground->GetHeightReal(p.x, p.z, false) + 1;
 
 	float3 p1(p.x + flashSize, 0, p.z);
 		p1.y = ground->GetApproximateHeight(p1.x, p1.z);
@@ -223,7 +223,7 @@ CSeismicGroundFlash::CSeismicGroundFlash(const float3& p, int ttl, int fade, flo
 	float flashsize = size + sizeGrowth * ttl;
 
 	float3 fw = camera->forward * -1000.0f;
-	this->pos.y = ground->GetHeightReal(p.x, p.z) + 1;
+	this->pos.y = ground->GetHeightReal(p.x, p.z, false) + 1;
 	float3 p1(p.x + flashsize, 0.0f, p.z);
 	p1.y = ground->GetApproximateHeight(p1.x, p1.z);
 	p1 += fw;
@@ -295,7 +295,7 @@ void CSimpleGroundFlash::Init(const float3& explosionPos, CUnit* owner)
 	float flashsize = size + (sizeGrowth * ttl);
 
 	const float3 fw = camera->forward * -1000.0f;
-	this->pos.y = ground->GetHeightReal(pos.x, pos.z) + 1;
+	this->pos.y = ground->GetHeightReal(pos.x, pos.z, false) + 1;
 	float3 p1(pos.x + flashsize, 0.0f, pos.z);
 	p1.y = ground->GetApproximateHeight(p1.x, p1.z);
 	p1 += fw;

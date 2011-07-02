@@ -421,10 +421,10 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 			// for transported structures, <wantedPos> must be free/buildable
 			// (note: TestUnitBuildSquare calls IsAllowedTerrainHeight again)
 			BuildInfo bi(unit->unitDef, wantedPos, unit->buildFacing);
-			bi.pos = helper->Pos2BuildPos(bi);
+			bi.pos = helper->Pos2BuildPos(bi, true);
 			CFeature* f = NULL;
 
-			if (isAllowedHeight && (!uh->TestUnitBuildSquare(bi, f, -1) || f != NULL))
+			if (isAllowedHeight && (!uh->TestUnitBuildSquare(bi, f, -1, true) || f != NULL))
 				isAllowedHeight = false;
 		}
 	}

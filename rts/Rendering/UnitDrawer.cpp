@@ -357,7 +357,7 @@ void CUnitDrawer::Update()
 	if (useDistToGroundForIcons) {
 		const float3& camPos = camera->pos;
 		// use the height at the current camera position
-		//const float groundHeight = ground->GetHeightAboveWater(camPos.x, camPos.z);
+		//const float groundHeight = ground->GetHeightAboveWater(camPos.x, camPos.z, false);
 		// use the middle between the highest and lowest position on the map as average
 		const float groundHeight = (readmap->currMinHeight + readmap->currMaxHeight) / 2;
 		const float overGround = camPos.y - groundHeight;
@@ -958,7 +958,7 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 	}
 
 	// If the icon is partly under the ground, move it up.
-	const float h = ground->GetHeightAboveWater(pos.x, pos.z);
+	const float h = ground->GetHeightAboveWater(pos.x, pos.z, false);
 	if (pos.y < (h + scale)) {
 		pos.y = (h + scale);
 	}
@@ -1178,7 +1178,7 @@ void CUnitDrawer::DrawCloakedAIUnits()
 			SetTeamColour(ti->second.team, cloakAlpha3);
 
 			BuildInfo bi(unitdef, pos, ti->second.facing);
-			pos = helper->Pos2BuildPos(bi);
+			pos = helper->Pos2BuildPos(bi, false);
 
 			const float xsize = bi.GetXSize() * 4;
 			const float zsize = bi.GetZSize() * 4;
@@ -2125,6 +2125,7 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 		buildInfo,
 		feature,
 		-1,
+		false,
 		&canbuildpos,
 		&featurepos,
 		&nobuildpos,

@@ -1,11 +1,6 @@
 ; Section descriptions
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
 	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_MAIN} "The core components required to run Spring. This includes the configuration utilities.$\n$\nNote: This section is required and cannot be deselected."
-	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_GML} "Multi-threaded version of the main program executable.$\n$\nNote: Requires that you also set up your lobby to launch spring-multithreaded.exe."
-	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_AAI}    "Supports BA, some *A and other Games; Note: requires manual config file management (author: submarine)"
-	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_KAIK}   "Supports BA and some other *A Games (authors: (current:) Kloot, (former:) Krogothe & Tournesol)"
-	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_RAI}    "Supports BA, some *A and other Games (author: Reth)"
-	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_E323AI} "Supports BA and XTA, uses guerilla tactics (author: Error323)"
 
 	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_START} "This creates shortcuts on the start menu to all the applications provided."
 

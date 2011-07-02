@@ -36,6 +36,7 @@ if    (UNIX AND NOT MINGW)
 	set (BINDIR  "bin"                CACHE STRING "Where to install binaries")
 	set (LIBDIR  "lib"                CACHE STRING "Where to install libraries")
 	set (MANDIR  "share/man"          CACHE STRING "Where to install man pages")
+	set (DOCDIR  "share/doc/spring-VERSION" CACHE STRING "Where to install basic project documentation (README, LICENSE, etc.)") # TODO set correct version here, and re-enable userdocs in doc/CMakeLists.txt
 	set (DATADIR "share/games/spring" CACHE STRING "Where to install game content")
 
 	set (APPLICATIONS_DIR "share/applications" CACHE STRING "Where to install desktop files")
@@ -45,6 +46,7 @@ if    (UNIX AND NOT MINGW)
 else  (UNIX AND NOT MINGW)
 	set (BINDIR  "." CACHE STRING "Where to install binaries")
 	set (LIBDIR  "." CACHE STRING "Where to install libraries")
+	set (DOCDIR  "doc" CACHE STRING "Where to install basic project documentation (README, LICENSE, etc.)")
 	set (DATADIR "." CACHE STRING "Where to install game content")
 
 	if    (NOT MINGWLIBS)
@@ -262,7 +264,7 @@ Add_Subdirectory(rts/System)
 # additional tools
 Add_Subdirectory(tools)
 
-# man pages
+# man pages & user-docs
 Add_Subdirectory(doc)
 
 ### Handle game content

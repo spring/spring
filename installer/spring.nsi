@@ -3,8 +3,7 @@
 !addPluginDir "nsis_plugins"
 
 ; Use the 7zip-like compressor
-SetCompress force
-SetCompressor /SOLID /FINAL lzma
+SetCompressor /FINAL /SOLID lzma
 
 
 !include "springsettings.nsh"
@@ -35,7 +34,7 @@ SetCompressor /SOLID /FINAL lzma
 ; Welcome page
 !insertmacro MUI_PAGE_WELCOME
 ; Licensepage
-!insertmacro MUI_PAGE_LICENSE "..\doc\gpl-2.0.txt"
+!insertmacro MUI_PAGE_LICENSE "..\gpl-2.0.txt"
 
 ; Components page
 !insertmacro MUI_PAGE_COMPONENTS
@@ -153,30 +152,32 @@ ${!echonow} "Using MINGWLIBS_DIR: ${MINGWLIBS_DIR}"
 	!define BUILD_OR_DIST_DIR "${BUILD_DIR}"
 !endif
 
-SectionGroup /e "!Engine"
-	Section "Main application (req)" SEC_MAIN
-		; make this section read-only -> user can not deselect it
-		SectionIn RO
+!ifndef PORTABLE_ARCHIVE
+	!error "PORTABLE_ARCHIVE undefined: please specifiy where portable 7z-archive which contains the spring-engine is"
+!else
+	${!echonow} "Using PORTABLE_ARCHIVE:      ${PORTABLE_ARCHIVE}"
+!endif
 
-		!define INSTALL
-			${!echonow} "Processing: main"
-			!include "sections\main.nsh"
-			${!echonow} "Processing: luaui"
-			!include "sections\luaui.nsh"
-		!undef INSTALL
-	SectionEnd
+!ifndef ARCHIVEMOVER
+	!warning "ARCHIVEMOVER not defined"
+!else
+	${!echonow} "Using ARCHIVEMOVER:      ${ARCHIVEMOVER}"
+!endif
 
-	${!defineiffileexists} GML_BUILD_EXISTS "${BUILD_OR_DIST_DIR}\spring-multithreaded.exe"
-	!ifdef GML_BUILD_EXISTS
-		Section "Multi-threaded executable" SEC_GML
-			${!echonow} "Processing: spring-multithreaded.exe"
-			SetOutPath "$INSTDIR"
-			SetOverWrite on
-			File "${BUILD_OR_DIST_DIR}\spring-multithreaded.exe"
-		SectionEnd
-		!undef GML_BUILD_EXISTS
-	!endif
-SectionGroupEnd
+
+Section "Engine" SEC_MAIN
+	; make this section read-only -> user can not deselect it
+	SectionIn RO
+
+	!define INSTALL
+		${!echonow} "Processing: main"
+		!include "sections\main.nsh"
+		${!echonow} "Processing: springsettings"
+		!include "sections\springsettings.nsh"
+		${!echonow} "Processing: deprecated"
+	        !include "sections\deprecated.nsh"
+	!undef INSTALL
+SectionEnd
 
 
 !ifndef SLIM
@@ -251,14 +252,6 @@ Section /o "Portable" SEC_PORTABLE
 SectionEnd
 
 
-SectionGroup "Skirmish AI plugins (Bots)"
-	!insertmacro SkirmishAIInstSection "AAI"
-	!insertmacro SkirmishAIInstSection "KAIK"
-	!insertmacro SkirmishAIInstSection "RAI"
-	!insertmacro SkirmishAIInstSection "E323AI"
-SectionGroupEnd
-
-
 !include "sections\sectiondesc.nsh"
 
 !ifndef SLIM
@@ -300,10 +293,6 @@ Function .onInit
 	${CheckExecutableRunning} "springsettings.exe" "Spring Settings"
 	skiprunchecks:
 
-	; The core cannot be deselected
-	IntOp $0 ${SEC_MAIN} | ${SF_RO}
-	SectionSetFlags ${SEC_MAIN} $0 ; make the core section read only
-
 !endif
 	; enable/disable sections depending on parameters
 	!include "sections/SetupSections.nsh"
@@ -326,6 +315,8 @@ Section Uninstall
 	${!echonow} "Processing: Uninstall"
 
 	!include "sections\main.nsh"
+	!include "sections\deprecated.nsh"
+	!include "sections\springsettings.nsh"
 
 	Delete "$INSTDIR\spring-multithreaded.exe"
 
@@ -346,8 +337,6 @@ Section Uninstall
 !ifndef SLIM
 	!include "sections\springlobby.nsh"
 !endif
-	!include "sections\luaui.nsh"
-
 	; All done
 	RMDir "$INSTDIR"
 

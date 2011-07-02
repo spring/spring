@@ -27,6 +27,7 @@ public:
 	 *   example: "MyGame 1.0 - Chicken Mode (Spring 0.83.0.1)"
 	 * @param titleShort will be displayed in the OS task-bar
 	 *   example: "MyGame"
+	 *   This may only ever be used under X11, but not QT(KDE) or Windows.
 	 * @see SDL_WM_SetCaption()
 	 */
 	static void SetCaption(const std::string& title,
