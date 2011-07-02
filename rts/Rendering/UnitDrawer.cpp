@@ -2119,7 +2119,7 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 	const int x2 = x1 + (buildInfo.GetXSize() * SQUARE_SIZE);
 	const int z1 = (int) (pos.z - (buildInfo.GetZSize() * 0.5f * SQUARE_SIZE));
 	const int z2 = z1 + (buildInfo.GetZSize() * SQUARE_SIZE);
-	const float h = uh->GetBuildHeight(pos, buildInfo.def);
+	const float h = uh->GetBuildHeight(pos, buildInfo.def, false);
 
 	const int canBuild = uh->TestUnitBuildSquare(
 		buildInfo,
