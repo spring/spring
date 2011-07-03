@@ -88,7 +88,6 @@ VAR REGISTRY ; if 1 registry values are written
 !ifndef SLIM
 !include "include\checkrunning.nsh"
 !endif
-!include "include\aiHelpers.nsh"
 !include "include\getParameterValue.nsh"
 
 ;!include "sections\ensureDotNet.nsh" ; deprecated, setup of zero-k installs .Net itself
