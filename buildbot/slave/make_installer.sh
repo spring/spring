@@ -69,9 +69,6 @@ done
 
 cd ${SOURCEDIR}
 
-echo "!define MINGWLIBS_DIR \"${MINGWLIBS_PATH}\"" > installer/custom_defines.nsi
-echo "!define BUILD_DIR \"${BUILDDIR}\"" >> installer/custom_defines.nsi
-
 ./installer/make_installer.pl -DMIN_PORTABLE_ARCHIVE=${MIN_PORTABLE_ARCHIVE} -DARCHIVEMOVER=${TMP_PATH}/${VERSION}_ArchiveMover.7z
 
 mv ./installer/spring*.exe ${TMP_PATH}
