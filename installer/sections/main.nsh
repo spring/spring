@@ -5,7 +5,7 @@
 
 	${!echonow} "Processing: engine"
 
-	!insertmacro extractFile "${MIN_PORTABLE_ARCHIVE}" "spring_engine.7z"
+	!insertmacro extractFile "${MIN_PORTABLE_ARCHIVE}" "spring_engine.7z" ""
 
 	; archive is portable, make it normal
 	Delete "$INSTDIR\springsettings.cfg"
