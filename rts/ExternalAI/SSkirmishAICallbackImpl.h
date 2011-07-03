@@ -492,7 +492,7 @@ EXPORT(float            ) skirmishAiCallback_UnitDef_getKamikazeDist(int skirmis
 
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isTargetingFacility(int skirmishAIId, int unitDefId);
 
-EXPORT(bool             ) skirmishAiCallback_UnitDef_isAbleToDGun(int skirmishAIId, int unitDefId);
+EXPORT(bool             ) skirmishAiCallback_UnitDef_canManualFire(int skirmishAIId, int unitDefId);
 
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isNeedGeo(int skirmishAIId, int unitDefId);
 

@@ -184,6 +184,9 @@ CWeapon* CUnitLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* udw)
 	} else if (weaponDef->type == "EmgCannon") {
 		weapon = new CEmgCannon(owner);
 	} else if (weaponDef->type == "DGun") {
+		// NOTE: no special connection to UnitDef::canManualFire
+		// (any type of weapon may be slaved to the button which
+		// controls manual firing) or the CMD_MANUALFIRE command
 		weapon = new CDGunWeapon(owner);
 	} else if (weaponDef->type == "StarburstLauncher") {
 		weapon = new CStarburstLauncher(owner);

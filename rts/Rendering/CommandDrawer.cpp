@@ -65,7 +65,7 @@ void CommandDrawer::DrawCommands(const CCommandAI* cai) const
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		switch (ci->GetID()) {
 			case CMD_ATTACK:
-			case CMD_DGUN: {
+			case CMD_MANUALFIRE: {
 				if (ci->params.size() == 1) {
 					const CUnit* unit = uh->GetUnit(ci->params[0]);
 
@@ -266,7 +266,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 				break;
 			}
 			case CMD_ATTACK:
-			case CMD_DGUN: {
+			case CMD_MANUALFIRE: {
 				if (ci->params.size() == 1) {
 					const CUnit* unit = uh->GetUnit(ci->params[0]);
 
@@ -507,7 +507,7 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
 				}
 			}
 			case CMD_ATTACK:
-			case CMD_DGUN: {
+			case CMD_MANUALFIRE: {
 				if (ci->params.size() == 1) {
 					const CUnit* unit = uh->GetUnit(ci->params[0]);
 

@@ -19,6 +19,7 @@ void initSUnitCommand(void* sUnitCommand) {
 #ifdef __cplusplus
 #ifdef    BUILDING_AI
 #include "LegacyCpp/Command.h"
+#define CMD_MANUALFIRE CMD_DGUN
 using namespace springLegacyAI;
 #else  // BUILDING_AI
 #include "Sim/Units/CommandAI/Command.h"
@@ -907,16 +908,20 @@ int toInternalUnitCommandTopic(int aiCmdTopic, const void* sUnitCommandData) {
 			internalUnitCommandTopic = CMD_STOCKPILE;
 			break;
 		}
+
 		case COMMAND_UNIT_D_GUN:
 		{
-			internalUnitCommandTopic = CMD_DGUN;
+			// FIXME
+			internalUnitCommandTopic = CMD_MANUALFIRE;
 			break;
 		}
 		case COMMAND_UNIT_D_GUN_POS:
 		{
-			internalUnitCommandTopic = CMD_DGUN;
+			// FIXME
+			internalUnitCommandTopic = CMD_MANUALFIRE;
 			break;
 		}
+
 		case COMMAND_UNIT_RESTORE_AREA:
 		{
 			internalUnitCommandTopic = CMD_RESTORE;
@@ -1140,8 +1145,9 @@ int extractAICommandTopic(const Command* engineCmd, int maxUnits) {
 			aiCommandTopic = COMMAND_UNIT_STOCKPILE;
 			break;
 		}
-		case CMD_DGUN:
+		case CMD_MANUALFIRE:
 		{
+			// FIXME
 			if (engineCmd->params.size() < 3) {
 				aiCommandTopic = COMMAND_UNIT_D_GUN;
 			} else {
@@ -1517,10 +1523,12 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 			c->timeOut = cmd->timeOut;
 			break;
 		}
+
 		case COMMAND_UNIT_D_GUN:
 		{
+			// FIXME
 			SDGunUnitCommand* cmd = (SDGunUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_DGUN, cmd->options);
+			c = new Command(CMD_MANUALFIRE, cmd->options);
 			c->timeOut = cmd->timeOut;
 
 			c->params.push_back(cmd->toAttackUnitId);
@@ -1528,8 +1536,9 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 		}
 		case COMMAND_UNIT_D_GUN_POS:
 		{
+			// FIXME
 			SDGunPosUnitCommand* cmd = (SDGunPosUnitCommand*) sUnitCommandData;
-			c = new Command(CMD_DGUN, cmd->options);
+			c = new Command(CMD_MANUALFIRE, cmd->options);
 			c->timeOut = cmd->timeOut;
 
 			c->params.push_back(cmd->pos_posF3[0]);
@@ -1537,6 +1546,7 @@ Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 			c->params.push_back(cmd->pos_posF3[2]);
 			break;
 		}
+
 		case COMMAND_UNIT_RESTORE_AREA:
 		{
 			SRestoreAreaUnitCommand* cmd = (SRestoreAreaUnitCommand*) sUnitCommandData;

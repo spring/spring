@@ -23,7 +23,6 @@
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "Sim/Weapons/DGunWeapon.h"
 #include "System/LogOutput.h"
 #include "System/myMath.h"
 #include "System/Util.h"
@@ -670,11 +669,6 @@ void CMobileCAI::ExecuteStop(Command &c)
 }
 
 
-void CMobileCAI::ExecuteDGun(Command &c)
-{
-	ExecuteAttack(c);
-}
-
 
 void CMobileCAI::ExecuteAttack(Command &c)
 {
@@ -743,7 +737,6 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 	// user clicked on enemy unit (note that we handle aircrafts slightly differently)
 	if (orderTarget) {
-		//bool b1 = owner->AttackUnit(orderTarget, c.id == CMD_DGUN);
 		bool b2 = false;
 		bool b3 = false;
 		bool b4 = false;
@@ -758,10 +751,11 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			}
 
 			CWeapon* w = owner->weapons.front();
-	
-			if (c.GetID() == CMD_DGUN) {
+
+			if (c.GetID() == CMD_MANUALFIRE) {
+				assert(owner->unitDef->canManualFire);
 				for (vector<CWeapon*>::iterator it = owner->weapons.begin(); it != owner->weapons.end(); ++it) {
-					if (dynamic_cast<CDGunWeapon*>(*it)) { // wd->type == "DGun"
+					if ((*it)->weaponDef->manualfire) {
 						w = *it; break;
 					}
 				}
@@ -769,7 +763,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 			// if we have at least one weapon then check if we
 			// can hit target with our first (meanest) one
-			b2 = w->TryTargetRotate(orderTarget, c.GetID() == CMD_DGUN);
+			b2 = w->TryTargetRotate(orderTarget, c.GetID() == CMD_MANUALFIRE);
 			b3 = Square(w->range - (w->relWeaponPos).Length()) > (orderTarget->pos.SqDistance(owner->pos));
 			b4 = w->TryTargetHeading(GetHeadingFromVector(-diff.x, -diff.z), orderTarget->pos, orderTarget != NULL, orderTarget);
 			edgeFactor = fabs(w->targetBorder);
@@ -799,7 +793,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 								owner->maxRange * 0.9f), true);
 				}
 			}
-			owner->AttackUnit(orderTarget, c.GetID() == CMD_DGUN);
+			owner->AttackUnit(orderTarget, c.GetID() == CMD_MANUALFIRE);
 		}
 
 		// if we're on hold pos in a temporary order, then none of the close-in
@@ -873,28 +867,29 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			// to be meanest) one
 			CWeapon* w = owner->weapons.front();
 
-			// XXX HACK - dgun overrides any checks
-			if (c.GetID() == CMD_DGUN) {
+			// XXX HACK - special weapon overrides any checks
+			if (c.GetID() == CMD_MANUALFIRE) {
+				assert(owner->unitDef->canManualFire);
 				float rr = owner->maxRange * owner->maxRange;
 
 				for (vector<CWeapon*>::iterator it = owner->weapons.begin(); it != owner->weapons.end(); ++it) {
-					if (dynamic_cast<CDGunWeapon*>(*it)) {
+					if ((*it)->weaponDef->manualfire) {
 						rr = (*it)->range * (*it)->range; break;
 					}
 				}
 
 				if (diff.SqLength() < rr) {
 					StopMove();
-					owner->AttackGround(pos, c.GetID() == CMD_DGUN);
+					owner->AttackGround(pos, c.GetID() == CMD_MANUALFIRE);
 					owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
 				}
 			} else {
-				const bool inAngle = w->TryTargetRotate(pos, c.GetID() == CMD_DGUN);
+				const bool inAngle = w->TryTargetRotate(pos, c.GetID() == CMD_MANUALFIRE);
 				const bool inRange = diff.SqLength2D() < Square(w->range - (w->relWeaponPos).Length2D());
 
 				if (inAngle || inRange) {
 					StopMove();
-					owner->AttackGround(pos, c.GetID() == CMD_DGUN);
+					owner->AttackGround(pos, c.GetID() == CMD_MANUALFIRE);
 					owner->moveType->KeepPointingTo(pos, owner->maxRange * 0.9f, true);
 				}
 			}

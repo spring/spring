@@ -1654,13 +1654,13 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 		const float3 pos(luaL_checkfloat(L, 2),
 		                 luaL_checkfloat(L, 3),
 		                 luaL_checkfloat(L, 4));
-		const bool dgun = lua_isboolean(L, 5) && lua_toboolean(L, 5);
-		unit->AttackGround(pos, dgun);
+		const bool manualFire = lua_isboolean(L, 5) && lua_toboolean(L, 5);
+		unit->AttackGround(pos, manualFire);
 	}
 	else if (args >= 2) {
 		CUnit* target = ParseRawUnit(L, __FUNCTION__, 2);
-		const bool dgun = lua_isboolean(L, 3) && lua_toboolean(L, 3);
-		unit->AttackUnit(target, dgun);
+		const bool manualFire = lua_isboolean(L, 3) && lua_toboolean(L, 3);
+		unit->AttackUnit(target, manualFire);
 	}
 	return 0;
 }
