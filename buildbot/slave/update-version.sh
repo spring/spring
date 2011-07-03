@@ -4,5 +4,7 @@ set -e
 
 FILE=rts/Game/GameVersion.cpp
 
-echo "setting version string '${VERSION}' in ${FILE}"
-sed -i -r '/\badditional\s+=/ s/"[^"]*"/"'"${VERSION}"'"/; s/#define GV_ADD_SPACE ""/#define GV_ADD_SPACE " "/' ${FILE}
+echo "setting version string '${VERSION_}' in ${FILE}"
+
+ESCAPED_VERSION=`echo "${VERSION_}" | sed 's@/@\\\\/@g'`
+sed -i -r '/\badditional\s+=/ s/"[^"]*"/"'"${ESCAPED_VERSION}"'"/; s/#define GV_ADD_SPACE ""/#define GV_ADD_SPACE " "/' ${FILE}
