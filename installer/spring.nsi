@@ -90,8 +90,6 @@ VAR REGISTRY ; if 1 registry values are written
 !endif
 !include "include\getParameterValue.nsh"
 
-;!include "sections\ensureDotNet.nsh" ; deprecated, setup of zero-k installs .Net itself
-
 
 ${!echonow} ""
 ${!echonow} "Base dir:   <engine-source-root>/installer/"
