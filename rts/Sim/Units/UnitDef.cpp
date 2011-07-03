@@ -214,7 +214,7 @@ UnitDef::UnitDef()
 , kamikazeDist(0.0f)
 , kamikazeUseLOS(false)
 , targfac(false)
-, canDGun(false)
+, canManualFire(false)
 , needGeo(false)
 , isFeature(false)
 , hideDamage(false)
@@ -526,7 +526,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	LuaTable weaponsTable = udTable.SubTable("weapons");
 	ParseWeaponsTable(weaponsTable);
 
-	canDGun = udTable.GetBool("canDGun", false);
+	canManualFire = udTable.GetBool("canDGun", false); // NOTE: deprecated, remove after 0.83.*
+	canManualFire = udTable.GetBool("canManualFire", canManualFire);
 	needGeo = false;
 
 	extractRange = mapInfo->map.extractorRadius * int(extractsMetal > 0.0f);

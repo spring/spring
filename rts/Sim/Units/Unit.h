@@ -85,8 +85,8 @@ public:
 	virtual void AddImpulse(const float3&);
 	virtual void FinishedBuilding();
 
-	bool AttackGround(const float3& pos, bool wantDGun, bool fpsMode = false);
-	bool AttackUnit(CUnit* unit, bool wantDGun, bool fpsMode = false);
+	bool AttackGround(const float3& pos, bool wantManualFire, bool fpsMode = false);
+	bool AttackUnit(CUnit* unit, bool wantManualFire, bool fpsMode = false);
 
 	int GetBlockingMapID() const { return id; }
 
@@ -270,7 +270,7 @@ public:
 	float maxRange;
 	bool haveTarget;
 	bool haveUserTarget;
-	bool haveDGunRequest;
+	bool haveManualFireRequest;
 	/// used to determine muzzle flare size
 	float lastMuzzleFlameSize;
 	float3 lastMuzzleFlameDir;
