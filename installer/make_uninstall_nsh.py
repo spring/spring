@@ -58,6 +58,7 @@ def writeNsh(files, paths, argv):
 		command=command+" " +arg
 
 	print "; created with: %s" % command
+	print ";"
 	for file in files:
 		print 'Delete "$INSTDIR\%s"'%(file)
 	for path in paths:
