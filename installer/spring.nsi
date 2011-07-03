@@ -209,15 +209,6 @@ SectionEnd
 
 !include "sections\sectiondesc.nsh"
 
-!ifndef SLIM
-Section -Documentation
-	!define INSTALL
-		${!echonow} "Processing: docs"
-		!include "sections\docs.nsh"
-	!undef INSTALL
-SectionEnd
-!endif
-
 Section -Post
 	${!echonow} "Processing: Registry entries"
 	IntOp $R0 ${SEC_PORTABLE} & ${SF_SELECTED} ; check if in normal mode
@@ -275,7 +266,6 @@ Section Uninstall
 
 	Delete "$INSTDIR\spring-multithreaded.exe"
 
-	!include "sections\docs.nsh"
 	!include "sections\shortcuts_startMenu.nsh"
 	!include "sections\shortcuts_desktop.nsh"
 !ifndef SLIM
