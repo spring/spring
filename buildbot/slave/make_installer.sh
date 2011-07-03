@@ -76,5 +76,5 @@ mv ./installer/spring*.exe ${TMP_PATH}
 #create symbolic links to current files
 cd ${TMP_PATH}/..
 ln -sfv ${REV}/*.exe spring_testing.exe
-ln -sfv ${REV}/spring_${VERSION}_minimal-portable.7z spring_minimal-portable.7z
+ln -sfv ${REV}/spring_${VERSION}_minimal-portable.7z spring_testing_minimal-portable.7z
 
