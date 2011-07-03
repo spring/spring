@@ -19,6 +19,7 @@
 #include "System/creg/creg_cond.h"
 
 #include <SDL_timer.h>
+#include <time.h>
 
 
 /**
