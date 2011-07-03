@@ -1,5 +1,6 @@
 ; This file is automaticly created, don't edit it!
 ; created with: make_uninstall_nsh.py spring_0.82.3-2436-g58d1e44_minimal-portable.7z 0.82.3-2436-g58d1e44_ArchiveMover.7z downloads/rapid-spring-latest-win32.7z:rapid\
+;
 Delete "$INSTDIR\fonts\AUTHORS"
 Delete "$INSTDIR\fonts\COPYING"
 Delete "$INSTDIR\fonts\CREDITS"
