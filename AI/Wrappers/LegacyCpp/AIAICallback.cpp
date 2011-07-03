@@ -1328,12 +1328,12 @@ float3 springLegacyAI::CAIAICallback::GetFeaturePos(int featureId) {
 }
 
 int springLegacyAI::CAIAICallback::GetNumUnitDefs() {
-	return sAICallback->getUnitDefs(skirmishAIId, NULL, NULL);
+	return sAICallback->getUnitDefs(skirmishAIId, NULL, 0);
 }
 
 void springLegacyAI::CAIAICallback::GetUnitDefList(const UnitDef** list) {
 
-	int size = sAICallback->getUnitDefs(skirmishAIId, NULL, NULL);
+	int size = sAICallback->getUnitDefs(skirmishAIId, NULL, 0);
 	int* unitDefIds = new int[size];
 
 	// get actual number of IDs
