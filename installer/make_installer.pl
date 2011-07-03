@@ -6,7 +6,6 @@
 use strict;
 use File::Basename;
 use File::Copy;
-use Cwd 'abs_path';
 use File::Spec::Functions;
 
 # Evaluate installer and root dirs
@@ -44,4 +43,4 @@ system("wget", "-N", "http://zero-k.info/lobby/setup_icon.ico");
 chdir("$installerDir/..");
 
 # Generate the installer
-system("makensis -V3 $nsisDefines @ARGV -DRAPID_ARCHIVE=downloads/rapid-spring-latest-win32.7z installer/spring.nsi");
+system("makensis -V3 $nsisDefines @ARGV -DNSI_UNINSTALL_FILES=sections/uninstall.nsh -DRAPID_ARCHIVE=downloads/rapid-spring-latest-win32.7z installer/spring.nsi");
