@@ -59,7 +59,7 @@ static void GetPlatformLocations(vector<string>& locations)
 		locations.push_back(verConfigPath);
 	}
 	// e.g. F:\Documents and Settings\MyUser\Local Settings\App Data
-	locations.push_back(strPath + "\\springsettings.cfg");
+	locations.push_back(string(strPath) + "\\springsettings.cfg");
 #endif
 }
 
