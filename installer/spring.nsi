@@ -183,7 +183,7 @@ SectionGroup "Tools"
 	Section "Simple spring-rapid downloader" SEC_RAPID
 		!define INSTALL
 			${!echonow} "Processing: rapid"
-			!include "sections\rapid.nsh"
+			!insertmacro extractFile "${RAPID_ARCHIVE}" "rapid-spring-latest-win32.7z" rapid
 		!undef INSTALL
 	SectionEnd
 !endif
@@ -273,7 +273,6 @@ Section Uninstall
 	!include "sections\portable.nsh"
 	!include "sections\zeroK.nsh"
 	!include "sections\tasServer.nsh"
-	!include "sections\rapid.nsh"
 !endif
 	!ifdef NSI_UNINSTALL_FILES
 	!include "${NSI_UNINSTALL_FILES}"

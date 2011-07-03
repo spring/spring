@@ -46,9 +46,9 @@ def writeNsh(files, paths):
 	"""
 	print "; This file is automaticly created, don't edit it!"
 	for file in files:
-		print 'Delete "%s"'%(file)
+		print 'Delete "$INSTDIR\%s"'%(file)
 	for path in paths:
-		print 'RmDir "%s"'%(path)
+		print 'RmDir "$INSTDIR\%s"'%(path)
 
 if len(sys.argv)<2:
 	print "Usage %s [<7z archive>]+"%(sys.argv[0])
