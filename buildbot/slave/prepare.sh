@@ -11,6 +11,8 @@
 # - BUILDDIR : absolute path to the build directory
 # - TMP_BASE : folder for temporary work items
 # - TMP_PATH : $TMP_BASE/$CONFIG/$BRANCH/$REV
+# - VERSION_ : version string, unsafe, may include special characters
+# - VERSION  : sanitized version string, suitable for filenames
 
 # Quit on error.
 set -e
@@ -37,4 +39,5 @@ else
    BRANCH_="{${BRANCH}}"
 fi
 
-VERSION="${CONFIG_}${BRANCH_}${REV}"
+VERSION_="${CONFIG_}${BRANCH_}${REV}"
+VERSION=`echo "${VERSION_}" | tr '<>:\"/\\|?*' -`
