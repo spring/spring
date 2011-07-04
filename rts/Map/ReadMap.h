@@ -134,7 +134,8 @@ public:
 	      unsigned char* GetTypeMapSynced()       { return &typeMap[0]; }
 	const float3* GetRawVertexNormalsUnsynced() const { return &rawVertexNormals[0]; }
 	const float3* GetVisVertexNormalsUnsynced() const { return &visVertexNormals[0]; }
-	const float3* GetFaceNormalsSynced() const { return &faceNormals[0]; }
+	const float3* GetFaceNormalsSynced() const { return &faceNormalsSynced[0]; }
+	const float3* GetFaceNormalsUnsynced() const { return &faceNormalsUnsynced[0]; }
 	const float3* GetCenterNormalsSynced() const { return &centerNormals[0]; }
 
 
@@ -181,12 +182,13 @@ protected:
 	 */
 	std::vector< float* > mipPointerHeightMaps;
 
-	std::vector<float3> rawVertexNormals;  /// size:  (mapx + 1) * (mapy + 1), contains one vertex normal per corner-heightmap pixel [UNSYNCED]
-	std::vector<float3> visVertexNormals;  /// size:  (mapx + 1) * (mapy + 1), contains one vertex normal per corner-heightmap pixel [UNSYNCED]
-	std::vector<float3> faceNormals;       /// size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [SYNCED]
-	std::vector<float3> centerNormals;     /// size:   mapx      *  mapy     , contains 1 interpolated normal per quad, same as (facenormal0+facenormal1).Normalize()) [SYNCED]
+	std::vector<float3> rawVertexNormals;    /// size:  (mapx + 1) * (mapy + 1), contains one vertex normal per corner-heightmap pixel [UNSYNCED]
+	std::vector<float3> visVertexNormals;    /// size:  (mapx + 1) * (mapy + 1), contains one vertex normal per corner-heightmap pixel [UNSYNCED]
+	std::vector<float3> faceNormalsSynced;   /// size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [SYNCED]
+	std::vector<float3> faceNormalsUnsynced; /// size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [UNSYNCED]
+	std::vector<float3> centerNormals;       /// size:   mapx      *  mapy     , contains 1 interpolated normal per quad, same as (facenormal0+facenormal1).Normalize()) [SYNCED]
 
-	std::vector<float> slopeMap;           /// size: (mapx/2)    * (mapy/2)  , same as 1.0 - interpolate(centernomal[i]).y [SYNCED]
+	std::vector<float> slopeMap;             /// size: (mapx/2)    * (mapy/2)  , same as 1.0 - interpolate(centernomal[i]).y [SYNCED]
 	std::vector<unsigned char> typeMap;
 
 	std::vector<HeightMapUpdate> unsyncedHeightMapUpdates;

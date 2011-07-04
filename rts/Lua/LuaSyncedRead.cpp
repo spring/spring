@@ -4413,7 +4413,7 @@ int LuaSyncedRead::GetGroundNormal(lua_State* L)
 {
 	const float x = luaL_checkfloat(L, 1);
 	const float z = luaL_checkfloat(L, 2);
-	const float3 normal = ground->GetSmoothNormal(x, z);
+	const float3 normal = ground->GetSmoothNormal(x, z, CLuaHandle::GetSynced(L));
 	lua_pushnumber(L, normal.x);
 	lua_pushnumber(L, normal.y);
 	lua_pushnumber(L, normal.z);
