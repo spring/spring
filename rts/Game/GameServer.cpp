@@ -182,7 +182,7 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 
 	maxUserSpeed = setup->maxSpeed;
 	minUserSpeed = setup->minSpeed;
-	noHelperAIs = (bool)setup->noHelperAIs;
+	noHelperAIs = setup->noHelperAIs;
 
 	{ // modify and save GameSetup text (remove passwords)
 		TdfParser parser(newGameData->GetSetup().c_str(), newGameData->GetSetup().length());

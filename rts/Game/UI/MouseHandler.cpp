@@ -59,7 +59,12 @@
 CONFIG(bool, HardwareCursor).defaultValue(false);
 CONFIG(bool, InvertMouse).defaultValue(false);
 CONFIG(float, DoubleClickTime).defaultValue(200.0f);
-CONFIG(float, ScrollWheelSpeed).defaultValue(25.0f);
+
+CONFIG(float, ScrollWheelSpeed)
+	.defaultValue(25.0f)
+	.minimumValue(-255.f)
+	.maximumValue(255.f);
+
 CONFIG(float, CrossSize).defaultValue(12.0f);
 CONFIG(float, CrossAlpha).defaultValue(0.5f);
 CONFIG(float, CrossMoveScale).defaultValue(1.0f);
@@ -116,7 +121,6 @@ CMouseHandler::CMouseHandler()
 	doubleClickTime = configHandler->GetFloat("DoubleClickTime") / 1000.0f;
 
 	scrollWheelSpeed = configHandler->GetFloat("ScrollWheelSpeed");
-	scrollWheelSpeed = Clamp(scrollWheelSpeed,-255.f,255.f);
 
 	crossSize      = configHandler->GetFloat("CrossSize");
 	crossAlpha     = configHandler->GetFloat("CrossAlpha");

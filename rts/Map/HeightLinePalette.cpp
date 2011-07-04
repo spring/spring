@@ -4,11 +4,11 @@
 
 #include "System/Config/ConfigHandler.h"
 
-CONFIG(int, ColorElev).defaultValue(1);
+CONFIG(bool, ColorElev).defaultValue(true);
 
 CHeightLinePalette::CHeightLinePalette()
 {
-	if (configHandler->GetInt("ColorElev")) {
+	if (configHandler->GetBool("ColorElev")) {
 		for(int a = 0; a < 86; ++a) {
 			heightLinePal[a*3 + 0] = 255 - a*3;
 			heightLinePal[a*3 + 1] = a*3;

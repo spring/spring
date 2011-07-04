@@ -52,7 +52,7 @@ using agui::Button;
 using agui::HorizontalLayout;
 
 CONFIG(std::string, address).defaultValue("");
-CONFIG(int, NoHelperAIs).defaultValue(0);
+CONFIG(bool, NoHelperAIs).defaultValue(false);
 CONFIG(std::string, LastSelectedSetting).defaultValue("");
 
 #ifdef WIN32
@@ -151,7 +151,7 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	game->AddPair("OnlyLocal", 1);
 	game->add_name_value("MyPlayerName", playername);
 
-	game->AddPair("NoHelperAIs", configHandler->GetInt("NoHelperAIs"));
+	game->AddPair("NoHelperAIs", configHandler->GetBool("NoHelperAIs"));
 
 	TdfParser::TdfSection* player0 = game->construct_subsection("PLAYER0");
 	player0->add_name_value("Name", playername);

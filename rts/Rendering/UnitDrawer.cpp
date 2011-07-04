@@ -74,7 +74,7 @@ CONFIG(bool, ShowHealthBars).defaultValue(true);
 CONFIG(bool, MultiThreadDrawUnit).defaultValue(true);
 CONFIG(bool, MultiThreadDrawUnitShadow).defaultValue(true);
 CONFIG(unsigned int, MaxDynamicModelLights).defaultValue(1U);
-CONFIG(int, AdvUnitShading).defaultValue(1);
+CONFIG(bool, AdvUnitShading).defaultValue(true);
 CONFIG(float, LODScale).defaultValue(1.0f);
 CONFIG(float, LODScaleShadow).defaultValue(1.0f);
 CONFIG(float, LODScaleReflection).defaultValue(1.0f);
@@ -91,15 +91,12 @@ inline static void SetUnitGlobalLODFactor(float value)
 static float GetLODFloat(const string& name)
 {
 	// NOTE: the inverse of the value is used
-	char* end;
-	const string valueStr = configHandler->GetString(name);
-	float value = (float)strtod(valueStr.c_str(), &end);
-	if ((end == valueStr.c_str()) || (value <= 0.0f)) {
+	const float value = configHandler->GetFloat(name);
+	if (value <= 0.0f) {
 		return 1.0f;
 	}
 	return (1.0f / value);
 }
-
 
 
 CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
@@ -238,7 +235,7 @@ bool CUnitDrawer::LoadModelShaders()
 		logOutput.Print("[LoadModelShaders] OpenGL ARB extensions missing for advanced unit shading");
 		return false;
 	}
-	if (configHandler->GetInt("AdvUnitShading") == 0) {
+	if (!configHandler->GetBool("AdvUnitShading")) {
 		// not allowed to do shader-based model rendering
 		return false;
 	}

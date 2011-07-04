@@ -9,7 +9,7 @@
 #include "System/Config/ConfigHandler.h"
 
 
-CONFIG(int, HeightMapTexture).defaultValue(1);
+CONFIG(bool, HeightMapTexture).defaultValue(true);
 
 HeightMapTexture heightMapTexture;
 
@@ -37,7 +37,7 @@ void HeightMapTexture::Init()
 	}
 	init = true;
 
-	if (!configHandler->GetInt("HeightMapTexture")) {
+	if (!configHandler->GetBool("HeightMapTexture")) {
 		return;
 	}
 

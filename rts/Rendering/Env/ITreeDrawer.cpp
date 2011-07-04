@@ -17,7 +17,7 @@
 #include "System/myMath.h"
 
 CONFIG(unsigned int, TreeRadius).defaultValue((unsigned int) (5.5f * 256));
-CONFIG(int, 3DTrees).defaultValue(1);
+CONFIG(bool, 3DTrees).defaultValue(true);
 
 ITreeDrawer* treeDrawer = NULL;
 
@@ -54,7 +54,7 @@ ITreeDrawer* ITreeDrawer::GetTreeDrawer()
 	ITreeDrawer* td = NULL;
 
 	try {
-		if (configHandler->GetInt("3DTrees")) {
+		if (configHandler->GetBool("3DTrees")) {
 			td = new CAdvTreeDrawer();
 		}
 	} catch (content_error& e) {

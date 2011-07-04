@@ -23,9 +23,19 @@
 #include "System/LogOutput.h"
 
 CONFIG(std::string, CamModeName).defaultValue("");
-CONFIG(int, CamMode).defaultValue(5);
-CONFIG(float, CamTimeFactor).defaultValue(1.0f);
-CONFIG(float, CamTimeExponent).defaultValue(4.0f);
+
+CONFIG(int, CamMode)
+	.defaultValue(CCameraHandler::CAMERA_MODE_SMOOTH)
+	.minimumValue(0)
+	.maximumValue(CCameraHandler::CAMERA_MODE_LAST - 1);
+
+CONFIG(float, CamTimeFactor)
+	.defaultValue(1.0f)
+	.minimumValue(0.0f);
+
+CONFIG(float, CamTimeExponent)
+	.defaultValue(4.0f)
+	.minimumValue(0.0f);
 
 
 CCameraHandler* camHandler = NULL;
@@ -59,15 +69,11 @@ CCameraHandler::CCameraHandler()
 		modeIndex = configHandler->GetInt("CamMode");
 	}
 
-	const unsigned int mode =
-		(unsigned int)std::max(0, std::min(modeIndex, (int)camControllers.size() - 1));
-
-	currCamCtrlNum = mode;
+	currCamCtrlNum = modeIndex;
 	currCamCtrl = camControllers[currCamCtrlNum];
 
-	const double z = 0.0; // casting problems...
-	cameraTimeFactor   = std::max(z, atof(configHandler->GetString("CamTimeFactor").c_str()));
-	cameraTimeExponent = std::max(z, atof(configHandler->GetString("CamTimeExponent").c_str()));
+	cameraTimeFactor   = configHandler->GetFloat("CamTimeFactor");
+	cameraTimeExponent = configHandler->GetFloat("CamTimeExponent");
 
 	RegisterAction("viewfps");
 	RegisterAction("viewta");

@@ -40,7 +40,7 @@ CGameSetup::CGameSetup()
 	, hostDemo(false)
 	, numDemoPlayers(0)
 	, gameStartDelay(0)
-	, noHelperAIs(0)
+	, noHelperAIs(false)
 {}
 
 CGameSetup::~CGameSetup()
@@ -70,7 +70,7 @@ void CGameSetup::LoadStartPositionsFromMap()
 	if (!mapParser.IsValid()) {
 		throw content_error("MapInfo: " + mapParser.GetErrorLog());
 	}
-	
+
 	for(size_t a = 0; a < teamStartingData.size(); ++a) {
 		float3 pos(1000.0f, 100.0f, 1000.0f);
 		if (!mapParser.GetStartPos(teamStartingData[a].teamStartNum, pos)) // don't fail when playing with more players than startpositions and we didn't use them anyway

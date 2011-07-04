@@ -7,7 +7,7 @@
 #include "ReadMap.h"
 #include "System/Config/ConfigHandler.h"
 
-CONFIG(int, MetalMapPalette).defaultValue(0);
+CONFIG(bool, MetalMapPalette).defaultValue(false);
 
 CR_BIND(CMetalMap,(NULL, 0, 0, 0.0f));
 
@@ -29,7 +29,7 @@ CMetalMap::CMetalMap(const unsigned char* map, int _sizeX, int _sizeZ, float _me
 		metalScale = 1.0f;
 	}
 
-	if (configHandler->GetInt("MetalMapPalette") == 1) {
+	if (configHandler->GetBool("MetalMapPalette")) {
 		/* Swap the green and blue channels. making metal go
 		   black -> blue -> cyan,
 		   rather than the usual black -> green -> cyan. */
