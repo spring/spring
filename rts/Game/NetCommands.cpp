@@ -304,13 +304,6 @@ void CGame::ClientReadNet()
 						{
 							playerHandler->Player(player)->readyToStart = !!inbuf[3];
 						}
-						if (pos.y != -500) // no marker marker when no pos set yet
-						{
-							char label[128];
-							SNPRINTF(label, sizeof(label), "Start %i", team);
-							inMapDrawerModel->AddPoint(pos, label, player);
-							// FIXME - erase old pos ?
-						}
 					}
 				}
 				AddTraffic(player, packetCode, dataLength);
