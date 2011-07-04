@@ -61,11 +61,19 @@
 CONFIG(std::string, MiniMapGeometry).defaultValue("2 2 200 200");
 CONFIG(bool, MiniMapFullProxy).defaultValue(true);
 CONFIG(int, MiniMapButtonSize).defaultValue(16);
-CONFIG(float, MiniMapUnitSize).defaultValue(2.5f);
+
+CONFIG(float, MiniMapUnitSize)
+	.defaultValue(2.5f)
+	.minimumValue(0.0f);
+
 CONFIG(float, MiniMapUnitExp).defaultValue(0.25f);
 CONFIG(float, MiniMapCursorScale).defaultValue(-0.5f);
 CONFIG(bool, MiniMapIcons).defaultValue(true);
-CONFIG(int, MiniMapDrawCommands).defaultValue(1);
+
+CONFIG(int, MiniMapDrawCommands)
+	.defaultValue(1)
+	.minimumValue(0);
+
 CONFIG(bool, MiniMapDrawProjectiles).defaultValue(true);
 CONFIG(bool, SimpleMiniMapColors).defaultValue(false);
 
@@ -109,12 +117,11 @@ CMiniMap::CMiniMap()
 	buttonSize = configHandler->GetInt("MiniMapButtonSize");
 
 	unitBaseSize = configHandler->GetFloat("MiniMapUnitSize");
-	unitBaseSize = std::max(0.0f, unitBaseSize);
 	unitExponent = configHandler->GetFloat("MiniMapUnitExp");
 
 	cursorScale = configHandler->GetFloat("MiniMapCursorScale");
 	useIcons = configHandler->GetBool("MiniMapIcons");
-	drawCommands = std::max(0, configHandler->GetInt("MiniMapDrawCommands"));
+	drawCommands = configHandler->GetInt("MiniMapDrawCommands");
 	drawProjectiles = configHandler->GetBool("MiniMapDrawProjectiles");
 	simpleColors = configHandler->GetBool("SimpleMiniMapColors");
 

@@ -55,7 +55,6 @@ public:
 
 	virtual void PushAction(const Action&);
 
-private:
 	enum {
 		CAMERA_MODE_FIRSTPERSON = 0,
 		CAMERA_MODE_OVERHEAD    = 1,
@@ -68,6 +67,7 @@ private:
 		CAMERA_MODE_LAST        = 8,
 	};
 
+private:
 	std::vector<CCameraController*> camControllers;
 	std::stack<unsigned int> controllerStack;
 	CCameraController* currCamCtrl;

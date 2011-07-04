@@ -91,7 +91,7 @@ public:
 	 */
 	unsigned int gameStartDelay;
 
-	int noHelperAIs;
+	bool noHelperAIs;
 
 private:
 	/**
