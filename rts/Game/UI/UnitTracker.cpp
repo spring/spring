@@ -16,8 +16,6 @@
 #include "System/LogOutput.h"
 
 
-CONFIG(int, ReflectiveWater).defaultValue(1);
-
 CUnitTracker unitTracker;
 
 
