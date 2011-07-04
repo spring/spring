@@ -191,7 +191,7 @@ struct LuaUIEvent {
 		#else
 			#define GML_DEBUG_LOCK(name)
 		#endif
-		#define GML_DRCMUTEX_LOCK(name) GML_DEBUG_LOCK(name); GML_MEASURE_LOCK_TIME(GML_THRMUTEX_LOCK(name, GML_DRAW|GML_SIM, *L->))
+		#define GML_DRCMUTEX_LOCK(name) GML_DEBUG_LOCK(name); GML_MEASURE_LOCK_TIME(GML_OBJMUTEX_LOCK(name, GML_DRAW|GML_SIM, *L->))
 	#else
 		#define GML_DRCMUTEX_LOCK(name)
 	#endif
@@ -205,5 +205,5 @@ struct LuaUIEvent {
 		#define SELECT_LUA_STATE()
 		#define SELECT_UNSYNCED_LUA_STATE()
 	#endif
-	#define GML_DRCMUTEX_LOCK(name) GML_MEASURE_LOCK_TIME(GML_THRMUTEX_LOCK(name, GML_DRAW|GML_SIM, *L->))
+	#define GML_DRCMUTEX_LOCK(name) GML_MEASURE_LOCK_TIME(GML_OBJMUTEX_LOCK(name, GML_DRAW|GML_SIM, *L->))
 #endif

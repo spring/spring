@@ -505,8 +505,9 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 	buttonList.clear();
 	menuName = "";
 
-	GML_RECMUTEX_LOCK(unit); // LayoutButtons
-	GML_RECMUTEX_LOCK(feat); // LayoutButtons
+	GML_THRMUTEX_LOCK(unit, GML_DRAW); // LayoutButtons
+	GML_THRMUTEX_LOCK(feat, GML_DRAW); // LayoutButtons
+//	GML_THRMUTEX_LOCK(proj, GML_DRAW); // LayoutButtons
 
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 6);
@@ -840,8 +841,9 @@ void CLuaUI::ExecuteDelayedXCalls() {
 		delayedXCall.swap(dxc);
 	}
 
-	GML_RECMUTEX_LOCK(unit); // ExecuteDelayedXCalls
-	GML_RECMUTEX_LOCK(feat); // ExecuteDelayedXCalls
+	GML_THRMUTEX_LOCK(unit, GML_DRAW); // ExecuteDelayedXCalls
+	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteDelayedXCalls
+//	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteDelayedXCalls
 
 	for(int i = 0; i < dxc.size(); ++i) {
 		DelayDataDump &ddp = dxc[i];
