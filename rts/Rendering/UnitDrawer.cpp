@@ -429,7 +429,7 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 					camera->pos  * (unit->drawMidPos.y / dif) +
 					unit->drawMidPos * (-camera->pos.y / dif);
 			}
-			if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > unit->drawRadius) {
+			if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z, false) > unit->drawRadius) {
 				return;
 			}
 		}

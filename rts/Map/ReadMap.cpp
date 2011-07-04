@@ -131,7 +131,8 @@ CReadMap::~CReadMap()
 	originalHeightMap.clear();
 	rawVertexNormals.clear();
 	visVertexNormals.clear();
-	faceNormals.clear();
+	faceNormalsSynced.clear();
+	faceNormalsUnsynced.clear();
 	centerNormals.clear();
 }
 
@@ -151,15 +152,15 @@ void CReadMap::Initialize()
 		char loadMsg[512];
 		const char* fmtString = "Loading Map (%u MB)";
 		unsigned int reqMemFootPrintKB =
-			((( gs->mapx + 1) * (gs->mapy + 1) * 2 * sizeof(float))         / 1024) +   // cornerHeightMap{Synced, Unsynced}
-			((( gs->mapx + 1) * (gs->mapy + 1) *     sizeof(float))         / 1024) +   // originalHeightMap
-			((  gs->mapx      *  gs->mapy      * 2 * sizeof(float3))        / 1024) +   // faceNormals
-			((  gs->mapx      *  gs->mapy          * sizeof(float3))        / 1024) +   // centerNormals
-			((( gs->mapx + 1) * (gs->mapy + 1) * 2 * sizeof(float3))        / 1024) +   // {raw, vis}VertexNormals
-			((  gs->mapx      *  gs->mapy          * sizeof(float))         / 1024) +   // centerHeightMap
-			((  gs->hmapx     *  gs->hmapy         * sizeof(float))         / 1024) +   // slopeMap
-			((  gs->hmapx     *  gs->hmapy         * sizeof(float))         / 1024) +   // MetalMap::extractionMap
-			((  gs->hmapx     *  gs->hmapy         * sizeof(unsigned char)) / 1024);    // MetalMap::metalMap
+			((( gs->mapx + 1) * (gs->mapy + 1) * 2 *   sizeof(float))         / 1024) +   // cornerHeightMap{Synced, Unsynced}
+			((( gs->mapx + 1) * (gs->mapy + 1) *       sizeof(float))         / 1024) +   // originalHeightMap
+			((  gs->mapx      *  gs->mapy      * 2*2 * sizeof(float3))        / 1024) +   // faceNormals{Synced, Unsynced}
+			((  gs->mapx      *  gs->mapy            * sizeof(float3))        / 1024) +   // centerNormals
+			((( gs->mapx + 1) * (gs->mapy + 1) * 2   * sizeof(float3))        / 1024) +   // {raw, vis}VertexNormals
+			((  gs->mapx      *  gs->mapy            * sizeof(float))         / 1024) +   // centerHeightMap
+			((  gs->hmapx     *  gs->hmapy           * sizeof(float))         / 1024) +   // slopeMap
+			((  gs->hmapx     *  gs->hmapy           * sizeof(float))         / 1024) +   // MetalMap::extractionMap
+			((  gs->hmapx     *  gs->hmapy           * sizeof(unsigned char)) / 1024);    // MetalMap::metalMap
 
 		// mipCenterHeightMaps[i]
 		for (int i = 1; i < numHeightMipMaps; i++) {
@@ -174,7 +175,8 @@ void CReadMap::Initialize()
 	float3::maxzpos = gs->mapy * SQUARE_SIZE - 1;
 
 	originalHeightMap.resize((gs->mapx + 1) * (gs->mapy + 1));
-	faceNormals.resize(gs->mapx * gs->mapy * 2);
+	faceNormalsSynced.resize(gs->mapx * gs->mapy * 2);
+	faceNormalsUnsynced.resize(gs->mapx * gs->mapy * 2);
 	centerNormals.resize(gs->mapx * gs->mapy);
 	centerHeightMap.resize(gs->mapx * gs->mapy);
 
@@ -284,27 +286,36 @@ void CReadMap::UpdateHeightMapSynced(int x1, int z1, int x2, int z2)
 	//! create the surface normals
 	for (int y = decy; y <= incy; y++) {
 		for (int x = decx; x <= incx; x++) {
-			const int idx0 = (y    ) * (gs->mapx + 1) + x;
-			const int idx1 = (y + 1) * (gs->mapx + 1) + x;
+			const int idxTL = (y    ) * (gs->mapx + 1) + x; // TL
+			const int idxBL = (y + 1) * (gs->mapx + 1) + x; // BL
 
-			float3 e1(-SQUARE_SIZE, heightmapSynced[idx0] - heightmapSynced[idx0 + 1],            0);
-			float3 e2(           0, heightmapSynced[idx0] - heightmapSynced[idx1    ], -SQUARE_SIZE);
+			//!  *---> e1
+			//!  |
+			//!  |
+			//!  v
+			//!  e2
+			float3 e1( SQUARE_SIZE, heightmapSynced[idxTL + 1] - heightmapSynced[idxTL],            0);
+			float3 e2(           0, heightmapSynced[idxBL    ] - heightmapSynced[idxTL],  SQUARE_SIZE);
 
-			const float3 n1 = e2.cross(e1).Normalize();
+			//! normal of top-left triangle (face) in square
+			const float3 fnTL = (e2.cross(e1)).Normalize();
 
-			//! triangle topright
-			faceNormals[(y * gs->mapx + x) * 2] = n1;
+			//!         e1
+			//!         ^
+			//!         |
+			//!         |
+			//!  e2 <---*
+			e1 = float3(-SQUARE_SIZE, heightmapSynced[idxBL    ] - heightmapSynced[idxBL + 1],            0);
+			e2 = float3(           0, heightmapSynced[idxTL + 1] - heightmapSynced[idxBL + 1], -SQUARE_SIZE);
 
-			e1 = float3( SQUARE_SIZE, heightmapSynced[idx1 + 1] - heightmapSynced[idx1    ],           0);
-			e2 = float3(           0, heightmapSynced[idx1 + 1] - heightmapSynced[idx0 + 1], SQUARE_SIZE);
+			//! normal of bottom-right triangle (face) in square
+			const float3 fnBR = (e2.cross(e1)).Normalize();
 
-			const float3 n2 = e2.cross(e1).Normalize();
+			faceNormalsSynced[(y * gs->mapx + x) * 2] = fnTL;
+			faceNormalsSynced[(y * gs->mapx + x) * 2 + 1] = fnBR;
 
-			//! triangle bottomleft
-			faceNormals[(y * gs->mapx + x) * 2 + 1] = n2;
-
-			//! face normal
-			centerNormals[y * gs->mapx + x] = (n1 + n2).Normalize();
+			//! square-normal
+			centerNormals[y * gs->mapx + x] = (fnTL + fnBR).Normalize();
 		}
 	}
 
@@ -314,24 +325,24 @@ void CReadMap::UpdateHeightMapSynced(int x1, int z1, int x2, int z2)
 			const int idx1 = (y*2 + 1) * (gs->mapx) + x*2;
 
 			float avgslope = 0.0f;
-			avgslope += faceNormals[(idx0    ) * 2    ].y;
-			avgslope += faceNormals[(idx0    ) * 2 + 1].y;
-			avgslope += faceNormals[(idx0 + 1) * 2    ].y;
-			avgslope += faceNormals[(idx0 + 1) * 2 + 1].y;
-			avgslope += faceNormals[(idx1    ) * 2    ].y;
-			avgslope += faceNormals[(idx1    ) * 2 + 1].y;
-			avgslope += faceNormals[(idx1 + 1) * 2    ].y;
-			avgslope += faceNormals[(idx1 + 1) * 2 + 1].y;
+			avgslope += faceNormalsSynced[(idx0    ) * 2    ].y;
+			avgslope += faceNormalsSynced[(idx0    ) * 2 + 1].y;
+			avgslope += faceNormalsSynced[(idx0 + 1) * 2    ].y;
+			avgslope += faceNormalsSynced[(idx0 + 1) * 2 + 1].y;
+			avgslope += faceNormalsSynced[(idx1    ) * 2    ].y;
+			avgslope += faceNormalsSynced[(idx1    ) * 2 + 1].y;
+			avgslope += faceNormalsSynced[(idx1 + 1) * 2    ].y;
+			avgslope += faceNormalsSynced[(idx1 + 1) * 2 + 1].y;
 			avgslope /= 8.0f;
 
-			float maxslope =              faceNormals[(idx0    ) * 2    ].y;
-			maxslope = std::min(maxslope, faceNormals[(idx0    ) * 2 + 1].y);
-			maxslope = std::min(maxslope, faceNormals[(idx0 + 1) * 2    ].y);
-			maxslope = std::min(maxslope, faceNormals[(idx0 + 1) * 2 + 1].y);
-			maxslope = std::min(maxslope, faceNormals[(idx1    ) * 2    ].y);
-			maxslope = std::min(maxslope, faceNormals[(idx1    ) * 2 + 1].y);
-			maxslope = std::min(maxslope, faceNormals[(idx1 + 1) * 2    ].y);
-			maxslope = std::min(maxslope, faceNormals[(idx1 + 1) * 2 + 1].y);
+			float maxslope =              faceNormalsSynced[(idx0    ) * 2    ].y;
+			maxslope = std::min(maxslope, faceNormalsSynced[(idx0    ) * 2 + 1].y);
+			maxslope = std::min(maxslope, faceNormalsSynced[(idx0 + 1) * 2    ].y);
+			maxslope = std::min(maxslope, faceNormalsSynced[(idx0 + 1) * 2 + 1].y);
+			maxslope = std::min(maxslope, faceNormalsSynced[(idx1    ) * 2    ].y);
+			maxslope = std::min(maxslope, faceNormalsSynced[(idx1    ) * 2 + 1].y);
+			maxslope = std::min(maxslope, faceNormalsSynced[(idx1 + 1) * 2    ].y);
+			maxslope = std::min(maxslope, faceNormalsSynced[(idx1 + 1) * 2 + 1].y);
 
 			//! smooth it a bit, so small holes don't block huge tanks
 			const float lerp = maxslope / avgslope;

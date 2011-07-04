@@ -17,22 +17,23 @@
 #undef far // avoid collision with windef.h
 #undef near
 
-static inline float Interpolate(float x, float y, const float* heightmap)
+static inline float InterpolateHeight(float x, float y, const float* heightmap)
 {
 	//! NOTE:
 	//! This isn't a bilinear interpolation. Instead it interpolates
 	//! on the 2 triangles that form the ground quad:
-	//! __________
-	//! |        /|
-	//! | dx+dy / |
-	//! |  <1  /  |
-	//! |     /   |
-	//! |    /    |
-	//! |   /     |
-	//! |  / dx+dy|
-	//! | /   >=1 |
-	//! |/        |
-	//! ----------
+	//!
+	//! TL __________ TR
+	//!    |        /|
+	//!    | dx+dy / |
+	//!    |  <1  /  |
+	//!    |     /   |
+	//!    |    /    |
+	//!    |   /     |
+	//!    |  / dx+dy|
+	//!    | /   >=1 |
+	//!    |/        |
+	//! BL ---------- BR
 
 	x = Clamp(x, 0.f, float3::maxxpos) / SQUARE_SIZE;
 	y = Clamp(y, 0.f, float3::maxzpos) / SQUARE_SIZE;
@@ -43,7 +44,7 @@ static inline float Interpolate(float x, float y, const float* heightmap)
 	const float dy = y - isy;
 	const int hs = isx + isy * (gs->mapx + 1);
 
-	if (dx + dy < 1) {
+	if (dx + dy < 1.0f) {
 		//! top left triangle
 		const float h00 = heightmap[hs                     ];
 		const float h10 = heightmap[hs + 1                 ];
@@ -52,8 +53,7 @@ static inline float Interpolate(float x, float y, const float* heightmap)
 		const float ydif = (dy) * (h01 - h00);
 
 		return h00 + xdif + ydif;
-	}
-	else {
+	} else {
 		//! bottom right triangle
 		const float h10 = heightmap[hs + 1                 ];
 		const float h11 = heightmap[hs + 1 + (gs->mapx + 1)];
@@ -63,65 +63,75 @@ static inline float Interpolate(float x, float y, const float* heightmap)
 
 		return h11 + xdif + ydif;
 	}
-	return 0; // can not be reached
+
+	return 0.0f; // can not be reached
 }
 
 
-static inline float LineGroundSquareCol(const float3& from, const float3& to, int xs, int ys, bool synced = true)
+static inline float LineGroundSquareCol(
+	const float* heightmap,
+	const float3* normalmap,
+	const float3& from,
+	const float3& to,
+	int xs,
+	int ys)
 {
 	if ((xs < 0) || (ys < 0) || (xs >= gs->mapx - 1) || (ys >= gs->mapy - 1))
 		return -1.0f;
 
-	const float* heightmap = readmap->GetCornerHeightMapSynced();
+	const float3& faceNormalTL = normalmap[(ys * gs->mapx + xs) * 2    ];
+	const float3& faceNormalBR = normalmap[(ys * gs->mapx + xs) * 2 + 1];
+	float3 cornerVertex;
 
-	#ifdef USE_UNSYNCED_HEIGHTMAP
-	if (!synced) {
-		heightmap = readmap->GetCornerHeightMapUnsynced();
-	}
-	#endif
+	//! The terrain grid is "composed" of two right-isosceles triangles
+	//! per square, so we have to check both faces (triangles) whether an
+	//! intersection exists
+	//! for each triangle, we pick one representative vertex
 
-	//! Info:
-	//! The terrain grid is constructed by a triangle strip
-	//! so we have to check 2 triangles for each quad
+	//! top-left corner vertex
+	cornerVertex.x = xs * SQUARE_SIZE;
+	cornerVertex.z = ys * SQUARE_SIZE;
+	cornerVertex.y = heightmap[ys * (gs->mapx + 1) + xs];
 
-	//! triangle topright
-	float3 tri;
-	tri.x = xs * SQUARE_SIZE;
-	tri.z = ys * SQUARE_SIZE;
-	tri.y = heightmap[ys * (gs->mapx + 1) + xs];
+	//! project <to - cornerVertex> vector onto the TL-normal
+	//! if <to> lies below the terrain, this will be negative
+	float toFacePlaneDist = (to - cornerVertex).dot(faceNormalTL);
+	float fromFacePlaneDist = 0.0f;
 
-	const float3& norm = readmap->GetFaceNormalsSynced()[(ys * gs->mapx + xs) * 2];
-	float side1 = (to - tri).dot(norm);
+	if (toFacePlaneDist <= 0.0f) {
+		//! project <from - cornerVertex> onto the TL-normal
+		fromFacePlaneDist = (from - cornerVertex).dot(faceNormalTL);
 
-	if (side1 <= 0.0f) {
-		float side2 = (from - tri).dot(norm);
+		if (fromFacePlaneDist != toFacePlaneDist) {
+			const float alpha = fromFacePlaneDist / (fromFacePlaneDist - toFacePlaneDist);
+			const float3 col = from * (1.0f - alpha) + (to * alpha);
 
-		if (side2 != side1) {
-			const float frontpart = side2 / (side2 - side1);
-			const float3 col = from * (1.0f - frontpart) + to * frontpart;
-
-			if ((col.x >= tri.x) && (col.z >= tri.z) && (col.x + col.z <= tri.x + tri.z + SQUARE_SIZE)) {
+			if ((col.x >= cornerVertex.x) && (col.z >= cornerVertex.z) && (col.x + col.z <= cornerVertex.x + cornerVertex.z + SQUARE_SIZE)) {
+				//! point of intersection is inside the TL triangle
 				return col.distance(from);
 			}
 		}
 	}
 
-	//! triangle bottomleft
-	tri.x += SQUARE_SIZE;
-	tri.z += SQUARE_SIZE;
-	tri.y = heightmap[(ys + 1) * (gs->mapx + 1) + xs + 1];
+	//! bottom-right corner vertex
+	cornerVertex.x += SQUARE_SIZE;
+	cornerVertex.z += SQUARE_SIZE;
+	cornerVertex.y = heightmap[(ys + 1) * (gs->mapx + 1) + (xs + 1)];
 
-	const float3& norm2 = readmap->GetFaceNormalsSynced()[(ys * gs->mapx + xs) * 2 + 1];
-	side1 = (to - tri).dot(norm2);
+	//! project <to - cornerVertex> vector onto the TL-normal
+	//! if <to> lies below the terrain, this will be negative
+	toFacePlaneDist = (to - cornerVertex).dot(faceNormalBR);
 
-	if (side1 <= 0.0f) {
-		float side2 = (from - tri).dot(norm2);
+	if (toFacePlaneDist <= 0.0f) {
+		//! project <from - cornerVertex> onto the BR-normal
+		fromFacePlaneDist = (from - cornerVertex).dot(faceNormalBR);
 
-		if (side2 != side1) {
-			const float frontpart = side2 / (side2 - side1);
-			const float3 col = from * (1.0f - frontpart) + to * frontpart;
+		if (fromFacePlaneDist != toFacePlaneDist) {
+			const float alpha = fromFacePlaneDist / (fromFacePlaneDist - toFacePlaneDist);
+			const float3 col = from * (1.0f - alpha) + (to * alpha);
 
-			if ((col.x <= tri.x) && (col.z <= tri.z) && (col.x + col.z >= tri.x + tri.z - SQUARE_SIZE)) {
+			if ((col.x <= cornerVertex.x) && (col.z <= cornerVertex.z) && (col.x + col.z >= cornerVertex.x + cornerVertex.z - SQUARE_SIZE)) {
+				//! point of intersection is inside the BR triangle
 				return col.distance(from);
 			}
 		}
@@ -202,18 +212,30 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 
 	bool keepgoing = true;
 
+	const float* hm = readmap->GetCornerHeightMapSynced();
+	const float3* nm = readmap->GetFaceNormalsSynced();
+
+	#ifdef USE_UNSYNCED_HEIGHTMAP
+	if (!synced) {
+		hm = readmap->GetCornerHeightMapUnsynced();
+		nm = readmap->GetFaceNormalsUnsynced();
+	}
+	#endif
+
 	if ((floor(from.x / SQUARE_SIZE) == floor(to.x / SQUARE_SIZE)) && (floor(from.z / SQUARE_SIZE) == floor(to.z / SQUARE_SIZE))) {
-		ret = LineGroundSquareCol(from, to, (int)floor(from.x / SQUARE_SIZE), (int)floor(from.z / SQUARE_SIZE), synced);
+		// <from> and <to> are the same
+		ret = LineGroundSquareCol(hm, nm,  from, to,  floor(from.x / SQUARE_SIZE), floor(from.z / SQUARE_SIZE));
 
 		if (ret >= 0.0f) {
 			return ret;
 		}
 	} else if (floor(from.x / SQUARE_SIZE) == floor(to.x / SQUARE_SIZE)) {
+		// ray is parallel to z-axis
 		float zp = from.z / SQUARE_SIZE;
 		int xp = floor(from.x / SQUARE_SIZE);
 
 		while (keepgoing) {
-			ret = LineGroundSquareCol(from, to, xp, (int)floor(zp), synced);
+			ret = LineGroundSquareCol(hm, nm,  from, to,  xp, floor(zp));
 
 			if (ret >= 0.0f) {
 				return ret + skippedDist;
@@ -227,11 +249,12 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 				zp -= 1.0f;
 		}
 	} else if (floor(from.z / SQUARE_SIZE) == floor(to.z / SQUARE_SIZE)) {
+		// ray is parallel to x-axis
 		float xp = from.x / SQUARE_SIZE;
 		int zp = floor(from.z / SQUARE_SIZE);
 
 		while (keepgoing) {
-			ret = LineGroundSquareCol(from, to, (int)floor(xp), zp, synced);
+			ret = LineGroundSquareCol(hm, nm,  from, to,  floor(xp), zp);
 
 			if (ret >= 0.0f) {
 				return ret + skippedDist;
@@ -245,6 +268,7 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 				xp -= 1.0f;
 		}
 	} else {
+		// general case
 		float xp = from.x;
 		float zp = from.z;
 
@@ -262,7 +286,7 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 			if (dz > 0.0f) zs = floor(zp * 1.0000001f / SQUARE_SIZE);
 			else           zs = floor(zp * 0.9999999f / SQUARE_SIZE);
 
-			ret = LineGroundSquareCol(from, to, (int)xs, (int)zs, synced);
+			ret = LineGroundSquareCol(hm, nm,  from, to,  xs, zs);
 
 			if (ret >= 0.0f) {
 				return ret + skippedDist;
@@ -304,14 +328,24 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 }
 
 
-float CGround::GetApproximateHeight(float x, float y) const
+float CGround::GetApproximateHeight(float x, float y, bool synced) const
 {
 	int xsquare = int(x) / SQUARE_SIZE;
 	int ysquare = int(y) / SQUARE_SIZE;
 	xsquare = Clamp(xsquare, 0, gs->mapx - 1);
 	ysquare = Clamp(ysquare, 0, gs->mapy - 1);
 
-	return readmap->GetCenterHeightMapSynced()[xsquare + ysquare * gs->mapx];
+	const float* heightmap = readmap->GetCenterHeightMapSynced();
+
+	/* TODO
+	#ifdef USE_UNSYNCED_HEIGHTMAP
+	if (!synced) {
+		heightmap = readmap->GetCenterHeightMapUnsynced();
+	}
+	#endif
+	*/
+
+	return heightmap[xsquare + ysquare * gs->mapx];
 }
 
 float CGround::GetHeightAboveWater(float x, float y, bool synced) const
@@ -329,39 +363,59 @@ float CGround::GetHeightReal(float x, float y, bool synced) const
 	}
 	#endif
 
-	return Interpolate(x, y, heightmap);
+	return InterpolateHeight(x, y, heightmap);
 }
 
 float CGround::GetOrigHeight(float x, float y) const
 {
-	return Interpolate(x, y, readmap->GetOriginalHeightMapSynced());
+	return InterpolateHeight(x, y, readmap->GetOriginalHeightMapSynced());
 }
 
 
-const float3& CGround::GetNormal(float x, float y) const
+const float3& CGround::GetNormal(float x, float y, bool synced) const
 {
 	int xsquare = int(x) / SQUARE_SIZE;
 	int ysquare = int(y) / SQUARE_SIZE;
 	xsquare = Clamp(xsquare, 0, gs->mapx - 1);
 	ysquare = Clamp(ysquare, 0, gs->mapy - 1);
 
-	return readmap->GetCenterNormalsSynced()[xsquare + ysquare * gs->mapx];
+	const float3* normalmap = readmap->GetCenterNormalsSynced();
+
+	/* TODO
+	#ifdef USE_UNSYNCED_HEIGHTMAP
+	if (!synced) {
+		normalmap = readmap->GetCenterNormalsUnsynced();
+	}
+	#endif
+	*/
+
+	return normalmap[xsquare + ysquare * gs->mapx];
 }
 
 
-float CGround::GetSlope(float x, float y) const
+float CGround::GetSlope(float x, float y, bool synced) const
 {
 	int xhsquare = int(x) / (2 * SQUARE_SIZE);
 	int yhsquare = int(y) / (2 * SQUARE_SIZE);
 	xhsquare = Clamp(xhsquare, 0, gs->hmapx - 1);
 	yhsquare = Clamp(yhsquare, 0, gs->hmapy - 1);
 
+	const float* slopemap = readmap->GetSlopeMapSynced();
+
+	/* TODO
+	#ifdef USE_UNSYNCED_HEIGHTMAP
+	if (!synced) {
+		slopemap = readmap->GetSlopeMapUnsynced();
+	}
+	#endif
+	*/
+
 	// return (1.0f - readmap->GetCenterNormalsSynced()[int(x) / SQUARE_SIZE + int(y) / SQUARE_SIZE * gs->mapx].y);
-	return readmap->GetSlopeMapSynced()[xhsquare + yhsquare * gs->hmapx];
+	return slopemap[xhsquare + yhsquare * gs->hmapx];
 }
 
 
-float3 CGround::GetSmoothNormal(float x, float y) const
+float3 CGround::GetSmoothNormal(float x, float y, bool synced) const
 {
 	int sx = (int) floor(x / SQUARE_SIZE);
 	int sy = (int) floor(y / SQUARE_SIZE);
@@ -403,11 +457,20 @@ float3 CGround::GetSmoothNormal(float x, float y) const
 	float ify = 1.0f - fy;
 	float ifx = 1.0f - fx;
 
-	const float3* normals = readmap->GetCenterNormalsSynced();
-	const float3& n1 = normals[sy  * gs->mapx + sx ] * ifx * ify;
-	const float3& n2 = normals[sy  * gs->mapx + sx2] *  fx * ify;
-	const float3& n3 = normals[sy2 * gs->mapx + sx ] * ifx * fy;
-	const float3& n4 = normals[sy2 * gs->mapx + sx2] *  fx * fy;
+	const float3* normalmap = readmap->GetCenterNormalsSynced();
+
+	/* TODO
+	#ifdef USE_UNSYNCED_HEIGHTMAP
+	if (!synced) {
+		normalmap = readmap->GetCenterNormalsUnsynced();
+	}
+	#endif
+	*/
+
+	const float3& n1 = normalmap[sy  * gs->mapx + sx ] * ifx * ify;
+	const float3& n2 = normalmap[sy  * gs->mapx + sx2] *  fx * ify;
+	const float3& n3 = normalmap[sy2 * gs->mapx + sx ] * ifx * fy;
+	const float3& n4 = normalmap[sy2 * gs->mapx + sx2] *  fx * fy;
 
 	float3 norm1 = n1 + n2 + n3 + n4;
 	norm1.Normalize();
@@ -423,11 +486,11 @@ float CGround::TrajectoryGroundCol(float3 from, const float3& flatdir, float len
 	std::pair<float,float> near_far = GetMapBoundaryIntersectionPoints(from, dir*length);
 
 	//! outside of map
-	if (near_far.second < 0.f)
-		return -1;
+	if (near_far.second < 0.0f)
+		return -1.0;
 
-	const float near = length * std::max(0.f, near_far.first);
-	const float far  = length * std::min(1.f, near_far.second);
+	const float near = length * std::max(0.0f, near_far.first);
+	const float far  = length * std::min(1.0f, near_far.second);
 
 	for (float l = near; l < far; l += SQUARE_SIZE) {
 		float3 pos(from + dir*l);
@@ -437,5 +500,6 @@ float CGround::TrajectoryGroundCol(float3 from, const float3& flatdir, float len
 			return l;
 		}
 	}
-	return -1.f;
+
+	return -1.0f;
 }

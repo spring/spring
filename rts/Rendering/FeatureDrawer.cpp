@@ -492,7 +492,7 @@ public:
 							camera->pos * (f->midPos.y / dif) +
 							f->midPos * (-camera->pos.y / dif);
 					}
-					if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > f->drawRadius) {
+					if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z, false) > f->drawRadius) {
 						continue;
 					}
 				}
