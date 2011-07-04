@@ -6,6 +6,7 @@
 #include <string>
 #include <map>
 #include <boost/noncopyable.hpp>
+#include <cstring>
 
 #include "float3.h"
 
