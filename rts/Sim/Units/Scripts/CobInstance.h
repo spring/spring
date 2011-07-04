@@ -44,7 +44,6 @@ protected:
 public:
 	std::vector<int> staticVars;
 	std::list<CCobThread *> threads;
-	bool smoothAnim;
 	const CCobFile* GetScriptAddr() const { return &script; }
 
 public:
@@ -88,17 +87,17 @@ public:
 	void StopSpin(int piece, int axis, int decel) {
 		CUnitScript::StopSpin(piece, axis, decel * TAANG2RAD);
 	}
-	void Turn(int piece, int axis, int speed, int destination, bool interpolated = false) {
+	void Turn(int piece, int axis, int speed, int destination) {
 		// COBWTF
 		if (axis == 2)
 			destination = -destination;
-		CUnitScript::Turn(piece, axis, speed * TAANG2RAD, destination * TAANG2RAD, interpolated);
+		CUnitScript::Turn(piece, axis, speed * TAANG2RAD, destination * TAANG2RAD);
 	}
-	void Move(int piece, int axis, int speed, int destination, bool interpolated = false) {
+	void Move(int piece, int axis, int speed, int destination) {
 		// COBWTF
 		if (axis == 0)
 			destination = -destination;
-		CUnitScript::Move(piece, axis, speed * CORDDIV, destination * CORDDIV, interpolated);
+		CUnitScript::Move(piece, axis, speed * CORDDIV, destination * CORDDIV);
 	}
 	void MoveNow(int piece, int axis, int destination) {
 		// COBWTF
@@ -111,18 +110,6 @@ public:
 		if (axis == 2)
 			destination = -destination;
 		CUnitScript::TurnNow(piece, axis, destination * TAANG2RAD);
-	}
-	void MoveSmooth(int piece, int axis, int destination, int delta, int deltaTime) {
-		// COBWTF
-		if (axis == 0)
-			destination = -destination;
-		CUnitScript::MoveSmooth(piece, axis, destination * CORDDIV, delta, deltaTime);
-	}
-	void TurnSmooth(int piece, int axis, int destination, int delta, int deltaTime) {
-		// COBWTF
-		if (axis == 2)
-			destination = -destination;
-		CUnitScript::TurnSmooth(piece, axis, destination * TAANG2RAD, delta, deltaTime);
 	}
 
 	// callins, called throughout sim

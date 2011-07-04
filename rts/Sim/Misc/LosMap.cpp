@@ -31,9 +31,6 @@ void CLosMap::SetSize(int2 newSize)
 void CLosMap::AddMapArea(int2 pos, int allyteam, int radius, int amount)
 {
 	#ifdef USE_UNSYNCED_HEIGHTMAP
-	static const float* shm = readmap->GetCornerHeightMapSynced();
-	static       float* uhm = readmap->GetCornerHeightMapUnsynced();
-
 	static const int LOS2HEIGHT_X = gs->mapx / size.x;
 	static const int LOS2HEIGHT_Z = gs->mapy / size.y;
 
@@ -72,11 +69,7 @@ void CLosMap::AddMapArea(int2 pos, int allyteam, int radius, int amount)
 			if (!updateUnsyncedHeightMap) { continue; }
 			if (!squareEnteredLOS) { continue; }
 
-			for (int hmx = lmx * LOS2HEIGHT_X; hmx < (lmx + 1) * LOS2HEIGHT_X; hmx++) {
-				for (int hmz = lmz * LOS2HEIGHT_Z; hmz < (lmz + 1) * LOS2HEIGHT_Z; hmz++) {
-					uhm[hmz * (gs->mapx + 1) + hmx] = shm[hmz * (gs->mapx + 1) + hmx];
-				}
-			}
+			readmap->PushVisibleHeightMapUpdate(lmx * LOS2HEIGHT_X, lmz * LOS2HEIGHT_Z,  (lmx + 1) * LOS2HEIGHT_X, (lmz + 1) * LOS2HEIGHT_Z);
 			#endif
 		}
 	}

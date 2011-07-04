@@ -1,7 +1,7 @@
 !ifdef INSTALL
 	SetOutPath "$INSTDIR"
 
-	File /r "downloads\TASServer.jar"
+	File "downloads\TASServer.jar"
 
 !else
 

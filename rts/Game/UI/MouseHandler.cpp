@@ -146,8 +146,8 @@ void CMouseHandler::LoadCursors()
 	AssignMouseCursor("Centroid",     "cursorcentroid",   mCenter,  false);
 	AssignMouseCursor("DeathWait",    "cursordwatch",     mCenter,  false);
 	AssignMouseCursor("DeathWait",    "cursorwait",       mCenter,  false); // backup
-	AssignMouseCursor("DGun",         "cursordgun",       mCenter,  false);
-	AssignMouseCursor("DGun",         "cursorattack",     mCenter,  false); // backup
+	AssignMouseCursor("ManualFire",   "cursordgun",       mCenter,  false); // FIXME
+	AssignMouseCursor("ManualFire",   "cursorattack",     mCenter,  false); // backup
 	AssignMouseCursor("Fight",        "cursorfight",      mCenter,  false);
 	AssignMouseCursor("Fight",        "cursorattack",     mCenter,  false); // backup
 	AssignMouseCursor("GatherWait",   "cursorgather",     mCenter,  false);
@@ -345,12 +345,18 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 
 		if (buttons[SDL_BUTTON_LEFT].movement > 4) {
 			// select box
-			float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*globalRendering->viewRange*1.4f);
+			float dist = ground->LineGroundCol(
+				buttons[SDL_BUTTON_LEFT].camPos,
+				buttons[SDL_BUTTON_LEFT].camPos +
+				buttons[SDL_BUTTON_LEFT].dir * globalRendering->viewRange * 1.4f,
+				false
+			);
+
 			if(dist<0)
 				dist=globalRendering->viewRange*1.4f;
 			float3 pos1=buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*dist;
 
-			dist=ground->LineGroundCol(camera->pos,camera->pos+dir*globalRendering->viewRange*1.4f);
+			dist = ground->LineGroundCol(camera->pos, camera->pos + dir * globalRendering->viewRange * 1.4f, false);
 			if(dist<0)
 				dist=globalRendering->viewRange*1.4f;
 			float3 pos2=camera->pos+dir*dist;
@@ -519,14 +525,18 @@ void CMouseHandler::DrawSelectionBox()
 	   (buttons[SDL_BUTTON_LEFT].movement > 4) &&
 	   (!inMapDrawer || !inMapDrawer->IsDrawMode())) {
 
-		float dist=ground->LineGroundCol(buttons[SDL_BUTTON_LEFT].camPos,
-		                                 buttons[SDL_BUTTON_LEFT].camPos
-		                                 + buttons[SDL_BUTTON_LEFT].dir*globalRendering->viewRange*1.4f);
+		float dist = ground->LineGroundCol(
+			buttons[SDL_BUTTON_LEFT].camPos,
+			buttons[SDL_BUTTON_LEFT].camPos +
+			buttons[SDL_BUTTON_LEFT].dir * globalRendering->viewRange * 1.4f,
+			false
+		);
+
 		if(dist<0)
 			dist=globalRendering->viewRange*1.4f;
 		float3 pos1=buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*dist;
 
-		dist=ground->LineGroundCol(camera->pos,camera->pos+dir*globalRendering->viewRange*1.4f);
+		dist = ground->LineGroundCol(camera->pos, camera->pos + dir * globalRendering->viewRange * 1.4f, false);
 		if(dist<0)
 			dist=globalRendering->viewRange*1.4f;
 		float3 pos2=camera->pos+dir*dist;
@@ -909,7 +919,7 @@ bool CMouseHandler::AssignMouseCursor(const std::string& cmdName,
 {
 	std::map<std::string, CMouseCursor*>::iterator cmdIt;
 	cmdIt = cursorCommandMap.find(cmdName);
-	const bool haveCmd  = (cmdIt  != cursorCommandMap.end());
+	const bool haveCmd = (cmdIt != cursorCommandMap.end());
 
 	std::map<std::string, CMouseCursor*>::iterator fileIt;
 	fileIt = cursorFileMap.find(fileName);

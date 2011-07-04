@@ -769,7 +769,8 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("capturable",  ud.capturable);
 	ADD_BOOL("repairable",  ud.repairable);
 
-	ADD_BOOL("canDGun",               ud.canDGun);
+	ADD_BOOL("canDGun",               ud.canManualFire); // NOTE: deprecated, remove after 0.83.*
+	ADD_BOOL("canManualFire",         ud.canManualFire);
 	ADD_BOOL("canCloak",              ud.canCloak);
 	ADD_BOOL("canRestore",            ud.canRestore);
 	ADD_BOOL("canRepair",             ud.canRepair);
@@ -891,8 +892,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_INT(  "flareTime",        ud.flareTime);
 	ADD_INT(  "flareSalvoSize",   ud.flareSalvoSize);
 	ADD_INT(  "flareSalvoDelay",  ud.flareSalvoDelay);
-
-	ADD_BOOL("smoothAnim", ud.smoothAnim);
 
 	ADD_BOOL("levelGround", ud.levelGround);
 	ADD_BOOL("strafeToAttack", ud.strafeToAttack);

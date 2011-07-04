@@ -145,7 +145,7 @@ bool CBFGroundDrawer::LoadMapShaders() {
 				extraDefs += (map->haveSplatTexture)?
 					"#define SMF_DETAIL_TEXTURE_SPLATTING 1\n":
 					"#define SMF_DETAIL_TEXTURE_SPLATTING 0\n";
-				extraDefs += (map->minheight > 0.0f || mapInfo->map.voidWater)?
+				extraDefs += (map->initMinHeight > 0.0f || mapInfo->map.voidWater)?
 					"#define SMF_WATER_ABSORPTION 0\n":
 					"#define SMF_WATER_ABSORPTION 1\n";
 				extraDefs += (map->GetSkyReflectModTexture() != 0)?
@@ -290,7 +290,7 @@ void CBFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 	const float alphainc = fastmath::PI2 / 32;
 	float alpha,r1,r2;
 
-	float3 p(0.0f, std::min(-200.0f, map->minheight - 400.0f), 0.0f);
+	float3 p(0.0f, std::min(-200.0f, map->initMinHeight - 400.0f), 0.0f);
 
 	for (int n = (camOufOfMap) ? 0 : 1; n < 4 ; ++n) {
 

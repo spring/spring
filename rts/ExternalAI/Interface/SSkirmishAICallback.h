@@ -855,7 +855,7 @@ struct SSkirmishAICallback {
 
 	bool              (CALLING_CONV *UnitDef_isTargetingFacility)(int skirmishAIId, int unitDefId);
 
-	bool              (CALLING_CONV *UnitDef_isAbleToDGun)(int skirmishAIId, int unitDefId);
+	bool              (CALLING_CONV *UnitDef_canManualFire)(int skirmishAIId, int unitDefId);
 
 	bool              (CALLING_CONV *UnitDef_isNeedGeo)(int skirmishAIId, int unitDefId);
 

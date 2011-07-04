@@ -69,10 +69,7 @@ public:
 	 * @brief Causes this CommandAI to execute the attack order c
 	 */
 	virtual void ExecuteAttack(Command& c);
-	/**
-	 * @brief executes the DGun command c
-	 */
-	virtual void ExecuteDGun(Command& c);
+
 	/**
 	 * @brief executes the stop command c
 	 */
