@@ -1582,17 +1582,18 @@ int LuaUnsyncedRead::GetActiveCommand(lua_State* L)
 
 int LuaUnsyncedRead::GetDefaultCommand(lua_State* L)
 {
-	GML_RECMUTEX_LOCK(gui); // GetDefaultCommand
-
 	if (guihandler == NULL) {
 		return 0;
 	}
 	CheckNoArgs(L, __FUNCTION__);
 
+	const int defCmd = guihandler->GetDefaultCommand(mouse->lastx, mouse->lasty);
+
+	GML_RECMUTEX_LOCK(gui); // GetDefaultCommand
+
 	const vector<CommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
 
-	const int defCmd = guihandler->GetDefaultCommand(mouse->lastx, mouse->lasty);
 	lua_pushnumber(L, defCmd + CMD_INDEX_OFFSET);
 	if ((defCmd < 0) || (defCmd >= cmdDescCount)) {
 		return 1;
