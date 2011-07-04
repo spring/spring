@@ -2196,7 +2196,7 @@ void AAIExecute::UpdateRessources()
 	averageMetalSurplus /= 8.0f;
 
 	// increase counter
-	counter = (++counter)%8;
+	counter = (counter + 1) % 8;
 }
 
 void AAIExecute::CheckStationaryArty()
