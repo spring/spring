@@ -209,10 +209,6 @@ def collect_modules(config, branch, rev, buildserv):
 	'''
 	log.info('Checking debug data availability...')
 
-	# characters not allowed in (windows) filenames are substituted with '-'
-	# see also: buildbot/slave/prepare.sh
-	branch = re.sub(r'[<>:"/\\|?*]', '-', branch)
-
 	if buildserv:
 		dir = os.path.join(WWWROOT, 'buildserv', config, branch, rev)
 	else:
