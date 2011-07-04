@@ -168,7 +168,7 @@ struct LuaUIEvent {
 	#define LUA_UI_BATCH_PUSH(...)
 #endif
 
-#if defined(USE_GML) && GML_ENABLE_SIM
+#if defined(USE_GML) && GML_ENABLE_SIM && GML_CALL_DEBUG
 	#define GML_MEASURE_LOCK_TIME(lock) unsigned luatime = SDL_GetTicks(); lock; luatime = SDL_GetTicks() - luatime; if(luatime >= 1) gmlLockTime += luatime
 #else
 	#define GML_MEASURE_LOCK_TIME(lock) lock
