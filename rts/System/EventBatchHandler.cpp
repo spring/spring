@@ -79,6 +79,9 @@ void EventBatchHandler::DeleteSyncedFeatures() {
 }
 
 void EventBatchHandler::UpdateProjectiles() {
+#if DETACH_SYNCED
+	syncedProjectileCreatedDestroyedEventBatch.delay_delete();
+#endif
 	syncedProjectileCreatedDestroyedEventBatch.delay_add();
 	unsyncedProjectileCreatedDestroyedEventBatch.delay_delete();
 	unsyncedProjectileCreatedDestroyedEventBatch.delay_add();
@@ -86,12 +89,17 @@ void EventBatchHandler::UpdateProjectiles() {
 void EventBatchHandler::UpdateDrawProjectiles() {
 	GML_STDMUTEX_LOCK(rproj); // UpdateDrawProjectiles
 
+#if DETACH_SYNCED
+	syncedProjectileCreatedDestroyedEventBatch.delete_delayed();
+#endif
 	syncedProjectileCreatedDestroyedEventBatch.add_delayed();
 	unsyncedProjectileCreatedDestroyedEventBatch.delete_delayed();
 	unsyncedProjectileCreatedDestroyedEventBatch.add_delayed();
 }
 void EventBatchHandler::DeleteSyncedProjectiles() {
+#if !DETACH_SYNCED
 	syncedProjectileCreatedDestroyedEventBatch.remove_erased_synced();
+#endif
 }
 
 void EventBatchHandler::UpdateObjects() {

@@ -65,6 +65,7 @@ bool piececmp::operator() (const FlyingPiece* fp1, const FlyingPiece* fp2) const
 	return (fp1 > fp2);
 }
 
+void projdetach::Detach(CProjectile *p) { p->Detach(); }
 
 
 //////////////////////////////////////////////////////////////////////
@@ -94,6 +95,7 @@ CProjectileHandler::CProjectileHandler()
 
 CProjectileHandler::~CProjectileHandler()
 {
+	syncedProjectiles.detach_all();
 	syncedProjectiles.clear(); // synced first, to avoid callback crashes
 	unsyncedProjectiles.clear();
 
@@ -184,7 +186,11 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 
 				freeUnsyncedIDs.push_back(p->id);
 #endif
+#if DETACH_SYNCED
+				pci = pc.erase_detach(pci);
+#else
 				pci = pc.erase_delete(pci);
+#endif
 			}
 		} else {
 			p->Update();
@@ -218,12 +224,18 @@ void CProjectileHandler::Update()
 			GML_STDMUTEX_LOCK(rproj); // Update
 
 			if (syncedProjectiles.can_delete_synced()) {
+#if !DETACH_SYNCED
 				GML_RECMUTEX_LOCK(proj); // Update
+#endif
 
 				eventHandler.DeleteSyncedProjectiles();
 				//! delete all projectiles that were
 				//! queued (push_back'ed) for deletion
+#if DETACH_SYNCED
+				syncedProjectiles.detach_erased_synced();
+#else
 				syncedProjectiles.delete_erased_synced();
+#endif
 			}
 
 			eventHandler.UpdateProjectiles();

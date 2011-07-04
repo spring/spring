@@ -85,10 +85,17 @@ CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, boo
 	GML_GET_TICKS(lastProjUpdate);
 }
 
-CProjectile::~CProjectile() {
+void CProjectile::Detach() {
+	// SYNCED
 	if (synced) {
 		qf->RemoveProjectile(this);
 	}
+	CExpGenSpawnable::Detach();
+}
+
+CProjectile::~CProjectile() {
+	// UNSYNCED
+	assert(!synced || detached);
 }
 
 void CProjectile::Init(const float3& offset, CUnit* owner)

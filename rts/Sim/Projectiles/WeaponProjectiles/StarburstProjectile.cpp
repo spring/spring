@@ -128,8 +128,15 @@ CStarburstProjectile::CStarburstProjectile(
 	cegID = gCEG->Load(explGenHandler, cegTag);
 }
 
+void CStarburstProjectile::Detach()
+{
+	// SYNCED
+	CWeaponProjectile::Detach();
+}
+
 CStarburstProjectile::~CStarburstProjectile()
 {
+	// UNSYNCED
 	delete numCallback;
 	if (curCallback) {
 		curCallback->drawCallbacker = 0;

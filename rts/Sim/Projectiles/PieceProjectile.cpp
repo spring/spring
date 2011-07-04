@@ -145,9 +145,15 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 	ph->AddProjectile(this);
 }
 
+void CPieceProjectile::Detach()
+{
+	// SYNCED
+	CProjectile::Detach();
+}
 
 CPieceProjectile::~CPieceProjectile()
 {
+	// UNSYNCED
 	delete numCallback;
 
 	if (curCallback)
