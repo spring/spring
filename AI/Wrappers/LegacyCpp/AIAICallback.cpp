@@ -685,7 +685,7 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 		unitDef->canKamikaze = sAICallback->UnitDef_isAbleToKamikaze(skirmishAIId, unitDefId);
 		unitDef->kamikazeDist = sAICallback->UnitDef_getKamikazeDist(skirmishAIId, unitDefId);
 		unitDef->targfac = sAICallback->UnitDef_isTargetingFacility(skirmishAIId, unitDefId);
-		unitDef->canDGun = sAICallback->UnitDef_isAbleToDGun(skirmishAIId, unitDefId);
+		unitDef->canDGun = sAICallback->UnitDef_canManualFire(skirmishAIId, unitDefId);
 		unitDef->needGeo = sAICallback->UnitDef_isNeedGeo(skirmishAIId, unitDefId);
 		unitDef->isFeature = sAICallback->UnitDef_isFeature(skirmishAIId, unitDefId);
 		unitDef->hideDamage = sAICallback->UnitDef_isHideDamage(skirmishAIId, unitDefId);
@@ -1328,12 +1328,12 @@ float3 springLegacyAI::CAIAICallback::GetFeaturePos(int featureId) {
 }
 
 int springLegacyAI::CAIAICallback::GetNumUnitDefs() {
-	return sAICallback->getUnitDefs(skirmishAIId, NULL, NULL);
+	return sAICallback->getUnitDefs(skirmishAIId, NULL, 0);
 }
 
 void springLegacyAI::CAIAICallback::GetUnitDefList(const UnitDef** list) {
 
-	int size = sAICallback->getUnitDefs(skirmishAIId, NULL, NULL);
+	int size = sAICallback->getUnitDefs(skirmishAIId, NULL, 0);
 	int* unitDefIds = new int[size];
 
 	// get actual number of IDs

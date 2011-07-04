@@ -20,7 +20,7 @@ make install DESTDIR=${DEST}
 
 #strip symbols and archive them
 cd ${INSTALLDIR}
-EXECUTABLES="spring.exe spring-dedicated.exe spring-multithreaded.exe spring-headless.exe unitsync.dll ArchiveMover.exe $(find AI/Skirmish -name SkirmishAI.dll) $(find AI/Interfaces -name AIInterface.dll)"
+EXECUTABLES="spring.exe spring-dedicated.exe spring-multithreaded.exe spring-headless.exe unitsync.dll ArchiveMover.exe springserver.dll $(find AI/Skirmish -name SkirmishAI.dll) $(find AI/Interfaces -name AIInterface.dll)"
 for tostripfile in ${EXECUTABLES}; do
 	if [ -f ${tostripfile} ]; then
 		# dont strip binaries that we processed earlier
@@ -38,9 +38,12 @@ done
 
 mkdir -p ${TMP_PATH}
 
+#absolute path to the minimal portable (engine, unitsync + ais)
+MIN_PORTABLE_ARCHIVE=${TMP_PATH}/spring_${VERSION}_minimal-portable.7z
+
 #create portable spring excluding shard (ask AF why its excluded)
 touch ${INSTALLDIR}/springsettings.cfg
-${SEVENZIP} ${TMP_PATH}/spring_${VERSION}_portable.7z ${INSTALLDIR}/* -x!spring-dedicated.exe -x!spring-headless.exe -x!ArchiveMover.exe -xr!*.dbg -x!AI/Skirmish/Shard
+${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -x!spring-dedicated.exe -x!spring-headless.exe -x!ArchiveMover.exe -xr!*.dbg -x!AI/Skirmish/Shard
 # compress files excluded from portable archive
 for file in spring-dedicated.exe spring-headless.exe ArchiveMover.exe; do
 	name=${file%.*}
@@ -66,11 +69,12 @@ done
 
 cd ${SOURCEDIR}
 
-echo "!define MINGWLIBS_DIR \"${MINGWLIBS_PATH}\"" > installer/custom_defines.nsi
-echo "!define BUILD_DIR \"${BUILDDIR}\"" >> installer/custom_defines.nsi
-
-# The 0 means: do not define DIST_DIR
-./installer/make_installer.pl 0 -DPORTABLE_ARCHIVE=${TMP_PATH}/spring_${VERSION}_portable.7z -DARCHIVEMOVER=${TMP_PATH}/${VERSION}_ArchiveMover.7z
+./installer/make_installer.pl -DMIN_PORTABLE_ARCHIVE=${MIN_PORTABLE_ARCHIVE} -DARCHIVEMOVER=${TMP_PATH}/${VERSION}_ArchiveMover.7z
 
 mv ./installer/spring*.exe ${TMP_PATH}
+
+#create symbolic links to current files
+cd ${TMP_PATH}/..
+ln -sfv ${REV}/*.exe spring_testing.exe
+ln -sfv ${REV}/spring_${VERSION}_minimal-portable.7z spring_testing_minimal-portable.7z
 

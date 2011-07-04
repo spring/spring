@@ -110,7 +110,7 @@ else -- begin synced section
 
 local GetTeamStartPosition = Spring.GetTeamStartPosition
 local GetUnitPosition = Spring.GetUnitPosition
-local CMD_DGUN = CMD.DGUN
+local CMD_MANUALFIRE = CMD.MANUALFIRE
 
 local teamStartPosVec = {} -- cache for team starting pos
 
@@ -122,9 +122,8 @@ function SqDistance(one, two)
 	return dx*dx + dy*dy + dz*dz
 end
 
-function gadget:AllowCommand(unitID, unitDefID, teamID, cmdID, cmdParams, cmdOptions, cmdTag, synced) -- restrict the dgun command to the allowed area
-
-	if cmdID ~= CMD_DGUN then -- pass all non-DGun commands
+function gadget:AllowCommand(unitID, unitDefID, teamID, cmdID, cmdParams, cmdOptions, cmdTag, synced)
+	if cmdID ~= CMD_MANUALFIRE then -- pass all non-dgun commands
 		return true
 	end
 
@@ -145,7 +144,8 @@ function gadget:AllowCommand(unitID, unitDefID, teamID, cmdID, cmdParams, cmdOpt
 	end
 	local unitPos = {unitX,unitY,unitZ}
 
-	if SqDistance(teamStartPos,unitPos) > dgunRadiusSquared then -- unit outside of allowed dgun range, block the command
+	-- restrict the command to the allowed area
+	if SqDistance(teamStartPos,unitPos) > dgunRadiusSquared then -- unit outside of allowed range, block the command
 		return false
 	end
 

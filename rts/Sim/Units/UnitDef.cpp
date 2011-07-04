@@ -214,7 +214,7 @@ UnitDef::UnitDef()
 , kamikazeDist(0.0f)
 , kamikazeUseLOS(false)
 , targfac(false)
-, canDGun(false)
+, canManualFire(false)
 , needGeo(false)
 , isFeature(false)
 , hideDamage(false)
@@ -297,14 +297,11 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	idleAutoHeal = udTable.GetFloat("idleAutoHeal", 10.0f) * (UNIT_SLOWUPDATE_RATE / float(GAME_SPEED));
 	idleTime     = udTable.GetInt("idleTime", 600);
 
-	metalCost = udTable.GetFloat("buildCostMetal", 0.0f);
-	if (metalCost < 1.0f) {
-		metalCost = 1.0f; //avoid some nasty divide by 0 etc
-	}
-	mass = udTable.GetFloat("mass", 0.0f);
-	if (mass <= 0.0f) {
-		mass = metalCost;
-	}
+	// iff a mass value is not defined, default to metalCost
+	// (do not allow it to be zero or negative in either case)
+	metalCost = std::max(1.0f, udTable.GetFloat("buildCostMetal", 0.0f));
+	mass = std::max(1.0f, udTable.GetFloat("mass", metalCost));
+
 	energyCost = udTable.GetFloat("buildCostEnergy", 0.0f);
 	buildTime = udTable.GetFloat("buildTime", 0.0f);
 	if (buildTime < 1.0f) {
@@ -526,7 +523,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	LuaTable weaponsTable = udTable.SubTable("weapons");
 	ParseWeaponsTable(weaponsTable);
 
-	canDGun = udTable.GetBool("canDGun", false);
+	canManualFire = udTable.GetBool("canDGun", false); // NOTE: deprecated, remove after 0.83.*
+	canManualFire = udTable.GetBool("canManualFire", canManualFire);
 	needGeo = false;
 
 	extractRange = mapInfo->map.extractorRadius * int(extractsMetal > 0.0f);
@@ -623,8 +621,10 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	// footprint sizes are assumed to be expressed in TA-engine units;
 	// Spring's heightmap resolution is double the footprint (yardmap)
-	// resolution, so we scale the values
-	// NOTE that this is done for the MoveData footprints as well
+	// resolution, so we scale the values (which are not allowed to be
+	// 0)
+	// NOTE that this is done for the FeatureDef and MoveData footprints
+	// as well
 	xsize = std::max(1 * 2, (udTable.GetInt("footprintX", 1) * 2));
 	zsize = std::max(1 * 2, (udTable.GetInt("footprintZ", 1) * 2));
 

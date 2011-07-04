@@ -33,7 +33,6 @@ public:
 	void StopSlowGuard();
 	void StartSlowGuard(float speed);
 	void ExecuteAttack(Command& c);
-	void ExecuteDGun(Command& c);
 	void ExecuteStop(Command& c);
 
 	bool RefuelIfNeeded();

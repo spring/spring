@@ -41,7 +41,9 @@ ${toggleSection} "NODESKTOPLINK" ${SEC_DESKTOP}
 !ifdef ARCHIVEMOVER
 ${toggleSection} "NOARCHIVEMOVER" ${SEC_ARCHIVEMOVER}
 !endif
+!ifdef RAPID_ARCHIVE
 ${toggleSection} "NORAPID" ${SEC_RAPID}
+!endif
 
 !endif
 ; startmenu

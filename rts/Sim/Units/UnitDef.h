@@ -341,7 +341,7 @@ public:
 	bool kamikazeUseLOS;
 
 	bool targfac;
-	bool canDGun;
+	bool canManualFire;
 	bool needGeo;
 	bool isFeature;
 	bool hideDamage;
