@@ -337,7 +337,6 @@ void CProjectileHandler::CheckUnitCollisions(
 		CUnit* unit = *ui;
 
 		const CUnit* attacker = p->owner();
-		const bool friendlyShot = (attacker && (unit->allyteam == attacker->allyteam));
 		const bool raytraced = (unit->collisionVolume->GetTestType() == CollisionVolume::COLVOL_HITTEST_CONT);
 
 		// if this unit fired this projectile, always ignore
