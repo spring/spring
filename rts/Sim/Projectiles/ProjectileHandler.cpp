@@ -336,16 +336,21 @@ void CProjectileHandler::CheckUnitCollisions(
 	for (CUnit** ui = &tempUnits[0]; ui != endUnit; ++ui) {
 		CUnit* unit = *ui;
 
-		const bool friendlyShot = (p->owner() && (unit->allyteam == p->owner()->allyteam));
+		const CUnit* attacker = p->owner();
+		const bool friendlyShot = (attacker && (unit->allyteam == attacker->allyteam));
 		const bool raytraced = (unit->collisionVolume->GetTestType() == CollisionVolume::COLVOL_HITTEST_CONT);
 
-		// if this unit fired this projectile or (this unit is in the
-		// same allyteam as the unit that shot this projectile and we
-		// are ignoring friendly collisions)
-		if (p->owner() == unit || ((p->GetCollisionFlags() & Collision::NOFRIENDLIES) && friendlyShot)) {
+		// if this unit fired this projectile, always ignore
+		if (attacker == unit) {
 			continue;
 		}
 
+		if (p->GetCollisionFlags() & Collision::NOFRIENDLIES) {
+			if (attacker != NULL && (unit->allyteam == attacker->allyteam)) { continue; }
+		}
+		if (p->GetCollisionFlags() & Collision::NOENEMIES) {
+			if (attacker != NULL && (unit->allyteam != attacker->allyteam)) { continue; }
+		}
 		if (p->GetCollisionFlags() & Collision::NONEUTRALS) {
 			if (unit->IsNeutral()) { continue; }
 		}
@@ -446,9 +451,14 @@ void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc) {
 	for (pci = pc.begin(); pci != pc.end(); ++pci) {
 		CProjectile* p = *pci;
 
+		if (p->GetCollisionFlags() & Collision::NOGROUND) {
+			continue;
+		}
+
 		if (p->checkCol) {
 			// too many projectiles seem to impact the ground before
 			// actually hitting so don't subtract the projectile radius
+			// NOTE: why are we not using Ground::CheckColSquare here?
 			if (ground->GetHeightAboveWater(p->pos.x, p->pos.z) > p->pos.y /* - p->radius*/) {
 				p->Collision();
 			}

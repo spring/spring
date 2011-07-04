@@ -81,12 +81,12 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	//FIXME may be smarter to merge the collideXYZ tags with avoidXYZ and removing the collisionFlags tag (and move the code into CWeapon)?
 	wd.collisionFlags = 0;
-	const bool collideFriendly = wdTable.GetBool("collideFriendly", true);
-	const bool collideFeature  = wdTable.GetBool("collideFeature",  true);
-	const bool collideNeutral  = wdTable.GetBool("collideNeutral",  true);
-	if (!collideFriendly) { wd.collisionFlags |= Collision::NOFRIENDLIES; }
-	if (!collideFeature)  { wd.collisionFlags |= Collision::NOFEATURES;  }
-	if (!collideNeutral)  { wd.collisionFlags |= Collision::NONEUTRALS;  }
+
+	if (!wdTable.GetBool("collideEnemy",    true)) { wd.collisionFlags |= Collision::NOENEMIES;    }
+	if (!wdTable.GetBool("collideFriendly", true)) { wd.collisionFlags |= Collision::NOFRIENDLIES; }
+	if (!wdTable.GetBool("collideFeature",  true)) { wd.collisionFlags |= Collision::NOFEATURES;   }
+	if (!wdTable.GetBool("collideNeutral",  true)) { wd.collisionFlags |= Collision::NONEUTRALS;   }
+	if (!wdTable.GetBool("collideGround",   true)) { wd.collisionFlags |= Collision::NOGROUND;     }
 
 	wd.minIntensity = wdTable.GetFloat("minIntensity", 0.0f);
 

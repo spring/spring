@@ -149,6 +149,7 @@ CGround::~CGround()
 	delete readmap; readmap = NULL;
 }
 
+/*
 void CGround::CheckColSquare(CProjectile* p, int x, int y)
 {
 	if (!(x >= 0 && y >= 0 && x < gs->mapx && y < gs->mapy))
@@ -188,6 +189,7 @@ void CGround::CheckColSquare(CProjectile* p, int x, int y)
 
 	return;
 }
+*/
 
 
 
