@@ -65,7 +65,7 @@ void CommandDrawer::DrawCommands(const CCommandAI* cai) const
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		switch (ci->GetID()) {
 			case CMD_ATTACK:
-			case CMD_DGUN: {
+			case CMD_MANUALFIRE: {
 				if (ci->params.size() == 1) {
 					const CUnit* unit = uh->GetUnit(ci->params[0]);
 
@@ -209,7 +209,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 				}
 
 				bi.pos = float3(ci->params[0], ci->params[1], ci->params[2]);
-				bi.pos = helper->Pos2BuildPos(bi);
+				bi.pos = helper->Pos2BuildPos(bi, false);
 
 				cursorIcons.AddBuildIcon(cmd_id, bi.pos, owner->team, bi.buildFacing);
 				lineDrawer.DrawLine(bi.pos, cmdColors.build);
@@ -266,7 +266,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 				break;
 			}
 			case CMD_ATTACK:
-			case CMD_DGUN: {
+			case CMD_MANUALFIRE: {
 				if (ci->params.size() == 1) {
 					const CUnit* unit = uh->GetUnit(ci->params[0]);
 
@@ -448,7 +448,7 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
 				bi.buildFacing = int(ci->params[3]);
 			}
 			bi.pos = float3(ci->params[0], ci->params[1], ci->params[2]);
-			bi.pos = helper->Pos2BuildPos(bi);
+			bi.pos = helper->Pos2BuildPos(bi, false);
 
 			cursorIcons.AddBuildIcon(cmd_id, bi.pos, owner->team, bi.buildFacing);
 			lineDrawer.DrawLine(bi.pos, cmdColors.build);
@@ -507,7 +507,7 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
 				}
 			}
 			case CMD_ATTACK:
-			case CMD_DGUN: {
+			case CMD_MANUALFIRE: {
 				if (ci->params.size() == 1) {
 					const CUnit* unit = uh->GetUnit(ci->params[0]);
 
@@ -722,7 +722,7 @@ void CommandDrawer::DrawQuedBuildingSquares(const CBuilderCAI* cai) const
 		if (buildOptions.find(ci->GetID()) != buildOptions.end()) {
 			++buildCommands;
 			BuildInfo bi(*ci);
-			bi.pos = helper->Pos2BuildPos(bi);
+			bi.pos = helper->Pos2BuildPos(bi, false);
 			if (bi.pos.y < 0.f)
 				++underwaterCommands;
 		}
@@ -743,7 +743,7 @@ void CommandDrawer::DrawQuedBuildingSquares(const CBuilderCAI* cai) const
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		if (buildOptions.find(ci->GetID()) != buildOptions.end()) {
 			BuildInfo bi(*ci);
-			bi.pos = helper->Pos2BuildPos(bi);
+			bi.pos = helper->Pos2BuildPos(bi, false);
 			const float xsize = bi.GetXSize()*4;
 			const float zsize = bi.GetZSize()*4;
 

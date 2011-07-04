@@ -43,7 +43,7 @@ void CGame::ClientReadNet()
 		lastCpuUsageTime = gu->gameTime;
 
 		if (playing) {
-			net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("CPU load") + profiler.GetPercent("CPU-DrawFrame load")));
+			net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("Game::SimFrame") + profiler.GetPercent("GameController::Draw")));
 #if defined(USE_GML) && GML_ENABLE_SIM
 			net->Send(CBaseNetProtocol::Get().SendLuaDrawTime(gu->myPlayerNum, luaLockTime));
 #endif

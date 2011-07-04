@@ -115,7 +115,7 @@ private:
 	vector<int> saveF;
 	int saveSectorSize;
 
-//	cLogFile *l; // Debugging only
+	cLogFile* l;
 };
 
 #endif

@@ -2705,8 +2705,8 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isTargetingFacility(int skirmishAIId, in
 	return getUnitDefById(skirmishAIId, unitDefId)->targfac;
 }
 
-EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToDGun(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->canDGun;
+EXPORT(bool) skirmishAiCallback_UnitDef_canManualFire(int skirmishAIId, int unitDefId) {
+	return getUnitDefById(skirmishAIId, unitDefId)->canManualFire;
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isNeedGeo(int skirmishAIId, int unitDefId) {
@@ -2800,10 +2800,6 @@ EXPORT(int) skirmishAiCallback_UnitDef_getFlareSalvoSize(int skirmishAIId, int u
 EXPORT(int) skirmishAiCallback_UnitDef_getFlareSalvoDelay(int skirmishAIId, int unitDefId) {
 	return getUnitDefById(skirmishAIId, unitDefId)->flareSalvoDelay;
 }
-
-//EXPORT(bool) skirmishAiCallback_UnitDef_isSmoothAnim(int skirmishAIId, int unitDefId) {
-//	return getUnitDefById(skirmishAIId, unitDefId)->smoothAnim;
-//}
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToLoopbackAttack(int skirmishAIId, int unitDefId) {
 	return getUnitDefById(skirmishAIId, unitDefId)->canLoopbackAttack;
@@ -4737,7 +4733,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_isAbleToKamikaze = &skirmishAiCallback_UnitDef_isAbleToKamikaze;
 	callback->UnitDef_getKamikazeDist = &skirmishAiCallback_UnitDef_getKamikazeDist;
 	callback->UnitDef_isTargetingFacility = &skirmishAiCallback_UnitDef_isTargetingFacility;
-	callback->UnitDef_isAbleToDGun = &skirmishAiCallback_UnitDef_isAbleToDGun;
+	callback->UnitDef_canManualFire = &skirmishAiCallback_UnitDef_canManualFire;
 	callback->UnitDef_isNeedGeo = &skirmishAiCallback_UnitDef_isNeedGeo;
 	callback->UnitDef_isFeature = &skirmishAiCallback_UnitDef_isFeature;
 	callback->UnitDef_isHideDamage = &skirmishAiCallback_UnitDef_isHideDamage;

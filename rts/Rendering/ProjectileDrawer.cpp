@@ -487,7 +487,7 @@ void CProjectileDrawer::DrawProjectile(CProjectile* pro, bool drawReflection, bo
 			float dif = pro->pos.y - camera->pos.y;
 			float3 zeroPos = camera->pos * (pro->pos.y / dif) + pro->pos * (-camera->pos.y / dif);
 
-			if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > 3 + 0.5f * pro->drawRadius) {
+			if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z, false) > 3 + 0.5f * pro->drawRadius) {
 				return;
 			}
 		}

@@ -25,7 +25,10 @@ public:
 	virtual ~CBitmap();
 
 	void Alloc(int w, int h);
+
+	/// Load data from a file on the VFS
 	bool Load(std::string const& filename, unsigned char defaultAlpha = 255);
+	/// Load data from a gray-scale file on the VFS
 	bool LoadGrayscale(std::string const& filename);
 	bool Save(std::string const& filename, bool opaque = true) const;
 

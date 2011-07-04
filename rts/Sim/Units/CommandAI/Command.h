@@ -43,7 +43,7 @@
 #define CMD_RECLAIM               90
 #define CMD_CLOAK                 95
 #define CMD_STOCKPILE            100
-#define CMD_DGUN                 105
+#define CMD_MANUALFIRE           105
 #define CMD_RESTORE              110
 #define CMD_REPEAT               115
 #define CMD_TRAJECTORY           120

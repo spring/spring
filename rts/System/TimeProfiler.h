@@ -24,6 +24,7 @@ protected:
 	const unsigned starttime;
 };
 
+
 /**
  * @brief Time profiling helper class
  *
@@ -33,23 +34,31 @@ protected:
 class ScopedTimer : public BasicTimer
 {
 public:
-	ScopedTimer(const char* const name);
+	ScopedTimer(const char* const name, bool autoShow = false): BasicTimer(name) {
+		autoShowGraph = autoShow;
+	}
 	/**
 	 * @brief destroy and add time to profiler
 	 */
 	~ScopedTimer();
+
+private:
+	bool autoShowGraph;
 };
+
 
 class ScopedOnceTimer : public BasicTimer
 {
 public:
-	ScopedOnceTimer(const char* const name);
-	ScopedOnceTimer(const std::string& name);
+	ScopedOnceTimer(const char* const name): BasicTimer(name) {}
+	ScopedOnceTimer(const std::string& name): BasicTimer(name.c_str()) {}
 	/**
 	 * @brief destroy and print passed time to infolog
 	 */
 	~ScopedOnceTimer();
 };
+
+
 
 class CTimeProfiler
 {
@@ -71,7 +80,7 @@ public:
 	~CTimeProfiler();
 
 	float GetPercent(const char *name);
-	void AddTime(const std::string& name, unsigned time);
+	void AddTime(const std::string& name, unsigned time, bool showGraph = false);
 	void Update();
 
 	void PrintProfilingInfo() const;

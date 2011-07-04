@@ -60,7 +60,7 @@ protected:
 
 	unsigned int detailTex;        // supplied by the map
 	unsigned int specularTex;      // supplied by the map, moderates specular contribution
-	unsigned int shadingTex;       // holds precomputed dot(lightDir, faceNormal) values
+	unsigned int shadingTex;       // holds precomputed dot(lightDir, vertexNormal) values
 	unsigned int normalsTex;       // holds vertex normals in RGBA32F internal format (GL_RGBA + GL_FLOAT)
 	unsigned int minimapTex;       // supplied by the map
 	unsigned int splatDetailTex;   // contains per-channel separate greyscale detail-textures (overrides detailTex)

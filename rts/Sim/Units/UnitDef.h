@@ -341,7 +341,7 @@ public:
 	bool kamikazeUseLOS;
 
 	bool targfac;
-	bool canDGun;
+	bool canManualFire;
 	bool needGeo;
 	bool isFeature;
 	bool hideDamage;
@@ -385,7 +385,6 @@ public:
 	int flareSalvoSize;
 	int flareSalvoDelay;
 
-	bool smoothAnim;         ///< True if the unit should use interpolated animation
 	bool canLoopbackAttack;  ///< only matters for fighter aircraft
 	bool levelGround;        ///< only matters for buildings
 

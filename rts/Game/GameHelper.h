@@ -66,8 +66,8 @@ public:
 	float3 GetUnitErrorPos(const CUnit* unit, int allyteam);
 
 	void BuggerOff(float3 pos, float radius, bool spherical, bool forced, int teamId, CUnit* exclude);
-	float3 Pos2BuildPos(const BuildInfo& buildInfo);
-	float3 Pos2BuildPos(const float3& pos, const UnitDef* ud);
+	float3 Pos2BuildPos(const BuildInfo& buildInfo, bool synced);
+	float3 Pos2BuildPos(const float3& pos, const UnitDef* ud, bool synced);
 
 	/**
 	 * @param minDist measured in 1/(SQUARE_SIZE * 2) = 1/16 of full map resolution.

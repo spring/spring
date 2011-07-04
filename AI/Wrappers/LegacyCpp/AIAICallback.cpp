@@ -685,7 +685,7 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 		unitDef->canKamikaze = sAICallback->UnitDef_isAbleToKamikaze(skirmishAIId, unitDefId);
 		unitDef->kamikazeDist = sAICallback->UnitDef_getKamikazeDist(skirmishAIId, unitDefId);
 		unitDef->targfac = sAICallback->UnitDef_isTargetingFacility(skirmishAIId, unitDefId);
-		unitDef->canDGun = sAICallback->UnitDef_isAbleToDGun(skirmishAIId, unitDefId);
+		unitDef->canDGun = sAICallback->UnitDef_canManualFire(skirmishAIId, unitDefId);
 		unitDef->needGeo = sAICallback->UnitDef_isNeedGeo(skirmishAIId, unitDefId);
 		unitDef->isFeature = sAICallback->UnitDef_isFeature(skirmishAIId, unitDefId);
 		unitDef->hideDamage = sAICallback->UnitDef_isHideDamage(skirmishAIId, unitDefId);
@@ -710,7 +710,6 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 		unitDef->flareTime = sAICallback->UnitDef_getFlareTime(skirmishAIId, unitDefId);
 		unitDef->flareSalvoSize = sAICallback->UnitDef_getFlareSalvoSize(skirmishAIId, unitDefId);
 		unitDef->flareSalvoDelay = sAICallback->UnitDef_getFlareSalvoDelay(skirmishAIId, unitDefId);
-		//unitDef->smoothAnim = sAICallback->UnitDef_isSmoothAnim(skirmishAIId, unitDefId);
 		unitDef->smoothAnim = false;
 		unitDef->canLoopbackAttack = sAICallback->UnitDef_isAbleToLoopbackAttack(skirmishAIId, unitDefId);
 		unitDef->levelGround = sAICallback->UnitDef_isLevelGround(skirmishAIId, unitDefId);
@@ -1322,19 +1321,19 @@ float springLegacyAI::CAIAICallback::GetFeatureReclaimLeft(int featureId) {
 }
 
 float3 springLegacyAI::CAIAICallback::GetFeaturePos(int featureId) {
-	
+
 	float pos_cache[3];
 	sAICallback->Feature_getPosition(skirmishAIId, featureId, pos_cache);
 	return pos_cache;
 }
 
 int springLegacyAI::CAIAICallback::GetNumUnitDefs() {
-	return sAICallback->getUnitDefs(skirmishAIId, NULL, NULL);
+	return sAICallback->getUnitDefs(skirmishAIId, NULL, 0);
 }
 
 void springLegacyAI::CAIAICallback::GetUnitDefList(const UnitDef** list) {
 
-	int size = sAICallback->getUnitDefs(skirmishAIId, NULL, NULL);
+	int size = sAICallback->getUnitDefs(skirmishAIId, NULL, 0);
 	int* unitDefIds = new int[size];
 
 	// get actual number of IDs

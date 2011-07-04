@@ -131,7 +131,7 @@ CUnit::CUnit() : CSolidObject(),
 	maxRange(0.0f),
 	haveTarget(false),
 	haveUserTarget(false),
-	haveDGunRequest(false),
+	haveManualFireRequest(false),
 	lastMuzzleFlameSize(0.0f),
 	lastMuzzleFlameDir(0.0f, 1.0f, 0.0f),
 	armorType(0),
@@ -387,7 +387,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	mass = (beingBuilt)? mass: unitDef->mass;
 	power = unitDef->power;
 	maxHealth = unitDef->health;
-	health = unitDef->health;
+	health = beingBuilt? 0.1f: unitDef->health;
 	losHeight = unitDef->losHeight;
 	radarHeight = unitDef->radarHeight;
 	metalCost = unitDef->metalCost;
@@ -443,17 +443,11 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 
 	useHighTrajectory = (unitDef->highTrajectoryType == 1);
 
-	if (build) {
-		ChangeLos(1, 1);
-		health = 0.1f;
-	} else {
-		ChangeLos(realLosRadius, realAirLosRadius);
-	}
-
 	energyTickMake =
 		unitDef->energyMake +
 		unitDef->tidalGenerator * mapInfo->map.tidalStrength;
 
+	ChangeLos(realLosRadius, realAirLosRadius);
 	SetRadius((model = unitDef->LoadModel())->radius);
 	modelParser->CreateLocalModel(this);
 
@@ -1031,7 +1025,7 @@ void CUnit::SlowUpdateWeapons() {
 			CWeapon* w = *wi;
 
 			if (!w->haveUserTarget) {
-				if ((haveDGunRequest == (unitDef->canDGun && w->weaponDef->manualfire))) {
+				if ((haveManualFireRequest == (unitDef->canManualFire && w->weaponDef->manualfire))) {
 					if (userTarget) {
 						w->AttackUnit(userTarget, true);
 					} else if (userAttackGround) {
@@ -1130,7 +1124,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 
 	if (paralyzeTime == 0) { // real damage
 		if (damage > 0.0f) {
-			// Dont log overkill damage (so dguns/nukes etc dont inflate values)
+			// Dont log overkill damage (so nukes etc dont inflate values)
 			const float statsdamage = std::max(0.0f, std::min(maxHealth - health, damage));
 			if (attacker) {
 				teamHandler->Team(attacker->team)->currentStats->damageDealt += statsdamage;
@@ -1524,11 +1518,11 @@ void CUnit::ChangeTeamReset()
 
 
 
-bool CUnit::AttackUnit(CUnit* targetUnit, bool wantDGun, bool fpsMode)
+bool CUnit::AttackUnit(CUnit* targetUnit, bool wantManualFire, bool fpsMode)
 {
 	bool ret = false;
 
-	haveDGunRequest = wantDGun;
+	haveManualFireRequest = wantManualFire;
 	userAttackGround = false;
 	commandShotCount = 0;
 
@@ -1539,7 +1533,7 @@ bool CUnit::AttackUnit(CUnit* targetUnit, bool wantDGun, bool fpsMode)
 
 		w->targetType = Target_None;
 
-		if ((wantDGun == (unitDef->canDGun && w->weaponDef->manualfire)) || fpsMode) {
+		if ((wantManualFire == (unitDef->canManualFire && w->weaponDef->manualfire)) || fpsMode) {
 			if (w->AttackUnit(targetUnit, true)) {
 				ret = true;
 			}
@@ -1549,11 +1543,11 @@ bool CUnit::AttackUnit(CUnit* targetUnit, bool wantDGun, bool fpsMode)
 	return ret;
 }
 
-bool CUnit::AttackGround(const float3& pos, bool wantDGun, bool fpsMode)
+bool CUnit::AttackGround(const float3& pos, bool wantManualFire, bool fpsMode)
 {
 	bool ret = false;
 
-	haveDGunRequest = wantDGun;
+	haveManualFireRequest = wantManualFire;
 	userAttackPos = pos;
 	userAttackGround = true;
 	commandShotCount = 0;
@@ -1563,7 +1557,7 @@ bool CUnit::AttackGround(const float3& pos, bool wantDGun, bool fpsMode)
 	for (std::vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
 		CWeapon* w = *wi;
 
-		if ((wantDGun == (unitDef->canDGun && w->weaponDef->manualfire)) || fpsMode) {
+		if ((wantManualFire == (unitDef->canManualFire && w->weaponDef->manualfire)) || fpsMode) {
 			if (w->AttackGround(pos, true)) {
 				ret = true;
 			}
@@ -2281,7 +2275,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(maxRange),
 	CR_MEMBER(haveTarget),
 	CR_MEMBER(haveUserTarget),
-	CR_MEMBER(haveDGunRequest),
+	CR_MEMBER(haveManualFireRequest),
 	CR_MEMBER(lastMuzzleFlameSize),
 	CR_MEMBER(lastMuzzleFlameDir),
 	CR_MEMBER(armorType),

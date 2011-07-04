@@ -184,6 +184,9 @@ CWeapon* CUnitLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* udw)
 	} else if (weaponDef->type == "EmgCannon") {
 		weapon = new CEmgCannon(owner);
 	} else if (weaponDef->type == "DGun") {
+		// NOTE: no special connection to UnitDef::canManualFire
+		// (any type of weapon may be slaved to the button which
+		// controls manual firing) or the CMD_MANUALFIRE command
 		weapon = new CDGunWeapon(owner);
 	} else if (weaponDef->type == "StarburstLauncher") {
 		weapon = new CStarburstLauncher(owner);
@@ -467,7 +470,7 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 		// if the terrain here is above sea level
 
 		BuildInfo bi(unitDef, unit->pos, unit->buildFacing);
-		bi.pos = helper->Pos2BuildPos(bi);
+		bi.pos = helper->Pos2BuildPos(bi, true);
 		const float hss = 0.5f * SQUARE_SIZE;
 		const int tx1 = (int) std::max(0.0f ,(bi.pos.x - (bi.GetXSize() * hss)) / SQUARE_SIZE);
 		const int tz1 = (int) std::max(0.0f ,(bi.pos.z - (bi.GetZSize() * hss)) / SQUARE_SIZE);
@@ -494,7 +497,7 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 		!(unitDef->canmove && (unitDef->speed > 0.0f))) {
 
 		BuildInfo bi(unitDef, unit->pos, unit->buildFacing);
-		bi.pos = helper->Pos2BuildPos(bi);
+		bi.pos = helper->Pos2BuildPos(bi, true);
 		const float hss = 0.5f * SQUARE_SIZE;
 		const int tx1 = (int) std::max(0.0f ,(bi.pos.x - (bi.GetXSize() * hss)) / SQUARE_SIZE);
 		const int tz1 = (int) std::max(0.0f ,(bi.pos.z - (bi.GetZSize() * hss)) / SQUARE_SIZE);
@@ -522,7 +525,7 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 			}
 		}
 		// but without affecting the build height
-		heightdiff = bi.pos.y - helper->Pos2BuildPos(bi).y;
+		heightdiff = bi.pos.y - helper->Pos2BuildPos(bi, true).y;
 		for (int z = tz1; z <= tz2; z++) {
 			for (int x = tx1; x <= tx2; x++) {
 				int index = z * (gs->mapx + 1) + x;

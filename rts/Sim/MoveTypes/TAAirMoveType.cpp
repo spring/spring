@@ -290,7 +290,7 @@ void CTAAirMoveType::UpdateLanded()
 
 	if (padStatus == 0) {
 		if (owner->unitDef->canSubmerge) {
-			pos.y = std::max(pos.y, ground->GetApproximateHeight(pos.x, pos.z));
+			pos.y = std::max(pos.y, ground->GetHeightReal(pos.x, pos.z));
 		} else {
 			pos.y = std::max(pos.y, ground->GetHeightAboveWater(pos.x, pos.z));
 		}
@@ -301,20 +301,20 @@ void CTAAirMoveType::UpdateLanded()
 
 void CTAAirMoveType::UpdateTakeoff()
 {
-	float3 &pos = owner->pos;
+	float3& pos = owner->pos;
 	wantedSpeed = ZeroVector;
 	wantedHeight = orgWantedHeight;
 
 	UpdateAirPhysics();
 
-	float h = 0.0f;
+	float altitude = 0.0f;
 	if (owner->unitDef->canSubmerge) {
-		h = pos.y - ground->GetApproximateHeight(pos.x, pos.z);
+		altitude = pos.y - ground->GetHeightReal(pos.x, pos.z);
 	} else {
-		h = pos.y - ground->GetHeightAboveWater(pos.x, pos.z);
+		altitude = pos.y - ground->GetHeightAboveWater(pos.x, pos.z);
 	}
 
-	if (h > orgWantedHeight * 0.8f) {
+	if (altitude > orgWantedHeight * 0.8f) {
 		SetState(AIRCRAFT_FLYING);
 	}
 }
@@ -327,7 +327,7 @@ void CTAAirMoveType::UpdateHovering()
 
 	const float driftSpeed = fabs(owner->unitDef->dlHoverFactor);
 	float3 deltaVec = goalPos - owner->pos;
-	float3 deltaDir = float3(deltaVec.x, 0, deltaVec.z);
+	float3 deltaDir = float3(deltaVec.x, 0.0f, deltaVec.z);
 	float l = NOZERO(deltaDir.Length2D());
 	deltaDir *= smoothstep(0.0f, 20.0f, l) / l;
 
@@ -348,7 +348,7 @@ void CTAAirMoveType::UpdateHovering()
 
 	// random movement (a sort of fake wind effect)
 	// random drift values are in range -0.5 ... 0.5
-	randomWind = float3(randomWind.x * 0.9f + (gs->randFloat() - 0.5f) * 0.5f, 0,
+	randomWind = float3(randomWind.x * 0.9f + (gs->randFloat() - 0.5f) * 0.5f, 0.0f,
                         randomWind.z * 0.9f + (gs->randFloat() - 0.5f) * 0.5f);
 	wantedSpeed += randomWind * driftSpeed * 0.5f;
 
@@ -545,24 +545,24 @@ void CTAAirMoveType::UpdateLanding()
 	}
 
 	// We have stopped, time to land
-	const float gah = ground->GetApproximateHeight(pos.x, pos.z);
-	float h = 0.0f;
+	const float gh = ground->GetHeightReal(pos.x, pos.z);
+	float altitude = 0.0f;
 
 	// if aircraft submergible and above water we want height of ocean floor
-	if ((owner->unitDef->canSubmerge) && (gah < 0.0f)) {
-		h = pos.y - gah;
-		wantedHeight = gah;
+	if ((owner->unitDef->canSubmerge) && (gh < 0.0f)) {
+		altitude = pos.y - gh;
+		wantedHeight = gh;
 	} else {
-		h = pos.y - ground->GetHeightAboveWater(pos.x, pos.z);
+		altitude = pos.y - ground->GetHeightAboveWater(pos.x, pos.z);
 		wantedHeight = -2.0;
 	}
 
 	UpdateAirPhysics();
 
-	if (h <= 0) {
+	if (altitude <= 0.0f) {
 		SetState(AIRCRAFT_LANDED);
 
-		pos.y = gah;
+		pos.y = gh;
 	}
 }
 
@@ -646,7 +646,7 @@ void CTAAirMoveType::UpdateAirPhysics()
 	const float yspeed = speed.y;
 	speed.y = 0.0f;
 
-	float3 delta = wantedSpeed - speed;
+	const float3 delta = wantedSpeed - speed;
 	const float deltaDotSpeed = (speed != ZeroVector)? delta.dot(speed): 1.0f;
 
 	if (deltaDotSpeed == 0.0f) {
@@ -669,20 +669,24 @@ void CTAAirMoveType::UpdateAirPhysics()
 		}
 	}
 
-	speed.y = yspeed;
-	float h;
+	float minH = 0.0f; // minimum altitude at (pos.x, pos.z)
+	float curH = 0.0f; // current altitude at (pos.x, pos.z)
 
 	if (UseSmoothMesh()) {
-		h = pos.y - std::max(
-			smoothGround->GetHeightAboveWater(pos.x, pos.z),
-			smoothGround->GetHeightAboveWater(pos.x + speed.x * 20.0f, pos.z + speed.z * 20.0f));
+		minH = owner->unitDef->canSubmerge?
+			smoothGround->GetHeight(pos.x, pos.z):
+			smoothGround->GetHeightAboveWater(pos.x, pos.z);
 	} else {
-		h = pos.y - std::max(
-			ground->GetHeightAboveWater(pos.x, pos.z),
-			ground->GetHeightAboveWater(pos.x + speed.x * 40.0f, pos.z + speed.z * 40.0f));
+		minH = owner->unitDef->canSubmerge?
+			ground->GetHeightReal(pos.x, pos.z):
+			ground->GetHeightAboveWater(pos.x, pos.z);
 	}
 
-	if (h < 4.0f) {
+	speed.y = yspeed;
+	pos.y = std::max(pos.y, minH);
+	curH = pos.y - minH;
+
+	if (curH < 4.0f) {
 		speed.x *= 0.95f;
 		speed.z *= 0.95f;
 	}
@@ -705,30 +709,30 @@ void CTAAirMoveType::UpdateAirPhysics()
 
 	float ws = 0.0f;
 
-	if (h < wh) {
+	if (curH < wh) {
 		ws = altitudeRate;
-		if (speed.y > 0.0001f && (wh - h) / speed.y * accRate * 1.5f < speed.y) {
+		if (speed.y > 0.0001f && (wh - curH) / speed.y * accRate * 1.5f < speed.y) {
 			ws = 0.0f;
 		}
 	} else {
 		ws = -altitudeRate;
-		if (speed.y < -0.0001f && (wh - h) / speed.y * accRate * 0.7f < -speed.y) {
+		if (speed.y < -0.0001f && (wh - curH) / speed.y * accRate * 0.7f < -speed.y) {
 			ws = 0.0f;
 		}
 	}
 
-	if (fabs(wh - h) > 2.0f) {
+	if (fabs(wh - curH) > 2.0f) {
 		if (speed.y > ws) {
 			speed.y = std::max(ws, speed.y - accRate * 1.5f);
 		} else if (!owner->beingBuilt) {
 			// let them accelerate upward faster if close to ground
-			speed.y = std::min(ws, speed.y + accRate * (h < 20.0f? 2.0f: 0.7f));
+			speed.y = std::min(ws, speed.y + accRate * (curH < 20.0f? 2.0f: 0.7f));
 		}
 	} else {
 		speed.y = speed.y * 0.95;
 	}
 
-	if (modInfo.allowAirPlanesToLeaveMap || (pos+speed).CheckInBounds()) {
+	if (modInfo.allowAirPlanesToLeaveMap || (pos + speed).CheckInBounds()) {
 		pos += speed;
 	}
 }
