@@ -410,10 +410,10 @@ static bool ParseSources(lua_State* L, int table,
 }
 
 
-static bool ApplyGeometryParameters(lua_State* L, int table, GLuint prog)
+static void ApplyGeometryParameters(lua_State* L, int table, GLuint prog)
 {
 	if (!glProgramParameteriEXT) {
-		return true;
+		return;
 	}
 
 	struct { const char* name; GLenum param; } parameters[] = {
@@ -431,8 +431,6 @@ static bool ApplyGeometryParameters(lua_State* L, int table, GLuint prog)
 		}
 		lua_pop(L, 1);
 	}
-
-	return true;
 }
 
 
