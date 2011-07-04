@@ -25,12 +25,15 @@ CR_REG_METADATA(CObject, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CObject::CObject()
+CObject::CObject() : detached(false)
 {
 }
 
-CObject::~CObject()
+void CObject::Detach()
 {
+	// SYNCED
+	assert(!detached);
+	detached = true;
 	std::list<CObject*>::iterator di;
 	for(di=listeners.begin();di!=listeners.end();++di){
  		m_setOwner(__FILE__, __LINE__, __FUNCTION__);
@@ -43,6 +46,14 @@ CObject::~CObject()
 		ListErase<CObject*>((*di)->listeners, this);
 	}
 	m_resetGlobals();
+}
+
+
+CObject::~CObject()
+{
+	// UNSYNCED (if detached)
+	if (!detached)
+		Detach();
 }
 
 void CObject::Serialize(creg::ISerializer *s)
@@ -85,6 +96,7 @@ void CObject::DependentDied(CObject* o)
 
 void CObject::AddDeathDependence(CObject *o)
 {
+	assert(!detached);
 	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
 	o->listeners.insert(o->listeners.end(),this);
 	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
@@ -94,6 +106,7 @@ void CObject::AddDeathDependence(CObject *o)
 
 void CObject::DeleteDeathDependence(CObject *o)
 {
+	assert(!detached);
 	//note that we can be listening to a single object from several different places (like curreclaim in CBuilder and lastAttacker in CUnit, grr) so we should only remove one of them
 	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
 	ListErase<CObject*>(listening, o);

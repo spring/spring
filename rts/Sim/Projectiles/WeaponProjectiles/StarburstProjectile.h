@@ -27,6 +27,7 @@ public:
 			CWeaponProjectile* interceptTarget, float maxdistance,
 			float3 aimError);
 	~CStarburstProjectile();
+	virtual void Detach();
 	void Collision(CUnit* unit);
 	void Collision();
 	void Update();
