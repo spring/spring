@@ -10,7 +10,9 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "LogOutput.h"
 #include "myMath.h"
-#include <assert.h>
+
+#include <cassert>
+#include <limits>
 
 #undef far // avoid collision with windef.h
 #undef near
@@ -68,9 +70,7 @@ static inline float Interpolate(float x, float y, const float* heightmap)
 static inline float LineGroundSquareCol(const float3& from, const float3& to, int xs, int ys, bool synced = true)
 {
 	if ((xs < 0) || (ys < 0) || (xs >= gs->mapx - 1) || (ys >= gs->mapy - 1))
-		return -1;
-
-	float3 tri;
+		return -1.0f;
 
 	const float* heightmap = readmap->GetCornerHeightMapSynced();
 
@@ -85,6 +85,7 @@ static inline float LineGroundSquareCol(const float3& from, const float3& to, in
 	//! so we have to check 2 triangles for each quad
 
 	//! triangle topright
+	float3 tri;
 	tri.x = xs * SQUARE_SIZE;
 	tri.z = ys * SQUARE_SIZE;
 	tri.y = heightmap[ys * (gs->mapx + 1) + xs];
@@ -96,8 +97,8 @@ static inline float LineGroundSquareCol(const float3& from, const float3& to, in
 		float side2 = (from - tri).dot(norm);
 
 		if (side2 != side1) {
-			float frontpart = side2 / (side2 - side1);
-			const float3 col = from * (1 - frontpart) + to * frontpart;
+			const float frontpart = side2 / (side2 - side1);
+			const float3 col = from * (1.0f - frontpart) + to * frontpart;
 
 			if ((col.x >= tri.x) && (col.z >= tri.z) && (col.x + col.z <= tri.x + tri.z + SQUARE_SIZE)) {
 				return col.distance(from);
@@ -117,15 +118,16 @@ static inline float LineGroundSquareCol(const float3& from, const float3& to, in
 		float side2 = (from - tri).dot(norm2);
 
 		if (side2 != side1) {
-			float frontpart = side2 / (side2 - side1);
-			const float3 col = from * (1 - frontpart) + to * frontpart;
+			const float frontpart = side2 / (side2 - side1);
+			const float3 col = from * (1.0f - frontpart) + to * frontpart;
 
 			if ((col.x <= tri.x) && (col.z <= tri.z) && (col.x + col.z >= tri.x + tri.z - SQUARE_SIZE)) {
 				return col.distance(from);
 			}
 		}
 	}
-	return -2;
+
+	return -2.0f;
 }
 
 
@@ -178,84 +180,76 @@ void CGround::CheckColSquare(CProjectile* p, int x, int y)
 }
 
 
+
 float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 {
-	float savedLength = 0.0f;
+	const float3 pfrom = from;
 
-	if (from.z > float3::maxzpos && to.z < float3::maxzpos) {
-		// a special case since the camera in overhead mode can often do this
-		float3 dir = to - from;
-		dir.SafeNormalize();
-		savedLength = -(from.z - float3::maxzpos) / dir.z;
-		from += dir * savedLength;
-	}
+	// handle special cases where the ray origin is out of bounds:
+	// need to move <from> to the closest map-edge along the ray
+	// (if both <from> and <to> are out of bounds, the ray might
+	// still hit)
+	// clamping <from> naively would change the direction of the
+	// ray, hence we save the distance along it that got skipped
+	ClampLineInMap(from, to);
 
-	from.CheckInBounds();
+	const float3 dir = (to - from).SafeNormalize();
 
-	float3 dir = to - from;
-	float maxLength = dir.Length();
-	dir /= maxLength;
-
-	if (from.x + dir.x * maxLength < 1.0f)
-		maxLength = (1.0f - from.x) / dir.x;
-	else if (from.x + dir.x * maxLength > float3::maxxpos)
-		maxLength = (float3::maxxpos - from.x) / dir.x;
-
-	if (from.z + dir.z * maxLength < 1.0f)
-		maxLength = (1.0f - from.z) / dir.z;
-	else if (from.z + dir.z * maxLength > float3::maxzpos)
-		maxLength = (float3::maxzpos - from.z) / dir.z;
-
-	to = from + dir * maxLength;
-
-	const float dx=to.x-from.x;
-	const float dz=to.z-from.z;
+	const float skippedDist = (pfrom - from).Length();
+	const float dx = to.x - from.x;
+	const float dz = to.z - from.z;
 	float ret;
 
-	bool keepgoing=true;
+	bool keepgoing = true;
 
-	if((floor(from.x/SQUARE_SIZE)==floor(to.x/SQUARE_SIZE)) && (floor(from.z/SQUARE_SIZE)==floor(to.z/SQUARE_SIZE))){
-		ret = LineGroundSquareCol(from, to, (int)floor(from.x/SQUARE_SIZE), (int)floor(from.z/SQUARE_SIZE), synced);
-		if(ret>=0){
+	if ((floor(from.x / SQUARE_SIZE) == floor(to.x / SQUARE_SIZE)) && (floor(from.z / SQUARE_SIZE) == floor(to.z / SQUARE_SIZE))) {
+		ret = LineGroundSquareCol(from, to, (int)floor(from.x / SQUARE_SIZE), (int)floor(from.z / SQUARE_SIZE), synced);
+
+		if (ret >= 0.0f) {
 			return ret;
 		}
-	} else if(floor(from.x/SQUARE_SIZE)==floor(to.x/SQUARE_SIZE)){
-		float zp = from.z/SQUARE_SIZE;
-		int xp = (int)floor(from.x/SQUARE_SIZE);
-		while(keepgoing){
+	} else if (floor(from.x / SQUARE_SIZE) == floor(to.x / SQUARE_SIZE)) {
+		float zp = from.z / SQUARE_SIZE;
+		int xp = floor(from.x / SQUARE_SIZE);
+
+		while (keepgoing) {
 			ret = LineGroundSquareCol(from, to, xp, (int)floor(zp), synced);
-			if(ret>=0){
-				return ret+savedLength;
+
+			if (ret >= 0.0f) {
+				return ret + skippedDist;
 			}
-			keepgoing = fabs(zp*SQUARE_SIZE-from.z)<fabs(dz);
-			if(dz>0)
-				zp+=1.0f;
+
+			keepgoing = (fabs(zp * SQUARE_SIZE - from.z) < fabs(dz));
+
+			if (dz > 0)
+				zp += 1.0f;
 			else
-				zp-=1.0f;
+				zp -= 1.0f;
 		}
-		// if you hit this the collision detection hit an infinite loop
-		assert(!keepgoing);
-	} else if(floor(from.z/SQUARE_SIZE)==floor(to.z/SQUARE_SIZE)){
-		float xp=from.x/SQUARE_SIZE;
-		int zp = (int)floor(from.z/SQUARE_SIZE);
-		while(keepgoing){
-			ret = LineGroundSquareCol(from,to,(int)floor(xp), zp, synced);
-			if(ret>=0){
-				return ret+savedLength;
+	} else if (floor(from.z / SQUARE_SIZE) == floor(to.z / SQUARE_SIZE)) {
+		float xp = from.x / SQUARE_SIZE;
+		int zp = floor(from.z / SQUARE_SIZE);
+
+		while (keepgoing) {
+			ret = LineGroundSquareCol(from, to, (int)floor(xp), zp, synced);
+
+			if (ret >= 0.0f) {
+				return ret + skippedDist;
 			}
-			keepgoing=fabs(xp*SQUARE_SIZE-from.x)<fabs(dx);
-			if(dx>0)
-				xp+=1.0f;
+
+			keepgoing = (fabs(xp * SQUARE_SIZE - from.x) < fabs(dx));
+
+			if (dx > 0.0f)
+				xp += 1.0f;
 			else
-				xp-=1.0f;
+				xp -= 1.0f;
 		}
-		// if you hit this the collision detection hit an infinite loop
-		assert(!keepgoing);
 	} else {
-		float xp=from.x;
-		float zp=from.z;
-		while(keepgoing){
-			float xn,zn;
+		float xp = from.x;
+		float zp = from.z;
+
+		while (keepgoing) {
+			float xn, zn;
 			float xs, zs;
 
 			// Push value just over the edge of the square
@@ -263,44 +257,50 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 			// add one digit and (xp*constant) reduces to xp itself
 			// This accuracy means that at (16384,16384) (lower right of 32x32 map)
 			// 1 in every 1/(16384*1e-7f/8)=4883 clicks on the map will be ignored.
-			if (dx>0) xs = floor(xp*1.0000001f/SQUARE_SIZE);
-			else      xs = floor(xp*0.9999999f/SQUARE_SIZE);
-			if (dz>0) zs = floor(zp*1.0000001f/SQUARE_SIZE);
-			else      zs = floor(zp*0.9999999f/SQUARE_SIZE);
+			if (dx > 0.0f) xs = floor(xp * 1.0000001f / SQUARE_SIZE);
+			else           xs = floor(xp * 0.9999999f / SQUARE_SIZE);
+			if (dz > 0.0f) zs = floor(zp * 1.0000001f / SQUARE_SIZE);
+			else           zs = floor(zp * 0.9999999f / SQUARE_SIZE);
 
 			ret = LineGroundSquareCol(from, to, (int)xs, (int)zs, synced);
-			if(ret>=0){
-				return ret+savedLength;
-			}
-			keepgoing=fabs(xp-from.x)<fabs(dx) && fabs(zp-from.z)<fabs(dz);
 
-			if(dx>0){
+			if (ret >= 0.0f) {
+				return ret + skippedDist;
+			}
+
+			keepgoing =
+				(fabs(xp - from.x) < fabs(dx)) &&
+				(fabs(zp - from.z) < fabs(dz));
+
+			if (dx > 0.0f) {
 				// distance xp to right edge of square (xs,zs) divided by dx, xp += xn*dx puts xp on the right edge
-				xn=(xs*SQUARE_SIZE+SQUARE_SIZE-xp)/dx;
+				xn = (xs * SQUARE_SIZE + SQUARE_SIZE - xp) / dx;
 			} else {
 				// distance xp to left edge of square (xs,zs) divided by dx, xp += xn*dx puts xp on the left edge
-				xn=(xs*SQUARE_SIZE-xp)/dx;
+				xn = (xs * SQUARE_SIZE - xp) / dx;
 			}
-			if(dz>0){
+
+			if (dz > 0.0f) {
 				// distance zp to bottom edge of square (xs,zs) divided by dz, zp += zn*dz puts zp on the bottom edge
-				zn=(zs*SQUARE_SIZE+SQUARE_SIZE-zp)/dz;
+				zn = (zs * SQUARE_SIZE + SQUARE_SIZE - zp) / dz;
 			} else {
 				// distance zp to top edge of square (xs,zs) divided by dz, zp += zn*dz puts zp on the top edge
-				zn=(zs*SQUARE_SIZE-zp)/dz;
+				zn = (zs * SQUARE_SIZE - zp) / dz;
 			}
 			// xn and zn are always positive, minus signs are divided out above
 
 			// this puts (xp,zp) exactly on the first edge you see if you look from (xp,zp) in the (dx,dz) direction
-			if(xn<zn){
-				xp+=xn*dx;
-				zp+=xn*dz;
+			if (xn < zn) {
+				xp += xn * dx;
+				zp += xn * dz;
 			} else {
-				xp+=zn*dx;
-				zp+=zn*dz;
+				xp += zn * dx;
+				zp += zn * dz;
 			}
 		}
 	}
-	return -1;
+
+	return -1.0f;
 }
 
 
