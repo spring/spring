@@ -75,15 +75,6 @@
 #include "System/Util.h"
 
 
-CONFIG(int, Shadows).defaultValue(0);
-CONFIG(int, FontSize).defaultValue(23);
-CONFIG(int, SmallFontSize).defaultValue(14);
-CONFIG(int, FontOutlineWidth).defaultValue(3);
-CONFIG(float, FontOutlineWeight).defaultValue(25.0f);
-CONFIG(int, SmallFontOutlineWidth).defaultValue(2);
-CONFIG(float, SmallFontOutlineWeight).defaultValue(10.0f);
-
-
 static std::vector<std::string> _local_strSpaceTokenize(const std::string& text) {
 	static const char* const SPACE_DELIMS = " \t";
 

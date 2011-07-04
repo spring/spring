@@ -62,7 +62,6 @@
 
 CONFIG(bool, MiniMapMarker).defaultValue(true);
 CONFIG(bool, InvertQueueKey).defaultValue(false);
-CONFIG(bool, StencilBufferBits).defaultValue(true);
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

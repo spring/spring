@@ -176,7 +176,6 @@ CONFIG(bool, ShowFPS).defaultValue(false);
 CONFIG(bool, ShowClock).defaultValue(true);
 CONFIG(bool, ShowSpeed).defaultValue(false);
 CONFIG(bool, ShowMTInfo).defaultValue(true);
-CONFIG(int, SpeedControl).defaultValue(0);
 CONFIG(int, ShowPlayerInfo).defaultValue(1);
 CONFIG(float, GuiOpacity).defaultValue(0.8f);
 CONFIG(std::string, InputTextGeo).defaultValue("");

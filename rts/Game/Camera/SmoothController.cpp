@@ -18,7 +18,6 @@
 #include "System/myMath.h"
 #include "System/Input/KeyInput.h"
 
-CONFIG(float, MiddleClickScrollSpeed).defaultValue(0.01f);
 CONFIG(int, SmoothScrollSpeed).defaultValue(10);
 CONFIG(float, SmoothTiltSpeed).defaultValue(1.0f);
 CONFIG(bool, SmoothEnabled).defaultValue(true);
