@@ -35,4 +35,7 @@
 	RmDir /r "$INSTDIR\AI\Helper-libs"
 
 	RmDir "$INSTDIR\mods"
+
+	; Old Springlobby stuff
+        RmDir /R "$INSTDIR\SpringLobbyDocs"
 !endif
