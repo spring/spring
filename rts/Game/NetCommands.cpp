@@ -15,7 +15,6 @@
 #include "WordCompletion.h"
 #include "IVideoCapturing.h"
 #include "InMapDraw.h"
-#include "InMapDrawModel.h"
 #ifdef _WIN32
 #  include "winerror.h" // TODO someone on windows (MinGW? VS?) please check if this is required
 #endif
