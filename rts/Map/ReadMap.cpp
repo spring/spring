@@ -359,22 +359,6 @@ void CReadMap::UpdateHeightMapSynced(int x1, int z1, int x2, int z2)
 void CReadMap::PushVisibleHeightMapUpdate(int x1, int z1, int x2, int z2)
 {
 	#ifdef USE_UNSYNCED_HEIGHTMAP
-	/*
-	const float* shm = GetCornerHeightMapSynced();
-	      float* uhm = GetCornerHeightMapUnsynced();
-	const float3* rvn = &rawVertexNormals[0];
-	      float3* vvn = &visVertexNormals[0];
-
-	for (int hmx = x1; hmx < x2; hmx++) {
-		for (int hmz = z1; hmz < z2; hmz++) {
-			const int vIdx = hmz * (gs->mapx + 1) + hmx;
-
-			uhm[vIdx] = shm[vIdx];
-			vvn[vIdx] = rvn[vIdx];
-		}
-	}
-	*/
-
 	//! NOTE: UpdateHeightMapUnsynced performs a LOS-check, but we already
 	//! know the area (x1, z1)-(x2, z2) is in LOS so uhm and vvn still get
 	//! updated properly in UpdateHeightMapUnsynced
