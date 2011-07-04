@@ -5,9 +5,8 @@
 
 	${!echonow} "Processing: engine"
 
-	File /oname=spring_engine.7z "${PORTABLE_ARCHIVE}"
-	Nsis7z::Extract "$INSTDIR\spring_engine.7z"
-	Delete "$INSTDIR\spring_engine.7z"
+	!insertmacro extractFile "${MIN_PORTABLE_ARCHIVE}" "spring_engine.7z" ""
+
 	; archive is portable, make it normal
 	Delete "$INSTDIR\springsettings.cfg"
 

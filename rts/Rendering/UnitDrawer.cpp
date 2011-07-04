@@ -429,7 +429,7 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 					camera->pos  * (unit->drawMidPos.y / dif) +
 					unit->drawMidPos * (-camera->pos.y / dif);
 			}
-			if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z) > unit->drawRadius) {
+			if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z, false) > unit->drawRadius) {
 				return;
 			}
 		}
@@ -2119,7 +2119,7 @@ int CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vect
 	const int x2 = x1 + (buildInfo.GetXSize() * SQUARE_SIZE);
 	const int z1 = (int) (pos.z - (buildInfo.GetZSize() * 0.5f * SQUARE_SIZE));
 	const int z2 = z1 + (buildInfo.GetZSize() * SQUARE_SIZE);
-	const float h = uh->GetBuildHeight(pos, buildInfo.def);
+	const float h = uh->GetBuildHeight(pos, buildInfo.def, false);
 
 	const int canBuild = uh->TestUnitBuildSquare(
 		buildInfo,

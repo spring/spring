@@ -390,7 +390,7 @@ int CUnitHandler::TestUnitBuildSquare(
 	}
 
 	if (commands != NULL) {
-		//! unsynced code
+		//! this is only called in unsynced context (ShowUnitBuildSquare)
 		assert(!synced);
 
 		for (int x = x1; x < x2; x += SQUARE_SIZE) {
@@ -426,8 +426,7 @@ int CUnitHandler::TestUnitBuildSquare(
 			}
 		}
 	} else {
-		assert(synced);
-
+		//! this can be called in either context
 		for (int x = x1; x < x2; x += SQUARE_SIZE) {
 			for (int z = z1; z < z2; z += SQUARE_SIZE) {
 				canBuild = std::min(canBuild, TestBuildSquare(float3(x, bh, z), buildInfo.def, feature, allyteam, synced));
