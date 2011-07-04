@@ -352,8 +352,10 @@ void CSmfReadMap::UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2)
 		#pragma omp parallel for private(z)
 		for (z = minz; z <= maxz; z++) {
 			for (int x = minx; x <= maxx; x++) {
-				const int vIdxTL = (z    ) * W + x, fIdxTL = (z * (W - 1) + x) * 2    ;
-				const int vIdxBL = (z + 1) * W + x, fIdxBR = (z * (W - 1) + x) * 2 + 1;
+				const int vIdxTL = (z    ) * W + x;
+				const int vIdxBL = (z + 1) * W + x;
+				const int fIdxTL = (z * (W - 1) + x) * 2    ;
+				const int fIdxBR = (z * (W - 1) + x) * 2 + 1;
 
 				const bool hasNgbL = (x >     0); const int xOffL = hasNgbL? 1: 0;
 				const bool hasNgbR = (x < W - 1); const int xOffR = hasNgbR? 1: 0;
@@ -399,8 +401,11 @@ void CSmfReadMap::UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2)
 					uhm[vIdxTL] = shm[vIdxTL];
 					vvn[vIdxTL] = rvn[vIdxTL];
 
-					ufn[fIdxTL] = sfn[fIdxTL];
-					ufn[fIdxBR] = sfn[fIdxBR];
+					if (hasNgbR && hasNgbB) {
+						// x == maxx and z == maxz are illegal indices
+						ufn[fIdxTL] = sfn[fIdxTL];
+						ufn[fIdxBR] = sfn[fIdxBR];
+					}
 				}
 				#endif
 
