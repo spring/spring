@@ -1446,11 +1446,6 @@ void CGame::StartPlaying()
 				skirmishAIHandler.CreateLocalSkirmishAI(*ai);
 			}
 		}
-
-		if (a == gu->myTeam) {
-			minimap->AddNotification(team->startPos, float3(1.0f, 1.0f, 1.0f), 1.0f);
-			infoConsole->SetLastMsgPos(team->startPos);
-		}
 	}
 
 	eventHandler.GameStart();
