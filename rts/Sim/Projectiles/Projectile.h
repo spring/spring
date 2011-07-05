@@ -37,7 +37,7 @@ public:
 	virtual void Update();
 	virtual void Init(const float3& pos, CUnit* owner);
 
-	virtual void Draw();
+	virtual void Draw() {}
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 	virtual void DrawCallback() {}
 
