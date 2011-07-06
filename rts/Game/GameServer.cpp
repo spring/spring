@@ -323,7 +323,7 @@ void CGameServer::SkipTo(int targetFrameNum)
 	if (serverFrameNum >= targetFrameNum) { return; }
 	if (demoReader == NULL) { return; }
 
-	CommandMessage startMsg(str(boost::format("skip start %d") %targetFrame), SERVER_PLAYER);
+	CommandMessage startMsg(str(boost::format("skip start %d") %targetFrameNum), SERVER_PLAYER);
 	CommandMessage endMsg("skip end", SERVER_PLAYER);
 	Broadcast(boost::shared_ptr<const netcode::RawPacket>(startMsg.Pack()));
 
@@ -706,9 +706,10 @@ void CGameServer::CheckSync()
 	}
 #endif
 }
-x
+
 float CGameServer::GetDemoTime() const {
-	return !gameHasStarted ? gameTime : startTime + (serverFrameNum / float(GAME_SPEED));
+	if (!gameHasStarted) return gameTime;
+	return (startTime + serverFrameNum / float(GAME_SPEED));
 }
 
 void CGameServer::Update()
