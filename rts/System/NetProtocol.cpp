@@ -11,7 +11,6 @@
 #include <boost/shared_ptr.hpp>
 
 #include "mmgr.h"
-#include "lib/gml/gmlmut.h"
 
 // NOTE: these _must_ be included before NetProtocol.h due to some ambiguity in
 // Boost hash_float.hpp ("call of overloaded ‘ldexp(float&, int&)’ is ambiguous")
@@ -26,6 +25,7 @@
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
+#include "lib/gml/gmlmut.h"
 
 CONFIG(int, SourcePort).defaultValue(0);
 

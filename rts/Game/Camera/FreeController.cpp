@@ -133,7 +133,7 @@ void CFreeController::Update()
 			hDir.y = 0.0f;
 			hDir.x = (float)sin(camera->rot.y);
 			hDir.z = (float)cos(camera->rot.y);
-			const float3 gndNormal = ground->GetSmoothNormal(pos.x, pos.z);
+			const float3 gndNormal = ground->GetSmoothNormal(pos.x, pos.z, false);
 			const float dot = gndNormal.dot(hDir);
 			const float gndRotX = (float)acos(dot) - (PI * 0.5f);
 			const float rotXdiff = (gndRotX - camera->rot.x);
@@ -170,7 +170,7 @@ void CFreeController::Update()
 		if (slide > 0.0f) {
 			const float gndHeight = ground->GetHeightReal(pos.x, pos.z, false);
 			if (pos.y < (gndHeight + gndOffset + 1.0f)) {
-				const float3 gndNormal = ground->GetSmoothNormal(pos.x, pos.z);
+				const float3 gndNormal = ground->GetSmoothNormal(pos.x, pos.z, false);
 				const float dotVal = gndNormal.y;
 				const float scale = (dotVal * slide * -dGrav);
 				vel.x += (gndNormal.x * scale);

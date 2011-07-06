@@ -68,6 +68,7 @@ bool piececmp::operator() (const FlyingPiece* fp1, const FlyingPiece* fp2) const
 	return (fp1 > fp2);
 }
 
+void projdetach::Detach(CProjectile *p) { p->Detach(); }
 
 
 //////////////////////////////////////////////////////////////////////
@@ -97,6 +98,7 @@ CProjectileHandler::CProjectileHandler()
 
 CProjectileHandler::~CProjectileHandler()
 {
+	syncedProjectiles.detach_all();
 	syncedProjectiles.clear(); // synced first, to avoid callback crashes
 	unsyncedProjectiles.clear();
 
@@ -187,7 +189,11 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 
 				freeUnsyncedIDs.push_back(p->id);
 #endif
+#if DETACH_SYNCED
+				pci = pc.erase_detach(pci);
+#else
 				pci = pc.erase_delete(pci);
+#endif
 			}
 		} else {
 			p->Update();
@@ -217,12 +223,18 @@ void CProjectileHandler::Update()
 			GML_STDMUTEX_LOCK(rproj); // Update
 
 			if (syncedProjectiles.can_delete_synced()) {
+#if !DETACH_SYNCED
 				GML_RECMUTEX_LOCK(proj); // Update
+#endif
 
 				eventHandler.DeleteSyncedProjectiles();
 				//! delete all projectiles that were
 				//! queued (push_back'ed) for deletion
+#if DETACH_SYNCED
+				syncedProjectiles.detach_erased_synced();
+#else
 				syncedProjectiles.delete_erased_synced();
+#endif
 			}
 
 			eventHandler.UpdateProjectiles();
@@ -339,16 +351,20 @@ void CProjectileHandler::CheckUnitCollisions(
 	for (CUnit** ui = &tempUnits[0]; ui != endUnit; ++ui) {
 		CUnit* unit = *ui;
 
-		const bool friendlyShot = (p->owner() && (unit->allyteam == p->owner()->allyteam));
+		const CUnit* attacker = p->owner();
 		const bool raytraced = (unit->collisionVolume->GetTestType() == CollisionVolume::COLVOL_HITTEST_CONT);
 
-		// if this unit fired this projectile or (this unit is in the
-		// same allyteam as the unit that shot this projectile and we
-		// are ignoring friendly collisions)
-		if (p->owner() == unit || ((p->GetCollisionFlags() & Collision::NOFRIENDLIES) && friendlyShot)) {
+		// if this unit fired this projectile, always ignore
+		if (attacker == unit) {
 			continue;
 		}
 
+		if (p->GetCollisionFlags() & Collision::NOFRIENDLIES) {
+			if (attacker != NULL && (unit->allyteam == attacker->allyteam)) { continue; }
+		}
+		if (p->GetCollisionFlags() & Collision::NOENEMIES) {
+			if (attacker != NULL && (unit->allyteam != attacker->allyteam)) { continue; }
+		}
 		if (p->GetCollisionFlags() & Collision::NONEUTRALS) {
 			if (unit->IsNeutral()) { continue; }
 		}
@@ -449,9 +465,14 @@ void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc) {
 	for (pci = pc.begin(); pci != pc.end(); ++pci) {
 		CProjectile* p = *pci;
 
+		if (p->GetCollisionFlags() & Collision::NOGROUND) {
+			continue;
+		}
+
 		if (p->checkCol) {
 			// too many projectiles seem to impact the ground before
 			// actually hitting so don't subtract the projectile radius
+			// NOTE: why are we not using Ground::CheckColSquare here?
 			if (ground->GetHeightAboveWater(p->pos.x, p->pos.z) > p->pos.y /* - p->radius*/) {
 				p->Collision();
 			}

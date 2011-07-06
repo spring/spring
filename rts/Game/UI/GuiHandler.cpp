@@ -2260,8 +2260,8 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 
 			if (mouse->buttons[button].movement < 4) {
 
-				GML_RECMUTEX_LOCK(unit); // GetCommand
-				GML_RECMUTEX_LOCK(feat); // GetCommand
+				GML_THRMUTEX_LOCK(unit, GML_DRAW); // GetCommand
+				GML_THRMUTEX_LOCK(feat, GML_DRAW); // GetCommand
 
 				CUnit* unit = NULL;
 				CFeature* feature = NULL;

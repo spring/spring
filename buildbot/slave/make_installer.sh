@@ -69,10 +69,12 @@ done
 
 cd ${SOURCEDIR}
 
-echo "!define MINGWLIBS_DIR \"${MINGWLIBS_PATH}\"" > installer/custom_defines.nsi
-echo "!define BUILD_DIR \"${BUILDDIR}\"" >> installer/custom_defines.nsi
-
 ./installer/make_installer.pl -DMIN_PORTABLE_ARCHIVE=${MIN_PORTABLE_ARCHIVE} -DARCHIVEMOVER=${TMP_PATH}/${VERSION}_ArchiveMover.7z
 
 mv ./installer/spring*.exe ${TMP_PATH}
+
+#create symbolic links to current files
+cd ${TMP_PATH}/..
+ln -sfv ${REV}/*.exe spring_testing.exe
+ln -sfv ${REV}/spring_${VERSION}_minimal-portable.7z spring_testing_minimal-portable.7z
 

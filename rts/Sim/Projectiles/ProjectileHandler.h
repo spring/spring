@@ -26,10 +26,13 @@ struct SS3OVertex;
 struct piececmp {
 	bool operator() (const FlyingPiece* fp1, const FlyingPiece* fp2) const;
 };
+struct projdetach {
+	static void Detach(CProjectile *p);
+};
 
 typedef std::pair<CProjectile*, int> ProjectileMapPair;
 typedef std::map<int, ProjectileMapPair> ProjectileMap;
-typedef ThreadListSim<std::list<CProjectile*>, std::set<CProjectile*>, CProjectile*> ProjectileContainer;
+typedef ThreadListSim<std::list<CProjectile*>, std::set<CProjectile*>, CProjectile*, projdetach> ProjectileContainer;
 typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*> GroundFlashContainer;
 #if defined(USE_GML) && GML_ENABLE_SIM
 typedef ThreadListSimRender<std::set<FlyingPiece*>, std::set<FlyingPiece*, piececmp>, FlyingPiece*> FlyingPieceContainer;

@@ -170,13 +170,12 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 
 	fd->upright = fdTable.GetBool("upright", false);
 
-	// our resolution is double TA's
-	fd->xsize = fdTable.GetInt("footprintX", 1) * 2;
-	fd->zsize = fdTable.GetInt("footprintZ", 1) * 2;
+	fd->xsize = std::max(1 * 2, fdTable.GetInt("footprintX", 1) * 2);
+	fd->zsize = std::max(1 * 2, fdTable.GetInt("footprintZ", 1) * 2);
 
+	const float minMass = 1.0f;
 	const float defMass = (fd->metal * 0.4f) + (fd->maxHealth * 0.1f);
-	fd->mass = fdTable.GetFloat("mass", defMass);
-	fd->mass = std::max(0.001f, fd->mass);
+	fd->mass = std::max(minMass, fdTable.GetFloat("mass", defMass));
 
 	// custom parameters table
 	fdTable.SubTable("customParams").GetMap(fd->customParams);

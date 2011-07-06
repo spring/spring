@@ -316,10 +316,11 @@ static int VisualsTable(lua_State* L, const void* data)
 }
 
 
-static int NoFeatureCollide(lua_State* L, const void* data)
+
+static int NoEnemyCollide(lua_State* L, const void* data)
 {
 	const int bits = *((const int*) data);
-	lua_pushboolean(L, (bits & Collision::NOFEATURES));
+	lua_pushboolean(L, (bits & Collision::NOENEMIES));
 	return 1;
 }
 
@@ -330,12 +331,27 @@ static int NoFriendlyCollide(lua_State* L, const void* data)
 	return 1;
 }
 
+static int NoFeatureCollide(lua_State* L, const void* data)
+{
+	const int bits = *((const int*) data);
+	lua_pushboolean(L, (bits & Collision::NOFEATURES));
+	return 1;
+}
+
 static int NoNeutralCollide(lua_State* L, const void* data)
 {
 	const int bits = *((const int*) data);
 	lua_pushboolean(L, (bits & Collision::NONEUTRALS));
 	return 1;
 }
+
+static int NoGroundCollide(lua_State* L, const void* data)
+{
+	const int bits = *((const int*) data);
+	lua_pushboolean(L, (bits & Collision::NOGROUND));
+	return 1;
+}
+
 
 
 static inline int BuildCategorySet(lua_State* L, const vector<string>& cats)
@@ -421,9 +437,11 @@ static bool InitParamMap()
 	ADD_FUNCTION("fireSound", wd.firesound, GuiSoundSetTable);
 
 	ADD_FUNCTION("customParams",         wd.customParams,   CustomParamsTable);
-	ADD_FUNCTION("noFeatureCollide",     wd.collisionFlags, NoFeatureCollide);
+	ADD_FUNCTION("noEnemyCollide",       wd.collisionFlags, NoEnemyCollide);
 	ADD_FUNCTION("noFriendlyCollide",    wd.collisionFlags, NoFriendlyCollide);
+	ADD_FUNCTION("noFeatureCollide",     wd.collisionFlags, NoFeatureCollide);
 	ADD_FUNCTION("noNeutralCollide",     wd.collisionFlags, NoNeutralCollide);
+	ADD_FUNCTION("noGroundCollide",      wd.collisionFlags, NoGroundCollide);
 	ADD_FUNCTION("onlyTargetCategories", wd.onlyTargetCategory, CategorySetFromBits);
 
 	ADD_INT("id", wd.id);

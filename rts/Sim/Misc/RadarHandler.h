@@ -34,19 +34,22 @@ public:
 
 	inline int GetSquare(const float3& pos) const
 	{
-		const int gx = (int)(pos.x * invRadarDiv);
-		const int gz = (int)(pos.z * invRadarDiv);
+		const int gx = pos.x * invRadarDiv;
+		const int gz = pos.z * invRadarDiv;
 		const int rowIdx = std::max(0, std::min(zsize - 1, gz));
 		const int colIdx = std::max(0, std::min(xsize - 1, gx));
 		return (rowIdx * xsize) + colIdx;
 	}
 
-	bool InRadar(const float3& pos, int allyTeam) {
+	bool InRadar(const float3& pos, int allyTeam) const {
 		const int square = GetSquare(pos);
-		if (pos.y < -0.5f) {
+
+		if (pos.y < 0.0f) {
+			// position is underwater, only sonar can see it
 			return (sonarMaps[allyTeam][square] && !commonSonarJammerMap[square]);
 		}
-		else if (circularRadar && (pos.y > 0.5f)) {
+		else if (circularRadar) {
+			// position is not in water, but height is irrelevant for this mode
 			return (airRadarMaps[allyTeam][square] && !commonJammerMap[square]);
 		}
 		else {
@@ -54,38 +57,44 @@ public:
 		}
 	}
 
-	bool InRadar(const CUnit* unit, int allyTeam) {
+	bool InRadar(const CUnit* unit, int allyTeam) const {
+		const int square = GetSquare(unit->pos);
+
 		if (unit->isUnderWater) {
+			// unit is completely submerged, only sonar can see it
 			if (unit->sonarStealth && !unit->beingBuilt) {
 				return false;
 			}
-			const int square = GetSquare(unit->pos);
+
 			return (!!sonarMaps[allyTeam][square] && !commonSonarJammerMap[square]);
 		}
 		else if (circularRadar && unit->useAirLos) {
+			// circular mode and unit is an aircraft (and currently not landed)
 			if (unit->stealth && !unit->beingBuilt) {
 				return false;
 			}
-			const int square = GetSquare(unit->pos);
+
 			return (airRadarMaps[allyTeam][square] && !commonJammerMap[square]);
 		}
 		else {
-			const int square = GetSquare(unit->pos);
+			// (surface) units that are not completely submerged can potentially
+			// be seen by both radar and sonar (by sonar iff the lowest point on
+			// the model is still inside water)
 			const bool radarVisible =
-				radarMaps[allyTeam][square] &&
 				(!unit->stealth || unit->beingBuilt) &&
+				radarMaps[allyTeam][square] &&
 				!commonJammerMap[square];
 			const bool sonarVisible = 
-				(unit->pos.y <= 1.0f) &&
-				sonarMaps[allyTeam][square] &&
+				(unit->pos.y < 0.0f) &&
 				(!unit->sonarStealth || unit->beingBuilt) &&
+				sonarMaps[allyTeam][square] &&
 				!commonSonarJammerMap[square];
 
 			return (radarVisible || sonarVisible);
 		}
 	}
 
-	bool InSeismicDistance(const CUnit* unit, int allyTeam) {
+	bool InSeismicDistance(const CUnit* unit, int allyTeam) const {
 		const int square = GetSquare(unit->pos);
 		return !!seismicMaps[allyTeam][square];
 	}

@@ -769,7 +769,8 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("capturable",  ud.capturable);
 	ADD_BOOL("repairable",  ud.repairable);
 
-	ADD_BOOL("canDGun",               ud.canDGun);
+	ADD_BOOL("canDGun",               ud.canManualFire); // NOTE: deprecated, remove after 0.83.*
+	ADD_BOOL("canManualFire",         ud.canManualFire);
 	ADD_BOOL("canCloak",              ud.canCloak);
 	ADD_BOOL("canRestore",            ud.canRestore);
 	ADD_BOOL("canRepair",             ud.canRepair);

@@ -10,9 +10,6 @@
 #ifndef GML_H
 #define GML_H
 
-#define GML_DRAW 1
-#define GML_SIM 2
-
 #if defined USE_GML_SIM && !defined USE_GML
 #error USE_GML_SIM requires USE_GML
 #endif
@@ -227,7 +224,8 @@ inline unsigned gmlGetTicks() {
 
 #define GML_STDMUTEX_LOCK(name)
 #define GML_RECMUTEX_LOCK(name)
-#define GML_THRMUTEX_LOCK(name,thr,...)
+#define GML_THRMUTEX_LOCK(name,thr)
+#define GML_OBJMUTEX_LOCK(name,thr,...)
 #define GML_STDMUTEX_LOCK_NOPROF(name)
 #define GML_MSTMUTEX_LOCK(name)
 #define GML_MSTMUTEX_DOLOCK(name)
