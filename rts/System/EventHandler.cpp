@@ -6,6 +6,8 @@
 #include "Game/UI/LuaUI.h"  // FIXME -- should be moved
 #include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaOpenGL.h"  // FIXME -- should be moved
+#include "Lua/LuaRules.h"
+#include "Lua/LuaGaia.h"
 
 #include "System/ConfigHandler.h"
 #include "System/Platform/Threading.h"
@@ -457,15 +459,16 @@ void CEventHandler::Load(IArchive* archive)
 #endif
 
 #define GML_CALLIN_MUTEXES() \
-	GML_RECMUTEX_LOCK(unit); \
-	GML_RECMUTEX_LOCK(feat)
+	GML_THRMUTEX_LOCK(feat, GML_DRAW); \
+	GML_THRMUTEX_LOCK(unit, GML_DRAW)/*; \
+	GML_THRMUTEX_LOCK(proj, GML_DRAW)*/
 
 
 #define EVENTHANDLER_CHECK(name, ...) \
 	const int count = list ## name.size(); \
 	if (count <= 0) \
 		return __VA_ARGS__; \
-	GML_CALLIN_MUTEXES();
+	GML_CALLIN_MUTEXES()
 
 
 void CEventHandler::Update()
@@ -501,17 +504,29 @@ void CEventHandler::DeleteSyncedFeatures() {
 void CEventHandler::UpdateProjectiles() { eventBatchHandler->UpdateProjectiles(); }
 void CEventHandler::UpdateDrawProjectiles() { eventBatchHandler->UpdateDrawProjectiles(); }
 void CEventHandler::DeleteSyncedProjectiles() {
+	if (luaRules) luaRules->ExecuteRecvFromSynced();
+	if (luaGaia) luaGaia->ExecuteRecvFromSynced();
 	eventBatchHandler->DeleteSyncedProjectiles();
+
 	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedProjectiles
-	if (luaUI) luaUI->ExecuteProjEventBatch();
+	if (luaUI) {
+		luaUI->ExecuteProjEventBatch();
+		luaUI->ExecuteRecvFromSynced();
+	}
 }
 
 void CEventHandler::UpdateObjects() {
 	eventBatchHandler->UpdateObjects();
 }
 void CEventHandler::DeleteSyncedObjects() {
+	if (luaRules) luaRules->ExecuteRecvFromSynced();
+	if (luaGaia) luaGaia->ExecuteRecvFromSynced();
+
 	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedObjects
-	if (luaUI) luaUI->ExecuteObjEventBatch();
+	if (luaUI) { 
+		luaUI->ExecuteObjEventBatch();
+		luaUI->ExecuteRecvFromSynced();
+	}
 }
 
 

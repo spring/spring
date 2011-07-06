@@ -10,7 +10,7 @@
 #ifdef __GNUC__
 	#define _const __attribute__((const))
 #else
-	#define _const 
+	#define _const
 #endif
 
 static const float INVPI  = 1.0f / PI;
@@ -95,7 +95,6 @@ float3 smoothstep(const float edge0, const float edge1, float3 vec);
 
 float Square(const float x) _const;
 int Round(const float f) _const;
-float Clamp(const float& v, const float& min, const float& max);
 template<class T> T Clamp(const T& v, const T& min, const T& max);
 
 

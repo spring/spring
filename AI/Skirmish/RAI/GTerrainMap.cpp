@@ -4,9 +4,29 @@
 #include "LegacyCpp/MoveData.h"
 #include "System/Util.h"
 #include "CUtils/Util.h"
+#include <stdexcept>
 //#include <time.h>
 using std::deque;
 using std::set;
+
+
+template<typename T>
+static inline void file_read(T* value, FILE* file)
+{
+	const size_t readCount = fread(value, sizeof(T), 1, file);
+	if (readCount != 1) {
+		throw std::runtime_error("failed reading from file");
+	}
+}
+
+template<typename T>
+static inline void file_write(const T* value, FILE* file)
+{
+	const size_t writeCount = fwrite(value, sizeof(T), 1, file);
+	if (writeCount != 1) {
+		throw std::runtime_error("failed writing to file");
+	}
+}
 
 GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 {
@@ -39,18 +59,27 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 	if( mapFile_r )
 	{
 		int version;
-		
-		fread(&version, sizeof(int), 1, mapFile_r);
-		
-		if( version == mapFileVersion )
+
+		try
 		{
-			fread(&waterIsHarmful, sizeof(bool), 1, mapFile_r);
-			fread(&waterIsAVoid, sizeof(bool), 1, mapFile_r);
-			mapFileLoaded = true;
+			file_read(&version, mapFile_r);
+
+			if( version == mapFileVersion )
+			{
+				file_read(&waterIsHarmful, mapFile_r);
+				file_read(&waterIsAVoid,   mapFile_r);
+				mapFileLoaded = true;
+			}
+			else
+			{
+				*l<<"\n  The cached map-file is using a different version format, reloading...";
+			}
 		}
-		else
-			*l<<"\n  The cached map-file is using a different version format, reloading...";
-		
+		catch (const std::exception& ex)
+		{
+			*l<<"\nERROR: failed reading the terrain map: " << ex.what();
+		}
+
 		fclose(mapFile_r);
 	}
 	
@@ -100,9 +129,16 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 		}
 
 		if (mapFile_w) {
-			fwrite(&mapFileVersion,sizeof(int),1,mapFile_w);
-			fwrite(&waterIsHarmful,sizeof(bool),1,mapFile_w);
-			fwrite(&waterIsAVoid,sizeof(bool),1,mapFile_w);
+			try
+			{
+				file_write(&mapFileVersion, mapFile_w);
+				file_write(&waterIsHarmful, mapFile_w);
+				file_write(&waterIsAVoid,   mapFile_w);
+			}
+			catch (const std::exception& ex)
+			{
+				*l<<"\nERROR: failed writing the terrain map: " << ex.what();
+			}
 			fclose(mapFile_w);
 		} else {
 			*l<<"\nERROR: Could not write to file: "<<relMapFileName;

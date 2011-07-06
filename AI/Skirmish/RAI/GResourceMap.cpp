@@ -4,6 +4,7 @@
 #include "LegacyCpp/FeatureDef.h"
 #include "System/Util.h"
 #include <stdio.h>
+#include <stdexcept>
 
 // a metal map block is 0-255 * cb->GetMaxMetal(), extractors are normally built on several
 const int RAI_MinimalMetalSite = 500; // (this * ud->extractsMetal = the predicted income)
@@ -35,8 +36,27 @@ float ResourceSite::GetResourceDistance(ResourceSite* RS, const int& pathType)
 	return RSD->minDistance;
 }
 
-GlobalResourceMap::GlobalResourceMap(IAICallback* _cb, cLogFile* l, GlobalTerrainMap* TM) :
-	cb(_cb)
+template<typename T>
+static inline void file_read(T* value, FILE* file)
+{
+	const size_t readCount = fread(value, sizeof(T), 1, file);
+	if (readCount != 1) {
+		throw std::runtime_error("failed reading from file");
+	}
+}
+
+template<typename T>
+static inline void file_write(const T* value, FILE* file)
+{
+	const size_t writeCount = fwrite(value, sizeof(T), 1, file);
+	if (writeCount != 1) {
+		throw std::runtime_error("failed writing to file");
+	}
+}
+
+GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrainMap* TM)
+	: cb(cb)
+	, l(l)
 {
 //	l = logfile;
 	*l<<"\n Loading the Resource-Map ...";
@@ -117,118 +137,125 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* _cb, cLogFile* l, GlobalTerrai
 	bool useResourceFile = false;
 	if( resourceFile_r )
 	{
-		useResourceFile = true;
-		*l<<"\n  Loading Resource-Site Data ...";
-		int udL2Size;
-		fread(&udL2Size, sizeof(int), 1, resourceFile_r);
-		if( udSize != udL2Size )
-			useResourceFile = false;
-		else
-		{	// Checks if the unit-Def list have changed
-			int ID;
-			for( int i=0; i<udSize; i++ )
-			{
-				fread(&ID, sizeof(int), 1, resourceFile_r);
-				if( udList[i]->id != ID )
-				{	// The order or types of definitions have changed
-					useResourceFile = false;
-					break;
-				}
-			}
-			if( useResourceFile )
-			{
-				int featureSites;
-				fread(&featureSites, sizeof(int), 1, resourceFile_r);
-				if( fSize != featureSites )
-					useResourceFile = false;
-				else
-				{	// Checks if the feature resource list has changed
-					for( int i=0; i<fSize; i++ )
-					{
-						fread(&ID, sizeof(int), 1, resourceFile_r);
-						if( fList[i] != ID )
-						{	// The order or types of features have changed
-							useResourceFile = false;
-							break;
-						}
+		try
+		{
+			useResourceFile = true;
+			*l<<"\n  Loading Resource-Site Data ...";
+			int udL2Size;
+			file_read(&udL2Size, resourceFile_r);
+			if( udSize != udL2Size )
+				useResourceFile = false;
+			else
+			{	// Checks if the unit-Def list have changed
+				int ID;
+				for( int i=0; i<udSize; i++ )
+				{
+					file_read(&ID, resourceFile_r);
+					if( udList[i]->id != ID )
+					{	// The order or types of definitions have changed
+						useResourceFile = false;
+						break;
 					}
-					if( useResourceFile )
-					{	// The actual loading starts here
-						typedef pair<ResourceSite*,ResourceSiteDistance> rrPair;
-						typedef pair<int,float> ifPair;
-						float3 position;
-						float distance;
-						int featureID;
-						int size,dSize;
-						int iT2,iR2;
-						int optionID;
-						for( int iT=0; iT<2; iT++ )
+				}
+				if( useResourceFile )
+				{
+					int featureSites;
+					file_read(&featureSites, resourceFile_r);
+					if( fSize != featureSites )
+						useResourceFile = false;
+					else
+					{	// Checks if the feature resource list has changed
+						for( int i=0; i<fSize; i++ )
 						{
-							fread(&RSize[iT], sizeof(int), 1, resourceFile_r);
-							for( int iR=0; iR<RSize[iT]; iR++ )
+							file_read(&ID, resourceFile_r);
+							if( fList[i] != ID )
+							{	// The order or types of features have changed
+								useResourceFile = false;
+								break;
+							}
+						}
+						if( useResourceFile )
+						{	// The actual loading starts here
+							typedef pair<ResourceSite*,ResourceSiteDistance> rrPair;
+							typedef pair<int,float> ifPair;
+							float3 position;
+							float distance;
+							int featureID;
+							int size,dSize;
+							int iT2,iR2;
+							int optionID;
+							for( int iT=0; iT<2; iT++ )
 							{
-								fread(&featureID, sizeof(int), 1, resourceFile_r);
-								fread(&position, sizeof(float3), 1, resourceFile_r);
-								if( featureID >= 0 )
-									R[iT][iR] = new ResourceSite(position,featureID,cb->GetFeatureDef(featureID));
-								else
-									R[iT][iR] = new ResourceSite(position);
-								fread(&R[iT][iR]->amount, sizeof(float), 1, resourceFile_r);
-								fread(&size, sizeof(int), 1, resourceFile_r);
-								for( int i=0; i<size; i++ )
+								file_read(&RSize[iT], resourceFile_r);
+								for( int iR=0; iR<RSize[iT]; iR++ )
 								{
-									fread(&optionID, sizeof(int), 1, resourceFile_r);
-									R[iT][iR]->options.insert(optionID);
+									file_read(&featureID, resourceFile_r);
+									file_read(&position, resourceFile_r);
+									if( featureID >= 0 )
+										R[iT][iR] = new ResourceSite(position,featureID,cb->GetFeatureDef(featureID));
+									else
+										R[iT][iR] = new ResourceSite(position);
+									file_read(&R[iT][iR]->amount, resourceFile_r);
+									file_read(&size, resourceFile_r);
+									for( int i=0; i<size; i++ )
+									{
+										file_read(&optionID, resourceFile_r);
+										R[iT][iR]->options.insert(optionID);
+									}
+								}
+							}
+							for( int iT=0; iT<2; iT++ )
+								for( int iR=0; iR<RSize[iT]; iR++ )
+								{
+									file_read(&size, resourceFile_r);
+									for( int i=0; i<size; i++ )
+									{
+										file_read(&iT2, resourceFile_r);
+										file_read(&iR2, resourceFile_r);
+										R[iT][iR]->siteDistance.insert(rrPair(R[iT2][iR2],ResourceSiteDistance(0.0)));
+										ResourceSiteDistance* RSD = &R[iT][iR]->siteDistance.find(R[iT2][iR2])->second;
+										file_read(&RSD->minDistance, resourceFile_r);
+										file_read(&RSD->bestPathType, resourceFile_r);
+										file_read(&dSize, resourceFile_r);
+										for( int i=0; i<dSize; i++ )
+										{
+											file_read(&optionID, resourceFile_r);
+											file_read(&distance, resourceFile_r);
+											RSD->distance.insert(ifPair(optionID,distance));
+										}
+										file_read(&dSize, resourceFile_r);
+										for( int i=0; i<dSize; i++ )
+										{
+											file_read(&position, resourceFile_r);
+											RSD->pathDebug.push_back(position);
+										}
+										if( RSD->bestPathType == -2 )
+											RSD->bestDistance = &RSD->minDistance;
+										else if( RSD->bestPathType >= 0 )
+											RSD->bestDistance = &RSD->distance.find(RSD->bestPathType)->second;
+									}
+								}
+							file_read(&averageMetalSite, resourceFile_r);
+							file_read(&isMetalMap, resourceFile_r);
+							if( isMetalMap )
+							{
+								sector = new MetalMapSector[TM->sectorXSize*TM->sectorZSize];
+								for( int iS=0; iS<TM->sectorXSize*TM->sectorZSize; iS++ )
+								{
+									file_read(&sector[iS].isMetalSector, resourceFile_r);
+									sector[iS].S = &TM->sector[iS];
 								}
 							}
 						}
-						for( int iT=0; iT<2; iT++ )
-							for( int iR=0; iR<RSize[iT]; iR++ )
-							{
-								fread(&size, sizeof(int), 1, resourceFile_r);
-								for( int i=0; i<size; i++ )
-								{
-									fread(&iT2, sizeof(int), 1, resourceFile_r);
-									fread(&iR2, sizeof(int), 1, resourceFile_r);
-									R[iT][iR]->siteDistance.insert(rrPair(R[iT2][iR2],ResourceSiteDistance(0.0)));
-									ResourceSiteDistance* RSD = &R[iT][iR]->siteDistance.find(R[iT2][iR2])->second;
-									fread(&RSD->minDistance, sizeof(float), 1, resourceFile_r);
-									fread(&RSD->bestPathType, sizeof(int), 1, resourceFile_r);
-									fread(&dSize, sizeof(int), 1, resourceFile_r);
-									for( int i=0; i<dSize; i++ )
-									{
-										fread(&optionID, sizeof(int), 1, resourceFile_r);
-										fread(&distance, sizeof(float), 1, resourceFile_r);
-										RSD->distance.insert(ifPair(optionID,distance));
-									}
-									fread(&dSize, sizeof(int), 1, resourceFile_r);
-									for( int i=0; i<dSize; i++ )
-									{
-										fread(&position, sizeof(float3), 1, resourceFile_r);
-										RSD->pathDebug.push_back(position);
-									}
-									if( RSD->bestPathType == -2 )
-										RSD->bestDistance = &RSD->minDistance;
-									else if( RSD->bestPathType >= 0 )
-										RSD->bestDistance = &RSD->distance.find(RSD->bestPathType)->second;
-								}
-							}
-						fread(&averageMetalSite, sizeof(float), 1, resourceFile_r);
-						fread(&isMetalMap, sizeof(bool), 1, resourceFile_r);
-						if( isMetalMap )
-						{
-							sector = new MetalMapSector[TM->sectorXSize*TM->sectorZSize];
-							for( int iS=0; iS<TM->sectorXSize*TM->sectorZSize; iS++ )
-							{
-								fread(&sector[iS].isMetalSector, sizeof(bool), 1, resourceFile_r);
-								sector[iS].S = &TM->sector[iS];
-							}
-						}
 					}
 				}
 			}
+			fclose(resourceFile_r);
 		}
-		fclose(resourceFile_r);
+		catch (const std::exception& ex)
+		{
+			*l<<"\nERROR: failed reading the resource map: " << ex.what();
+		}
 		if( !useResourceFile )
 			*l<<"\n  A change has been detected in the map/mod, the resource data will be reloaded.";
 	}
@@ -721,60 +748,67 @@ GlobalResourceMap::~GlobalResourceMap()
 			throw 12;
 		}
 
-		int size;
-		fwrite(&(size=saveUD.size()), sizeof(int), 1, resourceFile_w);
-		for(vector<int>::iterator i=saveUD.begin(); i!=saveUD.end(); ++i)
-			fwrite(&*i, sizeof(int), 1, resourceFile_w);
-		fwrite(&(size=saveF.size()), sizeof(int), 1, resourceFile_w);
-		for(vector<int>::iterator i=saveF.begin(); i!=saveF.end(); ++i)
-			fwrite(&*i, sizeof(int), 1, resourceFile_w);
-		for( int iT=0; iT<2; iT++ )
+		try
 		{
-			fwrite(&RSize[iT], sizeof(int), 1, resourceFile_w);
-			for( int iR=0; iR<RSize[iT]; iR++ )
+			int size;
+			file_write(&(size=saveUD.size()), resourceFile_w);
+			for(vector<int>::iterator i=saveUD.begin(); i!=saveUD.end(); ++i)
+				file_write(&*i, resourceFile_w);
+			file_write(&(size=saveF.size()), resourceFile_w);
+			for(vector<int>::iterator i=saveF.begin(); i!=saveF.end(); ++i)
+				file_write(&*i, resourceFile_w);
+			for( int iT=0; iT<2; iT++ )
 			{
-				fwrite(&R[iT][iR]->featureID, sizeof(int), 1, resourceFile_w);
-				fwrite(&R[iT][iR]->position, sizeof(float3), 1, resourceFile_w);
-				fwrite(&R[iT][iR]->amount, sizeof(float), 1, resourceFile_w);
-				fwrite(&(size=R[iT][iR]->options.size()), sizeof(int), 1, resourceFile_w);
-				for( set<int>::iterator i=R[iT][iR]->options.begin(); i!=R[iT][iR]->options.end(); ++i )
-					fwrite(&*i, sizeof(int), 1, resourceFile_w);
-			}
-		}
-		for( int iT=0; iT<2; iT++ )
-			for( int iR=0; iR<RSize[iT]; iR++ )
-			{
-				fwrite(&(size=R[iT][iR]->siteDistance.size()), sizeof(int), 1, resourceFile_w);
-				for( map<ResourceSite*,ResourceSiteDistance>::iterator iRS=R[iT][iR]->siteDistance.begin(); iRS!=R[iT][iR]->siteDistance.end(); ++iRS )
+				file_write(&RSize[iT], resourceFile_w);
+				for( int iR=0; iR<RSize[iT]; iR++ )
 				{
-					fwrite(&iRS->first->type, sizeof(int), 1, resourceFile_w);
-					ResourceSiteDistance* RSD = &iRS->second;
-					for(int i=0; i<RSize[iRS->first->type]; i++)
-						if( R[iRS->first->type][i] == iRS->first )
-						{
-							fwrite(&i, sizeof(int), 1, resourceFile_w);
-							break;
-						}
-					fwrite(&RSD->minDistance, sizeof(float), 1, resourceFile_w);
-					if( RSD->bestPathType == -1 && RSD->bestDistance != 0 )
-						RSD->bestPathType = -2;
-					fwrite(&RSD->bestPathType, sizeof(int), 1, resourceFile_w);
-					fwrite(&(size=RSD->distance.size()), sizeof(int), 1, resourceFile_w);
-					for( map<int,float>::iterator i=RSD->distance.begin(); i!=RSD->distance.end(); ++i )
-					{
-						fwrite(&i->first, sizeof(int), 1, resourceFile_w);
-						fwrite(&i->second, sizeof(float), 1, resourceFile_w);
-					}
-					fwrite(&(size=RSD->pathDebug.size()), sizeof(int), 1, resourceFile_w);
-					for( vector<float3>::iterator i=RSD->pathDebug.begin(); i!=RSD->pathDebug.end(); ++i )
-						fwrite(&*i, sizeof(float3), 1, resourceFile_w);
+					file_write(&R[iT][iR]->featureID, resourceFile_w);
+					file_write(&R[iT][iR]->position, resourceFile_w);
+					file_write(&R[iT][iR]->amount, resourceFile_w);
+					file_write(&(size=R[iT][iR]->options.size()), resourceFile_w);
+					for( set<int>::iterator i=R[iT][iR]->options.begin(); i!=R[iT][iR]->options.end(); ++i )
+						file_write(&*i, resourceFile_w);
 				}
 			}
-		fwrite(&averageMetalSite, sizeof(float), 1, resourceFile_w);
-		fwrite(&isMetalMap, sizeof(bool), 1, resourceFile_w);
-		if( isMetalMap )
-			for( int iS=0; iS<saveSectorSize; iS++ )
-				fwrite(&sector[iS].isMetalSector, sizeof(bool), 1, resourceFile_w);
+			for( int iT=0; iT<2; iT++ )
+				for( int iR=0; iR<RSize[iT]; iR++ )
+				{
+					file_write(&(size=R[iT][iR]->siteDistance.size()), resourceFile_w);
+					for( map<ResourceSite*,ResourceSiteDistance>::iterator iRS=R[iT][iR]->siteDistance.begin(); iRS!=R[iT][iR]->siteDistance.end(); ++iRS )
+					{
+						file_write(&iRS->first->type, resourceFile_w);
+						ResourceSiteDistance* RSD = &iRS->second;
+						for(int i=0; i<RSize[iRS->first->type]; i++)
+							if( R[iRS->first->type][i] == iRS->first )
+							{
+								file_write(&i, resourceFile_w);
+								break;
+							}
+						file_write(&RSD->minDistance, resourceFile_w);
+						if( RSD->bestPathType == -1 && RSD->bestDistance != 0 )
+							RSD->bestPathType = -2;
+						file_write(&RSD->bestPathType, resourceFile_w);
+						file_write(&(size=RSD->distance.size()), resourceFile_w);
+						for( map<int,float>::iterator i=RSD->distance.begin(); i!=RSD->distance.end(); ++i )
+						{
+							file_write(&i->first, resourceFile_w);
+							file_write(&i->second, resourceFile_w);
+						}
+						file_write(&(size=RSD->pathDebug.size()), resourceFile_w);
+						for( vector<float3>::iterator i=RSD->pathDebug.begin(); i!=RSD->pathDebug.end(); ++i )
+							file_write(&*i, resourceFile_w);
+					}
+				}
+			file_write(&averageMetalSite, resourceFile_w);
+			file_write(&isMetalMap, resourceFile_w);
+			if( isMetalMap )
+				for( int iS=0; iS<saveSectorSize; iS++ )
+					file_write(&sector[iS].isMetalSector, resourceFile_w);
+		}
+		catch (const std::exception& ex)
+		{
+			*l<<"\nERROR: failed writing the resource map: " << ex.what();
+		}
 		fclose(resourceFile_w);
 	}
 

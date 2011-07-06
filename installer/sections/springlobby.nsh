@@ -25,6 +25,5 @@
 	Delete "$INSTDIR\NEWS"
 	Delete "$INSTDIR\THANKS"
 	RmDir /R "$INSTDIR\locale"
-	RmDir /R "$INSTDIR\SpringLobbyDocs"
 
 !endif

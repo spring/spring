@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef MYGL_H
-#define MYGL_H
+#ifndef _MY_GL_H
+#define _MY_GL_H
 
 #define GLEW_STATIC
 #ifndef NOMINMAX
@@ -9,15 +9,28 @@
 #endif
 
 #include <string>
-#ifndef HEADLESS
-	#include <GL/glew.h>
-#else
+#if       defined(HEADLESS)
 	#include "lib/headlessStubs/glewstub.h"
-#endif
+#else
+	#include <GL/glew.h>
+#endif // defined(HEADLESS)
 #include "lib/gml/gml.h"
 
 // includes boost now!
 #include "float3.h"
+
+
+#if       defined(HEADLESS)
+	// All OpenGL functions should always exists on HEADLESS.
+	// If one does not, we should crash, and it has to be added to glstub.c.
+	// No runtime check should be performed, or it can be optimized away
+	// by the compiler.
+	// This also prevents a compile warning.
+	#define IS_GL_FUNCTION_AVAILABLE(functionName) true
+#else
+	// Check if the functions address is non-NULL.
+	#define IS_GL_FUNCTION_AVAILABLE(functionName) (functionName != NULL)
+#endif // defined(HEADLESS)
 
 
 inline void glVertexf3(const float3 &v)
@@ -77,4 +90,4 @@ void UnloadExtensions();
 class CVertexArray;
 CVertexArray* GetVertexArray();
 
-#endif
+#endif // _MY_GL_H

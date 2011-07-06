@@ -11,6 +11,8 @@
 #ifndef TSC_H
 #define TSC_H
 
+#define DETACH_SYNCED 1
+
 #include <list>
 #include <vector>
 
@@ -376,12 +378,12 @@ public:
 	}
 
 	void clear() {
-		for(SimIT it = cont.begin(); it != cont.end(); ++it) {
+		for(SimIT it = cont.begin(); it != cont.end(); ++it)
 			delete *it;
-		}
-		cont.clear();
-		delete_delayed();
-		delete_erased_synced();
+		for (VecIT it = delRender.begin(); it != delRender.end(); ++it)
+			delete *it;
+		for (SetIT it = postDelRender.begin(); it != postDelRender.end(); ++it)
+			delete *it;
 	}
 
 	void PostLoad() {
@@ -838,7 +840,7 @@ private:
 
 
 
-template <class C, class R, class T>
+template <class C, class R, class T, class D>
 class ThreadListSim {
 private:
 	typedef typename C::iterator SimIT;
@@ -859,6 +861,12 @@ public:
 		}
 		cont.clear();
 		delete_erased_synced();
+	}
+
+	void detach_all() {
+		for(SimIT it = cont.begin(); it != cont.end(); ++it) {
+			D::Detach(*it);
+		}
 	}
 
 	void PostLoad() {
@@ -894,6 +902,16 @@ public:
 		del.clear();
 	}
 
+	void detach_erased_synced() {
+		for (VecIT it = del.begin(); it != del.end(); ++it) {
+			D::Detach(*it);
+#if !defined(USE_GML) || !GML_ENABLE_SIM
+			delete *it;
+#endif
+		}
+		del.clear();
+	}
+
 	void resize(const size_t& s) {
 		cont.resize(s);
 	}
@@ -917,6 +935,15 @@ public:
 	SimIT erase_delete(SimIT& it) {
 #if !defined(USE_GML) || !GML_ENABLE_SIM
 		delete *it;
+#endif
+		return cont.erase(it);
+	}
+
+	SimIT erase_detach(SimIT& it) {
+#if !defined(USE_GML) || !GML_ENABLE_SIM
+		delete *it;
+#else
+		D::Detach(*it);
 #endif
 		return cont.erase(it);
 	}

@@ -168,7 +168,7 @@ struct LuaUIEvent {
 	#define LUA_UI_BATCH_PUSH(...)
 #endif
 
-#if defined(USE_GML) && GML_ENABLE_SIM
+#if defined(USE_GML) && GML_ENABLE_SIM && GML_CALL_DEBUG
 	#define GML_MEASURE_LOCK_TIME(lock) unsigned luatime = SDL_GetTicks(); lock; luatime = SDL_GetTicks() - luatime; if(luatime >= 1) gmlLockTime += luatime
 #else
 	#define GML_MEASURE_LOCK_TIME(lock) lock
@@ -191,7 +191,7 @@ struct LuaUIEvent {
 		#else
 			#define GML_DEBUG_LOCK(name)
 		#endif
-		#define GML_DRCMUTEX_LOCK(name) GML_DEBUG_LOCK(name); GML_MEASURE_LOCK_TIME(GML_THRMUTEX_LOCK(name, GML_DRAW|GML_SIM, *L->))
+		#define GML_DRCMUTEX_LOCK(name) GML_DEBUG_LOCK(name); GML_MEASURE_LOCK_TIME(GML_OBJMUTEX_LOCK(name, GML_DRAW|GML_SIM, *L->))
 	#else
 		#define GML_DRCMUTEX_LOCK(name)
 	#endif
@@ -205,5 +205,5 @@ struct LuaUIEvent {
 		#define SELECT_LUA_STATE()
 		#define SELECT_UNSYNCED_LUA_STATE()
 	#endif
-	#define GML_DRCMUTEX_LOCK(name) GML_MEASURE_LOCK_TIME(GML_THRMUTEX_LOCK(name, GML_DRAW|GML_SIM, *L->))
+	#define GML_DRCMUTEX_LOCK(name) GML_MEASURE_LOCK_TIME(GML_OBJMUTEX_LOCK(name, GML_DRAW|GML_SIM, *L->))
 #endif

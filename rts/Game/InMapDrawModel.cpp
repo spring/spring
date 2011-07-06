@@ -50,11 +50,11 @@ CR_REG_METADATA_SUB(CInMapDrawModel, MapLine, (
 
 CR_BIND(CInMapDrawModel::DrawQuad, );
 
-CR_REG_METADATA_SUB(CInMapDrawModel, DrawQuad, (
+//CR_REG_METADATA_SUB(CInMapDrawModel, DrawQuad, (
 //	CR_MEMBER(points), // TODO this is only left out due to lazyness
 //	CR_MEMBER(lines), // TODO this is only left out due to lazyness
-	CR_RESERVED(4)
-));
+//	CR_RESERVED(4)
+//));
 
 
 

@@ -359,6 +359,8 @@ void CReadMap::UpdateHeightMapSynced(int x1, int z1, int x2, int z2)
 void CReadMap::PushVisibleHeightMapUpdate(int x1, int z1, int x2, int z2)
 {
 	#ifdef USE_UNSYNCED_HEIGHTMAP
+	GML_STDMUTEX_LOCK(map); // PushVisibleHeightMapUpdate
+
 	//! NOTE: UpdateHeightMapUnsynced performs a LOS-check, but we already
 	//! know the area (x1, z1)-(x2, z2) is in LOS so uhm and vvn still get
 	//! updated properly in UpdateHeightMapUnsynced

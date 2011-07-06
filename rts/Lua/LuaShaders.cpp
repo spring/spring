@@ -410,10 +410,10 @@ static bool ParseSources(lua_State* L, int table,
 }
 
 
-static bool ApplyGeometryParameters(lua_State* L, int table, GLuint prog)
+static void ApplyGeometryParameters(lua_State* L, int table, GLuint prog)
 {
-	if (!glProgramParameteriEXT) {
-		return true;
+	if (!IS_GL_FUNCTION_AVAILABLE(glProgramParameteriEXT)) {
+		return;
 	}
 
 	struct { const char* name; GLenum param; } parameters[] = {
@@ -431,8 +431,6 @@ static bool ApplyGeometryParameters(lua_State* L, int table, GLuint prog)
 		}
 		lua_pop(L, 1);
 	}
-
-	return true;
 }
 
 
@@ -837,7 +835,7 @@ int LuaShaders::SetShaderParameter(lua_State* L)
 	const GLenum param = (GLenum)luaL_checkint(L, 2);
 	const GLint  value =  (GLint)luaL_checkint(L, 3);
 
-	if (glProgramParameteriEXT) {
+	if (IS_GL_FUNCTION_AVAILABLE(glProgramParameteriEXT)) {
 		glProgramParameteriEXT(progName, param, value);
 	}
 
