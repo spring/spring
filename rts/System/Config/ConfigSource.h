@@ -73,4 +73,16 @@ private:
 	char* Strip(char* begin, char* end);
 };
 
+/**
+ * @brief Configuration source that holds static defaults
+ *
+ * Keys and default values for each engine configuration variable
+ * are exposed by this class.
+ */
+class DefaultConfigSource : public ReadOnlyConfigSource
+{
+public:
+	DefaultConfigSource();
+};
+
 #endif // CONFIG_SOURCE_H

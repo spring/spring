@@ -44,9 +44,8 @@ set(main_files
 	../../rts/System/Config/ConfigLocater
 	../../rts/System/Config/ConfigSource
 	../../rts/System/Config/ConfigVariable
-	../../rts/System/Config/DefaultConfigSource
-	../../rts/System/Config/ScopedFileLock
 	../../rts/System/Platform/Misc
+	../../rts/System/Platform/ScopedFileLock
 	../../rts/System/LogOutput
 	../../rts/System/TdfParser
 	../../rts/System/Info

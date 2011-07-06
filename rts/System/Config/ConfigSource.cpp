@@ -2,8 +2,9 @@
 
 #include "StdAfx.h"
 #include "ConfigSource.h"
-#include "ScopedFileLock.h"
+#include "ConfigVariable.h"
 #include "System/LogOutput.h"
+#include "System/Platform/ScopedFileLock.h"
 
 #ifdef WIN32
 	#include <io.h>
@@ -176,6 +177,23 @@ void FileConfigSource::Write(FILE* file)
 			fputs(comment->second.c_str(), file);
 		}
 		fprintf(file, "%s = %s\n", iter->first.c_str(), iter->second.c_str());
+	}
+}
+
+/******************************************************************************/
+
+/**
+ * @brief Fill with default values of declared configuration variables.
+ */
+DefaultConfigSource::DefaultConfigSource()
+{
+	const ConfigVariable::MetaDataMap& vars = ConfigVariable::GetMetaDataMap();
+
+	for (ConfigVariable::MetaDataMap::const_iterator it = vars.begin(); it != vars.end(); ++it) {
+		const ConfigVariableMetaData* metadata = it->second;
+		if (metadata->HasDefaultValue()) {
+			data[metadata->key] = metadata->GetDefaultValue();
+		}
 	}
 }
 

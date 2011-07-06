@@ -4,7 +4,6 @@
 #include "ConfigHandler.h"
 #include "ConfigLocater.h"
 #include "ConfigSource.h"
-#include "DefaultConfigSource.h"
 #include "System/Util.h"
 #include "System/LogOutput.h"
 
