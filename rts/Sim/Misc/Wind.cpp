@@ -81,10 +81,10 @@ bool CWind::DelUnit(CUnit* u) {
 
 
 
-void CWind::LoadWind(float min, float max)
+void CWind::LoadWind(float minw, float maxw)
 {
-	minWind = min;
-	maxWind = max;
+	minWind = std::min(minw, maxw);
+	maxWind = std::max(minw, maxw);
 	curWind = float3(minWind, 0.0f, 0.0f);
 	oldWind = curWind;
 }
@@ -92,6 +92,10 @@ void CWind::LoadWind(float min, float max)
 
 void CWind::Update()
 {
+	//! zero-strength wind does not need updates
+	if (maxWind <= 0.0f)
+		return;
+
 	if (status == 0) {
 		oldWind = curWind;
 		newWind = oldWind;
@@ -102,7 +106,7 @@ void CWind::Update()
 			newWind.x -= (gs->randFloat() - 0.5f) * maxWind;
 			newWind.z -= (gs->randFloat() - 0.5f) * maxWind;
 			len = newWind.Length();
-		} while (len == 0.f);
+		} while (len == 0.0f);
 
 		//! clamp: windMin <= strength <= windMax
 		newWind /= len;
@@ -112,13 +116,13 @@ void CWind::Update()
 		status++;
 	} else if (status <= UpdateRate) {
 		float mod = status / float(UpdateRate);
-		mod = smoothstep(0.f, 1.f, mod);
+		mod = smoothstep(0.0f, 1.0f, mod);
 
 		//! blend between old & new wind directions
 		#define blend(x,y,a) x * (1.0f - a) + y * a
 		curWind = blend(oldWind, newWind, mod);
 		curStrength = curWind.Length();
-		if (curStrength != 0.f) {
+		if (curStrength != 0.0f) {
 			curDir = curWind / curStrength;
 		}
 

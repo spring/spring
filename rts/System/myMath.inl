@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 //                  F(N=2) = H(-32768 / 32767)
-// 
+//
 //                         ^
 //                         |
 //                         |
@@ -9,7 +9,7 @@
 //                         |
 //                         |
 //                         v
-// 
+//
 //                  F(S=0) = H(0)
 inline short int GetHeadingFromFacing(int facing)
 {
@@ -148,15 +148,10 @@ inline int Round(const float f)
 	return math::floor(f + 0.5f);
 }
 
-inline float Clamp(const float& v, const float& min, const float& max)
-{
-	return std::min(max, std::max(min, v));
-}
-
 template<class T>
 inline T Clamp(const T& v, const T& min, const T& max)
 {
-	return v < min ? min : (v > max ? max : v);
+	return std::min(max, std::max(min, v));
 }
 
 inline float ClampRad(float f)

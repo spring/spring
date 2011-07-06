@@ -29,6 +29,7 @@ class CProjectile: public CExpGenSpawnable
 public:
 	CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece);
 	virtual ~CProjectile();
+	virtual void Detach();
 
 	virtual void Collision();
 	virtual void Collision(CUnit* unit);
@@ -36,7 +37,7 @@ public:
 	virtual void Update();
 	virtual void Init(const float3& pos, CUnit* owner);
 
-	virtual void Draw();
+	virtual void Draw() {}
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 	virtual void DrawCallback() {}
 

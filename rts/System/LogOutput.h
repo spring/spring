@@ -105,7 +105,7 @@ public:
 	void Print(const CLogSubsystem& subsystem, const char* fmt, ...) FORMATSTRING(3);
 	void Print(const char* fmt, ...) FORMATSTRING(2);
 	void Print(const std::string& text);
-	void Prints(const CLogSubsystem& subsystem, const std::string& text); // canno be named Print, would be  not unique
+	void Prints(const CLogSubsystem& subsystem, const std::string& text); // can not be named Print, as it would not be unique
 	void Printv(const CLogSubsystem& subsystem, const char* fmt, va_list argp);
 	static CLogSubsystem& GetDefaultLogSubsystem();
 

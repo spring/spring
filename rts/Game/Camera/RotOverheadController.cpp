@@ -65,7 +65,7 @@ float3 CRotOverheadController::GetPos()
 {
 	pos.x = Clamp(pos.x, 0.01f, gs->mapx*SQUARE_SIZE-0.01f);
 	pos.z = Clamp(pos.z, 0.01f, gs->mapy*SQUARE_SIZE-0.01f);
-	pos.y = Clamp(pos.y, ground->GetHeightAboveWater(pos.x, pos.z, false) + 5, 9000);
+	pos.y = Clamp(pos.y, ground->GetHeightAboveWater(pos.x, pos.z, false) + 5, 9000.0f);
 
 	oldHeight = pos.y - ground->GetHeightAboveWater(pos.x, pos.z, false);
 

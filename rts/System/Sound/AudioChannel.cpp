@@ -159,8 +159,8 @@ void AudioChannel::StreamPlay(const std::string& filepath, float volume, bool en
 		curStreamSrc = newStreamSrc;
 
 	if (curStreamSrc) {
+		cur_sources[curStreamSrc] = true; //! This one first, PlayStream may invoke Stop immediately thus setting curStreamSrc to NULL
 		curStreamSrc->PlayStream(this, filepath, volume);
-		cur_sources[curStreamSrc] = true;
 	}
 }
 

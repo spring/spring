@@ -31,6 +31,7 @@ class CPieceProjectile: public CProjectile
 public:
 	CPieceProjectile(const float3& pos, const float3& speed, LocalModelPiece* piece, int flags, CUnit* owner, float radius);
 	virtual ~CPieceProjectile();
+	virtual void Detach();
 
 	void Update();
 	void Draw();

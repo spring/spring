@@ -85,10 +85,17 @@ CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, boo
 	GML_GET_TICKS(lastProjUpdate);
 }
 
-CProjectile::~CProjectile() {
+void CProjectile::Detach() {
+	// SYNCED
 	if (synced) {
 		qf->RemoveProjectile(this);
 	}
+	CExpGenSpawnable::Detach();
+}
+
+CProjectile::~CProjectile() {
+	// UNSYNCED
+	assert(!synced || detached);
 }
 
 void CProjectile::Init(const float3& offset, CUnit* owner)
@@ -142,23 +149,6 @@ void CProjectile::Collision(CFeature* feature)
 }
 
 
-void CProjectile::Draw()
-{
-	inArray = true;
-	unsigned char col[4];
-	col[0] = 255;
-	col[1] = 127;
-	col[2] =   0;
-	col[3] =  10;
-
-	#define pt projectileDrawer->projectiletex
-	va->AddVertexTC(drawPos - camera->right * drawRadius - camera->up * drawRadius, pt->xstart, pt->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * drawRadius - camera->up * drawRadius, pt->xend,   pt->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * drawRadius + camera->up * drawRadius, pt->xend,   pt->yend,   col);
-	va->AddVertexTC(drawPos - camera->right * drawRadius + camera->up * drawRadius, pt->xstart, pt->yend,   col);
-	#undef pt
-}
-
 void CProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 {
 	points.AddVertexQC(pos, color4::whiteA);
@@ -170,8 +160,8 @@ int CProjectile::DrawArray()
 
 	va->DrawArrayTC(GL_QUADS);
 
-	// divided by 24 because each element is 
-	// 12 + 4 + 4 + 4 bytes in size (pos + u + v + color)
+	// draw-index gets divided by 24 because each element is 
+	// 12 + 4 + 4 + 4 = 24 bytes in size (pos + u + v + color)
 	// for each type of "projectile"
 	idx = (va->drawIndex() / 24);
 	va = GetVertexArray();
