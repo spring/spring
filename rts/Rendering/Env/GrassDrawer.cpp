@@ -283,7 +283,7 @@ public:
 								const float col = 0.62f;
 
 								float3 pos(dx, ground->GetHeightReal(dx, dy, false), dy);
-									pos.y -= ground->GetSlope(dx, dy) * 10.0f + 0.03f;
+									pos.y -= ground->GetSlope(dx, dy, false) * 10.0f + 0.03f;
 
 								glColor3f(col, col, col);
 
@@ -378,7 +378,7 @@ public:
 								const float col = 1.0f;
 
 								float3 pos(dx, ground->GetHeightReal(dx, dy, false) + 0.5f, dy);
-									pos.y -= (ground->GetSlope(dx, dy) * 10.0f + 0.03f);
+									pos.y -= (ground->GetSlope(dx, dy, false) * 10.0f + 0.03f);
 
 								va->AddVertexQTN(pos, 0.0f,         0.0f, float3(-partTurfSize, -partTurfSize, col));
 								va->AddVertexQTN(pos, 1.0f / 16.0f, 0.0f, float3( partTurfSize, -partTurfSize, col));
@@ -700,7 +700,7 @@ void CGrassDrawer::Draw(void)
 				const float col = 1.0f;
 
 				float3 pos(dx, ground->GetHeightReal(dx, dy, false) + 0.5f, dy);
-					pos.y -= (ground->GetSlope(dx, dy) * 10.0f + 0.03f);
+					pos.y -= (ground->GetSlope(dx, dy, false) * 10.0f + 0.03f);
 
 				if (camera->InView(pos, turfSize * 0.7f)) {
 					va->AddVertexQTN(pos,         0.0f, 0.0f, float3(-partTurfSize, -partTurfSize, col));

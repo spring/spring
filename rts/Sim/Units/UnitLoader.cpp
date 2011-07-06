@@ -184,6 +184,9 @@ CWeapon* CUnitLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* udw)
 	} else if (weaponDef->type == "EmgCannon") {
 		weapon = new CEmgCannon(owner);
 	} else if (weaponDef->type == "DGun") {
+		// NOTE: no special connection to UnitDef::canManualFire
+		// (any type of weapon may be slaved to the button which
+		// controls manual firing) or the CMD_MANUALFIRE command
 		weapon = new CDGunWeapon(owner);
 	} else if (weaponDef->type == "StarburstLauncher") {
 		weapon = new CStarburstLauncher(owner);
@@ -304,12 +307,12 @@ void CUnitLoader::ParseAndExecuteGiveUnitsCommand(const std::vector<std::string>
 	int featureAllyTeam = -1;
 	if (teamArgIdx >= 0) {
 		team = atoi(args[teamArgIdx].c_str());
-		featureAllyTeam = teamHandler->AllyTeam(team);
 
 		if ((!teamHandler->IsValidTeam(team)) || (args[teamArgIdx].find_first_not_of("0123456789") != std::string::npos)) {
 			logOutput.Print("[%s] invalid team argument: %s", __FUNCTION__, args[teamArgIdx].c_str());
 			return;
 		}
+
 		featureAllyTeam = teamHandler->AllyTeam(team);
 	}
 

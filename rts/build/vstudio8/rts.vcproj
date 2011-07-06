@@ -2373,6 +2373,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Rendering\LineDrawer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\LineDrawer.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Rendering\ProjectileDrawer.cpp"
 				>
 			</File>
@@ -2561,14 +2569,6 @@
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Env\ITreeDrawer.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Units\CommandAI\LineDrawer.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\Units\CommandAI\LineDrawer.h"
 					>
 				</File>
 				<File

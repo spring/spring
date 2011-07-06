@@ -27,6 +27,7 @@ public:
 	virtual ~CObject();
 	void Serialize(creg::ISerializer* s);
 	void PostLoad();
+	virtual void Detach();
 
 	/// Request to not inform this when o dies
 	void DeleteDeathDependence(CObject* o);
@@ -69,6 +70,9 @@ public:
 #define INSTANCE_OF_SUBCLASS_OF(type,obj) ((obj->objType & kind) == kind) // exact class or any subclass of it
 #define INSTANCE_OF(type,obj) (obj->objType == type) // exact class only, saves one instruction yay :)
 */
+protected:
+	bool detached;
+
 private:
 	std::list<CObject*> listeners, listening;
 };

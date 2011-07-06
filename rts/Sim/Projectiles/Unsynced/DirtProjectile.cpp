@@ -68,7 +68,7 @@ void CDirtProjectile::Update()
 	alpha -= alphaFalloff;
 	size += sizeExpansion;
 
-	if (ground->GetApproximateHeight(pos.x, pos.z) - 40 > pos.y) {
+	if (ground->GetApproximateHeight(pos.x, pos.z, false) - 40 > pos.y) {
 		deleteMe = true;
 	}
 	if (alpha <= 0) {

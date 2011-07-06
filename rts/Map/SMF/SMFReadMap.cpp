@@ -324,10 +324,12 @@ void CSmfReadMap::UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2)
 {
 	{
 		// update the visible heights and normals
-		const float* shm = &cornerHeightMapSynced[0];
-		      float* uhm = &cornerHeightMapUnsynced[0];
-		float3* rvn = &rawVertexNormals[0];
-		float3* vvn = &visVertexNormals[0];
+		static const float*  shm = &cornerHeightMapSynced[0];
+		static       float*  uhm = &cornerHeightMapUnsynced[0];
+		static const float3* sfn = &faceNormalsSynced[0];
+		static       float3* ufn = &faceNormalsUnsynced[0];
+		static       float3* rvn = &rawVertexNormals[0];
+		static       float3* vvn = &visVertexNormals[0];
 
 		static const int W = gs->mapx + 1;
 		static const int H = gs->mapy + 1;
@@ -353,7 +355,10 @@ void CSmfReadMap::UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2)
 		#pragma omp parallel for private(z)
 		for (z = minz; z <= maxz; z++) {
 			for (int x = minx; x <= maxx; x++) {
-				const int vIdx = (z * W) + x;
+				const int vIdxTL = (z    ) * W + x;
+				const int vIdxBL = (z + 1) * W + x;
+				const int fIdxTL = (z * (W - 1) + x) * 2    ;
+				const int fIdxBR = (z * (W - 1) + x) * 2 + 1;
 
 				const bool hasNgbL = (x >     0); const int xOffL = hasNgbL? 1: 0;
 				const bool hasNgbR = (x < W - 1); const int xOffR = hasNgbR? 1: 0;
@@ -387,29 +392,39 @@ void CSmfReadMap::UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2)
 					tn = (hasNgbB           )? (vbm - vmm).cross((vbl - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
 					tn = (hasNgbB && hasNgbL)? (vbl - vmm).cross((vml - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
 					tn = (hasNgbL           )? (vml - vmm).cross((vtl - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
+				float3 fnTL;
+				float3 fnBR;
 
-				rvn[vIdx] = vn.ANormalize();
+				// update the raw vertex normal
+				rvn[vIdxTL] = vn.ANormalize();
 
 				#ifdef USE_UNSYNCED_HEIGHTMAP
 				if (gs->frameNum <= 0 || gu->spectatingFullView || loshandler->InLos(x, z, gu->myAllyTeam)) {
-					uhm[vIdx] = shm[vIdx];
-					vvn[vIdx] = rvn[vIdx];
+					// update the visible vertex/face height/normal
+					uhm[vIdxTL] = shm[vIdxTL];
+					vvn[vIdxTL] = rvn[vIdxTL];
+
+					if (hasNgbR && hasNgbB) {
+						// x == maxx and z == maxz are illegal indices
+						ufn[fIdxTL] = sfn[fIdxTL];
+						ufn[fIdxBR] = sfn[fIdxBR];
+					}
 				}
 				#endif
 
 				// compress the range [-1, 1] to [0, 1] to prevent clamping
 				// (ideally, should use an FBO with FP32 texture attachment)
 				#if (SSMF_UNCOMPRESSED_NORMALS == 1)
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 0] = ((vvn[vIdx].x + 1.0f) * 0.5f);
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 1] = ((vvn[vIdx].y + 1.0f) * 0.5f);
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 2] = ((vvn[vIdx].z + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 4 + 0] = ((vvn[vIdxTL].x + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 4 + 1] = ((vvn[vIdxTL].y + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 4 + 2] = ((vvn[vIdxTL].z + 1.0f) * 0.5f);
 				pixels[((z - minz) * xsize + (x - minx)) * 4 + 3] = 1.0f;
 				#else
 				//! note: y-coord is regenerated in the shader via "sqrt(1 - x*x - z*z)",
 				//!   this gives us 2 solutions but we know that the y-coord always points
 				//!   upwards, so we can reconstruct it in the shader.
-				pixels[((z - minz) * xsize + (x - minx)) * 2 + 0] = ((vvn[vIdx].x + 1.0f) * 0.5f);
-				pixels[((z - minz) * xsize + (x - minx)) * 2 + 1] = ((vvn[vIdx].z + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 2 + 0] = ((vvn[vIdxTL].x + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 2 + 1] = ((vvn[vIdxTL].z + 1.0f) * 0.5f);
 				#endif
 			}
 		}

@@ -6,6 +6,7 @@
 #include <string>
 #include <map>
 #include <boost/noncopyable.hpp>
+#include <cstring>
 
 #include "float3.h"
 
@@ -64,6 +65,9 @@ class CTimeProfiler
 {
 public:
 	struct TimeRecord {
+		TimeRecord() : total(0), current(0), percent(0), color(0,0,0), showGraph(false) { 
+			memset(frames, 0, sizeof(frames));
+		}
 		unsigned total;
 		unsigned current;
 		static const unsigned frames_size = 128;

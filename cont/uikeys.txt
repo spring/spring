@@ -276,8 +276,8 @@
 //  bind            Shift+a  attack
 //  bind              Alt+a  areaattack
 //  bind        Alt+Shift+a  areaattack
-//  bind                  d  dgun
-//  bind            Shift+d  dgun
+//  bind                  d  manualfire
+//  bind            Shift+d  manualfire
 //  bind             Ctrl+d  selfd
 //  bind       Ctrl+Shift+d  selfd queued
 //  bind                  e  reclaim

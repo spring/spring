@@ -191,7 +191,7 @@ CMouseCursor* CCursorIcons::GetCursor(int cmd)
 		case CMD_UNLOAD_UNITS:    cursorName = "Unload units"; break;
 		case CMD_UNLOAD_UNIT:     cursorName = "Unload units"; break;
 		case CMD_RECLAIM:         cursorName = "Reclaim";      break;
-		case CMD_DGUN:            cursorName = "DGun";         break;
+		case CMD_MANUALFIRE:      cursorName = "ManualFire";   break;
 		case CMD_RESURRECT:       cursorName = "Resurrect";    break;
 		case CMD_CAPTURE:         cursorName = "Capture";      break;
 		case CMD_SELFD:           cursorName = "SelfD";        break;
@@ -222,6 +222,7 @@ CMouseCursor* CCursorIcons::GetCursor(int cmd)
 		}
 	}
 
+	// look for the cursor of this name assigned in MouseHandler
 	std::map<std::string, CMouseCursor *>::const_iterator it;
 	it = mouse->cursorCommandMap.find(cursorName);
 	if (it != mouse->cursorCommandMap.end()) {

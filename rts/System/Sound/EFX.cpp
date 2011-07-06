@@ -41,7 +41,10 @@ CEFX::CEFX(ALCdevice* device)
 	airAbsorptionFactor = configHandler->GetFloat("snd_airAbsorption");
 	airAbsorptionFactor = Clamp(airAbsorptionFactor, AL_MIN_AIR_ABSORPTION_FACTOR, AL_MAX_AIR_ABSORPTION_FACTOR);
 
-	supported = alcIsExtensionPresent(device, "ALC_EXT_EFX");
+	bool hasExtension = alcIsExtensionPresent(device, "ALC_EXT_EFX");
+
+	if(hasExtension && alGenEffects && alDeleteEffects)
+		supported = true;
 
 	//! set default preset
 	eaxPresets["default"] = eaxPresets[default_preset];
@@ -51,7 +54,10 @@ CEFX::CEFX(ALCdevice* device)
 	*sfxProperties = eaxPresets[default_preset];
 
 	if (!supported) {
-		LogObject(LOG_SOUND) << "  EFX Supported: no";
+		if(!hasExtension)
+			LogObject(LOG_SOUND) << "  EFX Supported: no";
+		else
+			LogObject(LOG_SOUND) << "  EFX is supported but software does not seem to work properly";
 		return;
 	}
 

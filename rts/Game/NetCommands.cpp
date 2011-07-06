@@ -15,7 +15,6 @@
 #include "WordCompletion.h"
 #include "IVideoCapturing.h"
 #include "InMapDraw.h"
-#include "InMapDrawModel.h"
 #ifdef _WIN32
 #  include "winerror.h" // TODO someone on windows (MinGW? VS?) please check if this is required
 #endif
@@ -304,13 +303,6 @@ void CGame::ClientReadNet()
 						{
 							playerHandler->Player(player)->readyToStart = !!inbuf[3];
 						}
-						if (pos.y != -500) // no marker marker when no pos set yet
-						{
-							char label[128];
-							SNPRINTF(label, sizeof(label), "Start %i", team);
-							inMapDrawerModel->AddPoint(pos, label, player);
-							// FIXME - erase old pos ?
-						}
 					}
 				}
 				AddTraffic(player, packetCode, dataLength);
@@ -432,12 +424,17 @@ void CGame::ClientReadNet()
 						throw netcode::UnpackPacketException("Invalid player number");
 
 					vector<int> selected;
+					bool firsterr = true;
 					for (int a = 0; a < ((psize-4)/2); ++a) {
 						short int unitid;
 						pckt >> unitid;
 
-						if (uh->GetUnit(unitid) == NULL)
-							throw netcode::UnpackPacketException("Invalid unit ID");
+						if (uh->GetUnit(unitid) == NULL) {
+							if(firsterr)
+								logOutput.Print("Got invalid Select: Invalid unit ID");
+							firsterr = false;
+							continue;
+						}
 
 						if ((uh->GetUnit(unitid)->team == playerHandler->Player(player)->team) || gs->godMode) {
 							selected.push_back(unitid);

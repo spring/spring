@@ -158,8 +158,8 @@ void CMouseHandler::LoadCursors()
 	AssignMouseCursor("Centroid",     "cursorcentroid",   mCenter,  false);
 	AssignMouseCursor("DeathWait",    "cursordwatch",     mCenter,  false);
 	AssignMouseCursor("DeathWait",    "cursorwait",       mCenter,  false); // backup
-	AssignMouseCursor("DGun",         "cursordgun",       mCenter,  false);
-	AssignMouseCursor("DGun",         "cursorattack",     mCenter,  false); // backup
+	AssignMouseCursor("ManualFire",   "cursordgun",       mCenter,  false); // FIXME
+	AssignMouseCursor("ManualFire",   "cursorattack",     mCenter,  false); // backup
 	AssignMouseCursor("Fight",        "cursorfight",      mCenter,  false);
 	AssignMouseCursor("Fight",        "cursorattack",     mCenter,  false); // backup
 	AssignMouseCursor("GatherWait",   "cursorgather",     mCenter,  false);
@@ -931,7 +931,7 @@ bool CMouseHandler::AssignMouseCursor(const std::string& cmdName,
 {
 	std::map<std::string, CMouseCursor*>::iterator cmdIt;
 	cmdIt = cursorCommandMap.find(cmdName);
-	const bool haveCmd  = (cmdIt  != cursorCommandMap.end());
+	const bool haveCmd = (cmdIt != cursorCommandMap.end());
 
 	std::map<std::string, CMouseCursor*>::iterator fileIt;
 	fileIt = cursorFileMap.find(fileName);

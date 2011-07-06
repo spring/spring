@@ -117,17 +117,17 @@ CCommandAI::CCommandAI(CUnit* owner):
 		c.type = CMDTYPE_ICON_UNIT_OR_MAP;
 		c.name = "Attack";
 		c.mouseicon = c.name;
-		c.tooltip = "Attack: Attacks an unit or a position on the ground";
+		c.tooltip = "Attack: Attacks a unit or a position on the ground";
 		possibleCommands.push_back(c);
 	}
 
-	if (owner->unitDef->canDGun) {
-		c.id = CMD_DGUN;
-		c.action = "dgun";
+	if (owner->unitDef->canManualFire) {
+		c.id = CMD_MANUALFIRE;
+		c.action = "manualfire";
 		c.type = CMDTYPE_ICON_MAP;
-		c.name = "DGun";
+		c.name = "ManualFire";
 		c.mouseicon = c.name;
-		c.tooltip = "DGun: Attacks using the units special weapon";
+		c.tooltip = "ManualFire: Attacks with manually-fired weapon";
 		possibleCommands.push_back(c);
 	}
 
@@ -377,7 +377,7 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 		case CMD_PATROL:
 		case CMD_RESTORE:
 		case CMD_FIGHT:
-		case CMD_DGUN:
+		case CMD_MANUALFIRE:
 		case CMD_UNLOAD_UNIT:
 		case CMD_UNLOAD_UNITS: {
 			if (!IsCommandInMap(c)) { return false; }
@@ -397,8 +397,8 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 	const int& cmd_id = c.GetID();
 	
 	switch (cmd_id) {
-		case CMD_DGUN:
-			if (!ud->canDGun)
+		case CMD_MANUALFIRE:
+			if (!ud->canManualFire)
 				return false;
 
 		case CMD_ATTACK: {
@@ -694,8 +694,8 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 	if (!(c.options & SHIFT_KEY)) {
 		if (!commandQue.empty()) {
 			const int& cmd_id = commandQue.front().GetID();
-			if ((cmd_id == CMD_DGUN)      ||
-			    (cmd_id == CMD_ATTACK)    ||
+			if ((cmd_id == CMD_MANUALFIRE) ||
+			    (cmd_id == CMD_ATTACK)     ||
 			    (cmd_id == CMD_AREA_ATTACK)) {
 				owner->AttackUnit(0,true);
 			}
@@ -1195,7 +1195,7 @@ void CCommandAI::ExecuteAttack(Command& c)
 			CUnit* targetUnit = uh->GetUnit(c.params[0]);
 
 			if (targetUnit != NULL && targetUnit != owner) {
-				owner->AttackUnit(targetUnit, c.GetID() == CMD_DGUN);
+				owner->AttackUnit(targetUnit, c.GetID() == CMD_MANUALFIRE);
 
 				if (orderTarget)
 					DeleteDeathDependence(orderTarget);
@@ -1209,7 +1209,7 @@ void CCommandAI::ExecuteAttack(Command& c)
 			}
 		} else {
 			float3 pos(c.params[0], c.params[1], c.params[2]);
-			owner->AttackGround(pos, c.GetID() == CMD_DGUN);
+			owner->AttackGround(pos, c.GetID() == CMD_MANUALFIRE);
 			inCommand = true;
 		}
 	}
@@ -1224,13 +1224,6 @@ void CCommandAI::ExecuteStop(Command &c)
 		(*wi)->HoldFire();
 	}
 	FinishCommand();
-}
-
-
-void CCommandAI::ExecuteDGun(Command &c)
-{
-	ExecuteAttack(c);
-	return;
 }
 
 
@@ -1265,8 +1258,8 @@ void CCommandAI::SlowUpdate()
 			ExecuteAttack(c);
 			return;
 		}
-		case CMD_DGUN: {
-			ExecuteDGun(c);
+		case CMD_MANUALFIRE: {
+			ExecuteAttack(c);
 			return;
 		}
 	}
@@ -1384,7 +1377,7 @@ void CCommandAI::WeaponFired(CWeapon* weapon)
 	if (commandQue.empty()) { return; }
 	if (!weapon->weaponDef->manualfire) { return; }
 
-	if (commandQue.front().GetID() == CMD_ATTACK || commandQue.front().GetID() == CMD_DGUN) {
+	if (commandQue.front().GetID() == CMD_ATTACK || commandQue.front().GetID() == CMD_MANUALFIRE) {
 		owner->AttackUnit(0, true);
 		eoh->WeaponFired(*owner, *(weapon->weaponDef));
 		FinishCommand();
@@ -1452,7 +1445,7 @@ bool CCommandAI::HasMoreMoveCommands()
 			// in that they can require a unit to move, so return true when we
 			// have one
 			if (id == CMD_FIGHT || id == CMD_AREA_ATTACK || id == CMD_ATTACK || id == CMD_CAPTURE
-			 || id == CMD_DGUN || id == CMD_GUARD || id == CMD_LOAD_UNITS || id == CMD_MOVE
+			 || id == CMD_MANUALFIRE || id == CMD_GUARD || id == CMD_LOAD_UNITS || id == CMD_MOVE
 			 || id == CMD_PATROL || id == CMD_RECLAIM || id == CMD_REPAIR || id == CMD_RESTORE
 			 || id == CMD_RESURRECT || id == CMD_UNLOAD_UNIT || id == CMD_UNLOAD_UNITS || id < 0)
 			{

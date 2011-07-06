@@ -40,16 +40,35 @@ if    (UNIX)
 		set(MAN_BUILD_DIR  "${CMAKE_BINARY_DIR}/manpages")
 		set(MAN_DEST_DIR   "${MANDIR}/man6")
 
-		add_custom_target(manpages ALL
+		Set(man_src
+				"${MAN_SOURCE_DIR}/spring-dedicated.6.txt"
+				"${MAN_SOURCE_DIR}/spring-headless.6.txt"
+				"${MAN_SOURCE_DIR}/spring-multithreaded.6.txt"
+				"${MAN_SOURCE_DIR}/spring.6.txt")
+		Set(man_dst
+				"${MAN_BUILD_DIR}/spring-dedicated.6.gz"
+				"${MAN_BUILD_DIR}/spring-headless.6.gz"
+				"${MAN_BUILD_DIR}/spring-multithreaded.6.gz"
+				"${MAN_BUILD_DIR}/spring.6.gz")
+		set_source_files_properties(${man_dst} PROPERTIES GENERATED TRUE)
+
+		Add_Custom_Command(
+			OUTPUT ${man_dst}
 			COMMAND "${MAN_SOURCE_DIR}/make_manpages.sh"
 				"${MAN_BUILD_DIR}"
 				"${ASCIIDOC_BIN}"
 				"${XSLTPROC_BIN}"
 				"${DOCBOOK_XSL}"
 				"${SEVENZIP_BIN}"
-			WORKING_DIRECTORY "${MAN_SOURCE_DIR}")
+			DEPENDS ${man_src}
+			WORKING_DIRECTORY "${MAN_SOURCE_DIR}"
+			COMMENT "manpages: Generating" VERBATIM
+		)
 
-		install(DIRECTORY "${MAN_BUILD_DIR}/" DESTINATION "${MAN_DEST_DIR}" FILES_MATCHING PATTERN REGEX ".*\\.6\\.gz$")
+		add_custom_target(manpages ALL DEPENDS ${man_dst})
+
+		install(FILES ${man_dst} DESTINATION "${MAN_DEST_DIR}")
+
 		message(STATUS "MAN pages will be installed to {INSTALL_PREFIX}/${MAN_DEST_DIR}")
 	endif (CREATE_MAN_PAGES)
 endif (UNIX)
