@@ -1838,6 +1838,8 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 
 
 void CGame::StartSkip(int toFrame) {
+	return; // FIXME: desyncs
+
 	if (skipping) {
 		logOutput.Print("ERROR: skipping appears to be busted (%i)\n", skipping);
 	}
@@ -1851,7 +1853,7 @@ void CGame::StartSkip(int toFrame) {
 	}
 
 	skipTotalFrames = skipEndFrame - skipStartFrame;
-	skipSeconds = (float)(skipTotalFrames) / (float)GAME_SPEED;
+	skipSeconds = skipTotalFrames / float(GAME_SPEED);
 
 	skipSoundmute = sound->IsMuted();
 	if (!skipSoundmute)
@@ -1869,6 +1871,7 @@ void CGame::StartSkip(int toFrame) {
 }
 
 void CGame::EndSkip() {
+	return; // FIXME
 	skipping = false;
 
 	gu->gameTime    += skipSeconds;
