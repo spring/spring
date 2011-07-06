@@ -315,47 +315,40 @@ void CGameServer::PostLoad(unsigned newlastTick, int newServerFrameNum)
 	}
 }
 
-void CGameServer::SkipTo(int targetFrame)
+void CGameServer::SkipTo(int targetFrameNum)
 {
 	const bool wasPaused = isPaused;
 
-	if ((serverFrameNum < targetFrame) && demoReader) {
-		CommandMessage msg(str(boost::format("skip start %d") %targetFrame), SERVER_PLAYER);
-		Broadcast(boost::shared_ptr<const netcode::RawPacket>(msg.Pack()));
+	if (!gameHasStarted) { return; }
+	if (serverFrameNum >= targetFrameNum) { return; }
+	if (demoReader == NULL) { return; }
 
-		// fast-read and send demo data
-		// if SendDemoData reaches EOS, demoReader becomes NULL
-		while ((serverFrameNum < targetFrame) && demoReader) {
-			float toSkipSecs = 0.1f; // ~ 3 frames
-			if ((targetFrame - serverFrameNum) < 10) {
-				// we only want to advance one frame at most, so
-				// the next time-index must be "close enough" not
-				// to move past more than 1 NETMSG_NEWFRAME
-				toSkipSecs = (1.0f / (GAME_SPEED * 2)); // 1 frame
-			}
-			// skip time
-			gameTime += toSkipSecs;
-			modGameTime += toSkipSecs;
+	CommandMessage startMsg(str(boost::format("skip start %d") %targetFrame), SERVER_PLAYER);
+	CommandMessage endMsg("skip end", SERVER_PLAYER);
+	Broadcast(boost::shared_ptr<const netcode::RawPacket>(startMsg.Pack()));
 
-			SendDemoData(true);
-			if (((serverFrameNum % 20) == 0) && UDPNet) {
-				// send data every few frames, as otherwise packets would grow too big
-				UDPNet->Update();
-			}
-		}
+	// fast-read and send demo data
+	//
+	// note that we must maintain <modGameTime> ourselves
+	// since we do we NOT go through ::Update when skipping
+	while (SendDemoData(targetFrameNum)) {
+		gameTime = GetDemoTime();
+		modGameTime = demoReader->GetModGameTime() + 0.001f;
 
-		CommandMessage msg2("skip end", SERVER_PLAYER);
-		Broadcast(boost::shared_ptr<const netcode::RawPacket>(msg2.Pack()));
+		if (UDPNet == NULL) { continue; }
+		if ((serverFrameNum % 20) != 0) { continue; }
 
-		if (UDPNet)
-			UDPNet->Update();
-
-		lastUpdate = spring_gettime();
+		// send data every few frames, as otherwise packets would grow too big
+		UDPNet->Update();
 	}
 
-	// NOTE: unnecessary, pause-commands from
-	// demos are not broadcasted anyway,
-	// so /skip can not change the state
+	Broadcast(boost::shared_ptr<const netcode::RawPacket>(endMsg.Pack()));
+
+	if (UDPNet) {
+		UDPNet->Update();
+	}
+
+	lastUpdate = spring_gettime();
 	isPaused = wasPaused;
 }
 
@@ -403,16 +396,26 @@ bool CGameServer::AdjustPlayerNumber(netcode::RawPacket* buf, int pos, int val) 
 }
 
 
-void CGameServer::SendDemoData(const bool skipping)
+bool CGameServer::SendDemoData(int targetFrameNum)
 {
-	netcode::RawPacket* buf = 0;
+	bool ret = false;
+	netcode::RawPacket* buf = NULL;
+
+	// if we reached EOS before, demoReader has become NULL
+	if (demoReader == NULL)
+		return ret;
+
+	// get all packets from the stream up to <modGameTime>
 	while ((buf = demoReader->GetData(modGameTime))) {
 		boost::shared_ptr<const RawPacket> rpkt(buf);
+
 		if (buf->length <= 0) {
 			Message(str(format("Warning: Discarding zero size packet in demo")));
 			continue;
 		}
-		unsigned msgCode = buf->data[0];
+
+		const unsigned msgCode = buf->data[0];
+
 		switch (msgCode) {
 			case NETMSG_NEWFRAME:
 			case NETMSG_KEYFRAME: {
@@ -420,13 +423,16 @@ void CGameServer::SendDemoData(const bool skipping)
 				lastTick = spring_gettime();
 				serverFrameNum++;
 #ifdef SYNCCHECK
-				if (!skipping)
+				if (targetFrameNum == -1) {
+					// not skipping
 					outstandingSyncFrames.insert(serverFrameNum);
+				}
 				CheckSync();
 #endif
 				Broadcast(rpkt);
 				break;
 			}
+
 			case NETMSG_AI_STATE_CHANGED: /* many of these messages are not likely to be sent by a spec, but there are cheats */
 			case NETMSG_ALLIANCE:
 			case NETMSG_CUSTOM_DATA:
@@ -447,6 +453,7 @@ void CGameServer::SendDemoData(const bool skipping)
 				Broadcast(rpkt);
 				break;
 			}
+
 			case NETMSG_AI_CREATED:
 			case NETMSG_MAPDRAW:
 			case NETMSG_PLAYERNAME: {
@@ -455,12 +462,14 @@ void CGameServer::SendDemoData(const bool skipping)
 				Broadcast(rpkt);
 				break;
 			}
+
 			case NETMSG_CHAT: {
 				if (!AdjustPlayerNumber(buf, 2) || !AdjustPlayerNumber(buf, 3))
 					continue;
 				Broadcast(rpkt);
 				break;
 			}
+
 			case NETMSG_AICOMMAND:
 			case NETMSG_AISHARE:
 			case NETMSG_COMMAND:
@@ -472,6 +481,7 @@ void CGameServer::SendDemoData(const bool skipping)
 				Broadcast(rpkt);
 				break;
 			}
+
 			case NETMSG_CREATE_NEWPLAYER: {
 				if (!AdjustPlayerNumber(buf, 3, players.size()))
 					continue;
@@ -492,13 +502,15 @@ void CGameServer::SendDemoData(const bool skipping)
 				Broadcast(rpkt);
 				break;
 			}
+
 			case NETMSG_GAMEDATA:
 			case NETMSG_SETPLAYERNUM:
 			case NETMSG_USER_SPEED:
 			case NETMSG_INTERNAL_SPEED: {
-				// dont send these from demo
+				// never send these from demos
 				break;
 			}
+
 			default: {
 				Broadcast(rpkt);
 				break;
@@ -506,11 +518,19 @@ void CGameServer::SendDemoData(const bool skipping)
 		}
 	}
 
+	if (targetFrameNum > 0) {
+		// skipping
+		ret = (serverFrameNum < targetFrameNum);
+	}
+
 	if (demoReader->ReachedEnd()) {
 		demoReader.reset();
 		Message(DemoEnd);
 		gameEndTime = spring_gettime();
+		ret = false;
 	}
+
+	return ret;
 }
 
 void CGameServer::Broadcast(boost::shared_ptr<const netcode::RawPacket> packet)
@@ -686,20 +706,25 @@ void CGameServer::CheckSync()
 	}
 #endif
 }
-
+x
 float CGameServer::GetDemoTime() const {
-	return !gameHasStarted ? gameTime : startTime + (float)serverFrameNum / (float)GAME_SPEED;
+	return !gameHasStarted ? gameTime : startTime + (serverFrameNum / float(GAME_SPEED));
 }
 
 void CGameServer::Update()
 {
-	float tdif = float(spring_tomsecs(spring_gettime() - lastUpdate)) * 0.001f;
+	const float tdif = float(spring_tomsecs(spring_gettime() - lastUpdate)) * 0.001f;
+
 	gameTime += tdif;
-	if (!isPaused && gameHasStarted) {
-		if (!demoReader || !hasLocalClient || (serverFrameNum - players[localClientNumber].lastFrameResponse) < GAME_SPEED)
-			modGameTime += tdif * internalSpeed;
-	}
 	lastUpdate = spring_gettime();
+
+	if (!isPaused && gameHasStarted) {
+		// if we are not playing a demo, or have no local client, or the
+		// local client is less than <GAME_SPEED> frames behind, advance
+		// <modGameTime>
+		if (!demoReader || !hasLocalClient || (serverFrameNum - players[localClientNumber].lastFrameResponse) < GAME_SPEED)
+			modGameTime += (tdif * internalSpeed);
+	}
 
 	if (lastPlayerInfo < (spring_gettime() - playerInfoTime)) {
 		lastPlayerInfo = spring_gettime();
@@ -814,7 +839,6 @@ void CGameServer::Update()
 
 /// has to be consistent with Game.cpp/CPlayerHandler
 static std::vector<int> getPlayersInTeam(const std::vector<GameParticipant>& players, const int teamId) {
-
 	std::vector<int> playersInTeam;
 
 	for (size_t p = 0; p < players.size(); ++p) {
@@ -854,6 +878,8 @@ static std::vector<size_t> getSkirmishAIIds(const std::map<size_t, GameSkirmishA
 static int countNumSkirmishAIsInTeam(const std::map<size_t, GameSkirmishAI>& ais, const int teamId) {
 	return getSkirmishAIIds(ais, teamId).size();
 }
+
+
 
 void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<const netcode::RawPacket> packet)
 {
@@ -2018,7 +2044,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 		}
 	} else {
 		CheckSync();
-		SendDemoData();
+		SendDemoData(-1);
 	}
 }
 
