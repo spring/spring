@@ -111,6 +111,7 @@ CONFIG(int, YResolution).defaultValue(0);
 CONFIG(int, WindowPosX).defaultValue(32);
 CONFIG(int, WindowPosY).defaultValue(32);
 CONFIG(int, WindowState).defaultValue(0);
+CONFIG(bool, WindowBorderless).defaultValue(false);
 CONFIG(int, HardwareThreadCount).defaultValue(0);
 CONFIG(int, MultiThreadSim).defaultValue(1);
 CONFIG(std::string, name).defaultValue("UnnamedPlayer");
@@ -374,7 +375,7 @@ bool SpringApp::SetSDLVideoMode()
 	//! w/o SDL_NOFRAME, kde's windowmanager still creates a border (in fullscreen!) and forces a `window`-resize causing a lot of trouble (in the ::SaveWindowPositione)
 	sdlflags |= globalRendering->fullScreen ? SDL_FULLSCREEN | SDL_NOFRAME : 0;
 
-	bool winBorderless = configHandler->Get("WindowBorderless", false);
+	const bool winBorderless = configHandler->GetBool("WindowBorderless");
 	sdlflags |= winBorderless ? SDL_NOFRAME : 0;
 
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
