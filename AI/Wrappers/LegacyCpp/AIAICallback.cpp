@@ -1712,7 +1712,7 @@ int springLegacyAI::CAIAICallback::InitPath(float3 start, float3 end, int pathTy
 
 float3 springLegacyAI::CAIAICallback::GetNextWaypoint(int pathId) {
 
-	float ret_posF3[3];
+	float ret_posF3[3] = {0.0f, 0.0f, 0.0f};
 	SGetNextWaypointPathCommand cmd = {pathId, ret_posF3};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_GET_NEXT_WAYPOINT, &cmd);
 	return float3(cmd.ret_nextWaypoint_posF3_out);
