@@ -9,11 +9,11 @@
 #include "FileSystem/FileHandler.h"
 
 #ifndef _CONSOLE
-#  include "TimeProfiler.h"
+	#include "System/TimeProfiler.h"
 #else
-#  define START_TIME_PROFILE(a) {}
-#  define END_TIME_PROFILE(a) {}
-#  define SCOPED_TIMER(a) {}
+	#define START_TIME_PROFILE(a) {}
+	#define END_TIME_PROFILE(a) {}
+	#define SCOPED_TIMER(a) {}
 #endif
 
 #include "mmgr.h"
