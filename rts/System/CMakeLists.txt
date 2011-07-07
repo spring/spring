@@ -89,6 +89,7 @@ SET(sources_engine_System_FileSystem
 SET(sources_engine_System_Log
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/DefaultFilter.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogOutputSink.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogUtil.c"
 	)
 SET(sources_engine_System_Net
 		"${CMAKE_CURRENT_SOURCE_DIR}/Net/Connection.cpp"
