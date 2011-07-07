@@ -351,7 +351,9 @@ class CLuaHandle : public CEventClient
 
 		bool printTracebacks;
 
-		vector<bool> watchWeapons; // for the Explosion call-in
+		vector<bool> watchUnitDefs;
+		vector<bool> watchFeatureDefs;
+		vector<bool> watchWeaponDefs; // for the Explosion call-in
 
 		int callinErrors;
 
