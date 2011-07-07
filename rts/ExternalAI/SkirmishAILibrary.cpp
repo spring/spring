@@ -5,7 +5,7 @@
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/AIInterfaceKey.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 #include <string>
 
@@ -14,8 +14,8 @@ CSkirmishAILibrary::CSkirmishAILibrary(const SSkirmishAILibrary& ai,
 		: sSAI(ai), key(key) {
 
 	if (sSAI.handleEvent == NULL) {
-		logOutput.Print(
-				"ERROR: Fetched AI library %s-%s has no handleEvent function"
+		LOG_L(L_ERROR,
+				"Fetched AI library %s-%s has no handleEvent function"
 				"available. It is therefore illegal and will not be used."
 				"This usually indicates a problem in the used AI Interface"
 				"library (%s-%s).",
@@ -57,7 +57,9 @@ bool CSkirmishAILibrary::Init(int skirmishAIId, const SSkirmishAICallback* c_cal
 		if (!ok) {
 			// init failed
 			const int teamId = skirmishAIHandler.GetSkirmishAI(skirmishAIId)->team;
-			logOutput.Print("Failed to initialize an AI for team %d (ID: %i), error: %d", teamId, skirmishAIId, error);
+			LOG_L(L_ERROR,
+					"Failed to initialize an AI for team %d (ID: %i), error: %d",
+					teamId, skirmishAIId, error);
 			skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId, 5 /* = AI failed to init */);
 		}
 	}
@@ -76,7 +78,9 @@ bool CSkirmishAILibrary::Release(int skirmishAIId) const
 		if (!ok) {
 			// release failed
 			const int teamId = skirmishAIHandler.GetSkirmishAI(skirmishAIId)->team;
-			logOutput.Print("Failed to release an AI on team %d (ID: %i), error: %d", teamId, skirmishAIId, error);
+			LOG_L(L_ERROR,
+					"Failed to release an AI on team %d (ID: %i), error: %d",
+					teamId, skirmishAIId, error);
 		}
 	}
 
@@ -90,8 +94,8 @@ int CSkirmishAILibrary::HandleEvent(int skirmishAIId, int topic, const void* dat
 	if (ret != 0) {
 		// event handling failed!
 		const int teamId = skirmishAIHandler.GetSkirmishAI(skirmishAIId)->team;
-		logOutput.Print(
-			"Warning: AI for team %i (ID: %i) failed handling event with topic %i, error: %i",
+		LOG_L(L_WARNING,
+			"AI for team %i (ID: %i) failed handling event with topic %i, error: %i",
 			teamId, skirmishAIId, topic, ret
 		);
 	}
