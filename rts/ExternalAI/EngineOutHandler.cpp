@@ -20,7 +20,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/NetProtocol.h"
 #include "System/ConfigHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/TimeProfiler.h"
 
@@ -66,9 +66,9 @@ void CEngineOutHandler::HandleAIException(const char* description) {
 
 	if (CEngineOutHandler::IsCatchExceptions()) {
 		if (description) {
-			logOutput.Print("AI Exception: \'%s\'", description);
+			LOG_L(L_ERROR, "AI Exception: \'%s\'", description);
 		} else {
-			logOutput.Print("AI Exception");
+			LOG_L(L_ERROR, "AI Exception");
 		}
 //		exit(-1);
 	}
@@ -557,7 +557,7 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 	/*bool weDoPause = !gs->paused;
 	if (weDoPause) {
 		const std::string& myPlayerName = playerHandler->Player(gu->myPlayerNum)->name;
-		logOutput.Print(
+		LOG(
 				"Player %s (auto)-paused the game for letting Skirmish AI"
 				" %s initialize for controlling team %i.%s",
 				myPlayerName.c_str(), key.GetShortName().c_str(), teamId,
