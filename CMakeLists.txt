@@ -79,6 +79,20 @@ if    (HEADLESS_SYSTEM AND NOT NO_SOUND)
 	message(FATAL_ERROR "HEADLESS_SYSTEM requires NO_SOUND to be set!")
 endif (HEADLESS_SYSTEM AND NOT NO_SOUND)
 
+set(LOG_LEVEL "DEFAULT" CACHE STRING
+		"The minimum log level.
+		Log messages below this level
+		will not be compiled into the binary.
+		Available levels:
+		* DEFAULT (DEBUG on debug builds, INFO on release builds)
+		* DEBUG (log everything)
+		* INFO
+		* WARNING (only use this if you know what you are doing!)")
+add_definitions(-D_LOG_LEVEL=LOG_LEVEL_INFO)
+if    (NOT "${LOG_LEVEL}" STREQUAL "DEFAULT")
+	add_definitions(-D_LOG_LEVEL=LOG_LEVEL_${LOG_LEVEL})
+endif (NOT "${LOG_LEVEL}" STREQUAL "DEFAULT")
+
 set(SYNCCHECK TRUE CACHE BOOL "Check sync during gameplay (Required for online play!)")
 if    (SYNCCHECK)
 	add_definitions(-DSYNCCHECK)
