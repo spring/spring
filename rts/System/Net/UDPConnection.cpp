@@ -20,7 +20,7 @@
 #include "Exception.h"
 #include "System/ConfigHandler.h"
 #include "System/GlobalConfig.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 namespace netcode {
 using namespace boost::asio;
@@ -328,7 +328,9 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 					fragmentBuffer = new RawPacket(bufp, msglength);
 					break;
 				}
-				logOutput.Print("ERROR: Discarding incoming invalid packet: ID %d, LEN %d", (int)*bufp, pktlength);
+				LOG_L(L_ERROR,
+						"Discarding incoming invalid packet: ID %d, LEN %d",
+						(int)*bufp, pktlength);
 				// if the packet is invalid, skip a single byte
 				// until we encounter a good packet
 				++pos;
@@ -368,8 +370,8 @@ void UDPConnection::Flush(const bool forced)
 			if (!outgoingData.empty() && sendMore) {
 				boost::shared_ptr<const RawPacket>& packet = *(outgoingData.begin());
 				if (!partialPacket && !ProtocolDef::GetInstance()->IsValidPacket(packet->data, packet->length)) {
-					logOutput.Print(
-							"ERROR: Discarding outgoing invalid packet: ID %d, LEN %d",
+					LOG_L(L_ERROR,
+							"Discarding outgoing invalid packet: ID %d, LEN %d",
 							((packet->length > 0) ? (int)packet->data[0] : -1),
 							packet->length);
 					outgoingData.pop_front();

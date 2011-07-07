@@ -86,6 +86,10 @@ SET(sources_engine_System_FileSystem
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/VFSHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ZipArchive.cpp"
 	)
+SET(sources_engine_System_Log
+		"${CMAKE_CURRENT_SOURCE_DIR}/Log/DefaultFilter.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogOutputSink.cpp"
+	)
 SET(sources_engine_System_Net
 		"${CMAKE_CURRENT_SOURCE_DIR}/Net/Connection.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Net/LocalConnection.cpp"
@@ -121,6 +125,7 @@ IF     (UNIX)
 			${sources_engine_System_common}
 			${sources_engine_System_creg}
 			${sources_engine_System_FileSystem}
+			${sources_engine_System_Log}
 			${sources_engine_System_Net}
 			${sources_engine_System_Platform_Linux}
 		)
@@ -129,6 +134,7 @@ ELSEIF (WIN32)
 			${sources_engine_System_common}
 			${sources_engine_System_creg}
 			${sources_engine_System_FileSystem}
+			${sources_engine_System_Log}
 			${sources_engine_System_Net}
 			${sources_engine_System_Platform_Windows}
 		)
@@ -137,6 +143,7 @@ ELSE   ()
 			${sources_engine_System_common}
 			${sources_engine_System_creg}
 			${sources_engine_System_FileSystem}
+			${sources_engine_System_Log}
 			${sources_engine_System_Net}
 		)
 ENDIF  ()
@@ -145,6 +152,7 @@ MakeGlobal(sources_engine_System_common)
 MakeGlobal(sources_engine_System_creg)
 MakeGlobal(sources_engine_System_FileSystem)
 MakeGlobal(sources_engine_System_Net)
+MakeGlobal(sources_engine_System_Log)
 MakeGlobal(sources_engine_System_Platform_Linux)
 MakeGlobal(sources_engine_System_Platform_Mac)
 MakeGlobal(sources_engine_System_Platform_Windows)
