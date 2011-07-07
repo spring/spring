@@ -72,53 +72,62 @@ local function FixGroundFlashColor(ed)
   end
 end
 
+local function LoadTDFs(dir)
+  local tdfFiles = VFS.DirList(dir, '*.tdf')
 
-local tdfFiles = VFS.DirList('gamedata/explosions/', '*.tdf')
-
-for _, filename in ipairs(tdfFiles) do
-  local eds, err = TDF.Parse(filename)
-  if (eds == nil) then
-    Spring.Echo('Error parsing ' .. filename .. ': ' .. err)
-  else
-    for name, ed in pairs(eds) do
-      ed.filename = filename
-      explosionDefs[name] = ed
-      FixGroundFlashColor(ed)
+  for _, filename in ipairs(tdfFiles) do
+    local eds, err = TDF.Parse(filename)
+    if (eds == nil) then
+      Spring.Echo('Error parsing ' .. filename .. ': ' .. err)
+    else
+      for name, ed in pairs(eds) do
+        ed.filename = filename
+        explosionDefs[name] = ed
+        FixGroundFlashColor(ed)
+      end
     end
   end
-end
+ end
 
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
---
---  Load the raw LUA format explosiondef files
---  (these will override the TDF versions)
---
 
-local luaFiles = VFS.DirList('gamedata/explosions', '*.lua')
 
-for _, filename in ipairs(luaFiles) do
-  local edEnv = {}
-  edEnv._G = edEnv
-  edEnv.Shared = shared
-  edEnv.GetFilename = function() return filename end
-  setmetatable(edEnv, { __index = system })
-  local success, eds = pcall(VFS.Include, filename, edEnv)
-  if (not success) then
-    Spring.Echo('Error parsing ' .. filename .. ': ' .. eds)
-  elseif (eds == nil) then
-    Spring.Echo('Missing return table from: ' .. filename)
-  else
-    for edName, ed in pairs(eds) do
-      if ((type(edName) == 'string') and (type(ed) == 'table')) then
-        ed.filename = filename
-        explosionDefs[edName] = ed
+local function LoadLuas(dir)
+  local luaFiles = VFS.DirList(dir, '*.lua')
+
+  for _, filename in ipairs(luaFiles) do
+    local edEnv = {}
+    edEnv._G = edEnv
+    edEnv.Shared = shared
+    edEnv.GetFilename = function() return filename end
+    setmetatable(edEnv, { __index = system })
+    local success, eds = pcall(VFS.Include, filename, edEnv)
+    if (not success) then
+      Spring.Echo('Error parsing ' .. filename .. ': ' .. eds)
+    elseif (eds == nil) then
+      Spring.Echo('Missing return table from: ' .. filename)
+    else
+      for edName, ed in pairs(eds) do
+        if ((type(edName) == 'string') and (type(ed) == 'table')) then
+          ed.filename = filename
+          explosionDefs[edName] = ed
+		end
       end
     end
   end  
 end
 
+--  Load the TDF format explosiondef files
+--  Files in effects/ will override those in gamedata/explosions/
+LoadTDFs('gamedata/explosions/')
+LoadTDFs('effects/')
+--  Load the raw LUA format explosiondef files
+--  (these will override the TDF versions)
+--  Files in effects/ will override those in gamedata/explosions/
+LoadLuas('gamedata/explosions/')
+LoadLuas('effects/')
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
