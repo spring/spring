@@ -11,7 +11,7 @@
 #include <boost/system/error_code.hpp>
 #include "lib/streflop/streflop_cond.h"
 
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 namespace netcode
 {
@@ -30,7 +30,8 @@ bool CheckErrorCode(boost::system::error_code& err)
 	if (!err || err.value() == connection_reset) {
 		return false;
 	} else {
-		LogObject() << "Network error " << err.value() << ": " << err.message();
+		LOG_L(L_WARNING, "Network error %i: %s", err.value(),
+				err.message().c_str());
 		return true;
 	}
 }
