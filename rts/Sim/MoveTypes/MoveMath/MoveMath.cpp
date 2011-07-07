@@ -226,7 +226,7 @@ int CMoveMath::SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquar
 	int r = 0;
 	const BlockingMapCell& c = groundBlockingObjectMap->GetCell(xSquare + zSquare * gs->mapx);
 
-	for (BlockingMapCellIt it = c.begin(); it != c.end(); it++) {
+	for (BlockingMapCellIt it = c.begin(); it != c.end(); ++it) {
 		CSolidObject* obstacle = it->second;
 
 		if (IsNonBlocking(moveData, obstacle)) {

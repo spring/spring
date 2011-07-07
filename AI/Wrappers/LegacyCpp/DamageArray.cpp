@@ -50,8 +50,13 @@ springLegacyAI::DamageArray::DamageArray(const float mult) : paralyzeDamageTime(
 	}
 }
 
-springLegacyAI::DamageArray::DamageArray(int numTypes, const float* typeDamages) :
-			numTypes(numTypes)
+springLegacyAI::DamageArray::DamageArray(int numTypes, const float* typeDamages)
+	: paralyzeDamageTime(0)
+	, impulseFactor(1.0f)
+	, impulseBoost(0.0f)
+	, craterMult(1.0f)
+	, craterBoost(0.0f)
+	, numTypes(numTypes)
 {
 	damages = new float[numTypes];
 	for(int a = 0; a < numTypes; ++a) {
