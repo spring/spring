@@ -7,10 +7,10 @@
  * For now it only defines the good_fpu_control_registers() function.
  */
 
-#ifndef FPUCHECK_H
-#define FPUCHECK_H
+#ifndef _FPU_CHECK_H
+#define _FPU_CHECK_H
 
-#include "LogOutput.h"
+#include "System/Log/ILog.h"
 #include "lib/streflop/streflop_cond.h"
 
 /**
@@ -81,8 +81,8 @@ static inline void good_fpu_control_registers(const char* text)
 	#endif
 
 	if (!ret) {
-		logOutput.Print("[%s] Sync warning: (env.sse_mode) MXCSR 0x%04X instead of 0x1D00 or 0x1F80 (\"%s\")", __FUNCTION__, fenv.sse_mode, text);
-		logOutput.Print("[%s] Sync warning: (env.x87_mode) FPUCW 0x%04X instead of 0x003A or 0x003F (\"%s\")", __FUNCTION__, fenv.x87_mode, text);
+		LOG_L(L_WARNING, "[%s] Sync warning: (env.sse_mode) MXCSR 0x%04X instead of 0x1D00 or 0x1F80 (\"%s\")", __FUNCTION__, fenv.sse_mode, text);
+		LOG_L(L_WARNING, "[%s] Sync warning: (env.x87_mode) FPUCW 0x%04X instead of 0x003A or 0x003F (\"%s\")", __FUNCTION__, fenv.x87_mode, text);
 
 		// Set single precision floating point math.
 		streflop_init<streflop::Simple>();
@@ -103,7 +103,7 @@ static inline void good_fpu_control_registers(const char* text)
 	#endif
 
 	if (!ret) {
-		logOutput.Print("[%s] Sync warning: FPUCW 0x%04X instead of 0x003A or 0x003F (\"%s\")", __FUNCTION__, fenv, text);
+		LOG_L(L_WARNING, "[%s] Sync warning: FPUCW 0x%04X instead of 0x003A or 0x003F (\"%s\")", __FUNCTION__, fenv, text);
 
 		// Set single precision floating point math.
 		streflop_init<streflop::Simple>();
@@ -114,4 +114,4 @@ static inline void good_fpu_control_registers(const char* text)
 #endif
 }
 
-#endif // !FPUCHECK_H
+#endif // !_FPU_CHECK_H
