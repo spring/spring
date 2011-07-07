@@ -21,7 +21,7 @@ using namespace std;
 #include "LuaUtils.h"
 #include "LogOutput.h"
 #include "FileSystem/FileHandler.h"
-#include <FileSystem/ArchiveScanner.h>
+#include "System/FileSystem/ArchiveScanner.h"
 #include "FileSystem/VFSHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "Util.h"

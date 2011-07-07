@@ -12,7 +12,7 @@
 
 #ifdef USE_GML
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <boost/thread/thread.hpp>
 #include <boost/thread/barrier.hpp>
 #include <boost/bind.hpp>
