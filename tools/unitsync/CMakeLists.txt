@@ -66,6 +66,7 @@ endif (WIN32)
 
 set(unitsync_files
 	${sources_engine_System_FileSystem}
+	${sources_engine_System_Log}
 	${main_files}
 	unitsync
 	LuaParserAPI
