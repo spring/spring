@@ -32,7 +32,7 @@
 #include <cerrno>
 
 #include "System/Util.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "FileSystem/FileSystem.h"
 
 #if       defined WIN32
@@ -119,7 +119,7 @@ std::string GetProcessExecutableFile()
 #endif
 
 	if (procExeFilePath.empty()) {
-		logOutput.Print("WARNING: Failed to get file path of the process executable, reason: %s", error);
+		LOG_L(L_WARNING, "Failed to get file path of the process executable, reason: %s", error);
 	}
 
 	return procExeFilePath;
@@ -215,7 +215,7 @@ std::string GetModuleFile(std::string moduleName)
 		if (moduleName.empty()) {
 			moduleName = "<current>";
 		}
-		logOutput.Print("WARNING: Failed to get file path of the module \"%s\", reason: %s", moduleName.c_str(), error);
+		LOG_L(L_WARNING, "Failed to get file path of the module \"%s\", reason: %s", moduleName.c_str(), error);
 	}
 
 	return moduleFilePath;
