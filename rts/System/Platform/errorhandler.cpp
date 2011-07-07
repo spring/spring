@@ -12,6 +12,7 @@
 
 #include "Game/GameServer.h"
 #include "Game/GlobalUnsynced.h"
+#include "System/Log/ILog.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"
 
@@ -34,8 +35,8 @@ static void ExitMessage(const std::string& msg, const std::string& caption, unsi
 {
 	logOutput.SetSubscribersEnabled(false);
 	if (forced)
-		LogObject() << "WARNING: failed to shutdown normally, exit forced";
-	LogObject() << caption << " " << msg;
+		LOG_L(L_ERROR, "failed to shutdown normally, exit forced");
+	LOG_L(L_ERROR, "%s %s", caption.c_str(), msg.c_str());
 
 #if !defined(DEDICATED) && !defined(HEADLESS)
   #ifdef WIN32

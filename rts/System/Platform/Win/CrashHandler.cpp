@@ -9,6 +9,7 @@
 
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/errorhandler.h"
+#include "System/Log/ILog.h"
 #include "LogOutput.h"
 #include "NetProtocol.h"
 #include "seh.h"
@@ -33,8 +34,9 @@ static void SigAbrtHandler(int signal)
 }
 
 // Set this to the desired printf style output function.
-// Currently we write through the logOutput class to infolog.txt
-#define PRINT logOutput.Print
+// Currently we write through the ILog.h frontend to logOutput to infolog.txt
+#define PRINT(fmt, ...) \
+		LOG_L(L_ERROR, fmt, ##__VA_ARGS__)
 
 /** Convert exception code to human readable string. */
 static const char* ExceptionName(DWORD exceptionCode)

@@ -5,8 +5,8 @@
  * Platform specific error handling
  */
 
-#ifndef ERRORHANDLER_H
-#define ERRORHANDLER_H
+#ifndef _ERROR_HANDLER_H
+#define _ERROR_HANDLER_H
 
 #include <string>
 #include <boost/system/system_error.hpp>
@@ -65,4 +65,4 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 		}
 #endif
 
-#endif // ERRORHANDLER_H
+#endif // _ERROR_HANDLER_H

@@ -6,8 +6,7 @@
 #include "thread_backtrace.h"
 #include <vector>
 #include <stdint.h>
-#include <string.h> //memcpy
-#include "LogOutput.h"
+#include <string.h> // memcpy
 
 
 #define FP_OFFSET 1 //! in sizeof(void*)
