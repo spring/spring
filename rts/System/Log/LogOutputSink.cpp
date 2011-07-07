@@ -5,7 +5,9 @@
  * It routes all logging messages to logOutput.
  */
 
-#include "LogOutput.h"
+#include "ILog.h" // for LOG_LEVEL_*
+#include "LogUtil.h" // for log_levelToString
+#include "System/LogOutput.h"
 
 
 #ifdef __cplusplus
@@ -22,7 +24,15 @@ extern "C" {
 void log_sink_record(const char* section, int level, const char* fmt,
 		va_list arguments)
 {
-	logOutput.Printv(logOutput.GetDefaultLogSubsystem(), fmt, arguments);
+	if (level != LOG_LEVEL_INFO) {
+		// HACK this should be done later, closer to the point where it is written to a file or the console
+		const char* levelStr = log_levelToString(level);
+		const std::string prefixedFmt = std::string(levelStr) + ": " + fmt;
+		logOutput.Printv(logOutput.GetDefaultLogSubsystem(),
+				prefixedFmt.c_str(), arguments);
+	} else {
+		logOutput.Printv(logOutput.GetDefaultLogSubsystem(), fmt, arguments);
+	}
 }
 
 /** @} */ // group logging_sink_logOutput
