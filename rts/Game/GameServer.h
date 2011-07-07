@@ -123,7 +123,7 @@ private:
 	std::string GetPlayerNames(const std::vector<int>& indices) const;
 
 	/// read data from demo and send it to clients
-	void SendDemoData(const bool skipping = false);
+	bool SendDemoData(int targetFrameNum);
 
 	void Broadcast(boost::shared_ptr<const netcode::RawPacket> packet);
 
@@ -133,7 +133,7 @@ private:
 	 * If you are watching a demo, this will push out all data until
 	 * targetFrame to all clients
 	 */
-	void SkipTo(int targetFrame);
+	void SkipTo(int targetFrameNum);
 
 	void Message(const std::string& message, bool broadcast = true);
 	void PrivateMessage(int playerNum, const std::string& message);
