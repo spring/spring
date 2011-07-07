@@ -88,7 +88,6 @@ set(LOG_LEVEL "DEFAULT" CACHE STRING
 		* DEBUG (log everything)
 		* INFO
 		* WARNING (only use this if you know what you are doing!)")
-add_definitions(-D_LOG_LEVEL=LOG_LEVEL_INFO)
 if    (NOT "${LOG_LEVEL}" STREQUAL "DEFAULT")
 	add_definitions(-D_LOG_LEVEL=LOG_LEVEL_${LOG_LEVEL})
 endif (NOT "${LOG_LEVEL}" STREQUAL "DEFAULT")
