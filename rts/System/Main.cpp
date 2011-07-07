@@ -14,7 +14,6 @@
 #include "lib/gml/gml.h"
 #include "lib/gml/gmlmut.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
 
