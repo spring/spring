@@ -1,12 +1,17 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef LUALOADSAVEHANDLER_H
-#define LUALOADSAVEHANDLER_H
+#ifndef _LUA_LOAD_SAVE_HANDLER_H
+#define _LUA_LOAD_SAVE_HANDLER_H
 
 #include "LoadSaveHandler.h"
 
 class IArchive;
-typedef void* zipFile;
+
+#ifndef zipFile
+	// might be defined through zip.h already
+	typedef void* zipFile;
+#endif
+
 
 class CLuaLoadSaveHandler : public ILoadSaveHandler
 {
@@ -34,4 +39,4 @@ protected:
 	IArchive* loadfile;
 };
 
-#endif // LUALOADSAVEHANDLER_H
+#endif // _LUA_LOAD_SAVE_HANDLER_H
