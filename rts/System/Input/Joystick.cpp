@@ -6,9 +6,9 @@
 #include <SDL.h>
 
 #include "InputHandler.h"
-#include "ConfigHandler.h"
-#include "LogOutput.h"
-#include "EventHandler.h"
+#include "System/ConfigHandler.h"
+#include "System/Log/ILog.h"
+#include "System/EventHandler.h"
 
 Joystick* stick = NULL;
 
@@ -20,7 +20,8 @@ void InitJoystick()
 		const int err = SDL_InitSubSystem(SDL_INIT_JOYSTICK);
 		if (err == -1)
 		{
-			LogObject() << "Could not initialise joystick subsystem: " << SDL_GetError();
+			LOG_L(L_ERROR, "Could not initialise joystick subsystem: %s",
+					SDL_GetError());
 			return;
 		}
 		else
@@ -33,19 +34,19 @@ void InitJoystick()
 Joystick::Joystick()
 {
 	const int numSticks = SDL_NumJoysticks();
-	LogObject() << "Joysticks found: " << numSticks;
+	LOG("Joysticks found: %i", numSticks);
 	
 	const int stickNum = configHandler->Get("JoystickUse", 0);
 	myStick =  SDL_JoystickOpen(stickNum);
 	
 	if (myStick)
 	{
-		LogObject() << "Using joystick " << stickNum << ": " << SDL_JoystickName(stickNum);
+		LOG("Using joystick %i: %s", stickNum, SDL_JoystickName(stickNum));
 		inputCon = input.AddHandler(boost::bind(&Joystick::HandleEvent, this, _1));
 	}
 	else
 	{
-		LogObject() << "Joystick " << stickNum << " not found";
+		LOG_L(L_ERROR, "Joystick %i not found", stickNum);
 	}
 }
 
