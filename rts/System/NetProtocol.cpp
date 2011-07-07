@@ -24,7 +24,7 @@
 #include "System/Net/UnpackPacket.h"
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/ConfigHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "lib/gml/gmlmut.h"
 
 
@@ -35,7 +35,7 @@ CNetProtocol::CNetProtocol() : loading(false), disableDemo(false)
 CNetProtocol::~CNetProtocol()
 {
 	Send(CBaseNetProtocol::Get().SendQuit(""));
-	logOutput.Print(serverConn->Statistics());
+	LOG("%s", serverConn->Statistics().c_str());
 }
 
 void CNetProtocol::InitClient(const char* server_addr, unsigned portnum, const std::string& myName, const std::string& myPasswd, const std::string& myVersion)
@@ -47,7 +47,7 @@ void CNetProtocol::InitClient(const char* server_addr, unsigned portnum, const s
 	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion));
 	serverConn->Flush(true);
 
-	logOutput.Print("Connecting to %s:%i using name %s", server_addr, portnum, myName.c_str());
+	LOG("Connecting to %s:%i using name %s", server_addr, portnum, myName.c_str());
 }
 
 void CNetProtocol::AttemptReconnect(const std::string& myName, const std::string& myPasswd, const std::string& myVersion) {
@@ -57,7 +57,7 @@ void CNetProtocol::AttemptReconnect(const std::string& myName, const std::string
 	conn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion, true));
 	conn->Flush(true);
 
-	logOutput.Print("Reconnecting to server... %ds", dynamic_cast<netcode::UDPConnection&>(*serverConn).GetReconnectSecs());
+	LOG("Reconnecting to server... %ds", dynamic_cast<netcode::UDPConnection&>(*serverConn).GetReconnectSecs());
 
 	delete conn;
 }
@@ -73,7 +73,7 @@ void CNetProtocol::InitLocalClient()
 	serverConn.reset(new netcode::CLocalConnection);
 	serverConn->Flush();
 
-	logOutput.Print("Connecting to local server");
+	LOG("Connecting to local server");
 }
 
 bool CNetProtocol::CheckTimeout(int nsecs, bool initial) const {
@@ -118,12 +118,12 @@ boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int framenum)
 			try {
 				GameData gd(ret);
 
-				logOutput.Print("Starting demo recording");
+				LOG("Starting demo recording");
 				record.reset(new CDemoRecorder());
 				record->WriteSetupText(gd.GetSetup());
 				record->SaveToDemo(ret->data, ret->length, demoTime);
 			} catch (netcode::UnpackPacketException &e) {
-				logOutput.Print("Invalid GameData received: %s", e.err.c_str());
+				LOG_L(L_WARNING, "Invalid GameData received: %s", e.err.c_str());
 			}
 		}
 	}
