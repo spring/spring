@@ -38,7 +38,8 @@ class Exception : public std::exception {
     const char *what_;
     
 public:
-    Exception() throw() {}
+    Exception() throw()
+        : what_( 0 ) {}
     Exception( const Exception& src ) throw()
         : what_( src.what_ ) {}
     Exception( const char *w ) throw()
