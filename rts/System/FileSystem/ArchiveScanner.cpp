@@ -375,7 +375,7 @@ void CArchiveScanner::ScanDirs(const std::vector<std::string>& scanDirs, bool do
 	std::vector<std::string>::const_iterator dir;
 	for (dir = scanDirs.begin(); dir != scanDirs.end(); ++dir) {
 		if (FileSystemHandler::DirExists(*dir)) {
-			logOutput.Print("Scanning: %s\n", dir->c_str());
+			logOutput.Print("Scanning: %s", dir->c_str());
 			Scan(*dir, doChecksum);
 		}
 	}
@@ -569,7 +569,8 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 			AddDependency(ai.archiveData.GetDependencies(), "Map Helper v1");
 			ai.archiveData.SetInfoItemValueInteger("modType", modtype::map);
 
-			logOutput.Print(LOG_ARCHIVESCANNER, "Found new map: %s", ai.archiveData.GetName().c_str());
+			logOutput.Print(LOG_ARCHIVESCANNER, "Found new map: %s",
+					ai.archiveData.GetName().c_str());
 		} else if (hasModinfo) {
 			//! it is a mod
 			ScanArchiveLua(ar, "modinfo.lua", ai, error);
@@ -577,7 +578,8 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 				AddDependency(ai.archiveData.GetDependencies(), "Spring content v1");
 			}
 
-			logOutput.Print(LOG_ARCHIVESCANNER, "Found new game: %s", ai.archiveData.GetName().c_str());
+			logOutput.Print(LOG_ARCHIVESCANNER, "Found new game: %s",
+					ai.archiveData.GetName().c_str());
 		} else {
 			//! neither a map nor a mod: error
 			error = "missing modinfo.lua/mapinfo.lua";
@@ -587,7 +589,8 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 
 		if (!error.empty()) {
 			//! for some reason, the archive is marked as broken
-			logOutput.Print("Failed to scan %s (%s)", fullName.c_str(), error.c_str());
+			logOutput.Print("Failed to scan %s (%s)",
+					fullName.c_str(), error.c_str());
 
 			//! record it as broken, so we don't need to look inside everytime
 			BrokenArchive ba;
@@ -718,7 +721,8 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 	LuaParser p(filename, SPRING_VFS_RAW, SPRING_VFS_BASE);
 
 	if (!p.Execute()) {
-		logOutput.Print("Warning: Failed to read archive cache: " + p.GetErrorLog());
+		logOutput.Print("Warning: Failed to read archive cache: %s",
+				p.GetErrorLog().c_str());
 		return;
 	}
 	const LuaTable archiveCache = p.GetRoot();
@@ -965,7 +969,8 @@ std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllMods() const
 
 std::vector<std::string> CArchiveScanner::GetArchives(const std::string& root, int depth) const
 {
-	logOutput.Print(LOG_ARCHIVESCANNER, "GetArchives: %s (depth %u)\n", root.c_str(), depth);
+	logOutput.Print(LOG_ARCHIVESCANNER, "GetArchives: %s (depth %u)",
+			root.c_str(), depth);
 	//! Protect against circular dependencies
 	//! (worst case depth is if all archives form one huge dependency chain)
 	if ((unsigned)depth > archiveInfo.size()) {
@@ -1034,7 +1039,7 @@ std::string CArchiveScanner::MapNameToMapFile(const std::string& s) const
 			return aii->second.archiveData.GetMapFile();
 		}
 	}
-	logOutput.Print(LOG_ARCHIVESCANNER, "mapfile of %s not found\n", s.c_str());
+	logOutput.Print(LOG_ARCHIVESCANNER, "mapfile of %s not found", s.c_str());
 	return s;
 }
 
@@ -1045,11 +1050,13 @@ unsigned int CArchiveScanner::GetSingleArchiveChecksum(const std::string& name) 
 
 	std::map<std::string, ArchiveInfo>::const_iterator aii = archiveInfo.find(lcname);
 	if (aii == archiveInfo.end()) {
-		logOutput.Print(LOG_ARCHIVESCANNER, "%s checksum: not found (0)\n", name.c_str());
+		logOutput.Print(LOG_ARCHIVESCANNER, "%s checksum: not found (0)",
+				name.c_str());
 		return 0;
 	}
 
-	logOutput.Print(LOG_ARCHIVESCANNER, "%s checksum: %d/%u\n", name.c_str(), aii->second.checksum, aii->second.checksum);
+	logOutput.Print(LOG_ARCHIVESCANNER, "%s checksum: %d/%u",
+			name.c_str(), aii->second.checksum, aii->second.checksum);
 	return aii->second.checksum;
 }
 
@@ -1061,7 +1068,8 @@ unsigned int CArchiveScanner::GetArchiveCompleteChecksum(const std::string& name
 	for (unsigned int a = 0; a < ars.size(); a++) {
 		checksum ^= GetSingleArchiveChecksum(ars[a]);
 	}
-	logOutput.Print(LOG_ARCHIVESCANNER, "archive checksum %s: %d/%u\n", name.c_str(), checksum, checksum);
+	logOutput.Print(LOG_ARCHIVESCANNER, "archive checksum %s: %d/%u",
+			name.c_str(), checksum, checksum);
 	return checksum;
 }
 
