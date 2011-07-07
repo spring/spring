@@ -295,7 +295,7 @@ void CLosAlgorithm::LosAdd(int2 pos, int radius, float baseHeight, std::vector<i
 	if (radius <= 0) { return; }
 
 	pos.x = Clamp(pos.x, 0, size.x - 1);
-	pos.y = Clamp(pos.x, 0, size.y - 1);
+	pos.y = Clamp(pos.y, 0, size.y - 1);
 
 	if ((pos.x - radius < radius) || (pos.x + radius >= size.x - radius) || // FIXME: This additional margin is due to a suspect bug in losalgorithm
 	    (pos.y - radius < radius) || (pos.y + radius >= size.y - radius)) { // causing rare crash with big units such as arm Colossus

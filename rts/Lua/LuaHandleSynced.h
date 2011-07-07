@@ -95,8 +95,12 @@ class CLuaHandleSynced : public CLuaHandle
 		static int AddSyncedActionFallback(lua_State* L);
 		static int RemoveSyncedActionFallback(lua_State* L);
 
-		static int GetWatchWeapon(lua_State* L);
-		static int SetWatchWeapon(lua_State* L);
+		static int GetWatchUnitDef(lua_State* L);
+		static int SetWatchUnitDef(lua_State* L);
+		static int GetWatchFeatureDef(lua_State* L);
+		static int SetWatchFeatureDef(lua_State* L);
+		static int GetWatchWeaponDef(lua_State* L);
+		static int SetWatchWeaponDef(lua_State* L);
 
 	private:
 		//FIXME: add to CREG?

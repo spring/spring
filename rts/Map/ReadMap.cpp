@@ -219,22 +219,22 @@ void CReadMap::CalcHeightmapChecksum()
 }
 
 
-
 void CReadMap::UpdateDraw() {
-	GML_STDMUTEX_LOCK(map); // UpdateDraw
+	std::vector<HeightMapUpdate> ushmu;
+	{
+		GML_STDMUTEX_LOCK(map); // UpdateDraw
 
-	for (std::vector<HeightMapUpdate>::iterator i = unsyncedHeightMapUpdates.begin(); i != unsyncedHeightMapUpdates.end(); ++i)
+		unsyncedHeightMapUpdates.swap(ushmu);
+	}
+
+	for (std::vector<HeightMapUpdate>::iterator i = ushmu.begin(); i != ushmu.end(); ++i)
 		UpdateHeightMapUnsynced(i->x1, i->y1, i->x2, i->y2);
-
-	unsyncedHeightMapUpdates.clear();
 }
 
 
 
 void CReadMap::UpdateHeightMapSynced(int x1, int z1, int x2, int z2)
 {
-	GML_STDMUTEX_LOCK(map); // UpdateHeightMapSynced
-
 	if ((x1 >= x2) || (z1 >= z2)) {
 		// do not bother with zero-area updates
 		return;
@@ -352,6 +352,7 @@ void CReadMap::UpdateHeightMapSynced(int x1, int z1, int x2, int z2)
 		}
 	}
 
+	GML_STDMUTEX_LOCK(map); // UpdateHeightMapSynced
 	//! push the unsynced update
 	unsyncedHeightMapUpdates.push_back(HeightMapUpdate(x1, x2, z1, z2));
 }
