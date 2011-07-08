@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #changes include path in all files
 #has to be executed in rts/
