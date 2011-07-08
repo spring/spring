@@ -257,6 +257,10 @@ int CUnitScript::Tick(int deltaTime)
 		anims.remove(*it);
 	}
 
+	// If this was the last animation, remove from currently animating list
+	if (anims.empty()) // This will not have any effect since GUnitScriptEngine::currentScript == this 
+		GUnitScriptEngine.RemoveInstance(this); // But we add it just for the sake of consistency
+
 	//! Tell listeners to unblock?
 	for (std::vector<struct AnimInfo *>::iterator it = remove.begin(); it != remove.end(); ++it) {
 		UnblockAll(*it); //! NOTE: UnblockAll might result in new anims being added
@@ -295,17 +299,16 @@ void CUnitScript::RemoveAnim(AnimType type, int piece, int axis)
 	}
 
 	if (remove) {
+		anims.remove(remove);
+
+		// If this was the last animation, remove from currently animating list
+		if (anims.empty())
+			GUnitScriptEngine.RemoveInstance(this);
+
 		// We need to unblock threads waiting on this animation, otherwise they will be lost in the void
 		UnblockAll(remove); //! NOTE: UnblockAll might result in new anims being added
 
-		anims.remove(remove);
-
 		delete remove;
-
-		// If this was the last animation, remove from currently animating list
-		if (anims.empty()) {
-			GUnitScriptEngine.RemoveInstance(this);
-		}
 	}
 }
 
