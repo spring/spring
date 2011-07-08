@@ -84,7 +84,7 @@ CUnitScript::CUnitScript(CUnit* unit, const std::vector<LocalModelPiece*>& piece
 
 CUnitScript::~CUnitScript()
 {
-	for (std::list<struct AnimInfo *>::iterator i = anims.begin(); i != anims.end(); ++i) {
+	for (std::list<AnimInfo *>::iterator i = anims.begin(); i != anims.end(); ++i) {
 		// anim listeners are not owned by the anim in general, so don't delete them here
 		delete *i;
 	}
@@ -103,7 +103,7 @@ CUnitScript::~CUnitScript()
  * @brief Unblocks all threads waiting on an animation
  * @param anim AnimInfo the corresponding animation
  */
-void CUnitScript::UnblockAll(struct AnimInfo * anim)
+void CUnitScript::UnblockAll(AnimInfo * anim)
 {
 	std::list<IAnimListener *>::iterator li;
 
@@ -217,10 +217,10 @@ bool CUnitScript::DoSpin(float &cur, float dest, float &speed, float accel, int 
  */
 int CUnitScript::Tick(int deltaTime)
 {
-	std::vector<struct AnimInfo *> remove;
+	std::vector<AnimInfo *> remove;
 
-	for (std::list<struct AnimInfo *>::iterator it = anims.begin(); it != anims.end(); ) {
-		struct AnimInfo *ai = *it;
+	for (std::list<AnimInfo *>::iterator it = anims.begin(); it != anims.end(); ) {
+		AnimInfo *ai = *it;
 
 		bool done = false;
 
@@ -253,7 +253,7 @@ int CUnitScript::Tick(int deltaTime)
 	//! NOTE: _must_ happen before calling the listeners of such an anim!
 	//! Else the callback function can call AddAnimListener() and append the currently called
 	//! callback function again at the end of the listeners list. Causing an endless loop!
-	for (std::vector<struct AnimInfo *>::iterator it = remove.begin(); it != remove.end(); ++it) {
+	for (std::vector<AnimInfo *>::iterator it = remove.begin(); it != remove.end(); ++it) {
 		anims.remove(*it);
 	}
 
@@ -262,7 +262,7 @@ int CUnitScript::Tick(int deltaTime)
 		GUnitScriptEngine.RemoveInstance(this); // But we add it just for the sake of consistency
 
 	//! Tell listeners to unblock?
-	for (std::vector<struct AnimInfo *>::iterator it = remove.begin(); it != remove.end(); ++it) {
+	for (std::vector<AnimInfo *>::iterator it = remove.begin(); it != remove.end(); ++it) {
 		UnblockAll(*it); //! NOTE: UnblockAll might result in new anims being added
 		delete *it;
 	}
@@ -275,7 +275,7 @@ int CUnitScript::Tick(int deltaTime)
 //Returns anims list
 struct CUnitScript::AnimInfo *CUnitScript::FindAnim(AnimType type, int piece, int axis)
 {
-	for (std::list<struct AnimInfo *>::iterator i = anims.begin(); i != anims.end(); ++i) {
+	for (std::list<AnimInfo *>::iterator i = anims.begin(); i != anims.end(); ++i) {
 		if (((*i)->type == type) && ((*i)->piece == piece) && ((*i)->axis == axis))
 			return *i;
 	}
@@ -287,10 +287,10 @@ struct CUnitScript::AnimInfo *CUnitScript::FindAnim(AnimType type, int piece, in
 // Returns true if an animation was found and deleted
 void CUnitScript::RemoveAnim(AnimType type, int piece, int axis)
 {
-	struct AnimInfo *remove = NULL;
+	AnimInfo *remove = NULL;
 
-	for (std::list<struct AnimInfo *>::iterator i = anims.begin(); i != anims.end(); ++i) {
-		struct AnimInfo *ai = *i;
+	for (std::list<AnimInfo *>::iterator i = anims.begin(); i != anims.end(); ++i) {
+		AnimInfo *ai = *i;
 
 		if ((ai->type == type) && (ai->piece == piece) && (ai->axis == axis)) {
 			remove = ai;
@@ -333,7 +333,7 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 		}
 	}
 
-	struct AnimInfo *ai;
+	AnimInfo *ai;
 
 	//Turns override spins.. Not sure about the other way around? If so the system should probably be redesigned
 	//to only have two types of anims.. turns and moves, with spin as a bool
@@ -350,7 +350,7 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 			GUnitScriptEngine.AddInstance(this);
 		}
 
-		ai = new struct AnimInfo;
+		ai = new AnimInfo;
 		ai->type = type;
 		ai->piece = piece;
 		ai->axis = axis;
@@ -365,7 +365,7 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 
 void CUnitScript::Spin(int piece, int axis, float speed, float accel)
 {
-	struct AnimInfo *ai;
+	AnimInfo *ai;
 	ai = FindAnim(ASpin, piece, axis);
 
 	//If we are already spinning, we may have to decelerate to the new speed
@@ -396,7 +396,7 @@ void CUnitScript::StopSpin(int piece, int axis, float decel)
 		RemoveAnim(ASpin, piece, axis);
 	}
 	else {
-		struct AnimInfo *ai;
+		AnimInfo *ai;
 		ai = FindAnim(ASpin, piece, axis);
 		if (!ai)
 			return;
