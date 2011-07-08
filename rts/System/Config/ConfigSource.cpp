@@ -78,7 +78,8 @@ void FileConfigSource::SetString(const string& key, const string& value)
 void FileConfigSource::DeleteInternal(const string& key)
 {
 	ReadWriteConfigSource::Delete(key);
-	comments.erase(key);
+	// note: comments intentionally not deleted (see Write)
+	// comments.erase(key);
 }
 
 void FileConfigSource::Delete(const string& key)
@@ -108,16 +109,16 @@ void FileConfigSource::ReadModifyWrite(boost::function<void ()> modify) {
 /**
  * @brief strip whitespace
  *
- * Strips whitespace off the string [begin, end] by setting the first
- * non-whitespace character from the end to 0 and returning a pointer
+ * Strips whitespace off the string [begin, end] by setting the last
+ * whitespace character from the end to 0 and returning a pointer
  * to the first non-whitespace character from the beginning.
  *
  * Precondition: end must point to the last character of the string,
  * i.e. the one before the terminating '\0'.
  */
 char* FileConfigSource::Strip(char* begin, char* end) {
-	while (isspace(*begin)) ++begin;
 	while (end >= begin && isspace(*end)) --end;
+	while (begin <= end && isspace(*begin)) ++begin;
 	*(end + 1) = '\0';
 	return begin;
 }
@@ -131,7 +132,7 @@ void FileConfigSource::Read(FILE* file)
 	char line[500];
 	rewind(file);
 	while (fgets(line, sizeof(line), file)) {
-		char* line_stripped = Strip(line, strchr(line, '\0'));
+		char* line_stripped = Strip(line, strchr(line, '\0') - 1);
 		if (*line_stripped == '\0' || *line_stripped == '#') {
 			// an empty line or a comment line
 			// note: trailing whitespace has been removed by Strip
@@ -144,16 +145,24 @@ void FileConfigSource::Read(FILE* file)
 				char* key = Strip(line_stripped, eq - 1);
 				char* value = Strip(eq + 1, strchr(eq + 1, '\0') - 1);
 				data[key] = value;
-				comments[key] = commentBuffer.str();
-				// reset the ostringstream
-				commentBuffer.clear();
-				commentBuffer.str("");
+				if (commentBuffer.tellp() > 0) {
+					comments[key] = commentBuffer.str();
+					// reset the ostringstream
+					commentBuffer.clear();
+					commentBuffer.str("");
+				}
 			}
 			else {
 				// neither a comment nor an empty line nor a key=value line
 				logOutput.Print("ConfigSource: Error: Can not parse line: %s\n", line);
 			}
 		}
+	}
+
+	if (commentBuffer.tellp() > 0) {
+		// Must be sorted after all valid config variable names.
+		const std::string AT_THE_END = "\x7f";
+		comments[AT_THE_END] = commentBuffer.str();
 	}
 }
 
@@ -171,12 +180,24 @@ void FileConfigSource::Write(FILE* file)
 	if (err != 0) {
 		logOutput.Print("FileConfigSource: Error: Failed truncating config file.");
 	}
-	for(StringMap::const_iterator iter = data.begin(); iter != data.end(); ++iter) {
-		StringMap::const_iterator comment = comments.find(iter->first);
-		if (comment != comments.end()) {
-			fputs(comment->second.c_str(), file);
+
+	// Iterate through both containers at once, interspersing
+	// comment lines with key value pair lines.
+	StringMap::const_iterator iter = data.begin();
+	StringMap::const_iterator commentIter = comments.begin();
+	while (iter != data.end()) {
+		while (commentIter != comments.end() && commentIter->first <= iter->first) {
+			fputs(commentIter->second.c_str(), file);
+			++commentIter;
 		}
 		fprintf(file, "%s = %s\n", iter->first.c_str(), iter->second.c_str());
+		++iter;
+	}
+
+	// Finish by writing all new remaining comments.
+	while (commentIter != comments.end()) {
+		fputs(commentIter->second.c_str(), file);
+		++commentIter;
 	}
 }
 
