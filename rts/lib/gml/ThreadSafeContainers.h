@@ -16,7 +16,7 @@
 #include <list>
 #include <vector>
 
-#include "creg/creg_cond.h"
+#include "System/creg/creg_cond.h"
 #include "gmlcnf.h"
 #include <set>
 
