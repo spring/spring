@@ -74,7 +74,7 @@
 #include "System/Platform/Watchdog.h"
 
 #include <boost/cstdint.hpp>
-#include <Platform/Misc.h>
+#include "System/Platform/Misc.h"
 #include "LuaHelper.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
