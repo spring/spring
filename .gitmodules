@@ -13,3 +13,6 @@
 [submodule "AI/Skirmish/KAIK"]
 	path = AI/Skirmish/KAIK
 	url = git://github.com/Kaylewt/KAIK.git
+[submodule "rts/lib/assimp"]
+	path = rts/lib/assimp
+	url = git://github.com/spring/assimp.git
