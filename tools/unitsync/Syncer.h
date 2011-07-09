@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef SYNCER_H
-#define SYNCER_H
+#ifndef _SYNCER_H
+#define _SYNCER_H
 
 #include <map>
 #include <vector>
@@ -32,4 +32,4 @@ class CSyncer
 		std::map<std::string, Unit> units;
 };
 
-#endif
+#endif // _SYNCER_H

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef UNITSYNC_H
-#define UNITSYNC_H
+#ifndef _UNITSYNC_H
+#define _UNITSYNC_H
 
 #include <string>
 
@@ -65,4 +65,4 @@ enum BitmapType {
 
 const char* GetStr(std::string str);
 
-#endif // UNITSYNC_H
+#endif // _UNITSYNC_H

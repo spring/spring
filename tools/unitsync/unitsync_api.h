@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef UNITSYNC_API_H
-#define UNITSYNC_API_H
+#ifndef _UNITSYNC_API_H
+#define _UNITSYNC_API_H
 
 #ifdef PLAIN_API_STRUCTURE
 	// This is useful when parsing/wrapping this file with preprocessor support.
@@ -1420,4 +1420,4 @@ EXPORT(const char*) lpGetStrKeyStrVal(const char* key, const char* defValue);
 
 /** @} */
 
-#endif // UNITSYNC_API_H
+#endif // _UNITSYNC_API_H
