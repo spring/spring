@@ -358,7 +358,6 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 		return;
 	}
 
-	AnimType overrideType = -1;
 	float destf = 0.0f;
 
 	if (type == AMove) {
@@ -372,6 +371,7 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 
 	std::list<AnimInfo*>::iterator animInfoIt;
 	AnimInfo* ai = NULL;
+	AnimType overrideType = ANone;
 
 	// first find an animation of a type we override
 	// Turns override spins.. Not sure about the other way around? If so
@@ -399,7 +399,7 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 	// now find an animation of our own type
 	animInfoIt = FindAnim(type, piece, axis);
 
-	if (animInfoIt == anims[type].end())
+	if (animInfoIt == anims[type].end()) {
 		// If we were not animating before, inform the engine of this so it can schedule us
 		if (anims[type].empty()) {
 			GUnitScriptEngine.AddInstance(this);
