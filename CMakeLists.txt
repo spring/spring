@@ -89,7 +89,7 @@ set(LOG_LEVEL "DEFAULT" CACHE STRING
 		* INFO
 		* WARNING (only use this if you know what you are doing!)")
 if    (NOT "${LOG_LEVEL}" STREQUAL "DEFAULT")
-	add_definitions(-D_LOG_LEVEL=LOG_LEVEL_${LOG_LEVEL})
+	add_definitions(-D_LOG_LEVEL_MIN=LOG_LEVEL_${LOG_LEVEL})
 endif (NOT "${LOG_LEVEL}" STREQUAL "DEFAULT")
 
 set(SYNCCHECK TRUE CACHE BOOL "Check sync during gameplay (Required for online play!)")
