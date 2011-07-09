@@ -87,7 +87,7 @@ CUnitScript::~CUnitScript()
 	bool haveAnimations = false;
 
 	for (int animType = ATurn; animType <= AMove; animType++) {
-		for (std::list<AnimInfo *>::iterator i = anims[animType].begin(); i != anims[animType].end(); ++i) {
+		for (std::list<AnimInfo*>::iterator i = anims[animType].begin(); i != anims[animType].end(); ++i) {
 			// anim listeners are not owned by the anim in general, so don't delete them here
 			delete *i;
 		}
@@ -215,11 +215,11 @@ bool CUnitScript::DoSpin(float &cur, float dest, float &speed, float accel, int 
 
 
 
-void CUnitScript::TickAnims(AnimType type, int deltaTime, std::list< std::list<AnimInfo*>::iterator >& doneAnims) {
+void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<AnimInfo*>::iterator >& doneAnims) {
 	switch (type) {
 		case AMove: {
 			for (std::list<AnimInfo*>::iterator it = anims[type].begin(); it != anims[type].end(); ++it) {
-				const AnimInfo* ai = *it;
+				AnimInfo* ai = *it;
 
 				// NOTE: we should not need to copy-and-set here, because
 				// MoveToward/TurnToward/DoSpin modify pos/rot by reference
@@ -235,8 +235,7 @@ void CUnitScript::TickAnims(AnimType type, int deltaTime, std::list< std::list<A
 
 		case ATurn: {
 			for (std::list<AnimInfo*>::iterator it = anims[type].begin(); it != anims[type].end(); ++it) {
-				const AnimInfo* ai = *it;
-
+				AnimInfo* ai = *it;
 				float3 rot = pieces[ai->piece]->GetRotation();
 
 				if (TurnToward(rot[ai->axis], ai->dest, ai->speed / (1000 / deltaTime))) {
@@ -249,8 +248,7 @@ void CUnitScript::TickAnims(AnimType type, int deltaTime, std::list< std::list<A
 
 		case ASpin: {
 			for (std::list<AnimInfo*>::iterator it = anims[type].begin(); it != anims[type].end(); ++it) {
-				const AnimInfo* ai = *it;
-
+				AnimInfo* ai = *it;
 				float3 rot = pieces[ai->piece]->GetRotation();
 
 				if (DoSpin(rot[ai->axis], ai->dest, ai->speed, ai->accel, 1000 / deltaTime)) {
@@ -278,7 +276,7 @@ int CUnitScript::Tick(int deltaTime)
 	std::list<AnimInfoIt> doneAnims;
 
 	for (int animType = ATurn; animType <= AMove; animType++) {
-		TickAnims(AnimType(animType), deltaTime, doneAnims);
+		TickAnims(deltaTime, AnimType(animType), doneAnims);
 	}
 
 	//! Remove finished anims from the unit/script
@@ -322,9 +320,9 @@ int CUnitScript::Tick(int deltaTime)
 
 
 
-std::list<AnimInfo*>::iterator CUnitScript::FindAnim(AnimType type, int piece, int axis)
+std::list<CUnitScript::AnimInfo*>::iterator CUnitScript::FindAnim(AnimType type, int piece, int axis)
 {
-	for (std::list<AnimInfo *>::iterator i = anims[type].begin(); i != anims[type].end(); ++i) {
+	for (std::list<AnimInfo*>::iterator i = anims[type].begin(); i != anims[type].end(); ++i) {
 		if (((*i)->piece == piece) && ((*i)->axis == axis))
 			return i;
 	}
@@ -382,11 +380,11 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 	switch (type) {
 		case ATurn: {
 			overrideType = ASpin;
-			animInfoIt = FindAnim(ASpin, piece, axis);
+			animInfoIt = FindAnim(overrideType, piece, axis);
 		} break;
 		case ASpin: {
 			overrideType = ATurn;
-			animInfoIt = FindAnim(ATurn, piece, axis);
+			animInfoIt = FindAnim(overrideType, piece, axis);
 		} break;
 		default: {
 			// ensure we never remove an animation of this type
