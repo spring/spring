@@ -37,7 +37,7 @@ void log_filter_global_setMinLevel(int level);
  * @see #log_filter_global_setMinLevel
  * @see #log_filter_section_getMinLevel
  */
-int  log_filter_global_getMinLevel();
+int log_filter_global_getMinLevel();
 
 /**
  * Sets whether log messages for a certain section are logged or not.
@@ -64,7 +64,7 @@ void log_filter_section_setMinLevel(const char* section, int level);
  * CAUTION: you may only use strings defined at compile-time.
  * @see #log_filter_section_setMinLevel
  */
-int  log_filter_section_getMinLevel(const char* section);
+int log_filter_section_getMinLevel(const char* section);
 
 /** @} */ // group logging_filter_defaultFilter_control
 

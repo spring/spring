@@ -109,7 +109,7 @@ void log_filter_record(const char* section, int level, const char* fmt,
  * @{
  */
 
-inline bool log_frontend_isEnabled(const char* section, int level) {
+bool log_frontend_isEnabled(const char* section, int level) {
 
 	return ((level >= log_filter_global_getMinLevel())
 			&& (level >= log_filter_section_getMinLevel(section)));
