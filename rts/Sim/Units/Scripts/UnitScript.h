@@ -20,7 +20,7 @@ class CPlasmaRepulser;
 class CUnitScript : public CObject
 {
 public:
-	enum AnimType {ATurn, ASpin, AMove};
+	enum AnimType {ATurn = 0, ASpin = 1, AMove = 2};
 
 	struct IAnimListener {
 		virtual ~IAnimListener() {}
@@ -73,7 +73,7 @@ protected:
 		std::list<IAnimListener *> listeners;
 	};
 
-	std::list<AnimInfo*> anims;
+	std::list<AnimInfo*> anims[AMove + 1];
 
 	bool hasSetSFXOccupy;
 	bool hasRockUnit;
@@ -85,8 +85,8 @@ protected:
 	bool TurnToward(float &cur, float dest, float speed);
 	bool DoSpin(float &cur, float dest, float &speed, float accel, int divisor);
 
-	AnimInfo *FindAnim(AnimType anim, int piece, int axis);
-	void RemoveAnim(AnimType anim, int piece, int axis);
+	std::list<AnimInfo*>::iterator FindAnim(AnimType anim, int piece, int axis);
+	void RemoveAnim(AnimType type, const std::list<AnimInfo*>::iterator& animInfoIt);
 	void AddAnim(AnimType type, int piece, int axis, float speed, float dest, float accel);
 
 	virtual void ShowScriptError(const std::string& msg) = 0;
@@ -140,6 +140,7 @@ public:
 	const CUnit* GetUnit() const { return unit; }
 
 	int Tick(int deltaTime);
+	void TickAnims(AnimType type, std::list< std::list<AnimInfo*>::iterator >& doneAnims);
 
 	// animation, used by CCobThread
 	void Spin(int piece, int axis, float speed, float accel);
