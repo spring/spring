@@ -750,7 +750,7 @@ void CUnitScript::DropUnit(int u)
 //Returns true if there was an animation to listen to
 bool CUnitScript::AddAnimListener(AnimType type, int piece, int axis, IAnimListener *listener)
 {
-	std::list<AnimInfo*>::iterator animInfoIt = FindAnim(ASpin, piece, axis);
+	std::list<AnimInfo*>::iterator animInfoIt = FindAnim(type, piece, axis);
 
 	if (animInfoIt != anims[type].end()) {
 		AnimInfo* ai = *animInfoIt;
