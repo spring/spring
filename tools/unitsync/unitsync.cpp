@@ -33,7 +33,6 @@
 #include "System/Log/ILog.h"
 #include "System/Log/Level.h"
 #include "System/Log/DefaultFilter.h"
-#include "System/LogOutput.h"
 #include "System/Util.h"
 #include "System/exportdefines.h"
 #include "System/Info.h"
