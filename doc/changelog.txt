@@ -1,7 +1,7 @@
 Spring change log
 
 -- 0.83 ---------------------------------------------------------
-Bigs:
+Big Items:
  - EFX/EAX support (reverb)
  - ASSIMP support (not 100% finished yet)
  - many speedups and double as much slowdowns
@@ -9,14 +9,35 @@ Bigs:
 Engine:
  - use more smooth algorithm for wind updates
  - fixed a few focus lost issues (keyboard & mouse)
- - DebugMode draws now feature colvols, too
+ - DebugMode now draws feature collision volumes too
  - made ShadowSpace linear
  - multithreaded loadingscreen
+ - hide out-of-LOS heightmap changes
+
+Engine / bugfixes:
+ - too many to list, see springrts.com/mantis/changelog_page.php (incomplete!)
+ - calculate the team unit-limit without ancient hacks
+ - stop the maxunits team restriction from applying to Gaia (#2435)
+
+Engine / misc:
+ - replace UnitDef::pieceTrailCEG* by a Lua subtable of sfxTypes
+ - deprecate several *Def tags and their Lua*Defs copies (type/maxSlope/isBuilder/canDGun/transportableBuilding/dropped/...)
+ - make a missing UnitDef::humanName non-fatal
+ - add a /clearmapmarks command 
+ - rename /advshading to /advmodelshading; add an /advmapshading analogue
 
 Engine / Userconfigs:
  - removed the "FSAA" config tag (FSAALevel is enough)
  - removed default 1024x768res and use desktop one now instead (done when X/YResolution <= 0)
  - added a new 3rd state for AtiHacks: -1 (autodetect each run, so you can switch GPUs)
+
+Engine / Simulation:
+ - make UnitDef::losHeight configurable instead of an unused hardcoded value
+ - remove radius halving for default aircraft collision-volumes
+ - close down another out-of-map attack exploit route
+ - rewrite collision detection/resolution between ground units
+ - skip path-estimating for unused MoveDefs
+ - always add the "geovent" FeatureDef (#2402)
 
 Engine / Map:
  - merged both mapinfo.lua's! before there were two, one in the base-dir (-> ArchiveScanner) and one in "maphelper/mapinfo.lua" (-> MapParser/MapInfo)
@@ -26,6 +47,15 @@ Engine / Map:
   - "fogEnd"
   - "bladeColor"
  - check for the smt _next to_ the smf (which can already freely placed in the archive!)
+
+Engine / Rendering:
+ - Lua-scriptable dynamic lighting of models and terrain (www.youtube.com/watch?v=H5je8TKDfNA)
+ - WIP DynamicSun option for moving shadows
+ - add optional SSMF normal-mapping and self-illumination stages
+ - fix holes in shadows cast by non-closed S3O/OBJ models icw. face culling
+ - always cull (non-3DO) model backfaces for the shadow pass
+ - allow weapons to not leave any explosion scars
+ - render all SMF maps through GLSL if it is available
 
 Engine / Sound:
  - added EFX/EAX support (reverb)
@@ -37,6 +67,7 @@ Engine / Sound:
 
 Engine / COB&LUS:
  - fixed bug in WaitFor... [mantis #2499]
+ - minor animation-handler optimizations
 
 Engine / Lua:
  - fixed "/luagaia xyz" cmds
@@ -50,6 +81,11 @@ Engine / Lua:
     "userinterface", "ui", 3
     anything else defaults to "general"
  - removed teamcolors.lua (redundant since Spring.SetTeamColor)
+ - add optional flattenGround parameter to Spring.CreateUnit 
+ - remove the "n" field from array-like tables returned by API functions
+ - added Spring.GetProjectilesInRectangle
+ - linked Projectile{Created,Destroyed} to the Spring.SetWatchWeapon state
+ - extend LuaPathFinder with support for setting node cost overlays
 
 Engine / Internal:
  - added limited OpenMP support
@@ -60,6 +96,13 @@ Engine / Internal:
    NOTE: this doesn't work yet, because most drivers export this ext only for so called debug contexts.
    Creating those is impossible with near all current GL frameworks (SDL, SFML, ...).
  - fixed unnecessary memory allocation in Archive7Zip
+ - promote the CrashHandler hang-detector thread to a WatchDog
+ - use a SafeVector for the Command parameter array
+ - lots of cleanup and refactoring
+
+Engine / AI:
+ - add full two-way communications between AI's and unsyced Lua
+ - let AI's send textual commands (like "/cheat")
 
 
 -- 0.82.7.1 ---------------------------------------------------------
