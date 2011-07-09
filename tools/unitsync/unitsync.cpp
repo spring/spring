@@ -153,7 +153,7 @@ static std::set<std::string> infoSet;
 
 static std::string lastError;
 
-static void _SetLastError(std::string err)
+static void _SetLastError(const std::string& err)
 {
 	LOG_L(L_ERROR, "error: %s", err.c_str());
 	lastError = err;
