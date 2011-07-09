@@ -304,7 +304,9 @@ EXPORT(int) Init(bool isServer, int id)
 		if (!logOutputInitialised) {
 			logOutput.SetFileName("unitsync.log");
 		}
+#ifndef DEBUG
 		log_filter_section_setMinLevel(LOG_SECTION_UNITSYNC, LOG_LEVEL_INFO);
+#endif
 		if (!configHandler) {
 			ConfigHandler::Instantiate(); // use the default config file
 		}
