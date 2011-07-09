@@ -8,7 +8,6 @@
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
 
-#include <map>
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -49,15 +48,10 @@ void CSyncer::LoadUnits()
 
 		Unit unit;
 
+		unit.name = udName;
 		unit.fullName = udTable.GetString("name", udName);
 
-		units[udName] = unit;
-	}
-
-	// map the unitIds
-	std::map<std::string, Unit>::iterator mit;
-	for (mit = units.begin(); mit != units.end(); ++mit) {
-		unitIds.push_back(mit->first);
+		units.push_back(unit);
 	}
 }
 
@@ -78,13 +72,11 @@ int CSyncer::GetUnitCount()
 
 const std::string& CSyncer::GetUnitName(int unit)
 {
-	std::string unitName = unitIds[unit];
-	return unitIds[unit];
+	return units[unit].name;
 }
 
 
 const std::string& CSyncer::GetFullUnitName(int unit)
 {
-	const std::string& unitName = unitIds[unit];
-	return units[unitName].fullName;
+	return units[unit].fullName;
 }

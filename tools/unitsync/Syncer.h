@@ -3,7 +3,6 @@
 #ifndef _SYNCER_H
 #define _SYNCER_H
 
-#include <map>
 #include <vector>
 #include <string>
 
@@ -25,11 +24,11 @@ protected:
 protected:
 	struct Unit
 	{
+		std::string name;
 		std::string fullName;
 	};
 
-	std::vector<std::string> unitIds;
-	std::map<std::string, Unit> units;
+	std::vector<Unit> units;
 };
 
 #endif // _SYNCER_H
