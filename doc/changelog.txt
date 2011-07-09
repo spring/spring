@@ -18,11 +18,13 @@ Engine / bugfixes:
  - too many to list, see springrts.com/mantis/changelog_page.php (incomplete!)
  - calculate the team unit-limit without ancient hacks
  - stop the maxunits team restriction from applying to Gaia (#2435)
+ - fix ray-ground intersections when camera is outside map
 
 Engine / misc:
  - replace UnitDef::pieceTrailCEG* by a Lua subtable of sfxTypes
  - deprecate several *Def tags and their Lua*Defs copies (type/maxSlope/isBuilder/canDGun/transportableBuilding/dropped/...)
  - make a missing UnitDef::humanName non-fatal
+ - add collide{Enemy, Ground} as weapondef tags
  - add a /clearmapmarks command 
  - rename /advshading to /advmodelshading; add an /advmapshading analogue
 
@@ -32,6 +34,7 @@ Engine / Userconfigs:
  - added a new 3rd state for AtiHacks: -1 (autodetect each run, so you can switch GPUs)
 
 Engine / Simulation:
+ - never allow zero-area feature footprints
  - make UnitDef::losHeight configurable instead of an unused hardcoded value
  - remove radius halving for default aircraft collision-volumes
  - close down another out-of-map attack exploit route
