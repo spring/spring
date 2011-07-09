@@ -1,17 +1,4 @@
-/******************************************************************************/
-/******************************************************************************/
-//
-// file:   LuaParserAPI.cpp
-// desc:   LuaParser C interface
-// author: Dave Rodgers (aka: trepan)
-// 
-// LuaParser C interface
-//
-// Copyright (C) 2008.
-// Licensed under the terms of the GNU GPL, v2 or later
-//
-/******************************************************************************/
-/******************************************************************************/
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
 #include "Lua/LuaParser.h"
