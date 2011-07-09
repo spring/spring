@@ -11,6 +11,8 @@
 
 #include "WordCompletion.h"
 
+#include "System/Log/ILog.h"
+
 #include <stdexcept>
 
 
@@ -124,6 +126,11 @@ void CWordCompletion::AddWord(const std::string& word, bool startOfLine,
 		bool unitName, bool miniMap)
 {
 	if (!word.empty()) {
+		if (words.find(word) != words.end()) {
+			LOG_SL("WordCompletion", L_DEBUG,
+					"Tried to add already present word: %s", word.c_str());
+			return;
+		}
 		words[word] = WordProperties(startOfLine, unitName, miniMap);
 	}
 }
