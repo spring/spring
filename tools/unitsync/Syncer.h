@@ -5,31 +5,31 @@
 
 #include <map>
 #include <vector>
-#include <set>
 #include <string>
 
 class CSyncer
 {
-	public:
-		CSyncer();
-		~CSyncer();
-		virtual int ProcessUnits();
+public:
+	CSyncer();
+	~CSyncer();
 
-		int GetUnitCount();
-		std::string GetUnitName(int unit);
-		std::string GetFullUnitName(int unit);
+	virtual int ProcessUnits();
 
-	protected:
-		void LoadUnits();
+	int GetUnitCount();
+	const std::string& GetUnitName(int unit);
+	const std::string& GetFullUnitName(int unit);
 
-	protected:
-		struct Unit
-		{
-			std::string fullName;
-		};
+protected:
+	void LoadUnits();
 
-		std::vector<std::string> unitIds;
-		std::map<std::string, Unit> units;
+protected:
+	struct Unit
+	{
+		std::string fullName;
+	};
+
+	std::vector<std::string> unitIds;
+	std::map<std::string, Unit> units;
 };
 
 #endif // _SYNCER_H
