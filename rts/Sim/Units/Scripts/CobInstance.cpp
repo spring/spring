@@ -79,13 +79,15 @@ CCobInstance::~CCobInstance()
 	//this may be dangerous, is it really desired?
 	//Destroy();
 
-	for (std::list<AnimInfo *>::iterator i = anims.begin(); i != anims.end(); ++i) {
-		// All threads blocking on animations can be killed safely from here since the scheduler does not
-		// know about them
-		for (std::list<IAnimListener *>::iterator j = (*i)->listeners.begin(); j != (*i)->listeners.end(); ++j) {
-			delete *j;
+	for (int animType = ATurn; animType <= AMove; animType++) {
+		for (std::list<AnimInfo *>::iterator i = anims[animType].begin(); i != anims[animType].end(); ++i) {
+			// All threads blocking on animations can be killed safely from here since the scheduler does not
+			// know about them
+			for (std::list<IAnimListener *>::iterator j = (*i)->listeners.begin(); j != (*i)->listeners.end(); ++j) {
+				delete *j;
+			}
+			// the anims are deleted in ~CUnitScript
 		}
-		// the anims are deleted in ~CUnitScript
 	}
 
 	// Can't delete the thread here because that would confuse the scheduler to no end
