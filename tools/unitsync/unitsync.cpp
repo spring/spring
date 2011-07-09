@@ -80,26 +80,39 @@ BOOL CALLING_CONV DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpReserved)
 
 class CMessageOnce
 {
-	private:
-		bool alreadyDone;
+public:
+	CMessageOnce(const std::string& message)
+		: alreadyDone(false)
+		, message(message)
+	{
+		assert(!message.empty());
+	}
 
-	public:
-		CMessageOnce() : alreadyDone(false) {}
-		void operator() (const std::string& msg)
-		{
-			if (alreadyDone) return;
+	void print() {
+
+		if (!alreadyDone) {
 			alreadyDone = true;
-			LOG_L(L_WARNING, "Message from DLL: %s", msg.c_str());
-#ifdef WIN32
-			MessageBox(NULL, msg.c_str(), "Message from DLL", MB_OK);
-#endif
+			LOG_L(L_WARNING, "%s", message.c_str());
 		}
+	}
+
+private:
+	bool alreadyDone;
+	const std::string message;
 };
 
-#define DEPRECATED \
-	static CMessageOnce msg; \
-	msg(std::string(__FUNCTION__) + ": deprecated unitsync function called, please update your lobby client"); \
-	SetLastError("deprecated unitsync function called")
+#ifdef DEBUG
+	#define DEPRECATED \
+		static CMessageOnce msg( \
+				"The deprecated unitsync function " \
+				+ std::string(__FUNCTION__) + " was called." \
+				" Please update your lobby client"); \
+		msg.print(); \
+		SetLastError("deprecated unitsync function called: " \
+				+ std::string(__FUNCTION__))
+#else
+	#define DEPRECATED
+#endif
 
 
 //////////////////////////
