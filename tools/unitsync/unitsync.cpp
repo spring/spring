@@ -76,6 +76,35 @@ BOOL CALLING_CONV DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpReserved)
 //////////////////////////
 //////////////////////////
 
+// Helper class for popping up a MessageBox only once
+
+class CMessageOnce
+{
+	private:
+		bool alreadyDone;
+
+	public:
+		CMessageOnce() : alreadyDone(false) {}
+		void operator() (const std::string& msg)
+		{
+			if (alreadyDone) return;
+			alreadyDone = true;
+			LOG_L(L_WARNING, "Message from DLL: %s", msg.c_str());
+#ifdef WIN32
+			MessageBox(NULL, msg.c_str(), "Message from DLL", MB_OK);
+#endif
+		}
+};
+
+#define DEPRECATED \
+	static CMessageOnce msg; \
+	msg(std::string(__FUNCTION__) + ": deprecated unitsync function called, please update your lobby client"); \
+	SetLastError("deprecated unitsync function called")
+
+
+//////////////////////////
+//////////////////////////
+
 // function argument checking
 
 static void CheckInit()
@@ -635,6 +664,7 @@ static bool _GetMapInfoEx(const char* mapName, MapInfo* outInfo, int version)
 
 EXPORT(int) GetMapInfoEx(const char* mapName, MapInfo* outInfo, int version)
 {
+	DEPRECATED;
 	int ret = 0;
 
 	try {
@@ -649,6 +679,7 @@ EXPORT(int) GetMapInfoEx(const char* mapName, MapInfo* outInfo, int version)
 
 EXPORT(int) GetMapInfo(const char* mapName, MapInfo* outInfo)
 {
+	DEPRECATED;
 	int ret = 0;
 
 	try {
@@ -1257,8 +1288,9 @@ EXPORT(int) GetPrimaryModInfoCount(int modIndex) {
 
 	return 0; // FIXME error return should be -1
 }
-EXPORT(const char*) GetPrimaryModName(int index) // deprecated
+EXPORT(const char*) GetPrimaryModName(int index)
 {
+	DEPRECATED;
 	try {
 		CheckInit();
 		CheckBounds(index, modData.size());
@@ -1270,8 +1302,9 @@ EXPORT(const char*) GetPrimaryModName(int index) // deprecated
 	return NULL;
 }
 
-EXPORT(const char*) GetPrimaryModShortName(int index) // deprecated
+EXPORT(const char*) GetPrimaryModShortName(int index)
 {
+	DEPRECATED;
 	try {
 		CheckInit();
 		CheckBounds(index, modData.size());
@@ -1283,8 +1316,9 @@ EXPORT(const char*) GetPrimaryModShortName(int index) // deprecated
 	return NULL;
 }
 
-EXPORT(const char*) GetPrimaryModVersion(int index) // deprecated
+EXPORT(const char*) GetPrimaryModVersion(int index)
 {
+	DEPRECATED;
 	try {
 		CheckInit();
 		CheckBounds(index, modData.size());
@@ -1296,8 +1330,9 @@ EXPORT(const char*) GetPrimaryModVersion(int index) // deprecated
 	return NULL;
 }
 
-EXPORT(const char*) GetPrimaryModMutator(int index) // deprecated
+EXPORT(const char*) GetPrimaryModMutator(int index)
 {
+	DEPRECATED;
 	try {
 		CheckInit();
 		CheckBounds(index, modData.size());
@@ -1309,8 +1344,9 @@ EXPORT(const char*) GetPrimaryModMutator(int index) // deprecated
 	return NULL;
 }
 
-EXPORT(const char*) GetPrimaryModGame(int index) // deprecated
+EXPORT(const char*) GetPrimaryModGame(int index)
 {
+	DEPRECATED;
 	try {
 		CheckInit();
 		CheckBounds(index, modData.size());
@@ -1322,8 +1358,9 @@ EXPORT(const char*) GetPrimaryModGame(int index) // deprecated
 	return NULL;
 }
 
-EXPORT(const char*) GetPrimaryModShortGame(int index) // deprecated
+EXPORT(const char*) GetPrimaryModShortGame(int index)
 {
+	DEPRECATED;
 	try {
 		CheckInit();
 		CheckBounds(index, modData.size());
@@ -1335,8 +1372,9 @@ EXPORT(const char*) GetPrimaryModShortGame(int index) // deprecated
 	return NULL;
 }
 
-EXPORT(const char*) GetPrimaryModDescription(int index) // deprecated
+EXPORT(const char*) GetPrimaryModDescription(int index)
 {
+	DEPRECATED;
 	try {
 		CheckInit();
 		CheckBounds(index, modData.size());
@@ -1764,7 +1802,8 @@ EXPORT(const char*) GetInfoType(int infoIndex) {
 
 	return type;
 }
-EXPORT(const char*) GetInfoValue(int infoIndex) { // deprecated
+EXPORT(const char*) GetInfoValue(int infoIndex) {
+	DEPRECATED;
 
 	const char* value = NULL;
 
@@ -2637,30 +2676,3 @@ EXPORT(void) SetSpringConfigFloat(const char* name, const float value)
 	UNITSYNC_CATCH_BLOCKS;
 }
 
-//////////////////////////
-//////////////////////////
-
-// Helper class for popping up a MessageBox only once
-
-class CMessageOnce
-{
-	private:
-		bool alreadyDone;
-
-	public:
-		CMessageOnce() : alreadyDone(false) {}
-		void operator() (const std::string& msg)
-		{
-			if (alreadyDone) return;
-			alreadyDone = true;
-			LOG_L(L_WARNING, "Message from DLL: %s", msg.c_str());
-#ifdef WIN32
-			MessageBox(NULL, msg.c_str(), "Message from DLL", MB_OK);
-#endif
-		}
-};
-
-#define DEPRECATED \
-	static CMessageOnce msg; \
-	msg(std::string(__FUNCTION__) + ": deprecated unitsync function called, please update your lobby client"); \
-	SetLastError("deprecated unitsync function called")
