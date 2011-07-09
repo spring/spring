@@ -19,34 +19,52 @@ extern "C" {
  */
 
 /**
- * Sets the minimum level to log.
- * This is only the runtime limit; there might already have been one defined at
- * compile-time.
- * When you choose a lower level at runtime then was chosen at compile-time,
- * the low level messages will NOT be logged.
- * @see #log_filter_getMinLevel
+ * Sets the minimum level to log for all sections, including the default one.
+ *
+ * The compile-time min-level (_LOG_LEVEL_MIN) takes precedence of this one.
+ * This one takes precedence over the section specific one
+ * (log_filter_section_setMinLevel).
+ * You may set a more restrictive min-level then a preceding instance, but
+ * setting a less restrictive one has no effect.
+ *
+ * @see #log_filter_global_getMinLevel
+ * @see #log_filter_section_setMinLevel
  */
-void log_filter_setMinLevel(int level);
+void log_filter_global_setMinLevel(int level);
+
 /**
  * Returns the minimum level to log.
- * @see #log_filter_getMinLevel
+ * @see #log_filter_global_setMinLevel
+ * @see #log_filter_section_getMinLevel
  */
-int  log_filter_getMinLevel();
+int  log_filter_global_getMinLevel();
 
 /**
  * Sets whether log messages for a certain section are logged or not.
- * All sections are enabled by default.
+ *
+ * The compile-time min-level (_LOG_LEVEL_MIN) takes precedence of this one.
+ * The global run-time min-level (log_filter_global_setMinLevel) takes
+ * precedence over this one.
+ * You may set a more restrictive min-level then a preceding instance, but
+ * setting a less restrictive one has no effect.
+ *
+ * On release builds, the initial default section (LOG_SECTION_DEFAULT)
+ * min-level is L_INFO, and L_WARNING for non-default sections.
+ * On debug builds, all sections initial min-level is set to L_DEBUG.
+ *
  * CAUTION: you may only use strings defined at compile-time.
- * @see #log_filter_isSectionEnabled
+ * @see #log_filter_section_getMinLevel
  */
-void log_filter_setSectionEnabled(const char* section, bool enabled);
+void log_filter_section_setMinLevel(const char* section, int level);
+
 /**
- * Returns whether log messages for a certain section are logged or not.
+ * Returns the minimum level to log for a certain section.
  * All sections are enabled by default.
+ *
  * CAUTION: you may only use strings defined at compile-time.
- * @see #log_filter_setSectionEnabled
+ * @see #log_filter_section_setMinLevel
  */
-bool log_filter_isSectionEnabled(const char* section);
+int  log_filter_section_getMinLevel(const char* section);
 
 /** @} */ // group logging_filter_defaultFilter_control
 
