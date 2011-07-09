@@ -4,11 +4,11 @@
  * LuaParser C interface
  */
 
-#ifndef LUA_PARSER_API_H
-#define LUA_PARSER_API_H
+#ifndef _LUA_PARSER_API_H
+#define _LUA_PARSER_API_H
 
 #include "unitsync.h"
 
 EXPORT(void) lpClose();
 
-#endif /* LUA_PARSER_API_H */
+#endif /* _LUA_PARSER_API_H */
