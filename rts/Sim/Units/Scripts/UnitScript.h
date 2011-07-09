@@ -164,7 +164,7 @@ public:
 	void SetUnitVal(int val, int param);
 
 	bool IsInAnimation(AnimType type, int piece, int axis) {
-		return (FindAnim(type, piece, axis) != anims[type.end());
+		return (FindAnim(type, piece, axis) != anims[type].end());
 	}
 
 	// checks for callin existence
