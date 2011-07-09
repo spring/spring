@@ -20,7 +20,7 @@ class CPlasmaRepulser;
 class CUnitScript : public CObject
 {
 public:
-	enum AnimType {ATurn = 0, ASpin = 1, AMove = 2};
+	enum AnimType {ANone = -1, ATurn = 0, ASpin = 1, AMove = 2};
 
 	struct IAnimListener {
 		virtual ~IAnimListener() {}
