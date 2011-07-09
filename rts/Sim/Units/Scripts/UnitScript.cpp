@@ -215,10 +215,10 @@ bool CUnitScript::DoSpin(float &cur, float dest, float &speed, float accel, int 
 
 
 
-void CUnitScript::TickAnims(AnimType type, std::list< std::list<AnimInfo*>::iterator >& doneAnims) {
+void CUnitScript::TickAnims(AnimType type, int deltaTime, std::list< std::list<AnimInfo*>::iterator >& doneAnims) {
 	switch (type) {
 		case AMove: {
-			for (std::list<AnimInfo*>::const_iterator it = anims[type].begin(); it != anims[type].end(); ++it) {
+			for (std::list<AnimInfo*>::iterator it = anims[type].begin(); it != anims[type].end(); ++it) {
 				const AnimInfo* ai = *it;
 
 				// NOTE: we should not need to copy-and-set here, because
@@ -234,7 +234,7 @@ void CUnitScript::TickAnims(AnimType type, std::list< std::list<AnimInfo*>::iter
 		} break;
 
 		case ATurn: {
-			for (std::list<AnimInfo*>::const_iterator it = anims[type].begin(); it != anims[type].end(); ++it) {
+			for (std::list<AnimInfo*>::iterator it = anims[type].begin(); it != anims[type].end(); ++it) {
 				const AnimInfo* ai = *it;
 
 				float3 rot = pieces[ai->piece]->GetRotation();
@@ -248,7 +248,7 @@ void CUnitScript::TickAnims(AnimType type, std::list< std::list<AnimInfo*>::iter
 		} break;
 
 		case ASpin: {
-			for (std::list<AnimInfo*>::const_iterator it = anims[type].begin(); it != anims[type].end(); ++it) {
+			for (std::list<AnimInfo*>::iterator it = anims[type].begin(); it != anims[type].end(); ++it) {
 				const AnimInfo* ai = *it;
 
 				float3 rot = pieces[ai->piece]->GetRotation();
@@ -278,7 +278,7 @@ int CUnitScript::Tick(int deltaTime)
 	std::list<AnimInfoIt> doneAnims;
 
 	for (int animType = ATurn; animType <= AMove; animType++) {
-		TickAnims(animType, doneAnims);
+		TickAnims(AnimType(animType), deltaTime, doneAnims);
 	}
 
 	//! Remove finished anims from the unit/script

@@ -140,7 +140,7 @@ public:
 	const CUnit* GetUnit() const { return unit; }
 
 	int Tick(int deltaTime);
-	void TickAnims(AnimType type, std::list< std::list<AnimInfo*>::iterator >& doneAnims);
+	void TickAnims(AnimType type, int deltaTime, std::list< std::list<AnimInfo*>::iterator >& doneAnims);
 
 	// animation, used by CCobThread
 	void Spin(int piece, int axis, float speed, float accel);
