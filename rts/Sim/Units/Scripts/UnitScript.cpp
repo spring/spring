@@ -200,10 +200,10 @@ bool CUnitScript::DoSpin(float &cur, float dest, float &speed, float accel, int 
 	}
 	else {
 		if (delta > 0.0f) {
-			//TA obviously defines accelerations in speed/frame (at 30 fps)
-			speed += accel * (30.0f / divisor);
+			// accelerations are defined in speed/frame (at GAME_SPEED fps)
+			speed += accel * (float(GAME_SPEED) / divisor);
 		} else {
-			speed -= accel * (30.0f / divisor);
+			speed -= accel * (float(GAME_SPEED) / divisor);
 		}
 	}
 
@@ -257,6 +257,9 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<A
 
 				pieces[ai->piece]->SetRotation(rot);
 			}
+		} break;
+
+		default: {
 		} break;
 	}
 }
@@ -386,10 +389,12 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 			overrideType = ATurn;
 			animInfoIt = FindAnim(overrideType, piece, axis);
 		} break;
-		default: {
+		case AMove: {
 			// ensure we never remove an animation of this type
 			overrideType = AMove;
 			animInfoIt = anims[overrideType].end();
+		} break;
+		default: {
 		} break;
 	}
 
