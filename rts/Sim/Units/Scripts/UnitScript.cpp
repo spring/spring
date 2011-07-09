@@ -335,7 +335,7 @@ std::list<AnimInfo*>::iterator CUnitScript::FindAnim(AnimType type, int piece, i
 void CUnitScript::RemoveAnim(AnimType type, const std::list<AnimInfo*>::iterator& animInfoIt)
 {
 	if (animInfoIt != anims[type].end()) {
-		anims[type].remove(*animInfoIt);
+		anims[type].erase(animInfoIt);
  
 		// If this was the last animation, remove from currently animating list
 		if (anims[type].empty())
