@@ -26,13 +26,13 @@ void log_sink_record(const char* section, int level, const char* fmt,
 {
 	std::string fmtPrefix;
 	// HACK this stuff should be done later, closer to the point where it is written to a file or the console
-	if (level != LOG_LEVEL_INFO) {
-		const char* levelStr = log_levelToString(level);
-		fmtPrefix += std::string(levelStr) + ": ";
-	}
 	if (section != LOG_SECTION_DEFAULT) {
 		section = log_prepareSection(section);
 		fmtPrefix += std::string("[") + section + "] ";
+	}
+	if (level != LOG_LEVEL_INFO) {
+		const char* levelStr = log_levelToString(level);
+		fmtPrefix += std::string(levelStr) + ": ";
 	}
 
 	if (!fmtPrefix.empty()) {
