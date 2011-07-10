@@ -7,6 +7,7 @@
 #include "Interface/SAIInterfaceLibrary.h"
 #include "System/Util.h"
 #include "System/Info.h"
+#include "System/Log/ILog.h"
 
 #include "System/FileSystem/VFSModes.h"
 
@@ -113,7 +114,8 @@ const std::string& CAIInterfaceLibraryInfo::GetInfo(const std::string& key) cons
 	}
 
 	if (!found) {
-		logOutput.Print("AI Interface property '%s' could not be found.", key.c_str());
+		LOG_L(L_WARNING, "AI Interface property '%s' could not be found.",
+				key.c_str());
 		return DEFAULT_VALUE;
 	} else {
 		return strPair->second;
@@ -151,7 +153,7 @@ bool CAIInterfaceLibraryInfo::SetInfo(const std::string& key,
 	std::string keyLower = StringToLower(key);
 	if (keyLower == snKey || keyLower == vKey) {
 		if (value.find_first_of(BAD_CHARS) != std::string::npos) {
-		logOutput.Print("Error, AI interface property (%s or %s)\n"
+		LOG_L(L_WARNING, "AI interface property (%s or %s)\n"
 				"contains illegal characters (%s).",
 				AI_INTERFACE_PROPERTY_SHORT_NAME, AI_INTERFACE_PROPERTY_VERSION,
 				BAD_CHARS);
