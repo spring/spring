@@ -318,8 +318,10 @@ void CUnitScript::RemoveAnim(AnimType type, const std::list<AnimInfo*>::iterator
 		anims[type].erase(animInfoIt);
  
 		// If this was the last animation, remove from currently animating list
-		if (anims[type].empty())
+		// FIXME: this could be done in a cleaner way
+		if (anims[ATurn].empty() && anims[ASpin].empty() && anims[AMove].empty()) {
 			GUnitScriptEngine.RemoveInstance(this);
+		}
 
 		//! We need to unblock threads waiting on this animation, otherwise they will be lost in the void
 		//! NOTE: UnblockAll might result in new anims being added
@@ -385,7 +387,8 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 
 	if (animInfoIt == anims[type].end()) {
 		// If we were not animating before, inform the engine of this so it can schedule us
-		if (anims[type].empty()) {
+		// FIXME: this could be done in a cleaner way
+		if (anims[ATurn].empty() && anims[ASpin].empty() && anims[AMove].empty()) {
 			GUnitScriptEngine.AddInstance(this);
 		}
 
