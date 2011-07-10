@@ -50,6 +50,7 @@
 //////////////////////////
 //////////////////////////
 
+// use this section for all LOG*() calls in this source file
 #define LOG_SECTION_UNITSYNC "unitsync"
 #ifdef LOG_SECTION_CURRENT
 	#undef LOG_SECTION_CURRENT

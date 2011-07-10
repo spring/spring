@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifdef _MSC_VER
-#	include "StdAfx.h"
+#	include "System/StdAfx.h"
 #elif defined(_WIN32)
 #	include <windows.h>
 #endif
@@ -9,15 +9,24 @@
 #include "System/Net/Socket.h"
 
 #ifndef _MSC_VER
-#	include "StdAfx.h"
+#	include "System/StdAfx.h"
 #endif
 
-#include "System/AutohostInterface.h"
+#include "AutohostInterface.h"
 
 #include <string.h>
 #include <vector>
 #include "System/mmgr.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
+
+
+// use this section for all LOG*() calls in this source file
+#define LOG_SECTION_AUTOHOST_INTERFACE "AutohostInterface"
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_AUTOHOST_INTERFACE
+
 
 namespace {
 
@@ -105,7 +114,7 @@ AutohostInterface::AutohostInterface(const std::string& remoteIP, int remotePort
 	if (errorMsg.empty()) {
 		initialized = true;
 	} else {
-		LogObject() << "[AutohostInterface] Error: Failed to open socket: " << errorMsg;
+		LOG_L(L_ERROR, "Failed to open socket: %s", errorMsg.c_str());
 	}
 }
 
@@ -159,9 +168,8 @@ std::string AutohostInterface::TryBindSocket(
 		socket.io_control(command);
 
 		// A similar, slighly less verbose message is already in GameServer
-		//LogObject() << "[AutohostInterface] Connecting (UDP) to IP "
-		//		<<  (remoteAddr.is_v6() ? "(v6)" : "(v4)") << " " << remoteAddr
-		//		<< " Port " << remotePort;
+		//LOG("Connecting (UDP) to IP (v%i) %s Port %i",
+		//		(remoteAddr.is_v6() ? 6 : 4), remoteAddr.c_str(), remotePort);
 		socket.connect(ip::udp::endpoint(remoteAddr, remotePort));
 	} catch (std::runtime_error& e) { // includes also boost::system::system_error, as it inherits from runtime_error
 		socket.close();
@@ -328,7 +336,9 @@ void AutohostInterface::Send(boost::asio::mutable_buffers_1 buffer)
 			autohost.send(buffer);
 		} catch (boost::system::system_error& e) {
 			autohost.close();
-			LogObject() << "[AutohostInterface] Error: Failed to send buffer; the autohost may not be reachable: " << e.what();
+			LOG_L(L_ERROR,
+					"Failed to send buffer; the autohost may not be reachable: %s",
+					e.what());
 		}
 	}
 }
