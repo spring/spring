@@ -1542,13 +1542,13 @@ static std::set<std::string> optionsSet;
 
 static void ParseOptions(const std::string& fileName, const std::string& fileModes, const std::string& accessModes)
 {
-	parseOptions(options, fileName, fileModes, accessModes, &optionsSet);
+	option_parseOptions(options, fileName, fileModes, accessModes, &optionsSet);
 }
 
 
 static void ParseMapOptions(const std::string& mapName)
 {
-	parseMapOptions(options, "MapOptions.lua", mapName, SPRING_VFS_MAP,
+	option_parseMapOptions(options, "MapOptions.lua", mapName, SPRING_VFS_MAP,
 			SPRING_VFS_MAP, &optionsSet);
 }
 
@@ -1734,7 +1734,7 @@ static void ParseInfo(const std::string& fileName,
                       const std::string& fileModes,
                       const std::string& accessModes)
 {
-	parseInfo(info, fileName, fileModes, accessModes, &infoSet);
+	info_parseInfo(info, fileName, fileModes, accessModes, &infoSet);
 }
 
 static void CheckSkirmishAIIndex(int aiIndex)

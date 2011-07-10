@@ -29,7 +29,7 @@ CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
 		const std::string& interfaceInfoFile) {
 
 	std::vector<InfoItem> tmpInfo;
-	parseInfo(tmpInfo, interfaceInfoFile);
+	info_parseInfo(tmpInfo, interfaceInfoFile);
 	std::vector<InfoItem>::iterator ii;
 	for (ii = tmpInfo.begin(); ii != tmpInfo.end(); ++ii) {
 		// TODO remove this, once we support non-string value types for AI Interface info
