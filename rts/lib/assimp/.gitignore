@@ -15,3 +15,7 @@
 /CREDITS
 /CHANGES
 /assimp.pc.in
+/cmake-modules
+CMakeFiles
+cmake_install.cmake
+Makefile
