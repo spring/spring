@@ -226,7 +226,7 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<A
 				float3 pos = pieces[ai->piece]->GetPosition();
 
 				if (MoveToward(pos[ai->axis], ai->dest, ai->speed / (1000 / deltaTime))) {
-					doneAnims.push_back(it);
+					ai->done = true; doneAnims.push_back(it);
 				}
 
 				pieces[ai->piece]->SetPosition(pos);
@@ -239,7 +239,7 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<A
 				float3 rot = pieces[ai->piece]->GetRotation();
 
 				if (TurnToward(rot[ai->axis], ai->dest, ai->speed / (1000 / deltaTime))) {
-					doneAnims.push_back(it);
+					ai->done = true; doneAnims.push_back(it);
 				}
 
 				pieces[ai->piece]->SetRotation(rot);
@@ -252,7 +252,7 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<A
 				float3 rot = pieces[ai->piece]->GetRotation();
 
 				if (DoSpin(rot[ai->axis], ai->dest, ai->speed, ai->accel, 1000 / deltaTime)) {
-					doneAnims.push_back(it);
+					ai->done = true; doneAnims.push_back(it);
 				}
 
 				pieces[ai->piece]->SetRotation(rot);
@@ -315,7 +315,7 @@ std::list<CUnitScript::AnimInfo*>::iterator CUnitScript::FindAnim(AnimType type,
 void CUnitScript::RemoveAnim(AnimType type, const std::list<AnimInfo*>::iterator& animInfoIt)
 {
 	if (animInfoIt != anims[type].end()) {
-		AnimInfo *ai = *animInfoIt;
+		AnimInfo* ai = *animInfoIt;
 		anims[type].erase(animInfoIt);
  
 		// If this was the last animation, remove from currently animating list
@@ -393,7 +393,7 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 			GUnitScriptEngine.AddInstance(this);
 		}
 
-		ai = new AnimInfo;
+		ai = new AnimInfo();
 		ai->type = type;
 		ai->piece = piece;
 		ai->axis = axis;
@@ -405,6 +405,7 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 	ai->dest  = destf;
 	ai->speed = speed;
 	ai->accel = accel;
+	ai->done = false;
 }
 
 
@@ -737,8 +738,22 @@ bool CUnitScript::AddAnimListener(AnimType type, int piece, int axis, IAnimListe
 
 	if (animInfoIt != anims[type].end()) {
 		AnimInfo* ai = *animInfoIt;
-		ai->listeners.push_back(listener);
-		return true;
+
+		if (!ai->done) {
+			ai->listeners.push_back(listener);
+			return true;
+		}
+
+		// if the animation is already finished, listening for
+		// it just adds some overhead since either the current
+		// or the next Tick will remove it and call UnblockAll
+		// (which calls AnimFinished for each listener)
+		//
+		// we could notify the listener here, but a cleaner way
+		// is to treat the animation as if it did not exist and
+		// simply disregard the WaitFor* (no side-effects)
+		//
+		// listener->AnimFinished(ai->type, ai->piece, ai->axis);
 	}
 
 	return false;
