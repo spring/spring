@@ -166,6 +166,9 @@ public:
 	bool IsInAnimation(AnimType type, int piece, int axis) {
 		return (FindAnim(type, piece, axis) != anims[type].end());
 	}
+	bool HaveAnimations() const {
+		return (!anims[ATurn].empty() || !anims[ASpin].empty() || !anims[AMove].empty());
+	}
 
 	// checks for callin existence
 	bool HasSetSFXOccupy () const { return hasSetSFXOccupy; }

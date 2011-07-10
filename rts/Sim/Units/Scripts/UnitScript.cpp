@@ -297,7 +297,7 @@ int CUnitScript::Tick(int deltaTime)
 		delete animInfo;
 	}
 
-	return (anims[ATurn].empty() && anims[ASpin].empty() && anims[AMove].empty())? -1 : 0;
+	return (HaveAnimations()? 0: -1);
 }
 
 
@@ -319,7 +319,7 @@ void CUnitScript::RemoveAnim(AnimType type, const std::list<AnimInfo*>::iterator
  
 		// If this was the last animation, remove from currently animating list
 		// FIXME: this could be done in a cleaner way
-		if (anims[ATurn].empty() && anims[ASpin].empty() && anims[AMove].empty()) {
+		if (!HaveAnimations()) {
 			GUnitScriptEngine.RemoveInstance(this);
 		}
 
@@ -388,7 +388,7 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 	if (animInfoIt == anims[type].end()) {
 		// If we were not animating before, inform the engine of this so it can schedule us
 		// FIXME: this could be done in a cleaner way
-		if (anims[ATurn].empty() && anims[ASpin].empty() && anims[AMove].empty()) {
+		if (!HaveAnimations()) {
 			GUnitScriptEngine.AddInstance(this);
 		}
 
