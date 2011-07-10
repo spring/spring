@@ -66,12 +66,11 @@ const char* info_convertTypeToString(InfoValueType infoValueType) {
 }
 
 static bool info_parseInfoItem(const LuaTable& root, int index, InfoItem& inf,
-		std::set<string>& infoSet, const char* logSection)
+		std::set<string>& infoSet)
 {
 	const LuaTable& infsTbl = root.SubTable(index);
 	if (!infsTbl.IsValid()) {
-		LOG_SL(logSection, L_WARNING,
-				"parseInfoItem: subtable %d invalid", index);
+		LOG_L(L_WARNING, "parseInfoItem: subtable %d invalid", index);
 		return false;
 	}
 
@@ -79,13 +78,13 @@ static bool info_parseInfoItem(const LuaTable& root, int index, InfoItem& inf,
 	inf.key = infsTbl.GetString("key", "");
 	if (inf.key.empty()
 			|| (inf.key.find_first_of(InfoItem_badKeyChars) != string::npos)) {
-		LOG_SL(logSection, L_WARNING,
+		LOG_L(L_WARNING,
 				"parseInfoItem: empty key or key contains bad characters");
 		return false;
 	}
 	std::string lowerKey = StringToLower(inf.key);
 	if (infoSet.find(inf.key) != infoSet.end()) {
-		LOG_SL(logSection, L_WARNING, "parseInfoItem: key toLowerCase(%s) exists already",
+		LOG_L(L_WARNING, "parseInfoItem: key toLowerCase(%s) exists already",
 				inf.key.c_str());
 		return false;
 	}
@@ -93,8 +92,7 @@ static bool info_parseInfoItem(const LuaTable& root, int index, InfoItem& inf,
 	inf.valueType = INFO_VALUE_TYPE_STRING;
 	inf.valueTypeString = infsTbl.GetString("value", "");
 	if (inf.valueTypeString.empty()) {
-		LOG_SL(logSection, L_WARNING, "parseInfoItem: %s: empty value",
-				inf.key.c_str());
+		LOG_L(L_WARNING, "parseInfoItem: %s: empty value", inf.key.c_str());
 		return false;
 	}
 	inf.desc = infsTbl.GetString("desc", "");
@@ -110,8 +108,7 @@ void info_parseInfo(
 		const std::string& fileName,
 		const std::string& fileModes,
 		const std::string& accessModes,
-		std::set<std::string>* infoSet,
-		const char* logSection)
+		std::set<std::string>* infoSet)
 {
 	LuaParser luaParser(fileName, fileModes, accessModes);
 
@@ -133,7 +130,7 @@ void info_parseInfo(
 	}
 	for (int index = 1; root.KeyExists(index); index++) {
 		InfoItem inf;
-		if (info_parseInfoItem(root, index, inf, *myInfoSet, logSection)) {
+		if (info_parseInfoItem(root, index, inf, *myInfoSet)) {
 			info.push_back(inf);
 		}
 	}
@@ -147,12 +144,11 @@ std::vector<InfoItem> info_parseInfo(
 		const std::string& fileName,
 		const std::string& fileModes,
 		const std::string& accessModes,
-		std::set<std::string>* infoSet,
-		const char* logSection)
+		std::set<std::string>* infoSet)
 {
 	std::vector<InfoItem> info;
 
-	info_parseInfo(info, fileName, fileModes, accessModes, infoSet, logSection);
+	info_parseInfo(info, fileName, fileModes, accessModes, infoSet);
 
 	return info;
 }
