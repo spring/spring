@@ -68,9 +68,10 @@ protected:
 		int axis;
 		int piece;
 		float speed;
-		float dest;		//means final position when turning or moving, final speed when spinning
-		float accel;		//used for spinning, can be negative
-		std::list<IAnimListener *> listeners;
+		float dest;		// means final position when turning or moving, final speed when spinning
+		float accel;	// used for spinning, can be negative
+		bool done;
+		std::list<IAnimListener*> listeners;
 	};
 
 	std::list<AnimInfo*> anims[AMove + 1];
@@ -79,7 +80,7 @@ protected:
 	bool hasRockUnit;
 	bool hasStartBuilding;
 
-	void UnblockAll(AnimInfo * anim);
+	void UnblockAll(AnimInfo* anim);
 
 	bool MoveToward(float &cur, float dest, float speed);
 	bool TurnToward(float &cur, float dest, float speed);
