@@ -8,7 +8,6 @@
 #define	_OPTION_H
 
 #include "System/FileSystem/VFSModes.h"
-#include "System/Log/Section.h"
 
 #include <string>
 #include <vector>
@@ -80,8 +79,7 @@ void option_parseOptions(
 		const std::string& fileName,
 		const std::string& fileModes = SPRING_VFS_RAW,
 		const std::string& accessModes = SPRING_VFS_RAW,
-		std::set<std::string>* optionsSet = NULL,
-		const char* logSection = LOG_SECTION_DEFAULT);
+		std::set<std::string>* optionsSet = NULL);
 
 void option_parseMapOptions(
 		std::vector<Option>& options,
@@ -89,7 +87,6 @@ void option_parseMapOptions(
 		const std::string& mapName,
 		const std::string& fileModes = SPRING_VFS_RAW,
 		const std::string& accessModes = SPRING_VFS_RAW,
-		std::set<std::string>* optionsSet = NULL,
-		const char* logSection = LOG_SECTION_DEFAULT);
+		std::set<std::string>* optionsSet = NULL);
 
 #endif // _OPTION_H

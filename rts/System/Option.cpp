@@ -162,8 +162,7 @@ void option_parseOptions(
 		const std::string& fileName,
 		const std::string& fileModes,
 		const std::string& accessModes,
-		std::set<std::string>* optionsSet,
-		const char* logSection)
+		std::set<std::string>* optionsSet)
 {
 	LuaParser luaParser(fileName, fileModes, accessModes);
 
@@ -189,8 +188,7 @@ void option_parseOptions(
 			option_parseOption(root, index, opt, *myOptionsSet);
 			options.push_back(opt);
 		} catch (content_error& err) {
-			LOG_SL(logSection, L_WARNING,
-					"Failed parsing option %d from %s: %s",
+			LOG_L(L_WARNING, "Failed parsing option %d from %s: %s",
 					index, fileName.c_str(), err.what());
 		}
 	}
@@ -207,8 +205,7 @@ void option_parseMapOptions(
 		const std::string& mapName,
 		const std::string& fileModes,
 		const std::string& accessModes,
-		std::set<std::string>* optionsSet,
-		const char* logSection)
+		std::set<std::string>* optionsSet)
 {
 	LuaParser luaParser(fileName, fileModes, accessModes);
 
@@ -250,7 +247,7 @@ void option_parseMapOptions(
 			option_parseOption(root, index, opt, *myOptionsSet);
 			options.push_back(opt);
 		} catch (content_error& err) {
-			LOG_SL(logSection, L_WARNING,
+			LOG_L(L_WARNING,
 					"Failed parsing map-option %d from %s for map %s: %s",
 					index, fileName.c_str(), mapName.c_str(), err.what());
 		}

@@ -8,7 +8,6 @@
 #define _INFO_H
 
 #include "System/FileSystem/VFSModes.h"
-#include "System/Log/Section.h"
 
 #include <string>
 #include <vector>
@@ -45,14 +44,12 @@ void info_parseInfo(
 		const std::string& fileName,
 		const std::string& fileModes = SPRING_VFS_RAW,
 		const std::string& accessModes = SPRING_VFS_RAW,
-		std::set<std::string>* infoSet = NULL,
-		const char* logSection = LOG_SECTION_DEFAULT);
+		std::set<std::string>* infoSet = NULL);
 
 std::vector<InfoItem> info_parseInfo(
 		const std::string& fileName,
 		const std::string& fileModes = SPRING_VFS_RAW,
 		const std::string& accessModes = SPRING_VFS_RAW,
-		std::set<std::string>* infoSet = NULL,
-		const char* logSection = LOG_SECTION_DEFAULT);
+		std::set<std::string>* infoSet = NULL);
 
 #endif // _INFO_H
