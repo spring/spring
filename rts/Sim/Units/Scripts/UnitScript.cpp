@@ -315,6 +315,7 @@ std::list<CUnitScript::AnimInfo*>::iterator CUnitScript::FindAnim(AnimType type,
 void CUnitScript::RemoveAnim(AnimType type, const std::list<AnimInfo*>::iterator& animInfoIt)
 {
 	if (animInfoIt != anims[type].end()) {
+		AnimInfo *ai = *animInfoIt;
 		anims[type].erase(animInfoIt);
  
 		// If this was the last animation, remove from currently animating list
@@ -325,9 +326,9 @@ void CUnitScript::RemoveAnim(AnimType type, const std::list<AnimInfo*>::iterator
 
 		//! We need to unblock threads waiting on this animation, otherwise they will be lost in the void
 		//! NOTE: UnblockAll might result in new anims being added
-		UnblockAll(*animInfoIt);
+		UnblockAll(ai);
 
-		delete *animInfoIt;
+		delete ai;
 	}
 }
 
