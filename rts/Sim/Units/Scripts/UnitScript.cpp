@@ -282,38 +282,17 @@ int CUnitScript::Tick(int deltaTime)
 		TickAnims(deltaTime, AnimType(animType), doneAnims);
 	}
 
-	//! Remove finished anims from the unit/script
-	//! NOTE: _must_ happen before calling the listeners of such an anim!
-	//! Else the callback function can call AddAnimListener() and append the currently called
-	//! callback function again at the end of the listeners list. Causing an endless loop!
-	for (std::list<AnimInfoIt>::const_iterator it = doneAnims.begin(); it != doneAnims.end(); ++it) {
-		const AnimInfoIt animInfoIt = *it;
-		const AnimInfo* animInfo = *animInfoIt;
-		anims[animInfo->type].erase(animInfoIt);
-	}
-
-
-	{
-		bool haveAnimations = false;
-
-		for (int animType = ATurn; animType <= AMove; animType++) {
-			haveAnimations = (haveAnimations || !anims[animType].empty());
-		}
-
-		// If this was the last animation, remove from currently animating list
-		// This will not have any effect since GUnitScriptEngine::currentScript == this
-		// But we add it just for the sake of consistency
-		if (!haveAnimations)
-			GUnitScriptEngine.RemoveInstance(this);
-	}
-
-
-	//! Tell listeners to unblock?
+	//! Tell listeners to unblock, and remove finished animations from the unit/script.
+	//! NOTE:
+	//!     removing a finished animation _must_ happen before notifying its listeners,
+	//!     otherwise the callback function (AnimFinished()) can call AddAnimListener()
+	//!     and append it to the listeners-list again (causing an endless loop)!
 	//! NOTE: UnblockAll might result in new anims being added
 	for (std::list<AnimInfoIt>::const_iterator it = doneAnims.begin(); it != doneAnims.end(); ++it) {
 		AnimInfoIt animInfoIt = *it;
 		AnimInfo* animInfo = *animInfoIt;
 
+		anims[animInfo->type].erase(animInfoIt);
 		UnblockAll(animInfo);
 		delete animInfo;
 	}
