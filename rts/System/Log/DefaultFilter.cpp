@@ -15,14 +15,48 @@
 extern "C" {
 #endif
 
+
 bool log_frontend_isEnabled(const char* section, int level);
 
 extern void log_sink_record(const char* section, int level, const char* fmt,
 		va_list arguments);
 
 
+/**
+ * As all sections are required to be defined as compile-time constants,
+ * we may use an address comparison, if the compiler merged constants.
+ */
+#if       defined(__GNUC__) && !defined(DEBUG)
+	/**
+	 * GCC does merged constants on -O2+:
+	 * -fmerge-constants
+	 *   Attempt to merge identical constants (string constants and floating
+	 *   point constants) across compilation units. 
+	 *   This option is the default for optimized compilation if the assembler
+	 *   and linker support it. Use -fno-merge-constants to inhibit this
+	 *   behavior. 
+	 *   Enabled at levels -O, -O2, -O3, -Os.
+	 */
+	#define DEFAULT_FILTER_EQUAL_SECTIONS(section1, section2) \
+		(section1 == section2)
+#else  // defined(__GNUC__) && !defined(DEBUG)
+	#include <string.h>
+	#define DEFAULT_FILTER_EQUAL_SECTIONS(section1, section2) \
+		((section1 == section2) \
+		|| ((section1 != NULL) && (section2 != NULL) \
+			&& (strcmp(section1, section2) == 0)))
+#endif // defined(__GNUC__) && !defined(DEBUG)
+
+struct log_filter_section_compare {
+	inline bool operator()(const char* const& section1,
+			const char* const& section2) const
+	{
+		   return DEFAULT_FILTER_EQUAL_SECTIONS(section1, section2);
+	}
+};
+
 static int minLevel = LOG_LEVEL_ALL;
-static std::map<const char*, int> sectionMinLevels;
+static std::map<const char*, int, log_filter_section_compare> sectionMinLevels;
 
 
 static inline int log_filter_section_getDefaultMinLevel(const char* section) {
@@ -30,7 +64,7 @@ static inline int log_filter_section_getDefaultMinLevel(const char* section) {
 #ifdef DEBUG
 	return LOG_LEVEL_DEBUG;
 #else
-	if (section == LOG_SECTION_DEFAULT) {
+	if (DEFAULT_FILTER_EQUAL_SECTIONS(section, LOG_SECTION_DEFAULT)) {
 		return LOG_LEVEL_INFO;
 	} else {
 		return LOG_LEVEL_WARNING;
