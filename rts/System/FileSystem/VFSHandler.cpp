@@ -153,13 +153,13 @@ bool CVFSHandler::LoadFile(const std::string& filePath, std::vector<boost::uint8
 
 	const FileData* fileData = GetFileData(normalizedPath);
 	if (fileData == NULL) {
-		LOG_L(L_WARNING, "LoadFile: File '%s' does not exist in VFS.", filePath.c_str());
+		LOG_L(L_DEBUG, "LoadFile: File '%s' does not exist in VFS.", filePath.c_str());
 		return false;
 	}
 
 	if (!fileData->ar->GetFile(normalizedPath, buffer))
 	{
-		LOG_L(L_WARNING, "LoadFile: File '%s' does not exist in archive.", filePath.c_str());
+		LOG_L(L_DEBUG, "LoadFile: File '%s' does not exist in archive.", filePath.c_str());
 		return false;
 	}
 	return true;
