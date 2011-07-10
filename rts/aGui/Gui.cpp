@@ -8,7 +8,7 @@
 #include "GuiElement.h"
 #include "Rendering/GL/myGL.h"
 #include "System/Input/InputHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 
 namespace agui
@@ -28,7 +28,7 @@ void Gui::Draw()
 		{
 			if (it->element == elIt->element)
 			{
-				LogObject() << "Gui::AddElement: skipping duplicated object";
+				LOG_L(L_DEBUG, "Gui::AddElement: skipping duplicated object");
 				duplicate = true;
 				break;
 			}

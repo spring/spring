@@ -7,7 +7,7 @@
 #include "Gui.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 namespace agui
 {
@@ -80,7 +80,7 @@ bool Button::HandleEventSelf(const SDL_Event& ev)
 				if (!Clicked.empty()) {
 					Clicked();
 				} else {
-					LogObject() << "Button " << label << " clicked without callback";
+					LOG_L(L_WARNING, "Button %s clicked without callback", label.c_str());
 				}
 				clicked = false;
 				return true;
