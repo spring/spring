@@ -6,7 +6,7 @@
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 namespace agui
 {
@@ -31,9 +31,8 @@ void Picture::Load(const std::string& _file)
 	CBitmap bmp;
 	if (bmp.Load(file)) {
 		texture = bmp.CreateTexture(false);
-	else
-	{
-		LogObject() << "Failed to load: " << file;
+	} else {
+		LOG_L(L_WARNING, "Failed to load: %s", file.c_str());
 		texture = 0;
 	}
 }
