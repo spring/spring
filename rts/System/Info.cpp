@@ -4,6 +4,7 @@
 
 #include "System/Util.h"
 #include "System/Exceptions.h"
+#include "System/Log/ILog.h"
 #include "Lua/LuaParser.h"
 
 #include <assert.h>
@@ -64,12 +65,12 @@ const char* info_convertTypeToString(InfoValueType infoValueType) {
 	return typeString;
 }
 
-static bool parseInfoItem(const LuaTable& root, int index, InfoItem& inf,
-		std::set<string>& infoSet, CLogSubsystem& logSubsystem)
+static bool info_parseInfoItem(const LuaTable& root, int index, InfoItem& inf,
+		std::set<string>& infoSet, const char* logSection)
 {
 	const LuaTable& infsTbl = root.SubTable(index);
 	if (!infsTbl.IsValid()) {
-		logOutput.Print(logSubsystem,
+		LOG_SL(logSection, L_WARNING,
 				"parseInfoItem: subtable %d invalid", index);
 		return false;
 	}
@@ -78,21 +79,21 @@ static bool parseInfoItem(const LuaTable& root, int index, InfoItem& inf,
 	inf.key = infsTbl.GetString("key", "");
 	if (inf.key.empty()
 			|| (inf.key.find_first_of(InfoItem_badKeyChars) != string::npos)) {
-		logOutput.Print(logSubsystem,
+		LOG_SL(logSection, L_WARNING,
 				"parseInfoItem: empty key or key contains bad characters");
 		return false;
 	}
 	std::string lowerKey = StringToLower(inf.key);
 	if (infoSet.find(inf.key) != infoSet.end()) {
-		logOutput.Print(logSubsystem, "parseInfoItem: key toLowerCase(%s) exists already",
+		LOG_SL(logSection, L_WARNING, "parseInfoItem: key toLowerCase(%s) exists already",
 				inf.key.c_str());
 		return false;
 	}
 	// TODO add support for info value types other then string
 	inf.valueType = INFO_VALUE_TYPE_STRING;
-	inf.valueTypeString = infsTbl.GetString("value", inf.key);
+	inf.valueTypeString = infsTbl.GetString("value", "");
 	if (inf.valueTypeString.empty()) {
-		logOutput.Print(logSubsystem, "parseInfoItem: %s: empty value",
+		LOG_SL(logSection, L_WARNING, "parseInfoItem: %s: empty value",
 				inf.key.c_str());
 		return false;
 	}
@@ -104,18 +105,14 @@ static bool parseInfoItem(const LuaTable& root, int index, InfoItem& inf,
 }
 
 
-void parseInfo(
+void info_parseInfo(
 		std::vector<InfoItem>& info,
 		const std::string& fileName,
 		const std::string& fileModes,
 		const std::string& accessModes,
 		std::set<std::string>* infoSet,
-		CLogSubsystem* logSubsystem) {
-
-	if (!logSubsystem) {
-		assert(logSubsystem);
-	}
-
+		const char* logSection)
+{
 	LuaParser luaParser(fileName, fileModes, accessModes);
 
 	if (!luaParser.Execute()) {
@@ -136,7 +133,7 @@ void parseInfo(
 	}
 	for (int index = 1; root.KeyExists(index); index++) {
 		InfoItem inf;
-		if (parseInfoItem(root, index, inf, *myInfoSet, *logSubsystem)) {
+		if (info_parseInfoItem(root, index, inf, *myInfoSet, logSection)) {
 			info.push_back(inf);
 		}
 	}
@@ -146,17 +143,16 @@ void parseInfo(
 	}
 }
 
-std::vector<InfoItem> parseInfo(
+std::vector<InfoItem> info_parseInfo(
 		const std::string& fileName,
 		const std::string& fileModes,
 		const std::string& accessModes,
 		std::set<std::string>* infoSet,
-		CLogSubsystem* logSubsystem) {
-
+		const char* logSection)
+{
 	std::vector<InfoItem> info;
 
-	parseInfo(info, fileName, fileModes, accessModes, infoSet,
-			logSubsystem);
+	info_parseInfo(info, fileName, fileModes, accessModes, infoSet, logSection);
 
 	return info;
 }

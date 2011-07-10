@@ -31,7 +31,7 @@ CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 		const std::string& aiOptionFile) {
 
 	std::vector<InfoItem> tmpInfo;
-	parseInfo(tmpInfo, aiInfoFile);
+	info_parseInfo(tmpInfo, aiInfoFile);
 	std::vector<InfoItem>::iterator ii;
 	for (ii = tmpInfo.begin(); ii != tmpInfo.end(); ++ii) {
 		// TODO remove this, once we support non-string value types for Skirmish AI info
@@ -40,7 +40,7 @@ CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 	}
 
 	if (!aiOptionFile.empty()) {
-		parseOptions(options, aiOptionFile);
+		option_parseOptions(options, aiOptionFile);
 	}
 }
 
