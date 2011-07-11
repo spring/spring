@@ -8,7 +8,6 @@
 #include "mapfile.h"
 #include "Map/MapInfo.h"
 #include "Game/Camera.h"
-#include "Game/GlobalUnsynced.h"
 #include "Game/LoadScreen.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/BaseSky.h"
