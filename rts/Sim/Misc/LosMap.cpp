@@ -69,7 +69,10 @@ void CLosMap::AddMapArea(int2 pos, int allyteam, int radius, int amount)
 			if (!updateUnsyncedHeightMap) { continue; }
 			if (!squareEnteredLOS) { continue; }
 
-			readmap->PushVisibleHeightMapUpdate(lmx * LOS2HEIGHT_X, lmz * LOS2HEIGHT_Z,  (lmx + 1) * LOS2HEIGHT_X, (lmz + 1) * LOS2HEIGHT_Z);
+			const int hmxTL = lmx * LOS2HEIGHT_X, hmxBR = (lmx + 1) * LOS2HEIGHT_X;
+			const int hmzTL = lmz * LOS2HEIGHT_Z, hmzBR = (lmz + 1) * LOS2HEIGHT_Z;
+
+			readmap->PushVisibleHeightMapUpdate(hmxTL, hmzTL,  hmxBR, hmzBR,  true);
 			#endif
 		}
 	}

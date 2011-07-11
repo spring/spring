@@ -24,10 +24,6 @@
 #include "System/myMath.h"
 #include "System/Util.h"
 
-#ifdef USE_UNSYNCED_HEIGHTMAP
-#include "Sim/Misc/LosHandler.h"
-#endif
-
 #define SSMF_UNCOMPRESSED_NORMALS 0
 
 using namespace std;
@@ -317,8 +313,11 @@ void CSmfReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigne
 	}
 }
 
-void CSmfReadMap::UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2)
+void CSmfReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 {
+	const int x1 = update.x1, y1 = update.y1;
+	const int x2 = update.x2, y2 = update.y2;
+
 	{
 		// update the visible heights and normals
 		static const float*  shm = &cornerHeightMapSynced[0];
@@ -396,7 +395,7 @@ void CSmfReadMap::UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2)
 				rvn[vIdxTL] = vn.ANormalize();
 
 				#ifdef USE_UNSYNCED_HEIGHTMAP
-				if (gs->frameNum <= 0 || gu->spectatingFullView || loshandler->InLos(x, z, gu->myAllyTeam)) {
+				if (update.los) {
 					// update the visible vertex/face height/normal
 					uhm[vIdxTL] = shm[vIdxTL];
 					vvn[vIdxTL] = rvn[vIdxTL];
