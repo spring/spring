@@ -225,21 +225,23 @@ void CReadMap::CalcHeightmapChecksum()
 
 void CReadMap::UpdateDraw() {
 	std::list<HeightMapUpdate> ushmu;
+	std::list<HeightMapUpdate>::const_iterator ushmuIt;
 
 	{
 		GML_STDMUTEX_LOCK(map); // UpdateDraw
 
-		static const unsigned int NUM_UNSYNCED_UPDATES = 32U;
+		static const unsigned int MAX_UNSYNCED_UPDATES = 32U;
+		       const unsigned int numUnsyncedUpdates = std::min(MAX_UNSYNCED_UPDATES, unsyncedHeightMapUpdates.size());
 
-		// process the first <NUM_UNSYNCED_UPDATES> pending updates
-		for (unsigned int n = 0; n < std::min(NUM_UNSYNCED_UPDATES, unsyncedHeightMapUpdates.size()); n++) {
+		// process the first <numUnsyncedUpdates> pending updates
+		for (unsigned int n = 0; n < numUnsyncedUpdates; n++) {
 			ushmu.push_back(unsyncedHeightMapUpdates.front());
 			unsyncedHeightMapUpdates.pop_front();
 		}
 	}
 
-	for (std::list<HeightMapUpdate>::const_iterator i = ushmu.begin(); i != ushmu.end(); ++i) {
-		UpdateHeightMapUnsynced(*i);
+	for (ushmuIt = ushmu.begin(); ushmuIt != ushmu.end(); ++ushmuIt) {
+		UpdateHeightMapUnsynced(*ushmuIt);
 	}
 }
 
