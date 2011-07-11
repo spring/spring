@@ -386,8 +386,8 @@ void CReadMap::PushVisibleHeightMapUpdate(int x1, int z1,  int x2, int z2,  bool
 		// processed in UpdateHeightMapUnsynced
 		for (int hmx = x1; hmx < x2; hmx += loshandler->losSizeX) {
 			for (int hmz = z1; hmz < z2; hmz += loshandler->losSizeY) {
-				const int hmxTL = hmx, hmxBR = hmx + loshandler->losSizeX;
-				const int hmzTL = hmz, hmzBR = hmz + loshandler->losSizeY;
+				const int hmxTL = hmx, hmxBR = std::min(gs->mapx - 1, hmx + loshandler->losSizeX);
+				const int hmzTL = hmz, hmzBR = std::min(gs->mapy - 1, hmz + loshandler->losSizeY);
 
 				HeightMapUpdate hmUpdate = HeightMapUpdate(hmxTL, hmxBR,  hmzTL, hmzBR,  loshandler->InLos(hmx, hmz, gu->myAllyTeam));
 				unsyncedHeightMapUpdates.push_back(hmUpdate);
