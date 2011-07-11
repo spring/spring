@@ -230,11 +230,11 @@ void CReadMap::UpdateDraw() {
 	{
 		GML_STDMUTEX_LOCK(map); // UpdateDraw
 
-		static const unsigned int MAX_UNSYNCED_UPDATES = 32U;
-		       const unsigned int numUnsyncedUpdates = std::min(MAX_UNSYNCED_UPDATES, unsyncedHeightMapUpdates.size());
+		static const size_t MAX_UNSYNCED_UPDATES = 32U;
+		       const size_t numUnsyncedUpdates = std::min(MAX_UNSYNCED_UPDATES, unsyncedHeightMapUpdates.size());
 
 		// process the first <numUnsyncedUpdates> pending updates
-		for (unsigned int n = 0; n < numUnsyncedUpdates; n++) {
+		for (size_t n = 0; n < numUnsyncedUpdates; n++) {
 			ushmu.push_back(unsyncedHeightMapUpdates.front());
 			unsyncedHeightMapUpdates.pop_front();
 		}
