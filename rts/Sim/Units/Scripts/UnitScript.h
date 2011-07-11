@@ -68,8 +68,8 @@ protected:
 		int axis;
 		int piece;
 		float speed;
-		float dest;		// means final position when turning or moving, final speed when spinning
-		float accel;	// used for spinning, can be negative
+		float dest;     // means final position when turning or moving, final speed when spinning
+		float accel;    // used for spinning, can be negative
 		bool done;
 		std::list<IAnimListener*> listeners;
 	};
@@ -140,7 +140,7 @@ public:
 	      CUnit* GetUnit()       { return unit; }
 	const CUnit* GetUnit() const { return unit; }
 
-	int Tick(int deltaTime);
+	bool Tick(int deltaTime);
 	void TickAnims(int deltaTime, AnimType type, std::list< std::list<AnimInfo*>::iterator >& doneAnims);
 
 	// animation, used by CCobThread
