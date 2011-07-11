@@ -370,9 +370,9 @@ void CReadMap::UpdateHeightMapSynced(int x1, int z1, int x2, int z2)
 
 void CReadMap::PushVisibleHeightMapUpdate(int x1, int z1,  int x2, int z2,  bool losMapCall)
 {
-	#ifdef USE_UNSYNCED_HEIGHTMAP
 	GML_STDMUTEX_LOCK(map); // PushVisibleHeightMapUpdate
 
+	#ifdef USE_UNSYNCED_HEIGHTMAP
 	if (losMapCall || (gs->frameNum <= 0 || gu->spectatingFullView)) {
 		// all heightmap squares in this update are in LOS, no split
 		HeightMapUpdate hmUpdate = HeightMapUpdate(x1, x2,  z1, z2,  true);
@@ -395,6 +395,7 @@ void CReadMap::PushVisibleHeightMapUpdate(int x1, int z1,  int x2, int z2,  bool
 
 	#else
 	// only reached from UpdateHeightMapSynced, los-state is irrelevant
+	// (however, could still split chunk to save some CPU in UpdateDraw)
 	unsyncedHeightMapUpdates.push_back(HeightMapUpdate(x1, x2,  z1, z2));
 	#endif
 }
