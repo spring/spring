@@ -13,8 +13,8 @@
 /**
  *	@brief returns the offset of a window to the display
  *	@param display  The display
- * 	@param window   The window
- * 	@param out_left Pointer to an int, that will hold the x offset
+ *	@param window   The window
+ *	@param out_left Pointer to an int, that will hold the x offset
  *	@param out_top  Pointer to an int, that will hold the y offset
  */
 void MyX11GetFrameBorderOffset(Display* display, Window& window, int* out_left, int* out_top);
@@ -27,7 +27,7 @@ int MyX11GetWindowState(Display* display, Window& window);
 
 /**
  *	@brief sets the window to windowState (maximized,minimized, ...)
- * 	@see MyX11GetWindowState()
+ *	@see MyX11GetWindowState()
  */
 void MyX11SetWindowState(Display* display, Window& window, int windowState);
 
