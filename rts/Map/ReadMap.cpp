@@ -386,9 +386,9 @@ void CReadMap::PushVisibleHeightMapUpdate(int x1, int z1,  int x2, int z2,  bool
 		const unsigned int numLosSquaresZ = (z2 - z1) / loshandler->losSizeY;
 		const bool fullLOS = (gs->frameNum <= 0 || gu->spectatingFullView);
 
-		for (unsigned int lmx = 0; lmx < numLosSquaresX; lmx++) {
-			for (unsigned int lmz = 0; lmz < numLosSquaresZ; lmz++) {
-				const bool inLOS = fullLOS || loshandler->InLos(lmx * SQUARE_SIZE, lmz * SQUARE_SIZE, gu->myAllyTeam);
+		for (int hmx = x1; hmx < x2; hmx += loshandler->losSizeX) {
+			for (int hmz = z1; hmz < z2; hmz += loshandler->losSizeY) {
+				const bool inLOS = fullLOS || loshandler->InLos(hmx, hmz, gu->myAllyTeam);
 
 				HeightMapUpdate hmUpdate = HeightMapUpdate(x1, x2, z1, z2, inLOS);
 				unsyncedHeightMapUpdates.push_back(hmUpdate);
