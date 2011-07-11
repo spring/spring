@@ -51,6 +51,17 @@ void MyX11GetFrameBorderOffset(Display* display, Window& window, int* out_left, 
 	}
 }
 
+const int windowStates = 8;
+const std::string windowStatesStr[windowStates] = {
+	"_NET_WM_STATE_STICKY",
+	"_NET_WM_STATE_MAXIMIZED_VERT",
+	"_NET_WM_STATE_MAXIMIZED_HORZ",
+	"_NET_WM_STATE_SHADED",
+	"_NET_WM_STATE_HIDDEN",
+	"_NET_WM_STATE_FULLSCREEN",
+	"_NET_WM_STATE_ABOVE",
+	"_NET_WM_STATE_BELOW"
+};
 
 int MyX11GetWindowState(Display* display, Window& window)
 {
@@ -64,20 +75,9 @@ int MyX11GetWindowState(Display* display, Window& window)
 
 	Atom atom = XInternAtom(display, "_NET_WM_STATE", true);
 
-	const std::string windowStatesStr[8] = {
-		"_NET_WM_STATE_STICKY",
-		"_NET_WM_STATE_MAXIMIZED_VERT",
-		"_NET_WM_STATE_MAXIMIZED_HORZ",
-		"_NET_WM_STATE_SHADED",
-		"_NET_WM_STATE_HIDDEN",
-		"_NET_WM_STATE_FULLSCREEN",
-		"_NET_WM_STATE_ABOVE",
-		"_NET_WM_STATE_BELOW"
-	};
-
-	Atom windowStatesAtoms[8];
+	Atom windowStatesAtoms[windowStates];
 	std::map<Atom,int> windowStatesInt;
-	for (int i=0; i<8; i++) {
+	for (int i=0; i<windowStates; i++) {
 		windowStatesAtoms[i] = XInternAtom(display, windowStatesStr[i].c_str(), false);
 		windowStatesInt[windowStatesAtoms[i]] = 1<<i;
 	}
@@ -117,19 +117,9 @@ void MyX11SetWindowState(Display* display, Window& window, int windowState)
 	if (windowState <= 0)
 		return;
 
-	const std::string windowStatesStr[8] = {
-		"_NET_WM_STATE_STICKY",
-		"_NET_WM_STATE_MAXIMIZED_VERT",
-		"_NET_WM_STATE_MAXIMIZED_HORZ",
-		"_NET_WM_STATE_SHADED",
-		"_NET_WM_STATE_HIDDEN",
-		"_NET_WM_STATE_FULLSCREEN",
-		"_NET_WM_STATE_ABOVE",
-		"_NET_WM_STATE_BELOW"
-	};
 
-	Atom windowStatesAtoms[8];
-	for (int i=0; i<8; i++) {
+	Atom windowStatesAtoms[windowStates];
+	for (int i=0; i<windowStates; i++) {
 		windowStatesAtoms[i] = XInternAtom(display, windowStatesStr[i].c_str(), false);
 	}
 
@@ -148,8 +138,7 @@ void MyX11SetWindowState(Display* display, Window& window, int windowState)
 
 	static const int _NET_WM_STATE_REMOVE = 0;
 	static const int _NET_WM_STATE_ADD = 1;
-
-	for (int i=0; i<8; i++) {
+	for (int i=0; i<windowStates; i++) {
 		if (1<<i & windowState) {
 			xev.xclient.data.l[0] = _NET_WM_STATE_ADD;
 			xev.xclient.data.l[1] = windowStatesAtoms[i];
