@@ -373,24 +373,20 @@ void CReadMap::PushVisibleHeightMapUpdate(int x1, int z1,  int x2, int z2,  bool
 	#ifdef USE_UNSYNCED_HEIGHTMAP
 	GML_STDMUTEX_LOCK(map); // PushVisibleHeightMapUpdate
 
-	if (losMapCall) {
+	const bool fullLOS = (gs->frameNum <= 0 || gu->spectatingFullView);
+
+	if (losMapCall || fullLOS) {
 		// all heightmap squares in this update are in LOS, no split
-		HeightMapUpdate hmUpdate = HeightMapUpdate(x1, x2, z1, z2, true);
+		HeightMapUpdate hmUpdate = HeightMapUpdate(x1, x2,  z1, z2,  true);
 		unsyncedHeightMapUpdates.push_back(hmUpdate);
 	} else {
 		// split the update into multiple invididual chunks: we need
 		// to do this because the reduced-rate unsynced updating can
 		// mean a chunk has gone out of LOS again by the time it gets
 		// processed in UpdateHeightMapUnsynced
-		const unsigned int numLosSquaresX = (x2 - x1) / loshandler->losSizeX;
-		const unsigned int numLosSquaresZ = (z2 - z1) / loshandler->losSizeY;
-		const bool fullLOS = (gs->frameNum <= 0 || gu->spectatingFullView);
-
 		for (int hmx = x1; hmx < x2; hmx += loshandler->losSizeX) {
 			for (int hmz = z1; hmz < z2; hmz += loshandler->losSizeY) {
-				const bool inLOS = fullLOS || loshandler->InLos(hmx, hmz, gu->myAllyTeam);
-
-				HeightMapUpdate hmUpdate = HeightMapUpdate(x1, x2, z1, z2, inLOS);
+				HeightMapUpdate hmUpdate = HeightMapUpdate(x1, x2,  z1, z2,  loshandler->InLos(hmx, hmz, gu->myAllyTeam));
 				unsyncedHeightMapUpdates.push_back(hmUpdate);
 			}
 		}
@@ -398,6 +394,6 @@ void CReadMap::PushVisibleHeightMapUpdate(int x1, int z1,  int x2, int z2,  bool
 
 	#else
 	// only reached from UpdateHeightMapSynced, los-state is irrelevant
-	unsyncedHeightMapUpdates.push_back(HeightMapUpdate(x1, x2, z1, z2));
+	unsyncedHeightMapUpdates.push_back(HeightMapUpdate(x1, x2,  z1, z2));
 	#endif
 }
