@@ -18,7 +18,7 @@ CInMapDrawView* inMapDrawerView = NULL;
 
 
 /**
- * @param a how far on the way between x and y [0.0f, 1.0f]
+ * how far on the way between x and y [0.0f, 1.0f]
  */
 static inline unsigned char smoothStep(int x, int y, int a) {
 	return (unsigned char)((x * (1.0f - a)) + (y * a));

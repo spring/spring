@@ -284,6 +284,7 @@ namespace creg {
  * Should be used in the source file
  * @param TCls class to bind
  * @param TBase base class of TCls
+ * @param ctor_args constructor arguments
  */
 #define CR_BIND_DERIVED(TCls, TBase, ctor_args) \
 	creg::IMemberRegistrator* TCls::memberRegistrator=0;	\
@@ -298,6 +299,7 @@ namespace creg {
  * @param TSuper class that contains the class to register
  * @param TCls subclass to bind
  * @param TBase base class of TCls
+ * @param ctor_args constructor arguments
  */
 #define CR_BIND_DERIVED_SUB(TSuper, TCls, TBase, ctor_args) \
 	creg::IMemberRegistrator* TSuper::TCls::memberRegistrator=0;	 \
@@ -310,6 +312,7 @@ namespace creg {
  * Bind a class not derived from CObject
  * should be used in the source file
  * @param TCls class to bind
+ * @param ctor_args constructor arguments
  */
 #define CR_BIND(TCls, ctor_args) \
 	creg::IMemberRegistrator* TCls::memberRegistrator=0;	\

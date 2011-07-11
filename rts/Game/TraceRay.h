@@ -28,7 +28,7 @@ namespace TraceRay {
 
 	/**
 	 * @return true if there is an allied unit within
-	 *   the firing cone of <owner> (that might be hit)
+	 *   the firing cone of \<owner\> (that might be hit)
 	 */
 	bool TestAllyCone(const float3& from, const float3& weaponDir, float length, float spread, int allyteam, CUnit* owner);
 	/**

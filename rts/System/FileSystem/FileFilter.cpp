@@ -57,9 +57,9 @@ Note that:
  - Leading and trailing whitespace is ignored.
  - Globbing characters '*' and '?' can be used, both do NOT match path
    separators (like in shell, but unlike fnmatch(), or so I've been told.)
-   e.g. 'foo\*\baz' matches 'foo/bar/baz' but not 'foo/ba/r/baz'.
+   e.g. 'foo\\*\\baz' matches 'foo/bar/baz' but not 'foo/ba/r/baz'.
  - Any path separator matches any other path separator, so there is no need to
-   worry about converting them: 'foo/bar' matches 'foo\bar' and 'foo:bar' too.
+   worry about converting them: 'foo/bar' matches 'foo\\bar' and 'foo:bar' too.
  - A path can be prefixed with an exclamation mark '!', this negates the
    pattern. Because the rules are matched in-order, one can use this to exclude
    a file from a more generic pattern.

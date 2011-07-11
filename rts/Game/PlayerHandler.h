@@ -28,7 +28,7 @@ public:
 
 	/**
 	 * @brief Player
-	 * @param i index to fetch
+	 * @param id index to fetch
 	 * @return CPlayer pointer
 	 *
 	 * Accesses a CPlayer instance at a given index

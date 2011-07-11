@@ -26,12 +26,12 @@ static inline float InterpolateHeight(float x, float y, const float* heightmap)
 	//! TL __________ TR
 	//!    |        /|
 	//!    | dx+dy / |
-	//!    |  <1  /  |
+	//!    | \<1  /  |
 	//!    |     /   |
 	//!    |    /    |
 	//!    |   /     |
 	//!    |  / dx+dy|
-	//!    | /   >=1 |
+	//!    | /  \>=1 |
 	//!    |/        |
 	//! BL ---------- BR
 
@@ -93,13 +93,13 @@ static inline float LineGroundSquareCol(
 	cornerVertex.z = ys * SQUARE_SIZE;
 	cornerVertex.y = heightmap[ys * (gs->mapx + 1) + xs];
 
-	//! project <to - cornerVertex> vector onto the TL-normal
-	//! if <to> lies below the terrain, this will be negative
+	//! project \<to - cornerVertex\> vector onto the TL-normal
+	//! if \<to\> lies below the terrain, this will be negative
 	float toFacePlaneDist = (to - cornerVertex).dot(faceNormalTL);
 	float fromFacePlaneDist = 0.0f;
 
 	if (toFacePlaneDist <= 0.0f) {
-		//! project <from - cornerVertex> onto the TL-normal
+		//! project \<from - cornerVertex\> onto the TL-normal
 		fromFacePlaneDist = (from - cornerVertex).dot(faceNormalTL);
 
 		if (fromFacePlaneDist != toFacePlaneDist) {
@@ -118,12 +118,12 @@ static inline float LineGroundSquareCol(
 	cornerVertex.z += SQUARE_SIZE;
 	cornerVertex.y = heightmap[(ys + 1) * (gs->mapx + 1) + (xs + 1)];
 
-	//! project <to - cornerVertex> vector onto the TL-normal
-	//! if <to> lies below the terrain, this will be negative
+	//! project \<to - cornerVertex\> vector onto the TL-normal
+	//! if \<to\> lies below the terrain, this will be negative
 	toFacePlaneDist = (to - cornerVertex).dot(faceNormalBR);
 
 	if (toFacePlaneDist <= 0.0f) {
-		//! project <from - cornerVertex> onto the BR-normal
+		//! project \<from - cornerVertex\> onto the BR-normal
 		fromFacePlaneDist = (from - cornerVertex).dot(faceNormalBR);
 
 		if (fromFacePlaneDist != toFacePlaneDist) {

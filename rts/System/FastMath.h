@@ -15,7 +15,6 @@
 #endif
 
 /**
- * @file FastMath.cpp
  * @brief Fast math routines
  *
  * Contains faster alternatives for the more time
