@@ -117,7 +117,7 @@ void CScriptMoveType::CheckNotify()
 {
 	if (scriptNotify) {
 		if (luaRules && luaRules->MoveCtrlNotify(owner, scriptNotify)) {
-			//! deletes <this>
+			//! deletes \<this\>
 			owner->DisableScriptMoveType();
 		} else {
 			scriptNotify = 0;

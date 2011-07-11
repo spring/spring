@@ -108,7 +108,7 @@ public:
 
 
 	int id;                 ///< unique id for this type of unit
-	int cobID;              ///< associated with the COB <GET COB_ID unitID> call
+	int cobID;              ///< associated with the COB \<GET COB_ID unitID\> call
 
 	CollisionVolume* collisionVolume;
 

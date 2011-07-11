@@ -57,7 +57,7 @@ static inline unsigned int count_bits_set(unsigned int w)
 
 /**
  * @brief Make even number macro
- * @param x Number to make even
+ * @param n Number to make even
  *
  * Quick macro to make a number even, by
  * forcing the rightmost bit to 0.

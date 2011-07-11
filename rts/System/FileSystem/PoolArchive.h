@@ -61,11 +61,11 @@ private:
  * This referenced files, the real content of this archive is in the pool dir.
  * The splitting up into the 00 till ff sub-dirs is only to prevent possible
  * problems with file-system limits for maximum files per directory (eg. FAT32).
- * /pool/<first 2 hex chars>/<last 30 hex chars>.gz
+ * /pool/\<first 2 hex chars\>/\<last 30 hex chars\>.gz
  * Format of the .sdp (index) files:
  * There is one entry per indexed file. These are repeated until EOF.
  * The format of one such entry:
- * <1 byte real file name length><real file name><16 byte MD5 digest><4 byte CRC32><4 byte file size>
+ * \<1 byte real file name length\>\<real file name\>\<16 byte MD5 digest\>\<4 byte CRC32\>\<4 byte file size\>
  * The 16 bytes MD5 digest is the reference to the 32 Hex char file name
  * under pool, which contains the content.
  *
