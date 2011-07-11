@@ -51,8 +51,8 @@ void MyX11GetFrameBorderOffset(Display* display, Window& window, int* out_left, 
 	}
 }
 
-const int windowStates = 8;
-const std::string windowStatesStr[windowStates] = {
+static const int windowStates = 8;
+static const std::string windowStatesStr[windowStates] = {
 	"_NET_WM_STATE_STICKY",
 	"_NET_WM_STATE_MAXIMIZED_VERT",
 	"_NET_WM_STATE_MAXIMIZED_HORZ",
