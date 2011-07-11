@@ -265,12 +265,12 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<A
 }
 
 /**
- * @brief Called by the engine when we are registered as animating. If we return -1 it means that
- *        there is no longer anything animating
+ * @brief Called by the engine when we are registered as animating.
+          If we return false there are no active animations left.
  * @param deltaTime int delta time to update
- * @return 0 if there are still animations going, -1 else
+ * @return true if there are still active animations
  */
-int CUnitScript::Tick(int deltaTime)
+bool CUnitScript::Tick(int deltaTime)
 {
 	typedef std::list<AnimInfo*>::iterator AnimInfoIt;
 
@@ -297,7 +297,7 @@ int CUnitScript::Tick(int deltaTime)
 		delete animInfo;
 	}
 
-	return (HaveAnimations()? 0: -1);
+	return (HaveAnimations());
 }
 
 

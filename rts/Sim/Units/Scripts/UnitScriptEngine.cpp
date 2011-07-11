@@ -78,11 +78,14 @@ void CUnitScriptEngine::Tick(int deltaTime)
 	// Tick all instances that have registered themselves as animating
 	for (std::list<CUnitScript*>::iterator it = animating.begin(); it != animating.end(); ) {
 		currentScript = *it;
-		if (currentScript->Tick(deltaTime) == -1)
-			it = animating.erase(it);
-		else
+
+		if (currentScript->Tick(deltaTime)) {
 			++it;
+		} else {
+			it = animating.erase(it);
+		}
 	}
+
 	currentScript = NULL;
 }
 
