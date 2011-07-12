@@ -170,13 +170,13 @@ bool CStdExplosionGenerator::Explosion(
 	CUnit* hit,
 	const float3 &dir
 ) {
-	const float h2 = ground->GetHeightReal(pos.x, pos.z);
-	const float height = std::max(0.0f, pos.y - h2);
+	const float groundHeight = ground->GetHeightReal(pos.x, pos.z);
+	const float altitude = pos.y - groundHeight;
 
-	const bool waterExplosion = (h2 < -3.0f);
-	const bool uwExplosion = (pos.y < -15.0f);
+	const bool waterExplosion = (pos.y <= -3.0f && pos.y > groundHeight);
+	const bool uwExplosion = (pos.y < -15.0f && pos.y > groundHeight);
 
-	damage = damage / 20.0f;
+	damage /= 20.0f;
 
 	// limit the visual effects based on the radius
 	if (damage > radius * 1.5f) {
@@ -198,7 +198,7 @@ bool CStdExplosionGenerator::Explosion(
 	new CHeatCloudProjectile(npos, float3(0.0f, 0.3f, 0.0f), 8 + sqrt(damage) * 0.5f, 7 + damage * 2.8f, owner);
 
 	if (ph->particleSaturation < 1.0f) {
-		const bool airExplosion = (pos.y - std::max(0.0f, h2) > 20.0f);
+		const bool airExplosion = (pos.y > 0.0f && altitude > 20.0f);
 
 		// turn off lots of graphic only particles when we have more particles than we want
 		float smokeDamage = damage;
@@ -271,8 +271,8 @@ bool CStdExplosionGenerator::Explosion(
 			}
 			for (int a = 0; a < numDebris; ++a) {
 				float3 speed;
-				if (height < 4) {
-					speed=float3((0.5f-gu->usRandFloat())*2.0f,1.8f+gu->usRandFloat()*1.8f,(0.5f-gu->usRandFloat())*2.0f);
+				if (altitude < 4.0f) {
+					speed = float3((0.5f-gu->usRandFloat())*2.0f,1.8f+gu->usRandFloat()*1.8f,(0.5f-gu->usRandFloat())*2.0f);
 				} else {
 					speed = float3(gu->usRandVector() * 2);
 				}
@@ -326,7 +326,7 @@ bool CStdExplosionGenerator::Explosion(
 		}
 	}
 
-	if (radius > 20 && damage > 6 && height < radius * 0.7f) {
+	if (radius > 20 && damage > 6 && altitude < (radius * 0.7f)) {
 		float modSize = std::max(radius, damage * 2);
 		float circleAlpha = 0;
 		float circleGrowth = 0;
@@ -800,13 +800,17 @@ bool CCustomExplosionGenerator::Explosion(
 		return false;
 	}
 
-	float h2 = ground->GetHeightReal(pos.x, pos.z);
+	const float groundHeight = ground->GetHeightReal(pos.x, pos.z);
+	const float altitude = pos.y - groundHeight;
+
 	unsigned int flags = 0;
 
-	if (pos.y - std::max(0.0f, h2) > 20.0f) flags = SPW_AIR;
-	else if (h2 < -3.0f)                    flags = SPW_WATER;
-	else if (pos.y < -15.0f)                flags = SPW_UNDERWATER;
-	else                                    flags = SPW_GROUND;
+	if (altitude > 0.0f) {
+		     if (pos.y >   20.0f) { flags = SPW_AIR;        }
+		else if (pos.y >    0.0f) { flags = SPW_GROUND;     }
+		else if (pos.y >=  -3.0f) { flags = SPW_WATER;      }
+		else if (pos.y <  -15.0f) { flags = SPW_UNDERWATER; }
+	}
 
 	if (hit) flags |= SPW_UNIT;
 	else     flags |= SPW_NO_UNIT;
