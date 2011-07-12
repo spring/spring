@@ -831,6 +831,7 @@ void SpringApp::ParseCmdLine()
 	cmdline->AddString('C', "config",             "Configuration file");
 	cmdline->AddSwitch(0,   "list-ai-interfaces", "Dump a list of available AI Interfaces to stdout");
 	cmdline->AddSwitch(0,   "list-skirmish-ais",  "Dump a list of available Skirmish AIs to stdout");
+	cmdline->AddSwitch(0,   "list-config-vars",   "Dump a list of config vars and meta data to stdout");
 
 	try {
 		cmdline->Parse();
@@ -865,8 +866,13 @@ void SpringApp::ParseCmdLine()
 	if (cmdline->IsSet("list-ai-interfaces")) {
 		IAILibraryManager::OutputAIInterfacesInfo();
 		exit(0);
-	} else if (cmdline->IsSet("list-skirmish-ais")) {
+	}
+	else if (cmdline->IsSet("list-skirmish-ais")) {
 		IAILibraryManager::OutputSkirmishAIInfo();
+		exit(0);
+	}
+	else if (cmdline->IsSet("list-config-vars")) {
+		ConfigVariable::OutputMetaDataMap();
 		exit(0);
 	}
 

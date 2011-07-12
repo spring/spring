@@ -10,30 +10,50 @@
 #include <string>
 
 /**
- * @brief Wraps a value and detects whether it has been assigned to.
+ * @brief Untyped base class for TypedStringConvertibleOptionalValue.
  */
-template<typename T>
-class Optional : public boost::noncopyable
+class StringConvertibleOptionalValue : public boost::noncopyable
 {
 public:
-	Optional() : isSet(false) {}
-	void operator=(const T& x) { value = x; isSet = true; }
-	const T& Get() const { return value; }
+	StringConvertibleOptionalValue() : isSet(false) {}
+	virtual ~StringConvertibleOptionalValue() {}
+	virtual std::string ToString() const = 0;
 	bool IsSet() const { return isSet; }
 
-private:
-	T value;
+protected:
 	bool isSet;
 };
 
+/**
+ * @brief Wraps a value and detects whether it has been assigned to.
+ */
 template<typename T>
-std::ostream& operator<<(std::ostream& stream, const Optional<T>& o)
+class TypedStringConvertibleOptionalValue : public StringConvertibleOptionalValue
 {
-	if (o.IsSet()) {
-		stream << o.Get();
+public:
+	void operator=(const T& x) { value = x; isSet = true; }
+	const T& Get() const { return value; }
+
+	std::string ToString() const
+	{
+		std::ostringstream buf;
+		buf << value;
+		return buf.str();
 	}
-	return stream;
-}
+
+	static T FromString(const std::string& value)
+	{
+		std::istringstream buf(value);
+		T temp;
+		buf >> temp;
+		return temp;
+	}
+
+protected:
+	T value;
+};
+
+typedef TypedStringConvertibleOptionalValue<std::string> OptionalString;
 
 /**
  * @brief Untyped configuration variable meta data.
@@ -46,21 +66,32 @@ class ConfigVariableMetaData : public boost::noncopyable
 public:
 	virtual ~ConfigVariableMetaData() {}
 
-	/// @brief Get the default value of this config variable as a string.
-	virtual std::string GetDefaultValue() const = 0;
+	/// @brief Get the default value of this config variable.
+	virtual const StringConvertibleOptionalValue& GetDefaultValue() const = 0;
 
-	/// @brief Returns true if and only if a default value has been set.
-	virtual bool HasDefaultValue() const = 0;
+	/// @brief Get the minimum value of this config variable.
+	virtual const StringConvertibleOptionalValue& GetMinimumValue() const = 0;
+
+	/// @brief Get the maximum value of this config variable.
+	virtual const StringConvertibleOptionalValue& GetMaximumValue() const = 0;
 
 	/// @brief Clamp a value using the declared minimum and maximum value.
 	virtual std::string Clamp(const std::string& value) const = 0;
 
-public:
+	std::string GetKey() const { return key; }
+	std::string GetType() const { return type; }
+	std::string GetDeclarationFile() const { return declarationFile; }
+	int GetDeclarationLine() const { return declarationLine; }
+	const OptionalString& GetDescription() const { return description; }
+
+protected:
 	std::string key;
-	std::string type;
+	const char* type;
 	const char* declarationFile;
 	int declarationLine;
-	Optional<std::string> description;
+	OptionalString description;
+
+	template<typename F> friend class ConfigVariableBuilder;
 };
 
 /**
@@ -73,15 +104,9 @@ template<typename T>
 class ConfigVariableTypedMetaData : public ConfigVariableMetaData
 {
 public:
-	std::string GetDefaultValue() const
-	{
-		return ToString(defaultValue.Get());
-	}
-
-	bool HasDefaultValue() const
-	{
-		return defaultValue.IsSet();
-	}
+	const StringConvertibleOptionalValue& GetDefaultValue() const { return defaultValue; }
+	const StringConvertibleOptionalValue& GetMinimumValue() const { return minimumValue; }
+	const StringConvertibleOptionalValue& GetMaximumValue() const { return maximumValue; }
 
 	/**
 	 * @brief Clamp a value using the declared minimum and maximum value.
@@ -98,36 +123,23 @@ public:
 	 */
 	std::string Clamp(const std::string& value) const
 	{
-		T temp = FromString(value);
+		TypedStringConvertibleOptionalValue<T> temp;
+		temp = TypedStringConvertibleOptionalValue<T>::FromString(value);
 		if (minimumValue.IsSet()) {
-			temp = std::max(temp, minimumValue.Get());
+			temp = std::max(temp.Get(), minimumValue.Get());
 		}
 		if (maximumValue.IsSet()) {
-			temp = std::min(temp, maximumValue.Get());
+			temp = std::min(temp.Get(), maximumValue.Get());
 		}
-		return ToString(temp);
+		return temp.ToString();
 	}
 
-public:
-	Optional<T> defaultValue;
-	Optional<T> minimumValue;
-	Optional<T> maximumValue;
+protected:
+	TypedStringConvertibleOptionalValue<T> defaultValue;
+	TypedStringConvertibleOptionalValue<T> minimumValue;
+	TypedStringConvertibleOptionalValue<T> maximumValue;
 
-private:
-	static std::string ToString(T value)
-	{
-		std::ostringstream buf;
-		buf << value;
-		return buf.str();
-	}
-
-	static T FromString(const std::string& value)
-	{
-		std::istringstream buf(value);
-		T temp;
-		buf >> temp;
-		return temp;
-	}
+	template<typename F> friend class ConfigVariableBuilder;
 };
 
 /**
@@ -155,7 +167,7 @@ public:
 	}
 
 	MAKE_CHAIN_METHOD(key, std::string);
-	MAKE_CHAIN_METHOD(type, std::string);
+	MAKE_CHAIN_METHOD(type, const char*);
 	MAKE_CHAIN_METHOD(declarationFile, const char*);
 	MAKE_CHAIN_METHOD(declarationLine, int);
 	MAKE_CHAIN_METHOD(description, std::string);
@@ -183,6 +195,7 @@ public:
 
 	static const MetaDataMap& GetMetaDataMap();
 	static const ConfigVariableMetaData* GetMetaData(const std::string& key);
+	static void OutputMetaDataMap();
 
 private:
 	static MetaDataMap& GetMutableMetaDataMap();

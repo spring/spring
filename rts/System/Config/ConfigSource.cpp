@@ -215,8 +215,8 @@ DefaultConfigSource::DefaultConfigSource()
 
 	for (ConfigVariable::MetaDataMap::const_iterator it = vars.begin(); it != vars.end(); ++it) {
 		const ConfigVariableMetaData* metadata = it->second;
-		if (metadata->HasDefaultValue()) {
-			data[metadata->key] = metadata->GetDefaultValue();
+		if (metadata->GetDefaultValue().IsSet()) {
+			data[metadata->GetKey()] = metadata->GetDefaultValue().ToString();
 		}
 	}
 }
