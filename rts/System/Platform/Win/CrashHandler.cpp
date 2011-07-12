@@ -262,8 +262,8 @@ static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hT
 		containsOglDll = containsOglDll || strstr(modname, "atiogl");
 		// OpenGL lib names (Nvidia): "nvoglnt.dll" "nvoglv32.dll" "nvoglv64.dll" (last one is a guess)
 		containsOglDll = containsOglDll || strstr(modname, "nvogl");
-		// OpenGL lib names (Intel): "ig4dev32.dll" "ig4dev64.dll"
-		containsOglDll = containsOglDll || strstr(modname, "ig4dev");
+		// OpenGL lib names (Intel): "ig4dev32.dll" "ig4dev64.dll" "ig4icd32.dll"
+		containsOglDll = containsOglDll || strstr(modname, "ig4");
 
 		++count;
 	}
