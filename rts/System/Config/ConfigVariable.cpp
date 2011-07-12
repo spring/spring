@@ -2,14 +2,16 @@
 
 #include "StdAfx.h"
 #include "ConfigVariable.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 using std::map;
 using std::string;
 
-
-#define LOG_VAR(data) \
-	LogObject() << data->declarationFile << ":" << data->declarationLine << ": "
+/**
+ * @brief Log an error about a ConfigVariableMetaData
+ */
+#define LOG_VAR(data, fmt, ...) \
+	LOG_L(L_ERROR, "%s:%d: " fmt, data->declarationFile, data->declarationLine, ## __VA_ARGS__)
 
 
 ConfigVariable::MetaDataMap& ConfigVariable::GetMutableMetaDataMap()
@@ -29,8 +31,8 @@ void ConfigVariable::AddMetaData(const ConfigVariableMetaData* data)
 	MetaDataMap::const_iterator pos = vars.find(data->key);
 
 	if (pos != vars.end()) {
-		LOG_VAR(data) << "Duplicate config variable declaration \"" << data->key << "\"\n";
-		LOG_VAR(pos->second) << "  Previously declared here\n";
+		LOG_VAR(data, "Duplicate config variable declaration \"%s\"\n", data->key.c_str());
+		LOG_VAR(pos->second, "  Previously declared here\n");
 	}
 	else {
 		vars[data->key] = data;
