@@ -131,10 +131,9 @@ bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 		dir /= length;
 
 		if (!onlyForward) {
-			// skip ground col testing for aircraft
-			float g = ground->LineGroundCol(weaponMuzzlePos, pos);
-			if (g > 0 && g < length * 0.9f)
+			if (!HaveFreeLineOfFire(weaponMuzzlePos, dir, length)) {
 				return false;
+			}
 		} else {
 			float3 goaldir = pos - owner->pos;
 			goaldir.Normalize();

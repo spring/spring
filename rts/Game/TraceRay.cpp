@@ -107,14 +107,14 @@ inline bool TestTrajectoryConeHelper(const float3& from, const float3& flatdir, 
 
 namespace TraceRay {
 
-// called by {CRifle, CBeamLaser, CLightningCannon}::Fire() and Skirmish AIs
+// called by {CRifle, CBeamLaser, CLightningCannon}::Fire(), CWeapon::HaveFreeLineOfFire(), and Skirmish AIs
 float TraceRay(const float3& start, const float3& dir, float length, int collisionFlags, const CUnit* owner, CUnit*& hitUnit, CFeature*& hitFeature)
 {
-	const bool ignoreEnemies  = !!(collisionFlags & Collision::NOENEMIES);
-	const bool ignoreAllies   = !!(collisionFlags & Collision::NOFRIENDLIES);
-	const bool ignoreFeatures = !!(collisionFlags & Collision::NOFEATURES);
-	const bool ignoreNeutrals = !!(collisionFlags & Collision::NONEUTRALS);
-	const bool ignoreGround   = !!(collisionFlags & Collision::NOGROUND);
+	const bool ignoreEnemies  = ((collisionFlags & Collision::NOENEMIES   ) != 0);
+	const bool ignoreAllies   = ((collisionFlags & Collision::NOFRIENDLIES) != 0);
+	const bool ignoreFeatures = ((collisionFlags & Collision::NOFEATURES  ) != 0);
+	const bool ignoreNeutrals = ((collisionFlags & Collision::NONEUTRALS  ) != 0);
+	const bool ignoreGround   = ((collisionFlags & Collision::NOGROUND    ) != 0);
 
 	const bool ignoreUnits = ignoreEnemies && ignoreAllies && ignoreNeutrals;
 
@@ -125,11 +125,11 @@ float TraceRay(const float3& start, const float3& dir, float length, int collisi
 		return -1.0f;
 	}
 
-	CollisionQuery cq;
-
-	{
+	if (!ignoreFeatures || !ignoreUnits) {
 		GML_RECMUTEX_LOCK(quad); // TraceRay
-		const vector<int> &quads = qf->GetQuadsOnRay(start, dir, length);
+		CollisionQuery cq;
+
+		const vector<int>& quads = qf->GetQuadsOnRay(start, dir, length);
 
 		//! feature intersection
 		if (!ignoreFeatures) {
@@ -140,7 +140,7 @@ float TraceRay(const float3& start, const float3& dir, float length, int collisi
 					CFeature* f = *ui;
 
 					if (!f->blocking || !f->collisionVolume) {
-						// NOTE: why check the blocking property?
+						//! NOTE: why check the blocking property?
 						continue;
 					}
 
@@ -190,7 +190,7 @@ float TraceRay(const float3& start, const float3& dir, float length, int collisi
 			if (hitUnit)
 				hitFeature = NULL;
 		}
-	} //GML_RECMUTEX_LOCK(quad);
+	}
 
 	if (!ignoreGround) {
 		//! ground intersection

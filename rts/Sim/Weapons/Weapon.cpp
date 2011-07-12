@@ -7,6 +7,7 @@
 #include "Weapon.h"
 #include "Game/GameHelper.h"
 #include "Game/Player.h"
+#include "Game/TraceRay.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/CollisionHandler.h"
@@ -783,6 +784,16 @@ void CWeapon::DependentDied(CObject *o)
 	if (o == interceptTarget) {
 		interceptTarget = NULL;
 	}
+}
+
+bool CWeapon::HaveFreeLineOfFire(const float3& pos, const float3& dir, float length) const {
+	CUnit* u = NULL;
+	CFeature* f = NULL;
+	const float g = TraceRay::TraceRay(pos, dir, length, collisionFlags, owner, u, f);
+
+	// true iff nothing (unit, feature, ground) blocks
+	// the ray of length <length> from <pos> along <dir>
+	return (g <= 0.0f || g >= (length * 0.9f));
 }
 
 bool CWeapon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
