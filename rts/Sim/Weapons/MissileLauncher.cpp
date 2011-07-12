@@ -110,11 +110,13 @@ bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 
 		flatdir /= flatlength;
 
-		float linear = dir.y + weaponDef->trajectoryHeight;
-		float quadratic = -weaponDef->trajectoryHeight / flatlength;
-		float gc = ground->TrajectoryGroundCol(weaponMuzzlePos, flatdir, flatlength - 30, linear, quadratic);
+		const float linear = dir.y + weaponDef->trajectoryHeight;
+		const float quadratic = -weaponDef->trajectoryHeight / flatlength;
+		const float gc = ((collisionFlags & Collision::NOGROUND) == 0)?
+			ground->TrajectoryGroundCol(weaponMuzzlePos, flatdir, flatlength - 30, linear, quadratic):
+			-1.0f;
 
-		if (gc > 0)
+		if (gc > 0.0f)
 			return false;
 
 		if (avoidFriendly && TraceRay::TestTrajectoryAllyCone(weaponMuzzlePos, flatdir, flatlength - 30, linear, quadratic, 0, 8, owner->allyteam, owner)) {
