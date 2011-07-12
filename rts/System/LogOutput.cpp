@@ -196,7 +196,7 @@ void CLogOutput::RotateLogFile() const
 			const int moveError = rename(filePath.c_str(), archivedLogFile.c_str());
 			if (moveError != 0) {
 				// no log here yet
-				std::cout << "Failed rotating the log file" << std::endl;
+				std::cerr << "Failed rotating the log file" << std::endl;
 			}
 		}
 	}
@@ -326,7 +326,7 @@ void CLogOutput::Output(const CLogSubsystem& subsystem, const std::string& str)
 	msg += str;
 
 	if (!initialized) {
-		ToStdout(subsystem, msg);
+		ToStderr(subsystem, msg);
 		preInitLog().push_back(PreInitLogEntry(&subsystem, msg));
 		return;
 	}
@@ -351,7 +351,7 @@ void CLogOutput::Output(const CLogSubsystem& subsystem, const std::string& str)
 #endif // _MSC_VER
 
 	ToFile(subsystem, msg);
-	ToStdout(subsystem, msg);
+	ToStderr(subsystem, msg);
 }
 
 
@@ -452,7 +452,7 @@ CLogSubsystem& CLogOutput::GetDefaultLogSubsystem()
 
 
 
-void CLogOutput::ToStdout(const CLogSubsystem& subsystem, const std::string& message)
+void CLogOutput::ToStderr(const CLogSubsystem& subsystem, const std::string& message)
 {
 	if (message.empty()) {
 		return;
@@ -460,14 +460,14 @@ void CLogOutput::ToStdout(const CLogSubsystem& subsystem, const std::string& mes
 
 	const bool newline = (message.at(message.size() -1) != '\n');
 
-	std::cout << message;
+	std::cerr << message;
 	if (newline)
-		std::cout << std::endl;
+		std::cerr << std::endl;
 #ifdef DEBUG
 	// flushing may be bad for in particular dedicated server performance
 	// crash handler should cleanly close the log file usually anyway
 	else
-		std::cout.flush();
+		std::cerr.flush();
 #endif
 }
 
