@@ -13,24 +13,35 @@
 #include "ConfigVariable.h"
 
 /**
- * @brief config handler base
+ * @brief Config handler interface
  */
 class ConfigHandler
 {
 public:
 	/**
-	 * @brief instantiate global configHandler
+	 * @brief Instantiate global configHandler
 	 * @param configSource the config file to be used, using the default one if empty
-	 * @see GetDefaultConfig()
+	 *
+	 * Re-instantiates if the configHandler already existed.
 	 */
 	static void Instantiate(std::string configSource = "");
 
 	/**
-	 * @brief deallocate
+	 * @brief Deallocate global configHandler
 	 */
 	static void Deallocate();
 
 public:
+	/**
+	 * @brief Register an observer
+	 *
+	 * The observer must have a method ConfigNotify, that takes a key-value-pair
+	 * using two std::strings as argument. It is called whenever the config
+	 * variable changes from within the current application.
+	 *
+	 * It is not called when the config variable is changed from another
+	 * application and the new value was read in a read-modify-write cycle.
+	 */
 	template<class T>
 	void NotifyOnChange(T* observer)
 	{
@@ -56,32 +67,50 @@ public:
 
 public:
 	/**
-	 * @brief set string
-	 * @param name name of key to set
+	 * @brief Set string config value
+	 * @param key name of key to set
 	 * @param value string value to set
 	 * @param useOverlay if true, the value will only be set in memory,
 	 *        and therefore be lost for the next game
 	 */
-	virtual void SetString(const std::string& name, const std::string& value, bool useOverlay = false) = 0;
+	virtual void SetString(const std::string& key, const std::string& value, bool useOverlay = false) = 0;
 
 	/**
-	 * @brief get string
-	 * @param name name of key to get
+	 * @brief Get string config value
+	 * @param key name of key to get
 	 * @return string value
+	 * @note Throws if key not present! (But if you specified
+	 *       a default, then that will always be present.)
 	 */
 	virtual std::string GetString(const std::string& key) const = 0;
 
+	/**
+	 * @brief Queries whether config variable is set anywhere
+	 * @param key name of key to query
+	 * @return true if the key exists
+	 * @note If the config variable has a default value then it is always set!
+	 */
 	virtual bool IsSet(const std::string& key) const = 0;
 
+	/**
+	 * @brief Delete a config variable from all mutable config sources
+	 * @param key name of key to query
+	 */
 	virtual void Delete(const std::string& key) = 0;
 
+	/**
+	 * @brief Get the name of the main (first) config file
+	 */
 	virtual std::string GetConfigFile() const = 0;
 
+	/**
+	 * @brief Get a map containing all key value pairs
+	 * @note This includes default values!
+	 */
 	virtual const std::map<std::string, std::string> GetData() const = 0;
 
 	/**
-	 * @brief update
-	 * calls observers if configs changed
+	 * @brief Calls observers if config values changed
 	 */
 	virtual void Update() = 0;
 

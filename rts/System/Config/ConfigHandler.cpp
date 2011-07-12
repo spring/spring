@@ -70,6 +70,13 @@ private:
 #define for_each_source_const(it) \
 	for (vector<ReadOnlyConfigSource*>::const_iterator it = sources.begin(); it != sources.end(); ++it)
 
+/**
+ * @brief Fills the list of sources based on locations.
+ *
+ * Sources at lower indices take precedence over sources at higher indices.
+ * First there is the overlay, then one or more file sources, and the last
+ * source(s) specify default values.
+ */
 ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations)
 {
 	overlay = new OverlayConfigSource();
@@ -161,12 +168,6 @@ bool ConfigHandlerImpl::IsSet(const string& key) const
 	return false;
 }
 
-/**
- * @brief Gets string value from config
- *
- * If string value isn't set, it returns def AND it sets data[name] = def,
- * so the defaults end up in the config file.
- */
 string ConfigHandlerImpl::GetString(const string& key) const
 {
 	const ConfigVariableMetaData* meta = ConfigVariable::GetMetaData(key);
@@ -190,13 +191,10 @@ string ConfigHandlerImpl::GetString(const string& key) const
  * This does:
  * 1) Lock file.
  * 2) Read file (in case another program modified something)
- * 3) Set data[name] = value.
+ * 3) Set data[key] = value.
  * 4) Write file (so we keep the settings in the event of a crash or error)
  * 5) Unlock file.
  *
- * Data is stored in an internal data structure for
- * fast access.
- * Currently, settings are lost in the event of a crash.
  * We do not want conflicts when multiple instances are running
  * at the same time (which would cause data loss).
  * This would happen if e.g. unitsync and spring would access
@@ -247,9 +245,6 @@ void ConfigHandlerImpl::SetString(const string& key, const string& value, bool u
 	changedValues[key] = value;
 }
 
-/**
- * @brief call observers if a config changed
- */
 void ConfigHandlerImpl::Update()
 {
 	boost::mutex::scoped_lock lck(observerMutex);
@@ -284,10 +279,6 @@ void ConfigHandlerImpl::AddObserver(ConfigNotifyCallback observer) {
 
 /******************************************************************************/
 
-/**
- * Instantiates a copy of the current platform's config class.
- * Re-instantiates if the configHandler already existed.
- */
 void ConfigHandler::Instantiate(string configSource)
 {
 	Deallocate();
@@ -311,9 +302,6 @@ void ConfigHandler::Instantiate(string configSource)
 	configHandler = new ConfigHandlerImpl(locations);
 }
 
-/**
- * Destroys existing ConfigHandler instance.
- */
 void ConfigHandler::Deallocate()
 {
 	SafeDelete(configHandler);
