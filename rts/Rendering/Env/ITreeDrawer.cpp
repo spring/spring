@@ -16,7 +16,10 @@
 #include "System/LogOutput.h"
 #include "System/myMath.h"
 
-CONFIG(unsigned int, TreeRadius).defaultValue((unsigned int) (5.5f * 256));
+CONFIG(int, TreeRadius)
+	.defaultValue((int) (5.5f * 256))
+	.minimumValue(0);
+
 CONFIG(bool, 3DTrees).defaultValue(true);
 
 ITreeDrawer* treeDrawer = NULL;

@@ -73,7 +73,11 @@ CONFIG(float, UnitTransparency).defaultValue(0.7f);
 CONFIG(bool, ShowHealthBars).defaultValue(true);
 CONFIG(bool, MultiThreadDrawUnit).defaultValue(true);
 CONFIG(bool, MultiThreadDrawUnitShadow).defaultValue(true);
-CONFIG(unsigned int, MaxDynamicModelLights).defaultValue(1U);
+
+CONFIG(int, MaxDynamicModelLights)
+	.defaultValue(1)
+	.minimumValue(0);
+
 CONFIG(bool, AdvUnitShading).defaultValue(true);
 CONFIG(float, LODScale).defaultValue(1.0f);
 CONFIG(float, LODScaleShadow).defaultValue(1.0f);
