@@ -131,13 +131,16 @@ bool CCannon::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
 	}
 	flatdir /= flatlength;
 
-	float gc = ground->TrajectoryGroundCol(weaponMuzzlePos, flatdir, flatlength - 10,
-			dir.y , gravity / (projectileSpeed * projectileSpeed) * 0.5f);
-	if (gc > 0) {
+	const float linear = dir.y;
+	const float quadratic = gravity / (projectileSpeed * projectileSpeed) * 0.5f;
+	const float gc = ((collisionFlags & Collision::NOGROUND) == 0)?
+		ground->TrajectoryGroundCol(weaponMuzzlePos, flatdir, flatlength - 10, linear, quadratic):
+		-1.0f;
+
+	if (gc > 0.0f) {
 		return false;
 	}
 
-	const float quadratic = gravity / (projectileSpeed * projectileSpeed) * 0.5f;
 	const float spread =
 		((accuracy + sprayAngle) * 0.6f) *
 		((1.0f - owner->limExperience * weaponDef->ownerExpAccWeight) * 0.9f);
