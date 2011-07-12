@@ -150,16 +150,6 @@ CStarburstProjectile::~CStarburstProjectile()
 
 void CStarburstProjectile::Collision()
 {
-	const float h = ground->GetHeightReal(pos.x, pos.z);
-
-	if (weaponDef->waterweapon && h < pos.y) {
-		// prevent impact on water if waterweapon is set
-		return;
-	}
-	if (h > pos.y) {
-		pos += (speed * (h - pos.y) / speed.y);
-	}
-
 	if (weaponDef->visuals.smokeTrail) {
 		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner(), false, true, 7, SMOKE_TIME, 0.7f, drawTrail, 0, weaponDef->visuals.texture2);
 	}

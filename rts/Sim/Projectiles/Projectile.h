@@ -70,6 +70,7 @@ public:
 
 	bool luaMoveCtrl;
 	bool checkCol;
+	bool ignoreWater;
 	bool deleteMe;
 	bool castShadow;
 

@@ -5,6 +5,7 @@
 
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
+#include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "MissileProjectile.h"
 #include "Rendering/GlobalRendering.h"
@@ -150,17 +151,6 @@ void CMissileProjectile::DependentDied(CObject* o)
 
 void CMissileProjectile::Collision()
 {
-	const float h = ground->GetHeightReal(pos.x, pos.z);
-
-	if (weaponDef->waterweapon && h < pos.y) {
-		// let waterweapons travel in water
-		return;
-	}
-
-	if (h > pos.y && fabs(speed.y) > 0.001f) {
-		pos -= speed * std::min(1.0f, (float)((h - pos.y) / fabs(speed.y)));
-	}
-
 	if (weaponDef->visuals.smokeTrail) {
 		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner(), false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
 	}

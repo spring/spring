@@ -73,8 +73,7 @@ void CEmgProjectile::Collision(CUnit* unit)
 }
 
 void CEmgProjectile::Collision() {
-	if (!(weaponDef->waterweapon && ground->GetHeightReal(pos.x, pos.z) < pos.y))
-		CWeaponProjectile::Collision();
+	CWeaponProjectile::Collision();
 }
 
 void CEmgProjectile::Draw()
