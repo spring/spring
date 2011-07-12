@@ -57,12 +57,15 @@ FileConfigSource::FileConfigSource(const string& filename) : filename(filename)
 	if ((file = fopen(filename.c_str(), "r"))) {
 		ScopedFileLock scoped_lock(fileno(file), false);
 		Read(file);
+		fclose(file);
+	}
+	else if ((file = fopen(filename.c_str(), "a"))) {
+		// TODO: write some initial contents into the config file?
+		fclose(file);
 	}
 	else {
-		if (!(file = fopen(filename.c_str(), "a")))
-			throw std::runtime_error("FileConfigSource: Error: Could not write to config file \"" + filename + "\"");
+		LOG_L(L_ERROR, "FileConfigSource: Error: Could not write to config file \"%s\"", filename.c_str());
 	}
-	fclose(file);
 }
 
 void FileConfigSource::SetStringInternal(const std::string& key, const std::string& value)
