@@ -57,6 +57,7 @@ public:
 
 public:
 	std::string key;
+	std::string type;
 	const char* declarationFile;
 	int declarationLine;
 	Optional<std::string> description;
@@ -154,6 +155,7 @@ public:
 	}
 
 	MAKE_CHAIN_METHOD(key, std::string);
+	MAKE_CHAIN_METHOD(type, std::string);
 	MAKE_CHAIN_METHOD(declarationFile, const char*);
 	MAKE_CHAIN_METHOD(declarationLine, int);
 	MAKE_CHAIN_METHOD(description, std::string);
@@ -202,6 +204,6 @@ public:
 #define CONFIG(T, name) \
 	static ConfigVariableTypedMetaData<T> cfgdata##name; \
 	static ConfigVariable cfg##name = ConfigVariableBuilder<T>(cfgdata##name) \
-		.key(#name).declarationFile(__FILE__).declarationLine(__LINE__)
+		.key(#name).type(#T).declarationFile(__FILE__).declarationLine(__LINE__)
 
 #endif // CONFIG_VALUE_H
