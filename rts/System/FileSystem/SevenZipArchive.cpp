@@ -14,9 +14,9 @@ extern "C" {
 #include "lib/7z/7zCrc.h"
 }
 
-#include "Util.h"
-#include "mmgr.h"
-#include "LogOutput.h"
+#include "System/Util.h"
+#include "System/mmgr.h"
+#include "System/Log/ILog.h"
 
 
 CSevenZipArchiveFactory::CSevenZipArchiveFactory()
@@ -49,7 +49,8 @@ CSevenZipArchive::CSevenZipArchive(const std::string& name) :
 	WRes wres = InFile_Open(&archiveStream.file, name.c_str());
 	if (wres) {
 		boost::system::error_code e(wres, boost::system::get_system_category());
-		LogObject() << "Error opening " << name << ": " << e.message() << " (" << e.value() << ")";
+		LOG_L(L_ERROR, "Error opening %s: %s (%i)",
+				name.c_str(), e.message().c_str(), e.value());
 		return;
 	}
 
@@ -90,7 +91,7 @@ CSevenZipArchive::CSevenZipArchive(const std::string& name) :
 				error = "Unknown error";
 				break;
 		}
-		LogObject() << "Error opening " << name << ": " << error;
+		LOG_L(L_ERROR, "Error opening %s: %s", name.c_str(), error.c_str());
 		return;
 	}
 

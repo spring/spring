@@ -37,17 +37,19 @@
 #include "Game/WordCompletion.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Features/FeatureHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/Scripts/CobInstance.h"
 #include "Sim/Units/Scripts/LuaUnitScript.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "EventHandler.h"
-#include "GlobalConfig.h"
-#include "LogOutput.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/FileSystem.h"
+#include "System/EventHandler.h"
+#include "System/GlobalConfig.h"
+#include "System/LogOutput.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
 
 
 static const LuaHashString unsyncedStr("UNSYNCED");
@@ -74,6 +76,10 @@ CLuaHandleSynced::~CLuaHandleSynced()
 {
 	// kill all unitscripts running in this handle
 	CLuaUnitScript::HandleFreed(this);
+
+	watchUnitDefs.clear();
+	watchFeatureDefs.clear();
+	watchWeaponDefs.clear();
 }
 
 
@@ -98,7 +104,9 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 	}
 
 	if (GetFullCtrl()) {
-		watchWeapons.resize(weaponDefHandler->numWeaponDefs, false);
+		watchUnitDefs.resize(unitDefHandler->unitDefs.size() + 1, false);
+		watchFeatureDefs.resize(featureHandler->GetFeatureDefs().size(), false);
+		watchWeaponDefs.resize(weaponDefHandler->numWeaponDefs, false);
 	}
 
 	const string syncedCode   = LoadFile(syncedFile, modes);
@@ -203,8 +211,12 @@ bool CLuaHandleSynced::SetupSynced(lua_State *L, const string& code, const strin
 	LuaPushNamedCFunc(L, "AddActionFallback",    AddSyncedActionFallback);
 	LuaPushNamedCFunc(L, "RemoveActionFallback", RemoveSyncedActionFallback);
 	LuaPushNamedCFunc(L, "UpdateCallIn",         CallOutSyncedUpdateCallIn);
-	LuaPushNamedCFunc(L, "GetWatchWeapon",       GetWatchWeapon);
-	LuaPushNamedCFunc(L, "SetWatchWeapon",       SetWatchWeapon);
+	LuaPushNamedCFunc(L, "GetWatchUnit",         GetWatchUnitDef);
+	LuaPushNamedCFunc(L, "SetWatchUnit",         SetWatchUnitDef);
+	LuaPushNamedCFunc(L, "GetWatchFeature",      GetWatchFeatureDef);
+	LuaPushNamedCFunc(L, "SetWatchFeature",      SetWatchFeatureDef);
+	LuaPushNamedCFunc(L, "GetWatchWeapon",       GetWatchWeaponDef);
+	LuaPushNamedCFunc(L, "SetWatchWeapon",       SetWatchWeaponDef);
 	lua_pop(L, 1);
 
 	// add the custom file loader
@@ -1132,32 +1144,42 @@ int CLuaHandleSynced::RemoveSyncedActionFallback(lua_State* L)
 
 /******************************************************************************/
 
-int CLuaHandleSynced::GetWatchWeapon(lua_State* L)
-{
-	CLuaHandleSynced* lhs = GetActiveHandle(L);
-	const int weaponDefID = luaL_checkint(L, 1);
-	if ((weaponDefID < 0) || (weaponDefID >= (int)lhs->watchWeapons.size())) {
-		return 0;
+#define GetWatchDef(DefType)                                          \
+	int CLuaHandleSynced::GetWatch ## DefType ## Def(lua_State* L) {  \
+		CLuaHandleSynced* lhs = GetActiveHandle(L);                   \
+		const unsigned int defID = luaL_checkint(L, 1);               \
+		if (defID >= lhs->watch ## DefType ## Defs.size()) {          \
+			return 0;                                                 \
+		}                                                             \
+		lua_pushboolean(L, lhs->watch ## DefType ## Defs[defID]);     \
+		return 1;                                                     \
 	}
-	lua_pushboolean(L, lhs->watchWeapons[weaponDefID]);
-	return 1;
-}
 
-
-int CLuaHandleSynced::SetWatchWeapon(lua_State* L)
-{
-	CLuaHandleSynced* lhs = GetActiveHandle(L);
-	const int weaponDefID = luaL_checkint(L, 1);
-	if ((weaponDefID < 0) || (weaponDefID >= (int)lhs->watchWeapons.size())) {
-		return 0;
+#define SetWatchDef(DefType)                                          \
+	int CLuaHandleSynced::SetWatch ## DefType ## Def(lua_State* L) {  \
+		CLuaHandleSynced* lhs = GetActiveHandle(L);                   \
+		const unsigned int defID = luaL_checkint(L, 1);               \
+		if (defID >= lhs->watch ## DefType ## Defs.size()) {          \
+			return 0;                                                 \
+		}                                                             \
+		if (!lua_isboolean(L, 2)) {                                   \
+			luaL_error(L, "Incorrect arguments to %s", __FUNCTION__); \
+			return 0;                                                 \
+		}                                                             \
+		lhs->watch ## DefType ## Defs[defID] = lua_toboolean(L, 2);   \
+		return 0;                                                     \
 	}
-	if (!lua_isboolean(L, 2)) {
-		luaL_error(L, "Incorrect arguments to SetWatchWeapon()");
-	}
-	lhs->watchWeapons[weaponDefID] = lua_toboolean(L, 2);
-	return 0;
-}
 
+GetWatchDef(Unit)
+GetWatchDef(Feature)
+GetWatchDef(Weapon)
+
+SetWatchDef(Unit)
+SetWatchDef(Feature)
+SetWatchDef(Weapon)
+
+#undef GetWatchDef
+#undef SetWatchDef
 
 /******************************************************************************/
 /******************************************************************************/

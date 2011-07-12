@@ -7,9 +7,9 @@
 #include <algorithm>
 #include <stdexcept>
 
-#include "Util.h"
-#include "mmgr.h"
-#include "LogOutput.h"
+#include "System/Util.h"
+#include "System/mmgr.h"
+#include "System/Log/ILog.h"
 
 
 CZipArchiveFactory::CZipArchiveFactory()
@@ -34,7 +34,7 @@ CZipArchive::CZipArchive(const std::string& archiveName)
 	zip = unzOpen(archiveName.c_str());
 #endif
 	if (!zip) {
-		LogObject() << "Error opening " << archiveName;
+		LOG_L(L_ERROR, "Error opening %s", archiveName.c_str());
 		return;
 	}
 

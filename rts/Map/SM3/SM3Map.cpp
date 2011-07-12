@@ -152,8 +152,11 @@ void CSm3ReadMap::NewGroundDrawer() {
 }
 
 
-void CSm3ReadMap::UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2)
+void CSm3ReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 {
+	int x1 = update.x1, y1 = update.y1;
+	int x2 = update.x2, y2 = update.y2;
+
 	// heightmap is [width+1][height+1]
 	x1 -= 2; x2 += 2;
 	y1 -= 2; y2 += 2;

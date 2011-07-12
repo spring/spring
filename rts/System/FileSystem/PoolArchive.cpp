@@ -12,9 +12,9 @@
 #include <iostream>
 
 #include "FileSystem.h"
-#include "Util.h"
-#include "mmgr.h"
-#include "LogOutput.h"
+#include "System/Util.h"
+#include "System/mmgr.h"
+#include "System/Log/ILog.h"
 
 
 CPoolArchiveFactory::CPoolArchiveFactory()
@@ -54,7 +54,7 @@ CPoolArchive::CPoolArchive(const std::string& name)
 
 	gzFile in = gzopen (name.c_str(), "rb");
 	if (in == NULL) {
-		LogObject() << "Error opening " << name;
+		LOG_L(L_ERROR, "Error opening %s", name.c_str());
 		return;
 	}
 

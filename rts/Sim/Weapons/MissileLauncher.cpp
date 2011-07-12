@@ -110,11 +110,13 @@ bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 
 		flatdir /= flatlength;
 
-		float linear = dir.y + weaponDef->trajectoryHeight;
-		float quadratic = -weaponDef->trajectoryHeight / flatlength;
-		float gc = ground->TrajectoryGroundCol(weaponMuzzlePos, flatdir, flatlength - 30, linear, quadratic);
+		const float linear = dir.y + weaponDef->trajectoryHeight;
+		const float quadratic = -weaponDef->trajectoryHeight / flatlength;
+		const float gc = ((collisionFlags & Collision::NOGROUND) == 0)?
+			ground->TrajectoryGroundCol(weaponMuzzlePos, flatdir, flatlength - 30, linear, quadratic):
+			-1.0f;
 
-		if (gc > 0)
+		if (gc > 0.0f)
 			return false;
 
 		if (avoidFriendly && TraceRay::TestTrajectoryAllyCone(weaponMuzzlePos, flatdir, flatlength - 30, linear, quadratic, 0, 8, owner->allyteam, owner)) {
@@ -131,10 +133,9 @@ bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 		dir /= length;
 
 		if (!onlyForward) {
-			// skip ground col testing for aircraft
-			float g = ground->LineGroundCol(weaponMuzzlePos, pos);
-			if (g > 0 && g < length * 0.9f)
+			if (!HaveFreeLineOfFire(weaponMuzzlePos, dir, length)) {
 				return false;
+			}
 		} else {
 			float3 goaldir = pos - owner->pos;
 			goaldir.Normalize();

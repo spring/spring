@@ -2432,7 +2432,8 @@ public:
 			SetBoolArg(drawDecals, action.GetArgs());
 			groundDecals->SetDrawDecals(drawDecals);
 		}
-		LogSystemStatus("Ground-decals rendering", groundDecals->GetDrawDecals());
+		LogSystemStatus("Ground-decals rendering",
+				(groundDecals != NULL) ? groundDecals->GetDrawDecals() : false);
 	}
 };
 

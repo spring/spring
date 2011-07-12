@@ -32,7 +32,7 @@ LISTEN_ADDR = ('', 8000)
 
 # Match common pre- and suffix on infolog lines. This also allows
 # "empty" prefixes followed by any amount of trailing whitespace.
-RE_PREFIX = r'^(?:\[(?:f=)?\s*\d+\])?\s*'
+RE_PREFIX = r'^(?:\[(?:f=)?\s*\d+\])?(?: Error:)?\s*'
 RE_SUFFIX = '\r?$'
 
 # Match stackframe lines, captures the module name and the address.

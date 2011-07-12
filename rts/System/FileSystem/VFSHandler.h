@@ -10,6 +10,11 @@
 
 class IArchive;
 
+/**
+ * Main API for accessing the Virtual File System (VFS).
+ * This only allows accessing the VFS (stuff within archvies registered with the
+ * VFS), NOT the real file system.
+ */
 class CVFSHandler
 {
 public:

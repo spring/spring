@@ -43,7 +43,7 @@ public:
 
 	/**
 	 * @brief restore a camera state
-	 * @param fv the state to set
+	 * @param sm the state to set
 	 * @return false when vector has wrong size or garbage data, true when aplied without errors
 	 */
 	bool SetState(const CCameraController::StateMap& sm);

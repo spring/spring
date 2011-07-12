@@ -797,7 +797,7 @@ EXPORT(const char* ) GetPrimaryModArchive(int index);
 EXPORT(int         ) GetPrimaryModArchiveCount(int index);
 /**
  * @brief Retrieves the name of the current mod's archive.
- * @param archiveNr The archive's index/id.
+ * @param archive The archive's index/id.
  * @return NULL on error; the name of the archive on success
  * @see GetPrimaryModArchiveCount
  */

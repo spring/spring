@@ -1266,8 +1266,8 @@ int LuaSyncedRead::GetTeamStatsHistory(lua_State* L)
 	std::advance(it, start);
 
 	lua_newtable(L);
-	int count = 0;
 	if (statCount > 0) {
+		int count = 0;
 		for (int i = start; i <= end; ++i, ++it) {
 			const CTeam::Statistics& stats = *it;
 			count++;

@@ -54,8 +54,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * further imports with the same Importer instance could fail/crash/burn ...
  */
 // ------------------------------------------------------------------------------------------------
-#define ASSIMP_CATCH_GLOBAL_EXCEPTIONS
-
+#ifndef ASSIMP_BUILD_DEBUG
+#	define ASSIMP_CATCH_GLOBAL_EXCEPTIONS
+#endif
 
 // ------------------------------------------------------------------------------------------------
 // Internal headers
@@ -178,14 +179,14 @@ using namespace Assimp::Formatter;
 #ifndef ASSIMP_BUILD_NO_BLEND_IMPORTER
 #	include "BlenderLoader.h"
 #endif
-//#ifndef ASSIMP_BUILD_NO_SWORDOFMOONLIGHT_IMPORTER
-//#	include "SomLoader.h"
-//#endif
 #ifndef ASSIMP_BUILD_NO_Q3BSP_IMPORTER
 #	include "Q3BSPFileImporter.h"
 #endif
 #ifndef ASSIMP_BUILD_NO_NDO_IMPORTER
 #	include "NDOLoader.h"
+#endif
+#ifndef ASSIMP_BUILD_NO_IFC_IMPORTER
+#	include "IFCLoader.h"
 #endif
 
 // ------------------------------------------------------------------------------------------------
@@ -259,6 +260,9 @@ using namespace Assimp::Formatter;
 #endif
 #ifndef ASSIMP_BUILD_NO_SPLITBYBONECOUNT_PROCESS
 #	include "SplitByBoneCountProcess.h"
+#endif
+#ifndef ASSIMP_BUILD_NO_DEBONE_PROCESS
+#	include "DeboneProcess.h"
 #endif
 
 using namespace Assimp;
@@ -426,14 +430,14 @@ Importer::Importer()
 #if (!defined ASSIMP_BUILD_NO_BLEND_IMPORTER)
 	pimpl->mImporter.push_back( new BlenderImporter());
 #endif
-//#if (!defined ASSIMP_BUILD_NO_SWORDOFMOONLIGHT_IMPORTER)
-//	pimpl->mImporter.push_back( new SomImporter());
-//#endif
 #if (!defined ASSIMP_BUILD_NO_Q3BSP_IMPORTER)
 	pimpl->mImporter.push_back( new Q3BSPFileImporter() );
 #endif
 #if (!defined ASSIMP_BUILD_NO_NDO_IMPORTER)
 	pimpl->mImporter.push_back( new NDOImporter() );
+#endif
+#if (!defined ASSIMP_BUILD_NO_IFC_IMPORTER)
+	pimpl->mImporter.push_back( new IFCImporter() );
 #endif
 
 	// ----------------------------------------------------------------------------
@@ -521,6 +525,9 @@ Importer::Importer()
 #endif
 #if (!defined ASSIMP_BUILD_NO_FLIPWINDINGORDER_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new FlipWindingOrderProcess());
+#endif
+#if (!defined ASSIMP_BUILD_DEBONE_PROCESS)
+	pimpl->mPostProcessingSteps.push_back( new DeboneProcess());
 #endif
 #if (!defined ASSIMP_BUILD_NO_LIMITBONEWEIGHTS_PROCESS)
 	pimpl->mPostProcessingSteps.push_back( new LimitBoneWeightsProcess());
@@ -913,6 +920,8 @@ void WriteLogOpening(const std::string& file)
 		<< " itanium"
 #elif defined(ASSIMP_BUILD_PPC_32BIT_ARCHITECTURE)
 		<< " ppc32"
+#elif defined(ASSIMP_BUILD_ARM_32BIT_ARCHITECTURE)
+		<< " arm"
 #else
 #	error unknown architecture
 #endif
@@ -989,7 +998,7 @@ const aiScene* Importer::ReadFile( const char* _pFile, unsigned int pFlags)
 			// not so bad yet ... try format auto detection.
 			const std::string::size_type s = pFile.find_last_of('.');
 			if (s != std::string::npos) {
-				DefaultLogger::get()->info("File extension now known, trying signature-based detection");
+				DefaultLogger::get()->info("File extension not known, trying signature-based detection");
 				for( unsigned int a = 0; a < pimpl->mImporter.size(); a++)	{
 
 					if( pimpl->mImporter[a]->CanRead( pFile, pimpl->mIOHandler, true)) {

@@ -54,7 +54,7 @@ public:
 public:
 	CCobThread(CCobFile &script, CCobInstance *owner);
 	~CCobThread(void);
-	int Tick(int deltaTime);
+	bool Tick(int deltaTime);
 	void Start(int functionId, const vector<int> &args, bool schedule);
 	void SetCallback(CBCobThreadFinish cb, void *p1, void *p2);
 	void DependentDied(CObject* o);

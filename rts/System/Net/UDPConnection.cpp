@@ -20,7 +20,7 @@
 #include "Exception.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 namespace netcode {
 using namespace boost::asio;
@@ -328,7 +328,9 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 					fragmentBuffer = new RawPacket(bufp, msglength);
 					break;
 				}
-				logOutput.Print("ERROR: Discarding incoming invalid packet: ID %d, LEN %d", (int)*bufp, pktlength);
+				LOG_L(L_ERROR,
+						"Discarding incoming invalid packet: ID %d, LEN %d",
+						(int)*bufp, pktlength);
 				// if the packet is invalid, skip a single byte
 				// until we encounter a good packet
 				++pos;
@@ -347,9 +349,11 @@ void UDPConnection::Flush(const bool forced)
 	const int requiredLength = (spring_msecs(200) - (int)(curTime - lastChunkCreated)) / 10;
 
 	int outgoingLength = 0;
-	if(!waitMore) {
-		for (packetList::const_iterator it = outgoingData.begin(); it != outgoingData.end() && outgoingLength <= requiredLength; ++it)
-			outgoingLength += (*it)->length;
+	if (!waitMore) {
+		packetList::const_iterator pi;
+		for (pi = outgoingData.begin(); (pi != outgoingData.end()) && (outgoingLength <= requiredLength); ++pi) {
+			outgoingLength += (*pi)->length;
+		}
 	}
 
 	if (forced || (!waitMore && outgoingLength > requiredLength)) {
@@ -364,26 +368,29 @@ void UDPConnection::Flush(const bool forced)
 		do {
 			sendMore = outgoing.GetAverage(true) <= globalConfig->linkOutgoingBandwidth || globalConfig->linkOutgoingBandwidth <= 0 || partialPacket || forced;
 			if (!outgoingData.empty() && sendMore) {
-				packetList::iterator it = outgoingData.begin();
-				if (!partialPacket && !ProtocolDef::GetInstance()->IsValidPacket((*it)->data, (*it)->length)) {
-					logOutput.Print("ERROR: Discarding outgoing invalid packet: ID %d, LEN %d", ((*it)->length > 0) ? (int)(*it)->data[0] : -1, (*it)->length);
+				boost::shared_ptr<const RawPacket>& packet = *(outgoingData.begin());
+				if (!partialPacket && !ProtocolDef::GetInstance()->IsValidPacket(packet->data, packet->length)) {
+					LOG_L(L_ERROR,
+							"Discarding outgoing invalid packet: ID %d, LEN %d",
+							((packet->length > 0) ? (int)packet->data[0] : -1),
+							packet->length);
 					outgoingData.pop_front();
 				} else {
-					unsigned numBytes = std::min((unsigned)MaxChunkSize-pos, (*it)->length);
-					assert((*it)->length > 0);
-					memcpy(buffer+pos, (*it)->data, numBytes);
+					unsigned numBytes = std::min((unsigned)MaxChunkSize - pos, packet->length);
+					assert(packet->length > 0);
+					memcpy(buffer+pos, packet->data, numBytes);
 					pos+= numBytes;
 					outgoing.DataSent(numBytes, true);
-					partialPacket = (numBytes != (*it)->length);
+					partialPacket = (numBytes != packet->length);
 					if (partialPacket) {
 						// partially transfered
-						(*it).reset(new RawPacket((*it)->data + numBytes, (*it)->length - numBytes));
+						packet.reset(new RawPacket(packet->data + numBytes, packet->length - numBytes));
 					} else { // full packet copied
 						outgoingData.pop_front();
 					}
 				}
 			}
-			if (pos > 0 && (outgoingData.empty() || pos == MaxChunkSize || !sendMore)) {
+			if ((pos > 0) && (outgoingData.empty() || (pos == MaxChunkSize) || !sendMore)) {
 				CreateChunk(buffer, pos, currentNum++);
 				pos = 0;
 			}
@@ -393,6 +400,7 @@ void UDPConnection::Flush(const bool forced)
 }
 
 bool UDPConnection::CheckTimeout(int seconds, bool initial) const {
+
 	spring_duration timeout;
 	if (seconds == 0) {
 		timeout = spring_secs((dataRecv && !initial) ? globalConfig->networkTimeout : globalConfig->initialNetworkTimeout);
@@ -430,10 +438,14 @@ int UDPConnection::GetReconnectSecs() const {
 std::string UDPConnection::Statistics() const
 {
 	std::string msg = "Statistics for UDP connection:\n";
-	msg += str( boost::format("Received: %1% bytes in %2% packets (%3% bytes/package)\n") %dataRecv %recvPackets %((float)dataRecv / (float)recvPackets));
-	msg += str( boost::format("Sent: %1% bytes in %2% packets (%3% bytes/package)\n") %dataSent %sentPackets %((float)dataSent / (float)sentPackets));
-	msg += str( boost::format("Relative protocol overhead: %1% up, %2% down\n") %((float)sentOverhead / (float)dataSent) %((float)recvOverhead / (float)dataRecv) );
-	msg += str( boost::format("%1% incoming chunks had been dropped, %2% outgoing chunks had to be resent\n") %droppedChunks %resentChunks);
+	msg += str( boost::format("Received: %1% bytes in %2% packets (%3% bytes/package)\n")
+			%dataRecv %recvPackets %((float)dataRecv / (float)recvPackets));
+	msg += str( boost::format("Sent: %1% bytes in %2% packets (%3% bytes/package)\n")
+			%dataSent %sentPackets %((float)dataSent / (float)sentPackets));
+	msg += str( boost::format("Relative protocol overhead: %1% up, %2% down\n")
+			%((float)sentOverhead / (float)dataSent) %((float)recvOverhead / (float)dataRecv) );
+	msg += str( boost::format("%1% incoming chunks had been dropped, %2% outgoing chunks had to be resent\n")
+			%droppedChunks %resentChunks);
 	return msg;
 }
 
@@ -449,7 +461,7 @@ std::string UDPConnection::GetFullAddress() const
 
 void UDPConnection::SetMTU(unsigned mtu2)
 {
-	if (mtu2 > 300 && mtu2 < UDPMaxPacketSize) {
+	if ((mtu2 > 300) && (mtu2 < UDPMaxPacketSize)) {
 		mtu = mtu2;
 	}
 }
@@ -460,10 +472,10 @@ void UDPConnection::Init()
 	lastSendTime = spring_notime;
 	lastUnackResent = spring_notime;
 	lastReceiveTime = spring_gettime();
-	lastInOrder=-1;
+	lastInOrder = -1;
 	waitingPackets.clear();
-	currentNum=0;
-	lastNak=-1;
+	currentNum = 0;
+	lastNak = -1;
 	sentOverhead = 0;
 	recvOverhead = 0;
 	fragmentBuffer = 0;
@@ -477,7 +489,7 @@ void UDPConnection::Init()
 
 void UDPConnection::CreateChunk(const unsigned char* data, const unsigned length, const int packetNum)
 {
-	assert(length > 0 && length < 255);
+	assert((length > 0) && (length < 255));
 	ChunkPtr buf(new Chunk);
 	buf->chunkNumber = packetNum;
 	buf->chunkSize = length;
@@ -515,7 +527,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 			}
 		}
 
-		if (numContinuous < 8 && !(lastNakTime + spring_msecs(200) < spring_gettime())) {
+		if ((numContinuous < 8) && !((lastNakTime + spring_msecs(200)) < spring_gettime())) {
 			nak = std::min(dropped.size(), (size_t)127);
 			// needs 1 byte per requested packet, so do not spam to often
 			lastNakTime = curTime;
@@ -525,7 +537,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 	}
 
 	lastUnackResent = std::max(lastUnackResent, lastChunkCreated);
-	if (!unackedChunks.empty() && lastUnackResent + spring_msecs(400) < curTime)
+	if (!unackedChunks.empty() && ((lastUnackResent + spring_msecs(400)) < curTime))
 	{
 		if (newChunks.empty()) {
 			// resent last packet if we didn't get an ack after 0,4 seconds
@@ -535,10 +547,10 @@ void UDPConnection::SendIfNecessary(bool flushed)
 		lastUnackResent = curTime;
 	}
 
-	if (flushed || !newChunks.empty() || !resendRequested.empty() || nak > 0 || lastSendTime + spring_msecs(200) < curTime)
+	if (flushed || !newChunks.empty() || !resendRequested.empty() || (nak > 0) || ((lastSendTime + spring_msecs(200)) < curTime))
 	{
 		bool todo = true;
-		while (todo && (outgoing.GetAverage() <= globalConfig->linkOutgoingBandwidth || globalConfig->linkOutgoingBandwidth <= 0))
+		while (todo && ((outgoing.GetAverage() <= globalConfig->linkOutgoingBandwidth) || (globalConfig->linkOutgoingBandwidth <= 0)))
 		{
 			Packet buf(lastInOrder, nak);
 			if (nak > 0) {
@@ -550,11 +562,11 @@ void UDPConnection::SendIfNecessary(bool flushed)
 			}
 
 			while (true) {
-				if (!resendRequested.empty() && buf.GetSize() + resendRequested[0]->GetSize() <= mtu) {
+				if (!resendRequested.empty() && ((buf.GetSize() + resendRequested[0]->GetSize()) <= mtu)) {
 					buf.chunks.push_back(resendRequested[0]);
 					resendRequested.pop_front();
 					++resentChunks;
-				} else if (!newChunks.empty() && buf.GetSize() + newChunks[0]->GetSize() <= mtu) {
+				} else if (!newChunks.empty() && ((buf.GetSize() + newChunks[0]->GetSize()) <= mtu)) {
 					buf.chunks.push_back(newChunks[0]);
 					unackedChunks.push_back(newChunks[0]);
 					newChunks.pop_front();
@@ -591,7 +603,7 @@ void UDPConnection::SendPacket(Packet& pkt)
 
 void UDPConnection::AckChunks(int lastAck)
 {
-	while (!unackedChunks.empty() && lastAck >= (*unackedChunks.begin())->chunkNumber)
+	while (!unackedChunks.empty() && (lastAck >= (*unackedChunks.begin())->chunkNumber))
 	{
 		unackedChunks.pop_front();
 	}

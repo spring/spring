@@ -48,6 +48,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../include/aiTypes.h"
 #include "ParsingUtils.h"
+#include "System/FastMath.h"
 
 struct aiFace;
 

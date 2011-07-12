@@ -65,9 +65,9 @@ bool CRifle::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
 
 	dir /= length;
 
-	const float g = ground->LineGroundCol(weaponMuzzlePos, pos);
-	if (g > 0 && g < length * 0.9f)
+	if (!HaveFreeLineOfFire(weaponMuzzlePos, dir, length)) {
 		return false;
+	}
 
 	const float spread =
 		(accuracy + sprayAngle) *

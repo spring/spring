@@ -5,7 +5,7 @@
 #include "Object.h"
 #include "mmgr.h"
 #include "creg/STL_Set.h"
-#include "LogOutput.h"
+#include "System/Log/ILog.h"
 
 #ifndef USE_MMGR
 # define m_setOwner(file, line, func)
@@ -68,8 +68,10 @@ void CObject::Serialize(creg::ISerializer *s)
 		for (std::list<CObject*>::iterator i=listening.begin();i!=listening.end();++i) {
 			if ((*i)->GetClass()!=CObject::StaticClass())
 				s->SerializeObjectPtr((void **)&*i,(*i)->GetClass());
-			else
-				logOutput.Print("Death dependance not serialized in %s",this->GetClass()->name.c_str());
+			else {
+				LOG("Death dependance not serialized in %s",
+						GetClass()->name.c_str());
+			}
 		}
 	} else {
 		int size;

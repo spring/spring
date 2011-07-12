@@ -17,7 +17,7 @@ public:
 	~CSmfReadMap();
 
 	void UpdateShadingTexture();
-	void UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2);
+	void UpdateHeightMapUnsynced(const HeightMapUpdate&);
 	inline void UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigned char *pixels);
 
 	inline unsigned int GetDetailTexture() const { return detailTex; }

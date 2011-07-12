@@ -30,18 +30,18 @@ public:
 	virtual void AddNotification(float3 pos, float3 color, float alpha) = 0;
 
 	/**
-	 * Give <mAmount> of metal and <eAmount> of energy to <receivingTeam>
+	 * Give \<mAmount\> of metal and \<eAmount\> of energy to \<receivingTeam\>
 	 * - the amounts are capped to the AI team's resource levels
-	 * - does not check for alliance with <receivingTeam>
+	 * - does not check for alliance with \<receivingTeam\>
 	 * - LuaRules might not allow resource transfers,
 	 *   AI's must verify the deduction
 	 */
 	virtual bool SendResources(float mAmount, float eAmount, int receivingTeam) = 0;
 	/**
-	 * Give units to <receivingTeam>, the return value represents how many
+	 * Give units to \<receivingTeam\>, the return value represents how many
 	 * actually were transferred (make sure this always matches the size of
 	 * the vector you pass in, if not then some unitID's were filtered out)
-	 * - does not check for alliance with <receivingTeam>
+	 * - does not check for alliance with \<receivingTeam\>
 	 * - AI's should check each unit if it is still under control of their
 	 *   team after the transaction via UnitTaken() and UnitGiven(), since
 	 *   LuaRules might block part of it

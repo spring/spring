@@ -70,7 +70,7 @@ private:
 		/**
 		 * Real/unpacked size of the file in bytes.
 		 * @see #unpackedSize
-		 * @see #packSize
+		 * @see #packedSize
 		 */
 		int size;
 		std::string origName;

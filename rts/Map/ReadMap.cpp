@@ -2,8 +2,7 @@
 
 #include "StdAfx.h"
 
-#include <stdlib.h>
-#include <string>
+#include <cstdlib>
 #include "mmgr.h"
 
 #include "ReadMap.h"
@@ -20,6 +19,11 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
+
+#ifdef USE_UNSYNCED_HEIGHTMAP
+#include "Game/GlobalUnsynced.h"
+#include "Sim/Misc/LosHandler.h"
+#endif
 
 using namespace std;
 
@@ -132,7 +136,8 @@ CReadMap::~CReadMap()
 	visVertexNormals.clear();
 	faceNormalsSynced.clear();
 	faceNormalsUnsynced.clear();
-	centerNormals.clear();
+	centerNormalsSynced.clear();
+	centerNormalsUnsynced.clear();
 }
 
 
@@ -154,7 +159,7 @@ void CReadMap::Initialize()
 			((( gs->mapx + 1) * (gs->mapy + 1) * 2 *   sizeof(float))         / 1024) +   // cornerHeightMap{Synced, Unsynced}
 			((( gs->mapx + 1) * (gs->mapy + 1) *       sizeof(float))         / 1024) +   // originalHeightMap
 			((  gs->mapx      *  gs->mapy      * 2*2 * sizeof(float3))        / 1024) +   // faceNormals{Synced, Unsynced}
-			((  gs->mapx      *  gs->mapy            * sizeof(float3))        / 1024) +   // centerNormals
+			((  gs->mapx      *  gs->mapy      * 2   * sizeof(float3))        / 1024) +   // centerNormals{Synced, Unsynced}
 			((( gs->mapx + 1) * (gs->mapy + 1) * 2   * sizeof(float3))        / 1024) +   // {raw, vis}VertexNormals
 			((  gs->mapx      *  gs->mapy            * sizeof(float))         / 1024) +   // centerHeightMap
 			((  gs->hmapx     *  gs->hmapy           * sizeof(float))         / 1024) +   // slopeMap
@@ -176,7 +181,8 @@ void CReadMap::Initialize()
 	originalHeightMap.resize((gs->mapx + 1) * (gs->mapy + 1));
 	faceNormalsSynced.resize(gs->mapx * gs->mapy * 2);
 	faceNormalsUnsynced.resize(gs->mapx * gs->mapy * 2);
-	centerNormals.resize(gs->mapx * gs->mapy);
+	centerNormalsSynced.resize(gs->mapx * gs->mapy);
+	centerNormalsUnsynced.resize(gs->mapx * gs->mapy);
 	centerHeightMap.resize(gs->mapx * gs->mapy);
 
 	mipCenterHeightMaps.resize(numHeightMipMaps - 1);
@@ -218,22 +224,35 @@ void CReadMap::CalcHeightmapChecksum()
 }
 
 
-
 void CReadMap::UpdateDraw() {
-	GML_STDMUTEX_LOCK(map); // UpdateDraw
+	std::list<HeightMapUpdate> ushmu;
+	std::list<HeightMapUpdate>::const_iterator ushmuIt;
 
-	for (std::vector<HeightMapUpdate>::iterator i = unsyncedHeightMapUpdates.begin(); i != unsyncedHeightMapUpdates.end(); ++i)
-		UpdateHeightMapUnsynced(i->x1, i->y1, i->x2, i->y2);
+	{
+		GML_STDMUTEX_LOCK(map); // UpdateDraw
 
-	unsyncedHeightMapUpdates.clear();
+		static const float MIN_UNSYNCED_UPDATES_RATIO = 0.25f;
+		static const size_t MIN_UNSYNCED_UPDATES = 32U;
+		       const size_t maxUpdates = unsyncedHeightMapUpdates.size();
+		       const size_t minUpdates = maxUpdates * MIN_UNSYNCED_UPDATES_RATIO;
+		       const size_t numUpdates = std::min(maxUpdates, std::max(MIN_UNSYNCED_UPDATES, minUpdates));
+
+		// process the first <numUpdates> pending updates
+		for (size_t n = 0; n < numUpdates; n++) {
+			ushmu.push_back(unsyncedHeightMapUpdates.front());
+			unsyncedHeightMapUpdates.pop_front();
+		}
+	}
+
+	for (ushmuIt = ushmu.begin(); ushmuIt != ushmu.end(); ++ushmuIt) {
+		UpdateHeightMapUnsynced(*ushmuIt);
+	}
 }
 
 
 
 void CReadMap::UpdateHeightMapSynced(int x1, int z1, int x2, int z2)
 {
-	GML_STDMUTEX_LOCK(map); // UpdateHeightMapSynced
-
 	if ((x1 >= x2) || (z1 >= z2)) {
 		// do not bother with zero-area updates
 		return;
@@ -314,7 +333,7 @@ void CReadMap::UpdateHeightMapSynced(int x1, int z1, int x2, int z2)
 			faceNormalsSynced[(y * gs->mapx + x) * 2 + 1] = fnBR;
 
 			//! square-normal
-			centerNormals[y * gs->mapx + x] = (fnTL + fnBR).Normalize();
+			centerNormalsSynced[y * gs->mapx + x] = (fnTL + fnBR).Normalize();
 		}
 	}
 
@@ -352,17 +371,37 @@ void CReadMap::UpdateHeightMapSynced(int x1, int z1, int x2, int z2)
 	}
 
 	//! push the unsynced update
-	unsyncedHeightMapUpdates.push_back(HeightMapUpdate(x1, x2, z1, z2));
+	PushVisibleHeightMapUpdate(x1, z1,  x2, z2,  false);
 }
 
-void CReadMap::PushVisibleHeightMapUpdate(int x1, int z1, int x2, int z2)
+void CReadMap::PushVisibleHeightMapUpdate(int x1, int z1,  int x2, int z2,  bool losMapCall)
 {
-	#ifdef USE_UNSYNCED_HEIGHTMAP
 	GML_STDMUTEX_LOCK(map); // PushVisibleHeightMapUpdate
 
-	//! NOTE: UpdateHeightMapUnsynced performs a LOS-check, but we already
-	//! know the area (x1, z1)-(x2, z2) is in LOS so uhm and vvn still get
-	//! updated properly in UpdateHeightMapUnsynced
-	unsyncedHeightMapUpdates.push_back(HeightMapUpdate(x1, x2, z1, z2));
+	#ifdef USE_UNSYNCED_HEIGHTMAP
+	if (losMapCall || (gs->frameNum <= 0 || gu->spectatingFullView)) {
+		// all heightmap squares in this update are in LOS, no split
+		HeightMapUpdate hmUpdate = HeightMapUpdate(x1, x2,  z1, z2,  true);
+		unsyncedHeightMapUpdates.push_back(hmUpdate);
+	} else {
+		// split the update into multiple invididual chunks: we need
+		// to do this because the reduced-rate unsynced updating can
+		// mean a chunk has gone out of LOS again by the time it gets
+		// processed in UpdateHeightMapUnsynced
+		for (int hmx = x1; hmx < x2; hmx += loshandler->losSizeX) {
+			for (int hmz = z1; hmz < z2; hmz += loshandler->losSizeY) {
+				const int hmxTL = hmx, hmxBR = std::min(gs->mapx - 1, hmx + loshandler->losSizeX);
+				const int hmzTL = hmz, hmzBR = std::min(gs->mapy - 1, hmz + loshandler->losSizeY);
+
+				HeightMapUpdate hmUpdate = HeightMapUpdate(hmxTL, hmxBR,  hmzTL, hmzBR,  loshandler->InLos(hmx, hmz, gu->myAllyTeam));
+				unsyncedHeightMapUpdates.push_back(hmUpdate);
+			}
+		}
+	}
+
+	#else
+	// only reached from UpdateHeightMapSynced, los-state is irrelevant
+	// (however, could still split chunk to save some CPU in UpdateDraw)
+	unsyncedHeightMapUpdates.push_back(HeightMapUpdate(x1, x2,  z1, z2));
 	#endif
 }

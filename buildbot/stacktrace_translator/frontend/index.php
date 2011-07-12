@@ -11,13 +11,16 @@
 /*
 	limits the usage of the script, only allow this script to be run every 10 seconds
 */
+$lastrun=sys_get_temp_dir()."./.lastrun";
+
 function limit(){
-	$stat=stat("lastrun");
+	global $lastrun;
+	$stat=stat($lastrun);
 	$diff=$stat['mtime'] + 7 - time();
 	if ( $diff > 0 )
 		die("Please wait $diff seconds to rerun this script");
 	else
-		touch("lastrun");
+		touch($lastrun);
 }
 
 /**
