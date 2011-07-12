@@ -432,7 +432,6 @@ void CSmfReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 			#else
 			glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_LUMINANCE_ALPHA, GL_FLOAT, &pixels[0]);
 			#endif
-			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 	}
 
@@ -476,7 +475,6 @@ void CSmfReadMap::UpdateShadingTexture() {
 
 	glBindTexture(GL_TEXTURE_2D, shadingTex);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, y, xsize, 1, GL_RGBA, GL_UNSIGNED_BYTE, &shadingTexPixelRow[0]);
-	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 
