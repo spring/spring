@@ -13,7 +13,12 @@ class CMoveMath {
 protected:
 	virtual float SpeedMod(const MoveData& moveData, float height, float slope) const = 0;
 	virtual float SpeedMod(const MoveData& moveData, float height, float slope, float moveSlope) const = 0;
-	
+
+public:
+	// gives the y-coordinate the unit will "stand on"
+	virtual float yLevel(const float3& pos) const;
+	virtual float yLevel(int xSquare, int Square) const = 0;
+
 public:
 	// Block-check-options
 	const static int BLOCK_MOVING = 1;
@@ -38,12 +43,8 @@ public:
 	int IsBlocked(const MoveData& moveData, int xSquare, int zSquare) const;
 	
 	// tells whether a given object is blocking the given movedata
-
 	static bool CrushResistant(const MoveData& moveData, const CSolidObject* object);
 	static bool IsNonBlocking(const MoveData& moveData, const CSolidObject* object);
-	// gives the y-coordinate the unit will "stand on"
-	virtual float yLevel(const float3& pos) const;
-	virtual float yLevel(int xSquare, int Square) const = 0;
 
 	// returns the block-status of a single quare
 	static int SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquare);
