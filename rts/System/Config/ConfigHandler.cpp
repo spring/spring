@@ -49,6 +49,8 @@ protected:
 	void AddObserver(ConfigNotifyCallback observer);
 
 private:
+	void RemoveDefaults();
+
 	OverlayConfigSource* overlay;
 	FileConfigSource* writableSource;
 	DefaultConfigSource* defaultSource;
@@ -83,15 +85,35 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations)
 		sources.push_back(new FileConfigSource(*loc));
 	}
 
+	// TODO: Add extra sets of defaults here.
+	// E.g., a `template' with safe settings for a certain brand video card.
+
 	sources.push_back(new DefaultConfigSource());
 
-	// Remove config variables that are set to their default value.
-	// Algorithm is as follows:
-	// 1) Take all defaults from the DefaultConfigSource
-	// 2) Go in reverse through the FileConfigSources
-	// 3) For each one:
-	//    3a) delete setting if equal to the one in `defaults'
-	//    3b) add new value to `defaults' if different
+	// Perform migrations that need to happen on every load.
+	RemoveDefaults();
+}
+
+ConfigHandlerImpl::~ConfigHandlerImpl()
+{
+	for_each_source(it) {
+		delete (*it);
+	}
+}
+
+/**
+ * @brief Remove config variables that are set to their default value.
+ *
+ * Algorithm is as follows:
+ *
+ * 1) Take all defaults from the DefaultConfigSource
+ * 2) Go in reverse through the FileConfigSources
+ * 3) For each one:
+ *  3a) delete setting if equal to the one in `defaults'
+ *  3b) add new value to `defaults' if different
+ */
+void ConfigHandlerImpl::RemoveDefaults()
+{
 	StringMap defaults = sources.back()->GetData();
 	vector<ReadOnlyConfigSource*>::const_reverse_iterator rsource = sources.rbegin();
 	for (; rsource != sources.rend(); ++rsource) {
@@ -113,13 +135,6 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations)
 				}
 			}
 		}
-	}
-}
-
-ConfigHandlerImpl::~ConfigHandlerImpl()
-{
-	for_each_source(it) {
-		delete (*it);
 	}
 }
 
