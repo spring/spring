@@ -45,7 +45,7 @@ private:
 	bool  shoreWaves;
 	bool  endlessOcean; //! render the water around the whole map
 	bool  dynWaves;     //! only usable if bumpmap/normal texture is a TileSet
-	bool  useUniforms;  //! use Uniforms instead of #define'd const. Warning: this is much slower, but has the advantage that you can change the params on runtime.
+	bool  useUniforms;  //! use Uniforms instead of \#define'd const. Warning: this is much slower, but has the advantage that you can change the params on runtime.
 
 	unsigned char* tileOffsets; //! used to randomize the wave/bumpmap/normal texture
 	int  normalTextureX; //! needed for dynamic waves

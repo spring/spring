@@ -62,8 +62,8 @@ using namespace Assimp;
 // ------------------------------------------------------------------------------------------------
 // Constructor to be privately used by Importer
 MD5Importer::MD5Importer()
-: configNoAutoLoad (false)
-, mBuffer()
+: mBuffer()
+, configNoAutoLoad (false)
 {}
 
 // ------------------------------------------------------------------------------------------------
@@ -173,6 +173,7 @@ void MD5Importer::LoadFileIntoMemory (IOStream* file)
 
 	ai_assert(NULL != file);
 	fileSize = (unsigned int)file->FileSize();
+	ai_assert(fileSize);
 
 	// allocate storage and copy the contents of the file to a memory buffer
 	pScene = pScene;
@@ -334,8 +335,8 @@ void MD5Importer::LoadMD5MeshFile ()
 	boost::scoped_ptr<IOStream> file( pIOHandler->Open( pFile, "rb"));
 
 	// Check whether we can read from the file
-	if( file.get() == NULL)	{
-		DefaultLogger::get()->warn("Failed to read MD5MESH file: " + pFile);
+	if( file.get() == NULL || !file->FileSize())	{
+		DefaultLogger::get()->warn("Failed to access MD5MESH file: " + pFile);
 		return;
 	}
 	bHadMD5Mesh = true;
@@ -366,7 +367,6 @@ void MD5Importer::LoadMD5MeshFile ()
 	if (pScene->mRootNode->mChildren[1]->mNumChildren) /* start at the right hierarchy level */
 		SkeletonMeshBuilder skeleton_maker(pScene,pScene->mRootNode->mChildren[1]->mChildren[0]);
 #else
-	std::vector<MD5::MeshDesc>::const_iterator end = meshParser.mMeshes.end();
 
 	// FIX: MD5 files exported from Blender can have empty meshes
 	for (std::vector<MD5::MeshDesc>::const_iterator it  = meshParser.mMeshes.begin(),end = meshParser.mMeshes.end(); it != end;++it) {
@@ -550,7 +550,7 @@ void MD5Importer::LoadMD5AnimFile ()
 	boost::scoped_ptr<IOStream> file( pIOHandler->Open( pFile, "rb"));
 
 	// Check whether we can read from the file
-	if( file.get() == NULL)	{
+	if( !file.get() || !file->FileSize())	{
 		DefaultLogger::get()->warn("Failed to read MD5ANIM file: " + pFile);
 		return;
 	}
@@ -665,7 +665,7 @@ void MD5Importer::LoadMD5CameraFile ()
 	boost::scoped_ptr<IOStream> file( pIOHandler->Open( pFile, "rb"));
 
 	// Check whether we can read from the file
-	if( file.get() == NULL)	{
+	if( !file.get() || !file->FileSize())	{
 		throw DeadlyImportError("Failed to read MD5CAMERA file: " + pFile);
 	}
 	bHadMD5Camera = true;

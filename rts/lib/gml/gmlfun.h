@@ -12,7 +12,7 @@
 
 #include <set>
 #include <map>
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 #include <SDL_timer.h>
 #include <string.h>
 

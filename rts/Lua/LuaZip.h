@@ -1,15 +1,17 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef LUAZIP_H_
-#define LUAZIP_H_
-
+#ifndef _LUA_ZIP_H_
+#define _LUA_ZIP_H_
 
 #include <string>
 
-
-typedef void* zipFile;
 class IArchive;
 struct lua_State;
+
+#ifndef zipFile
+	// might be defined through zip.h already
+	typedef void* zipFile;
+#endif
 
 
 class LuaZipFileWriter {
@@ -48,4 +50,4 @@ private: // metatable methods
 };
 
 
-#endif /* LUAZIP_H_ */
+#endif /* _LUA_ZIP_H_ */

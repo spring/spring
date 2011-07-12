@@ -17,6 +17,7 @@
 #include <sstream>
 #include <string.h>
 
+#include "System/Log/ILog.h"
 #include "LogOutput.h"
 #include "ConfigHandler.h"
 #include "FileSystemHandler.h"
@@ -104,11 +105,9 @@ void DataDirLocater::AddDir(const std::string& dir)
 
 		if (!alreadyAdded) {
 			dataDirs.push_back(newDataDir);
-#ifdef DEBUG
-			logOutput.Print("Adding %s to directories", newDataDir.path.c_str());
+			LOG_L(L_DEBUG, "Adding %s to directories", newDataDir.path.c_str());
 		} else {
-			logOutput.Print("Skipping already added directory %s", newDataDir.path.c_str());
-#endif
+			LOG_L(L_DEBUG, "Skipping already added directory %s", newDataDir.path.c_str());
 		}
 	}
 }
@@ -121,7 +120,7 @@ bool DataDirLocater::DeterminePermissions(DataDir* dataDir)
 	if (dataDir->path.find("..") != std::string::npos)
 #endif
 	{
-		throw content_error(std::string("Error: datadir specified with relative path: \"") + dataDir->path + "\"");
+		throw content_error(std::string("Error: datadir specified with relative path: \"") + dataDir->path + "\""); // FIXME remove "Error: " prefix
 	}
 	// Figure out whether we have read/write permissions
 	// First check read access, if we got that, check write access too
@@ -348,7 +347,7 @@ void DataDirLocater::LocateDataDirs()
 	// Update: now it actually may start before, log has preInitLog.
 	for (std::vector<DataDir>::const_iterator d = dataDirs.begin(); d != dataDirs.end(); ++d) {
 		if (d->writable) {
-			logOutput.Print("Using read-write data directory: %s", d->path.c_str());
+			LOG("Using read-write data directory: %s", d->path.c_str());
 
 			// tag the cache dir
 			const std::string cacheDir = d->path + "cache";
@@ -356,7 +355,7 @@ void DataDirLocater::LocateDataDirs()
 				CacheDir::SetCacheDir(cacheDir, true);
 			}
 		} else {
-			logOutput.Print("Using read-only data directory: %s",  d->path.c_str());
+			LOG("Using read-only data directory: %s",  d->path.c_str());
 		}
 	}
 }

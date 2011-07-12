@@ -25,8 +25,13 @@ class CFeature;
 class CProjectile;
 struct Command;
 class CLogSubsystem;
-typedef void* zipFile;
 class IArchive;
+
+#ifndef zipFile
+	// might be defined through zip.h already
+	typedef void* zipFile;
+#endif
+
 
 class CEventClient
 {

@@ -47,10 +47,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // internal headers of the post-processing framework
 #include "SplitByBoneCountProcess.h"
 
-// bug: SIZE_MAX is undefined for some reason, even though it's in a header
-#ifndef SIZE_MAX
-# define SIZE_MAX (~(size_t)0)
-#endif
+#include <limits>
 
 using namespace Assimp;
 
@@ -80,7 +77,7 @@ bool SplitByBoneCountProcess::IsActive( unsigned int pFlags) const
 // Updates internal properties
 void SplitByBoneCountProcess::SetupProperties(const Importer* pImp)
 {
-	// ein andermal.
+	mMaxBoneCount = pImp->GetPropertyInteger(AI_CONFIG_PP_SBBC_MAX_BONES,AI_SBBC_DEFAULT_MAX_BONES);
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -179,6 +176,9 @@ void SplitByBoneCountProcess::SplitMesh( const aiMesh* pMesh, std::vector<aiMesh
 		subMeshFaces.reserve( pMesh->mNumFaces);
 		// accumulated vertex count of all the faces in this submesh
 		size_t numSubMeshVertices = 0;
+		// a small local array of new bones for the current face. State of all used bones for that face
+		// can only be updated AFTER the face is completely analysed. Thanks to imre for the fix.
+		std::vector<size_t> newBonesAtCurrentFace;
 
 		// add faces to the new submesh as long as all bones affecting the faces' vertices fit in the limit
 		for( size_t a = 0; a < pMesh->mNumFaces; ++a)
@@ -189,32 +189,37 @@ void SplitByBoneCountProcess::SplitMesh( const aiMesh* pMesh, std::vector<aiMesh
 
 			const aiFace& face = pMesh->mFaces[a];
 			// check every vertex if its bones would still fit into the current submesh
-			bool fitsInCurrentSubmesh = true;
 			for( size_t b = 0; b < face.mNumIndices; ++b )
 			{
 				const std::vector<BoneWeight>& vb = vertexBones[face.mIndices[b]];
 				for( size_t c = 0; c < vb.size(); ++c)
 				{
+					size_t boneIndex = vb[c].first;
 					// if the bone is already used in this submesh, it's ok
-					if( isBoneUsed[ vb[c].first ] )
+					if( isBoneUsed[boneIndex] )
 						continue;
 
-					// if it's not used, yet, we would need to add it. That only works
-					// if we're still under the bone count limit
-					if( numBones >= mMaxBoneCount )
-					{
-						fitsInCurrentSubmesh = false;
-						break;
-					} else
-					{
-						numBones++;
-						isBoneUsed[ vb[c].first ] = true;
-					}
+					// if it's not used, yet, we would need to add it. Store its bone index
+					if( std::find( newBonesAtCurrentFace.begin(), newBonesAtCurrentFace.end(), boneIndex) == newBonesAtCurrentFace.end() )
+						newBonesAtCurrentFace.push_back( boneIndex);
 				}
 			}
 
-			if( !fitsInCurrentSubmesh )
+			// leave out the face if the new bones required for this face don't fit the bone count limit anymore
+			if( numBones + newBonesAtCurrentFace.size() > mMaxBoneCount )
 				continue;
+
+			// mark all new bones as necessary
+			while( !newBonesAtCurrentFace.empty() )
+			{
+				size_t newIndex = newBonesAtCurrentFace.back();
+				newBonesAtCurrentFace.pop_back(); // this also avoids the deallocation which comes with a clear()
+				if( isBoneUsed[newIndex] ) 
+					continue;
+
+				isBoneUsed[newIndex] = true;
+				numBones++;
+			}
 
 			// store the face index and the vertex count
 			subMeshFaces.push_back( a);
@@ -259,7 +264,7 @@ void SplitByBoneCountProcess::SplitMesh( const aiMesh* pMesh, std::vector<aiMesh
 		// and copy over the data, generating faces with linear indices along the way
 		newMesh->mFaces = new aiFace[subMeshFaces.size()];
 		size_t nvi = 0; // next vertex index
-		std::vector<size_t> previousVertexIndices( numSubMeshVertices, SIZE_MAX); // per new vertex: its index in the source mesh
+		std::vector<size_t> previousVertexIndices( numSubMeshVertices, std::numeric_limits<size_t>::max()); // per new vertex: its index in the source mesh
 		for( size_t a = 0; a < subMeshFaces.size(); ++a )
 		{
 			const aiFace& srcFace = pMesh->mFaces[subMeshFaces[a]];
@@ -303,7 +308,7 @@ void SplitByBoneCountProcess::SplitMesh( const aiMesh* pMesh, std::vector<aiMesh
 		newMesh->mNumBones = 0;
 		newMesh->mBones = new aiBone*[numBones];
 
-		std::vector<size_t> mappedBoneIndex( pMesh->mNumBones, SIZE_MAX);
+		std::vector<size_t> mappedBoneIndex( pMesh->mNumBones, std::numeric_limits<size_t>::max());
 		for( size_t a = 0; a < pMesh->mNumBones; ++a )
 		{
 			if( !isBoneUsed[a] )
@@ -330,7 +335,7 @@ void SplitByBoneCountProcess::SplitMesh( const aiMesh* pMesh, std::vector<aiMesh
 			for( size_t b = 0; b < bonesOnThisVertex.size(); ++b )
 			{
 				size_t newBoneIndex = mappedBoneIndex[ bonesOnThisVertex[b].first ];
-				if( newBoneIndex != SIZE_MAX )
+				if( newBoneIndex != std::numeric_limits<size_t>::max() )
 					newMesh->mBones[newBoneIndex]->mNumWeights++;
 			}
 		}
@@ -356,7 +361,7 @@ void SplitByBoneCountProcess::SplitMesh( const aiMesh* pMesh, std::vector<aiMesh
 			for( size_t b = 0; b < bonesOnThisVertex.size(); ++b)
 			{
 				size_t newBoneIndex = mappedBoneIndex[ bonesOnThisVertex[b].first ];
-				ai_assert( newBoneIndex != SIZE_MAX );
+				ai_assert( newBoneIndex != std::numeric_limits<size_t>::max() );
 				aiVertexWeight* dstWeight = newMesh->mBones[newBoneIndex]->mWeights + newMesh->mBones[newBoneIndex]->mNumWeights;
 				newMesh->mBones[newBoneIndex]->mNumWeights++;
 

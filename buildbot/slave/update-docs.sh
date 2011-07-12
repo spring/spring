@@ -3,6 +3,5 @@
 # Quit on error.
 set -e
 
+umask 0022
 doxygen
-
-chmod -R a+rx doc/doxygen

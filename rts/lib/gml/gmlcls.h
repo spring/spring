@@ -882,7 +882,7 @@ public:
 
 
 // Circular Queue - a "crash free" queue because it wraps around and keeps array index within bounds
-#include "creg/creg_cond.h"
+#include "System/creg/creg_cond.h"
 
 template<class T,int S>
 class gmlCircularQueue {

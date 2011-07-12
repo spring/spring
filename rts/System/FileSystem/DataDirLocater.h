@@ -52,7 +52,7 @@ public:
 	 *
 	 * Windows:
 	 * - SPRING_DATADIR env-variable (semi-colon separated list, like PATH)
-	 * - ./springsettings.cfg:SpringData=C:\data (semi-colon separated list)
+	 * - ./springsettings.cfg:SpringData=C:\\data (semi-colon separated list)
 	 * - CWD; in portable mode only (usually: on):
 	 *   ~ path to the current work-dir/module,
 	 *     which is either spring.exe or unitsync.dll, or

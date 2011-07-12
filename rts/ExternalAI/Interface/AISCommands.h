@@ -305,9 +305,9 @@ struct SSetLastPosMessageCommand {
 }; //$ COMMAND_SET_LAST_POS_MESSAGE Game_setLastMessagePosition
 
 /**
- * Give <amount> units of resource <resourceId> to team <receivingTeam>.
+ * Give \<amount\> units of resource \<resourceId\> to team \<receivingTeam\>.
  * - the amount is capped to the AI team's resource levels
- * - does not check for alliance with <receivingTeam>
+ * - does not check for alliance with \<receivingTeam\>
  * - LuaRules might not allow resource transfers, AI's must verify the deduction
  */
 struct SSendResourcesCommand {
@@ -318,11 +318,11 @@ struct SSendResourcesCommand {
 }; //$ COMMAND_SEND_RESOURCES Economy_sendResource REF:resourceId->Resource REF:receivingTeamId->Team
 
 /**
- * Give units specified by <unitIds> to team <receivingTeam>.
- * <ret_sentUnits> represents how many actually were transferred.
- * Make sure this always matches the size of <unitIds> you passed in.
+ * Give units specified by \<unitIds\> to team \<receivingTeam\>.
+ * \<ret_sentUnits\> represents how many actually were transferred.
+ * Make sure this always matches the size of \<unitIds\> you passed in.
  * If it does not, then some unitId's were filtered out.
- * - does not check for alliance with <receivingTeam>
+ * - does not check for alliance with \<receivingTeam\>
  * - AI's should check each unit if it is still under control of their
  *   team after the transaction via UnitTaken() and UnitGiven(), since
  *   LuaRules might block part of it
@@ -497,11 +497,11 @@ struct SRestartPathDrawerCommand {
  * Creates a cubic Bezier spline figure from pos1 to pos4, with control points pos2 and pos3.
  *
  * - Each figure is part of a figure group
- * - When creating figures, use 0 as <figureGroupId> to create a new figure group.
- *   The id of this figure group is returned in <ret_newFigureGroupId>
- * - <lifeTime> specifies how many frames a figure should live before being auto-removed;
+ * - When creating figures, use 0 as \<figureGroupId\> to create a new figure group.
+ *   The id of this figure group is returned in \<ret_newFigureGroupId\>
+ * - \<lifeTime\> specifies how many frames a figure should live before being auto-removed;
  *   0 means no removal
- * - <arrow> == true means that the figure will get an arrow at the end
+ * - \<arrow\> == true means that the figure will get an arrow at the end
  */
 struct SCreateSplineFigureDrawerCommand {
 	float* pos1_posF3;
@@ -524,8 +524,8 @@ struct SCreateSplineFigureDrawerCommand {
  * Creates a straight line from pos1 to pos2.
  *
  * - Each figure is part of a figure group
- * - When creating figures, use 0 as <figureGroupId> to create a new figure group.
- *   The id of this figure group is returned in <ret_newFigureGroupId>
+ * - When creating figures, use 0 as \<figureGroupId\> to create a new figure group.
+ *   The id of this figure group is returned in \<ret_newFigureGroupId\>
  * @param lifeTime specifies how many frames a figure should live before being auto-removed;
  *                 0 means no removal
  * @param arrow true means that the figure will get an arrow at the end

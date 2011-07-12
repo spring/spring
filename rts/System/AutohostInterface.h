@@ -63,6 +63,7 @@ private:
 
 	/**
 	 * Tries to bind a socket for communication with a UDP server.
+	 * @param socket socket to bind
 	 * @param remoteIP IP of the remote host to connect to
 	 * @param remotePort the port where the remote host runs its
 	 *   UDP service
