@@ -137,7 +137,8 @@ CReadMap::~CReadMap()
 	visVertexNormals.clear();
 	faceNormalsSynced.clear();
 	faceNormalsUnsynced.clear();
-	centerNormals.clear();
+	centerNormalsSynced.clear();
+	centerNormalsUnsynced.clear();
 }
 
 
@@ -159,7 +160,7 @@ void CReadMap::Initialize()
 			((( gs->mapx + 1) * (gs->mapy + 1) * 2 *   sizeof(float))         / 1024) +   // cornerHeightMap{Synced, Unsynced}
 			((( gs->mapx + 1) * (gs->mapy + 1) *       sizeof(float))         / 1024) +   // originalHeightMap
 			((  gs->mapx      *  gs->mapy      * 2*2 * sizeof(float3))        / 1024) +   // faceNormals{Synced, Unsynced}
-			((  gs->mapx      *  gs->mapy            * sizeof(float3))        / 1024) +   // centerNormals
+			((  gs->mapx      *  gs->mapy      * 2   * sizeof(float3))        / 1024) +   // centerNormals{Synced, Unsynced}
 			((( gs->mapx + 1) * (gs->mapy + 1) * 2   * sizeof(float3))        / 1024) +   // {raw, vis}VertexNormals
 			((  gs->mapx      *  gs->mapy            * sizeof(float))         / 1024) +   // centerHeightMap
 			((  gs->hmapx     *  gs->hmapy           * sizeof(float))         / 1024) +   // slopeMap
@@ -181,7 +182,8 @@ void CReadMap::Initialize()
 	originalHeightMap.resize((gs->mapx + 1) * (gs->mapy + 1));
 	faceNormalsSynced.resize(gs->mapx * gs->mapy * 2);
 	faceNormalsUnsynced.resize(gs->mapx * gs->mapy * 2);
-	centerNormals.resize(gs->mapx * gs->mapy);
+	centerNormalsSynced.resize(gs->mapx * gs->mapy);
+	centerNormalsUnsynced.resize(gs->mapx * gs->mapy);
 	centerHeightMap.resize(gs->mapx * gs->mapy);
 
 	mipCenterHeightMaps.resize(numHeightMipMaps - 1);
@@ -332,7 +334,7 @@ void CReadMap::UpdateHeightMapSynced(int x1, int z1, int x2, int z2)
 			faceNormalsSynced[(y * gs->mapx + x) * 2 + 1] = fnBR;
 
 			//! square-normal
-			centerNormals[y * gs->mapx + x] = (fnTL + fnBR).Normalize();
+			centerNormalsSynced[y * gs->mapx + x] = (fnTL + fnBR).Normalize();
 		}
 	}
 
