@@ -942,13 +942,14 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius, b
 		return;
 
 	const float lifeTime = decalLevel * damage * 3.0f;
-	const float height = pos.y - ground->GetHeightReal(pos.x, pos.z, false);
+	const float altitude = pos.y - ground->GetHeightReal(pos.x, pos.z, false);
 
-	if (height >= radius)
-		return;
+	// no decals for below-ground explosions
+	if (altitude <= -1.0f) { return; }
+	if (altitude >= radius) { return; }
 
-	pos.y -= height;
-	radius -= height;
+	pos.y -= altitude;
+	radius -= altitude;
 
 	if (radius < 5.0f)
 		return;
@@ -956,7 +957,7 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius, b
 	if (damage > radius * 30)
 		damage = radius * 30;
 
-	damage *= (radius) / (radius + height);
+	damage *= (radius) / (radius + altitude);
 	if (radius > damage * 0.25f)
 		radius = damage * 0.25f;
 

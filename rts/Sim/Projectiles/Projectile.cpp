@@ -26,6 +26,7 @@ CR_REG_METADATA(CProjectile,
 
 	CR_MEMBER(luaMoveCtrl),
 	CR_MEMBER(checkCol),
+	CR_MEMBER(ignoreWater),
 	CR_MEMBER(deleteMe),
 	CR_MEMBER(castShadow), // unsynced
 
@@ -55,6 +56,7 @@ CProjectile::CProjectile():
 	piece(false),
 	luaMoveCtrl(false),
 	checkCol(true),
+	ignoreWater(false),
 	deleteMe(false),
 	castShadow(false),
 	speed(ZeroVector),
@@ -73,6 +75,7 @@ CProjectile::CProjectile(const float3& pos, const float3& spd, CUnit* owner, boo
 	piece(isPiece),
 	luaMoveCtrl(false),
 	checkCol(true),
+	ignoreWater(false),
 	deleteMe(false),
 	castShadow(false),
 	speed(spd),

@@ -462,15 +462,33 @@ void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc) {
 	for (pci = pc.begin(); pci != pc.end(); ++pci) {
 		CProjectile* p = *pci;
 
+		// NOTE: if <p> is a MissileProjectile and has
+		// noSelfExplode set, it will never be removed (!)
 		if (p->GetCollisionFlags() & Collision::NOGROUND) {
 			continue;
 		}
 
 		if (p->checkCol) {
-			// too many projectiles seem to impact the ground before
-			// actually hitting so don't subtract the projectile radius
-			// NOTE: why are we not using Ground::CheckColSquare here?
-			if (ground->GetHeightAboveWater(p->pos.x, p->pos.z) > p->pos.y /* - p->radius*/) {
+			      float3& pos = p->pos;
+			const float3& spd = p->speed;
+
+			// NOTE: don't add p->radius to groundHeight, or most
+			// projectiles will collide with the ground too early
+			const float groundHeight = ground->GetHeightReal(pos.x, pos.z);
+			const bool belowGround = (pos.y < groundHeight);
+			const bool insideWater = (pos.y <= 0.0f && !belowGround);
+			const bool ignoreWater = p->ignoreWater;
+
+			if (belowGround || (insideWater && !ignoreWater)) {
+				// if position has dropped below terrain or water
+				// where we cannot live, adjust it and explode us
+				const float ySpd = math::fabs(spd.y);
+				const float yDif = belowGround? (groundHeight - pos.y): pos.y;
+
+				if (ySpd > 0.001f) {
+					pos -= (spd * std::min(1.0f, yDif / ySpd));
+				}
+
 				p->Collision();
 			}
 		}
