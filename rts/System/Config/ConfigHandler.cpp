@@ -5,7 +5,7 @@
 #include "ConfigLocater.h"
 #include "ConfigSource.h"
 #include "System/Util.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 #ifdef WIN32
 	#include <io.h>
@@ -288,9 +288,9 @@ void ConfigHandler::Instantiate(string configSource)
 
 	// log here so unitsync shows configuration source(s), too
 	vector<string>::const_iterator loc = locations.begin();
-	logOutput.Print("Using configuration source: \"" + *loc + "\"\n");
+	LOG("Using configuration source: \"%s\"\n", loc->c_str());
 	for (++loc; loc != locations.end(); ++loc) {
-		logOutput.Print("Using additional configuration source: \"" + *loc + "\"\n");
+		LOG("Using additional configuration source: \"%s\"\n", loc->c_str());
 	}
 
 	configHandler = new ConfigHandlerImpl(locations);

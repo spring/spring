@@ -3,7 +3,7 @@
 #include "StdAfx.h"
 #include "ConfigSource.h"
 #include "ConfigVariable.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Platform/ScopedFileLock.h"
 
 #ifdef WIN32
@@ -154,7 +154,7 @@ void FileConfigSource::Read(FILE* file)
 			}
 			else {
 				// neither a comment nor an empty line nor a key=value line
-				logOutput.Print("ConfigSource: Error: Can not parse line: %s\n", line);
+				LOG_L(L_ERROR, "ConfigSource: Error: Can not parse line: %s\n", line);
 			}
 		}
 	}
@@ -178,7 +178,7 @@ void FileConfigSource::Write(FILE* file)
 	int err = ftruncate(fileno(file), 0);
 #endif
 	if (err != 0) {
-		logOutput.Print("FileConfigSource: Error: Failed truncating config file.");
+		LOG_L(L_ERROR, "FileConfigSource: Error: Failed truncating config file.");
 	}
 
 	// Iterate through both containers at once, interspersing
