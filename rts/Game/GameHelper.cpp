@@ -283,7 +283,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 
 		// deform the map if the explosion was above-ground
 		// (but had large enough radius to touch the ground)
-		if (altitude > 0.0f) {
+		if (altitude >= -1.0f) {
 			if (damageGround && !mapDamage->disabled && (expRad > altitude) && (damages.craterMult > 0.0f)) {
 				// limit the depth somewhat
 				const float craterDepth = damages[0] * (1.0f - (altitude / expRad));
