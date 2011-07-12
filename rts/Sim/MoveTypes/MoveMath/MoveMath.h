@@ -38,15 +38,15 @@ public:
 	int IsBlocked(const MoveData& moveData, int xSquare, int zSquare) const;
 	
 	// tells whether a given object is blocking the given movedata
-	bool CrushResistant(const MoveData& moveData, const CSolidObject* object) const;
-	bool IsNonBlocking(const MoveData& moveData, const CSolidObject* object) const;
 
+	static bool CrushResistant(const MoveData& moveData, const CSolidObject* object);
+	static bool IsNonBlocking(const MoveData& moveData, const CSolidObject* object);
 	// gives the y-coordinate the unit will "stand on"
 	virtual float yLevel(const float3& pos) const;
 	virtual float yLevel(int xSquare, int Square) const = 0;
 
 	// returns the block-status of a single quare
-	int SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquare) const;
+	static int SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquare);
 
 	virtual ~CMoveMath() {}
 };
