@@ -35,7 +35,11 @@ using std::max;
 CONFIG(int, GroundDetail).defaultValue(40);
 CONFIG(bool, MultiThreadDrawGround).defaultValue(true);
 CONFIG(bool, MultiThreadDrawGroundShadow).defaultValue(false);
-CONFIG(unsigned int, MaxDynamicMapLights).defaultValue(1U);
+
+CONFIG(int, MaxDynamicMapLights)
+	.defaultValue(1)
+	.minimumValue(0);
+
 CONFIG(int, AdvMapShading).defaultValue(1);
 
 CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):

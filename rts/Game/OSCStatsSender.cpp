@@ -26,7 +26,11 @@
 
 CONFIG(bool, OscStatsSenderEnabled).defaultValue(false);
 CONFIG(std::string, OscStatsSenderDestinationAddress).defaultValue("127.0.0.1");
-CONFIG(unsigned int, OscStatsSenderDestinationPort).defaultValue((unsigned int) 6447);
+
+CONFIG(int, OscStatsSenderDestinationPort)
+	.defaultValue(6447)
+	.minimumValue(0)
+	.maximumValue(65535);
 
 COSCStatsSender* COSCStatsSender::singleton = NULL;
 
