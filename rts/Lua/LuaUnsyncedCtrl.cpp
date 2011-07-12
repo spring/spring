@@ -51,7 +51,6 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/UnitDrawer.h"
-#include "Rendering/WindowManagerHelper.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -72,9 +71,10 @@
 #include "System/FileSystem/FileSystemHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Platform/Watchdog.h"
+#include "System/Platform/WindowManagerHelper.h"
 
 #include <boost/cstdint.hpp>
-#include <Platform/Misc.h>
+#include "System/Platform/Misc.h"
 #include "LuaHelper.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)

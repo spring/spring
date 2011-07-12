@@ -38,8 +38,9 @@ public:
 	static bool IsCacheDir(const std::string& dir);
 
 	/**
-	 * Sets or unsets a dir as cach dir.
+	 * Sets or unsets a dir as cache dir.
 	 * This removes or creates the tag file.
+	 * @param dir directory to be used as cache
 	 * @param additionalText only used if (isCache == true), is appended in the cache tag file
 	 * @param forceRewrite if set to true, the tag file will be rewritten even if a valid one already exists (default: false)
 	 * @return true if the dir tag file was successfully removed, created or already existed, false otherwise

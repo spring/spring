@@ -7,7 +7,7 @@
 
 class IExplosionGenerator;
 
-//! spawns a given explosion-generator after <delay> frames
+//! spawns a given explosion-generator after \<delay\> frames
 class CExpGenSpawner : public CProjectile
 {
 	CR_DECLARE(CExpGenSpawner);

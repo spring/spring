@@ -19,7 +19,7 @@ void CShaderHandler::ReleaseProgramObjects(const std::string& poClass) {
 		return;
 	}
 
-	for (ProgramObjMapIt it = programObjects[poClass].begin(); it != programObjects[poClass].end(); it++) {
+	for (ProgramObjMapIt it = programObjects[poClass].begin(); it != programObjects[poClass].end(); ++it) {
 		// free the program object and its attachments
 		(it->second)->Release(); delete (it->second);
 	}

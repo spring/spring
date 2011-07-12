@@ -72,10 +72,10 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 			}
 
 			if (useCurrentBuildOrder) {
-				for (int y = starty; y < endy; ++y) {
-					for (int x = 0; x < gs->hmapx; ++x) {
-						const float3 pos(x * (SQUARE_SIZE << 1) + SQUARE_SIZE, 0.0f, y * (SQUARE_SIZE << 1) + SQUARE_SIZE);
-						const unsigned int idx = ((y * (gs->pwr2mapx >> 1)) + x) * 4 - offset;
+				for (int ty = starty; ty < endy; ++ty) {
+					for (int tx = 0; tx < gs->hmapx; ++tx) {
+						const float3 pos(tx * (SQUARE_SIZE << 1) + SQUARE_SIZE, 0.0f, ty * (SQUARE_SIZE << 1) + SQUARE_SIZE);
+						const int idx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
 						float m = 0.0f;
 
 						if (!loshandler->InLos(pos, gu->myAllyTeam)) {
@@ -109,7 +109,9 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 				}
 			} else {
 				const MoveData* md = NULL;
-				const bool showBlockedMap = (gs->cheatEnabled || gu->spectating);
+				const bool los = (gs->cheatEnabled || gu->spectating);
+				const float* uhm = readmap->GetCornerHeightMapUnsynced();
+				const float3* ucn = readmap->GetCenterNormalsUnsynced();
 
 				{
 					GML_RECMUTEX_LOCK(sel); // UpdateExtraTexture
@@ -124,31 +126,47 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 					}
 				}
 
-				for (int y = starty; y < endy; ++y) {
-					for (int x = 0; x < gs->hmapx; ++x) {
-						const unsigned int idx = ((y * (gs->pwr2mapx >> 1)) + x) * 4 - offset;
+				for (int ty = starty; ty < endy; ++ty) {
+					for (int tx = 0; tx < gs->hmapx; ++tx) {
+						const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
+						const int hmIdx = (ty << 1) * (gs->mapx + 1) + (tx << 1);
+						const int cnIdx = (ty << 1) * (gs->mapx    ) + (tx << 1);
 
 						if (md != NULL) {
-							float m = md->moveMath->GetPosSpeedMod(*md, x << 1, y << 1);
+							const float height = uhm[hmIdx];
+							const float slope = 1.0f - ucn[cnIdx].y;
+							float m = 1.0f;
 
-							if (showBlockedMap && (md->moveMath->IsBlocked(*md, (x << 1) + 1, (y << 1) + 1) & CMoveMath::BLOCK_STRUCTURE)) {
-								m = 0.0f;
+							if (md->moveFamily == MoveData::Ship) {
+								// only check water depth
+								m = (height >= (-md->depth))? 0.0f: m;
+							} else {
+								// check depth and slope (if hover, only over land)
+								m = std::max(0.0f, 1.0f - (slope / (md->maxSlope + 0.1f)));
+								m = (height < (-md->depth))? 0.0f: m;
+								m = (height <= 0.0f && md->moveFamily == MoveData::Hover)? 1.0f: m;
 							}
 
-							m = std::min(1.0f, fastmath::apxsqrt(m));
-							m = int(m * 255.0f);
+							m = Clamp(m, 0.0f, 1.0f);
+							m *= 255;
 
-							texMem[idx + CBaseGroundDrawer::COLOR_R] = 255 - m;
-							texMem[idx + CBaseGroundDrawer::COLOR_G] = m;
-							texMem[idx + CBaseGroundDrawer::COLOR_B] = 0;
-							texMem[idx + CBaseGroundDrawer::COLOR_A] = 255;
+							if (los || loshandler->InLos((tx << 1), (ty << 1), gu->myAllyTeam)) {
+								if ((md->moveMath->IsBlocked(*md, (tx << 1) + 1, (ty << 1) + 1) & CMoveMath::BLOCK_STRUCTURE)) {
+									m = 0.0f;
+								}
+							}
+
+							texMem[texIdx + CBaseGroundDrawer::COLOR_R] = 255 - m;
+							texMem[texIdx + CBaseGroundDrawer::COLOR_G] = m;
+							texMem[texIdx + CBaseGroundDrawer::COLOR_B] = 0;
+							texMem[texIdx + CBaseGroundDrawer::COLOR_A] = 255;
 						} else {
 							// we have nothing to show
 							// -> draw a dark red overlay
-							texMem[idx + CBaseGroundDrawer::COLOR_R] = 100;
-							texMem[idx + CBaseGroundDrawer::COLOR_G] = 0;
-							texMem[idx + CBaseGroundDrawer::COLOR_B] = 0;
-							texMem[idx + CBaseGroundDrawer::COLOR_A] = 255;
+							texMem[texIdx + CBaseGroundDrawer::COLOR_R] = 100;
+							texMem[texIdx + CBaseGroundDrawer::COLOR_G] = 0;
+							texMem[texIdx + CBaseGroundDrawer::COLOR_B] = 0;
+							texMem[texIdx + CBaseGroundDrawer::COLOR_A] = 255;
 						}
 					}
 				}

@@ -36,32 +36,32 @@ struct GuiSoundSet
 		return ((idx >= 0) && (idx < (int)sounds.size()));
 	}
 
-	/// get a (loaded) sound's name for index <idx>
+	/// get a (loaded) sound's name for index \<idx\>
 	std::string getName(int idx) const {
 		return ValidIndex(idx) ? sounds[idx].name : "";
 	}
-	/// get a (loaded) sound's ID for index <idx>
+	/// get a (loaded) sound's ID for index \<idx\>
 	int getID(int idx) const {
 		return ValidIndex(idx) ? sounds[idx].id : 0;
 	}
-	/// get a (loaded) sound's volume for index <idx>
+	/// get a (loaded) sound's volume for index \<idx\>
 	float getVolume(int idx) const {
 		return ValidIndex(idx) ? sounds[idx].volume : 0.0f;
 	}
 
-	/// set a (loaded) sound's name for index <idx>
+	/// set a (loaded) sound's name for index \<idx\>
 	void setName(int idx, std::string name) {
 		if (ValidIndex(idx)) {
 			sounds[idx].name = name;
 		}
 	}
-	/// set a (loaded) sound's ID for index <idx>
+	/// set a (loaded) sound's ID for index \<idx\>
 	void setID(int idx, int id) {
 		if (ValidIndex(idx)) {
 			sounds[idx].id = id;
 		}
 	}
-	/// set a (loaded) sound's volume for index <idx>
+	/// set a (loaded) sound's volume for index \<idx\>
 	void setVolume(int idx, float volume) {
 		if (ValidIndex(idx)) {
 			sounds[idx].volume = volume;

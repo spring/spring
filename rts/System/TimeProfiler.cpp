@@ -7,7 +7,7 @@
 
 #include "mmgr.h"
 #include "lib/gml/gmlmut.h"
-#include "LogOutput.h"
+#include "System/Log/ILog.h"
 #include "UnsyncedRNG.h"
 
 
@@ -24,7 +24,7 @@ ScopedTimer::~ScopedTimer()
 
 ScopedOnceTimer::~ScopedOnceTimer()
 {
-	LogObject() << name << ": " << (SDL_GetTicks() - starttime) << " ms";
+	LOG("%s: %i ms", name.c_str(), (SDL_GetTicks() - starttime));
 }
 
 
@@ -104,7 +104,7 @@ void CTimeProfiler::AddTime(const std::string& name, unsigned time, bool showGra
 
 void CTimeProfiler::PrintProfilingInfo() const
 {
-	logOutput.Print("%35s|%18s|%s",
+	LOG("%35s|%18s|%s",
 			"Part",
 			"Total Time",
 			"Time of the last 0.5s");
@@ -115,7 +115,7 @@ void CTimeProfiler::PrintProfilingInfo() const
 			continue;
 		}
 #endif // GML_MUTEX_PROFILER
-		logOutput.Print("%35s %16.2fs %5.2f%%",
+		LOG("%35s %16.2fs %5.2f%%",
 				pi->first.c_str(),
 				((float)pi->second.total) / 1000.f,
 				pi->second.percent * 100);

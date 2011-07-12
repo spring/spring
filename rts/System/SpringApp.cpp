@@ -37,7 +37,6 @@
 #include "Rendering/glFont.h"
 #include "Rendering/GLContext.h"
 #include "Rendering/VerticalSync.h"
-#include "Rendering/WindowManagerHelper.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -48,7 +47,7 @@
 #include "System/Exceptions.h"
 #include "System/FPUCheck.h"
 #include "System/GlobalConfig.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/OffscreenGLContext.h"
 #include "System/TimeProfiler.h"
@@ -61,6 +60,7 @@
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Threading.h"
 #include "System/Platform/Watchdog.h"
+#include "System/Platform/WindowManagerHelper.h"
 #include "System/Sound/ISound.h"
 
 #include "mmgr.h"
@@ -138,7 +138,7 @@ bool SpringApp::Initialize()
 #if !(defined(WIN32) || defined(__APPLE__) || defined(HEADLESS))
 	//! this MUST run before any other X11 call (esp. those by SDL!)
 	if (!XInitThreads()) {
-		LogObject() << "Xlib not thread safe";
+		LOG_L(L_FATAL, "Xlib is not thread safe");
 		return false;
 	}
 #endif
@@ -148,8 +148,8 @@ bool SpringApp::Initialize()
 	{
 		// don't display a dialog box if gdb helpers aren't found
 		UINT olderrors = SetErrorMode(SEM_FAILCRITICALERRORS);
-		if(LoadLibrary("gdbmacros.dll")) {
-			LogObject() << "QT Creator's gdbmacros.dll loaded";
+		if (LoadLibrary("gdbmacros.dll")) {
+			LOG("QT Creator's gdbmacros.dll loaded");
 		}
 		SetErrorMode(olderrors);
 	}
@@ -172,13 +172,13 @@ bool SpringApp::Initialize()
 	Watchdog::RegisterThread(WDT_MAIN, true);
 
 	// log OS version
-	logOutput.Print("OS: %s", Platform::GetOS().c_str());
+	LOG("OS: %s", Platform::GetOS().c_str());
 	if (Platform::Is64Bit())
-		logOutput.Print("OS: 64bit native mode");
+		LOG("OS: 64bit native mode");
 	else if (Platform::Is32BitEmulation())
-		logOutput.Print("OS: emulated 32bit mode");
+		LOG("OS: emulated 32bit mode");
 	else
-		logOutput.Print("OS: 32bit native mode");
+		LOG("OS: 32bit native mode");
 
 	FileSystemHandler::Initialize(true);
 
@@ -254,9 +254,9 @@ void SpringApp::SetProcessAffinity(int affinity)
 		}
 
 		if (result > 0) {
-			logOutput.Print("CPU: affinity set (%d)", affinity);
+			LOG("CPU: affinity set (%d)", affinity);
 		} else {
-			logOutput.Print("CPU: affinity failed");
+			LOG("CPU: affinity failed");
 		}
 	}
 #elif defined(__APPLE__)
@@ -276,7 +276,7 @@ void SpringApp::SetProcessAffinity(int affinity)
 		// are numbered logically from 0 to N-1) we want
 		// to run
 		// note that this approach will fail when N > 32
-		logOutput.Print("[SetProcessAffinity(%d)] available system CPU's: %d", affinity, CPU_COUNT(&cpusSystem));
+		LOG("[SetProcessAffinity(%d)] available system CPU's: %d", affinity, CPU_COUNT(&cpusSystem));
 
 		// add the available system CPU's to the wanted set
 		for (int n = CPU_COUNT(&cpusSystem) - 1; n >= 0; n--) {
@@ -305,7 +305,7 @@ bool SpringApp::InitWindow(const char* title)
 	sdlInitFlags |= SDL_INIT_NOPARACHUTE;
 #endif
 	if ((SDL_Init(sdlInitFlags) == -1)) {
-		logOutput.Print("Could not initialize SDL: %s", SDL_GetError());
+		LOG_L(L_FATAL, "Could not initialize SDL: %s", SDL_GetError());
 		return false;
 	}
 
@@ -314,7 +314,7 @@ bool SpringApp::InitWindow(const char* title)
 	WindowManagerHelper::SetCaption(title);
 
 	if (!SetSDLVideoMode()) {
-		logOutput.Print("Failed to set SDL video mode: %s", SDL_GetError());
+		LOG_L(L_FATAL, "Failed to set SDL video mode: %s", SDL_GetError());
 		return false;
 	}
 
@@ -340,7 +340,7 @@ bool SpringApp::SetSDLVideoMode()
 {
 	int sdlflags = SDL_OPENGL | SDL_RESIZABLE;
 
-	//! w/o SDL_NOFRAME, kde's windowmanager still creates a border (in fullscreen!) and forces a `window`-resize causing a lot of trouble (in the ::SaveWindowPositione)
+	//! w/o SDL_NOFRAME, kde's windowmanager still creates a border (in fullscreen!) and forces a `window`-resize causing a lot of trouble (in the ::SaveWindowPosition)
 	sdlflags |= globalRendering->fullScreen ? SDL_FULLSCREEN | SDL_NOFRAME : 0;
 
 	bool winBorderless = configHandler->Get("WindowBorderless", false);
@@ -440,9 +440,9 @@ bool SpringApp::SetSDLVideoMode()
 	int bits;
 	SDL_GL_GetAttribute(SDL_GL_BUFFER_SIZE, &bits);
 	if (globalRendering->fullScreen) {
-		logOutput.Print("Video mode set to %ix%i/%ibit", globalRendering->viewSizeX, globalRendering->viewSizeY, bits);
+		LOG("Video mode set to %ix%i/%ibit", globalRendering->viewSizeX, globalRendering->viewSizeY, bits);
 	} else {
-		logOutput.Print("Video mode set to %ix%i/%ibit (windowed)", globalRendering->viewSizeX, globalRendering->viewSizeY, bits);
+		LOG("Video mode set to %ix%i/%ibit (windowed)", globalRendering->viewSizeX, globalRendering->viewSizeY, bits);
 	}
 
 	return true;
@@ -823,9 +823,11 @@ void SpringApp::ParseCmdLine()
 
 	if (cmdline->IsSet("config")) {
 		string configSource = cmdline->GetString("config");
-		logOutput.Print("using configuration source \"" + ConfigHandler::Instantiate(configSource) + "\"");
+		LOG("using configuration source \"%s\"",
+				ConfigHandler::Instantiate(configSource).c_str());
 	} else {
-		logOutput.Print("using default configuration source \"" + ConfigHandler::Instantiate() + "\"");
+		LOG("using default configuration source \"%s\"",
+				ConfigHandler::Instantiate().c_str());
 	}
 	GlobalConfig::Instantiate();
 
@@ -894,9 +896,9 @@ void SpringApp::Startup()
 	if (inputFile.empty())
 	{
 #ifdef HEADLESS
-		LogObject()
-				<< "The headless version of the engine can not be run in interactive mode.\n"
-				<< "Please supply a start-script, save- or demo-file.";
+		LOG_L(L_FATAL,
+				"The headless version of the engine can not be run in interactive mode.\n"
+				"Please supply a start-script, save- or demo-file.");
 		exit(1);
 #endif
 		bool server = !cmdline->IsSet("client") || cmdline->IsSet("server");
@@ -943,7 +945,7 @@ void SpringApp::Startup()
 	}
 	else
 	{
-		LogObject() << "Loading startscript from: " << inputFile;
+		LOG("Loading startscript from: %s", inputFile.c_str());
 		std::string startscript = inputFile;
 		CFileHandler fh(startscript);
 		if (!fh.FileExists())

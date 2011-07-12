@@ -20,7 +20,7 @@ class CPlasmaRepulser;
 class CUnitScript : public CObject
 {
 public:
-	enum AnimType {ATurn, ASpin, AMove};
+	enum AnimType {ANone = -1, ATurn = 0, ASpin = 1, AMove = 2};
 
 	struct IAnimListener {
 		virtual ~IAnimListener() {}
@@ -68,25 +68,26 @@ protected:
 		int axis;
 		int piece;
 		float speed;
-		float dest;		//means final position when turning or moving, final speed when spinning
-		float accel;		//used for spinning, can be negative
-		std::list<IAnimListener *> listeners;
+		float dest;     // means final position when turning or moving, final speed when spinning
+		float accel;    // used for spinning, can be negative
+		bool done;
+		std::list<IAnimListener*> listeners;
 	};
 
-	std::list<AnimInfo*> anims;
+	std::list<AnimInfo*> anims[AMove + 1];
 
 	bool hasSetSFXOccupy;
 	bool hasRockUnit;
 	bool hasStartBuilding;
 
-	void UnblockAll(struct AnimInfo * anim);
+	void UnblockAll(AnimInfo* anim);
 
 	bool MoveToward(float &cur, float dest, float speed);
 	bool TurnToward(float &cur, float dest, float speed);
 	bool DoSpin(float &cur, float dest, float &speed, float accel, int divisor);
 
-	struct AnimInfo *FindAnim(AnimType anim, int piece, int axis);
-	void RemoveAnim(AnimType anim, int piece, int axis);
+	std::list<AnimInfo*>::iterator FindAnim(AnimType anim, int piece, int axis);
+	void RemoveAnim(AnimType type, const std::list<AnimInfo*>::iterator& animInfoIt);
 	void AddAnim(AnimType type, int piece, int axis, float speed, float dest, float accel);
 
 	virtual void ShowScriptError(const std::string& msg) = 0;
@@ -139,7 +140,8 @@ public:
 	      CUnit* GetUnit()       { return unit; }
 	const CUnit* GetUnit() const { return unit; }
 
-	int Tick(int deltaTime);
+	bool Tick(int deltaTime);
+	void TickAnims(int deltaTime, AnimType type, std::list< std::list<AnimInfo*>::iterator >& doneAnims);
 
 	// animation, used by CCobThread
 	void Spin(int piece, int axis, float speed, float accel);
@@ -163,7 +165,10 @@ public:
 	void SetUnitVal(int val, int param);
 
 	bool IsInAnimation(AnimType type, int piece, int axis) {
-		return FindAnim(type, piece, axis) != NULL;
+		return (FindAnim(type, piece, axis) != anims[type].end());
+	}
+	bool HaveAnimations() const {
+		return (!anims[ATurn].empty() || !anims[ASpin].empty() || !anims[AMove].empty());
 	}
 
 	// checks for callin existence

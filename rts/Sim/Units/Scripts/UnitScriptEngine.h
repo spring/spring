@@ -25,6 +25,9 @@ public:
 	void AddInstance(CUnitScript* instance);
 	void RemoveInstance(CUnitScript* instance);
 	void Tick(int deltaTime);
+
+private:
+	CUnitScript *currentScript;
 };
 
 extern CUnitScriptEngine GUnitScriptEngine;

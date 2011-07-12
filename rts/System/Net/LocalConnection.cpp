@@ -6,7 +6,7 @@
 
 #include "Exception.h"
 #include "ProtocolDef.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 namespace netcode {
 
@@ -34,7 +34,7 @@ void CLocalConnection::SendData(boost::shared_ptr<const RawPacket> data)
 	if (!ProtocolDef::GetInstance()->IsValidPacket(data->data, data->length)) {
 		// having this check here makes it easier to find networking bugs
 		// also when testing locally
-		logOutput.Print("ERROR: Discarding invalid packet: ID %d, LEN %d",
+		LOG_L(L_ERROR, "Discarding invalid packet: ID %d, LEN %d",
 				(data->length > 0) ? (int)data->data[0] : -1, data->length);
 		return;
 	}

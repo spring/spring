@@ -129,7 +129,7 @@ struct InfinitumType{
 extern InfinitumType Infinitum;
 
 struct RgbaColor{
-    RgbaColor() {}
+    RgbaColor() : value( 0 ) {}
     explicit RgbaColor( uint32 value_ ) : value( value_ ) {}
     uint32 value;
 
@@ -138,7 +138,7 @@ struct RgbaColor{
 
 
 struct MidiMessage{
-    MidiMessage() {}
+    MidiMessage() : value( 0 ) {}
     explicit MidiMessage( uint32 value_ ) : value( value_ ) {}
     uint32 value;
 
@@ -147,7 +147,7 @@ struct MidiMessage{
 
 
 struct TimeTag{
-    TimeTag() {}
+    TimeTag() : value( 0 ) {}
     explicit TimeTag( uint64 value_ ) : value( value_ ) {}
     uint64 value;
 
@@ -156,7 +156,7 @@ struct TimeTag{
 
 
 struct Symbol{
-    Symbol() {}
+    Symbol() : value( 0 ) {}
     explicit Symbol( const char* value_ ) : value( value_ ) {}
     const char* value;
 
@@ -165,7 +165,8 @@ struct Symbol{
 
 
 struct Blob{
-    Blob() {}
+    Blob()
+            : data( 0 ), size( 0 ) {}
     explicit Blob( const void* data_, unsigned long size_ )
             : data( data_ ), size( size_ ) {}
     const void* data;

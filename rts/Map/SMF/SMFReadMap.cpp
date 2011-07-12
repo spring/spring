@@ -8,7 +8,6 @@
 #include "mapfile.h"
 #include "Map/MapInfo.h"
 #include "Game/Camera.h"
-#include "Game/GlobalUnsynced.h"
 #include "Game/LoadScreen.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/BaseSky.h"
@@ -23,10 +22,6 @@
 #include "System/mmgr.h"
 #include "System/myMath.h"
 #include "System/Util.h"
-
-#ifdef USE_UNSYNCED_HEIGHTMAP
-#include "Sim/Misc/LosHandler.h"
-#endif
 
 #define SSMF_UNCOMPRESSED_NORMALS 0
 
@@ -317,14 +312,19 @@ void CSmfReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigne
 	}
 }
 
-void CSmfReadMap::UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2)
+void CSmfReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 {
+	const int x1 = update.x1, y1 = update.y1;
+	const int x2 = update.x2, y2 = update.y2;
+
 	{
 		// update the visible heights and normals
 		static const float*  shm = &cornerHeightMapSynced[0];
 		static       float*  uhm = &cornerHeightMapUnsynced[0];
 		static const float3* sfn = &faceNormalsSynced[0];
 		static       float3* ufn = &faceNormalsUnsynced[0];
+		static const float3* scn = &centerNormalsSynced[0];
+		static       float3* ucn = &centerNormalsUnsynced[0];
 		static       float3* rvn = &rawVertexNormals[0];
 		static       float3* vvn = &visVertexNormals[0];
 
@@ -396,15 +396,16 @@ void CSmfReadMap::UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2)
 				rvn[vIdxTL] = vn.ANormalize();
 
 				#ifdef USE_UNSYNCED_HEIGHTMAP
-				if (gs->frameNum <= 0 || gu->spectatingFullView || loshandler->InLos(x, z, gu->myAllyTeam)) {
+				if (update.los) {
 					// update the visible vertex/face height/normal
 					uhm[vIdxTL] = shm[vIdxTL];
 					vvn[vIdxTL] = rvn[vIdxTL];
 
 					if (hasNgbR && hasNgbB) {
-						// x == maxx and z == maxz are illegal indices
-						ufn[fIdxTL] = sfn[fIdxTL];
-						ufn[fIdxBR] = sfn[fIdxBR];
+						// x == maxx and z == maxz are illegal indices for these
+						ufn[fIdxTL    ] = sfn[fIdxTL    ];
+						ufn[fIdxBR    ] = sfn[fIdxBR    ];
+						ucn[fIdxTL / 2] = scn[fIdxTL / 2];
 					}
 				}
 				#endif
@@ -434,7 +435,6 @@ void CSmfReadMap::UpdateHeightMapUnsynced(int x1, int y1, int x2, int y2)
 			#else
 			glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_LUMINANCE_ALPHA, GL_FLOAT, &pixels[0]);
 			#endif
-			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 	}
 
@@ -478,7 +478,6 @@ void CSmfReadMap::UpdateShadingTexture() {
 
 	glBindTexture(GL_TEXTURE_2D, shadingTex);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, y, xsize, 1, GL_RGBA, GL_UNSIGNED_BYTE, &shadingTexPixelRow[0]);
-	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 

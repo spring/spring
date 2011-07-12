@@ -96,14 +96,14 @@ bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 		return true;
 	}
 	
-	// remove the files loaded from the archive to remove
+	// remove the files loaded from the archive-to-remove
 	for (std::map<std::string, FileData>::iterator f = files.begin(); f != files.end();) {
 		if (f->second.ar == ar) {
 			logOutput.Print(LOG_VFS_DETAIL, "%s (removing)", f->first.c_str());
 			f = set_erase(files, f);
-		}
-		else
+		} else {
 			 ++f;
+		}
 	}
 	delete ar;
 	archives.erase(archiveName);
@@ -206,15 +206,16 @@ std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir)
 	while (filesStart != filesEnd) {
 		const std::string path = filesystem.GetDirectory(filesStart->first);
 
-		// Test to see if this file start with the dir path
+		// Check if this file starts with the dir path
 		if (path.compare(0, dir.length(), dir) == 0) {
 
 			// Strip pathname
 			const std::string name = filesStart->first.substr(dir.length());
 
 			// Do not return files in subfolders
-			if ((name.find('/') == std::string::npos) &&
-			    (name.find('\\') == std::string::npos)) {
+			if ((name.find('/') == std::string::npos)
+					&& (name.find('\\') == std::string::npos))
+			{
 				ret.push_back(name);
 				logOutput.Print(LOG_VFS_DETAIL, "%s", name.c_str());
 			}
