@@ -18,6 +18,7 @@
 #include "thread_backtrace.h"
 #include "FileSystem/FileSystemHandler.h"
 #include "Game/GameVersion.h"
+#include "System/Log/ILog.h"
 #include "System/LogOutput.h"
 #include "System/maindefines.h" // for SNPRINTF
 #include "System/myTime.h"
@@ -253,7 +254,7 @@ static void TranslateStackTrace(std::vector<std::string>* lines, const std::vect
 		}
 	}
 	if (!addr2line_found) {
-		logOutput.Print(" addr2line not found!");
+		LOG_L(L_WARNING, " addr2line not found!");
 		logOutput.Flush();
 		return;
 	}
@@ -307,9 +308,9 @@ namespace CrashHandler
 	static void Stacktrace(bool* keepRunning, pthread_t* hThread = NULL, const char* threadName = NULL)
 	{
 		if (threadName) {
-			logOutput.Print("Stacktrace (%s):", threadName);
+			LOG_L(L_ERROR, "Stacktrace (%s):", threadName);
 		} else {
-			logOutput.Print("Stacktrace:");
+			LOG_L(L_ERROR, "Stacktrace:");
 		}
 
 		bool _keepRunning = false;
@@ -329,7 +330,7 @@ namespace CrashHandler
 			std::vector<void*> buffer(MAX_STACKTRACE_DEPTH + 2);
 			int numLines;
 			if (hThread) {
-				logOutput.Print("  (Note: This stacktrace is not 100%% accurate! It just gives an impression.)");
+				LOG_L(L_ERROR, "  (Note: This stacktrace is not 100%% accurate! It just gives an impression.)");
 				logOutput.Flush();
 				numLines = thread_backtrace(*hThread, &buffer[0], buffer.size());    //! stack pointers
 			} else {
@@ -349,7 +350,7 @@ namespace CrashHandler
 		}
 
 		if (stacktrace.empty()) {
-			logOutput.Print("  Unable to create stacktrace");
+			LOG_L(L_ERROR, "  Unable to create stacktrace");
 			return;
 		}
 
@@ -380,7 +381,7 @@ namespace CrashHandler
 
 			//! Linux Graphic drivers are known to fail with moderate OpenGL usage
 			if (containsOglSo) {
-				logOutput.Print("This stack trace indicates a problem with your graphic card driver. "
+				LOG_L(L_ERROR, "This stack trace indicates a problem with your graphic card driver. "
 						"Please try upgrading or downgrading it. "
 						"Specifically recommended is the latest driver, and one that is as old as your graphic card. "
 						"Also try lower graphic details and disabling Lua widgets in spring-settings.\n");
@@ -392,11 +393,11 @@ namespace CrashHandler
 				containedAIInterfaceSo = false;
 			}
 			if (containedAIInterfaceSo) {
-				logOutput.Print("This stack trace indicates a problem with an AI Interface library.");
+				LOG_L(L_ERROR, "This stack trace indicates a problem with an AI Interface library.");
 				*keepRunning = true;
 			}
 			if (containedSkirmishAISo) {
-				logOutput.Print("This stack trace indicates a problem with a Skirmish AI library.");
+				LOG_L(L_ERROR, "This stack trace indicates a problem with a Skirmish AI library.");
 				*keepRunning = true;
 			}
 
@@ -409,7 +410,7 @@ namespace CrashHandler
 		//! Print out the StackTrace
 		unsigned numLine = 0;
 		for (std::vector<std::string>::iterator it = stacktrace.begin(); it != stacktrace.end(); ++it) {
-			logOutput.Print("  <%u> %s", numLine++, it->c_str());
+			LOG_L(L_ERROR, "  <%u> %s", numLine++, it->c_str());
 		}
 		logOutput.Flush();
 	}
@@ -418,8 +419,8 @@ namespace CrashHandler
 	void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName)
 	{
 		if (!Threading::IsMainThread(thread)) {
-			logOutput.Print("Stacktrace (%s):", threadName.c_str());
-			logOutput.Print("  No Stacktraces for non-MainThread.");
+			LOG_L(L_ERROR, "Stacktrace (%s):", threadName.c_str());
+			LOG_L(L_ERROR, "  No Stacktraces for non-MainThread.");
 			return;
 		}
 		Stacktrace(NULL, &thread, threadName.c_str());
@@ -464,7 +465,7 @@ namespace CrashHandler
 			//! we should never get here
 			error = "Unknown signal";
 		}
-		logOutput.Print("%s in spring %s\n", error.c_str(), SpringVersion::GetFull().c_str());
+		LOG_L(L_ERROR, "%s in spring %s\n", error.c_str(), SpringVersion::GetFull().c_str());
 
 		//! print stacktrace
 		bool keepRunning = false;
@@ -485,11 +486,11 @@ namespace CrashHandler
 			{
 				//! try to cleanup
 				/*if (!containedAIInterfaceSo.empty()) {
-					//logOutput.Print("Trying to kill AI Interface library only ...\n");
+					//LOG_L(L_ERROR, "Trying to kill AI Interface library only ...\n");
 					// TODO
 					//cleanupOk = true;
 				} else if (!containedSkirmishAISo.empty()) {
-					//logOutput.Print("Trying to kill Skirmish AI library only ...\n");
+					//LOG_L(L_ERROR, "Trying to kill Skirmish AI library only ...\n");
 					// TODO
 					//cleanupOk = true;
 				}*/

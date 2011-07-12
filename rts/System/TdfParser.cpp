@@ -14,8 +14,8 @@
 
 #include "TdfParser.h"
 #include "tdf_grammar.hpp"
-#include "FileSystem/FileHandler.h"
-#include "LogOutput.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/Log/ILog.h"
 
 TdfParser::parse_error::parse_error(size_t l, size_t c, std::string const& f) throw()
 	: content_error("Parse error in " + f + " at line " + IntToString(l) + " column " + IntToString(c) + ".")
@@ -154,7 +154,8 @@ void TdfParser::parse_buffer(char const* buf, size_t size) {
 	for (std::list<std::string>::const_iterator it = junk_data.begin(), e = junk_data.end(); it !=e ; ++it) {
 		std::string temp = StringTrim(*it);
 		if (!temp.empty()) {
-			::logOutput.Print("TdfParser: Junk in "+ filename + ": " + temp);
+			LOG_L(L_WARNING, "TdfParser: Junk in %s: %s",
+					filename.c_str(), temp.c_str());
 		}
 	}
 
@@ -278,7 +279,8 @@ const TdfParser::valueMap_t& TdfParser::GetAllValues(std::string const& location
 	const std::vector<std::string>& loclist = GetLocationVector(lowerd);
 	sectionsMap_t::const_iterator sit = root_section.sections.find(loclist[0]);
 	if (sit == root_section.sections.end()) {
-		logOutput.Print ("Section " + loclist[0] + " missing in file " + filename);
+		LOG_L(L_WARNING, "Section %s missing in file %s",
+				loclist[0].c_str(), filename.c_str());
 		return emptymap;
 	}
 	TdfSection *sectionptr = sit->second;
@@ -288,7 +290,8 @@ const TdfParser::valueMap_t& TdfParser::GetAllValues(std::string const& location
 		searchpath += loclist[i];
 		sit = sectionptr->sections.find(loclist[i]);
 		if (sit == sectionptr->sections.end()) {
-			logOutput.Print ("Section " + searchpath + " missing in file " + filename);
+			LOG_L(L_WARNING, "Section %s missing in file %s",
+					searchpath.c_str(), filename.c_str());
 			return emptymap;
 		}
 		sectionptr = sit->second;
@@ -307,7 +310,8 @@ std::vector<std::string> TdfParser::GetSectionList(std::string const& location) 
 		for (unsigned int i = 0; i < loclist.size(); i++) {
 			searchpath += loclist[i];
 			if (sectionsptr->find(loclist[i]) == sectionsptr->end()) {
-				logOutput.Print("Section " + searchpath + " missing in file " + filename);
+				LOG_L(L_WARNING, "Section %s missing in file %s",
+						searchpath.c_str(), filename.c_str());
 				return returnvec;
 			}
 			sectionsptr = &sectionsptr->find(loclist[i])->second->sections;

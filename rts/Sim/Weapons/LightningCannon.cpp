@@ -67,9 +67,9 @@ bool CLightningCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 
 	dir /= length;
 
-	float g = ground->LineGroundCol(weaponMuzzlePos, pos);
-	if (g > 0 && g < length * 0.9f)
+	if (!HaveFreeLineOfFire(weaponMuzzlePos, dir, length)) {
 		return false;
+	}
 
 	if (avoidFeature && TraceRay::LineFeatureCol(weaponMuzzlePos, dir, length)) {
 		return false;

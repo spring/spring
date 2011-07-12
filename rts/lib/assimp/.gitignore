@@ -1,0 +1,21 @@
+# Directories
+/tools
+/contrib/cppunit-*
+/doc
+/code/res
+/port
+/samples
+/scripts
+/test
+/packaging
+/workspaces
+# Files
+/*.url
+/INSTALL
+/CREDITS
+/CHANGES
+/assimp.pc.in
+/cmake-modules
+CMakeFiles
+cmake_install.cmake
+Makefile

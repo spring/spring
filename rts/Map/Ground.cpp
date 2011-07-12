@@ -26,12 +26,12 @@ static inline float InterpolateHeight(float x, float y, const float* heightmap)
 	//! TL __________ TR
 	//!    |        /|
 	//!    | dx+dy / |
-	//!    |  <1  /  |
+	//!    | \<1  /  |
 	//!    |     /   |
 	//!    |    /    |
 	//!    |   /     |
 	//!    |  / dx+dy|
-	//!    | /   >=1 |
+	//!    | /  \>=1 |
 	//!    |/        |
 	//! BL ---------- BR
 
@@ -93,13 +93,13 @@ static inline float LineGroundSquareCol(
 	cornerVertex.z = ys * SQUARE_SIZE;
 	cornerVertex.y = heightmap[ys * (gs->mapx + 1) + xs];
 
-	//! project <to - cornerVertex> vector onto the TL-normal
-	//! if <to> lies below the terrain, this will be negative
+	//! project \<to - cornerVertex\> vector onto the TL-normal
+	//! if \<to\> lies below the terrain, this will be negative
 	float toFacePlaneDist = (to - cornerVertex).dot(faceNormalTL);
 	float fromFacePlaneDist = 0.0f;
 
 	if (toFacePlaneDist <= 0.0f) {
-		//! project <from - cornerVertex> onto the TL-normal
+		//! project \<from - cornerVertex\> onto the TL-normal
 		fromFacePlaneDist = (from - cornerVertex).dot(faceNormalTL);
 
 		if (fromFacePlaneDist != toFacePlaneDist) {
@@ -118,12 +118,12 @@ static inline float LineGroundSquareCol(
 	cornerVertex.z += SQUARE_SIZE;
 	cornerVertex.y = heightmap[(ys + 1) * (gs->mapx + 1) + (xs + 1)];
 
-	//! project <to - cornerVertex> vector onto the TL-normal
-	//! if <to> lies below the terrain, this will be negative
+	//! project \<to - cornerVertex\> vector onto the TL-normal
+	//! if \<to\> lies below the terrain, this will be negative
 	toFacePlaneDist = (to - cornerVertex).dot(faceNormalBR);
 
 	if (toFacePlaneDist <= 0.0f) {
-		//! project <from - cornerVertex> onto the BR-normal
+		//! project \<from - cornerVertex\> onto the BR-normal
 		fromFacePlaneDist = (from - cornerVertex).dot(faceNormalBR);
 
 		if (fromFacePlaneDist != toFacePlaneDist) {
@@ -383,13 +383,11 @@ const float3& CGround::GetNormal(float x, float y, bool synced) const
 
 	const float3* normalmap = readmap->GetCenterNormalsSynced();
 
-	/* TODO
 	#ifdef USE_UNSYNCED_HEIGHTMAP
 	if (!synced) {
 		normalmap = readmap->GetCenterNormalsUnsynced();
 	}
 	#endif
-	*/
 
 	return normalmap[xsquare + ysquare * gs->mapx];
 }
@@ -412,7 +410,6 @@ float CGround::GetSlope(float x, float y, bool synced) const
 	#endif
 	*/
 
-	// return (1.0f - readmap->GetCenterNormalsSynced()[int(x) / SQUARE_SIZE + int(y) / SQUARE_SIZE * gs->mapx].y);
 	return slopemap[xhsquare + yhsquare * gs->hmapx];
 }
 
@@ -461,13 +458,11 @@ float3 CGround::GetSmoothNormal(float x, float y, bool synced) const
 
 	const float3* normalmap = readmap->GetCenterNormalsSynced();
 
-	/* TODO
 	#ifdef USE_UNSYNCED_HEIGHTMAP
 	if (!synced) {
 		normalmap = readmap->GetCenterNormalsUnsynced();
 	}
 	#endif
-	*/
 
 	const float3& n1 = normalmap[sy  * gs->mapx + sx ] * ifx * ify;
 	const float3& n2 = normalmap[sy  * gs->mapx + sx2] *  fx * ify;

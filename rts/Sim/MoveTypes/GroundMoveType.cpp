@@ -24,7 +24,6 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/CommandAI/MobileCAI.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
@@ -467,7 +466,6 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 
 		if (!fpsMode && turnDeltaHeading != 0) {
 			// only auto-adjust speed for turns when not in FPS mode
-			const bool moreCommands = owner->commandAI->HasMoreMoveCommands();
 			const bool startBreaking = (haveFinalWaypoint && !atGoal);
 
 			const float reqTurnAngle = reversing?

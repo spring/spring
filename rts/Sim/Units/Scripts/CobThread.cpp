@@ -213,21 +213,20 @@ int CCobThread::POP(void)
 		return 0;
 }
 
-//Returns -1 if this thread is dead and needs to be killed
-int CCobThread::Tick(int deltaTime)
+// Returns false if this thread is dead and needs to be killed
+bool CCobThread::Tick(int deltaTime)
 {
 	if (state == Sleep) {
 		logOutput.Print("CobError: sleeping thread ticked!");
 	}
 	if (state == Dead || !owner) {
-		return -1;
+		return false;
 	}
 
 	state = Run;
 
 	int r1, r2, r3, r4, r5, r6;
 	vector<int> args;
-	CCobThread *thread;
 
 	execTrace.clear();
 	//list<int>::iterator ei;
@@ -266,7 +265,7 @@ int CCobThread::Tick(int deltaTime)
 				if (COB_DEBUG_FILTER)
 					logOutput.Print("%s sleeping for %d ms", script.scriptNames[callStack.back().functionId].c_str(), r1);
 #endif
-				return 0;
+				return true;
 			case SPIN:
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
@@ -293,7 +292,7 @@ int CCobThread::Tick(int deltaTime)
 					state = Dead;
 					//callStack.pop_back();
 					//Leave values intact on stack in case caller wants to check them
-					return -1;
+					return false;
 				}
 
 				PC = callStack.back().returnAddr;
@@ -367,7 +366,7 @@ int CCobThread::Tick(int deltaTime)
 			case POP_STACK:
 				POP();
 				break;
-			case START:
+			case START: {
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
 
@@ -383,7 +382,7 @@ int CCobThread::Tick(int deltaTime)
 					args.push_back(r4);
 				}
 
-				thread = new CCobThread(script, owner);
+				CCobThread* thread = new CCobThread(script, owner);
 				thread->Start(r1, args, true);
 
 				//Seems that threads should inherit signal mask from creator
@@ -394,7 +393,7 @@ int CCobThread::Tick(int deltaTime)
 					logOutput.Print("Starting %s %d", script.scriptNames[r1].c_str(), signalMask);
 #endif
 
-				break;
+			} break;
 			case CREATE_LOCAL_VAR:
 				if (paramCount == 0) {
 					stack.push_back(0);
@@ -619,7 +618,7 @@ int CCobThread::Tick(int deltaTime)
 				//logOutput.Print("Waiting for turn on piece %s around axis %d", script.pieceNames[r1].c_str(), r2);
 				if (owner->AddAnimListener(CCobInstance::ATurn, r1, r2, this)) {
 					state = WaitTurn;
-					return 0;
+					return true;
 				}
 				else
 					break;
@@ -629,7 +628,7 @@ int CCobThread::Tick(int deltaTime)
 				//logOutput.Print("Waiting for move on piece %s on axis %d", script.pieceNames[r1].c_str(), r2);
 				if (owner->AddAnimListener(CCobInstance::AMove, r1, r2, this)) {
 					state = WaitMove;
-					return 0;
+					return true;
 				}
 				break;
 			case SET:
@@ -713,11 +712,11 @@ int CCobThread::Tick(int deltaTime)
 					++ei;
 				}
 				state = Dead;
-				return -1;
+				return false;
 		}
 	}
 
-	return 0;
+	return true;
 }
 
 // Shows an errormessage which includes the current state of the script interpreter

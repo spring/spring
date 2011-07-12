@@ -861,6 +861,12 @@ bool CGame::Update()
 		extern int backupSize;
 		luaExportSize = backupSize;
 		backupSize = 0;
+		luaLockTime = (int)GML_LOCK_TIME();
+		float amount = (showMTInfo <= 2) ? (float)luaLockTime / 10.0f : (float)luaExportSize / 1000.0f;
+		if (amount >= 0.1f) {
+			if((mtInfoCtrl = std::min(mtInfoCtrl + 1, 5)) == 3) mtInfoCtrl = 5;
+		}
+		else if((mtInfoCtrl = std::max(mtInfoCtrl - 1, 0)) == 2) mtInfoCtrl = 0;
 #endif
 		if (!gameServer) {
 			consumeSpeed = ((float)(GAME_SPEED * gs->speedFactor + leastQue - 2));
@@ -1210,18 +1216,8 @@ bool CGame::Draw() {
 		}
 
 #if defined(USE_GML) && GML_ENABLE_SIM
-		int cit = (int)GML_LOCK_TIME() * (int)fps;
-		if (cit > luaLockTime)
-			++luaLockTime;
-		else if (cit < luaLockTime)
-			--luaLockTime;
-
 		if (showMTInfo == 1 || showMTInfo == 2) {
 			float lockPercent = (float)luaLockTime / 10.0f;
-			if (lockPercent >= 0.1f) {
-				if((mtInfoCtrl = std::min(mtInfoCtrl + 1, 5)) == 3) mtInfoCtrl = 5;
-			}
-			else if((mtInfoCtrl = std::max(mtInfoCtrl - 1, 0)) == 2) mtInfoCtrl = 0;
 			if (mtInfoCtrl >= 3) {
 				char buf[40];
 				SNPRINTF(buf, sizeof(buf), "LUA-SYNC-CPU(MT): %2.1f%%", lockPercent);
@@ -1233,10 +1229,6 @@ bool CGame::Draw() {
 		}
 		else if (showMTInfo == 3) {
 			float ek = (float)luaExportSize / 1000.0f;
-			if (ek >= 0.1f) {
-				if((mtInfoCtrl = std::min(mtInfoCtrl + 1, 5)) == 3) mtInfoCtrl = 5;
-			}
-			else if ((mtInfoCtrl = std::max(mtInfoCtrl - 1, 0)) == 2) mtInfoCtrl = 0;
 			if (mtInfoCtrl >= 3) {
 				char buf[40];
 				SNPRINTF(buf, sizeof(buf), "LUA-EXP-SIZE(MT): %2.1fK", ek);
@@ -1859,6 +1851,8 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 
 
 void CGame::StartSkip(int toFrame) {
+	return; // FIXME: desyncs
+
 	if (skipping) {
 		logOutput.Print("ERROR: skipping appears to be busted (%i)\n", skipping);
 	}
@@ -1872,7 +1866,7 @@ void CGame::StartSkip(int toFrame) {
 	}
 
 	skipTotalFrames = skipEndFrame - skipStartFrame;
-	skipSeconds = (float)(skipTotalFrames) / (float)GAME_SPEED;
+	skipSeconds = skipTotalFrames / float(GAME_SPEED);
 
 	skipSoundmute = sound->IsMuted();
 	if (!skipSoundmute)
@@ -1890,6 +1884,7 @@ void CGame::StartSkip(int toFrame) {
 }
 
 void CGame::EndSkip() {
+	return; // FIXME
 	skipping = false;
 
 	gu->gameTime    += skipSeconds;

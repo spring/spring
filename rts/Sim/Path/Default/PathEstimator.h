@@ -34,10 +34,6 @@ public:
 	 * @param BLOCK_SIZE
 	 *   The resolution of the estimator, given in mapsquares.
 	 *
-	 * @param moveMathOpt
-	 *   What level of blocking the estimator should care of. Based on the
-	 *   available options given in CMoveMath.
-	 *
 	 * @param cacheFileName
 	 *   Name of the file on disk where pre-calculated data is stored.
 	 *   The name given are added to the end of the filename, after the

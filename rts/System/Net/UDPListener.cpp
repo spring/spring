@@ -20,7 +20,7 @@
 #include "ProtocolDef.h"
 #include "UDPConnection.h"
 #include "Socket.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Platform/errorhandler.h"
 
 namespace netcode
@@ -42,7 +42,7 @@ UDPListener::UDPListener(int port, const std::string& ip)
 	if (!acceptNewConnections) {
 		handleerror(NULL, "[UDPListener] error: unable to bind UDP port, see log for details.", "Network error", MBF_OK | MBF_EXCL);
 	} else {
-		LogObject() << "[UDPListener] succesfully bound socket on port " << port;
+		LOG("[UDPListener] successfully bound socket on port %i", port);
 	}
 }
 
@@ -76,7 +76,7 @@ bool UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::string& 
 		}
 
 		if (netcode::IsLoopbackAddress(addr)) {
-			LogObject() << "WARNING: Opening socket on loopback address. Other users will not be able to connect!";
+			LOG_L(L_WARNING, "Opening socket on loopback address. Other users will not be able to connect!");
 		}
 
 		if (!addr.is_v6()) {
@@ -89,7 +89,9 @@ bool UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::string& 
 			}
 		}
 
-		LogObject() << "Binding UDP socket to IP " <<  (addr.is_v6() ? "(v6)" : "(v4)") << " " << addr << " Port " << port;
+		LOG("Binding UDP socket to IP %s %s Port %i",
+				(addr.is_v6() ? "(v6)" : "(v4)"), addr.to_string().c_str(),
+				port);
 		(*socket)->bind(ip::udp::endpoint(addr, port));
 	} catch (std::runtime_error& e) { // includes also boost::system::system_error, as it inherits from runtime_error
 		socket->reset();
@@ -101,7 +103,8 @@ bool UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::string& 
 	const bool isBound = errorMsg.empty();
 
 	if (!isBound) {
-		LogObject() << "Failed to bind UDP socket on IP " << ip << ", port " << port << ": " << errorMsg;
+		LOG_L(L_ERROR, "Failed to bind UDP socket on IP %s, port %i: %s",
+				ip.c_str(), port, errorMsg.c_str());
 	}
 
 	return isBound;
@@ -163,7 +166,9 @@ void UDPListener::Update()
 			}
 			else
 			{
-				LogObject() << "Dropping packet from unknown IP: [" << sender_endpoint.address() << "]:" << sender_endpoint.port();
+				LOG_L(L_WARNING, "Dropping packet from unknown IP: [%s]:%i",
+						sender_endpoint.address().to_string().c_str(),
+						sender_endpoint.port());
 			}
 		}
 	}

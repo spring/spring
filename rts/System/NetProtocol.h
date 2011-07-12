@@ -62,7 +62,7 @@ public:
 
 	/**
 	 * @brief Deletes a packet from the buffer
-	 * @param queue index number
+	 * @param index queue index number
 	 * useful for messages that skips queuing and needs to be processed immediately
 	 */
 	void DeleteBufferPacketAt(unsigned index);

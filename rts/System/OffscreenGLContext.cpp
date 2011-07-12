@@ -5,7 +5,6 @@
 #include "OffscreenGLContext.h"
 
 #include "Exceptions.h"
-#include "LogOutput.h"
 #include "maindefines.h"
 #include "System/Platform/errorhandler.h"
 

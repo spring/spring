@@ -84,9 +84,7 @@ void CCobEngine::TickThread(int deltaTime, CCobThread* thread)
 {
 	curThread = thread; // for error messages originating in CUnitScript
 
-	int res = thread->Tick(deltaTime);
-
-	if (res == -1)
+	if (!thread->Tick(deltaTime))
 		delete thread;
 
 	curThread = NULL;
@@ -104,7 +102,7 @@ void CCobEngine::Tick(int deltaTime)
 #endif
 
 	// Advance all running threads
-	for (std::list<CCobThread *>::iterator i = running.begin(); i != running.end(); ++i) {
+	for (std::list<CCobThread*>::iterator i = running.begin(); i != running.end(); ++i) {
 		//logOutput.Print("Now 1running %d: %s", GCurrentTime, (*i)->GetName().c_str());
 #ifdef _CONSOLE
 		printf("----\n");
@@ -122,13 +120,14 @@ void CCobEngine::Tick(int deltaTime)
 	for (std::list<CCobThread *>::iterator i = wantToRun.begin(); i != wantToRun.end(); ++i) {
 		running.push_front(*i);
 	}
+
 	wantToRun.clear();
 
 	//Check on the sleeping threads
 	if (!sleeping.empty()) {
-		CCobThread *cur = sleeping.top();
-		while ((cur != NULL) && (cur->GetWakeTime() < GCurrentTime)) {
+		CCobThread* cur = sleeping.top();
 
+		while ((cur != NULL) && (cur->GetWakeTime() < GCurrentTime)) {
 			// Start with removing the executing thread from the queue
 			sleeping.pop();
 
@@ -146,6 +145,7 @@ void CCobEngine::Tick(int deltaTime)
 			} else {
 				logOutput.Print("CobError: Sleeping thread strange state %d", cur->state);
 			}
+
 			if (!sleeping.empty())
 				cur = sleeping.top();
 			else

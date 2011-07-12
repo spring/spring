@@ -124,7 +124,7 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 
 	//! Create a logger for debugging model loading issues
 	Assimp::DefaultLogger::create("",Assimp::Logger::VERBOSE);
-	const unsigned int severity = Assimp::Logger::DEBUGGING|Assimp::Logger::INFO|Assimp::Logger::ERR|Assimp::Logger::WARN;
+	const unsigned int severity = Assimp::Logger::Debugging|Assimp::Logger::Info|Assimp::Logger::Err|Assimp::Logger::Warn;
 	Assimp::DefaultLogger::get()->attachStream( new AssLogStream(), severity );
 
 	//! Give the importer an IO class that handles Spring's VFS

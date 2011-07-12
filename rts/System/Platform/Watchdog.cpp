@@ -16,6 +16,7 @@
 
 #include "Game/GameVersion.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/Log/ILog.h"
 #include "System/LogOutput.h"
 #include "System/maindefines.h"
 #include "System/myTime.h"
@@ -84,12 +85,12 @@ namespace Watchdog
 
 				if (spring_istime(curwdt) && curtime > curwdt && (curtime - curwdt) > hangTimeout) {
 					if (!hangDetected) {
-						logOutput.Print("[Watchdog] Hang detection triggered for Spring %s.", SpringVersion::GetFull().c_str());
+						LOG_L(L_WARNING, "[Watchdog] Hang detection triggered for Spring %s.", SpringVersion::GetFull().c_str());
 #ifdef USE_GML
-						logOutput.Print("MT with %d threads.", gmlThreadCount);
+						LOG_L(L_WARNING, "MT with %d threads.", gmlThreadCount);
 #endif
 					}
-					logOutput.Print("  (in thread: %s)", threadNames[i]);
+					LOG_L(L_WARNING, "  (in thread: %s)", threadNames[i]);
 
 					hangDetected = true;
 					th_info->timer = curtime;
@@ -121,7 +122,7 @@ namespace Watchdog
 		boost::mutex::scoped_lock lock(wdmutex);
 
 		if (num >= WDT_LAST || registeredThreads[num]->numreg) {
-			logOutput.Print("[Watchdog::RegisterThread] Invalid thread number");
+			LOG_L(L_ERROR, "[Watchdog::RegisterThread] Invalid thread number");
 			return;
 		}
 
@@ -140,7 +141,7 @@ namespace Watchdog
 		if (i >= WDT_LAST)
 			i = inact;
 		if (i >= WDT_LAST) {
-			logOutput.Print("[Watchdog::RegisterThread] Internal error");
+			LOG_L(L_ERROR, "[Watchdog::RegisterThread] Internal error");
 			return;
 		}
 		registeredThreads[num] = &registeredThreadsData[i];
@@ -163,7 +164,7 @@ namespace Watchdog
 
 		WatchDogThreadInfo* th_info;
 		if (num >= WDT_LAST || !(th_info = registeredThreads[num])->numreg) {
-			logOutput.Print("[Watchdog::DeregisterThread] Invalid thread number");
+			LOG_L(L_ERROR, "[Watchdog::DeregisterThread] Invalid thread number");
 			return;
 		}
 		threadSlots[num].primary = false;
@@ -193,7 +194,7 @@ namespace Watchdog
 				break;
 		WatchDogThreadInfo* th_info;
 		if (num >= WDT_LAST || !(th_info = registeredThreads[num])->numreg) {
-			logOutput.Print("[Watchdog::ClearTimer] Invalid thread %d", num);
+			LOG_L(L_ERROR, "[Watchdog::ClearTimer] Invalid thread %d", num);
 			return;
 		}
 
@@ -208,7 +209,7 @@ namespace Watchdog
 
 		WatchDogThreadInfo* th_info;
 		if (num >= WDT_LAST || !(th_info = registeredThreads[num])->numreg) {
-			logOutput.Print("[Watchdog::ClearTimer] Invalid thread number %d", num);
+			LOG_L(L_ERROR, "[Watchdog::ClearTimer] Invalid thread number %d", num);
 			return;
 		}
 
@@ -224,7 +225,7 @@ namespace Watchdog
 		unsigned int num;
 		WatchDogThreadInfo* th_info;
 		if (i == threadNameToNum.end() || (num = i->second) >= WDT_LAST || !(th_info = registeredThreads[num])->numreg) {
-			logOutput.Print("[Watchdog::ClearTimer] Invalid thread name");
+			LOG_L(L_ERROR, "[Watchdog::ClearTimer] Invalid thread name");
 			return;
 		}
 
@@ -265,7 +266,7 @@ namespace Watchdog
 			f.close();
 			std::string str(buf);
 			if (str.find("gdb") != std::string::npos) {
-				logOutput.Print("[Watchdog] disabled (gdb detected)");
+				LOG("[Watchdog] disabled (gdb detected)");
 				return;
 			}
 		}
@@ -274,7 +275,7 @@ namespace Watchdog
 
 		//! HangTimeout = -1 to force disable hang detection
 		if (hangTimeoutSecs < 0) {
-			logOutput.Print("[Watchdog] disabled");
+			LOG("[Watchdog] disabled");
 			return;
 		}
 		if (hangTimeoutSecs == 0)
@@ -285,7 +286,7 @@ namespace Watchdog
 		//! start the watchdog thread
 		hangDetectorThread = new boost::thread(&HangDetectorLoop);
 
-		logOutput.Print("[Watchdog] Installed (timeout: %isec)", hangTimeoutSecs);
+		LOG("[Watchdog] Installed (timeout: %isec)", hangTimeoutSecs);
 	}
 
 

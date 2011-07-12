@@ -32,42 +32,46 @@ ADD_DEFINITIONS(-DHEADLESS)
 ADD_DEFINITIONS(-DNO_SOUND)
 ADD_DEFINITIONS(-DBITMAP_NO_OPENGL)
 
+set(ENGINE_SRC_ROOT "../../rts")
 
 INCLUDE_DIRECTORIES(${DEVIL_INCLUDE_DIR})
-INCLUDE_DIRECTORIES(../../rts/lib/lua/include)
-INCLUDE_DIRECTORIES(../../rts/lib/7zip)
-INCLUDE_DIRECTORIES(../../rts)
-INCLUDE_DIRECTORIES(../../rts/System)
+INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT}/lib/lua/include)
+INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT}/lib/7zip)
+INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT})
+INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT}/System)
+
 
 set(main_files
-	../../rts/System/Config/ConfigHandler
-	../../rts/System/Config/ConfigLocater
-	../../rts/System/Config/ConfigSource
-	../../rts/System/Config/ConfigVariable
-	../../rts/System/Platform/Misc
-	../../rts/System/Platform/ScopedFileLock
-	../../rts/System/LogOutput
-	../../rts/System/TdfParser
-	../../rts/System/Info
-	../../rts/System/Option
-	../../rts/System/Util
-	../../rts/System/float4
-	../../rts/Sim/Misc/SideParser
-	../../rts/Game/GameVersion
-	../../rts/ExternalAI/LuaAIImplHandler
-	../../rts/Lua/LuaParser
-	../../rts/Lua/LuaUtils
-	../../rts/Lua/LuaIO
-	../../rts/Map/MapParser
-	../../rts/Map/SMF/SMFMapFile
-	../../rts/Rendering/Textures/Bitmap
+	"${ENGINE_SRC_ROOT}/System/Config/ConfigHandler.cpp"
+	"${ENGINE_SRC_ROOT}/System/Config/ConfigLocater.cpp"
+	"${ENGINE_SRC_ROOT}/System/Config/ConfigSource.cpp"
+	"${ENGINE_SRC_ROOT}/System/Config/ConfigVariable.cpp"
+	"${ENGINE_SRC_ROOT}/System/Config/ConfigLocater.cpp"
+	"${ENGINE_SRC_ROOT}/System/Platform/Misc.cpp"
+	"${ENGINE_SRC_ROOT}/System/Platform/ScopedFileLock.cpp"
+	"${ENGINE_SRC_ROOT}/System/LogOutput.cpp"
+	"${ENGINE_SRC_ROOT}/System/TdfParser.cpp"
+	"${ENGINE_SRC_ROOT}/System/Info.cpp"
+	"${ENGINE_SRC_ROOT}/System/Option.cpp"
+	"${ENGINE_SRC_ROOT}/System/Util.cpp"
+	"${ENGINE_SRC_ROOT}/System/float4.cpp"
+	"${ENGINE_SRC_ROOT}/Sim/Misc/SideParser.cpp"
+	"${ENGINE_SRC_ROOT}/Game/GameVersion.cpp"
+	"${ENGINE_SRC_ROOT}/ExternalAI/LuaAIImplHandler.cpp"
+	"${ENGINE_SRC_ROOT}/Lua/LuaParser.cpp"
+	"${ENGINE_SRC_ROOT}/Lua/LuaUtils.cpp"
+	"${ENGINE_SRC_ROOT}/Lua/LuaIO.cpp"
+	"${ENGINE_SRC_ROOT}/Map/MapParser.cpp"
+	"${ENGINE_SRC_ROOT}/Map/SMF/SMFMapFile.cpp"
+	"${ENGINE_SRC_ROOT}/Rendering/Textures/Bitmap.cpp"
 	)
 if (WIN32)
-	LIST(APPEND main_files ../../rts/System/Platform/Win/WinVersion)
+	LIST(APPEND main_files "${ENGINE_SRC_ROOT}/System/Platform/Win/WinVersion.cpp")
 endif (WIN32)
 
 set(unitsync_files
 	${sources_engine_System_FileSystem}
+	${sources_engine_System_Log}
 	${main_files}
 	unitsync
 	LuaParserAPI

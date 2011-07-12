@@ -90,7 +90,7 @@ public:
 	inline unsigned int GetTexHeight() const { return texHeight; }
 
 	static const char ColorCodeIndicator = '\xFF'; //FIXME use a non-printable char? (<32)
-	static const char ColorResetIndicator = '\x08'; //! =: '\b'
+	static const char ColorResetIndicator = '\x08'; //! =: '\\b'
 
 public:
 	typedef std::vector<float4> ColorMap;
@@ -191,7 +191,7 @@ private:
 	float4 textColor;
 	float4 outlineColor;
 
-	//! ::ColorResetIndicator will reset to those (they are the colors set when glPrint was called)
+	//! \::ColorResetIndicator will reset to those (they are the colors set when glPrint was called)
 	float4 baseTextColor;
 	float4 baseOutlineColor;
 };

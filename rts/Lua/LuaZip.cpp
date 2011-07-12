@@ -383,7 +383,7 @@ static int read_chars(lua_State *L, ZipFileReaderUserdata* f, size_t n)
 /**
  * Similar to Lua's built-in (I/O library) read function.
  *
- * Except that "*number" and *line" aren't supported; only "*all" and <num> are
+ * Except that "*number" and *line" aren't supported; only "*all" and \<num\> are
  * supported. The special case read(0) (test for end of file) is handled.
  *
  * Note that reading is only possible after a chunk has been opened using

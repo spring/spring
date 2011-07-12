@@ -51,6 +51,7 @@ INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/7zip)
 ### Assemble sources
 SET(system_files
 	${sources_engine_System_FileSystem}
+	${sources_engine_System_Log}
 	${sources_engine_System_Net}
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigHandler
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigLocater

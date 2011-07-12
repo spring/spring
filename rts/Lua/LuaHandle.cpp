@@ -32,6 +32,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
+#include "Sim/Features/FeatureDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Weapons/Weapon.h"
@@ -1261,6 +1262,9 @@ void CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 		LUA_CALL_IN_CHECK(L);
 		lua_checkstack(L, 4);
 
+		if (!watchUnitDefs[collider->unitDef->id]) { return; }
+		if (!watchUnitDefs[collidee->unitDef->id]) { return; }
+
 		static const LuaHashString cmdStr("UnitUnitCollision");
 		const int errFunc = SetupTraceback(L);
 
@@ -1285,6 +1289,9 @@ void CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* col
 		LUA_CALL_IN_CHECK(L);
 		lua_checkstack(L, 4);
 
+		if (!watchUnitDefs[collider->unitDef->id]) { return; }
+		if (!watchFeatureDefs[collidee->def->id]) { return; }
+
 		static const LuaHashString cmdStr("UnitFeatureCollision");
 		const int errFunc = SetupTraceback(L);
 
@@ -1304,6 +1311,10 @@ void CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* col
 
 void CLuaHandle::UnitMoveFailed(const CUnit* unit)
 {
+	if (!watchUnitDefs[unit->unitDef->id]) {
+		return;
+	}
+
 	LUA_UNIT_BATCH_PUSH(,UNIT_MOVE_FAILED, unit);
 	static const LuaHashString cmdStr("UnitMoveFailed");
 	UnitCallIn(cmdStr, unit);
@@ -1318,9 +1329,9 @@ void CLuaHandle::FeatureCreated(const CFeature* feature)
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 5);
 
-	int errfunc = SetupTraceback(L);
-
+	const int errfunc = SetupTraceback(L);
 	static const LuaHashString cmdStr("FeatureCreated");
+
 	if (!cmdStr.GetGlobalFunc(L)) {
 		// remove error handler
 		if (errfunc) lua_pop(L, 1);
@@ -1369,7 +1380,7 @@ void CLuaHandle::ProjectileCreated(const CProjectile* p)
 		const WeaponDef* wd = wp->weaponDef;
 
 		// if this weapon-type is not being watched, bail
-		if (wd == NULL || !watchWeapons[wd->id]) {
+		if (wd == NULL || !watchWeaponDefs[wd->id]) {
 			return;
 		}
 	}
@@ -1403,7 +1414,7 @@ void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 		const WeaponDef* wd = wp->weaponDef;
 
 		// if this weapon-type is not being watched, bail
-		if (wd == NULL || !watchWeapons[wd->id]) {
+		if (wd == NULL || !watchWeaponDefs[wd->id]) {
 			return;
 		}
 	}
@@ -1428,10 +1439,10 @@ void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 
 bool CLuaHandle::Explosion(int weaponDefID, const float3& pos, const CUnit* owner)
 {
-	if ((weaponDefID >= (int)watchWeapons.size()) || (weaponDefID < 0)) {
+	if ((weaponDefID >= (int)watchWeaponDefs.size()) || (weaponDefID < 0)) {
 		return false;
 	}
-	if (!watchWeapons[weaponDefID]) {
+	if (!watchWeaponDefs[weaponDefID]) {
 		return false;
 	}
 
@@ -1514,11 +1525,11 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 #endif
 	GML_DRCMUTEX_LOCK(lua); // ExecuteUnitEventBatch
 
-	if(Threading::IsSimThread())
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(false);
-	for(std::vector<LuaUnitEvent>::iterator i = lueb.begin(); i != lueb.end(); ++i) {
+	for (std::vector<LuaUnitEvent>::iterator i = lueb.begin(); i != lueb.end(); ++i) {
 		LuaUnitEvent &e = *i;
-		switch(e.id) {
+		switch (e.id) {
 			case UNIT_FINISHED:
 				UnitFinished(e.unit1);
 				break;
@@ -1608,7 +1619,7 @@ void CLuaHandle::ExecuteUnitEventBatch() {
 				break;
 		}
 	}
-	if(Threading::IsSimThread())
+	if (Threading::IsSimThread())
 		Threading::SetBatchThread(true);
 }
 
