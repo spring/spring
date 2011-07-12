@@ -168,13 +168,15 @@ bool CStdExplosionGenerator::Explosion(
 	CUnit* owner,
 	float gfxMod,
 	CUnit* hit,
-	const float3 &dir
+	const float3& dir
 ) {
 	const float groundHeight = ground->GetHeightReal(pos.x, pos.z);
 	const float altitude = pos.y - groundHeight;
 
-	const bool waterExplosion = (pos.y <= -3.0f && pos.y > groundHeight);
-	const bool uwExplosion = (pos.y < -15.0f && pos.y > groundHeight);
+	const bool airExplosion    = (altitude >= -1.0f && pos.y >= 20.0f);
+	const bool groundExplosion = (altitude >= -1.0f && pos.y >=  0.0f);
+	const bool waterExplosion  = (altitude >= -1.0f && pos.y >= -3.0f);
+	const bool uwExplosion     = (altitude >= -1.0f && pos.y <  -3.0f);
 
 	damage /= 20.0f;
 
@@ -198,8 +200,6 @@ bool CStdExplosionGenerator::Explosion(
 	new CHeatCloudProjectile(npos, float3(0.0f, 0.3f, 0.0f), 8 + sqrt(damage) * 0.5f, 7 + damage * 2.8f, owner);
 
 	if (ph->particleSaturation < 1.0f) {
-		const bool airExplosion = (pos.y > 0.0f && altitude > 20.0f);
-
 		// turn off lots of graphic only particles when we have more particles than we want
 		float smokeDamage = damage;
 
@@ -233,7 +233,7 @@ bool CStdExplosionGenerator::Explosion(
 			new CSmokeProjectile2(pos, npos, speed, time, sqrt(smokeDamage) *4, 0.4f, owner, 0.6f);
 		}
 
-		if (!airExplosion && !uwExplosion && !waterExplosion) {
+		if (groundExplosion) {
 			const int numDirt = std::min(20.0f, damage * 0.8f);
 			const float3 color(0.15f, 0.1f, 0.05f);
 
@@ -255,8 +255,9 @@ bool CStdExplosionGenerator::Explosion(
 			}
 		}
 		if (!airExplosion && !uwExplosion && waterExplosion) {
-			int numDirt = std::min(40.f, damage*0.8f);
-			float3 color(1.0f, 1.0f, 1.0f);
+			const int numDirt = std::min(40.f, damage*0.8f);
+			const float3 color(1.0f, 1.0f, 1.0f);
+
 			for (int a = 0; a < numDirt; ++a) {
 				float3 speed((0.5f - gu->usRandFloat()) * 0.2f, a * 0.1f + gu->usRandFloat()*0.8f, (0.5f - gu->usRandFloat()) * 0.2f);
 				speed *= 0.7f + std::min((float)30, damage) / 30;
@@ -264,11 +265,9 @@ bool CStdExplosionGenerator::Explosion(
 				new CDirtProjectile(npos, speed, 90 + damage*2, 2.0f + sqrt(damage)*2.0f, 0.3f, 0.99f, owner, color);
 			}
 		}
-		if (damage>=20 && !uwExplosion && !airExplosion) {
-			int numDebris = gu->usRandInt() % 6;
-			if (numDebris > 0) {
-				numDebris += 3 + (int) (damage * 0.04f);
-			}
+		if (damage >= 20.0f && !uwExplosion && !airExplosion) {
+			const int numDebris = (gu->usRandInt() % 6) + 3 + int(damage * 0.04f);
+
 			for (int a = 0; a < numDebris; ++a) {
 				float3 speed;
 				if (altitude < 4.0f) {
@@ -282,8 +281,9 @@ bool CStdExplosionGenerator::Explosion(
 			}
 		}
 		if (uwExplosion) {
-			int numBubbles = (int) (damage * 0.7f);
-			for (int a = 0 ;a < numBubbles; ++a) {
+			const int numBubbles = (damage * 0.7f);
+
+			for (int a = 0; a < numBubbles; ++a) {
 				new CBubbleProjectile(pos + gu->usRandVector()*radius*0.5f,
 						gu->usRandVector()*0.2f + float3(0.0f, 0.2f, 0.0f),
 						damage*2 + gu->usRandFloat()*damage,
@@ -294,7 +294,7 @@ bool CStdExplosionGenerator::Explosion(
 			}
 		}
 		if (waterExplosion && !uwExplosion && !airExplosion) {
-			int numWake = (int) (damage * 0.5f);
+			const int numWake = (damage * 0.5f);
 			for (int a = 0; a < numWake; ++a) {
 				new CWakeProjectile(pos + gu->usRandVector()*radius*0.2f,
 						gu->usRandVector()*radius*0.003f,
@@ -802,15 +802,12 @@ bool CCustomExplosionGenerator::Explosion(
 
 	const float groundHeight = ground->GetHeightReal(pos.x, pos.z);
 	const float altitude = pos.y - groundHeight;
-
 	unsigned int flags = 0;
 
-	if (altitude > 0.0f) {
-		     if (pos.y >   20.0f) { flags = SPW_AIR;        }
-		else if (pos.y >    0.0f) { flags = SPW_GROUND;     }
-		else if (pos.y >=  -3.0f) { flags = SPW_WATER;      }
-		else if (pos.y <  -15.0f) { flags = SPW_UNDERWATER; }
-	}
+	     if (altitude >= -1.0f && pos.y >   20.0f) { flags = SPW_AIR;        }
+	else if (altitude >= -1.0f && pos.y >    0.0f) { flags = SPW_GROUND;     }
+	else if (altitude >= -1.0f && pos.y >=  -3.0f) { flags = SPW_WATER;      }
+	else if (altitude >= -1.0f && pos.y <   -3.0f) { flags = SPW_UNDERWATER; }
 
 	if (hit) flags |= SPW_UNIT;
 	else     flags |= SPW_NO_UNIT;
