@@ -3,7 +3,6 @@
 #ifndef CONFIG_VALUE_H
 #define CONFIG_VALUE_H
 
-#include <assert.h>
 #include <boost/utility.hpp>
 #include <map>
 #include <sstream>
@@ -53,8 +52,6 @@ protected:
 	T value;
 };
 
-typedef TypedStringConvertibleOptionalValue<std::string> OptionalString;
-
 /**
  * @brief Untyped configuration variable meta data.
  *
@@ -64,6 +61,9 @@ typedef TypedStringConvertibleOptionalValue<std::string> OptionalString;
 class ConfigVariableMetaData : public boost::noncopyable
 {
 public:
+	typedef TypedStringConvertibleOptionalValue<std::string> OptionalString;
+	typedef TypedStringConvertibleOptionalValue<int> OptionalInt;
+
 	virtual ~ConfigVariableMetaData() {}
 
 	/// @brief Get the default value of this config variable.
@@ -80,15 +80,16 @@ public:
 
 	std::string GetKey() const { return key; }
 	std::string GetType() const { return type; }
-	std::string GetDeclarationFile() const { return declarationFile; }
-	int GetDeclarationLine() const { return declarationLine; }
+
+	const OptionalString& GetDeclarationFile() const { return declarationFile; }
+	const OptionalInt& GetDeclarationLine() const { return declarationLine; }
 	const OptionalString& GetDescription() const { return description; }
 
 protected:
-	std::string key;
+	const char* key;
 	const char* type;
-	const char* declarationFile;
-	int declarationLine;
+	OptionalString declarationFile;
+	OptionalInt declarationLine;
 	OptionalString description;
 
 	template<typename F> friend class ConfigVariableBuilder;
@@ -104,6 +105,8 @@ template<typename T>
 class ConfigVariableTypedMetaData : public ConfigVariableMetaData
 {
 public:
+	ConfigVariableTypedMetaData(const char* k, const char* t) { key = k; type = t; }
+
 	const StringConvertibleOptionalValue& GetDefaultValue() const { return defaultValue; }
 	const StringConvertibleOptionalValue& GetMinimumValue() const { return minimumValue; }
 	const StringConvertibleOptionalValue& GetMaximumValue() const { return maximumValue; }
@@ -147,7 +150,7 @@ protected:
  *
  * Uses method chaining so that a config variable can be declared like this:
  *
- * CONFIG(Example)
+ * CONFIG(int, Example)
  *   .defaultValue(6)
  *   .minimumValue(1)
  *   .maximumValue(10)
@@ -166,8 +169,6 @@ public:
 		return *this; \
 	}
 
-	MAKE_CHAIN_METHOD(key, std::string);
-	MAKE_CHAIN_METHOD(type, const char*);
 	MAKE_CHAIN_METHOD(declarationFile, const char*);
 	MAKE_CHAIN_METHOD(declarationLine, int);
 	MAKE_CHAIN_METHOD(description, std::string);
@@ -215,8 +216,8 @@ public:
  * @see ConfigVariableBuilder
  */
 #define CONFIG(T, name) \
-	static ConfigVariableTypedMetaData<T> cfgdata##name; \
+	static ConfigVariableTypedMetaData<T> cfgdata##name(#name, #T); \
 	static ConfigVariable cfg##name = ConfigVariableBuilder<T>(cfgdata##name) \
-		.key(#name).type(#T).declarationFile(__FILE__).declarationLine(__LINE__)
+		.declarationFile(__FILE__).declarationLine(__LINE__)
 
 #endif // CONFIG_VALUE_H

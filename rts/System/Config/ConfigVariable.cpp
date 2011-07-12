@@ -13,7 +13,7 @@ using std::string;
  * @brief Log an error about a ConfigVariableMetaData
  */
 #define LOG_VAR(data, fmt, ...) \
-	LOG_L(L_ERROR, "%s:%d: " fmt, data->GetDeclarationFile().c_str(), data->GetDeclarationLine(), ## __VA_ARGS__)
+	LOG_L(L_ERROR, "%s:%d: " fmt, data->GetDeclarationFile().Get().c_str(), data->GetDeclarationLine().Get(), ## __VA_ARGS__) \
 
 
 ConfigVariable::MetaDataMap& ConfigVariable::GetMutableMetaDataMap()
@@ -103,11 +103,11 @@ static std::ostream& operator<< (std::ostream& out, const ConfigVariableMetaData
 
 #define KV(key, value) out << INDENT << Quote(#key) << ": " << (value) << ",\n"
 
-	if (!d->GetDeclarationFile().empty()) {
-		KV(declarationFile, Quote(d->GetDeclarationFile()));
+	if (d->GetDeclarationFile().IsSet()) {
+		KV(declarationFile, Quote(d->GetDeclarationFile().Get()));
 	}
-	if (d->GetDeclarationLine() != 0) {
-		KV(declarationLine, d->GetDeclarationLine());
+	if (d->GetDeclarationLine().IsSet()) {
+		KV(declarationLine, d->GetDeclarationLine().Get());
 	}
 	if (d->GetDescription().IsSet()) {
 		KV(description, Quote(d->GetDescription().Get()));
@@ -115,10 +115,10 @@ static std::ostream& operator<< (std::ostream& out, const ConfigVariableMetaData
 	if (d->GetDefaultValue().IsSet()) {
 		KV(defaultValue, Quote(d->GetType(), d->GetDefaultValue().ToString()));
 	}
-	if (!d->GetMinimumValue().IsSet()) {
+	if (d->GetMinimumValue().IsSet()) {
 		KV(minimumValue, Quote(d->GetType(), d->GetMinimumValue().ToString()));
 	}
-	if (!d->GetMaximumValue().IsSet()) {
+	if (d->GetMaximumValue().IsSet()) {
 		KV(maximumValue, Quote(d->GetType(), d->GetMaximumValue().ToString()));
 	}
 	// Type is required.
@@ -133,7 +133,12 @@ static std::ostream& operator<< (std::ostream& out, const ConfigVariableMetaData
 }
 
 /**
- * @brief Output config variable meta data as JSON to stdout
+ * @brief Output config variable meta data as JSON to stdout.
+ *
+ * This can be tested using, for example:
+ *
+ *	./spring --list-config-vars |
+ *		python -c 'import json, sys; json.dump(json.load(sys.stdin), sys.stdout)'
  */
 void ConfigVariable::OutputMetaDataMap()
 {
