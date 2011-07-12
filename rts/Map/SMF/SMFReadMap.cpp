@@ -323,6 +323,8 @@ void CSmfReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 		static       float*  uhm = &cornerHeightMapUnsynced[0];
 		static const float3* sfn = &faceNormalsSynced[0];
 		static       float3* ufn = &faceNormalsUnsynced[0];
+		static const float3* scn = &centerNormalsSynced[0];
+		static       float3* ucn = &centerNormalsUnsynced[0];
 		static       float3* rvn = &rawVertexNormals[0];
 		static       float3* vvn = &visVertexNormals[0];
 
@@ -400,9 +402,10 @@ void CSmfReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 					vvn[vIdxTL] = rvn[vIdxTL];
 
 					if (hasNgbR && hasNgbB) {
-						// x == maxx and z == maxz are illegal indices
-						ufn[fIdxTL] = sfn[fIdxTL];
-						ufn[fIdxBR] = sfn[fIdxBR];
+						// x == maxx and z == maxz are illegal indices for these
+						ufn[fIdxTL    ] = sfn[fIdxTL    ];
+						ufn[fIdxBR    ] = sfn[fIdxBR    ];
+						ucn[fIdxTL / 2] = scn[fIdxTL / 2];
 					}
 				}
 				#endif
