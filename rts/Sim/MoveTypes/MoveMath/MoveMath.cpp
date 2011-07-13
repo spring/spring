@@ -88,7 +88,7 @@ int CMoveMath::IsBlocked(const MoveData& moveData, const float3& pos) const
 int CMoveMath::IsBlocked(const MoveData& moveData, int xSquare, int zSquare) const
 {
 	if (GetPosSpeedMod(moveData, xSquare, zSquare) == 0.0f) {
-		return 1;
+		return BLOCK_IMPASSABLE;
 	}
 
 	int ret = 0;
@@ -220,7 +220,7 @@ int CMoveMath::SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquar
 {
 	// bounds-check
 	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy) {
-		return 1;
+		return BLOCK_IMPASSABLE;
 	}
 
 	int r = 0;
