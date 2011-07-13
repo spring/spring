@@ -298,12 +298,12 @@ bool CPathFinder::TestSquare(
 	static const int blockBits = (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY);
 
 	if (testMobile && (blockStatus & blockBits)) {
-		if (blockStatus & CMoveMath::BLOCK_MOVING)
-			squareSpeedMod *= 0.65f;
+		if (blockStatus & CMoveMath::BLOCK_MOBILE_BUSY)
+			squareSpeedMod *= 0.10f;
 		else if (blockStatus & CMoveMath::BLOCK_MOBILE)
 			squareSpeedMod *= 0.35f;
-		else
-			squareSpeedMod *= 0.10f;
+		else //CMoveMath::BLOCK_MOVING
+			squareSpeedMod *= 0.65f;
 	}
 
 	// Include heatmap cost adjustment.
