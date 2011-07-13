@@ -437,8 +437,8 @@ void CSmfReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 	}
 
 	{
-		const int xsize = x2 - x1;
-		const int ysize = y2 - y1;
+		const int xsize = (x2 - x1) + 1;
+		const int ysize = (y2 - y1) + 1;
 
 		// update the shading texture (even if the map has specular
 		// lighting, we still need it to modulate the minimap image,
