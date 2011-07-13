@@ -3,7 +3,7 @@
 #include <string>
 #include <sstream>
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "LuaLoadSaveHandler.h"
 
 #include "lib/minizip/zip.h"
@@ -21,7 +21,7 @@
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 
 // Prefix for all files in the save file.

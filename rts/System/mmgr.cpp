@@ -45,7 +45,7 @@
 //		#include <stdlib.h>  //
 //		#include <streamio>  //
 //
-//		#include "mmgr.h"    // mmgr.h MUST come next
+//		#include "System/mmgr.h"    // mmgr.h MUST come next
 //
 //		#include "myfile1.h" // Project includes MUST come last
 //		#include "myfile2.h" //
@@ -53,7 +53,7 @@
 //
 // ---------------------------------------------------------------------------------------------------------------------------------
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #ifdef USE_MMGR
 
@@ -77,7 +77,7 @@ using std::new_handler;
 #include <execinfo.h>
 #endif
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // -DOC- If you're like me, it's hard to gain trust in foreign code. This memory manager will try to INDUCE your code to crash (for

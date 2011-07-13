@@ -3,7 +3,7 @@
 #ifndef SOLIB_H
 #define SOLIB_H
 
-#include "Platform/SharedLib.h"
+#include "System/Platform/SharedLib.h"
 
 /**
  * @brief Linux shared library base

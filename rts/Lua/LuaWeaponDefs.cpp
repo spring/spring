@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 
 #include <set>
 #include <string>
@@ -23,9 +23,9 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "FileSystem/SimpleParser.h"
-#include "LogOutput.h"
-#include "Util.h"
+#include "System/FileSystem/SimpleParser.h"
+#include "System/LogOutput.h"
+#include "System/Util.h"
 #include "Sim/Misc/GlobalSynced.h"
 
 using namespace std;

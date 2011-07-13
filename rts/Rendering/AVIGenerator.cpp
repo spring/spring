@@ -2,7 +2,7 @@
 
 #if       defined AVI_CAPTURING
 #ifdef _MSC_VER
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #endif
 #include "AVIGenerator.h"
 
@@ -16,7 +16,7 @@
 
 #include <boost/bind.hpp>
 #include <cassert>
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #if defined(_WIN32) && !defined(__MINGW32__)
 #pragma message("Adding library: vfw32.lib")

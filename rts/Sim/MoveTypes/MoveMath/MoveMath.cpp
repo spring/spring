@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "MoveMath.h"
 #include "Map/ReadMap.h"
 #include "Map/MapInfo.h"
@@ -8,8 +8,8 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "LogOutput.h"
-#include "mmgr.h"
+#include "System/LogOutput.h"
+#include "System/mmgr.h"
 
 CR_BIND_INTERFACE(CMoveMath);
 

@@ -1,12 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "DGunWeapon.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/WeaponProjectiles/FireBallProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "WeaponDefHandler.h"
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CDGunWeapon, CWeapon, (NULL));
 

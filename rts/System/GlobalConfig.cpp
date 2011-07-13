@@ -1,9 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "Rendering/GL/myGL.h"
-#include "ConfigHandler.h"
-#include "GlobalConfig.h"
+#include "System/ConfigHandler.h"
+#include "System/GlobalConfig.h"
 #include "Sim/Misc/ModInfo.h"
 
 GlobalConfig* globalConfig = NULL;

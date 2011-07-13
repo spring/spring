@@ -1,8 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "LuaFonts.h"
 
@@ -16,8 +16,8 @@
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
-#include "LogOutput.h"
-#include "Exceptions.h"
+#include "System/LogOutput.h"
+#include "System/Exceptions.h"
 
 
 /******************************************************************************/

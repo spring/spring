@@ -8,7 +8,7 @@
 #include <set>
 #include <deque>
 #include <string>
-#include "Object.h"
+#include "System/Object.h"
 #include "Sim/Units/UnitSet.h"
 
 class float3;

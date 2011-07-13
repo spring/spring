@@ -3,7 +3,7 @@
 #ifndef _MAP_DAMAGE_H_
 #define _MAP_DAMAGE_H_
 
-#include "float3.h"
+#include "System/float3.h"
 
 class IMapDamage
 {

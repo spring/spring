@@ -1,14 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "SelectionWidget.h"
 
 #include <set>
 
-#include "FileSystem/ArchiveScanner.h"
-#include "FileSystem/FileSystem.h"
-#include "Exceptions.h"
-#include "ConfigHandler.h"
+#include "System/FileSystem/ArchiveScanner.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/Exceptions.h"
+#include "System/ConfigHandler.h"
 #include "ScriptHandler.h"
 
 

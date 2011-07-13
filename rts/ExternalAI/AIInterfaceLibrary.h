@@ -3,7 +3,7 @@
 #ifndef _AI_INTERFACE_LIBRARY_H
 #define _AI_INTERFACE_LIBRARY_H
 
-#include "Platform/SharedLib.h"
+#include "System/Platform/SharedLib.h"
 #include "ExternalAI/Interface/ELevelOfSupport.h"
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 #include "ExternalAI/Interface/SAIInterfaceCallback.h"

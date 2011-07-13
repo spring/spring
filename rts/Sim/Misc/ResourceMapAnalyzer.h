@@ -3,7 +3,7 @@
 #ifndef _RESOURCE_MAP_ANALYZER_H
 #define _RESOURCE_MAP_ANALYZER_H
 
-#include "float3.h"
+#include "System/float3.h"
 #include <vector>
 
 class CResource;

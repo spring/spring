@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include <set>
 #include <list>
@@ -13,7 +13,7 @@
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "LuaUnsyncedCtrl.h"
 #include "LuaInclude.h"

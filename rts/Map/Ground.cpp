@@ -1,15 +1,15 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 
 #include "Ground.h"
 #include "ReadMap.h"
 #include "Game/Camera.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Projectiles/Projectile.h"
-#include "LogOutput.h"
-#include "myMath.h"
+#include "System/LogOutput.h"
+#include "System/myMath.h"
 
 #include <cassert>
 #include <limits>

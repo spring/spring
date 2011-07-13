@@ -2,7 +2,7 @@
 
 #include "ExternalAI/SkirmishAIData.h"
 
-#include "creg/STL_Map.h"
+#include "System/creg/STL_Map.h"
 
 CR_BIND(SkirmishAIData,);
 

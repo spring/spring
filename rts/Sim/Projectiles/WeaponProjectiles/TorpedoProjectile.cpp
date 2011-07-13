@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 
 #include "TorpedoProjectile.h"
 #include "Game/Camera.h"
@@ -18,7 +18,7 @@
 #include "System/myMath.h"
 
 #ifdef TRACE_SYNC
-	#include "Sync/SyncTracer.h"
+	#include "System/Sync/SyncTracer.h"
 #endif
 
 CR_BIND_DERIVED(CTorpedoProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, NULL, 0, 0, 0, 0, NULL, NULL));

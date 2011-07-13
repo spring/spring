@@ -1,14 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 
 #include "OverviewController.h"
 
 #include "Map/Ground.h"
 #include "Game/UI/MiniMap.h"
 #include "Game/UI/MouseHandler.h"
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 
 COverviewController::COverviewController()
 {

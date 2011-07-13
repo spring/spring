@@ -4,10 +4,10 @@
 #define __COB_THREAD_H__
 
 #include <vector>
-#include "Object.h"
+#include "System/Object.h"
 #include "CobInstance.h"
 #include "Lua/LuaRules.h"
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 
 class CCobFile;
 class CCobInstance;

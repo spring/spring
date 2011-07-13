@@ -5,8 +5,8 @@
 #include "UnitScriptEngine.h"
 #include "UnitScript.h"
 
-#include "LogOutput.h"
-#include "FileSystem/FileHandler.h"
+#include "System/LogOutput.h"
+#include "System/FileSystem/FileHandler.h"
 
 #ifndef _CONSOLE
 	#include "System/TimeProfiler.h"
@@ -16,7 +16,7 @@
 	#define SCOPED_TIMER(a) {}
 #endif
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 
 CUnitScriptEngine GUnitScriptEngine;

@@ -2,13 +2,13 @@
 
 /* based on code from GlobalSynced.{cpp,h} */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "PlayerHandler.h"
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 #include "Game/GameSetup.h"
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 CR_BIND(CPlayerHandler,);
 

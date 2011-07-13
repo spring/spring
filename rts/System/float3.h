@@ -5,10 +5,10 @@
 
 #include <cassert>
 
-#include "BranchPrediction.h"
+#include "System/BranchPrediction.h"
 #include "lib/streflop/streflop_cond.h"
-#include "creg/creg_cond.h"
-#include "FastMath.h"
+#include "System/creg/creg_cond.h"
+#include "System/FastMath.h"
 
 
 /**

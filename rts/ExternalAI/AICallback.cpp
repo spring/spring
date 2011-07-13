@@ -2,7 +2,7 @@
 
 #include "ExternalAI/AICallback.h"
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "Game/Game.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"

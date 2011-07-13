@@ -3,7 +3,7 @@
 #ifndef s3oH
 #define s3oH
 
-#include "Platform/byteorder.h"
+#include "System/Platform/byteorder.h"
 
 /// Structure in .s3o files representing draw primitives
 struct Piece{

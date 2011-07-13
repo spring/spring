@@ -1,18 +1,18 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "Rendering/GL/myGL.h"
 #include <map>
 #include <SDL_keysym.h>
 #include <SDL_timer.h>
 #include <set>
 #include <cfloat>
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "PreGame.h"
 
 #include "ClientSetup.h"
-#include "FPUCheck.h"
+#include "System/FPUCheck.h"
 #include "Game.h"
 #include "GameData.h"
 #include "GameServer.h"
@@ -22,7 +22,7 @@
 #include "LoadScreen.h"
 #include "Player.h"
 #include "PlayerHandler.h"
-#include "TimeProfiler.h"
+#include "System/TimeProfiler.h"
 #include "UI/InfoConsole.h"
 
 #include "aGui/Gui.h"

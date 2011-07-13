@@ -4,7 +4,7 @@
 #define I_AUDIO_CHANNEL_H
 
 #include <string.h>
-#include "float3.h"
+#include "System/float3.h"
 
 class CSoundSource;
 class CUnit;

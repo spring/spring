@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 #include "Sound.h"
 
 #include <cstdlib>
@@ -18,11 +18,11 @@
 #include "EFX.h"
 #include "EFXPresets.h"
 
-#include "LogOutput.h"
-#include "TimeProfiler.h"
-#include "ConfigHandler.h"
-#include "Exceptions.h"
-#include "FileSystem/FileHandler.h"
+#include "System/LogOutput.h"
+#include "System/TimeProfiler.h"
+#include "System/ConfigHandler.h"
+#include "System/Exceptions.h"
+#include "System/FileSystem/FileHandler.h"
 #include "Lua/LuaParser.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -30,7 +30,7 @@
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Watchdog.h"
 
-#include "float3.h"
+#include "System/float3.h"
 
 boost::recursive_mutex soundMutex;
 

@@ -8,7 +8,7 @@
 #include <list>
 #include <map>
 
-#include "creg/creg_cond.h"
+#include "System/creg/creg_cond.h"
 
 /**
  * Simple class to interpolate between 32bit RGBA colors

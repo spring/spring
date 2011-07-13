@@ -3,11 +3,11 @@
 #ifndef INTERCEPT_HANDLER_H
 #define INTERCEPT_HANDLER_H
 
-#include "Object.h"
+#include "System/Object.h"
 
 #include <list>
 #include <boost/noncopyable.hpp>
-#include "float3.h"
+#include "System/float3.h"
 
 class CWeapon;
 class CWeaponProjectile;
