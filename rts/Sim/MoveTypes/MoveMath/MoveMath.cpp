@@ -87,7 +87,7 @@ int CMoveMath::IsBlocked(const MoveData& moveData, const float3& pos) const
 /* Check if a given square-position is accessable by the movedata footprint. */
 int CMoveMath::IsBlocked(const MoveData& moveData, int xSquare, int zSquare) const
 {
-	if (CMoveMath::GetPosSpeedMod(moveData, xSquare, zSquare) == 0.0f) {
+	if (GetPosSpeedMod(moveData, xSquare, zSquare) == 0.0f) {
 		return 1;
 	}
 
@@ -122,7 +122,7 @@ int CMoveMath::IsBlocked(const MoveData& moveData, int xSquare, int zSquare) con
  * objects block iif their mass exceeds the movedata's crush-strength).
  * NOTE: modify for selective blocking
  */
-bool CMoveMath::CrushResistant(const MoveData& moveData, const CSolidObject* object) const
+bool CMoveMath::CrushResistant(const MoveData& moveData, const CSolidObject* object)
 {
 	if (!object->blocking) { return false; }
 	if (dynamic_cast<const CFeature*>(object) == NULL) { return true; }
@@ -134,7 +134,7 @@ bool CMoveMath::CrushResistant(const MoveData& moveData, const CSolidObject* obj
  * check if an object is NON-blocking for a given MoveData
  * (ex. a submarine's moveDef vs. a surface ship object)
  */
-bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obstacle) const
+bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obstacle)
 {
 	if (!obstacle->blocking) {
 		return true;
@@ -216,7 +216,7 @@ bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obst
 
 
 /* Check if a single square is accessable (for any object which uses the given movedata). */
-int CMoveMath::SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquare) const
+int CMoveMath::SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquare)
 {
 	// bounds-check
 	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy) {

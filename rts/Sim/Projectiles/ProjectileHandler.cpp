@@ -462,17 +462,30 @@ void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc) {
 	for (pci = pc.begin(); pci != pc.end(); ++pci) {
 		CProjectile* p = *pci;
 
+		if (!p->checkCol) {
+			continue;
+		}
+
+		// NOTE: if <p> is a MissileProjectile and does not
+		// have selfExplode set, it will never be removed (!)
 		if (p->GetCollisionFlags() & Collision::NOGROUND) {
 			continue;
 		}
 
-		if (p->checkCol) {
-			// too many projectiles seem to impact the ground before
-			// actually hitting so don't subtract the projectile radius
-			// NOTE: why are we not using Ground::CheckColSquare here?
-			if (ground->GetHeightAboveWater(p->pos.x, p->pos.z) > p->pos.y /* - p->radius*/) {
-				p->Collision();
-			}
+		// NOTE: don't add p->radius to groundHeight, or most
+		// projectiles will collide with the ground too early
+		const float groundHeight = ground->GetHeightReal(p->pos.x, p->pos.z);
+		const bool belowGround = (p->pos.y < groundHeight);
+		const bool insideWater = (p->pos.y <= 0.0f && !belowGround);
+		const bool ignoreWater = p->ignoreWater;
+
+		if (belowGround || (insideWater && !ignoreWater)) {
+			// if position has dropped below terrain or into water
+			// where we cannot live, adjust it and explode us now
+			// (if the projectile does not set deleteMe = true, it
+			// will keep hugging the terrain)
+			p->pos.y = belowGround? groundHeight: 0.0f;
+			p->Collision();
 		}
 	}
 }

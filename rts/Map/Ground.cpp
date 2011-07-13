@@ -383,13 +383,11 @@ const float3& CGround::GetNormal(float x, float y, bool synced) const
 
 	const float3* normalmap = readmap->GetCenterNormalsSynced();
 
-	/* TODO
 	#ifdef USE_UNSYNCED_HEIGHTMAP
 	if (!synced) {
 		normalmap = readmap->GetCenterNormalsUnsynced();
 	}
 	#endif
-	*/
 
 	return normalmap[xsquare + ysquare * gs->mapx];
 }
@@ -412,7 +410,6 @@ float CGround::GetSlope(float x, float y, bool synced) const
 	#endif
 	*/
 
-	// return (1.0f - readmap->GetCenterNormalsSynced()[int(x) / SQUARE_SIZE + int(y) / SQUARE_SIZE * gs->mapx].y);
 	return slopemap[xhsquare + yhsquare * gs->hmapx];
 }
 
@@ -461,13 +458,11 @@ float3 CGround::GetSmoothNormal(float x, float y, bool synced) const
 
 	const float3* normalmap = readmap->GetCenterNormalsSynced();
 
-	/* TODO
 	#ifdef USE_UNSYNCED_HEIGHTMAP
 	if (!synced) {
 		normalmap = readmap->GetCenterNormalsUnsynced();
 	}
 	#endif
-	*/
 
 	const float3& n1 = normalmap[sy  * gs->mapx + sx ] * ifx * ify;
 	const float3& n2 = normalmap[sy  * gs->mapx + sx2] *  fx * ify;

@@ -72,6 +72,14 @@ int Run(int argc, char* argv[])
 	return ret;
 }
 
+/**
+	\mainpage
+	This is the documentation of the Spring RTS Engine.
+
+	http://springrts.com/
+
+*/
+
 
 
 /**
