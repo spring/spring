@@ -2,10 +2,10 @@
 
 #include "CommonDefHandler.h"
 
-#include "FileSystem/FileSystem.h"
-#include "FileSystem/FileHandler.h"
-#include "Sound/ISound.h"
-#include "LogOutput.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/Sound/ISound.h"
+#include "System/LogOutput.h"
 
 int CommonDefHandler::LoadSoundFile(const std::string& fileName)
 {

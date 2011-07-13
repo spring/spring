@@ -1,8 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
-#include "TdfParser.h"
+#include "System/TdfParser.h"
 
 #include <cassert>
 #include <cstring>
@@ -12,8 +12,8 @@
 #include "TerrainNode.h"
 #include "Textures.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "FileSystem/FileSystem.h"
-#include "float3.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/float3.h"
 #if       defined(TERRAIN_USE_IL)
 #include <IL/il.h>
 #endif // defined(TERRAIN_USE_IL)

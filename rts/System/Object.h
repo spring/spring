@@ -4,7 +4,7 @@
 #define OBJECT_H
 
 #include <list>
-#include "creg/creg_cond.h"
+#include "System/creg/creg_cond.h"
 
 template<typename T>
 void ListErase(std::list<T>& list, const T& what)

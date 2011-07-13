@@ -5,8 +5,8 @@
 
 #include <string>
 
-#include "float3.h"
-#include "creg/creg_cond.h"
+#include "System/float3.h"
+#include "System/creg/creg_cond.h"
 
 
 class CGameSetup;

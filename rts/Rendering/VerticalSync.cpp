@@ -1,20 +1,20 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #ifdef WIN32
-#include "Platform/Win/win32.h"
+#include "System/Platform/Win/win32.h"
 #elif defined HEADLESS
 #include "lib/headlessStubs/glxextstub.h" // for glXGetVideoSyncSGI() glXWaitVideoSyncSGI()
 #else
 #include <GL/glxew.h> // for glXGetVideoSyncSGI() glXWaitVideoSyncSGI()
 #endif
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "VerticalSync.h"
 #include "GL/myGL.h"
-#include "LogOutput.h"
-#include "ConfigHandler.h"
+#include "System/LogOutput.h"
+#include "System/ConfigHandler.h"
 
 
 CVerticalSync VSync;

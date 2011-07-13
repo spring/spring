@@ -11,7 +11,7 @@
 #ifndef DEMOFILE_H
 #define DEMOFILE_H
 
-#include "Platform/byteorder.h"
+#include "System/Platform/byteorder.h"
 #include <boost/cstdint.hpp>
 
 /** The first 16 bytes of each demofile. */

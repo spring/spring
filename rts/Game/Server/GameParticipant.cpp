@@ -2,8 +2,8 @@
 
 #include "GameParticipant.h"
 
-#include "Net/Connection.h"
-#include "BaseNetProtocol.h"
+#include "System/Net/Connection.h"
+#include "System/BaseNetProtocol.h"
 
 GameParticipant::GameParticipant()
 : myState(UNCONNECTED)

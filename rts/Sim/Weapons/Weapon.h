@@ -5,9 +5,9 @@
 
 #include <list>
 
-#include "Object.h"
+#include "System/Object.h"
 #include "Sim/Misc/DamageArray.h"
-#include "float3.h"
+#include "System/float3.h"
 
 class CUnit;
 class CWeaponProjectile;

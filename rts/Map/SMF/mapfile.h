@@ -24,7 +24,7 @@ TileFileHeader for details.
 #ifndef _MAPFILE_H
 #define _MAPFILE_H
 
-#include "Platform/byteorder.h"
+#include "System/Platform/byteorder.h"
 
 /// Size in bytes of a single tile in the .smt
 #define SMALL_TILE_SIZE 680

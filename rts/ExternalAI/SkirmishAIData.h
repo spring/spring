@@ -5,7 +5,7 @@
 
 #include "ExternalAI/SkirmishAIBase.h"
 
-#include "creg/creg_cond.h"
+#include "System/creg/creg_cond.h"
 
 #include <string>
 #include <vector>

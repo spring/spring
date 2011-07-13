@@ -1,10 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "Rendering/GL/myGL.h"
 #include <fstream>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "InfoConsole.h"
 #include "GuiHandler.h"
@@ -14,8 +14,8 @@
 #  include "Platform/Win/win32.h"
 #endif
 
-#include "Sync/SyncTracer.h"
-#include "ConfigHandler.h"
+#include "System/Sync/SyncTracer.h"
+#include "System/ConfigHandler.h"
 #include "InputReceiver.h"
 
 #define border 7

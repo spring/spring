@@ -1,14 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "DemoReader.h"
 
 #include <limits.h>
 #include <stdexcept>
 #include <assert.h>
-#include "mmgr.h"
+#include "System/mmgr.h"
 
-#include "Net/RawPacket.h"
+#include "System/Net/RawPacket.h"
 #include "Game/GameVersion.h"
 
 CDemoReader::CDemoReader(const std::string& filename, float curTime)

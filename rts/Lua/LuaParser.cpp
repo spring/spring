@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include "LuaParser.h"
 
@@ -8,19 +8,19 @@
 #include <limits.h>
 #include <boost/regex.hpp>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
-#include "float3.h"
-#include "float4.h"
+#include "System/float3.h"
+#include "System/float4.h"
 #include "LuaInclude.h"
 
 #include "LuaIO.h"
 #include "LuaUtils.h"
 
-#include "LogOutput.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/VFSHandler.h"
-#include "FileSystem/FileSystem.h"
+#include "System/LogOutput.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/VFSHandler.h"
+#include "System/FileSystem/FileSystem.h"
 #include "System/BranchPrediction.h"
 #include "System/myTime.h"
 #include "System/Util.h"

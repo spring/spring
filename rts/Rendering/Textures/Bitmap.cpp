@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include <ostream>
 #include <fstream>
@@ -9,7 +9,7 @@
 //#include <IL/ilu.h>
 #include <SDL_video.h>
 #include <boost/thread.hpp>
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #ifndef BITMAP_NO_OPENGL
 	#include "Rendering/GL/myGL.h"

@@ -6,7 +6,7 @@
 #include "LuaUnitScript.h"
 
 #include "CobInstance.h"
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 #include "LuaInclude.h"
 #include "NullUnitScript.h"
 #include "LuaScriptNames.h"

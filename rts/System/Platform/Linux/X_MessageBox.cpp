@@ -6,7 +6,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "Platform/errorhandler.h"
+#include "System/Platform/errorhandler.h"
 
 /**
  * @brief X message box function

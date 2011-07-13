@@ -4,8 +4,8 @@
 
 #include <SDL.h>
 
-#include "FileSystem/FileHandler.h"
-#include "LogOutput.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/LogOutput.h"
 #include "ALShared.h"
 #include "VorbisShared.h"
 

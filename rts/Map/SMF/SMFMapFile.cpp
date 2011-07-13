@@ -1,13 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h" // TODO: ugh
+#include "System/StdAfx.h" // TODO: ugh
 #include <assert.h>
 
 #include "SMFMapFile.h"
 #include "mapfile.h"
 #include "Map/ReadMap.h"
-#include "mmgr.h"
-#include "Exceptions.h"
+#include "System/mmgr.h"
+#include "System/Exceptions.h"
 
 using std::string;
 

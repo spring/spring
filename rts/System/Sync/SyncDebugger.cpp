@@ -1,17 +1,17 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #ifdef SYNCDEBUG
 
 #include <boost/format.hpp>
 
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/PlayerHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "BaseNetProtocol.h"
-#include "NetProtocol.h"
+#include "System/BaseNetProtocol.h"
+#include "System/NetProtocol.h"
 #include "SyncDebugger.h"
 #include "SyncChecker.h"
 #include "SyncTracer.h"

@@ -1,9 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <cctype>
 #include <stdexcept>
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "S3OParser.h"
 #include "s3o.h"

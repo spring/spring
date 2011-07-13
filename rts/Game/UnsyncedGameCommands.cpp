@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include <SDL_events.h>
 
@@ -19,7 +19,7 @@
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
 #include "PlayerRoster.h"
-#include "TimeProfiler.h"
+#include "System/TimeProfiler.h"
 #include "IVideoCapturing.h"
 #include "WordCompletion.h"
 #include "InMapDraw.h"

@@ -16,10 +16,10 @@
 
 #include "Sound.h" //remove when unified ElmoInMeters
 
-#include "float3.h"
-#include "Util.h"
-#include "LogOutput.h"
-#include "myMath.h"
+#include "System/float3.h"
+#include "System/Util.h"
+#include "System/LogOutput.h"
+#include "System/myMath.h"
 
 float CSoundSource::referenceDistance = 200.0f;
 float CSoundSource::globalPitch = 1.0;

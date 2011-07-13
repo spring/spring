@@ -18,8 +18,8 @@ using std::fclose;
 #include "Game/GameSetup.h"
 #include "Map/MapInfo.h"
 #include "Map/MetalMap.h"
-#include "FileSystem/FileSystem.h"
-#include "LogOutput.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/LogOutput.h"
 
 #include <stdexcept>
 

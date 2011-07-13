@@ -5,7 +5,7 @@
 
 #include "ExternalAI/SkirmishAIData.h"
 
-#include "creg/creg_cond.h"
+#include "System/creg/creg_cond.h"
 
 #include <map>
 #include <set>

@@ -1,12 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include <cstdio>
 #include <cctype>
 #include <cstring>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "KeyBindings.h"
 #include "SDL_keysym.h"
@@ -16,10 +16,10 @@
 #include "KeyAutoBinder.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/SimpleParser.h"
-#include "LogOutput.h"
-#include "Util.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/SimpleParser.h"
+#include "System/LogOutput.h"
+#include "System/Util.h"
 
 
 CKeyBindings* keyBindings = NULL;

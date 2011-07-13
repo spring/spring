@@ -5,8 +5,8 @@
 
 #include <string>
 
-#include "Sync/SyncedFloat3.h"
-#include "float3.h"
+#include "System/Sync/SyncedFloat3.h"
+#include "System/float3.h"
 
 class CLoadSaveInterface
 {

@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "lib/gml/gml.h"
 #include <windows.h>
 #include <process.h>
@@ -10,10 +10,10 @@
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Log/ILog.h"
-#include "LogOutput.h"
-#include "NetProtocol.h"
+#include "System/LogOutput.h"
+#include "System/NetProtocol.h"
 #include "seh.h"
-#include "Util.h"
+#include "System/Util.h"
 #include "Game/GameVersion.h"
 
 

@@ -1,8 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
-#include "TdfParser.h"
+#include "System/TdfParser.h"
 
 #include <cassert>
 #include <deque>
@@ -16,7 +16,7 @@
 #include "TerrainTexEnvCombine.h"
 #include "TerrainTextureGLSL.h"
 #include "Lightcalc.h"
-#include "Util.h"
+#include "System/Util.h"
 
 #include <SDL_keysym.h>
 extern unsigned char *keys;

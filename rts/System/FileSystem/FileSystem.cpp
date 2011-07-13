@@ -5,7 +5,7 @@
  * Glob conversion by Chris Han (based on work by Nathaniel Smith).
  */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "FileSystem.h"
 
 #include <assert.h>

@@ -1,17 +1,17 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 
 #include "CobEngine.h"
 #include "CobThread.h"
 #include "CobInstance.h"
 #include "CobFile.h"
-#include "LogOutput.h"
-#include "FileSystem/FileHandler.h"
+#include "System/LogOutput.h"
+#include "System/FileSystem/FileHandler.h"
 
 #ifndef _CONSOLE
-#include "TimeProfiler.h"
+#include "System/TimeProfiler.h"
 #endif
 #ifdef _CONSOLE
 #define START_TIME_PROFILE(a) {}

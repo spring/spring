@@ -1,14 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "ConfigHandler.h"
+#include "System/StdAfx.h"
+#include "System/ConfigHandler.h"
 
 #include <string.h>
 #include <stdexcept>
 
-#include "Platform/ConfigLocater.h"
-#include "Platform/ScopedFileLock.h"
-#include "LogOutput.h"
+#include "System/Platform/ConfigLocater.h"
+#include "System/Platform/ScopedFileLock.h"
+#include "System/LogOutput.h"
 #ifdef WIN32
 #include <io.h>
 #endif

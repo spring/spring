@@ -1,13 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include <string>
 #include <vector>
 using std::string;
 using std::vector;
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "LuaShaders.h"
 
@@ -20,8 +20,8 @@ using std::vector;
 
 #include "Game/Camera.h"
 #include "Rendering/ShadowHandler.h"
-#include "LogOutput.h"
-#include "Util.h"
+#include "System/LogOutput.h"
+#include "System/Util.h"
 
 
 int LuaShaders::activeShaderDepth = 0;

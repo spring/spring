@@ -6,18 +6,18 @@
 #	include <windows.h>
 #endif
 
-#include "Net/Socket.h"
+#include "System/Net/Socket.h"
 
 #ifndef _MSC_VER
 #	include "StdAfx.h"
 #endif
 
-#include "AutohostInterface.h"
+#include "System/AutohostInterface.h"
 
 #include <string.h>
 #include <vector>
-#include "mmgr.h"
-#include "LogOutput.h"
+#include "System/mmgr.h"
+#include "System/LogOutput.h"
 
 namespace {
 

@@ -1,16 +1,16 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "BaseNetProtocol.h"
+#include "System/StdAfx.h"
+#include "System/BaseNetProtocol.h"
 
 #include <boost/cstdint.hpp>
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "Game/PlayerStatistics.h"
 #include "Sim/Misc/TeamStatistics.h"
-#include "Net/RawPacket.h"
-#include "Net/PackPacket.h"
-#include "Net/ProtocolDef.h"
+#include "System/Net/RawPacket.h"
+#include "System/Net/PackPacket.h"
+#include "System/Net/ProtocolDef.h"
 #if defined(_MSC_VER)
 #include "System.h" // for uint16_t (and possibly other types)
 #endif

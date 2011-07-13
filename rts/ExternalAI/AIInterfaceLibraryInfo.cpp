@@ -5,10 +5,10 @@
 #include "AIInterfaceKey.h"
 #include "Interface/aidefines.h"
 #include "Interface/SAIInterfaceLibrary.h"
-#include "Util.h"
-#include "Info.h"
+#include "System/Util.h"
+#include "System/Info.h"
 
-#include "FileSystem/VFSModes.h"
+#include "System/FileSystem/VFSModes.h"
 
 
 static const char* BAD_CHARS = "\t _#";

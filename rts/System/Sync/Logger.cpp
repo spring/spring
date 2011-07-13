@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #ifdef SYNCDEBUG
 
@@ -13,7 +13,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "Logger.h"
-#include "Util.h"
+#include "System/Util.h"
 
 
 #ifdef WIN32

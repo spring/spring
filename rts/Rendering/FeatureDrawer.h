@@ -5,7 +5,7 @@
 
 #include <set>
 #include <vector>
-#include "creg/creg_cond.h"
+#include "System/creg/creg_cond.h"
 #include "System/EventClient.h"
 #include "Rendering/Models/WorldObjectModelRenderer.h"
 

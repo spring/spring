@@ -6,7 +6,7 @@
 //#include "ExternalAI/SkirmishAIKey.h"
 #include "System/Info.h"
 
-//#include "creg/creg_cond.h"
+//#include "System/creg/creg_cond.h"
 
 #include <vector>
 #include <string>

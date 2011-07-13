@@ -4,8 +4,8 @@
 #define FLYING_PIECE_H
 
 #if !defined(USE_MMGR) && !(defined(USE_GML) && GML_ENABLE_SIM)
-#include "mmgr.h"
-#include "MemPool.h"
+#include "System/mmgr.h"
+#include "System/MemPool.h"
 #endif
 
 #include "System/float3.h"

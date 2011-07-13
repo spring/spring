@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-#include "float3.h"
-#include "float4.h"
+#include "System/float3.h"
+#include "System/float4.h"
 
 class LuaTable;
 class MapParser;

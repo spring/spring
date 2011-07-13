@@ -1,9 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <algorithm>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "CursorIcons.h"
 #include "CommandColors.h"
