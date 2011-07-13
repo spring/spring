@@ -121,8 +121,8 @@ inline aiMatrix3x3& aiMatrix3x3::Inverse()
 // ------------------------------------------------------------------------------------------------
 inline aiMatrix3x3& aiMatrix3x3::RotationZ(float a, aiMatrix3x3& out)
 {
-	out.a1 = out.b2 = ::cos(a);
-	out.b1 = ::sin(a);
+	out.a1 = out.b2 = math::cos(a);
+	out.b1 = math::sin(a);
 	out.a2 = - out.b1;
 
 	out.a3 = out.b3 = out.c1 = out.c2 = 0.f;

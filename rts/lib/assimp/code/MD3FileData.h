@@ -263,9 +263,9 @@ inline void LatLngNormalToVec3(uint16_t p_iNormal, float* p_afOut)
 	lat *= 3.141926f/128.0f;
 	lng *= 3.141926f/128.0f;
 
-	p_afOut[0] = cosf(lat) * sinf(lng);
-	p_afOut[1] = sinf(lat) * sinf(lng);
-	p_afOut[2] = cosf(lng);
+	p_afOut[0] = math::cosf(lat) * math::sinf(lng);
+	p_afOut[1] = math::sinf(lat) * math::sinf(lng);
+	p_afOut[2] = math::cosf(lng);
 	return;
 }
 
@@ -297,10 +297,10 @@ inline void Vec3NormalToLatLng( const aiVector3D& p_vIn, uint16_t& p_iOut )
 	{
 		int	a, b;
 
-		a = int(57.2957795f * ( atan2f( p_vIn[1], p_vIn[0] ) ) * (255.0f / 360.0f ));
+		a = int(57.2957795f * ( math::atan2f( p_vIn[1], p_vIn[0] ) ) * (255.0f / 360.0f ));
 		a &= 0xff;
 
-		b = int(57.2957795f * ( acosf( p_vIn[2] ) ) * ( 255.0f / 360.0f ));
+		b = int(57.2957795f * ( math::acosf( p_vIn[2] ) ) * ( 255.0f / 360.0f ));
 		b &= 0xff;
 
 		((unsigned char*)&p_iOut)[0] = b;	// longitude
