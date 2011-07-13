@@ -278,9 +278,9 @@ bool CPathFinder::TestSquare(
 
 	// Check if square are out of constraints or blocked by something.
 	// Doesn't need to be done on open squares, as those are already tested.
-	if ((!pfDef.WithinConstraints(square.x, square.y) || (blockStatus & CMoveMath::BLOCK_STRUCTURE)) &&
-		!(sqrStatus & PATHOPT_OPEN)) {
-
+	if (!(sqrStatus & PATHOPT_OPEN) &&
+		((blockStatus & CMoveMath::BLOCK_STRUCTURE) || !pfDef.WithinConstraints(square.x, square.y))
+	) {
 		squareStates[sqrIdx].nodeMask |= PATHOPT_BLOCKED;
 		dirtySquares.push_back(sqrIdx);
 		return false;
