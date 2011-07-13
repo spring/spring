@@ -108,8 +108,14 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 			} else {
 				const MoveData* md = NULL;
 				const bool los = (gs->cheatEnabled || gu->spectating);
-				const float* uhm = readmap->GetCornerHeightMapUnsynced();
-				const float3* ucn = readmap->GetCenterNormalsUnsynced();
+
+				#ifdef USE_UNSYNCED_HEIGHTMAP
+				const float* hm = readmap->GetCornerHeightMapUnsynced();
+				const float3* cn = readmap->GetCenterNormalsUnsynced();
+				#else
+				const float* hm = readmap->GetCornerHeightMapSynced();
+				const float3* cn = readmap->GetCenterNormalsSynced();
+				#endif
 
 				{
 					GML_RECMUTEX_LOCK(sel); // UpdateExtraTexture
@@ -131,8 +137,8 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 						const int cnIdx = (ty << 1) * (gs->mapx    ) + (tx << 1);
 
 						if (md != NULL) {
-							const float height = uhm[hmIdx];
-							const float slope = 1.0f - ucn[cnIdx].y;
+							const float height = hm[hmIdx];
+							const float slope = 1.0f - cn[cnIdx].y;
 							float m = 1.0f;
 
 							if (md->moveFamily == MoveData::Ship) {
