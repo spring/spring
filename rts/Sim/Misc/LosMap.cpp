@@ -81,9 +81,6 @@ void CLosMap::AddMapArea(int2 pos, int allyteam, int radius, int amount)
 void CLosMap::AddMapSquares(const std::vector<int>& squares, int allyteam, int amount)
 {
 	#ifdef USE_UNSYNCED_HEIGHTMAP
-	static const float* shm = readmap->GetCornerHeightMapSynced();
-	static       float* uhm = readmap->GetCornerHeightMapUnsynced();
-
 	static const int LOS2HEIGHT_X = gs->mapx / size.x;
 	static const int LOS2HEIGHT_Z = gs->mapy / size.y;
 
