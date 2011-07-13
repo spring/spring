@@ -56,14 +56,18 @@ void CUnitScriptEngine::AddInstance(CUnitScript *instance)
 		animating.push_front(instance);
 
 	// Error checking
-	//CheckForDuplicates(__FUNCTION__, instance);
+#ifdef _DEBUG
+	CheckForDuplicates(__FUNCTION__, instance);
+#endif
 }
 
 
 void CUnitScriptEngine::RemoveInstance(CUnitScript *instance)
 {
 	// Error checking
-	//CheckForDuplicates(__FUNCTION__, instance);
+#ifdef _DEBUG
+	CheckForDuplicates(__FUNCTION__, instance);
+#endif
 
 	//This is slow. would be better if instance was a hashlist perhaps
 	if (instance != currentScript)
