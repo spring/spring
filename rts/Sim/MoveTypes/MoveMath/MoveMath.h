@@ -25,7 +25,7 @@ public:
 	const static int BLOCK_MOBILE      = 2;
 	const static int BLOCK_MOBILE_BUSY = 4;
 	const static int BLOCK_STRUCTURE   = 8;
-	const static int BLOCK_IMPASSABLE  = 16;
+	const static int BLOCK_IMPASSABLE  = 16 | BLOCK_STRUCTURE;
 
 	// returns a speed-multiplier for given position or data
 	float GetPosSpeedMod(const MoveData& moveData, int xSquare, int zSquare) const;
