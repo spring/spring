@@ -93,12 +93,14 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 		interceptTarget->targeted = true;
 		AddDeathDependence(interceptTarget);
 	}
-	if (weaponDef) {
-		if(weaponDef->interceptedByShieldType) {
+
+	if (weaponDef != NULL) {
+		if (weaponDef->interceptedByShieldType) {
 			interceptHandler.AddShieldInterceptableProjectile(this);
 		}
 
 		alwaysVisible = weaponDef->visuals.alwaysVisible;
+		ignoreWater = weaponDef->waterweapon;
 
 		model = weaponDef->LoadModel();
 
@@ -165,7 +167,7 @@ void CWeaponProjectile::Collision(CFeature* feature)
 		Channels::Battle.PlaySample(weaponDef->soundhit.getID(0), this, weaponDef->soundhit.getVolume(0));
 	}
 
-	if (!weaponDef->noExplode){
+	if (!weaponDef->noExplode) {
 		CProjectile::Collision();
 	} else {
 		if (TraveledRange()) {
@@ -221,9 +223,9 @@ void CWeaponProjectile::Collision(CUnit* unit)
 				weaponDef->soundhit.getVolume(0));
 	}
 
-	if (!weaponDef->noExplode)
+	if (!weaponDef->noExplode) {
 		CProjectile::Collision(unit);
-	else {
+	} else {
 		if (TraveledRange())
 			CProjectile::Collision();
 	}

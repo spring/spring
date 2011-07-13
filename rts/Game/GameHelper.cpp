@@ -202,6 +202,8 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	const WeaponDef* weaponDef = params.weaponDef;
 	const int weaponDefID = (weaponDef != NULL)? weaponDef->id: -1;
 
+	const float3 expPos = pos;
+
 	CUnit* owner = params.owner;
 	CUnit* hitUnit = params.hitUnit;
 	CFeature* hitFeature = params.hitFeature;
@@ -210,9 +212,8 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	const float edgeEffectiveness = params.edgeEffectiveness;
 	const float expSpeed = params.explosionSpeed;
 	const float gfxMod = params.gfxMod;
-	const float realHeight = ground->GetHeightReal(pos.x, pos.z);
-
-	const float3 expPos = float3(pos.x, std::max(pos.y, realHeight), pos.z);
+	const float realHeight = ground->GetHeightReal(expPos.x, expPos.z);
+	const float altitude = expPos.y - realHeight;
 
 	const bool impactOnly = params.impactOnly;
 	const bool ignoreOwner = params.ignoreOwner;
@@ -237,8 +238,6 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 			DoExplosionDamage(hitFeature, expPos, expRad, damages);
 		}
 	} else {
-		const float height = std::max(expPos.y - realHeight, 0.0f);
-
 		{
 			// damage all units within the explosion radius
 			const vector<CUnit*>& units = qf->GetUnitsExact(expPos, expRad);
@@ -282,13 +281,16 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 			}
 		}
 
-		// deform the map
-		if (damageGround && !mapDamage->disabled && (expRad > height) && (damages.craterMult > 0.0f)) {
-			// limit the depth somewhat
-			const float craterDepth = damages[0] * (1.0f - (height / expRad));
-			const float damageDepth = std::min(expRad * 10.0f, craterDepth);
+		// deform the map if the explosion was above-ground
+		// (but had large enough radius to touch the ground)
+		if (altitude >= -1.0f) {
+			if (damageGround && !mapDamage->disabled && (expRad > altitude) && (damages.craterMult > 0.0f)) {
+				// limit the depth somewhat
+				const float craterDepth = damages[0] * (1.0f - (altitude / expRad));
+				const float damageDepth = std::min(expRad * 10.0f, craterDepth);
 
-			mapDamage->Explosion(expPos, (damageDepth + damages.craterBoost) * damages.craterMult, expRad - height);
+				mapDamage->Explosion(expPos, (damageDepth + damages.craterBoost) * damages.craterMult, expRad - altitude);
+			}
 		}
 	}
 

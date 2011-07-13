@@ -121,10 +121,9 @@ bool CBeamLaser::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 	dir /= length;
 
 	if (!onlyForward) {
-		// skip ground col testing for aircraft
-		float g = ground->LineGroundCol(weaponMuzzlePos, pos);
-		if (g > 0 && g < length * 0.9f)
+		if (!HaveFreeLineOfFire(weaponMuzzlePos, dir, length)) {
 			return false;
+		}
 	}
 
 	const float spread =
@@ -134,13 +133,11 @@ bool CBeamLaser::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 	if (avoidFeature && TraceRay::LineFeatureCol(weaponMuzzlePos, dir, length)) {
 		return false;
 	}
-	if (avoidFriendly) {
-		if (TraceRay::TestAllyCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, owner))
-			return false;
+	if (avoidFriendly && TraceRay::TestAllyCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, owner)) {
+		return false;
 	}
-	if (avoidNeutral) {
-		if (TraceRay::TestNeutralCone(weaponMuzzlePos, dir, length, spread, owner))
-			return false;
+	if (avoidNeutral && TraceRay::TestNeutralCone(weaponMuzzlePos, dir, length, spread, owner)) {
+		return false;
 	}
 
 	return true;
