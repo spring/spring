@@ -103,12 +103,10 @@ void CLosMap::AddMapSquares(const std::vector<int>& squares, int allyteam, int a
 
 		const int lmx = losMapSquareIdx % size.x;
 		const int lmz = losMapSquareIdx / size.x;
+		const int hmxTL = lmx * LOS2HEIGHT_X, hmxBR = std::min(gs->mapx - 1, (lmx + 1) * LOS2HEIGHT_X);
+		const int hmzTL = lmz * LOS2HEIGHT_Z, hmzBR = std::min(gs->mapy - 1, (lmz + 1) * LOS2HEIGHT_Z);
 
-		for (int hmx = lmx * LOS2HEIGHT_X; hmx < (lmx + 1) * LOS2HEIGHT_X; hmx++) {
-			for (int hmz = lmz * LOS2HEIGHT_Z; hmz < (lmz + 1) * LOS2HEIGHT_Z; hmz++) {
-				uhm[hmz * (gs->mapx + 1) + hmx] = shm[hmz * (gs->mapx + 1) + hmx];
-			}
-		}
+		readmap->PushVisibleHeightMapUpdate(hmxTL, hmzTL,  hmxBR, hmzBR,  true);
 		#endif
 	}
 }
