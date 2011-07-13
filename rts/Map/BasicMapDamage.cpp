@@ -109,8 +109,8 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 
 			// FIXME: compensate for flattened ground under dead buildings
 			const float prevDif =
-				curHeightMap[y * (gs->mapx + 1) + x] -
-				orgHeightMap[y * (gs->mapx + 1) + x];
+				curHeightMap[y * gs->mapxp1 + x] -
+				orgHeightMap[y * gs->mapxp1 + x];
 
 			if (prevDif * dif > 0.0f) {
 				dif /= fabs(prevDif) * 0.1f + 1;
@@ -146,8 +146,8 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 						baseStrength * craterTable[tableIdx] *
 						invHardness[typeMap[(z / 2) * gs->hmapx + x / 2]];
 				const float prevDif =
-						curHeightMap[z * (gs->mapx + 1) + x] -
-						orgHeightMap[z * (gs->mapx + 1) + x];
+						curHeightMap[z * gs->mapxp1 + x] -
+						orgHeightMap[z * gs->mapxp1 + x];
 
 				if (prevDif * dif > 0.0f) {
 					dif /= fabs(prevDif) * 0.1f + 1;
@@ -232,8 +232,7 @@ void CBasicMapDamage::Update()
 		for (int y = y1; y <= y2; ++y) {
 			for (int x = x1; x<= x2; ++x) {
 				const float dif = *(si++);
-
-				readmap->AddHeight(y * (gs->mapx + 1) + x, dif);
+				readmap->AddHeight(y * gs->mapxp1 + x, dif);
 			}
 		}
 		std::vector<ExploBuilding>::const_iterator bi;
@@ -246,7 +245,7 @@ void CBasicMapDamage::Update()
 
 			for (int z = tz1; z < tz2; z++) {
 				for (int x = tx1; x < tx2; x++) {
-					readmap->AddHeight(z * (gs->mapx + 1) + x, dif);
+					readmap->AddHeight(z * gs->mapxp1 + x, dif);
 				}
 			}
 

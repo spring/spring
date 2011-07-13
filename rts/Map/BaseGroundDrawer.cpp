@@ -379,9 +379,9 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 
 				for (int y = starty; y < endy; ++y) {
 					const int y_pwr2mapx = y * gs->pwr2mapx;
-					const int y_mapx     = y * (gs->mapx + 1);
+					const int y_mapx     = y * gs->mapxp1;
 
-					for (int x = 0; x < gs->mapx + 1; ++x) {
+					for (int x = 0; x < gs->mapxp1; ++x) {
 						const float height = heightMap[y_mapx + x];
 						const unsigned int value = (((unsigned int)(height * 8.0f)) % 255) * 3;
 						const int i = (y_pwr2mapx + x) * 4 - offset;

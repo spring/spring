@@ -2775,7 +2775,7 @@ int LuaSyncedCtrl::LevelHeightMap(lua_State* L)
 
 	for (int z = z1; z <= z2; z++) {
 		for (int x = x1; x <= x2; x++) {
-			const int index = (z * (gs->mapx + 1)) + x;
+			const int index = (z * gs->mapxp1) + x;
 			readmap->SetHeight(index, height);
 		}
 	}
@@ -2796,7 +2796,7 @@ int LuaSyncedCtrl::AdjustHeightMap(lua_State* L)
 
 	for (int z = z1; z <= z2; z++) {
 		for (int x = x1; x <= x2; x++) {
-			const int index = (z * (gs->mapx + 1)) + x;
+			const int index = (z * gs->mapxp1) + x;
 			readmap->AddHeight(index, height);
 		}
 	}
@@ -2821,7 +2821,7 @@ int LuaSyncedCtrl::RevertHeightMap(lua_State* L)
 	if (origFactor == 1.0f) {
 		for (int z = z1; z <= z2; z++) {
 			for (int x = x1; x <= x2; x++) {
-				const int idx = (z * (gs->mapx + 1)) + x;
+				const int idx = (z * gs->mapxp1) + x;
 
 				readmap->SetHeight(idx, origMap[idx]);
 			}
@@ -2831,7 +2831,7 @@ int LuaSyncedCtrl::RevertHeightMap(lua_State* L)
 		const float currFactor = (1.0f - origFactor);
 		for (int z = z1; z <= z2; z++) {
 			for (int x = x1; x <= x2; x++) {
-				const int index = (z * (gs->mapx + 1)) + x;
+				const int index = (z * gs->mapxp1) + x;
 				const float ofh = origFactor * origMap[index];
 				const float cfh = currFactor * currMap[index];
 				readmap->SetHeight(index, ofh + cfh);
@@ -2866,7 +2866,7 @@ int LuaSyncedCtrl::AddHeightMap(lua_State* L)
 		return 0;
 	}
 
-	const int index = (z * (gs->mapx + 1)) + x;
+	const int index = (z * gs->mapxp1) + x;
 	const float oldHeight = readmap->GetCornerHeightMapSynced()[index];
 	heightMapAmountChanged += streflop::fabsf(h);
 
@@ -2903,7 +2903,7 @@ int LuaSyncedCtrl::SetHeightMap(lua_State* L)
 		return 0;
 	}
 
-	const int index = (z * (gs->mapx + 1)) + x;
+	const int index = (z * gs->mapxp1) + x;
 	const float oldHeight = readmap->GetCornerHeightMapSynced()[index];
 	float height = oldHeight;
 

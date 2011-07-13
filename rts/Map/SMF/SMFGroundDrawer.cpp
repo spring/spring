@@ -36,8 +36,8 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 	bigSquareSize(128),
 	numBigTexX(gs->mapx / bigSquareSize),
 	numBigTexY(gs->mapy / bigSquareSize),
-	maxIdx(((gs->mapx + 1) * (gs->mapy + 1)) - 1),
-	heightMapSizeX(gs->mapx + 1)
+	maxIdx((gs->mapxp1 * gs->mapyp1) - 1),
+	heightMapSizeX(gs->mapxp1)
 {
 	mapSizeX = (gs->mapx * SQUARE_SIZE);
 	mapSizeZ = (gs->mapy * SQUARE_SIZE);
