@@ -11,7 +11,7 @@
 #include "Rendering/glFont.h"
 
 #ifdef WIN32
-#  include "Platform/Win/win32.h"
+	#include "System/Platform/Win/win32.h"
 #endif
 
 #include "System/Sync/SyncTracer.h"
