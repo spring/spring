@@ -44,8 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef AI_VECTOR2D_H_INC
 #define AI_VECTOR2D_H_INC
 
-#include "lib/streflop/streflop_cond.h"
-#include "System/FastMath.h"
+#include <math.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -73,7 +72,7 @@ struct aiVector2D
 	}
 	
 	float Length() const {
-		return math::sqrt( SquareLength());
+		return ::sqrt( SquareLength());
 	}
 
 	aiVector2D& Normalize() { 

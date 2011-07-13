@@ -451,7 +451,7 @@ bool TriangulateProcess::TriangulateMesh( aiMesh* pMesh)
 			unsigned int* i = f->mIndices;
 
 			//  drop dumb 0-area triangles
-			if (::fabs(GetArea2D(temp_verts[i[0]],temp_verts[i[1]],temp_verts[i[2]])) < 1e-5f) {
+			if (fabs(GetArea2D(temp_verts[i[0]],temp_verts[i[1]],temp_verts[i[2]])) < 1e-5f) {
 				DefaultLogger::get()->debug("Dropping triangle with area 0");
 				--curOut;
 
