@@ -21,6 +21,7 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/myMath.h"
 #include "System/TimeProfiler.h"
 
 
@@ -407,21 +408,19 @@ void CReadMap::PushVisibleHeightMapUpdate(int x1, int z1,  int x2, int z2,  bool
 			if (losMapCall && !f.update)
 				continue; // if the unsynced heightmap has not actually been modified for this LOS block, skip it
 			const int hmz = mz * losSizeY;
-			const bool inlos = (losMapCall || (gs->frameNum <= 0 || gu->spectatingFullView)) ? 
-							true : loshandler->InLos(hmx, hmz, gu->myAllyTeam);
-			UpdateFilter fnew(std::max(x1, std::min(hmx, x2)), std::max(x1, std::min(hmx + losSizeX - 1, x2)),
-							std::max(z1, std::min(hmz, z2)), std::max(z1, std::min(hmz + losSizeY - 1, z2)), true);
-			if (losMapCall || !inlos) {
-				if(!losMapCall) { // the heightmap has been modified, but the block is not in LOS
-					if (!f.update)
-						f = fnew; // no previous update 
-					else
-						f.expand(fnew); // combine the new update with the existing
-				}
-				else { // the block has now come into LOS
-					fnew = f;
-					f.update = false;
-				}
+			const bool inlos = (losMapCall || (gs->frameNum <= 0 || gu->spectatingFullView)) ||
+								loshandler->InLos(hmx, hmz, gu->myAllyTeam);
+			UpdateFilter fnew(Clamp(hmx, x1, x2), Clamp(hmx + losSizeX - 1, x1, x2),
+							Clamp(hmz, z1, z2), Clamp(hmz + losSizeY - 1, z1, z2), true);
+			if(!inlos) { // the heightmap has been modified, but the block is not in LOS
+				if (!f.update)
+					f = fnew; // no previous update 
+				else
+					f.expand(fnew); // combine the new update with the existing
+			}
+			else if (losMapCall) { // the block has now come into LOS
+				fnew = f;
+				f.update = false;
 			}
 			HeightMapUpdate hmUpdate = HeightMapUpdate(fnew.minx, std::min(gs->mapx - 1, fnew.maxx), 
 													fnew.miny, std::min(gs->mapy - 1, fnew.maxy), inlos);
