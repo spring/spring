@@ -195,6 +195,29 @@ protected:
 	std::vector<unsigned char> typeMap;
 
 	std::list<HeightMapUpdate> unsyncedHeightMapUpdates;
+
+#ifdef USE_UNSYNCED_HEIGHTMAP
+	struct UpdateFilter {
+		UpdateFilter(bool upd = false) : minx(0), maxx(0), miny(0), maxy(0), update(upd) {}
+		UpdateFilter(int mnx, int mxx, int mny, int mxy, bool upd = false) : minx(mnx), maxx(mxx), miny(mny), maxy(mxy), update(upd) {}
+		void expand(const UpdateFilter &fnew) {
+			minx = std::min(minx, fnew.minx);
+			maxx = std::max(maxx, fnew.maxx);
+			miny = std::min(miny, fnew.miny);
+			maxy = std::max(maxy, fnew.maxy);
+			update = fnew.update;
+		}
+		int minx;
+		int maxx;
+		int miny;
+		int maxy;
+		bool update;
+	};
+	std::vector<UpdateFilter> updateFilters;
+	int nuSizeX;
+#endif
+	int losSizeX; // FIXME, duplicated from loshandler
+	int losSizeY;
 };
 
 extern CReadMap* readmap;
