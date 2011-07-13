@@ -47,7 +47,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // internal headers
 #include "FixNormalsStep.h"
-#include "System/FastMath.h"
 
 using namespace Assimp;
 
@@ -145,9 +144,9 @@ bool FixInfacingNormalsProcess::ProcessMesh( aiMesh* pcMesh, unsigned int index)
 	// Check whether this is a planar surface
 	const float fDelta1_yz = fDelta1_y * fDelta1_z;
 
-	if (fDelta1_x < 0.05f * math::sqrtf( fDelta1_yz ))return false;
-	if (fDelta1_y < 0.05f * math::sqrtf( fDelta1_z * fDelta1_x ))return false;
-	if (fDelta1_z < 0.05f * math::sqrtf( fDelta1_y * fDelta1_x ))return false;
+	if (fDelta1_x < 0.05f * sqrtf( fDelta1_yz ))return false;
+	if (fDelta1_y < 0.05f * sqrtf( fDelta1_z * fDelta1_x ))return false;
+	if (fDelta1_z < 0.05f * sqrtf( fDelta1_y * fDelta1_x ))return false;
 
 	// now compare the volumes of the bounding boxes
 	if (::fabsf(fDelta0_x * fDelta1_yz) <

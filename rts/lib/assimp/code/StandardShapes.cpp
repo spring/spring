@@ -47,7 +47,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "AssimpPCH.h"
 #include "StandardShapes.h"
-#include "System/FastMath.h"
 
 namespace Assimp	{
 

@@ -44,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef AI_VECTOR3D_H_INC
 #define AI_VECTOR3D_H_INC
 
-#include "lib/streflop/streflop_cond.h"
+#include <math.h>
 
 #ifdef __cplusplus
 extern "C" {

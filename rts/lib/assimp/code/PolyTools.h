@@ -42,7 +42,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifndef AI_POLYTOOLS_H_INCLUDED
 #define AI_POLYTOOLS_H_INCLUDED
-#include "System/FastMath.h"
 
 namespace Assimp {
 
@@ -118,9 +117,9 @@ inline bool IsCCW(T* in, size_t npoints) {
 			((-in[i+2].y + in[i+1].y) *
 			(-in[i+2].y + in[i+1].y));
 
-		b = math::sqrt(bb);
-		c = math::sqrt(cc);
-		theta = math::acos((bb + cc - aa) / (2 * b * c));
+		b = sqrt(bb);
+		c = sqrt(cc);
+		theta = acos((bb + cc - aa) / (2 * b * c));
 
 		if (OnLeftSideOfLine2D(in[i],in[i+2],in[i+1])) {
 			//	if (convex(in[i].x, in[i].y,
@@ -146,9 +145,9 @@ inline bool IsCCW(T* in, size_t npoints) {
 	cc = ((in[1].x - in[0].x) * (in[1].x - in[0].x)) +
 		((-in[1].y + in[0].y) * (-in[1].y + in[0].y));
 
-	b = math::sqrt(bb);
-	c = math::sqrt(cc);
-	theta = math::acos((bb + cc - aa) / (2 * b * c));
+	b = sqrt(bb);
+	c = sqrt(cc);
+	theta = acos((bb + cc - aa) / (2 * b * c));
 
 	//if (convex(in[npoints-2].x, in[npoints-2].y,
 	//	in[0].x, in[0].y,
