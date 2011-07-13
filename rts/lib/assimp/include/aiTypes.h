@@ -48,7 +48,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Some runtime headers
 #include <sys/types.h>
 #include <memory.h>
-#include <math.h>
+#include "lib/streflop/streflop_cond.h"
 #include <stddef.h>
 
 // Our compile configuration
