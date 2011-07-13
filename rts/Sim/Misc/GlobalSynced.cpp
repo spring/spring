@@ -59,6 +59,10 @@ CGlobalSynced::CGlobalSynced()
 {
 	mapx  = 512;
 	mapy  = 512;
+	mapxm1 = mapx - 1;
+	mapym1 = mapy - 1;
+	mapxp1 = mapx + 1;
+	mapyp1 = mapy + 1;
 	mapSquares = mapx * mapy;
 	hmapx = mapx>>1;
 	hmapy = mapy>>1;

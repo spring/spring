@@ -96,9 +96,9 @@ IPath::SearchResult CPathFinder::GetPath(
 
 	// Clamp the start position
 	if (startxSqr <         0) startxSqr =            0;
-	if (startxSqr >= gs->mapx) startxSqr = gs->mapx - 1;
+	if (startxSqr >= gs->mapx) startxSqr = gs->mapxm1;
 	if (startzSqr <         0) startzSqr =            0;
-	if (startzSqr >= gs->mapy) startzSqr = gs->mapy - 1;
+	if (startzSqr >= gs->mapy) startzSqr = gs->mapym1;
 
 	startSquare = startxSqr + startzSqr * gs->mapx;
 
@@ -135,9 +135,9 @@ IPath::SearchResult CPathFinder::InitSearch(const MoveData& moveData, const CPat
 
 	// Clamp the start position
 	if (startxSqr <         0) { startxSqr =            0; }
-	if (startxSqr >= gs->mapx) { startxSqr = gs->mapx - 1; }
+	if (startxSqr >= gs->mapx) { startxSqr = gs->mapxm1; }
 	if (startzSqr <         0) { startzSqr =            0; }
-	if (startzSqr >= gs->mapy) { startzSqr = gs->mapy - 1; }
+	if (startzSqr >= gs->mapy) { startzSqr = gs->mapym1; }
 
 	// If the starting position is a goal position, then no search need to be performed.
 	if (pfDef.IsGoal(startxSqr, startzSqr))

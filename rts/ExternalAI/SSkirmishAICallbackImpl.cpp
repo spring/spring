@@ -1538,7 +1538,7 @@ EXPORT(int) skirmishAiCallback_Map_getHeightMap(int skirmishAIId, float* heights
 EXPORT(int) skirmishAiCallback_Map_getCornersHeightMap(int skirmishAIId,
 		float* cornerHeights, int cornerHeights_sizeMax) {
 
-	static const int cornerHeights_sizeReal = (gs->mapx + 1) * (gs->mapy + 1);
+	static const int cornerHeights_sizeReal = gs->mapxp1 * gs->mapyp1;
 
 	int cornerHeights_size = cornerHeights_sizeReal;
 

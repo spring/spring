@@ -321,8 +321,8 @@ float CUnitHandler::GetBuildHeight(const float3& pos, const UnitDef* unitdef, bo
 
 	for (int x = x1; x <= x2; x++) {
 		for (int z = z1; z <= z2; z++) {
-			const float sqOrgH = orgHeightMap[z * (gs->mapx + 1) + x];
-			const float sqCurH = curHeightMap[z * (gs->mapx + 1) + x];
+			const float sqOrgH = orgHeightMap[z * gs->mapxp1 + x];
+			const float sqCurH = curHeightMap[z * gs->mapxp1 + x];
 			const float sqMinH = std::min(sqCurH, sqOrgH);
 			const float sqMaxH = std::max(sqCurH, sqOrgH);
 
@@ -489,8 +489,8 @@ int CUnitHandler::TestBuildSquare(const float3& pos, const UnitDef* unitdef, CFe
 
 		const int sqx = pos.x / SQUARE_SIZE;
 		const int sqz = pos.z / SQUARE_SIZE;
-		const float orgH = orgHeightMap[sqz * (gs->mapx + 1) + sqx];
-		const float curH = curHeightMap[sqz * (gs->mapx + 1) + sqx];
+		const float orgH = orgHeightMap[sqz * gs->mapxp1 + sqx];
+		const float curH = curHeightMap[sqz * gs->mapxp1 + sqx];
 		const float difH = unitdef->maxHeightDif;
 
 		if (pos.y > std::max(orgH + difH, curH + difH)) { return 0; }

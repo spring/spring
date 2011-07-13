@@ -44,8 +44,8 @@ void HeightMapTexture::Init()
 		return;
 	}
 
-	xSize = (gs->mapx + 1);
-	ySize = (gs->mapy + 1);
+	xSize = gs->mapxp1;
+	ySize = gs->mapyp1;
 	
 	glGenTextures(1, &texID);
 	glBindTexture(GL_TEXTURE_2D, texID);

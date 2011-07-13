@@ -42,13 +42,13 @@ static inline float InterpolateHeight(float x, float y, const float* heightmap)
 	const int isy = int(y);
 	const float dx = x - isx;
 	const float dy = y - isy;
-	const int hs = isx + isy * (gs->mapx + 1);
+	const int hs = isx + isy * gs->mapxp1;
 
 	if (dx + dy < 1.0f) {
 		//! top left triangle
 		const float h00 = heightmap[hs                     ];
 		const float h10 = heightmap[hs + 1                 ];
-		const float h01 = heightmap[hs     + (gs->mapx + 1)];
+		const float h01 = heightmap[hs     + gs->mapxp1];
 		const float xdif = (dx) * (h10 - h00);
 		const float ydif = (dy) * (h01 - h00);
 
@@ -56,8 +56,8 @@ static inline float InterpolateHeight(float x, float y, const float* heightmap)
 	} else {
 		//! bottom right triangle
 		const float h10 = heightmap[hs + 1                 ];
-		const float h11 = heightmap[hs + 1 + (gs->mapx + 1)];
-		const float h01 = heightmap[hs     + (gs->mapx + 1)];
+		const float h11 = heightmap[hs + 1 + gs->mapxp1];
+		const float h01 = heightmap[hs     + gs->mapxp1];
 		const float xdif = (1.0f - dx) * (h01 - h11);
 		const float ydif = (1.0f - dy) * (h10 - h11);
 
@@ -76,7 +76,7 @@ static inline float LineGroundSquareCol(
 	int xs,
 	int ys)
 {
-	if ((xs < 0) || (ys < 0) || (xs >= gs->mapx - 1) || (ys >= gs->mapy - 1))
+	if ((xs < 0) || (ys < 0) || (xs >= gs->mapxm1) || (ys >= gs->mapym1))
 		return -1.0f;
 
 	const float3& faceNormalTL = normalmap[(ys * gs->mapx + xs) * 2    ];
@@ -91,7 +91,7 @@ static inline float LineGroundSquareCol(
 	//! top-left corner vertex
 	cornerVertex.x = xs * SQUARE_SIZE;
 	cornerVertex.z = ys * SQUARE_SIZE;
-	cornerVertex.y = heightmap[ys * (gs->mapx + 1) + xs];
+	cornerVertex.y = heightmap[ys * gs->mapxp1 + xs];
 
 	//! project \<to - cornerVertex\> vector onto the TL-normal
 	//! if \<to\> lies below the terrain, this will be negative
@@ -116,7 +116,7 @@ static inline float LineGroundSquareCol(
 	//! bottom-right corner vertex
 	cornerVertex.x += SQUARE_SIZE;
 	cornerVertex.z += SQUARE_SIZE;
-	cornerVertex.y = heightmap[(ys + 1) * (gs->mapx + 1) + (xs + 1)];
+	cornerVertex.y = heightmap[(ys + 1) * gs->mapxp1 + (xs + 1)];
 
 	//! project \<to - cornerVertex\> vector onto the TL-normal
 	//! if \<to\> lies below the terrain, this will be negative
@@ -163,8 +163,8 @@ void CGround::CheckColSquare(CProjectile* p, int x, int y)
 	const float3* fn = readmap->GetFaceNormalsSynced();
 	const int hmIdx = (y * gs->mapx + x);
 	const float xt = x * SQUARE_SIZE;
-	const float& yt0 = hm[ y      * (gs->mapx + 1) + x    ];
-	const float& yt1 = hm[(y + 1) * (gs->mapx + 1) + x + 1];
+	const float& yt0 = hm[ y      * gs->mapxp1 + x    ];
+	const float& yt1 = hm[(y + 1) * gs->mapxp1 + x + 1];
 	const float zt = y * SQUARE_SIZE;
 
 	const float3& fn0 = fn[hmIdx * 2    ];
@@ -334,8 +334,8 @@ float CGround::GetApproximateHeight(float x, float y, bool synced) const
 {
 	int xsquare = int(x) / SQUARE_SIZE;
 	int ysquare = int(y) / SQUARE_SIZE;
-	xsquare = Clamp(xsquare, 0, gs->mapx - 1);
-	ysquare = Clamp(ysquare, 0, gs->mapy - 1);
+	xsquare = Clamp(xsquare, 0, gs->mapxm1);
+	ysquare = Clamp(ysquare, 0, gs->mapym1);
 
 	const float* heightmap = readmap->GetCenterHeightMapSynced();
 
@@ -378,8 +378,8 @@ const float3& CGround::GetNormal(float x, float y, bool synced) const
 {
 	int xsquare = int(x) / SQUARE_SIZE;
 	int ysquare = int(y) / SQUARE_SIZE;
-	xsquare = Clamp(xsquare, 0, gs->mapx - 1);
-	ysquare = Clamp(ysquare, 0, gs->mapy - 1);
+	xsquare = Clamp(xsquare, 0, gs->mapxm1);
+	ysquare = Clamp(ysquare, 0, gs->mapym1);
 
 	const float3* normalmap = readmap->GetCenterNormalsSynced();
 
@@ -423,9 +423,9 @@ float3 CGround::GetSmoothNormal(float x, float y, bool synced) const
 		sy = 1;
 	if (sx < 1)
 		sx = 1;
-	if (sy >= gs->mapy - 1)
+	if (sy >= gs->mapym1)
 		sy = gs->mapy - 2;
-	if (sx >= gs->mapx - 1)
+	if (sx >= gs->mapxm1)
 		sx = gs->mapx - 2;
 
 	float dx = (x / SQUARE_SIZE) - sx;

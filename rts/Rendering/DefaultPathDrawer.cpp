@@ -133,7 +133,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 				for (int ty = starty; ty < endy; ++ty) {
 					for (int tx = 0; tx < gs->hmapx; ++tx) {
 						const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
-						const int hmIdx = (ty << 1) * (gs->mapx + 1) + (tx << 1);
+						const int hmIdx = (ty << 1) * gs->mapxp1 + (tx << 1);
 						const int cnIdx = (ty << 1) * (gs->mapx    ) + (tx << 1);
 
 						if (md != NULL) {

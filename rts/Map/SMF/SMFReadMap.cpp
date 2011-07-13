@@ -64,9 +64,9 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 
 	CReadMap::Initialize();
 
-	shadingTexPixelRow.resize((gs->mapx + 1) * 4, 0);
+	shadingTexPixelRow.resize(gs->mapxp1 * 4, 0);
 	shadingTexUpdateIter = 0;
-	shadingTexUpdateRate = std::max(1.0f, math::ceil((gs->mapx + 1) / float(gs->mapy + 1)));
+	shadingTexUpdateRate = std::max(1.0f, math::ceil(gs->mapxp1 / float(gs->mapyp1)));
 	// with GLSL, the shading texture has very limited use (minimap etc) so we increase the update interval
 	if (globalRendering->haveGLSL)
 		shadingTexUpdateRate *= 10;
@@ -281,7 +281,7 @@ void CSmfReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigne
 			#else
 			&cornerHeightMapSynced[0];
 			#endif
-		const float height = heightMap[xi + yi * (gs->mapx + 1)];
+		const float height = heightMap[xi + yi * gs->mapxp1];
 
 		if (height < 0.0f) {
 			const int h = (int) - height & 1023; //! waterHeightColors array just holds 1024 colors
@@ -328,8 +328,8 @@ void CSmfReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 		static       float3* rvn = &rawVertexNormals[0];
 		static       float3* vvn = &visVertexNormals[0];
 
-		static const int W = gs->mapx + 1;
-		static const int H = gs->mapy + 1;
+		static const int W = gs->mapxp1;
+		static const int H = gs->mapyp1;
 		static const int SS = SQUARE_SIZE;
 
 		// a heightmap update over (x1, y1) - (x2, y2) implies the
@@ -465,8 +465,8 @@ void CSmfReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 
 
 void CSmfReadMap::UpdateShadingTexture() {
-	const int xsize = gs->mapx + 1;
-	const int ysize = gs->mapy + 1;
+	const int xsize = gs->mapxp1;
+	const int ysize = gs->mapyp1;
 	int y = shadingTexUpdateIter;
 
 	shadingTexUpdateIter = (shadingTexUpdateIter + 1) % (ysize * shadingTexUpdateRate);
@@ -485,7 +485,7 @@ void CSmfReadMap::UpdateShadingTexture() {
 
 float CSmfReadMap::DiffuseSunCoeff(const int& x, const int& y) const
 {
-	const float3& N = visVertexNormals[(y * (gs->mapx + 1)) + x];
+	const float3& N = visVertexNormals[(y * gs->mapxp1) + x];
 	const float3& L = sky->GetLight()->GetLightDir();
 	return Clamp(L.dot(N), 0.0f, 1.0f);
 }

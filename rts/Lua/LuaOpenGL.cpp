@@ -1862,8 +1862,8 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 			}
 		}
 	}
-	const int mapxi = (gs->mapx + 1);
-	const int mapzi = (gs->mapy + 1);
+	const int mapxi = gs->mapxp1;
+	const int mapzi = gs->mapyp1;
 	const float* heightmap =
 		#ifdef USE_UNSYNCED_HEIGHTMAP
 		readmap->GetCornerHeightMapUnsynced();
