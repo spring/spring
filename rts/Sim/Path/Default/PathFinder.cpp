@@ -275,11 +275,10 @@ bool CPathFinder::TestSquare(
 	}
 
 	const int blockStatus = moveData.moveMath->IsBlocked(moveData, square.x, square.y);
-	unsigned int blockBits = CMoveMath::BLOCK_STRUCTURE;
 
 	// Check if square are out of constraints or blocked by something.
 	// Doesn't need to be done on open squares, as those are already tested.
-	if ((!pfDef.WithinConstraints(square.x, square.y) || (blockStatus & blockBits)) &&
+	if ((!pfDef.WithinConstraints(square.x, square.y) || (blockStatus & CMoveMath::BLOCK_STRUCTURE)) &&
 		!(sqrStatus & PATHOPT_OPEN)) {
 
 		squareStates[sqrIdx].nodeMask |= PATHOPT_BLOCKED;
@@ -289,13 +288,14 @@ bool CPathFinder::TestSquare(
 
 	// Evaluate this square.
 	float squareSpeedMod = moveData.moveMath->GetPosSpeedMod(moveData, square.x, square.y);
-	blockBits = (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY);
 
 	if (squareSpeedMod == 0) {
 		squareStates[sqrIdx].nodeMask |= PATHOPT_FORBIDDEN;
 		dirtySquares.push_back(sqrIdx);
 		return false;
 	}
+
+	static const int blockBits = (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY);
 
 	if (testMobile && (blockStatus & blockBits)) {
 		if (blockStatus & CMoveMath::BLOCK_MOVING)
