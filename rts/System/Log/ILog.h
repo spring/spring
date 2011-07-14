@@ -53,6 +53,12 @@ extern "C" {
  */
 extern bool log_frontend_isEnabled(const char* section, int level);
 
+/**
+ * Allows the global filter to maintain a set of all setions used in the binary.
+ * This will be called once per each LOG*() line in the source.
+ */
+extern void log_frontend_registerSection(const char* section);
+
 
 // format string error checking
 #ifdef __GNUC__
@@ -95,6 +101,60 @@ extern void log_frontend_record(const char* section, int level, const char* fmt,
 
 #define _LOG_IS_ENABLED_RUNTIME(section, level) \
 	log_frontend_isEnabled(section, LOG_LEVE##level)
+
+#define _LOG_REGISTER_SECTION_RAW(section) \
+	log_frontend_registerSection(section);
+
+/*
+ * Pre-processor trickery, useful to create unique identifiers.
+ * see http://stackoverflow.com/questions/461062/c-anonymous-variables
+ */
+#define _CONCAT_SUB(start, end) \
+	start##end
+#define _CONCAT(start, end) \
+	_CONCAT_SUB(start, end)
+#define _UNIQUE_IDENT(prefix) \
+	_CONCAT(prefix, __COUNTER__)
+
+// Register a section (only the first time the code is run)
+#if       defined(__cplusplus)
+	/*
+	 * This would also be C++ compatible, but a bit slower.
+	 * It can be used globally (outside of a function), where it would register
+	 * the section before main() is called.
+	 * When placed somewhere in a function, it will only register the function
+	 * when and if that code is called.
+	 */
+	#define _LOG_REGISTER_SECTION_SUB(section, className) \
+		struct className { \
+			className() { \
+				_LOG_REGISTER_SECTION_RAW(section); \
+			} \
+		} _UNIQUE_IDENT(secReg);
+	#define _LOG_REGISTER_SECTION(section) \
+		_LOG_REGISTER_SECTION_SUB(section, _UNIQUE_IDENT(SectionRegistrator))
+	#define _LOG_REGISTER_SECTION_GLOBAL(section) \
+		namespace { \
+			_LOG_REGISTER_SECTION(section); \
+		} // namespace
+#else  // defined(__cplusplus)
+	/*
+	 * This would also be C++ compatible, but it is a bit slower.
+	 * Still, branch-prediction should work well here.
+	 * It can not be used globally (outside of a function), and therefore will
+	 * only register a section when the invoking code is executed, instead of
+	 * before main() is called.
+	 */
+	#define _LOG_REGISTER_SECTION(section) \
+		{ \
+			static bool sectionRegistered = false; \
+			if (sectionRegistered) { \
+				sectionRegistered = true; \
+				_LOG_REGISTER_SECTION_RAW(section); \
+			} \
+		}
+	#define _LOG_REGISTER_SECTION_GLOBAL(section)
+#endif // defined(__cplusplus)
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -162,9 +222,12 @@ extern void log_frontend_record(const char* section, int level, const char* fmt,
 	#warning log messages of level FATAL are not compiled into the binary
 #endif
 
-/// Connects to the sink macro
+/// Registers the section and connects to the filter macro
 #define _LOG_SECTION(section, level, fmt, ...) \
-	_LOG_FILTER_##level(section, fmt, ##__VA_ARGS__)
+	do { \
+		_LOG_REGISTER_SECTION(section) \
+		_LOG_FILTER_##level(section, fmt, ##__VA_ARGS__); \
+	} while (false)
 
 /// Uses the section defined in LOG_SECTION
 #define _LOG_SECTION_DEFINED(level, fmt, ...) \
@@ -198,6 +261,24 @@ extern void log_frontend_record(const char* section, int level, const char* fmt,
  * @addtogroup logging_api
  * @{
  */
+
+/**
+ * Register a section name with the underlying log record processing system.
+ * This has to be placed inside a function.
+ * This will only register the section when and if that code is called.
+ * @see LOG_REGISTER_SECTION_GLOBAL
+ */
+#define LOG_REGISTER_SECTION(section) \
+	_LOG_REGISTER_SECTION(section);
+
+/**
+ * Register a section name with the underlying log record processing system.
+ * This has to be used globally (outside of a function).
+ * This registers the section before main() is called.
+ * NOTE: This is supported in C++ only, not in C.
+ */
+#define LOG_REGISTER_SECTION_GLOBAL(section) \
+	_LOG_REGISTER_SECTION_GLOBAL(section);
 
 /**
  * Returns whether logging for the current section and the supplied level is

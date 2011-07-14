@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstdarg>
 #include <map>
+#include <set>
 
 #include "DefaultFilter.h"
 
@@ -37,26 +38,43 @@ extern void log_sink_record(const char* section, int level, const char* fmt,
 	 *   behavior. 
 	 *   Enabled at levels -O, -O2, -O3, -Os.
 	 */
-	#define DEFAULT_FILTER_EQUAL_SECTIONS(section1, section2) \
+	#define DEFAULT_FILTER_SECTIONS_EQUAL(section1, section2) \
 		(section1 == section2)
+	#define DEFAULT_FILTER_SECTIONS_COMPARE(section1, section2) \
+		(section1 < section2)
 #else  // defined(__GNUC__) && !defined(DEBUG)
 	#include <string.h>
-	#define DEFAULT_FILTER_EQUAL_SECTIONS(section1, section2) \
+	#define DEFAULT_FILTER_SECTIONS_EQUAL(section1, section2) \
 		((section1 == section2) \
 		|| ((section1 != NULL) && (section2 != NULL) \
 			&& (strcmp(section1, section2) == 0)))
+	#define DEFAULT_FILTER_SECTIONS_COMPARE(section1, section2) \
+		((section1 == NULL) \
+			|| ((section2 != NULL) && (strcmp(section1, section2) > 0)))
 #endif // defined(__GNUC__) && !defined(DEBUG)
 
 struct log_filter_section_compare {
 	inline bool operator()(const char* const& section1,
 			const char* const& section2) const
 	{
-		   return DEFAULT_FILTER_EQUAL_SECTIONS(section1, section2);
+		return DEFAULT_FILTER_SECTIONS_COMPARE(section1, section2);
 	}
 };
 
 static int minLevel = LOG_LEVEL_ALL;
 static std::map<const char*, int, log_filter_section_compare> sectionMinLevels;
+static std::set<const char*, log_filter_section_compare>* registeredSections;
+namespace {
+struct SectionListInitializer {
+	SectionListInitializer() {
+		registeredSections = new std::set<const char*, log_filter_section_compare>();
+	}
+	~SectionListInitializer() {
+		delete registeredSections;
+		registeredSections = NULL;
+	}
+};
+}
 
 
 static inline int log_filter_section_getDefaultMinLevel(const char* section) {
@@ -64,7 +82,7 @@ static inline int log_filter_section_getDefaultMinLevel(const char* section) {
 #ifdef DEBUG
 	return LOG_LEVEL_DEBUG;
 #else
-	if (DEFAULT_FILTER_EQUAL_SECTIONS(section, LOG_SECTION_DEFAULT)) {
+	if (DEFAULT_FILTER_SECTIONS_EQUAL(section, LOG_SECTION_DEFAULT)) {
 		return LOG_LEVEL_INFO;
 	} else {
 		return LOG_LEVEL_WARNING;
@@ -147,6 +165,19 @@ bool log_frontend_isEnabled(const char* section, int level) {
 
 	return ((level >= log_filter_global_getMinLevel())
 			&& (level >= log_filter_section_getMinLevel(section)));
+}
+
+void log_frontend_registerSection(const char* section) {
+
+	static const SectionListInitializer sectionListInitializer;
+
+	if (!DEFAULT_FILTER_SECTIONS_EQUAL(section, LOG_SECTION_DEFAULT)) {
+		std::set<const char*, log_filter_section_compare>::const_iterator si
+				= registeredSections->find(section);
+		if (si == registeredSections->end()) {
+			registeredSections->insert(section);
+		}
+	}
 }
 
 void log_frontend_record(const char* section, int level, const char* fmt,
