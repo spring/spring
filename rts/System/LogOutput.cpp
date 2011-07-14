@@ -237,7 +237,7 @@ void CLogOutput::Initialize()
 void CLogOutput::InitializeSubsystems()
 {
 	// the new systems (ILog.h) log-sub-systems are called sections:
-	const std::set<std::string>& sections = log_filter_section_getRegisteredSet();
+	const std::set<const char*> sections = log_filter_section_getRegisteredSet();
 
 	{
 		LogObject lo;
@@ -252,7 +252,7 @@ void CLogOutput::InitializeSubsystems()
 				numSec++;
 			}
 		}
-		std::set<std::string>::const_iterator si;
+		std::set<const char*>::const_iterator si;
 		for (si = sections.begin(); si != sections.end(); ++si) {
 			if (numSec > 0) {
 				lo << ", ";
@@ -320,7 +320,7 @@ void CLogOutput::InitializeSubsystems()
 		}
 
 		// new log sections
-		std::set<std::string>::const_iterator si;
+		std::set<const char*>::const_iterator si;
 		for (si = sections.begin(); si != sections.end(); ++si) {
 			const std::string name = StringToLower(*si);
 			const bool found = (subsystemsLC.find("," + name + ",") != string::npos);
@@ -330,10 +330,10 @@ void CLogOutput::InitializeSubsystems()
 					lo << ", ";
 				}
 #if       defined(DEBUG)
-				log_filter_section_setMinLevel(si->c_str(), LOG_LEVEL_DEBUG);
+				log_filter_section_setMinLevel(*si, LOG_LEVEL_DEBUG);
 				lo << *si << "(LOG_LEVEL_DEBUG)";
 #else  // defined(DEBUG)
-				log_filter_section_setMinLevel(si->c_str(), LOG_LEVEL_INFO);
+				log_filter_section_setMinLevel(*si, LOG_LEVEL_INFO);
 				lo << *si << "(LOG_LEVEL_INFO)";
 #endif // defined(DEBUG)
 				numSec++;

@@ -4,7 +4,6 @@
 #include <cstdarg>
 #include <map>
 #include <set>
-#include <string>
 
 #include "DefaultFilter.h"
 
@@ -41,21 +40,34 @@ extern void log_sink_record(const char* section, int level, const char* fmt,
 	 */
 	#define DEFAULT_FILTER_SECTIONS_EQUAL(section1, section2) \
 		(section1 == section2)
+	#define DEFAULT_FILTER_SECTIONS_COMPARE(section1, section2) \
+		(section1 < section2)
 #else  // defined(__GNUC__) && !defined(DEBUG)
 	#include <string.h>
 	#define DEFAULT_FILTER_SECTIONS_EQUAL(section1, section2) \
 		((section1 == section2) \
 		|| ((section1 != NULL) && (section2 != NULL) \
 			&& (strcmp(section1, section2) == 0)))
+	#define DEFAULT_FILTER_SECTIONS_COMPARE(section1, section2) \
+		((section1 == NULL) \
+			|| ((section2 != NULL) && (strcmp(section1, section2) > 0)))
 #endif // defined(__GNUC__) && !defined(DEBUG)
 
+struct log_filter_section_compare {
+	inline bool operator()(const char* const& section1,
+			const char* const& section2) const
+	{
+		return DEFAULT_FILTER_SECTIONS_COMPARE(section1, section2);
+	}
+};
+
 static int minLevel = LOG_LEVEL_ALL;
-static std::map<std::string, int> sectionMinLevels;
-static std::set<std::string>* registeredSections;
+static std::map<const char*, int, log_filter_section_compare> sectionMinLevels;
+static std::set<const char*, log_filter_section_compare>* registeredSections;
 namespace {
 struct SectionListInitializer {
 	SectionListInitializer() {
-		registeredSections = new std::set<std::string>();
+		registeredSections = new std::set<const char*, log_filter_section_compare>();
 	}
 	~SectionListInitializer() {
 		delete registeredSections;
@@ -112,7 +124,7 @@ int log_filter_section_getMinLevel(const char* section) {
 
 	int level = -1;
 
-	const std::map<std::string, int>::const_iterator sectionMinLevel
+	const std::map<const char*, int>::const_iterator sectionMinLevel
 			= sectionMinLevels.find(section);
 	if (sectionMinLevel == sectionMinLevels.end()) {
 		level = log_filter_section_getDefaultMinLevel(section);
@@ -143,11 +155,12 @@ const char* log_filter_section_getRegisteredIndex(int index) {
 	const char* section = NULL;
 
 	if ((index >= 0) && (index < (int)registeredSections->size())) {
-		std::set<std::string>::const_iterator si = registeredSections->begin();
+		std::set<const char*, log_filter_section_compare>::const_iterator si
+				= registeredSections->begin();
 		for (int curIndex = 0; curIndex < index; ++curIndex) {
 			si = ++si;
 		}
-		section = si->c_str();
+		section = *si;
 	}
 
 	return section;
@@ -182,7 +195,7 @@ void log_frontend_registerSection(const char* section) {
 	static const SectionListInitializer sectionListInitializer;
 
 	if (!DEFAULT_FILTER_SECTIONS_EQUAL(section, LOG_SECTION_DEFAULT)) {
-		const std::set<std::string>::const_iterator si
+		std::set<const char*, log_filter_section_compare>::const_iterator si
 				= registeredSections->find(section);
 		if (si == registeredSections->end()) {
 			registeredSections->insert(section);
@@ -206,7 +219,17 @@ void log_frontend_record(const char* section, int level, const char* fmt,
 } // extern "C"
 #endif
 
-const std::set<std::string>& log_filter_section_getRegisteredSet() {
-	return *registeredSections;
+std::set<const char*> log_filter_section_getRegisteredSet() {
+
+	std::set<const char*> outSet;
+
+	std::set<const char*, log_filter_section_compare>::const_iterator si;
+	for (si = registeredSections->begin(); si != registeredSections->end();
+			++si)
+	{
+		outSet.insert(*si);
+	}
+
+	return outSet;
 }
 

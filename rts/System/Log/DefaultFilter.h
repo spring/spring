@@ -84,14 +84,13 @@ const char* log_filter_section_getRegisteredIndex(int index);
 
 #ifdef __cplusplus
 #include <set>
-#include <string>
 
 /**
  * Returns the registered sections.
  * This is simply to be more C++ friendly.
  * @see #log_filter_section_getRegistered
  */
-const std::set<std::string>& log_filter_section_getRegisteredSet();
+std::set<const char*> log_filter_section_getRegisteredSet();
 #endif
 
 /** @} */ // group logging_filter_defaultFilter_control
