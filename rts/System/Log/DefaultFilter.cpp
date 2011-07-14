@@ -142,8 +142,27 @@ void log_filter_section_setMinLevel(const char* section, int level) {
 	}
 }
 
+int log_filter_section_getRegistered() {
+	return registeredSections->size();
+}
 
-void log_filter_record(const char* section, int level, const char* fmt,
+const char* log_filter_section_getRegisteredIndex(int index) {
+
+	const char* section = NULL;
+
+	if ((index >= 0) && (index < (int)registeredSections->size())) {
+		std::set<const char*, log_filter_section_compare>::const_iterator si
+				= registeredSections->begin();
+		for (int curIndex = 0; curIndex < index; ++curIndex) {
+			si = ++si;
+		}
+		section = *si;
+	}
+
+	return section;
+}
+
+static void log_filter_record(const char* section, int level, const char* fmt,
 		va_list arguments)
 {
 	if (!log_frontend_isEnabled(section, level)) {
@@ -195,4 +214,18 @@ void log_frontend_record(const char* section, int level, const char* fmt,
 #ifdef __cplusplus
 } // extern "C"
 #endif
+
+std::set<const char*> log_filter_section_getRegisteredSet() {
+
+	std::set<const char*> outSet;
+
+	std::set<const char*, log_filter_section_compare>::const_iterator si;
+	for (si = registeredSections->begin(); si != registeredSections->end();
+			++si)
+	{
+		outSet.insert(*si);
+	}
+
+	return outSet;
+}
 
