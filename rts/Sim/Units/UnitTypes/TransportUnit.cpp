@@ -254,7 +254,26 @@ bool CTransportUnit::CanTransport(const CUnit *unit) const
 
 void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 {
-	DetachUnit(unit);
+	if (unit->transporter == this) {
+		// assume we are already transporting this unit,
+		// and just want to move it to a different piece
+		// with script logic (this means the UnitLoaded
+		// event is only sent once)
+		std::list<TransportedUnit>::iterator transporteesIt;
+
+		for (transporteesIt = transported.begin(); transporteesIt != transported.end(); ++transporteesIt) {
+			TransportedUnit& tu = *transporteesIt;
+
+			if (tu.unit == unit) {
+				tu.piece = piece;
+				break;
+			}
+		}
+
+		return;
+	}
+
+	// covers the case where unit->transporter != this
 	if (!CanTransport(unit)) {
 		return;
 	}
@@ -266,7 +285,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	unit->toBeTransported = false;
 
 	if (!unitDef->isFirePlatform) {
-		// make sure unit doesnt fire etc in transport
+		// make sure unit does not fire etc in transport
 		unit->stunned = true;
 		selectedUnits.RemoveUnit(unit);
 	}
@@ -298,7 +317,6 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	unit->UpdateTerrainType();
 
 	eventHandler.UnitLoaded(unit, this);
-
 	commandAI->BuggerOff(pos, -1.0f); // make sure not to get buggered off :) by transportee
 }
 
@@ -337,15 +355,15 @@ bool CTransportUnit::DetachUnitCore(CUnit* unit)
 			unit->UpdateTerrainType();
 
 			eventHandler.UnitUnloaded(unit, this);
-
 			return true;
 		}
 	}
+
 	return false;
 }
 
 
-void CTransportUnit::DetachUnit(CUnit* unit)
+bool CTransportUnit::DetachUnit(CUnit* unit)
 {
 	if (DetachUnitCore(unit)) {
 		unit->Block();
@@ -356,11 +374,15 @@ void CTransportUnit::DetachUnit(CUnit* unit)
 			Command c(CMD_STOP);
 			unit->commandAI->GiveCommand(c);
 		}
+
+		return true;
 	}
+
+	return false;
 }
 
 
-void CTransportUnit::DetachUnitFromAir(CUnit* unit, float3 pos)
+bool CTransportUnit::DetachUnitFromAir(CUnit* unit, float3 pos)
 {
 	if (DetachUnitCore(unit)) {
 		unit->Drop(this->pos, this->frontdir, this);
@@ -373,7 +395,11 @@ void CTransportUnit::DetachUnitFromAir(CUnit* unit, float3 pos)
 			c.params.push_back(pos.z);
 			unit->commandAI->GiveCommand(c);
 		}
+
+		return true;
 	}
+
+	return false;
 }
 
 
