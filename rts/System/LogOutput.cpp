@@ -237,41 +237,43 @@ void CLogOutput::InitializeSubsystems()
 	{
 		LogObject lo;
 		lo << "Available log subsystems: ";
+		int numSec = 0;
 		for (CLogSubsystem* sys = CLogSubsystem::GetList(); sys; sys = sys->next) {
 			if (sys->name && *sys->name) {
-				lo << sys->name;
-				if (sys->next)
+				if (numSec > 0) {
 					lo << ", ";
+				}
+				lo << sys->name;
+				numSec++;
 			}
 		}
 	}
-	// enabled subsystems is superset of the ones specified in environment
+
+	// enabled subsystems is superset of the ones specified in the environment
 	// and the ones specified in the configuration file.
 	// configHandler cannot be accessed here in unitsync since it may not exist.
 #ifndef UNITSYNC
-	string subsystems = "," + StringToLower(configHandler->GetString("LogSubsystems", "")) + ",";
+	std::string subsystems = "," + StringToLower(configHandler->GetString("LogSubsystems", "")) + ",";
 #else
-#  ifdef DEBUG
+	#ifdef DEBUG
 	// unitsync logging in debug mode always on
-	string subsystems = ",unitsync,archivescanner";
-#  else
-	string subsystems = ",";
-#  endif
+	std::string subsystems = ",unitsync,archivescanner";
+	#else
+	std::string subsystems = ",";
+	#endif
 #endif
 
 	const char* const env = getenv("SPRING_LOG_SUBSYSTEMS");
 	bool env_override = false;
-	if (env)
-	{
+	if (env) {
 		// this allows to disable all subsystems from the env var
 		std::string env_subsystems(StringToLower(env));
-		if ( env_subsystems == std::string("none" ))
-		{
+		if (env_subsystems == std::string("none")) {
 			subsystems = "";
 			env_override = true;
-		}
-		else
+		} else {
 			subsystems += env_subsystems + ",";
+		}
 	}
 
 
@@ -283,17 +285,19 @@ void CLogOutput::InitializeSubsystems()
 				const string name = StringToLower(sys->name);
 				const string::size_type index = subsystems.find("," + name + ",");
 
-				if (env_override)
-					sys->enabled = index != string::npos;
-				// log subsystems which are enabled by default can not be disabled
-				// ("enabled by default" wouldn't make sense otherwise...)
-				else if (!sys->enabled && index != string::npos)
+				if (env_override) {
+					sys->enabled = (index != string::npos);
+				} else if (!sys->enabled && (index != string::npos)) {
+					// log subsystems which are enabled by default can not be disabled
+					// ("enabled by default" wouldn't make sense otherwise...)
 					sys->enabled = true;
+				}
 
 				if (sys->enabled) {
 					lo << sys->name;
-					if (sys->next)
+					if (sys->next) {
 						lo << ", ";
+					}
 				}
 			}
 		}
