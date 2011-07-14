@@ -164,15 +164,15 @@ void CReadMap::Initialize()
 		char loadMsg[512];
 		const char* fmtString = "Loading Map (%u MB)";
 		unsigned int reqMemFootPrintKB =
-			((( gs->mapxp1) * gs->mapyp1       * 2 *   sizeof(float))         / 1024) +   // cornerHeightMap{Synced, Unsynced}
-			((( gs->mapxp1) * gs->mapyp1       *       sizeof(float))         / 1024) +   // originalHeightMap
-			((  gs->mapx      *  gs->mapy      * 2*2 * sizeof(float3))        / 1024) +   // faceNormals{Synced, Unsynced}
-			((  gs->mapx      *  gs->mapy      * 2   * sizeof(float3))        / 1024) +   // centerNormals{Synced, Unsynced}
-			((( gs->mapxp1) * gs->mapyp1       * 2   * sizeof(float3))        / 1024) +   // {raw, vis}VertexNormals
-			((  gs->mapx      *  gs->mapy            * sizeof(float))         / 1024) +   // centerHeightMap
-			((  gs->hmapx     *  gs->hmapy           * sizeof(float))         / 1024) +   // slopeMap
-			((  gs->hmapx     *  gs->hmapy           * sizeof(float))         / 1024) +   // MetalMap::extractionMap
-			((  gs->hmapx     *  gs->hmapy           * sizeof(unsigned char)) / 1024);    // MetalMap::metalMap
+			((( gs->mapxp1)   * gs->mapyp1  * 2     * sizeof(float))         / 1024) +   // cornerHeightMap{Synced, Unsynced}
+			((( gs->mapxp1)   * gs->mapyp1  *         sizeof(float))         / 1024) +   // originalHeightMap
+			((  gs->mapx      * gs->mapy    * 2 * 2 * sizeof(float3))        / 1024) +   // faceNormals{Synced, Unsynced}
+			((  gs->mapx      * gs->mapy    * 2     * sizeof(float3))        / 1024) +   // centerNormals{Synced, Unsynced}
+			((( gs->mapxp1)   * gs->mapyp1  * 2     * sizeof(float3))        / 1024) +   // {raw, vis}VertexNormals
+			((  gs->mapx      * gs->mapy            * sizeof(float))         / 1024) +   // centerHeightMap
+			((  gs->hmapx     * gs->hmapy           * sizeof(float))         / 1024) +   // slopeMap
+			((  gs->hmapx     * gs->hmapy           * sizeof(float))         / 1024) +   // MetalMap::extractionMap
+			((  gs->hmapx     * gs->hmapy           * sizeof(unsigned char)) / 1024);    // MetalMap::metalMap
 
 		// mipCenterHeightMaps[i]
 		for (int i = 1; i < numHeightMipMaps; i++) {
