@@ -66,11 +66,34 @@ void log_filter_section_setMinLevel(const char* section, int level);
  */
 int log_filter_section_getMinLevel(const char* section);
 
-/** @} */ // group logging_filter_defaultFilter_control
+/**
+ * Returns the number of currently registered sections.
+ * @see #log_filter_section_getRegisteredIndex
+ */
+int log_filter_section_getRegistered();
+
+/**
+ * Returns a registered section.
+ * @see #log_filter_section_getRegistered
+ */
+const char* log_filter_section_getRegisteredIndex(int index);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
+
+#ifdef __cplusplus
+#include <set>
+
+/**
+ * Returns the registered sections.
+ * This is simply to be more C++ friendly.
+ * @see #log_filter_section_getRegistered
+ */
+std::set<const char*> log_filter_section_getRegisteredSet();
+#endif
+
+/** @} */ // group logging_filter_defaultFilter_control
 
 #endif // _LOG_DEFAULT_FILTER_H
 
