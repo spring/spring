@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "creg/creg_cond.h"
+#include "System/creg/creg_cond.h"
 
 namespace LuaRulesParams
 {

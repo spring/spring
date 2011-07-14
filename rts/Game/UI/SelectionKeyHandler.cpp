@@ -1,9 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <fstream>
 #include <SDL_keysym.h>
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"

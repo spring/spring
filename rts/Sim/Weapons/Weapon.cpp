@@ -1,8 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "mmgr.h"
-#include "creg/STL_List.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
+#include "System/creg/STL_List.h"
 #include "WeaponDefHandler.h"
 #include "Weapon.h"
 #include "Game/GameHelper.h"

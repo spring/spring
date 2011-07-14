@@ -5,10 +5,10 @@
  * EXT_framebuffer_object class implementation
  */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <assert.h>
 #include <vector>
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "FBO.h"
 #include "Rendering/Textures/Bitmap.h"

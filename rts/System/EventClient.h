@@ -7,7 +7,7 @@
 #include <vector>
 #include <map>
 
-#include "float3.h"
+#include "System/float3.h"
 
 #ifdef __APPLE__
 //defined in X11/X.h

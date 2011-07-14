@@ -8,8 +8,8 @@ using std::sprintf;
 
 #include "Game/GameVersion.h"
 #include "Game/GameSetup.h"
-#include "FileSystem/FileSystem.h"
-#include "FileSystem/FileSystemHandler.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/FileSystemHandler.h"
 #include "Sim/Misc/GlobalConstants.h" // for MAX_TEAMS
 #include "Sim/Misc/TeamHandler.h" // ActiveTeams()
 #include "ExternalAI/IAILibraryManager.h"
@@ -20,7 +20,7 @@ using std::sprintf;
 #include "ExternalAI/Interface/AISCommands.h"         // for ABI version
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"  // for ABI version
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h" // for ABI version and AI_INTERFACE_PROPERTY_*
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 
 #include <vector>
 #include <stdlib.h> // malloc(), calloc(), free()

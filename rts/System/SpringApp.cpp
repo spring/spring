@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include <iostream>
 
@@ -9,10 +9,10 @@
 	#include <SDL_syswm.h>
 #endif
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "Rendering/GL/myGL.h"
-#include "SpringApp.h"
+#include "System/SpringApp.h"
 
 #include "aGui/Gui.h"
 #include "ExternalAI/IAILibraryManager.h"
@@ -27,10 +27,10 @@
 #include "Game/LoadScreen.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MouseHandler.h"
-#include "Input/KeyInput.h"
-#include "Input/MouseInput.h"
-#include "Input/InputHandler.h"
-#include "Input/Joystick.h"
+#include "System/Input/KeyInput.h"
+#include "System/Input/MouseInput.h"
+#include "System/Input/InputHandler.h"
+#include "System/Input/Joystick.h"
 #include "Lua/LuaOpenGL.h"
 #include "Menu/SelectMenu.h"
 #include "Rendering/GlobalRendering.h"
@@ -63,17 +63,17 @@
 #include "System/Platform/WindowManagerHelper.h"
 #include "System/Sound/ISound.h"
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #ifdef WIN32
-	#include "Platform/Win/win32.h"
-	#include "Platform/Win/WinVersion.h"
+	#include "System/Platform/Win/win32.h"
+	#include "System/Platform/Win/WinVersion.h"
 #elif defined(__APPLE__)
 #elif defined(HEADLESS)
 #else
 	#include <X11/Xlib.h>
 	#include <sched.h>
-	#include "Platform/Linux/myX11.h"
+	#include "System/Platform/Linux/myX11.h"
 #endif
 
 #undef KeyPress

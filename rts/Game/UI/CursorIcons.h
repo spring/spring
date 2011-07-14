@@ -7,7 +7,7 @@
 #include <set>
 #include <string>
 using std::string;
-#include "float3.h"
+#include "System/float3.h"
 
 class CMouseCursor;
 

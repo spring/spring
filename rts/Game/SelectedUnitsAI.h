@@ -4,7 +4,7 @@
 #define SELECTED_UNITS_AI_H
 
 #include "Sim/Units/CommandAI/Command.h"
-#include "float3.h"
+#include "System/float3.h"
 #include <map>
 #include <set>
 

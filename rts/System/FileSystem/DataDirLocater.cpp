@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "DataDirLocater.h"
 
 #include <cstdlib>
@@ -18,15 +18,15 @@
 #include <string.h>
 
 #include "System/Log/ILog.h"
-#include "LogOutput.h"
-#include "ConfigHandler.h"
+#include "System/LogOutput.h"
+#include "System/ConfigHandler.h"
 #include "FileSystemHandler.h"
 #include "FileSystem.h"
 #include "CacheDir.h"
-#include "mmgr.h"
-#include "Exceptions.h"
-#include "maindefines.h" // for sPS, cPS, cPD
-#include "Platform/Misc.h"
+#include "System/mmgr.h"
+#include "System/Exceptions.h"
+#include "System/maindefines.h" // for sPS, cPS, cPD
+#include "System/Platform/Misc.h"
 
 DataDir::DataDir(const std::string& path)
 	: path(path)

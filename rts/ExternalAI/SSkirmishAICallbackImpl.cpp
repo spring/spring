@@ -1,5 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include "ExternalAI/AICallback.h"
 #include "ExternalAI/AICheats.h"
@@ -1538,7 +1538,7 @@ EXPORT(int) skirmishAiCallback_Map_getHeightMap(int skirmishAIId, float* heights
 EXPORT(int) skirmishAiCallback_Map_getCornersHeightMap(int skirmishAIId,
 		float* cornerHeights, int cornerHeights_sizeMax) {
 
-	static const int cornerHeights_sizeReal = (gs->mapx + 1) * (gs->mapy + 1);
+	static const int cornerHeights_sizeReal = gs->mapxp1 * gs->mapyp1;
 
 	int cornerHeights_size = cornerHeights_sizeReal;
 

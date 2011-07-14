@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 
 #include "UnitLoader.h"
 #include "Unit.h"
@@ -479,7 +479,7 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 
 		for (int z = tz1; z <= tz2; z++) {
 			for (int x = tx1; x <= tx2; x++) {
-				readmap->SetHeight(z * (gs->mapx + 1) + x, bi.pos.y);
+				readmap->SetHeight(z * gs->mapxp1 + x, bi.pos.y);
 			}
 		}
 
@@ -510,7 +510,7 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 		float heightdiff = 0.0f;
 		for (int z = tz1; z <= tz2; z++) {
 			for (int x = tx1; x <= tx2; x++) {
-				int index = z * (gs->mapx + 1) + x;
+				int index = z * gs->mapxp1 + x;
 				heightdiff += heightmap[index] - readmap->GetOriginalHeightMapSynced()[index];
 				++num;
 			}
@@ -520,7 +520,7 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 		heightdiff += unit->pos.y - bi.pos.y;
 		for (int z = tz1; z <= tz2; z++) {
 			for (int x = tx1; x <= tx2; x++) {
-				int index = z * (gs->mapx + 1) + x;
+				int index = z * gs->mapxp1 + x;
 				readmap->SetHeight(index, heightdiff + readmap->GetOriginalHeightMapSynced()[index]);
 			}
 		}
@@ -528,7 +528,7 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 		heightdiff = bi.pos.y - helper->Pos2BuildPos(bi, true).y;
 		for (int z = tz1; z <= tz2; z++) {
 			for (int x = tx1; x <= tx2; x++) {
-				int index = z * (gs->mapx + 1) + x;
+				int index = z * gs->mapxp1 + x;
 				readmap->SetHeight(index, heightdiff + heightmap[index]);
 			}
 		}

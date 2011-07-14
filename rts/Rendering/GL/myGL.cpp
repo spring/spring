@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <string>
 #include <SDL.h>
 
@@ -9,7 +9,7 @@
 #include <windef.h>
 #endif
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 #include "myGL.h"
 #include "VertexArray.h"
 #include "VertexArrayRange.h"

@@ -8,9 +8,9 @@
 
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "FileSystem/FileSystem.h"
-#include "LogOutput.h"
-#include "Util.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/LogOutput.h"
+#include "System/Util.h"
 
 
 /******************************************************************************/

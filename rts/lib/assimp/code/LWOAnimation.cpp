@@ -46,6 +46,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *  implementation of LightWave envelopes of which I know.
 */
 
+#ifdef _MSC_VER // this ugly workaround stems from the fact that math/streflop cannot be mixed in MSVC
+#define STREFLOP_COND_H
+#define FASTMATH_H
+#include <math.h>
+#define math
+#endif
+
 #include "AssimpPCH.h"
 #if (!defined ASSIMP_BUILD_NO_LWO_IMPORTER) && (!defined ASSIMP_BUILD_NO_LWS_IMPORTER)
 
@@ -154,7 +161,7 @@ void AnimResolver::UpdateAnimRangeSetup()
 			case LWO::PrePostBehaviour_Repeat:
 			case LWO::PrePostBehaviour_Oscillate:
 				{
-				const double start_time = delta - ::fmod(my_first-first,delta);
+				const double start_time = delta - math::fmod((float)(my_first-first),(float)delta);
 				std::vector<LWO::Key>::iterator n = std::find_if((*it).keys.begin(),(*it).keys.end(), 
 					std::bind1st(std::greater<double>(),start_time)),m;
 

@@ -7,7 +7,7 @@
 #include <vector>
 #include <map>
 
-#include "creg/creg_cond.h"
+#include "System/creg/creg_cond.h"
 
 /** @brief Class for combining multiple bitmaps into one large single bitmap. */
 struct AtlasedTexture

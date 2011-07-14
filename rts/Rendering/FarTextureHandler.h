@@ -5,7 +5,7 @@
 #define __FARTEXTURE_HANDLER_H__
 
 #include <vector>
-#include "Vec2.h"
+#include "System/Vec2.h"
 #include "GL/myGL.h"
 #include "Rendering/GL/FBO.h"
 

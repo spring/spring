@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include <cmath>
 #include <cstdlib>
@@ -248,7 +248,7 @@ inline bool CBFGroundTextures::TexSquareInView(int btx, int bty) {
 		readmap->GetCornerHeightMapSynced();
 		#endif
 
-	static const int heightMapSizeX = gs->mapx + 1;
+	static const int heightMapSizeX = gs->mapxp1;
 	static const int bigTexW = (gs->mapx << 3) / numBigTexX;
 	static const int bigTexH = (gs->mapy << 3) / numBigTexY;
 	static const float bigTexSquareRadius = fastmath::apxsqrt(float(bigTexW * bigTexW + bigTexH * bigTexH));

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 
 #include <string>
 #include <vector>
@@ -20,8 +20,8 @@ using std::vector;
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Sim/Units/Unit.h"
-#include "LogOutput.h"
-#include "Util.h"
+#include "System/LogOutput.h"
+#include "System/Util.h"
 
 
 LuaMatHandler LuaMatHandler::handler;

@@ -1,13 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <algorithm>
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "PathCache.h"
 
 #include "Sim/Misc/GlobalSynced.h"
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 
 using namespace std;
 

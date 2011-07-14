@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <assert.h>
 #include <algorithm>
 #include "Builder.h"
@@ -11,7 +11,7 @@
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
-#include "myMath.h"
+#include "System/myMath.h"
 #include "Rendering/GlobalRendering.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -158,7 +158,7 @@ void CBuilder::Update()
 						curBuild->AddBuildPower(0.0f, this);
 						for (int z = tz1; z <= tz2; z++) {
 							for (int x = tx1; x <= tx2; x++) {
-								int idx = z * (gs->mapx + 1) + x;
+								int idx = z * gs->mapxp1 + x;
 								float ch = heightmap[idx];
 
 								readmap->AddHeight(idx, (curBuild->pos.y - ch) * terraformScale);
@@ -189,7 +189,7 @@ void CBuilder::Update()
 
 					for (int z = tz1; z <= tz2; z++) {
 						for (int x = tx1; x <= tx2; x++) {
-							int idx = z * (gs->mapx + 1) + x;
+							int idx = z * gs->mapxp1 + x;
 							float ch = heightmap[idx];
 							float oh = readmap->GetOriginalHeightMapSynced()[idx];
 
@@ -213,20 +213,20 @@ void CBuilder::Update()
 				// smooth the borders x
 				for (int x = 1; x <= 3; x++) {
 					if (tx1 - 3 >= 0) {
-						const float ch3 = heightmap[z * (gs->mapx + 1) + tx1    ];
-						const float ch  = heightmap[z * (gs->mapx + 1) + tx1 - x];
-						const float ch2 = heightmap[z * (gs->mapx + 1) + tx1 - 3];
+						const float ch3 = heightmap[z * gs->mapxp1 + tx1    ];
+						const float ch  = heightmap[z * gs->mapxp1 + tx1 - x];
+						const float ch2 = heightmap[z * gs->mapxp1 + tx1 - 3];
 						const float amount = ((ch3 * (3 - x) + ch2 * x) / 3 - ch) * terraformScale;
 
-						readmap->AddHeight(z * (gs->mapx + 1) + tx1 - x, amount);
+						readmap->AddHeight(z * gs->mapxp1 + tx1 - x, amount);
 					}
 					if (tx2 + 3 < gs->mapx) {
-						const float ch3 = heightmap[z * (gs->mapx + 1) + tx2    ];
-						const float ch  = heightmap[z * (gs->mapx + 1) + tx2 + x];
-						const float ch2 = heightmap[z * (gs->mapx + 1) + tx2 + 3];
+						const float ch3 = heightmap[z * gs->mapxp1 + tx2    ];
+						const float ch  = heightmap[z * gs->mapxp1 + tx2 + x];
+						const float ch2 = heightmap[z * gs->mapxp1 + tx2 + 3];
 						const float amount = ((ch3 * (3 - x) + ch2 * x) / 3 - ch) * terraformScale;
 
-						readmap->AddHeight(z * (gs->mapx + 1) + tx2 + x, amount);
+						readmap->AddHeight(z * gs->mapxp1 + tx2 + x, amount);
 					}
 				}
 			}
@@ -234,20 +234,20 @@ void CBuilder::Update()
 				// smooth the borders z
 				for (int x = tx1; x <= tx2; x++) {
 					if (tz1 - 3 >= 0) {
-						const float ch3 = heightmap[(tz1    ) * (gs->mapx + 1) + x];
-						const float ch  = heightmap[(tz1 - z) * (gs->mapx + 1) + x];
-						const float ch2 = heightmap[(tz1 - 3) * (gs->mapx + 1) + x];
+						const float ch3 = heightmap[(tz1    ) * gs->mapxp1 + x];
+						const float ch  = heightmap[(tz1 - z) * gs->mapxp1 + x];
+						const float ch2 = heightmap[(tz1 - 3) * gs->mapxp1 + x];
 						const float adjust = ((ch3 * (3 - z) + ch2 * z) / 3 - ch) * terraformScale;
 
-						readmap->AddHeight((tz1 - z) * (gs->mapx + 1) + x, adjust);
+						readmap->AddHeight((tz1 - z) * gs->mapxp1 + x, adjust);
 					}
 					if (tz2 + 3 < gs->mapy) {
-						const float ch3 = heightmap[(tz2    ) * (gs->mapx + 1) + x];
-						const float ch  = heightmap[(tz2 + z) * (gs->mapx + 1) + x];
-						const float ch2 = heightmap[(tz2 + 3) * (gs->mapx + 1) + x];
+						const float ch3 = heightmap[(tz2    ) * gs->mapxp1 + x];
+						const float ch  = heightmap[(tz2 + z) * gs->mapxp1 + x];
+						const float ch2 = heightmap[(tz2 + 3) * gs->mapxp1 + x];
 						const float adjust = ((ch3 * (3 - z) + ch2 * z) / 3 - ch) * terraformScale;
 
-						readmap->AddHeight((tz2 + z) * (gs->mapx + 1) + x, adjust);
+						readmap->AddHeight((tz2 + z) * gs->mapxp1 + x, adjust);
 					}
 				}
 			}
@@ -498,7 +498,7 @@ void CBuilder::StartRestore(float3 centerPos, float radius)
 
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {
-			float delta = orgHeightMap[z * (gs->mapx + 1) + x] - curHeightMap[z * (gs->mapx + 1) + x];
+			float delta = orgHeightMap[z * gs->mapxp1 + x] - curHeightMap[z * gs->mapxp1 + x];
 			tcost += fabs(delta);
 		}
 	}
@@ -642,7 +642,7 @@ float CBuilder::CalculateBuildTerraformCost(BuildInfo& buildInfo)
 
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {
-			const int idx = z * (gs->mapx + 1) + x;
+			const int idx = z * gs->mapxp1 + x;
 			float delta = buildPos.y - curHeightMap[idx];
 			float cost;
 			if (delta > 0) {

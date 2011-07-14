@@ -2,7 +2,7 @@
 
 #include "HeightLinePalette.h"
 
-#include "ConfigHandler.h"
+#include "System/ConfigHandler.h"
 
 CHeightLinePalette::CHeightLinePalette()
 {

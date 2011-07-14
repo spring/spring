@@ -4,7 +4,7 @@
 #define VERTEXARRAY_H
 
 #include "myGL.h"
-#include "Platform/errorhandler.h"
+#include "System/Platform/errorhandler.h"
 
 #define VA_INIT_VERTEXES 1000 // please don't change this, some files rely on specific initial sizes
 #define VA_INIT_STRIPS 100

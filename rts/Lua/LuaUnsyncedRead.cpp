@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include "Game/SelectedUnits.h"
 
@@ -12,7 +12,7 @@
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "LuaUnsyncedRead.h"
 

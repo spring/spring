@@ -4,7 +4,7 @@
 #define _RESOURCE_H
 
 #include <string>
-#include "creg/creg_cond.h"
+#include "System/creg/creg_cond.h"
 
 class CResource
 {

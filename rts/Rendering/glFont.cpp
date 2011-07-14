@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include "glFont.h"
 #include <string>
@@ -25,7 +25,7 @@
 #include "System/Exceptions.h"
 #include "System/mmgr.h"
 #include "System/float4.h"
-#include "bitops.h"
+#include "System/bitops.h"
 
 #undef GetCharWidth // winapi.h
 

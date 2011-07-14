@@ -1,12 +1,9 @@
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include <string>
-#ifdef _MSC_VER
-#define _INC_MATH // a hack to prevent ambiguous math calls
-#endif
 #include "AssIO.h"
 
-#include "FileSystem/FileHandler.h"
+#include "System/FileSystem/FileHandler.h"
 
 AssVFSStream::AssVFSStream(const std::string& pFile, const std::string& pMode)
 {

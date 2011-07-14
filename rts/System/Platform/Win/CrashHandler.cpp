@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "lib/gml/gml.h"
 #include <windows.h>
 #include <process.h>
@@ -10,10 +10,10 @@
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Log/ILog.h"
-#include "LogOutput.h"
-#include "NetProtocol.h"
+#include "System/LogOutput.h"
+#include "System/NetProtocol.h"
 #include "seh.h"
-#include "Util.h"
+#include "System/Util.h"
 #include "Game/GameVersion.h"
 
 
@@ -262,8 +262,8 @@ static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hT
 		containsOglDll = containsOglDll || strstr(modname, "atiogl");
 		// OpenGL lib names (Nvidia): "nvoglnt.dll" "nvoglv32.dll" "nvoglv64.dll" (last one is a guess)
 		containsOglDll = containsOglDll || strstr(modname, "nvogl");
-		// OpenGL lib names (Intel): "ig4dev32.dll" "ig4dev64.dll"
-		containsOglDll = containsOglDll || strstr(modname, "ig4dev");
+		// OpenGL lib names (Intel): "ig4dev32.dll" "ig4dev64.dll" "ig4icd32.dll"
+		containsOglDll = containsOglDll || strstr(modname, "ig4");
 
 		++count;
 	}

@@ -1,14 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "TimeProfiler.h"
+#include "System/TimeProfiler.h"
 
 #include <SDL_timer.h>
 #include <cstring>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 #include "lib/gml/gmlmut.h"
 #include "System/Log/ILog.h"
-#include "UnsyncedRNG.h"
+#include "System/UnsyncedRNG.h"
 
 
 BasicTimer::BasicTimer(const char* const myname) : name(myname), starttime(SDL_GetTicks())

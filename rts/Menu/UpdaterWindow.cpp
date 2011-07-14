@@ -1,13 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifdef _MSC_VER
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #endif
 #include "UpdaterWindow.h"
 
 #include <boost/bind.hpp>
 
-#include "ConfigHandler.h"
+#include "System/ConfigHandler.h"
 #include "lib/lobby/Connection.h"
 #include "aGui/LineEdit.h"
 #include "aGui/VerticalLayout.h"

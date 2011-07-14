@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include <set>
 #include <string>
@@ -9,7 +9,7 @@
 #include <map>
 #include <cctype>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "LuaUnitDefs.h"
 
@@ -46,11 +46,11 @@
 #include "Sim/Units/CommandAI/FactoryCAI.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "LogOutput.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/SimpleParser.h"
-#include "FileSystem/FileSystem.h"
-#include "Util.h"
+#include "System/LogOutput.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/SimpleParser.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/Util.h"
 
 using namespace std;
 

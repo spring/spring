@@ -14,7 +14,7 @@
 #include <boost/thread/thread.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 
-#include "float3.h"
+#include "System/float3.h"
 
 #include "SoundItem.h"
 

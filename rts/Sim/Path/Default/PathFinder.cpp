@@ -1,11 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <cstring>
 #include <ostream>
 #include <deque>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 #include "PathAllocator.h"
 #include "PathFinder.h"
 #include "PathFinderDef.h"
@@ -87,8 +87,8 @@ IPath::SearchResult CPathFinder::GetPath(
 	startzSqr = start.z / SQUARE_SIZE; startzSqr |= 1;
 
 	// Clamp the start position
-	if (startxSqr >= gs->mapx) startxSqr = gs->mapx - 1;
-	if (startzSqr >= gs->mapy) startzSqr = gs->mapy - 1;
+	if (startxSqr >= gs->mapx) startxSqr = gs->mapxm1;
+	if (startzSqr >= gs->mapy) startzSqr = gs->mapym1;
 
 	startSquareIdx = startxSqr + startzSqr * gs->mapx;
 
@@ -124,8 +124,8 @@ IPath::SearchResult CPathFinder::InitSearch(const MoveData& moveData, const CPat
 		return IPath::CantGetCloser;
 
 	// Clamp the start position
-	if (startxSqr >= gs->mapx) { startxSqr = gs->mapx - 1; }
-	if (startzSqr >= gs->mapy) { startzSqr = gs->mapy - 1; }
+	if (startxSqr >= gs->mapx) { startxSqr = gs->mapxm1; }
+	if (startzSqr >= gs->mapy) { startzSqr = gs->mapym1; }
 
 	// If the starting position is a goal position, then no search need to be performed.
 	if (pfDef.IsGoal(startxSqr, startzSqr))
@@ -267,9 +267,9 @@ bool CPathFinder::TestSquare(
 
 	// Check if square are out of constraints or blocked by something.
 	// Doesn't need to be done on open squares, as those are already tested.
-	if ((!pfDef.WithinConstraints(square.x, square.y) || (blockStatus & blockBits)) &&
-		!(sqrStatus & PATHOPT_OPEN)) {
-
+	if (!(sqrStatus & PATHOPT_OPEN) &&
+		((blockStatus & CMoveMath::BLOCK_STRUCTURE) || !pfDef.WithinConstraints(square.x, square.y))
+	) {
 		squareStates[sqrIdx].nodeMask |= PATHOPT_BLOCKED;
 		dirtySquares.push_back(sqrIdx);
 		return false;
@@ -277,7 +277,6 @@ bool CPathFinder::TestSquare(
 
 	// Evaluate this square.
 	float squareSpeedMod = moveData.moveMath->GetPosSpeedMod(moveData, square.x, square.y);
-	blockBits = (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY);
 
 	if (squareSpeedMod == 0) {
 		squareStates[sqrIdx].nodeMask |= PATHOPT_FORBIDDEN;
@@ -285,13 +284,15 @@ bool CPathFinder::TestSquare(
 		return false;
 	}
 
+	static const int blockBits = (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY);
+
 	if (testMobile && (blockStatus & blockBits)) {
-		if (blockStatus & CMoveMath::BLOCK_MOVING)
-			squareSpeedMod *= 0.65f;
+		if (blockStatus & CMoveMath::BLOCK_MOBILE_BUSY)
+			squareSpeedMod *= 0.10f;
 		else if (blockStatus & CMoveMath::BLOCK_MOBILE)
 			squareSpeedMod *= 0.35f;
-		else
-			squareSpeedMod *= 0.10f;
+		else //CMoveMath::BLOCK_MOVING
+			squareSpeedMod *= 0.65f;
 	}
 
 	const float heatCost = (PathHeatMap::GetInstance())->GetHeatCost(square.x, square.y, moveData, ownerId);

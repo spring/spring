@@ -1,12 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <limits.h>
 #include <boost/regex.hpp>
 #include <ctype.h>
 #include <sstream>
 #include <vector>
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "FileFilter.h"
 

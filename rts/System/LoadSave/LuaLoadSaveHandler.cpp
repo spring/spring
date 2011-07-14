@@ -3,7 +3,7 @@
 #include <string>
 #include <sstream>
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "LuaLoadSaveHandler.h"
 
 #include "lib/minizip/zip.h"
@@ -21,7 +21,7 @@
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 
 // Prefix for all files in the save file.
@@ -134,7 +134,7 @@ void CLuaLoadSaveHandler::SaveHeightmap()
 	// Big chunks of 0s are then very well compressed by zip.
 	const int* currHeightmap = (const int*) (const char*) readmap->GetCornerHeightMapSynced();
 	const int* origHeightmap = (const int*) (const char*) readmap->GetOriginalHeightMapSynced();
-	const int size = (gs->mapx + 1) * (gs->mapy + 1);
+	const int size = gs->mapxp1 * gs->mapyp1;
 	int* temp = new int[size];
 	for (int i = 0; i < size; ++i) {
 		temp[i] = swabdword(currHeightmap[i] ^ origHeightmap[i]);
@@ -213,7 +213,7 @@ void CLuaLoadSaveHandler::LoadHeightmap()
 	std::vector<boost::uint8_t> buf;
 
 	if (loadfile->GetFile(FILE_HEIGHTMAP, buf)) {
-		const int size = (gs->mapx + 1) * (gs->mapy + 1);
+		const int size = gs->mapxp1 * gs->mapyp1;
 		const int* temp = (const int*) (const char*) &*buf.begin();
 		const int* origHeightmap = (const int*) (const char*) readmap->GetOriginalHeightMapSynced();
 

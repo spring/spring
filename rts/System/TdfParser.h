@@ -8,9 +8,9 @@
 #include <map>
 #include <sstream>
 
-#include "Sync/SyncedPrimitiveIO.h"
-#include "Exceptions.h"
-#include "float3.h"
+#include "System/Sync/SyncedPrimitiveIO.h"
+#include "System/Exceptions.h"
+#include "System/float3.h"
 
 /**
  * Used to parse TDF Config files.

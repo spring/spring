@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "TransportUnit.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
@@ -21,7 +21,7 @@
 #include "System/EventHandler.h"
 #include "System/myMath.h"
 #include "System/creg/STL_List.h"
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CTransportUnit, CUnit, );
 

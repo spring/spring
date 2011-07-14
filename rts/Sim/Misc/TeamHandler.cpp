@@ -1,13 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "TeamHandler.h"
 
 #include <cstring>
 
 #include "Game/GameSetup.h"
 #include "Lua/LuaGaia.h"
-#include "mmgr.h"
+#include "System/mmgr.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/Util.h"

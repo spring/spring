@@ -16,7 +16,7 @@
 #include <SDL_events.h>
 
 #include "thread_backtrace.h"
-#include "FileSystem/FileSystemHandler.h"
+#include "System/FileSystem/FileSystemHandler.h"
 #include "Game/GameVersion.h"
 #include "System/Log/ILog.h"
 #include "System/LogOutput.h"

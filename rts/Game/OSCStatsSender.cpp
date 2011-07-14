@@ -10,7 +10,7 @@
 #include "lib/streflop/streflop_cond.h"
 
 #ifndef _MSC_VER
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #endif
 
 #include "OSCStatsSender.h"

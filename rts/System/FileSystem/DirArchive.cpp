@@ -1,15 +1,15 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include "DirArchive.h"
 
 #include <assert.h>
 #include <fstream>
 
-#include "FileSystem/FileSystem.h"
-#include "Util.h"
-#include "mmgr.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/Util.h"
+#include "System/mmgr.h"
 
 
 CDirArchiveFactory::CDirArchiveFactory()

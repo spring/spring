@@ -1,10 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "Rendering/GL/myGL.h"
 #include <algorithm>
 #include <cctype>
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "IModelParser.h"
 #include "3DModel.h"
@@ -12,9 +12,6 @@
 #include "3DOParser.h"
 #include "S3OParser.h"
 #include "OBJParser.h"
-#ifdef _MSC_VER
-#define _INC_MATH // a hack to prevent ambiguous math calls
-#endif
 #include "AssParser.h"
 #include "assimp.hpp"
 #include "Sim/Misc/CollisionVolume.h"

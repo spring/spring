@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 
 #include "Game/Camera.h"
 #include "LightningProjectile.h"
@@ -13,7 +13,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 
 #ifdef TRACE_SYNC
-	#include "Sync/SyncTracer.h"
+	#include "System/Sync/SyncTracer.h"
 #endif
 
 CR_BIND_DERIVED(CLightningProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, NULL, ZeroVector, NULL, 0, NULL));

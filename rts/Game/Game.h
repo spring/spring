@@ -9,7 +9,7 @@
 #include <set>
 
 #include "GameController.h"
-#include "creg/creg_cond.h"
+#include "System/creg/creg_cond.h"
 
 class CBaseWater;
 class CConsoleHistory;

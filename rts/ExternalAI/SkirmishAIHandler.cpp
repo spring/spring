@@ -12,8 +12,8 @@
 #include "System/NetProtocol.h"
 #include "System/Option.h"
 
-#include "creg/STL_Map.h"
-#include "creg/STL_Set.h"
+#include "System/creg/STL_Map.h"
+#include "System/creg/STL_Set.h"
 
 #include <assert.h>
 

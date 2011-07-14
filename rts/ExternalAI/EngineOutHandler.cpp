@@ -24,7 +24,7 @@
 #include "System/Util.h"
 #include "System/TimeProfiler.h"
 
-#include "creg/STL_Map.h"
+#include "System/creg/STL_Map.h"
 
 
 CR_BIND_DERIVED(CEngineOutHandler, CObject, )
