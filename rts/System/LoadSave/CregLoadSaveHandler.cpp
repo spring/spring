@@ -31,7 +31,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/creg/Serializer.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 CCregLoadSaveHandler::CCregLoadSaveHandler()
 	: ifs(NULL)
@@ -110,19 +110,19 @@ void CGameStateCollector::Serialize(creg::ISerializer& s)
 static void PrintSize(const char* txt, int size)
 {
 	if (size > (1024 * 1024 * 1024)) {
-		logOutput.Print("%s %.1f GB", txt, size / (1024.0f * 1024 * 1024));
+		LOG("%s %.1f GB", txt, size / (1024.0f * 1024 * 1024));
 	} else if (size >  (1024 * 1024)) {
-		logOutput.Print("%s %.1f MB", txt, size / (1024.0f * 1024));
+		LOG("%s %.1f MB", txt, size / (1024.0f * 1024));
 	} else if (size > 1024) {
-		logOutput.Print("%s %.1f KB", txt, size / (1024.0f));
+		LOG("%s %.1f KB", txt, size / (1024.0f));
 	} else {
-		logOutput.Print("%s %u B",    txt, size);
+		LOG("%s %u B",    txt, size);
 	}
 }
 
 void CCregLoadSaveHandler::SaveGame(const std::string& file)
 {
-	logOutput.Print("Saving game");
+	LOG("Saving game");
 	try {
 		std::ofstream ofs(filesystem.LocateFile(file, FileSystem::WRITE).c_str(), std::ios::out|std::ios::binary);
 		if (ofs.bad() || !ofs.is_open()) {
@@ -145,13 +145,13 @@ void CCregLoadSaveHandler::SaveGame(const std::string& file)
 		eoh->Save(&ofs);
 		PrintSize("AIs", ((int)ofs.tellp())-aistart);
 	} catch (content_error& e) {
-		logOutput.Print("Save failed(content error): %s", e.what());
+		LOG_L(L_ERROR, "Save failed(content error): %s", e.what());
 	} catch (std::exception& e) {
-		logOutput.Print("Save failed: %s", e.what());
+		LOG_L(L_ERROR, "Save failed: %s", e.what());
 	} catch (char*& e) {
-		logOutput.Print("Save failed: %s", e);
+		LOG_L(L_ERROR, "Save failed: %s", e);
 	} catch (...) {
-		logOutput.Print("Save failed(unknown error)");
+		LOG_L(L_ERROR, "Save failed(unknown error)");
 	}
 }
 
