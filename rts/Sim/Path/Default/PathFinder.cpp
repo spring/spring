@@ -262,8 +262,8 @@ bool CPathFinder::TestSquare(
 		return false;
 	}
 
-	const unsigned int blockStatus = moveData.moveMath->IsBlocked(moveData, square.x, square.y);
-	      unsigned int blockBits = CMoveMath::BLOCK_STRUCTURE;
+	       const unsigned int blockStatus = moveData.moveMath->IsBlocked(moveData, square.x, square.y);
+	static const unsigned int blockBits = (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY);
 
 	// Check if square are out of constraints or blocked by something.
 	// Doesn't need to be done on open squares, as those are already tested.
@@ -283,8 +283,6 @@ bool CPathFinder::TestSquare(
 		dirtySquares.push_back(sqrIdx);
 		return false;
 	}
-
-	static const int blockBits = (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY);
 
 	if (testMobile && (blockStatus & blockBits)) {
 		if (blockStatus & CMoveMath::BLOCK_MOBILE_BUSY)
