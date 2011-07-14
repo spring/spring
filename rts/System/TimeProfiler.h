@@ -8,7 +8,7 @@
 #include <boost/noncopyable.hpp>
 #include <cstring>
 
-#include "float3.h"
+#include "System/float3.h"
 
 // disable this if you want minimal profiling
 // (sim time is still measured because of game slowdown)

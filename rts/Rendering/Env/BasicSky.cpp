@@ -4,9 +4,9 @@
 #pragma warning(disable:4258)
 #endif
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <assert.h>
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "BasicSky.h"
 

@@ -1,14 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifdef _MSC_VER
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #endif
 #include "LobbyConnection.h"
 
 #include <boost/bind.hpp>
 
 #include "UpdaterWindow.h"
-#include "ConfigHandler.h"
+#include "System/ConfigHandler.h"
 #include "Game/GameVersion.h"
 #include "aGui/Gui.h"
 

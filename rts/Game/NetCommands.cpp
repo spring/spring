@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include "Game.h"
 #include "CameraHandler.h"
@@ -11,7 +11,7 @@
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
 #include "ChatMessage.h"
-#include "TimeProfiler.h"
+#include "System/TimeProfiler.h"
 #include "WordCompletion.h"
 #include "IVideoCapturing.h"
 #include "InMapDraw.h"

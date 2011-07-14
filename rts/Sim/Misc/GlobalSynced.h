@@ -5,8 +5,8 @@
 
 #include <string>
 
-#include "float3.h"
-#include "creg/creg_cond.h"
+#include "System/float3.h"
+#include "System/creg/creg_cond.h"
 
 
 class CGameSetup;
@@ -75,6 +75,8 @@ public:
 	* (note that the number of vertices is one more)
 	*/
 	int mapx;
+	int mapxm1; // mapx minus one
+	int mapxp1; // mapx plus one
 
 	/**
 	* @brief map y
@@ -82,6 +84,8 @@ public:
 	* The map's number of squares in the y direction
 	*/
 	int mapy;
+	int mapym1; // mapy minus one
+	int mapyp1; // mapy plus one
 
 	/**
 	* @brief map squares

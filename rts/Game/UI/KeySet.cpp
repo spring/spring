@@ -3,8 +3,8 @@
 #include <boost/cstdint.hpp>
 #include <SDL_keysym.h>
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 
 #include "KeySet.h"
 #include "KeyCodes.h"

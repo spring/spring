@@ -1,13 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "SelectedUnitsAI.h"
 #include "SelectedUnits.h"
-#include "LogOutput.h"
-#include "NetProtocol.h"
+#include "System/LogOutput.h"
+#include "System/NetProtocol.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "GlobalUnsynced.h"
 #include "PlayerHandler.h"

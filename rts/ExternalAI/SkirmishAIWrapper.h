@@ -3,9 +3,9 @@
 #ifndef _SKIRMISHAIWRAPPER_H
 #define _SKIRMISHAIWRAPPER_H
 
-#include "Object.h"
+#include "System/Object.h"
 #include "SkirmishAIKey.h"
-#include "Platform/SharedLib.h"
+#include "System/Platform/SharedLib.h"
 
 #include <map>
 #include <string>

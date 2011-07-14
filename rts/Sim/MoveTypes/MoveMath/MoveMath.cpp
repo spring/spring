@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "MoveMath.h"
 #include "Map/ReadMap.h"
 #include "Map/MapInfo.h"
@@ -8,8 +8,8 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "LogOutput.h"
-#include "mmgr.h"
+#include "System/LogOutput.h"
+#include "System/mmgr.h"
 
 CR_BIND_INTERFACE(CMoveMath);
 
@@ -88,7 +88,7 @@ int CMoveMath::IsBlocked(const MoveData& moveData, const float3& pos) const
 int CMoveMath::IsBlocked(const MoveData& moveData, int xSquare, int zSquare) const
 {
 	if (GetPosSpeedMod(moveData, xSquare, zSquare) == 0.0f) {
-		return 1;
+		return BLOCK_IMPASSABLE;
 	}
 
 	int ret = 0;
@@ -220,7 +220,7 @@ int CMoveMath::SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquar
 {
 	// bounds-check
 	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy) {
-		return 1;
+		return BLOCK_IMPASSABLE;
 	}
 
 	int r = 0;

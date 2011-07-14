@@ -1,8 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "creg/STL_List.h"
-#include "creg/STL_Set.h"
+#include "System/StdAfx.h"
+#include "System/creg/STL_List.h"
+#include "System/creg/STL_Set.h"
 #include "PlasmaRepulser.h"
 #include "Lua/LuaRules.h"
 #include "Sim/Misc/GlobalSynced.h"

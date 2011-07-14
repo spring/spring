@@ -8,7 +8,7 @@
 #include "Rendering/GL/myGL.h"
 #include "System/Input/InputHandler.h"
 #include "GuiElement.h"
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 
 namespace agui
 {

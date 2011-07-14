@@ -9,7 +9,7 @@
 #include <vector>
 #include <list>
 
-#include "Object.h"
+#include "System/Object.h"
 #include "Rendering/Models/3DModel.h"
 
 

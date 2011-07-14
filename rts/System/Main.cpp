@@ -9,7 +9,7 @@
 #include <boost/system/system_error.hpp>
 #include <boost/bind.hpp>
 
-#include "SpringApp.h"
+#include "System/SpringApp.h"
 
 #include "lib/gml/gml.h"
 #include "lib/gml/gmlmut.h"
@@ -18,7 +18,7 @@
 #include "System/Platform/Threading.h"
 
 #ifdef WIN32
-	#include "Platform/Win/win32.h"
+	#include "System/Platform/Win/win32.h"
 #endif
 
 #ifndef __APPLE__

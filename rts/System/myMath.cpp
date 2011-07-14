@@ -1,10 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "myMath.h"
-#include "Util.h"
+#include "System/StdAfx.h"
+#include "System/myMath.h"
+#include "System/Util.h"
 #include "System/Log/ILog.h"
-#include "Platform/errorhandler.h"
+#include "System/Platform/errorhandler.h"
 #include "Sim/Units/Scripts/CobInstance.h" // for TAANG2RAD (ugh)
 
 float2 CMyMath::headingToVectorTable[NUM_HEADINGS];

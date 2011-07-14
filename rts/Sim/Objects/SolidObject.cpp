@@ -1,15 +1,15 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 
 #include "SolidObject.h"
 #include "Map/ReadMap.h"
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
-#include "myMath.h"
+#include "System/myMath.h"
 
 const float CSolidObject::DEFAULT_MASS = 100000.0f;
 

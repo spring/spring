@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 
 #include <set>
 #include <list>
@@ -21,8 +21,8 @@
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "myMath.h"
-#include "LogOutput.h"
+#include "System/myMath.h"
+#include "System/LogOutput.h"
 #include "LuaHelper.h"
 
 using namespace std;

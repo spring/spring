@@ -1,9 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "SDL_mouse.h"
 #include "SDL_keyboard.h"
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "InMapDraw.h"
 #include "InMapDrawModel.h"
@@ -16,7 +16,7 @@
 #include "Game/UI/MouseHandler.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
-#include "Net/UnpackPacket.h"
+#include "System/Net/UnpackPacket.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "System/EventHandler.h"
 #include "System/EventClient.h"

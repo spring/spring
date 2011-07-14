@@ -7,8 +7,8 @@
 #include <vector>
 #include <map>
 
-#include "EventClient.h"
-#include "EventBatchHandler.h"
+#include "System/EventClient.h"
+#include "System/EventBatchHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Projectiles/Projectile.h"

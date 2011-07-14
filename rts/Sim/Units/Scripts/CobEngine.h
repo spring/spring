@@ -10,7 +10,7 @@
  */
 
 #include "CobThread.h"
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 
 #include <list>
 #include <queue>

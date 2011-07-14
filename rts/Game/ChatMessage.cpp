@@ -1,13 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 
 #include "ChatMessage.h"
 
-#include "BaseNetProtocol.h"
-#include "Net/PackPacket.h"
-#include "Net/UnpackPacket.h"
+#include "System/BaseNetProtocol.h"
+#include "System/Net/PackPacket.h"
+#include "System/Net/UnpackPacket.h"
 
 using namespace netcode;
 

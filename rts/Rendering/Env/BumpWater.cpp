@@ -4,11 +4,11 @@
  * @brief extended bumpmapping water shader
  */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <boost/format.hpp>
-#include "mmgr.h"
+#include "System/mmgr.h"
 
-#include "bitops.h"
+#include "System/bitops.h"
 #include "BumpWater.h"
 #include "BaseSky.h"
 #include "Game/Game.h"

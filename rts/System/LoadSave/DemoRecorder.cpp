@@ -1,21 +1,21 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "DemoRecorder.h"
 
 #include <assert.h>
 #include <errno.h>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
-#include "FileSystem/FileSystem.h"
-#include "FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/FileHandler.h"
 #include "Game/GameVersion.h"
 #include "Sim/Misc/TeamStatistics.h"
-#include "Util.h"
-#include "TimeUtil.h"
+#include "System/Util.h"
+#include "System/TimeUtil.h"
 
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 
 CDemoRecorder::CDemoRecorder()
 {

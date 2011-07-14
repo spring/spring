@@ -1,11 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "Util.h"
+#include "System/StdAfx.h"
+#include "System/Util.h"
 #include "Sim/Projectiles/Projectile.h" // for operator delete
 
-#include "EventBatchHandler.h"
-#include "EventHandler.h"
+#include "System/EventBatchHandler.h"
+#include "System/EventHandler.h"
 
 #if UNSYNCED_PROJ_NOEVENT
 #include "Rendering/ProjectileDrawer.hpp"

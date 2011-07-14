@@ -4,8 +4,8 @@
 #define MYMATH_H
 
 #include "Sim/Misc/GlobalConstants.h"
-#include "Vec2.h"
-#include "float3.h"
+#include "System/Vec2.h"
+#include "System/float3.h"
 
 #ifdef __GNUC__
 	#define _const __attribute__((const))

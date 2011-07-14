@@ -17,7 +17,7 @@
 #include "System/Util.h"
 
 #ifndef DEDICATED
-	#include "SpringApp.h"
+	#include "System/SpringApp.h"
 	#include "System/Platform/Threading.h"
 
     #ifndef HEADLESS

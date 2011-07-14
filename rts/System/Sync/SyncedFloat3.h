@@ -3,13 +3,13 @@
 #ifndef SYNCEDFLOAT3_H
 #define SYNCEDFLOAT3_H
 
-#include "float3.h"
+#include "System/float3.h"
 
 #if defined(SYNCDEBUG) || defined(SYNCCHECK)
 
 #include "lib/streflop/streflop_cond.h"
 #include "SyncedPrimitive.h"
-#include "FastMath.h" //SSE (I)SQRT
+#include "System/FastMath.h" //SSE (I)SQRT
 
 /**
  * @brief SyncedFloat3 class

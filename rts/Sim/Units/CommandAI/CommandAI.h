@@ -6,7 +6,7 @@
 #include <vector>
 #include <set>
 
-#include "Object.h"
+#include "System/Object.h"
 #include "CommandQueue.h"
 #include "System/float3.h"
 

@@ -1,12 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <stdio.h>
 #include <algorithm>
 #include <iostream>
 #include <locale>
 #include <cctype>
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "UnitDefHandler.h"
 #include "UnitDef.h"

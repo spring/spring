@@ -1,13 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 #include <SDL_keysym.h>
 #include <boost/cstdint.hpp>
 
 #include "OverheadController.h"
 
-#include "ConfigHandler.h"
+#include "System/ConfigHandler.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/UI/MouseHandler.h"

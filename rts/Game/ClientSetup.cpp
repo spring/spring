@@ -2,13 +2,13 @@
 
 #include "ClientSetup.h"
 
-#include "TdfParser.h"
-#include "Exceptions.h"
-#include "LogOutput.h"
-#include "ConfigHandler.h"
-#include "Util.h"
+#include "System/TdfParser.h"
+#include "System/Exceptions.h"
+#include "System/LogOutput.h"
+#include "System/ConfigHandler.h"
+#include "System/Util.h"
 #ifdef DEDICATED
-#include "Platform/errorhandler.h"
+#include "System/Platform/errorhandler.h"
 #endif
 
 static const unsigned int DEFAULT_HOST_PORT = 8452;

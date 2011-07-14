@@ -1,17 +1,17 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include <string>
 #include <set>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "SideParser.h"
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
-#include "LogOutput.h"
-#include "Util.h"
+#include "System/LogOutput.h"
+#include "System/Util.h"
 
 
 

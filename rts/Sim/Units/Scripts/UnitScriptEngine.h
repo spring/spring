@@ -5,7 +5,7 @@
 #ifndef UNITSCRIPTENGINE_H
 #define UNITSCRIPTENGINE_H
 
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 
 #include <list>
 

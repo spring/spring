@@ -5,9 +5,9 @@
 
 #include "WorldObject.h"
 #include "Sim/MoveTypes/MoveInfo.h"
-#include "Vec2.h"
-#include "Sync/SyncedFloat3.h"
-#include "Sync/SyncedPrimitive.h"
+#include "System/Vec2.h"
+#include "System/Sync/SyncedFloat3.h"
+#include "System/Sync/SyncedPrimitive.h"
 
 class CUnit;
 struct DamageArray;

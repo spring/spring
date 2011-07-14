@@ -1,8 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 
 #include <assert.h>
 #include <iostream>
@@ -15,13 +15,13 @@
 #endif
 
 #include "lib/gml/gmlmut.h"
-#include "Util.h"
-#include "float3.h"
+#include "System/Util.h"
+#include "System/float3.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameVersion.h"
-#include "ConfigHandler.h"
-#include "FileSystem/FileSystemHandler.h"
-#include "mmgr.h"
+#include "System/ConfigHandler.h"
+#include "System/FileSystem/FileSystemHandler.h"
+#include "System/mmgr.h"
 
 #include <string>
 #include <vector>

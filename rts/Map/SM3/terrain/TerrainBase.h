@@ -6,9 +6,9 @@
 #include "Rendering/GL/myGL.h"
 
 #include "Map/SM3/Frustum.h"
-#include "Matrix44f.h"
+#include "System/Matrix44f.h"
 
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 
 #define TERRAIN_USE_IL
 

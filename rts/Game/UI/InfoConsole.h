@@ -8,9 +8,9 @@
 #include <string>
 #include <list>
 #include <boost/thread/recursive_mutex.hpp>
-#include "float3.h"
+#include "System/float3.h"
 #include "InputReceiver.h"
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 
 class CInfoConsole: public CInputReceiver, public ILogSubscriber
 {

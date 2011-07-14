@@ -3,7 +3,7 @@
 #ifndef SELECTED_UNITS_H
 #define SELECTED_UNITS_H
 
-#include "Object.h"
+#include "System/Object.h"
 #include <vector>
 #include <string>
 #include "Sim/Units/CommandAI/Command.h"

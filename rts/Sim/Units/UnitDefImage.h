@@ -3,7 +3,7 @@
 #ifndef UNIT_DEF_IMAGE
 #define UNIT_DEF_IMAGE
 
-#include "creg/creg_cond.h"
+#include "System/creg/creg_cond.h"
 #include "Rendering/GL/myGL.h"
 
 struct UnitDefImage

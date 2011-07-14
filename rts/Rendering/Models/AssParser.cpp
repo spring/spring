@@ -1,19 +1,16 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-//#include "StdAfx.h"
-#include "Util.h"
-#include "LogOutput.h"
-#include "Platform/errorhandler.h"
+//#include "System/StdAfx.h"
+#include "System/Util.h"
+#include "System/LogOutput.h"
+#include "System/Platform/errorhandler.h"
 #include "System/Exceptions.h"
 #include "Sim/Misc/CollisionVolume.h"
-#include "FileSystem/FileHandler.h"
+#include "System/FileSystem/FileHandler.h"
 #include "Lua/LuaParser.h"
 #include "3DModel.h"
 #include "3DModelLog.h"
 #include "S3OParser.h"
-#ifdef _MSC_VER
-	#define _INC_MATH //! a hack to prevent ambiguous math calls
-#endif
 #include "AssIO.h"
 #include "AssParser.h"
 

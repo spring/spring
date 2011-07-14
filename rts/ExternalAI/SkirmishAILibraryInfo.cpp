@@ -5,11 +5,11 @@
 #include "Interface/aidefines.h"
 #include "Interface/SSkirmishAILibrary.h"
 #include "SkirmishAIKey.h"
-#include "Util.h"
-#include "Info.h"
-#include "Option.h"
+#include "System/Util.h"
+#include "System/Info.h"
+#include "System/Option.h"
 
-#include "FileSystem/VFSModes.h"
+#include "System/FileSystem/VFSModes.h"
 
 
 static const char* BAD_CHARS = "\t _#";

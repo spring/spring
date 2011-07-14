@@ -11,7 +11,7 @@
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 #include "IAILibraryManager.h"
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 
 
 CAIInterfaceLibrary::CAIInterfaceLibrary(const CAIInterfaceLibraryInfo& _info)

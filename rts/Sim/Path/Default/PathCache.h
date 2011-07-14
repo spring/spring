@@ -7,7 +7,7 @@
 #include <list>
 
 #include "IPath.h"
-#include "Vec2.h"
+#include "System/Vec2.h"
 
 class CPathCache
 {
