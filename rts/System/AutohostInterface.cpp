@@ -1,23 +1,16 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifdef _MSC_VER
-#	include "System/StdAfx.h"
-#elif defined(_WIN32)
-#	include <windows.h>
-#endif
-
-#include "System/Net/Socket.h"
-
-#ifndef _MSC_VER
-#	include "System/StdAfx.h"
-#endif
-
 #include "AutohostInterface.h"
 
-#include <string.h>
-#include <vector>
+#include "System/Net/Socket.h"
 #include "System/mmgr.h"
 #include "System/Log/ILog.h"
+
+#if defined(_WIN32)
+	#include <windows.h>
+#endif
+#include <string.h>
+#include <vector>
 
 
 #define LOG_SECTION_AUTOHOST_INTERFACE "AutohostInterface"
