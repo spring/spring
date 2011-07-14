@@ -52,9 +52,9 @@ CEFX::CEFX(ALCdevice* device)
 
 	if (!supported) {
 		if(!hasExtension)
-			LogObject(LOG_SOUND) << "  EFX Supported: no";
+			LOG_L(L_WARNING, "  EFX Supported: no");
 		else
-			LogObject(LOG_SOUND) << "  EFX is supported but software does not seem to work properly";
+			LOG_L(L_WARNING, "  EFX is supported but software does not seem to work properly");
 		return;
 	}
 
@@ -135,7 +135,7 @@ CEFX::CEFX(ALCdevice* device)
 		|| (maxSlots<1)
 		|| (maxSlotsPerSource<1)
 	) {
-		LogObject(LOG_SOUND) << "  EFX Supported: no";
+		LOG_L(L_WARNING, "  EFX Supported: no");
 		return;
 	}
 
@@ -147,7 +147,7 @@ CEFX::CEFX(ALCdevice* device)
 	alGenFilters(1, &sfxFilter);
 		alFilteri(sfxFilter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
 	if (!alIsAuxiliaryEffectSlot(sfxSlot) || !alIsEffect(sfxReverb) || !alIsFilter(sfxFilter)) {
-		LogObject(LOG_SOUND) << "  Initializing EFX failed!";
+		LOG_L(L_ERROR, "  Initializing EFX failed!");
 		alDeleteFilters(1, &sfxFilter);
 		alDeleteEffects(1, &sfxReverb);
 		alDeleteAuxiliaryEffectSlots(1, &sfxSlot);
@@ -158,7 +158,7 @@ CEFX::CEFX(ALCdevice* device)
 	//! Load defaults
 	CommitEffects();
 	if (!CheckError("  EFX")) {
-		LogObject(LOG_SOUND) << "  Initializing EFX failed!";
+		LOG_L(L_ERROR, "  Initializing EFX failed!");
 		alAuxiliaryEffectSloti(sfxSlot, AL_EFFECTSLOT_EFFECT, AL_EFFECT_NULL);
 		alDeleteFilters(1, &sfxFilter);
 		alDeleteEffects(1, &sfxReverb);
@@ -169,15 +169,12 @@ CEFX::CEFX(ALCdevice* device)
 	supported = true;
 
 	//! User may disable it (performance reasons?)
-	if (!configHandler->Get("UseEFX", true)) {
-		LogObject(LOG_SOUND) << "  EFX Enabled: no";
-		return;
+	enabled = configHandler->Get("UseEFX", true);
+	LOG("  EFX Enabled: %s", (enabled ? "yes" : "no"));
+	if (enabled) {
+		LOG_L(L_DEBUG, "  EFX MaxSlots: %i", maxSlots);
+		LOG_L(L_DEBUG, "  EFX MaxSlotsPerSource: %i", maxSlotsPerSource);
 	}
-
-	LogObject(LOG_SOUND) << "  EFX Enabled: yes";
-	//LogObject(LOG_SOUND) << "  EFX MaxSlots: " << maxSlots;
-	//LogObject(LOG_SOUND) << "  EFX MaxSlotsPerSource: " << maxSlotsPerSource;
-	enabled = true;
 }
 
 
@@ -198,7 +195,7 @@ void CEFX::Enable()
 	if (supported && !enabled) {
 		enabled = true;
 		CommitEffects();
-		LogObject(LOG_SOUND) << "EAX enabled";
+		LOG("EAX enabled");
 	}
 }
 
@@ -208,7 +205,7 @@ void CEFX::Disable()
 	if (enabled) {
 		enabled = false;
 		alAuxiliaryEffectSloti(sfxSlot, AL_EFFECTSLOT_EFFECT, AL_EFFECT_NULL);
-		LogObject(LOG_SOUND) << "EAX disabled";
+		LOG("EAX disabled");
 	}
 }
 
@@ -225,7 +222,7 @@ void CEFX::SetPreset(std::string name, bool verbose, bool commit)
 		if (commit)
 			CommitEffects();
 		if (verbose)
-			LogObject(LOG_SOUND) << "EAX Preset changed to: " << name;
+			LOG("EAX Preset changed to: %s", name.c_str());
 	}
 }
 

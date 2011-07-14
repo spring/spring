@@ -8,7 +8,6 @@ SET(noSoundSources
 		ISound
 		SoundChannels
 		NullSound
-		SoundLog
 	)
 
 ADD_LIBRARY(no-sound STATIC EXCLUDE_FROM_ALL ${noSoundSources})
