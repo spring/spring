@@ -124,7 +124,7 @@ int log_filter_section_getMinLevel(const char* section) {
 
 	int level = -1;
 
-	const std::map<const char*, int>::const_iterator sectionMinLevel
+	const std::map<const char*, int, log_filter_section_compare>::const_iterator sectionMinLevel
 			= sectionMinLevels.find(section);
 	if (sectionMinLevel == sectionMinLevels.end()) {
 		level = log_filter_section_getDefaultMinLevel(section);
