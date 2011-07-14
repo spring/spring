@@ -18,6 +18,10 @@ class CGlobalRendering {
 
 public:
 	void PostInit();
+	void SetDualScreenParams();
+	void UpdateWindowGeometry();
+	void UpdateViewPortGeometry();
+	void UpdatePixelGeometry();
 
 	/**
 	 * Does the user want team colored nanospray if the mod allows it?
