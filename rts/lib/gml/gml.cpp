@@ -226,7 +226,6 @@ boost::mutex posmutex;
 boost::mutex runitmutex;
 boost::mutex netmutex;
 boost::mutex histmutex;
-boost::mutex logmutex;
 boost::mutex timemutex;
 boost::mutex watermutex;
 boost::mutex dquemutex;
