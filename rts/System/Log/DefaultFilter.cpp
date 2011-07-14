@@ -80,7 +80,11 @@ struct SectionListInitializer {
 static inline int log_filter_section_getDefaultMinLevel(const char* section) {
 
 #ifdef DEBUG
-	return LOG_LEVEL_DEBUG;
+	if (DEFAULT_FILTER_SECTIONS_EQUAL(section, LOG_SECTION_DEFAULT)) {
+		return LOG_LEVEL_DEBUG;
+	} else {
+		return LOG_LEVEL_INFO;
+	}
 #else
 	if (DEFAULT_FILTER_SECTIONS_EQUAL(section, LOG_SECTION_DEFAULT)) {
 		return LOG_LEVEL_INFO;
