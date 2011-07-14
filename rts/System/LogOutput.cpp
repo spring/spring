@@ -21,6 +21,8 @@
 #include "Game/GameVersion.h"
 #include "System/ConfigHandler.h"
 #include "System/FileSystem/FileSystemHandler.h"
+#include "System/Log/DefaultFilter.h"
+#include "System/Log/Level.h"
 #include "System/mmgr.h"
 
 #include <string>
@@ -234,6 +236,9 @@ void CLogOutput::Initialize()
 
 void CLogOutput::InitializeSubsystems()
 {
+	// the new systems (ILog.h) log-sub-systems are called sections:
+	const std::set<const char*> sections = log_filter_section_getRegisteredSet();
+
 	{
 		LogObject lo;
 		lo << "Available log subsystems: ";
@@ -247,6 +252,14 @@ void CLogOutput::InitializeSubsystems()
 				numSec++;
 			}
 		}
+		std::set<const char*>::const_iterator si;
+		for (si = sections.begin(); si != sections.end(); ++si) {
+			if (numSec > 0) {
+				lo << ", ";
+			}
+			lo << *si;
+			numSec++;
+		}
 	}
 
 	// enabled subsystems is superset of the ones specified in the environment
@@ -257,7 +270,7 @@ void CLogOutput::InitializeSubsystems()
 #else
 	#ifdef DEBUG
 	// unitsync logging in debug mode always on
-	std::string subsystems = ",unitsync,archivescanner";
+	std::string subsystems = ",unitsync,ArchiveScanner";
 	#else
 	std::string subsystems = ",";
 	#endif
@@ -275,30 +288,55 @@ void CLogOutput::InitializeSubsystems()
 			subsystems += env_subsystems + ",";
 		}
 	}
-
+	const std::string subsystemsLC = StringToLower(subsystems);
 
 	{
 		LogObject lo;
 		lo << "Enabled log subsystems: ";
+		int numSec = 0;
+
+		// classical log-subsystems
 		for (CLogSubsystem* sys = CLogSubsystem::GetList(); sys; sys = sys->next) {
 			if (sys->name && *sys->name) {
-				const string name = StringToLower(sys->name);
-				const string::size_type index = subsystems.find("," + name + ",");
+				const std::string name = StringToLower(sys->name);
+				const bool found = (subsystemsLC.find("," + name + ",") != string::npos);
 
 				if (env_override) {
-					sys->enabled = (index != string::npos);
-				} else if (!sys->enabled && (index != string::npos)) {
+					sys->enabled = found;
+				} else if (!sys->enabled && found) {
 					// log subsystems which are enabled by default can not be disabled
 					// ("enabled by default" wouldn't make sense otherwise...)
 					sys->enabled = true;
 				}
 
 				if (sys->enabled) {
-					lo << sys->name;
-					if (sys->next) {
+					if (numSec > 0) {
 						lo << ", ";
 					}
+					lo << sys->name;
+					numSec++;
 				}
+			}
+		}
+
+		// new log sections
+		std::set<const char*>::const_iterator si;
+		for (si = sections.begin(); si != sections.end(); ++si) {
+			const std::string name = StringToLower(*si);
+			const bool found = (subsystemsLC.find("," + name + ",") != string::npos);
+
+			if (found) {
+				if (numSec > 0) {
+					lo << ", ";
+				}
+#if       defined(DEBUG)
+				log_filter_section_setMinLevel(*si, LOG_LEVEL_DEBUG);
+				lo << *si << "(LOG_LEVEL_DEBUG)";
+#else  // defined(DEBUG)
+				log_filter_section_setMinLevel(*si, LOG_LEVEL_INFO);
+				lo << *si << "(LOG_LEVEL_INFO)";
+#endif // defined(DEBUG)
+				numSec++;
 			}
 		}
 	}
