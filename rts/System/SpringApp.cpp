@@ -638,51 +638,18 @@ void SpringApp::SaveWindowPosition()
 void SpringApp::SetupViewportGeometry()
 {
 	if (!GetDisplayGeometry()) {
-		globalRendering->screenSizeX = globalRendering->viewSizeX;
-		globalRendering->screenSizeY = globalRendering->viewSizeY;
-		globalRendering->winSizeX = globalRendering->viewSizeX;
-		globalRendering->winSizeY = globalRendering->viewSizeY;
-		globalRendering->winPosX = 0;
-		globalRendering->winPosY = 0;
+		globalRendering->UpdateWindowGeometry();
 	}
 
-	globalRendering->dualScreenMode = !!configHandler->Get("DualScreenMode", 0);
-	if (globalRendering->dualScreenMode) {
-		globalRendering->dualScreenMiniMapOnLeft =
-			!!configHandler->Get("DualScreenMiniMapOnLeft", 0);
-	} else {
-		globalRendering->dualScreenMiniMapOnLeft = false;
-	}
-
-	if (!globalRendering->dualScreenMode) {
-		globalRendering->viewSizeX = globalRendering->winSizeX;
-		globalRendering->viewSizeY = globalRendering->winSizeY;
-		globalRendering->viewPosX = 0;
-		globalRendering->viewPosY = 0;
-	}
-	else {
-		globalRendering->viewSizeX = globalRendering->winSizeX / 2;
-		globalRendering->viewSizeY = globalRendering->winSizeY;
-		if (globalRendering->dualScreenMiniMapOnLeft) {
-			globalRendering->viewPosX = globalRendering->winSizeX / 2;
-			globalRendering->viewPosY = 0;
-		} else {
-			globalRendering->viewPosX = 0;
-			globalRendering->viewPosY = 0;
-		}
-	}
+	globalRendering->SetDualScreenParams();
+	globalRendering->UpdateViewPortGeometry();
+	globalRendering->UpdatePixelGeometry();
 
 	agui::gui->UpdateScreenGeometry(
 			globalRendering->viewSizeX,
 			globalRendering->viewSizeY,
 			globalRendering->viewPosX,
 			(globalRendering->winSizeY - globalRendering->viewSizeY - globalRendering->viewPosY) );
-	globalRendering->pixelX = 1.0f / (float)globalRendering->viewSizeX;
-	globalRendering->pixelY = 1.0f / (float)globalRendering->viewSizeY;
-
-	// NOTE:  globalRendering->viewPosY is not currently used
-
-	globalRendering->aspectRatio = (float)globalRendering->viewSizeX / (float)globalRendering->viewSizeY;
 }
 
 
