@@ -18,8 +18,10 @@
 #include "System/Util.h"
 
 
-// use this section for all LOG*() calls in this source file
 #define LOG_SECTION_VFS "VFS"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_VFS)
+
+// use the specific section for all LOG*() calls in this source file
 #ifdef LOG_SECTION_CURRENT
 	#undef LOG_SECTION_CURRENT
 #endif
