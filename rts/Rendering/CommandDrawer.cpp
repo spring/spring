@@ -39,11 +39,12 @@ CommandDrawer* CommandDrawer::GetInstance() {
 
 
 void CommandDrawer::Draw(const CCommandAI* cai) const {
-	const       CAirCAI* aCAI; if ((aCAI = dynamic_cast<const       CAirCAI*>(cai)) != NULL) {       DrawAirCAICommands(aCAI); return; }
-	const   CBuilderCAI* bCAI; if ((bCAI = dynamic_cast<const   CBuilderCAI*>(cai)) != NULL) {   DrawBuilderCAICommands(bCAI); return; }
-	const   CFactoryCAI* fCAI; if ((fCAI = dynamic_cast<const   CFactoryCAI*>(cai)) != NULL) {   DrawFactoryCAICommands(fCAI); return; }
-	const    CMobileCAI* mCAI; if ((mCAI = dynamic_cast<const    CMobileCAI*>(cai)) != NULL) {    DrawMobileCAICommands(mCAI); return; }
-	const CTransportCAI* tCAI; if ((tCAI = dynamic_cast<const CTransportCAI*>(cai)) != NULL) { DrawTransportCAICommands(tCAI); return; }
+	// note: {Air, Builder, Transport}CAI all inherit from MobileCAI, so test that last
+	const       CAirCAI* aCAI; if ((aCAI = dynamic_cast<const       CAirCAI*>(cai)) != NULL) {        DrawAirCAICommands(aCAI); return; }
+	const   CBuilderCAI* bCAI; if ((bCAI = dynamic_cast<const   CBuilderCAI*>(cai)) != NULL) {    DrawBuilderCAICommands(bCAI); return; }
+	const   CFactoryCAI* fCAI; if ((fCAI = dynamic_cast<const   CFactoryCAI*>(cai)) != NULL) {    DrawFactoryCAICommands(fCAI); return; }
+	const CTransportCAI* tCAI; if ((tCAI = dynamic_cast<const CTransportCAI*>(cai)) != NULL) {  DrawTransportCAICommands(tCAI); return; }
+	const    CMobileCAI* mCAI; if ((mCAI = dynamic_cast<const    CMobileCAI*>(cai)) != NULL) {     DrawMobileCAICommands(mCAI); return; }
 
 	DrawCommands(cai);
 }
