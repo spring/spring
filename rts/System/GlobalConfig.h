@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef GLOBAL_CONFIG_H
-#define GLOBAL_CONFIG_H
+#ifndef _GLOBAL_CONFIG_H
+#define _GLOBAL_CONFIG_H
 #include "lib/gml/gmlcnf.h"
 
 
@@ -30,7 +30,8 @@ public:
 	/**
 	 * @brief reconnect timeout
 	 *
-	 * Network timeout in seconds after which a player is allowed to reconnect with a different IP
+	 * Network timeout in seconds after which a player is allowed to reconnect
+	 * with a different IP.
 	 */
 	int reconnectTimeout;
 
@@ -44,7 +45,8 @@ public:
 	/**
 	 * @brief teamHighlight
 	 *
-	 * Team highlighting for teams that are uncontrolled or have connection problems
+	 * Team highlighting for teams that are uncontrolled or have connection
+	 * problems.
 	 */
 	int teamHighlight;
 
@@ -103,4 +105,4 @@ public:
 
 extern GlobalConfig* globalConfig;
 
-#endif // GLOBAL_CONFIG_H
+#endif // _GLOBAL_CONFIG_H
