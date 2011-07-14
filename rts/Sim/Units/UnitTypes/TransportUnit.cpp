@@ -203,9 +203,9 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 
 
 
-bool CTransportUnit::CanTransport(const CUnit *unit) const
+bool CTransportUnit::CanTransport(const CUnit* unit) const
 {
-	if (unit->transporter)
+	if (unit->transporter != NULL)
 		return false;
 
 	if (!unit->unitDef->transportByEnemy && !teamHandler->AlliedTeams(unit->team, team))
@@ -271,9 +271,15 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 		}
 
 		return;
+	} else {
+		// handle transfers from another transport to us
+		// (can still fail depending on CanTransport())
+		if (unit->transporter != NULL) {
+			unit->transporter->DetachUnit(unit);
+		}
 	}
 
-	// covers the case where unit->transporter != this
+	// covers the case where unit->transporter != NULL
 	if (!CanTransport(unit)) {
 		return;
 	}
