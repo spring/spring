@@ -137,15 +137,6 @@ void CGame::ClientReadNet()
 				break;
 			}
 
-			case NETMSG_MEMDUMP: {
-				MakeMemDump();
-#ifdef TRACE_SYNC
-				tracefile.Commit();
-#endif
-				AddTraffic(-1, packetCode, dataLength);
-				break;
-			}
-
 			case NETMSG_STARTPLAYING: {
 				unsigned timeToStart = *(unsigned*)(inbuf+1);
 				if (timeToStart > 0) {
