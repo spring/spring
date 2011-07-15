@@ -1528,7 +1528,7 @@ void CGame::SimFrame() {
 
 	lastUpdate = SDL_GetTicks();
 
-	DumpState(-1, -1);
+	DumpState(-1, -1, 1);
 }
 
 
@@ -1653,19 +1653,22 @@ void CGame::UpdateUI(bool updateCam)
 
 
 
-void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum)
+void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 {
 	#ifdef NDEBUG
 	// must be in debug-mode for this
 	return;
 	#endif
 
+	static std::fstream file;
+
 	static int gMinFrameNum = -1;
 	static int gMaxFrameNum = -1;
-	static std::fstream file;
+	static int gFramePeriod =  1;
 
 	const int oldMinFrameNum = gMinFrameNum;
 	const int oldMaxFrameNum = gMaxFrameNum;
+	const int oldFramePeriod = gFramePeriod;
 
 	if (!gs->cheatEnabled) { return; }
 	// check if the range is valid
@@ -1673,6 +1676,7 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum)
 	// adjust the bounds if the new values are valid
 	if (newMinFrameNum >= 0) { gMinFrameNum = newMinFrameNum; }
 	if (newMaxFrameNum >= 0) { gMaxFrameNum = newMaxFrameNum; }
+	if (newFramePeriod >= 1) { gFramePeriod = newFramePeriod; }
 
 	if ((gMinFrameNum != oldMinFrameNum) || (gMaxFrameNum != oldMaxFrameNum)) {
 		// bounds changed, open a new file
@@ -1703,6 +1707,7 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum)
 	// check if the CURRENT frame lies within the bounds
 	if (gs->frameNum < gMinFrameNum) { return; }
 	if (gs->frameNum > gMaxFrameNum) { return; }
+	if ((gs->frameNum % gFramePeriod) != 0) { return; }
 
 	// we only care about the synced projectile data here
 	const std::list<CUnit*>& units = uh->activeUnits;

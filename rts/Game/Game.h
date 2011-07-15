@@ -132,7 +132,7 @@ public:
 public:
 	/// Save the game state to file.
 	void SaveGame(const std::string& filename, bool overwrite);
-	void DumpState(int minFrameNum, int maxFrameNum);
+	void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod);
 
 	/// Re-load the game.
 	void ReloadGame();
