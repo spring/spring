@@ -114,7 +114,7 @@ extern void log_frontend_record(const char* section, int level, const char* fmt,
 #define _CONCAT(start, end) \
 	_CONCAT_SUB(start, end)
 #define _UNIQUE_IDENT(prefix) \
-	_CONCAT(prefix, __COUNTER__)
+	_CONCAT(prefix##__, _CONCAT(_CONCAT(__COUNTER__, __), __LINE__))
 
 // Register a section (only the first time the code is run)
 #if       defined(__cplusplus)

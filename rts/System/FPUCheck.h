@@ -62,12 +62,6 @@ MaskRsvd: 0    0    0  1  1  1  1  1   0    0   1  1  1  1  1  1 = 0x1F3F
 
 	Source: Intel Architecture Software Development Manual, Volume 1, Basic Architecture
 */
-#ifdef _MSC_VER // LOG_L gives rise to multiply defined symbols in MSVC linker
-#include "System/LogOutput.h" // "LoadScreen.obj : error LNK2005: public: __thiscall `void __cdecl good_fpu_control_registers(char const *)'::`7'::SectionRegistrator2::SectionRegistrator2(void)" (??0SectionRegistrator2@?6??good_fpu_control_registers@@YAXPBD@Z@QAE@XZ) already defined in Game.obj
-#define LOGG_L(type, ...) logOutput.Print(__VA_ARGS__)
-#else
-#define LOGG_L(type, ...) LOG_L(type, __VA_ARGS__)
-#endif
 static inline void good_fpu_control_registers(const char* text)
 {
 	// We are paranoid.
@@ -87,8 +81,8 @@ static inline void good_fpu_control_registers(const char* text)
 	#endif
 
 	if (!ret) {
-		LOGG_L(L_WARNING, "[%s] Sync warning: (env.sse_mode) MXCSR 0x%04X instead of 0x1D00 or 0x1F80 (\"%s\")", __FUNCTION__, fenv.sse_mode, text);
-		LOGG_L(L_WARNING, "[%s] Sync warning: (env.x87_mode) FPUCW 0x%04X instead of 0x003A or 0x003F (\"%s\")", __FUNCTION__, fenv.x87_mode, text);
+		LOG_L(L_WARNING, "[%s] Sync warning: (env.sse_mode) MXCSR 0x%04X instead of 0x1D00 or 0x1F80 (\"%s\")", __FUNCTION__, fenv.sse_mode, text);
+		LOG_L(L_WARNING, "[%s] Sync warning: (env.x87_mode) FPUCW 0x%04X instead of 0x003A or 0x003F (\"%s\")", __FUNCTION__, fenv.x87_mode, text);
 
 		// Set single precision floating point math.
 		streflop_init<streflop::Simple>();
