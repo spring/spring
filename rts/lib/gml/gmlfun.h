@@ -316,13 +316,6 @@ EXTERN inline int gmlSizeOf(int datatype) {
 #define GML_FUNCTION __func__
 #endif
 
-#ifdef _MSC_VER
-#include "System/LogOutput.h"
-#define GML_LOGG_SL(name, type, ...) logOutput.Print(__VA_ARGS__)
-#else
-#define GML_LOGG_SL(name, type, ...) LOG_SL(name, type, __VA_ARGS__)
-#endif
-
 #if GML_CALL_DEBUG
 #include "lib/lua/include/lauxlib.h"
 extern unsigned gmlLockTime;
@@ -354,7 +347,7 @@ public:
 #define GML_CURRENT_LUA(currentLuaState) (currentLuaState ? "LUA" : "Unknown")
 #define GML_THREAD_ERROR(msg, ret)\
 	lua_State *currentLuaState = gmlCurrentLuaStates[gmlThreadNumber];\
-	GML_LOGG_SL("GML", L_ERROR, "Sim thread called %s (%s)", msg, GML_CURRENT_LUA(currentLuaState));\
+	LOG_SL("GML", L_ERROR, "Sim thread called %s (%s)", msg, GML_CURRENT_LUA(currentLuaState));\
 	if(currentLuaState)\
 		luaL_error(currentLuaState, "Invalid call");\
 	ret
@@ -372,7 +365,7 @@ public:
 		GML_THREAD_ERROR(GML_QUOTE(gml##name), GML_DUMMYRETVAL(rettype))\
 	}
 #else
-#define GML_ITEMLOG_PRINT() GML_LOGG_SL("GML", L_ERROR, "Sim thread called %s", GML_FUNCTION);
+#define GML_ITEMLOG_PRINT() LOG_SL("GML", L_ERROR, "Sim thread called %s", GML_FUNCTION);
 #define GML_DUMMYRET()
 #define GML_DUMMYRETVAL(rettype)
 #define GML_IF_SIM_THREAD_RET(thread,name)
