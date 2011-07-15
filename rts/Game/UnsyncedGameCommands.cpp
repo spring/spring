@@ -2770,8 +2770,10 @@ public:
 	void Execute(const UnsyncedAction& action) const {
 		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
 
-		if (args.size() == 2) {
-			game->DumpState(atoi(args[0].c_str()), atoi(args[1].c_str()));
+		switch (args.size()) {
+			case 2: { game->DumpState(atoi(args[0].c_str()), atoi(args[1].c_str()),                     1); } break;
+			case 3: { game->DumpState(atoi(args[0].c_str()), atoi(args[1].c_str()), atoi(args[2].c_str())); } break;
+			default: {} break;
 		}
 	}
 };
