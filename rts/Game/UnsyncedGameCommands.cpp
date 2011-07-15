@@ -3199,6 +3199,7 @@ void UnsyncedGameCommands::DestroyInstance() {
 		singleton = NULL;
 		delete tmp;
 	} else {
-		throw std::logic_error("UnsyncedGameCommands singleton is already destroyed");
+		// this might happen during shutdown after an unclean init
+		logOutput.Print("Warning: UnsyncedGameCommands singleton was not initialized or is already destroyed");
 	}
 }
