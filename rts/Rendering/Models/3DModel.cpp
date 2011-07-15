@@ -88,9 +88,9 @@ void LocalModel::SetLODCount(unsigned int count)
 }
 
 
-void LocalModel::ApplyRawPieceTransform(int piecenum) const
+void LocalModel::ApplyRawPieceTransformUnsynced(int piecenum) const
 {
-	pieces[piecenum]->ApplyTransform();
+	pieces[piecenum]->ApplyTransformUnsynced();
 }
 
 
@@ -126,40 +126,37 @@ float3 LocalModel::GetRawPieceDirection(int piecenum) const
 static const float RADTOANG  = 180 / PI;
 
 LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
-	: updates(1)
-	, last_matrix_update(0)
+	: numUpdatesSynced(1)
+	, lastMatrixUpdate(0)
 {
 	assert(piece);
 	original   =  piece;
+	parent     =  NULL; // set later
 	dispListID =  piece->dispListID;
 	visible    = !piece->isEmpty;
 	identity   =  true;
 	pos        =  piece->offset;
 	colvol     =  new CollisionVolume(piece->GetCollisionVolume());
 	childs.reserve(piece->childs.size());
-
-	parent = NULL; //FIXME?
 }
-
 
 LocalModelPiece::~LocalModelPiece() {
-	delete colvol;
+	delete colvol; colvol = NULL;
 }
 
 
-inline void LocalModelPiece::CheckUpdateMatrix()
+inline void LocalModelPiece::CheckUpdateMatrixUnsynced()
 {
-	if (last_matrix_update != updates) {
-		last_matrix_update = updates;
+	if (lastMatrixUpdate != numUpdatesSynced) {
+		lastMatrixUpdate = numUpdatesSynced;
+		identity = true;
 
 		transfMat.LoadIdentity();
 
-		identity = !(pos.SqLength() || rot.SqLength());
-
-		if (pos.SqLength()) { transfMat.Translate(pos.x, pos.y, pos.z); }
-		if (rot[1]) { transfMat.RotateY(-rot[1]); }
-		if (rot[0]) { transfMat.RotateX(-rot[0]); }
-		if (rot[2]) { transfMat.RotateZ(-rot[2]); }
+		if (pos.SqLength() > 0.0f) { transfMat.Translate(pos.x, pos.y, pos.z); identity = false; }
+		if (rot[1] != 0.0f) { transfMat.RotateY(-rot[1]); identity = false; }
+		if (rot[0] != 0.0f) { transfMat.RotateX(-rot[0]); identity = false; }
+		if (rot[2] != 0.0f) { transfMat.RotateZ(-rot[2]); identity = false; }
 	}
 }
 
@@ -170,7 +167,7 @@ void LocalModelPiece::Draw()
 	if (!visible && childs.empty())
 		return;
 
-	CheckUpdateMatrix();
+	CheckUpdateMatrixUnsynced();
 
 	if (!identity) {
 		glPushMatrix();
@@ -195,7 +192,7 @@ void LocalModelPiece::DrawLOD(unsigned int lod)
 	if (!visible && childs.empty())
 		return;
 
-	CheckUpdateMatrix();
+	CheckUpdateMatrixUnsynced();
 	
 	if (!identity) {
 		glPushMatrix();
@@ -215,13 +212,13 @@ void LocalModelPiece::DrawLOD(unsigned int lod)
 }
 
 
-void LocalModelPiece::ApplyTransform()
+void LocalModelPiece::ApplyTransformUnsynced()
 {
 	if (parent) {
-		parent->ApplyTransform();
+		parent->ApplyTransformUnsynced();
 	}
 
-	CheckUpdateMatrix();
+	CheckUpdateMatrixUnsynced();
 
 	if (!identity) {
 		glMultMatrixf(transfMat);
