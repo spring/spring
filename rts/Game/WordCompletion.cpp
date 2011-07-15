@@ -46,8 +46,9 @@ void CWordCompletion::DestroyInstance() {
 		singleton = NULL;
 		delete tmp;
 	} else {
-		throw std::logic_error(
-				"CWordCompletion singleton is already destroyed");
+		// this might happen during shutdown after an unclean init
+		LOG_L(L_WARNING, "CWordCompletion singleton was not initialized"
+				" or is already destroyed");
 	}
 }
 
