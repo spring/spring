@@ -1754,9 +1754,9 @@ public:
 
 	void Execute(const UnsyncedAction& action) const {
 		if (!gu->spectating) {
-			Command c(CMD_STOP);
-			// force it to update selection and clear order queue
-			selectedUnits.GiveCommand(c, false);
+			// we must cause the to-be-controllee to be put in
+			// netSelected[myPlayerNum] by giving it an order
+			selectedUnits.SendCommand(Command(CMD_STOP));
 			net->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));
 		}
 	}

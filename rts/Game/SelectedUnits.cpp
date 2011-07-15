@@ -786,29 +786,24 @@ void CSelectedUnits::SetCommandPage(int page)
 }
 
 
-//! deprecated
-void CSelectedUnits::SendSelection()
-{
-	GML_RECMUTEX_LOCK(sel); // SendSelection
-
-	// first, convert CUnit* to unit IDs.
-	std::vector<short> selectedUnitIDs(selectedUnits.size());
-	std::vector<short>::iterator i = selectedUnitIDs.begin();
-	CUnitSet::const_iterator ui = selectedUnits.begin();
-	for(; ui != selectedUnits.end(); ++i, ++ui) {
-		*i = (*ui)->id;
-	}
-	net->Send(CBaseNetProtocol::Get().SendSelect(gu->myPlayerNum, selectedUnitIDs));
-	selectionChanged = false;
-}
-
 
 void CSelectedUnits::SendCommand(const Command& c)
 {
 	if (selectionChanged) {
 		// send new selection
-		SendSelection();
+		GML_RECMUTEX_LOCK(sel); // SendSelection
+
+		// first, convert CUnit* to unit IDs.
+		std::vector<short> selectedUnitIDs(selectedUnits.size());
+		std::vector<short>::iterator i = selectedUnitIDs.begin();
+		CUnitSet::const_iterator ui = selectedUnits.begin();
+		for(; ui != selectedUnits.end(); ++i, ++ui) {
+			*i = (*ui)->id;
+		}
+		net->Send(CBaseNetProtocol::Get().SendSelect(gu->myPlayerNum, selectedUnitIDs));
+		selectionChanged = false;
 	}
+
 	net->Send(CBaseNetProtocol::Get().SendCommand(gu->myPlayerNum, c.GetID(), c.options, c.params));
 }
 

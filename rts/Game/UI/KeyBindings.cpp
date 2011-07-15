@@ -36,7 +36,7 @@ defaultBindings[] = {
 	{ "Ctrl+Shift+esc", "quitforce"    },
 	{  "Any+pause", "pause"       },
 
-	{ "Any+c", "controlunit"          },
+	{ "c", "controlunit"          },
 	{ "Any+h", "sharedialog"          },
 	{ "Any+l", "togglelos"            },
 	{ "Any+;", "toggleradarandjammer" },
@@ -126,8 +126,6 @@ defaultBindings[] = {
 	{ "Any+7", "group7" },
 	{ "Any+8", "group8" },
 	{ "Any+9", "group9" },
-
-	{ "Any+c", "controlunit" },
 
 	{       "[", "buildfacing inc"  },
 	{ "Shift+[", "buildfacing inc"  },

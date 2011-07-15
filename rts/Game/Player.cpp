@@ -179,7 +179,6 @@ void CPlayer::StartControllingUnit()
 			return;
 		}
 
-
 		if (newControlleeUnit->fpsControlPlayer != NULL) {
 			if (this->playerNum == gu->myPlayerNum) {
 				logOutput.Print(
@@ -189,13 +188,19 @@ void CPlayer::StartControllingUnit()
 					newControlleeUnit->id
 				);
 			}
+
+			return;
 		}
-		else if (luaRules == NULL || luaRules->AllowDirectUnitControl(this->playerNum, newControlleeUnit)) {
+
+		if (luaRules == NULL || luaRules->AllowDirectUnitControl(this->playerNum, newControlleeUnit)) {
 			newControlleeUnit->fpsControlPlayer = this;
 			fpsController.SetControlleeUnit(newControlleeUnit);
+			selectedUnits.ClearNetSelect(this->playerNum);
 
 			if (this->playerNum == gu->myPlayerNum) {
 				// update the unsynced state
+				selectedUnits.ClearSelected();
+
 				gu->fpsMode = true;
 				mouse->wasLocked = mouse->locked;
 
@@ -205,7 +210,6 @@ void CPlayer::StartControllingUnit()
 				}
 				camHandler->PushMode();
 				camHandler->SetCameraMode(0);
-				selectedUnits.ClearSelected();
 			}
 		}
 	}
@@ -221,11 +225,16 @@ void CPlayer::StopControllingUnit()
 	CUnit* thatUnit = that->fpsController.GetControllee();
 	CUnit* thisUnit = this->fpsController.GetControllee();
 
+	// note: probably better to issue CMD_STOP via thisUnit->commandAI
+	thisUnit->AttackUnit(NULL, false, true);
 	thisUnit->fpsControlPlayer = NULL;
-	thisUnit->AttackUnit(NULL, true, true);
+	fpsController.SetControlleeUnit(NULL);
+	selectedUnits.ClearNetSelect(this->playerNum);
 
 	if (thatUnit == thisUnit) {
-		// update the  unsynced state
+		// update the unsynced state
+		selectedUnits.ClearSelected();
+
 		gu->fpsMode = false;
 		assert(gu->myPlayerNum == this->playerNum);
 
@@ -237,6 +246,4 @@ void CPlayer::StopControllingUnit()
 			mouse->ShowMouse();
 		}
 	}
-
-	fpsController.SetControlleeUnit(NULL);
 }
