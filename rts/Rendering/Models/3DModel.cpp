@@ -133,6 +133,7 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 	original   =  piece;
 	dispListID =  piece->dispListID;
 	visible    = !piece->isEmpty;
+	identity   =  true;
 	pos        =  piece->offset;
 	colvol     =  new CollisionVolume(piece->GetCollisionVolume());
 	childs.reserve(piece->childs.size());
@@ -146,27 +147,22 @@ LocalModelPiece::~LocalModelPiece() {
 }
 
 
-void LocalModelPiece::UpdateMatrix()
-{
-	last_matrix_update = updates;
-
-	transfMat.LoadIdentity();
-
-	identity = !(pos.SqLength() || rot.SqLength());
-
-	if (pos.SqLength()) { transfMat.Translate(pos.x, pos.y, pos.z); }
-	if (rot[1]) { transfMat.RotateY(-rot[1]); }
-	if (rot[0]) { transfMat.RotateX(-rot[0]); }
-	if (rot[2]) { transfMat.RotateZ(-rot[2]); }
-}
-
-
-inline void LocalModelPiece::CheckUpdate()
+inline void LocalModelPiece::CheckUpdateMatrix()
 {
 	if (last_matrix_update != updates) {
-		UpdateMatrix();
+		last_matrix_update = updates;
+
+		transfMat.LoadIdentity();
+
+		identity = !(pos.SqLength() || rot.SqLength());
+
+		if (pos.SqLength()) { transfMat.Translate(pos.x, pos.y, pos.z); }
+		if (rot[1]) { transfMat.RotateY(-rot[1]); }
+		if (rot[0]) { transfMat.RotateX(-rot[0]); }
+		if (rot[2]) { transfMat.RotateZ(-rot[2]); }
 	}
 }
+
 
 
 void LocalModelPiece::Draw()
@@ -174,7 +170,7 @@ void LocalModelPiece::Draw()
 	if (!visible && childs.empty())
 		return;
 
-	CheckUpdate();
+	CheckUpdateMatrix();
 
 	if (!identity) {
 		glPushMatrix();
@@ -199,7 +195,7 @@ void LocalModelPiece::DrawLOD(unsigned int lod)
 	if (!visible && childs.empty())
 		return;
 
-	CheckUpdate();
+	CheckUpdateMatrix();
 	
 	if (!identity) {
 		glPushMatrix();
@@ -225,7 +221,8 @@ void LocalModelPiece::ApplyTransform()
 		parent->ApplyTransform();
 	}
 
-	CheckUpdate();
+	CheckUpdateMatrix();
+
 	if (!identity) {
 		glMultMatrixf(transfMat);
 	}

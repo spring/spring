@@ -169,8 +169,7 @@ struct LocalModelPiece
 	      CollisionVolume* GetCollisionVolume()       { return colvol; }
 
 private:
-	void CheckUpdate();
-	void UpdateMatrix();
+	void CheckUpdateMatrix();
 
 private:
 	float3 pos;
