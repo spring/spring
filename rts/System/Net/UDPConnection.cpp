@@ -25,9 +25,9 @@
 namespace netcode {
 using namespace boost::asio;
 
-static const unsigned UDPMaxPacketSize = 4096;
-static const int MaxChunkSize = 254;
-static const int ChunksPerSec = 30;
+static const unsigned udpMaxPacketSize = 4096;
+static const int maxChunkSize = 254;
+static const int chunksPerSec = 30;
 
 
 class Unpacker
@@ -64,7 +64,8 @@ private:
 class Packer
 {
 public:
-	Packer(std::vector<uint8_t>& data) : data(data)
+	Packer(std::vector<uint8_t>& data)
+		: data(data)
 	{
 		assert(data.empty());
 	}
@@ -131,15 +132,15 @@ void Packet::Serialize(std::vector<uint8_t>& data)
 	buf.Pack(lastContinuous);
 	buf.Pack(nakType);
 	buf.Pack(naks);
-	for (std::list<ChunkPtr>::const_iterator it = chunks.begin(); it != chunks.end(); ++it)
-	{
-		buf.Pack((*it)->chunkNumber);
-		buf.Pack((*it)->chunkSize);
-		buf.Pack((*it)->data);
+	std::list<ChunkPtr>::const_iterator ci;
+	for (ci = chunks.begin(); ci != chunks.end(); ++ci) {
+		buf.Pack((*ci)->chunkNumber);
+		buf.Pack((*ci)->chunkSize);
+		buf.Pack((*ci)->data);
 	}
 }
 
-UDPConnection::UDPConnection(boost::shared_ptr<boost::asio::ip::udp::socket> netSocket, const boost::asio::ip::udp::endpoint& myAddr)
+UDPConnection::UDPConnection(boost::shared_ptr<ip::udp::socket> netSocket, const ip::udp::endpoint& myAddr)
 	: addr(myAddr)
 	, sharedSocket(true)
 	, mySocket(netSocket)
@@ -147,17 +148,21 @@ UDPConnection::UDPConnection(boost::shared_ptr<boost::asio::ip::udp::socket> net
 	Init();
 }
 
-UDPConnection::UDPConnection(int sourceport, const std::string& address, const unsigned port)
+UDPConnection::UDPConnection(int sourcePort, const std::string& address, const unsigned port)
 	: sharedSocket(false)
 {
 	addr = ResolveAddr(address, port);
+
+	ip::address sourceAddr;
 	if (addr.address().is_v6()) {
-		boost::shared_ptr<ip::udp::socket> temp(new ip::udp::socket(netcode::netservice, ip::udp::endpoint(ip::address_v6::any(), sourceport)));
-		mySocket = temp;
+		sourceAddr = ip::address_v6::any();
 	} else {
-		boost::shared_ptr<ip::udp::socket> temp(new ip::udp::socket(netcode::netservice, ip::udp::endpoint(ip::address_v4::any(), sourceport)));
-		mySocket = temp;
+		sourceAddr = ip::address_v4::any();
 	}
+	boost::shared_ptr<ip::udp::socket> tempSocket(new ip::udp::socket(
+			netcode::netservice, ip::udp::endpoint(sourceAddr, sourcePort)));
+	mySocket = tempSocket;
+
 	Init();
 }
 
@@ -176,7 +181,7 @@ void UDPConnection::CopyConnection(UDPConnection &conn) {
 	conn.InitConnection(addr, mySocket);
 }
 
-void UDPConnection::InitConnection(boost::asio::ip::udp::endpoint address, boost::shared_ptr<ip::udp::socket> socket) {
+void UDPConnection::InitConnection(ip::udp::endpoint address, boost::shared_ptr<ip::udp::socket> socket) {
 	addr = address;
 	mySocket = socket;
 }
@@ -211,8 +216,9 @@ boost::shared_ptr<const RawPacket> UDPConnection::Peek(unsigned ahead) const
 
 void UDPConnection::DeleteBufferPacketAt(unsigned index)
 {
-	if (index < msgQueue.size())
+	if (index < msgQueue.size()) {
 		msgQueue.erase(msgQueue.begin() + index);
+	}
 }
 
 boost::shared_ptr<const RawPacket> UDPConnection::GetData()
@@ -240,7 +246,7 @@ void UDPConnection::Update()
 			std::vector<uint8_t> buffer(bytes_avail);
 			ip::udp::endpoint sender_endpoint;
 			size_t bytesReceived;
-			boost::asio::ip::udp::socket::message_flags flags = 0;
+			ip::udp::socket::message_flags flags = 0;
 			boost::system::error_code err;
 			bytesReceived = mySocket->receive_from(boost::asio::buffer(buffer), sender_endpoint, flags, err);
 			if (CheckErrorCode(err)) {
@@ -288,14 +294,15 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 			}
 		}
 	}
-	for (std::list<ChunkPtr>::const_iterator it = incoming.chunks.begin(); it != incoming.chunks.end(); ++it)
-	{
-		if (lastInOrder >= (*it)->chunkNumber || waitingPackets.find((*it)->chunkNumber) != waitingPackets.end())
+	std::list<ChunkPtr>::const_iterator ci;
+	for (ci = incoming.chunks.begin(); ci != incoming.chunks.end(); ++ci) {
+		if ((lastInOrder >= (*ci)->chunkNumber)
+				|| (waitingPackets.find((*ci)->chunkNumber) != waitingPackets.end()))
 		{
 			++droppedChunks;
 			continue;
 		}
-		waitingPackets.insert((*it)->chunkNumber, new RawPacket(&(*it)->data[0], (*it)->data.size()));
+		waitingPackets.insert((*ci)->chunkNumber, new RawPacket(&(*ci)->data[0], (*ci)->data.size()));
 	}
 
 	packetMap::iterator wpi;
@@ -343,8 +350,8 @@ void UDPConnection::Flush(const bool forced)
 {
 	const spring_time curTime = spring_gettime();
 
-	// do not create chunks more than ChunksPerSec times per second
-	const bool waitMore = lastChunkCreated >= curTime - spring_msecs(1000 / ChunksPerSec);
+	// do not create chunks more than chunksPerSec times per second
+	const bool waitMore = lastChunkCreated >= curTime - spring_msecs(1000 / chunksPerSec);
 	// if the packet is tiny, reduce the send frequency further
 	const int requiredLength = (spring_msecs(200) - (int)(curTime - lastChunkCreated)) / 10;
 
@@ -357,7 +364,7 @@ void UDPConnection::Flush(const bool forced)
 	}
 
 	if (forced || (!waitMore && outgoingLength > requiredLength)) {
-		boost::uint8_t buffer[UDPMaxPacketSize];
+		boost::uint8_t buffer[udpMaxPacketSize];
 		unsigned pos = 0;
 		// Manually fragment packets to respect configured UDP_MTU.
 		// This is an attempt to fix the bug where players drop out of the game if
@@ -366,7 +373,10 @@ void UDPConnection::Flush(const bool forced)
 		bool sendMore = true;
 
 		do {
-			sendMore = outgoing.GetAverage(true) <= globalConfig->linkOutgoingBandwidth || globalConfig->linkOutgoingBandwidth <= 0 || partialPacket || forced;
+			sendMore = (outgoing.GetAverage(true) <= globalConfig->linkOutgoingBandwidth)
+					|| (globalConfig->linkOutgoingBandwidth <= 0)
+					|| partialPacket
+					|| forced;
 			if (!outgoingData.empty() && sendMore) {
 				boost::shared_ptr<const RawPacket>& packet = *(outgoingData.begin());
 				if (!partialPacket && !ProtocolDef::GetInstance()->IsValidPacket(packet->data, packet->length)) {
@@ -376,7 +386,7 @@ void UDPConnection::Flush(const bool forced)
 							packet->length);
 					outgoingData.pop_front();
 				} else {
-					unsigned numBytes = std::min((unsigned)MaxChunkSize - pos, packet->length);
+					unsigned numBytes = std::min((unsigned)maxChunkSize - pos, packet->length);
 					assert(packet->length > 0);
 					memcpy(buffer+pos, packet->data, numBytes);
 					pos+= numBytes;
@@ -390,7 +400,7 @@ void UDPConnection::Flush(const bool forced)
 					}
 				}
 			}
-			if ((pos > 0) && (outgoingData.empty() || (pos == MaxChunkSize) || !sendMore)) {
+			if ((pos > 0) && (outgoingData.empty() || (pos == maxChunkSize) || !sendMore)) {
 				CreateChunk(buffer, pos, currentNum++);
 				pos = 0;
 			}
@@ -403,7 +413,9 @@ bool UDPConnection::CheckTimeout(int seconds, bool initial) const {
 
 	spring_duration timeout;
 	if (seconds == 0) {
-		timeout = spring_secs((dataRecv && !initial) ? globalConfig->networkTimeout : globalConfig->initialNetworkTimeout);
+		timeout = spring_secs((dataRecv && !initial)
+				? globalConfig->networkTimeout
+				: globalConfig->initialNetworkTimeout);
 	} else if (seconds > 0) {
 		timeout = spring_secs(seconds);
 	} else {
@@ -428,7 +440,7 @@ bool UDPConnection::NeedsReconnect() {
 }
 
 bool UDPConnection::CanReconnect() const {
-	return globalConfig->reconnectTimeout > 0;
+	return (globalConfig->reconnectTimeout > 0);
 }
 
 int UDPConnection::GetReconnectSecs() const {
@@ -449,7 +461,7 @@ std::string UDPConnection::Statistics() const
 	return msg;
 }
 
-bool UDPConnection::IsUsingAddress(const boost::asio::ip::udp::endpoint& from) const
+bool UDPConnection::IsUsingAddress(const ip::udp::endpoint& from) const
 {
 	return (addr == from);
 }
@@ -461,7 +473,7 @@ std::string UDPConnection::GetFullAddress() const
 
 void UDPConnection::SetMTU(unsigned mtu2)
 {
-	if ((mtu2 > 300) && (mtu2 < UDPMaxPacketSize)) {
+	if ((mtu2 > 300) && (mtu2 < udpMaxPacketSize)) {
 		mtu = mtu2;
 	}
 }
@@ -507,9 +519,9 @@ void UDPConnection::SendIfNecessary(bool flushed)
 
 	{
 		int packetNum = lastInOrder+1;
-		for (packetMap::iterator it = waitingPackets.begin(); it != waitingPackets.end(); ++it)
+		for (packetMap::iterator pi = waitingPackets.begin(); pi != waitingPackets.end(); ++pi)
 		{
-			const int diff = it->first - packetNum;
+			const int diff = pi->first - packetNum;
 			if (diff > 0) {
 				for (int i = 0; i < diff; ++i) {
 					dropped.push_back(packetNum);
@@ -590,7 +602,7 @@ void UDPConnection::SendPacket(Packet& pkt)
 
 	outgoing.DataSent(data.size());
 	lastSendTime = spring_gettime();
-	boost::asio::ip::udp::socket::message_flags flags = 0;
+	ip::udp::socket::message_flags flags = 0;
 	boost::system::error_code err;
 	mySocket->send_to(buffer(data), addr, flags, err);
 	if (CheckErrorCode(err)) {
@@ -612,10 +624,11 @@ void UDPConnection::AckChunks(int lastAck)
 	do {
 		// resend requested and later acked, happens every now and then
 		done = true;
-		for (std::deque<ChunkPtr>::iterator it = resendRequested.begin(); it != resendRequested.end(); ++it)
+		std::deque<ChunkPtr>::iterator ci;
+		for (ci = resendRequested.begin(); ci != resendRequested.end(); ++ci)
 		{
-			if ((*it)->chunkNumber <= lastAck) {
-				resendRequested.erase(it);
+			if ((*ci)->chunkNumber <= lastAck) {
+				resendRequested.erase(ci);
 				done = false;
 				break;
 			}
@@ -625,10 +638,10 @@ void UDPConnection::AckChunks(int lastAck)
 
 void UDPConnection::RequestResend(ChunkPtr ptr)
 {
-	for (std::deque<ChunkPtr>::const_iterator it = resendRequested.begin(); it != resendRequested.end(); ++it)
-	{
+	std::deque<ChunkPtr>::const_iterator ci;
+	for (ci = resendRequested.begin(); ci != resendRequested.end(); ++ci) {
 		// filter out duplicates
-		if (*it == ptr) {
+		if (*ci == ptr) {
 			return;
 		}
 	}
