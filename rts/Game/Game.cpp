@@ -1748,7 +1748,7 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum)
 		file << "\t\t\tisDead: " << u->isDead << ", activated: " << u->activated << "\n";
 		file << "\t\t\tinAir: " << u->inAir << ", inWater: " << u->inWater << "\n";
 		file << "\t\t\tfireState: " << u->fireState << ", moveState: " << u->moveState << "\n";
-		file << "\t\t\tmodelID: " << om->id << ", modelName: " << om->name << "\n";
+		file << "\t\t\tmodelID: " << om->id << " (name: " << om->name << ")\n";
 		file << "\t\t\tmodelRadius: " << om->radius << ", modelHeight: " << om->height << "\n";
 		file << "\t\t\tpieces: " << pieces.size() << "\n";
 
@@ -1822,7 +1822,7 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum)
 	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
 		const CTeam* t = teamHandler->Team(a);
 
-		file << "\t\tteamID: " << t->teamNum << "(controller: " << t->GetControllerName() << ")\n";
+		file << "\t\tteamID: " << t->teamNum << " (controller: " << t->GetControllerName() << ")\n";
 		file << "\t\t\tmetal: " << float(t->metal) << ", energy: " << float(t->energy) << "\n";
 		file << "\t\t\tmetalPull: " << t->metalPull << ", energyPull: " << t->energyPull << "\n";
 		file << "\t\t\tmetalIncome: " << t->metalIncome << ", energyIncome: " << t->energyIncome << "\n";
