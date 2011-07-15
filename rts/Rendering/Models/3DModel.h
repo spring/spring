@@ -177,8 +177,6 @@ private:
 	float3 rot; //! in radians
 
 	CollisionVolume* colvol;
-
-	bool identity;
 	CMatrix44f transfMat;
 
 	unsigned updates;
@@ -187,6 +185,7 @@ private:
 public:
 	// TODO: add (visibility) maxradius!
 	bool visible;
+	bool identity;
 
 	const S3DModelPiece* original;
 
