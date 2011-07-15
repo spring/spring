@@ -1564,7 +1564,7 @@ int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 		return 0;
 	}
 
-	localModel->ApplyRawPieceTransform(piece);
+	localModel->ApplyRawPieceTransformUnsynced(piece);
 
 	return 0;
 }

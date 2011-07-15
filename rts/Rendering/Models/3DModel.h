@@ -152,13 +152,13 @@ struct LocalModelPiece
 	void DrawLOD(unsigned int lod);
 	void SetLODCount(unsigned int count);
 
-	void ApplyTransform();
+	void ApplyTransformUnsynced();
 	void GetPiecePosIter(CMatrix44f* mat) const;
 	bool GetEmitDirPos(float3& pos, float3& dir) const;
 	float3 GetAbsolutePos() const;
 
-	void SetPosition(const float3& p) { pos = p;++updates; };
-	void SetRotation(const float3& r) { rot = r; ++updates; };
+	void SetPosition(const float3& p) { pos = p; ++numUpdatesSynced; }
+	void SetRotation(const float3& r) { rot = r; ++numUpdatesSynced; }
 	//void SetDirection(const float3&);
 	const float3& GetPosition() const { return pos; }
 	const float3& GetRotation() const { return rot; }
@@ -169,7 +169,7 @@ struct LocalModelPiece
 	      CollisionVolume* GetCollisionVolume()       { return colvol; }
 
 private:
-	void CheckUpdateMatrix();
+	void CheckUpdateMatrixUnsynced();
 
 private:
 	float3 pos;
@@ -178,8 +178,8 @@ private:
 	CollisionVolume* colvol;
 	CMatrix44f transfMat;
 
-	unsigned updates;
-	unsigned last_matrix_update;
+	unsigned numUpdatesSynced;
+	unsigned lastMatrixUpdate;
 
 public:
 	// TODO: add (visibility) maxradius!
@@ -225,7 +225,7 @@ struct LocalModel
 	void SetLODCount(unsigned int count);
 
 	//! raw forms, the piecenum must be valid
-	void ApplyRawPieceTransform(int piecenum) const;
+	void ApplyRawPieceTransformUnsynced(int piecenum) const;
 	float3 GetRawPiecePos(int piecenum) const;
 	CMatrix44f GetRawPieceMatrix(int piecenum) const;
 	float3 GetRawPieceDirection(int piecenum) const;
