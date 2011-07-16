@@ -24,6 +24,25 @@ protected:
 };
 
 /**
+ * @brief Config string that allows whitespaces.
+ */
+class multistring : public std::string {
+public:
+	multistring() {}
+	multistring(const std::string& s) {
+		assign(s);
+	}
+	multistring(const char* s) {
+		assign(s);
+	}
+};
+
+inline multistring& operator>>(std::istringstream& in, multistring& str) {
+	getline(in, str);
+	return str;
+}
+
+/**
  * @brief Wraps a value and detects whether it has been assigned to.
  */
 template<typename T>

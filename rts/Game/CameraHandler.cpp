@@ -22,7 +22,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 
-CONFIG(std::string, CamModeName).defaultValue("");
+CONFIG(multistring, CamModeName).defaultValue("");
 
 CONFIG(int, CamMode)
 	.defaultValue(CCameraHandler::CAMERA_MODE_SMOOTH)
