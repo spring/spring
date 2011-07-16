@@ -27,6 +27,8 @@ Engine / misc:
  - add collide{Enemy, Ground} as weapondef tags
  - add a /clearmapmarks command 
  - rename /advshading to /advmodelshading; add an /advmapshading analogue
+ - add '/reloadCEGs [cegtag]'; reloads all CEGs or one specific CEG by tag
+ - add '/dumpstate <minFrame> <maxFrame> [frameInt]'
 
 Engine / Userconfigs:
  - removed the "FSAA" config tag (FSAALevel is enough)
