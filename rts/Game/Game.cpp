@@ -1682,7 +1682,6 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 
 	const int oldMinFrameNum = gMinFrameNum;
 	const int oldMaxFrameNum = gMaxFrameNum;
-	const int oldFramePeriod = gFramePeriod;
 
 	if (!gs->cheatEnabled) { return; }
 	// check if the range is valid
