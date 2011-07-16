@@ -1,20 +1,20 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <algorithm>
 #include <assert.h>
 #include <locale>
 #include <cctype>
 #include <vector>
 #include <string>
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "Rendering/GL/myGL.h"
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 #include "IconHandler.h"
 #include "Lua/LuaParser.h"
 #include "Textures/Bitmap.h"
-#include "Exceptions.h"
+#include "System/Exceptions.h"
 
 namespace icon {
 using std::string;

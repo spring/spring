@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 // TODO:
 // - go back to counting matrix push/pops (just for modelview?)
@@ -16,7 +16,7 @@
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "LuaOpenGL.h"
 
@@ -1565,7 +1565,7 @@ int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 		return 0;
 	}
 
-	localModel->ApplyRawPieceTransform(piece);
+	localModel->ApplyRawPieceTransformUnsynced(piece);
 
 	return 0;
 }
@@ -1863,8 +1863,8 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 			}
 		}
 	}
-	const int mapxi = (gs->mapx + 1);
-	const int mapzi = (gs->mapy + 1);
+	const int mapxi = gs->mapxp1;
+	const int mapzi = gs->mapyp1;
 	const float* heightmap =
 		#ifdef USE_UNSYNCED_HEIGHTMAP
 		readmap->GetCornerHeightMapUnsynced();

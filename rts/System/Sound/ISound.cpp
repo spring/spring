@@ -8,10 +8,10 @@
 #include "NullSound.h"
 
 #include "SoundLog.h"
-#include "System/LogOutput.h"
 #include "System/Config/ConfigHandler.h"
 
 CONFIG(bool, NoSound).defaultValue(false);
+
 
 ISound* ISound::singleton = NULL;
 
@@ -34,7 +34,7 @@ void ISound::Initialize()
 			singleton = new NullSound();
 		}
 	} else {
-		LogObject(LOG_SOUND) <<  "warning: Sound is already initialized!";
+		LOG_L(L_WARNING, "Sound is already initialized!");
 	}
 }
 

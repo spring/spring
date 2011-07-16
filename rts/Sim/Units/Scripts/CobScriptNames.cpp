@@ -4,7 +4,7 @@
 
 #include "Sim/Misc/GlobalConstants.h"
 #include "CobScriptNames.h"
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 
 using std::sprintf;
 

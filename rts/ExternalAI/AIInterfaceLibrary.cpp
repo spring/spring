@@ -8,10 +8,10 @@
 #include "SkirmishAILibraryInfo.h"
 #include "SAIInterfaceCallbackImpl.h"
 
-#include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/Log/ILog.h"
+#include "System/Util.h"
 #include "IAILibraryManager.h"
-#include "LogOutput.h"
 
 
 CAIInterfaceLibrary::CAIInterfaceLibrary(const CAIInterfaceLibraryInfo& _info)
@@ -24,8 +24,8 @@ CAIInterfaceLibrary::CAIInterfaceLibrary(const CAIInterfaceLibraryInfo& _info)
 
 	sharedLib = SharedLib::Instantiate(libFilePath);
 	if (sharedLib == NULL) {
-		logOutput.Print(
-				"ERROR: Loading AI Interface library from file \"%s\".",
+		LOG_L(L_ERROR,
+				"Loading AI Interface library from file \"%s\".",
 				libFilePath.c_str());
 		return;
 	}
@@ -51,8 +51,8 @@ void CAIInterfaceLibrary::InitStatic() {
 		int ret = sAIInterfaceLibrary.initStatic(interfaceId, &callback);
 		if (ret != 0) {
 			// initializing the library failed!
-			logOutput.Print(
-					"ERROR: Initializing AI Interface library from file \"%s\"."
+			LOG_L(L_ERROR,
+					"Initializing AI Interface library from file \"%s\"."
 					" The call to initStatic() returned unsuccessfuly.",
 					libFilePath.c_str());
 			aiInterfaceCallback_release(interfaceId);
@@ -69,8 +69,8 @@ void CAIInterfaceLibrary::ReleaseStatic() {
 		int ret = sAIInterfaceLibrary.releaseStatic();
 		if (ret != 0) {
 			// releasing the library failed!
-			logOutput.Print(
-					"ERROR: Releasing AI Interface Library from file \"%s\"."
+			LOG_L(L_ERROR,
+					"Releasing AI Interface Library from file \"%s\"."
 					" The call to releaseStatic() returned unsuccessfuly.",
 					libFilePath.c_str());
 		} else {
@@ -140,8 +140,8 @@ const CSkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const CSki
 		const SSkirmishAILibrary* sLib = sAIInterfaceLibrary.loadSkirmishAILibrary(aiInfo.GetShortName().c_str(), aiInfo.GetVersion().c_str());
 
 		if (sLib == NULL) {
-			logOutput.Print(
-				"ERROR: Skirmish AI %s-%s not found!\n"
+			LOG_L(L_ERROR,
+				"Skirmish AI %s-%s not found!\n"
 				"The game will go on without it.\n"
 				"This usually indicates a problem in the used "
 				"AI Interface library (%s-%s),\n"
@@ -214,8 +214,8 @@ int CAIInterfaceLibrary::ReleaseAllSkirmishAILibraries() {
 void CAIInterfaceLibrary::reportInterfaceFunctionError(
 		const std::string* libFileName, const std::string* functionName) {
 
-	logOutput.Print(
-			"ERROR: Loading AI Interface library from file \"%s\"."
+	LOG_L(L_ERROR,
+			"Loading AI Interface library from file \"%s\"."
 			" No \"%s\" function exported.",
 			libFileName->c_str(), functionName->c_str());
 }

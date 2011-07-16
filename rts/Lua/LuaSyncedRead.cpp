@@ -1,11 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <set>
 #include <list>
 #include <cctype>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "LuaSyncedRead.h"
 
@@ -4470,10 +4470,10 @@ static void ParseMapCoords(lua_State* L, const char* caller,
 	}
 
 	// quantize and clamp
-	tx1 = (int)max(0 , min(gs->mapx - 1, (int)(fx1 / SQUARE_SIZE)));
-	tx2 = (int)max(0 , min(gs->mapx - 1, (int)(fx2 / SQUARE_SIZE)));
-	tz1 = (int)max(0 , min(gs->mapy - 1, (int)(fz1 / SQUARE_SIZE)));
-	tz2 = (int)max(0 , min(gs->mapy - 1, (int)(fz2 / SQUARE_SIZE)));
+	tx1 = (int)max(0 , min(gs->mapxm1, (int)(fx1 / SQUARE_SIZE)));
+	tx2 = (int)max(0 , min(gs->mapxm1, (int)(fx2 / SQUARE_SIZE)));
+	tz1 = (int)max(0 , min(gs->mapym1, (int)(fz1 / SQUARE_SIZE)));
+	tz2 = (int)max(0 , min(gs->mapym1, (int)(fz2 / SQUARE_SIZE)));
 
 	return;
 }
@@ -4751,8 +4751,8 @@ int LuaSyncedRead::GetClosestValidPosition(lua_State* L)
 	const float x     = luaL_checkfloat(L, 2);
 	const float z     = luaL_checkfloat(L, 3);
 	const float r     = luaL_checkfloat(L, 4);*/
-	//const int mx = (int)max(0 , min(gs->mapx - 1, (int)(x / SQUARE_SIZE)));
-	//const int mz = (int)max(0 , min(gs->mapy - 1, (int)(z / SQUARE_SIZE)));
+	//const int mx = (int)max(0 , min(gs->mapxm1, (int)(x / SQUARE_SIZE)));
+	//const int mz = (int)max(0 , min(gs->mapym1, (int)(z / SQUARE_SIZE)));
 	return 0;
 }
 

@@ -5,7 +5,7 @@
 
 #include <boost/noncopyable.hpp>
 
-#include "Object.h"
+#include "System/Object.h"
 #include "Sim/Misc/LosMap.h"
 #include "Sim/Units/Unit.h"
 #include <assert.h>

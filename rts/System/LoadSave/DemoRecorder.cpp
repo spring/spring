@@ -1,21 +1,21 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "DemoRecorder.h"
 
 #include <assert.h>
 #include <errno.h>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
-#include "FileSystem/FileSystem.h"
-#include "FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/FileHandler.h"
 #include "Game/GameVersion.h"
 #include "Sim/Misc/TeamStatistics.h"
-#include "Util.h"
-#include "TimeUtil.h"
+#include "System/Util.h"
+#include "System/TimeUtil.h"
 
-#include "LogOutput.h"
+#include "System/Log/ILog.h"
 
 CDemoRecorder::CDemoRecorder()
 {
@@ -60,8 +60,8 @@ CDemoRecorder::~CDemoRecorder()
 	if (demoName != wantedName) {
 		if (rename(demoName.c_str(), wantedName.c_str()) != 0) {
 #ifndef DEDICATED
-			LogObject() << "Renaming demo " << demoName << " to " << wantedName << "\n";
-			LogObject() << "failed: " << strerror(errno) << "\n";
+			LOG_L(L_ERROR, "Renaming demo %s to %s failed: %s",
+					demoName.c_str(), wantedName.c_str(), strerror(errno));
 #endif
 		}
 	} else {

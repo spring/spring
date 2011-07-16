@@ -6,7 +6,7 @@
 #include <SDL_events.h>
 #include <boost/signals/connection.hpp>
 
-#include "Vec2.h"
+#include "System/Vec2.h"
 
 struct int2;
 

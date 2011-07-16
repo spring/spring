@@ -3,7 +3,7 @@
 #ifndef SELECTED_UNITS_H
 #define SELECTED_UNITS_H
 
-#include "Object.h"
+#include "System/Object.h"
 #include <vector>
 #include <string>
 #include "Sim/Units/CommandAI/Command.h"
@@ -45,7 +45,6 @@ public:
 	void DrawCommands();
 	std::string GetTooltip();
 	void SetCommandPage(int page);
-	void SendSelection();
 	void SendCommand(const Command& c);
 	void SendCommandsToUnits(const std::vector<int>& unitIDs, const std::vector<Command>& commands);
 

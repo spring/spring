@@ -2,7 +2,7 @@
 
 /* based on original los code in LosHandler.{cpp,h} and RadarHandler.{cpp,h} */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "LosMap.h"
 #include "Map/ReadMap.h"
 #include "System/myMath.h"
@@ -69,8 +69,8 @@ void CLosMap::AddMapArea(int2 pos, int allyteam, int radius, int amount)
 			if (!updateUnsyncedHeightMap) { continue; }
 			if (!squareEnteredLOS) { continue; }
 
-			const int hmxTL = lmx * LOS2HEIGHT_X, hmxBR = (lmx + 1) * LOS2HEIGHT_X;
-			const int hmzTL = lmz * LOS2HEIGHT_Z, hmzBR = (lmz + 1) * LOS2HEIGHT_Z;
+			const int hmxTL = lmx * LOS2HEIGHT_X, hmxBR = std::min(gs->mapxm1, (lmx + 1) * LOS2HEIGHT_X);
+			const int hmzTL = lmz * LOS2HEIGHT_Z, hmzBR = std::min(gs->mapym1, (lmz + 1) * LOS2HEIGHT_Z);
 
 			readmap->PushVisibleHeightMapUpdate(hmxTL, hmzTL,  hmxBR, hmzBR,  true);
 			#endif
@@ -81,9 +81,6 @@ void CLosMap::AddMapArea(int2 pos, int allyteam, int radius, int amount)
 void CLosMap::AddMapSquares(const std::vector<int>& squares, int allyteam, int amount)
 {
 	#ifdef USE_UNSYNCED_HEIGHTMAP
-	static const float* shm = readmap->GetCornerHeightMapSynced();
-	static       float* uhm = readmap->GetCornerHeightMapUnsynced();
-
 	static const int LOS2HEIGHT_X = gs->mapx / size.x;
 	static const int LOS2HEIGHT_Z = gs->mapy / size.y;
 
@@ -103,12 +100,10 @@ void CLosMap::AddMapSquares(const std::vector<int>& squares, int allyteam, int a
 
 		const int lmx = losMapSquareIdx % size.x;
 		const int lmz = losMapSquareIdx / size.x;
+		const int hmxTL = lmx * LOS2HEIGHT_X, hmxBR = std::min(gs->mapxm1, (lmx + 1) * LOS2HEIGHT_X);
+		const int hmzTL = lmz * LOS2HEIGHT_Z, hmzBR = std::min(gs->mapym1, (lmz + 1) * LOS2HEIGHT_Z);
 
-		for (int hmx = lmx * LOS2HEIGHT_X; hmx < (lmx + 1) * LOS2HEIGHT_X; hmx++) {
-			for (int hmz = lmz * LOS2HEIGHT_Z; hmz < (lmz + 1) * LOS2HEIGHT_Z; hmz++) {
-				uhm[hmz * (gs->mapx + 1) + hmx] = shm[hmz * (gs->mapx + 1) + hmx];
-			}
-		}
+		readmap->PushVisibleHeightMapUpdate(hmxTL, hmzTL,  hmxBR, hmzBR,  true);
 		#endif
 	}
 }

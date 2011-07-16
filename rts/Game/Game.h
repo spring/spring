@@ -9,7 +9,7 @@
 #include <set>
 
 #include "GameController.h"
-#include "creg/creg_cond.h"
+#include "System/creg/creg_cond.h"
 
 class CBaseWater;
 class CConsoleHistory;
@@ -125,9 +125,6 @@ public:
 	unsigned char gameID[16];
 
 	CInfoConsole* infoConsole;
-
-	void MakeMemDump();
-
 	CConsoleHistory* consoleHistory;
 
 	void SetHotBinding(const std::string& action) { hotBinding = action; }
@@ -135,6 +132,8 @@ public:
 public:
 	/// Save the game state to file.
 	void SaveGame(const std::string& filename, bool overwrite);
+	void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod);
+
 	/// Re-load the game.
 	void ReloadGame();
 	/// Send a message to other players (allows prefixed messages with e.g. "a:...")

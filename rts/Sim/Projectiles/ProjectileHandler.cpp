@@ -1,8 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <algorithm>
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "Projectile.h"
 #include "ProjectileHandler.h"
@@ -465,35 +465,30 @@ void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc) {
 	for (pci = pc.begin(); pci != pc.end(); ++pci) {
 		CProjectile* p = *pci;
 
-		// NOTE: if <p> is a MissileProjectile and has
-		// noSelfExplode set, it will never be removed (!)
+		if (!p->checkCol) {
+			continue;
+		}
+
+		// NOTE: if <p> is a MissileProjectile and does not
+		// have selfExplode set, it will never be removed (!)
 		if (p->GetCollisionFlags() & Collision::NOGROUND) {
 			continue;
 		}
 
-		if (p->checkCol) {
-			      float3& pos = p->pos;
-			const float3& spd = p->speed;
+		// NOTE: don't add p->radius to groundHeight, or most
+		// projectiles will collide with the ground too early
+		const float groundHeight = ground->GetHeightReal(p->pos.x, p->pos.z);
+		const bool belowGround = (p->pos.y < groundHeight);
+		const bool insideWater = (p->pos.y <= 0.0f && !belowGround);
+		const bool ignoreWater = p->ignoreWater;
 
-			// NOTE: don't add p->radius to groundHeight, or most
-			// projectiles will collide with the ground too early
-			const float groundHeight = ground->GetHeightReal(pos.x, pos.z);
-			const bool belowGround = (pos.y < groundHeight);
-			const bool insideWater = (pos.y <= 0.0f && !belowGround);
-			const bool ignoreWater = p->ignoreWater;
-
-			if (belowGround || (insideWater && !ignoreWater)) {
-				// if position has dropped below terrain or water
-				// where we cannot live, adjust it and explode us
-				const float ySpd = math::fabs(spd.y);
-				const float yDif = belowGround? (groundHeight - pos.y): pos.y;
-
-				if (ySpd > 0.001f) {
-					pos -= (spd * std::min(1.0f, yDif / ySpd));
-				}
-
-				p->Collision();
-			}
+		if (belowGround || (insideWater && !ignoreWater)) {
+			// if position has dropped below terrain or into water
+			// where we cannot live, adjust it and explode us now
+			// (if the projectile does not set deleteMe = true, it
+			// will keep hugging the terrain)
+			p->pos.y = belowGround? groundHeight: 0.0f;
+			p->Collision();
 		}
 	}
 }

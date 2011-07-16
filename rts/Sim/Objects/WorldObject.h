@@ -3,8 +3,8 @@
 #ifndef WORLD_OBJECT_H
 #define WORLD_OBJECT_H
 
-#include "Object.h"
-#include "float3.h"
+#include "System/Object.h"
+#include "System/float3.h"
 
 struct S3DModel;
 class CWorldObject: public CObject

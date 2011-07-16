@@ -1,10 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <boost/cstdint.hpp>
 #include <SDL_keysym.h>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "FreeController.h"
 #include "Game/Camera.h"

@@ -6,8 +6,8 @@
 #	include <windows.h>
 #endif
 
-#include "Net/UDPListener.h"
-#include "Net/UDPConnection.h"
+#include "System/Net/UDPListener.h"
+#include "System/Net/UDPConnection.h"
 
 #include <stdarg.h>
 #include <ctime>
@@ -23,8 +23,8 @@
 #endif
 #include <stdlib.h> // why is this here?
 
-#include "Net/Connection.h"
-#include "mmgr.h"
+#include "System/Net/Connection.h"
+#include "System/mmgr.h"
 
 #include "GameServer.h"
 
@@ -32,14 +32,14 @@
 #include "Action.h"
 #include "ChatMessage.h"
 #include "CommandMessage.h"
-#include "BaseNetProtocol.h"
+#include "System/BaseNetProtocol.h"
 #include "PlayerHandler.h"
 #ifdef DEDICATED
-	#include "LoadSave/DemoRecorder.h"
+	#include "System/LoadSave/DemoRecorder.h"
 #endif
-#include "AutohostInterface.h"
-#include "Util.h"
-#include "TdfParser.h"
+#include "System/AutohostInterface.h"
+#include "System/Util.h"
+#include "System/TdfParser.h"
 #include "GlobalUnsynced.h" // for syncdebug
 #include "Sim/Misc/GlobalConstants.h"
 

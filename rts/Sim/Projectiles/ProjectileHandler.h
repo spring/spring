@@ -9,8 +9,8 @@
 #include <stack>
 #include "lib/gml/ThreadSafeContainers.h"
 
-#include "MemPool.h"
-#include "float3.h"
+#include "System/MemPool.h"
+#include "System/float3.h"
 
 #define UNSYNCED_PROJ_NOEVENT 1 // bypass id and event handling for unsynced projectiles (faster)
 

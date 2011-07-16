@@ -6,8 +6,8 @@
 #include "IAILibraryManager.h"
 #include "SkirmishAILibrary.h"
 #include "SkirmishAIHandler.h"
-#include "TimeProfiler.h"
-#include "Util.h"
+#include "System/TimeProfiler.h"
+#include "System/Util.h"
 
 CSkirmishAI::CSkirmishAI(int skirmishAIId, int teamId, const SkirmishAIKey& key,
 		const SSkirmishAICallback* callback) :

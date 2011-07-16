@@ -1,12 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "BeamLaser.h"
 #include "Game/GameHelper.h"
 #include "Game/TraceRay.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Map/Ground.h"
-#include "Matrix44f.h"
+#include "System/Matrix44f.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -19,7 +19,7 @@
 #include "Sim/Units/UnitTypes/Building.h"
 #include "PlasmaRepulser.h"
 #include "WeaponDefHandler.h"
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CBeamLaser, CWeapon, (NULL));
 

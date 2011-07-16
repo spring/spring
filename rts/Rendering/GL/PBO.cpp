@@ -5,10 +5,10 @@
  * EXT_pixel_buffer_object class implementation
  */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <assert.h>
 #include <vector>
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "PBO.h"
 

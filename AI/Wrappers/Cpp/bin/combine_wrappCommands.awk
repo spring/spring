@@ -347,7 +347,7 @@ function canDeleteDocumentation() {
 }
 
 # beginn of struct S*Command
-/^\struct S.*Command( \{)?/ {
+/^struct S.*Command( \{)?/ {
 
 	isInsideCmdStruct = 1;
 	ind_cmdMember = 0;

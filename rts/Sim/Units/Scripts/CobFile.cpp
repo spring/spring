@@ -1,19 +1,19 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <algorithm>
 #include <locale>
 #include <cctype>
 #include <string.h>
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "Sim/Misc/GlobalConstants.h"
 #include "CobFile.h"
-#include "FileSystem/FileHandler.h"
-#include "LogOutput.h"
-#include "Sound/ISound.h"
-#include "Platform/byteorder.h"
-#include "Util.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/LogOutput.h"
+#include "System/Sound/ISound.h"
+#include "System/Platform/byteorder.h"
+#include "System/Util.h"
 
 
 //The following structure is taken from http://visualta.tauniverse.com/Downloads/ta-cob-fmt.txt

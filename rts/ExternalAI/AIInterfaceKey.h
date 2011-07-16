@@ -4,7 +4,7 @@
 #define _AIINTERFACEKEY_H
 
 #include <string>
-#include "creg/creg_cond.h"
+#include "System/creg/creg_cond.h"
 
 /**
  * Used to uniquely identify an AI Interface within the engine.

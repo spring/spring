@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 
 #include "InterceptHandler.h"
 
@@ -12,9 +12,9 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "LogOutput.h"
-#include "myMath.h"
-#include "creg/STL_List.h"
+#include "System/LogOutput.h"
+#include "System/myMath.h"
+#include "System/creg/STL_List.h"
 
 CR_BIND(CInterceptHandler, )
 CR_REG_METADATA(CInterceptHandler, (

@@ -8,7 +8,6 @@
 #define _INFO_H
 
 #include "System/FileSystem/VFSModes.h"
-#include "System/LogOutput.h"
 
 #include <string>
 #include <vector>
@@ -40,21 +39,17 @@ void info_convertToStringValue(InfoItem* infoItem);
 
 const char* info_convertTypeToString(InfoValueType infoValueType);
 
-// TODO add info_ prefix
-void parseInfo(
+void info_parseInfo(
 		std::vector<InfoItem>& options,
 		const std::string& fileName,
 		const std::string& fileModes = SPRING_VFS_RAW,
 		const std::string& accessModes = SPRING_VFS_RAW,
-		std::set<std::string>* infoSet = NULL,
-		CLogSubsystem* logSubsystem = &(CLogOutput::GetDefaultLogSubsystem()));
+		std::set<std::string>* infoSet = NULL);
 
-// TODO add info_ prefix
-std::vector<InfoItem> parseInfo(
+std::vector<InfoItem> info_parseInfo(
 		const std::string& fileName,
 		const std::string& fileModes = SPRING_VFS_RAW,
 		const std::string& accessModes = SPRING_VFS_RAW,
-		std::set<std::string>* infoSet = NULL,
-		CLogSubsystem* logSubsystem = &(CLogOutput::GetDefaultLogSubsystem()));
+		std::set<std::string>* infoSet = NULL);
 
 #endif // _INFO_H

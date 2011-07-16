@@ -3,7 +3,7 @@
 #ifndef _SMF_MAP_FILE_H
 #define _SMF_MAP_FILE_H
 
-#include "FileSystem/FileHandler.h"
+#include "System/FileSystem/FileHandler.h"
 #include "mapfile.h"
 #include <string>
 #include <vector>

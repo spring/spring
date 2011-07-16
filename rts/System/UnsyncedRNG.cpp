@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "UnsyncedRNG.h"
+#include "System/StdAfx.h"
+#include "System/UnsyncedRNG.h"
 #include "Sim/Misc/GlobalConstants.h"
 
 #include <limits.h>

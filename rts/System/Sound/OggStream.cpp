@@ -4,10 +4,11 @@
 
 #include <SDL.h>
 
-#include "FileSystem/FileHandler.h"
-#include "LogOutput.h"
+#include "System/FileSystem/FileHandler.h"
+#include "SoundLog.h"
 #include "ALShared.h"
 #include "VorbisShared.h"
+
 
 namespace VorbisCallbacks {
 	size_t VorbisStreamRead(void* ptr, size_t size, size_t nmemb, void* datasource)
@@ -90,7 +91,8 @@ void COggStream::Play(const std::string& path, float volume)
 
 	CFileHandler* buf = new CFileHandler(path);
 	if ((result = ov_open_callbacks(buf, &oggStream, NULL, 0, vorbisCallbacks)) < 0) {
-		logOutput.Print("Could not open Ogg stream (reason: %s).", ErrorString(result).c_str());
+		LOG_L(L_WARNING, "Could not open Ogg stream (reason: %s).",
+				ErrorString(result).c_str());
 		return;
 	}
 
@@ -155,18 +157,18 @@ const COggStream::TagVector& COggStream::VorbisTags() const
 // display Ogg info and comments
 void COggStream::DisplayInfo()
 {
-	logOutput.Print("version:           %d", vorbisInfo->version);
-	logOutput.Print("channels:          %d", vorbisInfo->channels);
-	logOutput.Print("time (sec):        %lf", ov_time_total(&oggStream,-1));
-	logOutput.Print("rate (Hz):         %ld", vorbisInfo->rate);
-	logOutput.Print("bitrate (upper):   %ld", vorbisInfo->bitrate_upper);
-	logOutput.Print("bitrate (nominal): %ld", vorbisInfo->bitrate_nominal);
-	logOutput.Print("bitrate (lower):   %ld", vorbisInfo->bitrate_lower);
-	logOutput.Print("bitrate (window):  %ld", vorbisInfo->bitrate_window);
-	logOutput.Print("vendor:            %s", vendor.c_str());
+	LOG("version:           %d", vorbisInfo->version);
+	LOG("channels:          %d", vorbisInfo->channels);
+	LOG("time (sec):        %lf", ov_time_total(&oggStream,-1));
+	LOG("rate (Hz):         %ld", vorbisInfo->rate);
+	LOG("bitrate (upper):   %ld", vorbisInfo->bitrate_upper);
+	LOG("bitrate (nominal): %ld", vorbisInfo->bitrate_nominal);
+	LOG("bitrate (lower):   %ld", vorbisInfo->bitrate_lower);
+	LOG("bitrate (window):  %ld", vorbisInfo->bitrate_window);
+	LOG("vendor:            %s", vendor.c_str());
 
 	for (TagVector::const_iterator it = vorbisTags.begin(); it != vorbisTags.end(); ++it) {
-		logOutput.Print("%s", it->c_str());
+		LOG("%s", it->c_str());
 	}
 }
 
@@ -305,7 +307,8 @@ bool COggStream::DecodeStream(ALuint buffer)
 			size += result;
 		} else {
 			if (result < 0) {
-				logOutput.Print("Error reading Ogg stream (%s)", ErrorString(result).c_str());
+				LOG_L(L_WARNING, "Error reading Ogg stream (%s)",
+						ErrorString(result).c_str());
 			} else {
 				break;
 			}

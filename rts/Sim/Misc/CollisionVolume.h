@@ -3,9 +3,9 @@
 #ifndef COLLISION_VOLUME_H
 #define COLLISION_VOLUME_H
 
-#include "float3.h"
-#include "creg/creg_cond.h"
-#include "Util.h"
+#include "System/float3.h"
+#include "System/creg/creg_cond.h"
+#include "System/Util.h"
 
 const float EPS = 0.0000000001f;
 

@@ -1,11 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "SafeVector.h"
+#include "System/SafeVector.h"
 
 #ifdef USE_SAFE_VECTOR
 #include "System/Log/ILog.h"
-#include "Platform/CrashHandler.h"
-#include "maindefines.h"
+#include "System/Platform/CrashHandler.h"
+#include "System/maindefines.h"
 
 CR_BIND_TEMPLATE(safe_vector<float>, );
 

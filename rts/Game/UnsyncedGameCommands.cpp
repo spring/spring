@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include <SDL_events.h>
 
@@ -19,7 +19,7 @@
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
 #include "PlayerRoster.h"
-#include "TimeProfiler.h"
+#include "System/TimeProfiler.h"
 #include "IVideoCapturing.h"
 #include "WordCompletion.h"
 #include "InMapDraw.h"
@@ -735,12 +735,11 @@ public:
 		const CPlayer* fromPlayer     = playerHandler->Player(gu->myPlayerNum);
 		const int      fromTeamId     = (fromPlayer != NULL) ? fromPlayer->team : -1;
 		const bool cheating           = gs->cheatEnabled;
-		const bool hasArgs            = (action.GetArgs().size() > 0);
-		const std::vector<std::string> &args = _local_strSpaceTokenize(action.GetArgs());
+		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
 		const bool singlePlayer       = (playerHandler->ActivePlayers() <= 1);
 		const std::string actionName  = StringToLower(GetCommand()).substr(2);
 
-		if (hasArgs) {
+		if (!args.empty()) {
 			size_t skirmishAIId           = 0; // will only be used if !badArgs
 			bool share = false;
 			int teamToKillId         = -1;
@@ -858,17 +857,16 @@ public:
 		const CPlayer* fromPlayer     = playerHandler->Player(gu->myPlayerNum);
 		const int      fromTeamId     = (fromPlayer != NULL) ? fromPlayer->team : -1;
 		const bool cheating           = gs->cheatEnabled;
-		const bool hasArgs            = (action.GetArgs().size() > 0);
 		const bool singlePlayer       = (playerHandler->ActivePlayers() <= 1);
+		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
 
-		if (hasArgs) {
+		if (!args.empty()) {
 			int         teamToControlId = -1;
 			std::string aiShortName     = "";
 			std::string aiVersion       = "";
 			std::string aiName          = "";
 			std::map<std::string, std::string> aiOptions;
 
-			const std::vector<std::string> &args = _local_strSpaceTokenize(action.GetArgs());
 			if (args.size() >= 1) {
 				teamToControlId = atoi(args[0].c_str());
 			}
@@ -1754,9 +1752,9 @@ public:
 
 	void Execute(const UnsyncedAction& action) const {
 		if (!gu->spectating) {
-			Command c(CMD_STOP);
-			// force it to update selection and clear order queue
-			selectedUnits.GiveCommand(c, false);
+			// we must cause the to-be-controllee to be put in
+			// netSelected[myPlayerNum] by giving it an order
+			selectedUnits.SendCommand(Command(CMD_STOP));
 			net->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));
 		}
 	}
@@ -2765,6 +2763,23 @@ public:
 
 
 
+class DumpStateActionExecutor: public IUnsyncedActionExecutor {
+public:
+	DumpStateActionExecutor(): IUnsyncedActionExecutor("DumpState", "dump game-state to file") {}
+
+	void Execute(const UnsyncedAction& action) const {
+		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
+
+		switch (args.size()) {
+			case 2: { game->DumpState(atoi(args[0].c_str()), atoi(args[1].c_str()),                     1); } break;
+			case 3: { game->DumpState(atoi(args[0].c_str()), atoi(args[1].c_str()), atoi(args[2].c_str())); } break;
+			default: {} break;
+		}
+	}
+};
+
+
+
 /// /save [-y ]<savename>
 class SaveActionExecutor : public IUnsyncedActionExecutor {
 public:
@@ -3146,6 +3161,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DestroyActionExecutor());
 	AddActionExecutor(new SendActionExecutor());
 	AddActionExecutor(new SaveGameActionExecutor());
+	AddActionExecutor(new DumpStateActionExecutor());
 	AddActionExecutor(new SaveActionExecutor());
 	AddActionExecutor(new ReloadGameActionExecutor());
 	AddActionExecutor(new DebugInfoActionExecutor());
@@ -3183,6 +3199,7 @@ void UnsyncedGameCommands::DestroyInstance() {
 		singleton = NULL;
 		delete tmp;
 	} else {
-		throw std::logic_error("UnsyncedGameCommands singleton is already destroyed");
+		// this might happen during shutdown after an unclean init
+		logOutput.Print("Warning: UnsyncedGameCommands singleton was not initialized or is already destroyed");
 	}
 }

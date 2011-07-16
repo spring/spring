@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include "SyncedGameCommands.h"
 #include "Action.h"
@@ -438,6 +438,7 @@ void SyncedGameCommands::DestroyInstance() {
 		singleton = NULL;
 		delete tmp;
 	} else {
-		throw std::logic_error("SyncedGameCommands singleton is already destroyed");
+		// this might happen during shutdown after an unclean init
+		logOutput.Print("Warning: SyncedGameCommands singleton was not initialized or is already destroyed");
 	}
 }

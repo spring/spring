@@ -8,7 +8,7 @@
 #include <assert.h>
 #include <vector>
 
-#include "creg/creg_cond.h"
+#include "System/creg/creg_cond.h"
 #include "Player.h"
 
 #define PATHING_FLAG 0xFFFFFFFF

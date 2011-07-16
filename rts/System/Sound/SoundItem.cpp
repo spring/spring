@@ -7,7 +7,7 @@
 #include <cfloat>
 
 #include "SoundBuffer.h"
-#include "UnsyncedRNG.h"
+#include "System/UnsyncedRNG.h"
 
 namespace
 {

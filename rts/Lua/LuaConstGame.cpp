@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 
 #include "LuaConstGame.h"
 
@@ -20,8 +20,8 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/Command.h"
-#include "FileSystem/ArchiveScanner.h"
-#include "Util.h"
+#include "System/FileSystem/ArchiveScanner.h"
+#include "System/Util.h"
 
 
 /******************************************************************************/

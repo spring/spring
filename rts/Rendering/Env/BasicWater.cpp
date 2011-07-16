@@ -1,14 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 
 #include "BasicWater.h"
 
 #include "Rendering/Textures/Bitmap.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Exceptions.h"
+#include "System/Exceptions.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

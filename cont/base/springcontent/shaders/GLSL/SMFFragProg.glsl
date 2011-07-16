@@ -226,7 +226,7 @@ void main() {
 		float cutoffDot = gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].spotCosCutoff;
 
 		#if (SMF_ARB_LIGHTING == 0)
-		float lightSpecularPow = pow(lightCosAngSpec, specularExp);
+		float lightSpecularPow = max(0.0, pow(lightCosAngSpec, specularExp));
 		#else
 		float lightSpecularPow = 0.0;
 		#endif

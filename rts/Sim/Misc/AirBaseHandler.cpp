@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 #include "AirBaseHandler.h"
 
 #include "GlobalSynced.h"
@@ -9,8 +9,8 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/Scripts/CobInstance.h"
 #include "Sim/Units/UnitDef.h"
-#include "creg/STL_List.h"
-#include "creg/STL_Set.h"
+#include "System/creg/STL_List.h"
+#include "System/creg/STL_Set.h"
 
 CAirBaseHandler* airBaseHandler = NULL;
 

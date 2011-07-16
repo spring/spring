@@ -45,18 +45,19 @@ extern "C" {
 // Connection to the non-pre-processor part of the frontend
 
 /**
- * Allows the sink to manage a minimal log level too.
+ * Allows the global filter to manage a minimal log level too,
+ * optionally per section.
  * This will only ever be called for levels higher then the minimal level set
- * during compile-time (_LOG_LEVEL).
+ * during compile-time (_LOG_LEVEL_MIN), and if the section is not already
+ * disabled during compile-time.
  */
-extern bool log_frontend_isLevelEnabled(int level);
+extern bool log_frontend_isEnabled(const char* section, int level);
 
 /**
- * Allows the sink to manage a minimal log section too.
- * This will only ever be called if the section is not already disabled
- * during compile-time.
+ * Allows the global filter to maintain a set of all setions used in the binary.
+ * This will be called once per each LOG*() line in the source.
  */
-extern bool log_frontend_isSectionEnabled(const char* section);
+extern void log_frontend_registerSection(const char* section);
 
 
 // format string error checking
@@ -71,8 +72,7 @@ extern bool log_frontend_isSectionEnabled(const char* section);
  * The main connection to the backend/sink.
  * This will receive all log messages that are not disabled at compile-time
  * already, so it has to check internally, whether the criteria for logging
- * are really met, so it will have to call log_frontend_isLevelEnabled() and
- * log_frontend_isSectionEnabled() internally.
+ * are really met, so it will have to call log_frontend_isEnabled() internally.
  */
 extern void log_frontend_record(const char* section, int level, const char* fmt,
 		...) FORMAT_STRING(3);
@@ -82,74 +82,79 @@ extern void log_frontend_record(const char* section, int level, const char* fmt,
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-// Level
+// Level & Section
 
-/**
- * Only stuff from in this doc-group should ever be used by clients of this API.
- *
- * @group logging_api
- * @{
- */
-
-#define LOG_LEVEL_ALL       0
-
-#define LOG_LEVEL_DEBUG    20
-#define LOG_LEVEL_INFO     30
-#define LOG_LEVEL_WARNING  40
-#define LOG_LEVEL_ERROR    50
-#define LOG_LEVEL_FATAL    60
-
-#define LOG_LEVEL_NONE    255
-
-/** @} */ // group logging_api
-
-
-#define _LOG_LEVEL_DEFAULT LOG_LEVEL_ALL
-
-/**
- * Minimal log level (compile-time).
- * This is the compile-time version of this setting;
- * there might be a more restrictive one at runtime.
- * Initialize to the default (may be overriden with -DLOG_LEVEL=X).
- */
-#ifndef _LOG_LEVEL
-	#define _LOG_LEVEL _LOG_LEVEL_DEFAULT
-#endif
-
+#include "Level.h"
 
 #define _LOG_IS_ENABLED_LEVEL_STATIC(level) \
-	(LOG_LEVE##level >= _LOG_LEVEL)
-
-#define _LOG_IS_ENABLED_LEVEL_RUNTIME(level) \
-	log_frontend_isLevelEnabled(LOG_LEVE##level)
+	(LOG_LEVE##level >= _LOG_LEVEL_MIN)
 
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-// Section
-
-#define LOG_SECTION_DEFAULT NULL
-
-/**
- * The current log section.
- * Initialize to the default.
- * You might set a custom section by defining LOG_SECTION before including
- * this header, or by redefining LOG_SECTION (#undef & #define).
- */
-#ifndef LOG_SECTION
-	#define LOG_SECTION LOG_SECTION_DEFAULT
-#endif
+#include "Section.h"
 
 // enable all log sections at compile-time
 #define _LOG_IS_ENABLED_SECTION_STATIC(section) \
 	true
 #define _LOG_IS_ENABLED_SECTION_DEFINED_STATIC(section) \
-	_LOG_IS_ENABLED_SECTION_STATIC(LOG_SECTION)
+	_LOG_IS_ENABLED_SECTION_STATIC(LOG_SECTION_CURRENT)
 
-#define _LOG_IS_ENABLED_SECTION_RUNTIME(section) \
-	log_frontend_isSectionEnabled(section)
-#define _LOG_IS_ENABLED_SECTION_DEFINED_RUNTIME(section) \
-	_LOG_IS_ENABLED_SECTION_RUNTIME(LOG_SECTION)
+
+#define _LOG_IS_ENABLED_RUNTIME(section, level) \
+	log_frontend_isEnabled(section, LOG_LEVE##level)
+
+#define _LOG_REGISTER_SECTION_RAW(section) \
+	log_frontend_registerSection(section);
+
+/*
+ * Pre-processor trickery, useful to create unique identifiers.
+ * see http://stackoverflow.com/questions/461062/c-anonymous-variables
+ */
+#define _CONCAT_SUB(start, end) \
+	start##end
+#define _CONCAT(start, end) \
+	_CONCAT_SUB(start, end)
+#define _UNIQUE_IDENT(prefix) \
+	_CONCAT(prefix##__, _CONCAT(_CONCAT(__COUNTER__, __), __LINE__))
+
+// Register a section (only the first time the code is run)
+#if       defined(__cplusplus)
+	/*
+	 * This would also be C++ compatible, but a bit slower.
+	 * It can be used globally (outside of a function), where it would register
+	 * the section before main() is called.
+	 * When placed somewhere in a function, it will only register the function
+	 * when and if that code is called.
+	 */
+	#define _LOG_REGISTER_SECTION_SUB(section, className) \
+		struct className { \
+			className() { \
+				_LOG_REGISTER_SECTION_RAW(section); \
+			} \
+		} _UNIQUE_IDENT(secReg);
+	#define _LOG_REGISTER_SECTION(section) \
+		_LOG_REGISTER_SECTION_SUB(section, _UNIQUE_IDENT(SectionRegistrator))
+	#define _LOG_REGISTER_SECTION_GLOBAL(section) \
+		namespace { \
+			_LOG_REGISTER_SECTION(section); \
+		} // namespace
+#else  // defined(__cplusplus)
+	/*
+	 * This would also be C++ compatible, but it is a bit slower.
+	 * Still, branch-prediction should work well here.
+	 * It can not be used globally (outside of a function), and therefore will
+	 * only register a section when the invoking code is executed, instead of
+	 * before main() is called.
+	 */
+	#define _LOG_REGISTER_SECTION(section) \
+		{ \
+			static bool sectionRegistered = false; \
+			if (sectionRegistered) { \
+				sectionRegistered = true; \
+				_LOG_REGISTER_SECTION_RAW(section); \
+			} \
+		}
+	#define _LOG_REGISTER_SECTION_GLOBAL(section)
+#endif // defined(__cplusplus)
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -217,27 +222,30 @@ extern void log_frontend_record(const char* section, int level, const char* fmt,
 	#warning log messages of level FATAL are not compiled into the binary
 #endif
 
-/// Connects to the sink macro
+/// Registers the section and connects to the filter macro
 #define _LOG_SECTION(section, level, fmt, ...) \
 	_LOG_FILTER_##level(section, fmt, ##__VA_ARGS__)
 
 /// Uses the section defined in LOG_SECTION
 #define _LOG_SECTION_DEFINED(level, fmt, ...) \
-	_LOG_SECTION(LOG_SECTION, level, fmt, ##__VA_ARGS__)
+	_LOG_SECTION(LOG_SECTION_CURRENT, level, fmt, ##__VA_ARGS__)
 
 /// Entry point for frontend-internal processing
 #define _LOG(level, fmt, ...) \
 	_LOG_SECTION_DEFINED(level, fmt, ##__VA_ARGS__)
 
 
-#define _LOG_IS_ENABLED_STATIC(level) \
+#define _LOG_IS_ENABLED_STATIC_S(section, level) \
 	(  _LOG_IS_ENABLED_LEVEL_STATIC(level) \
-	&& _LOG_IS_ENABLED_SECTION_DEFINED_STATIC())
+	&& _LOG_IS_ENABLED_SECTION_STATIC(section))
+#define _LOG_IS_ENABLED_STATIC(level) \
+	_LOG_IS_ENABLED_STATIC_S(LOG_SECTION_CURRENT, level)
 
-#define _LOG_IS_ENABLED(level) \
+#define _LOG_IS_ENABLED_S(section, level) \
 	(  _LOG_IS_ENABLED_STATIC(level) \
-	&& _LOG_IS_ENABLED_LEVEL_RUNTIME(level) \
-	&& _LOG_IS_ENABLED_SECTION_DEFINED_RUNTIME())
+	&& _LOG_IS_ENABLED_RUNTIME(section, level))
+#define _LOG_IS_ENABLED(level) \
+	_LOG_IS_ENABLED_S(LOG_SECTION_CURRENT, level)
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -252,6 +260,24 @@ extern void log_frontend_record(const char* section, int level, const char* fmt,
  */
 
 /**
+ * Register a section name with the underlying log record processing system.
+ * This has to be placed inside a function.
+ * This will only register the section when and if that code is called.
+ * @see LOG_REGISTER_SECTION_GLOBAL
+ */
+#define LOG_REGISTER_SECTION(section) \
+	_LOG_REGISTER_SECTION(section);
+
+/**
+ * Register a section name with the underlying log record processing system.
+ * This has to be used globally (outside of a function).
+ * This registers the section before main() is called.
+ * NOTE: This is supported in C++ only, not in C.
+ */
+#define LOG_REGISTER_SECTION_GLOBAL(section) \
+	_LOG_REGISTER_SECTION_GLOBAL(section);
+
+/**
  * Returns whether logging for the current section and the supplied level is
  * enabled at compile-time.
  * This might return true, even if the back-end will ignore the message anyway.
@@ -263,10 +289,20 @@ extern void log_frontend_record(const char* section, int level, const char* fmt,
  *   LOG(L_DEBUG, "the stats: %i", statistics);
  * #endif
  * </code>
+ * @see LOG_IS_ENABLED_STATIC_S
  * @see LOG_IS_ENABLED
  */
 #define LOG_IS_ENABLED_STATIC(level) \
 	_LOG_IS_ENABLED_STATIC(level)
+
+/**
+ * Returns whether logging for a specific section and the supplied level is
+ * enabled at compile-time.
+ * @see LOG_IS_ENABLED_STATIC
+ * @see LOG_IS_ENABLED_S
+ */
+#define LOG_IS_ENABLED_STATIC_S(section, level) \
+	_LOG_IS_ENABLED_STATIC_S(section, level)
 
 /**
  * Returns whether logging for the current section and the supplied level is
@@ -278,10 +314,21 @@ extern void log_frontend_record(const char* section, int level, const char* fmt,
  *   LOG(L_DEBUG, "the stats: %i", statistics);
  * }
  * </code>
+ * @see LOG_IS_ENABLED_S
  * @see LOG_IS_ENABLED_STATIC
  */
 #define LOG_IS_ENABLED(level) \
 	_LOG_IS_ENABLED(level)
+
+/**
+ * Returns whether logging for a specific section and the supplied level is
+ * enabled at run-time.
+ * @see LOG_IS_ENABLED
+ * @see LOG_IS_ENABLED_STATIC_S
+ */
+#define LOG_IS_ENABLED_S(section, level) \
+	_LOG_IS_ENABLED_S(section, level)
+
 
 /**
  * Registers a log message with level INFO.

@@ -30,7 +30,6 @@ extern boost::mutex posmutex;
 extern boost::mutex runitmutex;
 extern boost::mutex netmutex;
 extern boost::mutex histmutex;
-extern boost::mutex logmutex;
 extern boost::mutex timemutex;
 extern boost::mutex watermutex;
 extern boost::mutex dquemutex;

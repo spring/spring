@@ -5,7 +5,7 @@
  * Contains implementation of synced and unsynced global stuff.
  */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include "GlobalUnsynced.h"
 #include "Game/PlayerHandler.h"

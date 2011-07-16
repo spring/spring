@@ -4,8 +4,9 @@
 #define MOVEMATH_H
 
 #include "Sim/MoveTypes/MoveInfo.h"
-#include "float3.h"
+#include "System/float3.h"
 #include "Sim/Objects/SolidObject.h"
+
 
 class CMoveMath {
 	CR_DECLARE(CMoveMath);
@@ -20,11 +21,11 @@ public:
 	virtual float yLevel(int xSquare, int Square) const = 0;
 
 public:
-	// Block-check-options
-	const static int BLOCK_MOVING = 1;
-	const static int BLOCK_MOBILE = 2;
+	const static int BLOCK_MOVING      = 1;
+	const static int BLOCK_MOBILE      = 2;
 	const static int BLOCK_MOBILE_BUSY = 4;
-	const static int BLOCK_STRUCTURE = 8;
+	const static int BLOCK_STRUCTURE   = 8;
+	const static int BLOCK_IMPASSABLE  = 16 | BLOCK_STRUCTURE;
 
 	// returns a speed-multiplier for given position or data
 	float GetPosSpeedMod(const MoveData& moveData, int xSquare, int zSquare) const;

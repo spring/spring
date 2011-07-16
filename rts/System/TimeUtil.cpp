@@ -1,9 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "TimeUtil.h"
+#include "System/TimeUtil.h"
 
-#include "Util.h"
-#include "Exceptions.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 #include <string>
 #include <ctime>

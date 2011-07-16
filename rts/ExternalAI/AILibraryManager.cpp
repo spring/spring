@@ -9,13 +9,13 @@
 #include "SkirmishAILibraryInfo.h"
 #include "SkirmishAIData.h"
 
-#include "Util.h"
-#include "LogOutput.h"
-#include "Platform/errorhandler.h"
-#include "Platform/SharedLib.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/FileSystem.h"
-#include "FileSystem/FileSystemHandler.h"
+#include "System/Util.h"
+#include "System/Log/ILog.h"
+#include "System/Platform/errorhandler.h"
+#include "System/Platform/SharedLib.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/FileSystemHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -79,17 +79,20 @@ void CAILibraryManager::GetAllInfosFromCache() {
 		if (info->second.size() >= 2) {
 			duplicateInterfaceInfos[info->first] = info->second;
 
-			logOutput.Print("WARNING: Duplicate AI Interface Info found:");
-			logOutput.Print("\tfor interface: %s %s", info->first.GetShortName().c_str(),
-					info->first.GetVersion().c_str());
-			logOutput.Print("\tin files:");
-			const std::string* lastDir = NULL;
-			std::set<std::string>::const_iterator dir;
-			for (dir = info->second.begin(); dir != info->second.end(); ++dir) {
-				logOutput.Print("\t%s", dir->c_str());
-				lastDir = &(*dir);
+			if (LOG_IS_ENABLED(L_WARNING)) {
+				LOG_L(L_WARNING, "Duplicate AI Interface Info found:");
+				LOG_L(L_WARNING, "\tfor interface: %s %s",
+						info->first.GetShortName().c_str(),
+						info->first.GetVersion().c_str());
+				LOG_L(L_WARNING, "\tin files:");
+				const std::string* lastDir = NULL;
+				std::set<std::string>::const_iterator dir;
+				for (dir = info->second.begin(); dir != info->second.end(); ++dir) {
+					LOG_L(L_WARNING, "\t%s", dir->c_str());
+					lastDir = &(*dir);
+				}
+				LOG_L(L_WARNING, "\tusing: %s", lastDir->c_str());
 			}
-			logOutput.Print("\tusing: %s", lastDir->c_str());
 		}
 	}
 
@@ -133,7 +136,8 @@ void CAILibraryManager::GetAllInfosFromCache() {
 				// so we can check if one skirmish AI is specified multiple times
 				duplicateSkirmishAIInfoCheck[skirmishAIKey].insert(infoFile.at(0));
 			} else {
-				logOutput.Print("Note: Required AI Interface for Skirmish AI %s %s not found.",
+				LOG_L(L_ERROR,
+						"Required AI Interface for Skirmish AI %s %s not found.",
 						skirmishAIInfo->GetShortName().c_str(),
 						skirmishAIInfo->GetVersion().c_str());
 			}
@@ -146,17 +150,19 @@ void CAILibraryManager::GetAllInfosFromCache() {
 		if (info->second.size() >= 2) {
 			duplicateSkirmishAIInfos[info->first] = info->second;
 
-			logOutput.Print("WARNING: Duplicate Skirmish AI Info found:");
-			logOutput.Print("\tfor Skirmish AI: %s %s", info->first.GetShortName().c_str(),
-					info->first.GetVersion().c_str());
-			logOutput.Print("\tin files:");
-			const std::string* lastDir = NULL;
-			std::set<std::string>::const_iterator dir;
-			for (dir = info->second.begin(); dir != info->second.end(); ++dir) {
-				logOutput.Print("\t%s", dir->c_str());
-				lastDir = &(*dir);
+			if (LOG_IS_ENABLED(L_WARNING)) {
+				LOG_L(L_WARNING, "Duplicate Skirmish AI Info found:");
+				LOG_L(L_WARNING, "\tfor Skirmish AI: %s %s", info->first.GetShortName().c_str(),
+						info->first.GetVersion().c_str());
+				LOG_L(L_WARNING, "\tin files:");
+				const std::string* lastDir = NULL;
+				std::set<std::string>::const_iterator dir;
+				for (dir = info->second.begin(); dir != info->second.end(); ++dir) {
+					LOG_L(L_WARNING, "\t%s", dir->c_str());
+					lastDir = &(*dir);
+				}
+				LOG_L(L_WARNING, "\tusing: %s", lastDir->c_str());
 			}
-			logOutput.Print("\tusing: %s", lastDir->c_str());
 		}
 	}
 }
@@ -251,8 +257,8 @@ const CSkirmishAILibrary* CAILibraryManager::FetchSkirmishAILibrary(const Skirmi
 
 	T_skirmishAIInfos::const_iterator aiInfo = skirmishAIInfos.find(skirmishAIKey);
 	if (aiInfo == skirmishAIInfos.end()) {
-		logOutput.Print(
-				"ERROR: Unknown skirmish AI specified: %s %s",
+		LOG_L(L_ERROR,
+				"Unknown skirmish AI specified: %s %s",
 				skirmishAIKey.GetShortName().c_str(),
 				skirmishAIKey.GetVersion().c_str()
 				);
