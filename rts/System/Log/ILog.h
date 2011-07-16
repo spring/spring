@@ -224,10 +224,7 @@ extern void log_frontend_record(const char* section, int level, const char* fmt,
 
 /// Registers the section and connects to the filter macro
 #define _LOG_SECTION(section, level, fmt, ...) \
-	do { \
-		_LOG_REGISTER_SECTION(section) \
-		_LOG_FILTER_##level(section, fmt, ##__VA_ARGS__); \
-	} while (false)
+	_LOG_FILTER_##level(section, fmt, ##__VA_ARGS__)
 
 /// Uses the section defined in LOG_SECTION
 #define _LOG_SECTION_DEFINED(level, fmt, ...) \
