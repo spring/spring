@@ -53,7 +53,7 @@ const ConfigVariableMetaData* ConfigVariable::GetMetaData(const string& key)
 	}
 }
 
-CONFIG(int, test).description("\"quoted\", escaped: \\, \b, \f, \n, \r, \t, \u0041");
+CONFIG(int, test).description("\"quoted\", escaped: \\, \b, \f, \n, \r, \t");
 
 /**
  * @brief Escape special characters and wrap in double quotes.
