@@ -25,6 +25,7 @@ public:
 
 	float size;
 	bool depthTest;
+	bool depthMask;
 
 	static CVertexArray* va;
 };

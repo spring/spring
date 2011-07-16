@@ -41,6 +41,7 @@ Engine / Simulation:
  - rewrite collision detection/resolution between ground units
  - skip path-estimating for unused MoveDefs
  - always add the "geovent" FeatureDef (#2402)
+ - only send UnitLoaded events for units that were not already being transported (when Attach'ing them)
 
 Engine / Map:
  - merged both mapinfo.lua's! before there were two, one in the base-dir (-> ArchiveScanner) and one in "maphelper/mapinfo.lua" (-> MapParser/MapInfo)
@@ -59,6 +60,7 @@ Engine / Rendering:
  - always cull (non-3DO) model backfaces for the shadow pass
  - allow weapons to not leave any explosion scars
  - render all SMF maps through GLSL if it is available
+ - make depth-testing and -masking configurable for CSimpleGroundFlash
 
 Engine / Sound:
  - added EFX/EAX support (reverb)

@@ -18,6 +18,7 @@ CR_REG_METADATA(CGroundFlash, (
  	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(size),
 		CR_MEMBER(depthTest),
+		CR_MEMBER(depthMask),
 	CR_MEMBER_ENDFLAG(CM_Config)
 ));
 
@@ -63,6 +64,7 @@ CGroundFlash::CGroundFlash()
 {
 	size = 0.0f;
 	depthTest = true;
+	depthMask = false;
 	alwaysVisible = false;
 }
 
@@ -70,6 +72,7 @@ CGroundFlash::CGroundFlash(const float3& p): CExpGenSpawnable()
 {
 	size = 0.0f;
 	depthTest = true;
+	depthMask = false;
 	alwaysVisible = false;
 	pos = p;
 }

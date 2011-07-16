@@ -906,6 +906,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 	GroundFlashContainer::render_iterator gfi;
 
 	bool depthTest = true;
+	bool depthMask = false;
 
 	for (gfi = gfc.render_begin(); gfi != gfc.render_end(); ++gfi) {
 		CGroundFlash* gf = *gfi;
@@ -920,6 +921,15 @@ void CProjectileDrawer::DrawGroundFlashes()
 				glEnable(GL_DEPTH_TEST);
 			} else {
 				glDisable(GL_DEPTH_TEST);
+			}
+		}
+		if (depthMask != gf->depthMask) {
+			depthMask = gf->depthMask;
+
+			if (depthMask) {
+				glDepthMask(GL_TRUE);
+			} else {
+				glDepthMask(GL_FALSE);
 			}
 		}
 
