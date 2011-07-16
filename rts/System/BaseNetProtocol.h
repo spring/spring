@@ -52,7 +52,6 @@ enum NETMSG {
 	                              // short commandCount; commandCount * { int id; uchar options; std::vector<float> params }
 	NETMSG_AISHARE          = 16, // uchar myPlayerNum, uchar sourceTeam, uchar destTeam, float metal, float energy, std::vector<short> unitIDs
 
-	NETMSG_MEMDUMP          = 17, // (NEVER SENT)
 	NETMSG_USER_SPEED       = 19, // uchar myPlayerNum, float userSpeed;
 	NETMSG_INTERNAL_SPEED   = 20, // float internalSpeed;
 	NETMSG_CPU_USAGE        = 21, // float cpuUsage;

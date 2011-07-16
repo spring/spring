@@ -111,6 +111,7 @@
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Scripts/CobEngine.h"
 #include "Sim/Units/Scripts/UnitScriptEngine.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -1726,6 +1727,8 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 	#define DUMP_UNIT_DATA
 	#define DUMP_UNIT_PIECE_DATA
 	#define DUMP_UNIT_WEAPON_DATA
+	#define DUMP_UNIT_COMMANDAI_DATA
+	#define DUMP_UNIT_MOVETYPE_DATA
 	#define DUMP_FEATURE_DATA
 	#define DUMP_PROJECTILE_DATA
 	#define DUMP_TEAM_DATA
@@ -1790,6 +1793,41 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 			file << "\t\t\t\trelWeaponMuzzlePos: <" << rmp.x << ", " << rmp.y << ", " << rmp.z << ">\n";
 			file << "\n";
 		}
+		#endif
+
+		#ifdef DUMP_UNIT_COMMANDAI_DATA
+		const CCommandAI* cai = u->commandAI;
+		const CCommandQueue& cq = cai->commandQue;
+
+		file << "\t\t\tcommandAI:\n";
+		file << "\t\t\t\torderTarget->id: " << ((cai->orderTarget != NULL)? cai->orderTarget->id: -1) << "\n";
+		file << "\t\t\t\tcommandQue.size(): " << cq.size() << "\n";
+
+		for (CCommandQueue::const_iterator cit = cq.begin(); cit != cq.end(); ++cit) {
+			const Command& c = *cit;
+
+			file << "\t\t\t\t\tcommandID: " << c.GetID() << "\n";
+			file << "\t\t\t\t\ttag: " << c.tag << ", options: " << c.options << "\n";
+			file << "\t\t\t\t\tparams: " << c.GetParamsCount() << "\n";
+
+			for (unsigned int n = 0; n < c.GetParamsCount(); n++) {
+				file << "\t\t\t\t\t\t" << c.GetParam(n) << "\n";
+			}
+		}
+		#endif
+
+		#ifdef DUMP_UNIT_MOVETYPE_DATA
+		const AMoveType* amt = u->moveType;
+		const float3& goalPos = amt->goalPos;
+		const float3& oldUpdatePos = amt->oldPos;
+		const float3& oldSlowUpPos = amt->oldSlowUpdatePos;
+
+		file << "\t\t\tmoveType:\n";
+		file << "\t\t\t\tgoalPos: <" << goalPos.x << ", " << goalPos.y << ", " << goalPos.z << ">\n";
+		file << "\t\t\t\toldUpdatePos: <" << oldUpdatePos.x << ", " << oldUpdatePos.y << ", " << oldUpdatePos.z << ">\n";
+		file << "\t\t\t\toldSlowUpPos: <" << oldSlowUpPos.x << ", " << oldSlowUpPos.y << ", " << oldSlowUpPos.z << ">\n";
+		file << "\t\t\t\tmaxSpeed: " << amt->maxSpeed << ", maxWantedSpeed: " << amt->maxWantedSpeed << "\n";
+		file << "\t\t\t\tpadStatus: " << amt->padStatus << ", progressState: " << amt->progressState << "\n";
 		#endif
 	}
 	#endif
