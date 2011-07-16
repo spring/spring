@@ -16,10 +16,9 @@
 
 #include "Sound.h" //remove when unified ElmoInMeters
 
-#include "float3.h"
-#include "Util.h"
-#include "LogOutput.h"
-#include "myMath.h"
+#include "System/float3.h"
+#include "System/Util.h"
+#include "System/myMath.h"
 
 float CSoundSource::referenceDistance = 200.0f;
 float CSoundSource::globalPitch = 1.0;
@@ -166,8 +165,10 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 		alSourcef(id, AL_ROLLOFF_FACTOR, 0.f);
 		alSource3f(id, AL_POSITION, 0.0f, 0.0f, -1.0f * CSound::GetElmoInMeters());
 	} else {
-		if (item->buffer->GetChannels() > 1)
-			LogObject(LOG_SOUND) << "Can't play non-mono \"" << item->buffer->GetFilename() << "\" in 3d.";
+		if (item->buffer->GetChannels() > 1) {
+			LOG_L(L_WARNING, "Can not play non-mono \"%s\" in 3d.",
+					item->buffer->GetFilename().c_str());
+		}
 
 		in3D = true;
 		if (efx->enabled) {
@@ -203,8 +204,11 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 	}
 	alSourcePlay(id);
 
-	if (item->buffer->GetId() == 0)
-		logOutput.Print("CSoundSource::Play: Empty buffer for item %s (file %s)", item->name.c_str(), item->buffer->GetFilename().c_str());
+	if (item->buffer->GetId() == 0) {
+		LOG_L(L_WARNING,
+				"CSoundSource::Play: Empty buffer for item %s (file %s)",
+				item->name.c_str(), item->buffer->GetFilename().c_str());
+	}
 	CheckError("CSoundSource::Play");
 }
 

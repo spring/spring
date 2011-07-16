@@ -5,8 +5,8 @@
 
 #include <map>
 
-#include "creg/creg_cond.h"
-#include "float3.h"
+#include "System/creg/creg_cond.h"
+#include "System/float3.h"
 
 class CSolidObject;
 typedef std::map<int, CSolidObject*> BlockingMapCell;

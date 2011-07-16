@@ -9,12 +9,6 @@ ADD_SUBDIRECTORY(streflop)
 ADD_SUBDIRECTORY(md5)
 ADD_SUBDIRECTORY(lobby)
 ADD_SUBDIRECTORY(headlessStubs)
-set(assimpDir "${CMAKE_CURRENT_SOURCE_DIR}/assimp/")
-if   (NOT EXISTS "${assimpDir}" OR NOT IS_DIRECTORY "${assimpDir}")
-	MESSAGE(FATAL_ERROR "directory rts/lib/assimp doesn't exist \n please run 'git submodule init && git submodule update'!")
-endif()
-
-
 ADD_SUBDIRECTORY(assimp)
 
 if    (NOT HEADLESS_SYSTEM)

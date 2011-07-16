@@ -3,7 +3,7 @@
 #ifndef GROUND_H
 #define GROUND_H
 
-#include "float3.h"
+#include "System/float3.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 
@@ -32,8 +32,8 @@ public:
 	float TrajectoryGroundCol(float3 from, const float3& flatdir, float length, float linear, float quadratic) const;
 
 	inline int GetSquare(const float3& pos) const {
-		return std::max(0, std::min(gs->mapx - 1, (int(pos.x) / SQUARE_SIZE))) +
-			std::max(0, std::min(gs->mapy - 1, (int(pos.z) / SQUARE_SIZE))) * gs->mapx;
+		return std::max(0, std::min(gs->mapxm1, (int(pos.x) / SQUARE_SIZE))) +
+			std::max(0, std::min(gs->mapym1, (int(pos.z) / SQUARE_SIZE))) * gs->mapx;
 	};
 private:
 

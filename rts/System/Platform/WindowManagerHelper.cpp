@@ -1,13 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "WindowManagerHelper.h"
 
 #include <string>
 #include <SDL_video.h>
 
 #include "Rendering/Textures/Bitmap.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 
 SDL_Surface* WindowManagerHelper::currentIcon = NULL;
@@ -23,13 +23,13 @@ void WindowManagerHelper::SetIcon(const CBitmap* icon) {
 			|| (icon->ysize != 32)
 #endif // WIN32
 			) {
-			logOutput.Print("Warning: window-manager icon: Trying to set a window-manager icon with the wrong format.");
-			logOutput.Print("Warning: window-manager icon: It has to be 24bit or 32bit, and on windows it additionally has to be 32x32 pixels.");
+			LOG_L(L_WARNING, "window-manager icon: Trying to set a window-manager icon with the wrong format.");
+			LOG_L(L_WARNING, "window-manager icon: It has to be 24bit or 32bit, and on windows it additionally has to be 32x32 pixels.");
 		} else {
 			// supplied bitmap is usable as icon
 			SDL_Surface* newIcon = icon->CreateSDLSurface(true);
 			if (newIcon == NULL) {
-				logOutput.Print("Warning: window-manager icon: Failed to create SDL surface, reason: %s", SDL_GetError());
+				LOG_L(L_WARNING, "window-manager icon: Failed to create SDL surface, reason: %s", SDL_GetError());
 			} else {
 				SDL_WM_SetIcon(newIcon, NULL);
 				if (currentIcon != NULL) {

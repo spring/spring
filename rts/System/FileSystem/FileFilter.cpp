@@ -1,15 +1,17 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include <limits.h>
-#include <boost/regex.hpp>
-#include <ctype.h>
-#include <sstream>
-#include <vector>
-#include "mmgr.h"
+#include "System/StdAfx.h"
 
 #include "FileFilter.h"
 
+#include "System/mmgr.h"
+
+#include <boost/regex.hpp>
+
+#include <limits.h>
+#include <ctype.h>
+#include <sstream>
+#include <vector>
 
 using std::string;
 using std::vector;

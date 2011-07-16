@@ -1,13 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <vector>
 #include <set>
 #include <algorithm>
 #include <cctype>
 #include <locale>
 #include <stdexcept>
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "3DOParser.h"
 #include "Game/GlobalUnsynced.h"

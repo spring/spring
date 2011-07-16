@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include "FarTextureHandler.h"
 
@@ -18,7 +18,7 @@
 #include "System/LogOutput.h"
 #include "System/bitops.h"
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 #include "string.h"
 
 CFarTextureHandler* farTextureHandler = NULL;

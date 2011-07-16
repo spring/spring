@@ -12,7 +12,7 @@ using std::vector;
 using std::map;
 using std::set;
 
-#include "FileSystem/VFSModes.h"
+#include "System/FileSystem/VFSModes.h"
 
 class float3;
 struct float4;

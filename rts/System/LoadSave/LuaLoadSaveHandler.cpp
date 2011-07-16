@@ -3,7 +3,7 @@
 #include <string>
 #include <sstream>
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "LuaLoadSaveHandler.h"
 
 #include "lib/minizip/zip.h"
@@ -19,9 +19,9 @@
 #include "System/Platform/byteorder.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 
 // Prefix for all files in the save file.
@@ -39,7 +39,8 @@ static const char* FILE_HEIGHTMAP    = PREFIX"heightmap.0";
 
 
 CLuaLoadSaveHandler::CLuaLoadSaveHandler()
-: savefile(NULL), loadfile(NULL)
+	: savefile(NULL)
+	, loadfile(NULL)
 {
 }
 
@@ -74,21 +75,21 @@ void CLuaLoadSaveHandler::SaveGame(const std::string& file)
 
 		// Close zip file.
 		if (Z_OK != zipClose(savefile, "Spring save file, visit http://springrts.com/ for details.")) {
-			logOutput.Print("Unable to close save file \"" + filename + "\"");
+			LOG_L(L_ERROR, "Unable to close save file \"%s\"", filename.c_str());
 		}
 		return; // Success
 	}
-	catch (content_error &e) {
-		logOutput.Print("Save failed(content error): %s", e.what());
+	catch (content_error& e) {
+		LOG_L(L_ERROR, "Save failed(content error): %s", e.what());
 	}
-	catch (std::exception &e) {
-		logOutput.Print("Save failed: %s", e.what());
+	catch (std::exception& e) {
+		LOG_L(L_ERROR, "Save failed: %s", e.what());
 	}
-	catch (char* &e) {
-		logOutput.Print("Save failed: %s", e);
+	catch (char*& e) {
+		LOG_L(L_ERROR, "Save failed: %s", e);
 	}
 	catch (...) {
-		logOutput.Print("Save failed(unknown error)");
+		LOG_L(L_ERROR, "Save failed(unknown error)");
 	}
 
 	// Failure => cleanup
@@ -134,7 +135,7 @@ void CLuaLoadSaveHandler::SaveHeightmap()
 	// Big chunks of 0s are then very well compressed by zip.
 	const int* currHeightmap = (const int*) (const char*) readmap->GetCornerHeightMapSynced();
 	const int* origHeightmap = (const int*) (const char*) readmap->GetOriginalHeightMapSynced();
-	const int size = (gs->mapx + 1) * (gs->mapy + 1);
+	const int size = gs->mapxp1 * gs->mapyp1;
 	int* temp = new int[size];
 	for (int i = 0; i < size; ++i) {
 		temp[i] = swabdword(currHeightmap[i] ^ origHeightmap[i]);
@@ -146,25 +147,25 @@ void CLuaLoadSaveHandler::SaveHeightmap()
 
 void CLuaLoadSaveHandler::SaveEntireFile(const char* file, const char* what, const void* data, int size, bool throwOnError)
 {
-	std::string err;
+	std::string failedOperation;
 
 	if (Z_OK != zipOpenNewFileInZip(savefile, file, NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION)) {
-		err = "open";
+		failedOperation = "open";
 	}
 	else if (Z_OK != zipWriteInFileInZip(savefile, data, size)) {
-		err = "write";
+		failedOperation = "write";
 	}
 	else if (Z_OK != zipCloseFileInZip(savefile)) {
-		err = "close";
+		failedOperation = "close";
 	}
 
-	if (!err.empty()) {
-		err = "Unable to " + err + " " + what + " file in save file \"" + filename + "\"";
+	if (!failedOperation.empty()) {
+		const std::string error = "Unable to " + failedOperation + " " + what
+				+ " file in save file \"" + filename + "\"";
 		if (throwOnError) {
-			throw content_error(err);
-		}
-		else {
-			logOutput.Print(err);
+			throw content_error(error);
+		} else {
+			LOG_L(L_ERROR, "%s", error.c_str());
 		}
 	}
 }
@@ -178,7 +179,7 @@ void CLuaLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 	loadfile = archiveLoader.OpenArchive(realfile, "sdz");
 
 	if (!loadfile->IsOpen()) {
-		logOutput.Print("Unable to open save file \"" + filename + "\"");
+		LOG_L(L_ERROR, "Unable to open save file \"%s\"", filename.c_str());
 		return;
 	}
 
@@ -213,7 +214,7 @@ void CLuaLoadSaveHandler::LoadHeightmap()
 	std::vector<boost::uint8_t> buf;
 
 	if (loadfile->GetFile(FILE_HEIGHTMAP, buf)) {
-		const int size = (gs->mapx + 1) * (gs->mapy + 1);
+		const int size = gs->mapxp1 * gs->mapyp1;
 		const int* temp = (const int*) (const char*) &*buf.begin();
 		const int* origHeightmap = (const int*) (const char*) readmap->GetOriginalHeightMapSynced();
 
@@ -223,9 +224,8 @@ void CLuaLoadSaveHandler::LoadHeightmap()
 			readmap->SetHeight(i, newHeight);
 		}
 		mapDamage->RecalcArea(0, gs->mapx, 0, gs->mapy);
-	}
-	else {
-		logOutput.Print("Unable to load heightmap from save file \"" + filename + "\"");
+	} else {
+		LOG_L(L_ERROR, "Unable to load heightmap from save file \"%s\"", filename.c_str());
 	}
 }
 

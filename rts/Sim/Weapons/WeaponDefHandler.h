@@ -9,7 +9,7 @@
 #include "Sim/Misc/CommonDefHandler.h"
 #include "Sim/Misc/GuiSoundSet.h"
 #include "WeaponDef.h"
-#include "float3.h"
+#include "System/float3.h"
 
 class LuaTable;
 

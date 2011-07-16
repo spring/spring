@@ -1,14 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <cctype>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "KeyCodes.h"
 #include "SDL_keysym.h"
-#include "LogOutput.h"
-#include "Util.h"
+#include "System/LogOutput.h"
+#include "System/Util.h"
 
 
 CKeyCodes* keyCodes = NULL;

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 #include "Sound.h"
 
 #include <cstdlib>
@@ -18,11 +18,10 @@
 #include "EFX.h"
 #include "EFXPresets.h"
 
-#include "LogOutput.h"
-#include "TimeProfiler.h"
+#include "System/TimeProfiler.h"
 #include "System/Config/ConfigHandler.h"
-#include "Exceptions.h"
-#include "FileSystem/FileHandler.h"
+#include "System/Exceptions.h"
+#include "System/FileSystem/FileHandler.h"
 #include "Lua/LuaParser.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -30,7 +29,7 @@
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Watchdog.h"
 
-#include "float3.h"
+#include "System/float3.h"
 
 CONFIG(int, MaxSounds).defaultValue(128);
 CONFIG(bool, PitchAdjust).defaultValue(false);
@@ -72,7 +71,7 @@ CSound::CSound()
 	sounds.push_back(empty);
 
 	if (maxSounds <= 0) {
-		LogObject(LOG_SOUND) << "MaxSounds set to 0, sound is disabled";
+		LOG_L(L_WARNING, "MaxSounds set to 0, sound is disabled");
 	} else {
 		soundThread = new boost::thread(boost::bind(&CSound::StartThread, this, maxSounds));
 	}
@@ -150,7 +149,7 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 				}
 				else
 				{
-					LogObject(LOG_SOUND) << "CSound::GetSoundId: could not find sound: " << name;
+					LOG_L(L_WARNING, "CSound::GetSoundId: could not find sound: %s", name.c_str());
 					return 0;
 				}
 			}
@@ -305,8 +304,9 @@ void CSound::StartThread(int maxSounds)
 
 		if ((device == NULL) && (deviceName != NULL))
 		{
-			LogObject(LOG_SOUND) <<  "Could not open the sound device \""
-					<< deviceName << "\", trying the default device ...";
+			LOG_L(L_WARNING,
+					"Could not open the sound device \"%s\", trying the default device ...",
+					deviceName);
 			configDeviceName = "";
 			deviceName = NULL;
 			device = alcOpenDevice(deviceName);
@@ -314,7 +314,7 @@ void CSound::StartThread(int maxSounds)
 
 		if (device == NULL)
 		{
-			LogObject(LOG_SOUND) <<  "Could not open a sound device, disabling sounds";
+			LOG_L(L_ERROR, "Could not open a sound device, disabling sounds");
 			CheckError("CSound::InitAL");
 			return;
 		}
@@ -329,29 +329,28 @@ void CSound::StartThread(int maxSounds)
 			else
 			{
 				alcCloseDevice(device);
-				LogObject(LOG_SOUND) << "Could not create OpenAL audio context";
+				LOG_L(L_ERROR, "Could not create OpenAL audio context");
 				return;
 			}
 		}
 
-		LogObject(LOG_SOUND) << "OpenAL info:\n";
+		LOG("OpenAL info:");
 		if(alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
 		{
-			LogObject(LOG_SOUND) << "  Available Devices:";
-			const char *s = alcGetString(NULL, ALC_DEVICE_SPECIFIER);
-			while (*s != '\0')
-			{
-				LogObject(LOG_SOUND) << "              " << s;
-				while (*s++ != '\0')
+			LOG("  Available Devices:");
+			const char* deviceSpecifier = alcGetString(NULL, ALC_DEVICE_SPECIFIER);
+			while (*deviceSpecifier != '\0') {
+				LOG("              %s", deviceSpecifier);
+				while (*deviceSpecifier++ != '\0')
 					;
 			}
-			LogObject(LOG_SOUND) << "  Device:     " << alcGetString(device, ALC_DEVICE_SPECIFIER);
+			LOG("  Device:     %s", (const char*)alcGetString(device, ALC_DEVICE_SPECIFIER));
 		}
-		LogObject(LOG_SOUND) << "  Vendor:     " << (const char*)alGetString(AL_VENDOR );
-		LogObject(LOG_SOUND) << "  Version:    " << (const char*)alGetString(AL_VERSION);
-		LogObject(LOG_SOUND) << "  Renderer:   " << (const char*)alGetString(AL_RENDERER);
-		LogObject(LOG_SOUND) << "  AL Extensions:  " << (const char*)alGetString(AL_EXTENSIONS);
-		LogObject(LOG_SOUND) << "  ALC Extensions: " << (const char*)alcGetString(device, ALC_EXTENSIONS);
+		LOG("  Vendor:         %s", (const char*)alGetString(AL_VENDOR));
+		LOG("  Version:        %s", (const char*)alGetString(AL_VERSION));
+		LOG("  Renderer:       %s", (const char*)alGetString(AL_RENDERER));
+		LOG("  AL Extensions:  %s", (const char*)alGetString(AL_EXTENSIONS));
+		LOG("  ALC Extensions: %s", (const char*)alcGetString(device, ALC_EXTENSIONS));
 
 		// Init EFX
 		efx = new CEFX(device);
@@ -364,12 +363,14 @@ void CSound::StartThread(int maxSounds)
 				sources.push_back(thenewone);
 			} else {
 				maxSounds = std::max(i-1, 0);
-				LogObject(LOG_SOUND) << "Your hardware/driver can not handle more than " << maxSounds << " soundsources";
+				LOG_L(L_WARNING,
+						"Your hardware/driver can not handle more than %i soundsources",
+						maxSounds);
 				delete thenewone;
 				break;
 			}
 		}
-		LogObject(LOG_SOUND) << "  Max Sounds: " << maxSounds;
+		LOG("  Max Sounds: %i", maxSounds);
 
 		// Set distance model (sound attenuation)
 		alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
@@ -465,14 +466,14 @@ void CSound::PrintDebugInfo()
 {
 	boost::recursive_mutex::scoped_lock lck(soundMutex);
 
-	LogObject(LOG_SOUND) << "OpenAL Sound System:";
-	LogObject(LOG_SOUND) << "# SoundSources: " << sources.size();
-	LogObject(LOG_SOUND) << "# SoundBuffers: " << SoundBuffer::Count();
+	LOG_L(L_DEBUG, "OpenAL Sound System:");
+	LOG_L(L_DEBUG, "# SoundSources: %i", (int)sources.size());
+	LOG_L(L_DEBUG, "# SoundBuffers: %i", (int)SoundBuffer::Count());
 
-	LogObject(LOG_SOUND) << "# reserved for buffers: " << (SoundBuffer::AllocedSize()/1024) << " kB";
-	LogObject(LOG_SOUND) << "# PlayRequests for empty sound: " << numEmptyPlayRequests;
-	LogObject(LOG_SOUND) << "# Samples disrupted: " << numAbortedPlays;
-	LogObject(LOG_SOUND) << "# SoundItems: " << sounds.size();
+	LOG_L(L_DEBUG, "# reserved for buffers: %i kB", (int)(SoundBuffer::AllocedSize() / 1024));
+	LOG_L(L_DEBUG, "# PlayRequests for empty sound: %i", numEmptyPlayRequests);
+	LOG_L(L_DEBUG, "# Samples disrupted: %i", numAbortedPlays);
+	LOG_L(L_DEBUG, "# SoundItems: %i", (int)sounds.size());
 }
 
 bool CSound::LoadSoundDefs(const std::string& fileName)
@@ -486,7 +487,8 @@ bool CSound::LoadSoundDefs(const std::string& fileName)
 	parser.Execute();
 	if (!parser.IsValid())
 	{
-		LogObject(LOG_SOUND) << "Could not load " << fileName << ": " << parser.GetErrorLog();
+		LOG_L(L_WARNING, "Could not load %s: %s",
+				fileName.c_str(), parser.GetErrorLog().c_str());
 		return false;
 	}
 	else
@@ -495,7 +497,7 @@ bool CSound::LoadSoundDefs(const std::string& fileName)
 		const LuaTable soundItemTable = soundRoot.SubTable("SoundItems");
 		if (!soundItemTable.IsValid())
 		{
-			LogObject(LOG_SOUND) << "CSound(): could not parse SoundItems table in " << fileName;
+			LOG_L(L_WARNING, "CSound(): could not parse SoundItems table in %s", fileName.c_str());
 			return false;
 		}
 		else
@@ -511,20 +513,20 @@ bool CSound::LoadSoundDefs(const std::string& fileName)
 				bufmap["name"] = name;
 				soundItemDefMap::const_iterator sit = soundItemDefs.find(name);
 				if (sit != soundItemDefs.end())
-					LogObject(LOG_SOUND) << "Sound " << name << " gets overwritten by " << fileName;
+					LOG_L(L_WARNING, "Sound %s gets overwritten by %s", name.c_str(), fileName.c_str());
 
 				soundItemDef::const_iterator inspec = bufmap.find("file");
-				if (inspec == bufmap.end())	// no file, drop
-					LogObject(LOG_SOUND) << "Sound " << name << " is missing file tag (ignoring)";
-				else
+				if (inspec == bufmap.end()) {	// no file, drop
+					LOG_L(L_WARNING, "Sound %s is missing file tag (ignoring)", name.c_str());
+				} else {
 					soundItemDefs[name] = bufmap;
+				}
 
-				if (buf.KeyExists("preload"))
-				{
+				if (buf.KeyExists("preload")) {
 					MakeItemFromDef(bufmap);
 				}
 			}
-			LogObject(LOG_SOUND) << " parsed " << keys.size() << " sounds from " << fileName;
+			LOG(" parsed %i sounds from %s", (int)keys.size(), fileName.c_str());
 		}
 	}
 	return true;
@@ -541,10 +543,11 @@ size_t CSound::LoadSoundBuffer(const std::string& path, bool hardFail)
 		CFileHandler file(path);
 
 		if (!file.FileExists()) {
-			if (hardFail)
-				handleerror(0, "Couldn't open audio file", path.c_str(),0);
-			else
-				LogObject(LOG_SOUND) << "Unable to open audio file: " << path;
+			if (hardFail) {
+				handleerror(0, "Could not open audio file", path.c_str(), 0);
+			} else {
+				LOG_L(L_WARNING, "Unable to open audio file: %s", path.c_str());
+			}
 			return 0;
 		}
 
@@ -554,16 +557,18 @@ size_t CSound::LoadSoundBuffer(const std::string& path, bool hardFail)
 		boost::shared_ptr<SoundBuffer> buffer(new SoundBuffer());
 		bool success = false;
 		const std::string ending = file.GetFileExt();
-		if (ending == "wav")
+		if (ending == "wav") {
 			success = buffer->LoadWAV(path, buf, hardFail);
-		else if (ending == "ogg")
+		} else if (ending == "ogg") {
 			success = buffer->LoadVorbis(path, buf, hardFail);
-		else
-			LogObject(LOG_SOUND) << "CSound::LoadALBuffer: unknown audio format: " << ending;
+		} else {
+			LOG_L(L_WARNING, "CSound::LoadALBuffer: unknown audio format: %s",
+					ending.c_str());
+		}
 
 		CheckError("CSound::LoadALBuffer");
 		if (!success) {
-			LogObject(LOG_SOUND) << "Failed to load file: " << path;
+			LOG_L(L_WARNING, "Failed to load file: %s", path.c_str());
 			return 0;
 		}
 

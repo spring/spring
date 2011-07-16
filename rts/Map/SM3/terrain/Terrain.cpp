@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <cstdarg>
 #include <cstring>
 
@@ -8,15 +8,15 @@
 #include "Terrain.h"
 #include "TerrainVertexBuffer.h"
 
-#include "TdfParser.h"
+#include "System/TdfParser.h"
 
 #include <deque>
 #include <fstream>
 #include <IL/il.h>
 #include "TerrainTexture.h"
 #include "TerrainNode.h"
-#include "FileSystem/FileHandler.h"
-#include "Util.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/Util.h"
 #include <assert.h>
 
 // define this for big endian machines

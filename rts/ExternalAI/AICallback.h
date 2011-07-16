@@ -4,7 +4,7 @@
 #define AI_CALLBACK_H
 
 #include "ExternalAI/AILegacySupport.h"
-#include "float3.h"
+#include "System/float3.h"
 
 #include <string>
 #include <vector>

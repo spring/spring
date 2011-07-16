@@ -5,10 +5,11 @@
 #include <boost/bind.hpp>
 #include <SDL_events.h>
 
+#include "GuiElement.h"
 #include "Rendering/GL/myGL.h"
 #include "System/Input/InputHandler.h"
-#include "GuiElement.h"
-#include "LogOutput.h"
+#include "System/Log/ILog.h"
+
 
 namespace agui
 {
@@ -27,7 +28,7 @@ void Gui::Draw()
 		{
 			if (it->element == elIt->element)
 			{
-				LogObject() << "Gui::AddElement: skipping duplicated object";
+				LOG_L(L_DEBUG, "Gui::AddElement: skipping duplicated object");
 				duplicate = true;
 				break;
 			}
@@ -61,34 +62,35 @@ void Gui::Draw()
 	glEnable(GL_BLEND);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluOrtho2D(0,1,0,1);
+	gluOrtho2D(0, 1, 0, 1);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	for (ElList::reverse_iterator it = elements.rbegin(); it != elements.rend(); ++it)
+	for (ElList::reverse_iterator it = elements.rbegin(); it != elements.rend(); ++it) {
 		(*it).element->Draw();
+	}
 }
 
 void Gui::AddElement(GuiElement* elem, bool asBackground)
 {
-	if (elements.empty())
+	if (elements.empty()) {
 		inputCon.unblock();
+	}
 	toBeAdded.push_back(GuiItem(elem,asBackground));
 }
 
 void Gui::RmElement(GuiElement* elem)
 {
 	// has to be delayed, otherwise deleting a button during a callback would segfault
-	for (ElList::iterator it = elements.begin(); it != elements.end(); ++it)
-	{
-		if ((*it).element == elem)
-		{
+	for (ElList::iterator it = elements.begin(); it != elements.end(); ++it) {
+		if ((*it).element == elem) {
 			toBeRemoved.push_back(GuiItem(elem,true));
 			break;
 		}
 	}
 
-	if (elements.empty())
+	if (elements.empty()) {
 		inputCon.block();
+	}
 }
 
 void Gui::UpdateScreenGeometry(int screenx, int screeny, int screenOffsetX, int screenOffsetY)

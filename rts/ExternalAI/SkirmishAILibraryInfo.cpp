@@ -5,11 +5,12 @@
 #include "Interface/aidefines.h"
 #include "Interface/SSkirmishAILibrary.h"
 #include "SkirmishAIKey.h"
-#include "Util.h"
-#include "Info.h"
-#include "Option.h"
+#include "System/Util.h"
+#include "System/Info.h"
+#include "System/Option.h"
+#include "System/Log/ILog.h"
 
-#include "FileSystem/VFSModes.h"
+#include "System/FileSystem/VFSModes.h"
 
 
 static const char* BAD_CHARS = "\t _#";
@@ -30,7 +31,7 @@ CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 		const std::string& aiOptionFile) {
 
 	std::vector<InfoItem> tmpInfo;
-	parseInfo(tmpInfo, aiInfoFile);
+	info_parseInfo(tmpInfo, aiInfoFile);
 	std::vector<InfoItem>::iterator ii;
 	for (ii = tmpInfo.begin(); ii != tmpInfo.end(); ++ii) {
 		// TODO remove this, once we support non-string value types for Skirmish AI info
@@ -39,7 +40,7 @@ CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 	}
 
 	if (!aiOptionFile.empty()) {
-		parseOptions(options, aiOptionFile);
+		option_parseOptions(options, aiOptionFile);
 	}
 }
 
@@ -143,7 +144,8 @@ const std::string& CSkirmishAILibraryInfo::GetInfo(const std::string& key) const
 	}
 
 	if (!found) {
-		logOutput.Print("Skirmish AI property '%s' could not be found.", key.c_str());
+		LOG_L(L_WARNING, "Skirmish AI property '%s' could not be found.",
+				key.c_str());
 		return DEFAULT_VALUE;
 	} else {
 		return strPair->second;
@@ -195,7 +197,7 @@ bool CSkirmishAILibraryInfo::SetInfo(const std::string& key,
 	std::string keyLower = StringToLower(key);
 	if (keyLower == snKey || keyLower == vKey) {
 		if (value.find_first_of(BAD_CHARS) != std::string::npos) {
-		logOutput.Print("Error, Skirmish AI property (%s or %s)\n"
+		LOG_L(L_WARNING, "Skirmish AI property (%s or %s)\n"
 				"contains illegal characters (%s).",
 				SKIRMISH_AI_PROPERTY_SHORT_NAME, SKIRMISH_AI_PROPERTY_VERSION,
 				BAD_CHARS);

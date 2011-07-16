@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include "SM3GroundDrawer.h"
 #include "SM3Map.h"
@@ -223,7 +223,6 @@ void CSm3GroundDrawer::DrawObjects(bool drawWaterReflection,bool drawUnitReflect
 	if (!(drawWaterReflection || drawUnitReflection)) {
 		groundDecals->Draw();
 		projectileDrawer->DrawGroundFlashes();
-		glDepthMask(1);
 	}
 }
 

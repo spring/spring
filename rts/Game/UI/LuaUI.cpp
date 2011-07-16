@@ -1,11 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifdef _MSC_VER
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #endif
 #include "Lua/LuaLobby.h" // ugh, streflop namespace corruption...
 #ifndef _MSC_VER
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #endif
 
 #include <stdio.h>
@@ -15,7 +15,7 @@
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "LuaUI.h"
 
@@ -57,13 +57,13 @@
 #include "MouseHandler.h"
 #include "Map/ReadMap.h"
 #include "Rendering/IconHandler.h"
-#include "EventHandler.h"
-#include "LogOutput.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/VFSHandler.h"
+#include "System/EventHandler.h"
+#include "System/LogOutput.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/VFSHandler.h"
 #include "System/Config/ConfigHandler.h"
-#include "FileSystem/FileSystem.h"
-#include "Util.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/Util.h"
 
 using namespace std;
 

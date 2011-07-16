@@ -160,7 +160,7 @@
 //         GL_UNSIGNED_BYTE, image[0].get_mipmap(i));
 // }
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -168,9 +168,9 @@
 // spring related
 #include "Rendering/GL/myGL.h"
 #include "nv_dds.h"
-#include "FileSystem/FileHandler.h"
-#include "Platform/byteorder.h"
-#include "mmgr.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/Platform/byteorder.h"
+#include "System/mmgr.h"
 
 using namespace std;
 using namespace nv_dds;

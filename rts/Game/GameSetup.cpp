@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include <algorithm>
 #include <map>
@@ -8,17 +8,17 @@
 #include <cstring>
 #include <boost/format.hpp>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "GameSetup.h"
-#include "TdfParser.h"
-#include "FileSystem/ArchiveScanner.h"
+#include "System/TdfParser.h"
+#include "System/FileSystem/ArchiveScanner.h"
 #include "Map/MapParser.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "UnsyncedRNG.h"
-#include "Exceptions.h"
-#include "Util.h"
-#include "LogOutput.h"
+#include "System/UnsyncedRNG.h"
+#include "System/Exceptions.h"
+#include "System/Util.h"
+#include "System/LogOutput.h"
 
 
 using namespace std;

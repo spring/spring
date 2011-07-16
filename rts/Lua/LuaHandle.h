@@ -11,7 +11,7 @@ using std::vector;
 using std::set;
 #include <boost/cstdint.hpp>
 
-#include "EventClient.h"
+#include "System/EventClient.h"
 //FIXME#include "LuaArrays.h"
 #include "LuaCallInCheck.h"
 #include "LuaShaders.h"

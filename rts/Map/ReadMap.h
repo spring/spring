@@ -5,8 +5,8 @@
 
 #include <list>
 
-#include "creg/creg_cond.h"
-#include "float3.h"
+#include "System/creg/creg_cond.h"
+#include "System/float3.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 
@@ -197,6 +197,27 @@ protected:
 	std::vector<unsigned char> typeMap;
 
 	std::list<HeightMapUpdate> unsyncedHeightMapUpdates;
+
+#ifdef USE_UNSYNCED_HEIGHTMAP
+	struct HeightMapUpdateFilter {
+		HeightMapUpdateFilter(bool upd = false) : minx(0), maxx(0), miny(0), maxy(0), update(upd) {}
+		HeightMapUpdateFilter(int mnx, int mxx, int mny, int mxy, bool upd = false) : minx(mnx), maxx(mxx), miny(mny), maxy(mxy), update(upd) {}
+
+		void Expand(const HeightMapUpdateFilter& fnew) {
+			minx = std::min(minx, fnew.minx);
+			maxx = std::max(maxx, fnew.maxx);
+			miny = std::min(miny, fnew.miny);
+			maxy = std::max(maxy, fnew.maxy);
+			update = fnew.update;
+		}
+
+		int minx;
+		int maxx;
+		int miny;
+		int maxy;
+		bool update;
+	};
+#endif
 };
 
 extern CReadMap* readmap;

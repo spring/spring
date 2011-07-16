@@ -6,7 +6,7 @@
 #include <vector>
 #include <set>
 
-#include "Object.h"
+#include "System/Object.h"
 #include "CommandQueue.h"
 #include "System/float3.h"
 
@@ -100,8 +100,8 @@ public:
 	int lastFinishCommand;
 
 	CUnit* owner;
-
 	CUnit* orderTarget;
+
 	bool targetDied;
 	bool inCommand;
 	bool selected;

@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #if 0
 ################################################################################
 file=lua2php.cpp
@@ -22,20 +24,19 @@ exit
 /******************************************************************************/
 /******************************************************************************/
 
+#include "../unitsync_api.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <string>
 #include <vector>
-using namespace std;
-
-#include "../unitsync_api.h"
 
 
 /******************************************************************************/
 /******************************************************************************/
 
-static void OutputPHPTable(const string& indent);
+static void OutputPHPTable(const std::string& indent);
 
 static FILE* outfile = NULL;
 
@@ -64,12 +65,12 @@ int main(int argc, char** argv)
     printf("usage:  %s <mod>\n", argv[0]);
     exit(1);
   }
-  const string mod = argv[1];
+  const std::string mod = argv[1];
   printf("MOD = %s\n", mod.c_str());
 
   // open the output file in the local directory, before
   // initializing unitsync (which changes the working directory)
-  const string outName = mod + ".php";
+  const std::string outName = mod + ".php";
   printf("outName = %s\n", outName.c_str());
   outfile = fopen(outName.c_str(), "w");
   if (outfile == NULL) {
@@ -112,7 +113,7 @@ int main(int argc, char** argv)
 /******************************************************************************/
 /******************************************************************************/
 
-static void GetIntKeys(vector<int>& keys)
+static void GetIntKeys(std::vector<int>& keys)
 {
   const int count = lpGetIntKeyListCount();
   for (int i = 0; i < count; i++) {
@@ -121,7 +122,7 @@ static void GetIntKeys(vector<int>& keys)
 }
 
 
-static void GetStrKeys(vector<string>& keys)
+static void GetStrKeys(std::vector<std::string>& keys)
 {
   const int count = lpGetStrKeyListCount();
   for (int i = 0; i < count; i++) {
@@ -151,9 +152,9 @@ static inline std::string IntToString(int i, const std::string& format = "%i")
 #define LUA_TTHREAD        8
 
 
-static string SafeStr(const string& str, char escChar = '\'')
+static std::string SafeStr(const std::string& str, char escChar = '\'')
 {
-  string newStr;
+  std::string newStr;
   for (unsigned int i = 0; i < str.size(); i++) {
     const char c = str[i];
     if (c == escChar)  {
@@ -165,10 +166,10 @@ static string SafeStr(const string& str, char escChar = '\'')
 }
 
 
-static void OutputPHPTable(const string& indent)
+static void OutputPHPTable(const std::string& indent)
 {
-  vector<int>    intKeys; GetIntKeys(intKeys);
-  vector<string> strKeys; GetStrKeys(strKeys);
+  std::vector<int>         intKeys; GetIntKeys(intKeys);
+  std::vector<std::string> strKeys; GetStrKeys(strKeys);
 
   const char* ind = indent.c_str();
 

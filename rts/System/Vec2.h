@@ -3,7 +3,7 @@
 #ifndef VEC2_H
 #define VEC2_H
 
-#include "creg/creg_cond.h"
+#include "System/creg/creg_cond.h"
 
 // can't easily use templates because of creg
 

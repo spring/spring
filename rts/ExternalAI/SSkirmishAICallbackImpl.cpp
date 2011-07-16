@@ -1,5 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include "ExternalAI/AICallback.h"
 #include "ExternalAI/AICheats.h"
@@ -40,7 +40,7 @@
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h" // for qf->GetFeaturesExact(pos, radius)
 #include "System/FileSystem/ArchiveScanner.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 
 static const char* SKIRMISH_AIS_VERSION_COMMON = "common";
@@ -940,7 +940,7 @@ EXPORT(void) skirmishAiCallback_Log_log(int skirmishAIId, const char* const msg)
 	checkSkirmishAIId(skirmishAIId);
 
 	const CSkirmishAILibraryInfo* info = getSkirmishAILibraryInfo(skirmishAIId);
-	logOutput.Print("Skirmish AI <%s-%s>: %s", info->GetName().c_str(), info->GetVersion().c_str(), msg);
+	LOG("Skirmish AI <%s-%s>: %s", info->GetName().c_str(), info->GetVersion().c_str(), msg);
 }
 
 EXPORT(void) skirmishAiCallback_Log_exception(int skirmishAIId, const char* const msg, int severety, bool die) {
@@ -948,7 +948,7 @@ EXPORT(void) skirmishAiCallback_Log_exception(int skirmishAIId, const char* cons
 	checkSkirmishAIId(skirmishAIId);
 
 	const CSkirmishAILibraryInfo* info = getSkirmishAILibraryInfo(skirmishAIId);
-	logOutput.Print("Skirmish AI <%s-%s>: error, severety %i: [%s] %s",
+	LOG_L(L_ERROR, "Skirmish AI <%s-%s>: severety %i: [%s] %s",
 			info->GetName().c_str(), info->GetVersion().c_str(), severety,
 			(die ? "AI shutting down" : "AI still running"), msg);
 	if (die) {
@@ -1059,7 +1059,8 @@ EXPORT(bool) skirmishAiCallback_Cheats_setEnabled(int skirmishAIId, bool enabled
 
 	skirmishAIId_cheatingEnabled[skirmishAIId] = enabled;
 	if (enabled && !skirmishAIId_usesCheats[skirmishAIId]) {
-		logOutput.Print("SkirmishAI (ID = %i, team ID = %i) is using cheats!", skirmishAIId, skirmishAIId_teamId[skirmishAIId]);
+		LOG("SkirmishAI (ID = %i, team ID = %i) is using cheats!",
+				skirmishAIId, skirmishAIId_teamId[skirmishAIId]);
 		skirmishAIId_usesCheats[skirmishAIId] = true;
 	}
 	return (enabled == skirmishAiCallback_Cheats_isEnabled(skirmishAIId));
@@ -1538,7 +1539,7 @@ EXPORT(int) skirmishAiCallback_Map_getHeightMap(int skirmishAIId, float* heights
 EXPORT(int) skirmishAiCallback_Map_getCornersHeightMap(int skirmishAIId,
 		float* cornerHeights, int cornerHeights_sizeMax) {
 
-	static const int cornerHeights_sizeReal = (gs->mapx + 1) * (gs->mapy + 1);
+	static const int cornerHeights_sizeReal = gs->mapxp1 * gs->mapyp1;
 
 	int cornerHeights_size = cornerHeights_sizeReal;
 

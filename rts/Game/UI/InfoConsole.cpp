@@ -1,20 +1,20 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "Rendering/GL/myGL.h"
 #include <fstream>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "InfoConsole.h"
 #include "GuiHandler.h"
 #include "Rendering/glFont.h"
 
 #ifdef WIN32
-#  include "Platform/Win/win32.h"
+	#include "System/Platform/Win/win32.h"
 #endif
 
-#include "Sync/SyncTracer.h"
+#include "System/Sync/SyncTracer.h"
 #include "System/Config/ConfigHandler.h"
 #include "InputReceiver.h"
 

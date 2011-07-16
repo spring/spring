@@ -1,21 +1,21 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include <algorithm>
 #include <locale>
 #include <string>
 #include <vector>
 #include <cctype>
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "DamageArrayHandler.h"
 #include "DamageArray.h"
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 #include "Game/Game.h"
 #include "Lua/LuaParser.h"
-#include "creg/STL_Map.h"
-#include "Util.h"
-#include "Exceptions.h"
+#include "System/creg/STL_Map.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 
 CR_BIND(CDamageArrayHandler, );

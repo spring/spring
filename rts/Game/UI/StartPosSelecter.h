@@ -4,7 +4,7 @@
 #define STARTPOSSELECTER_H
 
 #include "InputReceiver.h"
-#include "float3.h"
+#include "System/float3.h"
 
 class CStartPosSelecter :
 	public CInputReceiver

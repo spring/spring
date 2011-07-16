@@ -1,18 +1,18 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include <sstream>
 #include <cstring>
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "ColorMap.h"
 #include "Bitmap.h"
 #include "Bitmap.h"
-#include "FileSystem/FileHandler.h"
-#include "Util.h"
-#include "Exceptions.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/Util.h"
+#include "System/Exceptions.h"
 
 std::vector<CColorMap*> CColorMap::colorMaps;
 std::map<std::string, CColorMap*> CColorMap::colorMapsMap;

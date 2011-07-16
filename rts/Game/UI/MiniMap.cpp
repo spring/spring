@@ -3,8 +3,8 @@
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 #include "lib/gml/ThreadSafeContainers.h"
 
 #include "CommandColors.h"
@@ -841,12 +841,6 @@ void CMiniMap::ProxyMousePress(int x, int y, int button)
 
 void CMiniMap::ProxyMouseRelease(int x, int y, int button)
 {
-	// is this really needed?
-//	CCamera *c = camera;
-//	camera = new CCamera(*c);
-
-//	const float3 tmpMouseDir = mouse->dir;
-
 	float3 mapPos = GetMapPosition(x, y);
 	const CUnit* unit = GetSelectUnit(mapPos);
 	if (unit) {
@@ -860,13 +854,8 @@ void CMiniMap::ProxyMouseRelease(int x, int y, int button)
 
 	float3 mousedir = float3(0.0f, -1.0f, 0.0f);
 	float3 campos = mapPos;
-//	float3 camfwd = mousedir; // not used?
 
 	guihandler->MouseRelease(x, y, -button, campos, mousedir);
-
-//	mouse->dir = tmpMouseDir;
-//	delete camera;
-//	camera = c;
 }
 
 

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 
 #include <algorithm>
 #include <boost/cstdint.hpp>
@@ -81,8 +81,8 @@ static CInputReceiver*& activeReceiver = CInputReceiver::GetActiveReceiverRef();
 
 CMouseHandler::CMouseHandler()
 	: hardwareCursor(false)
-	, lastx(300)
-	, lasty(200)
+	, lastx(-1)
+	, lasty(-1)
 	, hide(true)
 	, hwHide(true)
 	, locked(false)

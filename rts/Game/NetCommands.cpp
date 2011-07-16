@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include "Game.h"
 #include "CameraHandler.h"
@@ -11,7 +11,7 @@
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
 #include "ChatMessage.h"
-#include "TimeProfiler.h"
+#include "System/TimeProfiler.h"
 #include "WordCompletion.h"
 #include "IVideoCapturing.h"
 #include "InMapDraw.h"
@@ -134,15 +134,6 @@ void CGame::ClientReadNet()
 				eventHandler.PlayerRemoved(player, (int) inbuf[2]);
 
 				AddTraffic(player, packetCode, dataLength);
-				break;
-			}
-
-			case NETMSG_MEMDUMP: {
-				MakeMemDump();
-#ifdef TRACE_SYNC
-				tracefile.Commit();
-#endif
-				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
 
@@ -343,13 +334,14 @@ void CGame::ClientReadNet()
 
 				if (playerCheckSum == 0) {
 					logOutput.Print(
-						"[DESYNC WARNING] path-checksum for player %d (%s) is 0; non-writable cache?",
+						"[DESYNC WARNING] path-checksum for player %d (%s) is 0; non-writable PE-cache?",
 						playerNum, player->name.c_str()
 					);
 				} else {
 					if (playerCheckSum != localCheckSum) {
 						logOutput.Print(
-							"[DESYNC WARNING] path-checksum %08x for player %d (%s) does not match local checksum %08x",
+							"[DESYNC WARNING] path-checksum %08x for player %d (%s)"
+							"does not match local checksum %08x; stale PE-cache?",
 							playerCheckSum, playerNum, player->name.c_str(), localCheckSum
 						);
 					}

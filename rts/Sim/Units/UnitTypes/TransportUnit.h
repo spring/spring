@@ -33,8 +33,8 @@ public:
 	bool CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* unit) const;
 	float GetLoadUnloadHeading(const CUnit* unit) const;
 
-	void DetachUnit(CUnit* unit);
-	void DetachUnitFromAir(CUnit* unit, float3 pos); ///< moves to position after
+	bool DetachUnit(CUnit* unit);
+	bool DetachUnitFromAir(CUnit* unit, float3 pos); ///< moves to position after
 
 	const std::list<TransportedUnit>& GetTransportedUnits() const { return transported; }
 

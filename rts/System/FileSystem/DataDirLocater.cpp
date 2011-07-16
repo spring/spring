@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "DataDirLocater.h"
 
 #include <cstdlib>
@@ -18,15 +18,15 @@
 #include <string.h>
 
 #include "System/Log/ILog.h"
-#include "LogOutput.h"
+#include "System/LogOutput.h"
 #include "System/Config/ConfigHandler.h"
 #include "FileSystemHandler.h"
 #include "FileSystem.h"
 #include "CacheDir.h"
-#include "mmgr.h"
-#include "Exceptions.h"
-#include "maindefines.h" // for sPS, cPS, cPD
-#include "Platform/Misc.h"
+#include "System/mmgr.h"
+#include "System/Exceptions.h"
+#include "System/maindefines.h" // for sPS, cPS, cPD
+#include "System/Platform/Misc.h"
 
 CONFIG(std::string, SpringData).defaultValue("");
 
@@ -242,9 +242,6 @@ void DataDirLocater::LocateDataDirs()
 	std::string dd_appData = pathAppData;
 	// e.g. F:\Dokumente und Einstellungen\All Users\Anwendungsdaten\Spring
 	dd_appData += "\\Spring";
-#elif     defined(MACOSX_BUNDLE)
-	const std::string dd_curWorkDirData = dd_curWorkDir + "/" + SubstEnvVars(DATADIR);
-	const std::string dd_curWorkDirLib  = dd_curWorkDir + "/" + SubstEnvVars(LIBDIR);
 #else // *nix (-OSX)
 	// settings in /etc
 	std::string dd_etc = "";
@@ -292,19 +289,25 @@ void DataDirLocater::LocateDataDirs()
 		AddDirs(dd_appData);        // "C:/.../All Users/Applications/Spring/"
 
 #elif defined(MACOSX_BUNDLE)
-		// Mac OS X
+		// Mac OS X Application Bundle (*.app) - single file install
 
-		// FIXME Maps and mods are supposed to be located in spring's executable location on Mac, but unitsync
-		// cannot find them since it does not know spring binary path. I have no idea but to force users
-		// to locate lobby executables in the same as spring's dir and add its location to search dirs.
-		#ifdef UNITSYNC
-		AddCwdOrParentDir(dd_curWorkDir, true); // "./" or "../"
-		#endif
+		// directory structure (Apple standard):
+		// Spring.app/Contents/MacOS/springlobby
+		// Spring.app/Contents/Resources/bin/spring
+		// Spring.app/Contents/Resources/lib/unitsync.dylib
+		// Spring.app/Contents/Resources/share/games/spring/base/
 
-		// libs and data are supposed to be located in subdirectories of spring executable, so they
-		// sould be added instead of SPRING_DATADIR definition.
-		AddDirs(dd_curWorkDirData); // "./data/"
-		AddDirs(dd_curWorkDirLib);  // "./lib/"
+		// This corresponds to Spring.app/Contents/Resources/
+		const std::string bundleResourceDir = FileSystemHandler::GetParent(dd_curWorkDir);
+
+		// This has to correspond with the value in the build-script
+		const std::string dd_curWorkDirData = bundleResourceDir + "/share/games/spring";
+
+		// we need this as default writeable dir, because the Bundle.pp dir
+		// might not be writeable by the user starting the game
+		AddDirs(SubstEnvVars("$HOME/.spring")); // "~/.spring/"
+		AddDirs(dd_curWorkDirData);             // "Spring.app/Contents/Resources/share/games/spring"
+		AddDirs(dd_etc);                        // from /etc/spring/datadir
 
 #else
 		// Linux, FreeBSD, Solaris, Apple non-bundle

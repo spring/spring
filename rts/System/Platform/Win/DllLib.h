@@ -3,7 +3,7 @@
 #ifndef DLLLIB_H
 #define DLLLIB_H
 
-#include "Platform/SharedLib.h"
+#include "System/Platform/SharedLib.h"
 #include <windows.h>
 
 /**

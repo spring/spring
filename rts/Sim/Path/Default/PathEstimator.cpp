@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include "lib/gml/gml.h" // FIXME: linux for some reason does not compile without this
 
@@ -12,7 +12,7 @@
 #include <boost/version.hpp>
 
 #include "lib/minizip/zip.h"
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "PathAllocator.h"
 #include "PathCache.h"

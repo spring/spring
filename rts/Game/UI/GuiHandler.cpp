@@ -7,8 +7,8 @@
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 
-#include "StdAfx.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/mmgr.h"
 
 #include "GuiHandler.h"
 #include "CommandColors.h"
@@ -1545,11 +1545,9 @@ int CGuiHandler::GetDefaultCommand(int x, int y, const float3& cameraPos, const 
 			unit = minimap->GetSelectUnit(minimap->GetMapPosition(x, y));
 		}
 		else {
-			const float3 camPos = cameraPos;
-			const float3 camDir = mouseDir;
-			const float viewRange = globalRendering->viewRange*1.4f;
-			const float dist = TraceRay::GuiTraceRay(camPos, camDir, viewRange, true, NULL, unit, feature);
-			const float3 hit = camPos + camDir*dist;
+			const float viewRange = globalRendering->viewRange * 1.4f;
+			const float dist = TraceRay::GuiTraceRay(cameraPos, mouseDir, viewRange, true, NULL, unit, feature);
+			const float3 hit = cameraPos + mouseDir * dist;
 
 			// make sure the ray hit in the map
 			if (!unit && !feature && !hit.IsInBounds())
@@ -3773,11 +3771,6 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 		glDepthMask(GL_TRUE);
 		glDisable(GL_BLEND);
 	}
-
-/*	if (minimapCoords) {
-		camera->pos = tmpCamPos;
-		mouse->dir = tmpMouseDir;
-	}*/
 }
 
 

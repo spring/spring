@@ -2,7 +2,7 @@
 
 #include "ExternalAI/AICallback.h"
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "Game/Game.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"
@@ -49,6 +49,7 @@
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "System/mmgr.h"
+#include "System/Log/ILog.h"
 #include "System/LogOutput.h"
 #include "System/NetProtocol.h"
 #include "System/FileSystem/FileHandler.h"
@@ -145,7 +146,8 @@ void CAICallback::SendTextMsg(const char* text, int zone)
 	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(*(teamAIs.begin())); // FIXME is there a better way?
 
 	if (!game->ProcessCommandText(-1, text)) {
-		logOutput.Print("<SkirmishAI: %s %s (team %d)>: %s", aiData->shortName.c_str(), aiData->version.c_str(), team, text);
+		LOG("<SkirmishAI: %s %s (team %d)>: %s",
+				aiData->shortName.c_str(), aiData->version.c_str(), team, text);
 	}
 }
 
@@ -1116,7 +1118,7 @@ void CAICallback::DrawUnit(const char* unitName, const float3& pos,
 	CUnitDrawer::TempDrawUnit tdu;
 	tdu.unitdef = unitDefHandler->GetUnitDefByName(unitName);
 	if (!tdu.unitdef) {
-		logOutput.Print("Unknown unit in CAICallback::DrawUnit %s", unitName);
+		LOG_L(L_WARNING, "Unknown unit in CAICallback::DrawUnit %s", unitName);
 		return;
 	}
 	tdu.pos = pos;
@@ -1510,9 +1512,9 @@ int CAICallback::HandleCommand(int commandId, void* data)
 			AIHCPause* cmdData = (AIHCPause*) data;
 
 			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, cmdData->enable));
-			logOutput.Print(
-					"Skirmish AI controlling team %i paused the game, reason: %s",
-					team, cmdData->reason != NULL ? cmdData->reason : "UNSPECIFIED");
+			LOG("Skirmish AI controlling team %i paused the game, reason: %s",
+					team,
+					cmdData->reason != NULL ? cmdData->reason : "UNSPECIFIED");
 
 			return 1;
 		} break;

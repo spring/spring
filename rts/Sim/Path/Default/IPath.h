@@ -4,8 +4,8 @@
 #define IPATH_H
 
 #include <vector>
-#include "float3.h"
-#include "Vec2.h"
+#include "System/float3.h"
+#include "System/Vec2.h"
 
 class IPath {
 public:

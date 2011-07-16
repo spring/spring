@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef LINEEDIT_H
-#define LINEEDIT_H
+#ifndef LINE_EDIT_H
+#define LINE_EDIT_H
 
 #include <string>
 #include <boost/signal.hpp>

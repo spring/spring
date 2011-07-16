@@ -8,7 +8,6 @@
 #define	_OPTION_H
 
 #include "System/FileSystem/VFSModes.h"
-#include "System/LogOutput.h"
 
 #include <string>
 #include <vector>
@@ -75,21 +74,19 @@ struct Option {
 
 std::string option_getDefString(const Option& option);
 
-void parseOptions(
+void option_parseOptions(
 		std::vector<Option>& options,
 		const std::string& fileName,
 		const std::string& fileModes = SPRING_VFS_RAW,
 		const std::string& accessModes = SPRING_VFS_RAW,
-		std::set<std::string>* optionsSet = NULL,
-		CLogSubsystem* logSubsystem = &(CLogOutput::GetDefaultLogSubsystem()));
+		std::set<std::string>* optionsSet = NULL);
 
-void parseMapOptions(
+void option_parseMapOptions(
 		std::vector<Option>& options,
 		const std::string& fileName,
 		const std::string& mapName,
 		const std::string& fileModes = SPRING_VFS_RAW,
 		const std::string& accessModes = SPRING_VFS_RAW,
-		std::set<std::string>* optionsSet = NULL,
-		CLogSubsystem* logSubsystem = &(CLogOutput::GetDefaultLogSubsystem()));
+		std::set<std::string>* optionsSet = NULL);
 
 #endif // _OPTION_H

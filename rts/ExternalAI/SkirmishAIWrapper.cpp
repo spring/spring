@@ -1,12 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "SkirmishAIWrapper.h"
 
 #include "System/StdAfx.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileSystemHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/mmgr.h"
 #include "System/Util.h"
 #include "Sim/Units/Unit.h"
@@ -192,7 +192,7 @@ void CSkirmishAIWrapper::Init() {
 	int error = ai->HandleEvent(EVENT_INIT, &evtData);
 	if (error != 0) {
 		// init failed
-		logOutput.Print("Failed to handle init event: AI for team %d, error %d",
+		LOG_L(L_ERROR, "Failed to handle init event: AI for team %d, error %d",
 				teamId, error);
 		skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId, 5 /* = AI failed to init */);
 	} else {

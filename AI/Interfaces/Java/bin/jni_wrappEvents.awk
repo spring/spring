@@ -535,7 +535,7 @@ function canDeleteDocumentation() {
 }
 
 # beginn of struct S*Event
-/^\struct S.*Event( \{)?/ {
+/^struct S.*Event( \{)?/ {
 
 	isInsideEvtStruct = 1;
 	ind_evtMember = 0;

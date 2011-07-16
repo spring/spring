@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 #include "TransportUnit.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
@@ -21,7 +21,7 @@
 #include "System/EventHandler.h"
 #include "System/myMath.h"
 #include "System/creg/STL_List.h"
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 CR_BIND_DERIVED(CTransportUnit, CUnit, );
 
@@ -203,9 +203,9 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 
 
 
-bool CTransportUnit::CanTransport(const CUnit *unit) const
+bool CTransportUnit::CanTransport(const CUnit* unit) const
 {
-	if (unit->transporter)
+	if (unit->transporter != NULL)
 		return false;
 
 	if (!unit->unitDef->transportByEnemy && !teamHandler->AlliedTeams(unit->team, team))
@@ -254,7 +254,32 @@ bool CTransportUnit::CanTransport(const CUnit *unit) const
 
 void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 {
-	DetachUnit(unit);
+	if (unit->transporter == this) {
+		// assume we are already transporting this unit,
+		// and just want to move it to a different piece
+		// with script logic (this means the UnitLoaded
+		// event is only sent once)
+		std::list<TransportedUnit>::iterator transporteesIt;
+
+		for (transporteesIt = transported.begin(); transporteesIt != transported.end(); ++transporteesIt) {
+			TransportedUnit& tu = *transporteesIt;
+
+			if (tu.unit == unit) {
+				tu.piece = piece;
+				break;
+			}
+		}
+
+		return;
+	} else {
+		// handle transfers from another transport to us
+		// (can still fail depending on CanTransport())
+		if (unit->transporter != NULL) {
+			unit->transporter->DetachUnit(unit);
+		}
+	}
+
+	// covers the case where unit->transporter != NULL
 	if (!CanTransport(unit)) {
 		return;
 	}
@@ -266,7 +291,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	unit->toBeTransported = false;
 
 	if (!unitDef->isFirePlatform) {
-		// make sure unit doesnt fire etc in transport
+		// make sure unit does not fire etc in transport
 		unit->stunned = true;
 		selectedUnits.RemoveUnit(unit);
 	}
@@ -298,7 +323,6 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	unit->UpdateTerrainType();
 
 	eventHandler.UnitLoaded(unit, this);
-
 	commandAI->BuggerOff(pos, -1.0f); // make sure not to get buggered off :) by transportee
 }
 
@@ -337,15 +361,15 @@ bool CTransportUnit::DetachUnitCore(CUnit* unit)
 			unit->UpdateTerrainType();
 
 			eventHandler.UnitUnloaded(unit, this);
-
 			return true;
 		}
 	}
+
 	return false;
 }
 
 
-void CTransportUnit::DetachUnit(CUnit* unit)
+bool CTransportUnit::DetachUnit(CUnit* unit)
 {
 	if (DetachUnitCore(unit)) {
 		unit->Block();
@@ -356,11 +380,15 @@ void CTransportUnit::DetachUnit(CUnit* unit)
 			Command c(CMD_STOP);
 			unit->commandAI->GiveCommand(c);
 		}
+
+		return true;
 	}
+
+	return false;
 }
 
 
-void CTransportUnit::DetachUnitFromAir(CUnit* unit, float3 pos)
+bool CTransportUnit::DetachUnitFromAir(CUnit* unit, float3 pos)
 {
 	if (DetachUnitCore(unit)) {
 		unit->Drop(this->pos, this->frontdir, this);
@@ -373,7 +401,11 @@ void CTransportUnit::DetachUnitFromAir(CUnit* unit, float3 pos)
 			c.params.push_back(pos.z);
 			unit->commandAI->GiveCommand(c);
 		}
+
+		return true;
 	}
+
+	return false;
 }
 
 

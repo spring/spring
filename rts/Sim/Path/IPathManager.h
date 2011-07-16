@@ -4,7 +4,7 @@
 #define I_PATH_MANAGER_H
 
 #include <boost/cstdint.hpp> /* Replace with <stdint.h> if appropriate */
-#include "float3.h"
+#include "System/float3.h"
 
 struct MoveData;
 class CSolidObject;

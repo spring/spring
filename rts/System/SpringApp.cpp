@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "StdAfx.h"
+#include "System/StdAfx.h"
 
 #include <iostream>
 
@@ -9,10 +9,10 @@
 	#include <SDL_syswm.h>
 #endif
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #include "Rendering/GL/myGL.h"
-#include "SpringApp.h"
+#include "System/SpringApp.h"
 
 #include "aGui/Gui.h"
 #include "ExternalAI/IAILibraryManager.h"
@@ -27,10 +27,10 @@
 #include "Game/LoadScreen.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MouseHandler.h"
-#include "Input/KeyInput.h"
-#include "Input/MouseInput.h"
-#include "Input/InputHandler.h"
-#include "Input/Joystick.h"
+#include "System/Input/KeyInput.h"
+#include "System/Input/MouseInput.h"
+#include "System/Input/InputHandler.h"
+#include "System/Input/Joystick.h"
 #include "Lua/LuaOpenGL.h"
 #include "Menu/SelectMenu.h"
 #include "Rendering/GlobalRendering.h"
@@ -63,17 +63,17 @@
 #include "System/Platform/WindowManagerHelper.h"
 #include "System/Sound/ISound.h"
 
-#include "mmgr.h"
+#include "System/mmgr.h"
 
 #ifdef WIN32
-	#include "Platform/Win/win32.h"
-	#include "Platform/Win/WinVersion.h"
+	#include "System/Platform/Win/win32.h"
+	#include "System/Platform/Win/WinVersion.h"
 #elif defined(__APPLE__)
 #elif defined(HEADLESS)
 #else
 	#include <X11/Xlib.h>
 	#include <sched.h>
-	#include "Platform/Linux/myX11.h"
+	#include "System/Platform/Linux/myX11.h"
 #endif
 
 #undef KeyPress
@@ -93,8 +93,6 @@ CONFIG(int, SmoothLines).defaultValue(0); //! FSAA ? 0 : 3;  // until a few thin
 CONFIG(int, SmoothPoints).defaultValue(0); //! FSAA ? 0 : 3;
 CONFIG(float, TextureLODBias).defaultValue(0.0f);
 CONFIG(bool, FixAltTab).defaultValue(false);
-CONFIG(bool, DualScreenMode).defaultValue(false);
-CONFIG(bool, DualScreenMiniMapOnLeft).defaultValue(false);
 CONFIG(int, Version).defaultValue(0);
 CONFIG(bool, FSAA).defaultValue(false);
 CONFIG(std::string, FontFile).defaultValue("fonts/FreeSansBold.otf");
@@ -669,51 +667,18 @@ void SpringApp::SaveWindowPosition()
 void SpringApp::SetupViewportGeometry()
 {
 	if (!GetDisplayGeometry()) {
-		globalRendering->screenSizeX = globalRendering->viewSizeX;
-		globalRendering->screenSizeY = globalRendering->viewSizeY;
-		globalRendering->winSizeX = globalRendering->viewSizeX;
-		globalRendering->winSizeY = globalRendering->viewSizeY;
-		globalRendering->winPosX = 0;
-		globalRendering->winPosY = 0;
+		globalRendering->UpdateWindowGeometry();
 	}
 
-	globalRendering->dualScreenMode = configHandler->GetBool("DualScreenMode");
-	if (globalRendering->dualScreenMode) {
-		globalRendering->dualScreenMiniMapOnLeft =
-			configHandler->GetBool("DualScreenMiniMapOnLeft");
-	} else {
-		globalRendering->dualScreenMiniMapOnLeft = false;
-	}
-
-	if (!globalRendering->dualScreenMode) {
-		globalRendering->viewSizeX = globalRendering->winSizeX;
-		globalRendering->viewSizeY = globalRendering->winSizeY;
-		globalRendering->viewPosX = 0;
-		globalRendering->viewPosY = 0;
-	}
-	else {
-		globalRendering->viewSizeX = globalRendering->winSizeX / 2;
-		globalRendering->viewSizeY = globalRendering->winSizeY;
-		if (globalRendering->dualScreenMiniMapOnLeft) {
-			globalRendering->viewPosX = globalRendering->winSizeX / 2;
-			globalRendering->viewPosY = 0;
-		} else {
-			globalRendering->viewPosX = 0;
-			globalRendering->viewPosY = 0;
-		}
-	}
+	globalRendering->SetDualScreenParams();
+	globalRendering->UpdateViewPortGeometry();
+	globalRendering->UpdatePixelGeometry();
 
 	agui::gui->UpdateScreenGeometry(
 			globalRendering->viewSizeX,
 			globalRendering->viewSizeY,
 			globalRendering->viewPosX,
 			(globalRendering->winSizeY - globalRendering->viewSizeY - globalRendering->viewPosY) );
-	globalRendering->pixelX = 1.0f / (float)globalRendering->viewSizeX;
-	globalRendering->pixelY = 1.0f / (float)globalRendering->viewSizeY;
-
-	// NOTE:  globalRendering->viewPosY is not currently used
-
-	globalRendering->aspectRatio = (float)globalRendering->viewSizeX / (float)globalRendering->viewSizeY;
 }
 
 
