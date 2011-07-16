@@ -7,14 +7,15 @@
 // freely for any purpose, as long as 
 // this notice remains unchanged
 
-#ifndef GMLFUN_H
-#define GMLFUN_H
+#ifndef _GML_FUN_H
+#define _GML_FUN_H
 
 #include <set>
 #include <map>
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include <SDL_timer.h>
 #include <string.h>
+#include <string>
 
 #define GML_ENABLE_DEBUG 0
 
@@ -346,7 +347,7 @@ public:
 #define GML_CURRENT_LUA(currentLuaState) (currentLuaState ? "LUA" : "Unknown")
 #define GML_THREAD_ERROR(msg, ret)\
 	lua_State *currentLuaState = gmlCurrentLuaStates[gmlThreadNumber];\
-	logOutput.Print("GML error: Sim thread called %s (%s)", msg, GML_CURRENT_LUA(currentLuaState));\
+	LOG_SL("GML", L_ERROR, "Sim thread called %s (%s)", msg, GML_CURRENT_LUA(currentLuaState));\
 	if(currentLuaState)\
 		luaL_error(currentLuaState, "Invalid call");\
 	ret
@@ -364,7 +365,7 @@ public:
 		GML_THREAD_ERROR(GML_QUOTE(gml##name), GML_DUMMYRETVAL(rettype))\
 	}
 #else
-#define GML_ITEMLOG_PRINT() logOutput.Print("GML error: Sim thread called %s",GML_FUNCTION);
+#define GML_ITEMLOG_PRINT() LOG_SL("GML", L_ERROR, "Sim thread called %s", GML_FUNCTION);
 #define GML_DUMMYRET()
 #define GML_DUMMYRETVAL(rettype)
 #define GML_IF_SIM_THREAD_RET(thread,name)
@@ -1392,4 +1393,4 @@ GML_MAKEFUN3V(Uniform4fv,GLint,GLsizei,const GLfloat,GLfloat,4*B)
 GML_MAKEFUN4R(MapBufferRange,GLenum,GLintptr,GLsizeiptr,GLbitfield,GLvoid *)
 GML_MAKEFUN1(PrimitiveRestartIndexNV,GLuint)
 
-#endif
+#endif // _GML_FUN_H

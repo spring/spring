@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "StdAfx.h"
 #include "unitsync.h"
 #include "unitsync_api.h"
@@ -28,6 +30,9 @@
 #include "System/FileSystem/FileSystemHandler.h"
 #include "System/ConfigHandler.h"
 #include "System/Exceptions.h"
+#include "System/Log/ILog.h"
+#include "System/Log/Level.h"
+#include "System/Log/DefaultFilter.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"
 #include "System/exportdefines.h"
@@ -45,7 +50,14 @@
 //////////////////////////
 //////////////////////////
 
-static CLogSubsystem LOG_UNITSYNC("unitsync", true);
+#define LOG_SECTION_UNITSYNC "unitsync"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_UNITSYNC)
+
+// use the specific section for all LOG*() calls in this source file
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_UNITSYNC
 
 // NOTE This means that the DLL can only support one instance.
 //   This is no problem in the current architecture.
@@ -61,6 +73,48 @@ BOOL CALLING_CONV DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpReserved)
 {
 	return TRUE;
 }
+#endif
+
+
+//////////////////////////
+//////////////////////////
+
+// Helper class for popping up a MessageBox only once
+
+class CMessageOnce
+{
+public:
+	CMessageOnce(const std::string& message)
+		: alreadyDone(false)
+		, message(message)
+	{
+		assert(!message.empty());
+	}
+
+	void print() {
+
+		if (!alreadyDone) {
+			alreadyDone = true;
+			LOG_L(L_WARNING, "%s", message.c_str());
+		}
+	}
+
+private:
+	bool alreadyDone;
+	const std::string message;
+};
+
+#ifdef DEBUG
+	#define DEPRECATED \
+		static CMessageOnce msg( \
+				"The deprecated unitsync function " \
+				+ std::string(__FUNCTION__) + " was called." \
+				" Please update your lobby client"); \
+		msg.print(); \
+		SetLastError("deprecated unitsync function called: " \
+				+ std::string(__FUNCTION__))
+#else
+	#define DEPRECATED
 #endif
 
 
@@ -115,9 +169,9 @@ static std::set<std::string> infoSet;
 
 static std::string lastError;
 
-static void _SetLastError(std::string err)
+static void _SetLastError(const std::string& err)
 {
-	logOutput.Prints(LOG_UNITSYNC, "error: " + err);
+	LOG_L(L_ERROR, "error: %s", err.c_str());
 	lastError = err;
 }
 
@@ -243,7 +297,7 @@ static void _UnInit()
 
 	if (syncer) {
 		SafeDelete(syncer);
-		logOutput.Print(LOG_UNITSYNC, "deinitialized");
+		LOG("deinitialized");
 	}
 }
 
@@ -253,6 +307,9 @@ EXPORT(int) Init(bool isServer, int id)
 		if (!logOutputInitialised) {
 			logOutput.SetFileName("unitsync.log");
 		}
+#ifndef DEBUG
+		log_filter_section_setMinLevel(LOG_SECTION_UNITSYNC, LOG_LEVEL_INFO);
+#endif
 		if (!configHandler) {
 			ConfigHandler::Instantiate(); // use the default config file
 		}
@@ -262,7 +319,7 @@ EXPORT(int) Init(bool isServer, int id)
 			logOutput.Initialize();
 			logOutputInitialised = true;
 		}
-		logOutput.Print(LOG_UNITSYNC, "loaded, %s\n", SpringVersion::GetFull().c_str());
+		LOG("loaded, %s", SpringVersion::GetFull().c_str());
 
 		_UnInit();
 
@@ -280,8 +337,8 @@ EXPORT(int) Init(bool isServer, int id)
 		}
 
 		syncer = new CSyncer();
-		logOutput.Print(LOG_UNITSYNC, "initialized, %s\n", SpringVersion::GetFull().c_str());
-		logOutput.Print(LOG_UNITSYNC, "%s\n", isServer ? "hosting" : "joining");
+		LOG("initialized, %s", SpringVersion::GetFull().c_str());
+		LOG("%s", (isServer ? "hosting" : "joining"));
 		return 1;
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -339,7 +396,7 @@ EXPORT(int) ProcessUnits()
 	int leftToProcess = 0; // FIXME error return should be -1
 
 	try {
-		logOutput.Print(LOG_UNITSYNC, "syncer: process units\n");
+		LOG_L(L_DEBUG, "syncer: process units");
 		leftToProcess = syncer->ProcessUnits();
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -359,7 +416,7 @@ EXPORT(int) GetUnitCount()
 	int count = 0; // FIXME error return should be -1
 
 	try {
-		logOutput.Print(LOG_UNITSYNC, "syncer: get unit count\n");
+		LOG_L(L_DEBUG, "syncer: get unit count");
 		count = syncer->GetUnitCount();
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -371,7 +428,7 @@ EXPORT(int) GetUnitCount()
 EXPORT(const char*) GetUnitName(int unit)
 {
 	try {
-		logOutput.Print(LOG_UNITSYNC, "syncer: get unit %d name\n", unit);
+		LOG_L(L_DEBUG, "syncer: get unit %d name", unit);
 		std::string tmp = syncer->GetUnitName(unit);
 		return GetStr(tmp);
 	}
@@ -383,7 +440,7 @@ EXPORT(const char*) GetUnitName(int unit)
 EXPORT(const char*) GetFullUnitName(int unit)
 {
 	try {
-		logOutput.Print(LOG_UNITSYNC, "syncer: get full unit %d name\n", unit);
+		LOG_L(L_DEBUG, "syncer: get full unit %d name", unit);
 		std::string tmp = syncer->GetFullUnitName(unit);
 		return GetStr(tmp);
 	}
@@ -400,7 +457,7 @@ EXPORT(void) AddArchive(const char* archiveName)
 		CheckInit();
 		CheckNullOrEmpty(archiveName);
 
-		logOutput.Print(LOG_UNITSYNC, "adding archive: %s\n", archiveName);
+		LOG_L(L_DEBUG, "adding archive: %s", archiveName);
 		vfsHandler->AddArchive(archiveName, false);
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -422,7 +479,7 @@ EXPORT(void) RemoveAllArchives()
 	try {
 		CheckInit();
 
-		logOutput.Print(LOG_UNITSYNC, "removing all archives\n");
+		LOG_L(L_DEBUG, "removing all archives");
 		SafeDelete(vfsHandler);
 		SafeDelete(syncer);
 		vfsHandler = new CVFSHandler();
@@ -437,7 +494,7 @@ EXPORT(unsigned int) GetArchiveChecksum(const char* archiveName)
 		CheckInit();
 		CheckNullOrEmpty(archiveName);
 
-		logOutput.Print(LOG_UNITSYNC, "archive checksum: %s\n", archiveName);
+		LOG_L(L_DEBUG, "archive checksum: %s", archiveName);
 		return archiveScanner->GetSingleArchiveChecksum(archiveName);
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -450,7 +507,7 @@ EXPORT(const char*) GetArchivePath(const char* archiveName)
 		CheckInit();
 		CheckNullOrEmpty(archiveName);
 
-		logOutput.Print(LOG_UNITSYNC, "archive path: %s\n", archiveName);
+		LOG_L(L_DEBUG, "archive path: %s", archiveName);
 		return GetStr(archiveScanner->GetArchivePath(archiveName));
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -492,7 +549,7 @@ static bool internal_GetMapInfo(const char* mapName, InternalMapInfo* outInfo)
 	CheckNullOrEmpty(mapName);
 	CheckNull(outInfo);
 
-	logOutput.Print(LOG_UNITSYNC, "get map info: %s", mapName);
+	LOG_L(L_DEBUG, "get map info: %s", mapName);
 
 	const std::string mapFile = GetMapFile(mapName);
 
@@ -566,7 +623,7 @@ static bool internal_GetMapInfo(const char* mapName, InternalMapInfo* outInfo)
 		}
 		outInfo->xPos.push_back(pos.x);
 		outInfo->zPos.push_back(pos.z);
-		logOutput.Print(LOG_UNITSYNC, "  startpos: %.0f, %.0f", pos.x, pos.z);
+		LOG_L(L_DEBUG, "startpos: %.0f, %.0f", pos.x, pos.z);
 	}
 
 	return true;
@@ -625,6 +682,7 @@ static bool _GetMapInfoEx(const char* mapName, MapInfo* outInfo, int version)
 
 EXPORT(int) GetMapInfoEx(const char* mapName, MapInfo* outInfo, int version)
 {
+	DEPRECATED;
 	int ret = 0;
 
 	try {
@@ -639,6 +697,7 @@ EXPORT(int) GetMapInfoEx(const char* mapName, MapInfo* outInfo, int version)
 
 EXPORT(int) GetMapInfo(const char* mapName, MapInfo* outInfo)
 {
+	DEPRECATED;
 	int ret = 0;
 
 	try {
@@ -1247,8 +1306,9 @@ EXPORT(int) GetPrimaryModInfoCount(int modIndex) {
 
 	return 0; // FIXME error return should be -1
 }
-EXPORT(const char*) GetPrimaryModName(int index) // deprecated
+EXPORT(const char*) GetPrimaryModName(int index)
 {
+	DEPRECATED;
 	try {
 		CheckInit();
 		CheckBounds(index, modData.size());
@@ -1260,8 +1320,9 @@ EXPORT(const char*) GetPrimaryModName(int index) // deprecated
 	return NULL;
 }
 
-EXPORT(const char*) GetPrimaryModShortName(int index) // deprecated
+EXPORT(const char*) GetPrimaryModShortName(int index)
 {
+	DEPRECATED;
 	try {
 		CheckInit();
 		CheckBounds(index, modData.size());
@@ -1273,8 +1334,9 @@ EXPORT(const char*) GetPrimaryModShortName(int index) // deprecated
 	return NULL;
 }
 
-EXPORT(const char*) GetPrimaryModVersion(int index) // deprecated
+EXPORT(const char*) GetPrimaryModVersion(int index)
 {
+	DEPRECATED;
 	try {
 		CheckInit();
 		CheckBounds(index, modData.size());
@@ -1286,8 +1348,9 @@ EXPORT(const char*) GetPrimaryModVersion(int index) // deprecated
 	return NULL;
 }
 
-EXPORT(const char*) GetPrimaryModMutator(int index) // deprecated
+EXPORT(const char*) GetPrimaryModMutator(int index)
 {
+	DEPRECATED;
 	try {
 		CheckInit();
 		CheckBounds(index, modData.size());
@@ -1299,8 +1362,9 @@ EXPORT(const char*) GetPrimaryModMutator(int index) // deprecated
 	return NULL;
 }
 
-EXPORT(const char*) GetPrimaryModGame(int index) // deprecated
+EXPORT(const char*) GetPrimaryModGame(int index)
 {
+	DEPRECATED;
 	try {
 		CheckInit();
 		CheckBounds(index, modData.size());
@@ -1312,8 +1376,9 @@ EXPORT(const char*) GetPrimaryModGame(int index) // deprecated
 	return NULL;
 }
 
-EXPORT(const char*) GetPrimaryModShortGame(int index) // deprecated
+EXPORT(const char*) GetPrimaryModShortGame(int index)
 {
+	DEPRECATED;
 	try {
 		CheckInit();
 		CheckBounds(index, modData.size());
@@ -1325,8 +1390,9 @@ EXPORT(const char*) GetPrimaryModShortGame(int index) // deprecated
 	return NULL;
 }
 
-EXPORT(const char*) GetPrimaryModDescription(int index) // deprecated
+EXPORT(const char*) GetPrimaryModDescription(int index)
 {
+	DEPRECATED;
 	try {
 		CheckInit();
 		CheckBounds(index, modData.size());
@@ -1376,7 +1442,8 @@ EXPORT(const char*) GetPrimaryModArchiveList(int archiveNr)
 		CheckInit();
 		CheckBounds(archiveNr, primaryArchives.size());
 
-		logOutput.Print(LOG_UNITSYNC, "primary mod archive list: %s\n", primaryArchives[archiveNr].c_str());
+		LOG_L(L_DEBUG, "primary mod archive list: %s",
+				primaryArchives[archiveNr].c_str());
 		return GetStr(primaryArchives[archiveNr]);
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -1478,14 +1545,14 @@ static std::set<std::string> optionsSet;
 
 static void ParseOptions(const std::string& fileName, const std::string& fileModes, const std::string& accessModes)
 {
-	parseOptions(options, fileName, fileModes, accessModes, &optionsSet, &LOG_UNITSYNC);
+	option_parseOptions(options, fileName, fileModes, accessModes, &optionsSet);
 }
 
 
 static void ParseMapOptions(const std::string& mapName)
 {
-	parseMapOptions(options, "MapOptions.lua", mapName, SPRING_VFS_MAP,
-			SPRING_VFS_MAP, &optionsSet, &LOG_UNITSYNC);
+	option_parseMapOptions(options, "MapOptions.lua", mapName, SPRING_VFS_MAP,
+			SPRING_VFS_MAP, &optionsSet);
 }
 
 
@@ -1656,7 +1723,8 @@ EXPORT(int) GetSkirmishAICount() {
 
 		int luaAIs = GetNumberOfLuaAIs();
 
-//logOutput.Print(LOG_UNITSYNC, "GetSkirmishAICount: luaAIs: %i / skirmishAIs: %u", luaAIs, skirmishAIDataDirs.size());
+		//LOG_L(L_DEBUG, "GetSkirmishAICount: luaAIs: %i / skirmishAIs: %u",
+		//		luaAIs, skirmishAIDataDirs.size());
 		count = skirmishAIDataDirs.size() + luaAIs;
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -1669,7 +1737,7 @@ static void ParseInfo(const std::string& fileName,
                       const std::string& fileModes,
                       const std::string& accessModes)
 {
-	parseInfo(info, fileName, fileModes, accessModes, &infoSet, &LOG_UNITSYNC);
+	info_parseInfo(info, fileName, fileModes, accessModes, &infoSet);
 }
 
 static void CheckSkirmishAIIndex(int aiIndex)
@@ -1752,7 +1820,8 @@ EXPORT(const char*) GetInfoType(int infoIndex) {
 
 	return type;
 }
-EXPORT(const char*) GetInfoValue(int infoIndex) { // deprecated
+EXPORT(const char*) GetInfoValue(int infoIndex) {
+	DEPRECATED;
 
 	const char* value = NULL;
 
@@ -2133,7 +2202,8 @@ static int LuaGetMapInfo(lua_State* L)
 
 	InternalMapInfo mi;
 	if (!internal_GetMapInfo(mapName.c_str(), &mi)) {
-		logOutput.Print(LOG_UNITSYNC, "LuaGetMapInfo: internal_GetMapInfo(\"%s\") failed", mapName.c_str());
+		LOG_L(L_ERROR, "LuaGetMapInfo: internal_GetMapInfo(\"%s\") failed",
+				mapName.c_str());
 		return 0;
 	}
 
@@ -2237,7 +2307,7 @@ EXPORT(int) OpenFileVFS(const char* name)
 		CheckInit();
 		CheckNullOrEmpty(name);
 
-		logOutput.Print(LOG_UNITSYNC, "OpenFileVFS: %s\n", name);
+		LOG_L(L_DEBUG, "OpenFileVFS: %s", name);
 
 		CFileHandler* fh = new CFileHandler(name);
 		if (!fh->FileExists()) {
@@ -2259,7 +2329,7 @@ EXPORT(void) CloseFileVFS(int file)
 	try {
 		CheckFileHandle(file);
 
-		logOutput.Print(LOG_UNITSYNC, "CloseFileVFS: %d\n", file);
+		LOG_L(L_DEBUG, "CloseFileVFS: %d", file);
 		delete openFiles[file];
 		openFiles.erase(file);
 	}
@@ -2273,7 +2343,7 @@ EXPORT(int) ReadFileVFS(int file, unsigned char* buf, int numBytes)
 		CheckNull(buf);
 		CheckPositive(numBytes);
 
-		logOutput.Print(LOG_UNITSYNC, "ReadFileVFS: %d\n", file);
+		LOG_L(L_DEBUG, "ReadFileVFS: %d", file);
 		CFileHandler* fh = openFiles[file];
 		return fh->Read(buf, numBytes);
 	}
@@ -2286,7 +2356,7 @@ EXPORT(int) FileSizeVFS(int file)
 	try {
 		CheckFileHandle(file);
 
-		logOutput.Print(LOG_UNITSYNC, "FileSizeVFS: %d\n", file);
+		LOG_L(L_DEBUG, "FileSizeVFS: %d", file);
 		CFileHandler* fh = openFiles[file];
 		return fh->FileSize();
 	}
@@ -2302,7 +2372,7 @@ EXPORT(int) InitFindVFS(const char* pattern)
 
 		std::string path = filesystem.GetDirectory(pattern);
 		std::string patt = filesystem.GetFilename(pattern);
-		logOutput.Print(LOG_UNITSYNC, "InitFindVFS: %s\n", pattern);
+		LOG_L(L_DEBUG, "InitFindVFS: %s", pattern);
 		curFindFiles = CFileHandler::FindFiles(path, patt);
 		return 0;
 	}
@@ -2318,7 +2388,7 @@ EXPORT(int) InitDirListVFS(const char* path, const char* pattern, const char* mo
 		if (path    == NULL) { path = "";              }
 		if (modes   == NULL) { modes = SPRING_VFS_ALL; }
 		if (pattern == NULL) { pattern = "*";          }
-		logOutput.Print(LOG_UNITSYNC, "InitDirListVFS: '%s' '%s' '%s'\n", path, pattern, modes);
+		LOG_L(L_DEBUG, "InitDirListVFS: '%s' '%s' '%s'", path, pattern, modes);
 		curFindFiles = CFileHandler::DirList(path, pattern, modes);
 		return 0;
 	}
@@ -2333,7 +2403,7 @@ EXPORT(int) InitSubDirsVFS(const char* path, const char* pattern, const char* mo
 		if (path    == NULL) { path = "";              }
 		if (modes   == NULL) { modes = SPRING_VFS_ALL; }
 		if (pattern == NULL) { pattern = "*";          }
-		logOutput.Print(LOG_UNITSYNC, "InitSubDirsVFS: '%s' '%s' '%s'\n", path, pattern, modes);
+		LOG_L(L_DEBUG, "InitSubDirsVFS: '%s' '%s' '%s'", path, pattern, modes);
 		curFindFiles = CFileHandler::SubDirs(path, pattern, modes);
 		return 0;
 	}
@@ -2348,7 +2418,7 @@ EXPORT(int) FindFilesVFS(int file, char* nameBuf, int size)
 		CheckNull(nameBuf);
 		CheckPositive(size);
 
-		logOutput.Print(LOG_UNITSYNC, "FindFilesVFS: %d\n", file);
+		LOG_L(L_DEBUG, "FindFilesVFS: %d", file);
 		if ((unsigned)file >= curFindFiles.size()) {
 			return 0;
 		}
@@ -2438,7 +2508,7 @@ EXPORT(int) FindFilesArchive(int archive, int file, char* nameBuf, int* size)
 
 		IArchive* arch = openArchives[archive];
 
-		logOutput.Print(LOG_UNITSYNC, "FindFilesArchive: %d\n", archive);
+		LOG_L(L_DEBUG, "FindFilesArchive: %d", archive);
 
 		if (file < arch->NumFiles())
 		{
@@ -2624,30 +2694,3 @@ EXPORT(void) SetSpringConfigFloat(const char* name, const float value)
 	UNITSYNC_CATCH_BLOCKS;
 }
 
-//////////////////////////
-//////////////////////////
-
-// Helper class for popping up a MessageBox only once
-
-class CMessageOnce
-{
-	private:
-		bool alreadyDone;
-
-	public:
-		CMessageOnce() : alreadyDone(false) {}
-		void operator() (const std::string& msg)
-		{
-			if (alreadyDone) return;
-			alreadyDone = true;
-			logOutput.Print(LOG_UNITSYNC, "Message from DLL: %s\n", msg.c_str());
-#ifdef WIN32
-			MessageBox(NULL, msg.c_str(), "Message from DLL", MB_OK);
-#endif
-		}
-};
-
-#define DEPRECATED \
-	static CMessageOnce msg; \
-	msg(std::string(__FUNCTION__) + ": deprecated unitsync function called, please update your lobby client"); \
-	SetLastError("deprecated unitsync function called")

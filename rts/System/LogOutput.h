@@ -7,6 +7,10 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include "lib/gml/gmlcnf.h"
+#if defined(USE_GML) && GML_ENABLE_SIM
+#include <boost/thread/mutex.hpp>
+#endif
 
 // format string error checking
 #ifdef __GNUC__
@@ -233,6 +237,10 @@ private:
 	std::string filePath;
 	bool rotateLogFiles;
 	bool subscribersEnabled;
+
+#if defined(USE_GML) && GML_ENABLE_SIM
+	boost::mutex logmutex;
+#endif
 };
 
 

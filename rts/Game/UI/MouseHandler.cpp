@@ -68,8 +68,8 @@ static CInputReceiver*& activeReceiver = CInputReceiver::GetActiveReceiverRef();
 
 CMouseHandler::CMouseHandler()
 	: hardwareCursor(false)
-	, lastx(300)
-	, lasty(200)
+	, lastx(-1)
+	, lasty(-1)
 	, hide(true)
 	, hwHide(true)
 	, locked(false)

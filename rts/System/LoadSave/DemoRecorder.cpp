@@ -15,7 +15,7 @@
 #include "System/Util.h"
 #include "System/TimeUtil.h"
 
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 CDemoRecorder::CDemoRecorder()
 {
@@ -60,8 +60,8 @@ CDemoRecorder::~CDemoRecorder()
 	if (demoName != wantedName) {
 		if (rename(demoName.c_str(), wantedName.c_str()) != 0) {
 #ifndef DEDICATED
-			LogObject() << "Renaming demo " << demoName << " to " << wantedName << "\n";
-			LogObject() << "failed: " << strerror(errno) << "\n";
+			LOG_L(L_ERROR, "Renaming demo %s to %s failed: %s",
+					demoName.c_str(), wantedName.c_str(), strerror(errno));
 #endif
 		}
 	} else {

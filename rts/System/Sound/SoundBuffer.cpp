@@ -8,9 +8,9 @@
 #include "SoundLog.h"
 #include "ALShared.h"
 #include "VorbisShared.h"
-#include "System/LogOutput.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/byteorder.h"
+
 
 namespace
 {
@@ -128,24 +128,28 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<boost::uint8_t> b
 	}
 
 	if (static_cast<unsigned>(header->datalen) > buffer.size() - sizeof(WAVHeader)) {
-		LogObject(LOG_SOUND) << "WAV file " << file << " has data length " << header->datalen << " greater than actual data length " << buffer.size() - sizeof(WAVHeader);
+		LOG_L(L_WARNING,
+				"WAV file %s has data length %i greater than actual data length %i",
+				file.c_str(), header->datalen,
+				(int)(buffer.size() - sizeof(WAVHeader)));
 
-//		logOutput.Print("OpenAL: size %d\n", size);
-//		logOutput.Print("OpenAL: sizeof(WAVHeader) %d\n", sizeof(WAVHeader));
-//		logOutput.Print("OpenAL: format_tag %d\n", header->format_tag);
-//		logOutput.Print("OpenAL: channels %d\n", header->channels);
-//		logOutput.Print("OpenAL: BlockAlign %d\n", header->BlockAlign);
-//		logOutput.Print("OpenAL: BitsPerSample %d\n", header->BitsPerSample);
-//		logOutput.Print("OpenAL: totalLength %d\n", header->totalLength);
-//		logOutput.Print("OpenAL: length %d\n", header->length);
-//		logOutput.Print("OpenAL: SamplesPerSec %d\n", header->SamplesPerSec);
-//		logOutput.Print("OpenAL: AvgBytesPerSec %d\n", header->AvgBytesPerSec);
+//		LOG_L(L_WARNING, "OpenAL: size %d\n", size);
+//		LOG_L(L_WARNING, "OpenAL: sizeof(WAVHeader) %d\n", sizeof(WAVHeader));
+//		LOG_L(L_WARNING, "OpenAL: format_tag %d\n", header->format_tag);
+//		LOG_L(L_WARNING, "OpenAL: channels %d\n", header->channels);
+//		LOG_L(L_WARNING, "OpenAL: BlockAlign %d\n", header->BlockAlign);
+//		LOG_L(L_WARNING, "OpenAL: BitsPerSample %d\n", header->BitsPerSample);
+//		LOG_L(L_WARNING, "OpenAL: totalLength %d\n", header->totalLength);
+//		LOG_L(L_WARNING, "OpenAL: length %d\n", header->length);
+//		LOG_L(L_WARNING, "OpenAL: SamplesPerSec %d\n", header->SamplesPerSec);
+//		LOG_L(L_WARNING, "OpenAL: AvgBytesPerSec %d\n", header->AvgBytesPerSec);
 
 		header->datalen = boost::uint32_t(buffer.size() - sizeof(WAVHeader))&(~boost::uint32_t((header->BitsPerSample*header->channels)/8 -1));
 	}
 
-	if (!AlGenBuffer(file, format, &buffer[sizeof(WAVHeader)], header->datalen, header->SamplesPerSec))
-		LogObject(LOG_SOUND) << "Loading audio failed for " << file;
+	if (!AlGenBuffer(file, format, &buffer[sizeof(WAVHeader)], header->datalen, header->SamplesPerSec)) {
+		LOG_L(L_WARNING, "Loading audio failed for %s", file.c_str());
+	}
 
 	filename = file;
 	channels = header->channels;
@@ -170,7 +174,8 @@ bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<boost::uint8_t
 	int result = 0;
 	if ((result = ov_open_callbacks(&buf, &oggStream, NULL, 0, vorbisCallbacks)) < 0)
 	{
-		logOutput.Print("Could not open Ogg stream (reason: %s).", ErrorString(result).c_str());
+		LOG_L(L_WARNING, "Could not open Ogg stream (reason: %s).",
+				ErrorString(result).c_str());
 		return false;
 	}
 	
@@ -188,10 +193,12 @@ bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<boost::uint8_t
 	}
 	else
 	{
-		if (strict)
+		if (strict) {
 			ErrorMessageBox("SoundBuffer::LoadVorbis (%s): invalid number of channels.", file, 0);
-		else
-			LogObject(LOG_SOUND) << "File  " << file << ": invalid number of channels: " << vorbisInfo->channels;
+		} else {
+			LOG_L(L_WARNING, "File %s: invalid number of channels: %i",
+					file.c_str(), vorbisInfo->channels);
+		}
 		return false;
 	}
 
@@ -207,13 +214,15 @@ bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<boost::uint8_t
 		switch(read)
 		{
 			case OV_HOLE:
-				LogObject(LOG_SOUND) << file << ": garbage or corrupt page in stream (non-fatal)";
+				LOG_L(L_WARNING,
+						"%s: garbage or corrupt page in stream (non-fatal)",
+						file.c_str());
 				continue; // read next
 			case OV_EBADLINK:
-				LogObject(LOG_SOUND) << file << ": corrupted stream";
+				LOG_L(L_WARNING, "%s: corrupted stream", file.c_str());
 				return false; // abort
 			case OV_EINVAL:
-				LogObject(LOG_SOUND) << file << ": corrupted headers";
+				LOG_L(L_WARNING, "%s: corrupted headers", file.c_str());
 				return false; // abort
 			default:
 				break; // all good

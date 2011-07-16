@@ -111,6 +111,7 @@
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Scripts/CobEngine.h"
 #include "Sim/Units/Scripts/UnitScriptEngine.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -1527,6 +1528,8 @@ void CGame::SimFrame() {
 	playerHandler->GameFrame(gs->frameNum);
 
 	lastUpdate = SDL_GetTicks();
+
+	DumpState(-1, -1, 1);
 }
 
 
@@ -1651,41 +1654,244 @@ void CGame::UpdateUI(bool updateCam)
 
 
 
-void CGame::MakeMemDump()
+void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 {
-	std::ofstream file(gameServer ? "memdump.txt" : "memdumpclient.txt");
+	#ifdef NDEBUG
+	// must be in debug-mode for this
+	return;
+	#endif
 
-	if (file.bad() || !file.is_open()) {
-		return;
+	static std::fstream file;
+
+	static int gMinFrameNum = -1;
+	static int gMaxFrameNum = -1;
+	static int gFramePeriod =  1;
+
+	const int oldMinFrameNum = gMinFrameNum;
+	const int oldMaxFrameNum = gMaxFrameNum;
+	const int oldFramePeriod = gFramePeriod;
+
+	if (!gs->cheatEnabled) { return; }
+	// check if the range is valid
+	if (newMaxFrameNum < newMinFrameNum) { return; }
+	// adjust the bounds if the new values are valid
+	if (newMinFrameNum >= 0) { gMinFrameNum = newMinFrameNum; }
+	if (newMaxFrameNum >= 0) { gMaxFrameNum = newMaxFrameNum; }
+	if (newFramePeriod >= 1) { gFramePeriod = newFramePeriod; }
+
+	if ((gMinFrameNum != oldMinFrameNum) || (gMaxFrameNum != oldMaxFrameNum)) {
+		// bounds changed, open a new file
+		if (file.is_open()) {
+			file.flush();
+			file.close();
+		}
+
+		std::string name = (gameServer != NULL)? "Server": "Client";
+		name += "GameState-";
+		name += IntToString(gu->usRandInt());
+		name += "-[";
+		name += IntToString(gMinFrameNum);
+		name += "-";
+		name += IntToString(gMaxFrameNum);
+		name += "].txt";
+
+		file.open(name.c_str(), std::ios::out);
+
+		if (file.is_open()) {
+			file << "map name: " << gameSetup->mapName << "\n";
+			file << "mod name: " << gameSetup->modName << "\n";
+			file << "minFrame: " << gMinFrameNum << ", maxFrame: " << gMaxFrameNum << "\n";
+		}
 	}
 
-	file << "Frame " << gs->frameNum <<"\n";
-	for (std::list<CUnit*>::iterator usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); ++usi) {
-		CUnit* u = *usi;
-		file << "Unit " << u->id << "\n";
-		file << "  xpos " << u->pos.x << " ypos " << u->pos.y << " zpos " << u->pos.z << "\n";
-		file << "  heading " << u->heading << " power " << u->power << " experience " << u->experience << "\n";
-		file << " health " << u->health << "\n";
-	}
-	//! we only care about the synced projectile data here
-	for (ProjectileContainer::iterator psi = ph->syncedProjectiles.begin(); psi != ph->syncedProjectiles.end(); ++psi) {
-		CProjectile* p = *psi;
-		file << "Projectile " << p->radius << "\n";
-		file << "  xpos " << p->pos.x << " ypos " << p->pos.y << " zpos " << p->pos.z << "\n";
-		file << "  xspeed " << p->speed.x << " yspeed " << p->speed.y << " zspeed " << p->speed.z << "\n";
-	}
-	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
-		file << "LOS-map for team " << a << "\n";
-		for (int y = 0; y < gs->mapy>>modInfo.losMipLevel; ++y) {
-			file << " ";
-			for (int x = 0; x < gs->mapx >> modInfo.losMipLevel; ++x) {
-				file << loshandler->losMaps[a][y * (gs->mapx >> modInfo.losMipLevel) + x] << " ";
+	if (file.bad() || !file.is_open()) { return; }
+	// check if the CURRENT frame lies within the bounds
+	if (gs->frameNum < gMinFrameNum) { return; }
+	if (gs->frameNum > gMaxFrameNum) { return; }
+	if ((gs->frameNum % gFramePeriod) != 0) { return; }
+
+	// we only care about the synced projectile data here
+	const std::list<CUnit*>& units = uh->activeUnits;
+	const CFeatureSet& features = featureHandler->GetActiveFeatures();
+	      ProjectileContainer& projectiles = ph->syncedProjectiles;
+
+	std::list<CUnit*>::const_iterator unitsIt;
+	CFeatureSet::const_iterator featuresIt;
+	ProjectileContainer::iterator projectilesIt;
+	std::vector<LocalModelPiece*>::const_iterator piecesIt;
+	std::vector<CWeapon*>::const_iterator weaponsIt;
+
+	file << "frame: " << gs->frameNum << "\n";
+	file << "\tunits: " << units.size() << "\n";
+
+	#define DUMP_UNIT_DATA
+	#define DUMP_UNIT_PIECE_DATA
+	#define DUMP_UNIT_WEAPON_DATA
+	#define DUMP_UNIT_COMMANDAI_DATA
+	#define DUMP_UNIT_MOVETYPE_DATA
+	#define DUMP_FEATURE_DATA
+	#define DUMP_PROJECTILE_DATA
+	#define DUMP_TEAM_DATA
+	// #define DUMP_ALLYTEAM_DATA
+
+	#ifdef DUMP_UNIT_DATA
+	for (unitsIt = units.begin(); unitsIt != units.end(); ++unitsIt) {
+		const CUnit* u = *unitsIt;
+		const std::vector<CWeapon*>& weapons = u->weapons;
+		const LocalModel* lm = u->localmodel;
+		const S3DModel* om = u->localmodel->original;
+		const std::vector<LocalModelPiece*>& pieces = lm->pieces;
+		const float3& pos = u->pos;
+		const float3& xdir = u->rightdir;
+		const float3& ydir = u->updir;
+		const float3& zdir = u->frontdir;
+
+		file << "\t\tunitID: " << u->id << " (name: " << u->unitDef->name << ")\n";
+		file << "\t\t\tpos: <" << pos.x << ", " << pos.y << ", " << pos.z << "\n";
+		file << "\t\t\txdir: <" << xdir.x << ", " << xdir.y << ", " << xdir.z << "\n";
+		file << "\t\t\tydir: <" << ydir.x << ", " << ydir.y << ", " << ydir.z << "\n";
+		file << "\t\t\tzdir: <" << zdir.x << ", " << zdir.y << ", " << zdir.z << "\n";
+		file << "\t\t\theading: " << int(u->heading) << ", mapSquare: " << u->mapSquare << "\n";
+		file << "\t\t\thealth: " << u->health << ", experience: " << u->experience << "\n";
+		file << "\t\t\tisDead: " << u->isDead << ", activated: " << u->activated << "\n";
+		file << "\t\t\tinAir: " << u->inAir << ", inWater: " << u->inWater << "\n";
+		file << "\t\t\tfireState: " << u->fireState << ", moveState: " << u->moveState << "\n";
+		file << "\t\t\tmodelID: " << om->id << " (name: " << om->name << ")\n";
+		file << "\t\t\tmodelRadius: " << om->radius << ", modelHeight: " << om->height << "\n";
+		file << "\t\t\tpieces: " << pieces.size() << "\n";
+
+		#ifdef DUMP_UNIT_PIECE_DATA
+		for (piecesIt = pieces.begin(); piecesIt != pieces.end(); ++piecesIt) {
+			const LocalModelPiece* lmp = *piecesIt;
+			const S3DModelPiece* omp = lmp->original;
+			const float3& ppos = lmp->GetPosition();
+			const float3& prot = lmp->GetRotation();
+
+			file << "\t\t\t\tname: " << omp->name << " (parentName: " << omp->parentName << ")\n";
+			file << "\t\t\t\tpos: <" << ppos.x << ", " << ppos.y << ", " << ppos.z << ">\n";
+			file << "\t\t\t\trot: <" << prot.x << ", " << prot.y << ", " << prot.z << ">\n";
+			file << "\t\t\t\tvisible: " << lmp->visible << "\n";
+			file << "\n";
+		}
+		#endif
+
+		file << "\t\t\tweapons: " << weapons.size() << "\n";
+
+		#ifdef DUMP_UNIT_WEAPON_DATA
+		for (weaponsIt = weapons.begin(); weaponsIt != weapons.end(); ++weaponsIt) {
+			const CWeapon* w = *weaponsIt;
+			const float3& awp = w->weaponPos;
+			const float3& rwp = w->relWeaponPos;
+			const float3& amp = w->weaponMuzzlePos;
+			const float3& rmp = w->relWeaponMuzzlePos;
+
+			file << "\t\t\t\tweaponID: " << w->weaponNum << " (name: " << w->weaponDef->name << ")\n";
+			file << "\t\t\t\tweaponDir: <" << w->weaponDir.x << ", " << w->weaponDir.y << ", " << w->weaponDir.z << ">\n";
+			file << "\t\t\t\tabsWeaponPos: <" << awp.x << ", " << awp.y << ", " << awp.z << ">\n";
+			file << "\t\t\t\trelWeaponPos: <" << rwp.x << ", " << rwp.y << ", " << rwp.z << ">\n";
+			file << "\t\t\t\tabsWeaponMuzzlePos: <" << amp.x << ", " << amp.y << ", " << amp.z << ">\n";
+			file << "\t\t\t\trelWeaponMuzzlePos: <" << rmp.x << ", " << rmp.y << ", " << rmp.z << ">\n";
+			file << "\n";
+		}
+		#endif
+
+		#ifdef DUMP_UNIT_COMMANDAI_DATA
+		const CCommandAI* cai = u->commandAI;
+		const CCommandQueue& cq = cai->commandQue;
+
+		file << "\t\t\tcommandAI:\n";
+		file << "\t\t\t\torderTarget->id: " << ((cai->orderTarget != NULL)? cai->orderTarget->id: -1) << "\n";
+		file << "\t\t\t\tcommandQue.size(): " << cq.size() << "\n";
+
+		for (CCommandQueue::const_iterator cit = cq.begin(); cit != cq.end(); ++cit) {
+			const Command& c = *cit;
+
+			file << "\t\t\t\t\tcommandID: " << c.GetID() << "\n";
+			file << "\t\t\t\t\ttag: " << c.tag << ", options: " << c.options << "\n";
+			file << "\t\t\t\t\tparams: " << c.GetParamsCount() << "\n";
+
+			for (unsigned int n = 0; n < c.GetParamsCount(); n++) {
+				file << "\t\t\t\t\t\t" << c.GetParam(n) << "\n";
 			}
+		}
+		#endif
+
+		#ifdef DUMP_UNIT_MOVETYPE_DATA
+		const AMoveType* amt = u->moveType;
+		const float3& goalPos = amt->goalPos;
+		const float3& oldUpdatePos = amt->oldPos;
+		const float3& oldSlowUpPos = amt->oldSlowUpdatePos;
+
+		file << "\t\t\tmoveType:\n";
+		file << "\t\t\t\tgoalPos: <" << goalPos.x << ", " << goalPos.y << ", " << goalPos.z << ">\n";
+		file << "\t\t\t\toldUpdatePos: <" << oldUpdatePos.x << ", " << oldUpdatePos.y << ", " << oldUpdatePos.z << ">\n";
+		file << "\t\t\t\toldSlowUpPos: <" << oldSlowUpPos.x << ", " << oldSlowUpPos.y << ", " << oldSlowUpPos.z << ">\n";
+		file << "\t\t\t\tmaxSpeed: " << amt->maxSpeed << ", maxWantedSpeed: " << amt->maxWantedSpeed << "\n";
+		file << "\t\t\t\tpadStatus: " << amt->padStatus << ", progressState: " << amt->progressState << "\n";
+		#endif
+	}
+	#endif
+
+	file << "\tfeatures: " << features.size() << "\n";
+
+	#ifdef DUMP_FEATURE_DATA
+	for (featuresIt = features.begin(); featuresIt != features.end(); ++featuresIt) {
+		const CFeature* f = *featuresIt;
+
+		file << "\t\tfeatureID: " << f->id << " (name: " << f->def->myName << ")\n";
+		file << "\t\t\tpos: <" << f->pos.x << ", " << f->pos.y << ", " << f->pos.z << ">\n";
+		file << "\t\t\thealth: " << f->health << ", reclaimLeft: " << f->reclaimLeft << "\n";
+	}
+	#endif
+
+	file << "\tprojectiles: " << projectiles.size() << "\n";
+
+	#ifdef DUMP_PROJECTILE_DATA
+	for (projectilesIt = projectiles.begin(); projectilesIt != projectiles.end(); ++projectilesIt) {
+		const CProjectile* p = *projectilesIt;
+
+		file << "\t\tprojectileID: " << p->id << "\n";
+		file << "\t\t\tpos: <" << p->pos.x << ", " << p->pos.y << ", " << p->pos.z << ">\n";
+		file << "\t\t\tdir: <" << p->dir.x << ", " << p->dir.y << ", " << p->dir.z << ">\n";
+		file << "\t\t\tspeed: <" << p->speed.x << ", " << p->speed.y << ", " << p->speed.z << ">\n";
+		file << "\t\t\tweapon: " << p->weapon << ", piece: " << p->piece << "\n";
+		file << "\t\t\tcheckCol: " << p->checkCol << ", deleteMe: " << p->deleteMe << "\n";
+	}
+	#endif
+
+	file << "\tteams: " << teamHandler->ActiveTeams() << "\n";
+
+	#ifdef DUMP_TEAM_DATA
+	for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
+		const CTeam* t = teamHandler->Team(a);
+
+		file << "\t\tteamID: " << t->teamNum << " (controller: " << t->GetControllerName() << ")\n";
+		file << "\t\t\tmetal: " << float(t->metal) << ", energy: " << float(t->energy) << "\n";
+		file << "\t\t\tmetalPull: " << t->metalPull << ", energyPull: " << t->energyPull << "\n";
+		file << "\t\t\tmetalIncome: " << t->metalIncome << ", energyIncome: " << t->energyIncome << "\n";
+		file << "\t\t\tmetalExpense: " << t->metalExpense << ", energyExpense: " << t->energyExpense << "\n";
+	}
+	#endif
+
+	file << "\tallyteams: " << teamHandler->ActiveAllyTeams() << "\n";
+
+	#ifdef DUMP_ALLYTEAM_DATA
+	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
+		file << "\t\tallyteamID: " << a << ", LOS-map:" << "\n";
+
+		for (int y = 0; y < loshandler->losSizeY; ++y) {
+			file << " ";
+
+			for (int x = 0; x < loshandler->losSizeX; ++x) {
+				file << "\t\t\t" << loshandler->losMaps[a][y * loshandler->losSizeX + x] << " ";
+			}
+
 			file << "\n";
 		}
 	}
-	file.close();
-	logOutput.Print("Memdump finished");
+	#endif
+
+	file.flush();
 }
 
 
@@ -2096,7 +2302,7 @@ void CGame::SaveGame(const std::string& filename, bool overwrite)
 			logOutput.Print("Saving game to %s\n", filename.c_str());
 			ILoadSaveHandler* ls = ILoadSaveHandler::Create();
 			ls->mapName = gameSetup->mapName;
-			ls->modName = modInfo.filename;
+			ls->modName = gameSetup->modName;
 			ls->SaveGame(filename);
 			delete ls;
 		}

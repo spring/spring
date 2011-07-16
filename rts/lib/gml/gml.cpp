@@ -42,7 +42,7 @@
 #include "gmlcls.h"
 #include "gmlque.h"
 
-#include "LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"
 
 
@@ -226,7 +226,6 @@ boost::mutex posmutex;
 boost::mutex runitmutex;
 boost::mutex netmutex;
 boost::mutex histmutex;
-boost::mutex logmutex;
 boost::mutex timemutex;
 boost::mutex watermutex;
 boost::mutex dquemutex;
@@ -1060,12 +1059,12 @@ void gmlQueue::ExecuteDebug() {
 
 	while(p<e) {
 		if(*(int *)p!=GML_NOP)
-			logOutput.Print("GML error: Sim thread called %s",gmlFunctionNames[*(int *)p]);
+			LOG_SL("GML", L_ERROR, "Sim thread called %s", gmlFunctionNames[*(int*)p]);
 		QueueHandler(p,ptr);
 //		++procs;
 	}
 //	if(procs>1 || (procs==1 && *(int *)Read!=GML_NOP))
-//		logOutput.Print("GML error: %d OpenGL calls detected in SimFrame()",procs);
+//		LOG_SL("GML", L_ERROR, "%d OpenGL calls detected in SimFrame()", procs);
 }
 
 #include "gmlsrv.h"

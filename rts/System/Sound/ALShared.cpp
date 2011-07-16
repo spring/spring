@@ -4,19 +4,18 @@
 
 #include "SoundLog.h"
 
+#include <stddef.h>
+
 
 bool CheckError(const char* msg)
 {
 	ALenum e = alGetError();
-	if (e != AL_NO_ERROR)
-	{
-		char *alerr = (char*)alGetString(e);
-		std::string err = msg;
-		err += ": ";
-		err += (alerr != NULL) ? alerr : "Unknown error";
-
-		LogObject(LOG_SOUND) << err.c_str();
-		return false;
+	const bool hasError = (e != AL_NO_ERROR);
+	if (hasError) {
+		char* alerr = (char*)alGetString(e);
+		LOG_L(L_ERROR, "%s: %s",
+				msg, ((alerr != NULL) ? alerr : "Unknown error"));
 	}
-	return true;
+
+	return !hasError;
 }

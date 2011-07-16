@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #if 0
 ################################################################################
 file=test.cpp
@@ -24,16 +26,17 @@ exit
 //
 
 
+#include "../unitsync_api.h"
+#include "ExternalAI/Interface/SSkirmishAILibrary.h"
+#include "System/Option.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <string>
 #include <vector>
-using namespace std;
 
-#include "../unitsync_api.h"
-#include "ExternalAI/Interface/SSkirmishAILibrary.h"
-#include "System/Option.h"
+using std::string;
 
 /******************************************************************************/
 /******************************************************************************/
@@ -116,7 +119,7 @@ int main(int argc, char** argv)
 
   // map names
   printf("  MAPS\n");
-  vector<string> mapNames;
+  std::vector<string> mapNames;
   const int mapCount = GetMapCount();
   for (int i = 0; i < mapCount; i++) {
     const string mapName = GetMapName(i);

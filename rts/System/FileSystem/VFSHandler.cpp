@@ -11,36 +11,44 @@
 
 #include "ArchiveLoader.h"
 #include "IArchive.h"
-#include "System/LogOutput.h"
 #include "FileSystem.h"
 #include "ArchiveScanner.h"
 #include "System/Exceptions.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 
 
-static CLogSubsystem LOG_VFS("VFS");
-static CLogSubsystem LOG_VFS_DETAIL("VFS-detail");
+#define LOG_SECTION_VFS "VFS"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_VFS)
 
+// use the specific section for all LOG*() calls in this source file
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_VFS
 
 CVFSHandler* vfsHandler = NULL;
 
 
 CVFSHandler::CVFSHandler()
 {
-	logOutput.Print(LOG_VFS, "CVFSHandler::CVFSHandler()");
+	LOG_L(L_DEBUG, "CVFSHandler::CVFSHandler()");
 }
 
 
 bool CVFSHandler::AddArchive(const std::string& archiveName, bool override, const std::string& type)
 {
-	logOutput.Print(LOG_VFS, "AddArchive(arName = \"%s\", override = %s, type = \"%s\")",
+	LOG_L(L_DEBUG,
+			"AddArchive(arName = \"%s\", override = %s, type = \"%s\")",
 			archiveName.c_str(), override ? "true" : "false", type.c_str());
 
 	IArchive* ar = archives[archiveName];
 	if (!ar) {
 		ar = archiveLoader.OpenArchive(archiveName, type);
 		if (!ar) {
-			logOutput.Print(LOG_VFS, "AddArchive: Failed to open archive '%s'.", archiveName.c_str());
+			LOG_L(L_ERROR,
+					"AddArchive: Failed to open archive '%s'.",
+					archiveName.c_str());
 			return false;
 		}
 		archives[archiveName] = ar;
@@ -55,14 +63,14 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool override, cons
 
 		if (!override) {
 			if (files.find(name) != files.end()) {
-				logOutput.Print(LOG_VFS_DETAIL, "%s (skipping, exists)", name.c_str());
+				LOG_L(L_DEBUG, "%s (skipping, exists)", name.c_str());
 				continue;
+			} else {
+				LOG_L(L_DEBUG, "%s (adding, does not exist)", name.c_str());
 			}
-			else
-				logOutput.Print(LOG_VFS_DETAIL, "%s (adding, does not exist)", name.c_str());
-		}
-		else
-			logOutput.Print(LOG_VFS_DETAIL, "%s (overriding)", name.c_str());
+		} else {
+			LOG_L(L_DEBUG, "%s (overriding)", name.c_str());
+		} 
 
 		FileData d;
 		d.ar = ar;
@@ -88,7 +96,7 @@ bool CVFSHandler::AddArchiveWithDeps(const std::string& archiveName, bool overri
 
 bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 {
-	logOutput.Print(LOG_VFS, "RemoveArchive(archiveName = \"%s\")", archiveName.c_str());
+	LOG_L(L_DEBUG, "RemoveArchive(archiveName = \"%s\")", archiveName.c_str());
 
 	IArchive* ar = archives[archiveName];
 	if (ar == NULL) {
@@ -99,7 +107,7 @@ bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 	// remove the files loaded from the archive-to-remove
 	for (std::map<std::string, FileData>::iterator f = files.begin(); f != files.end();) {
 		if (f->second.ar == ar) {
-			logOutput.Print(LOG_VFS_DETAIL, "%s (removing)", f->first.c_str());
+			LOG_L(L_DEBUG, "%s (removing)", f->first.c_str());
 			f = set_erase(files, f);
 		} else {
 			 ++f;
@@ -113,7 +121,7 @@ bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 
 CVFSHandler::~CVFSHandler()
 {
-	logOutput.Print(LOG_VFS, "CVFSHandler::~CVFSHandler()");
+	LOG_L(L_DEBUG, "CVFSHandler::~CVFSHandler()");
 
 	for (std::map<std::string, IArchive*>::iterator i = archives.begin(); i != archives.end(); ++i) {
 		delete i->second;
@@ -141,19 +149,19 @@ const CVFSHandler::FileData* CVFSHandler::GetFileData(const std::string& normali
 
 bool CVFSHandler::LoadFile(const std::string& filePath, std::vector<boost::uint8_t>& buffer)
 {
-	logOutput.Print(LOG_VFS, "LoadFile(filePath = \"%s\", )", filePath.c_str());
+	LOG_L(L_DEBUG, "LoadFile(filePath = \"%s\", )", filePath.c_str());
 
 	const std::string normalizedPath = GetNormalizedPath(filePath);
 
 	const FileData* fileData = GetFileData(normalizedPath);
 	if (fileData == NULL) {
-		logOutput.Print(LOG_VFS, "LoadFile: File '%s' does not exist in VFS.", filePath.c_str());
+		LOG_L(L_DEBUG, "LoadFile: File '%s' does not exist in VFS.", filePath.c_str());
 		return false;
 	}
 
 	if (!fileData->ar->GetFile(normalizedPath, buffer))
 	{
-		logOutput.Print(LOG_VFS, "LoadFile: File '%s' does not exist in archive.", filePath.c_str());
+		LOG_L(L_DEBUG, "LoadFile: File '%s' does not exist in archive.", filePath.c_str());
 		return false;
 	}
 	return true;
@@ -161,7 +169,7 @@ bool CVFSHandler::LoadFile(const std::string& filePath, std::vector<boost::uint8
 
 bool CVFSHandler::FileExists(const std::string& filePath)
 {
-	logOutput.Print(LOG_VFS, "FileExists(filePath = \"%s\", )", filePath.c_str());
+	LOG_L(L_DEBUG, "FileExists(filePath = \"%s\", )", filePath.c_str());
 
 	const std::string normalizedPath = GetNormalizedPath(filePath);
 
@@ -181,7 +189,7 @@ bool CVFSHandler::FileExists(const std::string& filePath)
 
 std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir)
 {
-	logOutput.Print(LOG_VFS, "GetFilesInDir(rawDir = \"%s\")", rawDir.c_str());
+	LOG_L(L_DEBUG, "GetFilesInDir(rawDir = \"%s\")", rawDir.c_str());
 
 	std::vector<std::string> ret;
 	std::string dir = GetNormalizedPath(rawDir);
@@ -217,7 +225,7 @@ std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir)
 					&& (name.find('\\') == std::string::npos))
 			{
 				ret.push_back(name);
-				logOutput.Print(LOG_VFS_DETAIL, "%s", name.c_str());
+				LOG_L(L_DEBUG, "%s", name.c_str());
 			}
 		}
 		++filesStart;
@@ -229,7 +237,7 @@ std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir)
 
 std::vector<std::string> CVFSHandler::GetDirsInDir(const std::string& rawDir)
 {
-	logOutput.Print(LOG_VFS, "GetDirsInDir(rawDir = \"%s\")", rawDir.c_str());
+	LOG_L(L_DEBUG, "GetDirsInDir(rawDir = \"%s\")", rawDir.c_str());
 
 	std::vector<std::string> ret;
 	std::string dir = GetNormalizedPath(rawDir);
@@ -269,7 +277,7 @@ std::vector<std::string> CVFSHandler::GetDirsInDir(const std::string& rawDir)
 
 	for (std::set<std::string>::const_iterator it = dirs.begin(); it != dirs.end(); ++it) {
 		ret.push_back(*it);
-		logOutput.Print(LOG_VFS_DETAIL, "%s", it->c_str());
+		LOG_L(L_DEBUG, "%s", it->c_str());
 	}
 
 	return ret;
