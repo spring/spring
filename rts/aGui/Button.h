@@ -28,7 +28,6 @@ private:
 	bool clicked;
 
 	std::string label;
-
 };
 
 }

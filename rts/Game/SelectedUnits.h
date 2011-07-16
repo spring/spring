@@ -45,7 +45,6 @@ public:
 	void DrawCommands();
 	std::string GetTooltip();
 	void SetCommandPage(int page);
-	void SendSelection();
 	void SendCommand(const Command& c);
 	void SendCommandsToUnits(const std::vector<int>& unitIDs, const std::vector<Command>& commands);
 

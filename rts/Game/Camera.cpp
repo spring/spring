@@ -221,10 +221,13 @@ void CCamera::SetFov(float myfov)
 
 float3 CCamera::CalcPixelDir(int x, int y) const
 {
-	float dx = float(x - globalRendering->viewPosX - globalRendering->viewSizeX / 2) / globalRendering->viewSizeY * tanHalfFov * 2;
-	float dy = float(y - globalRendering->viewSizeY / 2)                             / globalRendering->viewSizeY * tanHalfFov * 2;
-	float3 dir = forward - up * dy + right * dx;
-	dir.Normalize();
+	const int vsx = std::max(1, globalRendering->viewSizeX);
+	const int vsy = std::max(1, globalRendering->viewSizeY);
+
+	const float dx = float(x - globalRendering->viewPosX - (vsx >> 1)) / vsy * (tanHalfFov * 2.0f);
+	const float dy = float(y -                             (vsy >> 1)) / vsy * (tanHalfFov * 2.0f);
+
+	const float3 dir = (forward - up * dy + right * dx).Normalize();
 	return dir;
 }
 

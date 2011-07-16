@@ -222,7 +222,6 @@ void CSm3GroundDrawer::DrawObjects(bool drawWaterReflection,bool drawUnitReflect
 	if (!(drawWaterReflection || drawUnitReflection)) {
 		groundDecals->Draw();
 		projectileDrawer->DrawGroundFlashes();
-		glDepthMask(1);
 	}
 }
 

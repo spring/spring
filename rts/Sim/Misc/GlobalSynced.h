@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef GLOBAL_UNSYNCED_H
-#define GLOBAL_UNSYNCED_H
+#ifndef _GLOBAL_SYNCED_H
+#define _GLOBAL_SYNCED_H
 
 #include <string>
 
@@ -135,7 +135,8 @@ public:
 	/**
 	* @brief god mode
 	*
-	* Whether god mode is enabled, allows all players to control all units (even specs)
+	* Whether god-mode is enabled, which allows all players (even spectators)
+	* to control all units.
 	*/
 	bool godMode;
 
@@ -202,4 +203,4 @@ public:
 	};
 };
 
-#endif //GLOBAL_UNSYNCED_H
+#endif // _GLOBAL_SYNCED_H

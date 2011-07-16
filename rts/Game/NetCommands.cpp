@@ -137,15 +137,6 @@ void CGame::ClientReadNet()
 				break;
 			}
 
-			case NETMSG_MEMDUMP: {
-				MakeMemDump();
-#ifdef TRACE_SYNC
-				tracefile.Commit();
-#endif
-				AddTraffic(-1, packetCode, dataLength);
-				break;
-			}
-
 			case NETMSG_STARTPLAYING: {
 				unsigned timeToStart = *(unsigned*)(inbuf+1);
 				if (timeToStart > 0) {
@@ -343,13 +334,14 @@ void CGame::ClientReadNet()
 
 				if (playerCheckSum == 0) {
 					logOutput.Print(
-						"[DESYNC WARNING] path-checksum for player %d (%s) is 0; non-writable cache?",
+						"[DESYNC WARNING] path-checksum for player %d (%s) is 0; non-writable PE-cache?",
 						playerNum, player->name.c_str()
 					);
 				} else {
 					if (playerCheckSum != localCheckSum) {
 						logOutput.Print(
-							"[DESYNC WARNING] path-checksum %08x for player %d (%s) does not match local checksum %08x",
+							"[DESYNC WARNING] path-checksum %08x for player %d (%s)"
+							"does not match local checksum %08x; stale PE-cache?",
 							playerCheckSum, playerNum, player->name.c_str(), localCheckSum
 						);
 					}

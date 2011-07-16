@@ -1,28 +1,16 @@
-/******************************************************************************/
-/******************************************************************************/
-//
-// file:   LuaParserAPI.cpp
-// desc:   LuaParser C interface
-// author: Dave Rodgers (aka: trepan)
-// 
-// LuaParser C interface
-//
-// Copyright (C) 2008.
-// Licensed under the terms of the GNU GPL, v2 or later
-//
-/******************************************************************************/
-/******************************************************************************/
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "StdAfx.h"
+
+#include "unitsync.h"
+
 #include "Lua/LuaParser.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/VFSHandler.h"
-#include "unitsync.h"
-#include "exportdefines.h"
+#include "System/exportdefines.h"
+
 #include <string>
 #include <vector>
-using std::string;
-using std::vector;
 
 
 /******************************************************************************/
@@ -31,10 +19,10 @@ static LuaParser* luaParser = NULL;
 
 static LuaTable rootTable;
 static LuaTable currTable;
-static vector<LuaTable> luaTables;
+static std::vector<LuaTable> luaTables;
 
-static vector<int>    intKeys;
-static vector<string> strKeys;
+static std::vector<int>         intKeys;
+static std::vector<std::string> strKeys;
 
 
 /******************************************************************************/
@@ -59,9 +47,8 @@ EXPORT(void) lpClose()
 }
 
 
-EXPORT(int) lpOpenFile(const char* filename,
-                                    const char* fileModes,
-                                    const char* accessModes)
+EXPORT(int) lpOpenFile(const char* filename, const char* fileModes,
+		const char* accessModes)
 {
 	lpClose();
 	luaParser = new LuaParser(filename, fileModes, accessModes);
@@ -69,8 +56,7 @@ EXPORT(int) lpOpenFile(const char* filename,
 }
 
 
-EXPORT(int) lpOpenSource(const char* source,
-                                      const char* accessModes)
+EXPORT(int) lpOpenSource(const char* source, const char* accessModes)
 {
 	lpClose();
 	luaParser = new LuaParser(source, accessModes);
@@ -349,15 +335,13 @@ EXPORT(float) lpGetStrKeyFloatVal(const char* key, float defVal)
 }
 
 
-EXPORT(const char*) lpGetIntKeyStrVal(int key,
-                                                   const char* defVal)
+EXPORT(const char*) lpGetIntKeyStrVal(int key, const char* defVal)
 {
 	return GetStr(currTable.GetString(key, defVal));
 }
 
 
-EXPORT(const char*) lpGetStrKeyStrVal(const char* key,
-                                                   const char* defVal)
+EXPORT(const char*) lpGetStrKeyStrVal(const char* key, const char* defVal)
 {
 	return GetStr(currTable.GetString(key, defVal));
 }

@@ -100,8 +100,8 @@ public:
 	int lastFinishCommand;
 
 	CUnit* owner;
-
 	CUnit* orderTarget;
+
 	bool targetDied;
 	bool inCommand;
 	bool selected;

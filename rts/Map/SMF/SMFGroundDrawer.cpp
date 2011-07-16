@@ -293,18 +293,17 @@ void CBFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 	float3 p(0.0f, std::min(-200.0f, map->initMinHeight - 400.0f), 0.0f);
 
 	for (int n = (camOufOfMap) ? 0 : 1; n < 4 ; ++n) {
-
 		if ((n == 1) && !camOufOfMap) {
 			//! don't render vertices under the map
 			r1 = 2 * size;
-		}else{
+		} else {
 			r1 = n*n * size;
 		}
 
-		if (n==3) {
+		if (n == 3) {
 			//! last stripe: make it thinner (looks better with fog)
 			r2 = (n+0.5)*(n+0.5) * size;
-		}else{
+		} else {
 			r2 = (n+1)*(n+1) * size;
 		}
 		for (alpha = 0.0f; (alpha - fastmath::PI2) < alphainc ; alpha+=alphainc) {
@@ -907,7 +906,6 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 
 		groundDecals->Draw();
 		projectileDrawer->DrawGroundFlashes();
-		glDepthMask(1);
 	}
 
 	viewRadius = baseViewRadius;

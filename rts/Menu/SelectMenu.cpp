@@ -29,7 +29,7 @@
 #include "Rendering/GL/myGL.h"
 #include "System/ConfigHandler.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/TdfParser.h"
 #include "System/Util.h"
 #include "System/Input/InputHandler.h"
@@ -427,7 +427,7 @@ bool SelectMenu::HandleEventSelf(const SDL_Event& ev)
 	switch (ev.type) {
 		case SDL_KEYDOWN: {
 			if (ev.key.keysym.sym == SDLK_ESCAPE) {
-				logOutput.Print("User exited");
+				LOG("User exited");
 				Quit();
 			} else if (ev.key.keysym.sym == SDLK_RETURN) {
 				Single();

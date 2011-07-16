@@ -69,6 +69,7 @@ public:
 	float crossSize;
 	float crossAlpha;
 	float crossMoveScale;
+	float cursorScale;
 
 	struct ButtonPressEvt {
 		bool pressed;
@@ -87,8 +88,6 @@ public:
 	float3 dir;
 
 	int soundMultiselID;
-
-	float cursorScale;
 
 	std::string cursorText; /// current cursor name
 	CMouseCursor* currentCursor;
