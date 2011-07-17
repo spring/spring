@@ -15,9 +15,9 @@ const std::string SelectionWidget::NoModSelect = "No game selected";
 const std::string SelectionWidget::NoMapSelect = "No map selected";
 const std::string SelectionWidget::NoScriptSelect = "No script selected";
 
-CONFIG(multistring, LastSelectedMod).defaultValue(SelectionWidget::NoModSelect);
-CONFIG(multistring, LastSelectedMap).defaultValue(SelectionWidget::NoMapSelect);
-CONFIG(multistring, LastSelectedScript).defaultValue(SelectionWidget::NoScriptSelect);
+CONFIG(std::string, LastSelectedMod).defaultValue(SelectionWidget::NoModSelect);
+CONFIG(std::string, LastSelectedMap).defaultValue(SelectionWidget::NoMapSelect);
+CONFIG(std::string, LastSelectedScript).defaultValue(SelectionWidget::NoScriptSelect);
 
 SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(parent)
 {
