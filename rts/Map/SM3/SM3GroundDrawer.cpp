@@ -16,9 +16,10 @@
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/GL/myGL.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/LogOutput.h"
 
 #include <SDL_keysym.h>
-extern unsigned char *keys;
+extern unsigned char* keys;
 
 CONFIG(int, SM3TerrainDetail).defaultValue(200);
 

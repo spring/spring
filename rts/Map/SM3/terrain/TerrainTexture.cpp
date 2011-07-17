@@ -17,6 +17,7 @@
 #include "TerrainTextureGLSL.h"
 #include "Lightcalc.h"
 #include "System/Util.h"
+#include "System/LogOutput.h"
 
 #include <SDL_keysym.h>
 extern unsigned char *keys;
