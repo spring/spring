@@ -11,6 +11,7 @@
 
 class CMetalMap;
 class CHeightLinePalette;
+class CBaseGroundTextures;
 
 class CBaseGroundDrawer
 {
@@ -64,6 +65,8 @@ public:
 	bool UpdateExtraTexture();
 	bool DrawExtraTex() const { return drawMode != drawNormal; }
 
+	CBaseGroundTextures* GetGroundTextures() { return groundTextures; }
+
 	bool wireframe;
 	bool advShading;
 
@@ -104,6 +107,7 @@ public:
 #endif
 
 	CHeightLinePalette* heightLinePal;
+	CBaseGroundTextures* groundTextures;
 };
 
 #endif // __BASE_GROUND_DRAWER__
