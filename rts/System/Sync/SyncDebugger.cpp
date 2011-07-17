@@ -21,20 +21,20 @@
 #include <string.h>
 #include <map>
 #ifndef WIN32
-/* for backtrace() function */
-# include <execinfo.h>
-# define HAVE_BACKTRACE
+	/* for backtrace() function */
+	#include <execinfo.h>
+	#define HAVE_BACKTRACE
 #elif defined __MINGW32__
-/* from backtrace.c: */
-extern "C" int backtrace (void **array, int size);
-# define HAVE_BACKTRACE
+	/* from backtrace.c: */
+	extern "C" int backtrace(void** array, int size);
+	#define HAVE_BACKTRACE
 #else
-# undef HAVE_BACKTRACE
+	#undef HAVE_BACKTRACE
 #endif
 
 
-#define LOGFILE_SERVER   "syncdebug-server.log"
-#define LOGFILE_CLIENT   "syncdebug-client.log"
+#define LOGFILE_SERVER "syncdebug-server.log"
+#define LOGFILE_CLIENT "syncdebug-client.log"
 
 
 #define LOG_SECTION_SYNC_DEBUGGER "SD"
@@ -51,35 +51,27 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SYNC_DEBUGGER)
 /**
  * @brief logging instance
  */
-CLogger logger;
+static CLogger logger;
 
 
-/**
- * @brief get sync debugger instance
- *
- * The sync debugger is a singleton (for now).
- * @return the instance
- */
 CSyncDebugger* CSyncDebugger::GetInstance() {
 	static CSyncDebugger instance;
 	return &instance;
 }
 
 
-/**
- * @brief default-noarg-constructor
- */
-CSyncDebugger::CSyncDebugger():
-		history(NULL), historybt(NULL), historyIndex(0),
-		disable_history(false), may_enable_history(false),
-		flop(0), waitingForBlockResponse(false)
+CSyncDebugger::CSyncDebugger()
+	: history(NULL)
+	, historybt(NULL)
+	, historyIndex(0)
+	, disable_history(false)
+	, may_enable_history(false)
+	, flop(0)
+	, waitingForBlockResponse(false)
 {
 }
 
 
-/**
- * @brief destructor
- */
 CSyncDebugger::~CSyncDebugger()
 {
 	delete[] history;
@@ -87,20 +79,12 @@ CSyncDebugger::~CSyncDebugger()
 }
 
 
-/**
- * @brief initialize
- *
- * Initialize the sync debugger. Pass true for a server (this requires approx.
- * 144 megabytes on 32 bit systems and 240 megabytes on 64 bit systems) and
- * false for a client (requires only 16 megabytes extra).
- * FIXME update this comment to reflect new values
- */
 void CSyncDebugger::Initialize(bool useBacktrace, unsigned numPlayers)
 {
 	delete[] history;
-	history = 0;
+	history = NULL;
 	delete[] historybt;
-	historybt = 0;
+	historybt = NULL;
 
 #ifdef HAVE_BACKTRACE
 	if (useBacktrace) {
@@ -135,13 +119,6 @@ void CSyncDebugger::Initialize(bool useBacktrace, unsigned numPlayers)
 }
 
 
-/**
- * @brief the backbone of the sync debugger
- *
- * This function adds an item to the history and appends a backtrace and an
- * operator (op) to it. p must point to the data to checksum and size must be
- * the size of that data.
- */
 void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 {
 	if (!history && !historybt)
@@ -192,12 +169,6 @@ void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 }
 
 
-/**
- * @brief output a backtrace to the log
- *
- * Writes the backtrace attached to history item # index to the log.
- * The backtrace is prefixed with prefix.
- */
 void CSyncDebugger::Backtrace(int index, const char* prefix) const
 {
 	if (historybt) {
@@ -217,11 +188,6 @@ void CSyncDebugger::Backtrace(int index, const char* prefix) const
 }
 
 
-/**
- * @brief get a checksum for a backtrace in the history
- *
- * @return a checksum for backtrace # index in the history.
- */
 unsigned CSyncDebugger::GetBacktraceChecksum(int index) const
 {
 #ifdef SD_USE_SIMPLE_CHECKSUM
@@ -236,12 +202,6 @@ unsigned CSyncDebugger::GetBacktraceChecksum(int index) const
 }
 
 
-/**
- * @brief serverside network receiver
- *
- * Plugin for the CGameServer network code in GameServer.cpp.
- * @return the number of bytes read from the network stream
- */
 bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 {
 	bool syncDebugPacket = false;
@@ -304,12 +264,6 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 }
 
 
-/**
- * @brief clientside network receiver
- *
- * Plugin for the CGame network code in Game.cpp.
- * @return the number of bytes read from the network stream
- */
 bool CSyncDebugger::ClientReceived(const unsigned char* inbuf)
 {
 	bool syncDebugPacket = false;
@@ -349,11 +303,6 @@ bool CSyncDebugger::ClientReceived(const unsigned char* inbuf)
 }
 
 
-/**
- * @brief first step after desync
- *
- * Does nothing
- */
 void CSyncDebugger::ServerTriggerSyncErrorHandling(int serverframenum)
 {
 	if (!disable_history) {
@@ -362,11 +311,6 @@ void CSyncDebugger::ServerTriggerSyncErrorHandling(int serverframenum)
 }
 
 
-/**
- * @brief second step after desync
- *
- * Called by client to send a response to a checksum request.
- */
 void CSyncDebugger::ClientSendChecksumResponse()
 {
 	const HistItem* myHistory = (historybt != NULL) ? historybt : history;
@@ -390,15 +334,6 @@ void CSyncDebugger::ClientSendChecksumResponse()
 }
 
 
-/**
- * @brief third step after desync
- *
- * Called by server after all checksum responses have been received.
- * Compares the checksumResponses and figures out which blocks are out of sync
- * (have different checksum). For these blocks requests are queued which will
- * be send next frames (one request at a time, see
- * CSyncDebugger::ServerHandlePendingBlockRequests()).
- */
 void CSyncDebugger::ServerQueueBlockRequests()
 {
 	logger.AddLine("Server: queuing block requests");
@@ -438,12 +373,6 @@ void CSyncDebugger::ServerQueueBlockRequests()
 }
 
 
-/**
- * @brief helper for the third step
- *
- * Must be called by the server in GameServer.cpp once every frame to handle
- * queued block requests (see CSyncDebugger::ServerQueueBlockRequests()).
- */
 void CSyncDebugger::ServerHandlePendingBlockRequests()
 {
 	if (!pendingBlocksToRequest.empty() && !waitingForBlockResponse) {
@@ -454,11 +383,6 @@ void CSyncDebugger::ServerHandlePendingBlockRequests()
 }
 
 
-/**
- * @brief fourth step after desync
- *
- * Called by client to send a response to a block request.
- */
 void CSyncDebugger::ClientSendBlockResponse(int block)
 {
 	std::vector<unsigned> checksums;
@@ -482,13 +406,6 @@ void CSyncDebugger::ClientSendBlockResponse(int block)
 }
 
 
-/**
- * @brief fifth step after desync
- *
- * Called each time a set of blockResponses (one for every client) is received.
- * If there are no more pendingBlocksToRequest, it triggers the sixth step,
- * ServerDumpStack().
- */
 void CSyncDebugger::ServerReceivedBlockResponses()
 {
 	pendingBlocksToRequest.pop_front();
@@ -499,15 +416,6 @@ void CSyncDebugger::ServerReceivedBlockResponses()
 }
 
 
-/**
- * @brief sixth step after desync
- *
- * Called by server once all blockResponses are received. It dumps a backtrace
- * to the logger for every checksum mismatch in the block which was out of
- * sync. The backtraces are passed to the logger in a fairly simple form
- * consisting basically only of hexadecimal addresses. The logger class
- * resolves those to function, filename & line number.
- */
 void CSyncDebugger::ServerDumpStack()
 {
 	// first calculate start iterator...
@@ -586,14 +494,7 @@ void CSyncDebugger::ServerDumpStack()
 	LOG("Server: Done!");
 }
 
-/**
- * @brief re-enable the history
- *
- * Restart the sync debugger lifecycle, so it can be used again (if the sync
- * errors are resolved somehow or you were just testing it using .fakedesync).
- *
- * Called after typing '.reset' in chat area.
- */
+
 void CSyncDebugger::Reset()
 {
 	if (may_enable_history)

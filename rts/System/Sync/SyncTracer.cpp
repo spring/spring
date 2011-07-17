@@ -1,11 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/StdAfx.h"
+#include "System/mmgr.h"
+
 #include "SyncTracer.h"
-#include <stdio.h>
 #include "Game/GlobalUnsynced.h"
 #include "System/Log/ILog.h"
-#include "System/mmgr.h"
+
+#include <cstdio>
+#include <fstream>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -13,16 +16,19 @@
 
 CSyncTracer tracefile;
 
+static const int MAX_ACTIVE = 10;
+
 bool CSyncTracer::init()
 {
 #ifdef TRACE_SYNC
-	if (logfile == 0) {
-		char c[100];
-		if (gu)
-			sprintf(c, "trace%i.log", gu->myTeam);
-		else
-			sprintf(c, "trace_early.log");
-		logfile = new std::ofstream(c);
+	if (logfile == NULL) {
+		char newLogFileName[64];
+		if (gu) {
+			sprintf(newLogFileName, "trace%i.log", gu->myTeam);
+		} else {
+			sprintf(newLogFileName, "trace_early.log");
+		}
+		logfile = new std::ofstream(newLogFileName);
 		LOG("Sync trace log: %s", newLogFileName);
 	}
 #endif
@@ -30,11 +36,11 @@ bool CSyncTracer::init()
 }
 
 CSyncTracer::CSyncTracer()
+	: file(NULL)
+	, logfile(NULL)
+	, firstActive(0)
+	, nowActive(0)
 {
-	file = 0;
-	logfile = 0;
-	nowActive = 0;
-	firstActive = 0;
 }
 
 CSyncTracer::~CSyncTracer()
@@ -48,82 +54,82 @@ CSyncTracer::~CSyncTracer()
 void CSyncTracer::Commit()
 {
 #ifdef TRACE_SYNC
-	if(file == 0){
-		char c[100];
+	if (file == NULL) {
+		char newFileName[64];
 		if (gu)
-			sprintf(c, "trace%i.log", gu->myTeam);
+			sprintf(newFileName, "trace%i.log", gu->myTeam);
 		else
-			sprintf(c, "trace_early.log");
-		file = new std::ofstream(c);
+			sprintf(newFileName, "trace_early.log");
+		file = new std::ofstream(newFileName);
 	}
 #endif
 
-	if (!file)
+	if (file == NULL)
 		return;
 
 	(*file) << traces[firstActive].c_str();
-	while(nowActive!=firstActive){
+	while (nowActive != firstActive) {
 		firstActive++;
-		if(firstActive==10)
-			firstActive=0;
+		if (firstActive == MAX_ACTIVE)
+			firstActive = 0;
 		(*file) << traces[firstActive].c_str();
 	}
-	traces[nowActive]="";
+	traces[nowActive] = "";
 }
 
 void CSyncTracer::NewInterval()
 {
 	nowActive++;
-	if(nowActive==10)
-		nowActive=0;
-	traces[nowActive]="";
+	if (nowActive == MAX_ACTIVE)
+		nowActive = 0;
+	traces[nowActive] = "";
 }
 
 void CSyncTracer::DeleteInterval()
 {
-	if(firstActive!=nowActive)
+	if (firstActive != nowActive)
 		firstActive++;
-	if(firstActive==10)
-		firstActive=0;
+	if (firstActive == MAX_ACTIVE)
+		firstActive = 0;
 }
 
-CSyncTracer& CSyncTracer::operator<<(const std::string& s)
+CSyncTracer& CSyncTracer::operator<<(const std::string& value)
 {
-	traces[nowActive] += s;
-	if (init()) (*logfile) << s;
+	traces[nowActive] += value;
+	if (init()) (*logfile) << value;
 	return *this;
 }
 
-CSyncTracer& CSyncTracer::operator<<(const char* c)
+CSyncTracer& CSyncTracer::operator<<(const char* value)
 {
-	traces[nowActive]+=c;
-	if (init()) (*logfile) << c;
+	traces[nowActive] += value;
+	if (init()) (*logfile) << value;
 	return *this;
 }
 
-CSyncTracer& CSyncTracer::operator<<(const int i)
+CSyncTracer& CSyncTracer::operator<<(const int value)
 {
-	char t[20];
-	sprintf(t,"%d",i);
-	traces[nowActive]+=t;
-	if (init()) (*logfile) << i;
+	char trace[20];
+	sprintf(trace, "%d", value);
+	traces[nowActive] += trace;
+	if (init()) (*logfile) << value;
 	return *this;
 }
 
-CSyncTracer& CSyncTracer::operator<<(const unsigned i)
+CSyncTracer& CSyncTracer::operator<<(const unsigned value)
 {
-	char t[20];
-	sprintf(t,"%d",i);
-	traces[nowActive]+=t;
-	if (init()) (*logfile) << i;
+	char trace[20];
+	sprintf(trace, "%d", value);
+	traces[nowActive] += trace;
+	if (init()) (*logfile) << value;
 	return *this;
 }
 
-CSyncTracer& CSyncTracer::operator<<(const float f)
+CSyncTracer& CSyncTracer::operator<<(const float value)
 {
-	char t[50];
-	sprintf(t,"%f",f);
-	traces[nowActive]+=t;
-	if (init()) (*logfile) << f;
+	char trace[50];
+	sprintf(trace, "%f", value);
+	traces[nowActive] += trace;
+	if (init()) (*logfile) << value;
 	return *this;
 }
