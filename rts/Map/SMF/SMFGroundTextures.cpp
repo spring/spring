@@ -359,7 +359,7 @@ bool CSMFGroundTextures::SetSquareLuaTexture(int x, int y, int textureID) {
 	} else {
 		if (square->luaTexture) {
 			// default texture will be loaded by the next
-			// DrawUpdate(when it comes into view again)
+			// DrawUpdate (when it comes into view again)
 			square->textureID = 0;
 			square->luaTexture = false;
 		}
