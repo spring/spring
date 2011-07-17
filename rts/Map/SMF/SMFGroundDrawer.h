@@ -7,7 +7,6 @@
 
 class CVertexArray;
 class CSmfReadMap;
-class CBFGroundTextures;
 
 namespace Shader {
 	struct IProgramObject;
@@ -72,8 +71,7 @@ private:
 	void UpdateCamRestraints();
 
 
-	CSmfReadMap* map;
-	CBFGroundTextures* textures;
+	CSmfReadMap* smfMap;
 
 	const int bigSquareSize;
 	const int numBigTexX;
