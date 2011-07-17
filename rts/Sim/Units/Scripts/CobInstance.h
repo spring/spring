@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __COB_INSTANCE_H__
-#define __COB_INSTANCE_H__
+#ifndef COB_INSTANCE_H
+#define COB_INSTANCE_H
 
 #include "UnitScript.h"
 
@@ -155,4 +155,4 @@ public:
 	virtual float TargetWeight(int weaponNum, const CUnit* targetUnit);
 };
 
-#endif // __COB_INSTANCE_H__
+#endif // COB_INSTANCE_H
