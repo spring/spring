@@ -128,7 +128,7 @@ void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 
 #ifdef HAVE_BACKTRACE
 	if (historybt) {
-		// dirty hack to skip the uppermost 2 or 3 (32 resp. 64 bit) frames without memcpy'ing the whole backtrace...
+		// HACK to skip the uppermost 2 or 3 (32 resp. 64 bit) frames without memcpy'ing the whole backtrace
 		const int frameskip = (8 + sizeof(void*)) / sizeof(void*);
 		historybt[historyIndex].bt_size = backtrace(historybt[historyIndex].bt - frameskip, MAX_STACK + frameskip) - frameskip;
 		historybt[historyIndex].op = op;
@@ -137,8 +137,8 @@ void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 	}
 #endif
 
-	// if data fits and has even size, it's probably a POD type, store it verbatim
-	// TODO: transfer offending blocks from clients to the server
+	// if data fits and has even size, it is probably a POD type, store it verbatim
+	// TODO transfer offending blocks from clients to the server
 	if (size == 1) {
 		h->data = *(unsigned char*)p;
 	} else if (size == sizeof(short)) {
@@ -149,7 +149,7 @@ void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 		h->data = -1;
 	}
 
-	// xor is dangerous in that every bit is independent of any other, this is bad
+	// FIXME xor is dangerous in that every bit is independent of any other, this is bad
 #ifdef SD_USE_SIMPLE_CHECKSUM
 	unsigned i = 0;
 	h->chk = 0;

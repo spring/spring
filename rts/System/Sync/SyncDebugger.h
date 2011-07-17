@@ -78,7 +78,7 @@ class CSyncDebugger {
 		 * assignments to synced variables are stored in it.
 		 *
 		 * The size of the array is HISTORY_SIZE * BLOCK_SIZE * sizeof(HistItem),
-		 * that is 2048*2048*4 = 16 MegaBytes.
+		 * that is 2048*2048*(4+4) = 32 MegaBytes.
 		 */
 		HistItem* history;
 
@@ -94,8 +94,9 @@ class CSyncDebugger {
 		 *
 		 * This makes the size of the array HISTORY_SIZE * BLOCK_SIZE *
 		 * sizeof(HistItemWithBacktrace), that is
-		 * 2048*2048*(8+(MAX_STACK+1)*sizeof(void*)) = 128 megabytes on 32 bit
-		 * systems and 224 megabytes on 64 bit systems.
+		 * 2048*2048*(4+4+4+4+((MAX_STACK+1)*sizeof(void*))) =
+		 * 160 MegaBytes on 32 bit systems and
+		 * 256 MegaBytes on 64 bit systems.
 		 */
 		HistItemWithBacktrace* historybt;
 
@@ -196,10 +197,9 @@ class CSyncDebugger {
 		 * @brief initialize
 		 *
 		 * Initialize the sync debugger.
-		 * @param useBacktrace true for a server (requires approx. 144 MegaBytes
-		 *   on 32 bit systems and 240 MegaBytes on 64 bit systems)
-		 *   and false for a client (requires only 16 MegaBytes extra)
-		 * FIXME update this comment to reflect new values
+		 * @param useBacktrace true for a server (requires approx. 160 MegaBytes
+		 *   on 32 bit systems and 256 MegaBytes on 64 bit systems)
+		 *   and false for a client (requires only 32 MegaBytes extra)
 		 */
 		void Initialize(bool useBacktrace, unsigned numPlayers);
 		/**
@@ -237,7 +237,7 @@ class CSyncDebugger {
 		 * sync errors are resolved somehow or you were just testing it using
 		 * /fakedesync).
 		 *
-		 * Called after typing '.reset' in chat area.
+		 * Called after typing '/reset' in chat area.
 		 */
 		void Reset();
 
