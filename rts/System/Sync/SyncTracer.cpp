@@ -4,7 +4,7 @@
 #include "SyncTracer.h"
 #include <stdio.h>
 #include "Game/GlobalUnsynced.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -23,7 +23,7 @@ bool CSyncTracer::init()
 		else
 			sprintf(c, "trace_early.log");
 		logfile = new std::ofstream(c);
-		logOutput.Print("Sync trace log: %s\n", c);
+		LOG("Sync trace log: %s", newLogFileName);
 	}
 #endif
 	return logfile != 0;

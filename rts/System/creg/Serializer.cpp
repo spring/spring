@@ -359,9 +359,16 @@ void COutputStreamSerializer::SavePackage (std::ostream *s, void *rootObj, Class
 		classObjects[i->classIndex]++;
 	}
 
-//	for (map<int,int>::iterator i=classObjects.begin();i!=classObjects.end();i++) {
-//		logOutput.Print("%20s %10u %10u",classRefs[i->first]->class_->name.c_str(),i->second,classSizes[classRefs[i->first]->class_]);
-//	}
+/*
+	if (LOG_IS_ENABLED(L_DEBUG)) {
+		for (std::map<int, int>::iterator i = classObjects.begin(); i != classObjects.end(); i++) {
+			LOG_L(L_DEBUG, "%20s %10u %10u",
+					classRefs[i->first]->class_->name.c_str(),
+					i->second,
+					classSizes[classRefs[i->first]->class_]);
+		}
+	}
+*/
 
 	// Write the class references
 	ph.numObjClassRefs = classRefs.size();
@@ -432,7 +439,11 @@ void COutputStreamSerializer::SavePackage (std::ostream *s, void *rootObj, Class
 	ph.SwapBytes ();
 	stream->write ((const char *)&ph, sizeof(PackageHeader));
 
-//	logOutput.Print("Number of objects saved: %d\nNumber of classes involved: %d\n", objects.size(), classRefs.size());
+/*
+	LOG_L(L_DEBUG,
+			"Number of objects saved: %d\nNumber of classes involved: %d\n",
+			objects.size(), classRefs.size());
+*/
 
 	stream->seekp (endOffset);
 	ptrToId.clear();

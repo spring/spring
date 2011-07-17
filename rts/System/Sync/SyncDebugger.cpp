@@ -7,6 +7,7 @@
 #include <boost/format.hpp>
 
 #include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/PlayerHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -34,6 +35,16 @@ extern "C" int backtrace (void **array, int size);
 
 #define LOGFILE_SERVER   "syncdebug-server.log"
 #define LOGFILE_CLIENT   "syncdebug-client.log"
+
+
+#define LOG_SECTION_SYNC_DEBUGGER "SD"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SYNC_DEBUGGER)
+
+// use the specific section for all LOG*() calls in this source file
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_SYNC_DEBUGGER
 
 
 
@@ -321,13 +332,13 @@ bool CSyncDebugger::ClientReceived(const unsigned char* inbuf)
 				ClientSendBlockResponse(*(unsigned short*)&inbuf[1]);
 				logger.AddLine("Client: block response sent for block %d", *(unsigned short*)&inbuf[1]);
 				// simple progress indication
-				logOutput.Print("[SD] Client: %d / %d", *(unsigned short*)&inbuf[3], *(unsigned short*)&inbuf[5]);
+				LOG("Client: %d / %d", *(unsigned short*)&inbuf[3], *(unsigned short*)&inbuf[5]);
 			}
 			syncDebugPacket = true;
 			break;
 		case NETMSG_SD_RESET:
 			logger.CloseSession();
-			logOutput.Print("[SD] Client: Done!");
+			LOG("Client: Done!");
 // 			disable_history = false;
 			may_enable_history = true;
 			syncDebugPacket = true;
@@ -572,7 +583,7 @@ void CSyncDebugger::ServerDumpStack()
 	net->Send(CBaseNetProtocol::Get().SendSdReset());
 	logger.AddLine("Server: Done!");
 	logger.CloseSession();
-	logOutput.Print("[SD] Server: Done!");
+	LOG("Server: Done!");
 }
 
 /**
