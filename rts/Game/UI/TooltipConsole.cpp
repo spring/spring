@@ -25,7 +25,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Util.h"
 
-CONFIG(multistring, TooltipGeometry).defaultValue("0.0 0.0 0.41 0.1");
+CONFIG(std::string, TooltipGeometry).defaultValue("0.0 0.0 0.41 0.1");
 CONFIG(bool, TooltipOutlineFont).defaultValue(true);
 
 CTooltipConsole* tooltip = NULL;

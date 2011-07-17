@@ -179,7 +179,7 @@ CONFIG(bool, ShowSpeed).defaultValue(false);
 CONFIG(bool, ShowMTInfo).defaultValue(true);
 CONFIG(int, ShowPlayerInfo).defaultValue(1);
 CONFIG(float, GuiOpacity).defaultValue(0.8f);
-CONFIG(multistring, InputTextGeo).defaultValue("");
+CONFIG(std::string, InputTextGeo).defaultValue("");
 CONFIG(bool, LuaModUICtrl).defaultValue(true);
 
 

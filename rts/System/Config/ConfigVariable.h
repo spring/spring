@@ -24,25 +24,6 @@ protected:
 };
 
 /**
- * @brief Config string that allows whitespaces.
- */
-class multistring : public std::string {
-public:
-	multistring() {}
-	multistring(const std::string& s) {
-		assign(s);
-	}
-	multistring(const char* s) {
-		assign(s);
-	}
-};
-
-inline multistring& operator>>(std::istringstream& in, multistring& str) {
-	getline(in, str);
-	return str;
-}
-
-/**
  * @brief Wraps a value and detects whether it has been assigned to.
  */
 template<typename T>
@@ -66,6 +47,29 @@ public:
 		buf >> temp;
 		return temp;
 	}
+
+protected:
+	T value;
+};
+
+/**
+ * @brief Specialization for std::string
+ *
+ * This exists because 1) converting from std::string to std::string is a no-op
+ * and 2) converting from std::string to std::string using std::istringstream
+ * will treat spaces as word boundaries, which we do not want.
+ */
+template<>
+class TypedStringConvertibleOptionalValue<std::string> : public StringConvertibleOptionalValue
+{
+	typedef std::string T;
+
+public:
+	void operator=(const T& x) { value = x; isSet = true; }
+	const T& Get() const { return value; }
+
+	std::string ToString() const { return value; }
+	static T FromString(const std::string& value) { return value; }
 
 protected:
 	T value;

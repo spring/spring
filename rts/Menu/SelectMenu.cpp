@@ -56,9 +56,9 @@ CONFIG(bool, NoHelperAIs).defaultValue(false);
 CONFIG(std::string, LastSelectedSetting).defaultValue("");
 
 #ifdef WIN32
-	CONFIG(multistring, DefaultLobby).defaultValue("springlobby.exe");
+	CONFIG(std::string, DefaultLobby).defaultValue("springlobby.exe");
 #else
-	CONFIG(multistring, DefaultLobby).defaultValue("springlobby");
+	CONFIG(std::string, DefaultLobby).defaultValue("springlobby");
 #endif
 
 class ConnectWindow : public agui::Window
