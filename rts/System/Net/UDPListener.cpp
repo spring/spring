@@ -22,6 +22,7 @@
 #include "Socket.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/errorhandler.h"
+#include "System/Util.h" // for IntToString (header only)
 
 namespace netcode
 {
@@ -89,13 +90,17 @@ bool UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::string& 
 			}
 		}
 
-		LOG("Binding UDP socket to IP %s %s Port %i",
+		if ((port < 0) || (port > 65535)) {
+			throw std::range_error("Port is out of range [0, 65535]: " + IntToString(port));
+		}
+
+		LOG("Binding UDP socket to IP %s %s port %i",
 				(addr.is_v6() ? "(v6)" : "(v4)"), addr.to_string().c_str(),
 				port);
 		(*socket)->bind(ip::udp::endpoint(addr, port));
-	} catch (std::runtime_error& e) { // includes also boost::system::system_error, as it inherits from runtime_error
+	} catch (const std::runtime_error& ex) { // includes boost::system::system_error and std::range_error
 		socket->reset();
-		errorMsg = e.what();
+		errorMsg = ex.what();
 		if (errorMsg.empty()) {
 			errorMsg = "Unknown problem";
 		}
