@@ -25,16 +25,16 @@ public:
 
 	CObject();
 	virtual ~CObject();
-	void Serialize(creg::ISerializer* s);
+	void Serialize(creg::ISerializer* ser);
 	void PostLoad();
 	virtual void Detach();
 
-	/// Request to not inform this when o dies
-	void DeleteDeathDependence(CObject* o);
-	/// Request to inform this when o dies
-	void AddDeathDependence(CObject* o);
+	/// Request to not inform this when obj dies
+	void DeleteDeathDependence(CObject* obj);
+	/// Request to inform this when obj dies
+	void AddDeathDependence(CObject* obj);
 	/// Called when an object died, that this is interested in
-	virtual void DependentDied(CObject* o);
+	virtual void DependentDied(CObject* obj);
 /*
 	// Possible future replacement for dynamic_cast (10x faster)
 	// Identifier bits for classes that have subclasses
@@ -74,7 +74,8 @@ protected:
 	bool detached;
 
 private:
-	std::list<CObject*> listeners, listening;
+	std::list<CObject*> listeners;
+	std::list<CObject*> listening;
 };
 
 #endif /* OBJECT_H */
