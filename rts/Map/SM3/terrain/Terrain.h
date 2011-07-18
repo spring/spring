@@ -3,6 +3,10 @@
 #ifndef JC_TERRAIN_H
 #define JC_TERRAIN_H
 
+#include "Map/SM3/Vector3.h"
+#include "Map/SM3/Frustum.h"
+#include "System/Matrix44f.h"
+
 class CSm3Map;
 class TdfParser;
 

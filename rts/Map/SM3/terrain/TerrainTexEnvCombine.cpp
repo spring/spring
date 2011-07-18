@@ -6,6 +6,8 @@
 
 #include "TerrainTexture.h"
 #include "TerrainTexEnvCombine.h"
+#include "Map/SM3/Plane.h"
+
 #include <assert.h>
 
 namespace terrain {

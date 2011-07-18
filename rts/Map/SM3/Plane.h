@@ -3,12 +3,11 @@
 #ifndef _PLANE_H_
 #define _PLANE_H_
 
-#include "System/float3.h"
-typedef float3 Vector3;
+#include "Vector3.h"
 
 #define EPSILON (0.01f)
 
-/** Terrain Renderer using texture splatting and geomipmapping */
+/** Terrain Renderer using texture splatting and geo-mip-mapping */
 class Plane
 {
 public:

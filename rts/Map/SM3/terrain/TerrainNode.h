@@ -4,6 +4,7 @@
 #define _TERRAIN_NODE_H_
 
 #include "TerrainVertexBuffer.h"
+#include "Map/SM3/Vector3.h"
 
 class Frustum;
 struct Sm3VisibilityNode;

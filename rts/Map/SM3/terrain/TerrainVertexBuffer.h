@@ -3,6 +3,9 @@
 #ifndef _TERRAIN_VERTEX_BUFFER_H_
 #define _TERRAIN_VERTEX_BUFFER_H_
 
+#include "TerrainBase.h"
+#include "Rendering/GL/myGL.h"
+
 namespace terrain {
 
 	class VertexBuffer
@@ -11,20 +14,20 @@ namespace terrain {
 		VertexBuffer ();
 		~VertexBuffer ();
 
-		void Init(int bytesize); /// Allocate the buffer
-		void Free(); /// Free the buffer, called by destructor
-		uint GetSize() const { return size; } /// returns the vertex buffer size in bytes
+		void Init(int byteSize); ///< Allocate the buffer
+		void Free(); ///< Free the buffer, called by destructor
+		uint GetSize() const { return size; } ///< returns the vertex buffer size in bytes
 
-		void* Bind (); /// returns the pointer that should be passed to glVertexPointer
-		void Unbind (); /// unbind it, so it can be locked again
+		void* Bind (); ///< returns the pointer that should be passed to glVertexPointer
+		void Unbind (); ///< unbind it, so it can be locked again
 
-		void* LockData(); /// returns a pointer to the data, write-only
-		void UnlockData(); /// unlocks the data, so it can be used for rendering
+		void* LockData(); ///< returns a pointer to the data, write-only
+		void UnlockData(); ///< unlocks the data, so it can be used for rendering
 		
-		static int TotalSize() { return totalBufferSize; } /// returns total buffer memory size used by all VertexBuffer instances
+		static int TotalSize() { return totalBufferSize; } ///< returns total buffer memory size used by all VertexBuffer instances
 
 	protected:
-		char *data;
+		char* data;
 		GLuint id;
 		uint size;
 		uint type;
@@ -37,7 +40,7 @@ namespace terrain {
 	public:
 		IndexBuffer ();
 	};
-};
+}
 
 #endif // _TERRAIN_VERTEX_BUFFER_H_
 
