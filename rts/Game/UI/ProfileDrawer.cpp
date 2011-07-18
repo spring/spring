@@ -18,6 +18,11 @@ void ProfileDrawer::SetEnabled(bool enable)
 	if (enable) {
 		assert(instance == NULL);
 		instance = new ProfileDrawer();
+		GML_STDMUTEX_LOCK_NOPROF(time); // SetEnabled
+		// reset peak indicators each time the drawer is restarted
+		std::map<std::string, CTimeProfiler::TimeRecord>::iterator pi;
+		for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi)
+			(*pi).second.peak = 0.0f;
 	} else {
 		ProfileDrawer* tmpInstance = instance;
 		instance = NULL;
@@ -58,8 +63,7 @@ void ProfileDrawer::Draw()
 	font->Begin();
 	for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++y) {
 #if GML_MUTEX_PROFILER
-		if (pi->first.size()<5 || pi->first.substr(pi->first.size()-5,5).compare("Mutex")!=0) { --y; continue; }
-		const float fStartY = start_y - y * 0.020f;
+		const float fStartY = start_y - y * 0.018f;
 #else
 		const float fStartY = start_y - y * 0.024f;
 #endif
@@ -72,9 +76,10 @@ void ProfileDrawer::Draw()
 		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2fs", s);
 
 		// print percent of CPU time used within the last 500ms
-		fStartX += 0.08f;
+		fStartX += 0.04f;
 		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2f%%", p);
-
+		fStartX += 0.04f;
+		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.2f%%", pi->second.newpeak?1:255, pi->second.newpeak?1:255, pi->second.peak * 100);
 		// print timer name
 		fStartX += 0.01f;
 		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM, "%s", pi->first.c_str());
