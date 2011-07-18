@@ -374,6 +374,10 @@ bool CSMFGroundTextures::GetSquareLuaTexture(int texSquareX, int texSquareY, int
 	if (texSquareX < 0 || texSquareX >= numBigTexX) { return false; }
 	if (texSquareY < 0 || texSquareY >= numBigTexY) { return false; }
 
+	texMipLevel = Clamp(texMipLevel, 0, 3);
+	texSizeX = std::min(texSizeX, mipSqSize);
+	texSizeY = std::min(texSizeY, mipSqSize);
+
 	static const GLenum ttarget = GL_TEXTURE_2D;
 	static const GLenum tformat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
 
@@ -384,9 +388,6 @@ bool CSMFGroundTextures::GetSquareLuaTexture(int texSquareX, int texSquareY, int
 	pbo.Resize(numSqBytes);
 	ExtractSquareTiles(texSquareX, texSquareY, texMipLevel, (GLint*) pbo.MapBuffer());
 	pbo.UnmapBuffer();
-
-	texSizeX = std::min(texSizeX, mipSqSize);
-	texSizeY = std::min(texSizeY, mipSqSize);
 
 	glBindTexture(ttarget, texID);
 	glCompressedTexImage2D(ttarget, 0, tformat, texSizeX, texSizeY, 0, numSqBytes, pbo.GetPtr());
