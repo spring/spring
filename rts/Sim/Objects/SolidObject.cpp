@@ -5,10 +5,10 @@
 
 #include "SolidObject.h"
 #include "Map/ReadMap.h"
-#include "System/LogOutput.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
+#include "Sim/MoveTypes/MoveInfo.h"
 #include "System/myMath.h"
 
 const float CSolidObject::DEFAULT_MASS = 100000.0f;
@@ -36,7 +36,7 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(allyteam),
 	CR_MEMBER(team),
 	CR_MEMBER(mobility),
-	// can't get creg work on templates
+	// can not get creg work on templates
 	CR_MEMBER(mapPos.x),
 	CR_MEMBER(mapPos.y),
 	CR_MEMBER(buildFacing),
@@ -47,6 +47,7 @@ CR_REG_METADATA(CSolidObject,
 
 
 CSolidObject::CSolidObject():
+	collisionVolume(NULL),
 	mass(DEFAULT_MASS),
 	blocking(false),
 	floatOnWater(false),
@@ -54,7 +55,7 @@ CSolidObject::CSolidObject():
 	blockHeightChanges(false),
 	xsize(1),
 	zsize(1),
-	height(1),
+	height(1.0f),
 	heading(0),
 	physicalState(OnGround),
 	isMoving(false),
@@ -65,13 +66,13 @@ CSolidObject::CSolidObject():
 	allyteam(0),
 	team(0),
 	mobility(NULL),
-	relMidPos(0, 0, 0),
+	relMidPos(0.0f, 0.0f, 0.0f),
 	midPos(pos),
-	curYardMap(0),
+	curYardMap(NULL),
 	buildFacing(0)
 {
 	mapPos = GetMapPos();
-	collisionVolume = NULL; //FIXME create collision volume with CWorldObject.radius?
+	// FIXME collisionVolume volume with CWorldObject.radius?
 }
 
 CSolidObject::~CSolidObject() {
@@ -86,11 +87,6 @@ CSolidObject::~CSolidObject() {
 
 
 
-/*
- * removes this object from the GroundBlockingMap
- * if it is currently marked on it, does nothing
- * otherwise
- */
 void CSolidObject::UnBlock() {
 	if (isMarkedOnBlockingMap) {
 		groundBlockingObjectMap->RemoveGroundBlockingObject(this);
@@ -98,12 +94,6 @@ void CSolidObject::UnBlock() {
 	}
 }
 
-/*
- * adds this object to the GroundBlockingMap
- * if and only if its collidable property is
- * set (blocking), else does nothing (except
- * call UnBlock())
- */
 void CSolidObject::Block() {
 	UnBlock();
 
@@ -135,21 +125,25 @@ int2 CSolidObject::GetMapPos()
 	return GetMapPos(pos);
 }
 
-int2 CSolidObject::GetMapPos(const float3 &position)
+int2 CSolidObject::GetMapPos(const float3& position)
 {
 	int2 p;
-	p.x = (int(position.x + SQUARE_SIZE / 2) / SQUARE_SIZE) - xsize / 2;
-	p.y = (int(position.z + SQUARE_SIZE / 2) / SQUARE_SIZE) - zsize / 2;
+	p.x = (int(position.x + SQUARE_SIZE / 2) / SQUARE_SIZE) - (xsize / 2);
+	p.y = (int(position.z + SQUARE_SIZE / 2) / SQUARE_SIZE) - (zsize / 2);
 
-	if (p.x < 0)
+	if (p.x < 0) {
 		p.x = 0;
-	if (p.x > gs->mapx - xsize)
+	}
+	if (p.x > gs->mapx - xsize) {
 		p.x = gs->mapx - xsize;
+	}
 
-	if (p.y < 0)
+	if (p.y < 0) {
 		p.y = 0;
-	if (p.y > gs->mapy - zsize)
+	}
+	if (p.y > gs->mapy - zsize) {
 		p.y = gs->mapy - zsize;
+	}
 
 	return p;
 }

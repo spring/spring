@@ -4,7 +4,6 @@
 #define SOLID_OBJECT_H
 
 #include "WorldObject.h"
-#include "Sim/MoveTypes/MoveInfo.h"
 #include "System/Vec2.h"
 #include "System/Sync/SyncedFloat3.h"
 #include "System/Sync/SyncedPrimitive.h"
@@ -12,6 +11,7 @@
 class CUnit;
 struct DamageArray;
 struct CollisionVolume;
+struct MoveData;
 
 
 class CSolidObject: public CWorldObject {
@@ -34,7 +34,15 @@ public:
 	virtual void Kill(const float3& impulse) {}
 	virtual int GetBlockingMapID() const { return -1; }
 
+	/**
+	 * Adds this object to the GroundBlockingMap if and only if its collidable
+	 * property is set (blocking), else does nothing (except call UnBlock()).
+	 */
 	void Block();
+	/**
+	 * Removes this object from the GroundBlockingMap if it is currently marked
+	 * on it, does nothing otherwise.
+	 */
 	void UnBlock();
 
 public:
@@ -70,9 +78,9 @@ public:
 	MoveData* mobility;							///< holds information about the mobility and movedata of this object (0 means object can not move on its own)
 
 	// Positional properties
-	SyncedFloat3 relMidPos;   ///< = (midPos - pos)
-	SyncedFloat3 midPos;      ///< This is the calculated center position of the model (pos is usually at the very bottom of the model). Used as mass center.
-	int2 mapPos;              ///< Current position on GroundBlockingMap.
+	SyncedFloat3 relMidPos;                     ///< = (midPos - pos)
+	SyncedFloat3 midPos;                        ///< This is the calculated center position of the model (pos is usually at the very bottom of the model). Used as mass center.
+	int2 mapPos;                                ///< Current position on GroundBlockingMap.
 
 	// Unsynced positional properties
 	float3 drawPos;
@@ -87,4 +95,4 @@ public:
 	static const float DEFAULT_MASS;
 };
 
-#endif
+#endif // SOLID_OBJECT_H

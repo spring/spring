@@ -32,6 +32,7 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/Wind.h"
+#include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Units/Unit.h"
