@@ -25,8 +25,6 @@
 
 namespace terrain {
 
-	using namespace std;
-
 	Config::Config()
 	{
 		cacheTextures=false;
@@ -914,7 +912,7 @@ namespace terrain {
 	void Terrain::LoadHeightMap(const TdfParser& parser, ILoadCallback* cb)
 	{
 		std::string heightMapName;
-		parser.GetDef(heightMapName, string(), "MAP\\TERRAIN\\Heightmap");
+		parser.GetDef(heightMapName, std::string(), "MAP\\TERRAIN\\Heightmap");
 
 		if (heightMapName.empty()) {
 			throw content_error("No heightmap given");
@@ -938,7 +936,7 @@ namespace terrain {
 			(GetHeightmapHeight() - 1) != atoi(parser.SGetValueDef("","MAP\\GameAreaH").c_str())) {
 			char hmdims[32];
 			SNPRINTF(hmdims, 32, "%dx%d", GetHeightmapWidth(), GetHeightmapHeight());
-			throw content_error("Map size (" + string(hmdims) + ") should be equal to GameAreaW and GameAreaH");
+			throw content_error("Map size (" + std::string(hmdims) + ") should be equal to GameAreaW and GameAreaH");
 		}
 	}
 

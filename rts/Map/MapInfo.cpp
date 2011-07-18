@@ -21,7 +21,8 @@
 #include <cassert>
 #include <cfloat>
 
-using namespace std;
+using std::max;
+using std::min;
 
 
 // Before delete, the const is const_cast'ed away. There are

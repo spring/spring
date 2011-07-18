@@ -8,7 +8,6 @@
 #include "Game/Camera.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Projectiles/Projectile.h"
-#include "System/LogOutput.h"
 #include "System/myMath.h"
 
 #include <cassert>

@@ -21,7 +21,6 @@
 #include <assert.h>
 
 namespace terrain {
-using namespace std;
 
 static void ShowInfoLog(GLhandleARB handle)
 {
@@ -39,7 +38,7 @@ static void ShowInfoLog(GLhandleARB handle)
 
 
 struct Shader {
-	list<string> texts;
+	std::list<std::string> texts;
 	GLhandleARB handle;
 
 	Shader() { handle = 0; }
@@ -50,7 +49,7 @@ struct Shader {
 		if (!fh.FileExists())
 			throw content_error("Can't load shader " + file);
 
-		string text;
+		std::string text;
 		text.resize(fh.FileSize());
 		fh.Read(&text[0], text.length());
 
@@ -61,10 +60,10 @@ struct Shader {
 	{
 		handle = glCreateShaderObjectARB(shaderType);
 
-		vector<GLint> lengths(texts.size());
-		vector<const GLcharARB*> strings(texts.size());
+		std::vector<GLint> lengths(texts.size());
+		std::vector<const GLcharARB*> strings(texts.size());
 		int index=0;
-		for (list<string>::iterator i=texts.begin(); i != texts.end(); ++i, index++) {
+		for (std::list<std::string>::iterator i = texts.begin(); i != texts.end(); ++i, index++) {
 			lengths[index] = i->length();
 			strings[index] = i->c_str();
 		}
@@ -83,7 +82,7 @@ struct Shader {
 			WriteToFile("sm3_failed_shader.glsl");
 			ShowInfoLog(handle);
 
-			string errMsg = "Failed to build ";
+			std::string errMsg = "Failed to build ";
 			throw std::runtime_error (errMsg + (shaderType == GL_VERTEX_SHADER_ARB ? "vertex shader" : "fragment shader"));
 		}
 	}
@@ -103,7 +102,7 @@ struct Shader {
 		FILE *f = fopen(n.c_str(), "w");
 
 		if(f) {
-			for (list<string>::iterator i=texts.begin();i!=texts.end();++i)
+			for (std::list<std::string>::iterator i=texts.begin();i!=texts.end();++i)
 				fputs(i->c_str(), f);
 			fclose(f);
 		}
@@ -178,7 +177,7 @@ struct ShaderBuilder
 	NodeGLSLShader* EndPass(ShaderDef* sd, const std::string &operations, uint passIndex=0);
 	void BuildFragmentShader(NodeGLSLShader *ns, uint passIndex, const std::string& operations, ShaderDef* sd);
 	void BuildVertexShader(NodeGLSLShader *ns, uint passIndex, ShaderDef *sd);
-	bool ProcessStage(vector<ShaderDef::Stage>& stages, uint &index, std::string& opstr);
+	bool ProcessStage(std::vector<ShaderDef::Stage>& stages, uint &index, std::string& opstr);
 	void Build(ShaderDef* shaderDef);
 	void AddPPDefines(ShaderDef *sd, Shader& shader, uint passIndex);
 
@@ -213,7 +212,7 @@ struct ShaderBuilder
 		GLint units;
 	};
 	// Calculate the texturing requirements for the specified stages
-	TexReq CalcStagesTexReq(const vector<ShaderDef::Stage>& stages, uint startIndex) const;
+	TexReq CalcStagesTexReq(const std::vector<ShaderDef::Stage>& stages, uint startIndex) const;
 };
 
 
@@ -291,7 +290,7 @@ ShaderBuilder::ShadingMethod  ShaderBuilder::CalculateShadingMethod(ShaderDef* s
 
 
 
-ShaderBuilder::TexReq  ShaderBuilder::CalcStagesTexReq(const vector<ShaderDef::Stage>& stages, uint index) const {
+ShaderBuilder::TexReq  ShaderBuilder::CalcStagesTexReq(const std::vector<ShaderDef::Stage>& stages, uint index) const {
 	TextureUsage usage;
 
 	while (index < stages.size()) {
@@ -367,7 +366,7 @@ NodeGLSLShader* ShaderBuilder::EndPass(ShaderDef* sd, const std::string &operati
 		d_trace ("Failed to link shaders. Showing info log:\n");
 		lastFragmentShader.WriteToFile("sm3_fragmentshader.txt");
 		lastVertexShader.WriteToFile("sm3_vertexshader.txt");
-		ShowInfoLog (nodeShader->program);
+		ShowInfoLog(nodeShader->program);
 		throw std::runtime_error("Failed to link shaders");
 	}
 
@@ -438,7 +437,7 @@ void ShaderBuilder::AddPPDefines(ShaderDef* sd, Shader& shader, uint passIndex)
 	shader.AddFile("shaders/GLSL/terrainCommon.glsl");
 	char specularExponentStr[20];
 	SNPRINTF(specularExponentStr, 20, "%5.3f", sd->specularExponent);
-	shader.texts.push_back(string("const float specularExponent = ") + specularExponentStr + ";\n");
+	shader.texts.push_back(std::string("const float specularExponent = ") + specularExponentStr + ";\n");
 }
 
 
@@ -448,7 +447,7 @@ void ShaderBuilder::BuildFragmentShader(NodeGLSLShader* ns, uint passIndex, cons
 	Shader& fragmentShader = lastFragmentShader;
 
 	// insert texture samplers
-	string textureSamplers;
+	std::string textureSamplers;
 	for (size_t a = 0; a < ns->texUnits.size(); a++) {
 		BaseTexture *tex = ns->texUnits[a];
 		if (tex->IsRect())
@@ -462,7 +461,7 @@ void ShaderBuilder::BuildFragmentShader(NodeGLSLShader* ns, uint passIndex, cons
 
 	fragmentShader.AddFile("shaders/GLSL/terrainFragmentShader.glsl");
 
-	string gentxt = "vec4 CalculateColor()  { vec4 color; float curalpha; \n" + operations;
+	std::string gentxt = "vec4 CalculateColor()  { vec4 color; float curalpha; \n" + operations;
 
 	switch (shadingMethod) {
 		case SM_DiffuseSP:
@@ -518,7 +517,7 @@ void ShaderBuilder::BuildVertexShader(NodeGLSLShader* ns, uint passIndex, Shader
 
 
 
-bool ShaderBuilder::ProcessStage(vector<ShaderDef::Stage>& stages, uint &index, std::string& opstr)
+bool ShaderBuilder::ProcessStage(std::vector<ShaderDef::Stage>& stages, uint &index, std::string& opstr)
 {
 	ShaderDef::Stage& stage = stages[index];
 	BaseTexture *texture = stage.source;
@@ -570,7 +569,7 @@ void ShaderBuilder::Build(ShaderDef* shaderDef) {
 
 	switch (shadingMethod) {
 		case SM_DiffuseSP: {
-			string opstr;
+			std::string opstr;
 			for (uint stage = 0; stage < shaderDef->stages.size(); )
 				ProcessStage(shaderDef->stages, stage, opstr);
 			EndPass(shaderDef, opstr);
@@ -578,7 +577,7 @@ void ShaderBuilder::Build(ShaderDef* shaderDef) {
 		}
 
 		case SM_DiffuseBumpmapSP: {
-			string diffusecode, bumpmapcode;
+			std::string diffusecode, bumpmapcode;
 
 			for (uint stage = 0; stage < shaderDef->stages.size(); )
 				ProcessStage(shaderDef->stages, stage, diffusecode);
@@ -591,7 +590,7 @@ void ShaderBuilder::Build(ShaderDef* shaderDef) {
 		}
 
 		case SM_DiffuseBumpmapMP: {
-			string diffusecode, bumpmapcode;
+			std::string diffusecode, bumpmapcode;
 
 			for (uint stage = 0; stage < shaderDef->stages.size(); )
 				ProcessStage(shaderDef->stages, stage, diffusecode);
