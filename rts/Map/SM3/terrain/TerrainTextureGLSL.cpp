@@ -47,7 +47,7 @@ struct Shader {
 	{
 		CFileHandler fh(file);
 		if (!fh.FileExists())
-			throw content_error("Can't load shader " + file);
+			throw content_error("Can not load shader " + file);
 
 		std::string text;
 		text.resize(fh.FileSize());
@@ -62,7 +62,7 @@ struct Shader {
 
 		std::vector<GLint> lengths(texts.size());
 		std::vector<const GLcharARB*> strings(texts.size());
-		int index=0;
+		int index = 0;
 		for (std::list<std::string>::iterator i = texts.begin(); i != texts.end(); ++i, index++) {
 			lengths[index] = i->length();
 			strings[index] = i->c_str();
@@ -83,25 +83,28 @@ struct Shader {
 			ShowInfoLog(handle);
 
 			std::string errMsg = "Failed to build ";
-			throw std::runtime_error (errMsg + (shaderType == GL_VERTEX_SHADER_ARB ? "vertex shader" : "fragment shader"));
+			throw std::runtime_error(errMsg + (shaderType == GL_VERTEX_SHADER_ARB ? "vertex shader" : "fragment shader"));
 		}
 	}
 	void DebugOutput(GLenum shaderType)
 	{
 		char fn[20];
-		static int fpc=0;
-		static int vpc=0;
-		if (shaderType == GL_FRAGMENT_SHADER_ARB) sprintf (fn, "shader%dfp.txt", fpc++);
-		else sprintf (fn, "shader%dvp.txt", vpc++);
+		static int fpc = 0;
+		static int vpc = 0;
+		if (shaderType == GL_FRAGMENT_SHADER_ARB) {
+			sprintf(fn, "shader%dfp.txt", fpc++);
+		} else {
+			sprintf(fn, "shader%dvp.txt", vpc++);
+		}
 		WriteToFile(fn);
 	}
-	void WriteToFile(const char *fn)
+	void WriteToFile(const char* fn)
 	{
 		std::string n = filesystem.LocateFile(fn, FileSystem::WRITE);
 
-		FILE *f = fopen(n.c_str(), "w");
+		FILE* f = fopen(n.c_str(), "w");
 
-		if(f) {
+		if (f) {
 			for (std::list<std::string>::iterator i=texts.begin();i!=texts.end();++i)
 				fputs(i->c_str(), f);
 			fclose(f);
@@ -166,20 +169,20 @@ public:
 
 struct ShaderBuilder
 {
-	RenderSetup *renderSetup;
+	RenderSetup* renderSetup;
 	TextureUsage texUsage;
 	BufferTexture* buffer;
 	bool ShadowMapping() const { return renderSetup->shaderDef.useShadowMapping; }
 	Shader lastFragmentShader, lastVertexShader; // for debugging
 
-	ShaderBuilder(RenderSetup *rs);
-	std::string GenTextureRead (int tu, int tc);
+	ShaderBuilder(RenderSetup* rs);
+	std::string GenTextureRead(int tu, int tc);
 	NodeGLSLShader* EndPass(ShaderDef* sd, const std::string &operations, uint passIndex=0);
-	void BuildFragmentShader(NodeGLSLShader *ns, uint passIndex, const std::string& operations, ShaderDef* sd);
-	void BuildVertexShader(NodeGLSLShader *ns, uint passIndex, ShaderDef *sd);
+	void BuildFragmentShader(NodeGLSLShader* ns, uint passIndex, const std::string& operations, ShaderDef* sd);
+	void BuildVertexShader(NodeGLSLShader* ns, uint passIndex, ShaderDef* sd);
 	bool ProcessStage(std::vector<ShaderDef::Stage>& stages, uint &index, std::string& opstr);
 	void Build(ShaderDef* shaderDef);
-	void AddPPDefines(ShaderDef *sd, Shader& shader, uint passIndex);
+	void AddPPDefines(ShaderDef* sd, Shader& shader, uint passIndex);
 
 	enum ShadingMethod {
 		SM_DiffuseSP, // lit diffuse single pass
@@ -303,7 +306,7 @@ ShaderBuilder::TexReq  ShaderBuilder::CalcStagesTexReq(const std::vector<ShaderD
 
 		if (stage.operation == ShaderDef::Alpha) {
 			// next operation is blend (alpha is autoinserted before blend)
-			assert (index < stages.size()-1 && stages[index+1].operation == ShaderDef::Blend);
+			assert(index < stages.size()-1 && stages[index+1].operation == ShaderDef::Blend);
 			const ShaderDef::Stage& blendStage = stages[index+1];
 
 			usage.AddTextureRead(-1, blendStage.source);
@@ -449,7 +452,7 @@ void ShaderBuilder::BuildFragmentShader(NodeGLSLShader* ns, uint passIndex, cons
 	// insert texture samplers
 	std::string textureSamplers;
 	for (size_t a = 0; a < ns->texUnits.size(); a++) {
-		BaseTexture *tex = ns->texUnits[a];
+		BaseTexture* tex = ns->texUnits[a];
 		if (tex->IsRect())
 			textureSamplers += "uniform sampler2DRect " + tex->name + ";\n";
 		else
@@ -520,7 +523,7 @@ void ShaderBuilder::BuildVertexShader(NodeGLSLShader* ns, uint passIndex, Shader
 bool ShaderBuilder::ProcessStage(std::vector<ShaderDef::Stage>& stages, uint &index, std::string& opstr)
 {
 	ShaderDef::Stage& stage = stages[index];
-	BaseTexture *texture = stage.source;
+	BaseTexture* texture = stage.source;
 
 	TexReq hwmax;
 	hwmax.GetFromGL();
@@ -529,7 +532,8 @@ bool ShaderBuilder::ProcessStage(std::vector<ShaderDef::Stage>& stages, uint &in
 	int tu = tmpUsage.AddTextureRead(hwmax.units, texture);
 	int tc = tmpUsage.AddTextureCoordRead(hwmax.coords, texture);
 
-	assert (tu >= 0 && tc >= 0);
+	assert(tu >= 0);
+	assert(tc >= 0);
 
 	if (index == 0) {  // replace
 		texUsage = tmpUsage;
@@ -537,13 +541,15 @@ bool ShaderBuilder::ProcessStage(std::vector<ShaderDef::Stage>& stages, uint &in
 	}
 	else if(stage.operation == ShaderDef::Alpha) {
 		// next operation is blend (alpha is autoinserted before blend)
-		assert (index < stages.size()-1 && stages[index+1].operation == ShaderDef::Blend);
+		assert(index < (stages.size() - 1));
+		assert(stages[index + 1].operation == ShaderDef::Blend);
 		ShaderDef::Stage& blendStage = stages[index+1];
 
 		int blendTU = tmpUsage.AddTextureRead(hwmax.units, blendStage.source);
 		int blendTC = tmpUsage.AddTextureCoordRead(hwmax.coords, blendStage.source);
 
-		assert (blendTU >= 0 && blendTC >= 0);
+		assert(blendTU >= 0);
+		assert(blendTC >= 0);
 
 		index++;
 
@@ -650,7 +656,7 @@ NodeGLSLShader::~NodeGLSLShader()
 
 
 
-void NodeGLSLShader::BindTSM (Vector3* buf, uint vertexSize)
+void NodeGLSLShader::BindTSM(Vector3* buf, uint vertexSize)
 {
 // according to the GL_ARB_vertex_shader spec:
 // The VertexAttrib*ARB entry points defined earlier can also be used to
@@ -667,7 +673,7 @@ void NodeGLSLShader::BindTSM (Vector3* buf, uint vertexSize)
 	}
 }
 
-void NodeGLSLShader::UnbindTSM ()
+void NodeGLSLShader::UnbindTSM()
 {
 	if (tsmAttrib >= 0) {
 		for (int a=0;a<3;a++)
@@ -740,12 +746,12 @@ void NodeGLSLShader::Cleanup() {
 
 
 
-std::string NodeGLSLShader::GetDebugDesc ()
+std::string NodeGLSLShader::GetDebugDesc()
 {
 	return debugstr;
 }
 
-uint NodeGLSLShader::GetVertexDataRequirements ()
+uint NodeGLSLShader::GetVertexDataRequirements()
 {
 	return vertBufReq;
 }
@@ -882,23 +888,23 @@ void GLSLShaderHandler::BuildNodeSetup(ShaderDef* shaderDef, RenderSetup* render
 
 int GLSLShaderHandler::MaxTextureUnits() {
 	GLint n;
-	glGetIntegerv (GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &n);
+	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &n);
 	return n;
 }
 
 int GLSLShaderHandler::MaxTextureCoords() {
 	GLint n;
-	glGetIntegerv (GL_MAX_TEXTURE_COORDS_ARB, &n);
+	glGetIntegerv(GL_MAX_TEXTURE_COORDS_ARB, &n);
 	return n;
 }
 
 
 
-SimpleCopyShader::SimpleCopyShader(BufferTexture *buf)
+SimpleCopyShader::SimpleCopyShader(BufferTexture* buf)
 {
 	Shader fs, vs;
 
-	if(buf->IsRect())
+	if (buf->IsRect())
 		fs.texts.push_back("#define UseTextureRECT");
 	fs.AddFile("shaders/GLSL/terrainSimpleCopyFS.glsl");
 	fs.Build(GL_FRAGMENT_SHADER_ARB);
@@ -969,5 +975,4 @@ void SimpleCopyShader::Cleanup()
 	glUseProgramObjectARB(0);
 }
 
-
-};
+}

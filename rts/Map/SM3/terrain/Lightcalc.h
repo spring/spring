@@ -5,28 +5,30 @@
 
 namespace terrain
 {
-	// The lightmap contains a shading texture to apply the lights on the terrain,
-	// and a shadow texture for unit shadowing
-
+	/**
+	 * The lightmap contains a shading texture to apply the lights on the
+	 * terrain, and a shadow texture for unit shadowing.
+	 */
 	class Lightmap : public BaseTexture
 	{
 	public:
-		Lightmap (Heightmap *hm, int level, int shadowLevelDif, LightingInfo *li);
-		~Lightmap ();
+		Lightmap(Heightmap* hm, int level, int shadowLevelDif, LightingInfo* li);
+		~Lightmap();
 
 		uint GetShadowTexture() const { return shadowTex; } 
 		uint GetShadingTexture() const { return shadingTex; }
 
 	protected:
-		void CalculateShadows (uchar *dst, int dstw, float lightX,float lightY, float lightH, float *centerhm, int hmw, int hmscale, bool directional);
+		void CalculateShadows(uchar* dst, int dstw, float lightX, float lightY, float lightH, float* centerhm, int hmw, int hmscale, bool directional);
 
-		GLuint shadowTex, shadingTex;
+		GLuint shadowTex;
+		GLuint shadingTex;
 	};
 
 	class Shadowmap : public BaseTexture
 	{
 	public:
-		Shadowmap (Heightmap *hm, int level, LightingInfo *li);
+		Shadowmap (Heightmap* hm, int level, LightingInfo* li);
 	};
 };
 
