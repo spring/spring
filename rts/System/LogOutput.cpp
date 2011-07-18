@@ -19,7 +19,7 @@
 #include "System/float3.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameVersion.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileSystemHandler.h"
 #include "System/Log/DefaultFilter.h"
 #include "System/Log/Level.h"
@@ -33,6 +33,9 @@ using std::vector;
 
 /******************************************************************************/
 /******************************************************************************/
+
+CONFIG(std::string, RotateLogFiles).defaultValue("auto");
+CONFIG(std::string, LogSubsystems).defaultValue("");
 
 CLogSubsystem* CLogSubsystem::linkedList;
 static CLogSubsystem LOG_DEFAULT("", true);
@@ -103,7 +106,7 @@ CLogOutput::CLogOutput()
 	bool doRotateLogFiles = false;
 	std::string rotatePolicy = "auto";
 	if (configHandler != NULL) {
-		rotatePolicy = configHandler->GetString("RotateLogFiles", "auto");
+		rotatePolicy = configHandler->GetString("RotateLogFiles");
 	}
 	if (rotatePolicy == "always") {
 		doRotateLogFiles = true;
@@ -195,7 +198,7 @@ void CLogOutput::RotateLogFile() const
 			const int moveError = rename(filePath.c_str(), archivedLogFile.c_str());
 			if (moveError != 0) {
 				// no log here yet
-				std::cout << "Failed rotating the log file" << std::endl;
+				std::cerr << "Failed rotating the log file" << std::endl;
 			}
 		}
 	}
@@ -266,7 +269,7 @@ void CLogOutput::InitializeSubsystems()
 	// and the ones specified in the configuration file.
 	// configHandler cannot be accessed here in unitsync since it may not exist.
 #ifndef UNITSYNC
-	std::string subsystems = "," + StringToLower(configHandler->GetString("LogSubsystems", "")) + ",";
+	std::string subsystems = "," + StringToLower(configHandler->GetString("LogSubsystems")) + ",";
 #else
 	#ifdef DEBUG
 	// unitsync logging in debug mode always on
@@ -365,7 +368,7 @@ void CLogOutput::Output(const CLogSubsystem& subsystem, const std::string& str)
 	msg += str;
 
 	if (!initialized) {
-		ToStdout(subsystem, msg);
+		ToStderr(subsystem, msg);
 		preInitLog().push_back(PreInitLogEntry(&subsystem, msg));
 		return;
 	}
@@ -390,7 +393,7 @@ void CLogOutput::Output(const CLogSubsystem& subsystem, const std::string& str)
 #endif // _MSC_VER
 
 	ToFile(subsystem, msg);
-	ToStdout(subsystem, msg);
+	ToStderr(subsystem, msg);
 }
 
 
@@ -491,7 +494,7 @@ CLogSubsystem& CLogOutput::GetDefaultLogSubsystem()
 
 
 
-void CLogOutput::ToStdout(const CLogSubsystem& subsystem, const std::string& message)
+void CLogOutput::ToStderr(const CLogSubsystem& subsystem, const std::string& message)
 {
 	if (message.empty()) {
 		return;
@@ -499,14 +502,14 @@ void CLogOutput::ToStdout(const CLogSubsystem& subsystem, const std::string& mes
 
 	const bool newline = (message.at(message.size() -1) != '\n');
 
-	std::cout << message;
+	std::cerr << message;
 	if (newline)
-		std::cout << std::endl;
+		std::cerr << std::endl;
 #ifdef DEBUG
 	// flushing may be bad for in particular dedicated server performance
 	// crash handler should cleanly close the log file usually anyway
 	else
-		std::cout.flush();
+		std::cerr.flush();
 #endif
 }
 

@@ -11,6 +11,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "System/bitops.h"
 #include "System/Util.h"
+#include "System/LogOutput.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
@@ -28,9 +29,9 @@ static void ShowInfoLog(GLhandleARB handle)
 	GLint infoLogLen;
 	GLsizei actualLength;
 	glGetObjectParameterivARB(handle, GL_OBJECT_INFO_LOG_LENGTH_ARB, &infoLogLen);
-	char *infoLog = new char[infoLogLen];
+	char* infoLog = new char[infoLogLen];
 	glGetInfoLogARB(handle, infoLogLen, &actualLength, infoLog);
-	d_puts(infoLog);
+	logOutput.Print("%s", infoLog);
 	delete[] infoLog;
 }
 

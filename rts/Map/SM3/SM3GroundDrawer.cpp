@@ -15,11 +15,13 @@
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/GL/myGL.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
+#include "System/LogOutput.h"
 
 #include <SDL_keysym.h>
-extern unsigned char *keys;
+extern unsigned char* keys;
 
+CONFIG(int, SM3TerrainDetail).defaultValue(200);
 
 CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap *m)
 {
@@ -27,7 +29,7 @@ CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap *m)
 	tr = map->renderer;
 	rc = tr->AddRenderContext (&cam, true);
 
-	tr->config.detailMod = configHandler->Get("SM3TerrainDetail", 200) / 100.0f;
+	tr->config.detailMod = configHandler->GetInt("SM3TerrainDetail") / 100.0f;
 
 	if (shadowHandler->shadowsSupported) {
 		shadowrc = tr->AddRenderContext(&shadowCam,false);

@@ -10,12 +10,14 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileHandler.h"
 
 #undef CreateDirectory
+
+CONFIG(int, ScreenshotCounter).defaultValue(0);
 
 struct FunctionArgs
 {
@@ -37,7 +39,7 @@ public:
 			delete myThread;
 		}
 	};
-	
+
 	void AddTask(FunctionArgs arg)
 	{
 		{
@@ -45,14 +47,14 @@ public:
 			tasks.push_back(arg);
 			Update();
 		}
-		
+
 		if (!myThread)
 		{
 			finished = false;
 			myThread = new boost::thread(boost::bind(&SaverThread::SaveStuff, this));
 		}
 	};
-	
+
 	void Update()
 	{
 		if (finished && myThread)
@@ -63,7 +65,7 @@ public:
 			finished = false;
 		}
 	};
-	
+
 private:
 	bool GetTask(FunctionArgs& args)
 	{
@@ -79,7 +81,7 @@ private:
 			return false;
 		}
 	}
-	
+
 	void SaveStuff()
 	{
 		FunctionArgs args;
@@ -93,7 +95,7 @@ private:
 		}
 		finished = true;
 	};
-	
+
 	boost::mutex myMutex;
 	boost::thread* myThread;
 	volatile bool finished;
@@ -115,8 +117,8 @@ void TakeScreenshot(std::string type)
 
 		if (args.x % 4)
 			args.x += (4 - args.x % 4);
-		
-		for (int a = configHandler->Get("ScreenshotCounter", 0); a <= 99999; ++a)
+
+		for (int a = configHandler->GetInt("ScreenshotCounter"); a <= 99999; ++a)
 		{
 			std::ostringstream fname;
 			fname << "screenshots/screen" << std::setfill('0') << std::setw(5) << a << '.' << type;

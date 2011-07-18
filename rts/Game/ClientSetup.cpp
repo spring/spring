@@ -5,7 +5,7 @@
 #include "System/TdfParser.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Util.h"
 #ifdef DEDICATED
 #include "System/Platform/errorhandler.h"
@@ -52,17 +52,20 @@ void ClientSetup::Init(const std::string& setup)
 #endif
 
 	std::string sourceport, autohostip, autohostport;
-	if (file.SGetValue(sourceport, "GAME\\SourcePort"))
-		configHandler->SetOverlay("SourcePort", sourceport);
-	if (file.SGetValue(autohostip, "GAME\\AutohostIP"))
-		configHandler->SetOverlay("AutohostIP", autohostip);
-	if (file.SGetValue(autohostport, "GAME\\AutohostPort"))
-		configHandler->SetOverlay("AutohostPort", autohostport);
+	if (file.SGetValue(sourceport, "GAME\\SourcePort")) {
+		configHandler->SetString("SourcePort", sourceport, true);
+	}
+	if (file.SGetValue(autohostip, "GAME\\AutohostIP")) {
+		configHandler->SetString("AutohostIP", autohostip, true);
+	}
+	if (file.SGetValue(autohostport, "GAME\\AutohostPort")) {
+		configHandler->SetString("AutohostPort", autohostport, true);
+	}
 
-	if (file.SectionExist("OPTIONS"))
-	{
+	if (file.SectionExist("OPTIONS")) {
 		const std::map<std::string, std::string>& options = file.GetAllValues("OPTIONS");
-		for (std::map<std::string,std::string>::const_iterator it = options.begin(); it != options.end(); ++it)
-			configHandler->SetOverlay(it->first, it->second);
+		for (std::map<std::string,std::string>::const_iterator it = options.begin(); it != options.end(); ++it) {
+			configHandler->SetString(it->first, it->second, true);
+		}
 	}
 }

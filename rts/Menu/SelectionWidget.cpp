@@ -8,13 +8,16 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Exceptions.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "ScriptHandler.h"
-
 
 const std::string SelectionWidget::NoModSelect = "No game selected";
 const std::string SelectionWidget::NoMapSelect = "No map selected";
 const std::string SelectionWidget::NoScriptSelect = "No script selected";
+
+CONFIG(std::string, LastSelectedMod).defaultValue(SelectionWidget::NoModSelect);
+CONFIG(std::string, LastSelectedMap).defaultValue(SelectionWidget::NoMapSelect);
+CONFIG(std::string, LastSelectedScript).defaultValue(SelectionWidget::NoScriptSelect);
 
 SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(parent)
 {
@@ -28,7 +31,7 @@ SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(pa
 	mod = new agui::Button("Select", modL);
 	mod->Clicked.connect(boost::bind(&SelectionWidget::ShowModList, this));
 	mod->SetSize(0.1f, 0.00f, true);
-	userMod = configHandler->GetString("LastSelectedMod", NoModSelect);
+	userMod = configHandler->GetString("LastSelectedMod");
 	if (archiveScanner->GetSingleArchiveChecksum(archiveScanner->ArchiveFromName(userMod)) == 0)
 		userMod = NoModSelect;
 	modT = new agui::TextElement(userMod, modL);
@@ -36,7 +39,7 @@ SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(pa
 	map = new agui::Button("Select", mapL);
 	map->Clicked.connect(boost::bind(&SelectionWidget::ShowMapList, this));
 	map->SetSize(0.1f, 0.00f, true);
-	userMap = configHandler->GetString("LastSelectedMap", NoMapSelect);
+	userMap = configHandler->GetString("LastSelectedMap");
 	if (archiveScanner->GetSingleArchiveChecksum(archiveScanner->ArchiveFromName(userMap)) == 0)
 		userMap = NoMapSelect;
 	mapT = new agui::TextElement(userMap, mapL);
@@ -44,7 +47,7 @@ SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(pa
 	script = new agui::Button("Select", scriptL);
 	script->Clicked.connect(boost::bind(&SelectionWidget::ShowScriptList, this));
 	script->SetSize(0.1f, 0.00f, true);
-	userScript = configHandler->GetString("LastSelectedScript", NoScriptSelect);
+	userScript = configHandler->GetString("LastSelectedScript");
 	scriptT = new agui::TextElement(userScript, scriptL);
 }
 

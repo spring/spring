@@ -8,14 +8,15 @@
 #include <boost/bind.hpp>
 
 #include "UpdaterWindow.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "Game/GameVersion.h"
 #include "aGui/Gui.h"
 
+CONFIG(std::string, LobbyServer).defaultValue("taspringmaster.clan-sy.com");
 
 LobbyConnection::LobbyConnection() : upwin(NULL)
 {
-	Connect(configHandler->GetString("LobbyServer", "taspringmaster.clan-sy.com"), 8200);
+	Connect(configHandler->GetString("LobbyServer"), 8200);
 }
 
 LobbyConnection::~LobbyConnection()

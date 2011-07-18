@@ -31,7 +31,7 @@
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"
@@ -41,6 +41,8 @@
 #include "System/Sound/SoundChannels.h"
 
 #define PLAY_SOUNDS 1
+
+CONFIG(bool, BuildIconsFirst).defaultValue(false);
 
 CSelectedUnits selectedUnits;
 
@@ -61,7 +63,7 @@ CSelectedUnits::~CSelectedUnits()
 
 void CSelectedUnits::Init(unsigned numPlayers)
 {
-	buildIconsFirst = !!configHandler->Get("BuildIconsFirst", 0);
+	buildIconsFirst = configHandler->GetBool("BuildIconsFirst");
 	netSelected.resize(numPlayers);
 }
 

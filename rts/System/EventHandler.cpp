@@ -9,7 +9,7 @@
 #include "Lua/LuaRules.h"
 #include "Lua/LuaGaia.h"
 
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Platform/Threading.h"
 #include "System/GlobalConfig.h"
 

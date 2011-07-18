@@ -94,7 +94,7 @@ CGlobalSynced::~CGlobalSynced()
 
 void CGlobalSynced::LoadFromSetup(const CGameSetup* setup)
 {
-	noHelperAIs = !!setup->noHelperAIs;
+	noHelperAIs = setup->noHelperAIs;
 	useLuaGaia  = setup->useLuaGaia;
 
 	skirmishAIHandler.LoadFromSetup(*setup);

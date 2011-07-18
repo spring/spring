@@ -20,7 +20,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/FPUCheck.h"
@@ -35,6 +35,8 @@
 	#include "System/Sound/EFX.h"
 	#include "System/Sound/EFXPresets.h"
 #endif
+
+CONFIG(bool, LoadingMT).defaultValue(true);
 
 CLoadScreen* CLoadScreen::singleton = NULL;
 
@@ -67,7 +69,7 @@ void CLoadScreen::Init()
 #ifdef HEADLESS
 	mt_loading = false;
 #else
-	mt_loading = configHandler->Get("LoadingMT", true);
+	mt_loading = configHandler->GetBool("LoadingMT");
 #endif
 
 	//! Create a thread during the loading that pings the host/server, so it knows that this client is still alive/loading
@@ -114,6 +116,8 @@ CLoadScreen::~CLoadScreen()
 {
 	// at this point, the thread running CGame::LoadGame
 	// has finished and deregistered itself from WatchDog
+	if (mt_loading && gameLoadThread)
+		gameLoadThread->Join();
 	delete gameLoadThread; gameLoadThread = NULL;
 
 	if (net)

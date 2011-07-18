@@ -2,8 +2,8 @@
 
 /* heavily based on CobInstance.h */
 
-#ifndef UNITSCRIPT_H
-#define UNITSCRIPT_H
+#ifndef UNIT_SCRIPT_H
+#define UNIT_SCRIPT_H
 
 #include <string>
 #include <vector>
@@ -229,4 +229,4 @@ public:
 	static void BenchmarkScript(const std::string& unitname);
 };
 
-#endif
+#endif // UNIT_SCRIPT_H

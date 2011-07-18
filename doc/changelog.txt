@@ -91,8 +91,9 @@ Engine / Lua:
  - add optional flattenGround parameter to Spring.CreateUnit 
  - remove the "n" field from array-like tables returned by API functions
  - added Spring.GetProjectilesInRectangle
- - linked Projectile{Created,Destroyed} to the Spring.SetWatchWeapon state
+ - linked Projectile{Created, Destroyed} to the Spring.SetWatchWeapon state
  - extend LuaPathFinder with support for setting node cost overlays
+ - added Spring.{Get, Set}MapSquareTexture
 
 Engine / Internal:
  - added limited OpenMP support

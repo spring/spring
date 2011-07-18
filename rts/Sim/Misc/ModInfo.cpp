@@ -12,10 +12,11 @@
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/LogOutput.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Exceptions.h"
 
+CONFIG(bool, TeamNanoSpray).defaultValue(true);
 
 CModInfo modInfo;
 
@@ -56,7 +57,7 @@ void CModInfo::Init(const char* modArchive)
 	allowTeamColors = nanosprayTbl.GetBool("allow_team_colors", true);
 	if (allowTeamColors) {
 		// Load the users preference for team coloured nanospray
-		globalRendering->teamNanospray = !!configHandler->Get("TeamNanoSpray", 1);
+		globalRendering->teamNanospray = configHandler->GetBool("TeamNanoSpray");
 	}
 
 	// constructions

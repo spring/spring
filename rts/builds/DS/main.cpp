@@ -22,7 +22,7 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/LoadSave/DemoRecorder.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/Exceptions.h"
 #include "System/UnsyncedRNG.h"

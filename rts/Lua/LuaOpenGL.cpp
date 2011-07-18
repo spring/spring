@@ -68,7 +68,7 @@
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "System/LogOutput.h"
 #include "System/Matrix44f.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 
 using std::max;
 using std::string;
@@ -78,8 +78,9 @@ using std::set;
 #undef far // avoid collision with windef.h
 #undef near
 
-static const int MAX_TEXTURE_UNITS = 32;
+CONFIG(bool, LuaShaders).defaultValue(true);
 
+static const int MAX_TEXTURE_UNITS = 32;
 
 /******************************************************************************/
 /******************************************************************************/
@@ -110,7 +111,7 @@ void LuaOpenGL::Init()
 
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
-	if (globalRendering->haveGLSL && !!configHandler->Get("LuaShaders", 1)) {
+	if (globalRendering->haveGLSL && configHandler->GetBool("LuaShaders")) {
 		canUseShaders = true;
 	}
 }

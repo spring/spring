@@ -11,7 +11,10 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Env/CubeMapHandler.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
+
+CONFIG(int, CubeTexSizeSpecular).defaultValue(128);
+CONFIG(int, CubeTexSizeReflection).defaultValue(128);
 
 static char cameraMemBuf[sizeof(CCamera)];
 
@@ -33,8 +36,8 @@ CubeMapHandler::CubeMapHandler() {
 }
 
 bool CubeMapHandler::Init() {
-	specTexSize = configHandler->Get("CubeTexSizeSpecular", 128);
-	reflTexSize = configHandler->Get("CubeTexSizeReflection", 128);
+	specTexSize = configHandler->GetInt("CubeTexSizeSpecular");
+	reflTexSize = configHandler->GetInt("CubeTexSizeReflection");
 	specTexBuf = new unsigned char[specTexSize * 4];
 
 	mapSkyReflections = !(mapInfo->smf.skyReflectModTexName.empty());

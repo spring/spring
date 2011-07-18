@@ -9,9 +9,12 @@
 #include "SkyBox.h"
 #include "Map/MapInfo.h"
 #include "Rendering/GlobalRendering.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
+
+CONFIG(bool, DynamicSun).defaultValue(false);
+CONFIG(bool, AdvSky).defaultValue(true);
 
 IBaseSky* sky = NULL;
 
@@ -22,7 +25,7 @@ IBaseSky::IBaseSky()
 	, skyLight(NULL)
 	, cloudDensity(0.0f)
 {
-	SetLight(configHandler->Get("DynamicSun", false));
+	SetLight(configHandler->GetBool("DynamicSun"));
 }
 
 IBaseSky::~IBaseSky()
@@ -55,7 +58,7 @@ IBaseSky* IBaseSky::GetSky()
 	try {
 		if (!mapInfo->atmosphere.skyBox.empty()) {
 			sky = new CSkyBox("maps/" + mapInfo->atmosphere.skyBox);
-		} else if (configHandler->Get("AdvSky", true)) {
+		} else if (configHandler->GetBool("AdvSky")) {
 			sky = new CAdvSky();
 		}
 	} catch (content_error& e) {

@@ -54,7 +54,7 @@
 	#undef interface
 #endif
 #include "Server/MsgStrings.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/LogOutput.h"
 #include "System/FileSystem/CRC.h"
@@ -68,6 +68,11 @@
 
 using netcode::RawPacket;
 
+CONFIG(int, SpeedControl).defaultValue(0);
+CONFIG(bool, AllowAdditionalPlayers).defaultValue(false);
+CONFIG(bool, WhiteListAdditionalPlayers).defaultValue(true);
+CONFIG(std::string, AutohostIP).defaultValue("127.0.0.1");
+CONFIG(int, AutohostPort).defaultValue(0);
 
 /// frames until a syncchech will time out and a warning is given out
 const unsigned SYNCCHECK_TIMEOUT = 300;
@@ -147,24 +152,24 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	medianCpu = 0.0f;
 	medianPing = 0;
 	curSpeedCtrl = 0;
-	speedControl = configHandler->Get("SpeedControl", 0);
+	speedControl = configHandler->GetInt("SpeedControl");
 	UpdateSpeedControl(--speedControl + 1);
 
-	allowAdditionalPlayers = configHandler->Get("AllowAdditionalPlayers", false);
-	whiteListAdditionalPlayers = configHandler->Get("WhiteListAdditionalPlayers", true);
+	allowAdditionalPlayers = configHandler->GetBool("AllowAdditionalPlayers");
+	whiteListAdditionalPlayers = configHandler->GetBool("WhiteListAdditionalPlayers");
 
 	if (!setup->onlyLocal) {
 		UDPNet.reset(new netcode::UDPListener(hostPort, hostIP));
 	}
 
-	std::string autohostip = configHandler->Get("AutohostIP", std::string("127.0.0.1"));
+	std::string autohostip = configHandler->GetString("AutohostIP");
 	if (StringToLower(autohostip) == "localhost") {
 		// FIXME temporary hack: we do not support (host-)names.
 		// "localhost" was the only name supported in the past.
 		// added 7. January 2011, to be removed in ~ 1 year
 		autohostip = "127.0.0.1";
 	}
-	const int autohostport = configHandler->Get("AutohostPort", 0);
+	const int autohostport = configHandler->GetInt("AutohostPort");
 
 	if (autohostport > 0) {
 		AddAutohostInterface(autohostip, autohostport);
@@ -177,7 +182,7 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 
 	maxUserSpeed = setup->maxSpeed;
 	minUserSpeed = setup->minSpeed;
-	noHelperAIs = (bool)setup->noHelperAIs;
+	noHelperAIs = setup->noHelperAIs;
 
 	{ // modify and save GameSetup text (remove passwords)
 		TdfParser parser(newGameData->GetSetup().c_str(), newGameData->GetSetup().length());

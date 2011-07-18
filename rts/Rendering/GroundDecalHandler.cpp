@@ -28,7 +28,7 @@
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Projectiles/ExplosionListener.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
@@ -42,6 +42,8 @@ using std::max;
 
 CGroundDecalHandler* groundDecals = NULL;
 
+CONFIG(int, GroundDecals).defaultValue(1);
+CONFIG(int, GroundScarAlphaFade).defaultValue(0);
 
 CGroundDecalHandler::CGroundDecalHandler()
 	: CEventClient("[CGroundDecalHandler]", 314159, false)
@@ -50,8 +52,8 @@ CGroundDecalHandler::CGroundDecalHandler()
 	helper->AddExplosionListener(this);
 
 	drawDecals = false;
-	decalLevel = std::max(0, configHandler->Get("GroundDecals", 1));
-	groundScarAlphaFade = (configHandler->Get("GroundScarAlphaFade", 0) != 0);
+	decalLevel = std::max(0, configHandler->GetInt("GroundDecals"));
+	groundScarAlphaFade = (configHandler->GetInt("GroundScarAlphaFade") != 0);
 
 	if (decalLevel == 0) {
 		return;
@@ -638,7 +640,7 @@ void CGroundDecalHandler::AddScars() {
 			}
 		}
 
-		scars.push_back(s); 
+		scars.push_back(s);
 	}
 }
 

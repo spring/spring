@@ -9,8 +9,10 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/myMath.h"
+
+CONFIG(float, DynamicSunMinElevation).defaultValue(0.1f);
 
 
 StaticSkyLight::StaticSkyLight() {
@@ -35,7 +37,7 @@ DynamicSkyLight::DynamicSkyLight()
 	lightIntensity = 1.0f;
 	groundShadowDensity = light.groundShadowDensity;
 	unitShadowDensity = light.unitShadowDensity;
-	orbitMinSunHeight = configHandler->Get("DynamicSunMinElevation", 0.1f); //FIXME mapinfo option???
+	orbitMinSunHeight = configHandler->GetFloat("DynamicSunMinElevation"); //FIXME mapinfo option???
 	orbitMinSunHeight = Clamp(orbitMinSunHeight, -1.0f, 1.0f);
 
 	// light.sunDir has already been normalized (in 3D) in MapInfo

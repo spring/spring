@@ -17,6 +17,7 @@
 #include "TerrainNode.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Util.h"
+#include "System/LogOutput.h"
 #include <assert.h>
 
 // define this for big endian machines

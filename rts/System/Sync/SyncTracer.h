@@ -1,30 +1,29 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef SYNCTRACER_H
-#define SYNCTRACER_H
+#ifndef SYNC_TRACER_H
+#define SYNC_TRACER_H
 
 //#define TRACE_SYNC
 
-
 #include <fstream>
-#include <deque>
 #include <string>
 
 class CSyncTracer
 {
 	bool init();
 public:
-	void DeleteInterval();
-	void NewInterval();
-	void Commit();
 	CSyncTracer();
 	virtual ~CSyncTracer();
 
+	void DeleteInterval();
+	void NewInterval();
+	void Commit();
+
 	CSyncTracer& operator<<(const std::string& s);
-	CSyncTracer& operator<<(const char* c);
-	CSyncTracer& operator<<(const int i);
-	CSyncTracer& operator<<(const unsigned i);
-	CSyncTracer& operator<<(const float f);
+	CSyncTracer& operator<<(const char* value);
+	CSyncTracer& operator<<(const int value);
+	CSyncTracer& operator<<(const unsigned value);
+	CSyncTracer& operator<<(const float value);
 
 	std::ofstream* file;
 	std::ofstream* logfile;
@@ -37,4 +36,4 @@ public:
 extern CSyncTracer tracefile;
 #endif
 
-#endif /* SYNCTRACER_H */
+#endif /* SYNC_TRACER_H */

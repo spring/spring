@@ -9,12 +9,15 @@
 #include "EFXfuncs.h"
 
 #include "SoundLog.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/myMath.h"
 
 
 /******************************************************************************/
 /******************************************************************************/
+
+CONFIG(float, snd_airAbsorption).defaultValue(AL_DEFAULT_AIR_ABSORPTION_FACTOR);
+CONFIG(bool, UseEFX).defaultValue(true);
 
 static std::string default_preset = "outdoors_valley";//"bathroom";
 
@@ -35,7 +38,7 @@ CEFX::CEFX(ALCdevice* device)
 	,maxSlots(0)
 	,maxSlotsPerSource(0)
 {
-	airAbsorptionFactor = configHandler->Get("snd_airAbsorption", AL_DEFAULT_AIR_ABSORPTION_FACTOR);
+	airAbsorptionFactor = configHandler->GetFloat("snd_airAbsorption");
 	airAbsorptionFactor = Clamp(airAbsorptionFactor, AL_MIN_AIR_ABSORPTION_FACTOR, AL_MAX_AIR_ABSORPTION_FACTOR);
 
 	bool hasExtension = alcIsExtensionPresent(device, "ALC_EXT_EFX");
@@ -169,7 +172,7 @@ CEFX::CEFX(ALCdevice* device)
 	supported = true;
 
 	//! User may disable it (performance reasons?)
-	enabled = configHandler->Get("UseEFX", true);
+	enabled = configHandler->GetBool("UseEFX");
 	LOG("  EFX Enabled: %s", (enabled ? "yes" : "no"));
 	if (enabled) {
 		LOG_L(L_DEBUG, "  EFX MaxSlots: %i", maxSlots);

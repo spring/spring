@@ -19,13 +19,15 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/NetProtocol.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/TimeProfiler.h"
 
 #include "System/creg/STL_Map.h"
 
+CONFIG(int, CatchAIExceptions).defaultValue(1);
+CONFIG(bool, AI_UnpauseAfterInit).defaultValue(true);
 
 CR_BIND_DERIVED(CEngineOutHandler, CObject, )
 
@@ -55,7 +57,7 @@ bool CEngineOutHandler::IsCatchExceptions() {
 	static bool isCatchExceptions;
 
 	if (!init) {
-		isCatchExceptions = (configHandler->Get("CatchAIExceptions", 1) != 0);
+		isCatchExceptions = (configHandler->GetInt("CatchAIExceptions") != 0);
 		init = true;
 	}
 
@@ -550,7 +552,7 @@ bool CEngineOutHandler::SendLuaMessages(int aiTeam, const char* inData, std::vec
 void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 	SCOPED_TIMER("AI Total");
 
-	//const bool unpauseAfterAIInit = configHandler->Get("AI_UnpauseAfterInit", true);
+	//const bool unpauseAfterAIInit = configHandler->GetBool("AI_UnpauseAfterInit");
 
 	// Pause the game for letting the AI initialize,
 	// as this can take quite some time.

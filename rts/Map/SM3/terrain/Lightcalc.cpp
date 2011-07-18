@@ -10,6 +10,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GL/myGL.h"
 #include "System/Util.h"
+#include "System/LogOutput.h"
 
 #include <IL/il.h>
 #include <assert.h>

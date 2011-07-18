@@ -8,20 +8,26 @@
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 #include "System/myMath.h"
 
 using std::min;
 using std::max;
 
+CONFIG(int, FPSScrollSpeed).defaultValue(10);
+CONFIG(float, FPSMouseScale).defaultValue(0.01f);
+CONFIG(bool, FPSEnabled).defaultValue(true);
+CONFIG(float, FPSFOV).defaultValue(45.0f);
+
+
 CFPSController::CFPSController()
 	: oldHeight(300)
 {
-	scrollSpeed = configHandler->Get("FPSScrollSpeed", 10) * 0.1f;
-	mouseScale = configHandler->Get("FPSMouseScale", 0.01f);
-	enabled = !!configHandler->Get("FPSEnabled", 1);
-	fov = configHandler->Get("FPSFOV", 45.0f);
+	scrollSpeed = configHandler->GetInt("FPSScrollSpeed") * 0.1f;
+	mouseScale = configHandler->GetFloat("FPSMouseScale");
+	enabled = configHandler->GetBool("FPSEnabled");
+	fov = configHandler->GetFloat("FPSFOV");
 }
 
 
@@ -152,4 +158,4 @@ bool CFPSController::SetState(const StateMap& sm)
 	return true;
 }
 
- 
+

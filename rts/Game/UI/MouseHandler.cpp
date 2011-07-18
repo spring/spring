@@ -39,7 +39,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Groups/Group.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/FastMath.h"
@@ -56,6 +56,19 @@
 
 #define PLAY_SOUNDS 1
 
+CONFIG(bool, HardwareCursor).defaultValue(false);
+CONFIG(bool, InvertMouse).defaultValue(false);
+CONFIG(float, DoubleClickTime).defaultValue(200.0f);
+
+CONFIG(float, ScrollWheelSpeed)
+	.defaultValue(25.0f)
+	.minimumValue(-255.f)
+	.maximumValue(255.f);
+
+CONFIG(float, CrossSize).defaultValue(12.0f);
+CONFIG(float, CrossAlpha).defaultValue(0.5f);
+CONFIG(float, CrossMoveScale).defaultValue(1.0f);
+CONFIG(float, MouseDragScrollThreshold).defaultValue(0.3f);
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -80,10 +93,10 @@ CMouseHandler::CMouseHandler()
 	, crossSize(0.0f)
 	, crossAlpha(0.0f)
 	, crossMoveScale(0.0f)
+	, cursorScale(1.0f)
 	, activeButton(-1)
 	, dir(ZeroVector)
 	, soundMultiselID(0)
-	, cursorScale(1.0f)
 	, cursorText("")
 	, currentCursor(NULL)
 	, wasLocked(false)
@@ -99,22 +112,21 @@ CMouseHandler::CMouseHandler()
 	LoadCursors();
 
 #ifndef __APPLE__
-	hardwareCursor = !!configHandler->Get("HardwareCursor", 0);
+	hardwareCursor = configHandler->GetBool("HardwareCursor");
 #endif
 
 	soundMultiselID = sound->GetSoundId("MultiSelect", false);
 
-	invertMouse = !!configHandler->Get("InvertMouse",0);
-	doubleClickTime = configHandler->Get("DoubleClickTime", 200.0f) / 1000.0f;
+	invertMouse = configHandler->GetBool("InvertMouse");
+	doubleClickTime = configHandler->GetFloat("DoubleClickTime") / 1000.0f;
 
-	scrollWheelSpeed = configHandler->Get("ScrollWheelSpeed", 25.0f);
-	scrollWheelSpeed = Clamp(scrollWheelSpeed,-255.f,255.f);
+	scrollWheelSpeed = configHandler->GetFloat("ScrollWheelSpeed");
 
-	crossSize      = configHandler->Get("CrossSize", 12.0f);
-	crossAlpha     = configHandler->Get("CrossAlpha", 0.5f);
-	crossMoveScale = configHandler->Get("CrossMoveScale", 1.0f) * 0.005f;
+	crossSize      = configHandler->GetFloat("CrossSize");
+	crossAlpha     = configHandler->GetFloat("CrossAlpha");
+	crossMoveScale = configHandler->GetFloat("CrossMoveScale") * 0.005f;
 
-	dragScrollThreshold = configHandler->Get("MouseDragScrollThreshold", 0.3f);
+	dragScrollThreshold = configHandler->GetFloat("MouseDragScrollThreshold");
 
 	configHandler->NotifyOnChange(this);
 }

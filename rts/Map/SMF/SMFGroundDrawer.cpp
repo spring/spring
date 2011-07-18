@@ -18,11 +18,12 @@
 #include "Rendering/Shaders/ShaderHandler.hpp"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Sim/Misc/SmoothHeightMesh.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/FastMath.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"
 #include "System/mmgr.h"
+#include "System/TimeProfiler.h"
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
@@ -31,6 +32,16 @@ extern gmlClientServer<void, int, CUnit*> *gmlProcessor;
 
 using std::min;
 using std::max;
+
+CONFIG(int, GroundDetail).defaultValue(40);
+CONFIG(bool, MultiThreadDrawGround).defaultValue(true);
+CONFIG(bool, MultiThreadDrawGroundShadow).defaultValue(false);
+
+CONFIG(int, MaxDynamicMapLights)
+	.defaultValue(1)
+	.minimumValue(0);
+
+CONFIG(int, AdvMapShading).defaultValue(1);
 
 CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 	bigSquareSize(128),
@@ -43,10 +54,10 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 	mapSizeZ = (gs->mapy * SQUARE_SIZE);
 	bigTexH = mapSizeZ / numBigTexY;
 
-	map = rm;
-	textures = new CBFGroundTextures(map);
+	smfMap = rm;
+	groundTextures = new CSMFGroundTextures(smfMap);
 
-	viewRadius = configHandler->Get("GroundDetail", 40);
+	viewRadius = configHandler->GetInt("GroundDetail");
 	viewRadius += (viewRadius & 1); //! we need a multiple of 2
 
 	useShaders = false;
@@ -68,17 +79,17 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 	}
 
 #ifdef USE_GML
-	multiThreadDrawGround = !!configHandler->Get("MultiThreadDrawGround", 1);
-	multiThreadDrawGroundShadow = !!configHandler->Get("MultiThreadDrawGroundShadow", 0);
+	multiThreadDrawGround = configHandler->GetBool("MultiThreadDrawGround");
+	multiThreadDrawGroundShadow = configHandler->GetBool("MultiThreadDrawGroundShadow");
 #endif
 
-	lightHandler.Init(2U, configHandler->Get("MaxDynamicMapLights", 1U));
+	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
 	advShading = LoadMapShaders();
 }
 
 CBFGroundDrawer::~CBFGroundDrawer(void)
 {
-	delete textures;
+	delete groundTextures;
 
 	shaderHandler->ReleaseProgramObjects("[SMFGroundDrawer]");
 
@@ -109,7 +120,7 @@ bool CBFGroundDrawer::LoadMapShaders() {
 	smfShaderAdvGLSL = NULL;
 	smfShaderCurGLSL = NULL;
 
-	if (configHandler->Get("AdvMapShading", 1) == 0) {
+	if (configHandler->GetInt("AdvMapShading") == 0) {
 		// not allowed to do shader-based map rendering
 		return false;
 	}
@@ -139,22 +150,22 @@ bool CBFGroundDrawer::LoadMapShaders() {
 			smfShaderCurGLSL = smfShaderDefGLSL;
 
 			std::string extraDefs;
-				extraDefs += (map->haveSpecularLighting)?
+				extraDefs += (smfMap->haveSpecularLighting)?
 					"#define SMF_ARB_LIGHTING 0\n":
 					"#define SMF_ARB_LIGHTING 1\n";
-				extraDefs += (map->haveSplatTexture)?
+				extraDefs += (smfMap->haveSplatTexture)?
 					"#define SMF_DETAIL_TEXTURE_SPLATTING 1\n":
 					"#define SMF_DETAIL_TEXTURE_SPLATTING 0\n";
-				extraDefs += (map->initMinHeight > 0.0f || mapInfo->map.voidWater)?
+				extraDefs += (readmap->initMinHeight > 0.0f || mapInfo->map.voidWater)?
 					"#define SMF_WATER_ABSORPTION 0\n":
 					"#define SMF_WATER_ABSORPTION 1\n";
-				extraDefs += (map->GetSkyReflectModTexture() != 0)?
+				extraDefs += (smfMap->GetSkyReflectModTexture() != 0)?
 					"#define SMF_SKY_REFLECTIONS 1\n":
 					"#define SMF_SKY_REFLECTIONS 0\n";
-				extraDefs += (map->GetDetailNormalTexture() != 0)?
+				extraDefs += (smfMap->GetDetailNormalTexture() != 0)?
 					"#define SMF_DETAIL_NORMALS 1\n":
 					"#define SMF_DETAIL_NORMALS 0\n";
-				extraDefs += (map->GetLightEmissionTexture() != 0)?
+				extraDefs += (smfMap->GetLightEmissionTexture() != 0)?
 					"#define SMF_LIGHT_EMISSION 1\n":
 					"#define SMF_LIGHT_EMISSION 0\n";
 				extraDefs +=
@@ -290,7 +301,7 @@ void CBFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 	const float alphainc = fastmath::PI2 / 32;
 	float alpha,r1,r2;
 
-	float3 p(0.0f, std::min(-200.0f, map->initMinHeight - 400.0f), 0.0f);
+	float3 p(0.0f, std::min(-200.0f, smfMap->initMinHeight - 400.0f), 0.0f);
 
 	for (int n = (camOufOfMap) ? 0 : 1; n < 4 ; ++n) {
 		if ((n == 1) && !camOufOfMap) {
@@ -826,7 +837,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 {
 	const int baseViewRadius = std::max(4, viewRadius);
 
-	if (mapInfo->map.voidWater && map->currMaxHeight < 0.0f) {
+	if (mapInfo->map.voidWater && readmap->currMaxHeight < 0.0f) {
 		return;
 	}
 
@@ -868,22 +879,25 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 		glAlphaFunc(GL_GREATER, 0.9f);
 	}
 
+	{ // profiler scope
 #ifdef USE_GML
-	if (multiThreadDrawGround) {
-		gmlProcessor->Work(NULL,&CBFGroundDrawer::DoDrawGroundRowMT,NULL,this,gmlThreadCount,FALSE,NULL,numBigTexY,50,100,TRUE,NULL);
-	}
-	else
-#endif
-	{
-		int camBty = math::floor(cam2->pos.z / (bigSquareSize * SQUARE_SIZE));
-		camBty = std::max(0, std::min(numBigTexY - 1, camBty));
-
-		//! try to render in "front to back" (so start with the camera nearest BigGroundLines)
-		for (int bty = camBty; bty >= 0; --bty) {
-			DoDrawGroundRow(bty);
+		bool mt = GML_PROFILER(multiThreadDrawGround)
+		if (mt) { // Profiler results, 4 threads: multiThreadDrawGround is faster only if ViewRadius is below 60 (probably depends on memory/cache speeds)
+			gmlProcessor->Work(NULL,&CBFGroundDrawer::DoDrawGroundRowMT,NULL,this,gmlThreadCount,FALSE,NULL,numBigTexY,50,100,TRUE,NULL);
 		}
-		for (int bty = camBty + 1; bty < numBigTexY; ++bty) {
-			DoDrawGroundRow(bty);
+		else
+#endif
+		{
+			int camBty = math::floor(cam2->pos.z / (bigSquareSize * SQUARE_SIZE));
+			camBty = std::max(0, std::min(numBigTexY - 1, camBty));
+
+			//! try to render in "front to back" (so start with the camera nearest BigGroundLines)
+			for (int bty = camBty; bty >= 0; --bty) {
+				DoDrawGroundRow(bty);
+			}
+			for (int bty = camBty + 1; bty < numBigTexY; ++bty) {
+				DoDrawGroundRow(bty);
+			}
 		}
 	}
 
@@ -1245,7 +1259,7 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 
 void CBFGroundDrawer::DrawShadowPass(void)
 {
-	if (mapInfo->map.voidWater && map->currMaxHeight < 0.0f) {
+	if (mapInfo->map.voidWater && readmap->currMaxHeight < 0.0f) {
 		return;
 	}
 
@@ -1259,15 +1273,18 @@ void CBFGroundDrawer::DrawShadowPass(void)
 
 	po->Enable();
 
+	{ // profiler scope
 #ifdef USE_GML
-	if (multiThreadDrawGroundShadow) {
-		gmlProcessor->Work(NULL, &CBFGroundDrawer::DoDrawGroundShadowLODMT, NULL, this, gmlThreadCount, FALSE, NULL, NUM_LODS + 1, 50, 100, TRUE, NULL);
-	}
-	else
+		bool mt = GML_PROFILER(multiThreadDrawGroundShadow)
+		if (mt) { // Profiler results, 4 threads: multiThreadDrawGroundShadow is rarely faster than single threaded rendering (therefore disabled by default)
+			gmlProcessor->Work(NULL, &CBFGroundDrawer::DoDrawGroundShadowLODMT, NULL, this, gmlThreadCount, FALSE, NULL, NUM_LODS + 1, 50, 100, TRUE, NULL);
+		}
+		else
 #endif
-	{
-		for (int nlod = 0; nlod < NUM_LODS + 1; ++nlod) {
-			DoDrawGroundShadowLOD(nlod);
+		{
+			for (int nlod = 0; nlod < NUM_LODS + 1; ++nlod) {
+				DoDrawGroundShadowLOD(nlod);
+			}
 		}
 	}
 
@@ -1281,7 +1298,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 
 inline void CBFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigSquareY)
 {
-	textures->SetTexture(bigSquareX, bigSquareY);
+	groundTextures->BindSquareTexture(bigSquareX, bigSquareY);
 
 	if (useShaders) {
 		if (smfShaderCurGLSL != NULL) {
@@ -1318,7 +1335,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 
 		glActiveTexture(GL_TEXTURE2);
 		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture());
+		glBindTexture(GL_TEXTURE_2D, smfMap->GetShadingTexture());
 		glMultiTexCoord4f(GL_TEXTURE2_ARB, 1.0f, 1.0f, 1.0f, 1.0f); //fixes a nvidia bug with gltexgen
 		if (drawMode == drawMetal) { // increased brightness for metal spots
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
@@ -1327,9 +1344,9 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
 
 		glActiveTexture(GL_TEXTURE3);
-		if (map->GetDetailTexture()) {
+		if (smfMap->GetDetailTexture()) {
 			glEnable(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D, map->GetDetailTexture());
+			glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailTexture());
 			glMultiTexCoord4f(GL_TEXTURE3_ARB, 1.0f, 1.0f, 1.0f, 1.0f); //fixes a nvidia bug with gltexgen
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
@@ -1373,9 +1390,9 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			const float3 ambientColor = mapInfo->light.groundAmbientColor * (210.0f / 255.0f);
 
 			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture());
+			glBindTexture(GL_TEXTURE_2D, smfMap->GetShadingTexture());
 			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, map->GetDetailTexture());
+			glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailTexture());
 
 			if (drawReflection) {
 				// FIXME: why?
@@ -1394,16 +1411,16 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 				lightHandler.Update(smfShaderCurGLSL);
 				glMultMatrixf(camera->GetViewMatrix());
 
-				glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, map->GetNormalsTexture());
-				glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, map->GetSpecularTexture());
-				glActiveTexture(GL_TEXTURE7); glBindTexture(GL_TEXTURE_2D, map->GetSplatDetailTexture());
-				glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, map->GetSplatDistrTexture());
+				glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, smfMap->GetNormalsTexture());
+				glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, smfMap->GetSpecularTexture());
+				glActiveTexture(GL_TEXTURE7); glBindTexture(GL_TEXTURE_2D, smfMap->GetSplatDetailTexture());
+				glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, smfMap->GetSplatDistrTexture());
 				glActiveTexture(GL_TEXTURE9);
 					glEnable(GL_TEXTURE_CUBE_MAP_ARB);
 					glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetSkyReflectionTextureID());
-				glActiveTexture(GL_TEXTURE10); glBindTexture(GL_TEXTURE_2D, map->GetSkyReflectModTexture());
-				glActiveTexture(GL_TEXTURE11); glBindTexture(GL_TEXTURE_2D, map->GetDetailNormalTexture());
-				glActiveTexture(GL_TEXTURE12); glBindTexture(GL_TEXTURE_2D, map->GetLightEmissionTexture());
+				glActiveTexture(GL_TEXTURE10); glBindTexture(GL_TEXTURE_2D, smfMap->GetSkyReflectModTexture());
+				glActiveTexture(GL_TEXTURE11); glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailNormalTexture());
+				glActiveTexture(GL_TEXTURE12); glBindTexture(GL_TEXTURE_2D, smfMap->GetLightEmissionTexture());
 
 				// setup for shadow2DProj
 				glActiveTexture(GL_TEXTURE4);
@@ -1435,10 +1452,10 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 				glActiveTexture(GL_TEXTURE0);
 			}
 		} else {
-			if (map->GetDetailTexture()) {
+			if (smfMap->GetDetailTexture()) {
 				glActiveTexture(GL_TEXTURE1);
 				glEnable(GL_TEXTURE_2D);
-				glBindTexture(GL_TEXTURE_2D, map->GetDetailTexture());
+				glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailTexture());
 				glMultiTexCoord4f(GL_TEXTURE1_ARB, 1.0f, 1.0f, 1.0f, 1.0f); //fixes a nvidia bug with gltexgen
 				glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
@@ -1460,16 +1477,16 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 
 			glActiveTexture(GL_TEXTURE2);
 			glEnable(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture());
+			glBindTexture(GL_TEXTURE_2D, smfMap->GetShadingTexture());
 			glMultiTexCoord4f(GL_TEXTURE2_ARB, 1.0f, 1.0f, 1.0f, 1.0f); //fixes a nvidia bug with gltexgen
 			SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
 
 			//! bind the detail texture a 2nd time to increase the details (-> GL_ADD_SIGNED_ARB is limited -0.5 to +0.5)
 			//! (also do this after the shading texture cause of color clamping issues)
-			if (map->GetDetailTexture()) {
+			if (smfMap->GetDetailTexture()) {
 				glActiveTexture(GL_TEXTURE3);
 				glEnable(GL_TEXTURE_2D);
-				glBindTexture(GL_TEXTURE_2D, map->GetDetailTexture());
+				glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailTexture());
 				glMultiTexCoord4f(GL_TEXTURE3_ARB, 1.0f, 1.0f, 1.0f, 1.0f); //fixes a nvidia bug with gltexgen
 				glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
@@ -1638,11 +1655,11 @@ void CBFGroundDrawer::UpdateCamRestraints(void)
 
 void CBFGroundDrawer::Update()
 {
-	if (mapInfo->map.voidWater && map->currMaxHeight < 0.0f) {
+	if (mapInfo->map.voidWater && readmap->currMaxHeight < 0.0f) {
 		return;
 	}
 
-	textures->DrawUpdate();
+	groundTextures->DrawUpdate();
 }
 
 

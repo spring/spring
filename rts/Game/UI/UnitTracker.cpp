@@ -12,7 +12,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 
 
@@ -237,7 +237,7 @@ void CUnitTracker::SetCam()
 {
 	if (firstUpdate) {
 		firstUpdate = false;
-		doRoll = !configHandler->Get("ReflectiveWater", 1);
+		doRoll = !configHandler->GetInt("ReflectiveWater");
 	}
 
 	CUnit* u = GetTrackUnit();
