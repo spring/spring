@@ -73,10 +73,10 @@ public:
 		static const unsigned frames_size = 128;
 		unsigned frames[frames_size];
 		float percent;
-		float peak;
-		bool newpeak;
 		float3 color;
 		bool showGraph;
+		float peak;
+		bool newpeak;
 	};
 
 	CTimeProfiler();
