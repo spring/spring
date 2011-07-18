@@ -65,7 +65,7 @@ class CTimeProfiler
 {
 public:
 	struct TimeRecord {
-		TimeRecord() : total(0), current(0), percent(0), color(0,0,0), showGraph(false) { 
+		TimeRecord() : total(0), current(0), percent(0), color(0,0,0), showGraph(false), peak(0), newpeak(false) { 
 			memset(frames, 0, sizeof(frames));
 		}
 		unsigned total;
@@ -75,6 +75,8 @@ public:
 		float percent;
 		float3 color;
 		bool showGraph;
+		float peak;
+		bool newpeak;
 	};
 
 	CTimeProfiler();

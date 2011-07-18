@@ -31,7 +31,7 @@
 #include "System/FastMath.h"
 #include "System/myMath.h"
 #include "System/EventHandler.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/TimeProfiler.h"
 #include "System/LogOutput.h"
 #include "System/Exceptions.h"
@@ -41,6 +41,19 @@ using std::string;
 using std::vector;
 using std::min;
 using std::max;
+
+CONFIG(int, BumpWaterTexSizeReflection).defaultValue(512);
+CONFIG(int, BumpWaterReflection).defaultValue(1);
+CONFIG(int, BumpWaterRefraction).defaultValue(1); // 0:=off, 1:=screencopy, 2:=own rendering cycle
+CONFIG(float, BumpWaterAnisotropy).defaultValue(0.0f);
+CONFIG(bool, BumpWaterUseDepthTexture).defaultValue(true);
+CONFIG(int, BumpWaterDepthBits);
+CONFIG(bool, BumpWaterBlurReflection).defaultValue(false);
+CONFIG(bool, BumpWaterShoreWaves).defaultValue(true);
+CONFIG(bool, BumpWaterEndlessOcean).defaultValue(true);
+CONFIG(bool, BumpWaterDynamicWaves).defaultValue(true);
+CONFIG(bool, BumpWaterUseUniforms).defaultValue(false);
+CONFIG(bool, BumpWaterOcclusionQuery).defaultValue(true);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// HELPER FUNCTIONS
@@ -142,18 +155,23 @@ static void DrawRadialDisc()
 CBumpWater::CBumpWater()
 {
 	/** LOAD USER CONFIGS **/
-	reflTexSize  = next_power_of_2(configHandler->Get("BumpWaterTexSizeReflection", 512));
-	reflection   = configHandler->Get("BumpWaterReflection", 1);
-	refraction   = configHandler->Get("BumpWaterRefraction", 1);  /// 0:=off, 1:=screencopy, 2:=own rendering cycle
-	anisotropy   = atof(configHandler->GetString("BumpWaterAnisotropy", "0.0").c_str());
-	depthCopy    = !!configHandler->Get("BumpWaterUseDepthTexture", 1);
-	depthBits    = configHandler->Get("BumpWaterDepthBits", (globalRendering->atiHacks)?16:24);
-	blurRefl     = !!configHandler->Get("BumpWaterBlurReflection", 0);
-	shoreWaves   = (!!configHandler->Get("BumpWaterShoreWaves", 1)) && mapInfo->water.shoreWaves;
-	endlessOcean = (!!configHandler->Get("BumpWaterEndlessOcean", 1)) && mapInfo->water.hasWaterPlane
+	reflTexSize  = next_power_of_2(configHandler->GetInt("BumpWaterTexSizeReflection"));
+	reflection   = configHandler->GetInt("BumpWaterReflection");
+	refraction   = configHandler->GetInt("BumpWaterRefraction");
+	anisotropy   = configHandler->GetFloat("BumpWaterAnisotropy");
+	depthCopy    = configHandler->GetBool("BumpWaterUseDepthTexture");
+	if (configHandler->IsSet("BumpWaterDepthBits")) {
+		depthBits = configHandler->GetInt("BumpWaterDepthBits");
+	}
+	else {
+		depthBits = (globalRendering->atiHacks) ? 16 : 24;
+	}
+	blurRefl     = configHandler->GetBool("BumpWaterBlurReflection");
+	shoreWaves   = (configHandler->GetBool("BumpWaterShoreWaves")) && mapInfo->water.shoreWaves;
+	endlessOcean = (configHandler->GetBool("BumpWaterEndlessOcean")) && mapInfo->water.hasWaterPlane
 	               && ((readmap->initMinHeight <= 0.0f) || (mapInfo->water.forceRendering));
-	dynWaves     = (!!configHandler->Get("BumpWaterDynamicWaves", 1)) && (mapInfo->water.numTiles>1);
-	useUniforms  = (!!configHandler->Get("BumpWaterUseUniforms", 0));
+	dynWaves     = (configHandler->GetBool("BumpWaterDynamicWaves")) && (mapInfo->water.numTiles>1);
+	useUniforms  = (configHandler->GetBool("BumpWaterUseUniforms"));
 
 	refractTexture = 0;
 	reflectTexture = 0;
@@ -303,7 +321,7 @@ CBumpWater::CBumpWater()
 		glBindTexture(target, depthTexture);
 		glTexParameteri(target,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
 		glTexParameteri(target,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-		GLuint depthFormat = GL_DEPTH_COMPONENT; 
+		GLuint depthFormat = GL_DEPTH_COMPONENT;
 		switch (globalRendering->depthBufferBits) { /// use same depth as screen framebuffer
 			case 16: depthFormat = GL_DEPTH_COMPONENT16; break;
 			case 24: if (!globalRendering->atiHacks) { depthFormat = GL_DEPTH_COMPONENT24; break; } //ATIs fall through and use 32bit!
@@ -442,8 +460,8 @@ CBumpWater::CBumpWater()
 		waterShader->SetUniformLocation("coastmap");    // idx  9
 		waterShader->SetUniformLocation("waverand");    // idx 10
 
-		if (!waterShader->IsValid() && 
-			(!globalRendering->atiHacks || !strstr(waterShader->GetLog().c_str(), 
+		if (!waterShader->IsValid() &&
+			(!globalRendering->atiHacks || !strstr(waterShader->GetLog().c_str(),
 			"Different sampler types for same sample texture unit in fragment shader"))) {
 			//! string size is limited with content_error()
 			logOutput.Print("[BumpWater] water-shader compilation error: " + waterShader->GetLog());
@@ -501,7 +519,7 @@ CBumpWater::CBumpWater()
 	occlusionQuery = 0;
 	occlusionQueryResult = GL_TRUE;
 	wasLastFrameVisible = true;
-	bool useOcclQuery  = (!!configHandler->Get("BumpWaterOcclusionQuery", 1));
+	bool useOcclQuery  = (configHandler->GetBool("BumpWaterOcclusionQuery"));
 	if (useOcclQuery && GLEW_ARB_occlusion_query && refraction<2) { //! in the case of a separate refraction pass, there isn't enough time for a occlusion query
 		GLint bitsSupported;
 		glGetQueryiv(GL_SAMPLES_PASSED, GL_QUERY_COUNTER_BITS, &bitsSupported);

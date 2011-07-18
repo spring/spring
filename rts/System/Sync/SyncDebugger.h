@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef SYNCDEBUGGER_H
-#define SYNCDEBUGGER_H
+#ifndef SYNC_DEBUGGER_H
+#define SYNC_DEBUGGER_H
 
 #ifdef SYNCDEBUG
 
@@ -23,6 +23,12 @@ class CSyncDebugger {
 
 	public:
 
+		/**
+		 * @brief get sync debugger instance
+		 *
+		 * The sync debugger is a singleton (for now).
+		 * @return the instance
+		 */
 		static CSyncDebugger* GetInstance();
 
 	private:
@@ -72,7 +78,7 @@ class CSyncDebugger {
 		 * assignments to synced variables are stored in it.
 		 *
 		 * The size of the array is HISTORY_SIZE * BLOCK_SIZE * sizeof(HistItem),
-		 * that is 2048*2048*4 = 16 megabytes.
+		 * that is 2048*2048*(4+4) = 32 MegaBytes.
 		 */
 		HistItem* history;
 
@@ -88,8 +94,9 @@ class CSyncDebugger {
 		 *
 		 * This makes the size of the array HISTORY_SIZE * BLOCK_SIZE *
 		 * sizeof(HistItemWithBacktrace), that is
-		 * 2048*2048*(8+(MAX_STACK+1)*sizeof(void*)) = 128 megabytes on 32 bit
-		 * systems and 224 megabytes on 64 bit systems.
+		 * 2048*2048*(4+4+4+4+((MAX_STACK+1)*sizeof(void*))) =
+		 * 160 MegaBytes on 32 bit systems and
+		 * 256 MegaBytes on 64 bit systems.
 		 */
 		HistItemWithBacktrace* historybt;
 
@@ -120,22 +127,118 @@ class CSyncDebugger {
 		CSyncDebugger& operator=(const CSyncDebugger&);
 		~CSyncDebugger();
 
+		/**
+		 * @brief output a backtrace to the log
+		 *
+		 * Writes the backtrace attached to history item # index to the log.
+		 * The backtrace is prefixed with prefix.
+		 */
 		void Backtrace(int index, const char* prefix) const;
+		/**
+		 * @brief get a checksum for a backtrace in the history
+		 *
+		 * @return a checksum for backtrace # index in the history.
+		 */
 		unsigned GetBacktraceChecksum(int index) const;
+		/**
+		 * @brief second step after desync
+		 *
+		 * Called by client to send a response to a checksum request.
+		 */
 		void ClientSendChecksumResponse();
+		/**
+		 * @brief third step after desync
+		 *
+		 * Called by server after all checksum responses have been received.
+		 * Compares the checksumResponses and figures out which blocks are out
+		 * of sync (have different checksum). For these blocks requests are
+		 * queued which will be send next frames (one request at a time, see
+		 * CSyncDebugger::ServerHandlePendingBlockRequests()).
+		 */
 		void ServerQueueBlockRequests();
+		/**
+		 * @brief fourth step after desync
+		 *
+		 * Called by client to send a response to a block request.
+		 */
 		void ClientSendBlockResponse(int block);
+		/**
+		 * @brief fifth step after desync
+		 *
+		 * Called each time a set of blockResponses (one for every client) is
+		 * received.
+		 * If there are no more pendingBlocksToRequest,
+		 * it triggers the sixth step, ServerDumpStack().
+		 */
 		void ServerReceivedBlockResponses();
+		/**
+		 * @brief sixth step after desync
+		 *
+		 * Called by server once all blockResponses are received. It dumps a
+		 * backtrace to the logger for every checksum mismatch in the block
+		 * which was out of sync. The backtraces are passed to the logger in a
+		 * fairly simple form consisting basically only of hexadecimal
+		 * addresses. The logger class resolves those to function, file-name
+		 * & line number.
+		 */
 		void ServerDumpStack();
+		/**
+		 * @brief the backbone of the sync debugger
+		 *
+		 * This function adds an item to the history and appends a backtrace and
+		 * an operator (op) to it. p must point to the data to checksum and size
+		 * must be the size of that data.
+		 */
 		void Sync(void* p, unsigned size, const char* op);
 
 	public:
 
+		/**
+		 * @brief initialize
+		 *
+		 * Initialize the sync debugger.
+		 * @param useBacktrace true for a server (requires approx. 160 MegaBytes
+		 *   on 32 bit systems and 256 MegaBytes on 64 bit systems)
+		 *   and false for a client (requires only 32 MegaBytes extra)
+		 */
 		void Initialize(bool useBacktrace, unsigned numPlayers);
+		/**
+		 * @brief first step after desync
+		 *
+		 * Does nothing
+		 */
 		void ServerTriggerSyncErrorHandling(int serverframenum);
+		/**
+		 * @brief serverside network receiver
+		 *
+		 * Plugin for the CGameServer network code in GameServer.cpp.
+		 * @return the number of bytes read from the network stream
+		 */
 		bool ServerReceived(const unsigned char* inbuf);
+		/**
+		 * @brief helper for the third step
+		 *
+		 * Must be called by the server in GameServer.cpp once every frame to
+		 * handle queued block requests.
+		 * @see #ServerQueueBlockRequests()
+		 */
 		void ServerHandlePendingBlockRequests();
+		/**
+		 * @brief clientside network receiver
+		 *
+		 * Plugin for the CGame network code in Game.cpp.
+		 * @return the number of bytes read from the network stream
+		 */
 		bool ClientReceived(const unsigned char* inbuf);
+		/**
+		 * @brief re-enable the history
+		 *
+		 * Restart the sync debugger lifecycle, so it can be used again (if the
+		 * sync errors are resolved somehow or you were just testing it using
+		 * /fakedesync).
+		 *
+		 * Called after typing '/reset' in chat area.
+		 */
 		void Reset();
 
 		friend class CSyncedPrimitiveBase;
@@ -143,4 +246,4 @@ class CSyncDebugger {
 
 #endif // SYNCDEBUG
 
-#endif // SYNCDEBUGGER_H
+#endif // SYNC_DEBUGGER_H

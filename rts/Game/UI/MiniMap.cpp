@@ -46,7 +46,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Util.h"
 #include "System/TimeProfiler.h"
@@ -57,6 +57,25 @@
 #include <boost/cstdint.hpp>
 
 #define PLAY_SOUNDS 1
+
+CONFIG(std::string, MiniMapGeometry).defaultValue("2 2 200 200");
+CONFIG(bool, MiniMapFullProxy).defaultValue(true);
+CONFIG(int, MiniMapButtonSize).defaultValue(16);
+
+CONFIG(float, MiniMapUnitSize)
+	.defaultValue(2.5f)
+	.minimumValue(0.0f);
+
+CONFIG(float, MiniMapUnitExp).defaultValue(0.25f);
+CONFIG(float, MiniMapCursorScale).defaultValue(-0.5f);
+CONFIG(bool, MiniMapIcons).defaultValue(true);
+
+CONFIG(int, MiniMapDrawCommands)
+	.defaultValue(1)
+	.minimumValue(0);
+
+CONFIG(bool, MiniMapDrawProjectiles).defaultValue(true);
+CONFIG(bool, SimpleMiniMapColors).defaultValue(false);
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -90,23 +109,21 @@ CMiniMap::CMiniMap()
 		ypos = 0;
 	}
 	else {
-		const std::string geodef = "2 2 200 200";
-		const std::string geo = configHandler->GetString("MiniMapGeometry", geodef);
+		const std::string geo = configHandler->GetString("MiniMapGeometry");
 		ParseGeometry(geo);
 	}
 
-	fullProxy = !!configHandler->Get("MiniMapFullProxy", 1);
-	buttonSize = configHandler->Get("MiniMapButtonSize", 16);
+	fullProxy = configHandler->GetBool("MiniMapFullProxy");
+	buttonSize = configHandler->GetInt("MiniMapButtonSize");
 
-	unitBaseSize = configHandler->Get("MiniMapUnitSize", 2.5f);
-	unitBaseSize = std::max(0.0f, unitBaseSize);
-	unitExponent = configHandler->Get("MiniMapUnitExp", 0.25f);
+	unitBaseSize = configHandler->GetFloat("MiniMapUnitSize");
+	unitExponent = configHandler->GetFloat("MiniMapUnitExp");
 
-	cursorScale = configHandler->Get("MiniMapCursorScale", -0.5f);
-	useIcons = !!configHandler->Get("MiniMapIcons", 1);
-	drawCommands = std::max(0, configHandler->Get("MiniMapDrawCommands", 1));
-	drawProjectiles = !!configHandler->Get("MiniMapDrawProjectiles", 1);
-	simpleColors = !!configHandler->Get("SimpleMiniMapColors", 0);
+	cursorScale = configHandler->GetFloat("MiniMapCursorScale");
+	useIcons = configHandler->GetBool("MiniMapIcons");
+	drawCommands = configHandler->GetInt("MiniMapDrawCommands");
+	drawProjectiles = configHandler->GetBool("MiniMapDrawProjectiles");
+	simpleColors = configHandler->GetBool("SimpleMiniMapColors");
 
 	myColor[0]    = (unsigned char)(0.2f * 255);
 	myColor[1]    = (unsigned char)(0.9f * 255);

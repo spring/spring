@@ -7,7 +7,7 @@
 
 #include "OverheadController.h"
 
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/UI/MouseHandler.h"
@@ -17,6 +17,12 @@
 #include "System/myMath.h"
 #include "System/Input/KeyInput.h"
 
+CONFIG(float, MiddleClickScrollSpeed).defaultValue(0.01f);
+CONFIG(int, OverheadScrollSpeed).defaultValue(10);
+CONFIG(float, OverheadTiltSpeed).defaultValue(1.0f);
+CONFIG(bool, OverheadEnabled).defaultValue(true);
+CONFIG(float, OverheadFOV).defaultValue(45.0f);
+
 COverheadController::COverheadController()
 	: flipped(false)
 	, zscale(0.5f)
@@ -25,11 +31,11 @@ COverheadController::COverheadController()
 	, changeAltHeight(true)
 	, maxHeight(10000)
 {
-	middleClickScrollSpeed = configHandler->Get("MiddleClickScrollSpeed", 0.01f);
-	scrollSpeed = configHandler->Get("OverheadScrollSpeed",10)*0.1f;
-	tiltSpeed = configHandler->Get("OverheadTiltSpeed",1.0f);
-	enabled = !!configHandler->Get("OverheadEnabled",1);
-	fov = configHandler->Get("OverheadFOV", 45.0f);
+	middleClickScrollSpeed = configHandler->GetFloat("MiddleClickScrollSpeed");
+	scrollSpeed = configHandler->GetInt("OverheadScrollSpeed")*0.1f;
+	tiltSpeed = configHandler->GetFloat("OverheadTiltSpeed");
+	enabled = configHandler->GetBool("OverheadEnabled");
+	fov = configHandler->GetFloat("OverheadFOV");
 }
 
 void COverheadController::KeyMove(float3 move)

@@ -4841,14 +4841,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\ConfigHandler.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\ConfigHandler.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\System\demofile.h"
 				>
 			</File>
@@ -4911,26 +4903,6 @@
 			<File
 				RelativePath="..\..\System\LogOutput.h"
 				>
-			</File>
-			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Dedicated Server (Debug)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\builds\DS\main.cpp"
@@ -5011,6 +4983,26 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Dedicated Server (Debug)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>
@@ -5831,14 +5823,6 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\CmdLineParams.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Platform\ConfigLocater.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Platform\ConfigLocater.h"
 					>
 				</File>
 				<File
@@ -7720,6 +7704,42 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Log\LogUtil.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Config"
+				>
+				<File
+					RelativePath="..\..\System\Config\ConfigHandler.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Config\ConfigHandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Config\ConfigLocater.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Config\ConfigLocater.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Config\ConfigSource.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Config\ConfigSource.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Config\ConfigVariable.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Config\ConfigVariable.h"
 					>
 				</File>
 			</Filter>

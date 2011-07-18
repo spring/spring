@@ -33,7 +33,7 @@
 #include "LuaVFS.h"
 #include "LuaZip.h"
 
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "Game/WordCompletion.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"

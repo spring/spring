@@ -13,7 +13,9 @@
 #include "FBO.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/LogOutput.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
+
+CONFIG(bool, AtiSwapRBFix).defaultValue(false);
 
 std::vector<FBO*> FBO::fboList;
 std::map<GLuint,FBO::TexData*> FBO::texBuf;
@@ -108,7 +110,7 @@ void FBO::DownloadAttachment(const GLenum attachment)
 		glGetTexLevelParameteriv(target, 0, GL_TEXTURE_DEPTH_SIZE, &_cbits); bits += _cbits;
 	}
 
-	if (configHandler->Get("AtiSwapRBFix",false)) {
+	if (configHandler->GetBool("AtiSwapRBFix")) {
 		if (tex->format == GL_RGBA) {
 			tex->format = GL_BGRA;
 		} else if (tex->format == GL_RGB) {

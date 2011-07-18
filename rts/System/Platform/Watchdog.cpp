@@ -15,7 +15,7 @@
 #include <boost/thread/recursive_mutex.hpp>
 
 #include "Game/GameVersion.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/LogOutput.h"
 #include "System/maindefines.h"
@@ -23,6 +23,7 @@
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Threading.h"
 
+CONFIG(int, HangTimeout).defaultValue(0);
 
 namespace Watchdog
 {
@@ -270,7 +271,7 @@ namespace Watchdog
 			}
 		}
 	#endif
-		int hangTimeoutSecs = configHandler->Get("HangTimeout", 0);
+		int hangTimeoutSecs = configHandler->GetInt("HangTimeout");
 
 		//! HangTimeout = -1 to force disable hang detection
 		if (hangTimeoutSecs < 0) {

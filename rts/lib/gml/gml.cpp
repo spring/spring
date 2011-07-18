@@ -49,6 +49,9 @@
 const char *gmlProfMutex = "lua";
 unsigned gmlLockTime = 0;
 
+int gmlProcNumLoop = 25;
+int gmlProcInterval = 8;
+
 #define EXEC_RUN (BYTE *)NULL
 #define EXEC_SYNC (BYTE *)-1
 #define EXEC_RES (BYTE *)-2

@@ -11,7 +11,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/TimeProfiler.h"
 #include "System/Matrix44f.h"
@@ -61,7 +61,7 @@ CAdvSky::CAdvSky()
 
 	dynamicSky = true;
 	CreateClouds();
-	dynamicSky = configHandler->Get("DynamicSky", false);
+	dynamicSky = configHandler->GetBool("DynamicSky");
 
 	oldCoverBaseX=-5;
 
@@ -293,7 +293,7 @@ void CAdvSky::CreateClouds()
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8, CLOUD_SIZE, CLOUD_SIZE,0,GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	
+
 	fbo.reloadOnAltTab = true;
 	fbo.Bind();
 	fbo.AttachTexture(cdtex);

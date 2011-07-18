@@ -20,9 +20,17 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/PlayerHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 #include "System/Net/Socket.h"
+
+CONFIG(bool, OscStatsSenderEnabled).defaultValue(false);
+CONFIG(std::string, OscStatsSenderDestinationAddress).defaultValue("127.0.0.1");
+
+CONFIG(int, OscStatsSenderDestinationPort)
+	.defaultValue(6447)
+	.minimumValue(0)
+	.maximumValue(65535);
 
 COSCStatsSender* COSCStatsSender::singleton = NULL;
 
@@ -39,7 +47,7 @@ COSCStatsSender::COSCStatsSender(const std::string& dstAddress,
 		network(NULL),
 		oscOutputBuffer(NULL), oscPacker(NULL)
 {
-	SetEnabled(configHandler->Get("OscStatsSenderEnabled", false));
+	SetEnabled(configHandler->GetBool("OscStatsSenderEnabled"));
 }
 COSCStatsSender::~COSCStatsSender() {
 	SetEnabled(false);
@@ -85,10 +93,8 @@ bool COSCStatsSender::IsEnabled() const {
 COSCStatsSender* COSCStatsSender::GetInstance() {
 
 	if (COSCStatsSender::singleton == NULL) {
-		std::string dstAddress = configHandler->GetString(
-				"OscStatsSenderDestinationAddress", "127.0.0.1");
-		unsigned int dstPort   = configHandler->Get(
-				"OscStatsSenderDestinationPort", (unsigned int) 6447);
+		std::string dstAddress = configHandler->GetString("OscStatsSenderDestinationAddress");
+		unsigned int dstPort   = configHandler->GetInt("OscStatsSenderDestinationPort");
 
 		static COSCStatsSender instance(dstAddress, dstPort);
 		COSCStatsSender::singleton = &instance;

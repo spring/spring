@@ -14,8 +14,9 @@
 #include "VerticalSync.h"
 #include "GL/myGL.h"
 #include "System/LogOutput.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 
+CONFIG(int, VSync).defaultValue(-1);
 
 CVerticalSync VSync;
 
@@ -37,14 +38,14 @@ CVerticalSync::~CVerticalSync()
 
 void CVerticalSync::Init()
 {
-	SetFrames(configHandler->Get("VSync", -1));
+	SetFrames(configHandler->GetInt("VSync"));
 }
 
 
 void CVerticalSync::SetFrames(int f)
 {
 	configHandler->Set("VSync", f);
-	
+
 	frames = f;
 
 #if !defined(WIN32) && !defined(__APPLE__)

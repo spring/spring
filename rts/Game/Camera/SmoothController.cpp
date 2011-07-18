@@ -13,10 +13,15 @@
 #include "Game/UI/MouseHandler.h"
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 #include "System/myMath.h"
 #include "System/Input/KeyInput.h"
+
+CONFIG(int, SmoothScrollSpeed).defaultValue(10);
+CONFIG(float, SmoothTiltSpeed).defaultValue(1.0f);
+CONFIG(bool, SmoothEnabled).defaultValue(true);
+CONFIG(float, SmoothFOV).defaultValue(45.0f);
 
 SmoothController::SmoothController()
 	: flipped(false)
@@ -27,11 +32,11 @@ SmoothController::SmoothController()
 	, maxHeight(10000)
 	, speedFactor(1)
 {
-	middleClickScrollSpeed = configHandler->Get("MiddleClickScrollSpeed", 0.01f);
-	scrollSpeed = configHandler->Get("SmoothScrollSpeed",10)*0.1f;
-	tiltSpeed = configHandler->Get("SmoothTiltSpeed",1.0f);
-	enabled = !!configHandler->Get("SmoothEnabled",1);
-	fov = configHandler->Get("SmoothFOV", 45.0f);
+	middleClickScrollSpeed = configHandler->GetFloat("MiddleClickScrollSpeed");
+	scrollSpeed = configHandler->GetInt("SmoothScrollSpeed")*0.1f;
+	tiltSpeed = configHandler->GetFloat("SmoothTiltSpeed");
+	enabled = configHandler->GetBool("SmoothEnabled");
+	fov = configHandler->GetFloat("SmoothFOV");
 	lastSource = Noone;
 }
 

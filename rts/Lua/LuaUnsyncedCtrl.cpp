@@ -45,6 +45,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
+#include "Map/BaseGroundTextures.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/CommandDrawer.h"
@@ -61,7 +62,7 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 #include "System/NetProtocol.h"
 #include "System/Util.h"
@@ -153,6 +154,9 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(UpdateModelLight);
 	REGISTER_LUA_CFUNC(SetMapLightTrackingState);
 	REGISTER_LUA_CFUNC(SetModelLightTrackingState);
+
+	REGISTER_LUA_CFUNC(SetMapSquareTexture);
+	REGISTER_LUA_CFUNC(GetMapSquareTexture);
 
 	REGISTER_LUA_CFUNC(SetUnitNoDraw);
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
@@ -1533,6 +1537,95 @@ int LuaUnsyncedCtrl::SetModelLightTrackingState(lua_State* L)
 
 /******************************************************************************/
 
+int LuaUnsyncedCtrl::SetMapSquareTexture(lua_State* L)
+{
+	if (CLuaHandle::GetSynced(L)) {
+		return 0;
+	}
+
+	const int texSquareX = luaL_checkint(L, 1);
+	const int texSquareY = luaL_checkint(L, 2);
+	const std::string& luaTexName = luaL_checkstring(L, 3);
+
+	CBaseGroundDrawer* groundDrawer = readmap->GetGroundDrawer();
+	CBaseGroundTextures* groundTextures = groundDrawer->GetGroundTextures();
+
+	if (groundTextures == NULL) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+	if (luaTexName.empty()) {
+		// restore default texture for this square
+		lua_pushboolean(L, groundTextures->SetSquareLuaTexture(texSquareX, texSquareY, 0));
+		return 1;
+	}
+
+	const LuaTextures& luaTextures = CLuaHandle::GetActiveTextures(L);
+	const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(luaTexName);
+
+	if (luaTexture == NULL) {
+		// not a valid texture (name)
+		lua_pushboolean(L, false);
+		return 1;
+	}
+	if (luaTexture->xsize != luaTexture->ysize) {
+		// square textures only
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	lua_pushboolean(L, groundTextures->SetSquareLuaTexture(texSquareX, texSquareY, luaTexture->id));
+	return 1;
+}
+
+int LuaUnsyncedCtrl::GetMapSquareTexture(lua_State* L)
+{
+	if (CLuaHandle::GetSynced(L)) {
+		return 0;
+	}
+
+	const int texSquareX = luaL_checkint(L, 1);
+	const int texSquareY = luaL_checkint(L, 2);
+	const int texMipLevel = luaL_checkint(L, 3);
+	const std::string& luaTexName = luaL_checkstring(L, 4);
+
+	CBaseGroundDrawer* groundDrawer = readmap->GetGroundDrawer();
+	CBaseGroundTextures* groundTextures = groundDrawer->GetGroundTextures();
+
+	if (groundTextures == NULL) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+	if (luaTexName.empty()) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	const LuaTextures& luaTextures = CLuaHandle::GetActiveTextures(L);
+	const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(luaTexName);
+
+	if (luaTexture == NULL) {
+		// not a valid texture (name)
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	const int tid = luaTexture->id;
+	const int txs = luaTexture->xsize;
+	const int tys = luaTexture->ysize;
+
+	if (txs != tys) {
+		// square textures only
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	lua_pushboolean(L, groundTextures->GetSquareLuaTexture(texSquareX, texSquareY, tid, txs, tys, texMipLevel));
+	return 1;
+}
+
+/******************************************************************************/
+
 int LuaUnsyncedCtrl::SetUnitNoDraw(lua_State* L)
 {
 	if (CLuaHandle::GetUserMode(L)) {
@@ -1948,6 +2041,15 @@ int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+#define SET_IN_OVERLAY_WARNING \
+	if (lua_isboolean(L, 3)) { \
+		static bool shown = false; \
+		if (!shown) { \
+			logOutput.Print("%s: Warning: third parameter \"setInOverlay\" is deprecated", __FUNCTION__); \
+			shown = true; \
+		} \
+	}
+
 int LuaUnsyncedCtrl::GetConfigInt(lua_State* L)
 {
 	if (!CheckModUICtrl()) {
@@ -1955,8 +2057,8 @@ int LuaUnsyncedCtrl::GetConfigInt(lua_State* L)
 	}
 	const string name = luaL_checkstring(L, 1);
 	const int def     = luaL_optint(L, 2, 0);
-	const bool setInOverlay = lua_isboolean(L, 3) ? lua_toboolean(L, 3) : false;
-	const int value = configHandler->Get(name, def, setInOverlay);
+	SET_IN_OVERLAY_WARNING;
+	const int value = configHandler->IsSet(name) ? configHandler->GetInt(name) : def;
 	lua_pushnumber(L, value);
 	return 1;
 }
@@ -1982,8 +2084,8 @@ int LuaUnsyncedCtrl::GetConfigString(lua_State* L)
 	}
 	const string name = luaL_checkstring(L, 1);
 	const string def  = luaL_optstring(L, 2, "");
-	const bool setInOverlay = lua_isboolean(L, 3) ? lua_toboolean(L, 3) : false;
-	const string value = configHandler->GetString(name, def, setInOverlay);
+	SET_IN_OVERLAY_WARNING;
+	const string value = configHandler->IsSet(name) ? configHandler->GetString(name) : def;
 	lua_pushsstring(L, value);
 	return 1;
 }
@@ -2789,7 +2891,7 @@ int LuaUnsyncedCtrl::SetSunParameters(lua_State* L)
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args != 6 ||
-		!lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3) || 
+		!lua_isnumber(L, 1) || !lua_isnumber(L, 2) || !lua_isnumber(L, 3) ||
 		!lua_isnumber(L, 4) || !lua_isnumber(L, 5) || !lua_isnumber(L, 6)) {
 		luaL_error(L, "Incorrect arguments to SetSunParameters(float, float, float, float, float, float)");
 	}

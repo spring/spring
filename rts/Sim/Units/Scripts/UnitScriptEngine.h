@@ -2,10 +2,8 @@
 
 /* heavily based on CobEngine.h */
 
-#ifndef UNITSCRIPTENGINE_H
-#define UNITSCRIPTENGINE_H
-
-#include "System/LogOutput.h"
+#ifndef UNIT_SCRIPT_ENGINE_H
+#define UNIT_SCRIPT_ENGINE_H
 
 #include <list>
 
@@ -16,20 +14,20 @@ class CUnitScript;
 class CUnitScriptEngine
 {
 protected:
-	std::list<CUnitScript*> animating;         //hash would be optimal. but not crucial.
+	std::list<CUnitScript*> animating; // hash would be optimal, but not crucial
 	void CheckForDuplicates(const char* name, CUnitScript* instance);
 
 public:
-	CUnitScriptEngine(void);
-	~CUnitScriptEngine(void);
+	CUnitScriptEngine();
+	~CUnitScriptEngine();
 	void AddInstance(CUnitScript* instance);
 	void RemoveInstance(CUnitScript* instance);
 	void Tick(int deltaTime);
 
 private:
-	CUnitScript *currentScript;
+	CUnitScript* currentScript;
 };
 
 extern CUnitScriptEngine GUnitScriptEngine;
 
-#endif // UNITSCRIPTENGINE_H
+#endif // UNIT_SCRIPT_ENGINE_H

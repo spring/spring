@@ -19,7 +19,7 @@
 #include "EFXPresets.h"
 
 #include "System/TimeProfiler.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
 #include "Lua/LuaParser.h"
@@ -30,6 +30,16 @@
 #include "System/Platform/Watchdog.h"
 
 #include "System/float3.h"
+
+CONFIG(int, MaxSounds).defaultValue(128);
+CONFIG(bool, PitchAdjust).defaultValue(false);
+CONFIG(int, snd_volmaster).defaultValue(60);
+CONFIG(int, snd_volgeneral).defaultValue(100);
+CONFIG(int, snd_volunitreply).defaultValue(100);
+CONFIG(int, snd_volbattle).defaultValue(100);
+CONFIG(int, snd_volui).defaultValue(100);
+CONFIG(int, snd_volmusic).defaultValue(100);
+CONFIG(std::string, snd_device);
 
 boost::recursive_mutex soundMutex;
 
@@ -43,16 +53,16 @@ CSound::CSound()
 	boost::recursive_mutex::scoped_lock lck(soundMutex);
 	mute = false;
 	appIsIconified = false;
-	int maxSounds = configHandler->Get("MaxSounds", 128);
-	pitchAdjust = configHandler->Get("PitchAdjust", false);
+	int maxSounds = configHandler->GetInt("MaxSounds");
+	pitchAdjust = configHandler->GetBool("PitchAdjust");
 
-	masterVolume = configHandler->Get("snd_volmaster", 60) * 0.01f;
-	Channels::General.SetVolume(configHandler->Get("snd_volgeneral", 100 ) * 0.01f);
-	Channels::UnitReply.SetVolume(configHandler->Get("snd_volunitreply", 100 ) * 0.01f);
+	masterVolume = configHandler->GetInt("snd_volmaster") * 0.01f;
+	Channels::General.SetVolume(configHandler->GetInt("snd_volgeneral") * 0.01f);
+	Channels::UnitReply.SetVolume(configHandler->GetInt("snd_volunitreply") * 0.01f);
 	Channels::UnitReply.SetMaxEmmits(1);
-	Channels::Battle.SetVolume(configHandler->Get("snd_volbattle", 100 ) * 0.01f);
-	Channels::UserInterface.SetVolume(configHandler->Get("snd_volui", 100 ) * 0.01f);
-	Channels::BGMusic.SetVolume(configHandler->Get("snd_volmusic", 100 ) * 0.01f);
+	Channels::Battle.SetVolume(configHandler->GetInt("snd_volbattle") * 0.01f);
+	Channels::UserInterface.SetVolume(configHandler->GetInt("snd_volui") * 0.01f);
+	Channels::BGMusic.SetVolume(configHandler->GetInt("snd_volmusic") * 0.01f);
 
 	SoundBuffer::Initialise();
 	soundItemDef temp;
@@ -286,7 +296,7 @@ void CSound::StartThread(int maxSounds)
 		// so we do it like this ...
 		if (configHandler->IsSet("snd_device"))
 		{
-			configDeviceName = configHandler->GetString("snd_device", "YOU_SHOULD_NOT_EVER_SEE_THIS");
+			configDeviceName = configHandler->GetString("snd_device");
 			deviceName = configDeviceName.c_str();
 		}
 
@@ -526,7 +536,7 @@ bool CSound::LoadSoundDefs(const std::string& fileName)
 size_t CSound::LoadSoundBuffer(const std::string& path, bool hardFail)
 {
 	const size_t id = SoundBuffer::GetId(path);
-	
+
 	if (id > 0) {
 		return id; // file is loaded already
 	} else {

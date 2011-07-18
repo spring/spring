@@ -14,7 +14,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/bitops.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/OpenMP_cond.h"
@@ -26,6 +26,9 @@
 #define SSMF_UNCOMPRESSED_NORMALS 0
 
 using namespace std;
+
+CONFIG(bool, GroundNormalTextureHighPrecision).defaultValue(false);
+CONFIG(float, SMFTexAniso).defaultValue(0.0f);
 
 CR_BIND_DERIVED(CSmfReadMap, CReadMap, (""))
 
@@ -223,7 +226,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 		#else
 		GLenum texFormat = GL_LUMINANCE_ALPHA16F_ARB;
 
-		if (!!configHandler->Get("GroundNormalTextureHighPrecision", 0)) {
+		if (configHandler->GetBool("GroundNormalTextureHighPrecision")) {
 			texFormat = GL_LUMINANCE_ALPHA32F_ARB;
 		}
 		#endif
@@ -682,9 +685,7 @@ void CSmfReadMap::ConfigureAnisotropy()
 		return;
 	}
 
-	const char* SMFTexAniso = "SMFTexAniso";
-
-	anisotropy = atof(configHandler->GetString(SMFTexAniso, "0.0").c_str());
+	anisotropy = configHandler->GetFloat("SMFTexAniso");
 
 	if (anisotropy < 1.0f) {
 		anisotropy = 0.0f; // disabled
@@ -693,9 +694,7 @@ void CSmfReadMap::ConfigureAnisotropy()
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
 		if (anisotropy > maxAniso) {
 			anisotropy = maxAniso;
-			char buf[64];
-			SNPRINTF(buf, sizeof(buf), "%f", anisotropy);
-			configHandler->SetString(SMFTexAniso, buf);
+			configHandler->Set("SMFTexAniso", anisotropy);
 		}
 	}
 }

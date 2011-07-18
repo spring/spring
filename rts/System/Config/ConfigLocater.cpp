@@ -17,25 +17,23 @@
 #include <stdlib.h>
 #include "Game/GameVersion.h"
 #include "System/Platform/Misc.h"
-#include "System/LogOutput.h"
 #include "ConfigLocater.h"
 
 
 using std::string;
+using std::vector;
 
-/**
- * @brief Get the name of the default configuration file
- */
-string ConfigLocater::GetDefaultLocation()
+static void GetPortableLocations(vector<string>& locations)
 {
 	string binaryPath = Platform::GetProcessExecutablePath() + "/";
 	string portableConfPath = binaryPath + "springsettings.cfg";
 	if (access(portableConfPath.c_str(), 6) != -1) {
-		return portableConfPath;
+		locations.push_back(portableConfPath);
 	}
+}
 
-	string cfg;
-
+static void GetPlatformLocations(vector<string>& locations)
+{
 #ifndef _WIN32
 	const string base = ".springrc";
 	const string home = getenv("HOME");
@@ -45,10 +43,9 @@ string ConfigLocater::GetDefaultLocation()
 
 	struct stat st;
 	if (stat(verCfg.c_str(), &st) == 0) { // check if file exists
-		cfg = verCfg; // use the versionned config file
-	} else {
-		cfg = defCfg; // use the default config file
+		locations.push_back(verCfg); // use the versionned config file
 	}
+	locations.push_back(defCfg); // use the default config file
 #else
 	// first, check if there exists a config file in the same directory as the exe
 	// and if the file is writable (otherwise it can fail/segfault/end up in virtualstore...)
@@ -59,14 +56,23 @@ string ConfigLocater::GetDefaultLocation()
 	const string userDir = strPath;
 	const string verConfigPath = userDir + "\\springsettings-" + SpringVersion::Get() + ".cfg";
 	if (_access(verConfigPath.c_str(), 6) != -1) { // check for read & write access
-		cfg = verConfigPath;
-	} else {
-		cfg = strPath;
-		cfg += "\\springsettings.cfg"; // e.g. F:\Documents and Settings\MyUser\Local Settings\App Data
+		locations.push_back(verConfigPath);
 	}
-	// log here so unitsync shows configuration source, too
-	logOutput.Print("default config file: " + cfg + "\n");
+	// e.g. F:\Documents and Settings\MyUser\Local Settings\App Data
+	locations.push_back(string(strPath) + "\\springsettings.cfg");
 #endif
+}
 
-	return cfg;
+/**
+ * @brief Get the names of the default configuration files
+ */
+void ConfigLocater::GetDefaultLocations(vector<string>& locations)
+{
+	GetPortableLocations(locations);
+
+	// portable implies isolated:
+	// no extra sources when a portable source has been found!
+	if (locations.empty()) {
+		GetPlatformLocations(locations);
+	}
 }

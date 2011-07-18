@@ -27,12 +27,14 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 
 #define DRAW_QUAD_SIZE 32
+
+CONFIG(bool, ShowRezBars).defaultValue(true);
 
 CFeatureDrawer* featureDrawer = NULL;
 
@@ -57,7 +59,7 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 	drawQuadsY = gs->mapy/DRAW_QUAD_SIZE;
 	drawQuads.resize(drawQuadsX * drawQuadsY);
 #ifdef USE_GML
-	showRezBars = !!configHandler->Get("ShowRezBars", 1);
+	showRezBars = configHandler->GetBool("ShowRezBars");
 #endif
 	opaqueModelRenderers.resize(MODELTYPE_OTHER, NULL);
 	cloakedModelRenderers.resize(MODELTYPE_OTHER, NULL);

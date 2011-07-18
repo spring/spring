@@ -23,10 +23,11 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Net/UnpackPacket.h"
 #include "System/LoadSave/DemoRecorder.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "lib/gml/gmlmut.h"
 
+CONFIG(int, SourcePort).defaultValue(0);
 
 CNetProtocol::CNetProtocol() : loading(false), disableDemo(false)
 {
@@ -42,7 +43,7 @@ void CNetProtocol::InitClient(const char* server_addr, unsigned portnum, const s
 {
 	GML_STDMUTEX_LOCK(net); // InitClient
 
-	netcode::UDPConnection* conn = new netcode::UDPConnection(configHandler->Get("SourcePort", 0), server_addr, portnum);
+	netcode::UDPConnection* conn = new netcode::UDPConnection(configHandler->GetInt("SourcePort"), server_addr, portnum);
 	serverConn.reset(conn);
 	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion));
 	serverConn->Flush(true);

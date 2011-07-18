@@ -15,7 +15,7 @@
 #include "Game/GameServer.h"
 
 #include "System/NetProtocol.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "Game/CameraHandler.h"
 #include "Game/PlayerHandler.h"
 #include "Game/GameSetup.h"
@@ -50,11 +50,11 @@ void GameSetupDrawer::StartCountdown(unsigned time)
 	if (instance) {
 		instance->lastTick = SDL_GetTicks();
 		instance->readyCountdown = (int)time;
-		const std::string modeName = configHandler->GetString("CamModeName", "");
+		const std::string modeName = configHandler->GetString("CamModeName");
 		if (!modeName.empty()) {
 			camHandler->SetCameraMode(modeName);
 		} else {
-			const int modeIndex = configHandler->Get("CamMode", 1);
+			const int modeIndex = configHandler->GetInt("CamMode");
 			camHandler->SetCameraMode(modeIndex);
 		}
 	}

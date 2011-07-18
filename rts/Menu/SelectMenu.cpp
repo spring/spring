@@ -27,7 +27,7 @@
 #include "Game/PreGame.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/TdfParser.h"
@@ -51,6 +51,16 @@ using std::string;
 using agui::Button;
 using agui::HorizontalLayout;
 
+CONFIG(std::string, address).defaultValue("");
+CONFIG(bool, NoHelperAIs).defaultValue(false);
+CONFIG(std::string, LastSelectedSetting).defaultValue("");
+
+#ifdef WIN32
+	CONFIG(std::string, DefaultLobby).defaultValue("springlobby.exe");
+#else
+	CONFIG(std::string, DefaultLobby).defaultValue("springlobby");
+#endif
+
 class ConnectWindow : public agui::Window
 {
 public:
@@ -66,7 +76,7 @@ public:
 		address = new agui::LineEdit(input);
 		address->DefaultAction.connect(boost::bind(&ConnectWindow::Finish, this, true));
 		address->SetFocus(true);
-		address->SetContent(configHandler->GetString("address", ""));
+		address->SetContent(configHandler->GetString("address"));
 		HorizontalLayout* buttons = new HorizontalLayout(wndLayout);
 		Button* connect = new Button("Connect", buttons);
 		connect->Clicked.connect(boost::bind(&ConnectWindow::Finish, this, true));
@@ -103,7 +113,8 @@ public:
 		value = new agui::LineEdit(input);
 		value->DefaultAction.connect(boost::bind(&SettingsWindow::Finish, this, true));
 		value->SetFocus(true);
-		value->SetContent(configHandler->GetString(name, ""));
+		if (configHandler->IsSet(name))
+			value->SetContent(configHandler->GetString(name));
 		HorizontalLayout* buttons = new HorizontalLayout(wndLayout);
 		Button* ok = new Button("OK", buttons);
 		ok->Clicked.connect(boost::bind(&SettingsWindow::Finish, this, true));
@@ -140,7 +151,7 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	game->AddPair("OnlyLocal", 1);
 	game->add_name_value("MyPlayerName", playername);
 
-	game->AddPair("NoHelperAIs", configHandler->Get("NoHelperAIs", 0));
+	game->AddPair("NoHelperAIs", configHandler->GetBool("NoHelperAIs"));
 
 	TdfParser::TdfSection* player0 = game->construct_subsection("PLAYER0");
 	player0->add_name_value("Name", playername);
@@ -193,7 +204,7 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWind
 	mySettings = new ClientSetup();
 
 	mySettings->isHost = server;
-	mySettings->myPlayerName = configHandler->GetString("name", "UnnamedPlayer");
+	mySettings->myPlayerName = configHandler->GetString("name");
 	if (mySettings->myPlayerName.empty()) {
 		mySettings->myPlayerName = "UnnamedPlayer";
 	} else {
@@ -222,7 +233,7 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWind
 		Button* update = new Button("Lobby connect (WIP)", menu);
 		update->Clicked.connect(boost::bind(&SelectMenu::ShowUpdateWindow, this, true));
 
-		userSetting = configHandler->GetString("LastSelectedSetting", "");
+		userSetting = configHandler->GetString("LastSelectedSetting");
 		Button* editsettings = new Button("Edit settings", menu);
 		editsettings->Clicked.connect(boost::bind(&SelectMenu::ShowSettingsList, this));
 
@@ -311,11 +322,7 @@ void SelectMenu::Settings()
 
 void SelectMenu::Multi()
 {
-#ifdef __unix__
-	const std::string defLobby = configHandler->GetString("DefaultLobby", "springlobby");
-#else
-	const std::string defLobby = configHandler->GetString("DefaultLobby", "springlobby.exe");
-#endif
+	const std::string defLobby = configHandler->GetString("DefaultLobby");
 	EXECLP(defLobby.c_str(), Quote(defLobby).c_str(), NULL);
 }
 
@@ -392,7 +399,7 @@ void SelectMenu::ShowSettingsList()
 	for(std::map<std::string,std::string>::const_iterator iter = data.begin(); iter != data.end(); ++iter)
 		curSelect->list->AddItem(iter->first + " = " + iter->second, "");
 	if(data.find(userSetting) != data.end())
-		curSelect->list->SetCurrentItem(userSetting + " = " + configHandler->GetString(userSetting, ""));
+		curSelect->list->SetCurrentItem(userSetting + " = " + configHandler->GetString(userSetting));
 	curSelect->list->RefreshQuery();
 }
 

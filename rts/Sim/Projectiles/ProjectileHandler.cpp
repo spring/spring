@@ -18,16 +18,19 @@
 #include "Sim/Projectiles/Unsynced/FlyingPiece.hpp"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/LogOutput.h"
 #include "System/TimeProfiler.h"
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_List.h"
 
-CProjectileHandler* ph;
-
 using namespace std;
+
+CONFIG(int, MaxParticles).defaultValue(1000);
+CONFIG(int, MaxNanoParticles).defaultValue(2500);
+
+CProjectileHandler* ph;
 
 
 CR_BIND_TEMPLATE(ProjectileContainer, )
@@ -74,8 +77,8 @@ void projdetach::Detach(CProjectile *p) { p->Detach(); }
 
 CProjectileHandler::CProjectileHandler()
 {
-	maxParticles     = configHandler->Get("MaxParticles",      1000);
-	maxNanoParticles = configHandler->Get("MaxNanoParticles", 2500);
+	maxParticles     = configHandler->GetInt("MaxParticles");
+	maxNanoParticles = configHandler->GetInt("MaxNanoParticles");
 
 	currentParticles       = 0;
 	currentNanoParticles   = 0;

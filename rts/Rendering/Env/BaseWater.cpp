@@ -12,14 +12,17 @@
 #include "Map/ReadMap.h" // struct HeightMapUpdate
 #include "Sim/Projectiles/ExplosionListener.h"
 #include "Game/GameHelper.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
+
+CONFIG(int, ReflectiveWater).defaultValue(CBaseWater::WATER_RENDERER_REFLECTIVE);
 
 CBaseWater* water = NULL;
 static std::vector<int> waterModes;
 static std::vector<HeightMapUpdate> heightmapChanges;
 bool CBaseWater::noWakeProjectiles = false;
+
 
 CBaseWater::CBaseWater()
 	: drawReflection(false)
@@ -101,7 +104,7 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRen
 	}
 
 	if (nextWaterRendererMode < CBaseWater::WATER_RENDERER_BASIC) {
-		nextWaterRendererMode = configHandler->Get("ReflectiveWater", int(CBaseWater::WATER_RENDERER_REFLECTIVE));
+		nextWaterRendererMode = configHandler->GetInt("ReflectiveWater");
 	}
 
 	switch (nextWaterRendererMode) {

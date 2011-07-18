@@ -52,10 +52,11 @@
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/Weapon.h"
 
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/LogOutput.h"
 #include "System/myMath.h"
+#include "System/TimeProfiler.h"
 #include "System/Util.h"
 
 #ifdef USE_GML
@@ -67,6 +68,23 @@ extern gmlClientServer<void, int, CUnit*> *gmlProcessor;
 
 CUnitDrawer* unitDrawer;
 
+CONFIG(int, UnitLodDist).defaultValue(1000);
+CONFIG(int, UnitIconDist).defaultValue(10000);
+CONFIG(float, UnitTransparency).defaultValue(0.7f);
+CONFIG(bool, ShowHealthBars).defaultValue(true);
+CONFIG(bool, MultiThreadDrawUnit).defaultValue(true);
+CONFIG(bool, MultiThreadDrawUnitShadow).defaultValue(true);
+
+CONFIG(int, MaxDynamicModelLights)
+	.defaultValue(1)
+	.minimumValue(0);
+
+CONFIG(bool, AdvUnitShading).defaultValue(true);
+CONFIG(float, LODScale).defaultValue(1.0f);
+CONFIG(float, LODScaleShadow).defaultValue(1.0f);
+CONFIG(float, LODScaleReflection).defaultValue(1.0f);
+CONFIG(float, LODScaleRefraction).defaultValue(1.0f);
+
 static bool LUA_DRAWING = false; // FIXME
 static float UNIT_GLOBAL_LOD_FACTOR = 1.0f;
 
@@ -75,38 +93,33 @@ inline static void SetUnitGlobalLODFactor(float value)
 	UNIT_GLOBAL_LOD_FACTOR = (value * camera->lppScale);
 }
 
-static float GetLODFloat(const string& name, float def)
+static float GetLODFloat(const string& name)
 {
 	// NOTE: the inverse of the value is used
-	char buf[64];
-	SNPRINTF(buf, sizeof(buf), "%.3f", def);
-	const string valueStr = configHandler->GetString(name, buf);
-	char* end;
-	float value = (float)strtod(valueStr.c_str(), &end);
-	if ((end == valueStr.c_str()) || (value <= 0.0f)) {
-		return (1.0f / def);
+	const float value = configHandler->GetFloat(name);
+	if (value <= 0.0f) {
+		return 1.0f;
 	}
 	return (1.0f / value);
 }
-
 
 
 CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 {
 	eventHandler.AddClient(this);
 
-	SetUnitDrawDist((float)configHandler->Get("UnitLodDist",  1000));
-	SetUnitIconDist((float)configHandler->Get("UnitIconDist", 10000));
+	SetUnitDrawDist((float)configHandler->GetInt("UnitLodDist"));
+	SetUnitIconDist((float)configHandler->GetInt("UnitIconDist"));
 
-	LODScale           = GetLODFloat("LODScale",           1.0f);
-	LODScaleShadow     = GetLODFloat("LODScaleShadow",     1.0f);
-	LODScaleReflection = GetLODFloat("LODScaleReflection", 1.0f);
-	LODScaleRefraction = GetLODFloat("LODScaleRefraction", 1.0f);
+	LODScale           = GetLODFloat("LODScale");
+	LODScaleShadow     = GetLODFloat("LODScaleShadow");
+	LODScaleReflection = GetLODFloat("LODScaleReflection");
+	LODScaleRefraction = GetLODFloat("LODScaleRefraction");
 
 	unitAmbientColor = mapInfo->light.unitAmbientColor;
 	unitSunColor = mapInfo->light.unitSunColor;
 
-	cloakAlpha  = std::max(0.11f, std::min(1.0f, 1.0f - configHandler->Get("UnitTransparency", 0.7f)));
+	cloakAlpha  = std::max(0.11f, std::min(1.0f, 1.0f - configHandler->GetFloat("UnitTransparency")));
 	cloakAlpha1 = std::min(1.0f, cloakAlpha + 0.1f);
 	cloakAlpha2 = std::min(1.0f, cloakAlpha + 0.2f);
 	cloakAlpha3 = std::min(1.0f, cloakAlpha + 0.4f);
@@ -147,12 +160,12 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	unitRadarIcons.resize(teamHandler->ActiveAllyTeams());
 
 #ifdef USE_GML
-	showHealthBars = !!configHandler->Get("ShowHealthBars", 1);
-	multiThreadDrawUnit = !!configHandler->Get("MultiThreadDrawUnit", 1);
-	multiThreadDrawUnitShadow = !!configHandler->Get("MultiThreadDrawUnitShadow", 1);
+	showHealthBars = configHandler->GetBool("ShowHealthBars");
+	multiThreadDrawUnit = configHandler->GetBool("MultiThreadDrawUnit");
+	multiThreadDrawUnitShadow = configHandler->GetBool("MultiThreadDrawUnitShadow");
 #endif
 
-	lightHandler.Init(2U, configHandler->Get("MaxDynamicModelLights", 1U));
+	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicModelLights"));
 
 	advFade = GLEW_NV_vertex_program2;
 	advShading = (LoadModelShaders() && cubeMapHandler->Init());
@@ -227,7 +240,7 @@ bool CUnitDrawer::LoadModelShaders()
 		logOutput.Print("[LoadModelShaders] OpenGL ARB extensions missing for advanced unit shading");
 		return false;
 	}
-	if (configHandler->Get("AdvUnitShading", 1) == 0) {
+	if (!configHandler->GetBool("AdvUnitShading")) {
 		// not allowed to do shader-based model rendering
 		return false;
 	}
@@ -523,10 +536,10 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 		}
 
 		const UnitSet& unitSet = unitBinIt->second;
-
 #ifdef USE_GML
-		if (multiThreadDrawUnit) {
-			gmlProcessor->Work(
+		bool mt = GML_PROFILER(multiThreadDrawUnit)
+		if (mt && unitSet.size() >= gmlThreadCount * 4) { // small unitSets will add a significant overhead
+			gmlProcessor->Work( // Profiler results, 4 threads, one single large unitSet: Approximately 20% faster with multiThreadDrawUnit
 				NULL, NULL, &CUnitDrawer::DrawOpaqueUnitMT, this, gmlThreadCount,
 				FALSE, &unitSet, unitSet.size(), 50, 100, TRUE
 			);
@@ -839,7 +852,6 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	#undef PUSH_SHADOW_TEXTURE_STATE
 	#undef POP_SHADOW_TEXTURE_STATE
 }
-
 void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
 	typedef std::set<CUnit*> UnitSet;
 	typedef std::map<int, UnitSet> UnitBin;
@@ -853,8 +865,9 @@ void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
 		const UnitSet& unitSet = unitBinIt->second;
 
 #ifdef USE_GML
-		if (multiThreadDrawUnitShadow) {
-			gmlProcessor->Work(
+		bool mt = GML_PROFILER(multiThreadDrawUnitShadow)
+		if (mt && unitSet.size() >= gmlThreadCount * 4) { // small unitSets will add a significant overhead
+			gmlProcessor->Work( // Profiler results, 4 threads, one single large unitSet: Approximately 20% faster with multiThreadDrawUnitShadow
 				NULL, NULL, &CUnitDrawer::DrawOpaqueUnitShadowMT, this, gmlThreadCount,
 				FALSE, &unitSet, unitSet.size(), 50, 100, TRUE
 			);

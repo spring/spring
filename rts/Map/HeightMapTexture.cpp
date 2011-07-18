@@ -6,8 +6,10 @@
 #include "HeightMapTexture.h"
 
 #include "ReadMap.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 
+
+CONFIG(bool, HeightMapTexture).defaultValue(true);
 
 HeightMapTexture heightMapTexture;
 
@@ -35,7 +37,7 @@ void HeightMapTexture::Init()
 	}
 	init = true;
 
-	if (!configHandler->Get("HeightMapTexture", 1)) {
+	if (!configHandler->GetBool("HeightMapTexture")) {
 		return;
 	}
 
@@ -46,7 +48,7 @@ void HeightMapTexture::Init()
 
 	xSize = gs->mapxp1;
 	ySize = gs->mapyp1;
-	
+
 	glGenTextures(1, &texID);
 	glBindTexture(GL_TEXTURE_2D, texID);
 

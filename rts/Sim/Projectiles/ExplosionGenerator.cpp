@@ -28,7 +28,7 @@
 #include "Sim/Projectiles/Unsynced/WakeProjectile.h"
 #include "Sim/Projectiles/Unsynced/WreckProjectile.h"
 
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 #include "System/Exceptions.h"
 #include "System/creg/VarTypes.h"
@@ -824,10 +824,7 @@ bool CCustomExplosionGenerator::Explosion(
 	const float altitude = pos.y - groundHeight;
 
 	unsigned int flags = GetFlagsFromHeight(pos.y, altitude);
-	const bool airExplosion    = ((flags & CCustomExplosionGenerator::SPW_AIR       ) != 0);
-	const bool groundExplosion = ((flags & CCustomExplosionGenerator::SPW_GROUND    ) != 0);
-	const bool waterExplosion  = ((flags & CCustomExplosionGenerator::SPW_WATER     ) != 0);
-	const bool uwExplosion     = ((flags & CCustomExplosionGenerator::SPW_UNDERWATER) != 0);
+	const bool groundExplosion = ((flags & CCustomExplosionGenerator::SPW_GROUND) != 0);
 
 	if (hit) flags |= SPW_UNIT;
 	else     flags |= SPW_NO_UNIT;

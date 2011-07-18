@@ -43,7 +43,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "System/bitops.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/FPUCheck.h"
 #include "System/GlobalConfig.h"
@@ -83,6 +83,36 @@
 	#include "lib/gml/gmlsrv.h"
 	extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 #endif
+
+
+CONFIG(int, SetCoreAffinity).defaultValue(0);
+CONFIG(int, DepthBufferBits).defaultValue(24);
+CONFIG(int, StencilBufferBits).defaultValue(8);
+CONFIG(int, FSAALevel).defaultValue(0);
+CONFIG(int, SmoothLines).defaultValue(0); //! FSAA ? 0 : 3;  // until a few things get fixed
+CONFIG(int, SmoothPoints).defaultValue(0); //! FSAA ? 0 : 3;
+CONFIG(float, TextureLODBias).defaultValue(0.0f);
+CONFIG(bool, FixAltTab).defaultValue(false);
+CONFIG(int, Version).defaultValue(0);
+CONFIG(bool, FSAA).defaultValue(false);
+CONFIG(std::string, FontFile).defaultValue("fonts/FreeSansBold.otf");
+CONFIG(std::string, SmallFontFile).defaultValue("fonts/FreeSansBold.otf");
+CONFIG(int, FontSize).defaultValue(23);
+CONFIG(int, SmallFontSize).defaultValue(14);
+CONFIG(int, FontOutlineWidth).defaultValue(3);
+CONFIG(float, FontOutlineWeight).defaultValue(25.0f);
+CONFIG(int, SmallFontOutlineWidth).defaultValue(2);
+CONFIG(float, SmallFontOutlineWeight).defaultValue(10.0f);
+CONFIG(bool, Fullscreen).defaultValue(true);
+CONFIG(int, XResolution).defaultValue(0);
+CONFIG(int, YResolution).defaultValue(0);
+CONFIG(int, WindowPosX).defaultValue(32);
+CONFIG(int, WindowPosY).defaultValue(32);
+CONFIG(int, WindowState).defaultValue(0);
+CONFIG(bool, WindowBorderless).defaultValue(false);
+CONFIG(int, HardwareThreadCount).defaultValue(0);
+CONFIG(int, MultiThreadSim).defaultValue(1);
+CONFIG(std::string, name).defaultValue("UnnamedPlayer");
 
 
 ClientSetup* startsetup = NULL;
@@ -220,7 +250,7 @@ bool SpringApp::Initialize()
 	ISound::Initialize();
 	InitJoystick();
 
-	SetProcessAffinity(configHandler->Get("SetCoreAffinity", 0));
+	SetProcessAffinity(configHandler->GetInt("SetCoreAffinity"));
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
@@ -343,7 +373,7 @@ bool SpringApp::SetSDLVideoMode()
 	//! w/o SDL_NOFRAME, kde's windowmanager still creates a border (in fullscreen!) and forces a `window`-resize causing a lot of trouble (in the ::SaveWindowPosition)
 	sdlflags |= globalRendering->fullScreen ? SDL_FULLSCREEN | SDL_NOFRAME : 0;
 
-	bool winBorderless = configHandler->Get("WindowBorderless", false);
+	const bool winBorderless = configHandler->GetBool("WindowBorderless");
 	sdlflags |= winBorderless ? SDL_NOFRAME : 0;
 
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
@@ -351,13 +381,13 @@ bool SpringApp::SetSDLVideoMode()
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8); //! enable alpha channel ???
 
-	globalRendering->depthBufferBits = configHandler->Get("DepthBufferBits", 24);
+	globalRendering->depthBufferBits = configHandler->GetInt("DepthBufferBits");
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, globalRendering->depthBufferBits);
-	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler->Get("StencilBufferBits", 8));
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler->GetInt("StencilBufferBits"));
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 	//! FullScreen AntiAliasing
-	globalRendering->FSAA = Clamp(configHandler->Get("FSAALevel", 0), 0, 8);
+	globalRendering->FSAA = Clamp(configHandler->GetInt("FSAALevel"), 0, 8);
 	if (globalRendering->FSAA > 0) {
 		make_even_number(globalRendering->FSAA);
 		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
@@ -396,8 +426,7 @@ bool SpringApp::SetSDLVideoMode()
 #endif
 
 	//! setup GL smoothing
-	const int defaultSmooth = 0; //! FSAA ? 0 : 3;  // until a few things get fixed
-	const int lineSmoothing = configHandler->Get("SmoothLines", defaultSmooth);
+	const int lineSmoothing = configHandler->GetInt("SmoothLines");
 	if (lineSmoothing > 0) {
 		GLenum hint = GL_FASTEST;
 		if (lineSmoothing >= 3) {
@@ -408,7 +437,7 @@ bool SpringApp::SetSDLVideoMode()
 		glEnable(GL_LINE_SMOOTH);
 		glHint(GL_LINE_SMOOTH_HINT, hint);
 	}
-	const int pointSmoothing = configHandler->Get("SmoothPoints", defaultSmooth);
+	const int pointSmoothing = configHandler->GetInt("SmoothPoints");
 	if (pointSmoothing > 0) {
 		GLenum hint = GL_FASTEST;
 		if (pointSmoothing >= 3) {
@@ -421,13 +450,13 @@ bool SpringApp::SetSDLVideoMode()
 	}
 
 	//! setup LOD bias factor
-	const float lodBias = Clamp(configHandler->Get("TextureLODBias", 0.0f), -4.f, 4.f);
+	const float lodBias = Clamp(configHandler->GetFloat("TextureLODBias"), -4.f, 4.f);
 	if (fabs(lodBias)>0.01f) {
 		glTexEnvf(GL_TEXTURE_FILTER_CONTROL,GL_TEXTURE_LOD_BIAS, lodBias );
 	}
 
 	//! there must be a way to see if this is necessary, compare old/new context pointers?
-	if (!!configHandler->Get("FixAltTab", 0)) {
+	if (configHandler->GetBool("FixAltTab")) {
 		//! free GL resources
 		GLContext::Free();
 
@@ -672,7 +701,7 @@ void SpringApp::InitOpenGL()
 
 void SpringApp::UpdateOldConfigs()
 {
-	const int cfgVersion = configHandler->Get("Version",0);
+	const int cfgVersion = configHandler->GetInt("Version");
 	if (cfgVersion < 2) {
 		// force an update to new defaults
 		configHandler->Delete("FontFile");
@@ -687,15 +716,15 @@ void SpringApp::UpdateOldConfigs()
 		configHandler->Set("Version",3);
 	}
 	if (cfgVersion < 4) {
-		const bool fsaaEnabled = configHandler->Get("FSAA", false);
+		const bool fsaaEnabled = configHandler->GetBool("FSAA");
 		if (!fsaaEnabled)
 			configHandler->Set("FSAALevel", 0);
 		configHandler->Delete("FSAA");
 		configHandler->Set("Version",4);
 	}
 	if (cfgVersion < 5) {
-		const int xres = configHandler->Get("XResolution", 0);
-		const int yres = configHandler->Get("YResolution", 0);
+		const int xres = configHandler->GetInt("XResolution");
+		const int yres = configHandler->GetInt("YResolution");
 		if ((xres == 1024) && (yres == 768)) { //! old default res (use desktop res now by default)
 			configHandler->Delete("XResolution");
 			configHandler->Delete("YResolution");
@@ -708,14 +737,14 @@ void SpringApp::UpdateOldConfigs()
 void SpringApp::LoadFonts()
 {
 	// Initialize font
-	const std::string fontFile = configHandler->GetString("FontFile", "fonts/FreeSansBold.otf");
-	const std::string smallFontFile = configHandler->GetString("SmallFontFile", "fonts/FreeSansBold.otf");
-	const int fontSize = configHandler->Get("FontSize", 23);
-	const int smallFontSize = configHandler->Get("SmallFontSize", 14);
-	const int outlineWidth = configHandler->Get("FontOutlineWidth", 3);
-	const float outlineWeight = configHandler->Get("FontOutlineWeight", 25.0f);
-	const int smallOutlineWidth = configHandler->Get("SmallFontOutlineWidth", 2);
-	const float smallOutlineWeight = configHandler->Get("SmallFontOutlineWeight", 10.0f);
+	const std::string fontFile = configHandler->GetString("FontFile");
+	const std::string smallFontFile = configHandler->GetString("SmallFontFile");
+	const int fontSize = configHandler->GetInt("FontSize");
+	const int smallFontSize = configHandler->GetInt("SmallFontSize");
+	const int outlineWidth = configHandler->GetInt("FontOutlineWidth");
+	const float outlineWeight = configHandler->GetFloat("FontOutlineWeight");
+	const int smallOutlineWidth = configHandler->GetInt("SmallFontOutlineWidth");
+	const float smallOutlineWeight = configHandler->GetFloat("SmallFontOutlineWeight");
 
 	SafeDelete(font);
 	SafeDelete(smallFont);
@@ -767,6 +796,7 @@ void SpringApp::ParseCmdLine()
 	cmdline->AddString('C', "config",             "Configuration file");
 	cmdline->AddSwitch(0,   "list-ai-interfaces", "Dump a list of available AI Interfaces to stdout");
 	cmdline->AddSwitch(0,   "list-skirmish-ais",  "Dump a list of available Skirmish AIs to stdout");
+	cmdline->AddSwitch(0,   "list-config-vars",   "Dump a list of config vars and meta data to stdout");
 
 	try {
 		cmdline->Parse();
@@ -790,11 +820,9 @@ void SpringApp::ParseCmdLine()
 
 	if (cmdline->IsSet("config")) {
 		string configSource = cmdline->GetString("config");
-		LOG("using configuration source \"%s\"",
-				ConfigHandler::Instantiate(configSource).c_str());
+		ConfigHandler::Instantiate(configSource);
 	} else {
-		LOG("using default configuration source \"%s\"",
-				ConfigHandler::Instantiate().c_str());
+		ConfigHandler::Instantiate();
 	}
 	GlobalConfig::Instantiate();
 
@@ -803,15 +831,20 @@ void SpringApp::ParseCmdLine()
 	if (cmdline->IsSet("list-ai-interfaces")) {
 		IAILibraryManager::OutputAIInterfacesInfo();
 		exit(0);
-	} else if (cmdline->IsSet("list-skirmish-ais")) {
+	}
+	else if (cmdline->IsSet("list-skirmish-ais")) {
 		IAILibraryManager::OutputSkirmishAIInfo();
+		exit(0);
+	}
+	else if (cmdline->IsSet("list-config-vars")) {
+		ConfigVariable::OutputMetaDataMap();
 		exit(0);
 	}
 
 #ifdef _DEBUG
 	globalRendering->fullScreen = false;
 #else
-	globalRendering->fullScreen = !!configHandler->Get("Fullscreen", 1);
+	globalRendering->fullScreen = configHandler->GetBool("Fullscreen");
 #endif
 	// flags
 	if (cmdline->IsSet("window")) {
@@ -831,24 +864,24 @@ void SpringApp::ParseCmdLine()
 		}
 	}
 
-	globalRendering->viewSizeX = configHandler->Get("XResolution", 0);
+	globalRendering->viewSizeX = configHandler->GetInt("XResolution");
 	if (cmdline->IsSet("xresolution"))
 		globalRendering->viewSizeX = std::max(cmdline->GetInt("xresolution"), 640);
 
-	globalRendering->viewSizeY = configHandler->Get("YResolution", 0);
+	globalRendering->viewSizeY = configHandler->GetInt("YResolution");
 	if (cmdline->IsSet("yresolution"))
 		globalRendering->viewSizeY = std::max(cmdline->GetInt("yresolution"), 480);
 
-	globalRendering->winPosX  = configHandler->Get("WindowPosX", 32);
-	globalRendering->winPosY  = configHandler->Get("WindowPosY", 32);
-	globalRendering->winState = configHandler->Get("WindowState", 0);
+	globalRendering->winPosX  = configHandler->GetInt("WindowPosX");
+	globalRendering->winPosY  = configHandler->GetInt("WindowPosY");
+	globalRendering->winState = configHandler->GetInt("WindowState");
 
 #ifdef USE_GML
-	gmlThreadCountOverride = configHandler->Get("HardwareThreadCount", 0);
+	gmlThreadCountOverride = configHandler->GetInt("HardwareThreadCount");
 	gmlThreadCount=GML_CPU_COUNT;
 #if GML_ENABLE_SIM
 	extern volatile int gmlMultiThreadSim;
-	gmlMultiThreadSim=configHandler->Get("MultiThreadSim", 1);
+	gmlMultiThreadSim=configHandler->GetInt("MultiThreadSim");
 #endif
 #endif
 }
@@ -877,7 +910,7 @@ void SpringApp::Startup()
 	else if (inputFile.rfind("sdf") == inputFile.size() - 3)
 	{
 		std::string demoFileName = inputFile;
-		std::string demoPlayerName = configHandler->GetString("name", "UnnamedPlayer");
+		std::string demoPlayerName = configHandler->GetString("name");
 
 		if (demoPlayerName.empty()) {
 			demoPlayerName = "UnnamedPlayer";
@@ -903,7 +936,7 @@ void SpringApp::Startup()
 		std::string savefile = inputFile;
 		startsetup = new ClientSetup();
 		startsetup->isHost = true;
-		startsetup->myPlayerName = configHandler->GetString("name", "unnamed");
+		startsetup->myPlayerName = configHandler->GetString("name");
 #ifdef SYNCDEBUG
 		CSyncDebugger::GetInstance()->Initialize(true, 64); //FIXME: add actual number of player
 #endif

@@ -42,10 +42,13 @@ INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT}/System)
 
 
 set(main_files
-	"${ENGINE_SRC_ROOT}/System/Platform/ConfigLocater.cpp"
+	"${ENGINE_SRC_ROOT}/System/Config/ConfigHandler.cpp"
+	"${ENGINE_SRC_ROOT}/System/Config/ConfigLocater.cpp"
+	"${ENGINE_SRC_ROOT}/System/Config/ConfigSource.cpp"
+	"${ENGINE_SRC_ROOT}/System/Config/ConfigVariable.cpp"
+	"${ENGINE_SRC_ROOT}/System/Config/ConfigLocater.cpp"
 	"${ENGINE_SRC_ROOT}/System/Platform/Misc.cpp"
 	"${ENGINE_SRC_ROOT}/System/Platform/ScopedFileLock.cpp"
-	"${ENGINE_SRC_ROOT}/System/ConfigHandler.cpp"
 	"${ENGINE_SRC_ROOT}/System/LogOutput.cpp"
 	"${ENGINE_SRC_ROOT}/System/TdfParser.cpp"
 	"${ENGINE_SRC_ROOT}/System/Info.cpp"

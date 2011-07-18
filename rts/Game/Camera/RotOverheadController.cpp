@@ -5,19 +5,25 @@
 
 #include "RotOverheadController.h"
 
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "Game/Camera.h"
 #include "System/LogOutput.h"
 #include "Map/Ground.h"
 #include "System/myMath.h"
 
+CONFIG(float, RotOverheadMouseScale).defaultValue(0.01f);
+CONFIG(int, RotOverheadScrollSpeed).defaultValue(10);
+CONFIG(bool, RotOverheadEnabled).defaultValue(true);
+CONFIG(float, RotOverheadFOV).defaultValue(45.0f);
+
+
 CRotOverheadController::CRotOverheadController()
 	: oldHeight(500)
 {
-	mouseScale = configHandler->Get("RotOverheadMouseScale", 0.01f);
-	scrollSpeed = configHandler->Get("RotOverheadScrollSpeed",10)*0.1f;
-	enabled=!!configHandler->Get("RotOverheadEnabled",1);
-	fov = configHandler->Get("RotOverheadFOV", 45.0f);
+	mouseScale = configHandler->GetFloat("RotOverheadMouseScale");
+	scrollSpeed = configHandler->GetInt("RotOverheadScrollSpeed")*0.1f;
+	enabled=configHandler->GetBool("RotOverheadEnabled");
+	fov = configHandler->GetFloat("RotOverheadFOV");
 }
 
 

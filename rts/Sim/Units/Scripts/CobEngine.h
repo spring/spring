@@ -1,16 +1,15 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __COB_ENGINE_H__
-#define __COB_ENGINE_H__
+#ifndef COB_ENGINE_H
+#define COB_ENGINE_H
 
 /*
- * The cob engine is responsible for "scheduling" and running threads that are running in
- * infinite loops.
+ * The cob engine is responsible for "scheduling" and running threads that are
+ * running in infinite loops.
  * It also manages reading and caching of the actual .cob files
  */
 
 #include "CobThread.h"
-#include "System/LogOutput.h"
 
 #include <list>
 #include <queue>
@@ -20,24 +19,31 @@ class CCobThread;
 class CCobInstance;
 class CCobFile;
 
-class CCobThreadPtr_less : public std::binary_function<CCobThread *, CCobThread *, bool> {
+
+class CCobThreadPtr_less : public std::binary_function<CCobThread*, CCobThread*, bool> {
 public:
-	bool operator() (const CCobThread *const &a, const CCobThread *const &b) const {return a->GetWakeTime() > b->GetWakeTime();}
+	bool operator() (const CCobThread* const& a, const CCobThread* const& b) const {
+		return a->GetWakeTime() > b->GetWakeTime();
+	}
 };
 
 
 class CCobEngine
 {
 protected:
-	std::list<CCobThread *> running;
-	std::list<CCobThread *> wantToRun;				//Threads are added here if they are in Running. And moved to real running after running is empty
-	std::priority_queue<CCobThread *, vector<CCobThread *>, CCobThreadPtr_less> sleeping;
-	CCobThread *curThread;
+	std::list<CCobThread*> running;
+	/**
+	 * Threads are added here if they are in Running.
+	 * And moved to real running after running is empty.
+	 */
+	std::list<CCobThread*> wantToRun;
+	std::priority_queue<CCobThread*, std::vector<CCobThread*>, CCobThreadPtr_less> sleeping;
+	CCobThread* curThread;
 	void TickThread(int deltaTime, CCobThread* thread);
 public:
 	CCobEngine();
 	~CCobEngine();
-	void AddThread(CCobThread *thread);
+	void AddThread(CCobThread* thread);
 	void Tick(int deltaTime);
 	void ShowScriptError(const std::string& msg);
 };
@@ -46,7 +52,7 @@ public:
 class CCobFileHandler
 {
 protected:
-	std::map<std::string, CCobFile *> cobFiles;
+	std::map<std::string, CCobFile*> cobFiles;
 public:
 	~CCobFileHandler();
 	CCobFile* GetCobFile(const std::string& name);
@@ -59,4 +65,4 @@ extern CCobEngine GCobEngine;
 extern CCobFileHandler GCobFileHandler;
 extern int GCurrentTime;
 
-#endif // __COB_ENGINE_H__
+#endif // COB_ENGINE_H

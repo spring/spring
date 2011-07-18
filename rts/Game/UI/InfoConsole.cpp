@@ -15,10 +15,13 @@
 #endif
 
 #include "System/Sync/SyncTracer.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "InputReceiver.h"
 
 #define border 7
+
+CONFIG(int, InfoMessageTime).defaultValue(400);
+CONFIG(std::string, InfoConsoleGeometry).defaultValue("0.26 0.96 0.41 0.205");
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -37,10 +40,9 @@ CInfoConsole::CInfoConsole() :
 {
 	data.clear();
 
-	lifetime = configHandler->Get("InfoMessageTime", 400);
+	lifetime = configHandler->GetInt("InfoMessageTime");
 
-	const std::string geo = configHandler->GetString("InfoConsoleGeometry",
-			"0.26 0.96 0.41 0.205");
+	const std::string geo = configHandler->GetString("InfoConsoleGeometry");
 	const int vars = sscanf(geo.c_str(), "%f %f %f %f",
 	                        &xpos, &ypos, &width, &height);
 	if (vars != 4) {

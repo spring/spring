@@ -14,7 +14,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/GL/myGL.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 #include "System/TdfParser.h"
 #include "System/Util.h"
@@ -24,7 +24,8 @@
 #include <stdexcept>
 #include <fstream>
 
-
+CONFIG(bool, SM3ForceFallbackTex).defaultValue(false);
+CONFIG(int, SM3MaxTextureStages).defaultValue(10);
 
 struct Sm3LoadCB: terrain::ILoadCallback
 {
@@ -112,7 +113,7 @@ void CSm3ReadMap::ConfigNotify(const std::string& key, const std::string& value)
 CBaseGroundDrawer* CSm3ReadMap::GetGroundDrawer() { return groundDrawer; }
 void CSm3ReadMap::NewGroundDrawer() {
 	renderer->config.cacheTextures = false;
-	renderer->config.forceFallbackTexturing = !!configHandler->Get("SM3ForceFallbackTex", 0);
+	renderer->config.forceFallbackTexturing = configHandler->GetBool("SM3ForceFallbackTex");
 
 	if (!renderer->config.forceFallbackTexturing && GLEW_ARB_fragment_shader && GLEW_ARB_shading_language_100) {
 		renderer->config.useBumpMaps = true;
@@ -126,7 +127,7 @@ void CSm3ReadMap::NewGroundDrawer() {
 
 	/*
 	int numStages = atoi(mapDefParser.SGetValueDef("0", "map\\terrain\\numtexturestages").c_str());
-	int maxStages = configHandler->Get("SM3MaxTextureStages", 10);
+	int maxStages = configHandler->GetInt("SM3MaxTextureStages");
 	if (numStages > maxStages) {
 		renderer->config.cacheTextures = true;
 		renderer->config.cacheTextureSize = 256;

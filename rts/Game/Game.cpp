@@ -137,7 +137,7 @@
 #include "UI/ShareBox.h"
 #include "UI/TooltipConsole.h"
 #include "UI/ProfileDrawer.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/FPUCheck.h"
@@ -169,6 +169,19 @@
 #include "lib/gml/gmlsrv.h"
 extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 #endif
+
+
+CONFIG(bool, WindowedEdgeMove).defaultValue(true);
+CONFIG(bool, FullscreenEdgeMove).defaultValue(true);
+CONFIG(bool, ShowFPS).defaultValue(false);
+CONFIG(bool, ShowClock).defaultValue(true);
+CONFIG(bool, ShowSpeed).defaultValue(false);
+CONFIG(bool, ShowMTInfo).defaultValue(true);
+CONFIG(int, ShowPlayerInfo).defaultValue(1);
+CONFIG(float, GuiOpacity).defaultValue(0.8f);
+CONFIG(std::string, InputTextGeo).defaultValue("");
+CONFIG(bool, LuaModUICtrl).defaultValue(true);
+
 
 CGame* game = NULL;
 
@@ -281,22 +294,22 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	configHandler->Set("Headless", isHeadless ? 1 : 0, true);
 
 	//FIXME move to MouseHandler!
-	windowedEdgeMove   = !!configHandler->Get("WindowedEdgeMove",   1);
-	fullscreenEdgeMove = !!configHandler->Get("FullscreenEdgeMove", 1);
+	windowedEdgeMove   = configHandler->GetBool("WindowedEdgeMove");
+	fullscreenEdgeMove = configHandler->GetBool("FullscreenEdgeMove");
 
-	showFPS   = !!configHandler->Get("ShowFPS",   0);
-	showClock = !!configHandler->Get("ShowClock", 1);
-	showSpeed = !!configHandler->Get("ShowSpeed", 0);
-	showMTInfo = !!configHandler->Get("ShowMTInfo", 1);
+	showFPS   = configHandler->GetBool("ShowFPS");
+	showClock = configHandler->GetBool("ShowClock");
+	showSpeed = configHandler->GetBool("ShowSpeed");
+	showMTInfo = configHandler->GetBool("ShowMTInfo");
 	mtInfoCtrl = 0;
 
-	speedControl = configHandler->Get("SpeedControl", 0);
+	speedControl = configHandler->GetInt("SpeedControl");
 
-	playerRoster.SetSortTypeByCode((PlayerRoster::SortType)configHandler->Get("ShowPlayerInfo", 1));
+	playerRoster.SetSortTypeByCode((PlayerRoster::SortType)configHandler->GetInt("ShowPlayerInfo"));
 
-	CInputReceiver::guiAlpha = configHandler->Get("GuiOpacity",  0.8f);
+	CInputReceiver::guiAlpha = configHandler->GetFloat("GuiOpacity");
 
-	const string inputTextGeo = configHandler->GetString("InputTextGeo", "");
+	const string inputTextGeo = configHandler->GetString("InputTextGeo");
 	ParseInputTextGeometry("default");
 	ParseInputTextGeometry(inputTextGeo);
 
@@ -304,7 +317,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	writingPos = 0;
 	userPrompt = "";
 
-	CLuaHandle::SetModUICtrl(!!configHandler->Get("LuaModUICtrl", 1));
+	CLuaHandle::SetModUICtrl(configHandler->GetBool("LuaModUICtrl"));
 
 	modInfo.Init(modName.c_str());
 
@@ -325,11 +338,12 @@ CGame::~CGame()
 	tracefile << "[" << __FUNCTION__ << "]";
 #endif
 
+	CLoadScreen::DeleteInstance(); // make sure to halt loading, otherwise crash :)
+
 	// TODO move these to the end of this dtor, once all action-executors are registered by their respective engine sub-parts
 	UnsyncedGameCommands::DestroyInstance();
 	SyncedGameCommands::DestroyInstance();
 
-	CLoadScreen::DeleteInstance();
 	IVideoCapturing::FreeInstance();
 	ISound::Shutdown();
 
@@ -1669,7 +1683,6 @@ void CGame::DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod
 
 	const int oldMinFrameNum = gMinFrameNum;
 	const int oldMaxFrameNum = gMaxFrameNum;
-	const int oldFramePeriod = gFramePeriod;
 
 	if (!gs->cheatEnabled) { return; }
 	// check if the range is valid

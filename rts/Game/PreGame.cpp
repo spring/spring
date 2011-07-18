@@ -31,7 +31,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/NetProtocol.h"
 #include "System/TdfParser.h"
@@ -49,6 +49,8 @@
 
 using netcode::RawPacket;
 using std::string;
+
+CONFIG(bool, DemoFromDemo).defaultValue(false);
 
 CPreGame* pregame = NULL;
 
@@ -85,7 +87,7 @@ void CPreGame::LoadSetupscript(const std::string& script)
 void CPreGame::LoadDemo(const std::string& demo)
 {
 	assert(settings->isHost);
-	if (!configHandler->Get("DemoFromDemo", false))
+	if (!configHandler->GetBool("DemoFromDemo"))
 		net->DisableDemoRecording();
 	ReadDataFromDemo(demo);
 }
@@ -218,7 +220,7 @@ void CPreGame::UpdateClientNet()
 					handleerror(NULL, "Remote requested quit: " + message, "Quit message", MBF_OK | MBF_EXCL);
 				} catch (netcode::UnpackPacketException &e) {
 					logOutput.Print("Got invalid QuitMessage: %s", e.err.c_str());
-				}		
+				}
 				break;
 			}
 			case NETMSG_CREATE_NEWPLAYER: {

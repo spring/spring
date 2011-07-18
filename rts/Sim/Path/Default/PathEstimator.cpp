@@ -29,10 +29,12 @@
 #include "System/FileSystem/ArchiveLoader.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/LogOutput.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/NetProtocol.h"
 
 #define PATHDEBUG false
+
+CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512 * 1024 * 1024);
 
 const std::string pathDir = "cache/paths/";
 
@@ -99,7 +101,7 @@ CPathEstimator::~CPathEstimator()
 
 void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::string& map)
 {
-	unsigned int numThreads = std::max(0, configHandler->Get("HardwareThreadCount", 0));
+	unsigned int numThreads = std::max(0, configHandler->GetInt("HardwareThreadCount"));
 
 	if (numThreads == 0) {
 		// auto-detect
@@ -126,7 +128,7 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		// start extra threads if applicable, but always keep the total
 		// memory-footprint made by CPathFinder instances within bounds
 		const unsigned int minMemFootPrint = sizeof(CPathFinder) + pathFinder->GetMemFootPrint();
-		const unsigned int maxMemFootPrint = configHandler->Get("MaxPathCostsMemoryFootPrint", 512 * 1024 * 1024);
+		const unsigned int maxMemFootPrint = configHandler->GetInt("MaxPathCostsMemoryFootPrint");
 		const unsigned int numExtraThreads = std::min(int(numThreads - 1), std::max(0, int(maxMemFootPrint / minMemFootPrint) - 1));
 		const unsigned int reqMemFootPrint = minMemFootPrint * (numExtraThreads + 1);
 
@@ -267,7 +269,7 @@ void CPathEstimator::FindOffset(const MoveData& moveData, unsigned int blockX, u
 
 			if (moveMath.IsBlocked(moveData, lowerX + x, lowerZ + z) & CMoveMath::BLOCK_STRUCTURE)
 				continue;
-			
+
 			const float speedMod = moveMath.GetPosSpeedMod(moveData, lowerX + x, lowerZ + z);
 			const float cost = (dx * dx + dz * dz) + (blockArea / (0.001f + speedMod));
 
@@ -894,7 +896,7 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 
 		std::auto_ptr<IArchive> auto_pfile(pfile);
 		IArchive& file(*pfile);
-		
+
 		const unsigned fid = file.FindFile("pathinfo");
 		assert(fid < file.NumFiles());
 		pathChecksum = file.GetCrc32(fid);

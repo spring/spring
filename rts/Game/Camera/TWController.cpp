@@ -11,16 +11,21 @@
 #include "Map/Ground.h"
 #include "Game/UI/MouseHandler.h"
 #include "Rendering/GlobalRendering.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
 #include "System/myMath.h"
 #include "System/Input/KeyInput.h"
 
+CONFIG(int, TWScrollSpeed).defaultValue(10);
+CONFIG(bool, TWEnabled).defaultValue(true);
+CONFIG(float, TWFOV).defaultValue(45.0f);
+
+
 CTWController::CTWController()
 {
-	scrollSpeed = configHandler->Get("TWScrollSpeed",10) * 0.1f;
-	enabled = !!configHandler->Get("TWEnabled",1);
-	fov = configHandler->Get("TWFOV", 45.0f);
+	scrollSpeed = configHandler->GetInt("TWScrollSpeed") * 0.1f;
+	enabled = configHandler->GetBool("TWEnabled");
+	fov = configHandler->GetFloat("TWFOV");
 }
 
 

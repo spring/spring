@@ -21,10 +21,12 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/Wind.h"
 #include "System/myMath.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
+
+CONFIG(int, GrassDetail).defaultValue(3);
 
 static const float turfSize        = 20.0f;            // single turf size
 static const float partTurfSize    = turfSize * 0.6f;  // single turf size
@@ -43,7 +45,7 @@ inline float fRand(float size)
 
 CGrassDrawer::CGrassDrawer()
 {
-	const int detail = configHandler->Get("GrassDetail", 3);
+	const int detail = configHandler->GetInt("GrassDetail");
 
 	if (detail == 0) {
 		grassOff = true;
@@ -58,7 +60,7 @@ CGrassDrawer::CGrassDrawer()
 	if (grassdata) {
 		if (grassbm.width != gs->mapx / grassSquareSize || grassbm.height != gs->mapy / grassSquareSize) {
 			char b[128];
-			SNPRINTF(b, sizeof(b), "grass-map has wrong size (%dx%d, should be %dx%d)\n", 
+			SNPRINTF(b, sizeof(b), "grass-map has wrong size (%dx%d, should be %dx%d)\n",
 				grassbm.width, grassbm.height, gs->mapx / 4, gs->mapy / 4);
 			throw std::runtime_error(b);
 		}
@@ -453,7 +455,7 @@ void CGrassDrawer::Draw(void)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_ALPHA);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB, 1.0f - sky->GetLight()->GetGroundShadowDensity());
-		
+
 		static const float texConstant[] = {
 			mapInfo->light.groundAmbientColor.x * 1.24f,
 			mapInfo->light.groundAmbientColor.y * 1.24f,
@@ -900,7 +902,7 @@ void CGrassDrawer::CreateFarTex(void)
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_FOG);
 	glDisable(GL_BLEND);
-	glColor4f(1,1,1,1);			
+	glColor4f(1,1,1,1);
 	glViewport(0,0,256*sizeMod,256*sizeMod);
 
 	for(int a=0;a<16;++a){
@@ -916,7 +918,7 @@ void CGrassDrawer::CreateFarTex(void)
 		glOrtho(-partTurfSize, partTurfSize, -partTurfSize, partTurfSize, -turfSize, turfSize);
 
 		glCallList(grassDL);
-		
+
 		glReadPixels(0,0,256*sizeMod,256*sizeMod,GL_RGBA,GL_UNSIGNED_BYTE,buf2);
 
 //		CBitmap bm(buf2,512,512);

@@ -19,7 +19,7 @@
 
 #include "System/Log/ILog.h"
 #include "System/LogOutput.h"
-#include "System/ConfigHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "FileSystemHandler.h"
 #include "FileSystem.h"
 #include "CacheDir.h"
@@ -27,6 +27,8 @@
 #include "System/Exceptions.h"
 #include "System/maindefines.h" // for sPS, cPS, cPD
 #include "System/Platform/Misc.h"
+
+CONFIG(std::string, SpringData).defaultValue("");
 
 DataDir::DataDir(const std::string& path)
 	: path(path)
@@ -276,7 +278,7 @@ void DataDirLocater::LocateDataDirs()
 		AddDirs(dd_env);    // ENV{SPRING_DATADIR}
 		// user defined in spring config handler
 		// (Linux: ~/.springrc, Windows: .\springsettings.cfg)
-		AddDirs(SubstEnvVars(configHandler->GetString("SpringData", "")));
+		AddDirs(SubstEnvVars(configHandler->GetString("SpringData")));
 
 #ifdef WIN32
 		// All MS Windows variants
