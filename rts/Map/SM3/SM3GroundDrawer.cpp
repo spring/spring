@@ -16,7 +16,7 @@
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/GL/myGL.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 #include <SDL_keysym.h>
 extern unsigned char* keys;
@@ -234,7 +234,7 @@ void CSm3GroundDrawer::IncreaseDetail()
 	tr->config.detailMod *= 1.1f;
 	if (tr->config.detailMod > 12.0f)
 		tr->config.detailMod = 12.0f;
-	logOutput.Print("Terrain detail changed to: %2.2f", tr->config.detailMod);
+	LOG("Terrain detail changed to: %2.2f", tr->config.detailMod);
 }
 
 void CSm3GroundDrawer::DecreaseDetail()
@@ -243,6 +243,6 @@ void CSm3GroundDrawer::DecreaseDetail()
 	if (tr->config.detailMod < 0.25f)
 		tr->config.detailMod = 0.25f;
 
-	logOutput.Print("Terrain detail changed to: %2.2f", tr->config.detailMod);
+	LOG("Terrain detail changed to: %2.2f", tr->config.detailMod);
 }
 

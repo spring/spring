@@ -14,8 +14,6 @@ typedef unsigned int uint;
 typedef unsigned short ushort;
 typedef unsigned char uchar;
 
-#define d_trace logOutput.Print
-
 
 namespace terrain {
 
