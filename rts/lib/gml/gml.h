@@ -14,11 +14,12 @@
 #error USE_GML_SIM requires USE_GML
 #endif
 
-#define GML_MUTEX_PROFILER 0 // enables profiler
+#define GML_MUTEX_PROFILER 0 // enables mutex profiler
 
 #ifdef USE_GML
 #define GML_MUTEX_PROFILE 0 // detailed profiling of specific mutex
 extern const char *gmlProfMutex;
+#define GML_PROC_PROFILER 0 // enables gmlprocessor profiler
 
 #include <set>
 #include <map>
@@ -30,6 +31,17 @@ extern const char *gmlProfMutex;
 extern gmlQueue gmlQueues[GML_MAX_NUM_THREADS];
 
 #include "gmlfun.h"
+
+#if GML_PROC_PROFILER
+	extern int gmlProcNumLoop;
+	extern int gmlProcInterval;
+	#define GML_PROFILER(name) \
+	name && (globalRendering->drawFrame & gmlProcInterval);\
+	SCOPED_TIMER(!name ? "NoProc" : ((name && (globalRendering->drawFrame & gmlProcInterval)) ? " " GML_QUOTE(name) "MTProc" : " " GML_QUOTE(name) "Proc"));\
+	for(int i = 0; i < (name ? gmlProcNumLoop : 1); ++i)
+#else
+	#define GML_PROFILER(name) name
+#endif
 
 extern gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_VERTEX;
 extern gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_FRAGMENT;

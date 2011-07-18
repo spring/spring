@@ -56,6 +56,7 @@
 #include "System/EventHandler.h"
 #include "System/LogOutput.h"
 #include "System/myMath.h"
+#include "System/TimeProfiler.h"
 #include "System/Util.h"
 
 #ifdef USE_GML
@@ -535,10 +536,10 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 		}
 
 		const UnitSet& unitSet = unitBinIt->second;
-
 #ifdef USE_GML
-		if (multiThreadDrawUnit) {
-			gmlProcessor->Work(
+		bool mt = GML_PROFILER(multiThreadDrawUnit)
+		if (mt && unitSet.size() >= gmlThreadCount * 4) { // small unitSets will add a significant overhead
+			gmlProcessor->Work( // Profiler results, 4 threads, one single large unitSets: Approximately 20% faster with multiThreadDrawUnit
 				NULL, NULL, &CUnitDrawer::DrawOpaqueUnitMT, this, gmlThreadCount,
 				FALSE, &unitSet, unitSet.size(), 50, 100, TRUE
 			);
@@ -851,7 +852,6 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	#undef PUSH_SHADOW_TEXTURE_STATE
 	#undef POP_SHADOW_TEXTURE_STATE
 }
-
 void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
 	typedef std::set<CUnit*> UnitSet;
 	typedef std::map<int, UnitSet> UnitBin;
@@ -865,8 +865,9 @@ void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
 		const UnitSet& unitSet = unitBinIt->second;
 
 #ifdef USE_GML
-		if (multiThreadDrawUnitShadow) {
-			gmlProcessor->Work(
+		bool mt = GML_PROFILER(multiThreadDrawUnitShadow)
+		if (mt && unitSet.size() >= gmlThreadCount * 4) { // small unitSets will add a significant overhead
+			gmlProcessor->Work( // Profiler results, 4 threads, one single large unitSet: Approximately 20% faster with multiThreadDrawUnitShadow
 				NULL, NULL, &CUnitDrawer::DrawOpaqueUnitShadowMT, this, gmlThreadCount,
 				FALSE, &unitSet, unitSet.size(), 50, 100, TRUE
 			);
