@@ -93,6 +93,7 @@ Engine / Lua:
  - added Spring.GetProjectilesInRectangle
  - linked Projectile{Created,Destroyed} to the Spring.SetWatchWeapon state
  - extend LuaPathFinder with support for setting node cost overlays
+ - added Spring.SetMapSquareTexture
 
 Engine / Internal:
  - added limited OpenMP support

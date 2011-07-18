@@ -1,40 +1,45 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _BF_GROUND_TEXTURES_H_
-#define _BF_GROUND_TEXTURES_H_
+#ifndef _SMF_GROUND_TEXTURES_H_
+#define _SMF_GROUND_TEXTURES_H_
 
+#include "Map/BaseGroundTextures.h"
 #include "Rendering/GL/PBO.h"
 
 class CFileHandler;
 class CSmfReadMap;
 
-class CBFGroundTextures
+class CSMFGroundTextures: public CBaseGroundTextures
 {
 public:
-	CBFGroundTextures(CSmfReadMap* srm);
-	~CBFGroundTextures(void);
-	void SetTexture(int x, int y);
+	CSMFGroundTextures(CSmfReadMap*);
+	~CSMFGroundTextures(void);
+
 	void DrawUpdate(void);
-	void LoadSquare(int x, int y, int level);
+	bool SetSquareLuaTexture(int x, int y, int textureID);
+	void BindSquareTexture(int x, int y);
+	void LoadSquareTexture(int x, int y, int level);
 
 protected:
-	CSmfReadMap* map;
+	CSmfReadMap* smfMap;
 
 	const int bigSquareSize;
 	const int numBigTexX;
 	const int numBigTexY;
 
 	struct GroundSquare {
-		int texLevel;
-		GLuint texture;
-		unsigned int lastUsed;
+		unsigned int texLevel;
+		unsigned int textureID;
+		unsigned int lastBoundFrame;
+		bool luaTexture;
 	};
 
-	GroundSquare* squares;
+	std::vector<GroundSquare> squares;
 
-	int* tileMap;
+	std::vector<int> tileMap;
+	std::vector<char> tiles;
+
 	int tileSize;
-	char* tiles;
 	int tileMapXSize;
 	int tileMapYSize;
 

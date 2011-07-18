@@ -80,6 +80,7 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 	alwaysColor[2] = (int)(losColorScale * 0.25f);
 
 	heightLinePal = new CHeightLinePalette();
+	groundTextures = NULL;
 }
 
 
