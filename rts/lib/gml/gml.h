@@ -40,7 +40,7 @@ extern gmlQueue gmlQueues[GML_MAX_NUM_THREADS];
 	SCOPED_TIMER(!name ? "NoProc" : ((name && (globalRendering->drawFrame & gmlProcInterval)) ? " " GML_QUOTE(name) "MTProc" : " " GML_QUOTE(name) "Proc"));\
 	for(int i = 0; i < (name ? gmlProcNumLoop : 1); ++i)
 #else
-	#define GML_PROFILER(name) name
+	#define GML_PROFILER(name) name;
 #endif
 
 extern gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_VERTEX;

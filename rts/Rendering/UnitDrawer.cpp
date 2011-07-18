@@ -539,7 +539,7 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 #ifdef USE_GML
 		bool mt = GML_PROFILER(multiThreadDrawUnit)
 		if (mt && unitSet.size() >= gmlThreadCount * 4) { // small unitSets will add a significant overhead
-			gmlProcessor->Work( // Profiler results, 4 threads, one single large unitSets: Approximately 20% faster with multiThreadDrawUnit
+			gmlProcessor->Work( // Profiler results, 4 threads, one single large unitSet: Approximately 20% faster with multiThreadDrawUnit
 				NULL, NULL, &CUnitDrawer::DrawOpaqueUnitMT, this, gmlThreadCount,
 				FALSE, &unitSet, unitSet.size(), 50, 100, TRUE
 			);
