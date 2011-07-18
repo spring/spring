@@ -65,6 +65,12 @@ void CTimeProfiler::Update()
 			pi->second.percent = ((float)pi->second.current) / ((float)timeDiff);
 			pi->second.current=0;
 
+			if(pi->second.percent > pi->second.peak) {
+				pi->second.peak = pi->second.percent;
+				pi->second.newpeak = true;
+			}
+			else
+				pi->second.newpeak = false;
 		}
 		lastBigUpdate = curTime;
 	}
@@ -110,11 +116,6 @@ void CTimeProfiler::PrintProfilingInfo() const
 			"Time of the last 0.5s");
 	std::map<std::string, CTimeProfiler::TimeRecord>::const_iterator pi;
 	for (pi = profile.begin(); pi != profile.end(); ++pi) {
-#if GML_MUTEX_PROFILER
-		if ((pi->first.size() < 5) || pi->first.substr(pi->first.size()-5,5).compare("Mutex")!=0) {
-			continue;
-		}
-#endif // GML_MUTEX_PROFILER
 		LOG("%35s %16.2fs %5.2f%%",
 				pi->first.c_str(),
 				((float)pi->second.total) / 1000.f,
