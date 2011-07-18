@@ -373,16 +373,16 @@ bool CSMFGroundTextures::SetSquareLuaTexture(int texSquareX, int texSquareY, int
 bool CSMFGroundTextures::GetSquareLuaTexture(int texSquareX, int texSquareY, int texID, int texSizeX, int texSizeY, int texMipLevel) {
 	if (texSquareX < 0 || texSquareX >= numBigTexX) { return false; }
 	if (texSquareY < 0 || texSquareY >= numBigTexY) { return false; }
-
-	texMipLevel = Clamp(texMipLevel, 0, 3);
-	texSizeX = std::min(texSizeX, mipSqSize);
-	texSizeY = std::min(texSizeY, mipSqSize);
+	if (texMipLevel < 0 || texMipLevel > 3) { return false; }
 
 	static const GLenum ttarget = GL_TEXTURE_2D;
 	static const GLenum tformat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
 
 	const int mipSqSize = 1024 >> texMipLevel;
 	const int numSqBytes = (mipSqSize * mipSqSize) / 2;
+
+	texSizeX = std::min(texSizeX, mipSqSize);
+	texSizeY = std::min(texSizeY, mipSqSize);
 
 	pbo.Bind();
 	pbo.Resize(numSqBytes);
