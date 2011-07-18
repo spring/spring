@@ -15,7 +15,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/TdfParser.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
@@ -29,7 +29,7 @@ CONFIG(int, SM3MaxTextureStages).defaultValue(10);
 
 struct Sm3LoadCB: terrain::ILoadCallback
 {
-	void Write(const char* msg) { logOutput.Print("%s", msg); }
+	void Write(const char* msg) { LOG("%s", msg); }
 };
 
 // FIXME - temporary, until the LuaParser change is done

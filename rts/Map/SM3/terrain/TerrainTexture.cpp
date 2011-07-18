@@ -17,7 +17,7 @@
 #include "TerrainTextureGLSL.h"
 #include "Lightcalc.h"
 #include "System/Util.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 #include <SDL_keysym.h>
 extern unsigned char* keys;
@@ -58,9 +58,11 @@ namespace terrain {
 				str="Pass_Replace";
 
 			string shaderstr = p.shaderSetup ? p.shaderSetup->GetDebugDesc () : string("none");
-			d_trace ("Pass ("_STPF_"): %s, %s. Shader: %s\n", a, str, p.invertAlpha ? "invertalpha" : "", shaderstr.c_str());
+			LOG_L(L_DEBUG, "Pass ("_STPF_"): %s, %s. Shader: %s",
+					a, str, (p.invertAlpha ? "invertalpha" : ""),
+					shaderstr.c_str());
 		}
-		d_trace ("\n");
+		LOG_L(L_DEBUG, "");
 	}
 
 //-----------------------------------------------------------------------
@@ -749,10 +751,10 @@ namespace terrain {
 	void ShaderDef::Output()
 	{
 		const char *opstr[] = { "add", "mul", "alpha" ,"blend" };
-		d_trace ("Shader: "_STPF_" stages.\n", stages.size());
+		LOG("Shader: "_STPF_" stages.", stages.size());
 		for (size_t a = 0; a < stages.size(); a++){
-			d_trace (_STPF_"\toperation=%s\n", a, opstr[(int)stages[a].operation]);
-			d_trace ("\tsource=%s\n", stages[a].sourceName.c_str());
+			LOG(_STPF_"\toperation=%s", a, opstr[(int)stages[a].operation]);
+			LOG("\tsource=%s", stages[a].sourceName.c_str());
 		}
 	}
 };

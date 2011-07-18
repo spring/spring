@@ -11,7 +11,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "System/bitops.h"
 #include "System/Util.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
@@ -24,13 +24,13 @@ namespace terrain {
 
 static void ShowInfoLog(GLhandleARB handle)
 {
-	d_trace("Shader failed to compile, showing info log:\n");
+	LOG_L(L_ERROR, "Shader failed to compile, showing info log:");
 	GLint infoLogLen;
 	GLsizei actualLength;
 	glGetObjectParameterivARB(handle, GL_OBJECT_INFO_LOG_LENGTH_ARB, &infoLogLen);
 	char* infoLog = new char[infoLogLen];
 	glGetInfoLogARB(handle, infoLogLen, &actualLength, infoLog);
-	logOutput.Print("%s", infoLog);
+	LOG_L(L_ERROR, "%s", infoLog);
 	delete[] infoLog;
 }
 
@@ -235,18 +235,18 @@ ShaderBuilder::ShadingMethod  ShaderBuilder::CalculateShadingMethod(ShaderDef* s
 		special.units++;
 	}
 
-	d_trace("[ShaderBuilder::CalculateShadingMethod]\n");
-	d_trace("\t    hwmax.units=%2d,     hwmax.coords=%2d\n",     hwmax.units,     hwmax.coords);
-	d_trace("\tdiffuseRQ.units=%2d, diffuseRQ.coords=%2d\n", diffuseRQ.units, diffuseRQ.coords);
-	d_trace("\tbumpmapRQ.units=%2d, bumpmapRQ.coords=%2d\n", bumpmapRQ.units, bumpmapRQ.coords);
-	d_trace("\t  special.units=%2d,   special.coords=%2d\n",   special.units,   special.coords);
+	LOG("[ShaderBuilder::CalculateShadingMethod]");
+	LOG("\t    hwmax.units=%2d,     hwmax.coords=%2d",     hwmax.units,     hwmax.coords);
+	LOG("\tdiffuseRQ.units=%2d, diffuseRQ.coords=%2d", diffuseRQ.units, diffuseRQ.coords);
+	LOG("\tbumpmapRQ.units=%2d, bumpmapRQ.coords=%2d", bumpmapRQ.units, bumpmapRQ.coords);
+	LOG("\t  special.units=%2d,   special.coords=%2d",   special.units,   special.coords);
 
 	if (sd->normalMapStages.empty()) {
 		if ((diffuseRQ + special).Fits(hwmax)) {
-			d_trace("\tno normal-map stages, SM_DiffuseSP\n");
+			LOG("\tno normal-map stages, SM_DiffuseSP");
 			return SM_DiffuseSP;
 		} else {
-			d_trace("\tno normal-map stages, SM_Impossible\n");
+			LOG("\tno normal-map stages, SM_Impossible");
 			return SM_Impossible;
 		}
 	} else {
@@ -258,14 +258,14 @@ ShaderBuilder::ShadingMethod  ShaderBuilder::CalculateShadingMethod(ShaderDef* s
 
 	TexReq total = diffuseRQ + bumpmapRQ + special;
 
-	d_trace("\t*****************************************\n");
-	d_trace("\tbumpmapRQ.units=%2d, bumpmapRQ.coords=%2d\n", bumpmapRQ.units, bumpmapRQ.coords);
-	d_trace("\t  special.units=%2d,   special.coords=%2d\n",   special.units,   special.coords);
-	d_trace("\t    total.units=%2d,     total.coords=%2d\n",     total.units,     total.coords);
+	LOG("\t*****************************************");
+	LOG("\tbumpmapRQ.units=%2d, bumpmapRQ.coords=%2d", bumpmapRQ.units, bumpmapRQ.coords);
+	LOG("\t  special.units=%2d,   special.coords=%2d",   special.units,   special.coords);
+	LOG("\t    total.units=%2d,     total.coords=%2d",     total.units,     total.coords);
 
 	// diffuse + bumpmap in one pass?
 	if (total.Fits(hwmax)) {
-		d_trace("\tnormalMapStages.size()="_STPF_", SM_DiffuseBumpmapSP", sd->normalMapStages.size());
+		LOG("\tnormalMapStages.size()="_STPF_", SM_DiffuseBumpmapSP", sd->normalMapStages.size());
 		return SM_DiffuseBumpmapSP;
 	}
 
@@ -273,18 +273,18 @@ ShaderBuilder::ShadingMethod  ShaderBuilder::CalculateShadingMethod(ShaderDef* s
 	// for multipass, one extra texture read is required for the diffuse input
 	special.units++;
 
-	d_trace("\t*****************************************\n");
-	d_trace("\t  special.units=%2d,   special.coords=%2d\n", special.units, special.coords);
-	d_trace("\t    total.units=%2d,     total.coords=%2d\n",   total.units,   total.coords);
+	LOG("\t*****************************************");
+	LOG("\t  special.units=%2d,   special.coords=%2d", special.units, special.coords);
+	LOG("\t    total.units=%2d,     total.coords=%2d",   total.units,   total.coords);
 
 	// is multipass possible?
 	if (diffuseRQ.Fits(hwmax) && (bumpmapRQ + special).Fits(hwmax)) {
-		d_trace("\tnormalMapStages.size()="_STPF_", SM_DiffuseBumpmapMP", sd->normalMapStages.size());
+		LOG("\tnormalMapStages.size()="_STPF_", SM_DiffuseBumpmapMP", sd->normalMapStages.size());
 		return SM_DiffuseBumpmapMP;
 	}
 
 	// no options left
-	d_trace("\tSM_Impossible\n");
+	LOG("\tSM_Impossible");
 	return SM_Impossible;
 }
 
@@ -363,7 +363,7 @@ NodeGLSLShader* ShaderBuilder::EndPass(ShaderDef* sd, const std::string &operati
 	glGetObjectParameterivARB(nodeShader->program, GL_OBJECT_LINK_STATUS_ARB, &isLinked);
 
 	if (!isLinked) {
-		d_trace ("Failed to link shaders. Showing info log:\n");
+		LOG_L(L_ERROR, "Failed to link shaders. Showing info log:");
 		lastFragmentShader.WriteToFile("sm3_fragmentshader.txt");
 		lastVertexShader.WriteToFile("sm3_vertexshader.txt");
 		ShowInfoLog(nodeShader->program);
@@ -487,7 +487,7 @@ void ShaderBuilder::BuildFragmentShader(NodeGLSLShader* ns, uint passIndex, cons
 	fragmentShader.Build(GL_FRAGMENT_SHADER_ARB);
 	ns->fragmentShader = fragmentShader.handle;
 
-	d_trace("Fragment shader built successfully.");
+	LOG("Fragment shader built successfully.");
 }
 
 void ShaderBuilder::BuildVertexShader(NodeGLSLShader* ns, uint passIndex, ShaderDef* sd)
@@ -510,7 +510,7 @@ void ShaderBuilder::BuildVertexShader(NodeGLSLShader* ns, uint passIndex, Shader
 
 	vertexShader.AddFile("shaders/GLSL/terrainVertexShader.glsl");
 	vertexShader.Build(GL_VERTEX_SHADER_ARB);
-	d_trace("Vertex shader built successfully.");
+	LOG("Vertex shader built successfully.");
 
 	ns->vertexShader = vertexShader.handle;
 }
@@ -918,7 +918,7 @@ SimpleCopyShader::SimpleCopyShader(BufferTexture *buf)
 	glGetObjectParameterivARB(program, GL_OBJECT_LINK_STATUS_ARB, &isLinked);
 	if (!isLinked)
 	{
-		d_trace("Failed to link shaders. Showing info log:\n");
+		LOG_L(L_ERROR, "Failed to link shaders. Showing info log:");
 		ShowInfoLog(program);
 		throw std::runtime_error("Failed to link shaders");
 	}

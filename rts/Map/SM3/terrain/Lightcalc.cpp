@@ -10,7 +10,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GL/myGL.h"
 #include "System/Util.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 #include <IL/il.h>
 #include <assert.h>
@@ -160,7 +160,7 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 	delete[] centerhm;
 
 	const spring_duration numTicks = spring_gettime() - startTicks;
-	d_trace ("Lightmap generation: %2.3f seconds\n", spring_tomsecs(numTicks) * 0.001f);
+	LOG("Lightmap generation: %2.3f seconds", spring_tomsecs(numTicks) * 0.001f);
 }
 
 Lightmap::~Lightmap()

@@ -18,13 +18,23 @@
 #include "Game/LoadScreen.h"
 #include "System/Exceptions.h"
 #include "System/FastMath.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/mmgr.h"
 #include "System/TimeProfiler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 
 using std::sprintf;
+
+#define LOG_SECTION_SMF_GROUND_TEXTURES "CSMFGroundTextures"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SMF_GROUND_TEXTURES)
+
+// use the specific section for all LOG*() calls in this source file
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_SMF_GROUND_TEXTURES
+
 
 CSMFGroundTextures::CSMFGroundTextures(CSmfReadMap* rm) :
 	bigSquareSize(128),
@@ -55,12 +65,11 @@ CSMFGroundTextures::CSMFGroundTextures(CSmfReadMap* rm) :
 
 	if (!smf.smtFileNames.empty()) {
 		if (smf.smtFileNames.size() != tileHeader.numTileFiles) {
-			logOutput.Print(
-				"[CSMFGroundTextures] mismatched number of .smt file "
-				"references between map's .smd ("_STPF_") and header (%d);"
-				" ignoring .smd overrides",
-				smf.smtFileNames.size(), tileHeader.numTileFiles
-			);
+			LOG_L(L_WARNING,
+					"mismatched number of .smt file "
+					"references between the map's .smd ("_STPF_")"
+					" and header (%d); ignoring .smd overrides",
+					smf.smtFileNames.size(), tileHeader.numTileFiles);
 		} else {
 			smtHeaderOverride = true;
 		}
@@ -108,11 +117,10 @@ CSMFGroundTextures::CSMFGroundTextures(CSmfReadMap* rm) :
 		}
 
 		if (!tileFile.FileExists()) {
-			logOutput.Print(
-				"[CSMFGroundTextures] could not find .smt tile-file "
-				"\"%s\" (all %d missing tiles will be colored red)",
-				smtFilePath.c_str(), numSmallTiles
-			);
+			LOG_L(L_WARNING,
+					"could not find .smt tile-file "
+					"\"%s\" (all %d missing tiles will be colored red)",
+					smtFilePath.c_str(), numSmallTiles);
 			memset(&tiles[curTile * SMALL_TILE_SIZE], 0xaa, numSmallTiles * SMALL_TILE_SIZE);
 			curTile += numSmallTiles;
 			continue;

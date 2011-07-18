@@ -16,8 +16,8 @@
 #include "TerrainTexture.h"
 #include "TerrainNode.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
-#include "System/LogOutput.h"
 #include <assert.h>
 
 // define this for big endian machines
@@ -501,8 +501,13 @@ namespace terrain {
 		}
 
 		if (logUpdates) {
-			if (nodeUpdateCount) d_trace ("NodeUpdates: %d, NormalDataAllocs:%d, RenderDataAllocs:%d\n",
-				nodeUpdateCount, renderDataManager->normalDataAllocates, renderDataManager->renderDataAllocates);
+			if (nodeUpdateCount) {
+				LOG_L(L_DEBUG,
+						"NodeUpdates: %d, NormalDataAllocs:%d, RenderDataAllocs:%d",
+						nodeUpdateCount,
+						renderDataManager->normalDataAllocates,
+						renderDataManager->renderDataAllocates);
+			}
 		}
 		curRC = 0;
 	}
@@ -906,7 +911,7 @@ namespace terrain {
 
 		// calculate index table
 		indexTable = new IndexTable;
-		d_trace ("Index buffer data size: %d\n", VertexBuffer::TotalSize());
+		LOG("Index buffer data size: %d", VertexBuffer::TotalSize());
 	}
 
 	void Terrain::LoadHeightMap(const TdfParser& parser, ILoadCallback* cb)
@@ -930,7 +935,7 @@ namespace terrain {
 			throw content_error("Failed to load heightmap " + heightMapName);
 		}
 
-		d_trace("heightmap size: %dx%d\n", GetHeightmapWidth(), GetHeightmapHeight());
+		LOG("heightmap size: %dx%d", GetHeightmapWidth(), GetHeightmapHeight());
 
 		if ((GetHeightmapWidth() - 1) != atoi(parser.SGetValueDef("","MAP\\GameAreaW").c_str()) ||
 			(GetHeightmapHeight() - 1) != atoi(parser.SGetValueDef("","MAP\\GameAreaH").c_str())) {
