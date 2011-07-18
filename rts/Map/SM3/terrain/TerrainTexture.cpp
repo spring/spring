@@ -20,7 +20,7 @@
 #include "System/LogOutput.h"
 
 #include <SDL_keysym.h>
-extern unsigned char *keys;
+extern unsigned char* keys;
 
 namespace terrain {
 

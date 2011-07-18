@@ -1655,7 +1655,7 @@ void CBFGroundDrawer::UpdateCamRestraints(void)
 
 void CBFGroundDrawer::Update()
 {
-	if (mapInfo->map.voidWater && readmap->currMaxHeight < 0.0f) {
+	if (mapInfo->map.voidWater && (readmap->currMaxHeight < 0.0f)) {
 		return;
 	}
 
