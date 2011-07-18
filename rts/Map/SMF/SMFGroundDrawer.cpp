@@ -23,6 +23,7 @@
 #include "System/LogOutput.h"
 #include "System/Util.h"
 #include "System/mmgr.h"
+#include "System/TimeProfiler.h"
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
@@ -878,22 +879,25 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 		glAlphaFunc(GL_GREATER, 0.9f);
 	}
 
+	{ // profiler scope
 #ifdef USE_GML
-	if (multiThreadDrawGround) {
-		gmlProcessor->Work(NULL,&CBFGroundDrawer::DoDrawGroundRowMT,NULL,this,gmlThreadCount,FALSE,NULL,numBigTexY,50,100,TRUE,NULL);
-	}
-	else
-#endif
-	{
-		int camBty = math::floor(cam2->pos.z / (bigSquareSize * SQUARE_SIZE));
-		camBty = std::max(0, std::min(numBigTexY - 1, camBty));
-
-		//! try to render in "front to back" (so start with the camera nearest BigGroundLines)
-		for (int bty = camBty; bty >= 0; --bty) {
-			DoDrawGroundRow(bty);
+		bool mt = GML_PROFILER(multiThreadDrawGround)
+		if (mt) { // Profiler results, 4 threads: multiThreadDrawGround is faster only if ViewRadius is below 60 (probably depends on memory/cache speeds)
+			gmlProcessor->Work(NULL,&CBFGroundDrawer::DoDrawGroundRowMT,NULL,this,gmlThreadCount,FALSE,NULL,numBigTexY,50,100,TRUE,NULL);
 		}
-		for (int bty = camBty + 1; bty < numBigTexY; ++bty) {
-			DoDrawGroundRow(bty);
+		else
+#endif
+		{
+			int camBty = math::floor(cam2->pos.z / (bigSquareSize * SQUARE_SIZE));
+			camBty = std::max(0, std::min(numBigTexY - 1, camBty));
+
+			//! try to render in "front to back" (so start with the camera nearest BigGroundLines)
+			for (int bty = camBty; bty >= 0; --bty) {
+				DoDrawGroundRow(bty);
+			}
+			for (int bty = camBty + 1; bty < numBigTexY; ++bty) {
+				DoDrawGroundRow(bty);
+			}
 		}
 	}
 
@@ -1269,15 +1273,18 @@ void CBFGroundDrawer::DrawShadowPass(void)
 
 	po->Enable();
 
+	{ // profiler scope
 #ifdef USE_GML
-	if (multiThreadDrawGroundShadow) {
-		gmlProcessor->Work(NULL, &CBFGroundDrawer::DoDrawGroundShadowLODMT, NULL, this, gmlThreadCount, FALSE, NULL, NUM_LODS + 1, 50, 100, TRUE, NULL);
-	}
-	else
+		bool mt = GML_PROFILER(multiThreadDrawGroundShadow)
+		if (mt) { // Profiler results, 4 threads: multiThreadDrawGroundShadow is rarely faster than single threaded rendering (therefore disabled by default)
+			gmlProcessor->Work(NULL, &CBFGroundDrawer::DoDrawGroundShadowLODMT, NULL, this, gmlThreadCount, FALSE, NULL, NUM_LODS + 1, 50, 100, TRUE, NULL);
+		}
+		else
 #endif
-	{
-		for (int nlod = 0; nlod < NUM_LODS + 1; ++nlod) {
-			DoDrawGroundShadowLOD(nlod);
+		{
+			for (int nlod = 0; nlod < NUM_LODS + 1; ++nlod) {
+				DoDrawGroundShadowLOD(nlod);
+			}
 		}
 	}
 

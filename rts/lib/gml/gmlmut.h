@@ -91,7 +91,7 @@ extern gmlMutex simmutex;
 			char st##name[sizeof(ScopedTimer)];\
 			int stc##name=GML_MTXCMP(GML_QUOTE(name),gmlProfMutex);\
 			if(stc##name)\
-				new (st##name) ScopedTimer(GML_QUOTE(name ## line ## Mutex));\
+				new (st##name) ScopedTimer(" " GML_QUOTE(name ## line ## Mutex));\
 			type;\
 			if(stc##name)\
 				((ScopedTimer *)st##name)->~ScopedTimer()
@@ -103,7 +103,7 @@ extern gmlMutex simmutex;
 #	else
 #		define GML_PROFMUTEX_LOCK(name, type)\
 			char st##name[sizeof(ScopedTimer)];\
-			new (st##name) ScopedTimer(GML_QUOTE(name##Mutex));\
+			new (st##name) ScopedTimer(" " GML_QUOTE(name##Mutex));\
 			type;\
 			((ScopedTimer *)st##name)->~ScopedTimer()
 #		define GML_STDMUTEX_LOCK(name) GML_PROFMUTEX_LOCK(name, GML_MUTEX_TYPE(name, mutex))
