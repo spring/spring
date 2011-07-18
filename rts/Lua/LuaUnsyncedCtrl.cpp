@@ -1546,6 +1546,19 @@ int LuaUnsyncedCtrl::SetMapSquareTexture(lua_State* L)
 	const int texSquareY = luaL_checkint(L, 2);
 	const std::string& luaTexName = luaL_checkstring(L, 3);
 
+	CBaseGroundDrawer* groundDrawer = readmap->GetGroundDrawer();
+	CBaseGroundTextures* groundTextures = groundDrawer->GetGroundTextures();
+
+	if (groundTextures == NULL) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+	if (luaTexName.empty()) {
+		// restore default texture for this square
+		lua_pushboolean(L, groundTextures->SetSquareLuaTexture(texSquareX, texSquareY, 0));
+		return 1;
+	}
+
 	const LuaTextures& luaTextures = CLuaHandle::GetActiveTextures(L);
 	const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(luaTexName);
 
@@ -1556,14 +1569,6 @@ int LuaUnsyncedCtrl::SetMapSquareTexture(lua_State* L)
 	}
 	if (luaTexture->xsize != luaTexture->ysize) {
 		// square textures only
-		lua_pushboolean(L, false);
-		return 1;
-	}
-
-	CBaseGroundDrawer* groundDrawer = readmap->GetGroundDrawer();
-	CBaseGroundTextures* groundTextures = groundDrawer->GetGroundTextures();
-
-	if (groundTextures == NULL) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
