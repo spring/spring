@@ -7,7 +7,7 @@ class CBaseGroundTextures {
 public:
 	virtual ~CBaseGroundTextures() {}
 	virtual void DrawUpdate(void) {}
-	virtual bool SetSquareLuaTexture(int x, int y, int textureID) {}
+	virtual bool SetSquareLuaTexture(int x, int y, int textureID) { return false; }
 	virtual void BindSquareTexture(int x, int y) {}
 };
 
