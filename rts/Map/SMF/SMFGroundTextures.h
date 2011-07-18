@@ -16,11 +16,14 @@ public:
 	~CSMFGroundTextures(void);
 
 	void DrawUpdate(void);
-	bool SetSquareLuaTexture(int x, int y, int textureID);
-	void BindSquareTexture(int x, int y);
-	void LoadSquareTexture(int x, int y, int level);
+	bool SetSquareLuaTexture(int texSquareX, int texSquareY, int texID);
+	bool GetSquareLuaTexture(int texSquareX, int texSquareY, int texID, int texSizeX, int texSizeY, int texMipLevel);
+	void BindSquareTexture(int texSquareX, int texSquareY);
 
 protected:
+	void ExtractSquareTiles(const int texSquareX, const int texSquareY, const int mipLevel, GLint* tileBuf) const;
+	void LoadSquareTexture(int x, int y, int level);
+
 	CSmfReadMap* smfMap;
 
 	const int bigSquareSize;
@@ -40,8 +43,8 @@ protected:
 	std::vector<char> tiles;
 
 	int tileSize;
-	int tileMapXSize;
-	int tileMapYSize;
+	int tileMapSizeX;
+	int tileMapSizeY;
 
 	// FIXME? these are not updated at runtime
 	std::vector<float> heightMaxima;
