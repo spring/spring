@@ -11,6 +11,7 @@
 #include "TerrainBase.h"
 #include "TerrainNode.h"
 #include "Textures.h"
+#include "Map/SM3/Plane.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/float3.h"

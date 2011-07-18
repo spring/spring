@@ -8,7 +8,9 @@
 #include "Textures.h"
 #include "Lightcalc.h"
 #include "Map/ReadMap.h"
+#include "Map/SM3/Vector3.h"
 #include "Rendering/GL/myGL.h"
+#include "System/Matrix44f.h"
 #include "System/Util.h"
 #include "System/Log/ILog.h"
 
