@@ -116,6 +116,8 @@ CLoadScreen::~CLoadScreen()
 {
 	// at this point, the thread running CGame::LoadGame
 	// has finished and deregistered itself from WatchDog
+	if (mt_loading && gameLoadThread)
+		gameLoadThread->Join();
 	delete gameLoadThread; gameLoadThread = NULL;
 
 	if (net)
