@@ -375,14 +375,15 @@ bool CSMFGroundTextures::GetSquareLuaTexture(int texSquareX, int texSquareY, int
 	if (texSquareY < 0 || texSquareY >= numBigTexY) { return false; }
 	if (texMipLevel < 0 || texMipLevel > 3) { return false; }
 
+	// no point extracting sub-rectangles from compressed data
+	if (texSizeX != (1024 >> texMipLevel)) { return false; }
+	if (texSizeY != (1024 >> texMipLevel)) { return false; }
+
 	static const GLenum ttarget = GL_TEXTURE_2D;
 	static const GLenum tformat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
 
 	const int mipSqSize = 1024 >> texMipLevel;
 	const int numSqBytes = (mipSqSize * mipSqSize) / 2;
-
-	texSizeX = std::min(texSizeX, mipSqSize);
-	texSizeY = std::min(texSizeY, mipSqSize);
 
 	pbo.Bind();
 	pbo.Resize(numSqBytes);
