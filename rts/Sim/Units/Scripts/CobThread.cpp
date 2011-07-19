@@ -14,8 +14,9 @@
 #include "System/LogOutput.h"
 
 
-CCobThread::CCobThread(CCobFile &script, CCobInstance *owner)
-: script(script), owner(owner)
+CCobThread::CCobThread(CCobFile& script, CCobInstance* owner)
+	: script(script)
+	, owner(owner)
 {
 	for (int i = 0; i < MAX_LUA_COB_ARGS; i++) {
 		luaArgs[i] = 0;
@@ -26,8 +27,7 @@ CCobThread::CCobThread(CCobFile &script, CCobInstance *owner)
 	signalMask = 42;
 }
 
-//Inform the vultures that we finally croaked
-CCobThread::~CCobThread(void)
+CCobThread::~CCobThread()
 {
 	if (callback != NULL) {
 		//logOutput.Print("%s callback with %d", script.scriptNames[callStack.back().functionId].c_str(), retCode);
@@ -37,18 +37,14 @@ CCobThread::~CCobThread(void)
 		owner->threads.remove(this);
 }
 
-//Sets a callback that will be called when the thread dies. There can be only one.
-void CCobThread::SetCallback(CBCobThreadFinish cb, void *p1, void *p2)
+void CCobThread::SetCallback(CBCobThreadFinish cb, void* p1, void* p2)
 {
 	callback = cb;
 	cbParam1 = p1;
 	cbParam2 = p2;
 }
 
-//This function sets the thread in motion. Should only be called once.
-//If schedule is false the thread is not added to the scheduler, and thus
-//it is expected that the starter is responsible for ticking it.
-void CCobThread::Start(int functionId, const vector<int> &args, bool schedule)
+void CCobThread::Start(int functionId, const vector<int>& args, bool schedule)
 {
 	wakeTime = 0;
 	state = Run;
@@ -70,18 +66,16 @@ void CCobThread::Start(int functionId, const vector<int> &args, bool schedule)
 		paramCount++;
 	}
 
-	//Add to scheduler
+	// Add to scheduler
 	if (schedule)
 		GCobEngine.AddThread(this);
 }
 
-const string &CCobThread::GetName()
+const string& CCobThread::GetName()
 {
 	return script.scriptNames[callStack[0].functionId];
 }
 
-/** @brief Checks whether the stack has at least size items.
-    @returns min(size, stack.size()) */
 int CCobThread::CheckStack(int size)
 {
 	if ((unsigned)size > stack.size()) {
@@ -94,7 +88,6 @@ int CCobThread::CheckStack(int size)
 	return size;
 }
 
-/** @brief Returns the value at pos in the stack. Neater than exposing the actual stack */
 int CCobThread::GetStackVal(int pos)
 {
 	return stack[pos];
@@ -105,10 +98,10 @@ int CCobThread::GetWakeTime() const
 	return wakeTime;
 }
 
-//Command documentation from http://visualta.tauniverse.com/Downloads/cob-commands.txt
-//And some information from basm0.8 source (basm ops.txt)
+// Command documentation from http://visualta.tauniverse.com/Downloads/cob-commands.txt
+// And some information from basm0.8 source (basm ops.txt)
 
-//Model interaction
+// Model interaction
 const int MOVE       = 0x10001000;
 const int TURN       = 0x10002000;
 const int SPIN       = 0x10003000;
@@ -123,37 +116,37 @@ const int SHADE      = 0x1000D000;
 const int DONT_SHADE = 0x1000E000;
 const int EMIT_SFX   = 0x1000F000;
 
-//Blocking operations
+// Blocking operations
 const int WAIT_TURN  = 0x10011000;
 const int WAIT_MOVE  = 0x10012000;
 const int SLEEP      = 0x10013000;
 
-//Stack manipulation
+// Stack manipulation
 const int PUSH_CONSTANT    = 0x10021001;
 const int PUSH_LOCAL_VAR   = 0x10021002;
 const int PUSH_STATIC      = 0x10021004;
 const int CREATE_LOCAL_VAR = 0x10022000;
 const int POP_LOCAL_VAR    = 0x10023002;
 const int POP_STATIC       = 0x10023004;
-const int POP_STACK        = 0x10024000;		// Not sure what this is supposed to do
+const int POP_STACK        = 0x10024000; ///< Not sure what this is supposed to do
 
-//Arithmetic operations
+// Arithmetic operations
 const int ADD         = 0x10031000;
 const int SUB         = 0x10032000;
 const int MUL         = 0x10033000;
 const int DIV         = 0x10034000;
-const int MOD		  = 0x10034001;	// spring specific
+const int MOD		  = 0x10034001; ///< spring specific
 const int BITWISE_AND = 0x10035000;
 const int BITWISE_OR  = 0x10036000;
 const int BITWISE_XOR = 0x10037000;
 const int BITWISE_NOT = 0x10038000;
 
-//Native function calls
+// Native function calls
 const int RAND           = 0x10041000;
 const int GET_UNIT_VALUE = 0x10042000;
 const int GET            = 0x10043000;
 
-//Comparison
+// Comparison
 const int SET_LESS             = 0x10051000;
 const int SET_LESS_OR_EQUAL    = 0x10052000;
 const int SET_GREATER          = 0x10053000;
@@ -165,22 +158,22 @@ const int LOGICAL_OR           = 0x10058000;
 const int LOGICAL_XOR          = 0x10059000;
 const int LOGICAL_NOT          = 0x1005A000;
 
-//Flow control
+// Flow control
 const int START           = 0x10061000;
-const int CALL            = 0x10062000; // converted when executed
-const int REAL_CALL       = 0x10062001; // spring custom
-const int LUA_CALL        = 0x10062002; // spring custom
+const int CALL            = 0x10062000; ///< converted when executed
+const int REAL_CALL       = 0x10062001; ///< spring custom
+const int LUA_CALL        = 0x10062002; ///< spring custom
 const int JUMP            = 0x10064000;
 const int RETURN          = 0x10065000;
 const int JUMP_NOT_EQUAL  = 0x10066000;
 const int SIGNAL          = 0x10067000;
 const int SET_SIGNAL_MASK = 0x10068000;
 
-//Piece destruction
+// Piece destruction
 const int EXPLODE    = 0x10071000;
 const int PLAY_SOUND = 0x10072000;
 
-//Special functions
+// Special functions
 const int SET    = 0x10082000;
 const int ATTACH = 0x10083000;
 const int DROP   = 0x10084000;
@@ -198,11 +191,11 @@ const int DROP   = 0x10084000;
 #define LUA9 119
 
 
-//Handy macros
+// Handy macros
 #define GET_LONG_PC() (script.code[PC++])
 //#define POP() (stack.size() > 0) ? stack.back(), stack.pop_back(); : 0
 
-int CCobThread::POP(void)
+int CCobThread::POP()
 {
 	if (!stack.empty()) {
 		int r = stack.back();
@@ -213,7 +206,6 @@ int CCobThread::POP(void)
 		return 0;
 }
 
-// Returns false if this thread is dead and needs to be killed
 bool CCobThread::Tick(int deltaTime)
 {
 	if (state == Sleep) {
@@ -238,9 +230,9 @@ bool CCobThread::Tick(int deltaTime)
 #endif
 
 	while (state == Run) {
-		//int opcode = *(int *)&script.code[PC];
+		//int opcode = *(int*)&script.code[PC];
 
-		//Disabling exec trace gives about a 50% speedup on vm-intensive code
+		// Disabling exec trace gives about a 50% speedup on vm-intensive code
 		//execTrace.push_back(PC);
 
 		int opcode = GET_LONG_PC();
@@ -269,14 +261,14 @@ bool CCobThread::Tick(int deltaTime)
 			case SPIN:
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
-				r3 = POP();				//speed
-				r4 = POP();				//accel
+				r3 = POP();         // speed
+				r4 = POP();         // accel
 				owner->Spin(r1, r2, r3, r4);
 				break;
 			case STOP_SPIN:
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
-				r3 = POP();				//decel
+				r3 = POP();         // decel
 				//logOutput.Print("Stop spin of %s around %d", script.pieceNames[r1].c_str(), r2);
 				owner->StopSpin(r1, r2, r3);
 				break;
@@ -291,7 +283,7 @@ bool CCobThread::Tick(int deltaTime)
 
 					state = Dead;
 					//callStack.pop_back();
-					//Leave values intact on stack in case caller wants to check them
+					// Leave values intact on stack in case caller wants to check them
 					return false;
 				}
 
@@ -385,7 +377,7 @@ bool CCobThread::Tick(int deltaTime)
 				CCobThread* thread = new CCobThread(script, owner);
 				thread->Start(r1, args, true);
 
-				//Seems that threads should inherit signal mask from creator
+				// Seems that threads should inherit signal mask from creator
 				thread->signalMask = signalMask;
 
 #if COB_DEBUG > 0
@@ -420,7 +412,7 @@ bool CCobThread::Tick(int deltaTime)
 				break;
 			case JUMP:
 				r1 = GET_LONG_PC();
-				//this seem to be an error in the docs..
+				// this seem to be an error in the docs..
 				//r2 = script.scriptOffsets[callStack.back().functionId] + r1;
 				PC = r1;
 				break;
@@ -447,7 +439,7 @@ bool CCobThread::Tick(int deltaTime)
 				r2 = POP();
 				stack.push_back(r1 & r2);
 				break;
-			case BITWISE_OR:	//seems to want stack contents or'd, result places on stack
+			case BITWISE_OR: // seems to want stack contents or'd, result places on stack
 				r1 = POP();
 				r2 = POP();
 				stack.push_back(r1 | r2);
@@ -704,7 +696,10 @@ bool CCobThread::Tick(int deltaTime)
 				//logOutput.Print("Showing %d", r1);
 				break;}
 			default:
-				logOutput.Print("CobError: Unknown opcode %x (in %s:%s at %x)", opcode, script.name.c_str(), script.scriptNames[callStack.back().functionId].c_str(), PC - 1);
+				logOutput.Print("CobError: Unknown opcode %x (in %s:%s at %x)",
+						opcode, script.name.c_str(),
+						script.scriptNames[callStack.back().functionId].c_str(),
+						PC - 1);
 				logOutput.Print("Exec trace:");
 				ei = execTrace.begin();
 				while (ei != execTrace.end()) {
@@ -719,16 +714,19 @@ bool CCobThread::Tick(int deltaTime)
 	return true;
 }
 
-// Shows an errormessage which includes the current state of the script interpreter
 void CCobThread::ShowError(const string& msg)
 {
 	static int spamPrevention = 100;
 	if (spamPrevention < 0) return;
 	--spamPrevention;
-	if (callStack.empty())
+	if (callStack.empty()) {
 		logOutput.Print("CobError: %s outside script execution (?)", msg.c_str());
-	else
-		logOutput.Print("CobError: %s (in %s:%s at %x)", msg.c_str(), script.name.c_str(), script.scriptNames[callStack.back().functionId].c_str(), PC - 1);
+	} else {
+		logOutput.Print("CobError: %s (in %s:%s at %x)", msg.c_str(),
+				script.name.c_str(),
+				script.scriptNames[callStack.back().functionId].c_str(),
+				PC - 1);
+	}
 }
 
 string CCobThread::GetOpcodeName(int opcode)
@@ -808,8 +806,8 @@ string CCobThread::GetOpcodeName(int opcode)
 
 void CCobThread::DependentDied(CObject* o)
 {
-	if(o==owner)
-		owner=0;
+	if (o == owner)
+		owner = NULL;
 }
 
 /******************************************************************************/
@@ -865,7 +863,7 @@ void CCobThread::LuaCall()
 
 void CCobThread::AnimFinished(CUnitScript::AnimType type, int piece, int axis)
 {
-	//Not sure how to do this more cleanly.. Will probably rewrite it
+	// Not sure how to do this more cleanly.. Will probably rewrite it
 	if (state == CCobThread::WaitMove || state == CCobThread::WaitTurn) {
 		state = CCobThread::Run;
 		GCobEngine.AddThread(this);

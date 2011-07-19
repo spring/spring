@@ -22,10 +22,10 @@ public:
 	typedef std::vector<int2> square_list_type;
 
 	struct Path {
-		//Information about the requested path.
+		// Information about the requested path.
 		float3 desiredGoal;
 		float goalRadius;
-		//Information about the generated path.
+		// Information about the generated path.
 		float3 pathGoal;
 		path_list_type path;
 		square_list_type squares;

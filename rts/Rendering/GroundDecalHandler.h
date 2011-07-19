@@ -30,7 +30,10 @@ struct TrackPart {
 };
 
 struct UnitTrackStruct {
-	UnitTrackStruct(CUnit* u): owner(u), lastAdded(NULL) {}
+	UnitTrackStruct(CUnit* owner)
+		: owner(owner)
+		, lastAdded(NULL)
+	{}
 
 	CUnit* owner;
 	unsigned int lastUpdate;
@@ -48,22 +51,32 @@ struct TrackToAdd {
 };
 
 struct TrackToClean {
-	TrackToClean() {}
+	TrackToClean()
+	{}
 	TrackToClean(UnitTrackStruct* t, std::set<UnitTrackStruct*>* ts)
-		: track(t), tracks(ts) {}
+		: track(t)
+		, tracks(ts)
+	{}
 	UnitTrackStruct* track;
 	std::set<UnitTrackStruct*>* tracks;
 };
 
 struct BuildingGroundDecal {
-	BuildingGroundDecal(): va(NULL), owner(NULL), gbOwner(NULL), alpha(1.0f) {}
+	BuildingGroundDecal()
+		: va(NULL)
+		, owner(NULL)
+		, gbOwner(NULL)
+		, alpha(1.0f)
+	{}
 	~BuildingGroundDecal();
 
 	CVertexArray* va;
 	CBuilding* owner;
 	GhostBuilding* gbOwner;
-	int posx, posy;
-	int xsize, ysize;
+	int posx;
+	int posy;
+	int xsize;
+	int ysize;
 	int facing;
 
 	float3 pos;
@@ -149,8 +162,10 @@ private:
 		float texOffsetX;
 		float texOffsetY;
 
-		int x1, x2;
-		int y1, y2;
+		int x1;
+		int x2;
+		int y1;
+		int y2;
 
 		float basesize;
 		float overdrawn;

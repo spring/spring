@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef PATHFINDER_H
-#define PATHFINDER_H
+#ifndef PATH_FINDER_H
+#define PATH_FINDER_H
 
 #include <list>
 #include <queue>
@@ -11,10 +11,9 @@
 #include "PathConstants.h"
 #include "PathDataTypes.h"
 
-
-
 struct MoveData;
 class CPathFinderDef;
+
 
 class CPathFinder {
 public:
@@ -27,40 +26,30 @@ public:
 #endif
 
 	/**
-	Gives a detailed path from given starting location to target defined in CPathFinderDef,
-	whenever any such are available.
-	If no complete path was found, any path leading as "close" to target as possible will be
-	created, and SearchResult::OutOfRange will be returned.
-	Only when no "closer" position than the given starting location could be found no path
-	is created, and SearchResult::CantGetCloser is returned.
-	Path resolution: 2*SQUARE_SIZE
-	Params:
-		moveData
-			MoveData defining the footprint of the unit requesting the path.
-
-		startPos
-			The starting location of the path. (Projected onto (x,z).)
-
-		pfDef
-			Object defining the target/goal of the search.
-			Could also be used to put constraints on the searchspace used.
-
-		path
-			If any path could be found, it will be generated and put into this structure.
-
-		moveMathOpt
-			MoveMath options. Used to tell what types of objects that could be considered
-			as blocking objects.
-
-		exactPath
-			Overrides the return of the "closest" path. If this option is true, a path is
-			returned only if it's completed all the way to the goal defined in pfDef.
-			All SearchResult::OutOfRange are then turned into SearchResult::CantGetCloser.
-
-		maxSearchedNodes
-			The maximum number of nodes/squares the search are allowed to analyze.
-			This restriction could be used in cases where CPU-consumption are critical.
-	*/
+	 * Gives a detailed path from given starting location to target defined in
+	 * CPathFinderDef, whenever any such are available.
+	 * If no complete path was found, any path leading as "close" to target as
+	 * possible will be created, and SearchResult::OutOfRange will be returned.
+	 * Only when no "closer" position than the given starting location could be
+	 * found no path is created, and SearchResult::CantGetCloser is returned.
+	 * Path resolution: 2*SQUARE_SIZE
+	 *
+	 * @param moveData defining the footprint of the unit requesting the path.
+	 * @param startPos The starting location of the path. (Projected onto (x,z))
+	 * @param pfDef Object defining the target/goal of the search.
+	 *   Could also be used to put constraints on the searchspace used.
+	 * @param path If any path could be found, it will be generated and put into
+	 *   this structure.
+	 * @param moveMathOpt MoveMath options. Used to tell what types of objects
+	 *   that could be considered as blocking objects.
+	 * @param exactPath Overrides the return of the "closest" path.
+	 *   If this option is true, a path is returned only if it's completed all
+	 *   the way to the goal defined in pfDef. All SearchResult::OutOfRange are
+	 *   then turned into SearchResult::CantGetCloser.
+	 * @param maxSearchedNodes The maximum number of nodes/squares the search
+	 *   are allowed to analyze. This restriction could be used in cases where
+	 *   CPU-consumption are critical.
+	 */
 	IPath::SearchResult GetPath(
 		const MoveData& moveData,
 		const float3& startPos,
@@ -118,20 +107,18 @@ private:
 	// Heat mapping
 	int GetHeatMapIndex(int x, int y);
 
-	struct HeatMapValue {
-		HeatMapValue(): value(0), ownerId(0) {}
-		int value;
-		int ownerId;
-	};
-
-	std::vector<HeatMapValue> heatmap; //! resolution is hmapx*hmapy
-	int heatMapOffset;  //! heatmap values are relative to this
-	bool heatMapping;
-
-
+	/**
+	 * Clear things up from last search.
+	 */
 	void ResetSearch();
-	IPath::SearchResult InitSearch(const MoveData&, const CPathFinderDef&, int ownerId, bool synced);
-	IPath::SearchResult DoSearch(const MoveData&, const CPathFinderDef&, int ownerId, bool synced);
+	/// Set up the starting point of the search.
+	IPath::SearchResult InitSearch(const MoveData& moveData, const CPathFinderDef& pfDef, int ownerId, bool synced);
+	/// Performs the actual search.
+	IPath::SearchResult DoSearch(const MoveData& moveData, const CPathFinderDef& pfDef, int ownerId, bool synced);
+	/**
+	 * Test the availability and value of a square,
+	 * and possibly add it to the queue of open squares.
+	 */
 	bool TestSquare(
 		const MoveData& moveData,
 		const CPathFinderDef& pfDef,
@@ -140,7 +127,16 @@ private:
 		int ownerId,
 		bool synced
 	);
+	/**
+	 * Recreates the path found by pathfinder.
+	 * Starting at goalSquare and tracking backwards.
+	 *
+	 * Perform adjustment of waypoints so not all turns are 90 or 45 degrees.
+	 */
 	void FinishSearch(const MoveData&, IPath::Path&);
+	/**
+	 * Adjusts the found path to cut corners where possible.
+	 */
 	void AdjustFoundPath(
 		const MoveData&,
 		IPath::Path&,
@@ -149,16 +145,29 @@ private:
 		int2 square
 	);
 
+	struct HeatMapValue {
+		HeatMapValue()
+			: value(0)
+			, ownerId(0)
+		{}
+		int value;
+		int ownerId;
+	};
 
-	int2 directionVector[16];						///< Unit square-movement in given direction.
-	float moveCost[16];								///< The cost of moving in given direction.
+	std::vector<HeatMapValue> heatmap; ///< resolution is hmapx*hmapy
+	int heatMapOffset;                 ///< heatmap values are relative to this
+	bool heatMapping;
+
+	int2 directionVector[16];          ///< Unit square-movement in given direction.
+	float moveCost[16];                ///< The cost of moving in given direction.
 
 	float3 start;
-	int startxSqr, startzSqr;
+	int startxSqr;
+	int startzSqr;
 	int startSquare;
 
-	int goalSquare;									///< Is sat during the search as the square closest to the goal.
-	float goalHeuristic;							///< The heuristic value of goalSquare.
+	int goalSquare;                    ///< Is sat during the search as the square closest to the goal.
+	float goalHeuristic;               ///< The heuristic value of goalSquare.
 
 	bool exactPath;
 	bool testMobile;
@@ -172,7 +181,7 @@ private:
 	PathNodeStateBuffer squareStates;
 	PathPriorityQueue openSquares;
 
-	std::vector<int> dirtySquares;					///< Squares tested by search.
+	std::vector<int> dirtySquares;     ///< Squares tested by search.
 };
 
-#endif // PATHFINDER_H
+#endif // PATH_FINDER_H

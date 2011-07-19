@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef PATH_DATATYPES_HDR
-#define PATH_DATATYPES_HDR
+#ifndef PATH_DATATYPES_H
+#define PATH_DATATYPES_H
 
 #include <queue>
 #include <vector>
@@ -9,13 +9,17 @@
 #include "PathConstants.h"
 #include "System/Vec2.h"
 
-// represents either a single square (PF) or a block of squares (PE)
+/// represents either a single square (PF) or a block of squares (PE)
 struct PathNode {
-	PathNode(): fCost(0.0f), gCost(0.0f), nodeNum(0), nodePos(0, 0) {
-	}
+	PathNode()
+		: fCost(0.0f)
+		, gCost(0.0f)
+		, nodeNum(0)
+		, nodePos(0, 0)
+	{}
 
-	float fCost; // f
-	float gCost; // g
+	float fCost; ///< f
+	float gCost; ///< g
 
 	int nodeNum;
 	int2 nodePos;
@@ -26,12 +30,16 @@ struct PathNode {
 };
 
 struct PathNodeState {
-	PathNodeState(): fCost(PATHCOST_INFINITY), gCost(PATHCOST_INFINITY), extraCostSynced(0.0f), extraCostUnsynced(0.0f), nodeMask(0) {
-		parentNodePos.x = -1;
-		parentNodePos.y = -1;
-	}
+	PathNodeState()
+		: fCost(PATHCOST_INFINITY)
+		, gCost(PATHCOST_INFINITY)
+		, extraCostSynced(0.0f)
+		, extraCostUnsynced(0.0f)
+		, nodeMask(0)
+		, parentNodePos(-1, -1)
+	{}
 
-	// size of the memory-region we hold allocated (excluding sizeof(*this))
+	/// size of the memory-region we hold allocated (excluding sizeof(*this))
 	unsigned int GetMemFootPrint() const { return (nodeOffsets.size() * sizeof(int2)); }
 
 	float fCost;
@@ -50,20 +58,22 @@ struct PathNodeState {
 	float extraCostSynced;
 	float extraCostUnsynced;
 
-	// combination of PATHOPT_{OPEN, ..., OBSOLETE} flags
+	/// combination of PATHOPT_{OPEN, ..., OBSOLETE} flags
 	unsigned int nodeMask;
 
-	// needed for the PE to back-track path to goal
+	/// needed for the PE to back-track path to goal
 	int2 parentNodePos;
-	// for the PE, each node (block) maintains the
-	// best accessible offset (from its own center
-	// position) with respect to each movetype
+	/**
+	 * for the PE, each node (block) maintains the
+	 * best accessible offset (from its own center
+	 * position) with respect to each movetype
+	 */
 	std::vector<int2> nodeOffsets;
 };
 
 
 
-// functor to define node priority
+/// functor to define node priority
 struct lessCost: public std::binary_function<PathNode*, PathNode*, bool> {
 	inline bool operator() (const PathNode* x, const PathNode* y) const {
 		return (x->fCost > y->fCost);
@@ -87,7 +97,7 @@ public:
 	      PathNode* GetNode(unsigned int i)       { return &buffer[i]; }
 
 private:
-	// index of the most recently added node
+	/// index of the most recently added node
 	unsigned int idx;
 
 	PathNode buffer[MAX_SEARCHED_NODES];
@@ -107,7 +117,7 @@ struct PathNodeStateBuffer {
 	void Clear() { buffer.clear(); }
 	unsigned int GetSize() const { return buffer.size(); }
 
-	// size of the memory-region we hold allocated (excluding sizeof(*this))
+	/// size of the memory-region we hold allocated (excluding sizeof(*this))
 	unsigned int GetMemFootPrint() const { return (GetSize() * (sizeof(PathNodeState) + buffer[0].GetMemFootPrint())); }
 
 	const std::vector<PathNodeState>& GetBuffer() const { return buffer; }
@@ -121,7 +131,7 @@ struct PathNodeStateBuffer {
 	float GetMaxFCost() const { return fCostMax; }
 	float GetMaxGCost() const { return gCostMax; }
 
-	// <xhm> and <zhm> are always passed in heightmap-coordinates
+	/// <xhm> and <zhm> are always passed in heightmap-coordinates
 	float GetNodeExtraCost(unsigned int xhm, unsigned int zhm, bool synced) const {
 		float c = 0.0f;
 
@@ -185,11 +195,11 @@ private:
 	const float* extraCostsSynced;
 	const float* extraCostsUnsynced;
 
-	int2 ps; // patch size (eg. 1 for PF, BLOCK_SIZE for PE); ignored when extraCosts != NULL
-	int2 br; // buffer resolution (equal to mr / ps); ignored when extraCosts != NULL
-	int2 mr; // heightmap resolution (equal to gs->map{x,y})
-	int2 sr; // extraCostsSynced resolution
-	int2 ur; // extraCostsUnsynced resolution
+	int2 ps; ///< patch size (eg. 1 for PF, BLOCK_SIZE for PE); ignored when extraCosts != NULL
+	int2 br; ///< buffer resolution (equal to mr / ps); ignored when extraCosts != NULL
+	int2 mr; ///< heightmap resolution (equal to gs->map{x,y})
+	int2 sr; ///< extraCostsSynced resolution
+	int2 ur; ///< extraCostsUnsynced resolution
 };
 
 
@@ -256,8 +266,8 @@ private:
 
 class PathPriorityQueue: public std::priority_queue<PathNode*, PathVector, lessCost> {
 public:
-	// faster than "while (!q.empty()) { q.pop(); }"
+	/// faster than "while (!q.empty()) { q.pop(); }"
 	void Clear() { c.clear(); }
 };
 
-#endif
+#endif // PATH_DATATYPES_H

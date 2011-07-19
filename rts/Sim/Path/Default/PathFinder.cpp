@@ -25,7 +25,8 @@ void CPathFinder::operator delete(void* p, size_t size) { PathAllocator::Free(p,
 
 
 
-CPathFinder::CPathFinder(): squareStates(int2(gs->mapx, gs->mapy), int2(gs->mapx, gs->mapy))
+CPathFinder::CPathFinder()
+	: squareStates(int2(gs->mapx, gs->mapy) , int2(gs->mapx, gs->mapy))
 {
 	heatMapping = true;
 	InitHeatMap();
@@ -127,7 +128,6 @@ IPath::SearchResult CPathFinder::GetPath(
 }
 
 
-// set up the starting point of the search
 IPath::SearchResult CPathFinder::InitSearch(const MoveData& moveData, const CPathFinderDef& pfDef, int ownerId, bool synced) {
 	// If exact path is reqired and the goal is blocked, then no search is needed.
 	if (exactPath && pfDef.GoalIsBlocked(moveData, CMoveMath::BLOCK_STRUCTURE))
@@ -181,9 +181,6 @@ IPath::SearchResult CPathFinder::InitSearch(const MoveData& moveData, const CPat
 }
 
 
-/**
- * Performs the actual search.
- */
 IPath::SearchResult CPathFinder::DoSearch(const MoveData& moveData, const CPathFinderDef& pfDef, int ownerId, bool synced) {
 	bool foundGoal = false;
 
@@ -242,10 +239,6 @@ IPath::SearchResult CPathFinder::DoSearch(const MoveData& moveData, const CPathF
 }
 
 
-/**
- * Test the availability and value of a square,
- * and possibly add it to the queue of open squares.
- */
 bool CPathFinder::TestSquare(
 	const MoveData& moveData,
 	const CPathFinderDef& pfDef,
@@ -360,13 +353,6 @@ bool CPathFinder::TestSquare(
 }
 
 
-
-/**
- * Recreates the path found by pathfinder.
- * Starting at goalSquare and tracking backwards.
- *
- * Perform adjustment of waypoints so not all turns are 90 or 45 degrees.
- */
 void CPathFinder::FinishSearch(const MoveData& moveData, IPath::Path& foundPath) {
 	// backtrack
 	if (needPath) {
@@ -435,9 +421,6 @@ static inline void FixupPath3Pts(const MoveData& moveData, float3& p1, float3& p
 }
 
 
-/**
- * Adjusts the found path to cut corners where possible.
- */
 void CPathFinder::AdjustFoundPath(const MoveData& moveData, IPath::Path& foundPath, float3& nextPoint,
 	std::deque<int2>& previous, int2 square)
 {
@@ -547,9 +530,6 @@ void CPathFinder::AdjustFoundPath(const MoveData& moveData, IPath::Path& foundPa
 }
 
 
-/**
- * Clear things up from last search.
- */
 void CPathFinder::ResetSearch()
 {
 	openSquares.Clear();
@@ -570,8 +550,8 @@ void CPathFinder::ResetSearch()
 
 
 
-
 // heat mapping
+
 void CPathFinder::SetHeatMapState(bool enabled)
 {
 	heatMapping = enabled;
