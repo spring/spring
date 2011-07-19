@@ -11,6 +11,7 @@
 #include "MetalMap.h"
 #include "SM3/SM3Map.h"
 #include "SMF/SMFReadMap.h"
+#include "lib/gml/gmlmut.h"
 #include "Game/LoadScreen.h"
 #include "System/bitops.h"
 #include "System/Exceptions.h"
