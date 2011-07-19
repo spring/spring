@@ -12,10 +12,10 @@ class CSmfReadMap;
 class CSMFGroundTextures: public CBaseGroundTextures
 {
 public:
-	CSMFGroundTextures(CSmfReadMap*);
-	~CSMFGroundTextures(void);
+	CSMFGroundTextures(CSmfReadMap* rm);
+	~CSMFGroundTextures();
 
-	void DrawUpdate(void);
+	void DrawUpdate();
 	bool SetSquareLuaTexture(int texSquareX, int texSquareY, int texID);
 	bool GetSquareLuaTexture(int texSquareX, int texSquareY, int texID, int texSizeX, int texSizeY, int texMipLevel);
 	void BindSquareTexture(int texSquareX, int texSquareY);
@@ -54,7 +54,7 @@ protected:
 	//! use Pixel Buffer Objects for async. uploading (DMA)
 	PBO pbo;
 
-	float anisotropy;
+	float anisotropy; // XXX unused, remove?
 
 	inline bool TexSquareInView(int, int);
 };

@@ -299,3 +299,8 @@ Add_Subdirectory(cont)
 # As rts/builds/* depends on most other stuff, we add this one as last
 Add_Subdirectory(rts)
 
+# Unit tests
+# this has to be in root CMakeLists.txt; it requires CMake 2.6.3 or later
+ENABLE_TESTING()
+Add_Subdirectory(test)
+

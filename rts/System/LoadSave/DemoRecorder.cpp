@@ -3,9 +3,6 @@
 #include "System/StdAfx.h"
 #include "DemoRecorder.h"
 
-#include <assert.h>
-#include <errno.h>
-
 #include "System/mmgr.h"
 
 #include "System/FileSystem/FileSystem.h"
@@ -16,6 +13,10 @@
 #include "System/TimeUtil.h"
 
 #include "System/Log/ILog.h"
+
+#include <cassert>
+#include <cerrno>
+#include <cstring>
 
 CDemoRecorder::CDemoRecorder()
 {
@@ -237,7 +238,7 @@ void CDemoRecorder::WriteTeamStats()
 
 	// Write array of dwords indicating number of TeamStatistics per team.
 	for (std::vector< std::vector< TeamStatistics > >::iterator it = teamStats.begin(); it != teamStats.end(); ++it) {
-		unsigned int c = swabdword(it->size());
+		unsigned int c = swabDWord(it->size());
 		recordDemo.write((char*)&c, sizeof(unsigned int));
 	}
 

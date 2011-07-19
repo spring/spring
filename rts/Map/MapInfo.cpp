@@ -10,7 +10,7 @@
 
 #include "MapParser.h"
 #include "Lua/LuaParser.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
@@ -20,8 +20,10 @@
 
 #include <cassert>
 #include <cfloat>
+#include <sstream>
 
-using namespace std;
+using std::max;
+using std::min;
 
 
 // Before delete, the const is const_cast'ed away. There are
@@ -42,7 +44,7 @@ CMapInfo::CMapInfo(const std::string& _mapInfoFile, const string& mapName) : map
 
 	LuaParser resParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	if (!resParser.Execute()) {
-		logOutput.Print(resParser.GetErrorLog());
+		LOG_L(L_ERROR, "%s", resParser.GetErrorLog().c_str());
 	}
 	LuaTable resTbl = resParser.GetRoot();
 	resRoot = &resTbl;

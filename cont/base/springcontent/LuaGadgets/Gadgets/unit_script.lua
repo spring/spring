@@ -176,9 +176,19 @@ Format: {
 --]]
 local units = {}
 
--- Keeps a reference to the currently active unit.
--- (ie. which is running a script.)
-local activeUnit
+
+-- this keeps track of the unit that is active (ie.
+-- running a script) at the time a callin triggers
+--
+-- the _current_ active unit (ID) is always at the
+-- top of the stack (index #activeUnitStack)
+local activeUnitStack = {}
+
+local function PushActiveUnitID(unitID)   activeUnitStack[#activeUnitStack + 1] = unitID   end
+local function PopActiveUnitID()   activeUnitStack[#activeUnitStack] = nil   end
+local function GetActiveUnitID()   return activeUnitStack[#activeUnitStack]   end
+local function GetActiveUnit()   return units[GetActiveUnitID()]   end
+
 
 --[[
 This is the bed, it stores all the sleeping threads,
@@ -207,14 +217,15 @@ end
 
 -- This is put in every script to clean up if the script gets destroyed.
 local function Destroy()
-	if activeUnit then
+	local activeUnit = GetActiveUnit()
+
+	if (activeUnit ~= nil) then
 		for _,thread in pairs(activeUnit.threads) do
 			if thread.container then
 				Remove(thread.container, thread)
 			end
 		end
 		units[activeUnit.unitID] = nil
-		activeUnit = nil
 	end
 end
 
@@ -257,11 +268,15 @@ end
 -- MoveFinished and TurnFinished are put in every script by the framework.
 -- They resume the threads which were waiting for the move/turn.
 local function MoveFinished(piece, axis)
-	return AnimFinished(activeUnit.waitingForMove, piece, axis)
+	local activeUnit = GetActiveUnit()
+	local activeAnim = activeUnit.waitingForMove
+	return AnimFinished(activeAnim, piece, axis)
 end
 
 local function TurnFinished(piece, axis)
-	return AnimFinished(activeUnit.waitingForTurn, piece, axis)
+	local activeUnit = GetActiveUnit()
+	local activeAnim = activeUnit.waitingForTurn
+	return AnimFinished(activeAnim, piece, axis)
 end
 
 --------------------------------------------------------------------------------
@@ -269,18 +284,17 @@ end
 
 -- overwrites engine's CallAsUnit
 function Spring.UnitScript.CallAsUnit(unitID, fun, ...)
-	local oldActiveUnit = activeUnit
-	activeUnit = units[unitID]
+	PushActiveUnitID(unitID)
 	local ret = {sp_CallAsUnit(unitID, fun, ...)}
-	activeUnit = oldActiveUnit
+	PopActiveUnitID()
+
 	return unpack(ret)
 end
 
 local function CallAsUnitNoReturn(unitID, fun, ...)
-	local oldActiveUnit = activeUnit
-	activeUnit = units[unitID]
+	PushActiveUnitID(unitID)
 	sp_CallAsUnit(unitID, fun, ...)
-	activeUnit = oldActiveUnit
+	PopActiveUnitID()
 end
 
 -- Helper for WaitForMove and WaitForTurn
@@ -303,6 +317,7 @@ end
 -- overwrites engine's WaitForMove
 function Spring.UnitScript.WaitForMove(piece, axis)
 	if sp_WaitForMove(piece, axis) then
+		local activeUnit = GetActiveUnit()
 		return WaitForAnim(activeUnit.threads, activeUnit.waitingForMove, piece, axis)
 	end
 end
@@ -310,9 +325,12 @@ end
 -- overwrites engine's WaitForTurn
 function Spring.UnitScript.WaitForTurn(piece, axis)
 	if sp_WaitForTurn(piece, axis) then
+		local activeUnit = GetActiveUnit()
 		return WaitForAnim(activeUnit.threads, activeUnit.waitingForTurn, piece, axis)
 	end
 end
+
+
 
 function Spring.UnitScript.Sleep(milliseconds)
 	local n = floor(milliseconds / 33)
@@ -323,15 +341,21 @@ function Spring.UnitScript.Sleep(milliseconds)
 		zzz = {}
 		sleepers[n] = zzz
 	end
-	local thread = activeUnit.threads[co_running() or error("not in a thread", 2)]
-	zzz[#zzz+1] = thread
-	thread.container = zzz
+
+	local activeUnit = GetActiveUnit() or error("[Sleep] no active unit on stack?", 2)
+	local activeThread = activeUnit.threads[co_running() or error("[Sleep] not in a thread?", 2)]
+
+	zzz[#zzz+1] = activeThread
+	activeThread.container = zzz
 	-- yield the running thread:
 	-- it will be resumed in frame #n (in gadget:GameFrame).
 	co_yield()
 end
 
+
+
 function Spring.UnitScript.StartThread(fun, ...)
+	local activeUnit = GetActiveUnit()
 	local co = co_create(fun)
 	local thread = {
 		thread = co,
@@ -340,6 +364,7 @@ function Spring.UnitScript.StartThread(fun, ...)
 		unitID = activeUnit.unitID,
 	}
 
+	-- add the new thread to activeUnit's registry
 	activeUnit.threads[co] = thread
 
 	-- COB doesn't start thread immediately: it only sets up stack and
@@ -351,17 +376,22 @@ function Spring.UnitScript.StartThread(fun, ...)
 end
 
 local function SetOnError(fun)
-	local thread = activeUnit.threads[co_running()]
-	if thread then
-		thread.onerror = fun
+	local activeUnit = GetActiveUnit()
+	local activeThread = activeUnit.threads[co_running()]
+	if activeThread then
+		activeThread.onerror = fun
 	end
 end
 
 function Spring.UnitScript.SetSignalMask(mask)
-	activeUnit.threads[co_running() or error("not in a thread", 2)].signal_mask = mask
+	local activeUnit = GetActiveUnit()
+	local activeThread = activeUnit.threads[co_running() or error("[SetSignalMask] not in a thread", 2)]
+	activeThread.signal_mask = mask
 end
 
 function Spring.UnitScript.Signal(mask)
+	local activeUnit = GetActiveUnit()
+
 	-- beware, unsynced loop order
 	-- (doesn't matter here as long as all threads get removed)
 	if type(mask) == "number" then
@@ -710,9 +740,13 @@ function gadget:UnitCreated(unitID, unitDefID)
 	-- Wrap everything so activeUnit get's set properly.
 	for k,v in pairs(callins) do
 		local fun = callins[k]
+
 		callins[k] = function(...)
-			activeUnit = units[unitID]
-			return fun(...)
+			PushActiveUnitID(unitID)
+			ret = fun(...)
+			PopActiveUnitID()
+
+			return ret
 		end
 	end
 
@@ -742,10 +776,12 @@ function gadget:GameFrame()
 	if zzz then
 		sleepers[n] = nil
 		-- Wake up the lazy bastards.
-		for i=1,#zzz do
+		for i = 1, #zzz do
 			local unitID = zzz[i].unitID
-			activeUnit = units[unitID]
+
+			PushActiveUnitID(unitID)
 			sp_CallAsUnit(unitID, WakeUp, zzz[i])
+			PopActiveUnitID()
 		end
 	end
 end

@@ -643,7 +643,7 @@ bool CArchiveScanner::ScanArchiveLua(IArchive* ar, const std::string& fileName, 
 			err = "Error in " + fileName + ": " + err;
 			return false;
 		}
-	} catch (content_error contErr) {
+	} catch (const content_error& contErr) {
 		err = "ERROR in " + fileName + ": " + contErr.what();
 		return false;
 	}

@@ -338,6 +338,12 @@ CGame::~CGame()
 	tracefile << "[" << __FUNCTION__ << "]";
 #endif
 
+	// Kill all teams that are still alive,
+	// in case the game did not do so through Lua.
+	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
+		teamHandler->Team(t)->Died();
+	} 
+
 	CLoadScreen::DeleteInstance(); // make sure to halt loading, otherwise crash :)
 
 	// TODO move these to the end of this dtor, once all action-executors are registered by their respective engine sub-parts

@@ -39,6 +39,7 @@ public:
 		, airLosMul(1.0f)
 		, requireSonarUnderWater(true)
 		, featureVisibility(FEATURELOS_NONE)
+		, luaThreadingModel(2)
 	{}
 	~CModInfo() {}
 

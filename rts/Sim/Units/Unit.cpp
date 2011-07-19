@@ -52,6 +52,7 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/MoveTypes/AirMoveType.h"
+#include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/MoveTypes/MoveTypeFactory.h"
 #include "Sim/MoveTypes/ScriptMoveType.h"

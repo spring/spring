@@ -11,7 +11,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "System/bitops.h"
 #include "System/Util.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
@@ -21,17 +21,16 @@
 #include <assert.h>
 
 namespace terrain {
-using namespace std;
 
 static void ShowInfoLog(GLhandleARB handle)
 {
-	d_trace("Shader failed to compile, showing info log:\n");
+	LOG_L(L_ERROR, "Shader failed to compile, showing info log:");
 	GLint infoLogLen;
 	GLsizei actualLength;
 	glGetObjectParameterivARB(handle, GL_OBJECT_INFO_LOG_LENGTH_ARB, &infoLogLen);
 	char* infoLog = new char[infoLogLen];
 	glGetInfoLogARB(handle, infoLogLen, &actualLength, infoLog);
-	logOutput.Print("%s", infoLog);
+	LOG_L(L_ERROR, "%s", infoLog);
 	delete[] infoLog;
 }
 
@@ -39,7 +38,7 @@ static void ShowInfoLog(GLhandleARB handle)
 
 
 struct Shader {
-	list<string> texts;
+	std::list<std::string> texts;
 	GLhandleARB handle;
 
 	Shader() { handle = 0; }
@@ -48,9 +47,9 @@ struct Shader {
 	{
 		CFileHandler fh(file);
 		if (!fh.FileExists())
-			throw content_error("Can't load shader " + file);
+			throw content_error("Can not load shader " + file);
 
-		string text;
+		std::string text;
 		text.resize(fh.FileSize());
 		fh.Read(&text[0], text.length());
 
@@ -61,10 +60,10 @@ struct Shader {
 	{
 		handle = glCreateShaderObjectARB(shaderType);
 
-		vector<GLint> lengths(texts.size());
-		vector<const GLcharARB*> strings(texts.size());
-		int index=0;
-		for (list<string>::iterator i=texts.begin(); i != texts.end(); ++i, index++) {
+		std::vector<GLint> lengths(texts.size());
+		std::vector<const GLcharARB*> strings(texts.size());
+		int index = 0;
+		for (std::list<std::string>::iterator i = texts.begin(); i != texts.end(); ++i, index++) {
 			lengths[index] = i->length();
 			strings[index] = i->c_str();
 		}
@@ -83,27 +82,30 @@ struct Shader {
 			WriteToFile("sm3_failed_shader.glsl");
 			ShowInfoLog(handle);
 
-			string errMsg = "Failed to build ";
-			throw std::runtime_error (errMsg + (shaderType == GL_VERTEX_SHADER_ARB ? "vertex shader" : "fragment shader"));
+			std::string errMsg = "Failed to build ";
+			throw std::runtime_error(errMsg + (shaderType == GL_VERTEX_SHADER_ARB ? "vertex shader" : "fragment shader"));
 		}
 	}
 	void DebugOutput(GLenum shaderType)
 	{
 		char fn[20];
-		static int fpc=0;
-		static int vpc=0;
-		if (shaderType == GL_FRAGMENT_SHADER_ARB) sprintf (fn, "shader%dfp.txt", fpc++);
-		else sprintf (fn, "shader%dvp.txt", vpc++);
+		static int fpc = 0;
+		static int vpc = 0;
+		if (shaderType == GL_FRAGMENT_SHADER_ARB) {
+			sprintf(fn, "shader%dfp.txt", fpc++);
+		} else {
+			sprintf(fn, "shader%dvp.txt", vpc++);
+		}
 		WriteToFile(fn);
 	}
-	void WriteToFile(const char *fn)
+	void WriteToFile(const char* fn)
 	{
 		std::string n = filesystem.LocateFile(fn, FileSystem::WRITE);
 
-		FILE *f = fopen(n.c_str(), "w");
+		FILE* f = fopen(n.c_str(), "w");
 
-		if(f) {
-			for (list<string>::iterator i=texts.begin();i!=texts.end();++i)
+		if (f) {
+			for (std::list<std::string>::iterator i=texts.begin();i!=texts.end();++i)
 				fputs(i->c_str(), f);
 			fclose(f);
 		}
@@ -167,20 +169,20 @@ public:
 
 struct ShaderBuilder
 {
-	RenderSetup *renderSetup;
+	RenderSetup* renderSetup;
 	TextureUsage texUsage;
 	BufferTexture* buffer;
 	bool ShadowMapping() const { return renderSetup->shaderDef.useShadowMapping; }
 	Shader lastFragmentShader, lastVertexShader; // for debugging
 
-	ShaderBuilder(RenderSetup *rs);
-	std::string GenTextureRead (int tu, int tc);
+	ShaderBuilder(RenderSetup* rs);
+	std::string GenTextureRead(int tu, int tc);
 	NodeGLSLShader* EndPass(ShaderDef* sd, const std::string &operations, uint passIndex=0);
-	void BuildFragmentShader(NodeGLSLShader *ns, uint passIndex, const std::string& operations, ShaderDef* sd);
-	void BuildVertexShader(NodeGLSLShader *ns, uint passIndex, ShaderDef *sd);
-	bool ProcessStage(vector<ShaderDef::Stage>& stages, uint &index, std::string& opstr);
+	void BuildFragmentShader(NodeGLSLShader* ns, uint passIndex, const std::string& operations, ShaderDef* sd);
+	void BuildVertexShader(NodeGLSLShader* ns, uint passIndex, ShaderDef* sd);
+	bool ProcessStage(std::vector<ShaderDef::Stage>& stages, uint &index, std::string& opstr);
 	void Build(ShaderDef* shaderDef);
-	void AddPPDefines(ShaderDef *sd, Shader& shader, uint passIndex);
+	void AddPPDefines(ShaderDef* sd, Shader& shader, uint passIndex);
 
 	enum ShadingMethod {
 		SM_DiffuseSP, // lit diffuse single pass
@@ -213,7 +215,7 @@ struct ShaderBuilder
 		GLint units;
 	};
 	// Calculate the texturing requirements for the specified stages
-	TexReq CalcStagesTexReq(const vector<ShaderDef::Stage>& stages, uint startIndex) const;
+	TexReq CalcStagesTexReq(const std::vector<ShaderDef::Stage>& stages, uint startIndex) const;
 };
 
 
@@ -236,18 +238,18 @@ ShaderBuilder::ShadingMethod  ShaderBuilder::CalculateShadingMethod(ShaderDef* s
 		special.units++;
 	}
 
-	d_trace("[ShaderBuilder::CalculateShadingMethod]\n");
-	d_trace("\t    hwmax.units=%2d,     hwmax.coords=%2d\n",     hwmax.units,     hwmax.coords);
-	d_trace("\tdiffuseRQ.units=%2d, diffuseRQ.coords=%2d\n", diffuseRQ.units, diffuseRQ.coords);
-	d_trace("\tbumpmapRQ.units=%2d, bumpmapRQ.coords=%2d\n", bumpmapRQ.units, bumpmapRQ.coords);
-	d_trace("\t  special.units=%2d,   special.coords=%2d\n",   special.units,   special.coords);
+	LOG("[ShaderBuilder::CalculateShadingMethod]");
+	LOG("\t    hwmax.units=%2d,     hwmax.coords=%2d",     hwmax.units,     hwmax.coords);
+	LOG("\tdiffuseRQ.units=%2d, diffuseRQ.coords=%2d", diffuseRQ.units, diffuseRQ.coords);
+	LOG("\tbumpmapRQ.units=%2d, bumpmapRQ.coords=%2d", bumpmapRQ.units, bumpmapRQ.coords);
+	LOG("\t  special.units=%2d,   special.coords=%2d",   special.units,   special.coords);
 
 	if (sd->normalMapStages.empty()) {
 		if ((diffuseRQ + special).Fits(hwmax)) {
-			d_trace("\tno normal-map stages, SM_DiffuseSP\n");
+			LOG("\tno normal-map stages, SM_DiffuseSP");
 			return SM_DiffuseSP;
 		} else {
-			d_trace("\tno normal-map stages, SM_Impossible\n");
+			LOG("\tno normal-map stages, SM_Impossible");
 			return SM_Impossible;
 		}
 	} else {
@@ -259,14 +261,14 @@ ShaderBuilder::ShadingMethod  ShaderBuilder::CalculateShadingMethod(ShaderDef* s
 
 	TexReq total = diffuseRQ + bumpmapRQ + special;
 
-	d_trace("\t*****************************************\n");
-	d_trace("\tbumpmapRQ.units=%2d, bumpmapRQ.coords=%2d\n", bumpmapRQ.units, bumpmapRQ.coords);
-	d_trace("\t  special.units=%2d,   special.coords=%2d\n",   special.units,   special.coords);
-	d_trace("\t    total.units=%2d,     total.coords=%2d\n",     total.units,     total.coords);
+	LOG("\t*****************************************");
+	LOG("\tbumpmapRQ.units=%2d, bumpmapRQ.coords=%2d", bumpmapRQ.units, bumpmapRQ.coords);
+	LOG("\t  special.units=%2d,   special.coords=%2d",   special.units,   special.coords);
+	LOG("\t    total.units=%2d,     total.coords=%2d",     total.units,     total.coords);
 
 	// diffuse + bumpmap in one pass?
 	if (total.Fits(hwmax)) {
-		d_trace("\tnormalMapStages.size()="_STPF_", SM_DiffuseBumpmapSP", sd->normalMapStages.size());
+		LOG("\tnormalMapStages.size()="_STPF_", SM_DiffuseBumpmapSP", sd->normalMapStages.size());
 		return SM_DiffuseBumpmapSP;
 	}
 
@@ -274,24 +276,24 @@ ShaderBuilder::ShadingMethod  ShaderBuilder::CalculateShadingMethod(ShaderDef* s
 	// for multipass, one extra texture read is required for the diffuse input
 	special.units++;
 
-	d_trace("\t*****************************************\n");
-	d_trace("\t  special.units=%2d,   special.coords=%2d\n", special.units, special.coords);
-	d_trace("\t    total.units=%2d,     total.coords=%2d\n",   total.units,   total.coords);
+	LOG("\t*****************************************");
+	LOG("\t  special.units=%2d,   special.coords=%2d", special.units, special.coords);
+	LOG("\t    total.units=%2d,     total.coords=%2d",   total.units,   total.coords);
 
 	// is multipass possible?
 	if (diffuseRQ.Fits(hwmax) && (bumpmapRQ + special).Fits(hwmax)) {
-		d_trace("\tnormalMapStages.size()="_STPF_", SM_DiffuseBumpmapMP", sd->normalMapStages.size());
+		LOG("\tnormalMapStages.size()="_STPF_", SM_DiffuseBumpmapMP", sd->normalMapStages.size());
 		return SM_DiffuseBumpmapMP;
 	}
 
 	// no options left
-	d_trace("\tSM_Impossible\n");
+	LOG("\tSM_Impossible");
 	return SM_Impossible;
 }
 
 
 
-ShaderBuilder::TexReq  ShaderBuilder::CalcStagesTexReq(const vector<ShaderDef::Stage>& stages, uint index) const {
+ShaderBuilder::TexReq  ShaderBuilder::CalcStagesTexReq(const std::vector<ShaderDef::Stage>& stages, uint index) const {
 	TextureUsage usage;
 
 	while (index < stages.size()) {
@@ -304,7 +306,7 @@ ShaderBuilder::TexReq  ShaderBuilder::CalcStagesTexReq(const vector<ShaderDef::S
 
 		if (stage.operation == ShaderDef::Alpha) {
 			// next operation is blend (alpha is autoinserted before blend)
-			assert (index < stages.size()-1 && stages[index+1].operation == ShaderDef::Blend);
+			assert(index < stages.size()-1 && stages[index+1].operation == ShaderDef::Blend);
 			const ShaderDef::Stage& blendStage = stages[index+1];
 
 			usage.AddTextureRead(-1, blendStage.source);
@@ -364,10 +366,10 @@ NodeGLSLShader* ShaderBuilder::EndPass(ShaderDef* sd, const std::string &operati
 	glGetObjectParameterivARB(nodeShader->program, GL_OBJECT_LINK_STATUS_ARB, &isLinked);
 
 	if (!isLinked) {
-		d_trace ("Failed to link shaders. Showing info log:\n");
+		LOG_L(L_ERROR, "Failed to link shaders. Showing info log:");
 		lastFragmentShader.WriteToFile("sm3_fragmentshader.txt");
 		lastVertexShader.WriteToFile("sm3_vertexshader.txt");
-		ShowInfoLog (nodeShader->program);
+		ShowInfoLog(nodeShader->program);
 		throw std::runtime_error("Failed to link shaders");
 	}
 
@@ -438,7 +440,7 @@ void ShaderBuilder::AddPPDefines(ShaderDef* sd, Shader& shader, uint passIndex)
 	shader.AddFile("shaders/GLSL/terrainCommon.glsl");
 	char specularExponentStr[20];
 	SNPRINTF(specularExponentStr, 20, "%5.3f", sd->specularExponent);
-	shader.texts.push_back(string("const float specularExponent = ") + specularExponentStr + ";\n");
+	shader.texts.push_back(std::string("const float specularExponent = ") + specularExponentStr + ";\n");
 }
 
 
@@ -448,9 +450,9 @@ void ShaderBuilder::BuildFragmentShader(NodeGLSLShader* ns, uint passIndex, cons
 	Shader& fragmentShader = lastFragmentShader;
 
 	// insert texture samplers
-	string textureSamplers;
+	std::string textureSamplers;
 	for (size_t a = 0; a < ns->texUnits.size(); a++) {
-		BaseTexture *tex = ns->texUnits[a];
+		BaseTexture* tex = ns->texUnits[a];
 		if (tex->IsRect())
 			textureSamplers += "uniform sampler2DRect " + tex->name + ";\n";
 		else
@@ -462,7 +464,7 @@ void ShaderBuilder::BuildFragmentShader(NodeGLSLShader* ns, uint passIndex, cons
 
 	fragmentShader.AddFile("shaders/GLSL/terrainFragmentShader.glsl");
 
-	string gentxt = "vec4 CalculateColor()  { vec4 color; float curalpha; \n" + operations;
+	std::string gentxt = "vec4 CalculateColor()  { vec4 color; float curalpha; \n" + operations;
 
 	switch (shadingMethod) {
 		case SM_DiffuseSP:
@@ -488,7 +490,7 @@ void ShaderBuilder::BuildFragmentShader(NodeGLSLShader* ns, uint passIndex, cons
 	fragmentShader.Build(GL_FRAGMENT_SHADER_ARB);
 	ns->fragmentShader = fragmentShader.handle;
 
-	d_trace("Fragment shader built successfully.");
+	LOG("Fragment shader built successfully.");
 }
 
 void ShaderBuilder::BuildVertexShader(NodeGLSLShader* ns, uint passIndex, ShaderDef* sd)
@@ -511,17 +513,17 @@ void ShaderBuilder::BuildVertexShader(NodeGLSLShader* ns, uint passIndex, Shader
 
 	vertexShader.AddFile("shaders/GLSL/terrainVertexShader.glsl");
 	vertexShader.Build(GL_VERTEX_SHADER_ARB);
-	d_trace("Vertex shader built successfully.");
+	LOG("Vertex shader built successfully.");
 
 	ns->vertexShader = vertexShader.handle;
 }
 
 
 
-bool ShaderBuilder::ProcessStage(vector<ShaderDef::Stage>& stages, uint &index, std::string& opstr)
+bool ShaderBuilder::ProcessStage(std::vector<ShaderDef::Stage>& stages, uint &index, std::string& opstr)
 {
 	ShaderDef::Stage& stage = stages[index];
-	BaseTexture *texture = stage.source;
+	BaseTexture* texture = stage.source;
 
 	TexReq hwmax;
 	hwmax.GetFromGL();
@@ -530,7 +532,8 @@ bool ShaderBuilder::ProcessStage(vector<ShaderDef::Stage>& stages, uint &index, 
 	int tu = tmpUsage.AddTextureRead(hwmax.units, texture);
 	int tc = tmpUsage.AddTextureCoordRead(hwmax.coords, texture);
 
-	assert (tu >= 0 && tc >= 0);
+	assert(tu >= 0);
+	assert(tc >= 0);
 
 	if (index == 0) {  // replace
 		texUsage = tmpUsage;
@@ -538,13 +541,15 @@ bool ShaderBuilder::ProcessStage(vector<ShaderDef::Stage>& stages, uint &index, 
 	}
 	else if(stage.operation == ShaderDef::Alpha) {
 		// next operation is blend (alpha is autoinserted before blend)
-		assert (index < stages.size()-1 && stages[index+1].operation == ShaderDef::Blend);
+		assert(index < (stages.size() - 1));
+		assert(stages[index + 1].operation == ShaderDef::Blend);
 		ShaderDef::Stage& blendStage = stages[index+1];
 
 		int blendTU = tmpUsage.AddTextureRead(hwmax.units, blendStage.source);
 		int blendTC = tmpUsage.AddTextureCoordRead(hwmax.coords, blendStage.source);
 
-		assert (blendTU >= 0 && blendTC >= 0);
+		assert(blendTU >= 0);
+		assert(blendTC >= 0);
 
 		index++;
 
@@ -570,7 +575,7 @@ void ShaderBuilder::Build(ShaderDef* shaderDef) {
 
 	switch (shadingMethod) {
 		case SM_DiffuseSP: {
-			string opstr;
+			std::string opstr;
 			for (uint stage = 0; stage < shaderDef->stages.size(); )
 				ProcessStage(shaderDef->stages, stage, opstr);
 			EndPass(shaderDef, opstr);
@@ -578,7 +583,7 @@ void ShaderBuilder::Build(ShaderDef* shaderDef) {
 		}
 
 		case SM_DiffuseBumpmapSP: {
-			string diffusecode, bumpmapcode;
+			std::string diffusecode, bumpmapcode;
 
 			for (uint stage = 0; stage < shaderDef->stages.size(); )
 				ProcessStage(shaderDef->stages, stage, diffusecode);
@@ -591,7 +596,7 @@ void ShaderBuilder::Build(ShaderDef* shaderDef) {
 		}
 
 		case SM_DiffuseBumpmapMP: {
-			string diffusecode, bumpmapcode;
+			std::string diffusecode, bumpmapcode;
 
 			for (uint stage = 0; stage < shaderDef->stages.size(); )
 				ProcessStage(shaderDef->stages, stage, diffusecode);
@@ -651,7 +656,7 @@ NodeGLSLShader::~NodeGLSLShader()
 
 
 
-void NodeGLSLShader::BindTSM (Vector3* buf, uint vertexSize)
+void NodeGLSLShader::BindTSM(Vector3* buf, uint vertexSize)
 {
 // according to the GL_ARB_vertex_shader spec:
 // The VertexAttrib*ARB entry points defined earlier can also be used to
@@ -668,7 +673,7 @@ void NodeGLSLShader::BindTSM (Vector3* buf, uint vertexSize)
 	}
 }
 
-void NodeGLSLShader::UnbindTSM ()
+void NodeGLSLShader::UnbindTSM()
 {
 	if (tsmAttrib >= 0) {
 		for (int a=0;a<3;a++)
@@ -741,12 +746,12 @@ void NodeGLSLShader::Cleanup() {
 
 
 
-std::string NodeGLSLShader::GetDebugDesc ()
+std::string NodeGLSLShader::GetDebugDesc()
 {
 	return debugstr;
 }
 
-uint NodeGLSLShader::GetVertexDataRequirements ()
+uint NodeGLSLShader::GetVertexDataRequirements()
 {
 	return vertBufReq;
 }
@@ -883,23 +888,23 @@ void GLSLShaderHandler::BuildNodeSetup(ShaderDef* shaderDef, RenderSetup* render
 
 int GLSLShaderHandler::MaxTextureUnits() {
 	GLint n;
-	glGetIntegerv (GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &n);
+	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &n);
 	return n;
 }
 
 int GLSLShaderHandler::MaxTextureCoords() {
 	GLint n;
-	glGetIntegerv (GL_MAX_TEXTURE_COORDS_ARB, &n);
+	glGetIntegerv(GL_MAX_TEXTURE_COORDS_ARB, &n);
 	return n;
 }
 
 
 
-SimpleCopyShader::SimpleCopyShader(BufferTexture *buf)
+SimpleCopyShader::SimpleCopyShader(BufferTexture* buf)
 {
 	Shader fs, vs;
 
-	if(buf->IsRect())
+	if (buf->IsRect())
 		fs.texts.push_back("#define UseTextureRECT");
 	fs.AddFile("shaders/GLSL/terrainSimpleCopyFS.glsl");
 	fs.Build(GL_FRAGMENT_SHADER_ARB);
@@ -919,7 +924,7 @@ SimpleCopyShader::SimpleCopyShader(BufferTexture *buf)
 	glGetObjectParameterivARB(program, GL_OBJECT_LINK_STATUS_ARB, &isLinked);
 	if (!isLinked)
 	{
-		d_trace("Failed to link shaders. Showing info log:\n");
+		LOG_L(L_ERROR, "Failed to link shaders. Showing info log:");
 		ShowInfoLog(program);
 		throw std::runtime_error("Failed to link shaders");
 	}
@@ -970,5 +975,4 @@ void SimpleCopyShader::Cleanup()
 	glUseProgramObjectARB(0);
 }
 
-
-};
+}

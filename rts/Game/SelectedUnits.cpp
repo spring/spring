@@ -22,6 +22,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"

@@ -18,7 +18,7 @@
 #include "Game/LoadScreen.h"
 #include "System/Exceptions.h"
 #include "System/FastMath.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/mmgr.h"
 #include "System/TimeProfiler.h"
 #include "System/FileSystem/FileHandler.h"
@@ -26,13 +26,24 @@
 
 using std::sprintf;
 
-CSMFGroundTextures::CSMFGroundTextures(CSmfReadMap* rm) :
-	bigSquareSize(128),
-	numBigTexX(gs->mapx / bigSquareSize),
-	numBigTexY(gs->mapy / bigSquareSize)
+#define LOG_SECTION_SMF_GROUND_TEXTURES "CSMFGroundTextures"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SMF_GROUND_TEXTURES)
+
+// use the specific section for all LOG*() calls in this source file
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_SMF_GROUND_TEXTURES
+
+
+CSMFGroundTextures::CSMFGroundTextures(CSmfReadMap* rm)
+	: smfMap(rm)
+	, bigSquareSize(128)
+	, numBigTexX(gs->mapx / bigSquareSize)
+	, numBigTexY(gs->mapy / bigSquareSize)
+	, anisotropy(0.0f)
 {
 	// TODO refactor: put reading code in CSmfFile and keep error-handling/progress reporting here
-	smfMap = rm;
 	CFileHandler* ifs = rm->GetFile().GetFileHandler();
 	const SMFHeader* header = &smfMap->GetFile().GetHeader();
 	const std::string smfDir = filesystem.GetDirectory(gameSetup->MapFile());
@@ -55,12 +66,11 @@ CSMFGroundTextures::CSMFGroundTextures(CSmfReadMap* rm) :
 
 	if (!smf.smtFileNames.empty()) {
 		if (smf.smtFileNames.size() != tileHeader.numTileFiles) {
-			logOutput.Print(
-				"[CSMFGroundTextures] mismatched number of .smt file "
-				"references between map's .smd ("_STPF_") and header (%d);"
-				" ignoring .smd overrides",
-				smf.smtFileNames.size(), tileHeader.numTileFiles
-			);
+			LOG_L(L_WARNING,
+					"mismatched number of .smt file "
+					"references between the map's .smd ("_STPF_")"
+					" and header (%d); ignoring .smd overrides",
+					smf.smtFileNames.size(), tileHeader.numTileFiles);
 		} else {
 			smtHeaderOverride = true;
 		}
@@ -72,7 +82,7 @@ CSMFGroundTextures::CSMFGroundTextures(CSmfReadMap* rm) :
 	for (int a = 0; a < tileHeader.numTileFiles; ++a) {
 		int numSmallTiles;
 		ifs->Read(&numSmallTiles, 4);
-		numSmallTiles = swabdword(numSmallTiles);
+		swabDWordInPlace(numSmallTiles);
 
 
 		std::string smtFilePath, smtFileName;
@@ -108,11 +118,10 @@ CSMFGroundTextures::CSMFGroundTextures(CSmfReadMap* rm) :
 		}
 
 		if (!tileFile.FileExists()) {
-			logOutput.Print(
-				"[CSMFGroundTextures] could not find .smt tile-file "
-				"\"%s\" (all %d missing tiles will be colored red)",
-				smtFilePath.c_str(), numSmallTiles
-			);
+			LOG_L(L_WARNING,
+					"could not find .smt tile-file "
+					"\"%s\" (all %d missing tiles will be colored red)",
+					smtFilePath.c_str(), numSmallTiles);
 			memset(&tiles[curTile * SMALL_TILE_SIZE], 0xaa, numSmallTiles * SMALL_TILE_SIZE);
 			curTile += numSmallTiles;
 			continue;
@@ -139,7 +148,7 @@ CSMFGroundTextures::CSMFGroundTextures(CSmfReadMap* rm) :
 		ifs->Read(&tileMap[0], tileCount * sizeof(int));
 
 		for (int i = 0; i < tileCount; i++) {
-			tileMap[i] = swabdword(tileMap[i]);
+			swabDWordInPlace(tileMap[i]);
 		}
 
 		tileMapSizeX = header->mapx / tileScale;
@@ -375,14 +384,15 @@ bool CSMFGroundTextures::GetSquareLuaTexture(int texSquareX, int texSquareY, int
 	if (texSquareY < 0 || texSquareY >= numBigTexY) { return false; }
 	if (texMipLevel < 0 || texMipLevel > 3) { return false; }
 
+	// no point extracting sub-rectangles from compressed data
+	if (texSizeX != (1024 >> texMipLevel)) { return false; }
+	if (texSizeY != (1024 >> texMipLevel)) { return false; }
+
 	static const GLenum ttarget = GL_TEXTURE_2D;
 	static const GLenum tformat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
 
 	const int mipSqSize = 1024 >> texMipLevel;
 	const int numSqBytes = (mipSqSize * mipSqSize) / 2;
-
-	texSizeX = std::min(texSizeX, mipSqSize);
-	texSizeY = std::min(texSizeY, mipSqSize);
 
 	pbo.Bind();
 	pbo.Resize(numSqBytes);

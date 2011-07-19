@@ -28,7 +28,6 @@ public:
 
 	void Update();
 	void UpdatePath(const CSolidObject*, unsigned int);
-
 	void DeletePath(unsigned int pathId);
 
 
@@ -89,11 +88,13 @@ private:
 	);
 
 	struct MultiPath {
-		MultiPath(const float3& pos, const CPathFinderDef* def, const MoveData* moveData):
-			start(pos),
-			peDef(def),
-			moveData(moveData) {
-		}
+		MultiPath(const float3& pos, const CPathFinderDef* def, const MoveData* moveData)
+			: start(pos)
+			, peDef(def)
+			, moveData(moveData)
+			, finalGoal(ZeroVector)
+			, caller(NULL)
+		{}
 
 		~MultiPath() { delete peDef; }
 

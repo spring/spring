@@ -5,6 +5,8 @@
 
 #include "System/Platform/byteorder.h"
 
+#include <cstring>
+
 #pragma pack(push, 1)
 
 struct TeamStatistics
@@ -25,7 +27,7 @@ struct TeamStatistics
 		unitsKilled      = 0;
 		frame            = 0;*/
 		
-		memset(this,0,sizeof(TeamStatistics));
+		memset(this, 0, sizeof(TeamStatistics));
 	};
 
 	int frame;

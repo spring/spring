@@ -19,7 +19,6 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Units/UnitDef.h"
-#include "System/LogOutput.h"
 #include "System/TimeProfiler.h"
 
 

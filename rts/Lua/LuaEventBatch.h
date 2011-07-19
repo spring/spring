@@ -1,3 +1,8 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+#ifndef LUA_EVENT_BATCH_H
+#define LUA_EVENT_BATCH_H
+
 #include "Rendering/GL/myGL.h" // for GML_ENABLE_SIM
 #include "System/Platform/Synchro.h"
 #include "Sim/Units/CommandAI/Command.h"
@@ -60,59 +65,187 @@ enum UIEvent {
 };
 
 struct LuaUnitEvent {
+	LuaUnitEvent(UnitEvent i, const CUnit* u1)
+		: id(i)
+		, unit1(u1)
+		, unit2(NULL)
+		, bool1(false)
+		, int1(0)
+		, int2(0)
+		, float1(0.0f)
+		, pos1(ZeroVector)
+	{}
+	LuaUnitEvent(UnitEvent i, const CUnit* u1, const CUnit* u2)
+		: id(i)
+		, unit1(u1)
+		, unit2(u2)
+		, bool1(false)
+		, int1(0)
+		, int2(0)
+		, float1(0.0f)
+		, pos1(ZeroVector)
+	{}
+	LuaUnitEvent(UnitEvent i, const CUnit* u1, const CUnit* u2, bool b1)
+		: id(i)
+		, unit1(u1)
+		, unit2(u2)
+		, bool1(b1)
+		, int1(0)
+		, int2(0)
+		, float1(0.0f)
+		, pos1(ZeroVector)
+	{}
+	LuaUnitEvent(UnitEvent i, const CUnit* u1, int i1)
+		: id(i)
+		, unit1(u1)
+		, unit2(NULL)
+		, bool1(false)
+		, int1(i1)
+		, int2(0)
+		, float1(0.0f)
+		, pos1(ZeroVector)
+	{}
+	LuaUnitEvent(UnitEvent i, const CUnit* u1, const Command& c1)
+		: id(i)
+		, unit1(u1)
+		, unit2(NULL)
+		, bool1(false)
+		, int1(0)
+		, int2(0)
+		, cmd1(c1)
+		, float1(0.0f)
+		, pos1(ZeroVector)
+	{}
+	LuaUnitEvent(UnitEvent i, const CUnit* u1, int i1, int i2)
+		: id(i)
+		, unit1(u1)
+		, unit2(NULL)
+		, bool1(false)
+		, int1(i1)
+		, int2(i2)
+		, float1(0.0f)
+		, pos1(ZeroVector)
+	{}
+	LuaUnitEvent(UnitEvent i, const CUnit* u1, const CUnit* u2, float f1, int i1, bool b1)
+		: id(i)
+		, unit1(u1)
+		, unit2(u2)
+		, bool1(b1)
+		, int1(i1)
+		, int2(0)
+		, float1(f1)
+		, pos1(ZeroVector)
+	{}
+	LuaUnitEvent(UnitEvent i, const CUnit* u1, float f1)
+		: id(i)
+		, unit1(u1)
+		, unit2(NULL)
+		, bool1(false)
+		, int1(0)
+		, int2(0)
+		, float1(f1)
+		, pos1(ZeroVector)
+	{}
+	LuaUnitEvent(UnitEvent i, const CUnit* u1, int i1, const float3& p1, float f1)
+		: id(i)
+		, unit1(u1)
+		, unit2(NULL)
+		, bool1(false)
+		, int1(i1)
+		, int2(0)
+		, float1(f1)
+		, pos1(p1)
+	{}
+	LuaUnitEvent(UnitEvent i, int i1, const float3& p1, const CUnit* u1)
+		: id(i)
+		, unit1(u1)
+		, unit2(NULL)
+		, bool1(false)
+		, int1(i1)
+		, int2(0)
+		, float1(0.0f)
+		, pos1(p1)
+	{}
+	LuaUnitEvent(UnitEvent i, const CUnit* u1, const CWeapon* u2, int i1)
+		: id(i)
+		, unit1(u1)
+		, unit2((CUnit*)u2)
+		, bool1(false)
+		, int1(i1)
+		, int2(0)
+		, float1(0.0f)
+		, pos1(ZeroVector)
+	{}
+
 	UnitEvent id;
-	const CUnit *unit1, *unit2;
+	const CUnit* unit1;
+	const CUnit* unit2;
 	bool bool1;
-	int int1, int2;
+	int int1;
+	int int2;
 	Command cmd1;
 	float float1;
 	float3 pos1;
-
-	LuaUnitEvent(UnitEvent i, const CUnit *u1) : id(i), unit1(u1), unit2(NULL) {}
-	LuaUnitEvent(UnitEvent i, const CUnit *u1, const CUnit *u2) : id(i), unit1(u1), unit2(u2) {}
-	LuaUnitEvent(UnitEvent i, const CUnit *u1, const CUnit *u2, bool b1) : id(i), unit1(u1), unit2(u2), bool1(b1) {}
-	LuaUnitEvent(UnitEvent i, const CUnit *u1, int i1) : id(i), unit1(u1), unit2(NULL), int1(i1) {}
-	LuaUnitEvent(UnitEvent i, const CUnit *u1, const Command &c1) : id(i), unit1(u1), unit2(NULL), cmd1(c1) {}
-	LuaUnitEvent(UnitEvent i, const CUnit *u1, int i1, int i2) : id(i), unit1(u1), unit2(NULL), int1(i1), int2(i2) {}
-	LuaUnitEvent(UnitEvent i, const CUnit *u1, const CUnit *u2, float f1, int i1, bool b1) : id(i), unit1(u1), unit2(u2), bool1(b1), int1(i1), float1(f1) {}
-	LuaUnitEvent(UnitEvent i, const CUnit *u1, float f1) : id(i), unit1(u1), unit2(NULL), float1(f1) {}
-	LuaUnitEvent(UnitEvent i, const CUnit *u1, int i1, const float3& p1, float f1) : id(i), unit1(u1), unit2(NULL), int1(i1),  float1(f1), pos1(p1)  {}
-	LuaUnitEvent(UnitEvent i, int i1, const float3& p1, const CUnit *u1) : id(i), unit1(u1), unit2(NULL), int1(i1), pos1(p1) {}
-	LuaUnitEvent(UnitEvent i, const CUnit *u1, const CWeapon *u2, int i1) : id(i), unit1(u1), unit2((CUnit *)u2), int1(i1) {}
 };
 
 struct LuaFeatEvent {
+	LuaFeatEvent(FeatEvent i, const CFeature* f1)
+		: id(i)
+		, feat1(f1)
+	{}
+
 	FeatEvent id;
-	const CFeature *feat1;
-	LuaFeatEvent(FeatEvent i, const CFeature *f1) : id(i), feat1(f1) {}
+	const CFeature* feat1;
 };
 
 struct LuaObjEvent {
+	LuaObjEvent(ObjEvent i, const CUnit* u, const CFeature* f)
+		: id(i)
+		, unit(u)
+		, feat(f)
+	{}
+
 	ObjEvent id;
-	const CUnit *unit;
-	const CFeature *feat;
-	LuaObjEvent(ObjEvent i, const CUnit *u, const CFeature *f) : id(i), unit(u), feat(f) {}
+	const CUnit* unit;
+	const CFeature* feat;
 };
 
 struct LuaProjEvent {
+	LuaProjEvent(ProjEvent i, const CProjectile* p1)
+		: id(i)
+		, proj1(p1)
+	{}
+
 	ProjEvent id;
-	const CProjectile *proj1;
-	LuaProjEvent(ProjEvent i, const CProjectile *p1) : id(i), proj1(p1) {}
+	const CProjectile* proj1;
 };
 
 struct LuaMiscEvent {
+	LuaMiscEvent(MiscEvent i, const std::string& s1, void* p)
+		: id(i)
+		, str1(s1)
+		, ptr(p)
+	{}
+
 	MiscEvent id;
 	std::string str1;
-	void *ptr;
-	LuaMiscEvent(MiscEvent i, const std::string &s1, void *p) : id(i), str1(s1), ptr(p) {}
+	void* ptr;
 };
 
 struct LuaUIEvent {
-	UIEvent id;
-	float flt1, flt2, flt3;
-	float3 pos1;
 	LuaUIEvent(UIEvent i, const float f1, const float3& p1, const float f2, const float f3)
-		: id(i), flt1(f1), flt2(f2), flt3(f3), pos1(p1) {}
+		: id(i)
+		, flt1(f1)
+		, flt2(f2)
+		, flt3(f3)
+		, pos1(p1)
+	{}
+
+	UIEvent id;
+	float flt1;
+	float flt2;
+	float flt3;
+	float3 pos1;
 };
 
 #if (LUA_MT_OPT & LUA_BATCH)
@@ -175,7 +308,7 @@ struct LuaUIEvent {
 #endif
 
 #if (LUA_MT_OPT & LUA_STATE)
-	#define BEGIN_ITERATE_LUA_STATES() lua_State *L_Cur = L_Sim; do { lua_State * const L = L_Cur
+	#define BEGIN_ITERATE_LUA_STATES() lua_State* L_Cur = L_Sim; do { lua_State * const L = L_Cur
 	#define END_ITERATE_LUA_STATES() if(SingleState() || L_Cur == L_Draw) break; L_Cur = L_Draw; } while(true)
 	#ifndef LUA_SYNCED_ONLY
 		#define SELECT_LUA_STATE() lua_State * const L = (SingleState() || Threading::IsSimThread()) ? L_Sim : L_Draw
@@ -187,7 +320,7 @@ struct LuaUIEvent {
 	#if defined(USE_GML) && GML_ENABLE_SIM
 		#if GML_DEBUG_MUTEX
 			#define GML_LOCK_TEST(nme) { std::map<std::string, int>::iterator locki = lockmaps[gmlThreadNumber].find(#nme); if((lockmi==lockmmaps[gmlThreadNumber].end() || (*lockmi).second == 0) && locki!=lockmaps[gmlThreadNumber].end() && (*locki).second>0) while(1); }
-			#define GML_DEBUG_LOCK(name) { GML_STDMUTEX_LOCK(lm); std::map<boost::recursive_mutex *, int>::iterator lockmi = lockmmaps[gmlThreadNumber].find(L->##name##mutex); GML_LOCK_TEST(sel); GML_LOCK_TEST(group); GML_LOCK_TEST(grpsel); GML_LOCK_TEST(gui); GML_LOCK_TEST(quad); GML_LOCK_TEST(qnum); }
+			#define GML_DEBUG_LOCK(name) { GML_STDMUTEX_LOCK(lm); std::map<boost::recursive_mutex*, int>::iterator lockmi = lockmmaps[gmlThreadNumber].find(L->##name##mutex); GML_LOCK_TEST(sel); GML_LOCK_TEST(group); GML_LOCK_TEST(grpsel); GML_LOCK_TEST(gui); GML_LOCK_TEST(quad); GML_LOCK_TEST(qnum); }
 		#else
 			#define GML_DEBUG_LOCK(name)
 		#endif
@@ -207,3 +340,6 @@ struct LuaUIEvent {
 	#endif
 	#define GML_DRCMUTEX_LOCK(name) GML_MEASURE_LOCK_TIME(GML_OBJMUTEX_LOCK(name, GML_DRAW|GML_SIM, *L->))
 #endif
+
+#endif // LUA_EVENT_BATCH_H
+

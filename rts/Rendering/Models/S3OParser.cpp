@@ -95,7 +95,7 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 	int vertexTableOffset = fp->vertexTable;
 
 	for (int a = 0; a < fp->vertexTableSize; ++a) {
-		const int vertexDrawIdx = swabdword(*(int*) &buf[vertexTableOffset]);
+		const int vertexDrawIdx = swabDWord(*(int*) &buf[vertexTableOffset]);
 
 		piece->vertexDrawOrder.push_back(vertexDrawIdx);
 		vertexTableOffset += sizeof(int);
@@ -126,7 +126,7 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 	int childTableOffset = fp->childs;
 
 	for (int a = 0; a < fp->numChilds; ++a) {
-		int childOffset = swabdword(*(int*) &buf[childTableOffset]);
+		int childOffset = swabDWord(*(int*) &buf[childTableOffset]);
 
 		SS3OPiece* childPiece = LoadPiece(model, piece, buf, childOffset);
 		piece->childs.push_back(childPiece);

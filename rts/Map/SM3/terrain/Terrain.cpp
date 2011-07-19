@@ -16,8 +16,8 @@
 #include "TerrainTexture.h"
 #include "TerrainNode.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
-#include "System/LogOutput.h"
 #include <assert.h>
 
 // define this for big endian machines
@@ -25,15 +25,13 @@
 
 namespace terrain {
 
-	using namespace std;
-
 	Config::Config()
 	{
-		cacheTextures=false;
-		useBumpMaps=false;
-		terrainNormalMaps=false;
-		detailMod=2.0f;
-		normalMapLevel=2;
+		cacheTextures = false;
+		useBumpMaps = false;
+		terrainNormalMaps = false;
+		detailMod = 2.0f;
+		normalMapLevel = 2;
 		cacheTextureSize = 128;
 		useShadowMaps = false;
 		anisotropicFiltering = 0;
@@ -43,16 +41,16 @@ namespace terrain {
 	}
 
 
-	void ILoadCallback::PrintMsg (const char *fmt, ...)
+	void ILoadCallback::PrintMsg(const char* fmt, ...)
 	{
 		char buf[256];
 
 		va_list l;
-		va_start (l, fmt);
+		va_start(l, fmt);
 		VSNPRINTF(buf, sizeof(buf), fmt, l);
-		va_end (l);
+		va_end(l);
 
-		Write (buf);
+		Write(buf);
 	}
 
 //-----------------------------------------------------------------------
@@ -60,22 +58,22 @@ namespace terrain {
 //            for quick access of nabours
 //-----------------------------------------------------------------------
 
-	void QuadMap::Alloc (int W)
+	void QuadMap::Alloc(int W)
 	{
-		w=W;
+		w = W;
 		map = new TQuad*[w*w];
-		memset (map, 0, sizeof(TQuad*) * w*w);
+		memset(map, 0, sizeof(TQuad*) * w*w);
 	}
 
-	void QuadMap::Fill (TQuad *q)
+	void QuadMap::Fill(TQuad* q)
 	{
-		At (q->qmPos.x, q->qmPos.y) = q;
+		At(q->qmPos.x, q->qmPos.y) = q;
 
-		if (!q->isLeaf ()) {
-			assert (highDetail);
+		if (!q->isLeaf()) {
+			assert(highDetail);
 
-			for (int a=0;a<4;a++)
-				highDetail->Fill (q->childs[a]);
+			for (int a = 0; a < 4; a++)
+				highDetail->Fill(q->childs[a]);
 		}
 	}
 
@@ -84,55 +82,55 @@ namespace terrain {
 // Terrain Quadtree Node
 //-----------------------------------------------------------------------
 
-	TQuad::TQuad ()
+	TQuad::TQuad()
 	{
-		parent=0;
-		for (int a=0;a<4;a++)
-			childs[a]=0;
-		depth=width=0;
-		drawState=NoDraw;
-		renderData=0;
-		textureSetup=0;
-		cacheTexture=0;
-		normalData=0;
-		maxLodValue=0.0f;
+		parent = 0;
+		for (int a = 0; a < 4; a++)
+			childs[a] = 0;
+		depth = width = 0;
+		drawState = NoDraw;
+		renderData = 0;
+		textureSetup = 0;
+		cacheTexture = 0;
+		normalData = 0;
+		maxLodValue = 0.0f;
 	}
 
-	TQuad::~TQuad ()
+	TQuad::~TQuad()
 	{
 		if (!isLeaf()) {
-			for (int a=0;a<4;a++)
+			for (int a = 0; a < 4; a++)
 				delete childs[a];
 		}
 
 		// delete cached texture
 		if (cacheTexture) {
-			glDeleteTextures(1,&cacheTexture);
+			glDeleteTextures(1, &cacheTexture);
 			cacheTexture = 0;
 		}
 	}
 
-	void TQuad::Build (Heightmap *hm, int2 sqStart, int2 hmStart, int2 quadPos, int w, int d)
+	void TQuad::Build(Heightmap* hm, int2 sqStart, int2 hmStart, int2 quadPos, int w, int d)
 	{
 		// create child nodes if necessary
 		if (hm->highDetail) {
-			for (int a=0;a<4;a++) {
+			for (int a = 0; a < 4; a++) {
 				childs[a] = new TQuad;
 				childs[a]->parent = this;
 
-				int2 sqPos (sqStart.x + (a&1)*w/2, sqStart.y + (a&2)*w/4); // square pos
-				int2 hmPos (hmStart.x*2 + (a&1)*QUAD_W, hmStart.y*2 + (a&2)*QUAD_W/2); // heightmap pos
-				int2 cqPos (quadPos.x*2 + (a&1), quadPos.y*2 + (a&2)/2);// child quad pos
+				int2 sqPos(sqStart.x   + (a & 1)*w/2, sqStart.y + (a & 2)*w/4); // square pos
+				int2 hmPos(hmStart.x*2 + (a & 1)*QUAD_W, hmStart.y*2 + (a & 2)*QUAD_W/2); // heightmap pos
+				int2 cqPos(quadPos.x*2 + (a & 1), quadPos.y*2 + (a & 2)/2);// child quad pos
 
-				childs[a]->Build (hm->highDetail, sqPos, hmPos, cqPos, w/2, d + 1);
+				childs[a]->Build(hm->highDetail, sqPos, hmPos, cqPos, w/2, d + 1);
 			}
 		}
 
 		float minH, maxH;
-		hm->FindMinMax (hmStart, int2(QUAD_W,QUAD_W), minH, maxH);
+		hm->FindMinMax(hmStart, int2(QUAD_W,QUAD_W), minH, maxH);
 
-		start = Vector3 (sqStart.x, 0.0f, sqStart.y) * SquareSize;
-		end = Vector3 (sqStart.x+w, 0.0f, sqStart.y+w) * SquareSize;
+		start = Vector3(sqStart.x,   0.0f, sqStart.y)     * SquareSize;
+		end = Vector3(sqStart.x + w, 0.0f, sqStart.y + w) * SquareSize;
 
 		start.y = minH;
 		end.y = maxH;
@@ -144,7 +142,7 @@ namespace terrain {
 		width = w;
 	}
 
-	int TQuad::GetVertexSize ()
+	int TQuad::GetVertexSize()
 	{
 		// compile-time assert
 		typedef int vector_should_be_12_bytes [(sizeof(Vector3) == 12) ? 1 : -1];
@@ -158,54 +156,54 @@ namespace terrain {
 		return vertexSize;
 	}
 
-	void TQuad::Draw (IndexTable *indexTable, bool onlyPositions, int lodState)
+	void TQuad::Draw(IndexTable* indexTable, bool onlyPositions, int lodState)
 	{
 		uint vda = textureSetup->vertexDataReq;
 		int vertexSize = GetVertexSize();
 
 		// Bind the vertex buffer components
 		Vector3* vbuf = (Vector3*) renderData->vertexBuffer.Bind();
-		glEnableClientState (GL_VERTEX_ARRAY);
-		glVertexPointer (3, GL_FLOAT, vertexSize, vbuf ++);
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(3, GL_FLOAT, vertexSize, vbuf ++);
 		if (vda & VRT_Normal)
 		{
 			if (!onlyPositions) {
-				glEnableClientState (GL_NORMAL_ARRAY);
-				glNormalPointer (GL_FLOAT, vertexSize, vbuf);
+				glEnableClientState(GL_NORMAL_ARRAY);
+				glNormalPointer(GL_FLOAT, vertexSize, vbuf);
 			}
 			vbuf ++;
 		}
 		if (vda & VRT_TangentSpaceMatrix)
 		{
 			if (!onlyPositions) {
-				assert (textureSetup->currentShaderSetup);
-				textureSetup->currentShaderSetup->BindTSM (vbuf, vertexSize);
+				assert(textureSetup->currentShaderSetup);
+				textureSetup->currentShaderSetup->BindTSM(vbuf, vertexSize);
 			}
 			vbuf += 3;
 		}
 
 		// Bind the index buffer and render
 		IndexBuffer& ibuf = indexTable->buffers [lodState];
-		glDrawElements (GL_TRIANGLES, indexTable->size [lodState], indexTable->IndexType(), ibuf.Bind());
-		ibuf.Unbind ();
+		glDrawElements(GL_TRIANGLES, indexTable->size [lodState], indexTable->IndexType(), ibuf.Bind());
+		ibuf.Unbind();
 
 		// Unbind the vertex buffer
 		if (!onlyPositions) {
-			if (vda&VRT_Normal) glDisableClientState (GL_NORMAL_ARRAY);
+			if (vda&VRT_Normal) glDisableClientState(GL_NORMAL_ARRAY);
 			if (vda&VRT_TangentSpaceMatrix) textureSetup->currentShaderSetup->UnbindTSM();
 		}
-		glDisableClientState (GL_VERTEX_ARRAY);
-		renderData->vertexBuffer.Unbind ();
+		glDisableClientState(GL_VERTEX_ARRAY);
+		renderData->vertexBuffer.Unbind();
 	}
 
-	bool TQuad::InFrustum (Frustum *f)
+	bool TQuad::InFrustum(Frustum* f)
 	{
-		Vector3 boxSt=start, boxEnd=end;
-		return f->IsBoxVisible (boxSt, boxEnd) != Frustum::Outside;
+		Vector3 boxSt = start, boxEnd = end;
+		return f->IsBoxVisible(boxSt, boxEnd) != Frustum::Outside;
 	}
 
 	// Calculates the exact nearest point, not just one of the box'es vertices
-	void NearestBoxPoint(const Vector3 *min, const Vector3 *max, const Vector3 *pos, Vector3 *out)
+	void NearestBoxPoint(const Vector3* min, const Vector3* max, const Vector3* pos, Vector3* out)
 	{
 		Vector3 mid = (*max + *min) * 0.5f;
 		if(pos->x < min->x) out->x = min->x;
@@ -219,22 +217,22 @@ namespace terrain {
 		else out->z = pos->z;
 	}
 
-	float TQuad::CalcLod (const Vector3& campos)
+	float TQuad::CalcLod(const Vector3& campos)
 	{
 		Vector3 nearest;
-		NearestBoxPoint (&start, &end, &campos, &nearest);
+		NearestBoxPoint(&start, &end, &campos, &nearest);
 
 		float nodesize = end.x - start.x;
 	//	float sloped = 0.01f * (1.0f + end.y - start.y);
 		nearest -= campos;
 		//return sqrtf(sloped) * nodesize / (nearest.length () + 0.1f);
-		return nodesize / (nearest.Length () + 0.1f);
+		return nodesize / (nearest.Length() + 0.1f);
 	}
 
 	void TQuad::CollectNodes(std::vector<TQuad*>& quads)
 	{
 		if (!isLeaf()) {
-			for (int a=0;a<4;a++)
+			for (int a = 0; a < 4; a++)
 				childs[a]->CollectNodes(quads);
 		}
 		quads.push_back(this);
@@ -248,12 +246,12 @@ namespace terrain {
 		}
 	}
 
-	TQuad *TQuad::FindSmallestContainingQuad2D(const Vector3& pos, float range, int maxdepth)
+	TQuad* TQuad::FindSmallestContainingQuad2D(const Vector3& pos, float range, int maxdepth)
 	{
 		if (depth < maxdepth)
 		{
-			for (int a=0;a<4;a++) {
-				TQuad *r = childs[a]->FindSmallestContainingQuad2D(pos,range,maxdepth);
+			for (int a = 0; a < 4; a++) {
+				TQuad* r = childs[a]->FindSmallestContainingQuad2D(pos,range,maxdepth);
 				if (r) return r;
 			}
 		}
@@ -277,8 +275,8 @@ namespace terrain {
 		lowdetailhm = 0;
 		shadowMap = 0;
 		renderDataManager = 0;
-		logUpdates=false;
-		nodeUpdateCount=0;
+		logUpdates = false;
+		nodeUpdateCount = 0;
 		curRC = 0;
 		activeRC = 0;
 		quadTreeDepth = 0;
@@ -288,7 +286,7 @@ namespace terrain {
 		delete renderDataManager;
         delete texturing;
 		while (heightmap) {
-			Heightmap *p = heightmap;
+			Heightmap* p = heightmap;
 			heightmap = heightmap->lowDetail;
 			delete p;
 		}
@@ -299,13 +297,13 @@ namespace terrain {
 		delete indexTable;
 	}
 
-	void Terrain::SetShadowMap (uint shadowTex)
+	void Terrain::SetShadowMap(uint shadowTex)
 	{
 		shadowMap = shadowTex;
 	}
 
 	// used by ForceQueue to queue quads
-	void Terrain::QueueLodFixQuad (TQuad *q)
+	void Terrain::QueueLodFixQuad(TQuad* q)
 	{
 		if (q->drawState == TQuad::Queued)
 			return;
@@ -317,20 +315,20 @@ namespace terrain {
 
 			// change the queued quad to a parent quad
 			q->parent->drawState = TQuad::Parent;
-			for (int a=0;a<4;a++) {
-				TQuad *ch = q->parent->childs [a];
+			for (int a = 0; a < 4; a++) {
+				TQuad* ch = q->parent->childs [a];
 
 				updatequads.push_back(ch);
 				ch->drawState = TQuad::Queued;
-				UpdateLodFix (ch);
+				UpdateLodFix(ch);
 			}
 		}
 	}
 
-	void Terrain::ForceQueue (TQuad *q)
+	void Terrain::ForceQueue(TQuad* q)
 	{
 		// See if the quad is culled against the view frustum
-		TQuad *p = q->parent;
+		TQuad* p = q->parent;
 		while (p) {
 			if (p->drawState == TQuad::Culled)
 				return;
@@ -339,18 +337,18 @@ namespace terrain {
 			p = p->parent;
 		}
 		// Quad is not culled, so make sure it is drawn
-		QueueLodFixQuad (q);
+		QueueLodFixQuad(q);
 	}
 
-	inline void Terrain::CheckNabourLod (TQuad *q, int xOfs, int yOfs)
+	inline void Terrain::CheckNabourLod(TQuad* q, int xOfs, int yOfs)
 	{
-		QuadMap *qm = qmaps[q->depth];
-		TQuad *nb = qm->At (q->qmPos.x+xOfs, q->qmPos.y+yOfs);
+		QuadMap* qm = qmaps[q->depth];
+		TQuad* nb = qm->At(q->qmPos.x+xOfs, q->qmPos.y+yOfs);
 
 		// Check the state of the nabour parent (q is already the parent),
 		if (nb->drawState == TQuad::NoDraw) {
 			// a parent of the node is either culled or drawn itself
-			ForceQueue (nb);
+			ForceQueue(nb);
 			return;
 		}
 	    // Parent: a child node of the nabour is drawn, which will take care of LOD gaps fixing
@@ -359,67 +357,67 @@ namespace terrain {
 	}
 
 	// Check nabour parent nodes to see if they need to be drawn to fix LOD gaps of this node.
-	void Terrain::UpdateLodFix (TQuad *q)
+	void Terrain::UpdateLodFix(TQuad* q)
 	{
-		if (q->drawState==TQuad::Culled)
+		if (q->drawState == TQuad::Culled)
 			return;
 
-		if (q->drawState==TQuad::Parent) {
-			for(int a=0;a<4;a++)
+		if (q->drawState == TQuad::Parent) {
+			for(int a = 0; a < 4; a++)
 				UpdateLodFix(q->childs [a]);
 		}
 		else if (q->parent) {
 			// find the nabours, and make sure at least them or their parents are drawn
-			TQuad *parent = q->parent;
-			QuadMap *qm = qmaps[parent->depth];
-			if (parent->qmPos.x>0) CheckNabourLod (parent, -1, 0);
-			if (parent->qmPos.y>0) CheckNabourLod (parent, 0, -1);
-			if (parent->qmPos.x<qm->w-1) CheckNabourLod (parent, 1, 0);
-			if (parent->qmPos.y<qm->w-1) CheckNabourLod (parent, 0, 1);
+			TQuad* parent = q->parent;
+			QuadMap* qm = qmaps[parent->depth];
+			if (parent->qmPos.x>0) CheckNabourLod(parent, -1, 0);
+			if (parent->qmPos.y>0) CheckNabourLod(parent, 0, -1);
+			if (parent->qmPos.x<qm->w-1) CheckNabourLod(parent, 1, 0);
+			if (parent->qmPos.y<qm->w-1) CheckNabourLod(parent, 0, 1);
 		}
 	}
 
 	// Handle visibility with the frustum, and select LOD based on distance to camera and LOD setting
-	void Terrain::QuadVisLod (TQuad *q)
+	void Terrain::QuadVisLod(TQuad* q)
 	{
-		if (q->InFrustum (&frustum)) {
+		if (q->InFrustum(&frustum)) {
 			// Node is visible, now determine if this LOD is suitable, or that a higher LOD should be used.
-			float lod = config.detailMod * q->CalcLod (curRC->cam->pos);
+			float lod = config.detailMod * q->CalcLod(curRC->cam->pos);
 			if (q->depth < quadTreeDepth-config.maxLodLevel || (lod > 1.0f && !q->isLeaf())) {
-				q->drawState=TQuad::Parent;
-				for (int a=0;a<4;a++)
-					QuadVisLod (q->childs[a]);
-			} else q->drawState=TQuad::Queued;
-			updatequads.push_back (q);
+				q->drawState = TQuad::Parent;
+				for (int a = 0; a < 4; a++)
+					QuadVisLod(q->childs[a]);
+			} else q->drawState = TQuad::Queued;
+			updatequads.push_back(q);
 
 			// update max lod value
 			if (q->maxLodValue < lod)
 				q->maxLodValue = lod;
 		} else {
-			q->drawState=TQuad::Culled;
-			culled.push_back (q);
+			q->drawState = TQuad::Culled;
+			culled.push_back(q);
 		}
 	}
 
-	static inline bool QuadSortFunc (const QuadRenderInfo& q1, const QuadRenderInfo& q2)
+	static inline bool QuadSortFunc(const QuadRenderInfo& q1, const QuadRenderInfo& q2)
 	{
 		return q1.quad->textureSetup->sortkey < q2.quad->textureSetup->sortkey;
 	}
 
 
 	// update quad node drawing list
-	void Terrain::Update ()
+	void Terrain::Update()
 	{
 		nodeUpdateCount = 0;
 
 		renderDataManager->ClearStat();
 
 		// clear LOD values of previously used renderquads
-		for (size_t a=0;a<contexts.size();a++)
+		for (size_t a = 0; a < contexts.size(); a++)
 		{
-			RenderContext *rc = contexts[a];
+			RenderContext* rc = contexts[a];
 			for (size_t n = 0; n < rc->quads.size();n++) {
-				TQuad *q = rc->quads [n].quad;
+				TQuad* q = rc->quads [n].quad;
 
 				q->maxLodValue = 0.0f;
 				if (q->renderData)
@@ -427,72 +425,72 @@ namespace terrain {
 			}
 		}
 
-		for (size_t ctx=0;ctx<contexts.size();ctx++)
+		for (size_t ctx = 0; ctx < contexts.size(); ctx++)
 		{
-			RenderContext *rc = curRC = contexts[ctx];
+			RenderContext* rc = curRC = contexts[ctx];
 
 			// Update the frustum based on the camera, to cull away TQuad nodes
-			//Camera *camera = rc->cam;
-		//	frustum.CalcCameraPlanes (&camera->pos, &camera->right, &camera->up, &camera->front, camera->fov, camera->aspect);
-			//assert (camera->pos.x == 0.0f || frustum.IsPointVisible (camera->pos + camera->front * 20)==Frustum::Inside);
+			//Camera* camera = rc->cam;
+		//	frustum.CalcCameraPlanes(&camera->pos, &camera->right, &camera->up, &camera->front, camera->fov, camera->aspect);
+			//assert(camera->pos.x == 0.0f || frustum.IsPointVisible(camera->pos + camera->front * 20)==Frustum::Inside);
 
 			// determine the new set of quads to draw
-			QuadVisLod (quadtree);
+			QuadVisLod(quadtree);
 
 			// go through nabours to make sure there is a maximum of one LOD difference between nabours
-			UpdateLodFix (quadtree);
+			UpdateLodFix(quadtree);
 
 			if (debugQuad)
-				ForceQueue (debugQuad);
+				ForceQueue(debugQuad);
 
 			// update lod state and copy the rendering list to the render context...
 			rc->quads.clear();
-			for (size_t a=0;a<updatequads.size();a++)
+			for (size_t a = 0; a < updatequads.size(); a++)
 			{
 				if (updatequads[a]->drawState == TQuad::Queued)
 				{
-					TQuad *q = updatequads[a];
+					TQuad* q = updatequads[a];
 					// calculate lod state
-					QuadMap *qm = qmaps[q->depth];
-					int ls=0;
-					if (q->qmPos.x>0 && qm->At (q->qmPos.x-1,q->qmPos.y)->drawState == TQuad::NoDraw) ls |= left_bit;
-					if (q->qmPos.y>0 && qm->At (q->qmPos.x,q->qmPos.y-1)->drawState == TQuad::NoDraw) ls |= up_bit;
-					if (q->qmPos.x<qm->w-1 && qm->At (q->qmPos.x+1,q->qmPos.y)->drawState == TQuad::NoDraw) ls |= right_bit;
-					if (q->qmPos.y<qm->w-1 && qm->At (q->qmPos.x,q->qmPos.y+1)->drawState == TQuad::NoDraw) ls |= down_bit;
+					QuadMap* qm = qmaps[q->depth];
+					int ls = 0;
+					if (q->qmPos.x>0 && qm->At(q->qmPos.x-1,q->qmPos.y)->drawState == TQuad::NoDraw) ls |= left_bit;
+					if (q->qmPos.y>0 && qm->At(q->qmPos.x,q->qmPos.y-1)->drawState == TQuad::NoDraw) ls |= up_bit;
+					if (q->qmPos.x<qm->w-1 && qm->At(q->qmPos.x+1,q->qmPos.y)->drawState == TQuad::NoDraw) ls |= right_bit;
+					if (q->qmPos.y<qm->w-1 && qm->At(q->qmPos.x,q->qmPos.y+1)->drawState == TQuad::NoDraw) ls |= down_bit;
 
-					rc->quads.push_back (QuadRenderInfo());
+					rc->quads.push_back(QuadRenderInfo());
 					rc->quads.back().quad = q;
 					rc->quads.back().lodState = ls;
 					if (q->renderData) q->renderData->used = true;
 				}
 			}
 			// sort rendering quads based on sorting key
-			sort (rc->quads.begin(), rc->quads.end(), QuadSortFunc);
+			sort(rc->quads.begin(), rc->quads.end(), QuadSortFunc);
 
 			// the active set of quads is determined, so their draw-states can be reset for the next context
-			for (size_t a=0;a<culled.size();a++)
+			for (size_t a = 0; a < culled.size(); a++)
 				culled[a]->drawState = TQuad::NoDraw;
 			culled.clear();
 
 			// clear the list of queued quads
-			for (size_t a=0;a<updatequads.size();a++)
+			for (size_t a = 0; a < updatequads.size(); a++)
 				updatequads[a]->drawState = TQuad::NoDraw;
-			updatequads.clear ();
+			updatequads.clear();
 		}
 
-		renderDataManager->FreeUnused ();
+		renderDataManager->FreeUnused();
 
-		for (size_t ctx=0;ctx<contexts.size();ctx++)
+		for (size_t ctx = 0; ctx < contexts.size(); ctx++)
 		{
-			RenderContext *rc = curRC = contexts[ctx];
+			RenderContext* rc = curRC = contexts[ctx];
 
 			// allocate required vertex buffers
-			for (size_t a=0;a<rc->quads.size();a++)
+			for (size_t a = 0; a < rc->quads.size(); a++)
 			{
-				TQuad *q = rc->quads[a].quad;
+				TQuad* q = rc->quads[a].quad;
 
 				if (!q->renderData) {
-					renderDataManager->InitializeNode (q);
+					renderDataManager->InitializeNode(q);
 
 					if (config.terrainNormalMaps && rc->needsNormalMap)
 						renderDataManager->InitializeNodeNormalMap(q, config.normalMapLevel);
@@ -503,72 +501,77 @@ namespace terrain {
 		}
 
 		if (logUpdates) {
-			if (nodeUpdateCount) d_trace ("NodeUpdates: %d, NormalDataAllocs:%d, RenderDataAllocs:%d\n",
-				nodeUpdateCount, renderDataManager->normalDataAllocates, renderDataManager->renderDataAllocates);
+			if (nodeUpdateCount) {
+				LOG_L(L_DEBUG,
+						"NodeUpdates: %d, NormalDataAllocs:%d, RenderDataAllocs:%d",
+						nodeUpdateCount,
+						renderDataManager->normalDataAllocates,
+						renderDataManager->renderDataAllocates);
+			}
 		}
 		curRC = 0;
 	}
 
-	void Terrain::DrawSimple ()
+	void Terrain::DrawSimple()
 	{
 		glEnable(GL_CULL_FACE);
 
-		for (size_t a=0;a<activeRC->quads.size();a++)
+		for (size_t a = 0; a < activeRC->quads.size(); a++)
 		{
-			QuadRenderInfo *q = &activeRC->quads[a];
-			q->quad->Draw (indexTable, true, q->lodState);
+			QuadRenderInfo* q = &activeRC->quads[a];
+			q->quad->Draw(indexTable, true, q->lodState);
 		}
 	}
 
-	void Terrain::DrawOverlayTexture (uint tex)
+	void Terrain::DrawOverlayTexture(uint tex)
 	{
-		glEnable (GL_TEXTURE_2D);
-		glBindTexture (GL_TEXTURE_2D, tex);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, tex);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE, GL_MODULATE);
-        SetTexGen (1.0f / (heightmap->w * SquareSize));
+        SetTexGen(1.0f / (heightmap->w * SquareSize));
 
-		DrawSimple ();
+		DrawSimple();
 
-		glDisable (GL_TEXTURE_GEN_S);
-		glDisable (GL_TEXTURE_GEN_T);
-		glDisable (GL_TEXTURE_2D);
+		glDisable(GL_TEXTURE_GEN_S);
+		glDisable(GL_TEXTURE_GEN_T);
+		glDisable(GL_TEXTURE_2D);
 	}
 
-	void DrawNormals(TQuad *q, const Heightmap* hm)
+	void DrawNormals(TQuad* q, const Heightmap* hm)
 	{
-		glBegin (GL_LINES);
+		glBegin(GL_LINES);
 		for (int y = q->hmPos.y; y < q->hmPos.y + QUAD_W; y++)
 			for (int x = q->hmPos.x; x < q->hmPos.x + QUAD_W; x++)
 			{
 				Vector3 origin(x * hm->squareSize, hm->atSynced(x, y), y * hm->squareSize);
 
 				Vector3 tangent, binormal;
-				CalculateTangents(hm, x,y, tangent, binormal);
+				CalculateTangents(hm, x, y, tangent, binormal);
 
 				Vector3 normal = binormal.cross(tangent);
 				normal.ANormalize();
 				binormal.ANormalize();
 				tangent.ANormalize();
 
-				glColor3f (1,1,0);
+				glColor3f(1, 1, 0);
 				glVertex3fv(&origin[0]);
 				glVertex3fv(&(origin + normal * 7)[0]);
-				glColor3f (1,0,0);
+				glColor3f(1, 0, 0);
 				glVertex3fv(&origin[0]);
 				glVertex3fv(&(origin + binormal * 7)[0]);
-				glColor3f (0,0,1);
+				glColor3f(0, 0, 1);
 				glVertex3fv(&origin[0]);
 				glVertex3fv(&(origin + tangent * 7)[0]);
 			}
 		glEnd();
-		glColor3f (1,1,1);
+		glColor3f(1, 1, 1);
 
 	}
 
-	void Terrain::Draw ()
+	void Terrain::Draw()
 	{
 		const float diffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-		glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, diffuse);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, diffuse);
 
 		glEnable(GL_CULL_FACE);
 		glColor3f(1.0f,1.0f,1.0f);
@@ -576,20 +579,20 @@ namespace terrain {
 		if (config.cacheTextures)
 		{
 			// draw all terrain nodes using their cached textures
-			glEnable (GL_TEXTURE_GEN_S);
-			glEnable (GL_TEXTURE_GEN_T);
-			glTexGeni (GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-			glTexGeni (GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+			glEnable(GL_TEXTURE_GEN_S);
+			glEnable(GL_TEXTURE_GEN_T);
+			glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+			glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
 
-			glEnable (GL_TEXTURE_2D);
-			glDisable (GL_LIGHTING);
+			glEnable(GL_TEXTURE_2D);
+			glDisable(GL_LIGHTING);
 
-			for (size_t a=0;a<activeRC->quads.size();a++)
+			for (size_t a = 0; a < activeRC->quads.size(); a++)
 			{
-				TQuad *q = activeRC->quads[a].quad;
+				TQuad* q = activeRC->quads[a].quad;
 
 				// set quad texture
-				glBindTexture (GL_TEXTURE_2D, q->cacheTexture);
+				glBindTexture(GL_TEXTURE_2D, q->cacheTexture);
 
 				// set texture gen
 				float ht = (q->end.x-q->start.x) / ( 2 * config.cacheTextureSize );
@@ -597,19 +600,19 @@ namespace terrain {
 				float v[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 				v[0] = 1.0f / (q->end.x - q->start.x + ht * 2);
 				v[3] = -v[0] * (q->start.x - ht);
-				glTexGenfv (GL_S, GL_OBJECT_PLANE, v);
+				glTexGenfv(GL_S, GL_OBJECT_PLANE, v);
 				v[0] = 0.0f;
 				v[2] = 1.0f / (q->end.z - q->start.z + ht * 2);
 				v[3] = -v[2] * (q->start.z - ht);
-				glTexGenfv (GL_T, GL_OBJECT_PLANE, v);
+				glTexGenfv(GL_T, GL_OBJECT_PLANE, v);
 
 				// draw
-				q->Draw (indexTable, false, activeRC->quads[a].lodState);
+				q->Draw(indexTable, false, activeRC->quads[a].lodState);
 			}
 
-			glDisable (GL_TEXTURE_2D);
-			glDisable (GL_TEXTURE_GEN_S);
-			glDisable (GL_TEXTURE_GEN_T);
+			glDisable(GL_TEXTURE_2D);
+			glDisable(GL_TEXTURE_GEN_S);
+			glDisable(GL_TEXTURE_GEN_T);
 		}
 		else  // no texture caching, so use the texturing system directly
 		{
@@ -625,12 +628,12 @@ namespace terrain {
 				texturing->BeginPass(pass);
 
 				for (size_t a = 0; a < activeRC->quads.size(); a++) {
-					TQuad *q = activeRC->quads[a].quad;
+					TQuad* q = activeRC->quads[a].quad;
 
 					// Setup node texturing
-					skipNodes = !texturing->SetupNode (q, pass);
+					skipNodes = !texturing->SetupNode(q, pass);
 
-					assert (q->renderData);
+					assert(q->renderData);
 
 					if (!skipNodes) {
 						// Draw the node
@@ -648,10 +651,10 @@ namespace terrain {
 		}
 
 		if (debugQuad)
-			DrawNormals (debugQuad, lowdetailhm->GetLevel (debugQuad->depth));
+			DrawNormals(debugQuad, lowdetailhm->GetLevel(debugQuad->depth));
 	}
 
-	void Terrain::CalcRenderStats (RenderStats& stats, RenderContext *ctx)
+	void Terrain::CalcRenderStats(RenderStats& stats, RenderContext* ctx)
 	{
 		if (!ctx)
 			ctx = activeRC;
@@ -660,14 +663,14 @@ namespace terrain {
 		stats.renderDataSize = 0;
 		stats.tris = 0;
 
-		for (size_t a=0;a<ctx->quads.size();a++) {
-			TQuad *q = ctx->quads[a].quad;
+		for (size_t a = 0; a < ctx->quads.size(); a++) {
+			TQuad* q = ctx->quads[a].quad;
 			if (q->cacheTexture)
 				stats.cacheTextureSize += config.cacheTextureSize * config.cacheTextureSize * 3;
 			stats.renderDataSize += q->renderData->GetDataSize();
 			stats.tris += MAX_INDICES/3;
 		}
-		stats.passes = texturing->NumPasses ();
+		stats.passes = texturing->NumPasses();
 	}
 
 #ifndef TERRAINRENDERERLIB_EXPORTS
@@ -694,101 +697,101 @@ namespace terrain {
 	}
 #endif
 
-	TQuad* FindQuad (TQuad *q, const Vector3& cpos)
+	TQuad* FindQuad(TQuad* q, const Vector3& cpos)
 	{
 		if (cpos.x >= q->start.x && cpos.z >= q->start.z &&
 			cpos.x < q->end.x && cpos.z < q->end.z)
 		{
-			if (q->isLeaf ()) return q;
+			if (q->isLeaf()) return q;
 
-			for (int a=0;a<4;a++)  {
-				TQuad *r = FindQuad (q->childs[a], cpos);
+			for (int a = 0; a < 4; a++)  {
+				TQuad* r = FindQuad(q->childs[a], cpos);
 				if (r) return r;
 			}
 		}
 		return 0;
 	}
 
-	void Terrain::RenderNodeFlat (int x,int y,int depth)
+	void Terrain::RenderNodeFlat(int x,int y,int depth)
 	{
-		RenderNode (qmaps[depth]->At (x,y));
+		RenderNode(qmaps[depth]->At(x,y));
 	}
 
-	void Terrain::RenderNode (TQuad *q)
+	void Terrain::RenderNode(TQuad* q)
 	{
 		// setup projection matrix, so the quad is exactly mapped onto the viewport
-		glMatrixMode (GL_PROJECTION);
-		glPushMatrix ();
-		glLoadIdentity ();
-		glOrtho (q->start.x, q->end.x, q->start.z, q->end.z, -10000.0f, 100000.0f);
+		glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glLoadIdentity();
+		glOrtho(q->start.x, q->end.x, q->start.z, q->end.z, -10000.0f, 100000.0f);
 		glColor3f(1.f,1.f,1.f);
 
 		if (!q->renderData)
-			renderDataManager->InitializeNode (q);
+			renderDataManager->InitializeNode(q);
 
 		texturing->BeginTexturing();
 		// render to the framebuffer
-		for (size_t p=0; p < q->textureSetup->renderSetup[0]->passes.size(); p++)
+		for (size_t p = 0; p < q->textureSetup->renderSetup[0]->passes.size(); p++)
 		{
 			texturing->BeginPass(p);
-			if (texturing->SetupNode (q, p))
+			if (texturing->SetupNode(q, p))
 			{
 				glBegin(GL_QUADS);
-				glVertex3f (q->start.x, 0.0f, q->start.z);
-				glVertex3f (q->end.x, 0.0f, q->start.z);
-				glVertex3f (q->end.x, 0.0f, q->end.z);
-				glVertex3f (q->start.x, 0.0f, q->end.z);
+				glVertex3f(q->start.x, 0.0f, q->start.z);
+				glVertex3f(q->end.x, 0.0f, q->start.z);
+				glVertex3f(q->end.x, 0.0f, q->end.z);
+				glVertex3f(q->start.x, 0.0f, q->end.z);
 				glEnd();
 			}
 			texturing->EndPass();
 		}
 		texturing->EndTexturing();
-		glMatrixMode (GL_PROJECTION);
-		glPopMatrix ();
+		glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
 	}
 
-	void Terrain::CacheTextures ()
+	void Terrain::CacheTextures()
 	{
 		if (!config.cacheTextures)
 			return;
 
-		glPushAttrib (GL_VIEWPORT_BIT | GL_DEPTH_BUFFER_BIT);
-		glViewport (0, 0, config.cacheTextureSize, config.cacheTextureSize);
+		glPushAttrib(GL_VIEWPORT_BIT | GL_DEPTH_BUFFER_BIT);
+		glViewport(0, 0, config.cacheTextureSize, config.cacheTextureSize);
 
-		glMatrixMode (GL_MODELVIEW);
-		glPushMatrix ();
-		glLoadIdentity ();
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
 
 		float m[16];
 		std::fill(m,m+16,0.0f);
-		m[0]=m[6]=m[9]=m[15]=1.0f;
-		glLoadMatrixf (m);
+		m[0] = m[6] = m[9] = m[15] = 1.0f;
+		glLoadMatrixf(m);
 
-		glDepthMask (GL_FALSE);
-		glDisable (GL_DEPTH_TEST);
-		glDisable (GL_CULL_FACE);
+		glDepthMask(GL_FALSE);
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_CULL_FACE);
 
 		glDisable(GL_LIGHTING);
 
 		// Make sure every node that might be drawn, has a cached texture
-		for (size_t ctx=0;ctx<contexts.size();ctx++)
+		for (size_t ctx = 0; ctx < contexts.size(); ctx++)
 		{
-			RenderContext *rc = contexts[ctx];
+			RenderContext* rc = contexts[ctx];
 			if (!rc->needsTexturing)
 				continue;
 
-			for (size_t a=0;a<rc->quads.size();a++)
+			for (size_t a = 0; a < rc->quads.size(); a++)
 			{
-				TQuad *q = rc->quads[a].quad;
+				TQuad* q = rc->quads[a].quad;
 
 				if (q->cacheTexture)
 					continue;
 
-				RenderNode (q);
+				RenderNode(q);
 
 				// copy it to the texture
 				glGenTextures(1, &q->cacheTexture);
-				glBindTexture (GL_TEXTURE_2D, q->cacheTexture);
+				glBindTexture(GL_TEXTURE_2D, q->cacheTexture);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -799,14 +802,14 @@ namespace terrain {
 			}
 		}
 
-		glMatrixMode (GL_MODELVIEW);
-		glPopMatrix ();
+		glMatrixMode(GL_MODELVIEW);
+		glPopMatrix();
 
 		// restore viewport and depth buffer states
-		glPopAttrib ();
+		glPopAttrib();
 	}
 
-	void Terrain::DebugEvent (const std::string& event)
+	void Terrain::DebugEvent(const std::string& event)
 	{
 		if (event == "t_detail_inc")
 			config.detailMod *= 1.2f;
@@ -814,17 +817,17 @@ namespace terrain {
 			config.detailMod /= 1.2f;
 		if (event == "t_debugquad") {
 			if (debugQuad)
-				debugQuad=0;
+				debugQuad = 0;
 			else
-				debugQuad=FindQuad(quadtree, activeRC->cam->pos);
+				debugQuad = FindQuad(quadtree, activeRC->cam->pos);
 			return;
 		}
 //		if (key == 'l')
 //			logUpdates=!logUpdates;
-		texturing->DebugEvent (event);
+		texturing->DebugEvent(event);
 	}
 
-	void Terrain::Load(const TdfParser& tdf, LightingInfo *li, ILoadCallback *cb)
+	void Terrain::Load(const TdfParser& tdf, LightingInfo* li, ILoadCallback* cb)
 	{
 		// validate configuration
 		if (config.cacheTextures)
@@ -834,15 +837,15 @@ namespace terrain {
 			if (!GLEW_EXT_texture_filter_anisotropic)
 				config.anisotropicFiltering = 0.0f;
 			else {
-				float maxAnisotropy=0.0f;
+				float maxAnisotropy = 0.0f;
 				glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT,&maxAnisotropy);
 				if (config.anisotropicFiltering > maxAnisotropy)
 					config.anisotropicFiltering = maxAnisotropy;
 			}
 		}
 
-		float hmScale = atof (tdf.SGetValueDef ("1000", "MAP\\TERRAIN\\HeightScale").c_str());
-		float hmOffset = atof (tdf.SGetValueDef ("0", "MAP\\TERRAIN\\HeightOffset").c_str());
+		float hmScale = atof(tdf.SGetValueDef("1000", "MAP\\TERRAIN\\HeightScale").c_str());
+		float hmOffset = atof(tdf.SGetValueDef("0", "MAP\\TERRAIN\\HeightOffset").c_str());
 
 		// apply scaling and offset to the heightmap
 		for (int y = 0; y < heightmap->w * heightmap->h; y++) {
@@ -850,7 +853,7 @@ namespace terrain {
 			heightmap->dataUnsynced[y] = heightmap->dataSynced[y];
 		}
 
-		if (cb) cb->PrintMsg ("initializing heightmap renderer...");
+		if (cb) cb->PrintMsg("initializing heightmap renderer...");
 
 		// create a set of low resolution heightmaps
 		int w = heightmap->w - 1;
@@ -859,7 +862,7 @@ namespace terrain {
 		while (w > QUAD_W) {
 			prev = prev->CreateLowDetailHM();
 			quadTreeDepth++;
-			w/=2;
+			w /= 2;
 		}
 		lowdetailhm = prev;
 		assert((1 << quadTreeDepth) * (lowdetailhm->w - 1) == heightmap->w - 1);
@@ -872,11 +875,11 @@ namespace terrain {
 		// build a quadtree and a vertex buffer for each quad tree
 		// prev is now the lowest detail heightmap, and will be used for the root quad tree node
 		quadtree = new TQuad;
-		quadtree->Build (lowdetailhm, int2(), int2(), int2(), heightmap->w-1, 0);
+		quadtree->Build(lowdetailhm, int2(), int2(), int2(), heightmap->w-1, 0);
 
 		// create a quad map for each LOD level
-		Heightmap *cur = prev;
-		QuadMap *qm = 0;
+		Heightmap* cur = prev;
+		QuadMap* qm = 0;
 		while (cur) {
 			if (qm) {
 				qm->highDetail = new QuadMap;
@@ -885,20 +888,20 @@ namespace terrain {
 			} else {
 				qm = new QuadMap;
 			}
-			qm->Alloc ((cur->w-1)/QUAD_W);
+			qm->Alloc((cur->w-1)/QUAD_W);
 			qmaps.push_back(qm);
 			cur = cur->highDetail;
 		}
 
 		// fill the quad maps (qmaps.front() is now the lowest detail quadmap)
-		qmaps.front()->Fill (quadtree);
+		qmaps.front()->Fill(quadtree);
 
 		// generate heightmap normals
-		if (cb) cb->PrintMsg ("  generating terrain normals for shading...");
+		if (cb) cb->PrintMsg("  generating terrain normals for shading...");
 		for (Heightmap *lod = heightmap; lod; lod = lod->lowDetail)
-			lod->GenerateNormals ();
+			lod->GenerateNormals();
 
-		if (cb) cb->PrintMsg ("initializing texturing system...");
+		if (cb) cb->PrintMsg("initializing texturing system...");
 
 		// load textures
 		texturing = new TerrainTexture;
@@ -908,13 +911,13 @@ namespace terrain {
 
 		// calculate index table
 		indexTable = new IndexTable;
-		d_trace ("Index buffer data size: %d\n", VertexBuffer::TotalSize());
+		LOG("Index buffer data size: %d", VertexBuffer::TotalSize());
 	}
 
 	void Terrain::LoadHeightMap(const TdfParser& parser, ILoadCallback* cb)
 	{
 		std::string heightMapName;
-		parser.GetDef(heightMapName, string(), "MAP\\TERRAIN\\Heightmap");
+		parser.GetDef(heightMapName, std::string(), "MAP\\TERRAIN\\Heightmap");
 
 		if (heightMapName.empty()) {
 			throw content_error("No heightmap given");
@@ -932,19 +935,19 @@ namespace terrain {
 			throw content_error("Failed to load heightmap " + heightMapName);
 		}
 
-		d_trace("heightmap size: %dx%d\n", GetHeightmapWidth(), GetHeightmapHeight());
+		LOG("heightmap size: %dx%d", GetHeightmapWidth(), GetHeightmapHeight());
 
 		if ((GetHeightmapWidth() - 1) != atoi(parser.SGetValueDef("","MAP\\GameAreaW").c_str()) ||
 			(GetHeightmapHeight() - 1) != atoi(parser.SGetValueDef("","MAP\\GameAreaH").c_str())) {
 			char hmdims[32];
 			SNPRINTF(hmdims, 32, "%dx%d", GetHeightmapWidth(), GetHeightmapHeight());
-			throw content_error("Map size (" + string(hmdims) + ") should be equal to GameAreaW and GameAreaH");
+			throw content_error("Map size (" + std::string(hmdims) + ") should be equal to GameAreaW and GameAreaH");
 		}
 	}
 
-	void Terrain::ReloadShaders ()
+	void Terrain::ReloadShaders()
 	{
-		texturing->ReloadShaders (quadtree, &config);
+		texturing->ReloadShaders(quadtree, &config);
 	}
 
 
@@ -961,19 +964,19 @@ namespace terrain {
 				w = (w-1)*2+1;
 
 			if (w*w != len) {
-				cb->PrintMsg ("Incorrect raw file size: %d, last comparing size: %d", len, w*w*2);
+				cb->PrintMsg("Incorrect raw file size: %d, last comparing size: %d", len, w*w*2);
 				return;
-			} else bytespp=1;
-		} else bytespp=2;
+			} else bytespp = 1;
+		} else bytespp = 2;
 
 		width = w;
 	}
 
-	Heightmap* Terrain::LoadHeightmapFromRAW(const std::string& file, ILoadCallback *cb)
+	Heightmap* Terrain::LoadHeightmapFromRAW(const std::string& file, ILoadCallback* cb)
 	{
-		CFileHandler fh (file);
-		if (!fh.FileExists ()) {
-			cb->PrintMsg ("Failed to load %s", file.c_str());
+		CFileHandler fh(file);
+		if (!fh.FileExists()) {
+			cb->PrintMsg("Failed to load %s", file.c_str());
 			return 0;
 		}
 
@@ -996,7 +999,7 @@ namespace terrain {
 				hm->dataUnsynced[y] = hm->dataSynced[y];
 			}
 #ifdef SWAP_SHORT
-			char *p = (char*)hm->data;
+			char* p = (char*)hm->data;
 			for (int x = 0; x < len; x += 2, p += 2)
 				std::swap(p[0], p[1]);
 #endif
@@ -1014,32 +1017,32 @@ namespace terrain {
 		return hm;
 	}
 
-	Heightmap* Terrain::LoadHeightmapFromImage(const std::string& heightmapFile, ILoadCallback *cb)
+	Heightmap* Terrain::LoadHeightmapFromImage(const std::string& heightmapFile, ILoadCallback* cb)
 	{
-		const char *hmfile = heightmapFile.c_str();
+		const char* hmfile = heightmapFile.c_str();
 		CFileHandler fh(heightmapFile);
 		if (!fh.FileExists())
 			throw content_error(heightmapFile + " does not exist");
 
 		ILuint ilheightmap;
-		ilGenImages (1, &ilheightmap);
-		ilBindImage (ilheightmap);
+		ilGenImages(1, &ilheightmap);
+		ilBindImage(ilheightmap);
 
 		int len=fh.FileSize();
 		assert(len >= 0);
 
-		char *buffer=new char[len];
+		char* buffer = new char[len];
 		fh.Read(buffer, len);
         bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer, len);
 		delete [] buffer;
 
 		if (!success) {
-			ilDeleteImages (1,&ilheightmap);
-			cb->PrintMsg ("Failed to load %s", hmfile);
+			ilDeleteImages(1,&ilheightmap);
+			cb->PrintMsg("Failed to load %s", hmfile);
 			return false;
 		}
 
-		int hmWidth = ilGetInteger (IL_IMAGE_WIDTH);
+		int hmWidth = ilGetInteger(IL_IMAGE_WIDTH);
 		int hmHeight = ilGetInteger (IL_IMAGE_HEIGHT);
 
 		// does it have the correct size? 129,257,513
@@ -1049,16 +1052,16 @@ namespace terrain {
 				break;
 			testw <<= 1;
 		}
-		if (testw>hmWidth || hmWidth!=hmHeight) {
-			cb->PrintMsg ("Heightmap %s has wrong dimensions (should be 129x129,257x257...)", hmfile);
-			ilDeleteImages (1,&ilheightmap);
+		if ((testw > hmWidth) || (hmWidth != hmHeight)) {
+			cb->PrintMsg("Heightmap %s has wrong dimensions (should be 129x129,257x257...)", hmfile);
+			ilDeleteImages(1,&ilheightmap);
 			return false;
 		}
 
 		// convert
-		if (!ilConvertImage (IL_LUMINANCE, IL_UNSIGNED_SHORT)) {
-			cb->PrintMsg ("Failed to convert heightmap image (%s) to grayscale image.", hmfile);
-			ilDeleteImages (1,&ilheightmap);
+		if (!ilConvertImage(IL_LUMINANCE, IL_UNSIGNED_SHORT)) {
+			cb->PrintMsg("Failed to convert heightmap image (%s) to grayscale image.", hmfile);
+			ilDeleteImages(1, &ilheightmap);
 			return false;
 		}
 
@@ -1077,17 +1080,17 @@ namespace terrain {
 		return hm;
 	}
 
-	Vector3 Terrain::TerrainSize ()
+	Vector3 Terrain::TerrainSize()
 	{
-		return Vector3 (heightmap->w, 0.0f, heightmap->h) * SquareSize;
+		return Vector3(heightmap->w, 0.0f, heightmap->h) * SquareSize;
 	}
 
 	int Terrain::GetHeightmapWidth() const { return heightmap->w; }
 	int Terrain::GetHeightmapHeight() const { return heightmap->h; }
 
-	void Terrain::SetShaderParams (Vector3 dir, Vector3 eyevec)
+	void Terrain::SetShaderParams(Vector3 dir, Vector3 eyevec)
 	{
-		texturing->SetShaderParams (dir, eyevec);
+		texturing->SetShaderParams(dir, eyevec);
 	}
 
 
@@ -1123,29 +1126,29 @@ namespace terrain {
 	      float* Terrain::GetCornerHeightMapUnsynced()     { return heightmap->dataUnsynced; }
 
 
-	void Terrain::SetShadowParams(ShadowMapParams *smp)
+	void Terrain::SetShadowParams(ShadowMapParams* smp)
 	{
 		texturing->SetShadowMapParams(smp);
 	}
 
-	RenderContext* Terrain::AddRenderContext (Camera* cam, bool needsTexturing)
+	RenderContext* Terrain::AddRenderContext(Camera* cam, bool needsTexturing)
 	{
-		RenderContext *rc = new RenderContext;
+		RenderContext* rc = new RenderContext;
 
 		rc->cam = cam;
 		rc->needsTexturing = needsTexturing;
 
-		contexts.push_back (rc);
+		contexts.push_back(rc);
 		return rc;
 	}
 
-	void Terrain::RemoveRenderContext (RenderContext *rc)
+	void Terrain::RemoveRenderContext(RenderContext* rc)
 	{
-		contexts.erase (find(contexts.begin(),contexts.end(),rc));
+		contexts.erase(find(contexts.begin(),contexts.end(),rc));
 		delete rc;
 	}
 
-	void Terrain::SetActiveContext (RenderContext *rc)
+	void Terrain::SetActiveContext(RenderContext* rc)
 	{
 		activeRC = rc;
 	}

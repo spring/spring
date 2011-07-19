@@ -16,23 +16,23 @@
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/GL/myGL.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 #include <SDL_keysym.h>
 extern unsigned char* keys;
 
 CONFIG(int, SM3TerrainDetail).defaultValue(200);
 
-CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap *m)
+CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap* m)
 {
 	map = m;
 	tr = map->renderer;
-	rc = tr->AddRenderContext (&cam, true);
+	rc = tr->AddRenderContext(&cam, true);
 
 	tr->config.detailMod = configHandler->GetInt("SM3TerrainDetail") / 100.0f;
 
 	if (shadowHandler->shadowsSupported) {
-		shadowrc = tr->AddRenderContext(&shadowCam,false);
+		shadowrc = tr->AddRenderContext(&shadowCam, false);
 	} else  {
 		shadowrc = 0;
 	}
@@ -127,19 +127,19 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 	glEnable(GL_LIGHT0);
 	glEnable(GL_RESCALE_NORMAL);
 
-//	glLightfv (GL_LIGHT0, GL_SPOT_DIRECTION,dir.getf());
-//	glLightf (GL_LIGHT0, GL_SPOT_CUTOFF, 90.0f);
+//	glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION,dir.getf());
+//	glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 90.0f);
 /*	const float ambient[] = { 0.4f, 0.4f, 0.4f, 1.0f };
 	const float diffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glLightfv (GL_LIGHT0, GL_DIFFUSE, diffuse);
-	glLightfv (GL_LIGHT0, GL_AMBIENT, ambient);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
+	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
 
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, 1);
 
 	const float md[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, md);
-	glMaterialfv (GL_FRONT_AND_BACK, GL_SPECULAR, md);
-	glMaterialf (GL_FRONT_AND_BACK, GL_SHININESS, 10.0f);*/
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, md);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, md);
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 10.0f);*/
 	/////////////////////
 
 	tr->Draw();
@@ -210,7 +210,7 @@ void CSm3GroundDrawer::DrawShadowPass()
 	glDisable(GL_POLYGON_OFFSET_FILL);
 }
 
-void CSm3GroundDrawer::DrawObjects(bool drawWaterReflection,bool drawUnitReflection)
+void CSm3GroundDrawer::DrawObjects(bool drawWaterReflection, bool drawUnitReflection)
 {
 /*	glEnable(GL_ALPHA_TEST);
 	glEnable(GL_TEXTURE_2D);
@@ -234,7 +234,7 @@ void CSm3GroundDrawer::IncreaseDetail()
 	tr->config.detailMod *= 1.1f;
 	if (tr->config.detailMod > 12.0f)
 		tr->config.detailMod = 12.0f;
-	logOutput.Print("Terrain detail changed to: %2.2f", tr->config.detailMod);
+	LOG("Terrain detail changed to: %2.2f", tr->config.detailMod);
 }
 
 void CSm3GroundDrawer::DecreaseDetail()
@@ -243,6 +243,6 @@ void CSm3GroundDrawer::DecreaseDetail()
 	if (tr->config.detailMod < 0.25f)
 		tr->config.detailMod = 0.25f;
 
-	logOutput.Print("Terrain detail changed to: %2.2f", tr->config.detailMod);
+	LOG("Terrain detail changed to: %2.2f", tr->config.detailMod);
 }
 

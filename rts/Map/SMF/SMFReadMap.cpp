@@ -18,14 +18,13 @@
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/OpenMP_cond.h"
-#include "System/LogOutput.h"
 #include "System/mmgr.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 
 #define SSMF_UNCOMPRESSED_NORMALS 0
 
-using namespace std;
+using std::max;
 
 CONFIG(bool, GroundNormalTextureHighPrecision).defaultValue(false);
 CONFIG(float, SMFTexAniso).defaultValue(0.0f);
