@@ -2,8 +2,6 @@
 
 #include "SoundBuffer.h"
 
-#include <ogg/ogg.h>
-#include <vorbis/vorbisfile.h>
 
 #include "SoundLog.h"
 #include "ALShared.h"
@@ -11,6 +9,9 @@
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/byteorder.h"
 
+#include <vorbis/vorbisfile.h>
+#include <ogg/ogg.h>
+#include <cstring>
 
 namespace
 {

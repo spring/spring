@@ -3,14 +3,15 @@
 #include "System/StdAfx.h"
 #include "System/mmgr.h"
 
-#include <assert.h>
-
 #include "PlayerRoster.h"
 #include "PlayerHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/Util.h"
+
+#include <cassert>
+#include <cstring>
 
 static int CompareAllies     (const void* a, const void* b);
 static int CompareTeamIDs    (const void* a, const void* b);

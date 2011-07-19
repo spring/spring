@@ -25,6 +25,7 @@ using std::sprintf;
 #include <vector>
 #include <stdlib.h> // malloc(), calloc(), free()
 #include <sstream> // ostringstream
+#include <cstring>
 
 
 static const char* AI_INTERFACES_VERSION_COMMON = "common";
