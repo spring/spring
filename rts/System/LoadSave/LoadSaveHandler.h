@@ -3,6 +3,9 @@
 #ifndef _LOAD_SAVE_HANDLER_H
 #define _LOAD_SAVE_HANDLER_H
 
+#include <string>
+
+
 class ILoadSaveHandler
 {
 public:
