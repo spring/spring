@@ -8,7 +8,6 @@
 
 .PHONY : start stop start-master stop-master reload
 .PHONY : start-slave stop-slave enter-chroot
-.PHONY : start-github stop-github
 .PHONY : start-stacktrace-translator stop-stacktrace-translator
 
 USER:=buildbot
@@ -39,13 +38,6 @@ stop-slave:
 enter-chroot:
 	schroot --run-session --chroot `cat ~/run/slave_schroot_session` --user=${USER}
 
-start-github:
-	env -i PATH=$$PATH buildbot/master/contrib/github_buildbot.py -m localhost:9989 -p 9987 -l ~/log/github_buildbot.log -L debug --pidfile ~/run/github_buildbot.pid &
-
-stop-github:
-	-[ -e ~/run/github_buildbot.pid ] && kill `cat ~/run/github_buildbot.pid`
-	rm -f ~/run/github_buildbot.pid
-
 start-stacktrace-translator:
 	spring/buildbot/stacktrace_translator/stacktrace_translator.py >> ~/log/stacktrace_translator.log 2>&1 &
 
@@ -53,9 +45,9 @@ stop-stacktrace-translator:
 	-[ -e ~/run/stacktrace_translator.pid ] && kill `cat ~/run/stacktrace_translator.pid`
 	rm -f ~/run/stacktrace_translator.pid
 
-start: start-master start-slave start-github start-stacktrace-translator
+start: start-master start-slave start-stacktrace-translator
 
-stop: stop-stacktrace-translator stop-github stop-slave stop-master
+stop: stop-stacktrace-translator stop-slave stop-master
 
 reload:
 	buildbot sighup master
