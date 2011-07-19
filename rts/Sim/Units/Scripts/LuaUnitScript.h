@@ -156,6 +156,8 @@ private:
 	static int GetPieceTranslation(lua_State* L); // matches Move
 	static int GetPieceRotation(lua_State* L);    // matches Turn
 	static int GetPiecePosDir(lua_State* L);      // EmitDirPos (in unit space)
+
+	static int GetActiveUnitID(lua_State* L);
 };
 
 #endif
