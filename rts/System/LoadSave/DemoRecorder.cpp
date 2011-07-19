@@ -3,9 +3,6 @@
 #include "System/StdAfx.h"
 #include "DemoRecorder.h"
 
-#include <assert.h>
-#include <errno.h>
-
 #include "System/mmgr.h"
 
 #include "System/FileSystem/FileSystem.h"
@@ -16,6 +13,10 @@
 #include "System/TimeUtil.h"
 
 #include "System/Log/ILog.h"
+
+#include <cassert>
+#include <cerrno>
+#include <cstring>
 
 CDemoRecorder::CDemoRecorder()
 {

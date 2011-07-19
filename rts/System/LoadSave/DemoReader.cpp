@@ -3,13 +3,15 @@
 #include "System/StdAfx.h"
 #include "DemoReader.h"
 
-#include <limits.h>
-#include <stdexcept>
-#include <assert.h>
 #include "System/mmgr.h"
 
 #include "System/Net/RawPacket.h"
 #include "Game/GameVersion.h"
+
+#include <limits.h>
+#include <stdexcept>
+#include <cassert>
+#include <cstring>
 
 CDemoReader::CDemoReader(const std::string& filename, float curTime)
 {
