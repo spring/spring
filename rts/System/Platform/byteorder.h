@@ -15,10 +15,8 @@
  * - cfh
  */
 
-#ifndef BYTEORDER_H
-#define BYTEORDER_H
-
-#include <string.h>
+#ifndef BYTE_ORDER_H
+#define BYTE_ORDER_H
 
 /*
  * The swabbing stuff looks backwards, but the files
@@ -28,66 +26,95 @@
  */
 
 #if defined(__linux__)
-#include <byteswap.h>
 
-#if __BYTE_ORDER == __BIG_ENDIAN
-#define swabword(w)	(bswap_16(w))
-#define swabdword(w)	(bswap_32(w))
-/*
-   My brother tells me that a C compiler must store floats in memory
-   by a particular standard, except for the endianness; hence, this
-   will work on all C compilers.
- */
-static inline float swabfloat(float w) {
-	char octets[4];
-	char ret_octets[4];
-	float ret;
+	#include <string.h> // for memcpy
+	#include <byteswap.h>
 
-	memcpy(octets, &w, 4);
+	#if __BYTE_ORDER == __BIG_ENDIAN
+		#define swabWord(w)  (bswap_16(w))
+		#define swabDWord(w) (bswap_32(w))
+		/*
+		 * My brother tells me that a C compiler must store floats in memory
+		 * by a particular standard, except for the endianness; hence, this
+		 * will work on all C compilers.
+		 */
+		static inline float swabFloat(float w) {
+			char octets[4];
+			char ret_octets[4];
+			float ret;
 
-	ret_octets[0] = octets[3];
-	ret_octets[1] = octets[2];
-	ret_octets[2] = octets[1];
-	ret_octets[3] = octets[0];
+			memcpy(octets, &w, 4);
 
-	memcpy(&ret, ret_octets, 4);
+			ret_octets[0] = octets[3];
+			ret_octets[1] = octets[2];
+			ret_octets[2] = octets[1];
+			ret_octets[3] = octets[0];
 
-	return ret;
-}
-#else
-#define swabword(w)	(w)
-#define swabdword(w)	(w)
-#define swabfloat(w)	(w)
-#endif
+			memcpy(&ret, ret_octets, 4);
+
+			return ret;
+		}
+	#else
+		// do not swab
+	#endif
 
 #elif defined(__FreeBSD__)
 
-#include <sys/endian.h>
+	#include <sys/endian.h>
 
-#define swabword(w)	(htole16(w))
-#define swabdword(w)	(htole32(w))
-static inline float swabfloat(float w) {
-	/* compile time assertion to validate sizeof(int) == sizeof(float) */
-	typedef int sizeof_long_equals_sizeof_float[sizeof(int) == sizeof(float) ? 1 : -1];
-	int l = swabdword(*(int*)&w);
-	return *(float*)&l;
-}
+	#define swabWord(w)  (htole16(w))
+	#define swabDWord(w) (htole32(w))
+	static inline float swabFloat(float w) {
+		// compile time assertion to validate sizeof(int) == sizeof(float)
+		typedef int sizeof_long_equals_sizeof_float[sizeof(int) == sizeof(float) ? 1 : -1];
+		int l = swabDWord(*(int*)&w);
+		return *(float*)&l;
+	}
 
 #elif defined(__APPLE__) && defined(_BIG_ENDIAN)
 
-#include <CoreFoundation/CFByteOrder.h>
+	#include <CoreFoundation/CFByteOrder.h>
 
-#define swabword(w)	CFSwapInt32(w)
-#define swabdword(w)	CFSwapInt64(w)
-#define swabfloat(w)	(w)
+	#define swabWord(w)  (CFSwapInt32(w))
+	#define swabDWord(w) (CFSwapInt64(w))
+	// swabFloat(w) do not swab
 
 #else
+	// WIN32
 
-// empty versions for win32
-#define swabword(w)	(w)
-#define swabdword(w)	(w)
-#define swabfloat(w)	(w)
+	// do not swab
 
 #endif
 
-#endif
+
+
+#if       defined(swabWord)
+	#define swabWordInPlace(w)  (w = swabWord(w))
+#else  // defined(swabWord)
+	// do nothing
+	#define swabWord(w)         (w)
+	#define swabWordInPlace(w)
+#endif // defined(swabWord)
+
+#if       defined(swabDWord)
+	#define swabDWordInPlace(w) (w = swabDWord(w))
+#else  // defined(swabDWord)
+	// do nothing
+	#define swabDWord(w)        (w)
+	#define swabDWordInPlace(w)
+#endif // defined(swabDWord)
+
+#if       defined(swabFloat)
+	#define swabFloatInPlace(w) (w = swabFloat(w))
+#else  // defined(swabFloat)
+	// do nothing
+	#define swabFloat(w)        (w)
+	#define swabFloatInPlace(w)
+#endif // defined(swabFloat)
+
+// backwards compatibility (used until 19. July 2011)
+#define swabword(w)  swabWord(w)
+#define swabdword(w) swabDWord(w)
+#define swabfloat(w) swabFloat(w)
+
+#endif // BYTE_ORDER_H
