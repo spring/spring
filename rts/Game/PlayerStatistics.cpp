@@ -15,10 +15,10 @@ PlayerStatistics::PlayerStatistics()
 
 void PlayerStatistics::swab()
 {
-	mousePixels = swabdword(mousePixels);
-	mouseClicks = swabdword(mouseClicks);
-	keyPresses = swabdword(keyPresses);
-	
-	numCommands = swabdword(numCommands);
-	unitCommands = swabdword(unitCommands);
+	swabDWordInPlace(mousePixels);
+	swabDWordInPlace(mouseClicks);
+	swabDWordInPlace(keyPresses);
+
+	swabDWordInPlace(numCommands);
+	swabDWordInPlace(unitCommands);
 }

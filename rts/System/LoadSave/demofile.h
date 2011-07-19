@@ -72,21 +72,21 @@ struct DemoFileHeader
 
 	/// Change structure from host endian to little endian or vice versa.
 	void swab() {
-		version = swabdword(version);
-		headerSize = swabdword(headerSize);
-		// FIXME endian: unixTime = swabqword(unixTime);
-		scriptSize = swabdword(scriptSize);
-		demoStreamSize = swabdword(demoStreamSize);
-		gameTime = swabdword(gameTime);
-		wallclockTime = swabdword(wallclockTime);
-		numPlayers = swabdword(numPlayers);
-		playerStatSize = swabdword(playerStatSize);
-		playerStatElemSize = swabdword(playerStatElemSize);
-		numTeams = swabdword(numTeams);
-		teamStatSize = swabdword(teamStatSize);
-		teamStatElemSize = swabdword(teamStatElemSize);
-		teamStatPeriod = swabdword(teamStatPeriod);
-		winningAllyTeamsSize = swabdword(winningAllyTeamsSize);
+		swabDWordInPlace(version);
+		swabDWordInPlace(headerSize);
+		// FIXME endian: unixTime = swabQWordInPlace(unixTime);
+		swabDWordInPlace(scriptSize);
+		swabDWordInPlace(demoStreamSize);
+		swabDWordInPlace(gameTime);
+		swabDWordInPlace(wallclockTime);
+		swabDWordInPlace(numPlayers);
+		swabDWordInPlace(playerStatSize);
+		swabDWordInPlace(playerStatElemSize);
+		swabDWordInPlace(numTeams);
+		swabDWordInPlace(teamStatSize);
+		swabDWordInPlace(teamStatElemSize);
+		swabDWordInPlace(teamStatPeriod);
+		swabDWordInPlace(winningAllyTeamsSize);
 	}
 };
 
@@ -108,8 +108,8 @@ struct DemoStreamChunkHeader
 
 	/// Change structure from host endian to little endian or vice versa.
 	void swab() {
-		modGameTime = swabfloat(modGameTime);
-		length = swabdword(length);
+		swabFloatInPlace(modGameTime);
+		swabDWordInPlace(length);
 	}
 };
 

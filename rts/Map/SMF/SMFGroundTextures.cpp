@@ -81,7 +81,7 @@ CSMFGroundTextures::CSMFGroundTextures(CSmfReadMap* rm) :
 	for (int a = 0; a < tileHeader.numTileFiles; ++a) {
 		int numSmallTiles;
 		ifs->Read(&numSmallTiles, 4);
-		numSmallTiles = swabdword(numSmallTiles);
+		swabDWordInPlace(numSmallTiles);
 
 
 		std::string smtFilePath, smtFileName;
@@ -147,7 +147,7 @@ CSMFGroundTextures::CSMFGroundTextures(CSmfReadMap* rm) :
 		ifs->Read(&tileMap[0], tileCount * sizeof(int));
 
 		for (int i = 0; i < tileCount; i++) {
-			tileMap[i] = swabdword(tileMap[i]);
+			swabDWordInPlace(tileMap[i]);
 		}
 
 		tileMapSizeX = header->mapx / tileScale;

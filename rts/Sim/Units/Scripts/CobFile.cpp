@@ -118,7 +118,7 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 		int ofs;
 
 		ofs = *(int *)&cobdata[ch.OffsetToScriptNameOffsetArray + i * 4];
-		ofs = swabdword(ofs);
+		swabDWordInPlace(ofs);
 		const string s = &cobdata[ofs];
 		scriptNames.push_back(s);
 		if (s.find("lua_") == 0) {
@@ -128,7 +128,7 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 		}
 
 		ofs = *(int *)&cobdata[ch.OffsetToScriptCodeIndexArray + i * 4];
-		ofs = swabdword(ofs);
+		swabDWordInPlace(ofs);
 		scriptOffsets.push_back(ofs);
 	}
 
@@ -143,7 +143,7 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 		int ofs;
 
 		ofs = *(int *)&cobdata[ch.OffsetToPieceNameOffsetArray + i * 4];
-		ofs = swabdword(ofs);
+		swabDWordInPlace(ofs);
 		string s = StringToLower(&cobdata[ofs]);
 		pieceNames.push_back(s);
 	}
@@ -153,7 +153,7 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 	code = new int[code_ints];
 	memcpy(code, &cobdata[ch.OffsetToScriptCode], code_octets);
 	for (int i = 0; i < code_ints; i++) {
-		code[i] = swabdword(code[i]);
+		swabDWordInPlace(code[i]);
 	}
 
 	numStaticVars = ch.NumberOfStaticVars;
@@ -165,7 +165,7 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 			int ofs;
 			ofs = *(int *)&cobdata[ch.OffsetToSoundNameArray + i * 4];
 			/* TODO This probably isn't correct. */
-			ofs = swabdword(ofs);
+			swabDWordInPlace(ofs);
 			string s = &cobdata[ofs];
 
 			if (sound->HasSoundItem(s))

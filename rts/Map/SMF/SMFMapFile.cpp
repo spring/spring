@@ -64,7 +64,7 @@ void CSmfMapFile::ReadHeightmap(unsigned short* heightmap)
 	ifs.Read(heightmap, hmx * hmy * sizeof(short));
 
 	for (int y = 0; y < hmx * hmy; ++y) {
-		heightmap[y] = swabword(heightmap[y]);
+		swabWordInPlace(heightmap[y]);
 	}
 }
 
@@ -79,7 +79,7 @@ void CSmfMapFile::ReadHeightmap(float* heightmap, float base, float mod)
 	ifs.Read(temphm, hmx * hmy * 2);
 
 	for (int y = 0; y < hmx * hmy; ++y) {
-		heightmap[y] = base + swabword(temphm[y]) * mod;
+		heightmap[y] = base + swabWord(temphm[y]) * mod;
 	}
 
 	delete[] temphm;
@@ -178,14 +178,14 @@ void CSmfMapFile::ReadGrassMap(void *data)
 	for (int a = 0; a < header.numExtraHeaders; ++a) {
 		int size;
 		ifs.Read(&size, 4);
-		size = swabdword(size);
+		swabDWordInPlace(size);
 		int type;
 		ifs.Read(&type, 4);
-		type = swabdword(type);
+		swabDWordInPlace(type);
 		if (type == MEH_Vegetation) {
 			int pos;
 			ifs.Read(&pos, 4);
-			pos = swabdword(pos);
+			swabDWordInPlace(pos);
 			ifs.Seek(pos);
 			ifs.Read(data, header.mapx / 4 * header.mapy / 4);
 			/* char; no swabbing. */
