@@ -26,9 +26,22 @@ void CPathFinder::operator delete(void* p, size_t size) { PathAllocator::Free(p,
 
 
 CPathFinder::CPathFinder()
-	: squareStates(int2(gs->mapx, gs->mapy) , int2(gs->mapx, gs->mapy))
+	: heatMapOffset(0)
+	, heatMapping(true)
+	, start(ZeroVector)
+	, startxSqr(0)
+	, startzSqr(0)
+	, startSquare(0)
+	, goalSquare(0)
+	, goalHeuristic(0.0f)
+	, exactPath(false)
+	, testMobile(false)
+	, needPath(false)
+	, maxSquaresToBeSearched(0)
+	, testedNodes(0)
+	, maxNodeCost(0.0f)
+	, squareStates(int2(gs->mapx, gs->mapy) , int2(gs->mapx, gs->mapy))
 {
-	heatMapping = true;
 	InitHeatMap();
 
 	// Precalculated vectors.

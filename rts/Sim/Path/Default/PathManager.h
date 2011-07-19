@@ -99,6 +99,8 @@ private:
 			: start(pos)
 			, peDef(def)
 			, moveData(moveData)
+			, finalGoal(ZeroVector)
+			, caller(NULL)
 		{}
 
 		~MultiPath() { delete peDef; }

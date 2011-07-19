@@ -34,7 +34,11 @@ namespace Watchdog
 	static unsigned int curorder = 0;
 
 	struct WatchDogThreadInfo {
-		WatchDogThreadInfo() : timer(spring_notime) {}
+		WatchDogThreadInfo()
+			: threadid(0)
+			, timer(spring_notime)
+			, numreg(0)
+		{}
 		volatile Threading::NativeThreadHandle thread;
 		volatile Threading::NativeThreadId threadid;
 		volatile spring_time timer;
@@ -42,6 +46,11 @@ namespace Watchdog
 	};
 	static WatchDogThreadInfo registeredThreadsData[WDT_SIZE];
 	struct WatchDogThreadSlot {
+		WatchDogThreadSlot()
+			: primary(false)
+			, active(false)
+			, regorder(0)
+		{}
 		volatile bool primary;
 		volatile bool active;
 		volatile unsigned int regorder;

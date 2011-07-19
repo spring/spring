@@ -271,6 +271,11 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 , movedata(NULL)
 , trackType(0)
 , buildingDecalType(-1)
+, realMetalCost(0.0f)
+, realEnergyCost(0.0f)
+, realMetalUpkeep(0.0f)
+, realEnergyUpkeep(0.0f)
+, realBuildTime(0.0f)
 {
 	humanName = udTable.GetString("name", "");
 	tooltip = udTable.GetString("description", name);
