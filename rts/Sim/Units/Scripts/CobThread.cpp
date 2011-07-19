@@ -17,14 +17,21 @@
 CCobThread::CCobThread(CCobFile& script, CCobInstance* owner)
 	: script(script)
 	, owner(owner)
+	, wakeTime(0)
+	, PC(0)
+	, paramCount(0)
+	, retCode(0)
+	, callback(NULL)
+	, cbParam1(NULL)
+	, cbParam2(NULL)
+	, state(Init)
+	, signalMask(42)
 {
 	for (int i = 0; i < MAX_LUA_COB_ARGS; i++) {
 		luaArgs[i] = 0;
 	}
-	state = Init;
 	owner->threads.push_back(this);
 	AddDeathDependence(owner);
-	signalMask = 42;
 }
 
 CCobThread::~CCobThread()

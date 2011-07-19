@@ -231,8 +231,8 @@ public:
 		reverse_iterator rend() { return 0; }
 		const_reverse_iterator rbegin() const { return 0; }
 		const_reverse_iterator rend() const { return 0; }
-		PathVector(int, const value_type&) { abort(); }
-		PathVector(iterator, iterator) { abort(); }
+		PathVector(int, const value_type&): bufPos(-1) { abort(); }
+		PathVector(iterator, iterator): bufPos(-1) { abort(); }
 		void insert(iterator, const value_type&) { abort(); }
 		void insert(iterator, const size_type&, const value_type&) { abort(); }
 		void insert(iterator, iterator, iterator) { abort(); }

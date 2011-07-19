@@ -36,13 +36,14 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SMF_GROUND_TEXTURES)
 #define LOG_SECTION_CURRENT LOG_SECTION_SMF_GROUND_TEXTURES
 
 
-CSMFGroundTextures::CSMFGroundTextures(CSmfReadMap* rm) :
-	bigSquareSize(128),
-	numBigTexX(gs->mapx / bigSquareSize),
-	numBigTexY(gs->mapy / bigSquareSize)
+CSMFGroundTextures::CSMFGroundTextures(CSmfReadMap* rm)
+	: smfMap(rm)
+	, bigSquareSize(128)
+	, numBigTexX(gs->mapx / bigSquareSize)
+	, numBigTexY(gs->mapy / bigSquareSize)
+	, anisotropy(0.0f)
 {
 	// TODO refactor: put reading code in CSmfFile and keep error-handling/progress reporting here
-	smfMap = rm;
 	CFileHandler* ifs = rm->GetFile().GetFileHandler();
 	const SMFHeader* header = &smfMap->GetFile().GetHeader();
 	const std::string smfDir = filesystem.GetDirectory(gameSetup->MapFile());
