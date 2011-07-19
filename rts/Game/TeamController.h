@@ -3,7 +3,7 @@
 #ifndef _TEAM_CONTROLLER_H
 #define _TEAM_CONTROLLER_H
 
-#include "System/Platform/byteorder.h" // for swabdword
+#include "System/Platform/byteorder.h" // for swabDWord
 
 #include <string>
 
@@ -66,8 +66,8 @@ public:
 protected:
 	/// Change structure from host endian to little endian or vice versa.
 	void swabTC() {
-		numCommands  = swabdword(numCommands);
-		unitCommands = swabdword(unitCommands);
+		swabDWordInPlace(numCommands);
+		swabDWordInPlace(unitCommands);
 	}
 };
 

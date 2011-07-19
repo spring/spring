@@ -266,7 +266,7 @@ void CSm3ReadMap::LoadFeatureData()
 
 		unsigned int nf;
 		fh.Read(&nf, 4);
-		numFeatures = swabdword(nf);
+		numFeatures = swabDWord(nf);
 
 		featureInfo = new MapFeatureInfo[numFeatures];
 		for (unsigned int a=0;a<numFeatures;a++) {
@@ -275,11 +275,11 @@ void CSm3ReadMap::LoadFeatureData()
 			fh.Read(&fi.pos, 12);
 			fh.Read(&fi.rotation, 4);
 
-			fi.featureType = swabdword(fi.featureType);
-			fi.pos.x = swabfloat(fi.pos.x);
-			fi.pos.y = swabfloat(fi.pos.y);
-			fi.pos.z = swabfloat(fi.pos.z);
-			fi.rotation = swabfloat(fi.rotation);
+			fi.featureType = swabDWord(fi.featureType);
+			fi.pos.x = swabFloat(fi.pos.x);
+			fi.pos.y = swabFloat(fi.pos.y);
+			fi.pos.z = swabFloat(fi.pos.z);
+			fi.rotation = swabFloat(fi.rotation);
 		}
 	}/* //testing features...
 	else {

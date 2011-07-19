@@ -24,19 +24,19 @@ struct Piece{
 	/// Swap byte order (endianess) for big-endian machines
 	void swap()
 	{
-		name = swabdword(name);
-		numChilds = swabdword(numChilds);
-		childs = swabdword(childs);
-		numVertices = swabdword(numVertices);
-		vertices = swabdword(vertices);
-		vertexType = swabdword(vertexType);
-		primitiveType = swabdword(primitiveType);
-		vertexTableSize = swabdword(vertexTableSize);
-		vertexTable = swabdword(vertexTable);
-		collisionData = swabdword(collisionData);
-		xoffset = swabfloat(xoffset);
-		yoffset = swabfloat(yoffset);
-		zoffset = swabfloat(zoffset);
+		swabDWordInPlace(name);
+		swabDWordInPlace(numChilds);
+		swabDWordInPlace(childs);
+		swabDWordInPlace(numVertices);
+		swabDWordInPlace(vertices);
+		swabDWordInPlace(vertexType);
+		swabDWordInPlace(primitiveType);
+		swabDWordInPlace(vertexTableSize);
+		swabDWordInPlace(vertexTable);
+		swabDWordInPlace(collisionData);
+		swabFloatInPlace(xoffset);
+		swabFloatInPlace(yoffset);
+		swabFloatInPlace(zoffset);
 	}
 };
 
@@ -54,14 +54,14 @@ struct Vertex{
 	/// Swap byte order (endianess) for big-endian machines
 	void swap()
 	{
-		xpos = swabfloat(xpos);
-		ypos = swabfloat(ypos);
-		zpos = swabfloat(zpos);
-		xnormal = swabfloat(xnormal);
-		ynormal = swabfloat(ynormal);
-		znormal = swabfloat(znormal);
-		texu = swabfloat(texu);
-		texv = swabfloat(texv);
+		swabFloatInPlace(xpos);
+		swabFloatInPlace(ypos);
+		swabFloatInPlace(zpos);
+		swabFloatInPlace(xnormal);
+		swabFloatInPlace(ynormal);
+		swabFloatInPlace(znormal);
+		swabFloatInPlace(texu);
+		swabFloatInPlace(texv);
 	}
 };
 
@@ -82,16 +82,16 @@ struct S3OHeader{
 	/// Swap byte order (endianess) for big-endian machines
 	void swap()
 	{
-		version = swabdword(version);
-		radius = swabfloat(radius);
-		height = swabfloat(height);
-		midx = swabfloat(midx);
-		midy = swabfloat(midy);
-		midz = swabfloat(midz);
-		rootPiece = swabdword(rootPiece);
-		collisionData = swabdword(collisionData);
-		texture1 = swabdword(texture1);
-		texture2 = swabdword(texture2);
+		swabDWordInPlace(version);
+		swabFloatInPlace(radius);
+		swabFloatInPlace(height);
+		swabFloatInPlace(midx);
+		swabFloatInPlace(midy);
+		swabFloatInPlace(midz);
+		swabDWordInPlace(rootPiece);
+		swabDWordInPlace(collisionData);
+		swabDWordInPlace(texture1);
+		swabDWordInPlace(texture2);
 	}
 };
 

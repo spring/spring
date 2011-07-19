@@ -237,7 +237,7 @@ void CDemoRecorder::WriteTeamStats()
 
 	// Write array of dwords indicating number of TeamStatistics per team.
 	for (std::vector< std::vector< TeamStatistics > >::iterator it = teamStats.begin(); it != teamStats.end(); ++it) {
-		unsigned int c = swabdword(it->size());
+		unsigned int c = swabDWord(it->size());
 		recordDemo.write((char*)&c, sizeof(unsigned int));
 	}
 

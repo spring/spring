@@ -77,8 +77,8 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<boost::uint8_t> b
 		return false;
 	}
 
-#define hswabword(c) header->c = swabword(header->c)
-#define hswabdword(c) header->c = swabdword(header->c)
+#define hswabword(c) swabWordInPlace(header->c)
+#define hswabdword(c) swabDWordInPlace(header->c)
 	hswabword(format_tag);
 	hswabword(channels);
 	hswabword(BlockAlign);
