@@ -55,12 +55,12 @@ CR_REG_METADATA_SUB(CSimpleParticleSystem, Particle,
 ));
 
 CSimpleParticleSystem::CSimpleParticleSystem()
-:	CProjectile()
+	: CProjectile()
+	, emitMul(1.0f, 1.0f, 1.0f)
+	, particles(NULL)
 {
 	checkCol = false;
 	useAirLos = true;
-	particles = NULL;
-	emitMul = float3(1.0f, 1.0f, 1.0f);
 }
 
 CSimpleParticleSystem::~CSimpleParticleSystem()

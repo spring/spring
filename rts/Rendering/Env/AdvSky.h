@@ -41,7 +41,8 @@ private:
 protected:
 	FBO fbo;
 
-	float3 skydir1, skydir2; // (right, up)
+	float3 skydir1; // right
+	float3 skydir2; // up
 
 	GLuint cdtex;
 
