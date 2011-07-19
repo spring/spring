@@ -928,6 +928,8 @@ bool CLuaUnitScript::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetPieceRotation);
 	REGISTER_LUA_CFUNC(GetPiecePosDir);
 
+	REGISTER_LUA_CFUNC(GetActiveUnitID);
+
 	lua_rawset(L, -3);
 
 	// backwards compatibility
@@ -1205,9 +1207,9 @@ int CLuaUnitScript::EmitSfx(lua_State* L)
 	}
 
 	// note: the arguments are reversed compared to the C++ (and COB?) function
-
 	const int piece = luaL_checkint(L, 1) - 1;
 	const int type = luaL_checkint(L, 2);
+
 	activeScript->EmitSfx(type, piece);
 	return 0;
 }
@@ -1474,3 +1476,12 @@ int CLuaUnitScript::GetPiecePosDir(lua_State* L)
 
 /******************************************************************************/
 /******************************************************************************/
+
+int CLuaUnitScript::GetActiveUnitID(lua_State* L)
+{
+	if (activeScript == NULL) { return 0; }
+	if (activeUnit == NULL) { return 0; }
+
+	lua_pushnumber(L, activeUnit->id);
+	return 1;
+}
