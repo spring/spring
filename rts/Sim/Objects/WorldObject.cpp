@@ -22,9 +22,9 @@ CWorldObject::~CWorldObject()
 {
 }
 
-void CWorldObject::SetRadius(float r)
+void CWorldObject::SetRadius(float radius)
 {
-	radius = r;
-	sqRadius = r * r;
-	drawRadius = r;
+	this->radius = radius;
+	sqRadius = radius * radius;
+	drawRadius = radius;
 }

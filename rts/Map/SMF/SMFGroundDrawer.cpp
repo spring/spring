@@ -20,7 +20,7 @@
 #include "Sim/Misc/SmoothHeightMesh.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FastMath.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/mmgr.h"
 #include "System/TimeProfiler.h"
@@ -1655,7 +1655,7 @@ void CBFGroundDrawer::UpdateCamRestraints(void)
 
 void CBFGroundDrawer::Update()
 {
-	if (mapInfo->map.voidWater && readmap->currMaxHeight < 0.0f) {
+	if (mapInfo->map.voidWater && (readmap->currMaxHeight < 0.0f)) {
 		return;
 	}
 
@@ -1666,11 +1666,11 @@ void CBFGroundDrawer::Update()
 void CBFGroundDrawer::IncreaseDetail()
 {
 	viewRadius += 2;
-	LogObject() << "ViewRadius is now " << viewRadius << "\n";
+	LOG("ViewRadius is now %i", viewRadius);
 }
 
 void CBFGroundDrawer::DecreaseDetail()
 {
 	viewRadius -= 2;
-	LogObject() << "ViewRadius is now " << viewRadius << "\n";
+	LOG("ViewRadius is now %i", viewRadius);
 }

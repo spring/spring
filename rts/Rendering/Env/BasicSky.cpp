@@ -35,16 +35,35 @@ CONFIG(bool, DynamicSky).defaultValue(false);
 #define CLOUD_MASK (CLOUD_SIZE-1)
 
 CBasicSky::CBasicSky()
+	: skydir1(ZeroVector)
+	, skydir2(ZeroVector)
+	, skyTex(0)
+	, skyDot3Tex(0)
+	, cloudDot3Tex(0)
+	, sunTex(0)
+	, sunFlareTex(0)
+	, skyTexUpdateIter(0)
+	, skyDomeList(0)
+	, sunFlareList(0)
+	, skyAngle(0.0f)
+	, domeheight(0.0f)
+	, domeWidth(0.0f)
+	, sunTexCoordX(0.0f)
+	, sunTexCoordY(0.0f)
+	, randMatrix(NULL)
+	, rawClouds(NULL)
+	, blendMatrix(NULL)
+	, cloudThickness(NULL)
+	, oldCoverBaseX(-5)
+	, oldCoverBaseY(0)
+	, updatecounter(0)
 {
 	sunFlareList = glGenLists(1);
 	skytexpart = new unsigned char[512][4];
-	skyTexUpdateIter = 0;
 
 	randMatrix=newmat3<int>(16,32,32);
 	rawClouds=newmat2<int>(CLOUD_SIZE,CLOUD_SIZE);
 	blendMatrix=newmat3<int>(CLOUD_DETAIL,32,32);
-
-	updatecounter=0;
 
 	domeheight=cos(PI/16)*1.01f;
 	domeWidth=sin(PI/16)*400*1.7f;
@@ -68,8 +87,6 @@ CBasicSky::CBasicSky()
 	dynamicSky = true;
 	CreateClouds();
 	dynamicSky = configHandler->GetBool("DynamicSky");
-
-	oldCoverBaseX=-5;
 
 	CreateSkyDomeList();
 }

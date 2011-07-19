@@ -24,7 +24,8 @@ CSkirmishAI::CSkirmishAI(int skirmishAIId, int teamId, const SkirmishAIKey& key,
 	library = IAILibraryManager::GetInstance()->FetchSkirmishAILibrary(key);
 	if (library == NULL) {
 		dieing = true;
-		skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId, 5);
+		skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId,
+				5 /* = AI failed to init */);
 	}
 }
 

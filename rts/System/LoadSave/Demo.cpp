@@ -3,6 +3,8 @@
 #include "System/StdAfx.h"
 #include "Demo.h"
 
+#include <cstring>
+
 CDemo::CDemo()
 {
 	demoName = "demos/unnamed.sdf";

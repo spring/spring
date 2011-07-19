@@ -3,12 +3,13 @@
 #ifndef SM3_MAP_H
 #define SM3_MAP_H
 
-#include <map>
-#include "Map/ReadMap.h"
+#include "Frustum.h"
 #include "terrain/TerrainBase.h"
 #include "terrain/Terrain.h"
+#include "Map/ReadMap.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Frustum.h"
+
+#include <map>
 
 class CSm3GroundDrawer;
 
@@ -18,7 +19,7 @@ class CSm3ReadMap : public CReadMap
 public:
 	CR_DECLARE(CSm3ReadMap);
 
-	CSm3ReadMap(const std::string&);
+	CSm3ReadMap(const std::string& rm);
 	~CSm3ReadMap();
 
 	void ConfigNotify(const std::string& key, const std::string& value);
@@ -26,7 +27,7 @@ public:
 	void NewGroundDrawer();
 	CBaseGroundDrawer* GetGroundDrawer();
 
-	void UpdateHeightMapUnsynced(const HeightMapUpdate&);
+	void UpdateHeightMapUnsynced(const HeightMapUpdate& hmu);
 
 	unsigned int GetShadingTexture() const { return 0; }
 	void DrawMinimap() const; // draw the minimap in a quad (with extends: (0,0)-(1,1))
@@ -42,9 +43,9 @@ public:
 	//   "metal"  -  metalmap
 	//   "grass"  -  grassmap
 	unsigned char* GetInfoMap (const std::string& name, MapBitmapInfo* bm);
-	void FreeInfoMap(const std::string& name, unsigned char *data);
+	void FreeInfoMap(const std::string& name, unsigned char* data);
 
-	void GridVisibility(CCamera *cam, int quadSize, float maxdist, IQuadDrawer *cb, int extraSize);
+	void GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize);
 
 	const float* GetCornerHeightMapSynced() const { return renderer->GetCornerHeightMapSynced(); }
 	      float* GetCornerHeightMapUnsynced()     { return renderer->GetCornerHeightMapUnsynced(); }
@@ -67,7 +68,7 @@ protected:
 	friend class CSm3GroundDrawer;
 
 	std::vector<std::string*> featureTypes;
-	MapFeatureInfo *featureInfo;
+	MapFeatureInfo* featureInfo;
 	unsigned int numFeatures;
 	void LoadFeatureData();
 

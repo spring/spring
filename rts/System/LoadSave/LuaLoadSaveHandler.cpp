@@ -138,7 +138,7 @@ void CLuaLoadSaveHandler::SaveHeightmap()
 	const int size = gs->mapxp1 * gs->mapyp1;
 	int* temp = new int[size];
 	for (int i = 0; i < size; ++i) {
-		temp[i] = swabdword(currHeightmap[i] ^ origHeightmap[i]);
+		temp[i] = swabDWord(currHeightmap[i] ^ origHeightmap[i]);
 	}
 	SaveEntireFile(FILE_HEIGHTMAP, "heightmap", temp, size * sizeof(int));
 	delete[] temp;
@@ -219,7 +219,7 @@ void CLuaLoadSaveHandler::LoadHeightmap()
 		const int* origHeightmap = (const int*) (const char*) readmap->GetOriginalHeightMapSynced();
 
 		for (int i = 0; i < size; ++i) {
-			const int newHeightBits = swabdword(temp[i]) ^ origHeightmap[i];
+			const int newHeightBits = swabDWord(temp[i]) ^ origHeightmap[i];
 			const float newHeight = *(const float*) (const char*) &newHeightBits;
 			readmap->SetHeight(i, newHeight);
 		}

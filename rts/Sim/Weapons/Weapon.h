@@ -32,7 +32,7 @@ public:
 
 	void DependentDied(CObject* o);
 
-	bool HaveFreeLineOfFire(const float3& pos, const float3& dir, float length) const;
+	bool HaveFreeLineOfFire(const float3& pos, const float3& dir, float length, const CUnit* target) const;
 	virtual bool TryTarget(const float3& pos, bool userTarget,CUnit* unit);
 	bool TryTarget(CUnit* unit, bool userTarget);
 	bool TryTargetRotate(CUnit* unit, bool userTarget);

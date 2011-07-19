@@ -4,16 +4,18 @@
 #define _TERRAIN_NODE_H_
 
 #include "TerrainVertexBuffer.h"
+#include "Map/SM3/Vector3.h"
 
 class Frustum;
 struct Sm3VisibilityNode;
 
 namespace terrain
 {
-	struct int2 { 
-		int2(int X,int Y) : x(X),y(Y) {}
-		int2() { x=y=0; }
-		int x,y; 
+	struct int2 {
+		int2(int x, int y) : x(x), y(y) {}
+		int2() : x(0), y(0) {}
+		int x;
+		int y;
 	};
 
 	class Camera;
@@ -30,70 +32,78 @@ namespace terrain
 // Terrain Quadtree Node
 //-----------------------------------------------------------------------
 
-	static const int QUAD_W=16;
-	static const int VERTC = QUAD_W+1;
-	static const int MAX_INDICES=((QUAD_W+1)*(QUAD_W+1)*2*3);
-	static const int NUM_VERTICES=((QUAD_W+1)*(QUAD_W+1));
+	static const int QUAD_W = 16;
+	static const int VERTC = QUAD_W + 1;
+	static const int MAX_INDICES  = (QUAD_W + 1) * (QUAD_W + 1) * 2 * 3;
+	static const int NUM_VERTICES = (QUAD_W + 1) * (QUAD_W + 1);
 
-	const float SquareSize=8.0f;
-	const float VBufMinDetail=0.25f; // at lod < 0.25f, the vertex buffer is deleted
+	const float SquareSize = 8.0f;
+	const float VBufMinDetail = 0.25f; ///< at lod < 0.25f, the vertex buffer is deleted
 
-	const float AREA_TEST_RANGE=0.05f;
+	const float AREA_TEST_RANGE = 0.05f;
 
 	class TQuad
 	{
 	public:
 		TQuad();
 		~TQuad();
-		bool isLeaf () const { return childs[0]==0; }
+		bool isLeaf() const { return childs[0] == NULL; }
 		// sqStart=start in square coordinates
 		// hmStart=start pixel on hm
-		void Build (Heightmap *hm, int2 sqStart, int2 hmStart, int2 quadPos, int w, int depth);
-		void Draw (IndexTable *indexTable, bool onlyPositions, int lodState);
-		bool InFrustum (Frustum *f);
-		float CalcLod (const Vector3& campos);
+		void Build(Heightmap* hm, int2 sqStart, int2 hmStart, int2 quadPos, int w, int depth);
+		void Draw(IndexTable* indexTable, bool onlyPositions, int lodState);
+		bool InFrustum(Frustum* f);
+		float CalcLod(const Vector3& campos);
 		void CollectNodes(std::vector<TQuad*>& quads);
 		void FreeCachedTexture();
 
 		TQuad* FindSmallestContainingQuad2D(const Vector3& pos, float range, int maxlevel);
 
-		int GetVertexSize ();
+		int GetVertexSize();
 
 		// Possible objects linked to this quad, for visibility determination
 		std::vector<Sm3VisibilityNode*> nodeLinks;
 
-		TQuad *parent;
-		TQuad *childs[4];
-		Vector3 start, end;  // quad node bounding box
-		int2 qmPos; // Quad map coordinates
+		TQuad* parent;
+		TQuad* childs[4];
+		Vector3 start, end;  ///< quad node bounding box
+		int2 qmPos; ///< Quad map coordinates
 		int2 hmPos;
-		int2 sqPos; // square position (position on highest detail heightmap)
+		int2 sqPos; ///< square position (position on highest detail heightmap)
 		int depth, width;
-		RenderSetupCollection *textureSetup;
+		RenderSetupCollection* textureSetup;
 		GLuint cacheTexture;
-		float maxLodValue; 		 /** maximum of the LOD values calculated for each render contexts
-			 used for determining if the QuadRenderData can be marked as free (see RenderDataManager::FreeUnused) */
+		/**
+		 * maximum of the LOD values calculated for each render contexts
+		 * used for determining if the QuadRenderData can be marked as free
+		 * @see RenderDataManager::FreeUnused
+		 */
+		float maxLodValue;
 
 		enum DrawState {
 			NoDraw, Parent, Queued, Culled
 		} drawState;
 
-		QuadNormals *normalData;
-		QuadRenderData *renderData;
+		QuadNormals* normalData;
+		QuadRenderData* renderData;
 	};
 
-	// Each render context has a QuadRenderInfo for every quad they have to render
+	/**
+	 * Each render context has a QuadRenderInfo for every quad they have to
+	 * render.
+	 */
 	struct QuadRenderInfo
 	{
 		int lodState;
-		TQuad *quad;
+		TQuad* quad;
 	};
 
 	class RenderContext
 	{
 	public:
-		Camera *cam;
-		bool needsTexturing; // contexts like shadow buffers don't need texturing
+		Camera* cam;
+		/// contexts like shadow buffers do not need texturing
+		bool needsTexturing;
 		bool needsNormalMap;
 
 		std::vector<QuadRenderInfo> quads;
@@ -108,14 +118,15 @@ namespace terrain
 
 		uint GetDataSize();
 
-		// seems silly yeah, but I use it to set breakpoints in.
+		// seems silly yeah, but I use it to set breakpoints in
 		TQuad* GetQuad() { return quad; }
-		void SetQuad(TQuad *q) { quad=q; }
+		void SetQuad(TQuad* q) { quad = q; }
 
 		// renderdata: normalmap + vertex buffer
 		// normalmap for detail preservation
 		GLuint normalMap;
-		uint normalMapW, normalMapTexWidth;
+		uint normalMapW;
+		uint normalMapTexWidth;
 
 		VertexBuffer vertexBuffer;
 		int vertexSize;
@@ -123,39 +134,41 @@ namespace terrain
 		int index;
 		bool used;
 	protected:
-		TQuad *quad;
+		TQuad* quad;
 	};
 
 	// Manager for QuadRenderData
 	class RenderDataManager {
 	public:
-		RenderDataManager(Heightmap *roothm, QuadMap *rootqm);
+		RenderDataManager(Heightmap* roothm, QuadMap* rootqm);
 		~RenderDataManager();
 
-		void Free (QuadRenderData *qrd);
-		void FreeUnused ();
-		void PruneFreeList (int maxFreeRD=0); /// allow the list of free renderdata to be maxFreeRD or lower
+		void Free(QuadRenderData* qrd);
+		void FreeUnused();
+		/// allow the list of free renderdata to be maxFreeRD or lower
+		void PruneFreeList(int maxFreeRD = 0);
 
-		void InitializeNode (TQuad *q);
-		void InitializeNodeNormalMap (TQuad *q, int cfgNormalMapLevel);
+		void InitializeNode(TQuad* q);
+		void InitializeNodeNormalMap(TQuad* q, int cfgNormalMapLevel);
 
-		void UpdateRect(int sx,int sy,int w,int h);
+		void UpdateRect(int sx, int sy, int w, int h);
 
-		void ClearStat () {
-			normalDataAllocates=renderDataAllocates=0;
+		void ClearStat() {
+			normalDataAllocates = 0;
+			renderDataAllocates = 0;
 		}
 
 		int normalDataAllocates; // performance statistic
 		int renderDataAllocates;
 
-		int QuadRenderDataCount () { return qrd.size(); }
+		int QuadRenderDataCount() { return qrd.size(); }
 
 	protected:
 		QuadRenderData* Allocate();
 
 		std::vector<QuadRenderData*> qrd;
 		std::vector<QuadRenderData*> freeRD;
-		Heightmap *roothm;
+		Heightmap* roothm;
 		QuadMap* rootQMap;
 	};
 
@@ -175,8 +188,11 @@ namespace terrain
 		Heightmap* CreateLowDetailHM();
 		void GenerateNormals();
 		void UpdateLowerUnsynced(int sx, int sy, int w, int h);
-		const Heightmap* GetLevel(int level); // level > 0 returns a high detail HM
-										// level < 0 returns a lower detail HM
+		/**
+		 * @param level > 0 returns a high detail HM
+		 *   < 0 returns a lower detail HM
+		 */
+		const Heightmap* GetLevel(int level);
 
 		float atSynced(int x, int y) const { return dataSynced[y * w + x]; }
 		float atUnsynced(int x, int y) const { return dataUnsynced[y * w + x]; }
@@ -188,9 +204,15 @@ namespace terrain
 		// float scale, offset;
 		float squareSize;
 
-        uchar* normalData; // optional heightmap normals, stored as compressed vectors (3 bytes per normal)
+		/**
+		 * optional heightmap normals, stored as compressed vectors
+		 * (3 bytes per normal)
+		 */
+        uchar* normalData;
 
-		Heightmap *lowDetail, *highDetail; // geomipmap chain links
+		// geo-mip-map chain links
+		Heightmap* lowDetail;
+		Heightmap* highDetail;
 	};
 
 //-----------------------------------------------------------------------
@@ -199,28 +221,33 @@ namespace terrain
 //-----------------------------------------------------------------------
 	struct QuadMap 
 	{
-		QuadMap () {
-			w = 0;
-			map = 0;
-			highDetail=lowDetail=0;
+		QuadMap()
+			: w(0)
+			, map(NULL)
+			, highDetail(NULL)
+			, lowDetail(NULL)
+		{
 		}
-		~QuadMap () {
+		~QuadMap() {
 			delete[] map;
 		}
 
-		void Alloc (int W);
-		void Fill (TQuad *root);
-		TQuad*& At (int x,int y) { return map[y*w+x]; }
+		void Alloc(int W);
+		void Fill(TQuad* root);
+		TQuad*& At(int x, int y) { return map[y*w + x]; }
 
 		int w;
-		TQuad **map;
+		TQuad** map;
 
-		QuadMap *highDetail;
-		QuadMap *lowDetail;
+		QuadMap* highDetail;
+		QuadMap* lowDetail;
 	};
 
-	
-	// Applies a "sobel" filter to the heightmap to find the slope in X and Z(Y in heightmap) direction
+
+	/**
+	 * Applies a "sobel" filter to the heightmap to find the slope in X
+	 * and Z(Y in heightmap) direction.
+	 */
 	inline void CalculateTangents(const Heightmap* hm, int x, int y, Vector3& tangent, Vector3& binormal)
 	{
 		int xp = (x < hm->w-1) ? x+1 : x;
@@ -250,8 +277,8 @@ namespace terrain
 		tangent = Vector3(hm->squareSize * 2.0f, /*hm->scale * */ dhdx * 0.25f, 0.0f);
 		binormal = Vector3(0.0f, dhdz * /*hm->scale * */ 0.25f, hm->squareSize * 2.0f);
 
-//		tangent.set (vdif * 2.0f, dhdx, 0.0f);
-//		binormal.set (0.0f, dhdz, vdif * 2.0f);
+//		tangent.set(vdif * 2.0f, dhdx, 0.0f);
+//		binormal.set(0.0f, dhdz, vdif * 2.0f);
 	}
 
 
@@ -271,14 +298,15 @@ namespace terrain
 	struct IndexTable
 	{
 		typedef unsigned short index_t;
-		IndexTable ();
+
+		IndexTable();
 
 		GLenum IndexType() const { return GL_UNSIGNED_SHORT; }
 
+		void Calculate(int sides);
+
 		int size[NUM_TABLES];
 		IndexBuffer buffers[NUM_TABLES];
-
-		void Calculate (int sides);
 	};
 
 };

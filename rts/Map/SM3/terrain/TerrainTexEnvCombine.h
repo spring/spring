@@ -21,10 +21,10 @@ namespace terrain {
 			Mul,
 			Add,
 			Sub,
-			Interp,   // interpolate:  color = prev.RGB * prev.Alpha + current.RGB * ( 1-prev.Alpha )
-			InsertAlpha, // use the previous color and insert an alpha channel
-			AlphaToRGB, // use the texture alpha as RGB
-			Dot3,   // dot product, requires GL_ARB_texture_env_dot3
+			Interp, ///< interpolate:  color = prev.RGB * prev.Alpha + current.RGB * ( 1-prev.Alpha )
+			InsertAlpha, ///< use the previous color and insert an alpha channel
+			AlphaToRGB, ///< use the texture alpha as RGB
+			Dot3, ///< dot product, requires GL_ARB_texture_env_dot3
 		};
 		enum Source {
 			None, TextureSrc, ColorSrc
@@ -32,9 +32,9 @@ namespace terrain {
 
 		Operation operation;
 		Source source;
-		BaseTexture *srcTexture;
+		BaseTexture* srcTexture;
 
-		TexEnvStage ();
+		TexEnvStage();
 	};
 
 	/// each TQuad has an instance of this class
@@ -57,27 +57,27 @@ namespace terrain {
 	class TexEnvSetupHandler : public ITexShaderHandler
 	{
 	public:
-		TexEnvSetupHandler ();
+		TexEnvSetupHandler();
 
-		void SetTexCoordGen (float *tgv);
+		void SetTexCoordGen(float* tgv);
 
 		// ITexShaderHandler interface
 		void BeginTexturing();
 		void EndTexturing();
-		void BeginPass (const std::vector<Blendmap*>& blendmaps, const std::vector<TiledTexture*>& textures, int pass);
+		void BeginPass(const std::vector<Blendmap*>& blendmaps, const std::vector<TiledTexture*>& textures, int pass);
 		void EndPass() {}
-		void BuildNodeSetup (ShaderDef *shaderDef, RenderSetup *renderSetup);
-		bool SetupShader (IShaderSetup *shadercfg, NodeSetupParams& params);
+		void BuildNodeSetup(ShaderDef* shaderDef, RenderSetup* renderSetup);
+		bool SetupShader(IShaderSetup* shadercfg, NodeSetupParams& params);
 
-		int MaxTextureUnits ();
-		int MaxTextureCoords ();
+		int MaxTextureUnits();
+		int MaxTextureCoords();
 
 	protected:
 		int maxtu;
 		bool hasDot3;
 		// Used when enabling texture units without actual texture
 		GLuint whiteTexture;
-		NodeTexEnvSetup *lastShader;
+		NodeTexEnvSetup* lastShader;
 
 		NodeTexEnvSetup* curSetup;
 	};

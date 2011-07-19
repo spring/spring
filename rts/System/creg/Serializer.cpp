@@ -20,13 +20,6 @@
 using namespace std;
 using namespace creg;
 
-#ifndef swabdword
-	#define swabdword(d) (d)
-#endif
-#ifndef swabword
-	#define swabword(d) (d)
-#endif
-
 #define CREG_PACKAGE_FILE_ID "CRPK"
 
 // File format structures
@@ -45,12 +38,12 @@ struct PackageHeader
 
 	void SwapBytes ()
 	{
-		objDataOffset = swabdword(objDataOffset);
-		objTableOffset = swabdword(objTableOffset);
-		objClassRefOffset = swabdword(objClassRefOffset);
-		numObjClassRefs = swabdword(numObjClassRefs);
-		numObjects = swabdword(numObjects);
-		metadataChecksum = swabdword(metadataChecksum);
+		swabDWordInPlace(objDataOffset);
+		swabDWordInPlace(objTableOffset);
+		swabDWordInPlace(objClassRefOffset);
+		swabDWordInPlace(numObjClassRefs);
+		swabDWordInPlace(numObjects);
+		swabDWordInPlace(metadataChecksum);
 	}
 };
 
@@ -60,7 +53,7 @@ struct PackageObject
 	char isEmbedded;
 
 	void SwapBytes() {
-		classRefIndex = swabword(classRefIndex);
+		swabWordInPlace(classRefIndex);
 	}
 };
 
@@ -117,7 +110,7 @@ void WriteVarSizeUInt(std::ostream* stream, unsigned int val)
 	} else if (val < 0x40000000) {
 		unsigned char a = (val & 0x7F) | 0x80;
 		unsigned char b = ((val >> 7) & 0x7F) | 0x80;
-		unsigned short c = swabword(val >> 14);
+		unsigned short c = swabWord(val >> 14);
 		stream->write((char*)&a, sizeof(char));
 		stream->write((char*)&b, sizeof(char));
 		stream->write((char*)&c, sizeof(short));
@@ -277,11 +270,11 @@ void COutputStreamSerializer::SerializeInt(void* data, int byteSize)
 			break;
 		}
 		case 2:{
-			*(short*)buf = swabword(*(short*) data);
+			*(short*)buf = swabWord(*(short*) data);
 			break;
 		}
 		case 4:{
-			*(long*)buf = swabdword(*(long*) data);
+			*(long*)buf = swabDWord(*(long*) data);
 			break;
 		}
 		default: throw "Unknown int type";
@@ -382,13 +375,13 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 	for (uint a = 0; a < classRefs.size(); a++) {
 		WriteZStr(*stream, classRefs[a]->class_->name);
 		// write a checksum (unused atm)
-//		int checksum = swabdword(0);
+//		int checksum = swabDWord(0);
 //		stream->write ((char*)&checksum, sizeof(int));
 		int cnt = classRefs[a]->class_->members.size();
 		WriteVarSizeUInt(stream, cnt);
 		for (int b = 0; b < cnt; b++) {
 			creg::Class::Member* m = classRefs[a]->class_->members[b];
-			const int namehash = swabdword(MakeStrHash(m->name));
+			const int namehash = swabDWord(MakeStrHash(m->name));
 			std::string typeName = m->type->GetName();
 			const int typehash1 = MakeStrHash(typeName.c_str());
 			const char typehash2 =
@@ -513,11 +506,11 @@ void CInputStreamSerializer::SerializeInt(void* data, int byteSize)
 	stream->read ((char*)data, byteSize);
 	switch (byteSize) {
 		case 2:{
-			*(short*) data = swabword(*(short*) data);
+			*(short*) data = swabWord(*(short*) data);
 			break;
 		}
 		case 4:{
-			*(long*) data = swabdword(*(long*) data);
+			*(long*) data = swabDWord(*(long*) data);
 			break;
 		}
 		default: throw "Unknown int type";

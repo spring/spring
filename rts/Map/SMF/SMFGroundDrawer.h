@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _BF_GROUND_DRAWER_H_
-#define _BF_GROUND_DRAWER_H_
+#ifndef _SMF_GROUND_DRAWER_H_
+#define _SMF_GROUND_DRAWER_H_
 
 #include "Map/BaseGroundDrawer.h"
 
@@ -13,13 +13,13 @@ namespace Shader {
 }
 
 /**
-Map drawer implementation for the CSmfReadMap map system.
-*/
+ * Map drawer implementation for the CSmfReadMap map system.
+ */
 class CBFGroundDrawer : public CBaseGroundDrawer
 {
 public:
-	CBFGroundDrawer(CSmfReadMap*);
-	~CBFGroundDrawer(void);
+	CBFGroundDrawer(CSmfReadMap* rm);
+	~CBFGroundDrawer();
 
 	friend class CSmfReadMap;
 
@@ -54,12 +54,12 @@ private:
 	void CreateWaterPlanes(bool camOufOfMap);
 	inline void DrawWaterPlane(bool drawWaterReflection);
 
-	void FindRange(int &xs, int &xe, const std::vector<fline>& left, const std::vector<fline>& right, int y, int lod);
+	void FindRange(int& xs, int& xe, const std::vector<fline>& left, const std::vector<fline>& right, int y, int lod);
 	void DoDrawGroundRow(int bty);
 	void DrawVertexAQ(CVertexArray* ma, int x, int y);
 	void DrawVertexAQ(CVertexArray* ma, int x, int y, float height);
 	void EndStripQ(CVertexArray* ma);
-	void DrawGroundVertexArrayQ(CVertexArray* &ma);
+	void DrawGroundVertexArrayQ(CVertexArray*& ma);
 	void DoDrawGroundShadowLOD(int nlod);
 
 	inline bool BigTexSquareRowVisible(int);
@@ -105,4 +105,4 @@ private:
 	bool waterDrawn;
 };
 
-#endif // _BF_GROUND_DRAWER_H_
+#endif // _SMF_GROUND_DRAWER_H_

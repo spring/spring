@@ -22,6 +22,13 @@ namespace Shader {
 }
 
 struct TrackPart {
+	TrackPart()
+		: pos1(ZeroVector)
+		, pos2(ZeroVector)
+		, texPos(0.0f)
+		, connected(false)
+		, creationTime(0)
+	{}
 	float3 pos1;
 	float3 pos2;
 	float texPos;
@@ -30,7 +37,14 @@ struct TrackPart {
 };
 
 struct UnitTrackStruct {
-	UnitTrackStruct(CUnit* u): owner(u), lastAdded(NULL) {}
+	UnitTrackStruct(CUnit* owner)
+		: owner(owner)
+		, lastUpdate(0)
+		, lifeTime(0)
+		, trackAlpha(255)
+		, alphaFalloff(0.0f)
+		, lastAdded(NULL)
+	{}
 
 	CUnit* owner;
 	unsigned int lastUpdate;
@@ -42,28 +56,53 @@ struct UnitTrackStruct {
 };
 
 struct TrackToAdd {
+	TrackToAdd()
+		: tp(NULL)
+		, unit(NULL)
+		, ts(NULL)
+	{}
 	TrackPart* tp;
 	CUnit* unit;
 	UnitTrackStruct* ts;
 };
 
 struct TrackToClean {
-	TrackToClean() {}
+	TrackToClean()
+		: track(NULL)
+		, tracks(NULL)
+	{}
 	TrackToClean(UnitTrackStruct* t, std::set<UnitTrackStruct*>* ts)
-		: track(t), tracks(ts) {}
+		: track(t)
+		, tracks(ts)
+	{}
 	UnitTrackStruct* track;
 	std::set<UnitTrackStruct*>* tracks;
 };
 
 struct BuildingGroundDecal {
-	BuildingGroundDecal(): va(NULL), owner(NULL), gbOwner(NULL), alpha(1.0f) {}
+	BuildingGroundDecal()
+		: va(NULL)
+		, owner(NULL)
+		, gbOwner(NULL)
+		, posx(0)
+		, posy(0)
+		, xsize(0)
+		, ysize(0)
+		, facing(-1)
+		, pos(ZeroVector)
+		, radius(0.0f)
+		, alpha(1.0f)
+		, alphaFalloff(1.0f)
+	{}
 	~BuildingGroundDecal();
 
 	CVertexArray* va;
 	CBuilding* owner;
 	GhostBuilding* gbOwner;
-	int posx, posy;
-	int xsize, ysize;
+	int posx;
+	int posy;
+	int xsize;
+	int ysize;
 	int facing;
 
 	float3 pos;
@@ -123,6 +162,9 @@ private:
 	bool groundScarAlphaFade;
 
 	struct TrackType {
+		TrackType()
+			: texture(0)
+		{}
 		std::string name;
 		std::set<UnitTrackStruct*> tracks;
 		unsigned int texture;
@@ -130,6 +172,9 @@ private:
 	std::vector<TrackType*> trackTypes;
 
 	struct BuildingDecalType {
+		BuildingDecalType()
+			: texture(0)
+		{}
 		std::string name;
 		std::set<BuildingGroundDecal*> buildingDecals;
 		unsigned int texture;
@@ -137,7 +182,24 @@ private:
 	std::vector<BuildingDecalType*> buildingDecalTypes;
 
 	struct Scar {
-		Scar(): va(NULL) {}
+		Scar()
+			: pos(ZeroVector)
+			, radius(0.0f)
+			, creationTime(0)
+			, lifeTime(0)
+			, alphaFalloff(0.0f)
+			, startAlpha(1.0f)
+			, texOffsetX(0.0f)
+			, texOffsetY(0.0f)
+			, x1(0)
+			, x2(0)
+			, y1(0)
+			, y2(0)
+			, basesize(0.0f)
+			, overdrawn(0.0f)
+			, lastTest(0)
+			, va(NULL)
+		{}
 		~Scar();
 
 		float3 pos;
@@ -149,8 +211,10 @@ private:
 		float texOffsetX;
 		float texOffsetY;
 
-		int x1, x2;
-		int y1, y2;
+		int x1;
+		int x2;
+		int y1;
+		int y2;
 
 		float basesize;
 		float overdrawn;

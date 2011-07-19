@@ -72,7 +72,7 @@ bool CEmgCannon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 
 	dir /= length;
 
-	if (!HaveFreeLineOfFire(weaponMuzzlePos, dir, length)) {
+	if (!HaveFreeLineOfFire(weaponMuzzlePos, dir, length, unit)) {
 		return false;
 	}
 

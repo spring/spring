@@ -35,13 +35,13 @@ void CObject::Detach()
 	assert(!detached);
 	detached = true;
 	std::list<CObject*>::iterator di;
-	for(di=listeners.begin();di!=listeners.end();++di){
+	for (di = listeners.begin(); di != listeners.end(); ++di) {
  		m_setOwner(__FILE__, __LINE__, __FUNCTION__);
 		(*di)->DependentDied(this);
 		m_setOwner(__FILE__, __LINE__, __FUNCTION__);
 		ListErase<CObject*>((*di)->listening, this);
 	}
-	for(di=listening.begin();di!=listening.end();++di){
+	for (di = listening.begin(); di != listening.end(); ++di) {
 		m_setOwner(__FILE__, __LINE__, __FUNCTION__);
 		ListErase<CObject*>((*di)->listeners, this);
 	}
@@ -56,63 +56,69 @@ CObject::~CObject()
 		Detach();
 }
 
-void CObject::Serialize(creg::ISerializer *s)
+void CObject::Serialize(creg::ISerializer* ser)
 {
-	if (s->IsWriting ()) {
-		int size=0;
-		for (std::list<CObject*>::iterator i=listening.begin();i!=listening.end();++i) {
-			if ((*i)->GetClass()!=CObject::StaticClass())
+	if (ser->IsWriting()) {
+		int size = 0;
+		std::list<CObject*>::const_iterator oi;
+		for (oi = listening.begin(); oi != listening.end(); ++oi) {
+			if ((*oi)->GetClass() != CObject::StaticClass()) {
 				size++;
+			}
 		}
-		s->Serialize (&size, sizeof(int));
-		for (std::list<CObject*>::iterator i=listening.begin();i!=listening.end();++i) {
-			if ((*i)->GetClass()!=CObject::StaticClass())
-				s->SerializeObjectPtr((void **)&*i,(*i)->GetClass());
-			else {
+		ser->Serialize(&size, sizeof(int));
+		for (oi = listening.begin(); oi != listening.end(); ++oi) {
+			if ((*oi)->GetClass() != CObject::StaticClass()) {
+				ser->SerializeObjectPtr((void**)&*oi, (*oi)->GetClass());
+			} else {
 				LOG("Death dependance not serialized in %s",
 						GetClass()->name.c_str());
 			}
 		}
 	} else {
 		int size;
-		s->Serialize (&size, sizeof(int));
-		for (int i=0;i<size;i++) {
-			std::list<CObject*>::iterator itm=listening.insert(listening.end(),0);
-			s->SerializeObjectPtr((void **)&*itm,0);
+		ser->Serialize(&size, sizeof(int));
+		for (int o = 0; o < size; o++) {
+			std::list<CObject*>::iterator oi =
+					listening.insert(listening.end(), NULL);
+			ser->SerializeObjectPtr((void**)&*oi, NULL);
 		}
 	}
 }
 
 void CObject::PostLoad()
 {
-	for (std::list<CObject*>::iterator i=listening.begin();i!=listening.end();++i) {
+	std::list<CObject*>::iterator oi;
+	for (oi = listening.begin(); oi != listening.end(); ++oi) {
 		m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-		(*i)->listeners.insert((*i)->listeners.end(),this);
+		(*oi)->listeners.insert((*oi)->listeners.end(), this);
 	}
 	m_resetGlobals();
 }
 
-void CObject::DependentDied(CObject* o)
+void CObject::DependentDied(CObject* obj)
 {
 }
 
-void CObject::AddDeathDependence(CObject *o)
+void CObject::AddDeathDependence(CObject* obj)
 {
 	assert(!detached);
 	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-	o->listeners.insert(o->listeners.end(),this);
+	obj->listeners.insert(obj->listeners.end(), this);
 	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-	listening.insert(listening.end(),o);
+	listening.insert(listening.end(), obj);
 	m_resetGlobals();
 }
 
-void CObject::DeleteDeathDependence(CObject *o)
+void CObject::DeleteDeathDependence(CObject* obj)
 {
 	assert(!detached);
-	//note that we can be listening to a single object from several different places (like curreclaim in CBuilder and lastAttacker in CUnit, grr) so we should only remove one of them
+	// NOTE that we can be listening to a single object from several different
+	// places (like curReclaim in CBuilder and lastAttacker in CUnit, grr)
+	// so we should only remove one of them
 	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-	ListErase<CObject*>(listening, o);
+	ListErase<CObject*>(listening, obj);
 	m_setOwner(__FILE__, __LINE__, __FUNCTION__);
-	ListErase<CObject*>(o->listeners, this);
+	ListErase<CObject*>(obj->listeners, this);
 	m_resetGlobals();
 }

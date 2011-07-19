@@ -17,13 +17,13 @@ namespace terrain
 
 	struct SimpleCopyShader 
 	{
-		SimpleCopyShader(BufferTexture *src);
+		SimpleCopyShader(BufferTexture* src);
 		~SimpleCopyShader();
 
 		void Setup();
 		void Cleanup();
 
-		BufferTexture *source;
+		BufferTexture* source;
 		GLhandleARB vertexShader;
 		GLhandleARB fragmentShader;
 		GLhandleARB program;
@@ -31,7 +31,7 @@ namespace terrain
 
 	struct SimpleCopyNodeShader : public GLSLBaseShader
 	{
-		SimpleCopyNodeShader(SimpleCopyShader *scs) :
+		SimpleCopyNodeShader(SimpleCopyShader* scs) :
 			shader(scs) {}
 
 		void Setup(NodeSetupParams& params) { shader->Setup(); }
@@ -42,12 +42,12 @@ namespace terrain
 
 	struct NodeGLSLShader : public GLSLBaseShader
 	{
-		NodeGLSLShader ();
-		~NodeGLSLShader ();
+		NodeGLSLShader();
+		~NodeGLSLShader();
 		
-		std::string GetDebugDesc ();
-		uint GetVertexDataRequirements ();
-		void GetTextureUnits(BaseTexture* tex, int &imageUnit, int& coordUnit);
+		std::string GetDebugDesc();
+		uint GetVertexDataRequirements();
+		void GetTextureUnits(BaseTexture* tex, int& imageUnit, int& coordUnit);
 
 		void BindTSM(Vector3* buf, uint vertexSize);
 		void UnbindTSM();
@@ -77,31 +77,31 @@ namespace terrain
 	class GLSLShaderHandler : public ITexShaderHandler
 	{
 	public:
-		GLSLShaderHandler ();
-		~GLSLShaderHandler ();
+		GLSLShaderHandler();
+		~GLSLShaderHandler();
 
 		// ITexShaderHandler interface
-		void BeginPass (const std::vector<Blendmap*>& blendmaps, const std::vector<TiledTexture*>& textures, int pass);
-		void EndPass () {}
+		void BeginPass(const std::vector<Blendmap*>& blendmaps, const std::vector<TiledTexture*>& textures, int pass);
+		void EndPass() {}
 
 		void BeginTexturing();
 		void EndTexturing();
 
-		void BuildNodeSetup (ShaderDef *shaderDef, RenderSetup *renderSetup);
-		bool SetupShader (IShaderSetup *shadercfg, NodeSetupParams& params);
+		void BuildNodeSetup(ShaderDef* shaderDef, RenderSetup* renderSetup);
+		bool SetupShader(IShaderSetup* shadercfg, NodeSetupParams& params);
 
 		void BeginBuild();
 		void EndBuild();
 
-		int MaxTextureUnits ();
-		int MaxTextureCoords ();
+		int MaxTextureUnits();
+		int MaxTextureCoords();
 	protected:
 		GLSLBaseShader* curShader;
 
-		BufferTexture *buffer;
+		BufferTexture* buffer;
 		std::vector<RenderSetup*> renderSetups;
 
-		SimpleCopyShader *scShader;
+		SimpleCopyShader* scShader;
 	};
 };
 

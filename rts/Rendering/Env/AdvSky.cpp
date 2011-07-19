@@ -25,45 +25,65 @@
 
 
 CAdvSky::CAdvSky()
+	: skydir1(ZeroVector)
+	, skydir2(ZeroVector)
+	, cdtex(0)
+	, cloudFP(0)
+	, drawFlare(false)
+	, cloudTexMem(NULL)
+	, skyTex(0)
+	, skyDot3Tex(0)
+	, cloudDot3Tex(0)
+	, sunTex(0)
+	, sunFlareTex(0)
+	, skyTexUpdateIter(0)
+	, skyDomeList(0)
+	, sunFlareList(0)
+	, skyAngle(0.0f)
+	, domeheight(0.0f)
+	, domeWidth(0.0f)
+	, sunTexCoordX(0.0f)
+	, sunTexCoordY(0.0f)
+	, randMatrix(NULL)
+	, rawClouds(NULL)
+	, blendMatrix(NULL)
+	, cloudThickness(NULL)
+	, oldCoverBaseX(-5)
+	, oldCoverBaseY(0)
+	, updatecounter(0)
 {
-	sunFlareList = 0;
 	skytexpart = new unsigned char[512][4];
-	skyTexUpdateIter = 0;
 
-	if (!(FBO::IsSupported() && GLEW_ARB_fragment_program && ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB,"ARB/clouds.fp"))) {
+	if (!(FBO::IsSupported() && GLEW_ARB_fragment_program && ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "ARB/clouds.fp"))) {
 		throw content_error("ADVSKY: missing OpenGL features!");
 	}
 
-	randMatrix=newmat3<int>(16,32,32);
-	rawClouds=newmat2<int>(CLOUD_SIZE,CLOUD_SIZE);
-	blendMatrix=newmat3<int>(CLOUD_DETAIL,32,32);
+	randMatrix = newmat3<int>(16, 32, 32);
+	rawClouds = newmat2<int>(CLOUD_SIZE, CLOUD_SIZE);
+	blendMatrix = newmat3<int>(CLOUD_DETAIL, 32, 32);
 
-	updatecounter=0;
-
-	domeheight = cos(PI/16)*1.01f;
-	domeWidth = sin(2*PI/32)*400*1.7f;
+	domeheight = cos(PI / 16) * 1.01f;
+	domeWidth = sin(2 * PI / 32) * 400 * 1.7f;
 
 	UpdateSkyDir();
 	InitSun();
 	UpdateSunDir();
 
-	for(int a=0;a<CLOUD_DETAIL;a++)
-		cloudDown[a]=false;
-	for(int a=0;a<5;a++)
-		cloudDetailDown[a]=false;
+	for (int a = 0; a < CLOUD_DETAIL; a++)
+		cloudDown[a] = false;
+	for (int a = 0; a < 5; a++)
+		cloudDetailDown[a] = false;
 
 	cloudDensity = mapInfo->atmosphere.cloudDensity;
 	cloudColor = mapInfo->atmosphere.cloudColor;
 	skyColor = mapInfo->atmosphere.skyColor;
 	sunColor = mapInfo->atmosphere.sunColor;
 	fogStart = mapInfo->atmosphere.fogStart;
-	if (fogStart>0.99f) globalRendering->drawFog = false;
+	if (fogStart > 0.99f) globalRendering->drawFog = false;
 
 	dynamicSky = true;
 	CreateClouds();
 	dynamicSky = configHandler->GetBool("DynamicSky");
-
-	oldCoverBaseX=-5;
 
 	cloudFP = LoadFragmentProgram("ARB/clouds.fp");
 
