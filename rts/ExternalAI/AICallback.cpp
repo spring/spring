@@ -58,6 +58,10 @@
 #include "System/FileSystem/FileSystemHandler.h"
 #include "System/Platform/errorhandler.h"
 
+#include <string>
+#include <vector>
+#include <map>
+
 // Cast id to unsigned to catch negative ids in the same operations,
 // cast MAX_* to unsigned to suppress GCC comparison between signed/unsigned warning.
 #define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)uh->MaxUnits())
@@ -1252,7 +1256,12 @@ int CAICallback::GetFeatures(int* featureIds, int featureIds_sizeMax)
 		assert(f);
 
 		if (f->IsInLosForAllyTeam(allyteam)) {
-			featureIds[featureIds_size++] = f->id;
+			// if it is NULL, the caller only wants to know
+			// the number of features
+			if (featureIds != NULL) {
+				featureIds[featureIds_size] = f->id;
+			}
+			featureIds_size++;
 		}
 	}
 
@@ -1273,7 +1282,12 @@ int CAICallback::GetFeatures(int* featureIds, int featureIds_sizeMax, const floa
 		assert(f);
 
 		if (f->IsInLosForAllyTeam(allyteam)) {
-			featureIds[featureIds_size++] = f->id;
+			// if it is NULL, the caller only wants to know
+			// the number of features
+			if (featureIds != NULL) {
+				featureIds[featureIds_size] = f->id;
+			}
+			featureIds_size++;
 		}
 	}
 
