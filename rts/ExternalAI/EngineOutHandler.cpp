@@ -5,6 +5,7 @@
 #include "ExternalAI/SkirmishAIWrapper.h"
 #include "ExternalAI/SkirmishAIData.h"
 #include "ExternalAI/SkirmishAIHandler.h"
+#include "ExternalAI/SSkirmishAICallbackImpl.h"
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/Interface/AISCommands.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -119,6 +120,8 @@ CEngineOutHandler::~CEngineOutHandler() {
 	for (id_ai_t::iterator ai = id_skirmishAI.begin(); ai != id_skirmishAI.end(); ++ai) {
 		delete ai->second;
 	}
+
+	skirmishAiCallback_releaseGlobal();
 }
 
 

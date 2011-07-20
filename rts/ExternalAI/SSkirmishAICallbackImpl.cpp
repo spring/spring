@@ -57,7 +57,7 @@ static const size_t TMP_ARR_SIZE = 16384;
 // this memory is only freed at exit of the application
 // There is quite some CPU and Memory performance waste present
 // in them and their use.
-static int         tmpIntArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
+static int tmpIntArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
 //static PointMarker tmpPointMarkerArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
 //static LineMarker  tmpLineMarkerArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
 
@@ -5128,5 +5128,13 @@ void skirmishAiCallback_release(int skirmishAIId) {
 	delete callback;
 
 	skirmishAIId_teamId.erase(skirmishAIId);
+}
+
+void skirmishAiCallback_releaseGlobal() {
+
+	free(tmpPointMarkerArr);
+	tmpPointMarkerArr = NULL;
+	free(tmpLineMarkerArr);
+	tmpLineMarkerArr = NULL;
 }
 

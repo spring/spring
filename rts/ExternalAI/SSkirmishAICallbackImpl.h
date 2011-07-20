@@ -1276,9 +1276,24 @@ class CAICallback;
 class CAICheats;
 
 // for engine internal use only
+
+/**
+ * Create the C Skirmish AI callback instance for a specific AI.
+ * @see skirmishAiCallback_release
+ */
 SSkirmishAICallback* skirmishAiCallback_getInstanceFor(int skirmishAIId, int teamId, CAICallback* aiCallback, CAICheats* aiCheats);
 
+/**
+ * Releases the C Skirmish AI callback instance for a specific AI.
+ * @see skirmishAiCallback_getInstanceFor
+ */
 void skirmishAiCallback_release(int skirmishAIId);
+
+/**
+ * Releases the all global resources for Skirmish AIs.
+ * This should only be called at game end.
+ */
+void skirmishAiCallback_releaseGlobal();
 
 #endif // defined __cplusplus && !defined BUILDING_AI
 
