@@ -90,7 +90,7 @@ void CSelectionKeyHandler::LoadSelectionKeys()
 		}
 		if ( keybindstring.size() != 0 ) keybindstring += "+";
 		keybindstring += keyname;
-		keyBindings->Command( "bind " + keybindstring + " select " + sel );
+		keyBindings->ExecuteCommand( "bind " + keybindstring + " select " + sel );
 	}
 }
 

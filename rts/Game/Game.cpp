@@ -767,7 +767,7 @@ int CGame::KeyPressed(unsigned short key, bool isRepeat)
 			string cmd = "bind";
 			cmd += " " + ks.GetString(false);
 			cmd += " " + hotBinding;
-			keyBindings->Command(cmd);
+			keyBindings->ExecuteCommand(cmd);
 			hotBinding.clear();
 			logOutput.Print("%s", cmd.c_str());
 		}
