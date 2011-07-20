@@ -57,7 +57,6 @@ static const size_t TMP_ARR_SIZE = 16384;
 // this memory is only freed at exit of the application
 // There is quite some CPU and Memory performance waste present
 // in them and their use.
-static int tmpIntArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
 //static PointMarker tmpPointMarkerArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
 //static LineMarker  tmpLineMarkerArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
 
@@ -3714,13 +3713,8 @@ EXPORT(int) skirmishAiCallback_getFeatures(int skirmishAIId, int* featureIds, in
 		// non cheating
 		int featureIds_size = -1;
 
-		if (featureIds == NULL) {
-			// only return size
-			featureIds_size = skirmishAIId_callback[skirmishAIId]->GetFeatures(tmpIntArr[skirmishAIId], TMP_ARR_SIZE);
-		} else {
-			// return size and values
-			featureIds_size = skirmishAIId_callback[skirmishAIId]->GetFeatures(featureIds, featureIds_sizeMax);
-		}
+		// if (featureIds == NULL), this will only return the number of features
+		featureIds_size = skirmishAIId_callback[skirmishAIId]->GetFeatures(featureIds, featureIds_sizeMax);
 
 		return featureIds_size;
 	}
@@ -3751,13 +3745,8 @@ EXPORT(int) skirmishAiCallback_getFeaturesIn(int skirmishAIId, float* pos_posF3,
 		// non cheating
 		int featureIds_size = -1;
 
-		if (featureIds == NULL) {
-			// only return size
-			featureIds_size = skirmishAIId_callback[skirmishAIId]->GetFeatures(tmpIntArr[skirmishAIId], TMP_ARR_SIZE, pos_posF3, radius);
-		} else {
-			// return size and values
-			featureIds_size = skirmishAIId_callback[skirmishAIId]->GetFeatures(featureIds, featureIds_sizeMax, pos_posF3, radius);
-		}
+		// if (featureIds == NULL), this will only return the number of features
+		featureIds_size = skirmishAIId_callback[skirmishAIId]->GetFeatures(featureIds, featureIds_sizeMax, pos_posF3, radius);
 
 		return featureIds_size;
 	}
