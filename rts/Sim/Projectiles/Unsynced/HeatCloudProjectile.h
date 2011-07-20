@@ -31,7 +31,7 @@ private:
 	float sizemod;
 	float sizemodmod;
 
-	AtlasedTexture *texture;
+	AtlasedTexture* texture;
 };
 
 #endif /* HEAT_CLOUD_PROJECTILE_H */

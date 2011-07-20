@@ -127,7 +127,7 @@ namespace terrain {
 		}
 
 		float minH, maxH;
-		hm->FindMinMax(hmStart, int2(QUAD_W,QUAD_W), minH, maxH);
+		hm->FindMinMax(hmStart, int2(QUAD_W, QUAD_W), minH, maxH);
 
 		start = Vector3(sqStart.x,   0.0f, sqStart.y)     * SquareSize;
 		end = Vector3(sqStart.x + w, 0.0f, sqStart.y + w) * SquareSize;
@@ -266,32 +266,34 @@ namespace terrain {
 //-----------------------------------------------------------------------
 
 	Terrain::Terrain()
+		: heightmap(NULL)
+		, lowdetailhm(NULL)
+		, quadtree(NULL)
+		, activeRC(NULL)
+		, curRC(NULL)
+		, indexTable(NULL)
+		, texturing(NULL)
+		, shadowMap(0)
+		, quadTreeDepth(0)
+		, renderDataManager(NULL)
+		, debugQuad(NULL)
+		, nodeUpdateCount(0)
+		, logUpdates(false)
 	{
-		heightmap = 0;
-		quadtree = 0;
-		debugQuad = 0;
-		indexTable = 0;
-		texturing = 0;
-		lowdetailhm = 0;
-		shadowMap = 0;
-		renderDataManager = 0;
-		logUpdates = false;
-		nodeUpdateCount = 0;
-		curRC = 0;
-		activeRC = 0;
-		quadTreeDepth = 0;
 	}
+
 	Terrain::~Terrain()
 	{
 		delete renderDataManager;
         delete texturing;
 		while (heightmap) {
-			Heightmap* p = heightmap;
+			Heightmap* tmpHm = heightmap;
 			heightmap = heightmap->lowDetail;
-			delete p;
+			delete tmpHm;
 		}
-		for (size_t a = 0; a < qmaps.size(); a++)
+		for (size_t a = 0; a < qmaps.size(); a++) {
 			delete qmaps[a];
+		}
 		qmaps.clear();
 		delete quadtree;
 		delete indexTable;
@@ -679,18 +681,24 @@ namespace terrain {
 		if (fr != NULL) {
 			const float s = 16.0f;
 
-			if (debugQuad) {
+			if (debugQuad != NULL) {
 				fr->printf(0, 30, s, "Selected quad: (%d,%d) on depth %d. Lod=%3.3f",
-				debugQuad->qmPos.x, debugQuad->qmPos.y, debugQuad->depth, config.detailMod * debugQuad->CalcLod(activeRC->cam->pos));
+						debugQuad->qmPos.x, debugQuad->qmPos.y,
+						debugQuad->depth,
+						config.detailMod * debugQuad->CalcLod(activeRC->cam->pos));
 			}
 
 			RenderStats stats;
 			CalcRenderStats(stats);
 
 			fr->printf(0, 46, s, "Rendered nodes: %d, tris: %d, VBufSize: %d(kb), TotalRenderData(kb): %d, DetailMod: %g, CacheTextureMemory: %d",
-				activeRC->quads.size(), stats.tris, VertexBuffer::TotalSize()/1024, stats.renderDataSize/1024, config.detailMod, stats.cacheTextureSize);
+					activeRC->quads.size(), stats.tris,
+					VertexBuffer::TotalSize() / 1024,
+					stats.renderDataSize / 1024, config.detailMod,
+					stats.cacheTextureSize);
 			fr->printf(0, 60, s, "NodeUpdateCount: %d, RenderDataAlloc: %d, #RenderData: %d",
-				nodeUpdateCount, renderDataManager->normalDataAllocates, renderDataManager->QuadRenderDataCount());
+					nodeUpdateCount, renderDataManager->normalDataAllocates,
+					renderDataManager->QuadRenderDataCount());
 
 			texturing->DebugPrint(fr);
 		}
