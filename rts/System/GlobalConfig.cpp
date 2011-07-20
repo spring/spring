@@ -8,7 +8,7 @@
 
 CONFIG(int, InitialNetworkTimeout)
 	.defaultValue(30)
-	.minimumValue(0);
+	.minimumValue(10);
 
 CONFIG(int, NetworkTimeout)
 	.defaultValue(120)
