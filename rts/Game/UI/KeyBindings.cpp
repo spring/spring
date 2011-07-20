@@ -586,8 +586,9 @@ void CKeyBindings::PushAction(const Action& action)
 	else if (action.command == "keycodes") {
 		keyCodes->PrintCodeToName(); // move to CKeyCodes?
 	}
-	else
+	else {
 		Command(action.rawline);
+	}
 }
 
 bool CKeyBindings::Command(const string& line)

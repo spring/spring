@@ -47,13 +47,13 @@ CHeatCloudProjectile::CHeatCloudProjectile()
 }
 
 CHeatCloudProjectile::CHeatCloudProjectile(const float3 pos, const float3 speed, const  float temperature, const float size, CUnit* owner)
-: CProjectile(pos, speed, owner, false, false, false),
-	heat(temperature),
-	maxheat(temperature),
-	heatFalloff(1.0f),
-	size(0.0f),
-	sizemod(0.0f),
-	sizemodmod(0.0f)
+	: CProjectile(pos, speed, owner, false, false, false)
+	, heat(temperature)
+	, maxheat(temperature)
+	, heatFalloff(1.0f)
+	, size(0.0f)
+	, sizemod(0.0f)
+	, sizemodmod(0.0f)
 {
 	sizeGrowth = size / temperature;
 	checkCol = false;

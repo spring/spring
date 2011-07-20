@@ -265,19 +265,21 @@ void COutputStreamSerializer::SerializeInt(void* data, int byteSize)
 {
 	char buf[4];
 	switch (byteSize) {
-		case 1:{
+		case 1: {
 			*(char*)buf = *(char*) data;
 			break;
 		}
-		case 2:{
+		case 2: {
 			*(short*)buf = swabWord(*(short*) data);
 			break;
 		}
-		case 4:{
+		case 4: {
 			*(long*)buf = swabDWord(*(long*) data);
 			break;
 		}
-		default: throw "Unknown int type";
+		default: {
+			throw "Unknown int type";
+		}
 	}
 	stream->write((char*)data, byteSize);
 }
