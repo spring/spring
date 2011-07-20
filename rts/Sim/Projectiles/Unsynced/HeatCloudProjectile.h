@@ -13,7 +13,7 @@ class CHeatCloudProjectile : public CProjectile
 public:
 	CHeatCloudProjectile();
 	/// projectile starts at size 0 and ends at size \<size\>
-	CHeatCloudProjectile(const float3 pos, const float3 speed,
+	CHeatCloudProjectile(const float3& pos, const float3& speed,
 			const float temperature, const float size, CUnit* owner);
 	virtual ~CHeatCloudProjectile();
 
