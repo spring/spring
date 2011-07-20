@@ -81,7 +81,6 @@ void COggStream::Play(const std::string& path, float volume)
 	}
 
 	vorbisTags.clear();
-	int result = 0;
 
 	ov_callbacks vorbisCallbacks;
 		vorbisCallbacks.read_func  = VorbisCallbacks::VorbisStreamRead;
@@ -90,7 +89,8 @@ void COggStream::Play(const std::string& path, float volume)
 		vorbisCallbacks.tell_func  = VorbisCallbacks::VorbisStreamTell;
 
 	CFileHandler* buf = new CFileHandler(path);
-	if ((result = ov_open_callbacks(buf, &oggStream, NULL, 0, vorbisCallbacks)) < 0) {
+	const int result = ov_open_callbacks(buf, &oggStream, NULL, 0, vorbisCallbacks);
+	if (result < 0) {
 		LOG_L(L_WARNING, "Could not open Ogg stream (reason: %s).",
 				ErrorString(result).c_str());
 		return;
