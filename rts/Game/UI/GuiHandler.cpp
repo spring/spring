@@ -1611,7 +1611,7 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 		const int iconCmd = (iconPos >= 0) ? icons[iconPos].commandsID : -1;
 		if ((iconCmd >= 0) && ((size_t)iconCmd < commands.size())) {
 			std::string cmd = "unbindaction " + commands[iconCmd].action;
-			keyBindings->Command(cmd);
+			keyBindings->ExecuteCommand(cmd);
 			logOutput.Print("%s", cmd.c_str());
 		}
 		return true;
