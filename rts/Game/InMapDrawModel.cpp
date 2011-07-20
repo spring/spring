@@ -20,6 +20,8 @@ CR_BIND(CInMapDrawModel, );
 
 CR_REG_METADATA(CInMapDrawModel, (
 	CR_MEMBER(drawQuads),
+	CR_MEMBER(numPoints),
+	CR_MEMBER(numLines),
 	CR_RESERVED(4)
 ));
 
@@ -68,6 +70,8 @@ CInMapDrawModel::CInMapDrawModel()
 	: drawQuadsX(gs->mapx / DRAW_QUAD_SIZE)
 	, drawQuadsY(gs->mapy / DRAW_QUAD_SIZE)
 	, drawAllMarks(false)
+	, numPoints(0)
+	, numLines(0)
 {
 	drawQuads.resize(drawQuadsX * drawQuadsY);
 }
@@ -147,6 +151,8 @@ bool CInMapDrawModel::AddPoint(const float3& constPos, const std::string& label,
 	                 int(pos.x * QUAD_SCALE);
 	drawQuads[quad].points.push_back(point);
 
+	numPoints++;
+
 	return true;
 }
 
@@ -177,6 +183,8 @@ bool CInMapDrawModel::AddLine(const float3& constPos1, const float3& constPos2, 
 	const int quad = int(pos1.z * QUAD_SCALE) * drawQuadsX +
 	                 int(pos1.x * QUAD_SCALE);
 	drawQuads[quad].lines.push_back(line);
+
+	numLines++;
 
 	return true;
 }
@@ -215,6 +223,7 @@ void CInMapDrawModel::EraseNear(const float3& constPos, int playerID)
 			for (pi = dq->points.begin(); pi != dq->points.end(); /* none */) {
 				if (pi->GetPos().SqDistance2D(pos) < (radius*radius) && (pi->IsBySpectator() == sender->spectator)) {
 					pi = dq->points.erase(pi);
+					numPoints--;
 				} else {
 					++pi;
 				}
@@ -224,6 +233,7 @@ void CInMapDrawModel::EraseNear(const float3& constPos, int playerID)
 				// TODO maybe erase on pos2 too?
 				if (li->GetPos1().SqDistance2D(pos) < (radius*radius) && (li->IsBySpectator() == sender->spectator)) {
 					li = dq->lines.erase(li);
+					numLines--;
 				} else {
 					++li;
 				}
@@ -239,6 +249,8 @@ void CInMapDrawModel::EraseAll()
 		drawQuads[n].points.clear();
 		drawQuads[n].lines.clear();
 	}
+	numPoints = 0;
+	numLines = 0;
 
 	// TODO check if this is needed
 	//visibleLabels.clear();
