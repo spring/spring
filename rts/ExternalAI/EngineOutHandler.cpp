@@ -120,8 +120,6 @@ CEngineOutHandler::~CEngineOutHandler() {
 	for (id_ai_t::iterator ai = id_skirmishAI.begin(); ai != id_skirmishAI.end(); ++ai) {
 		delete ai->second;
 	}
-
-	skirmishAiCallback_releaseGlobal();
 }
 
 
