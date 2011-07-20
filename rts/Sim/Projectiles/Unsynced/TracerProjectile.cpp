@@ -23,7 +23,7 @@ CR_REG_METADATA(CTracerProjectile,
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CTracerProjectile::CTracerProjectile(const float3 pos, const float3 speed, const float range, CUnit* owner):
+CTracerProjectile::CTracerProjectile(const float3& pos, const float3& speed, const float range, CUnit* owner):
 	CProjectile(pos, speed, owner, false, false, false)
 	, length(range)
 	, drawLength(0.0f)

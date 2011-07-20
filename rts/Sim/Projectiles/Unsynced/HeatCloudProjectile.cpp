@@ -46,7 +46,7 @@ CHeatCloudProjectile::CHeatCloudProjectile()
 	texture = projectileDrawer->heatcloudtex;
 }
 
-CHeatCloudProjectile::CHeatCloudProjectile(const float3 pos, const float3 speed, const  float temperature, const float size, CUnit* owner)
+CHeatCloudProjectile::CHeatCloudProjectile(const float3& pos, const float3& speed, const  float temperature, const float size, CUnit* owner)
 	: CProjectile(pos, speed, owner, false, false, false)
 	, heat(temperature)
 	, maxheat(temperature)
@@ -64,7 +64,6 @@ CHeatCloudProjectile::CHeatCloudProjectile(const float3 pos, const float3 speed,
 
 CHeatCloudProjectile::~CHeatCloudProjectile()
 {
-
 }
 
 void CHeatCloudProjectile::Update()
