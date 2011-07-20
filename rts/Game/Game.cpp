@@ -338,10 +338,10 @@ CGame::~CGame()
 	tracefile << "[" << __FUNCTION__ << "]";
 #endif
 
-	// Kill all teams that are still alive,
-	// in case the game did not do so through Lua.
+	// Kill all teams that are still alive, in
+	// case the game did not do so through Lua.
 	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
-		teamHandler->Team(t)->Died();
+		teamHandler->Team(t)->Died(false);
 	} 
 
 	CLoadScreen::DeleteInstance(); // make sure to halt loading, otherwise crash :)

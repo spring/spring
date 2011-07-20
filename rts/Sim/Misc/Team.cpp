@@ -189,28 +189,27 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 }
 
 
-void CTeam::Died()
+void CTeam::Died(bool normalDeath)
 {
 	if (isDead)
 		return;
 
 	isDead = true;
 
-	if (leader >= 0) {
-		const CPlayer* leadPlayer = playerHandler->Player(leader);
-		const char* leaderName = leadPlayer->name.c_str();
-		logOutput.Print(CMessages::Tr("Team %i (lead by %s) is no more").c_str(), teamNum, leaderName);
-	} else {
-		logOutput.Print(CMessages::Tr("Team %i is no more").c_str(), teamNum);
+	if (normalDeath) {
+		if (leader >= 0) {
+			const CPlayer* leadPlayer = playerHandler->Player(leader);
+			const char* leaderName = leadPlayer->name.c_str();
+			logOutput.Print(CMessages::Tr("Team %i (lead by %s) is no more").c_str(), teamNum, leaderName);
+		} else {
+			logOutput.Print(CMessages::Tr("Team %i is no more").c_str(), teamNum);
+		}
+
+		// this message is not relayed to clients, it's only for the server
+		net->Send(CBaseNetProtocol::Get().SendTeamDied(gu->myPlayerNum, teamNum));
 	}
 
-	CSkirmishAIHandler::ids_t localTeamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(teamNum, gu->myPlayerNum);
-	for (CSkirmishAIHandler::ids_t::const_iterator ai = localTeamAIs.begin(); ai != localTeamAIs.end(); ++ai) {
-		skirmishAIHandler.SetLocalSkirmishAIDieing(*ai, 2 /* = team died */);
-	}
-
-	// this message is not relayed to clients, it's only for the server
-	net->Send(CBaseNetProtocol::Get().SendTeamDied(gu->myPlayerNum, teamNum));
+	KillAIs();
 
 	// demote all players in _this_ team to spectators
 	for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {
@@ -234,6 +233,15 @@ void CTeam::AddPlayer(int playerNum)
 
 	playerHandler->Player(playerNum)->JoinTeam(teamNum);
 	playerHandler->Player(playerNum)->SetControlledTeams();
+}
+
+void CTeam::KillAIs()
+{
+	const CSkirmishAIHandler::ids_t& localTeamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(teamNum, gu->myPlayerNum);
+
+	for (CSkirmishAIHandler::ids_t::const_iterator ai = localTeamAIs.begin(); ai != localTeamAIs.end(); ++ai) {
+		skirmishAIHandler.SetLocalSkirmishAIDieing(*ai, 2 /* = team died */);
+	}
 }
 
 
