@@ -53,6 +53,7 @@
 #include "Rendering/LineDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/Textures/NamedTextures.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -1545,7 +1546,7 @@ int LuaUnsyncedCtrl::SetMapSquareTexture(lua_State* L)
 
 	const int texSquareX = luaL_checkint(L, 1);
 	const int texSquareY = luaL_checkint(L, 2);
-	const std::string& luaTexName = luaL_checkstring(L, 3);
+	const std::string& texName = luaL_checkstring(L, 3);
 
 	CBaseGroundDrawer* groundDrawer = readmap->GetGroundDrawer();
 	CBaseGroundTextures* groundTextures = groundDrawer->GetGroundTextures();
@@ -1554,27 +1555,40 @@ int LuaUnsyncedCtrl::SetMapSquareTexture(lua_State* L)
 		lua_pushboolean(L, false);
 		return 1;
 	}
-	if (luaTexName.empty()) {
+	if (texName.empty()) {
 		// restore default texture for this square
 		lua_pushboolean(L, groundTextures->SetSquareLuaTexture(texSquareX, texSquareY, 0));
 		return 1;
 	}
 
+	// TODO: leaking ID's like this means we need to guard against texture deletion
 	const LuaTextures& luaTextures = CLuaHandle::GetActiveTextures(L);
-	const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(luaTexName);
+	const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(texName);
+	const CNamedTextures::TexInfo* namedTexture = CNamedTextures::GetInfo(texName);
 
-	if (luaTexture == NULL) {
-		// not a valid texture (name)
-		lua_pushboolean(L, false);
+	if (luaTexture != NULL) {
+		if (luaTexture->xsize != luaTexture->ysize) {
+			// square textures only
+			lua_pushboolean(L, false);
+			return 1;
+		}
+
+		lua_pushboolean(L, groundTextures->SetSquareLuaTexture(texSquareX, texSquareY, luaTexture->id));
 		return 1;
 	}
-	if (luaTexture->xsize != luaTexture->ysize) {
-		// square textures only
-		lua_pushboolean(L, false);
+
+	if (namedTexture != NULL) {
+		if (namedTexture->xsize != namedTexture->ysize) {
+			// square textures only
+			lua_pushboolean(L, false);
+			return 1;
+		}
+
+		lua_pushboolean(L, groundTextures->SetSquareLuaTexture(texSquareX, texSquareY, namedTexture->id));
 		return 1;
 	}
 
-	lua_pushboolean(L, groundTextures->SetSquareLuaTexture(texSquareX, texSquareY, luaTexture->id));
+	lua_pushboolean(L, false);
 	return 1;
 }
 
@@ -1587,7 +1601,7 @@ int LuaUnsyncedCtrl::GetMapSquareTexture(lua_State* L)
 	const int texSquareX = luaL_checkint(L, 1);
 	const int texSquareY = luaL_checkint(L, 2);
 	const int texMipLevel = luaL_checkint(L, 3);
-	const std::string& luaTexName = luaL_checkstring(L, 4);
+	const std::string& texName = luaL_checkstring(L, 4);
 
 	CBaseGroundDrawer* groundDrawer = readmap->GetGroundDrawer();
 	CBaseGroundTextures* groundTextures = groundDrawer->GetGroundTextures();
@@ -1596,13 +1610,13 @@ int LuaUnsyncedCtrl::GetMapSquareTexture(lua_State* L)
 		lua_pushboolean(L, false);
 		return 1;
 	}
-	if (luaTexName.empty()) {
+	if (texName.empty()) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
 	const LuaTextures& luaTextures = CLuaHandle::GetActiveTextures(L);
-	const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(luaTexName);
+	const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(texName);
 
 	if (luaTexture == NULL) {
 		// not a valid texture (name)
