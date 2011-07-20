@@ -1782,7 +1782,7 @@ float3 CAICallback::GetMousePos() {
 }
 
 
-int CAICallback::GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAllies)
+void CAICallback::GetMapPoints(std::vector<PointMarker>& pm, int pm_sizeMax, bool includeAllies)
 {
 	verify();
 
@@ -1806,10 +1806,10 @@ int CAICallback::GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAllie
 		}
 	}
 
-	return (inMapDrawer->GetPoints(pm, pm_sizeMax, includeTeamIDs));
+	inMapDrawer->GetPoints(pm, pm_sizeMax, includeTeamIDs);
 }
 
-int CAICallback::GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllies)
+void CAICallback::GetMapLines(std::vector<LineMarker>& lm, int lm_sizeMax, bool includeAllies)
 {
 	verify();
 
@@ -1833,7 +1833,7 @@ int CAICallback::GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllies)
 		}
 	}
 
-	return (inMapDrawer->GetLines(lm, lm_sizeMax, includeTeamIDs));
+	inMapDrawer->GetLines(lm, lm_sizeMax, includeTeamIDs);
 }
 
 

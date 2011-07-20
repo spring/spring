@@ -52,30 +52,9 @@ static std::map<int, bool>                 skirmishAIId_cheatingEnabled;
 static std::map<int, bool>                 skirmishAIId_usesCheats;
 static std::map<int, int>                  skirmishAIId_teamId;
 
-static const size_t TMP_ARR_SIZE = 16384;
-// FIXME: the following lines are relatively memory intensive (~1MB per line)
-// this memory is only freed at exit of the application
-// There is quite some CPU and Memory performance waste present
-// in them and their use.
-//static PointMarker tmpPointMarkerArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
-//static LineMarker  tmpLineMarkerArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
-
-/*
- * FIXME: get rid of this and replace with std::vectors that are
- *        automatically grown to the needed size?
- *
- * GCC 4.4.1 on Ubuntu 9.10 segfaults during static initialization of the
- * tmpPointMarkerArr and tmpLineMarkerArr above. This seems to have to do
- * with the size of these arrays. (Bigger crashes more often, but even
- * TMP_ARR_SIZE=1024 still crashes occasionally.)
- *
- * As a workaround, we change the vars to be a reference to a 2d array,
- * and allocate the actual array on the heap.
- */
-static PointMarker (&tmpPointMarkerArr)[MAX_SKIRMISH_AIS][TMP_ARR_SIZE] =
-		*(PointMarker (*)[MAX_SKIRMISH_AIS][TMP_ARR_SIZE]) calloc(MAX_SKIRMISH_AIS * TMP_ARR_SIZE, sizeof(PointMarker));
-static LineMarker (&tmpLineMarkerArr)[MAX_SKIRMISH_AIS][TMP_ARR_SIZE] =
-		*(LineMarker (*)[MAX_SKIRMISH_AIS][TMP_ARR_SIZE]) calloc(MAX_SKIRMISH_AIS * TMP_ARR_SIZE, sizeof(LineMarker));
+static const size_t MARKERS_MAX_SIZE = 16384;
+static std::vector<PointMarker> tmpPointMarkerArr[MAX_SKIRMISH_AIS];
+static std::vector<LineMarker> tmpLineMarkerArr[MAX_SKIRMISH_AIS];
 
 static void checkSkirmishAIId(int skirmishAIId) {
 
@@ -1782,8 +1761,10 @@ EXPORT(void) skirmishAiCallback_Map_findClosestBuildSite(int skirmishAIId, int u
 }
 
 EXPORT(int) skirmishAiCallback_Map_getPoints(int skirmishAIId, bool includeAllies) {
-	return skirmishAIId_callback[skirmishAIId]->GetMapPoints(tmpPointMarkerArr[skirmishAIId],
-			TMP_ARR_SIZE, includeAllies);
+
+	skirmishAIId_callback[skirmishAIId]->GetMapPoints(
+			tmpPointMarkerArr[skirmishAIId], MARKERS_MAX_SIZE, includeAllies);
+	return (int)tmpPointMarkerArr[skirmishAIId].size();
 }
 
 EXPORT(void) skirmishAiCallback_Map_Point_getPosition(int skirmishAIId, int pointId, float* return_posF3_out) {
@@ -1803,8 +1784,10 @@ EXPORT(const char*) skirmishAiCallback_Map_Point_getLabel(int skirmishAIId, int 
 }
 
 EXPORT(int) skirmishAiCallback_Map_getLines(int skirmishAIId, bool includeAllies) {
-	return skirmishAIId_callback[skirmishAIId]->GetMapLines(tmpLineMarkerArr[skirmishAIId],
-			TMP_ARR_SIZE, includeAllies);
+
+	skirmishAIId_callback[skirmishAIId]->GetMapLines(
+			tmpLineMarkerArr[skirmishAIId], MARKERS_MAX_SIZE, includeAllies);
+	return (int)tmpLineMarkerArr[skirmishAIId].size();
 }
 
 EXPORT(void) skirmishAiCallback_Map_Line_getFirstPosition(int skirmishAIId, int lineId, float* return_posF3_out) {
@@ -5117,13 +5100,5 @@ void skirmishAiCallback_release(int skirmishAIId) {
 	delete callback;
 
 	skirmishAIId_teamId.erase(skirmishAIId);
-}
-
-void skirmishAiCallback_releaseGlobal() {
-
-	free(tmpPointMarkerArr);
-	tmpPointMarkerArr = NULL;
-	free(tmpLineMarkerArr);
-	tmpLineMarkerArr = NULL;
 }
 

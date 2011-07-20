@@ -1289,12 +1289,6 @@ SSkirmishAICallback* skirmishAiCallback_getInstanceFor(int skirmishAIId, int tea
  */
 void skirmishAiCallback_release(int skirmishAIId);
 
-/**
- * Releases the all global resources for Skirmish AIs.
- * This should only be called at game end.
- */
-void skirmishAiCallback_releaseGlobal();
-
 #endif // defined __cplusplus && !defined BUILDING_AI
 
 #endif // _SSKIRMISHAICALLBACKIMPL_H
