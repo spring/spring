@@ -31,11 +31,11 @@ static void log_sink_record_logOutput(const char* section, int level,
 
 namespace {
 	/// Auto-registers the sink defined in this file before main() is called
-	struct SinkRegistrator {
-		SinkRegistrator() {
+	struct LogOutputSinkRegistrator {
+		LogOutputSinkRegistrator() {
 			log_backend_registerSink(&log_sink_record_logOutput);
 		}
-	} sinkRegistrator;
+	} logOutputSinkRegistrator;
 }
 
 #ifdef __cplusplus

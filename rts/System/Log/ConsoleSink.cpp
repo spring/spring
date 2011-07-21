@@ -48,11 +48,11 @@ static void log_sink_record_console(const char* section, int level,
 
 namespace {
 	/// Auto-registers the sink defined in this file before main() is called
-	struct SinkRegistrator {
-		SinkRegistrator() {
+	struct ConsoleSinkRegistrator {
+		ConsoleSinkRegistrator() {
 			log_backend_registerSink(&log_sink_record_console);
 		}
-	} sinkRegistrator;
+	} consoleSinkRegistrator;
 }
 
 #ifdef __cplusplus
