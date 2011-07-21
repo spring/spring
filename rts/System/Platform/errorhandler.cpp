@@ -19,7 +19,7 @@
 #include "System/LogOutput.h"
 #include "System/Util.h"
 
-#ifndef DEDICATED
+#if !defined(DEDICATED) || defined(_MSC_VER)
 	#include "System/SpringApp.h"
 	#include "System/Platform/Threading.h"
 

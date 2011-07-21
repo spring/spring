@@ -2229,6 +2229,9 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		}
 	}
 
+	if(!reconnect) // don't respond before we are sure we want to do it
+		link->Unmute(); // never respond to reconnection attempts, it could interfere with the protocol and desync
+
 	if (newPlayerNumber >= players.size() || errmsg != "") {
 		Message(str(format(" -> %s") %errmsg));
 		link->SendData(CBaseNetProtocol::Get().SendQuit(str(format("Connection rejected: %s") %errmsg)));
@@ -2256,7 +2259,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 	if (newPlayer.link) {
 		newPlayer.link->ReconnectTo(*link);
 		Message(str(format(" -> Connection reestablished (id %i)") %newPlayerNumber));
-		link->Flush(!gameHasStarted);
+		newPlayer.link->Flush(!gameHasStarted);
 		return newPlayerNumber;
 	}
 
