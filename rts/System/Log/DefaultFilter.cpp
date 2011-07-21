@@ -19,8 +19,8 @@ extern "C" {
 
 bool log_frontend_isEnabled(const char* section, int level);
 
-extern void log_sink_record(const char* section, int level, const char* fmt,
-		va_list arguments);
+extern void log_backend_record(const char* section, int level,
+		const char* fmt, va_list arguments);
 
 
 /**
@@ -173,8 +173,8 @@ static void log_filter_record(const char* section, int level, const char* fmt,
 		return;
 	}
 
-	// store the log record
-	log_sink_record(section, level, fmt, arguments);
+	// format (and later store) the log record
+	log_backend_record(section, level, fmt, arguments);
 }
 
 

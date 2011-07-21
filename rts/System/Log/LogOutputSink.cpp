@@ -5,8 +5,7 @@
  * It routes all logging messages to logOutput.
  */
 
-#include "ILog.h" // for LOG_LEVEL_*
-#include "LogUtil.h" // for log_levelToString
+#include "Backend.h"
 #include "System/LogOutput.h"
 
 
@@ -21,29 +20,23 @@ extern "C" {
  */
 
 /// Records a log entry
-void log_sink_record(const char* section, int level, const char* fmt,
-		va_list arguments)
+static void log_sink_record_logOutput(const char* section, int level,
+		const char* record)
 {
-	std::string fmtPrefix;
-	// HACK this stuff should be done later, closer to the point where it is written to a file or the console
-	if (section != LOG_SECTION_DEFAULT) {
-		section = log_prepareSection(section);
-		fmtPrefix += std::string("[") + section + "] ";
-	}
-	if (level != LOG_LEVEL_INFO) {
-		const char* levelStr = log_levelToString(level);
-		fmtPrefix += std::string(levelStr) + ": ";
-	}
-
-	if (!fmtPrefix.empty()) {
-		fmtPrefix += fmt;
-		fmt = fmtPrefix.c_str();
-	}
-
-	logOutput.Printv(logOutput.GetDefaultLogSubsystem(), fmt, arguments);
+	logOutput.Print("%s", record);
 }
 
 /** @} */ // group logging_sink_logOutput
+
+
+namespace {
+	/// Auto-registers the sink defined in this file before main() is called
+	struct SinkRegistrator {
+		SinkRegistrator() {
+			log_backend_registerSink(&log_sink_record_logOutput);
+		}
+	} sinkRegistrator;
+}
 
 #ifdef __cplusplus
 } // extern "C"

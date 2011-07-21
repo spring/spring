@@ -90,7 +90,9 @@ SET(sources_engine_System_FileSystem
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ZipArchive.cpp"
 	)
 SET(sources_engine_System_Log
+		"${CMAKE_CURRENT_SOURCE_DIR}/Log/Backend.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/DefaultFilter.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Log/DefaultFormatter.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogOutputSink.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogUtil.c"
 	)
