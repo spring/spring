@@ -32,7 +32,6 @@
 #include "System/FileSystem/ArchiveLoader.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/LogOutput.h"
 #include "System/Util.h"
 #include "lib/minizip/zip.h"
 #include <cstring>
