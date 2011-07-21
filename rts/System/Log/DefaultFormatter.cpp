@@ -10,7 +10,7 @@
 #include "LogUtil.h"
 #include "Level.h"
 #include "Section.h"
-#include "System/Util.h"
+#include "System/maindefines.h"
 
 #include <cstdio>
 #include <cstdarg>
@@ -83,7 +83,7 @@ void log_formatter_format(char* record, size_t recordSize,
 	log_formatter_createPrefix(prefix, sizeof(prefix), section, level);
 
 	char message[1024];
-	vsnprintf(message, sizeof(message), fmt, arguments);
+	VSNPRINTF(message, sizeof(message), fmt, arguments);
 
 	SNPRINTF(record, recordSize, "%s%s", prefix, message);
 }

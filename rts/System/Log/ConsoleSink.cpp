@@ -7,6 +7,7 @@
 
 #include "Backend.h"
 #include "Level.h" // for LOG_LEVEL_*
+#include "System/maindefines.h"
 
 #include <cstdio>
 
@@ -40,7 +41,7 @@ static void log_sink_record_console(const char* section, int level,
 		const char* record)
 {
 	FILE* outStream = log_chooseStream(level);
-	fprintf(outStream, "%s\n", record);
+	FPRINTF(outStream, "%s\n", record);
 }
 
 /** @} */ // group logging_sink_console
