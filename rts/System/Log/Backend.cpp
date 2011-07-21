@@ -15,41 +15,24 @@ extern void log_formatter_format(char* record, size_t recordSize,
 		const char* section, int level, const char* fmt, va_list arguments);
 
 namespace {
-	std::vector<log_sink_ptr>* sinks;
-
-	struct SinkVectorInitializer {
-		SinkVectorInitializer() {
-			sinks = new std::vector<log_sink_ptr>();
-		}
-		~SinkVectorInitializer() {
-			std::vector<log_sink_ptr>* tmpSinks = sinks;
-			sinks = NULL;
-			tmpSinks->clear();
-			delete tmpSinks;
-		}
-	};
+	std::vector<log_sink_ptr>& log_formatter_getSinks() {
+		static std::vector<log_sink_ptr> sinks;
+		return sinks;
+	}
 }
 
 
 void log_backend_registerSink(log_sink_ptr sink) {
-
-	// NOTE This is required for the vector to be initialized
-	//      when used before main() was called.
-	static const SinkVectorInitializer sinkVectorInitializer;
-
-	if (sinks != NULL) { // might be cleaned-up already
-		sinks->push_back(sink);
-	}
+	log_formatter_getSinks().push_back(sink);
 }
 
 void log_backend_unregisterSink(log_sink_ptr sink) {
 
-	if (sinks != NULL) { // might be cleaned-up already
-		std::vector<log_sink_ptr>::iterator si;
-		for (si = sinks->begin(); si != sinks->end(); ++si) {
-			if (*si == sink) {
-				sinks->erase(si);
-			}
+	std::vector<log_sink_ptr>& sinks = log_formatter_getSinks();
+	std::vector<log_sink_ptr>::iterator si;
+	for (si = sinks.begin(); si != sinks.end(); ++si) {
+		if (*si == sink) {
+			sinks.erase(si);
 		}
 	}
 }
@@ -64,13 +47,14 @@ void log_backend_unregisterSink(log_sink_ptr sink) {
 void log_backend_record(const char* section, int level, const char* fmt,
 		va_list arguments)
 {
-	if ((sinks != NULL) && !sinks->empty()) {
+	const std::vector<log_sink_ptr>& sinks = log_formatter_getSinks();
+	if (!sinks.empty()) {
 		char record[1024 + 64];
 		log_formatter_format(record, sizeof(record), section, level, fmt,
 				arguments);
 
-		std::vector<log_sink_ptr>::iterator si;
-		for (si = sinks->begin(); si != sinks->end(); ++si) {
+		std::vector<log_sink_ptr>::const_iterator si;
+		for (si = sinks.begin(); si != sinks.end(); ++si) {
 			(*si)(section, level, record);
 		}
 	}
