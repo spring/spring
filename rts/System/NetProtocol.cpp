@@ -44,6 +44,7 @@ void CNetProtocol::InitClient(const char* server_addr, unsigned portnum, const s
 	GML_STDMUTEX_LOCK(net); // InitClient
 
 	netcode::UDPConnection* conn = new netcode::UDPConnection(configHandler->GetInt("SourcePort"), server_addr, portnum);
+	conn->Unmute();
 	serverConn.reset(conn);
 	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion));
 	serverConn->Flush(true);
@@ -55,6 +56,7 @@ void CNetProtocol::AttemptReconnect(const std::string& myName, const std::string
 	GML_STDMUTEX_LOCK(net); // AttemptReconnect
 
 	netcode::UDPConnection* conn = new netcode::UDPConnection(*serverConn);
+	conn->Unmute();
 	conn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion, true));
 	conn->Flush(true);
 

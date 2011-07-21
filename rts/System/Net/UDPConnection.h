@@ -11,6 +11,7 @@
 
 #include "Connection.h"
 #include "System/myTime.h"
+#include "System/FileSystem/CRC.h"
 
 namespace netcode {
 
@@ -19,6 +20,12 @@ class Chunk
 public:
 	unsigned GetSize() const {
 		return data.size() + headerSize;
+	}
+	void UpdateChecksum(CRC &crc) {
+		crc << chunkNumber;
+		crc << (unsigned int)chunkSize;
+		if(data.size() > 0)
+			crc.Update(&data[0], data.size());
 	}
 	static const unsigned maxSize = 254;
 	static const unsigned headerSize = 5;
@@ -31,7 +38,7 @@ typedef boost::shared_ptr<Chunk> ChunkPtr;
 class Packet
 {
 public:
-	static const unsigned headerSize = 5;
+	static const unsigned headerSize = 6;
 	Packet(const unsigned char* data, unsigned length);
 	Packet(int lastContinuous, int nak);
 
@@ -44,11 +51,23 @@ public:
 		return size;
 	}
 
+	uint8_t GetChecksum() {
+		CRC crc;
+		crc << lastContinuous;
+		crc << (unsigned int)nakType;
+		if(naks.size() > 0)
+			crc.Update(&naks[0], naks.size());
+		for (std::list<ChunkPtr>::const_iterator chk = chunks.begin(); chk != chunks.end(); ++chk)
+			(*chk)->UpdateChecksum(crc);
+		return (uint8_t)crc.GetDigest();
+	}
+
 	void Serialize(std::vector<uint8_t>& data);
 
 	int32_t lastContinuous;
 	/// if < 0, we lost -x packets since lastContinuous, if >0, x = size of naks
 	int8_t nakType;
+	uint8_t checksum;
 	std::vector<uint8_t> naks;
 	std::list<ChunkPtr> chunks;
 };
@@ -107,6 +126,8 @@ public:
 
 	/// Are we using this address?
 	bool IsUsingAddress(const boost::asio::ip::udp::endpoint& from) const;
+	/// Connections are stealth by default, this allow them to send data
+	void Unmute() { muted = false; }
 
 private:
 	void InitConnection(boost::asio::ip::udp::endpoint address,
@@ -138,6 +159,8 @@ private:
 
 	/// maximum size of packets to send
 	unsigned mtu;
+
+	bool muted;
 
 	int reconnectTime;
 
