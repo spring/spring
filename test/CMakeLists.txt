@@ -15,8 +15,10 @@ Else  (NOT Boost_FOUND)
 	add_definitions(-DBOOST_TEST_DYN_LINK)
 
 	Set(test_Log_sources
+			"${ENGINE_SOURCE_DIR}/System/Log/Backend.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Log/LogUtil.c"
 			"${ENGINE_SOURCE_DIR}/System/Log/DefaultFilter.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Log/DefaultFormatter.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Log/ConsoleSink.cpp"
 		)
 

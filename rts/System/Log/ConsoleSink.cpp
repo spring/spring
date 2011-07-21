@@ -5,47 +5,15 @@
  * It routes all logging messages to the console (stdout & stderr).
  */
 
+#include "Backend.h"
 #include "Level.h" // for LOG_LEVEL_*
-#include "LogUtil.h"
 
 #include <cstdio>
-#include <cstdarg>
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-static const int SECTION_SIZE_MIN = 10;
-static const int SECTION_SIZE_MAX = 20;
-
-static void log_createPrefix_xorgStyle(char* prefix, size_t prefixSize,
-		const char* section, int level)
-{
-	section = log_prepareSection(section);
-
-	const char levelChar = log_levelToChar(level);
-
-	snprintf(prefix, prefixSize, "(%c%c) %*.*s - ", levelChar, levelChar,
-			SECTION_SIZE_MIN, SECTION_SIZE_MAX, section);
-}
-
-static void log_createPrefix_classical(char* prefix, size_t prefixSize,
-		const char* section, int level)
-{
-	section = log_prepareSection(section);
-
-	const char* levelStr = log_levelToString(level);
-
-	snprintf(prefix, prefixSize, "%s %s: ", levelStr, section);
-}
-
-static inline void log_createPrefix(char* prefix, size_t prefixSize,
-		const char* section, int level)
-{
-	log_createPrefix_xorgStyle(prefix, prefixSize, section, level);
-	//log_createPrefix_classical(prefix, prefixSize, section, level);
-}
 
 /// Choose the out-stream for logging
 static inline FILE* log_chooseStream(int level) {
@@ -68,20 +36,24 @@ static inline FILE* log_chooseStream(int level) {
  */
 
 /// Records a log entry
-void log_sink_record(const char* section, int level, const char* fmt,
-		va_list arguments)
+static void log_sink_record_console(const char* section, int level,
+		const char* record)
 {
-	char prefix[64];
-	log_createPrefix(prefix, sizeof(prefix), section, level);
-
-	char message[1024];
-	vsnprintf(message, sizeof(message), fmt, arguments);
-
 	FILE* outStream = log_chooseStream(level);
-	fprintf(outStream, "%s%s\n", prefix, message);
+	fprintf(outStream, "%s\n", record);
 }
 
 /** @} */ // group logging_sink_console
+
+
+namespace {
+	/// Auto-registers the sink defined in this file before main() is called
+	struct SinkRegistrator {
+		SinkRegistrator() {
+			log_backend_registerSink(&log_sink_record_console);
+		}
+	} sinkRegistrator;
+}
 
 #ifdef __cplusplus
 } // extern "C"
