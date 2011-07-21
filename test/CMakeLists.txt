@@ -20,6 +20,7 @@ Else  (NOT Boost_FOUND)
 			"${ENGINE_SOURCE_DIR}/System/Log/DefaultFilter.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Log/DefaultFormatter.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Log/ConsoleSink.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Log/StreamSink.cpp"
 		)
 
 
@@ -53,11 +54,29 @@ Else  (NOT Boost_FOUND)
 
 
 ################################################################################
+### ILog
+
+	Set(test_ILog_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Log/TestILog.cpp"
+			${test_Log_sources}
+		)
+
+	ADD_EXECUTABLE(test_ILog ${test_ILog_src})
+	TARGET_LINK_LIBRARIES(test_ILog
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+		)
+
+	ADD_TEST(NAME testILog COMMAND test_ILog)
+
+
+
+################################################################################
 
 
 
 	Set(test_targets
 			test_UDPListener
+			test_ILog
 		)
 
 	Add_Custom_Target(tests)
