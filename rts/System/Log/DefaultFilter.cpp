@@ -61,19 +61,20 @@ struct log_filter_section_compare {
 	}
 };
 
-static int minLevel = LOG_LEVEL_ALL;
-static std::map<const char*, int, log_filter_section_compare> sectionMinLevels;
-static std::set<const char*, log_filter_section_compare>* registeredSections;
 namespace {
-struct SectionListInitializer {
-	SectionListInitializer() {
-		registeredSections = new std::set<const char*, log_filter_section_compare>();
-	}
-	~SectionListInitializer() {
-		delete registeredSections;
-		registeredSections = NULL;
-	}
-};
+	int minLevel = LOG_LEVEL_ALL;
+	std::map<const char*, int, log_filter_section_compare> sectionMinLevels;
+	std::set<const char*, log_filter_section_compare>* registeredSections;
+
+	struct SectionListInitializer {
+		SectionListInitializer() {
+			registeredSections = new std::set<const char*, log_filter_section_compare>();
+		}
+		~SectionListInitializer() {
+			delete registeredSections;
+			registeredSections = NULL;
+		}
+	};
 }
 
 
@@ -192,6 +193,8 @@ bool log_frontend_isEnabled(const char* section, int level) {
 
 void log_frontend_registerSection(const char* section) {
 
+	// NOTE This is required for the vector to be initialized
+	//      when used before main() was called.
 	static const SectionListInitializer sectionListInitializer;
 
 	if (!DEFAULT_FILTER_SECTIONS_EQUAL(section, LOG_SECTION_DEFAULT)) {
