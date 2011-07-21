@@ -25,9 +25,9 @@ static const int SECTION_SIZE_MAX = 20;
 static void log_formatter_createPrefix_xorgStyle(char* prefix,
 		size_t prefixSize, const char* section, int level)
 {
-	section = log_prepareSection(section);
+	section = log_util_prepareSection(section);
 
-	const char levelChar = log_levelToChar(level);
+	const char levelChar = log_util_levelToChar(level);
 
 	snprintf(prefix, prefixSize, "(%c%c) %*.*s - ", levelChar, levelChar,
 			SECTION_SIZE_MIN, SECTION_SIZE_MAX, section);
@@ -36,9 +36,9 @@ static void log_formatter_createPrefix_xorgStyle(char* prefix,
 static void log_formatter_createPrefix_testing(char* prefix,
 		size_t prefixSize, const char* section, int level)
 {
-	section = log_prepareSection(section);
+	section = log_util_prepareSection(section);
 
-	const char* levelStr = log_levelToString(level);
+	const char* levelStr = log_util_levelToString(level);
 
 	snprintf(prefix, prefixSize, "%s %s: ", levelStr, section);
 }
@@ -50,11 +50,11 @@ static void log_formatter_createPrefix_default(char* prefix,
 
 	// HACK this stuff should be done later, closer to the point where it is written to a file or the console
 	if (section != LOG_SECTION_DEFAULT) {
-		section = log_prepareSection(section);
+		section = log_util_prepareSection(section);
 		snprintf(prefix, prefixSize, "%s[%s] ", prefix, section);
 	}
 	if (level != LOG_LEVEL_INFO) {
-		const char* levelStr = log_levelToString(level);
+		const char* levelStr = log_util_levelToString(level);
 		snprintf(prefix, prefixSize, "%s%s: ", prefix, levelStr);
 	}
 }
