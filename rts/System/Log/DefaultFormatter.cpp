@@ -10,6 +10,7 @@
 #include "LogUtil.h"
 #include "Level.h"
 #include "Section.h"
+#include "System/Util.h"
 
 #include <cstdio>
 #include <cstdarg>
@@ -29,7 +30,7 @@ static void log_formatter_createPrefix_xorgStyle(char* prefix,
 
 	const char levelChar = log_util_levelToChar(level);
 
-	snprintf(prefix, prefixSize, "(%c%c) %*.*s - ", levelChar, levelChar,
+	SNPRINTF(prefix, prefixSize, "(%c%c) %*.*s - ", levelChar, levelChar,
 			SECTION_SIZE_MIN, SECTION_SIZE_MAX, section);
 }
 
@@ -40,7 +41,7 @@ static void log_formatter_createPrefix_testing(char* prefix,
 
 	const char* levelStr = log_util_levelToString(level);
 
-	snprintf(prefix, prefixSize, "%s %s: ", levelStr, section);
+	SNPRINTF(prefix, prefixSize, "%s %s: ", levelStr, section);
 }
 
 static void log_formatter_createPrefix_default(char* prefix,
@@ -51,11 +52,11 @@ static void log_formatter_createPrefix_default(char* prefix,
 	// HACK this stuff should be done later, closer to the point where it is written to a file or the console
 	if (section != LOG_SECTION_DEFAULT) {
 		section = log_util_prepareSection(section);
-		snprintf(prefix, prefixSize, "%s[%s] ", prefix, section);
+		SNPRINTF(prefix, prefixSize, "%s[%s] ", prefix, section);
 	}
 	if (level != LOG_LEVEL_INFO) {
 		const char* levelStr = log_util_levelToString(level);
-		snprintf(prefix, prefixSize, "%s%s: ", prefix, levelStr);
+		SNPRINTF(prefix, prefixSize, "%s%s: ", prefix, levelStr);
 	}
 }
 
@@ -84,7 +85,7 @@ void log_formatter_format(char* record, size_t recordSize,
 	char message[1024];
 	vsnprintf(message, sizeof(message), fmt, arguments);
 
-	snprintf(record, recordSize, "%s%s", prefix, message);
+	SNPRINTF(record, recordSize, "%s%s", prefix, message);
 }
 
 /** @} */ // group logging_formatter

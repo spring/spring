@@ -4905,26 +4905,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Dedicated Server (Debug)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\builds\DS\main.cpp"
 				>
 				<FileConfiguration
@@ -5003,6 +4983,26 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Dedicated Server (Debug)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>
@@ -7683,6 +7683,18 @@
 				Name="Log"
 				>
 				<File
+					RelativePath="..\..\System\Log\Backend.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Log\Backend.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Log\ConsoleSink.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Log\DefaultFilter.cpp"
 					>
 				</File>
@@ -7691,7 +7703,15 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\Log\DefaultFormatter.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Log\ILog.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Log\Level.h"
 					>
 				</File>
 				<File
@@ -7704,6 +7724,18 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Log\LogUtil.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Log\Section.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Log\StreamSink.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Log\StreamSink.h"
 					>
 				</File>
 			</Filter>
