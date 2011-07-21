@@ -14,7 +14,7 @@ namespace netcode
 }
 struct PlayerStatistics;
 
-const unsigned short NETWORK_VERSION = 2;
+const unsigned short NETWORK_VERSION = 3;
 
 /*
  * Comment behind NETMSG enumeration constant gives the extra data belonging to
