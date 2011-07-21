@@ -51,8 +51,8 @@ void EMULATE_PACKET_CORRUPTION(int data, uint8_t &crc) {
 		crc = (uint8_t)rand();
 }
 #else
-bool EMULATE_PACKET_LOSS(int data) { return false; }
-void EMULATE_PACKET_CORRUPTION(int data, uint8_t &crc) {}
+inline bool EMULATE_PACKET_LOSS(int data) { return false; }
+inline void EMULATE_PACKET_CORRUPTION(int data, uint8_t &crc) {}
 #endif
 
 
