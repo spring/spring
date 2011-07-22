@@ -5,7 +5,7 @@
 #include "SMFReadMap.h"
 #include "SMFGroundTextures.h"
 #include "SMFGroundDrawer.h"
-#include "mapfile.h"
+#include "SMFFormat.h"
 #include "Map/MapInfo.h"
 #include "Game/Camera.h"
 #include "Game/LoadScreen.h"
@@ -29,10 +29,10 @@ using std::max;
 CONFIG(bool, GroundNormalTextureHighPrecision).defaultValue(false);
 CONFIG(float, SMFTexAniso).defaultValue(0.0f);
 
-CR_BIND_DERIVED(CSmfReadMap, CReadMap, (""))
+CR_BIND_DERIVED(CSMFReadMap, CReadMap, (""))
 
 
-CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
+CSMFReadMap::CSMFReadMap(std::string mapname): file(mapname)
 {
 	loadscreen->SetLoadMessage("Loading SMF");
 
@@ -40,35 +40,43 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 
 	for (int a = 0; a < 1024; ++a) {
 		for (int b = 0; b < 3; ++b) {
-			float c = max(mapInfo->water.minColor[b], mapInfo->water.baseColor[b] - mapInfo->water.absorb[b] * a);
-			waterHeightColors[a * 4 + b] = (unsigned char)(c * 210);
+			const float absorbColor = mapInfo->water.baseColor[b] - mapInfo->water.absorb[b] * a;
+			const float clampedColor = max(mapInfo->water.minColor[b], absorbColor);
+			waterHeightColors[a * 4 + b] = clampedColor * 210;
 		}
 		waterHeightColors[a * 4 + 3] = 1;
 	}
 
 	const SMFHeader& header = file.GetHeader();
+	const CMapInfo::smf_t& smf = mapInfo->smf;
 
 	width  = header.mapx;
 	height = header.mapy;
+
+	numBigTexX      = (header.mapx / bigSquareSize);
+	numBigTexY      = (header.mapy / bigSquareSize);
+	bigTexSize      = (SQUARE_SIZE * bigSquareSize);
+	tileMapSizeX    = (header.mapx / tileScale);
+	tileMapSizeY    = (header.mapy / tileScale);
+	tileCount       = (header.mapx * header.mapy) / (tileScale * tileScale);
+	mapSizeX        = (header.mapx * SQUARE_SIZE);
+	mapSizeZ        = (header.mapy * SQUARE_SIZE);
+	maxHeightMapIdx = ((header.mapx + 1) * (header.mapy + 1)) - 1;
+	heightMapSizeX  =  (header.mapx + 1);
 
 	cornerHeightMapSynced.resize((width + 1) * (height + 1));
 	cornerHeightMapUnsynced.resize((width + 1) * (height + 1));
 	groundDrawer = NULL;
 
-	const CMapInfo::smf_t& smf = mapInfo->smf;
 	const float minH = smf.minHeightOverride ? smf.minHeight : header.minHeight;
 	const float maxH = smf.maxHeightOverride ? smf.maxHeight : header.maxHeight;
 
-	const float base = minH;
-	const float mod = (maxH - minH) / 65536.0f;
-
-	file.ReadHeightmap(&cornerHeightMapSynced[0], base, mod);
-
+	file.ReadHeightmap(&cornerHeightMapSynced[0],  minH, (maxH - minH) / 65536.0f);
 	CReadMap::Initialize();
 
 	shadingTexPixelRow.resize(gs->mapxp1 * 4, 0);
 	shadingTexUpdateIter = 0;
-	shadingTexUpdateRate = std::max(1.0f, math::ceil(gs->mapxp1 / float(gs->mapyp1)));
+	shadingTexUpdateRate = std::max(1.0f, math::ceil((width + 1) / float(height + 1)));
 	// with GLSL, the shading texture has very limited use (minimap etc) so we increase the update interval
 	if (globalRendering->haveGLSL)
 		shadingTexUpdateRate *= 10;
@@ -247,7 +255,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname): file(mapname)
 }
 
 
-CSmfReadMap::~CSmfReadMap()
+CSMFReadMap::~CSMFReadMap()
 {
 	delete groundDrawer;
 
@@ -268,11 +276,11 @@ CSmfReadMap::~CSmfReadMap()
 }
 
 
-void CSmfReadMap::NewGroundDrawer() { groundDrawer = new CBFGroundDrawer(this); }
-CBaseGroundDrawer* CSmfReadMap::GetGroundDrawer() { return (CBaseGroundDrawer*) groundDrawer; }
+void CSMFReadMap::NewGroundDrawer() { groundDrawer = new CSMFGroundDrawer(this); }
+CBaseGroundDrawer* CSMFReadMap::GetGroundDrawer() { return (CBaseGroundDrawer*) groundDrawer; }
 
 
-void CSmfReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigned char* pixelRow) {
+void CSMFReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigned char* pixelRow) {
 	for (int x = 0; x < xsize; ++x) {
 		const int xi = x1 + x;
 		const int yi = y1 + y;
@@ -314,7 +322,7 @@ void CSmfReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigne
 	}
 }
 
-void CSmfReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
+void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 {
 	const int x1 = update.x1, y1 = update.y1;
 	const int x2 = update.x2, y2 = update.y2;
@@ -466,7 +474,7 @@ void CSmfReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 }
 
 
-void CSmfReadMap::UpdateShadingTexture() {
+void CSMFReadMap::UpdateShadingTexture() {
 	const int xsize = gs->mapxp1;
 	const int ysize = gs->mapyp1;
 	int y = shadingTexUpdateIter;
@@ -485,7 +493,7 @@ void CSmfReadMap::UpdateShadingTexture() {
 }
 
 
-float CSmfReadMap::DiffuseSunCoeff(const int& x, const int& y) const
+float CSMFReadMap::DiffuseSunCoeff(const int& x, const int& y) const
 {
 	const float3& N = visVertexNormals[(y * gs->mapxp1) + x];
 	const float3& L = sky->GetLight()->GetLightDir();
@@ -493,7 +501,7 @@ float CSmfReadMap::DiffuseSunCoeff(const int& x, const int& y) const
 }
 
 
-float3 CSmfReadMap::GetLightValue(const int& x, const int& y) const
+float3 CSMFReadMap::GetLightValue(const int& x, const int& y) const
 {
 	float3 light =
 		mapInfo->light.groundAmbientColor +
@@ -509,7 +517,7 @@ float3 CSmfReadMap::GetLightValue(const int& x, const int& y) const
 }
 
 
-void CSmfReadMap::DrawMinimap() const
+void CSMFReadMap::DrawMinimap() const
 {
 	glDisable(GL_ALPHA_TEST);
 
@@ -573,7 +581,7 @@ void CSmfReadMap::DrawMinimap() const
 }
 
 
-void CSmfReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CReadMap::IQuadDrawer *qd, int extraSize)
+void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CReadMap::IQuadDrawer *qd, int extraSize)
 {
 	const int cx = (int)(cam->pos.x / (SQUARE_SIZE * quadSize));
 	const int cy = (int)(cam->pos.z / (SQUARE_SIZE * quadSize));
@@ -602,7 +610,7 @@ void CSmfReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 		int sx = sxi;
 		int ex = exi;
 		float xtest, xtest2;
-		std::vector<CBFGroundDrawer::fline>::iterator fli;
+		std::vector<CSMFGroundDrawer::fline>::iterator fli;
 		for (fli = groundDrawer->left.begin(); fli != groundDrawer->left.end(); ++fli) {
 			xtest  = ((fli->base + fli->dir * ( y * quadSize)            ));
 			xtest2 = ((fli->base + fli->dir * ((y * quadSize) + quadSize)));
@@ -634,31 +642,31 @@ void CSmfReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 }
 
 
-int CSmfReadMap::GetNumFeatures ()
+int CSMFReadMap::GetNumFeatures ()
 {
 	return file.GetNumFeatures();
 }
 
 
-int CSmfReadMap::GetNumFeatureTypes()
+int CSMFReadMap::GetNumFeatureTypes()
 {
 	return file.GetNumFeatureTypes();
 }
 
 
-void CSmfReadMap::GetFeatureInfo(MapFeatureInfo* f)
+void CSMFReadMap::GetFeatureInfo(MapFeatureInfo* f)
 {
 	file.ReadFeatureInfo(f);
 }
 
 
-const char* CSmfReadMap::GetFeatureTypeName (int typeID)
+const char* CSMFReadMap::GetFeatureTypeName (int typeID)
 {
 	return file.GetFeatureTypeName(typeID);
 }
 
 
-unsigned char* CSmfReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* bmInfo)
+unsigned char* CSMFReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* bmInfo)
 {
 	// get size
 	file.GetInfoMapSize(name, bmInfo);
@@ -671,13 +679,13 @@ unsigned char* CSmfReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* b
 }
 
 
-void CSmfReadMap::FreeInfoMap(const std::string& name, unsigned char *data)
+void CSMFReadMap::FreeInfoMap(const std::string& name, unsigned char *data)
 {
 	delete[] data;
 }
 
 
-void CSmfReadMap::ConfigureAnisotropy()
+void CSMFReadMap::ConfigureAnisotropy()
 {
 	if (!GLEW_EXT_texture_filter_anisotropic) {
 		anisotropy = 0.0f;

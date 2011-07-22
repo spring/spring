@@ -53,9 +53,9 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 	CReadMap* rm = 0;
 
 	if (extension == "sm3") {
-		rm = new CSm3ReadMap(mapname);
+		rm = new CSM3ReadMap(mapname);
 	} else {
-		rm = new CSmfReadMap(mapname);
+		rm = new CSMFReadMap(mapname);
 	}
 
 	if (!rm) {

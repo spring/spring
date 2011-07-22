@@ -568,7 +568,7 @@ static bool internal_GetMapInfo(const char* mapName, InternalMapInfo* outInfo)
 		const std::string extension = filesystem.GetExtension(mapFile);
 		if (extension == "smf") {
 			try {
-				const CSmfMapFile file(mapFile);
+				const CSMFMapFile file(mapFile);
 				const SMFHeader& mh = file.GetHeader();
 
 				outInfo->width  = mh.mapx * SQUARE_SIZE;
@@ -955,7 +955,7 @@ EXPORT(float) GetMapMinHeight(const char* mapName) {
 	try {
 		const std::string mapFile = GetMapFile(mapName);
 		ScopedMapLoader loader(mapName, mapFile);
-		CSmfMapFile file(mapFile);
+		CSMFMapFile file(mapFile);
 		MapParser parser(mapFile);
 
 		const SMFHeader& header = file.GetHeader();
@@ -977,7 +977,7 @@ EXPORT(float) GetMapMaxHeight(const char* mapName) {
 	try {
 		const std::string mapFile = GetMapFile(mapName);
 		ScopedMapLoader loader(mapName, mapFile);
-		CSmfMapFile file(mapFile);
+		CSMFMapFile file(mapFile);
 		MapParser parser(mapFile);
 
 		const SMFHeader& header = file.GetHeader();
@@ -1104,7 +1104,7 @@ static unsigned short* GetMinimapSM3(std::string mapFileName, int mipLevel)
 
 static unsigned short* GetMinimapSMF(std::string mapFileName, int mipLevel)
 {
-	CSmfMapFile in(mapFileName);
+	CSMFMapFile in(mapFileName);
 	std::vector<uint8_t> buffer;
 	const int mipsize = in.ReadMinimap(buffer, mipLevel);
 
@@ -1200,7 +1200,7 @@ EXPORT(int) GetInfoMapSize(const char* mapName, const char* name, int* width, in
 
 		const std::string mapFile = GetMapFile(mapName);
 		ScopedMapLoader mapLoader(mapName, mapFile);
-		CSmfMapFile file(mapFile);
+		CSMFMapFile file(mapFile);
 		MapBitmapInfo bmInfo;
 
 		file.GetInfoMapSize(name, &bmInfo);
@@ -1231,7 +1231,7 @@ EXPORT(int) GetInfoMap(const char* mapName, const char* name, unsigned char* dat
 
 		const std::string mapFile = GetMapFile(mapName);
 		ScopedMapLoader mapLoader(mapName, mapFile);
-		CSmfMapFile file(mapFile);
+		CSMFMapFile file(mapFile);
 
 		const std::string n = name;
 		int actualType = (n == "height" ? bm_grayscale_16 : bm_grayscale_8);
