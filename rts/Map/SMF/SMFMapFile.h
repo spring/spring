@@ -4,18 +4,19 @@
 #define _SMF_MAP_FILE_H
 
 #include "System/FileSystem/FileHandler.h"
-#include "mapfile.h"
+#include "SMFFormat.h"
+
 #include <string>
 #include <vector>
 
 struct MapFeatureInfo;
 struct MapBitmapInfo;
 
-class CSmfMapFile
+class CSMFMapFile
 {
 public:
 
-	CSmfMapFile(const std::string& mapFileName);
+	CSMFMapFile(const std::string& mapFileName);
 
 	void ReadMinimap(void* data);
 	/// @return mip size

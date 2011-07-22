@@ -6,22 +6,22 @@
 #include "Map/BaseGroundDrawer.h"
 
 class CVertexArray;
-class CSmfReadMap;
+class CSMFReadMap;
 
 namespace Shader {
 	struct IProgramObject;
 }
 
 /**
- * Map drawer implementation for the CSmfReadMap map system.
+ * Map drawer implementation for the CSMFReadMap map system.
  */
-class CBFGroundDrawer : public CBaseGroundDrawer
+class CSMFGroundDrawer : public CBaseGroundDrawer
 {
 public:
-	CBFGroundDrawer(CSmfReadMap* rm);
-	~CBFGroundDrawer();
+	CSMFGroundDrawer(CSMFReadMap* rm);
+	~CSMFGroundDrawer();
 
-	friend class CSmfReadMap;
+	friend class CSMFReadMap;
 
 	void Draw(bool drawWaterReflection = false, bool drawUnitReflection = false);
 	void DrawShadowPass();
@@ -46,8 +46,8 @@ private:
 	};
 
 #ifdef USE_GML
-	static void DoDrawGroundRowMT(void* c, int bty) { ((CBFGroundDrawer*) c)->DoDrawGroundRow(bty); }
-	static void DoDrawGroundShadowLODMT(void* c, int nlod) { ((CBFGroundDrawer*) c)->DoDrawGroundShadowLOD(nlod); }
+	static void DoDrawGroundRowMT(void* c, int bty) { ((CSMFGroundDrawer*) c)->DoDrawGroundRow(bty); }
+	static void DoDrawGroundShadowLODMT(void* c, int nlod) { ((CSMFGroundDrawer*) c)->DoDrawGroundShadowLOD(nlod); }
 #endif
 
 	bool LoadMapShaders();
@@ -62,7 +62,7 @@ private:
 	void DrawGroundVertexArrayQ(CVertexArray*& ma);
 	void DoDrawGroundShadowLOD(int nlod);
 
-	inline bool BigTexSquareRowVisible(int);
+	inline bool BigTexSquareRowVisible(int) const;
 	inline void SetupBigSquare(const int bigSquareX, const int bigSquareY);
 	void SetupTextureUnits(bool drawReflection);
 	void ResetTextureUnits(bool drawReflection);
@@ -71,17 +71,7 @@ private:
 	void UpdateCamRestraints();
 
 
-	CSmfReadMap* smfMap;
-
-	const int bigSquareSize;
-	const int numBigTexX;
-	const int numBigTexY;
-	const int maxIdx;
-	const int heightMapSizeX;
-
-	int mapSizeX;
-	int mapSizeZ;
-	int bigTexH;
+	CSMFReadMap* smfMap;
 
 	int viewRadius;
 	int neededLod;

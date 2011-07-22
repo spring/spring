@@ -21,14 +21,16 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/FastMath.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/myMath.h"
 #include "System/mmgr.h"
-#include "System/TimeProfiler.h"
+#include "System/Util.h"
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
-extern gmlClientServer<void, int, CUnit*> *gmlProcessor;
+extern gmlClientServer<void, int, CUnit*>* gmlProcessor;
 #endif
+
+#define CLAMP(i) Clamp((i), 0, smfMap->maxHeightMapIdx)
 
 using std::min;
 using std::max;
@@ -43,18 +45,8 @@ CONFIG(int, MaxDynamicMapLights)
 
 CONFIG(int, AdvMapShading).defaultValue(1);
 
-CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
-	bigSquareSize(128),
-	numBigTexX(gs->mapx / bigSquareSize),
-	numBigTexY(gs->mapy / bigSquareSize),
-	maxIdx((gs->mapxp1 * gs->mapyp1) - 1),
-	heightMapSizeX(gs->mapxp1)
+CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm): smfMap(rm)
 {
-	mapSizeX = (gs->mapx * SQUARE_SIZE);
-	mapSizeZ = (gs->mapy * SQUARE_SIZE);
-	bigTexH = mapSizeZ / numBigTexY;
-
-	smfMap = rm;
 	groundTextures = new CSMFGroundTextures(smfMap);
 
 	viewRadius = configHandler->GetInt("GroundDetail");
@@ -87,7 +79,7 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm):
 	advShading = LoadMapShaders();
 }
 
-CBFGroundDrawer::~CBFGroundDrawer(void)
+CSMFGroundDrawer::~CSMFGroundDrawer(void)
 {
 	delete groundTextures;
 
@@ -108,7 +100,7 @@ CBFGroundDrawer::~CBFGroundDrawer(void)
 	lightHandler.Kill();
 }
 
-bool CBFGroundDrawer::LoadMapShaders() {
+bool CSMFGroundDrawer::LoadMapShaders() {
 	#define sh shaderHandler
 
 	smfShaderBaseARB = NULL;
@@ -150,10 +142,10 @@ bool CBFGroundDrawer::LoadMapShaders() {
 			smfShaderCurGLSL = smfShaderDefGLSL;
 
 			std::string extraDefs;
-				extraDefs += (smfMap->haveSpecularLighting)?
+				extraDefs += (smfMap->HaveSpecularLighting())?
 					"#define SMF_ARB_LIGHTING 0\n":
 					"#define SMF_ARB_LIGHTING 1\n";
-				extraDefs += (smfMap->haveSplatTexture)?
+				extraDefs += (smfMap->HaveSplatTexture())?
 					"#define SMF_DETAIL_TEXTURE_SPLATTING 1\n":
 					"#define SMF_DETAIL_TEXTURE_SPLATTING 0\n";
 				extraDefs += (readmap->initMinHeight > 0.0f || mapInfo->map.voidWater)?
@@ -253,7 +245,7 @@ bool CBFGroundDrawer::LoadMapShaders() {
 }
 
 
-void CBFGroundDrawer::UpdateSunDir() {
+void CSMFGroundDrawer::UpdateSunDir() {
 	if (!shadowHandler->shadowsLoaded) {
 		return;
 	}
@@ -273,12 +265,12 @@ void CBFGroundDrawer::UpdateSunDir() {
 }
 
 
-void CBFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
+void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 	glDisable(GL_TEXTURE_2D);
 	glDepthMask(GL_FALSE);
 
-	const float xsize = (mapSizeX) >> 2;
-	const float ysize = (mapSizeZ) >> 2;
+	const float xsize = (smfMap->mapSizeX) >> 2;
+	const float ysize = (smfMap->mapSizeZ) >> 2;
 	const float size = std::min(xsize, ysize);
 
 	CVertexArray* va = GetVertexArray();
@@ -331,7 +323,7 @@ void CBFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 	glDepthMask(GL_TRUE);
 }
 
-inline void CBFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
+inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 	if (!drawWaterReflection) {
 		glCallList(camera->pos.IsInBounds()? waterPlaneCamInDispList: waterPlaneCamOutDispList);
 	}
@@ -339,16 +331,16 @@ inline void CBFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 
 
 
-inline void CBFGroundDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y)
+inline void CSMFGroundDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y)
 {
 	//! don't send the normals as vertex attributes
 	//! (DLOD'ed triangles mess with interpolation)
-	//! const float3& n = readmap->vertexNormals[(y * heightMapSizeX) + x];
+	//! const float3& n = readmap->vertexNormals[(y * smfMap->heightMapSizeX) + x];
 
-	DrawVertexAQ(ma, x, y, GetVisibleVertexHeight(y * heightMapSizeX + x));
+	DrawVertexAQ(ma, x, y, GetVisibleVertexHeight(y * smfMap->heightMapSizeX + x));
 }
 
-inline void CBFGroundDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y, float height)
+inline void CSMFGroundDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y, float height)
 {
 	if (waterDrawn && height < 0.0f) {
 		height *= 2.0f;
@@ -357,12 +349,12 @@ inline void CBFGroundDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y, float 
 	ma->AddVertexQ0(x * SQUARE_SIZE, height, y * SQUARE_SIZE);
 }
 
-inline void CBFGroundDrawer::EndStripQ(CVertexArray* ma)
+inline void CSMFGroundDrawer::EndStripQ(CVertexArray* ma)
 {
 	ma->EndStripQ();
 }
 
-inline void CBFGroundDrawer::DrawGroundVertexArrayQ(CVertexArray * &ma)
+inline void CSMFGroundDrawer::DrawGroundVertexArrayQ(CVertexArray * &ma)
 {
 	ma->DrawArray0(GL_TRIANGLE_STRIP);
 	ma = GetVertexArray();
@@ -370,23 +362,21 @@ inline void CBFGroundDrawer::DrawGroundVertexArrayQ(CVertexArray * &ma)
 
 
 
-inline bool CBFGroundDrawer::BigTexSquareRowVisible(int bty) {
-	const int minx =             0;
-	const int maxx =      mapSizeX;
-	const int minz = bty * bigTexH;
-	const int maxz = minz + bigTexH;
+inline bool CSMFGroundDrawer::BigTexSquareRowVisible(int bty) const {
+	const int minz =  bty * smfMap->bigTexSize;
+	const int maxz = minz + smfMap->bigTexSize;
 	const float miny = readmap->currMinHeight;
 	const float maxy = fabs(cam2->pos.y); // ??
 
-	const float3 mins(minx, miny, minz);
-	const float3 maxs(maxx, maxy, maxz);
+	const float3 mins(               0, miny, minz);
+	const float3 maxs(smfMap->mapSizeX, maxy, maxz);
 
 	return (cam2->InView(mins, maxs));
 }
 
 
 
-inline void CBFGroundDrawer::FindRange(int &xs, int &xe, const std::vector<fline>& left, const std::vector<fline>& right, int y, int lod) {
+inline void CSMFGroundDrawer::FindRange(int &xs, int &xe, const std::vector<fline>& left, const std::vector<fline>& right, int y, int lod) {
 	int xt0, xt1;
 	std::vector<fline>::const_iterator fli;
 
@@ -419,45 +409,45 @@ inline void CBFGroundDrawer::FindRange(int &xs, int &xe, const std::vector<fline
 }
 
 
-#define CLAMP(i) std::max(0, std::min((i), maxIdx))
 
-inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
+inline void CSMFGroundDrawer::DoDrawGroundRow(int bty) {
 	if (!BigTexSquareRowVisible(bty)) {
 		//! skip this entire row of squares if we can't see it
 		return;
 	}
 
-	CVertexArray *ma = GetVertexArray();
+	CVertexArray* ma = GetVertexArray();
 
 	bool inStrip = false;
 	float x0, x1;
 	int x,y;
 	int sx = 0;
-	int ex = numBigTexX;
+	int ex = smfMap->numBigTexX;
 	std::vector<fline>::iterator fli;
 
 	//! only process the necessary big squares in the x direction
-	int bigSquareSizeY = bty * bigSquareSize;
+	const int bigSquareSizeY = bty * smfMap->bigSquareSize;
+
 	for (fli = left.begin(); fli != left.end(); ++fli) {
 		x0 = fli->base + fli->dir * bigSquareSizeY;
-		x1 = x0 + fli->dir * bigSquareSize;
+		x1 = x0 + fli->dir * smfMap->bigSquareSize;
 
 		if (x0 > x1)
 			x0 = x1;
 
-		x0 /= bigSquareSize;
+		x0 /= smfMap->bigSquareSize;
 
 		if (x0 > sx)
 			sx = (int) x0;
 	}
 	for (fli = right.begin(); fli != right.end(); ++fli) {
-		x0 = fli->base + fli->dir * bigSquareSizeY + bigSquareSize;
-		x1 = x0 + fli->dir * bigSquareSize;
+		x0 = fli->base + fli->dir * bigSquareSizeY + smfMap->bigSquareSize;
+		x1 = x0 + fli->dir * smfMap->bigSquareSize;
 
 		if (x0 < x1)
 			x0 = x1;
 
-		x0 /= bigSquareSize;
+		x0 /= smfMap->bigSquareSize;
 
 		if (x0 < ex)
 			ex = (int) x0;
@@ -505,8 +495,8 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 			const float hocxp  = 0.5f * oldcamxpart, hocyp  = 0.5f * oldcamypart;
 			const float hmocxp = 0.5f * mocxp,       hmocyp = 0.5f * mocyp;
 
-			const int minty = bty * bigSquareSize, maxty = minty + bigSquareSize;
-			const int mintx = btx * bigSquareSize, maxtx = mintx + bigSquareSize;
+			const int minty = bty * smfMap->bigSquareSize, maxty = minty + smfMap->bigSquareSize;
+			const int mintx = btx * smfMap->bigSquareSize, maxtx = mintx + smfMap->bigSquareSize;
 
 			const int minly = cy + (-viewRadius + 3 - ysquaremod) * lod;
 			const int maxly = cy + ( viewRadius - 1 - ysquaremod) * lod;
@@ -536,9 +526,9 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 
 				ma->EnlargeArrays((52 * nloop), 14 * nloop + 1);
 
-				int yhdx = y * heightMapSizeX;
-				int ylhdx = yhdx + lod * heightMapSizeX;
-				int yhhdx = yhdx + hlod * heightMapSizeX;
+				int yhdx = y * smfMap->heightMapSizeX;
+				int ylhdx = yhdx + lod * smfMap->heightMapSizeX;
+				int yhhdx = yhdx + hlod * smfMap->heightMapSizeX;
 
 				for (x = xs; x < xe; x += lod) {
 					int xlod = x + lod;
@@ -706,16 +696,16 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 					DrawVertexAQ(ma, x, y + lod);
 
 					if (y % dlod) {
-						const int idx1 = CLAMP((y      ) * heightMapSizeX + x), idx1LOD = CLAMP(idx1 + lod);
-						const int idx2 = CLAMP((y + lod) * heightMapSizeX + x), idx2LOD = CLAMP(idx2 + lod);
-						const int idx3 = CLAMP((y - lod) * heightMapSizeX + x), idx3LOD = CLAMP(idx3 + lod);
+						const int idx1 = CLAMP((y      ) * smfMap->heightMapSizeX + x), idx1LOD = CLAMP(idx1 + lod);
+						const int idx2 = CLAMP((y + lod) * smfMap->heightMapSizeX + x), idx2LOD = CLAMP(idx2 + lod);
+						const int idx3 = CLAMP((y - lod) * smfMap->heightMapSizeX + x), idx3LOD = CLAMP(idx3 + lod);
 						const float h = (GetVisibleVertexHeight(idx3LOD) + GetVisibleVertexHeight(idx2LOD)) * hmcxp +	GetVisibleVertexHeight(idx1LOD) * camxpart;
 						DrawVertexAQ(ma, xlod, y, h);
 						DrawVertexAQ(ma, xlod, y + lod);
 					} else {
-						const int idx1 = CLAMP((y       ) * heightMapSizeX + x), idx1LOD = CLAMP(idx1 + lod);
-						const int idx2 = CLAMP((y +  lod) * heightMapSizeX + x), idx2LOD = CLAMP(idx2 + lod);
-						const int idx3 = CLAMP((y + dlod) * heightMapSizeX + x), idx3LOD = CLAMP(idx3 + lod);
+						const int idx1 = CLAMP((y       ) * smfMap->heightMapSizeX + x), idx1LOD = CLAMP(idx1 + lod);
+						const int idx2 = CLAMP((y +  lod) * smfMap->heightMapSizeX + x), idx2LOD = CLAMP(idx2 + lod);
+						const int idx3 = CLAMP((y + dlod) * smfMap->heightMapSizeX + x), idx3LOD = CLAMP(idx3 + lod);
 						const float h = (GetVisibleVertexHeight(idx1LOD) + GetVisibleVertexHeight(idx3LOD)) * hmcxp + GetVisibleVertexHeight(idx2LOD) * camxpart;
 						DrawVertexAQ(ma, xlod, y);
 						DrawVertexAQ(ma, xlod, y + lod, h);
@@ -729,16 +719,16 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 				int xlod = x + lod;
 				for (y = yst; y < yed; y += lod) {
 					if (y % dlod) {
-						int idx1 = CLAMP((y      ) * heightMapSizeX + x);
-						int idx2 = CLAMP((y + lod) * heightMapSizeX + x);
-						int idx3 = CLAMP((y - lod) * heightMapSizeX + x);
+						int idx1 = CLAMP((y      ) * smfMap->heightMapSizeX + x);
+						int idx2 = CLAMP((y + lod) * smfMap->heightMapSizeX + x);
+						int idx3 = CLAMP((y - lod) * smfMap->heightMapSizeX + x);
 						float h = (GetVisibleVertexHeight(idx3) + GetVisibleVertexHeight(idx2)) * hcxp + GetVisibleVertexHeight(idx1) * mcxp;
 						DrawVertexAQ(ma, x, y, h);
 						DrawVertexAQ(ma, x, y + lod);
 					} else {
-						int idx1 = CLAMP((y       ) * heightMapSizeX + x);
-						int idx2 = CLAMP((y +  lod) * heightMapSizeX + x);
-						int idx3 = CLAMP((y + dlod) * heightMapSizeX + x);
+						int idx1 = CLAMP((y       ) * smfMap->heightMapSizeX + x);
+						int idx2 = CLAMP((y +  lod) * smfMap->heightMapSizeX + x);
+						int idx3 = CLAMP((y + dlod) * smfMap->heightMapSizeX + x);
 						float h = (GetVisibleVertexHeight(idx1) + GetVisibleVertexHeight(idx3)) * hcxp + GetVisibleVertexHeight(idx2) * mcxp;
 						DrawVertexAQ(ma, x, y);
 						DrawVertexAQ(ma, x, y + lod, h);
@@ -759,7 +749,7 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 					x = xs;
 					int ylod = y + lod;
 					int nloop = (xe - xs) / lod + 2; //! one extra for if statment
-					int ylhdx = (y + lod) * heightMapSizeX;
+					int ylhdx = (y + lod) * smfMap->heightMapSizeX;
 
 					ma->EnlargeArrays((2 * nloop), 1);
 
@@ -796,7 +786,7 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 				if (xs < xe) {
 					x = xs;
 					int ylod = y + lod;
-					int yhdx = y * heightMapSizeX;
+					int yhdx = y * smfMap->heightMapSizeX;
 					int nloop = (xe - xs) / lod + 2; //! one extra for if statment
 
 					ma->EnlargeArrays((2 * nloop), 1);
@@ -833,7 +823,7 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 	}
 }
 
-void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
+void CSMFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 {
 	const int baseViewRadius = std::max(4, viewRadius);
 
@@ -866,7 +856,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 	// }
 
 	viewRadius  = int(viewRadius * fastmath::apxsqrt(45.0f / camera->GetFov()));
-	viewRadius  = std::max(std::max(numBigTexY, numBigTexX), viewRadius);
+	viewRadius  = std::max(std::max(smfMap->numBigTexY, smfMap->numBigTexX), viewRadius);
 	viewRadius += (viewRadius & 1); //! we need a multiple of 2
 	neededLod   = std::max(1, int((globalRendering->viewRange * 0.125f) / viewRadius) << 1);
 	neededLod   = std::min(neededLod, std::min(gs->mapx, gs->mapy));
@@ -883,19 +873,19 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 #ifdef USE_GML
 		bool mt = GML_PROFILER(multiThreadDrawGround)
 		if (mt) { // Profiler results, 4 threads: multiThreadDrawGround is faster only if ViewRadius is below 60 (probably depends on memory/cache speeds)
-			gmlProcessor->Work(NULL,&CBFGroundDrawer::DoDrawGroundRowMT,NULL,this,gmlThreadCount,FALSE,NULL,numBigTexY,50,100,TRUE,NULL);
+			gmlProcessor->Work(NULL, &CSMFGroundDrawer::DoDrawGroundRowMT, NULL, this, gmlThreadCount, FALSE, NULL, smfMap->numBigTexY, 50, 100, TRUE, NULL);
 		}
 		else
 #endif
 		{
-			int camBty = math::floor(cam2->pos.z / (bigSquareSize * SQUARE_SIZE));
-			camBty = std::max(0, std::min(numBigTexY - 1, camBty));
+			int camBty = math::floor(cam2->pos.z / (smfMap->bigSquareSize * SQUARE_SIZE));
+			camBty = std::max(0, std::min(smfMap->numBigTexY - 1, camBty));
 
 			//! try to render in "front to back" (so start with the camera nearest BigGroundLines)
 			for (int bty = camBty; bty >= 0; --bty) {
 				DoDrawGroundRow(bty);
 			}
-			for (int bty = camBty + 1; bty < numBigTexY; ++bty) {
+			for (int bty = camBty + 1; bty < smfMap->numBigTexY; ++bty) {
 				DoDrawGroundRow(bty);
 			}
 		}
@@ -926,7 +916,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 }
 
 
-inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
+inline void CSMFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 	CVertexArray *ma = GetVertexArray();
 	ma->Initialize();
 
@@ -971,9 +961,9 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 	const int xstart = std::max(minlx, mintx), xend   = std::min(maxlx, maxtx);
 	const int ystart = std::max(minly, minty), yend   = std::min(maxly, maxty);
 
-	const int lhdx = lod * heightMapSizeX;
-	const int hhdx = hlod * heightMapSizeX;
-	const int dhdx = dlod * heightMapSizeX;
+	const int lhdx = lod * smfMap->heightMapSizeX;
+	const int hhdx = hlod * smfMap->heightMapSizeX;
+	const int dhdx = dlod * smfMap->heightMapSizeX;
 
 	const float mcxp  = 1.0f - camxpart, mcyp  = 1.0f - camypart;
 	const float hcxp  = 0.5f * camxpart, hcyp  = 0.5f * camypart;
@@ -993,7 +983,7 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 
 		int ylod = y + lod;
 		int yhlod = y + hlod;
-		int ydx = y * heightMapSizeX;
+		int ydx = y * smfMap->heightMapSizeX;
 		int nloop = (xe - xs) / lod + 1;
 
 		//! EnlargeArrays(nVertices, nStrips [, stripSize])
@@ -1144,7 +1134,7 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 		for (y = yst; y < yed; y += lod) {
 			DrawVertexAQ(ma, x, y      );
 			DrawVertexAQ(ma, x, y + lod);
-			const int yhdx = y * heightMapSizeX + x;
+			const int yhdx = y * smfMap->heightMapSizeX + x;
 
 			if (y % dlod) {
 				const float h = (GetVisibleVertexHeight(yhdx - lhdx + lod) + GetVisibleVertexHeight(yhdx + lhdx + lod)) * hmcxp + GetVisibleVertexHeight(yhdx+lod) * camxpart;
@@ -1164,7 +1154,7 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 		const int xlod = x + lod;
 
 		for(y = yst; y < yed; y += lod) {
-			int yhdx = y * heightMapSizeX + x;
+			int yhdx = y * smfMap->heightMapSizeX + x;
 			if(y%dlod){
 				const float h = (GetVisibleVertexHeight(yhdx-lhdx) + GetVisibleVertexHeight(yhdx+lhdx)) * hcxp + GetVisibleVertexHeight(yhdx) * mcxp;
 				DrawVertexAQ(ma, x,y,h);
@@ -1187,7 +1177,7 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 		if (xs < xe) {
 			x = xs;
 			const int ylod = y + lod;
-			const int ydx = y * heightMapSizeX;
+			const int ydx = y * smfMap->heightMapSizeX;
 			const int nloop = (xe - xs) / lod + 2; //! two extra for if statment
 
 			ma->EnlargeArrays((2 * nloop), 1);
@@ -1224,7 +1214,7 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 		if (xs < xe) {
 			x = xs;
 			const int ylod = y + lod;
-			const int ydx = y * heightMapSizeX;
+			const int ydx = y * smfMap->heightMapSizeX;
 			const int nloop = (xe - xs) / lod + 2; //! two extra for if statment
 
 			ma->EnlargeArrays((2 * nloop), 1);
@@ -1257,7 +1247,7 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 }
 
 
-void CBFGroundDrawer::DrawShadowPass(void)
+void CSMFGroundDrawer::DrawShadowPass(void)
 {
 	if (mapInfo->map.voidWater && readmap->currMaxHeight < 0.0f) {
 		return;
@@ -1277,7 +1267,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 #ifdef USE_GML
 		bool mt = GML_PROFILER(multiThreadDrawGroundShadow)
 		if (mt) { // Profiler results, 4 threads: multiThreadDrawGroundShadow is rarely faster than single threaded rendering (therefore disabled by default)
-			gmlProcessor->Work(NULL, &CBFGroundDrawer::DoDrawGroundShadowLODMT, NULL, this, gmlThreadCount, FALSE, NULL, NUM_LODS + 1, 50, 100, TRUE, NULL);
+			gmlProcessor->Work(NULL, &CSMFGroundDrawer::DoDrawGroundShadowLODMT, NULL, this, gmlThreadCount, FALSE, NULL, NUM_LODS + 1, 50, 100, TRUE, NULL);
 		}
 		else
 #endif
@@ -1296,7 +1286,7 @@ void CBFGroundDrawer::DrawShadowPass(void)
 
 
 
-inline void CBFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigSquareY)
+inline void CSMFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigSquareY)
 {
 	groundTextures->BindSquareTexture(bigSquareX, bigSquareY);
 
@@ -1311,7 +1301,7 @@ inline void CBFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigS
 			}
 		}
 	} else {
-		SetTexGen(1.0f / 1024, 1.0f / 1024, -bigSquareX, -bigSquareY);
+		SetTexGen(1.0f / smfMap->bigTexSize, 1.0f / smfMap->bigTexSize, -bigSquareX, -bigSquareY);
 	}
 }
 
@@ -1320,7 +1310,7 @@ inline void CBFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigS
 
 
 
-void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
+void CSMFGroundDrawer::SetupTextureUnits(bool drawReflection)
 {
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -1375,7 +1365,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			smfShaderCurrARB->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 
 			smfShaderCurrARB->SetUniform4f(10, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 1);
-			smfShaderCurrARB->SetUniform4f(12, 1.0f / 1024, 1.0f / 1024, 0, 1);
+			smfShaderCurrARB->SetUniform4f(12, 1.0f / smfMap->bigTexSize, 1.0f / smfMap->bigTexSize, 0, 1);
 			smfShaderCurrARB->SetUniform4f(13, -floor(camera->pos.x * 0.02f), -floor(camera->pos.z * 0.02f), 0, 0);
 			smfShaderCurrARB->SetUniform4f(14, 0.02f, 0.02f, 0, 1);
 
@@ -1433,7 +1423,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 				smfShaderCurrARB->Enable();
 				smfShaderCurrARB->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 				smfShaderCurrARB->SetUniform4f(10, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 1);
-				smfShaderCurrARB->SetUniform4f(12, 1.0f / 1024, 1.0f / 1024, 0, 1);
+				smfShaderCurrARB->SetUniform4f(12, 1.0f / smfMap->bigTexSize, 1.0f / smfMap->bigTexSize, 0, 1);
 				smfShaderCurrARB->SetUniform4f(13, -floor(camera->pos.x * 0.02f), -floor(camera->pos.z * 0.02f), 0, 0);
 				smfShaderCurrARB->SetUniform4f(14, 0.02f, 0.02f, 0, 1);
 				smfShaderCurrARB->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
@@ -1516,7 +1506,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 }
 
 
-void CBFGroundDrawer::ResetTextureUnits(bool drawReflection)
+void CSMFGroundDrawer::ResetTextureUnits(bool drawReflection)
 {
 	if (!useShaders) {
 		glActiveTexture(GL_TEXTURE0);
@@ -1579,7 +1569,7 @@ void CBFGroundDrawer::ResetTextureUnits(bool drawReflection)
 
 
 
-void CBFGroundDrawer::AddFrustumRestraint(const float3& side)
+void CSMFGroundDrawer::AddFrustumRestraint(const float3& side)
 {
 
 	// get vector for collision between frustum and horizontal plane
@@ -1610,7 +1600,7 @@ void CBFGroundDrawer::AddFrustumRestraint(const float3& side)
 	}
 }
 
-void CBFGroundDrawer::UpdateCamRestraints(void)
+void CSMFGroundDrawer::UpdateCamRestraints(void)
 {
 	left.clear();
 	right.clear();
@@ -1653,7 +1643,7 @@ void CBFGroundDrawer::UpdateCamRestraints(void)
 
 }
 
-void CBFGroundDrawer::Update()
+void CSMFGroundDrawer::Update()
 {
 	if (mapInfo->map.voidWater && (readmap->currMaxHeight < 0.0f)) {
 		return;
@@ -1663,13 +1653,13 @@ void CBFGroundDrawer::Update()
 }
 
 
-void CBFGroundDrawer::IncreaseDetail()
+void CSMFGroundDrawer::IncreaseDetail()
 {
 	viewRadius += 2;
 	LOG("ViewRadius is now %i", viewRadius);
 }
 
-void CBFGroundDrawer::DecreaseDetail()
+void CSMFGroundDrawer::DecreaseDetail()
 {
 	viewRadius -= 2;
 	LOG("ViewRadius is now %i", viewRadius);

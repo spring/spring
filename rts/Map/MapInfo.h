@@ -215,8 +215,8 @@ private:
 	void ReadGrass();
 	void ReadLight();
 	void ReadWater();
-	void ReadSmf();
-	void ReadSm3();
+	void ReadSMF();
+	void ReadSM3();
 	void ReadTerrainTypes();
 	void ReadSound();
 

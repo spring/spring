@@ -30,29 +30,34 @@ static const int maxChunkSize = 254;
 static const int chunksPerSec = 30;
 
 // for reliability testing, introduce fake packet loss with a percentage probability
-#define PACKET_LOSS_FACTOR 0//25
-#define SEVERE_PACKET_LOSS_FACTOR 0//1
-#define PACKET_CORRUPTION_FACTOR 0//1
-#define SEVERE_PACKET_LOSS_MAX_COUNT 60 // max continuous number of packets to be lost
+#define PACKET_LOSS_FACTOR 0                       // in [0, 100)
+#define SEVERE_PACKET_LOSS_FACTOR 0                // in [0, 100)
+#define PACKET_CORRUPTION_FACTOR 0                 // in [0, 100)
+#define SEVERE_PACKET_LOSS_MAX_COUNT 60            // max continuous number of packets to be lost
+#define RANDOM_NUMBER (rand() / float(RAND_MAX))   // in [0, 1)
+
 #if PACKET_LOSS_FACTOR > 0 || SEVERE_PACKET_LOSS_FACTOR > 0 || PACKET_CORRUPTION_FACTOR > 0
 static int lossCounter = 0;
 bool EMULATE_PACKET_LOSS(int data) {
 	if (data < 1000)
 		return false;
-	if ((float)rand() / (float)RAND_MAX < (float)PACKET_LOSS_FACTOR / 100.0f)
+	if (RANDOM_NUMBER < (PACKET_LOSS_FACTOR / 100.0f))
 		return true;
-	bool loss = (float)rand() / (float)RAND_MAX < (float)SEVERE_PACKET_LOSS_FACTOR / 100.0f;
+
+	const bool loss = RANDOM_NUMBER < (SEVERE_PACKET_LOSS_FACTOR / 100.0f);
+
 	if (loss && lossCounter == 0)
-		lossCounter = SEVERE_PACKET_LOSS_MAX_COUNT * (float)rand() / (float)RAND_MAX;
+		lossCounter = SEVERE_PACKET_LOSS_MAX_COUNT * RANDOM_NUMBER;
+
 	return lossCounter > 0 && lossCounter--;
 }
-void EMULATE_PACKET_CORRUPTION(int data, uint8_t &crc) {
-	if (data > 1000 && (float)rand() / (float)RAND_MAX < (float)PACKET_CORRUPTION_FACTOR / 100.0f)
+void EMULATE_PACKET_CORRUPTION(int data, uint8_t& crc) {
+	if ((data > 1000) && (RANDOM_NUMBER < (PACKET_CORRUPTION_FACTOR / 100.0f)))
 		crc = (uint8_t)rand();
 }
 #else
 inline bool EMULATE_PACKET_LOSS(int data) { return false; }
-inline void EMULATE_PACKET_CORRUPTION(int data, uint8_t &crc) {}
+inline void EMULATE_PACKET_CORRUPTION(int data, uint8_t& crc) {}
 #endif
 
 

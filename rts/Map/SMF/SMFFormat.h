@@ -21,8 +21,8 @@ tiles used by the map. This file can be shared between different maps. See
 TileFileHeader for details.
 */
 
-#ifndef _MAPFILE_H
-#define _MAPFILE_H
+#ifndef SMF_MAPFORMAT_H
+#define SMF_MAPFORMAT_H
 
 #include "System/Platform/byteorder.h"
 

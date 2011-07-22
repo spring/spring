@@ -246,8 +246,10 @@ void CEndGameBox::Draw()
 	if (winners.empty()) {
 		font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, "Game result was undecided");
 	} else {
-		std::stringstream winnersText("Game Over, winning AllyTeams are: ");
+		std::stringstream winnersText;
+		std::stringstream winnersList;
 
+		// myPlayingAllyTeam is >= 0 iff we ever joined a team
 		const bool neverPlayed = (gu->myPlayingAllyTeam < 0);
 		      bool playedAndWon = false;
 
@@ -259,16 +261,23 @@ void CEndGameBox::Draw()
 				playedAndWon = true; break;
 			}
 
-			winnersText << winner;
+			winnersList << winner;
 
 			if (i < (winners.size() - 1))
-				winnersText << ", ";
+				winnersList << ", ";
 		}
 
 		if (neverPlayed) {
+			winnersText << "Game Over! Winning ally-teams are: ";
+			winnersText << winnersList.str();
+
 			font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, (winnersText.str()).c_str());
 		} else {
-			font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, (playedAndWon? "You won the game": "You lost the game"));
+			winnersText.str("");
+			winnersText << "Game Over! Your ally-team ";
+			winnersText << (playedAndWon)? "won the game": "lost the game";
+
+			font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, (winnersText.str()).c_str());
 		}
 	}
 

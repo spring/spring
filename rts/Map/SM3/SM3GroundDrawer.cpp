@@ -23,7 +23,7 @@ extern unsigned char* keys;
 
 CONFIG(int, SM3TerrainDetail).defaultValue(200);
 
-CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap* m)
+CSM3GroundDrawer::CSM3GroundDrawer(CSM3ReadMap* m)
 {
 	map = m;
 	tr = map->renderer;
@@ -39,7 +39,7 @@ CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap* m)
 	reflectrc = 0;
 }
 
-CSm3GroundDrawer::~CSm3GroundDrawer()
+CSM3GroundDrawer::~CSM3GroundDrawer()
 {
 	configHandler->Set("SM3TerrainDetail", int(tr->config.detailMod * 100));
 }
@@ -61,7 +61,7 @@ static void SpringCamToTerrainCam(CCamera &sc, terrain::Camera& tc)
 	tc.up.ANormalize();
 }
 
-void CSm3GroundDrawer::Update()
+void CSM3GroundDrawer::Update()
 {
 	SpringCamToTerrainCam(*camera, cam);
 
@@ -69,7 +69,7 @@ void CSm3GroundDrawer::Update()
 	tr->CacheTextures();
 }
 
-void CSm3GroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
+void CSM3GroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 {
 	if (wireframe) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -177,7 +177,7 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 }
 
 
-void CSm3GroundDrawer::DrawShadowPass()
+void CSM3GroundDrawer::DrawShadowPass()
 {
 	if (!shadowrc)
 		return;
@@ -210,7 +210,7 @@ void CSm3GroundDrawer::DrawShadowPass()
 	glDisable(GL_POLYGON_OFFSET_FILL);
 }
 
-void CSm3GroundDrawer::DrawObjects(bool drawWaterReflection, bool drawUnitReflection)
+void CSM3GroundDrawer::DrawObjects(bool drawWaterReflection, bool drawUnitReflection)
 {
 /*	glEnable(GL_ALPHA_TEST);
 	glEnable(GL_TEXTURE_2D);
@@ -229,7 +229,7 @@ void CSm3GroundDrawer::DrawObjects(bool drawWaterReflection, bool drawUnitReflec
 
 const int maxQuadDepth = 4;
 
-void CSm3GroundDrawer::IncreaseDetail()
+void CSM3GroundDrawer::IncreaseDetail()
 {
 	tr->config.detailMod *= 1.1f;
 	if (tr->config.detailMod > 12.0f)
@@ -237,7 +237,7 @@ void CSm3GroundDrawer::IncreaseDetail()
 	LOG("Terrain detail changed to: %2.2f", tr->config.detailMod);
 }
 
-void CSm3GroundDrawer::DecreaseDetail()
+void CSM3GroundDrawer::DecreaseDetail()
 {
 	tr->config.detailMod /= 1.1f;
 	if (tr->config.detailMod < 0.25f)
