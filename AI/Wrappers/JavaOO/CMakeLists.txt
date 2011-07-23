@@ -309,6 +309,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 			"-E" "make_directory" "${myJavaBuildDir}"
 		COMMAND "${JAVA_COMPILE}"
 			"${JAVA_COMPILE_FLAG_CONDITIONAL}"
+			"-Xlint:deprecation"
 			"-cp" "${myClassPath}"
 			"-d" "${myJavaBuildDir}"
 			"@${mySrcArgFile}"
