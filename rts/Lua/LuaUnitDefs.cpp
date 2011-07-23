@@ -47,7 +47,6 @@
 #include "Sim/Units/CommandAI/FactoryCAI.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/FileSystem/FileSystem.h"
