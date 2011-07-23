@@ -37,6 +37,7 @@ Else  (NOT Boost_FOUND)
 			"${ENGINE_SOURCE_DIR}/System/Net/UDPConnection.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Net/Connection.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Net/Socket.cpp"
+			"${ENGINE_SOURCE_DIR}/System/CRC.cpp"
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/NullGlobalConfig.cpp"
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Nullerrorhandler.cpp"
 			${test_Log_sources}
@@ -47,6 +48,7 @@ Else  (NOT Boost_FOUND)
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
 			${SDL_LIBRARY}
+			7zip
 		)
 
 	ADD_TEST(NAME testUDPListener COMMAND test_UDPListener)
