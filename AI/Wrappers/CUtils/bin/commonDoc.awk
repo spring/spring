@@ -95,6 +95,24 @@ function printFunctionComment_Common(outFile__doc, container__doc, index__doc, i
 	}
 }
 
+# Returns a string containing the requested, saved doc comment
+# expects the first doc-line at docsMap__doc[docIndex__doc, 0]
+# expects the number of doc-lines in docsMap__doc[docIndex__doc, "*"]
+function getFunctionComment_Common(container__doc, index__doc) {
+
+	funcComment__doc = "";
+
+	numLines__doc = container__doc[index__doc, "*"];
+	if (numLines__doc > 0) {
+		for (l__doc=0; l__doc < numLines__doc; l__doc++) {
+			docLine__doc = container__doc[index__doc, l__doc];
+			funcComment__doc = funcComment__doc "\n" docLine__doc;
+		}
+	}
+
+	return funcComment__doc;
+}
+
 # end of doc comment: */
 /\*\// {
 
