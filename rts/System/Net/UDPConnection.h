@@ -11,7 +11,7 @@
 
 #include "Connection.h"
 #include "System/myTime.h"
-#include "System/FileSystem/CRC.h"
+#include "System/CRC.h"
 
 namespace netcode {
 
@@ -21,10 +21,10 @@ public:
 	unsigned GetSize() const {
 		return data.size() + headerSize;
 	}
-	void UpdateChecksum(CRC &crc) {
+	void UpdateChecksum(CRC& crc) {
 		crc << chunkNumber;
 		crc << (unsigned int)chunkSize;
-		if(data.size() > 0)
+		if (data.size() > 0)
 			crc.Update(&data[0], data.size());
 	}
 	static const unsigned maxSize = 254;
@@ -55,7 +55,7 @@ public:
 		CRC crc;
 		crc << lastContinuous;
 		crc << (unsigned int)nakType;
-		if(naks.size() > 0)
+		if (naks.size() > 0)
 			crc.Update(&naks[0], naks.size());
 		for (std::list<ChunkPtr>::const_iterator chk = chunks.begin(); chk != chunks.end(); ++chk)
 			(*chk)->UpdateChecksum(crc);
