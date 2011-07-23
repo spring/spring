@@ -47,7 +47,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 
@@ -395,7 +395,7 @@ bool CLuaHandleSynced::SyncifyRandomFuncs(lua_State *L)
 	// adjust the math.random() and math.randomseed() calls
 	lua_getglobal(L, "math");
 	if (!lua_istable(L, -1)) {
-		logOutput.Print("lua.math does not exist\n");
+		LOG_L(L_WARNING, "lua.math does not exist");
 		return false;
 	}
 
@@ -456,7 +456,7 @@ bool CLuaHandleSynced::SetupUnsyncedFunction(lua_State *L, const char* funcName)
 	unsyncedStr.GetRegistry(L);
 	if (!lua_istable(L, -1)) {
 		lua_settop(L, 0);
-//FIXME		logOutput.Print("ERROR: missing UNSYNCED table for %s", name.c_str());
+// FIXME		LOG_L(L_ERROR, "missing UNSYNCED table for %s", name.c_str());
 		return false;
 	}
 	const int unsynced = lua_gettop(L);
@@ -472,7 +472,8 @@ bool CLuaHandleSynced::SetupUnsyncedFunction(lua_State *L, const char* funcName)
 	}
 	else if (!lua_isfunction(L, -1)) {
 		lua_settop(L, 0);
-		logOutput.Print("%s in %s is not a function", funcName, GetName().c_str());
+		LOG_L(L_WARNING, "%s in %s is not a function",
+				funcName, GetName().c_str());
 		return false;
 	}
 	lua_pushvalue(L, unsynced);
@@ -535,8 +536,8 @@ bool CLuaHandleSynced::LoadUnsyncedCode(lua_State *L, const string& code, const 
 	int error;
 	error = luaL_loadbuffer(L, code.c_str(), code.size(), debug.c_str());
 	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n",
-		                error, debug.c_str(), lua_tostring(L, -1));
+		LOG_L(L_ERROR, "error = %i, %s, %s",
+				error, debug.c_str(), lua_tostring(L, -1));
 		lua_settop(L, 0);
 		return false;
 	}
@@ -554,8 +555,8 @@ bool CLuaHandleSynced::LoadUnsyncedCode(lua_State *L, const string& code, const 
 	SetActiveHandle(orig);
 
 	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n",
-		                error, debug.c_str(), lua_tostring(L, -1));
+		LOG_L(L_ERROR, "error = %i, %s, %s",
+				error, debug.c_str(), lua_tostring(L, -1));
 		lua_settop(L, 0);
 		return false;
 	}
@@ -662,7 +663,7 @@ bool CLuaHandleSynced::Initialize(const string& syncData)
 	}
 
 	int errfunc = SetupTraceback(L) ? -2 : 0;
-	logOutput.Print("Initialize errfunc=%d\n", errfunc);
+	LOG("Initialize errfunc=%d", errfunc);
 
 	lua_pushsstring(L, syncData);
 
@@ -1071,8 +1072,8 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 	SetActiveReadAllyTeam(prevReadAllyTeam);
 
 	if (error != 0) {
-		logOutput.Print("error = %i, %s, %s\n",
-		                error, "CallAsTeam", lua_tostring(L, -1));
+		LOG_L(L_ERROR, "error = %i, %s, %s",
+				error, "CallAsTeam", lua_tostring(L, -1));
 		lua_error(L);
 	}
 

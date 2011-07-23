@@ -22,7 +22,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/myMath.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "LuaHelper.h"
 
 using namespace std;
@@ -633,16 +633,17 @@ static inline bool SetAirMoveTypeValue(CAirMoveType* mt, const string& key, bool
 static inline void SetSingleAirMoveTypeValue(lua_State *L, int keyidx, int validx, CAirMoveType *moveType)
 {
 	const string key = lua_tostring(L, keyidx);
+	bool failedToAssign = false;
 	if (lua_isnumber(L, validx)) {
 		const float value = float(lua_tonumber(L, validx));
-		if (!SetAirMoveTypeValue(moveType, key, value)) {
-			LogObject() << "can't assign key \"" << key << "\" to AirMoveType";
-		}
+		failedToAssign = !SetAirMoveTypeValue(moveType, key, value);
 	} else if (lua_isboolean(L, validx)) {
 		bool value = lua_toboolean(L, validx);
-		if (!SetAirMoveTypeValue(moveType, key, value)) {
-			LogObject() << "can't assign key \"" << key << "\" to AirMoveType";
-		}
+		failedToAssign = !SetAirMoveTypeValue(moveType, key, value);
+	}
+	if (failedToAssign) {
+		LOG_L(L_WARNING, "Can not assign key \"%s\" to AirMoveType",
+				key.c_str());
 	}
 }
 
@@ -713,16 +714,17 @@ static inline bool SetGroundMoveTypeValue(CGroundMoveType* mt, const string& key
 static inline void SetSingleGroundMoveTypeValue(lua_State *L, int keyidx, int validx, CGroundMoveType *moveType)
 {
 	const string key = lua_tostring(L, keyidx);
+	bool failedToAssign = false;
 	if (lua_isnumber(L, validx)) {
 		const float value = float(lua_tonumber(L, validx));
-		if (!SetGroundMoveTypeValue(moveType, key, value)) {
-			LogObject() << "can't assign key \"" << key << "\" to GroundMoveType";
-		}
+		failedToAssign = !SetGroundMoveTypeValue(moveType, key, value);
 	} else if (lua_isboolean(L, validx)) {
 		bool value = lua_toboolean(L, validx);
-		if (!SetGroundMoveTypeValue(moveType, key, value)) {
-			LogObject() << "can't assign key \"" << key << "\" to GroundMoveType";
-		}
+		failedToAssign = !SetGroundMoveTypeValue(moveType, key, value);
+	}
+	if (failedToAssign) {
+		LOG_L(L_WARNING, "Can not assign key \"%s\" to GroundMoveType",
+				key.c_str());
 	}
 }
 
@@ -813,16 +815,17 @@ static inline bool SetTAAirMoveTypeValue(CTAAirMoveType* mt, const string& key, 
 static inline void SetSingleTAAirMoveTypeValue(lua_State *L, int keyidx, int validx, CTAAirMoveType *moveType)
 {
 	const string key = lua_tostring(L, keyidx);
+	bool failedToAssign = false;
 	if (lua_isnumber(L, validx)) {
 		const float value = float(lua_tonumber(L, validx));
-		if (!SetTAAirMoveTypeValue(moveType, key, value)) {
-			LogObject() << "can't assign key \"" << key << "\" to GunshipMoveType";
-		}
+		failedToAssign = !SetTAAirMoveTypeValue(moveType, key, value);
 	} else if (lua_isboolean(L, validx)) {
 		bool value = lua_toboolean(L, validx);
-		if (!SetTAAirMoveTypeValue(moveType, key, value)) {
-			LogObject() << "can't assign key \"" << key << "\" to GunshipMoveType";
-		}
+		failedToAssign = !SetTAAirMoveTypeValue(moveType, key, value);
+	}
+	if (failedToAssign) {
+		LOG_L(L_WARNING, "Can not assign key \"%s\" to GunshipMoveType",
+				key.c_str());
 	}
 }
 

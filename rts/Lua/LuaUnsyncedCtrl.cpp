@@ -65,6 +65,7 @@
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
 #include "System/Util.h"
 #include "System/Sound/ISound.h"
@@ -466,7 +467,7 @@ static string ParseMessage(lua_State* L, const string& msg)
 
 static void PrintMessage(lua_State* L, const string& msg)
 {
-	logOutput.Print(ParseMessage(L, msg));
+	LOG("%s", ParseMessage(L, msg).c_str());
 }
 
 
@@ -1178,7 +1179,7 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 		return 0;
 	}
 	if (!gs->cheatEnabled) {
-		logOutput.Print("SetWaterParams() needs cheating enabled");
+		LOG("SetWaterParams() needs cheating enabled");
 		return 0;
 	}
 	if (!lua_istable(L, 1)) {
@@ -1801,10 +1802,10 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 	fstr.close();
 
 	if (!dname.empty()) {
-		logOutput.Print("Extracted file \"%s\" to directory \"%s\"",
-		                fname.c_str(), dname.c_str());
+		LOG("Extracted file \"%s\" to directory \"%s\"",
+				fname.c_str(), dname.c_str());
 	} else {
-		logOutput.Print("Extracted file \"%s\"", fname.c_str());
+		LOG("Extracted file \"%s\"", fname.c_str());
 	}
 
 	delete[] buffer;
@@ -2059,7 +2060,7 @@ int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 	if (lua_isboolean(L, 3)) { \
 		static bool shown = false; \
 		if (!shown) { \
-			logOutput.Print("%s: Warning: third parameter \"setInOverlay\" is deprecated", __FUNCTION__); \
+			LOG_L(L_WARNING, "%s: third parameter \"setInOverlay\" is deprecated", __FUNCTION__); \
 			shown = true; \
 		} \
 	}
@@ -2149,7 +2150,6 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 	}
 
 	const std::string arguments = luaL_checkstring(L, 1);
-	// LogObject() << "Args: " << arguments;
 	const std::string script = luaL_checkstring(L, 2);
 
 	const std::string springFullName = (Platform::GetProcessExecutableFile());
@@ -2164,7 +2164,6 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 	// script.txt, if content for it is given by Lua code
 	const std::string scriptFullName = FileSystemHandler::GetInstance().GetWriteDir() + "script.txt";
 	if (!script.empty()) {
-		// LogObject() << "Writing script to: " << scriptFullName;
 		std::ofstream scriptfile(scriptFullName.c_str());
 		scriptfile << script;
 		scriptfile.close();
@@ -2181,9 +2180,9 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 	const bool execOk = execError.empty();
 
 	if (execOk) {
-		LogObject() << "The game should restart";
+		LOG("The game should restart");
 	} else {
-		LogObject() << "Error in Restart: " << execError;
+		LOG_L(L_ERROR, "Error in Restart: %s", execError.c_str());
 	}
 
 	lua_pushboolean(L, execOk);
@@ -2675,7 +2674,7 @@ int LuaUnsyncedCtrl::SetShareLevel(lua_State* L)
 		net->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam,	teamHandler->Team(gu->myTeam)->metalShare, shareLevel));
 	}
 	else {
-		logOutput.Print("SetShareLevel() unknown resource: %s", shareType.c_str());
+		LOG_L(L_WARNING, "SetShareLevel() unknown resource: %s", shareType.c_str());
 	}
 	return 0;
 }
