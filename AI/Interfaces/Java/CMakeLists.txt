@@ -599,7 +599,12 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"-C" "${myJavaBuildDir}" "${myPkgFirstPart}"
 		DEPENDS
 			${myJavaSources}
-			${myJavaGeneratedSources}
+			# Using the native target reduces paralellism slightly
+			# (less then 1s per build => negliable), but prevetns multiple
+			# execution of the source generating custom-commands
+			# (which results in wrongly generated source files with "make -j <X>")
+			#${myJavaGeneratedSources}
+			${myNativeTarget}
 		WORKING_DIRECTORY
 			"${myJavaGeneratedSourceDir}"
 		COMMENT
@@ -617,7 +622,12 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"-C" "${myJavaGeneratedSourceDir}" "${myPkgFirstPart}"
 		DEPENDS
 			${myJavaSources}
-			${myJavaGeneratedSources}
+			# Using the native target reduces paralellism slightly
+			# (less then 1s per build => negliable), but prevetns multiple
+			# execution of the source generating custom-commands
+			# (which results in wrongly generated source files with "make -j <X>")
+			#${myJavaGeneratedSources}
+			${myNativeTarget}
 		WORKING_DIRECTORY
 			"${myBuildDir}"
 		COMMENT
@@ -627,7 +637,8 @@ if    (BUILD_${myName}_AIINTERFACE)
 	add_custom_target(${myJavaTarget}
 		DEPENDS
 			"${myBuildDir}/${myBinJarFile}"
-			"${myBuildDir}/${mySrcJarFile}")
+			"${myBuildDir}/${mySrcJarFile}"
+		)
 
 	add_custom_target(${myTarget} ALL)
 	add_dependencies(${myTarget} ${myNativeTarget})
