@@ -66,7 +66,7 @@
 #include "Sim/Units/UnitDefImage.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Matrix44f.h"
 #include "System/Config/ConfigHandler.h"
 
@@ -1792,8 +1792,8 @@ int LuaOpenGL::DrawFuncAtUnit(lua_State* L)
 	glPopMatrix();
 
 	if (error != 0) {
-		logOutput.Print("gl.DrawFuncAtUnit: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.DrawFuncAtUnit: error(%i) = %s",
+				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 
@@ -2065,8 +2065,8 @@ int LuaOpenGL::BeginEnd(lua_State* L)
 	glEnd();
 
 	if (error != 0) {
-		logOutput.Print("gl.BeginEnd: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.BeginEnd: error(%i) = %s",
+				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 	return 0;
@@ -2559,8 +2559,8 @@ int LuaOpenGL::Material(lua_State* L)
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (!lua_israwstring(L, -2)) { // the key
-			logOutput.Print("gl.Material: bad state type\n");
-			return 0;;
+			LOG_L(L_WARNING, "gl.Material: bad state type");
+			return 0;
 		}
 		const string key = lua_tostring(L, -2);
 
@@ -2603,7 +2603,8 @@ int LuaOpenGL::Material(lua_State* L)
 			}
 		}
 		else {
-			logOutput.Print("gl.Material: unknown material type: %s\n", key.c_str());
+			LOG_L(L_WARNING, "gl.Material: unknown material type: %s",
+					key.c_str());
 		}
 	}
 	return 0;
@@ -3899,8 +3900,8 @@ int LuaOpenGL::RenderToTexture(lua_State* L)
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFBO);
 
 	if (error != 0) {
-		logOutput.Print("gl.RenderToTexture: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.RenderToTexture: error(%i) = %s",
+				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 
@@ -3949,8 +3950,8 @@ int LuaOpenGL::ActiveTexture(lua_State* L)
 	glActiveTexture(GL_TEXTURE0);
 
 	if (error != 0) {
-		logOutput.Print("gl.ActiveTexture: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.ActiveTexture: error(%i) = %s",
+				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 	return 0;
@@ -4500,8 +4501,8 @@ int LuaOpenGL::PushPopMatrix(lua_State* L)
 	}
 
 	if (error != 0) {
-		logOutput.Print("gl.PushPopMatrix: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.PushPopMatrix: error(%i) = %s",
+				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 
@@ -4610,8 +4611,8 @@ int LuaOpenGL::UnsafeState(lua_State* L)
 	reverse ? glEnable(state) : glDisable(state);
 
 	if (error != 0) {
-		logOutput.Print("gl.UnsafeState: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.UnsafeState: error(%i) = %s",
+				error, lua_tostring(L, -1));
 		lua_pushnumber(L, 0);
 	}
 	return 0;
@@ -4646,8 +4647,8 @@ int LuaOpenGL::CreateList(lua_State* L)
 
 	if (error != 0) {
 		glDeleteLists(list, 1);
-		logOutput.Print("gl.CreateList: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.CreateList: error(%i) = %s",
+				error, lua_tostring(L, -1));
 		lua_pushnumber(L, 0);
 	}
 	else {
@@ -4939,8 +4940,8 @@ int LuaOpenGL::RunQuery(lua_State* L)
 	running = false;
 
 	if (error != 0) {
-		logOutput.Print("gl.RunQuery: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.RunQuery: error(%i) = %s",
+				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 
@@ -5135,8 +5136,8 @@ int LuaOpenGL::RenderMode(lua_State* L)
 	const GLint count2 = glRenderMode(GL_RENDER);
 
 	if (error != 0) {
-		logOutput.Print("gl.RenderMode: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.RenderMode: error(%i) = %s",
+				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 

@@ -64,7 +64,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/myMath.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "LuaHelper.h"
 
 using namespace std;
@@ -2955,7 +2955,7 @@ int LuaSyncedCtrl::SetHeightMapFunc(lua_State* L)
 	inHeightMap = false;
 
 	if (error != 0) {
-		logOutput.Print("Spring.SetHeightMapFunc: error(%i) = %s",
+		LOG_L(L_ERROR, "Spring.SetHeightMapFunc: error(%i) = %s",
 				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
@@ -3132,7 +3132,7 @@ int LuaSyncedCtrl::SetSmoothMeshFunc(lua_State *L)
 	inSmoothMesh = false;
 
 	if (error != 0) {
-		logOutput.Print("Spring.SetSmoothMeshFunc: error(%i) = %s",
+		LOG_L(L_ERROR, "Spring.SetSmoothMeshFunc: error(%i) = %s",
 				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
