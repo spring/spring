@@ -13,13 +13,13 @@
 #include "ArchiveScanner.h"
 
 #include "ArchiveLoader.h"
-#include "CRC.h"
 #include "IArchive.h"
 #include "FileFilter.h"
 #include "FileSystem.h"
 #include "FileSystemHandler.h"
 #include "Lua/LuaParser.h"
 #include "System/Log/ILog.h"
+#include "System/CRC.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
 #if       !defined(DEDICATED) && !defined(UNITSYNC)

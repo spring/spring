@@ -57,7 +57,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/LogOutput.h"
-#include "System/FileSystem/CRC.h"
+#include "System/CRC.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Net/LocalConnection.h"
 #include "System/Net/UnpackPacket.h"
