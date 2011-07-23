@@ -11,7 +11,9 @@
 
 #include "Connection.h"
 #include "System/myTime.h"
-#include "System/CRC.h"
+
+class CRC;
+
 
 namespace netcode {
 
@@ -21,12 +23,7 @@ public:
 	unsigned GetSize() const {
 		return data.size() + headerSize;
 	}
-	void UpdateChecksum(CRC& crc) {
-		crc << chunkNumber;
-		crc << (unsigned int)chunkSize;
-		if (data.size() > 0)
-			crc.Update(&data[0], data.size());
-	}
+	void UpdateChecksum(CRC& crc) const;
 	static const unsigned maxSize = 254;
 	static const unsigned headerSize = 5;
 	int32_t chunkNumber;
@@ -42,25 +39,9 @@ public:
 	Packet(const unsigned char* data, unsigned length);
 	Packet(int lastContinuous, int nak);
 
-	unsigned GetSize() const {
-		unsigned size = headerSize + naks.size();
-		std::list<ChunkPtr>::const_iterator chk;
-		for (chk = chunks.begin(); chk != chunks.end(); ++chk) {
-			size += (*chk)->GetSize();
-		}
-		return size;
-	}
+	unsigned GetSize() const;
 
-	uint8_t GetChecksum() {
-		CRC crc;
-		crc << lastContinuous;
-		crc << (unsigned int)nakType;
-		if (naks.size() > 0)
-			crc.Update(&naks[0], naks.size());
-		for (std::list<ChunkPtr>::const_iterator chk = chunks.begin(); chk != chunks.end(); ++chk)
-			(*chk)->UpdateChecksum(crc);
-		return (uint8_t)crc.GetDigest();
-	}
+	uint8_t GetChecksum() const;
 
 	void Serialize(std::vector<uint8_t>& data);
 

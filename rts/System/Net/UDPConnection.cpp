@@ -19,6 +19,7 @@
 #include "ProtocolDef.h"
 #include "Exception.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/CRC.h"
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
 
@@ -60,6 +61,40 @@ inline bool EMULATE_PACKET_LOSS(int data) { return false; }
 inline void EMULATE_PACKET_CORRUPTION(int data, uint8_t& crc) {}
 #endif
 
+
+void Chunk::UpdateChecksum(CRC& crc) const {
+
+	crc << chunkNumber;
+	crc << (unsigned int)chunkSize;
+	if (data.size() > 0) {
+		crc.Update(&data[0], data.size());
+	}
+}
+
+unsigned Packet::GetSize() const {
+
+	unsigned size = headerSize + naks.size();
+	std::list<ChunkPtr>::const_iterator chk;
+	for (chk = chunks.begin(); chk != chunks.end(); ++chk) {
+		size += (*chk)->GetSize();
+	}
+	return size;
+}
+
+uint8_t Packet::GetChecksum() const {
+
+	CRC crc;
+	crc << lastContinuous;
+	crc << (unsigned int)nakType;
+	if (naks.size() > 0) {
+		crc.Update(&naks[0], naks.size());
+	}
+	std::list<ChunkPtr>::const_iterator chk;
+	for (chk = chunks.begin(); chk != chunks.end(); ++chk) {
+		(*chk)->UpdateChecksum(crc);
+	}
+	return (uint8_t)crc.GetDigest();
+}
 
 class Unpacker
 {
