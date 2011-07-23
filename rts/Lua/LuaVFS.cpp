@@ -19,7 +19,6 @@ using namespace std;
 #include "LuaHashString.h"
 #include "LuaIO.h"
 #include "LuaUtils.h"
-#include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/VFSHandler.h"

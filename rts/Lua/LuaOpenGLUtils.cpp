@@ -8,7 +8,6 @@
 #include "LuaOpenGLUtils.h"
 #include "Game/Camera.h"
 #include "Rendering/ShadowHandler.h"
-//#include "System/LogOutput.h"
 #include "System/Matrix44f.h"
 #include "System/Util.h"
 
