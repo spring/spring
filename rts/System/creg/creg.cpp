@@ -6,6 +6,8 @@
  */
 
 #include <map>
+#include <vector>
+#include <string>
 #include <string.h>
 
 #include "System/mmgr.h"
@@ -26,7 +28,9 @@
 #include "creg_cond.h"
 
 using namespace creg;
-using namespace std;
+using std::map;
+using std::vector;
+using std::string;
 
 static map<string, Class*> mapNameToClass;
 static int currentMemberFlags = 0; // used when registering class members

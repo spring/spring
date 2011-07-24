@@ -3,6 +3,7 @@
 #include "System/StdAfx.h"
 #include <set>
 #include <list>
+#include <map>
 #include <cctype>
 
 #include "System/mmgr.h"
@@ -72,7 +73,10 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
 
-using namespace std;
+using std::min;
+using std::max;
+using std::map;
+using std::set;
 
 static const LuaHashString hs_n("n");
 
@@ -1246,7 +1250,7 @@ int LuaSyncedRead::GetTeamStatsHistory(lua_State* L)
 		return 1;
 	}
 
-	const list<CTeam::Statistics>& teamStats = team->statHistory;
+	const std::list<CTeam::Statistics>& teamStats = team->statHistory;
 	std::list<CTeam::Statistics>::const_iterator it = teamStats.begin();
 	const int statCount = teamStats.size();
 
@@ -2936,7 +2940,7 @@ int LuaSyncedRead::GetUnitIsTransporting(lua_State* L)
 		return 0;
 	}
 	lua_newtable(L);
-	list<CTransportUnit::TransportedUnit>::const_iterator it;
+	std::list<CTransportUnit::TransportedUnit>::const_iterator it;
 	int count = 0;
 	for (it = tu->GetTransportedUnits().begin(); it != tu->GetTransportedUnits().end(); ++it) {
 		const CUnit* carried = it->unit;

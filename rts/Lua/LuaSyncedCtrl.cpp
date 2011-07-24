@@ -67,7 +67,8 @@
 #include "System/Log/ILog.h"
 #include "LuaHelper.h"
 
-using namespace std;
+using std::max;
+using std::min;
 
 
 /******************************************************************************/
@@ -2740,10 +2741,10 @@ static void ParseParams(lua_State* L, const char* caller, float& factor,
 		fz2    = luaL_checkfloat(L, 4);
 		factor = luaL_checkfloat(L, 5);
 		if (fx1 > fx2) {
-			swap(fx1, fx2);
+			std::swap(fx1, fx2);
 		}
 		if (fz1 > fz2) {
-			swap(fz1, fz2);
+			std::swap(fz1, fz2);
 		}
 	}
 	else {

@@ -43,7 +43,11 @@
 #define _STPF_ __SIZE_T_PRINTF_FORMAT__
 
 
-using namespace std;
+using std::vector;
+using std::list;
+using std::map;
+using std::set;
+using std::string;
 
 
 struct file_t {

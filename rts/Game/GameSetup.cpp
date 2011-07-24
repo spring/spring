@@ -2,12 +2,6 @@
 
 #include "System/StdAfx.h"
 
-#include <algorithm>
-#include <map>
-#include <cctype>
-#include <cstring>
-#include <boost/format.hpp>
-
 #include "System/mmgr.h"
 
 #include "GameSetup.h"
@@ -20,8 +14,12 @@
 #include "System/Util.h"
 #include "System/LogOutput.h"
 
+#include <algorithm>
+#include <map>
+#include <cctype>
+#include <cstring>
+#include <boost/format.hpp>
 
-using namespace std;
 
 const CGameSetup* gameSetup = NULL;
 

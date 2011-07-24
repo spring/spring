@@ -2,14 +2,11 @@
 
 #include "System/StdAfx.h"
 
-#include <set>
-#include <list>
-#include <cctype>
-#include <limits.h>
-#include <boost/regex.hpp>
-using namespace std;
-
 #include "System/mmgr.h"
+
+#include <cmath>
+using std::ldexp;
+#include <boost/regex.hpp>
 
 #include "LuaVFS.h"
 
@@ -24,6 +21,13 @@ using namespace std;
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
+
+#include <set>
+#include <list>
+#include <cctype>
+#include <limits.h>
+
+using std::min;
 
 
 /******************************************************************************/

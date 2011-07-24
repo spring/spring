@@ -3,10 +3,6 @@
 #include "System/StdAfx.h"
 #include "System/mmgr.h"
 
-#include <set>
-#include <list>
-#include <cctype>
-
 #include "LuaSyncedMoveCtrl.h"
 
 #include "LuaInclude.h"
@@ -25,7 +21,7 @@
 #include "System/Log/ILog.h"
 #include "LuaHelper.h"
 
-using namespace std;
+#include <cctype>
 
 
 /******************************************************************************/
