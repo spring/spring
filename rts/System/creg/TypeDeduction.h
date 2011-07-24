@@ -11,7 +11,7 @@
 // Undefined types return 0
 template<typename T>
 struct DeduceType {
-	boost::shared_ptr<IType> Get () { return boost::shared_ptr<IType>(IType::CreateObjInstanceType(T::StaticClass())); }
+	boost::shared_ptr<IType> Get() { return boost::shared_ptr<IType>(IType::CreateObjInstanceType(T::StaticClass())); }
 };
 
 template<typename T>
@@ -21,10 +21,10 @@ struct IsBasicType {
 
 // Support for a number of fundamental types
 #define CREG_SUPPORT_BASIC_TYPE(T, typeID)			\
-	template <>	 struct DeduceType <T> {		\
-		boost::shared_ptr<IType> Get () { return IType::CreateBasicType (typeID); }	\
+	template<>	 struct DeduceType<T> {		\
+		boost::shared_ptr<IType> Get() { return IType::CreateBasicType(typeID); }	\
 	};																\
-	template <> struct IsBasicType <T> {							\
+	template<> struct IsBasicType<T> {							\
 		enum {Yes=1, No=0 };										\
 	};
 
@@ -60,11 +60,11 @@ class ObjectPointerType : public IType
 {
 public:
 	ObjectPointerType() { objectClass = T::StaticClass(); }
-	void Serialize (ISerializer *s, void *instance) {
+	void Serialize(ISerializer *s, void *instance) {
 		void **ptr = (void**)instance;
 		if (s->IsWriting())
-			s->SerializeObjectPtr (ptr, *ptr ? ((T*)*ptr)->GetClass () : 0);
-		else s->SerializeObjectPtr (ptr, objectClass);
+			s->SerializeObjectPtr(ptr, *ptr ? ((T*)*ptr)->GetClass() : 0);
+		else s->SerializeObjectPtr(ptr, objectClass);
 	}
 	std::string GetName() { return objectClass->name + "*"; }
 	Class* objectClass;
@@ -72,42 +72,42 @@ public:
 
 // Pointer type
 template<typename T>
-struct DeduceType <T *> {
-	boost::shared_ptr<IType> Get () { return boost::shared_ptr<IType>(new ObjectPointerType <T>()); }
+struct DeduceType<T*> {
+	boost::shared_ptr<IType> Get() { return boost::shared_ptr<IType>(new ObjectPointerType<T>()); }
 };
 
 // Reference type, handled as a pointer
 template<typename T>
-struct DeduceType <T&> {
-	boost::shared_ptr<IType> Get () { return boost::shared_ptr<IType>(new ObjectPointerType <T>()); }
+struct DeduceType<T&> {
+	boost::shared_ptr<IType> Get() { return boost::shared_ptr<IType>(new ObjectPointerType<T>()); }
 };
 
 // Static array type
 template<typename T, size_t ArraySize>
-struct DeduceType <T[ArraySize]> {
-	boost::shared_ptr<IType> Get () {
+struct DeduceType<T[ArraySize]> {
+	boost::shared_ptr<IType> Get() {
 		DeduceType<T> subtype;
-		return boost::shared_ptr<IType>(new StaticArrayType <T, ArraySize> (subtype.Get()));
+		return boost::shared_ptr<IType>(new StaticArrayType<T, ArraySize>(subtype.Get()));
 	}
 };
 
 // Vector type (vector<T>)
 template<typename T>
-struct DeduceType < std::vector <T> > {
-	boost::shared_ptr<IType> Get () {
+struct DeduceType<std::vector<T> > {
+	boost::shared_ptr<IType> Get() {
 		DeduceType<T> elemtype;
-		return boost::shared_ptr<IType>(new DynamicArrayType < std::vector<T> > (elemtype.Get()));
+		return boost::shared_ptr<IType>(new DynamicArrayType<std::vector<T> >(elemtype.Get()));
 	}
 };
 
 // String type
-template<> struct DeduceType < std::string > {
-	boost::shared_ptr<IType> Get () { return IType::CreateStringType (); }
+template<> struct DeduceType<std::string > {
+	boost::shared_ptr<IType> Get() { return IType::CreateStringType(); }
 };
 
 // GetType allows to use parameter type deduction to get the template argument for DeduceType
 template<typename T>
-boost::shared_ptr<IType> GetType (T& var) {
+boost::shared_ptr<IType> GetType(T& var) {
 	DeduceType<T> deduce;
 	return deduce.Get();
 }
