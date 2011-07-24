@@ -33,6 +33,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 	GetLastPathPart(dirName ${myDir})
 	set(myName       "${dirName}")
 	set(myTarget     "${myName}-AIWrapper")
+	set(myGenTarget  "${myTarget}-generateSources")
 	MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
 	AIWrapperMessage(STATUS "Found AI Wrapper: ${myTarget}")
@@ -255,6 +256,9 @@ if    (BUILD_${myName}_AIWRAPPER)
 			"${myAwkScriptsDir}"
 		COMMENT
 			"  ${myTarget}: Generating C++ Callback wrapper sources" VERBATIM)
+
+	add_custom_target(${myGenTarget} DEPENDS ${myGeneratedSources})
+	add_dependencies(generateSources ${myGenTarget})
 
 	# build the static lib
 	include_directories(${mySourceDir} ${myGeneratedSourceDir})

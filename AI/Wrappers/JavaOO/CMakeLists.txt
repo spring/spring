@@ -36,6 +36,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 	GetLastPathPart(dirName ${myDir})
 	set(myName       "${dirName}")
 	set(myTarget     "${myName}-AIWrapper")
+	set(myGenTarget  "${myTarget}-generateSources")
 	set(myJavaTarget "${myTarget}-java")
 	set(myPomTarget  "${myTarget}-pom")
 	set(myMavenInstallTarget "${myTarget}-mavenInstall")
@@ -285,6 +286,9 @@ if    (BUILD_${myName}_AIWRAPPER)
 		COMMENT
 			"  ${myTarget}: Generating event sources" VERBATIM
 		)
+
+	add_custom_target(${myGenTarget} DEPENDS ${myGeneratedSources})
+	add_dependencies(generateSources ${myGenTarget})
 
 
 	# Build the jars
