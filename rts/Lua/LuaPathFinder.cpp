@@ -2,13 +2,7 @@
 
 #include "System/StdAfx.h"
 
-#include <stdlib.h>
-#include <algorithm>
-#include <vector>
-
 #include "System/mmgr.h"
-
-using namespace std;
 
 #include "LuaPathFinder.h"
 #include "LuaInclude.h"
@@ -16,6 +10,10 @@ using namespace std;
 #include "LuaUtils.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/MoveTypes/MoveInfo.h"
+
+#include <stdlib.h>
+#include <algorithm>
+#include <vector>
 
 
 struct NodeCostOverlay {

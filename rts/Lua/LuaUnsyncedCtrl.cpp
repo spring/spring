@@ -2,17 +2,6 @@
 
 #include "System/StdAfx.h"
 
-#include <set>
-#include <list>
-#include <cctype>
-#include <cfloat>
-
-#include <fstream>
-
-#include <SDL_keysym.h>
-#include <SDL_mouse.h>
-#include <SDL_timer.h>
-
 #include "System/mmgr.h"
 
 #include "LuaUnsyncedCtrl.h"
@@ -85,7 +74,19 @@
 	#include "System/Sound/EFXPresets.h"
 #endif
 
-using namespace std;
+#include <map>
+#include <set>
+#include <cctype>
+#include <cfloat>
+
+#include <fstream>
+
+#include <SDL_keysym.h>
+#include <SDL_mouse.h>
+#include <SDL_timer.h>
+
+using std::min;
+using std::max;
 
 // MinGW defines this for a WINAPI function
 #undef SendMessage
@@ -1797,7 +1798,7 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 
 	fhVFS.Read(buffer, numBytes);
 
-	fstream fstr(path.c_str(), ios::out | ios::binary);
+	std::fstream fstr(path.c_str(), std::ios::out | std::ios::binary);
 	fstr.write((const char*) buffer, numBytes);
 	fstr.close();
 
@@ -2253,7 +2254,7 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 	ud->iconType = icon::iconHandler->GetIcon(lua_tostring(L, 2));
 
 	// set decoys to the same icon
-	map<int, set<int> >::const_iterator fit;
+	std::map<int, std::set<int> >::const_iterator fit;
 
 	if (ud->decoyDef) {
 		ud->decoyDef->iconType = ud->iconType;
@@ -2262,8 +2263,8 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 		fit = unitDefHandler->decoyMap.find(ud->id);
 	}
 	if (fit != unitDefHandler->decoyMap.end()) {
-		const set<int>& decoySet = fit->second;
-		set<int>::const_iterator dit;
+		const std::set<int>& decoySet = fit->second;
+		std::set<int>::const_iterator dit;
 		for (dit = decoySet.begin(); dit != decoySet.end(); ++dit) {
   		const UnitDef* decoyDef = unitDefHandler->GetUnitDefByID(*dit);
 			decoyDef->iconType = ud->iconType;

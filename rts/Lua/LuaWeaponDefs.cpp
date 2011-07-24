@@ -27,8 +27,6 @@
 #include "System/Util.h"
 #include "Sim/Misc/GlobalSynced.h"
 
-using namespace std;
-
 
 static ParamMap paramMap;
 

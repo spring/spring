@@ -5,16 +5,16 @@
  * Classes for serialization of registrated class instances
  */
 
-#include <assert.h>
-
 #include "System/mmgr.h"
 
 #include "VarTypes.h"
 
 #include "System/Util.h"
 
-using namespace std;
+#include <assert.h>
+
 using namespace creg;
+using std::string;
 
 // serialization code
 

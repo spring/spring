@@ -25,7 +25,9 @@
 #include "System/Platform/byteorder.h"
 #include <boost/cstdint.hpp>
 
-using namespace std;
+using std::list;
+using std::map;
+
 
 static const float  scaleFactor = 1 / (65536.0f);
 static const float3 DownVector  = -UpVector;
@@ -121,7 +123,7 @@ C3DOParser::C3DOParser()
 }
 
 
-S3DModel* C3DOParser::Load(const string& name)
+S3DModel* C3DOParser::Load(const std::string& name)
 {
 	CFileHandler file(name);
 	if (!file.FileExists()) {

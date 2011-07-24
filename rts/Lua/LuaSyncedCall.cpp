@@ -17,7 +17,6 @@
 #include <set>
 #include <list>
 #include <cctype>
-using namespace std;
 
 
 /******************************************************************************/

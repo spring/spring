@@ -52,8 +52,6 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
 
-using namespace std;
-
 
 static ParamMap paramMap;
 

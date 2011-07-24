@@ -12,7 +12,6 @@
 // Include time(0) function to get a seed based on system time
 #include <time.h>
 #include <iostream>
-using namespace std;
 #include "streflop.h"
 
 // Include endian-specific code

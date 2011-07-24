@@ -55,8 +55,6 @@
 
 #endif
 
-using namespace std;
-
 typedef void (WINAPI *PGNSI)(LPSYSTEM_INFO);
 typedef BOOL (WINAPI *PGPI)(DWORD, DWORD, DWORD, DWORD, PDWORD);
 

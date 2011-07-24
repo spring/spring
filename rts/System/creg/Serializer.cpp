@@ -8,17 +8,21 @@
 #include "creg_cond.h"
 #include "Serializer.h"
 
+#include "System/Platform/byteorder.h"
+#include "System/Exceptions.h"
+
 #include <fstream>
 #include <assert.h>
 #include <stdexcept>
 #include <map>
+#include <vector>
+#include <string>
 #include <string.h>
 
-#include "System/Platform/byteorder.h"
-#include "System/Exceptions.h"
-
-using namespace std;
 using namespace creg;
+using std::string;
+using std::map;
+using std::vector;
 
 #define CREG_PACKAGE_FILE_ID "CRPK"
 

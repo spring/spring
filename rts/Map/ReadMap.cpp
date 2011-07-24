@@ -28,8 +28,6 @@
 #include "Sim/Misc/LosHandler.h"
 #endif
 
-using namespace std;
-
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -48,9 +46,9 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 	if (mapname.length() < 3)
 		throw content_error("CReadMap::LoadMap(): mapname '" + mapname + "' too short");
 
-	const string extension = filesystem.GetExtension(mapname);
+	const std::string extension = filesystem.GetExtension(mapname);
 
-	CReadMap* rm = 0;
+	CReadMap* rm = NULL;
 
 	if (extension == "sm3") {
 		rm = new CSM3ReadMap(mapname);
@@ -59,7 +57,7 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 	}
 
 	if (!rm) {
-		return 0;
+		return NULL;
 	}
 
 	/* Read metal map */
