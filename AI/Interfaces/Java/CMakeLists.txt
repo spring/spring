@@ -333,6 +333,7 @@ endif (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS
 if    (BUILD_${myName}_AIINTERFACE)
 	GetVersionPlusDepFile(myVersion myVersionDepFile)
 	set(myTarget       "${myName}-AIInterface")
+	set(myGenTarget    "${myTarget}-generateSources")
 	set(myNativeTarget "${myTarget}-native")
 	set(myJavaTarget   "${myTarget}-java")
 	set(myMavenInstallTarget "${myTarget}-mavenInstall")
@@ -550,6 +551,9 @@ if    (BUILD_${myName}_AIINTERFACE)
 		COMMENT
 			"  ${myTarget}: Generating JNI events wrapper sources" VERBATIM
 		)
+
+	add_custom_target(${myGenTarget} DEPENDS ${myGeneratedSources})
+	add_dependencies(generateSources ${myGenTarget})
 
 	# Locate the manifest file
 	FindManifestFile("${myDir}" myManifestFile)
