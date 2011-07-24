@@ -6,6 +6,15 @@
 struct lua_State;
 
 
+/**
+ * This creates a userdata object, which calls a special user-defined function,
+ * when the object gets destroyed (=> garbage collector).
+ * You use it like this (Lua):
+ * <code>
+ *   local myScream = Script.CreateScream()
+ *   myScream.func  = function() Spring.Echo("AHHHHHH") end
+ * </code>
+ */
 class LuaScream {
 	public:
 		LuaScream();
