@@ -190,8 +190,8 @@ namespace creg {
 
 		boost::shared_ptr<IType> elemType;
 
-		DynamicArrayType(boost::shared_ptr<IType> elemType)
-			: elemType(elemType) {}
+		DynamicArrayType(boost::shared_ptr<IType> et)
+			: elemType(et) {}
 		~DynamicArrayType() {}
 
 		void Serialize(ISerializer* s, void* inst) {
@@ -232,8 +232,8 @@ namespace creg {
 	{
 	public:
 		typedef T ArrayType[Size];
-		StaticArrayType(boost::shared_ptr<IType> elemType)
-			: StaticArrayBaseType(elemType, Size, sizeof(ArrayType)/Size) {}
+		StaticArrayType(boost::shared_ptr<IType> et)
+			: StaticArrayBaseType(et, Size, sizeof(ArrayType)/Size) {}
 		void Serialize(ISerializer* s, void* instance)
 		{
 			T* array = (T*)instance;

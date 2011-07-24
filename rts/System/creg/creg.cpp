@@ -226,7 +226,7 @@ void* Class::CreateInstance()
 	void* inst = operator_new(binder->size);
 
 	if (binder->constructor) {
-		binder->destructor(inst);
+		binder->constructor(inst);
 	}
 	return inst;
 }
