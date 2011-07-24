@@ -5,7 +5,6 @@
 #include "System/mmgr.h"
 
 #include <cmath>
-using std::ldexp;
 #include <boost/regex.hpp>
 
 #include "LuaVFS.h"
