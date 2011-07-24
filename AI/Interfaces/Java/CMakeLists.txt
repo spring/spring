@@ -270,8 +270,9 @@ endmacro (ConfigureJavaSkirmishAI wrapperNames)
 
 set(myName               "Java")
 set(myDir                "${CMAKE_CURRENT_SOURCE_DIR}")
-set(myNativeSourceDirRel "src/main/native")
+set(mySourceDirRel       "src/main")
 set(myJavaSourceDirRel   "src/main/java")
+set(myNativeSourceDirRel "src/main/native")
 set(myPkgFirstPart       "com")
 set(myPkg                "${myPkgFirstPart}/springrts/ai")
 
@@ -337,6 +338,9 @@ if    (BUILD_${myName}_AIINTERFACE)
 	set(myMavenInstallTarget "${myTarget}-mavenInstall")
 	set(myInstLibsDir ${AI_INTERFACES_LIBS}/${myName}/${myVersion})
 	set(myInstDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
+	set(myJavaSourceDirRel   "${mySourceDirRel}/java")
+	set(myNativeSourceDirRel "${mySourceDirRel}/native")
+	MakeAbsolute(mySourceDir       "${myDir}" "${mySourceDirRel}")
 	MakeAbsolute(myNativeSourceDir "${myDir}" "${myNativeSourceDirRel}")
 	MakeAbsolute(myJavaSourceDir   "${myDir}" "${myJavaSourceDirRel}")
 
@@ -618,10 +622,19 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"${myBuildDir}/${mySrcJarFile}"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
 			"cf" "${myBuildDir}/${mySrcJarFile}"
-			"-C" "${myJavaSourceDir}" "${myPkgFirstPart}"
+			"-C" "${myJavaSourceDir}"          "${myPkgFirstPart}"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
 			"uf" "${myBuildDir}/${mySrcJarFile}"
 			"-C" "${myJavaGeneratedSourceDir}" "${myPkgFirstPart}"
+		COMMAND "${JAVA_ARCHIVE}" ARGS
+			"uf" "${myBuildDir}/${mySrcJarFile}"
+			"-C" "${mySourceDir}"              "native"
+		COMMAND "${JAVA_ARCHIVE}" ARGS
+			"uf" "${myBuildDir}/${mySrcJarFile}"
+			"-C" "${myGeneratedSourceDir}"     "native"
+		COMMAND "${JAVA_ARCHIVE}" ARGS
+			"uf" "${myBuildDir}/${mySrcJarFile}"
+			"-C" "${myDir}"                    "VERSION"
 		DEPENDS
 			${myJavaSources}
 			# Using the native target reduces paralellism slightly

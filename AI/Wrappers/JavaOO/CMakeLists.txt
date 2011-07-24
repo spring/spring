@@ -332,7 +332,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 			"${myBuildDir}/${mySrcJarFile}"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
 			"cf" "${${myName}_AIWRAPPER_JAR_SRC}"
-			"-C" "${mySourceDir}" "${myPkgFirstPart}"
+			"-C" "${mySourceDir}"          "${myPkgFirstPart}"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
 			"uf" "${${myName}_AIWRAPPER_JAR_SRC}"
 			"-C" "${myGeneratedSourceDir}" "${myPkgFirstPart}"
