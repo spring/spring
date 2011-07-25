@@ -167,6 +167,7 @@ EndIf  (userdoc_INSTALL_PLAIN)
 
 If     (userdoc_INSTALL_HTML)
 	add_custom_target(userdocs ALL DEPENDS ${userdoc_html_generated})
+	Add_Dependencies(generateSources userdocs)
 
 	Set(userdoc_html
 			"${userdoc_html_generated}"
