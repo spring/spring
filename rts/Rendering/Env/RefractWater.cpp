@@ -10,27 +10,30 @@
 #include "Map/ReadMap.h"
 #include "System/bitops.h"
 
-CRefractWater::CRefractWater() : CAdvWater(false)
+CRefractWater::CRefractWater()
+	: CAdvWater(false)
+	, subSurfaceTex(0)
 {
-	subSurfaceTex = 0;
 	LoadGfx();
 }
 
 void CRefractWater::LoadGfx()
 {
 	// valid because GL_TEXTURE_RECTANGLE_ARB = GL_TEXTURE_RECTANGLE_EXT
-	if(GLEW_ARB_texture_rectangle || GLEW_EXT_texture_rectangle)
+	if (GLEW_ARB_texture_rectangle || GLEW_EXT_texture_rectangle) {
 		target = GL_TEXTURE_RECTANGLE_ARB;
-	else target = GL_TEXTURE_2D;
+	} else {
+		target = GL_TEXTURE_2D;
+	}
 
 	glGenTextures(1, &subSurfaceTex);
 	glBindTexture(target, subSurfaceTex);
-	glTexParameteri(target,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-	glTexParameteri(target,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-	if(target == GL_TEXTURE_RECTANGLE_ARB) {
+	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	if (target == GL_TEXTURE_RECTANGLE_ARB) {
 		glTexImage2D(target, 0, 3, globalRendering->viewSizeX, globalRendering->viewSizeY, 0, GL_RGB, GL_INT, 0);
 		waterFP = LoadFragmentProgram("ARB/waterRefractTR.fp");
-	} else{
+	} else {
 		glTexImage2D(target, 0, 3, next_power_of_2(globalRendering->viewSizeX), next_power_of_2(globalRendering->viewSizeY), 0, GL_RGB, GL_INT, 0);
 		waterFP = LoadFragmentProgram("ARB/waterRefractT2D.fp");
 	}
@@ -38,14 +41,16 @@ void CRefractWater::LoadGfx()
 
 CRefractWater::~CRefractWater()
 {
-	if(subSurfaceTex)
+	if (subSurfaceTex) {
 		glDeleteTextures(1, &subSurfaceTex);
+	}
 }
 
 void CRefractWater::Draw()
 {
-	if (!mapInfo->water.forceRendering && readmap->currMinHeight > 1.0f)
+	if (!mapInfo->water.forceRendering && (readmap->currMinHeight > 1.0f)) {
 		return;
+	}
 
 	glActiveTextureARB(GL_TEXTURE2_ARB);
 	glBindTexture(target, subSurfaceTex);
