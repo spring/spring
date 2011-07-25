@@ -34,7 +34,9 @@ CBaseWater::CBaseWater()
 
 CBaseWater::~CBaseWater()
 {
-	if (helper != NULL) helper->RemoveExplosionListener(this);
+	if (helper != NULL) {
+		helper->RemoveExplosionListener(this);
+	}
 }
 
 
@@ -65,8 +67,9 @@ void CBaseWater::ApplyPushedChanges(CGame* game) {
 	for (std::vector<int>::iterator i = wm.begin(); i != wm.end(); ++i) {
 		int nextWaterRendererMode = *i;
 
-		if (nextWaterRendererMode < 0)
+		if (nextWaterRendererMode < 0) {
 			nextWaterRendererMode = (std::max(0, water->GetID()) + 1) % CBaseWater::NUM_WATER_RENDERERS;
+		}
 
 		water = GetWater(water, nextWaterRendererMode);
 		logOutput.Print("Set water rendering mode to %i (%s)", nextWaterRendererMode, water->GetName());
@@ -117,7 +120,7 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRen
 			if (canLoad) {
 				try {
 					nextWaterRenderer = new CDynWater();
-				} catch (content_error& e) {
+				} catch (const content_error& e) {
 					delete nextWaterRenderer;
 					nextWaterRenderer = NULL;
 					logOutput.Print("Loading Dynamic Water failed");
@@ -135,7 +138,7 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRen
 			if (canLoad) {
 				try {
 					nextWaterRenderer = new CBumpWater();
-				} catch (content_error& e) {
+				} catch (const content_error& e) {
 					delete nextWaterRenderer;
 					nextWaterRenderer = NULL;
 					logOutput.Print("Loading Bumpmapped Water failed");
@@ -152,7 +155,7 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRen
 			if (canLoad) {
 				try {
 					nextWaterRenderer = new CRefractWater();
-				} catch (content_error& e) {
+				} catch (const content_error& e) {
 					delete nextWaterRenderer;
 					nextWaterRenderer = NULL;
 					logOutput.Print("Loading Refractive Water failed");
@@ -169,7 +172,7 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRen
 			if (canLoad) {
 				try {
 					nextWaterRenderer = new CAdvWater();
-				} catch (content_error& e) {
+				} catch (const content_error& e) {
 					delete nextWaterRenderer;
 					nextWaterRenderer = NULL;
 					logOutput.Print("Loading Reflective Water failed");

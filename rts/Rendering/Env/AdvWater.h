@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __ADV_WATER_H__
-#define __ADV_WATER_H__
+#ifndef ADV_WATER_H
+#define ADV_WATER_H
 
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
@@ -31,4 +31,4 @@ protected:
 	unsigned int waterFP;
 };
 
-#endif // __ADV_WATER_H__
+#endif // ADV_WATER_H
