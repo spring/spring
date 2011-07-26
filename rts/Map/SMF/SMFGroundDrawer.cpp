@@ -11,7 +11,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ISky.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"

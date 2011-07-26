@@ -35,7 +35,7 @@
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/BaseGroundTextures.h"
-#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ISky.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/CommandDrawer.h"
 #include "Rendering/IconHandler.h"

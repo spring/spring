@@ -4,7 +4,7 @@
 #include "System/mmgr.h"
 
 #include "AdvWater.h"
-#include "BaseSky.h"
+#include "ISky.h"
 #include "Game/Game.h"
 #include "Game/Camera.h"
 #include "Map/BaseGroundDrawer.h"

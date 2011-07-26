@@ -2484,11 +2484,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseSky.cpp"
+					RelativePath="..\..\Rendering\Env\ISky.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseSky.h"
+					RelativePath="..\..\Rendering\Env\ISky.h"
 					>
 				</File>
 				<File

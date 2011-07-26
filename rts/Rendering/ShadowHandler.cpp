@@ -13,7 +13,7 @@
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/UnitDrawer.h"
-#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"

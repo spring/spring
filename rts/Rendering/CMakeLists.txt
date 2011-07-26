@@ -10,7 +10,7 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/AdvTreeDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/AdvTreeGenerator.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/AdvWater.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Env/BaseSky.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Env/ISky.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/ITreeDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/IWater.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/BasicSky.cpp"

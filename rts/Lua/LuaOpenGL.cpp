@@ -45,7 +45,7 @@
 #include "Rendering/LineDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
-#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ISky.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/GL/glExtra.h"

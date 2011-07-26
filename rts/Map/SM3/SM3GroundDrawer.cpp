@@ -12,7 +12,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/ProjectileDrawer.hpp"
-#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ISky.h"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/GL/myGL.h"
 #include "System/Config/ConfigHandler.h"

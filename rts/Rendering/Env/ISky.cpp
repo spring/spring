@@ -3,7 +3,7 @@
 #include "System/StdAfx.h"
 #include "System/mmgr.h"
 
-#include "BaseSky.h"
+#include "ISky.h"
 #include "BasicSky.h"
 #include "AdvSky.h"
 #include "SkyBox.h"
@@ -16,9 +16,9 @@
 CONFIG(bool, DynamicSun).defaultValue(false);
 CONFIG(bool, AdvSky).defaultValue(true);
 
-IBaseSky* sky = NULL;
+ISky* sky = NULL;
 
-IBaseSky::IBaseSky()
+ISky::ISky()
 	: wireframe(false)
 	, dynamicSky(false)
 	, fogStart(0.0f)
@@ -28,14 +28,14 @@ IBaseSky::IBaseSky()
 	SetLight(configHandler->GetBool("DynamicSun"));
 }
 
-IBaseSky::~IBaseSky()
+ISky::~ISky()
 {
 	delete skyLight;
 }
 
 
 
-void IBaseSky::SetFog() {
+void ISky::SetFog() {
 	if (globalRendering->drawFog) {
 		glEnable(GL_FOG);
 	} else {
@@ -51,9 +51,9 @@ void IBaseSky::SetFog() {
 
 
 
-IBaseSky* IBaseSky::GetSky()
+ISky* ISky::GetSky()
 {
-	IBaseSky* sky = NULL;
+	ISky* sky = NULL;
 
 	try {
 		if (!mapInfo->atmosphere.skyBox.empty()) {
@@ -74,7 +74,7 @@ IBaseSky* IBaseSky::GetSky()
 	return sky;
 }
 
-void IBaseSky::SetLight(bool dynamic) {
+void ISky::SetLight(bool dynamic) {
 	delete skyLight;
 
 	if (dynamic)

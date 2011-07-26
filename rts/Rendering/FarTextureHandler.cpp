@@ -7,7 +7,7 @@
 #include "Game/Camera.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ISky.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -312,7 +312,7 @@ void CFarTextureHandler::Draw()
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glNormal3fv((const GLfloat*) &unitDrawer->camNorm.x);
 
-	IBaseSky::SetFog();
+	ISky::SetFog();
 
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
