@@ -346,7 +346,7 @@ void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_ALPHA_TEST);
 
-	ISky::SetFog();
+	ISky::SetupFog();
 	glColor4f(1, 1, 1, 1);
 
 	const int cx = (int)(camera->pos.x / (SQUARE_SIZE * TREE_SQUARE_SIZE));

@@ -247,7 +247,7 @@ void CBasicSky::Draw()
 
 	glEnable(GL_DEPTH_TEST);
 
-	SetFog();
+	ISky::SetupFog();
 }
 
 float3 CBasicSky::GetCoord(int x, int y)

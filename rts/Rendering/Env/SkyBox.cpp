@@ -106,5 +106,5 @@ void CSkyBox::Draw()
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
-	SetFog();
+	ISky::SetupFog();
 }

@@ -312,7 +312,7 @@ void CFarTextureHandler::Draw()
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glNormal3fv((const GLfloat*) &unitDrawer->camNorm.x);
 
-	ISky::SetFog();
+	ISky::SetupFog();
 
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
