@@ -98,7 +98,7 @@ void CLoadScreen::Init()
 		if (mt_loading)
 			gameLoadThread = new COffscreenGLThread( boost::bind(&CGame::LoadGame, game, mapName) );
 
-	} catch (opengl_error& gle) {
+	} catch (const opengl_error& gle) {
 		//! Offscreen GL Context creation failed,
 		//! fallback to singlethreaded loading.
 		logOutput.Print(std::string(gle.what()));

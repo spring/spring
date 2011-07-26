@@ -79,14 +79,14 @@ void CLuaLoadSaveHandler::SaveGame(const std::string& file)
 		}
 		return; // Success
 	}
-	catch (content_error& e) {
-		LOG_L(L_ERROR, "Save failed(content error): %s", e.what());
+	catch (const content_error& ex) {
+		LOG_L(L_ERROR, "Save failed(content error): %s", ex.what());
 	}
-	catch (std::exception& e) {
-		LOG_L(L_ERROR, "Save failed: %s", e.what());
+	catch (const std::exception& ex) {
+		LOG_L(L_ERROR, "Save failed: %s", ex.what());
 	}
-	catch (char*& e) {
-		LOG_L(L_ERROR, "Save failed: %s", e);
+	catch (const char*& exStr) {
+		LOG_L(L_ERROR, "Save failed: %s", exStr);
 	}
 	catch (...) {
 		LOG_L(L_ERROR, "Save failed(unknown error)");

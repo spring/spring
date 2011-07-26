@@ -2177,11 +2177,11 @@ public:
 
 			newFont = CglFont::LoadFont(action.GetArgs(), fontSize, outlineWidth, outlineWeight);
 			newSmallFont = CglFont::LoadFont(action.GetArgs(), smallFontSize, smallOutlineWidth, smallOutlineWeight);
-		} catch (std::exception& e) {
+		} catch (const std::exception& ex) {
 			delete newFont;
 			delete newSmallFont;
 			newFont = newSmallFont = NULL;
-			logOutput.Print(string("font error: ") + e.what());
+			logOutput.Print(string("font error: ") + ex.what());
 		}
 		if (newFont != NULL && newSmallFont != NULL) {
 			delete font;

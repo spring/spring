@@ -144,12 +144,12 @@ void CCregLoadSaveHandler::SaveGame(const std::string& file)
 		int aistart = ofs.tellp();
 		eoh->Save(&ofs);
 		PrintSize("AIs", ((int)ofs.tellp())-aistart);
-	} catch (content_error& e) {
-		LOG_L(L_ERROR, "Save failed(content error): %s", e.what());
-	} catch (std::exception& e) {
-		LOG_L(L_ERROR, "Save failed: %s", e.what());
-	} catch (char*& e) {
-		LOG_L(L_ERROR, "Save failed: %s", e);
+	} catch (const content_error& ex) {
+		LOG_L(L_ERROR, "Save failed(content error): %s", ex.what());
+	} catch (const std::exception& ex) {
+		LOG_L(L_ERROR, "Save failed: %s", ex.what());
+	} catch (const char*& exStr) {
+		LOG_L(L_ERROR, "Save failed: %s", exStr);
 	} catch (...) {
 		LOG_L(L_ERROR, "Save failed(unknown error)");
 	}
