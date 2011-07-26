@@ -124,7 +124,7 @@ void CWorldDrawer::Draw()
 		SCOPED_TIMER("Water::{UpdateWater,Draw} (solid)");
 
 		water->OcclusionQuery();
-		if (water->drawSolid) {
+		if (water->IsDrawSolid()) {
 			IWater::ApplyPushedChanges(game);
 			water->UpdateWater(game);
 			water->Draw();
@@ -164,7 +164,7 @@ void CWorldDrawer::Draw()
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("Water::{UpdateWater,Draw} (!solid)");
 
-		if (!water->drawSolid) {
+		if (!water->IsDrawSolid()) {
 			//! Water rendering will overwrite features, so save them
 			featureDrawer->SwapFeatures();
 			IWater::ApplyPushedChanges(game);

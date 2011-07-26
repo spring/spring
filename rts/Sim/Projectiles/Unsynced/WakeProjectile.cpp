@@ -45,7 +45,7 @@ CWakeProjectile::CWakeProjectile(const float3& pos, const float3& speed, float s
 	rotation = gu->usRandFloat() * PI*2;
 	rotSpeed = (gu->usRandFloat() - 0.5f) * PI*2*0.01f;
 	checkCol = false;
-	if (IWater::noWakeProjectiles) {
+	if (IWater::IsNoWakeProjectiles()) {
 		alpha = 0;
 		alphaAddTime = 0;
 		size = 0;

@@ -33,11 +33,17 @@ public:
 
 	virtual void ExplosionOccurred(const CExplosionEvent& event);
 
+	bool IsDrawReflection() const { return drawReflection; }
+	bool IsDrawRefraction() const { return drawRefraction; }
+	bool IsDrawSolid() const { return drawSolid; }
+
 	static IWater* GetWater(IWater* currWaterRenderer, int nextWaterRenderMode);
 	static void ApplyPushedChanges(CGame* game);
 	static void PushWaterMode(int nextWaterRenderMode);
 	static void PushHeightmapChange(const int x1, const int y1, const int x2, const int y2);
+	static bool IsNoWakeProjectiles() { return noWakeProjectiles; }
 
+protected:
  	static bool noWakeProjectiles;
 
 	bool drawReflection;

@@ -554,8 +554,8 @@ void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 	CFeatureQuadDrawer drawer;
 	drawer.drawQuads = &drawQuads;
 	drawer.drawQuadsX = drawQuadsX;
-	drawer.drawReflection = water->drawReflection;
-	drawer.drawRefraction = water->drawRefraction;
+	drawer.drawReflection = water->IsDrawReflection();
+	drawer.drawRefraction = water->IsDrawRefraction();
 	drawer.unitDrawDist = unitDrawer->unitDrawDist;
 	drawer.sqFadeDistEnd = featureDist * featureDist;
 	drawer.sqFadeDistBegin = 0.75f * 0.75f * featureDist * featureDist;
