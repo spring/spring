@@ -14,7 +14,7 @@
 #include "Game/GameHelper.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 CONFIG(int, ReflectiveWater).defaultValue(IWater::WATER_RENDERER_REFLECTIVE);
 
@@ -72,7 +72,7 @@ void IWater::ApplyPushedChanges(CGame* game) {
 		}
 
 		water = GetWater(water, nextWaterRendererMode);
-		logOutput.Print("Set water rendering mode to %i (%s)", nextWaterRendererMode, water->GetName());
+		LOG("Set water rendering mode to %i (%s)", nextWaterRendererMode, water->GetName());
 	}
 
 	for (std::vector<HeightMapUpdate>::iterator i = hc.begin(); i != hc.end(); ++i) {
@@ -120,11 +120,11 @@ IWater* IWater::GetWater(IWater* currWaterRenderer, int nextWaterRendererMode)
 			if (canLoad) {
 				try {
 					nextWaterRenderer = new CDynWater();
-				} catch (const content_error& e) {
+				} catch (const content_error& ex) {
 					delete nextWaterRenderer;
 					nextWaterRenderer = NULL;
-					logOutput.Print("Loading Dynamic Water failed");
-					logOutput.Print("Error: %s", e.what());
+					LOG_L(L_ERROR, "Loading Dynamic Water failed, error: %s",
+							ex.what());
 				}
 			}
 		} break;
@@ -138,11 +138,11 @@ IWater* IWater::GetWater(IWater* currWaterRenderer, int nextWaterRendererMode)
 			if (canLoad) {
 				try {
 					nextWaterRenderer = new CBumpWater();
-				} catch (const content_error& e) {
+				} catch (const content_error& ex) {
 					delete nextWaterRenderer;
 					nextWaterRenderer = NULL;
-					logOutput.Print("Loading Bumpmapped Water failed");
-					logOutput.Print("Error: %s", e.what());
+					LOG_L(L_ERROR, "Loading Bumpmapped Water failed, error: %s",
+							ex.what());
 				}
 			}
 		} break;
@@ -155,11 +155,11 @@ IWater* IWater::GetWater(IWater* currWaterRenderer, int nextWaterRendererMode)
 			if (canLoad) {
 				try {
 					nextWaterRenderer = new CRefractWater();
-				} catch (const content_error& e) {
+				} catch (const content_error& ex) {
 					delete nextWaterRenderer;
 					nextWaterRenderer = NULL;
-					logOutput.Print("Loading Refractive Water failed");
-					logOutput.Print("Error: %s", e.what());
+					LOG_L(L_ERROR, "Loading Refractive Water failed, error: %s",
+							ex.what());
 				}
 			}
 		} break;
@@ -172,11 +172,11 @@ IWater* IWater::GetWater(IWater* currWaterRenderer, int nextWaterRendererMode)
 			if (canLoad) {
 				try {
 					nextWaterRenderer = new CAdvWater();
-				} catch (const content_error& e) {
+				} catch (const content_error& ex) {
 					delete nextWaterRenderer;
 					nextWaterRenderer = NULL;
-					logOutput.Print("Loading Reflective Water failed");
-					logOutput.Print("Error: %s", e.what());
+					LOG_L(L_ERROR, "Loading Reflective Water failed, error: %s",
+							ex.what());
 				}
 			}
 		} break;

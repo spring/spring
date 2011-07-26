@@ -33,7 +33,7 @@
 #include "System/EventHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/TimeProfiler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"
 
@@ -54,6 +54,16 @@ CONFIG(bool, BumpWaterEndlessOcean).defaultValue(true);
 CONFIG(bool, BumpWaterDynamicWaves).defaultValue(true);
 CONFIG(bool, BumpWaterUseUniforms).defaultValue(false);
 CONFIG(bool, BumpWaterOcclusionQuery).defaultValue(true);
+
+
+#define LOG_SECTION_BUMP_WATER "BumpWater"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_BUMP_WATER)
+
+// use the specific section for all LOG*() calls in this source file
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_BUMP_WATER
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// HELPER FUNCTIONS
@@ -93,7 +103,7 @@ static GLuint LoadTexture(const string& filename, const float anisotropy = 0.0f,
 	GLuint texID;
 	CBitmap bm;
 	if (!bm.Load(filename)) {
-		throw content_error("Could not load texture from file " + filename);
+		throw content_error("["LOG_SECTION_BUMP_WATER"] Could not load texture from file " + filename);
 	}
 
 	glGenTextures(1, &texID);
@@ -179,7 +189,7 @@ CBumpWater::CBumpWater()
 
 	// CHECK HARDWARE
 	if (!globalRendering->haveGLSL) {
-		throw content_error("BumpWater: your hardware/driver setup does not support GLSL");
+		throw content_error("["LOG_SECTION_BUMP_WATER"] your hardware/driver setup does not support GLSL");
 	}
 
 	shoreWaves = shoreWaves && (GLEW_EXT_framebuffer_object);
@@ -193,7 +203,7 @@ CBumpWater::CBumpWater()
 	//! caustic textures
 	const vector<string>& causticNames = mapInfo->water.causticTextures;
 	if (causticNames.size() <= 0) {
-		throw content_error("no caustic textures");
+		throw content_error("["LOG_SECTION_BUMP_WATER"] no caustic textures");
 	}
 	for (int i = 0; i < (int)causticNames.size(); ++i) {
 		caustTextures.push_back(LoadTexture(causticNames[i]));
@@ -207,7 +217,7 @@ CBumpWater::CBumpWater()
 		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &maxh);
 		if (gs->mapx>maxw || gs->mapy>maxh) {
 			shoreWaves = false;
-			logOutput.Print("BumpWater: can't display shorewaves (map too large)!");
+			LOG_L(L_WARNING, "Can not display shorewaves (map too large)!");
 		}
 	}
 
@@ -235,9 +245,10 @@ CBumpWater::CBumpWater()
 			blurShader->Link();
 
 			if (!blurShader->IsValid()) {
+				LOG_L(L_ERROR, "shorewaves-shader compilation error: %s",
+						blurShader->GetLog().c_str());
 				//! string size is limited with content_error()
-				logOutput.Print("[BumpWater] shorewaves-shader compilation error: " + blurShader->GetLog());
-				throw content_error(string("[BumpWater] shorewaves-shader compilation error!"));
+				throw content_error(string("["LOG_SECTION_BUMP_WATER"] shorewaves-shader compilation error!"));
 			}
 
 			blurShader->SetUniformLocation("tex0"); // idx 0
@@ -470,9 +481,10 @@ CBumpWater::CBumpWater()
 		if (!waterShader->IsValid() &&
 			(!globalRendering->atiHacks || !strstr(waterShader->GetLog().c_str(),
 			"Different sampler types for same sample texture unit in fragment shader"))) {
+			LOG_L(L_ERROR, "water-shader compilation error: %s",
+					waterShader->GetLog().c_str());
 			//! string size is limited with content_error()
-			logOutput.Print("[BumpWater] water-shader compilation error: " + waterShader->GetLog());
-			throw content_error(string("[BumpWater] water-shader compilation error!"));
+			throw content_error(string("["LOG_SECTION_BUMP_WATER"] water-shader compilation error!"));
 		}
 
 		if (useUniforms) {
@@ -679,9 +691,9 @@ void CBumpWater::UpdateWater(CGame* game)
 
 		//glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT_AVAILABLE, &occlusionQueryResult);
 		//if (!occlusionQueryResult) {
-		//	logOutput.Print("OcclusionQuery didn't finished yet!");
+		//	LOG_L(L_DEBUG, "OcclusionQuery did not finished yet!");
 		//}
-		glGetQueryObjectuiv(occlusionQuery,GL_QUERY_RESULT,&occlusionQueryResult);
+		glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT, &occlusionQueryResult);
 
 		wasLastFrameVisible = !!occlusionQueryResult;
 

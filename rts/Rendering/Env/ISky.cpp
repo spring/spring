@@ -11,7 +11,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 CONFIG(bool, DynamicSun).defaultValue(false);
 CONFIG(bool, AdvSky).defaultValue(true);
@@ -62,7 +62,8 @@ ISky* ISky::GetSky()
 			sky = new CAdvSky();
 		}
 	} catch (const content_error& ex) {
-		logOutput.Print("[%s] error: %s (falling back to BasicSky)", __FUNCTION__, ex.what());
+		LOG_L(L_ERROR, "[%s] error: %s (falling back to BasicSky)",
+				__FUNCTION__, ex.what());
 		delete sky;
 		sky = NULL;
 	}
