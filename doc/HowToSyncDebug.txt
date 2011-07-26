@@ -1,29 +1,29 @@
-#How to use the sync debugger (for testers)##
+#How to use the sync debugger (for testers)
 
-##Compiling##
+##Compiling
 
-The sync debugger is enabled at compilation time, so you must recompile spring to use it. It is also required to enable normal debugging and it is recommended to enable a little optimization.
+The sync debugger is enabled at compilation time, so you must recompile spring to use it. It is also required to enable normal debugging.
 
-cmake -DSYNCDEBUG=TRUE .
+cmake -DSYNCDEBUG=TRUE -DTRACE_SYNC=TRUE .
 
-##Running##
+##Running
 
 Start & play the game as you'd always do. On the first sync error the sync debugger will trigger. The sync debugger server will communicate with the clients and append a lot of debugging information to the file syncdebug-server.txt. Progress is shown on screen (in the infolog). After a “[SD] Client: Done!” message the sync debugger is finished. At this moment there are two things you can do: The first is to stop debugging, quit spring and jump to the “Post processing” chapter. The second thing you can do is to continue reading and learn about the commands to manipulate the sync debugger.
 
 As you may know already, spring accepts certain commands through the chat interface (press enter). For example, to enable cheating, the host gives the command .cheat and suddenly cheating is enabled!  The sync debugger extends the set of available commands with the following three commands. Note that cheating must be enabled to use the commands.
 
-##Available Commands##
+##Available Commands
 
-.desync
+/desync
 This command modifies some game data which causes the game to desync. Use this to test the sync debugger.
 
-.fakedesync
+/fakedesync
 This just triggers the sync debugger, without desyncing the game. The sync debugger will print an error “Huh, all checksums are equal?!?” to the logfile after issuing this command. Use this to test the sync debugger. Server only.
 
-.reset
+/reset
 Reset the sync debugger to it initial state. Use this if you want to continue playing after the sync debugger finished outputting the debugging info.
 
-##Post processing##
+##Post processing
 
 All previously required postprocessing has now been built into the sync debugger, so this step is quickly done: just check that syncdebug-server.log looks sane and if it does, send it to the team.
 
