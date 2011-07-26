@@ -14,7 +14,7 @@
 #include "VertexArray.h"
 #include "VertexArrayRange.h"
 #include "Rendering/GlobalRendering.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 #include "System/TimeProfiler.h"
 #include "System/FileSystem/FileHandler.h"
@@ -31,7 +31,7 @@ static CVertexArray* currentVertexArrays[GML_MAX_NUM_THREADS];
 #else
 static CVertexArray* currentVertexArray = NULL;
 #endif
-//BOOL gmlVertexArrayEnable=0;
+//BOOL gmlVertexArrayEnable = 0;
 /******************************************************************************/
 /******************************************************************************/
 
@@ -39,17 +39,17 @@ CVertexArray* GetVertexArray()
 {
 #ifdef USE_GML // each thread gets its own array to avoid conflicts
 	int thread=gmlThreadNumber;
-	if(currentVertexArrays[thread]==&vertexArrays1[thread]){
-		currentVertexArrays[thread]=&vertexArrays2[thread];
+	if (currentVertexArrays[thread] == &vertexArrays1[thread]) {
+		currentVertexArrays[thread] = &vertexArrays2[thread];
 	} else {
-		currentVertexArrays[thread]=&vertexArrays1[thread];
+		currentVertexArrays[thread] = &vertexArrays1[thread];
 	}
 	return currentVertexArrays[thread];
 #else
-	if(currentVertexArray==vertexArray1){
-		currentVertexArray=vertexArray2;
+	if (currentVertexArray == vertexArray1){
+		currentVertexArray = vertexArray2;
 	} else {
-		currentVertexArray=vertexArray1;
+		currentVertexArray = vertexArray1;
 	}
 	return currentVertexArray;
 #endif
@@ -61,22 +61,22 @@ CVertexArray* GetVertexArray()
 void PrintAvailableResolutions()
 {
 	// Get available fullscreen/hardware modes
-	SDL_Rect **modes=SDL_ListModes(NULL, SDL_FULLSCREEN|SDL_OPENGL);
-	if (modes == (SDL_Rect **)0) {
-		logOutput.Print("Supported Video modes: No modes available!\n");
-	}else if (modes == (SDL_Rect **)-1) {
-		logOutput.Print("Supported Video modes: All modes available.\n");
-	}else{
+	SDL_Rect** modes = SDL_ListModes(NULL, SDL_FULLSCREEN|SDL_OPENGL);
+	if (modes == (SDL_Rect**)0) {
+		LOG("Supported Video modes: No modes available!");
+	} else if (modes == (SDL_Rect**)-1) {
+		LOG("Supported Video modes: All modes available.");
+	} else {
 		char buffer[1024];
 		unsigned char n = 0;
-		for(int i=0;modes[i];++i) {
+		for (int i = 0; modes[i]; ++i) {
 			n += SNPRINTF(&buffer[n], 1024-n, "%dx%d, ", modes[i]->w, modes[i]->h);
 		}
 		// remove last comma
-		if (n>=2) {
-			buffer[n-2] = '\0';
+		if (n >= 2) {
+			buffer[n - 2] = '\0';
 		}
-		logOutput.Print("Supported Video modes: %s\n",buffer);
+		LOG("Supported Video modes: %s", buffer);
 	}
 }
 
@@ -153,7 +153,9 @@ void _APIENTRY OpenGLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
 			severityStr = "unknown";
 	}
 
-	logOutput.Print("OpenGL Error: source<%s> type<%s> id<%u> severity<%s>:\n%s", sourceStr.c_str(), typeStr.c_str(), id, severityStr.c_str(), messageStr.c_str());
+	LOG_L(L_ERROR, "OpenGL: source<%s> type<%s> id<%u> severity<%s>:\n%s",
+			sourceStr.c_str(), typeStr.c_str(), id, severityStr.c_str(),
+			messageStr.c_str());
 }
 #endif // GL_ARB_debug_output
 
@@ -169,15 +171,15 @@ void LoadExtensions()
 	const char* glExtensions = (const char*) glGetString(GL_EXTENSIONS);
 
 	// log some useful version info
-	logOutput.Print("SDL:  %d.%d.%d\n",
+	LOG("SDL:  %d.%d.%d",
 		SDL_Linked_Version()->major,
 		SDL_Linked_Version()->minor,
 		SDL_Linked_Version()->patch);
-	logOutput.Print("GL version:   %s\n", glVersion);
-	logOutput.Print("GL vendor:    %s\n", glVendor);
-	logOutput.Print("GL renderer:  %s\n", glRenderer);
-	logOutput.Print("GLSL version: %s\n", glslVersion); // only non-NULL as of OpenGL 2.0
-	logOutput.Print("GLEW version: %s\n", glewVersion);
+	LOG("GL version:   %s", glVersion);
+	LOG("GL vendor:    %s", glVendor);
+	LOG("GL renderer:  %s", glRenderer);
+	LOG("GLSL version: %s", glslVersion); // only non-NULL as of OpenGL 2.0
+	LOG("GLEW version: %s", glewVersion);
 
 #if       !defined DEBUG
 	{
@@ -198,17 +200,17 @@ void LoadExtensions()
 		}
 
 		if (gfxCardIsCrap) {
-			logOutput.Print("WW     WWW     WW    AAA     RRRRR   NNN  NN  II  NNN  NN   GGGGG  \n");
-			logOutput.Print(" WW   WW WW   WW    AA AA    RR  RR  NNNN NN  II  NNNN NN  GG      \n");
-			logOutput.Print("  WW WW   WW WW    AAAAAAA   RRRRR   NN NNNN  II  NN NNNN  GG   GG \n");
-			logOutput.Print("   WWW     WWW    AA     AA  RR  RR  NN  NNN  II  NN  NNN   GGGGG  \n");
-			logOutput.Print("(warning)\n");
-			logOutput.Print("Your graphic card is ...\n");
-			logOutput.Print("well, you know ...\n");
-			logOutput.Print("insufficient\n");
-			logOutput.Print("(in case you are not using a horribly wrong driver).\n");
-			logOutput.Print("If the game crashes, looks ugly or runs slow, buy a better card!\n");
-			logOutput.Print(".\n");
+			LOG_L(L_WARNING, "WW     WWW     WW    AAA     RRRRR   NNN  NN  II  NNN  NN   GGGGG ");
+			LOG_L(L_WARNING, " WW   WW WW   WW    AA AA    RR  RR  NNNN NN  II  NNNN NN  GG     ");
+			LOG_L(L_WARNING, "  WW WW   WW WW    AAAAAAA   RRRRR   NN NNNN  II  NN NNNN  GG   GG");
+			LOG_L(L_WARNING, "   WWW     WWW    AA     AA  RR  RR  NN  NNN  II  NN  NNN   GGGGG ");
+			LOG_L(L_WARNING, "(warning)");
+			LOG_L(L_WARNING, "Your graphic card is ...");
+			LOG_L(L_WARNING, "well, you know ...");
+			LOG_L(L_WARNING, "insufficient");
+			LOG_L(L_WARNING, "(in case you are not using a horribly wrong driver).");
+			LOG_L(L_WARNING, "If the game crashes, looks ugly or runs slow, buy a better card!");
+			LOG_L(L_WARNING, ".");
 		}
 	}
 #endif // !defined DEBUG
@@ -245,7 +247,7 @@ void LoadExtensions()
 
 #if defined(GL_ARB_debug_output) && !defined(HEADLESS) //! it's not defined in older GLEW versions
 	if (GLEW_ARB_debug_output) {
-		logOutput.Print("Installing OpenGL-DebugMessageHandler");
+		LOG("Installing OpenGL-DebugMessageHandler");
 		glDebugMessageCallbackARB(&OpenGLDebugMessageCallback, NULL);
 	}
 #endif
@@ -259,13 +261,14 @@ void UnloadExtensions()
 {
 	delete vertexArray1;
 	delete vertexArray2;
-	vertexArray1 = vertexArray2 = NULL;
+	vertexArray1 = NULL;
+	vertexArray2 = NULL;
 }
 
 
 /******************************************************************************/
 
-void glBuildMipmaps(const GLenum target,GLint internalFormat,const GLsizei width,const GLsizei height,const GLenum format,const GLenum type,const void *data)
+void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei width, const GLsizei height, const GLenum format, const GLenum type, const void* data)
 {
 	ScopedTimer timer("Textures::glBuildMipmaps");
 
@@ -310,19 +313,19 @@ void glBuildMipmaps(const GLenum target,GLint internalFormat,const GLsizei width
 
 void ClearScreen()
 {
-	glClearColor(0,0,0,1);
+	glClearColor(0, 0, 0, 1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glMatrixMode(GL_PROJECTION); // Select The Projection Matrix
 	glLoadIdentity();            // Reset The Projection Matrix
-	gluOrtho2D(0,1,0,1);
+	gluOrtho2D(0, 1, 0, 1);
 	glMatrixMode(GL_MODELVIEW);  // Select The Modelview Matrix
 
 	glLoadIdentity();
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_2D);
-	glColor3f(1,1,1);
+	glColor3f(1, 1, 1);
 }
 
 
@@ -343,7 +346,7 @@ bool ProgramStringIsNative(GLenum target, const char* filename)
 	// clear any current GL errors so that the following check is valid
 	glClearErrors();
 
-	GLuint tempProg = LoadProgram(target, filename, (target == GL_VERTEX_PROGRAM_ARB? "vertex": "fragment"));
+	const GLuint tempProg = LoadProgram(target, filename, (target == GL_VERTEX_PROGRAM_ARB? "vertex": "fragment"));
 
 	if (tempProg == 0) {
 		return false;
@@ -366,8 +369,9 @@ bool ProgramStringIsNative(GLenum target, const char* filename)
  */
 static bool CheckParseErrors(GLenum target, const char* filename, const char* program)
 {
-	if (glGetError() != GL_INVALID_OPERATION)
+	if (glGetError() != GL_INVALID_OPERATION) {
 		return false;
+	}
 
 	// Find the error position
 	GLint errorPos = -1;
@@ -380,7 +384,7 @@ static bool CheckParseErrors(GLenum target, const char* filename, const char* pr
 	// errors and warnings string.
 	const GLubyte* errString = glGetString(GL_PROGRAM_ERROR_STRING_ARB);
 
-	logOutput.Print(
+	LOG_L(L_ERROR,
 		"[myGL::CheckParseErrors] Shader compilation error at index "
 		"%d (near \"%.30s\") when loading %s-program file %s:\n%s",
 		errorPos, program + errorPos,

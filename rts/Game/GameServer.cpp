@@ -499,8 +499,8 @@ bool CGameServer::SendDemoData(int targetFrameNum)
 					pckt >> team;
 					pckt >> name;
 					AddAdditionalUser(name, "", true); // even though this is a demo, keep the players vector properly updated
-				} catch (netcode::UnpackPacketException &e) {
-					Message(str(format("Warning: Discarding invalid new player packet in demo: %s") %e.err));
+				} catch (const netcode::UnpackPacketException& ex) {
+					Message(str(format("Warning: Discarding invalid new player packet in demo: %s") %ex.err));
 					continue;
 				}
 
@@ -991,8 +991,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				Broadcast(CBaseNetProtocol::Get().SendPlayerName(playerNum, players[playerNum].name));
 				if (hostif)
 					hostif->SendPlayerJoined(playerNum, players[playerNum].name);
-			} catch (netcode::UnpackPacketException &e) {
-				Message(str(format("Player %d sent invalid PlayerName: %s") %a %e.err));
+			} catch (const netcode::UnpackPacketException& ex) {
+				Message(str(format("Player %d sent invalid PlayerName: %s") %a %ex.err));
 			}
 			break;
 		}
@@ -1015,8 +1015,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					break;
 				}
 				GotChatMessage(msg);
-			} catch (netcode::UnpackPacketException &e) {
-				Message(str(format("Player %s sent invalid ChatMessage: %s") %players[a].name %e.err));
+			} catch (const netcode::UnpackPacketException& ex) {
+				Message(str(format("Player %s sent invalid ChatMessage: %s") %players[a].name %ex.err));
 			}
 			break;
 		}
@@ -1032,8 +1032,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					break;
 				}
 				Broadcast(CBaseNetProtocol::Get().SendSystemMessage(playerNum, strmsg));
-			} catch (netcode::UnpackPacketException &e) {
-				Message(str(format("Player %d sent invalid SystemMessage: %s") %a %e.err));
+			} catch (const netcode::UnpackPacketException& ex) {
+				Message(str(format("Player %d sent invalid SystemMessage: %s") %a %ex.err));
 			}
 			break;
 
@@ -1077,8 +1077,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				}
 				if (!demoReader)
 					Broadcast(packet); //forward data
-			} catch (netcode::UnpackPacketException &e) {
-				Message(str(format("Player %s sent invalid Command: %s") %players[a].name %e.err));
+			} catch (const netcode::UnpackPacketException& ex) {
+				Message(str(format("Player %s sent invalid Command: %s") %players[a].name %ex.err));
 			}
 			break;
 
@@ -1093,8 +1093,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				}
 				if (!demoReader)
 					Broadcast(packet); //forward data
-			} catch (netcode::UnpackPacketException &e) {
-				Message(str(format("Player %s sent invalid Select: %s") %players[a].name %e.err));
+			} catch (const netcode::UnpackPacketException& ex) {
+				Message(str(format("Player %s sent invalid Select: %s") %players[a].name %ex.err));
 			}
 			break;
 
@@ -1111,8 +1111,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					Message(str(format(NoHelperAI) %players[a].name %a));
 				else if (!demoReader)
 					Broadcast(packet); //forward data
-			} catch (netcode::UnpackPacketException &e) {
-				Message(str(format("Player %s sent invalid AICommand: %s") %players[a].name %e.err));
+			} catch (const netcode::UnpackPacketException& ex) {
+				Message(str(format("Player %s sent invalid AICommand: %s") %players[a].name %ex.err));
 			}
 		}
 		break;
@@ -1130,8 +1130,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					Message(str(format(NoHelperAI) %players[a].name %a));
 				else if (!demoReader)
 					Broadcast(packet); //forward data
-			} catch (netcode::UnpackPacketException &e) {
-				Message(str(format("Player %s sent invalid AICommands: %s") %players[a].name %e.err));
+			} catch (const netcode::UnpackPacketException& ex) {
+				Message(str(format("Player %s sent invalid AICommands: %s") %players[a].name %ex.err));
 			}
 		} break;
 
@@ -1148,8 +1148,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					Message(str(format(NoHelperAI) %players[a].name %a));
 				else if (!demoReader)
 					Broadcast(packet); //forward data
-			} catch (netcode::UnpackPacketException &e) {
-				Message(str(format("Player %s sent invalid AIShare: %s") %players[a].name %e.err));
+			} catch (const netcode::UnpackPacketException& ex) {
+				Message(str(format("Player %s sent invalid AIShare: %s") %players[a].name %ex.err));
 			}
 		} break;
 
@@ -1167,8 +1167,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					if (hostif)
 						hostif->SendLuaMsg(packet->data, packet->length);
 				}
-			} catch (netcode::UnpackPacketException &e) {
-				Message(str(format("Player %s sent invalid LuaMsg: %s") %players[a].name %e.err));
+			} catch (const netcode::UnpackPacketException& ex) {
+				Message(str(format("Player %s sent invalid LuaMsg: %s") %players[a].name %ex.err));
 			}
 			break;
 
@@ -1222,8 +1222,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				}
 				if (!players[playerNum].spectator || allowSpecDraw)
 					Broadcast(packet); //forward data
-			} catch (netcode::UnpackPacketException &e) {
-				Message(str(format("Player %s sent invalid MapDraw: %s") %players[a].name %e.err));
+			} catch (const netcode::UnpackPacketException& ex) {
+				Message(str(format("Player %s sent invalid MapDraw: %s") %players[a].name %ex.err));
 			}
 			break;
 
@@ -1449,8 +1449,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					tai->leader = ais[skirmishAIId].hostPlayer;
 					tai->active = true;
 				}
-			} catch (netcode::UnpackPacketException &e) {
-				Message(str(format("Player %s sent invalid AICreated: %s") %players[a].name %e.err));
+			} catch (const netcode::UnpackPacketException& ex) {
+				Message(str(format("Player %s sent invalid AICreated: %s") %players[a].name %ex.err));
 			}
 			break;
 		}
@@ -1538,8 +1538,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 						Message(str(boost::format(CommandNotAllowed) %msg.GetPlayerID() %msg.GetAction().command.c_str()));
 					}
 				}
-			} catch (netcode::UnpackPacketException &e) {
-				Message(str(boost::format("Player %s sent invalid CommandMessage: %s") %players[a].name %e.err));
+			} catch (const netcode::UnpackPacketException& ex) {
+				Message(str(boost::format("Player %s sent invalid CommandMessage: %s") %players[a].name %ex.err));
 			}
 			break;
 		}
@@ -1576,8 +1576,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				Broadcast(CBaseNetProtocol::Get().SendGameOver(playerNum, winningAllyTeams));
 
 				gameEndTime = spring_gettime();
-			} catch (netcode::UnpackPacketException& e) {
-				Message(str(format("Player %s sent invalid GameOver: %s") %players[a].name %e.err));
+			} catch (const netcode::UnpackPacketException& ex) {
+				Message(str(format("Player %s sent invalid GameOver: %s") %players[a].name %ex.err));
 			}
 			break;
 		}
@@ -1628,8 +1628,8 @@ void CGameServer::ServerReadNet()
 				msg >> version;
 				msg >> reconnect;
 				BindConnection(name, passwd, version, false, UDPNet->AcceptConnection(), reconnect);
-			} catch (netcode::UnpackPacketException &e) {
-				Message(str(format(ConnectionReject) %e.err %packet->data[0] %packet->data[2] %packet->length));
+			} catch (const netcode::UnpackPacketException& ex) {
+				Message(str(format(ConnectionReject) %ex.err %packet->data[0] %packet->data[2] %packet->length));
 				UDPNet->RejectConnection();
 			}
 		}

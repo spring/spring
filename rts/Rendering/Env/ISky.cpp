@@ -3,7 +3,7 @@
 #include "System/StdAfx.h"
 #include "System/mmgr.h"
 
-#include "BaseSky.h"
+#include "ISky.h"
 #include "BasicSky.h"
 #include "AdvSky.h"
 #include "SkyBox.h"
@@ -11,14 +11,14 @@
 #include "Rendering/GlobalRendering.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 CONFIG(bool, DynamicSun).defaultValue(false);
 CONFIG(bool, AdvSky).defaultValue(true);
 
-IBaseSky* sky = NULL;
+ISky* sky = NULL;
 
-IBaseSky::IBaseSky()
+ISky::ISky()
 	: wireframe(false)
 	, dynamicSky(false)
 	, fogStart(0.0f)
@@ -28,14 +28,15 @@ IBaseSky::IBaseSky()
 	SetLight(configHandler->GetBool("DynamicSun"));
 }
 
-IBaseSky::~IBaseSky()
+ISky::~ISky()
 {
 	delete skyLight;
 }
 
 
 
-void IBaseSky::SetFog() {
+void ISky::SetupFog() {
+
 	if (globalRendering->drawFog) {
 		glEnable(GL_FOG);
 	} else {
@@ -51,9 +52,9 @@ void IBaseSky::SetFog() {
 
 
 
-IBaseSky* IBaseSky::GetSky()
+ISky* ISky::GetSky()
 {
-	IBaseSky* sky = NULL;
+	ISky* sky = NULL;
 
 	try {
 		if (!mapInfo->atmosphere.skyBox.empty()) {
@@ -61,8 +62,9 @@ IBaseSky* IBaseSky::GetSky()
 		} else if (configHandler->GetBool("AdvSky")) {
 			sky = new CAdvSky();
 		}
-	} catch (content_error& e) {
-		logOutput.Print("[%s] error: %s (falling back to BasicSky)", __FUNCTION__, e.what());
+	} catch (const content_error& ex) {
+		LOG_L(L_ERROR, "[%s] error: %s (falling back to BasicSky)",
+				__FUNCTION__, ex.what());
 		delete sky;
 		sky = NULL;
 	}
@@ -74,7 +76,7 @@ IBaseSky* IBaseSky::GetSky()
 	return sky;
 }
 
-void IBaseSky::SetLight(bool dynamic) {
+void ISky::SetLight(bool dynamic) {
 	delete skyLight;
 
 	if (dynamic)

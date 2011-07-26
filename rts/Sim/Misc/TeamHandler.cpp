@@ -49,6 +49,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 	assert(setup->allyStartingData.size() <= MAX_TEAMS);
 
 	teams.resize(setup->teamStartingData.size());
+	allyTeams = setup->allyStartingData;
 
 	for (size_t i = 0; i < teams.size(); ++i) {
 		// TODO: this loop body could use some more refactoring
@@ -57,10 +58,10 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		*team = setup->teamStartingData[i];
 		team->teamNum = i;
 		team->maxUnits = std::min(setup->maxUnits, int(MAX_UNITS / teams.size()));
-		SetAllyTeam(i, team->teamAllyteam);
-	}
 
-	allyTeams = setup->allyStartingData;
+		assert(team->teamAllyteam >=                0);
+		assert(team->teamAllyteam <  allyTeams.size());
+	}
 
 	if (gs->useLuaGaia) {
 		// Gaia adjustments
