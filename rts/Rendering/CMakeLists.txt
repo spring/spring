@@ -44,7 +44,6 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/LineDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SmoothHeightMeshDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Models/3DModel.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Models/3DModelLog.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Models/3DOParser.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Models/AssIO.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Models/AssParser.cpp"
