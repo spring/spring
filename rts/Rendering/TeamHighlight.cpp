@@ -46,7 +46,7 @@ void CTeamHighlight::Update(int frameNum) {
 		return;
 
 	bool hl = false;
-	if ((globalConfig->teamHighlight == 1 && !gu->spectatingFullView) || globalConfig->teamHighlight == 2) {
+	if ((globalConfig->teamHighlight == HIGHLIGHT_PLAYERS && !gu->spectatingFullView) || globalConfig->teamHighlight == HIGHLIGHT_ALL) {
 		int maxhl = 1000 * (globalConfig->networkTimeout + 1);
 
 		for (int ti = 0; ti < teamHandler->ActiveTeams(); ++ti) {
