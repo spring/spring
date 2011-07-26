@@ -9,7 +9,7 @@
 #include "System/mmgr.h"
 #include "System/Util.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/creg/creg_cond.h"
 
 #include <string>
@@ -142,7 +142,7 @@ void CGlobalRendering::PostInit() {
 	atiHacks = haveATI && (atiHacksCfg < 0); //! runtime detect
 	atiHacks |= (atiHacksCfg > 0); //! user override
 	if (atiHacks) {
-		logOutput.Print("ATI hacks enabled\n");
+		LOG("ATI hacks enabled");
 	}
 }
 

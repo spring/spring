@@ -16,7 +16,6 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/LogOutput.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
@@ -248,7 +247,7 @@ void CBasicSky::Draw()
 
 	glEnable(GL_DEPTH_TEST);
 
-	SetFog();
+	ISky::SetupFog();
 }
 
 float3 CBasicSky::GetCoord(int x, int y)

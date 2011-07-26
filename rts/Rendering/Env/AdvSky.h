@@ -1,13 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __ADV_SKY_H__
-#define __ADV_SKY_H__
+#ifndef ADV_SKY_H
+#define ADV_SKY_H
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
-#include "BaseSky.h"
+#include "ISky.h"
 
-class CAdvSky : public IBaseSky
+class CAdvSky : public ISky
 {
 public:
 	CAdvSky();
@@ -93,4 +93,4 @@ protected:
 	int updatecounter;
 };
 
-#endif // __ADV_SKY_H__
+#endif // ADV_SKY_H

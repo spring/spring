@@ -1,18 +1,18 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __BASE_SKY_H__
-#define __BASE_SKY_H__
+#ifndef I_SKY_H
+#define I_SKY_H
 
 #include "SkyLight.h"
 
 #define CLOUD_SIZE 256 // must be divisible by 4 and 8
 
-class IBaseSky
+class ISky
 {
 public:
-	static IBaseSky* GetSky();
+	static ISky* GetSky();
 
-	virtual ~IBaseSky();
+	virtual ~ISky();
 	virtual void Update() = 0;
 	virtual void Draw() = 0;
 	virtual void DrawSun() = 0;
@@ -25,9 +25,13 @@ public:
 	float GetCloudDensity() const { return cloudDensity; }
 
 	ISkyLight* GetLight() const { return skyLight; }
-	void SetLight(bool);
+	void SetLight(bool dynamic);
 
-	static void SetFog();
+	/**
+	 * Sets up OpenGL to draw fog or not, according to the value of
+	 * globalRendering->drawFog.
+	 */
+	static void SetupFog();
 
 public:
 	bool wireframe;
@@ -41,13 +45,13 @@ public:
 	float fogStart;
 
 protected:
-	IBaseSky();
+	ISky();
 
 	ISkyLight* skyLight;
 
 	float cloudDensity;
 };
 
-extern IBaseSky* sky;
+extern ISky* sky;
 
-#endif // __BASE_SKY_H__
+#endif // I_SKY_H

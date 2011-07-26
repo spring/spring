@@ -12,9 +12,9 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/FarTextureHandler.h"
-#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
-#include "Rendering/Env/BaseWater.h"
+#include "Rendering/Env/IWater.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -175,7 +175,7 @@ inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 
 void CFeatureDrawer::Draw()
 {
-	IBaseSky::SetFog();
+	ISky::SetupFog();
 
 	GML_RECMUTEX_LOCK(feat); // Draw
 
@@ -251,7 +251,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 void CFeatureDrawer::DrawFeatureStats()
 {
 	if (!drawStat.empty()) {
-		if (!water->drawReflection) {
+		if (!water->IsDrawReflection()) {
 			for (std::vector<CFeature *>::iterator fi = drawStat.begin(); fi != drawStat.end(); ++fi) {
 				DrawFeatureStatBars(*fi);
 			}
@@ -339,7 +339,7 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.5f);
 
-		IBaseSky::SetFog();
+		ISky::SetupFog();
 
 		{
 			GML_RECMUTEX_LOCK(feat); // DrawFadeFeatures
@@ -554,8 +554,8 @@ void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 	CFeatureQuadDrawer drawer;
 	drawer.drawQuads = &drawQuads;
 	drawer.drawQuadsX = drawQuadsX;
-	drawer.drawReflection = water->drawReflection;
-	drawer.drawRefraction = water->drawRefraction;
+	drawer.drawReflection = water->IsDrawReflection();
+	drawer.drawRefraction = water->IsDrawRefraction();
 	drawer.unitDrawDist = unitDrawer->unitDrawDist;
 	drawer.sqFadeDistEnd = featureDist * featureDist;
 	drawer.sqFadeDistBegin = 0.75f * 0.75f * featureDist * featureDist;

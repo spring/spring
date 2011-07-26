@@ -11,7 +11,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileHandler.h"
 
@@ -91,7 +91,7 @@ private:
 			delete[] args.buf;
 			b.ReverseYAxis();
 			b.Save(args.filename);
-			LogObject() << "Saved: " << args.filename;
+			LOG("Saved: %s", args.filename.c_str());
 		}
 		finished = true;
 	};

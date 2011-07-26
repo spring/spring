@@ -15,7 +15,6 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
-#include "System/LogOutput.h"
 
 static float3 defaultColVolColor(0.45f, 0.0f, 0.45f);
 
