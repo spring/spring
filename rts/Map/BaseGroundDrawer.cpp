@@ -392,7 +392,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 						const float height = heightMap[y_mapx + x];
 						const unsigned int value = (((unsigned int)(height * 8.0f)) % 255) * 3;
 						const int i = (y_pwr2mapx + x) * 4 - offset;
-						infoTexMem[i + COLOR_R] = 64 + (extraTexPal[value]     >> 1);
+						infoTexMem[i + COLOR_R] = 64 + (extraTexPal[value    ] >> 1);
 						infoTexMem[i + COLOR_G] = 64 + (extraTexPal[value + 1] >> 1);
 						infoTexMem[i + COLOR_B] = 64 + (extraTexPal[value + 2] >> 1);
 						infoTexMem[i + COLOR_A] = 255;

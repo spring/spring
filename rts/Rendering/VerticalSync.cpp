@@ -13,7 +13,6 @@
 
 #include "VerticalSync.h"
 #include "GL/myGL.h"
-#include "System/LogOutput.h"
 #include "System/Config/ConfigHandler.h"
 
 CONFIG(int, VSync).defaultValue(-1);

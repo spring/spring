@@ -118,8 +118,8 @@ void CGame::ClientReadNet()
 						GameEnd(std::vector<unsigned char>());
 					}
 					AddTraffic(-1, packetCode, dataLength);
-				} catch (netcode::UnpackPacketException &e) {
-					logOutput.Print("Got invalid QuitMessage: %s", e.err.c_str());
+				} catch (const netcode::UnpackPacketException& ex) {
+					logOutput.Print("Got invalid QuitMessage: %s", ex.err.c_str());
 				}
 				break;
 			}
@@ -244,8 +244,8 @@ void CGame::ClientReadNet()
 					playerHandler->Player(player)->active=true;
 					wordCompletion->AddWord(playerHandler->Player(player)->name, false, false, false); // required?
 					AddTraffic(player, packetCode, dataLength);
-				} catch (netcode::UnpackPacketException &e) {
-					logOutput.Print("Got invalid PlayerName: %s", e.err.c_str());
+				} catch (const netcode::UnpackPacketException& ex) {
+					logOutput.Print("Got invalid PlayerName: %s", ex.err.c_str());
 				}
 				break;
 			}
@@ -256,8 +256,8 @@ void CGame::ClientReadNet()
 
 					HandleChatMsg(msg);
 					AddTraffic(msg.fromPlayer, packetCode, dataLength);
-				} catch (netcode::UnpackPacketException &e) {
-					logOutput.Print("Got invalid ChatMessage: %s", e.err.c_str());
+				} catch (const netcode::UnpackPacketException& ex) {
+					logOutput.Print("Got invalid ChatMessage: %s", ex.err.c_str());
 				}
 				break;
 			}
@@ -269,8 +269,8 @@ void CGame::ClientReadNet()
 					pckt >> s;
 					logOutput.Print(s);
 					AddTraffic(-1, packetCode, dataLength);
-				} catch (netcode::UnpackPacketException &e) {
-					logOutput.Print("Got invalid SystemMessage: %s", e.err.c_str());
+				} catch (const netcode::UnpackPacketException& ex) {
+					logOutput.Print("Got invalid SystemMessage: %s", ex.err.c_str());
 				}
 				break;
 			}
@@ -399,8 +399,8 @@ void CGame::ClientReadNet()
 					}
 					selectedUnits.NetOrder(c,player);
 					AddTraffic(player, packetCode, dataLength);
-				} catch (netcode::UnpackPacketException &e) {
-					logOutput.Print("Got invalid Command: %s", e.err.c_str());
+				} catch (const netcode::UnpackPacketException& ex) {
+					logOutput.Print("Got invalid Command: %s", ex.err.c_str());
 				}
 				break;
 			}
@@ -435,8 +435,8 @@ void CGame::ClientReadNet()
 					selectedUnits.NetSelect(selected, player);
 
 					AddTraffic(player, packetCode, dataLength);
-				} catch (netcode::UnpackPacketException &e) {
-					logOutput.Print("Got invalid Select: %s", e.err.c_str());
+				} catch (const netcode::UnpackPacketException& ex) {
+					logOutput.Print("Got invalid Select: %s", ex.err.c_str());
 				}
 				break;
 			}
@@ -477,8 +477,8 @@ void CGame::ClientReadNet()
 
 					selectedUnits.AiOrder(unitid, c, player);
 					AddTraffic(player, packetCode, dataLength);
-				} catch (netcode::UnpackPacketException &e) {
-					logOutput.Print("Got invalid AICommand: %s", e.err.c_str());
+				} catch (const netcode::UnpackPacketException& ex) {
+					logOutput.Print("Got invalid AICommand: %s", ex.err.c_str());
 				}
 				break;
 			}
@@ -527,8 +527,8 @@ void CGame::ClientReadNet()
 						}
 					}
 					AddTraffic(player, packetCode, dataLength);
-				} catch (netcode::UnpackPacketException &e) {
-					logOutput.Print("Got invalid AICommands: %s", e.err.c_str());
+				} catch (const netcode::UnpackPacketException& ex) {
+					logOutput.Print("Got invalid AICommands: %s", ex.err.c_str());
 				}
 				break;
 			}
@@ -581,8 +581,8 @@ void CGame::ClientReadNet()
 							u->ChangeTeam(dstTeam, CUnit::ChangeGiven);
 						}
 					}
-				} catch (netcode::UnpackPacketException &e) {
-					logOutput.Print("Got invalid AIShare: %s", e.err.c_str());
+				} catch (const netcode::UnpackPacketException& ex) {
+					logOutput.Print("Got invalid AIShare: %s", ex.err.c_str());
 				}
 				break;
 			}
@@ -607,8 +607,8 @@ void CGame::ClientReadNet()
 
 					CLuaHandle::HandleLuaMsg(playerNum, script, mode, data);
 					AddTraffic(playerNum, packetCode, dataLength);
-				} catch (netcode::UnpackPacketException &e) {
-					logOutput.Print("Got invalid LuaMsg: %s", e.err.c_str());
+				} catch (const netcode::UnpackPacketException& ex) {
+					logOutput.Print("Got invalid LuaMsg: %s", ex.err.c_str());
 				}
 				break;
 			}
@@ -850,8 +850,8 @@ void CGame::ClientReadNet()
 						logOutput.Print("Skirmish AI being created for team %i ...", aiTeamId);
 						eoh->CreateSkirmishAI(skirmishAIId);
 					}
-				} catch (netcode::UnpackPacketException &e) {
-					logOutput.Print("Got invalid AICreated: %s", e.err.c_str());
+				} catch (const netcode::UnpackPacketException& ex) {
+					logOutput.Print("Got invalid AICreated: %s", ex.err.c_str());
 				}
 				break;
 			}
@@ -961,8 +961,8 @@ void CGame::ClientReadNet()
 					CommandMessage msg(packet);
 
 					ActionReceived(msg.GetAction(), msg.GetPlayerID());
-				} catch (netcode::UnpackPacketException &e) {
-					logOutput.Print("Got invalid CommandMessage: %s", e.err.c_str());
+				} catch (const netcode::UnpackPacketException& ex) {
+					logOutput.Print("Got invalid CommandMessage: %s", ex.err.c_str());
 				}
 				break;
 			}
@@ -1026,8 +1026,8 @@ void CGame::ClientReadNet()
 					logOutput.Print("Added new player: %s", name.c_str());
 					//TODO: perhaps add a lua hook, hook should be able to reassign the player to a team and/or create a new team/allyteam
 					AddTraffic(-1, packetCode, dataLength);
-				} catch (netcode::UnpackPacketException &e) {
-					logOutput.Print("Got invalid New player message: %s", e.err.c_str());
+				} catch (const netcode::UnpackPacketException& ex) {
+					logOutput.Print("Got invalid New player message: %s", ex.err.c_str());
 				}
 				break;
 			}

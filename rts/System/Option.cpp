@@ -187,7 +187,7 @@ void option_parseOptions(
 		try {
 			option_parseOption(root, index, opt, *myOptionsSet);
 			options.push_back(opt);
-		} catch (content_error& err) {
+		} catch (const content_error& err) {
 			LOG_L(L_WARNING, "Failed parsing option %d from %s: %s",
 					index, fileName.c_str(), err.what());
 		}
@@ -246,7 +246,7 @@ void option_parseMapOptions(
 		try {
 			option_parseOption(root, index, opt, *myOptionsSet);
 			options.push_back(opt);
-		} catch (content_error& err) {
+		} catch (const content_error& err) {
 			LOG_L(L_WARNING,
 					"Failed parsing map-option %d from %s for map %s: %s",
 					index, fileName.c_str(), mapName.c_str(), err.what());

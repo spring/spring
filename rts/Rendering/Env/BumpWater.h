@@ -1,11 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __BUMP_WATER_H__
-#define __BUMP_WATER_H__
+#ifndef BUMP_WATER_H
+#define BUMP_WATER_H
 
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
-#include "BaseWater.h"
+#include "IWater.h"
 
 #include <bitset>
 
@@ -13,7 +13,7 @@ namespace Shader {
 	struct IProgramObject;
 }
 
-class CBumpWater : public CBaseWater
+class CBumpWater : public IWater
 {
 public:
 	CBumpWater();
@@ -30,28 +30,28 @@ public:
 	const char* GetName() const { return "bumpmapped"; }
 
 private:
-	void SetUniforms(); //! see useUniforms
+	void SetUniforms(); ///< @see #useUniforms
 	void SetupUniforms( std::string& definitions );
 	void GetUniformLocations();
 
 	//! user options
-	char  reflection;   //! 0:=off, 1:=don't render the terrain, 2:=render everything+terrain
-	char  refraction;   //! 0:=off, 1:=screencopy, 2:=own rendering cycle
+	char  reflection;   ///< 0:=off, 1:=don't render the terrain, 2:=render everything+terrain
+	char  refraction;   ///< 0:=off, 1:=screencopy, 2:=own rendering cycle
 	int   reflTexSize;
-	bool  depthCopy;    //! uses a screen depth copy, which allows a nicer interpolation between deep sea and shallow water
+	bool  depthCopy;    ///< uses a screen depth copy, which allows a nicer interpolation between deep sea and shallow water
 	float anisotropy;
-	char  depthBits;    //! depthBits for reflection/refraction RBO
+	char  depthBits;    ///< depthBits for reflection/refraction RBO
 	bool  blurRefl;
 	bool  shoreWaves;
-	bool  endlessOcean; //! render the water around the whole map
-	bool  dynWaves;     //! only usable if bumpmap/normal texture is a TileSet
-	bool  useUniforms;  //! use Uniforms instead of \#define'd const. Warning: this is much slower, but has the advantage that you can change the params on runtime.
+	bool  endlessOcean; ///< render the water around the whole map
+	bool  dynWaves;     ///< only usable if bumpmap/normal texture is a TileSet
+	bool  useUniforms;  ///< use Uniforms instead of \#define'd const. Warning: this is much slower, but has the advantage that you can change the params on runtime.
 
-	unsigned char* tileOffsets; //! used to randomize the wave/bumpmap/normal texture
-	int  normalTextureX; //! needed for dynamic waves
+	unsigned char* tileOffsets; ///< used to randomize the wave/bumpmap/normal texture
+	int  normalTextureX; ///< needed for dynamic waves
 	int  normalTextureY;
 
-	GLuint target; //! for screen copies (color/depth), can be GL_TEXTURE_RECTANGLE (nvidia) or GL_TEXTURE_2D (others)
+	GLuint target; ///< for screen copies (color/depth), can be GL_TEXTURE_RECTANGLE (nvidia) or GL_TEXTURE_2D (others)
 	int  screenTextureX;
 	int  screenTextureY;
 
@@ -64,14 +64,18 @@ private:
 
 	//! coastmap
 	struct CoastUpdateRect {
-		CoastUpdateRect(int x1_, int z1_, int x2_, int z2_) : x1(x1_), z1(z1_), x2(x2_), z2(z2_) {}
+		CoastUpdateRect(int x1_, int z1_, int x2_, int z2_)
+			: x1(x1_)
+			, z1(z1_)
+			, x2(x2_)
+			, z2(z2_) {}
 		int x1, z1;
 		int x2, z2;
 	};
 
 	struct CoastAtlasRect {
 		CoastAtlasRect(const CoastUpdateRect& rect);
-		bool isCoastline; //! if false, then the whole rect is either above water or below water (no coastline -> no need to calc/render distfield)
+		bool isCoastline; ///< if false, then the whole rect is either above water or below water (no coastline -> no need to calc/render distfield)
 		int ix1, iy1;
 		int ix2, iy2;
 		int xsize, ysize;
@@ -96,11 +100,11 @@ private:
 
 	GLuint refractTexture;
 	GLuint reflectTexture;
-	GLuint depthTexture;   //! screen depth copy
+	GLuint depthTexture;   ///< screen depth copy
 	GLuint waveRandTexture;
 	GLuint foamTexture;
-	GLuint normalTexture;  //! final used
-	GLuint normalTexture2; //! updates normalTexture with dynamic waves turned on
+	GLuint normalTexture;  ///< final used
+	GLuint normalTexture2; ///< updates normalTexture with dynamic waves turned on
 	GLuint coastTexture;
 	GLuint coastUpdateTexture;
 	std::vector<GLuint> caustTextures;
@@ -108,7 +112,7 @@ private:
 	Shader::IProgramObject* waterShader;
 	Shader::IProgramObject* blurShader;
 
-	GLuint uniforms[20]; //! see useUniforms
+	GLuint uniforms[20]; ///< see useUniforms
 
 	bool wasLastFrameVisible;
 	GLuint occlusionQuery;
@@ -119,5 +123,5 @@ private:
 	float  windStrength;
 };
 
-#endif // __BUMP_WATER_H__
+#endif // BUMP_WATER_H
 

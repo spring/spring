@@ -114,7 +114,8 @@ boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int framenum)
 	boost::shared_ptr<const netcode::RawPacket> ret = serverConn->GetData();
 
 	if (ret) {
-		float demoTime = (framenum == 0) ? gu->gameTime : gu->startTime + (float)framenum / (float)GAME_SPEED;
+		const float demoTime = (framenum == 0) ? gu->gameTime
+				: gu->startTime + (float)framenum / (float)GAME_SPEED;
 		if (record) {
 			record->SaveToDemo(ret->data, ret->length, demoTime);
 		} else if (ret->data[0] == NETMSG_GAMEDATA && !disableDemo) {
@@ -125,8 +126,9 @@ boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int framenum)
 				record.reset(new CDemoRecorder());
 				record->WriteSetupText(gd.GetSetup());
 				record->SaveToDemo(ret->data, ret->length, demoTime);
-			} catch (netcode::UnpackPacketException &e) {
-				LOG_L(L_WARNING, "Invalid GameData received: %s", e.err.c_str());
+			} catch (const netcode::UnpackPacketException& ex) {
+				LOG_L(L_WARNING, "Invalid GameData received: %s",
+						ex.err.c_str());
 			}
 		}
 	}

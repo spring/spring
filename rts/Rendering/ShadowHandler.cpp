@@ -13,7 +13,7 @@
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/UnitDrawer.h"
-#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
@@ -23,7 +23,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Matrix44f.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 #define DEFAULT_SHADOWMAPSIZE 2048
 #define SHADOWMATRIX_NONLINEAR 0
@@ -63,31 +63,31 @@ CShadowHandler::CShadowHandler()
 		drawTerrainShadow = false;
 
 	if (configValue < 0) {
-		logOutput.Print("[%s] shadow rendering is disabled (config-value %d)", __FUNCTION__, configValue);
+		LOG("[%s] shadow rendering is disabled (config-value %d)", __FUNCTION__, configValue);
 		return;
 	}
 
 	if (!globalRendering->haveARB && !globalRendering->haveGLSL) {
-		logOutput.Print("[%s] GPU does not support either ARB or GLSL shaders for shadow rendering", __FUNCTION__);
+		LOG_L(L_WARNING, "[%s] GPU does not support either ARB or GLSL shaders for shadow rendering", __FUNCTION__);
 		return;
 	}
 
 	if (!globalRendering->haveGLSL) {
 		if (!GLEW_ARB_shadow || !GLEW_ARB_depth_texture || !GLEW_ARB_texture_env_combine) {
-			logOutput.Print("[%s] required OpenGL ARB-extensions missing for shadow rendering", __FUNCTION__);
+			LOG_L(L_WARNING, "[%s] required OpenGL ARB-extensions missing for shadow rendering", __FUNCTION__);
 			// NOTE: these should only be relevant for FFP shadows
 			// return;
 		}
 		if (!GLEW_ARB_shadow_ambient) {
 			// can't use arbitrary texvals in case the depth comparison op fails (only 0)
-			logOutput.Print("[%s] \"ARB_shadow_ambient\" extension missing (will probably make shadows darker than they should be)", __FUNCTION__);
+			LOG_L(L_WARNING, "[%s] \"ARB_shadow_ambient\" extension missing (will probably make shadows darker than they should be)", __FUNCTION__);
 		}
 	}
 
 	shadowMapSize = configHandler->GetInt("ShadowMapSize");
 
 	if (!InitDepthTarget()) {
-		logOutput.Print("[%s] failed to initialize depth-texture FBO", __FUNCTION__);
+		LOG_L(L_ERROR, "[%s] failed to initialize depth-texture FBO", __FUNCTION__);
 		return;
 	}
 
@@ -193,13 +193,13 @@ bool CShadowHandler::InitDepthTarget()
 	// it turns the shadow render buffer in a buffer with color
 	bool useColorTexture = false;
 	if (!fb.IsValid()) {
-		logOutput.Print("[%s] framebuffer not valid!", __FUNCTION__);
+		LOG_L(L_ERROR, "[%s] framebuffer not valid", __FUNCTION__);
 		return false;
 	}
 	glGenTextures(1,&shadowTexture);
 
 	glBindTexture(GL_TEXTURE_2D, shadowTexture);
-	float one[4] = {1.0f,1.0f,1.0f,1.0f};
+	float one[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, one);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
@@ -486,10 +486,9 @@ void CShadowHandler::CalcMinMaxView()
 
 
 
-//maybe standardize all these things in one place sometime (and maybe one day i should try to understand how i made them work)
+// TODO maybe standardize all these things in one place sometime (and maybe one day i should try to understand how i made them work)
 void CShadowHandler::GetFrustumSide(float3& side, bool upside)
 {
-
 	// get vector for collision between frustum and horizontal plane
 	float3 b = UpVector.cross(side);
 
@@ -505,7 +504,7 @@ void CShadowHandler::GetFrustumSide(float3& side, bool upside)
 		if(side.y>0){
 			if(b.dot(UpVector.cross(cam2->forward))<0 && upside){
 				colpoint=cam2->pos+cam2->forward*20000;
-				//logOutput.Print("upward frustum");
+				//LOG_L(L_DEBUG, "shadow-handler: upward frustum");
 			}else
 				colpoint=cam2->pos-c*((cam2->pos.y)/c.y);
 		}else

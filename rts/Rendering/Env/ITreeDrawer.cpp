@@ -13,7 +13,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/myMath.h"
 
 CONFIG(int, TreeRadius)
@@ -60,11 +60,11 @@ ITreeDrawer* ITreeDrawer::GetTreeDrawer()
 		if (configHandler->GetBool("3DTrees")) {
 			td = new CAdvTreeDrawer();
 		}
-	} catch (content_error& e) {
+	} catch (const content_error& e) {
 		if (e.what()[0] != '\0') {
-			logOutput.Print("Error: %s", e.what());
+			LOG_L(L_ERROR, "%s", e.what());
 		}
-		logOutput.Print("TreeDrawer: Fallback to BasicTreeDrawer.");
+		LOG("TreeDrawer: Fallback to BasicTreeDrawer.");
 		// td can not be != NULL here
 		//delete td;
 	}

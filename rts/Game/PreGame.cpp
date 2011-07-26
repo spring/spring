@@ -218,8 +218,8 @@ void CPreGame::UpdateClientNet()
 					pckt >> message;
 					logOutput.Print(message);
 					handleerror(NULL, "Remote requested quit: " + message, "Quit message", MBF_OK | MBF_EXCL);
-				} catch (netcode::UnpackPacketException &e) {
-					logOutput.Print("Got invalid QuitMessage: %s", e.err.c_str());
+				} catch (const netcode::UnpackPacketException& ex) {
+					logOutput.Print("Got invalid QuitMessage: %s", ex.err.c_str());
 				}
 				break;
 			}
@@ -250,8 +250,8 @@ void CPreGame::UpdateClientNet()
 					// the global broadcast will overwrite the user with the
 					// same values as here
 					playerHandler->AddPlayer(player);
-				} catch (netcode::UnpackPacketException &e) {
-					logOutput.Print("Got invalid New player message: %s", e.err.c_str());
+				} catch (const netcode::UnpackPacketException& ex) {
+					logOutput.Print("Got invalid New player message: %s", ex.err.c_str());
 				}
 				break;
 			}
@@ -307,8 +307,8 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			GameData* data = NULL;
 			try {
 				data = new GameData(boost::shared_ptr<const RawPacket>(buf));
-			} catch (netcode::UnpackPacketException &e) {
-				throw content_error("Demo contains invalid GameData: " + e.err);
+			} catch (const netcode::UnpackPacketException& ex) {
+				throw content_error("Demo contains invalid GameData: " + ex.err);
 			}
 
 			CGameSetup* demoScript = new CGameSetup();
@@ -401,8 +401,8 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 		GameData *data = new GameData(packet);
 
 		gameData.reset(data);
-	} catch (netcode::UnpackPacketException &e) {
-		throw content_error("Server sent us invalid GameData: " + e.err);
+	} catch (const netcode::UnpackPacketException& ex) {
+		throw content_error("Server sent us invalid GameData: " + ex.err);
 	}
 
 	CGameSetup* temp = new CGameSetup();

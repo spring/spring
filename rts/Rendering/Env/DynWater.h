@@ -1,18 +1,20 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef BASEWATER_H
-#define BASEWATER_H
+#ifndef DYN_WATER_H
+#define DYN_WATER_H
 
-#include "BaseWater.h"
-#include <vector>
+#include "IWater.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
 
-class CDynWater : public CBaseWater
+#include <vector>
+
+
+class CDynWater : public IWater
 {
 public:
-	CDynWater(void);
-	~CDynWater(void);
+	CDynWater();
+	~CDynWater();
 
 	void Draw();
 	void UpdateWater(CGame* game);
@@ -24,15 +26,15 @@ public:
 private:
 	void DrawReflection(CGame* game);
 	void DrawRefraction(CGame* game);
-	void DrawWaves(void);
-	void DrawHeightTex(void);
-	void DrawWaterSurface(void);
-	void UpdateCamRestraints(void);
-	void DrawDetailNormalTex(void);
+	void DrawWaves();
+	void DrawHeightTex();
+	void DrawWaterSurface();
+	void UpdateCamRestraints();
+	void DrawDetailNormalTex();
 	void AddShipWakes();
 	void AddExplosions();
 	void DrawUpdateSquare(float dx,float dy, int* resetTexs);
-	void DrawSingleUpdateSquare(float startx,float starty,float endx,float endy);
+	void DrawSingleUpdateSquare(float startx, float starty,float endx,float endy);
 
 	int refractSize;
 	GLuint reflectTexture;
@@ -100,13 +102,17 @@ private:
 	std::vector<fline> right,left;
 
 	struct Explosion{
-		Explosion(float3 pos,float strength,float radius): pos(pos),strength(strength),radius(radius){};
+		Explosion(float3 pos, float strength, float radius)
+			: pos(pos)
+			, strength(strength)
+			, radius(radius)
+		{}
 		float3 pos;
 		float strength;
 		float radius;
 	};
 	std::vector<Explosion> explosions;
-	void DrawOuterSurface(void);
+	void DrawOuterSurface();
 };
 
-#endif
+#endif // DYN_WATER_H

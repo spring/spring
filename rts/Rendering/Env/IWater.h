@@ -1,13 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _BASE_WATER_H_
-#define _BASE_WATER_H_
+#ifndef I_WATER_H
+#define I_WATER_H
 
 #include "System/float3.h"
 #include "Sim/Projectiles/ExplosionListener.h"
 class CGame;
 
-class CBaseWater : public CExplosionListener
+class IWater : public CExplosionListener
 {
 public:
 	enum {
@@ -19,8 +19,8 @@ public:
 		NUM_WATER_RENDERERS       = 5,
 	};
 
-	CBaseWater();
-	virtual ~CBaseWater();
+	IWater();
+	virtual ~IWater();
 
 	virtual void Draw() {}
 	virtual void Update() {}
@@ -33,11 +33,17 @@ public:
 
 	virtual void ExplosionOccurred(const CExplosionEvent& event);
 
-	static CBaseWater* GetWater(CBaseWater* currWaterRenderer, int nextWaterRenderMode);
+	bool IsDrawReflection() const { return drawReflection; }
+	bool IsDrawRefraction() const { return drawRefraction; }
+	bool IsDrawSolid() const { return drawSolid; }
+
+	static IWater* GetWater(IWater* currWaterRenderer, int nextWaterRenderMode);
 	static void ApplyPushedChanges(CGame* game);
 	static void PushWaterMode(int nextWaterRenderMode);
 	static void PushHeightmapChange(const int x1, const int y1, const int x2, const int y2);
+	static bool IsNoWakeProjectiles() { return noWakeProjectiles; }
 
+protected:
  	static bool noWakeProjectiles;
 
 	bool drawReflection;
@@ -45,6 +51,6 @@ public:
  	bool drawSolid;
 };
 
-extern CBaseWater* water;
+extern IWater* water;
 
-#endif // _BASE_WATER_H_
+#endif // I_WATER_H

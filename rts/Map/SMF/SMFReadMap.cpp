@@ -10,7 +10,7 @@
 #include "Game/Camera.h"
 #include "Game/LoadScreen.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ISky.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/bitops.h"
