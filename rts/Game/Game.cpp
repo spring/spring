@@ -53,7 +53,7 @@
 #include "Rendering/WorldDrawer.h"
 #include "Rendering/Env/BaseSky.h"
 #include "Rendering/Env/ITreeDrawer.h"
-#include "Rendering/Env/BaseWater.h"
+#include "Rendering/Env/IWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/DebugColVolDrawer.h"
 #include "Rendering/glFont.h"
@@ -743,7 +743,7 @@ void CGame::ResizeEvent()
 	}
 
 	// reload water renderer (it may depend on screen resolution)
-	water = CBaseWater::GetWater(water, water->GetID());
+	water = IWater::GetWater(water, water->GetID());
 
 	eventHandler.ViewResize();
 }

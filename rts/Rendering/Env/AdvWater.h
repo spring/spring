@@ -5,9 +5,9 @@
 
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
-#include "BaseWater.h"
+#include "IWater.h"
 
-class CAdvWater : public CBaseWater
+class CAdvWater : public IWater
 {
 public:
 	CAdvWater(bool loadShader = true);
