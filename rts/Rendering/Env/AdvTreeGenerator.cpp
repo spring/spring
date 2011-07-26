@@ -18,7 +18,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/Shader.hpp"
 #include "Rendering/Textures/Bitmap.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 
 using std::max;
@@ -34,7 +34,7 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 {
 	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	if (!resourcesParser.Execute()) {
-		logOutput.Print(resourcesParser.GetErrorLog());
+		LOG_L(L_ERROR, "%s", resourcesParser.GetErrorLog().c_str());
 	}
 
 	const LuaTable treesTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("trees");

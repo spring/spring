@@ -23,7 +23,6 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/ShadowHandler.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
 #include "System/Matrix44f.h"
 
 static const float TEX_LEAF_START_Y1 = 0.001f;

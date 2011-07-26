@@ -19,7 +19,7 @@
 #include "Bitmap.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/bitops.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/OpenMP_cond.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
@@ -625,7 +625,7 @@ CBitmap CBitmap::GetRegion(int startx, int starty, int width, int height) const
 void CBitmap::CopySubImage(const CBitmap& src, unsigned int xpos, unsigned int ypos)
 {
 	if (xpos + src.xsize >= xsize || ypos + src.ysize >= ysize) {
-		logOutput.Print("CBitmap::CopySubImage src image doesn't fit into dst");
+		LOG_L(L_WARNING, "CBitmap::CopySubImage src image does not fit into dst");
 		return;
 	}
 

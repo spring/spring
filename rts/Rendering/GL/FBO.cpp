@@ -12,7 +12,7 @@
 
 #include "FBO.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Config/ConfigHandler.h"
 
 CONFIG(bool, AtiSwapRBFix).defaultValue(false);
@@ -301,28 +301,28 @@ bool FBO::CheckStatus(std::string name)
 			valid = true;
 			return true;
 		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT:
-			logOutput.Print("FBO-"+name+": no/unsupported textures/buffers attached!");
+			LOG_L(L_WARNING, "FBO-%s: no/unsupported textures/buffers attached!", name.c_str());
 			break;
 		case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT:
-			logOutput.Print("FBO-"+name+": missing a required texture/buffer attachment!");
+			LOG_L(L_WARNING, "FBO-%s: missing a required texture/buffer attachment!", name.c_str());
 			break;
 		case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT:
-			logOutput.Print("FBO-"+name+": has mismatched texture/buffer dimensions!");
+			LOG_L(L_WARNING, "FBO-%s: has mismatched texture/buffer dimensions!", name.c_str());
 			break;
 		case GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT:
-			logOutput.Print("FBO-"+name+": colorbuffer attachments have different types!");
+			LOG_L(L_WARNING, "FBO-%s: colorbuffer attachments have different types!", name.c_str());
 			break;
 		case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT:
-			logOutput.Print("FBO-"+name+": incomplete draw buffers!");
+			LOG_L(L_WARNING, "FBO-%s: incomplete draw buffers!", name.c_str());
 			break;
 		case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT:
-			logOutput.Print("FBO-"+name+": trying to read from a non-attached color buffer!");
+			LOG_L(L_WARNING, "FBO-%s: trying to read from a non-attached color buffer!", name.c_str());
 			break;
 		case GL_FRAMEBUFFER_UNSUPPORTED_EXT:
-			logOutput.Print("FBO-"+name+" error: GL_FRAMEBUFFER_UNSUPPORTED_EXT");
+			LOG_L(L_WARNING, "FBO-%s error: GL_FRAMEBUFFER_UNSUPPORTED_EXT", name.c_str());
 			break;
 		default:
-			logOutput.Print(std::string("FBO-"+name+" error: 0x%X").c_str(),status);
+			LOG_L(L_WARNING, "FBO-%s error: 0x%X", name.c_str(), status);
 			break;
 	}
 	valid = false;
