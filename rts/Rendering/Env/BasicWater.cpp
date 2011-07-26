@@ -75,14 +75,10 @@ void CBasicWater::Draw()
 
 		for (int y = 0; y < 16; y++) {
 			for (int x = 0; x < 16; x++) {
-				glTexCoord2f(x       * repeatX, y       * repeatY);
-				glVertex3f(x       * mapSizeX/16, 0, y * mapSizeY/16);
-				glTexCoord2f(x       * repeatX, (y + 1) * repeatY);
-				glVertex3f(x       * mapSizeX/16, 0, (y + 1) * mapSizeY/16);
-				glTexCoord2f((x + 1) * repeatX, (y + 1) * repeatY);
-				glVertex3f((x + 1) * mapSizeX/16, 0, (y + 1) * mapSizeY/16);
-				glTexCoord2f((x + 1) * repeatX, y       * repeatY);
-				glVertex3f((x + 1) * mapSizeX/16, 0, y       * mapSizeY/16);
+				glTexCoord2f(x       * repeatX,  y      * repeatY); glVertex3f(x       * mapSizeX/16, 0,  y      * mapSizeY/16);
+				glTexCoord2f(x       * repeatX, (y + 1) * repeatY); glVertex3f(x       * mapSizeX/16, 0, (y + 1) * mapSizeY/16);
+				glTexCoord2f((x + 1) * repeatX, (y + 1) * repeatY); glVertex3f((x + 1) * mapSizeX/16, 0, (y + 1) * mapSizeY/16);
+				glTexCoord2f((x + 1) * repeatX,  y      * repeatY); glVertex3f((x + 1) * mapSizeX/16, 0,  y      * mapSizeY/16);
 			}
 		}
 

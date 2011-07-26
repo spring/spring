@@ -251,7 +251,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 void CFeatureDrawer::DrawFeatureStats()
 {
 	if (!drawStat.empty()) {
-		if (!water->drawReflection) {
+		if (!water->IsDrawReflection()) {
 			for (std::vector<CFeature *>::iterator fi = drawStat.begin(); fi != drawStat.end(); ++fi) {
 				DrawFeatureStatBars(*fi);
 			}
