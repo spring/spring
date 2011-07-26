@@ -313,19 +313,25 @@ void CSyncDebugger::ServerTriggerSyncErrorHandling(int serverframenum)
 
 void CSyncDebugger::ClientSendChecksumResponse()
 {
-	const HistItem* myHistory = (historybt != NULL) ? historybt : history;
 	std::vector<unsigned> checksums;
 	for (unsigned i = 0; i < HISTORY_SIZE; ++i) {
 #ifdef SD_USE_SIMPLE_CHECKSUM
 		unsigned checksum = 0;
 		for (unsigned j = 0; j < BLOCK_SIZE; ++j) {
-			checksum = 33 * checksum + myHistory[BLOCK_SIZE * i + j].chk;
+			if (historybt) {
+				checksum = 33 * checksum + historybt[BLOCK_SIZE * i + j].chk;
+			} else {
+				checksum = 33 * checksum + history[BLOCK_SIZE * i + j].chk;
+			}
 		}
 #else
 		unsigned checksum = 123456789;
 		for (unsigned j = 0; j < BLOCK_SIZE; ++j) {
-			const int historyIndex = BLOCK_SIZE * i + j;
-			checksum = CSyncChecker::HsiehHash((char*)&myHistory[historyIndex].chk, sizeof(myHistory[historyIndex].chk), checksum);
+			if (historybt) {
+				checksum = CSyncChecker::HsiehHash((char*)&historybt[BLOCK_SIZE * i + j].chk, sizeof(historybt[BLOCK_SIZE * i + j].chk), checksum);
+			} else {
+				checksum = CSyncChecker::HsiehHash((char*)&history[BLOCK_SIZE * i + j].chk, sizeof(history[BLOCK_SIZE * i + j].chk), checksum);
+			}
 		}
 #endif
 		checksums.push_back(checksum);
