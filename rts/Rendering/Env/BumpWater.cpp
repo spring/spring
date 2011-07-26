@@ -10,7 +10,7 @@
 
 #include "System/bitops.h"
 #include "BumpWater.h"
-#include "BaseSky.h"
+#include "ISky.h"
 #include "Game/Game.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"

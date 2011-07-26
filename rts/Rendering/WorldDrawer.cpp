@@ -7,7 +7,7 @@
 
 #include "WorldDrawer.h"
 #include "Rendering/Env/CubeMapHandler.h"
-#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/DebugColVolDrawer.h"
@@ -42,7 +42,7 @@ CWorldDrawer::CWorldDrawer()
 {
 	// rendering components
 	loadscreen->SetLoadMessage("Creating Sky");
-	sky = IBaseSky::GetSky();
+	sky = ISky::GetSky();
 
 	loadscreen->SetLoadMessage("Creating ShadowHandler & DecalHandler");
 	cubeMapHandler = new CubeMapHandler();

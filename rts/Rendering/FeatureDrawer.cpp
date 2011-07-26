@@ -12,7 +12,7 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/FarTextureHandler.h"
-#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/GL/glExtra.h"
@@ -175,7 +175,7 @@ inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 
 void CFeatureDrawer::Draw()
 {
-	IBaseSky::SetFog();
+	ISky::SetFog();
 
 	GML_RECMUTEX_LOCK(feat); // Draw
 
@@ -339,7 +339,7 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.5f);
 
-		IBaseSky::SetFog();
+		ISky::SetFog();
 
 		{
 			GML_RECMUTEX_LOCK(feat); // DrawFadeFeatures

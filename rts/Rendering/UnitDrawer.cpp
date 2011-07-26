@@ -20,7 +20,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 
-#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ISky.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/FarTextureHandler.h"
@@ -474,7 +474,7 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	IBaseSky::SetFog();
+	ISky::SetFog();
 
 	if (drawReflection) {
 		SetUnitGlobalLODFactor(LODScale * LODScaleReflection);

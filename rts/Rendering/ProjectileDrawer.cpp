@@ -11,7 +11,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
-#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ISky.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -647,7 +647,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(GL_TRUE);
 
-	IBaseSky::SetFog();
+	ISky::SetFog();
 
 	{
 		GML_STDMUTEX_LOCK(rpiece); // Draw

@@ -9,7 +9,7 @@
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ISky.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Log/ILog.h"
@@ -346,7 +346,7 @@ void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_ALPHA_TEST);
 
-	IBaseSky::SetFog();
+	ISky::SetFog();
 	glColor4f(1, 1, 1, 1);
 
 	const int cx = (int)(camera->pos.x / (SQUARE_SIZE * TREE_SQUARE_SIZE));
