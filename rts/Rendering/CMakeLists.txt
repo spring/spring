@@ -12,7 +12,7 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/AdvWater.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/BaseSky.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/ITreeDrawer.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Env/BaseWater.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Env/IWater.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/BasicSky.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/BasicTreeDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/BasicWater.cpp"

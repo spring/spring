@@ -3,14 +3,14 @@
 #ifndef DYN_WATER_H
 #define DYN_WATER_H
 
-#include "BaseWater.h"
+#include "IWater.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
 
 #include <vector>
 
 
-class CDynWater : public CBaseWater
+class CDynWater : public IWater
 {
 public:
 	CDynWater();

@@ -5,7 +5,7 @@
 
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
-#include "BaseWater.h"
+#include "IWater.h"
 
 #include <bitset>
 
@@ -13,7 +13,7 @@ namespace Shader {
 	struct IProgramObject;
 }
 
-class CBumpWater : public CBaseWater
+class CBumpWater : public IWater
 {
 public:
 	CBumpWater();

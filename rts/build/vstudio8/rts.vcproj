@@ -2492,11 +2492,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseWater.cpp"
+					RelativePath="..\..\Rendering\Env\IWater.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseWater.h"
+					RelativePath="..\..\Rendering\Env\IWater.h"
 					>
 				</File>
 				<File

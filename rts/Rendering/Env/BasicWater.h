@@ -4,9 +4,9 @@
 #define BASIC_WATER_H
 
 #include "Rendering/GL/myGL.h"
-#include "BaseWater.h"
+#include "IWater.h"
 
-class CBasicWater : public CBaseWater
+class CBasicWater : public IWater
 {
 public:
 	CBasicWater();
