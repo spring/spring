@@ -175,7 +175,7 @@ inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 
 void CFeatureDrawer::Draw()
 {
-	ISky::SetFog();
+	ISky::SetupFog();
 
 	GML_RECMUTEX_LOCK(feat); // Draw
 
@@ -339,7 +339,7 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.5f);
 
-		ISky::SetFog();
+		ISky::SetupFog();
 
 		{
 			GML_RECMUTEX_LOCK(feat); // DrawFadeFeatures

@@ -474,7 +474,7 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	ISky::SetFog();
+	ISky::SetupFog();
 
 	if (drawReflection) {
 		SetUnitGlobalLODFactor(LODScale * LODScaleReflection);

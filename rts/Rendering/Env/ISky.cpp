@@ -35,7 +35,8 @@ ISky::~ISky()
 
 
 
-void ISky::SetFog() {
+void ISky::SetupFog() {
+
 	if (globalRendering->drawFog) {
 		glEnable(GL_FOG);
 	} else {

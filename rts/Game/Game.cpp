@@ -600,7 +600,7 @@ void CGame::SetupRenderingParams()
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0);
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
 
-	ISky::SetFog();
+	ISky::SetupFog();
 
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0.0f);
 }

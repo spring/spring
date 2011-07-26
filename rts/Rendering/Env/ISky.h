@@ -27,7 +27,11 @@ public:
 	ISkyLight* GetLight() const { return skyLight; }
 	void SetLight(bool dynamic);
 
-	static void SetFog();
+	/**
+	 * Sets up OpenGL to draw fog or not, according to the value of
+	 * globalRendering->drawFog.
+	 */
+	static void SetupFog();
 
 public:
 	bool wireframe;
