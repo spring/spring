@@ -1,15 +1,15 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef SKYBOX_H
-#define SKYBOX_H
+#ifndef SKY_BOX_H
+#define SKY_BOX_H
 
 #include <string>
-#include "BaseSky.h"
+#include "ISky.h"
 
-class CSkyBox : public IBaseSky
+class CSkyBox : public ISky
 {
 public:
-	CSkyBox(const std::string&);
+	CSkyBox(const std::string& texture);
 	~CSkyBox();
 
 	void Draw();
@@ -22,4 +22,4 @@ private:
 	unsigned int tex;
 };
 
-#endif
+#endif // SKY_BOX_H

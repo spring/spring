@@ -1,12 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __BASIC_SKY_H__
-#define __BASIC_SKY_H__
+#ifndef BASIC_SKY_H
+#define BASIC_SKY_H
 
 #include "Rendering/GL/myGL.h"
-#include "BaseSky.h"
+#include "ISky.h"
 
-class CBasicSky : public IBaseSky
+class CBasicSky : public ISky
 {
 public:
 	CBasicSky();
@@ -79,4 +79,4 @@ protected:
 	int updatecounter;
 };
 
-#endif // __BASIC_SKY_H__
+#endif // BASIC_SKY_H

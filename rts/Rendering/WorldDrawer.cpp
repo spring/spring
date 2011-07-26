@@ -7,9 +7,9 @@
 
 #include "WorldDrawer.h"
 #include "Rendering/Env/CubeMapHandler.h"
-#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
-#include "Rendering/Env/BaseWater.h"
+#include "Rendering/Env/IWater.h"
 #include "Rendering/DebugColVolDrawer.h"
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/GroundDecalHandler.h"
@@ -42,7 +42,7 @@ CWorldDrawer::CWorldDrawer()
 {
 	// rendering components
 	loadscreen->SetLoadMessage("Creating Sky");
-	sky = IBaseSky::GetSky();
+	sky = ISky::GetSky();
 
 	loadscreen->SetLoadMessage("Creating ShadowHandler & DecalHandler");
 	cubeMapHandler = new CubeMapHandler();
@@ -69,7 +69,7 @@ CWorldDrawer::CWorldDrawer()
 	modelDrawer = IModelDrawer::GetInstance();
 
 	loadscreen->SetLoadMessage("Creating Water");
-	water = CBaseWater::GetWater(NULL, -1);
+	water = IWater::GetWater(NULL, -1);
 }
 
 
@@ -124,8 +124,8 @@ void CWorldDrawer::Draw()
 		SCOPED_TIMER("Water::{UpdateWater,Draw} (solid)");
 
 		water->OcclusionQuery();
-		if (water->drawSolid) {
-			CBaseWater::ApplyPushedChanges(game);
+		if (water->IsDrawSolid()) {
+			IWater::ApplyPushedChanges(game);
 			water->UpdateWater(game);
 			water->Draw();
 		}
@@ -164,10 +164,10 @@ void CWorldDrawer::Draw()
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("Water::{UpdateWater,Draw} (!solid)");
 
-		if (!water->drawSolid) {
+		if (!water->IsDrawSolid()) {
 			//! Water rendering will overwrite features, so save them
 			featureDrawer->SwapFeatures();
-			CBaseWater::ApplyPushedChanges(game);
+			IWater::ApplyPushedChanges(game);
 			water->UpdateWater(game);
 			water->Draw();
 			featureDrawer->SwapFeatures();

@@ -12,13 +12,24 @@
 #include "Map/ReadMap.h"
 #include "System/Exceptions.h"
 #include "System/float3.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
+
+#define LOG_SECTION_SKY_BOX "SkyBox"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SKY_BOX)
+
+// use the specific section for all LOG*() calls in this source file
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_SKY_BOX
+
 
 CSkyBox::CSkyBox(const std::string& texture)
 {
 	CBitmap btex;
 	if (!btex.Load(texture)) {
-		logOutput.Print("[CSkyBox] could not load skybox texture from file " + texture);
+		LOG_L(L_WARNING, "could not load skybox texture from file %s",
+				texture.c_str());
 		tex = 0;
 	} else {
 		tex = btex.CreateTexture(true);
@@ -95,5 +106,5 @@ void CSkyBox::Draw()
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
-	SetFog();
+	ISky::SetupFog();
 }

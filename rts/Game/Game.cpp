@@ -51,9 +51,9 @@
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Rendering/WorldDrawer.h"
-#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
-#include "Rendering/Env/BaseWater.h"
+#include "Rendering/Env/IWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/DebugColVolDrawer.h"
 #include "Rendering/glFont.h"
@@ -601,7 +601,7 @@ void CGame::SetupRenderingParams()
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0);
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
 
-	IBaseSky::SetFog();
+	ISky::SetupFog();
 
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0.0f);
 }
@@ -744,7 +744,7 @@ void CGame::ResizeEvent()
 	}
 
 	// reload water renderer (it may depend on screen resolution)
-	water = CBaseWater::GetWater(water, water->GetID());
+	water = IWater::GetWater(water, water->GetID());
 
 	eventHandler.ViewResize();
 }

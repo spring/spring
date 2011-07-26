@@ -17,7 +17,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
@@ -30,6 +30,16 @@
 #undef GetCharWidth // winapi.h
 
 using std::string;
+
+
+#define LOG_SECTION_FONT "Font"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_FONT)
+
+// use the specific section for all LOG*() calls in this source file
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_FONT
 
 /*******************************************************************************/
 /*******************************************************************************/
@@ -579,11 +589,11 @@ CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewid
 	try {
 		CglFont* newFont = new CglFont(fontFile, size, outlinewidth, outlineweight);
 		return newFont;
-	} catch (texture_size_exception&) {
-		logOutput.Print("FONT-ERROR: Couldn't create GlyphAtlas! (try to reduce reduce font size/outlinewidth)");
+	} catch (const texture_size_exception& ex) {
+		LOG_L(L_ERROR, "Failed creating font: Could not create GlyphAtlas! (try to reduce the font size/outline-width)");
 		return NULL;
-	} catch (content_error& e) {
-		logOutput.Print(std::string(e.what()));
+	} catch (const content_error& ex) {
+		LOG_L(L_ERROR, "Failed creating font: %s", ex.what());
 		return NULL;
 	}
 }
@@ -1612,7 +1622,7 @@ const float4* CglFont::ChooseOutlineColor(const float4& textColor)
 void CglFont::Begin(const bool immediate, const bool resetColors)
 {
 	if (inBeginEnd) {
-		logOutput.Print("FontError: called Begin() multiple times");
+		LOG_L(L_ERROR, "called Begin() multiple times");
 		return;
 	}
 
@@ -1637,12 +1647,12 @@ void CglFont::Begin(const bool immediate, const bool resetColors)
 void CglFont::End()
 {
 	if (!inBeginEnd) {
-		logOutput.Print("FontError: called End() without Begin()");
+		LOG_L(L_ERROR, "called End() without Begin()");
 		return;
 	}
 	inBeginEnd = false;
 
-	if (va->drawIndex()==0) {
+	if (va->drawIndex() == 0) {
 		return;
 	}
 

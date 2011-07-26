@@ -9,7 +9,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ISky.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "System/Config/ConfigHandler.h"
 

@@ -228,7 +228,7 @@ void CAdvSky::Draw()
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
-	SetFog();
+	ISky::SetupFog();
 }
 
 float3 CAdvSky::GetCoord(int x, int y)
