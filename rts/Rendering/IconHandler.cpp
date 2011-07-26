@@ -107,9 +107,10 @@ bool CIconHandler::AddIcon(const string& iconName, const string& textureName,
 			ysize = 128;
 			ownTexture = false;
 		}
-	}
-	catch (const content_error&) {
-		return false; // bail on non-existant file.
+	} catch (const content_error& ex) {
+		// bail on non-existant file
+		LOG_L(L_DEBUG, "Failed to add icon: %s", ex.what());
+		return false;
 	}
 
 	IconMap::iterator it = iconMap.find(iconName);

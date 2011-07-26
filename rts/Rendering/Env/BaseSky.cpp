@@ -61,8 +61,8 @@ IBaseSky* IBaseSky::GetSky()
 		} else if (configHandler->GetBool("AdvSky")) {
 			sky = new CAdvSky();
 		}
-	} catch (content_error& e) {
-		logOutput.Print("[%s] error: %s (falling back to BasicSky)", __FUNCTION__, e.what());
+	} catch (const content_error& ex) {
+		logOutput.Print("[%s] error: %s (falling back to BasicSky)", __FUNCTION__, ex.what());
 		delete sky;
 		sky = NULL;
 	}
