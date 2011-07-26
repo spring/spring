@@ -1,21 +1,7 @@
-/*
-	Copyright (c) 2009 Robin Vobruba <hoijui.quaero@gmail.com>
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-#ifndef _JVMLOCATER_H
-#define _JVMLOCATER_H
+#ifndef _JVM_LOCATER_H
+#define _JVM_LOCATER_H
 
 #if !defined bool
 #include <stdbool.h>
@@ -62,4 +48,4 @@ bool GetJREPath(char* path, size_t pathSize, const char* configFile,
 } // extern "C"
 #endif
 
-#endif // _JVMLOCATER_H
+#endif // _JVM_LOCATER_H
