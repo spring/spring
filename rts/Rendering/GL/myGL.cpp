@@ -14,7 +14,7 @@
 #include "VertexArray.h"
 #include "VertexArrayRange.h"
 #include "Rendering/GlobalRendering.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 #include "System/TimeProfiler.h"
 #include "System/FileSystem/FileHandler.h"
@@ -63,9 +63,9 @@ void PrintAvailableResolutions()
 	// Get available fullscreen/hardware modes
 	SDL_Rect** modes = SDL_ListModes(NULL, SDL_FULLSCREEN|SDL_OPENGL);
 	if (modes == (SDL_Rect**)0) {
-		logOutput.Print("Supported Video modes: No modes available!");
+		LOG("Supported Video modes: No modes available!");
 	} else if (modes == (SDL_Rect**)-1) {
-		logOutput.Print("Supported Video modes: All modes available.");
+		LOG("Supported Video modes: All modes available.");
 	} else {
 		char buffer[1024];
 		unsigned char n = 0;
@@ -76,7 +76,7 @@ void PrintAvailableResolutions()
 		if (n >= 2) {
 			buffer[n - 2] = '\0';
 		}
-		logOutput.Print("Supported Video modes: %s", buffer);
+		LOG("Supported Video modes: %s", buffer);
 	}
 }
 
@@ -153,7 +153,7 @@ void _APIENTRY OpenGLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
 			severityStr = "unknown";
 	}
 
-	logOutput.Print("OpenGL Error: source<%s> type<%s> id<%u> severity<%s>:\n%s",
+	LOG_L(L_ERROR, "OpenGL: source<%s> type<%s> id<%u> severity<%s>:\n%s",
 			sourceStr.c_str(), typeStr.c_str(), id, severityStr.c_str(),
 			messageStr.c_str());
 }
@@ -171,15 +171,15 @@ void LoadExtensions()
 	const char* glExtensions = (const char*) glGetString(GL_EXTENSIONS);
 
 	// log some useful version info
-	logOutput.Print("SDL:  %d.%d.%d",
+	LOG("SDL:  %d.%d.%d",
 		SDL_Linked_Version()->major,
 		SDL_Linked_Version()->minor,
 		SDL_Linked_Version()->patch);
-	logOutput.Print("GL version:   %s", glVersion);
-	logOutput.Print("GL vendor:    %s", glVendor);
-	logOutput.Print("GL renderer:  %s", glRenderer);
-	logOutput.Print("GLSL version: %s", glslVersion); // only non-NULL as of OpenGL 2.0
-	logOutput.Print("GLEW version: %s", glewVersion);
+	LOG("GL version:   %s", glVersion);
+	LOG("GL vendor:    %s", glVendor);
+	LOG("GL renderer:  %s", glRenderer);
+	LOG("GLSL version: %s", glslVersion); // only non-NULL as of OpenGL 2.0
+	LOG("GLEW version: %s", glewVersion);
 
 #if       !defined DEBUG
 	{
@@ -200,17 +200,17 @@ void LoadExtensions()
 		}
 
 		if (gfxCardIsCrap) {
-			logOutput.Print("WW     WWW     WW    AAA     RRRRR   NNN  NN  II  NNN  NN   GGGGG ");
-			logOutput.Print(" WW   WW WW   WW    AA AA    RR  RR  NNNN NN  II  NNNN NN  GG     ");
-			logOutput.Print("  WW WW   WW WW    AAAAAAA   RRRRR   NN NNNN  II  NN NNNN  GG   GG");
-			logOutput.Print("   WWW     WWW    AA     AA  RR  RR  NN  NNN  II  NN  NNN   GGGGG ");
-			logOutput.Print("(warning)");
-			logOutput.Print("Your graphic card is ...");
-			logOutput.Print("well, you know ...");
-			logOutput.Print("insufficient");
-			logOutput.Print("(in case you are not using a horribly wrong driver).");
-			logOutput.Print("If the game crashes, looks ugly or runs slow, buy a better card!");
-			logOutput.Print(".");
+			LOG_L(L_WARNING, "WW     WWW     WW    AAA     RRRRR   NNN  NN  II  NNN  NN   GGGGG ");
+			LOG_L(L_WARNING, " WW   WW WW   WW    AA AA    RR  RR  NNNN NN  II  NNNN NN  GG     ");
+			LOG_L(L_WARNING, "  WW WW   WW WW    AAAAAAA   RRRRR   NN NNNN  II  NN NNNN  GG   GG");
+			LOG_L(L_WARNING, "   WWW     WWW    AA     AA  RR  RR  NN  NNN  II  NN  NNN   GGGGG ");
+			LOG_L(L_WARNING, "(warning)");
+			LOG_L(L_WARNING, "Your graphic card is ...");
+			LOG_L(L_WARNING, "well, you know ...");
+			LOG_L(L_WARNING, "insufficient");
+			LOG_L(L_WARNING, "(in case you are not using a horribly wrong driver).");
+			LOG_L(L_WARNING, "If the game crashes, looks ugly or runs slow, buy a better card!");
+			LOG_L(L_WARNING, ".");
 		}
 	}
 #endif // !defined DEBUG
@@ -247,7 +247,7 @@ void LoadExtensions()
 
 #if defined(GL_ARB_debug_output) && !defined(HEADLESS) //! it's not defined in older GLEW versions
 	if (GLEW_ARB_debug_output) {
-		logOutput.Print("Installing OpenGL-DebugMessageHandler");
+		LOG("Installing OpenGL-DebugMessageHandler");
 		glDebugMessageCallbackARB(&OpenGLDebugMessageCallback, NULL);
 	}
 #endif
@@ -384,7 +384,7 @@ static bool CheckParseErrors(GLenum target, const char* filename, const char* pr
 	// errors and warnings string.
 	const GLubyte* errString = glGetString(GL_PROGRAM_ERROR_STRING_ARB);
 
-	logOutput.Print(
+	LOG_L(L_ERROR,
 		"[myGL::CheckParseErrors] Shader compilation error at index "
 		"%d (near \"%.30s\") when loading %s-program file %s:\n%s",
 		errorPos, program + errorPos,

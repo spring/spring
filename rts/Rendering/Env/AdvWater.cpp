@@ -17,7 +17,6 @@
 #include "Rendering/UnitDrawer.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
