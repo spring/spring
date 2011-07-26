@@ -15,11 +15,22 @@
 #include "Rendering/Models/WorldObjectModelRenderer.h"
 #include "Sim/Objects/SolidObject.h"
 #include "System/myMath.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/bitops.h"
 
 #include "System/mmgr.h"
 #include "string.h"
+
+
+#define LOG_SECTION_FAR_TEXTURE_HANDLER "FarTextureHandler"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_FAR_TEXTURE_HANDLER)
+
+// use the specific section for all LOG*() calls in this source file
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_FAR_TEXTURE_HANDLER
+
 
 CFarTextureHandler* farTextureHandler = NULL;
 
@@ -41,7 +52,7 @@ CFarTextureHandler::CFarTextureHandler()
 	texSizeY = next_power_of_2(texSizeY);
 
 	if (!fbo.IsValid()) {
-		logOutput.Print("Warning: FarTextureHandler: framebuffer not valid!");
+		LOG_L(L_WARNING, "framebuffer not valid!");
 		return;
 	}
 
@@ -134,7 +145,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 		}
 
 		if (texSizeY > globalRendering->maxTextureSize) {
-			//logOutput.Print("Out of farTextures"); 
+			LOG_L(L_DEBUG, "Out of farTextures"); 
 			texSizeY = oldTexSizeY;
 			return;
 		}
@@ -166,7 +177,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	}
 
 	if (!fbo.IsValid()) {
-		//logOutput.Print("framebuffer not valid!");
+		LOG_L(L_DEBUG, "framebuffer not valid!");
 		return;
 	}
 

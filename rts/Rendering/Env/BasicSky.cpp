@@ -16,7 +16,6 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/LogOutput.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
