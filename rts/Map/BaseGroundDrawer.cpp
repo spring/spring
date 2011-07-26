@@ -54,8 +54,12 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 	multiThreadDrawGround = false;
 #endif
 
+	// the extra-texture buffer must be larger than or equal to the CORNER
+	// heightmap, but gs->pwr2map* are not necessarily greater than gs->map*
+	// (because NPO2(x) == x for every x that is already a PO2) so we double
+	// its size
 	extraTexPBO.Bind();
-	extraTexPBO.Resize(gs->pwr2mapx * gs->pwr2mapy * 4);
+	extraTexPBO.Resize((gs->pwr2mapx * gs->pwr2mapy * 2) * 4);
 	extraTexPBO.Unbind(false);
 
 	highResInfoTexWanted = false;
@@ -374,9 +378,6 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 			case drawHeight: {
 				extraTexPal = heightLinePal->GetData();
 
-				// the extraTexture is guaranteed to be larger than the
-				// corner heightmap (gs->pwr2map* are always set to the
-				// next power of 2 of gs->map*, so > (gs->map* + 1))
 				const float* heightMap =
 					#ifdef USE_UNSYNCED_HEIGHTMAP
 					readmap->GetCornerHeightMapUnsynced();
