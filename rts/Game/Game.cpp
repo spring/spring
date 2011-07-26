@@ -325,7 +325,8 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 		mapInfo = new CMapInfo(gameSetup->MapFile(), gameSetup->mapName);
 	}
 
-	showMTInfo = (showMTInfo && globalConfig->GetMultiThreadLua() <= 3) ? globalConfig->GetMultiThreadLua() : 0;
+	int mtl = globalConfig->GetMultiThreadLua();
+	showMTInfo = (showMTInfo && (mtl != MT_LUA_DUAL && mtl != MT_LUA_DUAL_ALL)) ? mtl : MT_LUA_NONE;
 
 	if (!sideParser.Load()) {
 		throw content_error(sideParser.GetErrorLog());
@@ -870,7 +871,7 @@ bool CGame::Update()
 		luaExportSize = backupSize;
 		backupSize = 0;
 		luaLockTime = (int)GML_LOCK_TIME();
-		float amount = (showMTInfo <= 2) ? (float)luaLockTime / 10.0f : (float)luaExportSize / 1000.0f;
+		float amount = (showMTInfo == MT_LUA_DUAL_EXPORT) ? (float)luaExportSize / 1000.0f : (float)luaLockTime / 10.0f;
 		if (amount >= 0.1f) {
 			if((mtInfoCtrl = std::min(mtInfoCtrl + 1, 5)) == 3) mtInfoCtrl = 5;
 		}
@@ -1224,27 +1225,15 @@ bool CGame::Draw() {
 		}
 
 #if defined(USE_GML) && GML_ENABLE_SIM
-		if (showMTInfo == 1 || showMTInfo == 2) {
-			float lockPercent = (float)luaLockTime / 10.0f;
-			if (mtInfoCtrl >= 3) {
-				char buf[40];
-				SNPRINTF(buf, sizeof(buf), "LUA-SYNC-CPU(MT): %2.1f%%", lockPercent);
-				float4 warncol(lockPercent >= 10.0f && (currentTime & 128) ?
-					0.5f : std::max(0.0f, std::min(lockPercent / 5.0f, 1.0f)), std::max(0.0f, std::min(2.0f - lockPercent / 5.0f, 1.0f)), 0.0f, 1.0f);
-				smallFont->SetColors(&warncol, NULL);
-				smallFont->glPrint(0.99f, 0.88f, 1.0f, font_options, buf);
-			}
-		}
-		else if (showMTInfo == 3) {
-			float ek = (float)luaExportSize / 1000.0f;
-			if (mtInfoCtrl >= 3) {
-				char buf[40];
-				SNPRINTF(buf, sizeof(buf), "LUA-EXP-SIZE(MT): %2.1fK", ek);
-				float4 warncol(ek >= 10.0f && (currentTime & 128) ?
-					0.5f : std::max(0.0f, std::min(ek / 5.0f, 1.0f)), std::max(0.0f, std::min(2.0f - ek / 5.0f, 1.0f)), 0.0f, 1.0f);
-				smallFont->SetColors(&warncol, NULL);
-				smallFont->glPrint(0.99f, 0.88f, 1.0f, font_options, buf);
-			}
+		if (mtInfoCtrl >= 3 && (showMTInfo == MT_LUA_SINGLE || showMTInfo == MT_LUA_SINGLE_BATCH || showMTInfo == MT_LUA_DUAL_EXPORT)) {
+			float pval = (showMTInfo == MT_LUA_DUAL_EXPORT) ? (float)luaExportSize / 1000.0f : (float)luaLockTime / 10.0f;
+			const char *pstr = (showMTInfo == MT_LUA_DUAL_EXPORT) ? "LUA-EXP-SIZE(MT): %2.1fK" : "LUA-SYNC-CPU(MT): %2.1f%%";
+			char buf[40];
+			SNPRINTF(buf, sizeof(buf), pstr, pval);
+			float4 warncol(pval >= 10.0f && (currentTime & 128) ?
+				0.5f : std::max(0.0f, std::min(pval / 5.0f, 1.0f)), std::max(0.0f, std::min(2.0f - pval / 5.0f, 1.0f)), 0.0f, 1.0f);
+			smallFont->SetColors(&warncol, NULL);
+			smallFont->glPrint(0.99f, 0.88f, 1.0f, font_options, buf);
 		}
 #endif
 
@@ -1463,27 +1452,10 @@ void CGame::StartPlaying()
 
 	eventHandler.GameStart();
 	net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, speedControl));
+
 #if defined(USE_GML) && GML_ENABLE_SIM
-	if (showMTInfo >= 1) {
-		logOutput.Print("\n************** SPRING MULTITHREADING VERSION IMPORTANT NOTICE **************");
-		logOutput.Print("Engine or game settings have forced Spring MT to use compatibility mode %d", showMTInfo);
-		if(showMTInfo == 1) {
-			CKeyBindings::HotkeyList lslist = keyBindings->GetHotkeys("luaui selector");
-			std::string lskey = lslist.empty() ? "<none>" : lslist.front();
-			logOutput.Print("If your game uses lua based rendering, it may run very slow with Spring MT");
-			logOutput.Print("A high LUA-SYNC-CPU(MT) value in the upper right corner could indicate a problem");
-			logOutput.Print("Consider changing the engine setting 'MultiThreadLua' to 2 to improve performance,");
-			logOutput.Print("or try to disable LuaShaders and all rendering widgets (press " + lskey + ")\n");
-		}
-		else if(showMTInfo == 2) {
-			logOutput.Print("If your game uses lua gadget based rendering, it may run very slow with Spring MT");
-			logOutput.Print("A high LUA-SYNC-CPU(MT) value in the upper right corner could indicate a problem\n");
-		}
-		else if(showMTInfo == 3) {
-			logOutput.Print("If your game uses lua gadgets that export data, it may run very slow with Spring MT");
-			logOutput.Print("A high LUA-EXP-SIZE(MT) value in the upper right corner could indicate a problem\n");
-		}
-	}
+	extern void PrintMTStartupMessage(int showMTInfo);
+	PrintMTStartupMessage(showMTInfo);
 #endif
 }
 

@@ -42,6 +42,7 @@
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/Screenshot.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/TeamHighlight.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/VerticalSync.h"
 #include "Lua/LuaOpenGL.h"
@@ -2076,10 +2077,11 @@ public:
 
 	void Execute(const UnsyncedAction& action) const {
 
-		bool showMTInfo = (game->showMTInfo != 0);
+		bool showMTInfo = (game->showMTInfo != MT_LUA_NONE);
 		SetBoolArg(showMTInfo, action.GetArgs());
 		configHandler->Set("ShowMTInfo", showMTInfo ? 1 : 0);
-		game->showMTInfo = (showMTInfo && (globalConfig->GetMultiThreadLua() <= 3)) ? globalConfig->GetMultiThreadLua() : 0;
+		int mtl = globalConfig->GetMultiThreadLua();
+		game->showMTInfo = (showMTInfo && (mtl != MT_LUA_DUAL && mtl != MT_LUA_DUAL_ALL)) ? mtl : MT_LUA_NONE;
 	}
 };
 
@@ -2092,13 +2094,13 @@ public:
 
 	void Execute(const UnsyncedAction& action) const {
 		if (action.GetArgs().empty()) {
-			globalConfig->teamHighlight = abs(globalConfig->teamHighlight + 1) % 3;
+			globalConfig->teamHighlight = abs(globalConfig->teamHighlight + 1) % CTeamHighlight::HIGHLIGHT_SIZE;
 		} else {
-			globalConfig->teamHighlight = abs(atoi(action.GetArgs().c_str())) % 3;
+			globalConfig->teamHighlight = abs(atoi(action.GetArgs().c_str())) % CTeamHighlight::HIGHLIGHT_SIZE;
 		}
 		logOutput.Print("Team highlighting: %s",
-				((globalConfig->teamHighlight == 1) ? "Players only"
-				: ((globalConfig->teamHighlight == 2) ? "Players and spectators"
+				((globalConfig->teamHighlight == CTeamHighlight::HIGHLIGHT_PLAYERS) ? "Players only"
+				: ((globalConfig->teamHighlight == CTeamHighlight::HIGHLIGHT_ALL) ? "Players and spectators"
 				: "Disabled")));
 		configHandler->Set("TeamHighlight", globalConfig->teamHighlight);
 	}

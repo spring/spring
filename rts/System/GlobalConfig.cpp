@@ -2,9 +2,11 @@
 
 #include "System/StdAfx.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/TeamHighlight.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
 #include "Sim/Misc/ModInfo.h"
+#include "Lua/LuaConfig.h"
 
 CONFIG(int, InitialNetworkTimeout)
 	.defaultValue(30)
@@ -45,17 +47,17 @@ CONFIG(int, LinkIncomingMaxWaitingPackets)
 	.minimumValue(0);
 
 CONFIG(int, TeamHighlight)
-	.defaultValue(1) // FIXME: magic constant
-	.minimumValue(0)
-	.maximumValue(2); // FIXME: magic constant
+	.defaultValue(CTeamHighlight::HIGHLIGHT_PLAYERS)
+	.minimumValue(CTeamHighlight::HIGHLIGHT_FIRST)
+	.maximumValue(CTeamHighlight::HIGHLIGHT_LAST);
 
 CONFIG(bool, EnableDrawCallIns)
 	.defaultValue(true);
 
 CONFIG(int, MultiThreadLua)
-	.defaultValue(0)
-	.minimumValue(0)
-	.maximumValue(5); // FIXME: magic constant
+	.defaultValue(MT_LUA_DEFAULT)
+	.minimumValue(MT_LUA_FIRST)
+	.maximumValue(MT_LUA_LAST);
 
 GlobalConfig* globalConfig = NULL;
 
@@ -94,10 +96,9 @@ GlobalConfig::GlobalConfig()
 int GlobalConfig::GetMultiThreadLua()
 {
 #if (defined(USE_GML) && GML_ENABLE_SIM) || defined(USE_LUA_MT)
-	// FIXME: magic constant
-	return std::max(1, std::min((multiThreadLua == 0) ? modInfo.luaThreadingModel : multiThreadLua, 5));
+	return std::max((int)MT_LUA_FIRSTACTIVE, std::min((multiThreadLua == MT_LUA_DEFAULT) ? modInfo.luaThreadingModel : multiThreadLua, (int)MT_LUA_LAST));
 #else
-	return 0;
+	return MT_LUA_NONE;
 #endif
 }
 

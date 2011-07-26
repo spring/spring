@@ -109,11 +109,12 @@ CLuaHandle::~CLuaHandle()
 
 
 void CLuaHandle::UpdateThreading() {
-	useDualStates = (globalConfig->GetMultiThreadLua() >= 3);
-	singleState = (globalConfig->GetMultiThreadLua() <= 4);
+	int mtl = globalConfig->GetMultiThreadLua();
+	useDualStates = (mtl == MT_LUA_DUAL_EXPORT || mtl == MT_LUA_DUAL || mtl == MT_LUA_DUAL_ALL);
+	singleState = (mtl != MT_LUA_DUAL_ALL);
 	copyExportTable = false;
-	useEventBatch = singleState && (globalConfig->GetMultiThreadLua() >= 2);
-	purgeRecvFromSyncedBatch = !singleState && (globalConfig->GetMultiThreadLua() <= 4);
+	useEventBatch = singleState && (mtl != MT_LUA_NONE && mtl != MT_LUA_SINGLE);
+	purgeRecvFromSyncedBatch = false;
 }
 
 
