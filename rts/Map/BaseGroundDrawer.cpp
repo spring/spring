@@ -54,12 +54,8 @@ CBaseGroundDrawer::CBaseGroundDrawer(void)
 	multiThreadDrawGround = false;
 #endif
 
-	// the extra-texture buffer must be larger than or equal to the CORNER
-	// heightmap, but gs->pwr2map* are not necessarily greater than gs->map*
-	// (because NPO2(x) == x for every x that is already a PO2) so we double
-	// its size
 	extraTexPBO.Bind();
-	extraTexPBO.Resize((gs->pwr2mapx * gs->pwr2mapy * 2) * 4);
+	extraTexPBO.Resize(gs->pwr2mapx * gs->pwr2mapy * 4);
 	extraTexPBO.Unbind(false);
 
 	highResInfoTexWanted = false;
@@ -378,18 +374,23 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 			case drawHeight: {
 				extraTexPal = heightLinePal->GetData();
 
-				const float* heightMap =
-					#ifdef USE_UNSYNCED_HEIGHTMAP
-					readmap->GetCornerHeightMapUnsynced();
-					#else
-					readmap->GetCornerHeightMapSynced();
-					#endif
+				//NOTE: the resolution of our PBO/ExtraTexture is gs->pwr2mapx * gs->pwr2mapy (we don't use it fully)
+				//      while the corner heightmap has (gs->mapx + 1) * (gs->mapy + 1).
+				//      So for the case POT(gs->mapx) == gs->mapx we would get a buffer overrun in our PBO
+				//      when iterating (gs->mapx + 1) * (gs->mapy + 1). So we just skip +1, it may give
+				//      semi incorrect results, but it is the easiest solution.
+-				const float* heightMap =
+-					#ifdef USE_UNSYNCED_HEIGHTMAP
+-					readmap->GetCornerHeightMapUnsynced();
+-					#else
+-					readmap->GetCornerHeightMapSynced();
+-					#endif
 
 				for (int y = starty; y < endy; ++y) {
 					const int y_pwr2mapx = y * gs->pwr2mapx;
 					const int y_mapx     = y * gs->mapxp1;
 
-					for (int x = 0; x < gs->mapxp1; ++x) {
+					for (int x = 0; x < gs->mapx; ++x) {
 						const float height = heightMap[y_mapx + x];
 						const unsigned int value = (((unsigned int)(height * 8.0f)) % 255) * 3;
 						const int i = (y_pwr2mapx + x) * 4 - offset;
