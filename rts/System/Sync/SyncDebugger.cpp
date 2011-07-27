@@ -100,13 +100,8 @@ void CSyncDebugger::Initialize(bool useBacktrace, unsigned numPlayers)
 	disable_history = false;
 	may_enable_history = false;
 	flop = 0;
-	for (unsigned j = 0; j < numPlayers; ++j) {
-		PlayerStruct buf;
-		buf.checksumResponses.clear();
-		buf.remoteHistory.clear();
-		buf.remoteFlop = 0;
-		players.push_back(buf);
-	}
+	players.clear();
+	players.resize(numPlayers);
 	pendingBlocksToRequest.clear();
 	waitingForBlockResponse = false;
 
