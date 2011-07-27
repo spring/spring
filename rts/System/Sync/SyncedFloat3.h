@@ -22,16 +22,16 @@ class SyncedFloat3
 {
 public:
 	CR_DECLARE(SyncedFloat3);
-/*	inline void* operator new(size_t size){return mempool.Alloc(size);};
-	inline void* operator new(size_t n, void *p){return p;}; //cp visual
-	inline void operator delete(void* p,size_t size){mempool.Free(p,size);};
+/*	void* operator new(size_t size){return mempool.Alloc(size);};
+	void* operator new(size_t n, void *p){return p;}; //cp visual
+	void operator delete(void* p,size_t size){mempool.Free(p,size);};
 */
 	/**
 	 * @brief Constructor
 	 *
 	 * With no parameters, x/y/z are just initialized to 0.
 	 */
-	inline SyncedFloat3() : x(0), y(0), z(0) {};
+	SyncedFloat3() : x(0), y(0), z(0) {};
 
 	/**
 	 * @brief Constructor
@@ -41,21 +41,21 @@ public:
 	 *
 	 * With parameters, initializes x/y/z to the given floats.
 	 */
-	inline SyncedFloat3(const float x,const float y,const float z) : x(x),y(y),z(z) {}
+	SyncedFloat3(const float x,const float y,const float z) : x(x),y(y),z(z) {}
 
 	/**
 	 * @brief Copy constructor
 	 * @param f SyncedFloat3 to copy
 	 */
-	inline SyncedFloat3(const SyncedFloat3& f) : x(f.x), y(f.y), z(f.z) {}
-	inline SyncedFloat3(const float3& f) : x(f.x), y(f.y), z(f.z) {}
+	SyncedFloat3(const SyncedFloat3& f) : x(f.x), y(f.y), z(f.z) {}
+	SyncedFloat3(const float3& f) : x(f.x), y(f.y), z(f.z) {}
 
 	/**
 	 * @brief Destructor
 	 *
 	 * Does nothing
 	 */
-	inline ~SyncedFloat3(){}
+	~SyncedFloat3(){}
 
 	/**
 	 * @brief operator +
@@ -66,13 +66,13 @@ public:
 	 * calculate the sum of the positions in
 	 * space (adds the x/y/z components individually)
 	 */
-	inline float3 operator+ (const SyncedFloat3 &f) const{
+	float3 operator+ (const SyncedFloat3 &f) const{
 		return float3(x+f.x,y+f.y,z+f.z);
 	}
-	inline float3 operator+ (const float3 &f) const{
+	float3 operator+ (const float3 &f) const{
 		return float3(x+f.x,y+f.y,z+f.z);
 	}
-	inline friend float3 operator+ (const float3 &f, const SyncedFloat3 &g) {
+	friend float3 operator+ (const float3 &f, const SyncedFloat3 &g) {
 		return float3(f.x+g.x,f.y+g.y,f.z+g.z);
 	}
 
@@ -84,7 +84,7 @@ public:
 	 * When adding just a float, the point is
 	 * increased in all directions by that float.
 	 */
-	inline float3 operator+ (const float f) const{
+	float3 operator+ (const float f) const{
 		return float3(x+f,y+f,z+f);
 	}
 
@@ -95,12 +95,12 @@ public:
 	 * Just like adding a SyncedFloat3, but updates this
 	 * float with the new sum.
 	 */
-	inline void operator+= (const SyncedFloat3 &f){
+	void operator+= (const SyncedFloat3 &f){
 		x+=f.x;
 		y+=f.y;
 		z+=f.z;
 	}
-	inline void operator+= (const float3 &f){
+	void operator+= (const float3 &f){
 		x+=f.x;
 		y+=f.y;
 		z+=f.z;
@@ -114,13 +114,13 @@ public:
 	 * Decreases the SyncedFloat3 by another SyncedFloat3,
 	 * subtracting each x/y/z component individually.
 	 */
-	inline float3 operator- (const SyncedFloat3 &f) const{
+	float3 operator- (const SyncedFloat3 &f) const{
 		return float3(x-f.x,y-f.y,z-f.z);
 	}
-	inline float3 operator- (const float3 &f) const{
+	float3 operator- (const float3 &f) const{
 		return float3(x-f.x,y-f.y,z-f.z);
 	}
-	inline friend float3 operator- (const float3 &f, const SyncedFloat3 &g) {
+	friend float3 operator- (const float3 &f, const SyncedFloat3 &g) {
 		return float3(f.x-g.x,f.y-g.y,f.z-g.z);
 	}
 
@@ -131,7 +131,7 @@ public:
 	 * When negating the SyncedFloat3, inverts all three
 	 * x/y/z components.
 	 */
-	inline float3 operator- () const{
+	float3 operator- () const{
 		return float3(-x,-y,-z);
 	}
 
@@ -143,7 +143,7 @@ public:
 	 * When subtracting a single fixed float,
 	 * decreases all three x/y/z components by that amount.
 	 */
-	inline float3 operator- (const float f) const{
+	float3 operator- (const float f) const{
 		return float3(x-f,y-f,z-f);
 	}
 
@@ -154,12 +154,12 @@ public:
 	 * Same as subtracting a SyncedFloat3, but stores
 	 * the new SyncedFloat3 inside this one.
 	 */
-	inline void operator-= (const SyncedFloat3 &f){
+	void operator-= (const SyncedFloat3 &f){
 		x-=f.x;
 		y-=f.y;
 		z-=f.z;
 	}
-	inline void operator-= (const float3 &f){
+	void operator-= (const float3 &f){
 		x-=f.x;
 		y-=f.y;
 		z-=f.z;
@@ -173,13 +173,13 @@ public:
 	 * When multiplying by another SyncedFloat3,
 	 * multiplies each x/y/z component individually.
 	 */
-	inline float3 operator* (const SyncedFloat3 &f) const{
+	float3 operator* (const SyncedFloat3 &f) const{
 		return float3(x*f.x,y*f.y,z*f.z);
 	}
-	inline float3 operator* (const float3 &f) const{
+	float3 operator* (const float3 &f) const{
 		return float3(x*f.x,y*f.y,z*f.z);
 	}
-	inline friend float3 operator* (const float3 &f, const SyncedFloat3 &g) {
+	friend float3 operator* (const float3 &f, const SyncedFloat3 &g) {
 		return float3(f.x*g.x,f.y*g.y,f.z*g.z);
 	}
 
@@ -191,7 +191,7 @@ public:
 	 * When multiplying by a single float, multiplies
 	 * each x/y/z component by that float.
 	 */
-	inline float3 operator* (const float f) const{
+	float3 operator* (const float f) const{
 		return float3(x*f,y*f,z*f);
 	}
 
@@ -202,12 +202,12 @@ public:
 	 * Same as multiplying a SyncedFloat3, but stores
 	 * the new SyncedFloat3 inside this one.
 	 */
-	inline void operator*= (const SyncedFloat3 &f){
+	void operator*= (const SyncedFloat3 &f){
 		x*=f.x;
 		y*=f.y;
 		z*=f.z;
 	}
-	inline void operator*= (const float3 &f){
+	void operator*= (const float3 &f){
 		x*=f.x;
 		y*=f.y;
 		z*=f.z;
@@ -220,7 +220,7 @@ public:
 	 * Same as multiplying a float, but stores
 	 * the new SyncedFloat3 inside this one.
 	 */
-	inline void operator*= (const float f){
+	void operator*= (const float f){
 		x*=f;
 		y*=f;
 		z*=f;
@@ -234,13 +234,13 @@ public:
 	 * When dividing by a SyncedFloat3, divides
 	 * each x/y/z component individually.
 	 */
-	inline float3 operator/ (const SyncedFloat3 &f) const{
+	float3 operator/ (const SyncedFloat3 &f) const{
 		return float3(x/f.x,y/f.y,z/f.z);
 	}
-	inline float3 operator/ (const float3 &f) const{
+	float3 operator/ (const float3 &f) const{
 		return float3(x/f.x,y/f.y,z/f.z);
 	}
-	inline friend float3 operator/ (const float3 &f, const SyncedFloat3 &g) {
+	friend float3 operator/ (const float3 &f, const SyncedFloat3 &g) {
 		return float3(f.x/g.x,f.y/g.y,f.z/g.z);
 	}
 
@@ -252,7 +252,7 @@ public:
 	 * When dividing by a single float, divides
 	 * each x/y/z component by that float.
 	 */
-	inline float3 operator/ (const float f) const{
+	float3 operator/ (const float f) const{
 		const float inv = (float) 1.f / f;
 		return float3(x*inv, y*inv, z*inv);
 	}
@@ -264,12 +264,12 @@ public:
 	 * Same as dividing by a SyncedFloat3, but stores
 	 * the new values inside this SyncedFloat3.
 	 */
-	inline void operator/= (const SyncedFloat3 &f){
+	void operator/= (const SyncedFloat3 &f){
 		x/=f.x;
 		y/=f.y;
 		z/=f.z;
 	}
-	inline void operator/= (const float3 &f){
+	void operator/= (const float3 &f){
 		x/=f.x;
 		y/=f.y;
 		z/=f.z;
@@ -282,7 +282,7 @@ public:
 	 * Same as dividing by a single float, but stores
 	 * the new values inside this SyncedFloat3.
 	 */
-	inline void operator/= (const float f){
+	void operator/= (const float f){
 		const float inv = (float) 1.f / f;
 		x *= inv;
 		y *= inv;
@@ -297,19 +297,19 @@ public:
 	 * Tests if this SyncedFloat3 is equal to another, by
 	 * checking each x/y/z component individually.
 	 */
-	inline bool operator== (const SyncedFloat3 &f) const {
+	bool operator== (const SyncedFloat3 &f) const {
 		return
 			streflop::fabs(x - f.x) <= streflop::fabs(1.0E-4f * x) &&
 			streflop::fabs(y - f.y) <= streflop::fabs(1.0E-4f * y) &&
 			streflop::fabs(z - f.z) <= streflop::fabs(1.0E-4f * z);
 	}
-	inline bool operator== (const float3 &f) const {
+	bool operator== (const float3 &f) const {
 		return
 			streflop::fabs(x - f.x) <= streflop::fabs(1.0E-4f * x) &&
 			streflop::fabs(y - f.y) <= streflop::fabs(1.0E-4f * y) &&
 			streflop::fabs(z - f.z) <= streflop::fabs(1.0E-4f * z);
 	}
-	inline friend bool operator== (const float3 &f, const SyncedFloat3 &g)  {
+	friend bool operator== (const float3 &f, const SyncedFloat3 &g)  {
 		return g == f;
 	}
 
@@ -321,13 +321,13 @@ public:
 	 * Tests if this SyncedFloat3 is not equal to another, by
 	 * checking each x/y/z component individually.
 	 */
-	inline bool operator!= (const SyncedFloat3 &f) const {
+	bool operator!= (const SyncedFloat3 &f) const {
 		return !(*this == f);
 	}
-	inline bool operator!= (const float3 &f) const {
+	bool operator!= (const float3 &f) const {
 		return !(*this == f);
 	}
-	inline friend bool operator!= (const float3 &f, const SyncedFloat3 &g)  {
+	friend bool operator!= (const float3 &f, const SyncedFloat3 &g)  {
 		return !(g == f);
 	}
 
@@ -339,7 +339,7 @@ public:
 	 * Array access for x/y/z components
 	 * (index 0 is x, index 1 is y, index 2 is z)
 	 */
-	inline SyncedFloat& operator[] (const int t) {
+	SyncedFloat& operator[] (const int t) {
 		return (&x)[t];
 	}
 
@@ -351,7 +351,7 @@ public:
 	 * Same as plain [] operator but used in
 	 * a const context
 	 */
-	inline float operator[] (const int t) const {
+	float operator[] (const int t) const {
 		return (&x)[t];
 	}
 
@@ -364,10 +364,10 @@ public:
 	 * another SyncedFloat3 (sums the products of each
 	 * x/y/z component).
 	 */
-	inline float dot (const SyncedFloat3 &f) const{
+	float dot (const SyncedFloat3 &f) const{
 		return x*f.x + y*f.y + z*f.z;
 	}
-	inline float dot (const float3 &f) const{
+	float dot (const float3 &f) const{
 		return x*f.x + y*f.y + z*f.z;
 	}
 
@@ -379,12 +379,12 @@ public:
 	 * Calculates the cross product of this and
 	 * another SyncedFloat3 (y1*z2-z1*y2,z1*x2-x1*z2,x1*y2-y1*x2)
 	 */
-	inline float3 cross(const SyncedFloat3 &f) const{
+	float3 cross(const SyncedFloat3 &f) const{
 		return float3(	y*f.z - z*f.y,
 						z*f.x - x*f.z,
 						x*f.y - y*f.x  );
 	}
-	inline float3 cross(const float3 &f) const{
+	float3 cross(const float3 &f) const{
 		return float3(	y*f.z - z*f.y,
 						z*f.x - x*f.z,
 						x*f.y - y*f.x  );
@@ -399,13 +399,13 @@ public:
 	 * and another SyncedFloat3 (sums the differences in each
 	 * x/y/z component, square root for pythagorean theorem)
 	 */
-	inline float distance(const SyncedFloat3 &f) const{
+	float distance(const SyncedFloat3 &f) const{
 		const float dx = x - f.x;
 		const float dy = y - f.y;
 		const float dz = z - f.z;
 		return (float) math::sqrt(dx*dx + dy*dy + dz*dz);
 	}
-	inline float distance(const float3 &f) const{
+	float distance(const float3 &f) const{
 		const float dx = x - f.x;
 		const float dy = y - f.y;
 		const float dz = z - f.z;
@@ -423,12 +423,12 @@ public:
 	 * differences in the x and y components, square
 	 * root for pythagorean theorem
 	 */
-	inline float distance2D(const SyncedFloat3 &f) const{
+	float distance2D(const SyncedFloat3 &f) const{
 		const float dx = x - f.x;
 		const float dz = z - f.z;
 		return (float) math::sqrt(dx*dx + dz*dz);
 	}
-	inline float distance2D(const float3 &f) const{
+	float distance2D(const float3 &f) const{
 		const float dx = x - f.x;
 		const float dz = z - f.z;
 		return (float) math::sqrt(dx*dx + dz*dz);
@@ -442,7 +442,7 @@ public:
 	 * (squares and sums each x/y/z component,
 	 * square root for pythagorean theorem)
 	 */
-	inline float Length() const{
+	float Length() const{
 		return (float) math::sqrt(x*x+y*y+z*z);
 	}
 
@@ -454,7 +454,7 @@ public:
 	 * (squares and sums only the x and z components,
 	 * square root for pythagorean theorem)
 	 */
-	inline float Length2D() const{
+	float Length2D() const{
 		return (float) math::sqrt(x*x+z*z);
 	}
 
@@ -465,7 +465,7 @@ public:
 	 * Normalizes the vector by dividing each
 	 * x/y/z component by the vector's length.
 	 */
-	inline SyncedFloat3& Normalize()
+	SyncedFloat3& Normalize()
 	{
 		// contrary to most other operations we can make this synced
 		// because the results are always written in the synced x,y,z components
@@ -483,7 +483,7 @@ public:
 	 *
 	 * Returns the length of this vector squared.
 	 */
-	inline float SqLength() const{
+	float SqLength() const{
 		return x*x+y*y+z*z;
 	}
 
@@ -494,7 +494,7 @@ public:
 	 * Returns the 2-dimensional length of this
 	 * vector squared.
 	 */
-	inline float SqLength2D() const{
+	float SqLength2D() const{
 		return x*x+z*z;
 	}
 
@@ -506,13 +506,13 @@ public:
 	 *
 	 * Returns the squared distance of 2 float3s
 	 */
-	inline float SqDistance(const SyncedFloat3 &f) const{
+	float SqDistance(const SyncedFloat3 &f) const{
 		const float dx = x - f.x;
 		const float dy = y - f.y;
 		const float dz = z - f.z;
 		return (float) (dx*dx + dy*dy + dz*dz);
 	}
-	inline float SqDistance(const float3 &f) const{
+	float SqDistance(const float3 &f) const{
 		const float dx = x - f.x;
 		const float dy = y - f.y;
 		const float dz = z - f.z;
@@ -527,12 +527,12 @@ public:
 	 *
 	 * Returns the squared 2d-distance of 2 float3s
 	 */
-	inline float SqDistance2D(const SyncedFloat3 &f) const{
+	float SqDistance2D(const SyncedFloat3 &f) const{
 		const float dx = x - f.x;
 		const float dz = z - f.z;
 		return (float) (dx*dx + dz*dz);
 	}
-	inline float SqDistance2D(const float3 &f) const{
+	float SqDistance2D(const float3 &f) const{
 		const float dx = x - f.x;
 		const float dz = z - f.z;
 		return (float) (dx*dx + dz*dz);
