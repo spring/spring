@@ -241,14 +241,9 @@ CSMFGroundTextures::~CSMFGroundTextures(void)
 }
 
 
-
-inline bool CSMFGroundTextures::TexSquareInView(int btx, int bty) const {
-	static const float* hm =
-		#ifdef USE_UNSYNCED_HEIGHTMAP
-		readmap->GetCornerHeightMapUnsynced();
-		#else
-		readmap->GetCornerHeightMapSynced();
-		#endif
+inline bool CSMFGroundTextures::TexSquareInView(int btx, int bty) const
+{
+	static const float* hm = readmap->GetCornerHeightMapUnsynced();
 
 	static const float bigTexSquareRadius = fastmath::apxsqrt(
 		smfMap->bigTexSize * smfMap->bigTexSize +

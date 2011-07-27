@@ -48,8 +48,10 @@ public:
 	// NOTE: do not use, just here for backward compatibility with SMFGroundTextures.cpp
 	CSMFMapFile& GetFile() { return file; }
 
-	const float* GetCornerHeightMapSynced() const { return &cornerHeightMapSynced[0]; }
-	      float* GetCornerHeightMapUnsynced()     { return &cornerHeightMapUnsynced[0]; }
+	const float* GetCornerHeightMapSynced()   const { return &cornerHeightMapSynced[0]; }
+#ifdef USE_UNSYNCED_HEIGHTMAP
+	const float* GetCornerHeightMapUnsynced() const { return &cornerHeightMapUnsynced[0]; }
+#endif
 
 	void ConfigureAnisotropy();
 	float GetAnisotropy() const { return anisotropy; }
@@ -101,7 +103,9 @@ protected:
 
 private:
 	std::vector<float> cornerHeightMapSynced;
+#ifdef USE_UNSYNCED_HEIGHTMAP
 	std::vector<float> cornerHeightMapUnsynced;
+#endif
 
 	std::vector<unsigned char> shadingTexPixelRow;
 	unsigned int shadingTexUpdateIter;
