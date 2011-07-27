@@ -8,7 +8,7 @@
 #include <assert.h>
 #include <deque>
 #include <vector>
-
+#include <boost/cstdint.hpp>
 
 /**
  * @brief sync debugger class
