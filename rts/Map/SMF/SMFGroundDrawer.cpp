@@ -29,8 +29,14 @@
 #include "lib/gml/gmlsrv.h"
 extern gmlClientServer<void, int, CUnit*>* gmlProcessor;
 
-static void CSMFGroundDrawer::DoDrawGroundRowMT(void* c, int bty) { ((CSMFGroundDrawer*) c)->DoDrawGroundRow(cam2, bty); }
-static void CSMFGroundDrawer::DoDrawGroundShadowLODMT(void* c, int nlod) { ((CSMFGroundDrawer*) c)->DoDrawGroundShadowLOD(nlod); }
+void CSMFGroundDrawer::DoDrawGroundRowMT(void* c, int bty) {
+	((CSMFGroundDrawer*) c)->DoDrawGroundRow(cam2, bty);
+}
+
+void CSMFGroundDrawer::DoDrawGroundShadowLODMT(void* c, int nlod) {
+	((CSMFGroundDrawer*) c)->DoDrawGroundShadowLOD(nlod);
+}
+
 #endif
 
 #define CLAMP(i) Clamp((i), 0, smfMap->maxHeightMapIdx)
