@@ -58,12 +58,7 @@ void HeightMapTexture::Init()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	const float* heightMap =
-		#ifdef USE_UNSYNCED_HEIGHTMAP
-		readmap->GetCornerHeightMapUnsynced();
-		#else
-		readmap->GetCornerHeightMapSynced();
-		#endif
+	const float* heightMap = readmap->GetCornerHeightMapUnsynced();
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE32F_ARB,
 		xSize, ySize, 0,
@@ -87,12 +82,7 @@ void HeightMapTexture::UpdateArea(int x0, int z0, int x1, int z1)
 	if (texID == 0) {
 		return;
 	}
-	const float* heightMap =
-		#ifdef USE_UNSYNCED_HEIGHTMAP
-		readmap->GetCornerHeightMapUnsynced();
-		#else
-		readmap->GetCornerHeightMapSynced();
-		#endif
+	const float* heightMap = readmap->GetCornerHeightMapUnsynced();
 
 	const int sizeX = x1 - x0 + 1;
 	const int sizeZ = z1 - z0 + 1;

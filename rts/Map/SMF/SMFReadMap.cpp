@@ -65,7 +65,10 @@ CSMFReadMap::CSMFReadMap(std::string mapname): file(mapname)
 	heightMapSizeX  =  (header.mapx + 1);
 
 	cornerHeightMapSynced.resize((width + 1) * (height + 1));
+#ifdef USE_UNSYNCED_HEIGHTMAP
 	cornerHeightMapUnsynced.resize((width + 1) * (height + 1));
+#endif
+
 	groundDrawer = NULL;
 
 	const float minH = smf.minHeightOverride ? smf.minHeight : header.minHeight;
@@ -260,7 +263,9 @@ CSMFReadMap::~CSMFReadMap()
 	delete groundDrawer;
 
 	cornerHeightMapSynced.clear();
+#ifdef USE_UNSYNCED_HEIGHTMAP
 	cornerHeightMapUnsynced.clear();
+#endif
 
 	if (detailTex        != 0) { glDeleteTextures(1, &detailTex       ); }
 	if (specularTex      != 0) { glDeleteTextures(1, &specularTex     ); }
@@ -285,12 +290,7 @@ void CSMFReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigne
 		const int xi = x1 + x;
 		const int yi = y1 + y;
 
-		const float* heightMap =
-			#ifdef USE_UNSYNCED_HEIGHTMAP
-		    &cornerHeightMapUnsynced[0];
-			#else
-			&cornerHeightMapSynced[0];
-			#endif
+		const float* heightMap = GetCornerHeightMapUnsynced();
 		const float height = heightMap[xi + yi * gs->mapxp1];
 
 		if (height < 0.0f) {
@@ -331,7 +331,9 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 	{
 		//! update the visible heights and normals
 		static const float*  shm = &cornerHeightMapSynced[0];
+	#ifdef USE_UNSYNCED_HEIGHTMAP
 		static       float*  uhm = &cornerHeightMapUnsynced[0];
+	#endif
 		static const float3* sfn = &faceNormalsSynced[0];
 		static       float3* ufn = &faceNormalsUnsynced[0];
 		static const float3* scn = &centerNormalsSynced[0];
