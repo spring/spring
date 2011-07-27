@@ -188,7 +188,7 @@ static bool GetCoords(int screen_x, int screen_y, int& x, int& y)
 	{
 		SetLastError(0);
 		client_pt = screen_pt;	// translated below
-		const int ret = MapWindowPoints(HWND_DESKTOP, g_hWnd, &client_pt, 1);
+		MapWindowPoints(HWND_DESKTOP, g_hWnd, &client_pt, 1);
 	}
 
 	{
