@@ -4,20 +4,23 @@
 
 #ifdef SYNCDEBUG
 
-#include "System/LogOutput.h"
-#include "System/Log/ILog.h"
+#include "SyncDebugger.h"
+
 #include "Game/GlobalUnsynced.h"
 #include "Game/PlayerHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/BaseNetProtocol.h"
+#include "System/BranchPrediction.h"
+#include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
-#include "SyncDebugger.h"
-#include "SyncTracer.h"
-#include "Logger.h"
+
 #include "HsiehHash.h"
+#include "Logger.h"
+#include "SyncTracer.h"
 
 #include <string.h>
 #include <map>
+
 #ifndef WIN32
 	/* for backtrace() function */
 	#include <execinfo.h>
@@ -107,14 +110,14 @@ void CSyncDebugger::Initialize(bool useBacktrace, unsigned numPlayers)
 
 	// init logger
 	logger.SetFilename(useBacktrace ? LOGFILE_SERVER : LOGFILE_CLIENT);
-	logger.AddLine("Syncdebugger initialised");
+	logger.AddLine("SyncDebugger initialized");
 	logger.FlushBuffer();
 }
 
 
 void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 {
-	if (!history && !historybt) {
+	if (unlikely(!history && !historybt)) {
 		return;
 	}
 
@@ -131,7 +134,7 @@ void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 	}
 #endif
 
-	if (size == 4) {
+	if (likely(size == 4)) {
 		// common case
 		h->data = *(unsigned*) p;
 	}
@@ -150,7 +153,7 @@ void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 			h->data ^= *((unsigned char*) p + i);
 	}
 
-	if (++historyIndex == HISTORY_SIZE * BLOCK_SIZE) {
+	if (unlikely(++historyIndex == HISTORY_SIZE * BLOCK_SIZE)) {
 		historyIndex = 0; // wrap around
 	}
 	++flop;
