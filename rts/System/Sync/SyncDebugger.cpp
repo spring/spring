@@ -300,9 +300,9 @@ void CSyncDebugger::ClientSendChecksumResponse()
 		unsigned checksum = 123456789;
 		for (unsigned j = 0; j < BLOCK_SIZE; ++j) {
 			if (historybt) {
-				checksum = HsiehHash((char*)&historybt[BLOCK_SIZE * i + j].data, sizeof(HistItemWithBacktrace::data), checksum);
+				checksum = HsiehHash((char*)&historybt[BLOCK_SIZE * i + j].data, sizeof(historybt[0].data), checksum);
 			} else {
-				checksum = HsiehHash((char*)&history[BLOCK_SIZE * i + j].data, sizeof(HistItem::data), checksum);
+				checksum = HsiehHash((char*)&history[BLOCK_SIZE * i + j].data, sizeof(history[0].data), checksum);
 			}
 		}
 		checksums.push_back(checksum);
