@@ -9,7 +9,7 @@
 
 #include <vector>
 
-
+class CCamera;
 class CDynWater : public IWater
 {
 public:
@@ -29,12 +29,12 @@ private:
 	void DrawWaves();
 	void DrawHeightTex();
 	void DrawWaterSurface();
-	void UpdateCamRestraints();
 	void DrawDetailNormalTex();
 	void AddShipWakes();
 	void AddExplosions();
 	void DrawUpdateSquare(float dx,float dy, int* resetTexs);
 	void DrawSingleUpdateSquare(float startx, float starty,float endx,float endy);
+	void UpdateCamRestraints(CCamera* cam);
 
 	int refractSize;
 	GLuint reflectTexture;
@@ -92,17 +92,11 @@ private:
 	float3 oldCamPosBig;
 	float3 camPosBig2;
 
-	int camPosX,camPosZ;
+	int camPosX;
+	int camPosZ;
 
-	void AddFrustumRestraint(float3 side);
-	struct fline {
-		float base;
-		float dir;
-	};
-	std::vector<fline> right,left;
-
-	struct Explosion{
-		Explosion(float3 pos, float strength, float radius)
+	struct Explosion {
+		Explosion(const float3& pos, float strength, float radius)
 			: pos(pos)
 			, strength(strength)
 			, radius(radius)

@@ -28,6 +28,9 @@
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
 extern gmlClientServer<void, int, CUnit*>* gmlProcessor;
+
+static void CSMFGroundDrawer::DoDrawGroundRowMT(void* c, int bty) { ((CSMFGroundDrawer*) c)->DoDrawGroundRow(cam2, bty); }
+static void CSMFGroundDrawer::DoDrawGroundShadowLODMT(void* c, int nlod) { ((CSMFGroundDrawer*) c)->DoDrawGroundShadowLOD(nlod); }
 #endif
 
 #define CLAMP(i) Clamp((i), 0, smfMap->maxHeightMapIdx)
@@ -362,26 +365,30 @@ inline void CSMFGroundDrawer::DrawGroundVertexArrayQ(CVertexArray * &ma)
 
 
 
-inline bool CSMFGroundDrawer::BigTexSquareRowVisible(int bty) const {
+inline bool CSMFGroundDrawer::BigTexSquareRowVisible(const CCamera* cam, int bty) const {
 	const int minz =  bty * smfMap->bigTexSize;
 	const int maxz = minz + smfMap->bigTexSize;
 	const float miny = readmap->currMinHeight;
-	const float maxy = fabs(cam2->pos.y); // ??
+	const float maxy = fabs(cam->pos.y);
 
 	const float3 mins(               0, miny, minz);
 	const float3 maxs(smfMap->mapSizeX, maxy, maxz);
 
-	return (cam2->InView(mins, maxs));
+	return (cam->InView(mins, maxs));
 }
 
 
 
-inline void CSMFGroundDrawer::FindRange(int &xs, int &xe, const std::vector<fline>& left, const std::vector<fline>& right, int y, int lod) {
+inline void CSMFGroundDrawer::FindRange(const CCamera* cam, int& xs, int& xe, int y, int lod) {
 	int xt0, xt1;
-	std::vector<fline>::const_iterator fli;
+
+	const std::vector<CCamera::FrustumLine>& left = cam->leftFrustumSides;
+	const std::vector<CCamera::FrustumLine>& right = cam->rightFrustumSides;
+
+	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
 	for (fli = left.begin(); fli != left.end(); ++fli) {
-		float xtf = fli->base + fli->dir * y;
+		const float xtf = fli->base + fli->dir * y;
 		xt0 = (int)xtf;
 		xt1 = (int)(xtf + fli->dir * lod);
 
@@ -394,7 +401,7 @@ inline void CSMFGroundDrawer::FindRange(int &xs, int &xe, const std::vector<flin
 			xs = xt0;
 	}
 	for (fli = right.begin(); fli != right.end(); ++fli) {
-		float xtf = fli->base + fli->dir * y;
+		const float xtf = fli->base + fli->dir * y;
 		xt0 = (int)xtf;
 		xt1 = (int)(xtf + fli->dir * lod);
 
@@ -410,8 +417,8 @@ inline void CSMFGroundDrawer::FindRange(int &xs, int &xe, const std::vector<flin
 
 
 
-inline void CSMFGroundDrawer::DoDrawGroundRow(int bty) {
-	if (!BigTexSquareRowVisible(bty)) {
+inline void CSMFGroundDrawer::DoDrawGroundRow(const CCamera* cam, int bty) {
+	if (!BigTexSquareRowVisible(cam, bty)) {
 		//! skip this entire row of squares if we can't see it
 		return;
 	}
@@ -423,10 +430,14 @@ inline void CSMFGroundDrawer::DoDrawGroundRow(int bty) {
 	int x,y;
 	int sx = 0;
 	int ex = smfMap->numBigTexX;
-	std::vector<fline>::iterator fli;
 
 	//! only process the necessary big squares in the x direction
 	const int bigSquareSizeY = bty * smfMap->bigSquareSize;
+
+	const std::vector<CCamera::FrustumLine>& left = cam->leftFrustumSides;
+	const std::vector<CCamera::FrustumLine>& right = cam->rightFrustumSides;
+
+	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
 	for (fli = left.begin(); fli != left.end(); ++fli) {
 		x0 = fli->base + fli->dir * bigSquareSizeY;
@@ -512,7 +523,7 @@ inline void CSMFGroundDrawer::DoDrawGroundRow(int bty) {
 				int xs = xstart;
 				int xe = xend;
 
-				FindRange(/*inout*/ xs, /*inout*/ xe, left, right, y, lod);
+				FindRange(cam2, /*inout*/ xs, /*inout*/ xe, y, lod);
 
 				// If FindRange modifies (xs, xe) to a (less then) empty range,
 				// continue to the next row.
@@ -743,7 +754,7 @@ inline void CSMFGroundDrawer::DoDrawGroundRow(int bty) {
 				y = maxly;
 				int xs = std::max(xstart - lod, mintx);
 				int xe = std::min(xend + lod,   maxtx);
-				FindRange(xs, xe, left, right, y, lod);
+				FindRange(cam2, xs, xe, y, lod);
 
 				if (xs < xe) {
 					x = xs;
@@ -781,7 +792,7 @@ inline void CSMFGroundDrawer::DoDrawGroundRow(int bty) {
 				y = minly - lod;
 				int xs = std::max(xstart - lod, mintx);
 				int xe = std::min(xend + lod,   maxtx);
-				FindRange(xs, xe, left, right, y, lod);
+				FindRange(cam2, xs, xe, y, lod);
 
 				if (xs < xe) {
 					x = xs;
@@ -861,7 +872,7 @@ void CSMFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 	neededLod   = std::max(1, int((globalRendering->viewRange * 0.125f) / viewRadius) << 1);
 	neededLod   = std::min(neededLod, std::min(gs->mapx, gs->mapy));
 
-	UpdateCamRestraints();
+	UpdateCamRestraints(cam2);
 	SetupTextureUnits(drawWaterReflection);
 
 	if (mapInfo->map.voidWater && !waterDrawn) {
@@ -871,11 +882,24 @@ void CSMFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 
 	{ // profiler scope
 #ifdef USE_GML
-		bool mt = GML_PROFILER(multiThreadDrawGround)
-		if (mt) { // Profiler results, 4 threads: multiThreadDrawGround is faster only if ViewRadius is below 60 (probably depends on memory/cache speeds)
-			gmlProcessor->Work(NULL, &CSMFGroundDrawer::DoDrawGroundRowMT, NULL, this, gmlThreadCount, FALSE, NULL, smfMap->numBigTexY, 50, 100, TRUE, NULL);
-		}
-		else
+		// Profiler results, 4 threads: multiThreadDrawGround is faster only if ViewRadius is below 60 (probably depends on memory/cache speeds)
+		const bool mt = GML_PROFILER(multiThreadDrawGround)
+
+		if (mt) {
+			gmlProcessor->Work(
+				NULL,                                 // wrk
+				&CSMFGroundDrawer::DoDrawGroundRowMT, // wrka
+				NULL,                                 // wrkit
+				this,                                 // cls
+				gmlThreadCount,                       // mt
+				FALSE,                                // sm
+				NULL,                                 // it
+				smfMap->numBigTexY,                   // nu
+				50,                                   // l1
+				100,                                  // l2
+				TRUE                                  // sw
+			);
+		} else
 #endif
 		{
 			int camBty = math::floor(cam2->pos.z / (smfMap->bigSquareSize * SQUARE_SIZE));
@@ -883,10 +907,10 @@ void CSMFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 
 			//! try to render in "front to back" (so start with the camera nearest BigGroundLines)
 			for (int bty = camBty; bty >= 0; --bty) {
-				DoDrawGroundRow(bty);
+				DoDrawGroundRow(cam2, bty);
 			}
 			for (int bty = camBty + 1; bty < smfMap->numBigTexY; ++bty) {
-				DoDrawGroundRow(bty);
+				DoDrawGroundRow(cam2, bty);
 			}
 		}
 	}
@@ -1265,11 +1289,24 @@ void CSMFGroundDrawer::DrawShadowPass(void)
 
 	{ // profiler scope
 #ifdef USE_GML
-		bool mt = GML_PROFILER(multiThreadDrawGroundShadow)
-		if (mt) { // Profiler results, 4 threads: multiThreadDrawGroundShadow is rarely faster than single threaded rendering (therefore disabled by default)
-			gmlProcessor->Work(NULL, &CSMFGroundDrawer::DoDrawGroundShadowLODMT, NULL, this, gmlThreadCount, FALSE, NULL, NUM_LODS + 1, 50, 100, TRUE, NULL);
-		}
-		else
+		// Profiler results, 4 threads: multiThreadDrawGroundShadow is rarely faster than single threaded rendering (therefore disabled by default)
+		const bool mt = GML_PROFILER(multiThreadDrawGroundShadow)
+
+		if (mt) {
+			gmlProcessor->Work(
+				NULL,                                       // wrk
+				&CSMFGroundDrawer::DoDrawGroundShadowLODMT, // wrka
+				NULL,                                       // wrkit
+				this,                                       // cls
+				gmlThreadCount,                             // mt
+				FALSE,                                      // sm
+				NULL,                                       // it
+				NUM_LODS + 1,                               // nu
+				50,                                         // l1
+				100,                                        // l2
+				TRUE                                        // sw
+			);
+		} else
 #endif
 		{
 			for (int nlod = 0; nlod < NUM_LODS + 1; ++nlod) {
@@ -1569,78 +1606,24 @@ void CSMFGroundDrawer::ResetTextureUnits(bool drawReflection)
 
 
 
-void CSMFGroundDrawer::AddFrustumRestraint(const float3& side)
+void CSMFGroundDrawer::UpdateCamRestraints(CCamera* cam)
 {
-
-	// get vector for collision between frustum and horizontal plane
-	float3 b = UpVector.cross(side);
-
-	if (fabs(b.z) < 0.0001f)
-		b.z = 0.0001f;
-
-	{
-		fline temp;
-		temp.dir = b.x / b.z;      // set direction to that
-		float3 c = b.cross(side);  // get vector from camera to collision line
-		float3 colpoint;           // a point on the collision line
-
-		if (side.y > 0)
-			colpoint = cam2->pos - c * ((cam2->pos.y - (readmap->currMinHeight - 100)) / c.y);
-		else
-			colpoint = cam2->pos - c * ((cam2->pos.y - (readmap->currMaxHeight +  30)) / c.y);
-
-		// get intersection between colpoint and z axis
-		temp.base = (colpoint.x - colpoint.z * temp.dir) / SQUARE_SIZE;
-
-		if (b.z > 0) {
-			left.push_back(temp);
-		} else {
-			right.push_back(temp);
-		}
-	}
-}
-
-void CSMFGroundDrawer::UpdateCamRestraints(void)
-{
-	left.clear();
-	right.clear();
-
 	// add restraints for camera sides
-	AddFrustumRestraint(cam2->bottom);
-	AddFrustumRestraint(cam2->top);
-	AddFrustumRestraint(cam2->rightside);
-	AddFrustumRestraint(cam2->leftside);
+	cam->GetFrustumSides(readmap->currMinHeight - 100.0f,  readmap->currMaxHeight + 30.0f,  SQUARE_SIZE);
 
-	// add restraint for maximum view distance
-	float3 side = cam2->forward;
-	float3 camHorizontal = cam2->forward;
-	camHorizontal.y = 0.0f;
-	if (camHorizontal.x != 0.0f || camHorizontal.z != 0.0f)
-		camHorizontal.ANormalize();
-	// get vector for collision between frustum and horizontal plane
-	float3 b = UpVector.cross(camHorizontal);
+	// add restraint for maximum view distance (use flat z-dir as side)
+	const float3& camDir3D  = cam->forward;
+	      float3  camDir2D  = float3(camDir3D.x, 0.0f, camDir3D.z);
+	const float3  camOffset = camDir2D * globalRendering->viewRange * 1.05f;
 
-	if (fabs(b.z) > 0.0001f) {
-		fline temp;
-		temp.dir = b.x / b.z;               // set direction to that
-		float3 c = b.cross(camHorizontal);  // get vector from camera to collision line
-		float3 colpoint;                    // a point on the collision line
+	static const float miny = 0.0f;
+	static const float maxy = 255.0f / 3.5f;
 
-		if (side.y > 0.0f)
-			colpoint = cam2->pos + camHorizontal * globalRendering->viewRange * 1.05f - c * (cam2->pos.y / c.y);
-		else
-			colpoint = cam2->pos + camHorizontal * globalRendering->viewRange * 1.05f - c * ((cam2->pos.y - 255 / 3.5f) / c.y);
-
-		// get intersection between colpoint and z axis
-		temp.base = (colpoint.x - colpoint.z * temp.dir) / SQUARE_SIZE;
-
-		if (b.z > 0.0f) {
-			left.push_back(temp);
-		} else {
-			right.push_back(temp);
-		}
+	// prevent colinearity in top-down view
+	if (camDir2D.SqLength() > 0.01f) {
+		camDir2D.SafeANormalize();
+		cam->GetFrustumSide(camDir2D, camOffset, miny, maxy, SQUARE_SIZE, (camDir3D.y > 0.0f), false, false);
 	}
-
 }
 
 void CSMFGroundDrawer::Update()

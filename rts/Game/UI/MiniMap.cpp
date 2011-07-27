@@ -1187,50 +1187,57 @@ void CMiniMap::DrawForReal(bool use_geo)
 
 	glPopMatrix(); // revert to the 2d xform
 
-	// Draw the Camera Frustum
-	left.clear();
-	GetFrustumSide(cam2->bottom);
-	GetFrustumSide(cam2->top);
-	GetFrustumSide(cam2->rightside);
-	GetFrustumSide(cam2->leftside);
-
 	if (!minimap->maximized) {
-		// draw the camera lines
-		std::vector<fline>::iterator fli,fli2;
-		for(fli=left.begin();fli!=left.end();++fli){
-			for(fli2=left.begin();fli2!=left.end();++fli2){
-				if(fli==fli2)
+		// draw the camera frustum lines
+		cam2->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
+
+		std::vector<CCamera::FrustumLine>& left = cam2->leftFrustumSides;
+		std::vector<CCamera::FrustumLine>::iterator fli, fli2;
+
+		for (fli = left.begin(); fli != left.end(); ++fli) {
+			for (fli2 = left.begin(); fli2 != left.end(); ++fli2) {
+				if (fli == fli2)
 					continue;
-				if(fli->dir - fli2->dir == 0)
+
+				const float dbase = fli->base - fli2->base;
+				const float ddir = fli->dir - fli2->dir;
+
+				if (ddir == 0.0f)
 					continue;
-				float colz = -(fli->base - fli2->base) / (fli->dir - fli2->dir);
-				if (fli2->left * (fli->dir - fli2->dir) > 0) {
-					if (colz > fli->minz && colz < 400096)
+
+				const float colz = -(dbase / ddir);
+
+				if (fli2->left * ddir > 0.0f) {
+					if (colz > fli->minz && colz < 400096.0f)
 						fli->minz = colz;
 				} else {
-					if (colz < fli->maxz && colz > -10000)
+					if (colz < fli->maxz && colz > -10000.0f)
 						fli->maxz = colz;
 				}
 			}
 		}
+
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
-		va->EnlargeArrays(left.size()*2, 0, VA_SIZE_2D0);
-		for(fli = left.begin(); fli != left.end(); ++fli) {
-			if(fli->minz < fli->maxz) {
+		va->EnlargeArrays(left.size() * 2, 0, VA_SIZE_2D0);
+
+		for (fli = left.begin(); fli != left.end(); ++fli) {
+			if (fli->minz < fli->maxz) {
 				va->AddVertex2dQ0(fli->base + (fli->dir * fli->minz), fli->minz);
 				va->AddVertex2dQ0(fli->base + (fli->dir * fli->maxz), fli->maxz);
 			}
 		}
+
 		glLineWidth(2.5f);
-		glColor4f(0,0,0,0.5f);
+		glColor4f(0, 0, 0, 0.5f);
 		va->DrawArray2d0(GL_LINES);
 
 		glLineWidth(1.5f);
-		glColor4f(1,1,1,0.75f);
+		glColor4f(1, 1, 1, 0.75f);
 		va->DrawArray2d0(GL_LINES);
 		glLineWidth(1.0f);
 	}
+
 
 	// selection box
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1488,29 +1495,6 @@ void CMiniMap::DrawButtons()
 	glEnd();
 }
 
-
-void CMiniMap::GetFrustumSide(float3& side)
-{
-	fline temp;
-	static const float3 up(0,1,0);
-
-	float3 b=up.cross(side); // get vector for collision between frustum and horizontal plane
-
-	if(fabs(b.z) < 0.0001f)  // prevent div by zero
-		b.z = 0.00011f;
-
-	temp.dir = b.x / b.z;      // set direction to that
-	float3 c = b.cross(side);  // get vector from camera to collision line
-	float3 colpoint = cam2->pos - c * (cam2->pos.y/c.y); // a point on the collision line
-
-	temp.base = colpoint.x - colpoint.z * temp.dir; //get intersection between colpoint and z axis
-	temp.left = -1;
-	if(b.z>0)
-		temp.left = 1;
-	temp.maxz = gs->mapy * SQUARE_SIZE;
-	temp.minz = 0;
-	left.push_back(temp);
-}
 
 
 inline const icon::CIconData* CMiniMap::GetUnitIcon(const CUnit* unit, float& scale) const

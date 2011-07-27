@@ -606,12 +606,24 @@ void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 	if (exi > drawQuadsX - 1)
 		exi = drawQuadsX - 1;
 
+	// NOTE:
+	//     GridVisibility is only ever passed <camera>, not <cam2>
+	//     (but only <cam2> has sides calculated for it at present
+	//     by SMFGroundDrawer::UpdateCamRestraints, and older code
+	//     iterated over SMFGroundDrawer::{left, right})
+	// UpdateCamRestraints(cam);
+
+	const std::vector<CCamera::FrustumLine>& left = cam2->leftFrustumSides;
+	const std::vector<CCamera::FrustumLine>& right = cam2->rightFrustumSides;
+
+	std::vector<CCamera::FrustumLine>::const_iterator fli;
+
 	for (int y = sy; y <= ey; y++) {
 		int sx = sxi;
 		int ex = exi;
 		float xtest, xtest2;
-		std::vector<CSMFGroundDrawer::fline>::iterator fli;
-		for (fli = groundDrawer->left.begin(); fli != groundDrawer->left.end(); ++fli) {
+
+		for (fli = left.begin(); fli != left.end(); ++fli) {
 			xtest  = ((fli->base + fli->dir * ( y * quadSize)            ));
 			xtest2 = ((fli->base + fli->dir * ((y * quadSize) + quadSize)));
 
@@ -623,7 +635,7 @@ void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 			if (xtest - extraSize > sx)
 				sx = ((int) xtest) - extraSize;
 		}
-		for (fli = groundDrawer->right.begin(); fli != groundDrawer->right.end(); ++fli) {
+		for (fli = right.begin(); fli != right.end(); ++fli) {
 			xtest  = ((fli->base + fli->dir *  (y * quadSize)           ));
 			xtest2 = ((fli->base + fli->dir * ((y * quadSize) + quadSize)));
 

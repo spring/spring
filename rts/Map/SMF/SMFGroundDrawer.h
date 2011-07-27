@@ -40,35 +40,29 @@ public:
 	GL::LightHandler* GetLightHandler() { return &lightHandler; }
 
 private:
-	struct fline {
-		float base;
-		float dir;
-	};
-
 #ifdef USE_GML
-	static void DoDrawGroundRowMT(void* c, int bty) { ((CSMFGroundDrawer*) c)->DoDrawGroundRow(bty); }
-	static void DoDrawGroundShadowLODMT(void* c, int nlod) { ((CSMFGroundDrawer*) c)->DoDrawGroundShadowLOD(nlod); }
+	static void DoDrawGroundRowMT(void* c, int bty);
+	static void DoDrawGroundShadowLODMT(void* c, int nlod);
 #endif
 
 	bool LoadMapShaders();
 	void CreateWaterPlanes(bool camOufOfMap);
 	inline void DrawWaterPlane(bool drawWaterReflection);
 
-	void FindRange(int& xs, int& xe, const std::vector<fline>& left, const std::vector<fline>& right, int y, int lod);
-	void DoDrawGroundRow(int bty);
+	void FindRange(const CCamera* cam, int& xs, int& xe, int y, int lod);
+	void DoDrawGroundRow(const CCamera* cam, int bty);
 	void DrawVertexAQ(CVertexArray* ma, int x, int y);
 	void DrawVertexAQ(CVertexArray* ma, int x, int y, float height);
 	void EndStripQ(CVertexArray* ma);
 	void DrawGroundVertexArrayQ(CVertexArray*& ma);
 	void DoDrawGroundShadowLOD(int nlod);
 
-	inline bool BigTexSquareRowVisible(int) const;
+	inline bool BigTexSquareRowVisible(const CCamera* cam, int) const;
 	inline void SetupBigSquare(const int bigSquareX, const int bigSquareY);
 	void SetupTextureUnits(bool drawReflection);
 	void ResetTextureUnits(bool drawReflection);
 
-	void AddFrustumRestraint(const float3& side);
-	void UpdateCamRestraints();
+	void UpdateCamRestraints(CCamera* camera);
 
 
 	CSMFReadMap* smfMap;
@@ -86,8 +80,6 @@ private:
 	Shader::IProgramObject* smfShaderDefGLSL;   //! GLSL shader used when shadows are on
 	Shader::IProgramObject* smfShaderAdvGLSL;   //! GLSL shader used when shadows are off
 	Shader::IProgramObject* smfShaderCurGLSL;   //! currently active GLSL shader
-
-	std::vector<fline> right, left;
 
 	GL::LightHandler lightHandler;
 
