@@ -10,7 +10,6 @@
 #include "Game/PlayerHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/BaseNetProtocol.h"
-#include "System/BranchPrediction.h"
 #include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
 
@@ -117,7 +116,7 @@ void CSyncDebugger::Initialize(bool useBacktrace, unsigned numPlayers)
 
 void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 {
-	if (unlikely(!history && !historybt)) {
+	if (!history && !historybt) {
 		return;
 	}
 
@@ -134,7 +133,7 @@ void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 	}
 #endif
 
-	if (likely(size == 4)) {
+	if (size == 4) {
 		// common case
 		h->data = *(unsigned*) p;
 	}
@@ -153,7 +152,7 @@ void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 			h->data ^= *((unsigned char*) p + i);
 	}
 
-	if (unlikely(++historyIndex == HISTORY_SIZE * BLOCK_SIZE)) {
+	if (++historyIndex == HISTORY_SIZE * BLOCK_SIZE) {
 		historyIndex = 0; // wrap around
 	}
 	++flop;
