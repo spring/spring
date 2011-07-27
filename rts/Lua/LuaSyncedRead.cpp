@@ -421,6 +421,25 @@ static inline bool IsProjectileVisible(const ProjectileMapPair& pp)
 
 /******************************************************************************/
 /******************************************************************************/
+
+
+static int PushCollisionVolumeData(lua_State* L, const CollisionVolume* vol) {
+	lua_pushnumber(L, vol->GetScales().x);
+	lua_pushnumber(L, vol->GetScales().y);
+	lua_pushnumber(L, vol->GetScales().z);
+	lua_pushnumber(L, vol->GetOffsets().x);
+	lua_pushnumber(L, vol->GetOffsets().y);
+	lua_pushnumber(L, vol->GetOffsets().z);
+	lua_pushnumber(L, vol->GetVolumeType());
+	lua_pushnumber(L, vol->GetTestType());
+	lua_pushnumber(L, vol->GetPrimaryAxis());
+	lua_pushboolean(L, vol->IsDisabled());
+	return 10;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
 //
 //  Parsing helpers
 //
@@ -3233,20 +3252,7 @@ int LuaSyncedRead::GetUnitCollisionVolumeData(lua_State* L)
 		return 0;
 	}
 
-	const CollisionVolume* vol = unit->collisionVolume;
-
-	lua_pushnumber(L, vol->GetScales().x);
-	lua_pushnumber(L, vol->GetScales().y);
-	lua_pushnumber(L, vol->GetScales().z);
-	lua_pushnumber(L, vol->GetOffsets().x);
-	lua_pushnumber(L, vol->GetOffsets().y);
-	lua_pushnumber(L, vol->GetOffsets().z);
-	lua_pushnumber(L, vol->GetVolumeType());
-	lua_pushnumber(L, vol->GetTestType());
-	lua_pushnumber(L, vol->GetPrimaryAxis());
-	lua_pushboolean(L, vol->IsDisabled());
-
-	return 10;
+	return (PushCollisionVolumeData(L, unit->collisionVolume));
 }
 
 int LuaSyncedRead::GetUnitPieceCollisionVolumeData(lua_State* L)
@@ -3266,18 +3272,7 @@ int LuaSyncedRead::GetUnitPieceCollisionVolumeData(lua_State* L)
 	const LocalModelPiece* lmp = lm->pieces[pieceIndex];
 	const CollisionVolume* vol = lmp->GetCollisionVolume();
 
-	lua_pushnumber(L, vol->GetScales().x);
-	lua_pushnumber(L, vol->GetScales().y);
-	lua_pushnumber(L, vol->GetScales().z);
-	lua_pushnumber(L, vol->GetOffsets().x);
-	lua_pushnumber(L, vol->GetOffsets().y);
-	lua_pushnumber(L, vol->GetOffsets().z);
-	lua_pushnumber(L, vol->GetVolumeType());
-	lua_pushnumber(L, vol->GetTestType());
-	lua_pushnumber(L, vol->GetPrimaryAxis());
-	lua_pushboolean(L, vol->IsDisabled());
-
-	return 10;
+	return (PushCollisionVolumeData(L, vol));
 }
 
 
@@ -4255,6 +4250,17 @@ int LuaSyncedRead::GetFeatureResurrect(lua_State* L)
 
 	lua_pushnumber(L, feature->buildFacing);
 	return 2;
+}
+
+
+int LuaSyncedRead::GetFeatureCollisionVolumeData(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	if (feature == NULL) {
+		return 0;
+	}
+
+	return (PushCollisionVolumeData(L, feature->collisionVolume));
 }
 
 
