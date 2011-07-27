@@ -576,7 +576,7 @@ static int material_index(lua_State* L)
 
 static int material_newindex(lua_State* L)
 {
-	LuaMatRef** matRef = (LuaMatRef**) luaL_checkudata(L, 1, "MatRef");
+	luaL_checkudata(L, 1, "MatRef");
 	return 0;
 }
 

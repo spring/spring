@@ -363,7 +363,7 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 		for (z = minz; z <= maxz; z++) {
 			for (int x = minx; x <= maxx; x++) {
 				const int vIdxTL = (z    ) * W + x;
-				const int vIdxBL = (z + 1) * W + x;
+				//const int vIdxBL = (z + 1) * W + x;
 				const int fIdxTL = (z * (W - 1) + x) * 2    ;
 				const int fIdxBR = (z * (W - 1) + x) * 2 + 1;
 
