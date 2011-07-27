@@ -425,7 +425,6 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 	if (size<=0)
 		size = 14;
 
-	const float invSize = 1.0f / size;
 
 	//! setup character range
 	charstart = 32;
@@ -433,6 +432,7 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 	chars     = (charend - charstart) + 1;
 
 #ifndef   HEADLESS
+	const float invSize = 1.0f / size;
 	const float normScale = invSize / 64.0f;
 	FT_Library library;
 	FT_Face face;
