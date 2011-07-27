@@ -113,8 +113,8 @@ class CSyncDebugger {
 			boost::uint64_t remoteFlop;
 			std::vector<unsigned> remoteHistory;
 		};
-		typedef std::vector<PlayerStruct> playerVec;
-		playerVec players;
+		typedef std::vector<PlayerStruct> PlayerVec;
+		PlayerVec players;
 		std::deque<unsigned> requestedBlocks;        ///< We are processing these blocks.
 		std::deque<unsigned> pendingBlocksToRequest; ///< We still need to receive these blocks (slowly emptied).
 		bool waitingForBlockResponse;                ///< Are we still waiting for a block response?

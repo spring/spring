@@ -374,7 +374,7 @@ void CSyncDebugger::ServerQueueBlockRequests()
 		net->Send(CBaseNetProtocol::Get().SendSdReset());
 	}
 	//cleanup
-	for (playerVec::iterator it = players.begin(); it != players.end(); ++it)
+	for (PlayerVec::iterator it = players.begin(); it != players.end(); ++it)
 		it->checksumResponses.clear();
 }
 
@@ -482,7 +482,7 @@ void CSyncDebugger::ServerDumpStack()
 		logger.AddLine("Server: huh, all checksums equal?!? (INTERNAL ERROR)");
 
 	//cleanup
-	for (playerVec::iterator it = players.begin(); it != players.end(); ++it)
+	for (PlayerVec::iterator it = players.begin(); it != players.end(); ++it)
 		it->remoteHistory.clear();
 
 	if (historybt) {
