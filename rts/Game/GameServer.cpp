@@ -667,13 +667,12 @@ void CGameServer::CheckSync()
 				// TODO enable this when we have resync
 				//serverNet->SendPause(SERVER_PLAYER, true);
 #ifdef SYNCDEBUG
-				CSyncDebugger::GetInstance()->ServerTriggerSyncErrorHandling(serverFrameNum);
 				if (demoReader) // pause is a synced message, thus demo spectators may not pause for real
 					Message(str(format("%s paused the demo") %players[gu->myPlayerNum].name));
 				else
 					Broadcast(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
 				isPaused = true;
-				Broadcast(CBaseNetProtocol::Get().SendSdCheckrequest(serverFrameNum));
+				CSyncDebugger::GetInstance()->ServerTriggerSyncErrorHandling(serverFrameNum);
 #endif
 				// For each group, output a message with list of player names in it.
 				// TODO this should be linked to the resync system so it can roundrobin

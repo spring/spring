@@ -290,6 +290,7 @@ void CSyncDebugger::ServerTriggerSyncErrorHandling(int serverframenum)
 {
 	if (!disable_history) {
 		//this will set disable_history = true once received so only one sync errors is handled at a time.
+		net->Send(CBaseNetProtocol::Get().SendSdCheckrequest(serverframenum));
 	}
 }
 
