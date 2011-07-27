@@ -198,8 +198,7 @@ class CSyncDebugger {
 		/**
 		 * @brief first step after desync
 		 *
-		 * Called by server to trigger sync error handling.
-		 * It pauses the game and sends a checksum request to all clients.
+		 * Does nothing
 		 */
 		void ServerTriggerSyncErrorHandling(int serverframenum);
 		/**
