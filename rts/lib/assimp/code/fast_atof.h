@@ -261,7 +261,7 @@ inline const char* fast_atof_move( const char* c, float& out)
 		if (einv)
 			exp *= -1.0f;
 
-		f *= pow(10.0f, exp);
+		f *= math::pow(10.0f, exp);
 	}
 
 	if (inv)
