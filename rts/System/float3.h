@@ -63,13 +63,6 @@ public:
 	float3(const float f[3]) : x(f[0]), y(f[1]), z(f[2]) {}
 
 	/**
-	 * @brief Destructor
-	 *
-	 * Does nothing
-	 */
-	~float3() {}
-
-	/**
 	 * @brief operator =
 	 * @param f float[3] to assign
 	 *
