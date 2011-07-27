@@ -405,15 +405,11 @@ void CShadowHandler::CreateShadows()
 
 void CShadowHandler::CalcMinMaxView()
 {
-	left.clear();
+	cam2->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
 
-	// add restraints for camera frustum planes
-	GetFrustumSide(cam2->bottom, false);
-	GetFrustumSide(cam2->top, true);
-	GetFrustumSide(cam2->rightside, false);
-	GetFrustumSide(cam2->leftside, false);
+	std::vector<CCamera::FrustumLine>& left = cam2->leftFrustumSides;
+	std::vector<CCamera::FrustumLine>::iterator fli, fli2;
 
-	std::vector<fline>::iterator fli,fli2;
 	for (fli = left.begin(); fli != left.end(); ++fli) {
 		for (fli2 = left.begin(); fli2 != left.end(); ++fli2) {
 			if (fli == fli2)
@@ -450,7 +446,6 @@ void CShadowHandler::CalcMinMaxView()
 	}
 
 	if (!left.empty()) {
-		std::vector<fline>::iterator fli;
 		for (fli = left.begin(); fli != left.end(); ++fli) {
 			if (fli->minz < fli->maxz) {
 				float3 p[5];
@@ -481,43 +476,5 @@ void CShadowHandler::CalcMinMaxView()
 		shadowProjMinMax.y =  maxSize;
 		shadowProjMinMax.z = -maxSize;
 		shadowProjMinMax.w =  maxSize;
-	}
-}
-
-
-
-// TODO maybe standardize all these things in one place sometime (and maybe one day i should try to understand how i made them work)
-void CShadowHandler::GetFrustumSide(float3& side, bool upside)
-{
-	// get vector for collision between frustum and horizontal plane
-	float3 b = UpVector.cross(side);
-
-	if (fabs(b.z) < 0.0001f)
-		b.z = 0.00011f;
-	if (fabs(b.z) > 0.0001f) {
-		fline temp;
-		temp.dir=b.x/b.z;				//set direction to that
-		float3 c=b.cross(side);			//get vector from camera to collision line
-		c.ANormalize();
-		float3 colpoint;				//a point on the collision line
-
-		if(side.y>0){
-			if(b.dot(UpVector.cross(cam2->forward))<0 && upside){
-				colpoint=cam2->pos+cam2->forward*20000;
-				//LOG_L(L_DEBUG, "shadow-handler: upward frustum");
-			}else
-				colpoint=cam2->pos-c*((cam2->pos.y)/c.y);
-		}else
-			colpoint=cam2->pos-c*((cam2->pos.y)/c.y);
-
-		temp.base=colpoint.x-colpoint.z*temp.dir;	//get intersection between colpoint and z axis
-		temp.left=-1;
-		if(b.z>0)
-			temp.left=1;
-		if(side.y>0 && (b.dot(UpVector.cross(cam2->forward))<0 && upside))
-			temp.left*=-1;
-		temp.maxz=gs->mapy*SQUARE_SIZE+500;
-		temp.minz=-500;
-		left.push_back(temp);
 	}
 }

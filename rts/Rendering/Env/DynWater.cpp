@@ -810,75 +810,7 @@ void CDynWater::DrawHeightTex()
 	glFlush();
 }
 
-void CDynWater::AddFrustumRestraint(float3 side)
-{
-	float3 up(0, 1, 0);
 
-	float3 b = up.cross(side);    // get vector for collision between frustum and horizontal plane
-	if (fabs(b.z) < 0.0001f) {
-		b.z = 0.0001f;
-	}
-	{
-		fline temp;
-		temp.dir = b.x / b.z;     // set direction to that
-		float3 c = b.cross(side); // get vector from camera to collision line
-		float3 colpoint;          // a point on the collision line
-
-		if (side.y > 0) {
-			colpoint=cam2->pos - c*((cam2->pos.y - (-10))/c.y);
-		} else {
-			colpoint=cam2->pos - c*((cam2->pos.y - (10))/c.y);
-		}
-
-
-		temp.base = colpoint.x - colpoint.z*temp.dir; // get intersection between colpoint and z axis
-		if (b.z > 0) {
-			left.push_back(temp);
-		} else {
-			right.push_back(temp);
-		}
-	}
-}
-
-void CDynWater::UpdateCamRestraints(void)
-{
-	left.clear();
-	right.clear();
-
-	//Add restraints for camera sides
-	AddFrustumRestraint(cam2->bottom);
-	AddFrustumRestraint(cam2->top);
-	AddFrustumRestraint(cam2->rightside);
-	AddFrustumRestraint(cam2->leftside);
-
-	// Add restraint for maximum view distance
-	float3 up(0, 1, 0);
-	float3 side = cam2->forward;
-	float3 camHorizontal = cam2->forward;
-	camHorizontal.y = 0;
-	camHorizontal.ANormalize();
-	float3 b = up.cross(camHorizontal); // get vector for collision between frustum and horizontal plane
-	if (fabs(b.z) > 0.0001f) {
-		fline temp;
-		temp.dir = b.x / b.z; // set direction to that
-		float3 c = b.cross(camHorizontal); // get vector from camera to collision line
-		float3 colpoint; // a point on the collision line
-
-		if (side.y > 0) {
-			colpoint = cam2->pos + camHorizontal*globalRendering->viewRange*1.05f - c*(cam2->pos.y/c.y);
-		} else {
-			colpoint = cam2->pos + camHorizontal*globalRendering->viewRange*1.05f - c*((cam2->pos.y - 255/3.5f)/c.y);
-		}
-
-
-		temp.base = colpoint.x - colpoint.z*temp.dir; // get intersection between colpoint and z axis
-		if (b.z > 0) {
-			left.push_back(temp);
-		} else {
-			right.push_back(temp);
-		}
-	}
-}
 
 #define WSQUARE_SIZE W_SIZE
 
@@ -903,6 +835,16 @@ void CDynWater::DrawWaterSurface()
 
 	camPosBig2.x = floor(std::max((float)WH_SIZE, std::min((float)gs->mapx*SQUARE_SIZE - WH_SIZE, (float)camera->pos.x))/(W_SIZE*16))*(W_SIZE*16);
 	camPosBig2.z = floor(std::max((float)WH_SIZE, std::min((float)gs->mapy*SQUARE_SIZE - WH_SIZE, (float)camera->pos.z))/(W_SIZE*16))*(W_SIZE*16);
+
+	// FIXME:
+	//     1. DynWater::UpdateCamRestraints was never called ==> <this->left> and <this->right> were always empty
+	//     2. even if it had been, DynWater::UpdateCamRestraints always used <cam2> to get the sides, not <camera>
+	// UpdateCamRestraints(cam2);
+
+	const std::vector<CCamera::FrustumLine>/*&*/ left /*= cam2->leftFrustumSides*/;
+	const std::vector<CCamera::FrustumLine>/*&*/ right /*= cam2->rightFrustumSides*/;
+
+	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
 	for (int lod = 1; lod < (2 << 5); lod *= 2) {
 		int cx = (int)(cam2->pos.x / WSQUARE_SIZE);
@@ -935,7 +877,7 @@ void CDynWater::DrawWaterSurface()
 			int xs = xstart;
 			int xe = xend;
 			int xtest,xtest2;
-			std::vector<fline>::iterator fli;
+
 			for (fli = left.begin(); fli != left.end(); ++fli) {
 				float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
 				xtest = ((int)xtf) / lod * lod - lod;
@@ -1432,4 +1374,24 @@ void CDynWater::DrawOuterSurface()
 	}
 
 	va->DrawArray0(GL_QUADS);
+}
+
+
+
+void CDynWater::UpdateCamRestraints(CCamera* cam) {
+	// add restraints for camera sides
+	cam->GetFrustumSides(-10.0f, 10.0f, 1.0f);
+
+	// add restraint for maximum view distance (use flat z-dir as side)
+	const float3& camDir3D  = cam->forward;
+	      float3  camDir2D  = float3(camDir3D.x, 0.0f, camDir3D.z);
+	const float3  camOffset = camDir2D * globalRendering->viewRange * 1.05f;
+
+	static const float miny = 0.0f;
+	static const float maxy = 255.0f / 3.5f;
+
+	if (camDir2D.SqLength() > 0.01f) {
+		camDir2D.SafeANormalize();
+		cam->GetFrustumSide(camDir2D, camOffset, miny, maxy, SQUARE_SIZE, (camDir3D.y > 0.0f), false, false);
+	}
 }
