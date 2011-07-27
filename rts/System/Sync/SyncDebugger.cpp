@@ -149,19 +149,16 @@ void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 		h->data = -1;
 	}
 
-	// FIXME xor is dangerous in that every bit is independent of any other, this is bad
-#ifdef SD_USE_SIMPLE_CHECKSUM
+	// > XOR seems dangerous in that every bit is independent of any other, this is bad.
+	// This isn't the case here, however, because typically we checksum only 4 bytes
+	// of data at a time, so all of it fits in the checksum.
+	// (see SyncedPrimitiveBase / SyncedPrimitive, the main client of this method)
 	unsigned i = 0;
 	h->chk = 0;
 	for (; i < (size & ~3); i += 4)
 		h->chk ^= *(unsigned*) ((unsigned char*) p + i);
 	for (; i < size; ++i)
 		h->chk ^= *((unsigned char*) p + i);
-#else
-	// 33*flop + gs->frameNum is enough to prevent zero slurping
-	// using CSyncChecker::g_checksum here will cause cascade false positives
-	h->chk = HsiehHash((char*)p, size, 33*flop + gs->frameNum);
-#endif
 
 	if (++historyIndex == HISTORY_SIZE * BLOCK_SIZE)
 		historyIndex = 0; // wrap around
@@ -190,15 +187,7 @@ void CSyncDebugger::Backtrace(int index, const char* prefix) const
 
 unsigned CSyncDebugger::GetBacktraceChecksum(int index) const
 {
-#ifdef SD_USE_SIMPLE_CHECKSUM
-	unsigned checksum = 0;
-	const unsigned* p = (const unsigned*) historybt[index].bt;
-	for (unsigned i = 0; i < (sizeof(void*)/sizeof(unsigned)) * historybt[index].bt_size; ++i, ++p)
-		checksum = 33 * checksum + *p;
-	return checksum;
-#else
 	return HsiehHash((char *)historybt[index].bt, sizeof(void*) * historybt[index].bt_size, 0xf00dcafe);
-#endif
 }
 
 
@@ -315,16 +304,6 @@ void CSyncDebugger::ClientSendChecksumResponse()
 {
 	std::vector<unsigned> checksums;
 	for (unsigned i = 0; i < HISTORY_SIZE; ++i) {
-#ifdef SD_USE_SIMPLE_CHECKSUM
-		unsigned checksum = 0;
-		for (unsigned j = 0; j < BLOCK_SIZE; ++j) {
-			if (historybt) {
-				checksum = 33 * checksum + historybt[BLOCK_SIZE * i + j].chk;
-			} else {
-				checksum = 33 * checksum + history[BLOCK_SIZE * i + j].chk;
-			}
-		}
-#else
 		unsigned checksum = 123456789;
 		for (unsigned j = 0; j < BLOCK_SIZE; ++j) {
 			if (historybt) {
@@ -333,7 +312,6 @@ void CSyncDebugger::ClientSendChecksumResponse()
 				checksum = HsiehHash((char*)&history[BLOCK_SIZE * i + j].chk, sizeof(history[BLOCK_SIZE * i + j].chk), checksum);
 			}
 		}
-#endif
 		checksums.push_back(checksum);
 	}
 	net->Send(CBaseNetProtocol::Get().SendSdCheckresponse(gu->myPlayerNum, flop, checksums));
