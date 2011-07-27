@@ -218,7 +218,8 @@ void CLogOutput::Initialize()
 	initialized = true;
 	Print("LogOutput initialized.\n");
 	Print("Spring %s", SpringVersion::GetFull().c_str());
-	logOutput.Print("Build date/time: %s", SpringVersion::GetBuildTime().c_str());
+	Print("Build date/time: %s", SpringVersion::GetBuildTime().c_str());
+	Print("Compiler: %s", SpringVersion::GetCompiler().c_str());
 
 	InitializeSubsystems();
 
