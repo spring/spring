@@ -135,10 +135,18 @@ void CFeatureDrawer::UpdateDrawQuad(CFeature* feature)
 {
 	const int oldDrawQuad = feature->drawQuad;
 	if (oldDrawQuad >= -1) {
-		const int newDrawQuad =
-			int(feature->pos.z / DRAW_QUAD_SIZE / SQUARE_SIZE) * drawQuadsX +
-			int(feature->pos.x / DRAW_QUAD_SIZE / SQUARE_SIZE);
+		int newDrawQuadX = feature->pos.x / DRAW_QUAD_SIZE / SQUARE_SIZE;
+		int newDrawQuadY = feature->pos.z / DRAW_QUAD_SIZE / SQUARE_SIZE;
+		newDrawQuadX = Clamp(newDrawQuadX, 0, drawQuadsX - 1);
+		newDrawQuadY = Clamp(newDrawQuadY, 0, drawQuadsY - 1);
+		const int newDrawQuad = newDrawQuadY * drawQuadsX + newDrawQuadX;
+
 		if (oldDrawQuad != newDrawQuad) {
+			//TODO check if out of map features get drawn, when the camera is outside of the map
+			//     (q: does DrawGround render the border quads in such cases?)
+			assert(oldDrawQuad < drawQuadsX * drawQuadsY);
+			assert(newDrawQuad < drawQuadsX * drawQuadsY);
+
 			if (oldDrawQuad >= 0)
 				drawQuads[oldDrawQuad].features.erase(feature);
 			drawQuads[newDrawQuad].features.insert(feature);
