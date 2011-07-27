@@ -104,6 +104,7 @@ class CSyncDebugger {
 			std::vector<unsigned> checksumResponses;
 			boost::uint64_t remoteFlop;
 			std::vector<unsigned> remoteHistory;
+			PlayerStruct() : remoteFlop(0) {}
 		};
 		typedef std::vector<PlayerStruct> PlayerVec;
 		PlayerVec players;
