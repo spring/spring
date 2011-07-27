@@ -4,8 +4,6 @@
 
 #ifdef SYNCDEBUG
 
-#include <boost/format.hpp>
-
 #include "System/LogOutput.h"
 #include "System/Log/ILog.h"
 #include "Game/GlobalUnsynced.h"
@@ -121,8 +119,9 @@ void CSyncDebugger::Initialize(bool useBacktrace, unsigned numPlayers)
 
 void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 {
-	if (!history && !historybt)
+	if (!history && !historybt) {
 		return;
+	}
 
 	HistItem* h = &history[historyIndex];
 
@@ -137,31 +136,28 @@ void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 	}
 #endif
 
-	// if data fits and has even size, it is probably a POD type, store it verbatim
-	// TODO transfer offending blocks from clients to the server
-	if (size == 1) {
-		h->data = *(unsigned char*)p;
-	} else if (size == sizeof(short)) {
-		h->data = *(unsigned short*)p;
-	} else if (size >= sizeof(unsigned)) {
-		h->data = *(unsigned *)p;
-	} else {
-		h->data = -1;
+	if (size == 4) {
+		// common case
+		h->data = *(unsigned*) p;
+	}
+	else {
+		// > XOR seems dangerous in that every bit is independent of any other, this is bad.
+		// This isn't the case here, however, because typically we checksum only 1-8 bytes
+		// of data at a time, so most of it fits in the checksum anyway.
+		// (see SyncedPrimitiveBase / SyncedPrimitive, the main client of this method)
+		unsigned i = 0;
+		h->data = 0;
+		// whole dwords
+		for (; i < (size & ~3); i += 4)
+			h->data ^= *(unsigned*) ((unsigned char*) p + i);
+		// remaining 0 to 3 bytes
+		for (; i < size; ++i)
+			h->data ^= *((unsigned char*) p + i);
 	}
 
-	// > XOR seems dangerous in that every bit is independent of any other, this is bad.
-	// This isn't the case here, however, because typically we checksum only 4 bytes
-	// of data at a time, so all of it fits in the checksum.
-	// (see SyncedPrimitiveBase / SyncedPrimitive, the main client of this method)
-	unsigned i = 0;
-	h->chk = 0;
-	for (; i < (size & ~3); i += 4)
-		h->chk ^= *(unsigned*) ((unsigned char*) p + i);
-	for (; i < size; ++i)
-		h->chk ^= *((unsigned char*) p + i);
-
-	if (++historyIndex == HISTORY_SIZE * BLOCK_SIZE)
+	if (++historyIndex == HISTORY_SIZE * BLOCK_SIZE) {
 		historyIndex = 0; // wrap around
+	}
 	++flop;
 }
 
@@ -307,9 +303,9 @@ void CSyncDebugger::ClientSendChecksumResponse()
 		unsigned checksum = 123456789;
 		for (unsigned j = 0; j < BLOCK_SIZE; ++j) {
 			if (historybt) {
-				checksum = HsiehHash((char*)&historybt[BLOCK_SIZE * i + j].chk, sizeof(historybt[BLOCK_SIZE * i + j].chk), checksum);
+				checksum = HsiehHash((char*)&historybt[BLOCK_SIZE * i + j].data, sizeof(HistItemWithBacktrace::data), checksum);
 			} else {
-				checksum = HsiehHash((char*)&history[BLOCK_SIZE * i + j].chk, sizeof(history[BLOCK_SIZE * i + j].chk), checksum);
+				checksum = HsiehHash((char*)&history[BLOCK_SIZE * i + j].data, sizeof(HistItem::data), checksum);
 			}
 		}
 		checksums.push_back(checksum);
@@ -374,13 +370,19 @@ void CSyncDebugger::ClientSendBlockResponse(int block)
 	tracefile << "Sending block response for block " << block << "\n";
 #endif
 	for (unsigned i = 0; i < BLOCK_SIZE; ++i) {
-		if (historybt)
-			checksums.push_back(historybt[BLOCK_SIZE * block + i].chk);
-		else  checksums.push_back(history[BLOCK_SIZE * block + i].chk);
+		if (historybt) {
+			checksums.push_back(historybt[BLOCK_SIZE * block + i].data);
+		}
+		else {
+			checksums.push_back(history[BLOCK_SIZE * block + i].data);
+		}
 #ifdef TRACE_SYNC
-		if (historybt)
-			tracefile << historybt[BLOCK_SIZE * block + i].chk << " " << historybt[BLOCK_SIZE * block + i].data << "\n";
-		else  tracefile << history[BLOCK_SIZE * block + i].chk << " " << history[BLOCK_SIZE * block + i].data  << "\n";
+		if (historybt) {
+			tracefile << historybt[BLOCK_SIZE * block + i].data << " " << historybt[BLOCK_SIZE * block + i].data << "\n";
+		}
+		else {
+			tracefile << history[BLOCK_SIZE * block + i].data << " " << history[BLOCK_SIZE * block + i].data  << "\n";
+		}
 #endif
 	}
 #ifdef TRACE_SYNC
@@ -438,9 +440,14 @@ void CSyncDebugger::ServerDumpStack()
 						checksumToIndex[checksum] = curBacktrace;
 						indexToHistPos[curBacktrace] = histPos;
 					}
-					logger.AddLine("Server: chk %08X instead of %08X frame %06u, (value=%08x %15.8e) backtrace %u in \"%s\"", players[j].remoteHistory[i], correctChecksum, historybt[histPos].frameNum, historybt[histPos].data, *(float*)&historybt[histPos].data, checksumToIndex[checksum], historybt[histPos].op);
+					logger.AddLine("Server: 0x%08X/%15.8e instead of 0x%08X/%15.8e, frame %06u, backtrace %u in \"%s\"",
+							players[j].remoteHistory[i], *(float*)(char*)&players[j].remoteHistory[i],
+							correctChecksum, *(float*)(char*)&correctChecksum,
+							historybt[histPos].frameNum, checksumToIndex[checksum], historybt[histPos].op);
 				} else {
-					logger.AddLine("Server: chk %08X instead of %08X", players[j].remoteHistory[i], correctChecksum);
+					logger.AddLine("Server: 0x%08X/%15.8e instead of 0x%08X/%15.8e",
+							players[j].remoteHistory[i], *(float*)(char*)&players[j].remoteHistory[i],
+							correctChecksum, *(float*)(char*)&correctChecksum);
 				}
 				err = true;
 			} else {
