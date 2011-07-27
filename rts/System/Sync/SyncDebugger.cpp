@@ -14,9 +14,9 @@
 #include "System/BaseNetProtocol.h"
 #include "System/NetProtocol.h"
 #include "SyncDebugger.h"
-#include "SyncChecker.h"
 #include "SyncTracer.h"
 #include "Logger.h"
+#include "HsiehHash.h"
 
 #include <string.h>
 #include <map>
@@ -160,7 +160,7 @@ void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 #else
 	// 33*flop + gs->frameNum is enough to prevent zero slurping
 	// using CSyncChecker::g_checksum here will cause cascade false positives
-	h->chk = CSyncChecker::HsiehHash((char*)p, size, 33*flop + gs->frameNum);
+	h->chk = HsiehHash((char*)p, size, 33*flop + gs->frameNum);
 #endif
 
 	if (++historyIndex == HISTORY_SIZE * BLOCK_SIZE)
@@ -197,7 +197,7 @@ unsigned CSyncDebugger::GetBacktraceChecksum(int index) const
 		checksum = 33 * checksum + *p;
 	return checksum;
 #else
-	return CSyncChecker::HsiehHash((char *)historybt[index].bt, sizeof(void*) * historybt[index].bt_size, 0xf00dcafe);
+	return HsiehHash((char *)historybt[index].bt, sizeof(void*) * historybt[index].bt_size, 0xf00dcafe);
 #endif
 }
 
@@ -328,9 +328,9 @@ void CSyncDebugger::ClientSendChecksumResponse()
 		unsigned checksum = 123456789;
 		for (unsigned j = 0; j < BLOCK_SIZE; ++j) {
 			if (historybt) {
-				checksum = CSyncChecker::HsiehHash((char*)&historybt[BLOCK_SIZE * i + j].chk, sizeof(historybt[BLOCK_SIZE * i + j].chk), checksum);
+				checksum = HsiehHash((char*)&historybt[BLOCK_SIZE * i + j].chk, sizeof(historybt[BLOCK_SIZE * i + j].chk), checksum);
 			} else {
-				checksum = CSyncChecker::HsiehHash((char*)&history[BLOCK_SIZE * i + j].chk, sizeof(history[BLOCK_SIZE * i + j].chk), checksum);
+				checksum = HsiehHash((char*)&history[BLOCK_SIZE * i + j].chk, sizeof(history[BLOCK_SIZE * i + j].chk), checksum);
 			}
 		}
 #endif
