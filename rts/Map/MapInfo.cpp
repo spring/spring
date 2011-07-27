@@ -424,7 +424,7 @@ void CMapInfo::ReadSound()
 		}
 	}
 
-	const LuaTable& reverbTable = soundTable.SubTable("reverb");
+	soundTable.SubTable("reverb");
 	for (it = nameToALParam.begin(); it != nameToALParam.end(); ++it) {
 		const std::string& name = it->first;
 		const int luaType = filterTable.GetType(name);

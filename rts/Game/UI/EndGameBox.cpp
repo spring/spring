@@ -275,8 +275,11 @@ void CEndGameBox::Draw()
 		} else {
 			winnersText.str("");
 			winnersText << "Game Over! Your ally-team ";
-			winnersText << (playedAndWon)? "won the game": "lost the game";
-
+			if (playedAndWon) {
+				winnersText << "won the game";
+			} else {
+				winnersText << "lost the game";
+			}
 			font->glPrint(box.x1 + 0.25f, box.y1 + 0.65f, 1.0f, FONT_SCALE | FONT_NORM, (winnersText.str()).c_str());
 		}
 	}
