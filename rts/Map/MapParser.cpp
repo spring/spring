@@ -77,13 +77,13 @@ bool MapParser::GetStartPos(int team, float3& pos) const
 	errorLog.clear();
 
 	if (!parser->IsValid()) {
-		errorLog = "Map-Parser: Failed to get start position for team " + IntToString(team) + ", reason: parser not ready || file not found";
+		errorLog = "Map-Parser: Failed to get start position for team " + IntToString(team) + ", reason: " + parser->GetErrorLog();
 		return false;
 	}
 	const LuaTable teamsTable = parser->GetRoot().SubTable("teams");
 	const LuaTable posTable = teamsTable.SubTable(team).SubTable("startPos");
 	if (!posTable.IsValid()) {
-		errorLog = "Map-Parser: Failed to get start position for team " + IntToString(team) + ", reason: " + parser->GetErrorLog();
+		errorLog = "Map-Parser: Failed to get start position for team " + IntToString(team) + ", reason: Not defined in the map's config!";
 		return false;
 	}
 
