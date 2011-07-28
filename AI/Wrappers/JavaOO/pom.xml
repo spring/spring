@@ -6,12 +6,12 @@
 	<!--
 		You may not use this file to build this project!
 		It acts only as a container for certain meta-info, and is used with:
-		> mvn install:install-file -DpomFile=.../pom.xml -DmyVersion=X
+		> mvn install:install-file -DpomFile=.../pom.xml -Dmy.version=X
 	-->
 
 	<groupId>com.springrts</groupId>
 	<artifactId>ai-wrapper-javaoo</artifactId>
-	<version>${myVersion}</version> <!-- replaced by CMake or -DmyVersion=X -->
+	<version>${my.version}</version> <!-- replaced by CMake or -Dmy.version=X -->
 
 	<packaging>jar</packaging>
 	<prerequisites>
@@ -59,8 +59,9 @@
 		<dependency>
 			<groupId>com.springrts</groupId>
 			<artifactId>ai-interface-java</artifactId>
-			<version>${myVersion}</version> <!-- replaced by CMake or -DmyVersion=X -->
+			<version>${my.version}</version> <!-- replaced by CMake or -Dmy.version=X -->
 		</dependency>
+
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>vecmath</artifactId>

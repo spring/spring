@@ -350,8 +350,9 @@ if    (BUILD_${myName}_AIWRAPPER)
 		)
 
 	# This sets the version in pom.xml
-	# as we have no separate version for the wrapper:
-	set(myMavenProperties "-DmyVersion=${Java_AIINTERFACE_VERS}")
+	# as we have no separate version for the wrapper,
+	# we use the one from the interrface
+	set(myMavenProperties "-Dmy.version=${Java_AIINTERFACE_VERS}")
 	add_custom_command(
 		OUTPUT
 			"${myBuildDir}/pom-generated.xml"
