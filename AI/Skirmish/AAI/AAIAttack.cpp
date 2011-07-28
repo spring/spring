@@ -55,13 +55,13 @@ bool AAIAttack::Failed()
 void AAIAttack::StopAttack()
 {
 	float3 pos;
-	AAISector *sector;
+//	AAISector *sector;
 
 	for(set<AAIGroup*>::iterator group = combat_groups.begin(); group != combat_groups.end(); ++group)
 	{
 		// get rally point somewhere between current pos an base
 		pos = (*group)->GetGroupPos();
-		sector = ai->map->GetSectorOfPos(&pos);
+//		sector = ai->map->GetSectorOfPos(&pos);
 
 		(*group)->GetNewRallyPoint();
 
@@ -88,7 +88,7 @@ void AAIAttack::StopAttack()
 	{
 		// get rally point somewhere between current pos an base
 		pos = (*group)->GetGroupPos();
-		sector = ai->map->GetSectorOfPos(&pos);
+//		sector = ai->map->GetSectorOfPos(&pos);
 
 		(*group)->GetNewRallyPoint();
 

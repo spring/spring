@@ -201,7 +201,7 @@ void CBuilderCAI::PostLoad()
 {
 	if (!commandQue.empty()) {
 		Command& c = commandQue.front();
-		float3 curPos = owner->pos;
+//		float3 curPos = owner->pos;
 
 		map<int, string>::iterator boi = buildOptions.find(c.GetID());
 		if (boi != buildOptions.end()) {

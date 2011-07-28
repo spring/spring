@@ -165,7 +165,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 	const UnitDef *def;
 
 	bool error = false;
-	bool loaded = false;
+//	bool loaded = false;
 
 	if(file)
 	{
@@ -613,7 +613,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 		}
 		else
 		{
-			loaded = true;
+//			loaded = true;
 			fclose(file);
 			fprintf(ai->file, "Mod config file loaded\n");
 		}
