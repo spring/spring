@@ -379,7 +379,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				//      So for the case POT(gs->mapx) == gs->mapx we would get a buffer overrun in our PBO
 				//      when iterating (gs->mapx + 1) * (gs->mapy + 1). So we just skip +1, it may give
 				//      semi incorrect results, but it is the easiest solution.
--				const float* heightMap = readmap->GetCornerHeightMapUnsynced();
+				const float* heightMap = readmap->GetCornerHeightMapUnsynced();
 
 				for (int y = starty; y < endy; ++y) {
 					const int y_pwr2mapx = y * gs->pwr2mapx;
