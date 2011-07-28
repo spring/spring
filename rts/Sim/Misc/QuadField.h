@@ -80,7 +80,8 @@ public:
 	};
 
 	const Quad& GetQuad(int i) const {
-		assert(static_cast<unsigned>(i) < baseQuads.size());
+		assert(i >= 0);
+		assert(i < baseQuads.size());
 		return baseQuads[i];
 	}
 	const Quad& GetQuadAt(int x, int z) const {
