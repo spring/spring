@@ -663,7 +663,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	add_dependencies(${myTarget} ${myNativeTarget})
 
 	# this sets the version in pom.xml
-	set(myMavenProperties "-DmyVersion=${myVersion}")
+	set(myMavenProperties "-Dmy.version=${myVersion}")
 	add_custom_command(
 		OUTPUT
 			"${myBuildDir}/pom-generated.xml"
