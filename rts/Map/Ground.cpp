@@ -204,7 +204,7 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 	// ray, hence we save the distance along it that got skipped
 	ClampLineInMap(from, to);
 
-	const float3 dir = (to - from).SafeNormalize();
+//	const float3 dir = (to - from).SafeNormalize();
 
 	const float skippedDist = (pfrom - from).Length();
 	const float dx = to.x - from.x;

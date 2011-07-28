@@ -241,7 +241,7 @@ bool CGroundMoveType::Update()
 				ASSERT_SYNCED_FLOAT3(waypointDir);
 
 				const float3 wpDirInv = -waypointDir;
-				const float3 wpPosTmp = owner->pos + wpDirInv;
+//				const float3 wpPosTmp = owner->pos + wpDirInv;
 				const bool   wpBehind = (waypointDir.dot(flatFrontDir) < 0.0f);
 
 				if (!haveFinalWaypoint) {
@@ -459,7 +459,7 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 
 		const float3 goalDifFwd = waypoint - owner->pos;
 		const float3 goalDifRev = -goalDifFwd;
-		const float3 goalPosTmp = owner->pos + goalDifRev;
+//		const float3 goalPosTmp = owner->pos + goalDifRev;
 
 		const float3 goalDif = reversing? goalDifRev: goalDifFwd;
 		const short turnDeltaHeading = owner->heading - GetHeadingFromVector(goalDif.x, goalDif.z);

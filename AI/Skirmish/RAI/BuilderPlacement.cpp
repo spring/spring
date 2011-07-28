@@ -1210,11 +1210,13 @@ void cBuilderPlacement::SetResourceOwner(int RSindex, ResourceSiteExt* RS, int u
 		RS->ally = true;
 	else
 		RS->ally = false;
+/*
 	sRAIBuildList *BL;
 	if( RS->S->type == 0 )
 		BL=G->UDH->BLMetalL;
 	else
 		BL=G->UDH->BLEnergyL;
+*/
 	if( unit >= 0 && oldunit == -1 )
 	{
 		if( RSAvailable.find( RSindex ) == RSAvailable.end() )

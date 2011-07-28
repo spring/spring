@@ -1838,12 +1838,13 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 	const int args = lua_gettop(L); // number of arguments
 
 	bool useTxcd = false;
+/*
 	bool useNorm = false;
 
 	if (lua_isboolean(L, 5)) {
 		useNorm = lua_toboolean(L, 5);
 	}
-
+*/
 	float tu0, tv0, tu1, tv1;
 	if (args == 9) {
 		tu0 = luaL_checknumber(L, 6);

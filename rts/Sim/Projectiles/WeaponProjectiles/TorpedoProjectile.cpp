@@ -62,7 +62,7 @@ CTorpedoProjectile::CTorpedoProjectile(
 	SetRadius(0.0f);
 	drawRadius = maxSpeed * 8;
 
-	const float3 camDir = (pos - camera->pos).Normalize();
+//	const float3 camDir = (pos - camera->pos).Normalize();
 	texx = projectileDrawer->torpedotex->xstart - (projectileDrawer->torpedotex->xend - projectileDrawer->torpedotex->xstart) * 0.5f;
 	texy = projectileDrawer->torpedotex->ystart - (projectileDrawer->torpedotex->yend - projectileDrawer->torpedotex->ystart) * 0.5f;
 #ifdef TRACE_SYNC
