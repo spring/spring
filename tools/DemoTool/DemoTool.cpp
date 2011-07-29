@@ -207,12 +207,12 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 		packet = reader.GetData(3.40282347e+38f);
 		if (packet == NULL)
 			continue;
+		assert(packet->data[0]<NETMSG_LAST);
 		trafficCounter[packet->data[0]] += packet->length;
 		const unsigned char* buffer = packet->data;
 		char buf[16]; // FIXME: cba to look up how to format numbers with iostreams
 		sprintf(buf, "%06d ", frame);
 		std::cout << buf;
-		assert(packet->data[0]<NETMSG_LAST);
 		switch ((unsigned char)buffer[0])
 		{
 			case NETMSG_AICOMMAND:
