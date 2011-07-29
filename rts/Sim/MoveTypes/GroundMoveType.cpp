@@ -1005,14 +1005,14 @@ float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
 									(radiusSum - objectDistToAvoidDirCenter) *
 									AVOIDANCE_STRENGTH * fastmath::isqrt2(distanceToObjectSq);
 								avoidanceDir += (rightOfAvoid * avoidRight);
-								avoidanceDir.Normalize();
+								avoidanceDir.SafeNormalize();
 								rightOfAvoid = avoidanceDir.cross(float3(0.0f, 1.0f, 0.0f));
 							} else {
 								avoidLeft +=
 									(radiusSum - math::fabs(objectDistToAvoidDirCenter)) *
 									AVOIDANCE_STRENGTH * fastmath::isqrt2(distanceToObjectSq);
 								avoidanceDir -= (rightOfAvoid * avoidLeft);
-								avoidanceDir.Normalize();
+								avoidanceDir.SafeNormalize();
 								rightOfAvoid = avoidanceDir.cross(float3(0.0f, 1.0f, 0.0f));
 							}
 							objectsOnPath.push_back(o);
@@ -1042,7 +1042,7 @@ float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
 		}
 
 		// Return the resulting recommended velocity.
-		avoidanceDir = (desiredDir + avoidanceVec).Normalize();
+		avoidanceDir = (desiredDir + avoidanceVec).SafeNormalize();
 
 #ifdef TRACE_SYNC
 		tracefile << "[" << __FUNCTION__ << "] ";
@@ -1715,11 +1715,11 @@ void CGroundMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive
 		}
 
 		float3 dir1 = owner->weapons.front()->mainDir;
-		dir1.y = 0;
-		dir1.Normalize();
 		float3 dir2 = mainHeadingPos - owner->pos;
-		dir2.y = 0;
-		dir2.Normalize();
+		dir1.y = 0.0f;
+		dir1.Normalize();
+		dir2.y = 0.0f;
+		dir2.SafeNormalize();
 
 		if (dir2 != ZeroVector) {
 			short heading =
@@ -1745,11 +1745,11 @@ void CGroundMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressiv
 void CGroundMoveType::SetMainHeading() {
 	if (useMainHeading && !owner->weapons.empty()) {
 		float3 dir1 = owner->weapons.front()->mainDir;
-		dir1.y = 0;
-		dir1.Normalize();
 		float3 dir2 = mainHeadingPos - owner->pos;
-		dir2.y = 0;
-		dir2.Normalize();
+		dir1.y = 0.0f;
+		dir1.Normalize();
+		dir2.y = 0.0f;
+		dir2.SafeNormalize();
 
 		ASSERT_SYNCED_FLOAT3(dir1);
 		ASSERT_SYNCED_FLOAT3(dir2);
