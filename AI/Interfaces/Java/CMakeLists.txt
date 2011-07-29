@@ -706,19 +706,51 @@ if    (BUILD_${myName}_AIINTERFACE)
 		# This is required because the local Maven install does not create a
 		# file (whichs path we could know), and thus we would not be able to
 		# create a nice dependency chain without this.
-		set(myMavenInstallStubFile "${myBuildDir}/mavenInstallStub.txt")
-		set_source_files_properties("${myMavenInstallStubFile}" PROPERTIES GENERATED TRUE)
+		set(myMavenInstallStubFile_common       "${myBuildDir}/mavenInstallStub_common.txt")
+		set(myMavenInstallStubFile_commonSpring "${myBuildDir}/mavenInstallStub_commonSpring.txt")
+		set(myMavenInstallStubFile_my           "${myBuildDir}/mavenInstallStub_my.txt")
+		set(myMavenInstallStubFiles
+				"${myMavenInstallStubFile_common}"
+				"${myMavenInstallStubFile_commonSpring}"
+				"${myMavenInstallStubFile_my}")
+		set_source_files_properties(${myMavenInstallStubFiles} PROPERTIES GENERATED TRUE)
 		SetGlobal(${myName}_AIINTERFACE_MVN_INST_STUB_FILE  "${myMavenInstallStubFile}")
 		add_custom_command(
 			OUTPUT
-				"${myMavenInstallStubFile}"
+				"${myMavenInstallStubFile_common}"
+			COMMAND "mvn" "install"
+			COMMAND "${CMAKE_COMMAND}"
+				"-E" "touch" "${myMavenInstallStubFile_common}"
+			DEPENDS
+				"${myDir}/support/common/pom.xml"
+			WORKING_DIRECTORY
+				"${myDir}/support/common/"
+			COMMENT
+				"  ${myTarget}: Installing to local maven repository (common)" VERBATIM
+			)
+		add_custom_command(
+			OUTPUT
+				"${myMavenInstallStubFile_commonSpring}"
+			COMMAND "mvn" "install"
+			COMMAND "${CMAKE_COMMAND}"
+				"-E" "touch" "${myMavenInstallStubFile_commonSpring}"
+			DEPENDS
+				"${myDir}/support/common/spring/pom.xml"
+			WORKING_DIRECTORY
+				"${myDir}/support/common/spring"
+			COMMENT
+				"  ${myTarget}: Installing to local maven repository (common-spring)" VERBATIM
+			)
+		add_custom_command(
+			OUTPUT
+				"${myMavenInstallStubFile_my}"
 			COMMAND "mvn"
 				"install:install-file"
 				"-DpomFile=${myBuildDir}/pom-generated.xml"
 				"-Dfile=${myBuildDir}/${myBinJarFile}"
 				"-Dsources=${myBuildDir}/${mySrcJarFile}"
 			COMMAND "${CMAKE_COMMAND}"
-				"-E" "touch" "${myMavenInstallStubFile}"
+				"-E" "touch" "${myMavenInstallStubFile_my}"
 			DEPENDS
 				"${myBuildDir}/pom-generated.xml"
 				"${myBuildDir}/${myBinJarFile}"
@@ -730,7 +762,9 @@ if    (BUILD_${myName}_AIINTERFACE)
 			)
 		add_custom_target(${myMavenInstallTarget}
 			DEPENDS
-				"${myMavenInstallStubFile}"
+				"${myMavenInstallStubFile_common}"
+				"${myMavenInstallStubFile_commonSpring}"
+				"${myMavenInstallStubFile_my}"
 			)
 		add_dependencies(${myMavenInstallTarget} ${myJavaTarget})
 		add_dependencies(${myTarget} ${myMavenInstallTarget})

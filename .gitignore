@@ -61,6 +61,9 @@ Makefile
 # Java AI related
 /AI/Interfaces/Java/build
 /AI/Skirmish/*/build
+/AI/Interfaces/Java/target
+/AI/Wrappers/JavaOO/target
+/AI/Skirmish/*/target
 
 # Misc file endings (eg. build or temp files)
 *.o
