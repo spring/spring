@@ -138,8 +138,8 @@ float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p)
  */
 std::pair<float, float> GetMapBoundaryIntersectionPoints(const float3& start, const float3& dir)
 {
-	const float rcpdirx = 1.0f / dir.x;
-	const float rcpdirz = 1.0f / dir.z;
+	const float rcpdirx = (dir.x != 0.0f)? (1.0f / dir.x): 10000.0f;
+	const float rcpdirz = (dir.z != 0.0f)? (1.0f / dir.z): 10000.0f;
 	float l1, l2, far, near;
 
 	//! x component
@@ -156,7 +156,8 @@ std::pair<float, float> GetMapBoundaryIntersectionPoints(const float3& start, co
 
 	if (far < 0.0f || far < near) {
 		//! outside of boundary
-		return std::pair<float, float>(-1.0f, -1.0f);
+		near = -1.0f;
+		far = -1.0f;
 	}
 	return std::pair<float, float>(near, far);
 }
