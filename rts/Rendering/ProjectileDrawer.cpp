@@ -727,8 +727,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		ph->currentParticles += (modelRenderers[modelType]->GetNumProjectiles() * 0.8f);
 	}
 
-	ph->particleSaturation     = ph->currentParticles     / float(ph->maxParticles);
-	ph->nanoParticleSaturation = ph->currentNanoParticles / float(ph->maxNanoParticles);
+	ph->UpdateParticleSaturation();
 }
 
 void CProjectileDrawer::DrawShadowPass()
