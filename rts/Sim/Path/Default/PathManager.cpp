@@ -399,11 +399,13 @@ void CPathManager::UpdatePath(const CSolidObject* owner, unsigned int pathId)
 
 	GetDetailedPathSquares(pathId, points);
 
-	float scale = 1.0f / points.size();
-	unsigned int i = points.size();
+	if (!points.empty()) {
+		float scale = 1.0f / points.size();
+		unsigned int i = points.size();
 
-	for (std::vector<int2>::const_iterator it = points.begin(); it != points.end(); ++it) {
-		SetHeatOnSquare(it->x, it->y, i * scale * owner->mobility->heatProduced, owner->id); i--;
+		for (std::vector<int2>::const_iterator it = points.begin(); it != points.end(); ++it) {
+			SetHeatOnSquare(it->x, it->y, i * scale * owner->mobility->heatProduced, owner->id); i--;
+		}
 	}
 }
 
