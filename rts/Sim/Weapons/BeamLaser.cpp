@@ -58,7 +58,7 @@ void CBeamLaser::Update(void)
 
 		if (!onlyForward) {
 			wantedDir = targetPos - weaponPos;
-			wantedDir.Normalize();
+			wantedDir.SafeNormalize();
 		}
 
 		if (!weaponDef->beamburst) {
@@ -211,7 +211,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 	dir +=
 		((gs->randVector() * sprayAngle *
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight)));
-	dir.Normalize();
+	dir.SafeNormalize();
 
 	bool tryAgain = true;
 
