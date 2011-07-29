@@ -162,17 +162,13 @@ void UDPListener::Update() {
 		}
 	}
 
-	std::list<boost::asio::ip::udp::endpoint> toErase;
-	for (ConnMap::iterator ci = conn.begin(); ci != conn.end(); ++ci) {
-		if (ci->second.expired()) {
-			toErase.push_back(ci->first);
-		} else {
-			ci->second.lock()->Update();
+	for (ConnMap::iterator i = conn.begin(); i != conn.end(); ) {
+		if (i->second.expired()) {
+			i = set_erase(conn, i);
+			continue;
 		}
-	}
-	std::list<boost::asio::ip::udp::endpoint>::const_iterator ci;
-	for (ci = toErase.begin(); ci != toErase.end(); ++ci) {
-		conn.erase(*ci);
+		i->second.lock()->Update();
+		++i;
 	}
 }
 
@@ -218,18 +214,14 @@ void UDPListener::RejectConnection()
 }
 
 void UDPListener::UpdateConnections() {
-
-	std::list<boost::asio::ip::udp::endpoint> toErase;
-	for (ConnMap::iterator ci = conn.begin(); ci != conn.end(); ++ci) {
-		boost::shared_ptr<UDPConnection> uc = ci->second.lock();
-		if (uc && (ci->first != uc->GetEndpoint())) {
+	for (ConnMap::iterator i = conn.begin(); i != conn.end(); ) {
+		boost::shared_ptr<UDPConnection> uc = i->second.lock();
+		if (uc && i->first != uc->GetEndpoint()) {
 			conn[uc->GetEndpoint()] = uc; // inserting does not invalidate iterators
-			toErase.push_back(ci->first); // ... erasing would
+			i = set_erase(conn, i);
 		}
-	}
-	std::list<boost::asio::ip::udp::endpoint>::const_iterator ci;
-	for (ci = toErase.begin(); ci != toErase.end(); ++ci) {
-		conn.erase(*ci);
+		else
+			++i;
 	}
 }
 
