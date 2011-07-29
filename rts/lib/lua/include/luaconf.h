@@ -540,16 +540,16 @@
 #if defined(LUA_CORE)
 //SPRING#include <math.h>
 #include "streflop_cond.h"
-#define luai_numadd(a,b)	((a)+(b))
-#define luai_numsub(a,b)	((a)-(b))
-#define luai_nummul(a,b)	((a)*(b))
-#define luai_numdiv(a,b)	((b!=0.0f)? ((a)/(b)): (b))
-#define luai_nummod(a,b)	((a) - floor(luai_numdiv(a,b))*(b))
-#define luai_numpow(a,b)	(pow(a,b))
+#define luai_numadd(a,b)	((a) + (b))
+#define luai_numsub(a,b)	((a) - (b))
+#define luai_nummul(a,b)	((a) * (b))
+#define luai_numdiv(a,b)	(((b) != 0.0f)? ((a) / (b)): (b))
+#define luai_nummod(a,b)	((a) - floor(luai_numdiv((a), (b))) * (b))
+#define luai_numpow(a,b)	(pow((a), (b)))
 #define luai_numunm(a)		(-(a))
-#define luai_numeq(a,b)		((a)==(b))
-#define luai_numlt(a,b)		((a)<(b))
-#define luai_numle(a,b)		((a)<=(b))
+#define luai_numeq(a,b)		((a) == (b))
+#define luai_numlt(a,b)		((a) <  (b))
+#define luai_numle(a,b)		((a) <= (b))
 #define luai_numisnan(a)	(!luai_numeq((a), (a)))
 #endif
 
