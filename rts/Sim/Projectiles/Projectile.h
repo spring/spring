@@ -50,7 +50,7 @@ public:
 	}
 
 
-	void SetQuadFieldCellCoors(const int2 cell) { quadFieldCellCoors = cell; }
+	void SetQuadFieldCellCoors(const int2& cell) { quadFieldCellCoors = cell; }
 	int2 GetQuadFieldCellCoors() const { return quadFieldCellCoors; }
 
 	void SetQuadFieldCellIter(const std::list<CProjectile*>::iterator& it) { quadFieldCellIter = it; }

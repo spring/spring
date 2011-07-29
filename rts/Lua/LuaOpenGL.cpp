@@ -45,8 +45,8 @@
 #include "Rendering/LineDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
-#include "Rendering/Env/BaseSky.h"
-#include "Rendering/Env/BaseWater.h"
+#include "Rendering/Env/ISky.h"
+#include "Rendering/Env/IWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
@@ -66,7 +66,7 @@
 #include "Sim/Units/UnitDefImage.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Matrix44f.h"
 #include "System/Config/ConfigHandler.h"
 
@@ -1359,7 +1359,7 @@ int LuaOpenGL::Unit(lua_State* L)
 		unsigned int lod = 0;
 		if (!lua_isnumber(L, 3)) {
 			const LuaMatType matType =
-				(water->drawReflection) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
+				(water->IsDrawReflection()) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
 			lod = unitDrawer->CalcUnitLOD(unit, unit->luaMats[matType].GetLastLOD());
 		} else {
 			int tmpLod = lua_toint(L, 3);
@@ -1422,7 +1422,7 @@ int LuaOpenGL::UnitRaw(lua_State* L)
 		unsigned int lod = 0;
 		if (!lua_isnumber(L, 3)) {
 			const LuaMatType matType =
-				(water->drawReflection) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
+				(water->IsDrawReflection()) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
 			lod = unitDrawer->CalcUnitLOD(unit, unit->luaMats[matType].GetLastLOD());
 		} else {
 			int tmpLod = lua_toint(L, 3);
@@ -1792,8 +1792,8 @@ int LuaOpenGL::DrawFuncAtUnit(lua_State* L)
 	glPopMatrix();
 
 	if (error != 0) {
-		logOutput.Print("gl.DrawFuncAtUnit: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.DrawFuncAtUnit: error(%i) = %s",
+				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 
@@ -1838,12 +1838,13 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 	const int args = lua_gettop(L); // number of arguments
 
 	bool useTxcd = false;
+/*
 	bool useNorm = false;
 
 	if (lua_isboolean(L, 5)) {
 		useNorm = lua_toboolean(L, 5);
 	}
-
+*/
 	float tu0, tv0, tu1, tv1;
 	if (args == 9) {
 		tu0 = luaL_checknumber(L, 6);
@@ -1865,12 +1866,7 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 	}
 	const int mapxi = gs->mapxp1;
 	const int mapzi = gs->mapyp1;
-	const float* heightmap =
-		#ifdef USE_UNSYNCED_HEIGHTMAP
-		readmap->GetCornerHeightMapUnsynced();
-		#else
-		readmap->GetCornerHeightMapSynced();
-		#endif
+	const float* heightmap = readmap->GetCornerHeightMapUnsynced();
 
 	const float xs = std::max(0.0f, std::min(float3::maxxpos, x0)); // x start
 	const float xe = std::max(0.0f, std::min(float3::maxxpos, x1)); // x end
@@ -2065,8 +2061,8 @@ int LuaOpenGL::BeginEnd(lua_State* L)
 	glEnd();
 
 	if (error != 0) {
-		logOutput.Print("gl.BeginEnd: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.BeginEnd: error(%i) = %s",
+				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 	return 0;
@@ -2559,8 +2555,8 @@ int LuaOpenGL::Material(lua_State* L)
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (!lua_israwstring(L, -2)) { // the key
-			logOutput.Print("gl.Material: bad state type\n");
-			return 0;;
+			LOG_L(L_WARNING, "gl.Material: bad state type");
+			return 0;
 		}
 		const string key = lua_tostring(L, -2);
 
@@ -2603,7 +2599,8 @@ int LuaOpenGL::Material(lua_State* L)
 			}
 		}
 		else {
-			logOutput.Print("gl.Material: unknown material type: %s\n", key.c_str());
+			LOG_L(L_WARNING, "gl.Material: unknown material type: %s",
+					key.c_str());
 		}
 	}
 	return 0;
@@ -3899,8 +3896,8 @@ int LuaOpenGL::RenderToTexture(lua_State* L)
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFBO);
 
 	if (error != 0) {
-		logOutput.Print("gl.RenderToTexture: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.RenderToTexture: error(%i) = %s",
+				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 
@@ -3949,8 +3946,8 @@ int LuaOpenGL::ActiveTexture(lua_State* L)
 	glActiveTexture(GL_TEXTURE0);
 
 	if (error != 0) {
-		logOutput.Print("gl.ActiveTexture: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.ActiveTexture: error(%i) = %s",
+				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 	return 0;
@@ -4500,8 +4497,8 @@ int LuaOpenGL::PushPopMatrix(lua_State* L)
 	}
 
 	if (error != 0) {
-		logOutput.Print("gl.PushPopMatrix: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.PushPopMatrix: error(%i) = %s",
+				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 
@@ -4610,8 +4607,8 @@ int LuaOpenGL::UnsafeState(lua_State* L)
 	reverse ? glEnable(state) : glDisable(state);
 
 	if (error != 0) {
-		logOutput.Print("gl.UnsafeState: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.UnsafeState: error(%i) = %s",
+				error, lua_tostring(L, -1));
 		lua_pushnumber(L, 0);
 	}
 	return 0;
@@ -4646,8 +4643,8 @@ int LuaOpenGL::CreateList(lua_State* L)
 
 	if (error != 0) {
 		glDeleteLists(list, 1);
-		logOutput.Print("gl.CreateList: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.CreateList: error(%i) = %s",
+				error, lua_tostring(L, -1));
 		lua_pushnumber(L, 0);
 	}
 	else {
@@ -4939,8 +4936,8 @@ int LuaOpenGL::RunQuery(lua_State* L)
 	running = false;
 
 	if (error != 0) {
-		logOutput.Print("gl.RunQuery: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.RunQuery: error(%i) = %s",
+				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 
@@ -5135,8 +5132,8 @@ int LuaOpenGL::RenderMode(lua_State* L)
 	const GLint count2 = glRenderMode(GL_RENDER);
 
 	if (error != 0) {
-		logOutput.Print("gl.RenderMode: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.RenderMode: error(%i) = %s",
+				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 

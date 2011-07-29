@@ -81,7 +81,7 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations)
 	overlay = new OverlayConfigSource();
 	writableSource = new FileConfigSource(locations.front());
 
-	sources.reserve(2 + locations.size());
+	sources.reserve(3 + locations.size());
 	sources.push_back(overlay);
 	sources.push_back(writableSource);
 

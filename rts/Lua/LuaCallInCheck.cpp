@@ -5,7 +5,7 @@
 
 #include "LuaCallInCheck.h"
 #include "LuaInclude.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 
 /******************************************************************************/
@@ -23,8 +23,9 @@ LuaCallInCheck::~LuaCallInCheck()
 {
 	const int endTop = lua_gettop(L);
 	if (startTop != endTop) {
-		logOutput.Print("LuaCallInCheck mismatch for %s():  start = %i,  end = %i",
-		                funcName, startTop, endTop);
+		LOG_L(L_WARNING,
+				"LuaCallInCheck mismatch for %s():  start = %i,  end = %i",
+				funcName, startTop, endTop);
 	}
 }
 

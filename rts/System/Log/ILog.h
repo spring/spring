@@ -242,7 +242,7 @@ extern void log_frontend_record(const char* section, int level, const char* fmt,
 	_LOG_IS_ENABLED_STATIC_S(LOG_SECTION_CURRENT, level)
 
 #define _LOG_IS_ENABLED_S(section, level) \
-	(  _LOG_IS_ENABLED_STATIC(level) \
+	(  _LOG_IS_ENABLED_STATIC_S(section, level) \
 	&& _LOG_IS_ENABLED_RUNTIME(section, level))
 #define _LOG_IS_ENABLED(level) \
 	_LOG_IS_ENABLED_S(LOG_SECTION_CURRENT, level)

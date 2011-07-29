@@ -5,22 +5,22 @@
  * Classes for serialization of registrated class instances
  */
 
-#include <assert.h>
-
 #include "System/mmgr.h"
 
 #include "VarTypes.h"
 
 #include "System/Util.h"
 
-using namespace std;
+#include <assert.h>
+
 using namespace creg;
+using std::string;
 
 // serialization code
 
 // type instance allocators
 
-void BasicType::Serialize (ISerializer *s, void *inst)
+void BasicType::Serialize(ISerializer* s, void* inst)
 {
 	switch (id) {
 #if defined(SYNCDEBUG) || defined(SYNCCHECK)
@@ -29,7 +29,7 @@ void BasicType::Serialize (ISerializer *s, void *inst)
 #endif
 	case crInt:
 	case crUInt:
-		s->SerializeInt (inst, 4);
+		s->SerializeInt(inst, 4);
 		break;
 #if defined(SYNCDEBUG) || defined(SYNCCHECK)
 	case crSyncedSshort://FIXME
@@ -37,7 +37,7 @@ void BasicType::Serialize (ISerializer *s, void *inst)
 #endif
 	case crShort:
 	case crUShort:
-		s->SerializeInt (inst, 2);
+		s->SerializeInt(inst, 2);
 		break;
 #if defined(SYNCDEBUG) || defined(SYNCCHECK)
 	case crSyncedSchar://FIXME
@@ -45,31 +45,31 @@ void BasicType::Serialize (ISerializer *s, void *inst)
 #endif
 	case crChar:
 	case crUChar:
-		s->Serialize (inst, 1);
+		s->Serialize(inst, 1);
 		break;
 #if defined(SYNCDEBUG) || defined(SYNCCHECK)
 	case crSyncedFloat://FIXME
 #endif
 	case crFloat:
-		s->Serialize (inst, 4);
+		s->Serialize(inst, 4);
 		break;
 #if defined(SYNCDEBUG) || defined(SYNCCHECK)
 	case crSyncedDouble://FIXME
 #endif
 	case crDouble:
-		s->Serialize (inst, 8);
+		s->Serialize(inst, 8);
 		break;
 #if defined(SYNCDEBUG) || defined(SYNCCHECK)
 	case crSyncedBool://FIXME
 #endif
 	case crBool:{
 		// I'm not sure if bool is the same size on all compilers.. so it's stored as a byte
-		if (s->IsWriting ())  {
+		if (s->IsWriting())  {
 			char v = *(bool*)inst ? 1 : 0;
-			s->Serialize (&v,1);
+			s->Serialize(&v,1);
 		} else {
 			char v;
-			s->Serialize (&v,1);
+			s->Serialize(&v,1);
 			*(bool*)inst=!!v;
 		}
 		break;}
@@ -103,9 +103,9 @@ std::string BasicType::GetName()
 	return std::string();
 }
 
-boost::shared_ptr<IType> IType::CreateBasicType (BasicTypeID t)
+boost::shared_ptr<IType> IType::CreateBasicType(BasicTypeID t)
 {
-	return boost::shared_ptr<IType>(new BasicType (t));
+	return boost::shared_ptr<IType>(new BasicType(t));
 }
 
 std::string StringType::GetName()
@@ -113,17 +113,17 @@ std::string StringType::GetName()
 	return "string";
 }
 
-StringType::StringType(boost::shared_ptr<IType> charType) : DynamicArrayType<string> (charType) {}
+StringType::StringType(boost::shared_ptr<IType> charType) : DynamicArrayType<string>(charType) {}
 
-boost::shared_ptr<IType> IType::CreateStringType ()
+boost::shared_ptr<IType> IType::CreateStringType()
 {
 	DeduceType<char> charType;
 	return boost::shared_ptr<IType>(new StringType(charType.Get()));
 }
 
-void ObjectInstanceType::Serialize (ISerializer *s, void *inst)
+void ObjectInstanceType::Serialize(ISerializer* s, void* inst)
 {
-	s->SerializeObjectInstance (inst, objectClass);
+	s->SerializeObjectInstance(inst, objectClass);
 }
 
 std::string ObjectInstanceType::GetName()
@@ -131,17 +131,17 @@ std::string ObjectInstanceType::GetName()
 	return objectClass->name;
 }
 
-boost::shared_ptr<IType> IType::CreateObjInstanceType (Class *objectType)
+boost::shared_ptr<IType> IType::CreateObjInstanceType(Class* objectType)
 {
-	return boost::shared_ptr<IType>(new ObjectInstanceType (objectType));
+	return boost::shared_ptr<IType>(new ObjectInstanceType(objectType));
 }
 
-boost::shared_ptr<IType> IType::CreateEnumeratedType (size_t size)
+boost::shared_ptr<IType> IType::CreateEnumeratedType(size_t size)
 {
 	switch (size) {
-		case 1: return boost::shared_ptr<IType>(new BasicType (crUChar));
-		case 2: return boost::shared_ptr<IType>(new BasicType (crUShort));
-		case 4: return boost::shared_ptr<IType>(new BasicType (crUInt));
+		case 1: return boost::shared_ptr<IType>(new BasicType(crUChar));
+		case 2: return boost::shared_ptr<IType>(new BasicType(crUShort));
+		case 4: return boost::shared_ptr<IType>(new BasicType(crUInt));
 		default: assert(false); break;
 	}
 	return boost::shared_ptr<IType>(new EmptyType(0));
@@ -150,6 +150,6 @@ boost::shared_ptr<IType> IType::CreateEnumeratedType (size_t size)
 string StaticArrayBaseType::GetName()
 {
 	char sstr[16];
-	SNPRINTF(sstr,16,"%d", size);
+	SNPRINTF(sstr, 16, "%d", size);
 	return elemType->GetName() + "[" + std::string(sstr) + "]";
 }

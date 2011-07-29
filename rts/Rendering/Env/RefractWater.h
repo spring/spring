@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef REFRACTEDWATER_H
-#define REFRACTEDWATER_H
+#ifndef REFRACTED_WATER_H
+#define REFRACTED_WATER_H
 
 #include "AdvWater.h"
 
@@ -21,7 +21,8 @@ protected:
 	void SetupWaterDepthTex();
 
 	unsigned int target;
-	GLuint subSurfaceTex; // the screen is copied into this texture and used for water rendering
+	/// the screen is copied into this texture and used for water rendering
+	GLuint subSurfaceTex;
 };
 
-#endif
+#endif // REFRACTED_WATER_H

@@ -77,8 +77,8 @@ namespace Platform
 std::string GetProcessExecutableFile()
 {
 	std::string procExeFilePath = "";
-	// will only be used if procExeFilePath stays empty
-	const char* error = "Fetch not implemented";
+	// error will only be used if procExeFilePath stays empty
+	const char* error = NULL;
 
 #ifdef linux
 	char file[512];
@@ -133,8 +133,8 @@ std::string GetProcessExecutablePath()
 std::string GetModuleFile(std::string moduleName)
 {
 	std::string moduleFilePath = "";
-	// will only be used if moduleFilePath stays empty
-	const char* error = "Fetch not implemented";
+	// this will only be used if moduleFilePath stays empty
+	const char* error = NULL;
 
 #if defined(linux) || defined(__APPLE__)
 #ifdef __APPLE__

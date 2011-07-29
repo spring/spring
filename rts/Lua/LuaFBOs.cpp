@@ -1,8 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/StdAfx.h"
-#include <map>
-using std::map;
 
 #include "System/mmgr.h"
 
@@ -18,7 +16,10 @@ using std::map;
 #include "LuaRBOs.h"
 #include "LuaTextures.h"
 
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
+
+#include <map>
+using std::map;
 
 
 /******************************************************************************/
@@ -531,8 +532,8 @@ int LuaFBOs::ActiveFBO(lua_State* L)
 	glPopAttrib();
 
 	if (error != 0) {
-		logOutput.Print("gl.ActiveFBO: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.ActiveFBO: error(%i) = %s",
+				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 

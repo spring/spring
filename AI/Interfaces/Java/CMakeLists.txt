@@ -186,6 +186,7 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 					"-E" "make_directory" "${myJavaBuildDir}"
 				COMMAND "${JAVA_COMPILE}"
 					"${JAVA_COMPILE_FLAG_CONDITIONAL}"
+					"-Xlint:deprecation"
 					"-cp" "${myClassPath}"
 					"-d" "${myJavaBuildDir}"
 					"@${mySrcArgFile}"
@@ -269,8 +270,9 @@ endmacro (ConfigureJavaSkirmishAI wrapperNames)
 
 set(myName               "Java")
 set(myDir                "${CMAKE_CURRENT_SOURCE_DIR}")
-set(myNativeSourceDirRel "src/main/native")
+set(mySourceDirRel       "src/main")
 set(myJavaSourceDirRel   "src/main/java")
+set(myNativeSourceDirRel "src/main/native")
 set(myPkgFirstPart       "com")
 set(myPkg                "${myPkgFirstPart}/springrts/ai")
 
@@ -331,11 +333,15 @@ endif (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS
 if    (BUILD_${myName}_AIINTERFACE)
 	GetVersionPlusDepFile(myVersion myVersionDepFile)
 	set(myTarget       "${myName}-AIInterface")
+	set(myGenTarget    "${myTarget}-generateSources")
 	set(myNativeTarget "${myTarget}-native")
 	set(myJavaTarget   "${myTarget}-java")
 	set(myMavenInstallTarget "${myTarget}-mavenInstall")
 	set(myInstLibsDir ${AI_INTERFACES_LIBS}/${myName}/${myVersion})
 	set(myInstDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
+	set(myJavaSourceDirRel   "${mySourceDirRel}/java")
+	set(myNativeSourceDirRel "${mySourceDirRel}/native")
+	MakeAbsolute(mySourceDir       "${myDir}" "${mySourceDirRel}")
 	MakeAbsolute(myNativeSourceDir "${myDir}" "${myNativeSourceDirRel}")
 	MakeAbsolute(myJavaSourceDir   "${myDir}" "${myJavaSourceDirRel}")
 
@@ -546,6 +552,9 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"  ${myTarget}: Generating JNI events wrapper sources" VERBATIM
 		)
 
+	add_custom_target(${myGenTarget} DEPENDS ${myGeneratedSources})
+	add_dependencies(generateSources ${myGenTarget})
+
 	# Locate the manifest file
 	FindManifestFile("${myDir}" myManifestFile)
 	if    (myManifestFile)
@@ -591,6 +600,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"-E" "make_directory" "${myJavaBuildDir}"
 		COMMAND "${JAVA_COMPILE}" ARGS
 			"${JAVA_COMPILE_FLAG_CONDITIONAL}"
+			"-Xlint:deprecation"
 			"-cp" "${myClassPath}"
 			"-d" "${myJavaBuildDir}"
 			"@${mySrcArgFile}"
@@ -599,7 +609,12 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"-C" "${myJavaBuildDir}" "${myPkgFirstPart}"
 		DEPENDS
 			${myJavaSources}
-			${myJavaGeneratedSources}
+			# Using the native target reduces paralellism slightly
+			# (less then 1s per build => negliable), but prevetns multiple
+			# execution of the source generating custom-commands
+			# (which results in wrongly generated source files with "make -j <X>")
+			#${myJavaGeneratedSources}
+			${myNativeTarget}
 		WORKING_DIRECTORY
 			"${myJavaGeneratedSourceDir}"
 		COMMENT
@@ -611,13 +626,27 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"${myBuildDir}/${mySrcJarFile}"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
 			"cf" "${myBuildDir}/${mySrcJarFile}"
-			"-C" "${myJavaSourceDir}" "${myPkgFirstPart}"
+			"-C" "${myJavaSourceDir}"          "${myPkgFirstPart}"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
 			"uf" "${myBuildDir}/${mySrcJarFile}"
 			"-C" "${myJavaGeneratedSourceDir}" "${myPkgFirstPart}"
+		COMMAND "${JAVA_ARCHIVE}" ARGS
+			"uf" "${myBuildDir}/${mySrcJarFile}"
+			"-C" "${mySourceDir}"              "native"
+		COMMAND "${JAVA_ARCHIVE}" ARGS
+			"uf" "${myBuildDir}/${mySrcJarFile}"
+			"-C" "${myGeneratedSourceDir}"     "native"
+		COMMAND "${JAVA_ARCHIVE}" ARGS
+			"uf" "${myBuildDir}/${mySrcJarFile}"
+			"-C" "${myDir}"                    "VERSION"
 		DEPENDS
 			${myJavaSources}
-			${myJavaGeneratedSources}
+			# Using the native target reduces paralellism slightly
+			# (less then 1s per build => negliable), but prevetns multiple
+			# execution of the source generating custom-commands
+			# (which results in wrongly generated source files with "make -j <X>")
+			#${myJavaGeneratedSources}
+			${myNativeTarget}
 		WORKING_DIRECTORY
 			"${myBuildDir}"
 		COMMENT
@@ -627,7 +656,8 @@ if    (BUILD_${myName}_AIINTERFACE)
 	add_custom_target(${myJavaTarget}
 		DEPENDS
 			"${myBuildDir}/${myBinJarFile}"
-			"${myBuildDir}/${mySrcJarFile}")
+			"${myBuildDir}/${mySrcJarFile}"
+		)
 
 	add_custom_target(${myTarget} ALL)
 	add_dependencies(${myTarget} ${myNativeTarget})

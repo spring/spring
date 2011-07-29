@@ -8,13 +8,6 @@
 #include "System/StdAfx.h"
 #endif
 
-#include <stdio.h>
-#include <set>
-#include <cctype>
-#include <SDL_keysym.h>
-#include <SDL_mouse.h>
-#include <SDL_timer.h>
-
 #include "System/mmgr.h"
 
 #include "LuaUI.h"
@@ -65,7 +58,15 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
 
-using namespace std;
+#include <stdio.h>
+#include <set>
+#include <cctype>
+#include <SDL_keysym.h>
+#include <SDL_mouse.h>
+#include <SDL_timer.h>
+
+using std::max;
+
 
 CLuaUI* luaUI = NULL;
 

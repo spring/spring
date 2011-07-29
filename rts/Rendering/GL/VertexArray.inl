@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifdef DEBUG
 	#define ASSERT_SIZE(x) assert(drawArraySize>=drawArrayPos+ x );
 #else

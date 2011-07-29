@@ -4,22 +4,22 @@
 
 #ifdef SYNCDEBUG
 
-#include <boost/format.hpp>
+#include "SyncDebugger.h"
 
-#include "System/LogOutput.h"
-#include "System/Log/ILog.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/PlayerHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/BaseNetProtocol.h"
+#include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
-#include "SyncDebugger.h"
-#include "SyncChecker.h"
-#include "SyncTracer.h"
+
+#include "HsiehHash.h"
 #include "Logger.h"
+#include "SyncTracer.h"
 
 #include <string.h>
 #include <map>
+
 #ifndef WIN32
 	/* for backtrace() function */
 	#include <execinfo.h>
@@ -102,27 +102,23 @@ void CSyncDebugger::Initialize(bool useBacktrace, unsigned numPlayers)
 	disable_history = false;
 	may_enable_history = false;
 	flop = 0;
-	for (unsigned j = 0; j < numPlayers; ++j) {
-		PlayerStruct buf;
-		buf.checksumResponses.clear();
-		buf.remoteHistory.clear();
-		buf.remoteFlop = 0;
-		players.push_back(buf);
-	}
+	players.clear();
+	players.resize(numPlayers);
 	pendingBlocksToRequest.clear();
 	waitingForBlockResponse = false;
 
 	// init logger
 	logger.SetFilename(useBacktrace ? LOGFILE_SERVER : LOGFILE_CLIENT);
-	logger.AddLine("Syncdebugger initialised");
+	logger.AddLine("SyncDebugger initialized");
 	logger.FlushBuffer();
 }
 
 
 void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 {
-	if (!history && !historybt)
+	if (!history && !historybt) {
 		return;
+	}
 
 	HistItem* h = &history[historyIndex];
 
@@ -137,34 +133,28 @@ void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 	}
 #endif
 
-	// if data fits and has even size, it is probably a POD type, store it verbatim
-	// TODO transfer offending blocks from clients to the server
-	if (size == 1) {
-		h->data = *(unsigned char*)p;
-	} else if (size == sizeof(short)) {
-		h->data = *(unsigned short*)p;
-	} else if (size >= sizeof(unsigned)) {
-		h->data = *(unsigned *)p;
-	} else {
-		h->data = -1;
+	if (size == 4) {
+		// common case
+		h->data = *(unsigned*) p;
+	}
+	else {
+		// > XOR seems dangerous in that every bit is independent of any other, this is bad.
+		// This isn't the case here, however, because typically we checksum only 1-8 bytes
+		// of data at a time, so most of it fits in the checksum anyway.
+		// (see SyncedPrimitiveBase / SyncedPrimitive, the main client of this method)
+		unsigned i = 0;
+		h->data = 0;
+		// whole dwords
+		for (; i < (size & ~3); i += 4)
+			h->data ^= *(unsigned*) ((unsigned char*) p + i);
+		// remaining 0 to 3 bytes
+		for (; i < size; ++i)
+			h->data ^= *((unsigned char*) p + i);
 	}
 
-	// FIXME xor is dangerous in that every bit is independent of any other, this is bad
-#ifdef SD_USE_SIMPLE_CHECKSUM
-	unsigned i = 0;
-	h->chk = 0;
-	for (; i < (size & ~3); i += 4)
-		h->chk ^= *(unsigned*) ((unsigned char*) p + i);
-	for (; i < size; ++i)
-		h->chk ^= *((unsigned char*) p + i);
-#else
-	// 33*flop + gs->frameNum is enough to prevent zero slurping
-	// using CSyncChecker::g_checksum here will cause cascade false positives
-	h->chk = CSyncChecker::HsiehHash((char*)p, size, 33*flop + gs->frameNum);
-#endif
-
-	if (++historyIndex == HISTORY_SIZE * BLOCK_SIZE)
+	if (++historyIndex == HISTORY_SIZE * BLOCK_SIZE) {
 		historyIndex = 0; // wrap around
+	}
 	++flop;
 }
 
@@ -190,15 +180,7 @@ void CSyncDebugger::Backtrace(int index, const char* prefix) const
 
 unsigned CSyncDebugger::GetBacktraceChecksum(int index) const
 {
-#ifdef SD_USE_SIMPLE_CHECKSUM
-	unsigned checksum = 0;
-	const unsigned* p = (const unsigned*) historybt[index].bt;
-	for (unsigned i = 0; i < (sizeof(void*)/sizeof(unsigned)) * historybt[index].bt_size; ++i, ++p)
-		checksum = 33 * checksum + *p;
-	return checksum;
-#else
-	return CSyncChecker::HsiehHash((char *)historybt[index].bt, sizeof(void*) * historybt[index].bt_size, 0xf00dcafe);
-#endif
+	return HsiehHash((char *)historybt[index].bt, sizeof(void*) * historybt[index].bt_size, 0xf00dcafe);
 }
 
 
@@ -313,21 +295,16 @@ void CSyncDebugger::ServerTriggerSyncErrorHandling(int serverframenum)
 
 void CSyncDebugger::ClientSendChecksumResponse()
 {
-	const HistItem* myHistory = (historybt != NULL) ? historybt : history;
 	std::vector<unsigned> checksums;
 	for (unsigned i = 0; i < HISTORY_SIZE; ++i) {
-#ifdef SD_USE_SIMPLE_CHECKSUM
-		unsigned checksum = 0;
-		for (unsigned j = 0; j < BLOCK_SIZE; ++j) {
-			checksum = 33 * checksum + myHistory[BLOCK_SIZE * i + j].chk;
-		}
-#else
 		unsigned checksum = 123456789;
 		for (unsigned j = 0; j < BLOCK_SIZE; ++j) {
-			const int historyIndex = BLOCK_SIZE * i + j;
-			checksum = CSyncChecker::HsiehHash((char*)&myHistory[historyIndex].chk, sizeof(myHistory[historyIndex].chk), checksum);
+			if (historybt) {
+				checksum = HsiehHash((char*)&historybt[BLOCK_SIZE * i + j].data, sizeof(historybt[0].data), checksum);
+			} else {
+				checksum = HsiehHash((char*)&history[BLOCK_SIZE * i + j].data, sizeof(history[0].data), checksum);
+			}
 		}
-#endif
 		checksums.push_back(checksum);
 	}
 	net->Send(CBaseNetProtocol::Get().SendSdCheckresponse(gu->myPlayerNum, flop, checksums));
@@ -368,7 +345,7 @@ void CSyncDebugger::ServerQueueBlockRequests()
 		net->Send(CBaseNetProtocol::Get().SendSdReset());
 	}
 	//cleanup
-	for (playerVec::iterator it = players.begin(); it != players.end(); ++it)
+	for (PlayerVec::iterator it = players.begin(); it != players.end(); ++it)
 		it->checksumResponses.clear();
 }
 
@@ -390,13 +367,19 @@ void CSyncDebugger::ClientSendBlockResponse(int block)
 	tracefile << "Sending block response for block " << block << "\n";
 #endif
 	for (unsigned i = 0; i < BLOCK_SIZE; ++i) {
-		if (historybt)
-			checksums.push_back(historybt[BLOCK_SIZE * block + i].chk);
-		else  checksums.push_back(history[BLOCK_SIZE * block + i].chk);
+		if (historybt) {
+			checksums.push_back(historybt[BLOCK_SIZE * block + i].data);
+		}
+		else {
+			checksums.push_back(history[BLOCK_SIZE * block + i].data);
+		}
 #ifdef TRACE_SYNC
-		if (historybt)
-			tracefile << historybt[BLOCK_SIZE * block + i].chk << " " << historybt[BLOCK_SIZE * block + i].data << "\n";
-		else  tracefile << history[BLOCK_SIZE * block + i].chk << " " << history[BLOCK_SIZE * block + i].data  << "\n";
+		if (historybt) {
+			tracefile << historybt[BLOCK_SIZE * block + i].data << " " << historybt[BLOCK_SIZE * block + i].data << "\n";
+		}
+		else {
+			tracefile << history[BLOCK_SIZE * block + i].data << " " << history[BLOCK_SIZE * block + i].data  << "\n";
+		}
 #endif
 	}
 #ifdef TRACE_SYNC
@@ -454,9 +437,14 @@ void CSyncDebugger::ServerDumpStack()
 						checksumToIndex[checksum] = curBacktrace;
 						indexToHistPos[curBacktrace] = histPos;
 					}
-					logger.AddLine("Server: chk %08X instead of %08X frame %06u, (value=%08x %15.8e) backtrace %u in \"%s\"", players[j].remoteHistory[i], correctChecksum, historybt[histPos].frameNum, historybt[histPos].data, *(float*)&historybt[histPos].data, checksumToIndex[checksum], historybt[histPos].op);
+					logger.AddLine("Server: 0x%08X/%15.8e instead of 0x%08X/%15.8e, frame %06u, backtrace %u in \"%s\"",
+							players[j].remoteHistory[i], *(float*)(char*)&players[j].remoteHistory[i],
+							correctChecksum, *(float*)(char*)&correctChecksum,
+							historybt[histPos].frameNum, checksumToIndex[checksum], historybt[histPos].op);
 				} else {
-					logger.AddLine("Server: chk %08X instead of %08X", players[j].remoteHistory[i], correctChecksum);
+					logger.AddLine("Server: 0x%08X/%15.8e instead of 0x%08X/%15.8e",
+							players[j].remoteHistory[i], *(float*)(char*)&players[j].remoteHistory[i],
+							correctChecksum, *(float*)(char*)&correctChecksum);
 				}
 				err = true;
 			} else {
@@ -476,7 +464,7 @@ void CSyncDebugger::ServerDumpStack()
 		logger.AddLine("Server: huh, all checksums equal?!? (INTERNAL ERROR)");
 
 	//cleanup
-	for (playerVec::iterator it = players.begin(); it != players.end(); ++it)
+	for (PlayerVec::iterator it = players.begin(); it != players.end(); ++it)
 		it->remoteHistory.clear();
 
 	if (historybt) {

@@ -16,7 +16,6 @@
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
-#include "System/LogOutput.h"
 #include "System/Exceptions.h"
 
 

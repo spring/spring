@@ -99,7 +99,10 @@ void CResourceBar::Draw()
 	y1 = metaly + .014f;
 	x2 = metalbarx2;
 	y2 = metaly + .020f;
-	x = (1.0f * myTeam->metal / myTeam->metalStorage) * metalbarlen;
+
+	if (myTeam->metalStorage != 0.0f) {
+		x = (myTeam->metal / myTeam->metalStorage) * metalbarlen;
+	}
 
 	//metal draw
 	glColor4f(0.8f, 0.8f, 0.8f, 0.2f);
@@ -136,7 +139,10 @@ void CResourceBar::Draw()
 	y1 = energyy + 0.014f;
 	x2 = energybarx2;
 	y2 = energyy + 0.020f;
-	x = (1.0f * myTeam->energy / myTeam->energyStorage) * energybarlen;
+
+	if (myTeam->energyStorage != 0.0f) {
+		x = (myTeam->energy / myTeam->energyStorage) * energybarlen;
+	}
 
 	//energy draw
 	glColor4f(0.8f, 0.8f, 0.2f, 0.2f);

@@ -270,6 +270,8 @@ IF (MINGW)
 	FIND_PACKAGE(Win32Libs REQUIRED)
 ENDIF (MINGW)
 
+# Sub-parts of the build system may add dependencies to this target
+add_custom_target(generateSources)
 
 ### Where the other CMakeLists.txt are
 

@@ -3,11 +3,6 @@
 #include "System/StdAfx.h"
 #include "System/mmgr.h"
 
-#include <set>
-#include <list>
-#include <cctype>
-using namespace std;
-
 #include "LuaSyncedCall.h"
 
 #include "LuaInclude.h"
@@ -18,7 +13,10 @@ using namespace std;
 #include "LuaRules.h"
 #include "LuaHashString.h"
 #include "LuaUtils.h"
-#include "System/LogOutput.h"
+
+#include <set>
+#include <list>
+#include <cctype>
 
 
 /******************************************************************************/

@@ -11,16 +11,16 @@
 
 #include <map>
 
-class CSm3GroundDrawer;
+class CSM3GroundDrawer;
 
 
-class CSm3ReadMap : public CReadMap
+class CSM3ReadMap : public CReadMap
 {
 public:
-	CR_DECLARE(CSm3ReadMap);
+	CR_DECLARE(CSM3ReadMap);
 
-	CSm3ReadMap(const std::string& rm);
-	~CSm3ReadMap();
+	CSM3ReadMap(const std::string& rm);
+	~CSM3ReadMap();
 
 	void ConfigNotify(const std::string& key, const std::string& value);
 
@@ -47,11 +47,13 @@ public:
 
 	void GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize);
 
-	const float* GetCornerHeightMapSynced() const { return renderer->GetCornerHeightMapSynced(); }
-	      float* GetCornerHeightMapUnsynced()     { return renderer->GetCornerHeightMapUnsynced(); }
+	const float* GetCornerHeightMapSynced()   const { return renderer->GetCornerHeightMapSynced(); }
+#ifdef USE_UNSYNCED_HEIGHTMAP
+	const float* GetCornerHeightMapUnsynced() const { return renderer->GetCornerHeightMapUnsynced(); }
+#endif
 
 protected:
-	CSm3GroundDrawer* groundDrawer;
+	CSM3GroundDrawer* groundDrawer;
 	terrain::Terrain* renderer;
 
 	struct InfoMap {
@@ -65,7 +67,7 @@ protected:
 	unsigned int minimapTexture;
 
 	std::map<std::string, InfoMap> infoMaps;
-	friend class CSm3GroundDrawer;
+	friend class CSM3GroundDrawer;
 
 	std::vector<std::string*> featureTypes;
 	MapFeatureInfo* featureInfo;

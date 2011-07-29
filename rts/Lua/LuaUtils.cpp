@@ -12,7 +12,7 @@
 
 #include "LuaUtils.h"
 
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "LuaConfig.h"
 #include <boost/thread/recursive_mutex.hpp>
@@ -649,7 +649,7 @@ int LuaUtils::Echo(lua_State* L)
 	lua_getglobal(L, "tostring");
 
 	for (int i = 1; i <= args; i++) {
-		const char *s;
+		const char* s;
 		lua_pushvalue(L, -1);     // function to be called
 		lua_pushvalue(L, i);      // value to print
 		lua_call(L, 1, 1);
@@ -663,7 +663,7 @@ int LuaUtils::Echo(lua_State* L)
 		msg += s;
 		lua_pop(L, 1);            // pop result
 	}
-	logOutput.Print(msg);
+	LOG("%s", msg.c_str());
 
 	if ((args != 1) || !lua_istable(L, 1)) {
 		return 0;
@@ -691,7 +691,7 @@ int LuaUtils::Echo(lua_State* L)
 			lua_pop(L, 1);            // pop result
 		}
 	}
-	logOutput.Print(msg);
+	LOG("%s", msg.c_str());
 
 	return 0;
 }

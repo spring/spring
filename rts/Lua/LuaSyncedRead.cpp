@@ -3,6 +3,7 @@
 #include "System/StdAfx.h"
 #include <set>
 #include <list>
+#include <map>
 #include <cctype>
 
 #include "System/mmgr.h"
@@ -67,13 +68,15 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/myMath.h"
-#include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
 
-using namespace std;
+using std::min;
+using std::max;
+using std::map;
+using std::set;
 
 static const LuaHashString hs_n("n");
 
@@ -413,6 +416,25 @@ static inline bool IsProjectileVisible(const ProjectileMapPair& pp)
 		return false;
 	}
 	return true;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+
+static int PushCollisionVolumeData(lua_State* L, const CollisionVolume* vol) {
+	lua_pushnumber(L, vol->GetScales().x);
+	lua_pushnumber(L, vol->GetScales().y);
+	lua_pushnumber(L, vol->GetScales().z);
+	lua_pushnumber(L, vol->GetOffsets().x);
+	lua_pushnumber(L, vol->GetOffsets().y);
+	lua_pushnumber(L, vol->GetOffsets().z);
+	lua_pushnumber(L, vol->GetVolumeType());
+	lua_pushnumber(L, vol->GetTestType());
+	lua_pushnumber(L, vol->GetPrimaryAxis());
+	lua_pushboolean(L, vol->IsDisabled());
+	return 10;
 }
 
 
@@ -1247,7 +1269,7 @@ int LuaSyncedRead::GetTeamStatsHistory(lua_State* L)
 		return 1;
 	}
 
-	const list<CTeam::Statistics>& teamStats = team->statHistory;
+	const std::list<CTeam::Statistics>& teamStats = team->statHistory;
 	std::list<CTeam::Statistics>::const_iterator it = teamStats.begin();
 	const int statCount = teamStats.size();
 
@@ -2937,7 +2959,7 @@ int LuaSyncedRead::GetUnitIsTransporting(lua_State* L)
 		return 0;
 	}
 	lua_newtable(L);
-	list<CTransportUnit::TransportedUnit>::const_iterator it;
+	std::list<CTransportUnit::TransportedUnit>::const_iterator it;
 	int count = 0;
 	for (it = tu->GetTransportedUnits().begin(); it != tu->GetTransportedUnits().end(); ++it) {
 		const CUnit* carried = it->unit;
@@ -3230,20 +3252,7 @@ int LuaSyncedRead::GetUnitCollisionVolumeData(lua_State* L)
 		return 0;
 	}
 
-	const CollisionVolume* vol = unit->collisionVolume;
-
-	lua_pushnumber(L, vol->GetScales().x);
-	lua_pushnumber(L, vol->GetScales().y);
-	lua_pushnumber(L, vol->GetScales().z);
-	lua_pushnumber(L, vol->GetOffsets().x);
-	lua_pushnumber(L, vol->GetOffsets().y);
-	lua_pushnumber(L, vol->GetOffsets().z);
-	lua_pushnumber(L, vol->GetVolumeType());
-	lua_pushnumber(L, vol->GetTestType());
-	lua_pushnumber(L, vol->GetPrimaryAxis());
-	lua_pushboolean(L, vol->IsDisabled());
-
-	return 10;
+	return (PushCollisionVolumeData(L, unit->collisionVolume));
 }
 
 int LuaSyncedRead::GetUnitPieceCollisionVolumeData(lua_State* L)
@@ -3263,18 +3272,7 @@ int LuaSyncedRead::GetUnitPieceCollisionVolumeData(lua_State* L)
 	const LocalModelPiece* lmp = lm->pieces[pieceIndex];
 	const CollisionVolume* vol = lmp->GetCollisionVolume();
 
-	lua_pushnumber(L, vol->GetScales().x);
-	lua_pushnumber(L, vol->GetScales().y);
-	lua_pushnumber(L, vol->GetScales().z);
-	lua_pushnumber(L, vol->GetOffsets().x);
-	lua_pushnumber(L, vol->GetOffsets().y);
-	lua_pushnumber(L, vol->GetOffsets().z);
-	lua_pushnumber(L, vol->GetVolumeType());
-	lua_pushnumber(L, vol->GetTestType());
-	lua_pushnumber(L, vol->GetPrimaryAxis());
-	lua_pushboolean(L, vol->IsDisabled());
-
-	return 10;
+	return (PushCollisionVolumeData(L, vol));
 }
 
 
@@ -4252,6 +4250,17 @@ int LuaSyncedRead::GetFeatureResurrect(lua_State* L)
 
 	lua_pushnumber(L, feature->buildFacing);
 	return 2;
+}
+
+
+int LuaSyncedRead::GetFeatureCollisionVolumeData(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	if (feature == NULL) {
+		return 0;
+	}
+
+	return (PushCollisionVolumeData(L, feature->collisionVolume));
 }
 
 

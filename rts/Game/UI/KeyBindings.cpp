@@ -566,8 +566,8 @@ void CKeyBindings::PushAction(const Action& action)
 		selectionKeys->LoadSelectionKeys();
 	}
 	else if (action.command == "keyreload") {
-		Command("unbindall");
-		Command("unbind enter chat");
+		ExecuteCommand("unbindall");
+		ExecuteCommand("unbind enter chat");
 		Load("uikeys.txt");
 		selectionKeys->LoadSelectionKeys();
 	}
@@ -587,11 +587,12 @@ void CKeyBindings::PushAction(const Action& action)
 	else if (action.command == "keycodes") {
 		keyCodes->PrintCodeToName(); // move to CKeyCodes?
 	}
-	else
-		Command(action.rawline);
+	else {
+		ExecuteCommand(action.rawline);
+	}
 }
 
-bool CKeyBindings::Command(const string& line)
+bool CKeyBindings::ExecuteCommand(const string& line)
 {
 	const vector<string> words = CSimpleParser::Tokenize(line, 2);
 
@@ -662,7 +663,7 @@ bool CKeyBindings::Load(const string& filename)
 		if (line.empty()) {
 			break;
 		}
-		if (!Command(line)) {
+		if (!ExecuteCommand(line)) {
 			ParseTypeBind(parser, line);
 		}
 	}

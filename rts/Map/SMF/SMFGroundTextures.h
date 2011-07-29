@@ -7,12 +7,12 @@
 #include "Rendering/GL/PBO.h"
 
 class CFileHandler;
-class CSmfReadMap;
+class CSMFReadMap;
 
 class CSMFGroundTextures: public CBaseGroundTextures
 {
 public:
-	CSMFGroundTextures(CSmfReadMap* rm);
+	CSMFGroundTextures(CSMFReadMap* rm);
 	~CSMFGroundTextures();
 
 	void DrawUpdate();
@@ -24,11 +24,7 @@ protected:
 	void ExtractSquareTiles(const int texSquareX, const int texSquareY, const int mipLevel, GLint* tileBuf) const;
 	void LoadSquareTexture(int x, int y, int level);
 
-	CSmfReadMap* smfMap;
-
-	const int bigSquareSize;
-	const int numBigTexX;
-	const int numBigTexY;
+	CSMFReadMap* smfMap;
 
 	struct GroundSquare {
 		unsigned int texLevel;
@@ -42,11 +38,7 @@ protected:
 	std::vector<int> tileMap;
 	std::vector<char> tiles;
 
-	int tileSize;
-	int tileMapSizeX;
-	int tileMapSizeY;
-
-	// FIXME? these are not updated at runtime
+	//! FIXME? these are not updated at runtime
 	std::vector<float> heightMaxima;
 	std::vector<float> heightMinima;
 	std::vector<float> stretchFactors;
@@ -54,9 +46,7 @@ protected:
 	//! use Pixel Buffer Objects for async. uploading (DMA)
 	PBO pbo;
 
-	float anisotropy; // XXX unused, remove?
-
-	inline bool TexSquareInView(int, int);
+	inline bool TexSquareInView(int, int) const;
 };
 
 #endif // _BF_GROUND_TEXTURES_H_

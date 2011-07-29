@@ -166,9 +166,9 @@ std::string AutohostInterface::TryBindSocket(
 		//LOG("Connecting (UDP) to IP (v%i) %s Port %i",
 		//		(remoteAddr.is_v6() ? 6 : 4), remoteAddr.c_str(), remotePort);
 		socket.connect(ip::udp::endpoint(remoteAddr, remotePort));
-	} catch (std::runtime_error& e) { // includes also boost::system::system_error, as it inherits from runtime_error
+	} catch (const std::runtime_error& ex) { // includes also boost::system::system_error, as it inherits from runtime_error
 		socket.close();
-		errorMsg = e.what();
+		errorMsg = ex.what();
 		if (errorMsg.empty()) {
 			errorMsg = "Unknown problem";
 		}

@@ -3,6 +3,14 @@
 #ifndef SYNCED_PRIMITIVE_BASSE_H
 #define SYNCED_PRIMITIVE_BASSE_H
 
+#ifdef SYNCCHECK
+	#include "SyncChecker.h"
+#endif
+
+#ifdef SYNCDEBUG
+	#include "SyncDebugger.h"
+#endif
+
 /**
  * @brief base class to use for synced classes
  */

@@ -7,14 +7,14 @@
 extern "C" {
 #endif
 
-const char* log_levelToString(int level);
+const char* log_util_levelToString(int level);
 
-char log_levelToChar(int level);
+char log_util_levelToChar(int level);
 
 /**
  * Ensure we have a non-NULL section.
  */
-const char* log_prepareSection(const char* section);
+const char* log_util_prepareSection(const char* section);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -11,7 +11,8 @@
 #include <list>
 #include <cstddef> // for NULL
 
-using namespace std;
+using std::list;
+
 
 struct HookSet {
 	HookSet()

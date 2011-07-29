@@ -12,6 +12,9 @@
 #include "Connection.h"
 #include "System/myTime.h"
 
+class CRC;
+
+
 namespace netcode {
 
 class Chunk
@@ -20,6 +23,7 @@ public:
 	unsigned GetSize() const {
 		return data.size() + headerSize;
 	}
+	void UpdateChecksum(CRC& crc) const;
 	static const unsigned maxSize = 254;
 	static const unsigned headerSize = 5;
 	int32_t chunkNumber;
@@ -31,24 +35,20 @@ typedef boost::shared_ptr<Chunk> ChunkPtr;
 class Packet
 {
 public:
-	static const unsigned headerSize = 5;
+	static const unsigned headerSize = 6;
 	Packet(const unsigned char* data, unsigned length);
 	Packet(int lastContinuous, int nak);
 
-	unsigned GetSize() const {
-		unsigned size = headerSize + naks.size();
-		std::list<ChunkPtr>::const_iterator chk;
-		for (chk = chunks.begin(); chk != chunks.end(); ++chk) {
-			size += (*chk)->GetSize();
-		}
-		return size;
-	}
+	unsigned GetSize() const;
+
+	uint8_t GetChecksum() const;
 
 	void Serialize(std::vector<uint8_t>& data);
 
 	int32_t lastContinuous;
 	/// if < 0, we lost -x packets since lastContinuous, if >0, x = size of naks
 	int8_t nakType;
+	uint8_t checksum;
 	std::vector<uint8_t> naks;
 	std::list<ChunkPtr> chunks;
 };
@@ -107,6 +107,8 @@ public:
 
 	/// Are we using this address?
 	bool IsUsingAddress(const boost::asio::ip::udp::endpoint& from) const;
+	/// Connections are stealth by default, this allow them to send data
+	void Unmute() { muted = false; }
 
 private:
 	void InitConnection(boost::asio::ip::udp::endpoint address,
@@ -138,6 +140,8 @@ private:
 
 	/// maximum size of packets to send
 	unsigned mtu;
+
+	bool muted;
 
 	int reconnectTime;
 

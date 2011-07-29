@@ -11,7 +11,7 @@ public:
 	CR_DECLARE(CTracerProjectile);
 
 	CTracerProjectile();
-	CTracerProjectile(const float3 pos, const float3 speed, const float range,
+	CTracerProjectile(const float3& pos, const float3& speed, const float range,
 			CUnit* owner);
 	virtual ~CTracerProjectile();
 

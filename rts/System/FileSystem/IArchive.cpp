@@ -2,7 +2,7 @@
 
 #include "IArchive.h"
 
-#include "CRC.h"
+#include "System/CRC.h"
 #include "System/Util.h"
 
 IArchive::IArchive(const std::string& archiveName)

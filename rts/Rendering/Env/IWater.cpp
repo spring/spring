@@ -3,7 +3,7 @@
 #include "System/StdAfx.h"
 #include "System/mmgr.h"
 
-#include "BaseWater.h"
+#include "IWater.h"
 #include "BasicWater.h"
 #include "AdvWater.h"
 #include "BumpWater.h"
@@ -14,17 +14,17 @@
 #include "Game/GameHelper.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
-CONFIG(int, ReflectiveWater).defaultValue(CBaseWater::WATER_RENDERER_REFLECTIVE);
+CONFIG(int, ReflectiveWater).defaultValue(IWater::WATER_RENDERER_REFLECTIVE);
 
-CBaseWater* water = NULL;
+IWater* water = NULL;
 static std::vector<int> waterModes;
 static std::vector<HeightMapUpdate> heightmapChanges;
-bool CBaseWater::noWakeProjectiles = false;
+bool IWater::noWakeProjectiles = false;
 
 
-CBaseWater::CBaseWater()
+IWater::IWater()
 	: drawReflection(false)
 	, drawRefraction(false)
  	, drawSolid(false)
@@ -32,31 +32,33 @@ CBaseWater::CBaseWater()
 	helper->AddExplosionListener(this);
 }
 
-CBaseWater::~CBaseWater()
+IWater::~IWater()
 {
-	if (helper != NULL) helper->RemoveExplosionListener(this);
+	if (helper != NULL) {
+		helper->RemoveExplosionListener(this);
+	}
 }
 
 
-void CBaseWater::PushWaterMode(int nextWaterRenderMode) {
+void IWater::PushWaterMode(int nextWaterRenderMode) {
 	GML_STDMUTEX_LOCK(water); // PushWaterMode
 
 	waterModes.push_back(nextWaterRenderMode);
 }
 
-void CBaseWater::PushHeightmapChange(const int x1, const int y1, const int x2, const int y2) {
+void IWater::PushHeightmapChange(const int x1, const int y1, const int x2, const int y2) {
 	GML_STDMUTEX_LOCK(water); // PushHeightMapChange
 
 	heightmapChanges.push_back(HeightMapUpdate(x1, x2,  y1, y2));
 }
 
 
-void CBaseWater::ApplyPushedChanges(CGame* game) {
+void IWater::ApplyPushedChanges(CGame* game) {
 	std::vector<int> wm;
 	std::vector<HeightMapUpdate> hc;
 
 	{
-		GML_STDMUTEX_LOCK(water); // UpdateBaseWater
+		GML_STDMUTEX_LOCK(water); // UpdateIWater
 
 		wm.swap(waterModes);
 		hc.swap(heightmapChanges);
@@ -65,11 +67,12 @@ void CBaseWater::ApplyPushedChanges(CGame* game) {
 	for (std::vector<int>::iterator i = wm.begin(); i != wm.end(); ++i) {
 		int nextWaterRendererMode = *i;
 
-		if (nextWaterRendererMode < 0)
-			nextWaterRendererMode = (std::max(0, water->GetID()) + 1) % CBaseWater::NUM_WATER_RENDERERS;
+		if (nextWaterRendererMode < 0) {
+			nextWaterRendererMode = (std::max(0, water->GetID()) + 1) % IWater::NUM_WATER_RENDERERS;
+		}
 
 		water = GetWater(water, nextWaterRendererMode);
-		logOutput.Print("Set water rendering mode to %i (%s)", nextWaterRendererMode, water->GetName());
+		LOG("Set water rendering mode to %i (%s)", nextWaterRendererMode, water->GetName());
 	}
 
 	for (std::vector<HeightMapUpdate>::iterator i = hc.begin(); i != hc.end(); ++i) {
@@ -78,16 +81,16 @@ void CBaseWater::ApplyPushedChanges(CGame* game) {
 	}
 }
 
-CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRendererMode)
+IWater* IWater::GetWater(IWater* currWaterRenderer, int nextWaterRendererMode)
 {
-	static CBaseWater baseWaterRenderer;
-	CBaseWater* nextWaterRenderer = NULL;
+	static IWater baseWaterRenderer;
+	IWater* nextWaterRenderer = NULL;
 
 	if (currWaterRenderer != NULL) {
 		assert(water == currWaterRenderer);
 
 		if (currWaterRenderer->GetID() == nextWaterRendererMode) {
-			if (nextWaterRendererMode == CBaseWater::WATER_RENDERER_BASIC) {
+			if (nextWaterRendererMode == IWater::WATER_RENDERER_BASIC) {
 				return currWaterRenderer;
 			}
 		}
@@ -103,7 +106,7 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRen
 		delete currWaterRenderer;
 	}
 
-	if (nextWaterRendererMode < CBaseWater::WATER_RENDERER_BASIC) {
+	if (nextWaterRendererMode < IWater::WATER_RENDERER_BASIC) {
 		nextWaterRendererMode = configHandler->GetInt("ReflectiveWater");
 	}
 
@@ -117,11 +120,11 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRen
 			if (canLoad) {
 				try {
 					nextWaterRenderer = new CDynWater();
-				} catch (content_error& e) {
+				} catch (const content_error& ex) {
 					delete nextWaterRenderer;
 					nextWaterRenderer = NULL;
-					logOutput.Print("Loading Dynamic Water failed");
-					logOutput.Print("Error: %s", e.what());
+					LOG_L(L_ERROR, "Loading Dynamic Water failed, error: %s",
+							ex.what());
 				}
 			}
 		} break;
@@ -135,11 +138,11 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRen
 			if (canLoad) {
 				try {
 					nextWaterRenderer = new CBumpWater();
-				} catch (content_error& e) {
+				} catch (const content_error& ex) {
 					delete nextWaterRenderer;
 					nextWaterRenderer = NULL;
-					logOutput.Print("Loading Bumpmapped Water failed");
-					logOutput.Print("Error: %s", e.what());
+					LOG_L(L_ERROR, "Loading Bumpmapped Water failed, error: %s",
+							ex.what());
 				}
 			}
 		} break;
@@ -152,11 +155,11 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRen
 			if (canLoad) {
 				try {
 					nextWaterRenderer = new CRefractWater();
-				} catch (content_error& e) {
+				} catch (const content_error& ex) {
 					delete nextWaterRenderer;
 					nextWaterRenderer = NULL;
-					logOutput.Print("Loading Refractive Water failed");
-					logOutput.Print("Error: %s", e.what());
+					LOG_L(L_ERROR, "Loading Refractive Water failed, error: %s",
+							ex.what());
 				}
 			}
 		} break;
@@ -169,11 +172,11 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRen
 			if (canLoad) {
 				try {
 					nextWaterRenderer = new CAdvWater();
-				} catch (content_error& e) {
+				} catch (const content_error& ex) {
 					delete nextWaterRenderer;
 					nextWaterRenderer = NULL;
-					logOutput.Print("Loading Reflective Water failed");
-					logOutput.Print("Error: %s", e.what());
+					LOG_L(L_ERROR, "Loading Reflective Water failed, error: %s",
+							ex.what());
 				}
 			}
 		} break;
@@ -187,6 +190,6 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* currWaterRenderer, int nextWaterRen
 	return nextWaterRenderer;
 }
 
-void CBaseWater::ExplosionOccurred(const CExplosionEvent& event) {
+void IWater::ExplosionOccurred(const CExplosionEvent& event) {
 	AddExplosion(event.GetPos(), event.GetDamage(), event.GetRadius());
 }

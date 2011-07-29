@@ -11,7 +11,7 @@
 #include "GameController.h"
 #include "System/creg/creg_cond.h"
 
-class CBaseWater;
+class IWater;
 class CConsoleHistory;
 class CKeySet;
 class CInfoConsole;

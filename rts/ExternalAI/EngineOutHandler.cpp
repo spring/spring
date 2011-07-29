@@ -5,6 +5,7 @@
 #include "ExternalAI/SkirmishAIWrapper.h"
 #include "ExternalAI/SkirmishAIData.h"
 #include "ExternalAI/SkirmishAIHandler.h"
+#include "ExternalAI/SSkirmishAICallbackImpl.h"
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/Interface/AISCommands.h"
 #include "Sim/Misc/GlobalSynced.h"

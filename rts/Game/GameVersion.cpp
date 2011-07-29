@@ -106,6 +106,28 @@ const std::string& GetBuildTime()
 	return buildTime;
 }
 
+const std::string& GetCompiler()
+{
+	static const std::string compiler = ""
+#ifdef __GNUC__
+	//"gcc-" QUOTEME(__GNUC__) "." QUOTEME(__GNUC_MINOR__) "." QUOTEME(__GNUC_PATCHLEVEL__);
+	"gcc-" __VERSION__;
+#elif defined(_MSC_VER)
+	#define QUOTEME_(x) #x
+	#define QUOTEME(x) QUOTEME_(x)
+	#ifdef _MSC_FULL_VER
+		"msvc-" QUOTEME(_MSC_FULL_VER);
+	#else
+		"msvc-" QUOTEME(_MSC_VER);
+	#endif
+#elif defined(__VERSION__)
+	"unknown-" __VERSION__;
+#else
+	"unknown";
+#endif
+	return compiler;
+}
+
 const std::string& Get()
 {
 	static const std::string version = GetMajor() + "." + GetMinor();

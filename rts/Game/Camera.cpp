@@ -23,7 +23,7 @@ CCamera* cam2;
 
 inline void GetGLdoubleMatrix(const CMatrix44f& m, GLdouble* dm)
 {
-	for (int i=0; i<16; i+=4) {
+	for (int i = 0; i < 16; i += 4) {
 		dm[i+0] = m[i+0];
 		dm[i+1] = m[i+1];
 		dm[i+2] = m[i+2];
@@ -84,16 +84,12 @@ void CCamera::Update(bool freeze, bool resetUp)
 	}
 
 	const float3 forwardy = (-forward * viewy);
-	top    = forwardy + up;
-	top.UnsafeANormalize();
-	bottom = forwardy - up;
-	bottom.UnsafeANormalize();
-
 	const float3 forwardx = (-forward * viewx);
-	rightside = forwardx + right;
-	rightside.UnsafeANormalize();
-	leftside  = forwardx - right;
-	leftside.UnsafeANormalize();
+
+	top       = (forwardy +    up).UnsafeANormalize();
+	bottom    = (forwardy -    up).UnsafeANormalize();
+	rightside = (forwardx + right).UnsafeANormalize();
+	leftside  = (forwardx - right).UnsafeANormalize();
 
 	if (!freeze) {
 		cam2->bottom    = bottom;
@@ -167,7 +163,7 @@ static inline bool AABBInOriginPlane(const float3& plane, const float3& camPos,
 }
 
 
-bool CCamera::InView(const float3& mins, const float3& maxs)
+bool CCamera::InView(const float3& mins, const float3& maxs) const
 {
 	// Axis-aligned bounding box test  (AABB)
 	if (AABBInOriginPlane(rightside, pos, mins, maxs) &&
@@ -179,7 +175,7 @@ bool CCamera::InView(const float3& mins, const float3& maxs)
 	return false;
 }
 
-bool CCamera::InView(const float3& p, float radius)
+bool CCamera::InView(const float3& p, float radius) const
 {
 	const float3 t   = (p - pos);
 	const float  lsq = t.SqLength();
@@ -286,4 +282,65 @@ inline void CCamera::myGluLookAt(const float3& eye, const float3& center, const 
 	viewMatrix[14] = (-f.x * -eye.x) + (-f.y * -eye.y) + (-f.z * -eye.z);
 
 	glLoadMatrixf(viewMatrix);
+}
+
+
+
+void CCamera::GetFrustumSides(float miny, float maxy, float scale, bool leftSideOnly) {
+	ClearFrustumSides();
+	GetFrustumSide(bottom,    ZeroVector,  miny, maxy, scale,  (bottom.y    > 0.0f), leftSideOnly, false);
+	GetFrustumSide(top,       ZeroVector,  miny, maxy, scale,  (top.y       > 0.0f), leftSideOnly, true);
+	GetFrustumSide(rightside, ZeroVector,  miny, maxy, scale,  (rightside.y > 0.0f), leftSideOnly, false);
+	GetFrustumSide(leftside,  ZeroVector,  miny, maxy, scale,  (leftside.y  > 0.0f), leftSideOnly, false);
+}
+
+void CCamera::GetFrustumSide(
+	const float3& side,
+	const float3& offset,
+	float miny,
+	float maxy,
+	float scale,
+	bool sideAscending,
+	bool leftSideOnly,
+	bool topSide)
+{
+	// get vector for collision between frustum-side and horizontal plane
+	float3 b = UpVector.cross(side);
+	float3 a = UpVector.cross(forward);
+
+	if (side.SqLength() < 0.1f) {
+		b = float3(1.0f, 0.0f, 0.0f);
+	}
+	// prevent DIV0's when calculating line.dir
+	if (fabs(b.z) < 0.0001f) {
+		b.z = 0.0001f;
+	}
+
+	float3 c = b.cross(side);  // get vector from camera to collision line
+	float3 p;                  // collision point on the horizontal plane
+
+	const bool upwardOr = (b.dot(a) < 0.0f);
+	const bool leftSide = leftSideOnly || (b.z > 0.0f);
+	const bool flipLeft = upwardOr && topSide;
+
+	if (sideAscending) {
+		p = pos + offset - c * ((pos.y - miny) / c.y);
+	} else {
+		p = pos + offset - c * ((pos.y - maxy) / c.y);
+	}
+
+	// get intersection between p and z-axis
+	FrustumLine line;
+	line.dir  = (b.x / b.z);
+	line.base = (p.x - p.z * line.dir) / scale;
+	line.left = (b.z > 0.0f)? 1: -1;
+	line.left *= (sideAscending && flipLeft)? -1: 1;
+	line.minz = -500.0f;
+	line.maxz = (gs->mapy * SQUARE_SIZE) + 500.0f;
+
+	if (leftSide) {
+		leftFrustumSides.push_back(line);
+	} else {
+		rightFrustumSides.push_back(line);
+	}
 }

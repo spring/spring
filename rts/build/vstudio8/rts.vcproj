@@ -699,7 +699,7 @@
 				AdditionalOptions="/vmg /MP /D_WIN32_WINNT=0x500"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlib/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include;../../lib/assimp/include;../../lib/minizip"
-				PreprocessorDefinitions="_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE"
+				PreprocessorDefinitions="DEDICATED;_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_SSE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -2484,19 +2484,19 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseSky.cpp"
+					RelativePath="..\..\Rendering\Env\ISky.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseSky.h"
+					RelativePath="..\..\Rendering\Env\ISky.h"
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseWater.cpp"
+					RelativePath="..\..\Rendering\Env\IWater.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseWater.h"
+					RelativePath="..\..\Rendering\Env\IWater.h"
 					>
 				</File>
 				<File
@@ -5430,7 +5430,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\CRC.cpp"
+					RelativePath="..\..\System\CRC.cpp"
 					>
 					<FileConfiguration
 						Name="Debug|Win32"
@@ -5498,7 +5498,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\CRC.h"
+					RelativePath="..\..\System\CRC.h"
 					>
 				</File>
 				<File
@@ -7683,6 +7683,18 @@
 				Name="Log"
 				>
 				<File
+					RelativePath="..\..\System\Log\Backend.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Log\Backend.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Log\ConsoleSink.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Log\DefaultFilter.cpp"
 					>
 				</File>
@@ -7691,7 +7703,15 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\Log\DefaultFormatter.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Log\ILog.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Log\Level.h"
 					>
 				</File>
 				<File
@@ -7704,6 +7724,18 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Log\LogUtil.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Log\Section.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Log\StreamSink.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Log\StreamSink.h"
 					>
 				</File>
 			</Filter>

@@ -1,5 +1,7 @@
-#ifndef ASSIO_H
-#define ASSIO_H
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+#ifndef ASS_IO_H
+#define ASS_IO_H
 
 #include "IOStream.h"
 #include "IOSystem.h"
@@ -49,4 +51,4 @@ public:
 	void Close( Assimp::IOStream* pFile);
 };
 
-#endif
+#endif // ASS_IO_H

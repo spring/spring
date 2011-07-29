@@ -44,6 +44,7 @@ void CNetProtocol::InitClient(const char* server_addr, unsigned portnum, const s
 	GML_STDMUTEX_LOCK(net); // InitClient
 
 	netcode::UDPConnection* conn = new netcode::UDPConnection(configHandler->GetInt("SourcePort"), server_addr, portnum);
+	conn->Unmute();
 	serverConn.reset(conn);
 	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion));
 	serverConn->Flush(true);
@@ -55,6 +56,7 @@ void CNetProtocol::AttemptReconnect(const std::string& myName, const std::string
 	GML_STDMUTEX_LOCK(net); // AttemptReconnect
 
 	netcode::UDPConnection* conn = new netcode::UDPConnection(*serverConn);
+	conn->Unmute();
 	conn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion, true));
 	conn->Flush(true);
 
@@ -112,7 +114,8 @@ boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int framenum)
 	boost::shared_ptr<const netcode::RawPacket> ret = serverConn->GetData();
 
 	if (ret) {
-		float demoTime = (framenum == 0) ? gu->gameTime : gu->startTime + (float)framenum / (float)GAME_SPEED;
+		const float demoTime = (framenum == 0) ? gu->gameTime
+				: gu->startTime + (float)framenum / (float)GAME_SPEED;
 		if (record) {
 			record->SaveToDemo(ret->data, ret->length, demoTime);
 		} else if (ret->data[0] == NETMSG_GAMEDATA && !disableDemo) {
@@ -123,8 +126,9 @@ boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int framenum)
 				record.reset(new CDemoRecorder());
 				record->WriteSetupText(gd.GetSetup());
 				record->SaveToDemo(ret->data, ret->length, demoTime);
-			} catch (netcode::UnpackPacketException &e) {
-				LOG_L(L_WARNING, "Invalid GameData received: %s", e.err.c_str());
+			} catch (const netcode::UnpackPacketException& ex) {
+				LOG_L(L_WARNING, "Invalid GameData received: %s",
+						ex.err.c_str());
 			}
 		}
 	}

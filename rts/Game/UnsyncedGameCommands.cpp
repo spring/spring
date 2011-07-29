@@ -33,15 +33,16 @@
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "Rendering/DebugDrawerAI.h"
-#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
-#include "Rendering/Env/BaseWater.h"
+#include "Rendering/Env/IWater.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/Screenshot.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/TeamHighlight.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/VerticalSync.h"
 #include "Lua/LuaOpenGL.h"
@@ -477,12 +478,12 @@ public:
 
 		int nextWaterRendererMode = 0;
 		if (!action.GetArgs().empty()) {
-			nextWaterRendererMode = std::max(0, atoi(action.GetArgs().c_str()) % CBaseWater::NUM_WATER_RENDERERS);
+			nextWaterRendererMode = std::max(0, atoi(action.GetArgs().c_str()) % IWater::NUM_WATER_RENDERERS);
 		} else {
 			nextWaterRendererMode = -1;
 		}
 
-		CBaseWater::PushWaterMode(nextWaterRendererMode);
+		IWater::PushWaterMode(nextWaterRendererMode);
 	}
 };
 
@@ -2082,10 +2083,11 @@ public:
 
 	void Execute(const UnsyncedAction& action) const {
 
-		bool showMTInfo = (game->showMTInfo != 0);
+		bool showMTInfo = (game->showMTInfo != MT_LUA_NONE);
 		SetBoolArg(showMTInfo, action.GetArgs());
 		configHandler->Set("ShowMTInfo", showMTInfo ? 1 : 0);
-		game->showMTInfo = (showMTInfo && (globalConfig->GetMultiThreadLua() <= 3)) ? globalConfig->GetMultiThreadLua() : 0;
+		int mtl = globalConfig->GetMultiThreadLua();
+		game->showMTInfo = (showMTInfo && (mtl != MT_LUA_DUAL && mtl != MT_LUA_DUAL_ALL)) ? mtl : MT_LUA_NONE;
 	}
 };
 
@@ -2098,13 +2100,13 @@ public:
 
 	void Execute(const UnsyncedAction& action) const {
 		if (action.GetArgs().empty()) {
-			globalConfig->teamHighlight = abs(globalConfig->teamHighlight + 1) % 3;
+			globalConfig->teamHighlight = abs(globalConfig->teamHighlight + 1) % CTeamHighlight::HIGHLIGHT_SIZE;
 		} else {
-			globalConfig->teamHighlight = abs(atoi(action.GetArgs().c_str())) % 3;
+			globalConfig->teamHighlight = abs(atoi(action.GetArgs().c_str())) % CTeamHighlight::HIGHLIGHT_SIZE;
 		}
 		logOutput.Print("Team highlighting: %s",
-				((globalConfig->teamHighlight == 1) ? "Players only"
-				: ((globalConfig->teamHighlight == 2) ? "Players and spectators"
+				((globalConfig->teamHighlight == CTeamHighlight::HIGHLIGHT_PLAYERS) ? "Players only"
+				: ((globalConfig->teamHighlight == CTeamHighlight::HIGHLIGHT_ALL) ? "Players and spectators"
 				: "Disabled")));
 		configHandler->Set("TeamHighlight", globalConfig->teamHighlight);
 	}
@@ -2183,11 +2185,11 @@ public:
 
 			newFont = CglFont::LoadFont(action.GetArgs(), fontSize, outlineWidth, outlineWeight);
 			newSmallFont = CglFont::LoadFont(action.GetArgs(), smallFontSize, smallOutlineWidth, smallOutlineWeight);
-		} catch (std::exception& e) {
+		} catch (const std::exception& ex) {
 			delete newFont;
 			delete newSmallFont;
 			newFont = newSmallFont = NULL;
-			logOutput.Print(string("font error: ") + e.what());
+			logOutput.Print(string("font error: ") + ex.what());
 		}
 		if (newFont != NULL && newSmallFont != NULL) {
 			delete font;

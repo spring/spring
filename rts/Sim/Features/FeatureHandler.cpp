@@ -317,13 +317,17 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 {
 	if (freeIDs.empty()) {
 		// alloc n new ids and randomly insert to freeIDs
-		const unsigned n = 100;
+		static const unsigned n = 100;
+
 		std::vector<int> newIds(n);
+
 		for (unsigned i = 0; i < n; ++i)
 			newIds[i] = i + features.size();
+
+		features.resize(features.size() + n, NULL);
+
 		SyncedRNG rng;
 		std::random_shuffle(newIds.begin(), newIds.end(), rng); // synced
-		features.resize(features.size()+n, 0);
 		std::copy(newIds.begin(), newIds.end(), std::back_inserter(freeIDs));
 	}
 	

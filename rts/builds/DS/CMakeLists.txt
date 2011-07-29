@@ -57,6 +57,7 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigLocater
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigSource
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigVariable
+	${ENGINE_SRC_ROOT_DIR}/System/CRC
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/errorhandler
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/Misc
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/ScopedFileLock

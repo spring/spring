@@ -9,6 +9,7 @@ SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigLocater.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigSource.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigVariable.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/CRC.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/EventBatchHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/EventClient.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/EventHandler.cpp"
@@ -75,7 +76,6 @@ SET(sources_engine_System_FileSystem
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveLoader.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveScanner.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/BufferedArchive.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/CRC.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/CacheDir.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/DataDirLocater.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/DirArchive.cpp"
@@ -90,7 +90,9 @@ SET(sources_engine_System_FileSystem
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ZipArchive.cpp"
 	)
 SET(sources_engine_System_Log
+		"${CMAKE_CURRENT_SOURCE_DIR}/Log/Backend.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/DefaultFilter.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Log/DefaultFormatter.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogOutputSink.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogUtil.c"
 	)

@@ -17,7 +17,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
-#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ISky.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/ShaderHandler.hpp"
@@ -224,12 +224,7 @@ inline void CGroundDecalHandler::DrawBuildingDecal(BuildingGroundDecal* decal)
 		return;
 	}
 
-	const float* hm =
-		#ifdef USE_UNSYNCED_HEIGHTMAP
-		readmap->GetCornerHeightMapUnsynced();
-		#else
-		readmap->GetCornerHeightMapSynced();
-		#endif
+	const float* hm = readmap->GetCornerHeightMapUnsynced();
 	const int gsmx = gs->mapx;
 	const int gsmx1 = gsmx + 1;
 	const int gsmy = gs->mapy;
@@ -338,12 +333,8 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 		return;
 	}
 
-	const float* hm =
-		#ifdef USE_UNSYNCED_HEIGHTMAP
-		readmap->GetCornerHeightMapUnsynced();
-		#else
-		readmap->GetCornerHeightMapSynced();
-		#endif
+	const float* hm = readmap->GetCornerHeightMapUnsynced();
+
 	const int gsmx = gs->mapx;
 	const int gsmx1 = gsmx + 1;
 

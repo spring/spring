@@ -355,25 +355,22 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 			case drawHeight: {
 				extraTexPal = heightLinePal->GetData();
 
-				// the extraTexture is guaranteed to be larger than the
-				// corner heightmap (gs->pwr2map* are always set to the
-				// next power of 2 of gs->map*, so > (gs->map* + 1))
-				const float* heightMap =
-					#ifdef USE_UNSYNCED_HEIGHTMAP
-					readmap->GetCornerHeightMapUnsynced();
-					#else
-					readmap->GetCornerHeightMapSynced();
-					#endif
+				//NOTE: the resolution of our PBO/ExtraTexture is gs->pwr2mapx * gs->pwr2mapy (we don't use it fully)
+				//      while the corner heightmap has (gs->mapx + 1) * (gs->mapy + 1).
+				//      So for the case POT(gs->mapx) == gs->mapx we would get a buffer overrun in our PBO
+				//      when iterating (gs->mapx + 1) * (gs->mapy + 1). So we just skip +1, it may give
+				//      semi incorrect results, but it is the easiest solution.
+				const float* heightMap = readmap->GetCornerHeightMapUnsynced();
 
 				for (int y = starty; y < endy; ++y) {
 					const int y_pwr2mapx = y * gs->pwr2mapx;
 					const int y_mapx     = y * gs->mapxp1;
 
-					for (int x = 0; x < gs->mapxp1; ++x) {
+					for (int x = 0; x < gs->mapx; ++x) {
 						const float height = heightMap[y_mapx + x];
 						const unsigned int value = (((unsigned int)(height * 8.0f)) % 255) * 3;
 						const int i = (y_pwr2mapx + x) * 4 - offset;
-						infoTexMem[i + COLOR_R] = 64 + (extraTexPal[value]     >> 1);
+						infoTexMem[i + COLOR_R] = 64 + (extraTexPal[value    ] >> 1);
 						infoTexMem[i + COLOR_G] = 64 + (extraTexPal[value + 1] >> 1);
 						infoTexMem[i + COLOR_B] = 64 + (extraTexPal[value + 2] >> 1);
 						infoTexMem[i + COLOR_A] = 255;

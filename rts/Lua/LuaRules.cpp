@@ -33,7 +33,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Scripts/CobInstance.h"
 #include "Sim/Weapons/Weapon.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 
@@ -265,7 +265,7 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -302,7 +302,7 @@ bool CLuaRules::AllowCommand(const CUnit* unit, const Command& cmd, bool fromSyn
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -342,7 +342,7 @@ bool CLuaRules::AllowUnitCreation(const UnitDef* unitDef,
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -379,7 +379,7 @@ bool CLuaRules::AllowUnitTransfer(const CUnit* unit, int newTeam, bool capture)
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -417,7 +417,7 @@ bool CLuaRules::AllowUnitBuildStep(const CUnit* builder,
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -455,7 +455,7 @@ bool CLuaRules::AllowFeatureCreation(const FeatureDef* featureDef,
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -493,7 +493,7 @@ bool CLuaRules::AllowFeatureBuildStep(const CUnit* builder,
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -528,7 +528,7 @@ bool CLuaRules::AllowResourceLevel(int teamID, const string& type, float level)
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -565,7 +565,7 @@ bool CLuaRules::AllowResourceTransfer(int oldTeam, int newTeam,
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -601,7 +601,7 @@ bool CLuaRules::AllowDirectUnitControl(int playerID, const CUnit* unit)
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -638,7 +638,7 @@ bool CLuaRules::AllowStartPosition(int playerID, const float3& pos)
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return true;
 	}
@@ -674,7 +674,7 @@ bool CLuaRules::MoveCtrlNotify(const CUnit* unit, int data)
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return false;
 	}
@@ -716,7 +716,7 @@ bool CLuaRules::TerraformComplete(const CUnit* unit, const CUnit* build)
 
 	// get the results
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return false;
 	}
@@ -781,14 +781,18 @@ bool CLuaRules::UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
 		*newDamage = lua_tonumber(L, -2);
 	} else if (!lua_isnumber(L, -2) || lua_isnil(L, -2)) {
 		// first value is obligatory, so may not be nil
-		logOutput.Print("%s(): 1st value returned should be a number (newDamage)\n", cmdStr.GetString().c_str());
+		LOG_L(L_WARNING,
+				"%s(): 1st value returned should be a number (newDamage)",
+				cmdStr.GetString().c_str());
 	}
 
 	if (impulseMult && lua_isnumber(L, -1)) {
 		*impulseMult = lua_tonumber(L, -1);
 	} else if (!lua_isnumber(L, -1) && !lua_isnil(L, -1)) {
 		// second value is optional, so nils are OK
-		logOutput.Print("%s(): 2nd value returned should be a number (impulseMult)\n", cmdStr.GetString().c_str());
+		LOG_L(L_WARNING,
+				"%s(): 2nd value returned should be a number (impulseMult)",
+				cmdStr.GetString().c_str());
 	}
 
 	lua_pop(L, 2);
@@ -947,7 +951,7 @@ bool CLuaRules::DrawUnit(int unitID)
 	}
 
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return false;
 	}
@@ -985,7 +989,7 @@ bool CLuaRules::DrawFeature(int featureID)
 	}
 
 	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s() bad return value\n", cmdStr.GetString().c_str());
+		LOG_L(L_WARNING, "%s() bad return value", cmdStr.GetString().c_str());
 		lua_pop(L, 1);
 		return false;
 	}
@@ -1021,8 +1025,8 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 {
 	static int callDepth = 0;
 	if (callDepth >= 16) {
-		logOutput.Print("CLuaRules::Cob2Lua() call overflow: %s\n",
-		                name.GetString().c_str());
+		LOG_L(L_WARNING, "CLuaRules::Cob2Lua() call overflow: %s",
+				name.GetString().c_str());
 		args[0] = 0; // failure
 		return;
 	}
@@ -1032,16 +1036,16 @@ void CLuaRules::Cob2Lua(const LuaHashString& name, const CUnit* unit,
 	const int top = lua_gettop(L);
 
 	if (!lua_checkstack(L, 1 + 3 + argsCount)) {
-		logOutput.Print("CLuaRules::Cob2Lua() lua_checkstack() error: %s\n",
-		                name.GetString().c_str());
+		LOG_L(L_WARNING, "CLuaRules::Cob2Lua() lua_checkstack() error: %s",
+				name.GetString().c_str());
 		args[0] = 0; // failure
 		lua_settop(L, top);
 		return;
 	}
 
 	if (!name.GetGlobalFunc(L)) {
-		logOutput.Print("CLuaRules::Cob2Lua() missing function: %s\n",
-		                name.GetString().c_str());
+		LOG_L(L_WARNING, "CLuaRules::Cob2Lua() missing function: %s",
+				name.GetString().c_str());
 		args[0] = 0; // failure
 		lua_settop(L, top);
 		return;
@@ -1116,11 +1120,8 @@ int CLuaRules::PermitHelperAIs(lua_State* L)
 		luaL_error(L, "Incorrect argument to PermitHelperAIs()");
 	}
 	gs->noHelperAIs = !lua_toboolean(L, 1);
-	if (gs->noHelperAIs) {
-		logOutput.Print("LuaRules has Disabled helper AIs");
-	} else {
-		logOutput.Print("LuaRules has Enabled helper AIs");
-	}
+	LOG("LuaRules has %s helper AIs",
+			(gs->noHelperAIs ? "disabled" : "enabled"));
 	return 0;
 }
 

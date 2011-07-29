@@ -13,7 +13,7 @@
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.hpp"
 #include "Rendering/UnitDrawer.h"
-#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
@@ -23,7 +23,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Matrix44f.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 #define DEFAULT_SHADOWMAPSIZE 2048
 #define SHADOWMATRIX_NONLINEAR 0
@@ -63,31 +63,31 @@ CShadowHandler::CShadowHandler()
 		drawTerrainShadow = false;
 
 	if (configValue < 0) {
-		logOutput.Print("[%s] shadow rendering is disabled (config-value %d)", __FUNCTION__, configValue);
+		LOG("[%s] shadow rendering is disabled (config-value %d)", __FUNCTION__, configValue);
 		return;
 	}
 
 	if (!globalRendering->haveARB && !globalRendering->haveGLSL) {
-		logOutput.Print("[%s] GPU does not support either ARB or GLSL shaders for shadow rendering", __FUNCTION__);
+		LOG_L(L_WARNING, "[%s] GPU does not support either ARB or GLSL shaders for shadow rendering", __FUNCTION__);
 		return;
 	}
 
 	if (!globalRendering->haveGLSL) {
 		if (!GLEW_ARB_shadow || !GLEW_ARB_depth_texture || !GLEW_ARB_texture_env_combine) {
-			logOutput.Print("[%s] required OpenGL ARB-extensions missing for shadow rendering", __FUNCTION__);
+			LOG_L(L_WARNING, "[%s] required OpenGL ARB-extensions missing for shadow rendering", __FUNCTION__);
 			// NOTE: these should only be relevant for FFP shadows
 			// return;
 		}
 		if (!GLEW_ARB_shadow_ambient) {
 			// can't use arbitrary texvals in case the depth comparison op fails (only 0)
-			logOutput.Print("[%s] \"ARB_shadow_ambient\" extension missing (will probably make shadows darker than they should be)", __FUNCTION__);
+			LOG_L(L_WARNING, "[%s] \"ARB_shadow_ambient\" extension missing (will probably make shadows darker than they should be)", __FUNCTION__);
 		}
 	}
 
 	shadowMapSize = configHandler->GetInt("ShadowMapSize");
 
 	if (!InitDepthTarget()) {
-		logOutput.Print("[%s] failed to initialize depth-texture FBO", __FUNCTION__);
+		LOG_L(L_ERROR, "[%s] failed to initialize depth-texture FBO", __FUNCTION__);
 		return;
 	}
 
@@ -193,13 +193,13 @@ bool CShadowHandler::InitDepthTarget()
 	// it turns the shadow render buffer in a buffer with color
 	bool useColorTexture = false;
 	if (!fb.IsValid()) {
-		logOutput.Print("[%s] framebuffer not valid!", __FUNCTION__);
+		LOG_L(L_ERROR, "[%s] framebuffer not valid", __FUNCTION__);
 		return false;
 	}
 	glGenTextures(1,&shadowTexture);
 
 	glBindTexture(GL_TEXTURE_2D, shadowTexture);
-	float one[4] = {1.0f,1.0f,1.0f,1.0f};
+	float one[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, one);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
@@ -405,15 +405,11 @@ void CShadowHandler::CreateShadows()
 
 void CShadowHandler::CalcMinMaxView()
 {
-	left.clear();
+	cam2->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
 
-	// add restraints for camera frustum planes
-	GetFrustumSide(cam2->bottom, false);
-	GetFrustumSide(cam2->top, true);
-	GetFrustumSide(cam2->rightside, false);
-	GetFrustumSide(cam2->leftside, false);
+	std::vector<CCamera::FrustumLine>& left = cam2->leftFrustumSides;
+	std::vector<CCamera::FrustumLine>::iterator fli, fli2;
 
-	std::vector<fline>::iterator fli,fli2;
 	for (fli = left.begin(); fli != left.end(); ++fli) {
 		for (fli2 = left.begin(); fli2 != left.end(); ++fli2) {
 			if (fli == fli2)
@@ -450,7 +446,6 @@ void CShadowHandler::CalcMinMaxView()
 	}
 
 	if (!left.empty()) {
-		std::vector<fline>::iterator fli;
 		for (fli = left.begin(); fli != left.end(); ++fli) {
 			if (fli->minz < fli->maxz) {
 				float3 p[5];
@@ -481,44 +476,5 @@ void CShadowHandler::CalcMinMaxView()
 		shadowProjMinMax.y =  maxSize;
 		shadowProjMinMax.z = -maxSize;
 		shadowProjMinMax.w =  maxSize;
-	}
-}
-
-
-
-//maybe standardize all these things in one place sometime (and maybe one day i should try to understand how i made them work)
-void CShadowHandler::GetFrustumSide(float3& side, bool upside)
-{
-
-	// get vector for collision between frustum and horizontal plane
-	float3 b = UpVector.cross(side);
-
-	if (fabs(b.z) < 0.0001f)
-		b.z = 0.00011f;
-	if (fabs(b.z) > 0.0001f) {
-		fline temp;
-		temp.dir=b.x/b.z;				//set direction to that
-		float3 c=b.cross(side);			//get vector from camera to collision line
-		c.ANormalize();
-		float3 colpoint;				//a point on the collision line
-
-		if(side.y>0){
-			if(b.dot(UpVector.cross(cam2->forward))<0 && upside){
-				colpoint=cam2->pos+cam2->forward*20000;
-				//logOutput.Print("upward frustum");
-			}else
-				colpoint=cam2->pos-c*((cam2->pos.y)/c.y);
-		}else
-			colpoint=cam2->pos-c*((cam2->pos.y)/c.y);
-
-		temp.base=colpoint.x-colpoint.z*temp.dir;	//get intersection between colpoint and z axis
-		temp.left=-1;
-		if(b.z>0)
-			temp.left=1;
-		if(side.y>0 && (b.dot(UpVector.cross(cam2->forward))<0 && upside))
-			temp.left*=-1;
-		temp.maxz=gs->mapy*SQUARE_SIZE+500;
-		temp.minz=-500;
-		left.push_back(temp);
 	}
 }

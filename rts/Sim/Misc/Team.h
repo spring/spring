@@ -33,8 +33,9 @@ public:
 
 	void GiveEverythingTo(const unsigned toTeam);
 
-	void Died();
+	void Died(bool normalDeath = true);
 	void AddPlayer(int playerNum);
+	void KillAIs();
 
 	void StartposMessage(const float3& pos) { startPos = pos; }
 

@@ -16,9 +16,24 @@ public:
 	float3 CalcPixelDir(int x,int y) const;
 	float3 CalcWindowCoordinates(const float3& objPos) const;
 	void UpdateForward();
-	bool InView(const float3& p, float radius = 0);
-	bool InView(const float3& mins, const float3& maxs);
+	bool InView(const float3& p, float radius = 0) const;
+	bool InView(const float3& mins, const float3& maxs) const;
 	void Update(bool freeze, bool resetUp = true);
+
+	void GetFrustumSides(float miny, float maxy, float scale, bool leftSideOnly = false);
+	void GetFrustumSide(
+		const float3& side,
+		const float3& offset,
+		float miny,
+		float maxy,
+		float scale,
+		bool sideAscending,
+		bool leftSideOnly,
+		bool topSide);
+	void ClearFrustumSides() {
+		leftFrustumSides.clear();
+		rightFrustumSides.clear();
+	}
 
 	const CMatrix44f& GetViewMatrix() const { return viewMatrix; }
 	const CMatrix44f& GetViewMatrixInverse() const { return viewMatrixInverse; }
@@ -52,6 +67,16 @@ public:
 	float lppScale;    ///< length-per-pixel scale
 
 	GLint viewport[4];
+
+	struct FrustumLine {
+		float base;
+		float dir;
+		int left;
+		float minz;
+		float maxz;
+	};
+	std::vector<FrustumLine> leftFrustumSides;
+	std::vector<FrustumLine> rightFrustumSides;
 
 private:
 	void myGluPerspective(float aspect, float zNear, float zFar);

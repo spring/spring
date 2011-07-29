@@ -2680,11 +2680,11 @@ void AAIBuildTable::SaveBuildTable(int game_period, MapType map_type)
 		}
 	}
 
-	int tmp;
+//	int tmp;
 
 	for(int i = 1; i <= numOfUnits; ++i)
 	{
-		tmp = units_static[i].canBuildList.size();
+//		tmp = units_static[i].canBuildList.size();
 
 		fprintf(save_file, "%i %i %u %u %f %f %f %i "_STPF_" "_STPF_" ", units_static[i].def_id, units_static[i].side,
 								units_static[i].unit_type, units_static[i].movement_type, units_static[i].range,
@@ -3452,14 +3452,14 @@ bool AAIBuildTable::IsArty(int id)
 	if(!unitList[id-1]->weapons.empty())
 	{
 		float max_range = 0;
-		const WeaponDef *longest = 0;
+//		const WeaponDef *longest = 0;
 
 		for(vector<UnitDef::UnitDefWeapon>::const_iterator weapon = unitList[id-1]->weapons.begin(); weapon != unitList[id-1]->weapons.end(); weapon++)
 		{
 			if(weapon->def->range > max_range)
 			{
 				max_range = weapon->def->range;
-				longest = weapon->def;
+//				longest = weapon->def;
 			}
 		}
 

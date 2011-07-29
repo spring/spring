@@ -56,8 +56,8 @@ CMapInfo::CMapInfo(const std::string& _mapInfoFile, const string& mapName) : map
 	ReadGrass();
 	ReadLight();
 	ReadWater();
-	ReadSmf();
-	ReadSm3();
+	ReadSMF();
+	ReadSM3();
 	ReadTerrainTypes();
 	ReadSound();
 
@@ -81,7 +81,7 @@ std::string CMapInfo::GetStringValue(const std::string& key) const
 
 void CMapInfo::ReadGlobal()
 {
-	const LuaTable topTable = parser->GetRoot();
+	const LuaTable& topTable = parser->GetRoot();
 
 	map.description  = topTable.GetString("description", map.name);
 	map.author       = topTable.GetString("author", "");
@@ -120,7 +120,7 @@ void CMapInfo::ReadGui()
 void CMapInfo::ReadAtmosphere()
 {
 	// MAP\ATMOSPHERE
-	const LuaTable atmoTable = parser->GetRoot().SubTable("atmosphere");
+	const LuaTable& atmoTable = parser->GetRoot().SubTable("atmosphere");
 	atmosphere_t& atmo = atmosphere;
 
 	atmo.minWind = atmoTable.GetFloat("minWind", 5.0f);
@@ -148,7 +148,7 @@ void CMapInfo::ReadAtmosphere()
 
 void CMapInfo::ReadSplats()
 {
-	const LuaTable splatsTable = parser->GetRoot().SubTable("splats");
+	const LuaTable& splatsTable = parser->GetRoot().SubTable("splats");
 
 	splats.texScales = splatsTable.GetFloat4("texScales", float4(0.02f, 0.02f, 0.02f, 0.02f));
 	splats.texMults = splatsTable.GetFloat4("texMults", float4(1.0f, 1.0f, 1.0f, 1.0f));
@@ -156,8 +156,8 @@ void CMapInfo::ReadSplats()
 
 void CMapInfo::ReadGrass()
 {
-	const LuaTable grassTable = parser->GetRoot().SubTable("grass");
-	const LuaTable mapResTable = parser->GetRoot().SubTable("resources");
+	const LuaTable& grassTable = parser->GetRoot().SubTable("grass");
+	const LuaTable& mapResTable = parser->GetRoot().SubTable("resources");
 	
 	grass.bladeWaveScale = grassTable.GetFloat("bladeWaveScale", 1.0f);
 	grass.bladeWidth     = grassTable.GetFloat("bladeWidth", 0.32f);
@@ -166,12 +166,15 @@ void CMapInfo::ReadGrass()
 	grass.color          = grassTable.GetFloat3("bladeColor", float3(0.59f, 0.81f, 0.57f));
 
 	grass.grassBladeTexName = mapResTable.GetString("grassBladeTex", "");
-	if (!grass.grassBladeTexName.empty()) { grass.grassBladeTexName = "maps/" + grass.grassBladeTexName; }
+
+	if (!grass.grassBladeTexName.empty()) {
+		grass.grassBladeTexName = "maps/" + grass.grassBladeTexName;
+	}
 }
 
 void CMapInfo::ReadLight()
 {
-	const LuaTable lightTable = parser->GetRoot().SubTable("lighting");
+	const LuaTable& lightTable = parser->GetRoot().SubTable("lighting");
 
 	light.sunStartAngle = lightTable.GetFloat("sunStartAngle", 0.0f);
 	light.sunOrbitTime = lightTable.GetFloat("sunOrbitTime", 1440.0f);
@@ -198,7 +201,7 @@ void CMapInfo::ReadLight()
 
 void CMapInfo::ReadWater()
 {
-	const LuaTable wt = parser->GetRoot().SubTable("water");
+	const LuaTable& wt = parser->GetRoot().SubTable("water");
 
 	water.repeatX = wt.GetFloat("repeatX", 0.0f);
 	water.repeatY = wt.GetFloat("repeatY", 0.0f);
@@ -244,7 +247,7 @@ void CMapInfo::ReadWater()
 	water.forceRendering = wt.GetBool("forceRendering", false);
 
 	// use 'resources.lua' for missing fields  (our the engine defaults)
-	const LuaTable resGfxMaps = resRoot->SubTable("graphics").SubTable("maps");
+	const LuaTable& resGfxMaps = resRoot->SubTable("graphics").SubTable("maps");
 
 	if (!water.texture.empty()) {
 		water.texture = "maps/" + water.texture;
@@ -298,10 +301,10 @@ void CMapInfo::ReadWater()
 }
 
 
-void CMapInfo::ReadSmf()
+void CMapInfo::ReadSMF()
 {
 	// SMF specific settings
-	const LuaTable mapResTable = parser->GetRoot().SubTable("resources");
+	const LuaTable& mapResTable = parser->GetRoot().SubTable("resources");
 
 	smf.detailTexName      = mapResTable.GetString("detailTex", "");
 	smf.specularTexName    = mapResTable.GetString("specularTex", "");
@@ -331,7 +334,7 @@ void CMapInfo::ReadSmf()
 	if (!smf.lightEmissionTexName.empty()) { smf.lightEmissionTexName = "maps/" + smf.lightEmissionTexName; }
 
 	// height overrides
-	const LuaTable smfTable = parser->GetRoot().SubTable("smf");
+	const LuaTable& smfTable = parser->GetRoot().SubTable("smf");
 
 	smf.minHeightOverride = smfTable.KeyExists("minHeight");
 	smf.maxHeightOverride = smfTable.KeyExists("maxHeight");
@@ -354,7 +357,7 @@ void CMapInfo::ReadSmf()
 }
 
 
-void CMapInfo::ReadSm3()
+void CMapInfo::ReadSM3()
 {
 	// SM3 specific settings
 	sm3.minimap = parser->GetRoot().GetString("minimap", "");
@@ -363,15 +366,16 @@ void CMapInfo::ReadSm3()
 
 void CMapInfo::ReadTerrainTypes()
 {
-	const LuaTable terrTypeTable = parser->GetRoot().SubTable("terrainTypes");
+	const LuaTable& terrTypeTable = parser->GetRoot().SubTable("terrainTypes");
 
 	for (int tt = 0; tt < NUM_TERRAIN_TYPES; tt++) {
 		TerrainType& terrType = terrainTypes[tt];
-		const LuaTable terrain = terrTypeTable.SubTable(tt);
+		const LuaTable& terrain = terrTypeTable.SubTable(tt);
+		const LuaTable& moveTable = terrain.SubTable("moveSpeeds");
+
 		terrType.name          = terrain.GetString("name", "Default");
 		terrType.hardness      = terrain.GetFloat("hardness",   1.0f);
 		terrType.receiveTracks = terrain.GetBool("receiveTracks", true);
-		const LuaTable moveTable = terrain.SubTable("moveSpeeds");
 		terrType.tankSpeed  = moveTable.GetFloat("tank",  1.0f);
 		terrType.kbotSpeed  = moveTable.GetFloat("kbot",  1.0f);
 		terrType.hoverSpeed = moveTable.GetFloat("hover", 1.0f);
@@ -390,7 +394,7 @@ void CMapInfo::ReadTerrainTypes()
 void CMapInfo::ReadSound()
 {
 #if !defined(HEADLESS) && !defined(NO_SOUND)
-	const LuaTable soundTable = parser->GetRoot().SubTable("sound");
+	const LuaTable& soundTable = parser->GetRoot().SubTable("sound");
 
 	efxprops = new EAXSfxProps();
 
@@ -402,7 +406,7 @@ void CMapInfo::ReadSound()
 
 	std::map<std::string, ALuint>::const_iterator it;
 
-	const LuaTable filterTable = soundTable.SubTable("passfilter");
+	const LuaTable& filterTable = soundTable.SubTable("passfilter");
 	for (it = nameToALFilterParam.begin(); it != nameToALFilterParam.end(); ++it) {
 		const std::string& name = it->first;
 		const int luaType = filterTable.GetType(name);
@@ -420,7 +424,7 @@ void CMapInfo::ReadSound()
 		}
 	}
 
-	const LuaTable reverbTable = soundTable.SubTable("reverb");
+	soundTable.SubTable("reverb");
 	for (it = nameToALParam.begin(); it != nameToALParam.end(); ++it) {
 		const std::string& name = it->first;
 		const int luaType = filterTable.GetType(name);

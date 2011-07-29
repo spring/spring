@@ -58,6 +58,10 @@
 #include "System/FileSystem/FileSystemHandler.h"
 #include "System/Platform/errorhandler.h"
 
+#include <string>
+#include <vector>
+#include <map>
+
 // Cast id to unsigned to catch negative ids in the same operations,
 // cast MAX_* to unsigned to suppress GCC comparison between signed/unsigned warning.
 #define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)uh->MaxUnits())
@@ -1252,7 +1256,12 @@ int CAICallback::GetFeatures(int* featureIds, int featureIds_sizeMax)
 		assert(f);
 
 		if (f->IsInLosForAllyTeam(allyteam)) {
-			featureIds[featureIds_size++] = f->id;
+			// if it is NULL, the caller only wants to know
+			// the number of features
+			if (featureIds != NULL) {
+				featureIds[featureIds_size] = f->id;
+			}
+			featureIds_size++;
 		}
 	}
 
@@ -1273,7 +1282,12 @@ int CAICallback::GetFeatures(int* featureIds, int featureIds_sizeMax, const floa
 		assert(f);
 
 		if (f->IsInLosForAllyTeam(allyteam)) {
-			featureIds[featureIds_size++] = f->id;
+			// if it is NULL, the caller only wants to know
+			// the number of features
+			if (featureIds != NULL) {
+				featureIds[featureIds_size] = f->id;
+			}
+			featureIds_size++;
 		}
 	}
 
@@ -1768,7 +1782,7 @@ float3 CAICallback::GetMousePos() {
 }
 
 
-int CAICallback::GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAllies)
+void CAICallback::GetMapPoints(std::vector<PointMarker>& pm, int pm_sizeMax, bool includeAllies)
 {
 	verify();
 
@@ -1792,10 +1806,10 @@ int CAICallback::GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAllie
 		}
 	}
 
-	return (inMapDrawer->GetPoints(pm, pm_sizeMax, includeTeamIDs));
+	inMapDrawer->GetPoints(pm, pm_sizeMax, includeTeamIDs);
 }
 
-int CAICallback::GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllies)
+void CAICallback::GetMapLines(std::vector<LineMarker>& lm, int lm_sizeMax, bool includeAllies)
 {
 	verify();
 
@@ -1819,7 +1833,7 @@ int CAICallback::GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllies)
 		}
 	}
 
-	return (inMapDrawer->GetLines(lm, lm_sizeMax, includeTeamIDs));
+	inMapDrawer->GetLines(lm, lm_sizeMax, includeTeamIDs);
 }
 
 

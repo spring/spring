@@ -9,7 +9,7 @@
 #include "BaseGroundDrawer.h"
 #include "HeightMapTexture.h"
 #include "Rendering/Env/ITreeDrawer.h"
-#include "Rendering/Env/BaseWater.h"
+#include "Rendering/Env/IWater.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
@@ -204,7 +204,7 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 	readmap->UpdateHeightMapSynced(x1, y1, x2, y2);
 	pathManager->TerrainChange(x1, y1, x2, y2);
 	featureHandler->TerrainChanged(x1, y1, x2, y2);
-	CBaseWater::PushHeightmapChange(x1, y1, x2, y2);
+	IWater::PushHeightmapChange(x1, y1, x2, y2);
 	heightMapTexture.UpdateArea(x1, y1, x2, y2);
 }
 

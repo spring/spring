@@ -22,9 +22,6 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 
-using namespace std;
-
-
 
 static ParamMap paramMap;
 

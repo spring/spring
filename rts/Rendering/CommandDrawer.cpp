@@ -21,7 +21,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "System/myMath.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 static bool IsUnitTrackable(const CUnit* unit, const CUnit* owner)
 {
@@ -295,7 +295,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 				} else {
 					const int signedId = (int)ci->params[0];
 					if (signedId < 0) {
-						logOutput.Print("Trying to %s a feature or unit with id < 0 (%i), aborting.",
+						LOG_L(L_WARNING, "Trying to %s a feature or unit with id < 0 (%i), aborting.",
 								(cmd_id == CMD_RECLAIM) ? "reclaim" : "resurrect",
 								signedId);
 						break;

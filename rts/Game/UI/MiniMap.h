@@ -73,7 +73,6 @@ class CMiniMap : public CInputReceiver {
 		void DrawCircle(const float3& pos, float radius);
 		void DrawSquare(const float3& pos, float xsize, float zsize);
 		const icon::CIconData* GetUnitIcon(const CUnit* unit, float& scale) const;
-		void GetFrustumSide(float3& side);
 		
 	protected:
 		static void DrawSurfaceCircle(const float3& pos, float radius, unsigned int resolution);
@@ -138,15 +137,6 @@ class CMiniMap : public CInputReceiver {
 		unsigned int buttonsTexture;
 		unsigned int circleLists; // 8 - 256 divs
 		static const int circleListsCount = 6;
-				
-		struct fline {
-			float base;
-			float dir;
-			int left;
-			float minz;
-			float maxz;
-		};
-		std::vector<fline> left;
 
 		struct Notification {
 			float creationTime;

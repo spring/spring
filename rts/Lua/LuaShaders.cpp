@@ -2,11 +2,6 @@
 
 #include "System/StdAfx.h"
 
-#include <string>
-#include <vector>
-using std::string;
-using std::vector;
-
 #include "System/mmgr.h"
 
 #include "LuaShaders.h"
@@ -20,8 +15,13 @@ using std::vector;
 
 #include "Game/Camera.h"
 #include "Rendering/ShadowHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
+
+#include <string>
+#include <vector>
+using std::string;
+using std::vector;
 
 
 int LuaShaders::activeShaderDepth = 0;
@@ -578,8 +578,8 @@ int LuaShaders::ActiveShader(lua_State* L)
 	glUseProgram(currentProgram);
 
 	if (error != 0) {
-		logOutput.Print("gl.ActiveShader: error(%i) = %s",
-		                error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.ActiveShader: error(%i) = %s",
+				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 

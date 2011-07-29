@@ -69,7 +69,7 @@ done
 
 cd ${SOURCEDIR}
 
-./installer/make_installer.pl -DMIN_PORTABLE_ARCHIVE=${MIN_PORTABLE_ARCHIVE} -DARCHIVEMOVER=${TMP_PATH}/${VERSION}_ArchiveMover.7z
+./installer/make_installer.sh -DMIN_PORTABLE_ARCHIVE=${MIN_PORTABLE_ARCHIVE} -DARCHIVEMOVER=${TMP_PATH}/${VERSION}_ArchiveMover.7z
 
 mv ./installer/spring*.exe ${TMP_PATH}
 
