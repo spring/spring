@@ -14,6 +14,7 @@
 
 #include <cstdio>
 #include <cstdarg>
+#include <cstring>
 
 
 #ifdef __cplusplus
@@ -52,11 +53,14 @@ static void log_formatter_createPrefix_default(char* prefix,
 	// HACK this stuff should be done later, closer to the point where it is written to a file or the console
 	if (section != LOG_SECTION_DEFAULT) {
 		section = log_util_prepareSection(section);
-		SNPRINTF(prefix, prefixSize, "%s[%s] ", prefix, section);
+		STRCATS(prefix, prefixSize, "[");
+		STRCATS(prefix, prefixSize, section);
+		STRCATS(prefix, prefixSize, "] ");
 	}
 	if (level != LOG_LEVEL_INFO) {
 		const char* levelStr = log_util_levelToString(level);
-		SNPRINTF(prefix, prefixSize, "%s%s: ", prefix, levelStr);
+		STRCATS(prefix, prefixSize, levelStr);
+		STRCATS(prefix, prefixSize, ": ");
 	}
 }
 
