@@ -71,7 +71,7 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 netcode::RawPacket* CDemoReader::GetData(float readTime)
 {
 	if (ReachedEnd())
-		return 0;
+		return NULL;
 
 	// when paused, modGameTime does not increase (ie. we
 	// always pass the same readTime value) so no seperate
@@ -91,7 +91,7 @@ netcode::RawPacket* CDemoReader::GetData(float readTime)
 
 		return buf;
 	} else {
-		return 0;
+		return NULL;
 	}
 }
 
