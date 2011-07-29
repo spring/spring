@@ -19,10 +19,22 @@
 # includes rts/build/cmake/UtilJava.cmake
 INCLUDE(UtilJava)
 
+macro    (ConfigureJavaSkirmishAI wrapperNames)
+	ConfigureCMakeOrMavenJavaSkirmishAI(FALSE "${wrapperNames}")
+endmacro (ConfigureJavaSkirmishAI requireMaven wrapperNames)
+
+macro    (ConfigureMavenJavaSkirmishAI wrapperNames)
+	ConfigureCMakeOrMavenJavaSkirmishAI(TRUE  "${wrapperNames}")
+endmacro (ConfigureMavenJavaSkirmishAI wrapperNames)
+
 # Java Skirmish AI configuration macro.
 # This will be called from Java AIs at AI/Skirmish/*/CMakeLists.txt.
-# If Maven is installed, and
-macro    (ConfigureJavaSkirmishAI wrapperNames)
+# If Maven is installed and AI/Skirmish/*/pom.xml exists,
+# this macro will try to build the AI through Maven.
+# If requireMaven is TRUE, we will only attemp to build the
+# AI through Maven, and disable building of the AI if Maven
+# is not available.
+macro    (ConfigureCMakeOrMavenJavaSkirmishAI requireMaven wrapperNames)
 	# Assemble meta data
 	set(myDir            "${CMAKE_CURRENT_SOURCE_DIR}")
 	GetLastPathPart(dirName ${myDir})
@@ -39,12 +51,20 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 	set(myBuildDir      "${CMAKE_CURRENT_BINARY_DIR}")
 
 	# Check if the user wants to compile the AI
+	Set(BUILD_THIS_SKIRMISHAI FALSE)
 	if    (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 		set(BUILD_THIS_SKIRMISHAI TRUE)
-	else  (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
-		set(BUILD_THIS_SKIRMISHAI FALSE)
-		message("warning: ${myName} Skirmish AI will not be built!")
+		If    (requireMaven)
+			IsMavenInstalled(isMavenInstalled)
+			If    (NOT isMavenInstalled)
+				Set(BUILD_THIS_SKIRMISHAI FALSE)
+				Message(WARNING "${myName} Skirmish AI requires Maven to build, but Maven 2 (or later) was not found.")
+			EndIf (NOT isMavenInstalled)
+		EndIf (requireMaven)
 	endif (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
+	If    (NOT BUILD_THIS_SKIRMISHAI)
+		Message("warning: ${myName} Skirmish AI will not be built!")
+	EndIf (NOT BUILD_THIS_SKIRMISHAI)
 
 	# Compile and install
 	if    (BUILD_THIS_SKIRMISHAI)
@@ -261,7 +281,7 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 			endforeach (wrapperName)
 		endif (NOT configureMavenProject)
 	endif (BUILD_THIS_SKIRMISHAI)
-endmacro (ConfigureJavaSkirmishAI wrapperNames)
+endmacro (ConfigureCMakeOrMavenJavaSkirmishAI requireMaven wrapperNames)
 
 
 ### END: MACROS_AND_FUNCTIONS
