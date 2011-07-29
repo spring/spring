@@ -55,7 +55,8 @@ Lua-5.1.4 source code modifications:
         lua_calchash()
         lua_pushhstring()
 
-  11. modify lua_number2int*
-	prevent FPE's in lua_number2int* casts when NaN-signaling is enabled
-	see commit 01ef12fa4656534b23735e3abfd1d33c71bd46f1
+  11. modify luaconf.h:lua_number2int*
+        prevent FPE's in lua_number2int* casts when NaN-signaling is enabled
+        see commit 01ef12fa4656534b23735e3abfd1d33c71bd46f1
 
+  12. modify luaconf.h:{luai_numdiv, luai_nummod} macros to protect against DIV0
