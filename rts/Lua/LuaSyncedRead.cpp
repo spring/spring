@@ -256,6 +256,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetFeatureResources);
 	REGISTER_LUA_CFUNC(GetFeatureNoSelect);
 	REGISTER_LUA_CFUNC(GetFeatureResurrect);
+	REGISTER_LUA_CFUNC(GetFeatureCollisionVolumeData);
 
 	REGISTER_LUA_CFUNC(GetProjectilePosition);
 	REGISTER_LUA_CFUNC(GetProjectileVelocity);
