@@ -78,6 +78,10 @@ public:
 
 	void Update();
 	void UpdateProjectileContainer(ProjectileContainer&, bool);
+	void UpdateParticleSaturation() {
+		particleSaturation     = (maxParticles     > 0)? (currentParticles     / float(maxParticles    )): 1.0f;
+		nanoParticleSaturation = (maxNanoParticles > 0)? (currentNanoParticles / float(maxNanoParticles)): 1.0f;
+	}
 	
 	void AddProjectile(CProjectile* p);
 	void AddGroundFlash(CGroundFlash* flash);
