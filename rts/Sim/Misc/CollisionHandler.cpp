@@ -585,11 +585,13 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 				b1 = (s1 < segLenSq && (p1[pAx] > -ahs[pAx] && p1[pAx] < ahs[pAx]));
 			}
 		} else {
-			// linear eq.; one surface intersection
-			t0 = -c / b;
-			p0 = (pii0 + (diir * t0)) * inv;
-			s0 = (p0 - pi0).SqLength();
-			b0 = (s0 < segLenSq && (p0[pAx] > -ahs[pAx] && p0[pAx] < ahs[pAx]));
+			if (b != 0.0f) {
+				// linear eq.; one surface intersection
+				t0 = -c / b;
+				p0 = (pii0 + (diir * t0)) * inv;
+				s0 = (p0 - pi0).SqLength();
+				b0 = (s0 < segLenSq && (p0[pAx] > -ahs[pAx] && p0[pAx] < ahs[pAx]));
+			}
 		}
 	}
 
