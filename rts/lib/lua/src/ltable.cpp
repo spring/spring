@@ -120,8 +120,9 @@ static Node *mainposition (const Table *t, const TValue *key) {
 */
 static int arrayindex (const TValue *key) {
   if (ttisnumber(key)) {
-    lua_Number n = nvalue(key);
     int k;
+
+    lua_Number n = nvalue(key);
     lua_number2int(k, n);
     if (luai_numeq(cast_num(k), n))
       return k;
@@ -472,9 +473,11 @@ const TValue *luaH_get (Table *t, const TValue *key) {
     case LUA_TNIL: return luaO_nilobject;
     case LUA_TSTRING: return luaH_getstr(t, rawtsvalue(key));
     case LUA_TNUMBER: {
-      int k;
+      int k = 1;
+
       lua_Number n = nvalue(key);
       lua_number2int(k, n);
+
       if (luai_numeq(cast_num(k), nvalue(key))) /* index is int? */
         return luaH_getnum(t, k);  /* use specialized version */
       /* else go through */
