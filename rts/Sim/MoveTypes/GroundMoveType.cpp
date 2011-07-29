@@ -472,9 +472,12 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 				(streflop::acosf(waypointDir.dot(-flatFrontDir)) * (180.0f / PI)):
 				(streflop::acosf(waypointDir.dot( flatFrontDir)) * (180.0f / PI));
 			const float maxTurnAngle = (turnRate / SPRING_CIRCLE_DIVS) * 360.0f;
-			const float reducedSpeed = reversing?
-				(maxReverseSpeed * (maxTurnAngle / reqTurnAngle)):
-				(maxSpeed * (maxTurnAngle / reqTurnAngle));
+
+			float reducedSpeed = (reversing)? maxReverseSpeed: maxSpeed;
+
+			if (reqTurnAngle != 0.0f) {
+				reducedSpeed *= (maxTurnAngle / reqTurnAngle);
+			}
 
 			if (startBreaking) {
 				// at this point, Update() will no longer call GetNextWaypoint()
