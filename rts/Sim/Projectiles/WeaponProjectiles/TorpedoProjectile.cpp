@@ -141,9 +141,9 @@ void CTorpedoProjectile::Update()
 						dir = dif;
 					} else {
 						dif2 -= dir * (dif2.dot(dir));
-						dif2.Normalize();
+						dif2.SafeNormalize();
 						dir += dif2 * tracking;
-						dir.Normalize();
+						dir.SafeNormalize();
 					}
 				}
 
@@ -156,7 +156,7 @@ void CTorpedoProjectile::Update()
 				speed *= 0.98f;
 				speed.y += mygravity;
 				dir = speed;
-				dir.Normalize();
+				dir.SafeNormalize();
 			}
 		}
 	}
