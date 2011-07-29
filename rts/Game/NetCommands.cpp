@@ -118,6 +118,7 @@ void CGame::ClientReadNet()
 						GameEnd(std::vector<unsigned char>());
 					}
 					AddTraffic(-1, packetCode, dataLength);
+					net->Close(true);
 				} catch (const netcode::UnpackPacketException& ex) {
 					logOutput.Print("Got invalid QuitMessage: %s", ex.err.c_str());
 				}

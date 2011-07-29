@@ -306,7 +306,7 @@ void UDPConnection::Update()
 	spring_time curTime = spring_gettime();
 	outgoing.UpdateTime(curTime);
 
-	if (!sharedSocket) {
+	if (!sharedSocket && !closed) {
 		// duplicated code with UDPListener
 		netservice.poll();
 		size_t bytes_avail = 0;
@@ -592,6 +592,7 @@ void UDPConnection::Init()
 	reconnectTime = globalConfig->reconnectTimeout;
 	lastChunkCreated = spring_gettime();
 	muted = true;
+	closed = false;
 }
 
 void UDPConnection::CreateChunk(const unsigned char* data, const unsigned length, const int packetNum)
@@ -781,5 +782,14 @@ float UDPConnection::BandwidthUsage::GetAverage(bool prel) const
 	return average + (prel ? std::max(trafficSinceLastTime, prelTrafficSinceLastTime) : trafficSinceLastTime);
 }
 
-} // namespace netcode
+void UDPConnection::Close(bool flush) {
+	Flush(flush);
+	muted = true;
+	if (!sharedSocket && !closed) {
+		mySocket->shutdown(boost::asio::ip::udp::socket::shutdown_both);
+		mySocket->close();
+		closed = true;
+	}
+}
 
+} // namespace netcode

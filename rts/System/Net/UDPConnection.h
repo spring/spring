@@ -109,6 +109,9 @@ public:
 	bool IsUsingAddress(const boost::asio::ip::udp::endpoint& from) const;
 	/// Connections are stealth by default, this allow them to send data
 	void Unmute() { muted = false; }
+	void Close(bool flush);
+
+	const boost::asio::ip::udp::endpoint &GetEndpoint() const { return addr; }
 
 private:
 	void InitConnection(boost::asio::ip::udp::endpoint address,
@@ -142,6 +145,7 @@ private:
 	unsigned mtu;
 
 	bool muted;
+	bool closed;
 
 	int reconnectTime;
 
