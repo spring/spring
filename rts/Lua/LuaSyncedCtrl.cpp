@@ -2539,8 +2539,7 @@ int LuaSyncedCtrl::GiveOrderToUnit(lua_State* L)
 		luaL_error(L, "Invalid unitID given to GiveOrderToUnit()");
 	}
 
-	Command cmd;
-	LuaUtils::ParseCommand(L, __FUNCTION__, 2, cmd);
+	Command cmd = LuaUtils::ParseCommand(L, __FUNCTION__, 2);
 
 	if (!CanControlUnit(L, unit)) {
 		lua_pushboolean(L, false);
@@ -2574,8 +2573,7 @@ int LuaSyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 		return 1;
 	}
 
-	Command cmd;
-	LuaUtils::ParseCommand(L, __FUNCTION__, 2, cmd);
+	Command cmd = LuaUtils::ParseCommand(L, __FUNCTION__, 2);
 
 	if (inGiveOrder) {
 		luaL_error(L, "GiveOrderToUnitMap() recursion is not permitted");
@@ -2611,8 +2609,7 @@ int LuaSyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 		return 1;
 	}
 
-	Command cmd;
-	LuaUtils::ParseCommand(L, __FUNCTION__, 2, cmd);
+	Command cmd = LuaUtils::ParseCommand(L, __FUNCTION__, 2);
 
 	if (inGiveOrder) {
 		luaL_error(L, "GiveOrderToUnitArray() recursion is not permitted");
