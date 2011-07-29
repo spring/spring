@@ -8,6 +8,7 @@
 #include <boost/weak_ptr.hpp>
 #include <boost/asio/ip/udp.hpp>
 #include <list>
+#include <map>
 #include <queue>
 #include <string>
 
@@ -77,6 +78,8 @@ public:
 	boost::shared_ptr<UDPConnection> AcceptConnection();
 	void RejectConnection();
 
+	void UpdateConnections(); // Updates connections when the endpoint has been reconnected
+
 private:
 	/**
 	 * @brief Do we accept packets from unknown sources?
@@ -89,7 +92,8 @@ private:
 	SocketPtr mySocket;
 
 	/// all connections
-	std::list< boost::weak_ptr<UDPConnection> > conn;
+	typedef std::map< boost::asio::ip::udp::endpoint, boost::weak_ptr<UDPConnection> > ConnMap;
+	ConnMap conn;
 
 	std::queue< boost::shared_ptr<UDPConnection> > waiting;
 };

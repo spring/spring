@@ -388,7 +388,7 @@ bool CGameServer::AdjustPlayerNumber(netcode::RawPacket* buf, int pos, int val) 
 	// spectators watching the demo will offset the demo spectators, compensate for this
 	if (val < 0) {
 		unsigned char player = playerNumberMap[buf->data[pos]];
-		if (player >= players.size() && player < 250) { // ignore SERVER_PLAYER, ChatMessage::TO_XXX etc
+		if (player >= players.size() && player < MAX_PLAYERS) { // ignore SERVER_PLAYER, ChatMessage::TO_XXX etc
 			Message(str(format("Warning: Discarding packet with invalid player number in demo: ID %d, LEN %d") %buf->data[0] %buf->length));
 			return false;
 		}
@@ -2124,6 +2124,13 @@ void CGameServer::UpdateLoop()
 	if (hostif)
 		hostif->SendQuit();
 	Broadcast(CBaseNetProtocol::Get().SendQuit("Server shutdown"));
+	// flush the quit messages to reduce ugly network error messages on the client side
+	spring_sleep(spring_msecs(1000)); // this is to make sure the Flush has any effect at all (we don't want a forced flush)
+	for (size_t i = 0; i < players.size(); ++i) {
+		if (players[i].link)
+			players[i].link->Flush();
+	}
+	spring_sleep(spring_msecs(1000)); // now let clients close their connections
 }
 
 bool CGameServer::WaitsOnCon() const
@@ -2190,7 +2197,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 					break;
 				}
 				else {
-					bool reconnectAllowed = canReconnect && gameHasStarted && players[i].link->CheckTimeout(-1);
+					bool reconnectAllowed = canReconnect && players[i].link->CheckTimeout(-1);
 					if (!reconnect && reconnectAllowed) {
 						newPlayerNumber = i;
 						terminate = true;
@@ -2258,6 +2265,8 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 
 	if (newPlayer.link) {
 		newPlayer.link->ReconnectTo(*link);
+		if (UDPNet)
+			UDPNet->UpdateConnections();
 		Message(str(format(" -> Connection reestablished (id %i)") %newPlayerNumber));
 		newPlayer.link->Flush(!gameHasStarted);
 		return newPlayerNumber;

@@ -42,6 +42,7 @@ public:
 	bool CanReconnect() const;
 	bool NeedsReconnect();
 	void Unmute() {}
+	void Close(bool flush) {}
 
 	std::string Statistics() const;
 	std::string GetFullAddress() const;

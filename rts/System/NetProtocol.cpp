@@ -36,6 +36,7 @@ CNetProtocol::CNetProtocol() : loading(false), disableDemo(false)
 CNetProtocol::~CNetProtocol()
 {
 	Send(CBaseNetProtocol::Get().SendQuit(""));
+	Close();
 	LOG("%s", serverConn->Statistics().c_str());
 }
 
@@ -168,6 +169,12 @@ void CNetProtocol::Update()
 void CNetProtocol::DisableDemoRecording()
 {
 	disableDemo = true;
+}
+
+void CNetProtocol::Close(bool flush) {
+	GML_STDMUTEX_LOCK(net); // Close
+
+	serverConn->Close(flush);
 }
 
 CNetProtocol* net = NULL;
