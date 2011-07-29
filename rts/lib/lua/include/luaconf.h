@@ -590,15 +590,14 @@
 #else
 
 	#ifdef __SUPPORT_SNAN__
-		#define CLAMP_LUA_NUMBER(d)                                                        \
-			do {                                                                           \
-				if ((d) < (lua_Number(1 << 24) * -1)) { (d) = lua_Number(1 << 24) * -1; }  \
-				if ((d) > (lua_Number(1 << 24)     )) { (d) = lua_Number(1 << 24);      }  \
-			} while (0);
+		#define CLAMP_LUA_NUMBER(d) \
+			do { \
+				if ((d) < (lua_Number(1 << 24) * -1)) { (d) = lua_Number(1 << 24) * -1; } \
+				if ((d) > (lua_Number(1 << 24)     )) { (d) = lua_Number(1 << 24);      } \
+			} while (0)
 
-
-		#define lua_number2int(i, d)        CLAMP_LUA_NUMBER(d); ((i) = (int) (d))
-		#define lua_number2integer(i, d)    CLAMP_LUA_NUMBER(d); ((i) = (lua_Integer) (d))
+		#define lua_number2int(i, d)        do { CLAMP_LUA_NUMBER(d); (i) = (int)(d); } while (0)
+		#define lua_number2integer(i, d)    do { CLAMP_LUA_NUMBER(d); (i) = (lua_Integer)(d); } while (0)
 	#else
 		#define lua_number2int(i, d)        ((i) = (int)(d))
 		#define lua_number2integer(i, d)    ((i) = (lua_Integer)(d))
