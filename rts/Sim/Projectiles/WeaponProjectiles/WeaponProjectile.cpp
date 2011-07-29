@@ -127,7 +127,7 @@ void CWeaponProjectile::Collision(CFeature* feature)
 		// don't do damage only on odd-numbered frames
 		// for noExplode projectiles (it breaks coldet)
 		float3 impactDir = speed;
-		impactDir.Normalize();
+		impactDir.SafeNormalize();
 
 		// Dynamic Damage
 		DamageArray damageArray;
@@ -182,7 +182,7 @@ void CWeaponProjectile::Collision(CUnit* unit)
 		// don't do damage only on odd-numbered frames
 		// for noExplode projectiles (it breaks coldet)
 		float3 impactDir = speed;
-		impactDir.Normalize();
+		impactDir.SafeNormalize();
 
 		// Dynamic Damage
 		DamageArray damageArray;
