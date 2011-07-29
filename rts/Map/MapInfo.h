@@ -125,8 +125,8 @@ public:
 	/** settings read from "MAP\WATER" section
 	    prefix their name with "Water" to get the TDF variable */
 	struct water_t {
-		float  repeatX; ///< (calculated default is in CBaseWater)
-		float  repeatY; ///< (calculated default is in CBaseWater)
+		float  repeatX; ///< (calculated default is in IWater)
+		float  repeatY; ///< (calculated default is in IWater)
 		float  damage;
 		float3 absorb;
 		float3 baseColor;
@@ -215,8 +215,8 @@ private:
 	void ReadGrass();
 	void ReadLight();
 	void ReadWater();
-	void ReadSmf();
-	void ReadSm3();
+	void ReadSMF();
+	void ReadSM3();
 	void ReadTerrainTypes();
 	void ReadSound();
 

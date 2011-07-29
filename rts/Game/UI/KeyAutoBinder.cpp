@@ -224,9 +224,9 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
 	for (unsigned int i = 0; i < defs.size(); i++) {
 		const string lowerName = StringToLower(defs[i].ud->name);
 		const string action = string("buildunit_") + lowerName;
-		keyBindings->Command(bindStr + " " + keystr + " " + action);
+		keyBindings->ExecuteCommand(bindStr + " " + keystr + " " + action);
 		if ((i < chords.size()) && (StringToLower(chords[i]) != "none")) {
-			keyBindings->Command(bindStr + " " + chords[i] + " " + action);
+			keyBindings->ExecuteCommand(bindStr + " " + chords[i] + " " + action);
 		}
 		if (keyBindings->GetDebug() > 0) {
 			const string msg = "auto-" + bindStr + " " + keystr + " " + action;

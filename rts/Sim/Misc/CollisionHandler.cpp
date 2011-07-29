@@ -566,22 +566,32 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 	const float segLenSq = (pi1 - pi0).SqLength();
 
 	if (d >= -EPS) {
-		// one or two surface intersections
-		if (d < EPS) {
-			t0 = -b / (2.0f * a);
-			p0 = (pii0 + (diir * t0)) * inv;
-			s0 = (p0 - pi0).SqLength();
-			b0 = (s0 < segLenSq && (p0[pAx] > -ahs[pAx] && p0[pAx] < ahs[pAx]));
+		if (a != 0.0f) {
+			// quadratic eq.; one or two surface intersections
+			if (d < EPS) {
+				t0 = -b / (2.0f * a);
+				p0 = (pii0 + (diir * t0)) * inv;
+				s0 = (p0 - pi0).SqLength();
+				b0 = (s0 < segLenSq && (p0[pAx] > -ahs[pAx] && p0[pAx] < ahs[pAx]));
+			} else {
+				rd = fastmath::apxsqrt(d);
+				t0 = (-b - rd) / (2.0f * a);
+				t1 = (-b + rd) / (2.0f * a);
+				p0 = (pii0 + (diir * t0)) * inv;
+				p1 = (pii0 + (diir * t1)) * inv;
+				s0 = (p0 - pi0).SqLength();
+				s1 = (p1 - pi0).SqLength();
+				b0 = (s0 < segLenSq && (p0[pAx] > -ahs[pAx] && p0[pAx] < ahs[pAx]));
+				b1 = (s1 < segLenSq && (p1[pAx] > -ahs[pAx] && p1[pAx] < ahs[pAx]));
+			}
 		} else {
-			rd = fastmath::apxsqrt(d);
-			t0 = (-b - rd) / (2.0f * a);
-			t1 = (-b + rd) / (2.0f * a);
-			p0 = (pii0 + (diir * t0)) * inv;
-			p1 = (pii0 + (diir * t1)) * inv;
-			s0 = (p0 - pi0).SqLength();
-			s1 = (p1 - pi0).SqLength();
-			b0 = (s0 < segLenSq && (p0[pAx] > -ahs[pAx] && p0[pAx] < ahs[pAx]));
-			b1 = (s1 < segLenSq && (p1[pAx] > -ahs[pAx] && p1[pAx] < ahs[pAx]));
+			if (b != 0.0f) {
+				// linear eq.; one surface intersection
+				t0 = -c / b;
+				p0 = (pii0 + (diir * t0)) * inv;
+				s0 = (p0 - pi0).SqLength();
+				b0 = (s0 < segLenSq && (p0[pAx] > -ahs[pAx] && p0[pAx] < ahs[pAx]));
+			}
 		}
 	}
 

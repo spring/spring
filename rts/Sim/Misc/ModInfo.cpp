@@ -6,6 +6,7 @@
 #include "ModInfo.h"
 
 #include "Game/GameSetup.h"
+#include "Lua/LuaConfig.h"
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
 #include "Sim/Units/Unit.h"
@@ -145,5 +146,5 @@ void CModInfo::Init(const char* modArchive)
 	airLosMul = los.GetFloat("airLosMul", 1.0f);
 
 	const LuaTable system = root.SubTable("system");
-	luaThreadingModel = system.GetInt("luaThreadingModel", 2);
+	luaThreadingModel = system.GetInt("luaThreadingModel", MT_LUA_SINGLE_BATCH);
 }

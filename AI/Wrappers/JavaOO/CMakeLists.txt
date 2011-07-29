@@ -36,6 +36,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 	GetLastPathPart(dirName ${myDir})
 	set(myName       "${dirName}")
 	set(myTarget     "${myName}-AIWrapper")
+	set(myGenTarget  "${myTarget}-generateSources")
 	set(myJavaTarget "${myTarget}-java")
 	set(myPomTarget  "${myTarget}-pom")
 	set(myMavenInstallTarget "${myTarget}-mavenInstall")
@@ -286,6 +287,9 @@ if    (BUILD_${myName}_AIWRAPPER)
 			"  ${myTarget}: Generating event sources" VERBATIM
 		)
 
+	add_custom_target(${myGenTarget} DEPENDS ${myGeneratedSources})
+	add_dependencies(generateSources ${myGenTarget})
+
 
 	# Build the jars
 	# --------------
@@ -309,6 +313,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 			"-E" "make_directory" "${myJavaBuildDir}"
 		COMMAND "${JAVA_COMPILE}"
 			"${JAVA_COMPILE_FLAG_CONDITIONAL}"
+			"-Xlint:deprecation"
 			"-cp" "${myClassPath}"
 			"-d" "${myJavaBuildDir}"
 			"@${mySrcArgFile}"
@@ -331,7 +336,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 			"${myBuildDir}/${mySrcJarFile}"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
 			"cf" "${${myName}_AIWRAPPER_JAR_SRC}"
-			"-C" "${mySourceDir}" "${myPkgFirstPart}"
+			"-C" "${mySourceDir}"          "${myPkgFirstPart}"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
 			"uf" "${${myName}_AIWRAPPER_JAR_SRC}"
 			"-C" "${myGeneratedSourceDir}" "${myPkgFirstPart}"

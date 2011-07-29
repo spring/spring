@@ -30,7 +30,11 @@ template<typename T>
 class TypedStringConvertibleOptionalValue : public StringConvertibleOptionalValue
 {
 public:
-	void operator=(const T& x) { value = x; isSet = true; }
+	TypedStringConvertibleOptionalValue<T>& operator=(const T& x) {
+		value = x;
+		isSet = true;
+		return *this;
+	}
 	const T& Get() const { return value; }
 
 	std::string ToString() const

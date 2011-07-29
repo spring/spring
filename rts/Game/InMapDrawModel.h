@@ -43,6 +43,9 @@ public:
 	void EraseNear(const float3& pos, int playerID);
 	void EraseAll();
 
+	int GetNumPoints() const { return numPoints; }
+	int GetNumLines() const { return numLines; }
+
 
 	struct MapDrawPrimitive {
 		CR_DECLARE_STRUCT(MapDrawPrimitive);
@@ -143,6 +146,11 @@ private:
 	std::vector<DrawQuad> drawQuads;
 
 	bool drawAllMarks;
+
+	/// total number of points
+	int numPoints;
+	/// total number of lines
+	int numLines;
 };
 
 extern CInMapDrawModel* inMapDrawerModel;

@@ -22,9 +22,9 @@ class float3
 {
 public:
 	CR_DECLARE_STRUCT(float3);
-/*	inline void* operator new(size_t size) { return mempool.Alloc(size); }
-	inline void* operator new(size_t n, void* p) { return p; } // cp visual
-	inline void operator delete(void* p, size_t size) { mempool.Free(p, size); }
+/*	void* operator new(size_t size) { return mempool.Alloc(size); }
+	void* operator new(size_t n, void* p) { return p; } // cp visual
+	void operator delete(void* p, size_t size) { mempool.Free(p, size); }
 */
 
 #ifdef _MSC_VER
@@ -41,7 +41,7 @@ public:
 	 *
 	 * With no parameters, x/y/z are just initialized to 0.
 	 */
-	inline float3() : x(0.0f), y(0.0f), z(0.0f) {}
+	float3() : x(0.0f), y(0.0f), z(0.0f) {}
 
 	/**
 	 * @brief Constructor
@@ -51,7 +51,7 @@ public:
 	 *
 	 * With parameters, initializes x/y/z to the given floats.
 	 */
-	inline float3(const float x,const float y,const float z)
+	float3(const float x,const float y,const float z)
 			: x(x), y(y), z(z) {}
 
 	/**
@@ -60,14 +60,7 @@ public:
 	 *
 	 * With parameters, initializes x/y/z to the given float[3].
 	 */
-	inline float3(const float f[3]) : x(f[0]), y(f[1]), z(f[2]) {}
-
-	/**
-	 * @brief Destructor
-	 *
-	 * Does nothing
-	 */
-	inline ~float3() {}
+	float3(const float f[3]) : x(f[0]), y(f[1]), z(f[2]) {}
 
 	/**
 	 * @brief operator =
@@ -75,7 +68,7 @@ public:
 	 *
 	 * Sets the float3 to the given float[3].
 	 */
-	inline float3& operator= (const float f[3]) {
+	float3& operator= (const float f[3]) {
 
 		x = f[0];
 		y = f[1];
@@ -90,7 +83,7 @@ public:
 	 *
 	 * Sets the float[3] to this float3.
 	 */
-	inline void copyInto(float f[3]) const {
+	void copyInto(float f[3]) const {
 
 		f[0] = x;
 		f[1] = y;
@@ -107,7 +100,7 @@ public:
 	 * calculate the sum of the positions in
 	 * space (adds the x/y/z components individually)
 	 */
-	inline float3 operator+ (const float3& f) const {
+	float3 operator+ (const float3& f) const {
 		return float3(x+f.x, y+f.y, z+f.z);
 	}
 
@@ -119,7 +112,7 @@ public:
 	 * When adding just a float, the point is
 	 * increased in all directions by that float.
 	 */
-	inline float3 operator+ (const float f) const {
+	float3 operator+ (const float f) const {
 		return float3(x+f, y+f, z+f);
 	}
 
@@ -130,7 +123,7 @@ public:
 	 * Just like adding a float3, but updates this
 	 * float with the new sum.
 	 */
-	inline void operator+= (const float3& f) {
+	void operator+= (const float3& f) {
 
 		x += f.x;
 		y += f.y;
@@ -145,7 +138,7 @@ public:
 	 * Decreases the float3 by another float3,
 	 * subtracting each x/y/z component individually.
 	 */
-	inline float3 operator- (const float3& f) const {
+	float3 operator- (const float3& f) const {
 		return float3(x-f.x, y-f.y, z-f.z);
 	}
 
@@ -156,7 +149,7 @@ public:
 	 * When negating the float3, inverts all three
 	 * x/y/z components.
 	 */
-	inline float3 operator- () const {
+	float3 operator- () const {
 		return float3(-x, -y, -z);
 	}
 
@@ -168,7 +161,7 @@ public:
 	 * When subtracting a single fixed float,
 	 * decreases all three x/y/z components by that amount.
 	 */
-	inline float3 operator- (const float f) const {
+	float3 operator- (const float f) const {
 		return float3(x-f, y-f, z-f);
 	}
 
@@ -179,7 +172,7 @@ public:
 	 * Same as subtracting a float3, but stores
 	 * the new float3 inside this one.
 	 */
-	inline void operator-= (const float3& f) {
+	void operator-= (const float3& f) {
 
 		x -= f.x;
 		y -= f.y;
@@ -194,7 +187,7 @@ public:
 	 * When multiplying by another float3,
 	 * multiplies each x/y/z component individually.
 	 */
-	inline float3 operator* (const float3& f) const {
+	float3 operator* (const float3& f) const {
 		return float3(x*f.x, y*f.y, z*f.z);
 	}
 
@@ -206,7 +199,7 @@ public:
 	 * When multiplying by a single float, multiplies
 	 * each x/y/z component by that float.
 	 */
-	inline float3 operator* (const float f) const {
+	float3 operator* (const float f) const {
 		return float3(x*f, y*f, z*f);
 	}
 
@@ -217,7 +210,7 @@ public:
 	 * Same as multiplying a float3, but stores
 	 * the new float3 inside this one.
 	 */
-	inline void operator*= (const float3& f) {
+	void operator*= (const float3& f) {
 		x *= f.x;
 		y *= f.y;
 		z *= f.z;
@@ -230,7 +223,7 @@ public:
 	 * Same as multiplying a float, but stores
 	 * the new float3 inside this one.
 	 */
-	inline void operator*= (const float f) {
+	void operator*= (const float f) {
 		x *= f;
 		y *= f;
 		z *= f;
@@ -244,7 +237,7 @@ public:
 	 * When dividing by a float3, divides
 	 * each x/y/z component individually.
 	 */
-	inline float3 operator/ (const float3& f) const {
+	float3 operator/ (const float3& f) const {
 		return float3(x/f.x, y/f.y, z/f.z);
 	}
 
@@ -256,7 +249,7 @@ public:
 	 * When dividing by a single float, divides
 	 * each x/y/z component by that float.
 	 */
-	inline float3 operator/ (const float f) const {
+	float3 operator/ (const float f) const {
 
 		const float inv = (float) 1.0f / f;
 		return *this * inv;
@@ -269,7 +262,7 @@ public:
 	 * Same as dividing by a float3, but stores
 	 * the new values inside this float3.
 	 */
-	inline void operator/= (const float3& f) {
+	void operator/= (const float3& f) {
 
 		x /= f.x;
 		y /= f.y;
@@ -283,7 +276,7 @@ public:
 	 * Same as dividing by a single float, but stores
 	 * the new values inside this float3.
 	 */
-	inline void operator/= (const float f) {
+	void operator/= (const float f) {
 
 		const float inv = (float) 1.f / f;
 		*this *= inv;
@@ -297,7 +290,7 @@ public:
 	 * Tests if this float3 is equal to another, by
 	 * checking each x/y/z component individually.
 	 */
-	inline bool operator== (const float3& f) const {
+	bool operator== (const float3& f) const {
 		return math::fabs(x - f.x) <= math::fabs(CMP_EPS * x)
 			&& math::fabs(y - f.y) <= math::fabs(CMP_EPS * y)
 			&& math::fabs(z - f.z) <= math::fabs(CMP_EPS * z);
@@ -311,7 +304,7 @@ public:
 	 * Tests if this float3 is not equal to another, by
 	 * checking each x/y/z component individually.
 	 */
-	inline bool operator!= (const float3& f) const {
+	bool operator!= (const float3& f) const {
 		return !(*this == f);
 	}
 
@@ -323,7 +316,7 @@ public:
 	 * Array access for x/y/z components
 	 * (index 0 is x, index 1 is y, index 2 is z)
 	 */
-	inline float& operator[] (const int t) {
+	float& operator[] (const int t) {
 		return (&x)[t];
 	}
 
@@ -335,7 +328,7 @@ public:
 	 * Same as plain [] operator but used in
 	 * a const context
 	 */
-	inline const float& operator[] (const int t) const {
+	const float& operator[] (const int t) const {
 		return (&x)[t];
 	}
 
@@ -348,7 +341,7 @@ public:
 	 * another float3 (sums the products of each
 	 * x/y/z component).
 	 */
-	inline float dot (const float3& f) const {
+	float dot (const float3& f) const {
 		return (x * f.x) + (y * f.y) + (z * f.z);
 	}
 
@@ -361,7 +354,7 @@ public:
 	 * another float3:
 	 * (y1*z2 - z1*y2, z1*x2 - x1*z2, x1*y2 - y1*x2)
 	 */
-	inline float3 cross(const float3& f) const {
+	float3 cross(const float3& f) const {
 		return float3(
 				(y * f.z) - (z * f.y),
 				(z * f.x) - (x * f.z),
@@ -377,7 +370,7 @@ public:
 	 * and another float3 (sums the differences in each
 	 * x/y/z component, square root for pythagorean theorem)
 	 */
-	inline float distance(const float3& f) const {
+	float distance(const float3& f) const {
 
 		const float dx = x - f.x;
 		const float dy = y - f.y;
@@ -396,7 +389,7 @@ public:
 	 * differences in the x and z components, square
 	 * root for pythagorean theorem
 	 */
-	inline float distance2D(const float3& f) const {
+	float distance2D(const float3& f) const {
 
 		const float dx = x - f.x;
 		const float dz = z - f.z;
@@ -411,7 +404,7 @@ public:
 	 * (squares and sums each x/y/z component,
 	 * square root for pythagorean theorem)
 	 */
-	inline float Length() const {
+	float Length() const {
 		//assert(x!=0.f || y!=0.f || z!=0.f);
 		return (float) math::sqrt(SqLength());
 	}
@@ -424,7 +417,7 @@ public:
 	 * (squares and sums only the x and z components,
 	 * square root for pythagorean theorem)
 	 */
-	inline float Length2D() const {
+	float Length2D() const {
 		//assert(x!=0.f || y!=0.f || z!=0.f);
 		return (float) math::sqrt(SqLength2D());
 	}
@@ -436,7 +429,7 @@ public:
 	 * Normalizes the vector by dividing each
 	 * x/y/z component by the vector's length.
 	 */
-	inline float3& Normalize() {
+	float3& Normalize() {
 #if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
 		assert(SqLength() > NORMALIZE_EPS);
 		return UnsafeNormalize();
@@ -452,7 +445,7 @@ public:
 	 * Normalizes the vector by dividing each
 	 * x/y/z component by the vector's length.
 	 */
-	inline float3& UnsafeNormalize() {
+	float3& UnsafeNormalize() {
 		*this *= math::isqrt(SqLength());
 		return *this;
 	}
@@ -465,7 +458,7 @@ public:
 	 * Normalizes the vector by dividing each
 	 * x/y/z component by the vector's length.
 	 */
-	inline float3& SafeNormalize() {
+	float3& SafeNormalize() {
 
 		const float sql = SqLength();
 		if (likely(sql > NORMALIZE_EPS)) {
@@ -483,7 +476,7 @@ public:
 	 * Normalizes the vector by dividing each x/y/z component by
 	 * the vector's approx. length.
 	 */
-	inline float3& ANormalize() {
+	float3& ANormalize() {
 #if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
 		assert(SqLength() > NORMALIZE_EPS);
 		return UnsafeANormalize();
@@ -501,7 +494,7 @@ public:
 	 * Normalizes the vector by dividing each x/y/z component by
 	 * the vector's approx. length.
 	 */
-	inline float3& UnsafeANormalize() {
+	float3& UnsafeANormalize() {
 		*this *= fastmath::isqrt(SqLength());
 		return *this;
 	}
@@ -515,7 +508,7 @@ public:
 	 * the vector's approximate length, if (this != ZeroVector),
 	 * else do nothing.
 	 */
-	inline float3& SafeANormalize() {
+	float3& SafeANormalize() {
 
 		const float sql = SqLength();
 		if (likely(sql > NORMALIZE_EPS)) {
@@ -532,7 +525,7 @@ public:
 	 *
 	 * Returns the length of this vector squared.
 	 */
-	inline float SqLength() const {
+	float SqLength() const {
 		return x*x + y*y + z*z;
 	}
 
@@ -543,7 +536,7 @@ public:
 	 * Returns the 2-dimensional length of this
 	 * vector squared.
 	 */
-	inline float SqLength2D() const {
+	float SqLength2D() const {
 		return x*x + z*z;
 	}
 
@@ -555,7 +548,7 @@ public:
 	 *
 	 * Returns the squared distance of 2 float3s
 	 */
-	inline float SqDistance(const float3& f) const {
+	float SqDistance(const float3& f) const {
 
 		const float dx = x - f.x;
 		const float dy = y - f.y;
@@ -571,7 +564,7 @@ public:
 	 *
 	 * Returns the squared 2d-distance of 2 float3s
 	 */
-	inline float SqDistance2D(const float3& f) const {
+	float SqDistance2D(const float3& f) const {
 
 		const float dx = x - f.x;
 		const float dz = z - f.z;

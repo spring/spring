@@ -10,7 +10,7 @@
 
 #include <vector>
 
-class CSm3Map;
+class CSM3Map;
 class TdfParser;
 
 namespace terrain {

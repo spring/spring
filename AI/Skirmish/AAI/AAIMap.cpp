@@ -2004,7 +2004,7 @@ void AAIMap::SearchMetalSpots()
 	int TempMetal = 0;
 	int SpotsFound = 0;
 	int coordx = 0, coordy = 0;
-	float AverageMetal;
+//	float AverageMetal;
 
 	AAIMetalSpot temp;
 	float3 pos;
@@ -2021,7 +2021,7 @@ void AAIMap::SearchMetalSpots()
 	unsigned char DoubleRadius = cb->GetExtractorRadius() / 8.0;
 	int SquareRadius = (cb->GetExtractorRadius() / 16.0) * (cb->GetExtractorRadius() / 16.0); //used to speed up loops so no recalculation needed
 	int DoubleSquareRadius = (cb->GetExtractorRadius() / 8.0) * (cb->GetExtractorRadius() / 8.0); // same as above
-	int CellsInRadius = PI * XtractorRadius * XtractorRadius; //yadda yadda
+//	int CellsInRadius = PI * XtractorRadius * XtractorRadius; //yadda yadda
 	unsigned char* MexArrayA = new unsigned char [TotalCells];
 	unsigned char* MexArrayB = new unsigned char [TotalCells];
 	int* TempAverage = new int [TotalCells];
@@ -2039,7 +2039,7 @@ void AAIMap::SearchMetalSpots()
 		TotalMetal += MexArrayA[i];		// Count the total metal so you can work out an average of the whole map
 	}
 
-	AverageMetal = ((float)TotalMetal) / ((float)TotalCells);  //do the average
+//	AverageMetal = ((float)TotalMetal) / ((float)TotalCells);  //do the average
 
 	// Now work out how much metal each spot can make by adding up the metal from nearby spots
 	for (int y = 0; y != MetalMapHeight; y++)

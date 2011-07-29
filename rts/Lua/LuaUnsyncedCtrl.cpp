@@ -2,17 +2,6 @@
 
 #include "System/StdAfx.h"
 
-#include <set>
-#include <list>
-#include <cctype>
-#include <cfloat>
-
-#include <fstream>
-
-#include <SDL_keysym.h>
-#include <SDL_mouse.h>
-#include <SDL_timer.h>
-
 #include "System/mmgr.h"
 
 #include "LuaUnsyncedCtrl.h"
@@ -46,13 +35,14 @@
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/BaseGroundTextures.h"
-#include "Rendering/Env/BaseSky.h"
+#include "Rendering/Env/ISky.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/CommandDrawer.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/Textures/NamedTextures.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -64,6 +54,7 @@
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
 #include "System/Util.h"
 #include "System/Sound/ISound.h"
@@ -83,7 +74,19 @@
 	#include "System/Sound/EFXPresets.h"
 #endif
 
-using namespace std;
+#include <map>
+#include <set>
+#include <cctype>
+#include <cfloat>
+
+#include <fstream>
+
+#include <SDL_keysym.h>
+#include <SDL_mouse.h>
+#include <SDL_timer.h>
+
+using std::min;
+using std::max;
 
 // MinGW defines this for a WINAPI function
 #undef SendMessage
@@ -465,7 +468,7 @@ static string ParseMessage(lua_State* L, const string& msg)
 
 static void PrintMessage(lua_State* L, const string& msg)
 {
-	logOutput.Print(ParseMessage(L, msg));
+	LOG("%s", ParseMessage(L, msg).c_str());
 }
 
 
@@ -1177,7 +1180,7 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 		return 0;
 	}
 	if (!gs->cheatEnabled) {
-		logOutput.Print("SetWaterParams() needs cheating enabled");
+		LOG("SetWaterParams() needs cheating enabled");
 		return 0;
 	}
 	if (!lua_istable(L, 1)) {
@@ -1545,7 +1548,7 @@ int LuaUnsyncedCtrl::SetMapSquareTexture(lua_State* L)
 
 	const int texSquareX = luaL_checkint(L, 1);
 	const int texSquareY = luaL_checkint(L, 2);
-	const std::string& luaTexName = luaL_checkstring(L, 3);
+	const std::string& texName = luaL_checkstring(L, 3);
 
 	CBaseGroundDrawer* groundDrawer = readmap->GetGroundDrawer();
 	CBaseGroundTextures* groundTextures = groundDrawer->GetGroundTextures();
@@ -1554,27 +1557,40 @@ int LuaUnsyncedCtrl::SetMapSquareTexture(lua_State* L)
 		lua_pushboolean(L, false);
 		return 1;
 	}
-	if (luaTexName.empty()) {
+	if (texName.empty()) {
 		// restore default texture for this square
 		lua_pushboolean(L, groundTextures->SetSquareLuaTexture(texSquareX, texSquareY, 0));
 		return 1;
 	}
 
+	// TODO: leaking ID's like this means we need to guard against texture deletion
 	const LuaTextures& luaTextures = CLuaHandle::GetActiveTextures(L);
-	const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(luaTexName);
+	const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(texName);
+	const CNamedTextures::TexInfo* namedTexture = CNamedTextures::GetInfo(texName);
 
-	if (luaTexture == NULL) {
-		// not a valid texture (name)
-		lua_pushboolean(L, false);
+	if (luaTexture != NULL) {
+		if (luaTexture->xsize != luaTexture->ysize) {
+			// square textures only
+			lua_pushboolean(L, false);
+			return 1;
+		}
+
+		lua_pushboolean(L, groundTextures->SetSquareLuaTexture(texSquareX, texSquareY, luaTexture->id));
 		return 1;
 	}
-	if (luaTexture->xsize != luaTexture->ysize) {
-		// square textures only
-		lua_pushboolean(L, false);
+
+	if (namedTexture != NULL) {
+		if (namedTexture->xsize != namedTexture->ysize) {
+			// square textures only
+			lua_pushboolean(L, false);
+			return 1;
+		}
+
+		lua_pushboolean(L, groundTextures->SetSquareLuaTexture(texSquareX, texSquareY, namedTexture->id));
 		return 1;
 	}
 
-	lua_pushboolean(L, groundTextures->SetSquareLuaTexture(texSquareX, texSquareY, luaTexture->id));
+	lua_pushboolean(L, false);
 	return 1;
 }
 
@@ -1587,7 +1603,7 @@ int LuaUnsyncedCtrl::GetMapSquareTexture(lua_State* L)
 	const int texSquareX = luaL_checkint(L, 1);
 	const int texSquareY = luaL_checkint(L, 2);
 	const int texMipLevel = luaL_checkint(L, 3);
-	const std::string& luaTexName = luaL_checkstring(L, 4);
+	const std::string& texName = luaL_checkstring(L, 4);
 
 	CBaseGroundDrawer* groundDrawer = readmap->GetGroundDrawer();
 	CBaseGroundTextures* groundTextures = groundDrawer->GetGroundTextures();
@@ -1596,13 +1612,13 @@ int LuaUnsyncedCtrl::GetMapSquareTexture(lua_State* L)
 		lua_pushboolean(L, false);
 		return 1;
 	}
-	if (luaTexName.empty()) {
+	if (texName.empty()) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
 	const LuaTextures& luaTextures = CLuaHandle::GetActiveTextures(L);
-	const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(luaTexName);
+	const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(texName);
 
 	if (luaTexture == NULL) {
 		// not a valid texture (name)
@@ -1782,15 +1798,15 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 
 	fhVFS.Read(buffer, numBytes);
 
-	fstream fstr(path.c_str(), ios::out | ios::binary);
+	std::fstream fstr(path.c_str(), std::ios::out | std::ios::binary);
 	fstr.write((const char*) buffer, numBytes);
 	fstr.close();
 
 	if (!dname.empty()) {
-		logOutput.Print("Extracted file \"%s\" to directory \"%s\"",
-		                fname.c_str(), dname.c_str());
+		LOG("Extracted file \"%s\" to directory \"%s\"",
+				fname.c_str(), dname.c_str());
 	} else {
-		logOutput.Print("Extracted file \"%s\"", fname.c_str());
+		LOG("Extracted file \"%s\"", fname.c_str());
 	}
 
 	delete[] buffer;
@@ -2045,7 +2061,7 @@ int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 	if (lua_isboolean(L, 3)) { \
 		static bool shown = false; \
 		if (!shown) { \
-			logOutput.Print("%s: Warning: third parameter \"setInOverlay\" is deprecated", __FUNCTION__); \
+			LOG_L(L_WARNING, "%s: third parameter \"setInOverlay\" is deprecated", __FUNCTION__); \
 			shown = true; \
 		} \
 	}
@@ -2135,7 +2151,6 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 	}
 
 	const std::string arguments = luaL_checkstring(L, 1);
-	// LogObject() << "Args: " << arguments;
 	const std::string script = luaL_checkstring(L, 2);
 
 	const std::string springFullName = (Platform::GetProcessExecutableFile());
@@ -2150,7 +2165,6 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 	// script.txt, if content for it is given by Lua code
 	const std::string scriptFullName = FileSystemHandler::GetInstance().GetWriteDir() + "script.txt";
 	if (!script.empty()) {
-		// LogObject() << "Writing script to: " << scriptFullName;
 		std::ofstream scriptfile(scriptFullName.c_str());
 		scriptfile << script;
 		scriptfile.close();
@@ -2167,9 +2181,9 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 	const bool execOk = execError.empty();
 
 	if (execOk) {
-		LogObject() << "The game should restart";
+		LOG("The game should restart");
 	} else {
-		LogObject() << "Error in Restart: " << execError;
+		LOG_L(L_ERROR, "Error in Restart: %s", execError.c_str());
 	}
 
 	lua_pushboolean(L, execOk);
@@ -2240,7 +2254,7 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 	ud->iconType = icon::iconHandler->GetIcon(lua_tostring(L, 2));
 
 	// set decoys to the same icon
-	map<int, set<int> >::const_iterator fit;
+	std::map<int, std::set<int> >::const_iterator fit;
 
 	if (ud->decoyDef) {
 		ud->decoyDef->iconType = ud->iconType;
@@ -2249,8 +2263,8 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 		fit = unitDefHandler->decoyMap.find(ud->id);
 	}
 	if (fit != unitDefHandler->decoyMap.end()) {
-		const set<int>& decoySet = fit->second;
-		set<int>::const_iterator dit;
+		const std::set<int>& decoySet = fit->second;
+		std::set<int>::const_iterator dit;
 		for (dit = decoySet.begin(); dit != decoySet.end(); ++dit) {
   		const UnitDef* decoyDef = unitDefHandler->GetUnitDefByID(*dit);
 			decoyDef->iconType = ud->iconType;
@@ -2661,7 +2675,7 @@ int LuaUnsyncedCtrl::SetShareLevel(lua_State* L)
 		net->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam,	teamHandler->Team(gu->myTeam)->metalShare, shareLevel));
 	}
 	else {
-		logOutput.Print("SetShareLevel() unknown resource: %s", shareType.c_str());
+		LOG_L(L_WARNING, "SetShareLevel() unknown resource: %s", shareType.c_str());
 	}
 	return 0;
 }

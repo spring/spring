@@ -2,11 +2,6 @@
 
 #include "System/StdAfx.h"
 #include "CommandColors.h"
-#include <cstdio>
-#include <cstring>
-#include <string>
-#include <vector>
-#include <map>
 
 #include "System/mmgr.h"
 
@@ -15,7 +10,15 @@
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Util.h"
 
-using namespace std;
+#include <cstdio>
+#include <cstring>
+#include <string>
+#include <vector>
+#include <map>
+
+using std::string;
+using std::vector;
+using std::map;
 
 /******************************************************************************/
 

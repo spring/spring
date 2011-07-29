@@ -1,5 +1,8 @@
-#ifndef LUAHELPER_H
-#define LUAHELPER_H
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+#ifndef LUA_HELPER_H
+#define LUA_HELPER_H
+
 #include "Sim/Misc/TeamHandler.h"
 
 /******************************************************************************/
@@ -91,4 +94,4 @@ static inline bool CanControlProjectileAllyTeam(const lua_State *L, int allyTeam
 	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
 }
 
-#endif // LUAHELPER_H
+#endif // LUA_HELPER_H

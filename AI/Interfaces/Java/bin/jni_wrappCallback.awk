@@ -388,6 +388,11 @@ function printJavaClsAndInt() {
 			print("") >> outFile_i;
 
 			# print the interface implementing function
+			commentText = getFunctionComment_Common(funcDocComment, i);
+			if (match(commentText, /@deprecated/)) {
+				# this prevents javac from outputting a warning
+				print("\t" "/** @deprecated */") >> outFile_c;
+			}
 			print("\t" "@Override") >> outFile_c;
 			print("\t" "public " retType " " fullName "(" paramListNoSID ") {") >> outFile_c;
 			print("\t\t" condRet "this." fullName "(this.skirmishAIId" paramListNoSIDNoTypes ");") >> outFile_c;

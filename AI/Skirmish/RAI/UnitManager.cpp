@@ -431,7 +431,7 @@ void cUnitManager::GroupResetRallyPoint(sRAIGroup* group)
 	float3 GPos = cb->GetUnitPos(group->Units.begin()->first);
 	UnitInfo* GU = group->Units.begin()->second;
 	int iBest=-1;
-	UnitInfo* uBest;
+//	UnitInfo* uBest;
 
 	G->ValidateUnitList(&G->UImmobile);
 	for(map<int,UnitInfo*>::iterator iU=G->UImmobile.begin(); iU!=G->UImmobile.end(); ++iU)
@@ -439,7 +439,7 @@ void cUnitManager::GroupResetRallyPoint(sRAIGroup* group)
 		if( G->TM->CanMoveToPos(GU->area,cb->GetUnitPos(iU->first)) && GPos.distance2D(cb->GetUnitPos(iU->first)) < GPos.distance2D(cb->GetUnitPos(iBest)) )
 		{
 			iBest = iU->first;
-			uBest = iU->second;
+//			uBest = iU->second;
 		}
 	}
 
@@ -524,7 +524,7 @@ void cUnitManager::SendattackGroups()
 		if( (Group[i]->Enemies.size() == (size_t)0) &&
 		    ( (Group[i]->Units.size() >= (size_t)4) ||
 		      (G->UDH->BLBuilder->UDefActive == 0) ) ) {
-			int enemyID = G->CM->GetClosestEnemy(cb->GetUnitPos(Group[i]->Units.begin()->first), Group[i]->Units.begin()->second);
+//			int enemyID = G->CM->GetClosestEnemy(cb->GetUnitPos(Group[i]->Units.begin()->first), Group[i]->Units.begin()->second);
 			// TODO: FIXME: implement me
 		}
 	}

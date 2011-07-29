@@ -64,10 +64,11 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/myMath.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "LuaHelper.h"
 
-using namespace std;
+using std::max;
+using std::min;
 
 
 /******************************************************************************/
@@ -2740,10 +2741,10 @@ static void ParseParams(lua_State* L, const char* caller, float& factor,
 		fz2    = luaL_checkfloat(L, 4);
 		factor = luaL_checkfloat(L, 5);
 		if (fx1 > fx2) {
-			swap(fx1, fx2);
+			std::swap(fx1, fx2);
 		}
 		if (fz1 > fz2) {
-			swap(fz1, fz2);
+			std::swap(fz1, fz2);
 		}
 	}
 	else {
@@ -2955,7 +2956,7 @@ int LuaSyncedCtrl::SetHeightMapFunc(lua_State* L)
 	inHeightMap = false;
 
 	if (error != 0) {
-		logOutput.Print("Spring.SetHeightMapFunc: error(%i) = %s",
+		LOG_L(L_ERROR, "Spring.SetHeightMapFunc: error(%i) = %s",
 				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
@@ -3132,7 +3133,7 @@ int LuaSyncedCtrl::SetSmoothMeshFunc(lua_State *L)
 	inSmoothMesh = false;
 
 	if (error != 0) {
-		logOutput.Print("Spring.SetSmoothMeshFunc: error(%i) = %s",
+		LOG_L(L_ERROR, "Spring.SetSmoothMeshFunc: error(%i) = %s",
 				error, lua_tostring(L, -1));
 		lua_error(L);
 	}

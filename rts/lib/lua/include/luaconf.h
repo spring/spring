@@ -567,30 +567,42 @@
 #if defined(LUA_NUMBER_DOUBLE) && !defined(LUA_ANSI) && !defined(__SSE2__) && \
     (defined(__i386) || defined (_M_IX86) || defined(__i386__))
 
-/* On a Microsoft compiler, use assembler */
-#if defined(_MSC_VER)
+	/* On a Microsoft compiler, use assembler */
+	#if defined(_MSC_VER)
 
-#warning Using ASM for lua_number2int  (SPRING)
-#define lua_number2int(i,d)   __asm fld d   __asm fistp i
-#define lua_number2integer(i,n)		lua_number2int(i, n)
+		#warning Using ASM for lua_number2int  (SPRING)
+		#define lua_number2int(i,d)   __asm fld d   __asm fistp i
+		#define lua_number2integer(i,n)		lua_number2int(i, n)
 
-/* the next trick should work on any Pentium, but sometimes clashes
-   with a DirectX idiosyncrasy */
-#else
+		/* the next trick should work on any Pentium, but sometimes clashes
+		with a DirectX idiosyncrasy */
+	#else
 
-#warning Using casting for lua_number2int  (SPRING)
-union luai_Cast { double l_d; long l_l; };
-#define lua_number2int(i,d) \
-  { volatile union luai_Cast u; u.l_d = (d) + 6755399441055744.0; (i) = u.l_l; }
-#define lua_number2integer(i,n)		lua_number2int(i, n)
+		#warning Using casting for lua_number2int  (SPRING)
+		union luai_Cast { double l_d; long l_l; };
+		#define lua_number2int(i,d) \
+		{ volatile union luai_Cast u; u.l_d = (d) + 6755399441055744.0; (i) = u.l_l; }
+		#define lua_number2integer(i,n)		lua_number2int(i, n)
 
-#endif
-
+	#endif
 
 /* this option always works, but may be slow */
 #else
-#define lua_number2int(i,d)	((i)=(int)(d))
-#define lua_number2integer(i,d)	((i)=(lua_Integer)(d))
+
+	#ifdef __SUPPORT_SNAN__
+		#define CLAMP_LUA_NUMBER(d)                                                        \
+			do {                                                                           \
+				if ((d) < (lua_Number(1 << 24) * -1)) { (d) = lua_Number(1 << 24) * -1; }  \
+				if ((d) > (lua_Number(1 << 24)     )) { (d) = lua_Number(1 << 24);      }  \
+			} while (0);
+
+
+		#define lua_number2int(i, d)        CLAMP_LUA_NUMBER(d); ((i) = (int) (d))
+		#define lua_number2integer(i, d)    CLAMP_LUA_NUMBER(d); ((i) = (lua_Integer) (d))
+	#else
+		#define lua_number2int(i, d)        ((i) = (int)(d))
+		#define lua_number2integer(i, d)    ((i) = (lua_Integer)(d))
+	#endif
 
 #endif
 

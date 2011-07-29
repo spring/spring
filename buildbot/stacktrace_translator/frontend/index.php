@@ -11,7 +11,7 @@
 /*
 	limits the usage of the script, only allow this script to be run every 10 seconds
 */
-$lastrun=sys_get_temp_dir()."./.lastrun";
+$lastrun=sys_get_temp_dir()."/.lastrun";
 
 function limit(){
 	global $lastrun;

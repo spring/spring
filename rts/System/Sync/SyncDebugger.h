@@ -8,7 +8,7 @@
 #include <assert.h>
 #include <deque>
 #include <vector>
-
+#include <boost/cstdint.hpp>
 
 /**
  * @brief sync debugger class
@@ -46,8 +46,9 @@ class CSyncDebugger {
 		 * represented by this structure.
 		 */
 		struct HistItem {
-			unsigned chk; ///< Checksum (XOR of 32 bit dwords of the data).
-			unsigned data; ///< First four bytes of data
+			/// Checksum (XOR of 32 bit dwords of the data),
+			/// or the data itself if it is 32 bits or less.
+			unsigned data;
 		};
 
 		/**
@@ -76,9 +77,6 @@ class CSyncDebugger {
 		 *
 		 * Results of the last HISTORY_SIZE * BLOCK_SIZE = 2048 * 2048 = 4194304
 		 * assignments to synced variables are stored in it.
-		 *
-		 * The size of the array is HISTORY_SIZE * BLOCK_SIZE * sizeof(HistItem),
-		 * that is 2048*2048*(4+4) = 32 MegaBytes.
 		 */
 		HistItem* history;
 
@@ -91,12 +89,6 @@ class CSyncDebugger {
 		 *
 		 * Results of the last 4194304 assignments to synced variables are
 		 * stored in it, with a backtrace attached to each of these results.
-		 *
-		 * This makes the size of the array HISTORY_SIZE * BLOCK_SIZE *
-		 * sizeof(HistItemWithBacktrace), that is
-		 * 2048*2048*(4+4+4+4+((MAX_STACK+1)*sizeof(void*))) =
-		 * 160 MegaBytes on 32 bit systems and
-		 * 256 MegaBytes on 64 bit systems.
 		 */
 		HistItemWithBacktrace* historybt;
 
@@ -112,9 +104,10 @@ class CSyncDebugger {
 			std::vector<unsigned> checksumResponses;
 			boost::uint64_t remoteFlop;
 			std::vector<unsigned> remoteHistory;
+			PlayerStruct() : remoteFlop(0) {}
 		};
-		typedef std::vector<PlayerStruct> playerVec;
-		playerVec players;
+		typedef std::vector<PlayerStruct> PlayerVec;
+		PlayerVec players;
 		std::deque<unsigned> requestedBlocks;        ///< We are processing these blocks.
 		std::deque<unsigned> pendingBlocksToRequest; ///< We still need to receive these blocks (slowly emptied).
 		bool waitingForBlockResponse;                ///< Are we still waiting for a block response?

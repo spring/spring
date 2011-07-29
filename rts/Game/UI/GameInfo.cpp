@@ -1,10 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/StdAfx.h"
-#include <string>
-#include <vector>
-#include <SDL_keysym.h>
-#include <cstdio>
 
 #include "System/mmgr.h"
 
@@ -22,8 +18,13 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
 
+#include <string>
+#include <vector>
+#include <SDL_keysym.h>
+#include <cstdio>
 
-using namespace std;
+using std::string;
+using std::vector;
 
 
 CGameInfo* CGameInfo::instance = NULL;

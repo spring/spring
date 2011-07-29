@@ -165,7 +165,7 @@ void CCannon::FireImpl(void)
 	dir += 
 		(gs->randVector() * sprayAngle + salvoError) *
 		(1.0f - owner->limExperience * weaponDef->ownerExpAccWeight);
-	dir.Normalize();
+	dir.SafeNormalize();
 
 	int ttl = 0;
 	float sqSpeed2D = dir.SqLength2D() * projectileSpeed * projectileSpeed;

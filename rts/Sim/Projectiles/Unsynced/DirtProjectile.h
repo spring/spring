@@ -12,7 +12,7 @@ class CDirtProjectile : public CProjectile
 	CR_DECLARE(CDirtProjectile);
 public:
 	CDirtProjectile();
-	CDirtProjectile(const float3 pos, const float3 speed, const float ttl,
+	CDirtProjectile(const float3& pos, const float3& speed, const float ttl,
 			const float size, const float expansion, float slowdown,
 			CUnit* owner, const float3& color);
 	virtual ~CDirtProjectile();

@@ -38,7 +38,6 @@ public:
 	}
 
 protected:
-	void GetFrustumSide(float3& side, bool upside);
 	bool InitDepthTarget();
 	void DrawShadowPasses();
 	void LoadShadowGenShaderProgs();
@@ -63,14 +62,6 @@ public:
 	CMatrix44f shadowMatrix;
 
 protected:
-	struct fline {
-		float base;
-		float dir;
-		int left;
-		float minz;
-		float maxz;
-	};
-	std::vector<fline> left;
 	FBO fb;
 
 	static bool firstInstance;

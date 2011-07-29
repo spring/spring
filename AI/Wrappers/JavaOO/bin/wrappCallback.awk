@@ -136,7 +136,7 @@ function getNullTypeValue(fRet_ntv) {
 		return "0";
 	}
 }
-function printTripleFunc(fRet_tr, fName_tr, fParams_tr, thrownExceptions_tr, outFile_int_tr, outFile_stb_tr, outFile_jni_tr, printIntAndStb_tr, noOverride_tr) {
+function printTripleFunc(fRet_tr, fName_tr, fParams_tr, thrownExceptions_tr, outFile_int_tr, outFile_stb_tr, outFile_jni_tr, printIntAndStb_tr, noOverride_tr, isDeprecated_tr) {
 
 	_funcHdr_tr = "public " fRet_tr " " fName_tr "(" fParams_tr ")";
 	if (thrownExceptions_tr != "") {
@@ -160,10 +160,14 @@ function printTripleFunc(fRet_tr, fName_tr, fParams_tr, thrownExceptions_tr, out
 			propName_tr = lowerize(propName_tr);
 			fSetterName_tr = fName_tr;
 			sub(/^(get|is)/, "set", fSetterName_tr);
-			print("\t" "private " fRet_tr " " propName_tr " = "  nullTypeValue_tr ";") >> outFile_stb_tr;
 			print("\t" "public void " fSetterName_tr "(" fRet_tr " " propName_tr ")" " {") >> outFile_stb_tr;
 			print("\t\t" "this." propName_tr " = " propName_tr ";") >> outFile_stb_tr;
 			print("\t" "}") >> outFile_stb_tr;
+			print("\t" "private " fRet_tr " " propName_tr " = "  nullTypeValue_tr ";") >> outFile_stb_tr;
+			if (isDeprecated_tr) {
+				# this prevents javac from outputting a warning
+				print("\t" "/** @deprecated */") >> outFile_stb_tr;
+			}
 			print("\t" "@Override") >> outFile_stb_tr;
 			print("\t" _funcHdr_tr " {") >> outFile_stb_tr;
 			print("\t\t" "return " propName_tr ";") >> outFile_stb_tr;
@@ -309,7 +313,8 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 		_fName   = "get" addIndNameCap;
 		_fParams = "";
 		_fExceps = "";
-		printTripleFunc(_fRet, _fName, _fParams, _fExceps, outFile_int_c, outFile_stb_c, outFile_jni_c, printIntAndStb_tmp_c, _noOverride);
+		_fIsDeprecated = 0;
+		printTripleFunc(_fRet, _fName, _fParams, _fExceps, outFile_int_c, outFile_stb_c, outFile_jni_c, printIntAndStb_tmp_c, _noOverride, _fIsDeprecated);
 		print("\t\t" "return " addIndName ";") >> outFile_jni_c;
 		print("\t" "}") >> outFile_jni_c;
 		print("") >> outFile_jni_c;
@@ -339,7 +344,8 @@ function printClass(implId_c, clsName_c, printIntAndStb_c) {
 			_fName   = "get" addIndNameCapOO;
 			_fParams = "";
 			_fExceps = "";
-			printTripleFunc(_fRet, _fName, _fParams, _fExceps, outFile_int_c, outFile_stb_c, outFile_jni_c, printIntAndStb_tmp_c, _noOverride);
+			_fIsDeprecated = 0;
+			printTripleFunc(_fRet, _fName, _fParams, _fExceps, outFile_int_c, outFile_stb_c, outFile_jni_c, printIntAndStb_tmp_c, _noOverride, _fIsDeprecated);
 			print("\t\t" "return Wrapp" _fullClsName ".getInstance(" _wrappGetInst_params ");") >> outFile_jni_c;
 			print("\t" "}") >> outFile_jni_c;
 			print("") >> outFile_jni_c;
@@ -1089,7 +1095,10 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 	}
 	printFunctionComment_Common(outFile_jni_m, funcDocComment, fullName_doc_m, indent_m);
 
-	printTripleFunc(retType, memName, params, thrownExceptions, outFile_int_m, outFile_stb_m, outFile_jni_m, printIntAndStb_m, 0);
+	_fNoOverride = 0;
+	commentText = getFunctionComment_Common(funcDocComment, fullName_doc_m);
+	_fIsDeprecated = match(commentText, /@deprecated/);
+	printTripleFunc(retType, memName, params, thrownExceptions, outFile_int_m, outFile_stb_m, outFile_jni_m, printIntAndStb_m, _fNoOverride, _fIsDeprecated);
 
 	isVoid_m = (retType == "void");
 

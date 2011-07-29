@@ -41,6 +41,7 @@ public:
 	void ReconnectTo(CConnection& conn) {}
 	bool CanReconnect() const;
 	bool NeedsReconnect();
+	void Unmute() {}
 
 	std::string Statistics() const;
 	std::string GetFullAddress() const;

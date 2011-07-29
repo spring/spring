@@ -2,14 +2,10 @@
 
 #include "System/StdAfx.h"
 
-#include <set>
-#include <list>
-#include <cctype>
-#include <limits.h>
-#include <boost/regex.hpp>
-using namespace std;
-
 #include "System/mmgr.h"
+
+#include <cmath>
+#include <boost/regex.hpp>
 
 #include "LuaVFS.h"
 
@@ -19,12 +15,18 @@ using namespace std;
 #include "LuaHashString.h"
 #include "LuaIO.h"
 #include "LuaUtils.h"
-#include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
+
+#include <set>
+#include <list>
+#include <cctype>
+#include <limits.h>
+
+using std::min;
 
 
 /******************************************************************************/

@@ -4,14 +4,6 @@
 
 #include "Game/SelectedUnits.h"
 
-#include <set>
-#include <list>
-#include <cctype>
-
-#include <SDL_timer.h>
-#include <SDL_keysym.h>
-#include <SDL_mouse.h>
-
 #include "System/mmgr.h"
 
 #include "LuaUnsyncedRead.h"
@@ -44,7 +36,7 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
-#include "Rendering/Env/BaseWater.h"
+#include "Rendering/Env/IWater.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -67,7 +59,13 @@
 	#include "System/Sound/EFXPresets.h"
 #endif
 
-using namespace std;
+#include <set>
+#include <list>
+#include <cctype>
+
+#include <SDL_timer.h>
+#include <SDL_keysym.h>
+#include <SDL_mouse.h>
 
 const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
@@ -1866,7 +1864,7 @@ int LuaUnsyncedRead::GetConsoleBuffer(lua_State* L)
 		luaL_error(L, "Incorrect arguments to GetConsoleBuffer([count])");
 	}
 
-	deque<CInfoConsole::RawLine> lines;
+	std::deque<CInfoConsole::RawLine> lines;
 	ic->GetRawLines(lines);
 	const int lineCount = (int)lines.size();
 

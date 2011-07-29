@@ -6,15 +6,15 @@
 #include "Map/ReadMap.h"
 #include "SMFMapFile.h"
 
-class CBFGroundDrawer;
+class CSMFGroundDrawer;
 
-class CSmfReadMap : public CReadMap
+class CSMFReadMap : public CReadMap
 {
 public:
-	CR_DECLARE(CSmfReadMap)
+	CR_DECLARE(CSMFReadMap)
 
-	CSmfReadMap(std::string mapname);
-	~CSmfReadMap();
+	CSMFReadMap(std::string mapname);
+	~CSMFReadMap();
 
 	void UpdateShadingTexture();
 	void UpdateHeightMapUnsynced(const HeightMapUpdate&);
@@ -46,17 +46,37 @@ public:
 	void FreeInfoMap(const std::string& name, unsigned char* data);
 
 	// NOTE: do not use, just here for backward compatibility with SMFGroundTextures.cpp
-	CSmfMapFile& GetFile() { return file; }
+	CSMFMapFile& GetFile() { return file; }
 
-	const float* GetCornerHeightMapSynced() const { return &cornerHeightMapSynced[0]; }
-	      float* GetCornerHeightMapUnsynced()     { return &cornerHeightMapUnsynced[0]; }
+	const float* GetCornerHeightMapSynced()   const { return &cornerHeightMapSynced[0]; }
+#ifdef USE_UNSYNCED_HEIGHTMAP
+	const float* GetCornerHeightMapUnsynced() const { return &cornerHeightMapUnsynced[0]; }
+#endif
 
 	void ConfigureAnisotropy();
 	float GetAnisotropy() const { return anisotropy; }
 
-protected:
+	bool HaveSpecularLighting() const { return haveSpecularLighting; }
+	bool HaveSplatTexture() const { return haveSplatTexture; }
 
-	CSmfMapFile file;
+	// constants
+	static const int tileScale     =   4;
+	static const int bigSquareSize = 128; // 32 * tileScale
+
+	// globals for SMFGround{Drawer, Textures}
+	int numBigTexX;
+	int numBigTexY;
+	int bigTexSize;
+	int tileMapSizeX;
+	int tileMapSizeY;
+	int tileCount;
+	int mapSizeX;
+	int mapSizeZ;
+	int maxHeightMapIdx;
+	int heightMapSizeX;
+
+protected:
+	CSMFMapFile file;
 
 	unsigned int detailTex;        // supplied by the map
 	unsigned int specularTex;      // supplied by the map, moderates specular contribution
@@ -79,12 +99,13 @@ protected:
 	float3 GetLightValue(const int& x, const int& y) const;
 	void ParseSMD(std::string filename);
 
-	friend class CBFGroundDrawer;
-	CBFGroundDrawer* groundDrawer;
+	CSMFGroundDrawer* groundDrawer;
 
 private:
 	std::vector<float> cornerHeightMapSynced;
+#ifdef USE_UNSYNCED_HEIGHTMAP
 	std::vector<float> cornerHeightMapUnsynced;
+#endif
 
 	std::vector<unsigned char> shadingTexPixelRow;
 	unsigned int shadingTexUpdateIter;

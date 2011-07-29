@@ -7,17 +7,17 @@
 #include "terrain/Terrain.h" // for Camera
 #include "Map/BaseGroundDrawer.h"
 
-class CSm3ReadMap;
+class CSM3ReadMap;
 namespace terrain {
 	class Terrain;
 	class RenderContext;
 }
 
-class CSm3GroundDrawer : public CBaseGroundDrawer
+class CSM3GroundDrawer : public CBaseGroundDrawer
 {
 public:
-	CSm3GroundDrawer(CSm3ReadMap* map);
-	~CSm3GroundDrawer();
+	CSM3GroundDrawer(CSM3ReadMap* map);
+	~CSM3GroundDrawer();
 
 	void Draw(bool drawWaterReflection, bool drawUnitReflection);
 	void DrawShadowPass();
@@ -30,7 +30,7 @@ public:
 protected:
 	void DrawObjects(bool drawWaterReflection, bool drawUnitReflection);
 
-	CSm3ReadMap* map;
+	CSM3ReadMap* map;
 
 	terrain::Terrain* tr;
 	terrain::RenderContext* rc;
@@ -41,7 +41,7 @@ protected:
 	terrain::Camera reflectCam;
 	Frustum frustum;
 
-	friend class CSm3ReadMap;
+	friend class CSM3ReadMap;
 };
 
 #endif // _SMF3_GROUND_DRAWER_H_

@@ -2,10 +2,10 @@
 
 #include "LogUtil.h"
 
-#include "ILog.h" // for LOG_LEVEL_*
+#include "Level.h"
 #include <stddef.h> // for NULL
 
-const char* log_levelToString(int level) {
+const char* log_util_levelToString(int level) {
 
 	switch (level) {
 		case LOG_LEVEL_DEBUG:   return "Debug";
@@ -17,7 +17,7 @@ const char* log_levelToString(int level) {
 	}
 }
 
-char log_levelToChar(int level) {
+char log_util_levelToChar(int level) {
 
 	switch (level) {
 		case LOG_LEVEL_DEBUG:   return 'D';
@@ -29,7 +29,7 @@ char log_levelToChar(int level) {
 	}
 }
 
-const char* log_prepareSection(const char* section) {
+const char* log_util_prepareSection(const char* section) {
 
 	// make sure we always have a string for printing
 	if (section == NULL) {

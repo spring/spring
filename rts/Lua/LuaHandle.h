@@ -2,13 +2,6 @@
 
 #ifndef LUA_HANDLE_H
 #define LUA_HANDLE_H
-
-#include <string>
-#include <vector>
-#include <set>
-using std::string;
-using std::vector;
-using std::set;
 #include <boost/cstdint.hpp>
 
 #include "System/EventClient.h"
@@ -23,6 +16,13 @@ using std::set;
 #include "LuaDisplayLists.h"
 #include "System/Platform/Threading.h"
 #include "System/LogOutput.h"
+
+#include <string>
+#include <vector>
+#include <set>
+using std::string;
+using std::vector;
+using std::set;
 
 
 #define LUA_HANDLE_ORDER_RULES            100

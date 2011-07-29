@@ -8,7 +8,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.hpp"
-#include "Rendering/Env/BaseWater.h"
+#include "Rendering/Env/IWater.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
@@ -31,7 +31,7 @@ CR_REG_METADATA(CWakeProjectile,(
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CWakeProjectile::CWakeProjectile(const float3& pos, const float3 speed, float startSize, float sizeExpansion, CUnit* owner, float alpha, float alphaFalloff, float fadeupTime):
+CWakeProjectile::CWakeProjectile(const float3& pos, const float3& speed, float startSize, float sizeExpansion, CUnit* owner, float alpha, float alphaFalloff, float fadeupTime):
 	CProjectile(pos, speed, owner, false, false, false),
 	alpha(0.0f),
 	alphaFalloff(alphaFalloff),
@@ -45,7 +45,7 @@ CWakeProjectile::CWakeProjectile(const float3& pos, const float3 speed, float st
 	rotation = gu->usRandFloat() * PI*2;
 	rotSpeed = (gu->usRandFloat() - 0.5f) * PI*2*0.01f;
 	checkCol = false;
-	if (CBaseWater::noWakeProjectiles) {
+	if (IWater::IsNoWakeProjectiles()) {
 		alpha = 0;
 		alphaAddTime = 0;
 		size = 0;

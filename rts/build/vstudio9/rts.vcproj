@@ -2078,11 +2078,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseSky.cpp"
+					RelativePath="..\..\Rendering\Env\ISky.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseSky.h"
+					RelativePath="..\..\Rendering\Env\ISky.h"
 					>
 				</File>
 				<File
@@ -2094,11 +2094,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseWater.cpp"
+					RelativePath="..\..\Rendering\Env\IWater.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\BaseWater.h"
+					RelativePath="..\..\Rendering\Env\IWater.h"
 					>
 				</File>
 				<File
@@ -4430,7 +4430,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\CRC.cpp"
+					RelativePath="..\..\System\CRC.cpp"
 					>
 					<FileConfiguration
 						Name="Debug|Win32"
@@ -4482,7 +4482,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\CRC.h"
+					RelativePath="..\..\System\CRC.h"
 					>
 				</File>
 				<File

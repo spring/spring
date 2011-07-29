@@ -204,7 +204,7 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 	// ray, hence we save the distance along it that got skipped
 	ClampLineInMap(from, to);
 
-	const float3 dir = (to - from).SafeNormalize();
+//	const float3 dir = (to - from).SafeNormalize();
 
 	const float skippedDist = (pfrom - from).Length();
 	const float dx = to.x - from.x;
@@ -213,15 +213,8 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced) const
 
 	bool keepgoing = true;
 
-	const float* hm = readmap->GetCornerHeightMapSynced();
-	const float3* nm = readmap->GetFaceNormalsSynced();
-
-	#ifdef USE_UNSYNCED_HEIGHTMAP
-	if (!synced) {
-		hm = readmap->GetCornerHeightMapUnsynced();
-		nm = readmap->GetFaceNormalsUnsynced();
-	}
-	#endif
+	const float* hm  = (synced) ? readmap->GetCornerHeightMapSynced() : readmap->GetCornerHeightMapUnsynced();
+	const float3* nm = (synced) ? readmap->GetFaceNormalsSynced()     : readmap->GetFaceNormalsUnsynced();
 
 	if ((floor(from.x / SQUARE_SIZE) == floor(to.x / SQUARE_SIZE)) && (floor(from.z / SQUARE_SIZE) == floor(to.z / SQUARE_SIZE))) {
 		// <from> and <to> are the same
@@ -356,14 +349,7 @@ float CGround::GetHeightAboveWater(float x, float y, bool synced) const
 
 float CGround::GetHeightReal(float x, float y, bool synced) const
 {
-	const float* heightmap = readmap->GetCornerHeightMapSynced();
-
-	#ifdef USE_UNSYNCED_HEIGHTMAP
-	if (!synced) {
-		heightmap = readmap->GetCornerHeightMapUnsynced();
-	}
-	#endif
-
+	const float* heightmap = (synced) ? readmap->GetCornerHeightMapSynced() : readmap->GetCornerHeightMapUnsynced();
 	return InterpolateHeight(x, y, heightmap);
 }
 
@@ -380,14 +366,7 @@ const float3& CGround::GetNormal(float x, float y, bool synced) const
 	xsquare = Clamp(xsquare, 0, gs->mapxm1);
 	ysquare = Clamp(ysquare, 0, gs->mapym1);
 
-	const float3* normalmap = readmap->GetCenterNormalsSynced();
-
-	#ifdef USE_UNSYNCED_HEIGHTMAP
-	if (!synced) {
-		normalmap = readmap->GetCenterNormalsUnsynced();
-	}
-	#endif
-
+	const float3* normalmap = (synced) ? readmap->GetCenterNormalsSynced() : readmap->GetCenterNormalsUnsynced();
 	return normalmap[xsquare + ysquare * gs->mapx];
 }
 
@@ -455,13 +434,7 @@ float3 CGround::GetSmoothNormal(float x, float y, bool synced) const
 	float ify = 1.0f - fy;
 	float ifx = 1.0f - fx;
 
-	const float3* normalmap = readmap->GetCenterNormalsSynced();
-
-	#ifdef USE_UNSYNCED_HEIGHTMAP
-	if (!synced) {
-		normalmap = readmap->GetCenterNormalsUnsynced();
-	}
-	#endif
+	const float3* normalmap = (synced) ? readmap->GetCenterNormalsSynced() : readmap->GetCenterNormalsUnsynced();
 
 	const float3& n1 = normalmap[sy  * gs->mapx + sx ] * ifx * ify;
 	const float3& n2 = normalmap[sy  * gs->mapx + sx2] *  fx * ify;

@@ -20,8 +20,8 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 
-#include "Rendering/Env/BaseSky.h"
-#include "Rendering/Env/BaseWater.h"
+#include "Rendering/Env/ISky.h"
+#include "Rendering/Env/IWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/glFont.h"
@@ -391,7 +391,7 @@ inline bool CUnitDrawer::DrawUnitLOD(CUnit* unit)
 
 	if (unit->lodCount > 0) {
 		if (unit->isCloaked) {
-			const LuaMatType matType = (water->drawReflection)?
+			const LuaMatType matType = (water->IsDrawReflection())?
 				LUAMAT_ALPHA_REFLECT: LUAMAT_ALPHA;
 			LuaUnitMaterial& unitMat = unit->luaMats[matType];
 			const unsigned lod = CalcUnitLOD(unit, unitMat.GetLastLOD());
@@ -403,7 +403,7 @@ inline bool CUnitDrawer::DrawUnitLOD(CUnit* unit)
 			}
 		} else {
 			const LuaMatType matType =
-				(water->drawReflection) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
+				(water->IsDrawReflection()) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
 			LuaUnitMaterial& unitMat = unit->luaMats[matType];
 			const unsigned lod = CalcUnitLOD(unit, unitMat.GetLastLOD());
 			unit->currentLOD = lod;
@@ -474,7 +474,7 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	IBaseSky::SetFog();
+	ISky::SetupFog();
 
 	if (drawReflection) {
 		SetUnitGlobalLODFactor(LODScale * LODScaleReflection);
@@ -751,7 +751,7 @@ void CUnitDrawer::DrawOpaqueShaderUnits()
 	luaMatHandler.setupS3oShader = SetupOpaqueS3O;
 	luaMatHandler.resetS3oShader = ResetOpaqueS3O;
 
-	const LuaMatType matType = (water->drawReflection)?
+	const LuaMatType matType = (water->IsDrawReflection())?
 		LUAMAT_OPAQUE_REFLECT:
 		LUAMAT_OPAQUE;
 
@@ -766,7 +766,7 @@ void CUnitDrawer::DrawCloakedShaderUnits()
 	luaMatHandler.setupS3oShader = SetupAlphaS3O;
 	luaMatHandler.resetS3oShader = ResetAlphaS3O;
 
-	const LuaMatType matType = (water->drawReflection)?
+	const LuaMatType matType = (water->IsDrawReflection())?
 		LUAMAT_ALPHA_REFLECT:
 		LUAMAT_ALPHA;
 
@@ -1263,7 +1263,7 @@ void CUnitDrawer::SetupForUnitDrawing()
 	glAlphaFunc(GL_GREATER, 0.5f);
 	glEnable(GL_ALPHA_TEST);
 
-	if (advShading && !water->drawReflection) {
+	if (advShading && !water->IsDrawReflection()) {
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
 		glMultMatrixf(camera->GetViewMatrix());
@@ -1349,7 +1349,7 @@ void CUnitDrawer::CleanUpUnitDrawing() const
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_ALPHA_TEST);
 
-	if (advShading && !water->drawReflection) {
+	if (advShading && !water->IsDrawReflection()) {
 		modelShaders[MODEL_SHADER_S3O_ACTIVE]->Disable();
 
 		glActiveTexture(GL_TEXTURE1);
@@ -1385,7 +1385,7 @@ void CUnitDrawer::CleanUpUnitDrawing() const
 
 void CUnitDrawer::SetTeamColour(int team, float alpha) const
 {
-	if (advShading && !water->drawReflection) {
+	if (advShading && !water->IsDrawReflection()) {
 		const CTeam* t = teamHandler->Team(team);
 		const float4 c = float4(t->color[0] / 255.0f, t->color[1] / 255.0f, t->color[2] / 255.0f, alpha);
 
@@ -1507,7 +1507,7 @@ void CUnitDrawer::UnitDrawingTexturesOn()
 	// XXX FIXME GL_VERTEX_PROGRAM_ARB is very slow on ATIs here for some reason
 	// if clip planes are enabled
 	// check later after driver updates
-	if (advShading && !water->drawReflection) {
+	if (advShading && !water->IsDrawReflection()) {
 		glEnable(GL_TEXTURE_2D);
 		glActiveTexture(GL_TEXTURE1);
 		glEnable(GL_TEXTURE_2D);
@@ -1541,7 +1541,7 @@ void CUnitDrawer::UnitDrawingTexturesOn()
 void CUnitDrawer::UnitDrawingTexturesOff()
 {
 	/* If SetupForUnitDrawing is changed, this may need tweaking too. */
-	if (advShading && !water->drawReflection) {
+	if (advShading && !water->IsDrawReflection()) {
 		glActiveTexture(GL_TEXTURE1); //! 'Shiny' texture.
 		glDisable(GL_TEXTURE_2D);
 		glActiveTexture(GL_TEXTURE2); //! Shadows.
@@ -1583,7 +1583,7 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 	GML_LODMUTEX_LOCK(unit); // DrawIndividual
 
 	if (unit->lodCount > 0) {
-		const LuaMatType matType = (water->drawReflection)?
+		const LuaMatType matType = (water->IsDrawReflection())?
 			LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
 		LuaUnitMaterial& unitMat = unit->luaMats[matType];
 		lodMat = unitMat.GetMaterial(unit->currentLOD);
@@ -1773,7 +1773,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	glColorf3(fc * col);
 
 	//! render wireframe with FFP
-	if (!LUA_DRAWING && advShading && !water->drawReflection) {
+	if (!LUA_DRAWING && advShading && !water->IsDrawReflection()) {
 		modelShaders[MODEL_SHADER_S3O_ACTIVE]->Disable();
 	}
 
@@ -1822,7 +1822,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	glDisable(GL_CLIP_PLANE1);
 	unitDrawer->UnitDrawingTexturesOn();
 
-	if (!LUA_DRAWING && advShading && !water->drawReflection) {
+	if (!LUA_DRAWING && advShading && !water->IsDrawReflection()) {
 		modelShaders[MODEL_SHADER_S3O_ACTIVE]->Enable();
 	}
 

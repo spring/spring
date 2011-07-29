@@ -125,22 +125,36 @@ public:
 	};
 	virtual void GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize = 0) = 0;
 
+	virtual const float* GetCornerHeightMapSynced()   const = 0;
+#ifdef USE_UNSYNCED_HEIGHTMAP
+	virtual const float* GetCornerHeightMapUnsynced() const = 0;
+#else
+	        const float* GetCornerHeightMapUnsynced() const { return GetCornerHeightMapSynced(); }
+#endif
 
-	virtual const float* GetCornerHeightMapSynced() const = 0;
-	virtual       float* GetCornerHeightMapUnsynced() = 0;
-
+	/// synced
 	const float* GetOriginalHeightMapSynced() const { return &originalHeightMap[0]; }
 	const float* GetCenterHeightMapSynced() const { return &centerHeightMap[0]; }
 	const float* GetMIPHeightMapSynced(unsigned int mip) const { return mipPointerHeightMaps[mip]; }
 	const float* GetSlopeMapSynced() const { return &slopeMap[0]; }
 	const unsigned char* GetTypeMapSynced() const { return &typeMap[0]; }
 	      unsigned char* GetTypeMapSynced()       { return &typeMap[0]; }
+
+	/// unsynced
 	const float3* GetRawVertexNormalsUnsynced() const { return &rawVertexNormals[0]; }
 	const float3* GetVisVertexNormalsUnsynced() const { return &visVertexNormals[0]; }
+
+	/// both
 	const float3* GetFaceNormalsSynced() const { return &faceNormalsSynced[0]; }
-	const float3* GetFaceNormalsUnsynced() const { return &faceNormalsUnsynced[0]; }
 	const float3* GetCenterNormalsSynced() const { return &centerNormalsSynced[0]; }
+#ifdef USE_UNSYNCED_HEIGHTMAP
+	const float3* GetFaceNormalsUnsynced() const { return &faceNormalsUnsynced[0]; }
 	const float3* GetCenterNormalsUnsynced() const { return &centerNormalsUnsynced[0]; }
+#else
+	const float3* GetFaceNormalsUnsynced() const { return GetFaceNormalsSynced(); }
+	const float3* GetCenterNormalsUnsynced() const { return GetCenterNormalsSynced(); }
+#endif
+
 
 
 	/// if you modify the heightmap through these, call UpdateHeightMapSynced
@@ -160,7 +174,7 @@ public:
 		currMaxHeight = std::max(hm[idx], currMaxHeight);
 	}
 
-
+public:
 	/// number of heightmap mipmaps, including full resolution
 	static const int numHeightMipMaps = 7;
 

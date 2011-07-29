@@ -38,24 +38,24 @@ namespace creg
 	public:
 		typedef typename T::iterator iterator;
 
-		SetType (boost::shared_ptr<IType> elemType) :  elemType (elemType) {}
-		~SetType () {}
+		SetType(boost::shared_ptr<IType> elemType) : elemType(elemType) {}
+		~SetType() {}
 
-		void Serialize (ISerializer *s, void *instance)
+		void Serialize(ISerializer* s, void* instance)
 		{
 			T& ct = *(T*)instance;
-			if (s->IsWriting ()) {
-				int size=ct.size();
-				s->SerializeInt (&size, sizeof(int));
-				for (iterator i=ct.begin();i!=ct.end();++i)
-					elemType->Serialize (s, (void*) &*i);
+			if (s->IsWriting()) {
+				int size = ct.size();
+				s->SerializeInt(&size, sizeof(int));
+				for (iterator i = ct.begin(); i != ct.end(); ++i)
+					elemType->Serialize(s,(void*) &*i);
 			} else {
 				int size;
-				s->SerializeInt (&size, sizeof(int));
-				for (int i=0;i<size;i++) {
+				s->SerializeInt(&size, sizeof(int));
+				for (int i = 0; i < size; i++) {
 					typename T::value_type v;
-					elemType->Serialize (s, &v);
-					ct.insert (v);
+					elemType->Serialize(s, &v);
+					ct.insert(v);
 				}
 			}
 		}
@@ -65,26 +65,26 @@ namespace creg
 
 	// Set type
 	template<typename T, typename C>
-	struct DeduceType < std::set<T, C> > {
-		boost::shared_ptr<IType> Get () {
+	struct DeduceType<std::set<T, C> > {
+		boost::shared_ptr<IType> Get() {
 			DeduceType<T> elemtype;
-			return boost::shared_ptr<IType>(new SetType < std::set <T, C> > (elemtype.Get()));
+			return boost::shared_ptr<IType>(new SetType<std::set<T, C> >(elemtype.Get()));
 		}
 	};
 	// Multiset
 	template<typename T>
-	struct DeduceType < std::multiset<T> > {
-		boost::shared_ptr<IType> Get () {
+	struct DeduceType<std::multiset<T> > {
+		boost::shared_ptr<IType> Get() {
 			DeduceType<T> elemtype;
-			return boost::shared_ptr<IType>(new SetType < std::multiset<T> > (elemtype.Get()));
+			return boost::shared_ptr<IType>(new SetType<std::multiset<T> >(elemtype.Get()));
 		}
 	};
 	// Hash set
 	template<typename T>
-	struct DeduceType < SPRING_HASH_SET<T> > {
-		boost::shared_ptr<IType> Get () {
+	struct DeduceType<SPRING_HASH_SET<T> > {
+		boost::shared_ptr<IType> Get() {
 			DeduceType<T> elemtype;
-			return boost::shared_ptr<IType>(new SetType < SPRING_HASH_SET<T> > (elemtype.Get()));
+			return boost::shared_ptr<IType>(new SetType<SPRING_HASH_SET<T> >(elemtype.Get()));
 		}
 	};
 };

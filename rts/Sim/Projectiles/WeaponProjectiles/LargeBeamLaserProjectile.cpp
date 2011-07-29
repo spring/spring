@@ -78,13 +78,13 @@ CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(
 void CLargeBeamLaserProjectile::Update()
 {
 	if (ttl > 0) {
-		ttl--;
 		for (int i = 0; i < 3; i++) {
 			corecolstart[i] = (unsigned char) (corecolstart[i] * decay);
 			kocolstart[i] = (unsigned char) (kocolstart[i] * decay);
 		}
 
 		gCEG->Explosion(cegID, startPos + ((endPos - startPos) / ttl), 0.0f, flaresize, NULL, 0.0f, NULL, endPos - startPos);
+		ttl--;
 	}
 	else {
 		deleteMe = true;

@@ -375,7 +375,7 @@ float3 AAIExecute::GetBuildsite(int builder, int building, UnitCategory category
 
 float3 AAIExecute::GetUnitBuildsite(int builder, int unit)
 {
-	float3 builder_pos = cb->GetUnitPos(builder);
+//	float3 builder_pos = cb->GetUnitPos(builder);
 	float3 pos = ZeroVector, best_pos = ZeroVector;
 	float min_dist = 1000000, dist;
 
@@ -1210,7 +1210,7 @@ bool AAIExecute::BuildStorage()
 	float energy = 2 / (cb->GetEnergyStorage() + futureStoredMetal - cb->GetEnergy() + 1);
 
 	// urgency < 4
-	float urgency = 16.0 / (ai->ut->activeUnits[METAL_MAKER] + ai->ut->futureUnits[METAL_MAKER] + 4);
+//	float urgency = 16.0 / (ai->ut->activeUnits[METAL_MAKER] + ai->ut->futureUnits[METAL_MAKER] + 4);
 
 	for(list<AAISector*>::iterator sector = brain->sectors[0].begin(); sector != brain->sectors[0].end(); sector++)
 	{

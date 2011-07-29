@@ -25,12 +25,35 @@
 	<name>Java OO AI Wrapper</name>
 	<description>Java Object Oriented Artificial Intelligence interface wrapper for the Spring RTS engine</description>
 	<url>http://springrts.com/wiki/AIWrapper:JavaOO</url>
+	<inceptionYear>2008</inceptionYear>
+
+
+	<licenses>
+		<license>
+			<name>GPL 2.0</name>
+			<url>http://www.gnu.org/licenses/gpl-2.0.html</url>
+			<distribution>repo</distribution>
+		</license>
+		<license>
+			<name>GPL 3.0</name>
+			<url>http://www.gnu.org/licenses/gpl-3.0.html</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+
+	<issueManagement>
+		<system>Mantis</system>
+		<url>http://springrts.com/mantis/</url>
+	</issueManagement>
+
 
 	<scm>
 		<connection>scm:git:git://github.com/spring/spring.git</connection>
 		<url>http://github.com/spring/spring</url>
 		<developerConnection>scm:git:git@github.com:spring/spring.git</developerConnection>
 	</scm>
+
 
 	<dependencies>
 		<dependency>
