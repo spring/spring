@@ -343,7 +343,7 @@ bool CStdExplosionGenerator::Explosion(
 
 			for (int a = 0; a < numSpike; ++a) {
 				float3 speed = gu->usRandVector();
-				speed.Normalize();
+				speed.SafeNormalize();
 				speed *= (8 + damage*3.0f) / (9 + sqrt(damage)*0.7f) * 0.35f;
 
 				if (!airExplosion && !waterExplosion && (speed.y < 0)) {
