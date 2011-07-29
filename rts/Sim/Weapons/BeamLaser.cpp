@@ -171,18 +171,18 @@ void CBeamLaser::FireImpl(void)
 	} else {
 		if (salvoLeft == salvoSize - 1) {
 			dir = targetPos - weaponMuzzlePos;
-			dir.Normalize();
+			dir.SafeNormalize();
 			oldDir = dir;
 		} else if (weaponDef->beamburst) {
 			dir = targetPos - weaponMuzzlePos;
-			dir.Normalize();
+			dir.SafeNormalize();
 		} else {
 			dir = oldDir;
 		}
 	}
 
 	dir += ((salvoError) * (1.0f - owner->limExperience * weaponDef->ownerExpAccWeight));
-	dir.Normalize();
+	dir.SafeNormalize();
 
 	FireInternal(dir, false);
 }
