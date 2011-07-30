@@ -700,6 +700,7 @@ void CGroundMoveType::UpdateSkid()
 				speedf = speed.Length();
 				speed *= 1.0f - (0.1f * normal.y);
 			} else {
+				assert(math::fabs(speedf) > 0.0f);
 				speed *= (speedf - speedReduction) / speedf;
 			}
 
@@ -1934,6 +1935,12 @@ bool CGroundMoveType::WantReverse(const float3& waypointDir2D) const
 	if (!canReverse) {
 		return false;
 	}
+
+	assert(math::fabs(decRate) > 0.0f);
+	assert(math::fabs(accRate) > 0.0f);
+	assert(math::fabs(maxSpeed) > 0.0f);
+	assert(math::fabs(turnRate) > 0.0f);
+	assert(math::fabs(maxReverseSpeed) > 0.0f);
 
 	const float3 waypointDif  = goalPos - owner->pos;                                           // use final WP for ETA
 	const float waypointDist  = waypointDif.Length();                                           // in elmos
