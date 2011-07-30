@@ -111,10 +111,9 @@ protected:
 	bool canReverse;
 	bool useMainHeading;
 
-	float3 skidRotVector;
-	float skidRotSpeed;
-	float skidRotSpeed2;
-	float skidRotAngle;
+	float3 skidRotVector;  /// vector orthogonal to skidDir
+	float skidRotAccel;    /// rotational acceleration when skidding
+	float skidRotSpeed;    /// rotational speed when skidding
 
 	CSolidObject::PhysicalState oldPhysState;
 
