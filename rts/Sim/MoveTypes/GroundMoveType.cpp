@@ -690,9 +690,7 @@ void CGroundMoveType::UpdateSkid()
 				speedf = speed.Length();
 				speed *= (1.0f - (0.1f * normal.y));
 			} else {
-				if (speedf > 0.01f) {
-					speed *= (std::max(0.0f, speedf - speedReduction) / speedf);
-				}
+				speed *= (1.0f - std::min(1.0f, speedReduction / speedf)); // clamped 0..1
 			}
 
 			// number of frames until rotational speed drops to 0
