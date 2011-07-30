@@ -87,7 +87,7 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(skidRotVector),
 	CR_MEMBER(skidRotSpeed),
 	CR_MEMBER(skidRotSpeed2),
-	CR_MEMBER(skidRotPos2),
+	CR_MEMBER(skidRotAngle),
 	CR_ENUM_MEMBER(oldPhysState),
 
 	CR_MEMBER(mainHeadingPos),
@@ -134,7 +134,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	skidRotVector(UpVector),
 	skidRotSpeed(0.0f),
 	skidRotSpeed2(0.0f),
-	skidRotPos2(0.0f),
+	skidRotAngle(0.0f),
 	oldPhysState(CSolidObject::OnGround),
 
 	flatFrontDir(0.0f, 0.0, 1.0f),
@@ -610,7 +610,7 @@ void CGroundMoveType::ImpulseAdded(const float3&)
 		// FIXME: impulse should not cause a _random_ rotational component
 		skidRotSpeed += (gs->randFloat() - 0.5f) * 1500;
 		skidRotSpeed2 = 0.0f;
-		skidRotPos2 = 0.0f;
+		skidRotAngle = 0.0f;
 
 		float3 skidDir;
 
@@ -686,8 +686,8 @@ void CGroundMoveType::UpdateSkid()
 			owner->physicalState = oldPhysState;
 			owner->moveType->useHeading = true;
 
-			const float rp = floor(skidRotPos2 + skidRotSpeed2 + 0.5f);
-			skidRotSpeed2 = (rp - skidRotPos2) * 0.5f;
+			const float rp = floor(skidRotAngle + skidRotSpeed2 + 0.5f);
+			skidRotSpeed2 = (rp - skidRotAngle) * 0.5f;
 
 			ChangeHeading(owner->heading);
 		} else {
@@ -705,12 +705,12 @@ void CGroundMoveType::UpdateSkid()
 			}
 
 			const float remTime = speedf / speedReduction - 1.0f;
-			const float rp = floor(skidRotPos2 + skidRotSpeed2 * remTime + 0.5f);
+			const float rp = floor(skidRotAngle + skidRotSpeed2 * remTime + 0.5f);
 
-			skidRotSpeed2 = (remTime + 1.0f == 0.0f ) ? 0.0f : (rp - skidRotPos2) / (remTime + 1.0f);
+			skidRotSpeed2 = (remTime + 1.0f == 0.0f ) ? 0.0f : (rp - skidRotAngle) / (remTime + 1.0f);
 
-			if (floor(skidRotPos2) != floor(skidRotPos2 + skidRotSpeed2)) {
-				skidRotPos2 = 0.0f;
+			if (floor(skidRotAngle) != floor(skidRotAngle + skidRotSpeed2)) {
+				skidRotAngle = 0.0f;
 				skidRotSpeed2 = 0.0f;
 			}
 		}
@@ -874,10 +874,10 @@ void CGroundMoveType::CalcSkidRot()
 	owner->heading += (short int) skidRotSpeed;
 	owner->SetDirectionFromHeading();
 
-	skidRotPos2 += skidRotSpeed2;
+	skidRotAngle += skidRotSpeed2;
 
-	const float cosp = cos(skidRotPos2 * PI * 2.0f);
-	const float sinp = sin(skidRotPos2 * PI * 2.0f);
+	const float cosp = cos(skidRotAngle * PI * 2.0f);
+	const float sinp = sin(skidRotAngle * PI * 2.0f);
 
 	float3 f1 = skidRotVector * skidRotVector.dot(owner->frontdir);
 	float3 f2 = owner->frontdir - f1;
