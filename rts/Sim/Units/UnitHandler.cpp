@@ -238,6 +238,13 @@ void CUnitHandler::Update()
 		assert(!streflop::isnan(v.x) && !streflop::isinf(v.x)); \
 		assert(!streflop::isnan(v.y) && !streflop::isinf(v.y)); \
 		assert(!streflop::isnan(v.z) && !streflop::isinf(v.z));
+	#define MAPPOS_SANITY_CHECK(unit)                          \
+		if (unit->unitDef->IsGroundUnit()) {                   \
+			assert(unit->pos.x >= -(float3::maxxpos * 16.0f)); \
+			assert(unit->pos.x <=  (float3::maxxpos * 16.0f)); \
+			assert(unit->pos.z >= -(float3::maxzpos * 16.0f)); \
+			assert(unit->pos.z <=  (float3::maxzpos * 16.0f)); \
+		}
 	#define UNIT_SANITY_CHECK(unit)                 \
 		VECTOR_SANITY_CHECK(unit->pos);             \
 		VECTOR_SANITY_CHECK(unit->midPos);          \
@@ -247,7 +254,8 @@ void CUnitHandler::Update()
 		VECTOR_SANITY_CHECK(unit->residualImpulse); \
 		VECTOR_SANITY_CHECK(unit->rightdir);        \
 		VECTOR_SANITY_CHECK(unit->updir);           \
-		VECTOR_SANITY_CHECK(unit->frontdir);
+		VECTOR_SANITY_CHECK(unit->frontdir);        \
+		MAPPOS_SANITY_CHECK(unit);
 
 	{
 		SCOPED_TIMER("Unit::MoveType::Update");
