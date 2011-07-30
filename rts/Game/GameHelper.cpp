@@ -154,9 +154,9 @@ void CGameHelper::DoExplosionDamage(
 	if (mod < 0.01f)
 		mod = 0.01f;
 
-	// limit the impulse to prevent FP overflow
+	// limit the impulse to prevent later FP overflow
 	const DamageArray damageDone = damages * mod2;
-	const float impulseStrength = std::min(1e6f, damages.impulseFactor * mod * (damages[0] + damages.impulseBoost) * 3.2f);
+	const float impulseStrength = Clamp(damages.impulseFactor * mod * (damages[0] + damages.impulseBoost) * 3.2f, -1e6f, 1e6f);
 	const float3 addedImpulse = diffPos * impulseStrength;
 
 	if (expDist2 < (expSpeed * 4.0f)) { // damage directly
