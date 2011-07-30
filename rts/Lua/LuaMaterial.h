@@ -173,40 +173,6 @@ class LuaMaterial {
 
 
 /******************************************************************************/
-
-class LuaMatBuilder {
-	public:
-		LuaMatBuilder()
-		: type(LuaMatType(-1)), // invalid
-		  order(0), texCount(0),
-		  preList(0), postList(0),
-		  useCamera(true), culling(0),
-		  cameraLoc(-1), cameraPosLoc(-1),
-		  shadowLoc(-1), shadowParamsLoc(-1)
-		{}
-
-		LuaMatRef GetRef() const;
-
-	public:
-		LuaMatType type;
-		int order; // for manually adjusting rendering order
-		LuaMatShader shader;
-		int texCount;
-		LuaMatTexture textures[LuaMatTexture::maxTexUnits];
-
-		GLuint preList;
-		GLuint postList;
-
-		bool useCamera;
-		GLenum culling;
-		GLint cameraLoc;
-		GLint cameraPosLoc;
-		GLint shadowLoc;
-		GLint shadowParamsLoc;
-};
-
-
-/******************************************************************************/
 /******************************************************************************/
 
 class LuaMatBin : public LuaMaterial {
