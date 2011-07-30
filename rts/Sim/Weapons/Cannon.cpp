@@ -214,46 +214,55 @@ float3 CCannon::GetWantedDir(const float3& diff)
 	// try to cache results, sacrifice some (not much too much even for a pewee) accuracy
 	// it saves a dozen or two expensive calculations per second when 5 guardians
 	// are shooting at several slow- and fast-moving targets
-	if (fabs(diff.x-lastDiff.x) < SQUARE_SIZE/4.f
-			&& fabs(diff.y-lastDiff.y) < SQUARE_SIZE/4.f
-			&& fabs(diff.z-lastDiff.z) < SQUARE_SIZE/4.f) {
+	if (fabs(diff.x - lastDiff.x) < (SQUARE_SIZE / 4.0f) &&
+		fabs(diff.y - lastDiff.y) < (SQUARE_SIZE / 4.0f) &&
+		fabs(diff.z - lastDiff.z) < (SQUARE_SIZE / 4.0f)) {
 		return lastDir;
 	}
 
-	float Dsq = diff.SqLength();
-	float DFsq = diff.SqLength2D();
-	float g = gravity;
-	float v = projectileSpeed;
-	float dy = diff.y;
-	float dxz = math::sqrt(DFsq);
-	float Vxz;
-	float Vy;
-	if(Dsq == 0) {
-		Vxz = 0;
+	const float Dsq = diff.SqLength();
+	const float DFsq = diff.SqLength2D();
+	const float& g = gravity;
+	const float& v = projectileSpeed;
+	const float dy  = diff.y;
+	const float dxz = math::sqrt(DFsq);
+	float Vxz = 0.0f;
+	float Vy  = 0.0f;
+
+	if (Dsq == 0.0f) {
 		Vy = highTrajectory ? v : -v;
 	} else {
-		float root1 = v*v*v*v + 2*v*v*g*dy - g*g*DFsq;
-		if(root1 >= 0) {
-			float root2 = 2 * DFsq * Dsq * ( v * v + g * dy + (highTrajectory ? -1 : 1) * math::sqrt(root1));
-			if(root2 >= 0) {
-				Vxz = math::sqrt(root2) / (2 * Dsq);
-				Vy = (dxz == 0 || Vxz == 0) ? v : (Vxz*dy/dxz - dxz*g/(2*Vxz));
-			} else {
-				Vxz = 0;
-				Vy = 0;
+		// FIXME: temporary safeguards against FP overflow
+		// (introduced by extreme off-map unit positions; the term
+		// DFsq * Dsq * ... * dy should never even approach 1e38)
+		if (Dsq < 1e12f && fabs(dy) < 1e6f) {
+			const float root1 = v*v*v*v + 2.0f*v*v*g*dy - g*g*DFsq;
+
+			if (root1 >= 0.0f) {
+				const float root2 = 2.0f * DFsq * Dsq * (v * v + g * dy + (highTrajectory ? -1.0f : 1.0f) * math::sqrt(root1));
+
+				if (root2 >= 0.0f) {
+					Vxz = math::sqrt(root2) / (2.0f * Dsq);
+					Vy = (dxz == 0.0f || Vxz == 0.0f) ? v : (Vxz * dy / dxz  -  dxz * g / (2.0f * Vxz));
+				}
 			}
-		} else {
-			Vxz = 0;
-			Vy = 0;
 		}
 	}
-	float3 dir(diff.x, 0, diff.z);
-	dir.SafeNormalize();
-	dir *= Vxz;
-	dir.y = Vy;
-	dir.SafeNormalize();
-	lastDiff = diff;
-	lastDir = dir;
+
+	float3 dir = ZeroVector;
+
+	if (Vxz != 0.0f || Vy != 0.0f) {
+		dir.x = diff.x;
+		dir.z = diff.z;
+		dir.SafeNormalize();
+		dir *= Vxz;
+		dir.y = Vy;
+		dir.SafeNormalize();
+
+		lastDiff = diff;
+		lastDir = dir;
+	}
+
 	return dir;
 }
 
