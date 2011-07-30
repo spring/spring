@@ -234,6 +234,21 @@ void CUnitHandler::Update()
 
 	GML_UPDATE_TICKS();
 
+	#define VECTOR_SANITY_CHECK(v)                              \
+		assert(!streflop::isnan(v.x) && !streflop::isinf(v.x)); \
+		assert(!streflop::isnan(v.y) && !streflop::isinf(v.y)); \
+		assert(!streflop::isnan(v.z) && !streflop::isinf(v.z));
+	#define UNIT_SANITY_CHECK(unit)                 \
+		VECTOR_SANITY_CHECK(unit->pos);             \
+		VECTOR_SANITY_CHECK(unit->midPos);          \
+		VECTOR_SANITY_CHECK(unit->relMidPos);       \
+		VECTOR_SANITY_CHECK(unit->speed);           \
+		VECTOR_SANITY_CHECK(unit->deathSpeed);      \
+		VECTOR_SANITY_CHECK(unit->residualImpulse); \
+		VECTOR_SANITY_CHECK(unit->rightdir);        \
+		VECTOR_SANITY_CHECK(unit->updir);           \
+		VECTOR_SANITY_CHECK(unit->frontdir);
+
 	{
 		SCOPED_TIMER("Unit::MoveType::Update");
 		std::list<CUnit*>::iterator usi;
@@ -241,10 +256,13 @@ void CUnitHandler::Update()
 			CUnit* unit = *usi;
 			AMoveType* moveType = unit->moveType;
 
+			UNIT_SANITY_CHECK(unit);
+
 			if (moveType->Update()) {
 				eventHandler.UnitMoved(unit);
 			}
 
+			UNIT_SANITY_CHECK(unit);
 			GML_GET_TICKS(unit->lastUnitUpdate);
 		}
 	}
@@ -254,6 +272,8 @@ void CUnitHandler::Update()
 		std::list<CUnit*>::iterator usi;
 		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 			CUnit* unit = *usi;
+
+			UNIT_SANITY_CHECK(unit);
 
 			if (unit->deathScriptFinished) {
 				// there are many ways to fiddle with "deathScriptFinished", so a unit may
@@ -266,20 +286,32 @@ void CUnitHandler::Update()
 			} else {
 				unit->Update();
 			}
+
+			UNIT_SANITY_CHECK(unit);
 		}
 	}
 
 	{
 		SCOPED_TIMER("Unit::SlowUpdate");
-		if (!(gs->frameNum & (UNIT_SLOWUPDATE_RATE - 1))) {
+
+		// reset the iterator every <UNIT_SLOWUPDATE_RATE> frames
+		if ((gs->frameNum & (UNIT_SLOWUPDATE_RATE - 1)) == 0) {
 			slowUpdateIterator = activeUnits.begin();
 		}
 
+		// stagger the SlowUpdate's
 		int n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1;
-		for (; slowUpdateIterator != activeUnits.end() && n != 0; ++ slowUpdateIterator) {
-			(*slowUpdateIterator)->SlowUpdate(); n--;
+
+		for (; slowUpdateIterator != activeUnits.end() && n != 0; ++slowUpdateIterator) {
+			CUnit* unit = *slowUpdateIterator;
+
+			UNIT_SANITY_CHECK(unit);
+			unit->SlowUpdate();
+			UNIT_SANITY_CHECK(unit);
+
+			n--;
 		}
-	} // for timer destruction
+	}
 }
 
 

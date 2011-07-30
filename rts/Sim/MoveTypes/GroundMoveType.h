@@ -114,7 +114,7 @@ protected:
 	float3 skidRotVector;
 	float skidRotSpeed;
 	float skidRotSpeed2;
-	float skidRotPos2;
+	float skidRotAngle;
 
 	CSolidObject::PhysicalState oldPhysState;
 
