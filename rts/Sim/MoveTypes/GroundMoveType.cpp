@@ -178,7 +178,7 @@ bool CGroundMoveType::Update()
 		return false;
 	}
 
-	if (OnSlope() && (!owner->floatOnWater || !owner->inWater)) {
+	if (OnSlope(1.0f)) {
 		skidding = true;
 	}
 	if (skidding) {
@@ -664,12 +664,7 @@ void CGroundMoveType::UpdateSkid()
 		float speedf = speed.Length();
 		float skidRotSpdNew = 0.0f;
 
-		// does not use OnSlope() because then it could stop on an invalid path
-		// location, and be teleported back.
-		const bool onSlope =
-			midPos.IsInBounds() &&
-			(ground->GetSlope(midPos.x, midPos.z) > ud->movedata->maxSlope) &&
-			(!owner->floatOnWater || !owner->inWater);
+		const bool onSlope = OnSlope(-1.0f);
 		const float speedReduction = 0.35f;
 
 		if (speedf < speedReduction && !onSlope) {
@@ -1793,14 +1788,22 @@ void CGroundMoveType::SetMaxSpeed(float speed)
 	requestedSpeed = speed;
 }
 
-bool CGroundMoveType::OnSlope() {
+bool CGroundMoveType::OnSlope(float minSlideTolerance) {
 	const UnitDef* ud = owner->unitDef;
 	const float3& mp = owner->midPos;
 
-	return
-		(ud->slideTolerance >= 1.0f) &&
-		(mp.IsInBounds()) &&
-		(ground->GetSlope(mp.x, mp.z) > (ud->movedata->maxSlope * ud->slideTolerance));
+	if (ud->slideTolerance < minSlideTolerance) { return false; }
+	if (owner->floatOnWater && owner->inWater) { return false; }
+	if (!mp.IsInBounds()) { return false; }
+
+	// if minSlideTolerance is zero, do not multiply maxSlope by ud->slideTolerance
+	// (otherwise the unit could stop on an invalid path location, and be teleported
+	// back)
+	if (minSlideTolerance <= 0.0f) {
+		return (ground->GetSlope(mp.x, mp.z) > ud->movedata->maxSlope);
+	}
+
+	return (ground->GetSlope(mp.x, mp.z) > (ud->movedata->maxSlope * ud->slideTolerance));
 }
 
 void CGroundMoveType::StartSkidding() {
