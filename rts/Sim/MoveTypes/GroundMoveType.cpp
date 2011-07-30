@@ -806,7 +806,7 @@ void CGroundMoveType::CheckCollisionSkid()
 			}
 		} else {
 			// don't conserve momentum
-			assert(owner->mass > 0.0f && u->mass > 0.0f)
+			assert(owner->mass > 0.0f && u->mass > 0.0f);
 			const float part = (owner->mass / (owner->mass + u->mass));
 			const float impactSpeed = (u->speed - owner->speed).dot(dif) * 0.5f;
 
