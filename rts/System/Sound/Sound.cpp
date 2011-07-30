@@ -436,26 +436,30 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 	float3 myPosInMeters = myPos * GetElmoInMeters();
 	alListener3f(AL_POSITION, myPosInMeters.x, myPosInMeters.y, myPosInMeters.z);
 
-	//! reduce the rolloff when the camera is height above the ground (so we still hear something in tab mode or far zoom)
-	const float camHeight = std::max(0.f, campos.y - ground->GetHeightAboveWater(campos.x, campos.z));
-	const float newmod = std::min(600.f / camHeight, 1.f);
-	CSoundSource::SetHeightRolloffModifer(newmod);
-	efx->SetHeightRolloffModifer(newmod);
+	//! reduce the rolloff when the camera is high above the ground (so we still hear something in tab mode or far zoom)
+	//! for altitudes up to and including 600 elmos, the rolloff is always clamped to 1
+	const float camHeight = std::max(1.0f, campos.y - ground->GetHeightAboveWater(campos.x, campos.z));
+	const float newMod = std::min(600.0f / camHeight, 1.0f);
+
+	CSoundSource::SetHeightRolloffModifer(newMod);
+	efx->SetHeightRolloffModifer(newMod);
 
 	//! Result were bad with listener related doppler effects.
-	//! The user experience the camera/listener not as world interacting object.
+	//! The user experiences the camera/listener not as a world-interacting object.
 	//! So changing sounds on camera movements were irritating, esp. because zooming with the mouse wheel
 	//! often is faster than the speed of sound, causing very high frequencies.
 	//! Note: soundsource related doppler effects are not deactivated by this! Flying cannon shoots still change their frequencies.
 	//! Note2: by not updating the listener velocity soundsource related velocities are calculated wrong,
 	//! so even if the camera is moving with a cannon shoot the frequency gets changed.
-	/*const float3 velocity = (myPos - prevPos) / (lastFrameTime);
+	/*
+	const float3 velocity = (myPos - prevPos) / (lastFrameTime);
 	float3 velocityAvg = velocity * 0.6f + prevVelocity * 0.4f;
 	prevVelocity = velocityAvg;
 	velocityAvg *= GetElmoInMeters();
 	velocityAvg.y *= 0.001f; //! scale vertical axis separatly (zoom with mousewheel is faster than speed of sound!)
 	velocityAvg *= 0.15f;
-	alListener3f(AL_VELOCITY, velocityAvg.x, velocityAvg.y, velocityAvg.z);*/
+	alListener3f(AL_VELOCITY, velocityAvg.x, velocityAvg.y, velocityAvg.z);
+	*/
 
 	ALfloat ListenerOri[] = {camdir.x, camdir.y, camdir.z, camup.x, camup.y, camup.z};
 	alListenerfv(AL_ORIENTATION, ListenerOri);
