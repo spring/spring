@@ -130,7 +130,7 @@ class LuaMaterial {
 		  preList(0), postList(0),
 		  useCamera(true), culling(0),
 		  cameraLoc(-1), cameraInvLoc(-1), cameraPosLoc(-1),
-		  shadowLoc(-1), shadowParamsLoc(-1)
+		  sunPosLoc(-1), shadowLoc(-1), shadowParamsLoc(-1)
 		{}
 
 		void Finalize();
@@ -165,6 +165,7 @@ class LuaMaterial {
 		GLint cameraLoc;       // view matrix
 		GLint cameraInvLoc;    // inverse view matrix
 		GLint cameraPosLoc;
+		GLint sunPosLoc;
 		GLint shadowLoc;       // shadow matrix
 		GLint shadowParamsLoc;
 

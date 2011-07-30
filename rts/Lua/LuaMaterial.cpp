@@ -19,6 +19,7 @@ using std::vector;
 #include "Game/Camera.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/CubeMapHandler.h"
+#include "Rendering/Env/ISky.h"
 #include "Sim/Units/Unit.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
@@ -363,6 +364,10 @@ void LuaMaterial::Execute(const LuaMaterial& prev) const
 		glUniformf3(cameraPosLoc, camera->pos);
 	}
 
+	if (sunPosLoc >= 0) {
+		glUniformf3(sunPosLoc, sky->GetLight()->GetLightDir());
+	}
+
 	if (shadowLoc >= 0) {
 		glUniformMatrix4fv(shadowLoc, 1, GL_FALSE, shadowHandler->shadowMatrix.m);
 	}
@@ -453,6 +458,10 @@ int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
 		return (a.cameraPosLoc < b.cameraPosLoc) ? -1 : +1;
 	}
 
+	if (a.sunPosLoc != b.sunPosLoc) {
+		return (a.sunPosLoc < b.sunPosLoc) ? -1 : +1;
+	}
+
 	if (a.shadowLoc != b.shadowLoc) {
 		return (a.shadowLoc < b.shadowLoc) ? -1 : +1;
 	}
@@ -501,6 +510,7 @@ void LuaMaterial::Print(const string& indent) const
 	LOGPRINTF("%scameraLoc = %i", indent.c_str(), cameraLoc);
 	LOGPRINTF("%scameraInvLoc = %i", indent.c_str(), cameraInvLoc);
 	LOGPRINTF("%scameraPosLoc = %i", indent.c_str(), cameraPosLoc);
+	LOGPRINTF("%ssunPosLoc = %i", indent.c_str(), sunPosLoc);
 	LOGPRINTF("%sshadowLoc = %i", indent.c_str(), shadowLoc);
 	LOGPRINTF("%sshadowParamsLoc = %i", indent.c_str(), shadowParamsLoc);
 }
