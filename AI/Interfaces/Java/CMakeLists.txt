@@ -146,6 +146,10 @@ macro    (ConfigureCMakeOrMavenJavaSkirmishAI requireMaven wrapperNames)
 				COMMENT
 					"  ${myTarget}: Running Maven ${MVN_PHASE} phase" VERBATIM
 				)
+			Set(myDependTargets  ${myDependTargets} "${Java_AIINTERFACE_TARGET_MVN_INSTALL}")
+			ForEach    (wrapperName ${wrapperNames})
+				Set(myDependTargets  ${myDependTargets} "${${wrapperName}_AIWRAPPER_TARGET_MVN_INSTALL}")
+			EndForEach (wrapperName)
 			add_custom_target(${myTarget} ALL DEPENDS "${myBuildDir}/${myBinJarFile}" ${myVersionDepFile})
 			add_dependencies(${myTarget} ${myDependTargets})
 		else  (configureMavenProject)
@@ -398,6 +402,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	SetGlobal(CLASSPATH_${myName}_AIINTERFACE        "${myJavaLibs}${PATH_DELIM_H}${myBuildDir}/${myBinJarFile}")
 	SetGlobal(JAVA_SRC_DIR_${myName}_AIINTERFACE     "${myJavaSourceDir}")
 	SetGlobal(JAVA_GEN_SRC_DIR_${myName}_AIINTERFACE "${myJavaGeneratedSourceDir}")
+	SetGlobal(${myName}_AIINTERFACE_TARGET_MVN_INSTALL "${myMavenInstallTarget}")
 
 
 	# Generate sources
@@ -708,13 +713,12 @@ if    (BUILD_${myName}_AIINTERFACE)
 		# create a nice dependency chain without this.
 		set(myMavenInstallStubFile_common       "${myBuildDir}/mavenInstallStub_common.txt")
 		set(myMavenInstallStubFile_commonSpring "${myBuildDir}/mavenInstallStub_commonSpring.txt")
-		set(myMavenInstallStubFile_my           "${myBuildDir}/mavenInstallStub_my.txt")
+		set(myMavenInstallStubFile_interface    "${myBuildDir}/mavenInstallStub_interface.txt")
 		set(myMavenInstallStubFiles
 				"${myMavenInstallStubFile_common}"
 				"${myMavenInstallStubFile_commonSpring}"
-				"${myMavenInstallStubFile_my}")
+				"${myMavenInstallStubFile_interface}")
 		set_source_files_properties(${myMavenInstallStubFiles} PROPERTIES GENERATED TRUE)
-		SetGlobal(${myName}_AIINTERFACE_MVN_INST_STUB_FILE  "${myMavenInstallStubFile}")
 		add_custom_command(
 			OUTPUT
 				"${myMavenInstallStubFile_common}"
@@ -735,6 +739,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			COMMAND "${CMAKE_COMMAND}"
 				"-E" "touch" "${myMavenInstallStubFile_commonSpring}"
 			DEPENDS
+				"${myMavenInstallStubFile_common}"
 				"${myDir}/support/common/spring/pom.xml"
 			WORKING_DIRECTORY
 				"${myDir}/support/common/spring"
@@ -743,15 +748,16 @@ if    (BUILD_${myName}_AIINTERFACE)
 			)
 		add_custom_command(
 			OUTPUT
-				"${myMavenInstallStubFile_my}"
+				"${myMavenInstallStubFile_interface}"
 			COMMAND "mvn"
 				"install:install-file"
 				"-DpomFile=${myBuildDir}/pom-generated.xml"
 				"-Dfile=${myBuildDir}/${myBinJarFile}"
 				"-Dsources=${myBuildDir}/${mySrcJarFile}"
 			COMMAND "${CMAKE_COMMAND}"
-				"-E" "touch" "${myMavenInstallStubFile_my}"
+				"-E" "touch" "${myMavenInstallStubFile_interface}"
 			DEPENDS
+				"${myMavenInstallStubFile_commonSpring}"
 				"${myBuildDir}/pom-generated.xml"
 				"${myBuildDir}/${myBinJarFile}"
 				"${myBuildDir}/${mySrcJarFile}"
@@ -764,7 +770,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			DEPENDS
 				"${myMavenInstallStubFile_common}"
 				"${myMavenInstallStubFile_commonSpring}"
-				"${myMavenInstallStubFile_my}"
+				"${myMavenInstallStubFile_interface}"
 			)
 		add_dependencies(${myMavenInstallTarget} ${myJavaTarget})
 		add_dependencies(${myTarget} ${myMavenInstallTarget})
