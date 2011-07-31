@@ -44,6 +44,7 @@ Engine / Simulation:
  - skip path-estimating for unused MoveDefs
  - always add the "geovent" FeatureDef (#2402)
  - only send UnitLoaded events for units that were not already being transported (when Attach'ing them)
+ - fix bizarre skidding behavior for ground units with non-zero slideTolerance
 
 Engine / Map:
  - merged both mapinfo.lua's! before there were two, one in the base-dir (-> ArchiveScanner) and one in "maphelper/mapinfo.lua" (-> MapParser/MapInfo)
