@@ -355,8 +355,10 @@ void CGroundMoveType::SlowUpdate()
 
 
 	if (!flying) {
-		// just kindly move it into the map again instead of deleting
-		owner->pos.CheckInBounds();
+		// move us into the map, and update <oldPos>
+		// to prevent any extreme changes in <speed>
+		if (!owner->pos.CheckInBounds())
+			oldPos = owner->pos;
 	}
 
 	AMoveType::SlowUpdate();
@@ -643,6 +645,7 @@ void CGroundMoveType::UpdateSkid()
 
 	if (flying) {
 		speed.y += mapInfo->map.gravity;
+
 		if (midPos.y < 0.0f)
 			speed *= 0.95f;
 
@@ -698,7 +701,7 @@ void CGroundMoveType::UpdateSkid()
 			const float remTime = speedf / speedReduction;
 
 			skidRotSpdNew = floor(skidRotSpeed + skidRotAccel * (remTime - 1.0f) + 0.5f);
-			skidRotAccel = (remTime > 0.01f)? ((skidRotSpdNew - skidRotSpeed) / remTime): 0.0f;
+			skidRotAccel = (remTime > 0.1f)? ((skidRotSpdNew - skidRotSpeed) / remTime): 0.0f;
 
 			if (floor(skidRotSpeed) != floor(skidRotSpeed + skidRotAccel)) {
 				skidRotSpeed = 0.0f;
@@ -729,6 +732,10 @@ void CGroundMoveType::UpdateSkid()
 	owner->MoveMidPos(speed);
 	CheckCollisionSkid();
 
+	// always update <oldPos> here so that <speed> does not make
+	// extreme jumps when the unit transitions from skidding back
+	// to non-skidding
+	oldPos = owner->pos;
 	ASSERT_SYNCED_FLOAT3(owner->midPos);
 }
 
@@ -1297,11 +1304,15 @@ void CGroundMoveType::HandleObjectCollisions()
 	collider->mobility->tempOwner = collider;
 
 	{
-		#define FOOTPRINT_RADIUS(xs, zs) (math::sqrt((xs * xs + zs * zs)) * 0.5f * SQUARE_SIZE)
+		// allow some degree of inter-penetration (1 - 0.75)
+		// between objects to avoid sudden extreme responses
+		#define FOOTPRINT_RADIUS(xs, zs) ((math::sqrt((xs * xs + zs * zs)) * 0.5f * SQUARE_SIZE) * 0.75f)
 
 		const UnitDef*   colliderUD = collider->unitDef;
 		const MoveData*  colliderMD = collider->mobility;
 		const CMoveMath* colliderMM = colliderMD->moveMath;
+
+		static const float3 dirMask = float3(1.0f, 0.0f, 1.0f);
 
 		const float3& colliderCurPos = collider->pos;
 		const float3& colliderOldPos = collider->moveType->oldPos;
@@ -1319,9 +1330,9 @@ void CGroundMoveType::HandleObjectCollisions()
 		for (uit = nearUnits.begin(); uit != nearUnits.end(); ++uit) {
 			CUnit* collidee = const_cast<CUnit*>(*uit);
 
-			if (collidee == collider) {
-				continue;
-			}
+			if (collidee == collider) { continue; }
+			if (collidee->moveType->IsSkidding()) { continue; }
+			if (collidee->moveType->IsFlying()) { continue; }
 
 			const UnitDef*   collideeUD = collidee->unitDef;
 			const MoveData*  collideeMD = collidee->mobility;
@@ -1358,8 +1369,10 @@ void CGroundMoveType::HandleObjectCollisions()
 
 			const float  sepDistance    = (separationVector.Length() + 0.01f);
 			const float  penDistance    = (colliderRadius + collideeRadius) - sepDistance;
+			const float  sepResponse    = std::min(SQUARE_SIZE * 2.0f, penDistance * 0.5f);
+
 			const float3 sepDirection   = (separationVector / sepDistance);
-			const float3 colResponseVec = sepDirection * float3(1.0f, 0.0f, 1.0f) * (penDistance * 0.5f);
+			const float3 colResponseVec = sepDirection * dirMask * sepResponse;
 
 			const float
 				m1 = collider->mass,
@@ -1438,8 +1451,10 @@ void CGroundMoveType::HandleObjectCollisions()
 
 			const float  sepDistance    = (separationVector.Length() + 0.01f);
 			const float  penDistance    = (colliderRadius + collideeRadius) - sepDistance;
+			const float  sepResponse    = std::min(SQUARE_SIZE * 2.0f, penDistance * 0.5f);
+
 			const float3 sepDirection   = (separationVector / sepDistance);
-			const float3 colResponseVec = sepDirection * float3(1.0f, 0.0f, 1.0f) * (penDistance * 0.5f);
+			const float3 colResponseVec = sepDirection * dirMask * sepResponse;
 
 			// multiply the collider's mass by a large constant (so that heavy
 			// features do not bounce light units away like jittering pinballs;
