@@ -647,17 +647,18 @@ void CGroundMoveType::UpdateSkid()
 			speed *= 0.95f;
 
 		const float wh = GetGroundHeight(midPos);
+		const float impactSpeed = midPos.IsInBounds()?
+			-speed.dot(ground->GetNormal(midPos.x, midPos.z)):
+			-speed.dot(UpVector);
+		const float impactDamageMult = impactSpeed * owner->mass * 0.02f;
 
 		if (wh > (midPos.y - owner->relMidPos.y)) {
 			flying = false;
 			midPos.y = wh + owner->relMidPos.y - speed.y * 0.5f;
 
-			const float impactSpeed = midPos.IsInBounds()?
-				-speed.dot(ground->GetNormal(midPos.x, midPos.z)):
-				-speed.dot(UpVector);
-
+			// deal ground impact damage
 			if (impactSpeed > ud->minCollisionSpeed && ud->minCollisionSpeed >= 0.0f) {
-				owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
+				owner->DoDamage(DamageArray(impactDamageMult), NULL, ZeroVector);
 			}
 		}
 	} else {
@@ -723,10 +724,11 @@ void CGroundMoveType::UpdateSkid()
 			}
 		}
 	}
+
 	CalcSkidRot();
 	owner->MoveMidPos(speed);
-
 	CheckCollisionSkid();
+
 	ASSERT_SYNCED_FLOAT3(owner->midPos);
 }
 
@@ -781,32 +783,39 @@ void CGroundMoveType::CheckCollisionSkid()
 
 		if (u->mobility == NULL) {
 			const float impactSpeed = -owner->speed.dot(dif);
+			const float impactDamageMult = impactSpeed * owner->mass * 0.02f;
 
 			if (impactSpeed > 0.0f) {
 				owner->MoveMidPos(dif * impactSpeed);
 				owner->speed += ((dif * impactSpeed) * 1.8f);
 
-				// damage the collider
+				// damage the collider, no added impulse
 				if (impactSpeed > ownerUD->minCollisionSpeed && ownerUD->minCollisionSpeed >= 0) {
-					owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
+					owner->DoDamage(DamageArray(impactDamageMult), NULL, ZeroVector);
 				}
-				// damage the (static) collidee
+				// damage the (static) collidee based on owner's mass, no added impulse
 				if (impactSpeed > unitUD->minCollisionSpeed && unitUD->minCollisionSpeed >= 0) {
-					u->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
+					u->DoDamage(DamageArray(impactDamageMult), NULL, ZeroVector);
 				}
 			}
 		} else {
 			// don't conserve momentum
 			assert(owner->mass > 0.0f && u->mass > 0.0f);
-			const float part = (owner->mass / (owner->mass + u->mass));
+
+			const float ownerRelMass = (owner->mass / (owner->mass + u->mass));
 			const float impactSpeed = (u->speed - owner->speed).dot(dif) * 0.5f;
 
-			if (impactSpeed > 0.0f) {
-				owner->MoveMidPos(dif * (impactSpeed * (1 - part) * 2));
-				owner->speed += dif * (impactSpeed * (1 - part) * 2);
+			const float colliderImpactDmgMult  =       impactSpeed * (1.0f - ownerRelMass) * owner->mass;
+			const float collideeImpactDmgMult  =       impactSpeed * (       ownerRelMass) * owner->mass;
+			const float3 colliderImpactImpulse = dif * impactSpeed * (1.0f - ownerRelMass);
+			const float3 collideeImpactImpulse = dif * impactSpeed * (       ownerRelMass);
 
-				u->MoveMidPos(dif * (impactSpeed * part * -2));
-				u->speed -= dif * (impactSpeed * part * 2);
+			if (impactSpeed > 0.0f) {
+				owner->MoveMidPos(colliderImpactImpulse);
+				owner->speed += colliderImpactImpulse;
+
+				u->MoveMidPos(-collideeImpactImpulse);
+				u->speed -= collideeImpactImpulse;
 
 				if (CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(u->moveType)) {
 					mt->skidding = true;
@@ -814,15 +823,11 @@ void CGroundMoveType::CheckCollisionSkid()
 
 				// damage the collider
 				if (impactSpeed > ownerUD->minCollisionSpeed && ownerUD->minCollisionSpeed >= 0.0f) {
-					owner->DoDamage(
-						DamageArray(impactSpeed * owner->mass * 0.2f * (1 - part)),
-						0, dif * impactSpeed * (owner->mass * (1 - part)));
+					owner->DoDamage(DamageArray(colliderImpactDmgMult * 0.02f), NULL, dif * colliderImpactDmgMult);
 				}
 				// damage the collidee
 				if (impactSpeed > unitUD->minCollisionSpeed && unitUD->minCollisionSpeed >= 0.0f) {
-					u->DoDamage(
-						DamageArray(impactSpeed * owner->mass * 0.2f * part),
-						0, dif * -impactSpeed * (u->mass * part));
+					u->DoDamage(DamageArray(collideeImpactDmgMult * 0.02f), NULL, dif * -collideeImpactDmgMult);
 				}
 
 				owner->speed *= 0.9f;
@@ -846,15 +851,20 @@ void CGroundMoveType::CheckCollisionSkid()
 
 		const float3 dif = (midPos - f->midPos).SafeNormalize();
 		const float impactSpeed = -owner->speed.dot(dif);
+		const float impactDamageMult = impactSpeed * owner->mass * 0.02f;
+		const float3 impactImpulse = dif * impactSpeed;
 
 		if (impactSpeed > 0.0f) {
-			owner->MoveMidPos(dif * impactSpeed);
-			owner->speed += ((dif * impactSpeed) * 1.8f);
+			owner->MoveMidPos(impactImpulse);
+			owner->speed += (impactImpulse * 1.8f);
 
+			// damage the collider, no added impulse (!) 
 			if (impactSpeed > ownerUD->minCollisionSpeed && ownerUD->minCollisionSpeed >= 0) {
-				owner->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), 0, ZeroVector);
+				owner->DoDamage(DamageArray(impactDamageMult), NULL, ZeroVector);
 			}
-			f->DoDamage(DamageArray(impactSpeed * owner->mass * 0.2f), -dif * impactSpeed);
+
+			// damage the collidee feature based on owner's mass
+			f->DoDamage(DamageArray(impactDamageMult), -impactImpulse);
 		}
 	}
 }
@@ -1919,6 +1929,8 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 		// a new path is requested
 		currentSpeed += deltaSpeed;
 		owner->pos += (flatFrontDir * currentSpeed * (reversing? -1.0f: 1.0f));
+
+		assert(math::fabs(currentSpeed) < 1e6f);
 	}
 
 	if (!wantReverse && currentSpeed == 0.0f) {
