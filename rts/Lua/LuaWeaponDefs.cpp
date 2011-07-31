@@ -523,8 +523,8 @@ static bool InitParamMap()
 	ADD_FLOAT("startvelocity", wd.startvelocity);
 	ADD_FLOAT("weaponAcceleration", wd.weaponacceleration);
 	ADD_FLOAT("turnRate", wd.turnrate);
-	ADD_FLOAT("maxVelocity", wd.maxvelocity);
 
+	ADD_FLOAT("maxVelocity", wd.projectilespeed * GAME_SPEED); // deprecated
 	ADD_FLOAT("projectilespeed", wd.projectilespeed);
 	ADD_FLOAT("explosionSpeed", wd.explosionSpeed);
 
