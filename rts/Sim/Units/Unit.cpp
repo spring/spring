@@ -1076,6 +1076,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 	if (damage > 0.0f) {
 		if (attacker) {
 			SetLastAttacker(attacker);
+
 			if (flankingBonusMode) {
 				const float3 adir = (attacker->pos - pos).SafeNormalize(); // FIXME -- not the impulse direction?
 
@@ -1085,12 +1086,12 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 					flankingBonusDir.Normalize();
 					flankingBonusMobility = 0.0f;
 					damage *= flankingBonusAvgDamage - adir.dot(flankingBonusDir) * flankingBonusDifDamage;
-				}
-				else {
+				} else {
 					float3 adirRelative;
 					adirRelative.x = adir.dot(rightdir);
 					adirRelative.y = adir.dot(updir);
 					adirRelative.z = adir.dot(frontdir);
+
 					if (flankingBonusMode == 2) {	// mode 2 = unit coordinates, mobile
 						flankingBonusDir += adirRelative * flankingBonusMobility;
 						flankingBonusDir.Normalize();
@@ -1101,6 +1102,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 				}
 			}
 		}
+
 		damage *= curArmorMultiple;
 		restTime = 0; // bleeding != resting
 	}
