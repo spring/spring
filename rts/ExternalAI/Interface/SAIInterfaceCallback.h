@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _SAIINTERFACECALLBACK_H
-#define _SAIINTERFACECALLBACK_H
+#ifndef S_AI_INTERFACE_CALLBACK_H
+#define S_AI_INTERFACE_CALLBACK_H
 
 #include "aidefines.h"
 
@@ -209,4 +209,4 @@ struct SAIInterfaceCallback {
 } // extern "C"
 #endif
 
-#endif // _SAIINTERFACECALLBACK_H
+#endif // S_AI_INTERFACE_CALLBACK_H
