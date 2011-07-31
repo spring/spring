@@ -288,7 +288,7 @@ void CWeapon::Update()
 			lastRequest = gs->frameNum;
 
 			const float heading = GetHeadingFromVectorF(wantedDir.x, wantedDir.z);
-			const float pitch = asin(wantedDir.dot(owner->updir));
+			const float pitch = streflop::asin(Clamp(wantedDir.dot(owner->updir), -1.0f, 1.0f));
 			// for COB, this sets anglegood to return value of aim script when it finished,
 			// for Lua, there exists a callout to set the anglegood member.
 			// FIXME: convert CSolidObject::heading to radians too.
