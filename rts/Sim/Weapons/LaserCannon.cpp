@@ -121,7 +121,7 @@ void CLaserCannon::FireImpl()
 	}
 
 	new CLaserProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
-		weaponDef->duration * weaponDef->maxvelocity,
+		weaponDef->duration * (weaponDef->projectilespeed * GAME_SPEED),
 		weaponDef->visuals.color, weaponDef->visuals.color2,
 		weaponDef->intensity, weaponDef,
 		(int) ((weaponDef->range - fpsSub) / weaponDef->projectilespeed) - 6);

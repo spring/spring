@@ -4123,7 +4123,7 @@ EXPORT(float) skirmishAiCallback_WeaponDef_getTurnRate(int skirmishAIId, int wea
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getMaxVelocity(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->maxvelocity;
+	return getWeaponDefById(skirmishAIId, weaponDefId)->projectilespeed * GAME_SPEED; //deprecated
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getProjectileSpeed(int skirmishAIId, int weaponDefId) {

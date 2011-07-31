@@ -103,7 +103,6 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.fixedLauncher = wdTable.GetBool("fixedLauncher",   false);
 	wd.noExplode     = wdTable.GetBool("noExplode",       false);
 	wd.isShield      = wdTable.GetBool("isShield",        false);
-	wd.maxvelocity   = wdTable.GetFloat("weaponVelocity", 0.0f);
 	wd.beamtime      = wdTable.GetFloat("beamTime",       1.0f);
 	wd.beamburst     = wdTable.GetBool("beamburst",       false);
 
