@@ -34,6 +34,7 @@
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 
+#define ASSERT_SANE_OWNER_SPEED(v) assert(v.SqLength() < 1e6f);
 #define MIN_WAYPOINT_DISTANCE (SQUARE_SIZE << 1)
 #define MAX_IDLING_SLOWUPDATES 16
 #define DEBUG_OUTPUT 0
@@ -290,6 +291,8 @@ bool CGroundMoveType::Update()
 		// by UpdateOwnerPos() (so that owner->pos is again equal to oldPos)
 		owner->speed = owner->pos - oldPos;
 		owner->UpdateMidPos();
+
+		ASSERT_SANE_OWNER_SPEED(owner->speed);
 
 		// too many false negatives: speed is unreliable if stuck behind an obstacle
 		//   idling = (owner->speed.SqLength() < (accRate * accRate));
@@ -627,10 +630,12 @@ void CGroundMoveType::ImpulseAdded(const float3&)
 		owner->moveType->useHeading = false;
 
 		if (speed.dot(groundNormal) > 0.2f) {
-			flying = true;
 			skidRotAccel = (gs->randFloat() - 0.5f) * 0.04f;
+			flying = true;
 		}
 	}
+
+	ASSERT_SANE_OWNER_SPEED(speed);
 }
 
 void CGroundMoveType::UpdateSkid()
@@ -736,7 +741,9 @@ void CGroundMoveType::UpdateSkid()
 	// extreme jumps when the unit transitions from skidding back
 	// to non-skidding
 	oldPos = owner->pos;
-	ASSERT_SYNCED_FLOAT3(owner->midPos);
+
+	ASSERT_SANE_OWNER_SPEED(speed);
+	ASSERT_SYNCED_FLOAT3(midPos);
 }
 
 void CGroundMoveType::UpdateControlledDrop()
@@ -874,6 +881,8 @@ void CGroundMoveType::CheckCollisionSkid()
 			f->DoDamage(DamageArray(impactDamageMult), -impactImpulse);
 		}
 	}
+
+	ASSERT_SANE_OWNER_SPEED(owner->speed);
 }
 
 void CGroundMoveType::CalcSkidRot()
