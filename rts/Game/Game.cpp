@@ -1451,6 +1451,16 @@ void CGame::StartPlaying()
 	}
 
 	eventHandler.GameStart();
+	
+	// This is a hack!!!
+	// Before 0.83 Lua had its GameFrame callin before gs->frameNum got updated,
+	// what caused it to have a `gameframe0` while the engine started with 1.
+	// This became a problem when LUS was added, and so we were forced to switch
+	// Lua to the 1-indexed system, too.
+	// To keep backward compability Lua now gets 2 GameFrames at start (0 & 1)
+	// and both share the same SimFrame!
+	eventHandler.GameFrame(0);
+
 	net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, speedControl));
 
 #if defined(USE_GML) && GML_ENABLE_SIM
@@ -1467,6 +1477,8 @@ void CGame::SimFrame() {
 	good_fpu_control_registers("CGame::SimFrame");
 	lastFrameTime = SDL_GetTicks();
 
+	gs->frameNum++;
+
 #ifdef TRACE_SYNC
 	//uh->CreateChecksum();
 	tracefile << "New frame:" << gs->frameNum << " " << gs->GetRandSeed() << "\n";
@@ -1477,12 +1489,7 @@ void CGame::SimFrame() {
 		m_validateAllAllocUnits();
 #endif
 
-	// Important: gs->frameNum must be updated *before* GameFrame is called,
-	// or any call-outs called by Lua will see a stale gs->frameNum.
-	// (e.g. effective TTL of CEGs emitted in GameFrame will be reduced...)
-	// It must still be passed the old frameNum because Lua may depend on it.
-	// (e.g. initialization in frame 0...)
-	eventHandler.GameFrame(gs->frameNum++);
+	eventHandler.GameFrame(gs->frameNum);
 
 	if (!skipping) {
 		infoConsole->Update();
