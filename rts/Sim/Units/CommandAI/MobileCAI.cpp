@@ -638,7 +638,7 @@ void CMobileCAI::ExecuteGuard(Command &c)
 		StopSlowGuard();
 		SlowUpdate();
 	} else {
-		const float3 dif = (guardee->pos - owner->pos).Normalize();
+		const float3 dif = (guardee->pos - owner->pos).SafeNormalize();
 		const float3 goal = guardee->pos - dif * (guardee->radius + owner->radius + 64.0f);
 		const bool resetGoal =
 			((goalPos - goal).SqLength2D() > 1600.0f) ||
