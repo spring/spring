@@ -7,6 +7,7 @@
 
 #include <cstring>
 #include <boost/version.hpp>
+#include <boost/config.hpp>
 
 /**
  * @brief Defines the current version string.
