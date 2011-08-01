@@ -229,36 +229,32 @@ bool CStdExplosionGenerator::Explosion(
 
 	if (ph->particleSaturation < 1.0f) {
 		// turn off lots of graphic only particles when we have more particles than we want
-		float smokeDamage = damage;
+		float smokeDamage      = damage;
+		float smokeDamageSQRT  = 0.0f;
+		float smokeDamageISQRT = 0.0f;
 
-		if (uwExplosion) {
-			smokeDamage *= 0.3f;
-		}
-		if (airExplosion || waterExplosion) {
-			smokeDamage *= 0.6f;
-		}
+		if (uwExplosion) { smokeDamage *= 0.3f; }
+		if (airExplosion || waterExplosion) { smokeDamage *= 0.6f; }
 
-		float invSqrtsmokeDamage = 1.0f;
-		if (smokeDamage > 0.0f) {
-			invSqrtsmokeDamage /= (sqrt(smokeDamage) * 0.35f);
+		if (smokeDamage > 0.01f) {
+			smokeDamageSQRT = sqrt(smokeDamage);
+			smokeDamageISQRT = 1.0f / (smokeDamageSQRT * 0.35f);
 		}
 
 		for (int a = 0; a < smokeDamage * 0.6f; ++a) {
 			const float3 speed(
 				(-0.1f + gu->usRandFloat() * 0.2f),
-				( 0.1f + gu->usRandFloat() * 0.3f) * invSqrtsmokeDamage,
+				( 0.1f + gu->usRandFloat() * 0.3f) * smokeDamageISQRT,
 				(-0.1f + gu->usRandFloat() * 0.2f)
 			);
 
 			const float h = ground->GetApproximateHeight(npos.x, npos.z);
-			const float time = (40 + sqrt(smokeDamage) * 15) * (0.8f + gu->usRandFloat() * 0.7f);
+			const float time = (40.0f + smokeDamageSQRT * 15.0f) * (0.8f + gu->usRandFloat() * 0.7f);
 
-			float3 npos(pos + gu->usRandVector() * (smokeDamage * 1.0f));
-			if (npos.y < h) {
-				npos.y = h;
-			}
+			float3 npos = pos + gu->usRandVector() * smokeDamage;
+			npos.y = std::max(npos.y, h);
 
-			new CSmokeProjectile2(pos, npos, speed, time, sqrt(smokeDamage) *4, 0.4f, owner, 0.6f);
+			new CSmokeProjectile2(pos, npos, speed, time, smokeDamageSQRT * 4.0f, 0.4f, owner, 0.6f);
 		}
 
 		if (groundExplosion) {

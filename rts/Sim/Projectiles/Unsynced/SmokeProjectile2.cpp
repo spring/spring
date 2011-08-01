@@ -68,7 +68,15 @@ void CSmokeProjectile2::Init(const float3& pos, CUnit* owner)
 	CProjectile::Init(pos, owner);
 }
 
-CSmokeProjectile2::CSmokeProjectile2(const float3& pos, const float3& wantedPos, const float3& speed, float ttl, float startSize, float sizeExpansion, CUnit* owner, float color)
+CSmokeProjectile2::CSmokeProjectile2(
+	const float3& pos,
+	const float3& wantedPos,
+	const float3& speed,
+	float ttl,
+	float startSize,
+	float sizeExpansion,
+	CUnit* owner,
+	float color)
 : CProjectile(pos, speed, owner, false, false, false),
 	color(color),
 	age(0),
@@ -87,10 +95,7 @@ CSmokeProjectile2::CSmokeProjectile2(const float3& pos, const float3& wantedPos,
 	textureNum = (int)(gu->usRandInt() % projectileDrawer->smoketex.size());
 }
 
-CSmokeProjectile2::~CSmokeProjectile2()
-{
 
-}
 
 void CSmokeProjectile2::Update()
 {
@@ -129,10 +134,6 @@ void CSmokeProjectile2::Draw()
 	col[1] = (unsigned char) (color * alpha + gglow);
 	col[2] = (unsigned char) std::max(0.f, color * alpha - gglow * 0.5f);
 	col[3] = alpha/*-alphaFalloff*globalRendering->timeOffset*/;
-	//int frame=textureNum;
-	//float xmod=0.125f+(float(int(frame%6)))/16.0f;
-	//float ymod=(int(frame/6))/16.0f;
-	//int smokenum = frame%12;
 
 	const float3 interPos = pos + (wantedPos + speed * globalRendering->timeOffset - pos) * 0.1f * globalRendering->timeOffset;
 	const float interSize = size + sizeExpansion * globalRendering->timeOffset;
