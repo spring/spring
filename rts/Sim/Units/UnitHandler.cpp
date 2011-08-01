@@ -269,6 +269,11 @@ void CUnitHandler::Update()
 			if (moveType->Update()) {
 				eventHandler.UnitMoved(unit);
 			}
+			if (!unit->pos.IsInBounds() && unit->speed.SqLength() > 1e6f) {
+				// this unit is not coming back, kill it now without any death
+				// sequence (so deathScriptFinished becomes true immediately)
+				unit->KillUnit(false, true, NULL, false);
+			}
 
 			UNIT_SANITY_CHECK(unit);
 			GML_GET_TICKS(unit->lastUnitUpdate);

@@ -34,7 +34,12 @@
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 
+#ifndef NDEBUG
 #define ASSERT_SANE_OWNER_SPEED(v) assert(v.SqLength() < 1e6f);
+#else
+#define ASSERT_SANE_OWNER_SPEED(v)
+#endif
+
 #define MIN_WAYPOINT_DISTANCE (SQUARE_SIZE << 1)
 #define MAX_IDLING_SLOWUPDATES 16
 #define DEBUG_OUTPUT 0
