@@ -783,13 +783,22 @@ float UDPConnection::BandwidthUsage::GetAverage(bool prel) const
 }
 
 void UDPConnection::Close(bool flush) {
+
+	if (closed) {
+		return;
+	}
+
 	Flush(flush);
 	muted = true;
-	if (!sharedSocket && !closed) {
-		mySocket->shutdown(boost::asio::ip::udp::socket::shutdown_both);
-		mySocket->close();
-		closed = true;
+	if (!sharedSocket) {
+		try {
+			mySocket->shutdown(boost::asio::ip::udp::socket::shutdown_both);
+			mySocket->close();
+		} catch (const boost::system::system_error& ex) {
+			LOG_L(L_ERROR, "Failed closing UDP conection: %s", ex.what());
+		}
 	}
+	closed = true;
 }
 
 } // namespace netcode
