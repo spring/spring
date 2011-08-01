@@ -217,7 +217,6 @@ void CUnitHandler::Update()
 			eventHandler.DeleteSyncedUnits();
 
 			GML_RECMUTEX_LOCK(proj); // Update - projectile drawing may access owner() and lead to crash
-
 			GML_RECMUTEX_LOCK(sel);  // Update - unit is removed from selectedUnits in ~CObject, which is too late.
 			GML_RECMUTEX_LOCK(quad); // Update - make sure unit does not get partially deleted before before being removed from the quadfield
 
@@ -269,7 +268,7 @@ void CUnitHandler::Update()
 			if (moveType->Update()) {
 				eventHandler.UnitMoved(unit);
 			}
-			if (!unit->pos.IsInBounds() && unit->speed.SqLength() > 1e6f) {
+			if (!unit->pos.IsInBounds() && (unit->speed.SqLength() > (MAX_UNIT_SPEED * MAX_UNIT_SPEED))) {
 				// this unit is not coming back, kill it now without any death
 				// sequence (so deathScriptFinished becomes true immediately)
 				unit->KillUnit(false, true, NULL, false);

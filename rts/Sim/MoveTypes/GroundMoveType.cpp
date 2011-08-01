@@ -34,11 +34,10 @@
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 
-#ifndef NDEBUG
-#define ASSERT_SANE_OWNER_SPEED(v) assert(v.SqLength() < 1e6f);
-#else
-#define ASSERT_SANE_OWNER_SPEED(v)
-#endif
+// speeds near (MAX_UNIT_SPEED * 1e1) elmos / frame can be caused by explosion impulses
+// CUnitHandler removes units with speeds > MAX_UNIT_SPEED as soon as they exit the map,
+// so the assertion can be less strict
+#define ASSERT_SANE_OWNER_SPEED(v) assert(v.SqLength() < (MAX_UNIT_SPEED * MAX_UNIT_SPEED * 1e2));
 
 #define MIN_WAYPOINT_DISTANCE (SQUARE_SIZE << 1)
 #define MAX_IDLING_SLOWUPDATES 16

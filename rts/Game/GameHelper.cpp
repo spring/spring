@@ -160,7 +160,7 @@ void CGameHelper::DoExplosionDamage(
 	// outside the map)
 	const DamageArray damageDone = damages * mod2;
 	const float rawImpulseStrength = damages.impulseFactor * mod1 * (damages.GetDefaultDamage() + damages.impulseBoost) * 3.2f;
-	const float modImpulseStrength = Clamp(rawImpulseStrength, -1e4f, 1e4f);
+	const float modImpulseStrength = Clamp(rawImpulseStrength, -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE);
 	const float3 addedImpulse = diffPos * modImpulseStrength;
 
 	if (expDist2 < (expSpeed * 4.0f)) { // damage directly
