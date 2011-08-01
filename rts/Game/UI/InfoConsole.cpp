@@ -165,13 +165,15 @@ void CInfoConsole::NotifyLogMsg(const CLogSubsystem& subsystem, const std::strin
 
 	const float maxWidth  = (width  * globalRendering->viewSizeX) - (border * 2);
 	const float maxHeight = (height * globalRendering->viewSizeY) - (border * 2);
-	const unsigned int numLines = math::floor(maxHeight / (fontSize * smallFont->GetLineHeight()));
+	const unsigned int maxLines = (smallFont->GetLineHeight() > 0)
+			? math::floor(maxHeight / (fontSize * smallFont->GetLineHeight()))
+			: 1; // this will likely be the case on HEADLESS only
 
 	std::list<std::string> lines = smallFont->Wrap(text, fontSize, maxWidth);
 
 	std::list<std::string>::iterator il;
 	for (il = lines.begin(); il != lines.end(); ++il) {
-		//! add the line to the console
+		// add the line to the console
 		InfoLine l;
 		data.push_back(l);
 		data.back().text = *il;
@@ -179,7 +181,9 @@ void CInfoConsole::NotifyLogMsg(const CLogSubsystem& subsystem, const std::strin
 		lastTime = lifetime;
 	}
 
-	for (size_t i = data.size(); i > numLines; i--) {
+	// if we have more lines then we can show, remove the oldest one,
+	// and make sure the others are shown long enough
+	for (size_t i = data.size(); i > maxLines; i--) {
 		data[1].time += data[0].time;
 		data.pop_front();
 	}
