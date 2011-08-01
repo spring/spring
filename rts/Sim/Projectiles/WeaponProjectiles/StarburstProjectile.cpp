@@ -65,7 +65,7 @@ CStarburstProjectile::CStarburstProjectile(
 	CUnit* target,
 	const WeaponDef* weaponDef,
 	CWeaponProjectile* interceptTarget,
-	float maxdistance, float3 aimError):
+	float maxRange, float3 aimError):
 
 	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, interceptTarget, 200),
 	tracking(tracking),
@@ -81,7 +81,7 @@ CStarburstProjectile::CStarburstProjectile(
 	curCallback(NULL),
 	numCallback(NULL),
 	missileAge(0),
-	distanceToTravel(maxdistance)
+	distanceToTravel(maxRange)
 {
 	projectileType = WEAPON_STARBURST_PROJECTILE;
 	this->uptime = uptime;
@@ -196,7 +196,7 @@ void CStarburstProjectile::Update()
 
 			speed = dir * curSpeed;
 		}
-	} else if (doturn && ttl > 0 && distanceToTravel > 0) {
+	} else if (doturn && ttl > 0 && distanceToTravel > 0.0f) {
 		if (!luaMoveCtrl) {
 			float3 dif(targetPos - pos);
 			dif.Normalize();
@@ -220,11 +220,11 @@ void CStarburstProjectile::Update()
 				dir.Normalize();
 			}
 			speed = dir * curSpeed;
-			if (distanceToTravel != MAX_WORLD_SIZE) {
+			if (distanceToTravel != MAX_PROJECTILE_RANGE) {
 				distanceToTravel -= speed.Length2D();
 			}
 		}
-	} else if (ttl > 0 && distanceToTravel > 0) {
+	} else if (ttl > 0 && distanceToTravel > 0.0f) {
 		if (!luaMoveCtrl) {
 			if (curSpeed < maxSpeed) {
 				curSpeed += weaponDef->weaponacceleration;
@@ -244,7 +244,7 @@ void CStarburstProjectile::Update()
 
 			speed = dir * curSpeed;
 
-			if (distanceToTravel != MAX_WORLD_SIZE) {
+			if (distanceToTravel != MAX_PROJECTILE_RANGE) {
 				distanceToTravel -= speed.Length2D();
 			}
 		}
