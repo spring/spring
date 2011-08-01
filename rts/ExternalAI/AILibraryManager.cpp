@@ -29,12 +29,12 @@
 
 CAILibraryManager::CAILibraryManager() {
 
-	GetAllInfosFromCache();
+	ClearAllInfos();
+	GatherInterfaceLibrariesInfos();
+	GatherSkirmishAIsLibrariesInfos();
 }
 
-void CAILibraryManager::GetAllInfosFromCache() {
-
-	ClearAllInfos();
+void CAILibraryManager::GatherInterfaceLibrariesInfos() {
 
 	typedef std::vector<std::string> T_dirs;
 
@@ -103,6 +103,11 @@ void CAILibraryManager::GetAllInfosFromCache() {
 			}
 		}
 	}
+}
+
+void CAILibraryManager::GatherSkirmishAIsLibrariesInfos() {
+
+	typedef std::vector<std::string> T_dirs;
 
 	// Read from Skirmish AI info and option files
 	// we are looking for:
