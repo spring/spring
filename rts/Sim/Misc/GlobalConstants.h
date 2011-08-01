@@ -81,4 +81,14 @@ const int MAX_WEAPONS_PER_UNIT = 32;
  */
 const int RANDINT_MAX = 0x7fff;
 
+/**
+ * maximum speed (elmos/frame) a unit is allowed to have outside the map
+ */
+const float MAX_UNIT_SPEED = 1e3f;
+
+/**
+ * maximum impulse strength an explosion is allowed to impart on a unit
+ */
+const float MAX_EXPLOSION_IMPULSE = 1e4f;
+
 #endif // _GLOBAL_CONSTANTS_H

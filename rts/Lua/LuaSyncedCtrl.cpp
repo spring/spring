@@ -1938,6 +1938,13 @@ int LuaSyncedCtrl::SetUnitVelocity(lua_State* L)
 	           luaL_checkfloat(L, 3),
 	           luaL_checkfloat(L, 4));
 	unit->speed = dir;
+
+	if (!unit->pos.IsInBounds()) {
+		unit->speed.x = Clamp(unit->speed.x, -(MAX_UNIT_SPEED - 1.0f), (MAX_UNIT_SPEED - 1.0f));
+		unit->speed.y = Clamp(unit->speed.y, -(MAX_UNIT_SPEED - 1.0f), (MAX_UNIT_SPEED - 1.0f));
+		unit->speed.z = Clamp(unit->speed.z, -(MAX_UNIT_SPEED - 1.0f), (MAX_UNIT_SPEED - 1.0f));
+	}
+
 	return 0;
 }
 
