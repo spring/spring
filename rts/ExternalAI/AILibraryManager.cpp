@@ -144,6 +144,8 @@ void CAILibraryManager::GetAllInfosFromCache() {
 						"Required AI Interface for Skirmish AI %s %s not found.",
 						skirmishAIInfo->GetShortName().c_str(),
 						skirmishAIInfo->GetVersion().c_str());
+				delete skirmishAIInfo;
+				skirmishAIInfo = NULL;
 			}
 		}
 	}
