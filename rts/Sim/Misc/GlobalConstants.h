@@ -4,13 +4,6 @@
 #define _GLOBAL_CONSTANTS_H
 
 /**
- * @brief maximum world size
- *
- * Defines the maximum world size as 1'000'000.
- */
-const int MAX_WORLD_SIZE = 1000000;
-
-/**
  * @brief square size
  *
  * Defines the size of 1 square as 8.
@@ -90,5 +83,15 @@ const float MAX_UNIT_SPEED = 1e3f;
  * maximum impulse strength an explosion is allowed to impart on a unit
  */
 const float MAX_EXPLOSION_IMPULSE = 1e4f;
+
+/**
+ * maximum range of a weapon-projectile with a flight-time member
+ */
+const float MAX_PROJECTILE_RANGE = 1e6f;
+
+/**
+ * maximum absolute height a projectile is allowed to reach
+ */
+const float MAX_PROJECTILE_HEIGHT = 1e6f;
 
 #endif // _GLOBAL_CONSTANTS_H
