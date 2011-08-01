@@ -76,10 +76,10 @@ void CInfoConsole::Draw()
 		glColor4f(0.2f, 0.2f, 0.2f, CInputReceiver::guiAlpha);
 
 		glBegin(GL_TRIANGLE_STRIP);
-			glVertex3f(xpos,ypos,0);
-			glVertex3f(xpos+width,ypos,0);
-			glVertex3f(xpos,ypos-height,0);
-			glVertex3f(xpos+width,ypos-height,0);
+			glVertex3f(xpos,         ypos,          0);
+			glVertex3f(xpos + width, ypos,          0);
+			glVertex3f(xpos,         ypos - height, 0);
+			glVertex3f(xpos + width, ypos - height, 0);
 		glEnd();
 	}
 
@@ -160,11 +160,11 @@ void CInfoConsole::NotifyLogMsg(const CLogSubsystem& subsystem, const std::strin
 		newLines++;
 	}
 
-	const float maxWidth  = width * globalRendering->viewSizeX - border * 2;
-	const float maxHeight = height * globalRendering->viewSizeY - border * 2;
+	const float maxWidth  = (width  * globalRendering->viewSizeX) - (border * 2);
+	const float maxHeight = (height * globalRendering->viewSizeY) - (border * 2);
 	const unsigned int numLines = math::floor(maxHeight / (fontSize * smallFont->GetLineHeight()));
 
-	std::list<std::string> lines = smallFont->Wrap(text,fontSize,maxWidth);
+	std::list<std::string> lines = smallFont->Wrap(text, fontSize, maxWidth);
 
 	std::list<std::string>::iterator il;
 	for (il = lines.begin(); il != lines.end(); ++il) {
@@ -192,7 +192,7 @@ void CInfoConsole::SetLastMsgPos(const float3& pos)
 		lastMsgPositions.pop_back();
 	}
 
-	//! reset the iterator when a new msg comes in
+	// reset the iterator when a new msg comes in
 	lastMsgIter = lastMsgPositions.begin();
 }
 
