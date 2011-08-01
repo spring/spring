@@ -51,13 +51,14 @@ void CAILibraryManager::GetAllInfosFromCache() {
 	for (T_dirs::iterator dir = aiInterfaceDataDirs.begin();
 			dir != aiInterfaceDataDirs.end(); ++dir) {
 		const std::string& possibleDataDir = *dir;
-		T_dirs infoFile =
+		T_dirs infoFiles =
 				CFileHandler::FindFiles(possibleDataDir, "InterfaceInfo.lua");
-		if (!infoFile.empty()) { // interface info is available
+		if (!infoFiles.empty()) { // interface info is available
+			const std::string& infoFile = infoFiles.at(0);
 
 			// generate and store the interface info
 			CAIInterfaceLibraryInfo* interfaceInfo =
-					new CAIInterfaceLibraryInfo(infoFile.at(0));
+					new CAIInterfaceLibraryInfo(infoFile);
 
 			interfaceInfo->SetDataDir(FileSystemHandler::EnsureNoPathSepAtEnd(possibleDataDir));
 			interfaceInfo->SetDataDirCommon(
@@ -69,7 +70,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 			interfaceInfos[interfaceKey] = interfaceInfo;
 
 			// for debug-info, in case one interface is specified multiple times
-			duplicateInterfaceInfoCheck[interfaceKey].insert(infoFile.at(0));
+			duplicateInterfaceInfoCheck[interfaceKey].insert(infoFile);
 		}
 	}
 
@@ -105,9 +106,11 @@ void CAILibraryManager::GetAllInfosFromCache() {
 	for (T_dirs::iterator dir = skirmishAIDataDirs.begin();
 			dir != skirmishAIDataDirs.end(); ++dir) {
 		const std::string& possibleDataDir = *dir;
-		T_dirs infoFile = CFileHandler::FindFiles(possibleDataDir,
+		T_dirs infoFiles = CFileHandler::FindFiles(possibleDataDir,
 				"AIInfo.lua");
-		if (!infoFile.empty()) { // skirmish AI info is available
+		if (!infoFiles.empty()) { // skirmish AI info is available
+			const std::string& infoFile = infoFiles.at(0);
+
 			std::string optionFileName = "";
 			T_dirs optionFile = CFileHandler::FindFiles(possibleDataDir,
 					"AIOptions.lua");
@@ -116,7 +119,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 			}
 			// generate and store the ai info
 			CSkirmishAILibraryInfo* skirmishAIInfo =
-					new CSkirmishAILibraryInfo(infoFile.at(0), optionFileName);
+					new CSkirmishAILibraryInfo(infoFile, optionFileName);
 
 			skirmishAIInfo->SetDataDir(FileSystemHandler::EnsureNoPathSepAtEnd(possibleDataDir));
 			skirmishAIInfo->SetDataDirCommon(
@@ -135,7 +138,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 				skirmishAIInfos[skirmishAIKey] = skirmishAIInfo;
 
 				// for debug-info, in case one AI is specified multiple times
-				duplicateSkirmishAIInfoCheck[skirmishAIKey].insert(infoFile.at(0));
+				duplicateSkirmishAIInfoCheck[skirmishAIKey].insert(infoFile);
 			} else {
 				LOG_L(L_ERROR,
 						"Required AI Interface for Skirmish AI %s %s not found.",

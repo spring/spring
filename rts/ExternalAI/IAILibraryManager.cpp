@@ -28,7 +28,7 @@ void IAILibraryManager::Destroy() {
 	delete tmp;
 }
 
-std::string fillUpTo(const std::string& str, unsigned int numChars) {
+static std::string fillUpTo(const std::string& str, unsigned int numChars) {
 
 	std::string filler = "";
 
