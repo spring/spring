@@ -1203,21 +1203,23 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 	eventHandler.UnitDamaged(this, attacker, damage, weaponDefId, !!damages.paralyzeDamageTime);
 	eoh->UnitDamaged(*this, attacker, damage, weaponDefId, !!damages.paralyzeDamageTime);
 
-	if (health <= 0.0f) {
-		KillUnit(false, false, attacker);
-		if (isDead && (attacker != 0) &&
-		    !teamHandler->Ally(allyteam, attacker->allyteam) && !beingBuilt) {
-			attacker->AddExperience(expMultiplier * 0.1f * (power / attacker->power));
-			teamHandler->Team(attacker->team)->currentStats->unitsKilled++;
-		}
-	}
-//	if(attacker!=0 && attacker->team==team)
-//		logOutput.Print("FF by %i %s on %i %s",attacker->id,attacker->tooltip.c_str(),id,tooltip.c_str());
-
 #ifdef TRACE_SYNC
 	tracefile << "Damage: ";
 	tracefile << id << " " << damage << "\n";
 #endif
+
+	if (health <= 0.0f) {
+		KillUnit(false, false, attacker);
+
+		if (!isDead) { return; }
+		if (beingBuilt) { return; }
+		if (attacker == NULL) { return; }
+
+		if (!teamHandler->Ally(allyteam, attacker->allyteam)) {
+			attacker->AddExperience(expMultiplier * 0.1f * (power / attacker->power));
+			teamHandler->Team(attacker->team)->currentStats->unitsKilled++;
+		}
+	}
 }
 
 
@@ -1230,8 +1232,9 @@ void CUnit::Kill(const float3& impulse) {
 void CUnit::AddImpulse(const float3& addedImpulse) {
 	residualImpulse += addedImpulse;
 
-	if (addedImpulse.SqLength() >= 0.01f)
+	if (addedImpulse.SqLength() >= 0.01f) {
 		moveType->ImpulseAdded(addedImpulse);
+	}
 }
 
 

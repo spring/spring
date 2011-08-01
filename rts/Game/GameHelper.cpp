@@ -73,7 +73,9 @@ CGameHelper::~CGameHelper()
 void CGameHelper::DoExplosionDamage(
 	CUnit* unit,
 	CUnit* owner,
-	const float3& expPos, float expRad, float expSpeed,
+	const float3& expPos,
+	float expRad,
+	float expSpeed,
 	bool ignoreOwner, float edgeEffectiveness,
 	const DamageArray& damages, int weaponDefID)
 {
@@ -145,19 +147,21 @@ void CGameHelper::DoExplosionDamage(
 		expDist2 = std::min(expDist2, expRad);
 	}
 
-	float mod  = (expRad - expDist1) / (expRad - expDist1 * edgeEffectiveness);
-	float mod2 = (expRad - expDist2) / (expRad - expDist2 * edgeEffectiveness);
+	const float mod1 = std::max(0.01f, (expRad - expDist1) / (expRad - (expDist1 * edgeEffectiveness)));
+	const float mod2 = std::max(0.01f, (expRad - expDist2) / (expRad - (expDist2 * edgeEffectiveness)));
 
 	diffPos /= expDist;
 	diffPos.y += 0.12f;
 
-	if (mod < 0.01f)
-		mod = 0.01f;
-
 	// limit the impulse to prevent later FP overflow
+	// (several weapons have _default_ damage values in the order of 1e4,
+	// which make the simulation highly unstable because they can impart
+	// speeds of several thousand elmos/frame to units and throw them far
+	// outside the map)
 	const DamageArray damageDone = damages * mod2;
-	const float impulseStrength = Clamp(damages.impulseFactor * mod * (damages[0] + damages.impulseBoost) * 3.2f, -1e6f, 1e6f);
-	const float3 addedImpulse = diffPos * impulseStrength;
+	const float rawImpulseStrength = damages.impulseFactor * mod1 * (damages.GetDefaultDamage() + damages.impulseBoost) * 3.2f;
+	const float modImpulseStrength = Clamp(rawImpulseStrength, -1e4f, 1e4f);
+	const float3 addedImpulse = diffPos * modImpulseStrength;
 
 	if (expDist2 < (expSpeed * 4.0f)) { // damage directly
 		unit->DoDamage(damageDone, owner, addedImpulse, weaponDefID);
@@ -177,7 +181,7 @@ void CGameHelper::DoExplosionDamage(CFeature* feature,
 
 		float expDist = std::max(dif.Length(), 0.1f);
 		float expMod = (expRad - expDist) / expRad;
-		float dmgScale = (damages[0] + damages.impulseBoost);
+		float dmgScale = (damages.GetDefaultDamage() + damages.impulseBoost);
 
 		// always do some damage with explosive stuff
 		// (DDM wreckage etc. is too big to normally
@@ -221,11 +225,6 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	const bool ignoreOwner = params.ignoreOwner;
 	const bool damageGround = params.damageGround;
 	const bool noGfx = eventHandler.Explosion(weaponDefID, expPos, owner);
-
-#ifdef TRACE_SYNC
-	tracefile << "Explosion: ";
-	tracefile << expPos.x << " " << damages[0] <<  " " << expRad << "\n";
-#endif
 
 	if (luaUI) {
 		if (weaponDef != NULL && weaponDef->cameraShake > 0.0f) {
@@ -288,7 +287,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 		if (altitude >= -1.0f) {
 			if (damageGround && !mapDamage->disabled && (expRad > altitude) && (damages.craterMult > 0.0f)) {
 				// limit the depth somewhat
-				const float craterDepth = damages[0] * (1.0f - (altitude / expRad));
+				const float craterDepth = damages.GetDefaultDamage() * (1.0f - (altitude / expRad));
 				const float damageDepth = std::min(expRad * 10.0f, craterDepth);
 
 				mapDamage->Explosion(expPos, (damageDepth + damages.craterBoost) * damages.craterMult, expRad - altitude);
@@ -304,10 +303,10 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 			explosionGenerator = weaponDef->explosionGenerator;
 		}
 
-		explosionGenerator->Explosion(0, expPos, damages[0], expRad, owner, gfxMod, hitUnit, dir);
+		explosionGenerator->Explosion(0, expPos, damages.GetDefaultDamage(), expRad, owner, gfxMod, hitUnit, dir);
 	}
 
-	CExplosionEvent explosionEvent(expPos, damages[0], expRad, weaponDef);
+	CExplosionEvent explosionEvent(expPos, damages.GetDefaultDamage(), expRad, weaponDef);
 	FireExplosionEvent(explosionEvent);
 }
 
@@ -619,7 +618,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 	const float aHeight   = weapon->weaponPos.y;
 
 	// how much damage the weapon deals over 1 second
-	const float secDamage = weapon->weaponDef->damages[0] * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;
+	const float secDamage = weapon->weaponDef->damages.GetDefaultDamage() * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;
 	const bool paralyzer  = !!weapon->weaponDef->damages.paralyzeDamageTime;
 
 	const std::vector<int>& quads = qf->GetQuads(pos, radius + (aHeight - std::max(0.f, readmap->initMinHeight)) * heightMod);
