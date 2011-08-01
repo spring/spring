@@ -56,13 +56,24 @@ private:
 	 */
 	void ReleaseInterface(const AIInterfaceKey& interfaceKey);
 	/**
-	 * Loads info about available AI Interfaces and AIs from LUA Info files.
-	 * -> interface and AI libraries can not corrupt the engines memory
+	 * Loads info about available AI Interfaces from Lua info-files.
 	 *
 	 * The files are searched in all data-dirs (see fs.GetDataDirectories())
 	 * in the following sub-dirs:
 	 * {AI_INTERFACES_DATA_DIR}/{*}/InterfaceInfo.lua
 	 * {AI_INTERFACES_DATA_DIR}/{*}/{*}/InterfaceInfo.lua
+	 *
+	 * examples:
+	 * AI/Interfaces/C/0.1/InterfaceInfo.lua
+	 * AI/Interfaces/Java/0.1/InterfaceInfo.lua
+	 */
+	void GatherInterfaceLibrariesInfos();
+	/**
+	 * Loads info about available Skirmish AIs from Lua info- and option-files.
+	 * -> AI libraries can not corrupt the engines memory
+	 *
+	 * The files are searched in all data-dirs (see fs.GetDataDirectories())
+	 * in the following sub-dirs:
 	 * {SKIRMISH_AI_DATA_DIR}/{*}/AIInfo.lua
 	 * {SKIRMISH_AI_DATA_DIR}/{*}/AIOptions.lua
 	 * {SKIRMISH_AI_DATA_DIR}/{*}/{*}/AIInfo.lua
@@ -73,7 +84,7 @@ private:
 	 * AI/Skirmish/RAI/0.601/AIInfo.lua
 	 * AI/Skirmish/RAI/0.601/AIOptions.lua
 	 */
-	void GetAllInfosFromCache();
+	void GatherSkirmishAIsLibrariesInfos();
 	/**
 	 * Clears info about available AIs.
 	 */
