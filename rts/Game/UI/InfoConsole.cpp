@@ -146,7 +146,6 @@ void CInfoConsole::GetNewRawLines(std::vector<RawLine>& lines)
 
 void CInfoConsole::NotifyLogMsg(const CLogSubsystem& subsystem, const std::string& text)
 {
-	if (!smallFont) return;
 
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
@@ -158,6 +157,10 @@ void CInfoConsole::NotifyLogMsg(const CLogSubsystem& subsystem, const std::strin
 	}
 	if (newLines < maxRawLines) {
 		newLines++;
+	}
+
+	if (!smallFont) {
+		return;
 	}
 
 	const float maxWidth  = (width  * globalRendering->viewSizeX) - (border * 2);
