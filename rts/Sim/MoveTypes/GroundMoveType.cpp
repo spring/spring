@@ -39,6 +39,7 @@
 // so the assertion can be less strict
 #define ASSERT_SANE_OWNER_SPEED(v) assert(v.SqLength() < (MAX_UNIT_SPEED * MAX_UNIT_SPEED * 1e2));
 
+#define RAD2DEG (180.0f / PI)
 #define MIN_WAYPOINT_DISTANCE (SQUARE_SIZE << 1)
 #define MAX_IDLING_SLOWUPDATES 16
 #define DEBUG_OUTPUT 0
@@ -476,8 +477,8 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 			const bool startBreaking = (haveFinalWaypoint && !atGoal);
 
 			const float reqTurnAngle = reversing?
-				(streflop::acosf(waypointDir.dot(-flatFrontDir)) * (180.0f / PI)):
-				(streflop::acosf(waypointDir.dot( flatFrontDir)) * (180.0f / PI));
+				(streflop::acosf(Clamp(waypointDir.dot(-flatFrontDir), -1.0f, 1.0f)) * RAD2DEG):
+				(streflop::acosf(Clamp(waypointDir.dot( flatFrontDir), -1.0f, 1.0f)) * RAD2DEG);
 			const float maxTurnAngle = (turnRate / SPRING_CIRCLE_DIVS) * 360.0f;
 
 			float reducedSpeed = (reversing)? maxReverseSpeed: maxSpeed;
@@ -1983,8 +1984,8 @@ bool CGroundMoveType::WantReverse(const float3& waypointDir2D) const
 	const float waypointFETA  = (waypointDist / maxSpeed);                                      // in frames (simplistic)
 	const float waypointRETA  = (waypointDist / maxReverseSpeed);                               // in frames (simplistic)
 	const float waypointDirDP = waypointDir2D.dot(owner->frontdir);
-	const float waypointAngle = std::max(-1.0f, std::min(1.0f, waypointDirDP));                 // prevent NaN's
-	const float turnAngleDeg  = streflop::acosf(waypointAngle) * (180.0f / PI);                 // in degrees
+	const float waypointAngle = Clamp(waypointDirDP, -1.0f, 1.0f);                              // prevent NaN's
+	const float turnAngleDeg  = streflop::acosf(waypointAngle) * RAD2DEG;                       // in degrees
 	const float turnAngleSpr  = (turnAngleDeg / 360.0f) * SPRING_CIRCLE_DIVS;                   // in "headings"
 	const float revAngleSpr   = SHORTINT_MAXVALUE - turnAngleSpr;                               // 180 deg - angle
 
