@@ -67,7 +67,14 @@ void CAILibraryManager::GetAllInfosFromCache() {
 			AIInterfaceKey interfaceKey = interfaceInfo->GetKey();
 
 			interfaceKeys.insert(interfaceKey);
-			interfaceInfos[interfaceKey] = interfaceInfo;
+			if (interfaceInfos.find(interfaceKey) == interfaceInfos.end()) {
+				// no interface info with this key yet -> store it
+				interfaceInfos[interfaceKey] = interfaceInfo;
+			} else {
+				// duplicate interface info -> free
+				delete interfaceInfo;
+				interfaceInfo = NULL;
+			}
 
 			// for debug-info, in case one interface is specified multiple times
 			duplicateInterfaceInfoCheck[interfaceKey].insert(infoFile);
@@ -135,7 +142,14 @@ void CAILibraryManager::GetAllInfosFromCache() {
 			if (!interfaceKey.IsUnspecified()) {
 				SkirmishAIKey skirmishAIKey = SkirmishAIKey(aiKey, interfaceKey);
 				skirmishAIKeys.insert(skirmishAIKey);
-				skirmishAIInfos[skirmishAIKey] = skirmishAIInfo;
+				if (skirmishAIInfos.find(skirmishAIKey) == skirmishAIInfos.end()) {
+					// no AI info with this key yet -> store it
+					skirmishAIInfos[skirmishAIKey] = skirmishAIInfo;
+				} else {
+					// duplicate AI info -> free
+					delete skirmishAIInfo;
+					skirmishAIInfo = NULL;
+				}
 
 				// for debug-info, in case one AI is specified multiple times
 				duplicateSkirmishAIInfoCheck[skirmishAIKey].insert(infoFile);
