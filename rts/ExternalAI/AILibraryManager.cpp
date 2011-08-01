@@ -68,7 +68,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 			interfaceKeys.insert(interfaceKey);
 			interfaceInfos[interfaceKey] = interfaceInfo;
 
-			// so we can check if one interface is specified multiple times
+			// for debug-info, in case one interface is specified multiple times
 			duplicateInterfaceInfoCheck[interfaceKey].insert(infoFile.at(0));
 		}
 	}
@@ -99,6 +99,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 	// Read from Skirmish AI info and option files
 	// we are looking for:
 	// {SKIRMISH_AI_DATA_DIR}/{*}/{*}/AIInfo.lua
+	// {SKIRMISH_AI_DATA_DIR}/{*}/{*}/AIOptions.lua
 	T_dirs skirmishAIDataDirs = filesystem.FindDirsInDirectSubDirs(SKIRMISH_AI_DATA_DIR);
 	T_dupSkirm duplicateSkirmishAIInfoCheck;
 	for (T_dirs::iterator dir = skirmishAIDataDirs.begin();
@@ -133,7 +134,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 				skirmishAIKeys.insert(skirmishAIKey);
 				skirmishAIInfos[skirmishAIKey] = skirmishAIInfo;
 
-				// so we can check if one skirmish AI is specified multiple times
+				// for debug-info, in case one AI is specified multiple times
 				duplicateSkirmishAIInfoCheck[skirmishAIKey].insert(infoFile.at(0));
 			} else {
 				LOG_L(L_ERROR,
