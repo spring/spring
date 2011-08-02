@@ -78,7 +78,7 @@ namespace Shader {
 
 
 	void IProgramObject::Release() {
-		for (SOVecIt it = shaderObjs.begin(); it != shaderObjs.end(); it++) {
+		for (SOVecIt it = shaderObjs.begin(); it != shaderObjs.end(); ++it) {
 			(const_cast<IShaderObject*>(*it))->Release();
 			delete *it;
 		}
