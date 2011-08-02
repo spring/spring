@@ -821,7 +821,7 @@ bool CWeapon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 
 		{
 			CollisionVolume* cvOld = unit->collisionVolume;
-			CollisionVolume  cvNew = CollisionVolume(unit->collisionVolume);
+			CollisionVolume  cvNew(unit->collisionVolume);
 			CollisionQuery   cq;
 
 			cvNew.RescaleAxes(absTB, absTB, absTB);
