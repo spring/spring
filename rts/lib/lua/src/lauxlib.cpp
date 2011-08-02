@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h> // SPRING
 
 
 /* This file uses only the official API of Lua.
@@ -21,8 +22,9 @@
 #define LUA_LIB
 
 #include "lua.h"
-
 #include "lauxlib.h"
+
+#include "streflop_cond.h" // SPRING
 
 
 #define FREELIST_REF	0	/* free list of references */
