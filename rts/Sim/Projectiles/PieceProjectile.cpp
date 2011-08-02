@@ -174,10 +174,11 @@ void CPieceProjectile::Collision()
 		pos += norm * 0.1f;
 	} else {
 		if (flags & PF_Explode) {
+			DamageArray damageArray(50);
 			CGameHelper::ExplosionParams params = {
 				pos,
 				ZeroVector,
-				DamageArray(50),
+				damageArray,
 				NULL,              // weaponDef
 				owner(),
 				NULL,              // hitUnit
