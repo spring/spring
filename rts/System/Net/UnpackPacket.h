@@ -8,15 +8,15 @@
 #include <string>
 #include <vector>
 #include <cstring>
+#include <stdexcept>
 #include <boost/shared_ptr.hpp>
 
 namespace netcode
 {
 
-class UnpackPacketException {
+class UnpackPacketException : public std::runtime_error {
 public:
-	UnpackPacketException(const char* msg) : err(msg) {}
-	std::string err;
+	UnpackPacketException(const std::string& what) : std::runtime_error(what) {}
 };
 
 class UnpackPacket
