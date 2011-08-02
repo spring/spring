@@ -1580,13 +1580,15 @@ void CUnit::SetLastAttacker(CUnit* attacker)
 	if (teamHandler->AlliedTeams(team, attacker->team)) {
 		return;
 	}
-	if (lastAttacker)
+	if (lastAttacker) {
 		DeleteDeathDependence(lastAttacker, DEPENDENCE_ATTACKER);
+	}
 
 	lastAttack = gs->frameNum;
 	lastAttacker = attacker;
-	if (attacker)
+	if (attacker != NULL) {
 		AddDeathDependence(attacker);
+	}
 }
 
 void CUnit::SetUserTarget(CUnit* target)
