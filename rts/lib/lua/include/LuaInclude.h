@@ -46,7 +46,10 @@ inline int lua_toint(lua_State* L, int idx)
 
 inline float lua_tofloat(lua_State* L, int idx)
 {
-  return (float)lua_tonumber(L, idx);
+  const float n = lua_tonumber(L, idx);
+  assert(!streflop::isinf(n));
+  assert(!streflop::isnan(n));
+  return n;
 }
 
 
