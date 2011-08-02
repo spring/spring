@@ -87,7 +87,11 @@ void ForcedExit(const std::string& msg, const std::string& caption, unsigned int
 
 void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags)
 {
-#if       !defined(DEDICATED)
+#ifdef DEDICATED
+	SafeDelete(gameServer);
+	ExitMessage(msg, caption, flags, false);
+
+#else
 //#ifdef USE_GML
 	//! SpringApp::Shutdown is extremely likely to deadlock or end up waiting indefinitely if any 
 	//! MT thread has crashed or deviated from its normal execution path by throwing an exception
@@ -103,11 +107,7 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 		//! terminate thread // FIXME: only the (separate) loading thread can catch thread_interrupted
 		throw boost::thread_interrupted();
 	}
-#endif // !defined(DEDICATED)
 
-#if       defined(DEDICATED)
-	SafeDelete(gameServer);
-#else  // defined(DEDICATED)
 	Watchdog::ClearTimer();
 	
 	//! exiting any possibly threads
@@ -119,7 +119,7 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 	forcedExitThread->join();
 	delete forcedExitThread;
 //#endif
-#endif // defined(DEDICATED)
 
 	ExitMessage(msg, caption, flags, false);
+#endif // defined(DEDICATED)
 }
