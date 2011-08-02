@@ -93,4 +93,5 @@ DamageArray::DamageArray(const DamageArray& other)
 DamageArray::~DamageArray()
 {
 	delete[] damages;
+	damages = NULL;
 }
