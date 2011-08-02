@@ -41,40 +41,32 @@ static void ExitMessage(const std::string& msg, const std::string& caption, unsi
 		LOG_L(L_ERROR, "failed to shutdown normally, exit forced");
 	}
 	LOG_L(L_ERROR, "%s %s", caption.c_str(), msg.c_str());
+	
+	if (!forced) {
+	#if !defined(DEDICATED) && !defined(HEADLESS)
+		// no op
 
-#if !defined(DEDICATED) && !defined(HEADLESS)
-  #ifdef WIN32
-	//! Windows implementation, using MessageBox.
+	#elif defined(WIN32)
+		//! Windows implementation, using MessageBox.
+		// Translate spring flags to corresponding win32 dialog flags
+		unsigned int winFlags = MB_TOPMOST;
+		// MB_OK is default (0)
+		if (flags & MBF_EXCL)  winFlags |= MB_ICONEXCLAMATION;
+		if (flags & MBF_INFO)  winFlags |= MB_ICONINFORMATION;
+		if (flags & MBF_CRASH) winFlags |= MB_ICONERROR;
+		MessageBox(GetActiveWindow(), msg.c_str(), caption.c_str(), winFlags);
 
-	// Translate spring flags to corresponding win32 dialog flags
-	unsigned int winFlags = MB_TOPMOST;		
+	#else  // ifdef WIN32
+		//! X implementation
+		// TODO: write Mac OS X specific message box
+		X_MessageBox(msg.c_str(), caption.c_str(), flags);
 
-	// MB_OK is default (0)
-	if (flags & MBF_EXCL) {
-		winFlags |= MB_ICONEXCLAMATION;
+	#endif
 	}
-	if (flags & MBF_INFO) {
-		winFlags |= MB_ICONINFORMATION;
-	}
-	if (flags & MBF_CRASH) {
-		winFlags |= MB_ICONERROR;
-	}
-
-	MessageBox(GetActiveWindow(), msg.c_str(), caption.c_str(), winFlags);
-
-  #else  // ifdef WIN32
-	//! X implementation
-	// TODO: write Mac OS X specific message box
-	X_MessageBox(msg.c_str(), caption.c_str(), flags);
-
-  #endif // ifdef WIN32
-#endif // if !defined(DEDICATED) && !defined(HEADLESS)
 
 #ifdef _MSC_VER
 	TerminateProcess(GetCurrentProcess(), -1);
 #else
-	// continuing execution when SDL_Quit has already been run
-	// would result in a crash
 	exit(-1);
 #endif
 }
