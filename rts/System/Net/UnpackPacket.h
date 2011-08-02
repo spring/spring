@@ -25,7 +25,8 @@ public:
 	UnpackPacket(boost::shared_ptr<const RawPacket>, size_t skipBytes = 0);
 
 	template <typename T>
-	void operator>>(T& t) {
+	void operator>>(T& t)
+	{
 		if ((pos + sizeof(T)) > pckt->length) {
 			throw UnpackPacketException("Unpack failure (type)");
 		}
@@ -44,7 +45,8 @@ public:
 		pos += toCopy;
 	}
 
-	void operator>>(std::string& text) {
+	void operator>>(std::string& text)
+	{
 		int i = pos;
 		for (; i < pckt->length; ++i) {
 			if (pckt->data[i] == '\0') {
