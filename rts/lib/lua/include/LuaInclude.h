@@ -6,6 +6,7 @@
 #include "lib/lua/src/lstate.h"
 #include "lualib.h"
 #include "lauxlib.h"
+#include "lib/streflop/streflop_cond.h"
 #include <boost/thread/recursive_mutex.hpp>
 
 
