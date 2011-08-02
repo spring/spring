@@ -12,7 +12,9 @@
 #include <cstdlib>
 #include <cstdio>
 #include <inttypes.h> // for uintptr_t
+#include <boost/bind.hpp>
 #include <boost/static_assert.hpp> // for BOOST_STATIC_ASSERT
+#include <boost/thread.hpp>
 #include <SDL_events.h>
 
 #include "thread_backtrace.h"
@@ -24,6 +26,7 @@
 #include "System/myTime.h"
 #include "System/Platform/Misc.h"
 #include "System/Platform/errorhandler.h"
+#include "System/Platform/Threading.h"
 
 
 static const int MAX_STACKTRACE_DEPTH = 10;
@@ -302,6 +305,12 @@ static void TranslateStackTrace(std::vector<std::string>* lines, const std::vect
 }
 
 
+void ForcedExitAfterFiveSecs() {
+	boost::this_thread::sleep(boost::posix_time::seconds(5));
+	exit(-1);
+}
+
+
 
 namespace CrashHandler
 {
@@ -432,22 +441,19 @@ namespace CrashHandler
 	void HandleSignal(int signal)
 	{
 		if (signal == SIGINT) {
-			static bool inExit = false;
-			static spring_time exitTime = spring_notime;
-			if (inExit) {
-				//! give Spring 3 seconds to cleanly exit
-				if (spring_gettime() > exitTime + spring_secs(3)) {
-					exit(-1);
-				}
-			} else {
-				inExit = true;
-				exitTime = spring_gettime();
-				SDL_Event event;
-				event.type = SDL_QUIT;
-				SDL_PushEvent(&event);
-			}
+			//! ctrl+c = kill
+			LOG("Got SIGINT! Exiting!");
+
+			//! first try a clean exit
+			SDL_Event event;
+			event.type = SDL_QUIT;
+			SDL_PushEvent(&event);
+
+			//! abort after 5sec
+			boost::thread(boost::bind(&ForcedExitAfterFiveSecs));
 			return;
 		}
+
 		logOutput.SetSubscribersEnabled(false);
 
 		std::string error;
