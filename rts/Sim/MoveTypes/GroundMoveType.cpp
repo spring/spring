@@ -152,13 +152,10 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	numIdlingUpdates(0),
 	numIdlingSlowUpdates(0)
 {
-	if (owner) {
-		moveSquareX = owner->pos.x / MIN_WAYPOINT_DISTANCE;
-		moveSquareY = owner->pos.z / MIN_WAYPOINT_DISTANCE;
-	} else {
-		moveSquareX = 0;
-		moveSquareY = 0;
-	}
+	assert(owner != NULL);
+
+	moveSquareX = owner->pos.x / MIN_WAYPOINT_DISTANCE;
+	moveSquareY = owner->pos.z / MIN_WAYPOINT_DISTANCE;
 }
 
 CGroundMoveType::~CGroundMoveType()

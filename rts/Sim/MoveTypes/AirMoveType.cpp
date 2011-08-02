@@ -109,10 +109,10 @@ CAirMoveType::CAirMoveType(CUnit* owner):
 	mySide(1),
 	inefficientAttackTime(0)
 {
+	assert(owner != NULL);
+
 	// force LOS recalculation
-	if (owner) {
-		owner->mapSquare += 1;
-	}
+	owner->mapSquare += 1;
 
 	maxRudder   *= 0.99f + gs->randFloat() * 0.02f;
 	maxElevator *= 0.99f + gs->randFloat() * 0.02f;
