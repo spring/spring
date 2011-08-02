@@ -28,30 +28,36 @@ void DamageArray::creg_Serialize(creg::ISerializer& s)
 }
 #endif // USING_CREG
 
-DamageArray::DamageArray() : paralyzeDamageTime(0),
-			impulseFactor(1.0f), impulseBoost(0.0f),
-			craterMult(1.0f), craterBoost(0.0f),
-			numTypes(1)
+DamageArray::DamageArray()
+	: paralyzeDamageTime(0)
+	, impulseFactor(1.0f)
+	, impulseBoost(0.0f)
+	, craterMult(1.0f)
+	, craterBoost(0.0f)
+	, numTypes(1) 
 {
 	if (damageArrayHandler) {
 		numTypes = damageArrayHandler->GetNumTypes();
 	}
 	damages = new float[numTypes];
-	for(int a = 0; a < numTypes; ++a) {
+	for (int a = 0; a < numTypes; ++a) {
 		damages[a] = 1.0f;
 	}
 }
 
-DamageArray::DamageArray(const float mult) : paralyzeDamageTime(0),
-			impulseFactor(1.0f), impulseBoost(0.0f),
-			craterMult(1.0f), craterBoost(0.0f),
-			numTypes(1) 
+DamageArray::DamageArray(const float mult)
+	: paralyzeDamageTime(0)
+	, impulseFactor(1.0f)
+	, impulseBoost(0.0f)
+	, craterMult(1.0f)
+	, craterBoost(0.0f)
+	, numTypes(1) 
 {
 	if (damageArrayHandler) {
 		numTypes = damageArrayHandler->GetNumTypes();
 	}
 	damages = new float[numTypes];
-	for(int a = 0; a < numTypes; ++a) {
+	for (int a = 0; a < numTypes; ++a) {
 		damages[a] = mult;
 	}
 }
@@ -65,22 +71,23 @@ DamageArray::DamageArray(int numTypes, const float* typeDamages)
 	, numTypes(numTypes)
 {
 	damages = new float[numTypes];
-	for(int a = 0; a < numTypes; ++a) {
+	for (int a = 0; a < numTypes; ++a) {
 		damages[a] = typeDamages[a];
 	}
 }
 
 DamageArray::DamageArray(const DamageArray& other)
+	: paralyzeDamageTime(other.paralyzeDamageTime)
+	, impulseFactor(other.impulseFactor)
+	, impulseBoost(other.impulseBoost)
+	, craterMult(other.craterMult)
+	, craterBoost(other.craterBoost)
+	, numTypes(other.numTypes)
 {
-	paralyzeDamageTime = other.paralyzeDamageTime;
-	impulseBoost = other.impulseBoost;
-	craterBoost = other.craterBoost;
-	impulseFactor = other.impulseFactor;
-	craterMult = other.craterMult;
-	numTypes = other.numTypes;
 	damages = new float[numTypes];
-	for(int a = 0; a < numTypes; ++a)
+	for (int a = 0; a < numTypes; ++a) {
 		damages[a] = other.damages[a];
+	}
 }
 
 DamageArray::~DamageArray()
