@@ -505,6 +505,9 @@ namespace CrashHandler
 
 		//! exit app if we catched a critical one
 		if (!keepRunning) {
+			//! don't handle any further signals when exiting
+			Remove();
+			
 			std::ostringstream buf;
 			buf << "Spring has crashed:\n"
 				<< error << ".\n\n"
