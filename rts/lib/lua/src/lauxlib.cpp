@@ -183,8 +183,8 @@ LUALIB_API lua_Number luaL_checknumber (lua_State *L, int narg) {
   lua_Number d = lua_tonumber(L, narg);
   if (d == 0 && !lua_isnumber(L, narg))  /* avoid extra test when d is not 0 */
     tag_error(L, narg, LUA_TNUMBER);
-  assert(!streflop::isinf(d));
-  assert(!streflop::isnan(d));
+  assert(!math::isinf(d));
+  assert(!math::isnan(d));
   return d;
 }
 
