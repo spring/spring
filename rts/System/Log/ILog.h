@@ -30,7 +30,7 @@
  * - Keeps the API between sub-systems minimal:
  *   frontend <-> filter <-> backend(sinks)
  *
- * There is a grpahical diagram, explaining the basic structure of this API
+ * There is a graphical diagram, explaining the basic structure of this API
  * under doc/logApi.dia (Dia diagram editor file).
  */
 
