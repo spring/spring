@@ -44,7 +44,7 @@ static void ExitMessage(const std::string& msg, const std::string& caption, unsi
 	LOG_L(L_ERROR, "%s %s", caption.c_str(), msg.c_str());
 	
 	if (!forced) {
-	#if !defined(DEDICATED) && !defined(HEADLESS)
+	#if defined(DEDICATED) || defined(HEADLESS)
 		// no op
 
 	#elif defined(WIN32)
