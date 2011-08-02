@@ -44,7 +44,7 @@ CTeamHandler::~CTeamHandler()
 
 void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 {
-	assert(setup->teamStartingData.size() >          0);
+	assert(!setup->teamStartingData.empty());
 	assert(setup->teamStartingData.size() <= MAX_TEAMS);
 	assert(setup->allyStartingData.size() <= MAX_TEAMS);
 

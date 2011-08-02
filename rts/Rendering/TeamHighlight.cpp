@@ -32,7 +32,7 @@ void CTeamHighlight::Enable(unsigned currentTime) {
 }
 
 void CTeamHighlight::Disable() {
-	if(oldColors.size() > 0) {
+	if (!oldColors.empty()) {
 		for(std::map<int,int>::iterator i = oldColors.begin(); i != oldColors.end(); ++i) {
 			CTeam *t = teamHandler->Team((*i).first);
 			*(int *)t->color = (*i).second;
