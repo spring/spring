@@ -500,7 +500,7 @@ bool CGameServer::SendDemoData(int targetFrameNum)
 					pckt >> name;
 					AddAdditionalUser(name, "", true); // even though this is a demo, keep the players vector properly updated
 				} catch (const netcode::UnpackPacketException& ex) {
-					Message(str(format("Warning: Discarding invalid new player packet in demo: %s") %ex.err));
+					Message(str(format("Warning: Discarding invalid new player packet in demo: %s") %ex.what()));
 					continue;
 				}
 
@@ -992,7 +992,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				if (hostif)
 					hostif->SendPlayerJoined(playerNum, players[playerNum].name);
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %d sent invalid PlayerName: %s") %a %ex.err));
+				Message(str(format("Player %d sent invalid PlayerName: %s") %a %ex.what()));
 			}
 			break;
 		}
@@ -1016,7 +1016,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				}
 				GotChatMessage(msg);
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %s sent invalid ChatMessage: %s") %players[a].name %ex.err));
+				Message(str(format("Player %s sent invalid ChatMessage: %s") %players[a].name %ex.what()));
 			}
 			break;
 		}
@@ -1033,7 +1033,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				}
 				Broadcast(CBaseNetProtocol::Get().SendSystemMessage(playerNum, strmsg));
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %d sent invalid SystemMessage: %s") %a %ex.err));
+				Message(str(format("Player %d sent invalid SystemMessage: %s") %a %ex.what()));
 			}
 			break;
 
@@ -1078,7 +1078,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				if (!demoReader)
 					Broadcast(packet); //forward data
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %s sent invalid Command: %s") %players[a].name %ex.err));
+				Message(str(format("Player %s sent invalid Command: %s") %players[a].name %ex.what()));
 			}
 			break;
 
@@ -1094,7 +1094,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				if (!demoReader)
 					Broadcast(packet); //forward data
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %s sent invalid Select: %s") %players[a].name %ex.err));
+				Message(str(format("Player %s sent invalid Select: %s") %players[a].name %ex.what()));
 			}
 			break;
 
@@ -1112,7 +1112,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				else if (!demoReader)
 					Broadcast(packet); //forward data
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %s sent invalid AICommand: %s") %players[a].name %ex.err));
+				Message(str(format("Player %s sent invalid AICommand: %s") %players[a].name %ex.what()));
 			}
 		}
 		break;
@@ -1131,7 +1131,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				else if (!demoReader)
 					Broadcast(packet); //forward data
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %s sent invalid AICommands: %s") %players[a].name %ex.err));
+				Message(str(format("Player %s sent invalid AICommands: %s") %players[a].name %ex.what()));
 			}
 		} break;
 
@@ -1149,7 +1149,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				else if (!demoReader)
 					Broadcast(packet); //forward data
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %s sent invalid AIShare: %s") %players[a].name %ex.err));
+				Message(str(format("Player %s sent invalid AIShare: %s") %players[a].name %ex.what()));
 			}
 		} break;
 
@@ -1168,7 +1168,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 						hostif->SendLuaMsg(packet->data, packet->length);
 				}
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %s sent invalid LuaMsg: %s") %players[a].name %ex.err));
+				Message(str(format("Player %s sent invalid LuaMsg: %s") %players[a].name %ex.what()));
 			}
 			break;
 
@@ -1223,7 +1223,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				if (!players[playerNum].spectator || allowSpecDraw)
 					Broadcast(packet); //forward data
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %s sent invalid MapDraw: %s") %players[a].name %ex.err));
+				Message(str(format("Player %s sent invalid MapDraw: %s") %players[a].name %ex.what()));
 			}
 			break;
 
@@ -1450,7 +1450,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					tai->active = true;
 				}
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %s sent invalid AICreated: %s") %players[a].name %ex.err));
+				Message(str(format("Player %s sent invalid AICreated: %s") %players[a].name %ex.what()));
 			}
 			break;
 		}
@@ -1539,7 +1539,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					}
 				}
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(boost::format("Player %s sent invalid CommandMessage: %s") %players[a].name %ex.err));
+				Message(str(boost::format("Player %s sent invalid CommandMessage: %s") %players[a].name %ex.what()));
 			}
 			break;
 		}
@@ -1577,7 +1577,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 
 				gameEndTime = spring_gettime();
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %s sent invalid GameOver: %s") %players[a].name %ex.err));
+				Message(str(format("Player %s sent invalid GameOver: %s") %players[a].name %ex.what()));
 			}
 			break;
 		}
@@ -1629,7 +1629,7 @@ void CGameServer::ServerReadNet()
 				msg >> reconnect;
 				BindConnection(name, passwd, version, false, UDPNet->AcceptConnection(), reconnect);
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format(ConnectionReject) %ex.err %packet->data[0] %packet->data[2] %packet->length));
+				Message(str(format(ConnectionReject) %ex.what() %packet->data[0] %packet->data[2] %packet->length));
 				UDPNet->RejectConnection();
 			}
 		}
