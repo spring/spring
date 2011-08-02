@@ -66,7 +66,7 @@ void Chunk::UpdateChecksum(CRC& crc) const {
 
 	crc << chunkNumber;
 	crc << (unsigned int)chunkSize;
-	if (data.size() > 0) {
+	if (!data.empty()) {
 		crc.Update(&data[0], data.size());
 	}
 }
@@ -86,7 +86,7 @@ uint8_t Packet::GetChecksum() const {
 	CRC crc;
 	crc << lastContinuous;
 	crc << (unsigned int)nakType;
-	if (naks.size() > 0) {
+	if (!naks.empty()) {
 		crc.Update(&naks[0], naks.size());
 	}
 	std::list<ChunkPtr>::const_iterator chk;
