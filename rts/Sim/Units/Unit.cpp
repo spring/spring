@@ -1577,6 +1577,8 @@ bool CUnit::AttackGround(const float3& pos, bool wantManualFire, bool fpsMode)
 
 void CUnit::SetLastAttacker(CUnit* attacker)
 {
+	assert(attacker != NULL);
+
 	if (teamHandler->AlliedTeams(team, attacker->team)) {
 		return;
 	}
@@ -1586,9 +1588,7 @@ void CUnit::SetLastAttacker(CUnit* attacker)
 
 	lastAttack = gs->frameNum;
 	lastAttacker = attacker;
-	if (attacker != NULL) {
-		AddDeathDependence(attacker);
-	}
+	AddDeathDependence(attacker);
 }
 
 void CUnit::SetUserTarget(CUnit* target)
