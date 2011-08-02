@@ -5,6 +5,7 @@
 #include "AILibraryManager.h"
 #include "AIInterfaceKey.h"
 #include "SkirmishAIKey.h"
+#include "System/FileSystem/SimpleParser.h" // for Split()
 
 #include <climits>
 #include <cstdio>
@@ -109,34 +110,12 @@ void IAILibraryManager::OutputSkirmishAIInfo() {
 	printf("#\n");
 }
 
-static std::vector<std::string> split(const std::string& str, const char sep) {
-
-	std::vector<std::string> tokens;
-	std::string delimitters = ".";
-
-	// Skip delimiters at beginning.
-	std::string::size_type lastPos = str.find_first_not_of(delimitters, 0);
-	// Find first "non-delimiter".
-	std::string::size_type pos     = str.find_first_of(delimitters, lastPos);
-
-	while (std::string::npos != pos || std::string::npos != lastPos)
-	{
-		// Found a token, add it to the vector.
-		tokens.push_back(str.substr(lastPos, pos - lastPos));
-		// Skip delimiters.  Note the "not_of"
-		lastPos = str.find_first_not_of(sep, pos);
-		// Find next "non-delimiter"
-		pos = str.find_first_of(delimitters, lastPos);
-	}
-
-	return tokens;
-}
 int IAILibraryManager::VersionCompare(
 		const std::string& version1,
-		const std::string& version2) {
-
-	const std::vector<std::string> &parts1 = split(version1, '.');
-	const std::vector<std::string> &parts2 = split(version2, '.');
+		const std::string& version2)
+{
+	const std::vector<std::string>& parts1 = CSimpleParser::Split(version1, ".");
+	const std::vector<std::string>& parts2 = CSimpleParser::Split(version2, ".");
 	unsigned int maxParts = parts1.size() > parts2.size() ? parts1.size() : parts2.size();
 
 	int diff = 0;
