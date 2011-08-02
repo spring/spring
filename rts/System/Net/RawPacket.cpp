@@ -6,6 +6,8 @@
 
 #include "RawPacket.h"
 
+#include "System/Log/ILog.h"
+
 namespace netcode
 {
 
@@ -16,6 +18,7 @@ RawPacket::RawPacket(const unsigned char* const tdata, const unsigned newLength)
 		data = new unsigned char[length];
 		memcpy(data, tdata, length);
 	} else {
+		LOG_L(L_ERROR, "Tried to pack a zero lengh packet");
 		// TODO handle error
 	}
 }
