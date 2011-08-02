@@ -191,38 +191,35 @@ bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 
 #if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
 	// do not signal floating point exceptions in user Lua code
-	feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+	streflop::feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 #endif
 
-	int error;
-	error = luaL_loadbuffer(L, code.c_str(), code.size(), debug.c_str());
-	if (error != 0) {
-		LOG_L(L_ERROR, "Lua LoadCode loadbuffer error = %i, %s, %s",
-				error, debug.c_str(), lua_tostring(L, -1));
+	int loadError = 0;
+	int callError = 0;
+	bool ret = true;
+
+	if ((loadError = luaL_loadbuffer(L, code.c_str(), code.size(), debug.c_str())) == 0) {
+		CLuaHandle* orig = GetActiveHandle();
+		SetActiveHandle(L);
+
+		if ((callError = lua_pcall(L, 0, 0, 0)) != 0) {
+			LOG_L(L_ERROR, "Lua LoadCode pcall error = %i, %s, %s", loadError, debug.c_str(), lua_tostring(L, -1));
+			lua_pop(L, 1);
+			ret = false;
+		}
+
+		SetActiveHandle(orig);
+	} else {
+		LOG_L(L_ERROR, "Lua LoadCode loadbuffer error = %i, %s, %s", callError, debug.c_str(), lua_tostring(L, -1));
 		lua_pop(L, 1);
-#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
-		feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
-#endif
-		return false;
+		ret = false;
 	}
 
-	CLuaHandle* orig = GetActiveHandle();
-	SetActiveHandle(L);
-	error = lua_pcall(L, 0, 0, 0);
-	SetActiveHandle(orig);
-
 #if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
-	feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+	streflop::feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 #endif
 
-	if (error != 0) {
-		LOG_L(L_ERROR, "Lua LoadCode pcall error = %i, %s, %s",
-				error, debug.c_str(), lua_tostring(L, -1));
-		lua_pop(L, 1);
-		return false;
-	}
-
-	return true;
+	return ret;
 }
 
 /******************************************************************************/
@@ -450,7 +447,7 @@ int CLuaHandle::RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, st
 {
 #if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
 	// do not signal floating point exceptions in user Lua code
-	feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+	streflop::feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 #endif
 
 	SELECT_LUA_STATE();
@@ -479,7 +476,7 @@ int CLuaHandle::RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, st
 	}
 
 #if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
-	feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+	streflop::feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 #endif
 	return error;
 }
