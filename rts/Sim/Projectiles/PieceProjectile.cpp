@@ -175,7 +175,7 @@ void CPieceProjectile::Collision()
 	} else {
 		if (flags & PF_Explode) {
 			const DamageArray damageArray(50);
-			CGameHelper::ExplosionParams params = {
+			const CGameHelper::ExplosionParams params = {
 				pos,
 				ZeroVector,
 				damageArray,
@@ -218,7 +218,7 @@ void CPieceProjectile::Collision(CUnit* unit)
 	}
 	if (flags & PF_Explode) {
 		const DamageArray damageArray(50);
-		CGameHelper::ExplosionParams params = {
+		const CGameHelper::ExplosionParams params = {
 			pos,
 			ZeroVector,
 			damageArray,
