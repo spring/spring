@@ -332,11 +332,17 @@ int CLuaHandle::SendToUnsynced(lua_State* L)
 	if (args <= 0) {
 		luaL_error(L, "Incorrect arguments to SendToUnsynced()");
 	}
+
+	static const int supportedTypes =
+		  (1 << LUA_TNIL)
+		| (1 << LUA_TBOOLEAN)
+		| (1 << LUA_TNUMBER)
+		| (1 << LUA_TSTRING)
+	;
+
 	for (int i = 1; i <= args; i++) {
-		if (!lua_isnil(L, i)    &&
-		    !lua_isnumber(L, i) &&
-		    !lua_isstring(L, i) &&
-		    !lua_isboolean(L, i)) {
+		const int t = (1 << lua_type(L, i));
+		if (!(t & supportedTypes)) {
 			luaL_error(L, "Incorrect data type for SendToUnsynced(), arg %d", i);
 		}
 	}
