@@ -22,6 +22,7 @@
 #if !defined(DEDICATED) || defined(_MSC_VER)
 	#include "System/SpringApp.h"
 	#include "System/Platform/Threading.h"
+	#include "System/Platform/Watchdog.h"
 
 	#ifndef HEADLESS
 		#ifdef WIN32
@@ -107,6 +108,8 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 #if       defined(DEDICATED)
 	SafeDelete(gameServer);
 #else  // defined(DEDICATED)
+	Watchdog::ClearTimer();
+	
 	//! exiting any possibly threads
 	//! (else they would still run while the error messagebox is shown)
 	SpringApp::Shutdown();
