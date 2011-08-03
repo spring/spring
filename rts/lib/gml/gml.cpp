@@ -44,7 +44,6 @@
 
 #include "Game/UI/KeyBindings.h"
 #include "Lua/LuaConfig.h"
-#include "System/LogOutput.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"
 
@@ -286,23 +285,21 @@ std::map<boost::recursive_mutex *, int> lockmmaps[GML_MAX_NUM_THREADS];
 
 void PrintMTStartupMessage(int showMTInfo) {
 	if (showMTInfo != MT_LUA_NONE) {
-		logOutput.Print("\n************** SPRING MULTITHREADING VERSION IMPORTANT NOTICE **************");
-		logOutput.Print("Engine or game settings have forced Spring MT to use compatibility mode %d", showMTInfo);
-		if(showMTInfo == MT_LUA_SINGLE) {
+		LOG("\n************** SPRING MULTITHREADING VERSION IMPORTANT NOTICE **************");
+		LOG("Engine or game settings have forced Spring MT to use compatibility mode %d", showMTInfo);
+		if (showMTInfo == MT_LUA_SINGLE) {
 			CKeyBindings::HotkeyList lslist = keyBindings->GetHotkeys("luaui selector");
 			std::string lskey = lslist.empty() ? "" : " (press " + lslist.front() + ")";
-			logOutput.Print("If your game uses lua based rendering, it may run very slow with Spring MT");
-			logOutput.Print("A high LUA-SYNC-CPU(MT) value in the upper right corner could indicate a problem");
-			logOutput.Print("Consider changing the engine setting 'MultiThreadLua' to 2 to improve performance,");
-			logOutput.Print("or try to disable LuaShaders and all rendering widgets%s\n", lskey.c_str());
-		}
-		else if(showMTInfo == MT_LUA_SINGLE_BATCH) {
-			logOutput.Print("If your game uses lua gadget based rendering, it may run very slow with Spring MT");
-			logOutput.Print("A high LUA-SYNC-CPU(MT) value in the upper right corner could indicate a problem\n");
-		}
-		else if(showMTInfo == MT_LUA_DUAL_EXPORT) {
-			logOutput.Print("If your game uses lua gadgets that export data, it may run very slow with Spring MT");
-			logOutput.Print("A high LUA-EXP-SIZE(MT) value in the upper right corner could indicate a problem\n");
+			LOG("If your game uses lua based rendering, it may run very slow with Spring MT");
+			LOG("A high LUA-SYNC-CPU(MT) value in the upper right corner could indicate a problem");
+			LOG("Consider changing the engine setting 'MultiThreadLua' to 2 to improve performance,");
+			LOG("or try to disable LuaShaders and all rendering widgets%s\n", lskey.c_str());
+		} else if (showMTInfo == MT_LUA_SINGLE_BATCH) {
+			LOG("If your game uses lua gadget based rendering, it may run very slow with Spring MT");
+			LOG("A high LUA-SYNC-CPU(MT) value in the upper right corner could indicate a problem\n");
+		} else if (showMTInfo == MT_LUA_DUAL_EXPORT) {
+			LOG("If your game uses lua gadgets that export data, it may run very slow with Spring MT");
+			LOG("A high LUA-EXP-SIZE(MT) value in the upper right corner could indicate a problem\n");
 		}
 	}
 }
