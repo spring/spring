@@ -869,8 +869,6 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 		if (pp->alphaThreshold != 0.1f) {
 			glPopAttrib();
 		}
-
-		*(pp->numCallback) = 0;
 	}
 
 	return true;
