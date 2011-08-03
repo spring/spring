@@ -33,7 +33,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "Sim/Weapons/BeamLaser.h"
-#include "Sim/Weapons/bombdropper.h"
+#include "Sim/Weapons/BombDropper.h"
 #include "Sim/Weapons/Cannon.h"
 #include "Sim/Weapons/DGunWeapon.h"
 #include "Sim/Weapons/EmgCannon.h"
