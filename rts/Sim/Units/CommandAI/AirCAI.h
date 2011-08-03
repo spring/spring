@@ -35,6 +35,12 @@ public:
 
 	bool IsValidTarget(const CUnit* enemy) const;
 
+private:
+	void PushOrUpdateReturnFight() {
+		CCommandAI::PushOrUpdateReturnFight(commandPos1, commandPos2);
+	}
+
+
 	float3 basePos;
 	float3 baseDir;
 
@@ -44,11 +50,6 @@ public:
 
 	int lastPC1;
 	int lastPC2;
-
-protected:
-	void PushOrUpdateReturnFight() {
-		CCommandAI::PushOrUpdateReturnFight(commandPos1, commandPos2);
-	}
 };
 
 #endif // AIR_CAI_H
