@@ -18,7 +18,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/myMath.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 
 
@@ -369,9 +369,10 @@ void CAirCAI::ExecuteFight(Command &c)
 		tempOrder=false;
 		inCommand=true;
 	}
-	if(c.params.size()<3){		//this shouldnt happen but anyway ...
-		logOutput.Print("Error: got fight cmd with less than 3 params on %s in AirCAI",
-			owner->unitDef->humanName.c_str());
+	if (c.params.size() < 3) { // this shouldnt happen but anyway ...
+		LOG_L(L_ERROR,
+				"Received a Fight command with less than 3 params on %s in AirCAI",
+				owner->unitDef->humanName.c_str());
 		return;
 	}
 	if(c.params.size() >= 6){

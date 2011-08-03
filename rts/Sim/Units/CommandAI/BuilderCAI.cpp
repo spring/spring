@@ -35,6 +35,7 @@
 #include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/creg/STL_Map.h"
 
 
@@ -274,7 +275,8 @@ float CBuilderCAI::GetBuildOptionRadius(const UnitDef* ud, int cmdId)
 void CBuilderCAI::CancelRestrictedUnit(const std::string& buildOption)
 {
 	if (owner->team == gu->myTeam) {
-		logOutput.Print("%s: Build failed, unit type limit reached", owner->unitDef->humanName.c_str());
+		LOG_L(L_WARNING, "%s: Build failed, unit type limit reached",
+				owner->unitDef->humanName.c_str());
 		logOutput.SetLastMsgPos(owner->pos);
 	}
 	FinishCommand();
@@ -818,7 +820,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 		const int signedId = (int) c.params[0];
 
 		if (signedId < 0) {
-			logOutput.Print("Trying to reclaim unit or feature with id < 0 (%i), aborting.", signedId);
+			LOG_L(L_WARNING, "Trying to reclaim unit or feature with id < 0 (%i), aborting.", signedId);
 			return;
 		}
 
@@ -1027,8 +1029,10 @@ void CBuilderCAI::ExecuteFight(Command& c)
 		tempOrder = false;
 		inCommand = true;
 	}
-	if (c.params.size() < 3) {		//this shouldnt happen but anyway ...
-		logOutput.Print("Error: got fight cmd with less than 3 params on %s in BuilderCAI",owner->unitDef->humanName.c_str());
+	if (c.params.size() < 3) { // this shouldnt happen but anyway ...
+		LOG_L(L_ERROR,
+				"Received a Fight command with less than 3 params on %s in BuilderCAI",
+				owner->unitDef->humanName.c_str());
 		return;
 	}
 

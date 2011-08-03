@@ -23,7 +23,7 @@
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 #include <assert.h>
@@ -501,8 +501,9 @@ void CMobileCAI::ExecutePatrol(Command &c)
 {
 	assert(owner->unitDef->canPatrol);
 	if (c.params.size() < 3) {
-		logOutput.Print("Error: got patrol cmd with less than 3 params on %s in MobileCAI",
-			owner->unitDef->humanName.c_str());
+		LOG_L(L_ERROR,
+				"Received a Patrol command with less than 3 params on %s in MobileCAI",
+				owner->unitDef->humanName.c_str());
 		return;
 	}
 	Command temp(CMD_FIGHT, c.options | INTERNAL_ORDER);
@@ -545,8 +546,9 @@ void CMobileCAI::ExecuteFight(Command &c)
 		tempOrder = false;
 	}
 	if (c.params.size() < 3) {
-		logOutput.Print("Error: got fight cmd with less than 3 params on %s in MobileCAI",
-			owner->unitDef->humanName.c_str());
+		LOG_L(L_ERROR,
+				"Received a Fight command with less than 3 params on %s in MobileCAI",
+				owner->unitDef->humanName.c_str());
 		return;
 	}
 	if(c.params.size() >= 6){
