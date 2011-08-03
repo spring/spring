@@ -21,7 +21,6 @@
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "System/creg/STL_List.h"
 #include "System/myMath.h"
-#include "System/LogOutput.h"
 
 #define AIRTRANSPORT_DOCKING_RADIUS 16
 #define AIRTRANSPORT_DOCKING_ANGLE 50
@@ -180,7 +179,6 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 					am->ForceHeading(((CTransportUnit *)owner)->GetLoadUnloadHeading(unit));
 					am->SetWantedAltitude(wantedPos.y - ground->GetHeightAboveWater(wantedPos.x, wantedPos.z));
 					am->maxDrift = 1;
-					//logOutput.Print("cai dist %f %f %f",owner->pos.distance(wantedPos),owner->pos.distance2D(wantedPos),owner->pos.y-wantedPos.y);
 					if ((owner->pos.SqDistance(wantedPos) < Square(AIRTRANSPORT_DOCKING_RADIUS)) &&
 						(abs(owner->heading-unit->heading) < AIRTRANSPORT_DOCKING_ANGLE) &&
 						(owner->updir.dot(UpVector) > 0.995f))

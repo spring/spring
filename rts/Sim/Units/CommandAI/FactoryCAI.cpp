@@ -19,6 +19,7 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/creg/STL_Map.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
@@ -331,7 +332,8 @@ void CFactoryCAI::CancelRestrictedUnit(const Command& c, BuildOption& buildOptio
 		buildOption.numQued--;
 		if (owner->team == gu->myTeam) {
 			if(lastRestrictedWarning+100<gs->frameNum) {
-				logOutput.Print("%s: Build failed, unit type limit reached",owner->unitDef->humanName.c_str());
+				LOG_L(L_WARNING, "%s: Build failed, unit type limit reached",
+						owner->unitDef->humanName.c_str());
 				logOutput.SetLastMsgPos(owner->pos);
 				lastRestrictedWarning = gs->frameNum;
 			}
