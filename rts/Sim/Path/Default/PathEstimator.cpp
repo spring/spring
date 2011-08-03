@@ -33,7 +33,7 @@
 
 CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512 * 1024 * 1024);
 
-const std::string pathDir = "cache/paths/";
+static const std::string PATH_CACHE_DIR = "cache/paths/";
 
 #if !defined(USE_MMGR)
 void* CPathEstimator::operator new(size_t size) { return PathAllocator::Alloc(size); }
@@ -785,7 +785,7 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 	char hashString[50];
 	sprintf(hashString, "%u", hash);
 
-	std::string filename = std::string(pathDir) + map + hashString + "." + cacheFileName + ".zip";
+	std::string filename = std::string(PATH_CACHE_DIR) + map + hashString + "." + cacheFileName + ".zip";
 	if (!filesystem.FileExists(filename))
 		return false;
 	// open file for reading from a suitable location (where the file exists)
@@ -849,7 +849,7 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::string& map)
 {
 	// We need this directory to exist
-	if (!filesystem.CreateDirectory(pathDir))
+	if (!filesystem.CreateDirectory(PATH_CACHE_DIR))
 		return;
 
 	const unsigned int hash = Hash();
@@ -857,7 +857,7 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 
 	sprintf(hashString, "%u", hash);
 
-	const std::string filename = std::string(pathDir) + map + hashString + "." + cacheFileName + ".zip";
+	const std::string filename = std::string(PATH_CACHE_DIR) + map + hashString + "." + cacheFileName + ".zip";
 	zipFile file;
 
 	// open file for writing in a suitable location
