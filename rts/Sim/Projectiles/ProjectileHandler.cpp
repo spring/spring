@@ -20,7 +20,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_List.h"
@@ -344,7 +344,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 	}
 
 	if ((*maxUsedID) > (1 << 24)) {
-		logOutput.Print("Lua %s projectile IDs are now out of range", (p->synced? "synced": "unsynced"));
+		LOG_L(L_WARNING, "Lua %s projectile IDs are now out of range", (p->synced? "synced": "unsynced"));
 	}
 
 	ProjectileMapPair pp(p, p->owner() ? p->owner()->allyteam : -1);
