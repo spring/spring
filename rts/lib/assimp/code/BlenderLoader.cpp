@@ -172,7 +172,7 @@ void BlenderImporter::InternReadFile( const std::string& pFile,
 			ThrowException("BLENDER magic bytes are missing, couldn't find GZIP header either");
 		}
 
-		DefaultLogger::get()->debug("Found no BLENDER magic word but a GZIP header, might be a compressed file");
+		LogDebug("Found no BLENDER magic word but a GZIP header, might be a compressed file");
 		if (magic[2] != 8) {
 			ThrowException("Unsupported GZIP compression method");
 		}
@@ -493,7 +493,7 @@ void BlenderImporter::ResolveTexture(MaterialHelper* out, const Material* mat, c
 
 		case Tex::Type_IMAGE		:
 			if (!rtex->ima) {
-				DefaultLogger::get()->error("A texture claims to be an Image, but no image reference is given");
+				LogError("A texture claims to be an Image, but no image reference is given");
 				break;
 			}
 			ResolveImage(out, mat, tex, rtex->ima.get(),conv_data);
@@ -532,7 +532,7 @@ void BlenderImporter::BuildMaterials(ConversionData& conv_data)
 				index = static_cast<unsigned int>( conv_data.materials_raw.size() );
 				conv_data.materials_raw.push_back(p);
 
-				DefaultLogger::get()->info("Adding default material ...");
+				LogInfo("Adding default material ...");
 			}
 			mesh->mMaterialIndex = index;
 		}
