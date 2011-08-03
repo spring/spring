@@ -61,7 +61,7 @@ namespace terrain {
 					a, str, (p.invertAlpha ? "invertalpha" : ""),
 					shaderstr.c_str());
 		}
-		LOG_L(L_DEBUG, "");
+		LOG_L(L_DEBUG, "Shader passes finnished.");
 	}
 
 //-----------------------------------------------------------------------

@@ -45,10 +45,10 @@ class LuaUtils {
 		// from LuaUI.cpp / LuaSyncedCtrl.cpp (used to be duplicated)
 		static void ParseCommandOptions(lua_State* L, const char* caller,
 		                                int index, Command& cmd);
-		static void ParseCommand(lua_State* L, const char* caller,
-		                         int idIndex, Command& cmd);
-		static void ParseCommandTable(lua_State* L, const char* caller,
-		                              int table, Command& cmd);
+		static Command ParseCommand(lua_State* L, const char* caller,
+				int idIndex);
+		static Command ParseCommandTable(lua_State* L, const char* caller,
+				int table);
 		static void ParseCommandArray(lua_State* L, const char* caller,
 		                              int table, vector<Command>& commands);
 		static int ParseFacing(lua_State* L, const char* caller, int index);

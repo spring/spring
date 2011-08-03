@@ -68,7 +68,6 @@ CHeatCloudProjectile::~CHeatCloudProjectile()
 
 void CHeatCloudProjectile::Update()
 {
-//	speed.y+=GRAVITY*0.3f;
 	pos += speed;
 	heat -= heatFalloff;
 	if (heat <= 0) {

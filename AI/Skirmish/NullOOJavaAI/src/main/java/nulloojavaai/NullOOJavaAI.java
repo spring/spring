@@ -86,15 +86,10 @@ public class NullOOJavaAI extends OOAI implements AI {
 
 	public NullOOJavaAI() {}
 
-	/*private int handleEngineCommand(AICommand command) {
-		return clb.getEngine().handleCommand(
-				com.springrts.ai.AICommandWrapper.COMMAND_TO_ID_ENGINE,
-				-1, command);
-	}*/
 	private int sendTextMsg(String msg) {
 
 		try {
-			clb.getGame().sendTextMessage(msg, 0);
+			clb.getGame().sendTextMessage(msg, DEFAULT_ZONE);
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			return 1;
@@ -119,7 +114,7 @@ public class NullOOJavaAI extends OOAI implements AI {
 		info = new Properties();
 		Info inf = clb.getSkirmishAI().getInfo();
 		int numInfo = inf.getSize();
-		for (int i=0; i < numInfo; i++) {
+		for (int i = 0; i < numInfo; i++) {
 			String key = inf.getKey(i);
 			String value = inf.getValue(i);
 			info.setProperty(key, value);
@@ -128,7 +123,7 @@ public class NullOOJavaAI extends OOAI implements AI {
 		optionValues = new Properties();
 		OptionValues opVals = clb.getSkirmishAI().getOptionValues();
 		int numOpVals = opVals.getSize();
-		for (int i=0; i < numOpVals; i++) {
+		for (int i = 0; i < numOpVals; i++) {
 			String key = opVals.getKey(i);
 			String value = opVals.getValue(i);
 			optionValues.setProperty(key, value);

@@ -86,7 +86,7 @@ void CResourceBar::Draw()
 	glVertex2f(box.x2, box.y2);
 	glVertex2f(box.x2, box.y1);
 
-	//layout metal in box
+	// layout metal in box
 	GLfloat metalx = box.x1 + .01f;
 	GLfloat metaly = box.y1 + .004f;
 
@@ -104,7 +104,7 @@ void CResourceBar::Draw()
 		x = (myTeam->metal / myTeam->metalStorage) * metalbarlen;
 	}
 
-	//metal draw
+	// metal draw
 	glColor4f(0.8f, 0.8f, 0.8f, 0.2f);
 	glVertex2f(x1, y1);
 	glVertex2f(x1, y2);
@@ -126,14 +126,14 @@ void CResourceBar::Draw()
 
 	// Energy
 
-	//layout energy in box
+	// layout energy in box
 	GLfloat energyx = box.x1 + 0.4f;
 	GLfloat energyy = box.y1 + 0.004f;
 
 	GLfloat energybarx1 = energyx + 0.08f;
 	GLfloat energybarx2 = box.x2 - 0.03f;
 
-	//energy layout
+	// energy layout
 	GLfloat energybarlen = energybarx2 - energybarx1;
 	x1 = energybarx1;
 	y1 = energyy + 0.014f;
@@ -144,7 +144,7 @@ void CResourceBar::Draw()
 		x = (myTeam->energy / myTeam->energyStorage) * energybarlen;
 	}
 
-	//energy draw
+	// energy draw
 	glColor4f(0.8f, 0.8f, 0.2f, 0.2f);
 	glVertex2f(x1, y1);
 	glVertex2f(x1, y2);
@@ -157,7 +157,7 @@ void CResourceBar::Draw()
 	glVertex2f(x1 + x, y2);
 	glVertex2f(x1 + x, y1);
 
-	x=myTeam->energyShare*energybarlen;
+	x = myTeam->energyShare * energybarlen;
 	glColor4f(0.9f, 0.2f, 0.2f, 0.7f);
 	glVertex2f(x1 + x + 0.003f, y1 - 0.003f);
 	glVertex2f(x1 + x + 0.003f, y2 + 0.003f);
@@ -179,31 +179,31 @@ void CResourceBar::Draw()
 	smallFont->glPrint(energyx - 0.018f, (box.y1 + box.y2) * 0.5, headerFontSize, FONT_VCENTER | fontOptions, "Energy");
 
 	smallFont->SetTextColor(1.0f, 0.3f, 0.3f, 1.0f); // Expenses
-	smallFont->glFormat(metalx + 0.044f, box.y1, labelsFontSize, FONT_DESCENDER | fontOptions, "-%s(-%s)",
-	                FloatToSmallString(fabs(myTeam->prevMetalPull)).c_str(),
-	                FloatToSmallString(fabs(myTeam->metalSent)).c_str());
+	smallFont->glFormat(metalx  + 0.044f, box.y1, labelsFontSize, FONT_DESCENDER | fontOptions, "-%s(-%s)",
+			FloatToSmallString(fabs(myTeam->prevMetalPull)).c_str(),
+			FloatToSmallString(fabs(myTeam->metalSent)).c_str());
 	smallFont->glFormat(energyx + 0.044f, box.y1, labelsFontSize, FONT_DESCENDER | fontOptions, "-%s(-%s)",
-	                FloatToSmallString(fabs(myTeam->prevEnergyPull)).c_str(),
-	                FloatToSmallString(fabs(myTeam->energySent)).c_str());
+			FloatToSmallString(fabs(myTeam->prevEnergyPull)).c_str(),
+			FloatToSmallString(fabs(myTeam->energySent)).c_str());
 
 	smallFont->SetTextColor(0.4f, 1.0f, 0.4f, 0.95f); // Income
-	smallFont->glFormat(metalx + 0.044f, box.y2-2*globalRendering->pixelY, labelsFontSize, FONT_ASCENDER | fontOptions, "+%s",
-	                FloatToSmallString(myTeam->prevMetalIncome).c_str());
-	                // FloatToSmallString(myTeam->metalReceived).c_str());
-	smallFont->glFormat(energyx + 0.044f, box.y2-2*globalRendering->pixelY, labelsFontSize, FONT_ASCENDER | fontOptions, "+%s",
-	                FloatToSmallString(myTeam->prevEnergyIncome).c_str());
-	                // FloatToSmallString(myTeam->energyReceived).c_str());
+	smallFont->glFormat(metalx  + 0.044f, box.y2 - 2*globalRendering->pixelY, labelsFontSize, FONT_ASCENDER | fontOptions, "+%s",
+			FloatToSmallString(myTeam->prevMetalIncome).c_str());
+			// FloatToSmallString(myTeam->metalReceived).c_str());
+	smallFont->glFormat(energyx + 0.044f, box.y2 - 2*globalRendering->pixelY, labelsFontSize, FONT_ASCENDER | fontOptions, "+%s",
+			FloatToSmallString(myTeam->prevEnergyIncome).c_str());
+			// FloatToSmallString(myTeam->energyReceived).c_str());
 
 	smallFont->SetTextColor(1, 1, 1, 0.8f);
 	smallFont->glPrint(energybarx2 - 0.01f, energyy - 0.005f, labelsFontSize, fontOptions,
-	                FloatToSmallString(myTeam->energyStorage));
+			FloatToSmallString(myTeam->energyStorage));
 	smallFont->glPrint(energybarx1 + energybarlen / 2.0f, energyy - 0.005f, labelsFontSize, fontOptions,
-	                FloatToSmallString(myTeam->energy));
+			FloatToSmallString(myTeam->energy));
 
 	smallFont->glPrint(metalbarx2 - 0.01f, metaly - 0.005f, labelsFontSize, fontOptions,
-	                FloatToSmallString(myTeam->metalStorage));
+			FloatToSmallString(myTeam->metalStorage));
 	smallFont->glPrint(metalbarx1 + metalbarlen / 2.0f, metaly - 0.005f, labelsFontSize, fontOptions,
-	                FloatToSmallString(myTeam->metal));
+			FloatToSmallString(myTeam->metal));
 
 	smallFont->End();
 }

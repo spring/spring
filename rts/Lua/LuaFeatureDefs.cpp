@@ -49,16 +49,15 @@ static int CustomParamsTable(lua_State* L, const void* data);
 bool LuaFeatureDefs::PushEntries(lua_State* L)
 {
 	if (paramMap.empty()) {
-	  InitParamMap();
+		InitParamMap();
 	}
 
-	const map<string, const FeatureDef*>& featureDefs =
-		featureHandler->GetFeatureDefs();
+	const map<string, const FeatureDef*>& featureDefs = featureHandler->GetFeatureDefs();
 	map<string, const FeatureDef*>::const_iterator fdIt;
 	for (fdIt = featureDefs.begin(); fdIt != featureDefs.end(); ++fdIt) {
-	  const FeatureDef* fd = fdIt->second;
+		const FeatureDef* fd = fdIt->second;
 		if (fd == NULL) {
-	  	continue;
+			continue;
 		}
 		lua_pushnumber(L, fd->id);
 		lua_newtable(L); { // the proxy table
@@ -163,8 +162,8 @@ static int FeatureDefIndex(lua_State* L)
 
 	// not a default value
 	if (it == paramMap.end()) {
-	  lua_rawget(L, 1);
-	  return 1;
+		lua_rawget(L, 1);
+		return 1;
 	}
 
 	const void* userData = lua_touserdata(L, lua_upvalueindex(1));

@@ -7,8 +7,6 @@
 #include <boost/cstdint.hpp>
 #include <boost/asio/ip/udp.hpp>
 
-class SocketPtr;
-
 /**
  * API for engine <-> autohost (or similar) communication, using UDP over
  * loopback.

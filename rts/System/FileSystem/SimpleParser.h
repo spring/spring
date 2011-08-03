@@ -17,6 +17,8 @@ class CSimpleParser
 public:
 	/** Splits a string based on white-space. */
 	static std::vector<std::string> Tokenize(const std::string& line, int minWords = 0);
+	/** Splits a string based on a set of delimitters. */
+	static std::vector<std::string> Split(const std::string& str, const std::string& delimitters);
 
 	CSimpleParser(CFileHandler& fh);
 

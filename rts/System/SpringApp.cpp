@@ -167,6 +167,7 @@ bool SpringApp::Initialize()
 {
 #if !(defined(WIN32) || defined(__APPLE__) || defined(HEADLESS))
 	//! this MUST run before any other X11 call (esp. those by SDL!)
+	//! we need it to make calls to X11 threadsafe
 	if (!XInitThreads()) {
 		LOG_L(L_FATAL, "Xlib is not thread safe");
 		return false;

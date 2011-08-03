@@ -164,7 +164,7 @@ void InitCommandNames()
 	REGISTER_CMD(CMD_RECLAIM)
 	REGISTER_CMD(CMD_CLOAK)
 	REGISTER_CMD(CMD_STOCKPILE)
-	REGISTER_CMD(CMD_DGUN)
+	REGISTER_CMD(CMD_MANUALFIRE)
 	REGISTER_CMD(CMD_RESTORE)
 	REGISTER_CMD(CMD_REPEAT)
 	REGISTER_CMD(CMD_TRAJECTORY)
@@ -198,16 +198,16 @@ const std::string& GetCommandName(int commandId)
 void TrafficDump(CDemoReader& reader, bool trafficStats)
 {
 	InitCommandNames();
-
-	std::vector<unsigned> trafficCounter(55, 0);
+	std::vector<unsigned> trafficCounter(NETMSG_LAST, 0);
 	int frame = 0;
 	int cmdId = 0;
 	while (!reader.ReachedEnd())
 	{
 		netcode::RawPacket* packet;
 		packet = reader.GetData(3.40282347e+38f);
-		if (packet == 0)
+		if (packet == NULL)
 			continue;
+		assert(packet->data[0]<NETMSG_LAST);
 		trafficCounter[packet->data[0]] += packet->length;
 		const unsigned char* buffer = packet->data;
 		char buf[16]; // FIXME: cba to look up how to format numbers with iostreams

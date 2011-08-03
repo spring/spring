@@ -98,6 +98,8 @@ public:
 
 	void DisableDemoRecording();
 
+	void Close(bool flush = false);
+
 
 	volatile bool loading;
 

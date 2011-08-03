@@ -473,15 +473,14 @@ void LuaUtils::ParseCommandOptions(lua_State* L, const char* caller,
 }
 
 
-void LuaUtils::ParseCommand(lua_State* L, const char* caller,
-                            int idIndex, Command& cmd)
+Command LuaUtils::ParseCommand(lua_State* L, const char* caller, int idIndex)
 {
 	// cmdID
 	if (!lua_isnumber(L, idIndex)) {
 		luaL_error(L, "%s(): bad command ID", caller);
 	}
 	const int id = lua_toint(L, idIndex);
-	cmd.SetID(id);
+	Command cmd(id);
 
 	// params
 	const int paramTable = (idIndex + 1);
@@ -501,12 +500,13 @@ void LuaUtils::ParseCommand(lua_State* L, const char* caller,
 	// options
 	ParseCommandOptions(L, caller, (idIndex + 2), cmd);
 
-	// NOTE: should do some sanity checking?
+	// XXX should do some sanity checking?
+
+	return cmd;
 }
 
 
-void LuaUtils::ParseCommandTable(lua_State* L, const char* caller,
-                                 int table, Command& cmd)
+Command LuaUtils::ParseCommandTable(lua_State* L, const char* caller, int table)
 {
 	// cmdID
 	lua_rawgeti(L, table, 1);
@@ -514,7 +514,7 @@ void LuaUtils::ParseCommandTable(lua_State* L, const char* caller,
 		luaL_error(L, "%s(): bad command ID", caller);
 	}
 	const int id = lua_toint(L, -1);
-	cmd.SetID(id);
+	Command cmd(id);
 	lua_pop(L, 1);
 
 	// params
@@ -539,7 +539,9 @@ void LuaUtils::ParseCommandTable(lua_State* L, const char* caller,
 	ParseCommandOptions(L, caller, lua_gettop(L), cmd);
 	lua_pop(L, 1);
 
-	// NOTE: should do some sanity checking?
+	// XXX should do some sanity checking?
+
+	return cmd;
 }
 
 
@@ -553,8 +555,7 @@ void LuaUtils::ParseCommandArray(lua_State* L, const char* caller,
 		if (!lua_istable(L, -1)) {
 			continue;
 		}
-		Command cmd;
-		ParseCommandTable(L, caller, lua_gettop(L), cmd);
+		Command cmd = ParseCommandTable(L, caller, lua_gettop(L));
 		commands.push_back(cmd);
 	}
 }

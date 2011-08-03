@@ -3,10 +3,10 @@
 #include "System/StdAfx.h"
 #include "PackPacket.h"
 
+#include "System/Log/ILog.h"
+
 #include <algorithm>
 #include <cstdlib>
-
-#include "System/Log/ILog.h"
 
 namespace netcode
 {
@@ -37,7 +37,7 @@ PackPacket& PackPacket::operator<<(const std::string& text)
 		std::abort();
 		#endif
 	}
-	memcpy((char*)(data+pos), text.c_str(), size);
+	memcpy((char*)(data + pos), text.c_str(), size);
 	pos += size;
 	return *this;
 }

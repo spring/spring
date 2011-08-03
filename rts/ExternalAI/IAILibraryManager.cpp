@@ -5,10 +5,11 @@
 #include "AILibraryManager.h"
 #include "AIInterfaceKey.h"
 #include "SkirmishAIKey.h"
+#include "System/FileSystem/SimpleParser.h" // for Split()
 
-#include <iostream>
-#include <limits.h>
-#include <string.h>
+#include <climits>
+#include <cstdio>
+#include <cstring>
 
 IAILibraryManager* IAILibraryManager::myAILibraryManager = NULL;
 
@@ -28,35 +29,24 @@ void IAILibraryManager::Destroy() {
 	delete tmp;
 }
 
-std::string fillUpTo(const std::string& str, unsigned int numChars) {
-
-	std::string filler = "";
-
-	filler.append(numChars - str.size(), ' ');
-
-	return filler;
-}
-
 void IAILibraryManager::OutputAIInterfacesInfo() {
 
 	const IAILibraryManager* myLibManager = IAILibraryManager::GetInstance();
 	const T_interfaceSpecs& keys =
 			myLibManager->GetInterfaceKeys();
 
-	std::cout << "#" << std::endl;
-	std::cout << "# Available Spring Skirmish AIs" << std::endl;
-	std::cout << "# -----------------------------" << std::endl;
-	std::cout << "# [Name]              [Version]" << std::endl;
+	printf("#\n");
+	printf("# Available Spring Skirmish AIs\n");
+	printf("# -----------------------------\n");
+	printf("# %-20s %s\n", "[Name]", "[Version]");
 
 	T_interfaceSpecs::const_iterator key;
 	for (key = keys.begin(); key != keys.end(); ++key) {
-		std::cout << "  ";
-		std::cout << key->GetShortName() << fillUpTo(key->GetShortName(), 20);
-		std::cout << key->GetVersion() << fillUpTo(key->GetVersion(), 20)
-				<< std::endl;
+		printf("  %-20s %s\n",
+				key->GetShortName().c_str(), key->GetVersion().c_str());
 	}
 
-	std::cout << "#" << std::endl;
+	printf("#\n");
 }
 
 SkirmishAIKey IAILibraryManager::ResolveSkirmishAIKey(
@@ -87,68 +77,45 @@ void IAILibraryManager::OutputSkirmishAIInfo() {
 	const IAILibraryManager* myLibManager = IAILibraryManager::GetInstance();
 	const T_skirmishAIKeys& keys = myLibManager->GetSkirmishAIKeys();
 
-	std::cout << "#" << std::endl;
-	std::cout << "# Available Spring Skirmish AIs" << std::endl;
-	std::cout << "# -----------------------------" << std::endl;
-	std::cout << "# [Name]              [Version]           "
-			"[Interface-name]    [Interface-version]" << std::endl;
+	printf("#\n");
+	printf("# Available Spring Skirmish AIs\n");
+	printf("# -----------------------------\n");
+	printf("# %-20s %-20s %-20s %s\n",
+			"[Name]", "[Version]", "[Interface-name]", "[Interface-version]");
 
 	T_skirmishAIKeys::const_iterator key;
 	for (key = keys.begin(); key != keys.end(); ++key) {
-		std::cout << "  ";
-		std::cout << key->GetShortName() << fillUpTo(key->GetShortName(), 20);
-		std::cout << key->GetVersion() << fillUpTo(key->GetVersion(), 20);
-		std::cout << key->GetInterface().GetShortName()
-				<< fillUpTo(key->GetInterface().GetShortName(), 20);
-		std::cout << key->GetInterface().GetVersion() << std::endl;
+		printf("# %-20s %-20s %-20s %s\n",
+				key->GetShortName().c_str(),
+				key->GetVersion().c_str(),
+				key->GetInterface().GetShortName().c_str(),
+				key->GetInterface().GetVersion().c_str());
 	}
 
 	const T_dupSkirm& duplicateSkirmishAIInfos =
 			myLibManager->GetDuplicateSkirmishAIInfos();
 	for (T_dupSkirm::const_iterator info = duplicateSkirmishAIInfos.begin();
 			info != duplicateSkirmishAIInfos.end(); ++info) {
-		std::cout << "# WARNING: Duplicate Skirmish AI Info found:"
-				<< std::endl;
-		std::cout << "# \tfor Skirmish AI: " << info->first.GetShortName()
-				<< " " << info->first.GetVersion() << std::endl;
-		std::cout << "# \tin files:" << std::endl;
+		printf("# WARNING: Duplicate Skirmish AI Info found:\n");
+		printf("# \tfor Skirmish AI: %s %s\n",
+				info->first.GetShortName().c_str(),
+				info->first.GetVersion().c_str());
+		printf("# \tin files:\n");
 		std::set<std::string>::const_iterator dir;
 		for (dir = info->second.begin(); dir != info->second.end(); ++dir) {
-			std::cout << "# \t" << dir->c_str() << std::endl;
+			printf("# \t%s\n", dir->c_str());
 		}
 	}
 
-	std::cout << "#" << std::endl;
+	printf("#\n");
 }
 
-static std::vector<std::string> split(const std::string& str, const char sep) {
-
-	std::vector<std::string> tokens;
-	std::string delimitters = ".";
-
-	// Skip delimiters at beginning.
-	std::string::size_type lastPos = str.find_first_not_of(delimitters, 0);
-	// Find first "non-delimiter".
-	std::string::size_type pos     = str.find_first_of(delimitters, lastPos);
-
-	while (std::string::npos != pos || std::string::npos != lastPos)
-	{
-		// Found a token, add it to the vector.
-		tokens.push_back(str.substr(lastPos, pos - lastPos));
-		// Skip delimiters.  Note the "not_of"
-		lastPos = str.find_first_not_of(sep, pos);
-		// Find next "non-delimiter"
-		pos = str.find_first_of(delimitters, lastPos);
-	}
-
-	return tokens;
-}
 int IAILibraryManager::VersionCompare(
 		const std::string& version1,
-		const std::string& version2) {
-
-	const std::vector<std::string> &parts1 = split(version1, '.');
-	const std::vector<std::string> &parts2 = split(version2, '.');
+		const std::string& version2)
+{
+	const std::vector<std::string>& parts1 = CSimpleParser::Split(version1, ".");
+	const std::vector<std::string>& parts2 = CSimpleParser::Split(version2, ".");
 	unsigned int maxParts = parts1.size() > parts2.size() ? parts1.size() : parts2.size();
 
 	int diff = 0;

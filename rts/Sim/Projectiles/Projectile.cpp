@@ -136,14 +136,12 @@ void CProjectile::Collision()
 {
 	deleteMe = true;
 	checkCol = false;
-	pos.y = MAX_WORLD_SIZE;
 }
 
 void CProjectile::Collision(CUnit* unit)
 {
 	deleteMe = true;
 	checkCol = false;
-	pos.y = MAX_WORLD_SIZE;
 }
 
 void CProjectile::Collision(CFeature* feature)

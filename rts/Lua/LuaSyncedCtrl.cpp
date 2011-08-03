@@ -1934,10 +1934,12 @@ int LuaSyncedCtrl::SetUnitVelocity(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	float3 dir(luaL_checkfloat(L, 2),
-	           luaL_checkfloat(L, 3),
-	           luaL_checkfloat(L, 4));
-	unit->speed = dir;
+
+	const float3 speed(Clamp(luaL_checkfloat(L, 2), -MAX_UNIT_SPEED, MAX_UNIT_SPEED),
+	                   Clamp(luaL_checkfloat(L, 3), -MAX_UNIT_SPEED, MAX_UNIT_SPEED),
+	                   Clamp(luaL_checkfloat(L, 4), -MAX_UNIT_SPEED, MAX_UNIT_SPEED));
+	unit->speed = speed;
+
 	return 0;
 }
 
@@ -1952,9 +1954,9 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 	const int paralyze   = luaL_optint(L, 3, 0);
 	const int attackerID = luaL_optint(L, 4, -1);
 	const int weaponID   = luaL_optint(L, 5, -1);
-	const float3 impulse = float3(luaL_optfloat(L, 6, 0.0f),
-	                              luaL_optfloat(L, 7, 0.0f),
-	                              luaL_optfloat(L, 8, 0.0f));
+	const float3 impulse = float3(Clamp(luaL_optfloat(L, 6, 0.0f), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE),
+	                              Clamp(luaL_optfloat(L, 7, 0.0f), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE),
+	                              Clamp(luaL_optfloat(L, 8, 0.0f), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE));
 
 	CUnit* attacker = NULL;
 	if (attackerID >= 0) {
@@ -1985,9 +1987,10 @@ int LuaSyncedCtrl::AddUnitImpulse(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	float3 impulse(luaL_checkfloat(L, 2),
-	               luaL_checkfloat(L, 3),
-	               luaL_checkfloat(L, 4));
+
+	const float3 impulse(Clamp(luaL_checkfloat(L, 2), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE),
+	                     Clamp(luaL_checkfloat(L, 3), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE),
+	                     Clamp(luaL_checkfloat(L, 4), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE));
 	unit->AddImpulse(impulse);
 	return 0;
 }
@@ -2539,8 +2542,7 @@ int LuaSyncedCtrl::GiveOrderToUnit(lua_State* L)
 		luaL_error(L, "Invalid unitID given to GiveOrderToUnit()");
 	}
 
-	Command cmd;
-	LuaUtils::ParseCommand(L, __FUNCTION__, 2, cmd);
+	Command cmd = LuaUtils::ParseCommand(L, __FUNCTION__, 2);
 
 	if (!CanControlUnit(L, unit)) {
 		lua_pushboolean(L, false);
@@ -2574,8 +2576,7 @@ int LuaSyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 		return 1;
 	}
 
-	Command cmd;
-	LuaUtils::ParseCommand(L, __FUNCTION__, 2, cmd);
+	Command cmd = LuaUtils::ParseCommand(L, __FUNCTION__, 2);
 
 	if (inGiveOrder) {
 		luaL_error(L, "GiveOrderToUnitMap() recursion is not permitted");
@@ -2611,8 +2612,7 @@ int LuaSyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 		return 1;
 	}
 
-	Command cmd;
-	LuaUtils::ParseCommand(L, __FUNCTION__, 2, cmd);
+	Command cmd = LuaUtils::ParseCommand(L, __FUNCTION__, 2);
 
 	if (inGiveOrder) {
 		luaL_error(L, "GiveOrderToUnitArray() recursion is not permitted");

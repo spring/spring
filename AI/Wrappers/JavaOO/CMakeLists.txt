@@ -69,6 +69,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 	SetGlobal(${myName}_AIWRAPPER_JAR_SRC       "${myBuildDir}/${mySrcJarFile}")
 	SetGlobal(${myName}_AIWRAPPER_JAR_CLASSPATH "${myJLibs}${PATH_DELIM_H}${${myName}_AIWRAPPER_JAR_BIN}")
 	SetGlobal(${myName}_AIWRAPPER_TARGET        "${myTarget}")
+	SetGlobal(${myName}_AIWRAPPER_TARGET_MVN_INSTALL "${myMavenInstallTarget}")
 	SetGlobal(SOURCE_ROOT_${myName}_AIWRAPPER   "${myDir}")
 	SetGlobal(BUILD_ROOT_${myName}_AIWRAPPER    "${CMAKE_CURRENT_BINARY_DIR}")
 
@@ -350,8 +351,9 @@ if    (BUILD_${myName}_AIWRAPPER)
 		)
 
 	# This sets the version in pom.xml
-	# as we have no separate version for the wrapper:
-	set(myMavenProperties "-DmyVersion=${Java_AIINTERFACE_VERS}")
+	# as we have no separate version for the wrapper,
+	# we use the one from the interrface
+	set(myMavenProperties "-Dmy.version=${Java_AIINTERFACE_VERS}")
 	add_custom_command(
 		OUTPUT
 			"${myBuildDir}/pom-generated.xml"
@@ -382,7 +384,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		# create a nice dependency chain without this.
 		set(myMavenInstallStubFile "${myBuildDir}/mavenInstallStub.txt")
 		set_source_files_properties("${myMavenInstallStubFile}" PROPERTIES GENERATED TRUE)
-		set_source_files_properties("${Java_AIINTERFACE_MVN_INST_STUB_FILE}" PROPERTIES GENERATED TRUE)
 		add_custom_command(
 			OUTPUT
 				"${myMavenInstallStubFile}"
@@ -394,7 +395,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 			COMMAND "${CMAKE_COMMAND}"
 				"-E" "touch" "${myMavenInstallStubFile}"
 			DEPENDS
-				"${Java_AIINTERFACE_MVN_INST_STUB_FILE}"
 				# We have to handle these through target level dependencies, or
 				# else their generating custom commands may be executed multiple
 				# times.
@@ -410,7 +410,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 			DEPENDS
 				"${myMavenInstallStubFile}"
 			)
-		add_dependencies(${myMavenInstallTarget} ${myJavaTarget} ${myPomTarget})
+		add_dependencies(${myMavenInstallTarget} ${myJavaTarget} ${myPomTarget} ${Java_AIINTERFACE_TARGET_MVN_INSTALL})
 		add_dependencies(${myTarget} ${myMavenInstallTarget})
 	else  (isMavenInstalled)
 		add_dependencies(${myTarget} ${myJavaTarget})

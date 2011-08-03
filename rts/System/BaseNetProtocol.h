@@ -99,7 +99,10 @@ enum NETMSG {
 
 	NETMSG_AICOMMAND_TRACKED= 76,  // uchar myPlayerNum; short unitID; int id; uchar options; int aiCommandId, std::vector<float> params;
 
-	NETMSG_GAME_FRAME_PROGRESS= 77 // int frameNum # this special packet skips queue & cache entirely, indicates current game progress for clients fast-forwarding to current point the game #
+	NETMSG_GAME_FRAME_PROGRESS= 77, // int frameNum # this special packet skips queue & cache entirely, indicates current game progress for clients fast-forwarding to current point the game #
+
+
+	NETMSG_LAST //max types of netmessages, internal only
 };
 
 /// Data types for NETMSG_CUSTOM_DATA

@@ -67,6 +67,7 @@ public:
 	virtual std::string Statistics() const = 0;
 	virtual std::string GetFullAddress() const = 0;
 	virtual void Unmute() = 0;
+	virtual void Close(bool flush = false) = 0;
 
 	/**
 	 * @brief update internals

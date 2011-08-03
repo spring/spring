@@ -20,11 +20,15 @@ Engine / bugfixes:
  - stop the maxunits team restriction from applying to Gaia (#2435)
  - fix ray-ground intersections when camera is outside map
 
-Engine / misc:
+Engine / misc defs:
  - replace UnitDef::pieceTrailCEG* by a Lua subtable of sfxTypes
  - deprecate several *Def tags and their Lua*Defs copies (type/maxSlope/isBuilder/canDGun/transportableBuilding/dropped/...)
  - make a missing UnitDef::humanName non-fatal
+ - UnitDef: remove hardcoded: if ((waterline >= 5.0f) && canmove) { waterline += 10.0f; }
+ - make UnitDef::losHeight configurable instead of an unused hardcoded value
  - add collide{Enemy, Ground} as weapondef tags
+
+Engine / misc commands:
  - add a /clearmapmarks command 
  - rename /advshading to /advmodelshading; add an /advmapshading analogue
  - add '/reloadCEGs [cegtag]'; reloads all CEGs or one specific CEG by tag
@@ -37,13 +41,13 @@ Engine / Userconfigs:
 
 Engine / Simulation:
  - never allow zero-area feature footprints
- - make UnitDef::losHeight configurable instead of an unused hardcoded value
  - remove radius halving for default aircraft collision-volumes
  - close down another out-of-map attack exploit route
  - rewrite collision detection/resolution between ground units
  - skip path-estimating for unused MoveDefs
  - always add the "geovent" FeatureDef (#2402)
  - only send UnitLoaded events for units that were not already being transported (when Attach'ing them)
+ - fix bizarre skidding behavior for ground units with non-zero slideTolerance
 
 Engine / Map:
  - merged both mapinfo.lua's! before there were two, one in the base-dir (-> ArchiveScanner) and one in "maphelper/mapinfo.lua" (-> MapParser/MapInfo)

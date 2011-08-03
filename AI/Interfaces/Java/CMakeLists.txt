@@ -19,10 +19,22 @@
 # includes rts/build/cmake/UtilJava.cmake
 INCLUDE(UtilJava)
 
+macro    (ConfigureJavaSkirmishAI wrapperNames)
+	ConfigureCMakeOrMavenJavaSkirmishAI(FALSE "${wrapperNames}")
+endmacro (ConfigureJavaSkirmishAI requireMaven wrapperNames)
+
+macro    (ConfigureMavenJavaSkirmishAI wrapperNames)
+	ConfigureCMakeOrMavenJavaSkirmishAI(TRUE  "${wrapperNames}")
+endmacro (ConfigureMavenJavaSkirmishAI wrapperNames)
+
 # Java Skirmish AI configuration macro.
 # This will be called from Java AIs at AI/Skirmish/*/CMakeLists.txt.
-# If Maven is installed, and
-macro    (ConfigureJavaSkirmishAI wrapperNames)
+# If Maven is installed and AI/Skirmish/*/pom.xml exists,
+# this macro will try to build the AI through Maven.
+# If requireMaven is TRUE, we will only attemp to build the
+# AI through Maven, and disable building of the AI if Maven
+# is not available.
+macro    (ConfigureCMakeOrMavenJavaSkirmishAI requireMaven wrapperNames)
 	# Assemble meta data
 	set(myDir            "${CMAKE_CURRENT_SOURCE_DIR}")
 	GetLastPathPart(dirName ${myDir})
@@ -39,12 +51,20 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 	set(myBuildDir      "${CMAKE_CURRENT_BINARY_DIR}")
 
 	# Check if the user wants to compile the AI
+	Set(BUILD_THIS_SKIRMISHAI FALSE)
 	if    (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 		set(BUILD_THIS_SKIRMISHAI TRUE)
-	else  (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
-		set(BUILD_THIS_SKIRMISHAI FALSE)
-		message("warning: ${myName} Skirmish AI will not be built!")
+		If    (requireMaven)
+			IsMavenInstalled(isMavenInstalled)
+			If    (NOT isMavenInstalled)
+				Set(BUILD_THIS_SKIRMISHAI FALSE)
+				Message(WARNING "${myName} Skirmish AI requires Maven to build, but Maven 2 (or later) was not found.")
+			EndIf (NOT isMavenInstalled)
+		EndIf (requireMaven)
 	endif (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
+	If    (NOT BUILD_THIS_SKIRMISHAI)
+		Message("warning: ${myName} Skirmish AI will not be built!")
+	EndIf (NOT BUILD_THIS_SKIRMISHAI)
 
 	# Compile and install
 	if    (BUILD_THIS_SKIRMISHAI)
@@ -57,7 +77,7 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 			if    (isMavenInstalled)
 				set(configureMavenProject TRUE)
 			else  (isMavenInstalled)
-				message("Warning: Java AI with Maven Project file found, but Maven 2 not installed: Using default configuration.")
+				Message("warning: ${myName} Skirmish AI has a Maven Project file, but Maven 2 (or later) was not found; Using default configuration.")
 			endif (isMavenInstalled)
 		endif (isMavenProject)
 
@@ -126,6 +146,10 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 				COMMENT
 					"  ${myTarget}: Running Maven ${MVN_PHASE} phase" VERBATIM
 				)
+			Set(myDependTargets  ${myDependTargets} "${Java_AIINTERFACE_TARGET_MVN_INSTALL}")
+			ForEach    (wrapperName ${wrapperNames})
+				Set(myDependTargets  ${myDependTargets} "${${wrapperName}_AIWRAPPER_TARGET_MVN_INSTALL}")
+			EndForEach (wrapperName)
 			add_custom_target(${myTarget} ALL DEPENDS "${myBuildDir}/${myBinJarFile}" ${myVersionDepFile})
 			add_dependencies(${myTarget} ${myDependTargets})
 		else  (configureMavenProject)
@@ -261,7 +285,7 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 			endforeach (wrapperName)
 		endif (NOT configureMavenProject)
 	endif (BUILD_THIS_SKIRMISHAI)
-endmacro (ConfigureJavaSkirmishAI wrapperNames)
+endmacro (ConfigureCMakeOrMavenJavaSkirmishAI requireMaven wrapperNames)
 
 
 ### END: MACROS_AND_FUNCTIONS
@@ -314,7 +338,7 @@ if    (AI_TYPES_JAVA)
 			include_directories(${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2} ${JNI_INCLUDE_DIRS})
 		else (JAVA_INCLUDE_PATH)
 			set (JNI_FOUND FALSE)
-			message ("warning: No Java includes found!")
+			Message(WARNING "No Java includes found!")
 		endif (JAVA_INCLUDE_PATH)
 	endif (MINGW)
 endif (AI_TYPES_JAVA)
@@ -325,7 +349,7 @@ if    (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS
 	SetGlobal(BUILD_${myName}_AIINTERFACE TRUE)
 else  (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 	SetGlobal(BUILD_${myName}_AIINTERFACE FALSE)
-	message("warning: Java AI Interface will not be built!")
+	Message("warning: Java AI Interface will not be built!")
 endif (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 
 
@@ -378,6 +402,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	SetGlobal(CLASSPATH_${myName}_AIINTERFACE        "${myJavaLibs}${PATH_DELIM_H}${myBuildDir}/${myBinJarFile}")
 	SetGlobal(JAVA_SRC_DIR_${myName}_AIINTERFACE     "${myJavaSourceDir}")
 	SetGlobal(JAVA_GEN_SRC_DIR_${myName}_AIINTERFACE "${myJavaGeneratedSourceDir}")
+	SetGlobal(${myName}_AIINTERFACE_TARGET_MVN_INSTALL "${myMavenInstallTarget}")
 
 
 	# Generate sources
@@ -663,7 +688,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	add_dependencies(${myTarget} ${myNativeTarget})
 
 	# this sets the version in pom.xml
-	set(myMavenProperties "-DmyVersion=${myVersion}")
+	set(myMavenProperties "-Dmy.version=${myVersion}")
 	add_custom_command(
 		OUTPUT
 			"${myBuildDir}/pom-generated.xml"
@@ -686,20 +711,53 @@ if    (BUILD_${myName}_AIINTERFACE)
 		# This is required because the local Maven install does not create a
 		# file (whichs path we could know), and thus we would not be able to
 		# create a nice dependency chain without this.
-		set(myMavenInstallStubFile "${myBuildDir}/mavenInstallStub.txt")
-		set_source_files_properties("${myMavenInstallStubFile}" PROPERTIES GENERATED TRUE)
-		SetGlobal(${myName}_AIINTERFACE_MVN_INST_STUB_FILE  "${myMavenInstallStubFile}")
+		set(myMavenInstallStubFile_common       "${myBuildDir}/mavenInstallStub_common.txt")
+		set(myMavenInstallStubFile_commonSpring "${myBuildDir}/mavenInstallStub_commonSpring.txt")
+		set(myMavenInstallStubFile_interface    "${myBuildDir}/mavenInstallStub_interface.txt")
+		set(myMavenInstallStubFiles
+				"${myMavenInstallStubFile_common}"
+				"${myMavenInstallStubFile_commonSpring}"
+				"${myMavenInstallStubFile_interface}")
+		set_source_files_properties(${myMavenInstallStubFiles} PROPERTIES GENERATED TRUE)
 		add_custom_command(
 			OUTPUT
-				"${myMavenInstallStubFile}"
+				"${myMavenInstallStubFile_common}"
+			COMMAND "mvn" "install"
+			COMMAND "${CMAKE_COMMAND}"
+				"-E" "touch" "${myMavenInstallStubFile_common}"
+			DEPENDS
+				"${myDir}/support/common/pom.xml"
+			WORKING_DIRECTORY
+				"${myDir}/support/common/"
+			COMMENT
+				"  ${myTarget}: Installing to local maven repository (common)" VERBATIM
+			)
+		add_custom_command(
+			OUTPUT
+				"${myMavenInstallStubFile_commonSpring}"
+			COMMAND "mvn" "install"
+			COMMAND "${CMAKE_COMMAND}"
+				"-E" "touch" "${myMavenInstallStubFile_commonSpring}"
+			DEPENDS
+				"${myMavenInstallStubFile_common}"
+				"${myDir}/support/common/spring/pom.xml"
+			WORKING_DIRECTORY
+				"${myDir}/support/common/spring"
+			COMMENT
+				"  ${myTarget}: Installing to local maven repository (common-spring)" VERBATIM
+			)
+		add_custom_command(
+			OUTPUT
+				"${myMavenInstallStubFile_interface}"
 			COMMAND "mvn"
 				"install:install-file"
 				"-DpomFile=${myBuildDir}/pom-generated.xml"
 				"-Dfile=${myBuildDir}/${myBinJarFile}"
 				"-Dsources=${myBuildDir}/${mySrcJarFile}"
 			COMMAND "${CMAKE_COMMAND}"
-				"-E" "touch" "${myMavenInstallStubFile}"
+				"-E" "touch" "${myMavenInstallStubFile_interface}"
 			DEPENDS
+				"${myMavenInstallStubFile_commonSpring}"
 				"${myBuildDir}/pom-generated.xml"
 				"${myBuildDir}/${myBinJarFile}"
 				"${myBuildDir}/${mySrcJarFile}"
@@ -710,7 +768,9 @@ if    (BUILD_${myName}_AIINTERFACE)
 			)
 		add_custom_target(${myMavenInstallTarget}
 			DEPENDS
-				"${myMavenInstallStubFile}"
+				"${myMavenInstallStubFile_common}"
+				"${myMavenInstallStubFile_commonSpring}"
+				"${myMavenInstallStubFile_interface}"
 			)
 		add_dependencies(${myMavenInstallTarget} ${myJavaTarget})
 		add_dependencies(${myTarget} ${myMavenInstallTarget})

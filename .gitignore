@@ -24,10 +24,6 @@
 # DoxyGen output
 /doc/doxygen
 
-# Scons related
-/build
-*.pyc
-
 # CMake related
 # though it is cleaner to not build directly in the repository root
 CMakeFiles
@@ -47,12 +43,6 @@ Makefile
 /rts/build/vstudio8/Release+MT with error catching
 /rts/build/vstudio8/Syncdebug
 
-# NTai build folders
-/AI/Skirmish/NTai/AI/Debug
-/AI/Skirmish/NTai/AI/Release
-/AI/Skirmish/NTai/AI/AI.ncb
-/AI/Skirmish/NTai/AI/AI.suo
-
 # Windows libraries used by spring when compiling with MinGW
 # recommended: place the dir somewhere else, and specify with
 # MINGWLIBS=<your-path-here>/mingwlibs
@@ -71,6 +61,9 @@ Makefile
 # Java AI related
 /AI/Interfaces/Java/build
 /AI/Skirmish/*/build
+/AI/Interfaces/Java/target
+/AI/Wrappers/JavaOO/target
+/AI/Skirmish/*/target
 
 # Misc file endings (eg. build or temp files)
 *.o

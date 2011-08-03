@@ -217,7 +217,6 @@ void CUnitHandler::Update()
 			eventHandler.DeleteSyncedUnits();
 
 			GML_RECMUTEX_LOCK(proj); // Update - projectile drawing may access owner() and lead to crash
-
 			GML_RECMUTEX_LOCK(sel);  // Update - unit is removed from selectedUnits in ~CObject, which is too late.
 			GML_RECMUTEX_LOCK(quad); // Update - make sure unit does not get partially deleted before before being removed from the quadfield
 
@@ -234,6 +233,29 @@ void CUnitHandler::Update()
 
 	GML_UPDATE_TICKS();
 
+	#define VECTOR_SANITY_CHECK(v)                              \
+		assert(!streflop::isnan(v.x) && !streflop::isinf(v.x)); \
+		assert(!streflop::isnan(v.y) && !streflop::isinf(v.y)); \
+		assert(!streflop::isnan(v.z) && !streflop::isinf(v.z));
+	#define MAPPOS_SANITY_CHECK(unit)                          \
+		if (unit->unitDef->IsGroundUnit()) {                   \
+			assert(unit->pos.x >= -(float3::maxxpos * 16.0f)); \
+			assert(unit->pos.x <=  (float3::maxxpos * 16.0f)); \
+			assert(unit->pos.z >= -(float3::maxzpos * 16.0f)); \
+			assert(unit->pos.z <=  (float3::maxzpos * 16.0f)); \
+		}
+	#define UNIT_SANITY_CHECK(unit)                 \
+		VECTOR_SANITY_CHECK(unit->pos);             \
+		VECTOR_SANITY_CHECK(unit->midPos);          \
+		VECTOR_SANITY_CHECK(unit->relMidPos);       \
+		VECTOR_SANITY_CHECK(unit->speed);           \
+		VECTOR_SANITY_CHECK(unit->deathSpeed);      \
+		VECTOR_SANITY_CHECK(unit->residualImpulse); \
+		VECTOR_SANITY_CHECK(unit->rightdir);        \
+		VECTOR_SANITY_CHECK(unit->updir);           \
+		VECTOR_SANITY_CHECK(unit->frontdir);        \
+		MAPPOS_SANITY_CHECK(unit);
+
 	{
 		SCOPED_TIMER("Unit::MoveType::Update");
 		std::list<CUnit*>::iterator usi;
@@ -241,10 +263,18 @@ void CUnitHandler::Update()
 			CUnit* unit = *usi;
 			AMoveType* moveType = unit->moveType;
 
+			UNIT_SANITY_CHECK(unit);
+
 			if (moveType->Update()) {
 				eventHandler.UnitMoved(unit);
 			}
+			if (!unit->pos.IsInBounds() && (unit->speed.SqLength() > (MAX_UNIT_SPEED * MAX_UNIT_SPEED))) {
+				// this unit is not coming back, kill it now without any death
+				// sequence (so deathScriptFinished becomes true immediately)
+				unit->KillUnit(false, true, NULL, false);
+			}
 
+			UNIT_SANITY_CHECK(unit);
 			GML_GET_TICKS(unit->lastUnitUpdate);
 		}
 	}
@@ -254,6 +284,8 @@ void CUnitHandler::Update()
 		std::list<CUnit*>::iterator usi;
 		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 			CUnit* unit = *usi;
+
+			UNIT_SANITY_CHECK(unit);
 
 			if (unit->deathScriptFinished) {
 				// there are many ways to fiddle with "deathScriptFinished", so a unit may
@@ -266,20 +298,32 @@ void CUnitHandler::Update()
 			} else {
 				unit->Update();
 			}
+
+			UNIT_SANITY_CHECK(unit);
 		}
 	}
 
 	{
 		SCOPED_TIMER("Unit::SlowUpdate");
-		if (!(gs->frameNum & (UNIT_SLOWUPDATE_RATE - 1))) {
+
+		// reset the iterator every <UNIT_SLOWUPDATE_RATE> frames
+		if ((gs->frameNum & (UNIT_SLOWUPDATE_RATE - 1)) == 0) {
 			slowUpdateIterator = activeUnits.begin();
 		}
 
+		// stagger the SlowUpdate's
 		int n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1;
-		for (; slowUpdateIterator != activeUnits.end() && n != 0; ++ slowUpdateIterator) {
-			(*slowUpdateIterator)->SlowUpdate(); n--;
+
+		for (; slowUpdateIterator != activeUnits.end() && n != 0; ++slowUpdateIterator) {
+			CUnit* unit = *slowUpdateIterator;
+
+			UNIT_SANITY_CHECK(unit);
+			unit->SlowUpdate();
+			UNIT_SANITY_CHECK(unit);
+
+			n--;
 		}
-	} // for timer destruction
+	}
 }
 
 

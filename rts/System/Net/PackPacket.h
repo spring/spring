@@ -3,13 +3,14 @@
 #ifndef PACK_PACKET_H
 #define PACK_PACKET_H
 
+#include "RawPacket.h"
+#include "System/SafeVector.h"
+
 #include <string>
 #include <vector>
 #include <assert.h>
 #include <cstring>
 
-#include "RawPacket.h"
-#include "System/SafeVector.h"
 
 namespace netcode
 {
@@ -23,8 +24,8 @@ public:
 	template <typename T>
 	PackPacket& operator<<(const T& t) {
 		unsigned size = sizeof(T);
-		assert(size + pos <= length);
-		*(T*)(data+pos) = t;
+		assert((size + pos) <= length);
+		*(T*)(data + pos) = t;
 		pos += size;
 		return *this;
 	}
@@ -34,7 +35,7 @@ public:
 	template <typename element>
 	PackPacket& operator<<(const std::vector<element>& vec) {
 		const size_t size = vec.size()* sizeof(element);
-		assert(size + pos <= length);
+		assert((size + pos) <= length);
 		if (size > 0) {
 			std::memcpy((data+pos), (void*)(&vec[0]), size);
 			pos += size;
@@ -46,7 +47,7 @@ public:
 	template <typename element>
 	PackPacket& operator<<(const safe_vector<element>& vec) {
 		const size_t size = vec.size()* sizeof(element);
-		assert(size + pos <= length);
+		assert((size + pos) <= length);
 		if (size > 0) {
 			std::memcpy((data+pos), (void*)(&vec[0]), size);
 			pos += size;
@@ -56,7 +57,7 @@ public:
 #endif
 
 	unsigned char* GetWritingPos() {
-		return data+pos;
+		return data + pos;
 	}
 
 private:
