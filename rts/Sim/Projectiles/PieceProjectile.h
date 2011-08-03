@@ -61,7 +61,6 @@ public:
 	float3 oldSmokePos;
 	float3 oldSmokeDir;
 	bool drawTrail;
-	int age;
 
 	struct OldInfo {
 		float3 pos;
@@ -70,6 +69,7 @@ public:
 	OldInfo* oldInfos[8];
 	CSmokeTrailProjectile* curCallback;
 
+	int age;
 	int colorTeam;
 };
 
