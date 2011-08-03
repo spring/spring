@@ -27,12 +27,22 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/FastMath.h"
 #include "System/myMath.h"
 #include "System/Vec2.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
+
+
+#define LOG_SECTION_GMT "GroundMoveType"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
+
+// use the specific section for all LOG*() calls in this source file
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_GMT
 
 // speeds near (MAX_UNIT_SPEED * 1e1) elmos / frame can be caused by explosion impulses
 // CUnitHandler removes units with speeds > MAX_UNIT_SPEED as soon as they exit the map,
@@ -44,6 +54,7 @@
 #define MAX_IDLING_SLOWUPDATES 16
 #define DEBUG_OUTPUT 0
 #define PLAY_SOUNDS 1
+
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
 
@@ -332,9 +343,9 @@ void CGroundMoveType::SlowUpdate()
 
 			if (numIdlingUpdates > (SHORTINT_MAXVALUE / turnRate)) {
 				// case A: we have a path but are not moving
-				#if (DEBUG_OUTPUT == 1)
-				logOutput.Print("[CGMT::SU] unit %i has pathID %i but %i ETA failures", owner->id, pathId, numIdlingUpdates);
-				#endif
+				LOG_L(L_DEBUG,
+						"SlowUpdate: unit %i has pathID %i but %i ETA failures",
+						owner->id, pathId, numIdlingUpdates);
 
 				if (numIdlingSlowUpdates < MAX_IDLING_SLOWUPDATES) {
 					StopEngine();
@@ -348,9 +359,8 @@ void CGroundMoveType::SlowUpdate()
 		} else {
 			if (gs->frameNum > pathRequestDelay) {
 				// case B: we want to be moving but don't have a path
-				#if (DEBUG_OUTPUT == 1)
-				logOutput.Print("[CGMT::SU] unit %i has no path", owner->id);
-				#endif
+				LOG_L(L_DEBUG,
+						"SlowUpdate: unit %i has no path", owner->id);
 
 				StopEngine();
 				StartEngine();
@@ -406,9 +416,8 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float _goalRadius, float s
 	currWayPointDist = 0.0f;
 	prevWayPointDist = 0.0f;
 
-	#if (DEBUG_OUTPUT == 1)
-	logOutput.Print("[CGMT::StartMoving] starting engine for unit %i", owner->id);
-	#endif
+	LOG_L(L_DEBUG,
+			"StartMoving: starting engine for unit %i", owner->id);
 
 	StartEngine();
 
@@ -430,9 +439,8 @@ void CGroundMoveType::StopMoving() {
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
 #endif
 
-	#if (DEBUG_OUTPUT == 1)
-	logOutput.Print("[CGMT::StopMoving] stopping engine for unit %i", owner->id);
-	#endif
+	LOG_L(L_DEBUG,
+			"StopMoving: stopping engine for unit %i", owner->id);
 
 	StopEngine();
 
@@ -955,9 +963,8 @@ float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
 					if ((udMoveData.moveMath->IsBlocked(udMoveData, x, y) & blockBits) ||
 					    (udMoveData.moveMath->GetPosSpeedMod(udMoveData, x, y) <= 0.01f)) {
 
-						#if (DEBUG_OUTPUT == 1)
-						logOutput.Print("[CGMT::OA] path blocked for unit %i", owner->id);
-						#endif
+						LOG_L(L_DEBUG,
+								"ObstacleAvoidance: path blocked for unit %i", owner->id);
 						break;
 					}
 				}
@@ -1234,6 +1241,7 @@ void CGroundMoveType::StartEngine() {
 }
 
 void CGroundMoveType::StopEngine() {
+
 	if (pathId != 0) {
 		pathManager->DeletePath(pathId);
 		pathId = 0;
@@ -1245,9 +1253,8 @@ void CGroundMoveType::StopEngine() {
 		// Stop animation.
 		owner->script->StopMoving();
 
-		#if (DEBUG_OUTPUT == 1)
-		logOutput.Print("[CGMT::StopEngine] engine stopped for unit %i", owner->id);
-		#endif
+		LOG_L(L_DEBUG,
+				"StopEngine: engine stopped for unit %i", owner->id);
 	}
 
 	owner->isMoving = false;
@@ -1279,9 +1286,8 @@ void CGroundMoveType::Arrived()
 		progressState = Done;
 		owner->commandAI->SlowUpdate();
 
-		#if (DEBUG_OUTPUT == 1)
-		logOutput.Print("[CGMT::Arrived] unit %i arrived", owner->id);
-		#endif
+		LOG_L(L_DEBUG,
+				"Arrived: unit %i arrived", owner->id);
 	}
 }
 
@@ -1291,9 +1297,8 @@ No more trials will be done before a new goal is given.
 */
 void CGroundMoveType::Fail()
 {
-	#if (DEBUG_OUTPUT == 1)
-	logOutput.Print("[CGMT::Fail] unit %i failed", owner->id);
-	#endif
+	LOG_L(L_DEBUG,
+			"Fail: unit %i failed", owner->id);
 
 	StopEngine();
 

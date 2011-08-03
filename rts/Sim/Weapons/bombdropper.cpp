@@ -5,7 +5,6 @@
 #include "Game/GameHelper.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/Team.h"
-#include "System/LogOutput.h"
 #include "Map/MapInfo.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/ExplosiveProjectile.h"
