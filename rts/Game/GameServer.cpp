@@ -328,7 +328,7 @@ void CGameServer::SkipTo(int targetFrameNum)
 	if (serverFrameNum >= targetFrameNum) { return; }
 	if (demoReader == NULL) { return; }
 
-	CommandMessage startMsg(str(boost::format("skip start %d") %targetFrameNum), SERVER_PLAYER);
+	CommandMessage startMsg(str(format("skip start %d") %targetFrameNum), SERVER_PLAYER);
 	CommandMessage endMsg("skip end", SERVER_PLAYER);
 	Broadcast(boost::shared_ptr<const netcode::RawPacket>(startMsg.Pack()));
 
@@ -694,7 +694,7 @@ void CGameServer::CheckSync()
 
 		// Remove complete sets (for which all player's checksums have been received).
 		if (bComplete) {
-			// Message(str (boost::format("Succesfully purged outstanding sync frame %d from the deque") %(*f)));
+			// Message(str (format("Succesfully purged outstanding sync frame %d from the deque") %(*f)));
 			for (size_t a = 0; a < players.size(); ++a) {
 				if (players[a].myState < GameParticipant::DISCONNECTED)
 					players[a].syncResponse.erase(*f);
@@ -1046,9 +1046,9 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 			if (setup->startPosType == CGameSetup::StartPos_ChooseInGame) {
 				const unsigned team     = (unsigned)inbuf[2];
 				if (team >= teams.size()) {
-					Message(str(boost::format("Invalid teamID %d in NETMSG_STARTPOS from player %d") %team %player));
+					Message(str(format("Invalid teamID %d in NETMSG_STARTPOS from player %d") %team %player));
 				} else if (getSkirmishAIIds(ais, team, player).empty() && ((team != players[player].team) || (players[player].spectator))) {
-					Message(str(boost::format("Player %d sent spoofed NETMSG_STARTPOS with teamID %d") %player %team));
+					Message(str(format("Player %d sent spoofed NETMSG_STARTPOS with teamID %d") %player %team));
 				} else {
 					teams[team].startPos = float3(*((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12]));
 					if (inbuf[3] == 1) {
@@ -1285,7 +1285,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 						(isSpec ||
 						(!isOwnTeam_g && !isLeader_g) ||
 						(hasAIs_g && !isAllied_g && !cheating))) {
-							Message(str(boost::format("%s %s sent invalid team giveaway") %playerType %players[player].name), true);
+							Message(str(format("%s %s sent invalid team giveaway") %playerType %players[player].name), true);
 							break;
 					}
 					Broadcast(CBaseNetProtocol::Get().SendGiveAwayEverything(player, toTeam, fromTeam_g));
@@ -1305,7 +1305,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 							ais.erase(myAIsInTeam_g[0]);
 							giveAwayOk = true;
 						} else {
-							Message(str(boost::format("%s %s can not give away stuff of team %i (still has human players left)") %playerType %players[player].name %fromTeam_g), true);
+							Message(str(format("%s %s can not give away stuff of team %i (still has human players left)") %playerType %players[player].name %fromTeam_g), true);
 						}
 					}
 					if (giveAwayOk && (numControllersInTeam_g == 1)) {
@@ -1323,7 +1323,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					const bool isSinglePlayer = (players.size() <= 1);
 
 					if (isSpec && !isSinglePlayer) {
-						Message(str(boost::format("Spectator %s sent invalid team resign") %players[player].name), true);
+						Message(str(format("Spectator %s sent invalid team resign") %players[player].name), true);
 						break;
 					}
 					Broadcast(CBaseNetProtocol::Get().SendResign(player));
@@ -1535,11 +1535,11 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 					}
 					else {
 						// hack!
-						Message(str(boost::format(CommandNotAllowed) %msg.GetPlayerID() %msg.GetAction().command.c_str()));
+						Message(str(format(CommandNotAllowed) %msg.GetPlayerID() %msg.GetAction().command.c_str()));
 					}
 				}
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(boost::format("Player %s sent invalid CommandMessage: %s") %players[a].name %ex.what()));
+				Message(str(format("Player %s sent invalid CommandMessage: %s") %players[a].name %ex.what()));
 			}
 			break;
 		}
