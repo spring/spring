@@ -5,7 +5,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Sound/ISound.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 int CommonDefHandler::LoadSoundFile(const std::string& fileName)
 {
@@ -34,7 +34,8 @@ int CommonDefHandler::LoadSoundFile(const std::string& fileName)
 		}
 		else
 		{
-			LogObject() << "Could not load sound from def: " << fileName;
+			LOG_L(L_WARNING, "Could not load sound from def: %s",
+					fileName.c_str());
 			return 0;
 		}
 	}

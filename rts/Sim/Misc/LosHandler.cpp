@@ -13,7 +13,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Map/ReadMap.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
 #include "System/creg/STL_Deque.h"
 #include "System/creg/STL_List.h"
@@ -214,7 +214,9 @@ void CLosHandler::FreeInstance(LosInstance* instance)
 		}
 
 		if (instance->hashNum >= LOSHANDLER_MAGIC_PRIME || instance->hashNum < 0) {
-			logOutput.Print("[LosHandler::FreeInstance][1] bad LOS-instance hash (%d)", instance->hashNum);
+			LOG_L(L_WARNING,
+					"[LosHandler::FreeInstance][1] bad LOS-instance hash (%d)",
+					instance->hashNum);
 		}
 
 		if (toBeDeleted.size() > 500) {
@@ -222,7 +224,9 @@ void CLosHandler::FreeInstance(LosInstance* instance)
 			toBeDeleted.pop_front();
 
 			if (i->hashNum >= LOSHANDLER_MAGIC_PRIME || i->hashNum < 0) {
-				logOutput.Print("[LosHandler::FreeInstance][2] bad LOS-instance hash (%d)", i->hashNum);
+				LOG_L(L_WARNING,
+						"[LosHandler::FreeInstance][2] bad LOS-instance hash (%d)",
+						i->hashNum);
 				return;
 			}
 

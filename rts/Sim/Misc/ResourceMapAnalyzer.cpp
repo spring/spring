@@ -19,7 +19,7 @@ using std::fclose;
 #include "Map/MapInfo.h"
 #include "Map/MetalMap.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 #include <stdexcept>
 
@@ -102,7 +102,7 @@ float3 CResourceMapAnalyzer::GetNearestSpot(int builderUnitId, const UnitDef* ex
 	CUnit* builder = uh->units[builderUnitId];
 
 	if (builder == NULL) {
-		logOutput.Print("Invalid Unit ID: %i", builderUnitId);
+		LOG_L(L_WARNING, "GetNearestSpot: Invalid unit ID: %i", builderUnitId);
 		return ERRORVECTOR;
 	}
 
@@ -153,7 +153,7 @@ void CResourceMapAnalyzer::Init() {
 
 	// Leave this line if you want to use this class
 	const CResource* resource = resourceHandler->GetResource(resourceId);
-	logOutput.Print("ResourceMapAnalyzer by Krogothe, initialized for resource %i(%s)",
+	LOG("ResourceMapAnalyzer by Krogothe, initialized for resource %i(%s)",
 			resourceId, resource->name.c_str());
 
 	// if there's no available load file, create one and save it
@@ -567,7 +567,7 @@ void CResourceMapAnalyzer::SaveResourceMap() {
 			writeToFile(vectoredSpots[i], saveFile);
 		}
 	} catch (const std::runtime_error& err) {
-		logOutput.Print(
+		LOG_L(L_WARNING,
 				"Failed to save the analyzed resource-map to file %s, reason: %s",
 				cacheFileName.c_str(), err.what());
 	}
@@ -600,8 +600,9 @@ bool CResourceMapAnalyzer::LoadResourceMap() {
 			}
 			loaded = true;
 		} catch (const std::runtime_error& err) {
-			logOutput.Print("Failed to load the resource map cache from file "
-					+ cacheFileName + ": " + err.what());
+			LOG_L(L_WARNING,
+					"Failed to load the resource map cache from file %s: %s",
+					cacheFileName.c_str(), err.what());
 		}
 		fclose(cacheFile);
 	}
