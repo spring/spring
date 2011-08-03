@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/StdAfx.h"
-#include "bombdropper.h"
+#include "BombDropper.h"
 #include "Game/GameHelper.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/Team.h"
