@@ -28,16 +28,17 @@ CR_REG_METADATA(CBombDropper,(
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CBombDropper::CBombDropper(CUnit* owner,bool useTorps)
-: CWeapon(owner),
-	dropTorpedoes(useTorps),
-	bombMoveRange(3),
-	tracking(0)
+CBombDropper::CBombDropper(CUnit* owner, bool useTorps)
+	: CWeapon(owner)
+	, dropTorpedoes(useTorps)
+	, bombMoveRange(3)
+	, tracking(0)
 {
-	onlyForward=true;
+	onlyForward = true;
 
-	if(useTorps && owner)
-		owner->hasUWWeapons=true;
+	if (useTorps && owner) {
+		owner->hasUWWeapons = true;
+	}
 }
 
 CBombDropper::~CBombDropper()
@@ -47,104 +48,119 @@ CBombDropper::~CBombDropper()
 
 void CBombDropper::Update()
 {
-	if(targetType!=Target_None){
-		weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
-		subClassReady=false;
-		if(targetType==Target_Unit)
-			targetPos=targetUnit->pos;		//aim at base of unit instead of middle and ignore uncertainity
-		if(weaponPos.y>targetPos.y){
-			float d=targetPos.y-weaponPos.y;
-			float s=-owner->speed.y;
-			float sq=(s-2*d)/-(weaponDef->myGravity==0 ? mapInfo->map.gravity : -(weaponDef->myGravity));
-			if(sq>0)
-				predict=s/(weaponDef->myGravity==0 ? mapInfo->map.gravity : -(weaponDef->myGravity))+sqrt(sq);
-			else
-				predict=0;
-			float3 hitpos=owner->pos+owner->speed*predict;
-			float speedf=owner->speed.Length();
-			if(hitpos.SqDistance2D(targetPos)<Square(std::max(1,(salvoSize-1))*speedf*salvoDelay*0.5f+bombMoveRange)){
-				subClassReady=true;
+	if (targetType != Target_None) {
+		weaponPos = owner->pos
+				+ (owner->frontdir * relWeaponPos.z)
+				+ (owner->updir * relWeaponPos.y)
+				+ (owner->rightdir * relWeaponPos.x);
+		subClassReady = false;
+		if (targetType == Target_Unit) {
+			// aim at base of unit instead of middle and ignore uncertainity
+			targetPos = targetUnit->pos;
+		}
+		if (weaponPos.y > targetPos.y) {
+			const float d = targetPos.y - weaponPos.y;
+			const float s = -owner->speed.y;
+			const float sq = (s - 2*d) / -((weaponDef->myGravity == 0) ? mapInfo->map.gravity : -(weaponDef->myGravity));
+			if (sq > 0) {
+				predict = s / ((weaponDef->myGravity == 0) ? mapInfo->map.gravity : -(weaponDef->myGravity)) + sqrt(sq);
+			} else {
+				predict = 0;
+			}
+			const float3 hitpos = owner->pos+owner->speed*predict;
+			const float speedf = owner->speed.Length();
+			if (hitpos.SqDistance2D(targetPos) < Square((std::max(1, (salvoSize - 1)) * speedf * salvoDelay * 0.5f) + bombMoveRange))
+			{
+				subClassReady = true;
 			}
 		}
 	}
 	CWeapon::Update();
 }
 
-bool CBombDropper::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
+bool CBombDropper::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 {
-	if(unit){
-		if(unit->isUnderWater && !dropTorpedoes)
+	if (unit) {
+		if (unit->isUnderWater && !dropTorpedoes) {
 			return false;
+		}
 	} else {
-		if(pos.y<0)
+		if (pos.y < 0) {
 			return false;
+		}
 	}
 	return true;
 }
 
-void CBombDropper::FireImpl(void)
+void CBombDropper::FireImpl()
 {
-	if(targetType==Target_Unit) {
-		targetPos=targetUnit->pos;		//aim at base of unit instead of middle and ignore uncertainity
+	if (targetType == Target_Unit) {
+		// aim at base of unit instead of middle and ignore uncertainity
+		targetPos = targetUnit->pos;
 	}
 
-	if(dropTorpedoes){
-		float3 speed=owner->speed;
-		if(dynamic_cast<CTAAirMoveType*>(owner->moveType)){
-			speed=targetPos-weaponPos;
+	if (dropTorpedoes) {
+		float3 speed = owner->speed;
+		if (dynamic_cast<CTAAirMoveType*>(owner->moveType)) {
+			speed = targetPos - weaponPos;
 			speed.Normalize();
-			speed*=5;
+			speed *= 5;
 		}
 		int ttl;
-		if(weaponDef->flighttime == 0) {
-			ttl = (int)(range/projectileSpeed+15+predict);
+		if (weaponDef->flighttime == 0) {
+			ttl = (int)((range / projectileSpeed) + 15 + predict);
 		} else {
 			ttl = weaponDef->flighttime;
 		}
 		new CTorpedoProjectile(weaponPos, speed, owner, areaOfEffect,
-			projectileSpeed, tracking, ttl, targetUnit, weaponDef);
+				projectileSpeed, tracking, ttl, targetUnit, weaponDef);
 	} else {
-		float3 dif=targetPos-weaponPos;		//fudge a bit better lateral aim to compensate for imprecise aircraft steering
-		dif.y=0;
-		float3 dir=owner->speed;
+		// fudge a bit better lateral aim to compensate for imprecise aircraft steering
+		float3 dif = targetPos-weaponPos;
+		dif.y = 0;
+		float3 dir = owner->speed;
 		dir.SafeNormalize();
-		dir+=(gs->randVector()*sprayAngle+salvoError)*(1-owner->limExperience*0.9f); //add a random spray
-		dir.y=std::min(0.0f,dir.y);
+		// add a random spray
+		dir += (gs->randVector() * sprayAngle+salvoError) * (1 - (owner->limExperience * 0.9f));
+		dir.y = std::min(0.0f, dir.y);
 		dir.SafeNormalize();
-		dif-=dir*dif.dot(dir);
-		dif/=std::max(0.01f,predict);
-		float size=dif.Length();
-		if(size>1.0f)
-			dif/=size*1.0f;
+		dif -= dir * dif.dot(dir);
+		dif /= std::max(0.01f,predict);
+		const float size = dif.Length();
+		if (size > 1.0f) {
+			dif /= size * 1.0f;
+		}
 		new CExplosiveProjectile(weaponPos, owner->speed + dif, owner,
 				weaponDef, 1000, areaOfEffect,
-				weaponDef->myGravity==0 ? mapInfo->map.gravity : -(weaponDef->myGravity));
+				((weaponDef->myGravity == 0) ? mapInfo->map.gravity : -(weaponDef->myGravity)));
 	}
 }
 
-void CBombDropper::Init(void)
+void CBombDropper::Init()
 {
 	CWeapon::Init();
-	maxAngleDif=-1;
+	maxAngleDif = -1;
 }
 
-/** See SlowUpdate */
+/** @see #SlowUpdate */
 bool CBombDropper::AttackUnit(CUnit* unit, bool userTarget)
 {
 	if (!userTarget) return false;
 	return CWeapon::AttackUnit(unit, userTarget);
 }
 
-/** See SlowUpdate */
+/** @see #SlowUpdate */
 bool CBombDropper::AttackGround(float3 pos, bool userTarget)
 {
 	if (!userTarget) return false;
 	return CWeapon::AttackGround(pos, userTarget);
 }
 
-/** Make sure it wont try to find targets not targeted by the cai
-(to save cpu mostly) */
-void CBombDropper::SlowUpdate(void)
+/**
+ * Make sure it wont try to find targets not targeted by the Command-AI.
+ * (to save CPU mostly)
+ */
+void CBombDropper::SlowUpdate()
 {
 	CWeapon::SlowUpdate(true);
 }
