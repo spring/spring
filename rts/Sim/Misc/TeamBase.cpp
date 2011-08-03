@@ -6,7 +6,6 @@
 #include <sstream>
 
 #include "System/Util.h"
-#include "System/LogOutput.h"
 
 
 unsigned char TeamBase::teamDefaultColor[10][4] =

@@ -11,7 +11,6 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/Util.h"
-#include "System/LogOutput.h"
 
 
 CR_BIND(CTeamHandler, );

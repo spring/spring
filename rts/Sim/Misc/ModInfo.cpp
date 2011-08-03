@@ -12,7 +12,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "Rendering/GlobalRendering.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Exceptions.h"
@@ -44,8 +44,8 @@ void CModInfo::Init(const char* modArchive)
 	parser.EndTable();
 	parser.Execute();
 	if (!parser.IsValid()) {
-		logOutput.Print("Error loading modrules, using defaults");
-		logOutput.Print(parser.GetErrorLog());
+		LOG_L(L_ERROR, "Failed loading mod-rules, using defaults; error: %s",
+				parser.GetErrorLog().c_str());
 	}
 	const LuaTable root = parser.GetRoot();
 

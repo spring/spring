@@ -18,7 +18,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/EventHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
 #include "System/creg/STL_List.h"
 #include "System/creg/STL_Map.h"
@@ -167,7 +167,7 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 	CTeam* target = teamHandler->Team(toTeam);
 
 	if (!target) {
-		logOutput.Print("Team %i does not exist, can't give units", toTeam);
+		LOG_L(L_WARNING, "Team %i does not exist, can't give units", toTeam);
 		return;
 	}
 
@@ -200,9 +200,9 @@ void CTeam::Died(bool normalDeath)
 		if (leader >= 0) {
 			const CPlayer* leadPlayer = playerHandler->Player(leader);
 			const char* leaderName = leadPlayer->name.c_str();
-			logOutput.Print(CMessages::Tr("Team %i (lead by %s) is no more").c_str(), teamNum, leaderName);
+			LOG(CMessages::Tr("Team %i (lead by %s) is no more").c_str(), teamNum, leaderName);
 		} else {
-			logOutput.Print(CMessages::Tr("Team %i is no more").c_str(), teamNum);
+			LOG(CMessages::Tr("Team %i is no more").c_str(), teamNum);
 		}
 
 		// this message is not relayed to clients, it's only for the server
