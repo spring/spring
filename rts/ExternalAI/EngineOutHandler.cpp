@@ -125,7 +125,7 @@ CEngineOutHandler::~CEngineOutHandler() {
 
 // This macro should be insterted at the start of each method sending AI events
 #define AI_EVT_MTH()                               \
-		if (id_skirmishAI.size() == 0) { return; } \
+		if (id_skirmishAI.empty()) { return; } \
 		SCOPED_TIMER("AI Total");
 
 

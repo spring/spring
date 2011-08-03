@@ -66,7 +66,7 @@ void Chunk::UpdateChecksum(CRC& crc) const {
 
 	crc << chunkNumber;
 	crc << (unsigned int)chunkSize;
-	if (data.size() > 0) {
+	if (!data.empty()) {
 		crc.Update(&data[0], data.size());
 	}
 }
@@ -86,7 +86,7 @@ uint8_t Packet::GetChecksum() const {
 	CRC crc;
 	crc << lastContinuous;
 	crc << (unsigned int)nakType;
-	if (naks.size() > 0) {
+	if (!naks.empty()) {
 		crc.Update(&naks[0], naks.size());
 	}
 	std::list<ChunkPtr>::const_iterator chk;
@@ -306,7 +306,7 @@ void UDPConnection::Update()
 	spring_time curTime = spring_gettime();
 	outgoing.UpdateTime(curTime);
 
-	if (!sharedSocket) {
+	if (!sharedSocket && !closed) {
 		// duplicated code with UDPListener
 		netservice.poll();
 		size_t bytes_avail = 0;
@@ -592,6 +592,7 @@ void UDPConnection::Init()
 	reconnectTime = globalConfig->reconnectTimeout;
 	lastChunkCreated = spring_gettime();
 	muted = true;
+	closed = false;
 }
 
 void UDPConnection::CreateChunk(const unsigned char* data, const unsigned length, const int packetNum)
@@ -781,5 +782,23 @@ float UDPConnection::BandwidthUsage::GetAverage(bool prel) const
 	return average + (prel ? std::max(trafficSinceLastTime, prelTrafficSinceLastTime) : trafficSinceLastTime);
 }
 
-} // namespace netcode
+void UDPConnection::Close(bool flush) {
 
+	if (closed) {
+		return;
+	}
+
+	Flush(flush);
+	muted = true;
+	if (!sharedSocket) {
+		try {
+			mySocket->shutdown(boost::asio::ip::udp::socket::shutdown_both);
+			mySocket->close();
+		} catch (const boost::system::system_error& ex) {
+			LOG_L(L_ERROR, "Failed closing UDP conection: %s", ex.what());
+		}
+	}
+	closed = true;
+}
+
+} // namespace netcode

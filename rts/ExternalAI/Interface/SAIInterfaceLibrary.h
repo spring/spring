@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _SAIINTERFACELIBRARY_H
-#define _SAIINTERFACELIBRARY_H
+#ifndef S_AI_INTERFACE_LIBRARY_H
+#define S_AI_INTERFACE_LIBRARY_H
 
 /*
  * All this is not needed when building an AI,
@@ -127,10 +127,6 @@ struct SAIInterfaceLibrary {
 	int (CALLING_CONV *initStatic)(int interfaceId,
 			const struct SAIInterfaceCallback* const);
 
-//			unsigned int infoSize,
-//			const char** infoKeys, const char** infoValues,
-//			const struct SStaticGlobalData* staticGlobalData);
-
 	/**
 	 * This function is called right right before the library is unloaded.
 	 * It can be used to deinitialize variables and to cleanup the environment,
@@ -195,4 +191,4 @@ struct SAIInterfaceLibrary {
 #endif
 
 #endif // !defined BUILDING_SKIRMISH_AI
-#endif // _SAIINTERFACELIBRARY_H
+#endif // S_AI_INTERFACE_LIBRARY_H

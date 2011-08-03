@@ -5,8 +5,8 @@
  * but also by AIs.
  */
 
-#ifndef _AI_DEFINES_H
-#define _AI_DEFINES_H
+#ifndef AI_DEFINES_H
+#define AI_DEFINES_H
 
 #include "System/maindefines.h"
 #include "System/exportdefines.h"
@@ -79,4 +79,4 @@
 
 #define SKIRMISH_AI_DATA_DIR "AI/Skirmish"
 
-#endif // _AI_DEFINES_H
+#endif // AI_DEFINES_H

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _ELEVELOFSUPPORT_H
-#define	_ELEVELOFSUPPORT_H
+#ifndef E_LEVEL_OF_SUPPORT_H
+#define	E_LEVEL_OF_SUPPORT_H
 
 #ifdef	__cplusplus
 extern "C" {
@@ -34,4 +34,4 @@ enum LevelOfSupport {
 } // extern "C"
 #endif
 
-#endif // _ELEVELOFSUPPORT_H
+#endif // E_LEVEL_OF_SUPPORT_H

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _IAILIBRARYMANAGER_H
-#define _IAILIBRARYMANAGER_H
+#ifndef I_AI_LIBRARY_MANAGER_H
+#define I_AI_LIBRARY_MANAGER_H
 
 #include "AIInterfaceLibraryInfo.h"
 #include "SkirmishAILibraryInfo.h"
@@ -19,7 +19,6 @@ class CSkirmishAILibrary;
  * @see CAILibraryManager
  */
 class IAILibraryManager {
-
 public:
 	IAILibraryManager() {}
 	virtual ~IAILibraryManager() {}
@@ -42,17 +41,20 @@ public:
 	typedef std::map<const SkirmishAIKey, std::set<std::string> >
 			T_dupSkirm;
 
-	// The following three methods return sets of files which contain duplicate
-	// infos. These methods can be used for issueing warnings.
+	/**
+	 * Returns a set of files which contain duplicate AI Interface infos.
+	 * This can be used for issueing warnings.
+	 */
 	virtual const T_dupInt& GetDuplicateInterfaceInfos() const = 0;
+	/**
+	 * Returns a set of files which contain duplicate Skirmish AI infos.
+	 * This can be used for issueing warnings.
+	 */
 	virtual const T_dupSkirm& GetDuplicateSkirmishAIInfos() const = 0;
 
 	SkirmishAIKey ResolveSkirmishAIKey(const SkirmishAIKey& skirmishAIKey)
 			const;
-protected:
-	virtual std::vector<SkirmishAIKey> FittingSkirmishAIKeys(
-			const SkirmishAIKey& skirmishAIKey) const = 0;
-public:
+
 	/**
 	 * A Skirmish AI (its library) is only really loaded when it is not yet
 	 * loaded.
@@ -67,7 +69,6 @@ public:
 	 */
 	virtual void ReleaseSkirmishAILibrary(const SkirmishAIKey& skirmishAIKey) = 0;
 
-public:
 	/** Guaranteed to not return NULL. */
 	static IAILibraryManager* GetInstance();
 	/** Should only be called at end of game/process */
@@ -76,6 +77,9 @@ public:
 	static void OutputSkirmishAIInfo();
 
 protected:
+	virtual std::vector<SkirmishAIKey> FittingSkirmishAIKeys(
+			const SkirmishAIKey& skirmishAIKey) const = 0;
+
 	/**
 	 * Compares two version strings.
 	 * Splits the version strings at the '.' signs, and compares the parts.
@@ -104,4 +108,4 @@ private:
 
 #define aiLibManager IAILibraryManager::GetInstance()
 
-#endif // _IAILIBRARYMANAGER_H
+#endif // I_AI_LIBRARY_MANAGER_H

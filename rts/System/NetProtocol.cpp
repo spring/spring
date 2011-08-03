@@ -36,6 +36,7 @@ CNetProtocol::CNetProtocol() : loading(false), disableDemo(false)
 CNetProtocol::~CNetProtocol()
 {
 	Send(CBaseNetProtocol::Get().SendQuit(""));
+	Close();
 	LOG("%s", serverConn->Statistics().c_str());
 }
 
@@ -127,8 +128,7 @@ boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int framenum)
 				record->WriteSetupText(gd.GetSetup());
 				record->SaveToDemo(ret->data, ret->length, demoTime);
 			} catch (const netcode::UnpackPacketException& ex) {
-				LOG_L(L_WARNING, "Invalid GameData received: %s",
-						ex.err.c_str());
+				LOG_L(L_WARNING, "Invalid GameData received: %s", ex.what());
 			}
 		}
 	}
@@ -168,6 +168,12 @@ void CNetProtocol::Update()
 void CNetProtocol::DisableDemoRecording()
 {
 	disableDemo = true;
+}
+
+void CNetProtocol::Close(bool flush) {
+	GML_STDMUTEX_LOCK(net); // Close
+
+	serverConn->Close(flush);
 }
 
 CNetProtocol* net = NULL;

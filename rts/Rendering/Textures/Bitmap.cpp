@@ -120,6 +120,17 @@ CBitmap& CBitmap::operator=(const CBitmap& bm)
 		delete[] mem;
 		mem = new unsigned char[size];
 		memcpy(mem, bm.mem, size);
+
+#ifndef BITMAP_NO_OPENGL
+		textype = bm.textype;
+		delete ddsimage;
+		if (bm.ddsimage == NULL) {
+			ddsimage = NULL;
+		} else {
+			ddsimage = new nv_dds::CDDSImage();
+			*ddsimage = *(bm.ddsimage);
+		}
+#endif // !BITMAP_NO_OPENGL
 	}
 
 	return *this;

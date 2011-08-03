@@ -34,7 +34,7 @@ public:
 	void KeepPointingTo(float3 pos, float distance, bool aggressive);
 	void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
 
-	bool OnSlope();
+	bool OnSlope(float minSlideTolerance);
 
 	void TestNewTerrainSquare();
 	void LeaveTransport();
@@ -111,10 +111,9 @@ protected:
 	bool canReverse;
 	bool useMainHeading;
 
-	float3 skidRotVector;
-	float skidRotSpeed;
-	float skidRotSpeed2;
-	float skidRotPos2;
+	float3 skidRotVector;  /// vector orthogonal to skidDir
+	float skidRotAccel;    /// rotational acceleration when skidding
+	float skidRotSpeed;    /// rotational speed when skidding
 
 	CSolidObject::PhysicalState oldPhysState;
 

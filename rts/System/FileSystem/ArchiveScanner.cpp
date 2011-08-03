@@ -706,6 +706,9 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 		const unsigned int dataCRC = ar->GetCrc32(fid);
 		crc.Update(nameCRC);
 		crc.Update(dataCRC);
+	#if       !defined(DEDICATED) && !defined(UNITSYNC)
+		Watchdog::ClearTimer();
+	#endif // !defined(DEDICATED) && !defined(UNITSYNC)
 	}
 
 	delete ignore;

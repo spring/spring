@@ -176,7 +176,7 @@ void get_executable_name(char *output, int size)
 #ifdef ALLEGRO_HAVE_SV_PROCFS
 	sprintf (linkname, "/proc/%d/exe", pid);
 	fd = open(linkname, O_RDONLY);
-	if (!fd == -1) {
+	if (fd >= 0) {
 		ioctl(fd, PIOCPSINFO, &psinfo);
 		close(fd);
 

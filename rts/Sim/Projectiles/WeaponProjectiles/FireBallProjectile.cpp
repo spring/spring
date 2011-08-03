@@ -132,7 +132,7 @@ void CFireBallProjectile::Update()
 		sparks[i].speed *= 0.95f;
 	}
 
-	gCEG->Explosion(cegID, pos, ttl, (sparks.size() > 0) ? sparks[0].size : 0.0f, NULL, 0.0f, NULL, speed);
+	gCEG->Explosion(cegID, pos, ttl, !sparks.empty() ? sparks[0].size : 0.0f, NULL, 0.0f, NULL, speed);
 	UpdateGroundBounce();
 }
 

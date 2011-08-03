@@ -35,6 +35,7 @@ void GameParticipant::Kill(const std::string& reason)
 	if (link)
 	{
 		link->SendData(CBaseNetProtocol::Get().SendQuit(reason));
+		link->Close();
 		link.reset();
 	}
 #ifdef SYNCCHECK

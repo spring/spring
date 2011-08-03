@@ -2484,22 +2484,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Env\ISky.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Env\ISky.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Env\IWater.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Env\IWater.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\Rendering\Env\BasicSky.cpp"
 					>
 				</File>
@@ -2556,11 +2540,27 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Rendering\Env\ISky.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Env\ISky.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Rendering\Env\ITreeDrawer.cpp"
 					>
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Env\ITreeDrawer.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Env\IWater.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Rendering\Env\IWater.h"
 					>
 				</File>
 				<File
@@ -2949,14 +2949,6 @@
 				</File>
 				<File
 					RelativePath="..\..\Rendering\Models\3DModel.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Models\3DModelLog.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Models\3DModelLog.h"
 					>
 				</File>
 				<File
@@ -4905,6 +4897,26 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Dedicated Server (Debug)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\builds\DS\main.cpp"
 				>
 				<FileConfiguration
@@ -4983,26 +4995,6 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Dedicated Server (Debug)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>

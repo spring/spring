@@ -2424,8 +2424,7 @@ int LuaUnsyncedCtrl::GiveOrder(lua_State* L)
 		return 1;
 	}
 
-	Command cmd;
-	LuaUtils::ParseCommand(L, __FUNCTION__, 1, cmd);
+	Command cmd = LuaUtils::ParseCommand(L, __FUNCTION__, 1);
 
 	selectedUnits.GiveCommand(cmd);
 
@@ -2451,8 +2450,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 		return 1;
 	}
 
-	Command cmd;
-	LuaUtils::ParseCommand(L, __FUNCTION__, 2, cmd);
+	Command cmd = LuaUtils::ParseCommand(L, __FUNCTION__, 2);
 
 	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, unit->id, cmd.GetID(), cmd.aiCommandId, cmd.options, cmd.params));
 
@@ -2481,8 +2479,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 		return 1;
 	}
 
-	Command cmd;
-	LuaUtils::ParseCommand(L, __FUNCTION__, 2, cmd);
+	Command cmd = LuaUtils::ParseCommand(L, __FUNCTION__, 2);
 
 	vector<Command> commands;
 	commands.push_back(cmd);
@@ -2513,8 +2510,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 		return 1;
 	}
 
-	Command cmd;
-	LuaUtils::ParseCommand(L, __FUNCTION__, 2, cmd);
+	Command cmd = LuaUtils::ParseCommand(L, __FUNCTION__, 2);
 
 	vector<Command> commands;
 	commands.push_back(cmd);

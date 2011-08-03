@@ -33,6 +33,7 @@ void log_backend_unregisterSink(log_sink_ptr sink) {
 	for (si = sinks.begin(); si != sinks.end(); ++si) {
 		if (*si == sink) {
 			sinks.erase(si);
+			break;
 		}
 	}
 }

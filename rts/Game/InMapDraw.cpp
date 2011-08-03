@@ -211,8 +211,8 @@ int CInMapDraw::GotNetMsg(boost::shared_ptr<const netcode::RawPacket>& packet)
 				break;
 			}
 		}
-	} catch (const netcode::UnpackPacketException& e) {
-		logOutput.Print("Got invalid MapDraw: %s", e.err.c_str());
+	} catch (const netcode::UnpackPacketException& ex) {
+		logOutput.Print("Got invalid MapDraw: %s", ex.what());
 		playerID = -1;
 	}
 

@@ -76,7 +76,7 @@ void CTimeProfiler::Update()
 	}
 }
 
-float CTimeProfiler::GetPercent(const char *name)
+float CTimeProfiler::GetPercent(const char* name)
 {
 	GML_STDMUTEX_LOCK_NOPROF(time); // GetTimePercent
 

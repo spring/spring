@@ -71,10 +71,12 @@ class CLuaHandleSynced : public CLuaHandle
 
 	protected:
 		static CLuaHandleSynced* GetActiveHandle() {
-			return dynamic_cast<CLuaHandleSynced*>(CLuaHandle::GetActiveHandle());
+			assert(dynamic_cast<CLuaHandleSynced*>(CLuaHandle::GetActiveHandle()));
+			return static_cast<CLuaHandleSynced*>(CLuaHandle::GetActiveHandle());
 		}
 		static CLuaHandleSynced* GetActiveHandle(lua_State *L) {
-			return dynamic_cast<CLuaHandleSynced*>(CLuaHandle::GetActiveHandle(L));
+			assert(dynamic_cast<CLuaHandleSynced*>(CLuaHandle::GetActiveHandle(L)));
+			return static_cast<CLuaHandleSynced*>(CLuaHandle::GetActiveHandle(L));
 		}
 
 	private:

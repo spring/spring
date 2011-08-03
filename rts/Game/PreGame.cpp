@@ -219,7 +219,7 @@ void CPreGame::UpdateClientNet()
 					logOutput.Print(message);
 					handleerror(NULL, "Remote requested quit: " + message, "Quit message", MBF_OK | MBF_EXCL);
 				} catch (const netcode::UnpackPacketException& ex) {
-					logOutput.Print("Got invalid QuitMessage: %s", ex.err.c_str());
+					logOutput.Print("Got invalid QuitMessage: %s", ex.what());
 				}
 				break;
 			}
@@ -251,7 +251,7 @@ void CPreGame::UpdateClientNet()
 					// same values as here
 					playerHandler->AddPlayer(player);
 				} catch (const netcode::UnpackPacketException& ex) {
-					logOutput.Print("Got invalid New player message: %s", ex.err.c_str());
+					logOutput.Print("Got invalid New player message: %s", ex.what());
 				}
 				break;
 			}
@@ -308,7 +308,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			try {
 				data = new GameData(boost::shared_ptr<const RawPacket>(buf));
 			} catch (const netcode::UnpackPacketException& ex) {
-				throw content_error("Demo contains invalid GameData: " + ex.err);
+				throw content_error(std::string("Demo contains invalid GameData: ") + ex.what());
 			}
 
 			CGameSetup* demoScript = new CGameSetup();
@@ -402,7 +402,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 
 		gameData.reset(data);
 	} catch (const netcode::UnpackPacketException& ex) {
-		throw content_error("Server sent us invalid GameData: " + ex.err);
+		throw content_error(std::string("Server sent us invalid GameData: ") + ex.what());
 	}
 
 	CGameSetup* temp = new CGameSetup();

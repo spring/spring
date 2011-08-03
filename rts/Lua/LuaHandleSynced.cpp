@@ -151,7 +151,7 @@ void CLuaHandleSynced::Init(const string& syncedFile,
 		return;
 	}
 
-	CLuaHandle* origHandle = GetActiveHandle();
+	CLuaHandle* origHandle = CLuaHandle::GetActiveHandle();
 	SetActiveHandle(L);
 
 	SetAllowChanges(true, true);
