@@ -151,7 +151,7 @@ public:
 
     float length() const
     {
-	    return sqrtf(x*x+y*y+z*z);
+	    return math::sqrtf(x*x+y*y+z*z);
     }
 
     Vec3D& normalize()
@@ -246,7 +246,7 @@ public:
 
     float length() const
     {
-		return sqrtf(x*x+y*y);
+		return math::sqrtf(x*x+y*y);
     }
 
     Vec2D& normalize()
@@ -272,8 +272,8 @@ inline
 void rotate(float x0, float y0, float *x, float *y, float angle)
 {
     float xa = *x - x0, ya = *y - y0;
-    *x = xa*cosf(angle) - ya*sinf(angle) + x0;
-    *y = xa*sinf(angle) + ya*cosf(angle) + y0;
+    *x = xa*math::cosf(angle) - ya*math::sinf(angle) + x0;
+    *y = xa*math::sinf(angle) + ya*math::cosf(angle) + y0;
 }
 
 struct Reference 
