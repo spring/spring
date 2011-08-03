@@ -9,7 +9,6 @@
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Map/ReadMap.h"
-#include "System/LogOutput.h"
 #include "Sim/Units/UnitDef.h"
 #include "Map/MetalMap.h"
 #include "Sim/Misc/QuadField.h"
