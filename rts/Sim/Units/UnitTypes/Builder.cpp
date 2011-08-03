@@ -29,6 +29,7 @@
 #include "Sim/Units/UnitLoader.h"
 #include "System/EventHandler.h"
 #include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/mmgr.h"
 
@@ -369,7 +370,7 @@ void CBuilder::Update()
 						if (!curCapture->ChangeTeam(team, CUnit::ChangeCaptured)) {
 							// capture failed
 							if (team == gu->myTeam) {
-								logOutput.Print("%s: Capture failed, unit type limit reached", unitDef->humanName.c_str());
+								LOG_L(L_WARNING, "%s: Capture failed, unit type limit reached", unitDef->humanName.c_str());
 								logOutput.SetLastMsgPos(pos);
 							}
 						}
@@ -529,7 +530,6 @@ void CBuilder::StopBuild(bool callScript)
 	if(callScript)
 		script->StopBuilding();
 	ReleaseTempHoldFire();
-//	logOutput.Print("stop build");
 }
 
 

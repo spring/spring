@@ -61,7 +61,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 #include "System/creg/STL_List.h"
@@ -71,8 +71,6 @@
 #include "System/Sync/SyncTracer.h"
 
 #define PLAY_SOUNDS 1
-
-CLogSubsystem LOG_UNIT("unit");
 
 // See end of source for member bindings
 //////////////////////////////////////////////////////////////////////
@@ -894,8 +892,8 @@ void CUnit::SlowUpdate()
 			return;
 		}
 		if ((selfDCountdown & 1) && (team == gu->myTeam)) {
-			logOutput.Print("%s: Self destruct in %i s",
-			                unitDef->humanName.c_str(), selfDCountdown / 2);
+			LOG("%s: Self destruct in %i s",
+					unitDef->humanName.c_str(), selfDCountdown / 2);
 		}
 	}
 
@@ -1127,7 +1125,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 
 	if (paralyzeTime == 0) { // real damage
 		if (damage > 0.0f) {
-			// Dont log overkill damage (so nukes etc dont inflate values)
+			// Do not log overkill damage (so nukes etc do not inflate values)
 			const float statsdamage = std::max(0.0f, std::min(maxHealth - health, damage));
 			if (attacker) {
 				teamHandler->Team(attacker->team)->currentStats->damageDealt += statsdamage;

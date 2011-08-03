@@ -24,7 +24,7 @@
 #include "Sim/MoveTypes/MoveType.h"
 #include "System/EventHandler.h"
 #include "System/EventBatchHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
 #include "System/myMath.h"
 #include "System/Sync/SyncTracer.h"
@@ -192,7 +192,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 #ifdef _DEBUG
 	for (usi = activeUnits.begin(); usi != activeUnits.end(); /* no post-op */) {
 		if (*usi == delUnit) {
-			logOutput.Print("Error: Duplicated unit found in active units on erase");
+			LOG_L(L_ERROR, "Duplicated unit found in active units on erase");
 			usi = activeUnits.erase(usi);
 		} else {
 			++usi;

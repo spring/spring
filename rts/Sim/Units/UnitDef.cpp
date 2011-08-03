@@ -18,7 +18,7 @@
 #include "Rendering/Models/IModelParser.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 
@@ -548,22 +548,31 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 		movedata->unitDefRefCount += 1;
 
-		static const char* fmtString =
-			"[%s] inconsistent path-type %i for \"%s\" (move-class \"%s\"): %s, but not a %s-based movetype";
-		const char* udName = name.c_str();
-		const char* mdName = moveClass.c_str();
-
-		if (canhover) {
-			if (movedata->moveType != MoveData::Hover_Move) {
-				logOutput.Print(fmtString, __FUNCTION__, movedata->pathType, udName, mdName, "canhover", "hover");
+		if (LOG_IS_ENABLED(L_WARNING)) {
+			const char* typeStr = NULL;
+			const char* wantedTypeStr = NULL;
+			if (canhover) {
+				if (movedata->moveType != MoveData::Hover_Move) {
+					typeStr       = "canhover";
+					wantedTypeStr = "hover";
+				}
+			} else if (floater) {
+				if (movedata->moveType != MoveData::Ship_Move) {
+					typeStr       = "floater";
+					wantedTypeStr = "ship";
+				}
+			} else {
+				if (movedata->moveType != MoveData::Ground_Move) {
+					typeStr       = "!(canhover || floater)";
+					wantedTypeStr = "ground";
+				}
 			}
-		} else if (floater) {
-			if (movedata->moveType != MoveData::Ship_Move) {
-				logOutput.Print(fmtString, __FUNCTION__, movedata->pathType, udName, mdName, "floater", "ship");
-			}
-		} else {
-			if (movedata->moveType != MoveData::Ground_Move) {
-				logOutput.Print(fmtString, __FUNCTION__, movedata->pathType, udName, mdName, "!(canhover || floater)", "ground");
+			if ((typeStr != NULL) && (wantedTypeStr != NULL)) {
+				LOG_L(L_WARNING,
+						"[%s] inconsistent path-type %i for \"%s\" "
+						"(move-class \"%s\"): %s, but not a %s-based movetype",
+						__FUNCTION__, movedata->pathType, name.c_str(),
+						moveClass.c_str(), typeStr, wantedTypeStr);
 			}
 		}
 	}
@@ -617,8 +626,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	// Prevent a division by zero in experience calculations.
 	if (power < 1.0e-3f) {
-		logOutput.Print("Unit %s is really cheap? %f", humanName.c_str(), power);
-		logOutput.Print("This can cause a division by zero in experience calculations.");
+		LOG_L(L_WARNING, "Unit %s is really cheap? %f", humanName.c_str(), power);
+		LOG_L(L_WARNING, "This can cause a division by zero in experience calculations.");
 		power = 1.0e-3f;
 	}
 
@@ -787,8 +796,8 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 
 		while (weapons.size() < w) {
 			if (!noWeaponDef) {
-				logOutput.Print("Error: Spring requires a NOWEAPON weapon type "
-				                "to be present as a placeholder for missing weapons");
+				LOG_L(L_ERROR, "Spring requires a NOWEAPON weapon type "
+						"to be present as a placeholder for missing weapons");
 				break;
 			} else {
 				weapons.push_back(UnitDefWeapon());

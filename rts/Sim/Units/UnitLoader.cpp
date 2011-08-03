@@ -50,7 +50,7 @@
 
 #include "System/EventBatchHandler.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Platform/Watchdog.h"
 #include "System/TimeProfiler.h"
 
@@ -197,7 +197,7 @@ CWeapon* CUnitLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* udw)
 		((CStarburstLauncher*) weapon)->uptime = weaponDef->uptime * GAME_SPEED;
 	} else {
 		weapon = new CNoWeapon(owner);
-		LogObject() << "Unknown weapon type " << weaponDef->type.c_str() << "\n";
+		LOG_L(L_ERROR, "Unknown weapon type %s", weaponDef->type.c_str());
 	}
 	weapon->weaponDef = weaponDef;
 
@@ -269,13 +269,13 @@ CWeapon* CUnitLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* udw)
 void CUnitLoader::ParseAndExecuteGiveUnitsCommand(const std::vector<std::string>& args, int team)
 {
 	if (args.size() < 2) {
-		logOutput.Print("[%s] not enough arguments (\"/give [amount] <objectName | 'all'> [team] [@x, y, z]\")", __FUNCTION__);
+		LOG_L(L_WARNING, "[%s] not enough arguments (\"/give [amount] <objectName | 'all'> [team] [@x, y, z]\")", __FUNCTION__);
 		return;
 	}
 
 	float3 pos;
 	if (sscanf(args[args.size() - 1].c_str(), "@%f, %f, %f", &pos.x, &pos.y, &pos.z) != 3) {
-		logOutput.Print("[%s] invalid position argument (\"/give [amount] <objectName | 'all'> [team] [@x, y, z]\")", __FUNCTION__);
+		LOG_L(L_WARNING, "[%s] invalid position argument (\"/give [amount] <objectName | 'all'> [team] [@x, y, z]\")", __FUNCTION__);
 		return;
 	}
 
@@ -299,7 +299,7 @@ void CUnitLoader::ParseAndExecuteGiveUnitsCommand(const std::vector<std::string>
 		amount = atoi(args[amountArgIdx].c_str());
 
 		if ((amount < 0) || (args[amountArgIdx].find_first_not_of("0123456789") != std::string::npos)) {
-			logOutput.Print("[%s] invalid amount argument: %s", __FUNCTION__, args[amountArgIdx].c_str());
+			LOG_L(L_WARNING, "[%s] invalid amount argument: %s", __FUNCTION__, args[amountArgIdx].c_str());
 			return;
 		}
 	}
@@ -309,7 +309,7 @@ void CUnitLoader::ParseAndExecuteGiveUnitsCommand(const std::vector<std::string>
 		team = atoi(args[teamArgIdx].c_str());
 
 		if ((!teamHandler->IsValidTeam(team)) || (args[teamArgIdx].find_first_not_of("0123456789") != std::string::npos)) {
-			logOutput.Print("[%s] invalid team argument: %s", __FUNCTION__, args[teamArgIdx].c_str());
+			LOG_L(L_WARNING, "[%s] invalid team argument: %s", __FUNCTION__, args[teamArgIdx].c_str());
 			return;
 		}
 
@@ -319,7 +319,7 @@ void CUnitLoader::ParseAndExecuteGiveUnitsCommand(const std::vector<std::string>
 	const std::string& objectName = (amountArgIdx >= 0) ? args[1] : args[0];
 
 	if (objectName.empty()) {
-		logOutput.Print("[%s] invalid object-name argument", __FUNCTION__);
+		LOG_L(L_WARNING, "[%s] invalid object-name argument", __FUNCTION__);
 		return;
 	}
 
@@ -367,7 +367,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		unsigned int currentNumUnits = receivingTeam->units.size();
 
 		if (receivingTeam->AtUnitLimit()) {
-			logOutput.Print(
+			LOG_L(L_WARNING,
 				"[%s] unable to give more units to team %d (current: %u, team limit: %u, global limit: %u)",
 				__FUNCTION__, team, currentNumUnits, receivingTeam->maxUnits, uh->MaxUnits()
 			);
@@ -383,7 +383,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		const FeatureDef* featureDef = featureHandler->GetFeatureDef(objectName, false);
 
 		if (unitDef == NULL && featureDef == NULL) {
-			logOutput.Print("[%s] %s is not a valid object-name", __FUNCTION__, objectName.c_str());
+			LOG_L(L_WARNING, "[%s] %s is not a valid object-name", __FUNCTION__, objectName.c_str());
 			return;
 		}
 
@@ -416,7 +416,8 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 				}
 			}
 
-			logOutput.Print("[%s] spawned %i %s unit(s) for team %i", __FUNCTION__, numRequestedUnits, objectName.c_str(), team);
+			LOG("[%s] spawned %i %s unit(s) for team %i",
+					__FUNCTION__, numRequestedUnits, objectName.c_str(), team);
 		}
 
 		if (featureDef != NULL) {
@@ -450,7 +451,8 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 				}
 			}
 
-			logOutput.Print("[%s] spawned %i %s feature(s) for team %i", __FUNCTION__, numRequestedUnits, objectName.c_str(), team);
+			LOG("[%s] spawned %i %s feature(s) for team %i",
+					__FUNCTION__, numRequestedUnits, objectName.c_str(), team);
 		}
 	}
 }
