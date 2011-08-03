@@ -104,48 +104,48 @@ springLegacyAI::CAIAICallback::~CAIAICallback() {
 		delete weaponDefs[i];
 		weaponDefs[i] = NULL;
 	}
-	delete weaponDefs;
+	delete[] weaponDefs;
 	weaponDefs = NULL;
-	delete weaponDefFrames;
+	delete[] weaponDefFrames;
 	weaponDefFrames = NULL;
 
 	for (int i=0; i < numUnitDefs; ++i) {
 		delete unitDefs[i];
 		unitDefs[i] = NULL;
 	}
-	delete unitDefs;
+	delete[] unitDefs;
 	unitDefs = NULL;
-	delete unitDefFrames;
+	delete[] unitDefFrames;
 	unitDefFrames = NULL;
 
 	for (int i=0; i < numFeatDefs; ++i) {
 		delete featureDefs[i];
 		featureDefs[i] = NULL;
 	}
-	delete featureDefs;
+	delete[]featureDefs;
 	featureDefs = NULL;
-	delete featureDefFrames;
+	delete[] featureDefFrames;
 	featureDefFrames = NULL;
 
 	for (int i=0; i < maxGroups; ++i) {
 		delete groupPossibleCommands[i];
 		groupPossibleCommands[i] = NULL;
 	}
-	delete groupPossibleCommands;
+	delete[] groupPossibleCommands;
 	groupPossibleCommands = NULL;
 
 	for (int i=0; i < MAX_UNITS; ++i) {
 		delete unitPossibleCommands[i];
 		unitPossibleCommands[i] = NULL;
 	}
-	delete unitPossibleCommands;
+	delete[] unitPossibleCommands;
 	unitPossibleCommands = NULL;
 
 	for (int i=0; i < MAX_UNITS; ++i) {
 		delete unitCurrentCommandQueues[i];
 		unitCurrentCommandQueues[i] = NULL;
 	}
-	delete unitCurrentCommandQueues;
+	delete[] unitCurrentCommandQueues;
 	unitCurrentCommandQueues = NULL;
 
 	if (numClbInstances == 0) {
