@@ -48,8 +48,6 @@ CR_REG_METADATA(CStarburstProjectile,(
 
 void CStarburstProjectile::creg_Serialize(creg::ISerializer& s)
 {
-	s.Serialize(numCallback, sizeof(int));
-
 	// NOTE This could be tricky if gs is serialized after losHandler.
 	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
 		s.Serialize(tracerParts[a], sizeof(struct CStarburstProjectile::TracerPart));
@@ -79,7 +77,6 @@ CStarburstProjectile::CStarburstProjectile(
 	numParts(0),
 	doturn(true),
 	curCallback(NULL),
-	numCallback(NULL),
 	missileAge(0),
 	distanceToTravel(maxRange)
 {
@@ -98,9 +95,6 @@ CStarburstProjectile::CStarburstProjectile(
 	curSpeed = speed.Length();
 	dir = speed / curSpeed;
 	oldSmokeDir = dir;
-
-	numCallback = new int;
-	*numCallback = 0;
 
 	const float3 camDir = (pos - camera->pos).ANormalize();
 	const float camDist = (camera->pos.distance(pos) * 0.2f) + ((1.0f - fabs(camDir.dot(dir))) * 3000);
@@ -137,7 +131,6 @@ void CStarburstProjectile::Detach()
 CStarburstProjectile::~CStarburstProjectile()
 {
 	// UNSYNCED
-	delete numCallback;
 	if (curCallback) {
 		curCallback->drawCallbacker = 0;
 	}
@@ -403,19 +396,12 @@ void CStarburstProjectile::Draw()
 			}
 		}
 	}
+
 	DrawCallback();
-	if (curCallback == NULL)
-		DrawCallback();
 }
 
 void CStarburstProjectile::DrawCallback()
 {
-	if (*numCallback != globalRendering->drawFrame) {
-		*numCallback = globalRendering->drawFrame;
-		return;
-	}
-
-	*numCallback = 0;
 	inArray = true;
 
 	unsigned char col[4];

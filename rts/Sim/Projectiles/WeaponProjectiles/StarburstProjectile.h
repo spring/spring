@@ -54,7 +54,6 @@ private:
 	int numParts;
 	bool doturn;
 	CSmokeTrailProjectile* curCallback;
-	int* numCallback;
 	int missileAge;
 	float distanceToTravel;
 
