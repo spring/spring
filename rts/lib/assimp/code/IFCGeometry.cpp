@@ -48,7 +48,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "IFCUtil.h"
 #include "PolyTools.h"
 #include "ProcessHelper.h"
-#include "System/FastMath.h"
+
+#include <iterator>
 
 namespace Assimp {
 	namespace IFC {
@@ -265,7 +266,7 @@ void MergePolygonBoundaries(TempMesh& result, const TempMesh& inmesh, size_t mas
 	// handle polygons with holes. Our built in triangulation won't handle them as is, but
 	// the ear cutting algorithm is solid enough to deal with them if we join the inner
 	// holes with the outer boundaries by dummy connections.
-	DefaultLogger::get()->debug("fixing polygon with holes for triangulation via ear-cutting");
+	IFCImporter::LogDebug("fixing polygon with holes for triangulation via ear-cutting");
 	std::vector<unsigned int>::iterator outer_polygon = meshout.vertcnt.end(), begin=meshout.vertcnt.begin(), end=outer_polygon,  iit;
 
 	// each hole results in two extra vertices
@@ -317,7 +318,7 @@ void MergePolygonBoundaries(TempMesh& result, const TempMesh& inmesh, size_t mas
 			*iit++ = 0;
 			++removed;
 
-			DefaultLogger::get()->debug("skip small hole below treshold");
+			IFCImporter::LogDebug("skip small hole below treshold");
 		}
 		else {
 			normals[index] /= sqrt(sqlen);
@@ -348,7 +349,7 @@ next_loop:
 				const aiVector3D& o = in[outer_polygon_start+outer], &onext = in[outer_polygon_start+(outer+1)%*outer_polygon], &od = (onext-o).Normalize();
 
 				if (fabs(vd * od) > 1.f-1e-6f && (onext-v).Normalize() * vd > 1.f-1e-6f && (onext-v)*(o-v) < 0) {
-					DefaultLogger::get()->debug("got an inner hole that lies partly on the outer polygonal boundary, merging them to a single contour");
+					IFCImporter::LogDebug("got an inner hole that lies partly on the outer polygonal boundary, merging them to a single contour");
 
 					// in between outer and outer+1 insert all vertices of this loop, then drop the original altogether.
 					std::vector<aiVector3D> tmp(*iit);
@@ -524,7 +525,7 @@ void ProcessRevolvedAreaSolid(const IfcRevolvedAreaSolid& solid, TempMesh& resul
 	ConvertAxisPlacement(trafo, solid.Position);
 	
 	result.Transform(trafo);
-	DefaultLogger::get()->debug("generate mesh procedurally by radial extrusion (IfcRevolvedAreaSolid)");
+	IFCImporter::LogDebug("generate mesh procedurally by radial extrusion (IfcRevolvedAreaSolid)");
 }
 
 
@@ -556,7 +557,7 @@ bool TryAddOpenings(const std::vector<TempOpening>& openings,const std::vector<a
 		}
 
 		// const float dd = t.extrusionDir*nor;
-		DefaultLogger::get()->debug("apply an IfcOpeningElement linked via IfcRelVoidsElement to this polygon");
+		IFCImporter::LogDebug("apply an IfcOpeningElement linked via IfcRelVoidsElement to this polygon");
 
 		got_openings = true;
 
@@ -631,15 +632,17 @@ void QuadrifyPart(const aiVector2D& pmin, const aiVector2D& pmax, XYSortedField&
 	XYSortedField::iterator start = field.begin();
 	for(; start != field.end(); ++start) {
 		const BoundingBox& bb = bbs[(*start).second];
-		if (bb.second.x > pmin.x && bb.first.x < pmax.x && bb.second.y > pmin.y && bb.first.y < pmax.y) {
+		if(bb.first.x >= pmax.x) {
+			break;
+		} 
+
+		if (bb.second.x > pmin.x && bb.second.y > pmin.y && bb.first.y < pmax.y) {
 			xs = bb.first.x;
 			xe = bb.second.x;
 			found = true;
 			break;
 		}
 	}
-	xs = std::max(pmin.x,xs);
-	xe = std::min(pmax.x,xe);
 
 	if (!found) {
 		// the rectangle [pmin,pend] is opaque, fill it
@@ -650,6 +653,10 @@ void QuadrifyPart(const aiVector2D& pmin, const aiVector2D& pmax, XYSortedField&
 		return;
 	}
 
+	xs = std::max(pmin.x,xs);
+	xe = std::min(pmax.x,xe);
+
+	// see if there's an offset to fill at the top of our quad
 	if (xs - pmin.x) {
 		out.push_back(pmin);
 		out.push_back(aiVector2D(pmin.x,pmax.y));
@@ -657,18 +664,20 @@ void QuadrifyPart(const aiVector2D& pmin, const aiVector2D& pmax, XYSortedField&
 		out.push_back(aiVector2D(xs,pmin.y));
 	}
 
-	// search along the y-axis for all openings that overlap xs and our element
+	// search along the y-axis for all openings that overlap xs and our quad
 	float ylast = pmin.y;
 	found = false;
 	for(; start != field.end(); ++start) {
 		const BoundingBox& bb = bbs[(*start).second];
+		if (bb.first.x > xs || bb.first.y >= pmax.y) {
+			break;
+		}
 
-		if (bb.second.y > ylast && bb.first.y < pmax.y) {
+		if (bb.second.y > ylast) {
 
 			found = true;
 			const float ys = std::max(bb.first.y,pmin.y), ye = std::min(bb.second.y,pmax.y);
 			if (ys - ylast) {
-				// Divide et impera!
 				QuadrifyPart( aiVector2D(xs,ylast), aiVector2D(xe,ys) ,field,bbs,out);
 			}
 
@@ -680,10 +689,6 @@ void QuadrifyPart(const aiVector2D& pmin, const aiVector2D& pmax, XYSortedField&
 			wnd.push_back(aiVector2D(xe,ys));*/
 			ylast = ye;
 		}
-
-		if (bb.first.x > xs) {
-			break;
-		}
 	}
 	if (!found) {
 		// the rectangle [pmin,pend] is opaque, fill it
@@ -694,11 +699,10 @@ void QuadrifyPart(const aiVector2D& pmin, const aiVector2D& pmax, XYSortedField&
 		return;
 	}
 	if (ylast < pmax.y) {
-		// Divide et impera!
 		QuadrifyPart( aiVector2D(xs,ylast), aiVector2D(xe,pmax.y) ,field,bbs,out);
 	}
 
-	// Divide et impera! - now for the whole rest
+	// now for the whole rest
 	if (pmax.x-xe) {
 		QuadrifyPart(aiVector2D(xe,pmin.y), pmax ,field,bbs,out);
 	}
@@ -773,7 +777,7 @@ void InsertWindowContours(const std::vector< BoundingBox >& bbs,const std::vecto
 
 			// sanity checking
 			if (e == size*2) {
-				DefaultLogger::get()->error("encountered unexpected topology while generating window contour");
+				IFCImporter::LogError("encountered unexpected topology while generating window contour");
 				break;
 			}
 
@@ -917,7 +921,7 @@ bool TryAddOpenings_Quadrulate(const std::vector<TempOpening>& openings,const st
 
 		
 		if (field.find(vpmin) != field.end()) {
-			DefaultLogger::get()->warn("constraint failure during generation of wall openings, results may be faulty");
+			IFCImporter::LogWarn("constraint failure during generation of wall openings, results may be faulty");
 		}
 		field[vpmin] = bbs.size();
 		bbs.push_back(BoundingBox(vpmin,vpmax));
@@ -1096,10 +1100,10 @@ void ProcessExtrudedAreaSolid(const IfcExtrudedAreaSolid& solid, TempMesh& resul
 	}
 
 	if(conv.apply_openings && ((sides_with_openings != 2 && sides_with_openings) || (sides_with_v_openings != 2 && sides_with_v_openings))) {
-		DefaultLogger::get()->warn("failed to resolve all openings, presumably their topology is not supported by Assimp");
+		IFCImporter::LogWarn("failed to resolve all openings, presumably their topology is not supported by Assimp");
 	}
 
-	DefaultLogger::get()->debug("generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)");
+	IFCImporter::LogDebug("generate mesh procedurally by extrusion (IfcExtrudedAreaSolid)");
 }
 
 
@@ -1137,7 +1141,7 @@ void ProcessSweptAreaSolid(const IfcSweptAreaSolid& swept, TempMesh& meshout, Co
 // ------------------------------------------------------------------------------------------------
 void ProcessBoolean(const IfcBooleanResult& boolean, TempMesh& result, ConversionData& conv)
 {
-	if(const IfcBooleanClippingResult* const clip = boolean.ToPtr<IfcBooleanClippingResult>()) {
+	if(const IfcBooleanResult* const clip = boolean.ToPtr<IfcBooleanResult>()) {
 		if(clip->Operator != "DIFFERENCE") {
 			IFCImporter::LogWarn("encountered unsupported boolean operator: " + (std::string)clip->Operator);
 			return;
@@ -1146,13 +1150,13 @@ void ProcessBoolean(const IfcBooleanResult& boolean, TempMesh& result, Conversio
 		TempMesh meshout;
 		const IfcHalfSpaceSolid* const hs = clip->SecondOperand->ResolveSelectPtr<IfcHalfSpaceSolid>(conv.db);
 		if(!hs) {
-			DefaultLogger::get()->error("expected IfcHalfSpaceSolid as second clipping operand");
+			IFCImporter::LogError("expected IfcHalfSpaceSolid as second clipping operand");
 			return;
 		}
 
 		const IfcPlane* const plane = hs->BaseSurface->ToPtr<IfcPlane>();
 		if(!plane) {
-			DefaultLogger::get()->error("expected IfcPlane as base surface for the IfcHalfSpaceSolid");
+			IFCImporter::LogError("expected IfcPlane as base surface for the IfcHalfSpaceSolid");
 			return;
 		}
 
@@ -1163,7 +1167,7 @@ void ProcessBoolean(const IfcBooleanResult& boolean, TempMesh& result, Conversio
 			ProcessSweptAreaSolid(*swept,meshout,conv);
 		}
 		else {
-			DefaultLogger::get()->error("expected IfcSweptAreaSolid or IfcBooleanResult as first clipping operand");
+			IFCImporter::LogError("expected IfcSweptAreaSolid or IfcBooleanResult as first clipping operand");
 			return;
 		}
 
@@ -1246,10 +1250,10 @@ void ProcessBoolean(const IfcBooleanResult& boolean, TempMesh& result, Conversio
 			else while(newcount-->0)result.verts.pop_back();
 
 		}
-		DefaultLogger::get()->debug("generating CSG geometry by plane clipping (IfcBooleanClippingResult)");
+		IFCImporter::LogDebug("generating CSG geometry by plane clipping (IfcBooleanClippingResult)");
 	}
 	else {
-		DefaultLogger::get()->warn("skipping unknown IfcBooleanResult entity, type is " + boolean.GetClassName());
+		IFCImporter::LogWarn("skipping unknown IfcBooleanResult entity, type is " + boolean.GetClassName());
 	}
 }
 
@@ -1268,7 +1272,7 @@ bool ProcessGeometricItem(const IfcRepresentationItem& geo, std::vector<unsigned
 				ProcessConnectedFaceSet(fs,meshtmp,conv);
 			}
 			catch(std::bad_cast&) {
-				DefaultLogger::get()->warn("unexpected type error, IfcShell ought to inherit from IfcConnectedFaceSet");
+				IFCImporter::LogWarn("unexpected type error, IfcShell ought to inherit from IfcConnectedFaceSet");
 			}
 		}
 	}
@@ -1294,7 +1298,7 @@ bool ProcessGeometricItem(const IfcRepresentationItem& geo, std::vector<unsigned
 		return false; 
 	}
 	else {
-		DefaultLogger::get()->warn("skipping unknown IfcGeometricRepresentationItem entity, type is " + geo.GetClassName());
+		IFCImporter::LogWarn("skipping unknown IfcGeometricRepresentationItem entity, type is " + geo.GetClassName());
 		return false;
 	}
 

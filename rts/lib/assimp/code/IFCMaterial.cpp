@@ -62,7 +62,7 @@ int ConvertShadingMode(const std::string& name)
 	else if (name == "PHONG") {
 		return aiShadingMode_Phong;
 	}
-	DefaultLogger::get()->warn("shading mode "+name+" not recognized by Assimp, using Phong instead");
+	IFCImporter::LogWarn("shading mode "+name+" not recognized by Assimp, using Phong instead");
 	return aiShadingMode_Phong;
 }
 
@@ -119,7 +119,7 @@ void FillMaterial(MaterialHelper* mat,const IFC::IfcSurfaceStyle* surf,Conversio
 						mat->AddProperty(&e,1,AI_MATKEY_SHININESS);
 					}
 					else {
-						DefaultLogger::get()->warn("unexpected type error, SpecularHighlight should be a REAL");
+						IFCImporter::LogWarn("unexpected type error, SpecularHighlight should be a REAL");
 					}
 				}
 			}
@@ -156,7 +156,7 @@ unsigned int ProcessMaterials(const IFC::IfcRepresentationItem& item, Conversion
 					if (const IFC::IfcSurfaceStyle* const surf =  sel->ResolveSelectPtr<IFC::IfcSurfaceStyle>(conv.db)) {
 						const std::string side = static_cast<std::string>(surf->Side);
 						if (side != "BOTH") {
-							DefaultLogger::get()->warn("ignoring surface side marker on IFC::IfcSurfaceStyle: " + side);
+							IFCImporter::LogWarn("ignoring surface side marker on IFC::IfcSurfaceStyle: " + side);
 						}
 
 						std::auto_ptr<MaterialHelper> mat(new MaterialHelper());

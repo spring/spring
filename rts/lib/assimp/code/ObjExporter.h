@@ -38,55 +38,85 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ----------------------------------------------------------------------
 */
 
-
-/** @file Defines a post processing step to fix infacing normals */
-#ifndef AI_FIXNORMALSPROCESS_H_INC
-#define AI_FIXNORMALSPROCESS_H_INC
-
-#include "BaseProcess.h"
-
-struct aiMesh;
-
-namespace Assimp
-{
-
-// ---------------------------------------------------------------------------
-/** The FixInfacingNormalsProcess tries to deteermine whether the normal
- * vectors of an object are facing inwards. In this case they will be
- * flipped.
+/** @file ColladaExporter.h
+ * Declares the exporter class to write a scene to a Collada file
  */
-class ASSIMP_API FixInfacingNormalsProcess : public BaseProcess
+#ifndef AI_OBJEXPORTER_H_INC
+#define AI_OBJEXPORTER_H_INC
+
+#include <sstream>
+
+struct aiScene;
+struct aiNode;
+
+namespace Assimp	
+{
+
+// ------------------------------------------------------------------------------------------------
+/** Helper class to export a given scene to an OBJ file. */
+// ------------------------------------------------------------------------------------------------
+class ASSIMP_API ObjExporter
 {
 public:
-	
-	FixInfacingNormalsProcess();
-	~FixInfacingNormalsProcess();
+	/// Constructor for a specific scene to export
+	ObjExporter(const char* filename, const aiScene* pScene);
 
 public:
-	// -------------------------------------------------------------------
-	/** Returns whether the processing step is present in the given flag field.
-	 * @param pFlags The processing flags the importer was called with. A bitwise
-	 *   combination of #aiPostProcessSteps.
-	 * @return true if the process is present in this flag fields, false if not.
-	*/
-	bool IsActive( unsigned int pFlags) const;
 
-	// -------------------------------------------------------------------
-	/** Executes the post processing step on the given imported data.
-	* At the moment a process is not supposed to fail.
-	* @param pScene The imported data to work at.
-	*/
-	void Execute( aiScene* pScene);
+	std::string GetMaterialLibName();
+	std::string GetMaterialLibFileName();
+	
+public:
 
-protected:
+	/// public stringstreams to write all output into
+	std::ostringstream mOutput, mOutputMat;
 
-	// -------------------------------------------------------------------
-	/** Executes the step on the given mesh
-	 * @param pMesh The mesh to process.
-	 */
-	bool ProcessMesh( aiMesh* pMesh, unsigned int index);
+private:
+
+	// intermediate data structures
+	struct FaceVertex 
+	{
+		FaceVertex()
+			: vp(),vn(),vt() 
+		{
+		}
+
+		// one-based, 0 means: 'does not exist'
+		unsigned int vp,vn,vt;
+	};
+
+	struct Face {
+		std::vector<FaceVertex> indices;
+	};
+
+	struct MeshInstance {
+
+		std::string name, matname;
+		std::vector<Face> faces;
+	};
+
+	void WriteHeader(std::ostringstream& out);
+
+	void WriteMaterialFile();
+	void WriteGeometryFile();
+
+	std::string GetMaterialName(unsigned int index);
+
+	void AddMesh(const aiString& name, const aiMesh* m, const aiMatrix4x4& mat);
+	void AddNode(const aiNode* nd, const aiMatrix4x4& mParent);
+
+private:
+
+	const std::string filename;
+	const aiScene* const pScene;
+
+	std::vector<aiVector3D> vp, vn, vt;
+	std::vector<MeshInstance> meshes;
+
+	// this endl() doesn't flush() the stream
+	const std::string endl;
 };
 
-} // end of namespace Assimp
+}
 
-#endif // AI_FIXNORMALSPROCESS_H_INC
+#endif
