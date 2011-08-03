@@ -8,7 +8,6 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "System/LogOutput.h"
 #include "System/mmgr.h"
 
 CR_BIND_INTERFACE(CMoveMath);

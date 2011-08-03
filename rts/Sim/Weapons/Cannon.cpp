@@ -3,7 +3,6 @@
 #include "System/StdAfx.h"
 #include "Cannon.h"
 #include "Game/TraceRay.h"
-#include "System/LogOutput.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Sim/Projectiles/Unsynced/HeatCloudProjectile.h"
