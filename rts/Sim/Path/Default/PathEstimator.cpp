@@ -18,6 +18,7 @@
 #include "PathCache.h"
 #include "PathFinder.h"
 #include "PathFinderDef.h"
+#include "PathLog.h"
 #include "Map/ReadMap.h"
 #include "Game/LoadScreen.h"
 #include "Sim/MoveTypes/MoveInfo.h"
@@ -27,11 +28,8 @@
 #include "System/FileSystem/IArchive.h"
 #include "System/FileSystem/ArchiveLoader.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/LogOutput.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/NetProtocol.h"
-
-#define PATHDEBUG false
 
 CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512 * 1024 * 1024);
 
@@ -501,18 +499,18 @@ IPath::SearchResult CPathEstimator::GetPath(
 			pathCache->AddPath(&path, result, startBlock, goalBlock, peDef.sqGoalRadius, moveData.pathType);
 		}
 
-		if (PATHDEBUG) {
-			LogObject() << "PE: Search completed.\n";
-			LogObject() << "Tested blocks: " << testedBlocks << "\n";
-			LogObject() << "Open blocks: " << openBlockBuffer.GetSize() << "\n";
-			LogObject() << "Path length: " << path.path.size() << "\n";
-			LogObject() << "Path cost: " << path.pathCost << "\n";
+		if (LOG_IS_ENABLED(L_DEBUG)) {
+			LOG_L(L_DEBUG, "PE: Search completed.");
+			LOG_L(L_DEBUG, "Tested blocks: %u", testedBlocks);
+			LOG_L(L_DEBUG, "Open blocks: %u", openBlockBuffer.GetSize());
+			LOG_L(L_DEBUG, "Path length: "_STPF_, path.path.size());
+			LOG_L(L_DEBUG, "Path cost: %f", path.pathCost);
 		}
 	} else {
-		if (PATHDEBUG) {
-			LogObject() << "PE: Search failed!\n";
-			LogObject() << "Tested blocks: " << testedBlocks << "\n";
-			LogObject() << "Open blocks: " << openBlockBuffer.GetSize() << "\n";
+		if (LOG_IS_ENABLED(L_DEBUG)) {
+			LOG_L(L_DEBUG, "PE: Search failed!");
+			LOG_L(L_DEBUG, "Tested blocks: %u", testedBlocks);
+			LOG_L(L_DEBUG, "Open blocks: %u", openBlockBuffer.GetSize());
 		}
 	}
 
@@ -626,7 +624,7 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveData& moveData, const CPa
 		return IPath::GoalOutOfRange;
 
 	// should never happen
-	LogObject() << "ERROR: CPathEstimator::DoSearch() - Unhandled end of search!\n";
+	LOG_L(L_ERROR, "%s - Unhandled end of search!", __FUNCTION__);
 	return IPath::Error;
 }
 
