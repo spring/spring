@@ -747,7 +747,8 @@ UnitDef::~UnitDef()
 	collisionVolume = NULL;
 
 	for (std::vector<IExplosionGenerator*>::iterator it = sfxExplGens.begin(); it != sfxExplGens.end(); ++it) {
-		delete *it;
+		explGenHandler->UnloadGenerator(*it);
+		*it = NULL;
 	}
 }
 

@@ -55,6 +55,7 @@ public:
 
 	void ParseExplosionTables();
 	IExplosionGenerator* LoadGenerator(const std::string& tag);
+	void UnloadGenerator(IExplosionGenerator* explGen);
 	const LuaTable* GetExplosionTableRoot() const { return explTblRoot; }
 
 	ClassAliasList projectileClasses;
@@ -107,12 +108,12 @@ protected:
 			, count(0)
 			, flags(0)
 		{}
-		ProjectileSpawnInfo(const ProjectileSpawnInfo& psi) {
-			projectileClass = psi.projectileClass;
-			count = psi.count;
-			flags = psi.flags;
-			code  = psi.code;
-		}
+		ProjectileSpawnInfo(const ProjectileSpawnInfo& psi)
+			: projectileClass(psi.projectileClass)
+			, code(psi.code)
+			, count(psi.count)
+			, flags(psi.flags)
+		{}
 
 		creg::Class* projectileClass;
 
