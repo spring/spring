@@ -7,7 +7,7 @@
 
 #include "KeyCodes.h"
 #include "SDL_keysym.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 
 
@@ -245,7 +245,7 @@ void CKeyCodes::PrintNameToCode() const
 {
 	std::map<std::string, int>::const_iterator it;
 	for (it = nameToCode.begin(); it != nameToCode.end(); ++it) {
-		logOutput.Print("KEYNAME: %13s = 0x%03X\n", it->first.c_str(), it->second);
+		LOG("KEYNAME: %13s = 0x%03X", it->first.c_str(), it->second);
 	}
 }
 
@@ -254,7 +254,7 @@ void CKeyCodes::PrintCodeToName() const
 {
 	std::map<int, std::string>::const_iterator it;
 	for (it = codeToName.begin(); it != codeToName.end(); ++it) {
-		logOutput.Print("KEYCODE: 0x%03X = '%s'\n", it->first, it->second.c_str());
+		LOG("KEYCODE: 0x%03X = '%s'", it->first, it->second.c_str());
 	}
 }
 

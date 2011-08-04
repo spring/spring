@@ -11,7 +11,6 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/Util.h"
-#include "System/LogOutput.h"
 
 
 CR_BIND(CTeamHandler, );
@@ -44,7 +43,7 @@ CTeamHandler::~CTeamHandler()
 
 void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 {
-	assert(setup->teamStartingData.size() >          0);
+	assert(!setup->teamStartingData.empty());
 	assert(setup->teamStartingData.size() <= MAX_TEAMS);
 	assert(setup->allyStartingData.size() <= MAX_TEAMS);
 

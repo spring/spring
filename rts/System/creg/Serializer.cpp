@@ -403,7 +403,7 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 	// Write object info
 	ph.objTableOffset = (int)stream->tellp();
 	ph.numObjects = objects.size();
-	for (std::list <ObjectRef>::iterator i = objects.begin(); i != objects.end(); ++i) {
+	for (std::list<ObjectRef>::iterator i = objects.begin(); i != objects.end(); ++i) {
 		int classRefIndex = i->classIndex;
 		char isEmbedded = i->isEmbedded ? 1 : 0;
 		WriteVarSizeUInt(stream, classRefIndex);
@@ -474,6 +474,13 @@ CInputStreamSerializer::CInputStreamSerializer()
 
 CInputStreamSerializer::~CInputStreamSerializer()
 {
+	for (std::vector<StoredObject>::iterator it = objects.begin(); it != objects.end(); ++it) {
+		if (it->obj) {
+			ClassBinder* binder = classRefs[it->classRef]->binder;
+			binder->class_->DeleteInstance(it->obj);
+		}
+	}
+	objects.clear();
 }
 
 bool CInputStreamSerializer::IsWriting()
@@ -634,6 +641,7 @@ void CInputStreamSerializer::LoadPackage(std::istream* s, void*& root, creg::Cla
 			}
 		}
 
+		objects[a].obj = NULL;
 		if (!isEmbedded) {
 			// Allocate and construct
 			ClassBinder* binder = classRefs[classRefIndex]->binder;

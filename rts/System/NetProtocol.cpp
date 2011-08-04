@@ -129,8 +129,7 @@ boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int framenum)
 				record->WriteSetupText(gd.GetSetup());
 				record->SaveToDemo(ret->data, ret->length, demoTime);
 			} catch (const netcode::UnpackPacketException& ex) {
-				LOG_L(L_WARNING, "Invalid GameData received: %s",
-						ex.err.c_str());
+				LOG_L(L_WARNING, "Invalid GameData received: %s", ex.what());
 			}
 		}
 	}

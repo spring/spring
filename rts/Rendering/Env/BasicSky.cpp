@@ -60,6 +60,10 @@ CBasicSky::CBasicSky()
 	sunFlareList = glGenLists(1);
 	skytexpart = new unsigned char[512][4];
 
+	memset(alphaTransform, 0, 1024);
+	memset(thicknessTransform, 0, 1024);
+	memset(covers, 0, 4 * 32 * sizeof(float));
+
 	randMatrix=newmat3<int>(16,32,32);
 	rawClouds=newmat2<int>(CLOUD_SIZE,CLOUD_SIZE);
 	blendMatrix=newmat3<int>(CLOUD_DETAIL,32,32);

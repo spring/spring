@@ -219,6 +219,7 @@ void CLogOutput::Initialize()
 	Print("LogOutput initialized.\n");
 	Print("Spring %s", SpringVersion::GetFull().c_str());
 	Print("Build date/time: %s", SpringVersion::GetBuildTime().c_str());
+	Print("Build environment: %s", SpringVersion::GetBuildEnvironment().c_str());
 	Print("Compiler: %s", SpringVersion::GetCompiler().c_str());
 
 	InitializeSubsystems();

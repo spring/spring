@@ -34,6 +34,10 @@ public:
 	virtual bool Update() = 0;
 	virtual void SlowUpdate();
 
+	virtual bool IsSkidding() const { return false; }
+	virtual bool IsFlying() const { return false; }
+	virtual bool IsReversing() const { return false; }
+
 	bool WantsRepair() const;
 	bool WantsRefuel() const;
 

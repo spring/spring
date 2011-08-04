@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _S_SKIRMISH_AI_LIBRARY_H
-#define _S_SKIRMISH_AI_LIBRARY_H
+#ifndef S_SKIRMISH_AI_LIBRARY_H
+#define S_SKIRMISH_AI_LIBRARY_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -220,4 +220,4 @@ struct SSkirmishAILibrary {
 } // extern "C"
 #endif
 
-#endif // _S_SKIRMISH_AI_LIBRARY_H
+#endif // S_SKIRMISH_AI_LIBRARY_H

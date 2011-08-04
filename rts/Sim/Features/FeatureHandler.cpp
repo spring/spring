@@ -14,7 +14,7 @@
 #include "System/creg/STL_List.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
 #include "System/creg/STL_Set.h"
 
@@ -242,8 +242,10 @@ const FeatureDef* CFeatureHandler::GetFeatureDef(string name, const bool showErr
 		return fi->second;
 	}
 
-	if (showError)
-		logOutput.Print("[%s] could not find FeatureDef \"%s\"", __FUNCTION__, name.c_str());
+	if (showError) {
+		LOG_L(L_ERROR, "[%s] could not find FeatureDef \"%s\"",
+				__FUNCTION__, name.c_str());
+	}
 
 	return NULL;
 }
@@ -275,7 +277,8 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 				AddFeatureDef(name, CreateDefaultGeoFeatureDef(name));
 			}
 			else {
-				logOutput.Print("[%s] unknown map feature type \"%s\"", __FUNCTION__, name.c_str());
+				LOG_L(L_ERROR, "[%s] unknown map feature type \"%s\"",
+						__FUNCTION__, name.c_str());
 			}
 		}
 	}
@@ -296,7 +299,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			map<string, const FeatureDef*>::iterator def = featureDefs.find(name);
 
 			if (def == featureDefs.end()) {
-				logOutput.Print("Unknown feature named '%s'", name.c_str());
+				LOG_L(L_ERROR, "Unknown feature named '%s'", name.c_str());
 				continue;
 			}
 

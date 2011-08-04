@@ -12,7 +12,6 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "System/LogOutput.h"
 #include "System/myMath.h"
 #include "System/creg/STL_List.h"
 

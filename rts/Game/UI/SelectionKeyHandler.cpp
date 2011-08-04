@@ -21,7 +21,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/Building.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/FileSystem/FileSystem.h"
 #include <boost/cstdint.hpp>
@@ -339,7 +339,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 			selection.push_back(*ui);
 		}
 	} else {
-		logOutput.Print("Unknown source token %s",s.c_str());
+		LOG_L(L_WARNING, "Unknown source token %s", s.c_str());
 		return;
 	}
 
@@ -381,7 +381,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 			}
 		}
 		else {
-			logOutput.Print("Unknown token in filter %s",s.c_str());
+			LOG_L(L_WARNING, "Unknown token in filter %s", s.c_str());
 			return;
 		}
 	}
@@ -472,6 +472,6 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 
 		selectNumber+=num;
 	} else {
-		logOutput.Print("Unknown token in conclusion %s",s.c_str());
+		LOG_L(L_WARNING, "Unknown token in conclusion %s", s.c_str());
 	}
 }

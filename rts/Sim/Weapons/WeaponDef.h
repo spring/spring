@@ -92,7 +92,6 @@ public:
 		, startvelocity(0.0f)
 		, weaponacceleration(0.0f)
 		, turnrate(0.0f)
-		, maxvelocity(0.0f)
 		, projectilespeed(0.0f)
 		, explosionSpeed(0.0f)
 		, onlyTargetCategory(0)
@@ -239,7 +238,6 @@ public:
 	float startvelocity;
 	float weaponacceleration;
 	float turnrate;
-	float maxvelocity;
 
 	float projectilespeed;
 	float explosionSpeed;

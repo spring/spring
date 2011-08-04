@@ -33,6 +33,7 @@
 #include "SelectedUnits.h"
 #include "PlayerHandler.h"
 #include "PlayerRoster.h"
+#include "PlayerRosterDrawer.h"
 #include "WaitCommandsAI.h"
 #include "WordCompletion.h"
 #include "OSCStatsSender.h"
@@ -1237,72 +1238,7 @@ bool CGame::Draw() {
 		}
 #endif
 
-		if (playerRoster.GetSortType() != PlayerRoster::Disabled) {
-			static std::string chart; chart = "";
-			static std::string prefix;
-			char buf[128];
-
-			int count;
-			const std::vector<int>& indices = playerRoster.GetIndices(&count, true);
-
-			SNPRINTF(buf, sizeof(buf), "\xff%c%c%c \tNu\tm   \tUser name   \tCPU  \tPing", 255, 255, 63);
-			chart += buf;
-
-			for (int a = 0; a < count; ++a) {
-				const CPlayer* p = playerHandler->Player(indices[a]);
-				unsigned char color[3] = {255, 255, 255};
-				unsigned char allycolor[3] = {255, 255, 255};
-				if (p->ping != PATHING_FLAG || gs->frameNum != 0) {
-					if (p->spectator)
-						prefix = "S";
-					else {
-						const unsigned char* bColor = teamHandler->Team(p->team)->color;
-						color[0] = std::max((unsigned char)1, bColor[0]);
-						color[1] = std::max((unsigned char)1, bColor[1]);
-						color[2] = std::max((unsigned char)1, bColor[2]);
-						if (gu->myAllyTeam == teamHandler->AllyTeam(p->team)) {
-							allycolor[0] = allycolor[2] = 1;
-							prefix = "A";	// same AllyTeam
-						}
-						else if (teamHandler->AlliedTeams(gu->myTeam, p->team)) {
-							allycolor[0] = allycolor[1] = 1;
-							prefix = "E+";	// different AllyTeams, but are allied
-						}
-						else {
-							allycolor[1] = allycolor[2] = 1;
-							prefix = "E";	//no alliance at all
-						}
-					}
-					float4 cpucolor(!p->spectator && p->cpuUsage > 0.75f && gs->speedFactor < gs->userSpeedFactor * 0.99f &&
-						(currentTime & 128) ? 0.5f : std::max(0.01f, std::min(1.0f, p->cpuUsage * 2.0f / 0.75f)),
-							std::min(1.0f, std::max(0.01f, (1.0f - p->cpuUsage / 0.75f) * 2.0f)), 0.01f, 1.0f);
-					int ping = (int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor));
-					float4 pingcolor(!p->spectator && globalConfig->reconnectTimeout > 0 && ping > 1000 * globalConfig->reconnectTimeout &&
-							(currentTime & 128) ? 0.5f : std::max(0.01f, std::min(1.0f, (ping - 250) / 375.0f)),
-							std::min(1.0f, std::max(0.01f, (1000 - ping) / 375.0f)), 0.01f, 1.0f);
-					SNPRINTF(buf, sizeof(buf), "\xff%c%c%c%c \t%i \t%s   \t\xff%c%c%c%s   \t\xff%c%c%c%.0f%%  \t\xff%c%c%c%dms",
-							allycolor[0], allycolor[1], allycolor[2], (gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
-							p->team, prefix.c_str(), color[0], color[1], color[2], p->name.c_str(),
-							(unsigned char)(cpucolor[0] * 255.0f), (unsigned char)(cpucolor[1] * 255.0f), (unsigned char)(cpucolor[2] * 255.0f),
-							p->cpuUsage * 100.0f,
-							(unsigned char)(pingcolor[0] * 255.0f), (unsigned char)(pingcolor[1] * 255.0f), (unsigned char)(pingcolor[2] * 255.0f),
-							ping);
-				}
-				else {
-					prefix = "";
-					SNPRINTF(buf, sizeof(buf), "\xff%c%c%c%c \t%i \t%s   \t\xff%c%c%c%s   \t%s-%d  \t%d",
-							allycolor[0], allycolor[1], allycolor[2], (gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
-							p->team, prefix.c_str(), color[0], color[1], color[2], p->name.c_str(), (((int)p->cpuUsage) & 0x1)?"PC":"BO",
-							((int)p->cpuUsage) & 0xFE, (((int)p->cpuUsage)>>8)*1000);
-				}
-				chart += "\n";
-				chart += buf;
-			}
-
-			font_options |= FONT_BOTTOM;
-			smallFont->SetColors();
-			smallFont->glPrintTable(1.0f - 5 * globalRendering->pixelX, 0.00f + 5 * globalRendering->pixelY, 1.0f, font_options, chart);
-		}
+		CPlayerRosterDrawer::Draw();
 
 		smallFont->End();
 	}
@@ -1451,6 +1387,16 @@ void CGame::StartPlaying()
 	}
 
 	eventHandler.GameStart();
+	
+	// This is a hack!!!
+	// Before 0.83 Lua had its GameFrame callin before gs->frameNum got updated,
+	// what caused it to have a `gameframe0` while the engine started with 1.
+	// This became a problem when LUS was added, and so we were forced to switch
+	// Lua to the 1-indexed system, too.
+	// To keep backward compability Lua now gets 2 GameFrames at start (0 & 1)
+	// and both share the same SimFrame!
+	eventHandler.GameFrame(0);
+
 	net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, speedControl));
 
 #if defined(USE_GML) && GML_ENABLE_SIM
@@ -1467,6 +1413,8 @@ void CGame::SimFrame() {
 	good_fpu_control_registers("CGame::SimFrame");
 	lastFrameTime = SDL_GetTicks();
 
+	gs->frameNum++;
+
 #ifdef TRACE_SYNC
 	//uh->CreateChecksum();
 	tracefile << "New frame:" << gs->frameNum << " " << gs->GetRandSeed() << "\n";
@@ -1477,12 +1425,7 @@ void CGame::SimFrame() {
 		m_validateAllAllocUnits();
 #endif
 
-	// Important: gs->frameNum must be updated *before* GameFrame is called,
-	// or any call-outs called by Lua will see a stale gs->frameNum.
-	// (e.g. effective TTL of CEGs emitted in GameFrame will be reduced...)
-	// It must still be passed the old frameNum because Lua may depend on it.
-	// (e.g. initialization in frame 0...)
-	eventHandler.GameFrame(gs->frameNum++);
+	eventHandler.GameFrame(gs->frameNum);
 
 	if (!skipping) {
 		infoConsole->Update();

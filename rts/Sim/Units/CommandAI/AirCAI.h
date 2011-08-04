@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _AIR_CAI_H_
-#define _AIR_CAI_H_
+#ifndef AIR_CAI_H
+#define AIR_CAI_H
 
 #include "MobileCAI.h"
 
@@ -35,6 +35,12 @@ public:
 
 	bool IsValidTarget(const CUnit* enemy) const;
 
+private:
+	void PushOrUpdateReturnFight() {
+		CCommandAI::PushOrUpdateReturnFight(commandPos1, commandPos2);
+	}
+
+
 	float3 basePos;
 	float3 baseDir;
 
@@ -44,11 +50,6 @@ public:
 
 	int lastPC1;
 	int lastPC2;
-
-protected:
-	void PushOrUpdateReturnFight() {
-		CCommandAI::PushOrUpdateReturnFight(commandPos1, commandPos2);
-	}
 };
 
-#endif // _AIR_CAI_H_
+#endif // AIR_CAI_H

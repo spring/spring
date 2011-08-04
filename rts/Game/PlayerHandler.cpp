@@ -6,7 +6,6 @@
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "PlayerHandler.h"
-#include "System/LogOutput.h"
 #include "Game/GameSetup.h"
 #include "System/mmgr.h"
 

@@ -52,7 +52,7 @@ CPoolArchive::CPoolArchive(const std::string& name)
 	unsigned char c_crc32[4];
 	unsigned char c_size[4];
 
-	gzFile in = gzopen (name.c_str(), "rb");
+	gzFile in = gzopen(name.c_str(), "rb");
 	if (in == NULL) {
 		LOG_L(L_ERROR, "Error opening %s", name.c_str());
 		return;
@@ -137,7 +137,7 @@ bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& bu
 
 	filesystem.FixSlashes(rpath);
 	std::string path = filesystem.LocateFile(rpath);
-	gzFile in = gzopen (path.c_str(), "rb");
+	gzFile in = gzopen(path.c_str(), "rb");
 	if (in == NULL)
 		return false;
 

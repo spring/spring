@@ -50,7 +50,7 @@ FileSystem filesystem;
  *
  * Converts a glob expression to a regex
  */
-std::string FileSystem::glob_to_regex(const std::string& glob) const
+std::string FileSystem::glob_to_regex(const std::string& glob)
 {
 	std::string regex;
 	regex.reserve(glob.size()<<1);
@@ -115,7 +115,7 @@ std::string FileSystem::glob_to_regex(const std::string& glob) const
 	return regex;
 }
 
-bool FileSystem::FileExists(std::string file) const
+bool FileSystem::FileExists(std::string file)
 {
 	FixSlashes(file);
 	return FileSystemHandler::FileExists(file);
@@ -126,7 +126,7 @@ bool FileSystem::FileExists(std::string file) const
  *
  * @return the filesize or 0 if the file doesn't exist.
  */
-size_t FileSystem::GetFileSize(std::string file) const
+size_t FileSystem::GetFileSize(std::string file)
 {
 	if (!CheckFile(file)) {
 		return 0;
@@ -141,7 +141,7 @@ size_t FileSystem::GetFileSize(std::string file) const
  * Works like mkdir -p, ie. attempts to create parent directories too.
  * Operates on the current working directory.
  */
-bool FileSystem::CreateDirectory(std::string dir) const
+bool FileSystem::CreateDirectory(std::string dir)
 {
 	if (!CheckFile(dir)) {
 		return false;
@@ -202,7 +202,7 @@ std::vector<std::string> FileSystem::FindFiles(std::string dir, const std::strin
  * "/home/user/.spring/test.txt" -> "/home/user/.spring/"
  * "test.txt" -> ""
  */
-std::string FileSystem::GetDirectory(const std::string& path) const
+std::string FileSystem::GetDirectory(const std::string& path)
 {
 	size_t s = path.find_last_of("\\/");
 	if (s != std::string::npos) {
@@ -215,7 +215,7 @@ std::string FileSystem::GetDirectory(const std::string& path) const
  * @brief get the filename part of a path
  * "/home/user/.spring/test.txt" -> "test.txt"
  */
-std::string FileSystem::GetFilename(const std::string& path) const
+std::string FileSystem::GetFilename(const std::string& path)
 {
 	size_t s = path.find_last_of("\\/");
 	if (s != std::string::npos) {
@@ -228,7 +228,7 @@ std::string FileSystem::GetFilename(const std::string& path) const
  * @brief get the basename part of a path, ie. the filename without extension
  * "/home/user/.spring/test.txt" -> "test"
  */
-std::string FileSystem::GetBasename(const std::string& path) const
+std::string FileSystem::GetBasename(const std::string& path)
 {
 	std::string fn = GetFilename(path);
 	size_t dot = fn.find_last_of('.');
@@ -244,7 +244,7 @@ std::string FileSystem::GetBasename(const std::string& path) const
  * "/home/user/.spring/test.txt..." -> "txt"
  * "/home/user/.spring/test.txt. . ." -> "txt"
  */
-std::string FileSystem::GetExtension(const std::string& path) const
+std::string FileSystem::GetExtension(const std::string& path)
 {
 	const std::string fileName = GetFilename(path);
 	size_t l = fileName.length();
@@ -270,7 +270,7 @@ std::string FileSystem::GetExtension(const std::string& path) const
 /**
  * @brief converts all slashes and backslashes in path to the native_path_separator
  */
-std::string& FileSystem::FixSlashes(std::string& path) const
+std::string& FileSystem::FixSlashes(std::string& path)
 {
 	int sep = fs.GetNativePathSeparator();
 	for (size_t i = 0; i < path.size(); ++i) {
@@ -285,7 +285,7 @@ std::string& FileSystem::FixSlashes(std::string& path) const
 /**
  * @brief converts backslashes in path to forward slashes
  */
-std::string& FileSystem::ForwardSlashes(std::string& path) const
+std::string& FileSystem::ForwardSlashes(std::string& path)
 {
 	for (size_t i = 0; i < path.size(); ++i) {
 		if (path[i] == '\\') {
@@ -299,7 +299,7 @@ std::string& FileSystem::ForwardSlashes(std::string& path) const
 /**
  * @brief does a little checking of a filename
  */
-bool FileSystem::CheckFile(const std::string& file) const
+bool FileSystem::CheckFile(const std::string& file)
 {
 	// Don't allow code to escape from the data directories.
 	// Note: this does NOT mean this is a SAFE fopen function:

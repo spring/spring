@@ -128,6 +128,7 @@ SET(sources_engine_Sim
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/UnitTypes/Factory.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/UnitTypes/TransportUnit.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/BeamLaser.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/BombDropper.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/Cannon.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/DGunWeapon.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/EmgCannon.cpp"
@@ -144,7 +145,6 @@ SET(sources_engine_Sim
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/Weapon.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/WeaponDef.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/WeaponDefHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/bombdropper.cpp"
 	)
 
 MakeGlobal(sources_engine_Sim)

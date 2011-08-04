@@ -1,9 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __DAMAGE_ARRAY_H__
-#define __DAMAGE_ARRAY_H__
+#ifndef DAMAGE_ARRAY_H
+#define DAMAGE_ARRAY_H
 
 #include <algorithm>
+#include <vector>
 #include "System/creg/creg_cond.h"
 
 struct DamageArray
@@ -11,51 +12,31 @@ struct DamageArray
 	CR_DECLARE_STRUCT(DamageArray);
 
 public:
+	DamageArray(float damage = 1.0f);
+	DamageArray(const DamageArray& other) { *this = other; }
+	~DamageArray() { damages.clear(); }
 
-	DamageArray();
-	DamageArray(const float mul);
-	/**
-	 * This constructor is currently only used by C++ AIs
-	 * which use the legacy C++ wrapper around the C AI interface.
-	 */
-	DamageArray(int numTypes, const float* typeDamages);
-	DamageArray(const DamageArray& other);
-	~DamageArray();
+	DamageArray& operator = (const DamageArray& other);
+	DamageArray operator * (float damageMult) const;
 
-	DamageArray& operator=(const DamageArray& other) {
-		paralyzeDamageTime = other.paralyzeDamageTime;
-		impulseFactor = other.impulseFactor;
-		impulseBoost = other.impulseBoost;
-		craterMult = other.craterMult;
-		craterBoost = other.craterBoost;
-		numTypes = other.numTypes;
-		std::copy(other.damages, other.damages + numTypes, damages);
-		return *this;
-	}
-	float& operator[](int i) { return damages[i]; }
-	float operator[](int i) const { return damages[i]; }
+	float& operator [] (int i)       { return damages.at(i); }
+	float  operator [] (int i) const { return damages.at(i); }
 
-	DamageArray operator*(float mul) const {
-		DamageArray da(*this);
-		for(int a = 0; a < numTypes; ++a)
-			da.damages[a] *= mul;
-		return da;
-	}
-
-	int GetNumTypes() const { return numTypes; }
-	float GetTypeDamage(int typeIndex) const { return damages[typeIndex]; }
-	float GetDefaultDamage() const { return damages[0]; }
+	int GetNumTypes() const { return damages.size(); }
+	float GetTypeDamage(int typeIndex) const { return damages.at(typeIndex); }
+	float GetDefaultDamage() const { return damages.at(0); }
 
 	int paralyzeDamageTime;
-	float impulseFactor, impulseBoost, craterMult, craterBoost;
+	float
+		impulseFactor,
+		impulseBoost,
+		craterMult,
+		craterBoost;
 
 private:
-	#ifdef USING_CREG
 	void creg_Serialize(creg::ISerializer& s);
-	#endif // USING_CREG
 
-	int numTypes;
-	float* damages;
+	std::vector<float> damages;
 };
 
-#endif // __DAMAGE_ARRAY_H__
+#endif

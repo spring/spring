@@ -16,6 +16,7 @@
 /CHANGES
 /assimp.pc.in
 /cmake-modules
+/code/makefile
 CMakeFiles
 cmake_install.cmake
 Makefile

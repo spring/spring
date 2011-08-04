@@ -9,7 +9,6 @@
 #include "DummyVideoCapturing.h"
 #endif // defined AVI_CAPTURING
 
-//#include "System/LogOutput.h"
 #include <cstdlib> // for NULL
 
 IVideoCapturing* IVideoCapturing::GetInstance()
