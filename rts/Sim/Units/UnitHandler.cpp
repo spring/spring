@@ -24,7 +24,7 @@
 #include "Sim/MoveTypes/MoveType.h"
 #include "System/EventHandler.h"
 #include "System/EventBatchHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
 #include "System/myMath.h"
 #include "System/Sync/SyncTracer.h"
@@ -192,7 +192,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 #ifdef _DEBUG
 	for (usi = activeUnits.begin(); usi != activeUnits.end(); /* no post-op */) {
 		if (*usi == delUnit) {
-			logOutput.Print("Error: Duplicated unit found in active units on erase");
+			LOG_L(L_ERROR, "Duplicated unit found in active units on erase");
 			usi = activeUnits.erase(usi);
 		} else {
 			++usi;
@@ -217,7 +217,6 @@ void CUnitHandler::Update()
 			eventHandler.DeleteSyncedUnits();
 
 			GML_RECMUTEX_LOCK(proj); // Update - projectile drawing may access owner() and lead to crash
-
 			GML_RECMUTEX_LOCK(sel);  // Update - unit is removed from selectedUnits in ~CObject, which is too late.
 			GML_RECMUTEX_LOCK(quad); // Update - make sure unit does not get partially deleted before before being removed from the quadfield
 
@@ -268,6 +267,11 @@ void CUnitHandler::Update()
 
 			if (moveType->Update()) {
 				eventHandler.UnitMoved(unit);
+			}
+			if (!unit->pos.IsInBounds() && (unit->speed.SqLength() > (MAX_UNIT_SPEED * MAX_UNIT_SPEED))) {
+				// this unit is not coming back, kill it now without any death
+				// sequence (so deathScriptFinished becomes true immediately)
+				unit->KillUnit(false, true, NULL, false);
 			}
 
 			UNIT_SANITY_CHECK(unit);

@@ -18,6 +18,7 @@
 #include "PathCache.h"
 #include "PathFinder.h"
 #include "PathFinderDef.h"
+#include "PathLog.h"
 #include "Map/ReadMap.h"
 #include "Game/LoadScreen.h"
 #include "Sim/MoveTypes/MoveInfo.h"
@@ -27,15 +28,12 @@
 #include "System/FileSystem/IArchive.h"
 #include "System/FileSystem/ArchiveLoader.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/LogOutput.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/NetProtocol.h"
 
-#define PATHDEBUG false
-
 CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512 * 1024 * 1024);
 
-const std::string pathDir = "cache/paths/";
+static const std::string PATH_CACHE_DIR = "cache/paths/";
 
 #if !defined(USE_MMGR)
 void* CPathEstimator::operator new(size_t size) { return PathAllocator::Alloc(size); }
@@ -501,18 +499,18 @@ IPath::SearchResult CPathEstimator::GetPath(
 			pathCache->AddPath(&path, result, startBlock, goalBlock, peDef.sqGoalRadius, moveData.pathType);
 		}
 
-		if (PATHDEBUG) {
-			LogObject() << "PE: Search completed.\n";
-			LogObject() << "Tested blocks: " << testedBlocks << "\n";
-			LogObject() << "Open blocks: " << openBlockBuffer.GetSize() << "\n";
-			LogObject() << "Path length: " << path.path.size() << "\n";
-			LogObject() << "Path cost: " << path.pathCost << "\n";
+		if (LOG_IS_ENABLED(L_DEBUG)) {
+			LOG_L(L_DEBUG, "PE: Search completed.");
+			LOG_L(L_DEBUG, "Tested blocks: %u", testedBlocks);
+			LOG_L(L_DEBUG, "Open blocks: %u", openBlockBuffer.GetSize());
+			LOG_L(L_DEBUG, "Path length: "_STPF_, path.path.size());
+			LOG_L(L_DEBUG, "Path cost: %f", path.pathCost);
 		}
 	} else {
-		if (PATHDEBUG) {
-			LogObject() << "PE: Search failed!\n";
-			LogObject() << "Tested blocks: " << testedBlocks << "\n";
-			LogObject() << "Open blocks: " << openBlockBuffer.GetSize() << "\n";
+		if (LOG_IS_ENABLED(L_DEBUG)) {
+			LOG_L(L_DEBUG, "PE: Search failed!");
+			LOG_L(L_DEBUG, "Tested blocks: %u", testedBlocks);
+			LOG_L(L_DEBUG, "Open blocks: %u", openBlockBuffer.GetSize());
 		}
 	}
 
@@ -626,7 +624,7 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveData& moveData, const CPa
 		return IPath::GoalOutOfRange;
 
 	// should never happen
-	LogObject() << "ERROR: CPathEstimator::DoSearch() - Unhandled end of search!\n";
+	LOG_L(L_ERROR, "%s - Unhandled end of search!", __FUNCTION__);
 	return IPath::Error;
 }
 
@@ -787,7 +785,7 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 	char hashString[50];
 	sprintf(hashString, "%u", hash);
 
-	std::string filename = std::string(pathDir) + map + hashString + "." + cacheFileName + ".zip";
+	std::string filename = std::string(PATH_CACHE_DIR) + map + hashString + "." + cacheFileName + ".zip";
 	if (!filesystem.FileExists(filename))
 		return false;
 	// open file for reading from a suitable location (where the file exists)
@@ -851,7 +849,7 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::string& map)
 {
 	// We need this directory to exist
-	if (!filesystem.CreateDirectory(pathDir))
+	if (!filesystem.CreateDirectory(PATH_CACHE_DIR))
 		return;
 
 	const unsigned int hash = Hash();
@@ -859,7 +857,7 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 
 	sprintf(hashString, "%u", hash);
 
-	const std::string filename = std::string(pathDir) + map + hashString + "." + cacheFileName + ".zip";
+	const std::string filename = std::string(PATH_CACHE_DIR) + map + hashString + "." + cacheFileName + ".zip";
 	zipFile file;
 
 	// open file for writing in a suitable location

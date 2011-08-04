@@ -56,12 +56,19 @@ Here we implement only the C++ interface (Assimp::Exporter).
 
 #include "DefaultIOSystem.h"
 #include "BlobIOSystem.h" 
+#include "SceneCombiner.h" 
+#include "BaseProcess.h" 
+#include "Importer.h" // need this for GetPostProcessingStepInstanceList()
 
 namespace Assimp {
+
+// PostStepRegistry.cpp
+void GetPostProcessingStepInstanceList(std::vector< BaseProcess* >& out);
 
 // ------------------------------------------------------------------------------------------------
 // Exporter worker function prototypes. Should not be necessary to #ifndef them, it's just a prototype
 void ExportSceneCollada(const char*,IOSystem*, const aiScene*);
+void ExportSceneObj(const char*,IOSystem*, const aiScene*);
 void ExportScene3DS(const char*, IOSystem*, const aiScene*) {}
 
 /// Function pointer type of a Export worker function
@@ -77,13 +84,17 @@ struct ExportFormatEntry
 	// Worker function to do the actual exporting
 	fpExportFunc mExportFunction;
 
+	// Postprocessing steps to be executed PRIOR to calling mExportFunction
+	unsigned int mEnforcePP;
+
 	// Constructor to fill all entries
-	ExportFormatEntry( const char* pId, const char* pDesc, const char* pExtension, fpExportFunc pFunction)
+	ExportFormatEntry( const char* pId, const char* pDesc, const char* pExtension, fpExportFunc pFunction, unsigned int pEnforcePP = 0u)
 	{
 		mDescription.id = pId;
 		mDescription.description = pDesc;
 		mDescription.fileExtension = pExtension;
 		mExportFunction = pFunction;
+		mEnforcePP = pEnforcePP;
 	}
 };
 
@@ -93,6 +104,10 @@ ExportFormatEntry gExporters[] =
 {
 #ifndef ASSIMP_BUILD_NO_COLLADA_EXPORTER
 	ExportFormatEntry( "collada", "COLLADA - Digital Asset Exchange Schema", "dae", &ExportSceneCollada),
+#endif
+
+#ifndef ASSIMP_BUILD_NO_OBJ_EXPORTER
+	ExportFormatEntry( "obj", "Wavefront OBJ format", "obj", &ExportSceneObj),
 #endif
 
 #ifndef ASSIMP_BUILD_NO_3DS_EXPORTER
@@ -109,12 +124,17 @@ public:
 		, mIOSystem(new Assimp::DefaultIOSystem())
 		, mIsDefaultIOHandler(true)
 	{
-		
+		GetPostProcessingStepInstanceList(mPostProcessingSteps);
 	}
 
 	~ExporterPimpl() 
 	{
 		delete blob;
+
+		// Delete all post-processing plug-ins
+		for( unsigned int a = 0; a < mPostProcessingSteps.size(); a++) {
+			delete mPostProcessingSteps[a];
+		}
 	}
 
 public:
@@ -122,6 +142,9 @@ public:
 	aiExportDataBlob* blob;
 	boost::shared_ptr< Assimp::IOSystem > mIOSystem;
 	bool mIsDefaultIOHandler;
+
+	/** Post processing steps we can apply at the imported data. */
+	std::vector< BaseProcess* > mPostProcessingSteps;
 };
 
 #define ASSIMP_NUM_EXPORTERS (sizeof(gExporters)/sizeof(gExporters[0]))
@@ -172,7 +195,7 @@ bool Exporter :: IsDefaultIOHandler() const
 
 
 // ------------------------------------------------------------------------------------------------
-const aiExportDataBlob* Exporter :: ExportToBlob(  const aiScene* pScene, const char* pFormatId )
+const aiExportDataBlob* Exporter :: ExportToBlob(  const aiScene* pScene, const char* pFormatId, unsigned int pPreprocessing )
 {
 	if (pimpl->blob) {
 		delete pimpl->blob;
@@ -198,14 +221,33 @@ const aiExportDataBlob* Exporter :: ExportToBlob(  const aiScene* pScene, const 
 
 
 // ------------------------------------------------------------------------------------------------
-aiReturn Exporter :: Export( const aiScene* pScene, const char* pFormatId, const char* pPath )
+aiReturn Exporter :: Export( const aiScene* pScene, const char* pFormatId, const char* pPath, unsigned int pPreprocessing )
 {
 	ASSIMP_BEGIN_EXCEPTION_REGION();
 	for (size_t i = 0; i < ASSIMP_NUM_EXPORTERS; ++i) {
 		if (!strcmp(gExporters[i].mDescription.id,pFormatId)) {
 
 			try {
-				gExporters[i].mExportFunction(pPath,pimpl->mIOSystem.get(),pScene);
+
+				// Always create a full copy of the scene. We might optimize this one day, 
+				// but for now it is the most pragmatic way.
+				aiScene* scenecopy_tmp;
+				SceneCombiner::CopyScene(&scenecopy_tmp,pScene);
+
+				std::auto_ptr<aiScene> scenecopy(scenecopy_tmp);
+
+				const unsigned int pp = (gExporters[i].mEnforcePP | pPreprocessing);
+				if (pp) {
+					for( unsigned int a = 0; a < pimpl->mPostProcessingSteps.size(); a++) {
+						BaseProcess* const p = pimpl->mPostProcessingSteps[a];
+
+						if (p->IsActive(pp)) {
+							p->Execute(scenecopy.get());
+						}
+					}
+				}
+
+				gExporters[i].mExportFunction(pPath,pimpl->mIOSystem.get(),scenecopy.get());
 			}
 			catch (DeadlyExportError& err) {
 				// XXX what to do with the error message? Maybe introduce extra member to hold it, similar to Assimp.Importer

@@ -20,7 +20,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_List.h"
@@ -161,6 +161,21 @@ void CProjectileHandler::PostLoad()
 void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool synced) {
 	ProjectileContainer::iterator pci = pc.begin();
 
+	#define VECTOR_SANITY_CHECK(v)                              \
+		assert(!streflop::isnan(v.x) && !streflop::isinf(v.x)); \
+		assert(!streflop::isnan(v.y) && !streflop::isinf(v.y)); \
+		assert(!streflop::isnan(v.z) && !streflop::isinf(v.z));
+	#define MAPPOS_SANITY_CHECK(v)                 \
+		assert(v.x >= -(float3::maxxpos * 16.0f)); \
+		assert(v.x <=  (float3::maxxpos * 16.0f)); \
+		assert(v.z >= -(float3::maxzpos * 16.0f)); \
+		assert(v.z <=  (float3::maxzpos * 16.0f)); \
+		assert(v.y >= -MAX_PROJECTILE_HEIGHT);     \
+		assert(v.y <=  MAX_PROJECTILE_HEIGHT);
+	#define PROJECTILE_SANITY_CHECK(p) \
+		VECTOR_SANITY_CHECK(p->pos);   \
+		MAPPOS_SANITY_CHECK(p->pos);
+
 	while (pci != pc.end()) {
 		CProjectile* p = *pci;
 
@@ -196,10 +211,14 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 #endif
 			}
 		} else {
+			PROJECTILE_SANITY_CHECK(p);
+
 			p->Update();
 			qf->MovedProjectile(p);
 
+			PROJECTILE_SANITY_CHECK(p);
 			GML_GET_TICKS(p->lastProjUpdate);
+
 			++pci;
 		}
 	}
@@ -325,7 +344,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 	}
 
 	if ((*maxUsedID) > (1 << 24)) {
-		logOutput.Print("Lua %s projectile IDs are now out of range", (p->synced? "synced": "unsynced"));
+		LOG_L(L_WARNING, "Lua %s projectile IDs are now out of range", (p->synced? "synced": "unsynced"));
 	}
 
 	ProjectileMapPair pp(p, p->owner() ? p->owner()->allyteam : -1);

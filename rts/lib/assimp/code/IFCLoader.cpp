@@ -139,6 +139,7 @@ void IFCImporter::SetupProperties(const Importer* pImp)
 	settings.skipCurveRepresentations = pImp->GetPropertyBool(AI_CONFIG_IMPORT_IFC_SKIP_CURVE_REPRESENTATIONS,true);
 	settings.useCustomTriangulation = pImp->GetPropertyBool(AI_CONFIG_IMPORT_IFC_CUSTOM_TRIANGULATION,true);
 
+	settings.conicSamplingAngle = 10.f;
 	settings.skipAnnotations = true;
 }
 
@@ -161,12 +162,12 @@ void IFCImporter::InternReadFile( const std::string& pFile,
 	}
 
 	if (!DefaultLogger::isNullLogger()) {
-		DefaultLogger::get()->debug("File schema is \'" + head.fileSchema + '\'');
+		LogDebug("File schema is \'" + head.fileSchema + '\'');
 		if (head.timestamp.length()) {
 			LogDebug("Timestamp \'" + head.timestamp + '\'');
 		}
 		if (head.app.length()) {
-			DefaultLogger::get()->debug("Application/Exporter identline is \'" + head.app  + '\'');
+			LogDebug("Application/Exporter identline is \'" + head.app  + '\'');
 		}
 	}
 
@@ -234,7 +235,7 @@ void IFCImporter::InternReadFile( const std::string& pFile,
 
 	// this must be last because objects are evaluated lazily as we process them
 	if ( !DefaultLogger::isNullLogger() ){
-		DefaultLogger::get()->debug((Formatter::format(),"STEP: evaluated ",db->GetEvaluatedObjectCount()," object records"));
+		LogDebug((Formatter::format(),"STEP: evaluated ",db->GetEvaluatedObjectCount()," object records"));
 	}
 }
 
@@ -248,11 +249,11 @@ void ConvertUnit(const IfcNamedUnit& unit,ConversionData& conv)
 
 		if(si->UnitType == "LENGTHUNIT") { 
 			conv.len_scale = si->Prefix ? ConvertSIPrefix(si->Prefix) : 1.f;
-			DefaultLogger::get()->debug("got units used for lengths");
+			IFCImporter::LogDebug("got units used for lengths");
 		}
 		if(si->UnitType == "PLANEANGLEUNIT") { 
 			if (si->Name != "RADIAN") {
-				DefaultLogger::get()->warn("expected base unit for angles to be radian");
+				IFCImporter::LogWarn("expected base unit for angles to be radian");
 			}
 		}
 	}
@@ -262,10 +263,10 @@ void ConvertUnit(const IfcNamedUnit& unit,ConversionData& conv)
 			try {
 				conv.angle_scale = convu->ConversionFactor->ValueComponent->To<EXPRESS::REAL>();
 				ConvertUnit(*convu->ConversionFactor->UnitComponent,conv);
-				DefaultLogger::get()->debug("got units used for angles");
+				IFCImporter::LogDebug("got units used for angles");
 			}
 			catch(std::bad_cast&) {
-				DefaultLogger::get()->error("skipping unknown IfcConversionBasedUnit.ValueComponent entry - expected REAL");
+				IFCImporter::LogError("skipping unknown IfcConversionBasedUnit.ValueComponent entry - expected REAL");
 			}
 		}
 	}
@@ -286,7 +287,7 @@ void ConvertUnit(const EXPRESS::DataType& dt,ConversionData& conv)
 	}
 	catch(std::bad_cast&) {
 		// not entity, somehow
-		DefaultLogger::get()->error("skipping unknown IfcUnit entry - expected entity");
+		IFCImporter::LogError("skipping unknown IfcUnit entry - expected entity");
 	}
 }
 
@@ -314,7 +315,7 @@ void SetCoordinateSpace(ConversionData& conv)
 	if (fav) {
 		if(const IfcGeometricRepresentationContext* const geo = fav->ToPtr<IfcGeometricRepresentationContext>()) {
 			ConvertAxisPlacement(conv.wcs, *geo->WorldCoordinateSystem, conv);
-			DefaultLogger::get()->debug("got world coordinate system");
+			IFCImporter::LogDebug("got world coordinate system");
 		}
 	}
 }
@@ -354,7 +355,7 @@ bool ProcessMappedItem(const IfcMappedItem& mapped, aiNode* nd_src, std::vector<
 	std::auto_ptr<aiNode> nd(new aiNode());
 	nd->mName.Set("IfcMappedItem");
 		
-	// handle the cartesian operator
+	// handle the Cartesian operator
 	aiMatrix4x4 m;
 	ConvertTransformOperator(m, *mapped.MappingTarget);
 
@@ -378,7 +379,7 @@ bool ProcessMappedItem(const IfcMappedItem& mapped, aiNode* nd_src, std::vector<
 	bool got = false;
 	BOOST_FOREACH(const IfcRepresentationItem& item, repr.Items) {
 		if(!ProcessRepresentationItem(item,meshes,conv)) {
-			IFCImporter::LogWarn("skipping unknown mapped entity, type is " + item.GetClassName());
+			IFCImporter::LogWarn("skipping mapped entity of type " + item.GetClassName() + ", no representations could be generated");
 		}
 		else got = true;
 	}
@@ -519,14 +520,14 @@ aiNode* ProcessSpatialStructure(aiNode* parent, const IfcProduct& el, Conversion
 	// skip over space and annotation nodes - usually, these have no meaning in Assimp's context
 	if(conv.settings.skipSpaceRepresentations) {
 		if(const IfcSpace* const space = el.ToPtr<IfcSpace>()) {
-			DefaultLogger::get()->debug("skipping IfcSpace entity due to importer settings");
+			IFCImporter::LogDebug("skipping IfcSpace entity due to importer settings");
 			return NULL;
 		}
 	}
 
 	if(conv.settings.skipAnnotations) {
 		if(const IfcAnnotation* const ann = el.ToPtr<IfcAnnotation>()) {
-			DefaultLogger::get()->debug("skipping IfcAnnotation entity due to importer settings");
+			IFCImporter::LogDebug("skipping IfcAnnotation entity due to importer settings");
 			return NULL;
 		}
 	}
@@ -702,7 +703,7 @@ void ProcessSpatialStructures(ConversionData& conv)
 					// comparing pointer values is not sufficient, we would need to cast them to the same type first
 					// as there is multiple inheritance in the game.
 					if (def.GetID() == prod->GetID()) { 
-						DefaultLogger::get()->debug("selecting this spatial structure as root structure");
+						IFCImporter::LogDebug("selecting this spatial structure as root structure");
 						// got it, this is the primary site.
 						conv.out->mRootNode = ProcessSpatialStructure(NULL,*prod,conv,NULL);
 						return;
@@ -714,7 +715,7 @@ void ProcessSpatialStructures(ConversionData& conv)
 	}
 
 	
-	DefaultLogger::get()->warn("failed to determine primary site element, taking the first IfcSite");
+	IFCImporter::LogWarn("failed to determine primary site element, taking the first IfcSite");
 	BOOST_FOREACH(const STEP::LazyObject* lz, *range) {
 		const IfcSpatialStructureElement* const prod = lz->ToPtr<IfcSpatialStructureElement>();
 		if(!prod) {

@@ -2,6 +2,8 @@
 
 #include "UnpackPacket.h"
 
+#include <boost/shared_ptr.hpp>
+
 namespace netcode
 {
 

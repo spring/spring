@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _AI_LIBRARY_MANAGER_H
-#define	_AI_LIBRARY_MANAGER_H
+#ifndef AI_LIBRARY_MANAGER_H
+#define	AI_LIBRARY_MANAGER_H
 
 #include "IAILibraryManager.h"
 
@@ -21,8 +21,6 @@
  * are currently loaded, and unloads them when they are not needed anymore.
  */
 class CAILibraryManager : public IAILibraryManager {
-private:
-
 public:
 	CAILibraryManager();
 	/**
@@ -49,19 +47,6 @@ private:
 	/** Unloads all currently loaded AIs and interfaces. */
 	void ReleaseEverything();
 
-	typedef std::map<const AIInterfaceKey, CAIInterfaceLibrary*>
-			T_loadedInterfaces;
-	T_loadedInterfaces loadedAIInterfaceLibraries;
-
-	T_interfaceSpecs interfaceKeys;
-	T_skirmishAIKeys skirmishAIKeys;
-	T_interfaceInfos interfaceInfos;
-	T_skirmishAIInfos skirmishAIInfos;
-
-	T_dupInt duplicateInterfaceInfos;
-	T_dupSkirm duplicateSkirmishAIInfos;
-
-private:
 	/**
 	 * Loads the interface if it is not yet loaded; increments load count.
 	 */
@@ -71,29 +56,40 @@ private:
 	 */
 	void ReleaseInterface(const AIInterfaceKey& interfaceKey);
 	/**
-	 * Loads info about available AI Interfaces and AIs from LUA Info files.
-	 * -> interface and AI libraries can not corrupt the engines memory
+	 * Loads info about available AI Interfaces from Lua info-files.
 	 *
 	 * The files are searched in all data-dirs (see fs.GetDataDirectories())
 	 * in the following sub-dirs:
 	 * {AI_INTERFACES_DATA_DIR}/{*}/InterfaceInfo.lua
 	 * {AI_INTERFACES_DATA_DIR}/{*}/{*}/InterfaceInfo.lua
+	 *
+	 * examples:
+	 * AI/Interfaces/C/0.1/InterfaceInfo.lua
+	 * AI/Interfaces/Java/0.1/InterfaceInfo.lua
+	 */
+	void GatherInterfaceLibrariesInfos();
+	/**
+	 * Loads info about available Skirmish AIs from Lua info- and option-files.
+	 * -> AI libraries can not corrupt the engines memory
+	 *
+	 * The files are searched in all data-dirs (see fs.GetDataDirectories())
+	 * in the following sub-dirs:
 	 * {SKIRMISH_AI_DATA_DIR}/{*}/AIInfo.lua
+	 * {SKIRMISH_AI_DATA_DIR}/{*}/AIOptions.lua
 	 * {SKIRMISH_AI_DATA_DIR}/{*}/{*}/AIInfo.lua
-	 * {GROUP_AI_DATA_DIR}/{*}/AIInfo.lua
-	 * {GROUP_AI_DATA_DIR}/{*}/{*}/AIInfo.lua
+	 * {SKIRMISH_AI_DATA_DIR}/{*}/{*}/AIOptions.lua
 	 *
 	 * examples:
 	 * AI/Skirmish/KAIK-0.13/AIInfo.lua
 	 * AI/Skirmish/RAI/0.601/AIInfo.lua
+	 * AI/Skirmish/RAI/0.601/AIOptions.lua
 	 */
-	void GetAllInfosFromCache();
+	void GatherSkirmishAIsLibrariesInfos();
 	/**
 	 * Clears info about available AIs.
 	 */
 	void ClearAllInfos();
 
-private:
 	/**
 	 * Finds the best fitting interface.
 	 * The short name has to fit perfectly, and the version of the interface
@@ -110,6 +106,20 @@ private:
 			const std::string& shortName,
 			const std::string& minVersion,
 			const T_interfaceSpecs& specs);
+
+
+	typedef std::map<const AIInterfaceKey, CAIInterfaceLibrary*>
+			T_loadedInterfaces;
+
+	T_loadedInterfaces loadedAIInterfaceLibraries;
+
+	T_interfaceSpecs interfaceKeys;
+	T_skirmishAIKeys skirmishAIKeys;
+	T_interfaceInfos interfaceInfos;
+	T_skirmishAIInfos skirmishAIInfos;
+
+	T_dupInt duplicateInterfaceInfos;
+	T_dupSkirm duplicateSkirmishAIInfos;
 };
 
-#endif // _AI_LIBRARY_MANAGER_H
+#endif // AI_LIBRARY_MANAGER_H

@@ -69,15 +69,10 @@ namespace Assimp	{
 // -------------------------------------------------------------------------------------------
 class IFCImporter : public BaseImporter, public LogFunctions<IFCImporter>
 {
-	friend class Importer;
-
-protected:
-
-	/** Constructor to be privately used by Importer */
+public:
 	IFCImporter();
-
-	/** Destructor, private as well */
 	~IFCImporter();
+
 
 public:
 
@@ -107,7 +102,7 @@ private:
 public: 
 
 
-	// loader settings, publicy accessible via their corresponding AI_CONFIG constants
+	// loader settings, publicly accessible via their corresponding AI_CONFIG constants
 	struct Settings 
 	{
 		Settings()
@@ -115,6 +110,7 @@ public:
 			, skipCurveRepresentations()
 			, useCustomTriangulation()
 			, skipAnnotations()
+			, conicSamplingAngle(10.f)
 		{}
 
 
@@ -122,6 +118,7 @@ public:
 		bool skipCurveRepresentations;
 		bool useCustomTriangulation;
 		bool skipAnnotations;
+		float conicSamplingAngle;
 	};
 	
 	

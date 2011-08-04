@@ -16,7 +16,6 @@ public:
 	CSmokeProjectile();
 	CSmokeProjectile(const float3& pos, const float3& speed, float ttl,
 			float startSize, float sizeExpansion, CUnit* owner, float color);
-	virtual ~CSmokeProjectile();
 
 	void Update();
 	void Draw();

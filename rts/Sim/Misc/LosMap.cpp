@@ -48,7 +48,9 @@ void CLosMap::AddMapArea(int2 pos, int allyteam, int radius, int amount)
 		const int rrx = rr - Square(pos.y - lmz);
 		for (int lmx = sx; lmx <= ex; ++lmx) {
 			const int losMapSquareIdx = (lmz * size.x) + lmx;
+			#ifdef USE_UNSYNCED_HEIGHTMAP
 			const bool squareEnteredLOS = (map[losMapSquareIdx] == 0 && amount > 0);
+			#endif
 
 			if (Square(pos.x - lmx) > rrx) {
 				continue;
@@ -90,7 +92,9 @@ void CLosMap::AddMapSquares(const std::vector<int>& squares, int allyteam, int a
 	std::vector<int>::const_iterator lsi;
 	for (lsi = squares.begin(); lsi != squares.end(); ++lsi) {
 		const int losMapSquareIdx = *lsi;
+		#ifdef USE_UNSYNCED_HEIGHTMAP
 		const bool squareEnteredLOS = (map[losMapSquareIdx] == 0 && amount > 0);
+		#endif
 
 		map[losMapSquareIdx] += amount;
 

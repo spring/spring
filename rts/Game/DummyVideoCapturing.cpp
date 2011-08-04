@@ -2,7 +2,9 @@
 
 #include "DummyVideoCapturing.h"
 
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
+
+#include <cstdlib> // for NULL
 
 
 DummyVideoCapturing::DummyVideoCapturing() {
@@ -22,9 +24,9 @@ bool DummyVideoCapturing::IsCapturing() const {
 
 void DummyVideoCapturing::StartCapturing() {
 
-	logOutput.Print("Creating a video is not supported by this engine build.");
-	logOutput.Print("(requires: OS=Win32 / Compiler=MinGW / \"#define AVI_CAPTURING\")");
-	logOutput.Print("Please use an external frame-grabbing/-capturing application.");
+	LOG_L(L_WARNING, "Creating a video is not supported by this engine build.");
+	LOG_L(L_WARNING, "(requires: OS=Win32 / Compiler=MinGW / \"#define AVI_CAPTURING\")");
+	LOG_L(L_WARNING, "Please use an external frame-grabbing/-capturing application.");
 }
 
 void DummyVideoCapturing::StopCapturing() {

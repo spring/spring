@@ -2,7 +2,6 @@
 
 #include "System/StdAfx.h"
 
-#include <cstdio>
 #include "System/mmgr.h"
 
 #include "EndGameBox.h"
@@ -17,8 +16,10 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/TeamStatistics.h"
-#include "System/LogOutput.h"
 #include "System/Exceptions.h"
+
+#include <cstdio>
+#include <sstream>
 
 using std::sprintf;
 

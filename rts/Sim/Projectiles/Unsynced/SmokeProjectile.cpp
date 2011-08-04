@@ -83,10 +83,6 @@ CSmokeProjectile::CSmokeProjectile(const float3& pos, const float3& speed, float
 	}
 }
 
-CSmokeProjectile::~CSmokeProjectile()
-{
-
-}
 
 
 void CSmokeProjectile::Update()

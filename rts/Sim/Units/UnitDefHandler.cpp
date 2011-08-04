@@ -19,7 +19,7 @@
 #include "Sim/Misc/Team.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Sound/ISound.h"
@@ -75,12 +75,11 @@ CUnitDefHandler::~CUnitDefHandler(void)
 int CUnitDefHandler::PushNewUnitDef(const std::string& unitName, const LuaTable& udTable)
 {
 	if (std::find_if(unitName.begin(), unitName.end(), isblank) != unitName.end()) {
-		logOutput.Print(
-			"WARNING: UnitDef name \"%s\" contains white-spaces, "
-			"which will likely cause problems. Please contact the "
-			"Game/Mod developers.",
-			unitName.c_str()
-		);
+		LOG_L(L_WARNING,
+				"UnitDef name \"%s\" contains white-spaces, "
+				"which will likely cause problems. "
+				"Please contact the Game/Mod developers.",
+				unitName.c_str());
 	}
 
 	UnitDef* newDef = NULL;
@@ -120,8 +119,9 @@ void CUnitDefHandler::CleanBuildOptions()
 
 			const UnitDef* bd = GetUnitDefByName(it->second);
 			if (bd == NULL) {
-				logOutput.Print("WARNING: removed the \"" + it->second +
-				                "\" entry from the \"" + ud->name + "\" build menu");
+				LOG_L(L_WARNING,
+						"removed the \"%s\" entry from the \"%s\" build menu",
+						it->second.c_str(), ud->name.c_str());
 				erase = true;
 			}
 			/*

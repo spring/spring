@@ -95,6 +95,10 @@ SET( Common_SRCS
 	BaseImporter.h
 	BaseProcess.cpp
 	BaseProcess.h
+	Importer.h
+	ScenePrivate.h
+	PostStepRegistry.cpp
+	ImporterRegistry.cpp
 	ByteSwap.h
 	DefaultProgressHandler.h
 	DefaultIOStream.cpp
@@ -234,6 +238,12 @@ SET( LWS_SRCS
 )
 SOURCE_GROUP( LWS FILES ${LWS_SRCS})
 
+SET ( M3_SRCS
+	M3Importer.cpp
+	M3Importer.h
+)
+SOURCE_GROUP( M3 FILES ${M3_SRCS} )
+
 SET( MD2_SRCS
 	MD2FileData.h
 	MD2Loader.cpp
@@ -307,6 +317,9 @@ SET( Obj_SRCS
 	ObjFileParser.cpp
 	ObjFileParser.h
 	ObjTools.h
+	
+	ObjExporter.h
+	ObjExporter.cpp
 )
 SOURCE_GROUP( Obj FILES ${Obj_SRCS})
 
@@ -363,6 +376,7 @@ SET(IFC_SRCS
 	IFCGeometry.cpp
 	IFCMaterial.cpp
 	IFCProfile.cpp
+	IFCCurve.cpp
 	STEPFile.h
 	STEPFileReader.h
 	STEPFileReader.cpp
@@ -549,6 +563,7 @@ ADD_LIBRARY( assimp STATIC
 	${Irr_SRCS}
 	${LWO_SRCS}
 	${LWS_SRCS}
+	${M3_SRCS}
 	${MD2_SRCS}
 	${MD3_SRCS}
 	${MD5_SRCS}

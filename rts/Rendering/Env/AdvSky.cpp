@@ -62,6 +62,10 @@ CAdvSky::CAdvSky()
 	rawClouds = newmat2<int>(CLOUD_SIZE, CLOUD_SIZE);
 	blendMatrix = newmat3<int>(CLOUD_DETAIL, 32, 32);
 
+	memset(alphaTransform, 0, 1024);
+	memset(thicknessTransform, 0, 1024);
+	memset(covers, 0, 4 * 32 * sizeof(float));
+
 	domeheight = cos(PI / 16) * 1.01f;
 	domeWidth = sin(2 * PI / 32) * 400 * 1.7f;
 

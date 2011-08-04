@@ -48,8 +48,6 @@ CR_REG_METADATA(CStarburstProjectile,(
 
 void CStarburstProjectile::creg_Serialize(creg::ISerializer& s)
 {
-	s.Serialize(numCallback, sizeof(int));
-
 	// NOTE This could be tricky if gs is serialized after losHandler.
 	for (int a = 0; a < NUM_TRACER_PARTS; ++a) {
 		s.Serialize(tracerParts[a], sizeof(struct CStarburstProjectile::TracerPart));
@@ -65,7 +63,7 @@ CStarburstProjectile::CStarburstProjectile(
 	CUnit* target,
 	const WeaponDef* weaponDef,
 	CWeaponProjectile* interceptTarget,
-	float maxdistance, float3 aimError):
+	float maxRange, float3 aimError):
 
 	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, interceptTarget, 200),
 	tracking(tracking),
@@ -79,9 +77,8 @@ CStarburstProjectile::CStarburstProjectile(
 	numParts(0),
 	doturn(true),
 	curCallback(NULL),
-	numCallback(NULL),
 	missileAge(0),
-	distanceToTravel(maxdistance)
+	distanceToTravel(maxRange)
 {
 	projectileType = WEAPON_STARBURST_PROJECTILE;
 	this->uptime = uptime;
@@ -98,9 +95,6 @@ CStarburstProjectile::CStarburstProjectile(
 	curSpeed = speed.Length();
 	dir = speed / curSpeed;
 	oldSmokeDir = dir;
-
-	numCallback = new int;
-	*numCallback = 0;
 
 	const float3 camDir = (pos - camera->pos).ANormalize();
 	const float camDist = (camera->pos.distance(pos) * 0.2f) + ((1.0f - fabs(camDir.dot(dir))) * 3000);
@@ -137,7 +131,6 @@ void CStarburstProjectile::Detach()
 CStarburstProjectile::~CStarburstProjectile()
 {
 	// UNSYNCED
-	delete numCallback;
 	if (curCallback) {
 		curCallback->drawCallbacker = 0;
 	}
@@ -196,7 +189,7 @@ void CStarburstProjectile::Update()
 
 			speed = dir * curSpeed;
 		}
-	} else if (doturn && ttl > 0 && distanceToTravel > 0) {
+	} else if (doturn && ttl > 0 && distanceToTravel > 0.0f) {
 		if (!luaMoveCtrl) {
 			float3 dif(targetPos - pos);
 			dif.Normalize();
@@ -220,11 +213,11 @@ void CStarburstProjectile::Update()
 				dir.Normalize();
 			}
 			speed = dir * curSpeed;
-			if (distanceToTravel != MAX_WORLD_SIZE) {
+			if (distanceToTravel != MAX_PROJECTILE_RANGE) {
 				distanceToTravel -= speed.Length2D();
 			}
 		}
-	} else if (ttl > 0 && distanceToTravel > 0) {
+	} else if (ttl > 0 && distanceToTravel > 0.0f) {
 		if (!luaMoveCtrl) {
 			if (curSpeed < maxSpeed) {
 				curSpeed += weaponDef->weaponacceleration;
@@ -244,7 +237,7 @@ void CStarburstProjectile::Update()
 
 			speed = dir * curSpeed;
 
-			if (distanceToTravel != MAX_WORLD_SIZE) {
+			if (distanceToTravel != MAX_PROJECTILE_RANGE) {
 				distanceToTravel -= speed.Length2D();
 			}
 		}
@@ -403,19 +396,12 @@ void CStarburstProjectile::Draw()
 			}
 		}
 	}
+
 	DrawCallback();
-	if (curCallback == NULL)
-		DrawCallback();
 }
 
 void CStarburstProjectile::DrawCallback()
 {
-	if (*numCallback != globalRendering->drawFrame) {
-		*numCallback = globalRendering->drawFrame;
-		return;
-	}
-
-	*numCallback = 0;
 	inArray = true;
 
 	unsigned char col[4];

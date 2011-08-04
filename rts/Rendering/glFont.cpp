@@ -1169,9 +1169,8 @@ void CglFont::AddEllipsis(std::list<line>& lines, std::list<word>& words, float 
 
 void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxHeight) const
 {
-	if (words.empty())
+	if (words.empty() || (lineHeight<=0.0f))
 		return;
-
 	const bool splitAllWords = false;
 	const unsigned int maxLines = (unsigned int)math::floor(std::max(0.0f, maxHeight / lineHeight ));
 

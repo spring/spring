@@ -118,26 +118,10 @@ float smoothlimit(const float x, const float step) {
     return x;
 }
 
-
-float waveIntensity(const float x) {
-  //float front = smoothstep(1.0-0.85,0.0,abs(x-0.85));
-  float front = 1.0-(abs(x-0.85))/(1.0-0.85);
-  if (x<0.85)
-    return max(front,x*0.5);
-  else
-    return front;
-}
-
 vec4 waveIntensity(const vec4 v) {
   vec4 front = vec4(1.0)-(abs(v - vec4(0.85)))/vec4(1.0-0.85);
-  if (v.x<0.85)
-    front.x = max(front.x,v.x*0.5);
-  if (v.y<0.85)
-    front.y = max(front.y,v.y*0.5);
-  if (v.z<0.85)
-    front.z = max(front.z,v.z*0.5);
-  if (v.w<0.85)
-    front.w = max(front.w,v.w*0.5);
+  bvec4 bs = lessThan(v, vec4(0.85));
+  front = max(front, vec4(bs) * v * 0.5);
   return front;
 }
 

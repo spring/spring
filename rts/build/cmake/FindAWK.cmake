@@ -63,7 +63,7 @@ if    (AWK_FOUND)
 
 	if    (${RET_VAL} EQUAL 0)
 		# reduce to first line
-		string(REPLACE "\\n.*" "" AWK_VERSION "${AWK_VERSION}")
+		String(REGEX REPLACE "\n.*" "" AWK_VERSION "${AWK_VERSION}")
 		if    (NOT AWK_FIND_QUIETLY)
 			message(STATUS "AWK version: ${AWK_VERSION}")
 		endif (NOT AWK_FIND_QUIETLY)

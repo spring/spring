@@ -9,12 +9,12 @@
 #include "PathAllocator.h"
 #include "PathFinder.h"
 #include "PathFinderDef.h"
+#include "PathLog.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/Misc/GeometricObjects.h"
-#include "System/LogOutput.h"
 
 #define PATHDEBUG 0
 
@@ -123,18 +123,18 @@ IPath::SearchResult CPathFinder::GetPath(
 	if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 		FinishSearch(moveData, path);
 
-		if (PATHDEBUG) {
-			LogObject() << "Path found.\n";
-			LogObject() << "Nodes tested: " << testedNodes << "\n";
-			LogObject() << "Open squares: " << openSquareBuffer.GetSize() << "\n";
-			LogObject() << "Path nodes: " << path.path.size() << "\n";
-			LogObject() << "Path cost: " << path.pathCost << "\n";
+		if (LOG_IS_ENABLED(L_DEBUG)) {
+			LOG_L(L_DEBUG, "Path found.");
+			LOG_L(L_DEBUG, "Nodes tested: %u", testedNodes);
+			LOG_L(L_DEBUG, "Open squares: %u", openSquareBuffer.GetSize());
+			LOG_L(L_DEBUG, "Path nodes: "_STPF_, path.path.size());
+			LOG_L(L_DEBUG, "Path cost: %f", path.pathCost);
 		}
 	} else {
-		if (PATHDEBUG) {
-			LogObject() << "No path found!\n";
-			LogObject() << "Nodes tested: " << testedNodes << "\n";
-			LogObject() << "Open squares: " << openSquareBuffer.GetSize() << "\n";
+		if (LOG_IS_ENABLED(L_DEBUG)) {
+			LOG_L(L_DEBUG, "No path found!");
+			LOG_L(L_DEBUG, "Nodes tested: %u", testedNodes);
+			LOG_L(L_DEBUG, "Open squares: %u", openSquareBuffer.GetSize());
 		}
 	}
 	return result;
@@ -247,7 +247,7 @@ IPath::SearchResult CPathFinder::DoSearch(const MoveData& moveData, const CPathF
 		return IPath::GoalOutOfRange;
 
 	// Below shall never be runned.
-	LogObject() << "ERROR: CPathFinder::DoSearch() - Unhandled end of search!\n";
+	LOG_L(L_ERROR, "%s - Unhandled end of search!", __FUNCTION__);
 	return IPath::Error;
 }
 
@@ -454,21 +454,21 @@ void CPathFinder::AdjustFoundPath(const MoveData& moveData, IPath::Path& foundPa
 	if (previous[2].x == square.x) {
 		if (previous[2].y == square.y-2) {
 			if (previous[1].x == square.x-2 && previous[1].y == square.y-4) {
-				if (PATHDEBUG) logOutput.Print("case N, NW");
+				LOG_L(L_DEBUG, "case N, NW");
 				TRYFIX3POINTS(-2, -2);
 			}
 			else if (previous[1].x == square.x+2 && previous[1].y == square.y-4) {
-				if (PATHDEBUG) logOutput.Print("case N, NE");
+				LOG_L(L_DEBUG, "case N, NE");
 				TRYFIX3POINTS(2, -2);
 			}
 		}
 		else if (previous[2].y == square.y+2) {
 			if (previous[1].x == square.x+2 && previous[1].y == square.y+4) {
-				if (PATHDEBUG) logOutput.Print("case S, SE");
+				LOG_L(L_DEBUG, "case S, SE");
 				TRYFIX3POINTS(2, 2);
 			}
 			else if (previous[1].x == square.x-2 && previous[1].y == square.y+4) {
-				if (PATHDEBUG) logOutput.Print("case S, SW");
+				LOG_L(L_DEBUG, "case S, SW");
 				TRYFIX3POINTS(-2, 2);
 			}
 		}
@@ -476,31 +476,31 @@ void CPathFinder::AdjustFoundPath(const MoveData& moveData, IPath::Path& foundPa
 	else if (previous[2].x == square.x-2) {
 		if (previous[2].y == square.y) {
 			if (previous[1].x == square.x-4 && previous[1].y == square.y-2) {
-				if (PATHDEBUG) logOutput.Print("case W, NW");
+				LOG_L(L_DEBUG, "case W, NW");
 				TRYFIX3POINTS(-2, -2);
 			}
 			else if (previous[1].x == square.x-4 && previous[1].y == square.y+2) {
-				if (PATHDEBUG) logOutput.Print("case W, SW");
+				LOG_L(L_DEBUG, "case W, SW");
 				TRYFIX3POINTS(-2, 2);
 			}
 		}
 		else if (previous[2].y == square.y-2) {
 			if (previous[1].x == square.x-2 && previous[1].y == square.y-4) {
-				if (PATHDEBUG) logOutput.Print("case NW, N");
+				LOG_L(L_DEBUG, "case NW, N");
 				TRYFIX3POINTS(0, -2);
 			}
 			else if (previous[1].x == square.x-4 && previous[1].y == square.y-2) {
-				if (PATHDEBUG) logOutput.Print("case NW, W");
+				LOG_L(L_DEBUG, "case NW, W");
 				TRYFIX3POINTS(-2, 0);
 			}
 		}
 		else if (previous[2].y == square.y+2) {
 			if (previous[1].x == square.x-2 && previous[1].y == square.y+4) {
-				if (PATHDEBUG) logOutput.Print("case SW, S");
+				LOG_L(L_DEBUG, "case SW, S");
 				TRYFIX3POINTS(0, 2);
 			}
 			else if (previous[1].x == square.x-4 && previous[1].y == square.y+2) {
-				if (PATHDEBUG) logOutput.Print("case SW, W");
+				LOG_L(L_DEBUG, "case SW, W");
 				TRYFIX3POINTS(-2, 0);
 			}
 		}
@@ -508,32 +508,32 @@ void CPathFinder::AdjustFoundPath(const MoveData& moveData, IPath::Path& foundPa
 	else if (previous[2].x == square.x+2) {
 		if (previous[2].y == square.y) {
 			if (previous[1].x == square.x+4 && previous[1].y == square.y-2) {
-				if (PATHDEBUG) logOutput.Print("case NE, E");
+				LOG_L(L_DEBUG, "case NE, E");
 				TRYFIX3POINTS(2, -2);
 			}
 			else if (previous[1].x == square.x+4 && previous[1].y == square.y+2) {
-				if (PATHDEBUG) logOutput.Print("case SE, E");
+				LOG_L(L_DEBUG, "case SE, E");
 				TRYFIX3POINTS(2, 2);
 			}
 		}
 		if (previous[2].y == square.y+2) {
 			if (previous[1].x == square.x+2 && previous[1].y == square.y+4) {
-				if (PATHDEBUG) logOutput.Print("case SE, S");
+				LOG_L(L_DEBUG, "case SE, S");
 				TRYFIX3POINTS(0, 2);
 			}
 			else if (previous[1].x == square.x+4 && previous[1].y == square.y+2) {
-				if (PATHDEBUG) logOutput.Print("case SE, E");
+				LOG_L(L_DEBUG, "case SE, E");
 				TRYFIX3POINTS(2, 0);
 			}
 
 		}
 		else if (previous[2].y == square.y-2) {
 			if (previous[1].x == square.x+2 && previous[1].y == square.y-4) {
-				if (PATHDEBUG) logOutput.Print("case NE, N");
+				LOG_L(L_DEBUG, "case NE, N");
 				TRYFIX3POINTS(0, -2);
 			}
 			else if (previous[1].x == square.x+4 && previous[1].y == square.y-2) {
-				if (PATHDEBUG) logOutput.Print("case NE, E");
+				LOG_L(L_DEBUG, "case NE, E");
 				TRYFIX3POINTS(0, -2);
 			}
 		}
