@@ -8,8 +8,6 @@
 
 #include "UDPConnection.h"
 
-#include "lib/streflop/streflop_cond.h"
-
 #include <boost/format.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/cstdint.hpp>
@@ -23,7 +21,6 @@
 #include "System/CRC.h"
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
 #include "System/Util.h"
 
 namespace netcode {
@@ -878,7 +875,7 @@ void UDPConnection::Close(bool flush) {
 }
 
 void UDPConnection::SetLossFactor(int factor) {
-	netLossFactor = Clamp(factor, (int)MIN_LOSS_FACTOR, (int)MAX_LOSS_FACTOR);
+	netLossFactor = std::max((int)MIN_LOSS_FACTOR, std::min(factor, (int)MAX_LOSS_FACTOR));
 }
 
 } // namespace netcode
