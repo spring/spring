@@ -24,6 +24,7 @@
 #include "System/Net/UnpackPacket.h"
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
 #include "lib/gml/gmlmut.h"
 
@@ -47,7 +48,7 @@ void CNetProtocol::InitClient(const char* server_addr, unsigned portnum, const s
 	netcode::UDPConnection* conn = new netcode::UDPConnection(configHandler->GetInt("SourcePort"), server_addr, portnum);
 	conn->Unmute();
 	serverConn.reset(conn);
-	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion));
+	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion, globalConfig->networkLossFactor));
 	serverConn->Flush(true);
 
 	LOG("Connecting to %s:%i using name %s", server_addr, portnum, myName.c_str());
@@ -58,7 +59,7 @@ void CNetProtocol::AttemptReconnect(const std::string& myName, const std::string
 
 	netcode::UDPConnection* conn = new netcode::UDPConnection(*serverConn);
 	conn->Unmute();
-	conn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion, true));
+	conn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion, globalConfig->networkLossFactor, true));
 	conn->Flush(true);
 
 	LOG("Reconnecting to server... %ds", dynamic_cast<netcode::UDPConnection&>(*serverConn).GetReconnectSecs());

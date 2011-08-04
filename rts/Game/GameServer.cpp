@@ -1618,7 +1618,7 @@ void CGameServer::ServerReadNet()
 			try {
 				netcode::UnpackPacket msg(packet, 3);
 				std::string name, passwd, version;
-				unsigned char reconnect;
+				unsigned char reconnect, netloss;
 				unsigned short netversion;
 				msg >> netversion;
 				if (netversion != NETWORK_VERSION)
@@ -1627,7 +1627,8 @@ void CGameServer::ServerReadNet()
 				msg >> passwd;
 				msg >> version;
 				msg >> reconnect;
-				BindConnection(name, passwd, version, false, UDPNet->AcceptConnection(), reconnect);
+				msg >> netloss;
+				BindConnection(name, passwd, version, false, UDPNet->AcceptConnection(), reconnect, netloss);
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(str(format(ConnectionReject) %ex.err %packet->data[0] %packet->data[2] %packet->length));
 				UDPNet->RejectConnection();
@@ -2171,7 +2172,7 @@ void CGameServer::AddAdditionalUser(const std::string& name, const std::string& 
 }
 
 
-unsigned CGameServer::BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link, bool reconnect)
+unsigned CGameServer::BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link, bool reconnect, int netloss)
 {
 	Message(str(format("%s attempt from %s") %(reconnect ? "Reconnection" : "Connection") %name));
 	Message(str(format(" -> Version: %s") %version));
@@ -2268,6 +2269,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		if (UDPNet)
 			UDPNet->UpdateConnections();
 		Message(str(format(" -> Connection reestablished (id %i)") %newPlayerNumber));
+		newPlayer.link->SetLossFactor(netloss);
 		newPlayer.link->Flush(!gameHasStarted);
 		return newPlayerNumber;
 	}
@@ -2294,6 +2296,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 
 	Message(str(format(" -> Connection established (given id %i)") %newPlayerNumber));
 
+	link->SetLossFactor(netloss);
 	link->Flush(!gameHasStarted);
 	return newPlayerNumber;
 }

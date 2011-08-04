@@ -5,8 +5,14 @@
 #include "Rendering/TeamHighlight.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
+#include "System/Net/UDPConnection.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Lua/LuaConfig.h"
+
+CONFIG(int, NetworkLossFactor)
+.defaultValue(netcode::UDPConnection::MIN_LOSS_FACTOR)
+	.minimumValue(netcode::UDPConnection::MIN_LOSS_FACTOR)
+	.maximumValue(netcode::UDPConnection::MAX_LOSS_FACTOR);
 
 CONFIG(int, InitialNetworkTimeout)
 	.defaultValue(30)
@@ -65,6 +71,7 @@ GlobalConfig::GlobalConfig()
 {
 	// Recommended semantics for "expert" type config values:
 	// <0 = disable (if applicable)
+	networkLossFactor = configHandler->GetInt("NetworkLossFactor");
 	initialNetworkTimeout = configHandler->GetInt("InitialNetworkTimeout");
 	networkTimeout = configHandler->GetInt("NetworkTimeout");
 	reconnectTimeout = configHandler->GetInt("ReconnectTimeout");

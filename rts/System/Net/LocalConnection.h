@@ -43,6 +43,7 @@ public:
 	bool NeedsReconnect();
 	void Unmute() {}
 	void Close(bool flush) {}
+	void SetLossFactor(int factor) {}
 
 	std::string Statistics() const;
 	std::string GetFullAddress() const;

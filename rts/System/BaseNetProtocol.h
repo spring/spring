@@ -14,7 +14,7 @@ namespace netcode
 }
 struct PlayerStatistics;
 
-const unsigned short NETWORK_VERSION = 3;
+const unsigned short NETWORK_VERSION = 4;
 
 /*
  * Comment behind NETMSG enumeration constant gives the extra data belonging to
@@ -168,7 +168,7 @@ public:
 	PacketType SendLuaDrawTime(uchar myPlayerNum, int mSec);
 	PacketType SendDirectControl(uchar myPlayerNum);
 	PacketType SendDirectControlUpdate(uchar myPlayerNum, uchar status, short heading, short pitch);
-	PacketType SendAttemptConnect(const std::string& name, const std::string& passwd, const std::string& version, bool reconnect = false);
+	PacketType SendAttemptConnect(const std::string& name, const std::string& passwd, const std::string& version, int netloss, bool reconnect = false);
 	PacketType SendShare(uchar myPlayerNum, uchar shareTeam, uchar bShareUnits, float shareMetal, float shareEnergy);
 	PacketType SendSetShare(uchar myPlayerNum, uchar myTeam, float metalShareFraction, float energyShareFraction);
 	PacketType SendSendPlayerStat();
