@@ -8,6 +8,7 @@
 
 #include "UDPConnection.h"
 
+#include "lib/streflop/streflop_cond.h"
 
 #include <boost/format.hpp>
 #include <boost/shared_ptr.hpp>
