@@ -1233,6 +1233,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\PlayerRosterDrawer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\PlayerRosterDrawer.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Game\PlayerStatistics.cpp"
 				>
 			</File>
@@ -4897,26 +4905,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Dedicated Server (Debug)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\builds\DS\main.cpp"
 				>
 				<FileConfiguration
@@ -4995,6 +4983,26 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Dedicated Server (Debug)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>
@@ -16903,6 +16911,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\assimp\code\IFCCurve.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\assimp\code\IFCGeometry.cpp"
 					>
 				</File>
@@ -16944,6 +16956,14 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\assimp\code\Importer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\Importer.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ImporterRegistry.cpp"
 					>
 				</File>
 				<File
@@ -17060,6 +17080,14 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\assimp\code\LWSLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\M3Importer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\M3Importer.h"
 					>
 				</File>
 				<File
@@ -17191,6 +17219,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\assimp\code\ObjExporter.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ObjExporter.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\assimp\code\ObjFileData.h"
 					>
 				</File>
@@ -17284,6 +17320,10 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\assimp\code\PolyTools.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\PostStepRegistry.cpp"
 					>
 				</File>
 				<File
@@ -17396,6 +17436,10 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\assimp\code\ScenePreprocessor.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ScenePrivate.h"
 					>
 				</File>
 				<File
