@@ -51,7 +51,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/IconHandler.h"
 #include "System/EventHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Config/ConfigHandler.h"
@@ -243,10 +243,10 @@ string CLuaUI::LoadFile(const string& filename) const
 	CFileHandler lockFile("gamedata/LockLuaUI.txt", SPRING_VFS_MOD);
 	if (lockFile.FileExists()) {
 		if (!CLuaHandle::GetDevMode()) {
-			logOutput.Print("This game has locked LuaUI access");
+			LOG("This game has locked LuaUI access");
 			accessMode = SPRING_VFS_MOD;
 		} else {
-			logOutput.Print("Bypassing this game's LuaUI access lock");
+			LOG("Bypassing this game's LuaUI access lock");
 			accessMode = SPRING_VFS_RAW SPRING_VFS_MOD;
 		}
 	}
@@ -459,7 +459,7 @@ void CLuaUI::ExecuteUIEventBatch() {
 				ShockFront(e.flt1, e.pos1, e.flt2, &e.flt3);
 				break;
 			default:
-				logOutput.Print("%s: Invalid Event %d", __FUNCTION__, e.id);
+				LOG_L(L_ERROR, "%s: Invalid Event %d", __FUNCTION__, e.id);
 				break;
 		}
 	}
@@ -543,20 +543,20 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 		return false; // no warnings
 	}
 	else if (args != 11) {
-		logOutput.Print("LayoutButtons() bad number of return values (%i)\n", args);
+		LOG_L(L_WARNING, "LayoutButtons() bad number of return values (%i)", args);
 		lua_settop(L, top);
 		return false;
 	}
 
 	if (!lua_isstring(L, 1)) {
-		logOutput.Print("LayoutButtons() bad menuName value\n");
+		LOG_L(L_WARNING, "LayoutButtons() bad menuName value");
 		lua_settop(L, top);
 		return false;
 	}
 	menuName = string(lua_tostring(L, 1), lua_strlen(L, 1));
 
 	if (!lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
-		logOutput.Print("LayoutButtons() bad xButtons or yButtons values\n");
+		LOG_L(L_WARNING, "LayoutButtons() bad xButtons or yButtons values");
 		lua_settop(L, top);
 		return false;
 	}
@@ -564,49 +564,49 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 	yButtons = lua_toint(L, 3);
 
 	if (!GetLuaIntList(L, 4, removeCmds)) {
-		logOutput.Print("LayoutButtons() bad removeCommands table\n");
+		LOG_L(L_WARNING, "LayoutButtons() bad removeCommands table");
 		lua_settop(L, top);
 		return false;
 	}
 
 	if (!GetLuaCmdDescList(L, 5, customCmds)) {
-		logOutput.Print("LayoutButtons() bad customCommands table\n");
+		LOG_L(L_WARNING, "LayoutButtons() bad customCommands table");
 		lua_settop(L, top);
 		return false;
 	}
 
 	if (!GetLuaIntList(L, 6, onlyTextureCmds)) {
-		logOutput.Print("LayoutButtons() bad onlyTexture table\n");
+		LOG_L(L_WARNING, "LayoutButtons() bad onlyTexture table");
 		lua_settop(L, top);
 		return false;
 	}
 
 	if (!GetLuaReStringList(L, 7, reTextureCmds)) {
-		logOutput.Print("LayoutButtons() bad reTexture table\n");
+		LOG_L(L_WARNING, "LayoutButtons() bad reTexture table");
 		lua_settop(L, top);
 		return false;
 	}
 
 	if (!GetLuaReStringList(L, 8, reNamedCmds)) {
-		logOutput.Print("LayoutButtons() bad reNamed table\n");
+		LOG_L(L_WARNING, "LayoutButtons() bad reNamed table");
 		lua_settop(L, top);
 		return false;
 	}
 
 	if (!GetLuaReStringList(L, 9, reTooltipCmds)) {
-		logOutput.Print("LayoutButtons() bad reTooltip table\n");
+		LOG_L(L_WARNING, "LayoutButtons() bad reTooltip table");
 		lua_settop(L, top);
 		return false;
 	}
 
 	if (!GetLuaReParamsList(L, 10, reParamsCmds)) {
-		logOutput.Print("LayoutButtons() bad reParams table\n");
+		LOG_L(L_WARNING, "LayoutButtons() bad reParams table");
 		lua_settop(L, top);
 		return false;
 	}
 
 	if (!GetLuaIntMap(L, 11, buttonList)) {
-		logOutput.Print("LayoutButtons() bad buttonList table\n");
+		LOG_L(L_WARNING, "LayoutButtons() bad buttonList table");
 		lua_settop(L, top);
 		return false;
 	}
@@ -768,14 +768,14 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 				} else if (key == "setext") {
 					cd.params.push_back(string("$se$") + value);
 				} else {
-					logOutput.Print("GetLuaCmdDescList() unknown key  (%s)\n", key.c_str());
+					LOG_L(L_WARNING, "GetLuaCmdDescList() unknown key (%s)", key.c_str());
 				}
 			}
 			else if (lua_israwstring(L, -2) && lua_istable(L, -1)) {
 				const string key = StringToLower(lua_tostring(L, -2));
 				if (key != "actions") {
-					logOutput.Print("GetLuaCmdDescList() non \"actions\" table: %s",
-					                key.c_str());
+					LOG_L(L_WARNING, "GetLuaCmdDescList() non \"actions\" table: %s",
+							key.c_str());
 					continue;
 				}
 				const int actionsTable = lua_gettop(L);
@@ -790,14 +790,14 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 				}
 			}
 			else {
-				logOutput.Print("GetLuaCmdDescList() bad entry\n");
+				LOG_L(L_WARNING, "GetLuaCmdDescList() bad entry");
 			}
 		}
 		cmdDescs.push_back(cd);
 	}
 
 	if (!lua_isnil(L, -1)) {
-		logOutput.Print("GetLuaCmdDescList() entry %i is not a table\n", paramIndex);
+		LOG_L(L_WARNING, "GetLuaCmdDescList() entry %i is not a table", paramIndex);
 		lua_pop(L, 1);
 		return false;
 	}
