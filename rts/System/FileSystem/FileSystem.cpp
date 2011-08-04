@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 /**
- * @brief Abstracts locating of content on different platforms
  * Glob conversion by Chris Han (based on work by Nathaniel Smith).
  */
 
@@ -43,13 +42,6 @@ FileSystem filesystem;
 		str += c;				\
 	} while (0)
 
-/**
- * @brief glob to regex
- * @param glob string containing glob
- * @return string containing regex
- *
- * Converts a glob expression to a regex
- */
 std::string FileSystem::glob_to_regex(const std::string& glob)
 {
 	std::string regex;
@@ -121,11 +113,6 @@ bool FileSystem::FileExists(std::string file)
 	return FileSystemHandler::FileExists(file);
 }
 
-/**
- * @brief get filesize
- *
- * @return the filesize or 0 if the file doesn't exist.
- */
 size_t FileSystem::GetFileSize(std::string file)
 {
 	if (!CheckFile(file)) {
@@ -135,12 +122,6 @@ size_t FileSystem::GetFileSize(std::string file)
 	return FileSystemHandler::GetFileSize(file);
 }
 
-/**
- * @brief creates a directory recursively
- *
- * Works like mkdir -p, ie. attempts to create parent directories too.
- * Operates on the current working directory.
- */
 bool FileSystem::CreateDirectory(std::string dir)
 {
 	if (!CheckFile(dir)) {
@@ -160,18 +141,6 @@ bool FileSystem::CreateDirectory(std::string dir)
 }
 
 
-/**
- * @brief find files
- *
- * Compiles a std::vector of all files below dir that match pattern.
- *
- * If FileSystem::RECURSE flag is set it recurses into subdirectories.
- * If FileSystem::INCLUDE_DIRS flag is set it includes directories in the
- * result too, as long as they match the pattern.
- *
- * Note that pattern doesn't apply to the names of recursed directories,
- * it does apply to the files inside though.
- */
 std::vector<std::string> FileSystem::FindFiles(std::string dir, const std::string& pattern, int flags) const
 {
 	if (!CheckFile(dir)) {
@@ -197,11 +166,6 @@ std::vector<std::string> FileSystem::FindFiles(std::string dir, const std::strin
 }
 
 
-/**
- * @brief get the directory part of a path
- * "/home/user/.spring/test.txt" -> "/home/user/.spring/"
- * "test.txt" -> ""
- */
 std::string FileSystem::GetDirectory(const std::string& path)
 {
 	size_t s = path.find_last_of("\\/");
@@ -211,10 +175,6 @@ std::string FileSystem::GetDirectory(const std::string& path)
 	return ""; //FIXME return "./"? (a short test caused a crash because CFileHandler used in Lua couldn't find a file in the base-dir)
 }
 
-/**
- * @brief get the filename part of a path
- * "/home/user/.spring/test.txt" -> "test.txt"
- */
 std::string FileSystem::GetFilename(const std::string& path)
 {
 	size_t s = path.find_last_of("\\/");
@@ -224,10 +184,6 @@ std::string FileSystem::GetFilename(const std::string& path)
 	return path;
 }
 
-/**
- * @brief get the basename part of a path, ie. the filename without extension
- * "/home/user/.spring/test.txt" -> "test"
- */
 std::string FileSystem::GetBasename(const std::string& path)
 {
 	std::string fn = GetFilename(path);
@@ -238,12 +194,6 @@ std::string FileSystem::GetBasename(const std::string& path)
 	return fn;
 }
 
-/**
- * @brief get the extension of the filename part of the path
- * "/home/user/.spring/test.txt" -> "txt"
- * "/home/user/.spring/test.txt..." -> "txt"
- * "/home/user/.spring/test.txt. . ." -> "txt"
- */
 std::string FileSystem::GetExtension(const std::string& path)
 {
 	const std::string fileName = GetFilename(path);
@@ -267,9 +217,6 @@ std::string FileSystem::GetExtension(const std::string& path)
 	return "";
 }
 
-/**
- * @brief converts all slashes and backslashes in path to the native_path_separator
- */
 std::string& FileSystem::FixSlashes(std::string& path)
 {
 	int sep = fs.GetNativePathSeparator();
@@ -282,9 +229,6 @@ std::string& FileSystem::FixSlashes(std::string& path)
 	return path;
 }
 
-/**
- * @brief converts backslashes in path to forward slashes
- */
 std::string& FileSystem::ForwardSlashes(std::string& path)
 {
 	for (size_t i = 0; i < path.size(); ++i) {
@@ -296,9 +240,6 @@ std::string& FileSystem::ForwardSlashes(std::string& path)
 	return path;
 }
 
-/**
- * @brief does a little checking of a filename
- */
 bool FileSystem::CheckFile(const std::string& file)
 {
 	// Don't allow code to escape from the data directories.
@@ -439,11 +380,6 @@ bool FileSystem::InWriteDir(const std::string& path, const std::string& prefix)
 }
 
 
-/**
- * @brief remove a file
- *
- * Operates on the current working directory.
- */
 bool FileSystem::Remove(std::string file) const
 {
 	if (!CheckFile(file)) {
