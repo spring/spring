@@ -1,16 +1,16 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _LOG_LEVEL_H
-#define _LOG_LEVEL_H
+#ifndef LOG_LEVEL_H
+#define LOG_LEVEL_H
 
 /*
  * see ILog.h for documentation
  */
 
 /**
- * @addtogroup logging_api
- * @{
+ * @name logging_api
  */
+///@{
 
 #define LOG_LEVEL_ALL       0
 
@@ -22,7 +22,7 @@
 
 #define LOG_LEVEL_NONE    255
 
-/** @} */ // group logging_api
+///@}
 
 
 /**
@@ -39,4 +39,4 @@
 	#endif
 #endif
 
-#endif // _LOG_LEVEL_H
+#endif // LOG_LEVEL_H

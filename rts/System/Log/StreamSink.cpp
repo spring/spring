@@ -20,10 +20,10 @@ extern "C" {
 #endif
 
 /**
+ * @name logging_sink_stream
  * ILog.h sink implementation.
- * @group logging_sink_stream
- * @{
  */
+///@{
 
 /// Records a log entry
 void log_sink_record_stream(const char* section, int level, const char* record)
@@ -34,7 +34,7 @@ void log_sink_record_stream(const char* section, int level, const char* record)
 	}
 }
 
-/** @} */ // group logging_sink_stream
+///@}
 
 
 namespace {

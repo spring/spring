@@ -39,7 +39,7 @@ public:
 
 	/**
 	 * @brief Deletes a packet from the buffer
-	 * @param queue index number
+	 * @param index queue index number
 	 * Useful for messages that skip queuing and need to be processed
 	 * immediately.
 	 */

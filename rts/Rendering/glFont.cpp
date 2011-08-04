@@ -1933,7 +1933,7 @@ void CglFont::glPrint(float x, float y, float s, const int& options, const std::
 		y = (int)y;
 	}
 
-	//! backup text & outline colors (also ::ColorResetIndicator will reset to those)
+	// backup text & outline colors (also ::ColorResetIndicator will reset to those)
 	baseTextColor = textColor;
 	baseOutlineColor = outlineColor;
 
@@ -1992,7 +1992,7 @@ void CglFont::glPrintTable(float x, float y, float s, const int& options, const 
 				--pos;
 				break;
 
-			//! column separator is `\t`==`horizontal tab`
+			// column separator is `\t`==`horizontal tab`
 			case '\x09':
 				++col;
 				if(col >= coltext.size()) {
