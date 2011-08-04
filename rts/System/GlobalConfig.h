@@ -14,6 +14,14 @@ public:
 	static void Deallocate();
 
 	/**
+	 * @brief network loss factor
+	 *
+	 * Network loss factor, a higher factor will reconfigure the protocol 
+	 * to resend data more frequently, i.e. waste bandwidth to reduce lag
+	 */
+	int networkLossFactor;
+
+	/**
 	 * @brief initial network timeout
 	 *
 	 * Network timeout in seconds, effective before the game has started

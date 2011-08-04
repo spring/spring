@@ -68,6 +68,7 @@ public:
 	virtual std::string GetFullAddress() const = 0;
 	virtual void Unmute() = 0;
 	virtual void Close(bool flush = false) = 0;
+	virtual void SetLossFactor(int factor) = 0;
 
 	/**
 	 * @brief update internals

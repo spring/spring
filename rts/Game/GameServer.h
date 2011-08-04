@@ -107,7 +107,7 @@ private:
 	 */
 	void KickPlayer(const int playerNum);
 
-	unsigned BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link, bool reconnect = false);
+	unsigned BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link, bool reconnect = false, int netloss = 0);
 
 	void CheckForGameStart(bool forced=false);
 	void StartGame();
