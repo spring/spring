@@ -24,79 +24,79 @@
 
 
 static int math_abs (lua_State *L) {
-  lua_pushnumber(L, math::fabs(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, math::fabs(luaL_checknumber_noassert(L, 1)));
   return 1;
 }
 
 static int math_sin (lua_State *L) {
-  lua_pushnumber(L, math::sin(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, math::sin(luaL_checknumber_noassert(L, 1)));
   return 1;
 }
 
 static int math_sinh (lua_State *L) {
-  lua_pushnumber(L, math::sinh(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, math::sinh(luaL_checknumber_noassert(L, 1)));
   return 1;
 }
 
 static int math_cos (lua_State *L) {
-  lua_pushnumber(L, math::cos(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, math::cos(luaL_checknumber_noassert(L, 1)));
   return 1;
 }
 
 static int math_cosh (lua_State *L) {
-  lua_pushnumber(L, math::cosh(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, math::cosh(luaL_checknumber_noassert(L, 1)));
   return 1;
 }
 
 static int math_tan (lua_State *L) {
-  lua_pushnumber(L, math::tan(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, math::tan(luaL_checknumber_noassert(L, 1)));
   return 1;
 }
 
 static int math_tanh (lua_State *L) {
-  lua_pushnumber(L, math::tanh(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, math::tanh(luaL_checknumber_noassert(L, 1)));
   return 1;
 }
 
 static int math_asin (lua_State *L) {
-  lua_pushnumber(L, math::asin(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, math::asin(luaL_checknumber_noassert(L, 1)));
   return 1;
 }
 
 static int math_acos (lua_State *L) {
-  lua_pushnumber(L, math::acos(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, math::acos(luaL_checknumber_noassert(L, 1)));
   return 1;
 }
 
 static int math_atan (lua_State *L) {
-  lua_pushnumber(L, math::atan(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, math::atan(luaL_checknumber_noassert(L, 1)));
   return 1;
 }
 
 static int math_atan2 (lua_State *L) {
-  lua_pushnumber(L, math::atan2(luaL_checknumber(L, 1), luaL_checknumber(L, 2)));
+  lua_pushnumber(L, math::atan2(luaL_checknumber_noassert(L, 1), luaL_checknumber_noassert(L, 2)));
   return 1;
 }
 
 static int math_ceil (lua_State *L) {
-  lua_pushnumber(L, math::ceil(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, math::ceil(luaL_checknumber_noassert(L, 1)));
   return 1;
 }
 
 static int math_floor (lua_State *L) {
-  lua_pushnumber(L, math::floor(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, math::floor(luaL_checknumber_noassert(L, 1)));
   return 1;
 }
 
 static int math_fmod (lua_State *L) {
-  lua_pushnumber(L, math::fmod(luaL_checknumber(L, 1), luaL_checknumber(L, 2)));
+  lua_pushnumber(L, math::fmod(luaL_checknumber_noassert(L, 1), luaL_checknumber_noassert(L, 2)));
   return 1;
 }
 
 static int math_modf (lua_State *L) {
   // FIXME -- streflop does not have modf()
-  // double fp = math::modf(luaL_checknumber(L, 1), &ip);
-  const float in = (float)luaL_checknumber(L, 1);
+  // double fp = math::modf(luaL_checknumber_noassert(L, 1), &ip);
+  const float in = (float)luaL_checknumber_noassert(L, 1);
 
   if (math::isnan(in)) {
     lua_pushnumber(L, in);
@@ -116,49 +116,49 @@ static int math_modf (lua_State *L) {
 }
 
 static int math_sqrt (lua_State *L) {
-  lua_pushnumber(L, math::sqrt(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, math::sqrt(luaL_checknumber_noassert(L, 1)));
   return 1;
 }
 
 static int math_pow (lua_State *L) {
-  lua_pushnumber(L, math::pow(luaL_checknumber(L, 1), luaL_checknumber(L, 2)));
+  lua_pushnumber(L, math::pow(luaL_checknumber_noassert(L, 1), luaL_checknumber_noassert(L, 2)));
   return 1;
 }
 
 static int math_log (lua_State *L) {
-  lua_pushnumber(L, math::log(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, math::log(luaL_checknumber_noassert(L, 1)));
   return 1;
 }
 
 static int math_log10 (lua_State *L) {
-  lua_pushnumber(L, math::log10(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, math::log10(luaL_checknumber_noassert(L, 1)));
   return 1;
 }
 
 static int math_exp (lua_State *L) {
-  lua_pushnumber(L, math::exp(luaL_checknumber(L, 1)));
+  lua_pushnumber(L, math::exp(luaL_checknumber_noassert(L, 1)));
   return 1;
 }
 
 static int math_deg (lua_State *L) {
-  lua_pushnumber(L, luaL_checknumber(L, 1)/RADIANS_PER_DEGREE);
+  lua_pushnumber(L, luaL_checknumber_noassert(L, 1)/RADIANS_PER_DEGREE);
   return 1;
 }
 
 static int math_rad (lua_State *L) {
-  lua_pushnumber(L, luaL_checknumber(L, 1)*RADIANS_PER_DEGREE);
+  lua_pushnumber(L, luaL_checknumber_noassert(L, 1)*RADIANS_PER_DEGREE);
   return 1;
 }
 
 static int math_frexp (lua_State *L) {
   int e;
-  lua_pushnumber(L, math::frexp(luaL_checknumber(L, 1), &e));
+  lua_pushnumber(L, math::frexp(luaL_checknumber_noassert(L, 1), &e));
   lua_pushinteger(L, e);
   return 2;
 }
 
 static int math_ldexp (lua_State *L) {
-  lua_pushnumber(L, math::ldexp(luaL_checknumber(L, 1), luaL_checkint(L, 2)));
+  lua_pushnumber(L, math::ldexp(luaL_checknumber_noassert(L, 1), luaL_checkint(L, 2)));
   return 1;
 }
 
@@ -166,10 +166,10 @@ static int math_ldexp (lua_State *L) {
 
 static int math_min (lua_State *L) {
   int n = lua_gettop(L);  /* number of arguments */
-  lua_Number dmin = luaL_checknumber(L, 1);
+  lua_Number dmin = luaL_checknumber_noassert(L, 1);
   int i;
   for (i=2; i<=n; i++) {
-    lua_Number d = luaL_checknumber(L, i);
+    lua_Number d = luaL_checknumber_noassert(L, i);
     if (d < dmin)
       dmin = d;
   }
@@ -180,10 +180,10 @@ static int math_min (lua_State *L) {
 
 static int math_max (lua_State *L) {
   int n = lua_gettop(L);  /* number of arguments */
-  lua_Number dmax = luaL_checknumber(L, 1);
+  lua_Number dmax = luaL_checknumber_noassert(L, 1);
   int i;
   for (i=2; i<=n; i++) {
-    lua_Number d = luaL_checknumber(L, i);
+    lua_Number d = luaL_checknumber_noassert(L, i);
     if (d > dmax)
       dmax = d;
   }
