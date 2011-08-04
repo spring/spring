@@ -131,7 +131,7 @@ struct PathNodeStateBuffer {
 	float GetMaxFCost() const { return fCostMax; }
 	float GetMaxGCost() const { return gCostMax; }
 
-	/// <xhm> and <zhm> are always passed in heightmap-coordinates
+	/// {@param xhm} and {@param zhm} are always passed in heightmap-coordinates
 	float GetNodeExtraCost(unsigned int xhm, unsigned int zhm, bool synced) const {
 		float c = 0.0f;
 

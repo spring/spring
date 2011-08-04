@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _LOG_UTIL_H
-#define _LOG_UTIL_H
+#ifndef LOG_UTIL_H
+#define LOG_UTIL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -20,5 +20,5 @@ const char* log_util_prepareSection(const char* section);
 } // extern "C"
 #endif
 
-#endif // _LOG_UTIL_H
+#endif // LOG_UTIL_H
 

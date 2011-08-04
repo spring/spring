@@ -31,10 +31,10 @@ static inline FILE* log_chooseStream(int level) {
 
 
 /**
+ * @name logging_sink_console
  * ILog.h sink implementation.
- * @group logging_sink_console
- * @{
  */
+///@{
 
 /// Records a log entry
 static void log_sink_record_console(const char* section, int level,
@@ -44,7 +44,7 @@ static void log_sink_record_console(const char* section, int level,
 	FPRINTF(outStream, "%s\n", record);
 }
 
-/** @} */ // group logging_sink_console
+///@}
 
 
 namespace {

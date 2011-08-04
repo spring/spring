@@ -441,7 +441,7 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 		}
 
 		if (globalRendering->haveGLSL) {
-			//! <normalsTex> is not used by ARB shaders
+			// <normalsTex> is not used by ARB shaders
 			glBindTexture(GL_TEXTURE_2D, normalsTex);
 		#if (SSMF_UNCOMPRESSED_NORMALS == 1)
 			glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_RGBA, GL_FLOAT, &pixels[0]);

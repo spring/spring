@@ -39,10 +39,10 @@ void log_backend_unregisterSink(log_sink_ptr sink) {
 }
 
 /**
+ * @name logging_backend
  * ILog.h backend implementation.
- * @group logging_backend
- * @{
  */
+///@{
 
 /// Eventually formats and routes the record to all sinks
 void log_backend_record(const char* section, int level, const char* fmt,
@@ -61,7 +61,7 @@ void log_backend_record(const char* section, int level, const char* fmt,
 	}
 }
 
-/** @} */ // group logging_backend
+///@}
 
 #ifdef __cplusplus
 } // extern "C"
