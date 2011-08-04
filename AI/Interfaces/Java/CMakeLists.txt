@@ -369,6 +369,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 
 	SetGlobal(${myName}_AIINTERFACE_VERS   ${myVersion})
 	SetGlobal(${myName}_AIINTERFACE_TARGET ${myTarget})
+	SetGlobal(${myName}_AIINTERFACE_TARGET_GENERATE_SOURCES ${myGenTarget})
 
 
 	# Init some vars

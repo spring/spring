@@ -258,7 +258,8 @@ if    (BUILD_${myName}_AIWRAPPER)
 			"${commonAwkScriptsDir}/commonDoc.awk"
 			"${commonAwkScriptsDir}/commonOOCallback.awk"
 			"${myBinDir}/wrappCallback.awk"
-			"${jAiIntJavaGeneratedSourceDir}/${myParentPkg}/AICallback.java"
+			# Handled through a target level dependency, see below
+			#"${jAiIntJavaGeneratedSourceDir}/${myParentPkg}/AICallback.java"
 		WORKING_DIRECTORY
 			"${myBinDir}"
 		COMMENT
@@ -289,6 +290,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		)
 
 	add_custom_target(${myGenTarget} DEPENDS ${myGeneratedSources})
+	add_dependencies(${myGenTarget} ${Java_AIINTERFACE_TARGET_GENERATE_SOURCES}) # for AICallback.java
 	add_dependencies(generateSources ${myGenTarget})
 
 
