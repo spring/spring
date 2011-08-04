@@ -651,16 +651,13 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			string::size_type end = script.find(';', 0);
 			string name = script.substr(0, end);
 			IExplosionGenerator* explGen = explGenHandler->LoadGenerator(name);
+			explGens.push_back(explGen); // these will be unloaded in ~CCustomExplosionGenerator()
 			void* explGenRaw = (void*) explGen;
 			code += OP_LOADP;
 			code.append((char*)(&explGenRaw), ((char*)(&explGenRaw)) + sizeof(void*));
 			code += OP_STOREP;
 			boost::uint16_t ofs = offset;
 			code.append((char*)&ofs, (char*)&ofs + 2);
-			//explGenRaw = NULL;
-			// FIXME can not do this here, cause explGen is still used later on -> memory-leak
-			//explGenHandler->UnloadGenerator(explGen);
-			//explGen = NULL;
 		}
 	}
 }
@@ -913,4 +910,17 @@ void CCustomExplosionGenerator::OutputProjectileClassInfo()
 		}
 		fs << "\n\n";
 	}
+}
+
+void CCustomExplosionGenerator::ClearCache() {
+
+	explosionIDs.clear();
+
+	std::vector<IExplosionGenerator*>::iterator egi;
+	for (egi = explGens.begin(); egi != explGens.end(); ++egi) {
+		explGenHandler->UnloadGenerator(*egi);
+		*egi = NULL;
+	}
+
+	explosionData.clear();
 }
