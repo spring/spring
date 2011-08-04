@@ -13,7 +13,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 
 CUnitTracker unitTracker;
@@ -66,7 +66,7 @@ int CUnitTracker::GetMode() const
 void CUnitTracker::IncMode()
 {
 	trackMode = (trackMode + 1) % TrackModeCount;
-	logOutput.Print("TrackMode: %s", modeNames[trackMode]);
+	LOG("TrackMode: %s", modeNames[trackMode]);
 }
 
 
@@ -79,7 +79,7 @@ void CUnitTracker::SetMode(int mode)
 	} else {
 		trackMode = mode;
 	}
-	logOutput.Print("TrackMode: %s", modeNames[trackMode]);
+	LOG("TrackMode: %s", modeNames[trackMode]);
 }
 
 
@@ -111,7 +111,7 @@ void CUnitTracker::Track()
 		} else if (enabled) {
 			if (trackMode != TrackSingle) {
 				trackMode = TrackSingle;
-				logOutput.Print("TrackMode: %s", modeNames[TrackSingle]);
+				LOG("TrackMode: %s", modeNames[TrackSingle]);
 			}
 			NextUnit();
 		} else {
