@@ -4,6 +4,8 @@
 
 #include "System/LogOutput.h"
 
+#include <cstdlib> // for NULL
+
 
 DummyVideoCapturing::DummyVideoCapturing() {
 }
