@@ -959,10 +959,10 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 				RemoveUnitFromResurrecters(owner);
 
 				if (builder->lastResurrected && uh->GetUnitUnsafe(builder->lastResurrected) != NULL && owner->unitDef->canRepair) {
-					// resurrection finished, start repair
-					c.SetID(CMD_REPAIR); // XXX kind of hackery to overwrite the current order i suppose
-					c.params.push_back(builder->lastResurrected);
-					c.options |= INTERNAL_ORDER;
+					// resurrection finished, start repair (by overwriting the current order)
+					c = Command(CMD_REPAIR, c.options | INTERNAL_ORDER);
+					c.AddParam(builder->lastResurrected);
+
 					builder->lastResurrected = 0;
 					inCommand = false;
 					SlowUpdate();

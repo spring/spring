@@ -316,12 +316,12 @@ bool CFactoryCAI::RemoveBuildCommand(CCommandQueue::iterator& it)
 		ExecuteStop(cmd);
 		return true;
 	}
-	// XXX what does this do?
-	if (cmd.GetID() < 0) { // (id < 0) -> it is a build command
-		// convert the build-command into a stop command
-		cmd.SetID(CMD_STOP);
-		cmd.tag = 0;
+
+	if (cmd.GetID() < 0) {
+		// build command, convert into a stop command
+		cmd = Command(CMD_STOP);
 	}
+
 	return false;
 }
 
