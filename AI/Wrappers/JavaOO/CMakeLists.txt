@@ -377,8 +377,8 @@ if    (BUILD_${myName}_AIWRAPPER)
 
 	add_custom_target(${myTarget} ALL)
 
-	IsMavenInstalled(isMavenInstalled)
-	if    (isMavenInstalled)
+	Find_Package(Maven)
+	if    (MAVEN_FOUND)
 		# This is required because the local Maven install does not create a
 		# file (whichs path we could know), and thus we would not be able to
 		# create a nice dependency chain without this.
@@ -387,11 +387,12 @@ if    (BUILD_${myName}_AIWRAPPER)
 		add_custom_command(
 			OUTPUT
 				"${myMavenInstallStubFile}"
-			COMMAND "mvn"
-				"install:install-file"
+			COMMAND "${MVN_BIN}"
+				${MVN_ATTRIBUTES_DEFAULT}
 				"-DpomFile=${myBuildDir}/pom-generated.xml"
 				"-Dfile=${myBuildDir}/${myBinJarFile}"
 				"-Dsources=${myBuildDir}/${mySrcJarFile}"
+				"install:install-file"
 			COMMAND "${CMAKE_COMMAND}"
 				"-E" "touch" "${myMavenInstallStubFile}"
 			DEPENDS
@@ -412,8 +413,8 @@ if    (BUILD_${myName}_AIWRAPPER)
 			)
 		add_dependencies(${myMavenInstallTarget} ${myJavaTarget} ${myPomTarget} ${Java_AIINTERFACE_TARGET_MVN_INSTALL})
 		add_dependencies(${myTarget} ${myMavenInstallTarget})
-	else  (isMavenInstalled)
+	else  (MAVEN_FOUND)
 		add_dependencies(${myTarget} ${myJavaTarget})
-	endif (isMavenInstalled)
+	endif (MAVEN_FOUND)
 
 endif (BUILD_${myName}_AIWRAPPER)
