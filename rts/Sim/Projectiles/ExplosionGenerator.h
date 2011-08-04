@@ -157,6 +157,13 @@ protected:
 	//! indexed by explosion handles
 	std::vector<CEGData> explosionData;
 
+	/**
+	 * Explosion generators used by explosionData.projectileSpawn.
+	 * We only need this for unloading them later.
+	 * @see #ClearCache
+	 */
+	std::vector<IExplosionGenerator*> explGens;
+
 	void ParseExplosionCode(ProjectileSpawnInfo* psi, int baseOffset, boost::shared_ptr<creg::IType> type, const std::string& script, std::string& code);
 	void ExecuteExplosionCode(const char* code, float damage, char* instance, int spawnIndex, const float3& dir);
 
@@ -164,10 +171,7 @@ public:
 	CCustomExplosionGenerator() {}
 	~CCustomExplosionGenerator() { ClearCache(); }
 
-	void ClearCache() {
-		explosionIDs.clear();
-		explosionData.clear();
-	}
+	void ClearCache();
 	void RefreshCache(const std::string&);
 
 	static void OutputProjectileClassInfo();
