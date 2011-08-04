@@ -186,6 +186,12 @@ IExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag
 	return eg;
 }
 
+void CExplosionGeneratorHandler::UnloadGenerator(IExplosionGenerator* explGen)
+{
+	creg::Class* cls = explGen->GetClass();
+	cls->DeleteInstance(explGen);
+}
+
 
 
 
@@ -614,6 +620,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		if (type->GetName() == "AtlasedTexture*") {
 			string::size_type end = script.find(';', 0);
 			string texname = script.substr(0, end);
+			// this memory is managed by textureAtlas (CTextureAtlas)
 			void* tex = projectileDrawer->textureAtlas->GetTexturePtr(texname);
 			code += OP_LOADP;
 			code.append((char*)(&tex), ((char*)(&tex)) + sizeof(void*));
@@ -623,6 +630,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		} else if (type->GetName() == "GroundFXTexture*") {
 			string::size_type end = script.find(';', 0);
 			string texname = script.substr(0, end);
+			// this memory is managed by groundFXAtlas (CTextureAtlas)
 			void* tex = projectileDrawer->groundFXAtlas->GetTexturePtr(texname);
 			code += OP_LOADP;
 			code.append((char*)(&tex), ((char*)(&tex)) + sizeof(void*));
@@ -632,6 +640,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		} else if (type->GetName() == "CColorMap*") {
 			string::size_type end = script.find(';', 0);
 			string colorstring = script.substr(0, end);
+			// gets stored and deleted at game end from inside CColorMap
 			void* colormap = CColorMap::LoadFromDefString(colorstring);
 			code += OP_LOADP;
 			code.append((char*)(&colormap), ((char*)(&colormap)) + sizeof(void*));
@@ -641,12 +650,17 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		} else if (type->GetName() == "IExplosionGenerator*") {
 			string::size_type end = script.find(';', 0);
 			string name = script.substr(0, end);
-			void* explgen = explGenHandler->LoadGenerator(name);
+			IExplosionGenerator* explGen = explGenHandler->LoadGenerator(name);
+			void* explGenRaw = (void*) explGen;
 			code += OP_LOADP;
-			code.append((char*)(&explgen), ((char*)(&explgen)) + sizeof(void*));
+			code.append((char*)(&explGenRaw), ((char*)(&explGenRaw)) + sizeof(void*));
 			code += OP_STOREP;
 			boost::uint16_t ofs = offset;
 			code.append((char*)&ofs, (char*)&ofs + 2);
+			//explGenRaw = NULL;
+			// FIXME can not do this here, cause explGen is still used later on -> memory-leak
+			//explGenHandler->UnloadGenerator(explGen);
+			//explGen = NULL;
 		}
 	}
 }
