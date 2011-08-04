@@ -9,6 +9,7 @@
 #include "LuaInclude.h"
 
 #include "KeyBindings.h"
+#include "KeyBindingsLog.h"
 #include "Game/GameSetup.h"
 #include "Sim/Misc/Team.h"
 #include "Lua/LuaDefs.h"
@@ -26,9 +27,12 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
-#include "System/LogOutput.h"
 #include "System/Util.h"
 
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_KEY_BINDINGS
 
 
 static const string UnitDefsName    = "UnitDefs";
@@ -71,7 +75,7 @@ CKeyAutoBinder::CKeyAutoBinder()
 	if (!AddEntriesToTable(L, "Game",               LuaConstGame::PushEntries)  ||
 	    !AddEntriesToTable(L, UnitDefsName.c_str(), LuaUnitDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "WeaponDefs",         LuaWeaponDefs::PushEntries)) {
-		logOutput.Print("KeyAutoBinder: error loading lua libraries\n");
+		LOG_L(L_ERROR, "Failed loading Lua libraries");
 	}
 
 	lua_settop(L, 0);
@@ -107,15 +111,13 @@ bool CKeyAutoBinder::LoadCode(lua_State *L, const string& code, const string& de
 	int error;
 	error = luaL_loadbuffer(L, code.c_str(), code.size(), debug.c_str());
 	if (error != 0) {
-		logOutput.Print("ERROR: KeyAutoBinder: Loading: %s\n",
-		                lua_tostring(L, -1));
+		LOG_L(L_ERROR, "Loading: %s", lua_tostring(L, -1));
 		lua_pop(L, 1);
 		return false;
 	}
 	error = lua_pcall(L, 0, 0, 0);
 	if (error != 0) {
-		logOutput.Print("ERROR: KeyAutoBinder: Running: %s\n",
-		                lua_tostring(L, -1));
+		LOG_L(L_ERROR, "Running: %s", lua_tostring(L, -1));
 		lua_pop(L, 1);
 		return false;
 	}
@@ -145,9 +147,7 @@ bool CKeyAutoBinder::LoadCompareFunc(lua_State *L)
 
 	const std::string codeStr = code.str();
 
-	if (keyBindings->GetDebug() > 1) {
-		logOutput.Print(codeStr);
-	}
+	LOG_L(L_DEBUG, "%s", codeStr.c_str());
 
 	if (!LoadCode(L, codeStr, CompareFuncName + "()")) {
 		return false;
@@ -187,11 +187,11 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
 	const string reqCall = MakeRequirementCall(requirements);
 	const string sortCall = MakeSortCriteriaCall(sortCriteria);
 
-	if (keyBindings->GetDebug() > 1) {
-		logOutput.Print("--reqCall(%s):\n", keystr.c_str());
-		logOutput.Print(reqCall);
-		logOutput.Print("--sortCall(%s):\n", keystr.c_str());
-		logOutput.Print(sortCall);
+	if (LOG_IS_ENABLED(L_DEBUG)) {
+		LOG_L(L_DEBUG, "--reqCall(%s):", keystr.c_str());
+		LOG_L(L_DEBUG, "%s", reqCall.c_str());
+		LOG_L(L_DEBUG, "--sortCall(%s):", keystr.c_str());
+		LOG_L(L_DEBUG, "%s", sortCall.c_str());
 	}
 
 	if (!LoadCode(L, reqCall,  keystr + ":" + ReqFuncName + "()") ||
@@ -228,10 +228,8 @@ bool CKeyAutoBinder::BindBuildType(const string& keystr,
 		if ((i < chords.size()) && (StringToLower(chords[i]) != "none")) {
 			keyBindings->ExecuteCommand(bindStr + " " + chords[i] + " " + action);
 		}
-		if (keyBindings->GetDebug() > 0) {
-			const string msg = "auto-" + bindStr + " " + keystr + " " + action;
-			logOutput.Print(msg);
-		}
+		LOG_L(L_DEBUG, "auto-%s %s %s",
+				bindStr.c_str(), keystr.c_str(), action.c_str());
 	}
 
 	return true;
@@ -363,8 +361,8 @@ bool CKeyAutoBinder::HasRequirements(lua_State* L, int unitDefID)
 	lua_pushnumber(L, unitDefID);
 	const int error = lua_pcall(L, 1, 1, 0);
 	if (error != 0) {
-		logOutput.Print("ERROR: KeyAutoBinder: Running %s(%i)\n  %s\n",
-		                ReqFuncName.c_str(), unitDefID, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "Running %s(%i)\n  %s",
+				ReqFuncName.c_str(), unitDefID, lua_tostring(L, -1));
 		lua_pop(L, 1);
 		return false;
 	}
@@ -381,8 +379,8 @@ bool CKeyAutoBinder::IsBetter(lua_State* L, int thisDefID, int thatDefID)
 	lua_pushnumber(L, thatDefID);
 	const int error = lua_pcall(L, 2, 1, 0);
 	if (error != 0) {
-		logOutput.Print("ERROR: KeyAutoBinder: Running %s(%i, %i)\n  %s\n",
-		                SortFuncName.c_str(), thisDefID, thatDefID, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "Running %s(%i, %i)\n  %s",
+				SortFuncName.c_str(), thisDefID, thatDefID, lua_tostring(L, -1));
 		lua_pop(L, 1);
 		return false;
 	}

@@ -9,6 +9,7 @@
 #include "System/mmgr.h"
 
 #include "KeyBindings.h"
+#include "KeyBindingsLog.h"
 #include "SDL_keysym.h"
 #include "KeyCodes.h"
 #include "KeySet.h"
@@ -19,7 +20,13 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Log/ILog.h"
+#include "System/Log/DefaultFilter.h"
 #include "System/Util.h"
+
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_KEY_BINDINGS
 
 
 CKeyBindings* keyBindings = NULL;
@@ -236,7 +243,6 @@ defaultBindings[] = {
 
 CKeyBindings::CKeyBindings()
 {
-	debug = 0;
 	fakeMetaKey = -1;
 	userCommand = true;
 
@@ -595,11 +601,21 @@ bool CKeyBindings::ExecuteCommand(const string& line)
 	const string command = StringToLower(words[0]);
 
 	if (command == "keydebug") {
+		const int curLogLevel = log_filter_section_getMinLevel(LOG_SECTION_KEY_BINDINGS);
+		bool debug = (curLogLevel == LOG_LEVEL_DEBUG);
 		if (words.size() == 1) {
-			debug = (debug <= 0) ? 1 : 0;
+			// toggle
+			debug = !debug;
 		} else if (words.size() >= 2) {
+			// set
 			debug = atoi(words[1].c_str());
 		}
+		if (debug && !LOG_IS_ENABLED_STATIC(L_DEBUG)) {
+			LOG_L(L_WARNING,
+					"You have to run a DEBUG build to be able to log L_DEBUG messages");
+		}
+		log_filter_section_setMinLevel(LOG_SECTION_KEY_BINDINGS,
+				(debug ? LOG_LEVEL_DEBUG : LOG_LEVEL_INFO));
 	}
 	else if ((command == "fakemeta") && (words.size() > 1)) {
 		if (!SetFakeMetaKey(words[1])) { return false; }
