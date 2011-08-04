@@ -912,8 +912,8 @@ void CCustomExplosionGenerator::OutputProjectileClassInfo()
 	}
 }
 
-void CCustomExplosionGenerator::ClearCache() {
-
+void CCustomExplosionGenerator::ClearCache()
+{
 	std::vector<IExplosionGenerator*>::iterator egi;
 	for (egi = explGens.begin(); egi != explGens.end(); ++egi) {
 		explGenHandler->UnloadGenerator(*egi);
