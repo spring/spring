@@ -10,7 +10,7 @@
 #include "Game/Camera.h"
 #include "Game/UI/MouseHandler.h"
 #include "Map/Ground.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Input/KeyInput.h"
 
@@ -278,7 +278,7 @@ float3 COrbitController::SwitchFrom() const
 void COrbitController::SwitchTo(bool showText)
 {
 	if (showText) {
-		logOutput.Print("Switching to Orbit style camera");
+		LOG("Switching to Orbit style camera");
 	}
 
 	Init(camera->pos, ZeroVector);
