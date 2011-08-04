@@ -62,25 +62,24 @@ class FileSystem
 		std::string LocateDir(std::string dir, int flags = 0) const;
 		std::vector<std::string> LocateDirs(const std::string& dir) const;
 
-		std::vector<std::string> FindDirsInDirectSubDirs(
-				const std::string& relPath) const;
+		std::vector<std::string> FindDirsInDirectSubDirs(const std::string& relPath) const;
 
 		// metadata read functions
-		bool FileExists(std::string path) const;
-		size_t GetFileSize(std::string path) const;
+		static bool FileExists(std::string path);
+		static size_t GetFileSize(std::string path);
 
 		// directory functions
-		bool CreateDirectory(std::string dir) const;
+		static bool CreateDirectory(std::string dir);
 		std::vector<std::string> FindFiles(std::string dir, const std::string& pattern, int flags = 0) const;
 
 		// convenience functions
-		std::string GetDirectory (const std::string& path) const;
-		std::string GetFilename  (const std::string& path) const;
-		std::string GetBasename  (const std::string& path) const;
-		std::string GetExtension (const std::string& path) const;
-		std::string glob_to_regex(const std::string& glob) const;
-		std::string& FixSlashes  (std::string& path) const;
-		std::string& ForwardSlashes(std::string& path) const;
+		static std::string GetDirectory (const std::string& path);
+		static std::string GetFilename  (const std::string& path);
+		static std::string GetBasename  (const std::string& path);
+		static std::string GetExtension (const std::string& path);
+		static std::string glob_to_regex(const std::string& glob);
+		static std::string& FixSlashes  (std::string& path);
+		static std::string& ForwardSlashes(std::string& path);
 
 		// access check functions
 		/**
@@ -97,7 +96,7 @@ class FileSystem
 		bool InWriteDir(const std::string& path, const std::string& prefix = "");
 
 	private:
-		bool CheckFile(const std::string& file) const;
+		static bool CheckFile(const std::string& file);
 //		bool CheckDir(const std::string& dir) const;
 
 //		FileSystem(const FileSystem&);
