@@ -165,6 +165,7 @@ private:
 		std::string problem;
 	};
 
+private:
 	void ScanDirs(const std::vector<std::string>& dirs, bool checksum = false);
 	void Scan(const std::string& curPath, bool doChecksum);
 
@@ -175,14 +176,18 @@ private:
 	void ReadCacheData(const std::string& filename);
 	void WriteCacheData(const std::string& filename);
 
-	std::map<std::string, ArchiveInfo> archiveInfo;
-	std::map<std::string, BrokenArchive> brokenArchives;
 	IFileFilter* CreateIgnoreFilter(IArchive* ar);
+
 	/**
 	 * Get CRC of the data in the specified archive.
 	 * Returns 0 if file could not be opened.
 	 */
 	unsigned int GetCRC(const std::string& filename);
+
+private:
+	std::map<std::string, ArchiveInfo> archiveInfos;
+	std::map<std::string, BrokenArchive> brokenArchives;
+
 	bool isDirty;
 	std::string cachefile;
 };
