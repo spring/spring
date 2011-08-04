@@ -6,7 +6,6 @@
 
 #include "SelectedUnitsAI.h"
 #include "SelectedUnits.h"
-#include "System/LogOutput.h"
 #include "System/NetProtocol.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "GlobalUnsynced.h"

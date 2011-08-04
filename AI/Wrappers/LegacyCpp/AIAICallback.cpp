@@ -122,7 +122,7 @@ springLegacyAI::CAIAICallback::~CAIAICallback() {
 		delete featureDefs[i];
 		featureDefs[i] = NULL;
 	}
-	delete[]featureDefs;
+	delete[] featureDefs;
 	featureDefs = NULL;
 	delete[] featureDefFrames;
 	featureDefFrames = NULL;

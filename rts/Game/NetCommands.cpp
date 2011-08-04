@@ -151,8 +151,8 @@ void CGame::ClientReadNet()
 
 			case NETMSG_SENDPLAYERSTAT: {
 				//logOutput.Print("Game over");
-			// Warning: using CPlayer::Statistics here may cause endianness problems
-			// once net->SendData is endian aware!
+				// Warning: using CPlayer::Statistics here may cause endianness problems
+				// once net->SendData is endian aware!
 				net->Send(CBaseNetProtocol::Get().SendPlayerStat(gu->myPlayerNum, playerHandler->Player(gu->myPlayerNum)->currentStats));
 				AddTraffic(-1, packetCode, dataLength);
 				break;
@@ -357,7 +357,7 @@ void CGame::ClientReadNet()
 					// error
 					LogObject() << "Error: Keyframe difference: " << gs->frameNum - (serverframenum - 1);
 				}
-				/* Fall through */
+				// Fall-through
 			}
 			case NETMSG_NEWFRAME: {
 				timeLeft -= 1.0f;
@@ -922,8 +922,8 @@ void CGame::ClientReadNet()
 				const bool allied = static_cast<bool>(inbuf[3]);
 				const unsigned char fromAllyTeam = teamHandler->AllyTeam(playerHandler->Player(player)->team);
 				if (teamHandler->IsValidAllyTeam(whichAllyTeam) && fromAllyTeam != whichAllyTeam) {
-					// FIXME - need to reset unit allyTeams
-					//       - need a call-in for AIs
+					// FIXME NETMSG_ALLIANCE need to reset unit allyTeams
+					// FIXME NETMSG_ALLIANCE need a call-in for AIs
 					teamHandler->SetAlly(fromAllyTeam, whichAllyTeam, allied);
 
 					// inform the players
@@ -1025,7 +1025,7 @@ void CGame::ClientReadNet()
 					playerHandler->AddPlayer(player);
 					eventHandler.PlayerAdded(player.playerNum);
 					logOutput.Print("Added new player: %s", name.c_str());
-					// TODO: perhaps add a lua hook, hook should be able to reassign the player to a team and/or create a new team/allyteam
+					// TODO NETMSG_CREATE_NEWPLAYER perhaps add a lua hook; hook should be able to reassign the player to a team and/or create a new team/allyteam
 					AddTraffic(-1, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
 					logOutput.Print("Got invalid New player message: %s", ex.what());

@@ -34,7 +34,7 @@ CONFIG(float, CamFreeAngVelTime).defaultValue(1.0f);
 /******************************************************************************/
 //
 //  TODO: - separate speed variable for tracking state
-//        - smooth ransitions between tracking states and units
+//        - smooth transitions between tracking states and units
 //        - improve controls
 //        - rename it?  ;-)
 //

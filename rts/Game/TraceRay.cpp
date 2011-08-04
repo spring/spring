@@ -20,7 +20,6 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "System/myMath.h"
-#include "System/LogOutput.h"
 
 
 //////////////////////////////////////////////////////////////////////
