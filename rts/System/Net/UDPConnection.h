@@ -83,7 +83,7 @@ public:
 	UDPConnection(CConnection& conn);
 	virtual ~UDPConnection();
 
-	enum { MIN_LOSS_FACTOR = 0, MAX_LOSS_FACTOR = 2, LOSS_FACTOR_SIZE };
+	enum { MIN_LOSS_FACTOR = 0, MAX_LOSS_FACTOR = 2 };
 	// START overriding CConnection
 
 	void SendData(boost::shared_ptr<const RawPacket> data);

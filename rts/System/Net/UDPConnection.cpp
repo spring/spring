@@ -762,7 +762,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 									resMidIter = resMidIterStart;
 								break;
 						}
-						rev = (rev + 1) % LOSS_FACTOR_SIZE;
+						rev = (rev + 1) % 3;
 					}
 					++resentChunks;
 					--maxResend;
