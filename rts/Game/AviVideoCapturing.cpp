@@ -84,7 +84,8 @@ void AviVideoCapturing::StartCapturing() {
 			delete aviGenerator;
 			aviGenerator = NULL;
 		} else {
-			LogObject() << "Recording avi to " << fileName << " size " << videoSizeX << " x " << videoSizeY;
+			LOG("Recording avi to %s size %i x %i",
+					fileName.c_str(), videoSizeX, videoSizeY);
 		}
 
 		SDL_ShowCursor(savedCursorMode);
