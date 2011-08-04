@@ -5,7 +5,7 @@
 
 #include "Console.h" 
 
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "Action.h"
 
 #include <assert.h>
@@ -25,7 +25,7 @@ Console& Console::Instance()
 void Console::AddCommandReceiver(const std::string& name, CommandReceiver* rec)
 {
 	if (commandMap.find(name) != commandMap.end()) {
-		logOutput.Print("Overwriting command: %s", name.c_str());
+		LOG_L(L_WARNING, "Overwriting command: %s", name.c_str());
 	}
 	commandMap[name] = rec;
 }
@@ -34,11 +34,11 @@ bool Console::ExecuteAction(const Action& action)
 {
 	if (action.command == "commands")
 	{
-		logOutput.Print("Registered commands:");
+		LOG("Registered commands:");
 		std::map<const std::string, CommandReceiver*>::const_iterator cri;
 		for (cri = commandMap.begin(); cri != commandMap.end(); ++cri)
 		{
-			logOutput.Print(cri->first);
+			LOG("%s", cri->first.c_str());
 		}
 		return true;
 	}

@@ -5,7 +5,7 @@
 
 #include "Action.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 #include <string>
 
@@ -112,7 +112,7 @@ void IActionExecutor<action_t, synced_v>::ExecuteAction(const action_t& action) 
 	//assert(action.GetAction().command == GetCommand());
 
 	if (IsCheatRequired() && !gs->cheatEnabled) {
-		logOutput.Print("Chat command /%s (%s) requires /cheat",
+		LOG_L(L_WARNING, "Chat command /%s (%s) requires /cheat",
 				GetCommand().c_str(),
 				(IsSynced() ? "synced" : "unsynced"));
 	} else {
@@ -136,8 +136,7 @@ void IActionExecutor<action_t, synced_v>::SetBoolArg(bool& container, const std:
 template<class action_t, bool synced_v>
 void IActionExecutor<action_t, synced_v>::LogSystemStatus(const std::string& system, bool status) {
 
-	logOutput.Print("%s is %s!", system.c_str(),
-			(status ? "enabled" : "disabled"));
+	LOG("%s is %s!", system.c_str(), (status ? "enabled" : "disabled"));
 }
 
 

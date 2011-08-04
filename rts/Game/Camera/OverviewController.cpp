@@ -8,7 +8,7 @@
 #include "Map/Ground.h"
 #include "Game/UI/MiniMap.h"
 #include "Game/UI/MouseHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 COverviewController::COverviewController()
 {
@@ -67,7 +67,7 @@ float3 COverviewController::SwitchFrom() const
 void COverviewController::SwitchTo(bool showText)
 {
 	if (showText) {
-		logOutput.Print("Switching to Overview style camera");
+		LOG("Switching to Overview style camera");
 	}
 
 	if (!globalRendering->dualScreenMode) {

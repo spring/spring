@@ -7,7 +7,7 @@
 
 #include "System/Config/ConfigHandler.h"
 #include "Game/Camera.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "Map/Ground.h"
 #include "System/myMath.h"
 
@@ -104,8 +104,9 @@ float3 CRotOverheadController::SwitchFrom() const
 
 void CRotOverheadController::SwitchTo(bool showText)
 {
-	if(showText)
-		logOutput.Print("Switching to Rotatable overhead camera");
+	if (showText) {
+		LOG("Switching to Rotatable overhead camera");
+	}
 }
 
 
