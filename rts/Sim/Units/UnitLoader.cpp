@@ -341,7 +341,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		}
 
 		// make sure square is entirely on the map
-		const int sqSize = streflop::ceil(streflop::sqrt((float) numRequestedUnits));
+		const int sqSize = math::ceil(math::sqrt((float) numRequestedUnits));
 		const float sqHalfMapSize = sqSize / 2 * 10 * SQUARE_SIZE;
 
 		pos.x = std::max(sqHalfMapSize, std::min(pos.x, float3::maxxpos - sqHalfMapSize - 1));
@@ -390,7 +390,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		if (unitDef != NULL) {
 			const int xsize = unitDef->xsize;
 			const int zsize = unitDef->zsize;
-			const int squareSize = streflop::ceil(streflop::sqrt((float) numRequestedUnits));
+			const int squareSize = math::ceil(math::sqrt((float) numRequestedUnits));
 			const float3 squarePos = float3(
 				pos.x - (((squareSize - 1) * xsize * SQUARE_SIZE) / 2),
 				pos.y,
@@ -427,7 +427,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 
 			const int xsize = featureDef->xsize;
 			const int zsize = featureDef->zsize;
-			const int squareSize = streflop::ceil(streflop::sqrt((float) numRequestedUnits));
+			const int squareSize = math::ceil(math::sqrt((float) numRequestedUnits));
 			const float3 squarePos = float3(
 				pos.x - (((squareSize - 1) * xsize * SQUARE_SIZE) / 2),
 				pos.y,

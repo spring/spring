@@ -1396,7 +1396,7 @@ int LuaSyncedCtrl::SetUnitCloak(lua_State* L)
 	else if (lua_isboolean(L, 3)) {
 		const float defDist = unit->unitDef->decloakDistance;
 		if (lua_toboolean(L, 3)) {
-			unit->decloakDistance = streflop::fabsf(defDist);
+			unit->decloakDistance = math::fabsf(defDist);
 		} else {
 			unit->decloakDistance = defDist;
 		}
@@ -2869,7 +2869,7 @@ int LuaSyncedCtrl::AddHeightMap(lua_State* L)
 
 	const int index = (z * gs->mapxp1) + x;
 	const float oldHeight = readmap->GetCornerHeightMapSynced()[index];
-	heightMapAmountChanged += streflop::fabsf(h);
+	heightMapAmountChanged += math::fabsf(h);
 
 	// update RecalcArea()
 	if (x < heightMapx1) { heightMapx1 = x; }
@@ -2916,7 +2916,7 @@ int LuaSyncedCtrl::SetHeightMap(lua_State* L)
 	}
 
 	const float heightDiff = (height - oldHeight);
-	heightMapAmountChanged += streflop::fabsf(heightDiff);
+	heightMapAmountChanged += math::fabsf(heightDiff);
 
 	// update RecalcArea()
 	if (x < heightMapx1) { heightMapx1 = x; }
@@ -3068,7 +3068,7 @@ int LuaSyncedCtrl::AddSmoothMesh(lua_State *L)
 
 	const int index = (z * smoothGround->GetMaxX()) + x;
 	const float oldHeight = smoothGround->GetMeshData()[index];
-	smoothMeshAmountChanged += streflop::fabsf(h);
+	smoothMeshAmountChanged += math::fabsf(h);
 
 	smoothGround->AddHeight(index, h);
 	// push the new height
@@ -3108,7 +3108,7 @@ int LuaSyncedCtrl::SetSmoothMesh(lua_State *L)
 	}
 
 	const float heightDiff = (height - oldHeight);
-	smoothMeshAmountChanged += streflop::fabsf(heightDiff);
+	smoothMeshAmountChanged += math::fabsf(heightDiff);
 
 	smoothGround->SetHeight(index, height);
 	lua_pushnumber(L, heightDiff);

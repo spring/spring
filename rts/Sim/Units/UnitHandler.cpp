@@ -234,9 +234,9 @@ void CUnitHandler::Update()
 	GML_UPDATE_TICKS();
 
 	#define VECTOR_SANITY_CHECK(v)                              \
-		assert(!streflop::isnan(v.x) && !streflop::isinf(v.x)); \
-		assert(!streflop::isnan(v.y) && !streflop::isinf(v.y)); \
-		assert(!streflop::isnan(v.z) && !streflop::isinf(v.z));
+		assert(!math::isnan(v.x) && !math::isinf(v.x)); \
+		assert(!math::isnan(v.y) && !math::isinf(v.y)); \
+		assert(!math::isnan(v.z) && !math::isinf(v.z));
 	#define MAPPOS_SANITY_CHECK(unit)                          \
 		if (unit->unitDef->IsGroundUnit()) {                   \
 			assert(unit->pos.x >= -(float3::maxxpos * 16.0f)); \

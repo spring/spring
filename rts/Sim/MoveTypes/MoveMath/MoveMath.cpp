@@ -158,8 +158,8 @@ bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obst
 		// note: in many cases separation is not sufficient
 		// even when it logically should be (submarines vs.
 		// floating DT in shallow water)
-		const float elevDif = streflop::fabs(unit->pos.y - obstacle->pos.y);
-		const float hghtSum = streflop::fabs(unit->height) + streflop::fabs(obstacle->height);
+		const float elevDif = math::fabs(unit->pos.y - obstacle->pos.y);
+		const float hghtSum = math::fabs(unit->height) + math::fabs(obstacle->height);
 
 		if ((elevDif - hghtSum) >= 1.0f) { return true;  }
 		if ( elevDif            <= 1.0f) { return false; }
