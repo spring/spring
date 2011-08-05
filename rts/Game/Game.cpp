@@ -377,6 +377,8 @@ CGame::~CGame()
 	SafeDelete(selectionKeys); // CSelectionKeyHandler*
 	SafeDelete(luaInputReceiver);
 	SafeDelete(mouse); // CMouseHandler*
+	SafeDelete(inMapDrawerModel);
+	SafeDelete(inMapDrawer);
 
 	SafeDelete(water);
 	SafeDelete(sky);
