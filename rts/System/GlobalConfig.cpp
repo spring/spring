@@ -1,11 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/StdAfx.h"
+#include "System/Net/UDPConnection.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/TeamHighlight.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
-#include "System/Net/UDPConnection.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Lua/LuaConfig.h"
 
