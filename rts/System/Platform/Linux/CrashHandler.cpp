@@ -528,6 +528,7 @@ namespace CrashHandler
 		signal(SIGILL,  HandleSignal); //! illegal instruction
 		signal(SIGPIPE, HandleSignal); //! maybe some network error
 		signal(SIGIO,   HandleSignal); //! who knows?
+		signal(SIGFPE,  HandleSignal); //! div0 and more
 		signal(SIGABRT, HandleSignal);
 		signal(SIGINT,  HandleSignal);
 	}
@@ -537,6 +538,7 @@ namespace CrashHandler
 		signal(SIGILL,  SIG_DFL);
 		signal(SIGPIPE, SIG_DFL);
 		signal(SIGIO,   SIG_DFL);
+		signal(SIGFPE,  SIG_DFL);
 		signal(SIGABRT, SIG_DFL);
 		signal(SIGINT,  SIG_DFL);
 	}
