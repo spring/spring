@@ -288,7 +288,7 @@ void CWeapon::Update()
 			lastRequest = gs->frameNum;
 
 			const float heading = GetHeadingFromVectorF(wantedDir.x, wantedDir.z);
-			const float pitch = streflop::asin(Clamp(wantedDir.dot(owner->updir), -1.0f, 1.0f));
+			const float pitch = math::asin(Clamp(wantedDir.dot(owner->updir), -1.0f, 1.0f));
 			// for COB, this sets anglegood to return value of aim script when it finished,
 			// for Lua, there exists a callout to set the anglegood member.
 			// FIXME: convert CSolidObject::heading to radians too.
@@ -813,7 +813,7 @@ bool CWeapon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 
 	float3 dif = pos - weaponMuzzlePos;
 	float heightDiff = 0.0f; // negative when target below owner
-	const float absTB = streflop::fabsf(targetBorder);
+	const float absTB = math::fabsf(targetBorder);
 
 	if (targetBorder != 0.0f && unit) {
 		float3 difDir(dif);

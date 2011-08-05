@@ -328,7 +328,7 @@ void CFontTextureRenderer::ApproximateTextureWidth(int* width, int* height)
 	 */
 	unsigned int numPixelsAvg = (numPixels + numPixels2) / 2;
 
-	*width  = next_power_of_2(math::ceil(streflop::sqrtf( (float)numPixelsAvg )));
+	*width  = next_power_of_2(math::ceil(math::sqrtf( (float)numPixelsAvg )));
 	*height = next_power_of_2(math::ceil( (float)numPixelsAvg / (float)*width ));
 
 	if (*width > 2048)

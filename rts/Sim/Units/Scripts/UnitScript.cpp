@@ -129,7 +129,7 @@ bool CUnitScript::MoveToward(float &cur, float dest, float speed)
 {
 	const float delta = dest - cur;
 
-	if (streflop::fabsf(delta) <= speed) {
+	if (math::fabsf(delta) <= speed) {
 		cur = dest;
 		return true;
 	}
@@ -162,7 +162,7 @@ bool CUnitScript::TurnToward(float &cur, float dest, float speed)
 		delta += TWOPI;
 	}
 
-	if (streflop::fabsf(delta) <= speed) {
+	if (math::fabsf(delta) <= speed) {
 		cur = dest;
 		return true;
 	}
@@ -193,7 +193,7 @@ bool CUnitScript::DoSpin(float &cur, float dest, float &speed, float accel, int 
 
 	// Check if we are not at the final speed and
 	// make sure we dont go past desired speed
-	if (streflop::fabsf(delta) <= accel) {
+	if (math::fabsf(delta) <= accel) {
 		speed = dest;
 		if (speed == 0.0f)
 			return true;
@@ -1220,11 +1220,11 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case ABS:
 		return abs(p1);
 	case KSIN:
-		return int(1024*streflop::sinf(TAANG2RAD*(float)p1));
+		return int(1024*math::sinf(TAANG2RAD*(float)p1));
 	case KCOS:
-		return int(1024*streflop::cosf(TAANG2RAD*(float)p1));
+		return int(1024*math::cosf(TAANG2RAD*(float)p1));
 	case KTAN:
-		return int(1024*streflop::tanf(TAANG2RAD*(float)p1));
+		return int(1024*math::tanf(TAANG2RAD*(float)p1));
 	case SQRT:
 		return int(math::sqrt((float)p1));
 	case FLANK_B_MODE:

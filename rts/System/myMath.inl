@@ -101,7 +101,7 @@ inline shortint2 GetHAndPFromVector(const float3& vec)
   #if defined BUILDING_AI
 	int iy = (int) (std::asin(vec.y) * (SHORTINT_MAXVALUE * INVPI));
   #else
-	int iy = (int) (streflop::asin(vec.y) * (SHORTINT_MAXVALUE * INVPI));
+	int iy = (int) (math::asin(vec.y) * (SHORTINT_MAXVALUE * INVPI));
   #endif
 	iy %= SHORTINT_MAXVALUE;
 	ret.y = (short int) iy;
@@ -117,7 +117,7 @@ inline float2 GetHAndPFromVectorF(const float3& vec)
   #if defined BUILDING_AI
 	ret.y = std::asin(vec.y);
   #else
-	ret.y = streflop::asin(vec.y);
+	ret.y = math::asin(vec.y);
   #endif
 	ret.x = GetHeadingFromVectorF(vec.x, vec.z);
 	return ret;

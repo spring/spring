@@ -85,8 +85,8 @@ bool CExtractorBuilding::IsNeighbour(CExtractorBuilding* other)
 
 	if (sum == 2) {
 		// square vs. square
-		const float dx = streflop::fabs(this->pos.x - other->pos.x);
-		const float dz = streflop::fabs(this->pos.z - other->pos.z);
+		const float dx = math::fabs(this->pos.x - other->pos.x);
+		const float dz = math::fabs(this->pos.z - other->pos.z);
 		const float r = this->extractionRange + other->extractionRange;
 		return (dx < r && dz < r);
 	}

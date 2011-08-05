@@ -171,8 +171,8 @@ void CollisionVolume::Init(const float3& scales, const float3& offsets, int vTyp
 
 	if (volumeType == COLVOL_TYPE_ELLIPSOID) {
 		// if all axes are equal in scale, volume is a sphere (a special-case ellipsoid)
-		if ((streflop::fabsf(adjScales.x - adjScales.y) < EPS) &&
-		    (streflop::fabsf(adjScales.y - adjScales.z) < EPS))
+		if ((math::fabsf(adjScales.x - adjScales.y) < EPS) &&
+		    (math::fabsf(adjScales.y - adjScales.z) < EPS))
 		{
 			LOG_L(L_DEBUG, "auto-converting spherical COLVOL_TYPE_ELLIPSOID to COLVOL_TYPE_SPHERE");
 			volumeType = COLVOL_TYPE_SPHERE;
