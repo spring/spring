@@ -141,7 +141,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
-#include "System/FPUCheck.h"
+#include "System/Sync/FPUCheck.h"
 #include "System/GlobalConfig.h"
 #include "System/NetProtocol.h"
 #include "System/SpringApp.h"

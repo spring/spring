@@ -1,15 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-/**
- * @brief good_fpu_control_registers function
- *
- * Assertions on floating point unit control registers.
- * For now it only defines the good_fpu_control_registers() function.
- */
-
-#ifndef _FPU_CHECK_H
-#define _FPU_CHECK_H
-
+#include "FPUCheck.h"
+#include <cstddef>
 #include "System/Log/ILog.h"
 #include "lib/streflop/streflop_cond.h"
 
@@ -62,7 +54,7 @@ MaskRsvd: 0    0    0  1  1  1  1  1   0    0   1  1  1  1  1  1 = 0x1F3F
 
 	Source: Intel Architecture Software Development Manual, Volume 1, Basic Architecture
 */
-static inline void good_fpu_control_registers(const char* text)
+void good_fpu_control_registers(const char* text)
 {
 	// We are paranoid.
 	// We don't trust the enumeration constants from streflop / (g)libc.
@@ -113,5 +105,3 @@ static inline void good_fpu_control_registers(const char* text)
 	}
 #endif
 }
-
-#endif // !_FPU_CHECK_H

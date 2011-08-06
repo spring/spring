@@ -45,7 +45,7 @@
 #include "System/bitops.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
-#include "System/FPUCheck.h"
+#include "System/Sync/FPUCheck.h"
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"

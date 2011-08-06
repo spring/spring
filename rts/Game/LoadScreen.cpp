@@ -23,7 +23,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
-#include "System/FPUCheck.h"
+#include "System/Sync/FPUCheck.h"
 #include "System/LogOutput.h"
 #include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
