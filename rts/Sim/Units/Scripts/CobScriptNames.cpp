@@ -1,10 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <cstdio>
-
-#include "Sim/Misc/GlobalConstants.h"
 #include "CobScriptNames.h"
-#include "System/LogOutput.h"
+#include "Sim/Misc/GlobalConstants.h"
+
+#include <cstdio>
 
 using std::sprintf;
 
@@ -78,7 +77,7 @@ const vector<string>& CCobUnitScriptNames::GetScriptNames()
 	}
 
 	//for (size_t i = 0; i < scriptNames.size(); ++i) {
-	//	logOutput.Print("COBFN: %3d %s", i, scriptNames[i].c_str());
+	//	LOG_L(L_DEBUG, "COBFN: %3d %s", i, scriptNames[i].c_str());
 	//}
 
 	return scriptNames;
@@ -112,7 +111,7 @@ const std::map<std::string, int>& CCobUnitScriptNames::GetScriptMap()
 	scriptMap.insert(pair<string, int>("FireTertiary",     COBFN_FirePrimary + COBFN_Weapon_Funcs * 2));
 
 	//for (std::map<string, int>::const_iterator it = scriptMap.begin(); it != scriptMap.end(); ++it) {
-	//	logOutput.Print("COBFN: %s -> %3d", it->first.c_str(), it->second);
+	//	LOG_L(L_DEBUG, "COBFN: %s -> %3d", it->first.c_str(), it->second);
 	//}
 
 	return scriptMap;
