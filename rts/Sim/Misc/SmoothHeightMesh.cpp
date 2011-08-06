@@ -10,6 +10,7 @@
 #include "Map/ReadMap.h"
 #include "System/float3.h"
 #include "System/myMath.h"
+#include "System/OpenMP_cond.h"
 #include "System/TimeProfiler.h"
 
 #include "System/mmgr.h"
@@ -277,7 +278,9 @@ inline static void BlurHorizontal(
 	const float n = 2.0f * smoothrad + 1.0f;
 	const float recipn = 1.0f / n;
 
-	for (int y = 0; y <= maxy; ++y) {
+	int y;
+	#pragma omp parallel for private(y) schedule(static, 1000)
+	for (y = 0; y <= maxy; ++y) {
 		float avg = 0.0f;
 
 		for (int x = 0; x <= 2 * ismoothrad; ++x) {
@@ -330,7 +333,9 @@ inline static void BlurVertical(
 	const float n = 2.0f * smoothrad + 1.0f;
 	const float recipn = 1.0f / n;
 
-	for (int x = 0; x <= maxx; ++x) {
+	int x;
+	#pragma omp parallel for private(x) schedule(static, 1000)
+	for (x = 0; x <= maxx; ++x) {
 		float avg = 0.0f;
 
 		for (int y = 0; y <= 2 * ismoothrad; ++y) {
