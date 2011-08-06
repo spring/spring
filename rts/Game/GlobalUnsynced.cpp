@@ -17,6 +17,7 @@
 #include "System/Exceptions.h"
 #include "System/Util.h"
 #include "System/creg/creg_cond.h"
+#include "System/Sync/SyncTracer.h"
 
 #include <SDL_timer.h>
 #include <time.h>
