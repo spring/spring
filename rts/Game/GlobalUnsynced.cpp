@@ -130,6 +130,10 @@ void CGlobalUnsynced::SetMyPlayer(const int myNumber)
 {
 	myPlayerNum = myNumber;
 
+#ifdef TRACE_SYNC
+	tracefile.Initialize(myPlayerNum);
+#endif
+
 	const CPlayer* myPlayer = playerHandler->Player(myPlayerNum);
 
 	myTeam = myPlayer->team;

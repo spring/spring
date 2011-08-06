@@ -716,17 +716,6 @@ void CGame::LoadFinalize()
 	lastCpuUsageTime = gu->gameTime;
 	updateDeltaSeconds = 0.0f;
 
-#ifdef TRACE_SYNC
-	tracefile.NewInterval();
-	tracefile.NewInterval();
-	tracefile.NewInterval();
-	tracefile.NewInterval();
-	tracefile.NewInterval();
-	tracefile.NewInterval();
-	tracefile.NewInterval();
-	tracefile.NewInterval();
-#endif
-
 	finishedLoading = true;
 }
 
@@ -885,11 +874,6 @@ bool CGame::Update()
 			leastQue = 10000;
 			timeLeft = 0.0f;
 		}
-
-#ifdef TRACE_SYNC
-		tracefile.DeleteInterval();
-		tracefile.NewInterval();
-#endif
 	}
 
 	if (!skipping)
@@ -1418,7 +1402,6 @@ void CGame::SimFrame() {
 	gs->frameNum++;
 
 #ifdef TRACE_SYNC
-	//uh->CreateChecksum();
 	tracefile << "New frame:" << gs->frameNum << " " << gs->GetRandSeed() << "\n";
 #endif
 
