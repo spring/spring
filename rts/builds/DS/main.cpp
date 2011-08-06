@@ -22,6 +22,7 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/LoadSave/DemoRecorder.h"
+#include "System/Platform/CrashHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/Exceptions.h"
@@ -42,6 +43,8 @@ int main(int argc, char* argv[])
 #ifdef _WIN32
 	try {
 #endif
+	// Initialize crash reporting
+	CrashHandler::Install();
 
 	if (argc != 2) {
 		printf("[DS] usage: %s <full_path_to_script | --version>\n", argv[0]);
