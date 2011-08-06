@@ -3,10 +3,6 @@
 #ifndef UPCAST_H
 #define UPCAST_H
 
-// Defining this gives problems on 64 bit GCC 4.1.1,
-// and SyncedSint64 & SyncedUint64 aren't needed at this moment anyway.
-//#define UPCAST_USE_64_BIT_TYPES
-
 namespace upcast {
 	template<class T> struct UnaryUpcast {};
 	template<class U, class V> struct BinaryUpcast {};
@@ -28,11 +24,6 @@ namespace upcast {
 	template<> struct UnaryUpcast<          float > { typedef         float type; };
 	template<> struct UnaryUpcast<         double > { typedef        double type; };
 	template<> struct UnaryUpcast<    long double > { typedef   long double type; };
-
-#ifdef UPCAST_USE_64_BIT_TYPES
-	template<> struct UnaryUpcast<         int64_t > { typedef        int64_t type; };
-	template<> struct UnaryUpcast<         uint64_t > { typedef        uint64_t type; };
-#endif // UPCAST_USE_64_BIT_TYPES
 
 #define UPCAST1(U, V, W) \
 	template<> struct BinaryUpcast<U,V> { typedef W type; }
@@ -70,26 +61,6 @@ namespace upcast {
 	UPCAST1(        double ,        double ,        double );
 	UPCAST2(        double ,   long double ,   long double );
 	UPCAST1(   long double ,   long double ,   long double );
-
-#ifdef UPCAST_USE_64_BIT_TYPES
-	UPCAST2(   signed int  ,        int64_t ,        int64_t );
-	UPCAST2(   signed int  ,        uint64_t ,        uint64_t );
-	UPCAST2(   signed long ,        int64_t ,        int64_t );
-	UPCAST2(   signed long ,        uint64_t ,        uint64_t );
-	UPCAST2( unsigned int  ,        int64_t ,        int64_t );
-	UPCAST2( unsigned int  ,        uint64_t ,        uint64_t );
-	UPCAST2( unsigned long ,        int64_t ,        int64_t );
-	UPCAST2( unsigned long ,        uint64_t ,        uint64_t );
-	UPCAST1(        int64_t ,        int64_t ,        int64_t );
-	UPCAST2(        int64_t ,        uint64_t ,        uint64_t );
-	UPCAST2(        int64_t ,         float ,         float );
-	UPCAST2(        int64_t ,        double ,        double );
-	UPCAST2(        int64_t ,   long double ,   long double );
-	UPCAST1(        uint64_t ,        uint64_t ,        uint64_t );
-	UPCAST2(        uint64_t ,         float ,         float );
-	UPCAST2(        uint64_t ,        double ,        double );
-	UPCAST2(        uint64_t ,   long double ,   long double );
-#endif // UPCAST_USE_64_BIT_TYPES
 
 #undef UPCAST1
 #undef UPCAST2

@@ -57,6 +57,7 @@ static inline boost::uint32_t HsiehHash (const char * data, int len, boost::uint
 		hash += *data;
 		hash ^= hash << 10;
 		hash += hash >> 1;
+		break;
 	}
 
 	/* Force "avalanching" of final 127 bits */

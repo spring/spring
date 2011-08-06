@@ -5,10 +5,6 @@
 
 #ifdef SYNCCHECK
 
-#include <assert.h>
-#include <deque>
-#include <vector>
-
 #ifdef TRACE_SYNC
 	#include "SyncTracer.h"
 #endif
@@ -30,29 +26,25 @@ class CSyncChecker {
 		static unsigned GetChecksum() { return g_checksum; }
 		static void NewFrame() { g_checksum = 0xfade1eaf; }
 
-	private:
-
-		static unsigned g_checksum;
-
-		static inline void Sync(void* p, unsigned size) {
+		static void Sync(const void* p, unsigned size) {
 			// most common cases first, make it easy for compiler to optimize for it
 			// simple xor is not enough to detect multiple zeroes, e.g.
 #ifdef TRACE_SYNC_HEAVY
-			g_checksum = HsiehHash((char*)p, size, g_checksum);
+			g_checksum = HsiehHash((const char*)p, size, g_checksum);
 #else
 			switch(size) {
 			case 1:
-				g_checksum += *(unsigned char*)p;
+				g_checksum += *(const unsigned char*)p;
 				g_checksum ^= g_checksum << 10;
 				g_checksum += g_checksum >> 1;
 				break;
 			case 2:
-				g_checksum += *(unsigned short*)(char*)p;
+				g_checksum += *(const unsigned short*)(const char*)p;
 				g_checksum ^= g_checksum << 11;
 				g_checksum += g_checksum >> 17;
 				break;
 			case 4:
-				g_checksum += *(unsigned int*)(char*)p;
+				g_checksum += *(const unsigned int*)(const char*)p;
 				g_checksum ^= g_checksum << 16;
 				g_checksum += g_checksum >> 11;
 				break;
@@ -60,12 +52,12 @@ class CSyncChecker {
 			{
 				unsigned i = 0;
 				for (; i < (size & ~3); i += 4) {
-					g_checksum += *(unsigned int*)(char*)p + i;
+					g_checksum += *(const unsigned int*)(const char*)p + i;
 					g_checksum ^= g_checksum << 16;
 					g_checksum += g_checksum >> 11;
 				}
 				for (; i < size; ++i) {
-					g_checksum += *(unsigned char*)p + i;
+					g_checksum += *(const unsigned char*)p + i;
 					g_checksum ^= g_checksum << 10;
 					g_checksum += g_checksum >> 1;
 				}
@@ -75,7 +67,9 @@ class CSyncChecker {
 #endif
 		}
 
-		friend class CSyncedPrimitiveBase;
+	private:
+
+		static unsigned g_checksum;
 };
 
 #endif // SYNCDEBUG

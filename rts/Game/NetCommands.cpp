@@ -629,7 +629,7 @@ void CGame::ClientReadNet()
 				float energyShare = std::min(*(float*)&inbuf[8], (float)team1->energy);
 
 				if (metalShare != 0.0f) {
-					metalShare = std::min(metalShare, team1->metal);
+					metalShare = std::min(metalShare, (float)team1->metal);
 					if (!luaRules || luaRules->AllowResourceTransfer(teamID1, teamID2, "m", metalShare)) {
 						team1->metal                       -= metalShare;
 						team1->metalSent                   += metalShare;
@@ -640,7 +640,7 @@ void CGame::ClientReadNet()
 					}
 				}
 				if (energyShare != 0.0f) {
-					energyShare = std::min(energyShare, team1->energy);
+					energyShare = std::min(energyShare, (float)team1->energy);
 					if (!luaRules || luaRules->AllowResourceTransfer(teamID1, teamID2, "e", energyShare)) {
 						team1->energy                       -= energyShare;
 						team1->energySent                   += energyShare;
