@@ -49,10 +49,26 @@ INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/7zip)
 
 
 ### Assemble sources
+IF	(UNIX)
+	SET(sources_engine_Platform_CrashHandler
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/thread_backtrace
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler)
+ELSEIF	(WIN32)
+	SET(sources_engine_Platform_CrashHandler
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/seh
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/CrashHandler)
+ELSE	()
+	SET(sources_engine_Platform_CrashHandler
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Mac/CrashHandler)
+ENDIF	()
+
 SET(system_files
 	${sources_engine_System_FileSystem}
 	${sources_engine_System_Log}
 	${sources_engine_System_Net}
+	${sources_engine_Platform_CrashHandler}
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigHandler
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigLocater
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigSource
