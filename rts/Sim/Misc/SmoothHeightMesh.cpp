@@ -269,12 +269,11 @@ inline static void FixRemainingMaxima(
 inline static void BlurHorizontal(
 	const int maxx,
 	const int maxy,
-	const float smoothrad,
+	const int smoothrad,
 	const float resolution,
 	const std::vector<float>& mesh,
 	std::vector<float>& smoothed)
 {
-	const int ismoothrad = smoothrad;
 	const float n = 2.0f * smoothrad + 1.0f;
 	const float recipn = 1.0f / n;
 
@@ -283,19 +282,19 @@ inline static void BlurHorizontal(
 	for (y = 0; y <= maxy; ++y) {
 		float avg = 0.0f;
 
-		for (int x = 0; x <= 2 * ismoothrad; ++x) {
+		for (int x = 0; x <= 2 * smoothrad; ++x) {
 			avg += mesh[x + y * maxx];
 		}
 
 		for (int x = 0; x <= maxx; ++x) {
 			const int idx = x + y * maxx;
 
-			if (x <= ismoothrad || x > (maxx - ismoothrad)) {
+			if (x <= smoothrad || x > (maxx - smoothrad)) {
 				// map-border case
 				smoothed[idx] = 0.0f;
 
-				const int xstart = std::max(x - ismoothrad, 0);
-				const int xend   = std::min(x + ismoothrad, maxx);
+				const int xstart = std::max(x - smoothrad, 0);
+				const int xend   = std::min(x + smoothrad, maxx);
 
 				for (int x1 = xstart; x1 <= xend; ++x1) {
 					smoothed[idx] += mesh[x1 + y * maxx];
@@ -307,7 +306,7 @@ inline static void BlurHorizontal(
 				smoothed[idx] = std::min(readmap->currMaxHeight, std::max(gh, sh));
 			} else {
 				// non-border case
-				avg += mesh[idx + ismoothrad] - mesh[idx - ismoothrad - 1];
+				avg += mesh[idx + smoothrad] - mesh[idx - smoothrad - 1];
 
 				const float gh = ground->GetHeightAboveWater(x * resolution, y * resolution);
 				const float sh = recipn * avg;
@@ -324,12 +323,11 @@ inline static void BlurHorizontal(
 inline static void BlurVertical(
 	const int maxx,
 	const int maxy,
-	const float smoothrad,
+	const int smoothrad,
 	const float resolution,
 	const std::vector<float>& mesh,
 	std::vector<float>& smoothed)
 {
-	const int ismoothrad = smoothrad;
 	const float n = 2.0f * smoothrad + 1.0f;
 	const float recipn = 1.0f / n;
 
@@ -338,19 +336,19 @@ inline static void BlurVertical(
 	for (x = 0; x <= maxx; ++x) {
 		float avg = 0.0f;
 
-		for (int y = 0; y <= 2 * ismoothrad; ++y) {
+		for (int y = 0; y <= 2 * smoothrad; ++y) {
 			avg += mesh[x + y * maxx];
 		}
 
 		for (int y = 0; y <= maxy; ++y) {
 			const int idx = x + y * maxx;
 
-			if (y <= ismoothrad || y > (maxy - ismoothrad)) {
+			if (y <= smoothrad || y > (maxy - smoothrad)) {
 				// map-border case
 				smoothed[idx] = 0.0f;
 
-				const int ystart = std::max(y - ismoothrad, 0);
-				const int yend   = std::min(y + ismoothrad, maxy);
+				const int ystart = std::max(y - smoothrad, 0);
+				const int yend   = std::min(y + smoothrad, maxy);
 
 				for (int y1 = ystart; y1 <= yend; ++y1) {
 					smoothed[idx] += mesh[x + y1 * maxx];
@@ -362,7 +360,7 @@ inline static void BlurVertical(
 				smoothed[idx] = std::min(readmap->currMaxHeight, std::max(gh, sh));
 			} else {
 				// non-border case
-				avg += mesh[x + (y + ismoothrad) * maxx] - mesh[x + (y - ismoothrad - 1) * maxx];
+				avg += mesh[x + (y + smoothrad) * maxx] - mesh[x + (y - smoothrad - 1) * maxx];
 
 				const float gh = ground->GetHeightAboveWater(x * resolution, y * resolution);
 				const float sh = recipn * avg;
@@ -412,7 +410,6 @@ void SmoothHeightMesh::MakeSmoothMesh(const CGround* ground)
 	const size_t size = (this->maxx + 1) * (this->maxy + 1);
 	// use sliding window of maximums to reduce computational complexity
 	const int intrad = smoothRadius / resolution;
-	const int smoothrad = 3;
 
 	assert(mesh.empty());
 	mesh.resize(size);
@@ -433,6 +430,7 @@ void SmoothHeightMesh::MakeSmoothMesh(const CGround* ground)
 	}
 
 	// actually smooth with approximate Gaussian blur passes
+	const int smoothrad = 3;
 	std::vector<float> smoothed(size);
 	for (int numBlurs = 3; numBlurs > 0; --numBlurs) {
 		BlurHorizontal(maxx, maxy, smoothrad, resolution, mesh, smoothed);
