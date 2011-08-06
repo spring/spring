@@ -94,8 +94,16 @@ SET(sources_engine_System_Log
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/Backend.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/DefaultFilter.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/DefaultFormatter.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogOutputSink.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogUtil.c"
+	)
+SET(sources_engine_System_Log_sinkLogFile
+		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogOutputSink.cpp"
+	)
+SET(sources_engine_System_Log_sinkStream
+		"${CMAKE_CURRENT_SOURCE_DIR}/Log/StreamSink.cpp"
+	)
+SET(sources_engine_System_Log_sinkConsole
+		"${CMAKE_CURRENT_SOURCE_DIR}/Log/ConsoleSink.cpp"
 	)
 SET(sources_engine_System_Net
 		"${CMAKE_CURRENT_SOURCE_DIR}/Net/Connection.cpp"
@@ -133,6 +141,7 @@ IF     (UNIX)
 			${sources_engine_System_creg}
 			${sources_engine_System_FileSystem}
 			${sources_engine_System_Log}
+			${sources_engine_System_Log_sinkLogFile}
 			${sources_engine_System_Net}
 			${sources_engine_System_Platform_Linux}
 		)
@@ -142,6 +151,7 @@ ELSEIF (WIN32)
 			${sources_engine_System_creg}
 			${sources_engine_System_FileSystem}
 			${sources_engine_System_Log}
+			${sources_engine_System_Log_sinkLogFile}
 			${sources_engine_System_Net}
 			${sources_engine_System_Platform_Windows}
 		)
@@ -151,6 +161,7 @@ ELSE   ()
 			${sources_engine_System_creg}
 			${sources_engine_System_FileSystem}
 			${sources_engine_System_Log}
+			${sources_engine_System_Log_sinkLogFile}
 			${sources_engine_System_Net}
 		)
 ENDIF  ()

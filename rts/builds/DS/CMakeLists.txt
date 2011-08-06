@@ -126,11 +126,18 @@ IF    (MINGW)
 	TARGET_LINK_LIBRARIES (springserver-static ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY})
 ENDIF (MINGW)
 
-ADD_LIBRARY(springserver SHARED ${ENGINE_SRC_ROOT_DIR}/Map/MapParser)
+ADD_LIBRARY(springserver SHARED
+		${ENGINE_SRC_ROOT_DIR}/Map/MapParser
+		${ENGINE_SRC_ROOT_DIR}/System/Log/LogOutputSink
+	)
 TARGET_LINK_LIBRARIES(springserver springserver-static)
 
 # Compile dedicated server executable
-ADD_EXECUTABLE(engine-dedicated ${ENGINE_SRC_ROOT_DIR}/Map/MapParser main)
+ADD_EXECUTABLE(engine-dedicated
+		${ENGINE_SRC_ROOT_DIR}/Map/MapParser
+		${ENGINE_SRC_ROOT_DIR}/System/Log/LogOutputSink
+		main
+	)
 TARGET_LINK_LIBRARIES(engine-dedicated springserver-static)
 
 ### Install the executable

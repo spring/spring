@@ -73,6 +73,7 @@ endif (WIN32)
 set(unitsync_files
 	${sources_engine_System_FileSystem}
 	${sources_engine_System_Log}
+	${ENGINE_SRC_ROOT}/System/Log/LogOutputSink.cpp
 	${main_files}
 	${CMAKE_CURRENT_SOURCE_DIR}/unitsync.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/LuaParserAPI.cpp
