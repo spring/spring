@@ -300,10 +300,10 @@ public:
 			" the rest of the participating hosts", true) {}
 
 	void Execute(const SyncedAction& action) const {
-		ASSERT_SYNCED_PRIMITIVE(gu->myPlayerNum * 123.0f);
-		ASSERT_SYNCED_PRIMITIVE(gu->myPlayerNum * 123);
-		ASSERT_SYNCED_PRIMITIVE((short)(gu->myPlayerNum * 123 + 123));
-		ASSERT_SYNCED_FLOAT3(float3(gu->myPlayerNum, gu->myPlayerNum, gu->myPlayerNum));
+		ASSERT_SYNCED(gu->myPlayerNum * 123.0f);
+		ASSERT_SYNCED(gu->myPlayerNum * 123);
+		ASSERT_SYNCED((short)(gu->myPlayerNum * 123 + 123));
+		ASSERT_SYNCED(float3(gu->myPlayerNum, gu->myPlayerNum, gu->myPlayerNum));
 
 		for (size_t i = uh->MaxUnits() - 1; i >= 0; --i) {
 			if (uh->units[i]) {

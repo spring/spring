@@ -513,18 +513,18 @@ int LuaSyncedCtrl::SetTeamResource(lua_State* L)
 	const float value = max(0.0f, luaL_checkfloat(L, 3));
 
 	if ((type == "m") || (type == "metal")) {
-		team->metal = min(team->metalStorage, value);
+		team->metal = min<float>(team->metalStorage, value);
 	}
 	else if ((type == "e") || (type == "energy")) {
-		team->energy = min(team->energyStorage, value);
+		team->energy = min<float>(team->energyStorage, value);
 	}
 	else if ((type == "ms") || (type == "metalStorage")) {
 		team->metalStorage = value;
-		team->metal = min((float)team->metal, team->metalStorage);
+		team->metal = min<float>(team->metal, team->metalStorage);
 	}
 	else if ((type == "es") || (type == "energyStorage")) {
 		team->energyStorage = value;
-		team->energy = min((float)team->energy, team->energyStorage);
+		team->energy = min<float>(team->energy, team->energyStorage);
 	}
 	return 0;
 }
@@ -585,7 +585,7 @@ int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
 	float amount = luaL_checkfloat(L, 4);
 
 	if (type == "metal") {
-		amount = std::min(amount, team1->metal);
+		amount = std::min(amount, (float)team1->metal);
 		if (!luaRules || luaRules->AllowResourceTransfer(teamID1, teamID2, "m", amount)) {
 			team1->metal                       -= amount;
 			team1->metalSent                   += amount;
@@ -595,7 +595,7 @@ int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
 			team2->currentStats->metalReceived += amount;
 		}
 	} else if (type == "energy") {
-		amount = std::min(amount, team1->energy);
+		amount = std::min(amount, (float)team1->energy);
 		if (!luaRules || luaRules->AllowResourceTransfer(teamID1, teamID2, "e", amount)) {
 			team1->energy                       -= amount;
 			team1->energySent                   += amount;
@@ -892,8 +892,8 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		return 0; // unit limit reached
 	}
 
-	ASSERT_SYNCED_FLOAT3(pos);
-	ASSERT_SYNCED_PRIMITIVE(facing);
+	ASSERT_SYNCED(pos);
+	ASSERT_SYNCED(facing);
 
 	// FIXME -- allow specifying the 'builder' parameter?
 	inCreateUnit = true;
@@ -939,7 +939,7 @@ int LuaSyncedCtrl::DestroyUnit(lua_State* L)
 		luaL_error(L, "DestroyUnit() recursion is not permitted");
 	}
 	inDestroyUnit = true;
-	ASSERT_SYNCED_PRIMITIVE(unit->id);
+	ASSERT_SYNCED(unit->id);
 	unit->KillUnit(selfd, reclaimed, attacker);
 	inDestroyUnit = false;
 
@@ -973,9 +973,9 @@ int LuaSyncedCtrl::TransferUnit(lua_State* L)
 		luaL_error(L, "TransferUnit() recursion is not permitted");
 	}
 	inTransferUnit = true;
-	ASSERT_SYNCED_PRIMITIVE(unit->id);
-	ASSERT_SYNCED_PRIMITIVE((int)newTeam);
-	ASSERT_SYNCED_PRIMITIVE(given);
+	ASSERT_SYNCED(unit->id);
+	ASSERT_SYNCED((int)newTeam);
+	ASSERT_SYNCED(given);
 	unit->ChangeTeam(newTeam, given ? CUnit::ChangeGiven
 	                                : CUnit::ChangeCaptured);
 	inTransferUnit = false;
@@ -1002,7 +1002,7 @@ int LuaSyncedCtrl::SetUnitCosts(lua_State* L)
 		}
 		const string key = lua_tostring(L, -2);
 		const float value = lua_tonumber(L, -1);
-		ASSERT_SYNCED_PRIMITIVE((float)value);
+		ASSERT_SYNCED((float)value);
 
 		if (key == "buildTime") {
 			unit->buildTime  = max(1.0f, value);
@@ -1073,7 +1073,7 @@ int LuaSyncedCtrl::SetUnitResourcing(lua_State* L)
 			}
 			const string key = lua_tostring(L, -2);
 			const float value = lua_tonumber(L, -1);
-			ASSERT_SYNCED_PRIMITIVE((float)value);
+			ASSERT_SYNCED((float)value);
 
 			SetUnitResourceParam(unit, key, value);
 		}

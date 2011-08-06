@@ -175,6 +175,9 @@ class CSyncDebugger {
 		 * & line number.
 		 */
 		void ServerDumpStack();
+
+	public:
+
 		/**
 		 * @brief the backbone of the sync debugger
 		 *
@@ -182,9 +185,7 @@ class CSyncDebugger {
 		 * an operator (op) to it. p must point to the data to checksum and size
 		 * must be the size of that data.
 		 */
-		void Sync(void* p, unsigned size, const char* op);
-
-	public:
+		void Sync(const void* p, unsigned size, const char* op);
 
 		/**
 		 * @brief initialize

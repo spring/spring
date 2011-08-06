@@ -12,7 +12,7 @@ Else  (NOT Boost_FOUND)
 	SET(ENGINE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/rts")
 	INCLUDE_DIRECTORIES(${ENGINE_SOURCE_DIR})
 
-	add_definitions(-DBOOST_TEST_DYN_LINK)
+	add_definitions(-DBOOST_TEST_DYN_LINK -DSYNCCHECK)
 
 	Set(test_Log_sources
 			"${ENGINE_SOURCE_DIR}/System/Log/Backend.cpp"
@@ -73,16 +73,31 @@ Else  (NOT Boost_FOUND)
 
 
 ################################################################################
+### SyncedPrimitive
+
+	Set(test_SyncedPrimitive_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Sync/TestSyncedPrimitive.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Sync/SyncChecker.cpp"
+		)
+
+	ADD_EXECUTABLE(test_SyncedPrimitive ${test_SyncedPrimitive_src})
+	TARGET_LINK_LIBRARIES(test_SyncedPrimitive
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+		)
+
+	ADD_TEST(NAME testSyncedPrimitive COMMAND test_SyncedPrimitive)
 
 
+
+################################################################################
 
 	Set(test_targets
 			test_UDPListener
 			test_ILog
+			test_SyncedPrimitive
 		)
 
 	Add_Custom_Target(tests)
 	Add_Dependencies(tests ${test_targets})
 
 EndIf (NOT Boost_FOUND)
-

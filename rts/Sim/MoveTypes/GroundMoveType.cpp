@@ -186,7 +186,7 @@ void CGroundMoveType::PostLoad()
 
 bool CGroundMoveType::Update()
 {
-	ASSERT_SYNCED_FLOAT3(owner->pos);
+	ASSERT_SYNCED(owner->pos);
 
 	if (owner->transporter != NULL) {
 		return false;
@@ -200,7 +200,7 @@ bool CGroundMoveType::Update()
 		return false;
 	}
 
-	ASSERT_SYNCED_FLOAT3(owner->pos);
+	ASSERT_SYNCED(owner->pos);
 
 	// set drop height when we start to drop
 	if (owner->falling) {
@@ -208,7 +208,7 @@ bool CGroundMoveType::Update()
 		return false;
 	}
 
-	ASSERT_SYNCED_FLOAT3(owner->pos);
+	ASSERT_SYNCED(owner->pos);
 
 	bool hasMoved = false;
 	bool wantReverse = false;
@@ -226,8 +226,8 @@ bool CGroundMoveType::Update()
 				SetMainHeading();
 			} else {
 				// TODO: Stop the unit from moving as a reaction on collision/explosion physics.
-				ASSERT_SYNCED_FLOAT3(waypoint);
-				ASSERT_SYNCED_FLOAT3(owner->pos);
+				ASSERT_SYNCED(waypoint);
+				ASSERT_SYNCED(owner->pos);
 
 				prevWayPointDist = currWayPointDist;
 				currWayPointDist = owner->pos.distance2D(waypoint);
@@ -250,7 +250,7 @@ bool CGroundMoveType::Update()
 				waypointDir.y = 0.0f;
 				waypointDir.SafeNormalize();
 
-				ASSERT_SYNCED_FLOAT3(waypointDir);
+				ASSERT_SYNCED(waypointDir);
 
 				const float3 wpDirInv = -waypointDir;
 //				const float3 wpPosTmp = owner->pos + wpDirInv;
@@ -271,7 +271,7 @@ bool CGroundMoveType::Update()
 				// apply obstacle avoidance (steering)
 				const float3 avoidVec = ObstacleAvoidance(waypointDir);
 
-				ASSERT_SYNCED_FLOAT3(avoidVec);
+				ASSERT_SYNCED(avoidVec);
 
 				if (avoidVec != ZeroVector) {
 					if (wantReverse) {
@@ -565,19 +565,19 @@ void CGroundMoveType::ChangeHeading(short wantedHeading) {
 
 	deltaHeading = wantedHeading - heading;
 
-	ASSERT_SYNCED_PRIMITIVE(deltaHeading);
-	ASSERT_SYNCED_PRIMITIVE(turnRate);
-	ASSERT_SYNCED_PRIMITIVE((short)turnRate);
+	ASSERT_SYNCED(deltaHeading);
+	ASSERT_SYNCED(turnRate);
+	ASSERT_SYNCED((short)turnRate);
 
 	short sTurnRate = short(turnRate);
 
 	if (deltaHeading > 0) {
 		short tmp = (deltaHeading < sTurnRate)? deltaHeading: sTurnRate;
-		ASSERT_SYNCED_PRIMITIVE(tmp);
+		ASSERT_SYNCED(tmp);
 		heading += tmp;
 	} else {
 		short tmp = (deltaHeading > -sTurnRate)? deltaHeading: -sTurnRate;
-		ASSERT_SYNCED_PRIMITIVE(tmp);
+		ASSERT_SYNCED(tmp);
 		heading += tmp;
 	}
 
@@ -650,7 +650,7 @@ void CGroundMoveType::ImpulseAdded(const float3&)
 
 void CGroundMoveType::UpdateSkid()
 {
-	ASSERT_SYNCED_FLOAT3(owner->midPos);
+	ASSERT_SYNCED(owner->midPos);
 
 	float3& speed  = owner->speed;
 	float3& pos    = owner->pos;
@@ -753,7 +753,7 @@ void CGroundMoveType::UpdateSkid()
 	oldPos = owner->pos;
 
 	ASSERT_SANE_OWNER_SPEED(speed);
-	ASSERT_SYNCED_FLOAT3(midPos);
+	ASSERT_SYNCED(midPos);
 }
 
 void CGroundMoveType::UpdateControlledDrop()
@@ -1785,15 +1785,15 @@ void CGroundMoveType::SetMainHeading() {
 		dir2.y = 0.0f;
 		dir2.SafeNormalize();
 
-		ASSERT_SYNCED_FLOAT3(dir1);
-		ASSERT_SYNCED_FLOAT3(dir2);
+		ASSERT_SYNCED(dir1);
+		ASSERT_SYNCED(dir2);
 
 		if (dir2 != ZeroVector) {
 			short heading =
 				GetHeadingFromVector(dir2.x, dir2.z) -
 				GetHeadingFromVector(dir1.x, dir1.z);
 
-			ASSERT_SYNCED_PRIMITIVE(heading);
+			ASSERT_SYNCED(heading);
 
 			if (progressState == Active && owner->heading == heading) {
 				// stop turning
