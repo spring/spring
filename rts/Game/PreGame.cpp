@@ -12,7 +12,7 @@
 #include "PreGame.h"
 
 #include "ClientSetup.h"
-#include "System/FPUCheck.h"
+#include "System/Sync//FPUCheck.h"
 #include "Game.h"
 #include "GameData.h"
 #include "GameServer.h"
