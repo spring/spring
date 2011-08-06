@@ -105,10 +105,10 @@ float SmoothHeightMesh::SetMaxHeight(int index, float h)
 
 
 inline static void FindMaximumColumnHeights(
-	int maxx,
-	int maxy,
-	int intrad,
-	float resolution,
+	const int maxx,
+	const int maxy,
+	const int intrad,
+	const float resolution,
 	std::vector<float>& colsMaxima,
 	std::vector<int>& maximaRows)
 {
@@ -129,9 +129,9 @@ inline static void FindMaximumColumnHeights(
 }
 
 inline static void AdvanceMaximaRows(
-	int y,
-	int maxx,
-	float resolution,
+	const int y,
+	const int maxx,
+	const float resolution,
 	const std::vector<float>& colsMaxima,
 	      std::vector<int>& maximaRows)
 {
@@ -207,11 +207,11 @@ inline static void FindRadialMaximum(
 
 
 inline static void FixRemainingMaxima(
-	int y,
-	int maxx,
-	int maxy,
-	int intrad,
-	float resolution,
+	const int y,
+	const int maxx,
+	const int maxy,
+	const int intrad,
+	const float resolution,
 	std::vector<float>& colsMaxima,
 	std::vector<int>& maximaRows)
 {
@@ -270,7 +270,7 @@ inline static void BlurHorizontal(
 	const int maxy,
 	const float smoothrad,
 	const float resolution,
-	std::vector<float>& mesh,
+	const std::vector<float>& mesh,
 	std::vector<float>& smoothed)
 {
 	const float n = 2.0f * smoothrad + 1.0f;
@@ -324,9 +324,6 @@ inline static void BlurHorizontal(
 			assert(smoothed[idx] >=          readmap->currMinHeight       );
 		}
 	}
-
-	// copy <smoothed> into <mesh>
-	std::copy(smoothed.begin(), smoothed.end(), mesh.begin());
 }
 
 inline static void BlurVertical(
@@ -334,7 +331,7 @@ inline static void BlurVertical(
 	const int maxy,
 	const float smoothrad,
 	const float resolution,
-	std::vector<float>& mesh,
+	const std::vector<float>& mesh,
 	std::vector<float>& smoothed)
 {
 	const float n = 2.0f * smoothrad + 1.0f;
@@ -388,9 +385,6 @@ inline static void BlurVertical(
 			assert(smoothed[idx] >=          readmap->currMinHeight       );
 		}
 	}
-
-	// copy <smoothed> into <mesh>
-	std::copy(smoothed.begin(), smoothed.end(), mesh.begin());
 }
 
 
@@ -433,12 +427,10 @@ void SmoothHeightMesh::MakeSmoothMesh(const CGround* ground)
 
 	assert(mesh.empty());
 	mesh.resize(size);
-	origMesh.resize(size);
 
-	std::vector<float> smoothed(size);
 	std::vector<float> colsMaxima(maxx + 1, -std::numeric_limits<float>::max());
 	std::vector<int> maximaRows(maxx + 1, -1);
-
+	
 	FindMaximumColumnHeights(maxx, maxy, intrad, resolution, colsMaxima, maximaRows);
 
 	for (int y = 0; y <= maxy; ++y) {
@@ -452,12 +444,16 @@ void SmoothHeightMesh::MakeSmoothMesh(const CGround* ground)
 	}
 
 	// actually smooth with approximate Gaussian blur passes
+	std::vector<float> smoothed(size);
 	for (int numBlurs = 3; numBlurs > 0; --numBlurs) {
 		BlurHorizontal(maxx, maxy, smoothrad, resolution, mesh, smoothed);
+			mesh.swap(smoothed);
 		BlurVertical(maxx, maxy, smoothrad, resolution, mesh, smoothed);
+			mesh.swap(smoothed);
 	}
 
-	// copy <mesh> into <origMesh>, then <smoothed> into <mesh>
+	// `mesh` now contains the smoothed heightmap
+	// backup it in origMesh
+	origMesh.resize(size);
 	std::copy(mesh.begin(), mesh.end(), origMesh.begin());
-	std::copy(smoothed.begin(), smoothed.end(), mesh.begin());
 }
