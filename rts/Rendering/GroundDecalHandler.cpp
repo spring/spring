@@ -31,7 +31,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileSystem.h"
@@ -67,7 +67,8 @@ CGroundDecalHandler::CGroundDecalHandler()
 	LuaParser resourcesParser("gamedata/resources.lua",
 	                          SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	if (!resourcesParser.Execute()) {
-		logOutput.Print(resourcesParser.GetErrorLog());
+		LOG_L(L_ERROR, "Failed to load resources: %s",
+				resourcesParser.GetErrorLog().c_str());
 	}
 
 	const LuaTable scarsTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("scars");
@@ -1209,7 +1210,8 @@ int CGroundDecalHandler::GetBuildingDecalType(const std::string& name)
 
 	CBitmap bm;
 	if (!bm.Load(fullName)) {
-		logOutput.Print("[%s] Could not load building-decal from file \"%s\"", __FUNCTION__, fullName.c_str());
+		LOG_L(L_ERROR, "[%s] Could not load building-decal from file \"%s\"",
+				__FUNCTION__, fullName.c_str());
 		return -1;
 	}
 

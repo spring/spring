@@ -42,7 +42,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/FastMath.h"
 #include "System/myMath.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
@@ -818,7 +818,7 @@ void CUnitScript::Explode(int piece, int flags)
 			if ((flags & PF_Fire) && ph->particleSaturation < 0.95f) { newflags |= PF_Fire; }
 			if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
 
-			//logOutput.Print("Exploding %s as %d", script.pieceNames[piece].c_str(), dl);
+			//LOG_L(L_DEBUG, "Exploding %s as %d", script.pieceNames[piece].c_str(), dl);
 			new CPieceProjectile(pos, speed, pieceData, newflags,unit,0.5f);
 		}
 	}
@@ -1040,7 +1040,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case POW:
 		return int(pow(((float)p1)/COBSCALE,((float)p2)/COBSCALE)*COBSCALE);
 	case PRINT:
-		logOutput.Print("Value 1: %d, 2: %d, 3: %d, 4: %d", p1, p2, p3, p4);
+		LOG("Value 1: %d, 2: %d, 3: %d, 4: %d", p1, p2, p3, p4);
 		break;
 	case HEADING: {
 		if (p1 <= 0) {
@@ -1382,8 +1382,9 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			return 0;
 		}
 		else {
-			logOutput.Print("CobError: Unknown get constant %d  (params = %d %d %d %d)",
-			                val, p1, p2, p3, p4);
+			LOG_L(L_ERROR,
+					"CobError: Unknown get constant %d (params = %d %d %d %d)",
+					val, p1, p2, p3, p4);
 		}
 	}
 #endif
@@ -1659,7 +1660,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 				unitVars[val - UNIT_VAR_START] = param;
 			}
 			else {
-				logOutput.Print("CobError: Unknown set constant %d", val);
+				LOG_L(L_ERROR, "CobError: Unknown set constant %d", val);
 			}
 		}
 	}
@@ -1688,12 +1689,12 @@ void CUnitScript::BenchmarkScript(CUnitScript* script)
 		end = SDL_GetTicks();
 	}
 
-	logOutput.Print("%d0000 calls in %u ms -> %.0f calls/second",
-	                count, end - start, float(count) * (10000 / (duration / 1000)));
+	LOG("%d0000 calls in %u ms -> %.0f calls/second",
+			count, end - start, float(count) * (10000 / (duration / 1000)));
 }
 
 
-void CUnitScript::BenchmarkScript(const string& unitname)
+void CUnitScript::BenchmarkScript(const std::string& unitname)
 {
 	std::list<CUnit*>::iterator ui = uh->activeUnits.begin();
 	for (; ui != uh->activeUnits.end(); ++ui) {

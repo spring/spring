@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "NullUnitScript.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 
 // keep one global copy so we don't need to allocate a lot of
@@ -17,8 +17,8 @@ CNullUnitScript::CNullUnitScript()
 
 void CNullUnitScript::ShowScriptError(const std::string& msg)
 {
-	logOutput.Print(msg);
-	logOutput.Print("why are you using CNullUnitScript anyway?");
+	LOG_L(L_ERROR, "%s", msg.c_str());
+	LOG_L(L_ERROR, "why are you using CNullUnitScript anyway?");
 }
 
 
