@@ -66,6 +66,8 @@ public:
 	float GetFloat(const std::string& key) const { return Get<float>(key); }
 
 public:
+	virtual ~ConfigHandler() {}
+
 	/**
 	 * @brief Set string config value
 	 * @param key name of key to set
