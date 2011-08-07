@@ -8,7 +8,7 @@
 #include "System/EventHandler.h"
 
 #if UNSYNCED_PROJ_NOEVENT
-#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/ProjectileDrawer.h"
 #endif
 
 #include "lib/gml/gmlcnf.h"

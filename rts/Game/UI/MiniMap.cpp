@@ -33,7 +33,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/LineDrawer.h"
-#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/ProjectileDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"

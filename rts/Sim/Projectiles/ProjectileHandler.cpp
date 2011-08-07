@@ -15,7 +15,7 @@
 #include "Sim/Misc/CollisionHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Projectiles/Unsynced/FlyingPiece.hpp"
+#include "Sim/Projectiles/Unsynced/FlyingPiece.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/Config/ConfigHandler.h"

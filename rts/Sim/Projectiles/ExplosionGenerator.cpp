@@ -14,7 +14,7 @@
 #include "Lua/LuaParser.h"
 #include "Map/Ground.h"
 #include "Rendering/GroundFlash.h"
-#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/ProjectileDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"

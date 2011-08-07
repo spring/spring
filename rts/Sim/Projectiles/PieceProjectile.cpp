@@ -12,7 +12,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Colors.h"
-#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/ProjectileDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Models/IModelParser.h"
 #include "Rendering/Models/3DOParser.h"
