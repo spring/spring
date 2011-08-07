@@ -71,6 +71,7 @@ class FileSystem
 
 		/// @name meta-data
 		///@{
+		/// Returns true if the file exists, and is not a directory
 		static bool FileExists(std::string path);
 		/**
 		 * @brief get filesize
@@ -87,6 +88,8 @@ class FileSystem
 		 *
 		 * Works like mkdir -p, ie. attempts to create parent directories too.
 		 * Operates on the current working directory.
+		 * @return true if the postcondition of this function is that dir exists
+		 *   in the write directory.
 		 */
 		static bool CreateDirectory(std::string dir);
 		/**
