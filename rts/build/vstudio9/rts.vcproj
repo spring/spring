@@ -4123,7 +4123,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\tdf_grammar.hpp"
+				RelativePath="..\..\System\tdf_grammar.h"
 				>
 			</File>
 			<File

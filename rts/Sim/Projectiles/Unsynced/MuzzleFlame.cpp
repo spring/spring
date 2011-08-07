@@ -6,7 +6,7 @@
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "MuzzleFlame.h"
-#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 

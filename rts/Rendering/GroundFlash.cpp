@@ -10,7 +10,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/ProjectileDrawer.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
 CR_BIND_DERIVED(CGroundFlash, CExpGenSpawnable, );

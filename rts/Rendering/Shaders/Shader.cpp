@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "Rendering/GL/myGL.h"
-#include "Rendering/Shaders/Shader.hpp"
+#include "Rendering/Shaders/Shader.h"
 
 namespace Shader {
 	ARBShaderObject::ARBShaderObject(int shType, const std::string& shSrc): IShaderObject(shType, shSrc) {

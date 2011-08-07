@@ -13,7 +13,7 @@
 #include "System/Util.h"
 
 #include "System/TdfParser.h"
-#include "tdf_grammar.hpp"
+#include "tdf_grammar.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Log/ILog.h"
 

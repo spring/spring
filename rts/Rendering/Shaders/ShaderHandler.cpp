@@ -3,7 +3,7 @@
 #include "Rendering/GL/myGL.h"
 #include <cassert>
 
-#include "Rendering/Shaders/ShaderHandler.hpp"
+#include "Rendering/Shaders/ShaderHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/LogOutput.h"
 

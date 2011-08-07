@@ -2,7 +2,7 @@
 
 #include "System/StdAfx.h"
 
-#include "ProjectileDrawer.hpp"
+#include "ProjectileDrawer.h"
 
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
@@ -17,7 +17,7 @@
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Rendering/Shaders/Shader.hpp"
+#include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -29,7 +29,7 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/PieceProjectile.h"
-#include "Sim/Projectiles/Unsynced/FlyingPiece.hpp"
+#include "Sim/Projectiles/Unsynced/FlyingPiece.h"
 #include "Sim/Projectiles/Unsynced/ShieldPartProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"

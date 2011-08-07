@@ -2393,7 +2393,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Rendering\ProjectileDrawer.hpp"
+				RelativePath="..\..\Rendering\ProjectileDrawer.h"
 				>
 			</File>
 			<File
@@ -2864,7 +2864,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Shaders\Shader.hpp"
+					RelativePath="..\..\Rendering\Shaders\Shader.h"
 					>
 				</File>
 				<File
@@ -2872,7 +2872,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Shaders\ShaderHandler.hpp"
+					RelativePath="..\..\Rendering\Shaders\ShaderHandler.h"
 					>
 				</File>
 			</Filter>
@@ -3140,7 +3140,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Models\ModelDrawer.hpp"
+					RelativePath="..\..\Rendering\Models\ModelDrawer.h"
 					>
 				</File>
 				<File
@@ -3643,7 +3643,7 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\Unsynced\FlyingPiece.hpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\FlyingPiece.h"
 						>
 					</File>
 					<File
@@ -5147,7 +5147,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\tdf_grammar.hpp"
+				RelativePath="..\..\System\tdf_grammar.h"
 				>
 			</File>
 			<File
