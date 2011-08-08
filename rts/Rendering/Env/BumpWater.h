@@ -7,7 +7,8 @@
 #include "Rendering/GL/myGL.h"
 #include "IWater.h"
 
-#include <bitset>
+#include "System/Misc/RectangleOptimizer.h"
+
 
 namespace Shader {
 	struct IProgramObject;
@@ -34,6 +35,30 @@ private:
 	void SetupUniforms( std::string& definitions );
 	void GetUniformLocations();
 
+private:
+	//! coastmap (needed for shorewaves)
+	struct CoastAtlasRect {
+		CoastAtlasRect(const Rectangle& rect);
+		bool isCoastline; ///< if false, then the whole rect is either above water or below water (no coastline -> no need to calc/render distfield)
+		int ix1, iy1;
+		int ix2, iy2;
+		int xsize, ysize;
+		float x1, y1;
+		float x2, y2;
+		float tx1, ty1;
+		float tx2, ty2;
+	};
+
+	std::vector<CoastAtlasRect> coastmapAtlasRects;
+	CRectangleOptimizer heightmapUpdates;
+
+	void UploadCoastline(const bool forceFull = false);
+	void UpdateCoastmap();
+	void UpdateDynWaves(const bool initialize = false);
+
+	int atlasX,atlasY;
+
+private:
 	//! user options
 	char  reflection;   ///< 0:=off, 1:=don't render the terrain, 2:=render everything+terrain
 	char  refraction;   ///< 0:=off, 1:=screencopy, 2:=own rendering cycle
@@ -61,42 +86,6 @@ private:
 	FBO dynWavesFBO;
 
 	GLuint displayList;
-
-	//! coastmap
-	struct CoastUpdateRect {
-		CoastUpdateRect(int x1_, int z1_, int x2_, int z2_)
-			: x1(x1_)
-			, z1(z1_)
-			, x2(x2_)
-			, z2(z2_) {}
-		int x1, z1;
-		int x2, z2;
-	};
-
-	struct CoastAtlasRect {
-		CoastAtlasRect(const CoastUpdateRect& rect);
-		bool isCoastline; ///< if false, then the whole rect is either above water or below water (no coastline -> no need to calc/render distfield)
-		int ix1, iy1;
-		int ix2, iy2;
-		int xsize, ysize;
-		float x1, y1;
-		float x2, y2;
-		float tx1, ty1;
-		float tx2, ty2;
-	};
-
-	std::vector<CoastUpdateRect> coastmapUpdates;
-	std::vector<CoastAtlasRect> coastmapAtlasRects;
-
-	std::bitset<4> GetEdgesInRect(CoastUpdateRect& rect1, CoastUpdateRect& rect2);
-	std::bitset<4> GetSharedEdges(CoastUpdateRect& rect1, CoastUpdateRect& rect2);
-	void HandleOverlapping(size_t i, size_t& j);
-
-	void UploadCoastline(const bool forceFull = false);
-	void UpdateCoastmap();
-	void UpdateDynWaves(const bool initialize = false);
-
-	int atlasX,atlasY;
 
 	GLuint refractTexture;
 	GLuint reflectTexture;
