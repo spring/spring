@@ -62,7 +62,7 @@ int Test()
 		}
 	}
 
-	//! check if we have overlapping or any missing areas
+	//! check if we have overlapping or missing areas
 	int sum = 0;
 	for (int y=0; y<size; ++y) {
 		for (int x=0; x<size; ++x) {

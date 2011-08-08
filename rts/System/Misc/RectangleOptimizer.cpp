@@ -10,7 +10,7 @@ unsigned CRectangleOptimizer::statsOptSize   = 0;
 
 
 CRectangleOptimizer::CRectangleOptimizer()
-	: maxAreaPerRect(10 * 5) //FIXME find better default
+	: maxAreaPerRect(500*500) //FIXME auto adjust this in HeightMapUpdate!
 	, needsUpdate(false)
 {
 }
@@ -44,13 +44,13 @@ void CRectangleOptimizer::Optimize()
 	CRectangleOptimizer::iterator it;
 	CRectangleOptimizer::iterator jt;
 
+	//TODO this is not fully correct, when there was still rectangles
+	//     left from the last update we shouldn't count them twice!
 	statsTotalSize += GetTotalArea();
 
-	//! optimize update area (merge overlapping areas etc.)
-	int c = 0;
+	//! Fix Overlap
 	for (it = rectangles.begin(); it != rectangles.end(); ++it) {
 		for (jt = it, ++jt; jt != rectangles.end(); ) {
-			assert(++c < 100000);
 			int del = HandleOverlapping(&(*it), &(*jt));
 			if (del < 0) {
 				it = rectangles.erase(it);
@@ -63,13 +63,12 @@ void CRectangleOptimizer::Optimize()
 			} else {
 				++jt;
 			}
-			//if (c == 5) break;
 		}
-		//if (c == 5) break;
 	}
 
 	statsOptSize += GetTotalArea();
 
+	//! Merge when possible
 	rectangles.sort();
 	for (it = rectangles.begin(); it != rectangles.end(); ++it) {
 		for (jt = it, ++jt; jt != rectangles.end(); ) {
@@ -83,8 +82,8 @@ void CRectangleOptimizer::Optimize()
 		}
 	}
 
-	//! split too large rectangles
-	/*for (it = rectangles.begin(); it != rectangles.end(); ++it) {
+	//! Split too large
+	for (it = rectangles.begin(); it != rectangles.end(); ++it) {
 		Rectangle& rect1 = *it;
 		int width  = rect1.GetWidth();
 		int height = rect1.GetHeight();
@@ -103,7 +102,7 @@ void CRectangleOptimizer::Optimize()
 			width  = rect1.GetWidth();
 			height = rect1.GetHeight();
 		}
-	}*/
+	}
 }
 
 
@@ -214,8 +213,6 @@ bool CRectangleOptimizer::HandleMerge(Rectangle& rect1, Rectangle& rect2)
 
 int CRectangleOptimizer::HandleOverlapping(Rectangle* rect1, Rectangle* rect2)
 {
-	//TODO profile optimization in %?
-
 	if (!DoOverlap(*rect1, *rect2)) {
 		//  ______
 		// |      |  ___
