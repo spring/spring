@@ -5,11 +5,12 @@
  */
 
 #include "System/StdAfx.h"
+
+#include "BumpWater.h"
+
 #include <boost/format.hpp>
 #include "System/mmgr.h"
 
-#include "System/bitops.h"
-#include "BumpWater.h"
 #include "ISky.h"
 #include "Game/Game.h"
 #include "Game/Camera.h"
@@ -27,6 +28,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
+#include "System/bitops.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FastMath.h"
 #include "System/myMath.h"
@@ -36,6 +38,8 @@
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"
+
+#undef Rectangle
 
 using std::string;
 using std::vector;
