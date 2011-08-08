@@ -15,10 +15,15 @@
 #
 # Functions and macros defined in this file:
 # * FixLibName
+# * CreateInstallTarget
 # * SetGlobal
+# * MakeGlobal
 # * GetListOfSubModules
 # * GetVersionFromFile
 # * GetLastPathPart
+# * MakeAbsolute
+# * GetVersionPlusDepFile
+# * GetNativeSourcesRecursive
 # * CheckMinCMakeVersion
 #
 
