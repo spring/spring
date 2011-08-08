@@ -19,7 +19,7 @@
 
 CUnitScript* CUnitScriptFactory::CreateScript(const std::string& name, CUnit* unit)
 {
-	std::string ext = filesystem.GetExtension(name);
+	std::string ext = FileSystem::GetExtension(name);
 	CUnitScript* script = NULL;
 
 	if (ext == "cob") {

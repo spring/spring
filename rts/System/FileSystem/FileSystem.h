@@ -106,7 +106,4 @@ class FileSystem
 //		bool CheckDir(const std::string& dir) const;
 };
 
-// basically acts like a namespace, but with semantics like configHandler has
-extern FileSystem filesystem;
-
 #endif // !FILE_SYSTEM_H

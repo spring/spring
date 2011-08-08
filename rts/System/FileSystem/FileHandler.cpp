@@ -132,7 +132,7 @@ bool CFileHandler::FileExists(const std::string& filePath, const std::string& mo
 
 	//! Raw
 	if (modes.find(SPRING_VFS_RAW) != string::npos) {
-		fileExists = fileExists || filesystem.FileExists(filePath);
+		fileExists = fileExists || FileSystem::FileExists(filePath);
 	}
 
 	return fileExists;
@@ -264,7 +264,7 @@ bool CFileHandler::LoadStringData(string& data)
 
 std::string CFileHandler::GetFileExt() const
 {
-	return filesystem.GetExtension(fileName);
+	return FileSystem::GetExtension(fileName);
 }
 
 /******************************************************************************/

@@ -136,7 +136,7 @@ bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& bu
 	accu << "pool/" << prefix << "/" << postfix << ".gz";
 	std::string rpath = accu.str();
 
-	filesystem.FixSlashes(rpath);
+	FileSystem::FixSlashes(rpath);
 	std::string path = dataDirsAccess.LocateFile(rpath);
 	gzFile in = gzopen(path.c_str(), "rb");
 	if (in == NULL)

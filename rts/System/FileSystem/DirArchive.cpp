@@ -38,7 +38,7 @@ CDirArchive::CDirArchive(const std::string& archiveName)
 	for (fi = found.begin(); fi != found.end(); ++fi) {
 		// strip our own name off.. & convert to forward slashes
 		std::string origName(*fi, dirName.length());
-		filesystem.ForwardSlashes(origName);
+		FileSystem::ForwardSlashes(origName);
 		// convert to lowercase and store
 		searchFiles.push_back(origName);
 		lcNameIndex[StringToLower(origName)] = searchFiles.size() - 1;

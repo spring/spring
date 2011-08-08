@@ -9,7 +9,7 @@
 
 int CommonDefHandler::LoadSoundFile(const std::string& fileName)
 {
-	const std::string extension = filesystem.GetExtension(fileName);
+	const std::string extension = FileSystem::GetExtension(fileName);
 	bool hasFile = false;
 	if (extension == "wav" || extension == "ogg")
 	{

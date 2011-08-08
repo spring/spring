@@ -147,7 +147,7 @@ bool DataDirLocater::DeterminePermissions(DataDir* dataDir)
 	}
 	else if (!writeDir) // if there is already a rw data directory, do not create new folder for read-only locations
 	{
-		if (filesystem.CreateDirectory(dataDir->path))
+		if (FileSystem::CreateDirectory(dataDir->path))
 		{
 			// it did not exist before, now it does and we just created it with
 			// rw access, so we just assume we still have read-write access ...
@@ -360,7 +360,7 @@ void DataDirLocater::LocateDataDirs()
 
 			// tag the cache dir
 			const std::string cacheDir = d->path + "cache";
-			if (filesystem.CreateDirectory(cacheDir)) {
+			if (FileSystem::CreateDirectory(cacheDir)) {
 				CacheDir::SetCacheDir(cacheDir, true);
 			}
 		} else {

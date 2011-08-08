@@ -355,7 +355,7 @@ namespace terrain {
 			fmt = IL_LUMINANCE;
 		}
 		ilTexImage(w, h, 1, components, fmt, type, data);
-		filesystem.Remove(fn);
+		FileSystem::Remove(fn);
 		ilSaveImage((ILstring) fn);
 		ilDeleteImages(1, &out);
 #endif // defined(TERRAIN_USE_IL)

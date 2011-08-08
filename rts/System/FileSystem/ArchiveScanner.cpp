@@ -402,7 +402,7 @@ void CArchiveScanner::Scan(const std::string& curPath, bool doChecksum)
 			fullName = fullName.substr(0, fullName.size() - 1);
 		}
 
-		const std::string fpath = filesystem.GetDirectory(fullName);
+		const std::string fpath = FileSystem::GetDirectory(fullName);
 		const std::string lcfpath = StringToLower(fpath);
 
 		// Exclude archivefiles found inside directory archives (.sdd)
@@ -467,8 +467,8 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	struct stat info;
 	stat(fullName.c_str(), &info);
 
-	const std::string fn    = filesystem.GetFilename(fullName);
-	const std::string fpath = filesystem.GetDirectory(fullName);
+	const std::string fn    = FileSystem::GetFilename(fullName);
+	const std::string fpath = FileSystem::GetDirectory(fullName);
 	const std::string lcfn  = StringToLower(fn);
 
 	//! Determine whether this archive has earlier be found to be broken
@@ -530,7 +530,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 			int size;
 			ar->FileInfo(fid, name, size);
 			const std::string lowerName = StringToLower(name);
-			const std::string ext = filesystem.GetExtension(lowerName);
+			const std::string ext = FileSystem::GetExtension(lowerName);
 
 			if ((ext == "smf") || (ext == "sm3")) {
 				mapfile = name;
@@ -565,7 +565,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 			}
 			if (ai.archiveData.GetName().empty()) {
 				//! FIXME The name will never be empty, if version is set (see HACK in ArchiveData)
-				ai.archiveData.SetInfoItemValueString("name", filesystem.GetBasename(mapfile));
+				ai.archiveData.SetInfoItemValueString("name", FileSystem::GetBasename(mapfile));
 			}
 			if (ai.archiveData.GetMapFile().empty()) {
 				ai.archiveData.SetInfoItemValueString("mapfile", mapfile);
@@ -1093,7 +1093,7 @@ std::string CArchiveScanner::MapNameToMapFile(const std::string& s) const
 
 unsigned int CArchiveScanner::GetSingleArchiveChecksum(const std::string& name) const
 {
-	std::string lcname = filesystem.GetFilename(name);
+	std::string lcname = FileSystem::GetFilename(name);
 	StringToLowerInPlace(lcname);
 
 	std::map<std::string, ArchiveInfo>::const_iterator aii = archiveInfos.find(lcname);
@@ -1141,7 +1141,7 @@ void CArchiveScanner::CheckArchive(const std::string& name, unsigned checksum) c
 
 std::string CArchiveScanner::GetArchivePath(const std::string& name) const
 {
-	const std::string lcname = StringToLower(filesystem.GetFilename(name));
+	const std::string lcname = StringToLower(FileSystem::GetFilename(name));
 
 	std::map<std::string, ArchiveInfo>::const_iterator aii = archiveInfos.find(lcname);
 	if (aii == archiveInfos.end()) {
@@ -1195,7 +1195,7 @@ unsigned char CArchiveScanner::GetMetaFileClass(const std::string& filePath) {
 	unsigned char metaFileClass = 0;
 
 	const std::string lowerFilePath = StringToLower(filePath);
-	const std::string ext = filesystem.GetExtension(lowerFilePath);
+	const std::string ext = FileSystem::GetExtension(lowerFilePath);
 
 	// 1: what is commonly read from all archives when scanning through them
 	// 2: what is less commoonly used, or only used when looking

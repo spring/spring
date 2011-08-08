@@ -131,7 +131,7 @@ CVFSHandler::~CVFSHandler()
 std::string CVFSHandler::GetNormalizedPath(const std::string& rawPath)
 {
 	std::string path = StringToLower(rawPath);
-	filesystem.ForwardSlashes(path);
+	FileSystem::ForwardSlashes(path);
 	return path;
 }
 
@@ -212,7 +212,7 @@ std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir)
 	}
 
 	while (filesStart != filesEnd) {
-		const std::string path = filesystem.GetDirectory(filesStart->first);
+		const std::string path = FileSystem::GetDirectory(filesStart->first);
 
 		// Check if this file starts with the dir path
 		if (path.compare(0, dir.length(), dir) == 0) {
@@ -262,7 +262,7 @@ std::vector<std::string> CVFSHandler::GetDirsInDir(const std::string& rawDir)
 	std::set<std::string> dirs;
 
 	while (filesStart != filesEnd) {
-		const std::string path = filesystem.GetDirectory(filesStart->first);
+		const std::string path = FileSystem::GetDirectory(filesStart->first);
 		// Test to see if this file start with the dir path
 		if (path.compare(0, dir.length(), dir) == 0) {
 			// Strip pathname

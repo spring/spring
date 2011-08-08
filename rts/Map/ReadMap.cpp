@@ -46,7 +46,7 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 	if (mapname.length() < 3)
 		throw content_error("CReadMap::LoadMap(): mapname '" + mapname + "' too short");
 
-	const std::string extension = filesystem.GetExtension(mapname);
+	const std::string extension = FileSystem::GetExtension(mapname);
 
 	CReadMap* rm = NULL;
 

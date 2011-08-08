@@ -568,7 +568,7 @@ static bool internal_GetMapInfo(const char* mapName, InternalMapInfo* outInfo)
 
 	// Retrieve the map header as well
 	if (err.empty()) {
-		const std::string extension = filesystem.GetExtension(mapFile);
+		const std::string extension = FileSystem::GetExtension(mapFile);
 		if (extension == "smf") {
 			try {
 				const CSMFMapFile file(mapFile);
@@ -1178,7 +1178,7 @@ EXPORT(unsigned short*) GetMinimap(const char* mapName, int mipLevel)
 		ScopedMapLoader mapLoader(mapName, mapFile);
 
 		unsigned short* ret = NULL;
-		const std::string extension = filesystem.GetExtension(mapFile);
+		const std::string extension = FileSystem::GetExtension(mapFile);
 		if (extension == "smf") {
 			ret = GetMinimapSMF(mapFile, mipLevel);
 		} else if (extension == "sm3") {
@@ -2373,8 +2373,8 @@ EXPORT(int) InitFindVFS(const char* pattern)
 		CheckInit();
 		CheckNullOrEmpty(pattern);
 
-		std::string path = filesystem.GetDirectory(pattern);
-		std::string patt = filesystem.GetFilename(pattern);
+		std::string path = FileSystem::GetDirectory(pattern);
+		std::string patt = FileSystem::GetFilename(pattern);
 		LOG_L(L_DEBUG, "InitFindVFS: %s", pattern);
 		curFindFiles = CFileHandler::FindFiles(path, patt);
 		return 0;

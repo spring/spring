@@ -220,7 +220,7 @@ void option_parseMapOptions(
 
 	luaParser.GetTable("Map");
 	luaParser.AddString("name",     mapName);	
-	luaParser.AddString("fileName", filesystem.GetFilename(mapFile));
+	luaParser.AddString("fileName", FileSystem::GetFilename(mapFile));
 	luaParser.AddString("fullName", mapFile);
 	luaParser.AddString("configFile", configName);
 	luaParser.EndTable();

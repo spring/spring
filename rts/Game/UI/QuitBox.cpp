@@ -304,11 +304,11 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 		}
 		// save current game state
 		if (InBox(mx,my,box+saveBox)) {
-			if (filesystem.CreateDirectory("Saves")) {
+			if (FileSystem::CreateDirectory("Saves")) {
 				std::string timeStr = CTimeUtil::GetCurrentTimeStr();
 				std::string saveFileName(timeStr + "_" + modInfo.filename + "_" + gameSetup->mapName);
 				saveFileName = "Saves/" + saveFileName + ".ssf";
-				if (!filesystem.FileExists(saveFileName)) {
+				if (!FileSystem::FileExists(saveFileName)) {
 					LOG("Saving game to %s", saveFileName.c_str());
 					ILoadSaveHandler* ls = ILoadSaveHandler::Create();
 					ls->mapName = gameSetup->mapName;

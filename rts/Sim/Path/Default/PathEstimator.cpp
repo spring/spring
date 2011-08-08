@@ -788,7 +788,7 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 	sprintf(hashString, "%u", hash);
 
 	std::string filename = std::string(PATH_CACHE_DIR) + map + hashString + "." + cacheFileName + ".zip";
-	if (!filesystem.FileExists(filename))
+	if (!FileSystem::FileExists(filename))
 		return false;
 	// open file for reading from a suitable location (where the file exists)
 	IArchive* pfile = archiveLoader.OpenArchive(dataDirsAccess.LocateFile(filename), "sdz");
@@ -851,7 +851,7 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::string& map)
 {
 	// We need this directory to exist
-	if (!filesystem.CreateDirectory(PATH_CACHE_DIR))
+	if (!FileSystem::CreateDirectory(PATH_CACHE_DIR))
 		return;
 
 	const unsigned int hash = Hash();

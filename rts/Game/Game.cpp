@@ -2216,8 +2216,8 @@ bool CGame::HasLag() const
 
 void CGame::SaveGame(const std::string& filename, bool overwrite)
 {
-	if (filesystem.CreateDirectory("Saves")) {
-		if (overwrite || !filesystem.FileExists(filename)) {
+	if (FileSystem::CreateDirectory("Saves")) {
+		if (overwrite || !FileSystem::FileExists(filename)) {
 			logOutput.Print("Saving game to %s\n", filename.c_str());
 			ILoadSaveHandler* ls = ILoadSaveHandler::Create();
 			ls->mapName = gameSetup->mapName;
