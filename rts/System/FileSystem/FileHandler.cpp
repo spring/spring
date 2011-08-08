@@ -126,8 +126,7 @@ bool CFileHandler::FileExists(const std::string& filePath, const std::string& mo
 
 	//! VFS
 	if (modes.find_first_of(SPRING_VFS_ZIP) != string::npos) {
-		const string filePath_lower = StringToLower(filePath);
-		fileExists = vfsHandler->FileExists(filePath_lower);
+		fileExists = fileExists || vfsHandler->FileExists(filePath);
 	}
 
 	//! Raw
