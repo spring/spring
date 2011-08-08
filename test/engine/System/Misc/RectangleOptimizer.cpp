@@ -14,7 +14,7 @@ static inline float randf()
 	return rand() / float(RAND_MAX);
 }
 
-static const int testRuns = 2000;
+static const int testRuns = 1000;
 static const int size = 100;
 static const int count_rects = 15;
 
