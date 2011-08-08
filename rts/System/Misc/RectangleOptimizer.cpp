@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "RectangleOptimizer.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include <assert.h>
 
 
@@ -18,14 +18,14 @@ CRectangleOptimizer::CRectangleOptimizer()
 CRectangleOptimizer::~CRectangleOptimizer()
 {
 	const float reduction = 100.f - ((100.f * statsOptSize) / statsTotalSize) ;
-	logOutput.Print("Statistics for RectangleOptimizer: %.0f%%", reduction);
+	LOG("Statistics for RectangleOptimizer: %.0f%%", reduction);
 }
 
 
 unsigned CRectangleOptimizer::GetTotalArea() const
 {
 	unsigned ret = 0;
-	for (std::list<Rectangle>::const_iterator it = rectangles.begin(); it != rectangles.end(); ++it) {
+	for (CRectangleOptimizer::const_iterator it = rectangles.begin(); it != rectangles.end(); ++it) {
 		const int w = it->GetWidth();
 		const int h = it->GetHeight();
 		ret += (w * h);
@@ -36,8 +36,8 @@ unsigned CRectangleOptimizer::GetTotalArea() const
 
 void CRectangleOptimizer::Update()
 {
-	std::list<Rectangle>::iterator it;
-	std::list<Rectangle>::iterator jt;
+	CRectangleOptimizer::iterator it;
+	CRectangleOptimizer::iterator jt;
 
 	statsTotalSize += GetTotalArea();
 
