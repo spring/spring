@@ -118,6 +118,25 @@ void CFileHandler::TryReadContent(const string& fileName, const string& modes)
 
 /******************************************************************************/
 
+bool CFileHandler::FileExists(const std::string& filePath, const std::string& modes)
+{
+	bool fileExists = false;
+
+	//! VFS
+	if (modes.find_first_of(SPRING_VFS_ZIP) != string::npos) {
+		const string filePath_lower = StringToLower(filePath);
+		fileExists = vfsHandler->FileExists(filePath_lower);
+	}
+
+	//! Raw
+	if (modes.find(SPRING_VFS_RAW) != string::npos) {
+		fileExists = fileExists || filesystem.FileExists(filePath);
+	}
+
+	return fileExists;
+}
+
+
 bool CFileHandler::FileExists() const
 {
 	return (fileSize >= 0);

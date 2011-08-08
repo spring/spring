@@ -277,8 +277,10 @@ int LuaVFS::FileExists(lua_State* L, bool synced)
 
 	const string modes = GetModes(L, 2, synced);
 
-	CFileHandler fh(filename, modes);
-	lua_pushboolean(L, fh.FileExists());
+	//CFileHandler fh(filename, modes);
+	//lua_pushboolean(L, fh.FileExists());
+
+	lua_pushboolean(L, CFileHandler::FileExists(filename, modes));
 	return 1;
 }
 
