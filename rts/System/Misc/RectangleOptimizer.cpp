@@ -10,8 +10,9 @@ unsigned CRectangleOptimizer::statsOptSize   = 0;
 
 
 CRectangleOptimizer::CRectangleOptimizer()
+	: maxAreaPerRect(10 * 5) //FIXME find better default
+	, needsUpdate(false)
 {
-	maxAreaPerRect = 10 * 5;
 }
 
 
@@ -34,8 +35,12 @@ unsigned CRectangleOptimizer::GetTotalArea() const
 }
 
 
-void CRectangleOptimizer::Update()
+void CRectangleOptimizer::Optimize()
 {
+	if (!needsUpdate) {
+		return;
+	}
+
 	CRectangleOptimizer::iterator it;
 	CRectangleOptimizer::iterator jt;
 

@@ -9,7 +9,7 @@
 #define BOOST_TEST_MODULE RectangleOptimizer
 #include <boost/test/unit_test.hpp>
 
-float randf()
+static inline float randf()
 {
 	return rand() / float(RAND_MAX);
 }
@@ -50,7 +50,7 @@ int Test()
 	}
 
 	//! optimize
-	ro.Update();
+	ro.Optimize();
 
 	//! fill testMap with optimized
 	for (CRectangleOptimizer::iterator it = ro.begin(); it != ro.end(); ++it) {
@@ -79,8 +79,6 @@ int Test()
 
 static inline bool TestArea()
 {
-	srand( time(NULL) );
-
 	for (int i=0; i<testRuns; ++i) {
 		if (Test() > 0)
 			return false;
@@ -91,8 +89,6 @@ static inline bool TestArea()
 
 static inline bool TestOverlapping()
 {
-	srand( time(NULL) );
-
 	for (int i=0; i<testRuns; ++i) {
 		if (Test() < 0)
 			return false;
@@ -103,6 +99,8 @@ static inline bool TestOverlapping()
 
 BOOST_AUTO_TEST_CASE( RectangleOptimizer )
 {
+	srand( time(NULL) );
+
 	BOOST_CHECK_MESSAGE(TestArea(), "Optimized rectangles don't cover the same area!");
 	BOOST_CHECK_MESSAGE(TestOverlapping(), "Optimized rectangles still overlap!");
 }

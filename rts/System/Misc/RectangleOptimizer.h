@@ -14,7 +14,7 @@ public:
 	CRectangleOptimizer();
 	virtual ~CRectangleOptimizer();
 
-	void Update();
+	void Optimize();
 
 public:
 	//! std container funcs
@@ -33,6 +33,7 @@ public:
 		return rectangles.pop_front();
 	}
 	void clear() {
+		needsUpdate = false;
 		return rectangles.clear();
 	}
 	void push_back(const Rectangle& rect) {
@@ -40,6 +41,7 @@ public:
 		//assert(rect.GetWidth() > 0 && rect.GetHeight() > 0);
 		if (rect.GetWidth() <= 0 || rect.GetHeight() <= 0)
 			return;
+		needsUpdate = true;
 		rectangles.push_back(rect);
 	}
 	iterator begin() {
@@ -64,6 +66,7 @@ private:
 
 private:
 	std::list<Rectangle> rectangles;
+	bool needsUpdate;
 
 private:
 	static unsigned statsTotalSize;
