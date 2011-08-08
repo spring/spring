@@ -62,7 +62,7 @@ void CLuaLoadSaveHandler::SaveGame(const std::string& file)
 
 	try {
 		// Remove any existing file
-		filesystem.Remove(realname);
+		FileSystem::Remove(realname);
 
 		// Open the zip
 		if (realname.empty() ||
@@ -98,7 +98,7 @@ void CLuaLoadSaveHandler::SaveGame(const std::string& file)
 	if (savefile != NULL) {
 		zipClose(savefile, NULL);
 		savefile = NULL;
-		filesystem.Remove(realname);
+		FileSystem::Remove(realname);
 	}
 }
 

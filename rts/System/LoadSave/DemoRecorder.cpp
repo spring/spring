@@ -23,7 +23,7 @@
 CDemoRecorder::CDemoRecorder()
 {
 	// We want this folder to exist
-	if (!filesystem.CreateDirectory("demos"))
+	if (!FileSystem::CreateDirectory("demos"))
 		return;
 
 	SetName("unnamed", "");

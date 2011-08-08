@@ -1775,8 +1775,8 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 	}
 
 
-	string dname = filesystem.GetDirectory(path);
-	string fname = filesystem.GetFilename(path);
+	string dname = FileSystem::GetDirectory(path);
+	string fname = FileSystem::GetFilename(path);
 
 #ifdef WIN32
 	const size_t s = dname.size();
@@ -1788,7 +1788,7 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 	}
 #endif
 
-	if (!dname.empty() && !filesystem.CreateDirectory(dname)) {
+	if (!dname.empty() && !FileSystem::CreateDirectory(dname)) {
 		luaL_error(L, "Could not create directory \"%s\" for file \"%s\"",
 		           dname.c_str(), fname.c_str());
 	}
@@ -2135,7 +2135,7 @@ int LuaUnsyncedCtrl::CreateDir(lua_State* L)
 	    ((dir.size() > 0) && (dir[1] == ':'))) {
 		luaL_error(L, "Invalid CreateDir() access: %s", dir.c_str());
 	}
-	const bool success = filesystem.CreateDirectory(dir);
+	const bool success = FileSystem::CreateDirectory(dir);
 	lua_pushboolean(L, success);
 	return 1;
 }

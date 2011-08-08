@@ -14,8 +14,6 @@
 //#include <limits.h>
 //#include <fstream>
 
-FileSystem filesystem;
-
 ////////////////////////////////////////
 ////////// FileSystem
 

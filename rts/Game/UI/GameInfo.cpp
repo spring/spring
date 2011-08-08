@@ -167,7 +167,7 @@ void CGameInfo::Draw()
 
 	if (gameSetup && gameSetup->hostDemo) {
 		labels.push_back("Playback:");
-		values.push_back(filesystem.GetBasename(gameSetup->demoName));
+		values.push_back(FileSystem::GetBasename(gameSetup->demoName));
 	}
 
 	labels.push_back("Game Version:");

@@ -41,7 +41,7 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 	// TODO refactor: put reading code in CSMFFile and keep error-handling/progress reporting here
 	      CSMFMapFile& file = smfMap->GetFile();
 	const SMFHeader& header = file.GetHeader();
-	const std::string smfDir = filesystem.GetDirectory(gameSetup->MapFile());
+	const std::string smfDir = FileSystem::GetDirectory(gameSetup->MapFile());
 	const CMapInfo::smf_t& smf = mapInfo->smf;
 
 	assert(gs->mapx == header.mapx);
