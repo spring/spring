@@ -179,7 +179,7 @@ bool CVFSHandler::FileExists(const std::string& filePath)
 		return false;
 	}
 
-	if (fileData->ar->FileExists(normalizedPath)) {
+	if (!fileData->ar->FileExists(normalizedPath)) {
 		// the file does not exist in the archive
 		return false;
 	}
