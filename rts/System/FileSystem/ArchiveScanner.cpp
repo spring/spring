@@ -22,6 +22,7 @@
 #include "System/CRC.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
+#include "System/OpenMP_cond.h"
 #if       !defined(DEDICATED) && !defined(UNITSYNC)
 #include "System/Platform/Watchdog.h"
 #endif // !defined(DEDICATED) && !defined(UNITSYNC)
@@ -665,6 +666,13 @@ IFileFilter* CArchiveScanner::CreateIgnoreFilter(IArchive* ar)
 }
 
 
+/// used below
+struct CRCPair {
+	std::string* filename;
+	unsigned int nameCRC;
+	unsigned int dataCRC;
+};
+
 /**
  * Get CRC of the data in the specified archive.
  * Returns 0 if file could not be opened.
@@ -684,6 +692,7 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 	//! Load ignore list.
 	IFileFilter* ignore = CreateIgnoreFilter(ar);
 
+	//! Insert all files to check in lowercase format
 	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
 		std::string name;
 		int size;
@@ -697,18 +706,44 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 		files.push_back(name);
 	}
 
+	//! Sort by FileName
 	files.sort();
 
-	//! Add all files in sorted order
-	for (std::list<std::string>::iterator i = files.begin(); i != files.end(); ++i) {
-		const unsigned int nameCRC = CRC().Update(i->data(), i->size()).GetDigest();
-		const unsigned fid = ar->FindFile(*i);
+	//! Push the filenames into a std::vector, cause OMP can better iterate over those
+	std::vector<CRCPair> crcs;
+	crcs.reserve(files.size());
+	CRCPair crcp;
+	for (std::list<std::string>::iterator it = files.begin(); it != files.end(); ++it) {
+		crcp.filename = &(*it);
+		crcs.push_back(crcp);
+	}
+
+	//! Compute CRCs of the files
+	//! Hint: Multithreading only speedups `.sdd` loading. For those the CRC generation is extremely slow -
+	//!       it has to load the full file to calc it! For the other formats (sd7, sdz, sdp) the CRC is saved
+	//!       in the metainformation of the container and so the loading is much faster. Neither does any of our
+	//!       current (2011) packing libraries support multithreading :/
+	int i;
+	#pragma omp parallel for private(i)
+	for (i=0; i<crcs.size(); ++i) {
+		CRCPair& crcp = crcs[i];
+		const unsigned int nameCRC = CRC().Update(crcp.filename->data(), crcp.filename->size()).GetDigest();
+		const unsigned fid = ar->FindFile(*crcp.filename);
 		const unsigned int dataCRC = ar->GetCrc32(fid);
-		crc.Update(nameCRC);
-		crc.Update(dataCRC);
-	#if       !defined(DEDICATED) && !defined(UNITSYNC)
+		crcp.nameCRC = nameCRC;
+		crcp.dataCRC = dataCRC;
+	#if !defined(DEDICATED) && !defined(UNITSYNC)
+		Watchdog::ClearTimer(WDT_MAIN);
+	#endif
+	}
+
+	//! Add file CRCs to the main archive CRC
+	for (std::vector<CRCPair>::iterator it = crcs.begin(); it != crcs.end(); ++it) {
+		crc.Update(it->nameCRC);
+		crc.Update(it->dataCRC);
+	#if !defined(DEDICATED) && !defined(UNITSYNC)
 		Watchdog::ClearTimer();
-	#endif // !defined(DEDICATED) && !defined(UNITSYNC)
+	#endif
 	}
 
 	delete ignore;
