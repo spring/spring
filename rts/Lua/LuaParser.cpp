@@ -589,8 +589,9 @@ int LuaParser::FileExists(lua_State* L)
 	if (!LuaIO::IsSimplePath(filename)) {
 		return 0;
 	}
-	CFileHandler fh(filename, currentParser->accessModes);
-	lua_pushboolean(L, fh.FileExists());
+	//CFileHandler fh(filename, currentParser->accessModes);
+	//lua_pushboolean(L, fh.FileExists());
+	lua_pushboolean(L, CFileHandler::FileExists(filename, currentParser->accessModes));
 	return 1;
 }
 

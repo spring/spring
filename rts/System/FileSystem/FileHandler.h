@@ -30,7 +30,9 @@ public:
 	int Read(void* buf, int length);
 	void Seek(int pos, std::ios_base::seekdir where = std::ios_base::beg);
 
+	static bool FileExists(const std::string& filePath, const std::string& modes);
 	bool FileExists() const;
+
 	bool Eof() const;
 	int Peek() const;
 	int GetPos() const;
