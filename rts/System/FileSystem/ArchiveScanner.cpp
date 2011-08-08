@@ -13,9 +13,12 @@
 #include "ArchiveScanner.h"
 
 #include "ArchiveLoader.h"
+#include "DataDirLocater.h"
 #include "IArchive.h"
 #include "FileFilter.h"
+#include "DataDirsAccess.h"
 #include "FileSystem.h"
+#include "FileQueryFlags.h"
 #include "FileSystemHandler.h"
 #include "Lua/LuaParser.h"
 #include "System/Log/ILog.h"
@@ -340,10 +343,9 @@ CArchiveScanner::CArchiveScanner()
 	// the "cache" dir is created in DataDirLocater
 	file << "cache" << (char)FileSystemHandler::GetNativePathSeparator() << "ArchiveCache.lua";
 	cachefile = file.str();
-	FileSystemHandler& fsh = FileSystemHandler::GetInstance();
-	ReadCacheData(fsh.GetWriteDir() + GetFilename());
+	ReadCacheData(dataDirLocater.GetWriteDirPath() + GetFilename());
 
-	const std::vector<std::string>& datadirs = fsh.GetDataDirectories();
+	const std::vector<std::string>& datadirs = dataDirLocater.GetDataDirPaths();
 	std::vector<std::string> scanDirs;
 	for (std::vector<std::string>::const_reverse_iterator d = datadirs.rbegin(); d != datadirs.rend(); ++d) {
 		scanDirs.push_back(*d + "maps");
@@ -353,14 +355,14 @@ CArchiveScanner::CArchiveScanner()
 		scanDirs.push_back(*d + "packages");
 	}
 	ScanDirs(scanDirs, true);
-	WriteCacheData(fsh.GetWriteDir() + GetFilename());
+	WriteCacheData(dataDirLocater.GetWriteDirPath() + GetFilename());
 }
 
 
 CArchiveScanner::~CArchiveScanner()
 {
 	if (isDirty) {
-		WriteCacheData(filesystem.LocateFile(GetFilename(), FileSystem::WRITE));
+		WriteCacheData(dataDirsAccess.LocateFile(GetFilename(), FileQueryFlags::WRITE));
 	}
 }
 
@@ -388,8 +390,8 @@ void CArchiveScanner::Scan(const std::string& curPath, bool doChecksum)
 {
 	isDirty = true;
 
-	const int flags = (FileSystem::INCLUDE_DIRS | FileSystem::RECURSE);
-	const std::vector<std::string> &found = filesystem.FindFiles(curPath, "*", flags);
+	const int flags = (FileQueryFlags::INCLUDE_DIRS | FileQueryFlags::RECURSE);
+	const std::vector<std::string> &found = dataDirsAccess.FindFiles(curPath, "*", flags);
 
 	for (std::vector<std::string>::const_iterator it = found.begin(); it != found.end(); ++it) {
 		std::string fullName = *it;

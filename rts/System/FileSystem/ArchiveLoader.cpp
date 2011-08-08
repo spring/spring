@@ -14,6 +14,7 @@
 #include "SevenZipArchive.h"
 
 #include "FileSystem.h"
+#include "DataDirsAccess.h"
 
 #include "System/Util.h"
 
@@ -56,7 +57,7 @@ IArchive* CArchiveLoader::OpenArchive(const std::string& fileName, const std::st
 	IArchive* ret = NULL;
 
 	const std::string ext = type.empty() ? filesystem.GetExtension(fileName) : type;
-	const std::string filePath = filesystem.LocateFile(fileName);
+	const std::string filePath = dataDirsAccess.LocateFile(fileName);
 
 	const std::map<std::string, IArchiveFactory*>::const_iterator afi
 			= archiveFactories.find(ext);

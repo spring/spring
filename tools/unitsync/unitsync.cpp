@@ -24,10 +24,12 @@
 #include "System/FileSystem/IArchive.h"
 #include "System/FileSystem/ArchiveLoader.h"
 #include "System/FileSystem/ArchiveScanner.h"
+#include "System/FileSystem/DataDirsAccess.h"
+#include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/FileSystem/FileSystemHandler.h"
+#include "System/FileSystem/FileSystemInitializer.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
@@ -293,7 +295,7 @@ static void _UnInit()
 
 	lpClose();
 
-	FileSystemHandler::Cleanup();
+	FileSystemInitializer::Cleanup();
 
 	if (syncer) {
 		SafeDelete(syncer);
@@ -313,7 +315,7 @@ EXPORT(int) Init(bool isServer, int id)
 		if (!configHandler) {
 			ConfigHandler::Instantiate(); // use the default config file
 		}
-		FileSystemHandler::Initialize(false);
+		FileSystemInitializer::Initialize();
 
 		if (!logOutputInitialised) {
 			logOutput.Initialize();
@@ -359,7 +361,7 @@ EXPORT(const char*) GetWritableDataDirectory()
 {
 	try {
 		CheckInit();
-		return GetStr(FileSystemHandler::GetInstance().GetWriteDir());
+		return GetStr(dataDirLocater.GetWriteDirPath());
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return NULL;
@@ -371,7 +373,7 @@ EXPORT(int) GetDataDirectoryCount()
 
 	try {
 		CheckInit();
-		count = (int) FileSystemHandler::GetInstance().GetDataDirectories().size();
+		count = (int) dataDirLocater.GetDataDirs().size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
@@ -382,9 +384,10 @@ EXPORT(const char*) GetDataDirectory(int index)
 {
 	try {
 		CheckInit();
-		const std::vector<std::string> datadirs = FileSystemHandler::GetInstance().GetDataDirectories();
-		if (index > datadirs.size())
+		const std::vector<std::string> datadirs = dataDirLocater.GetDataDirPaths();
+		if (index > datadirs.size()) {
 			return NULL;
+		}
 		return GetStr(datadirs[index]);
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -1706,7 +1709,7 @@ EXPORT(int) GetSkirmishAICount() {
 		skirmishAIDataDirs.clear();
 
 		std::vector<std::string> dataDirs_tmp =
-				filesystem.FindDirsInDirectSubDirs(SKIRMISH_AI_DATA_DIR);
+				dataDirsAccess.FindDirsInDirectSubDirs(SKIRMISH_AI_DATA_DIR);
 
 		// filter out dirs not containing an AIInfo.lua file
 		std::vector<std::string>::const_iterator i;

@@ -1,7 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "FileSystemHandler.h"
+
+#include "FileQueryFlags.h"
+
+#include "System/Util.h"
+#include "System/Log/ILog.h"
+#include "System/Exceptions.h"
 
 #include <cassert>
 #include <sys/stat.h>
@@ -29,70 +34,12 @@
 	#endif
 #endif
 
-#include "System/Util.h"
-#include "System/Log/ILog.h"
-#include "System/FileSystem/ArchiveScanner.h"
-#include "System/FileSystem/VFSHandler.h"
-#include "System/Exceptions.h"
-#include "FileSystem.h"
-
-FileSystemHandler* FileSystemHandler::instance = NULL;
-
-FileSystemHandler& FileSystemHandler::GetInstance()
-{
-	if (!instance) {
-		Initialize(false);
-	}
-
-	return *instance;
-}
-
-void FileSystemHandler::Initialize(bool verbose)
-{
-	if (!instance) {
-		instance = new FileSystemHandler();
-		try {
-			instance->locater.LocateDataDirs();
-			// TODO: move these two out of here; this class is for low level file system abstraction only
-			archiveScanner = new CArchiveScanner();
-			vfsHandler = new CVFSHandler();
-		} catch (...) {
-			FileSystemHandler::Cleanup();
-			throw;
-		}
-	}
-}
-
-void FileSystemHandler::Cleanup()
-{
-	FileSystemHandler* tmp = instance;
-	instance = NULL;
-	delete tmp;
-}
-
-FileSystemHandler::~FileSystemHandler()
-{
-	SafeDelete(archiveScanner);
-	SafeDelete(vfsHandler);
-	// configHandler->Deallocate();
-}
 
 #ifndef _WIN32
-const int FileSystemHandler::native_path_separator = '/';
+const int FileSystemHandler::nativePathSeparator = '/';
 #else
-const int FileSystemHandler::native_path_separator = '\\';
+const int FileSystemHandler::nativePathSeparator = '\\';
 #endif
-
-FileSystemHandler::FileSystemHandler()
-{
-}
-
-std::string FileSystemHandler::GetWriteDir() const
-{
-	const DataDir* writedir = locater.GetWriteDir();
-	assert(writedir && writedir->writable); // duh
-	return writedir->path;
-}
 
 std::string FileSystemHandler::RemoveLocalPathPrefix(const std::string& path)
 {
@@ -215,27 +162,6 @@ size_t FileSystemHandler::GetFileSize(const std::string& file)
 	return fileSize;
 }
 
-std::vector<std::string> FileSystemHandler::FindFiles(const std::string& dir, const std::string& pattern, int flags) const
-{
-	std::vector<std::string> matches;
-
-	// if it is an absolute path, do not look for it in the data directories
-	if (FileSystemHandler::IsAbsolutePath(dir)) {
-		// pass the directory as second directory argument,
-		// so the path gets included in the matches.
-		FindFilesSingleDir(matches, "", dir, pattern, flags);
-		return matches;
-	}
-
-	std::string dir2 = RemoveLocalPathPrefix(dir);
-
-	const std::vector<DataDir>& datadirs = locater.GetDataDirs();
-	for (std::vector<DataDir>::const_reverse_iterator d = datadirs.rbegin(); d != datadirs.rend(); ++d) {
-		FindFilesSingleDir(matches, d->path, dir2, pattern, flags);
-	}
-	return matches;
-}
-
 bool FileSystemHandler::IsReadableFile(const std::string& file)
 {
 #ifdef WIN32
@@ -310,38 +236,6 @@ std::string FileSystemHandler::GetFileModificationDate(const std::string& file)
 #endif // defined(WIN32)
 
 	return time;
-}
-
-std::string FileSystemHandler::LocateFile(const std::string& file) const
-{
-	// if it's an absolute path, don't look for it in the data directories
-	if (FileSystemHandler::IsAbsolutePath(file)) {
-		return file;
-	}
-
-	const std::vector<DataDir>& datadirs = locater.GetDataDirs();
-	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
-		std::string fn(d->path + file);
-		// does the file exist, and is it readable?
-		if (IsReadableFile(fn)) {
-			return fn;
-		}
-	}
-
-	return file;
-}
-
-
-std::vector<std::string> FileSystemHandler::GetDataDirectories() const
-{
-	std::vector<std::string> dataDirPaths;
-
-	const std::vector<DataDir>& datadirs = locater.GetDataDirs();
-	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
-		dataDirPaths.push_back(d->path);
-	}
-
-	return dataDirPaths;
 }
 
 
@@ -518,7 +412,7 @@ void FileSystemHandler::Chdir(const std::string& dir)
 	}
 }
 
-static void FindFiles(std::vector<std::string>& matches, const std::string& datadir, const std::string& dir, const boost::regex &regexpattern, int flags)
+static void FindFiles(std::vector<std::string>& matches, const std::string& datadir, const std::string& dir, const boost::regex& regexPattern, int flags)
 {
 #ifdef _WIN32
 	WIN32_FIND_DATA wfd;
@@ -528,19 +422,19 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& data
 		do {
 			if(strcmp(wfd.cFileName,".") && strcmp(wfd.cFileName ,"..")) {
 				if(!(wfd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)) {
-					if ((flags & FileSystem::ONLY_DIRS) == 0) {
-						if (boost::regex_match(wfd.cFileName, regexpattern)) {
+					if ((flags & FileQueryFlags::ONLY_DIRS) == 0) {
+						if (boost::regex_match(wfd.cFileName, regexPattern)) {
 							matches.push_back(dir + wfd.cFileName);
 						}
 					}
 				} else {
-					if (flags & FileSystem::INCLUDE_DIRS) {
-						if (boost::regex_match(wfd.cFileName, regexpattern)) {
+					if (flags & FileQueryFlags::INCLUDE_DIRS) {
+						if (boost::regex_match(wfd.cFileName, regexPattern)) {
 							matches.push_back(dir + wfd.cFileName + "\\");
 						}
 					}
-					if (flags & FileSystem::RECURSE) {
-						FindFiles(matches, datadir, dir + wfd.cFileName + "\\", regexpattern, flags);
+					if (flags & FileQueryFlags::RECURSE) {
+						FindFiles(matches, datadir, dir + wfd.cFileName + "\\", regexPattern, flags);
 					}
 				}
 			}
@@ -563,20 +457,20 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& data
 			struct stat info;
 			if (stat((datadir + dir + ep->d_name).c_str(), &info) == 0) {
 				if (!S_ISDIR(info.st_mode)) {
-					if ((flags & FileSystem::ONLY_DIRS) == 0) {
-						if (boost::regex_match(ep->d_name, regexpattern)) {
+					if ((flags & FileQueryFlags::ONLY_DIRS) == 0) {
+						if (boost::regex_match(ep->d_name, regexPattern)) {
 							matches.push_back(dir + ep->d_name);
 						}
 					}
 				} else {
 					// or a directory?
-					if (flags & FileSystem::INCLUDE_DIRS) {
-						if (boost::regex_match(ep->d_name, regexpattern)) {
+					if (flags & FileQueryFlags::INCLUDE_DIRS) {
+						if (boost::regex_match(ep->d_name, regexPattern)) {
 							matches.push_back(dir + ep->d_name + "/");
 						}
 					}
-					if (flags & FileSystem::RECURSE) {
-						FindFiles(matches, datadir, dir + ep->d_name + "/", regexpattern, flags);
+					if (flags & FileQueryFlags::RECURSE) {
+						FindFiles(matches, datadir, dir + ep->d_name + "/", regexPattern, flags);
 					}
 				}
 			}
@@ -586,13 +480,8 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& data
 #endif
 }
 
-
-void FileSystemHandler::FindFilesSingleDir(std::vector<std::string>& matches, const std::string& datadir, const std::string& dir, const std::string &pattern, int flags) const
+void FileSystemHandler::FindFiles(std::vector<std::string>& matches, const std::string& dataDir, const std::string& dir, const std::string& regex, int flags)
 {
-	assert(datadir.empty() || datadir[datadir.length() - 1] == native_path_separator);
-	assert(!dir.empty() && dir[dir.length() - 1] == native_path_separator);
-
-	boost::regex regexpattern(filesystem.glob_to_regex(pattern));
-
-	::FindFiles(matches, datadir, dir, regexpattern, flags);
+	const boost::regex regexPattern(regex);
+	::FindFiles(matches, dataDir, dir, regexPattern, flags);
 }

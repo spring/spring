@@ -52,7 +52,7 @@
 #include "System/OffscreenGLContext.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
-#include "System/FileSystem/FileSystemHandler.h"
+#include "System/FileSystem/FileSystemInitializer.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/CmdLineParams.h"
 #include "System/Platform/Misc.h"
@@ -211,7 +211,7 @@ bool SpringApp::Initialize()
 	else
 		LOG("OS: 32bit native mode");
 
-	FileSystemHandler::Initialize(true);
+	FileSystemInitializer::Initialize();
 
 	UpdateOldConfigs();
 
@@ -1223,7 +1223,7 @@ void SpringApp::Shutdown()
 	DeleteAndNull(globalRendering);
 	DeleteAndNull(startsetup);
 
-	FileSystemHandler::Cleanup();
+	FileSystemInitializer::Cleanup();
 
 	Watchdog::Uninstall();
 

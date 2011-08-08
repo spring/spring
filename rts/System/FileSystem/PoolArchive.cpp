@@ -11,6 +11,7 @@
 #include <cstring>
 #include <iostream>
 
+#include "DataDirsAccess.h"
 #include "FileSystem.h"
 #include "System/Util.h"
 #include "System/mmgr.h"
@@ -136,7 +137,7 @@ bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& bu
 	std::string rpath = accu.str();
 
 	filesystem.FixSlashes(rpath);
-	std::string path = filesystem.LocateFile(rpath);
+	std::string path = dataDirsAccess.LocateFile(rpath);
 	gzFile in = gzopen(path.c_str(), "rb");
 	if (in == NULL)
 		return false;

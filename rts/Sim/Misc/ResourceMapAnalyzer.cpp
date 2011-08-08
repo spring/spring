@@ -18,7 +18,8 @@ using std::fclose;
 #include "Game/GameSetup.h"
 #include "Map/MapInfo.h"
 #include "Map/MetalMap.h"
-#include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/DataDirsAccess.h"
+#include "System/FileSystem/FileQueryFlags.h"
 #include "System/Log/ILog.h"
 
 #include <stdexcept>
@@ -54,7 +55,7 @@ CResourceMapAnalyzer::CResourceMapAnalyzer(int resourceId)
 	, tempAverage(NULL)
 {
 	if (CACHE_BASE.empty()) {
-		CACHE_BASE = filesystem.LocateDir("cache/analyzedResourceMaps/", FileSystem::WRITE | FileSystem::CREATE_DIRS);
+		CACHE_BASE = dataDirsAccess.LocateDir("cache/analyzedResourceMaps/", FileQueryFlags::WRITE | FileQueryFlags::CREATE_DIRS);
 	}
 
 	// from 0-255, the minimum percentage of resources a spot needs to have from

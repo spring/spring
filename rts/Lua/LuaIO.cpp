@@ -20,6 +20,7 @@ using std::string;
 #include "LuaHandle.h"
 #endif // !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 #include "LuaInclude.h"
+#include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
 
@@ -66,7 +67,7 @@ bool LuaIO::SafeExecPath(const string& path)
 
 bool LuaIO::SafeReadPath(const string& path)
 {
-	return filesystem.InReadDir(path);
+	return dataDirsAccess.InReadDir(path);
 }
 
 
@@ -87,7 +88,7 @@ bool LuaIO::SafeWritePath(const string& path)
 		if (ext == exeFiles[i])
 			return false;
 	}
-	return filesystem.InWriteDir(path, prefix);
+	return dataDirsAccess.InWriteDir(path, prefix);
 }
 
 
