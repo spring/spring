@@ -18,14 +18,22 @@ public:
 
 public:
 	//! std container funcs
+	typedef std::list<Rectangle>::iterator iterator;
+	typedef std::list<Rectangle>::const_iterator const_iterator;
 	bool empty() {
 		return rectangles.empty();
+	}
+	size_t size() {
+		return rectangles.size();
 	}
 	Rectangle& front() {
 		return rectangles.front();
 	}
 	void pop_front() {
 		return rectangles.pop_front();
+	}
+	void clear() {
+		return rectangles.clear();
 	}
 	void push_back(const Rectangle& rect) {
 		//! skip empty/negative rectangles
@@ -34,14 +42,12 @@ public:
 			return;
 		rectangles.push_back(rect);
 	}
-	void begin() {
-		rectangles.begin();
+	iterator begin() {
+		return rectangles.begin();
 	}
-	void end() {
-		rectangles.begin();
+	iterator end() {
+		return rectangles.end();
 	}
-	typedef std::list<Rectangle>::iterator iterator;
-	typedef std::list<Rectangle>::const_iterator const_iterator;
 
 public:
 	int maxAreaPerRect;
