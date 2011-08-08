@@ -88,6 +88,23 @@ Else  (NOT Boost_FOUND)
 	ADD_TEST(NAME testSyncedPrimitive COMMAND test_SyncedPrimitive)
 
 
+################################################################################
+### RectangleOptimizer
+
+	Set(test_RectangleOptimizer_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Misc/RectangleOptimizer.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/RectangleOptimizer.cpp"
+			${test_Log_sources}
+		)
+
+	ADD_EXECUTABLE(test_RectangleOptimizer ${test_RectangleOptimizer_src})
+	TARGET_LINK_LIBRARIES(test_RectangleOptimizer
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+		)
+
+	ADD_TEST(NAME testRectangleOptimizer COMMAND test_RectangleOptimizer)
+
+
 
 ################################################################################
 
@@ -95,6 +112,7 @@ Else  (NOT Boost_FOUND)
 			test_UDPListener
 			test_ILog
 			test_SyncedPrimitive
+			test_RectangleOptimizer
 		)
 
 	Add_Custom_Target(tests)
