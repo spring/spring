@@ -670,7 +670,7 @@ void CBumpWater::Update()
 
 	SCOPED_TIMER("BumpWater::Update (Coastmap)");
 
-	if ((gs->frameNum % 10) == 5 && !coastmapUpdates.empty()) {
+	if ((gs->frameNum % 10) == 5 && !heightmapUpdates.empty()) {
 		UploadCoastline();
 	}
 
@@ -717,7 +717,7 @@ void CBumpWater::UpdateWater(CGame* game)
 ///  SHOREWAVES/COASTMAP
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-CBumpWater::CoastAtlasRect::CoastAtlasRect(const CBumpWater::CoastUpdateRect& rect)
+CBumpWater::CoastAtlasRect::CoastAtlasRect(const Rectangle& rect)
 {
 	xsize = rect.x2 - rect.x1;
 	ysize = rect.z2 - rect.z1;
@@ -739,184 +739,34 @@ void CBumpWater::HeightmapChanged(const int x1, const int y1, const int x2, cons
 		return;
 	}
 
-	CoastUpdateRect updateRect(std::max(x1 - 12, 0), std::max(y1 - 12, 0),  std::min(x2 + 12, gs->mapx), std::min(y2 + 12, gs->mapy));
-	coastmapUpdates.push_back(updateRect);
-}
-
-
-std::bitset<4> CBumpWater::GetEdgesInRect(CoastUpdateRect& rect1, CoastUpdateRect& rect2)
-{
-	std::bitset<4> bits;
-	bits[0] = (rect2.x1 >= rect1.x1) && (rect2.x1 <= rect1.x2);
-	bits[1] = (rect2.x2 >= rect1.x1) && (rect2.x2 <= rect1.x2);
-	bits[2] = (rect2.z1 >= rect1.z1) && (rect2.z1 <= rect1.z2);
-	bits[3] = (rect2.z2 >= rect1.z1) && (rect2.z2 <= rect1.z2);
-
-	return bits;
-}
-
-
-std::bitset<4> CBumpWater::GetSharedEdges(CoastUpdateRect& rect1, CoastUpdateRect& rect2)
-{
-	std::bitset<4> bits;
-	bits[0] = (rect2.x1 == rect1.x1) || (rect2.x1 == rect1.x2);
-	bits[1] = (rect2.x2 == rect1.x1) || (rect2.x2 == rect1.x2);
-	bits[2] = (rect2.z1 == rect1.z1) || (rect2.z1 == rect1.z2);
-	bits[3] = (rect2.z2 == rect1.z1) || (rect2.z2 == rect1.z2);
-
-	return bits;
-}
-
-
-void CBumpWater::HandleOverlapping(size_t i, size_t& j)
-{
-	CoastUpdateRect& rect1 = coastmapUpdates[i];
-	CoastUpdateRect& rect2 = coastmapUpdates[j];
-
-	std::bitset<4> edgesInRect = GetEdgesInRect(rect1, rect2);
-
-	if (edgesInRect.count() <= 1) {
-		j++;
-		return;
-	}
-
-	//! select the `larger`/`outer` rectangle
-	std::bitset<4> bitsTwisted = GetEdgesInRect(rect2, rect1);
-	if (edgesInRect.count() < bitsTwisted.count()) {
-		edgesInRect = bitsTwisted;
-		std::swap(rect1,rect2);
-	}
-
-	j++;
-	if (edgesInRect.count() == 4) {
-		//  ________
-		// |  ____  |
-		// | |    | |
-		// | |____| |
-		// |________|
-
-		//! j is fully in i
-		j--;
-		coastmapUpdates[j] = coastmapUpdates.back();
-		coastmapUpdates.pop_back();
-	} else if (edgesInRect.count() == 3) {
-		//! check if the edges are really the same or just in first rectangle
-		//! (if they are the same we can merge those two rects into one)
-
-		std::bitset<4> sharedEdges = GetSharedEdges(rect1, rect2);
-
-		if (sharedEdges.count() == 3 || (
-			(sharedEdges.count() == 2) && (
-				(sharedEdges[0] && sharedEdges[1]) || (sharedEdges[2] && sharedEdges[3])
-			)
-		)) {
-			//  _________
-			// |   |     |
-			// |   |     |
-			// |___|_____|
-			//
-
-			//! merge
-			if (!sharedEdges[0]) {
-				rect1.x1 = std::min(rect1.x1, rect2.x1);
-			} else if (!sharedEdges[2]) {
-				rect1.z1 = std::min(rect1.z1, rect2.z1);
-			}
-			if (!sharedEdges[1]) {
-				rect1.x2 = std::max(rect1.x2, rect2.x2);
-			} else if (!sharedEdges[3]) {
-				rect1.z2 = std::max(rect1.z2, rect2.z2);
-			}
-			j--;
-			coastmapUpdates[j] = coastmapUpdates.back();
-			coastmapUpdates.pop_back();
-		} else {
-			//  ______
-			// |     _|___
-			// |    | |   |
-			// |____|_|___|
-			//
-
-			//! make one rect a smaller
-			if (!edgesInRect[0]) {
-				rect2.x2 = rect1.x1;
-			} else if (!edgesInRect[1]) {
-				rect2.x1 = rect1.x2;
-			} else if (!edgesInRect[2]) {
-				rect2.z2 = rect1.z1;
-			} else {
-				rect2.z1 = rect1.z2;
-			}
-		}
-	} else if ((edgesInRect[0] || edgesInRect[1]) && (edgesInRect[2] || edgesInRect[3])) /*if (edgesInRect.count() == 2)*/ {
-		//  ______
-		// |      |
-		// |  ____|___
-		// |_|____|   |
-		//   |________|
-
-		//! make one smaller and create a new one
-		CoastUpdateRect rect(rect2);
-
-		//! make smaller
-		if (!edgesInRect[0]) {
-			rect2.x2 = rect1.x1;
-			rect.x1 = rect1.x1;
-		} else { //(!edgesInRect[1])
-			rect2.x1 = rect1.x2;
-			rect.x2 = rect1.x2;
-		}
-		if (!edgesInRect[2]) {
-			rect2.z2 = rect1.z1;
-		} else { //(!edgesInRect[3])
-			rect2.z1 = rect1.z2;
-		}
-
-		//! create a new one
-		coastmapUpdates.push_back(rect);
-	}
+	Rectangle updateRect(std::max(x1 - 20, 0), std::max(y1 - 20, 0),  std::min(x2 + 20, gs->mapx), std::min(y2 + 20, gs->mapy));
+	heightmapUpdates.push_back(updateRect);
 }
 
 
 void CBumpWater::UploadCoastline(const bool forceFull)
 {
 	//! optimize update area (merge overlapping areas etc.)
-	for (size_t i = 0; i < coastmapUpdates.size(); i++) {
-		for (size_t j = i + 1; j < coastmapUpdates.size(); ) {
-			HandleOverlapping(i, j);
-		}
-	}
+	heightmapUpdates.Update();
 
 	//! limit the to be updated areas
 	unsigned int currentPixels = 0;
 
-	while (!coastmapUpdates.empty()) {
-		CoastUpdateRect& cuRect1 = coastmapUpdates.back();
-		CoastUpdateRect  cuRect2(cuRect1);
+	//! select the to be updated areas
+	while (!heightmapUpdates.empty()) {
+		Rectangle& cuRect1 = heightmapUpdates.front();
+		Rectangle  cuRect2(cuRect1);
 
-		const int width  = (cuRect1.x2 - cuRect1.x1);
-		const int height = (cuRect1.z2 - cuRect1.z1);
+		const int width  = cuRect1.GetWidth();
+		const int height = cuRect1.GetHeight();
 
-		if ((width * height > 512 * 512) && !forceFull) {
-			//! split rect1 if it is too large for a single update
-			if (width > 512) {
-				cuRect1.x2 = (cuRect1.x1 + cuRect1.x2) / 2;
-				cuRect2.x1 = (cuRect2.x1 + cuRect2.x2) / 2;
-			} else {
-				cuRect1.z2 = (cuRect1.z1 + cuRect1.z2) / 2;
-				cuRect2.z1 = (cuRect2.z1 + cuRect2.z2) / 2;
-			}
-
-			coastmapUpdates.push_back(cuRect2);
+		if ((currentPixels + (width * height) <= 512 * 512) || forceFull) {
+			CoastAtlasRect caRect(cuRect1);
+			currentPixels += width * height;
+			coastmapAtlasRects.push_back(caRect);
+			heightmapUpdates.pop_front();
 		} else {
-			if ((currentPixels + (width * height) <= 512 * 512) || forceFull) {
-				CoastAtlasRect caRect(cuRect1);
-				currentPixels += width * height;
-				coastmapAtlasRects.push_back(caRect);
-				coastmapUpdates.pop_back();
-			} else {
-				break;
-			}
+			break;
 		}
 	}
 
