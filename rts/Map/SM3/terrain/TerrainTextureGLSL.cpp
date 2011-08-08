@@ -13,8 +13,9 @@
 #include "System/Util.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
+#include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/FileQueryFlags.h"
 
 #include <fstream>
 #include <list>
@@ -100,7 +101,7 @@ struct Shader {
 	}
 	void WriteToFile(const char* fn)
 	{
-		std::string n = filesystem.LocateFile(fn, FileSystem::WRITE);
+		std::string n = dataDirsAccess.LocateFile(fn, FileQueryFlags::WRITE);
 
 		FILE* f = fopen(n.c_str(), "w");
 

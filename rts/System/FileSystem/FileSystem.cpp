@@ -4,21 +4,15 @@
  * Glob conversion by Chris Han (based on work by Nathaniel Smith).
  */
 
-#include "System/StdAfx.h"
 #include "FileSystem.h"
 
-#include <assert.h>
-#include <limits.h>
-#include <fstream>
-
-#include "FileHandler.h"
 #include "FileSystemHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/mmgr.h"
 
-
-#define fs (FileSystemHandler::GetInstance())
+//#include <limits.h>
+//#include <fstream>
 
 FileSystem filesystem;
 
@@ -42,7 +36,7 @@ FileSystem filesystem;
 		str += c;				\
 	} while (0)
 
-std::string FileSystem::glob_to_regex(const std::string& glob)
+std::string FileSystem::ConvertGlobToRegex(const std::string& glob)
 {
 	std::string regex;
 	regex.reserve(glob.size()<<1);
@@ -51,7 +45,7 @@ std::string FileSystem::glob_to_regex(const std::string& glob)
 		char c = *i;
 #ifdef DEBUG
 		if (braces >= 5) {
-			LOG_L(L_WARNING, "glob_to_regex: braces nested too deeply\n%s", glob.c_str());
+			LOG_L(L_WARNING, "%s: braces nested too deeply\n%s", __FUNCTION__, glob.c_str());
 		}
 #endif
 		switch (c) {
@@ -68,7 +62,7 @@ std::string FileSystem::glob_to_regex(const std::string& glob)
 			case '}':
 #ifdef DEBUG
 				if (braces == 0) {
-					LOG_L(L_WARNING, "glob_to_regex: closing brace without an equivalent opening brace\n%s", glob.c_str());
+					LOG_L(L_WARNING, "%s: closing brace without an equivalent opening brace\n%s", __FUNCTION__, glob.c_str());
 				}
 #endif
 				regex += ')';
@@ -85,7 +79,7 @@ std::string FileSystem::glob_to_regex(const std::string& glob)
 				++i;
 #ifdef DEBUG
 				if (i == glob.end()) {
-					LOG_L(L_WARNING, "glob_to_regex: pattern ends with backslash\n%s", glob.c_str());
+					LOG_L(L_WARNING, "%s: pattern ends with backslash\n%s", __FUNCTION__, glob.c_str());
 				}
 #endif
 				QUOTE(*i,regex);
@@ -98,9 +92,9 @@ std::string FileSystem::glob_to_regex(const std::string& glob)
 
 #ifdef DEBUG
 	if (braces > 0) {
-		LOG_L(L_WARNING, "glob_to_regex: unterminated brace expression\n%s", glob.c_str());
+		LOG_L(L_WARNING, "%s: unterminated brace expression\n%s", __FUNCTION__, glob.c_str());
 	} else if (braces < 0) {
-		LOG_L(L_WARNING, "glob_to_regex: too many closing braces\n%s", glob.c_str());
+		LOG_L(L_WARNING, "%s: too many closing braces\n%s", __FUNCTION__, glob.c_str());
 	}
 #endif
 
@@ -132,38 +126,15 @@ bool FileSystem::CreateDirectory(std::string dir)
 	size_t prev_slash = 0, slash;
 	while ((slash = dir.find('/', prev_slash + 1)) != std::string::npos) {
 		std::string pathPart = dir.substr(0, slash);
-		if (!FileSystemHandler::IsFSRoot(pathPart) && !fs.mkdir(pathPart)) {
+		if (!FileSystemHandler::IsFSRoot(pathPart) && !FileSystemHandler::mkdir(pathPart)) {
 			return false;
 		}
 		prev_slash = slash;
 	}
-	return fs.mkdir(dir);
+	return FileSystemHandler::mkdir(dir);
 }
 
 
-std::vector<std::string> FileSystem::FindFiles(std::string dir, const std::string& pattern, int flags) const
-{
-	if (!CheckFile(dir)) {
-		return std::vector<std::string>();
-	}
-
-	if (dir.empty()) {
-		dir = "./";
-	} else {
-		const char lastChar = dir[dir.length() - 1];
-		if ((lastChar != '/') && (lastChar != '\\')) {
-			dir += '/';
-		}
-	}
-
-	FixSlashes(dir);
-
-	if (flags & ONLY_DIRS) {
-		flags |= INCLUDE_DIRS;
-	}
-
-	return fs.FindFiles(dir, pattern, flags);
-}
 
 
 std::string FileSystem::GetDirectory(const std::string& path)
@@ -219,7 +190,7 @@ std::string FileSystem::GetExtension(const std::string& path)
 
 std::string& FileSystem::FixSlashes(std::string& path)
 {
-	int sep = fs.GetNativePathSeparator();
+	int sep = FileSystemHandler::GetNativePathSeparator();
 	for (size_t i = 0; i < path.size(); ++i) {
 		if (path[i] == '/' || path[i] == '\\') {
 			path[i] = sep;
@@ -240,6 +211,7 @@ std::string& FileSystem::ForwardSlashes(std::string& path)
 	return path;
 }
 
+
 bool FileSystem::CheckFile(const std::string& file)
 {
 	// Don't allow code to escape from the data directories.
@@ -253,134 +225,7 @@ bool FileSystem::CheckFile(const std::string& file)
 // bool FileSystem::CheckDir(const std::string& dir) const {
 // 	return CheckFile(dir);
 // }
-
-std::string FileSystem::LocateFile(std::string file, int flags) const
-{
-	if (!CheckFile(file)) {
-		return "";
-	}
-
-	// if it is an absolute path, do not look for it in the data directories
-	if (FileSystemHandler::IsAbsolutePath(file)) {
-		return file;
-	}
-
-	FixSlashes(file);
-
-	if (flags & WRITE) {
-		std::string writeableFile = fs.GetWriteDir() + file;
-		FixSlashes(writeableFile);
-		if (flags & CREATE_DIRS) {
-			CreateDirectory(GetDirectory(writeableFile));
-		}
-		return writeableFile;
-	}
-
-	return fs.LocateFile(file);
-}
-
-std::string FileSystem::LocateDir(std::string _dir, int flags) const
-{
-	if (!CheckFile(_dir)) {
-		return "";
-	}
-
-	// if it's an absolute path, don't look for it in the data directories
-	if (FileSystemHandler::IsAbsolutePath(_dir)) {
-		return _dir;
-	}
-
-	std::string dir = _dir;
-	FixSlashes(dir);
-
-	if (flags & WRITE) {
-		std::string writeableDir = fs.GetWriteDir() + dir;
-		FixSlashes(writeableDir);
-		if (flags & CREATE_DIRS) {
-			CreateDirectory(writeableDir);
-		}
-		return writeableDir;
-	} else {
-		const std::vector<std::string>& datadirs = fs.GetDataDirectories();
-		std::vector<std::string>::const_iterator dd;
-		for (dd = datadirs.begin(); dd != datadirs.end(); ++dd) {
-			std::string dirPath((*dd) + dir);
-			if (fs.DirExists(dirPath)) {
-				return dirPath;
-			}
-		}
-		return dir;
-	}
-}
-std::vector<std::string> FileSystem::LocateDirs(const std::string& _dir) const
-{
-	std::vector<std::string> found;
-
-	if (!CheckFile(_dir) || FileSystemHandler::IsAbsolutePath(_dir)) {
-		return found;
-	}
-
-	std::string dir = _dir;
-	FixSlashes(dir);
-
-	const std::vector<std::string>& datadirs = fs.GetDataDirectories();
-	std::vector<std::string>::const_iterator dd;
-	for (dd = datadirs.begin(); dd != datadirs.end(); ++dd) {
-		std::string dirPath((*dd) + dir);
-		if (fs.DirExists(dirPath)) {
-			found.push_back(dirPath);
-		}
-	}
-
-	return found;
-}
-
-std::vector<std::string> FileSystem::FindDirsInDirectSubDirs(
-		const std::string& relPath) const {
-
-	std::vector<std::string> found;
-
-	static const std::string pattern = "*";
-
-	// list of all occurences of the relative path in the data directories
-	const std::vector<std::string> &rootDirs = LocateDirs(relPath);
-
-	// list of subdirs in all occurences of the relative path in the data directories
-	std::vector<std::string> mainDirs;
-
-	// find all subdirectories in the rootDirs
-	std::vector<std::string>::const_iterator dir;
-	for (dir = rootDirs.begin(); dir != rootDirs.end(); ++dir) {
-		const std::vector<std::string>& localMainDirs = CFileHandler::SubDirs(*dir, pattern, SPRING_VFS_RAW);
-		mainDirs.insert(mainDirs.end(), localMainDirs.begin(), localMainDirs.end());
-	}
-	//found.insert(found.end(), mainDirs.begin(), mainDirs.end());
-
-	// and add all subdriectories of these
-	for (dir = mainDirs.begin(); dir != mainDirs.end(); ++dir) {
-		const std::vector<std::string>& subDirs = CFileHandler::SubDirs(*dir, pattern, SPRING_VFS_RAW);
-		found.insert(found.end(), subDirs.begin(), subDirs.end());
-	}
-
-	return found;
-}
-
-
-bool FileSystem::InReadDir(const std::string& path)
-{
-	std::string locatedFile = LocateFile(path);
-	return (locatedFile != "") && (locatedFile != path);
-}
-
-
-bool FileSystem::InWriteDir(const std::string& path, const std::string& prefix)
-{
-	std::string locatedFile = LocateFile(path, WRITE);
-	return (locatedFile != "") && (locatedFile != path);
-}
-
-
-bool FileSystem::Remove(std::string file) const
+bool FileSystem::Remove(std::string file)
 {
 	if (!CheckFile(file)) {
 		return false;

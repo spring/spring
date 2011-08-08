@@ -60,7 +60,7 @@
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/FileSystemHandler.h"
+#include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Platform/Watchdog.h"
 #include "System/Platform/WindowManagerHelper.h"
@@ -2163,7 +2163,7 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 	}
 
 	// script.txt, if content for it is given by Lua code
-	const std::string scriptFullName = FileSystemHandler::GetInstance().GetWriteDir() + "script.txt";
+	const std::string scriptFullName = dataDirLocater.GetWriteDirPath() + "script.txt";
 	if (!script.empty()) {
 		std::ofstream scriptfile(scriptFullName.c_str());
 		scriptfile << script;

@@ -23,7 +23,7 @@
 #include "Sim/Units/UnitTypes/Building.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
-#include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/DataDirsAccess.h"
 #include <boost/cstdint.hpp>
 
 CSelectionKeyHandler* selectionKeys;
@@ -39,7 +39,7 @@ CSelectionKeyHandler::~CSelectionKeyHandler()
 
 void CSelectionKeyHandler::LoadSelectionKeys()
 {
-	std::ifstream ifs(filesystem.LocateFile("selectkeys.txt").c_str());
+	std::ifstream ifs(dataDirsAccess.LocateFile("selectkeys.txt").c_str());
 
 	selectNumber = 0;
 

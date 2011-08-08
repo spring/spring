@@ -7,7 +7,9 @@
 #include <assert.h>
 #include <fstream>
 
+#include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/FileQueryFlags.h"
 #include "System/Util.h"
 #include "System/mmgr.h"
 
@@ -27,7 +29,7 @@ CDirArchive::CDirArchive(const std::string& archiveName)
 	: IArchive(archiveName)
 	, dirName(archiveName + '/')
 {
-	const std::vector<std::string>& found = filesystem.FindFiles(dirName, "*", FileSystem::RECURSE);
+	const std::vector<std::string>& found = dataDirsAccess.FindFiles(dirName, "*", FileQueryFlags::RECURSE);
 
 	// because spring expects the contents of archives to be case independent,
 	// we convert filenames to lowercase in every function, and keep a std::map
@@ -61,7 +63,7 @@ bool CDirArchive::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
 {
 	assert(IsFileId(fid));
 
-	const std::string rawpath = filesystem.LocateFile(dirName + searchFiles[fid]);
+	const std::string rawpath = dataDirsAccess.LocateFile(dirName + searchFiles[fid]);
 	std::ifstream ifs(rawpath.c_str(), std::ios::in | std::ios::binary);
 	if (!ifs.bad() && ifs.is_open()) {
 		ifs.seekg(0, std::ios_base::end);
@@ -80,7 +82,7 @@ void CDirArchive::FileInfo(unsigned int fid, std::string& name, int& size) const
 	assert(IsFileId(fid));
 
 	name = searchFiles[fid];
-	const std::string rawPath = filesystem.LocateFile(dirName + name);
+	const std::string rawPath = dataDirsAccess.LocateFile(dirName + name);
 	std::ifstream ifs(rawPath.c_str(), std::ios::in | std::ios::binary);
 	if (!ifs.bad() && ifs.is_open()) {
 		ifs.seekg(0, std::ios_base::end);

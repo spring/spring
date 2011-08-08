@@ -5,7 +5,9 @@
 
 #include "System/mmgr.h"
 
+#include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/FileQueryFlags.h"
 #include "System/FileSystem/FileHandler.h"
 #include "Game/GameVersion.h"
 #include "Sim/Misc/TeamStatistics.h"
@@ -27,7 +29,7 @@ CDemoRecorder::CDemoRecorder()
 	SetName("unnamed", "");
 	demoName = GetName();
 
-	std::string filename = filesystem.LocateFile(demoName, FileSystem::WRITE);
+	std::string filename = dataDirsAccess.LocateFile(demoName, FileQueryFlags::WRITE);
 	recordDemo.open(filename.c_str(), std::ios::out | std::ios::binary);
 
 	memset(&fileHeader, 0, sizeof(DemoFileHeader));

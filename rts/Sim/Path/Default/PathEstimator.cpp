@@ -27,7 +27,9 @@
 #include "Sim/Units/UnitDef.h"
 #include "System/FileSystem/IArchive.h"
 #include "System/FileSystem/ArchiveLoader.h"
+#include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/FileQueryFlags.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/NetProtocol.h"
 
@@ -789,7 +791,7 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 	if (!filesystem.FileExists(filename))
 		return false;
 	// open file for reading from a suitable location (where the file exists)
-	IArchive* pfile = archiveLoader.OpenArchive(filesystem.LocateFile(filename), "sdz");
+	IArchive* pfile = archiveLoader.OpenArchive(dataDirsAccess.LocateFile(filename), "sdz");
 
 	if (!pfile || !pfile->IsOpen()) {
 		delete pfile;
@@ -861,7 +863,7 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 	zipFile file;
 
 	// open file for writing in a suitable location
-	file = zipOpen(filesystem.LocateFile(filename, FileSystem::WRITE).c_str(), APPEND_STATUS_CREATE);
+	file = zipOpen(dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE).c_str(), APPEND_STATUS_CREATE);
 
 	if (file) {
 		zipOpenNewFileInZip(file, "pathinfo", NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION);
@@ -881,7 +883,7 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 
 
 		// get the CRC over the written path data
-		IArchive* pfile = archiveLoader.OpenArchive(filesystem.LocateFile(filename), "sdz");
+		IArchive* pfile = archiveLoader.OpenArchive(dataDirsAccess.LocateFile(filename), "sdz");
 
 		if (!pfile || !pfile->IsOpen()) {
 			delete pfile;

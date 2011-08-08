@@ -14,7 +14,8 @@
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/SharedLib.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/DataDirsAccess.h"
+#include "System/FileSystem/FileQueryFlags.h"
 #include "System/FileSystem/FileSystemHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/Team.h"
@@ -45,7 +46,7 @@ void CAILibraryManager::GatherInterfaceLibrariesInfos() {
 	// we are looking for:
 	// {AI_INTERFACES_DATA_DIR}/{*}/{*}/InterfaceInfo.lua
 	T_dirs aiInterfaceDataDirs =
-			filesystem.FindDirsInDirectSubDirs(AI_INTERFACES_DATA_DIR);
+			dataDirsAccess.FindDirsInDirectSubDirs(AI_INTERFACES_DATA_DIR);
 	typedef std::map<const AIInterfaceKey, std::set<std::string> > T_dupInt;
 	T_dupInt duplicateInterfaceInfoCheck;
 	for (T_dirs::iterator dir = aiInterfaceDataDirs.begin();
@@ -113,7 +114,7 @@ void CAILibraryManager::GatherSkirmishAIsLibrariesInfos() {
 	// we are looking for:
 	// {SKIRMISH_AI_DATA_DIR}/{*}/{*}/AIInfo.lua
 	// {SKIRMISH_AI_DATA_DIR}/{*}/{*}/AIOptions.lua
-	T_dirs skirmishAIDataDirs = filesystem.FindDirsInDirectSubDirs(SKIRMISH_AI_DATA_DIR);
+	T_dirs skirmishAIDataDirs = dataDirsAccess.FindDirsInDirectSubDirs(SKIRMISH_AI_DATA_DIR);
 	T_dupSkirm duplicateSkirmishAIInfoCheck;
 	for (T_dirs::iterator dir = skirmishAIDataDirs.begin();
 			dir != skirmishAIDataDirs.end(); ++dir) {

@@ -31,6 +31,9 @@
 CONFIG(std::string, SpringData).defaultValue("")
 		.description("List of addidional data-directories, separated by ';' on windows, ':' on other OSs");
 
+
+DataDirLocater dataDirLocater;
+
 DataDir::DataDir(const std::string& path)
 	: path(path)
 	, writable(false)
@@ -133,9 +136,9 @@ bool DataDirLocater::DeterminePermissions(DataDir* dataDir)
 	// FIXME: We fail to test whether the path actually is a directory
 	// Modifying the permissions while or after this function runs has undefined
 	// behaviour.
-	if (FileSystemHandler::GetInstance().DirExists(dataDir->path))
+	if (FileSystemHandler::DirExists(dataDir->path))
 	{
-		if (!writeDir && FileSystemHandler::GetInstance().DirIsWritable(dataDir->path))
+		if (!writeDir && FileSystemHandler::DirIsWritable(dataDir->path))
 		{
 			dataDir->writable = true;
 			writeDir = dataDir;
@@ -344,7 +347,7 @@ void DataDirLocater::LocateDataDirs()
 	// for now, chdir to the data directory as a safety measure:
 	// Not only safety anymore, it's just easier if other code can safely assume that
 	// writeDir == current working directory
-	FileSystemHandler::GetInstance().Chdir(GetWriteDir()->path.c_str());
+	FileSystemHandler::Chdir(GetWriteDir()->path.c_str());
 
 	// Initialize the log. Only after this moment log will be written to file.
 	logOutput.Initialize();
@@ -413,4 +416,25 @@ bool DataDirLocater::LooksLikeMultiVersionDataDir(const std::string& dirPath) {
 	}
 
 	return looksLikeDataDir;
+}
+
+
+std::string DataDirLocater::GetWriteDirPath() const
+{
+	const DataDir* writedir = GetWriteDir();
+	assert(writedir && writedir->writable); // duh
+	return writedir->path;
+}
+
+std::vector<std::string> DataDirLocater::GetDataDirPaths() const
+{
+	std::vector<std::string> dataDirPaths;
+
+	const std::vector<DataDir>& datadirs = GetDataDirs();
+	std::vector<DataDir>::const_iterator ddi;
+	for (ddi = datadirs.begin(); ddi != datadirs.end(); ++ddi) {
+		dataDirPaths.push_back(ddi->path);
+	}
+
+	return dataDirPaths;
 }

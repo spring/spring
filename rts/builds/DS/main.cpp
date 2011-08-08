@@ -17,7 +17,7 @@
 #include "Game/ClientSetup.h"
 #include "Game/GameData.h"
 #include "Game/GameVersion.h"
-#include "System/FileSystem/FileSystemHandler.h"
+#include "System/FileSystem/FileSystemInitializer.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileHandler.h"
@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
 
 	ConfigHandler::Instantiate(); // use the default config file
 	GlobalConfig::Instantiate();
-	FileSystemHandler::Initialize(false);
+	FileSystemInitializer::Initialize();
 
 	CGameServer* server = NULL;
 	CGameSetup* gameSetup = NULL;
@@ -155,7 +155,7 @@ int main(int argc, char* argv[])
 
 	delete server;
 
-	FileSystemHandler::Cleanup();
+	FileSystemInitializer::Cleanup();
 	GlobalConfig::Deallocate();
 	ConfigHandler::Deallocate();
 

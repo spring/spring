@@ -130,7 +130,7 @@ bool CFileFilter::Match(const string& filename) const
 }
 
 
-string CFileFilter::glob_to_regex(const string& glob)
+string CFileFilter::glob_to_regex(const string& glob) // FIXME remove; duplicate in FileSystem::ConvertGlobToRegex
 {
 #define PATH_SEPARATORS "/\\:"
 

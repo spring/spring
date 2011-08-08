@@ -4,7 +4,8 @@
 #include "SkirmishAIWrapper.h"
 
 #include "System/StdAfx.h"
-#include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/DataDirsAccess.h"
+#include "System/FileSystem/FileQueryFlags.h"
 #include "System/FileSystem/FileSystemHandler.h"
 #include "System/Log/ILog.h"
 #include "System/mmgr.h"
@@ -245,8 +246,8 @@ static std::string createTempFileName(const char* action, int teamId,
 	char* tmpFileName = new char[tmpFileName_size];
 	SNPRINTF(tmpFileName, tmpFileName_size, "%s-team%i_id%i.tmp", action,
 			teamId, skirmishAIId);
-	std::string tmpFile = filesystem.LocateFile(tmpFileName,
-			FileSystem::WRITE | FileSystem::CREATE_DIRS);
+	std::string tmpFile = dataDirsAccess.LocateFile(tmpFileName,
+			FileQueryFlags::WRITE | FileQueryFlags::CREATE_DIRS);
 	delete[] tmpFileName;
 	return tmpFile;
 }

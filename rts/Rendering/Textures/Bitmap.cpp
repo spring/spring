@@ -21,8 +21,9 @@
 #include "System/bitops.h"
 #include "System/Log/ILog.h"
 #include "System/OpenMP_cond.h"
+#include "System/FileSystem/DataDirsAccess.h"
+#include "System/FileSystem/FileQueryFlags.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/FileSystem.h"
 
 
 boost::mutex devilMutex; // devil functions, whilst expensive, aren't thread-save
@@ -341,7 +342,7 @@ bool CBitmap::Save(std::string const& filename, bool opaque) const
 
 	ilTexImage(xsize, ysize, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, buf);
 
-	const std::string fullpath = filesystem.LocateFile(filename, FileSystem::WRITE);
+	const std::string fullpath = dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE);
 	const bool success = ilSaveImage((char*)fullpath.c_str());
 
 	ilDeleteImages(1, &ImageName);
