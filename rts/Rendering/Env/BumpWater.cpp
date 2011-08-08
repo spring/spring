@@ -39,6 +39,7 @@
 #include "System/Exceptions.h"
 #include "System/Util.h"
 
+#undef Rect
 #undef Rectangle
 
 using std::string;
