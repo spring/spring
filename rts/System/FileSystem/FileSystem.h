@@ -3,10 +3,11 @@
 #ifndef FILE_SYSTEM_H
 #define FILE_SYSTEM_H
 
-#include <vector>
+#include "FileSystemAbstraction.h"
+
 #include <string>
 
-// winapi redifines these which breaks things
+// Win-API redifines these, which breaks things
 #if defined(CreateDirectory)
 	#undef CreateDirectory
 #endif
@@ -20,7 +21,7 @@
  * Abstracts locating of content on different platforms.
  * Use this from the rest of the spring code, not FileSystemHandler!
  */
-class FileSystem
+class FileSystem : public FileSystemAbstraction
 {
 	public:
 

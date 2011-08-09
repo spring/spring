@@ -20,7 +20,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameVersion.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/FileSystem/FileSystemHandler.h"
+#include "System/FileSystem/FileSystem.h"
 #include "System/Log/DefaultFilter.h"
 #include "System/Log/Level.h"
 #include "System/mmgr.h"
@@ -164,7 +164,7 @@ void CLogOutput::SetFileName(std::string fname)
 
 std::string CLogOutput::CreateFilePath(const std::string& fileName)
 {
-	return FileSystemHandler::GetCwd() + (char)FileSystemHandler::GetNativePathSeparator() + fileName;
+	return FileSystem::GetCwd() + (char)FileSystem::GetNativePathSeparator() + fileName;
 }
 
 
@@ -182,16 +182,16 @@ void CLogOutput::RotateLogFile() const
 {
 
 	if (IsLogFileRotating()) {
-		if (FileSystemHandler::FileExists(filePath)) {
+		if (FileSystem::FileExists(filePath)) {
 			// logArchiveDir: /absolute/writeable/data/dir/log/
 			std::string logArchiveDir = filePath.substr(0, filePath.find_last_of("/\\") + 1);
-			logArchiveDir = logArchiveDir + "log" + (char)FileSystemHandler::GetNativePathSeparator();
+			logArchiveDir = logArchiveDir + "log" + (char)FileSystem::GetNativePathSeparator();
 
-			const std::string archivedLogFile = logArchiveDir + FileSystemHandler::GetFileModificationDate(filePath) + "_" + fileName;
+			const std::string archivedLogFile = logArchiveDir + FileSystem::GetFileModificationDate(filePath) + "_" + fileName;
 
 			// create the log archive dir if it does nto exist yet
-			if (!FileSystemHandler::DirExists(logArchiveDir)) {
-				FileSystemHandler::mkdir(logArchiveDir);
+			if (!FileSystem::DirExists(logArchiveDir)) {
+				FileSystem::mkdir(logArchiveDir);
 			}
 
 			// move the old log to the archive dir

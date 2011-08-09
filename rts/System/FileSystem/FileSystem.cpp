@@ -6,7 +6,6 @@
 
 #include "FileSystem.h"
 
-#include "FileSystemHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/mmgr.h"
@@ -102,7 +101,7 @@ std::string FileSystem::ConvertGlobToRegex(const std::string& glob)
 bool FileSystem::FileExists(std::string file)
 {
 	FixSlashes(file);
-	return FileSystemHandler::FileExists(file);
+	return FileSystemAbstraction::FileExists(file);
 }
 
 size_t FileSystem::GetFileSize(std::string file)
@@ -111,7 +110,7 @@ size_t FileSystem::GetFileSize(std::string file)
 		return 0;
 	}
 	FixSlashes(file);
-	return FileSystemHandler::GetFileSize(file);
+	return FileSystemAbstraction::GetFileSize(file);
 }
 
 bool FileSystem::CreateDirectory(std::string dir)
@@ -124,12 +123,12 @@ bool FileSystem::CreateDirectory(std::string dir)
 	size_t prev_slash = 0, slash;
 	while ((slash = dir.find('/', prev_slash + 1)) != std::string::npos) {
 		std::string pathPart = dir.substr(0, slash);
-		if (!FileSystemHandler::IsFSRoot(pathPart) && !FileSystemHandler::mkdir(pathPart)) {
+		if (!FileSystemAbstraction::IsFSRoot(pathPart) && !FileSystemAbstraction::mkdir(pathPart)) {
 			return false;
 		}
 		prev_slash = slash;
 	}
-	return FileSystemHandler::mkdir(dir);
+	return FileSystemAbstraction::mkdir(dir);
 }
 
 
@@ -188,7 +187,7 @@ std::string FileSystem::GetExtension(const std::string& path)
 
 std::string& FileSystem::FixSlashes(std::string& path)
 {
-	int sep = FileSystemHandler::GetNativePathSeparator();
+	int sep = FileSystem::GetNativePathSeparator();
 	for (size_t i = 0; i < path.size(); ++i) {
 		if (path[i] == '/' || path[i] == '\\') {
 			path[i] = sep;
@@ -229,5 +228,5 @@ bool FileSystem::Remove(std::string file)
 		return false;
 	}
 	FixSlashes(file);
-	return FileSystemHandler::DeleteFile(file);
+	return FileSystem::DeleteFile(file);
 }

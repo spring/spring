@@ -19,7 +19,6 @@
 #include "DataDirsAccess.h"
 #include "FileSystem.h"
 #include "FileQueryFlags.h"
-#include "FileSystemHandler.h"
 #include "Lua/LuaParser.h"
 #include "System/Log/ILog.h"
 #include "System/CRC.h"
@@ -341,7 +340,7 @@ CArchiveScanner::CArchiveScanner()
 {
 	std::ostringstream file;
 	// the "cache" dir is created in DataDirLocater
-	file << "cache" << (char)FileSystemHandler::GetNativePathSeparator() << "ArchiveCache.lua";
+	file << "cache" << (char)FileSystem::GetNativePathSeparator() << "ArchiveCache.lua";
 	cachefile = file.str();
 	ReadCacheData(dataDirLocater.GetWriteDirPath() + GetFilename());
 
@@ -378,7 +377,7 @@ void CArchiveScanner::ScanDirs(const std::vector<std::string>& scanDirs, bool do
 	// add the archives
 	std::vector<std::string>::const_iterator dir;
 	for (dir = scanDirs.begin(); dir != scanDirs.end(); ++dir) {
-		if (FileSystemHandler::DirExists(*dir)) {
+		if (FileSystem::DirExists(*dir)) {
 			LOG("Scanning: %s", dir->c_str());
 			Scan(*dir, doChecksum);
 		}

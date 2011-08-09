@@ -57,7 +57,6 @@
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileQueryFlags.h"
-#include "System/FileSystem/FileSystemHandler.h"
 #include "System/Platform/errorhandler.h"
 
 #include <string>
@@ -1414,11 +1413,11 @@ bool CAICallback::GetValue(int id, void *data)
 			std::string f((char*) data);
 			f = dataDirsAccess.LocateFile(f);
 			strcpy((char*) data, f.c_str());
-			return FileSystemHandler::IsReadableFile(f);
+			return FileSystem::IsReadableFile(f);
 		}case AIVAL_LOCATE_FILE_W:{
 			std::string f((char*) data);
 			std::string f_abs = dataDirsAccess.LocateFile(f, FileQueryFlags::WRITE | FileQueryFlags::CREATE_DIRS);
-			if (!FileSystemHandler::IsAbsolutePath(f_abs)) {
+			if (!FileSystem::IsAbsolutePath(f_abs)) {
 				return false;
 			} else {
 				strcpy((char*) data, f.c_str());

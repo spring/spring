@@ -5618,11 +5618,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\FileSystemHandler.cpp"
+					RelativePath="..\..\System\FileSystem\FileSystemAbstraction.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\FileSystemHandler.h"
+					RelativePath="..\..\System\FileSystem\FileSystemAbstraction.h"
 					>
 				</File>
 				<File
