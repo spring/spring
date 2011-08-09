@@ -346,7 +346,7 @@ void DataDirLocater::LocateDataDirs()
 	// for now, chdir to the data directory as a safety measure:
 	// Not only safety anymore, it's just easier if other code can safely assume that
 	// writeDir == current working directory
-	FileSystem::Chdir(GetWriteDir()->path.c_str());
+	FileSystem::ChDir(GetWriteDir()->path.c_str());
 
 	// Initialize the log. Only after this moment log will be written to file.
 	logOutput.Initialize();

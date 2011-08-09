@@ -399,7 +399,7 @@ std::string FileSystemAbstraction::GetCwd()
 	return cwd;
 }
 
-void FileSystemAbstraction::Chdir(const std::string& dir)
+void FileSystemAbstraction::ChDir(const std::string& dir)
 {
 #ifndef _WIN32
 	const int err = chdir(dir.c_str());
