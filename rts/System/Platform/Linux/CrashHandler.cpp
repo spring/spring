@@ -18,7 +18,7 @@
 #include <SDL_events.h>
 
 #include "thread_backtrace.h"
-#include "System/FileSystem/FileSystemHandler.h"
+#include "System/FileSystem/FileSystem.h"
 #include "Game/GameVersion.h"
 #include "System/Log/ILog.h"
 #include "System/LogOutput.h"
@@ -105,18 +105,18 @@ static std::string LocateSymbolFile(const std::string& binaryFile)
 
 	if (bin_ext.length() > 0) {
 		symbolFile = bin_path + '/' + bin_file + bin_ext + ".dbg";
-		if (FileSystemHandler::IsReadableFile(symbolFile)) {
+		if (FileSystem::IsReadableFile(symbolFile)) {
 			return symbolFile;
 		}
 	}
 
 	symbolFile = bin_path + '/' + bin_file + ".dbg";
-	if (FileSystemHandler::IsReadableFile(symbolFile)) {
+	if (FileSystem::IsReadableFile(symbolFile)) {
 		return symbolFile;
 	}
 
 	symbolFile = debugPath + bin_path + '/' + bin_file + bin_ext;
-	if (FileSystemHandler::IsReadableFile(symbolFile)) {
+	if (FileSystem::IsReadableFile(symbolFile)) {
 		return symbolFile;
 	}
 

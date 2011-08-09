@@ -20,7 +20,6 @@
 #include "System/Log/ILog.h"
 #include "System/LogOutput.h"
 #include "System/Config/ConfigHandler.h"
-#include "FileSystemHandler.h"
 #include "FileSystem.h"
 #include "CacheDir.h"
 #include "System/mmgr.h"
@@ -38,7 +37,7 @@ DataDir::DataDir(const std::string& path)
 	: path(path)
 	, writable(false)
 {
-	FileSystemHandler::EnsurePathSepAtEnd(this->path);
+	FileSystem::EnsurePathSepAtEnd(this->path);
 }
 
 DataDirLocater::DataDirLocater()
@@ -136,9 +135,9 @@ bool DataDirLocater::DeterminePermissions(DataDir* dataDir)
 	// FIXME: We fail to test whether the path actually is a directory
 	// Modifying the permissions while or after this function runs has undefined
 	// behaviour.
-	if (FileSystemHandler::DirExists(dataDir->path))
+	if (FileSystem::DirExists(dataDir->path))
 	{
-		if (!writeDir && FileSystemHandler::DirIsWritable(dataDir->path))
+		if (!writeDir && FileSystem::DirIsWritable(dataDir->path))
 		{
 			dataDir->writable = true;
 			writeDir = dataDir;
@@ -189,7 +188,7 @@ void DataDirLocater::AddCwdOrParentDir(const std::string& curWorkDir, bool force
 	// engines/engine-0.83.1.0.exe
 	// unitsyncs/unitsync-0.83.0.0.exe
 	// unitsyncs/unitsync-0.83.1.0.exe
-	const std::string curWorkDirParent = FileSystemHandler::GetParent(curWorkDir);
+	const std::string curWorkDirParent = FileSystem::GetParent(curWorkDir);
 
 	// we can not add both ./ and ../ as data-dir
 	if ((curWorkDirParent != "") && LooksLikeMultiVersionDataDir(curWorkDirParent)) {
@@ -302,7 +301,7 @@ void DataDirLocater::LocateDataDirs()
 		// Spring.app/Contents/Resources/share/games/spring/base/
 
 		// This corresponds to Spring.app/Contents/Resources/
-		const std::string bundleResourceDir = FileSystemHandler::GetParent(dd_curWorkDir);
+		const std::string bundleResourceDir = FileSystem::GetParent(dd_curWorkDir);
 
 		// This has to correspond with the value in the build-script
 		const std::string dd_curWorkDirData = bundleResourceDir + "/share/games/spring";
@@ -347,7 +346,7 @@ void DataDirLocater::LocateDataDirs()
 	// for now, chdir to the data directory as a safety measure:
 	// Not only safety anymore, it's just easier if other code can safely assume that
 	// writeDir == current working directory
-	FileSystemHandler::Chdir(GetWriteDir()->path.c_str());
+	FileSystem::Chdir(GetWriteDir()->path.c_str());
 
 	// Initialize the log. Only after this moment log will be written to file.
 	logOutput.Initialize();
@@ -381,7 +380,7 @@ bool DataDirLocater::IsPortableMode() {
 #else
 	std::string fileExe = dirUnitsync + "/spring";
 #endif // defined(WIN32)
-	if (FileSystemHandler::FileExists(fileExe)) {
+	if (FileSystem::FileExists(fileExe)) {
 		portableMode = true;
 	}
 
@@ -395,7 +394,7 @@ bool DataDirLocater::IsPortableMode() {
 #else
 	std::string fileUnitsync = dirExe + "/libunitsync.so";
 #endif // defined(WIN32)
-	if (FileSystemHandler::FileExists(fileUnitsync)) {
+	if (FileSystem::FileExists(fileUnitsync)) {
 		portableMode = true;
 	}
 #endif // defined(UNITSYNC)
@@ -407,10 +406,10 @@ bool DataDirLocater::LooksLikeMultiVersionDataDir(const std::string& dirPath) {
 
 	bool looksLikeDataDir = false;
 
-	if (FileSystemHandler::DirExists(dirPath + "/maps")
-			&& FileSystemHandler::DirExists(dirPath + "/games")
-			&& FileSystemHandler::DirExists(dirPath + "/engines")
-			/*&& FileSystemHandler::DirExists(dirPath + "/unitsyncs") TODO uncomment this if the new name for unitsync has been set */)
+	if (FileSystem::DirExists(dirPath + "/maps")
+			&& FileSystem::DirExists(dirPath + "/games")
+			&& FileSystem::DirExists(dirPath + "/engines")
+			/*&& FileSystem::DirExists(dirPath + "/unitsyncs") TODO uncomment this if the new name for unitsync has been set */)
 	{
 		looksLikeDataDir = true;
 	}

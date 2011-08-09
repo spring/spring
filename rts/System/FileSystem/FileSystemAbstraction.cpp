@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
-#include "System/StdAfx.h"
-#include "FileSystemHandler.h"
+
+#include "FileSystemAbstraction.h"
 
 #include "FileQueryFlags.h"
 
@@ -25,7 +25,7 @@
 	#include <io.h>
 	#include <direct.h>
 	#include <fstream>
-	// winapi redifines these which breaks things
+	// Win-API redifines these, which breaks things
 	#if defined(CreateDirectory)
 		#undef CreateDirectory
 	#endif
@@ -36,12 +36,12 @@
 
 
 #ifndef _WIN32
-const int FileSystemHandler::nativePathSeparator = '/';
+const int FileSystemAbstraction::nativePathSeparator = '/';
 #else
-const int FileSystemHandler::nativePathSeparator = '\\';
+const int FileSystemAbstraction::nativePathSeparator = '\\';
 #endif
 
-std::string FileSystemHandler::RemoveLocalPathPrefix(const std::string& path)
+std::string FileSystemAbstraction::RemoveLocalPathPrefix(const std::string& path)
 {
 	std::string p(path);
 
@@ -52,7 +52,7 @@ std::string FileSystemHandler::RemoveLocalPathPrefix(const std::string& path)
 	return p;
 }
 
-bool FileSystemHandler::IsFSRoot(const std::string& p)
+bool FileSystemAbstraction::IsFSRoot(const std::string& p)
 {
 	bool isFsRoot = false;
 
@@ -69,15 +69,15 @@ bool FileSystemHandler::IsFSRoot(const std::string& p)
 	return isFsRoot;
 }
 
-bool FileSystemHandler::IsPathSeparator(char aChar) {
+bool FileSystemAbstraction::IsPathSeparator(char aChar) {
 	return ((aChar == cPS_WIN32) || (aChar == cPS_POSIX));
 }
 
-bool FileSystemHandler::IsNativePathSeparator(char aChar) {
+bool FileSystemAbstraction::IsNativePathSeparator(char aChar) {
 	return (aChar == cPS);
 }
 
-bool FileSystemHandler::HasPathSepAtEnd(const std::string& path) {
+bool FileSystemAbstraction::HasPathSepAtEnd(const std::string& path) {
 
 	bool pathSepAtEnd = false;
 
@@ -91,7 +91,7 @@ bool FileSystemHandler::HasPathSepAtEnd(const std::string& path) {
 	return pathSepAtEnd;
 }
 
-void FileSystemHandler::EnsurePathSepAtEnd(std::string& path) {
+void FileSystemAbstraction::EnsurePathSepAtEnd(std::string& path) {
 
 	if (path.empty()) {
 		path += "."sPS;
@@ -99,27 +99,27 @@ void FileSystemHandler::EnsurePathSepAtEnd(std::string& path) {
 		path += cPS;
 	}
 }
-std::string FileSystemHandler::EnsurePathSepAtEnd(const std::string& path) {
+std::string FileSystemAbstraction::EnsurePathSepAtEnd(const std::string& path) {
 	
 	std::string pathCopy(path);
 	EnsurePathSepAtEnd(pathCopy);
 	return pathCopy;
 }
 
-void FileSystemHandler::EnsureNoPathSepAtEnd(std::string& path) {
+void FileSystemAbstraction::EnsureNoPathSepAtEnd(std::string& path) {
 
 	if (HasPathSepAtEnd(path)) {
 		path.resize(path.size() - 1);
 	}
 }
-std::string FileSystemHandler::EnsureNoPathSepAtEnd(const std::string& path) {
+std::string FileSystemAbstraction::EnsureNoPathSepAtEnd(const std::string& path) {
 	
 	std::string pathCopy(path);
 	EnsureNoPathSepAtEnd(pathCopy);
 	return pathCopy;
 }
 
-std::string FileSystemHandler::StripTrailingSlashes(const std::string& path)
+std::string FileSystemAbstraction::StripTrailingSlashes(const std::string& path)
 {
 	size_t len = path.length();
 
@@ -134,7 +134,7 @@ std::string FileSystemHandler::StripTrailingSlashes(const std::string& path)
 	return path.substr(0, len);
 }
 
-std::string FileSystemHandler::GetParent(const std::string& path) {
+std::string FileSystemAbstraction::GetParent(const std::string& path) {
 
 	std::string parent = path;
 	EnsureNoPathSepAtEnd(parent);
@@ -150,7 +150,7 @@ std::string FileSystemHandler::GetParent(const std::string& path) {
 	return parent;
 }
 
-size_t FileSystemHandler::GetFileSize(const std::string& file)
+size_t FileSystemAbstraction::GetFileSize(const std::string& file)
 {
 	size_t fileSize = 0;
 
@@ -162,7 +162,7 @@ size_t FileSystemHandler::GetFileSize(const std::string& file)
 	return fileSize;
 }
 
-bool FileSystemHandler::IsReadableFile(const std::string& file)
+bool FileSystemAbstraction::IsReadableFile(const std::string& file)
 {
 #ifdef WIN32
 	return (_access(StripTrailingSlashes(file).c_str(), 4) == 0);
@@ -171,7 +171,7 @@ bool FileSystemHandler::IsReadableFile(const std::string& file)
 #endif
 }
 
-std::string FileSystemHandler::GetFileModificationDate(const std::string& file)
+std::string FileSystemAbstraction::GetFileModificationDate(const std::string& file)
 {
 	std::string time = "";
 
@@ -239,7 +239,7 @@ std::string FileSystemHandler::GetFileModificationDate(const std::string& file)
 }
 
 
-bool FileSystemHandler::IsAbsolutePath(const std::string& path)
+bool FileSystemAbstraction::IsAbsolutePath(const std::string& path)
 {
 #ifdef WIN32
 	return ((path.length() > 1) && (path[1] == ':'));
@@ -262,7 +262,7 @@ bool FileSystemHandler::IsAbsolutePath(const std::string& path)
  * data directory, ie. all subdirectories the same perms, all files the same
  * perms.
  */
-bool FileSystemHandler::mkdir(const std::string& dir)
+bool FileSystemAbstraction::mkdir(const std::string& dir)
 {
 	// First check if directory exists. We'll return success if it does.
 	if (DirExists(dir)) {
@@ -285,7 +285,7 @@ bool FileSystemHandler::mkdir(const std::string& dir)
 	return dirCreated;
 }
 
-bool FileSystemHandler::DeleteFile(const std::string& file)
+bool FileSystemAbstraction::DeleteFile(const std::string& file)
 {
 	bool fileDeleted = (remove(file.c_str()) == 0);
 
@@ -296,7 +296,7 @@ bool FileSystemHandler::DeleteFile(const std::string& file)
 	return fileDeleted;
 }
 
-bool FileSystemHandler::FileExists(const std::string& file)
+bool FileSystemAbstraction::FileExists(const std::string& file)
 {
 	bool fileExists = false;
 
@@ -313,7 +313,7 @@ bool FileSystemHandler::FileExists(const std::string& file)
 	return fileExists;
 }
 
-bool FileSystemHandler::DirExists(const std::string& dir)
+bool FileSystemAbstraction::DirExists(const std::string& dir)
 {
 	bool dirExists = false;
 
@@ -343,7 +343,7 @@ bool FileSystemHandler::DirExists(const std::string& dir)
 }
 
 
-bool FileSystemHandler::DirIsWritable(const std::string& dir)
+bool FileSystemAbstraction::DirIsWritable(const std::string& dir)
 {
 #ifdef _WIN32
 	// this exists because _access does not do the right thing
@@ -380,7 +380,7 @@ bool FileSystemHandler::DirIsWritable(const std::string& dir)
 #endif
 }
 
-std::string FileSystemHandler::GetCwd()
+std::string FileSystemAbstraction::GetCwd()
 {
 	std::string cwd = "";
 
@@ -399,7 +399,7 @@ std::string FileSystemHandler::GetCwd()
 	return cwd;
 }
 
-void FileSystemHandler::Chdir(const std::string& dir)
+void FileSystemAbstraction::Chdir(const std::string& dir)
 {
 #ifndef _WIN32
 	const int err = chdir(dir.c_str());
@@ -480,7 +480,7 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& data
 #endif
 }
 
-void FileSystemHandler::FindFiles(std::vector<std::string>& matches, const std::string& dataDir, const std::string& dir, const std::string& regex, int flags)
+void FileSystemAbstraction::FindFiles(std::vector<std::string>& matches, const std::string& dataDir, const std::string& dir, const std::string& regex, int flags)
 {
 	const boost::regex regexPattern(regex);
 	::FindFiles(matches, dataDir, dir, regexPattern, flags);

@@ -1,15 +1,19 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef FILE_SYSTEM_HANDLER_H
-#define FILE_SYSTEM_HANDLER_H
+#ifndef FILE_SYSTEM_ABSTACTION_H
+#define FILE_SYSTEM_ABSTACTION_H
 
 #include <vector>
 #include <string>
 
 /**
- * @brief native file system handling abstraction
+ * Native file-system handling abstraction.
+ * This contains only functions that have to implemented differently on
+ * different OSs.
+ * @note do not use this directly, but use FileSystem instead
+ * @see FileSystem
  */
-class FileSystemHandler
+class FileSystemAbstraction
 {
 public:
 
@@ -112,4 +116,4 @@ private:
 	static const int nativePathSeparator;
 };
 
-#endif // !FILE_SYSTEM_HANDLER_H
+#endif // !FILE_SYSTEM_ABSTACTION_H

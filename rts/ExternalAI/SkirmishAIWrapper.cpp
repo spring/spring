@@ -6,7 +6,7 @@
 #include "System/StdAfx.h"
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileQueryFlags.h"
-#include "System/FileSystem/FileSystemHandler.h"
+#include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/mmgr.h"
 #include "System/Util.h"
@@ -264,7 +264,7 @@ void CSkirmishAIWrapper::Load(std::istream* load_s)
 	SLoadEvent evtData = {tmpFile.c_str()};
 	ai->HandleEvent(EVENT_LOAD, &evtData);
 
-	FileSystemHandler::DeleteFile(tmpFile);
+	FileSystem::DeleteFile(tmpFile);
 }
 
 void CSkirmishAIWrapper::Save(std::ostream* save_s)
@@ -274,12 +274,12 @@ void CSkirmishAIWrapper::Save(std::ostream* save_s)
 	SSaveEvent evtData = {tmpFile.c_str()};
 	ai->HandleEvent(EVENT_SAVE, &evtData);
 
-	if (FileSystemHandler::FileExists(tmpFile)) {
+	if (FileSystem::FileExists(tmpFile)) {
 		std::ifstream tmpFile_s;
 		tmpFile_s.open(tmpFile.c_str(), std::ios::binary);
 		streamCopy(&tmpFile_s, save_s);
 		tmpFile_s.close();
-		FileSystemHandler::DeleteFile(tmpFile);
+		FileSystem::DeleteFile(tmpFile);
 	}
 }
 

@@ -43,7 +43,7 @@ public:
 	 * the file should live in.
 	 *
 	 * Otherwise (if flags == 0), it dispatches the call to
-	 * FileSystemHandler::LocateFile(), which either searches for it
+	 * FileSystem::LocateFile(), which either searches for it
 	 * in all the data directories.
 	 *
 	 * @return  an absolute path to file on success, or the argument

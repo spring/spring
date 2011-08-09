@@ -4,7 +4,6 @@
 #include "DataDirLocater.h"
 #include "FileHandler.h"
 #include "FileQueryFlags.h"
-#include "FileSystemHandler.h"
 #include "FileSystem.h"
 
 #include <cassert>
@@ -44,14 +43,14 @@ std::vector<std::string> DataDirsAccess::FindFilesInternal(const std::string& di
 	std::vector<std::string> matches;
 
 	// if it is an absolute path, do not look for it in the data directories
-	if (FileSystemHandler::IsAbsolutePath(dir)) {
+	if (FileSystem::IsAbsolutePath(dir)) {
 		// pass the directory as second directory argument,
 		// so the path gets included in the matches.
 		FindFilesSingleDir(matches, "", dir, pattern, flags);
 		return matches;
 	}
 
-	std::string dir2 = FileSystemHandler::RemoveLocalPathPrefix(dir);
+	std::string dir2 = FileSystem::RemoveLocalPathPrefix(dir);
 
 	const std::vector<DataDir>& datadirs = dataDirLocater.GetDataDirs();
 	for (std::vector<DataDir>::const_reverse_iterator d = datadirs.rbegin(); d != datadirs.rend(); ++d) {
@@ -63,7 +62,7 @@ std::vector<std::string> DataDirsAccess::FindFilesInternal(const std::string& di
 std::string DataDirsAccess::LocateFileInternal(const std::string& file) const
 {
 	// if it's an absolute path, don't look for it in the data directories
-	if (FileSystemHandler::IsAbsolutePath(file)) {
+	if (FileSystem::IsAbsolutePath(file)) {
 		return file;
 	}
 
@@ -71,7 +70,7 @@ std::string DataDirsAccess::LocateFileInternal(const std::string& file) const
 	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
 		std::string fn(d->path + file);
 		// does the file exist, and is it readable?
-		if (FileSystemHandler::IsReadableFile(fn)) {
+		if (FileSystem::IsReadableFile(fn)) {
 			return fn;
 		}
 	}
@@ -82,12 +81,12 @@ std::string DataDirsAccess::LocateFileInternal(const std::string& file) const
 
 void DataDirsAccess::FindFilesSingleDir(std::vector<std::string>& matches, const std::string& datadir, const std::string& dir, const std::string& pattern, int flags) const
 {
-	assert(datadir.empty() || datadir[datadir.length() - 1] == FileSystemHandler::GetNativePathSeparator());
-	assert(!dir.empty() && dir[dir.length() - 1] == FileSystemHandler::GetNativePathSeparator());
+	assert(datadir.empty() || datadir[datadir.length() - 1] == FileSystem::GetNativePathSeparator());
+	assert(!dir.empty() && dir[dir.length() - 1] == FileSystem::GetNativePathSeparator());
 
 	const std::string regexPattern = FileSystem::ConvertGlobToRegex(pattern);
 
-	FileSystemHandler::FindFiles(matches, datadir, dir, regexPattern, flags);
+	FileSystem::FindFiles(matches, datadir, dir, regexPattern, flags);
 }
 
 
@@ -99,7 +98,7 @@ std::string DataDirsAccess::LocateFile(std::string file, int flags) const
 	}
 
 	// if it is an absolute path, do not look for it in the data directories
-	if (FileSystemHandler::IsAbsolutePath(file)) {
+	if (FileSystem::IsAbsolutePath(file)) {
 		return file;
 	}
 
@@ -124,7 +123,7 @@ std::string DataDirsAccess::LocateDir(std::string _dir, int flags) const
 	}
 
 	// if it's an absolute path, don't look for it in the data directories
-	if (FileSystemHandler::IsAbsolutePath(_dir)) {
+	if (FileSystem::IsAbsolutePath(_dir)) {
 		return _dir;
 	}
 
@@ -143,7 +142,7 @@ std::string DataDirsAccess::LocateDir(std::string _dir, int flags) const
 		std::vector<std::string>::const_iterator dd;
 		for (dd = datadirs.begin(); dd != datadirs.end(); ++dd) {
 			std::string dirPath((*dd) + dir);
-			if (FileSystemHandler::DirExists(dirPath)) {
+			if (FileSystem::DirExists(dirPath)) {
 				return dirPath;
 			}
 		}
@@ -154,7 +153,7 @@ std::vector<std::string> DataDirsAccess::LocateDirs(const std::string& _dir) con
 {
 	std::vector<std::string> found;
 
-	if (!FileSystem::CheckFile(_dir) || FileSystemHandler::IsAbsolutePath(_dir)) {
+	if (!FileSystem::CheckFile(_dir) || FileSystem::IsAbsolutePath(_dir)) {
 		return found;
 	}
 
@@ -165,7 +164,7 @@ std::vector<std::string> DataDirsAccess::LocateDirs(const std::string& _dir) con
 	std::vector<std::string>::const_iterator dd;
 	for (dd = datadirs.begin(); dd != datadirs.end(); ++dd) {
 		std::string dirPath((*dd) + dir);
-		if (FileSystemHandler::DirExists(dirPath)) {
+		if (FileSystem::DirExists(dirPath)) {
 			found.push_back(dirPath);
 		}
 	}

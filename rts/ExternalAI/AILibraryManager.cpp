@@ -16,7 +16,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileQueryFlags.h"
-#include "System/FileSystem/FileSystemHandler.h"
+#include "System/FileSystem/FileSystem.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -61,9 +61,9 @@ void CAILibraryManager::GatherInterfaceLibrariesInfos() {
 			CAIInterfaceLibraryInfo* interfaceInfo =
 					new CAIInterfaceLibraryInfo(infoFile);
 
-			interfaceInfo->SetDataDir(FileSystemHandler::EnsureNoPathSepAtEnd(possibleDataDir));
+			interfaceInfo->SetDataDir(FileSystem::EnsureNoPathSepAtEnd(possibleDataDir));
 			interfaceInfo->SetDataDirCommon(
-					FileSystemHandler::GetParent(possibleDataDir) + "common");
+					FileSystem::GetParent(possibleDataDir) + "common");
 
 			AIInterfaceKey interfaceKey = interfaceInfo->GetKey();
 
@@ -134,9 +134,9 @@ void CAILibraryManager::GatherSkirmishAIsLibrariesInfos() {
 			CSkirmishAILibraryInfo* skirmishAIInfo =
 					new CSkirmishAILibraryInfo(infoFile, optionFileName);
 
-			skirmishAIInfo->SetDataDir(FileSystemHandler::EnsureNoPathSepAtEnd(possibleDataDir));
+			skirmishAIInfo->SetDataDir(FileSystem::EnsureNoPathSepAtEnd(possibleDataDir));
 			skirmishAIInfo->SetDataDirCommon(
-					FileSystemHandler::GetParent(possibleDataDir) + "common");
+					FileSystem::GetParent(possibleDataDir) + "common");
 			skirmishAIInfo->SetLuaAI(false);
 
 			SkirmishAIKey aiKey = skirmishAIInfo->GetKey();
