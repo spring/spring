@@ -4,6 +4,11 @@
  * @brief extended bump-mapping water shader
  */
 
+//win32 compile fix, wingdi.h does declare Rectangle()
+#ifdef WIN32
+#define NOGDI 1
+#endif
+
 #include "System/StdAfx.h"
 
 #include "BumpWater.h"
@@ -38,12 +43,6 @@
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"
-
-#ifdef WIN32
-// compile fix
-#undef rect
-#undef Rectangle
-#endif
 
 using std::string;
 using std::vector;
