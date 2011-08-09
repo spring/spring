@@ -4905,6 +4905,26 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Dedicated Server (Debug)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\builds\DS\main.cpp"
 				>
 				<FileConfiguration
@@ -4983,26 +5003,6 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Dedicated Server (Debug)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>
@@ -5510,6 +5510,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\FileSystem\DataDirsAccess.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\DataDirsAccess.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\FileSystem\DirArchive.cpp"
 					>
 				</File>
@@ -5598,6 +5606,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\FileSystem\FileQueryFlags.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\FileSystem\FileSystem.cpp"
 					>
 				</File>
@@ -5611,6 +5623,14 @@
 				</File>
 				<File
 					RelativePath="..\..\System\FileSystem\FileSystemHandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\FileSystemInitializer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\FileSystemInitializer.h"
 					>
 				</File>
 				<File
@@ -5787,6 +5807,10 @@
 				</File>
 				<File
 					RelativePath="..\..\System\FileSystem\VFSHandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\VFSModes.h"
 					>
 				</File>
 				<File
@@ -6875,6 +6899,14 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\..\System\Sync\FPUCheck.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sync\FPUCheck.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Sync\get_executable_name.c"
 					>
 					<FileConfiguration
@@ -6943,6 +6975,10 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\..\System\Sync\HsiehHash.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Sync\Logger.cpp"
 					>
 				</File>
@@ -6976,6 +7012,10 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Sync\SyncedPrimitive.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sync\SyncedPrimitiveBase.h"
 					>
 				</File>
 				<File
@@ -7772,6 +7812,18 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Config\ConfigVariable.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Misc"
+				>
+				<File
+					RelativePath="..\..\System\Misc\RectangleOptimizer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Misc\RectangleOptimizer.h"
 					>
 				</File>
 			</Filter>

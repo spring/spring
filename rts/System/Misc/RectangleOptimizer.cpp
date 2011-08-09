@@ -57,7 +57,7 @@ void CRectangleOptimizer::Optimize()
 				jt = it; ++jt;
 			} else if (del > 0) {
 				//jt = rectangles.erase(jt);
-				std::iter_swap(it, jt);
+				std::swap(*it, *jt);
 				it = rectangles.erase(it);
 				jt = it; ++jt;
 			} else {
