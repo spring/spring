@@ -42,6 +42,7 @@
 #ifdef WIN32
 // compile fix
 #undef rect
+#undef Rectangle
 #endif
 
 using std::string;
