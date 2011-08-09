@@ -27,7 +27,7 @@ public:
 	static bool DirIsWritable(const std::string& dir);
 
 	static std::string GetCwd();
-	static void Chdir(const std::string& dir);
+	static void ChDir(const std::string& dir);
 
 	/**
 	 * Removes "./" or ".\" from the start of a path string.
