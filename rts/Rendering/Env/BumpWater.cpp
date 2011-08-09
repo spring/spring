@@ -39,8 +39,10 @@
 #include "System/Exceptions.h"
 #include "System/Util.h"
 
-#undef Rect
-#undef Rectangle
+#ifdef WIN32
+// compile fix
+#undef rect
+#endif
 
 using std::string;
 using std::vector;
