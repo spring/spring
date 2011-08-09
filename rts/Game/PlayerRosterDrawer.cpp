@@ -90,7 +90,7 @@ void CPlayerRosterDrawer::Draw()
 		chart += buf;
 	}
 	
-	int font_options = FONT_BOTTOM | FONT_SCALE | FONT_NORM;
+	int font_options = FONT_RIGHT | FONT_BOTTOM | FONT_SCALE | FONT_NORM;
 	if (guihandler->GetOutlineFonts())
 		font_options |= FONT_OUTLINE;
 
