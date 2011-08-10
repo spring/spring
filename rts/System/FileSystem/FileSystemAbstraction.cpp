@@ -408,7 +408,7 @@ void FileSystemAbstraction::ChDir(const std::string& dir)
 #endif
 
 	if (err) {
-		throw content_error("Could not chdir into SPRING_DATADIR");
+		throw content_error("Could not chdir into " + dir);
 	}
 }
 
