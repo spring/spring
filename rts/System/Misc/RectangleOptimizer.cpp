@@ -18,7 +18,10 @@ CRectangleOptimizer::CRectangleOptimizer()
 
 CRectangleOptimizer::~CRectangleOptimizer()
 {
-	const float reduction = 100.f - ((100.f * statsOptSize) / statsTotalSize) ;
+	float reduction = 0.f;
+	if (statsTotalSize > 0) {
+		reduction = 100.f - ((100.f * statsOptSize) / statsTotalSize) ;
+	}
 	LOG("Statistics for RectangleOptimizer: %.0f%%", reduction);
 }
 
