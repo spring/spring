@@ -448,7 +448,7 @@ int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 	if (lua_isstring(L, 2)) {
 		const string type = lua_tostring(L, 2);
 
-		const float value = max(0.0f, float(lua_tonumber(L, 3)));
+		const float value = max(0.0f, luaL_checkfloat(L, 3));
 
 		if ((type == "m") || (type == "metal")) {
 			team->metalPull += value;
@@ -468,7 +468,7 @@ int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
 				const string key = lua_tostring(L, -2);
-				const float value = max(0.0f, float(lua_tonumber(L, -1)));
+				const float value = max(0.0f, lua_tofloat(L, -1));
 				if ((key == "m") || (key == "metal")) {
 					metal = value;
 				} else if ((key == "e") || (key == "energy")) {
@@ -1001,7 +1001,7 @@ int LuaSyncedCtrl::SetUnitCosts(lua_State* L)
 			continue;
 		}
 		const string key = lua_tostring(L, -2);
-		const float value = lua_tonumber(L, -1);
+		const float value = lua_tofloat(L, -1);
 		ASSERT_SYNCED((float)value);
 
 		if (key == "buildTime") {
@@ -1072,7 +1072,7 @@ int LuaSyncedCtrl::SetUnitResourcing(lua_State* L)
 				continue;
 			}
 			const string key = lua_tostring(L, -2);
-			const float value = lua_tonumber(L, -1);
+			const float value = lua_tofloat(L, -1);
 			ASSERT_SYNCED((float)value);
 
 			SetUnitResourceParam(unit, key, value);
@@ -2040,7 +2040,7 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 
 	if (lua_isstring(L, 2)) {
 		const string type = lua_tostring(L, 2);
-		const float value = max(0.0f, float(lua_tonumber(L, 3)));
+		const float value = max(0.0f, lua_tofloat(L, 3));
 
 		if ((type == "m") || (type == "metal")) {
 			lua_pushboolean(L, unit->UseMetal(value));
@@ -2057,7 +2057,7 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
 				const string key = lua_tostring(L, -2);
-				const float value = max(0.0f, float(lua_tonumber(L, -1)));
+				const float value = max(0.0f, lua_tofloat(L, -1));
 				if ((key == "m") || (key == "metal")) {
 					metal = value;
 				} else if ((key == "e") || (key == "energy")) {

@@ -179,7 +179,7 @@ int LuaFBOs::meta_newindex(lua_State* L)
 			glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFBO);
 			glBindFramebufferEXT(fbo->target, fbo->id);
 			if (lua_isnumber(L, 3)) {
-				const GLenum buffer = (GLenum)lua_tonumber(L, 3);
+				const GLenum buffer = (GLenum)lua_toint(L, 3);
 				glReadBuffer(buffer);
 			}
 			glBindFramebufferEXT(fbo->target, currentFBO);
@@ -319,11 +319,11 @@ bool LuaFBOs::ApplyAttachment(lua_State* L, int index,
 	GLint  level  = 0;
 
 	lua_rawgeti(L, table, 2);
-	if (lua_isnumber(L, -1)) { target = (GLenum)lua_tonumber(L, -1); }
+	if (lua_isnumber(L, -1)) { target = (GLenum)lua_toint(L, -1); }
 	lua_pop(L, 1);
 
 	lua_rawgeti(L, table, 3);
-	if (lua_isnumber(L, -1)) { level = (GLint)lua_tonumber(L, -1); }
+	if (lua_isnumber(L, -1)) { level = (GLint)lua_toint(L, -1); }
 	lua_pop(L, 1);
 
 	lua_rawgeti(L, table, 1);
@@ -337,7 +337,7 @@ bool LuaFBOs::ApplyAttachment(lua_State* L, int index,
 bool LuaFBOs::ApplyDrawBuffers(lua_State* L, int index)
 {
 	if (lua_isnumber(L, index)) {
-		const GLenum buffer = (GLenum)lua_tonumber(L, index);
+		const GLenum buffer = (GLenum)lua_toint(L, index);
 		glDrawBuffer(buffer);
 		return true;
 	}
@@ -378,7 +378,7 @@ int LuaFBOs::CreateFBO(lua_State* L)
 	if (lua_istable(L, table)) {
 		lua_getfield(L, table, "target");
 		if (lua_isnumber(L, -1)) {
-			fbo.target = (GLenum)lua_tonumber(L, -1);
+			fbo.target = (GLenum)lua_toint(L, -1);
 		} else {
 			lua_pop(L, 1);
 		}
@@ -493,7 +493,7 @@ int LuaFBOs::ActiveFBO(lua_State* L)
 	// target and matrix manipulation options
 	GLenum target = fbo->target;
 	if (lua_israwnumber(L, funcIndex)) {
-		target = (GLenum)lua_tonumber(L, funcIndex);
+		target = (GLenum)lua_toint(L, funcIndex);
 		funcIndex++;
 	}
 	bool identities = false;
