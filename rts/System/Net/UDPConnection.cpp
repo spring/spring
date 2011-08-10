@@ -672,11 +672,12 @@ void UDPConnection::SendIfNecessary(bool flushed)
 		}
 	}
 
-	if (!unackedChunks.empty() && (curTime - lastUnackResent) > spring_msecs(400 >> netLossFactor))
-	{
+	if (!unackedChunks.empty() &&
+		(curTime - lastChunkCreated) > spring_msecs(400 >> netLossFactor) &&
+		(curTime - lastUnackResent) > spring_msecs(400 >> netLossFactor)) {
 		// resend last packet if we didn't get an ack within reasonable time
 		// and don't plan sending out a new chunk either
-		if (newChunks.empty() && (curTime - lastChunkCreated) > spring_msecs(400 >> netLossFactor))
+		if (newChunks.empty())
 			RequestResend(*unackedChunks.rbegin());
 		lastUnackResent = curTime;
 	}
