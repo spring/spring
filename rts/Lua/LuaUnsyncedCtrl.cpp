@@ -674,12 +674,7 @@ int LuaUnsyncedCtrl::PauseSoundStream(lua_State*)
 }
 int LuaUnsyncedCtrl::SetSoundStreamVolume(lua_State* L)
 {
-	const int args = lua_gettop(L);
-	if (args == 1) {
-		Channels::BGMusic.SetVolume(lua_tonumber(L, 1));
-	} else {
-		luaL_error(L, "Incorrect arguments to SetSoundStreamVolume(v)");
-	}
+	Channels::BGMusic.SetVolume(luaL_checkfloat(L, 1));
 	return 0;
 }
 
@@ -729,7 +724,7 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 					ALuint& param = it->second;
 					if (lua_isnumber(L, -1)) {
 						if (alParamType[param] == EFXParamTypes::FLOAT) {
-							const float value = lua_tonumber(L, -1);
+							const float value = lua_tofloat(L, -1);
 							efxprops->filter_properties_f[param] = value;
 						}
 					}
@@ -760,7 +755,7 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 					}
 					else if (lua_isnumber(L, -1)) {
 						if (alParamType[param] == EFXParamTypes::FLOAT) {
-							const float value = lua_tonumber(L, -1);
+							const float value = lua_tofloat(L, -1);
 							efxprops->properties_f[param] = value;
 						}
 					}
@@ -1225,7 +1220,7 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 				}
 			}
 			else if (lua_isnumber(L, -1)) {
-				const float value = lua_tonumber(L, -1);
+				const float value = lua_tofloat(L, -1);
 				if (key == "damage") {
 					w.damage = value;
 				} else if (key == "repeatX") {

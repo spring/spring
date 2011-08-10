@@ -512,15 +512,7 @@ static inline CUnit* ParseTypedUnit(lua_State* L, const char* caller, int index)
 
 static CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
 {
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, index)) {
-		if (caller != NULL) {
-			luaL_error(L, "Incorrect arguments to %s(projectileID)", caller);
-		} else {
-			return NULL;
-		}
-	}
-	const int proID = (int) lua_tonumber(L, index);
+	const int proID = luaL_checkint(L, index);
 	ProjectileMap::iterator it = ph->syncedProjectileIDs.find(proID);
 
 	if (it == ph->syncedProjectileIDs.end()) {
@@ -3110,11 +3102,7 @@ int LuaSyncedRead::GetUnitWeaponVectors(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isnumber(L, 2)) {
-		luaL_error(L, "Incorrect arguments to GetUnitWeaponVectors(unitID,weaponNum)");
-	}
-	const int weaponNum = (int)lua_tonumber(L, 2);
+	const int weaponNum = luaL_checkint(L, 2);
 	if ((weaponNum < 0) || ((size_t)weaponNum >= unit->weapons.size())) {
 		return 0;
 	}

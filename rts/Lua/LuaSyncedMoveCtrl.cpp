@@ -631,7 +631,7 @@ static inline void SetSingleAirMoveTypeValue(lua_State *L, int keyidx, int valid
 	const string key = lua_tostring(L, keyidx);
 	bool failedToAssign = false;
 	if (lua_isnumber(L, validx)) {
-		const float value = float(lua_tonumber(L, validx));
+		const float value = lua_tofloat(L, validx);
 		failedToAssign = !SetAirMoveTypeValue(moveType, key, value);
 	} else if (lua_isboolean(L, validx)) {
 		bool value = lua_toboolean(L, validx);
@@ -712,7 +712,7 @@ static inline void SetSingleGroundMoveTypeValue(lua_State *L, int keyidx, int va
 	const string key = lua_tostring(L, keyidx);
 	bool failedToAssign = false;
 	if (lua_isnumber(L, validx)) {
-		const float value = float(lua_tonumber(L, validx));
+		const float value = lua_tofloat(L, validx);
 		failedToAssign = !SetGroundMoveTypeValue(moveType, key, value);
 	} else if (lua_isboolean(L, validx)) {
 		bool value = lua_toboolean(L, validx);
@@ -813,7 +813,7 @@ static inline void SetSingleTAAirMoveTypeValue(lua_State *L, int keyidx, int val
 	const string key = lua_tostring(L, keyidx);
 	bool failedToAssign = false;
 	if (lua_isnumber(L, validx)) {
-		const float value = float(lua_tonumber(L, validx));
+		const float value = lua_tofloat(L, validx);
 		failedToAssign = !SetTAAirMoveTypeValue(moveType, key, value);
 	} else if (lua_isboolean(L, validx)) {
 		bool value = lua_toboolean(L, validx);
