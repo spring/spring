@@ -123,12 +123,12 @@ bool FileSystem::CreateDirectory(std::string dir)
 	size_t prev_slash = 0, slash;
 	while ((slash = dir.find('/', prev_slash + 1)) != std::string::npos) {
 		std::string pathPart = dir.substr(0, slash);
-		if (!FileSystemAbstraction::IsFSRoot(pathPart) && !FileSystemAbstraction::mkdir(pathPart)) {
+		if (!FileSystemAbstraction::IsFSRoot(pathPart) && !FileSystemAbstraction::MkDir(pathPart)) {
 			return false;
 		}
 		prev_slash = slash;
 	}
-	return FileSystemAbstraction::mkdir(dir);
+	return FileSystemAbstraction::MkDir(dir);
 }
 
 

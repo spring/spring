@@ -189,9 +189,9 @@ void CLogOutput::RotateLogFile() const
 
 			const std::string archivedLogFile = logArchiveDir + FileSystem::GetFileModificationDate(filePath) + "_" + fileName;
 
-			// create the log archive dir if it does nto exist yet
+			// create the log archive dir if it does not exist yet
 			if (!FileSystem::DirExists(logArchiveDir)) {
-				FileSystem::mkdir(logArchiveDir);
+				FileSystem::CreateDirectory(logArchiveDir);
 			}
 
 			// move the old log to the archive dir
