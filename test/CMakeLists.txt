@@ -113,6 +113,28 @@ Else  (NOT Boost_FOUND)
 
 
 ################################################################################
+### FileSystem
+
+	Set(test_FileSystem_src
+			"${ENGINE_SOURCE_DIR}/System/FileSystem/FileSystem.cpp"
+			"${ENGINE_SOURCE_DIR}/System/FileSystem/FileSystemAbstraction.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Util.cpp"
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/FileSystem/TestFileSystem.cpp"
+			${test_Log_sources}
+		)
+
+	ADD_EXECUTABLE(test_FileSystem ${test_FileSystem_src})
+	TARGET_LINK_LIBRARIES(test_FileSystem
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_REGEX_LIBRARY}
+		)
+
+	ADD_TEST(NAME testFileSystem COMMAND test_FileSystem)
+	Add_Dependencies(tests test_FileSystem)
+
+
+
+################################################################################
 
 
 EndIf (NOT Boost_FOUND)
