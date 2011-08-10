@@ -34,6 +34,10 @@ static const char *ExceptionName(DWORD exceptionCode)
 	}
 	return "Unknown exception";
 }
+
+//! defined in System/Platform/Win/CrashHandler.cpp
+extern LONG CALLBACK CrashHandler::ExceptionHandler(LPEXCEPTION_POINTERS e);
+
 void __cdecl se_translator_function(unsigned int err, struct _EXCEPTION_POINTERS* ep)
 {
 	char buf[128];
