@@ -22,6 +22,8 @@ void COffscreenGLContext::WorkerThreadFree() {}
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //! WINDOWS
 
+#include <wingdi.h> //! wgl...
+
 COffscreenGLContext::COffscreenGLContext()
 {
 	//! this creates a 2nd OpenGL context on the >onscreen< window/HDC
