@@ -378,11 +378,11 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 		int nextCont = incoming.lastContinuous + 1;
 		int unAckDiff = unackedChunks[0]->chunkNumber - nextCont;
 
-		if (unAckDiff >= 0) {
+		if (-256 <= unAckDiff && unAckDiff <= 256) {
 			if (incoming.nakType < 0) {
 				for (int i = 0; i != -incoming.nakType; ++i) {
 					int unAckPos = i + unAckDiff;
-					if (unAckPos < unackedChunks.size()) {
+					if (unAckPos >= 0 && unAckPos < unackedChunks.size()) {
 						assert(unackedChunks[unAckPos]->chunkNumber == nextCont + i);
 						RequestResend(unackedChunks[unAckPos]);
 					}
@@ -390,7 +390,9 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 			} else if (incoming.nakType > 0) {
 				int unAckPos = 0;
 				for (int i = 0; i != incoming.naks.size(); ++i) {
-					while (unAckPos < incoming.naks[i] + unAckDiff) {
+					if (unAckDiff + incoming.naks[i] < 0)
+						continue;
+					while (unAckPos < unAckDiff + incoming.naks[i]) {
 						if (unAckPos < unackedChunks.size()) // if there are gaps in the array, assume that further resends are not needed
 							resendRequested.erase(unackedChunks[unAckPos]->chunkNumber);
 						++unAckPos;
@@ -650,7 +652,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 			}
 			packetNum++;
 		}
-		while(!dropped.empty() && (dropped.back() - (lastInOrder + 1)) > 255)
+		while (!dropped.empty() && (dropped.back() - (lastInOrder + 1)) > 255)
 			dropped.pop_back();
 		unsigned numContinuous = 0;
 		for (unsigned i = 0; i != dropped.size(); ++i) {
@@ -674,7 +676,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 	{
 		// resend last packet if we didn't get an ack within reasonable time
 		// and don't plan sending out a new chunk either
-		if (newChunks.empty())
+		if (newChunks.empty() && (curTime - lastChunkCreated) > spring_msecs(400 >> netLossFactor))
 			RequestResend(*unackedChunks.rbegin());
 		lastUnackResent = curTime;
 	}
@@ -684,28 +686,29 @@ void UDPConnection::SendIfNecessary(bool flushed)
 		bool todo = true;
 
 		int maxResend = resendRequested.size();
+		int unackPrevSize = unackedChunks.size();
 
 		std::map<int32_t, ChunkPtr>::iterator resIter = resendRequested.begin();
 		std::map<int32_t, ChunkPtr>::iterator resMidIter, resMidIterStart, resMidIterEnd;
 		std::map<int32_t, ChunkPtr>::reverse_iterator resRevIter;
 
 		if (netLossFactor != MIN_LOSS_FACTOR) {
-			maxResend = std::min(maxResend, 15 * netLossFactor); // keep it reasonable, or it could cause a tremendous flood of packets
+			maxResend = std::min(maxResend, 20 * netLossFactor); // keep it reasonable, or it could cause a tremendous flood of packets
 
 			resMidIter = resendRequested.begin();
 			resMidIterStart = resendRequested.begin();
-			resMidIterEnd = resendRequested.begin();
+			resMidIterEnd = resendRequested.end();
 			resRevIter = resendRequested.rbegin();
 
-			int resMidStart = (resendRequested.size() + 2) / 3;
+			int resMidStart = (maxResend + 3) / 4;
 			for (int i = 0; i < resMidStart; ++i)
 				++resMidIterStart;
 			if (resMidIterStart != resendRequested.end() && lastMidChunk < resMidIterStart->first)
 				lastMidChunk = resMidIterStart->first - 1;
 
-			int resMidEnd = 2 * (resendRequested.size() + 1) / 3;
+			int resMidEnd = (maxResend + 2) / 4;
 			for (int i = 0; i < resMidEnd; ++i)
-				++resMidIterEnd;
+				--resMidIterEnd;
 
 			while (resMidIter != resendRequested.end() && resMidIter->first <= lastMidChunk)
 				++resMidIter;
@@ -752,6 +755,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 								break;
 								// since this improves performance on high latency connections
 							case 2:
+							case 3:
 								buf.chunks.push_back(resMidIter->second);
 								lastMidChunk = resMidIter->first;
 								++resMidIter;
@@ -759,14 +763,12 @@ void UDPConnection::SendIfNecessary(bool flushed)
 									resMidIter = resMidIterStart;
 								break;
 						}
-						rev = (rev + 1) % 3;
+						rev = (rev + 1) % 4;
 					}
 					++resentChunks;
 					--maxResend;
 				} else if (!resend && canSendNew) {
 					buf.chunks.push_back(newChunks[0]);
-					if (netLossFactor != MIN_LOSS_FACTOR) // on a lossy connection the packet will be sent multiple times
-						RequestResend(newChunks[0]);
 					unackedChunks.push_back(newChunks[0]);
 					newChunks.pop_front();
 				}
@@ -779,6 +781,10 @@ void UDPConnection::SendIfNecessary(bool flushed)
 			if (maxResend == 0 && newChunks.empty()) {
 				todo = false;
 			}
+		}
+		if (netLossFactor != MIN_LOSS_FACTOR) { // on a lossy connection the packet will be sent multiple times
+			for (int i = unackPrevSize; i < unackedChunks.size(); ++i)
+				RequestResend(unackedChunks[i]);
 		}
 	}
 }
