@@ -23,6 +23,8 @@ Else  (NOT Boost_FOUND)
 			"${ENGINE_SOURCE_DIR}/System/Log/StreamSink.cpp"
 		)
 
+	Add_Custom_Target(tests)
+
 
 
 ################################################################################
@@ -52,6 +54,7 @@ Else  (NOT Boost_FOUND)
 		)
 
 	ADD_TEST(NAME testUDPListener COMMAND test_UDPListener)
+	Add_Dependencies(tests test_UDPListener)
 
 
 
@@ -69,6 +72,7 @@ Else  (NOT Boost_FOUND)
 		)
 
 	ADD_TEST(NAME testILog COMMAND test_ILog)
+	Add_Dependencies(tests test_ILog)
 
 
 
@@ -86,6 +90,7 @@ Else  (NOT Boost_FOUND)
 		)
 
 	ADD_TEST(NAME testSyncedPrimitive COMMAND test_SyncedPrimitive)
+	Add_Dependencies(tests test_SyncedPrimitive)
 
 
 ################################################################################
@@ -103,19 +108,11 @@ Else  (NOT Boost_FOUND)
 		)
 
 	ADD_TEST(NAME testRectangleOptimizer COMMAND test_RectangleOptimizer)
+	Add_Dependencies(tests test_RectangleOptimizer)
 
 
 
 ################################################################################
 
-	Set(test_targets
-			test_UDPListener
-			test_ILog
-			test_SyncedPrimitive
-			test_RectangleOptimizer
-		)
-
-	Add_Custom_Target(tests)
-	Add_Dependencies(tests ${test_targets})
 
 EndIf (NOT Boost_FOUND)
