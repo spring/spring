@@ -4,9 +4,6 @@
 #define _CRASH_HANDLER_H_
 
 #include <string.h>
-#ifdef WIN32
-#include <windows.h>
-#endif
 #include "Threading.h"
 
 namespace CrashHandler {
@@ -17,10 +14,6 @@ namespace CrashHandler {
 	void PrepareStacktrace();
 	void CleanupStacktrace();
 
-#ifdef WIN32
-	//! used by seh
-	LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e);
-#endif
 	void OutputStacktrace();
 };
 
