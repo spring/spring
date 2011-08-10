@@ -262,7 +262,7 @@ bool FileSystemAbstraction::IsAbsolutePath(const std::string& path)
  * data directory, ie. all subdirectories the same perms, all files the same
  * perms.
  */
-bool FileSystemAbstraction::mkdir(const std::string& dir)
+bool FileSystemAbstraction::MkDir(const std::string& dir)
 {
 	// First check if directory exists. We'll return success if it does.
 	if (DirExists(dir)) {

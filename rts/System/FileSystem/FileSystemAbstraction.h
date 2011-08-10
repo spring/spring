@@ -18,7 +18,7 @@ class FileSystemAbstraction
 public:
 
 	// almost direct wrappers to system calls
-	static bool mkdir(const std::string& dir);
+	static bool MkDir(const std::string& dir);
 	static bool DeleteFile(const std::string& file);
 	/// Returns true if the file exists, and is not a directory
 	static bool FileExists(const std::string& file);
