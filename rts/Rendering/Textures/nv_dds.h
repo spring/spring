@@ -8,11 +8,6 @@
 #ifndef __NV_DDS_H__
 #define __NV_DDS_H__
 
-
-#if defined(WIN32)
-#  include <windows.h>
-#endif
-
 #include <string>
 #include <deque>
 #include <assert.h>

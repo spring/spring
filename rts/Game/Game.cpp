@@ -45,9 +45,6 @@
 #include "UnsyncedActionExecutor.h"
 #include "UnsyncedGameCommands.h"
 #include "Game/UI/UnitTracker.h"
-#ifdef _WIN32
-#  include "winerror.h" // TODO someone on windows (MinGW? VS?) please check if this is required
-#endif
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
