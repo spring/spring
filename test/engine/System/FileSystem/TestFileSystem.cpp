@@ -102,5 +102,30 @@ BOOST_AUTO_TEST_CASE(GetDirectory)
 #undef CHECK_DIR_EXTRACTION
 }
 
+
+BOOST_AUTO_TEST_CASE(GetNormalizedPath)
+{
+#define CHECK_NORM_PATH(path, normPath) \
+		BOOST_CHECK(FileSystem::GetNormalizedPath(path) == normPath)
+
+	CHECK_NORM_PATH("/home/userX/.spring/foo/bar///./../test.log", "/home/userX/.spring/foo/test.log");
+	CHECK_NORM_PATH("./symLinkToHome/foo/bar///./../test.log", "./symLinkToHome/foo/test.log");
+	CHECK_NORM_PATH("C:\\foo\\bar\\\\\\.\\..\\test.log", "C:/foo/test.log");
+
+#undef CHECK_NORM_PATH
+}
+
+
+BOOST_AUTO_TEST_CASE(GetRealPath)
+{
+#define CHECK_REAL_PATH(path, realPath) \
+		printf("FileSystem::GetRealPath(\"%s\"):\n\t%s\n\t%s\n", path, FileSystem::GetRealPath(path).c_str(), (realPath).c_str()); \
+		BOOST_CHECK(FileSystem::GetRealPath(path) == realPath)
+
+	CHECK_REAL_PATH(".///././//./testDir/../testFile.txt", testCwd + "/testFile.txt");
+
+#undef CHECK_REAL_PATH
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 

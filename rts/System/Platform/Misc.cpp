@@ -108,11 +108,8 @@ std::string GetProcessExecutableFile()
 	uint32_t pathlen = PATH_MAX;
 	char path[PATH_MAX];
 	int err = _NSGetExecutablePath(path, &pathlen);
-	if (err == 0)
-	{
-		char pathReal[PATH_MAX];
-		realpath(path, pathReal);
-		procExeFilePath = std::string(pathReal);
+	if (err == 0) {
+		procExeFilePath = FileSystem::GetRealPath(path);
 	}
 #else
 	#error implement this
