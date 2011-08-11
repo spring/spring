@@ -15,9 +15,6 @@ namespace CrashHandler {
 	void CleanupStacktrace();
 
 	void OutputStacktrace();
-#ifdef WIN32
-	LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e);
-#endif
 };
 
 #endif // _CRASH_HANDLER_H_
