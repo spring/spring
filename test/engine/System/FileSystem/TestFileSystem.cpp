@@ -3,7 +3,6 @@
 
 #include <string>
 #include <cstdio>
-#include <cstdlib>
 
 #define BOOST_TEST_MODULE FileSystem
 #include <boost/test/unit_test.hpp>
@@ -46,20 +45,20 @@ namespace {
 		}
 		std::string GetTempDir() {
 			if (testCwd.empty()) {
-				char tmpDirTemplate[128];
-				strcpy(tmpDirTemplate, "Spring_Tests_FileSystem_XXXXXX");
-				char* tmpDir = mkdtemp(tmpDirTemplate);
+				char* tmpDir = tmpnam(NULL);
 				if (tmpDir != NULL) {
 					testCwd = tmpDir;
+					FileSystem::CreateDirectory(testCwd);
 				} else {
 					BOOST_FAIL("Failed to create temporary test dir");
 				}
 			}
 			return testCwd;
 		}
+
+		std::string testCwd;
 	private:
 		std::string oldDir;
-		std::string testCwd;
 	};
 }
 
