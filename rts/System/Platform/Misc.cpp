@@ -172,6 +172,8 @@ std::string GetModuleFile(std::string moduleName)
 		const int ret = dladdr(moduleAddress, &moduleInfo);
 		if ((ret != 0) && (moduleInfo.dli_fname != NULL)) {
 			moduleFilePath = moduleInfo.dli_fname;
+			// required on APPLE; does not hurt elsewhere
+			moduleFilePath = FileSystem::GetRealPath(moduleFilePath);
 		} else {
 			error = dlerror();
 			if (error == NULL) {
