@@ -4,7 +4,6 @@
 #include "AviVideoCapturing.h"
 
 #include "Rendering/AVIGenerator.h"
-#include "System/Platform/Win/win32.h"
 
 #include "Rendering/GlobalRendering.h"
 #include "Sim/Misc/GlobalConstants.h"

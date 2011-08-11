@@ -5,7 +5,6 @@
  * Contains implementation of synced and unsynced global stuff.
  */
 
-#include "System/Platform/Win/win32.h"
 
 #include "GlobalUnsynced.h"
 #include "Game/PlayerHandler.h"

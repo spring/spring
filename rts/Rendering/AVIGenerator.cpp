@@ -3,7 +3,6 @@
 #if       defined AVI_CAPTURING
 #include "AVIGenerator.h"
 
-#include "System/Platform/Win/win32.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Game/GameVersion.h"

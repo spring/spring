@@ -3,7 +3,6 @@
 #include <boost/cstdint.hpp>
 #include <SDL_keysym.h>
 
-#include "System/Platform/Win/win32.h"
 #include "System/mmgr.h"
 
 #include "lib/gml/gml.h"

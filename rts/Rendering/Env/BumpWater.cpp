@@ -9,7 +9,6 @@
 #define NOGDI 1
 #endif
 
-#include "System/Platform/Win/win32.h"
 
 #include "BumpWater.h"
 

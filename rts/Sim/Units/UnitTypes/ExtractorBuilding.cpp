@@ -3,7 +3,6 @@
 // Used for all metal-extractors.
 // Handles the metal-make-process.
 
-#include "System/Platform/Win/win32.h"
 #include <typeinfo>
 #include "ExtractorBuilding.h"
 #include "Sim/Units/Scripts/UnitScript.h"

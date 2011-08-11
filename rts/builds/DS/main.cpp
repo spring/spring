@@ -1,7 +1,3 @@
-#ifdef _MSC_VER
-#include "System/Platform/Win/win32.h"
-#endif
-
 #include <string>
 #include <iostream>
 #include <cstdlib>
