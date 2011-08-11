@@ -11,7 +11,6 @@
 #include "System/mmgr.h"
 
 #include <boost/regex.hpp>
-#include <stdlib.h> // for realpath
 
 ////////////////////////////////////////
 ////////// FileSystem
@@ -196,24 +195,6 @@ std::string FileSystem::GetNormalizedPath(const std::string& path) {
 	normalizedPath = boost::regex_replace(normalizedPath, boost::regex("[/]{2,}"), "/");
 
 	return normalizedPath; // maybe use FixSlashes here
-}
-
-std::string FileSystem::GetRealPath(const std::string& path)
-{
-	std::string pathReal("");
-
-	// using NULL here is not supported in very old systems,
-	// but should be no problem for spring
-	// see for older systems:
-	// http://stackoverflow.com/questions/4109638/what-is-the-safe-alternative-to-realpath
-	char* pathRealC = realpath(path.c_str(), NULL);
-	if (pathRealC != NULL) {
-		pathReal = pathRealC;
-		free(pathRealC);
-		pathRealC = NULL;
-	}
-
-	return pathReal;
 }
 
 std::string& FileSystem::FixSlashes(std::string& path)
