@@ -48,7 +48,6 @@ SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/WindowManagerHelper.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SafeVector.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SpringApp.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/StdAfx.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/FPUCheck.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/Logger.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/SyncChecker.cpp"
