@@ -115,17 +115,5 @@ BOOST_AUTO_TEST_CASE(GetNormalizedPath)
 #undef CHECK_NORM_PATH
 }
 
-
-BOOST_AUTO_TEST_CASE(GetRealPath)
-{
-#define CHECK_REAL_PATH(path, realPath) \
-		printf("FileSystem::GetRealPath(\"%s\"):\n\t%s\n\t%s\n", path, FileSystem::GetRealPath(path).c_str(), (realPath).c_str()); \
-		BOOST_CHECK(FileSystem::GetRealPath(path) == realPath)
-
-	CHECK_REAL_PATH(".///././//./testDir/../testFile.txt", testCwd + "/testFile.txt");
-
-#undef CHECK_REAL_PATH
-}
-
 BOOST_AUTO_TEST_SUITE_END()
 
