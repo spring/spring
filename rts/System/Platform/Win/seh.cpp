@@ -36,7 +36,9 @@ static const char *ExceptionName(DWORD exceptionCode)
 }
 
 //! defined in System/Platform/Win/CrashHandler.cpp
-extern LONG CALLBACK CrashHandler::ExceptionHandler(LPEXCEPTION_POINTERS e);
+namespace CrashHandler {
+	LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e);
+}
 
 void __cdecl se_translator_function(unsigned int err, struct _EXCEPTION_POINTERS* ep)
 {
