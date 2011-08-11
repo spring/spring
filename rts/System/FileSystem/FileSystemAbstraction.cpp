@@ -28,7 +28,7 @@
 	#include <io.h>
 	#include <direct.h>
 	#include <fstream>
-	#include "Shlwapi.h" // for PathCanonicalize
+	#include <shlwapi.h> // for PathCanonicalize
 	// Win-API redifines these, which breaks things
 	#if defined(CreateDirectory)
 		#undef CreateDirectory

@@ -123,7 +123,7 @@ SET(engineDedicatedSources
 ADD_LIBRARY(springserver-static STATIC EXCLUDE_FROM_ALL ${engineDedicatedSources})
 TARGET_LINK_LIBRARIES(springserver-static ${engineDedicatedLibraries})
 IF    (MINGW)
-	TARGET_LINK_LIBRARIES (springserver-static ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY})
+	TARGET_LINK_LIBRARIES (springserver-static ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY} ${SHLWAPI_LIBRARY})
 ENDIF (MINGW)
 
 ADD_LIBRARY(springserver SHARED
