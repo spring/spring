@@ -2,7 +2,7 @@
 
 // TODO: move this out of Sim, this is rendering code!
 
-#include "System/StdAfx.h"
+#include "System/Platform/Win/win32.h"
 
 #include "LineDrawer.h"
 

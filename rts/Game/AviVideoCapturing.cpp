@@ -1,11 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #if       defined AVI_CAPTURING
-#include "System/StdAfx.h"
 #include "AviVideoCapturing.h"
 
-
 #include "Rendering/AVIGenerator.h"
+#include "System/Platform/Win/win32.h"
+
 #include "Rendering/GlobalRendering.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Log/ILog.h"

@@ -1,7 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "LobbyConnection.h"
 #ifdef _MSC_VER
-#include "System/StdAfx.h"
+#include "System/Platform/Win/win32.h"
 #endif
 #include "SelectMenu.h"
 
@@ -19,7 +20,6 @@
 #include <stack>
 #include <boost/cstdint.hpp>
 
-#include "LobbyConnection.h"
 #include "SelectionWidget.h"
 #include "ScriptHandler.h"
 #include "Game/ClientSetup.h"

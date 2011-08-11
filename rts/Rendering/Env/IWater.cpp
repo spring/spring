@@ -1,12 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "IWater.h"
 #include "BasicWater.h"
 #include "AdvWater.h"
 #include "BumpWater.h"
+#include "System/Platform/Win/win32.h"
 #include "DynWater.h"
 #include "RefractWater.h"
 #include "Map/ReadMap.h" // struct HeightMapUpdate

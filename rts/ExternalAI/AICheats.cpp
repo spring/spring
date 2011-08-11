@@ -2,7 +2,7 @@
 
 #include "AICheats.h"
 
-#include "System/StdAfx.h"
+#include "System/Platform/Win/win32.h"
 #include "ExternalAI/SkirmishAIWrapper.h"
 #include "Game/TraceRay.h"
 #include "Sim/Units/Unit.h"

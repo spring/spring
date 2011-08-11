@@ -5139,14 +5139,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\StdAfx.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\StdAfx.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\System\tdf_grammar.h"
 				>
 			</File>

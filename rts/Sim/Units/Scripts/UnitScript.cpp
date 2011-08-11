@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 /* heavily based on CobInstance.cpp */
-#include "System/StdAfx.h"
+#include "System/Platform/Win/win32.h"
 #include "UnitScript.h"
 
 #include "CobDefines.h"

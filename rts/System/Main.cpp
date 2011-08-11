@@ -17,9 +17,7 @@
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
 
-#ifdef WIN32
-	#include "System/Platform/Win/win32.h"
-#endif
+#include "System/Platform/Win/win32.h"
 
 #if !defined(__APPLE__) || !defined(HEADLESS)
 	// SDL_main.h contains a macro that replaces the main function on some OS, see SDL_main.h for details

@@ -1,5 +1,5 @@
 #ifdef _MSC_VER
-#include "System/StdAfx.h"
+#include "System/Platform/Win/win32.h"
 #endif
 
 #include <string>

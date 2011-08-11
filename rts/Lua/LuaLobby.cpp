@@ -1,13 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifdef _MSC_VER
-#include "System/StdAfx.h"
-#endif
 #include "LuaLobby.h"
-#ifndef _MSC_VER
-#include "System/StdAfx.h"
-#endif
 
+#ifdef _MSC_VER
+#include "System/Platform/Win/win32.h"
+#endif
 #include "Game/UI/LuaUI.h"
 #include "LuaCallInCheck.h"
 #include "LuaHandle.h"
