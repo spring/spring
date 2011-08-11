@@ -2,9 +2,6 @@
 
 #include "LuaLobby.h"
 
-#ifdef _MSC_VER
-#include "System/Platform/Win/win32.h"
-#endif
 #include "Game/UI/LuaUI.h"
 #include "LuaCallInCheck.h"
 #include "LuaHandle.h"

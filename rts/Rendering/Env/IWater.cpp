@@ -6,7 +6,6 @@
 #include "BasicWater.h"
 #include "AdvWater.h"
 #include "BumpWater.h"
-#include "System/Platform/Win/win32.h"
 #include "DynWater.h"
 #include "RefractWater.h"
 #include "Map/ReadMap.h" // struct HeightMapUpdate

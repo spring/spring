@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/Platform/Win/win32.h"
 #include "System/creg/STL_List.h"
 #include "System/creg/STL_Set.h"
 #include "PlasmaRepulser.h"

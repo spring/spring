@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "Socket.h"
-#include "System/Platform/Win/win32.h"
 
 #include <boost/system/error_code.hpp>
 #include "lib/streflop/streflop_cond.h"

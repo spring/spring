@@ -12,7 +12,6 @@
 
 #ifdef USE_GML
 
-#include "System/Platform/Win/win32.h"
 #include <boost/thread/thread.hpp>
 #include <boost/thread/barrier.hpp>
 #include <boost/bind.hpp>

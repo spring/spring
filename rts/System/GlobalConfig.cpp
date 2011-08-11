@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/Net/UDPConnection.h"
-#include "System/Platform/Win/win32.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/TeamHighlight.h"
 #include "System/Config/ConfigHandler.h"

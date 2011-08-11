@@ -5,7 +5,6 @@
  * EXT_pixel_buffer_object class implementation
  */
 
-#include "System/Platform/Win/win32.h"
 #include <assert.h>
 #include <vector>
 #include "System/mmgr.h"
