@@ -79,7 +79,6 @@ set(unitsync_files
 	${CMAKE_CURRENT_SOURCE_DIR}/unitsync.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/LuaParserAPI.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/Syncer.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/stdafx.cpp
 	)
 
 ADD_LIBRARY(unitsync MODULE ${unitsync_files})
