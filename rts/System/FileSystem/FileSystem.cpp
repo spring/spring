@@ -10,8 +10,8 @@
 #include "System/Util.h"
 #include "System/mmgr.h"
 
-//#include <limits.h>
-//#include <fstream>
+#include <boost/regex.hpp>
+#include <stdlib.h> // for realpath
 
 ////////////////////////////////////////
 ////////// FileSystem
@@ -140,7 +140,7 @@ std::string FileSystem::GetDirectory(const std::string& path)
 	if (s != std::string::npos) {
 		return path.substr(0, s + 1);
 	}
-	return ""; //FIXME return "./"? (a short test caused a crash because CFileHandler used in Lua couldn't find a file in the base-dir)
+	return ""; // XXX return "./"? (a short test caused a crash because CFileHandler used in Lua couldn't find a file in the base-dir)
 }
 
 std::string FileSystem::GetFilename(const std::string& path)
@@ -183,6 +183,37 @@ std::string FileSystem::GetExtension(const std::string& path)
 	}
 
 	return "";
+}
+
+
+std::string FileSystem::GetNormalizedPath(const std::string& path) {
+
+	std::string normalizedPath = StringReplace(path, "\\", "/"); // convert to POSIX path separators
+
+	normalizedPath = StringReplace(normalizedPath, "/./", "/");
+	normalizedPath = boost::regex_replace(normalizedPath, boost::regex("[/]{2,}"), "/");
+	normalizedPath = boost::regex_replace(normalizedPath, boost::regex("[^/]+[/][.]{2}"), "");
+	normalizedPath = boost::regex_replace(normalizedPath, boost::regex("[/]{2,}"), "/");
+
+	return normalizedPath; // maybe use FixSlashes here
+}
+
+std::string FileSystem::GetRealPath(const std::string& path)
+{
+	std::string pathReal("");
+
+	// using NULL here is not supported in very old systems,
+	// but should be no problem for spring
+	// see for older systems:
+	// http://stackoverflow.com/questions/4109638/what-is-the-safe-alternative-to-realpath
+	char* pathRealC = realpath(path.c_str(), NULL);
+	if (pathRealC != NULL) {
+		pathReal = pathRealC;
+		free(pathRealC);
+		pathRealC = NULL;
+	}
+
+	return pathReal;
 }
 
 std::string& FileSystem::FixSlashes(std::string& path)

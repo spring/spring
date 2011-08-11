@@ -84,6 +84,28 @@ public:
 	 */
 	static std::string GetExtension(const std::string& path);
 	/**
+	 * Converts the given path into a canonicalized one.
+	 * CAUTION: be careful where using this, as it easily allows to link to
+	 * outside a certain parent dir, for example a data-dir.
+	 * @param path could be something like
+	 *   "./symLinkToHome/foo/bar///./../test.log"
+	 * @return with the example given in path, it could be
+	 *   "./symLinkToHome/foo/test.log"
+	 */
+	static std::string GetNormalizedPath(const std::string& path);
+	/**
+	 * Converts the given path into a canonicalized, absolute one,
+	 * and resolves symlinks.
+	 * CAUTION: be careful where using this, as it easily allows to link to
+	 * outside a certain parent dir, for example a data-dir.
+	 * @see #GetNormalizedPath
+	 * @param path could be something like
+	 *   "./symLinkToHome/foo/bar///./../test.log"
+	 * @return with the example given in path, it could be
+	 *   "/home/spring/foo/test.log"
+	 */
+	static std::string GetRealPath(const std::string& path);
+	/**
 	 * @brief Converts a glob expression to a regex
 	 * @param glob string containing glob
 	 * @return string containing regex
