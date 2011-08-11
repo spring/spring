@@ -21,7 +21,7 @@ namespace Sync {
 	 * @param msg  An arbitrary debugging text (preferably short)
 	 *
 	 * (A checksum of) the memory may be passed to either the CSyncDebugger,
-	 * or the CSyncChecker, depending on the enabled #defines.
+	 * or the CSyncChecker, depending on the enabled @code #defines @endcode.
 	 */
 	static inline void Assert(const void* p, unsigned size, const char* msg) {
 #ifdef SYNCDEBUG
