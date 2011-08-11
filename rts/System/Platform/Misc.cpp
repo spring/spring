@@ -68,6 +68,26 @@ static HMODULE GetCurrentModule() {
 namespace Platform
 {
 
+#ifndef WIN32
+static std::string GetRealPath(const std::string& path) {
+
+	std::string pathReal = path;
+
+	// using NULL here is not supported in very old systems,
+	// but should be no problem for spring
+	// see for older systems:
+	// http://stackoverflow.com/questions/4109638/what-is-the-safe-alternative-to-realpath
+	char* pathRealC = realpath(path.c_str(), NULL);
+	if (pathRealC != NULL) {
+		pathReal = pathRealC;
+		free(pathRealC);
+		pathRealC = NULL;
+	}
+
+	return pathReal;
+}
+#endif
+
 // Mac OS X:        _NSGetExecutablePath() (man 3 dyld)
 // Linux:           readlink /proc/self/exe
 // Solaris:         getexecname()
@@ -109,7 +129,7 @@ std::string GetProcessExecutableFile()
 	char path[PATH_MAX];
 	int err = _NSGetExecutablePath(path, &pathlen);
 	if (err == 0) {
-		procExeFilePath = FileSystem::GetRealPath(path);
+		procExeFilePath = GetRealPath(path);
 	}
 #else
 	#error implement this
@@ -173,7 +193,7 @@ std::string GetModuleFile(std::string moduleName)
 		if ((ret != 0) && (moduleInfo.dli_fname != NULL)) {
 			moduleFilePath = moduleInfo.dli_fname;
 			// required on APPLE; does not hurt elsewhere
-			moduleFilePath = FileSystem::GetRealPath(moduleFilePath);
+			moduleFilePath = GetRealPath(moduleFilePath);
 		} else {
 			error = dlerror();
 			if (error == NULL) {
