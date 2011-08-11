@@ -1,17 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifdef _MSC_VER
-#	include "StdAfx.h"
-#elif defined(_WIN32)
-#	include <windows.h>
-#endif
-
 #include <boost/asio.hpp>
-#include "lib/streflop/streflop_cond.h"
+#include "System/Platform/Win/win32.h"
 
-#ifndef _MSC_VER
-#include "System/StdAfx.h"
-#endif
+#include "lib/streflop/streflop_cond.h"
 
 #include "OSCStatsSender.h"
 #include "lib/oscpack/OscOutboundPacketStream.h"

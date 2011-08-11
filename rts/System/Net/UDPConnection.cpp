@@ -1,12 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "UDPConnection.h"
+
 #ifdef _MSC_VER
-#	include "StdAfx.h"
+#	include "System/Platform/Win/win32.h"
 #elif defined(_WIN32)
 #	include <windows.h>
 #endif
-
-#include "UDPConnection.h"
 
 #include <boost/format.hpp>
 #include <boost/shared_ptr.hpp>

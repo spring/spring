@@ -1,10 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#if   defined(_MSC_VER)
-#	include "StdAfx.h"
-#elif defined(_WIN32)
-#	include <windows.h>
-#endif
+#include "System/Net/UDPConnection.h"
+#include "System/Platform/Win/win32.h"
 
 #include <SDL_timer.h>
 #include <boost/scoped_ptr.hpp>
@@ -14,7 +11,6 @@
 
 // NOTE: these _must_ be included before NetProtocol.h due to some ambiguity in
 // Boost hash_float.hpp ("call of overloaded ‘ldexp(float&, int&)’ is ambiguous")
-#include "System/Net/UDPConnection.h"
 #include "System/Net/LocalConnection.h"
 #include "System/NetProtocol.h"
 

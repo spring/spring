@@ -1,9 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifdef _MSC_VER
-#include "System/StdAfx.h"
-#endif
 #include "LobbyConnection.h"
+#ifdef _MSC_VER
+#include "System/Platform/Win/win32.h"
+#endif
 
 #include <boost/bind.hpp>
 

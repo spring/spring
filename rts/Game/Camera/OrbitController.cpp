@@ -5,7 +5,7 @@
 #include <SDL_mouse.h>
 #include <SDL_keysym.h>
 
-#include "System/StdAfx.h"
+#include "System/Platform/Win/win32.h"
 #include "OrbitController.h"
 #include "Game/Camera.h"
 #include "Game/UI/MouseHandler.h"

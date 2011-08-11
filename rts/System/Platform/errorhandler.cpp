@@ -5,7 +5,7 @@
  * Error handling based on platform.
  */
 
-#include "System/StdAfx.h"
+#include "System/Platform/Win/win32.h"
 
 #include "errorhandler.h"
 

@@ -3,7 +3,7 @@
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 
-#include "System/StdAfx.h"
+#include "System/Platform/Win/win32.h"
 #include "System/mmgr.h"
 #include "lib/gml/ThreadSafeContainers.h"
 

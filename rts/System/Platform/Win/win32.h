@@ -7,12 +7,27 @@
 	#ifndef NOMINMAX
 	#define NOMINMAX
 	#endif
+	#ifndef VC_EXTRALEAN
+	#define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
+	#endif
+
+	// do not include <cmath> or <math.h> before this, it'll cause ambiguous call er
+	#include "lib/streflop/streflop_cond.h"
+
 	#include <windows.h>
 
 		#undef  PlaySound
 		#define PlaySound  use_PlaySample_instead_of_PlaySound
 
 		#undef CreateDirectory
+		#undef DeleteFile
+		#undef SendMessage
+		#undef GetCharWidth
+		#undef far
+		#undef near
+		#undef FAR
+		#undef NEAR
+		#undef Rectangle
 
 		// std min&max are used instead of the macros
 		#ifdef min

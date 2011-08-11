@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "DataDirLocater.h"
 
 #include <cstdlib>
@@ -14,6 +13,8 @@
 		#define SHGFP_TYPE_CURRENT 0
 	#endif
 #endif
+
+#include "System/Platform/Win/win32.h"
 #include <sstream>
 #include <string.h>
 

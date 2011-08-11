@@ -2,7 +2,7 @@
 
 /* based on code from GlobalSynced.{cpp,h} */
 
-#include "System/StdAfx.h"
+#include "System/Platform/Win/win32.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "PlayerHandler.h"

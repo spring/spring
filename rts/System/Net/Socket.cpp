@@ -1,12 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifdef _MSC_VER
-#	include "StdAfx.h"
-#elif defined(_WIN32)
-#	include <windows.h>
-#endif
-
 #include "Socket.h"
+#include "System/Platform/Win/win32.h"
 
 #include <boost/system/error_code.hpp>
 #include "lib/streflop/streflop_cond.h"

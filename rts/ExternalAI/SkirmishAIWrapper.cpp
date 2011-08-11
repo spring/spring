@@ -1,9 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
+#include "System/Platform/Win/win32.h"
 #include "SkirmishAIWrapper.h"
 
-#include "System/StdAfx.h"
+#include "System/Platform/Win/win32.h"
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileQueryFlags.h"
 #include "System/FileSystem/FileSystem.h"
