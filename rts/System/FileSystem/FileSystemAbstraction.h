@@ -30,19 +30,6 @@ public:
 	static void ChDir(const std::string& dir);
 
 	/**
-	 * Converts the given path into a canonicalized, absolute one,
-	 * and resolves symlinks.
-	 * CAUTION: be careful where using this, as it easily allows to link to
-	 * outside a certain parent dir, for example a data-dir.
-	 * @see #GetNormalizedPath
-	 * @param path could be something like
-	 *   "./symLinkToHome/foo/bar///./../test.log"
-	 * @return with the example given in path, it could be
-	 *   "/home/spring/foo/test.log"
-	 */
-	static std::string GetRealPath(const std::string& path);
-
-	/**
 	 * Removes "./" or ".\" from the start of a path string.
 	 */
 	static std::string RemoveLocalPathPrefix(const std::string& path);

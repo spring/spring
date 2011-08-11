@@ -22,13 +22,11 @@
 	#include <sstream>
 	#include <unistd.h>
 	#include <time.h>
-	#include <stdlib.h> // for realpath
 #else
 	#include <windows.h>
 	#include <io.h>
 	#include <direct.h>
 	#include <fstream>
-	#include <shlwapi.h> // for PathCanonicalize
 	// Win-API redifines these, which breaks things
 	#if defined(CreateDirectory)
 		#undef CreateDirectory
@@ -298,33 +296,6 @@ bool FileSystemAbstraction::DeleteFile(const std::string& file)
 	}
 
 	return fileDeleted;
-}
-
-
-std::string FileSystemAbstraction::GetRealPath(const std::string& path)
-{
-	std::string pathReal("");
-
-#ifdef _WIN32
-	char pathRealC[MAX_PATH];
-	const bool canonicalizationOk = PathCanonicalize(pathRealC, path.c_str());
-	if (canonicalizationOk) {
-		pathReal = pathRealC;
-	}
-#else
-	// using NULL here is not supported in very old systems,
-	// but should be no problem for spring
-	// see for older systems:
-	// http://stackoverflow.com/questions/4109638/what-is-the-safe-alternative-to-realpath
-	char* pathRealC = realpath(path.c_str(), NULL);
-	if (pathRealC != NULL) {
-		pathReal = pathRealC;
-		free(pathRealC);
-		pathRealC = NULL;
-	}
-#endif
-
-	return pathReal;
 }
 
 bool FileSystemAbstraction::FileExists(const std::string& file)
