@@ -3,7 +3,7 @@
 /**
  * Glob conversion by Chris Han (based on work by Nathaniel Smith).
  */
-
+#include "System/StdAfx.h"
 #include "FileSystem.h"
 
 #include "System/Log/ILog.h"
