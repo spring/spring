@@ -2,7 +2,6 @@
 
 #ifndef HEADLESS
 
-#include "System/StdAfx.h"
 #include "myX11.h"
 
 #include <string.h>
