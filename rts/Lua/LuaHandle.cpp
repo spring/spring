@@ -41,6 +41,7 @@
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/LogOutput.h"
+#include "System/Rectangle.h"
 #include "System/Log/ILog.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/FileHandler.h"
@@ -1945,6 +1946,25 @@ void CLuaHandle::Save(zipFile archive)
 
 	// call the routine
 	RunCallInUnsynced(cmdStr, 1, 0);
+}
+
+
+void CLuaHandle::UnsyncedHeightMapUpdate(const Rectangle& rect)
+{
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 6);
+	static const LuaHashString cmdStr("UnsyncedHeightMapUpdate");
+	if (!PushUnsyncedCallIn(L, cmdStr)) {
+		return;
+	}
+
+	lua_pushnumber(L, rect.x1);
+	lua_pushnumber(L, rect.z1);
+	lua_pushnumber(L, rect.x2);
+	lua_pushnumber(L, rect.z2);
+
+	// call the routine
+	RunCallInUnsynced(cmdStr, 4, 0);
 }
 
 
