@@ -77,6 +77,7 @@ class CEventClient
 		virtual void GameOver(const std::vector<unsigned char>& winningAllyTeams) {}
 		virtual void GamePaused(int playerID, bool paused) {}
 		virtual void GameFrame(int gameFrame) {}
+
 		virtual void TeamDied(int teamID) {}
 		virtual void TeamChanged(int teamID) {}
 		virtual void PlayerChanged(int playerID) {}
@@ -148,7 +149,8 @@ class CEventClient
 		// Unsynced events
 		virtual void Save(zipFile archive);
 
-		virtual void UnsyncedHeightMapUpdate(const Rectangle& rect) {}
+		virtual void Update();
+		virtual void UnsyncedHeightMapUpdate(const Rectangle& rect);
 
 		virtual bool KeyPress(unsigned short key, bool isRepeat);
 		virtual bool KeyRelease(unsigned short key);
