@@ -39,10 +39,12 @@ class CWeapon;
 class CFeature;
 class CProjectile;
 struct Command;
+struct Rectangle;
 struct LuaHashString;
 struct lua_State;
 class CLogSubsystem;
 class CLuaHandle;
+
 
 struct luaContextData {
 	luaContextData() : fullCtrl(false), fullRead(false), ctrlTeam(CEventClient::NoAccessTeam),
@@ -201,6 +203,7 @@ class CLuaHandle : public CEventClient
 
 		void Save(zipFile archive);
 
+		void UnsyncedHeightMapUpdate(const Rectangle& rect);
 		void Update();
 
 		bool KeyPress(unsigned short key, bool isRepeat);
