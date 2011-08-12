@@ -7,6 +7,7 @@
 #include "Rendering/GL/myGL.h"
 #include "IWater.h"
 
+#include "System/EventClient.h"
 #include "System/Misc/RectangleOptimizer.h"
 
 
@@ -14,16 +15,23 @@ namespace Shader {
 	struct IProgramObject;
 }
 
-class CBumpWater : public IWater
+class CBumpWater : public IWater, public CEventClient
 {
 public:
+	//! CEventClient interface
+	bool WantsEvent(const std::string& eventName) {
+		return shoreWaves && (eventName == "UnsyncedHeightMapUpdate");
+	}
+	bool GetFullRead() const { return true; }
+	int GetReadAllyTeam() const { return AllAccessTeam; }
+
+public:
 	CBumpWater();
-	~CBumpWater();
+	virtual ~CBumpWater();
 
 	void Update();
 	void UpdateWater(CGame* game);
 	void OcclusionQuery();
-	void HeightmapChanged(const int x1, const int y1, const int x2, const int y2);
 	void DrawReflection(CGame* game);
 	void DrawRefraction(CGame* game);
 	void Draw();
@@ -57,6 +65,8 @@ private:
 	void UpdateDynWaves(const bool initialize = false);
 
 	int atlasX,atlasY;
+
+	void UnsyncedHeightMapUpdate(const Rectangle& rect);
 
 private:
 	//! user options

@@ -171,7 +171,10 @@ static void DrawRadialDisc()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 CBumpWater::CBumpWater()
+	: CEventClient("[CBumpWater]", 271923, false)
 {
+	eventHandler.AddClient(this);
+
 	// LOAD USER CONFIGS
 	reflTexSize  = next_power_of_2(configHandler->GetInt("BumpWaterTexSizeReflection"));
 	reflection   = configHandler->GetInt("BumpWaterReflection");
@@ -276,12 +279,15 @@ CBumpWater::CBumpWater()
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			//! fill with current heightmap/coastmap
-			HeightmapChanged(0, 0, gs->mapx, gs->mapy);
+			UnsyncedHeightMapUpdate(Rectangle(0, 0, gs->mapx, gs->mapy));
 			UploadCoastline(true);
 			UpdateCoastmap();
 		} else
 			shoreWaves = false;
 
+		if (shoreWaves)
+			eventHandler.InsertEvent(this, "UnsyncedHeightMapUpdate");
+		
 		//coastFBO.Unbind(); // gets done below
 	}
 
@@ -739,14 +745,14 @@ CBumpWater::CoastAtlasRect::CoastAtlasRect(const Rectangle& rect)
 	isCoastline = true;
 }
 
-void CBumpWater::HeightmapChanged(const int x1, const int y1, const int x2, const int y2)
+void CBumpWater::UnsyncedHeightMapUpdate(const Rectangle& rect)
 {
-	if (!shoreWaves || readmap->currMinHeight > 0.0f || mapInfo->map.voidWater) {
+	if (/*!shoreWaves ||*/ readmap->currMinHeight > 0.0f || mapInfo->map.voidWater) {
 		return;
 	}
 
-	Rectangle updateRect(std::max(x1 - 20, 0), std::max(y1 - 20, 0),  std::min(x2 + 20, gs->mapx), std::min(y2 + 20, gs->mapy));
-	heightmapUpdates.push_back(updateRect);
+	Rectangle urect(std::max(rect.x1 - 15, 0), std::max(rect.z1 - 15, 0),  std::min(rect.x2 + 15, gs->mapx), std::min(rect.z2 + 15, gs->mapy));
+	heightmapUpdates.push_back(urect);
 }
 
 
@@ -761,7 +767,6 @@ void CBumpWater::UploadCoastline(const bool forceFull)
 	//! select the to be updated areas
 	while (!heightmapUpdates.empty()) {
 		Rectangle& cuRect1 = heightmapUpdates.front();
-		Rectangle  cuRect2(cuRect1);
 
 		const int width  = cuRect1.GetWidth();
 		const int height = cuRect1.GetHeight();
