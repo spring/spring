@@ -442,7 +442,7 @@ namespace CrashHandler
 	{
 		if (signal == SIGINT) {
 			//! ctrl+c = kill
-			LOG("Got SIGINT! Exiting!");
+			LOG("caught SIGINT, aborting");
 
 			//! first try a clean exit
 			SDL_Event event;
@@ -467,6 +467,8 @@ namespace CrashHandler
 			error = "IO-Error (SIGIO)";
 		} else if (signal == SIGABRT) {
 			error = "Aborted (SIGABRT)";
+		} else if (signal == SIGFPE) {
+			error = "FloatingPointException (SIGFPE)";
 		} else {
 			//! we should never get here
 			error = "Unknown signal";
@@ -477,7 +479,7 @@ namespace CrashHandler
 		bool keepRunning = false;
 		Stacktrace(&keepRunning);
 
-		//! only try to keep on running for these signals
+		//! don't try to keep on running after these signals
 		if (keepRunning &&
 		    (signal != SIGSEGV) &&
 		    (signal != SIGILL) &&
