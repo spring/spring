@@ -100,6 +100,7 @@ CEventHandler::CEventHandler()
 	// unsynced call-ins
 	SETUP_EVENT(Save,           MANAGED_BIT | UNSYNCED_BIT);
 
+	SETUP_EVENT(UnsyncedHeightMapUpdate, MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(Update,         MANAGED_BIT | UNSYNCED_BIT);
 
 	SETUP_EVENT(KeyPress,       MANAGED_BIT | UNSYNCED_BIT);

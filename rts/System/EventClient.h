@@ -26,6 +26,7 @@ class CProjectile;
 struct Command;
 class CLogSubsystem;
 class IArchive;
+struct Rectangle;
 
 #ifndef zipFile
 	// might be defined through zip.h already
@@ -147,7 +148,7 @@ class CEventClient
 		// Unsynced events
 		virtual void Save(zipFile archive);
 
-		virtual void Update();
+		virtual void UnsyncedHeightMapUpdate(const Rectangle& rect) {}
 
 		virtual bool KeyPress(unsigned short key, bool isRepeat);
 		virtual bool KeyRelease(unsigned short key);
