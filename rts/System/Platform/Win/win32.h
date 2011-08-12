@@ -12,7 +12,8 @@
 		#define NOGDI 1
 	#endif
 	#ifndef VC_EXTRALEAN
-	#define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
+		// Exclude rarely-used stuff from Windows headers
+		#define VC_EXTRALEAN
 	#endif
 
 	// do not include <cmath> or <math.h> before this, it'll cause ambiguous call er
