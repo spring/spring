@@ -5,7 +5,7 @@
 
 #include <string>
 #ifdef WIN32
-	#include <windows.h>
+	#include <windef.h> // HANDLE & DWORD
 #else
 	#include <pthread.h>
 #endif

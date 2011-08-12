@@ -4,9 +4,7 @@
 
 #include <boost/thread.hpp>
 #ifdef WIN32
-namespace windows {
 	#include <windows.h>
-};
 #endif
 
 namespace Threading {
@@ -32,7 +30,7 @@ namespace Threading {
 		//! which returns in all threads the current active one, so we need to translate it
 		//! with DuplicateHandle to an absolute handle valid in our watchdog thread
 		NativeThreadHandle hThread;
-		DuplicateHandle(GetCurrentProcess(), ::GetCurrentThread(), GetCurrentProcess(), &hThread, 0, TRUE, DUPLICATE_SAME_ACCESS);
+		::DuplicateHandle(::GetCurrentProcess(), ::GetCurrentThread(), ::GetCurrentProcess(), &hThread, 0, TRUE, ::DUPLICATE_SAME_ACCESS);
 		return hThread;
 	#else
 		return pthread_self();

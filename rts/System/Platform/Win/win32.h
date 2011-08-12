@@ -3,9 +3,13 @@
 #ifndef WINDOWS_H_INCLUDED
 #define WINDOWS_H_INCLUDED
 
-	#ifdef _WIN32
+#ifdef _WIN32
 	#ifndef NOMINMAX
-	#define NOMINMAX
+		#define NOMINMAX
+	#endif
+	#ifndef NOGDI
+		// disable _auto_ including of wingdi.h, when you rely on it include it explicitly
+		#define NOGDI 1
 	#endif
 	#ifndef VC_EXTRALEAN
 	#define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
@@ -35,6 +39,6 @@
 			#undef max
 		#endif
 
-	#endif // _WIN32
+#endif // _WIN32
 
 #endif // WINDOWS_H_INCLUDED

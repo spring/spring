@@ -19,7 +19,7 @@
 #include "System/Platform/Watchdog.h"
 #include "lib/streflop/streflop_cond.h"
 #if !defined(_MSC_VER) && defined(_WIN32)
-#	include <windows.h>
+#	include "System/Platform/Win/win32.h"
 #endif
 
 EXTERN inline void gmlUpdateServers() {
