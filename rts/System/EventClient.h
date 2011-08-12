@@ -49,7 +49,7 @@ class CEventClient
 
 		// used by the eventHandler to register
 		// call-ins when an EventClient is being added
-		virtual bool WantsEvent(const std::string& eventName) { return false; }
+		virtual bool WantsEvent(const std::string& eventName) = 0;
 
 		// used by the eventHandler to route certain event types
 		virtual int  GetReadAllyTeam() const { return NoAccessTeam; }
@@ -65,7 +65,7 @@ class CEventClient
 
 	protected:
 		CEventClient(const std::string& name, int order, bool synced);
-		virtual ~CEventClient() {}
+		virtual ~CEventClient();
 
 	public:
 		// Synced events
