@@ -2,6 +2,7 @@
 
 
 #include "System/EventClient.h"
+#include "System/EventHandler.h"
 
 /******************************************************************************/
 /******************************************************************************/
@@ -12,6 +13,16 @@ CEventClient::CEventClient(const std::string& _name, int _order, bool _synced)
 	, synced_(_synced)
 {
 }
+
+
+CEventClient::~CEventClient()
+{
+	//! No, we can't autobind all clients in the ctor.
+	//! eventHandler.AddClient() calls CEventClient::WantsEvent() that is
+	//! virtual and so not available during the initialization.
+	eventHandler.RemoveClient(this);
+}
+
 
 /******************************************************************************/
 /******************************************************************************/
