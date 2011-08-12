@@ -5,6 +5,7 @@
 
 #ifdef WIN32
 #include "System/Platform/Win/win32.h"
+#include <wingdi.h>
 WINGDIAPI PROC WINAPI wglGetProcAddress(LPCSTR);
 #endif
 
