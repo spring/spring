@@ -42,6 +42,8 @@ public:
 	 */
 	void RemoveExtraction(int x, int z, float depth);
 
+	int GetExtraction(int x, int z);
+
 	int GetSizeX() const { return sizeX; }
 	int GetSizeZ() const { return sizeZ; }
 

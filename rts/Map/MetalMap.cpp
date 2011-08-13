@@ -118,3 +118,12 @@ void CMetalMap::RemoveExtraction(int x, int z, float depth)
 
 	extractionMap[(z * sizeX) + x] -= depth;
 }
+
+
+int CMetalMap::GetExtraction(int x, int z)
+{
+	ClampInt(x, 0, sizeX);
+	ClampInt(z, 0, sizeZ);
+
+	return extractionMap[(z * sizeX) + x];
+}
