@@ -13,7 +13,7 @@
 
 #include "LuaHandle.h"
 #include "LuaHashString.h"
-//FIXME #include "LuaMetalMap.h"
+#include "LuaMetalMap.h"
 #include "LuaPathFinder.h"
 #include "LuaRules.h"
 #include "LuaRulesParams.h"
@@ -298,7 +298,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetCOBAllyTeamVar);
 	REGISTER_LUA_CFUNC(GetCOBGlobalVar);
 
-//FIXME	LuaMetalMap::PushEntries(L);
+	LuaMetalMap::PushEntries(L);
 	LuaPathFinder::PushEntries(L);
 
 	return true;
