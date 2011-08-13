@@ -4,8 +4,6 @@
  * @brief extended bump-mapping water shader
  */
 
-//win32 compile fix, wingdi.h does declare Rectangle()
-
 
 #include "BumpWater.h"
 
