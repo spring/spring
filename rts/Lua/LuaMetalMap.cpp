@@ -21,8 +21,8 @@ bool LuaMetalMap::PushEntries(lua_State* L)
 	lua_rawset(L, -3)
 
 	REGISTER_LUA_CFUNC(GetMetalMapSize);
-	REGISTER_LUA_CFUNC(GetMetalMapAmount);
-	REGISTER_LUA_CFUNC(GetMetalMapExtraction);
+	REGISTER_LUA_CFUNC(GetMetalAmount);
+	REGISTER_LUA_CFUNC(GetMetalExtraction);
 
 	return true;
 }
@@ -35,11 +35,11 @@ int LuaMetalMap::GetMetalMapSize(lua_State* L)
 	return 2;
 }
 
-int LuaMetalMap::GetMetalMapAmount(lua_State* L)
+int LuaMetalMap::GetMetalAmount(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2))
-		luaL_error(L, "Incorrect arguments to GetMetalMapAmount(int, int)");
+		luaL_error(L, "Incorrect arguments to GetMetalAmount(int, int)");
 
 	const int x = lua_toint(L, 1);
 	const int z = lua_toint(L, 2);
@@ -48,16 +48,16 @@ int LuaMetalMap::GetMetalMapAmount(lua_State* L)
 	return 1;
 }
 
-int LuaMetalMap::GetMetalMapExtraction(lua_State* L)
+int LuaMetalMap::GetMetalExtraction(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isnumber(L, 2))
-		luaL_error(L, "Incorrect arguments to GetMetalMapExtraction(int, int)");
+		luaL_error(L, "Incorrect arguments to GetMetalExtraction(int, int)");
 
 	const int x = lua_toint(L, 1);
 	const int z = lua_toint(L, 2);
-	// GetExtraction automatically clamps the value
-	lua_pushnumber(L, readmap->metalMap->GetExtraction(x, z));
+	// GetMetalExtraction automatically clamps the value
+	lua_pushnumber(L, readmap->metalMap->GetMetalExtraction(x, z));
 	return 1;
 }
 
