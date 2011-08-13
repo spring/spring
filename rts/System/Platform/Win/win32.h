@@ -30,7 +30,6 @@
 		#undef GetCharWidth
 		#undef far
 		#undef near
-		#undef FAR
 		#undef NEAR
 		#undef Rectangle
 

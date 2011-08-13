@@ -1,10 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "LuaHandle.h"
 #include "LuaLobby.h"
 
 #include "Game/UI/LuaUI.h"
 #include "LuaCallInCheck.h"
-#include "LuaHandle.h"
 #include "LuaHashString.h"
 #include "LuaUtils.h"
 
