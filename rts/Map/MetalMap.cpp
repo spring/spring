@@ -120,7 +120,7 @@ void CMetalMap::RemoveExtraction(int x, int z, float depth)
 }
 
 
-int CMetalMap::GetExtraction(int x, int z)
+int CMetalMap::GetMetalExtraction(int x, int z)
 {
 	ClampInt(x, 0, sizeX);
 	ClampInt(z, 0, sizeZ);

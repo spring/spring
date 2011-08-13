@@ -11,8 +11,8 @@ class LuaMetalMap {
 		static bool PushEntries(lua_State* L);
 
 		static int GetMetalMapSize(lua_State* L);
-		static int GetMetalMapAmount(lua_State* L);
-		static int GetMetalMapExtraction(lua_State* L);
+		static int GetMetalAmount(lua_State* L);
+		static int GetMetalExtraction(lua_State* L);
 };
 
 
