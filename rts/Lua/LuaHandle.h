@@ -39,7 +39,7 @@ class CWeapon;
 class CFeature;
 class CProjectile;
 struct Command;
-struct Rectangle;
+struct CRectangle;
 struct LuaHashString;
 struct lua_State;
 class CLogSubsystem;
@@ -203,7 +203,7 @@ class CLuaHandle : public CEventClient
 
 		void Save(zipFile archive);
 
-		void UnsyncedHeightMapUpdate(const Rectangle& rect);
+		void UnsyncedHeightMapUpdate(const CRectangle& rect);
 		void Update();
 
 		bool KeyPress(unsigned short key, bool isRepeat);

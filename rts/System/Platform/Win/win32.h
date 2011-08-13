@@ -7,10 +7,6 @@
 	#ifndef NOMINMAX
 		#define NOMINMAX
 	#endif
-	#ifndef NOGDI
-		// disable _auto_ including of wingdi.h, when you rely on it include it explicitly
-		#define NOGDI 1
-	#endif
 	#ifndef VC_EXTRALEAN
 		// Exclude rarely-used stuff from Windows headers
 		#define VC_EXTRALEAN
@@ -32,7 +28,6 @@
 		#undef near
 		#undef FAR
 		#undef NEAR
-		#undef Rectangle
 
 		// std min&max are used instead of the macros
 		#ifdef min

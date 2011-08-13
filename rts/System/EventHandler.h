@@ -136,7 +136,7 @@ class CEventHandler
 		// Unsynced events
 		void Save(zipFile archive);
 
-		void UnsyncedHeightMapUpdate(const Rectangle& rect);
+		void UnsyncedHeightMapUpdate(const CRectangle& rect);
 		void Update();
 
 		bool KeyPress(unsigned short key, bool isRepeat);
@@ -816,7 +816,7 @@ inline void CEventHandler::RenderProjectileDestroyed(const CProjectile* proj)
 }
 
 
-inline void CEventHandler::UnsyncedHeightMapUpdate(const Rectangle& rect)
+inline void CEventHandler::UnsyncedHeightMapUpdate(const CRectangle& rect)
 {
 	const int count = listUnsyncedHeightMapUpdate.size();
 	for (int i = 0; i < count; i++) {

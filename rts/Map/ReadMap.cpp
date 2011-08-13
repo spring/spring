@@ -253,7 +253,7 @@ void CReadMap::UpdateDraw() {
 	for (ushmuIt = ushmu.begin(); ushmuIt != ushmu.end(); ++ushmuIt) {
 		UpdateHeightMapUnsynced(*ushmuIt);
 
-		const Rectangle rect(ushmuIt->x1, ushmuIt->y1, ushmuIt->x2, ushmuIt->y2);
+		const CRectangle rect(ushmuIt->x1, ushmuIt->y1, ushmuIt->x2, ushmuIt->y2);
 		eventHandler.UnsyncedHeightMapUpdate(rect);
 	}
 }

@@ -46,7 +46,7 @@ private:
 private:
 	//! coastmap (needed for shorewaves)
 	struct CoastAtlasRect {
-		CoastAtlasRect(const Rectangle& rect);
+		CoastAtlasRect(const CRectangle& rect);
 		bool isCoastline; ///< if false, then the whole rect is either above water or below water (no coastline -> no need to calc/render distfield)
 		int ix1, iy1;
 		int ix2, iy2;
@@ -66,7 +66,7 @@ private:
 
 	int atlasX,atlasY;
 
-	void UnsyncedHeightMapUpdate(const Rectangle& rect);
+	void UnsyncedHeightMapUpdate(const CRectangle& rect);
 
 private:
 	//! user options
