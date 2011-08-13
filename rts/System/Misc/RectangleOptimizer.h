@@ -18,15 +18,15 @@ public:
 
 public:
 	//! std container funcs
-	typedef std::list<Rectangle>::iterator iterator;
-	typedef std::list<Rectangle>::const_iterator const_iterator;
+	typedef std::list<CRectangle>::iterator iterator;
+	typedef std::list<CRectangle>::const_iterator const_iterator;
 	bool empty() {
 		return rectangles.empty();
 	}
 	size_t size() {
 		return rectangles.size();
 	}
-	Rectangle& front() {
+	CRectangle& front() {
 		return rectangles.front();
 	}
 	void pop_front() {
@@ -36,7 +36,7 @@ public:
 		needsUpdate = false;
 		return rectangles.clear();
 	}
-	void push_back(const Rectangle& rect) {
+	void push_back(const CRectangle& rect) {
 		//! skip empty/negative rectangles
 		//assert(rect.GetWidth() > 0 && rect.GetHeight() > 0);
 		if (rect.GetWidth() <= 0 || rect.GetHeight() <= 0)
@@ -55,17 +55,17 @@ public:
 	int maxAreaPerRect;
 
 private:
-	bool HandleMerge(Rectangle& rect1, Rectangle& rect2);
-	int HandleOverlapping(Rectangle* rect1, Rectangle* rect2);
-	static std::bitset<4> GetEdgesInRect(const Rectangle& rect1, const Rectangle& rect2);
-	static std::bitset<4> GetSharedEdges(const Rectangle& rect1, const Rectangle& rect2);
-	static bool DoOverlap(const Rectangle& rect1, const Rectangle& rect2);
-	static bool AreMergable(const Rectangle& rect1, const Rectangle& rect2);
+	bool HandleMerge(CRectangle& rect1, CRectangle& rect2);
+	int HandleOverlapping(CRectangle* rect1, CRectangle* rect2);
+	static std::bitset<4> GetEdgesInRect(const CRectangle& rect1, const CRectangle& rect2);
+	static std::bitset<4> GetSharedEdges(const CRectangle& rect1, const CRectangle& rect2);
+	static bool DoOverlap(const CRectangle& rect1, const CRectangle& rect2);
+	static bool AreMergable(const CRectangle& rect1, const CRectangle& rect2);
 
 	unsigned GetTotalArea() const;
 
 private:
-	std::list<Rectangle> rectangles;
+	std::list<CRectangle> rectangles;
 	bool needsUpdate;
 
 private:

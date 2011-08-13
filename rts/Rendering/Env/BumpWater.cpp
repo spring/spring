@@ -5,9 +5,6 @@
  */
 
 //win32 compile fix, wingdi.h does declare Rectangle()
-#ifdef WIN32
-#define NOGDI 1
-#endif
 
 
 #include "BumpWater.h"
@@ -279,7 +276,7 @@ CBumpWater::CBumpWater()
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			//! fill with current heightmap/coastmap
-			UnsyncedHeightMapUpdate(Rectangle(0, 0, gs->mapx, gs->mapy));
+			UnsyncedHeightMapUpdate(CRectangle(0, 0, gs->mapx, gs->mapy));
 			UploadCoastline(true);
 			UpdateCoastmap();
 		} else
@@ -729,7 +726,7 @@ void CBumpWater::UpdateWater(CGame* game)
 ///  SHOREWAVES/COASTMAP
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-CBumpWater::CoastAtlasRect::CoastAtlasRect(const Rectangle& rect)
+CBumpWater::CoastAtlasRect::CoastAtlasRect(const CRectangle& rect)
 {
 	xsize = rect.x2 - rect.x1;
 	ysize = rect.z2 - rect.z1;
@@ -745,13 +742,13 @@ CBumpWater::CoastAtlasRect::CoastAtlasRect(const Rectangle& rect)
 	isCoastline = true;
 }
 
-void CBumpWater::UnsyncedHeightMapUpdate(const Rectangle& rect)
+void CBumpWater::UnsyncedHeightMapUpdate(const CRectangle& rect)
 {
 	if (/*!shoreWaves ||*/ readmap->currMinHeight > 0.0f || mapInfo->map.voidWater) {
 		return;
 	}
 
-	Rectangle urect(std::max(rect.x1 - 15, 0), std::max(rect.z1 - 15, 0),  std::min(rect.x2 + 15, gs->mapx), std::min(rect.z2 + 15, gs->mapy));
+	CRectangle urect(std::max(rect.x1 - 15, 0), std::max(rect.z1 - 15, 0),  std::min(rect.x2 + 15, gs->mapx), std::min(rect.z2 + 15, gs->mapy));
 	heightmapUpdates.push_back(urect);
 }
 
@@ -766,7 +763,7 @@ void CBumpWater::UploadCoastline(const bool forceFull)
 
 	//! select the to be updated areas
 	while (!heightmapUpdates.empty()) {
-		Rectangle& cuRect1 = heightmapUpdates.front();
+		CRectangle& cuRect1 = heightmapUpdates.front();
 
 		const int width  = cuRect1.GetWidth();
 		const int height = cuRect1.GetHeight();
