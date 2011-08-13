@@ -1,5 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "Lua/LuaHandle.h"
+#include "System/EventHandler.h"
 #include "Lua/LuaLobby.h" // ugh, streflop namespace corruption...
 
 #include "System/mmgr.h"

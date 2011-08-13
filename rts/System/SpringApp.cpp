@@ -3,6 +3,9 @@
 
 #include <iostream>
 
+#include "System/EventClient.h"
+#include "Lua/LuaOpenGL.h"
+
 #include <SDL.h>
 #if !defined(HEADLESS)
 	#include <SDL_syswm.h>
@@ -30,7 +33,6 @@
 #include "System/Input/MouseInput.h"
 #include "System/Input/InputHandler.h"
 #include "System/Input/Joystick.h"
-#include "Lua/LuaOpenGL.h"
 #include "Menu/SelectMenu.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/glFont.h"
@@ -66,6 +68,7 @@
 
 #ifdef WIN32
 	#include "System/Platform/Win/WinVersion.h"
+	#include <winbase.h>
 #elif defined(__APPLE__)
 #elif defined(HEADLESS)
 #else
