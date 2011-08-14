@@ -69,8 +69,9 @@ bool CDirArchive::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
 		buffer.resize(ifs.tellg());
 		ifs.seekg(0, std::ios_base::beg);
 		ifs.clear();
-		if (buffer.size() > 0)
+		if (!buffer.empty()) {
 			ifs.read((char*)&buffer[0], buffer.size());
+		}
 		return true;
 	} else {
 		return false;
