@@ -29,7 +29,7 @@ int Test()
 	//! create random rectangles
 	ro.clear();
 	for (int i=0; i<count_rects; ++i) {
-		Rectangle r(0,0,0,0);
+		CRectangle r(0,0,0,0);
 		r.x1 = randf() * (size-1);
 		r.z1 = randf() * (size-1);
 		r.x2 = randf() * (size-1);
@@ -41,7 +41,7 @@ int Test()
 
 	//! fill testMap with original areas
 	for (CRectangleOptimizer::iterator it = ro.begin(); it != ro.end(); ++it) {
-		const Rectangle& rect = *it;
+		const CRectangle& rect = *it;
 		for (int z=rect.z1; z<rect.z2; ++z) { //FIXME <=
 			for (int x=rect.x1; x<rect.x2; ++x) { //FIXME <=
 				testMap[z * size + x] = 1;
@@ -54,7 +54,7 @@ int Test()
 
 	//! fill testMap with optimized
 	for (CRectangleOptimizer::iterator it = ro.begin(); it != ro.end(); ++it) {
-		const Rectangle& rect = *it;
+		const CRectangle& rect = *it;
 		for (int z=rect.z1; z<rect.z2; ++z) { //FIXME <=
 			for (int x=rect.x1; x<rect.x2; ++x) { //FIXME <=
 				testMap[z * size + x] -= 1;
