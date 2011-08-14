@@ -14,7 +14,7 @@ extern "C" {
 #endif
 
 /**
- * @group logging_filter_defaultFilter_control
+ * @name logging_filter_defaultFilter_control
  * @{
  */
 
@@ -93,7 +93,7 @@ const char* log_filter_section_getRegisteredIndex(int index);
 std::set<const char*> log_filter_section_getRegisteredSet();
 #endif
 
-/** @} */ // group logging_filter_defaultFilter_control
+/** @} */ // logging_filter_defaultFilter_control
 
 #endif // _LOG_DEFAULT_FILTER_H
 

@@ -281,7 +281,8 @@ extern void log_frontend_record(const char* section, int level, const char* fmt,
  * enabled at compile-time.
  * This might return true, even if the back-end will ignore the message anyway.
  * You should consider using the LOG_IS_ENABLED macro instead (recommended).
- * This may be used with the preprocessor directly (in an #if statement):
+ * This may be used with the preprocessor directly
+ * (in an @code #if @endcode statement):
  * @code
  * #if LOG_IS_ENABLED_STATIC(L_DEBUG)
  *   const int statistics = calculateStats(); // performance-heavy
