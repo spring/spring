@@ -3070,8 +3070,8 @@ Unitsync:
 - windows users can use [VSync=-1] to use system default
 - allow selection of vsync rate
 
-- [feature] A new group AI, "MexUpgrader AI" has been added. See http://taspring.clan-sy.com/wiki/MexUpgrader_AI for more info.
-- [feature] Custom unit icons are supported. See http://taspring.clan-sy.com/wiki/CustomUnitIcons for more info.
+- [feature] A new group AI, "MexUpgrader AI" has been added. See http://springrts.com/wiki/MexUpgrader_AI for more info.
+- [feature] Custom unit icons are supported. See http://springrts.com/wiki/CustomUnitIcons for more info.
 - [bugfix] 'Quit and Resign' dialog now also appears when you're hosting, and stays hidden when the game is over.
 - [bugfix] Commands on enemy units (attack, reclaim) get canceled automatically when the unit leaves LOS / radar.
 - [change] 'Quit and Resign' dialog now only gives everything to allies (and not enemies) if they are still alive.

@@ -1,13 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
-
-#ifdef WIN32
-#include "System/Platform/Win/win32.h"
-#elif defined HEADLESS
-#include "lib/headlessStubs/glxextstub.h" // for glXGetVideoSyncSGI() glXWaitVideoSyncSGI()
+#if defined HEADLESS
+	#include "lib/headlessStubs/wglstub.h"
+	#include "lib/headlessStubs/glxextstub.h"
+#elif defined WIN32
+	#include "System/Platform/Win/win32.h"
+	#include <wingdi.h>
 #else
-#include <GL/glxew.h> // for glXGetVideoSyncSGI() glXWaitVideoSyncSGI()
+	#include <GL/glxew.h> // for glXGetVideoSyncSGI() glXWaitVideoSyncSGI()
 #endif
 #include "System/mmgr.h"
 

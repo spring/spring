@@ -8,8 +8,14 @@
 
 WeaponDef::~WeaponDef()
 {
-	delete explosionGenerator; explosionGenerator = NULL;
-	delete bounceExplosionGenerator; bounceExplosionGenerator = NULL;
+	if (explosionGenerator != NULL) {
+		explGenHandler->UnloadGenerator(explosionGenerator);
+		explosionGenerator = NULL;
+	}
+	if (bounceExplosionGenerator != NULL) {
+		explGenHandler->UnloadGenerator(bounceExplosionGenerator);
+		bounceExplosionGenerator = NULL;
+	}
 }
 
 

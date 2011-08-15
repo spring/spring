@@ -1,8 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "FileSystemHandler.h"
-
 #include "CacheDir.h"
+
+#include "FileSystem.h"
 
 #include <stdio.h>
 #include <string>
@@ -45,7 +45,7 @@ bool CacheDir::SetCacheDir(const std::string& dir, bool wantedCacheState, const 
 		if (wantedCacheState) {
 			requestedStatePresent = CacheDir::WriteCacheTagFile(cacheFile, additionalText);
 		} else {
-			requestedStatePresent = FileSystemHandler::DeleteFile(cacheFile);
+			requestedStatePresent = FileSystem::DeleteFile(cacheFile);
 		}
 	}
 
@@ -99,7 +99,7 @@ bool CacheDir::WriteCacheTagFile(const std::string& filePath, const std::string&
 std::string CacheDir::GetCacheTagFilePath(const std::string& dir) {
 
 	std::string cacheFile = dir;
-	FileSystemHandler::EnsurePathSepAtEnd(cacheFile);
+	FileSystem::EnsurePathSepAtEnd(cacheFile);
 	cacheFile = cacheFile + CacheDir::tagFile_name;
 
 	return cacheFile;

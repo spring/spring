@@ -28,8 +28,8 @@ CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 
 CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 		const std::string& aiInfoFile,
-		const std::string& aiOptionFile) {
-
+		const std::string& aiOptionFile)
+{
 	std::vector<InfoItem> tmpInfo;
 	info_parseInfo(tmpInfo, aiInfoFile);
 	std::vector<InfoItem>::iterator ii;
@@ -41,6 +41,20 @@ CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 
 	if (!aiOptionFile.empty()) {
 		option_parseOptions(options, aiOptionFile);
+	}
+}
+
+CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
+		const std::map<std::string, std::string>& aiInfo,
+		const std::string& aiOptionLua)
+{
+	std::map<std::string, std::string>::const_iterator ii;
+	for (ii = aiInfo.begin(); ii != aiInfo.end(); ++ii) {
+		SetInfo(ii->first, ii->second);
+	}
+
+	if (!aiOptionLua.empty()) {
+		option_parseOptionsLuaString(options, aiOptionLua);
 	}
 }
 
@@ -110,14 +124,8 @@ bool CSkirmishAILibraryInfo::IsLuaAI() const {
 	bool isLua = false;
 
 	const std::string& isLuaStr = GetInfo("isLuaAI");
-	if ((isLuaStr == "yes") ||
-		(isLuaStr == "Yes") ||
-		(isLuaStr == "YES") ||
-		(isLuaStr == "1") ||
-		(isLuaStr == "true") ||
-		(isLuaStr == "True") ||
-		(isLuaStr == "TRUE")) {
-		isLua = true;
+	if (isLuaStr != DEFAULT_VALUE) {
+		isLua = StringToBool(isLuaStr);
 	}
 
 	return isLua;

@@ -1,23 +1,17 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _AIINTERFACEKEY_H
-#define _AIINTERFACEKEY_H
+#ifndef AI_INTERFACE_KEY_H
+#define AI_INTERFACE_KEY_H
 
-#include <string>
 #include "System/creg/creg_cond.h"
+#include <string>
+
 
 /**
  * Used to uniquely identify an AI Interface within the engine.
  */
 class AIInterfaceKey {
 	CR_DECLARE_STRUCT(AIInterfaceKey);
-
-private:
-	std::string shortName;
-	std::string version;
-
-	bool isEqual(const AIInterfaceKey& otherKey) const;
-	bool isLessThen(const AIInterfaceKey& otherKey) const;
 
 public:
 	AIInterfaceKey(
@@ -30,6 +24,7 @@ public:
 	const std::string& GetVersion() const;
 
 	bool IsUnspecified() const;
+	std::string ToString() const;
 
 	bool operator==(const AIInterfaceKey& otherKey) const;
 	bool operator!=(const AIInterfaceKey& otherKey) const;
@@ -37,6 +32,13 @@ public:
 	bool operator>(const AIInterfaceKey& otherKey) const;
 	bool operator<=(const AIInterfaceKey& otherKey) const;
 	bool operator>=(const AIInterfaceKey& otherKey) const;
+
+private:
+	bool isEqual(const AIInterfaceKey& otherKey) const;
+	bool isLessThen(const AIInterfaceKey& otherKey) const;
+
+	std::string shortName;
+	std::string version;
 };
 
-#endif // _AIINTERFACEKEY_H
+#endif // AI_INTERFACE_KEY_H

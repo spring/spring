@@ -1,11 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "Game/Camera.h"
 #include "LaserProjectile.h"
-#include "System/LogOutput.h"
 #include "Map/Ground.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -16,7 +14,7 @@
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CLaserProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,float3(0,0,0),float3(0,0,0),0,NULL,0));
+CR_BIND_DERIVED(CLaserProjectile, CWeaponProjectile, (ZeroVector, ZeroVector, NULL, 0, ZeroVector, ZeroVector, 0, NULL, 0));
 
 CR_REG_METADATA(CLaserProjectile,(
 	CR_SETFLAG(CF_Synced),

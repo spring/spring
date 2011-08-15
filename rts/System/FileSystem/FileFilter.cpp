@@ -1,6 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
+#ifdef _MSC_VER
+#include "System/Platform/Win/win32.h"
+#endif
 
 #include "FileFilter.h"
 
@@ -130,7 +132,7 @@ bool CFileFilter::Match(const string& filename) const
 }
 
 
-string CFileFilter::glob_to_regex(const string& glob)
+string CFileFilter::glob_to_regex(const string& glob) // FIXME remove; duplicate in FileSystem::ConvertGlobToRegex
 {
 #define PATH_SEPARATORS "/\\:"
 

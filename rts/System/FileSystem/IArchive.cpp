@@ -44,7 +44,7 @@ unsigned int IArchive::GetCrc32(unsigned int fid)
 {
 	CRC crc;
 	std::vector<boost::uint8_t> buffer;
-	if (GetFile(fid, buffer)) {
+	if (GetFile(fid, buffer) && !buffer.empty()) {
 		crc.Update(&buffer[0], buffer.size());
 	}
 

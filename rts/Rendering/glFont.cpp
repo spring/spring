@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 
 #include "glFont.h"
 #include <string>
@@ -328,7 +327,7 @@ void CFontTextureRenderer::ApproximateTextureWidth(int* width, int* height)
 	 */
 	unsigned int numPixelsAvg = (numPixels + numPixels2) / 2;
 
-	*width  = next_power_of_2(math::ceil(streflop::sqrtf( (float)numPixelsAvg )));
+	*width  = next_power_of_2(math::ceil(math::sqrtf( (float)numPixelsAvg )));
 	*height = next_power_of_2(math::ceil( (float)numPixelsAvg / (float)*width ));
 
 	if (*width > 2048)
@@ -1933,7 +1932,7 @@ void CglFont::glPrint(float x, float y, float s, const int& options, const std::
 		y = (int)y;
 	}
 
-	//! backup text & outline colors (also ::ColorResetIndicator will reset to those)
+	// backup text & outline colors (also ::ColorResetIndicator will reset to those)
 	baseTextColor = textColor;
 	baseOutlineColor = outlineColor;
 
@@ -1992,7 +1991,7 @@ void CglFont::glPrintTable(float x, float y, float s, const int& options, const 
 				--pos;
 				break;
 
-			//! column separator is `\t`==`horizontal tab`
+			// column separator is `\t`==`horizontal tab`
 			case '\x09':
 				++col;
 				if(col >= coltext.size()) {

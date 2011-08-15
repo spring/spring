@@ -1,10 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "MissileLauncher.h"
-#include "Sim/MoveTypes/AirMoveType.h"
+#include "Sim/MoveTypes/StrafeAirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/MissileProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Unit.h"
@@ -70,7 +69,7 @@ void CMissileLauncher::FireImpl()
 	dir.Normalize();
 
 	float3 startSpeed = dir * weaponDef->startvelocity;
-	if (onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType))
+	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType))
 		startSpeed += owner->speed;
 
 	new CMissileProjectile(weaponMuzzlePos, startSpeed, owner, areaOfEffect,

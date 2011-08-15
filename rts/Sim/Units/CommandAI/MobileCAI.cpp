@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "MobileCAI.h"
@@ -14,8 +13,8 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
-#include "Sim/MoveTypes/TAAirMoveType.h"
-#include "Sim/MoveTypes/AirMoveType.h"
+#include "Sim/MoveTypes/HoverAirMoveType.h"
+#include "Sim/MoveTypes/StrafeAirMoveType.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -23,7 +22,7 @@
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 #include <assert.h>
@@ -501,8 +500,9 @@ void CMobileCAI::ExecutePatrol(Command &c)
 {
 	assert(owner->unitDef->canPatrol);
 	if (c.params.size() < 3) {
-		logOutput.Print("Error: got patrol cmd with less than 3 params on %s in MobileCAI",
-			owner->unitDef->humanName.c_str());
+		LOG_L(L_ERROR,
+				"Received a Patrol command with less than 3 params on %s in MobileCAI",
+				owner->unitDef->humanName.c_str());
 		return;
 	}
 	Command temp(CMD_FIGHT, c.options | INTERNAL_ORDER);
@@ -545,8 +545,9 @@ void CMobileCAI::ExecuteFight(Command &c)
 		tempOrder = false;
 	}
 	if (c.params.size() < 3) {
-		logOutput.Print("Error: got fight cmd with less than 3 params on %s in MobileCAI",
-			owner->unitDef->humanName.c_str());
+		LOG_L(L_ERROR,
+				"Received a Fight command with less than 3 params on %s in MobileCAI",
+				owner->unitDef->humanName.c_str());
 		return;
 	}
 	if(c.params.size() >= 6){
@@ -804,11 +805,11 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			return;
 		}
 
-		// if ((our movetype has type TAAirMoveType and length of 2D vector from us to target
+		// if ((our movetype has type HoverAirMoveType and length of 2D vector from us to target
 		// less than 90% of our maximum range) OR squared length of 2D vector from us to target
 		// less than 1024) then we are close enough
 		else if(diffLength2d < (owner->maxRange * 0.9f)){
-			if (dynamic_cast<CTAAirMoveType*>(owner->moveType)
+			if (dynamic_cast<CHoverAirMoveType*>(owner->moveType)
 					|| (diff.SqLength2D() < 1024))
 			{
 				StopMove();
@@ -1060,7 +1061,7 @@ void CMobileCAI::IdleCheck()
 	}
 	lastIdleCheck = gs->frameNum;
 	if (((owner->pos - lastUserGoal).SqLength2D() > 10000.0f) &&
-	    !owner->haveTarget && !dynamic_cast<CTAAirMoveType*>(owner->moveType)) {
+	    !owner->haveTarget && !dynamic_cast<CHoverAirMoveType*>(owner->moveType)) {
 		//note that this is not internal order so that we dont keep generating
 		//new orders if we cant get to that pos
 		Command c(CMD_MOVE);

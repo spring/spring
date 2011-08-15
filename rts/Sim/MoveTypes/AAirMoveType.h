@@ -9,7 +9,7 @@
 /**
  * Supposed to be an abstract class.
  * Do not create an instance of this class.
- * Use either CTAAirMoveType or CAirMoveType instead.
+ * Use either CHoverAirMoveType or CStrafeAirMoveType instead.
  */
 class AAirMoveType : public AMoveType
 {
@@ -32,6 +32,7 @@ public:
 	virtual bool Update();
 	virtual bool IsFighter() const = 0;
 	virtual void Takeoff() = 0;
+	virtual void SetState(AircraftState state) = 0;
 
 	void ReservePad(CAirBaseHandler::LandingPad* lp);
 	void DependentDied(CObject* o);
@@ -52,8 +53,6 @@ public:
 	bool autoLand;
 
 protected:
-	virtual void SetState(AircraftState state) = 0;
-
 	void CheckForCollision();
 	bool MoveToRepairPad();
 	void UpdateFuel();

@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "MoveType.h"
@@ -43,9 +42,6 @@ AMoveType::AMoveType(CUnit* owner):
 {
 }
 
-AMoveType::~AMoveType(void)
-{
-}
 
 void AMoveType::SetMaxSpeed(float speed)
 {
@@ -94,10 +90,6 @@ void AMoveType::SlowUpdate()
 
 		qf->MovedUnit(owner);
 	}
-}
-
-void AMoveType::LeaveTransport(void)
-{
 }
 
 void AMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressive)

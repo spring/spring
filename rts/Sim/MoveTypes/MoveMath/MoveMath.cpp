@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "MoveMath.h"
 #include "Map/ReadMap.h"
 #include "Map/MapInfo.h"
@@ -8,7 +7,6 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "System/LogOutput.h"
 #include "System/mmgr.h"
 
 CR_BIND_INTERFACE(CMoveMath);
@@ -159,8 +157,8 @@ bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obst
 		// note: in many cases separation is not sufficient
 		// even when it logically should be (submarines vs.
 		// floating DT in shallow water)
-		const float elevDif = streflop::fabs(unit->pos.y - obstacle->pos.y);
-		const float hghtSum = streflop::fabs(unit->height) + streflop::fabs(obstacle->height);
+		const float elevDif = math::fabs(unit->pos.y - obstacle->pos.y);
+		const float hghtSum = math::fabs(unit->height) + math::fabs(obstacle->height);
 
 		if ((elevDif - hghtSum) >= 1.0f) { return true;  }
 		if ( elevDif            <= 1.0f) { return false; }

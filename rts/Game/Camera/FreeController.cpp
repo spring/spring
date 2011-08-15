@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include <boost/cstdint.hpp>
 #include <SDL_keysym.h>
 
@@ -11,7 +10,7 @@
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Input/KeyInput.h"
 
 using std::max;
@@ -34,7 +33,7 @@ CONFIG(float, CamFreeAngVelTime).defaultValue(1.0f);
 /******************************************************************************/
 //
 //  TODO: - separate speed variable for tracking state
-//        - smooth ransitions between tracking states and units
+//        - smooth transitions between tracking states and units
 //        - improve controls
 //        - rename it?  ;-)
 //
@@ -410,7 +409,7 @@ float3 CFreeController::SwitchFrom() const
 void CFreeController::SwitchTo(bool showText)
 {
 	if (showText) {
-		logOutput.Print("Switching to Free style camera");
+		LOG("Switching to Free style camera");
 	}
 	prevVel  = ZeroVector;
 	prevAvel = ZeroVector;

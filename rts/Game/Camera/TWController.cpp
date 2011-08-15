@@ -3,7 +3,6 @@
 #include <boost/cstdint.hpp>
 #include <SDL_keysym.h>
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "TWController.h"
@@ -12,7 +11,7 @@
 #include "Game/UI/MouseHandler.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/Input/KeyInput.h"
 
@@ -116,7 +115,7 @@ float3 CTWController::SwitchFrom() const
 void CTWController::SwitchTo(bool showText)
 {
 	if (showText) {
-		logOutput.Print("Switching to Total War style camera");
+		LOG("Switching to Total War style camera");
 	}
 }
 

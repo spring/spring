@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include <algorithm>
 #include <assert.h>
 #include <locale>
@@ -13,7 +12,7 @@
 #include "Messages.h"
 #include "Game/GlobalUnsynced.h"
 #include "Lua/LuaParser.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 
 using std::string;
@@ -39,7 +38,8 @@ void CMessages::Load()
 	                    SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
 	if (!luaParser.Execute()) {
 		// Show parse errors in the infolog.
-		logOutput.Print(string("ERROR: messages.lua: ") + luaParser.GetErrorLog());
+		LOG_L(L_WARNING, "Failed to parse messages.lua: %s",
+				luaParser.GetErrorLog().c_str());
 		return;
 	}
 

@@ -39,8 +39,6 @@ class CKeyBindings : public CommandReceiver
 
 		int GetFakeMetaKey() const { return fakeMetaKey; }
 
-		int GetDebug() const { return debug; }
-
 	public:
 		static const char NamedKeySetChar = '&';
 
@@ -84,7 +82,6 @@ class CKeyBindings : public CommandReceiver
 		// commands that use both Up and Down key presses
 		std::set<std::string> statefulCommands;
 
-		int debug;
 		int fakeMetaKey;
 		bool userCommand;
 };

@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 
 #include <cstdlib>
 #include "System/mmgr.h"
@@ -14,14 +13,15 @@
 #include "lib/gml/gmlmut.h"
 #include "Game/LoadScreen.h"
 #include "System/bitops.h"
+#include "System/EventHandler.h"
 #include "System/Exceptions.h"
-#include "System/LoadSave/LoadSaveInterface.h"
+#include "System/myMath.h"
+#include "System/TimeProfiler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/myMath.h"
-#include "System/TimeProfiler.h"
-
+#include "System/LoadSave/LoadSaveInterface.h"
+#include "System/Misc/RectangleOptimizer.h"
 
 #ifdef USE_UNSYNCED_HEIGHTMAP
 #include "Game/GlobalUnsynced.h"
@@ -46,7 +46,7 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 	if (mapname.length() < 3)
 		throw content_error("CReadMap::LoadMap(): mapname '" + mapname + "' too short");
 
-	const std::string extension = filesystem.GetExtension(mapname);
+	const std::string extension = FileSystem::GetExtension(mapname);
 
 	CReadMap* rm = NULL;
 
@@ -252,6 +252,9 @@ void CReadMap::UpdateDraw() {
 
 	for (ushmuIt = ushmu.begin(); ushmuIt != ushmu.end(); ++ushmuIt) {
 		UpdateHeightMapUnsynced(*ushmuIt);
+
+		const CRectangle rect(ushmuIt->x1, ushmuIt->y1, ushmuIt->x2, ushmuIt->y2);
+		eventHandler.UnsyncedHeightMapUpdate(rect);
 	}
 }
 

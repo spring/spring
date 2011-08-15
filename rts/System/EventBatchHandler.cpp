@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/Util.h"
 #include "Sim/Projectiles/Projectile.h" // for operator delete
 
@@ -8,7 +7,7 @@
 #include "System/EventHandler.h"
 
 #if UNSYNCED_PROJ_NOEVENT
-#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/ProjectileDrawer.h"
 #endif
 
 #include "lib/gml/gmlcnf.h"

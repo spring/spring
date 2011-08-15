@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "Rendering/GL/myGL.h"
 
 #include "System/mmgr.h"
@@ -15,13 +14,13 @@
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/FeatureDrawer.h"
-#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/ProjectileDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/IPathDrawer.h"
 #include "Rendering/SmoothHeightMeshDrawer.h"
 #include "Rendering/InMapDrawView.h"
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/Models/ModelDrawer.hpp"
+#include "Rendering/Models/ModelDrawer.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/MapInfo.h"

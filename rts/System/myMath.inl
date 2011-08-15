@@ -98,11 +98,7 @@ inline shortint2 GetHAndPFromVector(const float3& vec)
 	// If h goes beyond SHORTINT_MAXVALUE, the following
 	// conversion to a short int crashes.
 	// this change destroys the whole meaning with using short ints....
-  #if defined BUILDING_AI
-	int iy = (int) (std::asin(vec.y) * (SHORTINT_MAXVALUE * INVPI));
-  #else
-	int iy = (int) (streflop::asin(vec.y) * (SHORTINT_MAXVALUE * INVPI));
-  #endif
+	int iy = (int) (math::asin(vec.y) * (SHORTINT_MAXVALUE * INVPI));
 	iy %= SHORTINT_MAXVALUE;
 	ret.y = (short int) iy;
 	ret.x = GetHeadingFromVector(vec.x, vec.z);
@@ -114,11 +110,7 @@ inline float2 GetHAndPFromVectorF(const float3& vec)
 {
 	float2 ret;
 
-  #if defined BUILDING_AI
-	ret.y = std::asin(vec.y);
-  #else
-	ret.y = streflop::asin(vec.y);
-  #endif
+	ret.y = math::asin(vec.y);
 	ret.x = GetHeadingFromVectorF(vec.x, vec.z);
 	return ret;
 }

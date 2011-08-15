@@ -16,7 +16,7 @@ class AMoveType : public CObject
 
 public:
 	AMoveType(CUnit* owner);
-	virtual ~AMoveType(void);
+	virtual ~AMoveType() {}
 
 	virtual void StartMoving(float3 pos, float goalRadius) = 0;
 	virtual void StartMoving(float3 pos, float goalRadius, float speed) = 0;
@@ -29,7 +29,7 @@ public:
 	virtual void SetGoal(const float3& pos);
 	virtual void SetMaxSpeed(float speed);
 	virtual void SetWantedMaxSpeed(float speed);
-	virtual void LeaveTransport(void);
+	virtual void LeaveTransport() {}
 
 	virtual bool Update() = 0;
 	virtual void SlowUpdate();

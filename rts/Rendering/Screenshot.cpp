@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "Screenshot.h"
 
 #include <vector>
@@ -109,7 +108,7 @@ void TakeScreenshot(std::string type)
 	if (type.empty())
 		type = "png";
 
-	if (filesystem.CreateDirectory("screenshots"))
+	if (FileSystem::CreateDirectory("screenshots"))
 	{
 		FunctionArgs args;
 		args.x = globalRendering->dualScreenMode? globalRendering->viewSizeX << 1: globalRendering->viewSizeX;

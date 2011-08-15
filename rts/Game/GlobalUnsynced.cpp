@@ -5,7 +5,6 @@
  * Contains implementation of synced and unsynced global stuff.
  */
 
-#include "System/StdAfx.h"
 
 #include "GlobalUnsynced.h"
 #include "Game/PlayerHandler.h"
@@ -17,6 +16,7 @@
 #include "System/Exceptions.h"
 #include "System/Util.h"
 #include "System/creg/creg_cond.h"
+#include "System/Sync/SyncTracer.h"
 
 #include <SDL_timer.h>
 #include <time.h>
@@ -129,6 +129,10 @@ float3 CGlobalUnsynced::usRandVector()
 void CGlobalUnsynced::SetMyPlayer(const int myNumber)
 {
 	myPlayerNum = myNumber;
+
+#ifdef TRACE_SYNC
+	tracefile.Initialize(myPlayerNum);
+#endif
 
 	const CPlayer* myPlayer = playerHandler->Player(myPlayerNum);
 

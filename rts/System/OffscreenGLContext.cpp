@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "lib/streflop/streflop_cond.h" //! must happen before OffscreenGLContext.h, which includes agl.h
 #include "System/OffscreenGLContext.h"
 
@@ -21,6 +20,8 @@ void COffscreenGLContext::WorkerThreadFree() {}
 #elif WIN32
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //! WINDOWS
+
+#include <wingdi.h> //! wgl...
 
 COffscreenGLContext::COffscreenGLContext()
 {

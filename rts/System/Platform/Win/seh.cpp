@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include <windows.h>
 #include "seh.h"
 #include "System/Platform/CrashHandler.h"
@@ -34,6 +33,12 @@ static const char *ExceptionName(DWORD exceptionCode)
 	}
 	return "Unknown exception";
 }
+
+//! defined in System/Platform/Win/CrashHandler.cpp
+namespace CrashHandler {
+	LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e);
+}
+
 void __cdecl se_translator_function(unsigned int err, struct _EXCEPTION_POINTERS* ep)
 {
 	char buf[128];

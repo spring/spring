@@ -1,7 +1,3 @@
-#ifdef _MSC_VER
-#include "System/StdAfx.h"
-#endif
-
 #include <string>
 #include <iostream>
 #include <cstdlib>
@@ -17,11 +13,12 @@
 #include "Game/ClientSetup.h"
 #include "Game/GameData.h"
 #include "Game/GameVersion.h"
-#include "System/FileSystem/FileSystemHandler.h"
+#include "System/FileSystem/FileSystemInitializer.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/LoadSave/DemoRecorder.h"
+#include "System/Platform/CrashHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/Exceptions.h"
@@ -42,6 +39,8 @@ int main(int argc, char* argv[])
 #ifdef _WIN32
 	try {
 #endif
+	// Initialize crash reporting
+	CrashHandler::Install();
 
 	if (argc != 2) {
 		printf("[DS] usage: %s <full_path_to_script | --version>\n", argv[0]);
@@ -62,7 +61,7 @@ int main(int argc, char* argv[])
 
 	ConfigHandler::Instantiate(); // use the default config file
 	GlobalConfig::Instantiate();
-	FileSystemHandler::Initialize(false);
+	FileSystemInitializer::Initialize();
 
 	CGameServer* server = NULL;
 	CGameSetup* gameSetup = NULL;
@@ -152,7 +151,7 @@ int main(int argc, char* argv[])
 
 	delete server;
 
-	FileSystemHandler::Cleanup();
+	FileSystemInitializer::Cleanup();
 	GlobalConfig::Deallocate();
 	ConfigHandler::Deallocate();
 

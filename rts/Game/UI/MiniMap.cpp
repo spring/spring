@@ -3,7 +3,6 @@
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 #include "lib/gml/ThreadSafeContainers.h"
 
@@ -33,7 +32,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/LineDrawer.h"
-#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/ProjectileDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"

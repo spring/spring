@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "CobEngine.h"
@@ -17,8 +16,6 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/MoveTypes/AirMoveType.h"
-#include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/PieceProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -503,20 +500,20 @@ int CCobInstance::RealCall(int functionId, vector<int> &args, CBCobThreadFinish 
 /******************************************************************************/
 
 
-int CCobInstance::Call(const string &fname)
+int CCobInstance::Call(const std::string& fname)
 {
 	vector<int> x;
 	return Call(fname, x, NULL, NULL, NULL);
 }
 
 
-int CCobInstance::Call(const string &fname, vector<int> &args)
+int CCobInstance::Call(const std::string& fname, std::vector<int>& args)
 {
 	return Call(fname, args, NULL, NULL, NULL);
 }
 
 
-int CCobInstance::Call(const string &fname, int p1)
+int CCobInstance::Call(const std::string& fname, int p1)
 {
 	vector<int> x;
 	x.push_back(p1);
@@ -524,7 +521,7 @@ int CCobInstance::Call(const string &fname, int p1)
 }
 
 
-int CCobInstance::Call(const string &fname, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
+int CCobInstance::Call(const std::string& fname, std::vector<int>& args, CBCobThreadFinish cb, void* p1, void* p2)
 {
 	int fn = GetFunctionId(fname);
 	//TODO: Check that new behaviour of actually calling cb when the function is not defined is right?
@@ -549,13 +546,13 @@ int CCobInstance::Call(int id, int p1)
 }
 
 
-int CCobInstance::Call(int id, vector<int> &args)
+int CCobInstance::Call(int id, std::vector<int>& args)
 {
 	return Call(id, args, NULL, NULL, NULL);
 }
 
 
-int CCobInstance::Call(int id, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
+int CCobInstance::Call(int id, std::vector<int>& args, CBCobThreadFinish cb, void* p1, void* p2)
 {
 	return RealCall(script.scriptIndex[id], args, cb, p1, p2);
 }
@@ -568,7 +565,7 @@ void CCobInstance::RawCall(int fn)
 }
 
 
-int CCobInstance::RawCall(int fn, vector<int> &args)
+int CCobInstance::RawCall(int fn, std::vector<int> &args)
 {
 	return RealCall(fn, args, NULL, NULL, NULL);
 }

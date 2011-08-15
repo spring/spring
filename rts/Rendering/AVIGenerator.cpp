@@ -1,9 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #if       defined AVI_CAPTURING
-#ifdef _MSC_VER
-#include "System/StdAfx.h"
-#endif
 #include "AVIGenerator.h"
 
 #include "Rendering/GlobalRendering.h"

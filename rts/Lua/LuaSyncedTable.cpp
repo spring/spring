@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 
 //  FIXME: it'd probably be faster overall to have a Script.NewSyncTable()
 //         available to the synced side, that checks data assignments in a

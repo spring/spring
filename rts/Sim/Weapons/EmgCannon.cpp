@@ -1,11 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "EmgCannon.h"
 #include "Game/TraceRay.h"
 #include "Sim/Misc/Team.h"
 #include "Map/Ground.h"
-#include "Sim/MoveTypes/AirMoveType.h"
+#include "Sim/MoveTypes/StrafeAirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/EmgProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "System/Sync/SyncTracer.h"
@@ -101,8 +100,8 @@ void CEmgCannon::Init(void)
 void CEmgCannon::FireImpl()
 {
 	float3 dir;
-	if (onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType)) {
-		// the taairmovetype cant align itself properly, change back when that is fixed
+	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType)) {
+		// HoverAirMoveType canot align itself properly, change back when that is fixed
 		dir = owner->frontdir;
 	} else {
 		dir = (targetPos - weaponMuzzlePos).Normalize();

@@ -3,12 +3,12 @@
 #ifndef _BUILDER_CAI_H_
 #define _BUILDER_CAI_H_
 
-#include <map>
-#include <string>
-
 #include "MobileCAI.h"
 #include "Sim/Units/UnitSet.h"
 #include "Sim/Units/BuildInfo.h"
+
+#include <map>
+#include <string>
 
 class CUnit;
 class CFeature;

@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include <cassert>
 #include "System/mmgr.h"
 
@@ -24,7 +23,7 @@
 #include "Sim/MoveTypes/MoveType.h"
 #include "System/EventHandler.h"
 #include "System/EventBatchHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
 #include "System/myMath.h"
 #include "System/Sync/SyncTracer.h"
@@ -192,7 +191,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 #ifdef _DEBUG
 	for (usi = activeUnits.begin(); usi != activeUnits.end(); /* no post-op */) {
 		if (*usi == delUnit) {
-			logOutput.Print("Error: Duplicated unit found in active units on erase");
+			LOG_L(L_ERROR, "Duplicated unit found in active units on erase");
 			usi = activeUnits.erase(usi);
 		} else {
 			++usi;
@@ -234,9 +233,9 @@ void CUnitHandler::Update()
 	GML_UPDATE_TICKS();
 
 	#define VECTOR_SANITY_CHECK(v)                              \
-		assert(!streflop::isnan(v.x) && !streflop::isinf(v.x)); \
-		assert(!streflop::isnan(v.y) && !streflop::isinf(v.y)); \
-		assert(!streflop::isnan(v.z) && !streflop::isinf(v.z));
+		assert(!math::isnan(v.x) && !math::isinf(v.x)); \
+		assert(!math::isnan(v.y) && !math::isinf(v.y)); \
+		assert(!math::isnan(v.z) && !math::isinf(v.z));
 	#define MAPPOS_SANITY_CHECK(unit)                          \
 		if (unit->unitDef->IsGroundUnit()) {                   \
 			assert(unit->pos.x >= -(float3::maxxpos * 16.0f)); \

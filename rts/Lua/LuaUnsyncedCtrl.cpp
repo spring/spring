@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 
 #include "System/mmgr.h"
 
@@ -60,7 +59,7 @@
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/FileSystemHandler.h"
+#include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Platform/Watchdog.h"
 #include "System/Platform/WindowManagerHelper.h"
@@ -674,12 +673,7 @@ int LuaUnsyncedCtrl::PauseSoundStream(lua_State*)
 }
 int LuaUnsyncedCtrl::SetSoundStreamVolume(lua_State* L)
 {
-	const int args = lua_gettop(L);
-	if (args == 1) {
-		Channels::BGMusic.SetVolume(lua_tonumber(L, 1));
-	} else {
-		luaL_error(L, "Incorrect arguments to SetSoundStreamVolume(v)");
-	}
+	Channels::BGMusic.SetVolume(luaL_checkfloat(L, 1));
 	return 0;
 }
 
@@ -729,7 +723,7 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 					ALuint& param = it->second;
 					if (lua_isnumber(L, -1)) {
 						if (alParamType[param] == EFXParamTypes::FLOAT) {
-							const float value = lua_tonumber(L, -1);
+							const float value = lua_tofloat(L, -1);
 							efxprops->filter_properties_f[param] = value;
 						}
 					}
@@ -760,7 +754,7 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 					}
 					else if (lua_isnumber(L, -1)) {
 						if (alParamType[param] == EFXParamTypes::FLOAT) {
-							const float value = lua_tonumber(L, -1);
+							const float value = lua_tofloat(L, -1);
 							efxprops->properties_f[param] = value;
 						}
 					}
@@ -1225,7 +1219,7 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 				}
 			}
 			else if (lua_isnumber(L, -1)) {
-				const float value = lua_tonumber(L, -1);
+				const float value = lua_tofloat(L, -1);
 				if (key == "damage") {
 					w.damage = value;
 				} else if (key == "repeatX") {
@@ -1775,8 +1769,8 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 	}
 
 
-	string dname = filesystem.GetDirectory(path);
-	string fname = filesystem.GetFilename(path);
+	string dname = FileSystem::GetDirectory(path);
+	string fname = FileSystem::GetFilename(path);
 
 #ifdef WIN32
 	const size_t s = dname.size();
@@ -1788,7 +1782,7 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 	}
 #endif
 
-	if (!dname.empty() && !filesystem.CreateDirectory(dname)) {
+	if (!dname.empty() && !FileSystem::CreateDirectory(dname)) {
 		luaL_error(L, "Could not create directory \"%s\" for file \"%s\"",
 		           dname.c_str(), fname.c_str());
 	}
@@ -2135,7 +2129,7 @@ int LuaUnsyncedCtrl::CreateDir(lua_State* L)
 	    ((dir.size() > 0) && (dir[1] == ':'))) {
 		luaL_error(L, "Invalid CreateDir() access: %s", dir.c_str());
 	}
-	const bool success = filesystem.CreateDirectory(dir);
+	const bool success = FileSystem::CreateDirectory(dir);
 	lua_pushboolean(L, success);
 	return 1;
 }
@@ -2163,7 +2157,7 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 	}
 
 	// script.txt, if content for it is given by Lua code
-	const std::string scriptFullName = FileSystemHandler::GetInstance().GetWriteDir() + "script.txt";
+	const std::string scriptFullName = dataDirLocater.GetWriteDirPath() + "script.txt";
 	if (!script.empty()) {
 		std::ofstream scriptfile(scriptFullName.c_str());
 		scriptfile << script;

@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "UnitDrawer.h"
@@ -30,8 +29,8 @@
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/Shaders/ShaderHandler.hpp"
-#include "Rendering/Shaders/Shader.hpp"
+#include "Rendering/Shaders/ShaderHandler.h"
+#include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"

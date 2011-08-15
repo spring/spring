@@ -7,7 +7,6 @@
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "GuiHandler.h"

@@ -3013,11 +3013,11 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Weapons\bombdropper.cpp"
+						RelativePath="..\..\Sim\Weapons\BombDropper.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Weapons\bombdropper.h"
+						RelativePath="..\..\Sim\Weapons\BombDropper.h"
 						>
 					</File>
 					<File
@@ -4123,7 +4123,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\tdf_grammar.hpp"
+				RelativePath="..\..\System\tdf_grammar.h"
 				>
 			</File>
 			<File

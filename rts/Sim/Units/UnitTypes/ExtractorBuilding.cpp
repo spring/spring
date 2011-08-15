@@ -3,13 +3,11 @@
 // Used for all metal-extractors.
 // Handles the metal-make-process.
 
-#include "System/StdAfx.h"
 #include <typeinfo>
 #include "ExtractorBuilding.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Map/ReadMap.h"
-#include "System/LogOutput.h"
 #include "Sim/Units/UnitDef.h"
 #include "Map/MetalMap.h"
 #include "Sim/Misc/QuadField.h"
@@ -86,8 +84,8 @@ bool CExtractorBuilding::IsNeighbour(CExtractorBuilding* other)
 
 	if (sum == 2) {
 		// square vs. square
-		const float dx = streflop::fabs(this->pos.x - other->pos.x);
-		const float dz = streflop::fabs(this->pos.z - other->pos.z);
+		const float dx = math::fabs(this->pos.x - other->pos.x);
+		const float dz = math::fabs(this->pos.z - other->pos.z);
 		const float r = this->extractionRange + other->extractionRange;
 		return (dx < r && dz < r);
 	}

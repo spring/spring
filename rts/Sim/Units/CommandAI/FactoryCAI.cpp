@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "FactoryCAI.h"
@@ -19,6 +18,7 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/creg/STL_Map.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
@@ -315,12 +315,12 @@ bool CFactoryCAI::RemoveBuildCommand(CCommandQueue::iterator& it)
 		ExecuteStop(cmd);
 		return true;
 	}
-	// XXX what does this do?
-	if (cmd.GetID() < 0) { // (id < 0) -> it is a build command
-		// convert the build-command into a stop command
-		cmd.SetID(CMD_STOP);
-		cmd.tag = 0;
+
+	if (cmd.GetID() < 0) {
+		// build command, convert into a stop command
+		cmd = Command(CMD_STOP);
 	}
+
 	return false;
 }
 
@@ -331,7 +331,8 @@ void CFactoryCAI::CancelRestrictedUnit(const Command& c, BuildOption& buildOptio
 		buildOption.numQued--;
 		if (owner->team == gu->myTeam) {
 			if(lastRestrictedWarning+100<gs->frameNum) {
-				logOutput.Print("%s: Build failed, unit type limit reached",owner->unitDef->humanName.c_str());
+				LOG_L(L_WARNING, "%s: Build failed, unit type limit reached",
+						owner->unitDef->humanName.c_str());
 				logOutput.SetLastMsgPos(owner->pos);
 				lastRestrictedWarning = gs->frameNum;
 			}

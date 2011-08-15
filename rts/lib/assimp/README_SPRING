@@ -6,4 +6,4 @@ spring/assimp contains some changes to assimp to made it work with spring
 
 .gitignore is used to avoid adding not-needed files to the spring repo. when switching back to the git repo, do a "git clean -n -x -d". (and replace -n with -f if its fine)
 
-when updating assimp please always do a git pull --rebase!
+when updating spring/assimp please always create a new branch (an other solution would be to do a --rebase...)!

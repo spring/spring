@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "GroundMoveType.h"
@@ -27,12 +26,22 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/FastMath.h"
 #include "System/myMath.h"
 #include "System/Vec2.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
+
+
+#define LOG_SECTION_GMT "GroundMoveType"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
+
+// use the specific section for all LOG*() calls in this source file
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_GMT
 
 // speeds near (MAX_UNIT_SPEED * 1e1) elmos / frame can be caused by explosion impulses
 // CUnitHandler removes units with speeds > MAX_UNIT_SPEED as soon as they exit the map,
@@ -44,6 +53,7 @@
 #define MAX_IDLING_SLOWUPDATES 16
 #define DEBUG_OUTPUT 0
 #define PLAY_SOUNDS 1
+
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
 
@@ -57,7 +67,6 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(currentSpeed),
 	CR_MEMBER(requestedSpeed),
 	CR_MEMBER(deltaSpeed),
-	CR_MEMBER(deltaHeading),
 
 	CR_MEMBER(pathId),
 	CR_MEMBER(goalRadius),
@@ -117,7 +126,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	currentSpeed(0.0f),
 	requestedSpeed(0.0f),
 	deltaSpeed(0.0f),
-	deltaHeading(0),
 
 	pathId(0),
 	goalRadius(0),
@@ -175,7 +183,7 @@ void CGroundMoveType::PostLoad()
 
 bool CGroundMoveType::Update()
 {
-	ASSERT_SYNCED_FLOAT3(owner->pos);
+	ASSERT_SYNCED(owner->pos);
 
 	if (owner->transporter != NULL) {
 		return false;
@@ -189,7 +197,7 @@ bool CGroundMoveType::Update()
 		return false;
 	}
 
-	ASSERT_SYNCED_FLOAT3(owner->pos);
+	ASSERT_SYNCED(owner->pos);
 
 	// set drop height when we start to drop
 	if (owner->falling) {
@@ -197,7 +205,7 @@ bool CGroundMoveType::Update()
 		return false;
 	}
 
-	ASSERT_SYNCED_FLOAT3(owner->pos);
+	ASSERT_SYNCED(owner->pos);
 
 	bool hasMoved = false;
 	bool wantReverse = false;
@@ -208,15 +216,14 @@ bool CGroundMoveType::Update()
 	} else {
 		if (owner->fpsControlPlayer != NULL) {
 			wantReverse = UpdateDirectControl();
-			ChangeHeading(owner->heading + deltaHeading);
 		} else {
 			if (pathId == 0) {
 				SetDeltaSpeed(0.0f, false);
 				SetMainHeading();
 			} else {
 				// TODO: Stop the unit from moving as a reaction on collision/explosion physics.
-				ASSERT_SYNCED_FLOAT3(waypoint);
-				ASSERT_SYNCED_FLOAT3(owner->pos);
+				ASSERT_SYNCED(waypoint);
+				ASSERT_SYNCED(owner->pos);
 
 				prevWayPointDist = currWayPointDist;
 				currWayPointDist = owner->pos.distance2D(waypoint);
@@ -239,7 +246,7 @@ bool CGroundMoveType::Update()
 				waypointDir.y = 0.0f;
 				waypointDir.SafeNormalize();
 
-				ASSERT_SYNCED_FLOAT3(waypointDir);
+				ASSERT_SYNCED(waypointDir);
 
 				const float3 wpDirInv = -waypointDir;
 //				const float3 wpPosTmp = owner->pos + wpDirInv;
@@ -260,7 +267,7 @@ bool CGroundMoveType::Update()
 				// apply obstacle avoidance (steering)
 				const float3 avoidVec = ObstacleAvoidance(waypointDir);
 
-				ASSERT_SYNCED_FLOAT3(avoidVec);
+				ASSERT_SYNCED(avoidVec);
 
 				if (avoidVec != ZeroVector) {
 					if (wantReverse) {
@@ -332,9 +339,9 @@ void CGroundMoveType::SlowUpdate()
 
 			if (numIdlingUpdates > (SHORTINT_MAXVALUE / turnRate)) {
 				// case A: we have a path but are not moving
-				#if (DEBUG_OUTPUT == 1)
-				logOutput.Print("[CGMT::SU] unit %i has pathID %i but %i ETA failures", owner->id, pathId, numIdlingUpdates);
-				#endif
+				LOG_L(L_DEBUG,
+						"SlowUpdate: unit %i has pathID %i but %i ETA failures",
+						owner->id, pathId, numIdlingUpdates);
 
 				if (numIdlingSlowUpdates < MAX_IDLING_SLOWUPDATES) {
 					StopEngine();
@@ -348,9 +355,8 @@ void CGroundMoveType::SlowUpdate()
 		} else {
 			if (gs->frameNum > pathRequestDelay) {
 				// case B: we want to be moving but don't have a path
-				#if (DEBUG_OUTPUT == 1)
-				logOutput.Print("[CGMT::SU] unit %i has no path", owner->id);
-				#endif
+				LOG_L(L_DEBUG,
+						"SlowUpdate: unit %i has no path", owner->id);
 
 				StopEngine();
 				StartEngine();
@@ -406,9 +412,8 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float _goalRadius, float s
 	currWayPointDist = 0.0f;
 	prevWayPointDist = 0.0f;
 
-	#if (DEBUG_OUTPUT == 1)
-	logOutput.Print("[CGMT::StartMoving] starting engine for unit %i", owner->id);
-	#endif
+	LOG_L(L_DEBUG,
+			"StartMoving: starting engine for unit %i", owner->id);
 
 	StartEngine();
 
@@ -430,9 +435,8 @@ void CGroundMoveType::StopMoving() {
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
 #endif
 
-	#if (DEBUG_OUTPUT == 1)
-	logOutput.Print("[CGMT::StopMoving] stopping engine for unit %i", owner->id);
-	#endif
+	LOG_L(L_DEBUG,
+			"StopMoving: stopping engine for unit %i", owner->id);
 
 	StopEngine();
 
@@ -474,8 +478,8 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 			const bool startBreaking = (haveFinalWaypoint && !atGoal);
 
 			const float reqTurnAngle = reversing?
-				(streflop::acosf(Clamp(waypointDir.dot(-flatFrontDir), -1.0f, 1.0f)) * RAD2DEG):
-				(streflop::acosf(Clamp(waypointDir.dot( flatFrontDir), -1.0f, 1.0f)) * RAD2DEG);
+				(math::acosf(Clamp(waypointDir.dot(-flatFrontDir), -1.0f, 1.0f)) * RAD2DEG):
+				(math::acosf(Clamp(waypointDir.dot( flatFrontDir), -1.0f, 1.0f)) * RAD2DEG);
 			const float maxTurnAngle = (turnRate / SPRING_CIRCLE_DIVS) * 360.0f;
 
 			float reducedSpeed = (reversing)? maxReverseSpeed: maxSpeed;
@@ -547,36 +551,21 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 }
 
 /*
-Changes the heading of the owner.
-*/
+ * Changes the heading of the owner.
+ * FIXME near-duplicate of HoverAirMoveType::UpdateHeading
+ */
 void CGroundMoveType::ChangeHeading(short wantedHeading) {
-#ifdef TRACE_SYNC
-	short _oldheading = owner->heading;
-#endif
 	SyncedSshort& heading = owner->heading;
+	const short deltaHeading = wantedHeading - heading;
 
-	deltaHeading = wantedHeading - heading;
-
-	ASSERT_SYNCED_PRIMITIVE(deltaHeading);
-	ASSERT_SYNCED_PRIMITIVE(turnRate);
-	ASSERT_SYNCED_PRIMITIVE((short)turnRate);
-
-	short sTurnRate = short(turnRate);
+	ASSERT_SYNCED(deltaHeading);
+	ASSERT_SYNCED(turnRate);
 
 	if (deltaHeading > 0) {
-		short tmp = (deltaHeading < sTurnRate)? deltaHeading: sTurnRate;
-		ASSERT_SYNCED_PRIMITIVE(tmp);
-		heading += tmp;
+		heading += std::min(deltaHeading, short(turnRate));
 	} else {
-		short tmp = (deltaHeading > -sTurnRate)? deltaHeading: -sTurnRate;
-		ASSERT_SYNCED_PRIMITIVE(tmp);
-		heading += tmp;
+		heading += std::max(deltaHeading, short(-turnRate));
 	}
-
-#ifdef TRACE_SYNC
-	tracefile << "[" << __FUNCTION__ << "] ";
-	tracefile << "unit " << owner->id << " changed heading to " << heading << " from " << _oldheading << " (wantedHeading: " << wantedHeading << ")\n";
-#endif
 
 	owner->SetDirectionFromHeading();
 
@@ -642,7 +631,7 @@ void CGroundMoveType::ImpulseAdded(const float3&)
 
 void CGroundMoveType::UpdateSkid()
 {
-	ASSERT_SYNCED_FLOAT3(owner->midPos);
+	ASSERT_SYNCED(owner->midPos);
 
 	float3& speed  = owner->speed;
 	float3& pos    = owner->pos;
@@ -745,7 +734,7 @@ void CGroundMoveType::UpdateSkid()
 	oldPos = owner->pos;
 
 	ASSERT_SANE_OWNER_SPEED(speed);
-	ASSERT_SYNCED_FLOAT3(midPos);
+	ASSERT_SYNCED(midPos);
 }
 
 void CGroundMoveType::UpdateControlledDrop()
@@ -955,9 +944,8 @@ float3 CGroundMoveType::ObstacleAvoidance(const float3& desiredDir) {
 					if ((udMoveData.moveMath->IsBlocked(udMoveData, x, y) & blockBits) ||
 					    (udMoveData.moveMath->GetPosSpeedMod(udMoveData, x, y) <= 0.01f)) {
 
-						#if (DEBUG_OUTPUT == 1)
-						logOutput.Print("[CGMT::OA] path blocked for unit %i", owner->id);
-						#endif
+						LOG_L(L_DEBUG,
+								"ObstacleAvoidance: path blocked for unit %i", owner->id);
 						break;
 					}
 				}
@@ -1234,6 +1222,7 @@ void CGroundMoveType::StartEngine() {
 }
 
 void CGroundMoveType::StopEngine() {
+
 	if (pathId != 0) {
 		pathManager->DeletePath(pathId);
 		pathId = 0;
@@ -1245,9 +1234,8 @@ void CGroundMoveType::StopEngine() {
 		// Stop animation.
 		owner->script->StopMoving();
 
-		#if (DEBUG_OUTPUT == 1)
-		logOutput.Print("[CGMT::StopEngine] engine stopped for unit %i", owner->id);
-		#endif
+		LOG_L(L_DEBUG,
+				"StopEngine: engine stopped for unit %i", owner->id);
 	}
 
 	owner->isMoving = false;
@@ -1279,9 +1267,8 @@ void CGroundMoveType::Arrived()
 		progressState = Done;
 		owner->commandAI->SlowUpdate();
 
-		#if (DEBUG_OUTPUT == 1)
-		logOutput.Print("[CGMT::Arrived] unit %i arrived", owner->id);
-		#endif
+		LOG_L(L_DEBUG,
+				"Arrived: unit %i arrived", owner->id);
 	}
 }
 
@@ -1291,9 +1278,8 @@ No more trials will be done before a new goal is given.
 */
 void CGroundMoveType::Fail()
 {
-	#if (DEBUG_OUTPUT == 1)
-	logOutput.Print("[CGMT::Fail] unit %i failed", owner->id);
-	#endif
+	LOG_L(L_DEBUG,
+			"Fail: unit %i failed", owner->id);
 
 	StopEngine();
 
@@ -1780,15 +1766,15 @@ void CGroundMoveType::SetMainHeading() {
 		dir2.y = 0.0f;
 		dir2.SafeNormalize();
 
-		ASSERT_SYNCED_FLOAT3(dir1);
-		ASSERT_SYNCED_FLOAT3(dir2);
+		ASSERT_SYNCED(dir1);
+		ASSERT_SYNCED(dir2);
 
 		if (dir2 != ZeroVector) {
 			short heading =
 				GetHeadingFromVector(dir2.x, dir2.z) -
 				GetHeadingFromVector(dir1.x, dir1.z);
 
-			ASSERT_SYNCED_PRIMITIVE(heading);
+			ASSERT_SYNCED(heading);
 
 			if (progressState == Active && owner->heading == heading) {
 				// stop turning
@@ -1900,6 +1886,7 @@ bool CGroundMoveType::UpdateDirectControl()
 	const FPSUnitController& selfCon = myPlayer->fpsController;
 	const FPSUnitController& unitCon = owner->fpsControlPlayer->fpsController;
 	const bool wantReverse = (unitCon.back && !unitCon.forward);
+	float turnSign = 0.0f;
 
 	waypoint = owner->pos;
 	waypoint += wantReverse ? -owner->frontdir * 100 : owner->frontdir * 100;
@@ -1923,13 +1910,11 @@ bool CGroundMoveType::UpdateDirectControl()
 		owner->script->StopMoving();
 	}
 
-	deltaHeading = 0;
-
-	if (unitCon.left ) { deltaHeading += (short) turnRate; }
-	if (unitCon.right) { deltaHeading -= (short) turnRate; }
+	if (unitCon.left ) { ChangeHeading(owner->heading + turnRate); turnSign =  1.0f; }
+	if (unitCon.right) { ChangeHeading(owner->heading - turnRate); turnSign = -1.0f; }
 
 	if (selfCon.GetControllee() == owner) {
-		camera->rot.y += (deltaHeading * TAANG2RAD);
+		camera->rot.y += (turnRate * turnSign * TAANG2RAD);
 	}
 
 	return wantReverse;
@@ -1982,7 +1967,7 @@ bool CGroundMoveType::WantReverse(const float3& waypointDir2D) const
 	const float waypointRETA  = (waypointDist / maxReverseSpeed);                               // in frames (simplistic)
 	const float waypointDirDP = waypointDir2D.dot(owner->frontdir);
 	const float waypointAngle = Clamp(waypointDirDP, -1.0f, 1.0f);                              // prevent NaN's
-	const float turnAngleDeg  = streflop::acosf(waypointAngle) * RAD2DEG;                       // in degrees
+	const float turnAngleDeg  = math::acosf(waypointAngle) * RAD2DEG;                       // in degrees
 	const float turnAngleSpr  = (turnAngleDeg / 360.0f) * SPRING_CIRCLE_DIVS;                   // in "headings"
 	const float revAngleSpr   = SHORTINT_MAXVALUE - turnAngleSpr;                               // 180 deg - angle
 

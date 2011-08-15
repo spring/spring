@@ -1,13 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 
 #include "DirArchive.h"
 
 #include <assert.h>
 #include <fstream>
 
+#include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/FileQueryFlags.h"
 #include "System/Util.h"
 #include "System/mmgr.h"
 
@@ -27,7 +28,7 @@ CDirArchive::CDirArchive(const std::string& archiveName)
 	: IArchive(archiveName)
 	, dirName(archiveName + '/')
 {
-	const std::vector<std::string>& found = filesystem.FindFiles(dirName, "*", FileSystem::RECURSE);
+	const std::vector<std::string>& found = dataDirsAccess.FindFiles(dirName, "*", FileQueryFlags::RECURSE);
 
 	// because spring expects the contents of archives to be case independent,
 	// we convert filenames to lowercase in every function, and keep a std::map
@@ -36,7 +37,7 @@ CDirArchive::CDirArchive(const std::string& archiveName)
 	for (fi = found.begin(); fi != found.end(); ++fi) {
 		// strip our own name off.. & convert to forward slashes
 		std::string origName(*fi, dirName.length());
-		filesystem.ForwardSlashes(origName);
+		FileSystem::ForwardSlashes(origName);
 		// convert to lowercase and store
 		searchFiles.push_back(origName);
 		lcNameIndex[StringToLower(origName)] = searchFiles.size() - 1;
@@ -61,14 +62,16 @@ bool CDirArchive::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
 {
 	assert(IsFileId(fid));
 
-	const std::string rawpath = filesystem.LocateFile(dirName + searchFiles[fid]);
+	const std::string rawpath = dataDirsAccess.LocateFile(dirName + searchFiles[fid]);
 	std::ifstream ifs(rawpath.c_str(), std::ios::in | std::ios::binary);
 	if (!ifs.bad() && ifs.is_open()) {
 		ifs.seekg(0, std::ios_base::end);
 		buffer.resize(ifs.tellg());
 		ifs.seekg(0, std::ios_base::beg);
 		ifs.clear();
-		ifs.read((char*)&buffer[0], buffer.size());
+		if (!buffer.empty()) {
+			ifs.read((char*)&buffer[0], buffer.size());
+		}
 		return true;
 	} else {
 		return false;
@@ -80,7 +83,7 @@ void CDirArchive::FileInfo(unsigned int fid, std::string& name, int& size) const
 	assert(IsFileId(fid));
 
 	name = searchFiles[fid];
-	const std::string rawPath = filesystem.LocateFile(dirName + name);
+	const std::string rawPath = dataDirsAccess.LocateFile(dirName + name);
 	std::ifstream ifs(rawPath.c_str(), std::ios::in | std::ios::binary);
 	if (!ifs.bad() && ifs.is_open()) {
 		ifs.seekg(0, std::ios_base::end);

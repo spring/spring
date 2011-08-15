@@ -1,6 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
+#ifdef _MSC_VER
+#include "System/Platform/Win/win32.h"
+#endif
 
 #include "FileHandler.h"
 
@@ -16,7 +18,9 @@
 #include "System/mmgr.h"
 #include "lib/gml/gmlmut.h"
 #include "VFSHandler.h"
+#include "DataDirsAccess.h"
 #include "FileSystem.h"
+#include "FileQueryFlags.h"
 #include "System/Util.h"
 
 using std::string;
@@ -56,7 +60,7 @@ CFileHandler::~CFileHandler()
 
 bool CFileHandler::TryReadFromRawFS(const string& fileName)
 {
-	const string rawpath = filesystem.LocateFile(fileName);
+	const string rawpath = dataDirsAccess.LocateFile(fileName);
 	ifs = new std::ifstream(rawpath.c_str(), std::ios::in | std::ios::binary);
 	if (ifs && !ifs->bad() && ifs->is_open()) {
 		ifs->seekg(0, std::ios_base::end);
@@ -117,6 +121,24 @@ void CFileHandler::TryReadContent(const string& fileName, const string& modes)
 
 
 /******************************************************************************/
+
+bool CFileHandler::FileExists(const std::string& filePath, const std::string& modes)
+{
+	bool fileExists = false;
+
+	//! VFS
+	if (modes.find_first_of(SPRING_VFS_ZIP) != string::npos) {
+		fileExists = fileExists || vfsHandler->FileExists(filePath);
+	}
+
+	//! Raw
+	if (modes.find(SPRING_VFS_RAW) != string::npos) {
+		fileExists = fileExists || FileSystem::FileExists(filePath);
+	}
+
+	return fileExists;
+}
+
 
 bool CFileHandler::FileExists() const
 {
@@ -243,7 +265,7 @@ bool CFileHandler::LoadStringData(string& data)
 
 std::string CFileHandler::GetFileExt() const
 {
-	return filesystem.GetExtension(fileName);
+	return FileSystem::GetExtension(fileName);
 }
 
 /******************************************************************************/
@@ -253,8 +275,8 @@ std::vector<string> CFileHandler::FindFiles(const string& path,
 {
 	GML_RECMUTEX_LOCK(file); // FindFiles
 
-	std::vector<string> found = filesystem.FindFiles(path, pattern);
-	boost::regex regexpattern(filesystem.glob_to_regex(pattern),
+	std::vector<string> found = dataDirsAccess.FindFiles(path, pattern);
+	boost::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
 			boost::regex::icase);
 	std::vector<string> f;
 
@@ -301,10 +323,10 @@ std::vector<string> CFileHandler::DirList(const string& path,
 bool CFileHandler::InsertRawFiles(std::set<string>& fileSet,
 		const string& path, const string& pattern)
 {
-	boost::regex regexpattern(filesystem.glob_to_regex(pattern),
+	boost::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
 	                          boost::regex::icase);
 
-	const std::vector<string> &found = filesystem.FindFiles(path, pattern);
+	const std::vector<string> &found = dataDirsAccess.FindFiles(path, pattern);
 	std::vector<string>::const_iterator fi;
 	for (fi = found.begin(); fi != found.end(); ++fi) {
 		if (boost::regex_match(*fi, regexpattern)) {
@@ -328,7 +350,7 @@ bool CFileHandler::InsertModFiles(std::set<string>& fileSet,
 		prefix += '/';
 	}
 
-	boost::regex regexpattern(filesystem.glob_to_regex(pattern),
+	boost::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
 			boost::regex::icase);
 
 	const std::vector<string> &found = vfsHandler->GetFilesInDir(path);
@@ -387,11 +409,11 @@ std::vector<string> CFileHandler::SubDirs(const string& path,
 bool CFileHandler::InsertRawDirs(std::set<string>& dirSet,
 		const string& path, const string& pattern)
 {
-	boost::regex regexpattern(filesystem.glob_to_regex(pattern),
+	boost::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
 	                          boost::regex::icase);
 
-	const std::vector<string> &found = filesystem.FindFiles(path, pattern,
-	                                            FileSystem::ONLY_DIRS);
+	const std::vector<string> &found = dataDirsAccess.FindFiles(path, pattern,
+	                                            FileQueryFlags::ONLY_DIRS);
 	std::vector<string>::const_iterator fi;
 	for (fi = found.begin(); fi != found.end(); ++fi) {
 		const string& dir = *fi;
@@ -416,7 +438,7 @@ bool CFileHandler::InsertModDirs(std::set<string>& dirSet,
 		prefix += '/';
 	}
 
-	boost::regex regexpattern(filesystem.glob_to_regex(pattern),
+	boost::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
 			boost::regex::icase);
 
 	const std::vector<string> &found = vfsHandler->GetDirsInDir(path);

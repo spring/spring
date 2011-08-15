@@ -190,7 +190,7 @@ void TempMesh::RemoveAdjacentDuplicates()
 		base += cnt;
 	}
 	if(drop) {
-		DefaultLogger::get()->debug("removed duplicate vertices");
+		IFCImporter::LogDebug("removed duplicate vertices");
 	}
 }
 
@@ -297,6 +297,13 @@ void ConvertCartesianPoint(aiVector3D& out, const IfcCartesianPoint& in)
 }
 
 // ------------------------------------------------------------------------------------------------
+void ConvertVector(aiVector3D& out, const IfcVector& in)
+{
+	ConvertDirection(out,in.Orientation);
+	out *= in.Magnitude;
+}
+
+// ------------------------------------------------------------------------------------------------
 void ConvertDirection(aiVector3D& out, const IfcDirection& in)
 {
 	out = aiVector3D();
@@ -305,7 +312,7 @@ void ConvertDirection(aiVector3D& out, const IfcDirection& in)
 	}
 	const float len = out.Length();
 	if (len<1e-6) {
-		DefaultLogger::get()->warn("direction vector too small, normalizing would result in a division by zero");
+		IFCImporter::LogWarn("direction vector magnitude too small, normalization would result in a division by zero");
 		return;
 	}
 	out /= len;
@@ -391,7 +398,7 @@ void ConvertAxisPlacement(aiMatrix4x4& out, const IfcAxis2Placement& in, Convers
 		ConvertAxisPlacement(out,*pl2);
 	}
 	else {
-		DefaultLogger::get()->warn("skipping unknown IfcAxis2Placement entity");
+		IFCImporter::LogWarn("skipping unknown IfcAxis2Placement entity");
 	}
 }
 

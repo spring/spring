@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "Feature.h"
@@ -24,7 +23,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "System/EventHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include <assert.h>
 
@@ -160,7 +159,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	if (def->drawType == DRAWTYPE_MODEL) {
 		model = def->LoadModel();
 		if (!model) {
-			logOutput.Print("Features: Couldn't load model for " + defName);
+			LOG_L(L_ERROR, "Features: Couldn't load model for %s", defName.c_str());
 			SetRadius(0.0f);
 			relMidPos = ZeroVector;
 		} else {

@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 #include <SDL_keysym.h>
 #include <SDL_timer.h>
@@ -14,7 +13,7 @@
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/Input/KeyInput.h"
 
@@ -203,8 +202,9 @@ float3 SmoothController::SwitchFrom() const
 
 void SmoothController::SwitchTo(bool showText)
 {
-	if(showText)
-		logOutput.Print("Switching to Smooth style camera");
+	if (showText) {
+		LOG("Switching to Smooth style camera");
+	}
 }
 
 

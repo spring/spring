@@ -2,6 +2,10 @@
 
 #include "SkirmishAIKey.h"
 
+#include "System/creg/creg_cond.h"
+#include <string>
+
+
 CR_BIND(SkirmishAIKey, );
 
 CR_REG_METADATA(SkirmishAIKey, (
@@ -64,6 +68,10 @@ bool SkirmishAIKey::IsUnspecified() const {
 }
 bool SkirmishAIKey::IsFullySpecified() const {
 	return shortName != "" || !interface.IsUnspecified();
+}
+
+std::string SkirmishAIKey::ToString() const {
+	return GetShortName() + " " + GetVersion();
 }
 
 bool SkirmishAIKey::operator==(const SkirmishAIKey& otherKey) const {

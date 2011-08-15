@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "CommandAI.h"
@@ -29,7 +28,6 @@
 #include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
 #include "System/LoadSave/LoadSaveInterface.h"
-#include "System/LogOutput.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 #include "System/creg/STL_Set.h"

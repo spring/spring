@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 
 #include "System/TdfParser.h"
 
@@ -355,7 +354,7 @@ namespace terrain {
 			fmt = IL_LUMINANCE;
 		}
 		ilTexImage(w, h, 1, components, fmt, type, data);
-		filesystem.Remove(fn);
+		FileSystem::Remove(fn);
 		ilSaveImage((ILstring) fn);
 		ilDeleteImages(1, &out);
 #endif // defined(TERRAIN_USE_IL)

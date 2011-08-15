@@ -1,5 +1,8 @@
 # Spring supplied CMake build file
 
+# deactivate signaling-NANs for this library
+RemoveFlag("-fsignaling-nans")
+
 INCLUDE_DIRECTORIES(BEFORE ../streflop include)
 
 SET(luaSources

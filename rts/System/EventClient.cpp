@@ -1,8 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 
 #include "System/EventClient.h"
+#include "System/EventHandler.h"
 
 /******************************************************************************/
 /******************************************************************************/
@@ -14,6 +14,16 @@ CEventClient::CEventClient(const std::string& _name, int _order, bool _synced)
 {
 }
 
+
+CEventClient::~CEventClient()
+{
+	//! No, we can't autobind all clients in the ctor.
+	//! eventHandler.AddClient() calls CEventClient::WantsEvent() that is
+	//! virtual and so not available during the initialization.
+	eventHandler.RemoveClient(this);
+}
+
+
 /******************************************************************************/
 /******************************************************************************/
 //
@@ -23,6 +33,7 @@ CEventClient::CEventClient(const std::string& _name, int _order, bool _synced)
 void CEventClient::Save(zipFile archive) {}
 
 void CEventClient::Update() {}
+void CEventClient::UnsyncedHeightMapUpdate(const CRectangle& rect) {}
 
 void CEventClient::ViewResize() {}
 

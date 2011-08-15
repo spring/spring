@@ -1,13 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include <algorithm>
 #include "System/mmgr.h"
 
 #include "PathCache.h"
 
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 using namespace std;
 
@@ -21,7 +20,10 @@ CPathCache::CPathCache(int blocksX,int blocksZ)
 
 CPathCache::~CPathCache(void)
 {
-	logOutput.Print("Path cache hits %i %.0f%%",numCacheHits,(numCacheHits+numCacheMisses)!=0 ? float(numCacheHits)/float(numCacheHits+numCacheMisses)*100.0f : 0.0f);
+	LOG("Path cache hits %i %.0f%%",
+			numCacheHits, ((numCacheHits + numCacheMisses) != 0)
+			? (float(numCacheHits) / float(numCacheHits + numCacheMisses) * 100.0f)
+			: 0.0f);
 	for(std::map<unsigned int,CacheItem*>::iterator ci=cachedPaths.begin();ci!=cachedPaths.end();++ci)
 		delete ci->second;
 }

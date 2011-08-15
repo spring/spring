@@ -98,6 +98,55 @@ LevelOfSupport CAIInterfaceLibrary::GetLevelOfSupportFor(
 	//}
 }
 
+int CAIInterfaceLibrary::GetSkirmishAICount() const {
+
+	int numLookupSkirmishAIs = 0;
+
+	if (sAIInterfaceLibrary.listSkirmishAILibraries != NULL) {
+		numLookupSkirmishAIs = sAIInterfaceLibrary.listSkirmishAILibraries(interfaceId);
+	}
+
+	return numLookupSkirmishAIs;
+}
+
+std::map<std::string, std::string> CAIInterfaceLibrary::GetSkirmishAIInfos(int aiIndex) const {
+
+	std::map<std::string, std::string> lookupInfos;
+
+	const bool libSupportsLookup =
+			(sAIInterfaceLibrary.listSkirmishAILibraries != NULL)
+			&& (sAIInterfaceLibrary.listSkirmishAILibraryInfos != NULL)
+			&& (sAIInterfaceLibrary.listSkirmishAILibraryInfoKey != NULL)
+			&& (sAIInterfaceLibrary.listSkirmishAILibraryInfoValue != NULL);
+	if (libSupportsLookup) {
+		const int numLookupInfos = sAIInterfaceLibrary.listSkirmishAILibraryInfos(interfaceId, aiIndex);
+		for (int i = 0; i < numLookupInfos; ++i) {
+			const char* key = sAIInterfaceLibrary.listSkirmishAILibraryInfoKey(interfaceId, aiIndex, i);
+			const char* value = sAIInterfaceLibrary.listSkirmishAILibraryInfoValue(interfaceId, aiIndex, i);
+			lookupInfos[key] = value;
+		}
+	}
+
+	return lookupInfos;
+}
+
+std::string CAIInterfaceLibrary::GetSkirmishAIOptions(int aiIndex) const {
+
+	std::string lookupOptions;
+
+	const bool libSupportsLookup =
+			(sAIInterfaceLibrary.listSkirmishAILibraries != NULL)
+			&& (sAIInterfaceLibrary.listSkirmishAILibraryOptions != NULL);
+	if (libSupportsLookup) {
+		const char* rawLuaOptions = sAIInterfaceLibrary.listSkirmishAILibraryOptions(interfaceId, aiIndex);
+		if (rawLuaOptions != NULL) {
+			lookupOptions = rawLuaOptions;
+		}
+	}
+
+	return lookupOptions;
+}
+
 int CAIInterfaceLibrary::GetLoadCount() const {
 
 	int totalSkirmishAILibraryLoadCount = 0;
@@ -128,6 +177,17 @@ static int CALLING_CONV handleEvent_empty(int teamId, int receiver, const void* 
 }
 
 
+struct SSkirmishAILibrary* CAIInterfaceLibrary::NewEmptyInterfaceLib() {
+
+	struct SSkirmishAILibrary* sLibEmpty = new SSkirmishAILibrary();
+
+	sLibEmpty->getLevelOfSupportFor = NULL;
+	sLibEmpty->init = NULL;
+	sLibEmpty->release = NULL;
+	sLibEmpty->handleEvent = handleEvent_empty;
+
+	return sLibEmpty;
+}
 
 // Skirmish AI methods
 const CSkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const CSkirmishAILibraryInfo& aiInfo) {
@@ -152,15 +212,10 @@ const CSkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const CSki
 				skirmishAIKey.GetInterface().GetShortName().c_str(),
 				skirmishAIKey.GetInterface().GetVersion().c_str()
 			);
-			struct SSkirmishAILibrary* sLib_empty = new SSkirmishAILibrary();
-			sLib_empty->getLevelOfSupportFor = NULL;
-			sLib_empty->init = NULL;
-			sLib_empty->release = NULL;
-			sLib_empty->handleEvent = handleEvent_empty;
-			// NOTE: this causes a memory leack
-			// as it is never freed anywhere()
-			// no problem because it is used till the end of the game anyway.
-			sLib = sLib_empty;
+			// NOTE: this causes a memory leak
+			// as it is never deleted.
+			// no problem, because it is used till the end of the game anyway.
+			sLib = NewEmptyInterfaceLib();
 		}
 		ai = new CSkirmishAILibrary(*sLib, skirmishAIKey);
 		loadedSkirmishAILibraries[skirmishAIKey] = ai;
@@ -288,6 +343,29 @@ int CAIInterfaceLibrary::InitializeFromLib(const std::string& libFilePath) {
 		reportInterfaceFunctionError(&libFilePath, &funcName);
 		return -6;
 	}
+
+	sAIInterfaceLibrary.listSkirmishAILibraries
+			= (int (CALLING_CONV_FUNC_POINTER *)(int interfaceId))
+			sharedLib->FindAddress(funcName.c_str());
+
+	sAIInterfaceLibrary.listSkirmishAILibraryInfos
+			= (int (CALLING_CONV_FUNC_POINTER *)(int interfaceId, int aiIndex))
+			sharedLib->FindAddress(funcName.c_str());
+
+	sAIInterfaceLibrary.listSkirmishAILibraryInfoKey
+			= (const char* (CALLING_CONV_FUNC_POINTER *)(int interfaceId,
+			int aiIndex, int infoIndex))
+			sharedLib->FindAddress(funcName.c_str());
+
+	sAIInterfaceLibrary.listSkirmishAILibraryInfoValue
+			= (const char* (CALLING_CONV_FUNC_POINTER *)(int interfaceId,
+			int aiIndex, int infoIndex))
+			sharedLib->FindAddress(funcName.c_str());
+
+	sAIInterfaceLibrary.listSkirmishAILibraryOptions
+			= (const char* (CALLING_CONV_FUNC_POINTER *)(int interfaceId,
+			int aiIndex))
+			sharedLib->FindAddress(funcName.c_str());
 
 	return 0;
 }

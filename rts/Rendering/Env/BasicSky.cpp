@@ -4,7 +4,6 @@
 #pragma warning(disable:4258)
 #endif
 
-#include "System/StdAfx.h"
 #include <assert.h>
 #include "System/mmgr.h"
 

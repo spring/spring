@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 /* heavily based on CobInstance.cpp */
-#include "System/StdAfx.h"
 #include "UnitScript.h"
 
 #include "CobDefines.h"
@@ -19,7 +18,7 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/MoveTypes/AirMoveType.h"
+#include "Sim/MoveTypes/AAirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -42,7 +41,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/FastMath.h"
 #include "System/myMath.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
@@ -129,7 +128,7 @@ bool CUnitScript::MoveToward(float &cur, float dest, float speed)
 {
 	const float delta = dest - cur;
 
-	if (streflop::fabsf(delta) <= speed) {
+	if (math::fabsf(delta) <= speed) {
 		cur = dest;
 		return true;
 	}
@@ -162,7 +161,7 @@ bool CUnitScript::TurnToward(float &cur, float dest, float speed)
 		delta += TWOPI;
 	}
 
-	if (streflop::fabsf(delta) <= speed) {
+	if (math::fabsf(delta) <= speed) {
 		cur = dest;
 		return true;
 	}
@@ -193,7 +192,7 @@ bool CUnitScript::DoSpin(float &cur, float dest, float &speed, float accel, int 
 
 	// Check if we are not at the final speed and
 	// make sure we dont go past desired speed
-	if (streflop::fabsf(delta) <= accel) {
+	if (math::fabsf(delta) <= accel) {
 		speed = dest;
 		if (speed == 0.0f)
 			return true;
@@ -818,7 +817,7 @@ void CUnitScript::Explode(int piece, int flags)
 			if ((flags & PF_Fire) && ph->particleSaturation < 0.95f) { newflags |= PF_Fire; }
 			if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
 
-			//logOutput.Print("Exploding %s as %d", script.pieceNames[piece].c_str(), dl);
+			//LOG_L(L_DEBUG, "Exploding %s as %d", script.pieceNames[piece].c_str(), dl);
 			new CPieceProjectile(pos, speed, pieceData, newflags,unit,0.5f);
 		}
 	}
@@ -1040,7 +1039,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case POW:
 		return int(pow(((float)p1)/COBSCALE,((float)p2)/COBSCALE)*COBSCALE);
 	case PRINT:
-		logOutput.Print("Value 1: %d, 2: %d, 3: %d, 4: %d", p1, p2, p3, p4);
+		LOG("Value 1: %d, 2: %d, 3: %d, 4: %d", p1, p2, p3, p4);
 		break;
 	case HEADING: {
 		if (p1 <= 0) {
@@ -1220,11 +1219,11 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case ABS:
 		return abs(p1);
 	case KSIN:
-		return int(1024*streflop::sinf(TAANG2RAD*(float)p1));
+		return int(1024*math::sinf(TAANG2RAD*(float)p1));
 	case KCOS:
-		return int(1024*streflop::cosf(TAANG2RAD*(float)p1));
+		return int(1024*math::cosf(TAANG2RAD*(float)p1));
 	case KTAN:
-		return int(1024*streflop::tanf(TAANG2RAD*(float)p1));
+		return int(1024*math::tanf(TAANG2RAD*(float)p1));
 	case SQRT:
 		return int(math::sqrt((float)p1));
 	case FLANK_B_MODE:
@@ -1382,8 +1381,9 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			return 0;
 		}
 		else {
-			logOutput.Print("CobError: Unknown get constant %d  (params = %d %d %d %d)",
-			                val, p1, p2, p3, p4);
+			LOG_L(L_ERROR,
+					"CobError: Unknown get constant %d (params = %d %d %d %d)",
+					val, p1, p2, p3, p4);
 		}
 	}
 #endif
@@ -1601,13 +1601,13 @@ void CUnitScript::SetUnitVal(int val, int param)
 			break;
 		}
 		case CRASHING: {
-			if (dynamic_cast<CAirMoveType*>(unit->moveType)) {
+			AAirMoveType* amt = dynamic_cast<AAirMoveType*>(unit->moveType);
+			if (amt != NULL) {
 				if (!!param) {
-					((CAirMoveType*)unit->moveType)->SetState(AAirMoveType::AIRCRAFT_CRASHING);
+					amt->SetState(AAirMoveType::AIRCRAFT_CRASHING);
 				} else {
-					unit->crashing = false;
-					((CAirMoveType*)unit->moveType)->aircraftState = AAirMoveType::AIRCRAFT_TAKEOFF;
-					((CAirMoveType*)unit->moveType)->SetState(AAirMoveType::AIRCRAFT_FLYING);
+					amt->aircraftState = AAirMoveType::AIRCRAFT_TAKEOFF;
+					amt->SetState(AAirMoveType::AIRCRAFT_FLYING);
 				}
 			}
 			break;
@@ -1659,7 +1659,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 				unitVars[val - UNIT_VAR_START] = param;
 			}
 			else {
-				logOutput.Print("CobError: Unknown set constant %d", val);
+				LOG_L(L_ERROR, "CobError: Unknown set constant %d", val);
 			}
 		}
 	}
@@ -1688,12 +1688,12 @@ void CUnitScript::BenchmarkScript(CUnitScript* script)
 		end = SDL_GetTicks();
 	}
 
-	logOutput.Print("%d0000 calls in %u ms -> %.0f calls/second",
-	                count, end - start, float(count) * (10000 / (duration / 1000)));
+	LOG("%d0000 calls in %u ms -> %.0f calls/second",
+			count, end - start, float(count) * (10000 / (duration / 1000)));
 }
 
 
-void CUnitScript::BenchmarkScript(const string& unitname)
+void CUnitScript::BenchmarkScript(const std::string& unitname)
 {
 	std::list<CUnit*>::iterator ui = uh->activeUnits.begin();
 	for (; ui != uh->activeUnits.end(); ++ui) {

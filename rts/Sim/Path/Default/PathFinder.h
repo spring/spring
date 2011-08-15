@@ -40,8 +40,6 @@ public:
 	 *   Could also be used to put constraints on the searchspace used.
 	 * @param path If any path could be found, it will be generated and put into
 	 *   this structure.
-	 * @param moveMathOpt MoveMath options. Used to tell what types of objects
-	 *   that could be considered as blocking objects.
 	 * @param exactPath Overrides the return of the "closest" path.
 	 *   If this option is true, a path is returned only if it's completed all
 	 *   the way to the goal defined in pfDef. All SearchResult::OutOfRange are
@@ -53,8 +51,8 @@ public:
 	IPath::SearchResult GetPath(
 		const MoveData& moveData,
 		const float3& startPos,
-		const CPathFinderDef&,
-		IPath::Path&,
+		const CPathFinderDef& pfDef,
+		IPath::Path& path,
 		bool testMobile,
 		bool exactPath,
 		unsigned int maxSearchedNodes,

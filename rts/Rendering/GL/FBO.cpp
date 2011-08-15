@@ -5,7 +5,6 @@
  * EXT_framebuffer_object class implementation
  */
 
-#include "System/StdAfx.h"
 #include <assert.h>
 #include <vector>
 #include "System/mmgr.h"

@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "VFSHandler.h"
@@ -131,7 +130,7 @@ CVFSHandler::~CVFSHandler()
 std::string CVFSHandler::GetNormalizedPath(const std::string& rawPath)
 {
 	std::string path = StringToLower(rawPath);
-	filesystem.ForwardSlashes(path);
+	FileSystem::ForwardSlashes(path);
 	return path;
 }
 
@@ -179,7 +178,7 @@ bool CVFSHandler::FileExists(const std::string& filePath)
 		return false;
 	}
 
-	if (fileData->ar->FileExists(normalizedPath)) {
+	if (!fileData->ar->FileExists(normalizedPath)) {
 		// the file does not exist in the archive
 		return false;
 	}
@@ -212,7 +211,7 @@ std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir)
 	}
 
 	while (filesStart != filesEnd) {
-		const std::string path = filesystem.GetDirectory(filesStart->first);
+		const std::string path = FileSystem::GetDirectory(filesStart->first);
 
 		// Check if this file starts with the dir path
 		if (path.compare(0, dir.length(), dir) == 0) {
@@ -262,7 +261,7 @@ std::vector<std::string> CVFSHandler::GetDirsInDir(const std::string& rawDir)
 	std::set<std::string> dirs;
 
 	while (filesStart != filesEnd) {
-		const std::string path = filesystem.GetDirectory(filesStart->first);
+		const std::string path = FileSystem::GetDirectory(filesStart->first);
 		// Test to see if this file start with the dir path
 		if (path.compare(0, dir.length(), dir) == 0) {
 			// Strip pathname

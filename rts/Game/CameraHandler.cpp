@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include <cstdlib>
 
 #include "System/mmgr.h"
@@ -20,7 +19,7 @@
 #include "Camera/OrbitController.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 CONFIG(std::string, CamModeName).defaultValue("");
 
@@ -357,12 +356,13 @@ void CCameraHandler::PushAction(const Action& action)
 	else if (cmd == "viewsave") {
 		if (!action.extra.empty()) {
 			SaveView(action.extra);
-			logOutput.Print("Saved view: " + action.extra);
+			LOG("Saved view: %s", action.extra.c_str());
 		}
 	}
 	else if (cmd == "viewload") {
-		if (!LoadView(action.extra))
-			logOutput.Print("Loading view failed!");
+		if (!LoadView(action.extra)) {
+			LOG_L(L_WARNING, "Loading view failed!");
+		}
 	}
 	else if (cmd == "toggleoverview") {
 		ToggleOverviewCamera();

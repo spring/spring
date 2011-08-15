@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "OverviewController.h"
@@ -8,7 +7,7 @@
 #include "Map/Ground.h"
 #include "Game/UI/MiniMap.h"
 #include "Game/UI/MouseHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 COverviewController::COverviewController()
 {
@@ -67,7 +66,7 @@ float3 COverviewController::SwitchFrom() const
 void COverviewController::SwitchTo(bool showText)
 {
 	if (showText) {
-		logOutput.Print("Switching to Overview style camera");
+		LOG("Switching to Overview style camera");
 	}
 
 	if (!globalRendering->dualScreenMode) {

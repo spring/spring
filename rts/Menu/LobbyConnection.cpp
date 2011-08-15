@@ -1,9 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifdef _MSC_VER
-#include "System/StdAfx.h"
-#endif
 #include "LobbyConnection.h"
+#include "System/Platform/Win/win32.h"
 
 #include <boost/bind.hpp>
 
@@ -12,7 +10,7 @@
 #include "Game/GameVersion.h"
 #include "aGui/Gui.h"
 
-CONFIG(std::string, LobbyServer).defaultValue("taspringmaster.clan-sy.com");
+CONFIG(std::string, LobbyServer).defaultValue("lobby.springrts.com");
 
 LobbyConnection::LobbyConnection() : upwin(NULL)
 {

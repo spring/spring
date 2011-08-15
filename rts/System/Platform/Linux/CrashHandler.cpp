@@ -18,7 +18,7 @@
 #include <SDL_events.h>
 
 #include "thread_backtrace.h"
-#include "System/FileSystem/FileSystemHandler.h"
+#include "System/FileSystem/FileSystem.h"
 #include "Game/GameVersion.h"
 #include "System/Log/ILog.h"
 #include "System/LogOutput.h"
@@ -105,18 +105,18 @@ static std::string LocateSymbolFile(const std::string& binaryFile)
 
 	if (bin_ext.length() > 0) {
 		symbolFile = bin_path + '/' + bin_file + bin_ext + ".dbg";
-		if (FileSystemHandler::IsReadableFile(symbolFile)) {
+		if (FileSystem::IsReadableFile(symbolFile)) {
 			return symbolFile;
 		}
 	}
 
 	symbolFile = bin_path + '/' + bin_file + ".dbg";
-	if (FileSystemHandler::IsReadableFile(symbolFile)) {
+	if (FileSystem::IsReadableFile(symbolFile)) {
 		return symbolFile;
 	}
 
 	symbolFile = debugPath + bin_path + '/' + bin_file + bin_ext;
-	if (FileSystemHandler::IsReadableFile(symbolFile)) {
+	if (FileSystem::IsReadableFile(symbolFile)) {
 		return symbolFile;
 	}
 
@@ -442,7 +442,7 @@ namespace CrashHandler
 	{
 		if (signal == SIGINT) {
 			//! ctrl+c = kill
-			LOG("Got SIGINT! Exiting!");
+			LOG("caught SIGINT, aborting");
 
 			//! first try a clean exit
 			SDL_Event event;
@@ -467,6 +467,8 @@ namespace CrashHandler
 			error = "IO-Error (SIGIO)";
 		} else if (signal == SIGABRT) {
 			error = "Aborted (SIGABRT)";
+		} else if (signal == SIGFPE) {
+			error = "FloatingPointException (SIGFPE)";
 		} else {
 			//! we should never get here
 			error = "Unknown signal";
@@ -477,7 +479,7 @@ namespace CrashHandler
 		bool keepRunning = false;
 		Stacktrace(&keepRunning);
 
-		//! only try to keep on running for these signals
+		//! don't try to keep on running after these signals
 		if (keepRunning &&
 		    (signal != SIGSEGV) &&
 		    (signal != SIGILL) &&
@@ -528,6 +530,7 @@ namespace CrashHandler
 		signal(SIGILL,  HandleSignal); //! illegal instruction
 		signal(SIGPIPE, HandleSignal); //! maybe some network error
 		signal(SIGIO,   HandleSignal); //! who knows?
+		signal(SIGFPE,  HandleSignal); //! div0 and more
 		signal(SIGABRT, HandleSignal);
 		signal(SIGINT,  HandleSignal);
 	}
@@ -537,6 +540,7 @@ namespace CrashHandler
 		signal(SIGILL,  SIG_DFL);
 		signal(SIGPIPE, SIG_DFL);
 		signal(SIGIO,   SIG_DFL);
+		signal(SIGFPE,  SIG_DFL);
 		signal(SIGABRT, SIG_DFL);
 		signal(SIGINT,  SIG_DFL);
 	}

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _I_LOG_H
-#define _I_LOG_H
+#ifndef I_LOG_H
+#define I_LOG_H
 
 /*
  * Logging API
@@ -253,11 +253,10 @@ extern void log_frontend_record(const char* section, int level, const char* fmt,
 // API
 
 /**
+ * @name logging_api
  * Only stuff from in this doc-group should ever be used by clients of this API.
- *
- * @addtogroup logging_api
- * @{
  */
+///@{
 
 /**
  * Register a section name with the underlying log record processing system.
@@ -282,13 +281,14 @@ extern void log_frontend_record(const char* section, int level, const char* fmt,
  * enabled at compile-time.
  * This might return true, even if the back-end will ignore the message anyway.
  * You should consider using the LOG_IS_ENABLED macro instead (recommended).
- * This may be used with the preprocessor directly (in an #if statement):
- * <code>
+ * This may be used with the preprocessor directly
+ * (in an @code #if @endcode statement):
+ * @code
  * #if LOG_IS_ENABLED_STATIC(L_DEBUG)
  *   const int statistics = calculateStats(); // performance-heavy
  *   LOG(L_DEBUG, "the stats: %i", statistics);
  * #endif
- * </code>
+ * @endcode
  * @see LOG_IS_ENABLED_STATIC_S
  * @see LOG_IS_ENABLED
  */
@@ -381,7 +381,7 @@ extern void log_frontend_record(const char* section, int level, const char* fmt,
 #define LOG_SL(section, level, fmt, ...) \
 	_LOG_SECTION(section, level, fmt, ##__VA_ARGS__)
 
-/** @} */ // group logging_api
+///@}
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -390,4 +390,4 @@ extern void log_frontend_record(const char* section, int level, const char* fmt,
 } // extern "C"
 #endif
 
-#endif // _I_LOG_H
+#endif // I_LOG_H

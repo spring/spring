@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 
 #include <set>
 #include <string>
@@ -33,8 +32,6 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/MoveTypes/MoveInfo.h"
-#include "Sim/MoveTypes/AirMoveType.h"
-#include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
@@ -784,7 +781,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("canCapture",            ud.canCapture);
 	ADD_BOOL("canResurrect",          ud.canResurrect);
 	ADD_BOOL("canLoopbackAttack",     ud.canLoopbackAttack);
-	ADD_BOOL("canCrash",              ud.canCrash);
+	ADD_BOOL("canCrash",              ud.canLoopbackAttack); // NOTE: deprecated, remove after 0.83.*
 	ADD_BOOL("canFireControl",        ud.canFireControl);
 	ADD_INT( "fireState",             ud.fireState);
 	ADD_INT( "moveState",             ud.moveState);

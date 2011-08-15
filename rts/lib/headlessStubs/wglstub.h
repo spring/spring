@@ -4,7 +4,8 @@
 #define _WGL_STUB_H_
 
 #ifdef WIN32
-#include <windows.h>
+#include "System/Platform/Win/win32.h"
+#include <wingdi.h>
 WINGDIAPI PROC WINAPI wglGetProcAddress(LPCSTR);
 #endif
 

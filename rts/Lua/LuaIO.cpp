@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -20,6 +19,7 @@ using std::string;
 #include "LuaHandle.h"
 #endif // !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 #include "LuaInclude.h"
+#include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
 
@@ -66,7 +66,7 @@ bool LuaIO::SafeExecPath(const string& path)
 
 bool LuaIO::SafeReadPath(const string& path)
 {
-	return filesystem.InReadDir(path);
+	return dataDirsAccess.InReadDir(path);
 }
 
 
@@ -81,13 +81,13 @@ bool LuaIO::SafeWritePath(const string& path)
 #endif // !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 	const size_t numExtensions = 5;
 	const char* exeFiles[numExtensions] = {"exe", "dll", "so", "bat", "com"};
-	const string ext = filesystem.GetExtension(path);
+	const string ext = FileSystem::GetExtension(path);
 	for (size_t i = 0; i < numExtensions; ++i)
 	{
 		if (ext == exeFiles[i])
 			return false;
 	}
-	return filesystem.InWriteDir(path, prefix);
+	return dataDirsAccess.InWriteDir(path, prefix);
 }
 
 

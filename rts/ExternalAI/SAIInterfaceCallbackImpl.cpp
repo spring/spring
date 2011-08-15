@@ -18,8 +18,9 @@ using std::sprintf;
 #include "ExternalAI/Interface/AISCommands.h"         // for ABI version
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"  // for ABI version
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h" // for ABI version and AI_INTERFACE_PROPERTY_*
-#include "System/FileSystem/FileSystem.h"
-#include "System/FileSystem/FileSystemHandler.h"
+#include "System/FileSystem/DataDirsAccess.h"
+#include "System/FileSystem/FileQueryFlags.h"
+#include "System/FileSystem/DataDirLocater.h"
 #include "System/Log/ILog.h"
 
 #include <vector>
@@ -174,14 +175,12 @@ EXPORT(char) aiInterfaceCallback_DataDirs_getPathSeparator(int UNUSED_interfaceI
 }
 EXPORT(int) aiInterfaceCallback_DataDirs_Roots_getSize(int UNUSED_interfaceId) {
 
-	const std::vector<std::string> &dds =
-			FileSystemHandler::GetInstance().GetDataDirectories();
+	const std::vector<std::string>& dds = dataDirLocater.GetDataDirPaths();
 	return dds.size();
 }
 EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_getDir(int UNUSED_interfaceId, char* path, int path_sizeMax, int dirIndex) {
 
-	const std::vector<std::string> &dds =
-			FileSystemHandler::GetInstance().GetDataDirectories();
+	const std::vector<std::string>& dds = dataDirLocater.GetDataDirPaths();
 	size_t numDataDirs = dds.size();
 	if (dirIndex >= 0 && (size_t)dirIndex < numDataDirs) {
 		STRCPYS(path, path_sizeMax, dds[dirIndex].c_str());
@@ -196,9 +195,9 @@ EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_locatePath(int UNUSED_interfaceI
 
 	int locateFlags = 0;
 	if (writeable) {
-		locateFlags = locateFlags | FileSystem::WRITE;
+		locateFlags = locateFlags | FileQueryFlags::WRITE;
 		if (create) {
-			locateFlags = locateFlags | FileSystem::CREATE_DIRS;
+			locateFlags = locateFlags | FileQueryFlags::CREATE_DIRS;
 		}
 	}
 	std::string locatedPath = "";
@@ -207,9 +206,9 @@ EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_locatePath(int UNUSED_interfaceI
 	STRCPYS(tmpRelPath, tmpRelPath_size, relPath);
 	std::string tmpRelPathStr = tmpRelPath;
 	if (dir) {
-		locatedPath = filesystem.LocateDir(tmpRelPathStr, locateFlags);
+		locatedPath = dataDirsAccess.LocateDir(tmpRelPathStr, locateFlags);
 	} else {
-		locatedPath = filesystem.LocateFile(tmpRelPathStr, locateFlags);
+		locatedPath = dataDirsAccess.LocateFile(tmpRelPathStr, locateFlags);
 	}
 	exists = (locatedPath != relPath);
 	STRCPYS(path, path_sizeMax, locatedPath.c_str());

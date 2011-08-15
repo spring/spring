@@ -164,6 +164,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.3.2</version> <!-- default version is 2.0.2, which does output compielr errors as INFO with "\-\-quiet", but we need them as ERROR -->
 				<configuration>
 					<source>1.5</source>
 					<target>1.5</target>

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef BOMBDROPPER_H
-#define BOMBDROPPER_H
+#ifndef BOMB_DROPPER_H
+#define BOMB_DROPPER_H
 
 #include "Weapon.h"
 
@@ -12,18 +12,20 @@ public:
 	void Update();
 	CBombDropper(CUnit* owner, bool useTorps);
 	virtual ~CBombDropper();
-	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
-	void Init(void);
+	bool TryTarget(const float3& pos, bool userTarget, CUnit* unit);
+	void Init();
 	bool AttackUnit(CUnit* unit, bool userTarget);
 	bool AttackGround(float3 pos, bool userTarget);
-	void SlowUpdate(void);
+	void SlowUpdate();
 
-	bool dropTorpedoes;			//if we should drop torpedoes
-	float bombMoveRange;		//range of bombs (torpedoes) after they hit ground/water
+	/// if we should drop torpedoes
+	bool dropTorpedoes;
+	/// range of bombs (torpedoes) after they hit ground/water
+	float bombMoveRange;
 	float tracking;
 
 private:
-	virtual void FireImpl(void);
+	virtual void FireImpl();
 };
 
-#endif /* BOMBDROPPER_H */
+#endif /* BOMB_DROPPER_H */

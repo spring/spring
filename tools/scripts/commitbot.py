@@ -86,7 +86,7 @@ class SvnLook:
 
 class TasServer:
 
-	server_address = "taspringmaster.clan-sy.com"
+	server_address = "lobby.springrts.com"
 	server_port = 8200
 
 	username = "CommitBot"

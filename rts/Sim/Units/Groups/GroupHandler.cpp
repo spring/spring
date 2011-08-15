@@ -3,7 +3,6 @@
 #include <boost/cstdint.hpp>
 #include <SDL_keysym.h>
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "lib/gml/gml.h"
@@ -14,7 +13,7 @@
 #include "Game/Camera/CameraController.h"
 #include "Game/CameraHandler.h"
 #include "Sim/Units/Unit.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/FileSystem.h"
@@ -156,7 +155,7 @@ void CGroupHandler::RemoveGroup(CGroup* group)
 	GML_RECMUTEX_LOCK(grpsel); // RemoveGroup
 
 	if (group->id < FIRST_SPECIAL_GROUP) {
-		logOutput.Print("Warning: Trying to remove hot-key group %i", group->id);
+		LOG_L(L_WARNING, "Trying to remove hot-key group %i", group->id);
 		return;
 	}
 	if (selectedUnits.selectedGroup == group->id) {

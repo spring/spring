@@ -3,16 +3,31 @@
 #ifndef WINDOWS_H_INCLUDED
 #define WINDOWS_H_INCLUDED
 
-	#ifdef _WIN32
+#ifdef _WIN32
 	#ifndef NOMINMAX
-	#define NOMINMAX
+		#define NOMINMAX
 	#endif
+	#ifndef VC_EXTRALEAN
+		// Exclude rarely-used stuff from Windows headers
+		#define VC_EXTRALEAN
+	#endif
+
+	// do not include <cmath> or <math.h> before this, it'll cause ambiguous call er
+	#include "lib/streflop/streflop_cond.h"
+
 	#include <windows.h>
 
 		#undef  PlaySound
 		#define PlaySound  use_PlaySample_instead_of_PlaySound
 
 		#undef CreateDirectory
+		#undef DeleteFile
+		#undef SendMessage
+		#undef GetCharWidth
+		#undef far
+		#undef near
+		#undef FAR
+		#undef NEAR
 
 		// std min&max are used instead of the macros
 		#ifdef min
@@ -20,6 +35,6 @@
 			#undef max
 		#endif
 
-	#endif // _WIN32
+#endif // _WIN32
 
 #endif // WINDOWS_H_INCLUDED

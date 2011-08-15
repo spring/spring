@@ -11,7 +11,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h> // SPRING
 
 
 /* This file uses only the official API of Lua.
@@ -175,16 +174,30 @@ LUALIB_API const char *luaL_optlstring (lua_State *L, int narg,
 }
 
 
-// this is used by luaL_optnumber, luaL_optfloat (via luaL_optnumber),
-// and luaL_checkfloat, so the asserts should cover 90% of all cases
-// in which non-numbers can infect the engine -- lua_tofloat asserts
-// take care of the rest
 LUALIB_API lua_Number luaL_checknumber (lua_State *L, int narg) {
   lua_Number d = lua_tonumber(L, narg);
   if (d == 0 && !lua_isnumber(L, narg))  /* avoid extra test when d is not 0 */
     tag_error(L, narg, LUA_TNUMBER);
-  assert(!math::isinf(d));
-  assert(!math::isnan(d));
+
+#ifdef DEBUG
+  // SPRING
+  //   this is used by luaL_optnumber, luaL_optfloat (via luaL_optnumber),
+  //   and luaL_checkfloat, so the asserts should cover 90% of all cases
+  //   in which non-numbers can infect the engine -- lua_tofloat asserts
+  //   take care of the rest
+  if (math::isinf(d) || math::isnan(d)) luaL_argerror(L, narg, "number expected, got NAN (check your code for div0)");
+  //assert(!math::isinf(d));
+  //assert(!math::isnan(d));
+#endif
+
+  return d;
+}
+
+LUALIB_API lua_Number luaL_checknumber_noassert (lua_State *L, int narg) {
+  lua_Number d = lua_tonumber(L, narg);
+  if (d == 0 && !lua_isnumber(L, narg))  /* avoid extra test when d is not 0 */
+    tag_error(L, narg, LUA_TNUMBER);
+
   return d;
 }
 

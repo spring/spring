@@ -176,3 +176,4 @@ public:
 #define GML_LODMUTEX_LOCK(unit) GML_OBJMUTEX_LOCK(lod, GML_DRAW|GML_SIM, unit->)
 
 #endif
+

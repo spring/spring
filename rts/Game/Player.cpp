@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include <assert.h>
 
 #include "System/mmgr.h"
@@ -22,7 +21,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "System/myMath.h"
 #include "System/EventHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 CR_BIND(CPlayer,);
 
@@ -181,12 +180,11 @@ void CPlayer::StartControllingUnit()
 
 		if (newControlleeUnit->fpsControlPlayer != NULL) {
 			if (this->playerNum == gu->myPlayerNum) {
-				logOutput.Print(
-					"player %d (%s) is already controlling unit %d",
-					newControlleeUnit->fpsControlPlayer->playerNum,
-					newControlleeUnit->fpsControlPlayer->name.c_str(),
-					newControlleeUnit->id
-				);
+				LOG_L(L_WARNING,
+						"player %d (%s) is already controlling unit %d",
+						newControlleeUnit->fpsControlPlayer->playerNum,
+						newControlleeUnit->fpsControlPlayer->name.c_str(),
+						newControlleeUnit->id);
 			}
 
 			return;

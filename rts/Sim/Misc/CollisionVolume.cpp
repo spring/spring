@@ -1,12 +1,18 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "CollisionVolume.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/mmgr.h"
 
 
-static CLogSubsystem LOG_COLVOL("CollisionVolume");
+#define LOG_SECTION_COLVOL "CollisionVolume"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_COLVOL)
+
+// use the specific section for all LOG*() calls in this source file
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_COLVOL
 
 
 CR_BIND(CollisionVolume, );
@@ -82,8 +88,6 @@ CollisionVolume::CollisionVolume(const CollisionVolume* v, float defaultRadius)
 
 CollisionVolume::CollisionVolume(const std::string& volTypeString, const float3& scales, const float3& offsets, int hitTestType)
 {
-	static const char* fmtString = "[%s] %s (scale: <%.2f, %.2f, %.2f>, offsets: <%.2f, %.2f, %.2f>, test-type: %d, axis: %d)";
-
 	int volType = COLVOL_TYPE_FOOTPRINT;
 	int volAxis = COLVOL_AXIS_Z;
 
@@ -107,20 +111,31 @@ CollisionVolume::CollisionVolume(const std::string& volTypeString, const float3&
 		}
 	}
 
+	const char* typeStr = NULL;
 	switch (volType) {
 		case COLVOL_TYPE_ELLIPSOID: {
-			logOutput.Print(LOG_COLVOL, fmtString, __FUNCTION__, "ellipsoid", scales.x, scales.y, scales.z, offsets.x, offsets.y, offsets.z, hitTestType, volAxis);
+			typeStr = "ellipsoid";
 		} break;
 		case COLVOL_TYPE_CYLINDER: {
-			logOutput.Print(LOG_COLVOL, fmtString, __FUNCTION__, "cylinder", scales.x, scales.y, scales.z, offsets.x, offsets.y, offsets.z, hitTestType, volAxis);
+			typeStr = "cylinder";
 		} break;
 		case COLVOL_TYPE_BOX: {
-			logOutput.Print(LOG_COLVOL, fmtString, __FUNCTION__, "cuboid", scales.x, scales.y, scales.z, offsets.x, offsets.y, offsets.z, hitTestType, volAxis);
+			typeStr = "cuboid";
 		} break;
 		case COLVOL_TYPE_FOOTPRINT: {
-			logOutput.Print(LOG_COLVOL, fmtString, __FUNCTION__, "footprint", scales.x, scales.y, scales.z, offsets.x, offsets.y, offsets.z, hitTestType, volAxis);
+			typeStr = "footprint";
 		} break;
 		default: {} break;
+	}
+	if (typeStr != NULL) {
+		LOG_L(L_DEBUG,
+				"%s (scale: <%.2f, %.2f, %.2f>, "
+				"offsets: <%.2f, %.2f, %.2f>, "
+				"test-type: %d, axis: %d)",
+				typeStr,
+				scales.x, scales.y, scales.z,
+				offsets.x, offsets.y, offsets.z,
+				hitTestType, volAxis);
 	}
 
 	Init(scales, offsets, volType, hitTestType, volAxis);
@@ -155,10 +170,10 @@ void CollisionVolume::Init(const float3& scales, const float3& offsets, int vTyp
 
 	if (volumeType == COLVOL_TYPE_ELLIPSOID) {
 		// if all axes are equal in scale, volume is a sphere (a special-case ellipsoid)
-		if ((streflop::fabsf(adjScales.x - adjScales.y) < EPS) &&
-		    (streflop::fabsf(adjScales.y - adjScales.z) < EPS))
+		if ((math::fabsf(adjScales.x - adjScales.y) < EPS) &&
+		    (math::fabsf(adjScales.y - adjScales.z) < EPS))
 		{
-			logOutput.Print(LOG_COLVOL, "auto-converting spherical COLVOL_TYPE_ELLIPSOID to COLVOL_TYPE_SPHERE");
+			LOG_L(L_DEBUG, "auto-converting spherical COLVOL_TYPE_ELLIPSOID to COLVOL_TYPE_SPHERE");
 			volumeType = COLVOL_TYPE_SPHERE;
 		}
 	}

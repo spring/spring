@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _AI_INTERFACE_LIBRARY_H
-#define _AI_INTERFACE_LIBRARY_H
+#ifndef AI_INTERFACE_LIBRARY_H
+#define AI_INTERFACE_LIBRARY_H
 
 #include "System/Platform/SharedLib.h"
 #include "ExternalAI/Interface/ELevelOfSupport.h"
@@ -15,6 +15,7 @@
 class CAIInterfaceLibraryInfo;
 class CSkirmishAILibrary;
 class CSkirmishAILibraryInfo;
+struct SSkirmishAILibrary;
 
 /**
  * The engines container for an AI Interface library.
@@ -29,6 +30,10 @@ public:
 
 	LevelOfSupport GetLevelOfSupportFor(
 			const std::string& engineVersionString, int engineVersionNumber) const;
+
+	int GetSkirmishAICount() const;
+	std::map<std::string, std::string> GetSkirmishAIInfos(int aiIndex) const;
+	std::string GetSkirmishAIOptions(int aiIndex) const;
 
 	/**
 	 * @brief	how many times is this interface loaded
@@ -85,13 +90,22 @@ public:
 	const bool IsInitialized() const;
 
 private:
-	int interfaceId;
-	struct SAIInterfaceCallback callback;
-	bool initialized;
 	void InitStatic();
 	void ReleaseStatic();
 
-private:
+	static void reportInterfaceFunctionError(const std::string* libFileName,
+			const std::string* functionName);
+	int InitializeFromLib(const std::string& libFilePath);
+
+	std::string FindLibFile();
+
+	struct SSkirmishAILibrary* NewEmptyInterfaceLib();
+
+
+	int interfaceId;
+	struct SAIInterfaceCallback callback;
+	bool initialized;
+
 	std::string libFilePath;
 	SharedLib* sharedLib;
 	SAIInterfaceLibrary sAIInterfaceLibrary;
@@ -99,14 +113,7 @@ private:
 	std::map<const SkirmishAIKey, CSkirmishAILibrary*> loadedSkirmishAILibraries;
 	std::map<const SkirmishAIKey, int> skirmishAILoadCount;
 
-private:
 	static const int MAX_INFOS = 128;
-
-	static void reportInterfaceFunctionError(const std::string* libFileName,
-			const std::string* functionName);
-	int InitializeFromLib(const std::string& libFilePath);
-
-	std::string FindLibFile();
 };
 
-#endif // _AI_INTERFACE_LIBRARY_H
+#endif // AI_INTERFACE_LIBRARY_H

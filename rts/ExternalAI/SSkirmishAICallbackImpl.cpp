@@ -1,5 +1,4 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
-#include "System/StdAfx.h"
 
 #include "ExternalAI/AICallback.h"
 #include "ExternalAI/AICheats.h"
@@ -2522,8 +2521,9 @@ EXPORT(float) skirmishAiCallback_UnitDef_getVerticalSpeed(int skirmishAIId, int 
 	return getUnitDefById(skirmishAIId, unitDefId)->verticalSpeed;
 }
 
+// DEPRECATED
 EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToCrash(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->canCrash;
+	return false;
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isHoverAttack(int skirmishAIId, int unitDefId) {
@@ -4123,7 +4123,7 @@ EXPORT(float) skirmishAiCallback_WeaponDef_getTurnRate(int skirmishAIId, int wea
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getMaxVelocity(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->projectilespeed * GAME_SPEED; //deprecated
+	return getWeaponDefById(skirmishAIId, weaponDefId)->projectilespeed * GAME_SPEED; // DEPRECATED
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getProjectileSpeed(int skirmishAIId, int weaponDefId) {
