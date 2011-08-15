@@ -216,17 +216,17 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 
 	// increase range if targets are searched for in a cylinder
 	if (cylinderTargetting > 0.01f) {
-		// const float3 up(0, owner->radius*cylinderTargetting, 0);
-		// const float uplen = up.dot(dir);
-		const float uplen = owner->radius * cylinderTargetting * dir.y;
-		maxLength = math::sqrt(maxLength * maxLength + uplen * uplen);
+		const float verticalDist = owner->radius * cylinderTargetting * dir.y;
+		const float maxLengthModSq = maxLength * maxLength + verticalDist * verticalDist;
+
+		maxLength = math::sqrt(maxLengthModSq);
 	}
+
 
 	// increase range if targetting edge of hitsphere
 	if (targetType == Target_Unit && targetUnit && targetBorder != 0) {
-		maxLength += targetUnit->radius * targetBorder;
+		maxLength += (targetUnit->radius * targetBorder);
 	}
-
 
 
 	// unit at the end of the beam

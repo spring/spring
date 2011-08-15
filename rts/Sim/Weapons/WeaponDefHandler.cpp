@@ -15,13 +15,13 @@
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "Sim/Projectiles/Projectile.h"
+#include "Sim/Units/Scripts/CobInstance.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
+#include "System/myMath.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Sound/ISound.h"
-#include "Sim/Units/Scripts/CobInstance.h"
 
 using std::min;
 using std::max;
@@ -133,16 +133,8 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	wd.type = wdTable.GetString("weaponType", "Cannon");
 
-	const bool melee = (wd.type == "Melee");
-	wd.targetBorder = wdTable.GetFloat("targetBorder", melee ? 1.0f : 0.0f);
-	if (wd.targetBorder > 1.0f) {
-		LOG_L(L_WARNING, "targetBorder truncated to 1 (was %f)", wd.targetBorder);
-		wd.targetBorder = 1.0f;
-	} else if (wd.targetBorder < -1.0f) {
-		LOG_L(L_WARNING, "targetBorder truncated to -1 (was %f)", wd.targetBorder);
-		wd.targetBorder = -1.0f;
-	}
-	wd.cylinderTargetting = wdTable.GetFloat("cylinderTargetting", melee ? 1.0f : 0.0f);
+	wd.targetBorder = Clamp(wdTable.GetFloat("targetBorder", (wd.type == "Melee")? 1.0f : 0.0f), -1.0f, 1.0f);
+	wd.cylinderTargetting = Clamp(wdTable.GetFloat("cylinderTargetting", (wd.type == "Melee")? 1.0f : 0.0f), 0.0f, 128.0f);
 
 	wd.range = wdTable.GetFloat("range", 10.0f);
 	const float accuracy       = wdTable.GetFloat("accuracy",   0.0f);
