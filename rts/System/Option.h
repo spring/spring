@@ -81,6 +81,12 @@ void option_parseOptions(
 		const std::string& accessModes = SPRING_VFS_RAW,
 		std::set<std::string>* optionsSet = NULL);
 
+void option_parseOptionsLuaString(
+		std::vector<Option>& options,
+		const std::string& optionsLuaString,
+		const std::string& accessModes = SPRING_VFS_RAW,
+		std::set<std::string>* optionsSet = NULL);
+
 void option_parseMapOptions(
 		std::vector<Option>& options,
 		const std::string& fileName,

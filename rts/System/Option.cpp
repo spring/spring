@@ -157,15 +157,12 @@ static void option_parseOption(const LuaTable& root, int index, Option& opt,
 }
 
 
-void option_parseOptions(
+static void option_parseOptionsInternal(
 		std::vector<Option>& options,
-		const std::string& fileName,
-		const std::string& fileModes,
-		const std::string& accessModes,
+		LuaParser& luaParser,
+		const std::string& luaSourceDesc,
 		std::set<std::string>* optionsSet)
 {
-	LuaParser luaParser(fileName, fileModes, accessModes);
-
 	if (!luaParser.Execute()) {
 		throw content_error("luaParser.Execute() failed: "
 				+ luaParser.GetErrorLog());
@@ -189,13 +186,34 @@ void option_parseOptions(
 			options.push_back(opt);
 		} catch (const content_error& err) {
 			LOG_L(L_WARNING, "Failed parsing option %d from %s: %s",
-					index, fileName.c_str(), err.what());
+					index, luaSourceDesc.c_str(), err.what());
 		}
 	}
 	if (optionsSet == NULL) {
 		delete myOptionsSet;
 		myOptionsSet = NULL;
 	}
+}
+
+void option_parseOptions(
+		std::vector<Option>& options,
+		const std::string& fileName,
+		const std::string& fileModes,
+		const std::string& accessModes,
+		std::set<std::string>* optionsSet)
+{
+	LuaParser luaParser(fileName, fileModes, accessModes);
+	option_parseOptionsInternal(options, luaParser, fileName, optionsSet);
+}
+
+void option_parseOptionsLuaString(
+		std::vector<Option>& options,
+		const std::string& optionsLuaString,
+		const std::string& accessModes,
+		std::set<std::string>* optionsSet)
+{
+	LuaParser luaParser(optionsLuaString, accessModes);
+	option_parseOptionsInternal(options, luaParser, "<Lua-Text-Chunk>", optionsSet);
 }
 
 
