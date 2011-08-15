@@ -121,24 +121,6 @@ CReadMap::CReadMap():
 CReadMap::~CReadMap()
 {
 	delete metalMap;
-
-	typeMap.clear();
-	slopeMap.clear();
-
-	for (unsigned int n = 0; n < mipCenterHeightMaps.size(); n++) {
-		mipCenterHeightMaps[n].clear();
-	}
-
-	mipCenterHeightMaps.clear();
-	mipPointerHeightMaps.clear();
-	centerHeightMap.clear();
-	originalHeightMap.clear();
-	rawVertexNormals.clear();
-	visVertexNormals.clear();
-	faceNormalsSynced.clear();
-	faceNormalsUnsynced.clear();
-	centerNormalsSynced.clear();
-	centerNormalsUnsynced.clear();
 }
 
 

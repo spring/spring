@@ -261,11 +261,6 @@ CSMFReadMap::~CSMFReadMap()
 {
 	delete groundDrawer;
 
-	cornerHeightMapSynced.clear();
-#ifdef USE_UNSYNCED_HEIGHTMAP
-	cornerHeightMapUnsynced.clear();
-#endif
-
 	if (detailTex        != 0) { glDeleteTextures(1, &detailTex       ); }
 	if (specularTex      != 0) { glDeleteTextures(1, &specularTex     ); }
 	if (minimapTex       != 0) { glDeleteTextures(1, &minimapTex      ); }

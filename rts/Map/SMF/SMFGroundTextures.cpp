@@ -229,14 +229,6 @@ CSMFGroundTextures::~CSMFGroundTextures(void)
 			glDeleteTextures(1, &squares[i].textureID);
 		}
 	}
-
-	tileMap.clear();
-	tiles.clear();
-
-	squares.clear();
-	heightMaxima.clear();
-	heightMinima.clear();
-	stretchFactors.clear();
 }
 
 
