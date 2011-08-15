@@ -90,7 +90,7 @@ do
 	done
 
 	# finally, strip the executable
-	{STRIP} MacOS/${executable}
+	${STRIP} MacOS/${executable}
 done
 
 # continue with recursive dependencies
@@ -122,7 +122,7 @@ do
 				install_name_tool -id @executable_path/../${requiredlib} ${requiredlib}
 
 				# the bundled lib is autonomous => it can be stripped
-				{STRIP} ${requiredlib}
+				${STRIP} ${requiredlib}
 			fi
 
 			# point the parent lib to the bundled lib in relative pathing mode
