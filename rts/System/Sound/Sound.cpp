@@ -59,6 +59,7 @@ CSound::CSound()
 	masterVolume = configHandler->GetInt("snd_volmaster") * 0.01f;
 	Channels::General.SetVolume(configHandler->GetInt("snd_volgeneral") * 0.01f);
 	Channels::UnitReply.SetVolume(configHandler->GetInt("snd_volunitreply") * 0.01f);
+	Channels::UnitReply.SetMaxConcurrent(1);
 	Channels::UnitReply.SetMaxEmmits(1);
 	Channels::Battle.SetVolume(configHandler->GetInt("snd_volbattle") * 0.01f);
 	Channels::UserInterface.SetVolume(configHandler->GetInt("snd_volui") * 0.01f);
