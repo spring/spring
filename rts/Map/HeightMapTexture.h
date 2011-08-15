@@ -5,8 +5,20 @@
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/PBO.h"
+#include "System/EventClient.h"
 
-class HeightMapTexture {
+class HeightMapTexture : public CEventClient
+{
+	public:
+		//! CEventClient interface
+		bool WantsEvent(const std::string& eventName) {
+			return (eventName == "UnsyncedHeightMapUpdate");
+		}
+		bool GetFullRead() const { return true; }
+		int GetReadAllyTeam() const { return AllAccessTeam; }
+
+		void UnsyncedHeightMapUpdate(const SRectangle& rect);
+
 	public:
 		HeightMapTexture();
 		~HeightMapTexture();
@@ -14,7 +26,6 @@ class HeightMapTexture {
 		void Init();
 		void Kill();
 
-		void UpdateArea(int x0, int z0, int x1, int z1);
 		GLuint GetTextureID() const { return texID; }
 		inline GLuint CheckTextureID()
 		{
