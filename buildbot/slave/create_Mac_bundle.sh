@@ -33,7 +33,7 @@ make install DESTDIR=${DEST}
 BUNDLE_NAME=Spring\ ${VERSION}.app
 BUNDLE_BASE=${TMP_PATH}/${BUNDLE_NAME}/Contents
 
-echo Creating ${BUNDLE_NAME}...
+echo "Creating ${BUNDLE_NAME}..."
 
 MACPORTS_BASE=`which port | sed s/[/]bin[/]port//`
 
@@ -41,21 +41,21 @@ mkdir -p ${BUNDLE_BASE}
 cd ${BUNDLE_BASE}
 
 # insert the version number in the Info.plist file
-echo -- installing header file
+echo "-- installing header file"
 cat ${SOURCEDIR}/installer/Mac/Info.plist | sed s/###VERSION###/${VERSION}/ > Info.plist
 
 mkdir MacOS Resources
 
-echo -- installing executables
+echo "-- installing executables"
 mv ${INSTALLDIR}/bin/* MacOS/
 
-echo -- installing application icon
+echo "-- installing application icon"
 cp ${SOURCEDIR}/installer/Mac/spring.icns Resources/
 
-echo -- installing spring libs
+echo "-- installing spring libs"
 mv ${INSTALLDIR}/lib .
 
-echo -- installing game content
+echo "-- installing game content"
 mv ${INSTALLDIR}/share .
 
 # move spring libraries to the executable folder (avoids spring relative path issues)
@@ -64,7 +64,7 @@ mv lib/libunitsync.dylib MacOS/
 # not needed (yet) for the server lib, uncomment if necessary
 #mv lib/libspringserver.dylib MacOS/
 
-echo -- installing 3rd-party libraries (provided by MacPorts)
+echo "-- installing 3rd-party libraries (provided by MacPorts)"
 for executable in `ls MacOS`
 do
 	# for each MacPorts's dylib required by the executable
@@ -72,7 +72,7 @@ do
 	do
 		# dylib =~ "lib/lib*.dylib"
 
-		echo ---- installing ${dylib}
+		echo "---- installing ${dylib}"
 		cp ${MACPORTS_BASE}/${dylib} lib
 
 		# take write permissions on the bundled lib
@@ -111,7 +111,7 @@ do
 				# loop
 				end=0
 
-				echo ---- installing ${requiredlib}
+				echo "---- installing ${requiredlib}"
 				cp ${MACPORTS_BASE}/${requiredlib} lib
 				
 				# take write permissions on the bundled lib
@@ -133,7 +133,7 @@ done
 # here, the bundle should be ready, a little compression and voila
 
 ARCHIVE_NAME=Spring_${VERSION}.zip
-echo -- creating archive
+echo "-- creating archive"
 cd ${TMP_PATH} && zip -9 ${ARCHIVE_NAME} ${BUNDLE_NAME}
 
-echo -- done
+echo "-- done"
