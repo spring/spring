@@ -20,7 +20,7 @@ CRectangleOptimizer::~CRectangleOptimizer()
 {
 	float reduction = 0.f;
 	if (statsTotalSize > 0) {
-		reduction = 100.f - ((100.f * statsOptSize) / statsTotalSize) ;
+		reduction = 100.f - ((100.f * statsOptSize) / statsTotalSize);
 	}
 	LOG("Statistics for RectangleOptimizer: %.0f%%", reduction);
 }
@@ -109,7 +109,7 @@ void CRectangleOptimizer::Optimize()
 }
 
 
-std::bitset<4> CRectangleOptimizer::GetEdgesInRect(const SRectangle& rect1, const SRectangle& rect2)
+inline std::bitset<4> CRectangleOptimizer::GetEdgesInRect(const SRectangle& rect1, const SRectangle& rect2)
 {
 	std::bitset<4> bits;
 	bits[0] = (rect2.x1 >= rect1.x1) && (rect2.x1 <= rect1.x2);
@@ -120,7 +120,7 @@ std::bitset<4> CRectangleOptimizer::GetEdgesInRect(const SRectangle& rect1, cons
 }
 
 
-std::bitset<4> CRectangleOptimizer::GetSharedEdges(const SRectangle& rect1, const SRectangle& rect2)
+inline std::bitset<4> CRectangleOptimizer::GetSharedEdges(const SRectangle& rect1, const SRectangle& rect2)
 {
 	std::bitset<4> bits;
 	bits[0] = (rect2.x1 == rect1.x1) || (rect2.x1 == rect1.x2);
@@ -131,7 +131,7 @@ std::bitset<4> CRectangleOptimizer::GetSharedEdges(const SRectangle& rect1, cons
 }
 
 
-bool CRectangleOptimizer::DoOverlap(const SRectangle& rect1, const SRectangle& rect2)
+inline bool CRectangleOptimizer::DoOverlap(const SRectangle& rect1, const SRectangle& rect2)
 {
 	SRectangle boundRect(rect1);
 	if (rect2.x1 < rect1.x1) boundRect.x1 = rect2.x1;
@@ -147,7 +147,7 @@ bool CRectangleOptimizer::DoOverlap(const SRectangle& rect1, const SRectangle& r
 }
 
 
-bool CRectangleOptimizer::AreMergable(const SRectangle& rect1, const SRectangle& rect2)
+inline bool CRectangleOptimizer::AreMergable(const SRectangle& rect1, const SRectangle& rect2)
 {
 	SRectangle boundRect(rect1);
 	if (rect2.x1 < rect1.x1) boundRect.x1 = rect2.x1;
@@ -180,7 +180,7 @@ bool CRectangleOptimizer::HandleMerge(SRectangle& rect1, SRectangle& rect2)
 	std::bitset<4> edgesInRect21 = GetEdgesInRect(rect2, rect1);
 	if (edgesInRect12.count() < edgesInRect21.count()) {
 		std::swap(edgesInRect12, edgesInRect21);
-		std::swap(rect1, rect2); //FIXME only swap if we `return false`!!!
+		std::swap(rect1, rect2); //FIXME only swap if we `return true`!!!
 	}
 
 	//! check if edges are really shared
