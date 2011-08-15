@@ -6,6 +6,7 @@
 
 #include "ReadMap.h"
 #include "System/EventHandler.h"
+#include "System/Rectangle.h"
 #include "System/Config/ConfigHandler.h"
 
 
