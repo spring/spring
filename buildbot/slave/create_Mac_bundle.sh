@@ -135,6 +135,10 @@ done
 
 ARCHIVE_NAME=Spring_${VERSION}.zip
 echo "-- creating archive"
-cd ${TMP_PATH} && zip -9 ${ARCHIVE_NAME} ${BUNDLE_NAME}
+zip -9 ${TMP_PATH}/${ARCHIVE_NAME} .
 
 echo "-- done"
+
+#TODO: uncomment this line
+#rm -rf ${BUNDLE_BASE}
+
