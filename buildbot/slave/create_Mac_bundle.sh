@@ -42,7 +42,7 @@ cd ${BUNDLE_BASE}
 
 # insert the version number in the Info.plist file
 echo -- installing header file
-cat ${SOURCEDIR}/installer/Info.plist | sed s/###VERSION###/${VERSION}/ > Info.plist
+cat ${SOURCEDIR}/installer/Mac/Info.plist | sed s/###VERSION###/${VERSION}/ > Info.plist
 
 mkdir MacOS Resources
 
@@ -50,7 +50,7 @@ echo -- installing executables
 mv ${INSTALLDIR}/bin/* MacOS/
 
 echo -- installing application icon
-cp ${SOURCEDIR}/installer/spring.icns Resources/
+cp ${SOURCEDIR}/installer/Mac/spring.icns Resources/
 
 echo -- installing spring libs
 mv ${INSTALLDIR}/lib .
