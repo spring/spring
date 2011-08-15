@@ -15,6 +15,7 @@
 class CAIInterfaceLibraryInfo;
 class CSkirmishAILibrary;
 class CSkirmishAILibraryInfo;
+struct SSkirmishAILibrary;
 
 /**
  * The engines container for an AI Interface library.
@@ -93,6 +94,8 @@ private:
 	int InitializeFromLib(const std::string& libFilePath);
 
 	std::string FindLibFile();
+
+	struct SSkirmishAILibrary* NewEmptyInterfaceLib();
 
 
 	int interfaceId;
