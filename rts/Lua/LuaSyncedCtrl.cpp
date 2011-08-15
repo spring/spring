@@ -14,6 +14,7 @@
 #include "LuaRules.h" // for MAX_LUA_COB_ARGS
 #include "LuaHandleSynced.h"
 #include "LuaHashString.h"
+#include "LuaMetalMap.h"
 #include "LuaSyncedMoveCtrl.h"
 #include "LuaUtils.h"
 #include "Game/Game.h"
@@ -245,13 +246,14 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetExperienceGrade);
 
 
-	if (!LuaSyncedMoveCtrl::PushMoveCtrl(L)) {
+	if (!LuaSyncedMoveCtrl::PushMoveCtrl(L))
 		return false;
-	}
 
-	if (!CLuaUnitScript::PushEntries(L)) {
+	if (!CLuaUnitScript::PushEntries(L))
 		return false;
-	}
+
+	if (!LuaMetalMap::PushCtrlEntries(L))
+		return false;
 
 	return true;
 }

@@ -5,6 +5,7 @@
 #include "MetalMap.h"
 #include "ReadMap.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/myMath.h"
 
 CONFIG(bool, MetalMapPalette).defaultValue(false);
 
@@ -87,6 +88,15 @@ float CMetalMap::GetMetalAmount(int x, int z)
 	ClampInt(z, 0, sizeZ);
 
 	return metalMap[(z * sizeX) + x] * metalScale;
+}
+
+
+void CMetalMap::SetMetalAmount(int x, int z, float m)
+{
+	ClampInt(x, 0, sizeX);
+	ClampInt(z, 0, sizeZ);
+
+	metalMap[(z * sizeX) + x] = (metalScale == 0.0f) ? 0 : Clamp((int)(m / metalScale), 0, 255);
 }
 
 

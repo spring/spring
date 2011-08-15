@@ -4208,19 +4208,19 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Sim\MoveTypes\AirMoveType.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Sim\MoveTypes\AirMoveType.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\Sim\MoveTypes\GroundMoveType.cpp"
 					>
 				</File>
 				<File
 					RelativePath="..\..\Sim\MoveTypes\GroundMoveType.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\MoveTypes\HoverAirMoveType.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\MoveTypes\HoverAirMoveType.h"
 					>
 				</File>
 				<File
@@ -4264,11 +4264,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Sim\MoveTypes\TAAirMoveType.cpp"
+					RelativePath="..\..\Sim\MoveTypes\StrafeAirMoveType.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\Sim\MoveTypes\TAAirMoveType.h"
+					RelativePath="..\..\Sim\MoveTypes\StrafeAirMoveType.h"
 					>
 				</File>
 				<Filter
@@ -4905,6 +4905,26 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Dedicated Server (Debug)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\builds\DS\main.cpp"
 				>
 				<FileConfiguration
@@ -4983,26 +5003,6 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Dedicated Server (Debug)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>

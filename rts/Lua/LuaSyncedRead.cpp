@@ -298,8 +298,11 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetCOBAllyTeamVar);
 	REGISTER_LUA_CFUNC(GetCOBGlobalVar);
 
-	LuaMetalMap::PushEntries(L);
-	LuaPathFinder::PushEntries(L);
+	if (!LuaMetalMap::PushReadEntries(L))
+		return false;
+
+	if (!LuaPathFinder::PushEntries(L))
+		return false;
 
 	return true;
 }
