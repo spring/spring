@@ -23,16 +23,6 @@ public:
 		mins        = ZeroVector;
 		maxs        = ZeroVector;
 	}
-	~SOBJPiece() {
-		vertices.clear();
-		vnormals.clear();
-		texcoors.clear();
-
-		triangles.clear();
-
-		sTangents.clear();
-		tTangents.clear();
-	}
 
 	void DrawForList() const;
 	void SetMinMaxExtends();

@@ -50,8 +50,6 @@ CMetalMap::CMetalMap(const unsigned char* map, int _sizeX, int _sizeZ, float _me
 
 CMetalMap::~CMetalMap()
 {
-	extractionMap.clear();
-	metalMap.clear();
 }
 
 

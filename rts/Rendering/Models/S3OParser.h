@@ -16,13 +16,6 @@ struct SS3OVertex {
 
 struct SS3OPiece: public S3DModelPiece {
 	SS3OPiece() { parent = NULL; primitiveType=0; }
-	~SS3OPiece() {
-		vertices.clear();
-		vertexDrawOrder.clear();
-
-		sTangents.clear();
-		tTangents.clear();
-	}
 
 	void DrawForList() const;
 	void SetMinMaxExtends();
