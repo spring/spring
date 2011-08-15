@@ -26,6 +26,8 @@ public:
 	float GetMetalAmount(int x1, int z1, int x2, int z2);
 	/** Returns the amount of metal on a single square. */
 	float GetMetalAmount(int x, int z);
+	/** Sets the amount of metal on a single square. */
+	void SetMetalAmount(int x, int z, float m);
 	/**
 	 * Makes a request for extracting metal from a given square.
 	 * If there is metal left to extract to the requested depth,
