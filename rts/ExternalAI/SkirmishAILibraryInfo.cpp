@@ -28,8 +28,8 @@ CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 
 CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 		const std::string& aiInfoFile,
-		const std::string& aiOptionFile) {
-
+		const std::string& aiOptionFile)
+{
 	std::vector<InfoItem> tmpInfo;
 	info_parseInfo(tmpInfo, aiInfoFile);
 	std::vector<InfoItem>::iterator ii;

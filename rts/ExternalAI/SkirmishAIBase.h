@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _SKIRMISH_AI_BASE_H
-#define _SKIRMISH_AI_BASE_H
+#ifndef SKIRMISH_AI_BASE_H
+#define SKIRMISH_AI_BASE_H
 
 #include "Game/TeamController.h"
 
@@ -65,4 +65,4 @@ public:
 	void swab();
 };
 
-#endif // _SKIRMISH_AI_BASE_H
+#endif // SKIRMISH_AI_BASE_H

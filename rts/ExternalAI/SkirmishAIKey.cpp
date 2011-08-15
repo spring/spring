@@ -2,6 +2,10 @@
 
 #include "SkirmishAIKey.h"
 
+#include "System/creg/creg_cond.h"
+#include <string>
+
+
 CR_BIND(SkirmishAIKey, );
 
 CR_REG_METADATA(SkirmishAIKey, (

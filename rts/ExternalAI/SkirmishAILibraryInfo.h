@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _SKIRMISHAILIBRARYINFO_H
-#define _SKIRMISHAILIBRARYINFO_H
+#ifndef SKIRMISH_AI_LIBRARY_INFO_H
+#define SKIRMISH_AI_LIBRARY_INFO_H
 
 #include <vector>
 #include <map>
@@ -13,6 +13,11 @@ struct Option;
 class CSkirmishAILibraryInfo {
 public:
 	CSkirmishAILibraryInfo(const CSkirmishAILibraryInfo& aiInfo);
+
+	/**
+	 * This is used when initializing from purely Lua files
+	 * (AIInfo.lua & AIOptions.lua).
+	 */
 	CSkirmishAILibraryInfo(const std::string& aiInfoFile,
 			const std::string& aiOptionFile = "");
 	~CSkirmishAILibraryInfo();
@@ -67,4 +72,4 @@ private:
 	std::vector<Option> options;
 };
 
-#endif // _SKIRMISHAILIBRARYINFO_H
+#endif // SKIRMISH_AI_LIBRARY_INFO_H
