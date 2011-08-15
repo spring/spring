@@ -5,7 +5,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/Team.h"
 #include "Map/MapInfo.h"
-#include "Sim/MoveTypes/TAAirMoveType.h"
+#include "Sim/MoveTypes/HoverAirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/ExplosiveProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/TorpedoProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
@@ -100,7 +100,7 @@ void CBombDropper::FireImpl()
 
 	if (dropTorpedoes) {
 		float3 speed = owner->speed;
-		if (dynamic_cast<CTAAirMoveType*>(owner->moveType)) {
+		if (dynamic_cast<CHoverAirMoveType*>(owner->moveType)) {
 			speed = targetPos - weaponPos;
 			speed.Normalize();
 			speed *= 5;

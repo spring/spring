@@ -40,9 +40,9 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/Wind.h"
-#include "Sim/MoveTypes/AirMoveType.h"
+#include "Sim/MoveTypes/StrafeAirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
-#include "Sim/MoveTypes/TAAirMoveType.h"
+#include "Sim/MoveTypes/HoverAirMoveType.h"
 #include "Sim/MoveTypes/ScriptMoveType.h"
 #include "Sim/MoveTypes/StaticMoveType.h"
 #include "Sim/Path/IPathManager.h"
@@ -2474,17 +2474,16 @@ int LuaSyncedRead::GetUnitStates(lua_State* L)
 
 	const AMoveType* mt = unit->moveType;
 	if (mt) {
-		const CTAAirMoveType* taAirMove = dynamic_cast<const CTAAirMoveType*>(mt);
-		if (taAirMove) {
-			HSTR_PUSH_BOOL  (L, "autoland",        taAirMove->autoLand);
-			HSTR_PUSH_NUMBER(L, "autorepairlevel", taAirMove->repairBelowHealth);
-		}
-		else {
-			const CAirMoveType* airMove = dynamic_cast<const CAirMoveType*>(mt);
-			if (airMove) {
-				HSTR_PUSH_BOOL  (L, "autoland",        airMove->autoLand);
-				HSTR_PUSH_BOOL  (L, "loopbackattack",  airMove->loopbackAttack);
-				HSTR_PUSH_NUMBER(L, "autorepairlevel", airMove->repairBelowHealth);
+		const CHoverAirMoveType* hAMT = dynamic_cast<const CHoverAirMoveType*>(mt);
+		if (hAMT) {
+			HSTR_PUSH_BOOL  (L, "autoland",        hAMT->autoLand);
+			HSTR_PUSH_NUMBER(L, "autorepairlevel", hAMT->repairBelowHealth);
+		} else {
+			const CStrafeAirMoveType* sAMT = dynamic_cast<const CStrafeAirMoveType*>(mt);
+			if (sAMT) {
+				HSTR_PUSH_BOOL  (L, "autoland",        sAMT->autoLand);
+				HSTR_PUSH_BOOL  (L, "loopbackattack",  sAMT->loopbackAttack);
+				HSTR_PUSH_NUMBER(L, "autorepairlevel", sAMT->repairBelowHealth);
 			}
 		}
 	}
@@ -3417,15 +3416,15 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 		return 1;
 	}
 
-	CTAAirMoveType* gunshipmt = dynamic_cast<CTAAirMoveType*>(unit->moveType);
-	if (gunshipmt) {
+	CHoverAirMoveType* hAMT = dynamic_cast<CHoverAirMoveType*>(unit->moveType);
+	if (hAMT) {
 		HSTR_PUSH_STRING(L, "name", "gunship");
 
-		HSTR_PUSH_NUMBER(L, "wantedHeight", gunshipmt->wantedHeight);
-		HSTR_PUSH_BOOL(L, "collide", gunshipmt->collide);
-		HSTR_PUSH_BOOL(L, "useSmoothMesh", gunshipmt->useSmoothMesh);
+		HSTR_PUSH_NUMBER(L, "wantedHeight", hAMT->wantedHeight);
+		HSTR_PUSH_BOOL(L, "collide", hAMT->collide);
+		HSTR_PUSH_BOOL(L, "useSmoothMesh", hAMT->useSmoothMesh);
 
-		switch (gunshipmt->aircraftState) {
+		switch (hAMT->aircraftState) {
 			case AAirMoveType::AIRCRAFT_LANDED:
 				HSTR_PUSH_STRING(L, "aircraftState", "landed");
 				break;
@@ -3446,44 +3445,44 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 				break;
 		};
 
-		switch (gunshipmt->flyState) {
-			case CTAAirMoveType::FLY_CRUISING:
+		switch (hAMT->flyState) {
+			case CHoverAirMoveType::FLY_CRUISING:
 				HSTR_PUSH_STRING(L, "flyState", "cruising");
 				break;
-			case CTAAirMoveType::FLY_CIRCLING:
+			case CHoverAirMoveType::FLY_CIRCLING:
 				HSTR_PUSH_STRING(L, "flyState", "circling");
 				break;
-			case CTAAirMoveType::FLY_ATTACKING:
+			case CHoverAirMoveType::FLY_ATTACKING:
 				HSTR_PUSH_STRING(L, "flyState", "attacking");
 				break;
-			case CTAAirMoveType::FLY_LANDING:
+			case CHoverAirMoveType::FLY_LANDING:
 				HSTR_PUSH_STRING(L, "flyState", "landing");
 				break;
 		}
 
-		HSTR_PUSH_NUMBER(L, "goalDistance", gunshipmt->goalDistance);
+		HSTR_PUSH_NUMBER(L, "goalDistance", hAMT->goalDistance);
 
-		HSTR_PUSH_BOOL(L, "bankingAllowed", gunshipmt->bankingAllowed);
-		HSTR_PUSH_NUMBER(L, "currentBank", gunshipmt->currentBank);
-		HSTR_PUSH_NUMBER(L, "currentPitch", gunshipmt->currentPitch);
+		HSTR_PUSH_BOOL(L, "bankingAllowed", hAMT->bankingAllowed);
+		HSTR_PUSH_NUMBER(L, "currentBank", hAMT->currentBank);
+		HSTR_PUSH_NUMBER(L, "currentPitch", hAMT->currentPitch);
 
-		HSTR_PUSH_NUMBER(L, "turnRate", gunshipmt->turnRate);
-		HSTR_PUSH_NUMBER(L, "accRate", gunshipmt->accRate);
-		HSTR_PUSH_NUMBER(L, "decRate", gunshipmt->decRate);
-		HSTR_PUSH_NUMBER(L, "altitudeRate", gunshipmt->altitudeRate);
+		HSTR_PUSH_NUMBER(L, "turnRate", hAMT->turnRate);
+		HSTR_PUSH_NUMBER(L, "accRate", hAMT->accRate);
+		HSTR_PUSH_NUMBER(L, "decRate", hAMT->decRate);
+		HSTR_PUSH_NUMBER(L, "altitudeRate", hAMT->altitudeRate);
 
-		HSTR_PUSH_NUMBER(L, "brakeDistance", gunshipmt->brakeDistance);
-		HSTR_PUSH_BOOL(L, "dontLand", gunshipmt->dontLand);
-		HSTR_PUSH_NUMBER(L, "maxDrift", gunshipmt->maxDrift);
+		HSTR_PUSH_NUMBER(L, "brakeDistance", hAMT->brakeDistance);
+		HSTR_PUSH_BOOL(L, "dontLand", hAMT->dontLand);
+		HSTR_PUSH_NUMBER(L, "maxDrift", hAMT->maxDrift);
 
 		return 1;
 	}
 
-	CAirMoveType* airmt = dynamic_cast<CAirMoveType*>(unit->moveType);
-	if (airmt) {
+	CStrafeAirMoveType* sAMT = dynamic_cast<CStrafeAirMoveType*>(unit->moveType);
+	if (sAMT) {
 		HSTR_PUSH_STRING(L, "name", "airplane");
 
-		switch (airmt->aircraftState) {
+		switch (sAMT->aircraftState) {
 			case AAirMoveType::AIRCRAFT_LANDED:
 				HSTR_PUSH_STRING(L, "aircraftState", "landed");
 				break;
@@ -3503,20 +3502,20 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State *L)
 				HSTR_PUSH_STRING(L, "aircraftState", "hovering");
 				break;
 		};
-		HSTR_PUSH_NUMBER(L, "wantedHeight", airmt->wantedHeight);
-		HSTR_PUSH_BOOL(L, "collide", airmt->collide);
-		HSTR_PUSH_BOOL(L, "useSmoothMesh", airmt->useSmoothMesh);
+		HSTR_PUSH_NUMBER(L, "wantedHeight", sAMT->wantedHeight);
+		HSTR_PUSH_BOOL(L, "collide", sAMT->collide);
+		HSTR_PUSH_BOOL(L, "useSmoothMesh", sAMT->useSmoothMesh);
 
-		HSTR_PUSH_NUMBER(L, "myGravity", airmt->myGravity);
+		HSTR_PUSH_NUMBER(L, "myGravity", sAMT->myGravity);
 
-		HSTR_PUSH_NUMBER(L, "maxBank", airmt->maxBank);
-		HSTR_PUSH_NUMBER(L, "maxPitch", airmt->maxBank);
-		HSTR_PUSH_NUMBER(L, "turnRadius", airmt->turnRadius);
+		HSTR_PUSH_NUMBER(L, "maxBank", sAMT->maxBank);
+		HSTR_PUSH_NUMBER(L, "maxPitch", sAMT->maxBank);
+		HSTR_PUSH_NUMBER(L, "turnRadius", sAMT->turnRadius);
 
-		HSTR_PUSH_NUMBER(L, "maxAcc", airmt->maxAcc);
-		HSTR_PUSH_NUMBER(L, "maxAileron", airmt->maxAileron);
-		HSTR_PUSH_NUMBER(L, "maxElevator", airmt->maxElevator);
-		HSTR_PUSH_NUMBER(L, "maxRudder", airmt->maxRudder);
+		HSTR_PUSH_NUMBER(L, "maxAcc", sAMT->maxAcc);
+		HSTR_PUSH_NUMBER(L, "maxAileron", sAMT->maxAileron);
+		HSTR_PUSH_NUMBER(L, "maxElevator", sAMT->maxElevator);
+		HSTR_PUSH_NUMBER(L, "maxRudder", sAMT->maxRudder);
 
 		return 1;
 	}

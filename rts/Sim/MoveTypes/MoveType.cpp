@@ -42,9 +42,6 @@ AMoveType::AMoveType(CUnit* owner):
 {
 }
 
-AMoveType::~AMoveType(void)
-{
-}
 
 void AMoveType::SetMaxSpeed(float speed)
 {
@@ -93,10 +90,6 @@ void AMoveType::SlowUpdate()
 
 		qf->MovedUnit(owner);
 	}
-}
-
-void AMoveType::LeaveTransport(void)
-{
 }
 
 void AMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressive)

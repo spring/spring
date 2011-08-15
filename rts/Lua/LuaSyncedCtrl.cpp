@@ -22,7 +22,6 @@
 #include "Game/GameHelper.h"
 #include "Game/PlayerHandler.h"
 #include "Game/SelectedUnits.h"
-#include "Sim/Misc/Team.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
@@ -35,10 +34,10 @@
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
+#include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/MoveTypes/AirMoveType.h"
-#include "Sim/MoveTypes/TAAirMoveType.h"
+#include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -1857,9 +1856,7 @@ int LuaSyncedCtrl::SetUnitPhysics(lua_State* L)
 	unit->frontdir.y = matrix[ 9];
 	unit->frontdir.z = matrix[10];
 
-	const shortint2 HandP = GetHAndPFromVector(unit->frontdir);
-	unit->heading = HandP.x;
-
+	unit->SetHeadingFromDirection();
 	unit->ForcedMove(pos);
 	return 0;
 }
@@ -1910,17 +1907,8 @@ int LuaSyncedCtrl::SetUnitRotation(lua_State* L)
 	matrix.RotateX(rot.x);
 	matrix.RotateY(rot.y);
 
-	unit->rightdir.x = -matrix[ 0];
-	unit->rightdir.y = -matrix[ 1];
-	unit->rightdir.z = -matrix[ 2];
-	unit->updir.x    =  matrix[ 4];
-	unit->updir.y    =  matrix[ 5];
-	unit->updir.z    =  matrix[ 6];
-	unit->frontdir.x =  matrix[ 8];
-	unit->frontdir.y =  matrix[ 9];
-	unit->frontdir.z =  matrix[10];
-
-	unit->heading = GetHeadingFromVector(unit->frontdir.x, unit->frontdir.z);
+	unit->SetDirVectors(matrix);
+	unit->SetHeadingFromDirection();
 	unit->ForcedMove(unit->pos);
 
 	return 0;

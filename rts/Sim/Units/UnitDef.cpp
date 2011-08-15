@@ -172,7 +172,6 @@ UnitDef::UnitDef()
 , wantedHeight(0.0f)
 , verticalSpeed(0.0f)
 , useSmoothMesh(false)
-, canCrash(false)
 , hoverAttack(false)
 , airStrafe(false)
 , dlHoverFactor(0.0f)
@@ -496,7 +495,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	maxBank = udTable.GetFloat("maxBank", 0.8f);         // max roll
 	maxPitch = udTable.GetFloat("maxPitch", 0.45f);      // max pitch this plane tries to keep
-	turnRadius = udTable.GetFloat("turnRadius", 500.0f); // hint to CAirMoveType about required turn-radius
+	turnRadius = udTable.GetFloat("turnRadius", 500.0f); // hint to CStrafeAirMoveType about required turn-radius
 	verticalSpeed = udTable.GetFloat("verticalSpeed", 3.0f); // speed of takeoff and landing, at least for gunships
 
 	maxAileron  = udTable.GetFloat("maxAileron",  0.015f); // turn speed around roll axis
@@ -600,7 +599,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 			drag = (1.0f / (speed / GAME_SPEED * 1.1f / maxAcc)) - (wingAngle * wingAngle * wingDrag);
 			drag = Clamp(drag, 0.0f, 1.0f);
 		} else {
-			//shouldn't be needed since drag is only used in CAirMoveType anyway,
+			//shouldn't be needed since drag is only used in CStrafeAirMoveType anyway,
 			//and aircraft without acceleration or speed aren't common :)
 			//initializing it anyway just for safety
 			drag = 0.005f;
@@ -669,7 +668,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	flareSalvoDelay = udTable.GetInt("flareSalvoDelay", 0) * GAME_SPEED;
 
 	canLoopbackAttack = udTable.GetBool("canLoopbackAttack", false);
-	canCrash = udTable.GetBool("canCrash", true);
 	levelGround = udTable.GetBool("levelGround", true);
 	strafeToAttack = udTable.GetBool("strafeToAttack", false);
 

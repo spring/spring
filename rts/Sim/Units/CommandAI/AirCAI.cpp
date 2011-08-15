@@ -8,7 +8,7 @@
 #include "Game/SelectedUnits.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/MoveTypes/AirMoveType.h"
+#include "Sim/MoveTypes/StrafeAirMoveType.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
@@ -107,11 +107,11 @@ void CAirCAI::GiveCommandReal(const Command& c)
 		if (c.params.empty()) {
 			return;
 		}
-		CAirMoveType* airMT;
+		CStrafeAirMoveType* airMT;
 		if (owner->usingScriptMoveType) {
-			airMT = (CAirMoveType*)owner->prevMoveType;
+			airMT = (CStrafeAirMoveType*)owner->prevMoveType;
 		} else {
-			airMT = (CAirMoveType*)owner->moveType;
+			airMT = (CStrafeAirMoveType*)owner->moveType;
 		}
 		switch ((int)c.params[0]) {
 			case 0: { airMT->repairBelowHealth = 0.0f; break; }
@@ -137,11 +137,11 @@ void CAirCAI::GiveCommandReal(const Command& c)
 		if (c.params.empty()) {
 			return;
 		}
-		CAirMoveType* airMT;
+		CStrafeAirMoveType* airMT;
 		if (owner->usingScriptMoveType) {
-			airMT = (CAirMoveType*)owner->prevMoveType;
+			airMT = (CStrafeAirMoveType*)owner->prevMoveType;
 		} else {
-			airMT = (CAirMoveType*)owner->moveType;
+			airMT = (CStrafeAirMoveType*)owner->moveType;
 		}
 		switch ((int)c.params[0]){
 			case 0: { airMT->autoLand = false; break; }
@@ -165,11 +165,11 @@ void CAirCAI::GiveCommandReal(const Command& c)
 		if (c.params.empty()) {
 			return;
 		}
-		CAirMoveType* airMT;
+		CStrafeAirMoveType* airMT;
 		if (owner->usingScriptMoveType) {
-			airMT = (CAirMoveType*)owner->prevMoveType;
+			airMT = (CStrafeAirMoveType*)owner->prevMoveType;
 		} else {
-			airMT = (CAirMoveType*)owner->moveType;
+			airMT = (CStrafeAirMoveType*)owner->moveType;
 		}
 		switch ((int)c.params[0]) {
 			case 0: { airMT->loopbackAttack = false; break; }
@@ -217,10 +217,10 @@ void CAirCAI::SlowUpdate()
 	}
 
 	if (owner->usingScriptMoveType) {
-		return; // avoid the invalid (CAirMoveType*) cast
+		return; // avoid the invalid (CStrafeAirMoveType*) cast
 	}
 
-	AAirMoveType* myPlane=(AAirMoveType*) owner->moveType;
+	AAirMoveType* myPlane = (AAirMoveType*) owner->moveType;
 
 	bool wantToRefuel = LandRepairIfNeeded();
 	if (!wantToRefuel && owner->unitDef->maxFuel > 0) {
@@ -454,7 +454,7 @@ void CAirCAI::ExecuteFight(Command& c)
 	}
 	myPlane->goalPos = goalPos;
 
-	CAirMoveType* airmt = dynamic_cast<CAirMoveType*>(myPlane);
+	CStrafeAirMoveType* airmt = dynamic_cast<CStrafeAirMoveType*>(myPlane);
 	const float radius = airmt ? std::max(airmt->turnRadius + 2*SQUARE_SIZE, 128.f) : 127.f;
 
 	// we're either circling or will get to the target in 8 frames
@@ -650,7 +650,7 @@ int CAirCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 
 bool CAirCAI::IsValidTarget(const CUnit* enemy) const {
 	return CMobileCAI::IsValidTarget(enemy) && !enemy->crashing
-		&& (((CAirMoveType*)owner->moveType)->isFighter || !enemy->unitDef->canfly);
+		&& (((CStrafeAirMoveType*)owner->moveType)->isFighter || !enemy->unitDef->canfly);
 }
 
 

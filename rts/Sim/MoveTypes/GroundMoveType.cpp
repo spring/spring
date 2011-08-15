@@ -67,7 +67,6 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(currentSpeed),
 	CR_MEMBER(requestedSpeed),
 	CR_MEMBER(deltaSpeed),
-	CR_MEMBER(deltaHeading),
 
 	CR_MEMBER(pathId),
 	CR_MEMBER(goalRadius),
@@ -127,7 +126,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	currentSpeed(0.0f),
 	requestedSpeed(0.0f),
 	deltaSpeed(0.0f),
-	deltaHeading(0),
 
 	pathId(0),
 	goalRadius(0),
@@ -218,7 +216,6 @@ bool CGroundMoveType::Update()
 	} else {
 		if (owner->fpsControlPlayer != NULL) {
 			wantReverse = UpdateDirectControl();
-			ChangeHeading(owner->heading + deltaHeading);
 		} else {
 			if (pathId == 0) {
 				SetDeltaSpeed(0.0f, false);
@@ -554,36 +551,21 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 }
 
 /*
-Changes the heading of the owner.
-*/
+ * Changes the heading of the owner.
+ * FIXME near-duplicate of HoverAirMoveType::UpdateHeading
+ */
 void CGroundMoveType::ChangeHeading(short wantedHeading) {
-#ifdef TRACE_SYNC
-	short _oldheading = owner->heading;
-#endif
 	SyncedSshort& heading = owner->heading;
-
-	deltaHeading = wantedHeading - heading;
+	const short deltaHeading = wantedHeading - heading;
 
 	ASSERT_SYNCED(deltaHeading);
 	ASSERT_SYNCED(turnRate);
-	ASSERT_SYNCED((short)turnRate);
-
-	short sTurnRate = short(turnRate);
 
 	if (deltaHeading > 0) {
-		short tmp = (deltaHeading < sTurnRate)? deltaHeading: sTurnRate;
-		ASSERT_SYNCED(tmp);
-		heading += tmp;
+		heading += std::min(deltaHeading, short(turnRate));
 	} else {
-		short tmp = (deltaHeading > -sTurnRate)? deltaHeading: -sTurnRate;
-		ASSERT_SYNCED(tmp);
-		heading += tmp;
+		heading += std::max(deltaHeading, short(-turnRate));
 	}
-
-#ifdef TRACE_SYNC
-	tracefile << "[" << __FUNCTION__ << "] ";
-	tracefile << "unit " << owner->id << " changed heading to " << heading << " from " << _oldheading << " (wantedHeading: " << wantedHeading << ")\n";
-#endif
 
 	owner->SetDirectionFromHeading();
 
@@ -1904,6 +1886,7 @@ bool CGroundMoveType::UpdateDirectControl()
 	const FPSUnitController& selfCon = myPlayer->fpsController;
 	const FPSUnitController& unitCon = owner->fpsControlPlayer->fpsController;
 	const bool wantReverse = (unitCon.back && !unitCon.forward);
+	float turnSign = 0.0f;
 
 	waypoint = owner->pos;
 	waypoint += wantReverse ? -owner->frontdir * 100 : owner->frontdir * 100;
@@ -1927,13 +1910,11 @@ bool CGroundMoveType::UpdateDirectControl()
 		owner->script->StopMoving();
 	}
 
-	deltaHeading = 0;
-
-	if (unitCon.left ) { deltaHeading += (short) turnRate; }
-	if (unitCon.right) { deltaHeading -= (short) turnRate; }
+	if (unitCon.left ) { ChangeHeading(owner->heading + turnRate); turnSign =  1.0f; }
+	if (unitCon.right) { ChangeHeading(owner->heading - turnRate); turnSign = -1.0f; }
 
 	if (selfCon.GetControllee() == owner) {
-		camera->rot.y += (deltaHeading * TAANG2RAD);
+		camera->rot.y += (turnRate * turnSign * TAANG2RAD);
 	}
 
 	return wantReverse;

@@ -121,10 +121,10 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, const float3& pos, int team,
 		} else if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit()) {
 			new CBuilderCAI(unit);
 		} else if (ud->IsNonHoveringAirUnit()) {
-			// non-hovering fighter or bomber aircraft; coupled to AirMoveType
+			// non-hovering fighter or bomber aircraft; coupled to StrafeAirMoveType
 			new CAirCAI(unit);
 		} else if (ud->IsAirUnit()) {
-			// all other aircraft
+			// all other aircraft; coupled to HoverAirMoveType
 			new CMobileCAI(unit);
 		} else if (ud->IsGroundUnit()) {
 			new CMobileCAI(unit);

@@ -18,7 +18,7 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/MoveTypes/AirMoveType.h"
+#include "Sim/MoveTypes/AAirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -1601,13 +1601,13 @@ void CUnitScript::SetUnitVal(int val, int param)
 			break;
 		}
 		case CRASHING: {
-			if (dynamic_cast<CAirMoveType*>(unit->moveType)) {
+			AAirMoveType* amt = dynamic_cast<AAirMoveType*>(unit->moveType);
+			if (amt != NULL) {
 				if (!!param) {
-					((CAirMoveType*)unit->moveType)->SetState(AAirMoveType::AIRCRAFT_CRASHING);
+					amt->SetState(AAirMoveType::AIRCRAFT_CRASHING);
 				} else {
-					unit->crashing = false;
-					((CAirMoveType*)unit->moveType)->aircraftState = AAirMoveType::AIRCRAFT_TAKEOFF;
-					((CAirMoveType*)unit->moveType)->SetState(AAirMoveType::AIRCRAFT_FLYING);
+					amt->aircraftState = AAirMoveType::AIRCRAFT_TAKEOFF;
+					amt->SetState(AAirMoveType::AIRCRAFT_FLYING);
 				}
 			}
 			break;

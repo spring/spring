@@ -9,16 +9,15 @@
 /**
  * Air movement type definition
  */
-class CAirMoveType : public AAirMoveType
+class CStrafeAirMoveType: public AAirMoveType
 {
-	CR_DECLARE(CAirMoveType);
+	CR_DECLARE(CStrafeAirMoveType);
 	CR_DECLARE_SUB(DrawLine);
 	CR_DECLARE_SUB(RudderInfo);
 
 public:
+	CStrafeAirMoveType(CUnit* owner);
 
-	CAirMoveType(CUnit* owner);
-	~CAirMoveType();
 	bool Update();
 	void SlowUpdate();
 
@@ -38,13 +37,13 @@ public:
 	void DependentDied(CObject* o);
 	void SetMaxSpeed(float speed);
 
-	void KeepPointingTo(float3 pos, float distance, bool aggressive);
+	void KeepPointingTo(float3 pos, float distance, bool aggressive) {}
 	void StartMoving(float3 pos, float goalRadius);
 	void StartMoving(float3 pos, float goalRadius, float speed);
 	void StopMoving();
 
 	void Takeoff();
-	bool IsFighter() const;
+	bool IsFighter() const { return isFighter; }
 
 	int subState;
 
