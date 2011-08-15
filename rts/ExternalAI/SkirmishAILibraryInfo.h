@@ -20,6 +20,13 @@ public:
 	 */
 	CSkirmishAILibraryInfo(const std::string& aiInfoFile,
 			const std::string& aiOptionFile = "");
+	/**
+	 * This is used when initializing from data fetched through the AI Interface
+	 * library plugin, through C functions.
+	 */
+	CSkirmishAILibraryInfo(const std::map<std::string, std::string>& aiInfo,
+			const std::string& aiOptionLua = "");
+
 	~CSkirmishAILibraryInfo();
 
 	virtual size_t size() const;

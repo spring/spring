@@ -44,6 +44,20 @@ CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 	}
 }
 
+CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
+		const std::map<std::string, std::string>& aiInfo,
+		const std::string& aiOptionLua)
+{
+	std::map<std::string, std::string>::const_iterator ii;
+	for (ii = aiInfo.begin(); ii != aiInfo.end(); ++ii) {
+		SetInfo(ii->first, ii->second);
+	}
+
+	if (!aiOptionLua.empty()) {
+		option_parseOptionsLuaString(options, aiOptionLua);
+	}
+}
+
 CSkirmishAILibraryInfo::~CSkirmishAILibraryInfo() {}
 
 
