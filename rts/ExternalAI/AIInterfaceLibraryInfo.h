@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _AIINTERFACELIBRARYINFO_H
-#define _AIINTERFACELIBRARYINFO_H
+#ifndef AI_INTERFACE_LIBRARY_INFO_H
+#define AI_INTERFACE_LIBRARY_INFO_H
 
 #include <vector>
 #include <map>
@@ -55,4 +55,4 @@ private:
 	std::map<std::string, std::string> key_description;
 };
 
-#endif // _AIINTERFACELIBRARYINFO_H
+#endif // AI_INTERFACE_LIBRARY_INFO_H

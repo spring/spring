@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _SSKIRMISHAICALLBACKIMPL_H
-#define	_SSKIRMISHAICALLBACKIMPL_H
+#ifndef S_SKIRMISH_AI_CALLBACK_IMPL_H
+#define	S_SKIRMISH_AI_CALLBACK_IMPL_H
 
 // Doc-comments for the functions in this header can be found in this file:
 // rts/ExternalAI/Interface/SSkirmishAICallback.h
@@ -1291,4 +1291,4 @@ void skirmishAiCallback_release(int skirmishAIId);
 
 #endif // defined __cplusplus && !defined BUILDING_AI
 
-#endif // _SSKIRMISHAICALLBACKIMPL_H
+#endif // S_SKIRMISH_AI_CALLBACK_IMPL_H

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _SKIRMISH_AI_LIBRARY_H
-#define _SKIRMISH_AI_LIBRARY_H
+#ifndef SKIRMISH_AI_LIBRARY_H
+#define SKIRMISH_AI_LIBRARY_H
 
 #include "SkirmishAIKey.h"
 #include "Interface/SSkirmishAILibrary.h"
@@ -39,4 +39,4 @@ private:
 	SkirmishAIKey key;
 };
 
-#endif // _SKIRMISH_AI_LIBRARY_H
+#endif // SKIRMISH_AI_LIBRARY_H

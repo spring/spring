@@ -1,9 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _LUA_AI_IMPL_HANDLER_H_
-#define _LUA_AI_IMPL_HANDLER_H_
+#ifndef LUA_AI_IMPL_HANDLER_H
+#define LUA_AI_IMPL_HANDLER_H
 
-//#include "ExternalAI/SkirmishAIKey.h"
 #include "System/Info.h"
 
 //#include "System/creg/creg_cond.h"
@@ -18,7 +17,6 @@ struct Info;
  */
 class CLuaAIImplHandler
 {
-private:
 //	CR_DECLARE(CLuaAIImplHandler);
 
 	CLuaAIImplHandler();
@@ -35,4 +33,4 @@ public:
 
 #define luaAIImplHandler CLuaAIImplHandler::GetInstance()
 
-#endif // _LUA_AI_IMPL_HANDLER_H_
+#endif // LUA_AI_IMPL_HANDLER_H

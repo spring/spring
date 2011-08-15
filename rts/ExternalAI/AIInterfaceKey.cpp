@@ -2,6 +2,10 @@
 
 #include "AIInterfaceKey.h"
 
+#include "System/creg/creg_cond.h"
+#include <string>
+
+
 CR_BIND(AIInterfaceKey, );
 
 CR_REG_METADATA(AIInterfaceKey, (
