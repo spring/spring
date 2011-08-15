@@ -135,7 +135,7 @@ done
 
 ARCHIVE_NAME=Spring_${VERSION}.zip
 echo "-- creating archive"
-zip -9 ${TMP_PATH}/${ARCHIVE_NAME} .
+zip -r9 ${TMP_PATH}/${ARCHIVE_NAME} .
 
 echo "-- done"
 
