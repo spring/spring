@@ -55,7 +55,7 @@ public:
 
 public:
 	CUnitDrawer();
-	virtual ~CUnitDrawer();
+	~CUnitDrawer();
 
 	void Update();
 
