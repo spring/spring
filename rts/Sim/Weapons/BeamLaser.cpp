@@ -9,7 +9,7 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/MoveTypes/AirMoveType.h"
+#include "Sim/MoveTypes/StrafeAirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/BeamLaserProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/LargeBeamLaserProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/LaserProjectile.h"
@@ -164,8 +164,8 @@ void CBeamLaser::Init(void)
 void CBeamLaser::FireImpl(void)
 {
 	float3 dir;
-	if (onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType)) {
-		// the taairmovetype can't align itself properly, change back when that is fixed
+	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType)) {
+		// HoverAirMoveType cannot align itself properly, change back when that is fixed
 		dir = owner->frontdir;
 	} else {
 		if (salvoLeft == salvoSize - 1) {

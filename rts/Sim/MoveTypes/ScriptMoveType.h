@@ -11,7 +11,7 @@ class CScriptMoveType : public AMoveType
 
 	public:
 		CScriptMoveType(CUnit* owner);
-		virtual ~CScriptMoveType(void);
+		virtual ~CScriptMoveType();
 
 	public:
 		bool Update();
@@ -23,7 +23,6 @@ class CScriptMoveType : public AMoveType
 		void SetRelativeVelocity(const float3& rvel);
 		void SetRotation(const float3& rot);
 		void SetRotationVelocity(const float3& rvel);
-		void SetRotationOffset(const float3& rotOff);
 		void SetHeading(short heading);
 		void SetNoBlocking(bool state);
 		
@@ -37,11 +36,10 @@ class CScriptMoveType : public AMoveType
 		void SetGoal(float3 pos) {}
 		void SetMaxSpeed(float speed) {}
 		void SetWantedMaxSpeed(float speed) {}
-		void LeaveTransport(void) {}
+		void LeaveTransport() {}
 
 	protected:
 		void CalcDirections();
-		void TrackSlope();
 		void CheckLimits();
 		void CheckNotify();
 
@@ -82,8 +80,6 @@ class CScriptMoveType : public AMoveType
 		bool collideStop;
 
 	protected:
-		float3 rotOffset;
-
 		int scriptNotify;
 };
 

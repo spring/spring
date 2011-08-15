@@ -86,19 +86,20 @@ void AAirMoveType::DependentDied(CObject* o) {
 bool AAirMoveType::Update() {
 	// NOTE: useHeading is never true by default for aircraft (AAirMoveType
 	// forces it to false, TransportUnit::{Attach,Detach}Unit manipulate it
-	// specifically for TAAirMoveType's)
+	// specifically for HoverAirMoveType's)
 	if (useHeading) {
 		useHeading = false;
 		SetState(AIRCRAFT_TAKEOFF);
 	}
 
-	return false; // this return value is never used
+	// this return value is never used
+	return false;
 }
 
 void AAirMoveType::UpdateFuel() {
 	if (owner->unitDef->maxFuel > 0.0f) {
 		if (aircraftState != AIRCRAFT_LANDED)
-			owner->currentFuel = std::max(0.0f, owner->currentFuel - ((float)(gs->frameNum - lastFuelUpdateFrame) / GAME_SPEED));
+			owner->currentFuel = std::max(0.0f, owner->currentFuel - (float(gs->frameNum - lastFuelUpdateFrame) / GAME_SPEED));
 
 		lastFuelUpdateFrame = gs->frameNum;
 	}

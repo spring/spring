@@ -59,7 +59,6 @@ public:
 	float currentSpeed;
 	float requestedSpeed;
 	float deltaSpeed;
-	short int deltaHeading;
 
 	unsigned int pathId;
 	float goalRadius;

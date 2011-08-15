@@ -5,7 +5,7 @@
 #include "Game/SelectedUnits.h"
 #include "Map/Ground.h"
 #include "Rendering/GroundDecalHandler.h"
-#include "Sim/MoveTypes/TAAirMoveType.h"
+#include "Sim/MoveTypes/HoverAirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/Units/Scripts/CobInstance.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -80,15 +80,8 @@ void CTransportUnit::Update()
 				const CMatrix44f& pieceMat = script->GetPieceMatrix(ti->piece);
 				const CMatrix44f slaveMat = pieceMat * transMat;
 
-				SyncedFloat3& xdir = transportee->rightdir;
-				SyncedFloat3& ydir = transportee->updir;
-				SyncedFloat3& zdir = transportee->frontdir;
-
-				zdir.x = slaveMat[8]; zdir.y = slaveMat[9]; zdir.z = slaveMat[10];
-				xdir.x = slaveMat[0]; xdir.y = slaveMat[1]; xdir.z = slaveMat[ 2];
-				ydir.x = slaveMat[4]; ydir.y = slaveMat[5]; ydir.z = slaveMat[ 6];
-
-				transportee->heading = GetHeadingFromVector(zdir.x, zdir.z);
+				transportee->SetDirVectors(slaveMat);
+				transportee->SetHeadingFromDirection();
 			}
 		} else {
 			// slave transportee orientation to body
@@ -176,7 +169,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 			(             u->moveType)->LeaveTransport();
 
 			// issue a move order so that unit won't try to return to pick-up pos in IdleCheck()
-			if (dynamic_cast<CTAAirMoveType*>(moveType) && u->unitDef->canmove) {
+			if (dynamic_cast<CHoverAirMoveType*>(moveType) && u->unitDef->canmove) {
 				const float3& pos = u->pos;
 				Command c(CMD_MOVE);
 				c.params.push_back(pos.x);
@@ -305,7 +298,7 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 		groundDecals->RemoveBuilding(building, NULL);
 	}
 
-	if (dynamic_cast<CTAAirMoveType*>(moveType)) {
+	if (dynamic_cast<CHoverAirMoveType*>(moveType)) {
 		unit->moveType->useHeading = false;
 	}
 
@@ -339,7 +332,7 @@ bool CTransportUnit::DetachUnitCore(CUnit* unit)
 			unit->DeleteDeathDependence(this, DEPENDENCE_TRANSPORTER);
 			unit->transporter = NULL;
 
-			if (dynamic_cast<CTAAirMoveType*>(moveType)) {
+			if (dynamic_cast<CHoverAirMoveType*>(moveType)) {
 				unit->moveType->useHeading = true;
 			}
 
@@ -418,7 +411,7 @@ bool CTransportUnit::CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* un
 	//     the unit is not already in a transport, or
 	//     we can land underwater, or
 	//     the target-altitude is over dry land
-	if (dynamic_cast<CTAAirMoveType*>(moveType) == NULL) { return canLoadUnload; }
+	if (dynamic_cast<CHoverAirMoveType*>(moveType) == NULL) { return canLoadUnload; }
 	if (unit->transporter == NULL) { return canLoadUnload; }
 	if (unitDef->canSubmerge) { return canLoadUnload; }
 	if (loadHeight >= 5.0f) { return canLoadUnload; }
@@ -464,7 +457,7 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 	float contactHeight = clampedHeight + unit->model->height;
 	float finalHeight = contactHeight;
 
-	if (dynamic_cast<CTAAirMoveType*>(moveType) != NULL) {
+	if (dynamic_cast<CHoverAirMoveType*>(moveType) != NULL) {
 		// if we are a gunship-style transport, we must be
 		// capable of reaching the point-of-contact height
 		isAllowedHeight = unitDef->IsAllowedTerrainHeight(contactHeight, &finalHeight);
@@ -481,7 +474,7 @@ float CTransportUnit::GetLoadUnloadHeight(const float3& wantedPos, const CUnit* 
 
 float CTransportUnit::GetLoadUnloadHeading(const CUnit* unit) const {
 	if (unit->transporter == NULL) { return unit->heading; }
-	if (dynamic_cast<CTAAirMoveType*>(moveType) == NULL) { return unit->heading; }
+	if (dynamic_cast<CHoverAirMoveType*>(moveType) == NULL) { return unit->heading; }
 	if (dynamic_cast<const CBuilding*>(unit) == NULL) { return unit->heading; }
 
 	// transported structures want to face a cardinal direction

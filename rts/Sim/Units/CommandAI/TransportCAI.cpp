@@ -17,7 +17,7 @@
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/MoveTypes/MoveInfo.h"
-#include "Sim/MoveTypes/TAAirMoveType.h"
+#include "Sim/MoveTypes/HoverAirMoveType.h"
 #include "System/creg/STL_List.h"
 #include "System/myMath.h"
 
@@ -163,7 +163,7 @@ void CTransportCAI::ExecuteLoadUnits(Command& c)
 			const float sqDist = unit->pos.SqDistance2D(owner->pos);
 			const bool inLoadingRadius = (sqDist <= Square(owner->unitDef->loadingRadius));
 			
-			CTAAirMoveType* am = dynamic_cast<CTAAirMoveType*>(owner->moveType);
+			CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
 			// subtracting 1 square to account for pathfinder/groundmovetype inaccuracy
 			if (goalPos.SqDistance2D(unit->pos) > Square(owner->unitDef->loadingRadius - SQUARE_SIZE) || 
 				(!inLoadingRadius && (!owner->isMoving || (am && am->aircraftState != AAirMoveType::AIRCRAFT_FLYING)))) {
@@ -289,7 +289,7 @@ bool CTransportCAI::CanTransport(const CUnit* unit)
 // FindEmptySpot(pos, max(16.0f, radius), spread, found, u);
 bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius, float3& found, CUnit* unitToUnload)
 {
-	if (dynamic_cast<CTAAirMoveType*>(owner->moveType)) {
+	if (dynamic_cast<CHoverAirMoveType*>(owner->moveType)) {
 		// If the command radius is less than the diameter of the unit we wish to drop
 		if (radius < emptyRadius*2) {
 			// Boundary checking.  If we are too close to the edge of the map, we will get stuck
@@ -451,7 +451,7 @@ bool CTransportCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::list
 	}
 
 	// remaining spots
-	if (dynamic_cast<CTAAirMoveType*>(owner->moveType)) {
+	if (dynamic_cast<CHoverAirMoveType*>(owner->moveType)) {
 		while (ti != transport->GetTransportedUnits().end() && startpos.SqDistance(nextPos) < startpos.SqDistance(endpos)) {
 			nextPos += dir*(ti->unit->radius);
 			nextPos.y = ground->GetHeightAboveWater(nextPos.x, nextPos.z);
@@ -579,7 +579,7 @@ void CTransportCAI::UnloadUnits_Drop(Command& c, CTransportUnit* transport)
 void CTransportCAI::UnloadUnits_CrashFlood(Command& c, CTransportUnit* transport)
 {
 	// TODO - fly into the ground, doing damage to units at landing pos, then unload.
-	// needs heavy modification of TAAirMoveType
+	// needs heavy modification of HoverAirMoveType
 }
 
 
@@ -668,7 +668,7 @@ void CTransportCAI::UnloadLand(Command& c)
 		}
 
 		if (pos.SqDistance2D(owner->pos) < Square(owner->unitDef->loadingRadius * 0.9f)) {
-			CTAAirMoveType* am = dynamic_cast<CTAAirMoveType*>(owner->moveType);
+			CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
 			pos.y = ((CTransportUnit*)owner)->GetLoadUnloadHeight(pos, unit);
 			if (am != NULL) {
 				// handle air transports differently
@@ -728,14 +728,14 @@ void CTransportCAI::UnloadDrop(Command& c)
 
 		float3 pos(c.params[0], c.params[1], c.params[2]); // head towards goal
 
-		// note that TAAirMoveType must be modified to allow non stop movement
+		// note that HoverAirMoveType must be modified to allow non stop movement
 		// through goals for this to work well
 		if (goalPos.SqDistance2D(pos) > 400) {
 			SetGoal(pos, owner->pos);
 			lastDropPos = pos;
 		}
 
-		if (CTAAirMoveType* am = dynamic_cast<CTAAirMoveType*>(owner->moveType)) {
+		if (CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType)) {
 
 			pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
 			CUnit* unit = ((CTransportUnit*)owner)->GetTransportedUnits().front().unit;
@@ -765,7 +765,7 @@ void CTransportCAI::UnloadDrop(Command& c)
 
 void CTransportCAI::UnloadCrashFlood(Command& c)
 {
-	// TODO - will require heavy modification of TAAirMoveType.cpp
+	// TODO - will require heavy modification of HoverAirMoveType.cpp
 }
 
 
@@ -815,7 +815,7 @@ void CTransportCAI::UnloadLandFlood(Command& c)
 
 		if (startingDropPos.SqDistance2D(owner->pos) < Square(owner->unitDef->loadingRadius * 0.9f)) {
 			// create aircraft movetype instance
-			CTAAirMoveType* am = dynamic_cast<CTAAirMoveType*>(owner->moveType);
+			CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
 
 			if (am != NULL) {
 				// lower to ground
@@ -918,7 +918,7 @@ int CTransportCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 
 void CTransportCAI::FinishCommand()
 {
-	CTAAirMoveType* am = dynamic_cast<CTAAirMoveType*>(owner->moveType);
+	CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
 	if (am) {
 		am->loadingUnits = false;
 	}

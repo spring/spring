@@ -2,7 +2,7 @@
 
 #include "System/mmgr.h"
 
-#include "AirMoveType.h"
+#include "StrafeAirMoveType.h"
 #include "Game/Player.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -17,11 +17,11 @@
 #include "Sim/Weapons/Weapon.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CAirMoveType, AAirMoveType, (NULL));
-CR_BIND(CAirMoveType::DrawLine, );
-CR_BIND(CAirMoveType::RudderInfo, );
+CR_BIND_DERIVED(CStrafeAirMoveType, AAirMoveType, (NULL));
+CR_BIND(CStrafeAirMoveType::DrawLine, );
+CR_BIND(CStrafeAirMoveType::RudderInfo, );
 
-CR_REG_METADATA(CAirMoveType, (
+CR_REG_METADATA(CStrafeAirMoveType, (
 	CR_MEMBER(subState),
 
 	CR_MEMBER(maneuver),
@@ -74,15 +74,15 @@ CR_REG_METADATA(CAirMoveType, (
 	CR_RESERVED(63)
 ));
 
-CR_REG_METADATA_SUB(CAirMoveType, DrawLine, (
+CR_REG_METADATA_SUB(CStrafeAirMoveType, DrawLine, (
 		CR_MEMBER(pos1), CR_MEMBER(pos2),
 		CR_MEMBER(color)));
 
-CR_REG_METADATA_SUB(CAirMoveType, RudderInfo, (CR_MEMBER(rotation)));
+CR_REG_METADATA_SUB(CStrafeAirMoveType, RudderInfo, (CR_MEMBER(rotation)));
 
 
 
-CAirMoveType::CAirMoveType(CUnit* owner):
+CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	AAirMoveType(owner),
 	subState(0),
 	maneuver(0),
@@ -139,16 +139,8 @@ CAirMoveType::CAirMoveType(CUnit* owner):
 
 
 
-CAirMoveType::~CAirMoveType()
+bool CStrafeAirMoveType::Update()
 {
-}
-
-
-
-bool CAirMoveType::Update()
-{
-	float3& pos = owner->pos;
-
 	AAirMoveType::Update();
 
 	if (owner->stunned || owner->beingBuilt) {
@@ -190,7 +182,6 @@ bool CAirMoveType::Update()
 	}
 
 
-
 	switch (aircraftState) {
 		case AIRCRAFT_FLYING: {
 			owner->restTime = 0;
@@ -209,10 +200,11 @@ bool CAirMoveType::Update()
 				} else {
 					goalPos = owner->userAttackPos;
 				}
+
 				if (maneuver) {
 					UpdateManeuver();
 					inefficientAttackTime = 0;
-				} else if (isFighter && goalPos.SqDistance(pos) < Square(owner->maxRange * 4)) {
+				} else if (isFighter && goalPos.SqDistance(owner->pos) < Square(owner->maxRange * 4)) {
 					inefficientAttackTime++;
 					UpdateFighterAttack();
 				} else {
@@ -233,11 +225,12 @@ bool CAirMoveType::Update()
 			UpdateLanding();
 			break;
 		case AIRCRAFT_CRASHING:
-			owner->crashing = true;
+			// note: the crashing-state can only be set by scripts
 			UpdateAirPhysics(crashRudder, crashAileron, crashElevator, 0, owner->frontdir);
 			new CSmokeProjectile(owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, owner, 0.4f);
-			if (!(gs->frameNum & 3) && std::max(0.f, ground->GetApproximateHeight(pos.x, pos.z)) + 5 + owner->radius > pos.y)
-				owner->KillUnit(true, false, 0);
+
+			if (!(gs->frameNum & 3) && (ground->GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y)
+				owner->crashing = false; owner->KillUnit(true, false, 0);
 			break;
 		case AIRCRAFT_TAKEOFF:
 			UpdateTakeOff(wantedHeight);
@@ -252,7 +245,7 @@ bool CAirMoveType::Update()
 
 
 
-bool CAirMoveType::HandleCollisions() {
+bool CStrafeAirMoveType::HandleCollisions() {
 	float3& pos = owner->pos;
 
 #ifdef DEBUG_AIRCRAFT
@@ -358,7 +351,7 @@ bool CAirMoveType::HandleCollisions() {
 
 
 
-void CAirMoveType::SlowUpdate()
+void CStrafeAirMoveType::SlowUpdate()
 {
 	UpdateFuel();
 
@@ -375,7 +368,7 @@ void CAirMoveType::SlowUpdate()
 
 
 
-void CAirMoveType::UpdateManeuver()
+void CStrafeAirMoveType::UpdateManeuver()
 {
 	const float speedf = owner->speed.Length();
 
@@ -443,7 +436,7 @@ void CAirMoveType::UpdateManeuver()
 
 
 
-void CAirMoveType::UpdateFighterAttack()
+void CStrafeAirMoveType::UpdateFighterAttack()
 {
 	float3 &pos = owner->pos;
 	SyncedFloat3 &rightdir = owner->rightdir;
@@ -614,14 +607,14 @@ void CAirMoveType::UpdateFighterAttack()
 
 
 
-void CAirMoveType::UpdateAttack()
+void CStrafeAirMoveType::UpdateAttack()
 {
 	UpdateFlying(wantedHeight, 1);
 }
 
 
 
-void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
+void CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 {
 	float3& pos = owner->pos;
 	SyncedFloat3& rightdir = owner->rightdir;
@@ -763,36 +756,22 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 
 
 
-void CAirMoveType::UpdateLanded()
+void CStrafeAirMoveType::UpdateLanded()
 {
-	float3& pos = owner->pos;
-	SyncedFloat3& rightdir = owner->rightdir;
-	SyncedFloat3& frontdir = owner->frontdir;
-	SyncedFloat3& updir = owner->updir;
-	float3& speed = owner->speed;
-
-	speed = ZeroVector;
-
-	updir = ground->GetNormal(pos.x, pos.z);
-	frontdir.Normalize();
-	rightdir = frontdir.cross(updir);
-	rightdir.Normalize();
-	updir = rightdir.cross(frontdir);
+	owner->speed = ZeroVector;
+	owner->UpdateDirVectors(true);
 }
 
 
 
-void CAirMoveType::UpdateTakeOff(float wantedHeight)
+void CStrafeAirMoveType::UpdateTakeOff(float wantedHeight)
 {
 	float3& pos = owner->pos;
 	float3& speed = owner->speed;
 
-	float h = 0.0f;
-	if (owner->unitDef->canSubmerge) {
-		h = pos.y - ground->GetHeightReal(pos.x, pos.z);
-	} else {
-		h = pos.y - ground->GetHeightAboveWater(pos.x, pos.z);
-	}
+	const float h = pos.y - (owner->unitDef->canSubmerge?
+		ground->GetHeightReal(pos.x, pos.z):
+		ground->GetHeightAboveWater(pos.x, pos.z));
 
 	if (h > wantedHeight) {
 		SetState(AIRCRAFT_FLYING);
@@ -809,19 +788,14 @@ void CAirMoveType::UpdateTakeOff(float wantedHeight)
 	}
 
 	speed *= invDrag;
-
-	owner->frontdir.Normalize();
-	owner->rightdir = owner->frontdir.cross(owner->updir);
-	owner->rightdir.Normalize();
-	owner->updir = owner->rightdir.cross(owner->frontdir);
-
 	pos += speed;
-	owner->UpdateMidPos();
+
+	owner->UpdateDirVectors(false);
 }
 
 
 
-void CAirMoveType::UpdateLanding()
+void CStrafeAirMoveType::UpdateLanding()
 {
 	float3& pos = owner->pos;
 	SyncedFloat3& rightdir = owner->rightdir;
@@ -910,12 +884,7 @@ void CAirMoveType::UpdateLanding()
 	else if (rightdir.dot(dif) < -0.01f)
 		frontdir -= rightdir * 0.02f;
 
-	frontdir.Normalize();
-	rightdir = frontdir.cross(updir);
-	rightdir.Normalize();
-	updir = rightdir.cross(frontdir);
-
-	owner->UpdateMidPos();
+	owner->UpdateDirVectors(false);
 
 	// see if we are at the reserved (not user-clicked) landing spot
 	if (dist < 1.0f) {
@@ -940,13 +909,15 @@ void CAirMoveType::UpdateLanding()
 
 
 
-void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator, float engine, const float3& engineVector)
+void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator, float engine, const float3& engineThrustVector)
 {
 	float3& pos = owner->pos;
+	float3& speed = owner->speed;
+
 	SyncedFloat3& rightdir = owner->rightdir;
 	SyncedFloat3& frontdir = owner->frontdir;
 	SyncedFloat3& updir = owner->updir;
-	float3& speed = owner->speed;
+
 	bool nextPosInBounds = true;
 
 	lastRudderPos = rudder;
@@ -970,7 +941,7 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 	}
 
 
-	speed += (engineVector * maxAcc * engine);
+	speed += (engineThrustVector * maxAcc * engine);
 	speed.y += (mapInfo->map.gravity * myGravity * (owner->beingBuilt? 0.0f: 1.0f));
 
 	if (aircraftState == AIRCRAFT_CRASHING) {
@@ -981,50 +952,41 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 
 	const float3 wingDir = updir * (1 - wingAngle) - frontdir * wingAngle;
 	const float wingForce = wingDir.dot(speed) * wingDrag;
-	speed -= (wingDir * wingForce);
 
-	frontdir += (rightdir * rudder * maxRudder * speedf);
-	updir += (rightdir * aileron * maxAileron * speedf);
-	frontdir += (updir * elevator * maxElevator * speedf);
+	frontdir += (rightdir * rudder   * maxRudder   * speedf); // yaw
+	updir    += (rightdir * aileron  * maxAileron  * speedf); // roll
+	frontdir += (updir    * elevator * maxElevator * speedf); // pitch
 	frontdir += ((speeddir - frontdir) * frontToSpeed);
+
+	speed -= (wingDir * wingForce);
 	speed += ((frontdir * speedf - speed) * speedToFront);
 
 	if (nextPosInBounds) {
 		pos += speed;
 	}
 
-	// ground collision
+	// ground collision; bounce away
 	if (gHeight > (owner->pos.y - owner->model->radius * 0.2f) && !owner->crashing) {
-		const float3 gNormal = ground->GetNormal(pos.x, pos.z);
+		const float3& gNormal = ground->GetNormal(pos.x, pos.z);
 		const float impactSpeed = -speed.dot(gNormal);
 
-		if (impactSpeed > 0) {
-			if (owner->stunned) {
-				float damage = 0;
-				if (impactSpeed > 0.5f)
-					damage += impactSpeed * impactSpeed * 1000;
-				if (updir.dot(gNormal) < 0.95f)
-					damage += (1 - (updir.dot(gNormal))) * 1000;
-				if (damage > 0) {
-					// only do damage while stunned for now
-					owner->DoDamage(DamageArray(damage * 0.4f), 0, ZeroVector);
-				}
-			}
-
+		if (impactSpeed > 0.0f) {
 			pos.y = gHeight + owner->model->radius * 0.2f + 0.01f;
-			speed += gNormal * (impactSpeed * 1.5f);
+			speed += (gNormal * impactSpeed * 1.5f);
 
 			// fix for mantis #1355
-			// aircraft could get stuck in the ground and never recover;
-			// this only happened when the speed wasn't high enough.
-			// do not reduce speed if it's too low, add a vertical component
-			// to help get off the ground instead.
-			if (speed.SqLength() > 0.3f*0.3f * owner->unitDef->speed*owner->unitDef->speed)
+			// aircraft could get stuck in the ground and never recover (on takeoff
+			// near map edges) where their forward speed wasn't allowed to build up
+			// therefore add a vertical component help get off the ground if |speed|
+			// is below a certain threshold
+			if (speed.SqLength() > (0.09f * owner->unitDef->speed * owner->unitDef->speed))
 				speed *= 0.95f;
 			else
 				speed.y += impactSpeed;
-			updir = gNormal - frontdir * 0.1f;
+
+			updir = (gNormal - frontdir * 0.1f);
 			frontdir = updir.cross(frontdir.cross(updir));
+			///!!!    git revert 10df119444c695349156e7ab1f001ef5c727d8a4
 		}
 	}
 
@@ -1034,18 +996,18 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 	updir = rightdir.cross(frontdir);
 
 	owner->UpdateMidPos();
+	owner->SetHeadingFromDirection();
 }
 
 
 
-void CAirMoveType::SetState(AAirMoveType::AircraftState state)
+void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState state)
 {
-	// this state is only used by CTAAirMoveType
+	// this state is only used by CHoverAirMoveType, so we should never enter it
 	assert(state != AIRCRAFT_HOVERING);
 
-	if (aircraftState == AIRCRAFT_CRASHING || state == aircraftState) {
-		return;
-	}
+	if (state == aircraftState) { return; }
+	if ((owner->crashing = (aircraftState == AIRCRAFT_CRASHING))) { return; }
 
 	/*
 	if (state == AIRCRAFT_LANDING)
@@ -1060,12 +1022,12 @@ void CAirMoveType::SetState(AAirMoveType::AircraftState state)
 	}
 
 	if (state == AIRCRAFT_LANDED) {
-		owner->heading = GetHeadingFromVector(owner->frontdir.x, owner->frontdir.z);
 		owner->physicalState = CSolidObject::OnGround;
 		owner->useAirLos = false;
 	} else {
 		owner->physicalState = CSolidObject::Flying;
 		owner->useAirLos = true;
+
 		if (state != AIRCRAFT_LANDING) {
 			reservedLandingPos.x = -1;
 			owner->UnBlock();
@@ -1087,7 +1049,7 @@ void CAirMoveType::SetState(AAirMoveType::AircraftState state)
 
 
 
-void CAirMoveType::ImpulseAdded(const float3&)
+void CStrafeAirMoveType::ImpulseAdded(const float3&)
 {
 	if (aircraftState == AIRCRAFT_FLYING) {
 		owner->speed += owner->residualImpulse;
@@ -1097,7 +1059,7 @@ void CAirMoveType::ImpulseAdded(const float3&)
 
 
 
-float3 CAirMoveType::FindLandingPos() const
+float3 CStrafeAirMoveType::FindLandingPos() const
 {
 	const float3 ret(-1.0f, -1.0f, -1.0f);
 
@@ -1129,7 +1091,7 @@ float3 CAirMoveType::FindLandingPos() const
 
 
 
-void CAirMoveType::DependentDied(CObject* o)
+void CStrafeAirMoveType::DependentDied(CObject* o)
 {
 	if (o == lastColWarning) {
 		lastColWarning = NULL;
@@ -1140,7 +1102,7 @@ void CAirMoveType::DependentDied(CObject* o)
 
 
 
-void CAirMoveType::SetMaxSpeed(float speed)
+void CStrafeAirMoveType::SetMaxSpeed(float speed)
 {
 	maxSpeed = speed;
 	if (maxAcc != 0.0f && maxSpeed != 0.0f) {
@@ -1153,29 +1115,19 @@ void CAirMoveType::SetMaxSpeed(float speed)
 
 
 
-void CAirMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive)
-{
-}
-
-
-
-void CAirMoveType::StartMoving(float3 gpos, float goalRadius)
+void CStrafeAirMoveType::StartMoving(float3 gpos, float goalRadius)
 {
 	SetWantedMaxSpeed(owner->maxSpeed);
 	SetGoal(gpos);
 }
 
-
-
-void CAirMoveType::StartMoving(float3 pos, float goalRadius, float speed)
+void CStrafeAirMoveType::StartMoving(float3 pos, float goalRadius, float speed)
 {
 	SetWantedMaxSpeed(speed);
 	SetGoal(pos);
 }
 
-
-
-void CAirMoveType::StopMoving()
+void CStrafeAirMoveType::StopMoving()
 {
 	SetGoal(owner->pos);
 	SetWantedMaxSpeed(0.0f);
@@ -1187,7 +1139,7 @@ void CAirMoveType::StopMoving()
 
 
 
-void CAirMoveType::Takeoff()
+void CStrafeAirMoveType::Takeoff()
 {
 	if (aircraftState != AAirMoveType::AIRCRAFT_FLYING) {
 		if ((owner->currentFuel > 0.0f) || owner->unitDef->maxFuel <= 0.0f) {
@@ -1199,11 +1151,4 @@ void CAirMoveType::Takeoff()
 			}
 		}
 	}
-}
-
-
-
-bool CAirMoveType::IsFighter() const
-{
-	return isFighter;
 }

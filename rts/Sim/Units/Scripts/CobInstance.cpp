@@ -16,8 +16,6 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/MoveTypes/AirMoveType.h"
-#include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/PieceProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"

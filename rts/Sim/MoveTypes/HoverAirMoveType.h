@@ -5,9 +5,9 @@
 
 #include "AAirMoveType.h"
 
-class CTAAirMoveType : public AAirMoveType
+class CHoverAirMoveType: public AAirMoveType
 {
-	CR_DECLARE(CTAAirMoveType);
+	CR_DECLARE(CHoverAirMoveType);
 public:
 	enum FlyState {
 		FLY_CRUISING,
@@ -67,8 +67,7 @@ public:
 	float3 randomWind;
 
 
-	CTAAirMoveType(CUnit* owner);
-	~CTAAirMoveType();
+	CHoverAirMoveType(CUnit* owner);
 
 	// MoveType interface
 	bool Update();
@@ -104,7 +103,7 @@ private:
 	void DependentDied(CObject* o);
 
 	void Takeoff();
-	bool IsFighter() const;
+	bool IsFighter() const { return false; }
 
 	bool HandleCollisions();
 };
