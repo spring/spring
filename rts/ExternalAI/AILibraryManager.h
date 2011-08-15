@@ -85,6 +85,13 @@ private:
 	 * AI/Skirmish/RAI/0.601/AIOptions.lua
 	 */
 	void GatherSkirmishAIsLibrariesInfos();
+
+	void GatherSkirmishAIsLibrariesInfosFromLuaFiles(T_dupSkirm duplicateSkirmishAIInfoCheck);
+	void GatherSkirmishAIsLibrariesInfosFromInterfaceLibrary(T_dupSkirm duplicateSkirmishAIInfoCheck);
+	void StoreSkirmishAILibraryInfos(T_dupSkirm duplicateSkirmishAIInfoCheck, CSkirmishAILibraryInfo* skirmishAIInfo, const std::string& sourceDesc);
+	/// Filter out Skirmish AIs that are specified multiple times
+	void FilterDuplicateSkirmishAILibrariesInfos(T_dupSkirm duplicateSkirmishAIInfoCheck);
+
 	/**
 	 * Clears info about available AIs.
 	 */

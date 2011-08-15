@@ -33,6 +33,7 @@ public:
 	virtual const std::string& GetName() const;
 	virtual const std::string& GetDescription() const;
 	virtual const std::string& GetURL() const;
+	virtual bool IsLookupSupported() const;
 	virtual const std::string& GetInfo(const std::string& key) const;
 
 	virtual void SetDataDir(const std::string& dataDir);

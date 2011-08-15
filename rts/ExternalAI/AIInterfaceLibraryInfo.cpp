@@ -98,6 +98,17 @@ const std::string& CAIInterfaceLibraryInfo::GetDescription() const {
 const std::string& CAIInterfaceLibraryInfo::GetURL() const {
 	return GetInfo(AI_INTERFACE_PROPERTY_URL);
 }
+bool CAIInterfaceLibraryInfo::IsLookupSupported() const {
+
+	bool lookupSupported = false;
+
+	const std::string& lookupSupportedStr = GetInfo(AI_INTERFACE_PROPERTY_SUPPORTS_LOOKUP);
+	if (lookupSupportedStr != DEFAULT_VALUE) {
+		lookupSupported = StringToBool(lookupSupportedStr);
+	}
+
+	return lookupSupported;
+}
 const std::string& CAIInterfaceLibraryInfo::GetInfo(const std::string& key) const {
 
 	bool found = false;
