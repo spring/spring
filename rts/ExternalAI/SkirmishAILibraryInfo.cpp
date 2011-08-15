@@ -110,14 +110,8 @@ bool CSkirmishAILibraryInfo::IsLuaAI() const {
 	bool isLua = false;
 
 	const std::string& isLuaStr = GetInfo("isLuaAI");
-	if ((isLuaStr == "yes") ||
-		(isLuaStr == "Yes") ||
-		(isLuaStr == "YES") ||
-		(isLuaStr == "1") ||
-		(isLuaStr == "true") ||
-		(isLuaStr == "True") ||
-		(isLuaStr == "TRUE")) {
-		isLua = true;
+	if (isLuaStr != DEFAULT_VALUE) {
+		isLua = StringToBool(isLuaStr);
 	}
 
 	return isLua;
