@@ -37,6 +37,7 @@ public:
 
 	bool IsUnspecified() const;
 	bool IsFullySpecified() const;
+	std::string ToString() const;
 
 	bool operator==(const SkirmishAIKey& otherKey) const;
 	bool operator!=(const SkirmishAIKey& otherKey) const;
