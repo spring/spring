@@ -31,6 +31,10 @@ public:
 	LevelOfSupport GetLevelOfSupportFor(
 			const std::string& engineVersionString, int engineVersionNumber) const;
 
+	int GetSkirmishAICount() const;
+	std::map<std::string, std::string> GetSkirmishAIInfos(int aiIndex) const;
+	std::string GetSkirmishAIOptions(int aiIndex) const;
+
 	/**
 	 * @brief	how many times is this interface loaded
 	 * Thought the AI library may be loaded only once, it can be logically
