@@ -26,7 +26,6 @@ public:
 	virtual void Update() {}
 	virtual void UpdateWater(CGame* game) {}
 	virtual void OcclusionQuery() {}
-	virtual void HeightmapChanged(const int x1, const int y1, const int x2, const int y2) {}
 	virtual void AddExplosion(const float3& pos, float strength, float size) {}
 	virtual int  GetID() const { return -1; }
 	virtual const char* GetName() const { return ""; }
@@ -40,7 +39,6 @@ public:
 	static IWater* GetWater(IWater* currWaterRenderer, int nextWaterRenderMode);
 	static void ApplyPushedChanges(CGame* game);
 	static void PushWaterMode(int nextWaterRenderMode);
-	static void PushHeightmapChange(const int x1, const int y1, const int x2, const int y2);
 	static bool IsNoWakeProjectiles() { return noWakeProjectiles; }
 
 protected:
