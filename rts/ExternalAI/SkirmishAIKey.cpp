@@ -70,6 +70,10 @@ bool SkirmishAIKey::IsFullySpecified() const {
 	return shortName != "" || !interface.IsUnspecified();
 }
 
+std::string SkirmishAIKey::ToString() const {
+	return GetShortName() + " " + GetVersion();
+}
+
 bool SkirmishAIKey::operator==(const SkirmishAIKey& otherKey) const {
 	return isEqual(otherKey);
 }

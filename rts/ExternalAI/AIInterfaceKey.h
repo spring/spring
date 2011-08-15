@@ -24,6 +24,7 @@ public:
 	const std::string& GetVersion() const;
 
 	bool IsUnspecified() const;
+	std::string ToString() const;
 
 	bool operator==(const AIInterfaceKey& otherKey) const;
 	bool operator!=(const AIInterfaceKey& otherKey) const;

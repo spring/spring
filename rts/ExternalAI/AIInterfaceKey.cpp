@@ -54,6 +54,10 @@ bool AIInterfaceKey::IsUnspecified() const {
 	return shortName == "";
 }
 
+std::string AIInterfaceKey::ToString() const {
+	return GetShortName() + " " + GetVersion();
+}
+
 bool AIInterfaceKey::operator==(const AIInterfaceKey& otherKey) const {
 	return isEqual(otherKey);
 }
