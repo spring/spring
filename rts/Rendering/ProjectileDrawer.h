@@ -35,7 +35,7 @@ struct distcmp {
 class CProjectileDrawer: public CEventClient {
 public:
 	CProjectileDrawer();
-	virtual ~CProjectileDrawer();
+	~CProjectileDrawer();
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawProjectilesMiniMap();

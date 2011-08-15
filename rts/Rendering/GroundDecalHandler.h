@@ -117,7 +117,7 @@ class CGroundDecalHandler: public CEventClient, public CExplosionListener
 {
 public:
 	CGroundDecalHandler();
-	virtual ~CGroundDecalHandler();
+	~CGroundDecalHandler();
 
 	void Draw();
 	void Update();
