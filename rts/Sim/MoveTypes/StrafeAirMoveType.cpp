@@ -986,7 +986,6 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 
 			updir = (gNormal - frontdir * 0.1f);
 			frontdir = updir.cross(frontdir.cross(updir));
-			///!!!    git revert 10df119444c695349156e7ab1f001ef5c727d8a4
 		}
 	}
 
