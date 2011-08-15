@@ -36,6 +36,7 @@ BUNDLE_BASE=${TMP_PATH}/${BUNDLE_NAME}/Contents
 echo "Creating ${BUNDLE_NAME}..."
 
 MACPORTS_BASE=`which port | sed s/[/]bin[/]port//`
+STRIP="strip -r -u"
 
 mkdir -p ${BUNDLE_BASE}
 cd ${BUNDLE_BASE}
@@ -85,11 +86,11 @@ do
 		install_name_tool -change ${MACPORTS_BASE}/${dylib} @executable_path/../${dylib} MacOS/${executable}
 
 		# the bundled lib is autonomous => it can be stripped
-		strip --strip-debug --strip-unneeded ${dylib}
+		${STRIP} ${dylib}
 	done
 
 	# finally, strip the executable
-	strip --strip-debug --strip-unneeded MacOS/${executable}
+	{STRIP} MacOS/${executable}
 done
 
 # continue with recursive dependencies
@@ -121,7 +122,7 @@ do
 				install_name_tool -id @executable_path/../${requiredlib} ${requiredlib}
 
 				# the bundled lib is autonomous => it can be stripped
-				strip --strip-debug --strip-unneeded ${requiredlib}
+				{STRIP} ${requiredlib}
 			fi
 
 			# point the parent lib to the bundled lib in relative pathing mode
