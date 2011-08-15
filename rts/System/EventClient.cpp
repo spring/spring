@@ -33,7 +33,7 @@ CEventClient::~CEventClient()
 void CEventClient::Save(zipFile archive) {}
 
 void CEventClient::Update() {}
-void CEventClient::UnsyncedHeightMapUpdate(const CRectangle& rect) {}
+void CEventClient::UnsyncedHeightMapUpdate(const SRectangle& rect) {}
 
 void CEventClient::ViewResize() {}
 

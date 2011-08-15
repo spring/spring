@@ -7,7 +7,11 @@
 #include <bitset>
 #include "System/Rectangle.h"
 
-
+/**
+ * @brief CRectangleOptimizer
+ *
+ * Container & preprocessor for rectangles. It solves any overlapping & merges+resizes rectangles.
+ */
 class CRectangleOptimizer
 {
 public:
@@ -18,15 +22,15 @@ public:
 
 public:
 	//! std container funcs
-	typedef std::list<CRectangle>::iterator iterator;
-	typedef std::list<CRectangle>::const_iterator const_iterator;
+	typedef std::list<SRectangle>::iterator iterator;
+	typedef std::list<SRectangle>::const_iterator const_iterator;
 	bool empty() {
 		return rectangles.empty();
 	}
 	size_t size() {
 		return rectangles.size();
 	}
-	CRectangle& front() {
+	SRectangle& front() {
 		return rectangles.front();
 	}
 	void pop_front() {
@@ -36,7 +40,7 @@ public:
 		needsUpdate = false;
 		return rectangles.clear();
 	}
-	void push_back(const CRectangle& rect) {
+	void push_back(const SRectangle& rect) {
 		//! skip empty/negative rectangles
 		//assert(rect.GetWidth() > 0 && rect.GetHeight() > 0);
 		if (rect.GetWidth() <= 0 || rect.GetHeight() <= 0)
@@ -55,17 +59,17 @@ public:
 	int maxAreaPerRect;
 
 private:
-	bool HandleMerge(CRectangle& rect1, CRectangle& rect2);
-	int HandleOverlapping(CRectangle* rect1, CRectangle* rect2);
-	static std::bitset<4> GetEdgesInRect(const CRectangle& rect1, const CRectangle& rect2);
-	static std::bitset<4> GetSharedEdges(const CRectangle& rect1, const CRectangle& rect2);
-	static bool DoOverlap(const CRectangle& rect1, const CRectangle& rect2);
-	static bool AreMergable(const CRectangle& rect1, const CRectangle& rect2);
+	bool HandleMerge(SRectangle& rect1, SRectangle& rect2);
+	int HandleOverlapping(SRectangle* rect1, SRectangle* rect2);
+	static std::bitset<4> GetEdgesInRect(const SRectangle& rect1, const SRectangle& rect2);
+	static std::bitset<4> GetSharedEdges(const SRectangle& rect1, const SRectangle& rect2);
+	static bool DoOverlap(const SRectangle& rect1, const SRectangle& rect2);
+	static bool AreMergable(const SRectangle& rect1, const SRectangle& rect2);
 
 	unsigned GetTotalArea() const;
 
 private:
-	std::list<CRectangle> rectangles;
+	std::list<SRectangle> rectangles;
 	bool needsUpdate;
 
 private:
