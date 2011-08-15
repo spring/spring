@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _ENGINEOUTHANDLER_H
-#define _ENGINEOUTHANDLER_H
+#ifndef ENGINE_OUT_HANDLER_H
+#define ENGINE_OUT_HANDLER_H
 
 #include "System/Object.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -19,10 +19,10 @@ class SkirmishAIKey;
 class CSkirmishAIWrapper;
 struct SSkirmishAICallback;
 
+
 void handleAIException(const char* description);
 
 class CEngineOutHandler : public CObject {
-private:
 	CR_DECLARE(CEngineOutHandler);
 
 	CEngineOutHandler();
@@ -170,4 +170,4 @@ private:
 
 #define eoh CEngineOutHandler::GetInstance()
 
-#endif // _ENGINEOUTHANDLER_H
+#endif // ENGINE_OUT_HANDLER_H

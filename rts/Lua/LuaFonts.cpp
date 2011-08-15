@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 
 #include "System/mmgr.h"
 
@@ -228,17 +227,12 @@ int LuaFonts::Print(lua_State* L)
 	CheckDrawingEnabled(L, __FUNCTION__);
 
 	const int args = lua_gettop(L); // number of arguments
-	if ((args < 4) ||
-	    !lua_isstring(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4)) {
-		luaL_error(L,
-		  "Incorrect arguments to font:Print(msg, x, y [,size [,\"options\"] ]");
-	}
 
 	CglFont* font = tofont(L, 1);
 
-	const string text(lua_tostring(L, 2),lua_strlen(L, 2));
-	const float x     = lua_tonumber(L, 3);
-	const float y     = lua_tonumber(L, 4);
+	const string text(luaL_checkstring(L, 2),lua_strlen(L, 2));
+	const float x     = luaL_checkfloat(L, 3);
+	const float y     = luaL_checkfloat(L, 4);
 	const float size  = luaL_optfloat(L, 5, font->GetSize());
 
 	int options = FONT_NEAREST;
@@ -300,14 +294,8 @@ int LuaFonts::End(lua_State* L)
 int LuaFonts::WrapText(lua_State* L)
 {
 	CglFont* font = tofont(L, 1);
-
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 3) || !lua_isstring(L, 2) || !lua_isnumber(L, 3)) {
-		luaL_error(L, "Incorrect arguments to font:WrapText(\"text\", maxWidth, [maxHeight], [size])");
-	}
-
-	string text(lua_tostring(L, 2),lua_strlen(L, 2));
-	const float maxWidth   = lua_tonumber(L, 3);
+	string text(luaL_checkstring(L, 2),lua_strlen(L, 2));
+	const float maxWidth   = luaL_checkfloat(L, 3);
 	const float maxHeight  = luaL_optfloat(L, 4, 1e9);
 	const float size       = luaL_optfloat(L, 5, font->GetSize());
 
@@ -324,14 +312,7 @@ int LuaFonts::WrapText(lua_State* L)
 int LuaFonts::GetTextWidth(lua_State* L)
 {
 	CglFont* font = tofont(L, 1);
-
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isstring(L, 2)) {
-		luaL_error(L, "Incorrect arguments to font:GetTextWidth(\"text\")");
-	}
-
-	const string text(lua_tostring(L, 2),lua_strlen(L, 2));
-
+	const string text(luaL_checkstring(L, 2),lua_strlen(L, 2));
 	const float width = font->GetTextWidth(text);
 	lua_pushnumber(L, width);
 	return 1;
@@ -341,16 +322,9 @@ int LuaFonts::GetTextWidth(lua_State* L)
 int LuaFonts::GetTextHeight(lua_State* L)
 {
 	CglFont* font = tofont(L, 1);
-
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isstring(L, 2)) {
-		luaL_error(L, "Incorrect arguments to font:GetTextHeight(\"text\")");
-	}
-
-	const string text(lua_tostring(L, 2),lua_strlen(L, 2));
+	const string text(luaL_checkstring(L, 2),lua_strlen(L, 2));
 	float descender;
 	int lines;
-
 	const float height = font->GetTextHeight(text,&descender,&lines);
 	lua_pushnumber(L, height);
 	lua_pushnumber(L, descender);
@@ -384,9 +358,9 @@ int LuaFonts::SetTextColor(lua_State* L)
 		}
 	} else if (args >= 4) {
 		color = new float4;
-		color->x = lua_tonumber(L, 2);
-		color->y = lua_tonumber(L, 3);
-		color->z = lua_tonumber(L, 4);
+		color->x = luaL_checkfloat(L, 2);
+		color->y = luaL_checkfloat(L, 3);
+		color->z = luaL_checkfloat(L, 4);
 		color->w = luaL_optfloat(L, 5, 1.0f);
 	} else if (!lua_isnil(L, 2)) {
 		luaL_error(L, "Incorrect arguments to font:SetTextColor([\"textColor\"])");
@@ -420,9 +394,9 @@ int LuaFonts::SetOutlineColor(lua_State* L)
 		}
 	} else if (args >= 4) {
 		color = new float4;
-		color->x = lua_tonumber(L, 2);
-		color->y = lua_tonumber(L, 3);
-		color->z = lua_tonumber(L, 4);
+		color->x = luaL_checkfloat(L, 2);
+		color->y = luaL_checkfloat(L, 3);
+		color->z = luaL_checkfloat(L, 4);
 		color->w = luaL_optfloat(L, 5, 1.0f);
 	} else if (!lua_isnil(L, 2)) {
 		luaL_error(L, "Incorrect arguments to font:SetOutlineColor([\"outlineColor\"])");

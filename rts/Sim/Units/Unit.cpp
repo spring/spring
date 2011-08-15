@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 #include "lib/gml/gml.h"
 
@@ -51,7 +50,6 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/ModInfo.h"
-#include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/MoveTypes/MoveTypeFactory.h"
@@ -61,7 +59,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 #include "System/creg/STL_List.h"
@@ -71,8 +69,6 @@
 #include "System/Sync/SyncTracer.h"
 
 #define PLAY_SOUNDS 1
-
-CLogSubsystem LOG_UNIT("unit");
 
 // See end of source for member bindings
 //////////////////////////////////////////////////////////////////////
@@ -371,7 +367,7 @@ void CUnit::PreInit(const UnitDef* uDef, int uTeam, int facing, const float3& po
 	tracefile << "pos: <" << pos.x << ", " << pos.y << ", " << pos.z << ">\n";
 #endif
 
-	ASSERT_SYNCED_FLOAT3(pos);
+	ASSERT_SYNCED(pos);
 
 	heading  = GetHeadingFromFacing(facing);
 	frontdir = GetVectorFromHeading(heading);
@@ -576,30 +572,42 @@ void CUnit::ForcedMove(const float3& newPos)
 }
 
 
-void CUnit::ForcedSpin(const float3& newDir)
-{
-	frontdir = newDir;
-	heading = GetHeadingFromVector(newDir.x, newDir.z);
-	ForcedMove(pos); // lazy, don't need to update the quadfield, etc...
-}
-
 void CUnit::SetDirectionFromHeading()
 {
-	if (GetTransporter() == NULL) {
-		frontdir = GetVectorFromHeading(heading);
-
-		if (upright || !unitDef->canmove) {
-			updir = UpVector;
-			rightdir = frontdir.cross(updir);
-		} else  {
-			updir = ground->GetNormal(pos.x, pos.z);
-			rightdir = frontdir.cross(updir);
-			rightdir.Normalize();
-			frontdir = updir.cross(rightdir);
-		}
+	if (GetTransporter() != NULL) {
+		return;
 	}
+
+	UpdateDirVectors(!upright && maxSpeed > 0.0f);
 }
 
+void CUnit::SetHeadingFromDirection()
+{
+	heading = GetHeadingFromVector(frontdir.x, frontdir.z);
+}
+
+
+void CUnit::SetDirVectors(const CMatrix44f& matrix) {
+	rightdir.x = -matrix[ 0];
+	rightdir.y = -matrix[ 1];
+	rightdir.z = -matrix[ 2];
+	updir.x    =  matrix[ 4];
+	updir.y    =  matrix[ 5];
+	updir.z    =  matrix[ 6];
+	frontdir.x =  matrix[ 8];
+	frontdir.y =  matrix[ 9];
+	frontdir.z =  matrix[10];
+}
+
+void CUnit::UpdateDirVectors(bool useGroundNormal)
+{
+	updir    = useGroundNormal? ground->GetSmoothNormal(pos.x, pos.z): UpVector;
+	frontdir = GetVectorFromHeading(heading);
+	rightdir = (frontdir.cross(updir)).Normalize();
+	frontdir = updir.cross(rightdir);
+
+	UpdateMidPos();
+}
 
 void CUnit::UpdateMidPos()
 {
@@ -643,7 +651,6 @@ void CUnit::EnableScriptMoveType()
 	usingScriptMoveType = true;
 }
 
-
 void CUnit::DisableScriptMoveType()
 {
 	if (!usingScriptMoveType) {
@@ -666,7 +673,7 @@ void CUnit::DisableScriptMoveType()
 
 void CUnit::Update()
 {
-	ASSERT_SYNCED_FLOAT3(pos);
+	ASSERT_SYNCED(pos);
 
 	posErrorVector += posErrorDelta;
 
@@ -894,8 +901,8 @@ void CUnit::SlowUpdate()
 			return;
 		}
 		if ((selfDCountdown & 1) && (team == gu->myTeam)) {
-			logOutput.Print("%s: Self destruct in %i s",
-			                unitDef->humanName.c_str(), selfDCountdown / 2);
+			LOG("%s: Self destruct in %i s",
+					unitDef->humanName.c_str(), selfDCountdown / 2);
 		}
 	}
 
@@ -1127,7 +1134,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 
 	if (paralyzeTime == 0) { // real damage
 		if (damage > 0.0f) {
-			// Dont log overkill damage (so nukes etc dont inflate values)
+			// Do not log overkill damage (so nukes etc do not inflate values)
 			const float statsdamage = std::max(0.0f, std::min(maxHealth - health, damage));
 			if (attacker) {
 				teamHandler->Team(attacker->team)->currentStats->damageDealt += statsdamage;
@@ -1250,37 +1257,7 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 		interPos += helper->GetUnitErrorPos(this, gu->myAllyTeam) - midPos;
 	}
 
-	if (usingScriptMoveType ||
-	    (!beingBuilt && (physicalState == CSolidObject::Flying) && unitDef->canmove)) {
-		// aircraft, skidding ground unit, or active ScriptMoveType
-		// note: (CAirMoveType) aircraft under construction should not
-		// use this matrix, or their nanoframes won't spin on pad
-		return CMatrix44f(interPos, -rightdir, updir, frontdir);
-	}
-	else if (GetTransporter()) {
-		// we're being transported, transporter sets our vectors
-		return CMatrix44f(interPos, -rightdir, updir, frontdir);
-	}
-	else if (upright || !unitDef->canmove) {
-		if (heading == 0) {
-			return CMatrix44f(interPos);
-		} else {
-			// making local copies of vectors
-			float3 frontDir = GetVectorFromHeading(heading);
-			float3 upDir    = updir;
-			float3 rightDir = frontDir.cross(upDir);
-			rightDir.Normalize();
-			frontDir = upDir.cross(rightDir);
-			return CMatrix44f(interPos, -rightdir, updir, frontdir);
-		}
-	}
-	// making local copies of vectors
-	float3 frontDir = GetVectorFromHeading(heading);
-	float3 upDir    = ground->GetSmoothNormal(pos.x, pos.z);
-	float3 rightDir = frontDir.cross(upDir);
-	rightDir.Normalize();
-	frontDir = upDir.cross(rightDir);
-	return CMatrix44f(interPos, -rightDir, upDir, frontDir);
+	return CMatrix44f(interPos, -rightdir, updir, frontdir);
 }
 
 
@@ -1834,13 +1811,14 @@ void CUnit::FinishedBuilding()
 	}
 
 	if (unitDef->isFeature && uh->morphUnitToFeature) {
-		UnBlock();
-		CFeature* f =
-			featureHandler->CreateWreckage(pos, wreckName, heading, buildFacing,
-										   0, team, allyteam, false, NULL);
+		CFeature* f = featureHandler->CreateWreckage(
+			pos, wreckName, heading, buildFacing, 0, team, allyteam, false, NULL);
+
 		if (f) {
 			f->blockHeightChanges = true;
 		}
+
+		UnBlock();
 		KillUnit(false, true, NULL);
 	}
 }
@@ -1848,18 +1826,8 @@ void CUnit::FinishedBuilding()
 
 void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool showDeathSequence)
 {
-	if (isDead) {
-		return;
-	}
-
-	if (dynamic_cast<CAirMoveType*>(moveType) && !beingBuilt) {
-		if (unitDef->canCrash && !selfDestruct && !reclaimed &&
-		    (gs->randFloat() > (recentDamage * 0.7f / maxHealth + 0.2f))) {
-			((CAirMoveType*) moveType)->SetState(AAirMoveType::AIRCRAFT_CRASHING);
-			health = maxHealth * 0.5f;
-			return;
-		}
-	}
+	if (isDead) { return; }
+	if (crashing && !beingBuilt) { return; }
 
 	isDead = true;
 	deathSpeed = speed;

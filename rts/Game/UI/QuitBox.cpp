@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include <SDL_keysym.h>
 #include "System/mmgr.h"
 
@@ -14,7 +13,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
 #include "System/TimeUtil.h"
 #include "System/FileSystem/FileSystem.h"
@@ -304,25 +303,26 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 		}
 		// save current game state
 		if (InBox(mx,my,box+saveBox)) {
-			if (filesystem.CreateDirectory("Saves")) {
+			if (FileSystem::CreateDirectory("Saves")) {
 				std::string timeStr = CTimeUtil::GetCurrentTimeStr();
 				std::string saveFileName(timeStr + "_" + modInfo.filename + "_" + gameSetup->mapName);
 				saveFileName = "Saves/" + saveFileName + ".ssf";
-				if (!filesystem.FileExists(saveFileName)) {
-					logOutput.Print("Saving game to %s\n", saveFileName.c_str());
+				if (!FileSystem::FileExists(saveFileName)) {
+					LOG("Saving game to %s", saveFileName.c_str());
 					ILoadSaveHandler* ls = ILoadSaveHandler::Create();
 					ls->mapName = gameSetup->mapName;
 					ls->modName = modInfo.filename;
 					ls->SaveGame(saveFileName);
 					delete ls;
 				} else {
-					logOutput.Print("Error: File %s already exists, game NOT saved!\n", saveFileName.c_str());
+					LOG_L(L_ERROR, "File %s already exists, game NOT saved!",
+							saveFileName.c_str());
 				}
 			}
 		}
 	}
 	else if (InBox(mx, my, box + quitBox)) {
-		logOutput.Print("User exited");
+		LOG("User exited");
 		gu->globalQuit = true;
 	}
 	// if we're still in the game, remove the resign box

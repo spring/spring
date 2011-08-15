@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include <fstream>
@@ -14,7 +13,7 @@
 #include "Lua/LuaParser.h"
 #include "Map/Ground.h"
 #include "Rendering/GroundFlash.h"
-#include "Rendering/ProjectileDrawer.hpp"
+#include "Rendering/ProjectileDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -29,7 +28,7 @@
 #include "Sim/Projectiles/Unsynced/WreckProjectile.h"
 
 #include "System/Config/ConfigHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 #include "System/creg/VarTypes.h"
 #include "System/FileSystem/FileHandler.h"
@@ -141,7 +140,8 @@ void CExplosionGeneratorHandler::ParseExplosionTables() {
 	explTblRoot = NULL;
 
 	if (!aliasParser->Execute()) {
-		logOutput.Print(aliasParser->GetErrorLog());
+		LOG_L(L_ERROR, "Failed to parse explosion aliases: %s",
+				aliasParser->GetErrorLog().c_str());
 	} else {
 		const LuaTable& aliasRoot = aliasParser->GetRoot();
 
@@ -152,7 +152,8 @@ void CExplosionGeneratorHandler::ParseExplosionTables() {
 	}
 
 	if (!exploParser->Execute()) {
-		logOutput.Print(exploParser->GetErrorLog());
+		LOG_L(L_ERROR, "Failed to parse explosions: %s",
+				exploParser->GetErrorLog().c_str());
 	} else {
 		explTblRoot = new LuaTable(exploParser->GetRoot());
 	}
@@ -182,6 +183,12 @@ IExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag
 	}
 
 	return eg;
+}
+
+void CExplosionGeneratorHandler::UnloadGenerator(IExplosionGenerator* explGen)
+{
+	creg::Class* cls = explGen->GetClass();
+	cls->DeleteInstance(explGen);
 }
 
 
@@ -548,7 +555,9 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			else if (c == 'q') {opcode = OP_POWBUFF; useInt = true;}
 			else if (isdigit(c) || c == '.' || c == '-') { opcode = OP_ADD; p--; }
 			else {
-				logOutput.Print("[CCEG::ParseExplosionCode] WARNING: unknown op-code \"" + string(1, c) + "\" in \"" + script + "\"");
+				LOG_L(L_WARNING,
+						"[CCEG::ParseExplosionCode] unknown op-code \"%c\" in \"%s\"",
+						c, script.c_str());
 				continue;
 			}
 
@@ -610,6 +619,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		if (type->GetName() == "AtlasedTexture*") {
 			string::size_type end = script.find(';', 0);
 			string texname = script.substr(0, end);
+			// this memory is managed by textureAtlas (CTextureAtlas)
 			void* tex = projectileDrawer->textureAtlas->GetTexturePtr(texname);
 			code += OP_LOADP;
 			code.append((char*)(&tex), ((char*)(&tex)) + sizeof(void*));
@@ -619,6 +629,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		} else if (type->GetName() == "GroundFXTexture*") {
 			string::size_type end = script.find(';', 0);
 			string texname = script.substr(0, end);
+			// this memory is managed by groundFXAtlas (CTextureAtlas)
 			void* tex = projectileDrawer->groundFXAtlas->GetTexturePtr(texname);
 			code += OP_LOADP;
 			code.append((char*)(&tex), ((char*)(&tex)) + sizeof(void*));
@@ -628,6 +639,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		} else if (type->GetName() == "CColorMap*") {
 			string::size_type end = script.find(';', 0);
 			string colorstring = script.substr(0, end);
+			// gets stored and deleted at game end from inside CColorMap
 			void* colormap = CColorMap::LoadFromDefString(colorstring);
 			code += OP_LOADP;
 			code.append((char*)(&colormap), ((char*)(&colormap)) + sizeof(void*));
@@ -637,9 +649,11 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		} else if (type->GetName() == "IExplosionGenerator*") {
 			string::size_type end = script.find(';', 0);
 			string name = script.substr(0, end);
-			void* explgen = explGenHandler->LoadGenerator(name);
+			IExplosionGenerator* explGen = explGenHandler->LoadGenerator(name);
+			explGens.push_back(explGen); // these will be unloaded in ~CCustomExplosionGenerator()
+			void* explGenRaw = (void*) explGen;
 			code += OP_LOADP;
-			code.append((char*)(&explgen), ((char*)(&explgen)) + sizeof(void*));
+			code.append((char*)(&explGenRaw), ((char*)(&explGenRaw)) + sizeof(void*));
 			code += OP_STOREP;
 			boost::uint16_t ofs = offset;
 			code.append((char*)&ofs, (char*)&ofs + 2);
@@ -667,7 +681,9 @@ unsigned int CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, cons
 
 		if (!expTable.IsValid()) {
 			// not a fatal error: any calls to ::Explosion will just return early
-			logOutput.Print("[CCEG::Load] WARNING: table for CEG \"" + tag + "\" invalid (parse errors?)");
+			LOG_L(L_WARNING,
+					"[CCEG::Load] table for CEG \"%s\" invalid (parse errors?)",
+					tag.c_str());
 			return explosionID;
 		}
 
@@ -753,7 +769,8 @@ void CCustomExplosionGenerator::RefreshCache(const std::string& tag) {
 		for (it = oldExplosionIDs.begin(); it != oldExplosionIDs.end(); ++it) {
 			const std::string& tmpTag = it->first;
 
-			logOutput.Print("[%s] reloading CEG \"%s\" (ID %u)", __FUNCTION__, tmpTag.c_str(), it->second);
+			LOG("[%s] reloading CEG \"%s\" (ID %u)",
+					__FUNCTION__, tmpTag.c_str(), it->second);
 			Load(explGenHandler, tmpTag);
 		}
 	} else {
@@ -761,7 +778,8 @@ void CCustomExplosionGenerator::RefreshCache(const std::string& tag) {
 		const std::map<std::string, unsigned int>::const_iterator it = explosionIDs.find(tag);
 
 		if (it == explosionIDs.end()) {
-			logOutput.Print("[%s] unknown CEG-tag \"%s\"", __FUNCTION__, tag.c_str());
+			LOG_L(L_WARNING, "[%s] unknown CEG-tag \"%s\"",
+					__FUNCTION__, tag.c_str());
 			return;
 		}
 
@@ -777,10 +795,12 @@ void CCustomExplosionGenerator::RefreshCache(const std::string& tag) {
 		explosionData[cegIndex] = tmpCEG;
 		explosionData.pop_back();
 
-		logOutput.Print("[%s] reloading single CEG \"%s\" (ID %u)", __FUNCTION__, tag.c_str(), cegIndex);
+		LOG("[%s] reloading single CEG \"%s\" (ID %u)",
+				__FUNCTION__, tag.c_str(), cegIndex);
 
 		if (Load(explGenHandler, tag) == -1U) {
-			logOutput.Print("[%s] failed to reload single CEG \"%s\" (ID %u)", __FUNCTION__, tag.c_str(), cegIndex);
+			LOG_L(L_ERROR, "[%s] failed to reload single CEG \"%s\" (ID %u)",
+					__FUNCTION__, tag.c_str(), cegIndex);
 
 			// reload failed, keep the old CEG
 			explosionIDs[tag] = cegIndex;
@@ -889,4 +909,16 @@ void CCustomExplosionGenerator::OutputProjectileClassInfo()
 		}
 		fs << "\n\n";
 	}
+}
+
+void CCustomExplosionGenerator::ClearCache()
+{
+	std::vector<IExplosionGenerator*>::iterator egi;
+	for (egi = explGens.begin(); egi != explGens.end(); ++egi) {
+		explGenHandler->UnloadGenerator(*egi);
+	}
+
+	explGens.clear();
+	explosionIDs.clear();
+	explosionData.clear();
 }

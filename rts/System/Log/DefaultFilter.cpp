@@ -183,10 +183,10 @@ static void log_filter_record(const char* section, int level, const char* fmt,
 
 
 /**
+ * @name logging_frontend_defaultFilter
  * ILog.h frontend implementation.
- * @group logging_frontend_defaultFilter
- * @{
  */
+///@{
 
 bool log_frontend_isEnabled(const char* section, int level) {
 
@@ -215,7 +215,7 @@ void log_frontend_record(const char* section, int level, const char* fmt,
 	va_end(arguments);
 }
 
-/** @} */ // group logging_frontend_defaultFilter
+///@}
 
 #ifdef __cplusplus
 } // extern "C"

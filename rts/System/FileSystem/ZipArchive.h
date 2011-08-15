@@ -12,7 +12,6 @@
 // because minizip needs to have it defined as well.
 //#define ZLIB_WINAPI
 #define USEWIN32IOAPI
-#include "System/Platform/Win/win32.h"
 #include "lib/minizip/iowin32.h"
 #endif
 

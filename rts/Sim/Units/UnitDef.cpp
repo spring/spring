@@ -18,7 +18,7 @@
 #include "Rendering/Models/IModelParser.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 
@@ -172,7 +172,6 @@ UnitDef::UnitDef()
 , wantedHeight(0.0f)
 , verticalSpeed(0.0f)
 , useSmoothMesh(false)
-, canCrash(false)
 , hoverAttack(false)
 , airStrafe(false)
 , dlHoverFactor(0.0f)
@@ -496,7 +495,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	maxBank = udTable.GetFloat("maxBank", 0.8f);         // max roll
 	maxPitch = udTable.GetFloat("maxPitch", 0.45f);      // max pitch this plane tries to keep
-	turnRadius = udTable.GetFloat("turnRadius", 500.0f); // hint to CAirMoveType about required turn-radius
+	turnRadius = udTable.GetFloat("turnRadius", 500.0f); // hint to CStrafeAirMoveType about required turn-radius
 	verticalSpeed = udTable.GetFloat("verticalSpeed", 3.0f); // speed of takeoff and landing, at least for gunships
 
 	maxAileron  = udTable.GetFloat("maxAileron",  0.015f); // turn speed around roll axis
@@ -548,22 +547,31 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 		movedata->unitDefRefCount += 1;
 
-		static const char* fmtString =
-			"[%s] inconsistent path-type %i for \"%s\" (move-class \"%s\"): %s, but not a %s-based movetype";
-		const char* udName = name.c_str();
-		const char* mdName = moveClass.c_str();
-
-		if (canhover) {
-			if (movedata->moveType != MoveData::Hover_Move) {
-				logOutput.Print(fmtString, __FUNCTION__, movedata->pathType, udName, mdName, "canhover", "hover");
+		if (LOG_IS_ENABLED(L_WARNING)) {
+			const char* typeStr = NULL;
+			const char* wantedTypeStr = NULL;
+			if (canhover) {
+				if (movedata->moveType != MoveData::Hover_Move) {
+					typeStr       = "canhover";
+					wantedTypeStr = "hover";
+				}
+			} else if (floater) {
+				if (movedata->moveType != MoveData::Ship_Move) {
+					typeStr       = "floater";
+					wantedTypeStr = "ship";
+				}
+			} else {
+				if (movedata->moveType != MoveData::Ground_Move) {
+					typeStr       = "!(canhover || floater)";
+					wantedTypeStr = "ground";
+				}
 			}
-		} else if (floater) {
-			if (movedata->moveType != MoveData::Ship_Move) {
-				logOutput.Print(fmtString, __FUNCTION__, movedata->pathType, udName, mdName, "floater", "ship");
-			}
-		} else {
-			if (movedata->moveType != MoveData::Ground_Move) {
-				logOutput.Print(fmtString, __FUNCTION__, movedata->pathType, udName, mdName, "!(canhover || floater)", "ground");
+			if ((typeStr != NULL) && (wantedTypeStr != NULL)) {
+				LOG_L(L_WARNING,
+						"[%s] inconsistent path-type %i for \"%s\" "
+						"(move-class \"%s\"): %s, but not a %s-based movetype",
+						__FUNCTION__, movedata->pathType, name.c_str(),
+						moveClass.c_str(), typeStr, wantedTypeStr);
 			}
 		}
 	}
@@ -591,7 +599,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 			drag = (1.0f / (speed / GAME_SPEED * 1.1f / maxAcc)) - (wingAngle * wingAngle * wingDrag);
 			drag = Clamp(drag, 0.0f, 1.0f);
 		} else {
-			//shouldn't be needed since drag is only used in CAirMoveType anyway,
+			//shouldn't be needed since drag is only used in CStrafeAirMoveType anyway,
 			//and aircraft without acceleration or speed aren't common :)
 			//initializing it anyway just for safety
 			drag = 0.005f;
@@ -617,8 +625,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	// Prevent a division by zero in experience calculations.
 	if (power < 1.0e-3f) {
-		logOutput.Print("Unit %s is really cheap? %f", humanName.c_str(), power);
-		logOutput.Print("This can cause a division by zero in experience calculations.");
+		LOG_L(L_WARNING, "Unit %s is really cheap? %f", humanName.c_str(), power);
+		LOG_L(L_WARNING, "This can cause a division by zero in experience calculations.");
 		power = 1.0e-3f;
 	}
 
@@ -660,7 +668,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	flareSalvoDelay = udTable.GetInt("flareSalvoDelay", 0) * GAME_SPEED;
 
 	canLoopbackAttack = udTable.GetBool("canLoopbackAttack", false);
-	canCrash = udTable.GetBool("canCrash", true);
 	levelGround = udTable.GetBool("levelGround", true);
 	strafeToAttack = udTable.GetBool("strafeToAttack", false);
 
@@ -738,7 +745,8 @@ UnitDef::~UnitDef()
 	collisionVolume = NULL;
 
 	for (std::vector<IExplosionGenerator*>::iterator it = sfxExplGens.begin(); it != sfxExplGens.end(); ++it) {
-		delete *it;
+		explGenHandler->UnloadGenerator(*it);
+		*it = NULL;
 	}
 }
 
@@ -787,8 +795,8 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 
 		while (weapons.size() < w) {
 			if (!noWeaponDef) {
-				logOutput.Print("Error: Spring requires a NOWEAPON weapon type "
-				                "to be present as a placeholder for missing weapons");
+				LOG_L(L_ERROR, "Spring requires a NOWEAPON weapon type "
+						"to be present as a placeholder for missing weapons");
 				break;
 			} else {
 				weapons.push_back(UnitDefWeapon());

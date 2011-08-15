@@ -14,10 +14,10 @@ extern "C" {
 #endif
 
 /**
+ * @name logging_sink_logOutput
  * ILog.h sink implementation.
- * @group logging_sink_logOutput
- * @{
  */
+///@{
 
 /// Records a log entry
 static void log_sink_record_logOutput(const char* section, int level,
@@ -26,7 +26,7 @@ static void log_sink_record_logOutput(const char* section, int level,
 	logOutput.Print("%s", record);
 }
 
-/** @} */ // group logging_sink_logOutput
+///@}
 
 
 namespace {

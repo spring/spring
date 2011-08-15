@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _SKIRMISHAI_H
-#define _SKIRMISHAI_H
+#ifndef SKIRMISH_AI_H
+#define SKIRMISH_AI_H
 
 #include "SkirmishAIKey.h"
 
@@ -52,4 +52,4 @@ private:
 	bool dieing;
 };
 
-#endif // _SKIRMISHAI_H
+#endif // SKIRMISH_AI_H

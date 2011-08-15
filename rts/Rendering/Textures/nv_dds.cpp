@@ -160,7 +160,6 @@
 //         GL_UNSIGNED_BYTE, image[0].get_mipmap(i));
 // }
 
-#include "System/StdAfx.h"
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>

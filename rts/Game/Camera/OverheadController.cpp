@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 #include <SDL_keysym.h>
 #include <boost/cstdint.hpp>
@@ -13,7 +12,7 @@
 #include "Game/UI/MouseHandler.h"
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/Input/KeyInput.h"
 
@@ -152,8 +151,9 @@ float3 COverheadController::SwitchFrom() const
 
 void COverheadController::SwitchTo(bool showText)
 {
-	if(showText)
-		logOutput.Print("Switching to Overhead (TA) style camera");
+	if (showText) {
+		LOG("Switching to Overhead (TA) style camera");
+	}
 }
 
 void COverheadController::GetState(StateMap& sm) const

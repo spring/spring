@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include <cstring>
@@ -12,7 +11,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "MouseCursor.h"
 #include "HwMouseCursor.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
@@ -136,16 +135,16 @@ bool CMouseCursor::BuildFromSpecFile(const string& name)
 				hwCursor->hotSpot = Center;
 			}
 			else {
-				logOutput.Print("%s: unknown hotspot  (%s)\n",
-							specFile.c_str(), words[1].c_str());
+				LOG_L(L_ERROR, "%s: unknown hotspot (%s)",
+						specFile.c_str(), words[1].c_str());
 			}
 		}
 		else if ((command == "lastframe") && (words.size() >= 1)) {
 			lastFrame = atoi(words[1].c_str());
 		}
 		else {
-			logOutput.Print("%s: unknown command  (%s)\n",
-			                specFile.c_str(), command.c_str());
+			LOG_L(L_ERROR, "%s: unknown command (%s)",
+					specFile.c_str(), command.c_str());
 		}
 	}
 
@@ -203,7 +202,7 @@ bool CMouseCursor::LoadCursorImage(const string& name, ImageData& image)
 
 	CBitmap b;
 	if (!b.Load(name)) {
-		logOutput.Print("CMouseCursor: Bad image file: %s", name.c_str());
+		LOG_L(L_ERROR, "CMouseCursor: Bad image file: %s", name.c_str());
 		return false;
 	}
 

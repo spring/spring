@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 
 #include <string>
 #include <set>
@@ -10,7 +9,7 @@
 #include "SideParser.h"
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 
 
@@ -68,11 +67,11 @@ bool SideParser::Load()
 		data.startUnit = StringToLower(data.startUnit);
 
 		if (data.sideName.empty()) {
-			logOutput.Print("Missing side name: %i", i);
+			LOG_L(L_ERROR, "Missing side name: %i", i);
 		} else if (data.startUnit.empty()) {
-			logOutput.Print("Missing side start unit: " + data.sideName);
+			LOG_L(L_ERROR, "Missing side start unit: %s", data.sideName.c_str());
 		} else if (sideSet.find(data.sideName) != sideSet.end()) {
-			logOutput.Print("Duplicate side name: " + data.sideName);
+			LOG_L(L_ERROR, "Duplicate side name: %s", data.sideName.c_str());
 		} else {
 			sideSet.insert(data.sideName);
 			dataVec.push_back(data);

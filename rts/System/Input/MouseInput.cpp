@@ -18,7 +18,6 @@
 	Several people confirmed its working.
 */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "Game/UI/MouseHandler.h"
@@ -30,7 +29,6 @@
 #include "Rendering/GL/FBO.h"
 #ifdef _WIN32
 	#include <SDL_syswm.h>
-	#include "System/Platform/Win/win32.h"
 	#include "System/Platform/Win/wsdl.h"
 #endif
 #include "System/Input/MouseInput.h"

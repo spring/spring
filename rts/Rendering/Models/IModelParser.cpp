@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "Rendering/GL/myGL.h"
 #include <algorithm>
 #include <cctype>
@@ -140,7 +139,7 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffs
 	}
 
 	//! not found in cache, create the model and cache it
-	const std::string& fileExt = filesystem.GetExtension(name);
+	const std::string& fileExt = FileSystem::GetExtension(name);
 	const ParserMap::iterator pi = parsers.find(fileExt);
 
 	if (pi != parsers.end()) {

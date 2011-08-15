@@ -6,7 +6,7 @@
 #include <string>
 #include <map>
 
-#include "Rendering/Shaders/Shader.hpp"
+#include "Rendering/Shaders/Shader.h"
 
 class CShaderHandler {
 public:

@@ -1,17 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifdef _MSC_VER
-#	include "StdAfx.h"
-#elif defined(_WIN32)
-#	include <windows.h>
-#endif
-
 #include <boost/asio.hpp>
-#include "lib/streflop/streflop_cond.h"
 
-#ifndef _MSC_VER
-#include "System/StdAfx.h"
-#endif
+#include "lib/streflop/streflop_cond.h"
 
 #include "OSCStatsSender.h"
 #include "lib/oscpack/OscOutboundPacketStream.h"
@@ -21,7 +12,7 @@
 #include "Game/PlayerHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Net/Socket.h"
 
 CONFIG(bool, OscStatsSenderEnabled).defaultValue(false);
@@ -69,7 +60,7 @@ void COSCStatsSender::SetEnabled(bool enabled) {
 			boost::asio::socket_base::broadcast option(true);
 			network->outSocket->set_option(option);
 			UpdateDestination();
-			logOutput.Print("Sending spring Statistics over OSC to: %s:%u",
+			LOG("Sending spring Statistics over OSC to: %s:%u",
 					dstAddress.c_str(), dstPort);
 
 			SendInit();
@@ -112,7 +103,7 @@ bool COSCStatsSender::SendInit() {
 					&& SendTeamStatsTitles()
 					&& SendPlayerStatsTitles();
 		} catch (const boost::system::system_error& ex) {
-			logOutput.Print("Failed sending OSC Stats init: %s", ex.what());
+			LOG_L(L_ERROR, "Failed sending OSC Stats init: %s", ex.what());
 			return false;
 		}
 	} else {
@@ -128,7 +119,7 @@ bool COSCStatsSender::Update(int frameNum) {
 			// more interesting.
 			return SendTeamStats() && SendPlayerStats();
 		} catch (const boost::system::system_error& ex) {
-			logOutput.Print("Failed sending OSC Stats init: %s", ex.what());
+			LOG_L(L_ERROR, "Failed sending OSC Stats init: %s", ex.what());
 			return false;
 		}
 	} else {

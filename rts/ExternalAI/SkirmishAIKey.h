@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _SKIRMISHAIKEY_H
-#define _SKIRMISHAIKEY_H
+#ifndef SKIRMISH_AI_KEY_H
+#define SKIRMISH_AI_KEY_H
 
 // this is needed when compiling with MinGW,
 // cause it has interface defined somewhere in its base files
@@ -10,23 +10,17 @@
 #undef interface
 #endif
 
-#include <string>
-#include "System/creg/creg_cond.h"
 #include "AIInterfaceKey.h"
+
+#include "System/creg/creg_cond.h"
+#include <string>
+
 
 /**
  * Used to uniquely identify a Skirmish AI within the engine.
  */
 class SkirmishAIKey {
 	CR_DECLARE_STRUCT(SkirmishAIKey);
-
-private:
-	std::string shortName;
-	std::string version;
-	AIInterfaceKey interface;
-
-	bool isEqual(const SkirmishAIKey& otherKey) const;
-	bool isLessThen(const SkirmishAIKey& otherKey) const;
 
 public:
 	SkirmishAIKey(
@@ -43,6 +37,7 @@ public:
 
 	bool IsUnspecified() const;
 	bool IsFullySpecified() const;
+	std::string ToString() const;
 
 	bool operator==(const SkirmishAIKey& otherKey) const;
 	bool operator!=(const SkirmishAIKey& otherKey) const;
@@ -50,6 +45,14 @@ public:
 	bool operator>(const SkirmishAIKey& otherKey) const;
 	bool operator<=(const SkirmishAIKey& otherKey) const;
 	bool operator>=(const SkirmishAIKey& otherKey) const;
+
+private:
+	bool isEqual(const SkirmishAIKey& otherKey) const;
+	bool isLessThen(const SkirmishAIKey& otherKey) const;
+
+	std::string shortName;
+	std::string version;
+	AIInterfaceKey interface;
 };
 
-#endif // _SKIRMISHAIKEY_H
+#endif // SKIRMISH_AI_KEY_H

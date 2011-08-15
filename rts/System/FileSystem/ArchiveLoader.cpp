@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "ArchiveLoader.h"
@@ -14,6 +13,7 @@
 #include "SevenZipArchive.h"
 
 #include "FileSystem.h"
+#include "DataDirsAccess.h"
 
 #include "System/Util.h"
 
@@ -45,7 +45,7 @@ CArchiveLoader& CArchiveLoader::GetInstance()
 
 bool CArchiveLoader::IsArchiveFile(const std::string& fileName) const
 {
-	const std::string ext = filesystem.GetExtension(fileName);
+	const std::string ext = FileSystem::GetExtension(fileName);
 
 	return (archiveFactories.find(ext) != archiveFactories.end());
 }
@@ -55,8 +55,8 @@ IArchive* CArchiveLoader::OpenArchive(const std::string& fileName, const std::st
 {
 	IArchive* ret = NULL;
 
-	const std::string ext = type.empty() ? filesystem.GetExtension(fileName) : type;
-	const std::string filePath = filesystem.LocateFile(fileName);
+	const std::string ext = type.empty() ? FileSystem::GetExtension(fileName) : type;
+	const std::string filePath = dataDirsAccess.LocateFile(fileName);
 
 	const std::map<std::string, IArchiveFactory*>::const_iterator afi
 			= archiveFactories.find(ext);

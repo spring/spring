@@ -1,10 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "Game/TraceRay.h"
 #include "LaserCannon.h"
 #include "Map/Ground.h"
-#include "Sim/MoveTypes/AirMoveType.h"
+#include "Sim/MoveTypes/StrafeAirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/LaserProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "WeaponDefHandler.h"
@@ -100,8 +99,8 @@ void CLaserCannon::Init(void)
 void CLaserCannon::FireImpl()
 {
 	float3 dir;
-	if (onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType)) {
-		// the taairmovetype cant align itself properly, change back when that is fixed
+	if (onlyForward && dynamic_cast<CStrafeAirMoveType*>(owner->moveType)) {
+		// HoverAirMovetype cannot align itself properly, change back when that is fixed
 		dir = owner->frontdir;
 	} else {
 		dir = targetPos - weaponMuzzlePos;

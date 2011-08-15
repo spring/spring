@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "FPSController.h"
@@ -9,7 +8,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/myMath.h"
 
 using std::min;
@@ -116,7 +115,7 @@ float3 CFPSController::SwitchFrom() const
 void CFPSController::SwitchTo(bool showText)
 {
 	if (showText) {
-		logOutput.Print("Switching to FPS style camera");
+		LOG("Switching to FPS style camera");
 	}
 }
 

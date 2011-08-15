@@ -48,8 +48,11 @@ inline int lua_toint(lua_State* L, int idx)
 inline float lua_tofloat(lua_State* L, int idx)
 {
   const float n = lua_tonumber(L, idx);
-  assert(!math::isinf(n));
-  assert(!math::isnan(n));
+#ifdef DEBUG
+  if (math::isinf(n) || math::isnan(n)) luaL_argerror(L, idx, "number expected, got NAN (check your code for div0)");
+  //assert(!math::isinf(d));
+  //assert(!math::isnan(d));
+#endif
   return n;
 }
 

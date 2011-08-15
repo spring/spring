@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 
 #include <algorithm>
 #include <cctype>
@@ -10,7 +9,7 @@
 
 #include "System/creg/STL_Map.h"
 #include "System/Util.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 CR_BIND(CCategoryHandler, );
 
@@ -54,12 +53,13 @@ unsigned int CCategoryHandler::GetCategory(std::string name)
 		// this category is yet unknown
 		if (firstUnused >= CCategoryHandler::GetMaxCategories()) {
 			// skip this category
-			logOutput.Print("WARNING: too many unit categories (%i), skipping %s", firstUnused, name.c_str());
+			LOG_L(L_WARNING, "too many unit categories (%i), skipping %s",
+					firstUnused, name.c_str());
 			cat = 0;
 		} else {
 			// create the category (bit field value)
 			cat = (1 << firstUnused);
-//			logOutput.Print("New cat %s #%i", name.c_str(), firstUnused);
+			//LOG_L(L_DEBUG, "New unit-category %s #%i", name.c_str(), firstUnused);
 		}
 		// if (cat == 0), this will prevent further warnings for this category
 		categories[name] = cat;

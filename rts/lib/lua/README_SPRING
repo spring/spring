@@ -62,4 +62,4 @@ Lua-5.1.4 source code modifications:
   12.
       modify lauxlib.cpp::luaL_checknumber and LuaInclude.h::lua_tofloat to
       trigger asserts if a Lua script pushes a NaN or Inf onto the stack and
-      the engine reads it
+      the engine reads it (asserts are disabled for Lua-internal math calls)

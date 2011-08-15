@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "Camera.h"
@@ -20,7 +19,6 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "System/myMath.h"
-#include "System/LogOutput.h"
 
 
 //////////////////////////////////////////////////////////////////////

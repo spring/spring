@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 
 #include "System/mmgr.h"
 
@@ -277,8 +276,10 @@ int LuaVFS::FileExists(lua_State* L, bool synced)
 
 	const string modes = GetModes(L, 2, synced);
 
-	CFileHandler fh(filename, modes);
-	lua_pushboolean(L, fh.FileExists());
+	//CFileHandler fh(filename, modes);
+	//lua_pushboolean(L, fh.FileExists());
+
+	lua_pushboolean(L, CFileHandler::FileExists(filename, modes));
 	return 1;
 }
 

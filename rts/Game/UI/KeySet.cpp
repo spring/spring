@@ -1,17 +1,18 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
-#include <cstdlib>
-#include <boost/cstdint.hpp>
-#include <SDL_keysym.h>
 
-#include "System/StdAfx.h"
+
 #include "System/mmgr.h"
 
 #include "KeySet.h"
 #include "KeyCodes.h"
 
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/Input/KeyInput.h"
+
+#include <cstdlib>
+#include <boost/cstdint.hpp>
+#include <SDL_keysym.h>
 
 #define DISALLOW_RELEASE_BINDINGS
 
@@ -129,12 +130,12 @@ bool CKeySet::Parse(const std::string& token)
 		key = strtol(start, &end, 16);
 		if (end == start) {
 			Reset();
-			logOutput.Print("Bad hex value: %s\n", s.c_str());
+			LOG_L(L_ERROR, "KeySet: Bad hex value: %s", s.c_str());
 			return false;
 		}
 		if (key >= SDLK_LAST) {
 			Reset();
-			logOutput.Print("Hex value out of range: %s\n", s.c_str());
+			LOG_L(L_ERROR, "KeySet: Hex value out of range: %s", s.c_str());
 			return false;
 		}
 	}
@@ -142,7 +143,7 @@ bool CKeySet::Parse(const std::string& token)
 		key = keyCodes->GetCode(s);
 		if (key < 0) {
 			Reset();
-			logOutput.Print("Bad keysym: %s\n", s.c_str());
+			LOG_L(L_ERROR, "KeySet: Bad keysym: %s", s.c_str());
 			return false;
 		}
 	}

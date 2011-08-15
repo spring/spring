@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include <algorithm>
@@ -17,7 +16,7 @@
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Projectiles/Projectile.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
@@ -137,10 +136,10 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	const bool melee = (wd.type == "Melee");
 	wd.targetBorder = wdTable.GetFloat("targetBorder", melee ? 1.0f : 0.0f);
 	if (wd.targetBorder > 1.0f) {
-		logOutput.Print("warning: targetBorder truncated to 1 (was %f)", wd.targetBorder);
+		LOG_L(L_WARNING, "targetBorder truncated to 1 (was %f)", wd.targetBorder);
 		wd.targetBorder = 1.0f;
 	} else if (wd.targetBorder < -1.0f) {
-		logOutput.Print("warning: targetBorder truncated to -1 (was %f)", wd.targetBorder);
+		LOG_L(L_WARNING, "targetBorder truncated to -1 (was %f)", wd.targetBorder);
 		wd.targetBorder = -1.0f;
 	}
 	wd.cylinderTargetting = wdTable.GetFloat("cylinderTargetting", melee ? 1.0f : 0.0f);
@@ -319,7 +318,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	if (wdTable.GetBool("toAirWeapon", false)) {
 		// fix if we sometime call aircrafts otherwise
 		wd.onlyTargetCategory = CCategoryHandler::Instance()->GetCategories("VTOL");
-		//logOutput.Print("air only weapon %s %i",weaponname.c_str(),wd.onlyTargetCategory);
+		//LOG("air only weapon %s %i", weaponname.c_str(), wd.onlyTargetCategory);
 	}
 
 	wd.largeBeamLaser = wdTable.GetBool("largeBeamLaser", false);
@@ -607,10 +606,10 @@ DamageArray CWeaponDefHandler::DynamicDamages(DamageArray damages, float3 startP
 			if (damageMin > 0)
 				dynDamages[i] = max(damages[i] * ddmod, dynDamages[i]);
 
-			// div by 0
+			// to prevent div by 0
 			dynDamages[i] = max(0.0001f, dynDamages[i]);
-//			logOutput.Print("D%i: %f (%f) - mod %f", i, dynDamages[i], damages[i], ddmod);
-//			logOutput.Print("F%i: %f - (1 - (1/%f * %f) ^ %f) * %f", i, damages[i], range, travDist, exp, damages[i]);
+//			LOG_L(L_DEBUG, "D%i: %f (%f) - mod %f", i, dynDamages[i], damages[i], ddmod);
+//			LOG_L(L_DEBUG, "F%i: %f - (1 - (1/%f * %f) ^ %f) * %f", i, damages[i], range, travDist, exp, damages[i]);
 		}
 	}
 	else {
@@ -622,8 +621,8 @@ DamageArray CWeaponDefHandler::DynamicDamages(DamageArray damages, float3 startP
 
 			// div by 0
 			dynDamages[i] = max(0.0001f, dynDamages[i]);
-//			logOutput.Print("D%i: %f (%f) - mod %f", i, dynDamages[i], damages[i], ddmod);
-//			logOutput.Print("F%i: (1 - (1/%f * %f) ^ %f) * %f", i, range, travDist, exp, damages[i]);
+//			LOG_L(L_DEBUG, "D%i: %f (%f) - mod %f", i, dynDamages[i], damages[i], ddmod);
+//			LOG_L(L_DEBUG, "F%i: (1 - (1/%f * %f) ^ %f) * %f", i, range, travDist, exp, damages[i]);
 		}
 	}
 	return dynDamages;

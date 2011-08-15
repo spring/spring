@@ -2,7 +2,6 @@
 
 #include "ExternalAI/AICallback.h"
 
-#include "System/StdAfx.h"
 #include "Game/Game.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"
@@ -54,8 +53,9 @@
 #include "System/LogOutput.h"
 #include "System/NetProtocol.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/FileSystem/FileSystemHandler.h"
+#include "System/FileSystem/FileQueryFlags.h"
 #include "System/Platform/errorhandler.h"
 
 #include <string>
@@ -1410,13 +1410,13 @@ bool CAICallback::GetValue(int id, void *data)
 			return true;
 		}case AIVAL_LOCATE_FILE_R:{
 			std::string f((char*) data);
-			f = filesystem.LocateFile(f);
+			f = dataDirsAccess.LocateFile(f);
 			strcpy((char*) data, f.c_str());
-			return FileSystemHandler::IsReadableFile(f);
+			return FileSystem::IsReadableFile(f);
 		}case AIVAL_LOCATE_FILE_W:{
 			std::string f((char*) data);
-			std::string f_abs = filesystem.LocateFile(f, FileSystem::WRITE | FileSystem::CREATE_DIRS);
-			if (!FileSystemHandler::IsAbsolutePath(f_abs)) {
+			std::string f_abs = dataDirsAccess.LocateFile(f, FileQueryFlags::WRITE | FileQueryFlags::CREATE_DIRS);
+			if (!FileSystem::IsAbsolutePath(f_abs)) {
 				return false;
 			} else {
 				strcpy((char*) data, f.c_str());

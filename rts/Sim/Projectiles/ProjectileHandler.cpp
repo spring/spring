@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include <algorithm>
 #include "System/mmgr.h"
 
@@ -15,12 +14,12 @@
 #include "Sim/Misc/CollisionHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Projectiles/Unsynced/FlyingPiece.hpp"
+#include "Sim/Projectiles/Unsynced/FlyingPiece.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_List.h"
@@ -162,9 +161,9 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 	ProjectileContainer::iterator pci = pc.begin();
 
 	#define VECTOR_SANITY_CHECK(v)                              \
-		assert(!streflop::isnan(v.x) && !streflop::isinf(v.x)); \
-		assert(!streflop::isnan(v.y) && !streflop::isinf(v.y)); \
-		assert(!streflop::isnan(v.z) && !streflop::isinf(v.z));
+		assert(!math::isnan(v.x) && !math::isinf(v.x)); \
+		assert(!math::isnan(v.y) && !math::isinf(v.y)); \
+		assert(!math::isnan(v.z) && !math::isinf(v.z));
 	#define MAPPOS_SANITY_CHECK(v)                 \
 		assert(v.x >= -(float3::maxxpos * 16.0f)); \
 		assert(v.x <=  (float3::maxxpos * 16.0f)); \
@@ -344,7 +343,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 	}
 
 	if ((*maxUsedID) > (1 << 24)) {
-		logOutput.Print("Lua %s projectile IDs are now out of range", (p->synced? "synced": "unsynced"));
+		LOG_L(L_WARNING, "Lua %s projectile IDs are now out of range", (p->synced? "synced": "unsynced"));
 	}
 
 	ProjectileMapPair pp(p, p->owner() ? p->owner()->allyteam : -1);

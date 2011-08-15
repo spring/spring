@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include <fstream>
 #include "System/mmgr.h"
 
@@ -28,7 +27,8 @@
 #include "Sim/Units/Groups/GroupHandler.h"
 
 #include "System/Platform/errorhandler.h"
-#include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/DataDirsAccess.h"
+#include "System/FileSystem/FileQueryFlags.h"
 #include "System/creg/Serializer.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
@@ -124,7 +124,7 @@ void CCregLoadSaveHandler::SaveGame(const std::string& file)
 {
 	LOG("Saving game");
 	try {
-		std::ofstream ofs(filesystem.LocateFile(file, FileSystem::WRITE).c_str(), std::ios::out|std::ios::binary);
+		std::ofstream ofs(dataDirsAccess.LocateFile(file, FileQueryFlags::WRITE).c_str(), std::ios::out|std::ios::binary);
 		if (ofs.bad() || !ofs.is_open()) {
 			throw content_error("Unable to save game to file \"" + file + "\"");
 		}
@@ -159,7 +159,7 @@ void CCregLoadSaveHandler::SaveGame(const std::string& file)
 void CCregLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 {
 	const std::string file2 = FindSaveFile(file);
-	ifs = new std::ifstream (filesystem.LocateFile(file2).c_str(), std::ios::in|std::ios::binary);
+	ifs = new std::ifstream (dataDirsAccess.LocateFile(file2).c_str(), std::ios::in|std::ios::binary);
 
 	// in case these contained values alredy
 	// (this is the case when loading a game through the spring menu eg),

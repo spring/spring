@@ -4,7 +4,7 @@
 
 #include "System/TdfParser.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Util.h"
 #ifdef DEDICATED
@@ -43,7 +43,7 @@ void ClientSetup::Init(const std::string& setup)
 	file.GetDef(myPasswd,     "", "GAME\\MyPasswd");
 
 	if (!file.GetValue(isHost, "GAME\\IsHost")) {
-		logOutput.Print("Warning: script.txt is missing the IsHost-entry. Assuming this is a client.");
+		LOG_L(L_WARNING, "script.txt is missing the IsHost-entry. Assuming this is a client.");
 	}
 #ifdef DEDICATED
 	if (!isHost) {

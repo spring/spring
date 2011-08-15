@@ -68,7 +68,7 @@ function LuaLobby.ChannelInfo(channel, num_users)
 end
 
 function widget:Initialize()
-	LuaLobby:Connect("taspringmaster.clan-sy.com", 8200);
+	LuaLobby:Connect("lobby.springrts.com", 8200);
 end
 
 function widget:Update()

@@ -9,7 +9,7 @@
 
 CR_BIND_TEMPLATE(safe_vector<float>, );
 
-template <> const float& safe_vector<float>::safe_element(size_t idx) const {
+template <> const float& safe_vector<float>::safe_element(size_type idx) const {
 	static const float def = 0.0f;
 
 	if (showError) {
@@ -21,7 +21,7 @@ template <> const float& safe_vector<float>::safe_element(size_t idx) const {
 	return def;
 }
 
-template <> float& safe_vector<float>::safe_element(size_t idx) {
+template <> float& safe_vector<float>::safe_element(size_type idx) {
 	static float def = 0.0f;
 
 	if (showError) {

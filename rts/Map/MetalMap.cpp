@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "MetalMap.h"
@@ -118,4 +117,13 @@ void CMetalMap::RemoveExtraction(int x, int z, float depth)
 	ClampInt(z, 0, sizeZ);
 
 	extractionMap[(z * sizeX) + x] -= depth;
+}
+
+
+int CMetalMap::GetMetalExtraction(int x, int z)
+{
+	ClampInt(x, 0, sizeX);
+	ClampInt(z, 0, sizeZ);
+
+	return extractionMap[(z * sizeX) + x];
 }

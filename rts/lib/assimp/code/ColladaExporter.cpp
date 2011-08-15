@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AssimpPCH.h"
 
 #ifndef ASSIMP_BUILD_NO_EXPORT
+#ifndef ASSIMP_BUILD_NO_COLLADA_EXPORTER
 #include "ColladaExporter.h"
 
 using namespace Assimp;
@@ -59,7 +60,7 @@ void ExportSceneCollada(const char* pFile,IOSystem* pIOSystem, const aiScene* pS
 	boost::scoped_ptr<IOStream> outfile (pIOSystem->Open(pFile,"wt"));
 
 	// XXX maybe use a small wrapper around IOStream that behaves like std::stringstream in order to avoid the extra copy.
-	outfile->Write( iDoTheExportThing.mOutput.str().c_str(),  iDoTheExportThing.mOutput.tellp(),1);
+	outfile->Write( iDoTheExportThing.mOutput.str().c_str(), static_cast<size_t>(iDoTheExportThing.mOutput.tellp()),1);
 }
 
 } // end of namespace Assimp
@@ -69,10 +70,13 @@ void ExportSceneCollada(const char* pFile,IOSystem* pIOSystem, const aiScene* pS
 // Constructor for a specific scene to export
 ColladaExporter::ColladaExporter( const aiScene* pScene)
 {
+	// make sure that all formatting happens using the standard, C locale and not the user's current locale
+	mOutput.imbue( std::locale("C") );
+
 	mScene = pScene;
 
 	// set up strings
-	endstr = "\n"; // std::endl is too complicated for me to insert here.
+	endstr = "\n"; 
 
 	// start writing
 	WriteFile();
@@ -365,5 +369,6 @@ void ColladaExporter::WriteNode( const aiNode* pNode)
 	mOutput << startstr << "</node>" << endstr;
 }
 
+#endif
 #endif
 

@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include <algorithm>
 #include <cctype>
 #include <limits.h>
@@ -13,7 +12,7 @@
 #include "System/Util.h"
 
 #include "System/TdfParser.h"
-#include "tdf_grammar.hpp"
+#include "tdf_grammar.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Log/ILog.h"
 

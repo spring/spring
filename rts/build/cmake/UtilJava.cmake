@@ -76,27 +76,6 @@ function    (ConcatClasspaths resultingCP_var)
 endfunction (ConcatClasspaths)
 
 
-# Checks if maven is installed by executing "mvn --version"
-# and checking the return value (0 == "is installed").
-# The result variable will be set to TRUE or FALSE
-function    (IsMavenInstalled result_var)
-	set(${result_var} FALSE)
-	if     (NOT APPLE)
-		# HACK Workaround to prevent maven beeing used on Mac,
-		# because CMake fails to replace the version-tags
-		# in the generated pom files.
-		execute_process(COMMAND "mvn" "--version"
-				WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-				RESULT_VARIABLE MVN_RET
-				OUTPUT_QUIET ERROR_QUIET)
-		if    ("${MVN_RET}" MATCHES "0")
-			set(${result_var} TRUE)
-		endif ("${MVN_RET}" MATCHES "0")
-	endif  (NOT APPLE)
-	set(${result_var} "${${result_var}}" PARENT_SCOPE)
-endfunction (IsMavenInstalled)
-
-
 # Checks if a given directory is the root of a Maven project.
 # The result variable will be set to TRUE or FALSE
 function    (IsMavenProject dirToCheck result_var)

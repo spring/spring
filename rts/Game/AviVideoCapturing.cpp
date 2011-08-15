@@ -1,14 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #if       defined AVI_CAPTURING
-#include "System/StdAfx.h"
 #include "AviVideoCapturing.h"
 
-
 #include "Rendering/AVIGenerator.h"
+
 #include "Rendering/GlobalRendering.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 #include "lib/streflop/streflop_cond.h"
@@ -50,7 +49,7 @@ void AviVideoCapturing::StopCapturing() {
 void AviVideoCapturing::StartCapturing() {
 
 	if (IsCapturing()) {
-		logOutput.Print("Video capturing is already running.");
+		LOG_L(L_WARNING, "Video capturing is already running.");
 		return;
 	}
 
@@ -67,8 +66,8 @@ void AviVideoCapturing::StartCapturing() {
 	}
 
 	if (vi == MAX_NUM_VIDEOS) {
-		logOutput.Print("Error: You have too many videos on disc already, please move, rename or delete some.");
-		logOutput.Print("Error: Not creating video!");
+		LOG_L(L_ERROR, "You have too many videos on disc already, please move, rename or delete some.");
+		LOG_L(L_ERROR, "Not creating video!");
 	} else {
 		capturing = true;
 		const int videoSizeX = (globalRendering->viewSizeX / 4) * 4;
@@ -80,11 +79,12 @@ void AviVideoCapturing::StartCapturing() {
 
 		if (!aviGenerator->InitEngine()) {
 			capturing = false;
-			logOutput.Print(aviGenerator->GetLastErrorMessage());
+			LOG_L(L_ERROR, "%s", aviGenerator->GetLastErrorMessage().c_str());
 			delete aviGenerator;
 			aviGenerator = NULL;
 		} else {
-			LogObject() << "Recording avi to " << fileName << " size " << videoSizeX << " x " << videoSizeY;
+			LOG("Recording avi to %s size %i x %i",
+					fileName.c_str(), videoSizeX, videoSizeY);
 		}
 
 		SDL_ShowCursor(savedCursorMode);
@@ -102,7 +102,7 @@ void AviVideoCapturing::RenderFrame() {
 		if (!aviGenerator->readOpenglPixelDataThreaded()) {
 			StopCapturing();
 		}
-//		logOutput.Print("Saved avi frame size %i %i", ih->biWidth, ih->biHeight);
+//		LOG("Saved avi frame size %i %i", ih->biWidth, ih->biHeight);
 	}
 }
 

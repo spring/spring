@@ -1,12 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
-#include "ModelDrawer.hpp"
+#include "ModelDrawer.h"
 #include "Game/Game.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Models/WorldObjectModelRenderer.h"
-#include "Rendering/Shaders/ShaderHandler.hpp"
-#include "Rendering/Shaders/Shader.hpp"
+#include "Rendering/Shaders/ShaderHandler.h"
+#include "Rendering/Shaders/Shader.h"
 #include "Rendering/ShadowHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Features/Feature.h"

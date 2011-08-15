@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
+#include "System/Platform/Win/win32.h"
 #if !defined(HEADLESS)
 #include "Rendering/Textures/Bitmap.h"
 #endif
@@ -27,7 +27,7 @@
 #include "CommandColors.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include <cstring> // for memset
 
@@ -388,7 +388,7 @@ void CHwWinCursor::Finish()
 		delete[] (*it).data;
 	icons.clear();
 
-	//if (cursor==NULL) logOutput.Print("hw cursor failed: x%d y%d",squaresize,squaresize);
+	//if (cursor==NULL) LOG_L(L_ERROR, "HW cursor failed: x%d y%d", squaresize, squaresize);
 }
 
 void CHwWinCursor::Bind()
@@ -396,7 +396,7 @@ void CHwWinCursor::Bind()
 	/*SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
 	if (!SDL_GetWMInfo(&info)) {
-		logOutput.Print("SDL error: can't get window handle");
+		LOG_L(L_ERROR, "SDL error: can't get window handle");
 		return;
 	}
 	SetClassLong(info.window,GCL_HCURSOR,(LONG)cursor);*/ //SDL doesn't let us use it :<
@@ -515,7 +515,7 @@ void CHwX11Cursor::Finish()
 	if (!SDL_GetWMInfo(&info)) {
 		XcursorImagesDestroy(cis);
 		cimages.clear();
-		logOutput.Print("SDL error: can't get X11 window info");
+		LOG_L(L_ERROR, "SDL error: can't get X11 window info");
 		return;
 	}
 
@@ -529,7 +529,7 @@ void CHwX11Cursor::Bind()
 	SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
 	if (!SDL_GetWMInfo(&info)) {
-		logOutput.Print("SDL error: can't get X11 window info");
+		LOG_L(L_ERROR, "SDL error: can't get X11 window info");
 		return;
 	}
 	XDefineCursor(info.info.x11.display,info.info.x11.window,cursor);
@@ -552,7 +552,7 @@ CHwX11Cursor::~CHwX11Cursor(void)
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
 		if (!SDL_GetWMInfo(&info)) {
-			logOutput.Print("SDL error: can't get X11 window info");
+			LOG_L(L_ERROR, "SDL error: can't get X11 window info");
 			return;
 		}
 		XFreeCursor(info.info.x11.display,cursor);

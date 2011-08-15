@@ -1,9 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
+#include "thread_backtrace.h"
+
 #include "System/mmgr.h"
 
-#include "thread_backtrace.h"
 #include <vector>
 #include <stdint.h>
 #include <string.h> // memcpy

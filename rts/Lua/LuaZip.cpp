@@ -30,8 +30,9 @@
 #include "LuaHashString.h"
 #include "System/FileSystem/IArchive.h"
 #include "System/FileSystem/ArchiveLoader.h"
+#include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/FileQueryFlags.h"
 #include "System/Util.h"
 #include "lib/minizip/zip.h"
 #include <cstring>
@@ -132,7 +133,7 @@ bool LuaZipFileWriter::PushNew(lua_State* L, const string& filename, zipFile zip
 		udata->dontClose = true;
 	}
 	else {
-		string realname = filesystem.LocateFile(filename, FileSystem::WRITE | FileSystem::CREATE_DIRS);
+		string realname = dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE | FileQueryFlags::CREATE_DIRS);
 		if (!realname.empty() && !FileExists(realname)) {
 			udata->zip = zipOpen(realname.c_str(), APPEND_STATUS_CREATE);
 		}
@@ -285,7 +286,7 @@ bool LuaZipFileReader::PushNew(lua_State* L, const string& filename, IArchive* a
 		udata->dontClose = true;
 	}
 	else {
-		string realname = filesystem.LocateFile(filename);
+		string realname = dataDirsAccess.LocateFile(filename);
 		if (!realname.empty()) {
 			udata->archive = archiveLoader.OpenArchive(realname, "sdz");
 		}

@@ -55,6 +55,7 @@ public:
 
 	void ParseExplosionTables();
 	IExplosionGenerator* LoadGenerator(const std::string& tag);
+	void UnloadGenerator(IExplosionGenerator* explGen);
 	const LuaTable* GetExplosionTableRoot() const { return explTblRoot; }
 
 	ClassAliasList projectileClasses;
@@ -107,12 +108,12 @@ protected:
 			, count(0)
 			, flags(0)
 		{}
-		ProjectileSpawnInfo(const ProjectileSpawnInfo& psi) {
-			projectileClass = psi.projectileClass;
-			count = psi.count;
-			flags = psi.flags;
-			code  = psi.code;
-		}
+		ProjectileSpawnInfo(const ProjectileSpawnInfo& psi)
+			: projectileClass(psi.projectileClass)
+			, code(psi.code)
+			, count(psi.count)
+			, flags(psi.flags)
+		{}
 
 		creg::Class* projectileClass;
 
@@ -156,6 +157,13 @@ protected:
 	//! indexed by explosion handles
 	std::vector<CEGData> explosionData;
 
+	/**
+	 * Explosion generators used by explosionData.projectileSpawn.
+	 * We only need this for unloading them later.
+	 * @see #ClearCache
+	 */
+	std::vector<IExplosionGenerator*> explGens;
+
 	void ParseExplosionCode(ProjectileSpawnInfo* psi, int baseOffset, boost::shared_ptr<creg::IType> type, const std::string& script, std::string& code);
 	void ExecuteExplosionCode(const char* code, float damage, char* instance, int spawnIndex, const float3& dir);
 
@@ -163,10 +171,7 @@ public:
 	CCustomExplosionGenerator() {}
 	~CCustomExplosionGenerator() { ClearCache(); }
 
-	void ClearCache() {
-		explosionIDs.clear();
-		explosionData.clear();
-	}
+	void ClearCache();
 	void RefreshCache(const std::string&);
 
 	static void OutputProjectileClassInfo();

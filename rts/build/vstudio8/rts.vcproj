@@ -65,7 +65,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
+				AdditionalDependencies="shlwapi.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
 				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;../../../vclibs/freetype/objs;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlib/lib;../../../vclibs/SDL/lib;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
@@ -156,7 +156,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
+				AdditionalDependencies="shlwapi.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
 				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
@@ -253,7 +253,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
+				AdditionalDependencies="shlwapi.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
 				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -349,7 +349,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
+				AdditionalDependencies="shlwapi.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
 				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -445,7 +445,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
+				AdditionalDependencies="shlwapi.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
 				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -536,7 +536,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
+				AdditionalDependencies="shlwapi.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
 				OutputFile="..\..\..\dist\spring.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;../../../vclibs/freetype/objs;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlib/lib;../../../vclibs/SDL/lib;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
@@ -629,7 +629,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="sdlmain.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
+				AdditionalDependencies="shlwapi.lib sdlmain.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
 				OutputFile="..\..\..\dist\spring-dedicated.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -721,7 +721,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="sdlmain.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
+				AdditionalDependencies="shlwapi.lib sdlmain.lib freetype.lib zlib.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
 				OutputFile="..\..\..\dist\spring-dedicated.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../vclibs/DevIL/lib;../../../vclibs/freetype/objs;../../../vclibs/OpenAL/libs;../../../vclibs/glew/lib;../../../vclibs/zlib/lib;../../../vclibs/SDL/lib;../../../vclibs/boost/lib;../../../vclibs/libjpeg;../../../vclibs/ogg_vorbis/lib"
@@ -1230,6 +1230,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Game\PlayerRoster.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\PlayerRosterDrawer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\PlayerRosterDrawer.h"
 				>
 			</File>
 			<File
@@ -2385,7 +2393,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Rendering\ProjectileDrawer.hpp"
+				RelativePath="..\..\Rendering\ProjectileDrawer.h"
 				>
 			</File>
 			<File
@@ -2856,7 +2864,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Shaders\Shader.hpp"
+					RelativePath="..\..\Rendering\Shaders\Shader.h"
 					>
 				</File>
 				<File
@@ -2864,7 +2872,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Shaders\ShaderHandler.hpp"
+					RelativePath="..\..\Rendering\Shaders\ShaderHandler.h"
 					>
 				</File>
 			</Filter>
@@ -3132,7 +3140,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Models\ModelDrawer.hpp"
+					RelativePath="..\..\Rendering\Models\ModelDrawer.h"
 					>
 				</File>
 				<File
@@ -3635,7 +3643,7 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Projectiles\Unsynced\FlyingPiece.hpp"
+						RelativePath="..\..\Sim\Projectiles\Unsynced\FlyingPiece.h"
 						>
 					</File>
 					<File
@@ -3899,11 +3907,11 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Weapons\bombdropper.cpp"
+						RelativePath="..\..\Sim\Weapons\BombDropper.cpp"
 						>
 					</File>
 					<File
-						RelativePath="..\..\Sim\Weapons\bombdropper.h"
+						RelativePath="..\..\Sim\Weapons\BombDropper.h"
 						>
 					</File>
 					<File
@@ -4897,26 +4905,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\Main.cpp"
-				>
-				<FileConfiguration
-					Name="Dedicated Server (Release)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Dedicated Server (Debug)|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\builds\DS\main.cpp"
 				>
 				<FileConfiguration
@@ -4995,6 +4983,26 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\System\Main.cpp"
+				>
+				<FileConfiguration
+					Name="Dedicated Server (Release)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Dedicated Server (Debug)|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>
@@ -5131,15 +5139,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\System\StdAfx.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\StdAfx.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\System\tdf_grammar.hpp"
+				RelativePath="..\..\System\tdf_grammar.h"
 				>
 			</File>
 			<File
@@ -5502,6 +5502,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\FileSystem\DataDirsAccess.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\DataDirsAccess.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\FileSystem\DirArchive.cpp"
 					>
 				</File>
@@ -5590,6 +5598,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\FileSystem\FileQueryFlags.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\FileSystem\FileSystem.cpp"
 					>
 				</File>
@@ -5598,11 +5610,19 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\FileSystemHandler.cpp"
+					RelativePath="..\..\System\FileSystem\FileSystemAbstraction.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\FileSystem\FileSystemHandler.h"
+					RelativePath="..\..\System\FileSystem\FileSystemAbstraction.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\FileSystemInitializer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\FileSystemInitializer.h"
 					>
 				</File>
 				<File
@@ -5782,6 +5802,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\FileSystem\VFSModes.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\FileSystem\ZipArchive.cpp"
 					>
 				</File>
@@ -5815,6 +5839,10 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\CmdLineParams.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Platform\CrashHandler.h"
 					>
 				</File>
 				<File
@@ -5954,10 +5982,6 @@
 					>
 					<File
 						RelativePath="..\..\System\Platform\Win\CrashHandler.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\System\Platform\Win\CrashHandler.h"
 						>
 					</File>
 					<File
@@ -6867,6 +6891,14 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\..\System\Sync\FPUCheck.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sync\FPUCheck.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Sync\get_executable_name.c"
 					>
 					<FileConfiguration
@@ -6935,6 +6967,10 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\..\System\Sync\HsiehHash.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Sync\Logger.cpp"
 					>
 				</File>
@@ -6968,6 +7004,10 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Sync\SyncedPrimitive.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sync\SyncedPrimitiveBase.h"
 					>
 				</File>
 				<File
@@ -7767,6 +7807,18 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="Misc"
+				>
+				<File
+					RelativePath="..\..\System\Misc\RectangleOptimizer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Misc\RectangleOptimizer.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Map"
@@ -8317,6 +8369,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Lua\LuaMaterial.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaMetalMap.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaMetalMap.h"
 				>
 			</File>
 			<File
@@ -16903,6 +16963,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\assimp\code\IFCCurve.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\assimp\code\IFCGeometry.cpp"
 					>
 				</File>
@@ -16944,6 +17008,14 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\assimp\code\Importer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\Importer.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ImporterRegistry.cpp"
 					>
 				</File>
 				<File
@@ -17060,6 +17132,14 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\assimp\code\LWSLoader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\M3Importer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\M3Importer.h"
 					>
 				</File>
 				<File
@@ -17191,6 +17271,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\assimp\code\ObjExporter.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ObjExporter.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\assimp\code\ObjFileData.h"
 					>
 				</File>
@@ -17284,6 +17372,10 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\assimp\code\PolyTools.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\PostStepRegistry.cpp"
 					>
 				</File>
 				<File
@@ -17396,6 +17488,10 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\assimp\code\ScenePreprocessor.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\assimp\code\ScenePrivate.h"
 					>
 				</File>
 				<File

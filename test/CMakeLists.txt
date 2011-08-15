@@ -12,7 +12,7 @@ Else  (NOT Boost_FOUND)
 	SET(ENGINE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/rts")
 	INCLUDE_DIRECTORIES(${ENGINE_SOURCE_DIR})
 
-	add_definitions(-DBOOST_TEST_DYN_LINK)
+	add_definitions(-DBOOST_TEST_DYN_LINK -DSYNCCHECK)
 
 	Set(test_Log_sources
 			"${ENGINE_SOURCE_DIR}/System/Log/Backend.cpp"
@@ -22,6 +22,8 @@ Else  (NOT Boost_FOUND)
 			"${ENGINE_SOURCE_DIR}/System/Log/ConsoleSink.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Log/StreamSink.cpp"
 		)
+
+	Add_Custom_Target(tests)
 
 
 
@@ -52,6 +54,7 @@ Else  (NOT Boost_FOUND)
 		)
 
 	ADD_TEST(NAME testUDPListener COMMAND test_UDPListener)
+	Add_Dependencies(tests test_UDPListener)
 
 
 
@@ -69,20 +72,69 @@ Else  (NOT Boost_FOUND)
 		)
 
 	ADD_TEST(NAME testILog COMMAND test_ILog)
+	Add_Dependencies(tests test_ILog)
+
+
+
+################################################################################
+### SyncedPrimitive
+
+	Set(test_SyncedPrimitive_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Sync/TestSyncedPrimitive.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Sync/SyncChecker.cpp"
+		)
+
+	ADD_EXECUTABLE(test_SyncedPrimitive ${test_SyncedPrimitive_src})
+	TARGET_LINK_LIBRARIES(test_SyncedPrimitive
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+		)
+
+	ADD_TEST(NAME testSyncedPrimitive COMMAND test_SyncedPrimitive)
+	Add_Dependencies(tests test_SyncedPrimitive)
+
+
+################################################################################
+### RectangleOptimizer
+
+	Set(test_RectangleOptimizer_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Misc/RectangleOptimizer.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/RectangleOptimizer.cpp"
+			${test_Log_sources}
+		)
+
+	ADD_EXECUTABLE(test_RectangleOptimizer ${test_RectangleOptimizer_src})
+	TARGET_LINK_LIBRARIES(test_RectangleOptimizer
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+		)
+
+	ADD_TEST(NAME testRectangleOptimizer COMMAND test_RectangleOptimizer)
+	Add_Dependencies(tests test_RectangleOptimizer)
+
+
+
+################################################################################
+### FileSystem
+
+	Set(test_FileSystem_src
+			"${ENGINE_SOURCE_DIR}/System/FileSystem/FileSystem.cpp"
+			"${ENGINE_SOURCE_DIR}/System/FileSystem/FileSystemAbstraction.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Util.cpp"
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/FileSystem/TestFileSystem.cpp"
+			${test_Log_sources}
+		)
+
+	ADD_EXECUTABLE(test_FileSystem ${test_FileSystem_src})
+	TARGET_LINK_LIBRARIES(test_FileSystem
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_REGEX_LIBRARY}
+		)
+
+	ADD_TEST(NAME testFileSystem COMMAND test_FileSystem)
+	Add_Dependencies(tests test_FileSystem)
 
 
 
 ################################################################################
 
 
-
-	Set(test_targets
-			test_UDPListener
-			test_ILog
-		)
-
-	Add_Custom_Target(tests)
-	Add_Dependencies(tests ${test_targets})
-
 EndIf (NOT Boost_FOUND)
-

@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 
 #ifdef SYNCDEBUG
 
@@ -114,7 +113,7 @@ void CSyncDebugger::Initialize(bool useBacktrace, unsigned numPlayers)
 }
 
 
-void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
+void CSyncDebugger::Sync(const void* p, unsigned size, const char* op)
 {
 	if (!history && !historybt) {
 		return;
@@ -135,7 +134,7 @@ void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 
 	if (size == 4) {
 		// common case
-		h->data = *(unsigned*) p;
+		h->data = *(const unsigned*) p;
 	}
 	else {
 		// > XOR seems dangerous in that every bit is independent of any other, this is bad.
@@ -146,10 +145,10 @@ void CSyncDebugger::Sync(void* p, unsigned size, const char* op)
 		h->data = 0;
 		// whole dwords
 		for (; i < (size & ~3); i += 4)
-			h->data ^= *(unsigned*) ((unsigned char*) p + i);
+			h->data ^= *(const unsigned*) ((const unsigned char*) p + i);
 		// remaining 0 to 3 bytes
 		for (; i < size; ++i)
-			h->data ^= *((unsigned char*) p + i);
+			h->data ^= *((const unsigned char*) p + i);
 	}
 
 	if (++historyIndex == HISTORY_SIZE * BLOCK_SIZE) {

@@ -1,11 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "System/creg/STL_Map.h"
 #include "GeometricObjects.h"
-#include "System/LogOutput.h"
 #include "Map/ReadMap.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/GeoSquareProjectile.h"
@@ -105,7 +103,6 @@ float3 CGeometricObjects::CalcSpline(float i, const float3& p1, const float3& p2
 	float ni = 1 - i;
 
 	float3 res = p1*ni*ni*ni + p2*3*i*ni*ni + p3*3*i*i*ni + p4*i*i*i;
-//	logOutput.Print("%f %f %f",res.x,res.y,res.z);
 	return res;
 }
 

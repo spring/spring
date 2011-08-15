@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 
 #include "System/mmgr.h"
 
@@ -12,7 +11,7 @@
 #include "System/UnsyncedRNG.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
 #include <algorithm>
 #include <map>
@@ -154,8 +153,11 @@ void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameL
 	}
 
 	unsigned playerCount = 0;
-	if (file.GetValue(playerCount, "GAME\\NumPlayers") && playerStartingData.size() != playerCount)
-		logOutput.Print("Warning: "_STPF_" players in GameSetup script (NumPlayers says %i)", playerStartingData.size(), playerCount);
+	if (file.GetValue(playerCount, "GAME\\NumPlayers") && playerStartingData.size() != playerCount) {
+		LOG_L(L_WARNING,
+				_STPF_" players in GameSetup script (NumPlayers says %i)",
+				playerStartingData.size(), playerCount);
+	}
 }
 
 void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& nameList)
@@ -257,8 +259,11 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 	}
 
 	unsigned teamCount = 0;
-	if (file.GetValue(teamCount, "Game\\NumTeams") && teamStartingData.size() != teamCount)
-		logOutput.Print("Warning: "_STPF_" teams in GameSetup script (NumTeams: %i)", teamStartingData.size(), teamCount);
+	if (file.GetValue(teamCount, "Game\\NumTeams") && teamStartingData.size() != teamCount) {
+		LOG_L(L_WARNING,
+				_STPF_" teams in GameSetup script (NumTeams: %i)",
+				teamStartingData.size(), teamCount);
+	}
 }
 
 void CGameSetup::LoadAllyTeams(const TdfParser& file)
@@ -303,10 +308,11 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 	}
 
 	unsigned allyCount = 0;
-	if (!file.GetValue(allyCount, "GAME\\NumAllyTeams") || allyStartingData.size() == allyCount)
+	if (!file.GetValue(allyCount, "GAME\\NumAllyTeams") || (allyStartingData.size() == allyCount)) {
 		;
-	else
-		logOutput.Print("Warning: incorrect number of allyteams in GameSetup script");
+	} else {
+		LOG_L(L_WARNING, "Incorrect number of allyteams in GameSetup script");
+	}
 }
 
 void CGameSetup::RemapPlayers()

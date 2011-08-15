@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 
 #include "LuaParser.h"
 
@@ -589,8 +588,9 @@ int LuaParser::FileExists(lua_State* L)
 	if (!LuaIO::IsSimplePath(filename)) {
 		return 0;
 	}
-	CFileHandler fh(filename, currentParser->accessModes);
-	lua_pushboolean(L, fh.FileExists());
+	//CFileHandler fh(filename, currentParser->accessModes);
+	//lua_pushboolean(L, fh.FileExists());
+	lua_pushboolean(L, CFileHandler::FileExists(filename, currentParser->accessModes));
 	return 1;
 }
 

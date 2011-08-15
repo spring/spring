@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _SAIINTERFACECALLBACKIMPL_H
-#define _SAIINTERFACECALLBACKIMPL_H
+#ifndef S_AI_INTERFACE_CALLBACK_IMPL_H
+#define S_AI_INTERFACE_CALLBACK_IMPL_H
 
 // Doc-comments for the functions in this header can be found in this file
 #include "Interface/SAIInterfaceCallback.h"
@@ -52,4 +52,4 @@ int  aiInterfaceCallback_getInstanceFor(const CAIInterfaceLibraryInfo* info, str
 void aiInterfaceCallback_release(int interfaceId);
 #endif // defined __cplusplus && !defined BUILDING_AI
 
-#endif // _SAIINTERFACECALLBACKIMPL_H
+#endif // S_AI_INTERFACE_CALLBACK_IMPL_H

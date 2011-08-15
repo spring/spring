@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 #include <vector>
 #include <SDL.h>
@@ -23,8 +22,9 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
-#include "System/FPUCheck.h"
+#include "System/Sync/FPUCheck.h"
 #include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/Watchdog.h"
@@ -99,10 +99,9 @@ void CLoadScreen::Init()
 			gameLoadThread = new COffscreenGLThread( boost::bind(&CGame::LoadGame, game, mapName) );
 
 	} catch (const opengl_error& gle) {
-		//! Offscreen GL Context creation failed,
-		//! fallback to singlethreaded loading.
-		logOutput.Print(std::string(gle.what()));
-		logOutput.Print("Fallback to singlethreaded loading.");
+		LOG_L(L_WARNING, "Offscreen GL Context creation failed, "
+				"falling back to single-threaded loading. The problem was: %s",
+				gle.what());
 		mt_loading = false;
 	}
 
@@ -330,7 +329,7 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 	}
 	curLoadMessage = text;
 
-	logOutput.Print(text);
+	LOG("%s", text.c_str());
 	logOutput.Flush();
 
 	//! Check the FPU state (needed for synced computations),

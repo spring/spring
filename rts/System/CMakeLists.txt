@@ -32,6 +32,7 @@ SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/Main.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Matrix44f.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/MemPool.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/RectangleOptimizer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/NetProtocol.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Object.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/OffscreenGLContext.cpp"
@@ -47,7 +48,7 @@ SET(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/WindowManagerHelper.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SafeVector.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SpringApp.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/StdAfx.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/FPUCheck.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/Logger.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/SyncChecker.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/SyncDebugger.cpp"
@@ -78,11 +79,13 @@ SET(sources_engine_System_FileSystem
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/BufferedArchive.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/CacheDir.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/DataDirLocater.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/DataDirsAccess.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/DirArchive.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/FileFilter.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/FileHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/FileSystem.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/FileSystemHandler.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/FileSystemAbstraction.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/FileSystemInitializer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/PoolArchive.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/SevenZipArchive.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/SimpleParser.cpp"
@@ -93,8 +96,16 @@ SET(sources_engine_System_Log
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/Backend.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/DefaultFilter.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/DefaultFormatter.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogOutputSink.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogUtil.c"
+	)
+SET(sources_engine_System_Log_sinkLogFile
+		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogOutputSink.cpp"
+	)
+SET(sources_engine_System_Log_sinkStream
+		"${CMAKE_CURRENT_SOURCE_DIR}/Log/StreamSink.cpp"
+	)
+SET(sources_engine_System_Log_sinkConsole
+		"${CMAKE_CURRENT_SOURCE_DIR}/Log/ConsoleSink.cpp"
 	)
 SET(sources_engine_System_Net
 		"${CMAKE_CURRENT_SOURCE_DIR}/Net/Connection.cpp"
@@ -132,6 +143,7 @@ IF     (UNIX)
 			${sources_engine_System_creg}
 			${sources_engine_System_FileSystem}
 			${sources_engine_System_Log}
+			${sources_engine_System_Log_sinkLogFile}
 			${sources_engine_System_Net}
 			${sources_engine_System_Platform_Linux}
 		)
@@ -141,6 +153,7 @@ ELSEIF (WIN32)
 			${sources_engine_System_creg}
 			${sources_engine_System_FileSystem}
 			${sources_engine_System_Log}
+			${sources_engine_System_Log_sinkLogFile}
 			${sources_engine_System_Net}
 			${sources_engine_System_Platform_Windows}
 		)
@@ -150,6 +163,7 @@ ELSE   ()
 			${sources_engine_System_creg}
 			${sources_engine_System_FileSystem}
 			${sources_engine_System_Log}
+			${sources_engine_System_Log_sinkLogFile}
 			${sources_engine_System_Net}
 		)
 ENDIF  ()

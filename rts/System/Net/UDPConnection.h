@@ -17,6 +17,15 @@ class CRC;
 
 namespace netcode {
 
+// for reliability testing, introduce fake packet loss with a percentage probability
+#define NETWORK_TEST 0                        // in [0, 1] // enable network reliability testing mode
+#define PACKET_LOSS_FACTOR 50                 // in [0, 100)
+#define SEVERE_PACKET_LOSS_FACTOR 1           // in [0, 100)
+#define PACKET_CORRUPTION_FACTOR 0            // in [0, 100)
+#define SEVERE_PACKET_LOSS_MAX_COUNT 10       // max continuous number of packets to be lost
+#define PACKET_MIN_LATENCY 750                // in [milliseconds] minimum latency
+#define PACKET_MAX_LATENCY 1250               // in [milliseconds] maximum latency
+
 class Chunk
 {
 public:
@@ -74,6 +83,7 @@ public:
 	UDPConnection(CConnection& conn);
 	virtual ~UDPConnection();
 
+	enum { MIN_LOSS_FACTOR = 0, MAX_LOSS_FACTOR = 2 };
 	// START overriding CConnection
 
 	void SendData(boost::shared_ptr<const RawPacket> data);
@@ -110,6 +120,7 @@ public:
 	/// Connections are stealth by default, this allow them to send data
 	void Unmute() { muted = false; }
 	void Close(bool flush);
+	void SetLossFactor(int factor);
 
 	const boost::asio::ip::udp::endpoint &GetEndpoint() const { return addr; }
 
@@ -129,7 +140,7 @@ private:
 	void SendIfNecessary(bool flushed);
 	void AckChunks(int lastAck);
 
-	void RequestResend(ChunkPtr);
+	void RequestResend(ChunkPtr ptr);
 	void SendPacket(Packet& pkt);
 
 	spring_time lastChunkCreated;
@@ -146,6 +157,8 @@ private:
 
 	bool muted;
 	bool closed;
+	int netLossFactor;
+	bool resend;
 
 	int reconnectTime;
 
@@ -160,8 +173,15 @@ private:
 	std::deque<ChunkPtr> unackedChunks;
 	spring_time lastUnackResent;
 	/// Packets the other side missed
-	std::deque<ChunkPtr> resendRequested;
+	std::map<int32_t, ChunkPtr> resendRequested;
 	int currentNum;
+
+	int32_t lastMidChunk;
+#if	NETWORK_TEST
+	/// Delayed packets, for testing purposes
+	std::map< spring_time, std::vector<uint8_t> > delayed;
+	int lossCounter;
+#endif
 
 	/// packets we have received but not yet read
 	packetMap waitingPackets;

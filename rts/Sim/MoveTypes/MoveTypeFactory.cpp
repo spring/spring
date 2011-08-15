@@ -1,9 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
-#include "System/StdAfx.h"
 #include "MoveTypeFactory.h"
 #include "MoveInfo.h"
-#include "AirMoveType.h"
-#include "TAAirMoveType.h"
+#include "StrafeAirMoveType.h"
+#include "HoverAirMoveType.h"
 #include "GroundMoveType.h"
 #include "StaticMoveType.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -36,51 +35,51 @@ AMoveType* MoveTypeFactory::GetMoveType(CUnit* unit, const UnitDef* ud) {
 		assert(ud->movedata == NULL);
 
 		if (!ud->builder && !ud->IsTransportUnit() && ud->IsNonHoveringAirUnit()) {
-			CAirMoveType* amt = new CAirMoveType(unit);
+			CStrafeAirMoveType* sAMT = new CStrafeAirMoveType(unit);
 
-			amt->isFighter = (ud->IsFighterUnit());
-			amt->collide = ud->collide;
+			sAMT->isFighter = (ud->IsFighterUnit());
+			sAMT->collide = ud->collide;
 
-			amt->wingAngle = ud->wingAngle;
-			amt->crashDrag = 1.0f - ud->crashDrag;
-			amt->invDrag = 1.0f - ud->drag;
-			amt->frontToSpeed = ud->frontToSpeed;
-			amt->speedToFront = ud->speedToFront;
-			amt->myGravity = ud->myGravity;
+			sAMT->wingAngle = ud->wingAngle;
+			sAMT->crashDrag = 1.0f - ud->crashDrag;
+			sAMT->invDrag = 1.0f - ud->drag;
+			sAMT->frontToSpeed = ud->frontToSpeed;
+			sAMT->speedToFront = ud->speedToFront;
+			sAMT->myGravity = ud->myGravity;
 
-			amt->maxBank = ud->maxBank;
-			amt->maxPitch = ud->maxPitch;
-			amt->turnRadius = ud->turnRadius;
-			amt->wantedHeight =
+			sAMT->maxBank = ud->maxBank;
+			sAMT->maxPitch = ud->maxPitch;
+			sAMT->turnRadius = ud->turnRadius;
+			sAMT->wantedHeight =
 				(ud->wantedHeight * 1.5f) +
-				((gs->randFloat() - 0.3f) * 15.0f * (amt->isFighter? 2.0f: 1.0f));
+				((gs->randFloat() - 0.3f) * 15.0f * (sAMT->isFighter? 2.0f: 1.0f));
 
-			// same as {Ground, TAAir}MoveType::accRate
-			amt->maxAcc = ud->maxAcc;
-			amt->maxAileron = ud->maxAileron;
-			amt->maxElevator = ud->maxElevator;
-			amt->maxRudder = ud->maxRudder;
+			// same as {Ground, HoverAir}MoveType::accRate
+			sAMT->maxAcc = ud->maxAcc;
+			sAMT->maxAileron = ud->maxAileron;
+			sAMT->maxElevator = ud->maxElevator;
+			sAMT->maxRudder = ud->maxRudder;
 
-			amt->useSmoothMesh = ud->useSmoothMesh;
+			sAMT->useSmoothMesh = ud->useSmoothMesh;
 
-			return amt;
+			return sAMT;
 		} else {
 			// flying builders, transports, gunships
-			CTAAirMoveType* taamt = new CTAAirMoveType(unit);
+			CHoverAirMoveType* hAMT = new CHoverAirMoveType(unit);
 
-			taamt->turnRate = ud->turnRate;
-			taamt->maxSpeed = ud->speed / GAME_SPEED;
-			taamt->accRate = std::max(0.01f, ud->maxAcc);
-			taamt->decRate = std::max(0.01f, ud->maxDec);
-			taamt->wantedHeight = ud->wantedHeight + gs->randFloat() * 5.0f;
-			taamt->orgWantedHeight = taamt->wantedHeight;
-			taamt->dontLand = ud->DontLand();
-			taamt->collide = ud->collide;
-			taamt->altitudeRate = ud->verticalSpeed;
-			taamt->bankingAllowed = ud->bankingAllowed;
-			taamt->useSmoothMesh = ud->useSmoothMesh;
+			hAMT->turnRate = ud->turnRate;
+			hAMT->maxSpeed = ud->speed / GAME_SPEED;
+			hAMT->accRate = std::max(0.01f, ud->maxAcc);
+			hAMT->decRate = std::max(0.01f, ud->maxDec);
+			hAMT->wantedHeight = ud->wantedHeight + gs->randFloat() * 5.0f;
+			hAMT->orgWantedHeight = hAMT->wantedHeight;
+			hAMT->dontLand = ud->DontLand();
+			hAMT->collide = ud->collide;
+			hAMT->altitudeRate = ud->verticalSpeed;
+			hAMT->bankingAllowed = ud->bankingAllowed;
+			hAMT->useSmoothMesh = ud->useSmoothMesh;
 
-			return taamt;
+			return hAMT;
 		}
 	}
 

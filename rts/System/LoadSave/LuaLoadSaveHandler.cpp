@@ -3,7 +3,7 @@
 #include <string>
 #include <sstream>
 
-#include "System/StdAfx.h"
+#include "System/Platform/Win/win32.h"
 #include "LuaLoadSaveHandler.h"
 
 #include "lib/minizip/zip.h"
@@ -15,7 +15,9 @@
 #include "Map/ReadMap.h"
 #include "System/FileSystem/IArchive.h"
 #include "System/FileSystem/ArchiveLoader.h"
+#include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/FileQueryFlags.h"
 #include "System/Platform/byteorder.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
@@ -53,14 +55,14 @@ CLuaLoadSaveHandler::~CLuaLoadSaveHandler()
 
 void CLuaLoadSaveHandler::SaveGame(const std::string& file)
 {
-	const std::string realname = filesystem.LocateFile(file, FileSystem::WRITE).c_str();
+	const std::string realname = dataDirsAccess.LocateFile(file, FileQueryFlags::WRITE).c_str();
 
 	filename = file;
 	savefile = NULL;
 
 	try {
 		// Remove any existing file
-		filesystem.Remove(realname);
+		FileSystem::Remove(realname);
 
 		// Open the zip
 		if (realname.empty() ||
@@ -96,7 +98,7 @@ void CLuaLoadSaveHandler::SaveGame(const std::string& file)
 	if (savefile != NULL) {
 		zipClose(savefile, NULL);
 		savefile = NULL;
-		filesystem.Remove(realname);
+		FileSystem::Remove(realname);
 	}
 }
 
@@ -173,7 +175,7 @@ void CLuaLoadSaveHandler::SaveEntireFile(const char* file, const char* what, con
 
 void CLuaLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 {
-	const std::string realfile = filesystem.LocateFile(FindSaveFile(file)).c_str();
+	const std::string realfile = dataDirsAccess.LocateFile(FindSaveFile(file)).c_str();
 
 	filename = file;
 	loadfile = archiveLoader.OpenArchive(realfile, "sdz");

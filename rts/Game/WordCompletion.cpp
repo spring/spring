@@ -6,7 +6,6 @@
 //        ex: '/give <ammount> {unitname} <team-ID>'
 //        user-input: '/give 10 armcom 1'
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "WordCompletion.h"

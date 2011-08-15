@@ -74,10 +74,10 @@ static inline void log_formatter_createPrefix(char* prefix, size_t prefixSize,
 
 
 /**
+ * @name logging_formatter
  * ILog.h formatter implementation.
- * @group logging_formatter
- * @{
  */
+///@{
 
 /// Formats a log entry into its final string form
 void log_formatter_format(char* record, size_t recordSize,
@@ -92,7 +92,7 @@ void log_formatter_format(char* record, size_t recordSize,
 	SNPRINTF(record, recordSize, "%s%s", prefix, message);
 }
 
-/** @} */ // group logging_formatter
+///@}
 
 #ifdef __cplusplus
 } // extern "C"

@@ -55,11 +55,11 @@ macro    (ConfigureCMakeOrMavenJavaSkirmishAI requireMaven wrapperNames)
 	if    (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 		set(BUILD_THIS_SKIRMISHAI TRUE)
 		If    (requireMaven)
-			IsMavenInstalled(isMavenInstalled)
-			If    (NOT isMavenInstalled)
+			Find_Package(Maven)
+			If    (NOT MAVEN_FOUND)
 				Set(BUILD_THIS_SKIRMISHAI FALSE)
 				Message(WARNING "${myName} Skirmish AI requires Maven to build, but Maven 2 (or later) was not found.")
-			EndIf (NOT isMavenInstalled)
+			EndIf (NOT MAVEN_FOUND)
 		EndIf (requireMaven)
 	endif (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 	If    (NOT BUILD_THIS_SKIRMISHAI)
@@ -70,15 +70,15 @@ macro    (ConfigureCMakeOrMavenJavaSkirmishAI requireMaven wrapperNames)
 	if    (BUILD_THIS_SKIRMISHAI)
 		file(MAKE_DIRECTORY "${myBuildDir}/jlib")
 
-		IsMavenInstalled(isMavenInstalled)
+		Find_Package(Maven)
 		IsMavenProject(${myDir} isMavenProject)
 		set(configureMavenProject FALSE)
 		if    (isMavenProject)
-			if    (isMavenInstalled)
+			if    (MAVEN_FOUND)
 				set(configureMavenProject TRUE)
-			else  (isMavenInstalled)
+			else  (MAVEN_FOUND)
 				Message("warning: ${myName} Skirmish AI has a Maven Project file, but Maven 2 (or later) was not found; Using default configuration.")
-			endif (isMavenInstalled)
+			endif (MAVEN_FOUND)
 		endif (isMavenProject)
 
 		set(configString "default")
@@ -122,21 +122,17 @@ macro    (ConfigureCMakeOrMavenJavaSkirmishAI requireMaven wrapperNames)
 			# ${my.build.dir}/SkirmishAI-src.jar (optional)
 			file(RELATIVE_PATH myBuildDirRel "${myDir}" "${myBuildDir}")
 			set(MVN_ATTRIBUTES
+				${MVN_ATTRIBUTES_DEFAULT}
 				"-P" "as-spring-subproject" # enable special profile
 				"-Dmy.build.dir=${myBuildDirRel}"
 				"-Dmy.version=${myVersion}"
-				"--batch-mode" # Run in non-interactive (batch) mode
 				)
-			if    (NOT CMAKE_VERBOSE_MAKEFILE)
-				# Quiet output - only show errors
-				set(MVN_ATTRIBUTES ${MVN_ATTRIBUTES} "--quiet")
-			endif (NOT CMAKE_VERBOSE_MAKEFILE)
 			set(MVN_PHASE "package")
 			#set(MVN_PHASE "help:effective-pom") # use this for debug purposes
 			add_custom_command(
 				OUTPUT
 					"${myBuildDir}/${myBinJarFile}"
-				COMMAND "mvn"
+				COMMAND "${MVN_BIN}"
 					"${MVN_PHASE}" ${MVN_ATTRIBUTES}
 				DEPENDS
 					${myDependLibFiles}
@@ -373,6 +369,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 
 	SetGlobal(${myName}_AIINTERFACE_VERS   ${myVersion})
 	SetGlobal(${myName}_AIINTERFACE_TARGET ${myTarget})
+	SetGlobal(${myName}_AIINTERFACE_TARGET_GENERATE_SOURCES ${myGenTarget})
 
 
 	# Init some vars
@@ -706,8 +703,8 @@ if    (BUILD_${myName}_AIINTERFACE)
 		)
 	set_source_files_properties("${myBuildDir}/pom-generated.xml" PROPERTIES GENERATED TRUE)
 
-	IsMavenInstalled(isMavenInstalled)
-	if    (isMavenInstalled)
+	Find_Package(Maven)
+	if    (MAVEN_FOUND)
 		# This is required because the local Maven install does not create a
 		# file (whichs path we could know), and thus we would not be able to
 		# create a nice dependency chain without this.
@@ -722,7 +719,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		add_custom_command(
 			OUTPUT
 				"${myMavenInstallStubFile_common}"
-			COMMAND "mvn" "install"
+			COMMAND "${MVN_BIN}" ${MVN_ATTRIBUTES_DEFAULT} "install"
 			COMMAND "${CMAKE_COMMAND}"
 				"-E" "touch" "${myMavenInstallStubFile_common}"
 			DEPENDS
@@ -735,7 +732,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		add_custom_command(
 			OUTPUT
 				"${myMavenInstallStubFile_commonSpring}"
-			COMMAND "mvn" "install"
+			COMMAND "${MVN_BIN}" ${MVN_ATTRIBUTES_DEFAULT} "install"
 			COMMAND "${CMAKE_COMMAND}"
 				"-E" "touch" "${myMavenInstallStubFile_commonSpring}"
 			DEPENDS
@@ -749,11 +746,12 @@ if    (BUILD_${myName}_AIINTERFACE)
 		add_custom_command(
 			OUTPUT
 				"${myMavenInstallStubFile_interface}"
-			COMMAND "mvn"
-				"install:install-file"
+			COMMAND "${MVN_BIN}"
+				${MVN_ATTRIBUTES_DEFAULT}
 				"-DpomFile=${myBuildDir}/pom-generated.xml"
 				"-Dfile=${myBuildDir}/${myBinJarFile}"
 				"-Dsources=${myBuildDir}/${mySrcJarFile}"
+				"install:install-file"
 			COMMAND "${CMAKE_COMMAND}"
 				"-E" "touch" "${myMavenInstallStubFile_interface}"
 			DEPENDS
@@ -774,9 +772,9 @@ if    (BUILD_${myName}_AIINTERFACE)
 			)
 		add_dependencies(${myMavenInstallTarget} ${myJavaTarget})
 		add_dependencies(${myTarget} ${myMavenInstallTarget})
-	else  (isMavenInstalled)
+	else  (MAVEN_FOUND)
 		add_dependencies(${myTarget} ${myJavaTarget})
-	endif (isMavenInstalled)
+	endif (MAVEN_FOUND)
 
 	# Install the native library
 	install(TARGETS   ${myNativeTarget} DESTINATION ${myInstLibsDir})

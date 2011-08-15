@@ -4,6 +4,7 @@
 #define SYNCEDFLOAT3_H
 
 #include "System/float3.h"
+#include "SyncedPrimitiveBase.h"
 
 #if defined(SYNCDEBUG) || defined(SYNCCHECK)
 
@@ -18,7 +19,7 @@
  * Usually used to represent a vector in
  * space as x/y/z.
  */
-class SyncedFloat3
+struct SyncedFloat3
 {
 public:
 	// value type -> _STRUCT (because no virtual dtor or vtable is required)
@@ -592,11 +593,15 @@ typedef float3 SyncedFloat3;
 
 #endif // !SYNCDEBUG && !SYNCCHECK
 
-// this macro looks like a noop, but causes checksum update
-#ifdef SYNCDEBUG
-#define ASSERT_SYNCED_FLOAT3(x) { SyncedFloat3(x); }
-#else
-#define ASSERT_SYNCED_FLOAT3(x)
-#endif
+namespace Sync {
+	/**
+	 * @brief Specialization of Assert to better differentiate the components.
+	 */
+	static inline void Assert(const SyncedFloat3& f) {
+		Assert(f.x, "assert-x");
+		Assert(f.y, "assert-y");
+		Assert(f.z, "assert-z");
+	}
+}
 
 #endif // SYNCEDFLOAT3_H

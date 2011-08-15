@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 
 #include <iostream>
 
@@ -45,14 +44,14 @@
 #include "System/bitops.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
-#include "System/FPUCheck.h"
+#include "System/Sync/FPUCheck.h"
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/OffscreenGLContext.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
-#include "System/FileSystem/FileSystemHandler.h"
+#include "System/FileSystem/FileSystemInitializer.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/CmdLineParams.h"
 #include "System/Platform/Misc.h"
@@ -66,7 +65,6 @@
 #include "System/mmgr.h"
 
 #ifdef WIN32
-	#include "System/Platform/Win/win32.h"
 	#include "System/Platform/Win/WinVersion.h"
 #elif defined(__APPLE__)
 #elif defined(HEADLESS)
@@ -211,7 +209,7 @@ bool SpringApp::Initialize()
 	else
 		LOG("OS: 32bit native mode");
 
-	FileSystemHandler::Initialize(true);
+	FileSystemInitializer::Initialize();
 
 	UpdateOldConfigs();
 
@@ -1223,7 +1221,7 @@ void SpringApp::Shutdown()
 	DeleteAndNull(globalRendering);
 	DeleteAndNull(startsetup);
 
-	FileSystemHandler::Cleanup();
+	FileSystemInitializer::Cleanup();
 
 	Watchdog::Uninstall();
 

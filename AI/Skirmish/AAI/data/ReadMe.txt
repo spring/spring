@@ -22,7 +22,7 @@ Installation:	Windows users:
 		Linux users:
 
 		AAI will get the path of a writable directory from spring and load/save its files there
-		e.g.  /usr/local/games/taspring
+		e.g.  /usr/local/games/spring
 
 		Apart from that the structure is the same as for windows users.
 

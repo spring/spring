@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "PathManager.h"
@@ -13,7 +12,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
 
@@ -32,7 +31,7 @@ CPathManager::CPathManager(): nextPathId(0)
 	medResPE = new CPathEstimator(maxResPF, MEDRES_PE_BLOCKSIZE, "pe",  mapInfo->map.name);
 	lowResPE = new CPathEstimator(maxResPF, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);
 
-	logOutput.Print("[CPathManager] pathing data checksum: %08x\n", GetPathCheckSum());
+	LOG("[CPathManager] pathing data checksum: %08x", GetPathCheckSum());
 
 	#ifdef SYNCDEBUG
 	// clients may have a non-writable cache directory (which causes

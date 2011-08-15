@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _SKIRMISHAIWRAPPER_H
-#define _SKIRMISHAIWRAPPER_H
+#ifndef SKIRMISH_AI_WRAPPER_H
+#define SKIRMISH_AI_WRAPPER_H
 
 #include "System/Object.h"
 #include "SkirmishAIKey.h"
@@ -83,6 +83,9 @@ public:
 	size_t GetSkirmishAIID() const { return skirmishAIId; }
 
 private:
+	bool LoadSkirmishAI(bool postLoad);
+
+
 	size_t skirmishAIId;
 	int teamId;
 	bool cheatEvents;
@@ -95,9 +98,6 @@ private:
 	SSkirmishAICallback* c_callback;
 	SkirmishAIKey key;
 	const struct InfoItem* info;
-
-private:
-	bool LoadSkirmishAI(bool postLoad);
 };
 
-#endif // _SKIRMISHAIWRAPPER_H
+#endif // SKIRMISH_AI_WRAPPER_H

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _LOG_STREAM_SINK_H
-#define _LOG_STREAM_SINK_H
+#ifndef LOG_STREAM_SINK_H
+#define LOG_STREAM_SINK_H
 
 /**
  * This is a simple sink for the ILog.h logging API.
@@ -12,10 +12,10 @@
 #include <ostream>
 
 /**
+ * @name logging_sink_stream_control
  * ILog.h stream-sink control interface.
- * @group logging_sink_stream_control
- * @{
  */
+///@{
 
 /**
  * Set which tream to log to.
@@ -23,8 +23,7 @@
  */
 void log_sink_stream_setLogStream(std::ostream* logStream);
 
+///@}
 
-/** @} */ // group logging_sink_stream_control
-
-#endif // _LOG_STREAM_SINK_H
+#endif // LOG_STREAM_SINK_H
 

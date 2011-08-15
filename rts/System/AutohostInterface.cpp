@@ -6,9 +6,6 @@
 #include "System/mmgr.h"
 #include "System/Log/ILog.h"
 
-#if defined(_WIN32)
-	#include <windows.h>
-#endif
 #include <string.h>
 #include <vector>
 

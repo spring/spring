@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 
 #include <set>
 #include <list>
@@ -23,7 +22,6 @@
 #include "Game/GameHelper.h"
 #include "Game/PlayerHandler.h"
 #include "Game/SelectedUnits.h"
-#include "Sim/Misc/Team.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
@@ -36,10 +34,10 @@
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
+#include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/MoveTypes/AirMoveType.h"
-#include "Sim/MoveTypes/TAAirMoveType.h"
+#include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -448,7 +446,7 @@ int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 	if (lua_isstring(L, 2)) {
 		const string type = lua_tostring(L, 2);
 
-		const float value = max(0.0f, float(lua_tonumber(L, 3)));
+		const float value = max(0.0f, luaL_checkfloat(L, 3));
 
 		if ((type == "m") || (type == "metal")) {
 			team->metalPull += value;
@@ -468,7 +466,7 @@ int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
 				const string key = lua_tostring(L, -2);
-				const float value = max(0.0f, float(lua_tonumber(L, -1)));
+				const float value = max(0.0f, lua_tofloat(L, -1));
 				if ((key == "m") || (key == "metal")) {
 					metal = value;
 				} else if ((key == "e") || (key == "energy")) {
@@ -513,18 +511,18 @@ int LuaSyncedCtrl::SetTeamResource(lua_State* L)
 	const float value = max(0.0f, luaL_checkfloat(L, 3));
 
 	if ((type == "m") || (type == "metal")) {
-		team->metal = min(team->metalStorage, value);
+		team->metal = min<float>(team->metalStorage, value);
 	}
 	else if ((type == "e") || (type == "energy")) {
-		team->energy = min(team->energyStorage, value);
+		team->energy = min<float>(team->energyStorage, value);
 	}
 	else if ((type == "ms") || (type == "metalStorage")) {
 		team->metalStorage = value;
-		team->metal = min((float)team->metal, team->metalStorage);
+		team->metal = min<float>(team->metal, team->metalStorage);
 	}
 	else if ((type == "es") || (type == "energyStorage")) {
 		team->energyStorage = value;
-		team->energy = min((float)team->energy, team->energyStorage);
+		team->energy = min<float>(team->energy, team->energyStorage);
 	}
 	return 0;
 }
@@ -585,7 +583,7 @@ int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
 	float amount = luaL_checkfloat(L, 4);
 
 	if (type == "metal") {
-		amount = std::min(amount, team1->metal);
+		amount = std::min(amount, (float)team1->metal);
 		if (!luaRules || luaRules->AllowResourceTransfer(teamID1, teamID2, "m", amount)) {
 			team1->metal                       -= amount;
 			team1->metalSent                   += amount;
@@ -595,7 +593,7 @@ int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
 			team2->currentStats->metalReceived += amount;
 		}
 	} else if (type == "energy") {
-		amount = std::min(amount, team1->energy);
+		amount = std::min(amount, (float)team1->energy);
 		if (!luaRules || luaRules->AllowResourceTransfer(teamID1, teamID2, "e", amount)) {
 			team1->energy                       -= amount;
 			team1->energySent                   += amount;
@@ -892,8 +890,8 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		return 0; // unit limit reached
 	}
 
-	ASSERT_SYNCED_FLOAT3(pos);
-	ASSERT_SYNCED_PRIMITIVE(facing);
+	ASSERT_SYNCED(pos);
+	ASSERT_SYNCED(facing);
 
 	// FIXME -- allow specifying the 'builder' parameter?
 	inCreateUnit = true;
@@ -939,7 +937,7 @@ int LuaSyncedCtrl::DestroyUnit(lua_State* L)
 		luaL_error(L, "DestroyUnit() recursion is not permitted");
 	}
 	inDestroyUnit = true;
-	ASSERT_SYNCED_PRIMITIVE(unit->id);
+	ASSERT_SYNCED(unit->id);
 	unit->KillUnit(selfd, reclaimed, attacker);
 	inDestroyUnit = false;
 
@@ -973,9 +971,9 @@ int LuaSyncedCtrl::TransferUnit(lua_State* L)
 		luaL_error(L, "TransferUnit() recursion is not permitted");
 	}
 	inTransferUnit = true;
-	ASSERT_SYNCED_PRIMITIVE(unit->id);
-	ASSERT_SYNCED_PRIMITIVE((int)newTeam);
-	ASSERT_SYNCED_PRIMITIVE(given);
+	ASSERT_SYNCED(unit->id);
+	ASSERT_SYNCED((int)newTeam);
+	ASSERT_SYNCED(given);
 	unit->ChangeTeam(newTeam, given ? CUnit::ChangeGiven
 	                                : CUnit::ChangeCaptured);
 	inTransferUnit = false;
@@ -1001,8 +999,8 @@ int LuaSyncedCtrl::SetUnitCosts(lua_State* L)
 			continue;
 		}
 		const string key = lua_tostring(L, -2);
-		const float value = lua_tonumber(L, -1);
-		ASSERT_SYNCED_PRIMITIVE((float)value);
+		const float value = lua_tofloat(L, -1);
+		ASSERT_SYNCED((float)value);
 
 		if (key == "buildTime") {
 			unit->buildTime  = max(1.0f, value);
@@ -1072,8 +1070,8 @@ int LuaSyncedCtrl::SetUnitResourcing(lua_State* L)
 				continue;
 			}
 			const string key = lua_tostring(L, -2);
-			const float value = lua_tonumber(L, -1);
-			ASSERT_SYNCED_PRIMITIVE((float)value);
+			const float value = lua_tofloat(L, -1);
+			ASSERT_SYNCED((float)value);
 
 			SetUnitResourceParam(unit, key, value);
 		}
@@ -1396,7 +1394,7 @@ int LuaSyncedCtrl::SetUnitCloak(lua_State* L)
 	else if (lua_isboolean(L, 3)) {
 		const float defDist = unit->unitDef->decloakDistance;
 		if (lua_toboolean(L, 3)) {
-			unit->decloakDistance = streflop::fabsf(defDist);
+			unit->decloakDistance = math::fabsf(defDist);
 		} else {
 			unit->decloakDistance = defDist;
 		}
@@ -1858,9 +1856,7 @@ int LuaSyncedCtrl::SetUnitPhysics(lua_State* L)
 	unit->frontdir.y = matrix[ 9];
 	unit->frontdir.z = matrix[10];
 
-	const shortint2 HandP = GetHAndPFromVector(unit->frontdir);
-	unit->heading = HandP.x;
-
+	unit->SetHeadingFromDirection();
 	unit->ForcedMove(pos);
 	return 0;
 }
@@ -1911,17 +1907,8 @@ int LuaSyncedCtrl::SetUnitRotation(lua_State* L)
 	matrix.RotateX(rot.x);
 	matrix.RotateY(rot.y);
 
-	unit->rightdir.x = -matrix[ 0];
-	unit->rightdir.y = -matrix[ 1];
-	unit->rightdir.z = -matrix[ 2];
-	unit->updir.x    =  matrix[ 4];
-	unit->updir.y    =  matrix[ 5];
-	unit->updir.z    =  matrix[ 6];
-	unit->frontdir.x =  matrix[ 8];
-	unit->frontdir.y =  matrix[ 9];
-	unit->frontdir.z =  matrix[10];
-
-	unit->heading = GetHeadingFromVector(unit->frontdir.x, unit->frontdir.z);
+	unit->SetDirVectors(matrix);
+	unit->SetHeadingFromDirection();
 	unit->ForcedMove(unit->pos);
 
 	return 0;
@@ -2040,7 +2027,7 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 
 	if (lua_isstring(L, 2)) {
 		const string type = lua_tostring(L, 2);
-		const float value = max(0.0f, float(lua_tonumber(L, 3)));
+		const float value = max(0.0f, lua_tofloat(L, 3));
 
 		if ((type == "m") || (type == "metal")) {
 			lua_pushboolean(L, unit->UseMetal(value));
@@ -2057,7 +2044,7 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
 				const string key = lua_tostring(L, -2);
-				const float value = max(0.0f, float(lua_tonumber(L, -1)));
+				const float value = max(0.0f, lua_tofloat(L, -1));
 				if ((key == "m") || (key == "metal")) {
 					metal = value;
 				} else if ((key == "e") || (key == "energy")) {
@@ -2869,7 +2856,7 @@ int LuaSyncedCtrl::AddHeightMap(lua_State* L)
 
 	const int index = (z * gs->mapxp1) + x;
 	const float oldHeight = readmap->GetCornerHeightMapSynced()[index];
-	heightMapAmountChanged += streflop::fabsf(h);
+	heightMapAmountChanged += math::fabsf(h);
 
 	// update RecalcArea()
 	if (x < heightMapx1) { heightMapx1 = x; }
@@ -2916,7 +2903,7 @@ int LuaSyncedCtrl::SetHeightMap(lua_State* L)
 	}
 
 	const float heightDiff = (height - oldHeight);
-	heightMapAmountChanged += streflop::fabsf(heightDiff);
+	heightMapAmountChanged += math::fabsf(heightDiff);
 
 	// update RecalcArea()
 	if (x < heightMapx1) { heightMapx1 = x; }
@@ -3068,7 +3055,7 @@ int LuaSyncedCtrl::AddSmoothMesh(lua_State *L)
 
 	const int index = (z * smoothGround->GetMaxX()) + x;
 	const float oldHeight = smoothGround->GetMeshData()[index];
-	smoothMeshAmountChanged += streflop::fabsf(h);
+	smoothMeshAmountChanged += math::fabsf(h);
 
 	smoothGround->AddHeight(index, h);
 	// push the new height
@@ -3108,7 +3095,7 @@ int LuaSyncedCtrl::SetSmoothMesh(lua_State *L)
 	}
 
 	const float heightDiff = (height - oldHeight);
-	smoothMeshAmountChanged += streflop::fabsf(heightDiff);
+	smoothMeshAmountChanged += math::fabsf(heightDiff);
 
 	smoothGround->SetHeight(index, height);
 	lua_pushnumber(L, heightDiff);

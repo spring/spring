@@ -26,6 +26,7 @@ class CProjectile;
 struct Command;
 class CLogSubsystem;
 class IArchive;
+struct CRectangle;
 
 #ifndef zipFile
 	// might be defined through zip.h already
@@ -49,7 +50,7 @@ class CEventClient
 
 		// used by the eventHandler to register
 		// call-ins when an EventClient is being added
-		virtual bool WantsEvent(const std::string& eventName) { return false; }
+		virtual bool WantsEvent(const std::string& eventName) = 0;
 
 		// used by the eventHandler to route certain event types
 		virtual int  GetReadAllyTeam() const { return NoAccessTeam; }
@@ -65,7 +66,7 @@ class CEventClient
 
 	protected:
 		CEventClient(const std::string& name, int order, bool synced);
-		virtual ~CEventClient() {}
+		virtual ~CEventClient();
 
 	public:
 		// Synced events
@@ -76,6 +77,7 @@ class CEventClient
 		virtual void GameOver(const std::vector<unsigned char>& winningAllyTeams) {}
 		virtual void GamePaused(int playerID, bool paused) {}
 		virtual void GameFrame(int gameFrame) {}
+
 		virtual void TeamDied(int teamID) {}
 		virtual void TeamChanged(int teamID) {}
 		virtual void PlayerChanged(int playerID) {}
@@ -148,6 +150,7 @@ class CEventClient
 		virtual void Save(zipFile archive);
 
 		virtual void Update();
+		virtual void UnsyncedHeightMapUpdate(const CRectangle& rect);
 
 		virtual bool KeyPress(unsigned short key, bool isRepeat);
 		virtual bool KeyRelease(unsigned short key);

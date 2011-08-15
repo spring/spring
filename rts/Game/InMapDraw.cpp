@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "SDL_mouse.h"
 #include "SDL_keyboard.h"
 #include "System/mmgr.h"
@@ -23,6 +22,7 @@
 #include "System/BaseNetProtocol.h"
 #include "System/NetProtocol.h"
 #include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 
@@ -54,7 +54,7 @@ public:
 
 			// if we happen to be in drawAll mode, notify us now
 			// even if this message is not intented for our ears
-			logOutput.Print("%s added point: %s", sender->name.c_str(), label->c_str());
+			LOG("%s added point: %s", sender->name.c_str(), label->c_str());
 			logOutput.SetLastMsgPos(*pos0);
 			Channels::UserInterface.PlaySample(blippSound, *pos0);
 			minimap->AddNotification(*pos0, float3(1.0f, 1.0f, 1.0f), 1.0f);
@@ -212,7 +212,7 @@ int CInMapDraw::GotNetMsg(boost::shared_ptr<const netcode::RawPacket>& packet)
 			}
 		}
 	} catch (const netcode::UnpackPacketException& ex) {
-		logOutput.Print("Got invalid MapDraw: %s", ex.what());
+		LOG_L(L_WARNING, "Got invalid MapDraw: %s", ex.what());
 		playerID = -1;
 	}
 
@@ -223,13 +223,13 @@ int CInMapDraw::GotNetMsg(boost::shared_ptr<const netcode::RawPacket>& packet)
 void CInMapDraw::SetSpecMapDrawingAllowed(bool state)
 {
 	allowSpecMapDrawing = state;
-	logOutput.Print("Spectator map drawing is %s", allowSpecMapDrawing? "disabled": "enabled");
+	LOG("Spectator map drawing is %s", allowSpecMapDrawing? "disabled": "enabled");
 }
 
 void CInMapDraw::SetLuaMapDrawingAllowed(bool state)
 {
 	allowLuaMapDrawing = state;
-	logOutput.Print("Lua map drawing is %s", allowLuaMapDrawing? "disabled": "enabled");
+	LOG("Lua map drawing is %s", allowLuaMapDrawing? "disabled": "enabled");
 }
 
 

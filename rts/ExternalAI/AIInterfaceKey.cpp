@@ -2,6 +2,10 @@
 
 #include "AIInterfaceKey.h"
 
+#include "System/creg/creg_cond.h"
+#include <string>
+
+
 CR_BIND(AIInterfaceKey, );
 
 CR_REG_METADATA(AIInterfaceKey, (
@@ -48,6 +52,10 @@ const std::string& AIInterfaceKey::GetVersion() const {
 
 bool AIInterfaceKey::IsUnspecified() const {
 	return shortName == "";
+}
+
+std::string AIInterfaceKey::ToString() const {
+	return GetShortName() + " " + GetVersion();
 }
 
 bool AIInterfaceKey::operator==(const AIInterfaceKey& otherKey) const {

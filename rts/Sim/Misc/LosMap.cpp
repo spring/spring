@@ -2,7 +2,6 @@
 
 /* based on original los code in LosHandler.{cpp,h} and RadarHandler.{cpp,h} */
 
-#include "System/StdAfx.h"
 #include "LosMap.h"
 #include "Map/ReadMap.h"
 #include "System/myMath.h"

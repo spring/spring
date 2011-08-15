@@ -19,6 +19,7 @@ SET(sources_engine_Lua
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaInputReceiver.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaLobby.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaMaterial.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/LuaMetalMap.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaOpenGL.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaOpenGLUtils.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaParser.cpp"

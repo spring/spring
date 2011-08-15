@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/mmgr.h"
 
 #include "MapParser.h"
@@ -18,9 +17,9 @@
 
 std::string MapParser::GetMapConfigName(const std::string& mapFileName)
 {
-	const std::string directory = filesystem.GetDirectory(mapFileName);
-	const std::string filename  = filesystem.GetBasename(mapFileName);
-	const std::string extension = filesystem.GetExtension(mapFileName);
+	const std::string directory = FileSystem::GetDirectory(mapFileName);
+	const std::string filename  = FileSystem::GetBasename(mapFileName);
+	const std::string extension = FileSystem::GetExtension(mapFileName);
 
 	if (extension == "sm3") {
 		return mapFileName;
@@ -45,7 +44,7 @@ MapParser::MapParser(const std::string& mapFileName) : parser(NULL)
 		parser = new LuaParser("maphelper/mapinfo.lua", SPRING_VFS_MAP_BASE, SPRING_VFS_MAP_BASE);
 	}
 	parser->GetTable("Map");
-	parser->AddString("fileName", filesystem.GetFilename(mapFileName));
+	parser->AddString("fileName", FileSystem::GetFilename(mapFileName));
 	parser->AddString("fullName", mapFileName);
 	parser->AddString("configFile", mapConfig);
 	parser->EndTable();

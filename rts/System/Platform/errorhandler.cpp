@@ -5,7 +5,6 @@
  * Error handling based on platform.
  */
 
-#include "System/StdAfx.h"
 
 #include "errorhandler.h"
 

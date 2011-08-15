@@ -10,6 +10,7 @@
 #include "Map/ReadMap.h"
 #include "System/float3.h"
 #include "System/myMath.h"
+#include "System/OpenMP_cond.h"
 #include "System/TimeProfiler.h"
 
 #include "System/mmgr.h"
@@ -105,10 +106,10 @@ float SmoothHeightMesh::SetMaxHeight(int index, float h)
 
 
 inline static void FindMaximumColumnHeights(
-	int maxx,
-	int maxy,
-	int intrad,
-	float resolution,
+	const int maxx,
+	const int maxy,
+	const int intrad,
+	const float resolution,
 	std::vector<float>& colsMaxima,
 	std::vector<int>& maximaRows)
 {
@@ -129,9 +130,9 @@ inline static void FindMaximumColumnHeights(
 }
 
 inline static void AdvanceMaximaRows(
-	int y,
-	int maxx,
-	float resolution,
+	const int y,
+	const int maxx,
+	const float resolution,
 	const std::vector<float>& colsMaxima,
 	      std::vector<int>& maximaRows)
 {
@@ -207,11 +208,11 @@ inline static void FindRadialMaximum(
 
 
 inline static void FixRemainingMaxima(
-	int y,
-	int maxx,
-	int maxy,
-	int intrad,
-	float resolution,
+	const int y,
+	const int maxx,
+	const int maxy,
+	const int intrad,
+	const float resolution,
 	std::vector<float>& colsMaxima,
 	std::vector<int>& maximaRows)
 {
@@ -268,15 +269,17 @@ inline static void FixRemainingMaxima(
 inline static void BlurHorizontal(
 	const int maxx,
 	const int maxy,
-	const float smoothrad,
+	const int smoothrad,
 	const float resolution,
-	std::vector<float>& mesh,
+	const std::vector<float>& mesh,
 	std::vector<float>& smoothed)
 {
 	const float n = 2.0f * smoothrad + 1.0f;
 	const float recipn = 1.0f / n;
 
-	for (int y = 0; y <= maxy; ++y) {
+	int y;
+	#pragma omp parallel for private(y) schedule(static, 1000)
+	for (y = 0; y <= maxy; ++y) {
 		float avg = 0.0f;
 
 		for (int x = 0; x <= 2 * smoothrad; ++x) {
@@ -286,28 +289,19 @@ inline static void BlurHorizontal(
 		for (int x = 0; x <= maxx; ++x) {
 			const int idx = x + y * maxx;
 
-			if (x <= smoothrad) {
-				// left map-border case
+			if (x <= smoothrad || x > (maxx - smoothrad)) {
+				// map-border case
 				smoothed[idx] = 0.0f;
 
-				for (int x1 = 0; x1 <= x + smoothrad; ++x1) {
+				const int xstart = std::max(x - smoothrad, 0);
+				const int xend   = std::min(x + smoothrad, maxx);
+
+				for (int x1 = xstart; x1 <= xend; ++x1) {
 					smoothed[idx] += mesh[x1 + y * maxx];
 				}
 
 				const float gh = ground->GetHeightAboveWater(x * resolution, y * resolution);
-				const float sh = smoothed[idx] / (x + smoothrad + 1);
-
-				smoothed[idx] = std::min(readmap->currMaxHeight, std::max(gh, sh));
-			} else if (x > (maxx - smoothrad)) {
-				// right map-border case
-				smoothed[idx] = 0.0f;
-
-				for (int x1 = x - smoothrad; x1 <= maxx; ++x1) {
-					smoothed[idx] += mesh[x1 + y * maxx];
-				}
-
-				const float gh = ground->GetHeightAboveWater(x * resolution, y * resolution);
-				const float sh = smoothed[idx] / (maxx - (x - smoothrad) + 1);
+				const float sh = smoothed[idx] / (xend - xstart + 1);
 
 				smoothed[idx] = std::min(readmap->currMaxHeight, std::max(gh, sh));
 			} else {
@@ -324,23 +318,22 @@ inline static void BlurHorizontal(
 			assert(smoothed[idx] >=          readmap->currMinHeight       );
 		}
 	}
-
-	// copy <smoothed> into <mesh>
-	std::copy(smoothed.begin(), smoothed.end(), mesh.begin());
 }
 
 inline static void BlurVertical(
 	const int maxx,
 	const int maxy,
-	const float smoothrad,
+	const int smoothrad,
 	const float resolution,
-	std::vector<float>& mesh,
+	const std::vector<float>& mesh,
 	std::vector<float>& smoothed)
 {
 	const float n = 2.0f * smoothrad + 1.0f;
 	const float recipn = 1.0f / n;
 
-	for (int x = 0; x <= maxx; ++x) {
+	int x;
+	#pragma omp parallel for private(x) schedule(static, 1000)
+	for (x = 0; x <= maxx; ++x) {
 		float avg = 0.0f;
 
 		for (int y = 0; y <= 2 * smoothrad; ++y) {
@@ -350,28 +343,19 @@ inline static void BlurVertical(
 		for (int y = 0; y <= maxy; ++y) {
 			const int idx = x + y * maxx;
 
-			if (y <= smoothrad) {
-				// top map-border case
+			if (y <= smoothrad || y > (maxy - smoothrad)) {
+				// map-border case
 				smoothed[idx] = 0.0f;
 
-				for (int y1 = 0; y1 <= y + smoothrad; ++y1) {
+				const int ystart = std::max(y - smoothrad, 0);
+				const int yend   = std::min(y + smoothrad, maxy);
+
+				for (int y1 = ystart; y1 <= yend; ++y1) {
 					smoothed[idx] += mesh[x + y1 * maxx];
 				}
 
 				const float gh = ground->GetHeightAboveWater(x * resolution, y * resolution);
-				const float sh = smoothed[idx] / (y + smoothrad + 1);
-
-				smoothed[idx] = std::min(readmap->currMaxHeight, std::max(gh, sh));
-			} else if (y > (maxy - smoothrad)) {
-				// bottom map-border case
-				smoothed[idx] = 0.0f;
-
-				for (int y1 = y - smoothrad; y1 <= maxy; ++y1) {
-					smoothed[idx] += mesh[x + y1 * maxx];
-				}
-
-				const float gh = ground->GetHeightAboveWater(x * resolution, y * resolution);
-				const float sh = smoothed[idx] / (maxy - (y - smoothrad) + 1);
+				const float sh = smoothed[idx] / (yend - ystart + 1);
 
 				smoothed[idx] = std::min(readmap->currMaxHeight, std::max(gh, sh));
 			} else {
@@ -388,9 +372,6 @@ inline static void BlurVertical(
 			assert(smoothed[idx] >=          readmap->currMinHeight       );
 		}
 	}
-
-	// copy <smoothed> into <mesh>
-	std::copy(smoothed.begin(), smoothed.end(), mesh.begin());
 }
 
 
@@ -429,16 +410,13 @@ void SmoothHeightMesh::MakeSmoothMesh(const CGround* ground)
 	const size_t size = (this->maxx + 1) * (this->maxy + 1);
 	// use sliding window of maximums to reduce computational complexity
 	const int intrad = smoothRadius / resolution;
-	const int smoothrad = 3;
 
 	assert(mesh.empty());
 	mesh.resize(size);
-	origMesh.resize(size);
 
-	std::vector<float> smoothed(size);
 	std::vector<float> colsMaxima(maxx + 1, -std::numeric_limits<float>::max());
 	std::vector<int> maximaRows(maxx + 1, -1);
-
+	
 	FindMaximumColumnHeights(maxx, maxy, intrad, resolution, colsMaxima, maximaRows);
 
 	for (int y = 0; y <= maxy; ++y) {
@@ -452,12 +430,17 @@ void SmoothHeightMesh::MakeSmoothMesh(const CGround* ground)
 	}
 
 	// actually smooth with approximate Gaussian blur passes
+	const int smoothrad = 3;
+	std::vector<float> smoothed(size);
 	for (int numBlurs = 3; numBlurs > 0; --numBlurs) {
 		BlurHorizontal(maxx, maxy, smoothrad, resolution, mesh, smoothed);
+			mesh.swap(smoothed);
 		BlurVertical(maxx, maxy, smoothrad, resolution, mesh, smoothed);
+			mesh.swap(smoothed);
 	}
 
-	// copy <mesh> into <origMesh>, then <smoothed> into <mesh>
+	// `mesh` now contains the smoothed heightmap
+	// backup it in origMesh
+	origMesh.resize(size);
 	std::copy(mesh.begin(), mesh.end(), origMesh.begin());
-	std::copy(smoothed.begin(), smoothed.end(), mesh.begin());
 }

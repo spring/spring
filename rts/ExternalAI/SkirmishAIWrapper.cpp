@@ -1,11 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "SkirmishAIWrapper.h"
 
-#include "System/StdAfx.h"
+#include "System/FileSystem/DataDirsAccess.h"
+#include "System/FileSystem/FileQueryFlags.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/FileSystem/FileSystemHandler.h"
 #include "System/Log/ILog.h"
 #include "System/mmgr.h"
 #include "System/Util.h"
@@ -245,8 +244,8 @@ static std::string createTempFileName(const char* action, int teamId,
 	char* tmpFileName = new char[tmpFileName_size];
 	SNPRINTF(tmpFileName, tmpFileName_size, "%s-team%i_id%i.tmp", action,
 			teamId, skirmishAIId);
-	std::string tmpFile = filesystem.LocateFile(tmpFileName,
-			FileSystem::WRITE | FileSystem::CREATE_DIRS);
+	std::string tmpFile = dataDirsAccess.LocateFile(tmpFileName,
+			FileQueryFlags::WRITE | FileQueryFlags::CREATE_DIRS);
 	delete[] tmpFileName;
 	return tmpFile;
 }
@@ -263,7 +262,7 @@ void CSkirmishAIWrapper::Load(std::istream* load_s)
 	SLoadEvent evtData = {tmpFile.c_str()};
 	ai->HandleEvent(EVENT_LOAD, &evtData);
 
-	FileSystemHandler::DeleteFile(tmpFile);
+	FileSystem::DeleteFile(tmpFile);
 }
 
 void CSkirmishAIWrapper::Save(std::ostream* save_s)
@@ -273,12 +272,12 @@ void CSkirmishAIWrapper::Save(std::ostream* save_s)
 	SSaveEvent evtData = {tmpFile.c_str()};
 	ai->HandleEvent(EVENT_SAVE, &evtData);
 
-	if (FileSystemHandler::FileExists(tmpFile)) {
+	if (FileSystem::FileExists(tmpFile)) {
 		std::ifstream tmpFile_s;
 		tmpFile_s.open(tmpFile.c_str(), std::ios::binary);
 		streamCopy(&tmpFile_s, save_s);
 		tmpFile_s.close();
-		FileSystemHandler::DeleteFile(tmpFile);
+		FileSystem::DeleteFile(tmpFile);
 	}
 }
 

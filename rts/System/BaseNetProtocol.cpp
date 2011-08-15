@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/StdAfx.h"
 #include "System/BaseNetProtocol.h"
 
 #include <boost/cstdint.hpp>
@@ -194,11 +193,11 @@ PacketType CBaseNetProtocol::SendDirectControlUpdate(uchar myPlayerNum, uchar st
 }
 
 
-PacketType CBaseNetProtocol::SendAttemptConnect(const std::string& name, const std::string& passwd, const std::string& version, bool reconnect)
+PacketType CBaseNetProtocol::SendAttemptConnect(const std::string& name, const std::string& passwd, const std::string& version, int netloss, bool reconnect)
 {
-	boost::uint16_t size = 9 + name.size() + passwd.size() + version.size();
+	boost::uint16_t size = 10 + name.size() + passwd.size() + version.size();
 	PackPacket* packet = new PackPacket(size , NETMSG_ATTEMPTCONNECT);
-	*packet << size << NETWORK_VERSION << name << passwd << version << uchar(reconnect);
+	*packet << size << NETWORK_VERSION << name << passwd << version << uchar(reconnect) << uchar(netloss);
 	return PacketType(packet);
 }
 

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef __SKIRMISH_AI_HANDLER_H
-#define __SKIRMISH_AI_HANDLER_H
+#ifndef SKIRMISH_AI_HANDLER_H
+#define SKIRMISH_AI_HANDLER_H
 
 #include "ExternalAI/SkirmishAIData.h"
 
@@ -20,7 +20,6 @@ class SkirmishAIKey;
  */
 class CSkirmishAIHandler
 {
-private:
 	CR_DECLARE(CSkirmishAIHandler);
 
 	CSkirmishAIHandler();
@@ -179,7 +178,7 @@ private:
 	void CompleteWithDefaultOptionValues(const size_t skirmishAIId);
 	void CompleteSkirmishAI(const size_t skirmishAIId);
 
-private:
+
 	/// Id -> AI instance
 	id_ai_t id_ai;
 
@@ -199,4 +198,4 @@ private:
 
 #define skirmishAIHandler CSkirmishAIHandler::GetInstance()
 
-#endif // __SKIRMISH_AI_HANDLER_H
+#endif // SKIRMISH_AI_HANDLER_H
