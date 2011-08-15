@@ -1949,7 +1949,7 @@ void CLuaHandle::Save(zipFile archive)
 }
 
 
-void CLuaHandle::UnsyncedHeightMapUpdate(const CRectangle& rect)
+void CLuaHandle::UnsyncedHeightMapUpdate(const SRectangle& rect)
 {
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 6);

@@ -3,9 +3,8 @@
 #ifndef RECTANGLE_H
 #define RECTANGLE_H
 
-
-struct CRectangle {
-	CRectangle(int x1_, int z1_, int x2_, int z2_)
+struct SRectangle {
+	SRectangle(int x1_, int z1_, int x2_, int z2_)
 		: x1(x1_)
 		, z1(z1_)
 		, x2(x2_)
@@ -15,7 +14,7 @@ struct CRectangle {
 	int GetWidth() const  { return x2 - x1; }
 	int GetHeight() const { return z2 - z1; }
 
-	bool operator< (const CRectangle& other) {
+	bool operator< (const SRectangle& other) {
 		if (x1 == other.x1) {
 			return (z1 < other.z1);
 		} else {
