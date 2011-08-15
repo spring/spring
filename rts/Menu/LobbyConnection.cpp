@@ -10,7 +10,7 @@
 #include "Game/GameVersion.h"
 #include "aGui/Gui.h"
 
-CONFIG(std::string, LobbyServer).defaultValue("taspringmaster.clan-sy.com");
+CONFIG(std::string, LobbyServer).defaultValue("lobby.springrts.com");
 
 LobbyConnection::LobbyConnection() : upwin(NULL)
 {
