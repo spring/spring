@@ -5,13 +5,15 @@
 	<key>CFBundleDisplayName</key>
 	<string>Spring RTS</string>
 	<key>CFBundleExecutable</key>
-	<string>springlobby</string>
+	<string>spring</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.springrts.Spring</string>
 	<key>CFBundleName</key>
 	<string>Spring RTS</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>###VERSION###</string>
 	<key>CSResourcesFileMapped</key>
 	<true/>
 	<key>LSRequiresCarbon</key>
