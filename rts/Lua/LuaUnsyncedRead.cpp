@@ -29,6 +29,7 @@
 #include "Game/UI/MiniMap.h"
 #include "Game/UI/MouseHandler.h"
 #include "Map/BaseGroundDrawer.h"
+#include "Map/BaseGroundTextures.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
@@ -134,6 +135,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(HaveAdvShading);
 	REGISTER_LUA_CFUNC(GetWaterMode);
 	REGISTER_LUA_CFUNC(GetMapDrawMode);
+	REGISTER_LUA_CFUNC(GetMapSquareTexture);
 
 	REGISTER_LUA_CFUNC(GetCameraNames);
 	REGISTER_LUA_CFUNC(GetCameraState);
@@ -1122,6 +1124,52 @@ int LuaUnsyncedRead::GetMapDrawMode(lua_State* L)
 	return 1;
 }
 
+
+int LuaUnsyncedRead::GetMapSquareTexture(lua_State* L)
+{
+	if (CLuaHandle::GetSynced(L)) {
+		return 0;
+	}
+
+	const int texSquareX = luaL_checkint(L, 1);
+	const int texSquareY = luaL_checkint(L, 2);
+	const int texMipLevel = luaL_checkint(L, 3);
+	const std::string& texName = luaL_checkstring(L, 4);
+
+	CBaseGroundDrawer* groundDrawer = readmap->GetGroundDrawer();
+	CBaseGroundTextures* groundTextures = groundDrawer->GetGroundTextures();
+
+	if (groundTextures == NULL) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+	if (texName.empty()) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	const LuaTextures& luaTextures = CLuaHandle::GetActiveTextures(L);
+	const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(texName);
+
+	if (luaTexture == NULL) {
+		// not a valid texture (name)
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	const int tid = luaTexture->id;
+	const int txs = luaTexture->xsize;
+	const int tys = luaTexture->ysize;
+
+	if (txs != tys) {
+		// square textures only
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	lua_pushboolean(L, groundTextures->GetSquareLuaTexture(texSquareX, texSquareY, tid, txs, tys, texMipLevel));
+	return 1;
+}
 
 /******************************************************************************/
 
