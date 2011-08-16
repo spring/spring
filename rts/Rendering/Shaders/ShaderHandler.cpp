@@ -1,11 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "Rendering/GL/myGL.h"
-#include <cassert>
 
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
+
+#include <cassert>
+
 
 CShaderHandler* CShaderHandler::GetInstance() {
 	static CShaderHandler shaHandler;
@@ -72,8 +74,8 @@ Shader::IProgramObject* CShaderHandler::CreateProgramObject(
 	po->Link();
 
 	if (!po->IsValid()) {
-		logOutput.Print("[CShaderHandler::CreateProgramObject]\n");
-		logOutput.Print("\tprogram-object name: %s, link-log:\n%s\n", poName.c_str(), po->GetLog().c_str());
+		LOG_L(L_WARNING, "[%s]\n\tprogram-object name: %s, link-log:\n%s",
+				__FUNCTION__, poName.c_str(), po->GetLog().c_str());
 	}
 	return po;
 }
@@ -100,12 +102,9 @@ Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soN
 			soName.find(".frag") == std::string::npos;
 		soSource = std::string(&soFileBuffer[0]);
 	} else {
-		logOutput.Print("[CShaderHandler::CreateShaderObject]\n");
-		logOutput.Print(
-			"\tfile \"%s\" does not exist, interpreting"
-			" \"%s\" as literal shader source-string\n",
-			soPath.c_str(), soName.c_str()
-		);
+		LOG_L(L_WARNING, "[%s]\n\tfile \"%s\" does not exist, interpreting"
+				" \"%s\" as literal shader source-string",
+				__FUNCTION__, soPath.c_str(), soName.c_str());
 
 		arbShader =
 			(soName.find("!!ARBvp") != std::string::npos) ||
@@ -137,8 +136,8 @@ Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soN
 	so->Compile();
 
 	if (!so->IsValid()) {
-		logOutput.Print("[CShaderHandler::CreateShaderObject]\n");
-		logOutput.Print("\tshader-object name: %s, compile-log:\n%s\n", soName.c_str(), (so->GetLog()).c_str());
+		LOG_L(L_WARNING, "[%s]\n\tshader-object name: %s, compile-log:\n%s",
+				__FUNCTION__, soName.c_str(), (so->GetLog()).c_str());
 	}
 	return so;
 }

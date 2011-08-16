@@ -35,7 +35,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 
 bool distcmp::operator() (const CProjectile* arg1, const CProjectile* arg2) const {
@@ -209,7 +209,7 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	}
 
 	if (!textureAtlas->Finalize()) {
-		logOutput.Print("Could not finalize projectile texture atlas. Use less/smaller textures.");
+		LOG_L(L_ERROR, "Could not finalize projectile texture atlas. Use less/smaller textures.");
 	}
 
 	flaretex        = textureAtlas->GetTexturePtr("flare");
@@ -278,7 +278,7 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	}
 
 	if (!groundFXAtlas->Finalize()) {
-		logOutput.Print("Could not finalize groundFX texture atlas. Use less/smaller textures.");
+		LOG_L(L_ERROR, "Could not finalize groundFX texture atlas. Use less/smaller textures.");
 	}
 
 	groundflashtex = groundFXAtlas->GetTexturePtr("groundflash");

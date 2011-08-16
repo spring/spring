@@ -1,26 +1,26 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
-#include <list>
-#include <cstring>
-
 #include "System/mmgr.h"
 
 #include "TextureAtlas.h"
+
 #include "Bitmap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/PBO.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/Vec2.h"
 
+#include <list>
+#include <cstring>
+
 CR_BIND(AtlasedTexture, );
 CR_BIND_DERIVED(GroundFXTexture, AtlasedTexture, );
 
-//texture spacing in the atlas (in pixels)
+// texture spacing in the atlas (in pixels)
 #define TEXMARGIN 2
 
 bool CTextureAtlas::debug;
@@ -244,7 +244,7 @@ void CTextureAtlas::CreateTexture()
 		//! even pbo.MapBuffer(GL_WRITE_ONLY) we can readback from it. GL_READ is only needed if we want to readback GPU data!
 		CBitmap save(data,xsize,ysize);
 		save.Save(fname);
-		logOutput.Print("Saved finalized textureatlas to '%s'.", fname);
+		LOG("Saved finalized texture-atlas to '%s'.", fname);
 	}
 
 	pbo.UnmapBuffer();
