@@ -134,8 +134,9 @@ done
 # here, the bundle should be ready, a little compression and voila
 
 ARCHIVE_NAME=Spring_${VERSION}.zip
-echo "-- creating archive"
-zip -r9 ${TMP_PATH}/${ARCHIVE_NAME} .
+echo "-- creating ${TMP_PATH}/${ARCHIVE_NAME}"
+cd ${TMP_PATH}
+zip -r9 ${ARCHIVE_NAME} ${BUNDLE_NAME}
 
 echo "-- done"
 
