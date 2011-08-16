@@ -38,7 +38,7 @@
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/MoveTypes/MoveType.h"
+#include "Sim/MoveTypes/AAirMoveType.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -155,6 +155,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitMetalExtraction);
 	REGISTER_LUA_CFUNC(SetUnitBuildSpeed);
 	REGISTER_LUA_CFUNC(SetUnitBlocking);
+	REGISTER_LUA_CFUNC(SetUnitCrashing);
 	REGISTER_LUA_CFUNC(SetUnitShieldState);
 	REGISTER_LUA_CFUNC(SetUnitFlanking);
 	REGISTER_LUA_CFUNC(SetUnitTravel);
@@ -1534,6 +1535,32 @@ int LuaSyncedCtrl::SetUnitBlocking(lua_State* L)
 	}
 
 	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitCrashing(lua_State* L) {
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	AAirMoveType* amt = dynamic_cast<AAirMoveType*>(unit->moveType);
+
+	if (amt != NULL) {
+		const bool crash = (lua_isboolean(L, 2) && lua_toboolean(L, 2));
+		const AAirMoveType::AircraftState state = crash?
+			AAirMoveType::AIRCRAFT_CRASHING:
+			AAirMoveType::AIRCRAFT_FLYING;
+
+		// note: this really only makes sense to call
+		// once, passing true for the second argument
+		amt->SetState(state);
+		lua_pushboolean(L, true);
+	} else {
+		lua_pushboolean(L, false);
+	}
+
+	return 1;
 }
 
 
