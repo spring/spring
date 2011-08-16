@@ -11,7 +11,6 @@
 #include "CommandAI/Command.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
-#include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Sim/Features/Feature.h"
@@ -158,16 +157,9 @@ void CUnitHandler::DeleteUnit(CUnit* unit)
 
 void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 {
-#if defined(USE_GML) && GML_ENABLE_SIM
-	{
-		GML_STDMUTEX_LOCK(dque); // DeleteUnitNow
-
-		LuaUnsyncedCtrl::drawCmdQueueUnits.erase(delUnit);
-	}
-#endif
-	
 	int delTeam = 0;
 	int delType = 0;
+
 	std::list<CUnit*>::iterator usi;
 	for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 		if (*usi == delUnit) {
@@ -183,6 +175,11 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 			teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
 
 			unitsByDefs[delTeam][delType].erase(delUnit);
+
+			#if defined(USE_GML) && GML_ENABLE_SIM
+			GML_STDMUTEX_LOCK(dque); // DeleteUnitNow
+			#endif
+
 			delete delUnit;
 			break;
 		}

@@ -97,7 +97,7 @@ const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 /******************************************************************************/
 /******************************************************************************/
 
-CUnitSet LuaUnsyncedCtrl::drawCmdQueueUnits;
+std::set<int> drawCmdQueueUnits;
 
 /******************************************************************************/
 /******************************************************************************/
@@ -396,11 +396,10 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 	GML_STDMUTEX_LOCK(cai); // DrawUnitCommandQueues
 	GML_STDMUTEX_LOCK(dque); // DrawUnitCommandQueues
 
-	const CUnitSet& units = drawCmdQueueUnits;
-	CUnitSet::const_iterator ui;
+	std::set<int>::const_iterator ui;
 
-	for (ui = units.begin(); ui != units.end(); ++ui) {
-		CUnit* unit = *ui;
+	for (ui = drawCmdQueueUnits.begin(); ui != drawCmdQueueUnits.end(); ++ui) {
+		const CUnit* unit = uh->GetUnit(*ui);
 
 		if (unit == NULL || unit->commandAI == NULL) {
 			continue;
@@ -852,15 +851,16 @@ int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 			if (lua_israwnumber(L, -2)) {
 				CUnit* unit = ParseAllyUnit(L, __FUNCTION__, unitArg);
 				if (unit != NULL) {
-					drawCmdQueueUnits.insert(unit);
+					drawCmdQueueUnits.insert(unit->id);
 				}
 			}
 		}
 		return 0;
 	}
+
 	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
 	if (unit != NULL) {
-		drawCmdQueueUnits.insert(unit);
+		drawCmdQueueUnits.insert(unit->id);
 	}
 	return 0;
 }
