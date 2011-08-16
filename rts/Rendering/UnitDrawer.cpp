@@ -53,7 +53,7 @@
 
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
@@ -236,7 +236,9 @@ bool CUnitDrawer::LoadModelShaders()
 
 	if (!globalRendering->haveARB) {
 		// not possible to do (ARB) shader-based model rendering
-		logOutput.Print("[LoadModelShaders] OpenGL ARB extensions missing for advanced unit shading");
+		LOG_L(L_WARNING,
+				"[%s] OpenGL ARB extensions missing for advanced unit shading",
+				__FUNCTION__);
 		return false;
 	}
 	if (!configHandler->GetBool("AdvUnitShading")) {

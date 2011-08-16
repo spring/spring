@@ -22,10 +22,20 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/bitops.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
+
+#define LOG_SECTION_DYN_WATER "DynWater"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_DYN_WATER)
+
+// use the specific section for all LOG*() calls in this source file
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_DYN_WATER
+
 
 #define W_SIZE 5
 #define WF_SIZE 5120
@@ -614,7 +624,7 @@ void CDynWater::DrawWaves()
 
 	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-		logOutput.Print("FBO not ready2");
+		LOG_L(L_WARNING, "FBO not ready - 2");
 	}
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -657,7 +667,7 @@ void CDynWater::DrawWaves()
 
 	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-		logOutput.Print("FBO not ready1");
+		LOG_L(L_WARNING, "FBO not ready - 1");
 	}
 
 
@@ -713,7 +723,7 @@ void CDynWater::DrawWaves()
 
 	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-		logOutput.Print("FBO not ready3");
+		LOG_L(L_WARNING, "FBO not ready - 3");
 	}
 
 	glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, waveNormalFP);
@@ -773,7 +783,7 @@ void CDynWater::DrawHeightTex()
 
 	const int status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-		logOutput.Print("FBO not ready4");
+		LOG_L(L_WARNING, "FBO not ready - 4");
 	}
 
 	glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, waveCopyHeightFP);
@@ -1023,7 +1033,7 @@ void CDynWater::DrawDetailNormalTex()
 
 	const int status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-		logOutput.Print("FBO not ready5");
+		LOG_L(L_WARNING, "FBO not ready - 5");
 	}
 
 	glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, dwDetailNormalFP);
@@ -1091,7 +1101,7 @@ void CDynWater::AddShipWakes()
 	GLenum status;
 	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-		logOutput.Print("FBO not ready6");
+		LOG_L(L_WARNING, "FBO not ready - 6");
 	}
 
 	glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, dwAddSplashFP);
@@ -1220,8 +1230,9 @@ void CDynWater::AddExplosions()
 
 	GLenum status;
 	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-	if (status != GL_FRAMEBUFFER_COMPLETE_EXT)
-		logOutput.Print("FBO not ready7");
+	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+		LOG_L(L_WARNING, "FBO not ready - 7");
+	}
 
 	glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, dwAddSplashFP);
 	glEnable(GL_FRAGMENT_PROGRAM_ARB);
