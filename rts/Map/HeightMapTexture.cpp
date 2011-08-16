@@ -12,34 +12,31 @@
 
 CONFIG(bool, HeightMapTexture).defaultValue(true);
 
-HeightMapTexture heightMapTexture;
-
-
+HeightMapTexture* heightMapTexture = NULL;
 HeightMapTexture::HeightMapTexture()
 	: CEventClient("[HeightMapTexture]", 2718965, false)
 {
-	eventHandler.AddClient(this);
-
-	init = false;
-
 	texID = 0;
-
 	xSize = 0;
 	ySize = 0;
+
+	eventHandler.AddClient(this);
+	Init();
 }
 
 
 HeightMapTexture::~HeightMapTexture()
 {
+	Kill();
+	eventHandler.RemoveClient(this);
 }
 
 
 void HeightMapTexture::Init()
 {
-	if (init || (readmap == NULL)) {
+	if (readmap == NULL) {
 		return;
 	}
-	init = true;
 
 	if (!configHandler->GetBool("HeightMapTexture")) {
 		return;
@@ -92,13 +89,19 @@ void HeightMapTexture::UnsyncedHeightMapUpdate(const SRectangle& rect)
 	const int sizeZ = rect.z2 - rect.z1 + 1;
 
 	pbo.Bind();
-	pbo.Resize( sizeX * sizeZ * sizeof(float) );
-	float* buf = (float*)pbo.MapBuffer();
+	pbo.Resize(sizeX * sizeZ * sizeof(float));
+
+	{
+		float* buf = (float*) pbo.MapBuffer();
+
 		for (int z = 0; z < sizeZ; z++) {
-			void* dst = buf + z * sizeX;
 			const void* src = heightMap + rect.x1 + (z + rect.z1) * xSize;
+			      void* dst = buf + z * sizeX;
+
 			memcpy(dst, src, sizeX * sizeof(float));
 		}
+	}
+
 	pbo.UnmapBuffer();
 
 	glBindTexture(GL_TEXTURE_2D, texID);
@@ -107,4 +110,3 @@ void HeightMapTexture::UnsyncedHeightMapUpdate(const SRectangle& rect)
 		GL_LUMINANCE, GL_FLOAT, pbo.GetPtr());
 	pbo.Unbind();
 }
-

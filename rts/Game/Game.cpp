@@ -84,7 +84,6 @@
 #include "Lua/LuaSyncedRead.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
-#include "Map/HeightMapTexture.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -354,7 +353,6 @@ CGame::~CGame()
 	CLuaGaia::FreeHandler();
 	CLuaRules::FreeHandler();
 	LuaOpenGL::Free();
-	heightMapTexture.Kill();
 	CColorMap::DeleteColormaps();
 	CEngineOutHandler::Destroy();
 	CResourceHandler::FreeInstance();

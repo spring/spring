@@ -23,37 +23,22 @@ class HeightMapTexture : public CEventClient
 		HeightMapTexture();
 		~HeightMapTexture();
 
-		void Init();
-		void Kill();
-
 		GLuint GetTextureID() const { return texID; }
-		inline GLuint CheckTextureID()
-		{
-			if (texID != 0) {
-				return texID;
-			}
-			else {
-				if (init) {
-					return 0;
-				} else {
-					Init();
-					return texID;
-				}
-			}
-		}
 
 		int GetSizeX() const { return xSize; }
 		int GetSizeY() const { return ySize; }
 
 	private:
-		bool init;
+		void Init();
+		void Kill();
+
 		GLuint texID;
 		int xSize;
 		int ySize;
 		PBO pbo;
 };
 
-extern HeightMapTexture heightMapTexture;
+extern HeightMapTexture* heightMapTexture;
 
 #endif // HEIGHTMAP_TEXTURE_H
 
