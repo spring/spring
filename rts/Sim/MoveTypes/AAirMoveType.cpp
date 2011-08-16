@@ -41,7 +41,7 @@ AAirMoveType::AAirMoveType(CUnit* unit) :
 	autoLand(true),
 	lastColWarning(NULL),
 	lastColWarningType(0),
-	lastFuelUpdateFrame(0)
+	lastFuelUpdateFrame(gs->frameNum)
 {
 	useHeading = false;
 }
