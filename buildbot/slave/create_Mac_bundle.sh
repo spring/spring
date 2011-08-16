@@ -30,7 +30,7 @@ make install DESTDIR=${DEST}
 # ---> share
 # -----> game content, doc, etc.
 
-BUNDLE_NAME=Spring\ ${VERSION}.app
+BUNDLE_NAME=Spring_${VERSION}.app
 BUNDLE_BASE=${TMP_PATH}/${BUNDLE_NAME}/Contents
 
 echo "Creating ${BUNDLE_NAME}..."
