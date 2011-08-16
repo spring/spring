@@ -169,16 +169,16 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 			delTeam = delUnit->team;
 			delType = delUnit->unitDef->id;
 
+			#if defined(USE_GML) && GML_ENABLE_SIM
+			GML_STDMUTEX_LOCK(dque); // DeleteUnitNow
+			#endif
+
 			activeUnits.erase(usi);
 			units[delUnit->id] = 0;
 			freeUnitIDs.push_back(delUnit->id);
 			teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
 
 			unitsByDefs[delTeam][delType].erase(delUnit);
-
-			#if defined(USE_GML) && GML_ENABLE_SIM
-			GML_STDMUTEX_LOCK(dque); // DeleteUnitNow
-			#endif
 
 			delete delUnit;
 			break;
