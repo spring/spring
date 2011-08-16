@@ -3515,7 +3515,7 @@ int LuaOpenGL::Texture(lua_State* L)
 			lua_pushboolean(L, true);
 		}
 		else if (texture == "$heightmap") {
-			const GLuint texID = heightMapTexture.CheckTextureID();
+			const GLuint texID = heightMapTexture->GetTextureID();
 			if (texID == 0) {
 				lua_pushboolean(L, false);
 			} else {
@@ -3778,12 +3778,12 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 			HSTR_PUSH_NUMBER(L, "ysize", cubeMapHandler->GetSpecularTextureSize());
 		}
 		else if (texture == "$heightmap") {
-			if (!heightMapTexture.CheckTextureID()) {
+			if (heightMapTexture->GetTextureID() == 0) {
 				return 0;
 			} else {
 				lua_createtable(L, 0, 2);
-				HSTR_PUSH_NUMBER(L, "xsize", heightMapTexture.GetSizeX());
-				HSTR_PUSH_NUMBER(L, "ysize", heightMapTexture.GetSizeY());
+				HSTR_PUSH_NUMBER(L, "xsize", heightMapTexture->GetSizeX());
+				HSTR_PUSH_NUMBER(L, "ysize", heightMapTexture->GetSizeY());
 			}
 		}
 		else if (texture == "$shading") {
