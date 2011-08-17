@@ -409,7 +409,6 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 	}
 
 	glLineWidth(1.0f);
-
 	glEnable(GL_DEPTH_TEST);
 }
 

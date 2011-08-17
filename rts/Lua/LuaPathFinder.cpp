@@ -62,6 +62,48 @@ bool LuaPathFinder::PushEntries(lua_State* L)
 	return true;
 }
 
+int LuaPathFinder::PushPathNodes(lua_State* L, const int pathID)
+{
+	if (pathID == 0) {
+		return 0;
+	}
+
+	vector<float3> points;
+	vector<int>    starts;
+
+	pathManager->GetEstimatedPath(pathID, points, starts);
+
+	const int pointCount = points.size();
+	const int startCount = starts.size();
+
+	{
+		lua_newtable(L);
+
+		for (int i = 0; i < pointCount; i++) {
+			lua_pushnumber(L, i + 1);
+			lua_newtable(L); {
+				const float3& p = points[i];
+				lua_pushnumber(L, 1); lua_pushnumber(L, p.x); lua_rawset(L, -3);
+				lua_pushnumber(L, 2); lua_pushnumber(L, p.y); lua_rawset(L, -3);
+				lua_pushnumber(L, 3); lua_pushnumber(L, p.z); lua_rawset(L, -3);
+			}
+			lua_rawset(L, -3);
+		}
+	}
+
+	{
+		lua_newtable(L);
+
+		for (int i = 0; i < startCount; i++) {
+			lua_pushnumber(L, i + 1);
+			lua_pushnumber(L, starts[i] + 1);
+			lua_rawset(L, -3);
+		}
+	}
+
+	return 2;
+}
+
 
 /******************************************************************************/
 
@@ -105,41 +147,9 @@ static int path_estimates(lua_State* L)
 {
 	const int* idPtr = (int*)luaL_checkudata(L, 1, "Path");
 	const int pathID = *idPtr;
-	if (pathID == 0) {
-		return 0;
-	}
 
-	vector<float3> points;
-	vector<int>    starts;
-	pathManager->GetEstimatedPath(pathID, points, starts);
-
-	const int pointCount = (int)points.size();
-
-	lua_newtable(L);
-	for (int i = 0; i < pointCount; i++) {
-		lua_pushnumber(L, i + 1);
-		lua_newtable(L); {
-			const float3& p = points[i];
-			lua_pushnumber(L, 1); lua_pushnumber(L, p.x); lua_rawset(L, -3);
-			lua_pushnumber(L, 2); lua_pushnumber(L, p.y); lua_rawset(L, -3);
-			lua_pushnumber(L, 3); lua_pushnumber(L, p.z); lua_rawset(L, -3);
-		}
-		lua_rawset(L, -3);
-	}
-
-	const int startCount = (int)starts.size();
-
-	lua_newtable(L);
-	for (int i = 0; i < startCount; i++) {
-		lua_pushnumber(L, i + 1);
-		lua_pushnumber(L, starts[i] + 1);
-		lua_rawset(L, -3);
-	}
-
-	return 2;
+	return (LuaPathFinder::PushPathNodes(L, pathID));
 }
-
-
 
 static int path_index(lua_State* L)
 {
