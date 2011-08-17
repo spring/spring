@@ -3,13 +3,13 @@
 #ifndef INFO_CONSOLE_H
 #define INFO_CONSOLE_H
 
+#include "InputReceiver.h"
+#include "System/float3.h"
 #include <deque>
 #include <vector>
 #include <string>
 #include <list>
 #include <boost/thread/recursive_mutex.hpp>
-#include "System/float3.h"
-#include "InputReceiver.h"
 #include "System/LogOutput.h"
 
 class CInfoConsole: public CInputReceiver, public ILogSubscriber

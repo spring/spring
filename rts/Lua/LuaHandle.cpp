@@ -1798,7 +1798,7 @@ void CLuaHandle::ExecuteFrameEventBatch() {
 
 
 void CLuaHandle::ExecuteMiscEventBatch() {
-	if(!UseEventBatch()) return;
+	if (!UseEventBatch()) return;
 
 	std::vector<LuaMiscEvent> lmeb;
 	{
@@ -1819,8 +1819,9 @@ void CLuaHandle::ExecuteMiscEventBatch() {
 #endif
 	GML_DRCMUTEX_LOCK(lua); // ExecuteMiscEventBatch
 
-	if(Threading::IsSimThread())
+	if (Threading::IsSimThread()) {
 		Threading::SetBatchThread(false);
+	}
 	for(std::vector<LuaMiscEvent>::iterator i = lmeb.begin(); i != lmeb.end(); ++i) {
 		LuaMiscEvent &e = *i;
 		switch(e.id) {
@@ -1832,8 +1833,9 @@ void CLuaHandle::ExecuteMiscEventBatch() {
 				break;
 		}
 	}
-	if(Threading::IsSimThread())
+	if (Threading::IsSimThread()) {
 		Threading::SetBatchThread(true);
+	}
 }
 
 
@@ -2615,7 +2617,7 @@ bool CLuaHandle::AddConsoleLine(const string& msg, const CLogSubsystem& sys)
 
 	lua_pushsstring(L, msg);
 	// FIXME: makes no sense now, but *gets might expect this
-	lua_pushnumber(L, 0);
+	lua_pushnumber(L, 0); // priority
 
 	// call the function
 	if (!RunCallIn(cmdStr, 2, 0)) {
