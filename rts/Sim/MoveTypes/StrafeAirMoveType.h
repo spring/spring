@@ -45,8 +45,6 @@ public:
 	void Takeoff();
 	bool IsFighter() const { return isFighter; }
 
-	int subState;
-
 	int maneuver;
 	int maneuverSubState;
 

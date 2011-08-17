@@ -1540,6 +1540,7 @@ int LuaSyncedCtrl::SetUnitBlocking(lua_State* L)
 
 int LuaSyncedCtrl::SetUnitCrashing(lua_State* L) {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
 	if (unit == NULL) {
 		return 0;
 	}
