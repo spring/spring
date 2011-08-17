@@ -22,8 +22,6 @@ CR_BIND(CStrafeAirMoveType::DrawLine, );
 CR_BIND(CStrafeAirMoveType::RudderInfo, );
 
 CR_REG_METADATA(CStrafeAirMoveType, (
-	CR_MEMBER(subState),
-
 	CR_MEMBER(maneuver),
 	CR_MEMBER(maneuverSubState),
 
@@ -84,7 +82,6 @@ CR_REG_METADATA_SUB(CStrafeAirMoveType, RudderInfo, (CR_MEMBER(rotation)));
 
 CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	AAirMoveType(owner),
-	subState(0),
 	maneuver(0),
 	maneuverSubState(0),
 	loopbackAttack(false),
@@ -170,17 +167,19 @@ bool CStrafeAirMoveType::Update()
 		}
 	}
 
-	if (reservedPad != NULL) {
-		MoveToRepairPad();
-	} else {
-		if ((owner->unitDef->maxFuel > 0.0f && owner->currentFuel <= 0.0f) &&
-				padStatus == 0 && maxWantedSpeed > 0.0f) {
-			// out of fuel, keep us in the air to reach our landing
-			// goalPos (which is hopefully in the vicinity of a pad)
-			SetState(AIRCRAFT_FLYING);
+	if (aircraftState != AIRCRAFT_CRASHING) {
+		if (reservedPad != NULL) {
+			MoveToRepairPad();
+		} else {
+			if (owner->unitDef->maxFuel > 0.0f && owner->currentFuel <= 0.0f) {
+				if (padStatus == 0 && maxWantedSpeed > 0.0f) {
+					// out of fuel, keep us in the air to reach our landing
+					// goalPos (which is hopefully in the vicinity of a pad)
+					SetState(AIRCRAFT_FLYING);
+				}
+			}
 		}
 	}
-
 
 	switch (aircraftState) {
 		case AIRCRAFT_FLYING: {
@@ -1000,49 +999,37 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 
 
 
-void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState state)
+void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 {
 	// this state is only used by CHoverAirMoveType, so we should never enter it
-	assert(state != AIRCRAFT_HOVERING);
+	assert(newState != AIRCRAFT_HOVERING);
 
-	if (state == aircraftState) { return; }
-	if ((owner->crashing = (aircraftState == AIRCRAFT_CRASHING))) { return; }
+	if (newState == aircraftState) {
+		return;
+	}
 
-	/*
-	if (state == AIRCRAFT_LANDING)
-		owner->cob->Call(COBFN_Deactivate);
-	else if (state == aircraft_flying)
-		// cob->Call(COBFN_Activate);
-	*/
-
-	if (state == AIRCRAFT_FLYING) {
+	if (newState == AIRCRAFT_FLYING) {
 		owner->Activate();
 		owner->script->StartMoving();
+		owner->UnBlock();
 	}
 
-	if (state == AIRCRAFT_LANDED) {
-		owner->physicalState = CSolidObject::OnGround;
-		owner->useAirLos = false;
-	} else {
-		owner->physicalState = CSolidObject::Flying;
-		owner->useAirLos = true;
+	owner->physicalState = (newState == AIRCRAFT_LANDED)?
+		CSolidObject::OnGround:
+		CSolidObject::Flying;
+	owner->useAirLos = (newState != AIRCRAFT_LANDED);
+	owner->crashing = (newState == AIRCRAFT_CRASHING);
 
-		if (state != AIRCRAFT_LANDING) {
-			reservedLandingPos.x = -1;
-			owner->UnBlock();
-		}
+	if (newState == AIRCRAFT_LANDED) {
+		// don't need a reserved position anymore
+		reservedLandingPos.x = -1.0f;
 	}
-
-	if (aircraftState == AIRCRAFT_LANDED && reservedLandingPos.x > 0) {
-		reservedLandingPos.x = -1;
-	}
-	subState = 0;
 
 	// make sure we only go into takeoff if actually landed
-	if (state != AIRCRAFT_TAKEOFF || aircraftState == AIRCRAFT_LANDED) {
-		aircraftState = state;
-	} else {
+	if (aircraftState == AIRCRAFT_LANDED) {
 		aircraftState = AIRCRAFT_TAKEOFF;
+	} else {
+		aircraftState = newState;
 	}
 }
 
