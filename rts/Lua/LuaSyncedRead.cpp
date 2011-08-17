@@ -3161,44 +3161,13 @@ int LuaSyncedRead::GetUnitEstimatedPath(lua_State* L)
 		return 0;
 	}
 
-	const CGroundMoveType* gndMove =
-		dynamic_cast<const CGroundMoveType*>(unit->moveType);
-	if (gndMove == NULL) {
+	const CGroundMoveType* gmt = dynamic_cast<const CGroundMoveType*>(unit->moveType);
+
+	if (gmt == NULL) {
 		return 0;
 	}
 
-	if (gndMove->pathId == 0) {
-		return 0;
-	}
-
-	vector<float3> points;
-	vector<int>    starts;
-	pathManager->GetEstimatedPath(gndMove->pathId, points, starts);
-
-	const int pointCount = (int)points.size();
-
-	lua_newtable(L);
-	for (int i = 0; i < pointCount; i++) {
-		lua_pushnumber(L, i + 1);
-		lua_newtable(L); {
-			const float3& p = points[i];
-			lua_pushnumber(L, 1); lua_pushnumber(L, p.x); lua_rawset(L, -3);
-			lua_pushnumber(L, 2); lua_pushnumber(L, p.y); lua_rawset(L, -3);
-			lua_pushnumber(L, 3); lua_pushnumber(L, p.z); lua_rawset(L, -3);
-		}
-		lua_rawset(L, -3);
-	}
-
-	const int startCount = (int)starts.size();
-
-	lua_newtable(L);
-	for (int i = 0; i < startCount; i++) {
-		lua_pushnumber(L, i + 1);
-		lua_pushnumber(L, starts[i] + 1);
-		lua_rawset(L, -3);
-	}
-
-	return 2;
+	return (LuaPathFinder::PushPathNodes(L, gmt->pathId));
 }
 
 
