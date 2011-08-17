@@ -42,6 +42,7 @@
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/LoadSave/DemoReader.h"
 #include "System/LoadSave/LoadSaveHandler.h"
+#include "System/LogOutput.h"
 #include "System/Net/RawPacket.h"
 #include "System/Net/UnpackPacket.h"
 #include "System/Platform/errorhandler.h"
@@ -105,8 +106,9 @@ int CPreGame::KeyPressed(unsigned short k,bool isRepeat)
 		if (keyInput->IsKeyPressed(SDLK_LSHIFT)) {
 			logOutput.Print("User exited");
 			gu->globalQuit = true;
-		} else
+		} else {
 			logOutput.Print("Use shift-esc to quit");
+		}
 	}
 	return 0;
 }
@@ -198,8 +200,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 
 void CPreGame::UpdateClientNet()
 {
-	if (net->CheckTimeout(0, true))
-	{
+	if (net->CheckTimeout(0, true)) {
 		logOutput.Print("Server not reachable");
 		gu->globalQuit = true;
 		return;

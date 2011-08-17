@@ -37,7 +37,10 @@ class CEventHandler
 		bool IsController(const std::string& ciName) const;
 
 	public:
-		// Synced events
+		/**
+		 * @name Synced_events
+		 * @{
+		 */
 		void Load(IArchive* archive);
 
 		void GamePreload();
@@ -131,9 +134,13 @@ class CEventHandler
 
 		void StockpileChanged(const CUnit* unit,
 		                      const CWeapon* weapon, int oldCount);
+		/// @}
 
 	public:
-		// Unsynced events
+		/**
+		 * @name Unsynced_events
+		 * @{
+		 */
 		void Save(zipFile archive);
 
 		void UnsyncedHeightMapUpdate(const SRectangle& rect);
@@ -185,6 +192,7 @@ class CEventHandler
 		/// @brief this UNSYNCED event is generated every gameProgressFrameInterval ( defined in gameserver.cpp ), skips network queuing and caching and it's useful
 		/// to calculate the current fast-forwarding % compared to the real game
 		void GameProgress(int gameFrame);
+		/// @}
 
 		// FIXME: void ShockFront(float power, const float3& pos, float areaOfEffect);
 		inline void LoadedModelRequested();

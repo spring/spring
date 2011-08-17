@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "Rendering/GL/myGL.h"
-#include <fstream>
 
 #include "System/mmgr.h"
 
@@ -12,6 +11,8 @@
 #include "System/Sync/SyncTracer.h"
 #include "System/Config/ConfigHandler.h"
 #include "InputReceiver.h"
+
+#include <fstream>
 
 #define border 7
 

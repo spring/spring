@@ -7,10 +7,8 @@
 #include <vector>
 #include <map>
 
-#include "System/float3.h"
-
 #ifdef __APPLE__
-//defined in X11/X.h
+// defined in X11/X.h
 #undef KeyPress
 #undef KeyRelease
 #endif
@@ -19,6 +17,7 @@ using std::string;
 using std::vector;
 using std::map;
 
+class float3;
 class CUnit;
 class CWeapon;
 class CFeature;
@@ -48,8 +47,10 @@ class CEventClient
 		inline int                GetOrder()  const { return order;  }
 		inline bool               GetSynced() const { return synced_; }
 
-		// used by the eventHandler to register
-		// call-ins when an EventClient is being added
+		/**
+		 * Used by the eventHandler to register
+		 * call-ins when an EventClient is being added.
+		 */
 		virtual bool WantsEvent(const std::string& eventName) = 0;
 
 		// used by the eventHandler to route certain event types
@@ -69,7 +70,10 @@ class CEventClient
 		virtual ~CEventClient();
 
 	public:
-		// Synced events
+		/**
+		 * @name Synced_events
+		 * @{
+		 */
 		virtual void Load(IArchive* archive) {}
 
 		virtual void GamePreload() {}
@@ -145,8 +149,12 @@ class CEventClient
 		                              const CWeapon* weapon, int oldCount) {}
 
 		virtual bool Explosion(int weaponID, const float3& pos, const CUnit* owner) { return false; }
+		/// @}
 
-		// Unsynced events
+		/**
+		 * @name Unsynced_events
+		 * @{
+		 */
 		virtual void Save(zipFile archive);
 
 		virtual void Update();
@@ -195,6 +203,7 @@ class CEventClient
 		virtual void DrawInMiniMap();
 
 		virtual void GameProgress(int gameFrame) {}
+		/// @}
 };
 
 
