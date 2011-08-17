@@ -1025,7 +1025,7 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 		reservedLandingPos.x = -1.0f;
 	}
 
-	// make sure we only go into takeoff if actually landed
+	// make sure we only go into takeoff mode when landed
 	if (aircraftState == AIRCRAFT_LANDED) {
 		aircraftState = AIRCRAFT_TAKEOFF;
 	} else {
