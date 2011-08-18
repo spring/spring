@@ -46,9 +46,6 @@ CR_REG_METADATA(CStrafeAirMoveType, (
 	CR_MEMBER(maxElevator),
 	CR_MEMBER(maxRudder),
 
-	CR_MEMBER(inSupply),
-
-	CR_MEMBER(mySide),
 	CR_MEMBER(crashAileron),
 	CR_MEMBER(crashElevator),
 	CR_MEMBER(crashRudder),
@@ -101,8 +98,6 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	maxAileron(0.04f),
 	maxElevator(0.02f),
 	maxRudder(0.01f),
-	inSupply(0),
-	mySide(1),
 	inefficientAttackTime(0)
 {
 	assert(owner != NULL);

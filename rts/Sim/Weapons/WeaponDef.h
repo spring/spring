@@ -55,7 +55,6 @@ public:
 		, flighttime(0)
 		, metalcost(0.0f)
 		, energycost(0.0f)
-		, supplycost(0.0f)
 		, projectilespershot(0)
 		, id(0)
 		, tdfId(0)
@@ -193,7 +192,6 @@ public:
 
 	float metalcost;
 	float energycost;
-	float supplycost;
 
 	int projectilespershot;
 

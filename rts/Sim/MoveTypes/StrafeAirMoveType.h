@@ -70,10 +70,7 @@ public:
 	float maxElevator;
 	float maxRudder;
 
-	float inSupply;
-
 	/// used while landing
-	float mySide;
 	float crashAileron;
 	float crashElevator;
 	float crashRudder;

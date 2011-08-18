@@ -328,8 +328,6 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 		wd.heightmod = wdTable.GetFloat("heightMod", 0.2f);
 	}
 
-	wd.supplycost = 0.0f;
-
 	wd.onlyForward = !wd.turret && (wd.type != "StarburstLauncher");
 
 	color  = wdTable.GetInt("color",  0);
