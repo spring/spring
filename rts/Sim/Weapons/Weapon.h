@@ -103,7 +103,7 @@ public:
 	float predictSpeedMod;					// how the weapon predicts the speed of the units goes -> 1 when experience increases
 
 	float metalFireCost;
-	float energyFireCost;					// part of unit supply used to fire a salvo (transformed by unitloader)
+	float energyFireCost;
 
 	int fireSoundId;
 	float fireSoundVolume;

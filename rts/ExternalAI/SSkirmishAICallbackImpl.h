@@ -1096,8 +1096,6 @@ EXPORT(int              ) skirmishAiCallback_WeaponDef_getFlightTime(int skirmis
 
 EXPORT(float            ) skirmishAiCallback_WeaponDef_getCost(int skirmishAIId, int weaponDefId, int resourceId);
 
-EXPORT(float            ) skirmishAiCallback_WeaponDef_getSupplyCost(int skirmishAIId, int weaponDefId);
-
 EXPORT(int              ) skirmishAiCallback_WeaponDef_getProjectilesPerShot(int skirmishAIId, int weaponDefId);
 
 //EXPORT(int              ) skirmishAiCallback_WeaponDef_getTdfId(int skirmishAIId, int weaponDefId);

@@ -1968,8 +1968,6 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *WeaponDef_getCost)(int skirmishAIId, int weaponDefId, int resourceId); //$ REF:resourceId->Resource
 
-	float             (CALLING_CONV *WeaponDef_getSupplyCost)(int skirmishAIId, int weaponDefId);
-
 	int               (CALLING_CONV *WeaponDef_getProjectilesPerShot)(int skirmishAIId, int weaponDefId);
 
 //	/** The "id=" tag in the TDF */
