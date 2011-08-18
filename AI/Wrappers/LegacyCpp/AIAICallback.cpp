@@ -1431,7 +1431,6 @@ weaponDef->uptime = sAICallback->WeaponDef_getUpTime(skirmishAIId, weaponDefId);
 weaponDef->flighttime = sAICallback->WeaponDef_getFlightTime(skirmishAIId, weaponDefId);
 weaponDef->metalcost = sAICallback->WeaponDef_getCost(skirmishAIId, weaponDefId, m);
 weaponDef->energycost = sAICallback->WeaponDef_getCost(skirmishAIId, weaponDefId, e);
-weaponDef->supplycost = sAICallback->WeaponDef_getSupplyCost(skirmishAIId, weaponDefId);
 weaponDef->projectilespershot = sAICallback->WeaponDef_getProjectilesPerShot(skirmishAIId, weaponDefId);
 //weaponDef->id = sAICallback->WeaponDef_getId(skirmishAIId, weaponDefId);
 weaponDef->id = weaponDefId;
