@@ -176,6 +176,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitsInCylinder);
 
 	REGISTER_LUA_CFUNC(GetFeaturesInRectangle);
+	REGISTER_LUA_CFUNC(GetFeaturesInSphere);
 	REGISTER_LUA_CFUNC(GetProjectilesInRectangle);
 
 	REGISTER_LUA_CFUNC(GetUnitNearestAlly);
@@ -2393,6 +2394,47 @@ int LuaSyncedRead::GetFeaturesInRectangle(lua_State* L)
 	return 1;
 }
 
+int LuaSyncedRead::GetFeaturesInSphere(lua_State* L)
+{
+	const float x = luaL_checkfloat(L, 1);
+	const float y = luaL_checkfloat(L, 2);
+	const float z = luaL_checkfloat(L, 3);
+	const float rad = luaL_checkfloat(L, 4);
+
+	const float3 pos(x, y, z);
+
+	const vector<CFeature*>& sphereFeatures = qf->GetFeaturesExact(pos, rad);
+	const unsigned int sphereFeatureCount = sphereFeatures.size();
+	unsigned int arrayIndex = 1;
+
+	lua_createtable(L, sphereFeatureCount, 0);
+
+	if (ActiveReadAllyTeam() < 0) {
+		if (ActiveFullRead()) {
+			for (unsigned int i = 0; i < sphereFeatureCount; i++) {
+				const CFeature* feature = sphereFeatures[i];
+
+				lua_pushnumber(L, arrayIndex++);
+				lua_pushnumber(L, feature->id);
+				lua_rawset(L, -3);
+			}
+		}
+	} else {
+		for (unsigned int i = 0; i < sphereFeatureCount; i++) {
+			const CFeature* feature = sphereFeatures[i];
+
+			if (!IsFeatureVisible(feature)) {
+				continue;
+			}
+
+			lua_pushnumber(L, arrayIndex++);
+			lua_pushnumber(L, feature->id);
+			lua_rawset(L, -3);
+		}
+	}
+
+	return 1;
+}
 
 int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 {
