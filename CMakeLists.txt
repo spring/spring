@@ -38,7 +38,7 @@ if    (WIN32)
 endif (WIN32)
 
 if    (APPLE)
-	set(MACOSX_BUNDLE FALSE CACHE BOOL "Compile spring to work as a Bundle.app")
+	set(MACOSX_BUNDLE TRUE CACHE BOOL "Compile spring to work as a Bundle.app")
 	if    (MACOSX_BUNDLE)
 		add_definitions(-DMACOSX_BUNDLE)
 	endif (MACOSX_BUNDLE)
