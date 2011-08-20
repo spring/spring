@@ -148,7 +148,7 @@
 #include "System/FileSystem/SimpleParser.h"
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/LoadSave/DemoRecorder.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Net/PackPacket.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Watchdog.h"
@@ -757,7 +757,7 @@ int CGame::KeyPressed(unsigned short key, bool isRepeat)
 			cmd += " " + hotBinding;
 			keyBindings->ExecuteCommand(cmd);
 			hotBinding.clear();
-			logOutput.Print("%s", cmd.c_str());
+			LOG("%s", cmd.c_str());
 		}
 		return 0;
 	}
@@ -893,7 +893,7 @@ bool CGame::Update()
 	}
 
 	if (net->CheckTimeout(0, gs->frameNum == 0) && !gameOver) {
-		logOutput.Print("Lost connection to gameserver");
+		LOG_L(L_WARNING, "Lost connection to gameserver");
 		GameEnd(std::vector<unsigned char>());
 	}
 
@@ -1026,12 +1026,12 @@ bool CGame::Draw() {
 	// XXX ugly hack to minimize luaUI errors
 	if (luaUI && luaUI->GetCallInErrors() >= 5) {
 		for (int annoy = 0; annoy < 8; annoy++) {
-			LogObject() << "5 errors deep in LuaUI, disabling...\n";
+			LOG_L(L_ERROR, "5 errors deep in LuaUI, disabling...");
 		}
 
 		guihandler->PushLayoutCommand("disable");
-		LogObject() << "Type '/luaui reload' in the chat to re-enable LuaUI.\n";
-		LogObject() << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
+		LOG_L(L_ERROR, "Type '/luaui reload' in the chat to re-enable LuaUI.");
+		LOG_L(L_ERROR, "===>>>  Please report this error to the forum or mantis with your infolog.txt");
 	}
 
 	configHandler->Update();
@@ -1922,32 +1922,32 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 			const int msgAllyTeam = teamHandler->AllyTeam(player->team);
 			const bool allied = teamHandler->Ally(msgAllyTeam, gu->myAllyTeam);
 			if (gu->spectating || (allied && !player->spectator)) {
-				logOutput.Print(label + "Allies: " + s);
+				LOG("%sAllies: %s", label.c_str(), s.c_str());
 				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 		}
 		else if (msg.destination == ChatMessage::TO_SPECTATORS) {
 			if (gu->spectating || myMsg) {
-				logOutput.Print(label + "Spectators: " + s);
+				LOG("%sSpectators: %s", label.c_str(), s.c_str());
 				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 		}
 		else if (msg.destination == ChatMessage::TO_EVERYONE) {
 			const bool specsOnly = noSpectatorChat && (player && player->spectator);
 			if (gu->spectating || !specsOnly) {
-				logOutput.Print(label + s);
+				LOG("%s%s", label.c_str(), s.c_str());
 				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 		}
 		else if (msg.destination < playerHandler->ActivePlayers())
 		{
 			if (msg.destination == gu->myPlayerNum && player && !player->spectator) {
-				logOutput.Print(label + "Private: " + s);
+				LOG("%sPrivate: %s", label.c_str(), s.c_str());
 				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 			else if (player->playerNum == gu->myPlayerNum)
 			{
-				LogObject() << "You whispered " << player->name << ": " << s;
+				LOG("You whispered %s: %s", player->name.c_str(), s.c_str());
 			}
 		}
 	}
@@ -1961,14 +1961,14 @@ void CGame::StartSkip(int toFrame) {
 	return; // FIXME: desyncs
 
 	if (skipping) {
-		logOutput.Print("ERROR: skipping appears to be busted (%i)\n", skipping);
+		LOG_L(L_ERROR, "skipping appears to be busted (%i)", skipping);
 	}
 
 	skipStartFrame = gs->frameNum;
 	skipEndFrame = toFrame;
 
 	if (skipEndFrame <= skipStartFrame) {
-		logOutput.Print("Already passed %i (%i)\n", skipEndFrame / GAME_SPEED, skipEndFrame);
+		LOG_L(L_WARNING, "Already passed %i (%i)", skipEndFrame / GAME_SPEED, skipEndFrame);
 		return;
 	}
 
@@ -2004,7 +2004,7 @@ void CGame::EndSkip() {
 		sound->Mute(); // sounds back on
 	}
 
-	logOutput.Print("Skipped %.1f seconds\n", skipSeconds);
+	LOG("Skipped %.1f seconds", skipSeconds);
 }
 
 
@@ -2036,27 +2036,27 @@ void CGame::DrawSkip(bool blackscreen) {
 void CGame::ReloadCOB(const string& msg, int player)
 {
 	if (!gs->cheatEnabled) {
-		logOutput.Print("reloadcob can only be used if cheating is enabled");
+		LOG_L(L_WARNING, "reloadcob can only be used if cheating is enabled");
 		return;
 	}
 	const string unitName = msg;
 	if (unitName.empty()) {
-		logOutput.Print("Missing unit name");
+		LOG_L(L_WARNING, "Missing unit name");
 		return;
 	}
 	const UnitDef* udef = unitDefHandler->GetUnitDefByName(unitName);
 	if (udef==NULL) {
-		logOutput.Print("Unknown unit name: \"%s\"", unitName.c_str());
+		LOG_L(L_WARNING, "Unknown unit name: \"%s\"", unitName.c_str());
 		return;
 	}
 	const CCobFile* oldScript = GCobFileHandler.GetScriptAddr(udef->scriptPath);
 	if (oldScript == NULL) {
-		logOutput.Print("Unknown COB script for unit \"%s\": %s", unitName.c_str(), udef->scriptPath.c_str());
+		LOG_L(L_WARNING, "Unknown COB script for unit \"%s\": %s", unitName.c_str(), udef->scriptPath.c_str());
 		return;
 	}
 	CCobFile* newScript = GCobFileHandler.ReloadCobFile(udef->scriptPath);
 	if (newScript == NULL) {
-		logOutput.Print("Could not load COB script for unit \"%s\" from: %s", unitName.c_str(), udef->scriptPath.c_str());
+		LOG_L(L_WARNING, "Could not load COB script for unit \"%s\" from: %s", unitName.c_str(), udef->scriptPath.c_str());
 		return;
 	}
 	int count = 0;
@@ -2072,7 +2072,7 @@ void CGame::ReloadCOB(const string& msg, int player)
 			}
 		}
 	}
-	logOutput.Print("Reloaded cob script for %i units", count);
+	LOG("Reloaded cob script for %i units", count);
 }
 
 void CGame::ReloadCEGs(const std::string& tag) {
@@ -2214,7 +2214,7 @@ void CGame::SaveGame(const std::string& filename, bool overwrite)
 {
 	if (FileSystem::CreateDirectory("Saves")) {
 		if (overwrite || !FileSystem::FileExists(filename)) {
-			logOutput.Print("Saving game to %s\n", filename.c_str());
+			LOG("Saving game to %s", filename.c_str());
 			ILoadSaveHandler* ls = ILoadSaveHandler::Create();
 			ls->mapName = gameSetup->mapName;
 			ls->modName = gameSetup->modName;
@@ -2222,7 +2222,7 @@ void CGame::SaveGame(const std::string& filename, bool overwrite)
 			delete ls;
 		}
 		else {
-			logOutput.Print("File %s already exists(use /save -y to override)\n", filename.c_str());
+			LOG_L(L_WARNING, "File %s already exists(use /save -y to override)", filename.c_str());
 		}
 	}
 }
@@ -2235,7 +2235,7 @@ void CGame::ReloadGame()
 		// Inside the Load call-in, Lua can ensure old units are wiped before new ones are placed.
 		saveFile->LoadGame();
 	} else {
-		logOutput.Print("Can only reload game when game has been started from a savegame");
+		LOG_L(L_WARNING, "We can only reload the game when it has been started from a savegame");
 	}
 }
 
