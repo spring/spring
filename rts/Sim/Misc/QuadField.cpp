@@ -565,6 +565,34 @@ std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos, float rad
 	return features;
 }
 
+std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos, float radius, bool spherical)
+{
+	GML_RECMUTEX_LOCK(qnum); // GetFeaturesExact
+
+	const std::vector<int>& quads = GetQuads(pos, radius);
+	const int tempNum = gs->tempNum++;
+
+	std::vector<CFeature*> features;
+	std::vector<int>::const_iterator qi;
+	std::list<CFeature*>::iterator fi;
+	const float totRadSq = radius * radius;
+
+	for (qi = quads.begin(); qi != quads.end(); ++qi) {
+		for (fi = baseQuads[*qi].features.begin(); fi != baseQuads[*qi].features.end(); ++fi) {
+
+			if ((*fi)->tempNum == tempNum) { continue; }
+			if ((spherical ?
+				(pos - (*fi)->midPos).SqLength() :
+				(pos - (*fi)->midPos).SqLength2D()) >= totRadSq) { continue; }
+
+			(*fi)->tempNum = tempNum;
+			features.push_back(*fi);
+		}
+	}
+
+	return features;
+}
+
 std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& mins, const float3& maxs)
 {
 	GML_RECMUTEX_LOCK(qnum); // GetFeaturesExact

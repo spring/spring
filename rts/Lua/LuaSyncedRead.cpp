@@ -177,6 +177,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetFeaturesInRectangle);
 	REGISTER_LUA_CFUNC(GetFeaturesInSphere);
+	REGISTER_LUA_CFUNC(GetFeaturesInCylinder);
 	REGISTER_LUA_CFUNC(GetProjectilesInRectangle);
 
 	REGISTER_LUA_CFUNC(GetUnitNearestAlly);
@@ -2351,6 +2352,37 @@ int LuaSyncedRead::GetUnitNearestEnemy(lua_State* L)
 
 /******************************************************************************/
 
+inline void ProcessFeatures(lua_State* L, const vector<CFeature*>& features) {
+	const unsigned int featureCount = features.size();
+	unsigned int arrayIndex = 1;
+
+	lua_createtable(L, featureCount, 0);
+
+	if (ActiveReadAllyTeam() < 0) {
+		if (ActiveFullRead()) {
+			for (unsigned int i = 0; i < featureCount; i++) {
+				const CFeature* feature = features[i];
+
+				lua_pushnumber(L, arrayIndex++);
+				lua_pushnumber(L, feature->id);
+				lua_rawset(L, -3);
+			}
+		}
+	} else {
+		for (unsigned int i = 0; i < featureCount; i++) {
+			const CFeature* feature = features[i];
+
+			if (!IsFeatureVisible(feature)) {
+				continue;
+			}
+
+			lua_pushnumber(L, arrayIndex++);
+			lua_pushnumber(L, feature->id);
+			lua_rawset(L, -3);
+		}
+	}
+}
+
 int LuaSyncedRead::GetFeaturesInRectangle(lua_State* L)
 {
 	const float xmin = luaL_checkfloat(L, 1);
@@ -2362,35 +2394,7 @@ int LuaSyncedRead::GetFeaturesInRectangle(lua_State* L)
 	const float3 maxs(xmax, 0.0f, zmax);
 
 	const vector<CFeature*>& rectFeatures = qf->GetFeaturesExact(mins, maxs);
-	const unsigned int rectFeatureCount = rectFeatures.size();
-	unsigned int arrayIndex = 1;
-
-	lua_createtable(L, rectFeatureCount, 0);
-
-	if (ActiveReadAllyTeam() < 0) {
-		if (ActiveFullRead()) {
-			for (unsigned int i = 0; i < rectFeatureCount; i++) {
-				const CFeature* feature = rectFeatures[i];
-
-				lua_pushnumber(L, arrayIndex++);
-				lua_pushnumber(L, feature->id);
-				lua_rawset(L, -3);
-			}
-		}
-	} else {
-		for (unsigned int i = 0; i < rectFeatureCount; i++) {
-			const CFeature* feature = rectFeatures[i];
-
-			if (!IsFeatureVisible(feature)) {
-				continue;
-			}
-
-			lua_pushnumber(L, arrayIndex++);
-			lua_pushnumber(L, feature->id);
-			lua_rawset(L, -3);
-		}
-	}
-
+	ProcessFeatures(L, rectFeatures);
 	return 1;
 }
 
@@ -2403,36 +2407,21 @@ int LuaSyncedRead::GetFeaturesInSphere(lua_State* L)
 
 	const float3 pos(x, y, z);
 
-	const vector<CFeature*>& sphereFeatures = qf->GetFeaturesExact(pos, rad);
-	const unsigned int sphereFeatureCount = sphereFeatures.size();
-	unsigned int arrayIndex = 1;
+	const vector<CFeature*>& sphFeatures = qf->GetFeaturesExact(pos, rad, true);
+	ProcessFeatures(L, sphFeatures);
+	return 1;
+}
 
-	lua_createtable(L, sphereFeatureCount, 0);
+int LuaSyncedRead::GetFeaturesInCylinder(lua_State* L)
+{
+	const float x = luaL_checkfloat(L, 1);
+	const float z = luaL_checkfloat(L, 2);
+	const float rad = luaL_checkfloat(L, 3);
 
-	if (ActiveReadAllyTeam() < 0) {
-		if (ActiveFullRead()) {
-			for (unsigned int i = 0; i < sphereFeatureCount; i++) {
-				const CFeature* feature = sphereFeatures[i];
+	const float3 pos(x, 0, z);
 
-				lua_pushnumber(L, arrayIndex++);
-				lua_pushnumber(L, feature->id);
-				lua_rawset(L, -3);
-			}
-		}
-	} else {
-		for (unsigned int i = 0; i < sphereFeatureCount; i++) {
-			const CFeature* feature = sphereFeatures[i];
-
-			if (!IsFeatureVisible(feature)) {
-				continue;
-			}
-
-			lua_pushnumber(L, arrayIndex++);
-			lua_pushnumber(L, feature->id);
-			lua_rawset(L, -3);
-		}
-	}
-
+	const vector<CFeature*>& cylFeatures = qf->GetFeaturesExact(pos, rad, false);
+	ProcessFeatures(L, cylFeatures);
 	return 1;
 }
 
