@@ -13,12 +13,19 @@ Engine:
  - made ShadowSpace linear
  - multithreaded loadingscreen
  - hide out-of-LOS heightmap changes
+ - replace engine start point marker with lua-widget
+ - use "game" instead of "mod" in many places
+ - add "isolation" mode
+ - change lobbyserver main address to "lobby.springrts.com"
+ - use http://springrts.com/ everywhere (deprecate clan-sy links)
+ - ArchiveMover uses unitsync to detect the writeable data dir
 
 Engine / bugfixes:
- - too many to list, see springrts.com/mantis/changelog_page.php (incomplete!)
+ - too many to list, see http://springrts.com/mantis/changelog_page.php (incomplete!)
  - calculate the team unit-limit without ancient hacks
  - stop the maxunits team restriction from applying to Gaia (#2435)
  - fix ray-ground intersections when camera is outside map
+ - fix spring on MacOSX
 
 Engine / misc defs:
  - replace UnitDef::pieceTrailCEG* by a Lua subtable of sfxTypes
@@ -36,7 +43,7 @@ Engine / misc commands:
 
 Engine / Userconfigs:
  - removed the "FSAA" config tag (FSAALevel is enough)
- - removed default 1024x768res and use desktop one now instead (done when X/YResolution <= 0)
+ - removed default 1024x768 res and use desktop one now instead (done when X/YResolution <= 0)
  - added a new 3rd state for AtiHacks: -1 (autodetect each run, so you can switch GPUs)
 
 Engine / Simulation:
@@ -116,6 +123,12 @@ Engine / Internal:
 Engine / AI:
  - add full two-way communications between AI's and unsyced Lua
  - let AI's send textual commands (like "/cheat")
+
+Installer:
+ - create minimal-portable .7z version of engine and reuse it in installer
+ - ai's are now installed always (removed individual sections)
+ - add registry key to unitsync.dll HKLM\Software\Spring\SpringEngineHelper
+ - replace readme.html with http://springrts.com/wiki/Read_Me_First
 
 
 -- 0.82.7.1 ---------------------------------------------------------
@@ -493,10 +506,10 @@ Engine / Rendering:
  - fixed alpha-masked shadows for S3O models
  - fixed ATI alpha masked shadows (trees, features)
  - fixed far-textures (caused changing teamcolors and disappearing units)
- - support the OBJ model format (springrts.com/phpbb/viewtopic.php?f=9&t=22635)
+ - support the OBJ model format (http://springrts.com/phpbb/viewtopic.php?f=9&t=22635)
  - support specular lighting, multiple blendable detail textures, and sky reflections on SMF maps ("SSMF")
-     springrts.com/phpbb/viewtopic.php?f=13&t=21951
-     springrts.com/phpbb/viewtopic.php?f=13&t=22564 (slightly outdated wrt. the SMD parameters)
+     http://springrts.com/phpbb/viewtopic.php?f=13&t=21951
+     http://springrts.com/phpbb/viewtopic.php?f=13&t=22564 (slightly outdated wrt. the SMD parameters)
  - converted all shadow, tree, grass, model, and map shaders to GLSL
  - vertex-animated grass; maps can specify the grass blade- and shading-textures and the dimensions/angle for blades
  - refactored and abstracted unit/feature/projectile drawing to be format-agnostic
