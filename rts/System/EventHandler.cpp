@@ -116,6 +116,7 @@ CEventHandler::CEventHandler()
 	SETUP_EVENT(DefaultCommand, MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(CommandNotify,  MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(AddConsoleLine, MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(LastMessagePosition, MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(GroupChanged,   MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(GameSetup,      MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(WorldTooltip,   MANAGED_BIT | UNSYNCED_BIT);
@@ -744,6 +745,18 @@ bool CEventHandler::AddConsoleLine(const string& msg, const CLogSubsystem& subsy
 		ec->AddConsoleLine(msg, subsystem);
 	}
 	return true;
+}
+
+
+void CEventHandler::LastMessagePosition(const float3& pos)
+{
+	EVENTHANDLER_CHECK(LastMessagePosition);
+	//GML_STDMUTEX_LOCK(log); // LastMessagePosition FIXME would this be required?
+
+	for (int i = 0; i < count; i++) {
+		CEventClient* ec = listLastMessagePosition[i];
+		ec->LastMessagePosition(pos);
+	}
 }
 
 

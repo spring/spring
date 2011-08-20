@@ -163,6 +163,8 @@ class CEventHandler
 
 		bool AddConsoleLine(const std::string& msg, const CLogSubsystem& zone);
 
+		void LastMessagePosition(const float3& pos);
+
 		bool GroupChanged(int groupID);
 
 		bool GameSetup(const std::string& state, bool& ready,
@@ -332,6 +334,7 @@ class CEventHandler
 		EventClientList listConfigCommand;
 		EventClientList listCommandNotify;
 		EventClientList listAddConsoleLine;
+		EventClientList listLastMessagePosition;
 		EventClientList listGroupChanged;
 		EventClientList listGameSetup;
 		EventClientList listWorldTooltip;

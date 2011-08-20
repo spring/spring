@@ -91,7 +91,6 @@ class ILogSubscriber
 public:
 	// Notification of log messages to subscriber
 	virtual void NotifyLogMsg(const CLogSubsystem& subsystem, const std::string& str) = 0;
-	virtual void SetLastMsgPos(const float3& pos) {}
 };
 
 
@@ -112,8 +111,6 @@ public:
 	void Prints(const CLogSubsystem& subsystem, const std::string& text); // can not be named Print, as it would not be unique
 	void Printv(const CLogSubsystem& subsystem, const char* fmt, va_list argp);
 	static CLogSubsystem& GetDefaultLogSubsystem();
-
-	void SetLastMsgPos(const float3& pos);
 
 	void AddSubscriber(ILogSubscriber* ls);
 	void RemoveSubscriber(ILogSubscriber* ls);

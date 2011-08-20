@@ -5,6 +5,7 @@
 
 #include "InputReceiver.h"
 #include "System/float3.h"
+#include "System/EventClient.h"
 #include <deque>
 #include <vector>
 #include <string>
@@ -12,7 +13,7 @@
 #include <boost/thread/recursive_mutex.hpp>
 #include "System/LogOutput.h"
 
-class CInfoConsole: public CInputReceiver, public ILogSubscriber
+class CInfoConsole: public CInputReceiver, public ILogSubscriber, public CEventClient
 {
 public:
 	CInfoConsole();
@@ -25,7 +26,10 @@ public:
 	void NotifyLogMsg(const CLogSubsystem& subsystem, const std::string& txt);
 
 
-	void SetLastMsgPos(const float3& pos);
+	bool WantsEvent(const std::string& eventName) {
+		return (eventName == "LastMessagePosition");
+	}
+	void LastMessagePosition(const float3& pos);
 	const float3& GetMsgPos();
 	int GetMsgPosCount() const {
 		return lastMsgPositions.size();

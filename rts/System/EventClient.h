@@ -176,6 +176,8 @@ class CEventClient
 
 		virtual bool AddConsoleLine(const std::string& msg, const CLogSubsystem& subsystem);
 
+		virtual void LastMessagePosition(const float3& pos);
+
 		virtual bool GroupChanged(int groupID);
 
 		virtual bool GameSetup(const std::string& state, bool& ready,

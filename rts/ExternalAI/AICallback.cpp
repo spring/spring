@@ -49,8 +49,8 @@
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "System/mmgr.h"
+#include "System/EventHandler.h"
 #include "System/Log/ILog.h"
-#include "System/LogOutput.h"
 #include "System/NetProtocol.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/DataDirsAccess.h"
@@ -158,7 +158,7 @@ void CAICallback::SendTextMsg(const char* text, int zone)
 
 void CAICallback::SetLastMsgPos(const float3& pos)
 {
-	logOutput.SetLastMsgPos(pos);
+	eventHandler.LastMessagePosition(pos);
 }
 
 void CAICallback::AddNotification(const float3& pos, const float3& color, float alpha)

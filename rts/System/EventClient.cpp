@@ -64,6 +64,8 @@ bool CEventClient::CommandNotify(const Command& cmd) { return false; }
 
 bool CEventClient::AddConsoleLine(const std::string& msg, const CLogSubsystem& subsystem) { return false; }
 
+void CEventClient::LastMessagePosition(const float3& pos) {}
+
 bool CEventClient::GroupChanged(int groupID) { return false; }
 
 bool CEventClient::GameSetup(const std::string& state, bool& ready,
