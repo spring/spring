@@ -52,7 +52,7 @@
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/LogOutput.h"
+#include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
 #include "System/Util.h"
@@ -2680,7 +2680,7 @@ int LuaUnsyncedCtrl::SetLastMessagePosition(lua_State* L)
 	                 lua_tofloat(L, 2),
 	                 lua_tofloat(L, 3));
 
-	logOutput.SetLastMsgPos(pos);
+	eventHandler.LastMessagePosition(pos);
 
 	return 0;
 }

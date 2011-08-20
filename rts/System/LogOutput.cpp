@@ -399,18 +399,6 @@ void CLogOutput::Output(const CLogSubsystem& subsystem, const std::string& str)
 }
 
 
-void CLogOutput::SetLastMsgPos(const float3& pos)
-{
-	GML_STDMUTEX_LOCK(log); // SetLastMsgPos
-
-	if (subscribersEnabled) {
-		for (vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi) {
-			(*lsi)->SetLastMsgPos(pos);
-		}
-	}
-}
-
-
 
 void CLogOutput::AddSubscriber(ILogSubscriber* ls)
 {

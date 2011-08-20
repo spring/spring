@@ -10,6 +10,7 @@
 
 #include "System/Sync/SyncTracer.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/EventClient.h"
 #include "InputReceiver.h"
 
 #include <fstream>
@@ -26,8 +27,9 @@ CONFIG(std::string, InfoConsoleGeometry).defaultValue("0.26 0.96 0.41 0.205");
 const size_t CInfoConsole::maxRawLines   = 1024;
 const size_t CInfoConsole::maxLastMsgPos = 10;
 
-CInfoConsole::CInfoConsole() :
-	  fontScale(1.0f)
+CInfoConsole::CInfoConsole()
+	: CEventClient("InfoConsole", 999, false)
+	, fontScale(1.0f)
 	, enabled(true)
 	, lastMsgIter(lastMsgPositions.begin())
 	, newLines(0)
@@ -186,7 +188,7 @@ void CInfoConsole::NotifyLogMsg(const CLogSubsystem& subsystem, const std::strin
 }
 
 
-void CInfoConsole::SetLastMsgPos(const float3& pos)
+void CInfoConsole::LastMessagePosition(const float3& pos)
 {
 	if (lastMsgPositions.size() < maxLastMsgPos) {
 		lastMsgPositions.push_front(pos);
