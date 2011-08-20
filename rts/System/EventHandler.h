@@ -161,7 +161,7 @@ class CEventHandler
 
 		bool CommandNotify(const Command& cmd);
 
-		bool AddConsoleLine(const std::string& msg, const CLogSubsystem& zone);
+		bool AddConsoleLine(const std::string& msg, const std::string& section, int level);
 
 		void LastMessagePosition(const float3& pos);
 

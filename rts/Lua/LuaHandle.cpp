@@ -40,7 +40,6 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
-#include "System/LogOutput.h"
 #include "System/Rectangle.h"
 #include "System/Log/ILog.h"
 #include "System/Input/KeyInput.h"
@@ -237,7 +236,7 @@ void CLuaHandle::CheckStack()
 	ExecuteObjEventBatch();
 	ExecuteProjEventBatch();
 	ExecuteFrameEventBatch();
-	ExecuteMiscEventBatch();
+	ExecuteLogEventBatch();
 
 	SELECT_LUA_STATE();
 	GML_DRCMUTEX_LOCK(lua); // CheckStack - avoid bogus errors due to concurrency
@@ -1797,36 +1796,37 @@ void CLuaHandle::ExecuteFrameEventBatch() {
 }
 
 
-void CLuaHandle::ExecuteMiscEventBatch() {
+void CLuaHandle::ExecuteLogEventBatch() {
 	if (!UseEventBatch()) return;
 
-	std::vector<LuaMiscEvent> lmeb;
+	std::vector<LuaLogEvent> lmeb;
 	{
 		GML_STDMUTEX_LOCK(mlbatch);
 
-		if(luaMiscEventBatch.empty())
+		if (luaLogEventBatch.empty()) {
 			return;
+		}
 
-		luaMiscEventBatch.swap(lmeb);
+		luaLogEventBatch.swap(lmeb);
 	}
 
-	GML_THRMUTEX_LOCK(unit, GML_DRAW); // ExecuteMiscEventBatch
-	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteMiscEventBatch
-//	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteMiscEventBatch
+	GML_THRMUTEX_LOCK(unit, GML_DRAW); // ExecuteLogEventBatch
+	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteLogEventBatch
+//	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteLogEventBatch
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 	SELECT_LUA_STATE();
 #endif
-	GML_DRCMUTEX_LOCK(lua); // ExecuteMiscEventBatch
+	GML_DRCMUTEX_LOCK(lua); // ExecuteLogEventBatch
 
 	if (Threading::IsSimThread()) {
 		Threading::SetBatchThread(false);
 	}
-	for(std::vector<LuaMiscEvent>::iterator i = lmeb.begin(); i != lmeb.end(); ++i) {
-		LuaMiscEvent &e = *i;
-		switch(e.id) {
+	for (std::vector<LuaLogEvent>::iterator i = lmeb.begin(); i != lmeb.end(); ++i) {
+		LuaLogEvent& e = *i;
+		switch (e.id) {
 			case ADD_CONSOLE_LINE:
-				AddConsoleLine(e.str1, *(CLogSubsystem *)e.ptr);
+				AddConsoleLine(e.msg, e.section, e.level);
 				break;
 			default:
 				LOG_L(L_ERROR, "%s: Invalid Event %d", __FUNCTION__, e.id);
@@ -2602,12 +2602,12 @@ bool CLuaHandle::CommandNotify(const Command& cmd)
 }
 
 
-bool CLuaHandle::AddConsoleLine(const string& msg, const CLogSubsystem& sys)
+bool CLuaHandle::AddConsoleLine(const string& msg, const string& section, int level)
 {
 	if (!CheckModUICtrl()) {
 		return true; // FIXME?
 	}
-	LUA_MISC_BATCH_PUSH(true, ADD_CONSOLE_LINE, msg, (void *)&sys);
+	LUA_LOG_BATCH_PUSH(true, ADD_CONSOLE_LINE, msg, level, section);
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 4);
 	static const LuaHashString cmdStr("AddConsoleLine");
@@ -2617,7 +2617,7 @@ bool CLuaHandle::AddConsoleLine(const string& msg, const CLogSubsystem& sys)
 
 	lua_pushsstring(L, msg);
 	// FIXME: makes no sense now, but *gets might expect this
-	lua_pushnumber(L, 0); // priority
+	lua_pushnumber(L, 0); // priority XXX replace 0 with level?
 
 	// call the function
 	if (!RunCallIn(cmdStr, 2, 0)) {

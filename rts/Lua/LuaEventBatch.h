@@ -56,7 +56,7 @@ enum ProjEvent {
 	PROJ_DESTROYED
 };
 
-enum MiscEvent {
+enum LogEvent {
 	ADD_CONSOLE_LINE
 };
 
@@ -220,16 +220,18 @@ struct LuaProjEvent {
 	const CProjectile* proj1;
 };
 
-struct LuaMiscEvent {
-	LuaMiscEvent(MiscEvent i, const std::string& s1, void* p)
-		: id(i)
-		, str1(s1)
-		, ptr(p)
+struct LuaLogEvent {
+	LuaLogEvent(LogEvent id, const std::string& msg, int level, const std::string& section)
+		: id(id)
+		, msg(msg)
+		, level(level)
+		, section(section)
 	{}
 
-	MiscEvent id;
-	std::string str1;
-	void* ptr;
+	LogEvent id;
+	std::string msg;
+	int level;
+	std::string section;
 };
 
 struct LuaUIEvent {
@@ -279,10 +281,10 @@ struct LuaUIEvent {
 			luaFrameEventBatch.push_back(__VA_ARGS__);\
 			return;\
 		}
-	#define LUA_MISC_BATCH_PUSH(r,...)\
+	#define LUA_LOG_BATCH_PUSH(r,...)\
 		if(UseEventBatch() && Threading::IsBatchThread()) {\
 			GML_STDMUTEX_LOCK(mlbatch);\
-			luaMiscEventBatch.push_back(LuaMiscEvent(__VA_ARGS__));\
+			luaLogEventBatch.push_back(LuaLogEvent(__VA_ARGS__));\
 			return r;\
 		}
 	#define LUA_UI_BATCH_PUSH(...)\
@@ -297,7 +299,7 @@ struct LuaUIEvent {
 	#define LUA_OBJ_BATCH_PUSH(...)
 	#define LUA_PROJ_BATCH_PUSH(...)
 	#define LUA_FRAME_BATCH_PUSH(...)
-	#define LUA_MISC_BATCH_PUSH(r,...)
+	#define LUA_LOG_BATCH_PUSH(r,...)
 	#define LUA_UI_BATCH_PUSH(...)
 #endif
 

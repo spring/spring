@@ -62,7 +62,7 @@ std::string CEventClient::GetTooltip(int x, int y) { return ""; }
 
 bool CEventClient::CommandNotify(const Command& cmd) { return false; }
 
-bool CEventClient::AddConsoleLine(const std::string& msg, const CLogSubsystem& subsystem) { return false; }
+bool CEventClient::AddConsoleLine(const std::string& msg, const std::string& section, int level) { return false; }
 
 void CEventClient::LastMessagePosition(const float3& pos) {}
 

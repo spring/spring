@@ -11,6 +11,7 @@
 #include "System/Sync/SyncTracer.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventClient.h"
+#include "System/Log/LogSinkHandler.h"
 #include "InputReceiver.h"
 
 #include <fstream>
@@ -52,12 +53,12 @@ CInfoConsole::CInfoConsole()
 
 	fontSize = fontScale * smallFont->GetSize();
 
-	logOutput.AddSubscriber(this);
+	logSinkHandler.AddSink(this);
 }
 
 CInfoConsole::~CInfoConsole()
 {
-	logOutput.RemoveSubscriber(this);
+	logSinkHandler.RemoveSink(this);
 }
 
 void CInfoConsole::Draw()
@@ -142,12 +143,12 @@ void CInfoConsole::GetNewRawLines(std::vector<RawLine>& lines)
 }
 
 
-void CInfoConsole::NotifyLogMsg(const CLogSubsystem& subsystem, const std::string& text)
+void CInfoConsole::RecordLogMessage(const std::string& section, int level,
+			const std::string& text)
 {
-
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
-	RawLine rl(text, &subsystem, rawId);
+	RawLine rl(text, section, level, rawId);
 	rawId++;
 	rawData.push_back(rl);
 	if (rawData.size() > maxRawLines) {
