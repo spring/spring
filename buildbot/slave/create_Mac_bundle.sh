@@ -139,6 +139,10 @@ cd ${TMP_PATH}
 zip -r9 ${ARCHIVE_NAME} ${BUNDLE_NAME}
 
 #remove temp files
-rm -rf ${TMP_PATH}/${BUNDLE_BASE}
+rm -rf ${BUNDLE_BASE}
+
+#create symbolic link
+cd ${TMP_PATH}/..
+ln -sfv ${REV}/${ARCHIVE_NAME} Spring_testing-MacOSX-10.6-SnowLeopard.zip
 echo "-- done"
 
