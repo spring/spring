@@ -9,12 +9,6 @@ INSTALLDIR=${DEST}/usr/local
 
 echo "Installing into $DEST"
 
-
-
-
-
-
-
 cd ${BUILDDIR}
 make install DESTDIR=${DEST}
 
@@ -139,10 +133,10 @@ cd ${TMP_PATH}
 zip -r9 ${ARCHIVE_NAME} ${BUNDLE_NAME}
 
 #remove temp files
-rm -rf ${BUNDLE_BASE}
+rm -rf ${TMP_PATH}/${BUNDLE_NAME}
 
 #create symbolic link
 cd ${TMP_PATH}/..
-ln -sfv ${REV}/${ARCHIVE_NAME} Spring_testing-MacOSX-10.6-SnowLeopard.zip
+ln -sv ${REV}/${ARCHIVE_NAME} Spring_testing-MacOSX-10.6-SnowLeopard.zip
 echo "-- done"
 
