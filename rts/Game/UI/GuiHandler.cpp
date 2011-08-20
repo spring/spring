@@ -44,7 +44,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 #include "System/Input/KeyInput.h"
@@ -694,8 +694,8 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	}
 
 	if ((tmpXicons < 2) || (tmpYicons < 2)) {
-		logOutput.Print("LayoutCustomIcons() bad xIcons or yIcons (%i, %i)\n",
-		                tmpXicons, tmpYicons);
+		LOG_L(L_ERROR, "LayoutCustomIcons() bad xIcons or yIcons (%i, %i)",
+				tmpXicons, tmpYicons);
 		return false;
 	}
 
@@ -709,8 +709,8 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 		if ((index >= 0) || ((size_t)index < cmds.size())) {
 			removeIDs.insert(index);
 		} else {
-			logOutput.Print("LayoutCustomIcons() skipping bad removeCmd (%i)\n",
-			                index);
+			LOG_L(L_ERROR, "LayoutCustomIcons() skipping bad removeCmd (%i)",
+					index);
 		}
 	}
 	// remove unwanted commands  (and mark all as hidden)
@@ -736,8 +736,8 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 		if ((index >= 0) && (index < cmdCount)) {
 			cmds[index].onlyTexture = true;
 		} else {
-			logOutput.Print("LayoutCustomIcons() skipping bad onlyTexture (%i)\n",
-			                index);
+			LOG_L(L_ERROR, "LayoutCustomIcons() skipping bad onlyTexture (%i)",
+					index);
 		}
 	}
 
@@ -747,8 +747,8 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 		if ((index >= 0) && (index < cmdCount)) {
 			cmds[index].iconname = reTextureCmds[i].texture;
 		} else {
-			logOutput.Print("LayoutCustomIcons() skipping bad reTexture (%i)\n",
-			                index);
+			LOG_L(L_ERROR, "LayoutCustomIcons() skipping bad reTexture (%i)",
+					index);
 		}
 	}
 
@@ -758,8 +758,8 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 		if ((index >= 0) && (index < cmdCount)) {
 			cmds[index].name = reNamedCmds[i].texture;
 		} else {
-			logOutput.Print("LayoutCustomIcons() skipping bad reNamed (%i)\n",
-			                index);
+			LOG_L(L_ERROR, "LayoutCustomIcons() skipping bad reNamed (%i)",
+					index);
 		}
 	}
 
@@ -769,8 +769,8 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 		if ((index >= 0) && (index < cmdCount)) {
 			cmds[index].tooltip = reTooltipCmds[i].texture;
 		} else {
-			logOutput.Print("LayoutCustomIcons() skipping bad reNamed (%i)\n",
-			                index);
+			LOG_L(L_ERROR, "LayoutCustomIcons() skipping bad reNamed (%i)",
+					index);
 		}
 	}
 
@@ -787,8 +787,8 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 				}
 			}
 		} else {
-			logOutput.Print("LayoutCustomIcons() skipping bad reParams (%i)\n",
-			                index);
+			LOG_L(L_ERROR, "LayoutCustomIcons() skipping bad reParams (%i)",
+					index);
 		}
 	}
 
@@ -1612,27 +1612,27 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 		if ((iconCmd >= 0) && ((size_t)iconCmd < commands.size())) {
 			std::string cmd = "unbindaction " + commands[iconCmd].action;
 			keyBindings->ExecuteCommand(cmd);
-			logOutput.Print("%s", cmd.c_str());
+			LOG("%s", cmd.c_str());
 		}
 		return true;
 	}
 	else if (action.command == "showcommands") {
 		// bonus command for debugging
-		logOutput.Print("Available Commands:\n");
+		LOG("Available Commands:");
 		for(size_t i = 0; i < commands.size(); ++i){
-			LogObject() << "  command: " << i << ", id = " << commands[i].id << ", action = " << commands[i].action;
+			LOG("  command: "_STPF_", id = %i, action = %s",
+					i, commands[i].id, commands[i].action.c_str());
 		}
 		// show the icon/command linkage
-		logOutput.Print("Icon Linkage:\n");
+		LOG("Icon Linkage:");
 		for(int ii = 0; ii < iconsCount; ++ii){
-			logOutput.Print("  icon: %i, commandsID = %i\n",
-			                ii, icons[ii].commandsID);
+			LOG("  icon: %i, commandsID = %i", ii, icons[ii].commandsID);
 		}
-		logOutput.Print("maxPage         = %i\n", maxPage);
-		logOutput.Print("activePage      = %i\n", activePage);
-		logOutput.Print("iconsSize       = %u\n", iconsSize);
-		logOutput.Print("iconsCount      = %i\n", iconsCount);
-		LogObject() << "commands.size() = " << commands.size();
+		LOG("maxPage         = %i", maxPage);
+		LOG("activePage      = %i", activePage);
+		LOG("iconsSize       = %u", iconsSize);
+		LOG("iconsCount      = %i", iconsCount);
+		LOG("commands.size() = "_STPF_, commands.size());
 		return true;
 	}
 	else if (action.command == "luaui") {
@@ -1659,23 +1659,23 @@ void CGuiHandler::RunLayoutCommand(const std::string& command)
 	if (command == "reload" || ((LUA_MT_OPT & LUA_STATE) && globalConfig->GetMultiThreadLua() == MT_LUA_DUAL_ALL && command == "update")) {
 		if (CLuaHandle::GetActiveHandle() != NULL) {
 			// NOTE: causes a SEGV through RunCallIn()
-			logOutput.Print("Can not reload from within LuaUI, yet");
+			LOG_L(L_WARNING, "Can not reload from within LuaUI, yet");
 			return;
 		}
 		if (luaUI == NULL) {
-			logOutput.Print("Loading: \"%s\"\n", "luaui.lua"); // FIXME
+			LOG("Loading: \"%s\"", "luaui.lua"); // FIXME
 			CLuaUI::LoadHandler();
 			if (luaUI == NULL) {
 				LoadConfig("ctrlpanel.txt");
-				logOutput.Print("Loading failed\n");
+				LOG_L(L_WARNING, "Loading failed");
 			}
 		} else {
-			logOutput.Print("Reloading: \"%s\"\n", "luaui.lua"); // FIXME
+			LOG("Reloading: \"%s\"", "luaui.lua"); // FIXME
 			CLuaUI::FreeHandler();
 			CLuaUI::LoadHandler();
 			if (luaUI == NULL) {
 				LoadConfig("ctrlpanel.txt");
-				logOutput.Print("Reloading failed\n");
+				LOG_L(L_WARNING, "Reloading failed");
 			}
 		}
 		LayoutIcons(false);
@@ -1683,13 +1683,13 @@ void CGuiHandler::RunLayoutCommand(const std::string& command)
 	else if (command == "disable") {
 		if (CLuaHandle::GetActiveHandle() != NULL) {
 			// NOTE: might cause a SEGV through RunCallIn()
-			logOutput.Print("Can not disable from within LuaUI, yet");
+			LOG_L(L_WARNING, "Can not disable from within LuaUI, yet");
 			return;
 		}
 		if (luaUI != NULL) {
 			CLuaUI::FreeHandler();
 			LoadConfig("ctrlpanel.txt");
-			logOutput.Print("Disabled LuaUI\n");
+			LOG("Disabled LuaUI");
 		}
 		LayoutIcons(false);
 	}
@@ -1697,7 +1697,7 @@ void CGuiHandler::RunLayoutCommand(const std::string& command)
 		if (luaUI != NULL) {
 			luaUI->ConfigCommand(command);
 		} else {
-			// logOutput.Print("[%s] LuaUI is not loaded (command=\"%s\")\n", __FUNCTION__, command.c_str());
+			//LOG_L(L_DEBUG, "[%s] LuaUI is not loaded (command=\"%s\")", __FUNCTION__, command.c_str());
 		}
 	}
 
@@ -1750,7 +1750,7 @@ bool CGuiHandler::ProcessBuildActions(const Action& action)
 			ret = true;
 		}
 
-		logOutput.Print("Buildings set to face %s", buildFaceDirs[buildFacing]);
+		LOG("Buildings set to face %s", buildFaceDirs[buildFacing]);
 	}
 
 	return ret;
