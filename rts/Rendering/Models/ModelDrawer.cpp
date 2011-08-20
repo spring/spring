@@ -15,7 +15,7 @@
 #include "System/Log/ILog.h"
 
 /// If set to true, additional stuff will be rendered
-#define MODEL_DRAWER_DEBUG_RENDERING false
+#define MODEL_DRAWER_DEBUG_RENDERING 0
 
 #define LOG_SECTION_MODEL_DRAWER "ModelDrawer"
 LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_MODEL_DRAWER)
