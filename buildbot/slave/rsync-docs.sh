@@ -5,6 +5,8 @@ set -e
 
 umask 022
 
+#FIXME: we should somehow delete the source-directory, as it will grow over time
+
 REMOTE_PATH=OmoikaneWeb:/mnt/data/WWW/spring.osocial.se/
 RSYNC="rsync -avz --delete-after"
 
