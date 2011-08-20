@@ -138,8 +138,7 @@ echo "-- creating ${TMP_PATH}/${ARCHIVE_NAME}"
 cd ${TMP_PATH}
 zip -r9 ${ARCHIVE_NAME} ${BUNDLE_NAME}
 
+#remove temp files
+rm -rf ${TMP_PATH}/${BUNDLE_BASE}
 echo "-- done"
-
-#TODO: uncomment this line
-#rm -rf ${BUNDLE_BASE}
 
