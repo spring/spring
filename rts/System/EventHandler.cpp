@@ -736,13 +736,13 @@ string CEventHandler::GetTooltip(int x, int y)
 }
 
 
-bool CEventHandler::AddConsoleLine(const string& msg, const CLogSubsystem& subsystem)
+bool CEventHandler::AddConsoleLine(const std::string& msg, const std::string& section, int level)
 {
 	EVENTHANDLER_CHECK(AddConsoleLine, false);
 
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listAddConsoleLine[i];
-		ec->AddConsoleLine(msg, subsystem);
+		ec->AddConsoleLine(msg, section, level);
 	}
 	return true;
 }

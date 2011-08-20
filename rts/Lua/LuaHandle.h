@@ -15,7 +15,6 @@
 //FIXME#include "LuaVBOs.h"
 #include "LuaDisplayLists.h"
 #include "System/Platform/Threading.h"
-#include "System/LogOutput.h"
 
 #include <string>
 #include <vector>
@@ -222,7 +221,7 @@ class CLuaHandle : public CEventClient
 
 		bool CommandNotify(const Command& cmd);
 
-		bool AddConsoleLine(const string& msg, const CLogSubsystem& sys);
+		bool AddConsoleLine(const string& msg, const string& section, int level);
 
 		bool GroupChanged(int groupID);
 
@@ -413,7 +412,7 @@ class CLuaHandle : public CEventClient
 		void ExecuteObjEventBatch();
 		void ExecuteProjEventBatch();
 		void ExecuteFrameEventBatch();
-		void ExecuteMiscEventBatch();
+		void ExecuteLogEventBatch();
 
 	protected: // static
 		static bool devMode; // allows real file access
@@ -424,7 +423,7 @@ class CLuaHandle : public CEventClient
 		std::vector<LuaObjEvent> luaObjEventBatch;
 		std::vector<LuaProjEvent> luaProjEventBatch;
 		std::vector<int> luaFrameEventBatch;
-		std::vector<LuaMiscEvent> luaMiscEventBatch;
+		std::vector<LuaLogEvent> luaLogEventBatch;
 
 		// FIXME: because CLuaUnitScript needs to access RunCallIn / activeHandle
 		friend class CLuaUnitScript;

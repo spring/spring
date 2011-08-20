@@ -174,7 +174,7 @@ class CEventClient
 
 		virtual bool CommandNotify(const Command& cmd);
 
-		virtual bool AddConsoleLine(const std::string& msg, const CLogSubsystem& subsystem);
+		virtual bool AddConsoleLine(const std::string& msg, const std::string& section, int level);
 
 		virtual void LastMessagePosition(const float3& pos);
 

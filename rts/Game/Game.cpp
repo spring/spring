@@ -903,7 +903,7 @@ bool CGame::Update()
 		infoConsole->GetNewRawLines(lines);
 		for (unsigned int i = 0; i < lines.size(); i++) {
 			const CInfoConsole::RawLine& rawLine = lines[i];
-			eventHandler.AddConsoleLine(rawLine.text, *rawLine.subsystem);
+			eventHandler.AddConsoleLine(rawLine.text, rawLine.section, rawLine.level);
 		}
 	}
 
