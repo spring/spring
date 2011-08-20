@@ -160,7 +160,7 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 	else if (action.command == "edit_complete") {
 		string head = userInput.substr(0, writingPos);
 		string tail = userInput.substr(writingPos);
-		const vector<string> &partials = wordCompletion->Complete(head);
+		const vector<string>& partials = wordCompletion->Complete(head);
 		userInput = head + tail;
 		writingPos = (int)head.length();
 
@@ -903,7 +903,7 @@ public:
 				logOutput.Print("Team to control: is a dead team: %i", teamToControlId);
 				badArgs = true;
 			}
-			// TODO: FIXME: remove this, if support for multiple Skirmish AIs per team is in place
+			// TODO remove this, if support for multiple Skirmish AIs per team is in place
 			if (!badArgs && (skirmishAIHandler.GetSkirmishAIsInTeam(teamToControlId).size() > 0)) {
 				logOutput.Print("Team to control: there is already an AI controlling this team: %i", teamToControlId);
 				badArgs = true;

@@ -163,7 +163,7 @@
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
-extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
+extern gmlClientServer<void, int,CUnit*>* gmlProcessor;
 #endif
 
 
@@ -1999,8 +1999,9 @@ void CGame::EndSkip() {
 	gs->speedFactor     = skipOldSpeed;
 	gs->userSpeedFactor = skipOldUserSpeed;
 
-	if (!skipSoundmute)
+	if (!skipSoundmute) {
 		sound->Mute(); // sounds back on
+	}
 
 	logOutput.Print("Skipped %.1f seconds\n", skipSeconds);
 }
@@ -2232,8 +2233,7 @@ void CGame::ReloadGame()
 		// This reloads heightmap, triggers Load call-in, etc.
 		// Inside the Load call-in, Lua can ensure old units are wiped before new ones are placed.
 		saveFile->LoadGame();
-	}
-	else {
+	} else {
 		logOutput.Print("Can only reload game when game has been started from a savegame");
 	}
 }
