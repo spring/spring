@@ -1,4 +1,3 @@
-!ifndef SLIM
 !ifdef INSTALL
 	; New Settings Program
 	${!echonow} "Processing: main: springsettings"
@@ -15,6 +14,5 @@
 	Delete "$INSTDIR\wxmsw28u_core_gcc_custom.dll"
 	Delete "$INSTDIR\springsettings.conf"
 
-!endif
 !endif
 
