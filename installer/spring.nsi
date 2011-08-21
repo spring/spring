@@ -85,9 +85,7 @@ VAR REGISTRY ; if 1 registry values are written
 !include "include\fileExistChecks.nsh"
 !include "include\fileMisc.nsh"
 !include "include\extractFile.nsh"
-!ifndef SLIM
 !include "include\checkrunning.nsh"
-!endif
 !include "include\getParameterValue.nsh"
 
 
@@ -134,7 +132,6 @@ Section "Engine" SEC_MAIN
 SectionEnd
 
 
-!ifndef SLIM
 SectionGroup "Multiplayer battlerooms"
 	Section "SpringLobby" SEC_SPRINGLOBBY
 		!define INSTALL
@@ -169,9 +166,7 @@ Section "Desktop shortcuts" SEC_DESKTOP
 		!undef INSTALL
 	${EndIf}
 SectionEnd
-!endif
 
-!ifndef SLIM
 SectionGroup "Tools"
 	Section "Easy content installation" SEC_ARCHIVEMOVER
 		!define INSTALL
@@ -189,7 +184,6 @@ SectionGroup "Tools"
 !endif
 SectionGroupEnd
 
-!endif
 
 Section "Start menu shortcuts" SEC_START
 	!define INSTALL
@@ -231,7 +225,6 @@ SectionEnd
 
 Function .onInit
 	${!echonow} ""
-!ifndef SLIM
 	IfSilent skiprunchecks ; don't check for running apps, the calling app has to do it
 	; check if we need to exit some processes which may be using unitsync
 	${CheckExecutableRunning} "TASClient.exe" "TASClient"
@@ -241,7 +234,6 @@ Function .onInit
 	${CheckExecutableRunning} "springsettings.exe" "Spring Settings"
 	skiprunchecks:
 
-!endif
 	; enable/disable sections depending on parameters
 	!include "sections/SetupSections.nsh"
 FunctionEnd
@@ -270,18 +262,14 @@ Section Uninstall
 
 	!include "sections\shortcuts_startMenu.nsh"
 	!include "sections\shortcuts_desktop.nsh"
-!ifndef SLIM
 	!include "sections\archivemover.nsh"
 	!include "sections\portable.nsh"
 	!include "sections\zeroK.nsh"
 	!include "sections\tasServer.nsh"
-!endif
 	!ifdef NSI_UNINSTALL_FILES
 	!include "${NSI_UNINSTALL_FILES}"
 	!endif
-!ifndef SLIM
 	!include "sections\springlobby.nsh"
-!endif
 	; All done
 	RMDir "$INSTDIR"
 
