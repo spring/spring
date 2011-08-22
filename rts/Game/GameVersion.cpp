@@ -97,6 +97,12 @@ const std::string& GetAdditional()
 	#undef  GV_ADD_SPACE
 	#define GV_ADD_SPACE " "
 #endif
+
+#if defined _OPENMP
+	GV_ADD_SPACE "OMP"
+	#undef  GV_ADD_SPACE
+	#define GV_ADD_SPACE " "
+#endif
 	;
 
 	return additional;
