@@ -15,7 +15,6 @@
 
 class CWeapon;
 struct Command;
-class CLogSubsystem;
 
 class CEventHandler
 {

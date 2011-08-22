@@ -1,103 +1,21 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef LOGOUTPUT_H
-#define LOGOUTPUT_H
+#ifndef LOG_OUTPUT_H
+#define LOG_OUTPUT_H
 
-#include <stdarg.h>
-#include <string>
-#include <vector>
-#include <sstream>
 #include "lib/gml/gmlcnf.h"
 #if defined(USE_GML) && GML_ENABLE_SIM
 #include <boost/thread/mutex.hpp>
 #endif
 
-// format string error checking
-#ifdef __GNUC__
-#define FORMATSTRING(n) __attribute__((format(printf, n, n + 1)))
-#else
-#define FORMATSTRING(n)
-#endif
-
-class float3;
-
-
-/**
- * @brief defines a logging subsystem
- *
- * Each logging subsystem can be independently enabled/disabled, this allows
- * for adding e.g. very detailed logging that's by default off, but can be
- * turned on when troubleshooting.  (example: the virtual file system)
- *
- * A logging subsystem should be defined as a global variable, so it can be
- * used as argument to logOutput.Print similarly to a simple enum constant:
- *
- *	static CLogSubsystem LOG_MYSUBSYS("mysubsystem");
- *
- * ...then, in the actual code of your engine subsystem, use:
- *
- *		logOutput.Print(LOG_MYSUBSYS, "blah");
- *
- * All subsystems are linked together in a global list, allowing CLogOutput
- * to enable/disable subsystems based on env var and configuration key.
- */
-class CLogSubsystem
-{
-public:
-	static CLogSubsystem* GetList() { return linkedList; }
-	CLogSubsystem* GetNext() { return next; }
-
-	explicit CLogSubsystem(const char* name, bool enabled = false);
-
-	const char* const name;
-	CLogSubsystem* const next;
-
-	bool enabled;
-
-private:
-	static CLogSubsystem* linkedList;
-};
-
-/**
- * @brief ostringstream-derivate for simple logging
- *
- * usage:
- * LogObject() << "Important message with value: " << myint;
- * LogObject(mySubsys) << "Message";
- */
-class LogObject
-{
-public:
-	LogObject(const CLogSubsystem& subsys);
-	LogObject();
-
-	~LogObject();
-
-	template <typename T>
-	LogObject& operator<<(const T& t)
-	{
-		str << t;
-		return *this;
-	};
-
-private:
-	const CLogSubsystem& subsys;
-	std::ostringstream str;
-};
-
-/** @brief implement this interface to be able to observe CLogOutput */
-class ILogSubscriber
-{
-public:
-	// Notification of log messages to subscriber
-	virtual void NotifyLogMsg(const CLogSubsystem& subsystem, const std::string& str) = 0;
-};
+#include <string>
+#include <vector>
 
 
 /**
  * @brief logging class
- * Global object to write log info to.
- * Game UI elements that display log can subscribe to it to receive the log messages.
+ * Game UI elements that display log can subscribe to it to receive the log
+ * messages.
  */
 class CLogOutput
 {
@@ -105,33 +23,17 @@ public:
 	CLogOutput();
 	~CLogOutput();
 
-	void Print(const CLogSubsystem& subsystem, const char* fmt, ...) FORMATSTRING(3);
-	void Print(const char* fmt, ...) FORMATSTRING(2);
-	void Print(const std::string& text);
-	void Prints(const CLogSubsystem& subsystem, const std::string& text); // can not be named Print, as it would not be unique
-	void Printv(const CLogSubsystem& subsystem, const char* fmt, va_list argp);
-	static CLogSubsystem& GetDefaultLogSubsystem();
-
-	void AddSubscriber(ILogSubscriber* ls);
-	void RemoveSubscriber(ILogSubscriber* ls);
 	/**
-	 * @brief Enables/Disables notifying of subscribers
+	 * @brief core log output method, used by all others
 	 *
-	 * The list of subscribers does not get altered when calling this function,
-	 * just its use is enabled or disabled.
-	 * Used, for example, in case the info console and other in game subscribers
-	 * should not be notified anymore (eg. SDL shutdown).
-	 */
-	void SetSubscribersEnabled(bool enabled);
-	/**
-	 * @brief Indicates whether notifying of subscribers is enabled
+	 * Note that, when logOutput isn't initialized yet, the logging is done to the
+	 * global std::vector preInitLog(), and is only written to disk in the call to
+	 * Initialize().
 	 *
-	 * The initial value is true.
+	 * This method notifies all registered ILogSubscribers, calls OutputDebugString
+	 * (for MSVC builds) and prints the message to stdout and the file log.
 	 */
-	bool IsSubscribersEnabled() const;
-
-	/// Close the output file, so the crash reporter can copy it
-	void End();
+	void Output(const std::string& str);
 
 	/**
 	 * @brief set the log file
@@ -167,7 +69,10 @@ public:
 	void Initialize();
 	void Flush();
 
-protected:
+private:
+	/// Close the output file, so the crash reporter can copy it
+	void End();
+
 	/**
 	 * @brief initialize the log subsystems
 	 *
@@ -182,22 +87,10 @@ protected:
 	 * A subsystem that is by default enabled, can not be disabled.
 	 */
 	void InitializeSubsystems();
-	/**
-	 * @brief core log output method, used by all others
-	 *
-	 * Note that, when logOutput isn't initialized yet, the logging is done to the
-	 * global std::vector preInitLog(), and is only written to disk in the call to
-	 * Initialize().
-	 *
-	 * This method notifies all registered ILogSubscribers, calls OutputDebugString
-	 * (for MSVC builds) and prints the message to stdout and the file log.
-	 */
-	void Output(const CLogSubsystem& subsystem, const std::string& str);
 
-	void ToStderr(const CLogSubsystem& subsystem, const std::string& message);
-	void ToFile(const CLogSubsystem& subsystem, const std::string& message);
+	void ToStderr(const std::string& message);
+	void ToFile(const std::string& message);
 
-private:
 	/**
 	 * @brief creates an absolute file path from a file name
 	 *
@@ -229,11 +122,9 @@ private:
 	void RotateLogFile() const;
 
 
-	std::vector<ILogSubscriber*> subscribers;
 	std::string fileName;
 	std::string filePath;
 	bool rotateLogFiles;
-	bool subscribersEnabled;
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 	boost::mutex logmutex;
@@ -243,7 +134,5 @@ private:
 
 extern CLogOutput logOutput;
 
-#undef FORMATSTRING
-
-#endif // LOGOUTPUT_H
+#endif // LOG_OUTPUT_H
 
