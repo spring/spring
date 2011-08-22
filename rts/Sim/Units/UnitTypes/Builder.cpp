@@ -756,6 +756,10 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 
 
 void CBuilder::DeleteDeathDependence(CObject* o, DependenceType dep) {
+	/* curBuild, lastAttacker, userTarget etc. are NOT mutually exclusive, 
+	   and we can therefore only call CUnit::DeleteDeathDependence if we are
+	   certain that no references to the object in question still exist
+	*/
 	switch(dep) {
 		case DEPENDENCE_ATTACKER:
 		case DEPENDENCE_BUILDER:
@@ -780,5 +784,6 @@ void CBuilder::DeleteDeathDependence(CObject* o, DependenceType dep) {
 			if(o == curBuild || o == curCapture || o == curReclaim) return;
 			break;
 	}
+
 	CUnit::DeleteDeathDependence(o, dep);
 }

@@ -2179,8 +2179,10 @@ void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 
 
 void CUnit::DeleteDeathDependence(CObject* o, DependenceType dep) {
-	/*
-	// FIXME: what is this supposed to accomplish?
+	/* curBuild, lastAttacker, userTarget etc. are NOT mutually exclusive, 
+	   and we can therefore only call CUnit::DeleteDeathDependence if we are
+	   certain that no references to the object in question still exist
+	*/
 	switch (dep) {
 		case DEPENDENCE_BUILD:
 		case DEPENDENCE_CAPTURE:
@@ -2203,7 +2205,6 @@ void CUnit::DeleteDeathDependence(CObject* o, DependenceType dep) {
 			if (o == lastAttacker || o == soloBuilder) return;
 			break;
 	}
-	*/
 
 	CObject::DeleteDeathDependence(o);
 }
