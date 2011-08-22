@@ -2,7 +2,8 @@
 
 #include "RectangleOptimizer.h"
 #include "System/Log/ILog.h"
-#include <assert.h>
+
+#include <cassert>
 
 
 unsigned CRectangleOptimizer::statsTotalSize = 0;
@@ -10,7 +11,7 @@ unsigned CRectangleOptimizer::statsOptSize   = 0;
 
 
 CRectangleOptimizer::CRectangleOptimizer()
-	: maxAreaPerRect(500*500) //FIXME auto adjust this in HeightMapUpdate!
+	: maxAreaPerRect(500 * 500) // FIXME auto adjust this in HeightMapUpdate!
 	, needsUpdate(false)
 {
 }
