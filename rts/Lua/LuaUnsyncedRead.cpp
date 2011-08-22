@@ -622,14 +622,7 @@ int LuaUnsyncedRead::GetUnitViewPosition(lua_State* L)
 	}
 	const bool midPos = (lua_isboolean(L, 2) && lua_toboolean(L, 2));
 
-	float3 pos = midPos ? (float3)unit->midPos : (float3)unit->pos;
-	CTransportUnit *trans=unit->GetTransporter();
-	if (trans == NULL) {
-		pos += (unit->speed * globalRendering->timeOffset);
-	} else {
-		pos += (trans->speed * globalRendering->timeOffset);
-	}
-
+	float3& pos = midPos ? unit->drawMidPos : unit->drawPos;
 	lua_pushnumber(L, pos.x);
 	lua_pushnumber(L, pos.y);
 	lua_pushnumber(L, pos.z);
