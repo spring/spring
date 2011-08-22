@@ -9,6 +9,7 @@
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Log/ILog.h"
+#include "System/Log/LogSinkHandler.h"
 #include "System/LogOutput.h"
 #include "System/NetProtocol.h"
 #include "seh.h"
@@ -335,7 +336,7 @@ void OutputStacktrace() {
 LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 {
 	// Prologue.
-	logOutput.SetSubscribersEnabled(false);
+	logSinkHandler.SetSinking(false);
 	PRINT("Spring %s has crashed.", SpringVersion::GetFull().c_str());
 #ifdef USE_GML
 	PRINT("MT with %d threads.", gmlThreadCount);
