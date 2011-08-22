@@ -18,6 +18,12 @@ static void log_sink_record_logSinkHandler(const char* section, int level,
 	logSinkHandler.RecordLogMessage((section == NULL) ? "" : section, level, record);
 }
 
+
+LogSinkHandler::LogSinkHandler()
+	: sinking(true)
+{
+}
+
 LogSinkHandler::~LogSinkHandler() {
 
 	if (!sinks.empty()) {
@@ -51,9 +57,21 @@ void LogSinkHandler::RemoveSink(ILogSink* logSink) {
 	}
 }
 
+void LogSinkHandler::SetSinking(bool enabled) {
+	this->sinking = enabled;
+}
+
+bool LogSinkHandler::IsSinking() const {
+	return sinking;
+}
+
 void LogSinkHandler::RecordLogMessage(const std::string& section, int level,
 			const std::string& text) const
 {
+	if (!sinking) {
+		return;
+	}
+
 	std::vector<ILogSink*>::const_iterator lsi;
 	for (lsi = sinks.begin(); lsi != sinks.end(); ++lsi) {
 		(*lsi)->RecordLogMessage(section, level, text);

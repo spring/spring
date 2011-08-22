@@ -21,6 +21,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "Game/GameVersion.h"
 #include "System/Log/ILog.h"
+#include "System/Log/LogSinkHandler.h"
 #include "System/LogOutput.h"
 #include "System/maindefines.h" // for SNPRINTF
 #include "System/myTime.h"
@@ -454,7 +455,7 @@ namespace CrashHandler
 			return;
 		}
 
-		logOutput.SetSubscribersEnabled(false);
+		logSinkHandler.SetSinking(false);
 
 		std::string error;
 		if (signal == SIGSEGV) {
@@ -505,7 +506,7 @@ namespace CrashHandler
 			}
 
 			if (cleanupOk) {
-				logOutput.SetSubscribersEnabled(true);
+				logSinkHandler.SetSinking(true);
 			} else {
 				keepRunning = false;
 			}
