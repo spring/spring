@@ -41,7 +41,6 @@ struct Command;
 struct SRectangle;
 struct LuaHashString;
 struct lua_State;
-class CLogSubsystem;
 class CLuaHandle;
 
 

@@ -23,7 +23,6 @@ class CWeapon;
 class CFeature;
 class CProjectile;
 struct Command;
-class CLogSubsystem;
 class IArchive;
 struct SRectangle;
 
