@@ -74,19 +74,19 @@ private:
 	void End();
 
 	/**
-	 * @brief initialize the log subsystems
+	 * @brief initialize the log sections
 	 *
-	 * This writes list of all available and all enabled subsystems to the log.
+	 * This writes a list of all available and all enabled sections to the log.
 	 *
-	 * Log subsystems can be enabled using the configuration key "LogSubsystems",
-	 * or the environment variable "SPRING_LOG_SUBSYSTEMS".
+	 * Log sections can be enabled using the configuration key "LogSections",
+	 * or the environment variable "SPRING_LOG_SECTIONS".
 	 *
-	 * Both specify a comma separated list of subsystems that should be enabled.
+	 * Both specify a comma separated list of sections that should be enabled.
 	 * The lists from both sources are combined, there is no overriding.
 	 *
-	 * A subsystem that is by default enabled, can not be disabled.
+	 * A section that is enabled by default, can not be disabled.
 	 */
-	void InitializeSubsystems();
+	void InitializeSections();
 
 	void ToStderr(const std::string& message);
 	void ToFile(const std::string& message);

@@ -35,7 +35,8 @@
 /******************************************************************************/
 
 CONFIG(std::string, RotateLogFiles).defaultValue("auto");
-CONFIG(std::string, LogSubsystems).defaultValue(""); // FIXME deprecate and call is somethign with "section"
+CONFIG(std::string, LogSections).defaultValue("");
+CONFIG(std::string, LogSubsystems).defaultValue(""); // XXX deprecated on 22. August 2011, before the 0.83 release
 
 /******************************************************************************/
 /******************************************************************************/
@@ -177,7 +178,7 @@ void CLogOutput::Initialize()
 		SafeDelete(filelog);
 
 	initialized = true;
-	InitializeSubsystems();
+	InitializeSections();
 
 	std::vector<std::string>::iterator pili;
 	for (pili = preInitLog().begin(); pili != preInitLog().end(); ++pili) {
@@ -192,7 +193,7 @@ void CLogOutput::Initialize()
 	LOG("Compiler: %s", SpringVersion::GetCompiler().c_str());
 }
 
-void CLogOutput::InitializeSubsystems()
+void CLogOutput::InitializeSections()
 {
 	// the new systems (ILog.h) log-sub-systems are called sections:
 	const std::set<const char*> sections = log_filter_section_getRegisteredSet();
@@ -215,20 +216,31 @@ void CLogOutput::InitializeSubsystems()
 	// enabled sections is a superset of the ones specified in the environment
 	// and the ones specified in the configuration file.
 	// configHandler cannot be accessed here in unitsync, as it may not exist.
+	std::string enabledSections = ",";
 #ifndef UNITSYNC
-	std::string enabledSections = "," + StringToLower(configHandler->GetString("LogSubsystems")) + ","; // FIXME this config key should/will change
+	enabledSections += StringToLower(configHandler->GetString("LogSections")) + ",";
+	enabledSections += StringToLower(configHandler->GetString("LogSubsystems")) + ","; // XXX deprecated on 22. August 2011, before the 0.83 release
 #else
 	#ifdef DEBUG
 	// unitsync logging in debug mode always on
-	std::string enabledSections = ",unitsync,ArchiveScanner";
-	#else
-	std::string enabledSections = ",";
+	enabledSections += "unitsync,ArchiveScanner,";
 	#endif
 #endif
 
-	const char* const env = getenv("SPRING_LOG_SUBSYSTEMS"); // FIXME deprecate this var, and add a new one with SECTION in the name
+	const char* const envSec = getenv("SPRING_LOG_SECTIONS");
+	const char* const envSubsys = getenv("SPRING_LOG_SUBSYSTEMS"); // XXX deprecated on 22. August 2011, before the 0.83 release
+	std::string env;
+	if (envSec != NULL) {
+		env += ",";
+		env += envSec;
+	}
+	if (envSubsys != NULL) {
+		env += ",";
+		env += envSubsys;
+	}
+
 	bool envOverride = false;
-	if (env) {
+	if (!env.empty()) {
 		// this allows to disable all sections from the env var
 		std::string envSections(StringToLower(env));
 		if (envSections == std::string("none")) {
@@ -268,9 +280,8 @@ void CLogOutput::InitializeSubsystems()
 		LOG("%s", enabledLogSectionsStr.str().c_str());
 	}
 
-	// FIXME adjust: subsytems -> sections
-	LOG("Enable or disable log sections using the LogSubsystems configuration key");
-	LOG("  or the SPRING_LOG_SUBSYSTEMS environment variable (both comma separated).");
+	LOG("Enable or disable log sections using the LogSections configuration key");
+	LOG("  or the SPRING_LOG_SECTIONS environment variable (both comma separated).");
 	LOG("  Use \"none\" to disable the default log sections.");
 }
 
