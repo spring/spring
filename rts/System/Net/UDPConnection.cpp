@@ -418,7 +418,7 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 	}
 
 	packetMap::iterator wpi;
-	//process all in order packets that we have waiting
+	// process all in order packets that we have waiting
 	while ((wpi = waitingPackets.find(lastInOrder+1)) != waitingPackets.end()) {
 		std::vector<boost::uint8_t> buf;
 		if (fragmentBuffer) {
@@ -430,7 +430,7 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 		}
 
 		lastInOrder++;
-		std::copy(wpi->second->data, wpi->second->data+wpi->second->length, std::back_inserter(buf));
+		std::copy(wpi->second->data, wpi->second->data + wpi->second->length, std::back_inserter(buf));
 		waitingPackets.erase(wpi);
 
 		for (unsigned pos = 0; pos < buf.size(); ) {
