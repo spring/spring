@@ -1887,7 +1887,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 		return;
 	}
 
-	string s = msg.msg;
+	const std::string& s = msg.msg;
 
 	if (!s.empty()) {
 		CPlayer* player = (msg.fromPlayer >= 0 && static_cast<unsigned int>(msg.fromPlayer) == SERVER_PLAYER) ? 0 : playerHandler->Player(msg.fromPlayer);
@@ -1939,9 +1939,9 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 		}
-		else if (msg.destination < playerHandler->ActivePlayers())
+		else if ((msg.destination < playerHandler->ActivePlayers()) && player)
 		{
-			if (msg.destination == gu->myPlayerNum && player && !player->spectator) {
+			if (msg.destination == gu->myPlayerNum && !player->spectator) {
 				LOG("%sPrivate: %s", label.c_str(), s.c_str());
 				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
