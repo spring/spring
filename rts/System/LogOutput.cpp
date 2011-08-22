@@ -177,13 +177,6 @@ void CLogOutput::Initialize()
 		SafeDelete(filelog);
 
 	initialized = true;
-
-	LOG("LogOutput initialized.");
-	LOG("Spring %s", SpringVersion::GetFull().c_str());
-	LOG("Build date/time: %s", SpringVersion::GetBuildTime().c_str());
-	LOG("Build environment: %s", SpringVersion::GetBuildEnvironment().c_str());
-	LOG("Compiler: %s", SpringVersion::GetCompiler().c_str());
-
 	InitializeSubsystems();
 
 	std::vector<std::string>::iterator pili;
@@ -191,6 +184,12 @@ void CLogOutput::Initialize()
 		ToFile(*pili);
 	}
 	preInitLog().clear();
+
+	LOG("LogOutput initialized.");
+	LOG("Spring %s", SpringVersion::GetFull().c_str());
+	LOG("Build date/time: %s", SpringVersion::GetBuildTime().c_str());
+	LOG("Build environment: %s", SpringVersion::GetBuildEnvironment().c_str());
+	LOG("Compiler: %s", SpringVersion::GetCompiler().c_str());
 }
 
 void CLogOutput::InitializeSubsystems()
