@@ -596,15 +596,12 @@ void CBitmap::Blur(int iterations, float weight)
 				}
 			}
 		}
-		CBitmap* buf = dst;
-		dst = src;
-		src = buf;
+		std::swap(src, dst);
 	}
 
 	if (dst == this) {
-		CBitmap* buf = dst;
-		dst = src;
-		src = buf;
+		// make sure we don't delete `this`
+		std::swap(src, dst);
 	}
 
 	delete dst;

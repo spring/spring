@@ -96,7 +96,6 @@ class C3DOParser: public IModelParser
 
 public:
 	C3DOParser();
-	~C3DOParser() { teamtex.clear(); }
 
 	S3DModel* Load(const std::string& name);
 
