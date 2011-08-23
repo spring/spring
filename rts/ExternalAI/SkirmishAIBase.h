@@ -8,6 +8,7 @@
 #include <string>
 #include <map>
 
+
 /**
  * Possible live-cycle stati of a Skirmish AI instance.
  */
@@ -34,8 +35,8 @@ public:
 	/**
 	 * @brief Constructor assigning default values.
 	 */
-	SkirmishAIBase() :
-		  TeamController()
+	SkirmishAIBase()
+		: TeamController()
 		, hostPlayer(-1)
 		, status(SKIRMAISTATE_CONSTRUCTED)
 		{}
@@ -53,8 +54,8 @@ public:
 	/**
 	 * @brief Constructor assigning default values.
 	 */
-	SkirmishAIStatistics() :
-		  TeamControllerStatistics()
+	SkirmishAIStatistics()
+		: TeamControllerStatistics()
 		, cpuTime(0)
 		{}
 

@@ -1,9 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
-#include <SDL_events.h>
-
 #include "UnsyncedGameCommands.h"
+
 #include "UnsyncedActionExecutor.h"
 #include "SyncedGameCommands.h"
 #include "SyncedActionExecutor.h"
@@ -16,6 +14,7 @@
 #include "GameSetup.h"
 #include "GlobalUnsynced.h"
 #include "SelectedUnits.h"
+#include "Player.h"
 #include "PlayerHandler.h"
 #include "PlayerRoster.h"
 #include "System/TimeProfiler.h"
@@ -74,6 +73,8 @@
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Util.h"
+
+#include <SDL_events.h>
 
 
 static std::vector<std::string> _local_strSpaceTokenize(const std::string& text) {

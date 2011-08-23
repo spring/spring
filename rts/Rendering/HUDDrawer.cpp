@@ -1,20 +1,22 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "HUDDrawer.h"
 
-#include "Game/Camera.h"
-#include "Game/GlobalUnsynced.h"
-#include "Game/PlayerHandler.h"
 #include "Rendering/glFont.h"
-#include "Rendering/HUDDrawer.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Models/3DModel.h"
+#include "Game/Camera.h"
+#include "Game/GlobalUnsynced.h"
+#include "Game/Player.h"
+#include "Game/PlayerHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/myMath.h"
+
 
 HUDDrawer* HUDDrawer::GetInstance()
 {

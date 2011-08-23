@@ -1,10 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
-#include "Game/SelectedUnits.h"
-
-#include "System/mmgr.h"
-
 #include "LuaUnsyncedRead.h"
 
 #include "LuaInclude.h"
@@ -17,8 +12,10 @@
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
+#include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Game/PlayerRoster.h"
+#include "Game/SelectedUnits.h"
 #include "Game/TraceRay.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/UI/GuiHandler.h"
@@ -48,6 +45,7 @@
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "System/NetProtocol.h"
+#include "System/mmgr.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"

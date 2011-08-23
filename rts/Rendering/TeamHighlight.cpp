@@ -1,15 +1,19 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "TeamHighlight.h"
-#include "Sim/Misc/TeamHandler.h"
+
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/GlobalUnsynced.h"
+#include "Game/Player.h"
 #include "Game/PlayerHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
-#include "ExternalAI/SkirmishAIHandler.h"
+
 #include <climits>
+
 
 bool CTeamHighlight::highlight = false;
 std::map<int, int> CTeamHighlight::oldColors;

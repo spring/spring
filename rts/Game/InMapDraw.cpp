@@ -5,14 +5,16 @@
 #include "System/mmgr.h"
 
 #include "InMapDraw.h"
+
 #include "InMapDrawModel.h"
-#include "ExternalAI/AILegacySupport.h" // {Point, Line}Marker
-#include "Game/Camera.h"
-#include "Game/Game.h"
+#include "Camera.h"
+#include "Game.h"
 #include "GlobalUnsynced.h"
-#include "Game/PlayerHandler.h"
-#include "Game/UI/MiniMap.h"
-#include "Game/UI/MouseHandler.h"
+#include "Player.h"
+#include "PlayerHandler.h"
+#include "UI/MiniMap.h"
+#include "UI/MouseHandler.h"
+#include "ExternalAI/AILegacySupport.h" // {Point, Line}Marker
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "System/Net/UnpackPacket.h"

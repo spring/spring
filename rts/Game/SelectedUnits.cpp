@@ -1,15 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <map>
-#include <SDL_keysym.h>
-
-#include "System/mmgr.h"
-
 #include "SelectedUnits.h"
+
 #include "SelectedUnitsAI.h"
 #include "Camera.h"
 #include "GlobalUnsynced.h"
 #include "WaitCommandsAI.h"
+#include "Player.h"
 #include "PlayerHandler.h"
 #include "UI/CommandColors.h"
 #include "UI/GuiHandler.h"
@@ -35,10 +32,15 @@
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
+#include "System/mmgr.h"
 #include "System/NetProtocol.h"
 #include "System/Net/PackPacket.h"
 #include "System/Input/KeyInput.h"
 #include "System/Sound/SoundChannels.h"
+
+#include <SDL_keysym.h>
+#include <map>
+
 
 #define PLAY_SOUNDS 1
 

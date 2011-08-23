@@ -1,17 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
-#include <string>
-#include <SDL_keysym.h>
-#include <SDL_mouse.h>
-#include <SDL_timer.h>
-
-#include "System/mmgr.h"
-
 #include "LuaHandle.h"
 
-#include "Game/GlobalUnsynced.h"
-#include "Game/UI/LuaUI.h"
 #include "LuaGaia.h"
 #include "LuaRules.h"
 
@@ -21,6 +11,9 @@
 #include "LuaBitOps.h"
 #include "LuaUtils.h"
 #include "LuaZip.h"
+#include "Game/GlobalUnsynced.h"
+#include "Game/UI/LuaUI.h"
+#include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Game/UI/KeyCodes.h"
 #include "Game/UI/KeySet.h"
@@ -41,11 +34,19 @@
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/Rectangle.h"
+#include "System/mmgr.h"
 #include "System/Log/ILog.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/FileHandler.h"
 
 #include "LuaInclude.h"
+
+#include <SDL_keysym.h>
+#include <SDL_mouse.h>
+#include <SDL_timer.h>
+
+#include <string>
+
 
 CLuaHandle::staticLuaContextData CLuaHandle::S_Sim;
 CLuaHandle::staticLuaContextData CLuaHandle::S_Draw;
