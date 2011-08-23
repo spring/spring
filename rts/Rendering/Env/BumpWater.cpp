@@ -48,7 +48,7 @@ CONFIG(int, BumpWaterReflection).defaultValue(1);
 CONFIG(int, BumpWaterRefraction).defaultValue(1); // 0:=off, 1:=screencopy, 2:=own rendering cycle
 CONFIG(float, BumpWaterAnisotropy).defaultValue(0.0f);
 CONFIG(bool, BumpWaterUseDepthTexture).defaultValue(true);
-CONFIG(int, BumpWaterDepthBits);
+CONFIG(int, BumpWaterDepthBits).defaultValue(16);
 CONFIG(bool, BumpWaterBlurReflection).defaultValue(false);
 CONFIG(bool, BumpWaterShoreWaves).defaultValue(true);
 CONFIG(bool, BumpWaterEndlessOcean).defaultValue(true);
