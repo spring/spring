@@ -39,7 +39,7 @@ CONFIG(int, snd_volunitreply).defaultValue(100);
 CONFIG(int, snd_volbattle).defaultValue(100);
 CONFIG(int, snd_volui).defaultValue(100);
 CONFIG(int, snd_volmusic).defaultValue(100);
-CONFIG(std::string, snd_device);
+CONFIG(std::string, snd_device).defaultValue("");
 
 boost::recursive_mutex soundMutex;
 
