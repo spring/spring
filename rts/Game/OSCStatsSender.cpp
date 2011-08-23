@@ -1,5 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <boost/asio.hpp> // must be included before streflop!
+
 #include "OSCStatsSender.h"
 
 #include "Game.h"
@@ -14,8 +16,6 @@
 
 #include "lib/streflop/streflop_cond.h"
 #include "lib/oscpack/OscOutboundPacketStream.h"
-
-#include <boost/asio.hpp>
 
 
 CONFIG(bool, OscStatsSenderEnabled).defaultValue(false);
