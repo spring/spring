@@ -3,6 +3,7 @@
 #ifndef SOCKET_H
 #define SOCKET_H
 
+//#include <boost/asio.hpp> must be included before streflop!
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/udp.hpp>
 #include <boost/asio/ip/tcp.hpp>
