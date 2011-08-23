@@ -810,6 +810,10 @@ void CGroundDecalHandler::UnitMovedNow(CUnit* unit)
 	if (!mapInfo->terrainTypes[readmap->GetTypeMapSynced()[mp]].receiveTracks)
 		return;
 
+	const float trackLifeTime = GAME_SPEED * decalLevel * unit->unitDef->trackStrength;
+	if (trackLifeTime <= 0)
+		return;
+
 	const float3 pos = unit->pos + unit->frontdir * unit->unitDef->trackOffset;
 
 	TrackPart* tp = new TrackPart;
@@ -827,9 +831,9 @@ void CGroundDecalHandler::UnitMovedNow(CUnit* unit)
 
 	if (unit->myTrack == NULL) {
 		unit->myTrack = new UnitTrackStruct(unit);
-		unit->myTrack->lifeTime = (GAME_SPEED * decalLevel * unit->unitDef->trackStrength);
+		unit->myTrack->lifeTime = trackLifeTime;
 		unit->myTrack->trackAlpha = (unit->unitDef->trackStrength * 25);
-		unit->myTrack->alphaFalloff = float(unit->myTrack->trackAlpha) / float(unit->myTrack->lifeTime);
+		unit->myTrack->alphaFalloff = unit->myTrack->trackAlpha / trackLifeTime;
 
 		tta.unit = NULL; // signal new trackstruct
 
