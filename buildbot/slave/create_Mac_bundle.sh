@@ -74,10 +74,10 @@ do
 		chmod u+w ${dylib}
 		
 		# change the bundled lib's id to relative pathing mode (not necessary but cleaner)
-		install_name_tool -id @executable_path/../${dylib} ${dylib}
+		install_name_tool -id @loader_path/../${dylib} ${dylib}
 
 		# point the executable to the bundled lib in relative pathing mode
-		install_name_tool -change ${MACPORTS_BASE}/${dylib} @executable_path/../${dylib} MacOS/${executable}
+		install_name_tool -change ${MACPORTS_BASE}/${dylib} @loader_path/../${dylib} MacOS/${executable}
 
 		# the bundled lib is autonomous => it can be stripped
 		${STRIP} ${dylib}
@@ -113,14 +113,14 @@ do
 				chmod u+w ${requiredlib}
 
 				# change the bundled lib's id to relative pathing mode (not necessary but cleaner)
-				install_name_tool -id @executable_path/../${requiredlib} ${requiredlib}
+				install_name_tool -id @loader_path/../${requiredlib} ${requiredlib}
 
 				# the bundled lib is autonomous => it can be stripped
 				${STRIP} ${requiredlib}
 			fi
 
 			# point the parent lib to the bundled lib in relative pathing mode
-			install_name_tool -change ${MACPORTS_BASE}/${requiredlib} @executable_path/../${requiredlib} lib/${dylib}
+			install_name_tool -change ${MACPORTS_BASE}/${requiredlib} @loader_path/../${requiredlib} lib/${dylib}
 		done
 	done
 done
