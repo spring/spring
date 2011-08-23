@@ -609,9 +609,15 @@ void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 	//     by SMFGroundDrawer::UpdateCamRestraints, and older code
 	//     iterated over SMFGroundDrawer::{left, right})
 	// UpdateCamRestraints(cam);
+	CCamera *fcam = cam2;
+	if (extraSize == INT_MAX) { // When called from within Lua, camera may not be updated
+		extraSize = 0;
+		readmap->GetGroundDrawer()->UpdateCamRestraints(cam);
+		fcam = cam;
+	}
 
-	const std::vector<CCamera::FrustumLine>& left = cam2->leftFrustumSides;
-	const std::vector<CCamera::FrustumLine>& right = cam2->rightFrustumSides;
+	const std::vector<CCamera::FrustumLine>& left = fcam->leftFrustumSides;
+	const std::vector<CCamera::FrustumLine>& right = fcam->rightFrustumSides;
 
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 

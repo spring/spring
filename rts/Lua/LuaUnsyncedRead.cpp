@@ -721,7 +721,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	{
 		GML_RECMUTEX_LOCK(quad); // GetVisibleUnits
 
-		readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 1e9, &quadIter);
+		readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 1e9, &quadIter, INT_MAX);
 
 		lua_createtable(L, quadIter.count, 0);
 
@@ -850,7 +850,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	{
 		GML_RECMUTEX_LOCK(quad); // GetVisibleFeatures
 
-		readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, maxDist, &quadIter);
+		readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, maxDist, &quadIter, INT_MAX);
 
 		lua_createtable(L, quadIter.count, 0);
 
