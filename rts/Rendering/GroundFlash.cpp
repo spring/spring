@@ -116,16 +116,19 @@ CStandardGroundFlash::CStandardGroundFlash(const float3& p, float circleAlpha, f
 
 	float3 p1(p.x + flashSize, 0, p.z);
 		p1.y = ground->GetApproximateHeight(p1.x, p1.z, false);
-		p1 += fw;
+		p1  += fw;
 	float3 p2(p.x - flashSize, 0, p.z);
 		p2.y = ground->GetApproximateHeight(p2.x, p2.z, false);
-		p2 += fw;
+		p2  += fw;
 	float3 p3(p.x, 0, p.z + flashSize);
 		p3.y = ground->GetApproximateHeight(p3.x, p3.z, false);
-		p3 += fw;
-	float3 p4(p.x,0,p.z-flashSize);
-		p4.y=ground->GetApproximateHeight(p4.x, p4.z, false);
-		p4 += fw;
+		p3  += fw;
+	float3 p4(p.x, 0, p.z - flashSize);
+		p4.y = ground->GetApproximateHeight(p4.x, p4.z, false);
+		p4  += fw;
+
+	// else ANormalize() fails!
+	assert(flashSize > 1);
 
 	const float3 n1 = ((p3 - p1).cross(p4 - p1)).ANormalize();
 	const float3 n2 = ((p4 - p2).cross(p3 - p2)).ANormalize();
