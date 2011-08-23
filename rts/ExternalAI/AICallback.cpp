@@ -10,6 +10,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/TraceRay.h"
 #include "Game/GameSetup.h"
+#include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Game/SelectedUnits.h"
 #include "Game/InMapDraw.h"

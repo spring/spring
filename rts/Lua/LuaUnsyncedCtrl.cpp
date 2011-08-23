@@ -1,9 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
-#include "System/mmgr.h"
-
 #include "LuaUnsyncedCtrl.h"
+
 #include "LuaInclude.h"
 #include "LuaHandle.h"
 #include "LuaHashString.h"
@@ -11,13 +9,13 @@
 #include "LuaTextures.h"
 
 #include "ExternalAI/EngineOutHandler.h"
-
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/Game.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
+#include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Game/InMapDraw.h"
 #include "Game/InMapDrawModel.h"
@@ -56,6 +54,7 @@
 #include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
 #include "System/Util.h"
+#include "System/mmgr.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/FileSystem/FileHandler.h"

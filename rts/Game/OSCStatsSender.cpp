@@ -1,19 +1,22 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <boost/asio.hpp>
-
-#include "lib/streflop/streflop_cond.h"
-
 #include "OSCStatsSender.h"
-#include "lib/oscpack/OscOutboundPacketStream.h"
-#include "Game/Game.h"
-#include "Game/GameVersion.h"
-#include "Game/GlobalUnsynced.h"
-#include "Game/PlayerHandler.h"
+
+#include "Game.h"
+#include "GameVersion.h"
+#include "GlobalUnsynced.h"
+#include "Player.h"
+#include "PlayerHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Net/Socket.h"
+
+#include "lib/streflop/streflop_cond.h"
+#include "lib/oscpack/OscOutboundPacketStream.h"
+
+#include <boost/asio.hpp>
+
 
 CONFIG(bool, OscStatsSenderEnabled).defaultValue(false);
 CONFIG(std::string, OscStatsSenderDestinationAddress).defaultValue("127.0.0.1");

@@ -1,19 +1,15 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-/* based on code from GlobalSynced.{cpp,h} */
-
-#ifndef PLAYERHANDLER_H
-#define PLAYERHANDLER_H
-
-#include <assert.h>
-#include <vector>
+#ifndef PLAYER_HANDLER_H
+#define PLAYER_HANDLER_H
 
 #include "System/creg/creg_cond.h"
-#include "Player.h"
 
-#define PATHING_FLAG 0xFFFFFFFF
+#include <cassert>
+#include <vector>
 
 class CGameSetup;
+class CPlayer;
 
 
 class CPlayerHandler
@@ -44,7 +40,7 @@ public:
 	 */
 	int Player(const std::string& name) const;
 
-	void PlayerLeft(int playernum, unsigned char reason);
+	void PlayerLeft(int id, unsigned char reason);
 
 	/**
 	 * @brief Number of players the game was created for
@@ -80,7 +76,7 @@ public:
 	void AddPlayer(const CPlayer& player);
 
 private:
-	typedef std::vector<CPlayer *> playerVec;
+	typedef std::vector<CPlayer*> playerVec;
 	/**
 	 * @brief players
 	 *
@@ -91,4 +87,4 @@ private:
 
 extern CPlayerHandler* playerHandler;
 
-#endif // !PLAYERHANDLER_H
+#endif // !PLAYER_HANDLER_H

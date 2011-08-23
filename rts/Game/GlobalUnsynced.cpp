@@ -5,9 +5,10 @@
  * Contains implementation of synced and unsynced global stuff.
  */
 
-
 #include "GlobalUnsynced.h"
-#include "Game/PlayerHandler.h"
+
+#include "Player.h"
+#include "PlayerHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalConstants.h" // for RANDINT_MAX
 #include "Sim/Units/Unit.h" // required by CREG

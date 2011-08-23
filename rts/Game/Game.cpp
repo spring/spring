@@ -30,6 +30,7 @@
 #include "GlobalUnsynced.h"
 #include "LoadScreen.h"
 #include "SelectedUnits.h"
+#include "Player.h"
 #include "PlayerHandler.h"
 #include "PlayerRoster.h"
 #include "PlayerRosterDrawer.h"

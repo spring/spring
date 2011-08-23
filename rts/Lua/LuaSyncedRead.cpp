@@ -1,12 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <set>
-#include <list>
-#include <map>
-#include <cctype>
-
-#include "System/mmgr.h"
-
 #include "LuaSyncedRead.h"
 
 #include "LuaInclude.h"
@@ -23,6 +16,7 @@
 #include "Game/GameSetup.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
+#include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
@@ -71,6 +65,13 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
+#include "System/mmgr.h"
+
+#include <set>
+#include <list>
+#include <map>
+#include <cctype>
+
 
 using std::min;
 using std::max;

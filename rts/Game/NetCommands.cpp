@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "Game.h"
 #include "CameraHandler.h"
 #include "GameServer.h"
@@ -8,6 +7,7 @@
 #include "GameSetup.h"
 #include "GlobalUnsynced.h"
 #include "SelectedUnits.h"
+#include "Player.h"
 #include "PlayerHandler.h"
 #include "ChatMessage.h"
 #include "System/TimeProfiler.h"
