@@ -12,7 +12,6 @@
 # * GetFirstSubDirName
 # * CreateClasspath
 # * ConcatClasspaths
-# * IsMavenInstalled
 # * IsMavenProject
 # * FindManifestFile
 #
