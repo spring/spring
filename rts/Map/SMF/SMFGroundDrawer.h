@@ -62,9 +62,6 @@ private:
 	void SetupTextureUnits(bool drawReflection);
 	void ResetTextureUnits(bool drawReflection);
 
-	void UpdateCamRestraints(CCamera* camera);
-
-
 	CSMFReadMap* smfMap;
 
 	int viewRadius;
