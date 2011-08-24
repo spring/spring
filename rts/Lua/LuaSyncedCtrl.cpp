@@ -1717,9 +1717,9 @@ int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 	const float3 scales(xs, ys, zs);
 	const float3 offsets(xo, yo, zo);
 
-	if (vType >= CollisionVolume::COLVOL_NUM_SHAPES  ) { return 0; }
-	if (tType >= CollisionVolume::COLVOL_NUM_HITTESTS) { return 0; }
-	if (pAxis >= CollisionVolume::COLVOL_NUM_AXES    ) { return 0; }
+	if (vType >= CollisionVolume::COLVOL_NUM_SHAPES)   { luaL_argerror(L,  8, "invalid vType"); }
+	if (tType >= CollisionVolume::COLVOL_NUM_HITTESTS) { luaL_argerror(L,  9, "invalid tType"); }
+	if (pAxis >= CollisionVolume::COLVOL_NUM_AXES  )   { luaL_argerror(L, 10, "invalid pAxis"); }
 
 	unit->collisionVolume->Init(scales, offsets, vType, tType, pAxis);
 	return 0;
@@ -1729,32 +1729,48 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 {
 	const int argc = lua_gettop(L);
 
-	if ((argc != 11) && (argc != 14)) {
-		return 0;
+	// before 83 this function had additional arguments (that affect all units with the same unitdef)
+	// those arguments were removed, still the syntax is still supported. Only the values of the additional
+	// arguments are ignored!
+	if ((argc != 3) && (argc != 11) && (argc != 14)) {
+		luaL_error(L, "Incorrect arguments to SetUnitPieceCollisionVolumeData()");
 	}
 
+	// 1st argument: unitid
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
+		//luaL_argerror(L, 1, "invalid unitid");
 		return 0;
 	}
 
 	LocalModel* localModel = unit->localmodel;
 
+	// 2nd argument: piece index
 	const int  pieceIndex = luaL_checkint(L, 2);
-	bool enableLocal      = lua_toboolean(L, 3);
-	int arg = 4;
-	if (argc == 14) {
-		//! old syntax had 3 additional arguments that were dropped now
-		//! so skip 3rd, 4th & 6th argument
-		enableLocal = lua_toboolean(L, 5);
-		arg = 7;
-	}
-
 	if (pieceIndex < 0 || pieceIndex >= localModel->pieces.size()) {
-		return 0;
+		luaL_argerror(L, 2, "invalid piece index");
 	}
 
 	LocalModelPiece* lmp = localModel->pieces[pieceIndex];
+
+	// 3rd/5th argument: enable/disable colvol
+	bool enable = lua_toboolean(L, 3);
+	int arg = 4;
+	if (argc == 14) {
+		// old syntax had 3 additional arguments that were dropped now
+		// so skip 3rd, 4th & 6th argument
+		enable = lua_toboolean(L, 5);
+		arg = 7;
+	}
+	if (!enable) {
+		lmp->GetCollisionVolume()->Disable();
+		return 0;
+	}
+
+	// n-th arguments: colvol data
+	if ((argc != 11) && (argc != 14)) {
+		luaL_error(L, "Incorrect arguments to SetUnitPieceCollisionVolumeData()");
+	}
 
 	const float xs  = luaL_checkfloat(L, arg++);
 	const float ys  = luaL_checkfloat(L, arg++);
@@ -1769,16 +1785,12 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 	const float3 scales(xs, ys, zs);
 	const float3 offset(xo, yo, zo);
 
-	if (vType >= CollisionVolume::COLVOL_NUM_SHAPES) { return 0; }
-	if (pAxis >= CollisionVolume::COLVOL_NUM_AXES  ) { return 0; }
+	if (vType >= CollisionVolume::COLVOL_NUM_SHAPES) { luaL_argerror(L, arg - 2, "invalid vType"); }
+	if (pAxis >= CollisionVolume::COLVOL_NUM_AXES  ) { luaL_argerror(L, arg - 1, "invalid pAxis"); }
 
-	//! affects this unit only
-	if (enableLocal) {
-		lmp->GetCollisionVolume()->Init(scales, offset, vType, tType, pAxis);
-		lmp->GetCollisionVolume()->Enable();
-	} else {
-		lmp->GetCollisionVolume()->Disable();
-	}
+	// finish
+	lmp->GetCollisionVolume()->Init(scales, offset, vType, tType, pAxis);
+	lmp->GetCollisionVolume()->Enable();
 
 	return 0;
 }
