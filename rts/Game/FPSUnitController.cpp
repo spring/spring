@@ -37,13 +37,7 @@ FPSUnitController::FPSUnitController()
 {
 }
 
-void FPSUnitController::SetControlleeUnit(CUnit* unit) {
-	this->controllee = unit;
-}
 
-void FPSUnitController::SetControllerPlayer(CPlayer* controller) {
-	this->controller = controller;
-}
 
 void FPSUnitController::Update() {
 	const int piece = controllee->script->AimFromWeapon(0);
@@ -56,18 +50,11 @@ void FPSUnitController::Update() {
 
 	oldDCpos = pos;
 
-	float hitDist;
 	CUnit* hitUnit;
 	CFeature* hitFeature;
-	{
-		int origAllyTeam = gu->myAllyTeam;
-		gu->myAllyTeam = teamHandler->AllyTeam(controllee->team);
 
-		//hitDist = helper->TraceRayTeam(pos, dc->viewDir, controllee->maxRange, hit, 1, controllee, teamHandler->AllyTeam(team));
-		hitDist = TraceRay::GuiTraceRay(pos, viewDir, controllee->maxRange, true, controllee, hitUnit, hitFeature);
-
-		gu->myAllyTeam = origAllyTeam;
-	}
+	// SYNCED, do NOT use GuiTraceRay which also checks gu->spectatingFullView
+	float hitDist = TraceRay::TraceRay(pos, viewDir, controllee->maxRange, 0, controllee, hitUnit, hitFeature);
 
 	if (hitUnit) {
 		targetUnit = hitUnit;

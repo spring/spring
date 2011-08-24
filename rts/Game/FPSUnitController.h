@@ -12,8 +12,8 @@ class CPlayer;
 struct FPSUnitController {
 	FPSUnitController();
 
-	void SetControlleeUnit(CUnit* unit);
-	void SetControllerPlayer(CPlayer* controller);
+	void SetControlleeUnit(CUnit* controlleeUnit) { controllee = controlleeUnit; }
+	void SetControllerPlayer(CPlayer* controllerPlayer) { controller = controllerPlayer; }
 
 	void Update();
 	/**
