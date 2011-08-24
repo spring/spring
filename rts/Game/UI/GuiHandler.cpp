@@ -4296,18 +4296,25 @@ void CGuiHandler::SetBuildSpacing(int spacing)
 
 
 void CGuiHandler::PushLayoutCommand(const std::string& cmd, bool luaCmd) {
+#if defined(USE_GML) && GML_ENABLE_SIM
 	GML_RECMUTEX_LOCK(laycmd); // PushLayoutCommand
 
 	layoutCommands.push_back(cmd);
 	if(luaCmd)
 		hasLuaUILayoutCommands = true;
+#else
+	RunLayoutCommand(cmd);
+#endif
 }
 
 void CGuiHandler::RunLayoutCommands() {
-	bool luaCmd = false;
-	std::vector<std::string> layoutCmds;
+#if defined(USE_GML) && GML_ENABLE_SIM
+	if (layoutCommands.empty())
+		return;
 
-	if (!layoutCommands.empty()) {
+	bool luaCmd;
+	std::vector<std::string> layoutCmds;
+	{
 		GML_RECMUTEX_LOCK(laycmd); // RunLayoutCommands
 
 		layoutCmds.swap(layoutCommands);
@@ -4326,4 +4333,5 @@ void CGuiHandler::RunLayoutCommands() {
 			RunLayoutCommand(*cit);
 		}
 	}
+#endif
 }
