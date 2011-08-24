@@ -198,9 +198,7 @@ defaultBindings[] = {
 	{ "Any+f6",  "NoSound"               },
 	{ "Any+f7",  "DynamicSky"            },
 	{ "Ctrl+Shift+f8", "savegame" },
-#ifdef USE_GML
-	{ "Any+f9",  "showhealthbars" },
-#endif
+	{ "Any+f9",  "showhealthbars" }, // MT only
 	{ "Ctrl+Shift+f10", "createvideo" },
 	{ "Any+f11", "screenshot"     },
 	{ "Any+f12", "screenshot"     },

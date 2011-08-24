@@ -1240,15 +1240,16 @@ public:
 
 
 
-#ifdef USE_GML
 class ShowHealthBarsActionExecutor : public IUnsyncedActionExecutor {
 public:
 	ShowHealthBarsActionExecutor() : IUnsyncedActionExecutor("ShowHealthBars",
 			"Enable/Disable rendering of health-bars for units") {}
 
 	void Execute(const UnsyncedAction& action) const {
+#ifdef USE_GML
 		SetBoolArg(unitDrawer->showHealthBars, action.GetArgs());
 		LogSystemStatus("rendering of health-bars", unitDrawer->showHealthBars);
+#endif // USE_GML
 	}
 };
 
@@ -1260,14 +1261,14 @@ public:
 			"Enable/Disable rendering of resource-bars for features") {}
 
 	void Execute(const UnsyncedAction& action) const {
-
+#ifdef USE_GML
 		bool showResBars = featureDrawer->GetShowRezBars();
 		SetBoolArg(showResBars, action.GetArgs());
 		featureDrawer->SetShowRezBars(showResBars);
 		LogSystemStatus("rendering of resource-bars for features", featureDrawer->GetShowRezBars());
+#endif // USE_GML
 	}
 };
-#endif // USE_GML
 
 
 
@@ -3081,10 +3082,8 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new TrackActionExecutor());
 	AddActionExecutor(new TrackOffActionExecutor());
 	AddActionExecutor(new TrackModeActionExecutor());
-#ifdef USE_GML
-	AddActionExecutor(new ShowHealthBarsActionExecutor());
-	AddActionExecutor(new ShowRezurectionBarsActionExecutor());
-#endif // USE_GML
+	AddActionExecutor(new ShowHealthBarsActionExecutor()); // MT only
+	AddActionExecutor(new ShowRezurectionBarsActionExecutor()); // MT only
 	AddActionExecutor(new PauseActionExecutor());
 	AddActionExecutor(new DebugActionExecutor());
 	AddActionExecutor(new NoSoundActionExecutor());
