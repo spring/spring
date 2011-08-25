@@ -66,16 +66,19 @@ CGlobalRendering::CGlobalRendering() {
 	timeOffset = 0;
 
 	compressTextures = false;
-	atiHacks = false;
 	maxTextureSize = 1024;
+	supportNPOTs = false;
+	support24bitDepthBuffers = false;
+
+	haveGLSL = false;
+	haveARB = false;
+
+	haveATI = false;
+	atiHacks = false;
 
 	fullScreen = true;
 	dualScreenMiniMapOnLeft = false;
 	dualScreenMode = false;
-	haveGLSL = false;
-	haveARB = false;
-	supportNPOTs = false;
-	haveATI = false;
 	depthBufferBits = false;
 
 	winState = 0;
@@ -134,6 +137,14 @@ void CGlobalRendering::PostInit() {
 	//! maximum 2D texture size
 	{
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
+	}
+
+	// detect if GL_DEPTH_COMPONENT24 is supported (many ATIs don't do so)
+	{
+		GLint state = 0;
+		glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, 16, 16, 0, GL_LUMINANCE, GL_FLOAT, NULL);
+		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &state);
+		support24bitDepthBuffers = (state>0);
 	}
 
 	//! use some ATI bugfixes?
