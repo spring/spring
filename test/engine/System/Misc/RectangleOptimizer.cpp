@@ -18,10 +18,8 @@ static const int testRuns = 1000;
 static const int size = 100;
 static const int count_rects = 15;
 
-static CRectangleOptimizer ro;
-static std::vector<int> testMap(size * size, 0);
 
-int Test()
+int Test(std::vector<int>& testMap, CRectangleOptimizer& ro)
 {
 	//! clear testMap
 	testMap.resize(size * size, 0);
@@ -77,20 +75,20 @@ int Test()
 }
 
 
-static inline bool TestArea()
+static inline bool TestArea(std::vector<int>& testMap, CRectangleOptimizer& ro)
 {
 	for (int i=0; i<testRuns; ++i) {
-		if (Test() > 0)
+		if (Test(testMap, ro) > 0)
 			return false;
 	}
 	return true;
 }
 
 
-static inline bool TestOverlapping()
+static inline bool TestOverlapping(std::vector<int>& testMap, CRectangleOptimizer& ro)
 {
 	for (int i=0; i<testRuns; ++i) {
-		if (Test() < 0)
+		if (Test(testMap, ro) < 0)
 			return false;
 	}
 	return true;
@@ -101,6 +99,11 @@ BOOST_AUTO_TEST_CASE( RectangleOptimizer )
 {
 	srand( time(NULL) );
 
-	BOOST_CHECK_MESSAGE(TestArea(), "Optimized rectangles don't cover the same area!");
-	BOOST_CHECK_MESSAGE(TestOverlapping(), "Optimized rectangles still overlap!");
+	std::vector<int> testMap(size * size, 0);
+	CRectangleOptimizer ro;
+
+	BOOST_CHECK_MESSAGE(TestArea(testMap, ro),
+			"Optimized rectangles don't cover the same area!");
+	BOOST_CHECK_MESSAGE(TestOverlapping(testMap, ro),
+			"Optimized rectangles still overlap!");
 }
