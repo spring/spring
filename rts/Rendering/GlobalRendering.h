@@ -156,8 +156,6 @@ public:
 	 * Especially some ATI cards report that they support NPOTs, but they don't (or just very limited).
 	 */
 	bool supportNPOTs;
-	bool haveARB;
-	bool haveGLSL;
 
 	/**
 	 * @brief maxTextureSize
@@ -165,6 +163,20 @@ public:
 	 * maximum 2D texture size
 	 */
 	int maxTextureSize;
+
+	/**
+	 * @brief support24bitDepthBuffers
+	 *
+	 * if GL_DEPTH_COMPONENT24 is supported (many ATIs don't do so)
+	 */
+	bool support24bitDepthBuffers;
+
+	/**
+	 * Shader capabilities
+	 */
+	bool haveARB;
+	bool haveGLSL;
+
 
 	/**
 	 * @brief dual screen mode
