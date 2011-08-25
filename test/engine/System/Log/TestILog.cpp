@@ -71,7 +71,40 @@ static inline void test_log_sl(int line, output_test_stream& logStream,
 #define TLOG(fmt, ...) \
 	TLOG_SL(LOG_SECTION_DEFAULT, L_INFO, fmt, ##__VA_ARGS__)
 
+
+namespace {
+	class PrePostMainLogTest {
+	public:
+		PrePostMainLogTest() {
+
+			//output_test_stream logStream;
+			//log_sink_stream_setLogStream(&logStream);
+			LOG( "static ctor log test");
+			// We can not use Boost Test here, cause it is not yet initialized,
+			// so we depend on asserts spread throught the logging system.
+			//TLOG("static ctor log test");
+			//log_sink_stream_setLogStream(NULL);
+		}
+
+		~PrePostMainLogTest() {
+
+			//output_test_stream logStream;
+			//log_sink_stream_setLogStream(&logStream);
+			LOG( "static dtor log test");
+			// We can not use Boost Test here, cause it is already
+			// uninitialized, so we depend on asserts spread throught the
+			// logging system.
+			//TLOG("static dtor log test");
+			//log_sink_stream_setLogStream(NULL);
+		}
+	};
+}
+
+
 BOOST_FIXTURE_TEST_SUITE(everything, LogStream)
+
+// test if logging works very early & very late in program live-time
+static PrePostMainLogTest prePostMainLogTest;
 
 
 BOOST_AUTO_TEST_CASE(Default)
