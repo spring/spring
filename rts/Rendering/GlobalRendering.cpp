@@ -136,6 +136,14 @@ void CGlobalRendering::PostInit() {
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
 	}
 
+	// detect if GL_DEPTH_COMPONENT24 is supported (many ATIs don't do so)
+	{
+		GLint state;
+		glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, 16, 16, 0, GL_LUMINANCE, GL_FLOAT, NULL);
+		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &state);
+		support24bitDepthBuffers = (state>0);
+	}
+
 	//! use some ATI bugfixes?
 	const int atiHacksCfg = configHandler->GetInt("AtiHacks");
 	atiHacks = haveATI && (atiHacksCfg < 0); //! runtime detect

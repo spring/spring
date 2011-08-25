@@ -48,7 +48,7 @@ CONFIG(int, BumpWaterReflection).defaultValue(1);
 CONFIG(int, BumpWaterRefraction).defaultValue(1); // 0:=off, 1:=screencopy, 2:=own rendering cycle
 CONFIG(float, BumpWaterAnisotropy).defaultValue(0.0f);
 CONFIG(bool, BumpWaterUseDepthTexture).defaultValue(true);
-CONFIG(int, BumpWaterDepthBits).defaultValue(16);
+CONFIG(int, BumpWaterDepthBits).defaultValue(24);
 CONFIG(bool, BumpWaterBlurReflection).defaultValue(false);
 CONFIG(bool, BumpWaterShoreWaves).defaultValue(true);
 CONFIG(bool, BumpWaterEndlessOcean).defaultValue(true);
@@ -176,11 +176,9 @@ CBumpWater::CBumpWater()
 	refraction   = configHandler->GetInt("BumpWaterRefraction");
 	anisotropy   = configHandler->GetFloat("BumpWaterAnisotropy");
 	depthCopy    = configHandler->GetBool("BumpWaterUseDepthTexture");
-	if (configHandler->IsSet("BumpWaterDepthBits")) {
-		depthBits = configHandler->GetInt("BumpWaterDepthBits");
-	} else {
-		depthBits = (globalRendering->atiHacks) ? 16 : 24;
-	}
+	depthBits    = configHandler->GetInt("BumpWaterDepthBits");
+	if ((depthBits == 24) && !globalRendering->support24bitDepthBuffers)
+		depthBits = 16;
 	blurRefl     = configHandler->GetBool("BumpWaterBlurReflection");
 	shoreWaves   = (configHandler->GetBool("BumpWaterShoreWaves")) && mapInfo->water.shoreWaves;
 	endlessOcean = (configHandler->GetBool("BumpWaterEndlessOcean")) && mapInfo->water.hasWaterPlane
