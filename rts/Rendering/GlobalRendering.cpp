@@ -4,6 +4,7 @@
 #include "GlobalRendering.h"
 
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/FBO.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/mmgr.h"
 #include "System/Util.h"
@@ -141,10 +142,22 @@ void CGlobalRendering::PostInit() {
 
 	// detect if GL_DEPTH_COMPONENT24 is supported (many ATIs don't do so)
 	{
-		GLint state = 0;
+		// ATI seems to support GL_DEPTH_COMPONENT24 for static textures, but you can't render to them
+		/*GLint state = 0;
 		glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, 16, 16, 0, GL_LUMINANCE, GL_FLOAT, NULL);
 		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &state);
-		support24bitDepthBuffers = (state>0);
+		support24bitDepthBuffers = (state>0);*/
+
+		support24bitDepthBuffers = false;
+		if (FBO::IsSupported()) {
+			FBO fbo;
+			fbo.Bind();
+			fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT24, 16, 16);
+			const GLenum status = fbo.GetStatus();
+			fbo.Unbind();
+
+			support24bitDepthBuffers = (status == GL_FRAMEBUFFER_COMPLETE_EXT);
+		}
 	}
 
 	//! use some ATI bugfixes?
