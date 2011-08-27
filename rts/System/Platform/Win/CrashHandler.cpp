@@ -317,6 +317,8 @@ void OutputStacktrace() {
 	PRINT("MT with %d threads.", gmlThreadCount);
 #endif
 
+	EnterCriticalSection(&stackLock);
+
 	InitImageHlpDll();
 
 	// Record list of loaded DLLs.
@@ -328,6 +330,8 @@ void OutputStacktrace() {
 
 	// Unintialize IMAGEHLP.DLL
 	SymCleanup(GetCurrentProcess());
+
+	LeaveCriticalSection(&stackLock);
 
 	logOutput.Flush();
 }
