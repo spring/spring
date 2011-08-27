@@ -40,7 +40,7 @@ extern boost::mutex rflashmutex;
 extern boost::mutex rpiecemutex;
 extern boost::mutex rfeatmutex;
 extern boost::mutex drawmutex;
-extern boost::mutex recvmutex;
+extern boost::mutex scallmutex;
 extern boost::mutex ulbatchmutex;
 extern boost::mutex flbatchmutex;
 extern boost::mutex olbatchmutex;

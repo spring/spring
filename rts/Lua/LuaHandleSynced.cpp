@@ -91,7 +91,7 @@ void CLuaHandleSynced::UpdateThreading() {
 	singleState = (mtl == MT_LUA_NONE || mtl == MT_LUA_SINGLE || mtl == MT_LUA_SINGLE_BATCH);
 	copyExportTable = (mtl == MT_LUA_DUAL_EXPORT);
 	useEventBatch = false;
-	purgeRecvFromSyncedBatch = !singleState && (mtl != MT_LUA_DUAL_ALL);
+	purgeCallsFromSyncedBatch = !singleState && (mtl != MT_LUA_DUAL_ALL);
 }
 
 

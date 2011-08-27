@@ -68,7 +68,6 @@ class CLuaUI : public CLuaHandle
 	public: // custom call-in
 		bool HasUnsyncedXCall(lua_State* srcState, const string& funcName);
 		int UnsyncedXCall(lua_State* srcState, const string& funcName);
-		void ExecuteDelayedXCalls();
 		void ExecuteUIEventBatch();
 
 	protected:
@@ -106,7 +105,6 @@ class CLuaUI : public CLuaHandle
 
 		int UpdateUnsyncedXCalls(lua_State* L);
 		std::set<std::string> unsyncedXCalls;
-		std::vector<DelayDataDump> delayedXCall;
 		std::vector<LuaUIEvent> luaUIEventBatch;
 };
 
