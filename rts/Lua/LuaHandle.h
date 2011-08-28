@@ -273,15 +273,16 @@ class CLuaHandle : public CEventClient
 			} data;
 		};
 		struct DelayDataDump {
-			std::vector<DelayData> dd;
-			std::vector<LuaUtils::DataDump> com;
+			std::vector<DelayData> data;
+			std::vector<LuaUtils::DataDump> dump;
+			bool xcall;
 		};
 
-		void ExecuteRecvFromSynced();
+		void ExecuteCallsFromSynced(bool forced = true);
 		virtual void RecvFromSynced(int args);
 		void RecvFromSim(int args);
 		void DelayRecvFromSynced(lua_State* srcState, int args);
-		std::vector<DelayDataDump> delayedRecvFromSynced;
+		std::vector<DelayDataDump> delayedCallsFromSynced;
 		static int SendToUnsynced(lua_State* L);
 
 		void UpdateThreading();
@@ -304,8 +305,8 @@ class CLuaHandle : public CEventClient
 		static inline bool UseDualStates() { return (LUA_MT_OPT & LUA_STATE) && useDualStates; } // Is Lua handle splitting enabled (globally)?
 		bool useEventBatch;
 		inline bool UseEventBatch() const { return (LUA_MT_OPT & LUA_BATCH) && useEventBatch; } // Use event batch to forward "synced" luaui events into draw thread?
-		bool purgeRecvFromSyncedBatch;
-		inline bool PurgeRecvFromSyncedBatch() const { return (LUA_MT_OPT & LUA_STATE) && purgeRecvFromSyncedBatch; } // Automatically clean deleted objects from the SendToUnsynced batch
+		bool purgeCallsFromSyncedBatch;
+		inline bool PurgeCallsFromSyncedBatch() const { return (LUA_MT_OPT & LUA_STATE) && purgeCallsFromSyncedBatch; } // Automatically clean deleted objects/IDs from the SendToUnsynced/XCall batch
 
 		inline lua_State *GetActiveState() {
 			return (SingleState() || Threading::IsSimThread()) ? L_Sim : L_Draw;

@@ -317,17 +317,12 @@ void OutputStacktrace() {
 	PRINT("MT with %d threads.", gmlThreadCount);
 #endif
 
-	InitImageHlpDll();
-
-	// Record list of loaded DLLs.
-	PRINT("DLL information:");
-	SymEnumerateModules(GetCurrentProcess(), EnumModules, NULL);
+	PrepareStacktrace();
 
 	PRINT("Stacktrace:");
 	Stacktrace(NULL,NULL);
 
-	// Unintialize IMAGEHLP.DLL
-	SymCleanup(GetCurrentProcess());
+	CleanupStacktrace();
 
 	logOutput.Flush();
 }
