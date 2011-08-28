@@ -41,7 +41,7 @@ public:
 private:
 	void SetUniforms(); ///< @see #useUniforms
 	void SetupUniforms( std::string& definitions );
-	void GetUniformLocations();
+	void GetUniformLocations(const Shader::IProgramObject*);
 
 private:
 	//! coastmap (needed for shorewaves)

@@ -301,6 +301,7 @@ bool CUnitDrawer::LoadModelShaders()
 		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(12, sky->GetLight()->GetUnitShadowDensity());
 		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(15, 0); // numModelDynLights
 		modelShaders[MODEL_SHADER_S3O_SHADOW]->Disable();
+		modelShaders[MODEL_SHADER_S3O_SHADOW]->Validate();
 	}
 
 	if (shadowHandler->shadowsLoaded)

@@ -72,10 +72,12 @@ Shader::IProgramObject* CShaderHandler::CreateProgramObject(
 	po->AttachShaderObject(vso);
 	po->AttachShaderObject(fso);
 	po->Link();
+	po->Validate();
 
 	if (!po->IsValid()) {
-		LOG_L(L_WARNING, "[%s]\n\tprogram-object name: %s, link-log:\n%s",
-				__FUNCTION__, poName.c_str(), po->GetLog().c_str());
+		const char* fmt = "[%s]\n\tprogram-object name: %s, link-log:\n%s";
+		const char* log = po->GetLog().c_str();
+		LOG_L(L_WARNING, fmt, __FUNCTION__, poName.c_str(), log);
 	}
 	return po;
 }
