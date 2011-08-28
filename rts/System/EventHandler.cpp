@@ -505,14 +505,14 @@ void CEventHandler::DeleteSyncedFeatures() {
 void CEventHandler::UpdateProjectiles() { eventBatchHandler->UpdateProjectiles(); }
 void CEventHandler::UpdateDrawProjectiles() { eventBatchHandler->UpdateDrawProjectiles(); }
 void CEventHandler::DeleteSyncedProjectiles() {
-	if (luaRules) luaRules->ExecuteRecvFromSynced();
-	if (luaGaia) luaGaia->ExecuteRecvFromSynced();
+	if (luaRules) luaRules->ExecuteCallsFromSynced();
+	if (luaGaia) luaGaia->ExecuteCallsFromSynced();
 	eventBatchHandler->DeleteSyncedProjectiles();
 
 	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedProjectiles
 	if (luaUI) {
 		luaUI->ExecuteProjEventBatch();
-		luaUI->ExecuteRecvFromSynced();
+		luaUI->ExecuteCallsFromSynced();
 	}
 }
 
@@ -520,13 +520,13 @@ void CEventHandler::UpdateObjects() {
 	eventBatchHandler->UpdateObjects();
 }
 void CEventHandler::DeleteSyncedObjects() {
-	if (luaRules) luaRules->ExecuteRecvFromSynced();
-	if (luaGaia) luaGaia->ExecuteRecvFromSynced();
+	if (luaRules) luaRules->ExecuteCallsFromSynced();
+	if (luaGaia) luaGaia->ExecuteCallsFromSynced();
 
 	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedObjects
 	if (luaUI) { 
 		luaUI->ExecuteObjEventBatch();
-		luaUI->ExecuteRecvFromSynced();
+		luaUI->ExecuteCallsFromSynced();
 	}
 }
 

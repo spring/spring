@@ -240,7 +240,7 @@ boost::mutex rflashmutex;
 boost::mutex rpiecemutex;
 boost::mutex rfeatmutex;
 boost::mutex drawmutex;
-boost::mutex recvmutex;
+boost::mutex scallmutex;
 boost::mutex ulbatchmutex;
 boost::mutex flbatchmutex;
 boost::mutex olbatchmutex;

@@ -96,25 +96,25 @@ CLuaHandle::~CLuaHandle()
 		GetStaticLuaContextData(true).activeHandle = NULL;
 	}
 
-	for(int i = 0; i < delayedRecvFromSynced.size(); ++i) {
-		DelayDataDump &ddp = delayedRecvFromSynced[i];
-		for(int d = 0; d < ddp.dd.size(); ++d) {
-			DelayData &ddt = ddp.dd[d];
+	for(int i = 0; i < delayedCallsFromSynced.size(); ++i) {
+		DelayDataDump &ddp = delayedCallsFromSynced[i];
+		for(int d = 0; d < ddp.data.size(); ++d) {
+			DelayData &ddt = ddp.data[d];
 			if(ddt.type == LUA_TSTRING)
 				delete ddt.data.str;
 		}
 	}
-	delayedRecvFromSynced.clear();
+	delayedCallsFromSynced.clear();
 }
 
 
 void CLuaHandle::UpdateThreading() {
 	int mtl = globalConfig->GetMultiThreadLua();
-	useDualStates = (mtl == MT_LUA_DUAL_EXPORT || mtl == MT_LUA_DUAL || mtl == MT_LUA_DUAL_ALL);
-	singleState = (mtl != MT_LUA_DUAL_ALL);
+	useDualStates = (mtl == MT_LUA_DUAL_EXPORT || mtl == MT_LUA_DUAL || mtl == MT_LUA_DUAL_ALL || mtl == MT_LUA_DUAL_UNMANAGED);
+	singleState = (mtl != MT_LUA_DUAL_ALL && mtl != MT_LUA_DUAL_UNMANAGED);
 	copyExportTable = false;
 	useEventBatch = singleState && (mtl != MT_LUA_NONE && mtl != MT_LUA_SINGLE);
-	purgeRecvFromSyncedBatch = false;
+	purgeCallsFromSyncedBatch = useDualStates && (mtl != MT_LUA_DUAL_UNMANAGED);
 }
 
 
@@ -231,7 +231,7 @@ bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 void CLuaHandle::CheckStack()
 {
 	// FIXME WTF this has NOTHING to do with the stack! esp. it should be called AFTER the stack was checked
-	ExecuteRecvFromSynced();
+	ExecuteCallsFromSynced(false);
 	ExecuteUnitEventBatch();
 	ExecuteFeatEventBatch();
 	ExecuteObjEventBatch();
@@ -256,11 +256,13 @@ void CLuaHandle::RecvFromSynced(int args) {
 	static const LuaHashString cmdStr("RecvFromSynced");
 	//LUA_CALL_IN_CHECK(L); -- not valid here
 
+#if ((LUA_MT_OPT & LUA_STATE) && (LUA_MT_OPT & LUA_MUTEX))
 	if(!SingleState() && L == L_Sim) { // Sim thread sends to unsynced --> delay it
 		DelayRecvFromSynced(L, args);
 		return;
 	}
 	// Draw thread, delayed already, execute it
+#endif
 
 	if (!cmdStr.GetGlobalFunc(L))
 		return; // the call is not defined
@@ -279,7 +281,7 @@ void CLuaHandle::DelayRecvFromSynced(lua_State* srcState, int args) {
 		lua_rawget(srcState, LUA_GLOBALSINDEX);
 
 		if (lua_istable(srcState, -1))
-			LuaUtils::Backup(ddmp.com, srcState, 1);
+			LuaUtils::Backup(ddmp.dump, srcState, 1);
 		lua_pop(srcState, 1);
 	}
 
@@ -314,15 +316,17 @@ void CLuaHandle::DelayRecvFromSynced(lua_State* srcState, int args) {
 				break; // nil
 			}
 		}
-		ddmp.dd.push_back(ddata);
+		ddmp.data.push_back(ddata);
 	}
 
-	GML_STDMUTEX_LOCK(recv);
+	GML_STDMUTEX_LOCK(scall);
 
-	DelayDataDump ddtemp;
-	delayedRecvFromSynced.push_back(ddtemp);
-	delayedRecvFromSynced.back().dd.swap(ddmp.dd);
-	delayedRecvFromSynced.back().com.swap(ddmp.com);
+	delayedCallsFromSynced.push_back(DelayDataDump());
+
+	DelayDataDump& ddb = delayedCallsFromSynced.back();
+	ddb.data.swap(ddmp.data);
+	ddb.dump.swap(ddmp.dump);
+	ddb.xcall = false;
 }
 
 
@@ -353,84 +357,112 @@ int CLuaHandle::SendToUnsynced(lua_State* L)
 }
 
 
-void CLuaHandle::ExecuteRecvFromSynced() {
+void CLuaHandle::ExecuteCallsFromSynced(bool forced) {
+#if (LUA_MT_OPT & LUA_MUTEX)
 	SELECT_LUA_STATE();
-	if (SingleState() || ((L == L_Sim) && !PurgeRecvFromSyncedBatch()))
+	// non forced luaui should always execute? single state?
+	if ((SingleState() && (this != luaUI)) || (forced && !PurgeCallsFromSyncedBatch()))
 		return;
 
-	GML_THRMUTEX_LOCK(unit, GML_DRAW); // ExecuteRecvFromSynced
-	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteRecvFromSynced
-//	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteRecvFromSynced
+	GML_THRMUTEX_LOCK(obj, GML_DRAW); // ExecuteCallsFromSynced
 
 	std::vector<DelayDataDump> drfs;
 	{
-		GML_STDMUTEX_LOCK(recv); // ExecuteRecvFromSynced
+		GML_STDMUTEX_LOCK(scall); // ExecuteCallsFromSynced
 
-		if(delayedRecvFromSynced.empty())
+		if(delayedCallsFromSynced.empty())
 			return;
 
-		delayedRecvFromSynced.swap(drfs);
+		delayedCallsFromSynced.swap(drfs);
 	}
 
-	for(int i = 0; i < drfs.size(); ++i) {
+	GML_THRMUTEX_LOCK(unit, GML_DRAW); // ExecuteCallsFromSynced
+	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteCallsFromSynced
+//	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteCallsFromSynced
+
+	for (int i = 0; i < drfs.size(); ++i) {
 		DelayDataDump &ddp = drfs[i];
 
 		LUA_CALL_IN_CHECK(L);
 
-		if(CopyExportTable() && ddp.com.size() > 0) {
-			HSTR_PUSH(L, "UNSYNCED");
-			lua_rawget(L, LUA_REGISTRYINDEX);
+#if (LUA_MT_OPT & LUA_STATE)
+		if (!ddp.xcall) {
+			if (CopyExportTable() && ddp.dump.size() > 0) {
+				HSTR_PUSH(L, "UNSYNCED");
+				lua_rawget(L, LUA_REGISTRYINDEX);
 
-			HSTR_PUSH(L, "SYNCED");
-			lua_rawget(L, -2);
-			if (lua_getmetatable(L, -1)) {
-				HSTR_PUSH(L, "realTable");
+				HSTR_PUSH(L, "SYNCED");
 				lua_rawget(L, -2);
-				if (lua_istable(L, -1)) {
-					HSTR_PUSH(L, "EXPORT");
-					LuaUtils::Restore(ddp.com, L);
-					lua_rawset(L, -3);
+				if (lua_getmetatable(L, -1)) {
+					HSTR_PUSH(L, "realTable");
+					lua_rawget(L, -2);
+					if (lua_istable(L, -1)) {
+						HSTR_PUSH(L, "EXPORT");
+						LuaUtils::Restore(ddp.dump, L);
+						lua_rawset(L, -3);
+					}
+					lua_pop(L, 2);
 				}
 				lua_pop(L, 2);
 			}
-			lua_pop(L, 2);
+
+			int ddsize = ddp.data.size();
+			if (ddsize > 0) {
+				lua_checkstack(L, ddsize + 2);
+
+				for (int d = 0; d < ddsize; ++d) {
+					DelayData &ddt = ddp.data[d];
+					switch (ddt.type) {
+						case LUA_TBOOLEAN: {
+							lua_pushboolean(L, ddt.data.bol);
+							break;
+						}
+						case LUA_TNUMBER: {
+							lua_pushnumber(L, ddt.data.num);
+							break;
+						}
+						case LUA_TSTRING: {
+							lua_pushlstring(L, ddt.data.str->c_str(), ddt.data.str->size());
+							delete ddt.data.str;
+							break;
+						}
+						case LUA_TNIL: {
+							lua_pushnil(L);
+							break;
+						}
+						default: {
+							lua_pushnil(L);
+							LOG_L(L_WARNING, "RecvFromSynced (execute): Invalid type for argument %d", d + 1);
+							break; // unhandled type
+						}
+					}
+				}
+
+				RecvFromSynced(ddsize);
+			}
 		}
+		else
+#endif // (LUA_MT_OPT & LUA_STATE)
+		{
+			if (ddp.data.size() == 1) {
+				DelayData dd = ddp.data[0];
+				if (dd.type == LUA_TSTRING) {
+					const LuaHashString funcHash(*dd.data.str);
+					delete dd.data.str;
+					if (funcHash.GetGlobalFunc(L)) {
+						const int top = lua_gettop(L) - 1;
 
-		int ddsize = ddp.dd.size();
-		if(ddsize > 0) {
-			lua_checkstack(L, ddsize + 2);
+						LuaUtils::Restore(ddp.dump, L);
 
-			for(int d = 0; d < ddsize; ++d) {
-				DelayData &ddt = ddp.dd[d];
-				switch (ddt.type) {
-					case LUA_TBOOLEAN: {
-						lua_pushboolean(L, ddt.data.bol);
-						break;
-					}
-					case LUA_TNUMBER: {
-						lua_pushnumber(L, ddt.data.num);
-						break;
-					}
-					case LUA_TSTRING: {
-						lua_pushlstring(L, ddt.data.str->c_str(), ddt.data.str->size());
-						delete ddt.data.str;
-						break;
-					}
-					case LUA_TNIL: {
-						lua_pushnil(L);
-						break;
-					}
-					default: {
-						lua_pushnil(L);
-						LOG_L(L_WARNING, "RecvFromSynced (execute): Invalid type for argument %d", d + 1);
-						break; // unhandled type
+						RunCallIn(funcHash, ddp.dump.size(), LUA_MULTRET);
+
+						lua_settop(L, top);
 					}
 				}
 			}
-
-			RecvFromSynced(ddsize);
 		}
 	}
+#endif // (LUA_MT_OPT & LUA_MUTEX)
 }
 
 

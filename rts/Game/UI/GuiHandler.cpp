@@ -1656,7 +1656,8 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 
 void CGuiHandler::RunLayoutCommand(const std::string& command)
 {
-	if (command == "reload" || ((LUA_MT_OPT & LUA_STATE) && globalConfig->GetMultiThreadLua() == MT_LUA_DUAL_ALL && command == "update")) {
+	if (command == "reload" || ((LUA_MT_OPT & LUA_STATE) && (globalConfig->GetMultiThreadLua() == MT_LUA_DUAL_ALL || 
+								globalConfig->GetMultiThreadLua() == MT_LUA_DUAL_UNMANAGED) && command == "update")) {
 		if (CLuaHandle::GetActiveHandle() != NULL) {
 			// NOTE: causes a SEGV through RunCallIn()
 			LOG_L(L_WARNING, "Can not reload from within LuaUI, yet");

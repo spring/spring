@@ -87,11 +87,11 @@ CLuaHandleSynced::~CLuaHandleSynced()
 
 void CLuaHandleSynced::UpdateThreading() {
 	int mtl = globalConfig->GetMultiThreadLua();
-	useDualStates = (mtl == MT_LUA_DUAL_EXPORT || mtl == MT_LUA_DUAL || mtl == MT_LUA_DUAL_ALL);
+	useDualStates = (mtl == MT_LUA_DUAL_EXPORT || mtl == MT_LUA_DUAL || mtl == MT_LUA_DUAL_ALL || mtl == MT_LUA_DUAL_UNMANAGED);
 	singleState = (mtl == MT_LUA_NONE || mtl == MT_LUA_SINGLE || mtl == MT_LUA_SINGLE_BATCH);
 	copyExportTable = (mtl == MT_LUA_DUAL_EXPORT);
 	useEventBatch = false;
-	purgeRecvFromSyncedBatch = !singleState && (mtl != MT_LUA_DUAL_ALL);
+	purgeCallsFromSyncedBatch = !singleState && (mtl != MT_LUA_DUAL_UNMANAGED);
 }
 
 

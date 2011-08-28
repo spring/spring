@@ -2095,7 +2095,7 @@ public:
 		SetBoolArg(showMTInfo, action.GetArgs());
 		configHandler->Set("ShowMTInfo", showMTInfo ? 1 : 0);
 		int mtl = globalConfig->GetMultiThreadLua();
-		game->showMTInfo = (showMTInfo && (mtl != MT_LUA_DUAL && mtl != MT_LUA_DUAL_ALL)) ? mtl : MT_LUA_NONE;
+		game->showMTInfo = (showMTInfo && (mtl != MT_LUA_DUAL && mtl != MT_LUA_DUAL_ALL && mtl != MT_LUA_DUAL_UNMANAGED)) ? mtl : MT_LUA_NONE;
 	}
 };
 
