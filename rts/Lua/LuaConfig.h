@@ -26,6 +26,7 @@ enum {
 	MT_LUA_DUAL_EXPORT,
 	MT_LUA_DUAL,
 	MT_LUA_DUAL_ALL,
+	MT_LUA_DUAL_UNMANAGED,
 	MT_LUA_SIZE,
 	MT_LUA_LAST = MT_LUA_SIZE - 1
 };
@@ -36,5 +37,6 @@ enum {
 // MT_LUA_DUAL_EXPORT: Dual states for synced, batching of unsynced events, synced/unsynced communication via EXPORT table and SendToUnsynced
 // MT_LUA_DUAL: Dual states for synced, batching of unsynced events, synced/unsynced communication via SendToUnsynced only
 // MT_LUA_DUAL_ALL: Dual states for all, all synced/unsynced communication (widgets included) via SendToUnsynced only
+// MT_LUA_DUAL_UNMANAGED: Dual states for all, all synced/unsynced communication (widgets included) is unmanaged and via SendToUnsynced only
 
 #endif // LUA_CONFIG_H

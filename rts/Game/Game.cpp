@@ -324,7 +324,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	}
 
 	int mtl = globalConfig->GetMultiThreadLua();
-	showMTInfo = (showMTInfo && (mtl != MT_LUA_DUAL && mtl != MT_LUA_DUAL_ALL)) ? mtl : MT_LUA_NONE;
+	showMTInfo = (showMTInfo && (mtl != MT_LUA_DUAL && mtl != MT_LUA_DUAL_ALL && mtl != MT_LUA_DUAL_UNMANAGED)) ? mtl : MT_LUA_NONE;
 
 	if (!sideParser.Load()) {
 		throw content_error(sideParser.GetErrorLog());
