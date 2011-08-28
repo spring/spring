@@ -244,6 +244,7 @@ bool CSMFGroundDrawer::LoadMapShaders() {
 				smfShaders[i]->SetUniform1i(28, 12); // lightEmisionTex (idx 28, texunit 12)
 				smfShaders[i]->SetUniform1i(29,  0); // numMapDynLights (unused)
 				smfShaders[i]->Disable();
+				smfShaders[i]->Validate();
 			}
 		}
 	}

@@ -9,8 +9,8 @@
 namespace Shader {
 	struct IShaderObject {
 	public:
-		IShaderObject(int shType = -1, const std::string& shSrc = ""):
-			objID(0), type(shType), valid(false), src(shSrc), log("") {
+		IShaderObject(int shType, const std::string& shSrc):
+			objID(0), type(shType), valid(false), src(shSrc) {
 		}
 		virtual ~IShaderObject() {
 		}
@@ -51,12 +51,13 @@ namespace Shader {
 
 	struct IProgramObject {
 	public:
-		IProgramObject(): objID(0), valid(false), log("") {}
+		IProgramObject(): objID(0), valid(false) {}
 		virtual ~IProgramObject() {}
 
 		virtual void Enable() const {}
 		virtual void Disable() const {}
 		virtual void Link() {}
+		virtual void Validate() {}
 		virtual void Release();
 
 		virtual void SetUniformTarget(int) {}
@@ -142,6 +143,7 @@ namespace Shader {
 		void Enable() const;
 		void Disable() const;
 		void Link();
+		void Validate();
 		void Release();
 
 		void SetUniformLocation(const std::string&);

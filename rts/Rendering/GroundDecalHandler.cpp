@@ -189,6 +189,7 @@ void CGroundDecalHandler::LoadDecalShaders() {
 			decalShaders[DECAL_SHADER_GLSL]->SetUniform2f(3, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
 			decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sky->GetLight()->GetGroundShadowDensity());
 			decalShaders[DECAL_SHADER_GLSL]->Disable();
+			decalShaders[DECAL_SHADER_GLSL]->Validate();
 
 			decalShaders[DECAL_SHADER_CURR] = decalShaders[DECAL_SHADER_GLSL];
 		}

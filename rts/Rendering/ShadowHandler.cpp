@@ -164,9 +164,9 @@ void CShadowHandler::LoadShadowGenShaderProgs()
 			po->SetUniformLocation("cameraDirX");    // used by SHADOWGEN_PROGRAM_TREE_NEAR
 			po->SetUniformLocation("cameraDirY");    // used by SHADOWGEN_PROGRAM_TREE_NEAR
 			po->SetUniformLocation("treeOffset");    // used by SHADOWGEN_PROGRAM_TREE_NEAR
+			po->Validate();
 
 			shadowGenProgs[i] = po;
-
 		}
 	} else {
 		for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
