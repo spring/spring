@@ -110,11 +110,11 @@ CLuaHandle::~CLuaHandle()
 
 void CLuaHandle::UpdateThreading() {
 	int mtl = globalConfig->GetMultiThreadLua();
-	useDualStates = (mtl == MT_LUA_DUAL_EXPORT || mtl == MT_LUA_DUAL || mtl == MT_LUA_DUAL_ALL);
-	singleState = (mtl != MT_LUA_DUAL_ALL);
+	useDualStates = (mtl == MT_LUA_DUAL_EXPORT || mtl == MT_LUA_DUAL || mtl == MT_LUA_DUAL_ALL || mtl == MT_LUA_DUAL_UNMANAGED);
+	singleState = (mtl != MT_LUA_DUAL_ALL && mtl != MT_LUA_DUAL_UNMANAGED);
 	copyExportTable = false;
 	useEventBatch = singleState && (mtl != MT_LUA_NONE && mtl != MT_LUA_SINGLE);
-	purgeCallsFromSyncedBatch = false;
+	purgeCallsFromSyncedBatch = useDualStates && (mtl != MT_LUA_DUAL_UNMANAGED);
 }
 
 
@@ -231,7 +231,7 @@ bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 void CLuaHandle::CheckStack()
 {
 	// FIXME WTF this has NOTHING to do with the stack! esp. it should be called AFTER the stack was checked
-	ExecuteCallsFromSynced();
+	ExecuteCallsFromSynced(false);
 	ExecuteUnitEventBatch();
 	ExecuteFeatEventBatch();
 	ExecuteObjEventBatch();
@@ -357,10 +357,11 @@ int CLuaHandle::SendToUnsynced(lua_State* L)
 }
 
 
-void CLuaHandle::ExecuteCallsFromSynced() {
+void CLuaHandle::ExecuteCallsFromSynced(bool forced) {
 #if (LUA_MT_OPT & LUA_MUTEX)
 	SELECT_LUA_STATE();
-	if ((SingleState() && (this != luaUI)) || ((L == L_Sim) && !PurgeCallsFromSyncedBatch()))
+	// non forced luaui should always execute? single state?
+	if ((SingleState() && (this != luaUI)) || (forced && !PurgeCallsFromSyncedBatch()))
 		return;
 
 	GML_THRMUTEX_LOCK(obj, GML_DRAW); // ExecuteCallsFromSynced
