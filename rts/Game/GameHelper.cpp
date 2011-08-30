@@ -1,10 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
+#include "GameHelper.h"
 
 #include "Camera.h"
 #include "GameSetup.h"
-#include "GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 #include "UI/LuaUI.h"
 #include "Lua/LuaRules.h"
@@ -35,6 +34,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
+#include "System/mmgr.h"
 #include "System/myMath.h"
 #include "System/Sync/SyncTracer.h"
 
@@ -837,11 +837,6 @@ void CGameHelper::BuggerOff(float3 pos, float radius, bool spherical, bool force
 	}
 }
 
-
-float3 CGameHelper::Pos2BuildPos(const float3& pos, const UnitDef* ud, bool synced)
-{
-	return Pos2BuildPos(BuildInfo(ud, pos, 0), synced);
-}
 
 float3 CGameHelper::Pos2BuildPos(const BuildInfo& buildInfo, bool synced)
 {
