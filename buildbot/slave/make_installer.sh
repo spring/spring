@@ -50,9 +50,6 @@ for file in spring-dedicated.exe spring-headless.exe ArchiveMover.exe; do
 	${SEVENZIP} ${TMP_PATH}/${VERSION}_${name}.7z ${file}
 done
 
-#compress shard
-${SEVENZIP} ${TMP_PATH}/${VERSION}_Shard.7z AI/Skirmish/Shard -xr!*.dbg
-
 #create archives for translate_stacktrace.py
 for tocompress in ${EXECUTABLES}; do
 	#get parent-parent-directory name of file
