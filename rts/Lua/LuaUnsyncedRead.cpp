@@ -730,8 +730,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 			//! if we see nearly all features, it is just faster to check them all, instead of doing slow duplication checks
 			if (teamID >= 0) {
 				unitSets.push_back(&teamHandler->Team(teamID)->units);
-			}
-			else {
+			} else {
 				for (int t = 0; t < teamHandler->ActiveTeams(); t++) {
 					if ((teamID == AllUnits) ||
 						((teamID == AllyUnits)  && (allyTeamID == teamHandler->AllyTeam(t))) ||
@@ -839,8 +838,6 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	// arg 4 - noGeos
 	const bool noGeos = lua_isboolean(L, 4) && !lua_toboolean(L, 4);
 
-	const float maxDist = 6000.0f; //from FeatureHandler.cpp
-
 	bool scanAll = false;
 	static CFeatureSet visQuadFeatures;
 
@@ -850,7 +847,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	{
 		GML_RECMUTEX_LOCK(quad); // GetVisibleFeatures
 
-		readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, maxDist, &quadIter, INT_MAX);
+		readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 3000.0f * 2.0f, &quadIter, INT_MAX);
 
 		lua_createtable(L, quadIter.count, 0);
 

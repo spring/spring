@@ -578,15 +578,15 @@ void CSMFReadMap::DrawMinimap() const
 }
 
 
-void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CReadMap::IQuadDrawer *qd, int extraSize)
+void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CReadMap::IQuadDrawer* qd, int extraSize)
 {
-	const int cx = (int)(cam->pos.x / (SQUARE_SIZE * quadSize));
-	const int cy = (int)(cam->pos.z / (SQUARE_SIZE * quadSize));
+	const int cx = cam->pos.x / (SQUARE_SIZE * quadSize);
+	const int cy = cam->pos.z / (SQUARE_SIZE * quadSize);
 
 	const int drawSquare = int(maxdist / (SQUARE_SIZE * quadSize)) + 1;
 
-	const int drawQuadsX = (int)(gs->mapx / quadSize);
-	const int drawQuadsY = (int)(gs->mapy / quadSize);
+	const int drawQuadsX = gs->mapx / quadSize;
+	const int drawQuadsY = gs->mapy / quadSize;
 
 	int sy = cy - drawSquare;
 	int ey = cy + drawSquare;
@@ -609,15 +609,17 @@ void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 	//     by SMFGroundDrawer::UpdateCamRestraints, and older code
 	//     iterated over SMFGroundDrawer::{left, right})
 	// UpdateCamRestraints(cam);
-	CCamera *fcam = cam2;
-	if (extraSize == INT_MAX) { // When called from within Lua, camera may not be updated
+	CCamera* frustumCam = cam2;
+
+	// When called from within Lua for GetVisible{Units, Features}, camera might not be updated
+	if (extraSize == INT_MAX) {
 		extraSize = 0;
-		readmap->GetGroundDrawer()->UpdateCamRestraints(cam);
-		fcam = cam;
+		frustumCam = cam;
+		groundDrawer->UpdateCamRestraints(frustumCam);
 	}
 
-	const std::vector<CCamera::FrustumLine>& left = fcam->leftFrustumSides;
-	const std::vector<CCamera::FrustumLine>& right = fcam->rightFrustumSides;
+	const std::vector<CCamera::FrustumLine>& left = frustumCam->leftFrustumSides;
+	const std::vector<CCamera::FrustumLine>& right = frustumCam->rightFrustumSides;
 
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
