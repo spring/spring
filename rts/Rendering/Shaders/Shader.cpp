@@ -165,10 +165,10 @@ namespace Shader {
 		if (IS_GL_FUNCTION_AVAILABLE(glLinkProgram)) {
 			glLinkProgram(objID);
 			glGetProgramInfoLog(objID, 65536, &logStrLen, logStr);
+			glGetProgramiv(objID, GL_LINK_STATUS, &linked);
+
 			// append the link-log
 			log += std::string(logStr);
-
-			glGetProgramiv(objID, GL_LINK_STATUS, &linked);
 		}
 
 		valid = bool(linked);
@@ -183,10 +183,10 @@ namespace Shader {
 		if (IS_GL_FUNCTION_AVAILABLE(glValidateProgram)) {
 			glValidateProgram(objID);
 			glGetProgramInfoLog(objID, 65536, &logStrLen, logStr);
+			glGetProgramiv(objID, GL_VALIDATE_STATUS, &validated);
+
 			// append the validation-log
 			log += std::string(logStr);
-
-			glGetProgramiv(objID, GL_VALIDATE_STATUS, &validated);
 		}
 
 		valid = valid && bool(validated);
