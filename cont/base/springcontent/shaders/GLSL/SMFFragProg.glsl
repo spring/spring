@@ -175,17 +175,18 @@ void main() {
 			vec4 waterHeightColor;
 				waterHeightColor.rgb = max(waterMinColor.rgb, waterBaseColor.rgb - (waterAbsorbColor.rgb * vertexStepHeight)) * SMF_INTENSITY_MUL;
 				waterHeightColor.a = max(0.0, (255.0 + 10.0 * vertexWorldPos.y) / 255.0);
+			vec3 waterShadeMul;
 
 			if (vertexWorldPos.y > -10.0) {
-				shadeInt.rgb =
+				waterShadeMul =
 					(diffuseInt.rgb * (1.0 - (-vertexWorldPos.y * 0.1))) +
 					(waterHeightColor.rgb * (0.0 + (-vertexWorldPos.y * 0.1)) * waterLightInt);
 			} else {
-				shadeInt.rgb = waterHeightColor.rgb * waterLightInt;
+				waterShadeMul = waterHeightColor.rgb * waterLightInt;
 			}
 
+			shadeInt.rgb *= waterShadeMul;
 			shadeInt.a = waterHeightColor.a;
-			shadeInt *= shadowInt;
 		}
 	#endif
 
