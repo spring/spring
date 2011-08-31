@@ -29,6 +29,7 @@ void CRefractWater::LoadGfx()
 	glBindTexture(target, subSurfaceTex);
 	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
 	if (target == GL_TEXTURE_RECTANGLE_ARB) {
 		glTexImage2D(target, 0, 3, globalRendering->viewSizeX, globalRendering->viewSizeY, 0, GL_RGB, GL_INT, 0);
 		waterFP = LoadFragmentProgram("ARB/waterRefractTR.fp");
