@@ -824,17 +824,17 @@ int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 		if (srcState != L) {
 			DelayDataDump ddmp;
 
-			LuaUtils::DelayData ddata;
-			ddata.type = LUA_TSTRING;
+			LuaUtils::ShallowDataDump sdd;
+			sdd.type = LUA_TSTRING;
 
 			size_t len = funcName.length();
-			ddata.data.str = new std::string;
+			sdd.data.str = new std::string;
 			if (len > 0) {
-				ddata.data.str->resize(len);
-				memcpy(&(*ddata.data.str)[0], funcName.c_str(), len);
+				sdd.data.str->resize(len);
+				memcpy(&(*sdd.data.str)[0], funcName.c_str(), len);
 			}
 
-			ddmp.data.push_back(ddata);
+			ddmp.data.push_back(sdd);
 
 			LuaUtils::Backup(ddmp.dump, srcState, lua_gettop(srcState));
 

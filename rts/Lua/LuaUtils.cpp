@@ -224,7 +224,7 @@ static bool RestoreTable(const LuaUtils::DataDump &d, lua_State* dst, int depth)
 }
 
 
-int LuaUtils::Backup(std::vector<LuaUtils::DataDump> &dv, lua_State* src, int count) {
+int LuaUtils::Backup(std::vector<LuaUtils::DataDump> &backup, lua_State* src, int count) {
 	const int srcTop = lua_gettop(src);
 	if (srcTop < count)
 		return 0;
@@ -232,20 +232,20 @@ int LuaUtils::Backup(std::vector<LuaUtils::DataDump> &dv, lua_State* src, int co
 	const int startIndex = (srcTop - count + 1);
 	const int endIndex   = srcTop;
 	for (int i = startIndex; i <= endIndex; i++) {
-		dv.push_back(DataDump());
-		BackupData(dv.back(), src, i, 0);
+		backup.push_back(DataDump());
+		BackupData(backup.back(), src, i, 0);
 	}
 
 	return count;
 }
 
 
-int LuaUtils::Restore(const std::vector<LuaUtils::DataDump> &dv, lua_State* dst) {
+int LuaUtils::Restore(const std::vector<LuaUtils::DataDump> &backup, lua_State* dst) {
 	const int dstTop = lua_gettop(dst);
-	int count = dv.size();
+	int count = backup.size();
 	lua_checkstack(dst, count); // FIXME: not enough for table chains
 
-	for (std::vector<DataDump>::const_iterator i = dv.begin(); i != dv.end(); ++i) {
+	for (std::vector<DataDump>::const_iterator i = backup.begin(); i != backup.end(); ++i) {
 		RestoreData(*i, dst, 0);
 	}
 	lua_settop(dst, dstTop + count);
@@ -254,7 +254,7 @@ int LuaUtils::Restore(const std::vector<LuaUtils::DataDump> &dv, lua_State* dst)
 }
 
 
-int LuaUtils::ShallowBackup(std::vector<LuaUtils::DelayData> &dv, lua_State* src, int count) {
+int LuaUtils::ShallowBackup(std::vector<LuaUtils::ShallowDataDump> &backup, lua_State* src, int count) {
 	const int srcTop = lua_gettop(src);
 	if (srcTop < count)
 		return 0;
@@ -264,24 +264,24 @@ int LuaUtils::ShallowBackup(std::vector<LuaUtils::DelayData> &dv, lua_State* src
 
 	for(int i = startIndex; i <= endIndex; ++i) {
 		const int type = lua_type(src, i);
-		DelayData ddata;
-		ddata.type = type;
+		ShallowDataDump sdd;
+		sdd.type = type;
 		switch (type) {
 			case LUA_TBOOLEAN: {
-				ddata.data.bol = lua_toboolean(src, i);
+				sdd.data.bol = lua_toboolean(src, i);
 				break;
 			}
 			case LUA_TNUMBER: {
-				ddata.data.num = lua_tonumber(src, i);
+				sdd.data.num = lua_tonumber(src, i);
 				break;
 			}
 			case LUA_TSTRING: {
 				size_t len = 0;
 				const char* data = lua_tolstring(src, i, &len);
-				ddata.data.str = new std::string;
+				sdd.data.str = new std::string;
 				if (len > 0) {
-					ddata.data.str->resize(len);
-					memcpy(&(*ddata.data.str)[0], data, len);
+					sdd.data.str->resize(len);
+					memcpy(&(*sdd.data.str)[0], data, len);
 				}
 				break;
 			}
@@ -293,31 +293,31 @@ int LuaUtils::ShallowBackup(std::vector<LuaUtils::DelayData> &dv, lua_State* src
 				break; // nil
 			}
 		}
-		dv.push_back(ddata);
+		backup.push_back(sdd);
 	}
 
 	return count;
 }
 
 
-int LuaUtils::ShallowRestore(const std::vector<LuaUtils::DelayData> &dv, lua_State* dst) {
-	int count = dv.size();
+int LuaUtils::ShallowRestore(const std::vector<LuaUtils::ShallowDataDump> &backup, lua_State* dst) {
+	int count = backup.size();
 	lua_checkstack(dst, count);
 
 	for (int d = 0; d < count; ++d) {
-		const DelayData &ddt = dv[d];
-		switch (ddt.type) {
+		const ShallowDataDump &sdd = backup[d];
+		switch (sdd.type) {
 			case LUA_TBOOLEAN: {
-				lua_pushboolean(dst, ddt.data.bol);
+				lua_pushboolean(dst, sdd.data.bol);
 				break;
 			}
 			case LUA_TNUMBER: {
-				lua_pushnumber(dst, ddt.data.num);
+				lua_pushnumber(dst, sdd.data.num);
 				break;
 			}
 			case LUA_TSTRING: {
-				lua_pushlstring(dst, ddt.data.str->c_str(), ddt.data.str->size());
-				delete ddt.data.str;
+				lua_pushlstring(dst, sdd.data.str->c_str(), sdd.data.str->size());
+				delete sdd.data.str;
 				break;
 			}
 			case LUA_TNIL: {
