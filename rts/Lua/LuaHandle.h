@@ -265,7 +265,7 @@ class CLuaHandle : public CEventClient
 		}
 
 		struct DelayDataDump {
-			std::vector<LuaUtils::DelayData> data;
+			std::vector<LuaUtils::ShallowDataDump> data;
 			std::vector<LuaUtils::DataDump> dump;
 			bool xcall;
 		};

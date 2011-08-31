@@ -99,9 +99,9 @@ CLuaHandle::~CLuaHandle()
 	for(int i = 0; i < delayedCallsFromSynced.size(); ++i) {
 		DelayDataDump &ddp = delayedCallsFromSynced[i];
 		for(int d = 0; d < ddp.data.size(); ++d) {
-			LuaUtils::DelayData &ddt = ddp.data[d];
-			if(ddt.type == LUA_TSTRING)
-				delete ddt.data.str;
+			LuaUtils::ShallowDataDump &sdd = ddp.data[d];
+			if(sdd.type == LUA_TSTRING)
+				delete sdd.data.str;
 		}
 	}
 	delayedCallsFromSynced.clear();
@@ -386,10 +386,10 @@ bool CLuaHandle::ExecuteCallsFromSynced(bool forced) {
 #endif // (LUA_MT_OPT & LUA_STATE)
 		{
 			if (ddp.data.size() == 1) {
-				LuaUtils::DelayData dd = ddp.data[0];
-				if (dd.type == LUA_TSTRING) {
-					const LuaHashString funcHash(*dd.data.str);
-					delete dd.data.str;
+				LuaUtils::ShallowDataDump sdd = ddp.data[0];
+				if (sdd.type == LUA_TSTRING) {
+					const LuaHashString funcHash(*sdd.data.str);
+					delete sdd.data.str;
 					if (funcHash.GetGlobalFunc(L)) {
 						const int top = lua_gettop(L) - 1;
 
