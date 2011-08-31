@@ -254,6 +254,87 @@ int LuaUtils::Restore(const std::vector<LuaUtils::DataDump> &dv, lua_State* dst)
 }
 
 
+int LuaUtils::ShallowBackup(std::vector<LuaUtils::DelayData> &dv, lua_State* src, int count) {
+	const int srcTop = lua_gettop(src);
+	if (srcTop < count)
+		return 0;
+
+	const int startIndex = (srcTop - count + 1);
+	const int endIndex   = srcTop;
+
+	for(int i = startIndex; i <= endIndex; ++i) {
+		const int type = lua_type(src, i);
+		DelayData ddata;
+		ddata.type = type;
+		switch (type) {
+			case LUA_TBOOLEAN: {
+				ddata.data.bol = lua_toboolean(src, i);
+				break;
+			}
+			case LUA_TNUMBER: {
+				ddata.data.num = lua_tonumber(src, i);
+				break;
+			}
+			case LUA_TSTRING: {
+				size_t len = 0;
+				const char* data = lua_tolstring(src, i, &len);
+				ddata.data.str = new std::string;
+				if (len > 0) {
+					ddata.data.str->resize(len);
+					memcpy(&(*ddata.data.str)[0], data, len);
+				}
+				break;
+			}
+			case LUA_TNIL: {
+				break;
+			}
+			default: {
+				LOG_L(L_WARNING, "ShallowBackup: Invalid type for argument %d", i);
+				break; // nil
+			}
+		}
+		dv.push_back(ddata);
+	}
+
+	return count;
+}
+
+
+int LuaUtils::ShallowRestore(const std::vector<LuaUtils::DelayData> &dv, lua_State* dst) {
+	int count = dv.size();
+	lua_checkstack(dst, count);
+
+	for (int d = 0; d < count; ++d) {
+		const DelayData &ddt = dv[d];
+		switch (ddt.type) {
+			case LUA_TBOOLEAN: {
+				lua_pushboolean(dst, ddt.data.bol);
+				break;
+			}
+			case LUA_TNUMBER: {
+				lua_pushnumber(dst, ddt.data.num);
+				break;
+			}
+			case LUA_TSTRING: {
+				lua_pushlstring(dst, ddt.data.str->c_str(), ddt.data.str->size());
+				delete ddt.data.str;
+				break;
+			}
+			case LUA_TNIL: {
+				lua_pushnil(dst);
+				break;
+			}
+			default: {
+				lua_pushnil(dst);
+				LOG_L(L_WARNING, "ShallowRestore: Invalid type for argument %d", d + 1);
+				break; // unhandled type
+			}
+		}
+	}
+
+	return count;
+}
+
 /******************************************************************************/
 /******************************************************************************/
 

@@ -264,22 +264,14 @@ class CLuaHandle : public CEventClient
 			return 0;
 		}
 
-		struct DelayData {
-			int type;
-			union {
-				std::string *str;
-				float num;
-				bool bol;
-			} data;
-		};
 		struct DelayDataDump {
-			std::vector<DelayData> data;
+			std::vector<LuaUtils::DelayData> data;
 			std::vector<LuaUtils::DataDump> dump;
 			bool xcall;
 		};
 
-		void ExecuteCallsFromSynced(bool forced = true);
-		virtual void RecvFromSynced(int args);
+		bool ExecuteCallsFromSynced(bool forced = true);
+		virtual void RecvFromSynced(lua_State *srcState, int args);
 		void RecvFromSim(int args);
 		void DelayRecvFromSynced(lua_State* srcState, int args);
 		std::vector<DelayDataDump> delayedCallsFromSynced;
@@ -307,6 +299,9 @@ class CLuaHandle : public CEventClient
 		inline bool UseEventBatch() const { return (LUA_MT_OPT & LUA_BATCH) && useEventBatch; } // Use event batch to forward "synced" luaui events into draw thread?
 		bool purgeCallsFromSyncedBatch;
 		inline bool PurgeCallsFromSyncedBatch() const { return (LUA_MT_OPT & LUA_STATE) && purgeCallsFromSyncedBatch; } // Automatically clean deleted objects/IDs from the SendToUnsynced/XCall batch
+
+		inline lua_State *ForceUnsyncedState() { lua_State *L_Temp = L_Sim; if (!SingleState() && Threading::IsSimThread()) L_Sim = L_Draw; return L_Temp; }
+		inline void RestoreState(lua_State *L_Temp) { if (!SingleState() && Threading::IsSimThread()) L_Sim = L_Temp; }
 
 		inline lua_State *GetActiveState() {
 			return (SingleState() || Threading::IsSimThread()) ? L_Sim : L_Draw;

@@ -36,7 +36,7 @@ class CLuaHandleSynced : public CLuaHandle
 
 		bool GotChatMsg(const string& msg, int playerID);
 		bool RecvLuaMsg(const string& msg, int playerID);
-		virtual void RecvFromSynced(int args); // not an engine call-in
+		virtual void RecvFromSynced(lua_State *srcState, int args); // not an engine call-in
 
 		bool SyncedActionFallback(const string& line, int playerID);
 

@@ -820,11 +820,11 @@ int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 {
 #if (LUA_MT_OPT & LUA_MUTEX)
 	{
-		SELECT_LUA_STATE();
+		SELECT_UNSYNCED_LUA_STATE();
 		if (srcState != L) {
 			DelayDataDump ddmp;
 
-			DelayData ddata;
+			LuaUtils::DelayData ddata;
 			ddata.type = LUA_TSTRING;
 
 			size_t len = funcName.length();

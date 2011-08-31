@@ -28,10 +28,22 @@ class LuaUtils {
 			bool bol;
 			std::vector<std::pair<DataDump, DataDump> > table;
 		};
+		struct DelayData {
+			int type;
+			union {
+				std::string *str;
+				float num;
+				bool bol;
+			} data;
+		};
 
 		static int Backup(std::vector<DataDump> &dv, lua_State* src, int count);
 
 		static int Restore(const std::vector<DataDump> &dv, lua_State* dst);
+
+		static int ShallowBackup(std::vector<DelayData> &dv, lua_State* src, int count);
+
+		static int ShallowRestore(const std::vector<DelayData> &dv, lua_State* dst);
 
 		static int CopyData(lua_State* dst, lua_State* src, int count);
 
