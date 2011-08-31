@@ -921,7 +921,6 @@ inline unsigned int CDDSImage::size_rgb(unsigned int width, unsigned int height)
 void CDDSImage::flip(CSurface &surface)
 {
     unsigned int linesize;
-    unsigned int offset;
 
     if (!is_compressed())
     {
@@ -932,7 +931,7 @@ void CDDSImage::flip(CSurface &surface)
 
         for (unsigned int n = 0; n < surface.get_depth(); n++)
         {
-            offset = imagesize*n;
+            unsigned int offset = imagesize*n;
             unsigned char *top = (unsigned char*)surface + offset;
             unsigned char *bottom = top + (imagesize-linesize);
     

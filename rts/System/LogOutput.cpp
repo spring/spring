@@ -239,13 +239,11 @@ void CLogOutput::InitializeSections()
 		env += envSubsys;
 	}
 
-	bool envOverride = false;
 	if (!env.empty()) {
 		// this allows to disable all sections from the env var
 		std::string envSections(StringToLower(env));
 		if (envSections == std::string("none")) {
 			enabledSections = "";
-			envOverride = true;
 		} else {
 			enabledSections += envSections + ",";
 		}
