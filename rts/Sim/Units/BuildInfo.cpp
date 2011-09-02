@@ -44,20 +44,19 @@ void BuildInfo::AddCommandParams(Command& cmd) const
 
 bool BuildInfo::Parse(const Command& c)
 {
-	if (c.params.size() < 3) {
+	if (c.params.size() < 3)
 		return false;
-	}
-	if (c.GetID() >= 0) {
-		return false;
-	}
 
 	pos = float3(c.params[0], c.params[1], c.params[2]);
+
+	if (c.GetID() >= 0)
+		return false;
+
 	def = unitDefHandler->GetUnitDefByID(-c.GetID());
 	buildFacing = FACING_SOUTH;
 
-	if (c.params.size() == 4) {
+	if (c.params.size() == 4)
 		buildFacing = std::abs(int(c.params[3])) % NUM_FACINGS;
-	}
 
 	return true;
 }
