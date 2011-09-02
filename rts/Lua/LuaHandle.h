@@ -300,8 +300,8 @@ class CLuaHandle : public CEventClient
 		bool purgeCallsFromSyncedBatch;
 		inline bool PurgeCallsFromSyncedBatch() const { return (LUA_MT_OPT & LUA_STATE) && purgeCallsFromSyncedBatch; } // Automatically clean deleted objects/IDs from the SendToUnsynced/XCall batch
 
-		inline lua_State *ForceUnsyncedState() { lua_State *L_Temp = L_Sim; if (!SingleState() && Threading::IsSimThread()) L_Sim = L_Draw; return L_Temp; }
-		inline void RestoreState(lua_State *L_Temp) { if (!SingleState() && Threading::IsSimThread()) L_Sim = L_Temp; }
+		inline lua_State *ForceUnsyncedState() { lua_State *L_Prev = L_Sim; if (!SingleState() && Threading::IsSimThread()) L_Sim = L_Draw; return L_Prev; }
+		inline void RestoreState(lua_State *L_Prev) { if (!SingleState() && Threading::IsSimThread()) L_Sim = L_Prev; }
 
 		inline lua_State *GetActiveState() {
 			return (SingleState() || Threading::IsSimThread()) ? L_Sim : L_Draw;
