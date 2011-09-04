@@ -1,15 +1,15 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <cstdio>
-#include <cstdarg>
-#include <map>
-#include <set>
-
 #include "DefaultFilter.h"
 
 #include "Level.h"
 #include "Section.h"
 #include "ILog.h"
+
+#include <cstdio>
+#include <cstdarg>
+#include <map>
+#include <set>
 
 
 #ifdef __cplusplus

@@ -578,8 +578,7 @@ static bool internal_GetMapInfo(const char* mapName, InternalMapInfo* outInfo)
 			catch (content_error&) {
 				outInfo->width  = -1;
 			}
-		}
-		else {
+		} else {
 			const int w = mapTable.GetInt("gameAreaW", 0);
 			const int h = mapTable.GetInt("gameAreaW", 1);
 
@@ -590,8 +589,7 @@ static bool internal_GetMapInfo(const char* mapName, InternalMapInfo* outInfo)
 		// Make sure we found stuff in both the smd and the header
 		if (outInfo->width <= 0) {
 			err = "Bad map width";
-		}
-		else if (outInfo->height <= 0) {
+		} else if (outInfo->height <= 0) {
 			err = "Bad map height";
 		}
 	}
