@@ -45,7 +45,7 @@ if    (MVN_BIN)
 		EndIf (NOT Maven_FIND_QUIETLY)
 
 		# Run in non-interactive mode
-		Set(MVN_ATTRIBUTES_DEFAULT "--batch-mode")
+		Set(MVN_ATTRIBUTES_DEFAULT "--batch-mode" "-DskipTests")
 		If    (NOT CMAKE_VERBOSE_MAKEFILE)
 			# Quiet output - only show errors
 			set(MVN_ATTRIBUTES_DEFAULT ${MVN_ATTRIBUTES_DEFAULT} "--quiet")
