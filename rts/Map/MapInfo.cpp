@@ -32,7 +32,8 @@ using std::min;
 const CMapInfo* mapInfo = NULL;
 
 
-CMapInfo::CMapInfo(const std::string& _mapInfoFile, const string& mapName) : mapInfoFile(_mapInfoFile)
+CMapInfo::CMapInfo(const std::string& mapInfoFile, const string& mapName)
+	: mapInfoFile(mapInfoFile)
 {
 	map.name = mapName;
 
