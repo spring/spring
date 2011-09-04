@@ -24,11 +24,11 @@ cd ${SOURCEDIR}
 #fetch required files
 mkdir -p $DOWNLOADDIR
 if [ ! -s $DOWNLOADDIR/ba750.sdz ]; then
-	wget -N -P $DOWNLOADDIR http://springfiles.com/sites/default/files/downloads/spring/games/ba750.sdz || rm -rf ${DOWNLOADDIR} && exit 1
+	wget -N -P $DOWNLOADDIR http://springfiles.com/sites/default/files/downloads/spring/games/ba750.sdz || ( rm -rf ${DOWNLOADDIR} && exit 1 )
 fi
 
 if [ ! -s $DOWNLOADDIR/Altair_Crossing.sd7 ]; then
-	wget -N -P $DOWNLOADDIR http://springfiles.com/sites/default/files/downloads/spring/spring-maps/Altair_Crossing.sd7 || rm -rf ${DOWNLOADDIR} && exit 1
+	wget -N -P $DOWNLOADDIR http://springfiles.com/sites/default/files/downloads/spring/spring-maps/Altair_Crossing.sd7 || ( rm -rf ${DOWNLOADDIR} && exit 1 )
 fi
 
 #install required files into spring dir
