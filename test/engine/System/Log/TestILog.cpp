@@ -47,7 +47,7 @@ static inline void test_log_sl(int line, output_test_stream& logStream,
 		vsnprintf(logMessage, sizeof(logMessage), fmt, arguments);
 		va_end(arguments);
 		std::string expected = std::string()
-				+ ((section != LOG_SECTION_DEFAULT) ? (std::string("[") + std::string(section) + "] ") : "")
+				+ (!LOG_SECTION_IS_DEFAULT(section) ? (std::string("[") + std::string(section) + "] ") : "")
 				+ ((level != LOG_LEVEL_INFO) ? (std::string(log_util_levelToString(level)) + ": ") : "")
 				+ logMessage
 				+ "\n";
