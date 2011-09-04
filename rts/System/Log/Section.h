@@ -7,7 +7,42 @@
  * see ILog.h for documentation
  */
 
-#define LOG_SECTION_DEFAULT NULL
+#define LOG_SECTION_DEFAULT ""
+
+
+/**
+ * As all sections are required to be defined as compile-time constants,
+ * we may use an address comparison, if the compiler merges constants.
+ */
+#if       defined(__GNUC__) && !defined(DEBUG)
+	/**
+	 * GCC does merged constants on -O2+:
+	 * -fmerge-constants
+	 *   Attempt to merge identical constants (string constants and floating
+	 *   point constants) across compilation units. 
+	 *   This option is the default for optimized compilation if the assembler
+	 *   and linker support it. Use -fno-merge-constants to inhibit this
+	 *   behavior. 
+	 *   Enabled at levels -O, -O2, -O3, -Os.
+	 */
+	#define LOG_SECTION_EQUAL(section1, section2) \
+		(section1 == section2)
+	#define LOG_SECTION_COMPARE(section1, section2) \
+		(section1 < section2)
+#else  // defined(__GNUC__) && !defined(DEBUG)
+	#include <string.h>
+	#define LOG_SECTION_EQUAL(section1, section2) \
+		(((void*)section1 == (void*)section2) \
+		|| (((void*)section1 != NULL) && ((void*)section2 != NULL) \
+			&& (strcmp(section1, section2) == 0)))
+	#define LOG_SECTION_COMPARE(section1, section2) \
+		(((void*)section1 == NULL) \
+			|| (((void*)section2 != NULL) && (strcmp(section1, section2) > 0)))
+#endif // defined(__GNUC__) && !defined(DEBUG)
+
+#define LOG_SECTION_IS_DEFAULT(section) \
+	LOG_SECTION_EQUAL(section, LOG_SECTION_DEFAULT)
+
 
 /**
  * Initialize the current log section to the default.

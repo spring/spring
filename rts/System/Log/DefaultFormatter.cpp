@@ -51,7 +51,7 @@ static void log_formatter_createPrefix_default(char* prefix,
 	prefix[0] = '\0';
 
 	// HACK this stuff should be done later, closer to the point where it is written to a file or the console
-	if (section != LOG_SECTION_DEFAULT) {
+	if (!LOG_SECTION_IS_DEFAULT(section)) {
 		section = log_util_prepareSection(section);
 		STRCATS(prefix, prefixSize, "[");
 		STRCATS(prefix, prefixSize, section);
