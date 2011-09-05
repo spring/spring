@@ -129,8 +129,6 @@ class CEventHandler
 		void UpdateObjects();
 		void DeleteSyncedObjects();
 
-		void ExecuteAllCallsFromSynced();
-
 		bool Explosion(int weaponDefID, const float3& pos, const CUnit* owner);
 
 		void StockpileChanged(const CUnit* unit,

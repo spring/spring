@@ -505,7 +505,8 @@ void CEventHandler::DeleteSyncedFeatures() {
 void CEventHandler::UpdateProjectiles() { eventBatchHandler->UpdateProjectiles(); }
 void CEventHandler::UpdateDrawProjectiles() { eventBatchHandler->UpdateDrawProjectiles(); }
 
-void CEventHandler::ExecuteAllCallsFromSynced() {
+inline void ExecuteAllCallsFromSynced() {
+#if (LUA_MT_OPT & LUA_MUTEX)
 	bool exec;
 	do { // these calls can be chained, need to purge them all
 		exec = false;
@@ -518,6 +519,7 @@ void CEventHandler::ExecuteAllCallsFromSynced() {
 		if (luaUI && luaUI->ExecuteCallsFromSynced())
 			exec = true;
 	} while (exec);
+#endif
 }
 
 void CEventHandler::DeleteSyncedProjectiles() {
