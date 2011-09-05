@@ -179,10 +179,10 @@ void CFireProjectile::Draw()
 		if (smokeType < 0 || smokeType >= projectileDrawer->smoketex.size()) {
 			continue;
 		}
-		AtlasedTexture *at = projectileDrawer->smoketex[smokeType];
+		const AtlasedTexture *at = projectileDrawer->smoketex[smokeType];
 #else
 	for (SUBPARTICLE_LIST::iterator pi = subParticles.begin(); pi != subParticles.end(); ++pi) {
-		AtlasedTexture* at = projectileDrawer->smoketex[pi->smokeType];
+		const AtlasedTexture* at = projectileDrawer->smoketex[pi->smokeType];
 #endif
 		float age = pi->age+ageSpeed * globalRendering->timeOffset;
 		float size = pi->maxSize * fastmath::apxsqrt(age);

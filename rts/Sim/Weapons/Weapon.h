@@ -44,7 +44,7 @@ public:
 	virtual void SlowUpdate();
 	virtual void Update();
 	virtual float GetRange2D(float yDiff) const;
-	virtual void UpdateRange(float val);
+	virtual void UpdateRange(float val) { range = val; }
 
 	void HoldFire();
 	virtual bool AttackUnit(CUnit* unit, bool userTarget);
