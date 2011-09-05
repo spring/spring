@@ -8,7 +8,7 @@ set -e
 
 TESTDIR=${TMP_BASE}/tests
 DOWNLOADDIR=${TMP_BASE}/download
-CONTENT_DIR=${TESTDIR}/usr/local/share/games/spring
+CONTENT_DIR=${TESTDIR}/.spring
 
 if [ ! -d test/game/ ];
 then
@@ -40,6 +40,7 @@ cp -suv ${SOURCEDIR}/test/game/LuaUI/Widgets/test.lua ${CONTENT_DIR}/LuaUI/Widge
 cp -suv ${SOURCEDIR}/test/game/test1.script.txt ${CONTENT_DIR}/test1.script.txt
 
 #run test
+HOME=${TESTDIR}/
 ${SOURCEDIR}/test/game/run.sh ${TESTDIR}/usr/local/bin/spring-headless test1.script.txt
 
 #cleanup
