@@ -57,159 +57,122 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	loadscreen->SetLoadMessage("Creating Projectile Textures");
 
 	textureAtlas = new CTextureAtlas(2048, 2048);
-
-	// used to block resources_map.tdf from loading textures
-	std::set<std::string> blockMapTexNames;
+	groundFXAtlas = new CTextureAtlas(2048, 2048);
 
 	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	LuaParser mapResParser("gamedata/resources_map.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+
 	resourcesParser.Execute();
 
-	const LuaTable rootTable = resourcesParser.GetRoot();
-	const LuaTable gfxTable = rootTable.SubTable("graphics");
-	const LuaTable ptTable = gfxTable.SubTable("projectileTextures");
+	const LuaTable& resTable = resourcesParser.GetRoot();
+	const LuaTable& resGraphicsTable = resTable.SubTable("graphics");
+	const LuaTable& resProjTexturesTable = resGraphicsTable.SubTable("projectileTextures");
+	const LuaTable& resSmokeTexturesTable = resGraphicsTable.SubTable("smoke");
+	const LuaTable& resGroundFXTexturesTable = resGraphicsTable.SubTable("groundfx");
 
-	// add all textures in projectiletextures section
-	std::map<std::string, std::string> ptex;
-	ptTable.GetMap(ptex);
+	// used to block resources_map.* from overriding any of
+	// resources.lua:{projectile, smoke, groundfx}textures,
+	// as well as various defaults (repulsegfxtexture, etc)
+	std::set<std::string> blockedTexNames;
 
-	for (std::map<std::string, std::string>::iterator pi = ptex.begin(); pi != ptex.end(); ++pi) {
-		textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
-		blockMapTexNames.insert(StringToLower(pi->first));
-	}
-	ptex.clear();
+	ParseAtlasTextures(resProjTexturesTable, blockedTexNames, textureAtlas);
+	ParseAtlasTextures(resGroundFXTexturesTable, blockedTexNames, groundFXAtlas);
 
-	// add all texture from sections within projectiletextures section
-	std::vector<std::string> seclist;
-	ptTable.GetKeys(seclist);
+	int smokeTexCount = -1;
 
-	for (size_t i = 0; i < seclist.size(); i++) {
-		const LuaTable ptSubTable = ptTable.SubTable(seclist[i]);
-
-		if (ptSubTable.IsValid()) {
-			ptSubTable.GetMap(ptex);
-
-			for (std::map<std::string, std::string>::iterator pi = ptex.begin(); pi != ptex.end(); ++pi) {
-				textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
-				blockMapTexNames.insert(StringToLower(pi->first));
-			}
-			ptex.clear();
-		}
-	}
-
-	// get the smoke textures, hold the count in 'smokeCount'
-	const LuaTable smokeTable = gfxTable.SubTable("smoke");
-	int smokeCount;
-
-	if (smokeTable.IsValid()) {
-		for (smokeCount = 0; true; smokeCount++) {
-			const std::string tex = smokeTable.GetString(smokeCount + 1, "");
-			if (tex.empty()) {
-				break;
-			}
-			const std::string texName = "bitmaps/" + tex;
-			const std::string smokeName = "ismoke" + IntToString(smokeCount, "%02i");
-
-			textureAtlas->AddTexFromFile(smokeName, texName);
-			blockMapTexNames.insert(StringToLower(smokeName));
-		}
-	} else {
-		// setup the defaults
-		for (smokeCount = 0; smokeCount < 12; smokeCount++) {
-			const std::string smokeNum = IntToString(smokeCount, "%02i");
-			const std::string smokeName = "ismoke" + smokeNum;
-			const std::string texName = "bitmaps/smoke/smoke" + smokeNum + ".tga";
-
-			textureAtlas->AddTexFromFile(smokeName, texName);
-			blockMapTexNames.insert(StringToLower(smokeName));
-		}
-	}
-
-	if (smokeCount <= 0) {
-		throw content_error("missing smoke textures");
-	}
-
-	char tex[128][128][4];
-	for (int y = 0; y < 128; y++) { // shield
-		for (int x = 0; x < 128; x++) {
-			tex[y][x][0] = 70;
-			tex[y][x][1] = 70;
-			tex[y][x][2] = 70;
-			tex[y][x][3] = 70;
-		}
-	}
-
-	textureAtlas->AddTexFromMem("perlintex", 128, 128, CTextureAtlas::RGBA32, tex);
-	blockMapTexNames.insert("perlintex");
-
-	blockMapTexNames.insert("flare");
-	blockMapTexNames.insert("explo");
-	blockMapTexNames.insert("explofade");
-	blockMapTexNames.insert("heatcloud");
-	blockMapTexNames.insert("laserend");
-	blockMapTexNames.insert("laserfalloff");
-	blockMapTexNames.insert("randdots");
-	blockMapTexNames.insert("smoketrail");
-	blockMapTexNames.insert("wake");
-	blockMapTexNames.insert("perlintex");
-	blockMapTexNames.insert("flame");
-
-	blockMapTexNames.insert("sbtrailtexture");
-	blockMapTexNames.insert("missiletrailtexture");
-	blockMapTexNames.insert("muzzleflametexture");
-	blockMapTexNames.insert("repulsetexture");
-	blockMapTexNames.insert("dguntexture");
-	blockMapTexNames.insert("flareprojectiletexture");
-	blockMapTexNames.insert("sbflaretexture");
-	blockMapTexNames.insert("missileflaretexture");
-	blockMapTexNames.insert("beamlaserflaretexture");
-	blockMapTexNames.insert("bubbletexture");
-	blockMapTexNames.insert("geosquaretexture");
-	blockMapTexNames.insert("gfxtexture");
-	blockMapTexNames.insert("projectiletexture");
-	blockMapTexNames.insert("repulsegfxtexture");
-	blockMapTexNames.insert("sphereparttexture");
-	blockMapTexNames.insert("torpedotexture");
-	blockMapTexNames.insert("wrecktexture");
-	blockMapTexNames.insert("plasmatexture");
-
-
-	// allow map specified atlas textures for gaia unit projectiles
-	LuaParser mapResParser("gamedata/resources_map.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	
-	if (mapResParser.Execute()) {
-		const LuaTable mapRoot = mapResParser.GetRoot();
-		const LuaTable mapTable = mapRoot.SubTable("projectileTextures");
-
-		// add all textures in projectiletextures section
-		std::map<std::string, std::string>::iterator pi;
-
-		mapTable.GetMap(ptex);
-
-		for (pi = ptex.begin(); pi != ptex.end(); ++pi) {
-			if (blockMapTexNames.find(StringToLower(pi->first)) == blockMapTexNames.end()) {
-				textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
-			}
-		}
-		ptex.clear();
-
-		// add all texture from sections within projectiletextures section
-		mapTable.GetKeys(seclist);
-		for (size_t i = 0; i < seclist.size(); i++) {
-			const LuaTable mapSubTable = mapTable.SubTable(seclist[i]);
-			if (mapSubTable.IsValid()) {
-				mapSubTable.GetMap(ptex);
-				for (pi = ptex.begin(); pi != ptex.end(); ++pi) {
-					if (blockMapTexNames.find(StringToLower(pi->first)) == blockMapTexNames.end()) {
-						textureAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
-					}
+	{
+		// get the smoke textures, hold the count in 'smokeTexCount'
+		if (resSmokeTexturesTable.IsValid()) {
+			for (smokeTexCount = 0; true; smokeTexCount++) {
+				const std::string& tex = resSmokeTexturesTable.GetString(smokeTexCount + 1, "");
+				if (tex.empty()) {
+					break;
 				}
-				ptex.clear();
+				const std::string texName = "bitmaps/" + tex;
+				const std::string smokeName = "ismoke" + IntToString(smokeTexCount, "%02i");
+
+				textureAtlas->AddTexFromFile(smokeName, texName);
+				blockedTexNames.insert(StringToLower(smokeName));
+			}
+		} else {
+			// setup the defaults
+			for (smokeTexCount = 0; smokeTexCount < 12; smokeTexCount++) {
+				const std::string smokeNum = IntToString(smokeTexCount, "%02i");
+				const std::string smokeName = "ismoke" + smokeNum;
+				const std::string texName = "bitmaps/smoke/smoke" + smokeNum + ".tga";
+
+				textureAtlas->AddTexFromFile(smokeName, texName);
+				blockedTexNames.insert(StringToLower(smokeName));
 			}
 		}
+
+		if (smokeTexCount <= 0) {
+			// this needs to be an exception, other code
+			// assumes at least one smoke-texture exists
+			throw content_error("missing smoke textures");
+		}
+	}
+
+	{
+		// shield-texture memory
+		char perlinTexMem[128][128][4];
+		for (int y = 0; y < 128; y++) {
+			for (int x = 0; x < 128; x++) {
+				perlinTexMem[y][x][0] = 70;
+				perlinTexMem[y][x][1] = 70;
+				perlinTexMem[y][x][2] = 70;
+				perlinTexMem[y][x][3] = 70;
+			}
+		}
+
+		textureAtlas->AddTexFromMem("perlintex", 128, 128, CTextureAtlas::RGBA32, perlinTexMem);
+	}
+
+	blockedTexNames.insert("perlintex");
+	blockedTexNames.insert("flare");
+	blockedTexNames.insert("explo");
+	blockedTexNames.insert("explofade");
+	blockedTexNames.insert("heatcloud");
+	blockedTexNames.insert("laserend");
+	blockedTexNames.insert("laserfalloff");
+	blockedTexNames.insert("randdots");
+	blockedTexNames.insert("smoketrail");
+	blockedTexNames.insert("wake");
+	blockedTexNames.insert("perlintex");
+	blockedTexNames.insert("flame");
+
+	blockedTexNames.insert("sbtrailtexture");
+	blockedTexNames.insert("missiletrailtexture");
+	blockedTexNames.insert("muzzleflametexture");
+	blockedTexNames.insert("repulsetexture");
+	blockedTexNames.insert("dguntexture");
+	blockedTexNames.insert("flareprojectiletexture");
+	blockedTexNames.insert("sbflaretexture");
+	blockedTexNames.insert("missileflaretexture");
+	blockedTexNames.insert("beamlaserflaretexture");
+	blockedTexNames.insert("bubbletexture");
+	blockedTexNames.insert("geosquaretexture");
+	blockedTexNames.insert("gfxtexture");
+	blockedTexNames.insert("projectiletexture");
+	blockedTexNames.insert("repulsegfxtexture");
+	blockedTexNames.insert("sphereparttexture");
+	blockedTexNames.insert("torpedotexture");
+	blockedTexNames.insert("wrecktexture");
+	blockedTexNames.insert("plasmatexture");
+
+	if (mapResParser.Execute()) {
+		// allow map-specified atlas textures (for gaia-projectiles and ground-flashes)
+		const LuaTable& mapResTable = mapResParser.GetRoot();
+		const LuaTable& mapResGraphicsTable = mapResTable.SubTable("graphics");
+		const LuaTable& mapResProjTexturesTable = mapResGraphicsTable.SubTable("projectileTextures");
+		const LuaTable& mapResGroundFXTexturesTable = mapResGraphicsTable.SubTable("groundfx");
+
+		ParseAtlasTextures(mapResProjTexturesTable, blockedTexNames, textureAtlas);
+		ParseAtlasTextures(mapResGroundFXTexturesTable, blockedTexNames, groundFXAtlas);
 	}
 
 	if (!textureAtlas->Finalize()) {
-		LOG_L(L_ERROR, "Could not finalize projectile texture atlas. Use less/smaller textures.");
+		LOG_L(L_ERROR, "Could not finalize projectile-texture atlas. Use less/smaller textures.");
 	}
 
 	flaretex        = textureAtlas->GetTexturePtr("flare");
@@ -224,9 +187,10 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	perlintex       = textureAtlas->GetTexturePtr("perlintex");
 	flametex        = textureAtlas->GetTexturePtr("flame");
 
-	for (int i = 0; i < smokeCount; i++) {
+	for (int i = 0; i < smokeTexCount; i++) {
 		const std::string smokeName = "ismoke" + IntToString(i, "%02i");
-		smoketex.push_back(textureAtlas->GetTexturePtr(smokeName));
+		const AtlasedTexture* smokeTex = textureAtlas->GetTexturePtr(smokeName);
+		smoketex.push_back(smokeTex);
 	}
 
 #define GETTEX(t, b) (textureAtlas->GetTexturePtrWithBackup((t), (b)))
@@ -251,32 +215,6 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 #undef GETTEX
 
 
-	groundFXAtlas = new CTextureAtlas(2048, 2048);
-	// add all textures in groundfx section
-	const LuaTable groundfxTable = gfxTable.SubTable("groundfx");
-	groundfxTable.GetMap(ptex);
-
-	for (std::map<std::string, std::string>::iterator pi = ptex.begin(); pi != ptex.end(); ++pi) {
-		groundFXAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
-	}
-	ptex.clear();
-
-	// add all textures from sections within groundfx section
-	groundfxTable.GetKeys(seclist);
-
-	for (size_t i = 0; i < seclist.size(); i++) {
-		const LuaTable gfxSubTable = groundfxTable.SubTable(seclist[i]);
-
-		if (gfxSubTable.IsValid()) {
-			gfxSubTable.GetMap(ptex);
-
-			for (std::map<std::string, std::string>::iterator pi = ptex.begin(); pi != ptex.end(); ++pi) {
-				groundFXAtlas->AddTexFromFile(pi->first, "bitmaps/" + pi->second);
-			}
-			ptex.clear();
-		}
-	}
-
 	if (!groundFXAtlas->Finalize()) {
 		LOG_L(L_ERROR, "Could not finalize groundFX texture atlas. Use less/smaller textures.");
 	}
@@ -286,19 +224,19 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	seismictex = groundFXAtlas->GetTexturePtr("seismic");
 
 	for (int a = 0; a < 4; ++a) {
-		perlinBlend[a]=0;
+		perlinBlend[a] = 0.0f;
 	}
 
-	unsigned char tempmem[4 * 16 * 16];
-	for (int a = 0; a < 4 * 16 * 16; ++a) {
-		tempmem[a] = 0;
-	}
-	for (int a = 0; a < 8; ++a) {
-		glGenTextures(1, &perlinTex[a]);
-		glBindTexture(GL_TEXTURE_2D, perlinTex[a]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 16,16, 0, GL_RGBA, GL_UNSIGNED_BYTE, tempmem);
+	{
+		unsigned char tempmem[4 * 16 * 16] = {0};
+
+		for (int a = 0; a < 8; ++a) {
+			glGenTextures(1, &perlinTex[a]);
+			glBindTexture(GL_TEXTURE_2D, perlinTex[a]);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 16,16, 0, GL_RGBA, GL_UNSIGNED_BYTE, tempmem);
+		}
 	}
 
 	drawPerlinTex = false;
@@ -341,6 +279,43 @@ CProjectileDrawer::~CProjectileDrawer() {
 }
 
 
+
+void CProjectileDrawer::ParseAtlasTextures(
+	const LuaTable& textureTable,
+	const std::set<std::string>& blockedTextures,
+	CTextureAtlas* textureAtlas)
+{
+	std::vector<std::string> subTables;
+	std::map<std::string, std::string> texturesMap;
+	std::map<std::string, std::string>::iterator texturesMapIt;
+
+	textureTable.GetMap(texturesMap);
+	textureTable.GetKeys(subTables);
+
+	for (texturesMapIt = texturesMap.begin(); texturesMapIt != texturesMap.end(); ++texturesMapIt) {
+		if (blockedTextures.find(StringToLower(texturesMapIt->first)) == blockedTextures.end()) {
+			textureAtlas->AddTexFromFile(texturesMapIt->first, "bitmaps/" + texturesMapIt->second);
+		}
+	}
+
+	texturesMap.clear();
+
+	for (size_t i = 0; i < subTables.size(); i++) {
+		const LuaTable& texSubTable = textureTable.SubTable(subTables[i]);
+
+		if (texSubTable.IsValid()) {
+			texSubTable.GetMap(texturesMap);
+
+			for (texturesMapIt = texturesMap.begin(); texturesMapIt != texturesMap.end(); ++texturesMapIt) {
+				if (blockedTextures.find(StringToLower(texturesMapIt->first)) == blockedTextures.end()) {
+					textureAtlas->AddTexFromFile(texturesMapIt->first, "bitmaps/" + texturesMapIt->second);
+				}
+			}
+
+			texturesMap.clear();
+		}
+	}
+}
 
 void CProjectileDrawer::LoadWeaponTextures() {
 	// post-process the synced weapon-defs to set unsynced fields

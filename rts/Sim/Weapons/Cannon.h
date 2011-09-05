@@ -18,12 +18,13 @@ protected:
 
 public:
 	CCannon(CUnit* owner);
-	virtual ~CCannon();
+	~CCannon();
+
 	void Init(void);
-	virtual void UpdateRange(float val);
+	void UpdateRange(float val);
 	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
 	void Update();
-	virtual bool AttackGround(float3 pos,bool userTarget);
+	bool AttackGround(float3 pos,bool userTarget);
 	float GetRange2D(float yDiff) const;
 
 	/// unused?
@@ -42,7 +43,7 @@ public:
 	float3 GetWantedDir(const float3& diff);
 
 private:
-	virtual void FireImpl();
+	void FireImpl();
 };
 
 #endif // __CANNON_H__

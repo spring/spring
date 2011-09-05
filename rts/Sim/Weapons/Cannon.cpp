@@ -73,7 +73,7 @@ void CCannon::UpdateRange(float val)
 	// some magical (but working) equations
 	// useful properties: if rangeFactor == 1, heightBoostFactor == 1
 	// TODO find something better?
-	if (weaponDef->heightBoostFactor < 0.f)
+	if (heightBoostFactor < 0.f)
 		heightBoostFactor = (2.f - rangeFactor) / math::sqrt(rangeFactor);
 }
 
