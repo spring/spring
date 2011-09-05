@@ -7,6 +7,7 @@
 #include <limits.h>
 #include <boost/regex.hpp>
 
+#include "lib/streflop/streflop_cond.h"
 #include "System/mmgr.h"
 
 #include "System/float3.h"
@@ -184,7 +185,18 @@ bool LuaParser::Execute()
 
 	currentParser = this;
 
+#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
+	// do not signal floating point exceptions in user Lua code
+	streflop::fpenv_t fenv;
+	streflop::fegetenv(&fenv);
+	streflop::feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+#endif
+
 	error = lua_pcall(L, 0, 1, 0);
+
+#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
+	streflop::fesetenv(&fenv);
+#endif
 
 	currentParser = NULL;
 
