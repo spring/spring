@@ -329,6 +329,7 @@ int CLuaHandle::SendToUnsynced(lua_State* L)
 bool CLuaHandle::ExecuteCallsFromSynced(bool forced) {
 #if (LUA_MT_OPT & LUA_MUTEX)
 	if ((SingleState() && (this != luaUI)) || (forced && !PurgeCallsFromSyncedBatch()))
+#endif
 		return false;
 
 	GML_THRMUTEX_LOCK(obj, GML_DRAW); // ExecuteCallsFromSynced
@@ -404,7 +405,6 @@ bool CLuaHandle::ExecuteCallsFromSynced(bool forced) {
 			}
 		}
 	}
-#endif // (LUA_MT_OPT & LUA_MUTEX)
 	return true;
 }
 
