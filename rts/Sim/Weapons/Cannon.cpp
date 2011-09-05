@@ -57,6 +57,12 @@ void CCannon::Init(void)
 	}
 	CWeapon::Init();
 
+	UpdateRange(range);
+}
+
+void CCannon::UpdateRange(float val)
+{
+	range = val;
 	// initialize range factor
 	rangeFactor = 1;
 	rangeFactor = (float)range/GetRange2D(0);
@@ -67,7 +73,7 @@ void CCannon::Init(void)
 	// some magical (but working) equations
 	// useful properties: if rangeFactor == 1, heightBoostFactor == 1
 	// TODO find something better?
-	if (heightBoostFactor < 0.f)
+	if (weaponDef->heightBoostFactor < 0.f)
 		heightBoostFactor = (2.f - rangeFactor) / math::sqrt(rangeFactor);
 }
 

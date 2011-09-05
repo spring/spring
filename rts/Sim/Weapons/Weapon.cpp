@@ -881,6 +881,10 @@ bool CWeapon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 	return true;
 }
 
+void CWeapon::UpdateRange(float val) {
+	range = val;
+}
+
 bool CWeapon::TryTarget(CUnit* unit, bool userTarget) {
 	float3 tempTargetPos =
 		helper->GetUnitErrorPos(unit, owner->allyteam) +

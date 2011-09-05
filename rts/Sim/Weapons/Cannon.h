@@ -20,6 +20,7 @@ public:
 	CCannon(CUnit* owner);
 	virtual ~CCannon();
 	void Init(void);
+	virtual void UpdateRange(float val);
 	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
 	void Update();
 	virtual bool AttackGround(float3 pos,bool userTarget);
