@@ -51,6 +51,7 @@
 #include "System/OffscreenGLContext.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
+#include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileSystemInitializer.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/CmdLineParams.h"
@@ -828,10 +829,12 @@ void SpringApp::ParseCmdLine()
 	// mutually exclusive options that cause spring to quit immediately
 	// and require the configHandler
 	if (cmdline->IsSet("list-ai-interfaces")) {
+		dataDirLocater.LocateDataDirs();
 		IAILibraryManager::OutputAIInterfacesInfo();
 		exit(0);
 	}
 	else if (cmdline->IsSet("list-skirmish-ais")) {
+		dataDirLocater.LocateDataDirs();
 		IAILibraryManager::OutputSkirmishAIInfo();
 		exit(0);
 	}
