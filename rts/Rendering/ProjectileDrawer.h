@@ -101,7 +101,7 @@ public:
 	std::vector<const AtlasedTexture*> smoketex;
 
 private:
-	void ParseAtlasTextures(const LuaTable&, const std::set<std::string>&, CTextureAtlas*);
+	void ParseAtlasTextures(const bool, const LuaTable&, std::set<std::string>&, CTextureAtlas*);
 
 	void DrawProjectiles(int modelType, int numFlyingPieces, int* drawnPieces, bool drawReflection, bool drawRefraction);
 	void DrawProjectilesSet(std::set<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction);
