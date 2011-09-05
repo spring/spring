@@ -270,7 +270,7 @@ class CLuaHandle : public CEventClient
 			bool xcall;
 		};
 
-		bool ExecuteCallsFromSynced(bool forced = true);
+		bool ExecuteCallsFromSynced(bool forced = true); // returns true if any calls were processed, false otherwise
 		virtual void RecvFromSynced(lua_State *srcState, int args);
 		void RecvFromSim(int args);
 		void DelayRecvFromSynced(lua_State* srcState, int args);
