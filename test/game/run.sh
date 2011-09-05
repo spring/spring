@@ -35,16 +35,24 @@ ulimit -v 1000000
 #max 15 min cpu time
 ulimit -t 900
 echo -n Starting Test, logging to $LOG ...
-gdb -batch-silent -x $GDBCMDS >$LOG 2>&1
 
-#cleanup (this info is alread in normal log)
-rm -f $GDBCMDS
+set +e #temp disable abort on error
+gdb -batch-silent -x $GDBCMDS >$LOG 2>&1
+if [ ! $? -eq 0]; then; #gdb exited abnormally, dump output
+	cat $LOG
+	exit 1
+fi
+set -e
 
 if ! grep "Program exited normally." $LOG >/dev/null; then
 	echo ": failed"
 	#echo logoutput to stderr
-	cat $LOG >&2
+	cat $LOG
+	exit 1
 else
 	echo ": ok"
 fi
 
+
+#cleanup (this info is alread in normal log)
+rm -f $GDBCMDS
