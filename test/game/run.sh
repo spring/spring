@@ -1,7 +1,5 @@
 #!/bin/sh
 
-#!/bin/sh
-
 set -e #abort on error
 
 
@@ -10,10 +8,12 @@ if [ $# -le 0 ]; then
 	exit 1
 fi
 
-DATESTR=$(date +"%Y.%m.%d_%H-%M-%S")
-LOGDIR=logs
-LOG=$LOGDIR/$DATESTR.log
-GDBCMDS=$LOGDIR/.$DATESTR.gdbcmds
+if [ -n $LOG ]; then #LOG not set, use default
+	DATESTR=$(date +"%Y.%m.%d_%H-%M-%S")
+	LOGDIR=logs
+	LOG=$LOGDIR/$DATESTR.log
+fi
+GDBCMDS=$LOG.gdbcmds
 
 if [ ! -x "$1" ]; then
 	echo "Parameter 1 $1 isn't executable!"
