@@ -1213,7 +1213,7 @@ static int SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 		weapon->sprayAngle = value;
 	}
 	else if (key == "range") {
-		weapon->range = value;
+		weapon->UpdateRange(value);
 	}
 	else if (key == "projectileSpeed") {
 		weapon->projectileSpeed = value;
