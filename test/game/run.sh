@@ -38,7 +38,7 @@ echo -n Starting Test, logging to $LOG ...
 
 set +e #temp disable abort on error
 gdb -batch-silent -x $GDBCMDS >$LOG 2>&1
-if [ ! $? -eq 0]; then; #gdb exited abnormally, dump output
+if [ ! $? -eq 0 ]; then #gdb exited abnormally, dump output
 	cat $LOG
 	exit 1
 fi
