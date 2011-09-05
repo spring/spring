@@ -33,7 +33,7 @@ fi
 
 #install required files into spring dir
 cd ${SOURCEDIR}
-mkdir -p ${CONTENT_DIR}/games ${CONTENT_DIR}/maps
+mkdir -p ${CONTENT_DIR}/games ${CONTENT_DIR}/maps ${CONTENT_DIR}/LuaUI/Widgets
 cp -suv ${DOWNLOADDIR}/ba750.sdz ${CONTENT_DIR}/games/ba750.sdz
 cp -suv ${DOWNLOADDIR}/Altair_Crossing.sd7 ${CONTENT_DIR}/maps/Altair_Crossing.sd7
 cp -suv ${SOURCEDIR}/test/game/LuaUI/Widgets/test.lua ${CONTENT_DIR}/LuaUI/Widgets/test.lua
