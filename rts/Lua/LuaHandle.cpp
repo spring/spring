@@ -219,7 +219,6 @@ bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
 
 #if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
 	streflop::fesetenv(&fenv);
-	//streflop::feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 #endif
 
 	return ret;
@@ -458,7 +457,6 @@ int CLuaHandle::RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, st
 
 #if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
 	streflop::fesetenv(&fenv);
-	//streflop::feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 #endif
 	return error;
 }
