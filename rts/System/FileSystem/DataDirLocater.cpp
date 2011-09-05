@@ -16,6 +16,7 @@
 
 #include "System/Platform/Win/win32.h"
 #include <sstream>
+#include <cassert>
 #include <string.h>
 
 #include "System/Log/ILog.h"
@@ -44,6 +45,12 @@ DataDir::DataDir(const std::string& path)
 DataDirLocater::DataDirLocater()
 	: writeDir(NULL)
 {
+}
+
+const std::vector<DataDir>& DataDirLocater::GetDataDirs() const {
+
+	assert(!dataDirs.empty());
+	return dataDirs;
 }
 
 std::string DataDirLocater::SubstEnvVars(const std::string& in) const
@@ -428,6 +435,7 @@ std::string DataDirLocater::GetWriteDirPath() const
 
 std::vector<std::string> DataDirLocater::GetDataDirPaths() const
 {
+	assert(!dataDirs.empty());
 	std::vector<std::string> dataDirPaths;
 
 	const std::vector<DataDir>& datadirs = GetDataDirs();
