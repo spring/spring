@@ -11,6 +11,9 @@
 #include <process.h>
 #include <shlobj.h>
 #include <shlwapi.h>
+#ifndef SHGFP_TYPE_CURRENT
+	#define SHGFP_TYPE_CURRENT 0
+#endif
 #include "System/Platform/Win/WinVersion.h"
 
 #elif __APPLE__
@@ -67,6 +70,19 @@ static HMODULE GetCurrentModule() {
 
 namespace Platform
 {
+
+std::string GetUserDir()
+{
+#ifdef _WIN32
+	TCHAR strPath[MAX_PATH + 1];
+	SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, strPath);
+	const std::string userDir = strPath;
+#else
+	const std::string userDir = getenv("HOME");
+#endif
+
+	return userDir;
+}
 
 #ifndef WIN32
 static std::string GetRealPath(const std::string& path) {
