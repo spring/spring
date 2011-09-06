@@ -29,6 +29,8 @@
 
 #if !defined(WIN32)
 #include <sys/utsname.h> // for uname()
+#include <sys/types.h> // for getpw
+#include <pwd.h> // for getpw
 #endif
 
 #include <cstring>
@@ -73,12 +75,26 @@ namespace Platform
 
 std::string GetUserDir()
 {
+	std::string userDir;
+
 #ifdef _WIN32
 	TCHAR strPath[MAX_PATH + 1];
 	SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, strPath);
-	const std::string userDir = strPath;
+	userDir = strPath;
 #else
-	const std::string userDir = getenv("HOME");
+	// the user might want to redefine this manually
+	// to locate spring related data in a non-default location
+	char* home = getenv("HOME");
+
+	if (home == NULL) {
+		// in some cases, the HOME env var is not set
+		// for example for non-human user accounts,
+		// or when starting through the UI on OS X
+		struct passwd* pw = getpwuid(getuid());
+		userDir = pw->pw_dir;
+	} else {
+		userDir = home;
+	}
 #endif
 
 	return userDir;
