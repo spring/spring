@@ -81,5 +81,9 @@ If    (NOT DEFINED LTO_FLAGS)
 			Set(LTO_FLAGS "${LTO_FLAGS} -fwhopr")
 		EndIf (HAS_LTO_WHOPR_FLAG)
 	EndIf (LTO_WHOPR)
+	
+	If (LTO AND LTO_WHOPR)
+		Message( FATAL_ERROR "LTO and LTO_WHOPR are mutually exclusive, please enable only one at a time." )
+	EndIf (LTO AND LTO_WHOPR)
 EndIf (NOT DEFINED LTO_FLAGS)
 
