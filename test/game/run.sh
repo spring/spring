@@ -44,7 +44,7 @@ if [ ! $? -eq 0 ]; then #gdb exited abnormally, dump output
 fi
 set -e
 
-if ! grep "Program exited normally." $LOG >/dev/null; then
+if ! grep " exited normally." $LOG >/dev/null; then
 	echo ": failed"
 	#echo logoutput to stderr
 	cat $LOG
