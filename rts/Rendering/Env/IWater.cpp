@@ -18,7 +18,6 @@ CONFIG(int, ReflectiveWater).defaultValue(IWater::WATER_RENDERER_REFLECTIVE);
 
 IWater* water = NULL;
 static std::vector<int> waterModes;
-bool IWater::noWakeProjectiles = false;
 
 
 IWater::IWater()

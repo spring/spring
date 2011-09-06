@@ -56,7 +56,6 @@ CDynWater::CDynWater()
 	}
 
 	lastWaveFrame = 0;
-	noWakeProjectiles = true;
 	firstDraw = true;
 	drawSolid = true;
 	camPosBig = float3(2048, 0, 2048);
@@ -1098,8 +1097,7 @@ void CDynWater::AddShipWakes()
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	GLenum status;
-	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+	const GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
 		LOG_L(L_WARNING, "FBO not ready - 6");
 	}
