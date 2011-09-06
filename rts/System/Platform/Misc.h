@@ -10,6 +10,19 @@ namespace Platform
 {
 
 /**
+ * Returns the path to the current users dir for storing application settings.
+ * examples:
+ * - "/home/pablo"
+ * - "/root"
+ * - "C:\Users\USER\AppData\Local"
+ * - "C:\Users\USER\Local Settings\Application Data"
+ * - "C:\Documents and Settings\USER\Local Settings\App Data"
+ * - "C:\Dokumente und Einstellungen\USER\Anwendungsdaten"
+ * @return path to the current users home dir, without trailing path separator
+ */
+std::string GetUserDir();
+
+/**
  * Returns the path to the main binary of the running process,
  * including the file name.
  * examples:
