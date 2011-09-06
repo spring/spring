@@ -35,15 +35,13 @@ public:
 	bool IsDrawReflection() const { return drawReflection; }
 	bool IsDrawRefraction() const { return drawRefraction; }
 	bool IsDrawSolid() const { return drawSolid; }
+	bool BlockWakeProjectiles() const { return (GetID() == WATER_RENDERER_DYNAMIC); }
 
 	static IWater* GetWater(IWater* currWaterRenderer, int nextWaterRenderMode);
 	static void ApplyPushedChanges(CGame* game);
 	static void PushWaterMode(int nextWaterRenderMode);
-	static bool IsNoWakeProjectiles() { return noWakeProjectiles; }
 
 protected:
- 	static bool noWakeProjectiles;
-
 	bool drawReflection;
 	bool drawRefraction;
  	bool drawSolid;
