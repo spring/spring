@@ -1307,7 +1307,7 @@ void CUnit::AddExperience(float exp)
 	}
 	if (expHealthScale > 0.0f) {
 		const float oldMaxHealth = maxHealth;
-		maxHealth = unitDef->health * (1.0f + (limExperience * expHealthScale));
+		maxHealth = std::max(0.1f, unitDef->health * (1.0f + (limExperience * expHealthScale)));
 		health = health * (maxHealth / oldMaxHealth);
 	}
 }

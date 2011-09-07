@@ -296,7 +296,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	makesMetal   = udTable.GetFloat("makesMetal", 0.0f);
 	energyMake   = udTable.GetFloat("energyMake", 0.0f);
 
-	health       = udTable.GetFloat("maxDamage",  0.0f);
+	health       = std::max(0.1f, udTable.GetFloat("maxDamage",  0.0f)); //avoid some nasty divide by 0
 	autoHeal     = udTable.GetFloat("autoHeal",      0.0f) * (UNIT_SLOWUPDATE_RATE / float(GAME_SPEED));
 	idleAutoHeal = udTable.GetFloat("idleAutoHeal", 10.0f) * (UNIT_SLOWUPDATE_RATE / float(GAME_SPEED));
 	idleTime     = udTable.GetInt("idleTime", 600);
@@ -307,10 +307,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	mass = std::max(1.0f, udTable.GetFloat("mass", metalCost));
 
 	energyCost = udTable.GetFloat("buildCostEnergy", 0.0f);
-	buildTime = udTable.GetFloat("buildTime", 0.0f);
-	if (buildTime < 1.0f) {
-		buildTime = 1.0f; //avoid some nasty divide by 0 etc
-	}
+	buildTime = std::max(0.1f, udTable.GetFloat("buildTime", 0.0f)); //avoid some nasty divide by 0
 
 	cobID = udTable.GetInt("cobID", -1);
 

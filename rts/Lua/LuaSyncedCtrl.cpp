@@ -1157,10 +1157,7 @@ int LuaSyncedCtrl::SetUnitMaxHealth(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	unit->maxHealth = luaL_checkfloat(L, 2);
-	if (unit->maxHealth <= 0.0f) {
-		unit->maxHealth = 1.0f;
-	}
+	unit->maxHealth = std::max(0.1f, luaL_checkfloat(L, 2));
 
 	if (unit->health > unit->maxHealth) {
 		unit->health = unit->maxHealth;
