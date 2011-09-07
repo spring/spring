@@ -38,7 +38,8 @@ cp -suv ${DOWNLOADDIR}/ba750.sdz ${CONTENT_DIR}/games/ba750.sdz
 cp -suv ${DOWNLOADDIR}/Altair_Crossing.sd7 ${CONTENT_DIR}/maps/Altair_Crossing.sd7
 cp -suv ${SOURCEDIR}/test/game/LuaUI/Widgets/test.lua ${CONTENT_DIR}/LuaUI/Widgets/test.lua
 cp -suv ${SOURCEDIR}/test/game/test1.script.txt ${CONTENT_DIR}/test1.script.txt
-echo "SpringData = ${TESTDIR}/usr/local/share/games/spring" > ${TESTDIR}/.springrc
+cp -v ${SOURCEDIR}/cont/springrc-template-headless.txt ${TESTDIR}/.springrc
+echo "SpringData = ${TESTDIR}/usr/local/share/games/spring" >> ${TESTDIR}/.springrc
 
 #run test
 HOME=${TESTDIR} ${SOURCEDIR}/test/game/run.sh ${TESTDIR}/usr/local/bin/spring-headless test1.script.txt
