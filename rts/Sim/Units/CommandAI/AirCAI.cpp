@@ -512,7 +512,7 @@ void CAirCAI::ExecuteAttack(Command& c)
 			if (targetUnit != NULL && targetUnit != owner) {
 				orderTarget = targetUnit;
 				owner->AttackUnit(orderTarget, false);
-				AddDeathDependence(orderTarget);
+				AddDeathDependence(orderTarget, DEPENDENCE_ORDERTARGET);
 				inCommand = true;
 				SetGoal(orderTarget->pos, owner->pos, cancelDistance);
 			} else {
@@ -547,7 +547,7 @@ void CAirCAI::ExecuteAreaAttack(Command& c)
 			inCommand = false;
 		if (orderTarget && orderTarget->pos.SqDistance2D(pos) > Square(radius)) {
 			inCommand = false;
-			DeleteDeathDependence(orderTarget);
+			DeleteDeathDependence(orderTarget, DEPENDENCE_ORDERTARGET);
 			orderTarget = 0;
 		}
 		if (owner->commandShotCount < 0) {
@@ -583,7 +583,7 @@ void CAirCAI::ExecuteAreaAttack(Command& c)
 
 				orderTarget = uh->GetUnitUnsafe(enemyUnitIDs[idx]);
 				owner->AttackUnit(orderTarget, false);
-				AddDeathDependence(orderTarget);
+				AddDeathDependence(orderTarget, DEPENDENCE_ORDERTARGET);
 			}
 		}
 	}
