@@ -138,6 +138,7 @@ CEFX::CEFX(ALCdevice* device)
 		|| (maxSlotsPerSource<1)
 	) {
 		LOG_L(L_WARNING, "  EFX Supported: no");
+		supported = false;
 		return;
 	}
 
@@ -153,6 +154,7 @@ CEFX::CEFX(ALCdevice* device)
 		alDeleteFilters(1, &sfxFilter);
 		alDeleteEffects(1, &sfxReverb);
 		alDeleteAuxiliaryEffectSlots(1, &sfxSlot);
+		supported = false;
 		return;
 	}
 
@@ -165,10 +167,9 @@ CEFX::CEFX(ALCdevice* device)
 		alDeleteFilters(1, &sfxFilter);
 		alDeleteEffects(1, &sfxReverb);
 		alDeleteAuxiliaryEffectSlots(1, &sfxSlot);
+		supported = false;
 		return;
 	}
-
-	supported = true;
 
 	//! User may disable it (performance reasons?)
 	enabled = configHandler->GetBool("UseEFX");
