@@ -23,8 +23,7 @@
 float CSoundSource::referenceDistance = 200.0f;
 float CSoundSource::globalPitch = 1.0;
 float CSoundSource::heightRolloffModifier = 1.0f;
-
-
+static const float ROLLOFF_FACTOR = 5.f;
 
 CSoundSource::CSoundSource()
 	: curPlaying(NULL)
@@ -71,7 +70,7 @@ void CSoundSource::Update()
 
 		if (heightRolloffModifier != curHeightRolloffModifier) {
 			curHeightRolloffModifier = heightRolloffModifier;
-			alSourcef(id, AL_ROLLOFF_FACTOR, curPlaying->rolloff * heightRolloffModifier);
+			alSourcef(id, AL_ROLLOFF_FACTOR, ROLLOFF_FACTOR * curPlaying->rolloff * heightRolloffModifier);
 		}
 
 		if (!IsPlaying() || ((curPlaying->loopTime > 0) && (loopStop < SDL_GetTicks())))
@@ -182,7 +181,7 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 		pos *= CSound::GetElmoInMeters();
 		alSource3f(id, AL_POSITION, pos.x, pos.y, pos.z);
 		curHeightRolloffModifier = heightRolloffModifier;
-		alSourcef(id, AL_ROLLOFF_FACTOR, item->rolloff * heightRolloffModifier);
+		alSourcef(id, AL_ROLLOFF_FACTOR, ROLLOFF_FACTOR * item->rolloff * heightRolloffModifier);
 #ifdef __APPLE__
 		alSourcef(id, AL_MAX_DISTANCE, 1000000.0f);
 		//! Max distance is too small by default on my Mac...
@@ -190,7 +189,7 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 		if (gain > 1.0f) {
 			//! OpenAL on Mac cannot handle AL_GAIN > 1 well, so we will adjust settings to get the same output with AL_GAIN = 1.
 			ALint model = alGetInteger(AL_DISTANCE_MODEL);
-			ALfloat rolloff = item->rolloff * heightRolloffModifier;
+			ALfloat rolloff = ROLLOFF_FACTOR * item->rolloff * heightRolloffModifier;
 			ALfloat ref = referenceDistance * CSound::GetElmoInMeters();
 			if ((model == AL_INVERSE_DISTANCE_CLAMPED) || (model == AL_INVERSE_DISTANCE)) {
 				alSourcef(id, AL_REFERENCE_DISTANCE, ((gain - 1.0f) * ref / rolloff) + ref);
