@@ -163,6 +163,9 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 		alSourcei(id, AL_SOURCE_RELATIVE, AL_TRUE);
 		alSourcef(id, AL_ROLLOFF_FACTOR, 0.f);
 		alSource3f(id, AL_POSITION, 0.0f, 0.0f, -1.0f * CSound::GetElmoInMeters());
+#ifdef __APPLE__
+		alSourcef(id, AL_REFERENCE_DISTANCE, referenceDistance * CSound::GetElmoInMeters());
+#endif
 	} else {
 		if (item->buffer->GetChannels() > 1) {
 			LOG_L(L_WARNING, "Can not play non-mono \"%s\" in 3d.",

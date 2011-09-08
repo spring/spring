@@ -432,9 +432,8 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 	if (sources.empty())
 		return;
 
-//	const float3 prevPos = myPos;
 	myPos = campos;
-	float3 myPosInMeters = myPos * GetElmoInMeters();
+	const float3 myPosInMeters = myPos * GetElmoInMeters();
 	alListener3f(AL_POSITION, myPosInMeters.x, myPosInMeters.y, myPosInMeters.z);
 
 	//! reduce the rolloff when the camera is high above the ground (so we still hear something in tab mode or far zoom)
