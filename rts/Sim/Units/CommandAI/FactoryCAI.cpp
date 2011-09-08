@@ -176,8 +176,11 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 		if (!(c.options & SHIFT_KEY)) {
  			waitCommandsAI.ClearUnitQueue(owner, newUnitCommands);
+			CCommandAI::ClearCommandDependencies();
 			newUnitCommands.clear();
 		}
+
+		CCommandAI::AddCommandDependency(c);
 
 		if (cmd_id != CMD_STOP) {
 			if ((cmd_id == CMD_WAIT) || (cmd_id == CMD_SELFD)) {

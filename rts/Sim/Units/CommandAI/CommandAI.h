@@ -25,8 +25,15 @@ public:
 	CCommandAI();
 	virtual ~CCommandAI();
 	void PostLoad();
-
+	enum DependenceType {
+		DEPENDENCE_COMMANDQUE,
+		DEPENDENCE_ORDERTARGET,
+	};
 	void DependentDied(CObject* o);
+	virtual void AddDeathDependence(CObject* o, DependenceType dep);
+	virtual void DeleteDeathDependence(CObject* o, DependenceType dep);
+	void AddCommandDependency(const Command &c);
+	void ClearCommandDependencies();
 	/// feeds into GiveCommandReal()
 	void GiveCommand(const Command& c, bool fromSynced = true);
 	virtual int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
@@ -126,6 +133,7 @@ protected:
 	void DrawDefaultCommand(const Command& c) const;
 
 private:
+	std::set<CObject *> commandDeathDependences;
 	/**
 	 * continously set to some non-zero value while target is in radar
 	 * decremented every frame, command is canceled if it reaches 0

@@ -13,6 +13,11 @@ struct DamageArray;
 struct CollisionVolume;
 struct MoveData;
 
+extern int deletingRefID;
+inline void SetDeletingRefID(int id) { deletingRefID = id; }
+// returns the object (command reference) id of the object currently being deleted,
+// for units this equals unit->id, and for features feature->id + uh->MaxUnits()
+inline int GetDeletingRefID() { return deletingRefID; }
 
 class CSolidObject: public CWorldObject {
 public:
