@@ -6,9 +6,14 @@
 /**
  * @brief square size
  *
- * Defines the size of 1 square as 8.
+ * Defines the size of 1 heightmap square as 8 elmos.
  */
 const int SQUARE_SIZE = 8;
+
+/**
+ * conversion factor from elmos to meters
+ */
+const float ELMOS_TO_METERS = 1.0f / SQUARE_SIZE;
 
 /**
  * @brief game speed

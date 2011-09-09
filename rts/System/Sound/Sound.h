@@ -14,7 +14,6 @@
 #include <boost/thread/thread.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 
-#include "Sim/Misc/GlobalConstants.h"
 #include "System/float3.h"
 
 #include "SoundItem.h"
@@ -52,9 +51,6 @@ public:
 	virtual void PrintDebugInfo();
 	virtual bool LoadSoundDefs(const std::string& fileName);
 
-	static float GetElmoInMeters() {
-		return 1.f / SQUARE_SIZE; //! 8 elmos = 1m
-	}
 	const float3& GetListenerPos() const {
 		return myPos;
 	}
