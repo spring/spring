@@ -234,9 +234,17 @@ void DataDirLocater::LocateDataDirs()
 
 #if    defined(WIN32)
 	// fetch my documents path
-	TCHAR pathMyDocsC[MAX_PATH];
-	SHGetFolderPath(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, pathMyDocsC);
-	const std::string pathMyDocs = pathMyDocsC;
+	std::string pathMyDocs;
+	// TODO instead of USERPROFILE/CSIDL_PERSONAL we should probably be using LOCALAPPDATA/CSIDL_LOCAL_APPDATA (or at least in addition to USERPROFILE)
+	// see http://en.wikipedia.org/wiki/Environment_variable#Synopsis
+	char* pathMyDocsEnv = getenv("USERPROFILE");
+	if (pathMyDocsEnv == NULL) {
+		TCHAR pathMyDocsC[MAX_PATH];
+		SHGetFolderPath(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, pathMyDocsC);
+		pathMyDocs = pathMyDocsC;
+	} else {
+		pathMyDocs = pathMyDocsEnv;
+	}
 
 	// e.g. F:\Dokumente und Einstellungen\Karl-Robert\Eigene Dateien\Spring
 	const std::string dd_myDocs = pathMyDocs + "\\Spring";
@@ -246,9 +254,15 @@ void DataDirLocater::LocateDataDirs()
 	const std::string dd_myDocsMyGames = pathMyDocs + "\\My Games\\Spring";
 
 	// fetch common app-data path
-	TCHAR pathAppDataC[MAX_PATH];
-	SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, pathAppDataC);
-	const std::string pathAppData = pathAppDataC;
+	std::string pathAppData;
+	char* pathAppDataEnv = getenv("PROGRAMDATA");
+	if (pathAppDataEnv == NULL) {
+		TCHAR pathAppDataC[MAX_PATH];
+		SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, pathAppDataC);
+		pathAppData = pathAppDataC;
+	} else {
+		pathAppData = pathAppDataEnv;
+	}
 
 	// e.g. F:\Dokumente und Einstellungen\All Users\Anwendungsdaten\Spring
 	const std::string dd_appData = pathAppData + "\\Spring";
