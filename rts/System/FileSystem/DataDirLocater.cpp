@@ -329,7 +329,7 @@ void DataDirLocater::LocateDataDirs()
 
 		// we need this as default writeable dir, because the Bundle.pp dir
 		// might not be writeable by the user starting the game
-		AddDirs(SubstEnvVars("$HOME/.spring")); // "~/.spring/"
+		AddDirs(Platform::GetUserDir() + "/.spring"); // "~/.spring/"
 		AddDirs(dd_curWorkDirData);             // "Spring.app/Contents/Resources/share/games/spring"
 		AddDirs(dd_etc);                        // from /etc/spring/datadir
 
@@ -337,7 +337,7 @@ void DataDirLocater::LocateDataDirs()
 		// Linux, FreeBSD, Solaris, Apple non-bundle
 
 		AddCwdOrParentDir(dd_curWorkDir); // "./" or "../"
-		AddDirs(SubstEnvVars("$HOME/.spring")); // "~/.spring/"
+		AddDirs(Platform::GetUserDir() + "/.spring"); // "~/.spring/"
 		AddDirs(dd_etc);            // from /etc/spring/datadir
 #endif
 
