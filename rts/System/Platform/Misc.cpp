@@ -69,33 +69,49 @@ static HMODULE GetCurrentModule() {
 }
 #endif // defined WIN32
 
+/**
+ * The user might want to define the user dir manually,
+ * to locate spring related data in a non-default location.
+ * @link http://en.wikipedia.org/wiki/Environment_variable#Synopsis
+ */
+static std::string GetUserDirFromEnvVar()
+{
+#ifdef _WIN32
+	char* home = NULL;
+#else
+	char* home = getenv("HOME");
+#endif
+
+	return (home == NULL) ? "" : home;
+}
+
+static std::string GetUserDirFromSystemApi()
+{
+#ifdef _WIN32
+	TCHAR strPath[MAX_PATH + 1];
+	SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, strPath);
+	return strPath;
+#else
+	struct passwd* pw = getpwuid(getuid());
+	return pw->pw_dir;
+#endif
+}
+
 
 namespace Platform
 {
 
 std::string GetUserDir()
 {
-	std::string userDir;
+	std::string userDir = GetUserDirFromEnvVar();
 
-#ifdef _WIN32
-	TCHAR strPath[MAX_PATH + 1];
-	SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, strPath);
-	userDir = strPath;
-#else
-	// the user might want to redefine this manually
-	// to locate spring related data in a non-default location
-	char* home = getenv("HOME");
-
-	if (home == NULL) {
-		// in some cases, the HOME env var is not set
+	if (userDir.empty()) {
+		// In some cases, the env var is not set,
 		// for example for non-human user accounts,
-		// or when starting through the UI on OS X
-		struct passwd* pw = getpwuid(getuid());
-		userDir = pw->pw_dir;
-	} else {
-		userDir = home;
+		// or when starting through the UI on OS X.
+		// It is unset by default on windows.
+		userDir = GetUserDirFromSystemApi();
 	}
-#endif
 
 	return userDir;
 }
