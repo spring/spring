@@ -1350,7 +1350,7 @@ void CCommandAI::DependentDied(CObject* o)
 			for (CCommandQueue::iterator qit = dq.begin(); qit != dq.end(); ++qit) {
 				Command &c = *qit;
 				int cpos;
-				if (c.IsObjectCommand(cpos) && (c.params[cpos] == GetDeletingRefID())) {
+				if (c.IsObjectCommand(cpos) && (c.params[cpos] == CSolidObject::GetDeletingRefID())) {
 					Command removeCmd(CMD_REMOVE, 0);
 					curTag = c.tag;
 					removeCmd.params.push_back(curTag);
