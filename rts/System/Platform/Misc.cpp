@@ -77,10 +77,12 @@ static HMODULE GetCurrentModule() {
 static std::string GetUserDirFromEnvVar()
 {
 #ifdef _WIN32
-	char* home = NULL;
+	#define HOME_ENV_VAR "LOCALAPPDATA"
 #else
-	char* home = getenv("HOME");
+	#define HOME_ENV_VAR "HOME"
 #endif
+	char* home = getenv(HOME_ENV_VAR);
+#undef HOME_ENV_VAR
 
 	return (home == NULL) ? "" : home;
 }
