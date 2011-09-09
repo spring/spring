@@ -37,8 +37,7 @@ CEFX::CEFX(ALCdevice* device)
 	,maxSlots(0)
 	,maxSlotsPerSource(0)
 {
-	airAbsorptionFactor = configHandler->GetFloat("snd_airAbsorption");
-	airAbsorptionFactor = Clamp(airAbsorptionFactor, AL_MIN_AIR_ABSORPTION_FACTOR, AL_MAX_AIR_ABSORPTION_FACTOR);
+	SetAirAbsorptionFactor(configHandler->GetFloat("snd_airAbsorption"));
 
 	bool hasExtension = alcIsExtensionPresent(device, "ALC_EXT_EFX");
 
@@ -178,6 +177,8 @@ CEFX::CEFX(ALCdevice* device)
 		LOG_L(L_DEBUG, "  EFX MaxSlots: %i", maxSlots);
 		LOG_L(L_DEBUG, "  EFX MaxSlotsPerSource: %i", maxSlotsPerSource);
 	}
+
+	configHandler->NotifyOnChange(this);
 }
 
 
@@ -262,4 +263,16 @@ void CEFX::CommitEffects()
 		alFilterf(sfxFilter, it->first, it->second);
 
 	updates++;
+}
+
+void CEFX::SetAirAbsorptionFactor(ALfloat value)
+{
+	airAbsorptionFactor = Clamp(value, AL_MIN_AIR_ABSORPTION_FACTOR, AL_MAX_AIR_ABSORPTION_FACTOR);
+}
+
+void CEFX::ConfigNotify(const std::string& key, const std::string& value)
+{
+	if (key == "snd_airAbsorption") {
+		SetAirAbsorptionFactor(std::atof(value.c_str()));
+	}
 }

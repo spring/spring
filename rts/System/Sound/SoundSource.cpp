@@ -62,7 +62,7 @@ void CSoundSource::Update()
 {
 	if (curPlaying) {
 		if (in3D && (efxEnabled != efx->enabled)) {
-			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, (efx->enabled) ? efx->airAbsorptionFactor : 0);
+			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, (efx->enabled) ? efx->GetAirAbsorptionFactor() : 0);
 			alSource3i(id, AL_AUXILIARY_SEND_FILTER, (efx->enabled) ? efx->sfxSlot : AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
 			alSourcei(id, AL_DIRECT_FILTER, (efx->enabled) ? efx->sfxFilter : AL_FILTER_NULL);
 			efxEnabled = efx->enabled;
@@ -92,7 +92,7 @@ void CSoundSource::Update()
 
 	if (efxEnabled && (efxUpdates != efx->updates)) {
 		//! airAbsorption & LowPass aren't auto updated by OpenAL on change, so we need to do it per source
-		alSourcef(id, AL_AIR_ABSORPTION_FACTOR, efx->airAbsorptionFactor);
+		alSourcef(id, AL_AIR_ABSORPTION_FACTOR, efx->GetAirAbsorptionFactor());
 		alSourcei(id, AL_DIRECT_FILTER, efx->sfxFilter);
 		efxUpdates = efx->updates;
 	}
@@ -176,7 +176,7 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 		in3D = true;
 		if (efx->enabled) {
 			efxEnabled = true;
-			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, efx->airAbsorptionFactor);
+			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, efx->GetAirAbsorptionFactor());
 			alSource3i(id, AL_AUXILIARY_SEND_FILTER, efx->sfxSlot, 0, AL_FILTER_NULL);
 			alSourcei(id, AL_DIRECT_FILTER, efx->sfxFilter);
 			efxUpdates = efx->updates;
