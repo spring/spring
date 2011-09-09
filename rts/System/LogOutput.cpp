@@ -218,6 +218,10 @@ void CLogOutput::InitializeSections()
 	// configHandler cannot be accessed here in unitsync, as it may not exist.
 	std::string enabledSections = ",";
 #ifndef UNITSYNC
+	#ifndef DEBUG
+	// Always show at least INFO level of these sections
+	enabledSections += "Sound,";
+	#endif
 	enabledSections += StringToLower(configHandler->GetString("LogSections")) + ",";
 	enabledSections += StringToLower(configHandler->GetString("LogSubsystems")) + ","; // XXX deprecated on 22. August 2011, before the 0.83 release
 #else
