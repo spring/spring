@@ -234,25 +234,24 @@ void DataDirLocater::LocateDataDirs()
 
 #if    defined(WIN32)
 	// fetch my documents path
-	TCHAR pathMyDocs[MAX_PATH];
-	SHGetFolderPath( NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, pathMyDocs);
+	TCHAR pathMyDocsC[MAX_PATH];
+	SHGetFolderPath(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, pathMyDocsC);
+	const std::string pathMyDocs = pathMyDocsC;
 
-	// fetch app-data path
-	TCHAR pathAppData[MAX_PATH];
-	SHGetFolderPath( NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, pathAppData);
-
-	std::string dd_myDocs = pathMyDocs;
 	// e.g. F:\Dokumente und Einstellungen\Karl-Robert\Eigene Dateien\Spring
-	dd_myDocs += "\\Spring";
+	const std::string dd_myDocs = pathMyDocs + "\\Spring";
 
-	std::string dd_myDocsMyGames = pathMyDocs;
 	// My Documents\My Games seems to be the MS standard even if no official guidelines exist
 	// most if not all new Games For Windows(TM) games use this dir
-	dd_myDocsMyGames += "\\My Games\\Spring";
+	const std::string dd_myDocsMyGames = pathMyDocs + "\\My Games\\Spring";
 
-	std::string dd_appData = pathAppData;
+	// fetch common app-data path
+	TCHAR pathAppDataC[MAX_PATH];
+	SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, pathAppDataC);
+	const std::string pathAppData = pathAppDataC;
+
 	// e.g. F:\Dokumente und Einstellungen\All Users\Anwendungsdaten\Spring
-	dd_appData += "\\Spring";
+	const std::string dd_appData = pathAppData + "\\Spring";
 #else // *nix (-OSX)
 	// settings in /etc
 	std::string dd_etc = "";
