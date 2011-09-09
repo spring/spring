@@ -181,9 +181,9 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 
 			unitsByDefs[delTeam][delType].erase(delUnit);
 
-			SetDeletingRefID(delID);
+			CSolidObject::SetDeletingRefID(delID);
 			delete delUnit;
-			SetDeletingRefID(-1);
+			CSolidObject::SetDeletingRefID(-1);
 			break;
 		}
 	}

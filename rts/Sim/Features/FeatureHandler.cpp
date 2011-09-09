@@ -439,9 +439,9 @@ void CFeatureHandler::Update()
 					if (feature->inUpdateQue) {
 						updateFeatures.erase(feature);
 					}
-					SetDeletingRefID(delID + uh->MaxUnits());
+					CSolidObject::SetDeletingRefID(delID + uh->MaxUnits());
 					delete feature;
-					SetDeletingRefID(-1);
+					CSolidObject::SetDeletingRefID(-1);
 				}
 			}
 		}

@@ -13,12 +13,6 @@ struct DamageArray;
 struct CollisionVolume;
 struct MoveData;
 
-extern int deletingRefID;
-inline void SetDeletingRefID(int id) { deletingRefID = id; }
-// returns the object (command reference) id of the object currently being deleted,
-// for units this equals unit->id, and for features feature->id + uh->MaxUnits()
-inline int GetDeletingRefID() { return deletingRefID; }
-
 class CSolidObject: public CWorldObject {
 public:
 	CR_DECLARE(CSolidObject)
@@ -98,6 +92,12 @@ public:
 	int2 GetMapPos(const float3& position);
 
 	static const float DEFAULT_MASS;
+
+	static int deletingRefID;
+	static void SetDeletingRefID(int id) { deletingRefID = id; }
+	// returns the object (command reference) id of the object currently being deleted,
+	// for units this equals unit->id, and for features feature->id + uh->MaxUnits()
+	static int GetDeletingRefID() { return deletingRefID; }
 };
 
 #endif // SOLID_OBJECT_H

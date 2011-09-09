@@ -10,7 +10,7 @@
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "System/myMath.h"
 
-int deletingRefID = -1;
+int CSolidObject::deletingRefID = -1;
 const float CSolidObject::DEFAULT_MASS = 100000.0f;
 
 CR_BIND_DERIVED(CSolidObject, CWorldObject, );
