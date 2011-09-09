@@ -27,6 +27,13 @@ public:
 	void SetHeightRolloffModifer(const float& mod);
 
 public:
+	/// @see ConfigHandler::ConfigNotifyCallback
+	virtual void ConfigNotify(const std::string& key, const std::string& value);
+
+	void SetAirAbsorptionFactor(ALfloat value);
+	ALfloat GetAirAbsorptionFactor() const { return airAbsorptionFactor; }
+
+
 	bool enabled;
 	bool supported;
 
@@ -34,7 +41,9 @@ public:
 	ALuint sfxSlot;
 	ALuint sfxReverb;
 	ALuint sfxFilter;
+private:
 	ALfloat airAbsorptionFactor;
+public:
 
 	int updates;
 
