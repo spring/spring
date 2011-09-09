@@ -433,7 +433,7 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 		return;
 
 	myPos = campos;
-	const float3 myPosInMeters = myPos * GetElmoInMeters();
+	const float3 myPosInMeters = myPos * ELMOS_TO_METERS;
 	alListener3f(AL_POSITION, myPosInMeters.x, myPosInMeters.y, myPosInMeters.z);
 
 	//! reduce the rolloff when the camera is high above the ground (so we still hear something in tab mode or far zoom)
@@ -455,7 +455,7 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 	const float3 velocity = (myPos - prevPos) / (lastFrameTime);
 	float3 velocityAvg = velocity * 0.6f + prevVelocity * 0.4f;
 	prevVelocity = velocityAvg;
-	velocityAvg *= GetElmoInMeters();
+	velocityAvg *= ELMOS_TO_METERS;
 	velocityAvg.y *= 0.001f; //! scale vertical axis separatly (zoom with mousewheel is faster than speed of sound!)
 	velocityAvg *= 0.15f;
 	alListener3f(AL_VELOCITY, velocityAvg.x, velocityAvg.y, velocityAvg.z);
