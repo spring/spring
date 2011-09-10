@@ -5,6 +5,10 @@ Big Items:
  - EFX/EAX support (reverb)
  - ASSIMP support (not 100% finished yet)
  - many speedups and double as much slowdowns
+ - lots of error messages improved and new ones added
+ - add the first few unit-tests
+ - add a validation-test
+ - AI Interface pure-ification
 
 Engine:
  - use more smooth algorithm for wind updates
@@ -15,10 +19,16 @@ Engine:
  - hide out-of-LOS heightmap changes
  - replace engine start point marker with lua-widget
  - use "game" instead of "mod" in many places
- - add "isolation" mode
+ - add "isolation" mode (do not use global data-dirs)
  - change lobbyserver main address to "lobby.springrts.com"
  - use http://springrts.com/ everywhere (deprecate clan-sy links)
  - ArchiveMover uses unitsync to detect the writeable data dir
+ - improve version logging on non-Windows OSs
+ - include player-name in log message when resingning
+ - add `../` as data-dir if it contains `maps/`, `games/` and `engines/`
+ - allow to define the default config- nad data-dir on windows, using env var PROGRAMDATA
+ - refuse to load too heavily compressed archives (see 0.82.3-1043-g2c15040 commit message for details)
+ - better IP v6 and v4/v6 mixed mode support
 
 Engine / bugfixes:
  - too many to list, see http://springrts.com/mantis/changelog_page.php (incomplete!)
@@ -26,6 +36,9 @@ Engine / bugfixes:
  - stop the maxunits team restriction from applying to Gaia (#2435)
  - fix ray-ground intersections when camera is outside map
  - fix spring on MacOSX
+ - CMake configure and make build are much more stable now (no more failure due to wrong order of actions)
+ - fix DamageArray related sync error
+ - fix a lot of memory-leaks
 
 Engine / misc defs:
  - replace UnitDef::pieceTrailCEG* by a Lua subtable of sfxTypes
@@ -34,12 +47,18 @@ Engine / misc defs:
  - UnitDef: remove hardcoded: if ((waterline >= 5.0f) && canmove) { waterline += 10.0f; }
  - make UnitDef::losHeight configurable instead of an unused hardcoded value
  - add collide{Enemy, Ground} as weapondef tags
+ - use a more reasonable default for FeatureDef.autoreclaimable (== reclaimable)
+ - scan in 'effects/' as well as 'gamedata/explosions' for CEG definitions
 
 Engine / misc commands:
  - add a /clearmapmarks command 
  - rename /advshading to /advmodelshading; add an /advmapshading analogue
  - add '/reloadCEGs [cegtag]'; reloads all CEGs or one specific CEG by tag
  - add '/dumpstate <minFrame> <maxFrame> [frameInt]'
+ - add '/CommandList'
+ - add '/CommandHelp <commandName>'
+ - more complete word completion for game-commands
+ - make auto-host command `paused` use a parameter (0|1)
 
 Engine / Userconfigs:
  - removed the "FSAA" config tag (FSAALevel is enough)
@@ -99,19 +118,33 @@ Engine / Lua:
     "userinterface", "ui", 3
     anything else defaults to "general"
  - removed teamcolors.lua (redundant since Spring.SetTeamColor)
- - add optional flattenGround parameter to Spring.CreateUnit 
+ - add optional flattenGround parameter to Spring.CreateUnit
  - remove the "n" field from array-like tables returned by API functions
  - added Spring.GetProjectilesInRectangle
  - linked Projectile{Created, Destroyed} to the Spring.SetWatchWeapon state
  - extend LuaPathFinder with support for setting node cost overlays
+ - extend SyncedRead::Pos2BuildPos: add support for additional param "facing"
  - added Spring.{Get, Set}MapSquareTexture (these allow complete dynamic run-time retexturing of SMF maps)
  - added Spring.GetFeatureCollisionVolumeData
+ - added Spring.SetWMIcon
+ - added Spring.SetWMCaption
+ - added widget call-in GamePaused
+ - added widget call-in PlayerAdded
+ - added widget call-in PlayerRemoved
 
 Engine / Internal:
  - added limited OpenMP support
  - added multithreaded OpenGL support via offscreen contexts
  - added LinkingTimeOptimization (currently fails with GCC4.5/6)
  - more/better error reporting
+ - new logging system:
+     frontend is leightweight
+     frontend is C compatible
+     is more modular
+     supports log levels: DEBUG, INFO, WARNING, ERROR, FATAL
+     "sub-systems" renamed to "sections"
+     more section then before
+     is compatible with unit-testing
  - added GL_ARB_debug_output support (callback-based opengl error reporting) 
    NOTE: this doesn't work yet, because most drivers export this ext only for so called debug contexts.
    Creating those is impossible with near all current GL frameworks (SDL, SFML, ...).
@@ -119,10 +152,34 @@ Engine / Internal:
  - promote the CrashHandler hang-detector thread to a WatchDog
  - use a SafeVector for the Command parameter array
  - lots of cleanup and refactoring
+ - get rid of goto
+ - modularized chat-/game-commands (for example /cheat)
+ - no more use of AUX_SOURCE_DIRECTORY in CMake (as recommended by CMake team)
+ - Remove the obsolete SCons build system
+ - reduces constantly allocated memory for drawing stuff for AIs from ~130MB to ~ 2KB
+ - add a new build-target "generateSources"
 
-Engine / AI:
+AI:
+ - AI Interface pure-ification, see Forum: Development - AI - <sticky-thread>
  - add full two-way communications between AI's and unsyced Lua
  - let AI's send textual commands (like "/cheat")
+ - allow AI Interface plugins to provide info about available Skirmish AIs
+ - install Java-AIInterface and JavaOO-AIWrapper as maven artifacts into the local repository
+ - Legacy C++ AI: allow fetching the maximum number of units in a game
+ - fix source generation occasionally failing for Java-AIInterface
+ - Java AI Interface: pack native sources too
+ - Maven-ize NullOOJavaAI
+ - Java AI: allow AIs to support compiling only through Maven
+ - generally improved Maven support
+ - make source generation compatible with BWK and GAWK 4.0.0
+ - E2323AI: bump to latest version
+ - KAIK: mid-game init fix
+
+Unitsync:
+ - implemented GetDataDirectoryCount() and GetDataDirectory(int index)
+ - add support for retrieving non-string info value types (string, integer, float, bool)
+ - introduce GetPrimaryModInfoCount
+ - fix OpenArchiveFile
 
 Installer:
  - create minimal-portable .7z version of engine and reuse it in installer
