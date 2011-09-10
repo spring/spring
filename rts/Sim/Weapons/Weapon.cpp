@@ -164,7 +164,7 @@ CWeapon::CWeapon(CUnit* owner):
 	lastErrorVectorUpdate(0),
 	slavedTo(0),
 	mainDir(0,0,1),
-	maxMainDirAngleDif(-1),
+	maxMainDirAngleDif(-1.0f),
 	avoidFriendly(true),
 	avoidFeature(true),
 	avoidNeutral(true),
@@ -795,89 +795,118 @@ bool CWeapon::HaveFreeLineOfFire(const float3& pos, const float3& dir, float len
 	return ((g <= 0.0f || g >= (length * 0.9f)) || (unit == target));
 }
 
-bool CWeapon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
+bool CWeapon::AdjustTargetVectorLength(
+	CUnit* targetUnit,
+	float3& targetPos,
+	float3& targetVec,
+	float3& targetDir)
+const {
+	bool retCode = false;
+	const float tbScale = math::fabsf(targetBorder);
+
+	CollisionVolume* cvOld = targetUnit->collisionVolume;
+	CollisionVolume  cvNew = CollisionVolume(targetUnit->collisionVolume);
+	CollisionQuery   cq;
+
+	// test for "collision" with a temporarily volume
+	// (scaled uniformly by the absolute target-border
+	// factor)
+	cvNew.RescaleAxes(tbScale, tbScale, tbScale);
+	cvNew.SetTestType(CollisionVolume::COLVOL_HITTEST_DISC);
+
+	targetUnit->collisionVolume = &cvNew;
+
+	if (CCollisionHandler::DetectHit(targetUnit, weaponMuzzlePos, ZeroVector, NULL)) {
+		// our weapon muzzle is inside the target unit's volume; this
+		// means we do not need to make any adjustments to targetVec
+		targetVec = ZeroVector;
+	} else {
+		targetDir.SafeNormalize();
+
+		// otherwise, perform a raytrace to find the proper length correction
+		// factor for non-spherical coldet volumes based on the ray's ingress
+		// (for positive TB values) or egress (for negative TB values) position;
+		// this either increases or decreases the length of <targetVec> but does
+		// not change its direction
+		cvNew.SetTestType(CollisionVolume::COLVOL_HITTEST_CONT);
+
+		// make the ray-segment long enough so it can reach the far side of the
+		// scaled collision volume (helps to ensure a ray-intersection is found)
+		//
+		// note: ray-intersection is NOT guaranteed if the volume itself has a
+		// non-zero offset, since here we are "shooting" at the target UNIT's
+		// midpoint
+		const float3 targetOffset = targetDir * (cvNew.GetBoundingRadius() * 2.0f);
+		const float3 targetRayPos = targetPos + targetOffset;
+
+		if (CCollisionHandler::DetectHit(targetUnit, weaponMuzzlePos, targetRayPos, &cq)) {
+			if (targetBorder > 0.0f) { targetVec -= (targetDir * ((targetPos - cq.p0).Length())); }
+			if (targetBorder < 0.0f) { targetVec += (targetDir * ((cq.p1 - targetPos).Length())); }
+		}
+
+		retCode = true;
+	}
+
+	targetUnit->collisionVolume = cvOld;
+
+	// true indicates we took the else-branch and targetDir is now normalized
+	return retCode;
+}
+
+bool CWeapon::TryTarget(const float3& tgtPos, bool /*userTarget*/, CUnit* targetUnit)
 {
-	if (unit && !(onlyTargetCategory & unit->category)) {
+	if (targetUnit && !(onlyTargetCategory & targetUnit->category)) {
 		return false;
 	}
 
-	if (unit && ((unit->isDead  && (modInfo.fireAtKilled   == 0)) ||
-	            (unit->crashing && (modInfo.fireAtCrashing == 0)))) {
+	if (targetUnit && ((targetUnit->isDead   && (modInfo.fireAtKilled   == 0)) ||
+	                   (targetUnit->crashing && (modInfo.fireAtCrashing == 0)))) {
 		return false;
 	}
 	if (weaponDef->stockpile && !numStockpiled) {
 		return false;
 	}
 
+	float3 targetPos = tgtPos;
+	float3 targetVec = targetPos - weaponMuzzlePos;
+	float3 targetDir = targetVec;
 
-	float3 dif = pos - weaponMuzzlePos;
 	float heightDiff = 0.0f; // negative when target below owner
-	const float absTB = math::fabsf(targetBorder);
+	float weaponRange = 0.0f; // range modified by heightDiff and cylinderTargetting
+	bool targetDirNormalized = false;
 
-	if (targetBorder != 0.0f && unit) {
-		float3 difDir(dif);
-		difDir.Normalize();
-
-		{
-			CollisionVolume* cvOld = unit->collisionVolume;
-			CollisionVolume  cvNew(unit->collisionVolume);
-			CollisionQuery   cq;
-
-			cvNew.RescaleAxes(absTB, absTB, absTB);
-			cvNew.SetTestType(CollisionVolume::COLVOL_HITTEST_DISC);
-
-			unit->collisionVolume = &cvNew;
-
-			if (CCollisionHandler::DetectHit(unit, weaponMuzzlePos, ZeroVector, NULL)) {
-				// weapon inside target unit's volume, no
-				// real need to calculate penetration depth
-				dif = ZeroVector;
-			} else {
-				// raytrace to find the proper correction
-				// factor for non-spherical volumes based
-				// on ingress position
-				cvNew.SetTestType(CollisionVolume::COLVOL_HITTEST_CONT);
-
-				// intersection is not guaranteed if the
-				// volume has an offset, since here we're
-				// shooting at the target's midpoint
-				if (CCollisionHandler::DetectHit(unit, weaponMuzzlePos, pos + (difDir * cvNew.GetBoundingRadius() * 2.0f), &cq)) {
-					if (targetBorder > 0.0f) { dif -= (difDir * ((pos - cq.p0).Length())); }
-					if (targetBorder < 0.0f) { dif += (difDir * ((cq.p1 - pos).Length())); }
-				}
-			}
-
-			unit->collisionVolume = cvOld;
-		}
-
-		heightDiff = (weaponPos.y + dif.y) - owner->pos.y;
-	} else {
-		heightDiff = pos.y - owner->pos.y;
+	if (targetBorder != 0.0f && targetUnit != NULL) {
+		// adjust the length of <targetVec> based on the targetBorder factor
+		targetDirNormalized = AdjustTargetVectorLength(targetUnit, targetPos, targetVec, targetDir);
+		targetPos.y = weaponPos.y + targetVec.y;
 	}
 
+	heightDiff = targetPos.y - owner->pos.y;
 
-	float r;
-	if (!unit || cylinderTargetting < 0.01f) {
-		r = GetRange2D(heightDiff * heightMod);
+	if (targetUnit == NULL || cylinderTargetting < 0.01f) {
+		// check range in a sphere (with extra radius <heightDiff * heightMod>)
+		weaponRange = GetRange2D(heightDiff * heightMod);
 	} else {
-		if (cylinderTargetting * range > fabs(heightDiff) * heightMod) {
-			r = GetRange2D(0);
-		} else {
-			r = 0;
+		// check range in a cylinder (with height <cylinderTargetting * range>)
+		if ((cylinderTargetting * range) > (math::fabsf(heightDiff) * heightMod)) {
+			weaponRange = GetRange2D(0.0f);
 		}
 	}
 
-	if (dif.SqLength2D() >= r * r)
+	if (targetVec.SqLength2D() >= (weaponRange * weaponRange))
 		return false;
 
 	if (maxMainDirAngleDif > -0.999f) {
-		dif.Normalize();
-		float3 modMainDir=owner->frontdir*mainDir.z+owner->rightdir*mainDir.x+owner->updir*mainDir.y;
+		const float3 targetNormDir = targetDirNormalized? targetDir: targetDir.SafeNormalize();
+		const float3 modMainDir =
+			owner->frontdir * mainDir.z +
+			owner->rightdir * mainDir.x +
+			owner->updir    * mainDir.y;
 
-//		geometricObjects->AddLine(weaponPos,weaponPos+modMainDir*50,3,0,16);
-		if(modMainDir.dot(dif)<maxMainDirAngleDif)
+		if (modMainDir.dot(targetNormDir) < maxMainDirAngleDif)
 			return false;
 	}
+
 	return true;
 }
 
