@@ -1,14 +1,11 @@
 Spring change log
 
 -- 0.83 ---------------------------------------------------------
-Big Items:
- - EFX/EAX support (reverb)
+Major Changes:
+ - EFX/EAX support (sound reverb)
  - ASSIMP support (not 100% finished yet)
- - many speedups and double as much slowdowns
- - lots of error messages improved and new ones added
- - add the first few unit-tests
- - add a validation-test
  - AI Interface pure-ification
+ - many speedups and double as much slowdowns
 
 Engine:
  - use more smooth algorithm for wind updates
@@ -29,6 +26,9 @@ Engine:
  - allow to define the default config- nad data-dir on windows, using env var PROGRAMDATA
  - refuse to load too heavily compressed archives (see 0.82.3-1043-g2c15040 commit message for details)
  - better IP v6 and v4/v6 mixed mode support
+ - lots of error messages improved and new ones added
+ - add the first few unit-tests
+ - add a validation-test
 
 Engine / bugfixes:
  - too many to list, see http://springrts.com/mantis/changelog_page.php (incomplete!)
