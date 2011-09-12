@@ -23,6 +23,7 @@ CR_BIND_DERIVED(CHoverAirMoveType, AAirMoveType, (NULL));
 CR_REG_METADATA(CHoverAirMoveType, (
 	CR_MEMBER(loadingUnits),
 	CR_MEMBER(bankingAllowed),
+	CR_MEMBER(airStrafe),
 
 	CR_MEMBER(orgWantedHeight),
 
@@ -56,7 +57,7 @@ CR_REG_METADATA(CHoverAirMoveType, (
 	CR_MEMBER(randomWind),
 
 	CR_RESERVED(32)
-	));
+));
 
 
 CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
@@ -64,13 +65,14 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	flyState(FLY_CRUISING),
 	loadingUnits(false),
 	bankingAllowed(true),
+	airStrafe(owner->unitDef->airStrafe),
 	orgWantedHeight(0.0f),
 	circlingPos(ZeroVector),
 	goalDistance(1),
 	waitCounter(0),
 	wantToStop(false),
 	// we want to take off in direction of factory facing
-	wantedHeading(owner? GetHeadingFromFacing(owner->buildFacing): 0),
+	wantedHeading(GetHeadingFromFacing(owner->buildFacing)),
 	wantedSpeed(ZeroVector),
 	deltaSpeed(ZeroVector),
 	currentBank(0),
@@ -417,7 +419,7 @@ void CHoverAirMoveType::UpdateFlying()
 				// break;
 				waitCounter++;
 				if (waitCounter > 100) {
-					if (owner->unitDef->airStrafe) {
+					if (airStrafe) {
 						float3 relPos = pos - circlingPos;
 						if (relPos.x < 0.0001f && relPos.x > -0.0001f) {
 							relPos.x = 0.0001f;
@@ -436,8 +438,8 @@ void CHoverAirMoveType::UpdateFlying()
 					waitCounter = 0;
 				}
 				break;
-			case FLY_ATTACKING:{
-				if (owner->unitDef->airStrafe) {
+			case FLY_ATTACKING: {
+				if (airStrafe) {
 					float3 relPos = pos - circlingPos;
 					if (relPos.x < 0.0001f && relPos.x > -0.0001f) {
 						relPos.x = 0.0001f;
