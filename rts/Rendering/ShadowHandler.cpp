@@ -244,12 +244,15 @@ void CShadowHandler::DrawShadowPasses()
 	inShadowPass = true;
 
 	glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT);
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK);
-
 		if (drawTerrainShadow) {
 			readmap->GetGroundDrawer()->DrawShadowPass();
 		}
+
+		// start culling after drawing the terrain: sun direction can
+		// be set so oblique that geometry back-faces are visible (eg.
+		// from hills near map edges)
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
 
 		unitDrawer->DrawShadowPass();
 		modelDrawer->Draw();
