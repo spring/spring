@@ -801,15 +801,15 @@ static inline bool SetHoverAirMoveTypeValue(CHoverAirMoveType* mt, const string&
 	return false;
 }
 
-static inline void SetSingleHoverAirMoveTypeValue(lua_State *L, int keyidx, int validx, CHoverAirMoveType *moveType)
+static inline void SetSingleHoverAirMoveTypeValue(lua_State* L, int keyIdx, int valIdx, CHoverAirMoveType* moveType)
 {
-	const string key = lua_tostring(L, keyidx);
+	const string key = lua_tostring(L, keyIdx);
 	bool assigned = true;
 
-	if (lua_isnumber(L, validx)) {
-		assigned = SetHoverAirMoveTypeValue(moveType, key, lua_tofloat(L, validx));
-	} else if (lua_isboolean(L, validx)) {
-		assigned = SetHoverAirMoveTypeValue(moveType, key, lua_toboolean(L, validx));
+	if (lua_isnumber(L, valIdx)) {
+		assigned = SetHoverAirMoveTypeValue(moveType, key, lua_tofloat(L, valIdx));
+	} else if (lua_isboolean(L, valIdx)) {
+		assigned = SetHoverAirMoveTypeValue(moveType, key, lua_toboolean(L, valIdx));
 	}
 
 	if (!assigned) {
