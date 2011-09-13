@@ -1132,7 +1132,7 @@ void CBumpWater::DrawRefraction(CGame* game)
 	//! _RENDER_ REFRACTION TEXTURE
 	refractFBO.Bind();
 
-	camera->Update(false);
+	camera->Update();
 	glViewport(0, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -1182,7 +1182,7 @@ void CBumpWater::DrawReflection(CGame* game)
 
 	camera->forward.y *= -1.0f;
 	camera->pos.y *= -1.0f;
-	camera->Update(false);
+	camera->Update();
 
 	glViewport(0, 0, reflTexSize, reflTexSize);
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -1213,7 +1213,7 @@ void CBumpWater::DrawReflection(CGame* game)
 //	camera = realCam;
 	camera->~CCamera();
 	new (camera) CCamera(*(CCamera*)realCam);
-	camera->Update(false);
+	camera->Update();
 }
 
 

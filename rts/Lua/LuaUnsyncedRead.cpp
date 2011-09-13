@@ -1232,24 +1232,22 @@ int LuaUnsyncedRead::GetCameraVectors(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
 
-	const CCamera* cam = camera;
-
 #define PACK_CAMERA_VECTOR(n) \
 	HSTR_PUSH(L, #n);           \
 	lua_createtable(L, 3, 0);            \
-	lua_pushnumber(L, cam-> n .x); lua_rawseti(L, -2, 1); \
-	lua_pushnumber(L, cam-> n .y); lua_rawseti(L, -2, 2); \
-	lua_pushnumber(L, cam-> n .z); lua_rawseti(L, -2, 3); \
+	lua_pushnumber(L, camera-> n .x); lua_rawseti(L, -2, 1); \
+	lua_pushnumber(L, camera-> n .y); lua_rawseti(L, -2, 2); \
+	lua_pushnumber(L, camera-> n .z); lua_rawseti(L, -2, 3); \
 	lua_rawset(L, -3)
 
 	lua_newtable(L);
 	PACK_CAMERA_VECTOR(forward);
 	PACK_CAMERA_VECTOR(up);
 	PACK_CAMERA_VECTOR(right);
-	PACK_CAMERA_VECTOR(top);
-	PACK_CAMERA_VECTOR(bottom);
-	PACK_CAMERA_VECTOR(leftside);
-	PACK_CAMERA_VECTOR(rightside);
+	PACK_CAMERA_VECTOR(topFrustumSideDir);
+	PACK_CAMERA_VECTOR(botFrustumSideDir);
+	PACK_CAMERA_VECTOR(lftFrustumSideDir);
+	PACK_CAMERA_VECTOR(rgtFrustumSideDir);
 
 	return 1;
 }

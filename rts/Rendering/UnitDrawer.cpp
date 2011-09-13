@@ -89,7 +89,7 @@ static float UNIT_GLOBAL_LOD_FACTOR = 1.0f;
 
 inline static void SetUnitGlobalLODFactor(float value)
 {
-	UNIT_GLOBAL_LOD_FACTOR = (value * camera->lppScale);
+	UNIT_GLOBAL_LOD_FACTOR = (value * camera->GetLPPScale());
 }
 
 static float GetLODFloat(const string& name)

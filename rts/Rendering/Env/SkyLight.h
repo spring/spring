@@ -65,7 +65,6 @@ public:
 
 private:
 	inline float4 CalculateSunPos(const float startAngle) const;
-	inline bool UpdateSunDir();
 
 	bool luaControl;
 

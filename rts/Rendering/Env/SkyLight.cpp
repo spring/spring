@@ -46,7 +46,7 @@ DynamicSkyLight::DynamicSkyLight()
 
 void DynamicSkyLight::Update() {
 	if (!luaControl) {
-		UpdateSunDir();
+		SetLightDir(CalculateSunPos(sunStartAngle).ANormalize());
 
 		lightIntensity = math::sqrt(Clamp(lightDir.y, 0.0f, 1.0f));
 
@@ -88,12 +88,6 @@ float4 DynamicSkyLight::CalculateSunPos(const float startAngle) const {
 
 	return sunPos;
 }
-
-bool DynamicSkyLight::UpdateSunDir() {
-	const float4 newDir = CalculateSunPos(sunStartAngle).ANormalize();
-	return SetLightDir(newDir);
-}
-
 
 void DynamicSkyLight::SetLightParams(float4 newLightDir, float startAngle, float orbitTime) {
 	newLightDir.ANormalize();
@@ -146,5 +140,5 @@ void DynamicSkyLight::SetLightParams(float4 newLightDir, float startAngle, float
 
 	shadowDensityFactor = 1.0f / peakElev;
 
-	UpdateSunDir();
+	SetLightDir(CalculateSunPos(sunStartAngle).ANormalize());
 }
