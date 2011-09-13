@@ -247,14 +247,18 @@ void CShadowHandler::DrawShadowPasses()
 	inShadowPass = true;
 
 	glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT);
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_FRONT);
+
+		// cull front-faces during the terrain shadow pass: sun direction
+		// can be set so oblique that geometry back-faces are visible (eg.
+		// from hills near map edges) from its POV
+		// (could also just disable culling for terrain, but we also want
+		// to prevent overdraw in such low-angle passes)
 		if (drawTerrainShadow) {
 			readmap->GetGroundDrawer()->DrawShadowPass();
 		}
 
-		// start culling after drawing the terrain: sun direction can
-		// be set so oblique that geometry back-faces are visible (eg.
-		// from hills near map edges) from its POV
-		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 
 		unitDrawer->DrawShadowPass();
