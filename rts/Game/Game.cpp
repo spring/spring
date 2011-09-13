@@ -970,7 +970,7 @@ bool CGame::Draw() {
 
 	//! set camera
 	camHandler->UpdateCam();
-	camera->Update(false);
+	camera->Update();
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 	if (doDrawWorld) {
@@ -1100,7 +1100,7 @@ bool CGame::Draw() {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);	// Clear Screen And Depth&Stencil Buffer
-	camera->Update(false);
+	camera->Update();
 
 	if (doDrawWorld) {
 		worldDrawer->Draw();

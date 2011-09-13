@@ -22,10 +22,12 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Matrix44f.h"
+#include "System/myMath.h"
 #include "System/Log/ILog.h"
 
 #define DEFAULT_SHADOWMAPSIZE 2048
 #define SHADOWMATRIX_NONLINEAR 0
+#define USE_CAMERA_PROJECTION_CENTER 0
 
 CONFIG(int, Shadows).defaultValue(0);
 CONFIG(int, ShadowMapSize).defaultValue(DEFAULT_SHADOWMAPSIZE);
@@ -51,11 +53,11 @@ CShadowHandler::CShadowHandler()
 		return;
 	}
 
-	//! Shadows possible values:
-	//! -1 : disable and don't try to initialize
-	//!  0 : disable, but still check if the hardware is able to run them
-	//!  1 : enable (full detail)
-	//!  2 : enable (no terrain)
+	// Shadows possible values:
+	// -1 : disable and don't try to initialize
+	//  0 : disable, but still check if the hardware is able to run them
+	//  1 : enable (full detail)
+	//  2 : enable (no terrain)
 	const int configValue = configHandler->GetInt("Shadows");
 
 	if (configValue >= 2)
@@ -223,18 +225,19 @@ bool CShadowHandler::InitDepthTarget()
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 	fb.Bind();
+
 	if (useColorTexture) {
 		fb.AttachTexture(shadowTexture);
-	}
-	else {
+	} else {
 		if (globalRendering->atiHacks)
 			fb.AttachTexture(dummyColorTexture);
 		fb.AttachTexture(shadowTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
 	}
-	int buffer = (useColorTexture || globalRendering->atiHacks) ? GL_COLOR_ATTACHMENT0_EXT : GL_NONE;
+
+	const int buffer = (useColorTexture || globalRendering->atiHacks) ? GL_COLOR_ATTACHMENT0_EXT : GL_NONE;
 	glDrawBuffer(buffer);
 	glReadBuffer(buffer);
-	bool status = fb.CheckStatus("SHADOW");
+	const bool status = fb.CheckStatus("SHADOW");
 	fb.Unbind();
 	return status;
 }
@@ -250,7 +253,7 @@ void CShadowHandler::DrawShadowPasses()
 
 		// start culling after drawing the terrain: sun direction can
 		// be set so oblique that geometry back-faces are visible (eg.
-		// from hills near map edges)
+		// from hills near map edges) from its POV
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 
@@ -315,22 +318,45 @@ void CShadowHandler::CreateShadows()
 	// sun direction is in world-space, invert it
 	sunDirZ = -L->GetLightDir();
 	sunDirX = (sunDirZ.cross(UpVector)).ANormalize();
-	sunDirY = sunDirX.cross(sunDirZ);
-	centerPos = camera->pos;
+	sunDirY = (sunDirX.cross(sunDirZ)).ANormalize();
 
-	//! derive the size of the shadow-map from the
-	//! intersection points of the camera frustum
-	//! with the xz-plane
-	CalcMinMaxView();
+	#if (USE_CAMERA_PROJECTION_CENTER == 1)
+	centerPos = camera->pos;
+	#else
+	// use map-center as projection target rather than camera position,
+	// because camera can be in a map corner looking at an area of the
+	// map that falls outside the sun frustum when variable scaling is
+	// used
+	centerPos.x = (gs->mapx * SQUARE_SIZE) * 0.5f;
+	centerPos.z = (gs->mapy * SQUARE_SIZE) * 0.5f;
+	#endif
+	centerPos.y = 0.0f;
+
+	// derive the size of the shadow-map from the
+	// intersection points of the camera frustum
+	// with the xz-plane
+	// CalcMinMaxView();
 	SetShadowMapSizeFactors();
 
-	// it should be possible to tweak a bit more shadow map resolution from this
-	static const float Z_DIVIDE = 12000.0f;
-	static const float Z_OFFSET = 0.00001f;
-	static const float Z_LENGTH = 8000.0f;
+	// FIXME:
+	//     these scaling factors do not change linearly or smoothly with
+	//     camera movements, creating visible artefacts (resolution jumps)
+	//     therefore, use fixed values such that the entire map barely fits
+	//     into the sun's frustum: pretend the map is embedded in a sphere
+	//     and take its radius as the scale factor
+	//     this means larger maps will have more blurred/aliased shadows if
+	//     the depth buffer is kept at the same size
+	//     in the ideal case, the zoom-factor should be such that everything
+	//     that can be seen by the camera maximally fills the sun's frustum
+	//     (and nothing is left out), but CalcMinMaxView fails to achieve this
+	//
+	// const float xScale = (shadowProjMinMax.y - shadowProjMinMax.x) * 1.5f;
+	// const float yScale = (shadowProjMinMax.w - shadowProjMinMax.z) * 1.5f;
+	static const float MAP_RADIUS = sqrt(Square(gs->mapx * SQUARE_SIZE) + Square(gs->mapy * SQUARE_SIZE));
 
-	const float maxLengthX = (shadowProjMinMax.y - shadowProjMinMax.x) * 1.5f;
-	const float maxLengthY = (shadowProjMinMax.w - shadowProjMinMax.z) * 1.5f;
+	const float zScale = MAP_RADIUS;
+	const float xScale = zScale;
+	const float yScale = zScale;
 
 	#if (SHADOWMATRIX_NONLINEAR == 1)
 	const float shadowMapX =              sqrt( fabs(shadowProjMinMax.y) ); // sqrt( |x2| )
@@ -345,29 +371,29 @@ void CShadowHandler::CreateShadows()
 	shadowProjCenter.y = 0.5f;
 	#endif
 
-	shadowMatrix[ 0] = sunDirX.x / maxLengthX;
-	shadowMatrix[ 1] = sunDirY.x / maxLengthY;
-	shadowMatrix[ 2] = sunDirZ.x / Z_DIVIDE;
+	shadowMatrix[ 0] = sunDirX.x / xScale;
+	shadowMatrix[ 1] = sunDirY.x / yScale;
+	shadowMatrix[ 2] = sunDirZ.x / zScale;
 
-	shadowMatrix[ 4] = sunDirX.y / maxLengthX;
-	shadowMatrix[ 5] = sunDirY.y / maxLengthY;
-	shadowMatrix[ 6] = sunDirZ.y / Z_DIVIDE;
+	shadowMatrix[ 4] = sunDirX.y / xScale;
+	shadowMatrix[ 5] = sunDirY.y / yScale;
+	shadowMatrix[ 6] = sunDirZ.y / zScale;
 
-	shadowMatrix[ 8] = sunDirX.z / maxLengthX;
-	shadowMatrix[ 9] = sunDirY.z / maxLengthY;
-	shadowMatrix[10] = sunDirZ.z / Z_DIVIDE;
+	shadowMatrix[ 8] = sunDirX.z / xScale;
+	shadowMatrix[ 9] = sunDirY.z / yScale;
+	shadowMatrix[10] = sunDirZ.z / zScale;
 
-	// rotate the camera position into sun-space for the translation
-	shadowMatrix[12] = -(sunDirX.dot(centerPos)) / maxLengthX;
-	shadowMatrix[13] = -(sunDirY.dot(centerPos)) / maxLengthY;
-	shadowMatrix[14] = -(sunDirZ.dot(centerPos)  / Z_DIVIDE) + 0.5f;
+	// rotate the target position into sun-space for the translation
+	shadowMatrix[12] = (-sunDirX.dot(centerPos) / xScale);
+	shadowMatrix[13] = (-sunDirY.dot(centerPos) / yScale);
+	shadowMatrix[14] = (-sunDirZ.dot(centerPos) / zScale) + 0.5f;
 
 	glLoadMatrixf(shadowMatrix.m);
 
-	//! set the shadow-parameter registers
-	//! NOTE: so long as any part of Spring rendering still uses
-	//! ARB programs at run-time, these lines can not be removed
-	//! (all ARB programs share the same environment)
+	// set the shadow-parameter registers
+	// NOTE: so long as any part of Spring rendering still uses
+	// ARB programs at run-time, these lines can not be removed
+	// (all ARB programs share the same environment)
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 16, shadowProjCenter.x, shadowProjCenter.y, 0.0f, 0.0f);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 17, shadowProjCenter.z, shadowProjCenter.z, 0.0f, 0.0f);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 18, shadowProjCenter.w, shadowProjCenter.w, 0.0f, 0.0f);
@@ -381,20 +407,17 @@ void CShadowHandler::CreateShadows()
 	}
 
 	if (L->GetLightIntensity() > 0.0f) {
-		//! move view into sun-space
+		// move view into sun-space
 		const float3 oldup = camera->up;
 
 		camera->right = sunDirX;
 		camera->up = sunDirY;
-		camera->pos2 = camera->pos - sunDirZ * Z_LENGTH;
 
 		DrawShadowPasses();
 
 		camera->up = oldup;
 		camera->pos2 = camera->pos;
 	}
-
-	shadowMatrix[14] -= Z_OFFSET;
 
 	glShadeModel(GL_SMOOTH);
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -408,29 +431,7 @@ void CShadowHandler::CreateShadows()
 void CShadowHandler::CalcMinMaxView()
 {
 	cam2->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
-
-	std::vector<CCamera::FrustumLine>& left = cam2->leftFrustumSides;
-	std::vector<CCamera::FrustumLine>::iterator fli, fli2;
-
-	for (fli = left.begin(); fli != left.end(); ++fli) {
-		for (fli2 = left.begin(); fli2 != left.end(); ++fli2) {
-			if (fli == fli2)
-				continue;
-			if (fli->dir - fli2->dir == 0.0f)
-				continue;
-
-			// z-intersection distance
-			const float colz = -(fli->base - fli2->base) / (fli->dir - fli2->dir);
-
-			if (fli2->left * (fli->dir - fli2->dir) > 0.0f) {
-				if ((colz > fli->minz) && (colz < gs->mapy * SQUARE_SIZE + 20000.0f))
-					fli->minz = colz;
-			} else {
-				if ((colz < fli->maxz) && (colz > -20000.0f))
-					fli->maxz = colz;
-			}
-		}
-	}
+	cam2->ClipFrustumLines(true, -20000.0f, gs->mapy * SQUARE_SIZE + 20000.0f);
 
 	shadowProjMinMax.x = -100.0f;
 	shadowProjMinMax.y =  100.0f;
@@ -447,15 +448,19 @@ void CShadowHandler::CalcMinMaxView()
 		maxSize *= 1.2f;
 	}
 
-	if (!left.empty()) {
-		for (fli = left.begin(); fli != left.end(); ++fli) {
+	const std::vector<CCamera::FrustumLine>& negSides = cam2->negFrustumSides;
+	const std::vector<CCamera::FrustumLine>& posSides = cam2->posFrustumSides;
+	std::vector<CCamera::FrustumLine>::const_iterator fli;
+
+	if (!negSides.empty()) {
+		for (fli = negSides.begin(); fli != negSides.end(); ++fli) {
 			if (fli->minz < fli->maxz) {
 				float3 p[5];
-				p[0] = float3(fli->base + fli->dir * fli->minz, 0.0, fli->minz);
+				p[0] = float3(fli->base + fli->dir * fli->minz, 0.0f, fli->minz);
 				p[1] = float3(fli->base + fli->dir * fli->maxz, 0.0f, fli->maxz);
 				p[2] = float3(fli->base + fli->dir * fli->minz, readmap->initMaxHeight + 200, fli->minz);
 				p[3] = float3(fli->base + fli->dir * fli->maxz, readmap->initMaxHeight + 200, fli->maxz);
-				p[4] = float3(camera->pos.x, 0.0f, camera->pos.z);
+				p[4] = centerPos;
 
 				for (int a = 0; a < 5; ++a) {
 					const float xd = (p[a] - centerPos).dot(sunDirX);

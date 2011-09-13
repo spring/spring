@@ -456,7 +456,7 @@ void CDynWater::DrawReflection(CGame* game)
 	camera->forward.y *= -1.0f;
 	camera->pos.y *= -1.0f;
 	camera->pos.y += 0.2f;
-	camera->Update(false);
+	camera->Update();
 	reflectRight = camera->right;
 	reflectUp = camera->up;
 	reflectForward = camera->forward;
@@ -515,13 +515,13 @@ void CDynWater::DrawReflection(CGame* game)
 	camera->~CCamera();
 	new (camera) CCamera(*(CCamera *)realCam);
 
-	camera->Update(false);
+	camera->Update();
 }
 
 void CDynWater::DrawRefraction(CGame* game)
 {
 	drawRefraction = true;
-	camera->Update(false);
+	camera->Update();
 
 	refractRight = camera->right;
 	refractUp = camera->up;
@@ -849,8 +849,8 @@ void CDynWater::DrawWaterSurface()
 	//     2. even if it had been, DynWater::UpdateCamRestraints always used <cam2> to get the sides, not <camera>
 	// UpdateCamRestraints(cam2);
 
-	const std::vector<CCamera::FrustumLine>/*&*/ left /*= cam2->leftFrustumSides*/;
-	const std::vector<CCamera::FrustumLine>/*&*/ right /*= cam2->rightFrustumSides*/;
+	const std::vector<CCamera::FrustumLine>/*&*/ negSides /*= cam2->negFrustumSides*/;
+	const std::vector<CCamera::FrustumLine>/*&*/ posSides /*= cam2->posFrustumSides*/;
 
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
@@ -886,8 +886,8 @@ void CDynWater::DrawWaterSurface()
 			int xe = xend;
 			int xtest,xtest2;
 
-			for (fli = left.begin(); fli != left.end(); ++fli) {
-				float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
+			for (fli = negSides.begin(); fli != negSides.end(); ++fli) {
+				const float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
 				xtest = ((int)xtf) / lod * lod - lod;
 				xtest2 = ((int)(xtf + fli->dir * lod)) / lod * lod - lod;
 				if (xtest > xtest2) {
@@ -897,8 +897,8 @@ void CDynWater::DrawWaterSurface()
 					xs = xtest;
 				}
 			}
-			for (fli = right.begin(); fli != right.end(); ++fli) {
-				float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
+			for (fli = posSides.begin(); fli != posSides.end(); ++fli) {
+				const float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
 				xtest = ((int)xtf) / lod * lod - lod;
 				xtest2 = ((int)(xtf + fli->dir * lod)) / lod * lod - lod;
 				if (xtest < xtest2) {
@@ -1386,6 +1386,7 @@ void CDynWater::DrawOuterSurface()
 
 
 
+/*
 void CDynWater::UpdateCamRestraints(CCamera* cam) {
 	// add restraints for camera sides
 	cam->GetFrustumSides(-10.0f, 10.0f, 1.0f);
@@ -1400,6 +1401,7 @@ void CDynWater::UpdateCamRestraints(CCamera* cam) {
 
 	if (camDir2D.SqLength() > 0.01f) {
 		camDir2D.SafeANormalize();
-		cam->GetFrustumSide(camDir2D, camOffset, miny, maxy, SQUARE_SIZE, (camDir3D.y > 0.0f), false, false);
+		cam->GetFrustumSide(camDir2D, camOffset, miny, maxy, SQUARE_SIZE, (camDir3D.y > 0.0f), false);
 	}
 }
+*/

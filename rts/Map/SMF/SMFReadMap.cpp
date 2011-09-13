@@ -618,8 +618,8 @@ void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 		groundDrawer->UpdateCamRestraints(frustumCam);
 	}
 
-	const std::vector<CCamera::FrustumLine>& left = frustumCam->leftFrustumSides;
-	const std::vector<CCamera::FrustumLine>& right = frustumCam->rightFrustumSides;
+	const std::vector<CCamera::FrustumLine>& negSides = frustumCam->negFrustumSides;
+	const std::vector<CCamera::FrustumLine>& posSides = frustumCam->posFrustumSides;
 
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
@@ -628,7 +628,7 @@ void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 		int ex = exi;
 		float xtest, xtest2;
 
-		for (fli = left.begin(); fli != left.end(); ++fli) {
+		for (fli = negSides.begin(); fli != negSides.end(); ++fli) {
 			xtest  = ((fli->base + fli->dir * ( y * quadSize)            ));
 			xtest2 = ((fli->base + fli->dir * ((y * quadSize) + quadSize)));
 
@@ -640,7 +640,7 @@ void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 			if (xtest - extraSize > sx)
 				sx = ((int) xtest) - extraSize;
 		}
-		for (fli = right.begin(); fli != right.end(); ++fli) {
+		for (fli = posSides.begin(); fli != posSides.end(); ++fli) {
 			xtest  = ((fli->base + fli->dir *  (y * quadSize)           ));
 			xtest2 = ((fli->base + fli->dir * ((y * quadSize) + quadSize)));
 

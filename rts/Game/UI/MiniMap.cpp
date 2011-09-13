@@ -1189,38 +1189,17 @@ void CMiniMap::DrawForReal(bool use_geo)
 	if (!minimap->maximized) {
 		// draw the camera frustum lines
 		cam2->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
+		cam2->ClipFrustumLines(true, -10000.0f, 400096.0f);
 
-		std::vector<CCamera::FrustumLine>& left = cam2->leftFrustumSides;
-		std::vector<CCamera::FrustumLine>::iterator fli, fli2;
-
-		for (fli = left.begin(); fli != left.end(); ++fli) {
-			for (fli2 = left.begin(); fli2 != left.end(); ++fli2) {
-				if (fli == fli2)
-					continue;
-
-				const float dbase = fli->base - fli2->base;
-				const float ddir = fli->dir - fli2->dir;
-
-				if (ddir == 0.0f)
-					continue;
-
-				const float colz = -(dbase / ddir);
-
-				if (fli2->left * ddir > 0.0f) {
-					if (colz > fli->minz && colz < 400096.0f)
-						fli->minz = colz;
-				} else {
-					if (colz < fli->maxz && colz > -10000.0f)
-						fli->maxz = colz;
-				}
-			}
-		}
+		const std::vector<CCamera::FrustumLine>& negSides = cam2->negFrustumSides;
+		const std::vector<CCamera::FrustumLine>& posSides = cam2->posFrustumSides;
+		std::vector<CCamera::FrustumLine>::const_iterator fli;
 
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
-		va->EnlargeArrays(left.size() * 2, 0, VA_SIZE_2D0);
+		va->EnlargeArrays(negSides.size() * 2, 0, VA_SIZE_2D0);
 
-		for (fli = left.begin(); fli != left.end(); ++fli) {
+		for (fli = negSides.begin(); fli != negSides.end(); ++fli) {
 			if (fli->minz < fli->maxz) {
 				va->AddVertex2dQ0(fli->base + (fli->dir * fli->minz), fli->minz);
 				va->AddVertex2dQ0(fli->base + (fli->dir * fli->maxz), fli->maxz);

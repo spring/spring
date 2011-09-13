@@ -535,7 +535,7 @@ void CBaseGroundDrawer::UpdateCamRestraints(CCamera* cam)
 	// prevent colinearity in top-down view
 	if (camDir2D.SqLength() > 0.01f) {
 		camDir2D.SafeANormalize();
-		cam->GetFrustumSide(camDir2D, camOffset, miny, maxy, SQUARE_SIZE, (camDir3D.y > 0.0f), false, false);
+		cam->GetFrustumSide(camDir2D, camOffset, miny, maxy, SQUARE_SIZE, (camDir3D.y > 0.0f), false);
 	}
 }
 
