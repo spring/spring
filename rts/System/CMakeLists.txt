@@ -111,6 +111,7 @@ SET(sources_engine_System_Log_sinkConsole
 SET(sources_engine_System_Net
 		"${CMAKE_CURRENT_SOURCE_DIR}/Net/Connection.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Net/LocalConnection.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Net/LoopbackConnection.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Net/PackPacket.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Net/ProtocolDef.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Net/RawPacket.cpp"
