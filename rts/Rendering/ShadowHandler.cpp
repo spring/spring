@@ -420,7 +420,6 @@ void CShadowHandler::CreateShadows()
 		DrawShadowPasses();
 
 		camera->up = oldup;
-		camera->pos2 = camera->pos;
 	}
 
 	glShadeModel(GL_SMOOTH);

@@ -66,7 +66,6 @@ void CCamera::CopyState(const CCamera* cam) {
 	up        = cam->up;
 
 	pos       = cam->pos;
-	pos2      = cam->pos2;
 	rot       = cam->rot;
 
 	lppScale  = cam->lppScale;
@@ -75,8 +74,6 @@ void CCamera::CopyState(const CCamera* cam) {
 
 void CCamera::Update(bool resetUp)
 {
-	pos2 = pos;
-
 	if (resetUp) {
 		up = UpVector;
 	}

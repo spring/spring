@@ -54,7 +54,6 @@ public:
 
 
 	float3 pos;
-	float3 pos2;       ///< use this for calculating orthodirections (might differ from pos when calcing shadows)
 	float3 rot;        ///< warning is not always updated
 
 	float3 forward;    ///< local z-axis
