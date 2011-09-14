@@ -81,12 +81,15 @@ set(unitsync_files
 	)
 
 ADD_LIBRARY(unitsync MODULE ${unitsync_files})
+ADD_LIBRARY(static-unitsync STATIC ${unitsync_files})
 TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs})
-if (MINGW)
+TARGET_LINK_LIBRARIES(static-unitsync ${unitsync_libs})
+if    (MINGW)
 	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--add-stdcall-alias)
 endif (MINGW)
 FixLibName(unitsync)
 
-install (TARGETS unitsync DESTINATION ${LIBDIR})
+install(TARGETS unitsync DESTINATION ${LIBDIR})
 
 Add_Subdirectory(test)
+Add_Subdirectory(python)
