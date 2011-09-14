@@ -193,7 +193,7 @@ bool CAICallback::SendResources(float mAmount, float eAmount, int receivingTeamI
 		eAmount = std::max(0.0f, std::min(eAmount, GetEnergy()));
 		std::vector<short> empty;
 
-		net->Send(CBaseNetProtocol::Get().SendAIShare(ubyte(gu->myPlayerNum), ubyte(team), ubyte(receivingTeamId), mAmount, eAmount, empty));
+		net->Send(CBaseNetProtocol::Get().SendAIShare(ubyte(gu->myPlayerNum), skirmishAIHandler.GetCurrentAIID(), ubyte(team), ubyte(receivingTeamId), mAmount, eAmount, empty));
 	}
 
 	return ret;
@@ -232,7 +232,7 @@ int CAICallback::SendUnits(const std::vector<int>& unitIds, int receivingTeamId)
 		if (!sentUnitIDs.empty()) {
 			// we ca not use SendShare() here either, since
 			// AIs do not have a notion of "selected units"
-			net->Send(CBaseNetProtocol::Get().SendAIShare(ubyte(gu->myPlayerNum), ubyte(team), ubyte(receivingTeamId), 0.0f, 0.0f, sentUnitIDs));
+			net->Send(CBaseNetProtocol::Get().SendAIShare(ubyte(gu->myPlayerNum), skirmishAIHandler.GetCurrentAIID(), ubyte(team), ubyte(receivingTeamId), 0.0f, 0.0f, sentUnitIDs));
 		}
 	}
 
@@ -391,7 +391,7 @@ int CAICallback::GiveOrder(int unitId, Command* c)
 		return -5;
 	}
 
-	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, unitId, c->GetID(), c->aiCommandId, c->options, c->params));
+	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, skirmishAIHandler.GetCurrentAIID(), unitId, c->GetID(), c->aiCommandId, c->options, c->params));
 
 	return 0;
 }

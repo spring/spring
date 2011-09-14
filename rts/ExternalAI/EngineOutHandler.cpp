@@ -624,9 +624,9 @@ void CEngineOutHandler::SetSkirmishAIDieing(const size_t skirmishAIId) {
 	} CATCH_AI_EXCEPTION;
 }
 
-static void internal_aiErase(std::vector<size_t>& ais, const size_t skirmishAIId) {
+static void internal_aiErase(std::vector<unsigned char>& ais, const unsigned char skirmishAIId) {
 
-	for (std::vector<size_t>::iterator ai = ais.begin(); ai != ais.end(); ++ai) {
+	for (std::vector<unsigned char>::iterator ai = ais.begin(); ai != ais.end(); ++ai) {
 		if (*ai == skirmishAIId) {
 			ais.erase(ai);
 			return;

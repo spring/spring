@@ -9,6 +9,7 @@
 #include "LuaTextures.h"
 
 #include "ExternalAI/EngineOutHandler.h"
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/Camera/CameraController.h"
@@ -2396,7 +2397,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 
 	Command cmd = LuaUtils::ParseCommand(L, __FUNCTION__, 2);
 
-	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, unit->id, cmd.GetID(), cmd.aiCommandId, cmd.options, cmd.params));
+	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, skirmishAIHandler.GetCurrentAIID(), unit->id, cmd.GetID(), cmd.aiCommandId, cmd.options, cmd.params));
 
 	lua_pushboolean(L, true);
 	return 1;
