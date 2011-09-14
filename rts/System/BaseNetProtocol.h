@@ -14,7 +14,7 @@ namespace netcode
 }
 struct PlayerStatistics;
 
-const unsigned short NETWORK_VERSION = 4;
+const unsigned short NETWORK_VERSION = 5;
 
 /*
  * Comment behind NETMSG enumeration constant gives the extra data belonging to
@@ -46,11 +46,11 @@ enum NETMSG {
 	NETMSG_SELECT           = 12, // uchar myPlayerNum; std::vector<short> selectedUnitIDs;
 	NETMSG_PAUSE            = 13, // uchar playerNum, bPaused;
 
-	NETMSG_AICOMMAND        = 14, // uchar myPlayerNum; short unitID; int id; uchar options; std::vector<float> params;
-	NETMSG_AICOMMANDS       = 15, // uchar myPlayerNum;
+	NETMSG_AICOMMAND        = 14, // uchar myPlayerNum; uchar aiID; short unitID; int id; uchar options; std::vector<float> params;
+	NETMSG_AICOMMANDS       = 15, // uchar myPlayerNum; uchar aiID;
 	                              // short unitIDCount;  unitIDCount * short(unitID)
 	                              // short commandCount; commandCount * { int id; uchar options; std::vector<float> params }
-	NETMSG_AISHARE          = 16, // uchar myPlayerNum, uchar sourceTeam, uchar destTeam, float metal, float energy, std::vector<short> unitIDs
+	NETMSG_AISHARE          = 16, // uchar myPlayerNum, uchar aiID, uchar sourceTeam, uchar destTeam, float metal, float energy, std::vector<short> unitIDs
 
 	NETMSG_USER_SPEED       = 19, // uchar myPlayerNum, float userSpeed;
 	NETMSG_INTERNAL_SPEED   = 20, // float internalSpeed;
@@ -90,14 +90,14 @@ enum NETMSG {
 
 	NETMSG_ATTEMPTCONNECT   = 65, // ushort msgsize, ushort netversion, string playername, string passwd, string VERSION_STRING_DETAILED
 
-	NETMSG_AI_CREATED       = 70, // /* uchar messageSize */, uchar myPlayerNum, uint whichSkirmishAI, uchar team, std::string name (ends with \0)
-	NETMSG_AI_STATE_CHANGED = 71, // uchar myPlayerNum, uint whichSkirmishAI, uchar newState
+	NETMSG_AI_CREATED       = 70, // /* uchar messageSize */, uchar myPlayerNum, uchar whichSkirmishAI, uchar team, std::string name (ends with \0)
+	NETMSG_AI_STATE_CHANGED = 71, // uchar myPlayerNum, uchar whichSkirmishAI, uchar newState
 
 	NETMSG_REQUEST_TEAMSTAT = 72, // uchar teamNum, ushort statFrameNum                   # used by LadderBot #
 
 	NETMSG_CREATE_NEWPLAYER = 75, // uchar myPlayerNum, uchar spectator, uchar teamNum, std::string playerName #used for players not preset in script.txt#
 
-	NETMSG_AICOMMAND_TRACKED= 76,  // uchar myPlayerNum; short unitID; int id; uchar options; int aiCommandId, std::vector<float> params;
+	NETMSG_AICOMMAND_TRACKED= 76,  // uchar myPlayerNum; uchar aiID; short unitID; int id; uchar options; int aiCommandId, std::vector<float> params;
 
 	NETMSG_GAME_FRAME_PROGRESS= 77, // int frameNum # this special packet skips queue & cache entirely, indicates current game progress for clients fast-forwarding to current point the game #
 
@@ -157,8 +157,8 @@ public:
 	PacketType SendSelect(uchar myPlayerNum, const std::vector<short>& selectedUnitIDs);
 	PacketType SendPause(uchar myPlayerNum, uchar bPaused);
 
-	PacketType SendAICommand(uchar myPlayerNum, short unitID, int id, int aiCommandId, uchar options, const std::vector<float>& params);
-	PacketType SendAIShare(uchar myPlayerNum, uchar sourceTeam, uchar destTeam, float metal, float energy, const std::vector<short>& unitIDs);
+	PacketType SendAICommand(uchar myPlayerNum, unsigned char aiID, short unitID, int id, int aiCommandId, uchar options, const std::vector<float>& params);
+	PacketType SendAIShare(uchar myPlayerNum, unsigned char aiID, uchar sourceTeam, uchar destTeam, float metal, float energy, const std::vector<short>& unitIDs);
 
 	PacketType SendUserSpeed(uchar myPlayerNum, float userSpeed);
 	PacketType SendInternalSpeed(float internalSpeed);
@@ -201,11 +201,11 @@ public:
 	PacketType SendTeamDied(uchar myPlayerNum, uchar whichTeam);
 
 	PacketType SendAICreated(const uchar myPlayerNum,
-	                         const uint  whichSkirmishAI,
+	                         const uchar whichSkirmishAI,
 	                         const uchar team,
 	                         const std::string& name);
 	PacketType SendAIStateChanged(const uchar myPlayerNum,
-	                              const uint  whichSkirmishAI,
+	                              const uchar whichSkirmishAI,
 	                              const uchar newState);
 
 	PacketType SendSetAllied(uchar myPlayerNum, uchar whichAllyTeam, uchar state);

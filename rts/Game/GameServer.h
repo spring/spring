@@ -168,11 +168,11 @@ private:
 	float internalSpeed;
 	bool cheating;
 
-	size_t ReserveNextAvailableSkirmishAIId();
+	unsigned char ReserveNextAvailableSkirmishAIId();
 
-	std::map<size_t, GameSkirmishAI> ais;
-	std::list<size_t> usedSkirmishAIIds;
-	void FreeSkirmishAIId(const size_t skirmishAIId);
+	std::map<unsigned char, GameSkirmishAI> ais;
+	std::list<unsigned char> usedSkirmishAIIds;
+	void FreeSkirmishAIId(const unsigned char skirmishAIId);
 
 	std::vector<GameParticipant> players;
 	std::vector<GameTeam> teams;

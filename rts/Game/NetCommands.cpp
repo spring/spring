@@ -449,6 +449,8 @@ void CGame::ClientReadNet()
 					pckt >> psize;
 					unsigned char player;
 					pckt >> player;
+					unsigned char aiID;
+					pckt >> aiID;
 
 					if (!playerHandler->IsValidPlayer(player))
 						throw netcode::UnpackPacketException("Invalid player number");
@@ -490,7 +492,8 @@ void CGame::ClientReadNet()
 					pckt >> player;
 					if (!playerHandler->IsValidPlayer(player))
 						throw netcode::UnpackPacketException("Invalid player number");
-
+					unsigned char aiID;
+					pckt >> aiID;
 					// parse the unit list
 					vector<int> unitIDs;
 					short int unitCount;
@@ -542,6 +545,8 @@ void CGame::ClientReadNet()
 					pckt >> player;
 					if (!playerHandler->IsValidPlayer(player))
 						throw netcode::UnpackPacketException("Invalid player number");
+					unsigned char aiID;
+					pckt >> aiID;
 
 					// total message length
 					const int fixedLen = (1 + sizeof(short) + 3 + (2 * sizeof(float)));
@@ -754,7 +759,7 @@ void CGame::ClientReadNet()
 							CTeam* team = teamHandler->Team(t);
 							if (team->leader == player) {
 								const std::vector<int> &teamPlayers = playerHandler->ActivePlayersInTeam(t);
-								const std::vector<size_t> &teamAIs  = skirmishAIHandler.GetSkirmishAIsInTeam(t);
+								const std::vector<unsigned char> &teamAIs  = skirmishAIHandler.GetSkirmishAIsInTeam(t);
 								if ((teamPlayers.size() + teamAIs.size()) == 0) {
 									// no controllers left in team
 									//team.active = false;
@@ -810,7 +815,7 @@ void CGame::ClientReadNet()
 					netcode::UnpackPacket pckt(packet, 2);
 					unsigned char playerId;
 					pckt >> playerId;
-					unsigned int skirmishAIId;
+					unsigned char skirmishAIId;
 					pckt >> skirmishAIId;
 					unsigned char aiTeamId;
 					pckt >> aiTeamId;
@@ -864,8 +869,8 @@ void CGame::ClientReadNet()
 					break;
 				}
 
-				const unsigned int skirmishAIId  = *((unsigned int*)&inbuf[2]); // 4 bytes
-				const ESkirmishAIStatus newState = (ESkirmishAIStatus) inbuf[6];
+				const unsigned char skirmishAIId  = inbuf[2];
+				const ESkirmishAIStatus newState = (ESkirmishAIStatus) inbuf[3];
 				SkirmishAIData* aiData           = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
 				const ESkirmishAIStatus oldState = aiData->status;
 				const unsigned aiTeamId          = aiData->team;

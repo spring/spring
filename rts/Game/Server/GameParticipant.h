@@ -7,6 +7,7 @@
 
 #include "Game/PlayerBase.h"
 #include "Game/PlayerStatistics.h"
+#include "System/Net/LoopbackConnection.h"
 
 namespace netcode
 {
@@ -43,7 +44,13 @@ public:
 	bool isMidgameJoin;
 	boost::shared_ptr<netcode::CConnection> link;
 	PlayerStatistics lastStats;
-	int bandwidthUsage;
+
+	struct PlayerLinkData {
+		PlayerLinkData(bool connect = true) : bandwidthUsage(0) { if (connect) link.reset(new netcode::CLoopbackConnection()); }
+		boost::shared_ptr<netcode::CConnection> link;
+		int bandwidthUsage;
+	};
+	std::map<unsigned char, PlayerLinkData> linkData;
 
 #ifdef SYNCCHECK
 	std::map<int, unsigned> syncResponse; // syncResponse[frameNum] = checksum

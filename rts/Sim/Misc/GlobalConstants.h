@@ -55,6 +55,16 @@ const int MAX_TEAMS = 255;
 const int MAX_PLAYERS = 251;
 
 /**
+ * @brief max AIs
+ *
+ * This is the hard limit.
+ * It is currently 255. as it isrestricted by the size of the ai-ID field
+ * in the network, which is 1 byte (=> 256), with the value 255 reserved for
+ * special purpose, resulting in 255.
+ */
+const int MAX_AIS = 255;
+
+/**
  * @brief max units
  *
  * Defines the absolute global maximum number of units allowed to exist in a

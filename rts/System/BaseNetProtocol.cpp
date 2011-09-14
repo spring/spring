@@ -116,16 +116,16 @@ PacketType CBaseNetProtocol::SendPause(uchar myPlayerNum, uchar bPaused)
 
 
 
-PacketType CBaseNetProtocol::SendAICommand(uchar myPlayerNum, short unitID, int id, int aiCommandId, uchar options, const std::vector<float>& params)
+PacketType CBaseNetProtocol::SendAICommand(uchar myPlayerNum, unsigned char aiID, short unitID, int id, int aiCommandId, uchar options, const std::vector<float>& params)
 {
 	int cmdTypeId = NETMSG_AICOMMAND;
-	unsigned size = 11 + (params.size() * sizeof(float));
+	unsigned size = 12 + (params.size() * sizeof(float));
 	if (aiCommandId != -1) {
 		cmdTypeId = NETMSG_AICOMMAND_TRACKED;
 		size += 4;
 	}
 	PackPacket* packet = new PackPacket(size, cmdTypeId);
-	*packet << static_cast<unsigned short>(size) << myPlayerNum << unitID << id << options;
+	*packet << static_cast<unsigned short>(size) << myPlayerNum << aiID << unitID << id << options;
 	if (cmdTypeId == NETMSG_AICOMMAND_TRACKED) {
 		*packet << aiCommandId;
 	}
@@ -133,12 +133,12 @@ PacketType CBaseNetProtocol::SendAICommand(uchar myPlayerNum, short unitID, int 
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendAIShare(uchar myPlayerNum, uchar sourceTeam, uchar destTeam, float metal, float energy, const std::vector<short>& unitIDs)
+PacketType CBaseNetProtocol::SendAIShare(uchar myPlayerNum, unsigned char aiID, uchar sourceTeam, uchar destTeam, float metal, float energy, const std::vector<short>& unitIDs)
 {
-	boost::uint16_t totalNumBytes = (1 + sizeof(boost::uint16_t)) + (3 + (2 * sizeof(float)) + (unitIDs.size() * sizeof(short)));
+	boost::uint16_t totalNumBytes = 1 + sizeof(boost::uint16_t) + 1 + 1 + 1 + 1 + (2 * sizeof(float)) + (unitIDs.size() * sizeof(short));
 
 	PackPacket* packet = new PackPacket(totalNumBytes, NETMSG_AISHARE);
-	*packet << totalNumBytes << myPlayerNum << sourceTeam << destTeam << metal << energy << unitIDs;
+	*packet << totalNumBytes << myPlayerNum << aiID << sourceTeam << destTeam << metal << energy << unitIDs;
 	return PacketType(packet);
 }
 
@@ -356,12 +356,12 @@ PacketType CBaseNetProtocol::SendTeamDied(uchar myPlayerNum, uchar whichTeam)
 }
 
 PacketType CBaseNetProtocol::SendAICreated(const uchar myPlayerNum,
-                                           const uint  whichSkirmishAI,
+                                           const uchar whichSkirmishAI,
                                            const uchar team,
                                            const std::string& name)
 {
 	// do not hand optimize this math; the compiler will do that
-	const uint size = 1 + 1 + 1 + 4 + 1 + (name.size() + 1);
+	const uint size = 1 + 1 + 1 + 1 + 1 + (name.size() + 1);
 	PackPacket* packet = new PackPacket(size, NETMSG_AI_CREATED);
 	*packet
 		<< static_cast<uchar>(size)
@@ -373,11 +373,11 @@ PacketType CBaseNetProtocol::SendAICreated(const uchar myPlayerNum,
 }
 
 PacketType CBaseNetProtocol::SendAIStateChanged(const uchar myPlayerNum,
-                                                const uint  whichSkirmishAI,
+                                                const uchar whichSkirmishAI,
                                                 const uchar newState)
 {
 	// do not hand optimize this math; the compiler will do that
-	PackPacket* packet = new PackPacket(1 + 1 + 4 + 1, NETMSG_AI_STATE_CHANGED);
+	PackPacket* packet = new PackPacket(1 + 1 + 1 + 1, NETMSG_AI_STATE_CHANGED);
 	*packet << myPlayerNum << whichSkirmishAI << newState;
 	return PacketType(packet);
 }
@@ -509,7 +509,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_CREATE_NEWPLAYER, -2);
 
 	proto->AddType(NETMSG_AI_CREATED, -1);
-	proto->AddType(NETMSG_AI_STATE_CHANGED, 7);
+	proto->AddType(NETMSG_AI_STATE_CHANGED, 4);
 	proto->AddType(NETMSG_GAME_FRAME_PROGRESS,5);
 
 #ifdef SYNCDEBUG
