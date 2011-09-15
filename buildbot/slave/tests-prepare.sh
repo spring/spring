@@ -12,7 +12,7 @@ CONTENT_DIR=${TESTDIR}/.spring
 
 if [ ! -d test/game/ ];
 then
-	echo This script has to be run from the source root dir
+	echo "$0 has to be run from the source root dir"
 	exit 1
 fi
 
@@ -23,8 +23,8 @@ make install DESTDIR=${TESTDIR}
 cd ${SOURCEDIR}
 #fetch required files
 mkdir -p $DOWNLOADDIR
-if [ ! -s $DOWNLOADDIR/ba750.sdz ]; then
-	wget -N -P $DOWNLOADDIR http://springfiles.com/sites/default/files/downloads/spring/games/ba750.sdz || ( rm -rf ${DOWNLOADDIR} && exit 1 )
+if [ ! -s $DOWNLOADDIR/ba760.sdz ]; then
+	wget -N -P $DOWNLOADDIR http://springfiles.com/sites/default/files/downloads/spring/games/ba760.sdz || ( rm -rf ${DOWNLOADDIR} && exit 1 )
 fi
 
 if [ ! -s $DOWNLOADDIR/Altair_Crossing.sd7 ]; then
@@ -34,16 +34,10 @@ fi
 #install required files into spring dir
 cd ${SOURCEDIR}
 mkdir -p ${CONTENT_DIR}/games ${CONTENT_DIR}/maps ${CONTENT_DIR}/LuaUI/Widgets
-cp -suv ${DOWNLOADDIR}/ba750.sdz ${CONTENT_DIR}/games/ba750.sdz
+cp -suv ${DOWNLOADDIR}/ba760.sdz ${CONTENT_DIR}/games/ba760.sdz
 cp -suv ${DOWNLOADDIR}/Altair_Crossing.sd7 ${CONTENT_DIR}/maps/Altair_Crossing.sd7
 cp -suv ${SOURCEDIR}/test/game/LuaUI/Widgets/test.lua ${CONTENT_DIR}/LuaUI/Widgets/test.lua
-cp -suv ${SOURCEDIR}/test/game/test1.script.txt ${CONTENT_DIR}/test1.script.txt
+cp -suv ${SOURCEDIR}/test/game/test*.txt ${CONTENT_DIR}/
 cp -v ${SOURCEDIR}/cont/springrc-template-headless.txt ${TESTDIR}/.springrc
 echo "SpringData = ${TESTDIR}/usr/local/share/games/spring" >> ${TESTDIR}/.springrc
-
-#run test
-HOME=${TESTDIR} ${SOURCEDIR}/test/game/run.sh ${TESTDIR}/usr/local/bin/spring-headless test1.script.txt
-
-#cleanup
-rm -rf ${TMP_BASE}/tests
 
