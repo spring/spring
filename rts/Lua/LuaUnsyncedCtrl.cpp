@@ -393,6 +393,7 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 	glLineWidth(cmdColors.QueuedLineWidth());
 
 	GML_RECMUTEX_LOCK(unit); // DrawUnitCommandQueues
+	GML_RECMUTEX_LOCK(feat); // DrawUnitCommandQueues
 	GML_STDMUTEX_LOCK(cai); // DrawUnitCommandQueues
 	GML_STDMUTEX_LOCK(dque); // DrawUnitCommandQueues
 
