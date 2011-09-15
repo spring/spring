@@ -9,8 +9,8 @@ INSTALLDIR=${DEST}/usr/local
 
 echo "Installing into $DEST"
 
-#Ultra settings
-SEVENZIP="7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on"
+#Ultra settings, max number of threads taken from commandline.
+SEVENZIP="7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on -mmt=${2:-on}"
 
 MINGWLIBS_PATH=${1}
 MINGW_HOST=i586-mingw32msvc-
