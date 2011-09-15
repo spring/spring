@@ -1,9 +1,10 @@
 // a validation script
-// runs a KAIK vs KAIK game
+// runs a RAI vs RAI game
 [GAME]
 {
 	IsHost=1;
 	MyPlayerName=TestMonkey;
+
 	Mapname=Altair_Crossing-V1;
 	GameType=Balanced Annihilation V7.60;
 
@@ -54,8 +55,8 @@
 	[AI0]
 	{
 		Name=Bot1;
-		ShortName=KAIK;
-		Version=0.13;
+		ShortName=RAI;
+		Version=0.601;
 		Team=0;
 		IsFromDemo=0;
 		Host=2;
@@ -66,8 +67,8 @@
 	[AI1]
 	{
 		Name=Bot2;
-		ShortName=KAIK;
-		Version=0.13;
+		ShortName=RAI;
+		Version=0.601;
 		Team=1;
 		IsFromDemo=0;
 		Host=2;
