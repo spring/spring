@@ -10,8 +10,7 @@ fi
 
 if [ -n $LOG ]; then #LOG not set, use default
 	DATESTR=$(date +"%Y.%m.%d_%H-%M-%S")
-	LOGDIR=logs
-	LOG=$LOGDIR/$DATESTR.log
+	LOG=$DATESTR.log
 fi
 GDBCMDS=$LOG.gdbcmds
 
@@ -20,7 +19,6 @@ if [ ! -x "$1" ]; then
 	exit 1
 fi
 
-mkdir -p $LOGDIR
 (
 echo file $1
 echo set logging on $LOG
@@ -34,25 +32,32 @@ echo quit
 ulimit -v 1000000
 #max 15 min cpu time
 ulimit -t 900
-echo -n Starting Test, logging to $LOG ...
+echo Starting Test, logging to $LOG ...
 
 set +e #temp disable abort on error
 gdb -batch-silent -x $GDBCMDS >$LOG 2>&1
-if [ ! $? -eq 0 ]; then #gdb exited abnormally, dump output
-	cat $LOG
-	exit 1
-fi
+
+ERROR=0
 set -e
 
-if ! grep " exited normally." $LOG >/dev/null; then
-	echo ": failed"
-	#echo logoutput to stderr
-	cat $LOG
-	exit 1
-else
-	echo ": ok"
+if [ ! $? -eq 0 ]; then
+	ERROR=1
 fi
 
+if ! grep " exited normally." $LOG >/dev/null; then
+	ERROR=1
+fi
 
-#cleanup (this info is alread in normal log)
+if [ -eq $ERROR 0 ]; then
+	echo ok
+else
+	echo failed
+fi
+
+cat $LOG
+
+#cleanup
 rm -f $GDBCMDS
+rm -f $LOG
+
+exit $ERROR
