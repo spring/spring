@@ -69,7 +69,9 @@ done
 
 cd ${SOURCEDIR}
 
-./installer/make_installer.sh -DMIN_PORTABLE_ARCHIVE=${MIN_PORTABLE_ARCHIVE} -DARCHIVEMOVER=${TMP_PATH}/${VERSION}_ArchiveMover.7z
+ln -sfv $(pwd)/${REV}/spring_${VERSION}_minimal-portable.7z ${SOURCEDIR}/installer/downloads/spring_minimal-portable.7z
+ln -sfv ${TMP_PATH}/${VERSION}_ArchiveMover.7z ${SOURCEDIR}/installer/downloads/archivemover.7z
+./installer/make_installer.sh
 
 mv ./installer/spring*.exe ${TMP_PATH}
 
@@ -77,4 +79,5 @@ mv ./installer/spring*.exe ${TMP_PATH}
 cd ${TMP_PATH}/..
 ln -sfv ${REV}/*.exe spring_testing.exe
 ln -sfv ${REV}/spring_${VERSION}_minimal-portable.7z spring_testing_minimal-portable.7z
+ln -sfv ${REV}/${VERSION}_ArchiveMover.7z ArchiveMover_testing.7z
 
