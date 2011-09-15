@@ -63,7 +63,7 @@ cd ../..
 installer/make_uninstall_nsh.py \
 installer/downloads/spring_testing_minimal-portable.7z \
 installer/downloads/ArchiveMover_testing.7z \
-installer/downloads/rapid-spring-latest-win32.7z >installer/downloads/uninstall.nsh
+installer/downloads/rapid-spring-latest-win32.7z:rapid\\ >installer/downloads/uninstall.nsh
 
 
 makensis -V3 $NSISDEFINES $@ -DNSI_UNINSTALL_FILES=downloads/uninstall.nsh \
