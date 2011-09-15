@@ -253,7 +253,7 @@ void CShadowHandler::DrawShadowPasses()
 		// cull front-faces during the terrain shadow pass: sun direction
 		// can be set so oblique that geometry back-faces are visible (eg.
 		// from hills near map edges) from its POV
-		// (could also just disable culling for terrain, but we also want
+		// (could just disable culling of terrain faces, but we also want
 		// to prevent overdraw in such low-angle passes)
 		if (drawTerrainShadow) {
 			readmap->GetGroundDrawer()->DrawShadowPass();
@@ -353,12 +353,13 @@ void CShadowHandler::CreateShadows()
 	//     in the ideal case, the zoom-factor should be such that everything
 	//     that can be seen by the camera maximally fills the sun's frustum
 	//     (and nothing is left out), but CalcMinMaxView fails to achieve this
+	// NOTE:
+	//     when DynamicSun is enabled, the orbit is always circular in the xz
+	//     plane, instead of elliptical when the map has an aspect-ratio != 1
 	//
 	// const float xScale = (shadowProjMinMax.y - shadowProjMinMax.x) * 1.5f;
 	// const float yScale = (shadowProjMinMax.w - shadowProjMinMax.z) * 1.5f;
-	static const float MAP_RADIUS = sqrt(Square(gs->mapx * SQUARE_SIZE) + Square(gs->mapy * SQUARE_SIZE));
-
-	const float zScale = MAP_RADIUS;
+	const float zScale = GetOrthoProjectedMapRadius(-sunDirZ);
 	const float xScale = zScale;
 	const float yScale = zScale;
 
@@ -487,4 +488,60 @@ void CShadowHandler::CalcMinMaxView()
 		shadowProjMinMax.z = -maxSize;
 		shadowProjMinMax.w =  maxSize;
 	}
+}
+
+float CShadowHandler::GetOrthoProjectedMapRadius(const float3& sunDir) const {
+	// to fit the map inside the frustum, we need to know
+	// the distance from one corner to its opposing corner
+	//
+	// this distance is maximal when the sun direction is
+	// orthogonal to the diagonal, but in other cases we
+	// can gain some precision by projecting the diagonal
+	// onto a vector orthogonal to the sun direction and
+	// using the length of that projected vector instead
+	//
+	// note: "radius" is actually the diameter
+	static const float maxMapRadius = math::sqrtf(Square(gs->mapx * SQUARE_SIZE) + Square(gs->mapy * SQUARE_SIZE));
+	static       float curMapRadius = 0.0f;
+
+	static float3 sunDir3D = ZeroVector;
+
+	if ((sunDir3D != sunDir)) {
+		float3 sunDir2D;
+		float3 mapVerts[2];
+
+		sunDir3D   = sunDir;
+		sunDir2D.x = sunDir3D.x;
+		sunDir2D.z = sunDir3D.z;
+		sunDir2D.ANormalize();
+
+		if (sunDir2D.x >= 0.0f) {
+			if (sunDir2D.z >= 0.0f) {
+				// use diagonal vector from top-right to bottom-left
+				mapVerts[0] = float3(gs->mapx * SQUARE_SIZE, 0.0f,                   0.0f);
+				mapVerts[1] = float3(                  0.0f, 0.0f, gs->mapy * SQUARE_SIZE);
+			} else {
+				// use diagonal vector from top-left to bottom-right
+				mapVerts[0] = float3(                  0.0f, 0.0f,                   0.0f);
+				mapVerts[1] = float3(gs->mapx * SQUARE_SIZE, 0.0f, gs->mapy * SQUARE_SIZE);
+			}
+		} else {
+			if (sunDir2D.z >= 0.0f) {
+				// use diagonal vector from bottom-right to top-left
+				mapVerts[0] = float3(gs->mapx * SQUARE_SIZE, 0.0f, gs->mapy * SQUARE_SIZE);
+				mapVerts[1] = float3(                  0.0f, 0.0f,                   0.0f);
+			} else {
+				// use diagonal vector from bottom-left to top-right
+				mapVerts[0] = float3(                  0.0f, 0.0f, gs->mapy * SQUARE_SIZE);
+				mapVerts[1] = float3(gs->mapx * SQUARE_SIZE, 0.0f,                   0.0f);
+			}
+		}
+
+		const float3 v1 = (mapVerts[1] - mapVerts[0]).ANormalize();
+		const float3 v2 = float3(-sunDir2D.z, 0.0f, sunDir2D.x);
+
+		curMapRadius = maxMapRadius * v2.dot(v1);
+	}
+
+	return curMapRadius;
 }
