@@ -69,8 +69,9 @@ done
 
 cd ${SOURCEDIR}
 
-ln -sfv $(pwd)/${REV}/spring_${VERSION}_minimal-portable.7z ${SOURCEDIR}/installer/downloads/spring_minimal-portable.7z
-ln -sfv ${TMP_PATH}/${VERSION}_ArchiveMover.7z ${SOURCEDIR}/installer/downloads/archivemover.7z
+#create symlinks required for building installer
+ln -sfv $(pwd)/${REV}/spring_${VERSION}_minimal-portable.7z ${SOURCEDIR}/installer/downloads/spring_testing_minimal-portable.7z
+ln -sfv ${TMP_PATH}/${VERSION}_ArchiveMover.7z ${SOURCEDIR}/installer/downloads/ArchiveMover_testing.7z
 ./installer/make_installer.sh
 
 mv ./installer/spring*.exe ${TMP_PATH}
