@@ -47,41 +47,21 @@ CR_REG_METADATA(CGlobalRendering, (
 ));
 
 CGlobalRendering::CGlobalRendering()
-	: drawSky(true)
-	, drawWater(true)
-	, drawGround(true)
-	, drawMapMarks(true)
-	, drawFog(true)
-	, drawdebug(false)
-	, teamNanospray(false)
-
-	, active(true)
-	, compressTextures(false)
-	, supportNPOTs(false)
-	, support24bitDepthBuffers(false)
-
-	, haveGLSL(false)
-	, haveARB(false)
-
-	, haveATI(false)
-	, atiHacks(false)
-
-	, fullScreen(true)
-	, dualScreenMiniMapOnLeft(false)
-	, dualScreenMode(false)
-
-	, FSAA(0)
-	, depthBufferBits(0)
-	, maxTextureSize(1024)
+	: timeOffset(0.0f)
+	, lastFrameTime(0.0f)
+	, lastFrameStart(0)
+	, weightedSpeedFactor(0.0f)
+	, drawFrame(1)
 
 	, winState(0)
+	, screenSizeX(1)
+	, screenSizeY(1)
+
 	// window geometry
 	, winPosX(0)
 	, winPosY(0)
 	, winSizeX(1)
 	, winSizeY(1)
-	, screenSizeX(1)
-	, screenSizeY(1)
 
 	// viewport geometry
 	, viewPosX(0)
@@ -94,13 +74,33 @@ CGlobalRendering::CGlobalRendering()
 	, pixelY(0.01f)
 
 	, aspectRatio(1.0f)
-	, viewRange(MAX_VIEW_RANGE)
 
-	, timeOffset(0.0f)
-	, lastFrameTime(0.0f)
-	, lastFrameStart(0)
-	, weightedSpeedFactor(0.0f)
-	, drawFrame(1)
+	, viewRange(MAX_VIEW_RANGE)
+	, FSAA(0)
+	, depthBufferBits(0)
+
+	, maxTextureSize(1024)
+
+	, drawSky(true)
+	, drawWater(true)
+	, drawGround(true)
+	, drawMapMarks(true)
+	, drawFog(true)
+	, drawdebug(false)
+
+	, teamNanospray(false)
+	, active(true)
+	, compressTextures(false)
+	, haveATI(false)
+	, atiHacks(false)
+	, supportNPOTs(false)
+	, support24bitDepthBuffers(false)
+	, haveARB(false)
+	, haveGLSL(false)
+
+	, dualScreenMode(false)
+	, dualScreenMiniMapOnLeft(false)
+	, fullScreen(true)
 {
 }
 
