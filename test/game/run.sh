@@ -48,7 +48,7 @@ if ! grep " exited normally." $LOG >/dev/null; then
 	ERROR=1
 fi
 
-if [ -eq $ERROR 0 ]; then
+if [ $ERROR -eq 0 ]; then
 	echo ok
 else
 	echo failed
