@@ -42,6 +42,7 @@ protected:
 	void DrawShadowPasses();
 	void LoadShadowGenShaderProgs();
 	void SetShadowMapSizeFactors();
+	float GetOrthoProjectedMapRadius(const float3&) const;
 
 public:
 	int shadowMapSize;
