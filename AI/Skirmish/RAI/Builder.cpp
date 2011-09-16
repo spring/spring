@@ -766,7 +766,8 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 		Demand[1] = 0;
 		Demand[2] = 3;
 		Demand[3] = 3;
-		if( cb->GetEnergy()*(cb->GetEnergyIncome()/cb->GetEnergyUsage()) < cb->GetMetal()*(cb->GetMetalIncome()/cb->GetMetalUsage()) )
+		if( cb->GetEnergy()*(cb->GetEnergyIncome()/std::max(0.1f, cb->GetEnergyUsage())) <
+			cb->GetMetal()*(cb->GetMetalIncome()/std::max(0.1f, cb->GetMetalUsage())) )
 			Demand[2]++;
 		else
 			Demand[3]++;
