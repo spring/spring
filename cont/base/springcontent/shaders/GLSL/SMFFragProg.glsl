@@ -3,6 +3,8 @@
 // also pre-dimmed
 #define SMF_INTENSITY_MUL (210.0 / 255.0)
 #define SSMF_UNCOMPRESSED_NORMALS 0
+#define SMF_SHALLOW_WATER_DEPTH     (10.0                          )
+#define SMF_SHALLOW_WATER_DEPTH_INV ( 1.0 / SMF_SHALLOW_WATER_DEPTH)
 
 uniform vec4 lightDir;
 
@@ -170,22 +172,28 @@ void main() {
 
 	#if (SMF_WATER_ABSORPTION == 1)
 		if (vertexWorldPos.y < 0.0) {
+			float waterHeightAlpha = -vertexWorldPos.y * SMF_SHALLOW_WATER_DEPTH_INV;
+			float waterShadeDecay = 0.2 + (waterHeightAlpha * 0.1);
 			float vertexStepHeight = min(1023.0, -floor(vertexWorldPos.y));
 			float waterLightInt = min((cosAngleDiffuse + 0.2) * 2.0, 1.0);
 			vec4 waterHeightColor;
+				waterHeightColor.a = max(0.0, (255.0 + SMF_SHALLOW_WATER_DEPTH * vertexWorldPos.y) / 255.0);
 				waterHeightColor.rgb = max(waterMinColor.rgb, waterBaseColor.rgb - (waterAbsorbColor.rgb * vertexStepHeight)) * SMF_INTENSITY_MUL;
-				waterHeightColor.a = max(0.0, (255.0 + 10.0 * vertexWorldPos.y) / 255.0);
-			vec3 waterShadeMul;
+				waterHeightColor.rgb *= waterLightInt;
 
-			if (vertexWorldPos.y > -10.0) {
-				waterShadeMul =
-					(diffuseInt.rgb * (1.0 - (-vertexWorldPos.y * 0.1))) +
-					(waterHeightColor.rgb * (0.0 + (-vertexWorldPos.y * 0.1)) * waterLightInt);
+			if (vertexWorldPos.y > -SMF_SHALLOW_WATER_DEPTH) {
+				// "shallow" water, interpolate between diffuseInt and
+				// waterHeightColor (both are already cosine-weighted)
+				shadeInt.rgb =
+					(diffuseInt.rgb * (1.0 - waterHeightAlpha)) +
+					(waterHeightColor.rgb * (0.0 + waterHeightAlpha));
 			} else {
-				waterShadeMul = waterHeightColor.rgb * waterLightInt;
+				// deep water, no interpolation
+				shadeInt.rgb = waterHeightColor.rgb;
 			}
 
-			shadeInt.rgb *= waterShadeMul;
+			// make shadowed areas darker over deeper water
+			shadeInt.rgb -= (shadeInt.rgb * waterShadeDecay * (1.0 - shadowInt));
 			shadeInt.a = waterHeightColor.a;
 		}
 	#endif
