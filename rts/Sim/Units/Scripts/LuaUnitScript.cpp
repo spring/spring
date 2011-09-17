@@ -1,12 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#define DEBUG_LUA 0
 #define LUA_SYNCED_ONLY
 
 #include "LuaUnitScript.h"
 
 #include "CobInstance.h"
-#include "System/LogOutput.h"
+#include "UnitScriptLog.h"
 #include "LuaInclude.h"
 #include "NullUnitScript.h"
 #include "LuaScriptNames.h"
@@ -150,13 +149,14 @@ Spring.UnitScript.UpdateCallIn(number unitID, string fname[, function callIn]) -
 */
 
 
-#if DEBUG_LUA
-#  define LUA_TRACE(m) do { if (unit) logOutput.Print("%s: %d: %s", __FUNCTION__, unit->id, m); \
-                            else logOutput.Print("%s: %s", __FUNCTION__, m); \
-                       } while (false);
-#else
-#  define LUA_TRACE(m)
-#endif
+#define LUA_TRACE(m) \
+	do { \
+		if (unit) { \
+			LOG_L(L_DEBUG, "%s: %d: %s", __FUNCTION__, unit->id, m); \
+		} else { \
+			LOG_L(L_DEBUG, "%s: %s", __FUNCTION__, m); \
+		} \
+	} while (false)
 
 
 CUnit* CLuaUnitScript::activeUnit;
@@ -300,7 +300,7 @@ void CLuaUnitScript::ShowScriptError(const string& msg)
 		luaL_error(L, "Lua UnitScript error: %s", msg.c_str());
 	}
 	else {
-		logOutput.Print("Lua UnitScript error: %s", msg.c_str());
+		LOG_L(L_ERROR, "%s", msg.c_str());
 	}
 }
 
@@ -326,7 +326,7 @@ inline float CLuaUnitScript::PopNumber(int fn, float def)
 	if (!lua_israwnumber(L, -1)) {
 		const string& fname = CLuaUnitScriptNames::GetScriptName(fn);
 
-		logOutput.Print("%s: bad return value, expected number", fname.c_str());
+		LOG_L(L_ERROR, "%s: bad return value, expected number", fname.c_str());
 		RemoveCallIn(fname);
 
 		lua_pop(L, 1);
@@ -344,7 +344,7 @@ inline bool CLuaUnitScript::PopBoolean(int fn, bool def)
 	if (!lua_isboolean(L, -1)) {
 		const string& fname = CLuaUnitScriptNames::GetScriptName(fn);
 
-		logOutput.Print("%s: bad return value, expected boolean", fname.c_str());
+		LOG_L(L_ERROR, "%s: bad return value, expected boolean", fname.c_str());
 		RemoveCallIn(fname);
 
 		lua_pop(L, 1);
@@ -402,14 +402,17 @@ int CLuaUnitScript::RunQueryCallIn(int fn)
 		return -1;
 	}
 
-#if DEBUG_LUA >= 2
-	int ret = PopNumber(fn, 0) - 1;
-	LocalModelPiece* piece = GetLocalModelPiece(ret);
-	logOutput.Print("%s: %d %s", CLuaUnitScriptNames::GetScriptName(fn).c_str(), ret, piece ? piece->name.c_str() : "n/a");
-	return ret;
-#else
-	return int(PopNumber(fn, 0)) - 1;
-#endif
+	const int scriptNum = (int)PopNumber(fn, 0) - 1;
+
+	if (LOG_IS_ENABLED(L_DEBUG)) {
+		LocalModelPiece* piece = GetLocalModelPiece(scriptNum);
+		LOG_L(L_DEBUG, "%s: %d %s",
+				CLuaUnitScriptNames::GetScriptName(fn).c_str(),
+				scriptNum,
+				(piece && piece->original) ? piece->original->name.c_str() : "n/a");
+	}
+
+	return scriptNum;
 }
 
 
@@ -429,14 +432,17 @@ int CLuaUnitScript::RunQueryCallIn(int fn, float arg1)
 		return -1;
 	}
 
-#if DEBUG_LUA >= 2
-	int ret = PopNumber(fn, 0) - 1;
-	LocalModelPiece* piece = GetLocalModelPiece(ret);
-	logOutput.Print("%s: %d %s", CLuaUnitScriptNames::GetScriptName(fn).c_str(), ret, piece ? piece->name.c_str() : "n/a");
-	return ret;
-#else
-	return int(PopNumber(fn, 0)) - 1;
-#endif
+	const int scriptNum = (int)PopNumber(fn, 0) - 1;
+
+	if (LOG_IS_ENABLED(L_DEBUG)) {
+		LocalModelPiece* piece = GetLocalModelPiece(scriptNum);
+		LOG_L(L_DEBUG, "%s: %d %s",
+				CLuaUnitScriptNames::GetScriptName(fn).c_str(),
+				scriptNum,
+				(piece && piece->original) ? piece->original->name.c_str() : "n/a");
+	}
+
+	return scriptNum;
 }
 
 
@@ -534,7 +540,7 @@ void CLuaUnitScript::Killed()
 	else if (!lua_isnoneornil(L, -1)) {
 		const string& fname = CLuaUnitScriptNames::GetScriptName(fn);
 
-		logOutput.Print("%s: bad return value, expected number or nil", fname.c_str());
+		LOG_L(L_ERROR, "%s: bad return value, expected number or nil", fname.c_str());
 		RemoveCallIn(fname);
 
 		// without this we would end up with zombie units
@@ -589,7 +595,7 @@ void CLuaUnitScript::HitByWeapon(const float3& hitDir, int weaponDefId, float& i
 
 	PushFunction(fn);
 	lua_pushnumber(L, x);
-	//FIXME: maybe we want hitDir.y too to be future proof?
+	// FIXME maybe we want hitDir.y too, to be future proofed?
 	lua_pushnumber(L, z);
 	lua_pushnumber(L, weaponDefId);
 	lua_pushnumber(L, inout_damage);
@@ -604,7 +610,7 @@ void CLuaUnitScript::HitByWeapon(const float3& hitDir, int weaponDefId, float& i
 	else if (!lua_isnoneornil(L, -1)) {
 		const string& fname = CLuaUnitScriptNames::GetScriptName(fn);
 
-		logOutput.Print("%s: bad return value, expected number or nil", fname.c_str());
+		LOG_L(L_ERROR, "%s: bad return value, expected number or nil", fname.c_str());
 		RemoveCallIn(fname);
 	}
 
@@ -660,7 +666,7 @@ void CLuaUnitScript::QueryLandingPads(std::vector<int>& out_pieces)
 	else {
 		const string& fname = CLuaUnitScriptNames::GetScriptName(fn);
 
-		logOutput.Print("%s: bad return value, expected table", fname.c_str());
+		LOG_L(L_ERROR, "%s: bad return value, expected table", fname.c_str());
 		RemoveCallIn(fname);
 	}
 
@@ -852,9 +858,9 @@ bool CLuaUnitScript::RawRunCallIn(int functionId, int inArgs, int outArgs)
 	if (error != 0) {
 		const string& fname = GetScriptName(functionId);
 
-		logOutput.Print("%s::RunCallIn: error = %i, %s::%s, %s\n",
-		                handle->GetName().c_str(), error, "CLuaUnitScript",
-		                fname.c_str(), err.c_str());
+		LOG_L(L_ERROR, "%s::RunCallIn: error = %i, %s::%s, %s",
+				handle->GetName().c_str(), error, "CLuaUnitScript",
+				fname.c_str(), err.c_str());
 		RemoveCallIn(fname);
 
 		return false;

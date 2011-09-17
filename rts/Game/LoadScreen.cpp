@@ -1,18 +1,18 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/mmgr.h"
-#include <vector>
 #include <SDL.h>
 
 #include "Rendering/GL/myGL.h"
 #include "LoadScreen.h"
-#include "ExternalAI/SkirmishAIHandler.h"
 #include "Game.h"
 #include "GameVersion.h"
-#include "Game/GlobalUnsynced.h"
+#include "GlobalUnsynced.h"
+#include "Player.h"
 #include "PlayerHandler.h"
 #include "Game/UI/MouseHandler.h"
 #include "Game/UI/InputReceiver.h"
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "Map/MapInfo.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GlobalRendering.h"
@@ -35,6 +35,8 @@
 	#include "System/Sound/EFX.h"
 	#include "System/Sound/EFXPresets.h"
 #endif
+
+#include <vector>
 
 CONFIG(bool, LoadingMT).defaultValue(true);
 

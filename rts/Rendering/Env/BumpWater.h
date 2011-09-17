@@ -41,12 +41,12 @@ public:
 private:
 	void SetUniforms(); ///< @see #useUniforms
 	void SetupUniforms( std::string& definitions );
-	void GetUniformLocations();
+	void GetUniformLocations(const Shader::IProgramObject*);
 
 private:
 	//! coastmap (needed for shorewaves)
 	struct CoastAtlasRect {
-		CoastAtlasRect(const CRectangle& rect);
+		CoastAtlasRect(const SRectangle& rect);
 		bool isCoastline; ///< if false, then the whole rect is either above water or below water (no coastline -> no need to calc/render distfield)
 		int ix1, iy1;
 		int ix2, iy2;
@@ -66,7 +66,7 @@ private:
 
 	int atlasX,atlasY;
 
-	void UnsyncedHeightMapUpdate(const CRectangle& rect);
+	void UnsyncedHeightMapUpdate(const SRectangle& rect);
 
 private:
 	//! user options

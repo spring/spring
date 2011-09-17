@@ -48,7 +48,7 @@ CONFIG(int, BumpWaterReflection).defaultValue(1);
 CONFIG(int, BumpWaterRefraction).defaultValue(1); // 0:=off, 1:=screencopy, 2:=own rendering cycle
 CONFIG(float, BumpWaterAnisotropy).defaultValue(0.0f);
 CONFIG(bool, BumpWaterUseDepthTexture).defaultValue(true);
-CONFIG(int, BumpWaterDepthBits);
+CONFIG(int, BumpWaterDepthBits).defaultValue(24);
 CONFIG(bool, BumpWaterBlurReflection).defaultValue(false);
 CONFIG(bool, BumpWaterShoreWaves).defaultValue(true);
 CONFIG(bool, BumpWaterEndlessOcean).defaultValue(true);
@@ -176,11 +176,9 @@ CBumpWater::CBumpWater()
 	refraction   = configHandler->GetInt("BumpWaterRefraction");
 	anisotropy   = configHandler->GetFloat("BumpWaterAnisotropy");
 	depthCopy    = configHandler->GetBool("BumpWaterUseDepthTexture");
-	if (configHandler->IsSet("BumpWaterDepthBits")) {
-		depthBits = configHandler->GetInt("BumpWaterDepthBits");
-	} else {
-		depthBits = (globalRendering->atiHacks) ? 16 : 24;
-	}
+	depthBits    = configHandler->GetInt("BumpWaterDepthBits");
+	if ((depthBits == 24) && !globalRendering->support24bitDepthBuffers)
+		depthBits = 16;
 	blurRefl     = configHandler->GetBool("BumpWaterBlurReflection");
 	shoreWaves   = (configHandler->GetBool("BumpWaterShoreWaves")) && mapInfo->water.shoreWaves;
 	endlessOcean = (configHandler->GetBool("BumpWaterEndlessOcean")) && mapInfo->water.hasWaterPlane
@@ -249,8 +247,11 @@ CBumpWater::CBumpWater()
 			blurShader->Link();
 
 			if (!blurShader->IsValid()) {
-				LOG_L(L_ERROR, "shorewaves-shader compilation error: %s",
-						blurShader->GetLog().c_str());
+				const char* fmt = "shorewaves-shader compilation error: %s";
+				const char* log = (blurShader->GetLog()).c_str();
+
+				LOG_L(L_ERROR, fmt, log);
+
 				//! string size is limited with content_error()
 				throw content_error(string("["LOG_SECTION_BUMP_WATER"] shorewaves-shader compilation error!"));
 			}
@@ -261,6 +262,15 @@ CBumpWater::CBumpWater()
 			blurShader->SetUniform1i(0, 0);
 			blurShader->SetUniform1i(1, 1);
 			blurShader->Disable();
+			blurShader->Validate();
+
+			if (!blurShader->IsValid()) {
+				const char* fmt = "shorewaves-shader validation error: %s";
+				const char* log = (blurShader->GetLog()).c_str();
+
+				LOG_L(L_ERROR, fmt, log);
+				throw content_error(string("["LOG_SECTION_BUMP_WATER"] shorewaves-shader validation error!"));
+			}
 		}
 
 
@@ -274,7 +284,7 @@ CBumpWater::CBumpWater()
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			//! fill with current heightmap/coastmap
-			UnsyncedHeightMapUpdate(CRectangle(0, 0, gs->mapx, gs->mapy));
+			UnsyncedHeightMapUpdate(SRectangle(0, 0, gs->mapx, gs->mapy));
 			UploadCoastline(true);
 			UpdateCoastmap();
 		} else
@@ -485,20 +495,20 @@ CBumpWater::CBumpWater()
 		waterShader->SetUniformLocation("coastmap");    // idx  9
 		waterShader->SetUniformLocation("waverand");    // idx 10
 
-		if (!waterShader->IsValid() &&
-			(!globalRendering->atiHacks || !strstr(waterShader->GetLog().c_str(),
-			"Different sampler types for same sample texture unit in fragment shader"))) {
-			LOG_L(L_ERROR, "water-shader compilation error: %s",
-					waterShader->GetLog().c_str());
-			//! string size is limited with content_error()
+		if (!waterShader->IsValid()) {
+			const char* fmt = "water-shader compilation error: %s";
+			const char* log = (waterShader->GetLog()).c_str();
+			LOG_L(L_ERROR, fmt, log);
 			throw content_error(string("["LOG_SECTION_BUMP_WATER"] water-shader compilation error!"));
 		}
 
 		if (useUniforms) {
-			GetUniformLocations();
+			GetUniformLocations(waterShader);
 		}
 
 		// BIND TEXTURE UNIFORMS
+		// NOTE: ATI shader validation code is stricter wrt. state,
+		// so postpone the call until all texture uniforms are set
 		waterShader->Enable();
 		waterShader->SetUniform1i( 2, 0);
 		waterShader->SetUniform1i( 3, 1);
@@ -510,6 +520,15 @@ CBumpWater::CBumpWater()
 		waterShader->SetUniform1i( 9, 6);
 		waterShader->SetUniform1i(10, 8);
 		waterShader->Disable();
+		waterShader->Validate();
+
+		if (!waterShader->IsValid()) {
+			const char* fmt = "water-shader validation error: %s";
+			const char* log = (waterShader->GetLog()).c_str();
+
+			LOG_L(L_ERROR, fmt, log);
+			throw content_error(string("["LOG_SECTION_BUMP_WATER"] water-shader validation error!"));
+		}
 	}
 
 
@@ -621,27 +640,27 @@ void CBumpWater::SetupUniforms(string& definitions)
 	definitions += "uniform float WindSpeed;\n";
 }
 
-void CBumpWater::GetUniformLocations()
+void CBumpWater::GetUniformLocations(const Shader::IProgramObject* shader)
 {
-	uniforms[ 0] = glGetUniformLocation( waterShader->GetObjID(), "SurfaceColor" );
-	uniforms[ 1] = glGetUniformLocation( waterShader->GetObjID(), "PlaneColor" );
-	uniforms[ 2] = glGetUniformLocation( waterShader->GetObjID(), "DiffuseColor" );
-	uniforms[ 3] = glGetUniformLocation( waterShader->GetObjID(), "SpecularColor" );
-	uniforms[ 4] = glGetUniformLocation( waterShader->GetObjID(), "SpecularPower" );
-	uniforms[ 5] = glGetUniformLocation( waterShader->GetObjID(), "SpecularFactor" );
-	uniforms[ 6] = glGetUniformLocation( waterShader->GetObjID(), "AmbientFactor" );
-	uniforms[ 7] = glGetUniformLocation( waterShader->GetObjID(), "DiffuseFactor" );
-	uniforms[ 8] = glGetUniformLocation( waterShader->GetObjID(), "SunDir" );
-	uniforms[ 9] = glGetUniformLocation( waterShader->GetObjID(), "FresnelMin" );
-	uniforms[10] = glGetUniformLocation( waterShader->GetObjID(), "FresnelMax" );
-	uniforms[11] = glGetUniformLocation( waterShader->GetObjID(), "FresnelPower" );
-	uniforms[12] = glGetUniformLocation( waterShader->GetObjID(), "ReflDistortion" );
-	uniforms[13] = glGetUniformLocation( waterShader->GetObjID(), "BlurBase" );
-	uniforms[14] = glGetUniformLocation( waterShader->GetObjID(), "BlurExponent" );
-	uniforms[15] = glGetUniformLocation( waterShader->GetObjID(), "PerlinStartFreq" );
-	uniforms[16] = glGetUniformLocation( waterShader->GetObjID(), "PerlinLacunarity" );
-	uniforms[17] = glGetUniformLocation( waterShader->GetObjID(), "PerlinAmp" );
-	uniforms[18] = glGetUniformLocation( waterShader->GetObjID(), "WindSpeed" );
+	uniforms[ 0] = glGetUniformLocation( shader->GetObjID(), "SurfaceColor" );
+	uniforms[ 1] = glGetUniformLocation( shader->GetObjID(), "PlaneColor" );
+	uniforms[ 2] = glGetUniformLocation( shader->GetObjID(), "DiffuseColor" );
+	uniforms[ 3] = glGetUniformLocation( shader->GetObjID(), "SpecularColor" );
+	uniforms[ 4] = glGetUniformLocation( shader->GetObjID(), "SpecularPower" );
+	uniforms[ 5] = glGetUniformLocation( shader->GetObjID(), "SpecularFactor" );
+	uniforms[ 6] = glGetUniformLocation( shader->GetObjID(), "AmbientFactor" );
+	uniforms[ 7] = glGetUniformLocation( shader->GetObjID(), "DiffuseFactor" );
+	uniforms[ 8] = glGetUniformLocation( shader->GetObjID(), "SunDir" );
+	uniforms[ 9] = glGetUniformLocation( shader->GetObjID(), "FresnelMin" );
+	uniforms[10] = glGetUniformLocation( shader->GetObjID(), "FresnelMax" );
+	uniforms[11] = glGetUniformLocation( shader->GetObjID(), "FresnelPower" );
+	uniforms[12] = glGetUniformLocation( shader->GetObjID(), "ReflDistortion" );
+	uniforms[13] = glGetUniformLocation( shader->GetObjID(), "BlurBase" );
+	uniforms[14] = glGetUniformLocation( shader->GetObjID(), "BlurExponent" );
+	uniforms[15] = glGetUniformLocation( shader->GetObjID(), "PerlinStartFreq" );
+	uniforms[16] = glGetUniformLocation( shader->GetObjID(), "PerlinLacunarity" );
+	uniforms[17] = glGetUniformLocation( shader->GetObjID(), "PerlinAmp" );
+	uniforms[18] = glGetUniformLocation( shader->GetObjID(), "WindSpeed" );
 }
 
 
@@ -724,7 +743,7 @@ void CBumpWater::UpdateWater(CGame* game)
 ///  SHOREWAVES/COASTMAP
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-CBumpWater::CoastAtlasRect::CoastAtlasRect(const CRectangle& rect)
+CBumpWater::CoastAtlasRect::CoastAtlasRect(const SRectangle& rect)
 {
 	xsize = rect.x2 - rect.x1;
 	ysize = rect.z2 - rect.z1;
@@ -740,13 +759,13 @@ CBumpWater::CoastAtlasRect::CoastAtlasRect(const CRectangle& rect)
 	isCoastline = true;
 }
 
-void CBumpWater::UnsyncedHeightMapUpdate(const CRectangle& rect)
+void CBumpWater::UnsyncedHeightMapUpdate(const SRectangle& rect)
 {
 	if (/*!shoreWaves ||*/ readmap->currMinHeight > 0.0f || mapInfo->map.voidWater) {
 		return;
 	}
 
-	CRectangle urect(std::max(rect.x1 - 15, 0), std::max(rect.z1 - 15, 0),  std::min(rect.x2 + 15, gs->mapx), std::min(rect.z2 + 15, gs->mapy));
+	SRectangle urect(std::max(rect.x1 - 15, 0), std::max(rect.z1 - 15, 0),  std::min(rect.x2 + 15, gs->mapx), std::min(rect.z2 + 15, gs->mapy));
 	heightmapUpdates.push_back(urect);
 }
 
@@ -761,7 +780,7 @@ void CBumpWater::UploadCoastline(const bool forceFull)
 
 	//! select the to be updated areas
 	while (!heightmapUpdates.empty()) {
-		CRectangle& cuRect1 = heightmapUpdates.front();
+		SRectangle& cuRect1 = heightmapUpdates.front();
 
 		const int width  = cuRect1.GetWidth();
 		const int height = cuRect1.GetHeight();
@@ -1113,7 +1132,7 @@ void CBumpWater::DrawRefraction(CGame* game)
 	//! _RENDER_ REFRACTION TEXTURE
 	refractFBO.Bind();
 
-	camera->Update(false);
+	camera->Update();
 	glViewport(0, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -1163,7 +1182,7 @@ void CBumpWater::DrawReflection(CGame* game)
 
 	camera->forward.y *= -1.0f;
 	camera->pos.y *= -1.0f;
-	camera->Update(false);
+	camera->Update();
 
 	glViewport(0, 0, reflTexSize, reflTexSize);
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -1194,7 +1213,7 @@ void CBumpWater::DrawReflection(CGame* game)
 //	camera = realCam;
 	camera->~CCamera();
 	new (camera) CCamera(*(CCamera*)realCam);
-	camera->Update(false);
+	camera->Update();
 }
 
 

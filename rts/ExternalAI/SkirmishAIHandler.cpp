@@ -37,7 +37,7 @@ CSkirmishAIHandler& CSkirmishAIHandler::GetInstance()
 }
 
 CSkirmishAIHandler::CSkirmishAIHandler():
-	gameInitialized(false)
+	gameInitialized(false), currentAIId(MAX_AIS)
 {
 }
 

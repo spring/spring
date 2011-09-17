@@ -1307,7 +1307,7 @@ void CUnit::AddExperience(float exp)
 	}
 	if (expHealthScale > 0.0f) {
 		const float oldMaxHealth = maxHealth;
-		maxHealth = unitDef->health * (1.0f + (limExperience * expHealthScale));
+		maxHealth = std::max(0.1f, unitDef->health * (1.0f + (limExperience * expHealthScale)));
 		health = health * (maxHealth / oldMaxHealth);
 	}
 }
@@ -1605,35 +1605,42 @@ void CUnit::UpdateTerrainType()
 	}
 }
 
-
 void CUnit::CalculateTerrainType()
 {
-	//Optimization: there's only about one unit that actually needs this information
+	enum {
+		SFX_TERRAINTYPE_NONE    = 0,
+		SFX_TERRAINTYPE_WATER_A = 1,
+		SFX_TERRAINTYPE_WATER_B = 2,
+		SFX_TERRAINTYPE_LAND    = 4,
+	};
+
+	// optimization: there's only about one unit that actually needs this information
+	// ==> why are we even bothering with it? the callin parameter barely makes sense
 	if (!script->HasSetSFXOccupy())
 		return;
 
-	if (transporter) {
-		curTerrainType = 0;
+	if (GetTransporter() != NULL) {
+		curTerrainType = SFX_TERRAINTYPE_NONE;
 		return;
 	}
 
-	float height = ground->GetApproximateHeight(pos.x, pos.z);
+	const float height = ground->GetApproximateHeight(pos.x, pos.z);
 
-	//Deep sea?
-	if (height < -5) {
+	// water
+	if (height < -5.0f) {
 		if (upright)
-			curTerrainType = 2;
+			curTerrainType = SFX_TERRAINTYPE_WATER_B;
 		else
-			curTerrainType = 1;
+			curTerrainType = SFX_TERRAINTYPE_WATER_A;
 	}
-	//Shore
-	else if (height < 0) {
+	// shore
+	else if (height < 0.0f) {
 		if (upright)
-			curTerrainType = 1;
+			curTerrainType = SFX_TERRAINTYPE_WATER_A;
 	}
-	//Land
+	// land (or air)
 	else {
-		curTerrainType = 4;
+		curTerrainType = SFX_TERRAINTYPE_LAND;
 	}
 }
 
@@ -1750,17 +1757,16 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 		}
 
 		health += maxHealth * part;
+
 		if (beingBuilt) {
 			builder->AddMetal(-metalUse * modInfo.reclaimUnitEfficiency, false);
-			buildProgress+=part;
-			if(buildProgress<0 || health<0){
+			buildProgress += part;
+
+			if (buildProgress < 0 || health < 0) {
 				KillUnit(false, true, NULL);
 				return false;
 			}
-		}
-
-
-		else {
+		} else {
 			if (health < 0) {
 				builder->AddMetal(metalCost * modInfo.reclaimUnitEfficiency, false);
 				KillUnit(false, true, NULL);
@@ -1870,10 +1876,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 			#if (PLAY_SOUNDS == 1)
 			// play explosion sound
 			if (wd->soundhit.getID(0) > 0) {
-				// HACK: loading code doesn't set sane defaults for explosion sounds, so we do it here
-				// NOTE: actually no longer true, loading code always ensures that sound volume != -1
-				const float volume = wd->soundhit.getVolume(0);
-				Channels::Battle.PlaySample(wd->soundhit.getID(0), pos, (volume == -1) ? 1.0f : volume);
+				Channels::Battle.PlaySample(wd->soundhit.getID(0), pos, wd->soundhit.getVolume(0));
 			}
 			#endif
 		}
@@ -2176,28 +2179,33 @@ void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 
 
 void CUnit::DeleteDeathDependence(CObject* o, DependenceType dep) {
-	switch(dep) {
+	/* curBuild, lastAttacker, userTarget etc. are NOT mutually exclusive, 
+	   and we can therefore only call CUnit::DeleteDeathDependence if we are
+	   certain that no references to the object in question still exist
+	*/
+	switch (dep) {
 		case DEPENDENCE_BUILD:
 		case DEPENDENCE_CAPTURE:
 		case DEPENDENCE_RECLAIM:
 		case DEPENDENCE_TERRAFORM:
 		case DEPENDENCE_TRANSPORTEE:
 		case DEPENDENCE_TRANSPORTER:
-			if(o == lastAttacker || o == soloBuilder || o == userTarget) return;
+			if (o == lastAttacker || o == soloBuilder || o == userTarget) return;
 			break;
 		case DEPENDENCE_ATTACKER:
-			if(o == soloBuilder || o == userTarget) return;
+			if (o == soloBuilder || o == userTarget) return;
 			break;
 		case DEPENDENCE_BUILDER:
-			if(o == lastAttacker || o == userTarget) return;
+			if (o == lastAttacker || o == userTarget) return;
 			break;
 		case DEPENDENCE_RESURRECT:
 			// feature
 			break;
 		case DEPENDENCE_TARGET:
-			if(o == lastAttacker || o == soloBuilder) return;
+			if (o == lastAttacker || o == soloBuilder) return;
 			break;
 	}
+
 	CObject::DeleteDeathDependence(o);
 }
 

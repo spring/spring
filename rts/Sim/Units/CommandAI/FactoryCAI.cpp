@@ -17,10 +17,10 @@
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitTypes/Factory.h"
-#include "System/LogOutput.h"
 #include "System/Log/ILog.h"
 #include "System/creg/STL_Map.h"
 #include "System/Util.h"
+#include "System/EventHandler.h"
 #include "System/Exceptions.h"
 
 CR_BIND_DERIVED(CFactoryCAI ,CCommandAI , );
@@ -176,8 +176,11 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 		if (!(c.options & SHIFT_KEY)) {
  			waitCommandsAI.ClearUnitQueue(owner, newUnitCommands);
+			CCommandAI::ClearCommandDependencies();
 			newUnitCommands.clear();
 		}
+
+		CCommandAI::AddCommandDependency(c);
 
 		if (cmd_id != CMD_STOP) {
 			if ((cmd_id == CMD_WAIT) || (cmd_id == CMD_SELFD)) {
@@ -333,7 +336,7 @@ void CFactoryCAI::CancelRestrictedUnit(const Command& c, BuildOption& buildOptio
 			if(lastRestrictedWarning+100<gs->frameNum) {
 				LOG_L(L_WARNING, "%s: Build failed, unit type limit reached",
 						owner->unitDef->humanName.c_str());
-				logOutput.SetLastMsgPos(owner->pos);
+				eventHandler.LastMessagePosition(owner->pos);
 				lastRestrictedWarning = gs->frameNum;
 			}
 		}

@@ -121,24 +121,6 @@ CReadMap::CReadMap():
 CReadMap::~CReadMap()
 {
 	delete metalMap;
-
-	typeMap.clear();
-	slopeMap.clear();
-
-	for (unsigned int n = 0; n < mipCenterHeightMaps.size(); n++) {
-		mipCenterHeightMaps[n].clear();
-	}
-
-	mipCenterHeightMaps.clear();
-	mipPointerHeightMaps.clear();
-	centerHeightMap.clear();
-	originalHeightMap.clear();
-	rawVertexNormals.clear();
-	visVertexNormals.clear();
-	faceNormalsSynced.clear();
-	faceNormalsUnsynced.clear();
-	centerNormalsSynced.clear();
-	centerNormalsUnsynced.clear();
 }
 
 
@@ -253,7 +235,7 @@ void CReadMap::UpdateDraw() {
 	for (ushmuIt = ushmu.begin(); ushmuIt != ushmu.end(); ++ushmuIt) {
 		UpdateHeightMapUnsynced(*ushmuIt);
 
-		const CRectangle rect(ushmuIt->x1, ushmuIt->y1, ushmuIt->x2, ushmuIt->y2);
+		const SRectangle rect(ushmuIt->x1, ushmuIt->y1, ushmuIt->x2, ushmuIt->y2);
 		eventHandler.UnsyncedHeightMapUpdate(rect);
 	}
 }

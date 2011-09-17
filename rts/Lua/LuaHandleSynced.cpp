@@ -87,11 +87,11 @@ CLuaHandleSynced::~CLuaHandleSynced()
 
 void CLuaHandleSynced::UpdateThreading() {
 	int mtl = globalConfig->GetMultiThreadLua();
-	useDualStates = (mtl == MT_LUA_DUAL_EXPORT || mtl == MT_LUA_DUAL || mtl == MT_LUA_DUAL_ALL);
+	useDualStates = (mtl == MT_LUA_DUAL_EXPORT || mtl == MT_LUA_DUAL || mtl == MT_LUA_DUAL_ALL || mtl == MT_LUA_DUAL_UNMANAGED);
 	singleState = (mtl == MT_LUA_NONE || mtl == MT_LUA_SINGLE || mtl == MT_LUA_SINGLE_BATCH);
 	copyExportTable = (mtl == MT_LUA_DUAL_EXPORT);
 	useEventBatch = false;
-	purgeRecvFromSyncedBatch = !singleState && (mtl != MT_LUA_DUAL_ALL);
+	purgeCallsFromSyncedBatch = !singleState && (mtl != MT_LUA_DUAL_UNMANAGED);
 }
 
 
@@ -754,18 +754,20 @@ bool CLuaHandleSynced::GotChatMsg(const string& msg, int playerID)
 
 
 
-void CLuaHandleSynced::RecvFromSynced(int args)
+void CLuaHandleSynced::RecvFromSynced(lua_State *srcState, int args)
 {
-	SELECT_LUA_STATE();
+	SELECT_UNSYNCED_LUA_STATE();
 
-	static const LuaHashString cmdStr("RecvFromSynced");
-	//LUA_CALL_IN_CHECK(L); -- not valid here
-
-	if(!SingleState() && L == L_Sim) { // Sim thread sends to unsynced --> delay it
-		DelayRecvFromSynced(L, args);
+#if ((LUA_MT_OPT & LUA_STATE) && (LUA_MT_OPT & LUA_MUTEX))
+	if (!SingleState() && srcState != L) { // Sim thread sends to unsynced --> delay it
+		DelayRecvFromSynced(srcState, args);
 		return;
 	}
 	// Draw thread, delayed already, execute it
+#endif
+
+	static const LuaHashString cmdStr("RecvFromSynced");
+	//LUA_CALL_IN_CHECK(L); -- not valid here
 
 	if (!cmdStr.GetRegistryFunc(L))
 		return; // the call is not defined
@@ -775,7 +777,9 @@ void CLuaHandleSynced::RecvFromSynced(int args)
 	SetAllowChanges(false);
 	SetSynced(L, false);
 
+	lua_State* L_Prev = ForceUnsyncedState();
 	RunCallIn(cmdStr, args, 0);
+	RestoreState(L_Prev);
 
 	SetSynced(L, true);
 	SetAllowChanges(true);
@@ -809,7 +813,7 @@ bool CLuaHandleSynced::HasSyncedXCall(const string& funcName)
 	if (L != L_Sim)
 		return false;
 
-	GML_MEASURE_LOCK_TIME(GML_OBJMUTEX_LOCK(lua, GML_DRAW|GML_SIM, *L->));
+	GML_DRCMUTEX_LOCK(lua); // HasSyncedXCall
 
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
 	if (!lua_istable(L, -1)) {
@@ -828,7 +832,7 @@ bool CLuaHandleSynced::HasUnsyncedXCall(lua_State* srcState, const string& funcN
 {
 	SELECT_UNSYNCED_LUA_STATE();
 
-	GML_MEASURE_LOCK_TIME(GML_OBJMUTEX_LOCK(lua, GML_DRAW|GML_SIM, *L->));
+	GML_DRCMUTEX_LOCK(lua); // HasUnsyncedXCall
 
 	unsyncedStr.GetRegistry(L); // push the UNSYNCED table
 	if (!lua_istable(L, -1)) {
@@ -904,7 +908,7 @@ int CLuaHandleSynced::SyncedXCall(lua_State* srcState, const string& funcName)
 	if (L != L_Sim)
 		return 0;
 
-	GML_MEASURE_LOCK_TIME(GML_OBJMUTEX_LOCK(lua, GML_DRAW|GML_SIM, *L->));
+	GML_DRCMUTEX_LOCK(lua); // SyncedXCall
 
 	lua_pushvalue(L, LUA_GLOBALSINDEX);
 	const int retval = XCall(L, srcState, funcName);
@@ -916,7 +920,7 @@ int CLuaHandleSynced::UnsyncedXCall(lua_State* srcState, const string& funcName)
 {
 	SELECT_UNSYNCED_LUA_STATE();
 
-	GML_MEASURE_LOCK_TIME(GML_OBJMUTEX_LOCK(lua, GML_DRAW|GML_SIM, *L->));
+	GML_DRCMUTEX_LOCK(lua); // UnsyncedXCall
 
 	const bool prevSynced = GetSynced(L);
 	SetSynced(L, false);

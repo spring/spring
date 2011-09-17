@@ -45,8 +45,6 @@ public:
 	void Takeoff();
 	bool IsFighter() const { return isFighter; }
 
-	int subState;
-
 	int maneuver;
 	int maneuverSubState;
 
@@ -72,10 +70,7 @@ public:
 	float maxElevator;
 	float maxRudder;
 
-	float inSupply;
-
 	/// used while landing
-	float mySide;
 	float crashAileron;
 	float crashElevator;
 	float crashRudder;

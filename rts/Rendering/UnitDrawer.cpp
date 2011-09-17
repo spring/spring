@@ -53,7 +53,7 @@
 
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
@@ -89,7 +89,7 @@ static float UNIT_GLOBAL_LOD_FACTOR = 1.0f;
 
 inline static void SetUnitGlobalLODFactor(float value)
 {
-	UNIT_GLOBAL_LOD_FACTOR = (value * camera->lppScale);
+	UNIT_GLOBAL_LOD_FACTOR = (value * camera->GetLPPScale());
 }
 
 static float GetLODFloat(const string& name)
@@ -236,7 +236,9 @@ bool CUnitDrawer::LoadModelShaders()
 
 	if (!globalRendering->haveARB) {
 		// not possible to do (ARB) shader-based model rendering
-		logOutput.Print("[LoadModelShaders] OpenGL ARB extensions missing for advanced unit shading");
+		LOG_L(L_WARNING,
+				"[%s] OpenGL ARB extensions missing for advanced unit shading",
+				__FUNCTION__);
 		return false;
 	}
 	if (!configHandler->GetBool("AdvUnitShading")) {
@@ -299,6 +301,7 @@ bool CUnitDrawer::LoadModelShaders()
 		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1f(12, sky->GetLight()->GetUnitShadowDensity());
 		modelShaders[MODEL_SHADER_S3O_SHADOW]->SetUniform1i(15, 0); // numModelDynLights
 		modelShaders[MODEL_SHADER_S3O_SHADOW]->Disable();
+		modelShaders[MODEL_SHADER_S3O_SHADOW]->Validate();
 	}
 
 	if (shadowHandler->shadowsLoaded)

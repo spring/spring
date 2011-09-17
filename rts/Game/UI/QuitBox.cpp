@@ -1,10 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <SDL_keysym.h>
-#include "System/mmgr.h"
+#include "QuitBox.h"
 
 #include "MouseHandler.h"
-#include "QuitBox.h"
+#include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
@@ -16,8 +15,12 @@
 #include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
 #include "System/TimeUtil.h"
+#include "System/mmgr.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/LoadSave/LoadSaveHandler.h"
+
+#include <SDL_keysym.h>
+
 
 #define MAX_QUIT_TEAMS (teamHandler->ActiveTeams() - 1)
 

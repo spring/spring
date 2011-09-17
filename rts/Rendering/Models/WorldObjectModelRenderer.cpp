@@ -1,14 +1,23 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "WorldObjectModelRenderer.h"
+
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/Unit.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 
-#define WORLDOBJECT_MODEL_RENDERER_DEBUG 0
+#define LOG_SECTION_WORLD_OBJECT_MODEL_RENDERER "WorldObjectModelRenderer"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_WORLD_OBJECT_MODEL_RENDERER)
+
+// use the specific section for all LOG*() calls in this source file
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_WORLD_OBJECT_MODEL_RENDERER
+
 
 IWorldObjectModelRenderer* IWorldObjectModelRenderer::GetInstance(int modelType)
 {
@@ -188,77 +197,49 @@ void IWorldObjectModelRenderer::DelProjectile(const CProjectile* p)
 
 void WorldObjectModelRenderer3DO::PushRenderState()
 {
-	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
-	#endif
-
 	texturehandler3DO->Set3doAtlases();
 	glPushAttrib(GL_POLYGON_BIT);
 	glDisable(GL_CULL_FACE);
 }
 void WorldObjectModelRenderer3DO::PopRenderState()
 {
-	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
-	#endif
-
 	glPopAttrib();
 }
 
 void WorldObjectModelRendererS3O::PushRenderState()
 {
-	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
-	#endif
 	// no-op
 }
 void WorldObjectModelRendererS3O::PopRenderState()
 {
-	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
-	#endif
 	// no-op
 }
 
-void WorldObjectModelRendererOBJ::PushRenderState()
+void WorldObjectModelRendererOBJ::PushRenderState() // TODO implement me
 {
-	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
-	#endif
-	// WRITEME
 }
-void WorldObjectModelRendererOBJ::PopRenderState()
+void WorldObjectModelRendererOBJ::PopRenderState() // TODO implement me
 {
-	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
-	#endif
-	// WRITEME
 }
 
-void WorldObjectModelRendererASS::PushRenderState()
+void WorldObjectModelRendererASS::PushRenderState() // TODO implement me
 {
-	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
-	#endif
-	// WRITEME
 }
-void WorldObjectModelRendererASS::PopRenderState()
+void WorldObjectModelRendererASS::PopRenderState() // TODO implement me
 {
-	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
-	#endif
-	// WRITEME
 }
 
 void WorldObjectModelRendererS3O::DrawModel(const CUnit* u)
 {
-	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
-	logOutput.Print("[WorldObjectModelRendererS3O::DrawModel(CUnit)] id=%d", u->id);
-	#endif
+	LOG_L(L_DEBUG, "[%s(%s)] id=%d", __FUNCTION__, "CUnit", u->id);
 }
 
 void WorldObjectModelRendererS3O::DrawModel(const CFeature* f)
 {
-	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
-	logOutput.Print("[WorldObjectModelRendererS3O::DrawModel(CFeature)] id=%d", f->id);
-	#endif
+	LOG_L(L_DEBUG, "[%s(%s)] id=%d", __FUNCTION__, "CFeature", f->id);
 }
 
 void WorldObjectModelRendererS3O::DrawModel(const CProjectile* p)
 {
-	#if (WORLDOBJECT_MODEL_RENDERER_DEBUG == 1)
-	logOutput.Print("[WorldObjectModelRendererS3O::DrawModel(CProjectile)] id=%d", p->id);
-	#endif
+	LOG_L(L_DEBUG, "[%s(%s)] id=%d", __FUNCTION__, "CProjectile", p->id);
 }

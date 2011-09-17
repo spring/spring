@@ -23,10 +23,14 @@ public:
 	void UpdateViewPortGeometry();
 	void UpdatePixelGeometry();
 
+
 	/**
-	 * Does the user want team colored nanospray if the mod allows it?
+	 * @brief time offset
+	 *
+	 * Time in number of frames since last update
+	 * (for interpolation)
 	 */
-	bool teamNanospray;
+	float timeOffset;
 
 	/**
 	 * @brief last frame time
@@ -45,12 +49,12 @@ public:
 	unsigned int drawFrame;
 
 
+	/// the window state (0=normal,1=maximized,2=minimized)
+	int winState;
+
 	/// the screen size in pixels
 	int screenSizeX;
 	int screenSizeY;
-
-	/// the window state (0=normal,1=maximized,2=minimized)
-	int winState;
 
 	/// the window position relative to the screen's bottom-left corner
 	int winPosX;
@@ -80,11 +84,12 @@ public:
 	float aspectRatio;
 
 	/**
-	 * @brief Depthbuffer bits
+	 * @brief view range
 	 *
-	 * depthbuffer precision
+	 * Player's view range
 	 */
-	int depthBufferBits;
+	float viewRange;
+
 
 	/**
 	 * @brief FSAA
@@ -92,6 +97,20 @@ public:
 	 * Level of full-screen anti-aliasing
 	 */
 	int FSAA;
+
+	/**
+	 * @brief Depthbuffer bits
+	 *
+	 * depthbuffer precision
+	 */
+	int depthBufferBits;
+
+	/**
+	 * @brief maxTextureSize
+	 *
+	 * maximum 2D texture size
+	 */
+	int maxTextureSize;
 
 	bool drawSky;
 	bool drawWater;
@@ -114,26 +133,17 @@ public:
 
 
 	/**
+	 * Does the user want team colored nanospray if the mod allows it?
+	 */
+	bool teamNanospray;
+
+
+	/**
 	 * @brief active video
 	 *
 	 * Whether the graphics need to be drawn
 	 */
 	bool active;
-
-	/**
-	 * @brief view range
-	 *
-	 * Player's view range
-	 */
-	float viewRange;
-
-	/**
-	 * @brief time offset
-	 *
-	 * Time in number of frames since last update
-	 * (for interpolation)
-	 */
-	float timeOffset;
 
 	/**
 	 * @brief compressTextures
@@ -156,15 +166,20 @@ public:
 	 * Especially some ATI cards report that they support NPOTs, but they don't (or just very limited).
 	 */
 	bool supportNPOTs;
+
+	/**
+	 * @brief support24bitDepthBuffers
+	 *
+	 * if GL_DEPTH_COMPONENT24 is supported (many ATIs don't do so)
+	 */
+	bool support24bitDepthBuffers;
+
+	/**
+	 * Shader capabilities
+	 */
 	bool haveARB;
 	bool haveGLSL;
 
-	/**
-	 * @brief maxTextureSize
-	 *
-	 * maximum 2D texture size
-	 */
-	int maxTextureSize;
 
 	/**
 	 * @brief dual screen mode

@@ -12,6 +12,7 @@
 class CMetalMap;
 class CHeightLinePalette;
 class CBaseGroundTextures;
+class CCamera;
 
 class CBaseGroundDrawer
 {
@@ -65,6 +66,8 @@ public:
 	bool DrawExtraTex() const { return drawMode != drawNormal; }
 
 	CBaseGroundTextures* GetGroundTextures() { return groundTextures; }
+
+	void UpdateCamRestraints(CCamera* camera);
 
 	bool wireframe;
 	bool advShading;

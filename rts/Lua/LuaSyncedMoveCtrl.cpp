@@ -792,6 +792,8 @@ static inline bool SetHoverAirMoveTypeValue(CHoverAirMoveType* mt, const string&
 		mt->useSmoothMesh = value; return true;
 	} else if (key == "bankingAllowed") {
 		mt->bankingAllowed = value; return true;
+	} else if (key == "airStrafe") {
+		mt->airStrafe = value; return true;
 	} else if (key == "dontLand") {
 		mt->dontLand = value; return true;
 	}
@@ -799,20 +801,19 @@ static inline bool SetHoverAirMoveTypeValue(CHoverAirMoveType* mt, const string&
 	return false;
 }
 
-static inline void SetSingleHoverAirMoveTypeValue(lua_State *L, int keyidx, int validx, CHoverAirMoveType *moveType)
+static inline void SetSingleHoverAirMoveTypeValue(lua_State* L, int keyIdx, int valIdx, CHoverAirMoveType* moveType)
 {
-	const string key = lua_tostring(L, keyidx);
-	bool failedToAssign = false;
-	if (lua_isnumber(L, validx)) {
-		const float value = lua_tofloat(L, validx);
-		failedToAssign = !SetHoverAirMoveTypeValue(moveType, key, value);
-	} else if (lua_isboolean(L, validx)) {
-		bool value = lua_toboolean(L, validx);
-		failedToAssign = !SetHoverAirMoveTypeValue(moveType, key, value);
+	const string key = lua_tostring(L, keyIdx);
+	bool assigned = true;
+
+	if (lua_isnumber(L, valIdx)) {
+		assigned = SetHoverAirMoveTypeValue(moveType, key, lua_tofloat(L, valIdx));
+	} else if (lua_isboolean(L, valIdx)) {
+		assigned = SetHoverAirMoveTypeValue(moveType, key, lua_toboolean(L, valIdx));
 	}
-	if (failedToAssign) {
-		LOG_L(L_WARNING, "Can not assign key \"%s\" to GunshipMoveType",
-				key.c_str());
+
+	if (!assigned) {
+		LOG_L(L_WARNING, "Can not assign key \"%s\" to GunshipMoveType", key.c_str());
 	}
 }
 

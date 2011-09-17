@@ -701,7 +701,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				SetGoal(fix - diff * targetUnit->radius, owner->pos);
 
 				orderTarget = targetUnit;
-				AddDeathDependence(orderTarget);
+				AddDeathDependence(orderTarget, DEPENDENCE_ORDERTARGET);
 				inCommand = true;
 			} else {
 				// unit may not fire on itself, cancel order

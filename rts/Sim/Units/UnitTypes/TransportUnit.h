@@ -34,12 +34,13 @@ public:
 	float GetLoadUnloadHeading(const CUnit* unit) const;
 
 	bool DetachUnit(CUnit* unit);
-	bool DetachUnitFromAir(CUnit* unit, float3 pos); ///< moves to position after
+	bool DetachUnitFromAir(CUnit* unit, const float3& pos); ///< moves to position after
 
-	const std::list<TransportedUnit>& GetTransportedUnits() const { return transported; }
+	const std::list<TransportedUnit>& GetTransportedUnits() const { return transportedUnits; }
 
 private:
-	std::list<TransportedUnit> transported;
+	std::list<TransportedUnit> transportedUnits;
+
 	int transportCapacityUsed;
 	float transportMassUsed;
 

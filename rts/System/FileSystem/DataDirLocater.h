@@ -102,7 +102,7 @@ public:
 	 */
 	void LocateDataDirs();
 
-	const std::vector<DataDir>& GetDataDirs() const { return dataDirs; }
+	const std::vector<DataDir>& GetDataDirs() const;
 	const DataDir* GetWriteDir() const { return writeDir; }
 
 	/**

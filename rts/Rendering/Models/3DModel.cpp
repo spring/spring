@@ -1,11 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "3DModel.h"
 
-#include <algorithm>
-#include <cctype>
 #include "System/mmgr.h"
 
-#include "3DModel.h"
 #include "3DOParser.h"
 #include "S3OParser.h"
 #include "Rendering/FarTextureHandler.h"
@@ -13,7 +11,9 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"
-#include "System/LogOutput.h"
+
+#include <algorithm>
+#include <cctype>
 
 
 /** ****************************************************************************************************

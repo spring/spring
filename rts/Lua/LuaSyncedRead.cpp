@@ -1,12 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <set>
-#include <list>
-#include <map>
-#include <cctype>
-
-#include "System/mmgr.h"
-
 #include "LuaSyncedRead.h"
 
 #include "LuaInclude.h"
@@ -23,6 +16,7 @@
 #include "Game/GameSetup.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
+#include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
@@ -71,6 +65,13 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
+#include "System/mmgr.h"
+
+#include <set>
+#include <list>
+#include <map>
+#include <cctype>
+
 
 using std::min;
 using std::max;
@@ -176,6 +177,8 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitsInCylinder);
 
 	REGISTER_LUA_CFUNC(GetFeaturesInRectangle);
+	REGISTER_LUA_CFUNC(GetFeaturesInSphere);
+	REGISTER_LUA_CFUNC(GetFeaturesInCylinder);
 	REGISTER_LUA_CFUNC(GetProjectilesInRectangle);
 
 	REGISTER_LUA_CFUNC(GetUnitNearestAlly);
@@ -298,8 +301,11 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetCOBAllyTeamVar);
 	REGISTER_LUA_CFUNC(GetCOBGlobalVar);
 
-	LuaMetalMap::PushEntries(L);
-	LuaPathFinder::PushEntries(L);
+	if (!LuaMetalMap::PushReadEntries(L))
+		return false;
+
+	if (!LuaPathFinder::PushEntries(L))
+		return false;
 
 	return true;
 }
@@ -2347,6 +2353,37 @@ int LuaSyncedRead::GetUnitNearestEnemy(lua_State* L)
 
 /******************************************************************************/
 
+inline void ProcessFeatures(lua_State* L, const vector<CFeature*>& features) {
+	const unsigned int featureCount = features.size();
+	unsigned int arrayIndex = 1;
+
+	lua_createtable(L, featureCount, 0);
+
+	if (ActiveReadAllyTeam() < 0) {
+		if (ActiveFullRead()) {
+			for (unsigned int i = 0; i < featureCount; i++) {
+				const CFeature* feature = features[i];
+
+				lua_pushnumber(L, arrayIndex++);
+				lua_pushnumber(L, feature->id);
+				lua_rawset(L, -3);
+			}
+		}
+	} else {
+		for (unsigned int i = 0; i < featureCount; i++) {
+			const CFeature* feature = features[i];
+
+			if (!IsFeatureVisible(feature)) {
+				continue;
+			}
+
+			lua_pushnumber(L, arrayIndex++);
+			lua_pushnumber(L, feature->id);
+			lua_rawset(L, -3);
+		}
+	}
+}
+
 int LuaSyncedRead::GetFeaturesInRectangle(lua_State* L)
 {
 	const float xmin = luaL_checkfloat(L, 1);
@@ -2358,38 +2395,36 @@ int LuaSyncedRead::GetFeaturesInRectangle(lua_State* L)
 	const float3 maxs(xmax, 0.0f, zmax);
 
 	const vector<CFeature*>& rectFeatures = qf->GetFeaturesExact(mins, maxs);
-	const unsigned int rectFeatureCount = rectFeatures.size();
-	unsigned int arrayIndex = 1;
-
-	lua_createtable(L, rectFeatureCount, 0);
-
-	if (ActiveReadAllyTeam() < 0) {
-		if (ActiveFullRead()) {
-			for (unsigned int i = 0; i < rectFeatureCount; i++) {
-				const CFeature* feature = rectFeatures[i];
-
-				lua_pushnumber(L, arrayIndex++);
-				lua_pushnumber(L, feature->id);
-				lua_rawset(L, -3);
-			}
-		}
-	} else {
-		for (unsigned int i = 0; i < rectFeatureCount; i++) {
-			const CFeature* feature = rectFeatures[i];
-
-			if (!IsFeatureVisible(feature)) {
-				continue;
-			}
-
-			lua_pushnumber(L, arrayIndex++);
-			lua_pushnumber(L, feature->id);
-			lua_rawset(L, -3);
-		}
-	}
-
+	ProcessFeatures(L, rectFeatures);
 	return 1;
 }
 
+int LuaSyncedRead::GetFeaturesInSphere(lua_State* L)
+{
+	const float x = luaL_checkfloat(L, 1);
+	const float y = luaL_checkfloat(L, 2);
+	const float z = luaL_checkfloat(L, 3);
+	const float rad = luaL_checkfloat(L, 4);
+
+	const float3 pos(x, y, z);
+
+	const vector<CFeature*>& sphFeatures = qf->GetFeaturesExact(pos, rad, true);
+	ProcessFeatures(L, sphFeatures);
+	return 1;
+}
+
+int LuaSyncedRead::GetFeaturesInCylinder(lua_State* L)
+{
+	const float x = luaL_checkfloat(L, 1);
+	const float z = luaL_checkfloat(L, 2);
+	const float rad = luaL_checkfloat(L, 3);
+
+	const float3 pos(x, 0, z);
+
+	const vector<CFeature*>& cylFeatures = qf->GetFeaturesExact(pos, rad, false);
+	ProcessFeatures(L, cylFeatures);
+	return 1;
+}
 
 int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 {
@@ -3158,44 +3193,13 @@ int LuaSyncedRead::GetUnitEstimatedPath(lua_State* L)
 		return 0;
 	}
 
-	const CGroundMoveType* gndMove =
-		dynamic_cast<const CGroundMoveType*>(unit->moveType);
-	if (gndMove == NULL) {
+	const CGroundMoveType* gmt = dynamic_cast<const CGroundMoveType*>(unit->moveType);
+
+	if (gmt == NULL) {
 		return 0;
 	}
 
-	if (gndMove->pathId == 0) {
-		return 0;
-	}
-
-	vector<float3> points;
-	vector<int>    starts;
-	pathManager->GetEstimatedPath(gndMove->pathId, points, starts);
-
-	const int pointCount = (int)points.size();
-
-	lua_newtable(L);
-	for (int i = 0; i < pointCount; i++) {
-		lua_pushnumber(L, i + 1);
-		lua_newtable(L); {
-			const float3& p = points[i];
-			lua_pushnumber(L, 1); lua_pushnumber(L, p.x); lua_rawset(L, -3);
-			lua_pushnumber(L, 2); lua_pushnumber(L, p.y); lua_rawset(L, -3);
-			lua_pushnumber(L, 3); lua_pushnumber(L, p.z); lua_rawset(L, -3);
-		}
-		lua_rawset(L, -3);
-	}
-
-	const int startCount = (int)starts.size();
-
-	lua_newtable(L);
-	for (int i = 0; i < startCount; i++) {
-		lua_pushnumber(L, i + 1);
-		lua_pushnumber(L, starts[i] + 1);
-		lua_rawset(L, -3);
-	}
-
-	return 2;
+	return (LuaPathFinder::PushPathNodes(L, gmt->pathId));
 }
 
 
@@ -4583,11 +4587,14 @@ int LuaSyncedRead::Pos2BuildPos(lua_State* L)
 	if (ud == NULL) {
 		return 0;
 	}
+
 	const float3 pos(luaL_checkfloat(L, 2),
 	                 luaL_checkfloat(L, 3),
 	                 luaL_checkfloat(L, 4));
+	const int facing = luaL_optint(L, 5, FACING_SOUTH);
 
-	const float3 buildPos = helper->Pos2BuildPos(pos, ud, CLuaHandle::GetSynced(L));
+	const BuildInfo buildInfo(ud, pos, facing);
+	const float3 buildPos = helper->Pos2BuildPos(buildInfo, CLuaHandle::GetSynced(L));
 
 	lua_pushnumber(L, buildPos.x);
 	lua_pushnumber(L, buildPos.y);

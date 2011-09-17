@@ -215,6 +215,7 @@ void CGrassDrawer::LoadGrassShaders() {
 			grassShaders[i]->SetUniform2f(0, 1.0f / (gs->pwr2mapx  * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
 			grassShaders[i]->SetUniform2f(1, 1.0f / (gs->mapx      * SQUARE_SIZE), 1.0f / (gs->mapy     * SQUARE_SIZE));
 			grassShaders[i]->Disable();
+			grassShaders[i]->Validate();
 		}
 	}
 

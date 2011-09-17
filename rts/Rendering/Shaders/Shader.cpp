@@ -160,25 +160,36 @@ namespace Shader {
 		char logStr[65536] = {0};
 		int  logStrLen     = 0;
 
-		GLint linked    = 0;
-		GLint validated = 0;
+		GLint linked = 0;
 
 		if (IS_GL_FUNCTION_AVAILABLE(glLinkProgram)) {
 			glLinkProgram(objID);
 			glGetProgramInfoLog(objID, 65536, &logStrLen, logStr);
+			glGetProgramiv(objID, GL_LINK_STATUS, &linked);
+
 			// append the link-log
 			log += std::string(logStr);
-
-			glValidateProgram(objID);
-			glGetProgramInfoLog(objID, 65536, &logStrLen, logStr);
-			// append the validation-log
-			log += std::string(logStr);
-
-			glGetProgramiv(objID, GL_LINK_STATUS,     &linked);
-			glGetProgramiv(objID, GL_VALIDATE_STATUS, &validated);
 		}
 
-		valid = bool(linked) && bool(validated);
+		valid = bool(linked);
+	}
+
+	void GLSLProgramObject::Validate() {
+		char logStr[65536] = {0};
+		int  logStrLen     = 0;
+
+		GLint validated = 0;
+
+		if (IS_GL_FUNCTION_AVAILABLE(glValidateProgram)) {
+			glValidateProgram(objID);
+			glGetProgramInfoLog(objID, 65536, &logStrLen, logStr);
+			glGetProgramiv(objID, GL_VALIDATE_STATUS, &validated);
+
+			// append the validation-log
+			log += std::string(logStr);
+		}
+
+		valid = valid && bool(validated);
 	}
 
 	void GLSLProgramObject::Release() {

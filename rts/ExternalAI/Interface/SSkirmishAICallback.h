@@ -350,13 +350,13 @@ struct SSkirmishAICallback {
 	/**
 	 * Returns the bitfield values of a list of category names.
 	 * @param categoryNames space delimited list of names
-	 * @see #getCategoryFlag
+	 * @see Game#getCategoryFlag
 	 */
 	int               (CALLING_CONV *Game_getCategoriesFlag)(int skirmishAIId, const char* categoryNames);
 
 	/**
 	 * Return the name of the category described by a category flag.
-	 * @see #getCategoryFlag
+	 * @see Game#getCategoryFlag
 	 */
 	void              (CALLING_CONV *Game_getCategoryName)(int skirmishAIId, int categoryFlag, char* name, int name_sizeMax);
 
@@ -739,8 +739,14 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *UnitDef_getVerticalSpeed)(int skirmishAIId, int unitDefId);
 
+	/**
+	 * @deprecated
+	 */
 	bool              (CALLING_CONV *UnitDef_isAbleToCrash)(int skirmishAIId, int unitDefId);
 
+	/**
+	 * @deprecated
+	 */
 	bool              (CALLING_CONV *UnitDef_isHoverAttack)(int skirmishAIId, int unitDefId);
 
 	bool              (CALLING_CONV *UnitDef_isAirStrafe)(int skirmishAIId, int unitDefId);
@@ -1961,8 +1967,6 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *WeaponDef_getFlightTime)(int skirmishAIId, int weaponDefId);
 
 	float             (CALLING_CONV *WeaponDef_getCost)(int skirmishAIId, int weaponDefId, int resourceId); //$ REF:resourceId->Resource
-
-	float             (CALLING_CONV *WeaponDef_getSupplyCost)(int skirmishAIId, int weaponDefId);
 
 	int               (CALLING_CONV *WeaponDef_getProjectilesPerShot)(int skirmishAIId, int weaponDefId);
 

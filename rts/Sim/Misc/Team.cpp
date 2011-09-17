@@ -1,12 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
-
 #include "Team.h"
-#include "TeamHandler.h"
 
+#include "TeamHandler.h"
 #include "GlobalSynced.h"
 #include "ExternalAI/SkirmishAIHandler.h"
+#include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
@@ -19,6 +18,7 @@
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
+#include "System/mmgr.h"
 #include "System/creg/STL_List.h"
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_Set.h"

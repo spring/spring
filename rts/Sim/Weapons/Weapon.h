@@ -33,6 +33,7 @@ public:
 	void DependentDied(CObject* o);
 
 	bool HaveFreeLineOfFire(const float3& pos, const float3& dir, float length, const CUnit* target) const;
+	bool AdjustTargetVectorLength(CUnit*, float3&, float3&, float3&) const;
 	virtual bool TryTarget(const float3& pos, bool userTarget,CUnit* unit);
 	bool TryTarget(CUnit* unit, bool userTarget);
 	bool TryTargetRotate(CUnit* unit, bool userTarget);
@@ -44,6 +45,7 @@ public:
 	virtual void SlowUpdate();
 	virtual void Update();
 	virtual float GetRange2D(float yDiff) const;
+	virtual void UpdateRange(float val) { range = val; }
 
 	void HoldFire();
 	virtual bool AttackUnit(CUnit* unit, bool userTarget);
@@ -103,7 +105,7 @@ public:
 	float predictSpeedMod;					// how the weapon predicts the speed of the units goes -> 1 when experience increases
 
 	float metalFireCost;
-	float energyFireCost;					// part of unit supply used to fire a salvo (transformed by unitloader)
+	float energyFireCost;
 
 	int fireSoundId;
 	float fireSoundVolume;

@@ -1,13 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
-#include <algorithm>
-#include <cctype>
-#include <set>
-#include <sstream>
 #include "System/mmgr.h"
 
 #include "S3OTextureHandler.h"
+
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "Rendering/ShadowHandler.h"
@@ -16,10 +12,16 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"
 
-static CLogSubsystem LOG_TEXTURE("Texture");
+#include <algorithm>
+#include <cctype>
+#include <set>
+#include <sstream>
+
+#define LOG_SECTION_TEXTURE "Texture"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_TEXTURE)
 
 // The S3O texture handler uses two textures.
 // The first contains diffuse color (RGB) and teamcolor (A)
@@ -63,10 +65,10 @@ void CS3OTextureHandler::Update() {
 int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 {
 	GML_RECMUTEX_LOCK(model); // LoadS3OTextureNow
-	logOutput.Print(LOG_TEXTURE, "Load S3O texture now (Flip Y Axis: %s, Invert Team Alpha: %s)", 
-		model->flipTexY ? "yes" : "no",
-		model->invertTexAlpha ? "yes" : "no"
-	);
+	LOG_S(LOG_SECTION_TEXTURE,
+			"Load S3O texture now (Flip Y Axis: %s, Invert Team Alpha: %s)", 
+			model->flipTexY ? "yes" : "no",
+			model->invertTexAlpha ? "yes" : "no");
 
 	const string totalName = model->tex1 + model->tex2;
 
@@ -80,10 +82,11 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 
 	CBitmap tex1bm;
 	CBitmap tex2bm;
-	S3oTex *tex = new S3oTex();
+	S3oTex* tex = new S3oTex();
 
 	if (!tex1bm.Load(std::string("unittextures/" + model->tex1))) {
-		logOutput.Print("[%s] could not load texture \"%s\" from model \"%s\"", __FUNCTION__, model->tex1.c_str(), model->name.c_str());
+		LOG_L(L_WARNING, "[%s] could not load texture \"%s\" from model \"%s\"",
+				__FUNCTION__, model->tex1.c_str(), model->name.c_str());
 
 		// file not found (or headless build), set single pixel to red so unit is visible
 		tex1bm.channels = 4;

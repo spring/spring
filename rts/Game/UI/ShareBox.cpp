@@ -1,18 +1,21 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <SDL_keysym.h>
-#include "System/mmgr.h"
-
 #include "ShareBox.h"
+
 #include "MouseHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
+#include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "System/NetProtocol.h"
+#include "System/mmgr.h"
+
+#include <SDL_keysym.h>
+
 
 #define MAX_SHARE_TEAMS (teamHandler->ActiveTeams() - 1)
 int CShareBox::lastShareTeam = 0;

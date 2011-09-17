@@ -8,6 +8,7 @@ struct lua_State;
 class LuaPathFinder {
 public:
 	static bool PushEntries(lua_State* L);
+	static int PushPathNodes(lua_State* L, const int pathID);
 
 private:
 	static int RequestPath(lua_State* L);

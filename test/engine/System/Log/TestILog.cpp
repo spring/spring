@@ -47,7 +47,7 @@ static inline void test_log_sl(int line, output_test_stream& logStream,
 		vsnprintf(logMessage, sizeof(logMessage), fmt, arguments);
 		va_end(arguments);
 		std::string expected = std::string()
-				+ ((section != LOG_SECTION_DEFAULT) ? (std::string("[") + std::string(section) + "] ") : "")
+				+ (!LOG_SECTION_IS_DEFAULT(section) ? (std::string("[") + std::string(section) + "] ") : "")
 				+ ((level != LOG_LEVEL_INFO) ? (std::string(log_util_levelToString(level)) + ": ") : "")
 				+ logMessage
 				+ "\n";
@@ -71,20 +71,53 @@ static inline void test_log_sl(int line, output_test_stream& logStream,
 #define TLOG(fmt, ...) \
 	TLOG_SL(LOG_SECTION_DEFAULT, L_INFO, fmt, ##__VA_ARGS__)
 
+
+namespace {
+	class PrePostMainLogTest {
+	public:
+		PrePostMainLogTest() {
+
+			//output_test_stream logStream;
+			//log_sink_stream_setLogStream(&logStream);
+			LOG( "static ctor log test");
+			// We can not use Boost Test here, cause it is not yet initialized,
+			// so we depend on asserts spread throught the logging system.
+			//TLOG("static ctor log test");
+			//log_sink_stream_setLogStream(NULL);
+		}
+
+		~PrePostMainLogTest() {
+
+			//output_test_stream logStream;
+			//log_sink_stream_setLogStream(&logStream);
+			LOG( "static dtor log test");
+			// We can not use Boost Test here, cause it is already
+			// uninitialized, so we depend on asserts spread throught the
+			// logging system.
+			//TLOG("static dtor log test");
+			//log_sink_stream_setLogStream(NULL);
+		}
+	};
+}
+
+
 BOOST_FIXTURE_TEST_SUITE(everything, LogStream)
+
+// test if logging works very early & very late in program live-time
+static PrePostMainLogTest prePostMainLogTest;
 
 
 BOOST_AUTO_TEST_CASE(Default)
 {
 	LOG( "Testing default logging level (INFO)");
-    TLOG("Testing default logging level (INFO)");
+	TLOG("Testing default logging level (INFO)");
 }
 
 
 BOOST_AUTO_TEST_CASE(Levels)
 {
 	LOG_L( L_ERROR, "Static min log level is: %i", _LOG_LEVEL_MIN);
-    TLOG_L(L_ERROR, "Static min log level is: %i", _LOG_LEVEL_MIN);
+	TLOG_L(L_ERROR, "Static min log level is: %i", _LOG_LEVEL_MIN);
 
 #define TEST_LOG_LEVEL(level) \
 	LOG_L( level, "Testing logging level: (%i) %s", LOG_LEVE##level, #level); \
@@ -111,33 +144,33 @@ BOOST_AUTO_TEST_CASE(IsSingleInstruction)
 	else
 		LOG("(IsSingleInstruction) LOG() is a single instruction.");
 
-    TLOG("(IsSingleInstruction) Test");
+	TLOG("(IsSingleInstruction) Test");
 }
 
 
 BOOST_AUTO_TEST_CASE(Sections)
 {
 	LOG( "Testing logging section: <default> (level: default)");
-    TLOG("Testing logging section: <default> (level: default)");
+	TLOG("Testing logging section: <default> (level: default)");
 
 	LOG_L( L_INFO, "Testing logging section: <default> (level: info)");
-    TLOG_L(L_INFO, "Testing logging section: <default> (level: info)");
+	TLOG_L(L_INFO, "Testing logging section: <default> (level: info)");
 
 	#undef  LOG_SECTION_CURRENT
 	#define LOG_SECTION_CURRENT LOG_SECTION_EMPTY
 	LOG_L(                     L_DEBUG, "Testing logging section: \"" LOG_SECTION_EMPTY "\"");
-    TLOG_SL(LOG_SECTION_EMPTY, L_DEBUG, "Testing logging section: \"" LOG_SECTION_EMPTY "\"");
+	TLOG_SL(LOG_SECTION_EMPTY, L_DEBUG, "Testing logging section: \"" LOG_SECTION_EMPTY "\"");
 
 	#undef  LOG_SECTION_CURRENT
 	#define LOG_SECTION_CURRENT LOG_SECTION_DEFINED
 	LOG_L(                       L_DEBUG, "Testing logging section: \"" LOG_SECTION_DEFINED "\"");
-    TLOG_SL(LOG_SECTION_DEFINED, L_DEBUG, "Testing logging section: \"" LOG_SECTION_DEFINED "\"");
+	TLOG_SL(LOG_SECTION_DEFINED, L_DEBUG, "Testing logging section: \"" LOG_SECTION_DEFINED "\"");
 
 	LOG_S( LOG_SECTION_ONE_TIME_0, "Testing logging section: <temporary-section> (level: default)");
-    TLOG_S(LOG_SECTION_ONE_TIME_0, "Testing logging section: <temporary-section> (level: default)");
+	TLOG_S(LOG_SECTION_ONE_TIME_0, "Testing logging section: <temporary-section> (level: default)");
 
 	LOG_SL( LOG_SECTION_ONE_TIME_1, L_INFO, "Testing logging section: <temporary-section> (level: INFO)");
-    TLOG_SL(LOG_SECTION_ONE_TIME_1, L_INFO, "Testing logging section: <temporary-section> (level: INFO)");
+	TLOG_SL(LOG_SECTION_ONE_TIME_1, L_INFO, "Testing logging section: <temporary-section> (level: INFO)");
 
 	#undef  LOG_SECTION_CURRENT
 	#define LOG_SECTION_CURRENT LOG_SECTION_DEFAULT
@@ -149,27 +182,27 @@ BOOST_AUTO_TEST_CASE(IsEnabled)
 	if (LOG_IS_ENABLED_STATIC(L_DEBUG)) {
 		// *do heavy, log-output related processing here*
 		LOG_L( L_DEBUG, "Testing LOG_IS_ENABLED_STATIC");
-    	TLOG_L(L_DEBUG, "Testing LOG_IS_ENABLED_STATIC");
+		TLOG_L(L_DEBUG, "Testing LOG_IS_ENABLED_STATIC");
 	}
 
 	if (LOG_IS_ENABLED(L_DEBUG)) {
 		// *do heavy, log-output related processing here*
 		LOG_L(L_DEBUG, "Testing LOG_IS_ENABLED");
 	}
-    TLOG_L(   L_DEBUG, "Testing LOG_IS_ENABLED");
+	TLOG_L(   L_DEBUG, "Testing LOG_IS_ENABLED");
 
 
 	if (LOG_IS_ENABLED_STATIC_S("one-time-section", L_DEBUG)) {
 		// *do heavy, log-output related processing here*
 		LOG_SL( "one-time-section", L_DEBUG, "Testing LOG_IS_ENABLED_STATIC_S");
-    	TLOG_SL("one-time-section", L_DEBUG, "Testing LOG_IS_ENABLED_STATIC_S");
+		TLOG_SL("one-time-section", L_DEBUG, "Testing LOG_IS_ENABLED_STATIC_S");
 	}
 
 	if (LOG_IS_ENABLED_S("other-one-time-section", L_DEBUG)) {
 		// *do heavy, log-output related processing here*
 		LOG_SL("other-one-time-section", L_DEBUG, "Testing LOG_IS_ENABLED_S");
 	}
-    TLOG_SL(   "other-one-time-section", L_DEBUG, "Testing LOG_IS_ENABLED_S");
+	TLOG_SL(   "other-one-time-section", L_DEBUG, "Testing LOG_IS_ENABLED_S");
 }
 
 

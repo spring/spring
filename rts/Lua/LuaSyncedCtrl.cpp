@@ -14,6 +14,7 @@
 #include "LuaRules.h" // for MAX_LUA_COB_ARGS
 #include "LuaHandleSynced.h"
 #include "LuaHashString.h"
+#include "LuaMetalMap.h"
 #include "LuaSyncedMoveCtrl.h"
 #include "LuaUtils.h"
 #include "Game/Game.h"
@@ -37,7 +38,7 @@
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/MoveTypes/MoveType.h"
+#include "Sim/MoveTypes/AAirMoveType.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -154,6 +155,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitMetalExtraction);
 	REGISTER_LUA_CFUNC(SetUnitBuildSpeed);
 	REGISTER_LUA_CFUNC(SetUnitBlocking);
+	REGISTER_LUA_CFUNC(SetUnitCrashing);
 	REGISTER_LUA_CFUNC(SetUnitShieldState);
 	REGISTER_LUA_CFUNC(SetUnitFlanking);
 	REGISTER_LUA_CFUNC(SetUnitTravel);
@@ -245,13 +247,14 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetExperienceGrade);
 
 
-	if (!LuaSyncedMoveCtrl::PushMoveCtrl(L)) {
+	if (!LuaSyncedMoveCtrl::PushMoveCtrl(L))
 		return false;
-	}
 
-	if (!CLuaUnitScript::PushEntries(L)) {
+	if (!CLuaUnitScript::PushEntries(L))
 		return false;
-	}
+
+	if (!LuaMetalMap::PushCtrlEntries(L))
+		return false;
 
 	return true;
 }
@@ -1154,10 +1157,7 @@ int LuaSyncedCtrl::SetUnitMaxHealth(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	unit->maxHealth = luaL_checkfloat(L, 2);
-	if (unit->maxHealth <= 0.0f) {
-		unit->maxHealth = 1.0f;
-	}
+	unit->maxHealth = std::max(0.1f, luaL_checkfloat(L, 2));
 
 	if (unit->health > unit->maxHealth) {
 		unit->health = unit->maxHealth;
@@ -1210,7 +1210,7 @@ static int SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 		weapon->sprayAngle = value;
 	}
 	else if (key == "range") {
-		weapon->range = value;
+		weapon->UpdateRange(value);
 	}
 	else if (key == "projectileSpeed") {
 		weapon->projectileSpeed = value;
@@ -1535,6 +1535,33 @@ int LuaSyncedCtrl::SetUnitBlocking(lua_State* L)
 }
 
 
+int LuaSyncedCtrl::SetUnitCrashing(lua_State* L) {
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL) {
+		return 0;
+	}
+
+	AAirMoveType* amt = dynamic_cast<AAirMoveType*>(unit->moveType);
+
+	if (amt != NULL) {
+		const bool crash = (lua_isboolean(L, 2) && lua_toboolean(L, 2));
+		const AAirMoveType::AircraftState state = crash?
+			AAirMoveType::AIRCRAFT_CRASHING:
+			AAirMoveType::AIRCRAFT_FLYING;
+
+		// note: this really only makes sense to call
+		// once, passing true for the second argument
+		amt->SetState(state);
+		lua_pushboolean(L, true);
+	} else {
+		lua_pushboolean(L, false);
+	}
+
+	return 1;
+}
+
+
 int LuaSyncedCtrl::SetUnitShieldState(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -1687,9 +1714,9 @@ int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 	const float3 scales(xs, ys, zs);
 	const float3 offsets(xo, yo, zo);
 
-	if (vType >= CollisionVolume::COLVOL_NUM_SHAPES  ) { return 0; }
-	if (tType >= CollisionVolume::COLVOL_NUM_HITTESTS) { return 0; }
-	if (pAxis >= CollisionVolume::COLVOL_NUM_AXES    ) { return 0; }
+	if (vType >= CollisionVolume::COLVOL_NUM_SHAPES)   { luaL_argerror(L,  8, "invalid vType"); }
+	if (tType >= CollisionVolume::COLVOL_NUM_HITTESTS) { luaL_argerror(L,  9, "invalid tType"); }
+	if (pAxis >= CollisionVolume::COLVOL_NUM_AXES  )   { luaL_argerror(L, 10, "invalid pAxis"); }
 
 	unit->collisionVolume->Init(scales, offsets, vType, tType, pAxis);
 	return 0;
@@ -1699,32 +1726,48 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 {
 	const int argc = lua_gettop(L);
 
-	if ((argc != 11) && (argc != 14)) {
-		return 0;
+	// before 83 this function had additional arguments (that affect all units with the same unitdef)
+	// those arguments were removed, still the syntax is still supported. Only the values of the additional
+	// arguments are ignored!
+	if ((argc != 3) && (argc != 11) && (argc != 14)) {
+		luaL_error(L, "Incorrect arguments to SetUnitPieceCollisionVolumeData()");
 	}
 
+	// 1st argument: unitid
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
+		//luaL_argerror(L, 1, "invalid unitid");
 		return 0;
 	}
 
 	LocalModel* localModel = unit->localmodel;
 
+	// 2nd argument: piece index
 	const int  pieceIndex = luaL_checkint(L, 2);
-	bool enableLocal      = lua_toboolean(L, 3);
-	int arg = 4;
-	if (argc == 14) {
-		//! old syntax had 3 additional arguments that were dropped now
-		//! so skip 3rd, 4th & 6th argument
-		enableLocal = lua_toboolean(L, 5);
-		arg = 7;
-	}
-
 	if (pieceIndex < 0 || pieceIndex >= localModel->pieces.size()) {
-		return 0;
+		luaL_argerror(L, 2, "invalid piece index");
 	}
 
 	LocalModelPiece* lmp = localModel->pieces[pieceIndex];
+
+	// 3rd/5th argument: enable/disable colvol
+	bool enable = lua_toboolean(L, 3);
+	int arg = 4;
+	if (argc == 14) {
+		// old syntax had 3 additional arguments that were dropped now
+		// so skip 3rd, 4th & 6th argument
+		enable = lua_toboolean(L, 5);
+		arg = 7;
+	}
+	if (!enable) {
+		lmp->GetCollisionVolume()->Disable();
+		return 0;
+	}
+
+	// n-th arguments: colvol data
+	if ((argc != 11) && (argc != 14)) {
+		luaL_error(L, "Incorrect arguments to SetUnitPieceCollisionVolumeData()");
+	}
 
 	const float xs  = luaL_checkfloat(L, arg++);
 	const float ys  = luaL_checkfloat(L, arg++);
@@ -1739,16 +1782,12 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 	const float3 scales(xs, ys, zs);
 	const float3 offset(xo, yo, zo);
 
-	if (vType >= CollisionVolume::COLVOL_NUM_SHAPES) { return 0; }
-	if (pAxis >= CollisionVolume::COLVOL_NUM_AXES  ) { return 0; }
+	if (vType >= CollisionVolume::COLVOL_NUM_SHAPES) { luaL_argerror(L, arg - 2, "invalid vType"); }
+	if (pAxis >= CollisionVolume::COLVOL_NUM_AXES  ) { luaL_argerror(L, arg - 1, "invalid pAxis"); }
 
-	//! affects this unit only
-	if (enableLocal) {
-		lmp->GetCollisionVolume()->Init(scales, offset, vType, tType, pAxis);
-		lmp->GetCollisionVolume()->Enable();
-	} else {
-		lmp->GetCollisionVolume()->Disable();
-	}
+	// finish
+	lmp->GetCollisionVolume()->Init(scales, offset, vType, tType, pAxis);
+	lmp->GetCollisionVolume()->Enable();
 
 	return 0;
 }

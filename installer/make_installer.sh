@@ -32,6 +32,16 @@ $WGET http://zero-k.info/lobby/setup.exe
 $WGET http://zero-k.info/lobby/setup_icon.ico
 $WGET http://www.springlobby.info/windows/latest.zip
 
+if [ ! -s spring_testing_minimal-portable.7z ]; then
+	echo "Warning: spring_testing_minimal-portable.7z didn't exist, downloading..." >&2
+	$WGET http://springrts.com/dl/buildbot/default/master/spring_testing_minimal-portable.7z
+fi
+
+if [ ! -s ArchiveMover_testing.7z ]; then
+	echo "Warning: ArchiveMover_testing.7z didn't exist, downloading..." >&2
+	$WGET http://springrts.com/dl/buildbot/default/master/ArchiveMover_testing.7z
+fi
+
 cd ..
 rm -rf Springlobby
 mkdir -p Springlobby
@@ -46,6 +56,19 @@ mv SLArchive/springsettings.exe SettingsDlls
 ### This version of OpenAL breaks Spring ...
 # not used anymore since May 2010
 rm -f SettingsDlls/OpenAL32.dll
+
 cd ../..
-makensis -V3 $NSISDEFINES $@ -DNSI_UNINSTALL_FILES=sections/uninstall.nsh -DRAPID_ARCHIVE=downloads/rapid-spring-latest-win32.7z installer/spring.nsi
+
+#create uninstall.nsh
+installer/make_uninstall_nsh.py \
+installer/downloads/spring_testing_minimal-portable.7z \
+installer/downloads/ArchiveMover_testing.7z \
+installer/downloads/rapid-spring-latest-win32.7z:rapid\\ >installer/downloads/uninstall.nsh
+
+
+makensis -V3 $NSISDEFINES $@ -DNSI_UNINSTALL_FILES=downloads/uninstall.nsh \
+-DRAPID_ARCHIVE=downloads/rapid-spring-latest-win32.7z \
+-DMIN_PORTABLE_ARCHIVE=downloads/spring_testing_minimal-portable.7z \
+-DARCHIVEMOVER=downloads/ArchiveMover_testing.7z \
+ installer/spring.nsi
 

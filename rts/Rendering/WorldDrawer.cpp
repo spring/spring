@@ -23,6 +23,7 @@
 #include "Rendering/Models/ModelDrawer.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
+#include "Map/HeightMapTexture.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Game/Camera.h"
@@ -58,6 +59,7 @@ CWorldDrawer::CWorldDrawer()
 	pathDrawer = IPathDrawer::GetInstance();
 
 	farTextureHandler = new CFarTextureHandler();
+	heightMapTexture = new HeightMapTexture();
 
 	loadscreen->SetLoadMessage("Creating ProjectileDrawer & UnitDrawer");
 	projectileDrawer = new CProjectileDrawer();
@@ -85,7 +87,9 @@ CWorldDrawer::~CWorldDrawer()
 	SafeDelete(featureDrawer);
 	SafeDelete(unitDrawer); // depends on unitHandler, cubeMapHandler, groundDecals
 	SafeDelete(projectileDrawer);
+
 	SafeDelete(farTextureHandler);
+	SafeDelete(heightMapTexture);
 
 	SafeDelete(cubeMapHandler);
 	SafeDelete(groundDecals);

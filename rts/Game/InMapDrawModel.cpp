@@ -1,8 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
-
 #include "InMapDrawModel.h"
+
+#include "Player.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/PlayerHandler.h"
 #include "Game/TeamController.h"
@@ -11,6 +11,7 @@
 #include "System/EventHandler.h"
 #include "System/BaseNetProtocol.h"
 #include "System/creg/STL_List.h"
+#include "System/mmgr.h"
 
 
 CInMapDrawModel* inMapDrawerModel = NULL;

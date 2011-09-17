@@ -1,8 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <SDL_mouse.h>
-
 #include "FPSUnitController.h"
+
 #include "UI/MouseHandler.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
@@ -15,8 +14,14 @@
 #include "System/myMath.h"
 #include "System/NetProtocol.h"
 
+#include <SDL_mouse.h>
+
+
 FPSUnitController::FPSUnitController()
-	: viewDir(float3(0.0f, 0.0f, 1.0f))
+	: targetUnit(NULL)
+	, controllee(NULL)
+	, controller(NULL)
+	, viewDir(float3(0.0f, 0.0f, 1.0f))
 	, targetPos(float3(0.0f, 0.0f, 1.0f))
 	, targetDist(1000.0f)
 	, forward(false)
@@ -25,16 +30,14 @@ FPSUnitController::FPSUnitController()
 	, right(false)
 	, mouse1(false)
 	, mouse2(false)
+	, oldHeading(0)
+	, oldPitch(0)
+	, oldState(255)
+	, oldDCpos(ZeroVector)
 {
-	oldPitch   = 0;
-	oldHeading = 0;
-	oldState   = 255;
-	oldDCpos   = ZeroVector;
-
-	targetUnit = NULL;
-	controllee = NULL;
-	controller = NULL;
 }
+
+
 
 void FPSUnitController::Update() {
 	const int piece = controllee->script->AimFromWeapon(0);
@@ -47,18 +50,11 @@ void FPSUnitController::Update() {
 
 	oldDCpos = pos;
 
-	float hitDist;
 	CUnit* hitUnit;
 	CFeature* hitFeature;
-	{
-		int origAllyTeam = gu->myAllyTeam;
-		gu->myAllyTeam = teamHandler->AllyTeam(controllee->team);
 
-		//hitDist = helper->TraceRayTeam(pos, dc->viewDir, controllee->maxRange, hit, 1, controllee, teamHandler->AllyTeam(team));
-		hitDist = TraceRay::GuiTraceRay(pos, viewDir, controllee->maxRange, true, controllee, hitUnit, hitFeature);
-
-		gu->myAllyTeam = origAllyTeam;
-	}
+	// SYNCED, do NOT use GuiTraceRay which also checks gu->spectatingFullView
+	float hitDist = TraceRay::TraceRay(pos, viewDir, controllee->maxRange, 0, controllee, hitUnit, hitFeature);
 
 	if (hitUnit) {
 		targetUnit = hitUnit;
@@ -97,7 +93,7 @@ void FPSUnitController::RecvStateUpdate(const unsigned char* buf) {
 	right      = !!(buf[2] & (1 << 3));
 	mouse1     = !!(buf[2] & (1 << 4));
 
-	bool newMouse2 = !!(buf[2] & (1 << 5));
+	const bool newMouse2 = !!(buf[2] & (1 << 5));
 
 	if (!mouse2 && newMouse2 && controllee != NULL) {
 		controllee->AttackUnit(NULL, true);

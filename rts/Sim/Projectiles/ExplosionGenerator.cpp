@@ -362,19 +362,20 @@ bool CStdExplosionGenerator::Explosion(
 	}
 
 	if (radius > 20 && damage > 6 && altitude < (radius * 0.7f)) {
-		const float modSize = std::max(radius, damage * 2);
+		const float flashSize = std::max(radius, damage * 2);
 		const float ttl = 8 + sqrtDmg * 0.8f;
-		const float flashSize = modSize;
-		const float flashAlpha = std::min(0.8f, damage * 0.01f);
+		if (flashSize > 5.f && ttl > 15.f) {
+			const float flashAlpha = std::min(0.8f, damage * 0.01f);
 
-		float circleAlpha = 0;
-		float circleGrowth = 0;
+			float circleAlpha = 0;
+			float circleGrowth = 0;
+			if (radius > 40 && damage > 12) {
+				circleAlpha = std::min(0.5f, damage * 0.01f);
+				circleGrowth = (8 + damage*2.5f) / (9 + sqrtDmg * 0.7f) * 0.55f;
+			}
 
-		if (radius > 40 && damage > 12) {
-			circleAlpha = std::min(0.5f, damage * 0.01f);
-			circleGrowth = (8 + damage*2.5f) / (9 + sqrtDmg * 0.7f) * 0.55f;
+			new CStandardGroundFlash(pos, circleAlpha, flashAlpha, flashSize, circleGrowth, ttl);
 		}
-		new CStandardGroundFlash(pos, circleAlpha, flashAlpha, flashSize, circleGrowth, ttl);
 	}
 
 	if (radius > 40 && damage > 12) {
@@ -870,7 +871,7 @@ bool CCustomExplosionGenerator::Explosion(
 		}
 	}
 
-	if (groundExplosion && (groundFlash.ttl > 0)) {
+	if (groundExplosion && (groundFlash.ttl > 0) && (groundFlash.flashSize > 1)) {
 		new CStandardGroundFlash(pos, groundFlash.circleAlpha, groundFlash.flashAlpha,
 			groundFlash.flashSize, groundFlash.circleGrowth, groundFlash.ttl, groundFlash.color);
 	}

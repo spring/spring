@@ -10,6 +10,8 @@
 #include "Sim/Objects/WorldObject.h"
 #include "Sim/Units/Unit.h"
 
+#include <climits>
+
 extern boost::recursive_mutex soundMutex;
 
 const size_t AudioChannel::MAX_STREAM_QUEUESIZE = 10;
@@ -91,7 +93,24 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 	if (emmitsThisFrame >= emmitsPerFrame)
 		return;
 	emmitsThisFrame++;
-	
+
+	if (cur_sources.size() >= maxConcurrentSources) {
+		CSoundSource* src = NULL;
+		int prio = INT_MAX;
+		for (std::map<CSoundSource*, bool>::iterator it = cur_sources.begin(); it != cur_sources.end(); ++it) {
+			if (prio < it->first->GetCurrentPriority()) {
+				src  = it->first;
+				prio = it->first->GetCurrentPriority();
+			}
+		}
+
+		if (src && prio <= sndItem->GetPriority()) {
+			src->Stop();
+		} else {
+			return;
+		}
+	}
+
 	CSoundSource* sndSource = sound->GetNextBestSource();
 	if (!sndSource)
 		return;

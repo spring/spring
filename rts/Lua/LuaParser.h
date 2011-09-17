@@ -3,22 +3,23 @@
 #ifndef LUA_PARSER_H
 #define LUA_PARSER_H
 
+#include "System/FileSystem/VFSModes.h"
+
 #include <string>
 #include <vector>
 #include <map>
 #include <set>
-using std::string;
-using std::vector;
-using std::map;
-using std::set;
-
-#include "System/FileSystem/VFSModes.h"
 
 class float3;
 struct float4;
 class LuaTable;
 class LuaParser;
 struct lua_State;
+
+using std::string;
+using std::vector;
+using std::map;
+using std::set;
 
 
 /******************************************************************************/

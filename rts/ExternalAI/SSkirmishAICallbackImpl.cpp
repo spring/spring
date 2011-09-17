@@ -3974,10 +3974,6 @@ EXPORT(float) skirmishAiCallback_WeaponDef_getCost(int skirmishAIId, int weaponD
 	}
 }
 
-EXPORT(float) skirmishAiCallback_WeaponDef_getSupplyCost(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->supplycost;
-}
-
 EXPORT(int) skirmishAiCallback_WeaponDef_getProjectilesPerShot(int skirmishAIId, int weaponDefId) {
 	return getWeaponDefById(skirmishAIId, weaponDefId)->projectilespershot;
 }
@@ -4991,7 +4987,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->WeaponDef_getUpTime = &skirmishAiCallback_WeaponDef_getUpTime;
 	callback->WeaponDef_getFlightTime = &skirmishAiCallback_WeaponDef_getFlightTime;
 	callback->WeaponDef_getCost = &skirmishAiCallback_WeaponDef_getCost;
-	callback->WeaponDef_getSupplyCost = &skirmishAiCallback_WeaponDef_getSupplyCost;
 	callback->WeaponDef_getProjectilesPerShot = &skirmishAiCallback_WeaponDef_getProjectilesPerShot;
 	callback->WeaponDef_isTurret = &skirmishAiCallback_WeaponDef_isTurret;
 	callback->WeaponDef_isOnlyForward = &skirmishAiCallback_WeaponDef_isOnlyForward;

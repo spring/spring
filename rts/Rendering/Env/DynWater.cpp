@@ -22,10 +22,20 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/bitops.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
+
+#define LOG_SECTION_DYN_WATER "DynWater"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_DYN_WATER)
+
+// use the specific section for all LOG*() calls in this source file
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_DYN_WATER
+
 
 #define W_SIZE 5
 #define WF_SIZE 5120
@@ -46,7 +56,6 @@ CDynWater::CDynWater()
 	}
 
 	lastWaveFrame = 0;
-	noWakeProjectiles = true;
 	firstDraw = true;
 	drawSolid = true;
 	camPosBig = float3(2048, 0, 2048);
@@ -447,7 +456,7 @@ void CDynWater::DrawReflection(CGame* game)
 	camera->forward.y *= -1.0f;
 	camera->pos.y *= -1.0f;
 	camera->pos.y += 0.2f;
-	camera->Update(false);
+	camera->Update();
 	reflectRight = camera->right;
 	reflectUp = camera->up;
 	reflectForward = camera->forward;
@@ -506,13 +515,13 @@ void CDynWater::DrawReflection(CGame* game)
 	camera->~CCamera();
 	new (camera) CCamera(*(CCamera *)realCam);
 
-	camera->Update(false);
+	camera->Update();
 }
 
 void CDynWater::DrawRefraction(CGame* game)
 {
 	drawRefraction = true;
-	camera->Update(false);
+	camera->Update();
 
 	refractRight = camera->right;
 	refractUp = camera->up;
@@ -614,7 +623,7 @@ void CDynWater::DrawWaves()
 
 	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-		logOutput.Print("FBO not ready2");
+		LOG_L(L_WARNING, "FBO not ready - 2");
 	}
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -657,7 +666,7 @@ void CDynWater::DrawWaves()
 
 	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-		logOutput.Print("FBO not ready1");
+		LOG_L(L_WARNING, "FBO not ready - 1");
 	}
 
 
@@ -713,7 +722,7 @@ void CDynWater::DrawWaves()
 
 	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-		logOutput.Print("FBO not ready3");
+		LOG_L(L_WARNING, "FBO not ready - 3");
 	}
 
 	glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, waveNormalFP);
@@ -773,7 +782,7 @@ void CDynWater::DrawHeightTex()
 
 	const int status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-		logOutput.Print("FBO not ready4");
+		LOG_L(L_WARNING, "FBO not ready - 4");
 	}
 
 	glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, waveCopyHeightFP);
@@ -840,8 +849,8 @@ void CDynWater::DrawWaterSurface()
 	//     2. even if it had been, DynWater::UpdateCamRestraints always used <cam2> to get the sides, not <camera>
 	// UpdateCamRestraints(cam2);
 
-	const std::vector<CCamera::FrustumLine>/*&*/ left /*= cam2->leftFrustumSides*/;
-	const std::vector<CCamera::FrustumLine>/*&*/ right /*= cam2->rightFrustumSides*/;
+	const std::vector<CCamera::FrustumLine>/*&*/ negSides /*= cam2->negFrustumSides*/;
+	const std::vector<CCamera::FrustumLine>/*&*/ posSides /*= cam2->posFrustumSides*/;
 
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
@@ -877,8 +886,8 @@ void CDynWater::DrawWaterSurface()
 			int xe = xend;
 			int xtest,xtest2;
 
-			for (fli = left.begin(); fli != left.end(); ++fli) {
-				float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
+			for (fli = negSides.begin(); fli != negSides.end(); ++fli) {
+				const float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
 				xtest = ((int)xtf) / lod * lod - lod;
 				xtest2 = ((int)(xtf + fli->dir * lod)) / lod * lod - lod;
 				if (xtest > xtest2) {
@@ -888,8 +897,8 @@ void CDynWater::DrawWaterSurface()
 					xs = xtest;
 				}
 			}
-			for (fli = right.begin(); fli != right.end(); ++fli) {
-				float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
+			for (fli = posSides.begin(); fli != posSides.end(); ++fli) {
+				const float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
 				xtest = ((int)xtf) / lod * lod - lod;
 				xtest2 = ((int)(xtf + fli->dir * lod)) / lod * lod - lod;
 				if (xtest < xtest2) {
@@ -1023,7 +1032,7 @@ void CDynWater::DrawDetailNormalTex()
 
 	const int status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-		logOutput.Print("FBO not ready5");
+		LOG_L(L_WARNING, "FBO not ready - 5");
 	}
 
 	glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, dwDetailNormalFP);
@@ -1088,10 +1097,9 @@ void CDynWater::AddShipWakes()
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	GLenum status;
-	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+	const GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-		logOutput.Print("FBO not ready6");
+		LOG_L(L_WARNING, "FBO not ready - 6");
 	}
 
 	glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, dwAddSplashFP);
@@ -1220,8 +1228,9 @@ void CDynWater::AddExplosions()
 
 	GLenum status;
 	status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-	if (status != GL_FRAMEBUFFER_COMPLETE_EXT)
-		logOutput.Print("FBO not ready7");
+	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+		LOG_L(L_WARNING, "FBO not ready - 7");
+	}
 
 	glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, dwAddSplashFP);
 	glEnable(GL_FRAGMENT_PROGRAM_ARB);
@@ -1377,6 +1386,7 @@ void CDynWater::DrawOuterSurface()
 
 
 
+/*
 void CDynWater::UpdateCamRestraints(CCamera* cam) {
 	// add restraints for camera sides
 	cam->GetFrustumSides(-10.0f, 10.0f, 1.0f);
@@ -1391,6 +1401,7 @@ void CDynWater::UpdateCamRestraints(CCamera* cam) {
 
 	if (camDir2D.SqLength() > 0.01f) {
 		camDir2D.SafeANormalize();
-		cam->GetFrustumSide(camDir2D, camOffset, miny, maxy, SQUARE_SIZE, (camDir3D.y > 0.0f), false, false);
+		cam->GetFrustumSide(camDir2D, camOffset, miny, maxy, SQUARE_SIZE, (camDir3D.y > 0.0f), false);
 	}
 }
+*/

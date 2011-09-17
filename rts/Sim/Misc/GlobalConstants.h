@@ -6,9 +6,14 @@
 /**
  * @brief square size
  *
- * Defines the size of 1 square as 8.
+ * Defines the size of 1 heightmap square as 8 elmos.
  */
 const int SQUARE_SIZE = 8;
+
+/**
+ * conversion factor from elmos to meters
+ */
+const float ELMOS_TO_METERS = 1.0f / SQUARE_SIZE;
 
 /**
  * @brief game speed
@@ -48,6 +53,16 @@ const int MAX_TEAMS = 255;
  * purposes, resulting in 251.
  */
 const int MAX_PLAYERS = 251;
+
+/**
+ * @brief max AIs
+ *
+ * This is the hard limit.
+ * It is currently 255. as it isrestricted by the size of the ai-ID field
+ * in the network, which is 1 byte (=> 256), with the value 255 reserved for
+ * special purpose, resulting in 255.
+ */
+const int MAX_AIS = 255;
 
 /**
  * @brief max units

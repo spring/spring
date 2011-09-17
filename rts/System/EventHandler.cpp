@@ -116,6 +116,7 @@ CEventHandler::CEventHandler()
 	SETUP_EVENT(DefaultCommand, MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(CommandNotify,  MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(AddConsoleLine, MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(LastMessagePosition, MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(GroupChanged,   MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(GameSetup,      MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(WorldTooltip,   MANAGED_BIT | UNSYNCED_BIT);
@@ -503,30 +504,40 @@ void CEventHandler::DeleteSyncedFeatures() {
 
 void CEventHandler::UpdateProjectiles() { eventBatchHandler->UpdateProjectiles(); }
 void CEventHandler::UpdateDrawProjectiles() { eventBatchHandler->UpdateDrawProjectiles(); }
+
+inline void ExecuteAllCallsFromSynced() {
+#if (LUA_MT_OPT & LUA_MUTEX)
+	bool exec;
+	do { // these calls can be chained, need to purge them all
+		exec = false;
+		if (luaRules && luaRules->ExecuteCallsFromSynced())
+			exec = true;
+		if (luaGaia && luaGaia->ExecuteCallsFromSynced())
+			exec = true;
+
+		GML_STDMUTEX_LOCK(luaui); // ExecuteAllCallsFromSynced
+		if (luaUI && luaUI->ExecuteCallsFromSynced())
+			exec = true;
+	} while (exec);
+#endif
+}
+
 void CEventHandler::DeleteSyncedProjectiles() {
-	if (luaRules) luaRules->ExecuteRecvFromSynced();
-	if (luaGaia) luaGaia->ExecuteRecvFromSynced();
+	ExecuteAllCallsFromSynced();
 	eventBatchHandler->DeleteSyncedProjectiles();
 
 	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedProjectiles
-	if (luaUI) {
-		luaUI->ExecuteProjEventBatch();
-		luaUI->ExecuteRecvFromSynced();
-	}
+	if (luaUI) luaUI->ExecuteProjEventBatch();
 }
 
 void CEventHandler::UpdateObjects() {
 	eventBatchHandler->UpdateObjects();
 }
 void CEventHandler::DeleteSyncedObjects() {
-	if (luaRules) luaRules->ExecuteRecvFromSynced();
-	if (luaGaia) luaGaia->ExecuteRecvFromSynced();
+	ExecuteAllCallsFromSynced();
 
 	GML_STDMUTEX_LOCK(luaui); // DeleteSyncedObjects
-	if (luaUI) { 
-		luaUI->ExecuteObjEventBatch();
-		luaUI->ExecuteRecvFromSynced();
-	}
+	if (luaUI) luaUI->ExecuteObjEventBatch();
 }
 
 
@@ -735,15 +746,27 @@ string CEventHandler::GetTooltip(int x, int y)
 }
 
 
-bool CEventHandler::AddConsoleLine(const string& msg, const CLogSubsystem& subsystem)
+bool CEventHandler::AddConsoleLine(const std::string& msg, const std::string& section, int level)
 {
 	EVENTHANDLER_CHECK(AddConsoleLine, false);
 
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listAddConsoleLine[i];
-		ec->AddConsoleLine(msg, subsystem);
+		ec->AddConsoleLine(msg, section, level);
 	}
 	return true;
+}
+
+
+void CEventHandler::LastMessagePosition(const float3& pos)
+{
+	EVENTHANDLER_CHECK(LastMessagePosition);
+	//GML_STDMUTEX_LOCK(log); // LastMessagePosition FIXME would this be required?
+
+	for (int i = 0; i < count; i++) {
+		CEventClient* ec = listLastMessagePosition[i];
+		ec->LastMessagePosition(pos);
+	}
 }
 
 

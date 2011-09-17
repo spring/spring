@@ -30,6 +30,7 @@
 #include "GlobalUnsynced.h"
 #include "LoadScreen.h"
 #include "SelectedUnits.h"
+#include "Player.h"
 #include "PlayerHandler.h"
 #include "PlayerRoster.h"
 #include "PlayerRosterDrawer.h"
@@ -84,7 +85,6 @@
 #include "Lua/LuaSyncedRead.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
-#include "Map/HeightMapTexture.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -149,6 +149,7 @@
 #include "System/FileSystem/SimpleParser.h"
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/LoadSave/DemoRecorder.h"
+#include "System/Log/ILog.h"
 #include "System/Net/PackPacket.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Watchdog.h"
@@ -164,7 +165,7 @@
 
 #ifdef USE_GML
 #include "lib/gml/gmlsrv.h"
-extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
+extern gmlClientServer<void, int,CUnit*>* gmlProcessor;
 #endif
 
 
@@ -323,7 +324,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	}
 
 	int mtl = globalConfig->GetMultiThreadLua();
-	showMTInfo = (showMTInfo && (mtl != MT_LUA_DUAL && mtl != MT_LUA_DUAL_ALL)) ? mtl : MT_LUA_NONE;
+	showMTInfo = (showMTInfo && (mtl != MT_LUA_DUAL && mtl != MT_LUA_DUAL_ALL && mtl != MT_LUA_DUAL_UNMANAGED)) ? mtl : MT_LUA_NONE;
 
 	if (!sideParser.Load()) {
 		throw content_error(sideParser.GetErrorLog());
@@ -354,7 +355,6 @@ CGame::~CGame()
 	CLuaGaia::FreeHandler();
 	CLuaRules::FreeHandler();
 	LuaOpenGL::Free();
-	heightMapTexture.Kill();
 	CColorMap::DeleteColormaps();
 	CEngineOutHandler::Destroy();
 	CResourceHandler::FreeInstance();
@@ -758,7 +758,7 @@ int CGame::KeyPressed(unsigned short key, bool isRepeat)
 			cmd += " " + hotBinding;
 			keyBindings->ExecuteCommand(cmd);
 			hotBinding.clear();
-			logOutput.Print("%s", cmd.c_str());
+			LOG("%s", cmd.c_str());
 		}
 		return 0;
 	}
@@ -861,9 +861,9 @@ bool CGame::Update()
 		luaLockTime = (int)GML_LOCK_TIME();
 		float amount = (showMTInfo == MT_LUA_DUAL_EXPORT) ? (float)luaExportSize / 1000.0f : (float)luaLockTime / 10.0f;
 		if (amount >= 0.1f) {
-			if((mtInfoCtrl = std::min(mtInfoCtrl + 1, 5)) == 3) mtInfoCtrl = 5;
+			if ((mtInfoCtrl = std::min(mtInfoCtrl + 1, 9)) == 5) mtInfoCtrl = 9;
 		}
-		else if((mtInfoCtrl = std::max(mtInfoCtrl - 1, 0)) == 2) mtInfoCtrl = 0;
+		else if ((mtInfoCtrl = std::max(mtInfoCtrl - 1, 0)) == 4) mtInfoCtrl = 0;
 #endif
 		if (!gameServer) {
 			consumeSpeed = ((float)(GAME_SPEED * gs->speedFactor + leastQue - 2));
@@ -894,7 +894,7 @@ bool CGame::Update()
 	}
 
 	if (net->CheckTimeout(0, gs->frameNum == 0) && !gameOver) {
-		logOutput.Print("Lost connection to gameserver");
+		LOG_L(L_WARNING, "Lost connection to gameserver");
 		GameEnd(std::vector<unsigned char>());
 	}
 
@@ -904,7 +904,7 @@ bool CGame::Update()
 		infoConsole->GetNewRawLines(lines);
 		for (unsigned int i = 0; i < lines.size(); i++) {
 			const CInfoConsole::RawLine& rawLine = lines[i];
-			eventHandler.AddConsoleLine(rawLine.text, *rawLine.subsystem);
+			eventHandler.AddConsoleLine(rawLine.text, rawLine.section, rawLine.level);
 		}
 	}
 
@@ -970,7 +970,7 @@ bool CGame::Draw() {
 
 	//! set camera
 	camHandler->UpdateCam();
-	camera->Update(false);
+	camera->Update();
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 	if (doDrawWorld) {
@@ -1020,19 +1020,19 @@ bool CGame::Draw() {
 
 	SetDrawMode(gameNormalDraw);
 
- 	if (luaUI)    { luaUI->CheckStack(); luaUI->ExecuteDelayedXCalls(); luaUI->ExecuteUIEventBatch(); }
+ 	if (luaUI)    { luaUI->CheckStack(); luaUI->ExecuteUIEventBatch(); }
 	if (luaGaia)  { luaGaia->CheckStack(); }
 	if (luaRules) { luaRules->CheckStack(); }
 
 	// XXX ugly hack to minimize luaUI errors
 	if (luaUI && luaUI->GetCallInErrors() >= 5) {
 		for (int annoy = 0; annoy < 8; annoy++) {
-			LogObject() << "5 errors deep in LuaUI, disabling...\n";
+			LOG_L(L_ERROR, "5 errors deep in LuaUI, disabling...");
 		}
 
 		guihandler->PushLayoutCommand("disable");
-		LogObject() << "Type '/luaui reload' in the chat to re-enable LuaUI.\n";
-		LogObject() << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
+		LOG_L(L_ERROR, "Type '/luaui reload' in the chat to re-enable LuaUI.");
+		LOG_L(L_ERROR, "===>>>  Please report this error to the forum or mantis with your infolog.txt");
 	}
 
 	configHandler->Update();
@@ -1100,7 +1100,7 @@ bool CGame::Draw() {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);	// Clear Screen And Depth&Stencil Buffer
-	camera->Update(false);
+	camera->Update();
 
 	if (doDrawWorld) {
 		worldDrawer->Draw();
@@ -1208,7 +1208,7 @@ bool CGame::Draw() {
 		}
 
 #if defined(USE_GML) && GML_ENABLE_SIM
-		if (mtInfoCtrl >= 3 && (showMTInfo == MT_LUA_SINGLE || showMTInfo == MT_LUA_SINGLE_BATCH || showMTInfo == MT_LUA_DUAL_EXPORT)) {
+		if (mtInfoCtrl >= 5 && (showMTInfo == MT_LUA_SINGLE || showMTInfo == MT_LUA_SINGLE_BATCH || showMTInfo == MT_LUA_DUAL_EXPORT)) {
 			float pval = (showMTInfo == MT_LUA_DUAL_EXPORT) ? (float)luaExportSize / 1000.0f : (float)luaLockTime / 10.0f;
 			const char *pstr = (showMTInfo == MT_LUA_DUAL_EXPORT) ? "LUA-EXP-SIZE(MT): %2.1fK" : "LUA-SYNC-CPU(MT): %2.1f%%";
 			char buf[40];
@@ -1888,7 +1888,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 		return;
 	}
 
-	string s = msg.msg;
+	const std::string& s = msg.msg;
 
 	if (!s.empty()) {
 		CPlayer* player = (msg.fromPlayer >= 0 && static_cast<unsigned int>(msg.fromPlayer) == SERVER_PLAYER) ? 0 : playerHandler->Player(msg.fromPlayer);
@@ -1923,32 +1923,32 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 			const int msgAllyTeam = teamHandler->AllyTeam(player->team);
 			const bool allied = teamHandler->Ally(msgAllyTeam, gu->myAllyTeam);
 			if (gu->spectating || (allied && !player->spectator)) {
-				logOutput.Print(label + "Allies: " + s);
+				LOG("%sAllies: %s", label.c_str(), s.c_str());
 				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 		}
 		else if (msg.destination == ChatMessage::TO_SPECTATORS) {
 			if (gu->spectating || myMsg) {
-				logOutput.Print(label + "Spectators: " + s);
+				LOG("%sSpectators: %s", label.c_str(), s.c_str());
 				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 		}
 		else if (msg.destination == ChatMessage::TO_EVERYONE) {
 			const bool specsOnly = noSpectatorChat && (player && player->spectator);
 			if (gu->spectating || !specsOnly) {
-				logOutput.Print(label + s);
+				LOG("%s%s", label.c_str(), s.c_str());
 				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 		}
-		else if (msg.destination < playerHandler->ActivePlayers())
+		else if ((msg.destination < playerHandler->ActivePlayers()) && player)
 		{
-			if (msg.destination == gu->myPlayerNum && player && !player->spectator) {
-				logOutput.Print(label + "Private: " + s);
+			if (msg.destination == gu->myPlayerNum && !player->spectator) {
+				LOG("%sPrivate: %s", label.c_str(), s.c_str());
 				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 			else if (player->playerNum == gu->myPlayerNum)
 			{
-				LogObject() << "You whispered " << player->name << ": " << s;
+				LOG("You whispered %s: %s", player->name.c_str(), s.c_str());
 			}
 		}
 	}
@@ -1962,14 +1962,14 @@ void CGame::StartSkip(int toFrame) {
 	return; // FIXME: desyncs
 
 	if (skipping) {
-		logOutput.Print("ERROR: skipping appears to be busted (%i)\n", skipping);
+		LOG_L(L_ERROR, "skipping appears to be busted (%i)", skipping);
 	}
 
 	skipStartFrame = gs->frameNum;
 	skipEndFrame = toFrame;
 
 	if (skipEndFrame <= skipStartFrame) {
-		logOutput.Print("Already passed %i (%i)\n", skipEndFrame / GAME_SPEED, skipEndFrame);
+		LOG_L(L_WARNING, "Already passed %i (%i)", skipEndFrame / GAME_SPEED, skipEndFrame);
 		return;
 	}
 
@@ -2001,10 +2001,11 @@ void CGame::EndSkip() {
 	gs->speedFactor     = skipOldSpeed;
 	gs->userSpeedFactor = skipOldUserSpeed;
 
-	if (!skipSoundmute)
+	if (!skipSoundmute) {
 		sound->Mute(); // sounds back on
+	}
 
-	logOutput.Print("Skipped %.1f seconds\n", skipSeconds);
+	LOG("Skipped %.1f seconds", skipSeconds);
 }
 
 
@@ -2036,27 +2037,27 @@ void CGame::DrawSkip(bool blackscreen) {
 void CGame::ReloadCOB(const string& msg, int player)
 {
 	if (!gs->cheatEnabled) {
-		logOutput.Print("reloadcob can only be used if cheating is enabled");
+		LOG_L(L_WARNING, "reloadcob can only be used if cheating is enabled");
 		return;
 	}
 	const string unitName = msg;
 	if (unitName.empty()) {
-		logOutput.Print("Missing unit name");
+		LOG_L(L_WARNING, "Missing unit name");
 		return;
 	}
 	const UnitDef* udef = unitDefHandler->GetUnitDefByName(unitName);
 	if (udef==NULL) {
-		logOutput.Print("Unknown unit name: \"%s\"", unitName.c_str());
+		LOG_L(L_WARNING, "Unknown unit name: \"%s\"", unitName.c_str());
 		return;
 	}
 	const CCobFile* oldScript = GCobFileHandler.GetScriptAddr(udef->scriptPath);
 	if (oldScript == NULL) {
-		logOutput.Print("Unknown COB script for unit \"%s\": %s", unitName.c_str(), udef->scriptPath.c_str());
+		LOG_L(L_WARNING, "Unknown COB script for unit \"%s\": %s", unitName.c_str(), udef->scriptPath.c_str());
 		return;
 	}
 	CCobFile* newScript = GCobFileHandler.ReloadCobFile(udef->scriptPath);
 	if (newScript == NULL) {
-		logOutput.Print("Could not load COB script for unit \"%s\" from: %s", unitName.c_str(), udef->scriptPath.c_str());
+		LOG_L(L_WARNING, "Could not load COB script for unit \"%s\" from: %s", unitName.c_str(), udef->scriptPath.c_str());
 		return;
 	}
 	int count = 0;
@@ -2072,7 +2073,7 @@ void CGame::ReloadCOB(const string& msg, int player)
 			}
 		}
 	}
-	logOutput.Print("Reloaded cob script for %i units", count);
+	LOG("Reloaded cob script for %i units", count);
 }
 
 void CGame::ReloadCEGs(const std::string& tag) {
@@ -2214,7 +2215,7 @@ void CGame::SaveGame(const std::string& filename, bool overwrite)
 {
 	if (FileSystem::CreateDirectory("Saves")) {
 		if (overwrite || !FileSystem::FileExists(filename)) {
-			logOutput.Print("Saving game to %s\n", filename.c_str());
+			LOG("Saving game to %s", filename.c_str());
 			ILoadSaveHandler* ls = ILoadSaveHandler::Create();
 			ls->mapName = gameSetup->mapName;
 			ls->modName = gameSetup->modName;
@@ -2222,7 +2223,7 @@ void CGame::SaveGame(const std::string& filename, bool overwrite)
 			delete ls;
 		}
 		else {
-			logOutput.Print("File %s already exists(use /save -y to override)\n", filename.c_str());
+			LOG_L(L_WARNING, "File %s already exists(use /save -y to override)", filename.c_str());
 		}
 	}
 }
@@ -2234,9 +2235,8 @@ void CGame::ReloadGame()
 		// This reloads heightmap, triggers Load call-in, etc.
 		// Inside the Load call-in, Lua can ensure old units are wiped before new ones are placed.
 		saveFile->LoadGame();
-	}
-	else {
-		logOutput.Print("Can only reload game when game has been started from a savegame");
+	} else {
+		LOG_L(L_WARNING, "We can only reload the game when it has been started from a savegame");
 	}
 }
 

@@ -1,9 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
-#include "System/mmgr.h"
-
 #include "LuaUnsyncedCtrl.h"
+
 #include "LuaInclude.h"
 #include "LuaHandle.h"
 #include "LuaHashString.h"
@@ -11,13 +9,14 @@
 #include "LuaTextures.h"
 
 #include "ExternalAI/EngineOutHandler.h"
-
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/Game.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
+#include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Game/InMapDraw.h"
 #include "Game/InMapDrawModel.h"
@@ -52,10 +51,11 @@
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/LogOutput.h"
+#include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
 #include "System/Util.h"
+#include "System/mmgr.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/FileSystem/FileHandler.h"
@@ -97,7 +97,7 @@ const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 /******************************************************************************/
 /******************************************************************************/
 
-CUnitSet LuaUnsyncedCtrl::drawCmdQueueUnits;
+std::set<int> drawCmdQueueUnits;
 
 /******************************************************************************/
 /******************************************************************************/
@@ -156,9 +156,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(UpdateModelLight);
 	REGISTER_LUA_CFUNC(SetMapLightTrackingState);
 	REGISTER_LUA_CFUNC(SetModelLightTrackingState);
-
 	REGISTER_LUA_CFUNC(SetMapSquareTexture);
-	REGISTER_LUA_CFUNC(GetMapSquareTexture);
 
 	REGISTER_LUA_CFUNC(SetUnitNoDraw);
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
@@ -395,14 +393,14 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 	glLineWidth(cmdColors.QueuedLineWidth());
 
 	GML_RECMUTEX_LOCK(unit); // DrawUnitCommandQueues
+	GML_RECMUTEX_LOCK(feat); // DrawUnitCommandQueues
 	GML_STDMUTEX_LOCK(cai); // DrawUnitCommandQueues
 	GML_STDMUTEX_LOCK(dque); // DrawUnitCommandQueues
 
-	const CUnitSet& units = drawCmdQueueUnits;
-	CUnitSet::const_iterator ui;
+	std::set<int>::const_iterator ui;
 
-	for (ui = units.begin(); ui != units.end(); ++ui) {
-		CUnit* unit = *ui;
+	for (ui = drawCmdQueueUnits.begin(); ui != drawCmdQueueUnits.end(); ++ui) {
+		const CUnit* unit = uh->GetUnit(*ui);
 
 		if (unit == NULL || unit->commandAI == NULL) {
 			continue;
@@ -412,7 +410,6 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 	}
 
 	glLineWidth(1.0f);
-
 	glEnable(GL_DEPTH_TEST);
 }
 
@@ -854,15 +851,16 @@ int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 			if (lua_israwnumber(L, -2)) {
 				CUnit* unit = ParseAllyUnit(L, __FUNCTION__, unitArg);
 				if (unit != NULL) {
-					drawCmdQueueUnits.insert(unit);
+					drawCmdQueueUnits.insert(unit->id);
 				}
 			}
 		}
 		return 0;
 	}
+
 	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
 	if (unit != NULL) {
-		drawCmdQueueUnits.insert(unit);
+		drawCmdQueueUnits.insert(unit->id);
 	}
 	return 0;
 }
@@ -1585,52 +1583,6 @@ int LuaUnsyncedCtrl::SetMapSquareTexture(lua_State* L)
 	}
 
 	lua_pushboolean(L, false);
-	return 1;
-}
-
-int LuaUnsyncedCtrl::GetMapSquareTexture(lua_State* L)
-{
-	if (CLuaHandle::GetSynced(L)) {
-		return 0;
-	}
-
-	const int texSquareX = luaL_checkint(L, 1);
-	const int texSquareY = luaL_checkint(L, 2);
-	const int texMipLevel = luaL_checkint(L, 3);
-	const std::string& texName = luaL_checkstring(L, 4);
-
-	CBaseGroundDrawer* groundDrawer = readmap->GetGroundDrawer();
-	CBaseGroundTextures* groundTextures = groundDrawer->GetGroundTextures();
-
-	if (groundTextures == NULL) {
-		lua_pushboolean(L, false);
-		return 1;
-	}
-	if (texName.empty()) {
-		lua_pushboolean(L, false);
-		return 1;
-	}
-
-	const LuaTextures& luaTextures = CLuaHandle::GetActiveTextures(L);
-	const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(texName);
-
-	if (luaTexture == NULL) {
-		// not a valid texture (name)
-		lua_pushboolean(L, false);
-		return 1;
-	}
-
-	const int tid = luaTexture->id;
-	const int txs = luaTexture->xsize;
-	const int tys = luaTexture->ysize;
-
-	if (txs != tys) {
-		// square textures only
-		lua_pushboolean(L, false);
-		return 1;
-	}
-
-	lua_pushboolean(L, groundTextures->GetSquareLuaTexture(texSquareX, texSquareY, tid, txs, tys, texMipLevel));
 	return 1;
 }
 
@@ -2446,7 +2398,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 
 	Command cmd = LuaUtils::ParseCommand(L, __FUNCTION__, 2);
 
-	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, unit->id, cmd.GetID(), cmd.aiCommandId, cmd.options, cmd.params));
+	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, skirmishAIHandler.GetCurrentAIID(), unit->id, cmd.GetID(), cmd.aiCommandId, cmd.options, cmd.params));
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -2729,7 +2681,7 @@ int LuaUnsyncedCtrl::SetLastMessagePosition(lua_State* L)
 	                 lua_tofloat(L, 2),
 	                 lua_tofloat(L, 3));
 
-	logOutput.SetLastMsgPos(pos);
+	eventHandler.LastMessagePosition(pos);
 
 	return 0;
 }

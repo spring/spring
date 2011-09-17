@@ -16,16 +16,10 @@ struct UnitDef;
  */
 struct BuildInfo
 {
-	BuildInfo()
-		: def(NULL)
-		, pos(ZeroVector)
-		, buildFacing(0) {}
-	BuildInfo(const UnitDef* def, const float3& pos, int buildFacing)
-		: def(def)
-		, pos(pos)
-		, buildFacing(buildFacing) {}
-	BuildInfo(const Command& c) { Parse(c); }
+	BuildInfo();
+	BuildInfo(const UnitDef* def, const float3& pos, int buildFacing);
 	BuildInfo(const std::string& name, const float3& pos, int facing);
+	BuildInfo(const Command& c) { Parse(c); }
 
 	int GetXSize() const;
 	int GetZSize() const;

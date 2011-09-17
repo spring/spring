@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _PLAYER_BASE_H
-#define _PLAYER_BASE_H
+#ifndef PLAYER_BASE_H
+#define PLAYER_BASE_H
 
 #include "Game/TeamController.h"
 
@@ -47,4 +47,4 @@ private:
 	customOpts customValues;
 };
 
-#endif // _PLAYER_BASE_H
+#endif // PLAYER_BASE_H

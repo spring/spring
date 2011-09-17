@@ -154,8 +154,8 @@ private:
 	static CEngineOutHandler* singleton;
 
 private:
-	typedef std::vector<size_t> ids_t;
-	typedef std::map<size_t, CSkirmishAIWrapper*> id_ai_t;
+	typedef std::vector<unsigned char> ids_t;
+	typedef std::map<unsigned char, CSkirmishAIWrapper*> id_ai_t;
 	typedef std::map<int, ids_t> team_ais_t;
 
 	/// Contains all local Skirmish AIs, indexed by their ID

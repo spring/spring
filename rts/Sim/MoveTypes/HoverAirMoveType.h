@@ -22,6 +22,7 @@ public:
 	 */
 	bool loadingUnits;
 	bool bankingAllowed;
+	bool airStrafe;
 
 	/// to reset altitude back
 	float orgWantedHeight;

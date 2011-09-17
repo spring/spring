@@ -431,15 +431,17 @@ void CFeatureHandler::Update()
 				CFeature* feature = GetFeature(toBeRemoved.back());
 				toBeRemoved.pop_back();
 				if (feature) {
-					toBeFreedIDs.push_back(feature->id);
+					int delID = feature->id;
+					toBeFreedIDs.push_back(delID);
 					activeFeatures.erase(feature);
-					features[feature->id] = 0;
+					features[delID] = 0;
 
 					if (feature->inUpdateQue) {
 						updateFeatures.erase(feature);
 					}
-
+					CSolidObject::SetDeletingRefID(delID + uh->MaxUnits());
 					delete feature;
+					CSolidObject::SetDeletingRefID(-1);
 				}
 			}
 		}

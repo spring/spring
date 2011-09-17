@@ -1,30 +1,31 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "Rendering/GL/myGL.h"
-#include <assert.h>
-#include <string>
-#include <map>
-#include <SDL_timer.h>
-#include <SDL_keysym.h>
-
-#include "System/mmgr.h"
-
 #include "GameSetupDrawer.h"
 
+#include "KeyBindings.h"
+#include "StartPosSelecter.h"
 #include "Game/GameServer.h"
-
-#include "System/NetProtocol.h"
-#include "System/Config/ConfigHandler.h"
 #include "Game/CameraHandler.h"
+#include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "StartPosSelecter.h"
+#include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
-#include "KeyBindings.h"
+#include "System/NetProtocol.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
+#include "System/mmgr.h"
+
+#include <SDL_timer.h>
+#include <SDL_keysym.h>
+
+#include <cassert>
+#include <string>
+#include <map>
+
 
 GameSetupDrawer* GameSetupDrawer::instance = NULL;
 

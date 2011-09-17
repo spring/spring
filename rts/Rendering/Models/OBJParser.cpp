@@ -1,17 +1,29 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <cassert>
-#include <sstream>
 #include <boost/regex.hpp>
 
 #include "OBJParser.h"
+
 #include "Lua/LuaParser.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
+
+#include <cassert>
+#include <sstream>
+
+#define LOG_SECTION_OBJ_PARSER "OBJParser"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_OBJ_PARSER)
+
+// use the specific section for all LOG*() calls in this source file
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_OBJ_PARSER
+
 
 static const float3 DEF_MIN_SIZE( 10000.0f,  10000.0f,  10000.0f);
 static const float3 DEF_MAX_SIZE(-10000.0f, -10000.0f, -10000.0f);
@@ -142,7 +154,8 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 				// ignore groups ('g'), smoothing groups ('s'),
 				// and materials ("mtllib", "usemtl") for now
 				// (s-groups are obsolete with vertex normals)
-				logOutput.Print("[OBJParser] failed to parse line \"%s\" for model \"%s\"", line.c_str(), model->name.c_str());
+				LOG_L(L_WARNING, "Failed to parse line \"%s\" for model \"%s\"",
+						line.c_str(), model->name.c_str());
 
 				prevReadIdx = currReadIdx + 1;
 				continue;
@@ -272,7 +285,9 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 
 						piece->AddTriangle(triangle);
 					} else {
-						logOutput.Print("[OBJParser] illegal face-element indices on line \"%s\" for model \"%s\"", line.c_str(), model->name.c_str());
+						LOG_L(L_WARNING,
+								"Illegal face-element indices on line \"%s\" for model \"%s\"",
+								line.c_str(), model->name.c_str());
 					}
 				} break;
 
