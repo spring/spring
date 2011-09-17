@@ -68,7 +68,6 @@ include=" \
  $dir/include/ \
  $dir/installer/ \
  $dir/rts/ \
- $dir/SConstruct \
  $dir/tools/unitsync/ \
  $dir/tools/ArchiveMover/ \
  $dir/tools/DemoTool/ \
