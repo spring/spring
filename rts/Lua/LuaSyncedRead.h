@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef LUA_SYNCED_INFO_H
-#define LUA_SYNCED_INFO_H
+#ifndef LUA_SYNCED_READ_H
+#define LUA_SYNCED_READ_H
 
 struct lua_State;
 
@@ -84,6 +84,8 @@ class LuaSyncedRead {
 		static int GetUnitNearestEnemy(lua_State* L);
 
 		static int GetFeaturesInRectangle(lua_State* L);
+		static int GetFeaturesInSphere(lua_State* L);
+		static int GetFeaturesInCylinder(lua_State* L);
 		static int GetProjectilesInRectangle(lua_State* L);
 
 		static int ValidUnitID(lua_State* L);
@@ -214,5 +216,4 @@ class LuaSyncedRead {
 		static int GetCOBGlobalVar(lua_State* L);
 };
 
-
-#endif /* LUA_SYNCED_INFO_H */
+#endif /* LUA_SYNCED_READ_H */

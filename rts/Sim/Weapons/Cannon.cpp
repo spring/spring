@@ -57,6 +57,12 @@ void CCannon::Init(void)
 	}
 	CWeapon::Init();
 
+	UpdateRange(range);
+}
+
+void CCannon::UpdateRange(float val)
+{
+	range = val;
 	// initialize range factor
 	rangeFactor = 1;
 	rangeFactor = (float)range/GetRange2D(0);

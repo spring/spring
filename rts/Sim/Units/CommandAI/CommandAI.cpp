@@ -309,8 +309,26 @@ CCommandAI::CCommandAI(CUnit* owner):
 CCommandAI::~CCommandAI()
 {
 	if (orderTarget) {
-		DeleteDeathDependence(orderTarget);
+		DeleteDeathDependence(orderTarget, DEPENDENCE_ORDERTARGET);
 		orderTarget = 0;
+	}
+	ClearCommandDependencies();
+}
+
+void CCommandAI::ClearCommandDependencies() {
+	while (!commandDeathDependences.empty()) {
+		DeleteDeathDependence(*commandDeathDependences.begin(), DEPENDENCE_COMMANDQUE);
+	}
+}
+
+void CCommandAI::AddCommandDependency(const Command &c) {
+	int cpos;
+	if (c.IsObjectCommand(cpos)) {
+		int refid = c.params[cpos];
+		CObject* ref = (refid < uh->MaxUnits()) ? (CObject*)uh->GetUnit(refid) :
+						(CObject*)featureHandler->GetFeature(refid - uh->MaxUnits());
+		if (ref)
+			AddDeathDependence(ref, DEPENDENCE_COMMANDQUE);
 	}
 }
 
@@ -698,14 +716,17 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 				owner->AttackUnit(0,true);
 			}
 			waitCommandsAI.ClearUnitQueue(owner, commandQue);
+			ClearCommandDependencies();
 			commandQue.clear();
 		}
 		inCommand=false;
 		if(orderTarget){
-			DeleteDeathDependence(orderTarget);
+			DeleteDeathDependence(orderTarget, DEPENDENCE_ORDERTARGET);
 			orderTarget=0;
 		}
 	}
+
+	AddCommandDependency(c);
 
 	if (c.GetID() == CMD_PATROL) {
 		CCommandQueue::iterator ci = commandQue.begin();
@@ -1196,10 +1217,10 @@ void CCommandAI::ExecuteAttack(Command& c)
 				owner->AttackUnit(targetUnit, c.GetID() == CMD_MANUALFIRE);
 
 				if (orderTarget)
-					DeleteDeathDependence(orderTarget);
+					DeleteDeathDependence(orderTarget, DEPENDENCE_ORDERTARGET);
 
 				orderTarget = targetUnit;
-				AddDeathDependence(orderTarget);
+				AddDeathDependence(orderTarget, DEPENDENCE_ORDERTARGET);
 				inCommand = true;
 			} else {
 				FinishCommand();
@@ -1287,11 +1308,57 @@ int CCommandAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 	return CMD_STOP;
 }
 
+
+void CCommandAI::AddDeathDependence(CObject* o, DependenceType dep) {
+	if (dep == DEPENDENCE_COMMANDQUE) {
+		if (commandDeathDependences.insert(o).second && o != orderTarget);
+			CObject::AddDeathDependence(o);
+	}
+	else if (dep == DEPENDENCE_ORDERTARGET) {
+		if (commandDeathDependences.find(o) == commandDeathDependences.end())
+			CObject::AddDeathDependence(o);
+	}
+}
+
+
+void CCommandAI::DeleteDeathDependence(CObject* o, DependenceType dep) {
+	if (dep == DEPENDENCE_COMMANDQUE) {
+		if (commandDeathDependences.erase(o) && o != orderTarget)
+			CObject::DeleteDeathDependence(o);
+	}
+	else if (dep == DEPENDENCE_ORDERTARGET) {
+		if (commandDeathDependences.find(o) == commandDeathDependences.end())
+			CObject::DeleteDeathDependence(o);
+	}
+}
+
+
 void CCommandAI::DependentDied(CObject* o)
 {
 	if (o == orderTarget) {
 		targetDied = true;
 		orderTarget = NULL;
+	}
+
+	if (commandDeathDependences.erase(o) && o != owner) {
+		CFactoryCAI* facCAI = dynamic_cast<CFactoryCAI*>(this);
+		CCommandQueue& dq = facCAI ? facCAI->newUnitCommands : commandQue;
+		int lastTag;
+		int curTag = -1;
+		do {
+			lastTag = curTag;
+			for (CCommandQueue::iterator qit = dq.begin(); qit != dq.end(); ++qit) {
+				Command &c = *qit;
+				int cpos;
+				if (c.IsObjectCommand(cpos) && (c.params[cpos] == CSolidObject::GetDeletingRefID())) {
+					Command removeCmd(CMD_REMOVE, 0);
+					curTag = c.tag;
+					removeCmd.params.push_back(curTag);
+					ExecuteRemove(removeCmd);
+					break;
+				}
+			}
+		} while(curTag != lastTag);
 	}
 }
 
@@ -1442,17 +1509,34 @@ bool CCommandAI::HasMoreMoveCommands()
 			// build commands are no different from reclaim or repair commands
 			// in that they can require a unit to move, so return true when we
 			// have one
-			if (id == CMD_FIGHT || id == CMD_AREA_ATTACK || id == CMD_ATTACK || id == CMD_CAPTURE
-			 || id == CMD_MANUALFIRE || id == CMD_GUARD || id == CMD_LOAD_UNITS || id == CMD_MOVE
-			 || id == CMD_PATROL || id == CMD_RECLAIM || id == CMD_REPAIR || id == CMD_RESTORE
-			 || id == CMD_RESURRECT || id == CMD_UNLOAD_UNIT || id == CMD_UNLOAD_UNITS || id < 0)
-			{
-				return true;
-			}
-			else if (id == CMD_DEATHWAIT || id == CMD_GATHERWAIT || id == CMD_SELFD
-				    || id == CMD_SQUADWAIT || id == CMD_STOP || id == CMD_TIMEWAIT || id == CMD_WAIT)
-			{
-				return false;
+			switch(id) {
+				case CMD_AREA_ATTACK:
+				case CMD_ATTACK:
+				case CMD_CAPTURE:
+				case CMD_FIGHT:
+				case CMD_GUARD:
+				case CMD_LOAD_UNITS:
+				case CMD_MANUALFIRE:
+				case CMD_MOVE:
+				case CMD_PATROL:
+				case CMD_RECLAIM:
+				case CMD_REPAIR:
+				case CMD_RESTORE:
+				case CMD_RESURRECT:
+				case CMD_UNLOAD_UNIT:
+				case CMD_UNLOAD_UNITS:
+					return true;
+				case CMD_DEATHWAIT:
+				case CMD_GATHERWAIT:
+				case CMD_SELFD:
+				case CMD_SQUADWAIT:
+				case CMD_STOP:
+				case CMD_TIMEWAIT:
+				case CMD_WAIT:
+					return false;
+				default:
+					if (id < 0)
+						return true;
 			}
 		}
 	}

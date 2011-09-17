@@ -70,6 +70,9 @@ public:
 	void SetMaxEmmits(unsigned max) {
 		emmitsPerFrame = max;
 	}
+	void SetMaxConcurrent(unsigned max) {
+		maxConcurrentSources = max;
+	}
 
 protected:
 	virtual void FindSourceAndPlay(size_t id, const float3& p, const float3& velocity, float volume, bool relative) = 0;
@@ -84,6 +87,7 @@ public:
 protected:
 	unsigned emmitsPerFrame;
 	unsigned emmitsThisFrame;
+	unsigned maxConcurrentSources;
 };
 
 #endif // I_AUDIO_CHANNEL_H

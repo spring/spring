@@ -500,7 +500,6 @@ static bool InitParamMap()
 
 	ADD_FLOAT("metalCost",  wd.metalcost);
 	ADD_FLOAT("energyCost", wd.energycost);
-	ADD_FLOAT("supplyCost", wd.supplycost);
 
 	ADD_BOOL("turret", wd.turret);
 	ADD_BOOL("onlyForward", wd.onlyForward);

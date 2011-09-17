@@ -3,10 +3,11 @@
 #ifndef MAP_PARSER_H
 #define MAP_PARSER_H
 
+#include "Lua/LuaParser.h"
+
 #include <string>
 
-#include "Lua/LuaParser.h"
-#include "System/float3.h"
+class float3;
 
 
 class MapParser

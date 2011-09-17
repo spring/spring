@@ -1,18 +1,18 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
-
 #include "MapParser.h"
-
-#include <string>
-#include <ctype.h>
 
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
+#include "System/mmgr.h"
+#include "System/float3.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
+
+#include <string>
+#include <ctype.h>
 
 
 std::string MapParser::GetMapConfigName(const std::string& mapFileName)

@@ -1,11 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "SyncedGameCommands.h"
+
 #include "Action.h"
 #include "Game.h"
 #include "GlobalUnsynced.h"
 #include "InMapDraw.h"
+#include "Player.h"
 #include "PlayerHandler.h"
 #include "SelectedUnits.h"
 #include "SyncedActionExecutor.h"
@@ -13,6 +14,7 @@
 #  include "winerror.h" // TODO someone on windows (MinGW? VS?) please check if this is required
 #endif
 
+#include "UI/LuaUI.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -21,7 +23,6 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/Unit.h"
-#include "UI/LuaUI.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"

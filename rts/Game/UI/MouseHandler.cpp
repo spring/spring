@@ -1,11 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/mmgr.h"
-
-#include <algorithm>
-#include <boost/cstdint.hpp>
-
 #include "MouseHandler.h"
+
 #include "CommandColors.h"
 #include "InputReceiver.h"
 #include "GuiHandler.h"
@@ -17,6 +13,7 @@
 #include "Game/Game.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/InMapDraw.h"
+#include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Game/SelectedUnits.h"
 #include "Game/TraceRay.h"
@@ -43,15 +40,20 @@
 #include "System/Exceptions.h"
 #include "System/FastMath.h"
 #include "System/myMath.h"
+#include "System/mmgr.h"
 #include "System/Input/KeyInput.h"
 #include "System/Input/MouseInput.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 
+#include <algorithm>
+#include <boost/cstdint.hpp>
+
 // can't be up there since those contain conflicting definitions
 #include <SDL_mouse.h>
 #include <SDL_events.h>
 #include <SDL_keysym.h>
+
 
 #define PLAY_SOUNDS 1
 

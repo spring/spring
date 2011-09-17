@@ -1441,7 +1441,9 @@ void CGroundMoveType::HandleObjectCollisions()
 			if ((separationVector.SqLength() - separationMinDist) > 0.01f) { continue; }
 			if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
 
-			if (!colliderMM->CrushResistant(*colliderMD, collidee)) { collidee->Kill(collider->frontdir * currentSpeed * 200.0f); }
+			const float3 crushImpulse = collider->frontdir * currentSpeed * ((reversing)? -200.0f: 200.0f);
+
+			if (!colliderMM->CrushResistant(*colliderMD, collidee)) { collidee->Kill(crushImpulse); }
 			if ((colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
 
 			eventHandler.UnitFeatureCollision(collider, collidee);

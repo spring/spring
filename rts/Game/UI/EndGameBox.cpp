@@ -1,10 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
-#include "System/mmgr.h"
-
 #include "EndGameBox.h"
+
 #include "MouseHandler.h"
+#include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Game/Game.h"
 #include "Game/GlobalUnsynced.h"
@@ -15,6 +14,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/TeamStatistics.h"
+#include "System/mmgr.h"
 #include "System/Exceptions.h"
 
 #include <cstdio>

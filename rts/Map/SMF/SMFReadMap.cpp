@@ -261,11 +261,6 @@ CSMFReadMap::~CSMFReadMap()
 {
 	delete groundDrawer;
 
-	cornerHeightMapSynced.clear();
-#ifdef USE_UNSYNCED_HEIGHTMAP
-	cornerHeightMapUnsynced.clear();
-#endif
-
 	if (detailTex        != 0) { glDeleteTextures(1, &detailTex       ); }
 	if (specularTex      != 0) { glDeleteTextures(1, &specularTex     ); }
 	if (minimapTex       != 0) { glDeleteTextures(1, &minimapTex      ); }
@@ -583,15 +578,15 @@ void CSMFReadMap::DrawMinimap() const
 }
 
 
-void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CReadMap::IQuadDrawer *qd, int extraSize)
+void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CReadMap::IQuadDrawer* qd, int extraSize)
 {
-	const int cx = (int)(cam->pos.x / (SQUARE_SIZE * quadSize));
-	const int cy = (int)(cam->pos.z / (SQUARE_SIZE * quadSize));
+	const int cx = cam->pos.x / (SQUARE_SIZE * quadSize);
+	const int cy = cam->pos.z / (SQUARE_SIZE * quadSize);
 
 	const int drawSquare = int(maxdist / (SQUARE_SIZE * quadSize)) + 1;
 
-	const int drawQuadsX = (int)(gs->mapx / quadSize);
-	const int drawQuadsY = (int)(gs->mapy / quadSize);
+	const int drawQuadsX = gs->mapx / quadSize;
+	const int drawQuadsY = gs->mapy / quadSize;
 
 	int sy = cy - drawSquare;
 	int ey = cy + drawSquare;
@@ -614,9 +609,17 @@ void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 	//     by SMFGroundDrawer::UpdateCamRestraints, and older code
 	//     iterated over SMFGroundDrawer::{left, right})
 	// UpdateCamRestraints(cam);
+	CCamera* frustumCam = cam2;
 
-	const std::vector<CCamera::FrustumLine>& left = cam2->leftFrustumSides;
-	const std::vector<CCamera::FrustumLine>& right = cam2->rightFrustumSides;
+	// When called from within Lua for GetVisible{Units, Features}, camera might not be updated
+	if (extraSize == INT_MAX) {
+		extraSize = 0;
+		frustumCam = cam;
+		groundDrawer->UpdateCamRestraints(frustumCam);
+	}
+
+	const std::vector<CCamera::FrustumLine>& negSides = frustumCam->negFrustumSides;
+	const std::vector<CCamera::FrustumLine>& posSides = frustumCam->posFrustumSides;
 
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
@@ -625,7 +628,7 @@ void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 		int ex = exi;
 		float xtest, xtest2;
 
-		for (fli = left.begin(); fli != left.end(); ++fli) {
+		for (fli = negSides.begin(); fli != negSides.end(); ++fli) {
 			xtest  = ((fli->base + fli->dir * ( y * quadSize)            ));
 			xtest2 = ((fli->base + fli->dir * ((y * quadSize) + quadSize)));
 
@@ -637,7 +640,7 @@ void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CRea
 			if (xtest - extraSize > sx)
 				sx = ((int) xtest) - extraSize;
 		}
-		for (fli = right.begin(); fli != right.end(); ++fli) {
+		for (fli = posSides.begin(); fli != posSides.end(); ++fli) {
 			xtest  = ((fli->base + fli->dir *  (y * quadSize)           ));
 			xtest2 = ((fli->base + fli->dir * ((y * quadSize) + quadSize)));
 

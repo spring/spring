@@ -310,7 +310,7 @@ void CAdvWater::UpdateWater(CGame* game)
 
 	camera->forward.y *= -1.0f;
 	camera->pos.y *= -1.0f;
-	camera->Update(false);
+	camera->Update();
 
 	reflectFBO.Bind();
 	glViewport(0, 0, 512, 512);
@@ -348,7 +348,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	camera->~CCamera();
 	new (camera) CCamera(*(CCamera*)realCam);
 
-	camera->Update(false);
+	camera->Update();
 	glPopAttrib();
 	glPopAttrib();
 }

@@ -1,9 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
-#include <SDL_events.h>
-
 #include "UnsyncedGameCommands.h"
+
 #include "UnsyncedActionExecutor.h"
 #include "SyncedGameCommands.h"
 #include "SyncedActionExecutor.h"
@@ -16,6 +14,7 @@
 #include "GameSetup.h"
 #include "GlobalUnsynced.h"
 #include "SelectedUnits.h"
+#include "Player.h"
 #include "PlayerHandler.h"
 #include "PlayerRoster.h"
 #include "System/TimeProfiler.h"
@@ -66,6 +65,7 @@
 #include "UI/ProfileDrawer.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
+#include "System/Log/ILog.h"
 #include "System/GlobalConfig.h"
 #include "System/NetProtocol.h"
 #include "System/Input/KeyInput.h"
@@ -73,6 +73,8 @@
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Util.h"
+
+#include <SDL_events.h>
 
 
 static std::vector<std::string> _local_strSpaceTokenize(const std::string& text) {
@@ -137,7 +139,7 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 			if (ProcessCommandText(key, command)) {
 				// execute an action
 				consoleHistory->AddLine(command);
-				logOutput.Print(command);
+				LOG_L(L_DEBUG, "%s", command.c_str());
 
 				chatting = false;
 				userInput = "";
@@ -160,7 +162,7 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 	else if (action.command == "edit_complete") {
 		string head = userInput.substr(0, writingPos);
 		string tail = userInput.substr(writingPos);
-		const vector<string> &partials = wordCompletion->Complete(head);
+		const vector<string>& partials = wordCompletion->Complete(head);
 		userInput = head + tail;
 		writingPos = (int)head.length();
 
@@ -170,7 +172,7 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 				msg += "  ";
 				msg += partials[i];
 			}
-			logOutput.Print(msg);
+			LOG("%s", msg.c_str());
 		}
 		return true;
 	}
@@ -438,12 +440,12 @@ public:
 	void Execute(const UnsyncedAction& action) const {
 		const int current = configHandler->GetInt("Shadows");
 		if (current < 0) {
-			logOutput.Print("Shadows have been disabled with %i", current);
-			logOutput.Print("Change your configuration and restart to use them");
+			LOG_L(L_WARNING, "Shadows have been disabled with %i", current);
+			LOG_L(L_WARNING, "Change your configuration and restart to use them");
 			return;
 		}
 		else if (!shadowHandler->shadowsSupported) {
-			logOutput.Print("Your hardware/driver setup does not support shadows");
+			LOG_L(L_WARNING, "Your hardware/driver setup does not support shadows");
 			return;
 		}
 
@@ -460,7 +462,7 @@ public:
 			next = (current + 1) % 3;
 		}
 		configHandler->Set("Shadows", next);
-		logOutput.Print("Set Shadows to %i", next);
+		LOG("Set Shadows to %i", next);
 		shadowHandler = new CShadowHandler();
 	}
 };
@@ -547,7 +549,7 @@ public:
 			if (playerID >= 0) {
 				game->SendNetChat(action.GetArgs().substr(pos+1), playerID);
 			} else {
-				logOutput.Print("Player not found: %s", action.GetArgs().substr(0, pos).c_str());
+				LOG_L(L_WARNING, "Player not found: %s", action.GetArgs().substr(0, pos).c_str());
 			}
 		}
 	}
@@ -569,7 +571,7 @@ public:
 			if (playerID >= 0) {
 				game->SendNetChat(action.GetArgs().substr(pos+1), playerID);
 			} else {
-				logOutput.Print("Player-ID invalid: %i", playerID);
+				LOG_L(L_WARNING, "Player-ID invalid: %i", playerID);
 			}
 		}
 	}
@@ -583,7 +585,7 @@ public:
 			"Write a string to the log file") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		logOutput.Print(action.GetArgs());
+		LOG("%s", action.GetArgs().c_str());
 	}
 };
 
@@ -759,27 +761,27 @@ public:
 			                                  teamHandler->Team(teamToReceiveUnitsId) : NULL;
 
 			if (teamToKill == NULL) {
-				logOutput.Print("Team to %s: not a valid team number: \"%s\"", actionName.c_str(), args[0].c_str());
+				LOG_L(L_WARNING, "Team to %s: not a valid team number: \"%s\"", actionName.c_str(), args[0].c_str());
 				badArgs = true;
 			}
 			if (share && teamToReceiveUnits == NULL) {
-				logOutput.Print("Team to receive units: not a valid team number: \"%s\"", args[1].c_str());
+				LOG_L(L_WARNING, "Team to receive units: not a valid team number: \"%s\"", args[1].c_str());
 				badArgs = true;
 			}
 			if (!badArgs && (skirmishAIHandler.GetSkirmishAIsInTeam(teamToKillId).size() == 0)) {
-				logOutput.Print("Team to %s: not a Skirmish AI team: %i", actionName.c_str(), teamToKillId);
+				LOG_L(L_WARNING, "Team to %s: not a Skirmish AI team: %i", actionName.c_str(), teamToKillId);
 				badArgs = true;
 			} else {
 				const CSkirmishAIHandler::ids_t skirmishAIIds = skirmishAIHandler.GetSkirmishAIsInTeam(teamToKillId, gu->myPlayerNum);
 				if (!skirmishAIIds.empty()) {
 					skirmishAIId = skirmishAIIds[0];
 				} else {
-					logOutput.Print("Team to %s: not a local Skirmish AI team: %i", actionName.c_str(), teamToKillId);
+					LOG_L(L_WARNING, "Team to %s: not a local Skirmish AI team: %i", actionName.c_str(), teamToKillId);
 					badArgs = true;
 				}
 			}
 			if (!badArgs && skirmishAIHandler.GetSkirmishAI(skirmishAIId)->isLuaAI) {
-				logOutput.Print("Team to %s: it is not yet supported to %s Lua AIs", actionName.c_str(), actionName.c_str());
+				LOG_L(L_WARNING, "Team to %s: it is not yet supported to %s Lua AIs", actionName.c_str(), actionName.c_str());
 				badArgs = true;
 			}
 			if (!badArgs) {
@@ -787,13 +789,13 @@ public:
 				const bool weAreAIHost  = (skirmishAIHandler.GetSkirmishAI(skirmishAIId)->hostPlayer == gu->myPlayerNum);
 				const bool weAreLeader  = (teamToKill->leader == gu->myPlayerNum);
 				if (!(weAreAIHost || weAreLeader || singlePlayer || (weAreAllied && cheating))) {
-					logOutput.Print("Team to %s: player %s is not allowed to %s Skirmish AI controlling team %i (try with /cheat)",
+					LOG_L(L_WARNING, "Team to %s: player %s is not allowed to %s Skirmish AI controlling team %i (try with /cheat)",
 							actionName.c_str(), fromPlayer->name.c_str(), actionName.c_str(), teamToKillId);
 					badArgs = true;
 				}
 			}
 			if (!badArgs && teamToKill->isDead) {
-				logOutput.Print("Team to %s: is a dead team already: %i", actionName.c_str(), teamToKillId);
+				LOG_L(L_WARNING, "Team to %s: is a dead team already: %i", actionName.c_str(), teamToKillId);
 				badArgs = true;
 			}
 
@@ -815,26 +817,26 @@ public:
 					net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_RELOADING));
 				}
 
-				logOutput.Print("Skirmish AI controlling team %i is beeing %sed ...", teamToKillId, actionName.c_str());
+				LOG("Skirmish AI controlling team %i is beeing %sed ...", teamToKillId, actionName.c_str());
 			}
 		} else {
-			logOutput.Print("/%s: missing mandatory argument \"teamTo%s\"", GetCommand().c_str(), actionName.c_str());
+			LOG_L(L_WARNING, "/%s: missing mandatory argument \"teamTo%s\"", GetCommand().c_str(), actionName.c_str());
 			badArgs = true;
 		}
 
 		if (badArgs) {
 			if (kill) {
-				logOutput.Print("description: "
+				LOG("description: "
 				                "Kill a Skirmish AI controlling a team. The team itsself will remain alive, "
 				                "unless a second argument is given, which specifies an active team "
 				                "that will receive all the units of the AI team.");
-				logOutput.Print("usage:   /%s teamToKill [teamToReceiveUnits]", GetCommand().c_str());
+				LOG("usage:   /%s teamToKill [teamToReceiveUnits]", GetCommand().c_str());
 			} else {
 				// reload
-				logOutput.Print("description: "
+				LOG("description: "
 				                "Reload a Skirmish AI controlling a team."
 				                "The team itsself will remain alive during the process.");
-				logOutput.Print("usage:   /%s teamToReload", GetCommand().c_str());
+				LOG("usage:   /%s teamToReload", GetCommand().c_str());
 			}
 		}
 	}
@@ -873,7 +875,7 @@ public:
 			if (args.size() >= 2) {
 				aiShortName = args[1];
 			} else {
-				logOutput.Print("/%s: missing mandatory argument \"aiShortName\"", GetCommand().c_str());
+				LOG_L(L_WARNING, "/%s: missing mandatory argument \"aiShortName\"", GetCommand().c_str());
 			}
 			if (args.size() >= 3) {
 				aiVersion = args[2];
@@ -886,7 +888,7 @@ public:
 			                             teamHandler->Team(teamToControlId) : NULL;
 
 			if (teamToControl == NULL) {
-				logOutput.Print("Team to control: not a valid team number: \"%s\"", args[0].c_str());
+				LOG_L(L_WARNING, "Team to control: not a valid team number: \"%s\"", args[0].c_str());
 				badArgs = true;
 			}
 			if (!badArgs) {
@@ -894,28 +896,28 @@ public:
 				const bool weAreLeader  = (teamToControl->leader == gu->myPlayerNum);
 				const bool noLeader     = (teamToControl->leader == -1);
 				if (!(weAreLeader || singlePlayer || (weAreAllied && (cheating || noLeader)))) {
-					logOutput.Print("Team to control: player %s is not allowed to let a Skirmish AI take over control of team %i (try with /cheat)",
+					LOG_L(L_WARNING, "Team to control: player %s is not allowed to let a Skirmish AI take over control of team %i (try with /cheat)",
 							fromPlayer->name.c_str(), teamToControlId);
 					badArgs = true;
 				}
 			}
 			if (!badArgs && teamToControl->isDead) {
-				logOutput.Print("Team to control: is a dead team: %i", teamToControlId);
+				LOG_L(L_WARNING, "Team to control: is a dead team: %i", teamToControlId);
 				badArgs = true;
 			}
-			// TODO: FIXME: remove this, if support for multiple Skirmish AIs per team is in place
+			// TODO remove this, if support for multiple Skirmish AIs per team is in place
 			if (!badArgs && (skirmishAIHandler.GetSkirmishAIsInTeam(teamToControlId).size() > 0)) {
-				logOutput.Print("Team to control: there is already an AI controlling this team: %i", teamToControlId);
+				LOG_L(L_WARNING, "Team to control: there is already an AI controlling this team: %i", teamToControlId);
 				badArgs = true;
 			}
 			if (!badArgs && (skirmishAIHandler.GetLocalSkirmishAIInCreation(teamToControlId) != NULL)) {
-				logOutput.Print("Team to control: there is already an AI beeing created for team: %i", teamToControlId);
+				LOG_L(L_WARNING, "Team to control: there is already an AI beeing created for team: %i", teamToControlId);
 				badArgs = true;
 			}
 			if (!badArgs) {
 				const std::set<std::string>& luaAIImplShortNames = skirmishAIHandler.GetLuaAIImplShortNames();
 				if (luaAIImplShortNames.find(aiShortName) != luaAIImplShortNames.end()) {
-					logOutput.Print("Team to control: it is currently not supported to initialize Lua AIs mid-game");
+					LOG_L(L_WARNING, "Team to control: it is currently not supported to initialize Lua AIs mid-game");
 					badArgs = true;
 				}
 			}
@@ -924,7 +926,7 @@ public:
 				SkirmishAIKey aiKey(aiShortName, aiVersion);
 				aiKey = aiLibManager->ResolveSkirmishAIKey(aiKey);
 				if (aiKey.IsUnspecified()) {
-					logOutput.Print("Skirmish AI: not a valid Skirmish AI: %s %s",
+					LOG_L(L_WARNING, "Skirmish AI: not a valid Skirmish AI: %s %s",
 							aiShortName.c_str(), aiVersion.c_str());
 					badArgs = true;
 				} else {
@@ -947,14 +949,14 @@ public:
 				}
 			}
 		} else {
-			logOutput.Print("/%s: missing mandatory arguments \"teamToControl\" and \"aiShortName\"", GetCommand().c_str());
+			LOG_L(L_WARNING, "/%s: missing mandatory arguments \"teamToControl\" and \"aiShortName\"", GetCommand().c_str());
 			badArgs = true;
 		}
 
 		if (badArgs) {
-			logOutput.Print("description: Let a Skirmish AI take over control of a team.");
-			logOutput.Print("usage:   /%s teamToControl aiShortName [aiVersion] [name] [options...]", GetCommand().c_str());
-			logOutput.Print("example: /%s 1 RAI 0.601 my_RAI_Friend difficulty=2 aggressiveness=3", GetCommand().c_str());
+			LOG("description: Let a Skirmish AI take over control of a team.");
+			LOG("usage:   /%s teamToControl aiShortName [aiVersion] [name] [options...]", GetCommand().c_str());
+			LOG("example: /%s 1 RAI 0.601 my_RAI_Friend difficulty=2 aggressiveness=3", GetCommand().c_str());
 		}
 	}
 };
@@ -970,7 +972,13 @@ public:
 		const CSkirmishAIHandler::id_ai_t& ais  = skirmishAIHandler.GetAllSkirmishAIs();
 		if (ais.size() > 0) {
 			CSkirmishAIHandler::id_ai_t::const_iterator ai;
-			logOutput.Print("ID | Team | Local | Lua | Name | (Hosting player name) or (Short name & Version)");
+			LOG("%s | %s | %s | %s | %s | %s",
+					"ID",
+					"Team",
+					"Local",
+					"Lua",
+					"Name",
+					"(Hosting player name) or (Short name & Version)");
 			for (ai = ais.begin(); ai != ais.end(); ++ai) {
 				const bool isLocal = (ai->second.hostPlayer == gu->myPlayerNum);
 				std::string lastPart;
@@ -979,10 +987,16 @@ public:
 				} else {
 					lastPart = "(Host:) " + playerHandler->Player(gu->myPlayerNum)->name;
 				}
-				LogObject() << ai->first << " | " <<  ai->second.team << " | " << (isLocal ? "yes" : "no ") << " | " << (ai->second.isLuaAI ? "yes" : "no ") << " | " << ai->second.name << " | " << lastPart;
+				LOG(_STPF_" | %i | %s | %s | %s | %s",
+						ai->first,
+						ai->second.team,
+						(isLocal ? "yes" : "no "),
+						(ai->second.isLuaAI ? "yes" : "no "),
+						ai->second.name.c_str(),
+						lastPart.c_str());
 			}
 		} else {
-			logOutput.Print("<There are no active Skirmish AIs in this game>");
+			LOG("<There are no active Skirmish AIs in this game>");
 		}
 	}
 };
@@ -1077,10 +1091,10 @@ public:
 					if (state >= 0 && state < 2 && otherAllyTeam >= 0 && otherAllyTeam != gu->myAllyTeam)
 						net->Send(CBaseNetProtocol::Get().SendSetAllied(gu->myPlayerNum, otherAllyTeam, state));
 					else
-						logOutput.Print("/%s: wrong parameters (usage: /%s <other team> [0|1])", GetCommand().c_str(), GetCommand().c_str());
+						LOG_L(L_WARNING, "/%s: wrong parameters (usage: /%s <other team> [0|1])", GetCommand().c_str(), GetCommand().c_str());
 				}
 				else {
-					logOutput.Print("In-game alliances are not allowed");
+					LOG_L(L_WARNING, "In-game alliances are not allowed");
 				}
 			}
 		}
@@ -1226,15 +1240,16 @@ public:
 
 
 
-#ifdef USE_GML
 class ShowHealthBarsActionExecutor : public IUnsyncedActionExecutor {
 public:
 	ShowHealthBarsActionExecutor() : IUnsyncedActionExecutor("ShowHealthBars",
 			"Enable/Disable rendering of health-bars for units") {}
 
 	void Execute(const UnsyncedAction& action) const {
+#ifdef USE_GML
 		SetBoolArg(unitDrawer->showHealthBars, action.GetArgs());
 		LogSystemStatus("rendering of health-bars", unitDrawer->showHealthBars);
+#endif // USE_GML
 	}
 };
 
@@ -1246,14 +1261,14 @@ public:
 			"Enable/Disable rendering of resource-bars for features") {}
 
 	void Execute(const UnsyncedAction& action) const {
-
+#ifdef USE_GML
 		bool showResBars = featureDrawer->GetShowRezBars();
 		SetBoolArg(showResBars, action.GetArgs());
 		featureDrawer->SetShowRezBars(showResBars);
 		LogSystemStatus("rendering of resource-bars for features", featureDrawer->GetShowRezBars());
+#endif // USE_GML
 	}
 };
-#endif // USE_GML
 
 
 
@@ -1549,7 +1564,7 @@ public:
 		game->speedControl = std::max(-2, std::min(game->speedControl, 2));
 
 		net->Send(CBaseNetProtocol::Get().SendSpeedControl(gu->myPlayerNum, game->speedControl));
-		logOutput.Print("Speed Control: %s", CGameServer::SpeedControlToString(game->speedControl).c_str());
+		LOG("Speed Control: %s", CGameServer::SpeedControlToString(game->speedControl).c_str());
 		configHandler->Set("SpeedControl", game->speedControl);
 		if (gameServer) {
 			gameServer->UpdateSpeedControl(game->speedControl);
@@ -1641,7 +1656,7 @@ public:
 		ReportTreeDistance();
 	}
 	static void ReportTreeDistance() {
-		logOutput.Print("Base tree distance %f",
+		LOG("Base tree distance %f",
 				treeDrawer->baseTreeDistance * 2 * SQUARE_SIZE * TREE_SQUARE_SIZE);
 	}
 };
@@ -1675,7 +1690,7 @@ public:
 	}
 
 	static void ReportCloudDensity() {
-		logOutput.Print("Cloud density %f", 1.0f / sky->GetCloudDensity());
+		LOG("Cloud density %f", 1.0f / sky->GetCloudDensity());
 	}
 };
 
@@ -1891,7 +1906,7 @@ public:
 		if (!inputReceivers.empty() && (dynamic_cast<CQuitBox*>(inputReceivers.front())) == NULL) {
 			const CKeyBindings::HotkeyList quitList = keyBindings->GetHotkeys("quitmenu");
 			const std::string quitKey = quitList.empty() ? "<none>" : quitList.front();
-			logOutput.Print("Press %s to access the quit menu", quitKey.c_str());
+			LOG("Press %s to access the quit menu", quitKey.c_str());
 		}
 	}
 };
@@ -1922,7 +1937,7 @@ public:
 		Exit();
 	}
 	static void Exit() {
-		logOutput.Print("User exited");
+		LOG("User exited");
 		gu->globalQuit = true;
 	}
 };
@@ -2086,7 +2101,7 @@ public:
 		SetBoolArg(showMTInfo, action.GetArgs());
 		configHandler->Set("ShowMTInfo", showMTInfo ? 1 : 0);
 		int mtl = globalConfig->GetMultiThreadLua();
-		game->showMTInfo = (showMTInfo && (mtl != MT_LUA_DUAL && mtl != MT_LUA_DUAL_ALL)) ? mtl : MT_LUA_NONE;
+		game->showMTInfo = (showMTInfo && (mtl != MT_LUA_DUAL && mtl != MT_LUA_DUAL_ALL && mtl != MT_LUA_DUAL_UNMANAGED)) ? mtl : MT_LUA_NONE;
 	}
 };
 
@@ -2103,7 +2118,7 @@ public:
 		} else {
 			globalConfig->teamHighlight = abs(atoi(action.GetArgs().c_str())) % CTeamHighlight::HIGHLIGHT_SIZE;
 		}
-		logOutput.Print("Team highlighting: %s",
+		LOG("Team highlighting: %s",
 				((globalConfig->teamHighlight == CTeamHighlight::HIGHLIGHT_PLAYERS) ? "Players only"
 				: ((globalConfig->teamHighlight == CTeamHighlight::HIGHLIGHT_ALL) ? "Players and spectators"
 				: "Disabled")));
@@ -2129,7 +2144,7 @@ public:
 			playerRoster.SetSortTypeByName(action.GetArgs());
 		}
 		if (playerRoster.GetSortType() != PlayerRoster::Disabled) {
-			logOutput.Print("Sorting roster by %s", playerRoster.GetSortName());
+			LOG("Sorting roster by %s", playerRoster.GetSortName());
 		}
 		configHandler->Set("ShowPlayerInfo", (int)playerRoster.GetSortType());
 	}
@@ -2146,7 +2161,7 @@ public:
 
 		const std::string fileName = action.GetArgs().empty() ? "cmdcolors.txt" : action.GetArgs();
 		cmdColors.LoadConfig(fileName);
-		logOutput.Print("Reloaded cmdcolors from file: %s", fileName.c_str());
+		LOG("Reloaded cmdcolors from file: %s", fileName.c_str());
 	}
 };
 
@@ -2161,7 +2176,7 @@ public:
 
 		const std::string fileName = action.GetArgs().empty() ? "ctrlpanel.txt" : action.GetArgs();
 		guihandler->ReloadConfig(fileName);
-		logOutput.Print("Reloaded ctrlpanel from file: %s", fileName.c_str());
+		LOG("Reloaded ctrlpanel from file: %s", fileName.c_str());
 	}
 };
 
@@ -2188,14 +2203,14 @@ public:
 			delete newFont;
 			delete newSmallFont;
 			newFont = newSmallFont = NULL;
-			logOutput.Print(string("font error: ") + ex.what());
+			LOG_L(L_ERROR, "Font: %s", ex.what());
 		}
 		if (newFont != NULL && newSmallFont != NULL) {
 			delete font;
 			delete smallFont;
 			font = newFont;
 			smallFont = newSmallFont;
-			logOutput.Print("Loaded font: %s", action.GetArgs().c_str());
+			LOG("Loaded font: %s", action.GetArgs().c_str());
 			configHandler->SetString("FontFile", action.GetArgs());
 			configHandler->SetString("SmallFontFile", action.GetArgs());
 		}
@@ -2453,7 +2468,7 @@ public:
 		if (ph && !action.GetArgs().empty()) {
 			const int value = std::max(1, atoi(action.GetArgs().c_str()));
 			ph->SetMaxParticles(value);
-			logOutput.Print("Set maximum particles to: %i", value);
+			LOG("Set maximum particles to: %i", value);
 		}
 	}
 };
@@ -2469,7 +2484,7 @@ public:
 		if (ph && !action.GetArgs().empty()) {
 			const int value = std::max(1, atoi(action.GetArgs().c_str()));
 			ph->SetMaxNanoParticles(value);
-			logOutput.Print("Set maximum nano-particles to: %i", value);
+			LOG("Set maximum nano-particles to: %i", value);
 		}
 	}
 };
@@ -2553,7 +2568,7 @@ public:
 			const int iconDist = atoi(action.GetArgs().c_str());
 			unitDrawer->SetUnitIconDist((float)iconDist);
 			configHandler->Set("UnitIconDist", iconDist);
-			logOutput.Print("Set UnitIconDist to %i", iconDist);
+			LOG("Set UnitIconDist to %i", iconDist);
 		}
 	}
 };
@@ -2571,7 +2586,7 @@ public:
 			const int drawDist = atoi(action.GetArgs().c_str());
 			unitDrawer->SetUnitDrawDist((float)drawDist);
 			configHandler->Set("UnitLodDist", drawDist);
-			logOutput.Print("Set UnitLodDist to %i", drawDist);
+			LOG("Set UnitLodDist to %i", drawDist);
 		}
 	}
 };
@@ -2633,12 +2648,12 @@ public:
 		const int count = sscanf(action.GetArgs().c_str(), "%f %f %f", &r, &g, &b);
 		if (count == 1) {
 			SDL_SetGamma(r, r, r);
-			logOutput.Print("Set gamma value");
+			LOG("Set gamma value");
 		} else if (count == 3) {
 			SDL_SetGamma(r, g, b);
-			logOutput.Print("Set gamma values");
+			LOG("Set gamma values");
 		} else {
-			logOutput.Print("Unknown gamma format");
+			LOG_L(L_WARNING, "Unknown gamma format");
 		}
 	}
 };
@@ -2677,7 +2692,7 @@ public:
 
 	void Execute(const UnsyncedAction& action) const {
 		float a = 0;
-		logOutput.Print("Result: %f", 1.0f/a);
+		LOG("Result: %f", 1.0f/a);
 	}
 };
 
@@ -2828,7 +2843,7 @@ public:
 		} else if (action.GetArgs() == "profiling") {
 			profiler.PrintProfilingInfo();
 		} else {
-			logOutput.Print("Give either of these as argument: sound, profiling");
+			LOG_L(L_WARNING, "Give either of these as argument: sound, profiling");
 		}
 	}
 };
@@ -2872,8 +2887,8 @@ public:
 
 	void Execute(const UnsyncedAction& action) const {
 
-		logOutput.Print("Chat commands plus description");
-		logOutput.Print("==============================");
+		LOG("Chat commands plus description");
+		LOG("==============================");
 		PrintToConsole(syncedGameCommands->GetActionExecutors());
 		PrintToConsole(unsyncedGameCommands->GetActionExecutors());
 	}
@@ -2881,7 +2896,7 @@ public:
 	template<class action_t, bool synced_v>
 	static void PrintExecutorToConsole(const IActionExecutor<action_t, synced_v>* executor) {
 
-		logOutput.Print("/%-30s  %s  %s",
+		LOG("/%-30s  %s  %s",
 				executor->GetCommand().c_str(),
 				(executor->IsSynced() ? "(synced)  " : "(unsynced)"),
 				executor->GetDescription().c_str());
@@ -2933,9 +2948,9 @@ public:
 				return;
 			}
 
-			logOutput.Print("No chat command registered with name \"%s\" (case-insensitive)", args[0].c_str());
+			LOG_L(L_WARNING, "No chat command registered with name \"%s\" (case-insensitive)", args[0].c_str());
 		} else {
-			logOutput.Print("missing command-name");
+			LOG_L(L_WARNING, "missing command-name");
 		}
 	}
 
@@ -3073,10 +3088,8 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new TrackActionExecutor());
 	AddActionExecutor(new TrackOffActionExecutor());
 	AddActionExecutor(new TrackModeActionExecutor());
-#ifdef USE_GML
-	AddActionExecutor(new ShowHealthBarsActionExecutor());
-	AddActionExecutor(new ShowRezurectionBarsActionExecutor());
-#endif // USE_GML
+	AddActionExecutor(new ShowHealthBarsActionExecutor()); // MT only
+	AddActionExecutor(new ShowRezurectionBarsActionExecutor()); // MT only
 	AddActionExecutor(new PauseActionExecutor());
 	AddActionExecutor(new DebugActionExecutor());
 	AddActionExecutor(new NoSoundActionExecutor());
@@ -3208,6 +3221,6 @@ void UnsyncedGameCommands::DestroyInstance() {
 		delete tmp;
 	} else {
 		// this might happen during shutdown after an unclean init
-		logOutput.Print("Warning: UnsyncedGameCommands singleton was not initialized or is already destroyed");
+		LOG_L(L_WARNING, "UnsyncedGameCommands singleton was not initialized or is already destroyed");
 	}
 }

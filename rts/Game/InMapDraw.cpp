@@ -5,14 +5,16 @@
 #include "System/mmgr.h"
 
 #include "InMapDraw.h"
+
 #include "InMapDrawModel.h"
-#include "ExternalAI/AILegacySupport.h" // {Point, Line}Marker
-#include "Game/Camera.h"
-#include "Game/Game.h"
+#include "Camera.h"
+#include "Game.h"
 #include "GlobalUnsynced.h"
-#include "Game/PlayerHandler.h"
-#include "Game/UI/MiniMap.h"
-#include "Game/UI/MouseHandler.h"
+#include "Player.h"
+#include "PlayerHandler.h"
+#include "UI/MiniMap.h"
+#include "UI/MouseHandler.h"
+#include "ExternalAI/AILegacySupport.h" // {Point, Line}Marker
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "System/Net/UnpackPacket.h"
@@ -21,7 +23,6 @@
 #include "System/EventClient.h"
 #include "System/BaseNetProtocol.h"
 #include "System/NetProtocol.h"
-#include "System/LogOutput.h"
 #include "System/Log/ILog.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/SoundChannels.h"
@@ -55,7 +56,7 @@ public:
 			// if we happen to be in drawAll mode, notify us now
 			// even if this message is not intented for our ears
 			LOG("%s added point: %s", sender->name.c_str(), label->c_str());
-			logOutput.SetLastMsgPos(*pos0);
+			eventHandler.LastMessagePosition(*pos0);
 			Channels::UserInterface.PlaySample(blippSound, *pos0);
 			minimap->AddNotification(*pos0, float3(1.0f, 1.0f, 1.0f), 1.0f);
 		}

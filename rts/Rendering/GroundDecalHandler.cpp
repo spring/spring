@@ -189,6 +189,7 @@ void CGroundDecalHandler::LoadDecalShaders() {
 			decalShaders[DECAL_SHADER_GLSL]->SetUniform2f(3, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
 			decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sky->GetLight()->GetGroundShadowDensity());
 			decalShaders[DECAL_SHADER_GLSL]->Disable();
+			decalShaders[DECAL_SHADER_GLSL]->Validate();
 
 			decalShaders[DECAL_SHADER_CURR] = decalShaders[DECAL_SHADER_GLSL];
 		}
@@ -810,6 +811,10 @@ void CGroundDecalHandler::UnitMovedNow(CUnit* unit)
 	if (!mapInfo->terrainTypes[readmap->GetTypeMapSynced()[mp]].receiveTracks)
 		return;
 
+	const float trackLifeTime = GAME_SPEED * decalLevel * unit->unitDef->trackStrength;
+	if (trackLifeTime <= 0)
+		return;
+
 	const float3 pos = unit->pos + unit->frontdir * unit->unitDef->trackOffset;
 
 	TrackPart* tp = new TrackPart;
@@ -827,9 +832,9 @@ void CGroundDecalHandler::UnitMovedNow(CUnit* unit)
 
 	if (unit->myTrack == NULL) {
 		unit->myTrack = new UnitTrackStruct(unit);
-		unit->myTrack->lifeTime = (GAME_SPEED * decalLevel * unit->unitDef->trackStrength);
+		unit->myTrack->lifeTime = trackLifeTime;
 		unit->myTrack->trackAlpha = (unit->unitDef->trackStrength * 25);
-		unit->myTrack->alphaFalloff = float(unit->myTrack->trackAlpha) / float(unit->myTrack->lifeTime);
+		unit->myTrack->alphaFalloff = unit->myTrack->trackAlpha / trackLifeTime;
 
 		tta.unit = NULL; // signal new trackstruct
 

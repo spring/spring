@@ -5,36 +5,38 @@
 #include "HeightMapTexture.h"
 
 #include "ReadMap.h"
+#include "System/EventHandler.h"
+#include "System/Rectangle.h"
 #include "System/Config/ConfigHandler.h"
 
 
 CONFIG(bool, HeightMapTexture).defaultValue(true);
 
-HeightMapTexture heightMapTexture;
-
-
+HeightMapTexture* heightMapTexture = NULL;
 HeightMapTexture::HeightMapTexture()
+	: CEventClient("[HeightMapTexture]", 2718965, false)
 {
-	init = false;
-
 	texID = 0;
-
 	xSize = 0;
 	ySize = 0;
+
+	eventHandler.AddClient(this);
+	Init();
 }
 
 
 HeightMapTexture::~HeightMapTexture()
 {
+	Kill();
+	eventHandler.RemoveClient(this);
 }
 
 
 void HeightMapTexture::Init()
 {
-	if (init || (readmap == NULL)) {
+	if (readmap == NULL) {
 		return;
 	}
-	init = true;
 
 	if (!configHandler->GetBool("HeightMapTexture")) {
 		return;
@@ -76,30 +78,35 @@ void HeightMapTexture::Kill()
 }
 
 
-void HeightMapTexture::UpdateArea(int x0, int z0, int x1, int z1)
+void HeightMapTexture::UnsyncedHeightMapUpdate(const SRectangle& rect)
 {
 	if (texID == 0) {
 		return;
 	}
 	const float* heightMap = readmap->GetCornerHeightMapUnsynced();
 
-	const int sizeX = x1 - x0 + 1;
-	const int sizeZ = z1 - z0 + 1;
+	const int sizeX = rect.x2 - rect.x1 + 1;
+	const int sizeZ = rect.z2 - rect.z1 + 1;
 
 	pbo.Bind();
-	pbo.Resize( sizeX * sizeZ * sizeof(float) );
-	float* buf = (float*)pbo.MapBuffer();
+	pbo.Resize(sizeX * sizeZ * sizeof(float));
+
+	{
+		float* buf = (float*) pbo.MapBuffer();
+
 		for (int z = 0; z < sizeZ; z++) {
-			void* dst = buf + z * sizeX;
-			const void* src = heightMap + x0 + (z + z0) * xSize;
+			const void* src = heightMap + rect.x1 + (z + rect.z1) * xSize;
+			      void* dst = buf + z * sizeX;
+
 			memcpy(dst, src, sizeX * sizeof(float));
 		}
+	}
+
 	pbo.UnmapBuffer();
 
 	glBindTexture(GL_TEXTURE_2D, texID);
 	glTexSubImage2D(GL_TEXTURE_2D, 0,
-		x0, z0, sizeX, sizeZ,
+		rect.x1, rect.z1, sizeX, sizeZ,
 		GL_LUMINANCE, GL_FLOAT, pbo.GetPtr());
 	pbo.Unbind();
 }
-

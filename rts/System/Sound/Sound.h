@@ -51,9 +51,6 @@ public:
 	virtual void PrintDebugInfo();
 	virtual bool LoadSoundDefs(const std::string& fileName);
 
-	static float GetElmoInMeters() {
-		return 1.f/8; //SQUARE_SIZE; //! 8 elmos = 1m
-	}
 	const float3& GetListenerPos() const {
 		return myPos;
 	}

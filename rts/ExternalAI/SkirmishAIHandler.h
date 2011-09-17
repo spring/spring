@@ -26,8 +26,8 @@ class CSkirmishAIHandler
 	~CSkirmishAIHandler();
 
 public:
-	typedef std::vector<size_t> ids_t;
-	typedef std::map<size_t, SkirmishAIData> id_ai_t;
+	typedef std::vector<unsigned char> ids_t;
+	typedef std::map<unsigned char, SkirmishAIData> id_ai_t;
 
 	/**
 	 * Fetcher for the singleton.
@@ -172,6 +172,9 @@ public:
 
 	const std::set<std::string>& GetLuaAIImplShortNames() const;
 
+	unsigned char GetCurrentAIID() { return currentAIId; }
+	void SetCurrentAIID(unsigned char id) { currentAIId = id; }
+
 private:
 	static bool IsLocalSkirmishAI(const SkirmishAIData& aiData);
 	bool IsLuaAI(const SkirmishAIData& aiData) const;
@@ -194,6 +197,8 @@ private:
 
 	bool gameInitialized;
 	std::set<std::string> luaAIShortNames;
+	// the current local AI ID that is executing, MAX_AIS if none (e.g. LuaUI)
+	unsigned char currentAIId;
 };
 
 #define skirmishAIHandler CSkirmishAIHandler::GetInstance()

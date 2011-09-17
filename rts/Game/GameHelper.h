@@ -1,16 +1,16 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _GAME_HELPER_H_
-#define _GAME_HELPER_H_
-
-#include <list>
-#include <map>
-#include <vector>
+#ifndef GAME_HELPER_H
+#define GAME_HELPER_H
 
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Projectiles/ExplosionListener.h"
 #include "System/float3.h"
 #include "System/MemPool.h"
+
+#include <list>
+#include <map>
+#include <vector>
 
 class CGame;
 class CUnit;
@@ -67,7 +67,6 @@ public:
 
 	void BuggerOff(float3 pos, float radius, bool spherical, bool forced, int teamId, CUnit* exclude);
 	float3 Pos2BuildPos(const BuildInfo& buildInfo, bool synced);
-	float3 Pos2BuildPos(const float3& pos, const UnitDef* ud, bool synced);
 
 	/**
 	 * @param minDist measured in 1/(SQUARE_SIZE * 2) = 1/16 of full map resolution.
@@ -119,4 +118,4 @@ private:
 
 extern CGameHelper* helper;
 
-#endif // _GAME_HELPER_H_
+#endif // GAME_HELPER_H

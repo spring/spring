@@ -9,8 +9,8 @@ INSTALLDIR=${DEST}/usr/local
 
 echo "Installing into $DEST"
 
-#Ultra settings
-SEVENZIP="7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on"
+#Ultra settings, max number of threads taken from commandline.
+SEVENZIP="7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on -mmt=${2:-on}"
 
 MINGWLIBS_PATH=${1}
 MINGW_HOST=i586-mingw32msvc-
@@ -69,12 +69,22 @@ done
 
 cd ${SOURCEDIR}
 
-./installer/make_installer.sh -DMIN_PORTABLE_ARCHIVE=${MIN_PORTABLE_ARCHIVE} -DARCHIVEMOVER=${TMP_PATH}/${VERSION}_ArchiveMover.7z
+# create symlinks required for building installer
+rm -f ${SOURCEDIR}/installer/downloads/spring_testing_minimal-portable.7z
+ln -sv ${MIN_PORTABLE_ARCHIVE} ${SOURCEDIR}/installer/downloads/spring_testing_minimal-portable.7z
 
+rm -f  ${SOURCEDIR}/installer/downloads/ArchiveMover_testing.7z
+ln -sv ${TMP_PATH}/${VERSION}_ArchiveMover.7z ${SOURCEDIR}/installer/downloads/ArchiveMover_testing.7z
+
+# create installer
+./installer/make_installer.sh
+
+# move installer to rsync-directory
 mv ./installer/spring*.exe ${TMP_PATH}
 
-#create symbolic links to current files
+# create relative symbolic links to current files for rsyncing
 cd ${TMP_PATH}/..
 ln -sfv ${REV}/*.exe spring_testing.exe
 ln -sfv ${REV}/spring_${VERSION}_minimal-portable.7z spring_testing_minimal-portable.7z
+ln -sfv ${REV}/${VERSION}_ArchiveMover.7z ArchiveMover_testing.7z
 

@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "Rendering/GL/myGL.h"
-#include <fstream>
 
 #include "System/mmgr.h"
 
@@ -11,7 +10,11 @@
 
 #include "System/Sync/SyncTracer.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/EventClient.h"
+#include "System/Log/LogSinkHandler.h"
 #include "InputReceiver.h"
+
+#include <fstream>
 
 #define border 7
 
@@ -25,8 +28,9 @@ CONFIG(std::string, InfoConsoleGeometry).defaultValue("0.26 0.96 0.41 0.205");
 const size_t CInfoConsole::maxRawLines   = 1024;
 const size_t CInfoConsole::maxLastMsgPos = 10;
 
-CInfoConsole::CInfoConsole() :
-	  fontScale(1.0f)
+CInfoConsole::CInfoConsole()
+	: CEventClient("InfoConsole", 999, false)
+	, fontScale(1.0f)
 	, enabled(true)
 	, lastMsgIter(lastMsgPositions.begin())
 	, newLines(0)
@@ -49,12 +53,12 @@ CInfoConsole::CInfoConsole() :
 
 	fontSize = fontScale * smallFont->GetSize();
 
-	logOutput.AddSubscriber(this);
+	logSinkHandler.AddSink(this);
 }
 
 CInfoConsole::~CInfoConsole()
 {
-	logOutput.RemoveSubscriber(this);
+	logSinkHandler.RemoveSink(this);
 }
 
 void CInfoConsole::Draw()
@@ -139,12 +143,12 @@ void CInfoConsole::GetNewRawLines(std::vector<RawLine>& lines)
 }
 
 
-void CInfoConsole::NotifyLogMsg(const CLogSubsystem& subsystem, const std::string& text)
+void CInfoConsole::RecordLogMessage(const std::string& section, int level,
+			const std::string& text)
 {
-
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
-	RawLine rl(text, &subsystem, rawId);
+	RawLine rl(text, section, level, rawId);
 	rawId++;
 	rawData.push_back(rl);
 	if (rawData.size() > maxRawLines) {
@@ -185,7 +189,7 @@ void CInfoConsole::NotifyLogMsg(const CLogSubsystem& subsystem, const std::strin
 }
 
 
-void CInfoConsole::SetLastMsgPos(const float3& pos)
+void CInfoConsole::LastMessagePosition(const float3& pos)
 {
 	if (lastMsgPositions.size() < maxLastMsgPos) {
 		lastMsgPositions.push_front(pos);

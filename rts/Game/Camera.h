@@ -15,25 +15,26 @@ public:
 
 	float3 CalcPixelDir(int x,int y) const;
 	float3 CalcWindowCoordinates(const float3& objPos) const;
+	void CopyState(const CCamera*);
 	void UpdateForward();
 	bool InView(const float3& p, float radius = 0) const;
 	bool InView(const float3& mins, const float3& maxs) const;
-	void Update(bool freeze, bool resetUp = true);
+	void Update(bool resetUp = true);
 
-	void GetFrustumSides(float miny, float maxy, float scale, bool leftSideOnly = false);
+	void GetFrustumSides(float miny, float maxy, float scale, bool negSide = false);
 	void GetFrustumSide(
-		const float3& side,
+		const float3& zdir,
 		const float3& offset,
 		float miny,
 		float maxy,
 		float scale,
-		bool sideAscending,
-		bool leftSideOnly,
-		bool topSide);
+		bool upwardDir,
+		bool negSide);
 	void ClearFrustumSides() {
-		leftFrustumSides.clear();
-		rightFrustumSides.clear();
+		posFrustumSides.clear();
+		negFrustumSides.clear();
 	}
+	void ClipFrustumLines(bool left, const float zmin, const float zmax);
 
 	const CMatrix44f& GetViewMatrix() const { return viewMatrix; }
 	const CMatrix44f& GetViewMatrixInverse() const { return viewMatrixInverse; }
@@ -46,37 +47,39 @@ public:
 	float GetFov() const { return fov; }
 	float GetHalfFov() const { return halfFov; }
 	float GetTanHalfFov() const { return tanHalfFov; }
+	float GetLPPScale() const { return lppScale; }
 
 	/// @param fov in degree
 	void SetFov(float fov);
 
 
 	float3 pos;
-	float3 pos2;       ///< use this for calculating orthodirections (might differ from pos when calcing shadows)
 	float3 rot;        ///< warning is not always updated
-	float3 forward;
-	float3 right;
-	float3 up;
-	float3 top;
-	float3 bottom;
-	float3 rightside;
-	float3 leftside;
+
+	float3 forward;    ///< local z-axis
+	float3 right;      ///< local x-axis
+	float3 up;         ///< local y-axis
+
+	float3 topFrustumSideDir;
+	float3 botFrustumSideDir;
+	float3 rgtFrustumSideDir;
+	float3 lftFrustumSideDir;
+
+	// Lua-controlled parameters, camera-only (not cam2)
 	float3 posOffset;
 	float3 tiltOffset;
-
-	float lppScale;    ///< length-per-pixel scale
 
 	GLint viewport[4];
 
 	struct FrustumLine {
 		float base;
 		float dir;
-		int left;
+		int sign;
 		float minz;
 		float maxz;
 	};
-	std::vector<FrustumLine> leftFrustumSides;
-	std::vector<FrustumLine> rightFrustumSides;
+	std::vector<FrustumLine> posFrustumSides;
+	std::vector<FrustumLine> negFrustumSides;
 
 private:
 	void myGluPerspective(float aspect, float zNear, float zFar);
@@ -93,9 +96,10 @@ private:
 	std::vector<GLdouble> viewMatrixD;
 	std::vector<GLdouble> projectionMatrixD;
 
-	float fov; ///< in degrees
-	float halfFov; ///< half the fov in radians
-	float tanHalfFov; ///< tan(halfFov)
+	float fov;         ///< in degrees
+	float halfFov;     ///< half the fov in radians
+	float tanHalfFov;  ///< tan(halfFov)
+	float lppScale;    ///< length-per-pixel scale
 };
 
 extern CCamera* camera;

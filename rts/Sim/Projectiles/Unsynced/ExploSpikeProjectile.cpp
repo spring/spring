@@ -75,10 +75,8 @@ void CExploSpikeProjectile::Draw()
 {
 	inArray = true;
 
-	float3 dif(pos-camera->pos2);
-	dif.ANormalize();
-	float3 dir2(dif.cross(dir));
-	dir2.ANormalize();
+	const float3 dif = (pos - camera->pos).ANormalize();
+	const float3 dir2 = (dif.cross(dir)).ANormalize();
 
 	unsigned char col[4];
 	const float a = std::max(0.0f, alpha-alphaDecay * globalRendering->timeOffset) * 255;

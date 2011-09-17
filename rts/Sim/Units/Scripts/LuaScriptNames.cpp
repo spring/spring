@@ -1,10 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <cstdio>
+#include "LuaScriptNames.h"
 
 #include "Sim/Misc/GlobalConstants.h"
-#include "LuaScriptNames.h"
-#include "System/LogOutput.h"
+
+#include <cstdio>
 
 using std::sprintf;
 
@@ -66,7 +66,7 @@ const vector<string>& CLuaUnitScriptNames::GetScriptNames()
 	scriptNames[LUAFN_TargetWeight]  = "TargetWeight";
 
 	//for (size_t i = 0; i < scriptNames.size(); ++i) {
-	//	logOutput.Print("LUAFN: %3d %s", i, scriptNames[i].c_str());
+	//	LOG_L(L_DEBUG, "LUAFN: %3d %s", i, scriptNames[i].c_str());
 	//}
 
 	return scriptNames;
@@ -87,7 +87,7 @@ const std::map<std::string, int>& CLuaUnitScriptNames::GetScriptMap()
 	}
 
 	//for (std::map<string, int>::const_iterator it = scriptMap.begin(); it != scriptMap.end(); ++it) {
-	//	logOutput.Print("LUAFN: %s -> %3d", it->first.c_str(), it->second);
+	//	LOG_L(L_DEBUG, "LUAFN: %s -> %3d", it->first.c_str(), it->second);
 	//}
 
 	return scriptMap;

@@ -6,6 +6,7 @@
 #include "CobFile.h"
 #include "CobInstance.h"
 #include "CobThread.h"
+#include "UnitScriptLog.h"
 
 #ifndef _CONSOLE
 
@@ -36,7 +37,6 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/Util.h"
-#include "System/LogOutput.h"
 #include "System/myMath.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/Sync/SyncTracer.h"
@@ -130,7 +130,9 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 			pieces.push_back(lp[cur]);
 		} else {
 			pieces.push_back(NULL);
-			logOutput.Print("CobWarning: Couldn't find a piece named \""+ scriptname +"\" in the model (in "+ script.name +")");
+			LOG_L(L_WARNING,
+					"Couldn't find a piece named \"%s\" in the model (in %s)",
+					scriptname.c_str(), script.name.c_str());
 		}
 	}
 }
@@ -469,10 +471,7 @@ int CCobInstance::RealCall(int functionId, vector<int> &args, CBCobThreadFinish 
 	CCobThread* thread = new CCobThread(script, this);
 	thread->Start(functionId, args, false);
 
-#if COB_DEBUG > 0
-	if (COB_DEBUG_FILTER)
-		logOutput.Print("Calling %s:%s", script.name.c_str(), script.scriptNames[functionId].c_str());
-#endif
+	LOG_L(L_DEBUG, "Calling %s:%s", script.name.c_str(), script.scriptNames[functionId].c_str());
 
 	const bool res = thread->Tick(30);
 
@@ -580,7 +579,7 @@ void CCobInstance::Signal(int signal)
 	for (std::list<CCobThread *>::iterator i = threads.begin(); i != threads.end(); ++i) {
 		if ((signal & (*i)->signalMask) != 0) {
 			(*i)->state = CCobThread::Dead;
-			//logOutput.Print("Killing a thread %d %d", signal, (*i)->signalMask);
+			//LOG_L(L_DEBUG, "Killing a thread %d %d", signal, (*i)->signalMask);
 		}
 	}
 }

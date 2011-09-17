@@ -214,15 +214,6 @@ CLuaUI::CLuaUI()
 
 CLuaUI::~CLuaUI()
 {
-#if (LUA_MT_OPT & LUA_STATE)
-	for(int i = 0; i < delayedXCall.size(); ++i) {
-		DelayDataDump &ddp = delayedXCall[i];
-		if(ddp.dd.size() == 1 && ddp.dd[0].type == LUA_TSTRING)
-			delete ddp.dd[0].data.str;
-	}
-	delayedXCall.clear();
-#endif
-
 	if (L_Sim != NULL || L_Draw != NULL) {
 		Shutdown();
 		KillLua();
@@ -810,7 +801,7 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 bool CLuaUI::HasUnsyncedXCall(lua_State* srcState, const string& funcName)
 {
 	SELECT_LUA_STATE();
-#if defined(USE_GML) && GML_ENABLE_SIM && (LUA_MT_OPT & LUA_MUTEX)
+#if (LUA_MT_OPT & LUA_MUTEX)
 	if (srcState != L && SingleState()) {
 		GML_STDMUTEX_LOCK(xcall); // HasUnsyncedXCall
 
@@ -824,76 +815,39 @@ bool CLuaUI::HasUnsyncedXCall(lua_State* srcState, const string& funcName)
 	return haveFunc;
 }
 
-void CLuaUI::ExecuteDelayedXCalls() {
-#if (LUA_MT_OPT & LUA_STATE)
-	std::vector<DelayDataDump> dxc;
-	{
-		GML_STDMUTEX_LOCK(xcall); // ExecuteDelayedXCalls
-
-		if(delayedXCall.empty())
-			return;
-
-		delayedXCall.swap(dxc);
-	}
-
-	GML_THRMUTEX_LOCK(unit, GML_DRAW); // ExecuteDelayedXCalls
-	GML_THRMUTEX_LOCK(feat, GML_DRAW); // ExecuteDelayedXCalls
-//	GML_THRMUTEX_LOCK(proj, GML_DRAW); // ExecuteDelayedXCalls
-
-	for(int i = 0; i < dxc.size(); ++i) {
-		DelayDataDump &ddp = dxc[i];
-
-		LUA_CALL_IN_CHECK(L);
-
-		if(ddp.dd.size() == 1) {
-			DelayData dd = ddp.dd[0];
-			if(dd.type == LUA_TSTRING) {
-				const LuaHashString funcHash(*dd.data.str);
-				delete dd.data.str;
-				if (funcHash.GetGlobalFunc(L)) {
-					const int top = lua_gettop(L) - 1;
-
-					LuaUtils::Restore(ddp.com, L);
-
-					RunCallIn(funcHash, ddp.com.size(), LUA_MULTRET);
-
-					lua_settop(L, top);
-				}
-			}
-		}
-	}
-#endif
-}
 
 int CLuaUI::UnsyncedXCall(lua_State* srcState, const string& funcName)
 {
-#if (LUA_MT_OPT & LUA_STATE)
+#if (LUA_MT_OPT & LUA_MUTEX)
 	{
-		SELECT_LUA_STATE();
-		if(srcState != L) {
+		SELECT_UNSYNCED_LUA_STATE();
+		if (srcState != L) {
 			DelayDataDump ddmp;
 
-			DelayData ddata;
-			ddata.type = LUA_TSTRING;
+			LuaUtils::ShallowDataDump sdd;
+			sdd.type = LUA_TSTRING;
 
 			size_t len = funcName.length();
-			ddata.data.str = new std::string;
+			sdd.data.str = new std::string;
 			if (len > 0) {
-				ddata.data.str->resize(len);
-				memcpy(&(*ddata.data.str)[0], funcName.c_str(), len);
+				sdd.data.str->resize(len);
+				memcpy(&(*sdd.data.str)[0], funcName.c_str(), len);
 			}
-			ddmp.dd.push_back(ddata);
 
-			LuaUtils::Backup(ddmp.com, srcState, lua_gettop(srcState));
+			ddmp.data.push_back(sdd);
+
+			LuaUtils::Backup(ddmp.dump, srcState, lua_gettop(srcState));
 
 			lua_settop(srcState, 0);
 
-			GML_STDMUTEX_LOCK(xcall);
+			GML_STDMUTEX_LOCK(scall);
 
-			DelayDataDump ddtemp;
-			delayedXCall.push_back(ddtemp);
-			delayedXCall.back().dd.swap(ddmp.dd);
-			delayedXCall.back().com.swap(ddmp.com);
+			delayedCallsFromSynced.push_back(DelayDataDump());
+
+			DelayDataDump &ddb = delayedCallsFromSynced.back();
+			ddb.data.swap(ddmp.data);
+			ddb.dump.swap(ddmp.dump);
+			ddb.xcall = true;
 
 			return 0;
 		}
@@ -968,7 +922,7 @@ int CLuaUI::SetShockFrontFactors(lua_State* L)
 
 int CLuaUI::UpdateUnsyncedXCalls(lua_State* L)
 {
-#if defined(USE_GML) && GML_ENABLE_SIM && (LUA_MT_OPT & LUA_MUTEX)
+#if (LUA_MT_OPT & LUA_MUTEX)
 	if (!SingleState() || L != L_Sim)
 #endif
 		return 0;

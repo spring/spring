@@ -30,8 +30,8 @@ CMakeFiles
 /CMakeCache.txt
 *.sdz
 Makefile
-# user scripts use .cmake extension
-#*.cmake
+cmake_install.cmake
+CTestTestfile.cmake
 
 # Visual Studio related
 *.ncb

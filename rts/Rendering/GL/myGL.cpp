@@ -368,30 +368,66 @@ bool ProgramStringIsNative(GLenum target, const char* filename)
  */
 static bool CheckParseErrors(GLenum target, const char* filename, const char* program)
 {
-	if (glGetError() != GL_INVALID_OPERATION) {
-		return false;
-	}
-
-	// Find the error position
 	GLint errorPos = -1;
 	GLint isNative =  0;
 
 	glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorPos);
 	glGetProgramivARB(target, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &isNative);
 
-	// Print implementation-dependent program
-	// errors and warnings string.
-	const GLubyte* errString = glGetString(GL_PROGRAM_ERROR_STRING_ARB);
+	if (errorPos != -1) {
+		const char* fmtString =
+			"[%s] shader compilation error at index %d (near "
+			"\"%.30s\") when loading %s-program file %s:\n%s";
+		const char* tgtString = (target == GL_VERTEX_PROGRAM_ARB)? "vertex": "fragment";
+		const char* errString = (const char*) glGetString(GL_PROGRAM_ERROR_STRING_ARB);
 
-	LOG_L(L_ERROR,
-		"[myGL::CheckParseErrors] Shader compilation error at index "
-		"%d (near \"%.30s\") when loading %s-program file %s:\n%s",
-		errorPos, program + errorPos,
-		(target == GL_VERTEX_PROGRAM_ARB? "vertex": "fragment"),
-		filename, errString ? (const char*) errString : "(null)"
-	);
+		if (errString != NULL) {
+			LOG_L(L_ERROR, fmtString, __FUNCTION__, errorPos, program + errorPos, tgtString, filename, errString);
+		} else {
+			LOG_L(L_ERROR, fmtString, __FUNCTION__, errorPos, program + errorPos, tgtString, filename, "(null)");
+		}
 
-	return true;
+		return true;
+	}
+
+	if (isNative != 1) {
+		GLint aluInstrs, maxAluInstrs;
+		GLint texInstrs, maxTexInstrs;
+		GLint texIndirs, maxTexIndirs;
+		GLint nativeTexIndirs, maxNativeTexIndirs;
+		GLint nativeAluInstrs, maxNativeAluInstrs;
+
+		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_ALU_INSTRUCTIONS_ARB,            &aluInstrs);
+		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_ALU_INSTRUCTIONS_ARB,        &maxAluInstrs);
+		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_TEX_INSTRUCTIONS_ARB,            &texInstrs);
+		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_TEX_INSTRUCTIONS_ARB,        &maxTexInstrs);
+		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_TEX_INDIRECTIONS_ARB,            &texIndirs);
+		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_TEX_INDIRECTIONS_ARB,        &maxTexIndirs);
+		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB,     &nativeTexIndirs);
+		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB, &maxNativeTexIndirs);
+		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB,     &nativeAluInstrs);
+		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB, &maxNativeAluInstrs);
+
+		if (aluInstrs > maxAluInstrs) {
+			LOG_L(L_ERROR, "[%s] too many ALU instructions in %s (%d, max. %d)\n", __FUNCTION__, filename, aluInstrs, maxAluInstrs);
+		}
+		if (texInstrs > maxTexInstrs) {
+			LOG_L(L_ERROR, "[%s] too many texture instructions in %s (%d, max. %d)\n", __FUNCTION__, filename, texInstrs, maxTexInstrs);
+		}
+		if (texIndirs > maxTexIndirs) {
+			LOG_L(L_ERROR, "[%s] too many texture indirections in %s (%d, max. %d)\n", __FUNCTION__, filename, texIndirs, maxTexIndirs);
+		}
+		if (nativeTexIndirs > maxNativeTexIndirs) {
+			LOG_L(L_ERROR, "[%s] too many native texture indirections in %s (%d, max. %d)\n", __FUNCTION__, filename, nativeTexIndirs, maxNativeTexIndirs);
+		}
+		if (nativeAluInstrs > maxNativeAluInstrs) {
+			LOG_L(L_ERROR, "[%s] too many native ALU instructions in %s (%d, max. %d)\n", __FUNCTION__, filename, nativeAluInstrs, maxNativeAluInstrs);
+		}
+
+		return true;
+	}
+
+	return false;
 }
 
 

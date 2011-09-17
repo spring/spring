@@ -1606,7 +1606,6 @@ void CUnitScript::SetUnitVal(int val, int param)
 				if (!!param) {
 					amt->SetState(AAirMoveType::AIRCRAFT_CRASHING);
 				} else {
-					amt->aircraftState = AAirMoveType::AIRCRAFT_TAKEOFF;
 					amt->SetState(AAirMoveType::AIRCRAFT_FLYING);
 				}
 			}

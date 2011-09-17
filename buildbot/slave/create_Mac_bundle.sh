@@ -9,12 +9,6 @@ INSTALLDIR=${DEST}/usr/local
 
 echo "Installing into $DEST"
 
-
-
-
-
-
-
 cd ${BUILDDIR}
 make install DESTDIR=${DEST}
 
@@ -30,32 +24,33 @@ make install DESTDIR=${DEST}
 # ---> share
 # -----> game content, doc, etc.
 
-BUNDLE_NAME=Spring\ ${VERSION}.app
+BUNDLE_NAME=Spring_${VERSION}.app
 BUNDLE_BASE=${TMP_PATH}/${BUNDLE_NAME}/Contents
 
-echo Creating ${BUNDLE_NAME}...
+echo "Creating ${BUNDLE_NAME}..."
 
 MACPORTS_BASE=`which port | sed s/[/]bin[/]port//`
+STRIP="strip -r -u"
 
 mkdir -p ${BUNDLE_BASE}
 cd ${BUNDLE_BASE}
 
 # insert the version number in the Info.plist file
-echo -- installing header file
-cat ${SOURCEDIR}/installer/Info.plist | sed s/###VERSION###/${VERSION}/ > Info.plist
+echo "-- installing header file"
+cat ${SOURCEDIR}/installer/Mac/Info.plist | sed s/###VERSION###/${VERSION}/ > Info.plist
 
 mkdir MacOS Resources
 
-echo -- installing executables
+echo "-- installing executables"
 mv ${INSTALLDIR}/bin/* MacOS/
 
-echo -- installing application icon
-cp ${SOURCEDIR}/installer/spring.icns Resources/
+echo "-- installing application icon"
+cp ${SOURCEDIR}/installer/Mac/spring.icns Resources/
 
-echo -- installing spring libs
+echo "-- installing spring libs"
 mv ${INSTALLDIR}/lib .
 
-echo -- installing game content
+echo "-- installing game content"
 mv ${INSTALLDIR}/share .
 
 # move spring libraries to the executable folder (avoids spring relative path issues)
@@ -64,7 +59,7 @@ mv lib/libunitsync.dylib MacOS/
 # not needed (yet) for the server lib, uncomment if necessary
 #mv lib/libspringserver.dylib MacOS/
 
-echo -- installing 3rd-party libraries (provided by MacPorts)
+echo "-- installing 3rd-party libraries (provided by MacPorts)"
 for executable in `ls MacOS`
 do
 	# for each MacPorts's dylib required by the executable
@@ -72,24 +67,24 @@ do
 	do
 		# dylib =~ "lib/lib*.dylib"
 
-		echo ---- installing ${dylib}
+		echo "---- installing ${dylib}"
 		cp ${MACPORTS_BASE}/${dylib} lib
 
 		# take write permissions on the bundled lib
 		chmod u+w ${dylib}
 		
 		# change the bundled lib's id to relative pathing mode (not necessary but cleaner)
-		install_name_tool -id @executable_path/../${dylib} ${dylib}
+		install_name_tool -id @loader_path/../${dylib} ${dylib}
 
 		# point the executable to the bundled lib in relative pathing mode
-		install_name_tool -change ${MACPORTS_BASE}/${dylib} @executable_path/../${dylib} MacOS/${executable}
+		install_name_tool -change ${MACPORTS_BASE}/${dylib} @loader_path/../${dylib} MacOS/${executable}
 
 		# the bundled lib is autonomous => it can be stripped
-		strip --strip-debug --strip-unneeded ${dylib}
+		${STRIP} ${dylib}
 	done
 
 	# finally, strip the executable
-	strip --strip-debug --strip-unneeded MacOS/${executable}
+	${STRIP} MacOS/${executable}
 done
 
 # continue with recursive dependencies
@@ -111,29 +106,37 @@ do
 				# loop
 				end=0
 
-				echo ---- installing ${requiredlib}
+				echo "---- installing ${requiredlib}"
 				cp ${MACPORTS_BASE}/${requiredlib} lib
 				
 				# take write permissions on the bundled lib
 				chmod u+w ${requiredlib}
 
 				# change the bundled lib's id to relative pathing mode (not necessary but cleaner)
-				install_name_tool -id @executable_path/../${requiredlib} ${requiredlib}
+				install_name_tool -id @loader_path/../${requiredlib} ${requiredlib}
 
 				# the bundled lib is autonomous => it can be stripped
-				strip --strip-debug --strip-unneeded ${requiredlib}
+				${STRIP} ${requiredlib}
 			fi
 
 			# point the parent lib to the bundled lib in relative pathing mode
-			install_name_tool -change ${MACPORTS_BASE}/${requiredlib} @executable_path/../${requiredlib} lib/${dylib}
+			install_name_tool -change ${MACPORTS_BASE}/${requiredlib} @loader_path/../${requiredlib} lib/${dylib}
 		done
 	done
 done
 
 # here, the bundle should be ready, a little compression and voila
 
-ARCHIVE_NAME=Spring_${VERSION}.zip
-echo -- creating archive
-cd ${TMP_PATH} && zip -9 ${ARCHIVE_NAME} ${BUNDLE_NAME}
+ARCHIVE_NAME=Spring_${VERSION}-MacOSX-10.6-SnowLeopard.zip
+echo "-- creating ${TMP_PATH}/${ARCHIVE_NAME}"
+cd ${TMP_PATH}
+zip -r9 ${ARCHIVE_NAME} ${BUNDLE_NAME}
 
-echo -- done
+#remove temp files
+rm -rf ${TMP_PATH}/${BUNDLE_NAME}
+
+#create symbolic link
+cd ${TMP_PATH}/..
+ln -sv ${REV}/${ARCHIVE_NAME} Spring_testing-MacOSX-10.6-SnowLeopard.zip
+echo "-- done"
+

@@ -8,12 +8,23 @@
 #include "System/float3.h"
 
 
+BuildInfo::BuildInfo()
+	: def(NULL)
+	, pos(ZeroVector)
+	, buildFacing(FACING_SOUTH)
+{}
+
+BuildInfo::BuildInfo(const UnitDef* def, const float3& pos, int facing)
+	: def(def)
+	, pos(pos)
+	, buildFacing(std::abs(facing) % NUM_FACINGS)
+{}
+
 BuildInfo::BuildInfo(const std::string& name, const float3& pos, int facing)
-	: pos(pos)
-{
-	def = unitDefHandler->GetUnitDefByName(name);
-	buildFacing = abs(facing) % NUM_FACINGS;
-}
+	: def(unitDefHandler->GetUnitDefByName(name))
+	, pos(pos)
+	, buildFacing(std::abs(facing) % NUM_FACINGS)
+{}
 
 
 int BuildInfo::CreateCommandID() const
@@ -33,21 +44,21 @@ void BuildInfo::AddCommandParams(Command& cmd) const
 
 bool BuildInfo::Parse(const Command& c)
 {
-	if (c.params.size() >= 3) {
-		pos = float3(c.params[0], c.params[1], c.params[2]);
+	if (c.params.size() < 3)
+		return false;
 
-		if (c.GetID() < 0) {
-			def = unitDefHandler->GetUnitDefByID(-c.GetID());
-			buildFacing = 0;
+	pos = float3(c.params[0], c.params[1], c.params[2]);
 
-			if (c.params.size() == 4) {
-				buildFacing = int(abs(c.params[3])) % NUM_FACINGS;
-			}
+	if (c.GetID() >= 0)
+		return false;
 
-			return true;
-		}
-	}
-	return false;
+	def = unitDefHandler->GetUnitDefByID(-c.GetID());
+	buildFacing = FACING_SOUTH;
+
+	if (c.params.size() == 4)
+		buildFacing = std::abs(int(c.params[3])) % NUM_FACINGS;
+
+	return true;
 }
 
 
@@ -56,9 +67,7 @@ int BuildInfo::GetXSize() const
 	return ((buildFacing & 1) == 0) ? def->xsize : def->zsize;
 }
 
-
 int BuildInfo::GetZSize() const
 {
 	return ((buildFacing & 1) == 1) ? def->xsize : def->zsize;
 }
-

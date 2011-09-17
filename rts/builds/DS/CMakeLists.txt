@@ -3,6 +3,9 @@ ADD_DEFINITIONS    (-DHEADLESS -DNO_SOUND)
 REMOVE_DEFINITIONS (-DSTREFLOP_SSE -DAVI_CAPTURING)
 REMOVE_DEFINITIONS (-DUSE_MMGR -DTRACE_SYNC -DSYNCDEBUG)
 
+# deactivate signaling-NANs for this library
+RemoveFlag("-fsignaling-nans")
+
 # Place executables and shared libs under "build-dir/",
 # instead of under "build-dir/rts/"
 # This way, we have the build-dir structure more like the install-dir one,

@@ -288,13 +288,11 @@ EXPORT(const char*) GetSpringVersionPatchset()
 
 static void internal_deleteMapInfos();
 
-static void _UnInit()
+static void _Cleanup()
 {
 	internal_deleteMapInfos();
 
 	lpClose();
-
-	FileSystemInitializer::Cleanup();
 
 	if (syncer) {
 		SafeDelete(syncer);
@@ -322,7 +320,7 @@ EXPORT(int) Init(bool isServer, int id)
 		}
 		LOG("loaded, %s", SpringVersion::GetFull().c_str());
 
-		_UnInit();
+		_Cleanup();
 
 		std::vector<std::string> filesToCheck;
 		filesToCheck.push_back("base/springcontent.sdz");
@@ -349,7 +347,8 @@ EXPORT(int) Init(bool isServer, int id)
 EXPORT(void) UnInit()
 {
 	try {
-		_UnInit();
+		_Cleanup();
+		FileSystemInitializer::Cleanup();
 		ConfigHandler::Deallocate();
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -579,8 +578,7 @@ static bool internal_GetMapInfo(const char* mapName, InternalMapInfo* outInfo)
 			catch (content_error&) {
 				outInfo->width  = -1;
 			}
-		}
-		else {
+		} else {
 			const int w = mapTable.GetInt("gameAreaW", 0);
 			const int h = mapTable.GetInt("gameAreaW", 1);
 
@@ -591,8 +589,7 @@ static bool internal_GetMapInfo(const char* mapName, InternalMapInfo* outInfo)
 		// Make sure we found stuff in both the smd and the header
 		if (outInfo->width <= 0) {
 			err = "Bad map width";
-		}
-		else if (outInfo->height <= 0) {
+		} else if (outInfo->height <= 0) {
 			err = "Bad map height";
 		}
 	}

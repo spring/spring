@@ -602,9 +602,6 @@ CglFont::~CglFont()
 {
 	glDeleteTextures(1, &fontTexture);
 
-	stripTextColors.clear();
-	stripOutlineColors.clear();
-
 	delete va;
 	delete va2;
 }

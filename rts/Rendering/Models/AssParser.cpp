@@ -1,17 +1,19 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/Util.h"
-#include "System/Log/ILog.h"
-#include "System/Platform/errorhandler.h"
-#include "System/Exceptions.h"
-#include "Sim/Misc/CollisionVolume.h"
-#include "System/FileSystem/FileHandler.h"
-#include "Lua/LuaParser.h"
+#include "AssParser.h"
+
 #include "3DModel.h"
 #include "3DModelLog.h"
 #include "S3OParser.h"
 #include "AssIO.h"
-#include "AssParser.h"
+
+#include "Lua/LuaParser.h"
+#include "Sim/Misc/CollisionVolume.h"
+#include "System/Util.h"
+#include "System/Log/ILog.h"
+#include "System/Platform/errorhandler.h"
+#include "System/Exceptions.h"
+#include "System/FileSystem/FileHandler.h"
 
 #include "assimp.hpp"
 #include "aiDefines.h"

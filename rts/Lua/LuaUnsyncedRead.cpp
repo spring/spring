@@ -1,10 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
-#include "Game/SelectedUnits.h"
-
-#include "System/mmgr.h"
-
 #include "LuaUnsyncedRead.h"
 
 #include "LuaInclude.h"
@@ -17,8 +12,10 @@
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
+#include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Game/PlayerRoster.h"
+#include "Game/SelectedUnits.h"
 #include "Game/TraceRay.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/UI/GuiHandler.h"
@@ -29,6 +26,7 @@
 #include "Game/UI/MiniMap.h"
 #include "Game/UI/MouseHandler.h"
 #include "Map/BaseGroundDrawer.h"
+#include "Map/BaseGroundTextures.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
@@ -47,6 +45,7 @@
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "System/NetProtocol.h"
+#include "System/mmgr.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
@@ -134,6 +133,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(HaveAdvShading);
 	REGISTER_LUA_CFUNC(GetWaterMode);
 	REGISTER_LUA_CFUNC(GetMapDrawMode);
+	REGISTER_LUA_CFUNC(GetMapSquareTexture);
 
 	REGISTER_LUA_CFUNC(GetCameraNames);
 	REGISTER_LUA_CFUNC(GetCameraState);
@@ -620,14 +620,7 @@ int LuaUnsyncedRead::GetUnitViewPosition(lua_State* L)
 	}
 	const bool midPos = (lua_isboolean(L, 2) && lua_toboolean(L, 2));
 
-	float3 pos = midPos ? (float3)unit->midPos : (float3)unit->pos;
-	CTransportUnit *trans=unit->GetTransporter();
-	if (trans == NULL) {
-		pos += (unit->speed * globalRendering->timeOffset);
-	} else {
-		pos += (trans->speed * globalRendering->timeOffset);
-	}
-
+	float3& pos = midPos ? unit->drawMidPos : unit->drawPos;
 	lua_pushnumber(L, pos.x);
 	lua_pushnumber(L, pos.y);
 	lua_pushnumber(L, pos.z);
@@ -728,7 +721,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	{
 		GML_RECMUTEX_LOCK(quad); // GetVisibleUnits
 
-		readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 1e9, &quadIter);
+		readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 1e9, &quadIter, INT_MAX);
 
 		lua_createtable(L, quadIter.count, 0);
 
@@ -737,8 +730,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 			//! if we see nearly all features, it is just faster to check them all, instead of doing slow duplication checks
 			if (teamID >= 0) {
 				unitSets.push_back(&teamHandler->Team(teamID)->units);
-			}
-			else {
+			} else {
 				for (int t = 0; t < teamHandler->ActiveTeams(); t++) {
 					if ((teamID == AllUnits) ||
 						((teamID == AllyUnits)  && (allyTeamID == teamHandler->AllyTeam(t))) ||
@@ -846,8 +838,6 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	// arg 4 - noGeos
 	const bool noGeos = lua_isboolean(L, 4) && !lua_toboolean(L, 4);
 
-	const float maxDist = 6000.0f; //from FeatureHandler.cpp
-
 	bool scanAll = false;
 	static CFeatureSet visQuadFeatures;
 
@@ -857,7 +847,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	{
 		GML_RECMUTEX_LOCK(quad); // GetVisibleFeatures
 
-		readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, maxDist, &quadIter);
+		readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 3000.0f * 2.0f, &quadIter, INT_MAX);
 
 		lua_createtable(L, quadIter.count, 0);
 
@@ -1123,6 +1113,52 @@ int LuaUnsyncedRead::GetMapDrawMode(lua_State* L)
 }
 
 
+int LuaUnsyncedRead::GetMapSquareTexture(lua_State* L)
+{
+	if (CLuaHandle::GetSynced(L)) {
+		return 0;
+	}
+
+	const int texSquareX = luaL_checkint(L, 1);
+	const int texSquareY = luaL_checkint(L, 2);
+	const int texMipLevel = luaL_checkint(L, 3);
+	const std::string& texName = luaL_checkstring(L, 4);
+
+	CBaseGroundDrawer* groundDrawer = readmap->GetGroundDrawer();
+	CBaseGroundTextures* groundTextures = groundDrawer->GetGroundTextures();
+
+	if (groundTextures == NULL) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+	if (texName.empty()) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	const LuaTextures& luaTextures = CLuaHandle::GetActiveTextures(L);
+	const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(texName);
+
+	if (luaTexture == NULL) {
+		// not a valid texture (name)
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	const int tid = luaTexture->id;
+	const int txs = luaTexture->xsize;
+	const int tys = luaTexture->ysize;
+
+	if (txs != tys) {
+		// square textures only
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	lua_pushboolean(L, groundTextures->GetSquareLuaTexture(texSquareX, texSquareY, tid, txs, tys, texMipLevel));
+	return 1;
+}
+
 /******************************************************************************/
 
 int LuaUnsyncedRead::GetCameraNames(lua_State* L)
@@ -1196,24 +1232,22 @@ int LuaUnsyncedRead::GetCameraVectors(lua_State* L)
 {
 	CheckNoArgs(L, __FUNCTION__);
 
-	const CCamera* cam = camera;
-
 #define PACK_CAMERA_VECTOR(n) \
 	HSTR_PUSH(L, #n);           \
 	lua_createtable(L, 3, 0);            \
-	lua_pushnumber(L, cam-> n .x); lua_rawseti(L, -2, 1); \
-	lua_pushnumber(L, cam-> n .y); lua_rawseti(L, -2, 2); \
-	lua_pushnumber(L, cam-> n .z); lua_rawseti(L, -2, 3); \
+	lua_pushnumber(L, camera-> n .x); lua_rawseti(L, -2, 1); \
+	lua_pushnumber(L, camera-> n .y); lua_rawseti(L, -2, 2); \
+	lua_pushnumber(L, camera-> n .z); lua_rawseti(L, -2, 3); \
 	lua_rawset(L, -3)
 
 	lua_newtable(L);
 	PACK_CAMERA_VECTOR(forward);
 	PACK_CAMERA_VECTOR(up);
 	PACK_CAMERA_VECTOR(right);
-	PACK_CAMERA_VECTOR(top);
-	PACK_CAMERA_VECTOR(bottom);
-	PACK_CAMERA_VECTOR(leftside);
-	PACK_CAMERA_VECTOR(rightside);
+	PACK_CAMERA_VECTOR(topFrustumSideDir);
+	PACK_CAMERA_VECTOR(botFrustumSideDir);
+	PACK_CAMERA_VECTOR(lftFrustumSideDir);
+	PACK_CAMERA_VECTOR(rgtFrustumSideDir);
 
 	return 1;
 }
@@ -1885,10 +1919,10 @@ int LuaUnsyncedRead::GetConsoleBuffer(lua_State* L)
 			lua_pushliteral(L, "text");
 			lua_pushsstring(L, lines[i].text);
 			lua_rawset(L, -3);
-			// FIXME: migrate priority to subsystem...
+			// FIXME migrate priority to level...
 			lua_pushliteral(L, "priority");
-			lua_pushnumber(L, 0 /*priority*/ );
-			//lua_pushstring(L, lines[i].subsystem->name);
+			lua_pushnumber(L, 0);
+			//lua_pushstring(L, lines[i].level);
 			lua_rawset(L, -3);
 		}
 		lua_rawset(L, -3);

@@ -23,7 +23,7 @@ extern "C" {
 static void log_sink_record_logOutput(const char* section, int level,
 		const char* record)
 {
-	logOutput.Print("%s", record);
+	logOutput.Output(record);
 }
 
 ///@}

@@ -3,17 +3,20 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include <string>
-#include <set>
-
 #include "PlayerBase.h"
 #include "PlayerStatistics.h"
 #include "FPSUnitController.h"
 #include "System/creg/creg_cond.h"
-#include "System/float3.h"
+
+#include <string>
+#include <set>
 
 class CPlayer;
 class CUnit;
+
+/// @see CPlayer::ping
+#define PATHING_FLAG 0xFFFFFFFF
+
 
 class CPlayer : public PlayerBase
 {
@@ -42,6 +45,11 @@ public:
 
 	int playerNum;
 
+	/**
+	 * Contains either the current ping of the player to the game host,
+	 * or the value of the pathign flag.
+	 * @see PATHING_FLAG
+	 */
 	int ping;
 
 	typedef PlayerStatistics Statistics;

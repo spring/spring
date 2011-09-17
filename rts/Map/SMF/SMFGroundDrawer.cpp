@@ -244,6 +244,7 @@ bool CSMFGroundDrawer::LoadMapShaders() {
 				smfShaders[i]->SetUniform1i(28, 12); // lightEmisionTex (idx 28, texunit 12)
 				smfShaders[i]->SetUniform1i(29,  0); // numMapDynLights (unused)
 				smfShaders[i]->Disable();
+				smfShaders[i]->Validate();
 			}
 		}
 	}
@@ -387,12 +388,12 @@ inline bool CSMFGroundDrawer::BigTexSquareRowVisible(const CCamera* cam, int bty
 inline void CSMFGroundDrawer::FindRange(const CCamera* cam, int& xs, int& xe, int y, int lod) {
 	int xt0, xt1;
 
-	const std::vector<CCamera::FrustumLine>& left = cam->leftFrustumSides;
-	const std::vector<CCamera::FrustumLine>& right = cam->rightFrustumSides;
+	const std::vector<CCamera::FrustumLine>& negSides = cam->negFrustumSides;
+	const std::vector<CCamera::FrustumLine>& posSides = cam->posFrustumSides;
 
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
-	for (fli = left.begin(); fli != left.end(); ++fli) {
+	for (fli = negSides.begin(); fli != negSides.end(); ++fli) {
 		const float xtf = fli->base + fli->dir * y;
 		xt0 = (int)xtf;
 		xt1 = (int)(xtf + fli->dir * lod);
@@ -405,7 +406,7 @@ inline void CSMFGroundDrawer::FindRange(const CCamera* cam, int& xs, int& xe, in
 		if (xt0 > xs)
 			xs = xt0;
 	}
-	for (fli = right.begin(); fli != right.end(); ++fli) {
+	for (fli = posSides.begin(); fli != posSides.end(); ++fli) {
 		const float xtf = fli->base + fli->dir * y;
 		xt0 = (int)xtf;
 		xt1 = (int)(xtf + fli->dir * lod);
@@ -439,12 +440,12 @@ inline void CSMFGroundDrawer::DoDrawGroundRow(const CCamera* cam, int bty) {
 	//! only process the necessary big squares in the x direction
 	const int bigSquareSizeY = bty * smfMap->bigSquareSize;
 
-	const std::vector<CCamera::FrustumLine>& left = cam->leftFrustumSides;
-	const std::vector<CCamera::FrustumLine>& right = cam->rightFrustumSides;
+	const std::vector<CCamera::FrustumLine>& negSides = cam->negFrustumSides;
+	const std::vector<CCamera::FrustumLine>& posSides = cam->posFrustumSides;
 
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
-	for (fli = left.begin(); fli != left.end(); ++fli) {
+	for (fli = negSides.begin(); fli != negSides.end(); ++fli) {
 		x0 = fli->base + fli->dir * bigSquareSizeY;
 		x1 = x0 + fli->dir * smfMap->bigSquareSize;
 
@@ -456,7 +457,7 @@ inline void CSMFGroundDrawer::DoDrawGroundRow(const CCamera* cam, int bty) {
 		if (x0 > sx)
 			sx = (int) x0;
 	}
-	for (fli = right.begin(); fli != right.end(); ++fli) {
+	for (fli = posSides.begin(); fli != posSides.end(); ++fli) {
 		x0 = fli->base + fli->dir * bigSquareSizeY + smfMap->bigSquareSize;
 		x1 = x0 + fli->dir * smfMap->bigSquareSize;
 
@@ -468,6 +469,9 @@ inline void CSMFGroundDrawer::DoDrawGroundRow(const CCamera* cam, int bty) {
 		if (x0 < ex)
 			ex = (int) x0;
 	}
+
+	if (sx > ex)
+		return;
 
 	const float cx2 = cam2->pos.x / SQUARE_SIZE;
 	const float cy2 = cam2->pos.z / SQUARE_SIZE;
@@ -485,7 +489,7 @@ inline void CSMFGroundDrawer::DoDrawGroundRow(const CCamera* cam, int bty) {
 			int cx = cx2;
 			int cy = cy2;
 
-			if (lod>1) {
+			if (lod > 1) {
 				int cxo = (cx / hlod) * hlod;
 				int cyo = (cy / hlod) * hlod;
 				float cx2o = (cxo / lod) * lod;
@@ -1606,30 +1610,6 @@ void CSMFGroundDrawer::ResetTextureUnits(bool drawReflection)
 	}
 }
 
-
-
-
-
-
-void CSMFGroundDrawer::UpdateCamRestraints(CCamera* cam)
-{
-	// add restraints for camera sides
-	cam->GetFrustumSides(readmap->currMinHeight - 100.0f,  readmap->currMaxHeight + 30.0f,  SQUARE_SIZE);
-
-	// add restraint for maximum view distance (use flat z-dir as side)
-	const float3& camDir3D  = cam->forward;
-	      float3  camDir2D  = float3(camDir3D.x, 0.0f, camDir3D.z);
-	const float3  camOffset = camDir2D * globalRendering->viewRange * 1.05f;
-
-	static const float miny = 0.0f;
-	static const float maxy = 255.0f / 3.5f;
-
-	// prevent colinearity in top-down view
-	if (camDir2D.SqLength() > 0.01f) {
-		camDir2D.SafeANormalize();
-		cam->GetFrustumSide(camDir2D, camOffset, miny, maxy, SQUARE_SIZE, (camDir3D.y > 0.0f), false, false);
-	}
-}
 
 void CSMFGroundDrawer::Update()
 {

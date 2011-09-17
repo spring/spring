@@ -32,8 +32,8 @@
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "System/myMath.h"
 #include "System/Util.h"
+#include "System/EventHandler.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
 #include "System/Log/ILog.h"
 #include "System/creg/STL_Map.h"
 
@@ -276,7 +276,7 @@ void CBuilderCAI::CancelRestrictedUnit(const std::string& buildOption)
 	if (owner->team == gu->myTeam) {
 		LOG_L(L_WARNING, "%s: Build failed, unit type limit reached",
 				owner->unitDef->humanName.c_str());
-		logOutput.SetLastMsgPos(owner->pos);
+		eventHandler.LastMessagePosition(owner->pos);
 	}
 	FinishCommand();
 }

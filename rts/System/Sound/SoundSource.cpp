@@ -16,6 +16,7 @@
 
 #include "Sound.h" //remove when unified ElmoInMeters
 
+#include "Sim/Misc/GlobalConstants.h"
 #include "System/float3.h"
 #include "System/Util.h"
 #include "System/myMath.h"
@@ -23,8 +24,7 @@
 float CSoundSource::referenceDistance = 200.0f;
 float CSoundSource::globalPitch = 1.0;
 float CSoundSource::heightRolloffModifier = 1.0f;
-
-
+static const float ROLLOFF_FACTOR = 5.f;
 
 CSoundSource::CSoundSource()
 	: curPlaying(NULL)
@@ -41,7 +41,7 @@ CSoundSource::CSoundSource()
 	if (!CheckError("CSoundSource::CSoundSource")) {
 		id = 0;
 	} else {
-		alSourcef(id, AL_REFERENCE_DISTANCE, referenceDistance * CSound::GetElmoInMeters());
+		alSourcef(id, AL_REFERENCE_DISTANCE, referenceDistance * ELMOS_TO_METERS);
 		CheckError("CSoundSource::CSoundSource");
 	}
 }
@@ -62,7 +62,7 @@ void CSoundSource::Update()
 {
 	if (curPlaying) {
 		if (in3D && (efxEnabled != efx->enabled)) {
-			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, (efx->enabled) ? efx->airAbsorptionFactor : 0);
+			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, (efx->enabled) ? efx->GetAirAbsorptionFactor() : 0);
 			alSource3i(id, AL_AUXILIARY_SEND_FILTER, (efx->enabled) ? efx->sfxSlot : AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
 			alSourcei(id, AL_DIRECT_FILTER, (efx->enabled) ? efx->sfxFilter : AL_FILTER_NULL);
 			efxEnabled = efx->enabled;
@@ -71,7 +71,7 @@ void CSoundSource::Update()
 
 		if (heightRolloffModifier != curHeightRolloffModifier) {
 			curHeightRolloffModifier = heightRolloffModifier;
-			alSourcef(id, AL_ROLLOFF_FACTOR, curPlaying->rolloff * heightRolloffModifier);
+			alSourcef(id, AL_ROLLOFF_FACTOR, ROLLOFF_FACTOR * curPlaying->rolloff * heightRolloffModifier);
 		}
 
 		if (!IsPlaying() || ((curPlaying->loopTime > 0) && (loopStop < SDL_GetTicks())))
@@ -92,7 +92,7 @@ void CSoundSource::Update()
 
 	if (efxEnabled && (efxUpdates != efx->updates)) {
 		//! airAbsorption & LowPass aren't auto updated by OpenAL on change, so we need to do it per source
-		alSourcef(id, AL_AIR_ABSORPTION_FACTOR, efx->airAbsorptionFactor);
+		alSourcef(id, AL_AIR_ABSORPTION_FACTOR, efx->GetAirAbsorptionFactor());
 		alSourcei(id, AL_DIRECT_FILTER, efx->sfxFilter);
 		efxUpdates = efx->updates;
 	}
@@ -150,7 +150,7 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 	alSourcei(id, AL_BUFFER, item->buffer->GetId());
 	alSourcef(id, AL_GAIN, volume * item->GetGain() * channel->volume);
 	alSourcef(id, AL_PITCH, item->GetPitch() * globalPitch);
-	velocity *= item->dopplerScale * CSound::GetElmoInMeters();
+	velocity *= item->dopplerScale * ELMOS_TO_METERS;
 	alSource3f(id, AL_VELOCITY, velocity.x, velocity.y, velocity.z);
 	alSourcei(id, AL_LOOPING, (item->loopTime > 0) ? AL_TRUE : AL_FALSE);
 	loopStop = SDL_GetTicks() + item->loopTime;
@@ -163,7 +163,10 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 		}
 		alSourcei(id, AL_SOURCE_RELATIVE, AL_TRUE);
 		alSourcef(id, AL_ROLLOFF_FACTOR, 0.f);
-		alSource3f(id, AL_POSITION, 0.0f, 0.0f, -1.0f * CSound::GetElmoInMeters());
+		alSource3f(id, AL_POSITION, 0.0f, 0.0f, -1.0f * ELMOS_TO_METERS);
+#ifdef __APPLE__
+		alSourcef(id, AL_REFERENCE_DISTANCE, referenceDistance * ELMOS_TO_METERS);
+#endif
 	} else {
 		if (item->buffer->GetChannels() > 1) {
 			LOG_L(L_WARNING, "Can not play non-mono \"%s\" in 3d.",
@@ -173,16 +176,16 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 		in3D = true;
 		if (efx->enabled) {
 			efxEnabled = true;
-			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, efx->airAbsorptionFactor);
+			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, efx->GetAirAbsorptionFactor());
 			alSource3i(id, AL_AUXILIARY_SEND_FILTER, efx->sfxSlot, 0, AL_FILTER_NULL);
 			alSourcei(id, AL_DIRECT_FILTER, efx->sfxFilter);
 			efxUpdates = efx->updates;
 		}
 		alSourcei(id, AL_SOURCE_RELATIVE, AL_FALSE);
-		pos *= CSound::GetElmoInMeters();
+		pos *= ELMOS_TO_METERS;
 		alSource3f(id, AL_POSITION, pos.x, pos.y, pos.z);
 		curHeightRolloffModifier = heightRolloffModifier;
-		alSourcef(id, AL_ROLLOFF_FACTOR, item->rolloff * heightRolloffModifier);
+		alSourcef(id, AL_ROLLOFF_FACTOR, ROLLOFF_FACTOR * item->rolloff * heightRolloffModifier);
 #ifdef __APPLE__
 		alSourcef(id, AL_MAX_DISTANCE, 1000000.0f);
 		//! Max distance is too small by default on my Mac...
@@ -190,15 +193,15 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 		if (gain > 1.0f) {
 			//! OpenAL on Mac cannot handle AL_GAIN > 1 well, so we will adjust settings to get the same output with AL_GAIN = 1.
 			ALint model = alGetInteger(AL_DISTANCE_MODEL);
-			ALfloat rolloff = item->rolloff * heightRolloffModifier;
-			ALfloat ref = referenceDistance * CSound::GetElmoInMeters();
+			ALfloat rolloff = ROLLOFF_FACTOR * item->rolloff * heightRolloffModifier;
+			ALfloat ref = referenceDistance * ELMOS_TO_METERS;
 			if ((model == AL_INVERSE_DISTANCE_CLAMPED) || (model == AL_INVERSE_DISTANCE)) {
 				alSourcef(id, AL_REFERENCE_DISTANCE, ((gain - 1.0f) * ref / rolloff) + ref);
 				alSourcef(id, AL_ROLLOFF_FACTOR, (gain + rolloff - 1.0f) / gain);
 				alSourcef(id, AL_GAIN, 1.0f);
 			}
 		} else {
-			alSourcef(id, AL_REFERENCE_DISTANCE, referenceDistance * CSound::GetElmoInMeters());
+			alSourcef(id, AL_REFERENCE_DISTANCE, referenceDistance * ELMOS_TO_METERS);
 		}
 #endif
 	}

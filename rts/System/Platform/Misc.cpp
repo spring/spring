@@ -11,6 +11,9 @@
 #include <process.h>
 #include <shlobj.h>
 #include <shlwapi.h>
+#ifndef SHGFP_TYPE_CURRENT
+	#define SHGFP_TYPE_CURRENT 0
+#endif
 #include "System/Platform/Win/WinVersion.h"
 
 #elif __APPLE__
@@ -26,6 +29,8 @@
 
 #if !defined(WIN32)
 #include <sys/utsname.h> // for uname()
+#include <sys/types.h> // for getpw
+#include <pwd.h> // for getpw
 #endif
 
 #include <cstring>
@@ -64,9 +69,54 @@ static HMODULE GetCurrentModule() {
 }
 #endif // defined WIN32
 
+/**
+ * The user might want to define the user dir manually,
+ * to locate spring related data in a non-default location.
+ * @link http://en.wikipedia.org/wiki/Environment_variable#Synopsis
+ */
+static std::string GetUserDirFromEnvVar()
+{
+#ifdef _WIN32
+	#define HOME_ENV_VAR "LOCALAPPDATA"
+#else
+	#define HOME_ENV_VAR "HOME"
+#endif
+	char* home = getenv(HOME_ENV_VAR);
+#undef HOME_ENV_VAR
+
+	return (home == NULL) ? "" : home;
+}
+
+static std::string GetUserDirFromSystemApi()
+{
+#ifdef _WIN32
+	TCHAR strPath[MAX_PATH + 1];
+	SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, strPath);
+	return strPath;
+#else
+	struct passwd* pw = getpwuid(getuid());
+	return pw->pw_dir;
+#endif
+}
+
 
 namespace Platform
 {
+
+std::string GetUserDir()
+{
+	std::string userDir = GetUserDirFromEnvVar();
+
+	if (userDir.empty()) {
+		// In some cases, the env var is not set,
+		// for example for non-human user accounts,
+		// or when starting through the UI on OS X.
+		// It is unset by default on windows.
+		userDir = GetUserDirFromSystemApi();
+	}
+
+	return userDir;
+}
 
 #ifndef WIN32
 static std::string GetRealPath(const std::string& path) {

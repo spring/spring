@@ -1,15 +1,15 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <cstdio>
-#include <cstdarg>
-#include <map>
-#include <set>
-
 #include "DefaultFilter.h"
 
 #include "Level.h"
 #include "Section.h"
 #include "ILog.h"
+
+#include <cstdio>
+#include <cstdarg>
+#include <map>
+#include <set>
 
 
 #ifdef __cplusplus
@@ -23,41 +23,11 @@ extern void log_backend_record(const char* section, int level,
 		const char* fmt, va_list arguments);
 
 
-/**
- * As all sections are required to be defined as compile-time constants,
- * we may use an address comparison, if the compiler merged constants.
- */
-#if       defined(__GNUC__) && !defined(DEBUG)
-	/**
-	 * GCC does merged constants on -O2+:
-	 * -fmerge-constants
-	 *   Attempt to merge identical constants (string constants and floating
-	 *   point constants) across compilation units. 
-	 *   This option is the default for optimized compilation if the assembler
-	 *   and linker support it. Use -fno-merge-constants to inhibit this
-	 *   behavior. 
-	 *   Enabled at levels -O, -O2, -O3, -Os.
-	 */
-	#define DEFAULT_FILTER_SECTIONS_EQUAL(section1, section2) \
-		(section1 == section2)
-	#define DEFAULT_FILTER_SECTIONS_COMPARE(section1, section2) \
-		(section1 < section2)
-#else  // defined(__GNUC__) && !defined(DEBUG)
-	#include <string.h>
-	#define DEFAULT_FILTER_SECTIONS_EQUAL(section1, section2) \
-		((section1 == section2) \
-		|| ((section1 != NULL) && (section2 != NULL) \
-			&& (strcmp(section1, section2) == 0)))
-	#define DEFAULT_FILTER_SECTIONS_COMPARE(section1, section2) \
-		((section1 == NULL) \
-			|| ((section2 != NULL) && (strcmp(section1, section2) > 0)))
-#endif // defined(__GNUC__) && !defined(DEBUG)
-
 struct log_filter_section_compare {
 	inline bool operator()(const char* const& section1,
 			const char* const& section2) const
 	{
-		return DEFAULT_FILTER_SECTIONS_COMPARE(section1, section2);
+		return LOG_SECTION_COMPARE(section1, section2);
 	}
 };
 
@@ -81,19 +51,17 @@ namespace {
 
 static inline int log_filter_section_getDefaultMinLevel(const char* section) {
 
+	if (LOG_SECTION_IS_DEFAULT(section)) {
 #ifdef DEBUG
-	if (DEFAULT_FILTER_SECTIONS_EQUAL(section, LOG_SECTION_DEFAULT)) {
 		return LOG_LEVEL_DEBUG;
 	} else {
 		return LOG_LEVEL_INFO;
-	}
 #else
-	if (DEFAULT_FILTER_SECTIONS_EQUAL(section, LOG_SECTION_DEFAULT)) {
 		return LOG_LEVEL_INFO;
 	} else {
 		return LOG_LEVEL_WARNING;
-	}
 #endif
+	}
 }
 
 static inline void log_filter_checkCompileTimeMinLevel(int level) {
@@ -196,7 +164,7 @@ bool log_frontend_isEnabled(const char* section, int level) {
 
 void log_frontend_registerSection(const char* section) {
 
-	if (!DEFAULT_FILTER_SECTIONS_EQUAL(section, LOG_SECTION_DEFAULT)) {
+	if (!LOG_SECTION_IS_DEFAULT(section)) {
 		secSet_t& registeredSections = log_filter_getRegisteredSections();
 		secSet_t::const_iterator si = registeredSections.find(section);
 		if (si == registeredSections.end()) {

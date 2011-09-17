@@ -2,6 +2,7 @@
 
 #include "GameParticipant.h"
 
+#include "Sim/Misc/GlobalConstants.h"
 #include "System/Net/Connection.h"
 #include "System/BaseNetProtocol.h"
 
@@ -13,8 +14,8 @@ GameParticipant::GameParticipant()
 , isLocal(false)
 , isReconn(false)
 , isMidgameJoin(false)
-, bandwidthUsage(0)
 {
+	linkData[MAX_AIS] = PlayerLinkData(false);
 }
 
 void GameParticipant::SendData(boost::shared_ptr<const netcode::RawPacket> packet)
@@ -26,6 +27,7 @@ void GameParticipant::SendData(boost::shared_ptr<const netcode::RawPacket> packe
 void GameParticipant::Connected(boost::shared_ptr<netcode::CConnection> _link, bool local)
 {
 	link = _link;
+	linkData[MAX_AIS].link.reset(new netcode::CLoopbackConnection());
 	isLocal = local;
 	myState = CONNECTED;
 }
@@ -38,6 +40,7 @@ void GameParticipant::Kill(const std::string& reason)
 		link->Close();
 		link.reset();
 	}
+	linkData[MAX_AIS].link.reset();
 #ifdef SYNCCHECK
 	syncResponse.clear();
 #endif

@@ -16,6 +16,7 @@
 
 #include "System/Platform/Win/win32.h"
 #include <sstream>
+#include <cassert>
 #include <string.h>
 
 #include "System/Log/ILog.h"
@@ -44,6 +45,12 @@ DataDir::DataDir(const std::string& path)
 DataDirLocater::DataDirLocater()
 	: writeDir(NULL)
 {
+}
+
+const std::vector<DataDir>& DataDirLocater::GetDataDirs() const {
+
+	assert(!dataDirs.empty());
+	return dataDirs;
 }
 
 std::string DataDirLocater::SubstEnvVars(const std::string& in) const
@@ -126,7 +133,7 @@ bool DataDirLocater::DeterminePermissions(DataDir* dataDir)
 	if (dataDir->path.find("..") != std::string::npos)
 #endif
 	{
-		throw content_error(std::string("Error: datadir specified with relative path: \"") + dataDir->path + "\""); // FIXME remove "Error: " prefix
+		throw content_error(std::string("a datadir may not be specified with a relative path: \"") + dataDir->path + "\"");
 	}
 	// Figure out whether we have read/write permissions
 	// First check read access, if we got that, check write access too
@@ -227,25 +234,38 @@ void DataDirLocater::LocateDataDirs()
 
 #if    defined(WIN32)
 	// fetch my documents path
-	TCHAR pathMyDocs[MAX_PATH];
-	SHGetFolderPath( NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, pathMyDocs);
+	std::string pathMyDocs;
+	// TODO instead of USERPROFILE/CSIDL_PERSONAL we should probably be using LOCALAPPDATA/CSIDL_LOCAL_APPDATA (or at least in addition to USERPROFILE)
+	// see http://en.wikipedia.org/wiki/Environment_variable#Synopsis
+	char* pathMyDocsEnv = getenv("USERPROFILE");
+	if (pathMyDocsEnv == NULL) {
+		TCHAR pathMyDocsC[MAX_PATH];
+		SHGetFolderPath(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, pathMyDocsC);
+		pathMyDocs = pathMyDocsC;
+	} else {
+		pathMyDocs = pathMyDocsEnv;
+	}
 
-	// fetch app-data path
-	TCHAR pathAppData[MAX_PATH];
-	SHGetFolderPath( NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, pathAppData);
-
-	std::string dd_myDocs = pathMyDocs;
 	// e.g. F:\Dokumente und Einstellungen\Karl-Robert\Eigene Dateien\Spring
-	dd_myDocs += "\\Spring";
+	const std::string dd_myDocs = pathMyDocs + "\\Spring";
 
-	std::string dd_myDocsMyGames = pathMyDocs;
 	// My Documents\My Games seems to be the MS standard even if no official guidelines exist
 	// most if not all new Games For Windows(TM) games use this dir
-	dd_myDocsMyGames += "\\My Games\\Spring";
+	const std::string dd_myDocsMyGames = pathMyDocs + "\\My Games\\Spring";
 
-	std::string dd_appData = pathAppData;
+	// fetch common app-data path
+	std::string pathAppData;
+	char* pathAppDataEnv = getenv("PROGRAMDATA");
+	if (pathAppDataEnv == NULL) {
+		TCHAR pathAppDataC[MAX_PATH];
+		SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, pathAppDataC);
+		pathAppData = pathAppDataC;
+	} else {
+		pathAppData = pathAppDataEnv;
+	}
+
 	// e.g. F:\Dokumente und Einstellungen\All Users\Anwendungsdaten\Spring
-	dd_appData += "\\Spring";
+	const std::string dd_appData = pathAppData + "\\Spring";
 #else // *nix (-OSX)
 	// settings in /etc
 	std::string dd_etc = "";
@@ -309,7 +329,7 @@ void DataDirLocater::LocateDataDirs()
 
 		// we need this as default writeable dir, because the Bundle.pp dir
 		// might not be writeable by the user starting the game
-		AddDirs(SubstEnvVars("$HOME/.spring")); // "~/.spring/"
+		AddDirs(Platform::GetUserDir() + "/.spring"); // "~/.spring/"
 		AddDirs(dd_curWorkDirData);             // "Spring.app/Contents/Resources/share/games/spring"
 		AddDirs(dd_etc);                        // from /etc/spring/datadir
 
@@ -317,7 +337,7 @@ void DataDirLocater::LocateDataDirs()
 		// Linux, FreeBSD, Solaris, Apple non-bundle
 
 		AddCwdOrParentDir(dd_curWorkDir); // "./" or "../"
-		AddDirs(SubstEnvVars("$HOME/.spring")); // "~/.spring/"
+		AddDirs(Platform::GetUserDir() + "/.spring"); // "~/.spring/"
 		AddDirs(dd_etc);            // from /etc/spring/datadir
 #endif
 
@@ -428,6 +448,7 @@ std::string DataDirLocater::GetWriteDirPath() const
 
 std::vector<std::string> DataDirLocater::GetDataDirPaths() const
 {
+	assert(!dataDirs.empty());
 	std::vector<std::string> dataDirPaths;
 
 	const std::vector<DataDir>& datadirs = GetDataDirs();

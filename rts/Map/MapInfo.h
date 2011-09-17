@@ -1,13 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef MAPINFO_H
-#define MAPINFO_H
-
-#include <string>
-#include <vector>
+#ifndef MAP_INFO_H
+#define MAP_INFO_H
 
 #include "System/float3.h"
 #include "System/float4.h"
+
+#include <string>
+#include <vector>
 
 class LuaTable;
 class MapParser;
@@ -15,13 +15,14 @@ class MapParser;
 	struct EAXSfxProps;
 #endif
 
+
 class CMapInfo
 {
 public:
 	/**
-	@param mapInfoFile mapinfo file, aka sm3 / smf (full path)
-	@param mapName human readable mapname e.g. DeltaSiegeDry
-	*/
+	 * @param mapInfoFile mapinfo file, aka sm3 / smf (full path)
+	 * @param mapName human readable mapname e.g. DeltaSiegeDry
+	 */
 	CMapInfo(const std::string& mapInfoFile, const std::string& mapName);
 	~CMapInfo();
 
@@ -227,4 +228,4 @@ private:
 
 extern const CMapInfo* mapInfo;
 
-#endif // MAPINFO_H
+#endif // MAP_INFO_H

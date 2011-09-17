@@ -4,8 +4,8 @@
 
 #include "UnitScriptEngine.h"
 #include "UnitScript.h"
+#include "UnitScriptLog.h"
 
-#include "System/LogOutput.h"
 #include "System/FileSystem/FileHandler.h"
 
 #ifndef _CONSOLE
@@ -46,7 +46,7 @@ void CUnitScriptEngine::CheckForDuplicates(const char* name, CUnitScript* instan
 	}
 
 	if (found > 1)
-		logOutput.Print("Warning: %s found duplicates %d", name, found);
+		LOG_L(L_WARNING, "%s found duplicates %d", name, found);
 }
 
 

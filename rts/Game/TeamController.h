@@ -1,11 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _TEAM_CONTROLLER_H
-#define _TEAM_CONTROLLER_H
+#ifndef TEAM_CONTROLLER_H
+#define TEAM_CONTROLLER_H
 
 #include "System/Platform/byteorder.h" // for swabDWord
 
 #include <string>
+
 
 /**
  * Acts as a base class for everything that can control a team,
@@ -71,4 +72,4 @@ protected:
 	}
 };
 
-#endif // _TEAM_CONTROLLER_H
+#endif // TEAM_CONTROLLER_H

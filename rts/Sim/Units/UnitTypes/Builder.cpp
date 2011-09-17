@@ -27,7 +27,6 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "System/EventHandler.h"
-#include "System/LogOutput.h"
 #include "System/Log/ILog.h"
 #include "System/Sound/SoundChannels.h"
 #include "System/mmgr.h"
@@ -370,7 +369,7 @@ void CBuilder::Update()
 							// capture failed
 							if (team == gu->myTeam) {
 								LOG_L(L_WARNING, "%s: Capture failed, unit type limit reached", unitDef->humanName.c_str());
-								logOutput.SetLastMsgPos(pos);
+								eventHandler.LastMessagePosition(pos);
 							}
 						}
 						curCapture->captureProgress=0.0f;
@@ -757,6 +756,10 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 
 
 void CBuilder::DeleteDeathDependence(CObject* o, DependenceType dep) {
+	/* curBuild, lastAttacker, userTarget etc. are NOT mutually exclusive, 
+	   and we can therefore only call CUnit::DeleteDeathDependence if we are
+	   certain that no references to the object in question still exist
+	*/
 	switch(dep) {
 		case DEPENDENCE_ATTACKER:
 		case DEPENDENCE_BUILDER:
@@ -781,5 +784,6 @@ void CBuilder::DeleteDeathDependence(CObject* o, DependenceType dep) {
 			if(o == curBuild || o == curCapture || o == curReclaim) return;
 			break;
 	}
+
 	CUnit::DeleteDeathDependence(o, dep);
 }

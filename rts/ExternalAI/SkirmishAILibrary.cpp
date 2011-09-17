@@ -5,9 +5,11 @@
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/AIInterfaceKey.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "System/Log/ILog.h"
 
 #include <string>
+
 
 CSkirmishAILibrary::CSkirmishAILibrary(const SSkirmishAILibrary& ai,
 		const SkirmishAIKey& key)
@@ -89,7 +91,9 @@ bool CSkirmishAILibrary::Release(int skirmishAIId) const
 
 int CSkirmishAILibrary::HandleEvent(int skirmishAIId, int topic, const void* data) const
 {
+	skirmishAIHandler.SetCurrentAIID(skirmishAIId);
 	int ret = sSAI.handleEvent(skirmishAIId, topic, data);
+	skirmishAIHandler.SetCurrentAIID(MAX_AIS);
 
 	if (ret != 0) {
 		// event handling failed!

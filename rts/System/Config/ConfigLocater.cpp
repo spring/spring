@@ -8,11 +8,6 @@
 	#include <io.h>
 	#include <direct.h>
 	#include <windows.h>
-	#include <shlobj.h>
-	#include <shlwapi.h>
-	#ifndef SHGFP_TYPE_CURRENT
-		#define SHGFP_TYPE_CURRENT 0
-	#endif
 #endif
 #include <stdlib.h>
 #include "Game/GameVersion.h"
@@ -27,6 +22,10 @@ static void GetPortableLocations(vector<string>& locations)
 {
 	string binaryPath = Platform::GetProcessExecutablePath() + "/";
 	string portableConfPath = binaryPath + "springsettings.cfg";
+	// lets see if the file is writable
+	// (otherwise it can fail/segfault/end up in virtualstore...)
+	// _access modes: 0 - exists; 2 - write; 4 - read; 6 - r/w
+	// doesn't work on directories (precisely, mode is always 0)
 	if (access(portableConfPath.c_str(), 6) != -1) {
 		locations.push_back(portableConfPath);
 	}
@@ -36,7 +35,7 @@ static void GetPlatformLocations(vector<string>& locations)
 {
 #ifndef _WIN32
 	const string base = ".springrc";
-	const string home = getenv("HOME");
+	const string home = Platform::GetUserDir();
 
 	const string defCfg = home + "/" + base;
 	const string verCfg = defCfg + "-" + SpringVersion::Get();
@@ -47,19 +46,15 @@ static void GetPlatformLocations(vector<string>& locations)
 	}
 	locations.push_back(defCfg); // use the default config file
 #else
-	// first, check if there exists a config file in the same directory as the exe
-	// and if the file is writable (otherwise it can fail/segfault/end up in virtualstore...)
-	// _access modes: 0 - exists; 2 - write; 4 - read; 6 - r/w
-	// doesn't work on directories (precisely, mode is always 0)
-	TCHAR strPath[MAX_PATH+1];
-	SHGetFolderPath( NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, strPath);
-	const string userDir = strPath;
+	// e.g. "C:\Users\USER\AppData\Local"
+	const string userDir = Platform::GetUserDir();
+
 	const string verConfigPath = userDir + "\\springsettings-" + SpringVersion::Get() + ".cfg";
 	if (_access(verConfigPath.c_str(), 6) != -1) { // check for read & write access
 		locations.push_back(verConfigPath);
 	}
-	// e.g. F:\Documents and Settings\MyUser\Local Settings\App Data
-	locations.push_back(string(strPath) + "\\springsettings.cfg");
+
+	locations.push_back(userDir + "\\springsettings.cfg");
 #endif
 }
 
@@ -68,6 +63,7 @@ static void GetPlatformLocations(vector<string>& locations)
  */
 void ConfigLocater::GetDefaultLocations(vector<string>& locations)
 {
+	// check if there exists a config file in the same directory as the exe
 	GetPortableLocations(locations);
 
 	// portable implies isolated:

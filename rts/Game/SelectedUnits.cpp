@@ -1,20 +1,18 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <map>
-#include <SDL_keysym.h>
-
-#include "System/mmgr.h"
-
 #include "SelectedUnits.h"
+
 #include "SelectedUnitsAI.h"
 #include "Camera.h"
 #include "GlobalUnsynced.h"
 #include "WaitCommandsAI.h"
+#include "Player.h"
 #include "PlayerHandler.h"
 #include "UI/CommandColors.h"
 #include "UI/GuiHandler.h"
 #include "UI/TooltipConsole.h"
 #include "ExternalAI/EngineOutHandler.h"
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "Rendering/CommandDrawer.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/GL/myGL.h"
@@ -35,10 +33,15 @@
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
+#include "System/mmgr.h"
 #include "System/NetProtocol.h"
 #include "System/Net/PackPacket.h"
 #include "System/Input/KeyInput.h"
 #include "System/Sound/SoundChannels.h"
+
+#include <SDL_keysym.h>
+#include <map>
+
 
 #define PLAY_SOUNDS 1
 
@@ -648,6 +651,7 @@ void CSelectedUnits::DrawCommands()
 	glLineWidth(cmdColors.QueuedLineWidth());
 
 	GML_RECMUTEX_LOCK(unit); // DrawCommands
+	GML_RECMUTEX_LOCK(feat); // DrawCommands
 	GML_RECMUTEX_LOCK(grpsel); // DrawCommands
 	GML_STDMUTEX_LOCK(cai); // DrawCommands
 
@@ -831,7 +835,7 @@ void CSelectedUnits::SendCommandsToUnits(const std::vector<int>& unitIDs, const 
 	}
 
 	unsigned msgLen = 0;
-	msgLen += (1 + 2 + 1); // msg type, msg size, player ID
+	msgLen += (1 + 2 + 1 + 1); // msg type, msg size, player ID, AI ID
 	msgLen += 2; // unitID count
 	msgLen += unitIDCount * 2;
 	msgLen += 2; // command count
@@ -845,7 +849,8 @@ void CSelectedUnits::SendCommandsToUnits(const std::vector<int>& unitIDs, const 
 	netcode::PackPacket* packet = new netcode::PackPacket(msgLen);
 	*packet << static_cast<unsigned char>(NETMSG_AICOMMANDS)
 	        << static_cast<unsigned short>(msgLen)
-	        << static_cast<unsigned char>(gu->myPlayerNum);
+	        << static_cast<unsigned char>(gu->myPlayerNum)
+	        << skirmishAIHandler.GetCurrentAIID();
 
 	*packet << static_cast<unsigned short>(unitIDCount);
 	for (std::vector<int>::const_iterator it = unitIDs.begin(); it != unitIDs.end(); ++it)

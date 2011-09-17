@@ -90,7 +90,6 @@ public:
 	AtlasedTexture* randdotstex;
 	AtlasedTexture* smoketrailtex;
 	AtlasedTexture* waketex;
-	std::vector<AtlasedTexture*> smoketex;
 	AtlasedTexture* perlintex;
 	AtlasedTexture* flametex;
 
@@ -99,7 +98,11 @@ public:
 
 	AtlasedTexture* seismictex;
 
+	std::vector<const AtlasedTexture*> smoketex;
+
 private:
+	void ParseAtlasTextures(const bool, const LuaTable&, std::set<std::string>&, CTextureAtlas*);
+
 	void DrawProjectiles(int modelType, int numFlyingPieces, int* drawnPieces, bool drawReflection, bool drawRefraction);
 	void DrawProjectilesSet(std::set<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction);
 	void DrawProjectile(CProjectile* projectile, bool drawReflection, bool drawRefraction);

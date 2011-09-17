@@ -15,7 +15,7 @@
 #include "Game/GameServer.h"
 #include "Game/GlobalUnsynced.h"
 #include "System/Log/ILog.h"
-#include "System/LogOutput.h"
+#include "System/Log/LogSinkHandler.h"
 #include "System/Util.h"
 
 #if !defined(DEDICATED) || defined(_MSC_VER)
@@ -36,7 +36,7 @@
 
 static void ExitMessage(const std::string& msg, const std::string& caption, unsigned int flags, bool forced)
 {
-	logOutput.SetSubscribersEnabled(false);
+	logSinkHandler.SetSinking(false);
 	if (forced) {
 		LOG_L(L_ERROR, "failed to shutdown normally, exit forced");
 	}

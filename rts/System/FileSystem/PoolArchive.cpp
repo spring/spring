@@ -54,7 +54,7 @@ CPoolArchive::CPoolArchive(const std::string& name)
 
 	gzFile in = gzopen(name.c_str(), "rb");
 	if (in == NULL) {
-		LOG_L(L_ERROR, "Error opening %s", name.c_str());
+		LOG_L(L_ERROR, "couldn't open %s", name.c_str());
 		return;
 	}
 
@@ -138,8 +138,10 @@ bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& bu
 	FileSystem::FixSlashes(rpath);
 	std::string path = dataDirsAccess.LocateFile(rpath);
 	gzFile in = gzopen(path.c_str(), "rb");
-	if (in == NULL)
+	if (in == NULL){
+		LOG_L(L_ERROR, "couldn't open %s", path.c_str());
 		return false;
+	}
 
 	unsigned int len = f->size;
 	buffer.resize(len);
@@ -148,6 +150,7 @@ bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& bu
 	gzclose(in);
 
 	if (bytesread != len) {
+		LOG_L(L_ERROR, "couldn't read %s", path.c_str());
 		buffer.clear();
 		return false;
 	}

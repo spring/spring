@@ -10,7 +10,6 @@
 #include "Rendering/Env/IWater.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "Sim/Misc/Wind.h"
 
 CR_BIND_DERIVED(CWakeProjectile, CProjectile, (ZeroVector, ZeroVector, 0.0f, 0.0f, NULL, 0.0f, 0.0f, 0.0f));
 
@@ -44,18 +43,12 @@ CWakeProjectile::CWakeProjectile(const float3& pos, const float3& speed, float s
 	rotation = gu->usRandFloat() * PI*2;
 	rotSpeed = (gu->usRandFloat() - 0.5f) * PI*2*0.01f;
 	checkCol = false;
-	if (IWater::IsNoWakeProjectiles()) {
+	if (water->BlockWakeProjectiles()) {
 		alpha = 0;
 		alphaAddTime = 0;
 		size = 0;
 	}
 }
-
-CWakeProjectile::~CWakeProjectile()
-{
-
-}
-
 
 void CWakeProjectile::Update()
 {
@@ -83,8 +76,8 @@ void CWakeProjectile::Draw()
 	col[2] = (unsigned char) (255 * alpha);
 	col[3] = (unsigned char) (255 * alpha)/*-alphaFalloff*globalRendering->timeOffset*/;
 
-	float interSize = size+sizeExpansion * globalRendering->timeOffset;
-	float interRot = rotation+rotSpeed * globalRendering->timeOffset;
+	float interSize = size + sizeExpansion * globalRendering->timeOffset;
+	float interRot = rotation + rotSpeed * globalRendering->timeOffset;
 
 	const float3 dir1 = float3(cos(interRot), 0, sin(interRot)) * interSize;
 	const float3 dir2 = dir1.cross(UpVector);

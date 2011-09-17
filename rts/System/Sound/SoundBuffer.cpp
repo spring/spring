@@ -71,7 +71,7 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<boost::uint8_t> b
 {
 	WAVHeader* header = (WAVHeader*)(&buffer[0]);
 
-	if (memcmp(header->riff, "RIFF", 4) || memcmp(header->wavefmt, "WAVEfmt", 7)) {
+	if ((buffer.empty()) || memcmp(header->riff, "RIFF", 4) || memcmp(header->wavefmt, "WAVEfmt", 7)) {
 		if (strict) {
 			ErrorMessageBox("ReadWAV: invalid header.", file, 0);
 		}

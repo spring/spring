@@ -35,16 +35,17 @@ CCamera::CCamera()
 	: pos(2000.0f, 70.0f, 1800.0f)
 	, rot(0.0f, 0.0f, 0.0f)
 	, forward(1.0f, 0.0f, 0.0f)
-	, posOffset(0.0f, 0.0f, 0.0f)
-	, tiltOffset(0.0f, 0.0f, 0.0f)
-	, lppScale(0.0f)
-	, viewMatrixD(16, 0.)
-	, projectionMatrixD(16, 0.)
+	, up(UpVector)
+	, posOffset(ZeroVector)
+	, tiltOffset(ZeroVector)
+	, viewMatrixD(16, 0.0)
+	, projectionMatrixD(16, 0.0)
 	, fov(0.0f)
 	, halfFov(0.0f)
 	, tanHalfFov(0.0f)
+	, lppScale(0.0f)
 {
-	memset(viewport, 0, 4*sizeof(int));
+	memset(viewport, 0, 4 * sizeof(int));
 
 	// stuff that will not change can be initialised here,
 	// so it does not need to be reinitialised every update
@@ -52,22 +53,33 @@ CCamera::CCamera()
 	billboardMatrix[15] = 1.0f;
 
 	SetFov(45.0f);
+}
 
-	up = UpVector;
+void CCamera::CopyState(const CCamera* cam) {
+	topFrustumSideDir = cam->topFrustumSideDir;
+	botFrustumSideDir = cam->botFrustumSideDir;
+	rgtFrustumSideDir = cam->rgtFrustumSideDir;
+	lftFrustumSideDir = cam->lftFrustumSideDir;
+
+	forward   = cam->forward;
+	right     = cam->right;
+	up        = cam->up;
+
+	pos       = cam->pos;
+	rot       = cam->rot;
+
+	lppScale  = cam->lppScale;
 }
 
 
-void CCamera::Update(bool freeze, bool resetUp)
+void CCamera::Update(bool resetUp)
 {
-	pos2 = pos;
-
 	if (resetUp) {
 		up = UpVector;
 	}
 
 	right = forward.cross(up);
 	right.UnsafeANormalize();
-
 	up = right.cross(forward);
 	up.UnsafeANormalize();
 
@@ -78,30 +90,20 @@ void CCamera::Update(bool freeze, bool resetUp)
 	if (globalRendering->viewSizeY <= 0) {
 		lppScale = 0.0f;
 	} else {
-		const float span = 2.0f * tanHalfFov;
-		lppScale = span / (float) globalRendering->viewSizeY;
+		lppScale = (2.0f * tanHalfFov) / globalRendering->viewSizeY;
 	}
 
 	const float3 forwardy = (-forward * viewy);
 	const float3 forwardx = (-forward * viewx);
 
-	top       = (forwardy +    up).UnsafeANormalize();
-	bottom    = (forwardy -    up).UnsafeANormalize();
-	rightside = (forwardx + right).UnsafeANormalize();
-	leftside  = (forwardx - right).UnsafeANormalize();
+	// note: top- and bottom-dir should be parallel to <forward>
+	topFrustumSideDir = (forwardy +    up).UnsafeANormalize();
+	botFrustumSideDir = (forwardy -    up).UnsafeANormalize();
+	rgtFrustumSideDir = (forwardx + right).UnsafeANormalize();
+	lftFrustumSideDir = (forwardx - right).UnsafeANormalize();
 
-	if (!freeze) {
-		cam2->bottom    = bottom;
-		cam2->forward   = forward;
-		cam2->leftside  = leftside;
-		cam2->pos       = pos;
-		cam2->right     = right;
-		cam2->rightside = rightside;
-		cam2->rot       = rot;
-		cam2->top       = top;
-		cam2->up        = up;
-		cam2->lppScale  = lppScale;
-	}
+	if (this == camera)
+		cam2->CopyState(this);
 
 	const float gndHeight = ground->GetHeightAboveWater(pos.x, pos.z, false);
 	const float rangemod = 1.0f + std::max(0.0f, pos.y - gndHeight - 500.0f) * 0.0003f;
@@ -140,8 +142,8 @@ void CCamera::Update(bool freeze, bool resetUp)
 	// Billboard Matrix
 	billboardMatrix = viewMatrix;
 	billboardMatrix.SetPos(ZeroVector);
-	billboardMatrix.Transpose(); //! viewMatrix is affine, equals inverse
-	billboardMatrix[15] = 1.0f; //! SetPos() touches m[15]
+	billboardMatrix.Transpose(); // viewMatrix is affine, equals inverse
+	billboardMatrix[15] = 1.0f; // SetPos() touches m[15]
 
 	// viewport
 	viewport[0] = 0;
@@ -165,13 +167,12 @@ static inline bool AABBInOriginPlane(const float3& plane, const float3& camPos,
 bool CCamera::InView(const float3& mins, const float3& maxs) const
 {
 	// Axis-aligned bounding box test  (AABB)
-	if (AABBInOriginPlane(rightside, pos, mins, maxs) &&
-	    AABBInOriginPlane(leftside,  pos, mins, maxs) &&
-	    AABBInOriginPlane(bottom,    pos, mins, maxs) &&
-	    AABBInOriginPlane(top,       pos, mins, maxs)) {
-		return true;
-	}
-	return false;
+	if (!AABBInOriginPlane(rgtFrustumSideDir, pos, mins, maxs)) return false;
+	if (!AABBInOriginPlane(lftFrustumSideDir, pos, mins, maxs)) return false;
+	if (!AABBInOriginPlane(botFrustumSideDir, pos, mins, maxs)) return false;
+	if (!AABBInOriginPlane(topFrustumSideDir, pos, mins, maxs)) return false;
+
+	return true;
 }
 
 bool CCamera::InView(const float3& p, float radius) const
@@ -179,17 +180,14 @@ bool CCamera::InView(const float3& p, float radius) const
 	const float3 t   = (p - pos);
 	const float  lsq = t.SqLength();
 
-	if (lsq < 2500.0f) { //FIXME WHY?
-		return true;
-	}
-	else if (lsq > Square(globalRendering->viewRange)) {
+	if (lsq > Square(globalRendering->viewRange)) {
 		return false;
 	}
 
-	if ((t.dot(rightside) > radius) ||
-	    (t.dot(leftside)  > radius) ||
-	    (t.dot(bottom)    > radius) ||
-	    (t.dot(top)       > radius)) {
+	if ((t.dot(rgtFrustumSideDir) > radius) ||
+	    (t.dot(lftFrustumSideDir) > radius) ||
+	    (t.dot(botFrustumSideDir) > radius) ||
+	    (t.dot(topFrustumSideDir) > radius)) {
 		return false;
 	}
 
@@ -209,7 +207,7 @@ void CCamera::UpdateForward()
 void CCamera::SetFov(float myfov)
 {
 	fov = myfov;
-	halfFov = fov * 0.5f * PI / 180.f;
+	halfFov = (fov * 0.5f) * (PI / 180.f);
 	tanHalfFov = tan(halfFov);
 }
 
@@ -285,61 +283,90 @@ inline void CCamera::myGluLookAt(const float3& eye, const float3& center, const 
 
 
 
-void CCamera::GetFrustumSides(float miny, float maxy, float scale, bool leftSideOnly) {
+void CCamera::GetFrustumSides(float miny, float maxy, float scale, bool negSide) {
 	ClearFrustumSides();
-	GetFrustumSide(bottom,    ZeroVector,  miny, maxy, scale,  (bottom.y    > 0.0f), leftSideOnly, false);
-	GetFrustumSide(top,       ZeroVector,  miny, maxy, scale,  (top.y       > 0.0f), leftSideOnly, true);
-	GetFrustumSide(rightside, ZeroVector,  miny, maxy, scale,  (rightside.y > 0.0f), leftSideOnly, false);
-	GetFrustumSide(leftside,  ZeroVector,  miny, maxy, scale,  (leftside.y  > 0.0f), leftSideOnly, false);
+	// note: order does not matter
+	GetFrustumSide(topFrustumSideDir, ZeroVector,  miny, maxy, scale,  (topFrustumSideDir.y > 0.0f), negSide);
+	GetFrustumSide(botFrustumSideDir, ZeroVector,  miny, maxy, scale,  (botFrustumSideDir.y > 0.0f), negSide);
+	GetFrustumSide(lftFrustumSideDir, ZeroVector,  miny, maxy, scale,  (lftFrustumSideDir.y > 0.0f), negSide);
+	GetFrustumSide(rgtFrustumSideDir, ZeroVector,  miny, maxy, scale,  (rgtFrustumSideDir.y > 0.0f), negSide);
 }
 
 void CCamera::GetFrustumSide(
-	const float3& side,
+	const float3& zdir,
 	const float3& offset,
 	float miny,
 	float maxy,
 	float scale,
-	bool sideAscending,
-	bool leftSideOnly,
-	bool topSide)
+	bool upwardDir,
+	bool negSide)
 {
-	// get vector for collision between frustum-side and horizontal plane
-	float3 b = UpVector.cross(side);
-	float3 a = UpVector.cross(forward);
+	// compose an orthonormal axis-system around <zdir>
+	float3 xdir = (zdir.cross(UpVector)).UnsafeANormalize();
+	float3 ydir = (zdir.cross(xdir)).UnsafeANormalize();
 
-	if (side.SqLength() < 0.1f) {
-		b = float3(1.0f, 0.0f, 0.0f);
-	}
-	// prevent DIV0's when calculating line.dir
-	if (fabs(b.z) < 0.0001f) {
-		b.z = 0.0001f;
-	}
+	// intersection of vector from <pos> along <ydir> with xz-plane
+	float3 pInt;
 
-	float3 c = b.cross(side);  // get vector from camera to collision line
-	float3 p;                  // collision point on the horizontal plane
+	// prevent DIV0 when calculating line.dir
+	if (fabs(xdir.z) < 0.001f)
+		xdir.z = 0.001f;
 
-	const bool upwardOr = (b.dot(a) < 0.0f);
-	const bool leftSide = leftSideOnly || (b.z > 0.0f);
-	const bool flipLeft = upwardOr && topSide;
-
-	if (sideAscending) {
-		p = pos + offset - c * ((pos.y - miny) / c.y);
-	} else {
-		p = pos + offset - c * ((pos.y - maxy) / c.y);
+	if (ydir.y != 0.0f) {
+		// if <zdir> is angled toward the sky instead of the ground,
+		// subtract <miny> from the camera's y-position, else <maxy>
+		if (upwardDir) {
+			pInt = (pos + offset) - ydir * ((pos.y - miny) / ydir.y);
+		} else {
+			pInt = (pos + offset) - ydir * ((pos.y - maxy) / ydir.y);
+		}
 	}
 
-	// get intersection between p and z-axis
+	// <line.dir> is the direction coefficient (0 ==> parallel to z-axis, inf ==> parallel to x-axis)
+	// in the xz-plane; <line.base> is the x-coordinate at which line intersects x-axis; <line.sign>
+	// indicates line direction, ie. left-to-right (whenever <xdir.z> is negative) or right-to-left
+	// NOTE:
+	//     (b.x / b.z) is actually the reciprocal of the DC (ie. the number of steps along +x for
+	//     one step along +y); the world z-axis is inverted wrt. a regular Carthesian grid, so the
+	//     DC is also inverted
 	FrustumLine line;
-	line.dir  = (b.x / b.z);
-	line.base = (p.x - p.z * line.dir) / scale;
-	line.left = (b.z > 0.0f)? 1: -1;
-	line.left *= (sideAscending && flipLeft)? -1: 1;
-	line.minz = -500.0f;
-	line.maxz = (gs->mapy * SQUARE_SIZE) + 500.0f;
+	line.dir  = (xdir.x / xdir.z);
+	line.base = (pInt.x - (pInt.z * line.dir)) / scale;
+	line.sign = (xdir.z <= 0.0f)? 1: -1;
+	line.minz = (                  0.0f) - (gs->mapy);
+	line.maxz = (gs->mapy * SQUARE_SIZE) + (gs->mapy);
 
-	if (leftSide) {
-		leftFrustumSides.push_back(line);
+	if (line.sign == 1 || negSide) {
+		negFrustumSides.push_back(line);
 	} else {
-		rightFrustumSides.push_back(line);
+		posFrustumSides.push_back(line);
+	}
+}
+
+void CCamera::ClipFrustumLines(bool neg, const float zmin, const float zmax) {
+	std::vector<FrustumLine>& lines = neg? negFrustumSides: posFrustumSides;
+	std::vector<FrustumLine>::iterator fli, fli2;
+
+	for (fli = lines.begin(); fli != lines.end(); ++fli) {
+		for (fli2 = lines.begin(); fli2 != lines.end(); ++fli2) {
+			if (fli == fli2)
+				continue;
+
+			const float dbase = fli->base - fli2->base;
+			const float ddir = fli->dir - fli2->dir;
+
+			if (ddir == 0.0f)
+				continue;
+
+			const float colz = -(dbase / ddir);
+
+			if ((fli2->sign * ddir) > 0.0f) {
+				if ((colz > fli->minz) && (colz < zmax))
+					fli->minz = colz;
+			} else {
+				if ((colz < fli->maxz) && (colz > zmin))
+					fli->maxz = colz;
+			}
+		}
 	}
 }

@@ -17,6 +17,12 @@
 # Quit on error.
 set -e
 
+if [ ! -n "$1" ] && [ ! -n "$2" ]; then
+	echo "Please run with $0 <config> <branch>"
+	exit 1
+fi
+
+
 CONFIG=${1:-default}
 BRANCH=${2:-master}
 shift 2

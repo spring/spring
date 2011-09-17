@@ -67,6 +67,7 @@ class LuaUnsyncedRead {
 		static int HaveAdvShading(lua_State* L);
 		static int GetWaterMode(lua_State* L);
 		static int GetMapDrawMode(lua_State* L);
+		static int GetMapSquareTexture(lua_State* L);
 
 		static int GetCameraNames(lua_State* L);
 		static int GetCameraState(lua_State* L);

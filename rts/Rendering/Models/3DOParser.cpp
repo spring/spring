@@ -1,14 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <vector>
-#include <set>
-#include <algorithm>
-#include <cctype>
-#include <locale>
-#include <stdexcept>
+#include "3DOParser.h"
+
 #include "System/mmgr.h"
 
-#include "3DOParser.h"
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -16,12 +11,19 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
-#include "System/LogOutput.h"
 #include "System/Matrix44f.h"
+#include "System/Log/ILog.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Platform/byteorder.h"
+
+#include <vector>
+#include <set>
+#include <algorithm>
+#include <cctype>
+#include <locale>
+#include <stdexcept>
 #include <boost/cstdint.hpp>
 
 using std::list;
@@ -239,8 +241,8 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim
 		}
 
 		if ((sp.texture = texturehandler3DO->Get3DOTexture(texName)) == NULL) {
-			LogObject() << "[" << __FUNCTION__ << "] ";
-			LogObject() << "unknown 3DO texture \"" << texName << "\" for piece \"" << obj->name << "\"\n";
+			LOG_L(L_WARNING, "[%s] unknown 3DO texture \"%s\" for piece \"%s\"",
+					__FUNCTION__, texName.c_str(), obj->name.c_str());
 
 			// assign a dummy texture (the entire atlas)
 			sp.texture = texturehandler3DO->Get3DOTexture("___dummy___");
