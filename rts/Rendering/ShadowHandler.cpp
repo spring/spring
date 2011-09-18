@@ -35,17 +35,34 @@ CONFIG(int, ShadowMapSize).defaultValue(DEFAULT_SHADOWMAPSIZE);
 CShadowHandler* shadowHandler = NULL;
 
 bool CShadowHandler::shadowsSupported = false;
-bool CShadowHandler::firstInstance = true;
+bool CShadowHandler::firstInit = true;
 
 
-CShadowHandler::CShadowHandler()
+void CShadowHandler::Reload(const char* args)
 {
-	const int configValue = configHandler->GetInt("Shadows");
-	const bool tmpFirstInstance = firstInstance;
-	firstInstance = false;
+	int nextShadowConfig = (shadowConfig + 1) & 0xF;
+	int nextShadowMapSize = DEFAULT_SHADOWMAPSIZE;
 
-	shadowModeMask = SHADOWMODE_NONE;
+	if (args != NULL) {
+		if (sscanf(args, "%i %i", &nextShadowConfig, &nextShadowMapSize) > 1) {
+			configHandler->Set("ShadowMapSize", nextShadowMapSize);
+		}
+	}
+
+	configHandler->Set("Shadows", nextShadowConfig & 0xF);
+
+	Kill();
+	Init();
+}
+
+void CShadowHandler::Init()
+{
+	const bool tmpFirstInit = firstInit;
+	firstInit = false;
+
+	shadowConfig = configHandler->GetInt("Shadows");
 	shadowMapSize = configHandler->GetInt("ShadowMapSize");
+	shadowModeMask = SHADOWMODE_NONE;
 
 	shadowsLoaded = false;
 	inShadowPass = false;
@@ -53,7 +70,7 @@ CShadowHandler::CShadowHandler()
 	shadowTexture = 0;
 	dummyColorTexture = 0;
 
-	if (!tmpFirstInstance && !shadowsSupported) {
+	if (!tmpFirstInit && !shadowsSupported) {
 		return;
 	}
 
@@ -61,19 +78,19 @@ CShadowHandler::CShadowHandler()
 	// < 0: disable and don't try to initialize
 	//   0: disable, but still check if the hardware is able to run them
 	// > 0: enabled (by default for all shadow-casting geometry if equal to 1)
-	if (configValue < 0) {
-		LOG("[%s] shadow rendering is disabled (config-value %d)", __FUNCTION__, configValue);
+	if (shadowConfig < 0) {
+		LOG("[%s] shadow rendering is disabled (config-value %d)", __FUNCTION__, shadowConfig);
 		return;
 	}
 
-	if (configValue > 0)
+	if (shadowConfig > 0)
 		shadowModeMask = SHADOWMODE_MODEL | SHADOWMODE_MAP | SHADOWMODE_PROJ | SHADOWMODE_TREE;
 
-	if (configValue > 1) {
-		if ((configValue & SHADOWMODE_MODEL) != 0) { shadowModeMask &= (~SHADOWMODE_MODEL); }
-		if ((configValue & SHADOWMODE_MAP  ) != 0) { shadowModeMask &= (~SHADOWMODE_MAP  ); }
-		if ((configValue & SHADOWMODE_PROJ ) != 0) { shadowModeMask &= (~SHADOWMODE_PROJ ); }
-		if ((configValue & SHADOWMODE_TREE ) != 0) { shadowModeMask &= (~SHADOWMODE_TREE ); }
+	if (shadowConfig > 1) {
+		if ((shadowConfig & SHADOWMODE_MODEL) == 0) { shadowModeMask &= (~SHADOWMODE_MODEL); }
+		if ((shadowConfig & SHADOWMODE_MAP  ) == 0) { shadowModeMask &= (~SHADOWMODE_MAP  ); }
+		if ((shadowConfig & SHADOWMODE_PROJ ) == 0) { shadowModeMask &= (~SHADOWMODE_PROJ ); }
+		if ((shadowConfig & SHADOWMODE_TREE ) == 0) { shadowModeMask &= (~SHADOWMODE_TREE ); }
 	}
 
 
@@ -100,23 +117,22 @@ CShadowHandler::CShadowHandler()
 		return;
 	}
 
-	if (tmpFirstInstance) {
+	if (tmpFirstInit) {
 		shadowsSupported = true;
 	}
 
-	if (configValue == 0) {
+	if (shadowConfig == 0) {
 		// free any resources allocated by InitDepthTarget()
-		glDeleteTextures(1, &shadowTexture);
-		shadowTexture = 0;
-		glDeleteTextures(1, &dummyColorTexture);
-		dummyColorTexture = 0;
-		return; // shadowsLoaded is still false
+		glDeleteTextures(1, &shadowTexture    ); shadowTexture     = 0;
+		glDeleteTextures(1, &dummyColorTexture); dummyColorTexture = 0;
+		// shadowsLoaded is still false
+		return;
 	}
 
 	LoadShadowGenShaderProgs();
 }
 
-CShadowHandler::~CShadowHandler()
+void CShadowHandler::Kill()
 {
 	if (shadowsLoaded) {
 		glDeleteTextures(1, &shadowTexture);
