@@ -13,6 +13,7 @@ namespace Shader {
 	struct IProgramObject;
 };
 
+class CCamera;
 class CShadowHandler
 {
 public:
@@ -21,16 +22,24 @@ public:
 
 	void Reload(const char* args);
 	void CreateShadows();
-	void CalcMinMaxView();
 
-	const float4& GetShadowParams() const { return shadowProjCenter; }
+	const float4& GetShadowParams() const { return shadowTexProjCenter; }
 
-	enum ShadowMode {
-		SHADOWMODE_NONE  = 0,
-		SHADOWMODE_MODEL = 1,
-		SHADOWMODE_MAP   = 2,
-		SHADOWMODE_PROJ  = 4,
-		SHADOWMODE_TREE  = 8,
+	enum ShadowGenerationBits {
+		SHADOWGEN_BIT_NONE  = 0,
+		SHADOWGEN_BIT_MODEL = 1,
+		SHADOWGEN_BIT_MAP   = 2,
+		SHADOWGEN_BIT_PROJ  = 4,
+		SHADOWGEN_BIT_TREE  = 8,
+	};
+	enum ShadowProjectionMode {
+		SHADOWPROMODE_MAP_CENTER = 0, // use center of map-geometry as projection target (constant res.)
+		SHADOWPROMODE_CAM_CENTER = 1, // use center of camera-frustum as projection target (variable res.)
+	};
+	enum ShadowMapSizes {
+		MIN_SHADOWMAP_SIZE =   512,
+		DEF_SHADOWMAP_SIZE =  2048,
+		MAX_SHADOWMAP_SIZE = 16384,
 	};
 
 	enum ShadowGenProgram {
@@ -54,12 +63,14 @@ private:
 	void DrawShadowPasses();
 	void LoadShadowGenShaderProgs();
 	void SetShadowMapSizeFactors();
-	float GetOrthoProjectedMapRadius(const float3&) const;
+	float GetOrthoProjectedMapRadius(const float3&, float3&) const;
+	float GetOrthoProjectedFrustumRadius(CCamera*, float3&) const;
 
 public:
 	int shadowConfig;
 	int shadowMapSize;
-	int shadowModeMask;
+	int shadowGenBits;
+	int shadowProMode;
 
 	unsigned int shadowTexture;
 	unsigned int dummyColorTexture;
@@ -81,14 +92,14 @@ private:
 
 	static bool firstInit;
 
-	//! these project geometry into light-space
-	//! to write the (FBO) depth-buffer texture
+	/// these project geometry into light-space
+	/// to write the (FBO) depth-buffer texture
 	std::vector<Shader::IProgramObject*> shadowGenProgs;
 
 	/// x1, x2, y1, y2
 	float4 shadowProjMinMax;
 	/// xmid, ymid, p17, p18
-	float4 shadowProjCenter;
+	float4 shadowTexProjCenter;
 };
 
 extern CShadowHandler* shadowHandler;
