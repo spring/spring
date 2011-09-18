@@ -24,6 +24,14 @@ public:
 
 	const float4& GetShadowParams() const { return shadowProjCenter; }
 
+	enum ShadowMode {
+		SHADOWMODE_NONE  = 0,
+		SHADOWMODE_MODEL = 1,
+		SHADOWMODE_MAP   = 2,
+		SHADOWMODE_PROJ  = 4,
+		SHADOWMODE_TREE  = 8,
+	};
+
 	enum ShadowGenProgram {
 		SHADOWGEN_PROGRAM_MODEL      = 0,
 		SHADOWGEN_PROGRAM_MAP        = 1,
@@ -46,6 +54,8 @@ protected:
 
 public:
 	int shadowMapSize;
+	int shadowModeMask;
+
 	unsigned int shadowTexture;
 	unsigned int dummyColorTexture;
 
@@ -53,7 +63,6 @@ public:
 
 	bool shadowsLoaded;
 	bool inShadowPass;
-	bool drawTerrainShadow;
 
 	float3 centerPos;
 	float3 sunDirX;
