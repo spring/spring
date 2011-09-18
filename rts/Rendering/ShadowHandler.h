@@ -16,9 +16,10 @@ namespace Shader {
 class CShadowHandler
 {
 public:
-	CShadowHandler();
-	~CShadowHandler();
+	CShadowHandler() { Init(); }
+	~CShadowHandler() { Kill(); }
 
+	void Reload(const char* args);
 	void CreateShadows();
 	void CalcMinMaxView();
 
@@ -45,7 +46,10 @@ public:
 		return shadowGenProgs[p];
 	}
 
-protected:
+private:
+	void Init();
+	void Kill();
+
 	bool InitDepthTarget();
 	void DrawShadowPasses();
 	void LoadShadowGenShaderProgs();
@@ -53,6 +57,7 @@ protected:
 	float GetOrthoProjectedMapRadius(const float3&) const;
 
 public:
+	int shadowConfig;
 	int shadowMapSize;
 	int shadowModeMask;
 
@@ -71,10 +76,10 @@ public:
 
 	CMatrix44f shadowMatrix;
 
-protected:
+private:
 	FBO fb;
 
-	static bool firstInstance;
+	static bool firstInit;
 
 	//! these project geometry into light-space
 	//! to write the (FBO) depth-buffer texture

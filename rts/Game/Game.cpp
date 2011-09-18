@@ -378,10 +378,6 @@ CGame::~CGame()
 
 	SafeDelete(water);
 	SafeDelete(sky);
-	SafeDelete(treeDrawer);
-	SafeDelete(pathDrawer);
-	SafeDelete(modelDrawer);
-	SafeDelete(shadowHandler);
 	SafeDelete(camHandler);
 	SafeDelete(camera);
 	SafeDelete(cam2);
