@@ -40,33 +40,42 @@ bool CShadowHandler::firstInstance = true;
 
 CShadowHandler::CShadowHandler()
 {
+	const int configValue = configHandler->GetInt("Shadows");
 	const bool tmpFirstInstance = firstInstance;
 	firstInstance = false;
 
+	shadowModeMask = SHADOWMODE_NONE;
+	shadowMapSize = configHandler->GetInt("ShadowMapSize");
+
 	shadowsLoaded = false;
 	inShadowPass = false;
+
 	shadowTexture = 0;
 	dummyColorTexture = 0;
-	drawTerrainShadow = true;
 
 	if (!tmpFirstInstance && !shadowsSupported) {
 		return;
 	}
 
-	// Shadows possible values:
-	// -1 : disable and don't try to initialize
-	//  0 : disable, but still check if the hardware is able to run them
-	//  1 : enable (full detail)
-	//  2 : enable (no terrain)
-	const int configValue = configHandler->GetInt("Shadows");
-
-	if (configValue >= 2)
-		drawTerrainShadow = false;
-
+	// possible values for the "Shadows" config-parameter:
+	// < 0: disable and don't try to initialize
+	//   0: disable, but still check if the hardware is able to run them
+	// > 0: enabled (by default for all shadow-casting geometry if equal to 1)
 	if (configValue < 0) {
 		LOG("[%s] shadow rendering is disabled (config-value %d)", __FUNCTION__, configValue);
 		return;
 	}
+
+	if (configValue > 0)
+		shadowModeMask = SHADOWMODE_MODEL | SHADOWMODE_MAP | SHADOWMODE_PROJ | SHADOWMODE_TREE;
+
+	if (configValue > 1) {
+		if ((configValue & SHADOWMODE_MODEL) != 0) { shadowModeMask &= (~SHADOWMODE_MODEL); }
+		if ((configValue & SHADOWMODE_MAP  ) != 0) { shadowModeMask &= (~SHADOWMODE_MAP  ); }
+		if ((configValue & SHADOWMODE_PROJ ) != 0) { shadowModeMask &= (~SHADOWMODE_PROJ ); }
+		if ((configValue & SHADOWMODE_TREE ) != 0) { shadowModeMask &= (~SHADOWMODE_TREE ); }
+	}
+
 
 	if (!globalRendering->haveARB && !globalRendering->haveGLSL) {
 		LOG_L(L_WARNING, "[%s] GPU does not support either ARB or GLSL shaders for shadow rendering", __FUNCTION__);
@@ -85,7 +94,6 @@ CShadowHandler::CShadowHandler()
 		}
 	}
 
-	shadowMapSize = configHandler->GetInt("ShadowMapSize");
 
 	if (!InitDepthTarget()) {
 		LOG_L(L_ERROR, "[%s] failed to initialize depth-texture FBO", __FUNCTION__);
@@ -255,18 +263,24 @@ void CShadowHandler::DrawShadowPasses()
 		// from hills near map edges) from its POV
 		// (could just disable culling of terrain faces, but we also want
 		// to prevent overdraw in such low-angle passes)
-		if (drawTerrainShadow) {
+		if ((shadowModeMask & SHADOWMODE_MAP) != 0)
 			readmap->GetGroundDrawer()->DrawShadowPass();
-		}
 
 		glCullFace(GL_BACK);
 
-		unitDrawer->DrawShadowPass();
-		modelDrawer->Draw();
-		featureDrawer->DrawShadowPass();
-		treeDrawer->DrawShadowPass();
+		if ((shadowModeMask & SHADOWMODE_MODEL) != 0) {
+			unitDrawer->DrawShadowPass();
+			modelDrawer->Draw();
+			featureDrawer->DrawShadowPass();
+		}
+
+		if ((shadowModeMask & SHADOWMODE_TREE) != 0)
+			treeDrawer->DrawShadowPass();
+
+		if ((shadowModeMask & SHADOWMODE_PROJ) != 0)
+			projectileDrawer->DrawShadowPass();
+
 		eventHandler.DrawWorldShadow();
-		projectileDrawer->DrawShadowPass();
 	glPopAttrib();
 
 	inShadowPass = false;
