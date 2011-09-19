@@ -52,9 +52,6 @@ class CTransportUnit;
 #define LOS_ALL_MASK_BITS \
 	(LOS_INLOS_MASK | LOS_INRADAR_MASK | LOS_PREVLOS_MASK | LOS_CONTRADAR_MASK)
 
-#define NORMAL_NANO_PRIO 0.95f // reserve 5% of maxNanoParticles for important stuff such as capture and reclaim other teams' units
-#define HIGH_NANO_PRIO 1.0f
-
 enum ScriptCloakBits { // FIXME -- not implemented
 	// always set to 0 if not enabled
 	SCRIPT_CLOAK_ENABLED          = (1 << 0),
