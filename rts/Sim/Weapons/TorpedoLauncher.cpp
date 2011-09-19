@@ -72,27 +72,29 @@ bool CTorpedoLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit
 		return false;
 
 	if (unit) {
-		if (!(weaponDef->submissile) && unit->unitDef->canhover)
+		// if we cannot leave water and target unit is not in water, bail
+		if (!weaponDef->submissile && !unit->inWater)
 			return false;
-		if (!(weaponDef->submissile) && unit->unitDef->canfly && unit->pos.y > 0)
+	} else {
+		// if we cannot leave water and target position is not in water, bail
+		if (!weaponDef->submissile && ground->GetHeightReal(pos.x, pos.z) > 0.0f)
 			return false;
 	}
-	if (!(weaponDef->submissile) && ground->GetHeightReal(pos.x, pos.z) > 0)
-		return 0;
 
-	float3 dir = pos-weaponMuzzlePos;
-	float length = dir.Length();
-	if (length == 0)
+	float3 targetVec = pos - weaponMuzzlePos;
+	float targetDist = targetVec.Length();
+
+	if (targetDist == 0.0f)
 		return true;
 
-	dir /= length;
+	targetVec /= targetDist;
 	// +0.05f since torpedoes have an unfortunate tendency to hit own ships due to movement
 	float spread = (accuracy + sprayAngle) + 0.05f;
 
-	if (avoidFriendly && TraceRay::TestAllyCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, owner)) {
+	if (avoidFriendly && TraceRay::TestAllyCone(weaponMuzzlePos, targetVec, targetDist, spread, owner->allyteam, owner)) {
 		return false;
 	}
-	if (avoidNeutral && TraceRay::TestNeutralCone(weaponMuzzlePos, dir, length, spread, owner)) {
+	if (avoidNeutral && TraceRay::TestNeutralCone(weaponMuzzlePos, targetVec, targetDist, spread, owner)) {
 		return false;
 	}
 
