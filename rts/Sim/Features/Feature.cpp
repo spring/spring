@@ -393,9 +393,11 @@ void CFeature::DoDamage(const DamageArray& damages, const float3& impulse)
 }
 
 
-void CFeature::Kill(const float3& impulse) {
+void CFeature::Kill(const float3& impulse, bool crushKill) {
+	crushKilled = crushKill;
+
 	DamageArray damage;
-	DoDamage(damage * (health + 1), impulse);
+	DoDamage(damage * (health + 1.0f), impulse);
 }
 
 

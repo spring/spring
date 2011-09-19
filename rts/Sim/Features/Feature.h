@@ -45,7 +45,7 @@ public:
 	 */
 	bool AddBuildPower(float amount, CUnit* builder);
 	void DoDamage(const DamageArray& damages, const float3& impulse);
-	void Kill(const float3& impulse);
+	void Kill(const float3& impulse, bool crushKill);
 	void ForcedMove(const float3& newPos, bool snapToGround = true);
 	void ForcedSpin(const float3& newDir);
 	virtual bool Update(void);
