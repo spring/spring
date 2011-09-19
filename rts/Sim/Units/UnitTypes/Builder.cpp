@@ -52,6 +52,7 @@ CR_REG_METADATA(CBuilder, (
 				CR_MEMBER(curBuild),
 				CR_MEMBER(curCapture),
 				CR_MEMBER(curReclaim),
+				CR_MEMBER(reclaimingUnit),
 				CR_MEMBER(helpTerraform),
 				CR_MEMBER(terraforming),
 				CR_MEMBER(myTerraformLeft),
@@ -83,6 +84,7 @@ CBuilder::CBuilder():
 	curBuild(0),
 	curCapture(0),
 	curReclaim(0),
+	reclaimingUnit(false),
 	helpTerraform(0),
 	terraforming(false),
 	terraformHelp(0),
@@ -206,7 +208,7 @@ void CBuilder::Update()
 
 			ScriptDecloak(true);
 
-			CreateNanoParticle(terraformCenter,terraformRadius*0.5f,false);
+			CreateNanoParticle(terraformCenter, terraformRadius * 0.5f, false);
 
 			for (int z = tz1; z <= tz2; z++) {
 				// smooth the borders x
@@ -256,7 +258,7 @@ void CBuilder::Update()
 				ScriptDecloak(true);
 
 				helpTerraform->terraformHelp += terraformSpeed;
-				CreateNanoParticle(helpTerraform->terraformCenter,helpTerraform->terraformRadius*0.5f,false);
+				CreateNanoParticle(helpTerraform->terraformCenter, helpTerraform->terraformRadius * 0.5f, false);
 			} else {
 				DeleteDeathDependence(helpTerraform, DEPENDENCE_TERRAFORM);
 				helpTerraform=0;
@@ -296,7 +298,7 @@ void CBuilder::Update()
 			ScriptDecloak(true);
 
 			if (curReclaim->AddBuildPower(-reclaimSpeed, this)) {
-				CreateNanoParticle(curReclaim->midPos, curReclaim->radius * 0.7f, true);
+				CreateNanoParticle(curReclaim->midPos, curReclaim->radius * 0.7f, true, (reclaimingUnit && curReclaim->team != team) ? HIGH_NANO_PRIO : NORMAL_NANO_PRIO);
 			}
 		}
 		else if(curResurrect && f3SqDist(curResurrect->pos, pos)<Square(buildDistance+curResurrect->radius) && inBuildStance){
@@ -312,7 +314,7 @@ void CBuilder::Update()
 					// Corpse has been restored, begin resurrection
 					if (UseEnergy(ud->energyCost * resurrectSpeed / ud->buildTime * modInfo.resurrectEnergyCostFactor)) {
 						curResurrect->resurrectProgress+=resurrectSpeed/ud->buildTime;
-						CreateNanoParticle(curResurrect->midPos,curResurrect->radius*0.7f,gs->randInt()&1);
+						CreateNanoParticle(curResurrect->midPos, curResurrect->radius * 0.7f, (gs->randInt() & 1));
 					}
 					if (curResurrect->resurrectProgress > 1) {
 						// resurrect finished
@@ -363,7 +365,7 @@ void CBuilder::Update()
 					teamHandler->Team(team)->energyPull += energyUseScaled;
 				} else {
 					curCapture->captureProgress = captureProgressTemp;
-					CreateNanoParticle(curCapture->midPos,curCapture->radius*0.7f,false);
+					CreateNanoParticle(curCapture->midPos, curCapture->radius * 0.7f, false, HIGH_NANO_PRIO);
 					if(curCapture->captureProgress >= 1.0f){
 						if (!curCapture->ChangeTeam(team, CUnit::ChangeCaptured)) {
 							// capture failed
@@ -428,7 +430,8 @@ void CBuilder::SetReclaimTarget(CSolidObject* target)
 		return;
 	}
 
-	if(dynamic_cast<CUnit*>(target) && !((CUnit*) target)->unitDef->reclaimable){
+	CUnit* recUnit = dynamic_cast<CUnit*>(target);
+	if(recUnit && !recUnit->unitDef->reclaimable){
 		return;
 	}
 
@@ -439,6 +442,7 @@ void CBuilder::SetReclaimTarget(CSolidObject* target)
 	StopBuild(false);
 	TempHoldFire();
 
+	reclaimingUnit = !!recUnit;
 	curReclaim=target;
 	AddDeathDependence(curReclaim);
 
@@ -721,7 +725,7 @@ void CBuilder::HelpTerraform(CBuilder* unit)
 }
 
 
-void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
+void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse, float prio)
 {
 	const int piece = script->QueryNanoPiece();
 
@@ -730,7 +734,7 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 		return;
 #endif
 
-	if (ph->currentNanoParticles < ph->maxNanoParticles && unitDef->showNanoSpray) {
+	if (ph->currentNanoParticles < (ph->maxNanoParticles * prio) && unitDef->showNanoSpray) {
 		float3 relWeaponFirePos = script->GetPiecePos(piece);
 		float3 weaponPos = pos + frontdir * relWeaponFirePos.z + updir * relWeaponFirePos.y + rightdir * relWeaponFirePos.x;
 

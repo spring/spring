@@ -53,7 +53,7 @@ public:
 	void SetBuildStanceToward(float3 pos);
 
 	void HelpTerraform(CBuilder* unit);
-	void CreateNanoParticle(float3 goal, float radius, bool inverse);
+	void CreateNanoParticle(float3 goal, float radius, bool inverse, float prio = NORMAL_NANO_PRIO);
 	void SetResurrectTarget(CFeature* feature);
 	void SetCaptureTarget(CUnit* unit);
 
@@ -73,6 +73,7 @@ public:
 	CUnit* curBuild;
 	CUnit* curCapture;
 	CSolidObject* curReclaim;
+	bool reclaimingUnit;
 	CBuilder* helpTerraform;
 
 	bool terraforming;

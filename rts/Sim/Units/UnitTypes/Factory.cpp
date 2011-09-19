@@ -362,7 +362,7 @@ void CFactory::CreateNanoParticle(void)
 		return;
 #endif
 
-	if (ph->currentNanoParticles < ph->maxNanoParticles && unitDef->showNanoSpray) {
+	if (ph->currentNanoParticles < (ph->maxNanoParticles * NORMAL_NANO_PRIO) && unitDef->showNanoSpray) {
 		const float3 relWeaponFirePos = script->GetPiecePos(piece);
 		const float3 weaponPos = pos + (frontdir * relWeaponFirePos.z)
 			+ (updir    * relWeaponFirePos.y)
