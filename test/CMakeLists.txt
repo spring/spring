@@ -111,6 +111,22 @@ Else  (NOT Boost_FOUND)
 	Add_Dependencies(tests test_RectangleOptimizer)
 
 
+################################################################################
+### BitwiseEnum
+
+	Set(test_BitwiseEnum_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Misc/TestBitwiseEnum.cpp"
+			${test_Log_sources}
+		)
+
+	ADD_EXECUTABLE(test_BitwiseEnum ${test_BitwiseEnum_src})
+	TARGET_LINK_LIBRARIES(test_BitwiseEnum
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+		)
+
+	ADD_TEST(NAME testBitwiseEnum COMMAND test_BitwiseEnum)
+	Add_Dependencies(tests test_BitwiseEnum)
+
 
 ################################################################################
 ### FileSystem
