@@ -83,7 +83,7 @@ public:
 	virtual void DoDamage(const DamageArray& damages, CUnit* attacker,
 	                      const float3& impulse, int weaponId = -1);
 	virtual void DoWaterDamage();
-	virtual void Kill(const float3& impulse);
+	virtual void Kill(const float3& impulse, bool crushKill);
 	virtual void AddImpulse(const float3&);
 	virtual void FinishedBuilding();
 

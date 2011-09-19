@@ -1231,9 +1231,11 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 
 
 
-void CUnit::Kill(const float3& impulse) {
-	DamageArray da(health);
-	DoDamage(da, NULL, impulse, -1);
+void CUnit::Kill(const float3& impulse, bool crushKill) {
+	crushKilled = crushKill;
+
+	DamageArray damage;
+	DoDamage(damage * (health + 1.0f), NULL, impulse, -1);
 }
 
 void CUnit::AddImpulse(const float3& addedImpulse) {

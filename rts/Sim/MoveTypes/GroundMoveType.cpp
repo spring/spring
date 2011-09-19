@@ -1443,7 +1443,7 @@ void CGroundMoveType::HandleObjectCollisions()
 
 			const float3 crushImpulse = collider->frontdir * currentSpeed * ((reversing)? -200.0f: 200.0f);
 
-			if (!colliderMM->CrushResistant(*colliderMD, collidee)) { collidee->Kill(crushImpulse); }
+			if (!colliderMM->CrushResistant(*colliderMD, collidee)) { collidee->Kill(crushImpulse, true); }
 			if ((colliderMM->IsBlocked(*colliderMD, colliderCurPos) & CMoveMath::BLOCK_STRUCTURE) == 0) { continue; }
 
 			eventHandler.UnitFeatureCollision(collider, collidee);
