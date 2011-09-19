@@ -53,7 +53,7 @@ public:
 	void SetBuildStanceToward(float3 pos);
 
 	void HelpTerraform(CBuilder* unit);
-	void CreateNanoParticle(float3 goal, float radius, bool inverse, float prio = NORMAL_NANO_PRIO);
+	void CreateNanoParticle(const float3& goal, float radius, bool inverse, bool highPriority = false);
 	void SetResurrectTarget(CFeature* feature);
 	void SetCaptureTarget(CUnit* unit);
 

@@ -18,6 +18,7 @@ class CProjectile;
 class CUnit;
 class CFeature;
 class CGroundFlash;
+struct UnitDef;
 struct FlyingPiece;
 struct S3DOPrimitive;
 struct S3DOPiece;
@@ -27,7 +28,7 @@ struct piececmp {
 	bool operator() (const FlyingPiece* fp1, const FlyingPiece* fp2) const;
 };
 struct projdetach {
-	static void Detach(CProjectile *p);
+	static void Detach(CProjectile* p);
 };
 
 typedef std::pair<CProjectile*, int> ProjectileMapPair;
@@ -87,19 +88,21 @@ public:
 	void AddGroundFlash(CGroundFlash* flash);
 	void AddFlyingPiece(int team, float3 pos, float3 speed, const S3DOPiece* object, const S3DOPrimitive* piece);
 	void AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex* verts);
+	void AddNanoParticle(const float3&, const float3&, const UnitDef*, int team, bool highPriority);
+	void AddNanoParticle(const float3&, const float3&, const UnitDef*, int team, float radius, bool inverse, bool highPriority);
 
-	ProjectileContainer syncedProjectiles;    //! contains only projectiles that can change simulation state
-	ProjectileContainer unsyncedProjectiles;  //! contains only projectiles that cannot change simulation state
-	FlyingPieceContainer flyingPieces3DO;     //! unsynced
-	FlyingPieceContainer flyingPiecesS3O;     //! unsynced
-	GroundFlashContainer groundFlashes;       //! unsynced
+	ProjectileContainer syncedProjectiles;    // contains only projectiles that can change simulation state
+	ProjectileContainer unsyncedProjectiles;  // contains only projectiles that cannot change simulation state
+	FlyingPieceContainer flyingPieces3DO;     // unsynced
+	FlyingPieceContainer flyingPiecesS3O;     // unsynced
+	GroundFlashContainer groundFlashes;       // unsynced
 
 	int maxUsedSyncedID;
 	int maxUsedUnsyncedID;
-	std::list<int> freeSyncedIDs;             //! available synced (weapon, piece) projectile ID's
-	std::list<int> freeUnsyncedIDs;           //! available unsynced projectile ID's
-	ProjectileMap syncedProjectileIDs;        //! ID ==> <projectile, allyteam> map for living synced projectiles
-	ProjectileMap unsyncedProjectileIDs;      //! ID ==> <projectile, allyteam> map for living unsynced projectiles
+	std::list<int> freeSyncedIDs;             // available synced (weapon, piece) projectile ID's
+	std::list<int> freeUnsyncedIDs;           // available unsynced projectile ID's
+	ProjectileMap syncedProjectileIDs;        // ID ==> <projectile, allyteam> map for living synced projectiles
+	ProjectileMap unsyncedProjectileIDs;      // ID ==> <projectile, allyteam> map for living unsynced projectiles
 
 	int maxParticles;              // different effects should start to cut down on unnececary(unsynced) particles when this number is reached
 	int maxNanoParticles;
@@ -108,7 +111,7 @@ public:
 	float particleSaturation;      // currentParticles / maxParticles ratio
 	float nanoParticleSaturation;
 
-	int numPerlinProjectiles; //! unsynced
+	int numPerlinProjectiles;      // unsynced
 };
 
 
