@@ -37,6 +37,7 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(allyteam),
 	CR_MEMBER(team),
 	CR_MEMBER(mobility),
+	CR_MEMBER(collisionVolume),
 	// can not get creg work on templates
 	CR_MEMBER(mapPos.x),
 	CR_MEMBER(mapPos.y),
@@ -48,7 +49,6 @@ CR_REG_METADATA(CSolidObject,
 
 
 CSolidObject::CSolidObject():
-	collisionVolume(NULL),
 	mass(DEFAULT_MASS),
 	blocking(false),
 	floatOnWater(false),
@@ -67,6 +67,7 @@ CSolidObject::CSolidObject():
 	allyteam(0),
 	team(0),
 	mobility(NULL),
+	collisionVolume(NULL),
 	relMidPos(0.0f, 0.0f, 0.0f),
 	midPos(pos),
 	curYardMap(NULL),
