@@ -29,7 +29,7 @@
 
 CONFIG(int, Shadows).defaultValue(0);
 CONFIG(int, ShadowMapSize).defaultValue(CShadowHandler::DEF_SHADOWMAP_SIZE);
-CONFIG(int, ShadowProjMode).defaultValue(CShadowHandler::SHADOWPROMODE_CAM_CENTER);
+CONFIG(int, ShadowProjectionMode).defaultValue(CShadowHandler::SHADOWPROMODE_CAM_CENTER);
 
 CShadowHandler* shadowHandler = NULL;
 
