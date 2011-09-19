@@ -20,7 +20,7 @@ public:
 	CShadowHandler() { Init(); }
 	~CShadowHandler() { Kill(); }
 
-	void Reload(const char* args);
+	void Reload(const char* argv);
 	void CreateShadows();
 
 	const float4& GetShadowParams() const { return shadowTexProjCenter; }
