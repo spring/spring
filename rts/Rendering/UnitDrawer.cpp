@@ -2086,7 +2086,7 @@ inline void CUnitDrawer::UpdateUnitDrawPos(CUnit* u) {
 		u->drawPos = u->pos + (u->speed * globalRendering->timeOffset);
 	}
 #endif
-	u->drawMidPos = u->drawPos + (u->midPos - u->pos);
+	u->drawMidPos = u->drawPos + u->relMidPos;
 }
 
 
