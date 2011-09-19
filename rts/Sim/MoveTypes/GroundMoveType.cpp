@@ -1388,7 +1388,7 @@ void CGroundMoveType::HandleObjectCollisions()
 
 			if (!collideeMobile) {
 				const float3 colliderNextPos = colliderCurPos + collider->frontdir * currentSpeed;
-				const unsigned int colliderNextPosBits = colliderMM->IsBlocked(*colliderMD, colliderNextPos);
+				const CMoveMath::BlockType colliderNextPosBits = colliderMM->IsBlocked(*colliderMD, colliderNextPos);
 
 				if ((colliderNextPosBits & CMoveMath::BLOCK_STRUCTURE) != 0 && collider->frontdir.dot(sepDirection) < -0.25f) {
 					const int2   sgnVec = int2((colResponseVec.x >= 0.0f)? 1: -1, (colResponseVec.z >= 0.0f)? 1: -1);
@@ -1474,7 +1474,7 @@ void CGroundMoveType::HandleObjectCollisions()
 
 			if (collidee->reachedFinalPos) {
 				const float3 colliderNextPos = colliderCurPos + collider->frontdir * currentSpeed;
-				const unsigned int colliderNextPosBits = colliderMM->IsBlocked(*colliderMD, colliderNextPos);
+				const CMoveMath::BlockType colliderNextPosBits = colliderMM->IsBlocked(*colliderMD, colliderNextPos);
 
 				if ((colliderNextPosBits & CMoveMath::BLOCK_STRUCTURE) != 0 && collider->frontdir.dot(sepDirection) < -0.25f) {
 					// make sure the scaled response is never of epsilon-length (units would get stuck otherwise)
@@ -1969,7 +1969,7 @@ bool CGroundMoveType::WantReverse(const float3& waypointDir2D) const
 	const float waypointRETA  = (waypointDist / maxReverseSpeed);                               // in frames (simplistic)
 	const float waypointDirDP = waypointDir2D.dot(owner->frontdir);
 	const float waypointAngle = Clamp(waypointDirDP, -1.0f, 1.0f);                              // prevent NaN's
-	const float turnAngleDeg  = math::acosf(waypointAngle) * RAD2DEG;                       // in degrees
+	const float turnAngleDeg  = math::acosf(waypointAngle) * RAD2DEG;                           // in degrees
 	const float turnAngleSpr  = (turnAngleDeg / 360.0f) * SPRING_CIRCLE_DIVS;                   // in "headings"
 	const float revAngleSpr   = SHORTINT_MAXVALUE - turnAngleSpr;                               // 180 deg - angle
 
