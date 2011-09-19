@@ -508,7 +508,7 @@ float CShadowHandler::GetOrthoProjectedMapRadius(const float3& sunDir, float3& p
 
 		projectionMidPos.x = (gs->mapx * SQUARE_SIZE) * 0.5f;
 		projectionMidPos.z = (gs->mapy * SQUARE_SIZE) * 0.5f;
-		projectionMidPos.y = ground->GetHeightReal(projectionMidPos.x, projectionMidPos.y, false);
+		projectionMidPos.y = ground->GetHeightReal(projectionMidPos.x, projectionMidPos.z, false);
 	}
 
 	return curMapDiameter;
