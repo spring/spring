@@ -37,18 +37,19 @@ bool CShadowHandler::shadowsSupported = false;
 bool CShadowHandler::firstInit = true;
 
 
-void CShadowHandler::Reload(const char* args)
+void CShadowHandler::Reload(const char* argv)
 {
 	int nextShadowConfig = (shadowConfig + 1) & 0xF;
-	int nextShadowMapSize = DEF_SHADOWMAP_SIZE;
+	int nextShadowMapSize = shadowMapSize;
+	int nextShadowProMode = shadowProMode;
 
-	if (args != NULL) {
-		if (sscanf(args, "%i %i", &nextShadowConfig, &nextShadowMapSize) > 1) {
-			configHandler->Set("ShadowMapSize", Clamp(nextShadowMapSize, int(MIN_SHADOWMAP_SIZE), int(MAX_SHADOWMAP_SIZE)));
-		}
+	if (argv != NULL) {
+		(void) sscanf(argv, "%i %i %i", &nextShadowConfig, &nextShadowMapSize, &nextShadowProMode);
 	}
 
 	configHandler->Set("Shadows", nextShadowConfig & 0xF);
+	configHandler->Set("ShadowMapSize", Clamp(nextShadowMapSize, int(MIN_SHADOWMAP_SIZE), int(MAX_SHADOWMAP_SIZE)));
+	configHandler->Set("ShadowProjectionMode", Clamp(nextShadowProMode, int(SHADOWPROMODE_MAP_CENTER), int(SHADOWPROMODE_CAM_CENTER)));
 
 	Kill();
 	Init();
