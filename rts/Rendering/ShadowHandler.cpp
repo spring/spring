@@ -390,14 +390,10 @@ void CShadowHandler::CreateShadows()
 	//     when DynamicSun is enabled, the orbit is always circular in the xz
 	//     plane, instead of elliptical when the map has an aspect-ratio != 1
 	//
-	float zScale = 0.0f;
-
-	switch (shadowProMode) {
-		case SHADOWPROMODE_CAM_CENTER: { zScale = GetOrthoProjectedFrustumRadius(camera, centerPos); } break;
-		case SHADOWPROMODE_MAP_CENTER: { zScale = GetOrthoProjectedMapRadius(-sunDirZ, centerPos); } break;
-		default: { assert(false); } break;
-	}
-
+	const float zScale =
+		(shadowProMode == SHADOWPROMODE_CAM_CENTER)? GetOrthoProjectedFrustumRadius(camera, centerPos):
+		(shadowProMode == SHADOWPROMODE_MAP_CENTER)? GetOrthoProjectedMapRadius(-sunDirZ, centerPos):
+		1.0f;
 	const float xScale = zScale;
 	const float yScale = zScale;
 
@@ -547,8 +543,8 @@ float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, float3& proje
 				cx1 = Clamp(x1, 0.0f, (float3::maxxpos + 1.0f)),
 				cz1 = Clamp(z1, 0.0f, (float3::maxzpos + 1.0f));
 
-			const float3 p0 = float3(cx0, ground->GetHeightReal(x0, z0, false), cz0);
-			const float3 p1 = float3(cx1, ground->GetHeightReal(x1, z1, false), cz1);
+			const float3 p0 = float3(cx0, ground->GetHeightReal(cx0, cz0, false), cz0);
+			const float3 p1 = float3(cx1, ground->GetHeightReal(cx1, cz1, false), cz1);
 
 			frustumPoints[j + 0] = p0;
 			frustumPoints[j + 1] = p1;
