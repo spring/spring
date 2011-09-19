@@ -564,7 +564,7 @@ void CProjectileHandler::AddNanoParticle(
 {
 	const float priority = highPriority? HIGH_NANO_PRIO: NORMAL_NANO_PRIO;
 
-	if (currentNanoParticles >= (maxNanoParticles * NORMAL_NANO_PRIO))
+	if (currentNanoParticles >= (maxNanoParticles * priority))
 		return;
 	if (!unitDef->showNanoSpray)
 		return;
