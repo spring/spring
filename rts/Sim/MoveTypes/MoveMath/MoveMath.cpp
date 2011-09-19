@@ -77,19 +77,19 @@ float CMoveMath::GetPosSpeedMod(const MoveData& moveData, int xSquare, int zSqua
 
 
 /* Converts a point-request into a square-positional request. */
-int CMoveMath::IsBlocked(const MoveData& moveData, const float3& pos) const
+CMoveMath::BlockType CMoveMath::IsBlocked(const MoveData& moveData, const float3& pos) const
 {
 	return IsBlocked(moveData, (pos.x / SQUARE_SIZE), (pos.z / SQUARE_SIZE));
 }
 
 /* Check if a given square-position is accessable by the movedata footprint. */
-int CMoveMath::IsBlocked(const MoveData& moveData, int xSquare, int zSquare) const
+CMoveMath::BlockType CMoveMath::IsBlocked(const MoveData& moveData, int xSquare, int zSquare) const
 {
 	if (GetPosSpeedMod(moveData, xSquare, zSquare) == 0.0f) {
 		return BLOCK_IMPASSABLE;
 	}
 
-	int ret = 0;
+	BlockType ret = BLOCK_NONE;
 
 	const int xmin = xSquare - (moveData.xsize >> 1), xmax = xSquare + (moveData.xsize >> 1);
 	const int zmin = zSquare - (moveData.zsize >> 1), zmax = zSquare + (moveData.zsize >> 1);
@@ -214,14 +214,14 @@ bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obst
 
 
 /* Check if a single square is accessable (for any object which uses the given movedata). */
-int CMoveMath::SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquare)
+CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveData& moveData, int xSquare, int zSquare)
 {
 	// bounds-check
 	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy) {
 		return BLOCK_IMPASSABLE;
 	}
 
-	int r = 0;
+	BlockType r = BLOCK_NONE;
 	const BlockingMapCell& c = groundBlockingObjectMap->GetCell(xSquare + zSquare * gs->mapx);
 
 	for (BlockingMapCellIt it = c.begin(); it != c.end(); ++it) {

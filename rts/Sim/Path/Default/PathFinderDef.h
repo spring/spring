@@ -3,6 +3,7 @@
 #ifndef PATHFINDERDEF_HDR
 #define PATHFINDERDEF_HDR
 
+#include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "System/float3.h"
 #include "System/Vec2.h"
 
@@ -17,7 +18,7 @@ public:
 
 	bool IsGoal(int xSquare, int zSquare) const;
 	float Heuristic(int xSquare, int zSquare) const;
-	bool GoalIsBlocked(const MoveData& moveData, unsigned int moveMathOptions) const;
+	bool GoalIsBlocked(const MoveData& moveData, const CMoveMath::BlockType moveMathOptions) const;
 	int2 GoalSquareOffset(int blockSize) const;
 
 	float3 goal;
