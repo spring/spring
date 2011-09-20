@@ -2,11 +2,12 @@
 
 /*
  * This file has to be C90 compatible, as it is not only used by the engine,
- * but also by AIs.
+ * but also by AIs, which might be compiled with compilers (for example VS)
+ * that do not support C99.
  */
 
-#ifndef _MAIN_DEFINES_H
-#define _MAIN_DEFINES_H
+#ifndef MAIN_DEFINES_H
+#define MAIN_DEFINES_H
 
 #include <stdio.h>
 
@@ -141,4 +142,4 @@
 #endif // cPD
 
 
-#endif // _MAIN_DEFINES_H
+#endif // MAIN_DEFINES_H
