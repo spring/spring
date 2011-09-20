@@ -14,6 +14,7 @@
 #include "System/NetProtocol.h"
 #include "seh.h"
 #include "System/Util.h"
+#include "System/SafeCStrings.h"
 #include "Game/GameVersion.h"
 
 
@@ -72,7 +73,7 @@ static const char* ExceptionName(DWORD exceptionCode)
 static bool InitImageHlpDll()
 {
 	char userSearchPath[8];
-	STRCPY(userSearchPath, ".");
+	STRCPY_T(userSearchPath, 8, ".");
 	// Initialize IMAGEHLP.DLL
 	// Note: For some strange reason it doesn't work ~4 times after it was loaded&unloaded the first time.
 	int i = 0;

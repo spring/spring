@@ -39,6 +39,7 @@
 #include "System/exportdefines.h"
 #include "System/Info.h"
 #include "System/Option.h"
+#include "System/SafeCStrings.h"
 
 #ifdef WIN32
 #include <windows.h>
@@ -518,10 +519,7 @@ EXPORT(const char*) GetArchivePath(const char* archiveName)
 
 static void safe_strzcpy(char* dst, std::string src, size_t max)
 {
-	if (src.length() > max-1) {
-		src = src.substr(0, max-1);
-	}
-	STRCPY(dst, src.c_str());
+	STRCPY_T(dst, max, src.c_str());
 }
 
 

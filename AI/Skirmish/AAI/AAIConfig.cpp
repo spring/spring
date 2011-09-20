@@ -121,21 +121,21 @@ void AAIConfig::LoadConfig(AAI *ai)
 
 	FILE* file = NULL;
 
-	STRCPY(buffer, MAIN_PATH);
-	STRCAT(buffer, MOD_CFG_PATH);
+	STRCPY_T(buffer, sizeof(buffer), MAIN_PATH);
+	STRCAT_T(buffer, sizeof(buffer), MOD_CFG_PATH);
 	const std::string modHumanName = MakeFileSystemCompatible(ai->cb->GetModHumanName());
-	STRCAT(buffer, modHumanName.c_str());
-	STRCAT(buffer, ".cfg");
-	STRCPY(filename, buffer);
+	STRCAT_T(buffer, sizeof(buffer), modHumanName.c_str());
+	STRCAT_T(buffer, sizeof(buffer), ".cfg");
+	STRCPY_T(filename, sizeof(filename), buffer);
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 	file = fopen(filename, "r");
 	if (file == NULL) {
 		fprintf(ai->file, "Mod config file %s not found\n", filename);
 		fprintf(ai->file, "Now trying with legacy mod config file name ...\n");
-		STRCPY(buffer, MAIN_PATH);
-		STRCAT(buffer, MOD_CFG_PATH);
+		STRCPY_T(buffer, sizeof(buffer), MAIN_PATH);
+		STRCAT_T(buffer, sizeof(buffer), MOD_CFG_PATH);
 		const std::string modName = MakeFileSystemCompatible(ai->cb->GetModName());
-		STRCAT(buffer, modName.c_str());
+		STRCAT_T(buffer, sizeof(buffer), modName.c_str());
 		ReplaceExtension(buffer, filename, sizeof(filename), ".cfg");
 		ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 		file = fopen(filename, "r");
@@ -143,12 +143,12 @@ void AAIConfig::LoadConfig(AAI *ai)
 	if (file == NULL) {
 		fprintf(ai->file, "Mod config file %s not found\n", filename);
 		fprintf(ai->file, "Now trying with version independent mod config file name ...\n");
-		STRCPY(buffer, MAIN_PATH);
-		STRCAT(buffer, MOD_CFG_PATH);
+		STRCPY_T(buffer, sizeof(buffer), MAIN_PATH);
+		STRCAT_T(buffer, sizeof(buffer), MOD_CFG_PATH);
 		const std::string modShortName = MakeFileSystemCompatible(ai->cb->GetModShortName());
-		STRCAT(buffer, modShortName.c_str());
-		STRCAT(buffer, ".cfg");
-		STRCPY(filename, buffer);
+		STRCAT_T(buffer, sizeof(buffer), modShortName.c_str());
+		STRCAT_T(buffer, sizeof(buffer), ".cfg");
+		STRCPY_T(filename, sizeof(filename), buffer);
 		ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 		file = fopen(filename, "r");
 	}
@@ -621,8 +621,8 @@ void AAIConfig::LoadConfig(AAI *ai)
 
 
 	// load general settings
-	STRCPY(buffer, MAIN_PATH);
-	STRCAT(buffer, GENERAL_CFG_FILE);
+	STRCPY_T(buffer, sizeof(buffer), MAIN_PATH);
+	STRCAT_T(buffer, sizeof(buffer), GENERAL_CFG_FILE);
 	ReplaceExtension(buffer, filename, sizeof(filename), ".cfg");
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 	file = fopen(filename, "r");

@@ -20,6 +20,7 @@
 #include "Util.h"
 
 #include "System/maindefines.h"
+#include "System/SafeCStrings.h"
 
 #include <stdio.h>	// for file IO
 #include <stdlib.h>	// calloc(), exit()
@@ -107,7 +108,7 @@ void simpleLog_init(const char* _logFileName, bool _useTimeStamps,
 	if (_logFileName != NULL) {
 		logFileInitialized = false;
 		bool initOk = true;
-		STRCPYS(logFileName, logFileName_sizeMax, _logFileName);
+		STRCPY_T(logFileName, logFileName_sizeMax, _logFileName);
 
 		// make sure the dir of the log file exists
 		char* logFileDir = util_allocStrCpy(logFileName);
