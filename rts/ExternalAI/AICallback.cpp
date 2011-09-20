@@ -807,7 +807,7 @@ float CAICallback::GetPathNodeCost(unsigned int x, unsigned int z) {
 
 
 
-static int FilterUnitsVector(const std::vector<CUnit*>& units, int* unitIds, int unitIds_max, bool (*includeUnit)(CUnit*) = NULL)
+static int FilterUnitsVector(const std::vector<CUnit*>& units, int* unitIds, int unitIds_max, bool (*includeUnit)(const CUnit*) = NULL)
 {
 	int a = 0;
 
@@ -830,7 +830,7 @@ static int FilterUnitsVector(const std::vector<CUnit*>& units, int* unitIds, int
 
 	return a;
 }
-static int FilterUnitsList(const std::list<CUnit*>& units, int* unitIds, int unitIds_max, bool (*includeUnit)(CUnit*) = NULL)
+static int FilterUnitsList(const std::list<CUnit*>& units, int* unitIds, int unitIds_max, bool (*includeUnit)(const CUnit*) = NULL)
 {
 	int a = 0;
 
@@ -855,46 +855,46 @@ static int FilterUnitsList(const std::list<CUnit*>& units, int* unitIds, int uni
 }
 
 
-static inline bool unit_IsNeutral(CUnit* unit) {
+static inline bool unit_IsNeutral(const CUnit* unit) {
 	return unit->IsNeutral();
 }
 
 static int myAllyTeamId = -1;
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
-static inline bool unit_IsEnemy(CUnit* unit) {
+static inline bool unit_IsEnemy(const CUnit* unit) {
 	return (!teamHandler->Ally(unit->allyteam, myAllyTeamId)
 			&& !unit_IsNeutral(unit));
 }
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
-static inline bool unit_IsFriendly(CUnit* unit) {
+static inline bool unit_IsFriendly(const CUnit* unit) {
 	return (teamHandler->Ally(unit->allyteam, myAllyTeamId)
 			&& !unit_IsNeutral(unit));
 }
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
-static inline bool unit_IsInLos(CUnit* unit) {
+static inline bool unit_IsInLos(const CUnit* unit) {
 	return ((unit->losStatus[myAllyTeamId] & LOS_INLOS) != 0);
 }
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
-static inline bool unit_IsInRadar(CUnit* unit) {
+static inline bool unit_IsInRadar(const CUnit* unit) {
 	return ((unit->losStatus[myAllyTeamId] & LOS_INRADAR) != 0);
 }
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
-static inline bool unit_IsEnemyAndInLos(CUnit* unit) {
+static inline bool unit_IsEnemyAndInLos(const CUnit* unit) {
 	return (unit_IsEnemy(unit) && unit_IsInLos(unit));
 }
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
-static inline bool unit_IsEnemyAndInLosOrRadar(CUnit* unit) {
+static inline bool unit_IsEnemyAndInLosOrRadar(const CUnit* unit) {
 	return (unit_IsEnemy(unit) && (unit_IsInLos(unit) || unit_IsInRadar(unit)));
 }
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
-static inline bool unit_IsNeutralAndInLos(CUnit* unit) {
+static inline bool unit_IsNeutralAndInLos(const CUnit* unit) {
 	return (unit_IsNeutral(unit) && unit_IsInLos(unit));
 }
 
