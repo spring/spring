@@ -340,7 +340,7 @@ void CShadowHandler::CreateShadows()
 	glDisable(GL_TEXTURE_2D);
 
 	glShadeModel(GL_FLAT);
-	glColor4f(1, 1, 1, 1);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 	glDepthMask(GL_TRUE);
 	glEnable(GL_DEPTH_TEST);
@@ -368,35 +368,37 @@ void CShadowHandler::CreateShadows()
 
 	SetShadowMapSizeFactors();
 
-
 	// NOTE:
-	//     these scaling factors do not change linearly or smoothly with
-	//     camera movements, creating visible artefacts (resolution jumps)
+	//     the xy-scaling factors from CalcMinMaxView do not change linearly
+	//     or smoothly with camera movements, creating visible artefacts (eg.
+	//     large jumps in shadow resolution)
 	//
-	//     therefore, use fixed values such that the entire map barely fits
-	//     into the sun's frustum: pretend the map is embedded in a sphere
-	//     and take its diameter as the scale factor
-	//     this means larger maps will have more blurred/aliased shadows if
-	//     the depth buffer is kept at the same size, but no (map) geometry
-	//     is omitted
+	//     therefore, EITHER use "fixed" scaling values such that the entire
+	//     map barely fits into the sun's frustum (by pretending it is embedded
+	//     in a sphere and taking its diameter), OR variable scaling such that
+	//     everything that can be seen by the camera maximally fills the sun's
+	//     frustum (choice of projection-style is left to the user and can be
+	//     changed at run-time)
 	//
-	//     in the ideal case, the zoom-factor should be such that everything
-	//     that can be seen by the camera maximally fills the sun's frustum
-	//     (and nothing is left out), but it is harder to achieve this since
-	//     the camera can be in a map corner looking at an area of the map
-	//     that falls outside the sun frustum when variable scaling is used
-	//     ==> leave the choice of projection-style to the user
+	//     the first option means larger maps will have more blurred/aliased
+	//     shadows if the depth buffer is kept at the same size, but no (map)
+	//     geometry is ever omitted
+	//
+	//     the second option means shadows have higher average resolution, but
+	//     become less sharp as the viewing volume increases (through eg.camera
+	//     rotations) and geometry can be omitted in some cases
 	//
 	// NOTE:
 	//     when DynamicSun is enabled, the orbit is always circular in the xz
 	//     plane, instead of elliptical when the map has an aspect-ratio != 1
 	//
-	const float zScale =
+	const float xyScale =
 		(shadowProMode == SHADOWPROMODE_CAM_CENTER)? GetOrthoProjectedFrustumRadius(camera, centerPos):
 		(shadowProMode == SHADOWPROMODE_MAP_CENTER)? GetOrthoProjectedMapRadius(-sunDirZ, centerPos):
 		1.0f;
-	const float xScale = zScale;
-	const float yScale = zScale;
+	const float xScale = xyScale;
+	const float yScale = xyScale;
+	const float zScale = globalRendering->viewRange;
 
 	shadowMatrix[ 0] = sunDirX.x / xScale;
 	shadowMatrix[ 1] = sunDirY.x / yScale;
@@ -640,6 +642,5 @@ void CShadowHandler::CalcMinMaxView()
 
 	// xScale = (shadowProjMinMax.y - shadowProjMinMax.x) * 1.5f;
 	// yScale = (shadowProjMinMax.w - shadowProjMinMax.z) * 1.5f;
-
 }
 #endif
