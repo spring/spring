@@ -1378,11 +1378,6 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	selectedUnits.RemoveUnit(this);
 	SetGroup(NULL);
 
-	// reset states and clear the queues
-	if (!teamHandler->AlliedTeams(oldteam, newteam)) {
-		ChangeTeamReset();
-	}
-
 	eventHandler.UnitTaken(this, newteam);
 	eoh->UnitCaptured(*this, newteam);
 
@@ -1436,12 +1431,35 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	eventHandler.UnitGiven(this, oldteam);
 	eoh->UnitGiven(*this, oldteam);
 
+	// reset states and clear the queues
+	if (!teamHandler->AlliedTeams(oldteam, newteam))
+		ChangeTeamReset();
+
 	return true;
 }
 
 
 void CUnit::ChangeTeamReset()
 {
+	// stop mutual shooting among friendly units
+	const std::list<CObject*>& listeners = GetListeners();
+	std::vector<CUnit *> alliedunits;
+	std::set<int> allyteams;
+	allyteams.insert(allyteam);
+	for (std::list<CObject *>::const_iterator di = listeners.begin(); di != listeners.end(); ++di) {
+		CUnit* u = dynamic_cast<CUnit *>(*di);
+		if (u != NULL && teamHandler->AlliedTeams(team, u->team)) {
+			alliedunits.push_back(u);
+			allyteams.insert(u->allyteam);
+		}
+	}
+	for (std::vector<CUnit *>::const_iterator ui = alliedunits.begin(); ui != alliedunits.end(); ++ui) {
+		(*ui)->StopAttackingAllyTeam(allyteam);
+	}
+	for (std::set<int>::const_iterator ai = allyteams.begin(); ai != allyteams.end(); ++ai) {
+		StopAttackingAllyTeam(*ai);
+	}
+
 	// clear the commands (newUnitCommands for factories)
 	Command c(CMD_STOP);
 	commandAI->GiveCommand(c);
@@ -2110,6 +2128,13 @@ void CUnit::PostLoad()
 
 void CUnit::StopAttackingAllyTeam(int ally)
 {
+	if (lastAttacker != NULL && lastAttacker->allyteam == ally) {
+		DeleteDeathDependence(lastAttacker, DEPENDENCE_ATTACKER);
+		lastAttacker = NULL;
+	}
+	if (userTarget != NULL && userTarget->allyteam == ally)
+		SetUserTarget(NULL);
+
 	commandAI->StopAttackingAllyTeam(ally);
 	for (std::vector<CWeapon*>::iterator it = weapons.begin(); it != weapons.end(); ++it) {
 		(*it)->StopAttackingAllyTeam(ally);
