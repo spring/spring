@@ -4,6 +4,9 @@ FIND_PACKAGE(Boost 1.35.0 COMPONENTS unit_test_framework)
 If    (NOT Boost_FOUND)
 	Message(STATUS "Note: Unit tests will not be built: Boost::test library was not found")
 Else  (NOT Boost_FOUND)
+	# defines spring_test_compile_fail macro
+	INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/tools/CompileFailTest/CompileFailTest.cmake)
+
 	INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
 	FIND_PACKAGE(SDL REQUIRED)
@@ -116,7 +119,6 @@ Else  (NOT Boost_FOUND)
 
 	Set(test_BitwiseEnum_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Misc/TestBitwiseEnum.cpp"
-			${test_Log_sources}
 		)
 
 	ADD_EXECUTABLE(test_BitwiseEnum ${test_BitwiseEnum_src})
@@ -124,8 +126,14 @@ Else  (NOT Boost_FOUND)
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 		)
 
+	# positive tests (should compile fine)
 	ADD_TEST(NAME testBitwiseEnum COMMAND test_BitwiseEnum)
 	Add_Dependencies(tests test_BitwiseEnum)
+
+	# negative tests (must not compile)
+	spring_test_compile_fail(testBitwiseEnum_fail1 ${test_BitwiseEnum_src} "-DTEST1")
+	spring_test_compile_fail(testBitwiseEnum_fail2 ${test_BitwiseEnum_src} "-DTEST2")
+	spring_test_compile_fail(testBitwiseEnum_fail3 ${test_BitwiseEnum_src} "-DTEST3")
 
 
 ################################################################################

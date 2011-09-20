@@ -14,7 +14,7 @@ typedef BitwiseEnum<Colors::Colors> Color;
 bool foo(Color c) { return true; }
 
 // NOTE: these are compile time tests
-
+#ifndef FAIL
 BOOST_AUTO_TEST_CASE( ShouldCompile )
 {
 	Color c = Colors::red | Colors::green;
@@ -31,15 +31,23 @@ BOOST_AUTO_TEST_CASE( ShouldCompile )
 	c = c2;
 	c = Colors::green;
 }
+#endif
 
-//FIXME how to check this?
-/*
+
+#ifdef FAIL
 BOOST_AUTO_TEST_CASE( MustNotCompile )
 {
+#ifdef TEST1
 	BOOST_CHECK(foo(Vehicles::car));
+#endif
+	
+#ifdef TEST2
 	BOOST_CHECK(foo(1));
+#endif
 
+#ifdef TEST3
 	Color c = Colors::blue;
-	c = 1; // must fail
+	c = 1;
+#endif
 }
-*/
+#endif
