@@ -72,6 +72,7 @@ public:
 */
 protected:
 	bool detached;
+	const std::list<CObject*>& GetListeners() const { return listeners; }
 
 private:
 	std::list<CObject*> listeners;
