@@ -1311,7 +1311,7 @@ int CCommandAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 
 void CCommandAI::AddDeathDependence(CObject* o, DependenceType dep) {
 	if (dep == DEPENDENCE_COMMANDQUE) {
-		if (commandDeathDependences.insert(o).second && o != orderTarget);
+		if (commandDeathDependences.insert(o).second && o != orderTarget)
 			CObject::AddDeathDependence(o);
 	}
 	else if (dep == DEPENDENCE_ORDERTARGET) {
