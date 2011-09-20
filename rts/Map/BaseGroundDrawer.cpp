@@ -525,17 +525,21 @@ void CBaseGroundDrawer::UpdateCamRestraints(CCamera* cam)
 	cam->GetFrustumSides(readmap->currMinHeight - 100.0f,  readmap->currMaxHeight + 30.0f,  SQUARE_SIZE);
 
 	// add restraint for maximum view distance (use flat z-dir as side)
+	// this is supposed to prevent (far) terrain from first being drawn
+	// and then immediately z-clipped away
 	const float3& camDir3D  = cam->forward;
 	      float3  camDir2D  = float3(camDir3D.x, 0.0f, camDir3D.z);
-	const float3  camOffset = camDir2D * globalRendering->viewRange * 1.05f;
+	      float3  camOffset = ZeroVector;
 
+	// FIXME magic constants
 	static const float miny = 0.0f;
 	static const float maxy = 255.0f / 3.5f;
 
 	// prevent colinearity in top-down view
-	if (camDir2D.SqLength() > 0.01f) {
-		camDir2D.SafeANormalize();
+	if (std::abs(camDir3D.dot(UpVector) < 0.95f)) {
+		camDir2D  = camDir2D.SafeANormalize();
+		camOffset = camDir2D * globalRendering->viewRange * 1.05f;
+
 		cam->GetFrustumSide(camDir2D, camOffset, miny, maxy, SQUARE_SIZE, (camDir3D.y > 0.0f), false);
 	}
 }
-
