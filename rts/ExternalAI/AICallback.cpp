@@ -612,16 +612,17 @@ const UnitDef* CAICallback::GetUnitDef(int unitId)
 			const int allyTeam = teamHandler->AllyTeam(team);
 			if (teamHandler->Ally(unit->allyteam, allyTeam)) {
 				def = unitDef;
-			}
-			const unsigned short losStatus = unit->losStatus[allyTeam];
-			const unsigned short prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
-			if (((losStatus & LOS_INLOS) != 0) ||
-					((losStatus & prevMask) == prevMask)) {
-				const UnitDef* decoyDef = unitDef->decoyDef;
-				if (decoyDef == NULL) {
-					def = unitDef;
-				} else {
-					def = decoyDef;
+			} else {
+				const unsigned short losStatus = unit->losStatus[allyTeam];
+				const unsigned short prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
+				if (((losStatus & LOS_INLOS) != 0) ||
+						((losStatus & prevMask) == prevMask)) {
+					const UnitDef* decoyDef = unitDef->decoyDef;
+					if (decoyDef == NULL) {
+						def = unitDef;
+					} else {
+						def = decoyDef;
+					}
 				}
 			}
 		}
