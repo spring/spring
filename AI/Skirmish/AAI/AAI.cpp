@@ -539,6 +539,7 @@ void AAI::UnitDestroyed(int unit, int attacker)
 		ut->ActiveUnitKilled(category);
 
 		bt->units_dynamic[def->id].active -= 1;
+		assert(bt->units_dynamic[def->id].active >= 0);
 
 		// update buildtable
 		if (attacker)
