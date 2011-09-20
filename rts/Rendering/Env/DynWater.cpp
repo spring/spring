@@ -1398,7 +1398,7 @@ void CDynWater::UpdateCamRestraints(CCamera* cam) {
 	static const float maxy = 255.0f / 3.5f;
 
 	// prevent colinearity in top-down view
-	if (std::abs(camDir3D.dot(UpVector) < 0.95f)) {
+	if (fabs(camDir3D.dot(UpVector)) < 0.95f) {
 		camDir2D  = camDir2D.SafeANormalize();
 		camOffset = camDir2D * globalRendering->viewRange * 1.05f;
 
