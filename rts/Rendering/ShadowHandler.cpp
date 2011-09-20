@@ -276,31 +276,30 @@ void CShadowHandler::DrawShadowPasses()
 
 	glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT);
 		glEnable(GL_CULL_FACE);
-		glCullFace(GL_FRONT);
-
-		// cull front-faces during the terrain shadow pass: sun direction
-		// can be set so oblique that geometry back-faces are visible (eg.
-		// from hills near map edges) from its POV
-		// (could just disable culling of terrain faces, but we also want
-		// to prevent overdraw in such low-angle passes)
-		if ((shadowGenBits & SHADOWGEN_BIT_MAP) != 0)
-			readmap->GetGroundDrawer()->DrawShadowPass();
 
 		glCullFace(GL_BACK);
+			eventHandler.DrawWorldShadow();
 
-		if ((shadowGenBits & SHADOWGEN_BIT_MODEL) != 0) {
-			unitDrawer->DrawShadowPass();
-			modelDrawer->Draw();
-			featureDrawer->DrawShadowPass();
-		}
+			if ((shadowGenBits & SHADOWGEN_BIT_TREE) != 0)
+				treeDrawer->DrawShadowPass();
+			
+			if ((shadowGenBits & SHADOWGEN_BIT_PROJ) != 0)
+				projectileDrawer->DrawShadowPass();
 
-		if ((shadowGenBits & SHADOWGEN_BIT_TREE) != 0)
-			treeDrawer->DrawShadowPass();
+			if ((shadowGenBits & SHADOWGEN_BIT_MODEL) != 0) {
+				unitDrawer->DrawShadowPass();
+				modelDrawer->Draw();
+				featureDrawer->DrawShadowPass();
+			}
 
-		if ((shadowGenBits & SHADOWGEN_BIT_PROJ) != 0)
-			projectileDrawer->DrawShadowPass();
-
-		eventHandler.DrawWorldShadow();
+		glCullFace(GL_FRONT);
+			// cull front-faces during the terrain shadow pass: sun direction
+			// can be set so oblique that geometry back-faces are visible (eg.
+			// from hills near map edges) from its POV
+			// (could just disable culling of terrain faces, but we also want
+			// to prevent overdraw in such low-angle passes)
+			if ((shadowGenBits & SHADOWGEN_BIT_MAP) != 0)
+				readmap->GetGroundDrawer()->DrawShadowPass();
 	glPopAttrib();
 
 	inShadowPass = false;
