@@ -60,7 +60,7 @@ void CShadowHandler::Init()
 	const bool tmpFirstInit = firstInit;
 	firstInit = false;
 
-	shadowConfig = configHandler->GetInt("Shadows");
+	shadowConfig  = configHandler->GetInt("Shadows");
 	shadowMapSize = configHandler->GetInt("ShadowMapSize");
 	shadowProMode = configHandler->GetInt("ShadowProjectionMode");
 	shadowGenBits = SHADOWGEN_BIT_NONE;
@@ -88,10 +88,11 @@ void CShadowHandler::Init()
 		shadowGenBits = SHADOWGEN_BIT_MODEL | SHADOWGEN_BIT_MAP | SHADOWGEN_BIT_PROJ | SHADOWGEN_BIT_TREE;
 
 	if (shadowConfig > 1) {
-		if ((shadowConfig & SHADOWGEN_BIT_MODEL) == 0) { shadowGenBits &= (~SHADOWGEN_BIT_MODEL); }
-		if ((shadowConfig & SHADOWGEN_BIT_MAP  ) == 0) { shadowGenBits &= (~SHADOWGEN_BIT_MAP  ); }
-		if ((shadowConfig & SHADOWGEN_BIT_PROJ ) == 0) { shadowGenBits &= (~SHADOWGEN_BIT_PROJ ); }
-		if ((shadowConfig & SHADOWGEN_BIT_TREE ) == 0) { shadowGenBits &= (~SHADOWGEN_BIT_TREE ); }
+		/*if ((shadowConfig & SHADOWGEN_BIT_MODEL) != 0) { shadowGenBits ^= SHADOWGEN_BIT_MODEL; }
+		if ((shadowConfig & SHADOWGEN_BIT_MAP  ) != 0) { shadowGenBits ^= SHADOWGEN_BIT_MAP  ; }
+		if ((shadowConfig & SHADOWGEN_BIT_PROJ ) != 0) { shadowGenBits ^= SHADOWGEN_BIT_PROJ ; }
+		if ((shadowConfig & SHADOWGEN_BIT_TREE ) != 0) { shadowGenBits ^= SHADOWGEN_BIT_TREE ; }*/
+		shadowGenBits &= (~shadowConfig);
 	}
 
 
