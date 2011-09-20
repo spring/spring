@@ -525,10 +525,11 @@ float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, float3& proje
 		return 0.0f;
 
 	// two points per side; last point is used for the geometric average
-	std::vector<float3> frustumPoints((sides.size() * 2) + 1, ZeroVector);
+	// there are never more than 5 side-lines (10 points), so reserve 16
+	static std::vector<float3> frustumPoints(16, ZeroVector);
 
-	float3& frustumCenter = frustumPoints[frustumPoints.size() - 1];
-	float   frustumRadius = 0.0f;
+	float3 frustumCenter = ZeroVector;
+	float  frustumRadius = 0.0f;
 
 	for (unsigned int i = 0, j = 0; i < sides.size(); i++) {
 		const CCamera::FrustumLine* line = &sides[i];
@@ -556,12 +557,12 @@ float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, float3& proje
 		}
 	}
 
-	projectionMidPos.x = frustumCenter.x / (frustumPoints.size() - 1);
-	projectionMidPos.z = frustumCenter.z / (frustumPoints.size() - 1);
+	projectionMidPos.x = frustumCenter.x / (sides.size() * 2);
+	projectionMidPos.z = frustumCenter.z / (sides.size() * 2);
 	projectionMidPos.y = ground->GetHeightReal(projectionMidPos.x, projectionMidPos.z, false);
 
 	// calculate the radius of the minimally-bounding sphere around the projected frustum
-	for (unsigned int n = 0; n < frustumPoints.size() - 1; n++) {
+	for (unsigned int n = 0; n < (sides.size() * 2); n++) {
 		const float3& pos = frustumPoints[n];
 		const float   rad = (pos - projectionMidPos).SqLength();
 

@@ -1388,19 +1388,20 @@ void CDynWater::DrawOuterSurface()
 
 /*
 void CDynWater::UpdateCamRestraints(CCamera* cam) {
-	// add restraints for camera sides
 	cam->GetFrustumSides(-10.0f, 10.0f, 1.0f);
 
-	// add restraint for maximum view distance (use flat z-dir as side)
 	const float3& camDir3D  = cam->forward;
 	      float3  camDir2D  = float3(camDir3D.x, 0.0f, camDir3D.z);
-	const float3  camOffset = camDir2D * globalRendering->viewRange * 1.05f;
+	      float3  camOffset = ZeroVector;
 
 	static const float miny = 0.0f;
 	static const float maxy = 255.0f / 3.5f;
 
-	if (camDir2D.SqLength() > 0.01f) {
-		camDir2D.SafeANormalize();
+	// prevent colinearity in top-down view
+	if (std::abs(camDir3D.dot(UpVector) < 0.95f)) {
+		camDir2D  = camDir2D.SafeANormalize();
+		camOffset = camDir2D * globalRendering->viewRange * 1.05f;
+
 		cam->GetFrustumSide(camDir2D, camOffset, miny, maxy, SQUARE_SIZE, (camDir3D.y > 0.0f), false);
 	}
 }
