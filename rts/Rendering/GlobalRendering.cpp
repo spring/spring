@@ -41,7 +41,6 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_MEMBER(active),
 	CR_MEMBER(viewRange),
 	CR_MEMBER(timeOffset),
-//				CR_MEMBER(compressTextures),
 	CR_MEMBER(drawFog),
 	CR_RESERVED(64)
 ));
@@ -125,6 +124,11 @@ void CGlobalRendering::PostInit() {
 		}
 	}
 
+	// use some ATI bugfixes?
+	const int atiHacksCfg = configHandler->GetInt("AtiHacks");
+	atiHacks = haveATI && (atiHacksCfg < 0); // runtime detect
+	atiHacks |= (atiHacksCfg > 0); // user override
+
 	// Runtime compress textures?
 	if (GLEW_ARB_texture_compression) {
 		// we don't even need to check it, 'cos groundtextures must have that extension
@@ -148,10 +152,13 @@ void CGlobalRendering::PostInit() {
 		*/
 
 		support24bitDepthBuffers = false;
-		if (FBO::IsSupported()) {
+		if (FBO::IsSupported() && !atiHacks) {
+			const int fboSizeX = 16, fboSizeY = 16;
+
 			FBO fbo;
 			fbo.Bind();
-			fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT24, 16, 16);
+			fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, fboSizeX, fboSizeY);
+			fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT,  GL_DEPTH_COMPONENT24, fboSizeX, fboSizeY);
 			const GLenum status = fbo.GetStatus();
 			fbo.Unbind();
 
@@ -159,13 +166,8 @@ void CGlobalRendering::PostInit() {
 		}
 	}
 
-	// use some ATI bugfixes?
-	const int atiHacksCfg = configHandler->GetInt("AtiHacks");
-	atiHacks = haveATI && (atiHacksCfg < 0); // runtime detect
-	atiHacks |= (atiHacksCfg > 0); // user override
-	if (atiHacks) {
-		LOG("ATI hacks enabled");
-	}
+	// print info
+	LOG("GL info: FBO=%i NPOT=%i 24bitDepth=%i ATiHacks=%i", FBO::IsSupported(), supportNPOTs, support24bitDepthBuffers, atiHacks);
 }
 
 
