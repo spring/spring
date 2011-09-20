@@ -37,6 +37,7 @@
 #include <cerrno>
 
 #include "System/Util.h"
+#include "System/SafeCStrings.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileSystem.h"
 
@@ -372,7 +373,7 @@ std::string ExecuteProcess(const std::string& file, std::vector<std::string> arg
 		const std::string& arg = args.at(a);
 		const size_t arg_size = arg.length() + 1;
 		processArgs[a] = new char[arg_size];
-		STRCPYS(processArgs[a], arg_size, arg.c_str());
+		STRCPY_T(processArgs[a], arg_size, arg.c_str());
 	}
 
 	// "The array of pointers must be terminated by a NULL pointer."

@@ -18,6 +18,7 @@ using std::sprintf;
 #include "ExternalAI/Interface/AISCommands.h"         // for ABI version
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"  // for ABI version
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h" // for ABI version and AI_INTERFACE_PROPERTY_*
+#include "System/SafeCStrings.h"
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileQueryFlags.h"
 #include "System/FileSystem/DataDirLocater.h"
@@ -183,7 +184,7 @@ EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_getDir(int UNUSED_interfaceId, c
 	const std::vector<std::string>& dds = dataDirLocater.GetDataDirPaths();
 	size_t numDataDirs = dds.size();
 	if (dirIndex >= 0 && (size_t)dirIndex < numDataDirs) {
-		STRCPYS(path, path_sizeMax, dds[dirIndex].c_str());
+		STRCPY_T(path, path_sizeMax, dds[dirIndex].c_str());
 		return true;
 	} else {
 		return false;
@@ -203,7 +204,7 @@ EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_locatePath(int UNUSED_interfaceI
 	std::string locatedPath = "";
 	const size_t tmpRelPath_size = strlen(relPath) + 1;
 	char* tmpRelPath = new char[tmpRelPath_size];
-	STRCPYS(tmpRelPath, tmpRelPath_size, relPath);
+	STRCPY_T(tmpRelPath, tmpRelPath_size, relPath);
 	std::string tmpRelPathStr = tmpRelPath;
 	if (dir) {
 		locatedPath = dataDirsAccess.LocateDir(tmpRelPathStr, locateFlags);
@@ -211,7 +212,7 @@ EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_locatePath(int UNUSED_interfaceI
 		locatedPath = dataDirsAccess.LocateFile(tmpRelPathStr, locateFlags);
 	}
 	exists = (locatedPath != relPath);
-	STRCPYS(path, path_sizeMax, locatedPath.c_str());
+	STRCPY_T(path, path_sizeMax, locatedPath.c_str());
 
 	delete [] tmpRelPath;
 	return exists;

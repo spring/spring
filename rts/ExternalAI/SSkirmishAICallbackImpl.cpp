@@ -38,6 +38,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h" // for qf->GetFeaturesExact(pos, radius)
+#include "System/SafeCStrings.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Log/ILog.h"
 
@@ -1253,7 +1254,7 @@ EXPORT(void) skirmishAiCallback_Game_getCategoryName(int skirmishAIId, int categ
 	if (!names.empty()) {
 		theName = names.begin()->c_str();
 	}
-	STRCPYS(name, name_sizeMax, theName);
+	STRCPY_T(name, name_sizeMax, theName);
 }
 
 EXPORT(float) skirmishAiCallback_Gui_getViewRange(int skirmishAIId) {

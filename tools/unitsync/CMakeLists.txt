@@ -54,6 +54,7 @@ set(main_files
 	"${ENGINE_SRC_ROOT}/System/TdfParser.cpp"
 	"${ENGINE_SRC_ROOT}/System/Info.cpp"
 	"${ENGINE_SRC_ROOT}/System/Option.cpp"
+	"${ENGINE_SRC_ROOT}/System/SafeCStrings.c"
 	"${ENGINE_SRC_ROOT}/System/Util.cpp"
 	"${ENGINE_SRC_ROOT}/System/float4.cpp"
 	"${ENGINE_SRC_ROOT}/Sim/Misc/SideParser.cpp"

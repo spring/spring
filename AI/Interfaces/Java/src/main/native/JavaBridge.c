@@ -15,6 +15,7 @@
 #include "ExternalAI/Interface/SAIInterfaceCallback.h"
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
+#include "System/SafeCStrings.h"
 
 #include <jni.h>
 
@@ -192,14 +193,14 @@ static size_t java_createClassPath(char* classPathStr, const size_t classPathStr
 	// concat the classpath entries
 	classPathStr[0] = '\0';
 	if (classPath[0] != NULL) {
-		STRCATS(classPathStr, classPathStr_sizeMax, classPath[0]);
+		STRCAT_T(classPathStr, classPathStr_sizeMax, classPath[0]);
 		FREE(classPath[0]);
 	}
 	size_t cp;
 	for (cp=1; cp < classPath_size; ++cp) {
 		if (classPath[cp] != NULL) {
-			STRCATS(classPathStr, classPathStr_sizeMax, ENTRY_DELIM);
-			STRCATS(classPathStr, classPathStr_sizeMax, classPath[cp]);
+			STRCAT_T(classPathStr, classPathStr_sizeMax, ENTRY_DELIM);
+			STRCAT_T(classPathStr, classPathStr_sizeMax, classPath[cp]);
 			FREE(classPath[cp]);
 		}
 	}
@@ -446,7 +447,7 @@ static bool java_createNativeLibsPath(char* libraryPath, const size_t libraryPat
 				"Unable to find read-only data-dir.");
 		return false;
 	} else {
-		STRCPYS(libraryPath, libraryPath_sizeMax, dd_r);
+		STRCPY_T(libraryPath, libraryPath_sizeMax, dd_r);
 	}
 
 	// {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/lib/
@@ -457,8 +458,8 @@ static bool java_createNativeLibsPath(char* libraryPath, const size_t libraryPat
 				"Unable to find read-only native libs data-dir (optional): %s",
 				NATIVE_LIBS_DIR);
 	} else {
-		STRCATS(libraryPath, libraryPath_sizeMax, ENTRY_DELIM);
-		STRCATS(libraryPath, libraryPath_sizeMax, dd_lib_r);
+		STRCAT_T(libraryPath, libraryPath_sizeMax, ENTRY_DELIM);
+		STRCAT_T(libraryPath, libraryPath_sizeMax, dd_lib_r);
 		FREE(dd_lib_r);
 	}
 
@@ -470,8 +471,8 @@ static bool java_createNativeLibsPath(char* libraryPath, const size_t libraryPat
 		simpleLog_logL(SIMPLELOG_LEVEL_NORMAL,
 				"Unable to find common read-only data-dir (optional).");
 	} else {
-		STRCATS(libraryPath, libraryPath_sizeMax, ENTRY_DELIM);
-		STRCATS(libraryPath, libraryPath_sizeMax, dd_r_common);
+		STRCAT_T(libraryPath, libraryPath_sizeMax, ENTRY_DELIM);
+		STRCAT_T(libraryPath, libraryPath_sizeMax, dd_r_common);
 	}
 
 	// {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/common/lib/
@@ -482,8 +483,8 @@ static bool java_createNativeLibsPath(char* libraryPath, const size_t libraryPat
 			simpleLog_logL(SIMPLELOG_LEVEL_NORMAL,
 					"Unable to find common read-only native libs data-dir (optional).");
 		} else {
-			STRCATS(libraryPath, libraryPath_sizeMax, ENTRY_DELIM);
-			STRCATS(libraryPath, libraryPath_sizeMax, dd_lib_r_common);
+			STRCAT_T(libraryPath, libraryPath_sizeMax, ENTRY_DELIM);
+			STRCAT_T(libraryPath, libraryPath_sizeMax, dd_lib_r_common);
 			FREE(dd_lib_r_common);
 		}
 	}
@@ -582,15 +583,15 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args, const stru
 		const char* clsPathFromCfg = java_getValueByKey(jvmProps,
 				"jvm.option.java.class.path");
 		if (clsPathFromCfg != NULL) {
-			STRCATS(classPath, classPath_sizeMax, ENTRY_DELIM);
-			STRCATS(classPath, classPath_sizeMax, clsPathFromCfg);
+			STRCAT_T(classPath, classPath_sizeMax, ENTRY_DELIM);
+			STRCAT_T(classPath, classPath_sizeMax, clsPathFromCfg);
 		}
 	}
 	// create the java.class.path option
 	static const size_t classPathOpt_sizeMax = 8 * 1024;
 	char* classPathOpt = util_allocStr(classPathOpt_sizeMax);
-	STRCPYS(classPathOpt, classPathOpt_sizeMax, "-Djava.class.path=");
-	STRCATS(classPathOpt, classPathOpt_sizeMax, classPath);
+	STRCPY_T(classPathOpt, classPathOpt_sizeMax, "-Djava.class.path=");
+	STRCAT_T(classPathOpt, classPathOpt_sizeMax, classPath);
 	FREE(classPath);
 
 	// ### create the Java library-path option ###
@@ -609,8 +610,8 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args, const stru
 		const char* libPathFromCfg = java_getValueByKey(jvmProps,
 				"jvm.option.java.library.path");
 		if (libPathFromCfg != NULL) {
-			STRCATS(libraryPath, libraryPath_sizeMax, ENTRY_DELIM);
-			STRCATS(libraryPath, libraryPath_sizeMax, libPathFromCfg);
+			STRCAT_T(libraryPath, libraryPath_sizeMax, ENTRY_DELIM);
+			STRCAT_T(libraryPath, libraryPath_sizeMax, libPathFromCfg);
 		}
 	}
 	// create the java.library.path option ...
@@ -618,8 +619,8 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args, const stru
 	// if it is specified there
 	static const size_t libraryPathOpt_sizeMax = 4 * 1024;
 	char* libraryPathOpt = util_allocStr(libraryPathOpt_sizeMax);
-	STRCPYS(libraryPathOpt, libraryPathOpt_sizeMax, "-Djava.library.path=");
-	STRCATS(libraryPathOpt, libraryPathOpt_sizeMax, libraryPath);
+	STRCPY_T(libraryPathOpt, libraryPathOpt_sizeMax, "-Djava.library.path=");
+	STRCAT_T(libraryPathOpt, libraryPathOpt_sizeMax, libraryPath);
 	FREE(libraryPath);
 
 	// ### create and set all JVM options ###
@@ -1058,7 +1059,7 @@ static bool java_loadSkirmishAI(JNIEnv* env,
 /*	// convert className from "com.myai.AI" to "com/myai/AI"
 	const size_t classNameP_sizeMax = strlen(className) + 1;
 	char classNameP[classNameP_sizeMax];
-	STRCPYS(classNameP, classNameP_sizeMax, className);
+	STRCPY_T(classNameP, classNameP_sizeMax, className);
 	util_strReplaceChar(classNameP, '.', '/');*/
 
 	// get the AIs private class-loader

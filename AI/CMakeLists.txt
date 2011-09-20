@@ -41,7 +41,8 @@ endif (WIN32)
 
 
 # Assemble common additional native AI sources
-list(APPEND ai_common_SRC ${rts}/Game/GameVersion)
+list(APPEND ai_common_SRC "${rts}/Game/GameVersion.cpp")
+list(APPEND ai_common_SRC "${rts}/System/SafeCStrings.c")
 
 
 # Set some Skirmish AI stuff here already,

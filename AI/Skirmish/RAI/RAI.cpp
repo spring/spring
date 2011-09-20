@@ -5,6 +5,7 @@
 #include "LegacyCpp/MoveData.h"
 #include "CUtils/Util.h"
 #include "System/Util.h"
+#include "System/SafeCStrings.h"
 #include <stdio.h>
 //#include <direct.h>	// mkdir function (windows)
 //#include <sys/stat.h>	// mkdir function (linux)
@@ -1100,7 +1101,7 @@ bool cRAI::LocateFile(IAICallback* cb, const string& relFileName, string& absFil
 	int action = forWriting ? AIVAL_LOCATE_FILE_W : AIVAL_LOCATE_FILE_R;
 
 	char absFN[2048];
-	STRCPYS(absFN, sizeof(absFN), relFileName.c_str());
+	STRCPY_T(absFN, sizeof(absFN), relFileName.c_str());
 	const bool located = cb->GetValue(action, absFN);
 
 	if (located) {

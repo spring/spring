@@ -11,6 +11,7 @@
 #include "Level.h"
 #include "Section.h"
 #include "System/maindefines.h"
+#include "System/SafeCStrings.h"
 
 #include <cstdio>
 #include <cstdarg>
@@ -53,14 +54,14 @@ static void log_formatter_createPrefix_default(char* prefix,
 	// HACK this stuff should be done later, closer to the point where it is written to a file or the console
 	if (!LOG_SECTION_IS_DEFAULT(section)) {
 		section = log_util_prepareSection(section);
-		STRCATS(prefix, prefixSize, "[");
-		STRCATS(prefix, prefixSize, section);
-		STRCATS(prefix, prefixSize, "] ");
+		STRCAT_T(prefix, prefixSize, "[");
+		STRCAT_T(prefix, prefixSize, section);
+		STRCAT_T(prefix, prefixSize, "] ");
 	}
 	if (level != LOG_LEVEL_INFO) {
 		const char* levelStr = log_util_levelToString(level);
-		STRCATS(prefix, prefixSize, levelStr);
-		STRCATS(prefix, prefixSize, ": ");
+		STRCAT_T(prefix, prefixSize, levelStr);
+		STRCAT_T(prefix, prefixSize, ": ");
 	}
 }
 
