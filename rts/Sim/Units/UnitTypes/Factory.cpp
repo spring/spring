@@ -118,10 +118,10 @@ void CFactory::Update()
 
 			if (!unitDef->canBeAssisted) {
 				b->soloBuilder = this;
-				b->AddDeathDependence(this);
+				b->AddDeathDependence(this, DEPENDENCE_BUILDER);
 			}
 
-			AddDeathDependence(b);
+			AddDeathDependence(b, DEPENDENCE_BUILD);
 			curBuild = b;
 
 			script->StartBuilding();

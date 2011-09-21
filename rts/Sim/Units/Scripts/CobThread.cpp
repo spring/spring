@@ -31,7 +31,7 @@ CCobThread::CCobThread(CCobFile& script, CCobInstance* owner)
 		luaArgs[i] = 0;
 	}
 	owner->threads.push_back(this);
-	AddDeathDependence(owner);
+	AddDeathDependence(owner, DEPENDENCE_COBTHREAD);
 }
 
 CCobThread::~CCobThread()

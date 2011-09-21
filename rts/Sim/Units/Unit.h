@@ -119,19 +119,6 @@ public:
 	}
 
 	void DependentDied(CObject* o);
-	enum DependenceType {
-		DEPENDENCE_ATTACKER,
-		DEPENDENCE_BUILD,
-		DEPENDENCE_BUILDER,
-		DEPENDENCE_CAPTURE,
-		DEPENDENCE_RECLAIM, 
-		DEPENDENCE_RESURRECT,
-		DEPENDENCE_TARGET,
-		DEPENDENCE_TERRAFORM,
-		DEPENDENCE_TRANSPORTEE,
-		DEPENDENCE_TRANSPORTER
-	};
-	virtual void DeleteDeathDependence(CObject* o, DependenceType dep);
 
 	void SetUserTarget(CUnit* target);
 	bool SetGroup(CGroup* group);

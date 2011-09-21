@@ -277,7 +277,7 @@ void CPlasmaRepulser::NewProjectile(CWeaponProjectile* p)
 	// but this still doesn't solve anything for e.g. teleporting shields.
 	if (closeDist < Square(radius * 1.5f)) {
 		incoming.push_back(p);
-		AddDeathDependence(p);
+		AddDeathDependence(p, DEPENDENCE_REPULSED);
 	}
 }
 

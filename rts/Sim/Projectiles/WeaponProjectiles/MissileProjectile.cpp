@@ -86,10 +86,6 @@ CMissileProjectile::CMissileProjectile(
 	dir = speed / curSpeed;
 	oldDir = dir;
 
-	if (target) {
-		AddDeathDependence(target);
-	}
-
 	SetRadius(0.0f);
 
 	if (weaponDef) {

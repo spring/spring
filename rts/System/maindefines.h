@@ -60,10 +60,10 @@
 		#define VSNPRINTF vsprintf_s
 		#define STRCPY    strcpy
 		#define STRCPYS   strcpy_s
-		#define STRNCPY   strncpy_s
+		#define STRNCPY   strncpy
 		#define STRCAT    strcat
 		#define STRCATS   strcat_s
-		#define STRNCAT   strncat_s
+		#define STRNCAT   strncat
 		#define FOPEN     fopen_s
 	#else              // Visual Studio 2003
 		#define PRINTF    _printf
