@@ -114,7 +114,8 @@ AAIConfig::~AAIConfig(void)
 
 void AAIConfig::LoadConfig(AAI *ai)
 {
-	char filename[500];
+	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
+	char filename[2048];
 	char buffer[500];
 
 	MAX_UNITS = ai->cb->GetMaxUnits();
