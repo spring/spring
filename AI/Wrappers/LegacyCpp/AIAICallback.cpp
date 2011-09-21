@@ -4,7 +4,6 @@
 
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
 #include "ExternalAI/Interface/AISCommands.h"
-#include "System/SafeCStrings.h"
 
 // these are all copies from the engine, so we do not have to adjust
 // to each minor change done there
@@ -1101,14 +1100,20 @@ bool springLegacyAI::CAIAICallback::GetValue(int valueId, void *data)
 			static const size_t absPath_sizeMax = 2048;
 			char absPath[absPath_sizeMax];
 			bool located = sAICallback->DataDirs_locatePath(skirmishAIId, absPath, absPath_sizeMax, (const char*) data, false, false, false, false);
-			STRCPY_T((char*)data, absPath_sizeMax, absPath);
+			// NOTE We can not use STRCPY_T or STRNCPY here, as we do not know
+			//   the size of data. It might be below absPath_sizeMax,
+			//   and thus we would corrupt the stack.
+			STRCPY((char*)data, absPath);
 			return located;
 		}case AIVAL_LOCATE_FILE_W:{
 			//sAICallback->File_locateForWriting(skirmishAIId, (char*) data);
 			static const size_t absPath_sizeMax = 2048;
 			char absPath[absPath_sizeMax];
 			bool located = sAICallback->DataDirs_locatePath(skirmishAIId, absPath, absPath_sizeMax, (const char*) data, true, true, false, false);
-			STRCPY_T((char*)data, absPath_sizeMax, absPath);
+			// NOTE We can not use STRCPY_T or STRNCPY here, as we do not know
+			//   the size of data. It might be below absPath_sizeMax,
+			//   and thus we would corrupt the stack.
+			STRCPY((char*)data, absPath);
 			return located;
 		}
 		case AIVAL_UNIT_LIMIT: {
