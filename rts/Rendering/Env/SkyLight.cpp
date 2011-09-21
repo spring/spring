@@ -69,7 +69,11 @@ void DynamicSkyLight::Update() {
 
 bool DynamicSkyLight::SetLightDir(const float4& newLightDir) {
 	if (newLightDir != lightDir) {
-		updateNeeded = (lightDir.dot(newLightDir) < 0.95f);
+		static float4 lastUpdate = ZeroVector;
+		if (lastUpdate.dot(newLightDir) < 0.95f) {
+			lastUpdate   = newLightDir;
+			updateNeeded = true;
+		}
 
 		lightDir = newLightDir;
 		lightDir.w = 0.0f;
