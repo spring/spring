@@ -2503,7 +2503,8 @@ bool AAIBuildTable::LoadBuildTable()
 		STRCAT(buffer, ".dat");
 		STRCPY(buildtable_filename, buffer);
 
-		char buildtable_filename_r[500];
+		// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
+		char buildtable_filename_r[2048];
 		STRCPY(buildtable_filename_r, buildtable_filename);
 		ai->cb->GetValue(AIVAL_LOCATE_FILE_R, buildtable_filename_r);
 
@@ -2644,7 +2645,8 @@ void AAIBuildTable::SaveBuildTable(int game_period, MapType map_type)
 	}
 
 	// get filename
-	char buildtable_filename_w[500];
+	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
+	char buildtable_filename_w[2048];
 	STRCPY(buildtable_filename_w, buildtable_filename);
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, buildtable_filename_w);
 	FILE *save_file = fopen(buildtable_filename_w, "w+");
@@ -2747,7 +2749,8 @@ void AAIBuildTable::DebugPrint()
 
 	// for debugging
 	UnitType unitType;
-	char filename[500];
+	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
+	char filename[2048];
 	char buffer[500];
 	STRCPY(buffer, MAIN_PATH);
 	STRCAT(buffer, AILOG_PATH);
