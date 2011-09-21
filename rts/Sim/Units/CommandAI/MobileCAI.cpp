@@ -291,7 +291,7 @@ bool CMobileCAI::RefuelIfNeeded()
 		StopMove();
 
 		owner->userAttackGround = false;
-		owner->userTarget = 0;
+		owner->SetUserTarget(NULL);
 		inCommand = false;
 
 		CAirBaseHandler::LandingPad* lp =
@@ -327,7 +327,7 @@ bool CMobileCAI::RefuelIfNeeded()
 		if (lp != NULL) {
 			StopMove();
 			owner->userAttackGround = false;
-			owner->userTarget = 0;
+			owner->SetUserTarget(NULL);
 			inCommand = false;
 			owner->moveType->ReservePad(lp);
 			return true;
@@ -700,8 +700,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 				SetGoal(fix - diff * targetUnit->radius, owner->pos);
 
-				orderTarget = targetUnit;
-				AddDeathDependence(orderTarget, DEPENDENCE_ORDERTARGET);
+				SetOrderTarget(targetUnit);
 				inCommand = true;
 			} else {
 				// unit may not fire on itself, cancel order

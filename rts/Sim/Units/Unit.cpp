@@ -1441,23 +1441,23 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 void CUnit::ChangeTeamReset()
 {
-	// stop mutual shooting among friendly units
-	const std::list<CObject*>& listeners = GetListeners();
+	// stop friendly units shooting at us
+	const std::map<DependenceType, std::list<CObject*> >& listeners = GetAllListeners();
 	std::vector<CUnit *> alliedunits;
-	std::set<int> allyteams;
-	allyteams.insert(allyteam);
-	for (std::list<CObject *>::const_iterator di = listeners.begin(); di != listeners.end(); ++di) {
-		CUnit* u = dynamic_cast<CUnit *>(*di);
-		if (u != NULL && teamHandler->AlliedTeams(team, u->team)) {
-			alliedunits.push_back(u);
-			allyteams.insert(u->allyteam);
+	for (std::map<DependenceType, std::list<CObject*> >::const_iterator li = listeners.begin(); li != listeners.end(); ++li) {
+		for (std::list<CObject *>::const_iterator di = li->second.begin(); di != li->second.end(); ++di) {
+			CUnit* u = dynamic_cast<CUnit *>(*di);
+			if (u != NULL && teamHandler->AlliedTeams(team, u->team))
+				alliedunits.push_back(u);
 		}
 	}
 	for (std::vector<CUnit *>::const_iterator ui = alliedunits.begin(); ui != alliedunits.end(); ++ui) {
 		(*ui)->StopAttackingAllyTeam(allyteam);
 	}
-	for (std::set<int>::const_iterator ai = allyteams.begin(); ai != allyteams.end(); ++ai) {
-		StopAttackingAllyTeam(*ai);
+	// and stop shooting at friendly ally teams
+	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
+		if (teamHandler->Ally(t, allyteam))
+			StopAttackingAllyTeam(t);
 	}
 
 	// clear the commands (newUnitCommands for factories)
@@ -1585,7 +1585,7 @@ void CUnit::SetLastAttacker(CUnit* attacker)
 
 	lastAttack = gs->frameNum;
 	lastAttacker = attacker;
-	AddDeathDependence(attacker);
+	AddDeathDependence(attacker, DEPENDENCE_ATTACKER);
 }
 
 void CUnit::SetUserTarget(CUnit* target)
@@ -1599,7 +1599,7 @@ void CUnit::SetUserTarget(CUnit* target)
 	}
 
 	if (target) {
-		AddDeathDependence(target);
+		AddDeathDependence(target, DEPENDENCE_TARGET);
 	}
 }
 
@@ -2070,7 +2070,7 @@ void CUnit::IncomingMissile(CMissileProjectile* missile)
 {
 	if (unitDef->canDropFlare) {
 		incomingMissiles.push_back(missile);
-		AddDeathDependence(missile);
+		AddDeathDependence(missile, DEPENDENCE_INCOMING);
 
 		if (lastFlareDrop < (gs->frameNum - unitDef->flareReloadTime * 30)) {
 			new CFlareProjectile(pos, speed, this, (int) (gs->frameNum + unitDef->flareDelay * (1 + gs->randFloat()) * 15));
@@ -2203,40 +2203,6 @@ void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 		}
 	}
 }
-
-
-void CUnit::DeleteDeathDependence(CObject* o, DependenceType dep) {
-	/* curBuild, lastAttacker, userTarget etc. are NOT mutually exclusive, 
-	   and we can therefore only call CUnit::DeleteDeathDependence if we are
-	   certain that no references to the object in question still exist
-	*/
-	switch (dep) {
-		case DEPENDENCE_BUILD:
-		case DEPENDENCE_CAPTURE:
-		case DEPENDENCE_RECLAIM:
-		case DEPENDENCE_TERRAFORM:
-		case DEPENDENCE_TRANSPORTEE:
-		case DEPENDENCE_TRANSPORTER:
-			if (o == lastAttacker || o == soloBuilder || o == userTarget) return;
-			break;
-		case DEPENDENCE_ATTACKER:
-			if (o == soloBuilder || o == userTarget) return;
-			break;
-		case DEPENDENCE_BUILDER:
-			if (o == lastAttacker || o == userTarget) return;
-			break;
-		case DEPENDENCE_RESURRECT:
-			// feature
-			break;
-		case DEPENDENCE_TARGET:
-			if (o == lastAttacker || o == soloBuilder) return;
-			break;
-	}
-
-	CObject::DeleteDeathDependence(o);
-}
-
-
 
 CR_BIND_DERIVED(CUnit, CSolidObject, );
 // Member bindings
