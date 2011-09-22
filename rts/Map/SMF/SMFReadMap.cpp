@@ -332,7 +332,6 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 		static       float3* ufn = &faceNormalsUnsynced[0];
 		static const float3* scn = &centerNormalsSynced[0];
 		static       float3* ucn = &centerNormalsUnsynced[0];
-		static       float3* rvn = &rawVertexNormals[0];
 		static       float3* vvn = &visVertexNormals[0];
 
 		static const int W = gs->mapxp1;
@@ -396,17 +395,12 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 					tn = (hasNgbB           )? (vbm - vmm).cross((vbl - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
 					tn = (hasNgbB && hasNgbL)? (vbl - vmm).cross((vml - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
 					tn = (hasNgbL           )? (vml - vmm).cross((vtl - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-				float3 fnTL;
-				float3 fnBR;
-
-				//! update the raw vertex normal
-				rvn[vIdxTL] = vn.ANormalize();
 
 			#ifdef USE_UNSYNCED_HEIGHTMAP
 				if (update.los) {
 					// update the visible vertex/face height/normal
 					uhm[vIdxTL] = shm[vIdxTL];
-					vvn[vIdxTL] = rvn[vIdxTL];
+					vvn[vIdxTL] = vn.ANormalize();
 
 					if (hasNgbR && hasNgbB) {
 						// x == maxx and z == maxz are illegal indices for these

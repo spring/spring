@@ -141,7 +141,6 @@ public:
 	      unsigned char* GetTypeMapSynced()       { return &typeMap[0]; }
 
 	/// unsynced
-	const float3* GetRawVertexNormalsUnsynced() const { return &rawVertexNormals[0]; }
 	const float3* GetVisVertexNormalsUnsynced() const { return &visVertexNormals[0]; }
 
 	/// both
@@ -200,7 +199,6 @@ protected:
 	 */
 	std::vector< float* > mipPointerHeightMaps;
 
-	std::vector<float3> rawVertexNormals;      /// size:  (mapx + 1) * (mapy + 1), contains one vertex normal per corner-heightmap pixel [UNSYNCED]
 	std::vector<float3> visVertexNormals;      /// size:  (mapx + 1) * (mapy + 1), contains one vertex normal per corner-heightmap pixel [UNSYNCED]
 	std::vector<float3> faceNormalsSynced;     /// size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [SYNCED]
 	std::vector<float3> faceNormalsUnsynced;   /// size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [UNSYNCED]
