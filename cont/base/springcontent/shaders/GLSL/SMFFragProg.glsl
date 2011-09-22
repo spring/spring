@@ -68,15 +68,6 @@ void main() {
 	// we don't calculate it in the vertex shader to save varyings (OpenGL2.0 just allows 32 varying components)
 	vec3 cameraDir = vertexWorldPos.xyz - cameraPos;
 
-	#if (HAVE_SHADOWS == 1)
-	vec2 p17 = vec2(shadowParams.z, shadowParams.z);
-	vec2 p18 = vec2(shadowParams.w, shadowParams.w);
-
-	vec4 vertexShadowPos = shadowMat * vertexWorldPos;
-		vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + p17) + p18);
-		vertexShadowPos.st += shadowParams.xy;
-	#endif
-
 	vec3 normal;
 	#if (SSMF_UNCOMPRESSED_NORMALS == 1)
 		normal = normalize((texture2D(normalsTex, normalTexCoords).rgb * 2.0) - 1.0);
@@ -144,16 +135,18 @@ void main() {
 
 
 	#if (HAVE_SHADOWS == 1)
+	vec2 p17 = vec2(shadowParams.z, shadowParams.z);
+	vec2 p18 = vec2(shadowParams.w, shadowParams.w);
+
+	vec4 vertexShadowPos = shadowMat * vertexWorldPos;
+		vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + p17) + p18);
+		vertexShadowPos.st += shadowParams.xy;
+
 	float shadowInt = shadow2DProj(shadowTex, vertexShadowPos).r;
+	      shadowInt = min(shadowInt, cosAngleDiffuse);
 	#else
 	float shadowInt = 1.0;
 	#endif
-
-	// NOTE: do we want to add the ambient term to diffuseInt?
-	// vec4 diffuseInt = texture2D(shadingTex, diffuseTexCoords);
-	vec3 diffuseInt = groundAmbientColor + groundDiffuseColor * cosAngleDiffuse;
-	vec3 ambientInt = groundAmbientColor;
-	vec4 shadeInt;
 
 	#if (SMF_ARB_LIGHTING == 0)
 	specularInt *= shadowInt;
@@ -161,10 +154,11 @@ void main() {
 
 	#if (HAVE_SHADOWS == 1)
 	shadowInt = 1.0 - (1.0 - shadowInt) * groundShadowDensity;
-	shadeInt.rgb = mix(ambientInt, diffuseInt, shadowInt);
-	#else
-	shadeInt.rgb = diffuseInt;
 	#endif
+
+	// Ambient + Diffuse
+	vec4 shadeInt;
+	shadeInt.rgb = groundAmbientColor + groundDiffuseColor * shadowInt;
 
 	shadeInt.rgb *= SMF_INTENSITY_MUL;
 	shadeInt.a = 1.0;
@@ -183,9 +177,9 @@ void main() {
 				waterHeightColor.rgb *= waterLightInt;
 
 			if (vertexWorldPos.y > -SMF_SHALLOW_WATER_DEPTH) {
-				// "shallow" water, interpolate between diffuseInt and
+				// "shallow" water, interpolate between shadeInt and
 				// waterHeightColor (both are already cosine-weighted)
-				shadeInt.rgb = mix(diffuseInt.rgb, waterHeightColor.rgb, waterHeightAlpha);
+				shadeInt.rgb = mix(shadeInt.rgb, waterHeightColor.rgb, waterHeightAlpha);
 			} else {
 				// deep water, no interpolation
 				shadeInt.rgb = waterHeightColor.rgb;
