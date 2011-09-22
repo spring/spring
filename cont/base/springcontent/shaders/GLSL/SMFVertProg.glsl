@@ -29,15 +29,12 @@ void main() {
 	halfDir = normalize(lightDir.xyz + viewDir);
 	vertexWorldPos = gl_Vertex;
 
-	gl_Position = gl_ModelViewMatrix * gl_Vertex;
-	float fogCoord = length(gl_Position.xyz);
-	gl_Position = gl_ProjectionMatrix * gl_Position;
 
 	diffuseTexCoords  = floor(gl_Vertex.xz) / SMF_TEXSQR_SIZE - vec2(ivec2(texSquareX, texSquareZ));
 	specularTexCoords = gl_Vertex.xz / mapSize.xy;
 	normalTexCoords   = gl_Vertex.xz / mapSizePO2.xy;
 
-	// detail-tex coors
+	// detail-tex coords
 	#if (SMF_DETAIL_TEXTURE_SPLATTING == 0)
 		gl_TexCoord[0].st  = gl_Vertex.xz * vec2(SMF_DETAILTEX_RES);
 	#else
@@ -47,7 +44,11 @@ void main() {
 		gl_TexCoord[1].pq  = gl_Vertex.xz * vec2(splatTexScales.a);
 	#endif
 
+	gl_Position = gl_ModelViewMatrix * gl_Vertex;
+	float fogCoord = length(gl_Position.xyz);
+	gl_Position = gl_ProjectionMatrix * gl_Position;
+
 	// emulate linear fog
-	fogFactor = (gl_Fog.end - fogCoord) / (gl_Fog.end - gl_Fog.start);
+	fogFactor = (gl_Fog.end - fogCoord) * gl_Fog.scale; // gl_Fog.scale == 1.0 / (gl_Fog.end - gl_Fog.start)
 	fogFactor = clamp(fogFactor, 0.0, 1.0);
 }
