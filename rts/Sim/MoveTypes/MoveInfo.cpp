@@ -66,7 +66,8 @@ CMoveInfo* moveinfo;
 static float DegreesToMaxSlope(float degrees)
 {
 	const float deg = Clamp(degrees, 0.0f, 60.0f) * 1.5f;
-	const float rad = PI * deg / 180.0f;
+//	const float rad = deg * (PI / 180.0f); // If written like this, it yields a slightly different result for MSVC DEBUG builds - causing
+	const float rad = PI * deg / 180.0f; // a PE checksum mismatch - possibly because it does not optimize division of the two constants
 
 	return (1.0f - cos(rad));
 }
