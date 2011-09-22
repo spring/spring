@@ -453,8 +453,8 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 				//! note: y-coord is regenerated in the shader via "sqrt(1 - x*x - z*z)",
 				//!   this gives us 2 solutions but we know that the y-coord always points
 				//!   upwards, so we can reconstruct it in the shader.
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 0] = ((vertNormal.x + 1.0f) * 0.5f);
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 1] = ((vertNormal.z + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 2 + 0] = ((vertNormal.x + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 2 + 1] = ((vertNormal.z + 1.0f) * 0.5f);
 			#endif
 			}
 		}
