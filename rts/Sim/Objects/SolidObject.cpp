@@ -54,6 +54,7 @@ CSolidObject::CSolidObject():
 	floatOnWater(false),
 	immobile(false),
 	blockHeightChanges(false),
+	crushKilled(false),
 	xsize(1),
 	zsize(1),
 	height(1.0f),
