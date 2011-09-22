@@ -351,12 +351,6 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 		const int xsize = maxx - minx;
 		const int zsize = maxz - minz;
 
-	#if (SSMF_UNCOMPRESSED_NORMALS == 1)
-		std::vector<float> pixels((xsize + 1) * (zsize + 1) * 4, 0.0f);
-	#else
-		std::vector<float> pixels((xsize + 1) * (zsize + 1) * 2, 0.0f);
-	#endif
-
 		int z;
 		#pragma omp parallel for private(z)
 		for (z = minz; z <= maxz; z++) {
@@ -413,35 +407,67 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 					}
 				}
 			#endif
+			}
+		}
+	}
+
+
+	// Update VertexNormalsTexture (not used by ARB shaders)
+	if (globalRendering->haveGLSL) {
+		static float3* vvn = &visVertexNormals[0];
+
+		static const int W = gs->mapxp1;
+		static const int H = gs->mapyp1;
+
+		//! a heightmap update over (x1, y1) - (x2, y2) implies the
+		//! normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
+		const int minx = std::max((x1 - 1),     0);
+		const int minz = std::max((y1 - 1),     0);
+		const int maxx = std::min((x2 + 1), W - 1);
+		const int maxz = std::min((y2 + 1), H - 1);
+
+		const int xsize = maxx - minx;
+		const int zsize = maxz - minz;
+
+		// Note, it doesn't make sense to use a PBO here.
+		// Cause the upstreamed float32s need to be transformed to float16s, which seems to happen on the CPU!
+	#if (SSMF_UNCOMPRESSED_NORMALS == 1)
+		std::vector<float> pixels((xsize + 1) * (zsize + 1) * 4, 0.0f);
+	#else
+		std::vector<float> pixels((xsize + 1) * (zsize + 1) * 2, 0.0f);
+	#endif
+
+		for (int z = minz; z <= maxz; z++) {
+			for (int x = minx; x <= maxx; x++) {
+				const int vIdxTL = z * W + x;
+				const float3& vertNormal = vvn[vIdxTL];
 
 				//! compress the range [-1, 1] to [0, 1] to prevent clamping
 				//! (ideally, should use an FBO with FP32 texture attachment)
 			#if (SSMF_UNCOMPRESSED_NORMALS == 1)
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 0] = ((vvn[vIdxTL].x + 1.0f) * 0.5f);
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 1] = ((vvn[vIdxTL].y + 1.0f) * 0.5f);
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 2] = ((vvn[vIdxTL].z + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 4 + 0] = ((vertNormal.x + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 4 + 1] = ((vertNormal.y + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 4 + 2] = ((vertNormal.z + 1.0f) * 0.5f);
 				pixels[((z - minz) * xsize + (x - minx)) * 4 + 3] = 1.0f;
 			#else
 				//! note: y-coord is regenerated in the shader via "sqrt(1 - x*x - z*z)",
 				//!   this gives us 2 solutions but we know that the y-coord always points
 				//!   upwards, so we can reconstruct it in the shader.
-				pixels[((z - minz) * xsize + (x - minx)) * 2 + 0] = ((vvn[vIdxTL].x + 1.0f) * 0.5f);
-				pixels[((z - minz) * xsize + (x - minx)) * 2 + 1] = ((vvn[vIdxTL].z + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 4 + 0] = ((vertNormal.x + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 4 + 1] = ((vertNormal.z + 1.0f) * 0.5f);
 			#endif
 			}
 		}
 
-		if (globalRendering->haveGLSL) {
-			// <normalsTex> is not used by ARB shaders
-			glBindTexture(GL_TEXTURE_2D, normalsTex);
-		#if (SSMF_UNCOMPRESSED_NORMALS == 1)
-			glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_RGBA, GL_FLOAT, &pixels[0]);
-		#else
-			glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_LUMINANCE_ALPHA, GL_FLOAT, &pixels[0]);
-		#endif
-		}
+		glBindTexture(GL_TEXTURE_2D, normalsTex);
+	#if (SSMF_UNCOMPRESSED_NORMALS == 1)
+		glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_RGBA, GL_FLOAT, &pixels[0]);
+	#else
+		glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_LUMINANCE_ALPHA, GL_FLOAT, &pixels[0]);
+	#endif
 	}
 
+	
 	{
 		//! ReadMap::UpdateHeightMapSynced clamps to [0, gs->mapx - 1]
 		//! but we want it to be [0, gs->mapx] for the shading texture
