@@ -1453,9 +1453,7 @@ void CSMFGroundDrawer::SetupTextureUnits(bool drawReflection)
 				glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, smfMap->GetSpecularTexture());
 				glActiveTexture(GL_TEXTURE7); glBindTexture(GL_TEXTURE_2D, smfMap->GetSplatDetailTexture());
 				glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, smfMap->GetSplatDistrTexture());
-				glActiveTexture(GL_TEXTURE9);
-					glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-					glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetSkyReflectionTextureID());
+				glActiveTexture(GL_TEXTURE9); glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetSkyReflectionTextureID());
 				glActiveTexture(GL_TEXTURE10); glBindTexture(GL_TEXTURE_2D, smfMap->GetSkyReflectModTexture());
 				glActiveTexture(GL_TEXTURE11); glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailNormalTexture());
 				glActiveTexture(GL_TEXTURE12); glBindTexture(GL_TEXTURE_2D, smfMap->GetLightEmissionTexture());
@@ -1590,9 +1588,7 @@ void CSMFGroundDrawer::ResetTextureUnits(bool drawReflection)
 		glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTexture(GL_TEXTURE7); glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, 0);
-		glActiveTexture(GL_TEXTURE9);
-			glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-			glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, 0);
+		glActiveTexture(GL_TEXTURE9); glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, 0);
 		glActiveTexture(GL_TEXTURE10); glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTexture(GL_TEXTURE11); glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTexture(GL_TEXTURE12); glBindTexture(GL_TEXTURE_2D, 0);
