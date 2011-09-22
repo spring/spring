@@ -120,7 +120,7 @@ void main() {
 	#endif
 
 
-	float shadowCoeff = 1.f;
+	float shadowCoeff = 1.;
 	#if (HAVE_SHADOWS == 1)
 	vec2 p17 = vec2(shadowParams.z, shadowParams.z);
 	vec2 p18 = vec2(shadowParams.w, shadowParams.w);
