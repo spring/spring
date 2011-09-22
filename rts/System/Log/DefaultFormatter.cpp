@@ -25,6 +25,13 @@ extern "C" {
 static const int SECTION_SIZE_MIN = 10;
 static const int SECTION_SIZE_MAX = 20;
 
+static int* frameNum = NULL;
+
+void log_formatter_setFrameNumReference(int* frameNumReference)
+{
+	frameNum = frameNumReference;
+}
+
 static void log_formatter_createPrefix_xorgStyle(char* prefix,
 		size_t prefixSize, const char* section, int level)
 {
@@ -52,6 +59,9 @@ static void log_formatter_createPrefix_default(char* prefix,
 	prefix[0] = '\0';
 
 	// HACK this stuff should be done later, closer to the point where it is written to a file or the console
+	if (frameNum != NULL) {
+		SNPRINTF(prefix, prefixSize, "[f=%07d] ", *frameNum);
+	}
 	if (!LOG_SECTION_IS_DEFAULT(section)) {
 		section = log_util_prepareSection(section);
 		STRCAT_T(prefix, prefixSize, "[");

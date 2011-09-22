@@ -6,7 +6,6 @@
 
 #include "lib/gml/gmlmut.h"
 #include "System/Util.h"
-#include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameVersion.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileSystem.h"
@@ -292,15 +291,7 @@ void CLogOutput::Output(const std::string& str)
 {
 	GML_STDMUTEX_LOCK(log); // Output
 
-	std::string msg;
-
-#if !defined UNITSYNC && !defined DEDICATED
-	if (gs) {
-		msg += IntToString(gs->frameNum, "[f=%07d] ");
-	}
-#endif
-
-	msg += str;
+	const std::string& msg = str;
 
 	if (!initialized) {
 		ToStderr(msg);
