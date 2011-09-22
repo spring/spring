@@ -255,9 +255,9 @@ bool CSMFGroundDrawer::LoadMapShaders() {
 
 
 void CSMFGroundDrawer::UpdateSunDir() {
-	if (!shadowHandler->shadowsLoaded) {
+	/*if (!shadowHandler->shadowsLoaded) {
 		return;
-	}
+	}*/
 
 	if (smfShaderCurGLSL != NULL) {
 		smfShaderCurGLSL->Enable();
