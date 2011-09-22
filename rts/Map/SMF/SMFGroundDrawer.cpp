@@ -1293,7 +1293,7 @@ void CSMFGroundDrawer::DrawShadowPass(void)
 	Shader::IProgramObject* po =
 		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MAP);
 
-	glPolygonOffset(1, 1);
+	glPolygonOffset(-1.f, -1.f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
 	po->Enable();
