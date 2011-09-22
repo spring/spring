@@ -7,7 +7,7 @@
 
 CPathFinderDef::CPathFinderDef(const float3& goalCenter, float goalRadius):
 goal(goalCenter),
-sqGoalRadius(goalRadius)
+sqGoalRadius(goalRadius * goalRadius)
 {
 	// make sure that the goal can be reached with 2-square resolution
 	if (sqGoalRadius < (SQUARE_SIZE * SQUARE_SIZE * 2))
