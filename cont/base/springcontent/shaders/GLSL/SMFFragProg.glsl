@@ -92,10 +92,10 @@ void main() {
 	vec3 tTangent = cross(normal, vec3(-1.0, 0.0, 0.0));
 	vec3 sTangent = cross(normal, tTangent);
 	vec4 dtSample = texture2D(detailNormalTex, normalTexCoords);
-	vec3 dtNormal = (dtSample.rgb * 2.0) - 1.0;
+	vec3 dtNormal = (dtSample.xyz * 2.0) - 1.0;
 	mat3 stnMatrix = mat3(sTangent, tTangent, normal);
 
-	normal = normalize((normal * (1.0 - dtSample.a)) + ((stnMatrix * dtNormal) * dtSample.a));
+	normal = normalize(mix(normal, stnMatrix * dtNormal, dtSample.a));
 	#endif
 
 
@@ -172,11 +172,12 @@ void main() {
 
 	#if (SMF_WATER_ABSORPTION == 1)
 		if (vertexWorldPos.y < 0.0) {
-			float waterHeightAlpha = -vertexWorldPos.y * SMF_SHALLOW_WATER_DEPTH_INV;
-			float waterShadeDecay = 0.2 + (waterHeightAlpha * 0.1);
+			float waterHeightAlpha = abs(vertexWorldPos.y) * SMF_SHALLOW_WATER_DEPTH_INV;
+			float waterShadeDecay  = 0.2 + (waterHeightAlpha * 0.1);
 			float vertexStepHeight = min(1023.0, -floor(vertexWorldPos.y));
-			float waterLightInt = min((cosAngleDiffuse + 0.2) * 2.0, 1.0);
+			float waterLightInt    = min((cosAngleDiffuse + 0.2) * 2.0, 1.0);
 			vec4 waterHeightColor;
+
 				waterHeightColor.a = max(0.0, (255.0 + SMF_SHALLOW_WATER_DEPTH * vertexWorldPos.y) / 255.0);
 				waterHeightColor.rgb = max(waterMinColor.rgb, waterBaseColor.rgb - (waterAbsorbColor.rgb * vertexStepHeight)) * SMF_INTENSITY_MUL;
 				waterHeightColor.rgb *= waterLightInt;
@@ -184,9 +185,7 @@ void main() {
 			if (vertexWorldPos.y > -SMF_SHALLOW_WATER_DEPTH) {
 				// "shallow" water, interpolate between diffuseInt and
 				// waterHeightColor (both are already cosine-weighted)
-				shadeInt.rgb =
-					(diffuseInt.rgb * (1.0 - waterHeightAlpha)) +
-					(waterHeightColor.rgb * (0.0 + waterHeightAlpha));
+				shadeInt.rgb = mix(diffuseInt.rgb, waterHeightColor.rgb, waterHeightAlpha);
 			} else {
 				// deep water, no interpolation
 				shadeInt.rgb = waterHeightColor.rgb;
