@@ -120,7 +120,6 @@ void main() {
 	#endif
 
 
-	float shadowCoeff = 1.;
 	#if (HAVE_SHADOWS == 1)
 	vec2 p17 = vec2(shadowParams.z, shadowParams.z);
 	vec2 p18 = vec2(shadowParams.w, shadowParams.w);
@@ -130,16 +129,16 @@ void main() {
 		vertexShadowPos.st += shadowParams.xy;
 
 	shadowCoeff = shadow2DProj(shadowTex, vertexShadowPos).r;
-	#endif
 
-	float diffuseCoeff = min(shadowCoeff, cosAngleDiffuse);
-
-	#if (HAVE_SHADOWS == 1)
-	diffuseCoeff = 1.0 - (1.0 - diffuseCoeff) * groundShadowDensity;
+	// same as what the ARB shader did: shadowCoeff = 1 - (1 - shadowCoeff) * groundShadowDensity;
+	shadowCoeff = mix(1.0, shadowCoeff, groundShadowDensity);
+	#else
+	float shadowCoeff = 1.;
 	#endif
 
 	// Light Ambient + Diffuse
 	vec4 shadeInt;
+	float diffuseCoeff = shadowCoeff * cosAngleDiffuse;
 	shadeInt.rgb = groundAmbientColor + groundDiffuseColor * diffuseCoeff;
 
 	shadeInt.rgb *= SMF_INTENSITY_MUL;
