@@ -279,7 +279,8 @@ void CSMFReadMap::NewGroundDrawer() { groundDrawer = new CSMFGroundDrawer(this);
 CBaseGroundDrawer* CSMFReadMap::GetGroundDrawer() { return (CBaseGroundDrawer*) groundDrawer; }
 
 
-void CSMFReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigned char* pixelRow) {
+void CSMFReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigned char* pixelRow)
+{
 	for (int x = 0; x < xsize; ++x) {
 		const int xi = x1 + x;
 		const int yi = y1 + y;
@@ -288,12 +289,13 @@ void CSMFReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigne
 		const float height = heightMap[xi + yi * gs->mapxp1];
 
 		if (height < 0.0f) {
-			const int h = (int) - height & 1023; //! waterHeightColors array just holds 1024 colors
-			float light = std::min((DiffuseSunCoeff(x + x1, y + y1) + 0.2f) * 2.0f, 1.0f);
+			// Underwater
+			const int h = (int)(-height) & 1023; //! waterHeightColors array just holds 1024 colors
+			float light = std::min((DiffuseSunCoeff(xi, yi) + 0.2f) * 2.0f, 1.0f);
 
 			if (height > -10.0f) {
 				const float wc = -height * 0.1f;
-				const float3 light3 = GetLightValue(x + x1, y + y1) * (1.0f - wc) * 210.0f;
+				const float3 light3 = GetLightValue(xi, yi) * (1.0f - wc) * 255.0f;
 				light *= wc;
 
 				pixelRow[x * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light + light3.x);
@@ -306,7 +308,8 @@ void CSMFReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigne
 			}
 			pixelRow[x * 4 + 3] = EncodeHeight(height);
 		} else {
-			const float3& light = GetLightValue(x + x1, y + y1) * 210.0f;
+			// Above water
+			const float3& light = GetLightValue(xi, yi) * 255.0f;
 
 			pixelRow[x * 4 + 0] = (unsigned char) light.x;
 			pixelRow[x * 4 + 1] = (unsigned char) light.y;
