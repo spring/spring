@@ -182,7 +182,6 @@ void CReadMap::Initialize()
 	}
 
 	slopeMap.resize(gs->hmapx * gs->hmapy);
-	rawVertexNormals.resize(gs->mapxp1 * gs->mapyp1);
 	visVertexNormals.resize(gs->mapxp1 * gs->mapyp1);
 
 	CalcHeightmapChecksum();
