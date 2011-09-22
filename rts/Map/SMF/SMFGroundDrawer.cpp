@@ -255,9 +255,11 @@ bool CSMFGroundDrawer::LoadMapShaders() {
 
 
 void CSMFGroundDrawer::UpdateSunDir() {
-	/*if (!shadowHandler->shadowsLoaded) {
+	/* the GLSL shader may run even w/o shadows and depends on a correct sunDir
+	if (!shadowHandler->shadowsLoaded) {
 		return;
-	}*/
+	}
+	*/
 
 	if (smfShaderCurGLSL != NULL) {
 		smfShaderCurGLSL->Enable();
