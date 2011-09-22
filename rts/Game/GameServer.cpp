@@ -518,7 +518,21 @@ bool CGameServer::SendDemoData(int targetFrameNum)
 				// never send these from demos
 				break;
 			}
-
+			case NETMSG_CCOMMAND: {
+				if (!AdjustPlayerNumber(buf ,3))
+					continue;
+				try {
+					CommandMessage msg(rpkt);
+					const Action& action = msg.GetAction();
+					if (msg.GetPlayerID() == SERVER_PLAYER && action.command == "cheat")
+						SetBoolArg(cheating, action.extra);
+				} catch (const netcode::UnpackPacketException& ex) {
+					Message(str(format("Warning: Discarding invalid command message packet in demo: %s") %ex.what()));
+					continue;
+				}
+				Broadcast(rpkt);
+				break;
+			}
 			default: {
 				Broadcast(rpkt);
 				break;
