@@ -95,14 +95,6 @@ void main() {
 	vec4 diffuseCol = texture2D(diffuseTex, diffuseTexCoords);
 	vec4 specularCol = texture2D(specularTex, specularTexCoords);
 
-	#if (SMF_ARB_LIGHTING == 0)
-	// sun specular lighting contribution
-	float specularExp = specularCol.a * 16.0;
-	float specularPow = pow(cosAngleSpecular, specularExp);
-	vec3 specularInt  = specularCol.rgb * specularPow;
-	#endif
-
-
 	vec4 detailCol;
 	#if (SMF_DETAIL_TEXTURE_SPLATTING == 0)
 		detailCol = (texture2D(detailTex, gl_TexCoord[0].st) * 2.0) - 1.0;
@@ -119,11 +111,6 @@ void main() {
 		detailCol.a = 1.0;
 	#endif
 
-	#if (SMF_LIGHT_EMISSION == 1)
-	vec4 lightEmissionCol = texture2D(lightEmissionTex, specularTexCoords);
-	#endif
-
-
 	#if (SMF_SKY_REFLECTIONS == 1)
 		vec3 reflectDir = reflect(cameraDir, normal); //cameraDir doesn't need to be normalized for reflect()
 		vec3 reflectCol = textureCube(skyReflectTex, gl_NormalMatrix * reflectDir).rgb;
@@ -133,7 +120,7 @@ void main() {
 	#endif
 
 
-
+	float shadowCoeff = 1.f;
 	#if (HAVE_SHADOWS == 1)
 	vec2 p17 = vec2(shadowParams.z, shadowParams.z);
 	vec2 p18 = vec2(shadowParams.w, shadowParams.w);
@@ -142,23 +129,18 @@ void main() {
 		vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + p17) + p18);
 		vertexShadowPos.st += shadowParams.xy;
 
-	float shadowInt = shadow2DProj(shadowTex, vertexShadowPos).r;
-	      shadowInt = min(shadowInt, cosAngleDiffuse);
-	#else
-	float shadowInt = 1.0;
+	shadowCoeff = shadow2DProj(shadowTex, vertexShadowPos).r;
 	#endif
 
-	#if (SMF_ARB_LIGHTING == 0)
-	specularInt *= shadowInt;
-	#endif
+	float diffuseCoeff = min(shadowCoeff, cosAngleDiffuse);
 
 	#if (HAVE_SHADOWS == 1)
-	shadowInt = 1.0 - (1.0 - shadowInt) * groundShadowDensity;
+	diffuseCoeff = 1.0 - (1.0 - diffuseCoeff) * groundShadowDensity;
 	#endif
 
-	// Ambient + Diffuse
+	// Light Ambient + Diffuse
 	vec4 shadeInt;
-	shadeInt.rgb = groundAmbientColor + groundDiffuseColor * shadowInt;
+	shadeInt.rgb = groundAmbientColor + groundDiffuseColor * diffuseCoeff;
 
 	shadeInt.rgb *= SMF_INTENSITY_MUL;
 	shadeInt.a = 1.0;
@@ -186,19 +168,27 @@ void main() {
 			}
 
 			// make shadowed areas darker over deeper water
-			shadeInt.rgb -= (shadeInt.rgb * waterShadeDecay * (1.0 - shadowInt));
+			shadeInt.rgb -= (shadeInt.rgb * waterShadeDecay * (1.0 - diffuseCoeff));
 			shadeInt.a = waterHeightColor.a;
 		}
 	#endif
 
-
+	// Final Ambient + Diffuse
 	gl_FragColor = (diffuseCol + detailCol) * shadeInt;
 
 	#if (SMF_LIGHT_EMISSION == 1)
+		vec4 lightEmissionCol = texture2D(lightEmissionTex, specularTexCoords);
 		gl_FragColor.rgb = (gl_FragColor.rgb * (1.0 - lightEmissionCol.a)) + lightEmissionCol.rgb;
 	#endif
 
+	// Specular
 	#if (SMF_ARB_LIGHTING == 0)
+		// sun specular lighting contribution
+		float specularExp  = specularCol.a * 16.0;
+		float specularPow  = pow(cosAngleSpecular, specularExp);
+		vec3  specularInt  = specularCol.rgb * specularPow;
+		      specularInt *= shadowCoeff;
+
 		// no need to multiply by groundSpecularColor anymore
 		gl_FragColor.rgb += specularInt;
 	#endif
