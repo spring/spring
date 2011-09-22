@@ -120,6 +120,7 @@ void main() {
 	#endif
 
 
+	float shadowCoeff = 1.0;
 	#if (HAVE_SHADOWS == 1)
 	vec2 p17 = vec2(shadowParams.z, shadowParams.z);
 	vec2 p18 = vec2(shadowParams.w, shadowParams.w);
@@ -132,8 +133,6 @@ void main() {
 
 	// same as what the ARB shader did: shadowCoeff = 1 - (1 - shadowCoeff) * groundShadowDensity;
 	shadowCoeff = mix(1.0, shadowCoeff, groundShadowDensity);
-	#else
-	float shadowCoeff = 1.;
 	#endif
 
 	// Light Ambient + Diffuse
