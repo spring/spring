@@ -35,7 +35,7 @@ static void SigAbrtHandler(int signal)
 }
 
 // Set this to the desired printf style output function.
-// Currently we write through the ILog.h frontend to logOutput to infolog.txt
+// Currently we write through the ILog.h frontend to infolog.txt
 #define PRINT(fmt, ...) \
 		LOG_L(L_ERROR, fmt, ##__VA_ARGS__)
 
@@ -324,8 +324,6 @@ void OutputStacktrace() {
 	Stacktrace(NULL,NULL);
 
 	CleanupStacktrace();
-
-	logOutput.Flush();
 }
 
 /** Called by windows if an exception happens. */
