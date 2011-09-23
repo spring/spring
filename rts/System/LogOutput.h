@@ -24,18 +24,6 @@ public:
 	~CLogOutput();
 
 	/**
-	 * @brief core log output method, used by all others
-	 *
-	 * Note that, when logOutput isn't initialized yet, the logging is done to the
-	 * global std::vector preInitLog(), and is only written to disk in the call to
-	 * Initialize().
-	 *
-	 * This method notifies all registered ILogSubscribers, calls OutputDebugString
-	 * (for MSVC builds) and prints the message to stdout and the file log.
-	 */
-	void Output(const std::string& str);
-
-	/**
 	 * @brief set the log file
 	 *
 	 * Relative paths are relative to the writeable data-dir.
@@ -67,10 +55,8 @@ public:
 	 * after the engine chdir'ed to the correct directory.
 	 */
 	void Initialize();
-	void Flush();
 
 private:
-	/// Close the output file, so the crash reporter can copy it
 	void End();
 
 	/**
@@ -87,9 +73,6 @@ private:
 	 * A section that is enabled by default, can not be disabled.
 	 */
 	void InitializeSections();
-
-	void ToStderr(const std::string& message);
-	void ToFile(const std::string& message);
 
 	/**
 	 * @brief creates an absolute file path from a file name

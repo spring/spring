@@ -100,14 +100,17 @@ SET(sources_engine_System_Log
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogSinkHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogUtil.c"
 	)
-SET(sources_engine_System_Log_sinkLogFile
-		"${CMAKE_CURRENT_SOURCE_DIR}/Log/LogOutputSink.cpp"
-	)
 SET(sources_engine_System_Log_sinkStream
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/StreamSink.cpp"
 	)
 SET(sources_engine_System_Log_sinkConsole
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/ConsoleSink.cpp"
+	)
+SET(sources_engine_System_Log_sinkFile
+		"${CMAKE_CURRENT_SOURCE_DIR}/Log/FileSink.cpp"
+	)
+SET(sources_engine_System_Log_sinkOutputDebugString
+		"${CMAKE_CURRENT_SOURCE_DIR}/Log/OutputDebugStringSink.cpp"
 	)
 SET(sources_engine_System_Net
 		"${CMAKE_CURRENT_SOURCE_DIR}/Net/Connection.cpp"
@@ -146,7 +149,8 @@ IF     (UNIX)
 			${sources_engine_System_creg}
 			${sources_engine_System_FileSystem}
 			${sources_engine_System_Log}
-			${sources_engine_System_Log_sinkLogFile}
+			${sources_engine_System_Log_sinkConsole}
+			${sources_engine_System_Log_sinkFile}
 			${sources_engine_System_Net}
 			${sources_engine_System_Platform_Linux}
 		)
@@ -156,7 +160,9 @@ ELSEIF (WIN32)
 			${sources_engine_System_creg}
 			${sources_engine_System_FileSystem}
 			${sources_engine_System_Log}
-			${sources_engine_System_Log_sinkLogFile}
+			${sources_engine_System_Log_sinkConsole}
+			${sources_engine_System_Log_sinkFile}
+			${sources_engine_System_Log_sinkOutputDebugString}
 			${sources_engine_System_Net}
 			${sources_engine_System_Platform_Windows}
 		)
@@ -166,7 +172,8 @@ ELSE   ()
 			${sources_engine_System_creg}
 			${sources_engine_System_FileSystem}
 			${sources_engine_System_Log}
-			${sources_engine_System_Log_sinkLogFile}
+			${sources_engine_System_Log_sinkConsole}
+			${sources_engine_System_Log_sinkFile}
 			${sources_engine_System_Net}
 		)
 ENDIF  ()
@@ -175,9 +182,10 @@ MakeGlobal(sources_engine_System_common)
 MakeGlobal(sources_engine_System_creg)
 MakeGlobal(sources_engine_System_FileSystem)
 MakeGlobal(sources_engine_System_Log)
-MakeGlobal(sources_engine_System_Log_sinkLogFile)
 MakeGlobal(sources_engine_System_Log_sinkStream)
 MakeGlobal(sources_engine_System_Log_sinkConsole)
+MakeGlobal(sources_engine_System_Log_sinkFile)
+MakeGlobal(sources_engine_System_Log_sinkOutputDebugString)
 MakeGlobal(sources_engine_System_Net)
 MakeGlobal(sources_engine_System_Platform_Linux)
 MakeGlobal(sources_engine_System_Platform_Mac)
