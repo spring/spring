@@ -259,7 +259,6 @@ static void TranslateStackTrace(std::vector<std::string>* lines, const std::vect
 	}
 	if (!addr2line_found) {
 		LOG_L(L_WARNING, " addr2line not found!");
-		logOutput.Flush();
 		return;
 	}
 
@@ -341,7 +340,6 @@ namespace CrashHandler
 			int numLines;
 			if (hThread) {
 				LOG_L(L_ERROR, "  (Note: This stacktrace is not 100%% accurate! It just gives an impression.)");
-				logOutput.Flush();
 				numLines = thread_backtrace(*hThread, &buffer[0], buffer.size());    //! stack pointers
 			} else {
 				numLines = backtrace(&buffer[0], buffer.size());    //! stack pointers
@@ -410,8 +408,6 @@ namespace CrashHandler
 				LOG_L(L_ERROR, "This stack trace indicates a problem with a Skirmish AI library.");
 				*keepRunning = true;
 			}
-
-			logOutput.Flush();
 		}
 
 		//! Translate it
@@ -422,7 +418,6 @@ namespace CrashHandler
 		for (std::vector<std::string>::iterator it = stacktrace.begin(); it != stacktrace.end(); ++it) {
 			LOG_L(L_ERROR, "  <%u> %s", numLine++, it->c_str());
 		}
-		logOutput.Flush();
 	}
 
 
