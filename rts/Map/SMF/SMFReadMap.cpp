@@ -322,11 +322,13 @@ void CSMFReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigne
 
 void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 {
+	// ReadMap::UpdateHeightMapSynced clamps to [0, gs->mapx - 1]
+
 	const int x1 = update.x1, y1 = update.y1;
 	const int x2 = update.x2, y2 = update.y2;
 
+	// update the visible (LOS) heights and normals
 	{
-		//! update the visible heights and normals
 		static const float*  shm = &cornerHeightMapSynced[0];
 	#ifdef USE_UNSYNCED_HEIGHTMAP
 		static       float*  uhm = &cornerHeightMapUnsynced[0];
@@ -341,8 +343,8 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 		static const int H = gs->mapyp1;
 		static const int SS = SQUARE_SIZE;
 
-		//! a heightmap update over (x1, y1) - (x2, y2) implies the
-		//! normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
+		// a heightmap update over (x1, y1) - (x2, y2) implies the
+		// normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
 		const int minx = std::max((x1 - 1),     0);
 		const int minz = std::max((y1 - 1),     0);
 		const int maxx = std::min((x2 + 1), W - 1);
@@ -365,11 +367,11 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 				const bool hasNgbT = (z >     0); const int zOffT = hasNgbT? 1: 0;
 				const bool hasNgbB = (z < H - 1); const int zOffB = hasNgbB? 1: 0;
 
-				//! pretend there are 8 incident triangle faces per vertex
-				//! for each these triangles, calculate the surface normal,
-				//! then average the 8 normals (this stays closest to the
-				//! heightmap data)
-				//! if edge vertex, don't add virtual neighbor normals to vn
+				// pretend there are 8 incident triangle faces per vertex
+				// for each these triangles, calculate the surface normal,
+				// then average the 8 normals (this stays closest to the
+				// heightmap data)
+				// if edge vertex, don't add virtual neighbor normals to vn
 				const float3 vtl = float3((x - 1) * SS,  shm[((z - zOffT) * W) + (x - xOffL)],  (z - 1) * SS);
 				const float3 vtm = float3((x    ) * SS,  shm[((z - zOffT) * W) + (x        )],  (z - 1) * SS);
 				const float3 vtr = float3((x + 1) * SS,  shm[((z - zOffT) * W) + (x + xOffR)],  (z - 1) * SS);
@@ -419,8 +421,8 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 		static const int W = gs->mapxp1;
 		static const int H = gs->mapyp1;
 
-		//! a heightmap update over (x1, y1) - (x2, y2) implies the
-		//! normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
+		// a heightmap update over (x1, y1) - (x2, y2) implies the
+		// normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
 		const int minx = std::max((x1 - 1),     0);
 		const int minz = std::max((y1 - 1),     0);
 		const int maxx = std::min((x2 + 1), W - 1);
@@ -450,9 +452,9 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 				pixels[((z - minz) * xsize + (x - minx)) * 4 + 2] = ((vertNormal.z + 1.0f) * 0.5f);
 				pixels[((z - minz) * xsize + (x - minx)) * 4 + 3] = 1.0f;
 			#else
-				//! note: y-coord is regenerated in the shader via "sqrt(1 - x*x - z*z)",
-				//!   this gives us 2 solutions but we know that the y-coord always points
-				//!   upwards, so we can reconstruct it in the shader.
+				// note: y-coord is regenerated in the shader via "sqrt(1 - x*x - z*z)",
+				//   this gives us 2 solutions but we know that the y-coord always points
+				//   upwards, so we can reconstruct it in the shader.
 				pixels[((z - minz) * xsize + (x - minx)) * 2 + 0] = ((vertNormal.x + 1.0f) * 0.5f);
 				pixels[((z - minz) * xsize + (x - minx)) * 2 + 1] = ((vertNormal.z + 1.0f) * 0.5f);
 			#endif
@@ -467,17 +469,16 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 	#endif
 	}
 
-	
+
+	// update the shading texture (even if the map has specular
+	// lighting, we still need it to modulate the minimap image)
+	// this can be done for diffuse lighting only
 	{
 		//! ReadMap::UpdateHeightMapSynced clamps to [0, gs->mapx - 1]
 		//! but we want it to be [0, gs->mapx] for the shading texture
 		const int xsize = Clamp((x2 - x1) + 1, 0, gs->mapx);
 		const int ysize = Clamp((y2 - y1) + 1, 0, gs->mapy);
-
-		//! update the shading texture (even if the map has specular
-		//! lighting, we still need it to modulate the minimap image,
-		//! as well as for several extraTexture overlays)
-		//! this can be done for diffuse lighting only
+		//TODO switch to PBO?
 		std::vector<unsigned char> pixels(xsize * ysize * 4, 0.0f);
 
 		int y;
@@ -486,7 +487,7 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 			UpdateShadingTexPart(y, x1, y1, xsize, &pixels[y * xsize * 4]);
 		}
 
-		//! redefine the texture subregion
+		// redefine the texture subregion
 		glBindTexture(GL_TEXTURE_2D, shadingTex);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, x1, y1, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, &pixels[0]);
 		glBindTexture(GL_TEXTURE_2D, 0);
