@@ -68,6 +68,7 @@ Else  (NOT Boost_FOUND)
 	Set(test_ILog_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Log/TestILog.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Log/FileSink.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Log/OutputDebugStringSink.cpp"
 			${test_Log_sources}
 		)
 
