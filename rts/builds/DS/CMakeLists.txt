@@ -101,6 +101,7 @@ ENDIF (WIN32)
 SET(engineDedicatedSources
 	${system_files}
 	${sources_engine_Game_Server}
+	${sources_engine_System_Log}
 	${ENGINE_SRC_ROOT_DIR}/Game/GameServer
 	${ENGINE_SRC_ROOT_DIR}/Game/ClientSetup
 	${ENGINE_SRC_ROOT_DIR}/Game/GameSetup
@@ -132,14 +133,14 @@ ENDIF (MINGW)
 
 ADD_LIBRARY(springserver SHARED
 		${ENGINE_SRC_ROOT_DIR}/Map/MapParser
-		${ENGINE_SRC_ROOT_DIR}/System/Log/LogOutputSink
+		${sources_engine_System_Log_sinkLogFile}
 	)
 TARGET_LINK_LIBRARIES(springserver springserver-static)
 
 # Compile dedicated server executable
 ADD_EXECUTABLE(engine-dedicated
 		${ENGINE_SRC_ROOT_DIR}/Map/MapParser
-		${ENGINE_SRC_ROOT_DIR}/System/Log/LogOutputSink
+		${sources_engine_System_Log_sinkLogFile}
 		main
 	)
 TARGET_LINK_LIBRARIES(engine-dedicated springserver-static)
