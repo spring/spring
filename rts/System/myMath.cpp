@@ -13,11 +13,11 @@ float2 CMyMath::headingToVectorTable[NUM_HEADINGS];
 void CMyMath::Init()
 {
 	const unsigned int sseBits = proc::GetProcSSEBits();
-		LOG("[CMyMath::Init] CPU SSE mask: %u, flags:\n", sseBits);
-		LOG("\tSSE 1.0:  %d,  SSE 2.0:  %d\n", (sseBits >> 5) & 1, (sseBits >> 4) & 1);
-		LOG("\tSSE 3.0:  %d, SSSE 3.0:  %d\n", (sseBits >> 3) & 1, (sseBits >> 2) & 1);
-		LOG("\tSSE 4.1:  %d,  SSE 4.2:  %d\n", (sseBits >> 1) & 1, (sseBits >> 0) & 1);
-		LOG("\tSSE 4.0A: %d,  SSE 5.0A: %d\n", (sseBits >> 8) & 1, (sseBits >> 7) & 1);
+		LOG("[CMyMath::Init] CPU SSE mask: %u, flags:", sseBits);
+		LOG("\tSSE 1.0:  %d,  SSE 2.0:  %d", (sseBits >> 5) & 1, (sseBits >> 4) & 1);
+		LOG("\tSSE 3.0:  %d, SSSE 3.0:  %d", (sseBits >> 3) & 1, (sseBits >> 2) & 1);
+		LOG("\tSSE 4.1:  %d,  SSE 4.2:  %d", (sseBits >> 1) & 1, (sseBits >> 0) & 1);
+		LOG("\tSSE 4.0A: %d,  SSE 5.0A: %d", (sseBits >> 8) & 1, (sseBits >> 7) & 1);
 
 #ifdef STREFLOP_H
 	// SSE 1.0 is mandatory in synced context
