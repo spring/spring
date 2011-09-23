@@ -133,14 +133,18 @@ ENDIF (MINGW)
 
 ADD_LIBRARY(springserver SHARED
 		${ENGINE_SRC_ROOT_DIR}/Map/MapParser
-		${sources_engine_System_Log_sinkLogFile}
+		${sources_engine_System_Log_sinkConsole}
+		${sources_engine_System_Log_sinkFile}
+		${sources_engine_System_Log_sinkOutputDebugString}
 	)
 TARGET_LINK_LIBRARIES(springserver springserver-static)
 
 # Compile dedicated server executable
 ADD_EXECUTABLE(engine-dedicated
 		${ENGINE_SRC_ROOT_DIR}/Map/MapParser
-		${sources_engine_System_Log_sinkLogFile}
+		${sources_engine_System_Log_sinkConsole}
+		${sources_engine_System_Log_sinkFile}
+		${sources_engine_System_Log_sinkOutputDebugString}
 		main
 	)
 TARGET_LINK_LIBRARIES(engine-dedicated springserver-static)
