@@ -16,6 +16,8 @@ fi
 GDBCMDS=$(mktemp)
 (
 	echo file $1
+	#FIXME: better solutions are welcome to break when a signal occurs
+	echo handle all nostop
 	# set breakpoints + log to stderr when breakpoint is hit
 	for condition in CrashHandler::HandleSignal __assert_fail; do
 		echo break $condition
@@ -23,15 +25,9 @@ GDBCMDS=$(mktemp)
 		echo	set logging file /dev/stderr
 		echo	set logging on
 		echo	bt full
-		echo	quit
 		echo end
 	done
 	echo run $2 $3 $4 $5 $6 $7 $8 $9
-	echo if sig != 0
-	echo   set logging file /dev/stderr
-	echo   set logging on
-	echo   bt full
-	echo end
 	echo quit
 )>$GDBCMDS
 
