@@ -128,7 +128,7 @@ namespace {
 	}
 
 	/**
-	 * Flushes the contetn of the buffer to all the currently registered log
+	 * Flushes the content of the buffer to all the currently registered log
 	 * files.
 	 */
 	void log_file_writeBufferToFiles() {
