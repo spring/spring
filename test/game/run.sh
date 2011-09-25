@@ -27,6 +27,11 @@ GDBCMDS=$(mktemp)
 		echo end
 	done
 	echo run $2 $3 $4 $5 $6 $7 $8 $9
+	echo if sig != 0
+	echo   set logging file /dev/stderr
+	echo   set logging on
+	echo   bt full
+	echo end
 	echo quit
 )>$GDBCMDS
 
@@ -36,9 +41,12 @@ ulimit -v 1000000
 ulimit -t 900
 
 set +e #temp disable abort on error
-gdb -batch-silent -x $GDBCMDS
+gdb -batch-silent -return-child-result -x $GDBCMDS
+#store exit code
+EXIT=$?
 set -e
 
 #cleanup
 rm -f $GDBCMDS
+exit $EXIT
 
