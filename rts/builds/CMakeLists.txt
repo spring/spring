@@ -41,8 +41,10 @@ macro    (CreateEngineBuildAndInstallTarget targetName)
 			"doc"
 			"tools/unitsync"
 			"cont"
-			"AI"
 		)
+	If    (NOT "${AI_TYPES}" STREQUAL "NONE")
+		Set(${targetName}-InstallDirs ${${targetName}-InstallDirs} "AI")
+	EndIf (NOT "${AI_TYPES}" STREQUAL "NONE")
 	CreateInstallTarget(spring-${targetName} myBuildTarget ${targetName}-InstallDirs)
 endmacro (CreateEngineBuildAndInstallTarget targetName)
 
