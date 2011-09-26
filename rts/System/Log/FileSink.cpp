@@ -107,7 +107,11 @@ namespace {
 	void log_file_writeToFile(FILE* outStream, const char* record) {
 
 		FPRINTF(outStream, "%s\n", record);
-		fflush(outStream);
+
+		// We never flush, but only close the stream before process exit.
+		// This decision was made in two engine dev meetings, the last one was
+		// at 26. September 2011.
+		//fflush(outStream);
 	}
 
 	/**
