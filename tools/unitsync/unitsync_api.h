@@ -1370,12 +1370,6 @@ EXPORT(void        ) SetSpringConfigInt(const char* name, const int value);
  */
 EXPORT(void        ) SetSpringConfigFloat(const char* name, const float value);
 
-/**
- * @brief set minimum log level for unitsync
- * @param minimum log level, @see log_filter_global_setMinLevel
- */
-EXPORT(void        ) SetMinLogLevel(int level);
-
 
 // from LuaParserAPI.cpp:
 
