@@ -2691,3 +2691,8 @@ EXPORT(void) SetSpringConfigFloat(const char* name, const float value)
 	UNITSYNC_CATCH_BLOCKS;
 }
 
+EXPORT(void) SetMinLogLevel(int level)
+{
+	log_filter_global_setMinLevel(level);
+}
+
