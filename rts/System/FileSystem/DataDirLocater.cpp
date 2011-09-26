@@ -235,15 +235,23 @@ void DataDirLocater::LocateDataDirs()
 #if    defined(WIN32)
 	// fetch my documents path
 	std::string pathMyDocs;
-	// TODO instead of USERPROFILE/CSIDL_PERSONAL we should probably be using LOCALAPPDATA/CSIDL_LOCAL_APPDATA (or at least in addition to USERPROFILE)
+	// TODO instead of USERPROFILE/CSIDL_PERSONAL, we should probably be using LOCALAPPDATA/CSIDL_LOCAL_APPDATA (or at least in addition to USERPROFILE)
 	// see http://en.wikipedia.org/wiki/Environment_variable#Synopsis
+	// default CSIDL_PERSONAL: C:\Documents and Settings\username\My Documents
+	// default %USERPROFILE%:  C:\Documents and Settings\username
+	// default CSIDL_LOCAL_APPDATA: C:\Documents and Settings\username\Local Settings\Application Data
+	// default %LOCALAPPDATA%:      C:\Documents and Settings\username\Local Settings\Application Data
 	char* pathMyDocsEnv = getenv("USERPROFILE");
+	TCHAR pathMyDocsApi[MAX_PATH];
+	SHGetFolderPath(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, pathMyDocsApi);
 	if (pathMyDocsEnv == NULL) {
-		TCHAR pathMyDocsC[MAX_PATH];
-		SHGetFolderPath(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, pathMyDocsC);
-		pathMyDocs = pathMyDocsC;
+		// use the API fetched path
+		pathMyDocs = pathMyDocsApi;
 	} else {
-		pathMyDocs = pathMyDocsEnv;
+		// use the env var path
+		const std::string pathMyDocsApiStr = pathMyDocsApi;
+		const std::string localizedMyDocuments = pathMyDocsApiStr.substr(pathMyDocsApiStr.find_last_of("/\\") + 1);
+		pathMyDocs = pathMyDocsEnv + "\\" + localizedMyDocuments;
 	}
 
 	// e.g. F:\Dokumente und Einstellungen\Karl-Robert\Eigene Dateien\Spring
@@ -257,8 +265,8 @@ void DataDirLocater::LocateDataDirs()
 	std::string pathAppData;
 	char* pathAppDataEnv = getenv("PROGRAMDATA");
 	if (pathAppDataEnv == NULL) {
-		TCHAR pathAppDataC[MAX_PATH];
-		SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, pathAppDataC);
+		TCHAR pathAppDataApi[MAX_PATH];
+		SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, pathAppDataApi);
 		pathAppData = pathAppDataC;
 	} else {
 		pathAppData = pathAppDataEnv;
