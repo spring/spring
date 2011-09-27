@@ -94,8 +94,6 @@ CSMFReadMap::CSMFReadMap(std::string mapname): file(mapname)
 	haveSpecularLighting = !(mapInfo->smf.specularTexName.empty());
 	haveSplatTexture = (!mapInfo->smf.splatDetailTexName.empty() && !mapInfo->smf.splatDistrTexName.empty());
 
-	CBitmap detailTexBM;
-	CBitmap grassShadingTexBM;
 
 	detailTex        = 0;
 	shadingTex       = 0;
@@ -168,11 +166,13 @@ CSMFReadMap::CSMFReadMap(std::string mapname): file(mapname)
 		}
 	}
 
-	if (!detailTexBM.Load(mapInfo->smf.detailTexName)) {
-		throw content_error("Could not load detail texture from file " + mapInfo->smf.detailTexName);
-	}
 
 	{
+		CBitmap detailTexBM;
+		if (!detailTexBM.Load(mapInfo->smf.detailTexName)) {
+			throw content_error("Could not load detail texture from file " + mapInfo->smf.detailTexName);
+		}
+
 		glGenTextures(1, &detailTex);
 		glBindTexture(GL_TEXTURE_2D, detailTex);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -204,6 +204,7 @@ CSMFReadMap::CSMFReadMap(std::string mapname): file(mapname)
 	}
 
 	{
+		CBitmap grassShadingTexBM;
 		if (grassShadingTexBM.Load(mapInfo->smf.grassShadingTexName)) {
 			// generate mipmaps for the grass shading-texture
 			grassShadingTex = grassShadingTexBM.CreateTexture(true);
@@ -261,17 +262,17 @@ CSMFReadMap::~CSMFReadMap()
 {
 	delete groundDrawer;
 
-	if (detailTex        != 0) { glDeleteTextures(1, &detailTex       ); }
-	if (specularTex      != 0) { glDeleteTextures(1, &specularTex     ); }
-	if (minimapTex       != 0) { glDeleteTextures(1, &minimapTex      ); }
-	if (shadingTex       != 0) { glDeleteTextures(1, &shadingTex      ); }
-	if (normalsTex       != 0) { glDeleteTextures(1, &normalsTex      ); }
-	if (splatDetailTex   != 0) { glDeleteTextures(1, &splatDetailTex  ); }
-	if (splatDistrTex    != 0) { glDeleteTextures(1, &splatDistrTex   ); }
-	if (grassShadingTex  != 0) { glDeleteTextures(1, &grassShadingTex ); }
-	if (skyReflectModTex != 0) { glDeleteTextures(1, &skyReflectModTex); }
-	if (detailNormalTex  != 0) { glDeleteTextures(1, &detailNormalTex ); }
-	if (lightEmissionTex != 0) { glDeleteTextures(1, &lightEmissionTex); }
+	glDeleteTextures(1, &detailTex       );
+	glDeleteTextures(1, &specularTex     );
+	glDeleteTextures(1, &minimapTex      );
+	glDeleteTextures(1, &shadingTex      );
+	glDeleteTextures(1, &normalsTex      );
+	glDeleteTextures(1, &splatDetailTex  );
+	glDeleteTextures(1, &splatDistrTex   );
+	glDeleteTextures(1, &grassShadingTex );
+	glDeleteTextures(1, &skyReflectModTex);
+	glDeleteTextures(1, &detailNormalTex );
+	glDeleteTextures(1, &lightEmissionTex);
 }
 
 
