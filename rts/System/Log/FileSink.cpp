@@ -170,7 +170,7 @@ void log_file_addLogFile(const char* filePath, const char* sections, int minLeve
 		return;
 	}
 
-	FILE* tmpStream = fopen(filePath, "a");
+	FILE* tmpStream = fopen(filePath, "w");
 	if (tmpStream == NULL) {
 		LOG_L(L_ERROR, "Failed to open log file for writing: %s", filePath);
 		return;
