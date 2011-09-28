@@ -6,7 +6,7 @@
 #include "System/Platform/Win/win32.h"
 #include "LuaLoadSaveHandler.h"
 
-#include "lib/minizip/zip.h"
+#include "minizip/zip.h"
 
 #include "ExternalAI/EngineOutHandler.h"
 #include "Game/GameSetup.h"

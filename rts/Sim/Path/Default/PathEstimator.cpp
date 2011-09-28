@@ -11,7 +11,7 @@
 #include <boost/version.hpp>
 #include <boost/version.hpp>
 
-#include "lib/minizip/zip.h"
+#include "minizip/zip.h"
 #include "System/mmgr.h"
 
 #include "PathAllocator.h"
