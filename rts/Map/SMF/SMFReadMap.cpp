@@ -467,7 +467,7 @@ void CSMFReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigne
 
 		if (height < 0.0f) {
 			// Underwater
-			const int h = (int)(-height) & 1023; //! waterHeightColors array just holds 1024 colors
+			const int h = std::min((int)(-height), 1023); //! waterHeightColors array just holds 1024 colors
 			float light = std::min((DiffuseSunCoeff(xi, yi) + 0.2f) * 2.0f, 1.0f);
 
 			if (height > -10.0f) {
