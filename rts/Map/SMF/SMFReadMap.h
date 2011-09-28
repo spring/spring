@@ -18,7 +18,6 @@ public:
 
 	void UpdateShadingTexture();
 	void UpdateHeightMapUnsynced(const HeightMapUpdate&);
-	inline void UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigned char *pixels);
 
 	inline unsigned int GetDetailTexture() const { return detailTex; }
 	inline unsigned int GetShadingTexture() const { return shadingTex; }
@@ -35,7 +34,6 @@ public:
 	void GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize);
 
 	void NewGroundDrawer();
-	inline CBaseGroundDrawer* GetGroundDrawer();
 
 	int GetNumFeatureTypes();
 	int GetNumFeatures();
@@ -59,6 +57,15 @@ public:
 	bool HaveSpecularLighting() const { return haveSpecularLighting; }
 	bool HaveSplatTexture() const { return haveSplatTexture; }
 
+private:
+	inline void UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigned char* pixelRow);
+	inline CBaseGroundDrawer* GetGroundDrawer();
+
+	inline float DiffuseSunCoeff(const int& x, const int& y) const;
+	inline float3 GetLightValue(const int& x, const int& y) const;
+	void ParseSMD(std::string filename);
+
+public:
 	// constants
 	static const int tileScale     =   4;
 	static const int bigSquareSize = 128; // 32 * tileScale
@@ -94,10 +101,6 @@ protected:
 	bool haveSplatTexture;
 
 	unsigned char waterHeightColors[1024 * 4];
-
-	float DiffuseSunCoeff(const int& x, const int& y) const;
-	float3 GetLightValue(const int& x, const int& y) const;
-	void ParseSMD(std::string filename);
 
 	CSMFGroundDrawer* groundDrawer;
 
