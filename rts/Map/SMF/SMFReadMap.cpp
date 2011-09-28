@@ -311,9 +311,6 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 		const int maxx = std::min((x2 + 1), W - 1);
 		const int maxz = std::min((y2 + 1), H - 1);
 
-		const int xsize = maxx - minx;
-		const int zsize = maxz - minz;
-
 		int z;
 		#pragma omp parallel for private(z)
 		for (z = minz; z <= maxz; z++) {
