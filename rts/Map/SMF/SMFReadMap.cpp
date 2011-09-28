@@ -76,9 +76,9 @@ CSMFReadMap::CSMFReadMap(std::string mapname): file(mapname)
 	file.ReadHeightmap(&cornerHeightMapSynced[0],  minH, (maxH - minH) / 65536.0f);
 	CReadMap::Initialize();
 
-	shadingTexPixelRow.resize(gs->mapxp1 * 4, 0);
+	shadingTexPixelRow.resize(gs->mapx * 4, 0);
 	shadingTexUpdateIter = 0;
-	shadingTexUpdateRate = std::max(1.0f, math::ceil((width + 1) / float(height + 1)));
+	shadingTexUpdateRate = std::max(1.0f, math::ceil((width) / float(height)));
 	// with GLSL, the shading texture has very limited use (minimap etc) so we increase the update interval
 	if (globalRendering->haveGLSL)
 		shadingTexUpdateRate *= 10;
@@ -435,10 +435,11 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 	// lighting, we still need it to modulate the minimap image)
 	// this can be done for diffuse lighting only
 	{
-		//! ReadMap::UpdateHeightMapSynced clamps to [0, gs->mapx - 1]
-		//! but we want it to be [0, gs->mapx] for the shading texture
-		const int xsize = Clamp((x2 - x1) + 1, 0, gs->mapx);
-		const int ysize = Clamp((y2 - y1) + 1, 0, gs->mapy);
+		// texture space is [0 .. gs->mapxm1] x [0 .. gs->mapym1]
+
+		const int xsize = (x2 - x1) + 1; // +1 cause we iterate:
+		const int ysize = (y2 - y1) + 1; // x1 <= xi <= x2  (not!  x1 <= xi < x2)
+
 		//TODO switch to PBO?
 		std::vector<unsigned char> pixels(xsize * ysize * 4, 0.0f);
 
@@ -451,8 +452,20 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 		// redefine the texture subregion
 		glBindTexture(GL_TEXTURE_2D, shadingTex);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, x1, y1, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, &pixels[0]);
-		glBindTexture(GL_TEXTURE_2D, 0);
 	}
+}
+
+
+const float CSMFReadMap::GetCenterHeightUnsynced(const int& x, const int& y) const
+{
+	static const float* hm = GetCornerHeightMapUnsynced();
+
+	float h = hm[(y    ) * gs->mapxp1 + (x    )] +
+	          hm[(y    ) * gs->mapxp1 + (x + 1)] +
+	          hm[(y + 1) * gs->mapxp1 + (x    )] +
+	          hm[(y + 1) * gs->mapxp1 + (x + 1)];
+
+	return h * 0.25f;
 }
 
 
@@ -462,8 +475,7 @@ void CSMFReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigne
 		const int xi = x1 + x;
 		const int yi = y1 + y;
 
-		const float* heightMap = GetCornerHeightMapUnsynced();
-		const float height = heightMap[xi + yi * gs->mapxp1];
+		const float height = GetCenterHeightUnsynced(xi, yi);
 
 		if (height < 0.0f) {
 			// Underwater
@@ -498,8 +510,8 @@ void CSMFReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigne
 
 
 void CSMFReadMap::UpdateShadingTexture() {
-	const int xsize = gs->mapxp1;
-	const int ysize = gs->mapyp1;
+	const int xsize = gs->mapx;
+	const int ysize = gs->mapy;
 	int y = shadingTexUpdateIter;
 
 	shadingTexUpdateIter = (shadingTexUpdateIter + 1) % (ysize * shadingTexUpdateRate);
@@ -507,7 +519,6 @@ void CSMFReadMap::UpdateShadingTexture() {
 		return;
 
 	y /= shadingTexUpdateRate;
-//	y = (y * 2 + ((((ysize % 2) == 0) && (y >= (ysize / 2))) ? 1 : 0)) % ysize;
 
 	UpdateShadingTexPart(y, 0, 0, xsize, &shadingTexPixelRow[0]);
 
@@ -518,7 +529,7 @@ void CSMFReadMap::UpdateShadingTexture() {
 
 float CSMFReadMap::DiffuseSunCoeff(const int& x, const int& y) const
 {
-	const float3& N = visVertexNormals[(y * gs->mapxp1) + x];
+	const float3& N = centerNormalsUnsynced[y * gs->mapx + x];
 	const float3& L = sky->GetLight()->GetLightDir();
 	return Clamp(L.dot(N), 0.0f, 1.0f);
 }

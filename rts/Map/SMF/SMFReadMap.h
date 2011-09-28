@@ -61,6 +61,8 @@ private:
 	inline void UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigned char* pixelRow);
 	inline CBaseGroundDrawer* GetGroundDrawer();
 
+	inline const float GetCenterHeightUnsynced(const int& x, const int& y) const;
+
 	inline float DiffuseSunCoeff(const int& x, const int& y) const;
 	inline float3 GetLightValue(const int& x, const int& y) const;
 	void ParseSMD(std::string filename);
