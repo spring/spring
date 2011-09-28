@@ -26,7 +26,7 @@ using std::vector;
 
 typedef map<string, string> StringMap;
 
-ConfigHandler* configHandler;
+ConfigHandler* configHandler = NULL;
 
 /******************************************************************************/
 
