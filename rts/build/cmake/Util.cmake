@@ -146,6 +146,7 @@ endmacro (RemoveFlag)
 # Sets a variable in global scope
 function    (SetGlobal var value)
 	set(${var} "${value}" CACHE INTERNAL "" FORCE)
+	Mark_As_Advanced(${var})
 endfunction (SetGlobal)
 
 
