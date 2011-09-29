@@ -49,10 +49,18 @@ macro    (CreateEngineBuildAndInstallTarget targetName)
 endmacro (CreateEngineBuildAndInstallTarget targetName)
 
 
+# This allows us to disable each build type individually at configure stage.
+Macro    (AddEngineBuild build)
+	Set(CONFIGURE_BUILD_${build} TRUE CACHE BOOL "Build the ${build} build-type of the engine.")
+	If     (CONFIGURE_BUILD_${build})
+		Add_Subdirectory(${build})
+	EndIf  ()
+EndMacro (AddEngineBuild)
+
 if    (NOT HEADLESS_SYSTEM)
-	Add_Subdirectory(default)
-	Add_Subdirectory(GML)
+	AddEngineBuild(default)
+	AddEngineBuild(GML)
 endif (NOT HEADLESS_SYSTEM)
 
-Add_Subdirectory(DS)
-Add_Subdirectory(HL)
+AddEngineBuild(DS)
+AddEngineBuild(HL)
