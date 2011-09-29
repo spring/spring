@@ -59,8 +59,8 @@ EndMacro (AddEngineBuild)
 
 if    (NOT HEADLESS_SYSTEM)
 	AddEngineBuild(default)
-	AddEngineBuild(GML)
+	AddEngineBuild(multithreaded)
 endif (NOT HEADLESS_SYSTEM)
 
-AddEngineBuild(DS)
-AddEngineBuild(HL)
+AddEngineBuild(dedicated)
+AddEngineBuild(headless)
