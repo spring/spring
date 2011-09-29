@@ -174,7 +174,7 @@ add_custom_target(spring-dedicated
 add_dependencies(spring-dedicated ${springDsDeps}) # This also works for custom targets
 
 set(springDsInstallDirs
-		"rts/builds/DS"
+		"rts/builds/dedicated"
 		"tools/unitsync"
 		"cont"
 	)
