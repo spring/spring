@@ -254,3 +254,18 @@ Macro    (CheckMinCMakeVersion res_var major minor patch)
 		EndIf  ()
 	EndIf  ()
 EndMacro (CheckMinCMakeVersion res_var major minor patch)
+
+
+# Tries to capture a specific regex group from a string.
+# The regex has to match the whole string.
+# @param pattern the regex to match to
+# @param group starts at 1
+# @param var to write the result to, "" in case of no match
+# @param str the string that will be tried to be match
+Macro    (CatchRegexGroup pattern group var str)
+	String(REGEX MATCH "^${pattern}\$" "${var}_MATCH_TEST" "${str}")
+	Set(${var} "")
+	If     ("${${var}_MATCH_TEST}" STREQUAL "${str}")
+		String(REGEX REPLACE "${pattern}" "\\${group}" ${var} "${str}")
+	EndIf  ()
+EndMacro (CatchRegexGroup)
