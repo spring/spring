@@ -1,0 +1,65 @@
+# This file is part of the Spring engine (GPL v2 or later), see LICENSE.html
+
+#
+# example usage:
+#Add_Custom_Command(
+#	TARGET
+#		configureVersion
+#	COMMAND "${CMAKE_COMMAND}"
+#		"-DSOURCE_ROOT=${CMAKE_SOURCE_DIR}"
+#		"-DCMAKE_MODULES_SPRING=${CMAKE_MODULES_SPRING}"
+#		"-DVERSION_ADDITIONAL=ABC"
+#		"-DGENERATE_DIR=${CMAKE_BINARY_DIR}"
+#		"-P" "${CMAKE_MODULES_SPRING}/ConfigureFile.cmake"
+#	COMMENT
+#		"Configure Version files" VERBATIM
+#	)
+#
+
+Cmake_Minimum_Required(VERSION 2.6)
+
+List(APPEND CMAKE_MODULE_PATH "${CMAKE_MODULES_SPRING}")
+
+Include(UtilVersion)
+
+
+
+# Fetch through git or from the VERSION file
+FetchSpringVersion(${SOURCE_ROOT} SPRING_ENGINE)
+ParseSpringVersion(SPRING_VERSION_ENGINE "${SPRING_ENGINE_VERSION}")
+
+# We define this, so it may be used in the to-be-configured files
+Set(SPRING_VERSION_ENGINE "${SPRING_ENGINE_VERSION}")
+
+# This is supplied by -DVERSION_ADDITIONAL="abc"
+Set(SPRING_VERSION_ENGINE_ADDITIONAL "${VERSION_ADDITIONAL}")
+
+# Add the full version specifier to ADDITIONAL
+If     (NOT "${SPRING_VERSION_ENGINE_ADDITIONAL}" STREQUAL "")
+	# Add a delimiter space
+	Set(SPRING_VERSION_ENGINE_ADDITIONAL "${SPRING_VERSION_ENGINE_ADDITIONAL} ")
+EndIf  ()
+Set(SPRING_VERSION_ENGINE_ADDITIONAL "${SPRING_VERSION_ENGINE_ADDITIONAL}${SPRING_ENGINE_VERSION}")
+
+
+
+Message("Spring engine version: ${SPRING_ENGINE_VERSION} (${SPRING_VERSION_ENGINE_ADDITIONAL})")
+
+
+
+File(MAKE_DIRECTORY "${GENERATE_DIR}/src-generated/engine/System")
+Configure_File(
+		"${SOURCE_ROOT}/rts/System/VersionGenerated.h.template"
+		"${GENERATE_DIR}/src-generated/engine/System/VersionGenerated.h"
+		@ONLY
+	)
+
+File(MAKE_DIRECTORY "${GENERATE_DIR}")
+Configure_File(
+		"${SOURCE_ROOT}/VERSION.template"
+		"${GENERATE_DIR}/VERSION"
+		@ONLY
+	)
+
+
+
