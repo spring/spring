@@ -4,6 +4,7 @@
 # * CreateEngineBuildAndInstallTarget
 #
 
+Include_Directories(${CMAKE_BINARY_DIR}/src-generated/engine)
 
 # Only install the given engine target executable & dependencies
 # example:
@@ -34,6 +35,7 @@ macro    (CreateEngineBuildAndInstallTarget targetName)
 		)
 	# This also works for custom targets
 	add_dependencies(${myBuildTarget} ${${targetName}-Deps})
+	Add_Dependencies(${myBuildTarget} generateVersionFiles)
 
 	# Only install spring-<targetName> executable & dependencies
 	set(${targetName}-InstallDirs

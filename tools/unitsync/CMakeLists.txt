@@ -40,6 +40,7 @@ INCLUDE_DIRECTORIES(${SPRING_MINIZIP_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT}/lib/lua/include)
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT}/lib/7zip)
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT})
+Include_Directories(${CMAKE_BINARY_DIR}/src-generated/engine)
 
 
 set(main_files
@@ -84,6 +85,7 @@ set(unitsync_files
 	)
 
 ADD_LIBRARY(unitsync MODULE ${unitsync_files})
+Add_Dependencies(unitsync generateVersionFiles)
 TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs})
 if (MINGW)
 	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--add-stdcall-alias)

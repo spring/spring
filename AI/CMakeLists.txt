@@ -20,6 +20,7 @@ set(rts             "${CMAKE_SOURCE_DIR}/rts")
 
 include_directories(
 	${rts}
+	${CMAKE_BINARY_DIR}/src-generated/engine
 	${rts}/ExternalAI/Interface
 	Wrappers
 	)
