@@ -62,7 +62,7 @@ namespace SpringVersion
 	extern const std::string& GetPatchSet();
 
 	/// additional information (compiler flags, VCS revision etc.)
-	extern const std::string& GetAdditional();
+	extern std::string GetAdditional();
 
 	/// time of build
 	extern const std::string& GetBuildTime();
