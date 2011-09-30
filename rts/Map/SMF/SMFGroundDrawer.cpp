@@ -194,8 +194,8 @@ bool CSMFGroundDrawer::LoadMapShaders() {
 				smfShaders[i]->SetUniformLocation("specularTex");         // idx  4
 				smfShaders[i]->SetUniformLocation("mapSizePO2");          // idx  5
 				smfShaders[i]->SetUniformLocation("mapSize");             // idx  6
-				smfShaders[i]->SetUniformLocation("texSquareX");          // idx  7
-				smfShaders[i]->SetUniformLocation("texSquareZ");          // idx  8
+				smfShaders[i]->SetUniformLocation("texSquare");           // idx  7
+				smfShaders[i]->SetUniformLocation("$UNUSED$");            // idx  8
 				smfShaders[i]->SetUniformLocation("lightDir");            // idx  9
 				smfShaders[i]->SetUniformLocation("cameraPos");           // idx 10
 				smfShaders[i]->SetUniformLocation("$UNUSED$");            // idx 11
@@ -217,6 +217,8 @@ bool CSMFGroundDrawer::LoadMapShaders() {
 				smfShaders[i]->SetUniformLocation("detailNormalTex");     // idx 27
 				smfShaders[i]->SetUniformLocation("lightEmissionTex");    // idx 28
 				smfShaders[i]->SetUniformLocation("numMapDynLights");     // idx 29
+				smfShaders[i]->SetUniformLocation("normalTexGen");        // idx 30
+				smfShaders[i]->SetUniformLocation("specularTexGen");      // idx 31
 
 				smfShaders[i]->Enable();
 				smfShaders[i]->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
@@ -243,6 +245,8 @@ bool CSMFGroundDrawer::LoadMapShaders() {
 				smfShaders[i]->SetUniform1i(27, 11); // detailNormalTex (idx 27, texunit 11)
 				smfShaders[i]->SetUniform1i(28, 12); // lightEmisionTex (idx 28, texunit 12)
 				smfShaders[i]->SetUniform1i(29,  0); // numMapDynLights (unused)
+				smfShaders[i]->SetUniform2f(30, 1.0f / ((smfMap->normalTexSize.x - 1) * SQUARE_SIZE), 1.0f / ((smfMap->normalTexSize.y - 1) * SQUARE_SIZE));
+				smfShaders[i]->SetUniform2f(31, 1.0f / (gs->mapx * SQUARE_SIZE), 1.0f / (gs->mapy * SQUARE_SIZE));
 				smfShaders[i]->Disable();
 				smfShaders[i]->Validate();
 			}
@@ -1340,8 +1344,7 @@ inline void CSMFGroundDrawer::SetupBigSquare(const int bigSquareX, const int big
 
 	if (useShaders) {
 		if (smfShaderCurGLSL != NULL) {
-			smfShaderCurGLSL->SetUniform1i(7, bigSquareX);
-			smfShaderCurGLSL->SetUniform1i(8, bigSquareY);
+			smfShaderCurGLSL->SetUniform2i(7, bigSquareX, bigSquareY);
 		} else {
 			if (smfShaderCurrARB != NULL && shadowHandler->shadowsLoaded) {
 				smfShaderCurrARB->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
