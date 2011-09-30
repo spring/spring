@@ -1,0 +1,23 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
+/*
+ * Do NOT include this file directly, but include the wrapper instead.
+ * This prevents wastefull recompiling.
+ */
+
+#ifndef VERSION_GENERATED_H
+#define VERSION_GENERATED_H
+
+static const char* SPRING_VERSION_ENGINE_MAJOR      = "@SPRING_VERSION_ENGINE_MAJOR@";
+
+static const char* SPRING_VERSION_ENGINE_MINOR      = "@SPRING_VERSION_ENGINE_MINOR@";
+
+static const char* SPRING_VERSION_ENGINE_PATCH_SET  = "@SPRING_VERSION_ENGINE_PATCH_SET@";
+
+static const char* SPRING_VERSION_ENGINE_ADDITIONAL = "@SPRING_VERSION_ENGINE_ADDITIONAL@";
+
+#endif // VERSION_GENERATED_H
+
+ 
+ 
+ 
