@@ -53,8 +53,8 @@ endmacro (CreateEngineBuildAndInstallTarget targetName)
 
 # This allows us to disable each build type individually at configure stage.
 Macro    (AddEngineBuild build)
-	Set(CONFIGURE_BUILD_${build} TRUE CACHE BOOL "Build the ${build} build-type of the engine.")
-	If     (CONFIGURE_BUILD_${build})
+	Set(BUILD_spring-${build} TRUE CACHE BOOL "Configure the spring-${build} target.")
+	If     (BUILD_spring-${build})
 		Add_Subdirectory(${build})
 	EndIf  ()
 EndMacro (AddEngineBuild)
