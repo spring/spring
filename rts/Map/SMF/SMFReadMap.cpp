@@ -231,15 +231,19 @@ CSMFReadMap::CSMFReadMap(std::string mapname): file(mapname)
 	}
 
 	{
-		#if (SSMF_UNCOMPRESSED_NORMALS == 1)
-		std::vector<float> normalsTexBuf(gs->pwr2mapx * gs->pwr2mapy * 4, 0.0f);
-		#else
+	#if (SSMF_UNCOMPRESSED_NORMALS == 0)
 		GLenum texFormat = GL_LUMINANCE_ALPHA16F_ARB;
-
 		if (configHandler->GetBool("GroundNormalTextureHighPrecision")) {
 			texFormat = GL_LUMINANCE_ALPHA32F_ARB;
 		}
-		#endif
+	#endif
+
+		normalTexSize.x = gs->mapxp1;
+		normalTexSize.y = gs->mapyp1;
+		if (!globalRendering->supportNPOTs) {
+			normalTexSize.x = next_power_of_2(normalTexSize.x);
+			normalTexSize.y = next_power_of_2(normalTexSize.y);
+		}
 
 		glGenTextures(1, &normalsTex);
 		glBindTexture(GL_TEXTURE_2D, normalsTex);
@@ -247,11 +251,11 @@ CSMFReadMap::CSMFReadMap(std::string mapname): file(mapname)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		#if (SSMF_UNCOMPRESSED_NORMALS == 1)
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_FLOAT, &normalsTexBuf[0]);
-		#else
-		glTexImage2D(GL_TEXTURE_2D, 0, texFormat, gs->pwr2mapx, gs->pwr2mapy, 0, GL_LUMINANCE_ALPHA, GL_FLOAT, NULL);
-		#endif
+	#if (SSMF_UNCOMPRESSED_NORMALS == 1)
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, normalTexSize.x, normalTexSize.y, 0, GL_RGBA, GL_FLOAT, NULL);
+	#else
+		glTexImage2D(GL_TEXTURE_2D, 0, texFormat, normalTexSize.x, normalTexSize.y, 0, GL_LUMINANCE_ALPHA, GL_FLOAT, NULL);
+	#endif
 	}
 
 	file.ReadFeatureInfo();
@@ -374,6 +378,8 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 
 	// Update VertexNormalsTexture (not used by ARB shaders)
 	if (globalRendering->haveGLSL) {
+		// texture space is [0 .. gs->mapx] x [0 .. gs->mapy] (NPOT; vertex-aligned)
+
 		static float3* vvn = &visVertexNormals[0];
 
 		static const int W = gs->mapxp1;
@@ -386,15 +392,15 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 		const int maxx = std::min((x2 + 1), W - 1);
 		const int maxz = std::min((y2 + 1), H - 1);
 
-		const int xsize = maxx - minx;
-		const int zsize = maxz - minz;
+		const int xsize = (maxx - minx) + 1;
+		const int zsize = (maxz - minz) + 1;
 
 		// Note, it doesn't make sense to use a PBO here.
 		// Cause the upstreamed float32s need to be transformed to float16s, which seems to happen on the CPU!
 	#if (SSMF_UNCOMPRESSED_NORMALS == 1)
-		std::vector<float> pixels((xsize + 1) * (zsize + 1) * 4, 0.0f);
+		std::vector<float> pixels(xsize * zsize * 4, 0.0f);
 	#else
-		std::vector<float> pixels((xsize + 1) * (zsize + 1) * 2, 0.0f);
+		std::vector<float> pixels(xsize * zsize * 2, 0.0f);
 	#endif
 
 		for (int z = minz; z <= maxz; z++) {

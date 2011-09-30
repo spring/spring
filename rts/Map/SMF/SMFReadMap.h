@@ -3,8 +3,9 @@
 #ifndef SMFREADMAP_H
 #define SMFREADMAP_H
 
-#include "Map/ReadMap.h"
 #include "SMFMapFile.h"
+#include "Map/ReadMap.h"
+#include "System/Vec2.h"
 
 class CSMFGroundDrawer;
 
@@ -83,6 +84,8 @@ public:
 	int mapSizeZ;
 	int maxHeightMapIdx;
 	int heightMapSizeX;
+
+	int2 normalTexSize;
 
 protected:
 	CSMFMapFile file;
