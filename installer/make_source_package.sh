@@ -41,7 +41,7 @@ else
 	version_string=$(git describe --tags | sed s/\-[^\-]*$//)
 	branch="develop"
 fi
-echo "Using ${branch} as source"
+echo "Using ${branch} (${version_string}) as source"
 
 dir="spring_${version_string}"
 
@@ -51,13 +51,13 @@ dir="spring_${version_string}"
 # * GPL compatible
 lzma="spring_${version_string}_src.tar.lzma"
 #tbz="spring_${version_string}_src.tar.bz2"
-tgz="spring_${branch}_src.tar.gz"
+tgz="spring_${version_string}_src.tar.gz"
 
 # Windows archives
 # * windows (CRLF) line endings (bugged, see TODO below)
 # * contain everything from the GIT repository
 #zip="spring_${version_string}_src.zip"
-#seven_zip="spring_${branch}_src.7z"
+#seven_zip="spring_${version_string}_src.7z"
 
 # This is the list of files/directories that go in the source package.
 # (directories are included recursively)
