@@ -57,6 +57,7 @@
 #include "System/Net/LocalConnection.h"
 #include "System/Net/UnpackPacket.h"
 #include "System/LoadSave/DemoReader.h"
+#include "System/Platform/errorhandler.h"
 
 
 #define PKTCACHE_VECSIZE 1000
@@ -2174,26 +2175,30 @@ std::string CGameServer::SpeedControlToString(int speedCtrl) {
 
 void CGameServer::UpdateLoop()
 {
-	while (!quitServer) {
-		spring_sleep(spring_msecs(10));
+	try {
+		while (!quitServer) {
+			spring_sleep(spring_msecs(10));
 
-		if (UDPNet)
-			UDPNet->Update();
+			if (UDPNet)
+				UDPNet->Update();
 
-		Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
-		ServerReadNet();
-		Update();
-	}
-	if (hostif)
-		hostif->SendQuit();
-	Broadcast(CBaseNetProtocol::Get().SendQuit("Server shutdown"));
-	// flush the quit messages to reduce ugly network error messages on the client side
-	spring_sleep(spring_msecs(1000)); // this is to make sure the Flush has any effect at all (we don't want a forced flush)
-	for (size_t i = 0; i < players.size(); ++i) {
-		if (players[i].link)
-			players[i].link->Flush();
-	}
-	spring_sleep(spring_msecs(1000)); // now let clients close their connections
+			Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
+			ServerReadNet();
+			Update();
+		}
+
+		if (hostif)
+			hostif->SendQuit();
+		Broadcast(CBaseNetProtocol::Get().SendQuit("Server shutdown"));
+
+		// flush the quit messages to reduce ugly network error messages on the client side
+		spring_sleep(spring_msecs(1000)); // this is to make sure the Flush has any effect at all (we don't want a forced flush)
+		for (size_t i = 0; i < players.size(); ++i) {
+			if (players[i].link)
+				players[i].link->Flush();
+		}
+		spring_sleep(spring_msecs(1000)); // now let clients close their connections
+	} CATCH_SPRING_ERRORS
 }
 
 bool CGameServer::WaitsOnCon() const
