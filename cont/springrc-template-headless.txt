@@ -45,6 +45,7 @@ GroundLODScaleRefraction=0
 GroundLODScaleUnitReflection=0
 GroundScarAlphaFade=0
 HardwareCursor=0
+JoystickEnabled=0
 LodScale=1.00
 LodScaleReflection=1.00
 LodScaleRefraction=1.00
