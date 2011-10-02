@@ -13,6 +13,7 @@
 
 static GlobalResourceMap* GRMap = NULL;
 static GlobalTerrainMap* GTMap  = NULL;
+static cLogFile* gl = NULL;
 static int RAIs=0;
 
 namespace std
@@ -128,7 +129,7 @@ cRAI::~cRAI()
 	RAIs--;
 	if( RAIs == 0 )
 	{
-		*l<<"\n Global RAI Shutting Down";
+		*gl<<"\n Global RAI Shutting Down";
 //		double closingTimer = clock();
 		GlobalResourceMap* tmpRM = GRMap;
 		GRMap = NULL;
@@ -141,7 +142,9 @@ cRAI::~cRAI()
 		TM    = NULL;
 		delete tmpTM;
 		tmpTM = NULL;
-		*l<<"\n Global RAI Shutdown Complete.";
+		*gl<<"\n Global RAI Shutdown Complete.";
+		delete gl;
+		gl = NULL;
 	}
 
 	*l<<"\nShutdown Complete.";
@@ -162,18 +165,19 @@ void cRAI::InitAI(IGlobalAICallback* callback, int team)
 	if( GRMap == 0 )
 	{
 		ClearLogFiles();
-		*l<<"Loading Global RAI...";
-		*l<<"\n Mod = " << cb->GetModHumanName() << "(" << IntToString(cb->GetModHash(), "%x") << ")";
-		*l<<"\n Map = " << cb->GetMapName()      << "(" << IntToString(cb->GetMapHash(), "%x") << ")";
+		gl = new cLogFile(cb, "log/RAIGlobal_LastGame.log", false);
+		*gl<<"Loading Global RAI...";
+		*gl<<"\n Mod = " << cb->GetModHumanName() << "(" << IntToString(cb->GetModHash(), "%x") << ")";
+		*gl<<"\n Map = " << cb->GetMapName()      << "(" << IntToString(cb->GetMapHash(), "%x") << ")";
 		int seed = time(NULL);
 		srand(seed);
 		RAIs=0;
 		double loadingTimer = clock();
-		GTMap = new GlobalTerrainMap(cb,l);
-		*l<<"\n  Terrain-Map Loading Time: "<<(clock()-loadingTimer)/(double)CLOCKS_PER_SEC<<" seconds";
+		GTMap = new GlobalTerrainMap(cb,gl);
+		*gl<<"\n  Terrain-Map Loading Time: "<<(clock()-loadingTimer)/(double)CLOCKS_PER_SEC<<" seconds";
 		loadingTimer = clock();
-		GRMap = new GlobalResourceMap(cb,l,GTMap);
-		*l<<"\n  Resource-Map Loading Time: "<<(clock()-loadingTimer)/(double)CLOCKS_PER_SEC<<" seconds\n";
+		GRMap = new GlobalResourceMap(cb,gl,GTMap);
+		*gl<<"\n  Resource-Map Loading Time: "<<(clock()-loadingTimer)/(double)CLOCKS_PER_SEC<<" seconds\n";
 /*
 		loadingTimer = clock();
 		CMetalMap* KMM;
@@ -183,7 +187,7 @@ void cRAI::InitAI(IGlobalAICallback* callback, int team)
 		*l<<"\n   KAI Metal-Sites Found: "<<KMM->NumSpotsFound;
 		delete KMM;
 */
-		*l<<"\nGlobal RAI Loading Complete.\n\n";
+		*gl<<"\nGlobal RAI Loading Complete.\n\n";
 	}
 	RM = GRMap;
 	TM = GTMap;
