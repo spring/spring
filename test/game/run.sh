@@ -27,7 +27,7 @@ ulimit -v 1000000
 ulimit -t 900
 
 set +e #temp disable abort on error
-gdb -batch-silent -return-child-result -x $GDBCMDS
+gdb -batch -return-child-result -x $GDBCMDS
 #store exit code
 EXIT=$?
 set -e
