@@ -60,7 +60,7 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 		}                                                                                       \
 		catch (const boost::lock_error& e) {                                                          \
 			std::ostringstream ss;                                                          \
-			ss << e.code().value() << ": " << e.what();                                     \
+			ss << e.native_error() << ": " << e.what();                                     \
 			ErrorMessageBox(ss.str(), "Spring: Fatal Error", MBF_OK | MBF_CRASH);           \
 		}                                                                                       \
 		catch (const std::exception& e) {                                                       \
