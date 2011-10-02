@@ -296,7 +296,7 @@ static void TranslateStackTrace(std::vector<std::string>* lines, const std::vect
 				const size_t i = indices.front();
 				indices.pop();
 				if (strcmp(line,"??:0\n") != 0) {
-					(*lines)[i] = std::string(line);
+					(*lines)[i] = std::string(line, strlen(line) - 1); // exclude the lineending
 				}
 			}
 			pclose(cmdOut);
@@ -469,7 +469,7 @@ namespace CrashHandler
 			//! we should never get here
 			error = "Unknown signal";
 		}
-		LOG_L(L_ERROR, "%s in spring %s\n", error.c_str(), SpringVersion::GetFull().c_str());
+		LOG_L(L_ERROR, "%s in spring %s", error.c_str(), SpringVersion::GetFull().c_str());
 
 		//! print stacktrace
 		bool keepRunning = false;
