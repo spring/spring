@@ -11,8 +11,8 @@
 //#include <sys/stat.h>	// mkdir function (linux)
 #include <time.h>		// time(NULL)
 
-static GlobalResourceMap* GRMap=NULL;
-static GlobalTerrainMap* GTMap=NULL;
+static GlobalResourceMap* GRMap = NULL;
+static GlobalTerrainMap* GTMap  = NULL;
 static int RAIs=0;
 
 namespace std
@@ -115,26 +115,38 @@ cRAI::~cRAI()
 	}
 
 	delete UM;
+	UM = NULL;
 	delete B;
+	B = NULL;
 	delete SWM;
+	SWM = NULL;
 	delete CM;
+	CM = NULL;
 	delete UDH;
+	UDH = NULL;
 
 	RAIs--;
 	if( RAIs == 0 )
 	{
 		*l<<"\n Global RAI Shutting Down";
 //		double closingTimer = clock();
-		delete RM;
-		RM = 0;
-//		*l<<"\n Resource-Map Closing Time: "<<(clock()-closingTimer)/(double)CLOCKS_PER_SEC<<" seconds";
-		delete TM;
-		TM = 0;
+		GlobalResourceMap* tmpRM = GRMap;
+		GRMap = NULL;
+		RM    = NULL;
+		delete tmpRM;
+		tmpRM = NULL;
+//		*gl<<"\n Resource-Map Closing Time: "<<(clock()-closingTimer)/(double)CLOCKS_PER_SEC<<" seconds";
+		GlobalTerrainMap* tmpTM = GTMap;
+		GTMap = NULL;
+		TM    = NULL;
+		delete tmpTM;
+		tmpTM = NULL;
 		*l<<"\n Global RAI Shutdown Complete.";
 	}
 
 	*l<<"\nShutdown Complete.";
 	delete l;
+	l = NULL;
 }
 
 void cRAI::InitAI(IGlobalAICallback* callback, int team)
