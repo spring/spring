@@ -70,9 +70,9 @@ void main() {
 
 	vec3 normal;
 	#if (SSMF_UNCOMPRESSED_NORMALS == 1)
-		normal = normalize((texture2D(normalsTex, normalTexCoords).rgb * 2.0) - 1.0);
+		normal = normalize(texture2D(normalsTex, normalTexCoords).xyz);
 	#else
-		normal.xz = (texture2D(normalsTex, normalTexCoords).ra * 2.0) - 1.0;
+		normal.xz = texture2D(normalsTex, normalTexCoords).ra;
 		normal.y  = sqrt(1.0 - dot(normal.xz, normal.xz));
 	#endif
 
@@ -142,7 +142,6 @@ void main() {
 
 	shadeInt.rgb *= SMF_INTENSITY_MUL;
 	shadeInt.a = 1.0;
-
 
 	#if (SMF_WATER_ABSORPTION == 1)
 		if (vertexWorldPos.y < 0.0) {
