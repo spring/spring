@@ -151,9 +151,16 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 							m *= 255;
 
 							if (los || loshandler->InLos(sqx, sqy, gu->myAllyTeam)) {
-								if (md->moveMath->IsBlocked(*md, sqx + 1, sqy + 1) & CMoveMath::BLOCK_STRUCTURE) {
-									m = 0.0f;
-								}
+								float fact = 1.0f;
+								if (md->moveMath->IsBlocked(*md, sqx, sqy) & CMoveMath::BLOCK_STRUCTURE)
+									fact -= 0.25f;
+								if (md->moveMath->IsBlocked(*md, sqx+1, sqy) & CMoveMath::BLOCK_STRUCTURE)
+									fact -= 0.25f;
+								if (md->moveMath->IsBlocked(*md, sqx, sqy+1) & CMoveMath::BLOCK_STRUCTURE)
+									fact -= 0.25f;
+								if (md->moveMath->IsBlocked(*md, sqx+1, sqy+1) & CMoveMath::BLOCK_STRUCTURE)
+									fact -= 0.25f;
+								m *= fact;
 							}
 
 							texMem[texIdx + CBaseGroundDrawer::COLOR_R] = 255 - m;
