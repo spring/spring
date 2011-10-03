@@ -97,8 +97,10 @@ CMoveMath::BlockType CMoveMath::IsBlocked(const MoveData& moveData, int xSquare,
 	const bool zSizeOdd = (zSize & 1) != 0;
 	const int xstep = 2;
 	const int zstep = 2;
-	const int xmin = xSquare - (xSize >> 1), xmax = xSquare + (xSize >> 1);
-	const int zmin = zSquare - (zSize >> 1), zmax = zSquare + (zSize >> 1);
+	const int xh = (xSize - 1) >> 1;
+	const int zh = (zSize - 1) >> 1;
+	const int xmin = xSquare - xh, xmax = xSquare + xh;
+	const int zmin = zSquare - zh, zmax = zSquare + zh;
 
 	if (xSizeOdd && zSizeOdd) {
 		if (xSize <= 3 && zSize <= 3) {
@@ -123,13 +125,13 @@ CMoveMath::BlockType CMoveMath::IsBlocked(const MoveData& moveData, int xSquare,
 			}
 		}
 		BlockType bt1 = BLOCK_NONE, bt2 = BLOCK_NONE, bt3 = BLOCK_NONE, bt4 = BLOCK_NONE;
-		if (!xSizeOdd && xSize > 2) {
+		if (!xSizeOdd) {
 			for (int z = zmin; z <= zmax; z += zstep) {
 				bt1 |= SquareIsBlocked(moveData, xmin - 1, z);
 				bt3 |= SquareIsBlocked(moveData, xmax + 1, z);
 			}
 		}
-		if (!zSizeOdd && zSize > 2) {
+		if (!zSizeOdd) {
 			for (int x = xmin; x <= xmax; x += xstep) {
 				bt2 |= SquareIsBlocked(moveData, x, zmin - 1);
 				bt4 |= SquareIsBlocked(moveData, x, zmax + 1);
@@ -172,8 +174,10 @@ CMoveMath::BlockType CMoveMath::IsBlockedXmax(const MoveData& moveData, int xSqu
 	const bool zSizeOdd = (zSize & 1) != 0;
 	const int xstep = 2;
 	const int zstep = 2;
-	const int xmax = xSquare + (xSize >> 1);
-	const int zmin = zSquare - (zSize >> 1), zmax = zSquare + (zSize >> 1);
+	const int xh = (xSize - 1) >> 1;
+	const int zh = (zSize - 1) >> 1;
+	const int xmax = xSquare + xh;
+	const int zmin = zSquare - zh, zmax = zSquare + zh;
 
 	if (xSizeOdd && zSizeOdd) {
 		if (xSize <= 3 && zSize <= 3) {
@@ -192,12 +196,12 @@ CMoveMath::BlockType CMoveMath::IsBlockedXmax(const MoveData& moveData, int xSqu
 			ret |= SquareIsBlocked(moveData, xmax, z);
 		}
 		BlockType bt2 = BLOCK_NONE, bt3 = BLOCK_NONE, bt4 = BLOCK_NONE;
-		if (!xSizeOdd && xSize > 2) {
+		if (!xSizeOdd) {
 			for (int z = zmin; z <= zmax; z += zstep) {
 				bt3 |= SquareIsBlocked(moveData, xmax + 1, z);
 			}
 		}
-		if (!zSizeOdd && zSize > 2) {
+		if (!zSizeOdd) {
 			bt2 |= SquareIsBlocked(moveData, xmax, zmin - 1);
 			bt4 |= SquareIsBlocked(moveData, xmax, zmax + 1);
 		}
@@ -236,8 +240,10 @@ CMoveMath::BlockType CMoveMath::IsBlockedZmax(const MoveData& moveData, int xSqu
 	const bool zSizeOdd = (zSize & 1) != 0;
 	const int xstep = 2;
 	const int zstep = 2;
-	const int xmin = xSquare - (xSize >> 1), xmax = xSquare + (xSize >> 1);
-	const int zmax = zSquare + (zSize >> 1);
+	const int xh = (xSize - 1) >> 1;
+	const int zh = (zSize - 1) >> 1;
+	const int xmin = xSquare - xh, xmax = xSquare + xh;
+	const int zmax = zSquare + zh;
 
 	if (xSizeOdd && zSizeOdd) {
 		if (xSize <= 3 && zSize <= 3) {
@@ -256,11 +262,11 @@ CMoveMath::BlockType CMoveMath::IsBlockedZmax(const MoveData& moveData, int xSqu
 			ret |= SquareIsBlocked(moveData, x, zmax);
 		}
 		BlockType bt1 = BLOCK_NONE, bt3 = BLOCK_NONE, bt4 = BLOCK_NONE;
-		if (!xSizeOdd && xSize > 2) {
+		if (!xSizeOdd) {
 			bt1 |= SquareIsBlocked(moveData, xmin - 1, zmax);
 			bt3 |= SquareIsBlocked(moveData, xmax + 1, zmax);
 		}
-		if (!zSizeOdd && zSize > 2) {
+		if (!zSizeOdd) {
 			for (int x = xmin; x <= xmax; x += xstep) {
 				bt4 |= SquareIsBlocked(moveData, x, zmax + 1);
 			}
