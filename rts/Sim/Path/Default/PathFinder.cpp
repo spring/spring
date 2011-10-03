@@ -104,8 +104,8 @@ IPath::SearchResult CPathFinder::GetPath(
 	this->exactPath = exactPath;
 	this->needPath = needPath;
 	start = startPos;
-	startxSqr = (int(start.x) / SQUARE_SIZE)|1;
-	startzSqr = (int(start.z) / SQUARE_SIZE)|1;
+	startxSqr = (int(start.x) / SQUARE_SIZE);
+	startzSqr = (int(start.z) / SQUARE_SIZE);
 
 	// Clamp the start position
 	if (startxSqr <         0) startxSqr =            0;

@@ -91,29 +91,199 @@ CMoveMath::BlockType CMoveMath::IsBlocked(const MoveData& moveData, int xSquare,
 
 	BlockType ret = BLOCK_NONE;
 
-	const int xmin = xSquare - (moveData.xsize >> 1), xmax = xSquare + (moveData.xsize >> 1);
-	const int zmin = zSquare - (moveData.zsize >> 1), zmax = zSquare + (moveData.zsize >> 1);
-	const int xstep = std::max(1, moveData.xsize >> 2);
-	const int zstep = std::max(1, moveData.zsize >> 2);
+	const int xSize = moveData.xsize;
+	const int zSize = moveData.zsize;
+	const bool xSizeOdd = (xSize & 1) != 0;
+	const bool zSizeOdd = (zSize & 1) != 0;
+	const int xstep = 2;
+	const int zstep = 2;
+	const int xmin = xSquare - (xSize >> 1), xmax = xSquare + (xSize >> 1);
+	const int zmin = zSquare - (zSize >> 1), zmax = zSquare + (zSize >> 1);
 
-	if (moveData.xsize <= (SQUARE_SIZE >> 1) && moveData.zsize <= (SQUARE_SIZE >> 1)) {
-		// only check squares under the footprint-corners and center
-		// (footprints are point-symmetric around <xSquare, zSquare>)
-		ret |= SquareIsBlocked(moveData, xSquare, zSquare);
-		ret |= SquareIsBlocked(moveData, xmin, zmin);
-		ret |= SquareIsBlocked(moveData, xmax, zmin);
-		ret |= SquareIsBlocked(moveData, xmax, zmax);
-		ret |= SquareIsBlocked(moveData, xmin, zmax);
-	} else {
+	if (xSizeOdd && zSizeOdd) {
+		if (xSize <= 3 && zSize <= 3) {
+			// only check squares under the footprint-corners
+			// (footprints are point-symmetric around <xSquare, zSquare>)
+			ret |= SquareIsBlocked(moveData, xmin, zmin);
+			ret |= SquareIsBlocked(moveData, xmax, zmin);
+			ret |= SquareIsBlocked(moveData, xmax, zmax);
+			ret |= SquareIsBlocked(moveData, xmin, zmax);
+		} else {
+			for (int x = xmin; x <= xmax; x += xstep) {
+				for (int z = zmin; z <= zmax; z += zstep) {
+					ret |= SquareIsBlocked(moveData, x, z);
+				}
+			}
+		}
+	}
+	else {
 		for (int x = xmin; x <= xmax; x += xstep) {
 			for (int z = zmin; z <= zmax; z += zstep) {
 				ret |= SquareIsBlocked(moveData, x, z);
 			}
 		}
+		BlockType bt1 = BLOCK_NONE, bt2 = BLOCK_NONE, bt3 = BLOCK_NONE, bt4 = BLOCK_NONE;
+		if (!xSizeOdd && xSize > 2) {
+			for (int z = zmin; z <= zmax; z += zstep) {
+				bt1 |= SquareIsBlocked(moveData, xmin - 1, z);
+				bt3 |= SquareIsBlocked(moveData, xmax + 1, z);
+			}
+		}
+		if (!zSizeOdd && zSize > 2) {
+			for (int x = xmin; x <= xmax; x += xstep) {
+				bt2 |= SquareIsBlocked(moveData, x, zmin - 1);
+				bt4 |= SquareIsBlocked(moveData, x, zmax + 1);
+			}
+		}
+		// Try extending the footprint towards each possible "even" side, and
+		// only consider it blocked if all those sides have a matching BlockType.
+		// This is an approximation, but better than truncating it to odd size.
+		if (!xSizeOdd && !zSizeOdd) {
+			BlockType bta = bt1 | bt2 | SquareIsBlocked(moveData, xmin - 1, zmin - 1);
+			BlockType btb = bt1 | bt4 | SquareIsBlocked(moveData, xmin - 1, zmax + 1);
+			BlockType btc = bt3 | bt2 | SquareIsBlocked(moveData, xmax + 1, zmin - 1);
+			BlockType btd = bt3 | bt4 | SquareIsBlocked(moveData, xmax + 1, zmax + 1);
+			ret |= (bta & btb & btc & btd);
+		}
+		else if (!xSizeOdd) {
+			ret |= (bt1 & bt3);
+		}
+		else if (!zSizeOdd) {
+			ret |= (bt2 & bt4);
+		}
 	}
 
 	return ret;
 }
+
+
+/* Check if the Xmax edge of a given square-position is accessable by the movedata footprint. */
+CMoveMath::BlockType CMoveMath::IsBlockedXmax(const MoveData& moveData, int xSquare, int zSquare) const
+{
+	if (GetPosSpeedMod(moveData, xSquare, zSquare) == 0.0f) {
+		return BLOCK_IMPASSABLE;
+	}
+
+	BlockType ret = BLOCK_NONE;
+
+	const int xSize = moveData.xsize;
+	const int zSize = moveData.zsize;
+	const bool xSizeOdd = (xSize & 1) != 0;
+	const bool zSizeOdd = (zSize & 1) != 0;
+	const int xstep = 2;
+	const int zstep = 2;
+	const int xmax = xSquare + (xSize >> 1);
+	const int zmin = zSquare - (zSize >> 1), zmax = zSquare + (zSize >> 1);
+
+	if (xSizeOdd && zSizeOdd) {
+		if (xSize <= 3 && zSize <= 3) {
+			// only check squares under the footprint-corners
+			// (footprints are point-symmetric around <xSquare, zSquare>)
+			ret |= SquareIsBlocked(moveData, xmax, zmin);
+			ret |= SquareIsBlocked(moveData, xmax, zmax);
+		} else {
+			for (int z = zmin; z <= zmax; z += zstep) {
+				ret |= SquareIsBlocked(moveData, xmax, z);
+			}
+		}
+	}
+	else {
+		for (int z = zmin; z <= zmax; z += zstep) {
+			ret |= SquareIsBlocked(moveData, xmax, z);
+		}
+		BlockType bt2 = BLOCK_NONE, bt3 = BLOCK_NONE, bt4 = BLOCK_NONE;
+		if (!xSizeOdd && xSize > 2) {
+			for (int z = zmin; z <= zmax; z += zstep) {
+				bt3 |= SquareIsBlocked(moveData, xmax + 1, z);
+			}
+		}
+		if (!zSizeOdd && zSize > 2) {
+			bt2 |= SquareIsBlocked(moveData, xmax, zmin - 1);
+			bt4 |= SquareIsBlocked(moveData, xmax, zmax + 1);
+		}
+		// Try extending the footprint towards each possible "even" side, and
+		// only consider it blocked if all those sides have a matching BlockType.
+		// This is an approximation, but better than truncating it to odd size.
+		if (!xSizeOdd && !zSizeOdd) {
+			BlockType btc = bt3 | bt2 | SquareIsBlocked(moveData, xmax + 1, zmin - 1);
+			BlockType btd = bt3 | bt4 | SquareIsBlocked(moveData, xmax + 1, zmax + 1);
+			ret |= (btc & btd);
+		}
+		else if (!xSizeOdd) {
+			ret |= (bt3);
+		}
+		else if (!zSizeOdd) {
+			ret |= (bt2 & bt4);
+		}
+	}
+
+	return ret;
+}
+
+
+/* Check if the Zmax edge of a given square-position is accessable by the movedata footprint. */
+CMoveMath::BlockType CMoveMath::IsBlockedZmax(const MoveData& moveData, int xSquare, int zSquare) const
+{
+	if (GetPosSpeedMod(moveData, xSquare, zSquare) == 0.0f) {
+		return BLOCK_IMPASSABLE;
+	}
+
+	BlockType ret = BLOCK_NONE;
+
+	const int xSize = moveData.xsize;
+	const int zSize = moveData.zsize;
+	const bool xSizeOdd = (xSize & 1) != 0;
+	const bool zSizeOdd = (zSize & 1) != 0;
+	const int xstep = 2;
+	const int zstep = 2;
+	const int xmin = xSquare - (xSize >> 1), xmax = xSquare + (xSize >> 1);
+	const int zmax = zSquare + (zSize >> 1);
+
+	if (xSizeOdd && zSizeOdd) {
+		if (xSize <= 3 && zSize <= 3) {
+			// only check squares under the footprint-corners
+			// (footprints are point-symmetric around <xSquare, zSquare>)
+			ret |= SquareIsBlocked(moveData, xmax, zmax);
+			ret |= SquareIsBlocked(moveData, xmin, zmax);
+		} else {
+			for (int x = xmin; x <= xmax; x += xstep) {
+				ret |= SquareIsBlocked(moveData, x, zmax);
+			}
+		}
+	}
+	else {
+		for (int x = xmin; x <= xmax; x += xstep) {
+			ret |= SquareIsBlocked(moveData, x, zmax);
+		}
+		BlockType bt1 = BLOCK_NONE, bt3 = BLOCK_NONE, bt4 = BLOCK_NONE;
+		if (!xSizeOdd && xSize > 2) {
+			bt1 |= SquareIsBlocked(moveData, xmin - 1, zmax);
+			bt3 |= SquareIsBlocked(moveData, xmax + 1, zmax);
+		}
+		if (!zSizeOdd && zSize > 2) {
+			for (int x = xmin; x <= xmax; x += xstep) {
+				bt4 |= SquareIsBlocked(moveData, x, zmax + 1);
+			}
+		}
+		// Try extending the footprint towards each possible "even" side, and
+		// only consider it blocked if all those sides have a matching BlockType.
+		// This is an approximation, but better than truncating it to odd size.
+		if (!xSizeOdd && !zSizeOdd) {
+			BlockType btb = bt1 | bt4 | SquareIsBlocked(moveData, xmin - 1, zmax + 1);
+			BlockType btd = bt3 | bt4 | SquareIsBlocked(moveData, xmax + 1, zmax + 1);
+			ret |= (btb & btd);
+		}
+		else if (!xSizeOdd) {
+			ret |= (bt1 & bt3);
+		}
+		else if (!zSizeOdd) {
+			ret |= (bt4);
+		}
+	}
+
+	return ret;
+}
+
 
 /*
  * check if an object is blocking or not for a given MoveData (feature

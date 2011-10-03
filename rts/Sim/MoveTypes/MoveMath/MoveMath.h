@@ -48,6 +48,8 @@ public:
 	// tells whether a position is blocked (inaccessable for a given object's movedata)
 	BlockType IsBlocked(const MoveData& moveData, const float3& pos) const;
 	BlockType IsBlocked(const MoveData& moveData, int xSquare, int zSquare) const;
+	BlockType IsBlockedXmax(const MoveData& moveData, int xSquare, int zSquare) const;
+	BlockType IsBlockedZmax(const MoveData& moveData, int xSquare, int zSquare) const;
 	
 	// tells whether a given object is blocking the given movedata
 	static bool CrushResistant(const MoveData& moveData, const CSolidObject* object);
