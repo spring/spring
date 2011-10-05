@@ -31,16 +31,16 @@ public:
 	void UpdateShadingTexture();
 	void UpdateHeightMapUnsynced(const HeightMapUpdate&);
 
-	inline unsigned int GetDetailTexture() const { return detailTex; }
-	inline unsigned int GetShadingTexture() const { return shadingTex; }
-	inline unsigned int GetNormalsTexture() const { return normalsTex; }
-	inline unsigned int GetSpecularTexture() const { return specularTex; }
-	inline unsigned int GetGrassShadingTexture() const { return grassShadingTex; }
-	inline unsigned int GetSplatDetailTexture() const { return splatDetailTex; }
-	inline unsigned int GetSplatDistrTexture() const { return splatDistrTex; }
-	inline unsigned int GetSkyReflectModTexture() const { return skyReflectModTex; }
-	inline unsigned int GetDetailNormalTexture() const { return detailNormalTex; }
-	inline unsigned int GetLightEmissionTexture() const { return lightEmissionTex; }
+	unsigned int GetDetailTexture() const { return detailTex; }
+	unsigned int GetShadingTexture() const { return shadingTex; }
+	unsigned int GetNormalsTexture() const { return normalsTex; }
+	unsigned int GetSpecularTexture() const { return specularTex; }
+	unsigned int GetGrassShadingTexture() const { return grassShadingTex; }
+	unsigned int GetSplatDetailTexture() const { return splatDetailTex; }
+	unsigned int GetSplatDistrTexture() const { return splatDistrTex; }
+	unsigned int GetSkyReflectModTexture() const { return skyReflectModTex; }
+	unsigned int GetDetailNormalTexture() const { return detailNormalTex; }
+	unsigned int GetLightEmissionTexture() const { return lightEmissionTex; }
 
 	void DrawMinimap() const;
 	void GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize);
