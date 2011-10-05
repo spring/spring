@@ -59,7 +59,7 @@ public:
 	bool HaveSplatTexture() const { return haveSplatTexture; }
 
 private:
-	inline void UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigned char* pixelRow);
+	inline void UpdateShadingTexPart(int idx1, int idx2, unsigned char* dst) const;
 	inline CBaseGroundDrawer* GetGroundDrawer();
 
 	inline const float GetCenterHeightUnsynced(const int& x, const int& y) const;
@@ -115,9 +115,8 @@ private:
 	std::vector<float> cornerHeightMapUnsynced;
 #endif
 
-	std::vector<unsigned char> shadingTexPixelRow;
-	unsigned int shadingTexUpdateIter;
-	unsigned int shadingTexUpdateRate;
+	std::vector<unsigned char> shadingTexBuffer;
+	int shadingTexUpdateProgress;
 
 	float anisotropy;
 };

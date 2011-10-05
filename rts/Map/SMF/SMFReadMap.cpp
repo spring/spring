@@ -76,13 +76,6 @@ CSMFReadMap::CSMFReadMap(std::string mapname): file(mapname)
 	file.ReadHeightmap(&cornerHeightMapSynced[0],  minH, (maxH - minH) / 65536.0f);
 	CReadMap::Initialize();
 
-	shadingTexPixelRow.resize(gs->mapx * 4, 0);
-	shadingTexUpdateIter = 0;
-	shadingTexUpdateRate = std::max(1.0f, math::ceil((width) / float(height)));
-	// with GLSL, the shading texture has very limited use (minimap etc) so we increase the update interval
-	if (globalRendering->haveGLSL)
-		shadingTexUpdateRate *= 10;
-
 
 	for (unsigned int a = 0; a < mapname.size(); ++a) {
 		mapChecksum += mapname[a];
@@ -228,6 +221,9 @@ CSMFReadMap::CSMFReadMap(std::string mapname): file(mapname)
 		}
 
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+		shadingTexBuffer.resize(gs->mapx * gs->mapy * 4, 0);
+		shadingTexUpdateProgress = 0;
 	}
 
 	{
@@ -446,7 +442,19 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 		int y;
 		#pragma omp parallel for private(y)
 		for (y = 0; y < ysize; ++y) {
-			UpdateShadingTexPart(y, x1, y1, xsize, &pixels[y * xsize * 4]);
+			const int idx1 = (y + y1) * gs->mapx + x1;
+			const int idx2 = (y + y1) * gs->mapx + x2;
+			UpdateShadingTexPart(idx1, idx2, &pixels[y * xsize * 4]);
+		}
+
+		// check if we were in a dynamic sun issued shadingTex update
+		// and our updaterect was already updated (buffered, not send to the GPU yet!)
+		// if so update it in that buffer, too
+		if (shadingTexUpdateProgress > (y1 * gs->mapx + x1)) {
+			for (y = 0; y < ysize; ++y) {
+				const int idx = (y + y1) * gs->mapx + x1;
+				memcpy(&shadingTexBuffer[idx * 4] , &pixels[y * xsize * 4], xsize);
+			}
 		}
 
 		// redefine the texture subregion
@@ -469,17 +477,18 @@ const float CSMFReadMap::GetCenterHeightUnsynced(const int& x, const int& y) con
 }
 
 
-void CSMFReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigned char* pixelRow)
+void CSMFReadMap::UpdateShadingTexPart(int idx1, int idx2, unsigned char* dst) const
 {
-	for (int x = 0; x < xsize; ++x) {
-		const int xi = x1 + x;
-		const int yi = y1 + y;
+	for (int idx = idx1; idx <= idx2; ++idx) {
+		const int i = idx - idx1;
+		const int xi = idx % gs->mapx;
+		const int yi = idx / gs->mapx;
 
 		const float height = GetCenterHeightUnsynced(xi, yi);
 
 		if (height < 0.0f) {
 			// Underwater
-			const int h = std::min((int)(-height), 1023); //! waterHeightColors array just holds 1024 colors
+			const int h = std::min((int)(-height), 1023); // waterHeightColors array just holds 1024 colors
 			float light = std::min((DiffuseSunCoeff(xi, yi) + 0.2f) * 2.0f, 1.0f);
 
 			if (height > -10.0f) {
@@ -487,43 +496,24 @@ void CSMFReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigne
 				const float3 light3 = GetLightValue(xi, yi) * (1.0f - wc) * 255.0f;
 				light *= wc;
 
-				pixelRow[x * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light + light3.x);
-				pixelRow[x * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light + light3.y);
-				pixelRow[x * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light + light3.z);
+				dst[i * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light + light3.x);
+				dst[i * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light + light3.y);
+				dst[i * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light + light3.z);
 			} else {
-				pixelRow[x * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light);
-				pixelRow[x * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light);
-				pixelRow[x * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light);
+				dst[i * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light);
+				dst[i * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light);
+				dst[i * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light);
 			}
-			pixelRow[x * 4 + 3] = EncodeHeight(height);
+			dst[i * 4 + 3] = EncodeHeight(height);
 		} else {
 			// Above water
 			const float3& light = GetLightValue(xi, yi) * 255.0f;
-
-			pixelRow[x * 4 + 0] = (unsigned char) light.x;
-			pixelRow[x * 4 + 1] = (unsigned char) light.y;
-			pixelRow[x * 4 + 2] = (unsigned char) light.z;
-			pixelRow[x * 4 + 3] = 255;
+			dst[i * 4 + 0] = (unsigned char) light.x;
+			dst[i * 4 + 1] = (unsigned char) light.y;
+			dst[i * 4 + 2] = (unsigned char) light.z;
+			dst[i * 4 + 3] = 255;
 		}
 	}
-}
-
-
-void CSMFReadMap::UpdateShadingTexture() {
-	const int xsize = gs->mapx;
-	const int ysize = gs->mapy;
-	int y = shadingTexUpdateIter;
-
-	shadingTexUpdateIter = (shadingTexUpdateIter + 1) % (ysize * shadingTexUpdateRate);
-	if ((y % shadingTexUpdateRate) != 0)
-		return;
-
-	y /= shadingTexUpdateRate;
-
-	UpdateShadingTexPart(y, 0, 0, xsize, &shadingTexPixelRow[0]);
-
-	glBindTexture(GL_TEXTURE_2D, shadingTex);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, y, xsize, 1, GL_RGBA, GL_UNSIGNED_BYTE, &shadingTexPixelRow[0]);
 }
 
 
@@ -548,6 +538,39 @@ float3 CSMFReadMap::GetLightValue(const int& x, const int& y) const
 	}
 
 	return light;
+}
+
+
+
+
+void CSMFReadMap::UpdateShadingTexture()
+{
+	static const int xsize = gs->mapx;
+	static const int ysize = gs->mapy;
+	static const int pixels = xsize * ysize;
+
+	// with GLSL, the shading texture has very limited use (minimap etc) so we reduce the updaterate
+	//FIXME replace with a real check if glsl is used in terrain rendering!
+	const int update_rate = (globalRendering->haveGLSL ? 64*64 : 64*128); 
+
+	const int idx1 = shadingTexUpdateProgress;
+	const int idx2 = std::min(idx1 + update_rate, pixels - 1);
+
+	int idx;
+	#pragma omp parallel for private(idx)
+	for (idx = idx1; idx <= idx2; idx += 1025) {
+		const int idx3 = std::min(idx2, idx + 1024);
+		UpdateShadingTexPart(idx, idx3, &shadingTexBuffer[idx * 4]);
+	}
+
+	shadingTexUpdateProgress += update_rate;
+
+	if (shadingTexUpdateProgress >= pixels) {
+		shadingTexUpdateProgress = 0;
+
+		glBindTexture(GL_TEXTURE_2D, shadingTex);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, &shadingTexBuffer[0]);
+	}
 }
 
 
