@@ -553,6 +553,14 @@ void CSMFReadMap::UpdateShadingTexture()
 	//FIXME replace with a real check if glsl is used in terrain rendering!
 	const int update_rate = (globalRendering->haveGLSL ? 64*64 : 64*128); 
 
+	if (shadingTexUpdateProgress >= pixels) {
+		shadingTexUpdateProgress = 0;
+
+		glBindTexture(GL_TEXTURE_2D, shadingTex);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, &shadingTexBuffer[0]);
+		return;
+	}
+
 	const int idx1 = shadingTexUpdateProgress;
 	const int idx2 = std::min(idx1 + update_rate, pixels - 1);
 
@@ -564,13 +572,6 @@ void CSMFReadMap::UpdateShadingTexture()
 	}
 
 	shadingTexUpdateProgress += update_rate;
-
-	if (shadingTexUpdateProgress >= pixels) {
-		shadingTexUpdateProgress = 0;
-
-		glBindTexture(GL_TEXTURE_2D, shadingTex);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, &shadingTexBuffer[0]);
-	}
 }
 
 
