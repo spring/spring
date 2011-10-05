@@ -50,7 +50,7 @@ void DynamicSkyLight::Update() {
 
 		lightIntensity = math::sqrt(Clamp(lightDir.y, 0.0f, 1.0f));
 
-		const float shadowDensity = std::min(1.0f, lightIntensity * shadowDensityFactor); //FIXME why min(1.)? shouldn't the shadow fade away in the night?
+		const float shadowDensity = std::min(1.0f, lightIntensity * shadowDensityFactor);
 		const CMapInfo::light_t& light = mapInfo->light;
 
 		groundShadowDensity = shadowDensity * light.groundShadowDensity;
@@ -58,6 +58,7 @@ void DynamicSkyLight::Update() {
 	}
 
 	if (updateNeeded) {
+		updateNeeded = false;
 		sky->UpdateSunDir();
 		unitDrawer->UpdateSunDir();
 		readmap->GetGroundDrawer()->UpdateSunDir();
@@ -70,7 +71,9 @@ void DynamicSkyLight::Update() {
 bool DynamicSkyLight::SetLightDir(const float4& newLightDir) {
 	if (newLightDir != lightDir) {
 		static float4 lastUpdate = ZeroVector;
-		if (lastUpdate.dot(newLightDir) < 0.95f) {
+		static float minCosAngle = cos(1.5f * (PI/180.f));
+
+		if (lastUpdate.dot(newLightDir) < minCosAngle) {
 			lastUpdate   = newLightDir;
 			updateNeeded = true;
 		}
