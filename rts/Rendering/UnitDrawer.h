@@ -42,7 +42,8 @@ public:
 	bool WantsEvent(const std::string& eventName) {
 		return
 			(eventName == "RenderUnitCreated"      || eventName == "RenderUnitDestroyed") ||
-			(eventName == "RenderUnitCloakChanged" || eventName == "RenderUnitLOSChanged");
+			(eventName == "RenderUnitCloakChanged" || eventName == "RenderUnitLOSChanged") ||
+			(eventName == "SunChanged");
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
@@ -52,6 +53,8 @@ public:
 
 	void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);
 	void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
+
+	void SunChanged(const float3& sunDir);
 
 public:
 	CUnitDrawer();
@@ -81,7 +84,6 @@ public:
 	int ShowUnitBuildSquare(const BuildInfo& buildInfo);
 	int ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands);
 
-	void UpdateSunDir();
 	void CreateSpecularFace(unsigned int glType, int size, float3 baseDir, float3 xDif, float3 yDif, float3 sunDir, float exponent, float3 sunColor);
 
 	void DrawBuildingSample(const UnitDef* unitdef, int side, float3 pos, int facing = 0);
