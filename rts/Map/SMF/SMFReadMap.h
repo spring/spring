@@ -29,7 +29,7 @@ public:
 	~CSMFReadMap();
 
 	void UpdateShadingTexture();
-	void UpdateHeightMapUnsynced(const SRectangle&);
+	void UpdateHeightMapUnsynced(const HeightMapUpdate&);
 
 	inline unsigned int GetDetailTexture() const { return detailTex; }
 	inline unsigned int GetShadingTexture() const { return shadingTex; }
