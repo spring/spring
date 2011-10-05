@@ -46,10 +46,11 @@ public:
 	}
 
 	// tells whether a position is blocked (inaccessable for a given object's movedata)
-	BlockType IsBlocked(const MoveData& moveData, const float3& pos) const;
-	BlockType IsBlocked(const MoveData& moveData, int xSquare, int zSquare) const;
-	BlockType IsBlockedXmax(const MoveData& moveData, int xSquare, int zSquare) const;
-	BlockType IsBlockedZmax(const MoveData& moveData, int xSquare, int zSquare) const;
+	inline BlockType IsBlocked(const MoveData& moveData, const float3& pos) const;
+	inline BlockType IsBlocked(const MoveData& moveData, int xSquare, int zSquare) const;
+	BlockType IsBlockedNoSpeedModCheck(const MoveData& moveData, int xSquare, int zSquare) const;
+	bool IsBlockedStructureXmax(const MoveData& moveData, int xSquare, int zSquare) const;
+	bool IsBlockedStructureZmax(const MoveData& moveData, int xSquare, int zSquare) const;
 	
 	// tells whether a given object is blocking the given movedata
 	static bool CrushResistant(const MoveData& moveData, const CSolidObject* object);
@@ -60,5 +61,20 @@ public:
 
 	virtual ~CMoveMath() {}
 };
+
+/* Check if a given square-position is accessable by the movedata footprint. */
+inline CMoveMath::BlockType CMoveMath::IsBlocked(const MoveData& moveData, int xSquare, int zSquare) const
+{
+	if (GetPosSpeedMod(moveData, xSquare, zSquare) == 0.0f)
+		return BLOCK_IMPASSABLE;
+	return IsBlockedNoSpeedModCheck(moveData, xSquare, zSquare);
+}
+
+/* Converts a point-request into a square-positional request. */
+inline CMoveMath::BlockType CMoveMath::IsBlocked(const MoveData& moveData, const float3& pos) const
+{
+	return IsBlocked(moveData, pos.x / SQUARE_SIZE, pos.z / SQUARE_SIZE);
+}
+
 
 #endif
