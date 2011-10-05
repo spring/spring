@@ -5,12 +5,23 @@
 
 #include "SMFMapFile.h"
 #include "Map/ReadMap.h"
+#include "System/EventClient.h"
 #include "System/Vec2.h"
+
 
 class CSMFGroundDrawer;
 
-class CSMFReadMap : public CReadMap
+class CSMFReadMap : public CReadMap, public CEventClient
 {
+public:
+	// CEventClient interface
+	int GetReadAllyTeam() const { return AllAccessTeam; }
+	bool WantsEvent(const std::string& eventName) {
+		return (eventName == "SunChanged");
+	}
+
+	void SunChanged(const float3& sunDir);
+
 public:
 	CR_DECLARE(CSMFReadMap)
 
@@ -18,7 +29,7 @@ public:
 	~CSMFReadMap();
 
 	void UpdateShadingTexture();
-	void UpdateHeightMapUnsynced(const HeightMapUpdate&);
+	void UpdateHeightMapUnsynced(const SRectangle&);
 
 	inline unsigned int GetDetailTexture() const { return detailTex; }
 	inline unsigned int GetShadingTexture() const { return shadingTex; }
@@ -116,6 +127,7 @@ private:
 #endif
 
 	std::vector<unsigned char> shadingTexBuffer;
+	bool shadingTexUpdateNeeded;
 	int shadingTexUpdateProgress;
 
 	float anisotropy;
