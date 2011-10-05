@@ -566,7 +566,8 @@ void CSMFReadMap::UpdateShadingTexture()
 
 	// with GLSL, the shading texture has very limited use (minimap etc) so we reduce the updaterate
 	//FIXME replace with a real check if glsl is used in terrain rendering!
-	const int update_rate = (globalRendering->haveGLSL ? 64*64 : 64*128); 
+	//FIXME make configurable? or even FPS depending?
+	const int update_rate = (globalRendering->haveGLSL ? 64*64 : 64*128);
 
 	if (shadingTexUpdateProgress < 0) {
 		return;
@@ -580,6 +581,7 @@ void CSMFReadMap::UpdateShadingTexture()
 			shadingTexUpdateProgress = -1;
 		}
 
+		//FIXME use FBO and blend slowly new and old? (this way update rate could reduced even more -> saves CPU time)
 		glBindTexture(GL_TEXTURE_2D, shadingTex);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, &shadingTexBuffer[0]);
 		return;
