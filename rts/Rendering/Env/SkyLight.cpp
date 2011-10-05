@@ -9,8 +9,9 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/Config/ConfigHandler.h"
+#include "System/EventHandler.h"
 #include "System/myMath.h"
+#include "System/Config/ConfigHandler.h"
 
 CONFIG(float, DynamicSunMinElevation).defaultValue(0.1f);
 
@@ -63,6 +64,8 @@ void DynamicSkyLight::Update() {
 		unitDrawer->UpdateSunDir();
 		readmap->GetGroundDrawer()->UpdateSunDir();
 		groundDecals->UpdateSunDir();
+
+		eventHandler.SunChanged(lightDir);
 	}
 }
 
