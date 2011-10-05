@@ -14,6 +14,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "System/bitops.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/OpenMP_cond.h"
@@ -31,9 +32,14 @@ CONFIG(float, SMFTexAniso).defaultValue(0.0f);
 CR_BIND_DERIVED(CSMFReadMap, CReadMap, (""))
 
 
-CSMFReadMap::CSMFReadMap(std::string mapname): file(mapname)
+CSMFReadMap::CSMFReadMap(std::string mapname)
+	: CEventClient("[CSMFReadMap]", 271950, false)
+	, file(mapname)
+	
 {
 	loadscreen->SetLoadMessage("Loading SMF");
+
+	eventHandler.AddClient(this);
 
 	ConfigureAnisotropy();
 
@@ -223,7 +229,8 @@ CSMFReadMap::CSMFReadMap(std::string mapname): file(mapname)
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
 		shadingTexBuffer.resize(gs->mapx * gs->mapy * 4, 0);
-		shadingTexUpdateProgress = 0;
+		shadingTexUpdateNeeded   = false;
+		shadingTexUpdateProgress = -1;
 	}
 
 	{
@@ -540,6 +547,14 @@ float3 CSMFReadMap::GetLightValue(const int& x, const int& y) const
 	return light;
 }
 
+void CSMFReadMap::SunChanged(const float3& sunDir)
+{
+	if (shadingTexUpdateProgress < 0) {
+		shadingTexUpdateProgress = 0;
+	} else {
+		shadingTexUpdateNeeded = true;
+	}
+}
 
 
 
@@ -553,8 +568,17 @@ void CSMFReadMap::UpdateShadingTexture()
 	//FIXME replace with a real check if glsl is used in terrain rendering!
 	const int update_rate = (globalRendering->haveGLSL ? 64*64 : 64*128); 
 
+	if (shadingTexUpdateProgress < 0) {
+		return;
+	}
+
 	if (shadingTexUpdateProgress >= pixels) {
-		shadingTexUpdateProgress = 0;
+		if (shadingTexUpdateNeeded) {
+			shadingTexUpdateProgress = 0;
+			shadingTexUpdateNeeded   = false;
+		} else {
+			shadingTexUpdateProgress = -1;
+		}
 
 		glBindTexture(GL_TEXTURE_2D, shadingTex);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, &shadingTexBuffer[0]);
