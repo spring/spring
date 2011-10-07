@@ -132,7 +132,7 @@ public:
 	        const float* GetCornerHeightMapUnsynced() const { return GetCornerHeightMapSynced(); }
 #endif
 
-	/// synced
+	/// synced only
 	const float* GetOriginalHeightMapSynced() const { return &originalHeightMap[0]; }
 	const float* GetCenterHeightMapSynced() const { return &centerHeightMap[0]; }
 	const float* GetMIPHeightMapSynced(unsigned int mip) const { return mipPointerHeightMaps[mip]; }
@@ -140,17 +140,19 @@ public:
 	const unsigned char* GetTypeMapSynced() const { return &typeMap[0]; }
 	      unsigned char* GetTypeMapSynced()       { return &typeMap[0]; }
 
-	/// unsynced
+	/// unsynced only
 	const float3* GetVisVertexNormalsUnsynced() const { return &visVertexNormals[0]; }
 
 	/// both
-	const float3* GetFaceNormalsSynced() const { return &faceNormalsSynced[0]; }
+	/// synced versions
+	const float3* GetFaceNormalsSynced()   const { return &faceNormalsSynced[0]; }
 	const float3* GetCenterNormalsSynced() const { return &centerNormalsSynced[0]; }
+	/// unsynced versions
 #ifdef USE_UNSYNCED_HEIGHTMAP
-	const float3* GetFaceNormalsUnsynced() const { return &faceNormalsUnsynced[0]; }
+	const float3* GetFaceNormalsUnsynced()   const { return &faceNormalsUnsynced[0]; }
 	const float3* GetCenterNormalsUnsynced() const { return &centerNormalsUnsynced[0]; }
 #else
-	const float3* GetFaceNormalsUnsynced() const { return GetFaceNormalsSynced(); }
+	const float3* GetFaceNormalsUnsynced()   const { return GetFaceNormalsSynced(); }
 	const float3* GetCenterNormalsUnsynced() const { return GetCenterNormalsSynced(); }
 #endif
 
