@@ -27,7 +27,7 @@ public:
 	void NewGroundDrawer();
 	CBaseGroundDrawer* GetGroundDrawer();
 
-	void UpdateHeightMapUnsynced(const HeightMapUpdate& hmu);
+	void UpdateHeightMapUnsynced(const SRectangle& hmu);
 
 	unsigned int GetShadingTexture() const { return 0; }
 	void DrawMinimap() const; // draw the minimap in a quad (with extends: (0,0)-(1,1))

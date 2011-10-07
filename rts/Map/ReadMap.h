@@ -5,10 +5,11 @@
 
 #include <list>
 
-#include "System/creg/creg_cond.h"
-#include "System/float3.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "System/float3.h"
+#include "System/creg/creg_cond.h"
+#include "System/Misc/RectangleOptimizer.h"
 
 #define USE_UNSYNCED_HEIGHTMAP
 
@@ -40,14 +41,6 @@ struct MapBitmapInfo
 	int height;
 };
 
-struct HeightMapUpdate {
-	HeightMapUpdate(int tlx, int brx,  int tly, int bry, bool inLOS = false): x1(tlx), x2(brx), y1(tly), y2(bry), los(inLOS) {
-	}
-
-	int x1, x2;
-	int y1, y2;
-	bool los;
-};
 
 
 class CReadMap
@@ -59,7 +52,7 @@ protected:
 	void Initialize();
 	void CalcHeightmapChecksum();
 
-	virtual void UpdateHeightMapUnsynced(const HeightMapUpdate&) = 0;
+	virtual void UpdateHeightMapUnsynced(const SRectangle&) = 0;
 
 public:
 	CR_DECLARE(CReadMap);
@@ -77,7 +70,7 @@ public:
 	 * calculates derived heightmap information
 	 * such as normals, centerheightmap and slopemap
 	 */
-	void UpdateHeightMapSynced(int x1, int z1, int x2, int z2);
+	void UpdateHeightMapSynced(int x1, int z1, int x2, int z2, bool initialize = false);
 	void PushVisibleHeightMapUpdate(int x1, int z1, int x2, int z2, bool);
 	void UpdateDraw();
 
@@ -175,6 +168,9 @@ public:
 		currMaxHeight = std::max(hm[idx], currMaxHeight);
 	}
 
+private:
+	void HeightMapUpdateLOSCheck(SRectangle rect);
+
 public:
 	/// number of heightmap mipmaps, including full resolution
 	static const int numHeightMipMaps = 7;
@@ -210,28 +206,7 @@ protected:
 	std::vector<float> slopeMap;               /// size: (mapx/2)    * (mapy/2)  , same as 1.0 - interpolate(centernomal[i]).y [SYNCED]
 	std::vector<unsigned char> typeMap;
 
-	std::list<HeightMapUpdate> unsyncedHeightMapUpdates;
-
-#ifdef USE_UNSYNCED_HEIGHTMAP
-	struct HeightMapUpdateFilter {
-		HeightMapUpdateFilter(bool upd = false) : minx(0), maxx(0), miny(0), maxy(0), update(upd) {}
-		HeightMapUpdateFilter(int mnx, int mxx, int mny, int mxy, bool upd = false) : minx(mnx), maxx(mxx), miny(mny), maxy(mxy), update(upd) {}
-
-		void Expand(const HeightMapUpdateFilter& fnew) {
-			minx = std::min(minx, fnew.minx);
-			maxx = std::max(maxx, fnew.maxx);
-			miny = std::min(miny, fnew.miny);
-			maxy = std::max(maxy, fnew.maxy);
-			update = fnew.update;
-		}
-
-		int minx;
-		int maxx;
-		int miny;
-		int maxy;
-		bool update;
-	};
-#endif
+	CRectangleOptimizer unsyncedHeightMapUpdates;
 };
 
 extern CReadMap* readmap;

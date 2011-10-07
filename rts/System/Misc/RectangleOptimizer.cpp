@@ -27,7 +27,7 @@ CRectangleOptimizer::~CRectangleOptimizer()
 }
 
 
-unsigned CRectangleOptimizer::GetTotalArea() const
+unsigned CRectangleOptimizer::GetArea() const
 {
 	unsigned ret = 0;
 	for (CRectangleOptimizer::const_iterator it = rectangles.begin(); it != rectangles.end(); ++it) {
@@ -50,7 +50,7 @@ void CRectangleOptimizer::Optimize()
 
 	//TODO this is not fully correct, when there was still rectangles
 	//     left from the last update we shouldn't count them twice!
-	statsTotalSize += GetTotalArea();
+	statsTotalSize += GetArea();
 
 	//! Fix Overlap
 	for (it = rectangles.begin(); it != rectangles.end(); ++it) {
@@ -70,7 +70,7 @@ void CRectangleOptimizer::Optimize()
 		}
 	}
 
-	statsOptSize += GetTotalArea();
+	statsOptSize += GetArea();
 
 	//! Merge when possible
 	rectangles.sort();
