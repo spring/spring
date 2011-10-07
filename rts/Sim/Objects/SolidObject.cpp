@@ -128,6 +128,7 @@ int2 CSolidObject::GetMapPos()
 	return GetMapPos(pos);
 }
 
+//FIXME move somewhere else?
 int2 CSolidObject::GetMapPos(const float3& position)
 {
 	int2 p;
