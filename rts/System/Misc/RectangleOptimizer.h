@@ -20,6 +20,8 @@ public:
 
 	void Optimize();
 
+	unsigned GetArea() const;
+
 public:
 	//! std container funcs
 	typedef std::list<SRectangle>::iterator iterator;
@@ -48,6 +50,10 @@ public:
 		needsUpdate = true;
 		rectangles.push_back(rect);
 	}
+	void swap(std::list<SRectangle>& lst)
+	{
+		rectangles.swap(lst);
+	}
 	iterator begin() {
 		return rectangles.begin();
 	}
@@ -65,8 +71,6 @@ private:
 	static std::bitset<4> GetSharedEdges(const SRectangle& rect1, const SRectangle& rect2);
 	static bool DoOverlap(const SRectangle& rect1, const SRectangle& rect2);
 	static bool AreMergable(const SRectangle& rect1, const SRectangle& rect2);
-
-	unsigned GetTotalArea() const;
 
 private:
 	std::list<SRectangle> rectangles;

@@ -288,7 +288,7 @@ CBaseGroundDrawer* CSMFReadMap::GetGroundDrawer() { return (CBaseGroundDrawer*) 
 
 
 
-void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
+void CSMFReadMap::UpdateHeightMapUnsynced(const SRectangle& update)
 {
 	// ReadMap::UpdateHeightMapSynced clamps to [0, gs->mapx - 1]
 
@@ -361,17 +361,15 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 					tn = (hasNgbL           )? (vml - vmm).cross((vtl - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
 
 			#ifdef USE_UNSYNCED_HEIGHTMAP
-				if (update.los) {
-					// update the visible vertex/face height/normal
-					uhm[vIdxTL] = shm[vIdxTL];
-					vvn[vIdxTL] = vn.ANormalize();
+				// update the visible vertex/face height/normal
+				uhm[vIdxTL] = shm[vIdxTL];
+				vvn[vIdxTL] = vn.ANormalize();
 
-					if (hasNgbR && hasNgbB) {
-						// x == maxx and z == maxz are illegal indices for these
-						ufn[fIdxTL    ] = sfn[fIdxTL    ];
-						ufn[fIdxBR    ] = sfn[fIdxBR    ];
-						ucn[fIdxTL / 2] = scn[fIdxTL / 2];
-					}
+				if (hasNgbR && hasNgbB) {
+					// x == maxx and z == maxz are illegal indices for these
+					ufn[fIdxTL    ] = sfn[fIdxTL    ];
+					ufn[fIdxBR    ] = sfn[fIdxBR    ];
+					ucn[fIdxTL / 2] = scn[fIdxTL / 2];
 				}
 			#endif
 			}
