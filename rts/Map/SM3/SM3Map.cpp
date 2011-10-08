@@ -151,7 +151,7 @@ void CSM3ReadMap::NewGroundDrawer() {
 }
 
 
-void CSM3ReadMap::UpdateHeightMapUnsynced(const SRectangle& update)
+void CSM3ReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 {
 	int x1 = update.x1, y1 = update.y1;
 	int x2 = update.x2, y2 = update.y2;
