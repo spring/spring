@@ -655,13 +655,6 @@ EXPORT(int         ) GetSkirmishAIOptionCount(int index);
  */
 EXPORT(int         ) GetPrimaryModCount();
 /**
- * @brief Retrieves the name of this mod
- * @param index The mods index/id
- * @return NULL on error; The mods name on success
- *
- * Returns the name of the mod usually found in ModInfo.lua.
- * Be sure you have made a call to GetPrimaryModCount() prior to using this.
-
  * @brief Retrieves the number of info items available for this mod
  * @param index The mods index/id
  * @return negative integer (< 0) on error;
