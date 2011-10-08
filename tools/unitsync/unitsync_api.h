@@ -41,70 +41,69 @@
 EXPORT(const char* ) GetNextError();
 
 /**
- * @brief Retrieve the synced version of Spring,
+ * @brief Retrieve the synced version of Spring
  *   this unitsync was compiled with.
- * @return The synced Spring/unitsync version, examples:
+ *
+ * Returns a string specifying the synced part of the version of Spring used to
+ * build this library with.
+ *
+ * Before release 83:
+ *   Release:
+ *     The version will be of the format "Major.Minor".
+ *     With Major=0.82 and Minor=6, the returned version would be "0.82.6".
+ *   Development:
+ *     They use the same format, but major ends with a +, for example "0.82+.5".
+ *   Examples:
  *   - 0.78.0: 1st release of 0.78
  *   - 0.82.6: 7th release of 0.82
  *   - 0.82+.5: some test-version from after the 6th release of 0.82
  *   - 0.82+.0: some dev-version from after the 1st release of 0.82
  *     (on the main dev branch)
- *   - 0.83.0-: some dev-version during the preparation phase for
- *     the 1st release of 0.83 (may be on any but the master or hotfix branch)
- *   - 0.83.0+: some dev-version after the 1st release of 0.83
- *     (may be on any but the master or hotfix branch)
  *
- * Returns a string specifying the synced part of the version of Spring used to
- * build this library with.
- *
- * The returned version will be of the format "Major.Minor".
- * With Major=0.82 and Minor=6, the returned version would be "0.82.6".
- * It was added to aid in lobby creation, to check if the engine version in use
- * is sync-compatible with the current stable one.
- *
- * The branching model and versioning scheme before and after the 0.83 release
- * are slightly different. Before 0.83, test versions look like "0.82+.5",
- * while later they are either "0.83.0+" or  "0.83.1-".
- *
- * To find out whether a version is an official release or an
- * intermediate/test/development/unstable version, you may follow one of
- * these rules (all backwards compatible):
- * - if the version matches the regex
- *   "^[0-9]+[.][0-9]+[.][0-9]+$", it is a release build
- *   This rule is recommended, because it is more likely to be feature proof.
- * - if the version contains '+' or '-', it is a development build
+ * After release 83:
+ *   You may check for sync compatibility by using a string equality test with
+ *   the return of this function.
+ *   Release:
+ *     Contains only the major version number, for example "83".
+ *     You may combine this with the patch-set to get the full version,
+ *     for example "83.2".
+ *   Development:
+ *     The full version, for example "83.0.1-13-g1234567 develop", and therefore
+ *     it would not make sense to append the patch-set in such a case.
+ *   Examples:
+ *   - 83: any 83 release, for example 83.0 or 83.1
+ *     this may only be on the the master or hotfix branch
+ *   - 83.0.1-13-g1234567 develop: some dev-version after the 1st release of 83
+ *     on the develop branch
  */
 EXPORT(const char* ) GetSpringVersion();
 
 /**
- * @brief Returns the unsynced/patch-set part of the version of Spring,
+ * @brief Returns the unsynced/patch-set part of the version of Spring
  *   this unitsync was compiled with.
- * @return The unsynced/patch-set Spring/unitsync version,
- *   for example "1" if the whole spring version is "0.82.6.1".
  *
- * You may want to use this together with GetSpringVersion() to form the whole
- * version like this:
- * GetSpringVersion() + "." + GetSpringVersionPatchset()
- * This will provide you with a version of the format "Major.Minor.Patchset";
- * examples:
- * - 0.82.6.0                in this case, the 0 is usually omitted -> 0.82.6
- * - 0.82.6.1                release
- * - 0.82+.6.1               dev build
- * - 0.83.0.1                release
- * - 0.83.0-.release         release candidate
- * - 0.83.0-.develop         dev build during release preparation
- * - 0.83.0+.develop         dev build after a release
- * - 0.83.0-.myCoolFeature   feature branch during release preparation
- * - 0.83.0+.myCoolFeature   feature branch after a release
+ * Before release 83:
+ *   You may want to use this together with GetSpringVersion() to form the whole
+ *   version like this:
+ *   GetSpringVersion() + "." + GetSpringVersionPatchset()
+ *   This will provide you with a version of the format "Major.Minor.Patchset".
+ *   Examples:
+ *   - 0.82.6.0                in this case, the 0 is usually omitted -> 0.82.6
+ *   - 0.82.6.1                release
+ *   - 0.82+.6.1               dev build
  *
- * The branching model and versioning scheme before and after the 0.83 release
- * are slightly different. Before 0.83, test patch-set always was a pure number,
- * for example "1" or "2", while now it may also be the name of a VCS branch.
- * All master and hotfix builds (this equals releases) always use pure numbers,
- * while all other builds (equals in-development stuff) always use the branch
- * name as patch-set version part.
+ * After release 83:
+ *   You should only possibly append this to the main version returned by
+ *   GetSpringVersion(), if it is a release, as otherwise GetSpringVersion()
+ *   already contains the patch-set.
  */
 EXPORT(const char* ) GetSpringVersionPatchset();
+
+/**
+ * @brief Returns true if the version of Spring this unitsync was compiled
+ *   with is a release version, false if it is a development version.
+ */
+EXPORT(bool        ) IsSpringReleaseVersion();
 
 /**
  * @brief Initialize the unitsync library

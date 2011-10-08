@@ -35,7 +35,7 @@ CDemoRecorder::CDemoRecorder()
 	strcpy(fileHeader.magic, DEMOFILE_MAGIC);
 	fileHeader.version = DEMOFILE_VERSION;
 	fileHeader.headerSize = sizeof(DemoFileHeader);
-	strcpy(fileHeader.versionString, SpringVersion::Get().c_str());
+	strcpy(fileHeader.versionString, SpringVersion::GetSync().c_str());
 
 	__time64_t currtime = CTimeUtil::GetCurrentTime();
 	fileHeader.unixTime = currtime;
@@ -106,7 +106,7 @@ void CDemoRecorder::SetName(const std::string& mapname, const std::string& modna
 	demoName << "demos/" << curTime << "_";
 	//if (!modname.empty())
 	//	demoName << modname << "_";
-	demoName << mapname.substr(0, mapname.find_first_of(".")) << "_" << SpringVersion::Get();
+	demoName << mapname.substr(0, mapname.find_first_of(".")) << "_" << SpringVersion::GetSync();
 
 	std::ostringstream buf;
 	buf << demoName.str() << ".sdf";
