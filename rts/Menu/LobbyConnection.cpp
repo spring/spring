@@ -58,10 +58,10 @@ void LobbyConnection::DoneConnecting(bool success, const std::string& err)
 
 void LobbyConnection::ServerGreeting(const std::string& serverVer, const std::string& springVer, int udpport, int mode)
 {
-	upwin->ServerLabel(std::string("Connected to TASServer v")+serverVer);
-	if (springVer != SpringVersion::Get())
+	upwin->ServerLabel(std::string("Connected to TASServer v")+serverVer); // TODO change "TASServer" to something like "spring-lobby server"
+	if (springVer != SpringVersion::GetSync())
 	{
-		upwin->Label(std::string("Server has new version: ")+springVer + " (Yours: "+ SpringVersion::Get() + ")");
+		upwin->Label(std::string("Server has new version: ")+springVer + " (Yours: "+ SpringVersion::GetSync() + ")");
 	}
 	else
 	{

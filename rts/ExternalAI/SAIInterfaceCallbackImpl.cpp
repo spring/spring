@@ -62,14 +62,29 @@ EXPORT(const char*) aiInterfaceCallback_Engine_Version_getMinor(int UNUSED_inter
 EXPORT(const char*) aiInterfaceCallback_Engine_Version_getPatchset(int UNUSED_interfaceId) {
 	return SpringVersion::GetPatchSet().c_str();
 }
+EXPORT(const char*) aiInterfaceCallback_Engine_Version_getCommits(int UNUSED_interfaceId) {
+	return SpringVersion::GetCommits().c_str();
+}
+EXPORT(const char*) aiInterfaceCallback_Engine_Version_getHash(int UNUSED_interfaceId) {
+	return SpringVersion::GetHash().c_str();
+}
+EXPORT(const char*) aiInterfaceCallback_Engine_Version_getBranch(int UNUSED_interfaceId) {
+	return SpringVersion::GetBranch().c_str();
+}
 EXPORT(const char*) aiInterfaceCallback_Engine_Version_getAdditional(int UNUSED_interfaceId) {
 	return SpringVersion::GetAdditional().c_str();
 }
 EXPORT(const char*) aiInterfaceCallback_Engine_Version_getBuildTime(int UNUSED_interfaceId) {
 	return SpringVersion::GetBuildTime().c_str();
 }
+EXPORT(bool) aiInterfaceCallback_Engine_Version_isRelease(int UNUSED_interfaceId) {
+	return SpringVersion::IsRelease();
+}
 EXPORT(const char*) aiInterfaceCallback_Engine_Version_getNormal(int UNUSED_interfaceId) {
 	return SpringVersion::Get().c_str();
+}
+EXPORT(const char*) aiInterfaceCallback_Engine_Version_getSync(int UNUSED_interfaceId) {
+	return SpringVersion::GetSync().c_str();
 }
 EXPORT(const char*) aiInterfaceCallback_Engine_Version_getFull(int UNUSED_interfaceId) {
 	return SpringVersion::GetFull().c_str();
@@ -308,9 +323,14 @@ static void aiInterfaceCallback_init(struct SAIInterfaceCallback* callback) {
 	callback->Engine_Version_getMajor = &aiInterfaceCallback_Engine_Version_getMajor;
 	callback->Engine_Version_getMinor = &aiInterfaceCallback_Engine_Version_getMinor;
 	callback->Engine_Version_getPatchset = &aiInterfaceCallback_Engine_Version_getPatchset;
+	callback->Engine_Version_getCommits = &aiInterfaceCallback_Engine_Version_getCommits;
+	callback->Engine_Version_getHash = &aiInterfaceCallback_Engine_Version_getHash;
+	callback->Engine_Version_getBranch = &aiInterfaceCallback_Engine_Version_getBranch;
 	callback->Engine_Version_getAdditional = &aiInterfaceCallback_Engine_Version_getAdditional;
 	callback->Engine_Version_getBuildTime = &aiInterfaceCallback_Engine_Version_getBuildTime;
+	callback->Engine_Version_isRelease = &aiInterfaceCallback_Engine_Version_isRelease;
 	callback->Engine_Version_getNormal = &aiInterfaceCallback_Engine_Version_getNormal;
+	callback->Engine_Version_getSync = &aiInterfaceCallback_Engine_Version_getSync;
 	callback->Engine_Version_getFull = &aiInterfaceCallback_Engine_Version_getFull;
 	callback->AIInterface_Info_getSize = &aiInterfaceCallback_AIInterface_Info_getSize;
 	callback->AIInterface_Info_getKey = &aiInterfaceCallback_AIInterface_Info_getKey;

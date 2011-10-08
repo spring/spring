@@ -787,6 +787,18 @@ EXPORT(const char*) skirmishAiCallback_Engine_Version_getPatchset(int skirmishAI
 	return aiInterfaceCallback_Engine_Version_getPatchset(-1);
 }
 
+EXPORT(const char*) skirmishAiCallback_Engine_Version_getCommits(int skirmishAIId) {
+	return aiInterfaceCallback_Engine_Version_getCommits(-1);
+}
+
+EXPORT(const char*) skirmishAiCallback_Engine_Version_getHash(int skirmishAIId) {
+	return aiInterfaceCallback_Engine_Version_getHash(-1);
+}
+
+EXPORT(const char*) skirmishAiCallback_Engine_Version_getBranch(int skirmishAIId) {
+	return aiInterfaceCallback_Engine_Version_getBranch(-1);
+}
+
 EXPORT(const char*) skirmishAiCallback_Engine_Version_getAdditional(int skirmishAIId) {
 	return aiInterfaceCallback_Engine_Version_getAdditional(-1);
 }
@@ -795,8 +807,16 @@ EXPORT(const char*) skirmishAiCallback_Engine_Version_getBuildTime(int skirmishA
 	return aiInterfaceCallback_Engine_Version_getBuildTime(-1);
 }
 
+EXPORT(bool) skirmishAiCallback_Engine_Version_isRelease(int skirmishAIId) {
+	return aiInterfaceCallback_Engine_Version_isRelease(-1);
+}
+
 EXPORT(const char*) skirmishAiCallback_Engine_Version_getNormal(int skirmishAIId) {
 	return aiInterfaceCallback_Engine_Version_getNormal(-1);
+}
+
+EXPORT(const char*) skirmishAiCallback_Engine_Version_getSync(int skirmishAIId) {
+	return aiInterfaceCallback_Engine_Version_getSync(-1);
 }
 
 EXPORT(const char*) skirmishAiCallback_Engine_Version_getFull(int skirmishAIId) {
@@ -4476,9 +4496,14 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Engine_Version_getMajor = &skirmishAiCallback_Engine_Version_getMajor;
 	callback->Engine_Version_getMinor = &skirmishAiCallback_Engine_Version_getMinor;
 	callback->Engine_Version_getPatchset = &skirmishAiCallback_Engine_Version_getPatchset;
+	callback->Engine_Version_getCommits = &skirmishAiCallback_Engine_Version_getCommits;
+	callback->Engine_Version_getHash = &skirmishAiCallback_Engine_Version_getHash;
+	callback->Engine_Version_getBranch = &skirmishAiCallback_Engine_Version_getBranch;
 	callback->Engine_Version_getAdditional = &skirmishAiCallback_Engine_Version_getAdditional;
 	callback->Engine_Version_getBuildTime = &skirmishAiCallback_Engine_Version_getBuildTime;
+	callback->Engine_Version_isRelease = &skirmishAiCallback_Engine_Version_isRelease;
 	callback->Engine_Version_getNormal = &skirmishAiCallback_Engine_Version_getNormal;
+	callback->Engine_Version_getSync = &skirmishAiCallback_Engine_Version_getSync;
 	callback->Engine_Version_getFull = &skirmishAiCallback_Engine_Version_getFull;
 	callback->Teams_getSize = &skirmishAiCallback_Teams_getSize;
 	callback->SkirmishAIs_getSize = &skirmishAiCallback_SkirmishAIs_getSize;

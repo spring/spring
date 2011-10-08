@@ -277,13 +277,19 @@ EXPORT(const char*) GetNextError()
 
 EXPORT(const char*) GetSpringVersion()
 {
-	return GetStr(SpringVersion::Get());
+	return GetStr(SpringVersion::GetSync());
 }
 
 
 EXPORT(const char*) GetSpringVersionPatchset()
 {
 	return GetStr(SpringVersion::GetPatchSet());
+}
+
+
+EXPORT(bool) IsSpringReleaseVersion()
+{
+	return SpringVersion::IsRelease();
 }
 
 
