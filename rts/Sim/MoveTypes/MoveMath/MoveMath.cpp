@@ -116,11 +116,11 @@ CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveData& moveDat
 		if (xSizeOdd)
 			return ret | (bzmin & bzmax);
 	}
-	BlockType bnn = bxmin | bzmin | SquareIsBlocked(moveData, xmin - 1, zmin - 1);
-	BlockType bnx = bxmin | bzmax | SquareIsBlocked(moveData, xmin - 1, zmax + 1);
-	BlockType bxn = bxmax | bzmin | SquareIsBlocked(moveData, xmax + 1, zmin - 1);
-	BlockType bxx = bxmax | bzmax | SquareIsBlocked(moveData, xmax + 1, zmax + 1);
-	return ret | (bnn & bnx & bxn & bxx);
+	return ret |
+		((bxmin | bzmin | SquareIsBlocked(moveData, xmin - 1, zmin - 1)) &
+		 (bxmin | bzmax | SquareIsBlocked(moveData, xmin - 1, zmax + 1)) &
+		 (bxmax | bzmin | SquareIsBlocked(moveData, xmax + 1, zmin - 1)) &
+		 (bxmax | bzmax | SquareIsBlocked(moveData, xmax + 1, zmax + 1)));
 }
 
 
@@ -141,8 +141,8 @@ bool CMoveMath::IsBlockedStructureXmax(const MoveData& moveData, int xSquare, in
 	}
 	if (zSize & 1)
 		return false;
-	bool bmin = (SquareIsBlocked(moveData, xmax, zmin - 1) & BLOCK_STRUCTURE);
-	bool bmax = (SquareIsBlocked(moveData, xmax, zmax + 1) & BLOCK_STRUCTURE);
+	bool bmin = (SquareIsBlocked(moveData, xmax, zmin - 1) & BLOCK_STRUCTURE) != 0;
+	bool bmax = (SquareIsBlocked(moveData, xmax, zmax + 1) & BLOCK_STRUCTURE) != 0;
 	if (!bmin && !bmax)
 		return false;
 	if (bmin && bmax)
@@ -184,8 +184,8 @@ bool CMoveMath::IsBlockedStructureZmax(const MoveData& moveData, int xSquare, in
 	}
 	if (xSize & 1)
 		return false;
-	bool bmin = (SquareIsBlocked(moveData, xmin - 1, zmax) & BLOCK_STRUCTURE);
-	bool bmax = (SquareIsBlocked(moveData, xmax + 1, zmax) & BLOCK_STRUCTURE);
+	bool bmin = (SquareIsBlocked(moveData, xmin - 1, zmax) & BLOCK_STRUCTURE) != 0;
+	bool bmax = (SquareIsBlocked(moveData, xmax + 1, zmax) & BLOCK_STRUCTURE) != 0;
 	if (!bmin && !bmax)
 		return false;
 	if (bmin && bmax)
