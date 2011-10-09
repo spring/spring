@@ -11,7 +11,7 @@ public:
 	CModInfo()
 		: allowTeamColors(true)
 		, allowAirPlanesToLeaveMap(true)
-		, allowPushingEnemyUnits(true)
+		, allowPushingEnemyUnits(false)
 		, constructionDecay(true)
 		, constructionDecayTime(1000)
 		, constructionDecaySpeed(1.0f)
