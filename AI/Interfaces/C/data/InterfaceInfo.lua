@@ -42,6 +42,10 @@ local infos = {
 		key    = 'supportedLanguages',
 		value  = 'C, C++',
 	},
+	{
+		key    = 'supportsLookup',
+		value  = 'false',
+	},
 }
 
 return infos
