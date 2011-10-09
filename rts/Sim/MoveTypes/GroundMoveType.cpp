@@ -16,6 +16,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
@@ -1326,8 +1327,10 @@ void CGroundMoveType::HandleObjectCollisions()
 			if (collidee->usingScriptMoveType) { pushCollidee = false; }
 			if (collideeUD->pushResistant) { pushCollidee = false; }
 
-			if (!teamHandler->Ally(collider->allyteam, collidee->allyteam)) { pushCollider = false; pushCollidee = false; }
-			if (!teamHandler->Ally(collidee->allyteam, collider->allyteam)) { pushCollider = false; pushCollidee = false; }
+			if (!modInfo.allowPushingEnemyUnits) {
+				if (!teamHandler->Ally(collider->allyteam, collidee->allyteam)) { pushCollider = false; pushCollidee = false; }
+				if (!teamHandler->Ally(collidee->allyteam, collider->allyteam)) { pushCollider = false; pushCollidee = false; }
+			}
 
 			// don't push either party if the collidee does not block the collider
 			if (colliderMM->IsNonBlocking(*colliderMD, collidee)) { continue; }
