@@ -22,6 +22,7 @@
 # Headless=1
 #
 
+3DTrees=0
 AdvSky=0
 AdvUnitShading=0
 AtiHacks=0
