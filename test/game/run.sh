@@ -3,7 +3,7 @@
 set -e #abort on error
 
 if [ $# -le 0 ]; then
-	echo "Usage: $0 /path/to/spring [parameters]"
+	echo "Usage: $0 /path/to/spring testScript [parameters]"
 	exit 1
 fi
 
