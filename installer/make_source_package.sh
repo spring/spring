@@ -25,11 +25,11 @@ done
 
 
 branch=$(git rev-parse --abbrev-ref HEAD)
-describe=$(git describe --tags --candidates 999 --match "*.*.*")
+describe=$(git describe --tags --candidates 999 --match "*.*")
 
 set +e # turn of quit on error
 # Check if current HEAD has a version tag
-git describe --tags --candidates 0 --match "*.*.*" &> /dev/null
+git describe --tags --candidates 0 --match "*.*" &> /dev/null
 onVersionTag=$(if [ $? -eq "0" ]; then echo "true"; else echo "false"; fi)
 set -e # turn it on again
 
@@ -51,10 +51,10 @@ else
 	echo "Making test-packages"
 	# Insert the branch name as the patch-set part.
 	# (double-quotation is required because of the sub-shell)
-	versionString=$(echo "${describe}" | sed s/\\\([0-9]\\\+[+\-]\\\)\-/\\\1.${branch}-/)
+	versionString="${describe}_${branch}")
 fi
 
-echo "Using branch ${branch} (${versionString}) as source"
+echo "Using branch \"${versionString}\" as source"
 
 
 dir="spring_${versionString}"
