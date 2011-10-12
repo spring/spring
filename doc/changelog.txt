@@ -1,11 +1,12 @@
 Spring change log
 
--- 0.83 ---------------------------------------------------------
+-- 83.0 ---------------------------------------------------------
 Major Changes:
  - EFX/EAX support (sound reverb)
  - ASSIMP support (not 100% finished yet)
  - AI Interface pure-ification
  - many speedups and double as much slowdowns
+ - use a new engine versioning scheme (RC12)
 
 Engine:
  - use more smooth algorithm for wind updates
@@ -182,6 +183,10 @@ Engine / Internal:
      "sub-systems" renamed to "sections"
      more section then before
      is compatible with unit-testing
+     write DEBUG and INFO to stdout, the rest to stderr
+     disable console logging for unitsync
+     disable console output for dedicated server shared library
+     turn off flushing to log-file completely
  - added GL_ARB_debug_output support (callback-based opengl error reporting) 
    NOTE: this doesn't work yet, because most drivers export this ext only for so called debug contexts.
    Creating those is impossible with near all current GL frameworks (SDL, SFML, ...).
@@ -195,6 +200,9 @@ Engine / Internal:
  - Remove the obsolete SCons build system
  - reduces constantly allocated memory for drawing stuff for AIs from ~130MB to ~ 2KB
  - add a new build-target "generateSources"
+ - allow to use a system-supplied minizip library
+ - allow to disable each build type individually at configure stage
+ - generate version from git-describe (git tags), instead of hardcoding them into a source-file
  - unsynced deletion of synced projectiles
  - watchdog monitoring for some additional threads
 
@@ -206,6 +214,8 @@ AI:
  - install Java-AIInterface and JavaOO-AIWrapper as maven artifacts into the local repository
  - Legacy C++ AI: allow fetching the maximum number of units in a game
  - fix source generation occasionally failing for Java-AIInterface
+ - treat allied units as always in LOS
+ - fetch the correct UnitDef for decoy units, if the unit is allied
  - Java AI Interface: pack native sources too
  - Maven-ize NullOOJavaAI
  - Java AI: allow AIs to support compiling only through Maven
@@ -213,6 +223,8 @@ AI:
  - make source generation compatible with BWK and GAWK 4.0.0
  - E2323AI: bump to latest version
  - KAIK: mid-game init fix
+ - AAI: prevent stack corruption in the case of file paths longer then 500 chars
+ - RAI: do not use a single/static team-instance callback in a place used by all RAI instances
 
 Unitsync:
  - implemented GetDataDirectoryCount() and GetDataDirectory(int index)
