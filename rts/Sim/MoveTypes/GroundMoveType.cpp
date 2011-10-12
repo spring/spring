@@ -123,8 +123,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	turnRate(0.1f),
 	accRate(0.01f),
 	decRate(0.01f),
-	lastAvoid(ZeroVector),
-	wantedHeading(0),
 	maxReverseSpeed(0.0f),
 	wantedSpeed(0.0f),
 	currentSpeed(0.0f),
@@ -162,7 +160,10 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	pathRequestDelay(0),
 
 	numIdlingUpdates(0),
-	numIdlingSlowUpdates(0)
+	numIdlingSlowUpdates(0),
+
+	lastAvoid(ZeroVector),
+	wantedHeading(0)
 {
 	assert(owner != NULL);
 
