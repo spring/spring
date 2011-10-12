@@ -788,10 +788,10 @@ void CWeapon::DependentDied(CObject *o)
 bool CWeapon::HaveFreeLineOfFire(const float3& pos, const float3& dir, float length, const CUnit* target) const {
 	CUnit* unit = NULL;
 	CFeature* feature = NULL;
-	const float g = TraceRay::TraceRay(pos, dir, length, collisionFlags, owner, unit, feature);
 
-	// true iff nothing (unit, feature, ground) blocks
-	// the ray of length <length> from <pos> along <dir>
+	const float g = TraceRay::TraceRay(pos, dir, length, ~Collision::NOGROUND, owner, unit, feature);
+
+	// true iff ground does not block the ray of length <length> from <pos> along <dir>
 	return ((g <= 0.0f || g >= (length * 0.9f)) || (unit == target));
 }
 
