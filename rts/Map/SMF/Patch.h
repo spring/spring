@@ -1,6 +1,6 @@
 //#include "BFGroundDrawer.h"
 
-#include "Vec2.h"
+//#include "Vec2.h"
 
 class CVertexArray;
 class CSMFGroundDrawer;
@@ -57,7 +57,7 @@ protected:
 	CVertexArray *m_Array;
 
 public:
-	float superfloat[384000]; //Why yes, this IS a mind bogglingly wasteful thing to do: TODO: remove this for both the Displaylist and the VBO implementations (only really needed for vertexarrays)
+	float superfloat[128000]; //Why yes, this IS a mind bogglingly wasteful thing to do: TODO: remove this for both the Displaylist and the VBO implementations (only really needed for vertexarrays)
 	const float * heightData;
 	unsigned int lend;
 	unsigned int rend;
