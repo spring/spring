@@ -372,7 +372,7 @@ inline void CSMFGroundDrawer::DrawMesh(bool haveShadows, bool inShadowPass, bool
 	//const bool camMoved = (haveShadows && ((camera->pos - lastCamPos).SqLength() > maxCamDeltaDistSq));
 	
 	int tricount=0;
-	if (shadowHandler->shadowsLoaded==true){ 
+	if (shadowHandler->shadowsLoaded==true && !DrawExtraTex()){ 
 		//This check is needed, because the shadows are rendered first, and if we
 		//update terrain in same frame, we will get flashes of shadows on updates
 		//So if shadows are on, we must put the terrain update part in the shadows part.
@@ -1448,7 +1448,7 @@ void CSMFGroundDrawer::DrawShadowPass(void)
 
 
 
-inline void CSMFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigSquareY)
+void CSMFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigSquareY)
 {
 	groundTextures->BindSquareTexture(bigSquareX, bigSquareY);
 
