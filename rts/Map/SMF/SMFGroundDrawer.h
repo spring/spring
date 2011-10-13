@@ -4,6 +4,7 @@
 #define _SMF_GROUND_DRAWER_H_
 
 #include "Map/BaseGroundDrawer.h"
+#include "Map/SMF/Landscape.h"
 
 class CVertexArray;
 class CSMFReadMap;
@@ -39,6 +40,24 @@ public:
 
 	GL::LightHandler* GetLightHandler() { return &lightHandler; }
 
+	//ROAM members:
+	void DrawMesh(bool haveShadows, bool inShadowPass, bool drawWaterReflection, bool drawUnitReflection);
+	
+	bool useROAM;
+	bool * visibilitygrid;
+	int shc;
+	int dc;
+	unsigned char * charheight;
+
+	Landscape landscape;
+	
+	friend class CSmfReadMap;
+	friend class Landscape;
+	friend class Patch;
+	float3 lastCamPos;
+	float maxCamDeltaDistSq;
+	int numBigTexX;
+	int numBigTexY;
 private:
 #ifdef USE_GML
 	static void DoDrawGroundRowMT(void* c, int bty);

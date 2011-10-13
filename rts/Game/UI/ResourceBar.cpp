@@ -101,6 +101,8 @@ void CResourceBar::Draw()
 
 	if (myTeam->metalStorage != 0.0f) {
 		x = (myTeam->metal / myTeam->metalStorage) * metalbarlen;
+	} else {
+		x=0.0f;
 	}
 
 	// metal draw
