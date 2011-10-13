@@ -77,7 +77,7 @@ private:
 	void DoDrawGroundShadowLOD(int nlod);
 
 	inline bool BigTexSquareRowVisible(const CCamera* cam, int) const;
-	inline void SetupBigSquare(const int bigSquareX, const int bigSquareY);
+	void SetupBigSquare(const int bigSquareX, const int bigSquareY);
 	void SetupTextureUnits(bool drawReflection);
 	void ResetTextureUnits(bool drawReflection);
 
