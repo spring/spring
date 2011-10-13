@@ -96,9 +96,10 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm): smfMap(rm)
 		#ifdef USE_UNSYNCED_HEIGHTMAP
 			LOG("unshmap null value= %f \n",*readmap->GetCornerHeightMapUnsynced());
 			LOG("syncedhmap null value= %f \n",*readmap->GetCornerHeightMapSynced());
-
+			
+			//ROAM todo: yeah it takes the synced map, not the unsynced one...
 			landscape.Init(readmap->GetCornerHeightMapSynced(),gs->mapx,gs->mapy);
-		#elif
+		#else
 			landscape.Init(readmap->GetCornerHeightMapSynced(),gs->mapx,gs->mapy);
 		#endif
 		visibilitygrid=new bool[rm->numBigTexX*rm->numBigTexY];
