@@ -26,6 +26,8 @@ SET(sources_engine_Map
 		"${CMAKE_CURRENT_SOURCE_DIR}/SM3/terrain/TerrainUtil.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SM3/terrain/TerrainVertexBuffer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SM3/terrain/Textures.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/Landscape.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/Patch.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/SMFGroundDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/SMFGroundTextures.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/SMFMapFile.cpp"
