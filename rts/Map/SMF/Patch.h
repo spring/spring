@@ -16,7 +16,7 @@ class CSMFGroundDrawer;
 
 
 // Depth of variance tree: should be near SQRT(PATCH_SIZE) + 1
-#define VARIANCE_DEPTH (9)
+#define VARIANCE_DEPTH (12)
 
 //
 // TriTreeNode Struct

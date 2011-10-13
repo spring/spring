@@ -121,7 +121,7 @@ void Patch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY,
 					centerX, centerY, 1 + (node << 1));
 		}
 	}else{
-		bool stoptess=true;
+		bool stoptess=true; //this is just for them debuggings
 	}
 }
 
