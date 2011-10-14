@@ -102,19 +102,19 @@ public:
 	virtual void Reset();
 	virtual void Tessellate(float cx, float cy, float cz, int viewradius);
 	
-	virtual int Render2(CSMFGroundDrawer * parent, int n, bool waterdrawn);
+	virtual int Render(CSMFGroundDrawer * parent, int n, bool waterdrawn);
 	virtual void ComputeVariance();
 
 	// The recursive half of the Patch Class
 	virtual void Split(TriTreeNode *tri);
 	virtual void RecursTessellate(TriTreeNode *tri, int leftX, int leftY,
 			int rightX, int rightY, int apexX, int apexY, int node);
-	virtual void RecursRender3(TriTreeNode *tri, int leftX, int leftY, int rightX,
+	virtual void RecursRender(TriTreeNode *tri, int leftX, int leftY, int rightX,
 		int rightY, int apexX, int apexY, int n,bool dir, int maxdepth, bool waterdrawn);
 	virtual unsigned char RecursComputeVariance(int leftX, int leftY,
 		float leftZ, int rightX, int rightY, float rightZ,
 		int apexX, int apexY, float apexZ, int node);
-	virtual void DrawTriArray(CSMFGroundDrawer * parent,bool inShadowPass);
+	virtual void DrawTriArray(CSMFGroundDrawer * parent);
 };
 
 #endif
