@@ -9,6 +9,7 @@
 #define _ERROR_HANDLER_H
 
 #include <string>
+#include <boost/thread/exceptions.hpp>
 #include <boost/system/system_error.hpp>
 #include "System/Exceptions.h"
 
@@ -55,6 +56,11 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 		catch (const boost::system::system_error& e) {                                          \
 			std::ostringstream ss;                                                          \
 			ss << e.code().value() << ": " << e.what();                                     \
+			ErrorMessageBox(ss.str(), "Spring: Fatal Error", MBF_OK | MBF_CRASH);           \
+		}                                                                                       \
+		catch (const boost::lock_error& e) {                                                          \
+			std::ostringstream ss;                                                          \
+			ss << e.native_error() << ": " << e.what();                                     \
 			ErrorMessageBox(ss.str(), "Spring: Fatal Error", MBF_OK | MBF_CRASH);           \
 		}                                                                                       \
 		catch (const std::exception& e) {                                                       \

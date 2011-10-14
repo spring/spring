@@ -285,8 +285,8 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 		return;
 	}
 
-	AddDeathDependence(unit);
-	unit->AddDeathDependence(this);
+	AddDeathDependence(unit, DEPENDENCE_TRANSPORTEE);
+	unit->AddDeathDependence(this, DEPENDENCE_TRANSPORTER);
 
 	unit->transporter = this;
 	unit->toBeTransported = false;

@@ -12,9 +12,14 @@ EXPORT(int              ) aiInterfaceCallback_Engine_AIInterface_ABIVersion_getW
 EXPORT(const char*      ) aiInterfaceCallback_Engine_Version_getMajor(int UNUSED_interfaceId);
 EXPORT(const char*      ) aiInterfaceCallback_Engine_Version_getMinor(int UNUSED_interfaceId);
 EXPORT(const char*      ) aiInterfaceCallback_Engine_Version_getPatchset(int UNUSED_interfaceId);
+EXPORT(const char*      ) aiInterfaceCallback_Engine_Version_getCommits(int UNUSED_interfaceId);
+EXPORT(const char*      ) aiInterfaceCallback_Engine_Version_getHash(int UNUSED_interfaceId);
+EXPORT(const char*      ) aiInterfaceCallback_Engine_Version_getBranch(int UNUSED_interfaceId);
 EXPORT(const char*      ) aiInterfaceCallback_Engine_Version_getAdditional(int UNUSED_interfaceId);
 EXPORT(const char*      ) aiInterfaceCallback_Engine_Version_getBuildTime(int UNUSED_interfaceId);
+EXPORT(bool             ) aiInterfaceCallback_Engine_Version_isRelease(int UNUSED_interfaceId);
 EXPORT(const char*      ) aiInterfaceCallback_Engine_Version_getNormal(int UNUSED_interfaceId);
+EXPORT(const char*      ) aiInterfaceCallback_Engine_Version_getSync(int UNUSED_interfaceId);
 EXPORT(const char*      ) aiInterfaceCallback_Engine_Version_getFull(int UNUSED_interfaceId);
 
 

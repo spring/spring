@@ -25,11 +25,8 @@ public:
 	CCommandAI();
 	virtual ~CCommandAI();
 	void PostLoad();
-	enum DependenceType {
-		DEPENDENCE_COMMANDQUE,
-		DEPENDENCE_ORDERTARGET,
-	};
 	void DependentDied(CObject* o);
+	inline void SetOrderTarget(CUnit* o);
 	virtual void AddDeathDependence(CObject* o, DependenceType dep);
 	virtual void DeleteDeathDependence(CObject* o, DependenceType dep);
 	void AddCommandDependency(const Command &c);
@@ -141,5 +138,12 @@ private:
 	int targetLostTimer;
 };
 
+inline void CCommandAI::SetOrderTarget(CUnit* o) {
+	if (orderTarget != NULL)
+		DeleteDeathDependence((CObject*)orderTarget, DEPENDENCE_ORDERTARGET);
+	orderTarget = o;
+	if (orderTarget != NULL)
+		AddDeathDependence((CObject*)orderTarget, DEPENDENCE_ORDERTARGET);
+}
 
 #endif // __COMMAND_AI_H__

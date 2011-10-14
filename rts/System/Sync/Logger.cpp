@@ -127,8 +127,9 @@ void CLogger::FlushBuffer()
 		buf2[sizeof(buf2)-1] = '\0'; // make sure the string is terminated
 		if (len > 4 && buf2[len-4] == '.')
 			buf2[len-4] = 0;
-		// Note: strncat: 3rd param: maximum number of characters to append
-		STRNCAT(buf2, ".dbg", sizeof(buf2) - strlen(buf2) - 1);
+		// NOTE STRCAT_T: will always terminate destination with '/0'
+		//   2nd param: destination buffer size
+		STRCAT_T(buf2, sizeof(buf2), ".dbg");
 
 		fprintf(logfile, "trying debug symbols file: '%s'\n", buf2);
 

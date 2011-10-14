@@ -182,7 +182,6 @@ void CReadMap::Initialize()
 	}
 
 	slopeMap.resize(gs->hmapx * gs->hmapy);
-	rawVertexNormals.resize(gs->mapxp1 * gs->mapyp1);
 	visVertexNormals.resize(gs->mapxp1 * gs->mapyp1);
 
 	CalcHeightmapChecksum();
@@ -249,10 +248,12 @@ void CReadMap::UpdateHeightMapSynced(int x1, int z1, int x2, int z2)
 		return;
 	}
 
+	SCOPED_TIMER("ReadMap::UpdateHeightMapSynced");
+
 	const float* heightmapSynced = GetCornerHeightMapSynced();
 
-	x1 = std::max(           0, x1 - 1);
-	z1 = std::max(           0, z1 - 1);
+	x1 = std::max(         0, x1 - 1);
+	z1 = std::max(         0, z1 - 1);
 	x2 = std::min(gs->mapxm1, x2 + 1);
 	z2 = std::min(gs->mapym1, z2 + 1);
 
@@ -287,9 +288,9 @@ void CReadMap::UpdateHeightMapSynced(int x1, int z1, int x2, int z2)
 		}
 	}
 
-	const int decy = std::max(           0, z1 - 1);
+	const int decy = std::max(         0, z1 - 1);
 	const int incy = std::min(gs->mapym1, z2 + 1);
-	const int decx = std::max(           0, x1 - 1);
+	const int decx = std::max(         0, x1 - 1);
 	const int incx = std::min(gs->mapxm1, x2 + 1);
 
 	//! create the surface normals

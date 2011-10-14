@@ -5,6 +5,7 @@
 #include "JvmLocater_common.h"
 
 #include "System/maindefines.h"
+#include "System/SafeCStrings.h"
 
 #include <windows.h>
 #include <wtypes.h>
@@ -77,16 +78,16 @@ bool GetJREPathFromBase(char* path, size_t pathSize, const char* basePath,
 	if (basePath != NULL) {
 	//if (GetApplicationHome(path, pathSize)) {
 		// Is basePath a JRE path?
-		STRCPYS(jrePath, MAXPATHLEN, basePath);
+		STRCPY_T(jrePath, MAXPATHLEN, basePath);
 		if (CheckIfJREPath(jrePath, arch)) {
-			STRCPYS(path, pathSize, basePath);
+			STRCPY_T(path, pathSize, basePath);
 			found = true;
 		}
 
 		// Is basePath/jre a JRE path?
-		STRCATS(jrePath, MAXPATHLEN, "\\jre");
+		STRCAT_T(jrePath, MAXPATHLEN, "\\jre");
 		if (CheckIfJREPath(jrePath, arch)) {
-			STRCPYS(path, pathSize, jrePath);
+			STRCPY_T(path, pathSize, jrePath);
 			found = true;
 		}
 	}

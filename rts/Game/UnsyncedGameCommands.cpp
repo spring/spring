@@ -972,7 +972,7 @@ public:
 				} else {
 					lastPart = "(Host:) " + playerHandler->Player(gu->myPlayerNum)->name;
 				}
-				LOG(_STPF_" | %i | %s | %s | %s | %s",
+				LOG("%i | %i | %s | %s | %s | %s",
 						ai->first,
 						ai->second.team,
 						(isLocal ? "yes" : "no "),

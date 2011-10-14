@@ -84,7 +84,7 @@ protected:
 	void HandleObjectCollisions();
 
 	void SetMainHeading();
-	void ChangeHeading(short wantedHeading);
+	void ChangeHeading(short newHeading);
 
 	void UpdateSkid();
 	void UpdateControlledDrop();
@@ -136,6 +136,9 @@ protected:
 
 	int moveSquareX;
 	int moveSquareY;
+
+	float3 lastAvoid;
+	short wantedHeading;
 };
 
 #endif // GROUNDMOVETYPE_H

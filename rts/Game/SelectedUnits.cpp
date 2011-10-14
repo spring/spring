@@ -278,8 +278,8 @@ void CSelectedUnits::AddUnit(CUnit* unit)
 
 	GML_RECMUTEX_LOCK(sel); // AddUnit
 
-	selectedUnits.insert(unit);
-	AddDeathDependence(unit);
+	if (selectedUnits.insert(unit).second)
+		AddDeathDependence(unit, DEPENDENCE_SELECTED);
 	selectionChanged = true;
 	possibleCommandsChanged = true;
 
@@ -295,8 +295,8 @@ void CSelectedUnits::RemoveUnit(CUnit* unit)
 {
 	GML_RECMUTEX_LOCK(sel); // RemoveUnit
 
-	selectedUnits.erase(unit);
-	DeleteDeathDependence(unit);
+	if (selectedUnits.erase(unit))
+		DeleteDeathDependence(unit, DEPENDENCE_SELECTED);
 	selectionChanged = true;
 	possibleCommandsChanged = true;
 	selectedGroup = -1;
@@ -311,7 +311,7 @@ void CSelectedUnits::ClearSelected()
 	CUnitSet::iterator ui;
 	for (ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
 		(*ui)->commandAI->selected = false;
-		DeleteDeathDependence(*ui);
+		DeleteDeathDependence(*ui, DEPENDENCE_SELECTED);
 	}
 
 	selectedUnits.clear();
@@ -334,7 +334,7 @@ void CSelectedUnits::SelectGroup(int num)
 		if (!(*ui)->noSelect) {
 			(*ui)->commandAI->selected = true;
 			selectedUnits.insert(*ui);
-			AddDeathDependence(*ui);
+			AddDeathDependence(*ui, DEPENDENCE_SELECTED);
 		}
 	}
 

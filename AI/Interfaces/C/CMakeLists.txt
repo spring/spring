@@ -48,6 +48,7 @@ macro    (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var add
 		add_library(${myTarget} MODULE ${mySources} ${additionalSources} ${myVersionDepFile})
 		FixLibName(${myTarget})
 
+		Add_Dependencies(${myTarget} generateVersionFiles)
 		target_link_libraries(${myTarget} ${additionalLibraries})
 		set_target_properties(${myTarget} PROPERTIES COMPILE_FLAGS "${additionalCompileFlags}")
 		set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME   "SkirmishAI")
@@ -110,6 +111,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	add_library(${myTarget} MODULE ${mySources} ${ai_common_SRC} ${CUtils_SRC} ${myVersionDepFile})
 	FixLibName(${myTarget})
 
+	Add_Dependencies(${myTarget} generateVersionFiles)
 	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME "AIInterface")
 
 	# Install the data files

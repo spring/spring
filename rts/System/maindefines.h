@@ -2,11 +2,12 @@
 
 /*
  * This file has to be C90 compatible, as it is not only used by the engine,
- * but also by AIs.
+ * but also by AIs, which might be compiled with compilers (for example VS)
+ * that do not support C99.
  */
 
-#ifndef _MAIN_DEFINES_H
-#define _MAIN_DEFINES_H
+#ifndef MAIN_DEFINES_H
+#define MAIN_DEFINES_H
 
 #include <stdio.h>
 
@@ -59,10 +60,10 @@
 		#define VSNPRINTF vsprintf_s
 		#define STRCPY    strcpy
 		#define STRCPYS   strcpy_s
-		#define STRNCPY   strncpy_s
+		#define STRNCPY   strncpy
 		#define STRCAT    strcat
 		#define STRCATS   strcat_s
-		#define STRNCAT   strncat_s
+		#define STRNCAT   strncat
 		#define FOPEN     fopen_s
 	#else              // Visual Studio 2003
 		#define PRINTF    _printf
@@ -141,4 +142,4 @@
 #endif // cPD
 
 
-#endif // _MAIN_DEFINES_H
+#endif // MAIN_DEFINES_H

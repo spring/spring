@@ -30,10 +30,10 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 		|| fileHeader.playerStatElemSize != sizeof(PlayerStatistics)
 		|| fileHeader.teamStatElemSize != sizeof(TeamStatistics)
 		// Don't compare spring version in debug mode: we don't want to make
-		// debugging SVN demos impossible (because VERSION_STRING is different
+		// debugging dev-version demos impossible (because the version is different
 		// each build.)
 #ifndef _DEBUG
-		|| (SpringVersion::Get().find("+") == std::string::npos && strcmp(fileHeader.versionString, SpringVersion::Get().c_str()))
+		|| (!SpringVersion::IsRelease() && strcmp(fileHeader.versionString, SpringVersion::GetSync().c_str()))
 #endif
 	) {
 		throw std::runtime_error(std::string("Demofile corrupt or created by a different version of Spring: ")+filename);
