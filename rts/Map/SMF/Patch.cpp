@@ -15,8 +15,8 @@
 #include "SMFGroundDrawer.h"
 #include "Landscape.h"
 #include "Game/Camera.h"
-#include "System/LogOutput.h"
-
+//#include "System/LogOutput.h"
+#include "System/Log/ILog.h"
 // -------------------------------------------------------------------------------------------------
 //	PATCH CLASS
 
@@ -130,7 +130,7 @@ void Patch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY,
 //
 
 
-void Patch::RecursRender3(TriTreeNode *tri, int leftX, int leftY, int rightX,
+void Patch::RecursRender(TriTreeNode *tri, int leftX, int leftY, int rightX,
 		int rightY, int apexX, int apexY, int n, bool dir, int maxdepth,bool waterdrawn)
 {
 
@@ -167,8 +167,8 @@ void Patch::RecursRender3(TriTreeNode *tri, int leftX, int leftY, int rightX,
 	{
 		int centerX = (leftX + rightX) >> 1; // Compute X coordinate of center of Hypotenuse
 		int centerY = (leftY + rightY) >> 1; // Compute Y coord...
-		RecursRender3(tri->LeftChild, apexX, apexY, leftX, leftY, centerX,	centerY, n,dir,m_depth,waterdrawn);
-		RecursRender3(tri->RightChild, rightX, rightY, apexX, apexY, centerX,centerY, n,dir,m_depth,waterdrawn);
+		RecursRender(tri->LeftChild, apexX, apexY, leftX, leftY, centerX,	centerY, n,dir,m_depth,waterdrawn);
+		RecursRender(tri->RightChild, rightX, rightY, apexX, apexY, centerX,centerY, n,dir,m_depth,waterdrawn);
 	
 	}
 }
@@ -270,7 +270,6 @@ void Patch::Init(int heightX, int heightY, int worldX, int worldY,
 		}
 	}
 	glGenBuffersARB(1,&vertexBuffer);
-	glGenBuffersARB(1,&vertexIndexBuffer);
 	glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);
 	glBufferDataARB(GL_ARRAY_BUFFER_ARB,3*(PATCH_SIZE+1)*(PATCH_SIZE+1),vbuf,GL_STATIC_DRAW_ARB );
 	int bufferSize = 0;
@@ -278,9 +277,11 @@ void Patch::Init(int heightX, int heightY, int worldX, int worldY,
 	if(index != bufferSize)
     {
         glDeleteBuffersARB(1, &vertexIndexBuffer);
-		LogObject() << "[createVBO()] Data size is mismatch with input array\n";
+		LOG("[createVBO()] Data size is mismatch with input array\n");
     }
 	glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+	glGenBuffersARB(1,&vertexIndexBuffer);
+
 	glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 	delete [] vbuf;
 #endif
@@ -375,14 +376,14 @@ void Patch::Tessellate(float cx, float cy, float cz, int viewradius)
 // Render the mesh.
 //
 
-void Patch::DrawTriArray(CSMFGroundDrawer * parent,bool inShadowPass)
+void Patch::DrawTriArray(CSMFGroundDrawer * parent)
 {
-	if (m_WorldX==0 && m_WorldY==0 && parent->shc %1000==50){
-		for(int i=0;i<=lend;i+=9){
+	//if (m_WorldX==0 && m_WorldY==0 && parent->shc %1000==50){
+	//	for(int i=0;i<=lend;i+=9){
 			//LogObject() << "@" << superfloat[i] << "," <<  superfloat[i+1] << "," << superfloat[i+2]<< "@" << superfloat[i+3] << "," <<  superfloat[i+4] << "," << superfloat[i+5]<< "@" << superfloat[i+6] << "," <<  superfloat[i+7] << "," << superfloat[i+8];
-		}
+		//}
 		//LogObject() << "push done shc:" << parent->shc << "inshadowpass="<<inShadowPass;
-	}
+	//}
 #ifdef ROAM_VA
 
 	//roamarray
@@ -401,6 +402,8 @@ void Patch::DrawTriArray(CSMFGroundDrawer * parent,bool inShadowPass)
 		//roamvbo
 
 	glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);         // for vertex coordinates
+	glEnableVertexAttribArrayARB(0);
+	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,12,0);
 	glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, vertexIndexBuffer); // for indices
 	glIndexPointer(GL_UNSIGNED_SHORT, 0, 0);
 	// do same as vertex array except pointer
@@ -414,15 +417,15 @@ void Patch::DrawTriArray(CSMFGroundDrawer * parent,bool inShadowPass)
 	glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 #endif
 }
-int Patch::Render2(CSMFGroundDrawer * parent, int n,bool waterdrawn)
+int Patch::Render(CSMFGroundDrawer * parent, int n,bool waterdrawn)
 {
 
 	lend=0;
 	rend=0;
 
-	RecursRender3(&m_BaseLeft, 0, PATCH_SIZE, PATCH_SIZE, 0, 0, 0, n, true,0,waterdrawn);
+	RecursRender(&m_BaseLeft, 0, PATCH_SIZE, PATCH_SIZE, 0, 0, 0, n, true,0,waterdrawn);
 
-	RecursRender3(&m_BaseRight, PATCH_SIZE, 0, 0, PATCH_SIZE, PATCH_SIZE,
+	RecursRender(&m_BaseRight, PATCH_SIZE, 0, 0, PATCH_SIZE, PATCH_SIZE,
 			PATCH_SIZE, n,false,0,waterdrawn);
 	//assert(rend<200000);
 	//assert(rend>-1);
@@ -448,12 +451,12 @@ int Patch::Render2(CSMFGroundDrawer * parent, int n,bool waterdrawn)
     if(rend != bufferSize)
     {
         glDeleteBuffersARB(1, &vertexIndexBuffer);
-		LogObject() << "[createVBO()] Data size is mismatch with input array\n";
+		LOG( "[createVBO()] Data size is mismatch with input array\n" );
     }
-	for (int i=0;i<rend;i+=3){
-		LogObject() << "VBO" << superint[i] <<" " <<superint[i+1]<< " "<< superint[i+2] << "\n";
+	//for (int i=0;i<rend;i+=3){
+		//LOG( "VBO" << superint[i] <<" " <<superint[i+1]<< " "<< superint[i+2] << "\n";
 	
-	}
+	//}
 	
 	glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 

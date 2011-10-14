@@ -187,13 +187,13 @@ int Landscape::Render(CSMFGroundDrawer* parent, bool camMoved, bool inShadowPass
 
 		if (patch->isVisibile()) {
 			if (camMoved)
-				tricount+=patch->Render2(parent, nCount, waterdrawn);
+				tricount+=patch->Render(parent, nCount, waterdrawn);
 			tricount+=patch->lend/9;
 	
 			if (!inShadowPass) {
 				parent->SetupBigSquare(nCount % (w / PATCH_SIZE), nCount / (w / PATCH_SIZE));
 			}
-			patch->DrawTriArray(parent,inShadowPass);
+			patch->DrawTriArray(parent);
 		}
 
 	}
