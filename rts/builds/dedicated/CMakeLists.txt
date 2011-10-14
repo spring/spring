@@ -20,7 +20,7 @@ SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
 ### Assemble libraries
 LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY})
-LIST(APPEND engineDedicatedLibraries 7zip minizip lua)
+LIST(APPEND engineDedicatedLibraries 7zip ${SPRING_MINIZIP_LIBRARY} lua)
 LIST(APPEND engineDedicatedLibraries headlessStubs)
 IF    (UNIX)
 	# Needed for dynamically loading shared libraries (on some OS)
@@ -90,6 +90,7 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoReader
 	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoRecorder
 	${ENGINE_SRC_ROOT_DIR}/System/AutohostInterface
+	${ENGINE_SRC_ROOT_DIR}/System/SafeCStrings
 	${ENGINE_SRC_ROOT_DIR}/System/UnsyncedRNG
 	${ENGINE_SRC_ROOT_DIR}/System/Util
 	${ENGINE_SRC_ROOT_DIR}/System/float4)
@@ -100,6 +101,7 @@ ENDIF (WIN32)
 SET(engineDedicatedSources
 	${system_files}
 	${sources_engine_Game_Server}
+	${sources_engine_System_Log}
 	${ENGINE_SRC_ROOT_DIR}/Game/GameServer
 	${ENGINE_SRC_ROOT_DIR}/Game/ClientSetup
 	${ENGINE_SRC_ROOT_DIR}/Game/GameSetup
@@ -124,6 +126,7 @@ SET(engineDedicatedSources
 
 # Compile dedicated server shared library
 ADD_LIBRARY(springserver-static STATIC EXCLUDE_FROM_ALL ${engineDedicatedSources})
+Add_Dependencies(springserver-static generateVersionFiles)
 TARGET_LINK_LIBRARIES(springserver-static ${engineDedicatedLibraries})
 IF    (MINGW)
 	TARGET_LINK_LIBRARIES (springserver-static ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY})
@@ -131,14 +134,17 @@ ENDIF (MINGW)
 
 ADD_LIBRARY(springserver SHARED
 		${ENGINE_SRC_ROOT_DIR}/Map/MapParser
-		${ENGINE_SRC_ROOT_DIR}/System/Log/LogOutputSink
+		${sources_engine_System_Log_sinkFile}
+		${sources_engine_System_Log_sinkOutputDebugString}
 	)
 TARGET_LINK_LIBRARIES(springserver springserver-static)
 
 # Compile dedicated server executable
 ADD_EXECUTABLE(engine-dedicated
 		${ENGINE_SRC_ROOT_DIR}/Map/MapParser
-		${ENGINE_SRC_ROOT_DIR}/System/Log/LogOutputSink
+		${sources_engine_System_Log_sinkConsole}
+		${sources_engine_System_Log_sinkFile}
+		${sources_engine_System_Log_sinkOutputDebugString}
 		main
 	)
 TARGET_LINK_LIBRARIES(engine-dedicated springserver-static)
@@ -168,7 +174,7 @@ add_custom_target(spring-dedicated
 add_dependencies(spring-dedicated ${springDsDeps}) # This also works for custom targets
 
 set(springDsInstallDirs
-		"rts/builds/DS"
+		"rts/builds/dedicated"
 		"tools/unitsync"
 		"cont"
 	)

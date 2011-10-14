@@ -60,7 +60,7 @@ void CShadowHandler::Init()
 	const bool tmpFirstInit = firstInit;
 	firstInit = false;
 
-	shadowConfig = configHandler->GetInt("Shadows");
+	shadowConfig  = configHandler->GetInt("Shadows");
 	shadowMapSize = configHandler->GetInt("ShadowMapSize");
 	shadowProMode = configHandler->GetInt("ShadowProjectionMode");
 	shadowGenBits = SHADOWGEN_BIT_NONE;
@@ -88,10 +88,11 @@ void CShadowHandler::Init()
 		shadowGenBits = SHADOWGEN_BIT_MODEL | SHADOWGEN_BIT_MAP | SHADOWGEN_BIT_PROJ | SHADOWGEN_BIT_TREE;
 
 	if (shadowConfig > 1) {
-		if ((shadowConfig & SHADOWGEN_BIT_MODEL) == 0) { shadowGenBits &= (~SHADOWGEN_BIT_MODEL); }
-		if ((shadowConfig & SHADOWGEN_BIT_MAP  ) == 0) { shadowGenBits &= (~SHADOWGEN_BIT_MAP  ); }
-		if ((shadowConfig & SHADOWGEN_BIT_PROJ ) == 0) { shadowGenBits &= (~SHADOWGEN_BIT_PROJ ); }
-		if ((shadowConfig & SHADOWGEN_BIT_TREE ) == 0) { shadowGenBits &= (~SHADOWGEN_BIT_TREE ); }
+		/*if ((shadowConfig & SHADOWGEN_BIT_MODEL) != 0) { shadowGenBits ^= SHADOWGEN_BIT_MODEL; }
+		if ((shadowConfig & SHADOWGEN_BIT_MAP  ) != 0) { shadowGenBits ^= SHADOWGEN_BIT_MAP  ; }
+		if ((shadowConfig & SHADOWGEN_BIT_PROJ ) != 0) { shadowGenBits ^= SHADOWGEN_BIT_PROJ ; }
+		if ((shadowConfig & SHADOWGEN_BIT_TREE ) != 0) { shadowGenBits ^= SHADOWGEN_BIT_TREE ; }*/
+		shadowGenBits &= (~shadowConfig);
 	}
 
 
@@ -234,10 +235,12 @@ bool CShadowHandler::InitDepthTarget()
 	if (useColorTexture) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, shadowMapSize, shadowMapSize, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	} else {
+		const GLint texFormat = globalRendering->support24bitDepthBuffers ? GL_DEPTH_COMPONENT24 : GL_DEPTH_COMPONENT16;
+		
 		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, texFormat, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	}
 
 	glGenTextures(1, &dummyColorTexture);
@@ -273,31 +276,30 @@ void CShadowHandler::DrawShadowPasses()
 
 	glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT);
 		glEnable(GL_CULL_FACE);
-		glCullFace(GL_FRONT);
-
-		// cull front-faces during the terrain shadow pass: sun direction
-		// can be set so oblique that geometry back-faces are visible (eg.
-		// from hills near map edges) from its POV
-		// (could just disable culling of terrain faces, but we also want
-		// to prevent overdraw in such low-angle passes)
-		if ((shadowGenBits & SHADOWGEN_BIT_MAP) != 0)
-			readmap->GetGroundDrawer()->DrawShadowPass();
 
 		glCullFace(GL_BACK);
+			eventHandler.DrawWorldShadow();
 
-		if ((shadowGenBits & SHADOWGEN_BIT_MODEL) != 0) {
-			unitDrawer->DrawShadowPass();
-			modelDrawer->Draw();
-			featureDrawer->DrawShadowPass();
-		}
+			if ((shadowGenBits & SHADOWGEN_BIT_TREE) != 0)
+				treeDrawer->DrawShadowPass();
+			
+			if ((shadowGenBits & SHADOWGEN_BIT_PROJ) != 0)
+				projectileDrawer->DrawShadowPass();
 
-		if ((shadowGenBits & SHADOWGEN_BIT_TREE) != 0)
-			treeDrawer->DrawShadowPass();
+			if ((shadowGenBits & SHADOWGEN_BIT_MODEL) != 0) {
+				unitDrawer->DrawShadowPass();
+				modelDrawer->Draw();
+				featureDrawer->DrawShadowPass();
+			}
 
-		if ((shadowGenBits & SHADOWGEN_BIT_PROJ) != 0)
-			projectileDrawer->DrawShadowPass();
-
-		eventHandler.DrawWorldShadow();
+		glCullFace(GL_FRONT);
+			// cull front-faces during the terrain shadow pass: sun direction
+			// can be set so oblique that geometry back-faces are visible (eg.
+			// from hills near map edges) from its POV
+			// (could just disable culling of terrain faces, but we also want
+			// to prevent overdraw in such low-angle passes)
+			if ((shadowGenBits & SHADOWGEN_BIT_MAP) != 0)
+				readmap->GetGroundDrawer()->DrawShadowPass();
 	glPopAttrib();
 
 	inShadowPass = false;
@@ -340,7 +342,7 @@ void CShadowHandler::CreateShadows()
 	glDisable(GL_TEXTURE_2D);
 
 	glShadeModel(GL_FLAT);
-	glColor4f(1, 1, 1, 1);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 	glDepthMask(GL_TRUE);
 	glEnable(GL_DEPTH_TEST);
@@ -368,35 +370,37 @@ void CShadowHandler::CreateShadows()
 
 	SetShadowMapSizeFactors();
 
-
 	// NOTE:
-	//     these scaling factors do not change linearly or smoothly with
-	//     camera movements, creating visible artefacts (resolution jumps)
+	//     the xy-scaling factors from CalcMinMaxView do not change linearly
+	//     or smoothly with camera movements, creating visible artefacts (eg.
+	//     large jumps in shadow resolution)
 	//
-	//     therefore, use fixed values such that the entire map barely fits
-	//     into the sun's frustum: pretend the map is embedded in a sphere
-	//     and take its diameter as the scale factor
-	//     this means larger maps will have more blurred/aliased shadows if
-	//     the depth buffer is kept at the same size, but no (map) geometry
-	//     is omitted
+	//     therefore, EITHER use "fixed" scaling values such that the entire
+	//     map barely fits into the sun's frustum (by pretending it is embedded
+	//     in a sphere and taking its diameter), OR variable scaling such that
+	//     everything that can be seen by the camera maximally fills the sun's
+	//     frustum (choice of projection-style is left to the user and can be
+	//     changed at run-time)
 	//
-	//     in the ideal case, the zoom-factor should be such that everything
-	//     that can be seen by the camera maximally fills the sun's frustum
-	//     (and nothing is left out), but it is harder to achieve this since
-	//     the camera can be in a map corner looking at an area of the map
-	//     that falls outside the sun frustum when variable scaling is used
-	//     ==> leave the choice of projection-style to the user
+	//     the first option means larger maps will have more blurred/aliased
+	//     shadows if the depth buffer is kept at the same size, but no (map)
+	//     geometry is ever omitted
+	//
+	//     the second option means shadows have higher average resolution, but
+	//     become less sharp as the viewing volume increases (through eg.camera
+	//     rotations) and geometry can be omitted in some cases
 	//
 	// NOTE:
 	//     when DynamicSun is enabled, the orbit is always circular in the xz
 	//     plane, instead of elliptical when the map has an aspect-ratio != 1
 	//
-	const float zScale =
+	const float xyScale =
 		(shadowProMode == SHADOWPROMODE_CAM_CENTER)? GetOrthoProjectedFrustumRadius(camera, centerPos):
 		(shadowProMode == SHADOWPROMODE_MAP_CENTER)? GetOrthoProjectedMapRadius(-sunDirZ, centerPos):
 		1.0f;
-	const float xScale = zScale;
-	const float yScale = zScale;
+	const float xScale = xyScale;
+	const float yScale = xyScale;
+	const float zScale = globalRendering->viewRange;
 
 	shadowMatrix[ 0] = sunDirX.x / xScale;
 	shadowMatrix[ 1] = sunDirY.x / yScale;
@@ -525,10 +529,11 @@ float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, float3& proje
 		return 0.0f;
 
 	// two points per side; last point is used for the geometric average
-	std::vector<float3> frustumPoints((sides.size() * 2) + 1, ZeroVector);
+	// there are never more than 5 side-lines (10 points), so reserve 16
+	static std::vector<float3> frustumPoints(16, ZeroVector);
 
-	float3& frustumCenter = frustumPoints[frustumPoints.size() - 1];
-	float   frustumRadius = 0.0f;
+	float3 frustumCenter = ZeroVector;
+	float  frustumRadius = 0.0f;
 
 	for (unsigned int i = 0, j = 0; i < sides.size(); i++) {
 		const CCamera::FrustumLine* line = &sides[i];
@@ -556,12 +561,12 @@ float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, float3& proje
 		}
 	}
 
-	projectionMidPos.x = frustumCenter.x / (frustumPoints.size() - 1);
-	projectionMidPos.z = frustumCenter.z / (frustumPoints.size() - 1);
+	projectionMidPos.x = frustumCenter.x / (sides.size() * 2);
+	projectionMidPos.z = frustumCenter.z / (sides.size() * 2);
 	projectionMidPos.y = ground->GetHeightReal(projectionMidPos.x, projectionMidPos.z, false);
 
 	// calculate the radius of the minimally-bounding sphere around the projected frustum
-	for (unsigned int n = 0; n < frustumPoints.size() - 1; n++) {
+	for (unsigned int n = 0; n < (sides.size() * 2); n++) {
 		const float3& pos = frustumPoints[n];
 		const float   rad = (pos - projectionMidPos).SqLength();
 
@@ -639,6 +644,5 @@ void CShadowHandler::CalcMinMaxView()
 
 	// xScale = (shadowProjMinMax.y - shadowProjMinMax.x) * 1.5f;
 	// yScale = (shadowProjMinMax.w - shadowProjMinMax.z) * 1.5f;
-
 }
 #endif

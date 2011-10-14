@@ -39,6 +39,8 @@ public:
 
 	void SetRadius(float radius);
 
+
+public:
 	int id;
 
 	float3 pos;

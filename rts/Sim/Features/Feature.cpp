@@ -614,9 +614,9 @@ bool CFeature::Update()
 
 			if (so != solidOnTop) {
 				if (solidOnTop)
-					DeleteDeathDependence(solidOnTop);
+					DeleteDeathDependence(solidOnTop, DEPENDENCE_SOLIDONTOP);
 				if (so)
-					AddDeathDependence(so);
+					AddDeathDependence(so, DEPENDENCE_SOLIDONTOP);
 			}
 			solidOnTop = so;
 		}

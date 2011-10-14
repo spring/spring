@@ -54,6 +54,7 @@ CSolidObject::CSolidObject():
 	floatOnWater(false),
 	immobile(false),
 	blockHeightChanges(false),
+	crushKilled(false),
 	xsize(1),
 	zsize(1),
 	height(1.0f),
@@ -127,6 +128,7 @@ int2 CSolidObject::GetMapPos()
 	return GetMapPos(pos);
 }
 
+//FIXME move somewhere else?
 int2 CSolidObject::GetMapPos(const float3& position)
 {
 	int2 p;

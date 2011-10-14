@@ -1428,7 +1428,7 @@ static bool AddLightTrackingTarget(lua_State* L, GL::Light* light, bool trackEna
 		if (unit != NULL) {
 			if (trackEnable) {
 				if (light->GetTrackPosition() == NULL) {
-					light->AddDeathDependence(unit);
+					light->AddDeathDependence(unit, CObject::DEPENDENCE_LIGHT);
 					light->SetTrackPosition(&unit->drawPos);
 					light->SetTrackDirection(&unit->speed); //! non-normalized
 					ret = true;
@@ -1436,7 +1436,7 @@ static bool AddLightTrackingTarget(lua_State* L, GL::Light* light, bool trackEna
 			} else {
 				// assume <light> was tracking <unit>
 				if (light->GetTrackPosition() == &unit->drawPos) {
-					light->DeleteDeathDependence(unit);
+					light->DeleteDeathDependence(unit, CObject::DEPENDENCE_LIGHT);
 					light->SetTrackPosition(NULL);
 					light->SetTrackDirection(NULL);
 					ret = true;
@@ -1453,7 +1453,7 @@ static bool AddLightTrackingTarget(lua_State* L, GL::Light* light, bool trackEna
 		if (proj != NULL) {
 			if (trackEnable) {
 				if (light->GetTrackPosition() == NULL) {
-					light->AddDeathDependence(proj);
+					light->AddDeathDependence(proj, CObject::DEPENDENCE_LIGHT);
 					light->SetTrackPosition(&proj->drawPos);
 					light->SetTrackDirection(&proj->dir);
 					ret = true;
@@ -1461,7 +1461,7 @@ static bool AddLightTrackingTarget(lua_State* L, GL::Light* light, bool trackEna
 			} else {
 				// assume <light> was tracking <proj>
 				if (light->GetTrackPosition() == &proj->drawPos) {
-					light->DeleteDeathDependence(proj);
+					light->DeleteDeathDependence(proj, CObject::DEPENDENCE_LIGHT);
 					light->SetTrackPosition(NULL);
 					light->SetTrackDirection(NULL);
 					ret = true;

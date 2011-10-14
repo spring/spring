@@ -20,6 +20,7 @@ set(rts             "${CMAKE_SOURCE_DIR}/rts")
 
 include_directories(
 	${rts}
+	${CMAKE_BINARY_DIR}/src-generated/engine
 	${rts}/ExternalAI/Interface
 	Wrappers
 	)
@@ -41,7 +42,8 @@ endif (WIN32)
 
 
 # Assemble common additional native AI sources
-list(APPEND ai_common_SRC ${rts}/Game/GameVersion)
+list(APPEND ai_common_SRC "${rts}/Game/GameVersion.cpp")
+list(APPEND ai_common_SRC "${rts}/System/SafeCStrings.c")
 
 
 # Set some Skirmish AI stuff here already,

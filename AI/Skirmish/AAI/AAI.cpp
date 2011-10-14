@@ -129,7 +129,8 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 	cb = callback->GetAICallback();
 
 	// open log file
-	char filename[500];
+	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
+	char filename[2048];
 	char buffer[500];
 	char team_number[3];
 
@@ -539,6 +540,7 @@ void AAI::UnitDestroyed(int unit, int attacker)
 		ut->ActiveUnitKilled(category);
 
 		bt->units_dynamic[def->id].active -= 1;
+		assert(bt->units_dynamic[def->id].active >= 0);
 
 		// update buildtable
 		if (attacker)

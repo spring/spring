@@ -8,6 +8,7 @@
 
 #include <cstdio>
 #include <cstdarg>
+#include <cassert>
 #include <map>
 #include <set>
 
@@ -141,6 +142,9 @@ const char* log_filter_section_getRegisteredIndex(int index) {
 static void log_filter_record(const char* section, int level, const char* fmt,
 		va_list arguments)
 {
+	assert(level > LOG_LEVEL_ALL);
+	assert(level < LOG_LEVEL_NONE);
+
 	if (!log_frontend_isEnabled(section, level)) {
 		return;
 	}
@@ -176,6 +180,9 @@ void log_frontend_registerSection(const char* section) {
 void log_frontend_record(const char* section, int level, const char* fmt,
 		...)
 {
+	assert(level > LOG_LEVEL_ALL);
+	assert(level < LOG_LEVEL_NONE);
+
 	// pass the log record on to the filter
 	va_list arguments;
 	va_start(arguments, fmt);

@@ -312,7 +312,7 @@ bool CUnitDrawer::LoadModelShaders()
 }
 
 
-void CUnitDrawer::UpdateSunDir() {
+void CUnitDrawer::SunChanged(const float3& sunDir) {
 	if (advShading && shadowHandler->shadowsSupported && globalRendering->haveGLSL) {
 		const float3 factoredUnitSunColor = unitSunColor * sky->GetLight()->GetLightIntensity();
 

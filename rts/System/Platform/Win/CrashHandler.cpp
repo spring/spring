@@ -14,6 +14,7 @@
 #include "System/NetProtocol.h"
 #include "seh.h"
 #include "System/Util.h"
+#include "System/SafeCStrings.h"
 #include "Game/GameVersion.h"
 
 
@@ -34,7 +35,7 @@ static void SigAbrtHandler(int signal)
 }
 
 // Set this to the desired printf style output function.
-// Currently we write through the ILog.h frontend to logOutput to infolog.txt
+// Currently we write through the ILog.h frontend to infolog.txt
 #define PRINT(fmt, ...) \
 		LOG_L(L_ERROR, fmt, ##__VA_ARGS__)
 
@@ -72,7 +73,7 @@ static const char* ExceptionName(DWORD exceptionCode)
 static bool InitImageHlpDll()
 {
 	char userSearchPath[8];
-	STRCPY(userSearchPath, ".");
+	STRCPY_T(userSearchPath, 8, ".");
 	// Initialize IMAGEHLP.DLL
 	// Note: For some strange reason it doesn't work ~4 times after it was loaded&unloaded the first time.
 	int i = 0;
@@ -323,8 +324,6 @@ void OutputStacktrace() {
 	Stacktrace(NULL,NULL);
 
 	CleanupStacktrace();
-
-	logOutput.Flush();
 }
 
 /** Called by windows if an exception happens. */

@@ -14,6 +14,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "System/bitops.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/OpenMP_cond.h"
@@ -31,9 +32,14 @@ CONFIG(float, SMFTexAniso).defaultValue(0.0f);
 CR_BIND_DERIVED(CSMFReadMap, CReadMap, (""))
 
 
-CSMFReadMap::CSMFReadMap(std::string mapname): file(mapname)
+CSMFReadMap::CSMFReadMap(std::string mapname)
+	: CEventClient("[CSMFReadMap]", 271950, false)
+	, file(mapname)
+	
 {
 	loadscreen->SetLoadMessage("Loading SMF");
+
+	eventHandler.AddClient(this);
 
 	ConfigureAnisotropy();
 
@@ -76,13 +82,6 @@ CSMFReadMap::CSMFReadMap(std::string mapname): file(mapname)
 	file.ReadHeightmap(&cornerHeightMapSynced[0],  minH, (maxH - minH) / 65536.0f);
 	CReadMap::Initialize();
 
-	shadingTexPixelRow.resize(gs->mapxp1 * 4, 0);
-	shadingTexUpdateIter = 0;
-	shadingTexUpdateRate = std::max(1.0f, math::ceil((width + 1) / float(height + 1)));
-	// with GLSL, the shading texture has very limited use (minimap etc) so we increase the update interval
-	if (globalRendering->haveGLSL)
-		shadingTexUpdateRate *= 10;
-
 
 	for (unsigned int a = 0; a < mapname.size(); ++a) {
 		mapChecksum += mapname[a];
@@ -94,8 +93,6 @@ CSMFReadMap::CSMFReadMap(std::string mapname): file(mapname)
 	haveSpecularLighting = !(mapInfo->smf.specularTexName.empty());
 	haveSplatTexture = (!mapInfo->smf.splatDetailTexName.empty() && !mapInfo->smf.splatDistrTexName.empty());
 
-	CBitmap detailTexBM;
-	CBitmap grassShadingTexBM;
 
 	detailTex        = 0;
 	shadingTex       = 0;
@@ -168,11 +165,13 @@ CSMFReadMap::CSMFReadMap(std::string mapname): file(mapname)
 		}
 	}
 
-	if (!detailTexBM.Load(mapInfo->smf.detailTexName)) {
-		throw content_error("Could not load detail texture from file " + mapInfo->smf.detailTexName);
-	}
 
 	{
+		CBitmap detailTexBM;
+		if (!detailTexBM.Load(mapInfo->smf.detailTexName)) {
+			throw content_error("Could not load detail texture from file " + mapInfo->smf.detailTexName);
+		}
+
 		glGenTextures(1, &detailTex);
 		glBindTexture(GL_TEXTURE_2D, detailTex);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -204,6 +203,7 @@ CSMFReadMap::CSMFReadMap(std::string mapname): file(mapname)
 	}
 
 	{
+		CBitmap grassShadingTexBM;
 		if (grassShadingTexBM.Load(mapInfo->smf.grassShadingTexName)) {
 			// generate mipmaps for the grass shading-texture
 			grassShadingTex = grassShadingTexBM.CreateTexture(true);
@@ -227,18 +227,26 @@ CSMFReadMap::CSMFReadMap(std::string mapname): file(mapname)
 		}
 
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+		shadingTexBuffer.resize(gs->mapx * gs->mapy * 4, 0);
+		shadingTexUpdateNeeded   = false;
+		shadingTexUpdateProgress = -1;
 	}
 
 	{
-		#if (SSMF_UNCOMPRESSED_NORMALS == 1)
-		std::vector<float> normalsTexBuf(gs->pwr2mapx * gs->pwr2mapy * 4, 0.0f);
-		#else
+	#if (SSMF_UNCOMPRESSED_NORMALS == 0)
 		GLenum texFormat = GL_LUMINANCE_ALPHA16F_ARB;
-
 		if (configHandler->GetBool("GroundNormalTextureHighPrecision")) {
 			texFormat = GL_LUMINANCE_ALPHA32F_ARB;
 		}
-		#endif
+	#endif
+
+		normalTexSize.x = gs->mapxp1;
+		normalTexSize.y = gs->mapyp1;
+		if (!globalRendering->supportNPOTs) {
+			normalTexSize.x = next_power_of_2(normalTexSize.x);
+			normalTexSize.y = next_power_of_2(normalTexSize.y);
+		}
 
 		glGenTextures(1, &normalsTex);
 		glBindTexture(GL_TEXTURE_2D, normalsTex);
@@ -246,11 +254,11 @@ CSMFReadMap::CSMFReadMap(std::string mapname): file(mapname)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		#if (SSMF_UNCOMPRESSED_NORMALS == 1)
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_FLOAT, &normalsTexBuf[0]);
-		#else
-		glTexImage2D(GL_TEXTURE_2D, 0, texFormat, gs->pwr2mapx, gs->pwr2mapy, 0, GL_LUMINANCE_ALPHA, GL_FLOAT, NULL);
-		#endif
+	#if (SSMF_UNCOMPRESSED_NORMALS == 1)
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, normalTexSize.x, normalTexSize.y, 0, GL_RGBA, GL_FLOAT, NULL);
+	#else
+		glTexImage2D(GL_TEXTURE_2D, 0, texFormat, normalTexSize.x, normalTexSize.y, 0, GL_LUMINANCE_ALPHA, GL_FLOAT, NULL);
+	#endif
 	}
 
 	file.ReadFeatureInfo();
@@ -261,17 +269,17 @@ CSMFReadMap::~CSMFReadMap()
 {
 	delete groundDrawer;
 
-	if (detailTex        != 0) { glDeleteTextures(1, &detailTex       ); }
-	if (specularTex      != 0) { glDeleteTextures(1, &specularTex     ); }
-	if (minimapTex       != 0) { glDeleteTextures(1, &minimapTex      ); }
-	if (shadingTex       != 0) { glDeleteTextures(1, &shadingTex      ); }
-	if (normalsTex       != 0) { glDeleteTextures(1, &normalsTex      ); }
-	if (splatDetailTex   != 0) { glDeleteTextures(1, &splatDetailTex  ); }
-	if (splatDistrTex    != 0) { glDeleteTextures(1, &splatDistrTex   ); }
-	if (grassShadingTex  != 0) { glDeleteTextures(1, &grassShadingTex ); }
-	if (skyReflectModTex != 0) { glDeleteTextures(1, &skyReflectModTex); }
-	if (detailNormalTex  != 0) { glDeleteTextures(1, &detailNormalTex ); }
-	if (lightEmissionTex != 0) { glDeleteTextures(1, &lightEmissionTex); }
+	glDeleteTextures(1, &detailTex       );
+	glDeleteTextures(1, &specularTex     );
+	glDeleteTextures(1, &minimapTex      );
+	glDeleteTextures(1, &shadingTex      );
+	glDeleteTextures(1, &normalsTex      );
+	glDeleteTextures(1, &splatDetailTex  );
+	glDeleteTextures(1, &splatDistrTex   );
+	glDeleteTextures(1, &grassShadingTex );
+	glDeleteTextures(1, &skyReflectModTex);
+	glDeleteTextures(1, &detailNormalTex );
+	glDeleteTextures(1, &lightEmissionTex);
 }
 
 
@@ -279,51 +287,16 @@ void CSMFReadMap::NewGroundDrawer() { groundDrawer = new CSMFGroundDrawer(this);
 CBaseGroundDrawer* CSMFReadMap::GetGroundDrawer() { return (CBaseGroundDrawer*) groundDrawer; }
 
 
-void CSMFReadMap::UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigned char* pixelRow) {
-	for (int x = 0; x < xsize; ++x) {
-		const int xi = x1 + x;
-		const int yi = y1 + y;
-
-		const float* heightMap = GetCornerHeightMapUnsynced();
-		const float height = heightMap[xi + yi * gs->mapxp1];
-
-		if (height < 0.0f) {
-			const int h = (int) - height & 1023; //! waterHeightColors array just holds 1024 colors
-			float light = std::min((DiffuseSunCoeff(x + x1, y + y1) + 0.2f) * 2.0f, 1.0f);
-
-			if (height > -10.0f) {
-				const float wc = -height * 0.1f;
-				const float3 light3 = GetLightValue(x + x1, y + y1) * (1.0f - wc) * 210.0f;
-				light *= wc;
-
-				pixelRow[x * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light + light3.x);
-				pixelRow[x * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light + light3.y);
-				pixelRow[x * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light + light3.z);
-			} else {
-				pixelRow[x * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light);
-				pixelRow[x * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light);
-				pixelRow[x * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light);
-			}
-			pixelRow[x * 4 + 3] = EncodeHeight(height);
-		} else {
-			const float3& light = GetLightValue(x + x1, y + y1) * 210.0f;
-
-			pixelRow[x * 4 + 0] = (unsigned char) light.x;
-			pixelRow[x * 4 + 1] = (unsigned char) light.y;
-			pixelRow[x * 4 + 2] = (unsigned char) light.z;
-			pixelRow[x * 4 + 3] = 255;
-		}
-	}
-}
-
 
 void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 {
+	// ReadMap::UpdateHeightMapSynced clamps to [0, gs->mapx - 1]
+
 	const int x1 = update.x1, y1 = update.y1;
 	const int x2 = update.x2, y2 = update.y2;
 
+	// update the visible (LOS) heights and normals
 	{
-		//! update the visible heights and normals
 		static const float*  shm = &cornerHeightMapSynced[0];
 	#ifdef USE_UNSYNCED_HEIGHTMAP
 		static       float*  uhm = &cornerHeightMapUnsynced[0];
@@ -332,28 +305,18 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 		static       float3* ufn = &faceNormalsUnsynced[0];
 		static const float3* scn = &centerNormalsSynced[0];
 		static       float3* ucn = &centerNormalsUnsynced[0];
-		static       float3* rvn = &rawVertexNormals[0];
 		static       float3* vvn = &visVertexNormals[0];
 
 		static const int W = gs->mapxp1;
 		static const int H = gs->mapyp1;
 		static const int SS = SQUARE_SIZE;
 
-		//! a heightmap update over (x1, y1) - (x2, y2) implies the
-		//! normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
+		// a heightmap update over (x1, y1) - (x2, y2) implies the
+		// normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
 		const int minx = std::max((x1 - 1),     0);
 		const int minz = std::max((y1 - 1),     0);
 		const int maxx = std::min((x2 + 1), W - 1);
 		const int maxz = std::min((y2 + 1), H - 1);
-
-		const int xsize = maxx - minx;
-		const int zsize = maxz - minz;
-
-	#if (SSMF_UNCOMPRESSED_NORMALS == 1)
-		std::vector<float> pixels((xsize + 1) * (zsize + 1) * 4, 0.0f);
-	#else
-		std::vector<float> pixels((xsize + 1) * (zsize + 1) * 2, 0.0f);
-	#endif
 
 		int z;
 		#pragma omp parallel for private(z)
@@ -369,11 +332,11 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 				const bool hasNgbT = (z >     0); const int zOffT = hasNgbT? 1: 0;
 				const bool hasNgbB = (z < H - 1); const int zOffB = hasNgbB? 1: 0;
 
-				//! pretend there are 8 incident triangle faces per vertex
-				//! for each these triangles, calculate the surface normal,
-				//! then average the 8 normals (this stays closest to the
-				//! heightmap data)
-				//! if edge vertex, don't add virtual neighbor normals to vn
+				// pretend there are 8 incident triangle faces per vertex
+				// for each these triangles, calculate the surface normal,
+				// then average the 8 normals (this stays closest to the
+				// heightmap data)
+				// if edge vertex, don't add virtual neighbor normals to vn
 				const float3 vtl = float3((x - 1) * SS,  shm[((z - zOffT) * W) + (x - xOffL)],  (z - 1) * SS);
 				const float3 vtm = float3((x    ) * SS,  shm[((z - zOffT) * W) + (x        )],  (z - 1) * SS);
 				const float3 vtr = float3((x + 1) * SS,  shm[((z - zOffT) * W) + (x + xOffR)],  (z - 1) * SS);
@@ -396,17 +359,12 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 					tn = (hasNgbB           )? (vbm - vmm).cross((vbl - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
 					tn = (hasNgbB && hasNgbL)? (vbl - vmm).cross((vml - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
 					tn = (hasNgbL           )? (vml - vmm).cross((vtl - vmm)): ZeroVector;  if (tn.y < 0.0f) { tn = -tn; }; vn += tn;
-				float3 fnTL;
-				float3 fnBR;
-
-				//! update the raw vertex normal
-				rvn[vIdxTL] = vn.ANormalize();
 
 			#ifdef USE_UNSYNCED_HEIGHTMAP
 				if (update.los) {
 					// update the visible vertex/face height/normal
 					uhm[vIdxTL] = shm[vIdxTL];
-					vvn[vIdxTL] = rvn[vIdxTL];
+					vvn[vIdxTL] = vn.ANormalize();
 
 					if (hasNgbR && hasNgbB) {
 						// x == maxx and z == maxz are illegal indices for these
@@ -416,83 +374,159 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 					}
 				}
 			#endif
+			}
+		}
+	}
 
-				//! compress the range [-1, 1] to [0, 1] to prevent clamping
-				//! (ideally, should use an FBO with FP32 texture attachment)
+
+	// Update VertexNormalsTexture (not used by ARB shaders)
+	if (globalRendering->haveGLSL) {
+		// texture space is [0 .. gs->mapx] x [0 .. gs->mapy] (NPOT; vertex-aligned)
+
+		static float3* vvn = &visVertexNormals[0];
+
+		static const int W = gs->mapxp1;
+		static const int H = gs->mapyp1;
+
+		// a heightmap update over (x1, y1) - (x2, y2) implies the
+		// normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
+		const int minx = std::max((x1 - 1),     0);
+		const int minz = std::max((y1 - 1),     0);
+		const int maxx = std::min((x2 + 1), W - 1);
+		const int maxz = std::min((y2 + 1), H - 1);
+
+		const int xsize = (maxx - minx) + 1;
+		const int zsize = (maxz - minz) + 1;
+
+		// Note, it doesn't make sense to use a PBO here.
+		// Cause the upstreamed float32s need to be transformed to float16s, which seems to happen on the CPU!
+	#if (SSMF_UNCOMPRESSED_NORMALS == 1)
+		std::vector<float> pixels(xsize * zsize * 4, 0.0f);
+	#else
+		std::vector<float> pixels(xsize * zsize * 2, 0.0f);
+	#endif
+
+		for (int z = minz; z <= maxz; z++) {
+			for (int x = minx; x <= maxx; x++) {
+				const float3& vertNormal = vvn[z * W + x];
+
 			#if (SSMF_UNCOMPRESSED_NORMALS == 1)
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 0] = ((vvn[vIdxTL].x + 1.0f) * 0.5f);
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 1] = ((vvn[vIdxTL].y + 1.0f) * 0.5f);
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 2] = ((vvn[vIdxTL].z + 1.0f) * 0.5f);
+				pixels[((z - minz) * xsize + (x - minx)) * 4 + 0] = vertNormal.x;
+				pixels[((z - minz) * xsize + (x - minx)) * 4 + 1] = vertNormal.y;
+				pixels[((z - minz) * xsize + (x - minx)) * 4 + 2] = vertNormal.z;
 				pixels[((z - minz) * xsize + (x - minx)) * 4 + 3] = 1.0f;
 			#else
-				//! note: y-coord is regenerated in the shader via "sqrt(1 - x*x - z*z)",
-				//!   this gives us 2 solutions but we know that the y-coord always points
-				//!   upwards, so we can reconstruct it in the shader.
-				pixels[((z - minz) * xsize + (x - minx)) * 2 + 0] = ((vvn[vIdxTL].x + 1.0f) * 0.5f);
-				pixels[((z - minz) * xsize + (x - minx)) * 2 + 1] = ((vvn[vIdxTL].z + 1.0f) * 0.5f);
+				// note: y-coord is regenerated in the shader via "sqrt(1 - x*x - z*z)",
+				//   this gives us 2 solutions but we know that the y-coord always points
+				//   upwards, so we can reconstruct it in the shader.
+				pixels[((z - minz) * xsize + (x - minx)) * 2 + 0] = vertNormal.x;
+				pixels[((z - minz) * xsize + (x - minx)) * 2 + 1] = vertNormal.z;
 			#endif
 			}
 		}
 
-		if (globalRendering->haveGLSL) {
-			// <normalsTex> is not used by ARB shaders
-			glBindTexture(GL_TEXTURE_2D, normalsTex);
-		#if (SSMF_UNCOMPRESSED_NORMALS == 1)
-			glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_RGBA, GL_FLOAT, &pixels[0]);
-		#else
-			glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_LUMINANCE_ALPHA, GL_FLOAT, &pixels[0]);
-		#endif
-		}
+		glBindTexture(GL_TEXTURE_2D, normalsTex);
+	#if (SSMF_UNCOMPRESSED_NORMALS == 1)
+		glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_RGBA, GL_FLOAT, &pixels[0]);
+	#else
+		glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_LUMINANCE_ALPHA, GL_FLOAT, &pixels[0]);
+	#endif
 	}
 
-	{
-		//! ReadMap::UpdateHeightMapSynced clamps to [0, gs->mapx - 1]
-		//! but we want it to be [0, gs->mapx] for the shading texture
-		const int xsize = Clamp((x2 - x1) + 1, 0, gs->mapx);
-		const int ysize = Clamp((y2 - y1) + 1, 0, gs->mapy);
 
-		//! update the shading texture (even if the map has specular
-		//! lighting, we still need it to modulate the minimap image,
-		//! as well as for several extraTexture overlays)
-		//! this can be done for diffuse lighting only
+	// update the shading texture (even if the map has specular
+	// lighting, we still need it to modulate the minimap image)
+	// this can be done for diffuse lighting only
+	{
+		// texture space is [0 .. gs->mapxm1] x [0 .. gs->mapym1]
+
+		const int xsize = (x2 - x1) + 1; // +1 cause we iterate:
+		const int ysize = (y2 - y1) + 1; // x1 <= xi <= x2  (not!  x1 <= xi < x2)
+
+		//TODO switch to PBO?
 		std::vector<unsigned char> pixels(xsize * ysize * 4, 0.0f);
 
 		int y;
 		#pragma omp parallel for private(y)
 		for (y = 0; y < ysize; ++y) {
-			UpdateShadingTexPart(y, x1, y1, xsize, &pixels[y * xsize * 4]);
+			const int idx1 = (y + y1) * gs->mapx + x1;
+			const int idx2 = (y + y1) * gs->mapx + x2;
+			UpdateShadingTexPart(idx1, idx2, &pixels[y * xsize * 4]);
 		}
 
-		//! redefine the texture subregion
+		// check if we were in a dynamic sun issued shadingTex update
+		// and our updaterect was already updated (buffered, not send to the GPU yet!)
+		// if so update it in that buffer, too
+		if (shadingTexUpdateProgress > (y1 * gs->mapx + x1)) {
+			for (y = 0; y < ysize; ++y) {
+				const int idx = (y + y1) * gs->mapx + x1;
+				memcpy(&shadingTexBuffer[idx * 4] , &pixels[y * xsize * 4], xsize);
+			}
+		}
+
+		// redefine the texture subregion
 		glBindTexture(GL_TEXTURE_2D, shadingTex);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, x1, y1, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, &pixels[0]);
-		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 }
 
 
-void CSMFReadMap::UpdateShadingTexture() {
-	const int xsize = gs->mapxp1;
-	const int ysize = gs->mapyp1;
-	int y = shadingTexUpdateIter;
+const float CSMFReadMap::GetCenterHeightUnsynced(const int& x, const int& y) const
+{
+	static const float* hm = GetCornerHeightMapUnsynced();
 
-	shadingTexUpdateIter = (shadingTexUpdateIter + 1) % (ysize * shadingTexUpdateRate);
-	if ((y % shadingTexUpdateRate) != 0)
-		return;
+	float h = hm[(y    ) * gs->mapxp1 + (x    )] +
+	          hm[(y    ) * gs->mapxp1 + (x + 1)] +
+	          hm[(y + 1) * gs->mapxp1 + (x    )] +
+	          hm[(y + 1) * gs->mapxp1 + (x + 1)];
 
-	y /= shadingTexUpdateRate;
-//	y = (y * 2 + ((((ysize % 2) == 0) && (y >= (ysize / 2))) ? 1 : 0)) % ysize;
+	return h * 0.25f;
+}
 
-	UpdateShadingTexPart(y, 0, 0, xsize, &shadingTexPixelRow[0]);
 
-	glBindTexture(GL_TEXTURE_2D, shadingTex);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, y, xsize, 1, GL_RGBA, GL_UNSIGNED_BYTE, &shadingTexPixelRow[0]);
+void CSMFReadMap::UpdateShadingTexPart(int idx1, int idx2, unsigned char* dst) const
+{
+	for (int idx = idx1; idx <= idx2; ++idx) {
+		const int i = idx - idx1;
+		const int xi = idx % gs->mapx;
+		const int yi = idx / gs->mapx;
+
+		const float height = GetCenterHeightUnsynced(xi, yi);
+
+		if (height < 0.0f) {
+			// Underwater
+			const int h = std::min((int)(-height), 1023); // waterHeightColors array just holds 1024 colors
+			float light = std::min((DiffuseSunCoeff(xi, yi) + 0.2f) * 2.0f, 1.0f);
+
+			if (height > -10.0f) {
+				const float wc = -height * 0.1f;
+				const float3 light3 = GetLightValue(xi, yi) * (1.0f - wc) * 255.0f;
+				light *= wc;
+
+				dst[i * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light + light3.x);
+				dst[i * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light + light3.y);
+				dst[i * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light + light3.z);
+			} else {
+				dst[i * 4 + 0] = (unsigned char) (waterHeightColors[h * 4 + 0] * light);
+				dst[i * 4 + 1] = (unsigned char) (waterHeightColors[h * 4 + 1] * light);
+				dst[i * 4 + 2] = (unsigned char) (waterHeightColors[h * 4 + 2] * light);
+			}
+			dst[i * 4 + 3] = EncodeHeight(height);
+		} else {
+			// Above water
+			const float3& light = GetLightValue(xi, yi) * 255.0f;
+			dst[i * 4 + 0] = (unsigned char) light.x;
+			dst[i * 4 + 1] = (unsigned char) light.y;
+			dst[i * 4 + 2] = (unsigned char) light.z;
+			dst[i * 4 + 3] = 255;
+		}
+	}
 }
 
 
 float CSMFReadMap::DiffuseSunCoeff(const int& x, const int& y) const
 {
-	const float3& N = visVertexNormals[(y * gs->mapxp1) + x];
+	const float3& N = centerNormalsUnsynced[y * gs->mapx + x];
 	const float3& L = sky->GetLight()->GetLightDir();
 	return Clamp(L.dot(N), 0.0f, 1.0f);
 }
@@ -511,6 +545,59 @@ float3 CSMFReadMap::GetLightValue(const int& x, const int& y) const
 	}
 
 	return light;
+}
+
+void CSMFReadMap::SunChanged(const float3& sunDir)
+{
+	if (shadingTexUpdateProgress < 0) {
+		shadingTexUpdateProgress = 0;
+	} else {
+		shadingTexUpdateNeeded = true;
+	}
+}
+
+
+
+void CSMFReadMap::UpdateShadingTexture()
+{
+	static const int xsize = gs->mapx;
+	static const int ysize = gs->mapy;
+	static const int pixels = xsize * ysize;
+
+	// with GLSL, the shading texture has very limited use (minimap etc) so we reduce the updaterate
+	//FIXME replace with a real check if glsl is used in terrain rendering!
+	//FIXME make configurable? or even FPS depending?
+	const int update_rate = (globalRendering->haveGLSL ? 64*64 : 64*128);
+
+	if (shadingTexUpdateProgress < 0) {
+		return;
+	}
+
+	if (shadingTexUpdateProgress >= pixels) {
+		if (shadingTexUpdateNeeded) {
+			shadingTexUpdateProgress = 0;
+			shadingTexUpdateNeeded   = false;
+		} else {
+			shadingTexUpdateProgress = -1;
+		}
+
+		//FIXME use FBO and blend slowly new and old? (this way update rate could reduced even more -> saves CPU time)
+		glBindTexture(GL_TEXTURE_2D, shadingTex);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, &shadingTexBuffer[0]);
+		return;
+	}
+
+	const int idx1 = shadingTexUpdateProgress;
+	const int idx2 = std::min(idx1 + update_rate, pixels - 1);
+
+	int idx;
+	#pragma omp parallel for private(idx)
+	for (idx = idx1; idx <= idx2; idx += 1025) {
+		const int idx3 = std::min(idx2, idx + 1024);
+		UpdateShadingTexPart(idx, idx3, &shadingTexBuffer[idx * 4]);
+	}
+
+	shadingTexUpdateProgress += update_rate;
 }
 
 

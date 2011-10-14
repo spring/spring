@@ -27,10 +27,10 @@ public:
 
 	enum ShadowGenerationBits {
 		SHADOWGEN_BIT_NONE  = 0,
-		SHADOWGEN_BIT_MODEL = 1,
 		SHADOWGEN_BIT_MAP   = 2,
-		SHADOWGEN_BIT_PROJ  = 4,
-		SHADOWGEN_BIT_TREE  = 8,
+		SHADOWGEN_BIT_MODEL = 4,
+		SHADOWGEN_BIT_PROJ  = 8,
+		SHADOWGEN_BIT_TREE  = 16,
 	};
 	enum ShadowProjectionMode {
 		SHADOWPROMODE_MAP_CENTER = 0, // use center of map-geometry as projection target (constant res.)
