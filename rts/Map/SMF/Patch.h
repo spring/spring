@@ -69,6 +69,7 @@ public:
 	const float* heightData;
 	unsigned int lend;
 	unsigned int rend;
+
 	// Some encapsulation functions & extras
 	float distfromcam;
 	int m_WorldX, m_WorldY; // World coordinate offset of this patch.
