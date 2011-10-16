@@ -107,8 +107,7 @@ public:
 	void SetVisibility();
 
 	// The static half of the Patch Class
-	virtual void Init(int heightX, int heightY, int worldX, int worldY,
-			const float* hMap, int mx, float maxH, float minH);
+	virtual void Init(int worldX, int worldZ, const float* hMap, int mx, float maxH, float minH);
 	virtual void Reset();
 	virtual void Tessellate(float cx, float cy, float cz, int viewradius);
 	
