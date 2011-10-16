@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 //
 // ROAM Simplistic Implementation
 // Added to Spring by Peter Sarkozy (mysterme AT gmail DOT com)
