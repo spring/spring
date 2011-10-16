@@ -104,7 +104,14 @@ CUnit* CAICallback::GetInSensorRangeUnit(int unitId, unsigned short losFlags) co
 
 	if (CHECK_UNITID(unitId)) {
 		CUnit* unitTmp = uh->units[unitId];
-		if (unitTmp && (unitTmp->losStatus[teamHandler->AllyTeam(team)] & losFlags)) {
+		// Skip in-sensor-range test if the unit is allied with our team.
+		// This prevents errors where an allied unit is starting to build,
+		// but is not yet (technically) in LOS, because LOS was not yet updated,
+		// and thus would be invisible for us, without the ally check.
+		if (unitTmp
+				&& (teamHandler->AlliedTeams(unitTmp->team, team)
+				||  (unitTmp->losStatus[teamHandler->AllyTeam(team)] & losFlags)))
+		{
 			unit = unitTmp;
 		}
 	}
@@ -612,16 +619,17 @@ const UnitDef* CAICallback::GetUnitDef(int unitId)
 			const int allyTeam = teamHandler->AllyTeam(team);
 			if (teamHandler->Ally(unit->allyteam, allyTeam)) {
 				def = unitDef;
-			}
-			const unsigned short losStatus = unit->losStatus[allyTeam];
-			const unsigned short prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
-			if (((losStatus & LOS_INLOS) != 0) ||
-					((losStatus & prevMask) == prevMask)) {
-				const UnitDef* decoyDef = unitDef->decoyDef;
-				if (decoyDef == NULL) {
-					def = unitDef;
-				} else {
-					def = decoyDef;
+			} else {
+				const unsigned short losStatus = unit->losStatus[allyTeam];
+				const unsigned short prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
+				if (((losStatus & LOS_INLOS) != 0) ||
+						((losStatus & prevMask) == prevMask)) {
+					const UnitDef* decoyDef = unitDef->decoyDef;
+					if (decoyDef == NULL) {
+						def = unitDef;
+					} else {
+						def = decoyDef;
+					}
 				}
 			}
 		}
@@ -807,7 +815,7 @@ float CAICallback::GetPathNodeCost(unsigned int x, unsigned int z) {
 
 
 
-static int FilterUnitsVector(const std::vector<CUnit*>& units, int* unitIds, int unitIds_max, bool (*includeUnit)(CUnit*) = NULL)
+static int FilterUnitsVector(const std::vector<CUnit*>& units, int* unitIds, int unitIds_max, bool (*includeUnit)(const CUnit*) = NULL)
 {
 	int a = 0;
 
@@ -830,7 +838,7 @@ static int FilterUnitsVector(const std::vector<CUnit*>& units, int* unitIds, int
 
 	return a;
 }
-static int FilterUnitsList(const std::list<CUnit*>& units, int* unitIds, int unitIds_max, bool (*includeUnit)(CUnit*) = NULL)
+static int FilterUnitsList(const std::list<CUnit*>& units, int* unitIds, int unitIds_max, bool (*includeUnit)(const CUnit*) = NULL)
 {
 	int a = 0;
 
@@ -855,46 +863,58 @@ static int FilterUnitsList(const std::list<CUnit*>& units, int* unitIds, int uni
 }
 
 
-static inline bool unit_IsNeutral(CUnit* unit) {
+static inline bool unit_IsNeutral(const CUnit* unit) {
 	return unit->IsNeutral();
 }
 
 static int myAllyTeamId = -1;
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
-static inline bool unit_IsEnemy(CUnit* unit) {
+static inline bool unit_IsEnemy(const CUnit* unit) {
 	return (!teamHandler->Ally(unit->allyteam, myAllyTeamId)
 			&& !unit_IsNeutral(unit));
 }
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
-static inline bool unit_IsFriendly(CUnit* unit) {
+static inline bool unit_IsFriendly(const CUnit* unit) {
 	return (teamHandler->Ally(unit->allyteam, myAllyTeamId)
 			&& !unit_IsNeutral(unit));
 }
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
-static inline bool unit_IsInLos(CUnit* unit) {
-	return ((unit->losStatus[myAllyTeamId] & LOS_INLOS) != 0);
+static inline bool unit_IsInLos(const CUnit* unit) {
+
+	// Skip in-sensor-range test if the unit is allied with our team.
+	// This prevents errors where an allied unit is starting to build,
+	// but is not yet (technically) in LOS, because LOS was not yet updated,
+	// and thus would be invisible for us, without the ally check.
+	return (teamHandler->Ally(myAllyTeamId, unit->allyteam)
+			|| ((unit->losStatus[myAllyTeamId] & LOS_INLOS) != 0));
 }
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
-static inline bool unit_IsInRadar(CUnit* unit) {
-	return ((unit->losStatus[myAllyTeamId] & LOS_INRADAR) != 0);
+static inline bool unit_IsInRadar(const CUnit* unit) {
+
+	// Skip in-sensor-range test if the unit is allied with our team.
+	// This prevents errors where an allied unit is starting to build,
+	// but is not yet (technically) in LOS, because LOS was not yet updated,
+	// and thus would be invisible for us, without the ally check.
+	return (teamHandler->Ally(myAllyTeamId, unit->allyteam)
+			|| ((unit->losStatus[myAllyTeamId] & LOS_INRADAR) != 0));
 }
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
-static inline bool unit_IsEnemyAndInLos(CUnit* unit) {
+static inline bool unit_IsEnemyAndInLos(const CUnit* unit) {
 	return (unit_IsEnemy(unit) && unit_IsInLos(unit));
 }
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
-static inline bool unit_IsEnemyAndInLosOrRadar(CUnit* unit) {
+static inline bool unit_IsEnemyAndInLosOrRadar(const CUnit* unit) {
 	return (unit_IsEnemy(unit) && (unit_IsInLos(unit) || unit_IsInRadar(unit)));
 }
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
-static inline bool unit_IsNeutralAndInLos(CUnit* unit) {
+static inline bool unit_IsNeutralAndInLos(const CUnit* unit) {
 	return (unit_IsNeutral(unit) && unit_IsInLos(unit));
 }
 
@@ -1487,7 +1507,8 @@ int CAICallback::HandleCommand(int commandId, void* data)
 					const float realLen = TraceRay::TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, cmdData->flags, srcUnit, hitUnit, hitFeature);
 
 					if (hitUnit != NULL) {
-						const bool isUnitVisible = (hitUnit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS);
+						myAllyTeamId = teamHandler->AllyTeam(team);
+						const bool isUnitVisible = unit_IsInLos(hitUnit);
 						if (isUnitVisible) {
 							cmdData->rayLen = realLen;
 							cmdData->hitUID = hitUnit->id;
@@ -1654,7 +1675,8 @@ bool CAICallback::GetProperty(int unitId, int property, void* data)
 	if (CHECK_UNITID(unitId)) {
 		const CUnit* unit = uh->units[unitId];
 		const int allyTeam = teamHandler->AllyTeam(team);
-		if (!(unit && (unit->losStatus[allyTeam] & LOS_INLOS))) {
+		myAllyTeamId = allyTeam;
+		if (!(unit && unit_IsInLos(unit))) {
 			// the unit does not exist or can not be seen
 			return false;
 		}

@@ -17,7 +17,6 @@
 #include "Game/GameVersion.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
-#include "System/LogOutput.h"
 #include "System/maindefines.h"
 #include "System/myTime.h"
 #include "System/Platform/CrashHandler.h"
@@ -116,7 +115,6 @@ namespace Watchdog
 
 					WatchDogThreadInfo* th_info = registeredThreads[i];
 					CrashHandler::Stacktrace(th_info->thread, threadNames[i]);
-					logOutput.Flush();
 				}
 
 				CrashHandler::CleanupStacktrace();

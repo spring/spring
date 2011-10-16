@@ -768,7 +768,12 @@ void CUnitScript::Explode(int piece, int flags)
 	}
 
 #ifndef _CONSOLE
-	const float3 pos = GetPiecePos(piece) + unit->pos;
+	const float3 relpos = GetPiecePos(piece);
+	const float3 pos =
+		unit->pos +
+		unit->frontdir * relpos.z +
+		unit->updir    * relpos.y +
+		unit->rightdir * relpos.x;
 
 #ifdef TRACE_SYNC
 	tracefile << "Cob explosion: ";

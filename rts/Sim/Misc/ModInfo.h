@@ -11,6 +11,7 @@ public:
 	CModInfo()
 		: allowTeamColors(true)
 		, allowAirPlanesToLeaveMap(true)
+		, allowPushingEnemyUnits(false)
 		, constructionDecay(true)
 		, constructionDecayTime(1000)
 		, constructionDecaySpeed(1.0f)
@@ -74,6 +75,7 @@ public:
 
 	// Movement behaviour
 	bool allowAirPlanesToLeaveMap;
+	bool allowPushingEnemyUnits;
 
 	// Build behaviour
 	/// Should constructions without builders decay?

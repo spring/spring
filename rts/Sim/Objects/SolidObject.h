@@ -44,6 +44,9 @@ public:
 	 */
 	void UnBlock();
 
+	int2 GetMapPos();
+	int2 GetMapPos(const float3& position);
+
 public:
 	// Static properties
 	float mass;                                 ///< the physical mass of this object
@@ -56,7 +59,7 @@ public:
 	int xsize;                                  ///< The x-size of this object, according to its footprint.
 	int zsize;                                  ///< The z-size of this object, according to its footprint.
 	float height;                               ///< The height of this object.
-	
+
 	SyncedSshort heading;                       ///< Contains the same information as frontdir, but in a short signed integer.
 	PhysicalState physicalState;                ///< The current state of the object within the gameworld. I.e Flying or OnGround.
 
@@ -82,9 +85,6 @@ public:
 
 	const unsigned char* curYardMap;            ///< Current active yardmap of this object. 0 means no active yardmap => all blocked.
 	int buildFacing;                            ///< Orientation of footprint, 4 different states
-
-	int2 GetMapPos();
-	int2 GetMapPos(const float3& position);
 
 	static const float DEFAULT_MASS;
 

@@ -10,7 +10,7 @@ TESTDIR=${TMP_BASE}/tests
 DOWNLOADDIR=${TMP_BASE}/download
 CONTENT_DIR=${TESTDIR}/.spring
 
-if [ ! -d test/game/ ];
+if [ ! -d test/validation/ ];
 then
 	echo "$0 has to be run from the source root dir"
 	exit 1
@@ -36,8 +36,8 @@ cd ${SOURCEDIR}
 mkdir -p ${CONTENT_DIR}/games ${CONTENT_DIR}/maps ${CONTENT_DIR}/LuaUI/Widgets
 cp -suv ${DOWNLOADDIR}/ba760.sdz ${CONTENT_DIR}/games/ba760.sdz
 cp -suv ${DOWNLOADDIR}/Altair_Crossing.sd7 ${CONTENT_DIR}/maps/Altair_Crossing.sd7
-cp -suv ${SOURCEDIR}/test/game/LuaUI/Widgets/test.lua ${CONTENT_DIR}/LuaUI/Widgets/test.lua
-cp -suv ${SOURCEDIR}/test/game/test*.txt ${CONTENT_DIR}/
+cp -suv ${SOURCEDIR}/test/validation/LuaUI/Widgets/test.lua ${CONTENT_DIR}/LuaUI/Widgets/test.lua
+cp -suv ${SOURCEDIR}/test/validation/*.script.txt ${CONTENT_DIR}/
 cp -v ${SOURCEDIR}/cont/springrc-template-headless.txt ${TESTDIR}/.springrc
 echo "SpringData = ${TESTDIR}/usr/local/share/games/spring" >> ${TESTDIR}/.springrc
 

@@ -35,6 +35,8 @@ void CEventClient::Save(zipFile archive) {}
 void CEventClient::Update() {}
 void CEventClient::UnsyncedHeightMapUpdate(const SRectangle& rect) {}
 
+void CEventClient::SunChanged(const float3& sunDir) {}
+
 void CEventClient::ViewResize() {}
 
 bool CEventClient::DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd) { return false; }

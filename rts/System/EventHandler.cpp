@@ -122,6 +122,8 @@ CEventHandler::CEventHandler()
 	SETUP_EVENT(WorldTooltip,   MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(MapDrawCmd,     MANAGED_BIT | UNSYNCED_BIT);
 
+	SETUP_EVENT(SunChanged,     MANAGED_BIT | UNSYNCED_BIT); //FIXME make synced? (whole dynSun code needs to then)
+
 	SETUP_EVENT(ViewResize,     MANAGED_BIT | UNSYNCED_BIT);
 
 	SETUP_EVENT(DrawGenesis,         MANAGED_BIT | UNSYNCED_BIT);
@@ -542,6 +544,15 @@ void CEventHandler::DeleteSyncedObjects() {
 
 
 
+void CEventHandler::SunChanged(const float3& sunDir)
+{
+	EVENTHANDLER_CHECK(SunChanged);
+
+	for (int i = 0; i < count; i++) {
+		CEventClient* ec = listSunChanged[i];
+		ec->SunChanged(sunDir);
+	}
+}
 
 void CEventHandler::ViewResize()
 {

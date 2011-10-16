@@ -54,10 +54,6 @@ CTorpedoProjectile::CTorpedoProjectile(
 	curSpeed = speed.Length();
 	dir = speed / curSpeed;
 
-	if (target) {
-		AddDeathDependence(target);
-	}
-
 	SetRadius(0.0f);
 	drawRadius = maxSpeed * 8;
 

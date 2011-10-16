@@ -10,6 +10,7 @@
 #include "TimeUtil.h"
 #include "Util.h"
 #include "System/maindefines.h"
+#include "System/SafeCStrings.h"
 
 
 Profiler Profiler::def("");
@@ -103,7 +104,7 @@ char*         simpleProfiler_getSummaryString() {
 	const std::string& summaryStr = Profiler::GetDefault()->ToString();
 
 	char* summary = util_allocStr(summaryStr.length());
-	STRCPYS(summary, sizeof(summary), summaryStr.c_str());
+	STRCPY_T(summary, sizeof(summary), summaryStr.c_str());
 
 	return summary;
 }

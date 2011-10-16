@@ -12,5 +12,5 @@ if [ ! -n "$1" ]; then
 fi
 
 #run test
-HOME=${TESTDIR} ${SOURCEDIR}/test/game/run.sh ${TESTDIR}/usr/local/bin/spring-headless $@
+HOME=${TESTDIR} ${SOURCEDIR}/test/validation/run.sh ${TESTDIR}/usr/local/bin/spring-headless $@
 

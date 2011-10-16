@@ -198,7 +198,7 @@ void CGroundDecalHandler::LoadDecalShaders() {
 	#undef sh
 }
 
-void CGroundDecalHandler::UpdateSunDir() {
+void CGroundDecalHandler::SunChanged(const float3& sunDir) {
 	if (globalRendering->haveGLSL && decalShaders.size() > DECAL_SHADER_GLSL) {
 		decalShaders[DECAL_SHADER_GLSL]->Enable();
 		decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sky->GetLight()->GetGroundShadowDensity());

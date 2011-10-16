@@ -23,7 +23,6 @@
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Sync/FPUCheck.h"
-#include "System/LogOutput.h"
 #include "System/Log/ILog.h"
 #include "System/NetProtocol.h"
 #include "System/FileSystem/FileHandler.h"
@@ -332,7 +331,6 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 	curLoadMessage = text;
 
 	LOG("%s", text.c_str());
-	logOutput.Flush();
 
 	//! Check the FPU state (needed for synced computations),
 	//! some external libraries which get linked during loading might reset those.

@@ -3,13 +3,25 @@
 #ifndef SMFREADMAP_H
 #define SMFREADMAP_H
 
-#include "Map/ReadMap.h"
 #include "SMFMapFile.h"
+#include "Map/ReadMap.h"
+#include "System/EventClient.h"
+#include "System/Vec2.h"
+
 
 class CSMFGroundDrawer;
 
-class CSMFReadMap : public CReadMap
+class CSMFReadMap : public CReadMap, public CEventClient
 {
+public:
+	// CEventClient interface
+	int GetReadAllyTeam() const { return AllAccessTeam; }
+	bool WantsEvent(const std::string& eventName) {
+		return (eventName == "SunChanged");
+	}
+
+	void SunChanged(const float3& sunDir);
+
 public:
 	CR_DECLARE(CSMFReadMap)
 
@@ -18,24 +30,22 @@ public:
 
 	void UpdateShadingTexture();
 	void UpdateHeightMapUnsynced(const HeightMapUpdate&);
-	inline void UpdateShadingTexPart(int y, int x1, int y1, int xsize, unsigned char *pixels);
 
-	inline unsigned int GetDetailTexture() const { return detailTex; }
-	inline unsigned int GetShadingTexture() const { return shadingTex; }
-	inline unsigned int GetNormalsTexture() const { return normalsTex; }
-	inline unsigned int GetSpecularTexture() const { return specularTex; }
-	inline unsigned int GetGrassShadingTexture() const { return grassShadingTex; }
-	inline unsigned int GetSplatDetailTexture() const { return splatDetailTex; }
-	inline unsigned int GetSplatDistrTexture() const { return splatDistrTex; }
-	inline unsigned int GetSkyReflectModTexture() const { return skyReflectModTex; }
-	inline unsigned int GetDetailNormalTexture() const { return detailNormalTex; }
-	inline unsigned int GetLightEmissionTexture() const { return lightEmissionTex; }
+	unsigned int GetDetailTexture() const { return detailTex; }
+	unsigned int GetShadingTexture() const { return shadingTex; }
+	unsigned int GetNormalsTexture() const { return normalsTex; }
+	unsigned int GetSpecularTexture() const { return specularTex; }
+	unsigned int GetGrassShadingTexture() const { return grassShadingTex; }
+	unsigned int GetSplatDetailTexture() const { return splatDetailTex; }
+	unsigned int GetSplatDistrTexture() const { return splatDistrTex; }
+	unsigned int GetSkyReflectModTexture() const { return skyReflectModTex; }
+	unsigned int GetDetailNormalTexture() const { return detailNormalTex; }
+	unsigned int GetLightEmissionTexture() const { return lightEmissionTex; }
 
 	void DrawMinimap() const;
 	void GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize);
 
 	void NewGroundDrawer();
-	inline CBaseGroundDrawer* GetGroundDrawer();
 
 	int GetNumFeatureTypes();
 	int GetNumFeatures();
@@ -59,6 +69,17 @@ public:
 	bool HaveSpecularLighting() const { return haveSpecularLighting; }
 	bool HaveSplatTexture() const { return haveSplatTexture; }
 
+private:
+	inline void UpdateShadingTexPart(int idx1, int idx2, unsigned char* dst) const;
+	inline CBaseGroundDrawer* GetGroundDrawer();
+
+	inline const float GetCenterHeightUnsynced(const int& x, const int& y) const;
+
+	inline float DiffuseSunCoeff(const int& x, const int& y) const;
+	inline float3 GetLightValue(const int& x, const int& y) const;
+	void ParseSMD(std::string filename);
+
+public:
 	// constants
 	static const int tileScale     =   4;
 	static const int bigSquareSize = 128; // 32 * tileScale
@@ -74,6 +95,8 @@ public:
 	int mapSizeZ;
 	int maxHeightMapIdx;
 	int heightMapSizeX;
+
+	int2 normalTexSize;
 
 protected:
 	CSMFMapFile file;
@@ -95,10 +118,6 @@ protected:
 
 	unsigned char waterHeightColors[1024 * 4];
 
-	float DiffuseSunCoeff(const int& x, const int& y) const;
-	float3 GetLightValue(const int& x, const int& y) const;
-	void ParseSMD(std::string filename);
-
 	CSMFGroundDrawer* groundDrawer;
 
 private:
@@ -107,9 +126,9 @@ private:
 	std::vector<float> cornerHeightMapUnsynced;
 #endif
 
-	std::vector<unsigned char> shadingTexPixelRow;
-	unsigned int shadingTexUpdateIter;
-	unsigned int shadingTexUpdateRate;
+	std::vector<unsigned char> shadingTexBuffer;
+	bool shadingTexUpdateNeeded;
+	int shadingTexUpdateProgress;
 
 	float anisotropy;
 };

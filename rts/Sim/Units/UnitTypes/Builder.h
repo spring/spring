@@ -42,7 +42,6 @@ public:
 	void Update();
 	void SlowUpdate();
 	void DependentDied(CObject* o);
-	virtual void DeleteDeathDependence(CObject* o, DependenceType dep);
 
 	bool StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitstance);
 	float CalculateBuildTerraformCost(BuildInfo& buildInfo);

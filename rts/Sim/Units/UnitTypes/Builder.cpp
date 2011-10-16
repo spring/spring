@@ -322,7 +322,7 @@ void CBuilder::Update()
 
 						if (!this->unitDef->canBeAssisted) {
 							u->soloBuilder = this;
-							u->AddDeathDependence(this);
+							u->AddDeathDependence(this, DEPENDENCE_BUILDER);
 						}
 						u->health *= 0.05f;
 
@@ -404,7 +404,7 @@ void CBuilder::SetRepairTarget(CUnit* target)
 	TempHoldFire();
 
 	curBuild=target;
-	AddDeathDependence(curBuild);
+	AddDeathDependence(curBuild, DEPENDENCE_BUILD);
 
 	if (!target->groundLevelled) {
 		//resume levelling the ground
@@ -442,7 +442,7 @@ void CBuilder::SetReclaimTarget(CSolidObject* target)
 
 	reclaimingUnit = !!recUnit;
 	curReclaim=target;
-	AddDeathDependence(curReclaim);
+	AddDeathDependence(curReclaim, DEPENDENCE_RECLAIM);
 
 	SetBuildStanceToward(target->pos);
 }
@@ -457,7 +457,7 @@ void CBuilder::SetResurrectTarget(CFeature* target)
 	TempHoldFire();
 
 	curResurrect = target;
-	AddDeathDependence(curResurrect);
+	AddDeathDependence(curResurrect, DEPENDENCE_RESURRECT);
 
 	SetBuildStanceToward(target->pos);
 }
@@ -472,7 +472,7 @@ void CBuilder::SetCaptureTarget(CUnit* target)
 	TempHoldFire();
 
 	curCapture = target;
-	AddDeathDependence(curCapture);
+	AddDeathDependence(curCapture, DEPENDENCE_CAPTURE);
 
 	SetBuildStanceToward(target->pos);
 }
@@ -564,7 +564,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitst
 
 		if (u != NULL && u->unitDef == buildInfo.def && unitDef->canAssist) {
 			curBuild = u;
-			AddDeathDependence(u);
+			AddDeathDependence(u, DEPENDENCE_BUILD);
 			SetBuildStanceToward(buildInfo.pos);
 			return true;
 		}
@@ -613,9 +613,9 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitst
 
 	if (!this->unitDef->canBeAssisted) {
 		b->soloBuilder = this;
-		b->AddDeathDependence(this);
+		b->AddDeathDependence(this, DEPENDENCE_BUILDER);
 	}
-	AddDeathDependence(b);
+	AddDeathDependence(b, DEPENDENCE_BUILD);
 	curBuild=b;
 
 	/* The ground isn't going to be terraformed.
@@ -717,7 +717,7 @@ void CBuilder::HelpTerraform(CBuilder* unit)
 	StopBuild(false);
 
 	helpTerraform=unit;
-	AddDeathDependence(helpTerraform);
+	AddDeathDependence(helpTerraform, DEPENDENCE_TERRAFORM);
 
 	SetBuildStanceToward(unit->terraformCenter);
 }
@@ -740,38 +740,4 @@ void CBuilder::CreateNanoParticle(const float3& goal, float radius, bool inverse
 
 	// unsynced
 	ph->AddNanoParticle(weaponPos, goal, unitDef, team, radius, inverse, highPriority);
-}
-
-
-void CBuilder::DeleteDeathDependence(CObject* o, DependenceType dep) {
-	/* curBuild, lastAttacker, userTarget etc. are NOT mutually exclusive, 
-	   and we can therefore only call CUnit::DeleteDeathDependence if we are
-	   certain that no references to the object in question still exist
-	*/
-	switch(dep) {
-		case DEPENDENCE_ATTACKER:
-		case DEPENDENCE_BUILDER:
-		case DEPENDENCE_TARGET:
-		case DEPENDENCE_TRANSPORTEE:
-		case DEPENDENCE_TRANSPORTER:
-			if (o == curBuild || o == curCapture || o == curReclaim || o == curResurrect || o == helpTerraform) return;
-			break;
-		case DEPENDENCE_BUILD:
-			if (o == curCapture || o == curReclaim || o == helpTerraform) return;
-			break;
-		case DEPENDENCE_CAPTURE:
-			if (o == curBuild || o == curReclaim || o == helpTerraform) return;
-			break;
-		case DEPENDENCE_RECLAIM:
-			if (o == curBuild || o == curCapture || o == curResurrect || o == helpTerraform) return;
-			break;
-		case DEPENDENCE_RESURRECT:
-			if (o == curReclaim) return;
-			break;
-		case DEPENDENCE_TERRAFORM:
-			if (o == curBuild || o == curCapture || o == curReclaim) return;
-			break;
-	}
-
-	CUnit::DeleteDeathDependence(o, dep);
 }

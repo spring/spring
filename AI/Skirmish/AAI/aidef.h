@@ -25,6 +25,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Vec2.h"
 #include "System/maindefines.h"
+#include "System/SafeCStrings.h"
 #include "System/Util.h"
 #include "AAIConfig.h"
 #include "AIExport.h"

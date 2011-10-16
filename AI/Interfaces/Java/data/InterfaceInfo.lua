@@ -42,6 +42,10 @@ local infos = {
 		key    = 'supportedLanguages',
 		value  = 'Java (possily Groovy, JRuby, ...)',
 	},
+	{
+		key    = 'supportsLookup',
+		value  = 'false',
+	},
 }
 
 return infos
