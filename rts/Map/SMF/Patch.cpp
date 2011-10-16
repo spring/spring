@@ -138,38 +138,43 @@ void Patch::RecursRender(TriTreeNode *tri, int leftX, int leftY, int rightX,
 	
 	if ( tri->LeftChild == NULL || maxdepth>12 )  // All non-leaf nodes have both children, so just check for one
 	{
-		#ifndef ROAM_VBO
+	#ifndef ROAM_VBO
 		superfloat[lend]=(apexX+m_WorldX)*8;
 		superfloat[lend + 1]= heightData[(apexY+m_WorldY) * (mapx+1) + apexX+m_WorldX];
 		if (waterdrawn && superfloat[lend+1]<0) superfloat[lend+1] *=2;
 		superfloat[lend+2]=(apexY+m_WorldY)*8;
 		lend+=3;
+		
 		//push left
 		superfloat[lend]=(leftX+m_WorldX)*8;
 		superfloat[lend + 1]= heightData[(leftY+m_WorldY) * (mapx+1) + leftX+m_WorldX];
 		if (waterdrawn && superfloat[lend+1]<0) superfloat[lend+1] *=2;
 		superfloat[lend+2]=(leftY+m_WorldY)*8;
 		lend+=3;
+		
 		//push right
 		superfloat[lend]=(rightX+m_WorldX)*8;
 		superfloat[lend + 1]= heightData[(rightY+m_WorldY) * (mapx+1) + rightX+m_WorldX];
 		if (waterdrawn && superfloat[lend+1]<0) superfloat[lend+1] *=2;
 		superfloat[lend+2]=(rightY+m_WorldY)*8;
 		lend+=3;
-		#else
-				//roamvbo
-		superint[rend++]=apexX	+(PATCH_SIZE+1)*apexY	;
-		superint[rend++]=leftX	+(PATCH_SIZE+1)*leftY	;
-		superint[rend++]=rightX	+(PATCH_SIZE+1)*rightY	;
-		#endif
+	#else
+		//roamvbo
+		superint[rend++] = apexX  + apexY  * (PATCH_SIZE + 1);
+		superint[rend++] = leftX  + leftY  * (PATCH_SIZE + 1);
+		superint[rend++] = rightX + rightY * (PATCH_SIZE + 1);
+		
+		assert(superint[rend - 3] < (PATCH_SIZE+1)*(PATCH_SIZE+1));
+		assert(superint[rend - 2] < (PATCH_SIZE+1)*(PATCH_SIZE+1));
+		assert(superint[rend - 1] < (PATCH_SIZE+1)*(PATCH_SIZE+1));
+	#endif
 	} 
 	else
 	{
 		int centerX = (leftX + rightX) >> 1; // Compute X coordinate of center of Hypotenuse
 		int centerY = (leftY + rightY) >> 1; // Compute Y coord...
-		RecursRender(tri->LeftChild, apexX, apexY, leftX, leftY, centerX,	centerY, n,dir,m_depth,waterdrawn);
+		RecursRender(tri->LeftChild, apexX, apexY, leftX, leftY, centerX, centerY, n,dir,m_depth,waterdrawn);
 		RecursRender(tri->RightChild, rightX, rightY, apexX, apexY, centerX,centerY, n,dir,m_depth,waterdrawn);
-	
 	}
 }
 
@@ -206,9 +211,9 @@ unsigned char Patch::RecursComputeVariance(int leftX, int leftY,
 	//    only calculate variance down to a 4x4 block
 	if ((abs(leftX - rightX) >= 4) || (abs(leftY - rightY) >= 4)) {
 		// Final Variance for this node is the max of it's own variance and that of it's children.
-		myVariance	=
-				MAX( myVariance, RecursComputeVariance( apexX, apexY, apexZ, leftX, leftY, leftZ, centerX, centerY, centerZ, node<<1 ) );
-		myVariance=
+		myVariance =
+			MAX( myVariance, RecursComputeVariance( apexX, apexY, apexZ, leftX, leftY, leftZ, centerX, centerY, centerZ, node<<1 ) );
+		myVariance =
 			MAX( myVariance, RecursComputeVariance( rightX, rightY, rightZ, apexX, apexY, apexZ, centerX, centerY, centerZ, 1+(node<<1)) );
 	}
 	
@@ -265,20 +270,26 @@ void Patch::Init(int worldX, int worldZ, const float *hMap, int mx, float maxH, 
 			vbuf[index++] = z * 8;
 		}
 	}
-	glGenBuffersARB(1,&vertexBuffer);
+
+	glGenBuffersARB(1, &vertexBuffer);
+	glGenBuffersARB(1, &vertexIndexBuffer);
+
+	// Fill vertexBuffer
 	glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);
-	glBufferDataARB(GL_ARRAY_BUFFER_ARB,3*(PATCH_SIZE+1)*(PATCH_SIZE+1),vbuf,GL_STATIC_DRAW_ARB );
+	glBufferDataARB(GL_ARRAY_BUFFER_ARB, 3*(PATCH_SIZE+1)*(PATCH_SIZE+1), vbuf, GL_STATIC_DRAW_ARB);
+	/*
 	int bufferSize = 0;
 	glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_SIZE_ARB, &bufferSize);
 	if(index != bufferSize) {
+		glDeleteBuffersARB(1, &vertexBuffer);
 		glDeleteBuffersARB(1, &vertexIndexBuffer);
 		LOG("[createVBO()] Data size is mismatch with input array\n");
 	}
+	*/
 	glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
-	glGenBuffersARB(1,&vertexIndexBuffer);
-
-	glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 	delete[] vbuf;
+
+	//glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 #endif
 }
 
@@ -367,7 +378,7 @@ void Patch::Tessellate(float cx, float cy, float cz, int viewradius)
 // Render the mesh.
 //
 
-void Patch::DrawTriArray(CSMFGroundDrawer * parent)
+void Patch::DrawTriArray(CSMFGroundDrawer* parent)
 {
 	//if (m_WorldX==0 && m_WorldY==0 && parent->shc %1000==50){
 	//	for(int i=0;i<=lend;i+=9){
@@ -411,25 +422,25 @@ void Patch::DrawTriArray(CSMFGroundDrawer * parent)
 
 int Patch::Render(CSMFGroundDrawer* parent, int n, bool waterdrawn)
 {
-
-	lend=0;
-	rend=0;
+	lend = 0;
+	rend = 0;
 
 	RecursRender(&m_BaseLeft, 0, PATCH_SIZE, PATCH_SIZE, 0, 0, 0, n, true,0,waterdrawn);
 
 	RecursRender(&m_BaseRight, PATCH_SIZE, 0, 0, PATCH_SIZE, PATCH_SIZE,
-			PATCH_SIZE, n,false,0,waterdrawn);
+			PATCH_SIZE, n, false, 0, waterdrawn);
 	//assert(rend<200000);
 	//assert(rend>-1);
 
 
 #ifdef ROAM_DL
 	if (triList!=0) glDeleteLists(triList,1);
-	triList=glGenLists(1);
+	triList = glGenLists(1);
 	glNewList(triList,GL_COMPILE);
+		//FIXME use VA!
 		glBegin(GL_TRIANGLES);
 		for (int i=0; i<lend;i+=3){
-			glVertex3f(superfloat[i],superfloat[i+1],superfloat[i+2]);
+			glVertex3f(superfloat[i], superfloat[i+1], superfloat[i+2]);
 		}
 		glEnd();
 	glEndList();
@@ -437,8 +448,10 @@ int Patch::Render(CSMFGroundDrawer* parent, int n, bool waterdrawn)
 
 #ifdef ROAM_VBO
 	//roamvbo
-	glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB,vertexIndexBuffer);
-	glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB,rend,superint,GL_DYNAMIC_DRAW_ARB);
+	glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, vertexIndexBuffer);
+	glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, rend, superint, GL_DYNAMIC_DRAW_ARB);
+	
+	/*
 	int bufferSize = 0;
 	glGetBufferParameterivARB(GL_ELEMENT_ARRAY_BUFFER_ARB, GL_BUFFER_SIZE_ARB, &bufferSize);
 	if(rend != bufferSize) {
@@ -448,6 +461,7 @@ int Patch::Render(CSMFGroundDrawer* parent, int n, bool waterdrawn)
 	//for (int i=0;i<rend;i+=3){
 		//LOG( "VBO" << superint[i] <<" " <<superint[i+1]<< " "<< superint[i+2] << "\n";
 	//}
+	*/
 
 	glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 #endif	
