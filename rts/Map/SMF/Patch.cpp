@@ -11,14 +11,12 @@
 // Much help and hints provided by Seumas McNally, LDA.
 //
 
-
-
-#include "Rendering/GL/VertexArray.h"
+#include "Patch.h"
 #include "SMFGroundDrawer.h"
 #include "Landscape.h"
 #include "Game/Camera.h"
-//#include "System/LogOutput.h"
 #include "System/Log/ILog.h"
+
 // -------------------------------------------------------------------------------------------------
 //	PATCH CLASS
 
