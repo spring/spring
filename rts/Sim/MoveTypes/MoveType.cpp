@@ -111,7 +111,7 @@ void AMoveType::DependentDied(CObject* o)
 
 void AMoveType::ReservePad(CAirBaseHandler::LandingPad* lp)
 {
-	AddDeathDependence(lp);
+	AddDeathDependence(lp, DEPENDENCE_LANDINGPAD);
 	SetGoal(lp->GetUnit()->pos);
 
 	reservedPad = lp;

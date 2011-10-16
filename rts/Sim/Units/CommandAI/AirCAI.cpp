@@ -510,11 +510,10 @@ void CAirCAI::ExecuteAttack(Command& c)
 			CUnit* targetUnit = uh->GetUnit(c.params[0]);
 
 			if (targetUnit != NULL && targetUnit != owner) {
-				orderTarget = targetUnit;
-				owner->AttackUnit(orderTarget, false);
-				AddDeathDependence(orderTarget, DEPENDENCE_ORDERTARGET);
+				SetOrderTarget(targetUnit);
+				owner->AttackUnit(targetUnit, false);
 				inCommand = true;
-				SetGoal(orderTarget->pos, owner->pos, cancelDistance);
+				SetGoal(targetUnit->pos, owner->pos, cancelDistance);
 			} else {
 				FinishCommand();
 				return;
@@ -547,8 +546,7 @@ void CAirCAI::ExecuteAreaAttack(Command& c)
 			inCommand = false;
 		if (orderTarget && orderTarget->pos.SqDistance2D(pos) > Square(radius)) {
 			inCommand = false;
-			DeleteDeathDependence(orderTarget, DEPENDENCE_ORDERTARGET);
-			orderTarget = 0;
+			SetOrderTarget(NULL);
 		}
 		if (owner->commandShotCount < 0) {
 			if ((c.params.size() == 4) && (commandQue.size() > 1)) {
@@ -580,10 +578,9 @@ void CAirCAI::ExecuteAreaAttack(Command& c)
 			} else {
 				// note: the range of randFloat() is inclusive of 1.0f
 				const unsigned int idx(gs->randFloat() * (enemyUnitIDs.size() - 1));
-
-				orderTarget = uh->GetUnitUnsafe(enemyUnitIDs[idx]);
-				owner->AttackUnit(orderTarget, false);
-				AddDeathDependence(orderTarget, DEPENDENCE_ORDERTARGET);
+				CUnit* targetUnit = uh->GetUnitUnsafe(enemyUnitIDs[idx]);
+				SetOrderTarget(targetUnit);
+				owner->AttackUnit(targetUnit, false);
 			}
 		}
 	}

@@ -22,9 +22,16 @@ struct SRectangle {
 		}
 	}
 
-
-	int x1, z1;
-	int x2, z2;
+	int x1;
+	union {
+		int z1;
+		int y1;
+	};
+	int x2;
+	union {
+		int z2;
+		int y2;
+	};
 };
 
 #endif // RECTANGLE_H

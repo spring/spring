@@ -55,8 +55,7 @@ static inline void file_write(const T* value, FILE* file)
 }
 
 GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrainMap* TM)
-	: cb(cb)
-	, l(l)
+	: l(l)
 {
 //	l = logfile;
 	*l<<"\n Loading the Resource-Map ...";
@@ -258,6 +257,11 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrain
 		}
 		if( !useResourceFile )
 			*l<<"\n  A change has been detected in the map/mod, the resource data will be reloaded.";
+	}
+
+	// get absolute file name
+	if (!cRAI::LocateFile(cb, relResourceFileName, resourceFileName_w, true)) {
+		resourceFileName_w = "";
 	}
 
 	if( useResourceFile || cb->GetCurrentFrame() == 0 )
@@ -739,13 +743,11 @@ GlobalResourceMap::~GlobalResourceMap()
 {
 	if( saveResourceFile )
 	{
-		string resourceFileName_w;
 		FILE* resourceFile_w = NULL;
-		// get absolute file name
-		if (cRAI::LocateFile(cb, relResourceFileName, resourceFileName_w, true)) {
-			resourceFile_w = fopen(resourceFileName_w.c_str(), "wb");
-		} else {
+		if (resourceFileName_w.empty()) {
 			throw 12;
+		} else {
+			resourceFile_w = fopen(resourceFileName_w.c_str(), "wb");
 		}
 
 		try

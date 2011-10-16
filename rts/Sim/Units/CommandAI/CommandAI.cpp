@@ -308,10 +308,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 CCommandAI::~CCommandAI()
 {
-	if (orderTarget) {
-		DeleteDeathDependence(orderTarget, DEPENDENCE_ORDERTARGET);
-		orderTarget = 0;
-	}
+	SetOrderTarget(NULL);
 	ClearCommandDependencies();
 }
 
@@ -720,10 +717,7 @@ void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 			commandQue.clear();
 		}
 		inCommand=false;
-		if(orderTarget){
-			DeleteDeathDependence(orderTarget, DEPENDENCE_ORDERTARGET);
-			orderTarget=0;
-		}
+		SetOrderTarget(NULL);
 	}
 
 	AddCommandDependency(c);
@@ -929,7 +923,7 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 		inCommand = false;
 		targetDied = false;
 		unimportantMove = false;
-		orderTarget = NULL;
+		SetOrderTarget(NULL);
 		const Command& cmd = queue->front();
 		eoh->CommandFinished(*owner, cmd);
 		eventHandler.UnitCmdDone(owner, cmd.GetID(), cmd.tag);
@@ -1216,11 +1210,7 @@ void CCommandAI::ExecuteAttack(Command& c)
 			if (targetUnit != NULL && targetUnit != owner) {
 				owner->AttackUnit(targetUnit, c.GetID() == CMD_MANUALFIRE);
 
-				if (orderTarget)
-					DeleteDeathDependence(orderTarget, DEPENDENCE_ORDERTARGET);
-
-				orderTarget = targetUnit;
-				AddDeathDependence(orderTarget, DEPENDENCE_ORDERTARGET);
+				SetOrderTarget(targetUnit);
 				inCommand = true;
 			} else {
 				FinishCommand();
@@ -1311,25 +1301,21 @@ int CCommandAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 
 void CCommandAI::AddDeathDependence(CObject* o, DependenceType dep) {
 	if (dep == DEPENDENCE_COMMANDQUE) {
-		if (commandDeathDependences.insert(o).second && o != orderTarget);
-			CObject::AddDeathDependence(o);
+		if (commandDeathDependences.insert(o).second) // prevent multiple dependencies for the same object
+			CObject::AddDeathDependence(o, dep);
+		return;
 	}
-	else if (dep == DEPENDENCE_ORDERTARGET) {
-		if (commandDeathDependences.find(o) == commandDeathDependences.end())
-			CObject::AddDeathDependence(o);
-	}
+	CObject::AddDeathDependence(o, dep);
 }
 
 
 void CCommandAI::DeleteDeathDependence(CObject* o, DependenceType dep) {
 	if (dep == DEPENDENCE_COMMANDQUE) {
-		if (commandDeathDependences.erase(o) && o != orderTarget)
-			CObject::DeleteDeathDependence(o);
+		if (commandDeathDependences.erase(o))
+			CObject::DeleteDeathDependence(o, dep);
+		return;
 	}
-	else if (dep == DEPENDENCE_ORDERTARGET) {
-		if (commandDeathDependences.find(o) == commandDeathDependences.end())
-			CObject::DeleteDeathDependence(o);
-	}
+	CObject::DeleteDeathDependence(o,dep);
 }
 
 
@@ -1384,7 +1370,7 @@ void CCommandAI::FinishCommand()
 	inCommand = false;
 	targetDied = false;
 	unimportantMove = false;
-	orderTarget = 0;
+	SetOrderTarget(NULL);
 	eoh->CommandFinished(*owner, cmd);
 	eventHandler.UnitCmdDone(owner, cmdID, cmdTag);
 

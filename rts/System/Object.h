@@ -4,24 +4,74 @@
 #define OBJECT_H
 
 #include <list>
+#include <map>
 #include "System/creg/creg_cond.h"
 
 template<typename T>
-void ListErase(std::list<T>& list, const T& what)
+bool ListErase(std::list<T>& list, const T& what)
 {
 	typename std::list<T>::iterator it;
 	for (it = list.begin(); it != list.end(); ++it) {
 		if (*it == what) {
 			list.erase(it);
+			return true;
+		}
+	}
+	return false;
+}
+
+template<typename T>
+bool ListInsert(std::list<T>& list, const T& what)
+{
+	bool ret = true;
+#ifndef NDEBUG
+	typename std::list<T>::iterator it;
+	for (it = list.begin(); it != list.end(); ++it) {
+		if (*it == what) {
+			ret = false;
 			break;
 		}
 	}
+#endif
+	list.insert(list.end(), what);
+	return ret;
 }
 
 class CObject
 {
 public:
 	CR_DECLARE(CObject);
+
+	enum DependenceType {
+		DEPENDENCE_ATTACKER,
+		DEPENDENCE_BUILD,
+		DEPENDENCE_BUILDER,
+		DEPENDENCE_CAPTURE,
+		DEPENDENCE_COBTHREAD,
+		DEPENDENCE_COMMANDQUE,
+		DEPENDENCE_DECOYTARGET,
+		DEPENDENCE_INCOMING,
+		DEPENDENCE_INTERCEPT,
+		DEPENDENCE_INTERCEPTTARGET,
+		DEPENDENCE_LANDINGPAD,
+		DEPENDENCE_LASTCOLWARN,
+		DEPENDENCE_LIGHT,
+		DEPENDENCE_ORDERTARGET,
+		DEPENDENCE_RECLAIM,
+		DEPENDENCE_REPULSE,
+		DEPENDENCE_REPULSED,
+		DEPENDENCE_RESURRECT,
+		DEPENDENCE_SELECTED,
+		DEPENDENCE_SOLIDONTOP,
+		DEPENDENCE_TARGET,
+		DEPENDENCE_TARGETUNIT,
+		DEPENDENCE_TERRAFORM,
+		DEPENDENCE_TRANSPORTEE,
+		DEPENDENCE_TRANSPORTER,
+		DEPENDENCE_WAITCMD,
+		DEPENDENCE_WEAPON,
+		DEPENDENCE_WEAPONTARGET
+	};
 
 	CObject();
 	virtual ~CObject();
@@ -30,9 +80,9 @@ public:
 	virtual void Detach();
 
 	/// Request to not inform this when obj dies
-	void DeleteDeathDependence(CObject* obj);
+	virtual void DeleteDeathDependence(CObject* obj, DependenceType dep);
 	/// Request to inform this when obj dies
-	void AddDeathDependence(CObject* obj);
+	virtual void AddDeathDependence(CObject* obj, DependenceType dep);
 	/// Called when an object died, that this is interested in
 	virtual void DependentDied(CObject* obj);
 /*
@@ -72,10 +122,14 @@ public:
 */
 protected:
 	bool detached;
+	const std::list<CObject*>& GetListeners(const DependenceType dep) { return listeners[dep]; }
+	const std::map<DependenceType, std::list<CObject*> >& GetAllListeners() { return listeners; }
+	const std::list<CObject*>& GetListening(const DependenceType dep) { return listening[dep]; }
+	const std::map<DependenceType, std::list<CObject*> >& GetAllListening() { return listening; }
 
 private:
-	std::list<CObject*> listeners;
-	std::list<CObject*> listening;
+	std::map<DependenceType, std::list<CObject*> > listeners;
+	std::map<DependenceType, std::list<CObject*> > listening;
 };
 
 #endif /* OBJECT_H */

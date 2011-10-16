@@ -70,6 +70,7 @@ public:
 
 	void UpdateCamRestraints(CCamera* camera);
 
+public:
 	bool wireframe;
 	bool advShading;
 

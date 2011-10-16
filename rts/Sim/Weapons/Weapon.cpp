@@ -473,7 +473,7 @@ bool CWeapon::AttackGround(float3 pos, bool userTarget)
 	if (!TryTarget(pos,userTarget, 0))
 		return false;
 	if (targetUnit) {
-		DeleteDeathDependence(targetUnit);
+		DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 		targetUnit = NULL;
 	}
 
@@ -530,7 +530,7 @@ bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 		return false;
 
 	if (targetUnit) {
-		DeleteDeathDependence(targetUnit);
+		DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 		targetUnit = NULL;
 	}
 
@@ -539,7 +539,7 @@ bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 	targetUnit = unit;
 	targetPos = tempTargetPos;
 
-	AddDeathDependence(targetUnit);
+	AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 	avoidTarget = false;
 	return true;
 }
@@ -548,7 +548,7 @@ bool CWeapon::AttackUnit(CUnit* unit, bool userTarget)
 void CWeapon::HoldFire()
 {
 	if (targetUnit) {
-		DeleteDeathDependence(targetUnit);
+		DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 		targetUnit = NULL;
 	}
 	targetType = Target_None;
@@ -671,7 +671,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	if (slavedTo) {
 		// use targets from the thing we are slaved to
 		if (targetUnit) {
-			DeleteDeathDependence(targetUnit);
+			DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 			targetUnit = NULL;
 		}
 		targetType = Target_None;
@@ -686,7 +686,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 				targetUnit = slavedTo->targetUnit;
 				targetPos = tp;
 
-				AddDeathDependence(targetUnit);
+				AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 			}
 		} else if (slavedTo->targetType == Target_Pos) {
 			if (TryTarget(slavedTo->targetPos, false, 0)) {
@@ -739,14 +739,14 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 
 			if (TryTarget(nextTargetPos, false, nextTargetUnit)) {
 				if (targetUnit) {
-					DeleteDeathDependence(targetUnit);
+					DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 				}
 
 				targetType = Target_Unit;
 				targetUnit = nextTargetUnit;
 				targetPos = nextTargetPos;
 
-				AddDeathDependence(targetUnit);
+				AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 				break;
 			}
 		}
@@ -788,10 +788,10 @@ void CWeapon::DependentDied(CObject *o)
 bool CWeapon::HaveFreeLineOfFire(const float3& pos, const float3& dir, float length, const CUnit* target) const {
 	CUnit* unit = NULL;
 	CFeature* feature = NULL;
-	const float g = TraceRay::TraceRay(pos, dir, length, collisionFlags, owner, unit, feature);
 
-	// true iff nothing (unit, feature, ground) blocks
-	// the ray of length <length> from <pos> along <dir>
+	const float g = TraceRay::TraceRay(pos, dir, length, ~Collision::NOGROUND, owner, unit, feature);
+
+	// true iff ground does not block the ray of length <length> from <pos> along <dir>
 	return ((g <= 0.0f || g >= (length * 0.9f)) || (unit == target));
 }
 
