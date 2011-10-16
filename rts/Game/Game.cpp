@@ -128,6 +128,7 @@
 #include "UI/KeyCodes.h"
 #include "UI/MiniMap.h"
 #include "UI/MouseHandler.h"
+#include "UI/TUIOHandler.h"
 #include "UI/QuitBox.h"
 #include "UI/ResourceBar.h"
 #include "UI/SelectionKeyHandler.h"
@@ -180,6 +181,8 @@ CONFIG(int, ShowPlayerInfo).defaultValue(1);
 CONFIG(float, GuiOpacity).defaultValue(0.8f);
 CONFIG(std::string, InputTextGeo).defaultValue("");
 CONFIG(bool, LuaModUICtrl).defaultValue(true);
+CONFIG(bool, EnableTuioTouchEvents).defaultValue(true)
+    .description("Whether or not to listen for tuio touch events.");
 
 
 CGame* game = NULL;
@@ -351,7 +354,7 @@ CGame::~CGame()
 	// case the game did not do so through Lua.
 	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
 		teamHandler->Team(t)->Died(false);
-	} 
+	}
 
 	CLoadScreen::DeleteInstance(); // make sure to halt loading, otherwise crash :)
 
@@ -382,6 +385,7 @@ CGame::~CGame()
 	SafeDelete(selectionKeys); // CSelectionKeyHandler*
 	SafeDelete(luaInputReceiver);
 	SafeDelete(mouse); // CMouseHandler*
+    SafeDelete(tuio);
 	SafeDelete(inMapDrawerModel);
 	SafeDelete(inMapDrawer);
 
@@ -623,6 +627,13 @@ void CGame::LoadInterface()
 		camera = new CCamera();
 		cam2 = new CCamera();
 		mouse = new CMouseHandler();
+
+		bool startTuio = configHandler->GetBool("EnableTuioTouchEvents");
+		if(startTuio)
+		{
+            tuio = new CTuioHandler();
+		}
+
 		camHandler = new CCameraHandler();
 	}
 
@@ -1405,7 +1416,7 @@ void CGame::StartPlaying()
 	}
 
 	eventHandler.GameStart();
-	
+
 	// This is a hack!!!
 	// Before 0.83 Lua had its GameFrame callin before gs->frameNum got updated,
 	// what caused it to have a `gameframe0` while the engine started with 1.

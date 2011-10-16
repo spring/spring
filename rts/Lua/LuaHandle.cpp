@@ -19,6 +19,7 @@
 #include "Game/UI/KeySet.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MiniMap.h"
+#include "Game/UI/TUIOHandler.h"
 #include "Rendering/GlobalRendering.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -2305,7 +2306,6 @@ bool CLuaHandle::MousePress(int x, int y, int button)
 	return retval;
 }
 
-
 int CLuaHandle::MouseRelease(int x, int y, int button)
 {
 	if (!CheckModUICtrl()) {
@@ -2367,6 +2367,162 @@ bool CLuaHandle::MouseMove(int x, int y, int dx, int dy, int button)
 	return retval;
 }
 
+bool CLuaHandle::AddCursor(TUIO::TuioCursor* tcur)
+{
+    if (!CheckModUICtrl()) {
+		return false;
+	}
+
+	shortint2 pos = toWindowSpace(tcur);
+	int x = pos.x;
+	int y = pos.y;
+
+	if(!isInWindowSpace(pos))
+	{
+	    return false;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 5);
+
+	static const LuaHashString cmdStr("MainAddCursor");
+
+	if (!PushUnsyncedCallIn(L, cmdStr)) {
+		return false; // the call is not defined, do not take the event
+	}
+
+    lua_pushnumber(L, tcur->getCursorID());
+	lua_pushnumber(L, x);
+	lua_pushnumber(L, y);
+
+	// call the function
+	if (!RunCallInUnsynced(cmdStr, 3, 1)) {
+		return false;
+	}
+
+	if (!lua_isboolean(L, -1)) {
+		lua_pop(L, 1);
+		return false;
+	}
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
+}
+
+void CLuaHandle::UpdateCursor(TUIO::TuioCursor* tcur)
+{
+     if (!CheckModUICtrl()) {
+		return;
+	}
+
+	shortint2 pos = toWindowSpace(tcur);
+	int x = pos.x;
+	int y = pos.y;
+
+	int dx = 0;
+	int dy = 0;
+
+    if(tcur->getPath().size() > 1)
+    {
+        shortint2 oldPos = toWindowSpace(&(*(++tcur->getPath().rbegin())));
+
+        int ox = oldPos.x;
+        int oy = oldPos.y;
+
+        dx = x - ox;
+        dy = y - oy;
+    }
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 7);
+
+	static const LuaHashString cmdStr("MainUpdateCursor");
+
+	if (!PushUnsyncedCallIn(L, cmdStr)) {
+		return; // the call is not defined, do not take the event
+	}
+
+    lua_pushnumber(L, tcur->getCursorID());
+	lua_pushnumber(L, x);
+	lua_pushnumber(L, y);
+	lua_pushnumber(L, dx);
+	lua_pushnumber(L, dy);
+
+	// call the function
+	if (!RunCallInUnsynced(cmdStr, 5, 0)) {
+		return;
+	}
+}
+
+void CLuaHandle::RemoveCursor(TUIO::TuioCursor* tcur)
+{
+    if (!CheckModUICtrl()) {
+		return;
+	}
+
+	shortint2 pos = toWindowSpace(tcur);
+	int x = pos.x;
+	int y = pos.y;
+
+	int dx = 0;
+	int dy = 0;
+
+    if(tcur->getPath().size() > 1)
+    {
+        shortint2 oldPos = toWindowSpace(&(*(++tcur->getPath().rbegin())));
+
+        int ox = oldPos.x;
+        int oy = oldPos.y;
+
+        dx = x - ox;
+        dy = y - oy;
+    }
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 7);
+
+	static const LuaHashString cmdStr("MainRemoveCursor");
+
+	if (!PushUnsyncedCallIn(L, cmdStr)) {
+		return; // the call is not defined, do not take the event
+	}
+
+    lua_pushnumber(L, tcur->getCursorID());
+	lua_pushnumber(L, x);
+	lua_pushnumber(L, y);
+	lua_pushnumber(L, dx);
+	lua_pushnumber(L, dy);
+
+	// call the function
+	if (!RunCallInUnsynced(cmdStr, 5, 0)) {
+		return;
+	}
+}
+
+void CLuaHandle::RefreshCursors(TUIO::TuioTime ftime)
+{
+    float seconds = ftime.getTotalMilliseconds() / 1000.0f;
+
+    if (!CheckModUICtrl()) {
+		return;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
+
+	static const LuaHashString cmdStr("MainRefreshCursors");
+
+	if (!PushUnsyncedCallIn(L, cmdStr)) {
+		return; // the call is not defined, do not take the event
+	}
+
+    lua_pushnumber(L, seconds);
+
+	// call the function
+	if (!RunCallInUnsynced(cmdStr, 1, 0)) {
+		return;
+	}
+}
 
 bool CLuaHandle::MouseWheel(bool up, float value)
 {

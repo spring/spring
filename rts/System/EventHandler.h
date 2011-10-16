@@ -6,15 +6,28 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <hash_map>
+#include <hash_set>
+
 
 #include "System/EventClient.h"
 #include "System/EventBatchHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Projectiles/Projectile.h"
+#include "lib/tuio/TuioCursor.h"
 
 class CWeapon;
 struct Command;
+
+struct CEventClient_hash
+{
+    size_t operator()(const CEventClient *p) const
+    {
+        return reinterpret_cast<size_t>(p) ;
+    }
+};
+
 
 class CEventHandler
 {
@@ -151,6 +164,14 @@ class CEventHandler
 		bool MousePress(int x, int y, int button);
 		int  MouseRelease(int x, int y, int button); // return a cmd index, or -1
 		bool MouseWheel(bool up, float value);
+
+		/* tuio updates */
+        bool addTuioCursor(TUIO::TuioCursor *tcur);
+        void updateTuioCursor(TUIO::TuioCursor *tcur);
+        void removeTuioCursor(TUIO::TuioCursor *tcur);
+        void tuioRefresh(TUIO::TuioTime ftime);
+
+
 		bool JoystickEvent(const std::string& event, int val1, int val2);
 		bool IsAbove(int x, int y);
 
@@ -236,6 +257,8 @@ class CEventHandler
 
 	private:
 		CEventClient* mouseOwner;
+		__gnu_cxx::hash_map<int, CEventClient*> activeReceivers;
+        __gnu_cxx::hash_set<CEventClient*, CEventClient_hash> refreshedReceivers;
 
 	private:
 		EventMap eventMap;
@@ -326,6 +349,12 @@ class CEventHandler
 		EventClientList listMousePress;
 		EventClientList listMouseRelease;
 		EventClientList listMouseWheel;
+
+		EventClientList listAddCursor;
+		EventClientList listUpdateCursor;
+		EventClientList listRemoveCursor;
+		EventClientList listRefreshCursors;
+
 		EventClientList listJoystickEvent;
 		EventClientList listIsAbove;
 		EventClientList listGetTooltip;

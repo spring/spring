@@ -13,6 +13,9 @@
 #undef KeyRelease
 #endif
 
+#include "float3.h"
+#include "lib/tuio/TuioCursor.h"
+
 using std::string;
 using std::vector;
 using std::map;
@@ -165,6 +168,14 @@ class CEventClient
 		virtual bool MousePress(int x, int y, int button);
 		virtual int  MouseRelease(int x, int y, int button); // FIXME - bool / void?
 		virtual bool MouseWheel(bool up, float value);
+
+		virtual bool AddCursor(TUIO::TuioCursor* tcur);
+		virtual void UpdateCursor(TUIO::TuioCursor* tcur);
+		virtual void RemoveCursor(TUIO::TuioCursor* tcur);
+		virtual void RefreshCursors(TUIO::TuioTime ftime);
+
+
+
 		virtual bool JoystickEvent(const std::string& event, int val1, int val2);
 		virtual bool IsAbove(int x, int y);
 		virtual std::string GetTooltip(int x, int y);

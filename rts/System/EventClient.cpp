@@ -58,6 +58,12 @@ bool CEventClient::MouseMove(int x, int y, int dx, int dy, int button) { return 
 bool CEventClient::MousePress(int x, int y, int button) { return false; }
 int  CEventClient::MouseRelease(int x, int y, int button) { return -1; } // FIXME - bool / void?
 bool CEventClient::MouseWheel(bool up, float value) { return false; }
+
+bool CEventClient::AddCursor(TUIO::TuioCursor* tcur) {return false;}
+void CEventClient::UpdateCursor(TUIO::TuioCursor* tcur) {}
+void CEventClient::RemoveCursor(TUIO::TuioCursor* tcur) {}
+void CEventClient::RefreshCursors(TUIO::TuioTime ftime) {}
+
 bool CEventClient::JoystickEvent(const std::string& event, int val1, int val2) { return false; }
 bool CEventClient::IsAbove(int x, int y) { return false; }
 std::string CEventClient::GetTooltip(int x, int y) { return ""; }

@@ -20,6 +20,13 @@ class LuaInputReceiver : public CInputReceiver
 		bool MousePress(int x, int y, int button);
 		void MouseMove(int x, int y, int dx, int dy, int button);
 		void MouseRelease(int x, int y, int button);
+
+		/*Tuio Updates*/
+        bool addTuioCursor(TUIO::TuioCursor *tcur);
+        void updateTuioCursor(TUIO::TuioCursor *tcur);
+        void removeTuioCursor(TUIO::TuioCursor *tcur);
+        void tuioRefresh(TUIO::TuioTime ftime);
+
 		bool IsAbove(int x, int y);
 		std::string GetTooltip(int x,int y);
 

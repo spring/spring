@@ -7,6 +7,7 @@
 
 #include "LuaInputReceiver.h"
 #include "System/EventHandler.h"
+#include "System/LogOutput.h"
 
 
 LuaInputReceiver* luaInputReceiver = NULL;
@@ -52,6 +53,26 @@ void LuaInputReceiver::MouseRelease(int x, int y, int button)
 	eventHandler.MouseRelease(x, y, button);
 }
 
+
+bool LuaInputReceiver::addTuioCursor(TUIO::TuioCursor *tcur)
+{
+    return eventHandler.addTuioCursor(tcur);
+}
+
+void LuaInputReceiver::updateTuioCursor(TUIO::TuioCursor *tcur)
+{
+    eventHandler.updateTuioCursor(tcur);
+}
+
+void LuaInputReceiver::removeTuioCursor(TUIO::TuioCursor *tcur)
+{
+    eventHandler.removeTuioCursor(tcur);
+}
+
+void LuaInputReceiver::tuioRefresh(TUIO::TuioTime ftime)
+{
+    eventHandler.tuioRefresh(ftime);
+}
 
 bool LuaInputReceiver::IsAbove(int x, int y)
 {

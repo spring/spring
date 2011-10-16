@@ -34,7 +34,7 @@ void CEventHandler::SetupEvent(const string& eName,
 /******************************************************************************/
 /******************************************************************************/
 
-CEventHandler::CEventHandler()
+CEventHandler::CEventHandler(): refreshedReceivers()
 {
 	mouseOwner = NULL;
 
@@ -109,6 +109,12 @@ CEventHandler::CEventHandler()
 	SETUP_EVENT(MousePress,     MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(MouseRelease,   MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(MouseWheel,     MANAGED_BIT | UNSYNCED_BIT);
+
+	SETUP_EVENT(AddCursor,      MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(UpdateCursor,   MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RemoveCursor,   MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(RefreshCursors, MANAGED_BIT | UNSYNCED_BIT);
+
 	SETUP_EVENT(JoystickEvent,  MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(IsAbove,        MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(GetTooltip,     MANAGED_BIT | UNSYNCED_BIT);
@@ -698,6 +704,59 @@ bool CEventHandler::MouseMove(int x, int y, int dx, int dy, int button)
 	return mouseOwner->MouseMove(x, y, dx, dy, button);
 }
 
+bool CEventHandler::addTuioCursor(TUIO::TuioCursor *tcur)
+{
+    // reverse order, user has the override
+
+	const int count = listAddCursor.size();
+
+	for (int i = (count - 1); i >= 0; i--) {
+		CEventClient* ec = listAddCursor[i];
+		if (ec->AddCursor(tcur)) {
+			if (!activeReceivers[tcur->getCursorID()])
+				activeReceivers[tcur->getCursorID()] = ec;
+			return true;
+		}
+	}
+	return false;
+}
+
+void CEventHandler::updateTuioCursor(TUIO::TuioCursor *tcur)
+{
+    CEventClient* recv = activeReceivers[tcur->getCursorID()];
+    if(recv)
+    {
+        recv->UpdateCursor(tcur);
+    }
+}
+
+void CEventHandler::removeTuioCursor(TUIO::TuioCursor *tcur)
+{
+    CEventClient* recv = activeReceivers[tcur->getCursorID()];
+    if(recv)
+    {
+        recv->RemoveCursor(tcur);
+        activeReceivers.erase(tcur->getCursorID());
+    }
+}
+
+void CEventHandler::tuioRefresh(TUIO::TuioTime ftime)
+{
+    __gnu_cxx::hash_map<int, CEventClient*>::const_iterator it;
+
+    refreshedReceivers.clear();
+
+    for(it = activeReceivers.begin(); it != activeReceivers.end(); it++)
+    {
+        CEventClient* recv = it->second;
+
+        if(refreshedReceivers.find(recv) == refreshedReceivers.end())
+        {
+            recv->RefreshCursors(ftime);
+            refreshedReceivers.insert(recv);
+        }
+    }
+}
 
 bool CEventHandler::MouseWheel(bool up, float value)
 {
