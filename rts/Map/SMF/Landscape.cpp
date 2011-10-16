@@ -80,12 +80,10 @@ void Landscape::Init(const float *hMap, int bx, int by)//513 513
 			}
 			patch->heightData=heightData;
 			patch->Init(
-					X * PATCH_SIZE, 
-					Y * PATCH_SIZE, 
-					X * PATCH_SIZE, 
-					Y * PATCH_SIZE, 
-					hMap, 
-					bx, 
+					X * PATCH_SIZE,
+					Y * PATCH_SIZE,
+					hMap,
+					bx,
 					maxhpatch[Y * bx / PATCH_SIZE + X],
 					minhpatch[Y * bx / PATCH_SIZE + X]);
 			patch->ComputeVariance();

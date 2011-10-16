@@ -224,8 +224,7 @@ unsigned char Patch::RecursComputeVariance(int leftX, int leftY,
 // ---------------------------------------------------------------------
 // Initialize a patch.
 //
-void Patch::Init(int heightX, int heightY, int worldX, int worldY,
-		const float *hMap, int mx, float maxH, float minH)
+void Patch::Init(int worldX, int worldZ, const float *hMap, int mx, float maxH, float minH)
 {
 	// Clear all the relationships
 	maxh = maxH;
@@ -240,10 +239,10 @@ void Patch::Init(int heightX, int heightY, int worldX, int worldY,
 
 	// Store Patch offsets for the world and heightmap.
 	m_WorldX = worldX;
-	m_WorldY = worldY;
+	m_WorldY = worldZ;
 
 	// Store pointer to first byte of the height data for this patch.
-	m_HeightMap = &hMap[heightY * (mapx+1) + heightX];
+	m_HeightMap = &hMap[worldZ * (mapx+1) + worldX];
 
 	// Initialize flags
 	m_VarianceDirty = 1;
