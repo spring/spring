@@ -401,19 +401,19 @@ void Patch::DrawTriArray(CSMFGroundDrawer* parent)
 #endif
 
 #ifdef ROAM_VBO
-	//roamvbo
-	glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);         // for vertex coordinates
-	glEnableVertexAttribArrayARB(0);
-	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,12,0);
+	// enable VBOs
+	glDisable(GL_CULL_FACE); //FIXME
+	glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);              // for vertex coordinates
 	glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, vertexIndexBuffer); // for indices
-	glIndexPointer(GL_UNSIGNED_SHORT, 0, 0);
-	// do same as vertex array except pointer
-	glEnableClientState(GL_VERTEX_ARRAY);             // activate vertex coords array
-	glVertexPointer(3, GL_FLOAT, 0, 0);               // last param is offset, not ptr
-	// draw 6 quads using offset of index array
-	glDrawElements(GL_TRIANGLES, rend, GL_UNSIGNED_SHORT, 0);
-	glDisableClientState(GL_VERTEX_ARRAY);            // deactivate vertex array
-	// bind with 0, so, switch back to normal pointer operation
+
+		glEnableClientState(GL_VERTEX_ARRAY);             // activate vertex coords array
+
+			glVertexPointer(3, GL_FLOAT, 0, 0);       // last param is offset, not ptr
+			glDrawElements(GL_TRIANGLES, rend, GL_UNSIGNED_INT, 0);
+
+		glDisableClientState(GL_VERTEX_ARRAY);            // deactivate vertex array
+
+	// disable VBO mode
 	glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
 	glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 #endif

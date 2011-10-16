@@ -84,7 +84,7 @@ public:
 
 #ifdef ROAM_VBO
 	//roamvbo
-	int superint[129*129*4];
+	unsigned int superint[129*129*4];
 	GLuint vertexBuffer;
 	GLuint vertexIndexBuffer;
 #endif
