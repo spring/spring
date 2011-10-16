@@ -231,13 +231,10 @@ void Patch::Init(int heightX, int heightY, int worldX, int worldY,
 	maxh = maxH;
 	minh = minH;
 	mapx = mx;
-	m_BaseLeft.RightNeighbor = m_BaseLeft.LeftNeighbor
-			= m_BaseRight.RightNeighbor = m_BaseRight.LeftNeighbor
-					= m_BaseLeft.LeftChild = m_BaseLeft.RightChild
-							= m_BaseRight.LeftChild = m_BaseLeft.LeftChild
-									= NULL;
 
 	// Attach the two m_Base triangles together
+	m_BaseLeft = TriTreeNode();
+	m_BaseRight = TriTreeNode();
 	m_BaseLeft.BaseNeighbor = &m_BaseRight;
 	m_BaseRight.BaseNeighbor = &m_BaseLeft;
 
@@ -295,16 +292,12 @@ void Patch::Reset()
 	m_isVisible = 0;
 
 	// Reset the important relationships
-	m_BaseLeft.LeftChild = m_BaseLeft.RightChild = m_BaseRight.LeftChild
-			= m_BaseLeft.LeftChild = NULL;
+	m_BaseLeft = TriTreeNode();
+	m_BaseRight = TriTreeNode();
 
 	// Attach the two m_Base triangles together
 	m_BaseLeft.BaseNeighbor = &m_BaseRight;
 	m_BaseRight.BaseNeighbor = &m_BaseLeft;
-
-	// Clear the other relationships.
-	m_BaseLeft.RightNeighbor = m_BaseLeft.LeftNeighbor
-			= m_BaseRight.RightNeighbor = m_BaseRight.LeftNeighbor = NULL;
 }
 
 // ---------------------------------------------------------------------
