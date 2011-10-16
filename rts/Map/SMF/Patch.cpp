@@ -273,17 +273,16 @@ void Patch::Init(int heightX, int heightY, int worldX, int worldY,
 	glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);
 	glBufferDataARB(GL_ARRAY_BUFFER_ARB,3*(PATCH_SIZE+1)*(PATCH_SIZE+1),vbuf,GL_STATIC_DRAW_ARB );
 	int bufferSize = 0;
-    glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_SIZE_ARB, &bufferSize);
-	if(index != bufferSize)
-    {
-        glDeleteBuffersARB(1, &vertexIndexBuffer);
+	glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_SIZE_ARB, &bufferSize);
+	if(index != bufferSize) {
+		glDeleteBuffersARB(1, &vertexIndexBuffer);
 		LOG("[createVBO()] Data size is mismatch with input array\n");
-    }
+	}
 	glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
 	glGenBuffersARB(1,&vertexIndexBuffer);
 
 	glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
-	delete [] vbuf;
+	delete[] vbuf;
 #endif
 }
 
@@ -384,8 +383,8 @@ void Patch::DrawTriArray(CSMFGroundDrawer * parent)
 		//}
 		//LogObject() << "push done shc:" << parent->shc << "inshadowpass="<<inShadowPass;
 	//}
-#ifdef ROAM_VA
 
+#ifdef ROAM_VA
 	//roamarray
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(3, GL_FLOAT, 0, superfloat);
@@ -394,13 +393,12 @@ void Patch::DrawTriArray(CSMFGroundDrawer * parent)
 	glDisableClientState(GL_VERTEX_ARRAY);
 #endif
 
-
 #ifdef ROAM_DL
-		glCallList(triList);
+	glCallList(triList);
 #endif
-#ifdef ROAM_VBO
-		//roamvbo
 
+#ifdef ROAM_VBO
+	//roamvbo
 	glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);         // for vertex coordinates
 	glEnableVertexAttribArrayARB(0);
 	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,12,0);
@@ -417,7 +415,9 @@ void Patch::DrawTriArray(CSMFGroundDrawer * parent)
 	glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 #endif
 }
-int Patch::Render(CSMFGroundDrawer * parent, int n,bool waterdrawn)
+
+
+int Patch::Render(CSMFGroundDrawer* parent, int n, bool waterdrawn)
 {
 
 	lend=0;
@@ -435,31 +435,29 @@ int Patch::Render(CSMFGroundDrawer * parent, int n,bool waterdrawn)
 	if (triList!=0) glDeleteLists(triList,1);
 	triList=glGenLists(1);
 	glNewList(triList,GL_COMPILE);
-	glBegin(GL_TRIANGLES);
-	for (int i=0; i<lend;i+=3){
-		glVertex3f(superfloat[i],superfloat[i+1],superfloat[i+2]);
-	}
-	glEnd();
+		glBegin(GL_TRIANGLES);
+		for (int i=0; i<lend;i+=3){
+			glVertex3f(superfloat[i],superfloat[i+1],superfloat[i+2]);
+		}
+		glEnd();
 	glEndList();
 #endif
+
 #ifdef ROAM_VBO
 	//roamvbo
 	glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB,vertexIndexBuffer);
 	glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB,rend,superint,GL_DYNAMIC_DRAW_ARB);
 	int bufferSize = 0;
-    glGetBufferParameterivARB(GL_ELEMENT_ARRAY_BUFFER_ARB, GL_BUFFER_SIZE_ARB, &bufferSize);
-    if(rend != bufferSize)
-    {
-        glDeleteBuffersARB(1, &vertexIndexBuffer);
+	glGetBufferParameterivARB(GL_ELEMENT_ARRAY_BUFFER_ARB, GL_BUFFER_SIZE_ARB, &bufferSize);
+	if(rend != bufferSize) {
+		glDeleteBuffersARB(1, &vertexIndexBuffer);
 		LOG( "[createVBO()] Data size is mismatch with input array\n" );
-    }
+	}
 	//for (int i=0;i<rend;i+=3){
 		//LOG( "VBO" << superint[i] <<" " <<superint[i+1]<< " "<< superint[i+2] << "\n";
-	
 	//}
-	
-	glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 
+	glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 #endif	
 	
 	return MAX(rend/3,lend/9); //return the number of tris rendered
