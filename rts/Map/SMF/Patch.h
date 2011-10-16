@@ -24,6 +24,14 @@ class CSMFGroundDrawer;
 //
 struct TriTreeNode
 {
+	TriTreeNode()
+		: LeftChild(NULL)
+		, RightChild(NULL)
+		, BaseNeighbor(NULL)
+		, LeftNeighbor(NULL)
+		, RightNeighbor(NULL)
+	{}
+
 	TriTreeNode* LeftChild;
 	TriTreeNode* RightChild;
 	TriTreeNode* BaseNeighbor;
