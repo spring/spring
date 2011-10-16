@@ -256,14 +256,14 @@ void Patch::Init(int heightX, int heightY, int worldX, int worldY,
 #ifdef ROAM_VBO
 	//roamvbo
 	rend=0;
-	float * vbuf;
-	int index=0;
-	vbuf=new float[3*(PATCH_SIZE+1)*(PATCH_SIZE+1)];
-	for (int x=heightX; x<=heightX+PATCH_SIZE;x++){
-		for (int y=heightY; y<=heightY+PATCH_SIZE;y++){
-				vbuf[index++]=heightX*8;
-				vbuf[index++]=hMap[heightY * (mapx+1) + heightX];
-				vbuf[index++]=heightY*8;
+	int index = 0;
+	float* vbuf = new float[3*(PATCH_SIZE+1)*(PATCH_SIZE+1)];
+
+	for (int z=worldZ; z<=worldZ+PATCH_SIZE; z++) {
+		for (int x=worldX; x<=worldX+PATCH_SIZE; x++) {
+			vbuf[index++] = x * 8;
+			vbuf[index++] = hMap[z * (mapx+1) + x];
+			vbuf[index++] = z * 8;
 		}
 	}
 	glGenBuffersARB(1,&vertexBuffer);
