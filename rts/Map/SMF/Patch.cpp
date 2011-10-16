@@ -277,7 +277,7 @@ void Patch::Init(int worldX, int worldZ, const float *hMap, int mx, float maxH, 
 
 	// Fill vertexBuffer
 	glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);
-	glBufferDataARB(GL_ARRAY_BUFFER_ARB, 3*(PATCH_SIZE+1)*(PATCH_SIZE+1), vbuf, GL_STATIC_DRAW_ARB);
+	glBufferDataARB(GL_ARRAY_BUFFER_ARB, 3 * (PATCH_SIZE + 1) * (PATCH_SIZE + 1) * sizeof(float), vbuf, GL_STATIC_DRAW_ARB);
 	/*
 	int bufferSize = 0;
 	glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_SIZE_ARB, &bufferSize);
@@ -448,8 +448,8 @@ int Patch::Render(CSMFGroundDrawer* parent, int n, bool waterdrawn)
 #ifdef ROAM_VBO
 	//roamvbo
 	glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, vertexIndexBuffer);
-	glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, rend, superint, GL_DYNAMIC_DRAW_ARB);
-	
+	glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, rend * sizeof(unsigned), superint, GL_DYNAMIC_DRAW_ARB);
+
 	/*
 	int bufferSize = 0;
 	glGetBufferParameterivARB(GL_ELEMENT_ARRAY_BUFFER_ARB, GL_BUFFER_SIZE_ARB, &bufferSize);
