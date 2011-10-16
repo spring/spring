@@ -121,7 +121,7 @@ void Patch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY,
 					centerX, centerY, 1 + (node << 1));
 		}
 	}else{
-		bool stoptess=true; //this is just for them debuggings
+		//bool stoptess=true; //this is just for them debuggings
 	}
 }
 
@@ -130,51 +130,51 @@ void Patch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY,
 //
 
 
-void Patch::RecursRender(TriTreeNode *tri, int leftX, int leftY, int rightX,
-		int rightY, int apexX, int apexY, int n, bool dir, int maxdepth,bool waterdrawn)
+void Patch::RecursRender(TriTreeNode* tri, int leftX, int leftY, int rightX,
+		int rightY, int apexX, int apexY, int n, bool dir, int maxdepth, bool waterdrawn)
 {
-
 	int m_depth=maxdepth+1;
 	
 	if ( tri->LeftChild == NULL || maxdepth>12 )  // All non-leaf nodes have both children, so just check for one
 	{
 	#ifndef ROAM_VBO
-		superfloat[lend]=(apexX+m_WorldX)*8;
-		superfloat[lend + 1]= heightData[(apexY+m_WorldY) * (mapx+1) + apexX+m_WorldX];
+		superfloat[lend    ] = (apexX + m_WorldX) * 8;
+		superfloat[lend + 1] = heightData[(apexY+m_WorldY) * (mapx+1) + apexX+m_WorldX];
 		if (waterdrawn && superfloat[lend+1]<0) superfloat[lend+1] *=2;
-		superfloat[lend+2]=(apexY+m_WorldY)*8;
-		lend+=3;
+		superfloat[lend + 2] = (apexY + m_WorldY) * 8;
+		lend += 3;
 		
 		//push left
-		superfloat[lend]=(leftX+m_WorldX)*8;
-		superfloat[lend + 1]= heightData[(leftY+m_WorldY) * (mapx+1) + leftX+m_WorldX];
+		superfloat[lend    ] = (leftX + m_WorldX) * 8;
+		superfloat[lend + 1] = heightData[(leftY+m_WorldY) * (mapx+1) + leftX+m_WorldX];
 		if (waterdrawn && superfloat[lend+1]<0) superfloat[lend+1] *=2;
-		superfloat[lend+2]=(leftY+m_WorldY)*8;
-		lend+=3;
+		superfloat[lend + 2] = (leftY + m_WorldY) * 8;
+		lend += 3;
 		
 		//push right
-		superfloat[lend]=(rightX+m_WorldX)*8;
-		superfloat[lend + 1]= heightData[(rightY+m_WorldY) * (mapx+1) + rightX+m_WorldX];
+		superfloat[lend    ] = (rightX + m_WorldX) * 8;
+		superfloat[lend + 1] = heightData[(rightY+m_WorldY) * (mapx+1) + rightX+m_WorldX];
 		if (waterdrawn && superfloat[lend+1]<0) superfloat[lend+1] *=2;
-		superfloat[lend+2]=(rightY+m_WorldY)*8;
-		lend+=3;
+		superfloat[lend + 2] = (rightY + m_WorldY) * 8;
+		lend += 3;
 	#else
 		//roamvbo
 		superint[rend++] = apexX  + apexY  * (PATCH_SIZE + 1);
 		superint[rend++] = leftX  + leftY  * (PATCH_SIZE + 1);
 		superint[rend++] = rightX + rightY * (PATCH_SIZE + 1);
-		
-		assert(superint[rend - 3] < (PATCH_SIZE+1)*(PATCH_SIZE+1));
-		assert(superint[rend - 2] < (PATCH_SIZE+1)*(PATCH_SIZE+1));
-		assert(superint[rend - 1] < (PATCH_SIZE+1)*(PATCH_SIZE+1));
+
+		assert(superint[rend - 3] >= 0);
+		assert(superint[rend - 2] >= 0);
+		assert(superint[rend - 1] >= 0);
+		assert(superint[rend - 3] < (PATCH_SIZE+1) * (PATCH_SIZE+1));
+		assert(superint[rend - 2] < (PATCH_SIZE+1) * (PATCH_SIZE+1));
+		assert(superint[rend - 1] < (PATCH_SIZE+1) * (PATCH_SIZE+1));
 	#endif
-	} 
-	else
-	{
+	} else {
 		int centerX = (leftX + rightX) >> 1; // Compute X coordinate of center of Hypotenuse
 		int centerY = (leftY + rightY) >> 1; // Compute Y coord...
-		RecursRender(tri->LeftChild, apexX, apexY, leftX, leftY, centerX, centerY, n,dir,m_depth,waterdrawn);
-		RecursRender(tri->RightChild, rightX, rightY, apexX, apexY, centerX,centerY, n,dir,m_depth,waterdrawn);
+		RecursRender(tri->LeftChild, apexX, apexY, leftX, leftY, centerX, centerY, n, dir, m_depth, waterdrawn);
+		RecursRender(tri->RightChild, rightX, rightY, apexX, apexY, centerX, centerY, n, dir, m_depth, waterdrawn);
 	}
 }
 
@@ -252,16 +252,17 @@ void Patch::Init(int worldX, int worldZ, const float *hMap, int mx, float maxH, 
 	// Initialize flags
 	m_VarianceDirty = 1;
 	m_isVisible = 0;
-	lend=0;
+	lend = 0;
+	rend = 0;
+
 #ifdef ROAM_DL
 	triList=0;
 #endif
 
 #ifdef ROAM_VBO
 	//roamvbo
-	rend=0;
 	int index = 0;
-	float* vbuf = new float[3*(PATCH_SIZE+1)*(PATCH_SIZE+1)];
+	float* vbuf = new float[3 * (PATCH_SIZE + 1) * (PATCH_SIZE + 1)];
 
 	for (int z=worldZ; z<=worldZ+PATCH_SIZE; z++) {
 		for (int x=worldX; x<=worldX+PATCH_SIZE; x++) {
@@ -426,9 +427,7 @@ int Patch::Render(CSMFGroundDrawer* parent, int n, bool waterdrawn)
 	rend = 0;
 
 	RecursRender(&m_BaseLeft, 0, PATCH_SIZE, PATCH_SIZE, 0, 0, 0, n, true,0,waterdrawn);
-
-	RecursRender(&m_BaseRight, PATCH_SIZE, 0, 0, PATCH_SIZE, PATCH_SIZE,
-			PATCH_SIZE, n, false, 0, waterdrawn);
+	RecursRender(&m_BaseRight, PATCH_SIZE, 0, 0, PATCH_SIZE, PATCH_SIZE, PATCH_SIZE, n, false, 0, waterdrawn);
 	//assert(rend<200000);
 	//assert(rend>-1);
 
