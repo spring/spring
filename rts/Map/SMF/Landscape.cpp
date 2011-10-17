@@ -178,7 +178,7 @@ int Landscape::Render(CSMFGroundDrawer* parent, bool camMoved, bool inShadowPass
 		}
 
 	}
-	if (dirty){
+	if (dirty) {
 		Reset();
 		Tessellate(0,0,0,200);
 	}
@@ -187,12 +187,13 @@ int Landscape::Render(CSMFGroundDrawer* parent, bool camMoved, bool inShadowPass
 
 		if (patch->isVisibile()) {
 			if (camMoved)
-				tricount+=patch->Render(parent, nCount, waterdrawn);
-			tricount+=patch->lend/9;
-	
+				patch->Render(parent, nCount, waterdrawn);
+
 			if (!inShadowPass) {
 				parent->SetupBigSquare(nCount % (w / PATCH_SIZE), nCount / (w / PATCH_SIZE));
 			}
+			
+			tricount += patch->GetTriCount();
 			patch->DrawTriArray(parent);
 		}
 
