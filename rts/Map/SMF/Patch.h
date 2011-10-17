@@ -45,49 +45,8 @@ struct TriTreeNode
 //
 class Patch
 {
-protected:
-	const float* m_HeightMap; // Pointer to height map to use
-
-	float m_VarianceLeft[1 << (VARIANCE_DEPTH)]; // Left variance tree
-	float m_VarianceRight[1 << (VARIANCE_DEPTH)]; // Right variance tree
-
-	float* m_CurrentVariance; // Which varience we are currently using. [Only valid during the Tessellate and ComputeVariance passes]
-
-	unsigned char m_isVisible; // Is this patch visible in the current frame?
-
-	TriTreeNode m_BaseLeft; // Left base triangle tree node
-	TriTreeNode m_BaseRight; // Right base triangle tree node
-
-	int dbgmax;
-	int ptrsf;
-
-	CSMFGroundDrawer* m_parent;
-	CVertexArray* m_Array;
-
 public:
-	float superfloat[128000]; //Why yes, this IS a mind bogglingly wasteful thing to do: TODO: remove this for both the Displaylist and the VBO implementations (only really needed for vertexarrays)
-	const float* heightData;
-	unsigned int lend;
-	unsigned int rend;
-
-	// Some encapsulation functions & extras
-	float distfromcam;
-	int m_WorldX, m_WorldY; // World coordinate offset of this patch.
-	int mapx;
-	int offx, offy;
-	float maxh, minh;
-	unsigned char m_VarianceDirty; // Does the Varience Tree need to be recalculated for this Patch?
-
-#ifdef ROAM_DL
-	GLuint triList;
-#endif
-
-#ifdef ROAM_VBO
-	//roamvbo
-	unsigned int superint[129*129*4];
-	GLuint vertexBuffer;
-	GLuint vertexIndexBuffer;
-#endif
+	~Patch();
 
 	TriTreeNode* GetBaseLeft()
 	{
@@ -104,6 +63,10 @@ public:
 	int isVisibile()
 	{
 		return m_isVisible;
+	}
+	int GetTriCount()
+	{
+		return indices.size() / 3;
 	}
 	void SetVisibility();
 
@@ -125,6 +88,49 @@ public:
 		float leftZ, int rightX, int rightY, float rightZ,
 		int apexX, int apexY, float apexZ, int node);
 	virtual void DrawTriArray(CSMFGroundDrawer* parent);
+
+protected:
+	const float* m_HeightMap; //< Pointer to height map to use
+
+	float m_VarianceLeft[1 << (VARIANCE_DEPTH)];  //< Left variance tree
+	float m_VarianceRight[1 << (VARIANCE_DEPTH)]; //< Right variance tree
+
+	float* m_CurrentVariance;  //< Which varience we are currently using. [Only valid during the Tessellate and ComputeVariance passes]
+
+	unsigned char m_isVisible; //< Is this patch visible in the current frame?
+
+	TriTreeNode m_BaseLeft;  //< Left base triangle tree node
+	TriTreeNode m_BaseRight; //< Right base triangle tree node
+
+	int dbgmax;
+	int ptrsf;
+
+	CSMFGroundDrawer* m_parent;
+
+	// Some encapsulation functions & extras
+	float distfromcam;
+
+	int mapx;
+	int offx, offy;
+	float maxh, minh;
+
+
+	std::vector<float> vertices; // Why yes, this IS a mind bogglingly wasteful thing to do: TODO: remove this for both the Displaylist and the VBO implementations (only really needed for vertexarrays)
+	std::vector<unsigned int> indices;
+
+#ifdef ROAM_DL
+	GLuint triList;
+#endif
+
+#ifdef ROAM_VBO
+	GLuint vertexBuffer;
+	GLuint vertexIndexBuffer;
+#endif
+
+public:
+	const float* heightData;
+	int m_WorldX, m_WorldY; //< World coordinate offset of this patch.
+	unsigned char m_VarianceDirty; //< Does the Varience Tree need to be recalculated for this Patch?
 };
 
 #endif
