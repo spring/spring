@@ -310,8 +310,8 @@ void Patch::ComputeVariance()
 //
 void Patch::SetVisibility() {
 	float3 patchPos;
-		patchPos.x = (m_WorldX + PATCH_SIZE / 2) * 8;
-		patchPos.z = (m_WorldY + PATCH_SIZE / 2) * 8;
+		patchPos.x = (m_WorldX + PATCH_SIZE / 2) * SQUARE_SIZE;
+		patchPos.z = (m_WorldY + PATCH_SIZE / 2) * SQUARE_SIZE;
 		patchPos.y = (maxh + minh) * 0.5f;
 	m_isVisible = int(cam2->InView(patchPos, 768));
 }
@@ -321,8 +321,8 @@ void Patch::SetVisibility() {
 //
 void Patch::Tessellate(float cx, float cy, float cz, int viewradius)
 {
-	const float myx = (m_WorldX + PATCH_SIZE / 2) * 8;
-	const float myz = (m_WorldY + PATCH_SIZE / 2) * 8;
+	const float myx = (m_WorldX + PATCH_SIZE / 2) * SQUARE_SIZE;
+	const float myz = (m_WorldY + PATCH_SIZE / 2) * SQUARE_SIZE;
 
 	this->distfromcam = (math::fabs(cx - myx) + cy + math::fabs(cz - myz))
 			* ((float) 200 / viewradius);
