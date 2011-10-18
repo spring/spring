@@ -309,11 +309,17 @@ void Patch::ComputeVariance()
 // Set patch's visibility flag.
 //
 void Patch::SetVisibility() {
-	float3 patchPos;
-		patchPos.x = (m_WorldX + PATCH_SIZE / 2) * SQUARE_SIZE;
-		patchPos.z = (m_WorldY + PATCH_SIZE / 2) * SQUARE_SIZE;
-		patchPos.y = (maxh + minh) * 0.5f;
-	m_isVisible = int(cam2->InView(patchPos, 768));
+	const float3 mins(
+		m_WorldX * SQUARE_SIZE,
+		minh,
+		m_WorldY * SQUARE_SIZE
+	);
+	const float3 maxs(
+		(m_WorldX + PATCH_SIZE) * SQUARE_SIZE,
+		maxh,
+		(m_WorldY + PATCH_SIZE) * SQUARE_SIZE
+	);
+	m_isVisible = cam2->InView(mins, maxs);
 }
 
 // ---------------------------------------------------------------------
