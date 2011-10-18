@@ -342,28 +342,37 @@ public:
 class TakeActionExecutor : public ISyncedActionExecutor {
 public:
 	TakeActionExecutor() : ISyncedActionExecutor("Take",
-			"Transfers all units of allied teams without active controller to"
-			" the issuing players team") {}
+			"Transfers all units of allied teams without any "
+			"active players to the team of the issuing player") {}
 
 	void Execute(const SyncedAction& action) const {
-		if (!playerHandler->Player(action.GetPlayerID())->spectator || gs->cheatEnabled) {
-			const int sendTeam = playerHandler->Player(action.GetPlayerID())->team;
-			for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
-				if (teamHandler->AlliedTeams(a, sendTeam)) {
-					bool hasPlayer = false;
-					for (int b = 0; b < playerHandler->ActivePlayers(); ++b) {
-						if (playerHandler->Player(b)->active
-								&& (playerHandler->Player(b)->team == a)
-								&& !playerHandler->Player(b)->spectator)
-						{
-							hasPlayer = true;
-							break;
-						}
-					}
-					if (!hasPlayer) {
-						teamHandler->Team(a)->GiveEverythingTo(sendTeam);
-					}
-				}
+		const CPlayer* actionPlayer = playerHandler->Player(action.GetPlayerID());
+		const bool allowAction = (game->playing && (!actionPlayer->spectator || gs->cheatEnabled));
+
+		if (!allowAction) {
+			return;
+		}
+
+		for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
+			if (!teamHandler->AlliedTeams(a, actionPlayer->team)) {
+				continue;
+			}
+
+			bool hasPlayer = false;
+
+			for (int b = 0; b < playerHandler->ActivePlayers(); ++b) {
+				const CPlayer* teamPlayer = playerHandler->Player(b);
+
+				if (!teamPlayer->active) { continue; }
+				if (teamPlayer->spectator) { continue; }
+				if (teamPlayer->team != a) { continue; }
+
+				hasPlayer = true;
+				break;
+			}
+
+			if (!hasPlayer) {
+				teamHandler->Team(a)->GiveEverythingTo(actionPlayer->team);
 			}
 		}
 	}
