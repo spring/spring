@@ -59,7 +59,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm): smfMap(rm)
 
 	viewRadius = configHandler->GetInt("GroundDetail");
 	viewRadius += (viewRadius & 1); //! we need a multiple of 2
-	if (configHandler->IsSet("ROAM")){
+	if (configHandler->IsSet("ROAM")){//FIXME
 		useROAM=configHandler->GetInt("ROAM");
 	}else{
 		useROAM=true;
@@ -92,19 +92,12 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm): smfMap(rm)
 
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
 	advShading = LoadMapShaders();
+
 	if (useROAM){
-		#ifdef USE_UNSYNCED_HEIGHTMAP
-			LOG("unshmap null value= %f \n",*readmap->GetCornerHeightMapUnsynced());
-			LOG("syncedhmap null value= %f \n",*readmap->GetCornerHeightMapSynced());
-			
-			//ROAM todo: yeah it takes the synced map, not the unsynced one...
-			landscape.Init(readmap->GetCornerHeightMapSynced(),gs->mapx,gs->mapy);
-		#else
-			landscape.Init(readmap->GetCornerHeightMapSynced(),gs->mapx,gs->mapy);
-		#endif
-		visibilitygrid=new bool[rm->numBigTexX*rm->numBigTexY];
-		shc=0;
-		dc=0;
+		landscape.Init(this, readmap->GetCornerHeightMapSynced(), gs->mapx, gs->mapy); //FIXME use GetCornerHeightMapUnsynced()
+		visibilitygrid = new bool[rm->numBigTexX*rm->numBigTexY];
+		shc = 0;
+		dc  = 0;
 	}
 
 }
@@ -359,89 +352,54 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 
 	glDepthMask(GL_TRUE);
 }
-inline void CSMFGroundDrawer::DrawMesh(bool haveShadows, bool inShadowPass, bool drawWaterReflection, bool drawUnitReflection) {
 
-	bool framchanged=false;
-	int vispatches=0;
-	for (int i=0;i<numBigTexX*numBigTexY;i++){
-		landscape.m_Patches[i].SetVisibility();
-		if ((bool)landscape.m_Patches[i].isVisibile()!=visibilitygrid[i] &&  drawWaterReflection == false && drawUnitReflection == false){
-			framchanged=true;
-			visibilitygrid[i]=(bool)landscape.m_Patches[i].isVisibile();
-		}
-		vispatches+=landscape.m_Patches[i].isVisibile();
-	
-	}
-	//framchanged=true;
 
+inline void CSMFGroundDrawer::DrawMesh(bool haveShadows, bool inShadowPass, bool drawWaterReflection, bool drawUnitReflection)
+{
 	const CCamera* cam = (inShadowPass)? camera: cam2;
-	//const bool camMoved = (haveShadows && ((camera->pos - lastCamPos).SqLength() > maxCamDeltaDistSq));
 	
-	int tricount=0;
-	if (shadowHandler->shadowsLoaded==true && !DrawExtraTex()){ 
-		//This check is needed, because the shadows are rendered first, and if we
-		//update terrain in same frame, we will get flashes of shadows on updates
-		//So if shadows are on, we must put the terrain update part in the shadows part.
-		if (inShadowPass==true){
-			shc++;
-			if(framchanged==true || landscape.updateCount>0){ 
-				//ONLY reset and retessellate if the set of patches in view has changed, 
-				//OR if any one of the terrain blocks have been changed due to explosions/terraform
-				landscape.Reset();
-				landscape.Tessellate(cam2->pos.x,cam2->pos.y,cam2->pos.z,viewRadius);
-				tricount=landscape.Render(this, true, inShadowPass, waterDrawn);
-				LOG("ROAM dbg: Framechange, tris=%i, shc=%i, viewrad=%i, inshadowpass=%i, camera=(%5.0f, %5.0f, %5.0f) camera2=  (%5.0f, %5.0f, %5.0f)",
-					tricount,
-					shc,
-					viewRadius,
-					inShadowPass,
-					camera->pos.x,
-					camera->pos.y,
-					camera->pos.z,
-					cam2->pos.x,
-					cam2->pos.y,
-					cam2->pos.z
-					);
-				/*		LogObject() << "Frame changed, id" << shc <<", viewrad is: " << viewRadius << ", triangles pushed:" <<tricount << 
-				", inshadowpass=" << inShadowPass <<  " camera:"<< camera->pos.x << " " << camera->pos.y << " " << camera->pos.z 
-				<< " cam2:" << cam2->pos.x << " " << cam2->pos.y <<" " << cam2->pos.z <<"\n";
-				*/
-			}
-			else{
-				tricount=landscape.Render(this, false, inShadowPass, waterDrawn);
-			}								
+	bool camMoved = false;
+
+	for (int i=0;i<numBigTexX*numBigTexY;i++){
+		landscape.m_Patches[i].UpdateVisibility();
+		if ((bool)landscape.m_Patches[i].isVisibile() != visibilitygrid[i] && !drawWaterReflection && !drawUnitReflection) {
+			visibilitygrid[i] = (bool)landscape.m_Patches[i].isVisibile();
+			camMoved = true;
 		}
-		else{
-			tricount=landscape.Render(this, false, inShadowPass, waterDrawn);
-		}
-	}else{
-		shc++;
-		if(framchanged==true || landscape.updateCount>0 ){
-			landscape.Reset();
-			landscape.Tessellate(cam2->pos.x,cam2->pos.y,cam2->pos.z,viewRadius);
-			tricount=landscape.Render(this, true, inShadowPass, waterDrawn);
-			LOG("ROAM dbg: Framechange, tris=%i, shc=%i, viewrad=%i, inshadowpass=%i, camera=(%5.0f, %5.0f, %5.0f) camera2=  (%5.0f, %5.0f, %5.0f)",
-					tricount,
-					shc,
-					viewRadius,
-					inShadowPass,
-					camera->pos.x,
-					camera->pos.y,
-					camera->pos.z,
-					cam2->pos.x,
-					cam2->pos.y,
-					cam2->pos.z
-					);/*LogObject() << "Frame changed, id" << shc <<", viewrad is: " << viewRadius << ", triangles pushed:" <<tricount << 
-				", inshadowpass=" << inShadowPass <<  " camera:"<< camera->pos.x << " " << camera->pos.y << " " << camera->pos.z 
-				<< " cam2:" << cam2->pos.x << " " << cam2->pos.y <<" " << cam2->pos.z <<"\n";
-				*/
-		}
-		else{
-			tricount=landscape.Render(this, false, inShadowPass, waterDrawn);
-		}	
-	
 	}
+
+	camMoved |= (landscape.updateCount > 0);
+	//camMoved = ((cam - lastCamPos).SqLength() > maxCamDeltaDistSq);
+
+	// This check is needed, because the shadows are rendered first, and if we
+	// update terrain in same frame, we will get flashes of shadows on updates
+	// So if shadows are on, we must put the terrain update part in the shadows part.
+	const bool shadowsEnabled = (shadowHandler->shadowsLoaded && !DrawExtraTex());
+	if (!shadowsEnabled || inShadowPass) { 
+		shc++;
+		if (camMoved){
+			landscape.Reset();
+			landscape.Tessellate(cam->pos, viewRadius);
+		}
+	}
+
+	const int tricount = landscape.Render(camMoved, inShadowPass, waterDrawn);
+
+	/*LOG("ROAM dbg: Framechange, tris=%i, shc=%i, viewrad=%i, inshadowpass=%i, camera=(%5.0f, %5.0f, %5.0f) camera2=  (%5.0f, %5.0f, %5.0f)",
+		tricount,
+		shc,
+		viewRadius,
+		inShadowPass,
+		camera->pos.x,
+		camera->pos.y,
+		camera->pos.z,
+		cam2->pos.x,
+		cam2->pos.y,
+		cam2->pos.z
+		);*/
 }
+
+
 inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 	if (!drawWaterReflection) {
 		glCallList(camera->pos.IsInBounds()? waterPlaneCamInDispList: waterPlaneCamOutDispList);

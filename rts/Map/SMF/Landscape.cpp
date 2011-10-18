@@ -31,26 +31,11 @@ int Landscape::m_NextTriNode;
 TriTreeNode Landscape::m_TriPool[POOL_SIZE];
 
 // ---------------------------------------------------------------------
-// Allocate a TriTreeNode from the pool.
+// Ctor
 //
-TriTreeNode *Landscape::AllocateTri()
+void Landscape::Init(CSMFGroundDrawer* _drawer, const float* hMap, int bx, int by)
 {
-	TriTreeNode *pTri=NULL;
-
-	// IF we've run out of TriTreeNodes, just return NULL (this is handled gracefully)
-	if (m_NextTriNode >= POOL_SIZE)
-		return NULL;
-
-	pTri = &(m_TriPool[m_NextTriNode++]);
-	pTri->LeftChild = pTri->RightChild = NULL;
-	return pTri;
-}
-
-// ---------------------------------------------------------------------
-// Initialize all patches
-//
-void Landscape::Init(const float *hMap, int bx, int by)//513 513
-{
+	drawer = _drawer;
 	heightData = hMap;
 
 	// Store the Height Field array
@@ -70,13 +55,14 @@ void Landscape::Init(const float *hMap, int bx, int by)//513 513
 			for (int i = 0; i < PATCH_SIZE; i++) {
 				for (int j = 0; j < PATCH_SIZE; j++) {
 					maxhpatch[Y * bx / PATCH_SIZE + X]
-							=MAX(maxhpatch[Y*bx/PATCH_SIZE+X], heightData[X*PATCH_SIZE+i+(Y*PATCH_SIZE+j)*(bx+1)]);
+							= MAX(maxhpatch[Y*bx/PATCH_SIZE+X], heightData[X*PATCH_SIZE+i+(Y*PATCH_SIZE+j)*(bx+1)]);
 					minhpatch[Y * bx / PATCH_SIZE + X]
-							=MIN(minhpatch[Y*bx/PATCH_SIZE+X], heightData[X*PATCH_SIZE+i+(Y*PATCH_SIZE+j)*(bx+1)]);
+							= MIN(minhpatch[Y*bx/PATCH_SIZE+X], heightData[X*PATCH_SIZE+i+(Y*PATCH_SIZE+j)*(bx+1)]);
 				}
 			}
 			patch->heightData=heightData;
 			patch->Init(
+					drawer,
 					X * PATCH_SIZE,
 					Y * PATCH_SIZE,
 					hMap,
@@ -87,6 +73,24 @@ void Landscape::Init(const float *hMap, int bx, int by)//513 513
 		}
 	}
 }
+
+
+// ---------------------------------------------------------------------
+// Allocate a TriTreeNode from the pool.
+//
+TriTreeNode* Landscape::AllocateTri()
+{
+	TriTreeNode* pTri=NULL;
+
+	// IF we've run out of TriTreeNodes, just return NULL (this is handled gracefully)
+	if (m_NextTriNode >= POOL_SIZE)
+		return NULL;
+
+	pTri = &(m_TriPool[m_NextTriNode++]);
+	pTri->LeftChild = pTri->RightChild = NULL;
+	return pTri;
+}
+
 
 // ---------------------------------------------------------------------
 // Reset all patches, recompute variance if needed
@@ -103,7 +107,7 @@ void Landscape::Reset()
 
 			// Reset the patch
 			patch->Reset();
-			patch->SetVisibility();
+			patch->UpdateVisibility();
 
 			// Check to see if this patch has been deformed since last frame.
 			// If so, recompute the varience tree for it.
@@ -145,12 +149,12 @@ void Landscape::Reset()
 // ---------------------------------------------------------------------
 // Create an approximate mesh of the landscape.
 //
-void Landscape::Tessellate(float cx, float cy, float cz, int viewradius)
+void Landscape::Tessellate(const float3& campos, int viewradius)
 {
 	// Perform Tessellation
 	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); it++) {
 		if (it->isVisibile())
-			it->Tessellate(cx, cy, cz, viewradius);
+			it->Tessellate(campos, viewradius);
 	}
 	updateCount = 0;
 }
@@ -158,7 +162,7 @@ void Landscape::Tessellate(float cx, float cy, float cz, int viewradius)
 // ---------------------------------------------------------------------
 // Render each patch of the landscape & adjust the frame variance.
 //
-int Landscape::Render(CSMFGroundDrawer* parent, bool camMoved, bool inShadowPass, bool waterdrawn)
+int Landscape::Render(bool camMoved, bool inShadowPass, bool waterdrawn)
 {
 	bool dirty = false;
 
@@ -171,24 +175,20 @@ int Landscape::Render(CSMFGroundDrawer* parent, bool camMoved, bool inShadowPass
 
 	if (dirty) {
 		Reset();
-		Tessellate(0,0,0,200);
+		Tessellate(ZeroVector, 200);
 	}
 
-	int nCount;
 	int tricount = 0;
-	Patch* patch = &(m_Patches[0]);
-
-	for (nCount = 0; nCount < (w / PATCH_SIZE) * (h / PATCH_SIZE); nCount++, patch++) {
-		if (patch->isVisibile()) {
+	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); it++) {
+		if (it->isVisibile()) {
 			if (camMoved)
-				patch->Render(parent, nCount, waterdrawn);
+				it->Render(waterdrawn);
 
-			if (!inShadowPass) {
-				parent->SetupBigSquare(nCount % (w / PATCH_SIZE), nCount / (w / PATCH_SIZE));
-			}
-			
-			tricount += patch->GetTriCount();
-			patch->DrawTriArray(parent);
+			if (!inShadowPass)
+				it->SetSquareTexture();
+
+			tricount += it->GetTriCount();
+			it->DrawTriArray();
 		}
 	}
 
@@ -202,6 +202,7 @@ int Landscape::Render(CSMFGroundDrawer* parent, bool camMoved, bool inShadowPass
 
 void Landscape::Explosion(float x, float y, float z, float radius)
 {
+	//FIXME use syncedheightmapupdate!
 	updateCount = 0;
 
 	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); it++) {
