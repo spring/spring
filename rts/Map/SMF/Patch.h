@@ -5,7 +5,6 @@
 
 #include "Rendering/GL/myGL.h"
 
-class CVertexArray;
 class CSMFGroundDrawer;
 
 //--UNCOMMENT WHICH TRIANGLE PUSHING METHOD SHOULD BE USED!-----------------------
@@ -102,16 +101,11 @@ protected:
 	TriTreeNode m_BaseLeft;  //< Left base triangle tree node
 	TriTreeNode m_BaseRight; //< Right base triangle tree node
 
-	int dbgmax;
-	int ptrsf;
-
-	CSMFGroundDrawer* m_parent;
 
 	// Some encapsulation functions & extras
 	float distfromcam;
 
 	int mapx;
-	int offx, offy;
 	float maxh, minh;
 
 
