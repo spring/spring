@@ -37,11 +37,11 @@ class CSMFGroundDrawer;
 class Landscape
 {
 public:
-	virtual void Init(const float* hMap, int bx, int by);
-	virtual void Reset();
-	virtual void Tessellate(float cx, float cy, float cz, int viewradius);
-	virtual int Render(CSMFGroundDrawer* parent, bool changed, bool shadows, bool waterdrawn);
-	virtual void Explosion(float x, float y, float z, float radius);
+	void Init(CSMFGroundDrawer* drawer, const float* hMap, int bx, int by);
+	void Reset();
+	void Tessellate(const float3& campos, int viewradius);
+	int Render(bool changed, bool shadows, bool waterdrawn);
+	void Explosion(float x, float y, float z, float radius);
 
 protected:
 	static int GetNextTriNode() { return m_NextTriNode; }
@@ -52,6 +52,8 @@ protected:
 
 	static int m_NextTriNode;                //< Index to next free TriTreeNode
 	static TriTreeNode m_TriPool[POOL_SIZE]; //< Pool of TriTree nodes for splitting
+
+	CSMFGroundDrawer* drawer;
 
 public:
 	std::vector<Patch> m_Patches; //[NUM_PATCHES_PER_SIDE][NUM_PATCHES_PER_SIDE];  //< Array of patches
