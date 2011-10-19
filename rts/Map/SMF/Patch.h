@@ -99,6 +99,11 @@ public:
 		int apexX, int apexY, float apexZ, int node);
 	void DrawTriArray();
 
+public:
+	static void SetRenderMode(RenderMode mode) {
+		renderMode = mode;
+	}
+	static void ToggleRenderMode();
 
 protected:
 	static RenderMode renderMode;
