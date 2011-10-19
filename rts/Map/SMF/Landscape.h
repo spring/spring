@@ -22,14 +22,6 @@ class CSMFGroundDrawer;
 // How many heightmap pixels a patch consists of
 #define PATCH_SIZE 128
 
-//useful stuff:
-//#define SQR(x) ((x) * (x))
-//#define MAX(a,b) ((a < b) ? (b) : (a))
-//#define MIN(a,b) ((a > b) ? (b) : (a))
-//#define DEG2RAD(a) (((a) * M_PI) / 180.0f)
-//#define M_PI (3.14159265358979323846f)
-
-
 
 //
 // Landscape Class
