@@ -35,7 +35,7 @@ macro    (CreateEngineBuildAndInstallTarget targetName)
 		)
 	# This also works for custom targets
 	add_dependencies(${myBuildTarget} ${${targetName}-Deps})
-	Add_Dependencies(${myBuildTarget} generateVersionFiles)
+	Add_Dependencies(engine-${targetName} generateVersionFiles)
 
 	# Only install spring-<targetName> executable & dependencies
 	set(${targetName}-InstallDirs
