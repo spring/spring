@@ -83,11 +83,14 @@ public:
 	// The static half of the Patch Class
 	void Init(CSMFGroundDrawer* drawer, int worldX, int worldZ, const float* hMap, int mx);
 	void Reset();
+
 	void Tessellate(const float3& campos, int viewradius);
-	
-	int Render(bool waterdrawn);
 	void ComputeVariance();
 
+	int Render(bool waterdrawn);
+	void DrawTriArray();
+
+private:
 	// The recursive half of the Patch Class
 	void Split(TriTreeNode* tri);
 	void RecursTessellate(TriTreeNode* tri, int leftX, int leftY,
@@ -97,7 +100,6 @@ public:
 	float RecursComputeVariance(int leftX, int leftY,
 		float leftZ, int rightX, int rightY, float rightZ,
 		int apexX, int apexY, float apexZ, int node);
-	void DrawTriArray();
 
 public:
 	static void SetRenderMode(RenderMode mode) {
