@@ -94,7 +94,7 @@ public:
 			int rightX, int rightY, int apexX, int apexY, int node);
 	void RecursRender(TriTreeNode* tri, int leftX, int leftY, int rightX,
 		int rightY, int apexX, int apexY, bool dir, int maxdepth, bool waterdrawn);
-	unsigned char RecursComputeVariance(int leftX, int leftY,
+	float RecursComputeVariance(int leftX, int leftY,
 		float leftZ, int rightX, int rightY, float rightZ,
 		int apexX, int apexY, float apexZ, int node);
 	void DrawTriArray();
