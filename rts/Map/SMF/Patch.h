@@ -77,6 +77,8 @@ public:
 	void UpdateVisibility();
 
 	void SetSquareTexture() const;
+	
+	void UpdateHeightMap();
 
 	// The static half of the Patch Class
 	virtual void Init(CSMFGroundDrawer* drawer, int worldX, int worldZ, const float* hMap, int mx, float maxH, float minH);

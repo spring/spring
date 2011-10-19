@@ -17,8 +17,9 @@
 #include "Map/SMF/SMFGroundDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "System/LogOutput.h"
-
+#include "System/Rectangle.h"
+#include "System/Log/ILog.h"
+#include <cmath>
 
 // -------------------------------------------------------------------------------------------------
 //	LANDSCAPE CLASS
@@ -33,6 +34,13 @@ TriTreeNode Landscape::m_TriPool[POOL_SIZE];
 // ---------------------------------------------------------------------
 // Ctor
 //
+Landscape::Landscape()
+	: CEventClient("[Landscape]", 271989, false)
+{
+	eventHandler.AddClient(this);
+}
+
+
 void Landscape::Init(CSMFGroundDrawer* _drawer, const float* hMap, int bx, int by)
 {
 	drawer = _drawer;
@@ -200,22 +208,29 @@ int Landscape::Render(bool camMoved, bool inShadowPass, bool waterdrawn)
 	return tricount;
 }
 
-void Landscape::Explosion(float x, float y, float z, float radius)
+
+void Landscape::UnsyncedHeightMapUpdate(const SRectangle& rect)
 {
-	//FIXME use syncedheightmapupdate!
+	//FIXME find a better to way to find out if ROAM is used
+	if (m_Patches.empty())
+		return;
+
 	updateCount = 0;
 
-	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); it++) {
-		if (
-			it->m_WorldX * SQUARE_SIZE                  < x + radius &&
-			(it->m_WorldX + PATCH_SIZE) * SQUARE_SIZE   > x - radius &&
-			it->m_WorldY * SQUARE_SIZE                  < z + radius &&
-			(it->m_WorldY + PATCH_SIZE) * SQUARE_SIZE   > z - radius
-		) {
-			it->m_VarianceDirty = 1;
+	const int xstart = std::floor(rect.x1 / PATCH_SIZE);
+	const int xend   = std::ceil( rect.x2 / PATCH_SIZE);
+	const int zstart = std::floor(rect.z1 / PATCH_SIZE);
+	const int zend   = std::ceil( rect.z2 / PATCH_SIZE);
+
+	const int pwidth = (gs->mapx / PATCH_SIZE);
+
+	for (int z = zstart; z <= zend; z++) {
+		for (int x = xstart; x <= xend; x++) {
+			Patch& p = m_Patches[z * pwidth + x];
+			p.UpdateHeightMap();
+			p.m_VarianceDirty = 1;
+
 			updateCount++;
 		}
 	}
-	//LogObject() << "Explosion: updating " << updateCount <<" patches";
-	
 }

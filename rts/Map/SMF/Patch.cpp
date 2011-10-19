@@ -12,9 +12,10 @@
 //
 
 #include "Patch.h"
-#include "SMFGroundDrawer.h"
 #include "Landscape.h"
+#include "SMFGroundDrawer.h"
 #include "Game/Camera.h"
+#include "Map/ReadMap.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Log/ILog.h"
 
@@ -230,19 +231,33 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ, const float*
 
 	vertices.resize(3 * (PATCH_SIZE + 1) * (PATCH_SIZE + 1));
 
+	triList = glGenLists(1);
+
+	glGenBuffersARB(1, &vertexBuffer);
+	glGenBuffersARB(1, &vertexIndexBuffer);
+
+	UpdateHeightMap();
+}
+
+
+Patch::~Patch()
+{
+	glDeleteLists(triList, 1);
+}
+
+
+void Patch::UpdateHeightMap()
+{
+	const float* hMap = readmap->GetCornerHeightMapSynced(); //FIXME
+
 	int index = 0;
-	for (int z=worldZ; z<=worldZ+PATCH_SIZE; z++) {
-		for (int x=worldX; x<=worldX+PATCH_SIZE; x++) {
+	for (int z = m_WorldY; z <= (m_WorldY + PATCH_SIZE); z++) {
+		for (int x = m_WorldX; x <= (m_WorldX + PATCH_SIZE); x++) {
 			vertices[index++] = x * SQUARE_SIZE;
 			vertices[index++] = hMap[z * (mapx+1) + x];
 			vertices[index++] = z * SQUARE_SIZE;
 		}
 	}
-
-	triList = glGenLists(1);
-
-	glGenBuffersARB(1, &vertexBuffer);
-	glGenBuffersARB(1, &vertexIndexBuffer);
 
 	// Fill vertexBuffer
 	glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);
@@ -257,12 +272,6 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ, const float*
 	}
 	*/
 	glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
-}
-
-
-Patch::~Patch()
-{
-	glDeleteLists(triList, 1);
 }
 
 // ---------------------------------------------------------------------
@@ -329,7 +338,7 @@ void Patch::Tessellate(const float3& campos, int viewradius)
 	const float myz = (m_WorldY + PATCH_SIZE / 2) * SQUARE_SIZE;
 
 	distfromcam  = math::fabs(campos.x - myx) + campos.y + math::fabs(campos.z - myz);
-	distfromcam *= (float) 200 / viewradius;
+	distfromcam *= 200.0f / viewradius;
 
 	// Split each of the base triangles
 	m_CurrentVariance = m_VarianceLeft;

@@ -5,6 +5,7 @@
 
 #include "Patch.h"
 #include "Map/BaseGroundDrawer.h"
+#include "System/EventHandler.h"
 
 #include <vector>
 
@@ -34,18 +35,29 @@ class CSMFGroundDrawer;
 // Landscape Class
 // Holds all the information to render an entire landscape.
 //
-class Landscape
+class Landscape : public CEventClient
 {
 public:
+	//! CEventClient interface
+	bool WantsEvent(const std::string& eventName) {
+		return (eventName == "UnsyncedHeightMapUpdate");
+	}
+	bool GetFullRead() const { return true; }
+	int  GetReadAllyTeam() const { return AllAccessTeam; }
+
+	void UnsyncedHeightMapUpdate(const SRectangle& rect);
+
+public:
+	Landscape();
+
 	void Init(CSMFGroundDrawer* drawer, const float* hMap, int bx, int by);
 	void Reset();
 	void Tessellate(const float3& campos, int viewradius);
 	int Render(bool changed, bool shadows, bool waterdrawn);
-	void Explosion(float x, float y, float z, float radius);
 
 protected:
-	static int GetNextTriNode() { return m_NextTriNode; }
-	static void SetNextTriNode( int nNextNode ) { m_NextTriNode = nNextNode; }
+	static int  GetNextTriNode() { return m_NextTriNode; }
+	static void SetNextTriNode(int nNextNode) { m_NextTriNode = nNextNode; }
 
 protected:
 	const float* m_HeightMap;                //< HeightMap of the Landscape
