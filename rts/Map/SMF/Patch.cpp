@@ -19,6 +19,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Log/ILog.h"
 
+#include <cfloat>
 
 // -------------------------------------------------------------------------------------------------
 //	PATCH CLASS
@@ -203,13 +204,11 @@ unsigned char Patch::RecursComputeVariance(int leftX, int leftY,
 // ---------------------------------------------------------------------
 // Initialize a patch.
 //
-void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ, const float* hMap, int mx, float maxH, float minH)
+void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ, const float* hMap, int mx)
 {
 	drawer = _drawer;
 
 	// Clear all the relationships
-	maxh = maxH;
-	minh = minH;
 	mapx = mx;
 
 	// Attach the two m_Base triangles together
@@ -224,6 +223,7 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ, const float*
 
 	// Store pointer to first byte of the height data for this patch.
 	m_HeightMap = &hMap[worldZ * (mapx+1) + worldX];
+	heightData = hMap;
 
 	// Initialize flags
 	m_VarianceDirty = 1;
@@ -250,14 +250,26 @@ void Patch::UpdateHeightMap()
 {
 	const float* hMap = readmap->GetCornerHeightMapSynced(); //FIXME
 
+	float minHeight = FLT_MAX;
+	float maxHeight = FLT_MIN;
+
 	int index = 0;
 	for (int z = m_WorldY; z <= (m_WorldY + PATCH_SIZE); z++) {
 		for (int x = m_WorldX; x <= (m_WorldX + PATCH_SIZE); x++) {
+			const float& h = hMap[z * (mapx+1) + x];
+			
 			vertices[index++] = x * SQUARE_SIZE;
-			vertices[index++] = hMap[z * (mapx+1) + x];
+			vertices[index++] = h;
 			vertices[index++] = z * SQUARE_SIZE;
+
+			//FIXME use map global ones instead?
+			maxHeight = std::max(maxHeight, h);
+			minHeight = std::min(minHeight, h);
 		}
 	}
+
+	maxh = maxHeight;
+	minh = minHeight;
 
 	// Fill vertexBuffer
 	glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);

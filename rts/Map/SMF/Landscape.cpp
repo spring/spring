@@ -44,40 +44,25 @@ Landscape::Landscape()
 void Landscape::Init(CSMFGroundDrawer* _drawer, const float* hMap, int bx, int by)
 {
 	drawer = _drawer;
-	heightData = hMap;
 
 	// Store the Height Field array
-	m_HeightMap = hMap;
 	h = by;
 	w = bx;
 	updateCount = 0;
 
 	m_Patches.resize((bx / PATCH_SIZE) * (by / PATCH_SIZE));
-	minhpatch.resize((bx / PATCH_SIZE) * (by / PATCH_SIZE), -10000.0f);
-	maxhpatch.resize((bx / PATCH_SIZE) * (by / PATCH_SIZE), 10000.0f);
 
 	// Initialize all terrain patches
 	for (int Y = 0; Y < by / PATCH_SIZE; Y++) {
 		for (int X = 0; X < bx / PATCH_SIZE; X++) {
-			Patch* patch = &(m_Patches[Y * (bx / PATCH_SIZE) + X]);
-			for (int i = 0; i < PATCH_SIZE; i++) {
-				for (int j = 0; j < PATCH_SIZE; j++) {
-					maxhpatch[Y * bx / PATCH_SIZE + X]
-							= MAX(maxhpatch[Y*bx/PATCH_SIZE+X], heightData[X*PATCH_SIZE+i+(Y*PATCH_SIZE+j)*(bx+1)]);
-					minhpatch[Y * bx / PATCH_SIZE + X]
-							= MIN(minhpatch[Y*bx/PATCH_SIZE+X], heightData[X*PATCH_SIZE+i+(Y*PATCH_SIZE+j)*(bx+1)]);
-				}
-			}
-			patch->heightData=heightData;
-			patch->Init(
+			Patch& patch = m_Patches[Y * (bx / PATCH_SIZE) + X];
+			patch.Init(
 					drawer,
 					X * PATCH_SIZE,
 					Y * PATCH_SIZE,
 					hMap,
-					bx,
-					maxhpatch[Y * bx / PATCH_SIZE + X],
-					minhpatch[Y * bx / PATCH_SIZE + X]);
-			patch->ComputeVariance();
+					bx);
+			patch.ComputeVariance();
 		}
 	}
 }
@@ -88,13 +73,11 @@ void Landscape::Init(CSMFGroundDrawer* _drawer, const float* hMap, int bx, int b
 //
 TriTreeNode* Landscape::AllocateTri()
 {
-	TriTreeNode* pTri=NULL;
-
 	// IF we've run out of TriTreeNodes, just return NULL (this is handled gracefully)
 	if (m_NextTriNode >= POOL_SIZE)
 		return NULL;
 
-	pTri = &(m_TriPool[m_NextTriNode++]);
+	TriTreeNode* pTri = &(m_TriPool[m_NextTriNode++]);
 	pTri->LeftChild = pTri->RightChild = NULL;
 	return pTri;
 }

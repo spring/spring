@@ -81,7 +81,7 @@ public:
 	void UpdateHeightMap();
 
 	// The static half of the Patch Class
-	void Init(CSMFGroundDrawer* drawer, int worldX, int worldZ, const float* hMap, int mx, float maxH, float minH);
+	void Init(CSMFGroundDrawer* drawer, int worldX, int worldZ, const float* hMap, int mx);
 	void Reset();
 	void Tessellate(const float3& campos, int viewradius);
 	
@@ -111,6 +111,7 @@ protected:
 	CSMFGroundDrawer* drawer;
 
 	const float* m_HeightMap; //< Pointer to height map to use
+	const float* heightData;
 
 	float m_VarianceLeft[1 << (VARIANCE_DEPTH)];  //< Left variance tree
 	float m_VarianceRight[1 << (VARIANCE_DEPTH)]; //< Right variance tree
@@ -127,18 +128,17 @@ protected:
 
 	int mapx;
 	float maxh, minh;
+	int m_WorldX, m_WorldY; //< World coordinate offset of this patch.
+
 
 	std::vector<float> vertices; // Why yes, this IS a mind bogglingly wasteful thing to do: TODO: remove this for both the Displaylist and the VBO implementations (only really needed for vertexarrays)
 	std::vector<unsigned int> indices;
-
 
 	GLuint triList;
 	GLuint vertexBuffer;
 	GLuint vertexIndexBuffer;
 
 public:
-	const float* heightData;
-	int m_WorldX, m_WorldY; //< World coordinate offset of this patch.
 	unsigned char m_VarianceDirty; //< Does the Varience Tree need to be recalculated for this Patch? FIXME why not bool?
 };
 
