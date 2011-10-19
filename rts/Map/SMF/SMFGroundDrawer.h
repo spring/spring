@@ -23,6 +23,8 @@ public:
 	~CSMFGroundDrawer();
 
 	friend class CSMFReadMap;
+	friend class Landscape;
+	friend class Patch;
 
 	void Draw(bool drawWaterReflection = false, bool drawUnitReflection = false);
 	void DrawShadowPass();
@@ -41,23 +43,17 @@ public:
 	GL::LightHandler* GetLightHandler() { return &lightHandler; }
 
 	//ROAM members:
-	void DrawMesh(bool haveShadows, bool inShadowPass, bool drawWaterReflection, bool drawUnitReflection);
-	
+	void DrawRoamMesh(bool inShadowPass, bool drawWaterReflection, bool drawUnitReflection);
+
 	bool useROAM;
 	bool* visibilitygrid;
-	int shc;
-	int dc;
-	unsigned char* charheight;
-
 	Landscape landscape;
-	
-	friend class CSmfReadMap;
-	friend class Landscape;
-	friend class Patch;
+
 	float3 lastCamPos;
 	float maxCamDeltaDistSq;
 	int numBigTexX;
 	int numBigTexY;
+
 private:
 #ifdef USE_GML
 	static void DoDrawGroundRowMT(void* c, int bty);
