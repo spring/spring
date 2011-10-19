@@ -113,7 +113,7 @@ void Patch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY,
 
 	if (node < (1 << VARIANCE_DEPTH)) { 
 		TriVariance = ((float) m_CurrentVariance[node] * PATCH_SIZE )
-				/ distfromcam *size ; // Take both distance and variance and patch size into consideration
+				/ distfromcam * size ; // Take both distance and variance and patch size into consideration
 	}
 
 	if ((node >= (1 << VARIANCE_DEPTH)) || // IF we do not have variance info for this node, then we must have gotten here by splitting, so continue down to the lowest level.
@@ -316,7 +316,6 @@ void Patch::Reset()
 void Patch::ComputeVariance()
 {
 	// Compute variance on each of the base triangles...
-
 	m_CurrentVariance = m_VarianceLeft;
 	RecursComputeVariance(0, PATCH_SIZE, m_HeightMap[PATCH_SIZE * (mapx+1)],
 			PATCH_SIZE, 0, m_HeightMap[PATCH_SIZE], 0, 0, m_HeightMap[0], 1);
@@ -392,7 +391,7 @@ void Patch::DrawTriArray()
 		case VA:
 			glEnableClientState(GL_VERTEX_ARRAY);             // activate vertex coords array
 
-				glVertexPointer(3, GL_FLOAT, 0, &vertices[0]);       // last param is offset, not ptr
+				glVertexPointer(3, GL_FLOAT, 0, &vertices[0]);
 				glDrawRangeElements(GL_TRIANGLES, 0, vertices.size(), indices.size(), GL_UNSIGNED_INT, &indices[0]);
 
 			glDisableClientState(GL_VERTEX_ARRAY);            // deactivate vertex array
@@ -431,10 +430,10 @@ int Patch::Render(bool waterdrawn)
 	switch (renderMode) {
 		case DL:
 			glNewList(triList, GL_COMPILE);
-				glEnableClientState(GL_VERTEX_ARRAY);             // activate vertex coords array
-					glVertexPointer(3, GL_FLOAT, 0, &vertices[0]);       // last param is offset, not ptr
+				glEnableClientState(GL_VERTEX_ARRAY);
+					glVertexPointer(3, GL_FLOAT, 0, &vertices[0]);
 					glDrawRangeElements(GL_TRIANGLES, 0, vertices.size(), indices.size(), GL_UNSIGNED_INT, &indices[0]);
-				glDisableClientState(GL_VERTEX_ARRAY);            // deactivate vertex array
+				glDisableClientState(GL_VERTEX_ARRAY);
 			glEndList();
 			break;
 
@@ -467,16 +466,16 @@ void Patch::SetSquareTexture() const
 }
 
 
-	void Patch::ToggleRenderMode() {
-		switch (renderMode) {
-			case VA:
-				LOG("Set ROAM mode to DispList");
-				renderMode = DL; break;
-			case DL:
-				LOG("Set ROAM mode to VBO");
-				renderMode = VBO; break;
-			default:
-				LOG("Set ROAM mode to VA");
-				renderMode = VA; break;
-		}
+void Patch::ToggleRenderMode() {
+	switch (renderMode) {
+		case VA:
+			LOG("Set ROAM mode to DispList");
+			renderMode = DL; break;
+		case DL:
+			LOG("Set ROAM mode to VBO");
+			renderMode = VBO; break;
+		default:
+			LOG("Set ROAM mode to VA");
+			renderMode = VA; break;
 	}
+}

@@ -94,44 +94,44 @@ void Landscape::Reset()
 	// Go through the patches performing resets, compute variances, and linking.
 	for (int Y = 0; Y < h / PATCH_SIZE; Y++)
 		for (int X = 0; X < w / PATCH_SIZE; X++) {
-			Patch* patch = &(m_Patches[Y * (w / PATCH_SIZE) + X]);
+			Patch& patch = m_Patches[Y * (w / PATCH_SIZE) + X];
 
 			// Reset the patch
-			patch->Reset();
-			patch->UpdateVisibility();
+			patch.Reset();
+			patch.UpdateVisibility();
 
 			// Check to see if this patch has been deformed since last frame.
 			// If so, recompute the varience tree for it.
 			//if (!mapDamage->disabled):
 
-			//patch->ComputeVariance();
+			//patch.ComputeVariance();
 
-			//if (patch->isVisibile()) {
-			if (true){
+			//if (patch.isVisibile()) {
+			if (true) {
 				// Link all the patches together.
 				if (X > 0)
-					patch->GetBaseLeft()->LeftNeighbor = m_Patches[Y * (w
+					patch.GetBaseLeft()->LeftNeighbor = m_Patches[Y * (w
 							/ PATCH_SIZE) + X - 1].GetBaseRight();
 				else
-					patch->GetBaseLeft()->LeftNeighbor = NULL; // Link to bordering Landscape here..
+					patch.GetBaseLeft()->LeftNeighbor = NULL; // Link to bordering Landscape here..
 
 				if (X < ((w / PATCH_SIZE) - 1))
-					patch->GetBaseRight()->LeftNeighbor = m_Patches[Y * (w
+					patch.GetBaseRight()->LeftNeighbor = m_Patches[Y * (w
 							/ PATCH_SIZE) + X + 1].GetBaseLeft();
 				else
-					patch->GetBaseRight()->LeftNeighbor = NULL; // Link to bordering Landscape here..
+					patch.GetBaseRight()->LeftNeighbor = NULL; // Link to bordering Landscape here..
 
 				if (Y > 0)
-					patch->GetBaseLeft()->RightNeighbor = m_Patches[(Y - 1)
+					patch.GetBaseLeft()->RightNeighbor = m_Patches[(Y - 1)
 							* (w / PATCH_SIZE) + X].GetBaseRight();
 				else
-					patch->GetBaseLeft()->RightNeighbor = NULL; // Link to bordering Landscape here..
+					patch.GetBaseLeft()->RightNeighbor = NULL; // Link to bordering Landscape here..
 
 				if (Y < ((h / PATCH_SIZE) - 1))
-					patch->GetBaseRight()->RightNeighbor = m_Patches[(Y + 1)
+					patch.GetBaseRight()->RightNeighbor = m_Patches[(Y + 1)
 							* (w / PATCH_SIZE) + X].GetBaseLeft();
 				else
-					patch->GetBaseRight()->RightNeighbor = NULL; // Link to bordering Landscape here..
+					patch.GetBaseRight()->RightNeighbor = NULL; // Link to bordering Landscape here..
 			}
 		}
 
