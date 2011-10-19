@@ -58,7 +58,7 @@ Engine / bugfixes:
 
 Engine / misc defs:
  - replace UnitDef::pieceTrailCEG* by a Lua subtable of sfxTypes
- - deprecate several *Def tags and their Lua*Defs copies (type/maxSlope/isBuilder/canDGun/transportableBuilding/dropped/...)
+ - deprecate several *Def tags and their Lua*Defs copies (type/maxSlope/isBuilder/canDGun/transportableBuilding/dropped/canCrash/...)
  - make a missing UnitDef::humanName non-fatal
  - UnitDef: remove hardcoded: if ((waterline >= 5.0f) && canmove) { waterline += 10.0f; }
  - make UnitDef::losHeight configurable instead of an unused hardcoded value
@@ -95,6 +95,9 @@ Engine / Simulation:
  - fix bizarre skidding behavior for ground units with non-zero slideTolerance
  - higher priority for nano particles when capturing and reclaiming other teams units
  - print error message for select commands referencing invalid object IDs
+ - make TorpedoLauncher weapons able to target any in-water unit
+ - make pushing of enemy units during collisions a ModInfo option ("allowPushingEnemyUnits")
+ - remove hardcoded enter-crashing-state-on-death behavior for aircraft (now delegated to Lua or COB)
 
 Engine / Map:
  - merged both mapinfo.lua's! before there were two, one in the base-dir (-> ArchiveScanner) and one in "maphelper/mapinfo.lua" (-> MapParser/MapInfo)
@@ -104,6 +107,7 @@ Engine / Map:
   - "fogEnd"
   - "bladeColor"
  - check for the smt _next to_ the smf (which can already freely placed in the archive!)
+ - allow resources_map.lua to specify GroundFX textures for CEGs (that use CSimpleGroundFlash)
 
 Engine / Rendering:
  - Lua-scriptable dynamic lighting of models and terrain (www.youtube.com/watch?v=H5je8TKDfNA)
@@ -111,7 +115,9 @@ Engine / Rendering:
  - add optional SSMF normal-mapping and self-illumination stages
  - fix holes in shadows cast by non-closed S3O/OBJ models icw. face culling
  - always cull (non-3DO) model backfaces for the shadow pass
- - allow weapons to not leave any explosion scars
+ - squeeze some extra precision out of the shadow-map
+ - make map/model/tree/projectile shadows individually configurable
+ - allow weapons to not leave any explosion scars (add "explosionScar=true|false" to a WeaponDef)
  - render all SMF maps through GLSL if it is available
  - make depth-testing and -masking configurable for CSimpleGroundFlash
  - fix mixed up textures in the multithreaded version
@@ -119,8 +125,10 @@ Engine / Rendering:
  - add peak display for time profiler
  - don't display /mtinfo if the value is near zero
  - properly fade out features
+ - make underwater shadows darker in deeper water
  - significantly reduced performance impact for Lua rendering widgets in the multithreaded version
  - enable creation of OpenGL objects such as display lists in the sim thread in the multithreaded version
+ - fix BumpWater on ATI cards when atiHacks=false
 
 Engine / Sound:
  - added EFX/EAX support (reverb)
@@ -150,6 +158,7 @@ Engine / Lua:
  - remove the "n" field from array-like tables returned by API functions
  - added Spring.GetProjectilesInRectangle
  - linked Projectile{Created, Destroyed} to the Spring.SetWatchWeapon state
+ - added Spring.SetWatchUnit(unitDefID) and Spring.SetWatchFeature(featureDefID) analogues of SetWatchWeapon
  - extend LuaPathFinder with support for setting node cost overlays
  - extend SyncedRead::Pos2BuildPos: add support for additional param "facing"
  - added Spring.{Get, Set}MapSquareTexture (these allow complete dynamic run-time retexturing of SMF maps)
@@ -165,10 +174,16 @@ Engine / Lua:
  - added widget call-in GamePaused
  - added widget call-in PlayerAdded
  - added widget call-in PlayerRemoved
+ - added callins for collision events
+     UnitUnitCollision(colliderID, collideeID) -- needs SetWatchUnit enabled for both parties
+     UnitFeatureCollision(colliderID, collideeID, crushKilled) -- needs SetWatchFeature enabled for both parties
+ - added Spring.SetUnitCrashing
  - add All/None buttons for widget selector
  - fix multithreaded crashes in Spring.Get{Full,Real}BuildQueue
  - fix Immobilebuilder fails near the map edge
  - fix Spring.SetUnitWeaponState "range" for cannon weapons
+ - add control over airStrafe via MoveCtrl.SetGunshipMoveTypeData
+ - migrate MoveCtrl.SetLeaveTracks to (LuaUnsynced) Spring.SetUnitLeaveTracks
 
 Engine / Internal:
  - added limited OpenMP support

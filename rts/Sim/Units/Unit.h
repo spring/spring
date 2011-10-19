@@ -85,7 +85,7 @@ public:
 	virtual void DoWaterDamage();
 	virtual void Kill(const float3& impulse, bool crushKill);
 	virtual void AddImpulse(const float3&);
-	virtual void FinishedBuilding();
+	virtual void FinishedBuilding(bool postInit);
 
 	bool AttackGround(const float3& pos, bool wantManualFire, bool fpsMode = false);
 	bool AttackUnit(CUnit* unit, bool wantManualFire, bool fpsMode = false);
