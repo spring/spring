@@ -105,9 +105,12 @@ void Patch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY,
 		int rightX, int rightY, int apexX, int apexY, int node)
 {
 	float TriVariance=0;
-	int centerX = (leftX + rightX) >> 1; // Compute X coordinate of center of Hypotenuse
-	int centerY = (leftY + rightY) >> 1; // Compute Y coord...	
-	int size=MAX(MAX(leftY - rightY,rightY - leftY ),MAX(leftX - rightX,rightX - leftX ));
+	const int centerX = (leftX + rightX) >> 1; // Compute X coordinate of center of Hypotenuse
+	const int centerY = (leftY + rightY) >> 1; // Compute Y coord...
+	const int sizeX = std::max(leftX - rightX, rightX - leftX);
+	const int sizeY = std::max(leftY - rightY, rightY - leftY);
+	const int size  = std::max(sizeX, sizeY);
+
 	if (node < (1 << VARIANCE_DEPTH)) { 
 		TriVariance = ((float) m_CurrentVariance[node] * PATCH_SIZE )
 				/ distfromcam *size ; // Take both distance and variance and patch size into consideration
@@ -158,7 +161,7 @@ void Patch::RecursRender(TriTreeNode* tri, int leftX, int leftY, int rightX,
 // ---------------------------------------------------------------------
 // Computes Variance over the entire tree.  Does not examine node relationships.
 //
-unsigned char Patch::RecursComputeVariance(int leftX, int leftY,
+float Patch::RecursComputeVariance(int leftX, int leftY,
 		float leftZ, int rightX, int rightY, float rightZ,
 		int apexX, int apexY, float apexZ, int node)
 {
@@ -177,27 +180,31 @@ unsigned char Patch::RecursComputeVariance(int leftX, int leftY,
 	// Variance of this triangle is the actual height at it's hypotenuse midpoint minus the interpolated height.
 	// Use values passed on the stack instead of re-accessing the Height Field.
 	myVariance = abs(centerZ - ((leftZ + rightZ) / 2));
-	if (leftZ*rightZ<0 ||leftZ*centerZ<0||rightZ*centerZ<0) myVariance=MAX(myVariance*2,20.0f); //shore lines get more variance for higher accuracy
+	
+	if (leftZ*rightZ<0 || leftZ*centerZ<0 || rightZ*centerZ<0)
+		myVariance = std::max(myVariance*2,20.0f); //shore lines get more variance for higher accuracy
+
 	//myVariance= MAX(abs(leftX - rightX),abs(leftY - rightY))*myVariance;
-	if (myVariance<0){
-		myVariance=100;
-	}
+	if (myVariance<0)
+		myVariance = 100;
+
 	// Since we're after speed and not perfect representations,
 	//    only calculate variance down to a 4x4 block
 	if ((abs(leftX - rightX) >= 4) || (abs(leftY - rightY) >= 4)) {
 		// Final Variance for this node is the max of it's own variance and that of it's children.
 		myVariance =
-			MAX( myVariance, RecursComputeVariance( apexX, apexY, apexZ, leftX, leftY, leftZ, centerX, centerY, centerZ, node<<1 ) );
+			std::max( myVariance, RecursComputeVariance( apexX, apexY, apexZ, leftX, leftY, leftZ, centerX, centerY, centerZ, node<<1 ) );
 		myVariance =
-			MAX( myVariance, RecursComputeVariance( rightX, rightY, rightZ, apexX, apexY, apexZ, centerX, centerY, centerZ, 1+(node<<1)) );
+			std::max( myVariance, RecursComputeVariance( rightX, rightY, rightZ, apexX, apexY, apexZ, centerX, centerY, centerZ, 1+(node<<1)) );
 	}
 	
 	// Store the final variance for this node.  Note Variance is never zero.
 	if (node < (1 << VARIANCE_DEPTH))
 		m_CurrentVariance[node] = myVariance;//NOW IT IS 0 MUWAHAHAHAHA
-	if (myVariance<0){
+
+	if (myVariance<0)
 		myVariance=0.001;
-	}
+
 	return myVariance;
 }
 
