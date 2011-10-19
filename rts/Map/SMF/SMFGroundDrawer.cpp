@@ -96,8 +96,6 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm): smfMap(rm)
 	if (useROAM){
 		landscape.Init(this, readmap->GetCornerHeightMapSynced(), gs->mapx, gs->mapy); //FIXME use GetCornerHeightMapUnsynced()
 		visibilitygrid = new bool[rm->numBigTexX*rm->numBigTexY];
-		shc = 0;
-		dc  = 0;
 	}
 
 }
@@ -354,7 +352,7 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 }
 
 
-inline void CSMFGroundDrawer::DrawMesh(bool haveShadows, bool inShadowPass, bool drawWaterReflection, bool drawUnitReflection)
+inline void CSMFGroundDrawer::DrawRoamMesh(bool inShadowPass, bool drawWaterReflection, bool drawUnitReflection)
 {
 	const CCamera* cam = (inShadowPass)? camera: cam2;
 	
@@ -376,7 +374,6 @@ inline void CSMFGroundDrawer::DrawMesh(bool haveShadows, bool inShadowPass, bool
 	// So if shadows are on, we must put the terrain update part in the shadows part.
 	const bool shadowsEnabled = (shadowHandler->shadowsLoaded && !DrawExtraTex());
 	if (!shadowsEnabled || inShadowPass) { 
-		shc++;
 		if (camMoved){
 			landscape.Reset();
 			landscape.Tessellate(cam->pos, viewRadius);
@@ -385,9 +382,8 @@ inline void CSMFGroundDrawer::DrawMesh(bool haveShadows, bool inShadowPass, bool
 
 	const int tricount = landscape.Render(camMoved, inShadowPass, waterDrawn);
 
-	/*LOG("ROAM dbg: Framechange, tris=%i, shc=%i, viewrad=%i, inshadowpass=%i, camera=(%5.0f, %5.0f, %5.0f) camera2=  (%5.0f, %5.0f, %5.0f)",
+	/*LOG("ROAM dbg: Framechange, tris=%i, viewrad=%i, inshadowpass=%i, camera=(%5.0f, %5.0f, %5.0f) camera2=  (%5.0f, %5.0f, %5.0f)",
 		tricount,
-		shc,
 		viewRadius,
 		inShadowPass,
 		camera->pos.x,
@@ -978,24 +974,21 @@ void CSMFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection)
 			);
 		} else
 #endif
-		if (useROAM){
-			//LogObject() << "Calling DrawMesh with drawWaterReflection " << drawWaterReflection<< ", drawUnitReflection " << drawUnitReflection<< "\n" ;
-			DrawMesh(shadowHandler->shadowsLoaded, false, drawWaterReflection, drawUnitReflection);
+		if (useROAM) {
+			DrawRoamMesh(false, drawWaterReflection, drawUnitReflection);
+		} else {
+			int camBty = math::floor(cam2->pos.z / (smfMap->bigSquareSize * SQUARE_SIZE));
+			camBty = std::max(0, std::min(smfMap->numBigTexY - 1, camBty));
 
-		}else
-			{
-				int camBty = math::floor(cam2->pos.z / (smfMap->bigSquareSize * SQUARE_SIZE));
-				camBty = std::max(0, std::min(smfMap->numBigTexY - 1, camBty));
-
-				//! try to render in "front to back" (so start with the camera nearest BigGroundLines)
-				for (int bty = camBty; bty >= 0; --bty) {
-					DoDrawGroundRow(cam2, bty);
-				}
-				for (int bty = camBty + 1; bty < smfMap->numBigTexY; ++bty) {
-					DoDrawGroundRow(cam2, bty);
-				}
+			//! try to render in "front to back" (so start with the camera nearest BigGroundLines)
+			for (int bty = camBty; bty >= 0; --bty) {
+				DoDrawGroundRow(cam2, bty);
+			}
+			for (int bty = camBty + 1; bty < smfMap->numBigTexY; ++bty) {
+				DoDrawGroundRow(cam2, bty);
 			}
 		}
+	}
 	
 
 	ResetTextureUnits(drawWaterReflection);
@@ -1392,11 +1385,9 @@ void CSMFGroundDrawer::DrawShadowPass(void)
 		} else
 #endif
 		{
-			if (useROAM){
-			//LogObject() << "Calling DrawMesh with drawWaterReflection " << drawWaterReflection<< ", drawUnitReflection " << drawUnitReflection<< "\n" ;
-			DrawMesh(shadowHandler->shadowsLoaded, true, false, false);
-
-			}else{
+			if (useROAM) {
+				DrawRoamMesh(true, false, false);
+			} else {
 				for (int nlod = 0; nlod < NUM_LODS + 1; ++nlod) {
 					DoDrawGroundShadowLOD(nlod);
 				}
