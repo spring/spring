@@ -81,23 +81,24 @@ public:
 	void UpdateHeightMap();
 
 	// The static half of the Patch Class
-	virtual void Init(CSMFGroundDrawer* drawer, int worldX, int worldZ, const float* hMap, int mx, float maxH, float minH);
-	virtual void Reset();
-	virtual void Tessellate(const float3& campos, int viewradius);
+	void Init(CSMFGroundDrawer* drawer, int worldX, int worldZ, const float* hMap, int mx, float maxH, float minH);
+	void Reset();
+	void Tessellate(const float3& campos, int viewradius);
 	
-	virtual int Render(bool waterdrawn);
-	virtual void ComputeVariance();
+	int Render(bool waterdrawn);
+	void ComputeVariance();
 
 	// The recursive half of the Patch Class
-	virtual void Split(TriTreeNode* tri);
-	virtual void RecursTessellate(TriTreeNode* tri, int leftX, int leftY,
+	void Split(TriTreeNode* tri);
+	void RecursTessellate(TriTreeNode* tri, int leftX, int leftY,
 			int rightX, int rightY, int apexX, int apexY, int node);
-	virtual void RecursRender(TriTreeNode* tri, int leftX, int leftY, int rightX,
+	void RecursRender(TriTreeNode* tri, int leftX, int leftY, int rightX,
 		int rightY, int apexX, int apexY, bool dir, int maxdepth, bool waterdrawn);
-	virtual unsigned char RecursComputeVariance(int leftX, int leftY,
+	unsigned char RecursComputeVariance(int leftX, int leftY,
 		float leftZ, int rightX, int rightY, float rightZ,
 		int apexX, int apexY, float apexZ, int node);
-	virtual void DrawTriArray();
+	void DrawTriArray();
+
 
 protected:
 	static RenderMode renderMode;
