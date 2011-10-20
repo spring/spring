@@ -30,7 +30,7 @@ class CSMFGroundDrawer;
 class Landscape : public CEventClient
 {
 public:
-	//! CEventClient interface
+	// CEventClient interface
 	bool WantsEvent(const std::string& eventName) {
 		return (eventName == "UnsyncedHeightMapUpdate");
 	}

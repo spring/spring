@@ -19,7 +19,7 @@ public:
 	CSM3GroundDrawer(CSM3ReadMap* map);
 	~CSM3GroundDrawer();
 
-	void Draw(bool drawWaterReflection, bool drawUnitReflection);
+	void Draw(const DrawPass::e& drawPass);
 	void DrawShadowPass();
 	void Update();
 	void UpdateSunDir() {}
@@ -28,7 +28,7 @@ public:
 	void DecreaseDetail();
 
 protected:
-	void DrawObjects(bool drawWaterReflection, bool drawUnitReflection);
+	void DrawObjects(const DrawPass::e& drawPass);
 
 	CSM3ReadMap* map;
 

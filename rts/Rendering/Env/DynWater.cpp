@@ -483,12 +483,12 @@ void CDynWater::DrawReflection(CGame* game)
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 		gd->SetupReflDrawPass();
-		gd->Draw(true, false);
+		gd->Draw(DrawPass::WaterReflection);
 		gd->SetupBaseDrawPass();
 
 	glClipPlane(GL_CLIP_PLANE2 ,plane);
 
-	gd->Draw(true);
+	gd->Draw(DrawPass::WaterReflection);
 
 	shadowHandler->shadowsLoaded = shadowsLoaded;
 
@@ -543,7 +543,7 @@ void CDynWater::DrawRefraction(CGame* game)
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 		gd->SetupRefrDrawPass();
-		gd->Draw(false, false);
+		gd->Draw(DrawPass::WaterRefraction);
 		gd->SetupBaseDrawPass();
 
 	glEnable(GL_CLIP_PLANE2);

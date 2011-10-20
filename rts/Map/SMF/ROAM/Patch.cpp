@@ -13,9 +13,9 @@
 
 #include "Patch.h"
 #include "Landscape.h"
-#include "SMFGroundDrawer.h"
 #include "Game/Camera.h"
 #include "Map/ReadMap.h"
+#include "Map/SMF/SMFGroundDrawer.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Log/ILog.h"
 
