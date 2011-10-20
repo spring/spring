@@ -51,8 +51,11 @@ struct TriTreeNode
 class Patch
 {
 public:
+	void Init(CSMFGroundDrawer* drawer, int worldX, int worldZ, const float* hMap, int mx); //FIXME make this a ctor!
 	~Patch();
 
+	void Reset();
+	
 	TriTreeNode* GetBaseLeft()
 	{
 		return &m_BaseLeft;
@@ -75,20 +78,15 @@ public:
 	}
 
 	void UpdateVisibility();
-
-	void SetSquareTexture() const;
-	
 	void UpdateHeightMap();
-
-	// The static half of the Patch Class
-	void Init(CSMFGroundDrawer* drawer, int worldX, int worldZ, const float* hMap, int mx);
-	void Reset();
 
 	void Tessellate(const float3& campos, int viewradius);
 	void ComputeVariance();
 
 	int Render(bool waterdrawn);
 	void DrawTriArray();
+
+	void SetSquareTexture() const;
 
 private:
 	// The recursive half of the Patch Class

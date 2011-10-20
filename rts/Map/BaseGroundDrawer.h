@@ -14,6 +14,16 @@ class CHeightLinePalette;
 class CBaseGroundTextures;
 class CCamera;
 
+struct DrawPass {
+	enum e {
+		Normal,
+		Shadow,
+		WaterReflection,
+		WaterRefraction,
+		UnitReflection
+	};
+};
+
 class CBaseGroundDrawer
 {
 public:
@@ -36,7 +46,7 @@ public:
 	CBaseGroundDrawer(void);
 	virtual ~CBaseGroundDrawer(void);
 
-	virtual void Draw(bool drawWaterReflection = false, bool drawUnitReflection = false) = 0;
+	virtual void Draw(const DrawPass::e& drawPass) = 0;
 	virtual void DrawShadowPass(void);
 
 	virtual void SetupBaseDrawPass(void) {}

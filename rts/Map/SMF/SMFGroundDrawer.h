@@ -4,14 +4,16 @@
 #define _SMF_GROUND_DRAWER_H_
 
 #include "Map/BaseGroundDrawer.h"
-#include "Map/SMF/Landscape.h"
 
-class CVertexArray;
+
 class CSMFReadMap;
+class IMeshDrawer;
+
 
 namespace Shader {
 	struct IProgramObject;
 }
+
 
 /**
  * Map drawer implementation for the CSMFReadMap map system.
@@ -23,10 +25,11 @@ public:
 	~CSMFGroundDrawer();
 
 	friend class CSMFReadMap;
-	friend class Landscape;
-	friend class Patch;
+	friend class IMeshDrawer;
+	//friend class Landscape;
+	//friend class Patch;
 
-	void Draw(bool drawWaterReflection = false, bool drawUnitReflection = false);
+	void Draw(const DrawPass::e& drawPass);
 	void DrawShadowPass();
 
 	// for non-GLSL clients
@@ -42,44 +45,23 @@ public:
 
 	GL::LightHandler* GetLightHandler() { return &lightHandler; }
 
-	//ROAM members:
-	void DrawRoamMesh(bool inShadowPass, bool drawWaterReflection, bool drawUnitReflection);
-
-	bool useROAM;
-	bool* visibilitygrid;
-	Landscape landscape;
-
-	float3 lastCamPos;
-	float maxCamDeltaDistSq;
-	int numBigTexX;
-	int numBigTexY;
+	void SetupBigSquare(const int bigSquareX, const int bigSquareY);
 
 private:
-#ifdef USE_GML
-	static void DoDrawGroundRowMT(void* c, int bty);
-	static void DoDrawGroundShadowLODMT(void* c, int nlod);
-#endif
-
 	bool LoadMapShaders();
 	void CreateWaterPlanes(bool camOufOfMap);
 	inline void DrawWaterPlane(bool drawWaterReflection);
 
-	void FindRange(const CCamera* cam, int& xs, int& xe, int y, int lod);
-	void DoDrawGroundRow(const CCamera* cam, int bty);
-	void DrawVertexAQ(CVertexArray* ma, int x, int y);
-	void DrawVertexAQ(CVertexArray* ma, int x, int y, float height);
-	void EndStripQ(CVertexArray* ma);
-	void DrawGroundVertexArrayQ(CVertexArray*& ma);
-	void DoDrawGroundShadowLOD(int nlod);
-
-	inline bool BigTexSquareRowVisible(const CCamera* cam, int) const;
-	void SetupBigSquare(const int bigSquareX, const int bigSquareY);
 	void SetupTextureUnits(bool drawReflection);
 	void ResetTextureUnits(bool drawReflection);
 
+private:
 	CSMFReadMap* smfMap;
+	IMeshDrawer* meshDrawer;
 
+public://FIXME
 	int viewRadius;
+private:
 	int neededLod;
 
 	GLuint waterPlaneCamOutDispList;
