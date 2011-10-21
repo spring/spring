@@ -126,12 +126,15 @@ void CRoamMeshDrawer::Update()
 	//retessellate |= ((cam->pos - lastCamPos).SqLength() > maxCamDeltaDistSq);
 	//const float cd = (cam->pos - lastCamPos).SqLength();
 
+	retessellate |= forceRetessellate;
+
 	retessellate |= (lastViewRadius != smfGroundDrawer->viewRadius);
 
 	if (retessellate) {
 		lastViewRadius = smfGroundDrawer->viewRadius;
 		lastCamPos = cam->pos;
-		
+		forceRetessellate = false;
+
 		{ SCOPED_TIMER("ROAM::Tessellate");
 			//FIXME this tessellates with current camera + viewRadius
 			//  so it doesn't retessellate patches that are e.g. only vis. in the shadow frustum
