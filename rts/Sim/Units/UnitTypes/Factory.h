@@ -17,13 +17,13 @@ public:
 
 	CFactory();
 	virtual ~CFactory();
+
 	void PostLoad();
 	void StopBuild();
 	void StartBuild(const UnitDef* ud);
 	void Update();
 	void DependentDied(CObject* o);
-	void FinishedBuilding();
-	void CreateNanoParticle();
+	void CreateNanoParticle(bool highPriority = false);
 
 	/// supply the build piece to speed up
 	float3 CalcBuildPos(int buildPiece = -1);

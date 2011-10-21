@@ -214,7 +214,7 @@ bool SpringApp::Initialize()
 
 	UpdateOldConfigs();
 
-	if (!InitWindow(("Spring " + SpringVersion::Get()).c_str())) {
+	if (!InitWindow(("Spring " + SpringVersion::GetSync()).c_str())) {
 		SDL_Quit();
 		return false;
 	}

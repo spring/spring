@@ -61,7 +61,7 @@ void CInterceptHandler::AddInterceptTarget(CWeaponProjectile* target, const floa
 			(w->weaponPos.SqDistance2D(destination) < Square(w->weaponDef->coverageRange)))
 		{
 			w->incoming.push_back(target);
-			w->AddDeathDependence(target);
+			w->AddDeathDependence(target, CObject::DEPENDENCE_INTERCEPT);
 		}
 	}
 }

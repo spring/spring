@@ -539,7 +539,8 @@ void CUnit::PostInit(const CUnit* builder)
 	eoh->UnitCreated(*this, builder);
 
 	if (!beingBuilt) {
-		FinishedBuilding();
+		// skip past the gradual build-progression
+		FinishedBuilding(true);
 	}
 }
 
@@ -1231,9 +1232,11 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 
 
 
-void CUnit::Kill(const float3& impulse) {
-	DamageArray da(health);
-	DoDamage(da, NULL, impulse, -1);
+void CUnit::Kill(const float3& impulse, bool crushKill) {
+	crushKilled = crushKill;
+
+	DamageArray damage;
+	DoDamage(damage * (health + 1.0f), NULL, impulse, -1);
 }
 
 void CUnit::AddImpulse(const float3& addedImpulse) {
@@ -1376,11 +1379,6 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	selectedUnits.RemoveUnit(this);
 	SetGroup(NULL);
 
-	// reset states and clear the queues
-	if (!teamHandler->AlliedTeams(oldteam, newteam)) {
-		ChangeTeamReset();
-	}
-
 	eventHandler.UnitTaken(this, newteam);
 	eoh->UnitCaptured(*this, newteam);
 
@@ -1434,12 +1432,35 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	eventHandler.UnitGiven(this, oldteam);
 	eoh->UnitGiven(*this, oldteam);
 
+	// reset states and clear the queues
+	if (!teamHandler->AlliedTeams(oldteam, newteam))
+		ChangeTeamReset();
+
 	return true;
 }
 
 
 void CUnit::ChangeTeamReset()
 {
+	// stop friendly units shooting at us
+	const std::map<DependenceType, std::list<CObject*> >& listeners = GetAllListeners();
+	std::vector<CUnit *> alliedunits;
+	for (std::map<DependenceType, std::list<CObject*> >::const_iterator li = listeners.begin(); li != listeners.end(); ++li) {
+		for (std::list<CObject *>::const_iterator di = li->second.begin(); di != li->second.end(); ++di) {
+			CUnit* u = dynamic_cast<CUnit *>(*di);
+			if (u != NULL && teamHandler->AlliedTeams(team, u->team))
+				alliedunits.push_back(u);
+		}
+	}
+	for (std::vector<CUnit *>::const_iterator ui = alliedunits.begin(); ui != alliedunits.end(); ++ui) {
+		(*ui)->StopAttackingAllyTeam(allyteam);
+	}
+	// and stop shooting at friendly ally teams
+	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
+		if (teamHandler->Ally(t, allyteam))
+			StopAttackingAllyTeam(t);
+	}
+
 	// clear the commands (newUnitCommands for factories)
 	Command c(CMD_STOP);
 	commandAI->GiveCommand(c);
@@ -1565,7 +1586,7 @@ void CUnit::SetLastAttacker(CUnit* attacker)
 
 	lastAttack = gs->frameNum;
 	lastAttacker = attacker;
-	AddDeathDependence(attacker);
+	AddDeathDependence(attacker, DEPENDENCE_ATTACKER);
 }
 
 void CUnit::SetUserTarget(CUnit* target)
@@ -1579,7 +1600,7 @@ void CUnit::SetUserTarget(CUnit* target)
 	}
 
 	if (target) {
-		AddDeathDependence(target);
+		AddDeathDependence(target, DEPENDENCE_TARGET);
 	}
 }
 
@@ -1682,24 +1703,23 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 
 		lastNanoAdd = gs->frameNum;
 
-
 		if (beingBuilt) { //build
 			if ((teamHandler->Team(builder->team)->metal  >= metalUse) &&
 			    (teamHandler->Team(builder->team)->energy >= energyUse) &&
 			    (!luaRules || luaRules->AllowUnitBuildStep(builder, this, part))) {
-				if (builder->UseMetal(metalUse)) { //just because we checked doesn't mean they were deducted since upkeep can prevent deduction
+				if (builder->UseMetal(metalUse)) {
+					// just because we checked doesn't mean they were deducted since upkeep can prevent deduction
 					if (builder->UseEnergy(energyUse)) {
 						health += (maxHealth * part);
+						health = std::min(health, maxHealth);
 						buildProgress += part;
+
 						if (buildProgress >= 1.0f) {
-							if (health > maxHealth) {
-								health = maxHealth;
-							}
-							FinishedBuilding();
+							FinishedBuilding(false);
 						}
-					}
-					else {
-						builder->UseMetal(-metalUse); //refund the metal if the energy cannot be deducted
+					} else {
+						// refund the metal if the energy cannot be deducted
+						builder->UseMetal(-metalUse);
 					}
 				}
 				return true;
@@ -1779,18 +1799,19 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 }
 
 
-void CUnit::FinishedBuilding()
+void CUnit::FinishedBuilding(bool postInit)
 {
+	if (!beingBuilt && !postInit) {
+		return;
+	}
+
 	beingBuilt = false;
 	buildProgress = 1.0f;
+	mass = unitDef->mass;
 
 	if (soloBuilder) {
 		DeleteDeathDependence(soloBuilder, DEPENDENCE_BUILDER);
 		soloBuilder = NULL;
-	}
-
-	if (!(immobile && (mass == CSolidObject::DEFAULT_MASS))) {
-		mass = unitDef->mass;
 	}
 
 	ChangeLos(realLosRadius, realAirLosRadius);
@@ -2050,7 +2071,7 @@ void CUnit::IncomingMissile(CMissileProjectile* missile)
 {
 	if (unitDef->canDropFlare) {
 		incomingMissiles.push_back(missile);
-		AddDeathDependence(missile);
+		AddDeathDependence(missile, DEPENDENCE_INCOMING);
 
 		if (lastFlareDrop < (gs->frameNum - unitDef->flareReloadTime * 30)) {
 			new CFlareProjectile(pos, speed, this, (int) (gs->frameNum + unitDef->flareDelay * (1 + gs->randFloat()) * 15));
@@ -2108,6 +2129,13 @@ void CUnit::PostLoad()
 
 void CUnit::StopAttackingAllyTeam(int ally)
 {
+	if (lastAttacker != NULL && lastAttacker->allyteam == ally) {
+		DeleteDeathDependence(lastAttacker, DEPENDENCE_ATTACKER);
+		lastAttacker = NULL;
+	}
+	if (userTarget != NULL && userTarget->allyteam == ally)
+		SetUserTarget(NULL);
+
 	commandAI->StopAttackingAllyTeam(ally);
 	for (std::vector<CWeapon*>::iterator it = weapons.begin(); it != weapons.end(); ++it) {
 		(*it)->StopAttackingAllyTeam(ally);
@@ -2177,46 +2205,11 @@ void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 	}
 }
 
-
-void CUnit::DeleteDeathDependence(CObject* o, DependenceType dep) {
-	/* curBuild, lastAttacker, userTarget etc. are NOT mutually exclusive, 
-	   and we can therefore only call CUnit::DeleteDeathDependence if we are
-	   certain that no references to the object in question still exist
-	*/
-	switch (dep) {
-		case DEPENDENCE_BUILD:
-		case DEPENDENCE_CAPTURE:
-		case DEPENDENCE_RECLAIM:
-		case DEPENDENCE_TERRAFORM:
-		case DEPENDENCE_TRANSPORTEE:
-		case DEPENDENCE_TRANSPORTER:
-			if (o == lastAttacker || o == soloBuilder || o == userTarget) return;
-			break;
-		case DEPENDENCE_ATTACKER:
-			if (o == soloBuilder || o == userTarget) return;
-			break;
-		case DEPENDENCE_BUILDER:
-			if (o == lastAttacker || o == userTarget) return;
-			break;
-		case DEPENDENCE_RESURRECT:
-			// feature
-			break;
-		case DEPENDENCE_TARGET:
-			if (o == lastAttacker || o == soloBuilder) return;
-			break;
-	}
-
-	CObject::DeleteDeathDependence(o);
-}
-
-
-
 CR_BIND_DERIVED(CUnit, CSolidObject, );
 // Member bindings
 CR_REG_METADATA(CUnit, (
 	// CR_MEMBER(unitDef),
 	CR_MEMBER(unitDefID),
-	CR_MEMBER(collisionVolume),
 	CR_MEMBER(frontdir),
 	CR_MEMBER(rightdir),
 	CR_MEMBER(updir),

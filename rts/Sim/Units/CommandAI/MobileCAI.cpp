@@ -35,6 +35,7 @@ CR_BIND_DERIVED(CMobileCAI ,CCommandAI , );
 
 CR_REG_METADATA(CMobileCAI, (
 				CR_MEMBER(goalPos),
+				CR_MEMBER(lastBuggerGoalPos),
 				CR_MEMBER(lastUserGoal),
 
 				CR_MEMBER(lastIdleCheck),
@@ -62,6 +63,7 @@ CR_REG_METADATA(CMobileCAI, (
 CMobileCAI::CMobileCAI():
 	CCommandAI(),
 	goalPos(-1,-1,-1),
+	lastBuggerGoalPos(-1,0,-1),
 	lastUserGoal(0,0,0),
 	lastIdleCheck(0),
 	tempOrder(false),
@@ -83,6 +85,7 @@ CMobileCAI::CMobileCAI():
 CMobileCAI::CMobileCAI(CUnit* owner):
 	CCommandAI(owner),
 	goalPos(-1,-1,-1),
+	lastBuggerGoalPos(-1,0,-1),
 	lastUserGoal(owner->pos),
 	lastIdleCheck(0),
 	tempOrder(false),
@@ -291,7 +294,7 @@ bool CMobileCAI::RefuelIfNeeded()
 		StopMove();
 
 		owner->userAttackGround = false;
-		owner->userTarget = 0;
+		owner->SetUserTarget(NULL);
 		inCommand = false;
 
 		CAirBaseHandler::LandingPad* lp =
@@ -327,7 +330,7 @@ bool CMobileCAI::RefuelIfNeeded()
 		if (lp != NULL) {
 			StopMove();
 			owner->userAttackGround = false;
-			owner->userTarget = 0;
+			owner->SetUserTarget(NULL);
 			inCommand = false;
 			owner->moveType->ReservePad(lp);
 			return true;
@@ -700,8 +703,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 				SetGoal(fix - diff * targetUnit->radius, owner->pos);
 
-				orderTarget = targetUnit;
-				AddDeathDependence(orderTarget, DEPENDENCE_ORDERTARGET);
+				SetOrderTarget(targetUnit);
 				inCommand = true;
 			} else {
 				// unit may not fire on itself, cancel order
@@ -980,6 +982,17 @@ void CMobileCAI::NonMoving()
 		}
 		if (length < buggerOffRadius) {
 			float3 goalPos = buggerOffPos + dif * ((buggerOffRadius + 128) / length);
+			bool randomize = (goalPos.x == lastBuggerGoalPos.x) && (goalPos.z == lastBuggerGoalPos.z);
+			lastBuggerGoalPos.x = goalPos.x;
+			lastBuggerGoalPos.z = goalPos.z;
+			if (randomize) {
+				lastBuggerGoalPos.y += 32.0f; // gradually increase the amplitude of the random factor
+				goalPos.x += (2.0f * lastBuggerGoalPos.y) * gs->randFloat() - lastBuggerGoalPos.y;
+				goalPos.z += (2.0f * lastBuggerGoalPos.y) * gs->randFloat() - lastBuggerGoalPos.y;
+			}
+			else
+				lastBuggerGoalPos.y = 0.0f;
+
 			Command c(CMD_MOVE);
 			//c.options = INTERNAL_ORDER;
 			c.params.push_back(goalPos.x);

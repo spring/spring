@@ -464,7 +464,8 @@ void AAIMap::ReadMapCacheFile()
 
 void AAIMap::ReadContinentFile()
 {
-	static const size_t buffer_sizeMax = 500;
+	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
+	static const size_t buffer_sizeMax = 2048;
 	char buffer[buffer_sizeMax];
 	STRCPY(buffer, MAIN_PATH);
 	STRCAT(buffer, MAP_CACHE_PATH);
@@ -588,7 +589,8 @@ void AAIMap::ReadContinentFile()
 
 std::string AAIMap::LocateMapLearnFile(const bool forWriting) const {
 
-	const size_t buffer_sizeMax = 512;
+	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
+	const size_t buffer_sizeMax = 2048;
 	char buffer[buffer_sizeMax];
 
 	STRCPY(buffer, MAIN_PATH);
@@ -618,7 +620,8 @@ std::string AAIMap::LocateMapLearnFile(const bool forWriting) const {
 
 std::string AAIMap::LocateMapCacheFile(const bool forWriting) const {
 
-	const size_t buffer_sizeMax = 512;
+	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
+	const size_t buffer_sizeMax = 2048;
 	char buffer[buffer_sizeMax];
 
 	STRCPY(buffer, MAIN_PATH);
@@ -644,7 +647,8 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 {
 	const std::string mapLearn_filename = LocateMapLearnFile(false);
 
-	const size_t buffer_sizeMax = 512;
+	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
+	const size_t buffer_sizeMax = 2048;
 	char buffer[buffer_sizeMax];
 
 	// open learning files
@@ -2540,7 +2544,8 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 		}
 	}
 
-	static const size_t filename_sizeMax = 500;
+	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
+	static const size_t filename_sizeMax = 2048;
 	char filename[filename_sizeMax];
 	STRCPY(filename, "AAIDefMap.txt");
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
@@ -2684,7 +2689,8 @@ float AAIMap::GetDefenceBuildsite(float3 *best_pos, const UnitDef *def, int xSta
 
 	float range =  bt->units_static[def->id].range / 8.0;
 
-	static const size_t filename_sizeMax = 500;
+	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
+	static const size_t filename_sizeMax = 2048;
 	char filename[filename_sizeMax];
 	STRCPY(filename, "AAIDebug.txt");
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);

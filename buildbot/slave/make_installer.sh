@@ -88,3 +88,6 @@ ln -sfv ${REV}/*.exe spring_testing.exe
 ln -sfv ${REV}/spring_${VERSION}_minimal-portable.7z spring_testing_minimal-portable.7z
 ln -sfv ${REV}/${VERSION}_ArchiveMover.7z ArchiveMover_testing.7z
 
+# create a file which contains the latest version of a branch
+echo ${VERSION} > LATEST
+

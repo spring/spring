@@ -11,7 +11,6 @@
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
 #include "System/myMath.h"
-#include "Rendering/GlobalRendering.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
@@ -19,7 +18,6 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Projectiles/Unsynced/GfxProjectile.h"
 #include "Sim/Units/Scripts/CobInstance.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -52,6 +50,7 @@ CR_REG_METADATA(CBuilder, (
 				CR_MEMBER(curBuild),
 				CR_MEMBER(curCapture),
 				CR_MEMBER(curReclaim),
+				CR_MEMBER(reclaimingUnit),
 				CR_MEMBER(helpTerraform),
 				CR_MEMBER(terraforming),
 				CR_MEMBER(myTerraformLeft),
@@ -83,6 +82,7 @@ CBuilder::CBuilder():
 	curBuild(0),
 	curCapture(0),
 	curReclaim(0),
+	reclaimingUnit(false),
 	helpTerraform(0),
 	terraforming(false),
 	terraformHelp(0),
@@ -164,7 +164,7 @@ void CBuilder::Update()
 							}
 						}
 
-						if(curBuild->terraformLeft<=0){
+						if (curBuild->terraformLeft<=0) {
 							terraforming=false;
 							mapDamage->RecalcArea(tx1,tx2,tz1,tz2);
 							curBuild->groundLevelled = true;
@@ -206,7 +206,7 @@ void CBuilder::Update()
 
 			ScriptDecloak(true);
 
-			CreateNanoParticle(terraformCenter,terraformRadius*0.5f,false);
+			CreateNanoParticle(terraformCenter, terraformRadius * 0.5f, false);
 
 			for (int z = tz1; z <= tz2; z++) {
 				// smooth the borders x
@@ -256,7 +256,7 @@ void CBuilder::Update()
 				ScriptDecloak(true);
 
 				helpTerraform->terraformHelp += terraformSpeed;
-				CreateNanoParticle(helpTerraform->terraformCenter,helpTerraform->terraformRadius*0.5f,false);
+				CreateNanoParticle(helpTerraform->terraformCenter, helpTerraform->terraformRadius * 0.5f, false);
 			} else {
 				DeleteDeathDependence(helpTerraform, DEPENDENCE_TERRAFORM);
 				helpTerraform=0;
@@ -279,27 +279,27 @@ void CBuilder::Update()
 						adjBuildSpeed = min(unitDef->maxRepairSpeed / 2.0f - curBuild->repairAmount, repairSpeed); // repair
 					}
 
-					if(adjBuildSpeed > 0 && !commandAI->commandQue.empty()
+					if (adjBuildSpeed > 0 && !commandAI->commandQue.empty()
 							&& commandAI->commandQue.front().GetID() == CMD_WAIT) {
 						curBuild->AddBuildPower(0, this);
 					} else if (adjBuildSpeed > 0 && curBuild->AddBuildPower(adjBuildSpeed, this)) {
 						CreateNanoParticle(curBuild->midPos, curBuild->radius * 0.5f, false);
 					} else {
-						if(!curBuild->beingBuilt && curBuild->health >= curBuild->maxHealth) {
+						if (!curBuild->beingBuilt && curBuild->health >= curBuild->maxHealth) {
 							StopBuild();
 						}
 					}
 				}
 			}
 		}
-		else if(curReclaim && f3SqDist(curReclaim->pos, pos)<Square(buildDistance+curReclaim->radius) && inBuildStance){
+		else if (curReclaim && f3SqDist(curReclaim->pos, pos)<Square(buildDistance+curReclaim->radius) && inBuildStance) {
 			ScriptDecloak(true);
 
 			if (curReclaim->AddBuildPower(-reclaimSpeed, this)) {
-				CreateNanoParticle(curReclaim->midPos, curReclaim->radius * 0.7f, true);
+				CreateNanoParticle(curReclaim->midPos, curReclaim->radius * 0.7f, true, (reclaimingUnit && curReclaim->team != team));
 			}
 		}
-		else if(curResurrect && f3SqDist(curResurrect->pos, pos)<Square(buildDistance+curResurrect->radius) && inBuildStance){
+		else if (curResurrect && f3SqDist(curResurrect->pos, pos)<Square(buildDistance+curResurrect->radius) && inBuildStance) {
 			const UnitDef* ud = curResurrect->udef;
 
 			if (ud) {
@@ -312,7 +312,7 @@ void CBuilder::Update()
 					// Corpse has been restored, begin resurrection
 					if (UseEnergy(ud->energyCost * resurrectSpeed / ud->buildTime * modInfo.resurrectEnergyCostFactor)) {
 						curResurrect->resurrectProgress+=resurrectSpeed/ud->buildTime;
-						CreateNanoParticle(curResurrect->midPos,curResurrect->radius*0.7f,gs->randInt()&1);
+						CreateNanoParticle(curResurrect->midPos, curResurrect->radius * 0.7f, (gs->randInt() & 1));
 					}
 					if (curResurrect->resurrectProgress > 1) {
 						// resurrect finished
@@ -322,7 +322,7 @@ void CBuilder::Update()
 
 						if (!this->unitDef->canBeAssisted) {
 							u->soloBuilder = this;
-							u->AddDeathDependence(this);
+							u->AddDeathDependence(this, DEPENDENCE_BUILDER);
 						}
 						u->health *= 0.05f;
 
@@ -348,8 +348,8 @@ void CBuilder::Update()
 				StopBuild(true);
 			}
 		}
-		else if(curCapture && f3SqDist(curCapture->pos, pos)<Square(buildDistance+curCapture->radius) && inBuildStance){
-			if(curCapture->team!=team){
+		else if (curCapture && f3SqDist(curCapture->pos, pos)<Square(buildDistance+curCapture->radius) && inBuildStance) {
+			if (curCapture->team!=team) {
 
 				float captureProgressTemp = curCapture->captureProgress + 1.0f/(150+curCapture->buildTime/captureSpeed*(curCapture->health+curCapture->maxHealth)/curCapture->maxHealth*0.4f);
 				if (captureProgressTemp >= 1.0f) {
@@ -363,8 +363,8 @@ void CBuilder::Update()
 					teamHandler->Team(team)->energyPull += energyUseScaled;
 				} else {
 					curCapture->captureProgress = captureProgressTemp;
-					CreateNanoParticle(curCapture->midPos,curCapture->radius*0.7f,false);
-					if(curCapture->captureProgress >= 1.0f){
+					CreateNanoParticle(curCapture->midPos, curCapture->radius * 0.7f, false, true);
+					if (curCapture->captureProgress >= 1.0f) {
 						if (!curCapture->ChangeTeam(team, CUnit::ChangeCaptured)) {
 							// capture failed
 							if (team == gu->myTeam) {
@@ -388,7 +388,7 @@ void CBuilder::Update()
 
 void CBuilder::SlowUpdate(void)
 {
-	if(terraforming){
+	if (terraforming) {
 		mapDamage->RecalcArea(tx1,tx2,tz1,tz2);
 	}
 	CUnit::SlowUpdate();
@@ -397,16 +397,16 @@ void CBuilder::SlowUpdate(void)
 
 void CBuilder::SetRepairTarget(CUnit* target)
 {
-	if(target==curBuild)
+	if (target==curBuild)
 		return;
 
 	StopBuild(false);
 	TempHoldFire();
 
 	curBuild=target;
-	AddDeathDependence(curBuild);
+	AddDeathDependence(curBuild, DEPENDENCE_BUILD);
 
-	if(!target->groundLevelled) {
+	if (!target->groundLevelled) {
 		//resume levelling the ground
 		tx1 = (int)max((float)0,(target->pos.x - (target->unitDef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
 		tx2 = min(gs->mapx,tx1+target->unitDef->xsize);
@@ -424,23 +424,25 @@ void CBuilder::SetRepairTarget(CUnit* target)
 
 void CBuilder::SetReclaimTarget(CSolidObject* target)
 {
-	if(dynamic_cast<CFeature*>(target) && !((CFeature*) target)->def->reclaimable){
+	if (dynamic_cast<CFeature*>(target) && !((CFeature*) target)->def->reclaimable) {
 		return;
 	}
 
-	if(dynamic_cast<CUnit*>(target) && !((CUnit*) target)->unitDef->reclaimable){
+	CUnit* recUnit = dynamic_cast<CUnit*>(target);
+	if (recUnit && !recUnit->unitDef->reclaimable) {
 		return;
 	}
 
-	if(curReclaim==target || this == target){
+	if (curReclaim==target || this == target) {
 		return;
 	}
 
 	StopBuild(false);
 	TempHoldFire();
 
+	reclaimingUnit = !!recUnit;
 	curReclaim=target;
-	AddDeathDependence(curReclaim);
+	AddDeathDependence(curReclaim, DEPENDENCE_RECLAIM);
 
 	SetBuildStanceToward(target->pos);
 }
@@ -455,7 +457,7 @@ void CBuilder::SetResurrectTarget(CFeature* target)
 	TempHoldFire();
 
 	curResurrect = target;
-	AddDeathDependence(curResurrect);
+	AddDeathDependence(curResurrect, DEPENDENCE_RESURRECT);
 
 	SetBuildStanceToward(target->pos);
 }
@@ -470,7 +472,7 @@ void CBuilder::SetCaptureTarget(CUnit* target)
 	TempHoldFire();
 
 	curCapture = target;
-	AddDeathDependence(curCapture);
+	AddDeathDependence(curCapture, DEPENDENCE_CAPTURE);
 
 	SetBuildStanceToward(target->pos);
 }
@@ -509,15 +511,15 @@ void CBuilder::StartRestore(float3 centerPos, float radius)
 
 void CBuilder::StopBuild(bool callScript)
 {
-	if(curBuild)
+	if (curBuild)
 		DeleteDeathDependence(curBuild, DEPENDENCE_BUILD);
-	if(curReclaim)
+	if (curReclaim)
 		DeleteDeathDependence(curReclaim, DEPENDENCE_RECLAIM);
-	if(helpTerraform)
+	if (helpTerraform)
 		DeleteDeathDependence(helpTerraform, DEPENDENCE_TERRAFORM);
-	if(curResurrect)
+	if (curResurrect)
 		DeleteDeathDependence(curResurrect, DEPENDENCE_RESURRECT);
-	if(curCapture)
+	if (curCapture)
 		DeleteDeathDependence(curCapture, DEPENDENCE_CAPTURE);
 	curBuild=0;
 	curReclaim=0;
@@ -525,7 +527,7 @@ void CBuilder::StopBuild(bool callScript)
 	curResurrect=0;
 	curCapture=0;
 	terraforming=false;
-	if(callScript)
+	if (callScript)
 		script->StopBuilding();
 	ReleaseTempHoldFire();
 }
@@ -562,7 +564,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitst
 
 		if (u != NULL && u->unitDef == buildInfo.def && unitDef->canAssist) {
 			curBuild = u;
-			AddDeathDependence(u);
+			AddDeathDependence(u, DEPENDENCE_BUILD);
 			SetBuildStanceToward(buildInfo.pos);
 			return true;
 		}
@@ -611,9 +613,9 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitst
 
 	if (!this->unitDef->canBeAssisted) {
 		b->soloBuilder = this;
-		b->AddDeathDependence(this);
+		b->AddDeathDependence(this, DEPENDENCE_BUILDER);
 	}
-	AddDeathDependence(b);
+	AddDeathDependence(b, DEPENDENCE_BUILD);
 	curBuild=b;
 
 	/* The ground isn't going to be terraformed.
@@ -658,23 +660,23 @@ float CBuilder::CalculateBuildTerraformCost(BuildInfo& buildInfo)
 
 void CBuilder::DependentDied(CObject *o)
 {
-	if(o==curBuild){
+	if (o==curBuild) {
 		curBuild=0;
 		StopBuild();
 	}
-	if(o==curReclaim){
+	if (o==curReclaim) {
 		curReclaim=0;
 		StopBuild();
 	}
-	if(o==helpTerraform){
+	if (o==helpTerraform) {
 		helpTerraform=0;
 		StopBuild();
 	}
-	if(o==curResurrect){
+	if (o==curResurrect) {
 		curResurrect=0;
 		StopBuild();
 	}
-	if(o==curCapture){
+	if (o==curCapture) {
 		curCapture=0;
 		StopBuild();
 	}
@@ -709,19 +711,19 @@ void CBuilder::SetBuildStanceToward(float3 pos)
 
 void CBuilder::HelpTerraform(CBuilder* unit)
 {
-	if(helpTerraform==unit)
+	if (helpTerraform==unit)
 		return;
 
 	StopBuild(false);
 
 	helpTerraform=unit;
-	AddDeathDependence(helpTerraform);
+	AddDeathDependence(helpTerraform, DEPENDENCE_TERRAFORM);
 
 	SetBuildStanceToward(unit->terraformCenter);
 }
 
 
-void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
+void CBuilder::CreateNanoParticle(const float3& goal, float radius, bool inverse, bool highPriority)
 {
 	const int piece = script->QueryNanoPiece();
 
@@ -730,60 +732,12 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 		return;
 #endif
 
-	if (ph->currentNanoParticles < ph->maxNanoParticles && unitDef->showNanoSpray) {
-		float3 relWeaponFirePos = script->GetPiecePos(piece);
-		float3 weaponPos = pos + frontdir * relWeaponFirePos.z + updir * relWeaponFirePos.y + rightdir * relWeaponFirePos.x;
+	const float3 relWeaponFirePos = script->GetPiecePos(piece);
+	const float3 weaponPos = pos
+		+ (frontdir * relWeaponFirePos.z)
+		+ (updir    * relWeaponFirePos.y)
+		+ (rightdir * relWeaponFirePos.x);
 
-		float3 dif = goal - weaponPos;
-		const float l = fastmath::apxsqrt2(dif.SqLength());
-
-		dif /= l;
-		float3 error = gu->usRandVector() * (radius / l);
-		float3 color = unitDef->nanoColor;
-
-		if (globalRendering->teamNanospray) {
-			unsigned char* tcol = teamHandler->Team(team)->color;
-			color = float3(tcol[0] * (1.f / 255.f), tcol[1] * (1.f / 255.f), tcol[2] * (1.f / 255.f));
-		}
-
-		if (inverse) {
-			new CGfxProjectile(weaponPos + (dif + error) * l, -(dif + error) * 3, int(l / 3), color);
-		} else {
-			new CGfxProjectile(weaponPos, (dif + error) * 3, int(l / 3), color);
-		}
-	}
-}
-
-
-void CBuilder::DeleteDeathDependence(CObject* o, DependenceType dep) {
-	/* curBuild, lastAttacker, userTarget etc. are NOT mutually exclusive, 
-	   and we can therefore only call CUnit::DeleteDeathDependence if we are
-	   certain that no references to the object in question still exist
-	*/
-	switch(dep) {
-		case DEPENDENCE_ATTACKER:
-		case DEPENDENCE_BUILDER:
-		case DEPENDENCE_TARGET:
-		case DEPENDENCE_TRANSPORTEE:
-		case DEPENDENCE_TRANSPORTER:
-			if(o == curBuild || o == curCapture || o == curReclaim || o == curResurrect || o == helpTerraform) return;
-			break;
-		case DEPENDENCE_BUILD:
-			if(o == curCapture || o == curReclaim || o == helpTerraform) return;
-			break;
-		case DEPENDENCE_CAPTURE:
-			if(o == curBuild || o == curReclaim || o == helpTerraform) return;
-			break;
-		case DEPENDENCE_RECLAIM:
-			if(o == curBuild || o == curCapture || o == curResurrect || o == helpTerraform) return;
-			break;
-		case DEPENDENCE_RESURRECT:
-			if(o == curReclaim) return;
-			break;
-		case DEPENDENCE_TERRAFORM:
-			if(o == curBuild || o == curCapture || o == curReclaim) return;
-			break;
-	}
-
-	CUnit::DeleteDeathDependence(o, dep);
+	// unsynced
+	ph->AddNanoParticle(weaponPos, goal, unitDef, team, radius, inverse, highPriority);
 }

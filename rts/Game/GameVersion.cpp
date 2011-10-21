@@ -5,6 +5,8 @@
 
 #include "GameVersion.h"
 
+#include "System/VersionGenerated.h"
+
 #include <cstring>
 #include <boost/version.hpp>
 #include <boost/config.hpp>
@@ -19,30 +21,48 @@ namespace SpringVersion
 
 const std::string& GetMajor()
 {
-	static const std::string major = "0.82+";
+	static const std::string major = SPRING_VERSION_ENGINE_MAJOR;
 	return major;
 }
 
 const std::string& GetMinor()
 {
-	static const std::string minor = "4";
+	static const std::string minor = "0";
 	return minor;
 }
 
 const std::string& GetPatchSet()
 {
-	static const std::string patchSet = "0";
+	static const std::string patchSet = SPRING_VERSION_ENGINE_PATCH_SET;
 	return patchSet;
 }
 
-const std::string& GetAdditional()
+const std::string& GetCommits()
 {
-	static const std::string additional = "" // Build-Bot will write in here before compiling
+	static const std::string patchSet = SPRING_VERSION_ENGINE_COMMITS;
+	return patchSet;
+}
 
-#if !defined GV_ADD_SPACE
-	// Build-Bot should set this to " " if it put something into the above line
-	#define GV_ADD_SPACE ""
-#endif
+const std::string& GetHash()
+{
+	static const std::string patchSet = SPRING_VERSION_ENGINE_HASH;
+	return patchSet;
+}
+
+const std::string& GetBranch()
+{
+	static const std::string patchSet = SPRING_VERSION_ENGINE_BRANCH;
+	return patchSet;
+}
+
+std::string GetAdditional()
+{
+	std::string additional = SPRING_VERSION_ENGINE_ADDITIONAL;
+
+	additional += additional.empty() ? "" : " ";
+
+	additional += ""
+#define GV_ADD_SPACE ""
 
 #if defined DEBUG
 	GV_ADD_SPACE "Debug"
@@ -137,7 +157,8 @@ const std::string& GetCompiler()
 	return compiler;
 }
 
-const std::string& GetBuildEnvironment(){
+const std::string& GetBuildEnvironment()
+{
 	static const std::string environment = "boost-"
 #ifdef BOOST_VERSION
 	QUOTEME(BOOST_VERSION)
@@ -153,15 +174,32 @@ const std::string& GetBuildEnvironment(){
 	return environment;
 }
 
+bool IsRelease()
+{
+	return (GetBranch() == "master");
+}
+
 const std::string& Get()
 {
-	static const std::string version = GetMajor() + "." + GetMinor();
-	return version;
+	static const std::string base = IsRelease()
+			? GetMajor()
+			: (GetMajor() + "." + GetPatchSet() + ".1");
+
+	return base;
+}
+
+const std::string& GetSync()
+{
+	static const std::string sync = IsRelease()
+			? GetMajor()
+			: SPRING_VERSION_ENGINE;
+
+	return sync;
 }
 
 const std::string& GetFull()
 {
-	static const std::string full = Get() + "." + GetPatchSet()
+	static const std::string full = SPRING_VERSION_ENGINE
 			+ (GetAdditional().empty() ? "" : (" (" + GetAdditional() + ")"));
 
 	return full;

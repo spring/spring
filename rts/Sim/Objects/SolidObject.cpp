@@ -22,6 +22,7 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(isUnderWater),
 	CR_MEMBER(immobile),
 	CR_MEMBER(blockHeightChanges),
+	CR_MEMBER(crushKilled),
 	CR_MEMBER(xsize),
 	CR_MEMBER(zsize),
 	CR_MEMBER(height),
@@ -36,6 +37,7 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(allyteam),
 	CR_MEMBER(team),
 	CR_MEMBER(mobility),
+	CR_MEMBER(collisionVolume),
 	// can not get creg work on templates
 	CR_MEMBER(mapPos.x),
 	CR_MEMBER(mapPos.y),
@@ -47,12 +49,12 @@ CR_REG_METADATA(CSolidObject,
 
 
 CSolidObject::CSolidObject():
-	collisionVolume(NULL),
 	mass(DEFAULT_MASS),
 	blocking(false),
 	floatOnWater(false),
 	immobile(false),
 	blockHeightChanges(false),
+	crushKilled(false),
 	xsize(1),
 	zsize(1),
 	height(1.0f),
@@ -66,6 +68,7 @@ CSolidObject::CSolidObject():
 	allyteam(0),
 	team(0),
 	mobility(NULL),
+	collisionVolume(NULL),
 	relMidPos(0.0f, 0.0f, 0.0f),
 	midPos(pos),
 	curYardMap(NULL),
@@ -125,6 +128,7 @@ int2 CSolidObject::GetMapPos()
 	return GetMapPos(pos);
 }
 
+//FIXME move somewhere else?
 int2 CSolidObject::GetMapPos(const float3& position)
 {
 	int2 p;

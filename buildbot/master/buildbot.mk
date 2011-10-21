@@ -49,5 +49,8 @@ start: start-master start-slave start-stacktrace-translator
 
 stop: stop-stacktrace-translator stop-slave stop-master
 
-reload:
-	buildbot sighup master
+reload: checkconfig
+	@buildbot sighup master
+
+checkconfig:
+	@cd master && buildbot checkconfig

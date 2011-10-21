@@ -6,11 +6,11 @@
 
 #include "lib/gml/gmlmut.h"
 #include "System/Util.h"
-#include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameVersion.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/DefaultFilter.h"
+#include "System/Log/FileSink.h"
 #include "System/Log/ILog.h"
 #include "System/Log/Level.h"
 #include "System/mmgr.h"
@@ -42,14 +42,6 @@ CONFIG(std::string, LogSubsystems).defaultValue(""); // XXX deprecated on 22. Au
 /******************************************************************************/
 
 CLogOutput logOutput;
-
-// wrapped in a function to prevent order of initialization problems
-// when logOutput is used before main() is entered.
-static std::vector<std::string>& preInitLog()
-{
-	static std::vector<std::string> preInitLog;
-	return preInitLog;
-}
 
 static std::ofstream* filelog = NULL;
 static bool initialized = false;
@@ -97,15 +89,7 @@ void CLogOutput::End()
 	GML_STDMUTEX_LOCK_NOPROF(log); // End
 
 	SafeDelete(filelog);
-}
-
-void CLogOutput::Flush()
-{
-	GML_STDMUTEX_LOCK_NOPROF(log); // Flush
-
-	if (filelog != NULL) {
-		filelog->flush();
-	}
+	//log_file_removeLogFile(filePath.c_str());
 }
 
 const std::string& CLogOutput::GetFileName() const
@@ -173,18 +157,19 @@ void CLogOutput::Initialize()
 	filePath = CreateFilePath(fileName);
 	RotateLogFile();
 
-	filelog = new std::ofstream(filePath.c_str());
+	/*filelog = new std::ofstream(filePath.c_str());
 	if (filelog->bad())
-		SafeDelete(filelog);
+		SafeDelete(filelog);*/
+	log_file_addLogFile(filePath.c_str());
 
 	initialized = true;
 	InitializeSections();
 
-	std::vector<std::string>::iterator pili;
+	/*std::vector<std::string>::iterator pili;
 	for (pili = preInitLog().begin(); pili != preInitLog().end(); ++pili) {
 		ToFile(*pili);
 	}
-	preInitLog().clear();
+	preInitLog().clear();*/
 
 	LOG("LogOutput initialized.");
 	LOG("Spring %s", SpringVersion::GetFull().c_str());
@@ -285,83 +270,5 @@ void CLogOutput::InitializeSections()
 	LOG("Enable or disable log sections using the LogSections configuration key");
 	LOG("  or the SPRING_LOG_SECTIONS environment variable (both comma separated).");
 	LOG("  Use \"none\" to disable the default log sections.");
-}
-
-
-void CLogOutput::Output(const std::string& str)
-{
-	GML_STDMUTEX_LOCK(log); // Output
-
-	std::string msg;
-
-#if !defined UNITSYNC && !defined DEDICATED
-	if (gs) {
-		msg += IntToString(gs->frameNum, "[f=%07d] ");
-	}
-#endif
-
-	msg += str;
-
-	if (!initialized) {
-		ToStderr(msg);
-		preInitLog().push_back(msg);
-		return;
-	}
-
-#ifdef _MSC_VER
-	int index = strlen(str.c_str()) - 1;
-	bool newline = ((index < 0) || (str[index] != '\n'));
-	OutputDebugString(msg.c_str());
-	if (newline) {
-		OutputDebugString("\n");
-	}
-#endif // _MSC_VER
-
-	ToFile(msg);
-	ToStderr(msg);
-}
-
-
-
-// ----------------------------------------------------------------------
-// Output functions
-// ----------------------------------------------------------------------
-
-void CLogOutput::ToStderr(const std::string& message)
-{
-	if (message.empty()) {
-		return;
-	}
-
-	const bool newline = (message.at(message.size() -1) != '\n');
-
-	std::cerr << message;
-	if (newline)
-		std::cerr << std::endl;
-#ifdef DEBUG
-	// flushing may be bad for in particular dedicated server performance
-	// crash handler should cleanly close the log file usually anyway
-	else
-		std::cerr.flush();
-#endif
-}
-
-void CLogOutput::ToFile(const std::string& message)
-{
-	if (message.empty() || (filelog == NULL)) {
-		return;
-	}
-
-	const bool newline = (message.at(message.size() -1) != '\n');
-
-	(*filelog) << message;
-	if (newline)
-		(*filelog) << std::endl;
-#ifdef DEBUG
-	// flushing may be bad for in particular dedicated server performance
-	// crash handler should cleanly close the log file usually anyway
-	else
-		filelog->flush();
-#endif
 }
 

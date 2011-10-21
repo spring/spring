@@ -641,7 +641,7 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 		}
 
 		if (unit->unitDef->capturable && unit->team != owner->team && UpdateTargetLostTimer(unit->id)) {
-			if (f3SqDist(unit->pos, builder->pos) < Square(builder->buildDistance + unit->radius - 8)) {
+			if (f3SqDist(unit->pos, builder->pos) < Square(builder->buildDistance + unit->radius - 8.0f)) {
 				StopMove();
 				builder->SetCaptureTarget(unit);
 				owner->moveType->KeepPointingTo(unit->pos, builder->buildDistance * 0.9f + unit->radius, false);
@@ -913,7 +913,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 bool CBuilderCAI::ResurrectObject(CFeature *feature) {
 	CBuilder* builder = (CBuilder*) owner;
 
-	if (f3SqDist(feature->pos, builder->pos) < Square(builder->buildDistance * 0.9f + feature->radius)) {
+	if (f3SqDist(feature->pos, builder->pos) < Square(builder->buildDistance + feature->radius - 1.0f)) {
 		StopMove();
 		owner->moveType->KeepPointingTo(feature->pos, builder->buildDistance * 0.9f + feature->radius, false);
 		builder->SetResurrectTarget(feature);
@@ -1122,11 +1122,10 @@ void CBuilderCAI::ExecuteRestore(Command& c)
 			FinishCommand();
 		}
 	} else if (owner->unitDef->canRestore) {
-		float3 pos(c.params[0], c.params[1], c.params[2]);
-			pos.y = ground->GetHeightReal(pos.x, pos.y);
+		float3 pos(c.params[0], ground->GetHeightReal(c.params[0], c.params[2]), c.params[2]);
 		const float radius = std::min(c.params[3], 200.0f);
 
-		if (f3SqDist(builder->pos, pos) < Square(builder->buildDistance - 1)) {
+		if (f3SqDist(builder->pos, pos) < Square(builder->buildDistance - 1.0f)) {
 			StopMove();
 			builder->StartRestore(pos, radius);
 			owner->moveType->KeepPointingTo(pos, builder->buildDistance * 0.9f, false);
@@ -1302,13 +1301,13 @@ bool CBuilderCAI::IsFeatureBeingResurrected(int featureId, CUnit *friendUnit)
 bool CBuilderCAI::ReclaimObject(CSolidObject* object) {
 	CBuilder* builder = (CBuilder*) owner;
 
-	if (f3SqDist(object->pos, builder->pos) < Square(builder->buildDistance - 1 + object->radius)) {
+	if (f3SqDist(object->pos, builder->pos) < Square(builder->buildDistance + object->radius - 1.0f)) {
 		StopMove();
 		owner->moveType->KeepPointingTo(object->pos, builder->buildDistance * 0.9f + object->radius, false);
 		builder->SetReclaimTarget(object);
 	} else {
 		if (f3SqDist(goalPos, object->pos) > 1) {
-			SetGoal(object->pos, owner->pos);
+			SetGoal(object->pos, owner->pos, builder->buildDistance * 0.8f + object->radius);
 		} else {
 			if (owner->moveType->progressState == AMoveType::Failed) {
 				return false;

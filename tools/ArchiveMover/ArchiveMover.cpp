@@ -77,7 +77,7 @@ BOOST_STATIC_ASSERT(BOOST_VERSION >= 103400);
 namespace fs = boost::filesystem;
 
 
-#include "lib/minizip/unzip.h"
+#include "minizip/unzip.h"
 extern "C" {
 #include "lib/7z/Types.h"
 #include "lib/7z/Archive/7z/7zAlloc.h"

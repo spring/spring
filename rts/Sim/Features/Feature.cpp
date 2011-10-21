@@ -393,9 +393,11 @@ void CFeature::DoDamage(const DamageArray& damages, const float3& impulse)
 }
 
 
-void CFeature::Kill(const float3& impulse) {
+void CFeature::Kill(const float3& impulse, bool crushKill) {
+	crushKilled = crushKill;
+
 	DamageArray damage;
-	DoDamage(damage * (health + 1), impulse);
+	DoDamage(damage * (health + 1.0f), impulse);
 }
 
 
@@ -612,9 +614,9 @@ bool CFeature::Update()
 
 			if (so != solidOnTop) {
 				if (solidOnTop)
-					DeleteDeathDependence(solidOnTop);
+					DeleteDeathDependence(solidOnTop, DEPENDENCE_SOLIDONTOP);
 				if (so)
-					AddDeathDependence(so);
+					AddDeathDependence(so, DEPENDENCE_SOLIDONTOP);
 			}
 			solidOnTop = so;
 		}

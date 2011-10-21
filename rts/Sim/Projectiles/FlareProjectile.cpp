@@ -85,7 +85,7 @@ void CFlareProjectile::Update()
 				if (gs->randFloat() < owner->unitDef->flareEfficiency) {
 					CMissileProjectile* missile = *mi;
 					missile->decoyTarget = this;
-					missile->AddDeathDependence(this);
+					missile->AddDeathDependence(this, DEPENDENCE_DECOYTARGET);
 				}
 			}
 		}

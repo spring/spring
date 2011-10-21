@@ -72,7 +72,14 @@ rem the windows format, and therefore have to be converted.
 rem You may enforce this by setting the following in the
 rem environment this script is executed in:
 rem USE_TMP_DIR=TRUE
-FOR /F "usebackq" %%P IN (`git config --get core.autocrlf`) DO if "%%P" == "false" set USE_TMP_DIR=TRUE
+
+rem Check if the git command is available
+git status > NUL 2>&1
+IF errorlevel 0 (
+	FOR /F "usebackq" %%P IN (`git config --get core.autocrlf`) DO if "%%P" == "false" set USE_TMP_DIR=TRUE
+) ELSE (
+	USE_TMP_DIR=TRUE
+)
 
 
 if not "%USE_TMP_DIR%" == "TRUE" goto tmpDir_no

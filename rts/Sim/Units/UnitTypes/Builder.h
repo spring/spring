@@ -42,7 +42,6 @@ public:
 	void Update();
 	void SlowUpdate();
 	void DependentDied(CObject* o);
-	virtual void DeleteDeathDependence(CObject* o, DependenceType dep);
 
 	bool StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitstance);
 	float CalculateBuildTerraformCost(BuildInfo& buildInfo);
@@ -53,7 +52,7 @@ public:
 	void SetBuildStanceToward(float3 pos);
 
 	void HelpTerraform(CBuilder* unit);
-	void CreateNanoParticle(float3 goal, float radius, bool inverse);
+	void CreateNanoParticle(const float3& goal, float radius, bool inverse, bool highPriority = false);
 	void SetResurrectTarget(CFeature* feature);
 	void SetCaptureTarget(CUnit* unit);
 
@@ -73,6 +72,7 @@ public:
 	CUnit* curBuild;
 	CUnit* curCapture;
 	CSolidObject* curReclaim;
+	bool reclaimingUnit;
 	CBuilder* helpTerraform;
 
 	bool terraforming;

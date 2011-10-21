@@ -4,6 +4,7 @@
 # * CreateEngineBuildAndInstallTarget
 #
 
+Include_Directories(${CMAKE_BINARY_DIR}/src-generated/engine)
 
 # Only install the given engine target executable & dependencies
 # example:
@@ -34,6 +35,7 @@ macro    (CreateEngineBuildAndInstallTarget targetName)
 		)
 	# This also works for custom targets
 	add_dependencies(${myBuildTarget} ${${targetName}-Deps})
+	Add_Dependencies(engine-${targetName} generateVersionFiles)
 
 	# Only install spring-<targetName> executable & dependencies
 	set(${targetName}-InstallDirs
@@ -41,16 +43,26 @@ macro    (CreateEngineBuildAndInstallTarget targetName)
 			"doc"
 			"tools/unitsync"
 			"cont"
-			"AI"
 		)
+	If    (NOT "${AI_TYPES}" STREQUAL "NONE")
+		Set(${targetName}-InstallDirs ${${targetName}-InstallDirs} "AI")
+	EndIf (NOT "${AI_TYPES}" STREQUAL "NONE")
 	CreateInstallTarget(spring-${targetName} myBuildTarget ${targetName}-InstallDirs)
 endmacro (CreateEngineBuildAndInstallTarget targetName)
 
 
+# This allows us to disable each build type individually at configure stage.
+Macro    (AddEngineBuild build)
+	Set(BUILD_spring-${build} TRUE CACHE BOOL "Configure the spring-${build} target.")
+	If     (BUILD_spring-${build})
+		Add_Subdirectory(${build})
+	EndIf  ()
+EndMacro (AddEngineBuild)
+
 if    (NOT HEADLESS_SYSTEM)
-	Add_Subdirectory(default)
-	Add_Subdirectory(GML)
+	AddEngineBuild(default)
+	AddEngineBuild(multithreaded)
 endif (NOT HEADLESS_SYSTEM)
 
-Add_Subdirectory(DS)
-Add_Subdirectory(HL)
+AddEngineBuild(dedicated)
+AddEngineBuild(headless)

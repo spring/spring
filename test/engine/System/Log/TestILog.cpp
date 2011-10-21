@@ -1,5 +1,6 @@
 
 #include "System/Log/ILog.h"
+#include "System/Log/FileSink.h"
 #include "System/Log/StreamSink.h"
 #include "System/Log/LogUtil.h"
 #include "System/Util.h" // IntToString() -> header only
@@ -27,13 +28,27 @@ LOG_REGISTER_SECTION(LOG_SECTION_ONE_TIME_0)
 namespace {
 	struct LogStream {
 		LogStream() {
+			logFile = GetTempLogFile();
+			printf("\tNOTE: logging to temporary log file: %s\n", logFile.c_str());
+			log_file_addLogFile(logFile.c_str());
 			log_sink_stream_setLogStream(&logStream);
 		}
 		~LogStream() {
 			log_sink_stream_setLogStream(NULL);
+			log_file_removeLogFile(logFile.c_str());
+			remove(logFile.c_str());
+		}
+
+		std::string GetTempLogFile() {
+
+			char* tmpName = tmpnam(NULL);
+			BOOST_REQUIRE_MESSAGE((tmpName != NULL),
+					"Failed to fetch a temporary log file name");
+			return tmpName;
 		}
 
 		output_test_stream logStream;
+		std::string logFile;
 	};
 }
 

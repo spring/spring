@@ -13,6 +13,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Util.h"
+#include "System/Log/DefaultFormatter.h"
 
 
 /**
@@ -81,6 +82,8 @@ CGlobalSynced::CGlobalSynced()
 	tempNum = 2;
 	useLuaGaia = true;
 
+	log_formatter_setFrameNumReference(&frameNum);
+
 	teamHandler = new CTeamHandler();
 }
 
@@ -88,6 +91,8 @@ CGlobalSynced::CGlobalSynced()
 CGlobalSynced::~CGlobalSynced()
 {
 	SafeDelete(teamHandler);
+
+	log_formatter_setFrameNumReference(NULL);
 }
 
 

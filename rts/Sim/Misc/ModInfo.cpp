@@ -24,7 +24,6 @@ CModInfo modInfo;
 void CModInfo::Init(const char* modArchive)
 {
 	filename = modArchive;
-
 	humanName = archiveScanner->NameFromArchive(modArchive);
 
 	const CArchiveScanner::ArchiveData md = archiveScanner->GetArchiveData(humanName);
@@ -51,6 +50,7 @@ void CModInfo::Init(const char* modArchive)
 	// determine if bombers are allowed to leave map boundaries
 	const LuaTable movementTbl = root.SubTable("movement");
 	allowAirPlanesToLeaveMap = movementTbl.GetBool("allowAirPlanesToLeaveMap", true);
+	allowPushingEnemyUnits = movementTbl.GetBool("allowPushingEnemyUnits", false);
 
 	// determine whether the modder allows the user to use team coloured nanospray
 	const LuaTable nanosprayTbl = root.SubTable("nanospray");

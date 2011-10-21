@@ -10,15 +10,22 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR})
-INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/System)
 
 SET(demoToolSpringSources
-	${ENGINE_SRC_ROOT_DIR}/Game/GameVersion
-	${ENGINE_SRC_ROOT_DIR}/Game/PlayerStatistics
-	${ENGINE_SRC_ROOT_DIR}/Sim/Misc/TeamStatistics
-	${ENGINE_SRC_ROOT_DIR}/System/Net/RawPacket
-	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoReader
-	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/Demo)
+	${ENGINE_SRC_ROOT_DIR}/Game/GameVersion.cpp
+	${ENGINE_SRC_ROOT_DIR}/Game/PlayerStatistics.cpp
+	${ENGINE_SRC_ROOT_DIR}/Sim/Misc/TeamStatistics.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Net/RawPacket.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoReader.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/Demo.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Log/Backend.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Log/DefaultFilter.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Log/DefaultFormatter.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Log/LogSinkHandler.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/Log/LogUtil.c
+	${ENGINE_SRC_ROOT_DIR}/System/Log/ConsoleSink.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/SafeCStrings.c
+)
 
 ADD_EXECUTABLE(demotool EXCLUDE_FROM_ALL DemoTool ${demoToolSpringSources})
 IF (MINGW)
@@ -26,5 +33,6 @@ IF (MINGW)
 	SET_TARGET_PROPERTIES(demotool PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
 ENDIF (MINGW)
 TARGET_LINK_LIBRARIES(demotool ${Boost_PROGRAM_OPTIONS_LIBRARY})
+Add_Dependencies(demotool generateVersionFiles)
 
 

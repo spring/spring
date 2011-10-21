@@ -438,32 +438,17 @@ public:
 			" 1=unit&feature-shadows, 2=+terrain-shadows") {}
 
 	void Execute(const UnsyncedAction& action) const {
-		const int current = configHandler->GetInt("Shadows");
-		if (current < 0) {
-			LOG_L(L_WARNING, "Shadows have been disabled with %i", current);
-			LOG_L(L_WARNING, "Change your configuration and restart to use them");
+		if (shadowHandler->shadowConfig < 0) {
+			LOG_L(L_WARNING, "Shadows are disabled; change your configuration and restart to use them");
 			return;
 		}
-		else if (!shadowHandler->shadowsSupported) {
+		if (!shadowHandler->shadowsSupported) {
 			LOG_L(L_WARNING, "Your hardware/driver setup does not support shadows");
 			return;
 		}
 
-		delete shadowHandler; // XXX use SafeDelete() ?
-		int next = 0;
-		if (!action.GetArgs().empty()) {
-			int mapSize = 2048;
-			const char* args = action.GetArgs().c_str();
-			const int argcount = sscanf(args, "%i %i", &next, &mapSize);
-			if (argcount > 1) {
-				configHandler->Set("ShadowMapSize", mapSize);
-			}
-		} else {
-			next = (current + 1) % 3;
-		}
-		configHandler->Set("Shadows", next);
-		LOG("Set Shadows to %i", next);
-		shadowHandler = new CShadowHandler();
+		shadowHandler->Reload(((action.GetArgs()).empty())? NULL: (action.GetArgs()).c_str());
+		LOG("Set \"shadows\" config-parameter to %i", shadowHandler->shadowConfig);
 	}
 };
 
@@ -987,7 +972,7 @@ public:
 				} else {
 					lastPart = "(Host:) " + playerHandler->Player(gu->myPlayerNum)->name;
 				}
-				LOG(_STPF_" | %i | %s | %s | %s | %s",
+				LOG("%i | %i | %s | %s | %s | %s",
 						ai->first,
 						ai->second.team,
 						(isLocal ? "yes" : "no "),

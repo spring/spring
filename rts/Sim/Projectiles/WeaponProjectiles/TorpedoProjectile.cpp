@@ -54,10 +54,6 @@ CTorpedoProjectile::CTorpedoProjectile(
 	curSpeed = speed.Length();
 	dir = speed / curSpeed;
 
-	if (target) {
-		AddDeathDependence(target);
-	}
-
 	SetRadius(0.0f);
 	drawRadius = maxSpeed * 8;
 
@@ -96,7 +92,7 @@ void CTorpedoProjectile::Collision(CUnit *unit)
 
 void CTorpedoProjectile::Update()
 {
-	if (!(weaponDef->submissile) && pos.y > -3.0f) {
+	if (!weaponDef->submissile && pos.y > -3.0f) {
 		// tracking etc only works when we are underwater
 		if (!luaMoveCtrl) {
 			speed.y += mygravity;
@@ -105,7 +101,7 @@ void CTorpedoProjectile::Update()
 			dir.Normalize();
 		}
 	} else {
-		if (!(weaponDef->submissile) && pos.y-speed.y > -3.0f) {
+		if (!weaponDef->submissile && pos.y-speed.y > -3.0f) {
 			// level out torpedo a bit when hitting water
 			if (!luaMoveCtrl) {
 				dir.y *= 0.5f;
@@ -128,7 +124,7 @@ void CTorpedoProjectile::Update()
 						targPos = helper->GetUnitErrorPos(target, owner()->allyteam);
 					}
 
-					if (!(weaponDef->submissile) && targPos.y > 0) {
+					if (!weaponDef->submissile && targPos.y > 0) {
 						targPos.y = 0;
 					}
 

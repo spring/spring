@@ -121,7 +121,7 @@ void AAirMoveType::CheckForCollision()
 	float dist = 200.0f;
 
 	if (lastColWarning) {
-		DeleteDeathDependence(lastColWarning);
+		DeleteDeathDependence(lastColWarning, DEPENDENCE_LASTCOLWARN);
 		lastColWarning = NULL;
 		lastColWarningType = 0;
 	}
@@ -154,7 +154,7 @@ void AAirMoveType::CheckForCollision()
 
 	if (lastColWarning != NULL) {
 		lastColWarningType = 2;
-		AddDeathDependence(lastColWarning);
+		AddDeathDependence(lastColWarning, DEPENDENCE_LASTCOLWARN);
 		return;
 	}
 
@@ -168,7 +168,7 @@ void AAirMoveType::CheckForCollision()
 
 	if (lastColWarning != NULL) {
 		lastColWarningType = 1;
-		AddDeathDependence(lastColWarning);
+		AddDeathDependence(lastColWarning, DEPENDENCE_LASTCOLWARN);
 	}
 }
 

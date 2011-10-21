@@ -108,7 +108,7 @@ void CWorldDrawer::Update()
 
 void CWorldDrawer::Draw()
 {
-	SCOPED_TIMER("WorldDrawer::Draw");
+	SCOPED_TIMER("WorldDrawer::Total");
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 
@@ -117,6 +117,7 @@ void CWorldDrawer::Draw()
 	}
 
 	if (globalRendering->drawGround) {
+		SCOPED_TIMER("WorldDrawer::Terrain");
 		gd->Draw();
 		smoothHeightMeshDrawer->Draw(1.0f);
 		treeDrawer->DrawGrass();
@@ -124,7 +125,7 @@ void CWorldDrawer::Draw()
 	}
 
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
-		SCOPED_TIMER("Water::{UpdateWater,Draw} (solid)");
+		SCOPED_TIMER("WorldDrawer::Water");
 
 		water->OcclusionQuery();
 		if (water->IsDrawSolid()) {
@@ -165,7 +166,7 @@ void CWorldDrawer::Draw()
 
 	//! draw water
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
-		SCOPED_TIMER("Water::{UpdateWater,Draw} (!solid)");
+		SCOPED_TIMER("WorldDrawer::Water");
 
 		if (!water->IsDrawSolid()) {
 			//! Water rendering will overwrite features, so save them

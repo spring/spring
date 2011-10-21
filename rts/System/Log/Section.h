@@ -13,8 +13,9 @@
 /**
  * As all sections are required to be defined as compile-time constants,
  * we may use an address comparison, if the compiler merges constants.
+ * MinGW does not merge constants, therefore we have to use !defined(_WIN32).
  */
-#if       defined(__GNUC__) && !defined(DEBUG)
+#if       defined(__GNUC__) && !defined(_WIN32) && !defined(DEBUG)
 	/**
 	 * GCC does merged constants on -O2+:
 	 * -fmerge-constants
@@ -29,7 +30,7 @@
 		(section1 == section2)
 	#define LOG_SECTION_COMPARE(section1, section2) \
 		(section1 < section2)
-#else  // defined(__GNUC__) && !defined(DEBUG)
+#else  // defined(__GNUC__) && !defined(_WIN32) && !defined(DEBUG)
 	#include <string.h>
 	#define LOG_SECTION_EQUAL(section1, section2) \
 		(((void*)section1 == (void*)section2) \
@@ -38,7 +39,7 @@
 	#define LOG_SECTION_COMPARE(section1, section2) \
 		(((void*)section1 == NULL) \
 			|| (((void*)section2 != NULL) && (strcmp(section1, section2) > 0)))
-#endif // defined(__GNUC__) && !defined(DEBUG)
+#endif // defined(__GNUC__) && !defined(_WIN32) && !defined(DEBUG)
 
 #define LOG_SECTION_IS_DEFAULT(section) \
 	LOG_SECTION_EQUAL(section, LOG_SECTION_DEFAULT)

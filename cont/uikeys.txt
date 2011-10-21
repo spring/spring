@@ -317,7 +317,7 @@
 //  bind            Ctrl+f4  viewrot
 //
 //  bind             Any+f1  showElevation
-//  bind             Any+f2  ShowPathMap
+//  bind             Any+f2  ShowPathTraversability
 //  bind             Any+f3  LastMsgPos
 //  bind             Any+f4  ShowMetalMap
 //  bind             Any+f5  hideinterface

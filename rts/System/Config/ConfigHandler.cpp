@@ -26,7 +26,7 @@ using std::vector;
 
 typedef map<string, string> StringMap;
 
-ConfigHandler* configHandler;
+ConfigHandler* configHandler = NULL;
 
 /******************************************************************************/
 
@@ -293,9 +293,9 @@ void ConfigHandler::Instantiate(string configSource)
 
 	// log here so unitsync shows configuration source(s), too
 	vector<string>::const_iterator loc = locations.begin();
-	LOG("Using configuration source: \"%s\"\n", loc->c_str());
+	LOG("Using configuration source: \"%s\"", loc->c_str());
 	for (++loc; loc != locations.end(); ++loc) {
-		LOG("Using additional configuration source: \"%s\"\n", loc->c_str());
+		LOG("Using additional configuration source: \"%s\"", loc->c_str());
 	}
 
 	configHandler = new ConfigHandlerImpl(locations);

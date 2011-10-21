@@ -60,7 +60,8 @@ void AAIConstructor::Idle()
 		{
 			if(construction_unit_id == -1)
 			{
-				ai->bt->units_dynamic[construction_def_id].active -= 1;
+				//ai->bt->units_dynamic[construction_def_id].active -= 1;
+				//assert(ai->bt->units_dynamic[construction_def_id].active >= 0);
 				ai->ut->UnitRequestFailed(construction_category);
 
 				// clear up buildmap etc. (make sure conctructor wanted to build a building and not a unit)

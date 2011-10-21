@@ -18,6 +18,7 @@ using std::sprintf;
 #include "ExternalAI/Interface/AISCommands.h"         // for ABI version
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"  // for ABI version
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h" // for ABI version and AI_INTERFACE_PROPERTY_*
+#include "System/SafeCStrings.h"
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileQueryFlags.h"
 #include "System/FileSystem/DataDirLocater.h"
@@ -61,14 +62,29 @@ EXPORT(const char*) aiInterfaceCallback_Engine_Version_getMinor(int UNUSED_inter
 EXPORT(const char*) aiInterfaceCallback_Engine_Version_getPatchset(int UNUSED_interfaceId) {
 	return SpringVersion::GetPatchSet().c_str();
 }
+EXPORT(const char*) aiInterfaceCallback_Engine_Version_getCommits(int UNUSED_interfaceId) {
+	return SpringVersion::GetCommits().c_str();
+}
+EXPORT(const char*) aiInterfaceCallback_Engine_Version_getHash(int UNUSED_interfaceId) {
+	return SpringVersion::GetHash().c_str();
+}
+EXPORT(const char*) aiInterfaceCallback_Engine_Version_getBranch(int UNUSED_interfaceId) {
+	return SpringVersion::GetBranch().c_str();
+}
 EXPORT(const char*) aiInterfaceCallback_Engine_Version_getAdditional(int UNUSED_interfaceId) {
 	return SpringVersion::GetAdditional().c_str();
 }
 EXPORT(const char*) aiInterfaceCallback_Engine_Version_getBuildTime(int UNUSED_interfaceId) {
 	return SpringVersion::GetBuildTime().c_str();
 }
+EXPORT(bool) aiInterfaceCallback_Engine_Version_isRelease(int UNUSED_interfaceId) {
+	return SpringVersion::IsRelease();
+}
 EXPORT(const char*) aiInterfaceCallback_Engine_Version_getNormal(int UNUSED_interfaceId) {
 	return SpringVersion::Get().c_str();
+}
+EXPORT(const char*) aiInterfaceCallback_Engine_Version_getSync(int UNUSED_interfaceId) {
+	return SpringVersion::GetSync().c_str();
 }
 EXPORT(const char*) aiInterfaceCallback_Engine_Version_getFull(int UNUSED_interfaceId) {
 	return SpringVersion::GetFull().c_str();
@@ -183,7 +199,7 @@ EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_getDir(int UNUSED_interfaceId, c
 	const std::vector<std::string>& dds = dataDirLocater.GetDataDirPaths();
 	size_t numDataDirs = dds.size();
 	if (dirIndex >= 0 && (size_t)dirIndex < numDataDirs) {
-		STRCPYS(path, path_sizeMax, dds[dirIndex].c_str());
+		STRCPY_T(path, path_sizeMax, dds[dirIndex].c_str());
 		return true;
 	} else {
 		return false;
@@ -203,7 +219,7 @@ EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_locatePath(int UNUSED_interfaceI
 	std::string locatedPath = "";
 	const size_t tmpRelPath_size = strlen(relPath) + 1;
 	char* tmpRelPath = new char[tmpRelPath_size];
-	STRCPYS(tmpRelPath, tmpRelPath_size, relPath);
+	STRCPY_T(tmpRelPath, tmpRelPath_size, relPath);
 	std::string tmpRelPathStr = tmpRelPath;
 	if (dir) {
 		locatedPath = dataDirsAccess.LocateDir(tmpRelPathStr, locateFlags);
@@ -211,7 +227,7 @@ EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_locatePath(int UNUSED_interfaceI
 		locatedPath = dataDirsAccess.LocateFile(tmpRelPathStr, locateFlags);
 	}
 	exists = (locatedPath != relPath);
-	STRCPYS(path, path_sizeMax, locatedPath.c_str());
+	STRCPY_T(path, path_sizeMax, locatedPath.c_str());
 
 	delete [] tmpRelPath;
 	return exists;
@@ -307,9 +323,14 @@ static void aiInterfaceCallback_init(struct SAIInterfaceCallback* callback) {
 	callback->Engine_Version_getMajor = &aiInterfaceCallback_Engine_Version_getMajor;
 	callback->Engine_Version_getMinor = &aiInterfaceCallback_Engine_Version_getMinor;
 	callback->Engine_Version_getPatchset = &aiInterfaceCallback_Engine_Version_getPatchset;
+	callback->Engine_Version_getCommits = &aiInterfaceCallback_Engine_Version_getCommits;
+	callback->Engine_Version_getHash = &aiInterfaceCallback_Engine_Version_getHash;
+	callback->Engine_Version_getBranch = &aiInterfaceCallback_Engine_Version_getBranch;
 	callback->Engine_Version_getAdditional = &aiInterfaceCallback_Engine_Version_getAdditional;
 	callback->Engine_Version_getBuildTime = &aiInterfaceCallback_Engine_Version_getBuildTime;
+	callback->Engine_Version_isRelease = &aiInterfaceCallback_Engine_Version_isRelease;
 	callback->Engine_Version_getNormal = &aiInterfaceCallback_Engine_Version_getNormal;
+	callback->Engine_Version_getSync = &aiInterfaceCallback_Engine_Version_getSync;
 	callback->Engine_Version_getFull = &aiInterfaceCallback_Engine_Version_getFull;
 	callback->AIInterface_Info_getSize = &aiInterfaceCallback_AIInterface_Info_getSize;
 	callback->AIInterface_Info_getKey = &aiInterfaceCallback_AIInterface_Info_getKey;

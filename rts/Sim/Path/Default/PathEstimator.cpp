@@ -11,7 +11,7 @@
 #include <boost/version.hpp>
 #include <boost/version.hpp>
 
-#include "lib/minizip/zip.h"
+#include "minizip/zip.h"
 #include "System/mmgr.h"
 
 #include "PathAllocator.h"
@@ -261,24 +261,38 @@ void CPathEstimator::FindOffset(const MoveData& moveData, unsigned int blockX, u
 	float bestCost = std::numeric_limits<float>::max();
 	const CMoveMath& moveMath = *(moveData.moveMath);
 
+	float speedMod = moveMath.GetPosSpeedMod(moveData, lowerX, lowerZ);
+	bool curblock = (speedMod == 0.0f) || (moveMath.IsBlockedNoSpeedModCheck(moveData, lowerX, lowerZ) & CMoveMath::BLOCK_STRUCTURE) != 0;
 	// search for an accessible position
-	for (unsigned int z = 1; z < BLOCK_SIZE; z += 2) {
-		for (unsigned int x = 1; x < BLOCK_SIZE; x += 2) {
-			const int dx = x - (BLOCK_SIZE >> 1);
-			const int dz = z - (BLOCK_SIZE >> 1);
+	unsigned int z = 0;
+	while (true) {
+		bool zcurblock = curblock;
+		unsigned int x = 0;
+		while (true) {
+			if (!curblock) {
+				const float dx = x - (float)(BLOCK_SIZE - 1) / 2.0f;
+				const float dz = z - (float)(BLOCK_SIZE - 1) / 2.0f;
 
-			if (moveMath.IsBlocked(moveData, lowerX + x, lowerZ + z) & CMoveMath::BLOCK_STRUCTURE)
-				continue;
+				const float cost = (dx * dx + dz * dz) + (blockArea / (0.001f + speedMod));
 
-			const float speedMod = moveMath.GetPosSpeedMod(moveData, lowerX + x, lowerZ + z);
-			const float cost = (dx * dx + dz * dz) + (blockArea / (0.001f + speedMod));
-
-			if (cost < bestCost) {
-				bestCost = cost;
-				bestPosX = x;
-				bestPosZ = z;
+				if (cost < bestCost) {
+					bestCost = cost;
+					bestPosX = x;
+					bestPosZ = z;
+				}
 			}
+			if (++x >= BLOCK_SIZE)
+				break;
+			// if last position was not blocked, then we do not need to check the entire square
+			speedMod = moveMath.GetPosSpeedMod(moveData, lowerX + x, lowerZ + z);
+			curblock = (speedMod == 0.0f) || (curblock ? (moveMath.IsBlockedNoSpeedModCheck(moveData, lowerX + x, lowerZ + z) & CMoveMath::BLOCK_STRUCTURE) != 0 :
+						moveMath.IsBlockedStructureXmax(moveData, lowerX + x, lowerZ + z));
 		}
+		if (++z >= BLOCK_SIZE)
+			break;
+		speedMod = moveMath.GetPosSpeedMod(moveData, lowerX, lowerZ + z);
+		curblock = (speedMod == 0.0f) || (zcurblock ? (moveMath.IsBlockedNoSpeedModCheck(moveData, lowerX, lowerZ + z) & CMoveMath::BLOCK_STRUCTURE) != 0 :
+						moveMath.IsBlockedStructureZmax(moveData, lowerX, lowerZ + z));
 	}
 
 	// store the offset found

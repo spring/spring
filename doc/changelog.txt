@@ -1,11 +1,12 @@
 Spring change log
 
--- 0.83 ---------------------------------------------------------
+-- 83.0 ---------------------------------------------------------
 Major Changes:
  - EFX/EAX support (sound reverb)
  - ASSIMP support (not 100% finished yet)
  - AI Interface pure-ification
  - many speedups and double as much slowdowns
+ - use a new engine versioning scheme (RC12)
 
 Engine:
  - use more smooth algorithm for wind updates
@@ -29,6 +30,8 @@ Engine:
  - lots of error messages improved and new ones added
  - add the first few unit-tests
  - add a validation-test
+ - add network bandwidth limits per player to prevent malicious command spam
+ - add optional high-loss network modes to make spring playable on very lossy connections (NetworkLossFactor = 0|1|2)
 
 Engine / bugfixes:
  - too many to list, see http://springrts.com/mantis/changelog_page.php (incomplete!)
@@ -39,10 +42,23 @@ Engine / bugfixes:
  - CMake configure and make build are much more stable now (no more failure due to wrong order of actions)
  - fix DamageArray related sync error
  - fix a lot of memory-leaks
+ - fix unit does sometimes not reach target position when given a restore command
+ - fix build time-out when builder is blocking the build pos
+ - fix "cheat" status disparity between server and client after watching demo
+ - fix captured unit still getting shot at
+ - fix repeat commands remain even if the target object is destroyed
+ - fix unwanted error spam when disconnecting from server
+ - fix reconnect failure (incorrect password)
+ - fix rare desync and keyframe mismatch after reconnect
+ - fix two crashes related to audio channels
+ - eliminate some false hang detections on load
+ - fix multithreaded crash in lua material rendering
+ - fix hang after crash
+ - fix memory corruption in bitmap handling
 
 Engine / misc defs:
  - replace UnitDef::pieceTrailCEG* by a Lua subtable of sfxTypes
- - deprecate several *Def tags and their Lua*Defs copies (type/maxSlope/isBuilder/canDGun/transportableBuilding/dropped/...)
+ - deprecate several *Def tags and their Lua*Defs copies (type/maxSlope/isBuilder/canDGun/transportableBuilding/dropped/canCrash/...)
  - make a missing UnitDef::humanName non-fatal
  - UnitDef: remove hardcoded: if ((waterline >= 5.0f) && canmove) { waterline += 10.0f; }
  - make UnitDef::losHeight configurable instead of an unused hardcoded value
@@ -59,6 +75,7 @@ Engine / misc commands:
  - add '/CommandHelp <commandName>'
  - more complete word completion for game-commands
  - make auto-host command `paused` use a parameter (0|1)
+ - add scrollbars for player list in "quit" and "share" dialogs
 
 Engine / Userconfigs:
  - removed the "FSAA" config tag (FSAALevel is enough)
@@ -71,9 +88,16 @@ Engine / Simulation:
  - close down another out-of-map attack exploit route
  - rewrite collision detection/resolution between ground units
  - skip path-estimating for unused MoveDefs
+ - use the full resolution of the blocking object map in pathestimator
+ - invoke higher resolution pathfinder if needed
  - always add the "geovent" FeatureDef (#2402)
  - only send UnitLoaded events for units that were not already being transported (when Attach'ing them)
  - fix bizarre skidding behavior for ground units with non-zero slideTolerance
+ - higher priority for nano particles when capturing and reclaiming other teams units
+ - print error message for select commands referencing invalid object IDs
+ - make TorpedoLauncher weapons able to target any in-water unit
+ - make pushing of enemy units during collisions a ModInfo option ("allowPushingEnemyUnits")
+ - remove hardcoded enter-crashing-state-on-death behavior for aircraft (now delegated to Lua or COB)
 
 Engine / Map:
  - merged both mapinfo.lua's! before there were two, one in the base-dir (-> ArchiveScanner) and one in "maphelper/mapinfo.lua" (-> MapParser/MapInfo)
@@ -83,6 +107,7 @@ Engine / Map:
   - "fogEnd"
   - "bladeColor"
  - check for the smt _next to_ the smf (which can already freely placed in the archive!)
+ - allow resources_map.lua to specify GroundFX textures for CEGs (that use CSimpleGroundFlash)
 
 Engine / Rendering:
  - Lua-scriptable dynamic lighting of models and terrain (www.youtube.com/watch?v=H5je8TKDfNA)
@@ -90,9 +115,20 @@ Engine / Rendering:
  - add optional SSMF normal-mapping and self-illumination stages
  - fix holes in shadows cast by non-closed S3O/OBJ models icw. face culling
  - always cull (non-3DO) model backfaces for the shadow pass
- - allow weapons to not leave any explosion scars
+ - squeeze some extra precision out of the shadow-map
+ - make map/model/tree/projectile shadows individually configurable
+ - allow weapons to not leave any explosion scars (add "explosionScar=true|false" to a WeaponDef)
  - render all SMF maps through GLSL if it is available
  - make depth-testing and -masking configurable for CSimpleGroundFlash
+ - fix mixed up textures in the multithreaded version
+ - fix awkward performance with multithreaded engine in games using custom model formats
+ - add peak display for time profiler
+ - don't display /mtinfo if the value is near zero
+ - properly fade out features
+ - make underwater shadows darker in deeper water
+ - significantly reduced performance impact for Lua rendering widgets in the multithreaded version
+ - enable creation of OpenGL objects such as display lists in the sim thread in the multithreaded version
+ - fix BumpWater on ATI cards when atiHacks=false
 
 Engine / Sound:
  - added EFX/EAX support (reverb)
@@ -122,15 +158,32 @@ Engine / Lua:
  - remove the "n" field from array-like tables returned by API functions
  - added Spring.GetProjectilesInRectangle
  - linked Projectile{Created, Destroyed} to the Spring.SetWatchWeapon state
+ - added Spring.SetWatchUnit(unitDefID) and Spring.SetWatchFeature(featureDefID) analogues of SetWatchWeapon
  - extend LuaPathFinder with support for setting node cost overlays
  - extend SyncedRead::Pos2BuildPos: add support for additional param "facing"
  - added Spring.{Get, Set}MapSquareTexture (these allow complete dynamic run-time retexturing of SMF maps)
+ - added Spring.GetMetalMapSize (returns size in metal map coordinates)
+ - added Spring.GetMetalExtraction (note: uses metal map coordinates)
+ - added Spring.{Get, Set}MetalAmount (note: uses metal map coordinates)
+ - added Spring.GetFeaturesInCylinder
+ - added Spring.GetFeaturesInSphere
  - added Spring.GetFeatureCollisionVolumeData
  - added Spring.SetWMIcon
  - added Spring.SetWMCaption
+ - added Spring.ClearWatchDogTimer
  - added widget call-in GamePaused
  - added widget call-in PlayerAdded
  - added widget call-in PlayerRemoved
+ - added callins for collision events
+     UnitUnitCollision(colliderID, collideeID) -- needs SetWatchUnit enabled for both parties
+     UnitFeatureCollision(colliderID, collideeID, crushKilled) -- needs SetWatchFeature enabled for both parties
+ - added Spring.SetUnitCrashing
+ - add All/None buttons for widget selector
+ - fix multithreaded crashes in Spring.Get{Full,Real}BuildQueue
+ - fix Immobilebuilder fails near the map edge
+ - fix Spring.SetUnitWeaponState "range" for cannon weapons
+ - add control over airStrafe via MoveCtrl.SetGunshipMoveTypeData
+ - migrate MoveCtrl.SetLeaveTracks to (LuaUnsynced) Spring.SetUnitLeaveTracks
 
 Engine / Internal:
  - added limited OpenMP support
@@ -145,6 +198,10 @@ Engine / Internal:
      "sub-systems" renamed to "sections"
      more section then before
      is compatible with unit-testing
+     write DEBUG and INFO to stdout, the rest to stderr
+     disable console logging for unitsync
+     disable console output for dedicated server shared library
+     turn off flushing to log-file completely
  - added GL_ARB_debug_output support (callback-based opengl error reporting) 
    NOTE: this doesn't work yet, because most drivers export this ext only for so called debug contexts.
    Creating those is impossible with near all current GL frameworks (SDL, SFML, ...).
@@ -158,6 +215,11 @@ Engine / Internal:
  - Remove the obsolete SCons build system
  - reduces constantly allocated memory for drawing stuff for AIs from ~130MB to ~ 2KB
  - add a new build-target "generateSources"
+ - allow to use a system-supplied minizip library
+ - allow to disable each build type individually at configure stage
+ - generate version from git-describe (git tags), instead of hardcoding them into a source-file
+ - unsynced deletion of synced projectiles
+ - watchdog monitoring for some additional threads
 
 AI:
  - AI Interface pure-ification, see Forum: Development - AI - <sticky-thread>
@@ -167,6 +229,8 @@ AI:
  - install Java-AIInterface and JavaOO-AIWrapper as maven artifacts into the local repository
  - Legacy C++ AI: allow fetching the maximum number of units in a game
  - fix source generation occasionally failing for Java-AIInterface
+ - treat allied units as always in LOS
+ - fetch the correct UnitDef for decoy units, if the unit is allied
  - Java AI Interface: pack native sources too
  - Maven-ize NullOOJavaAI
  - Java AI: allow AIs to support compiling only through Maven
@@ -174,6 +238,8 @@ AI:
  - make source generation compatible with BWK and GAWK 4.0.0
  - E2323AI: bump to latest version
  - KAIK: mid-game init fix
+ - AAI: prevent stack corruption in the case of file paths longer then 500 chars
+ - RAI: do not use a single/static team-instance callback in a place used by all RAI instances
 
 Unitsync:
  - implemented GetDataDirectoryCount() and GetDataDirectory(int index)
