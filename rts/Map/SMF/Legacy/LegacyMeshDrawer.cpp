@@ -52,8 +52,6 @@ CLegacyMeshDrawer::CLegacyMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	viewRadius = configHandler->GetInt("GroundDetail");
 	viewRadius += (viewRadius & 1); //! we need a multiple of 2
 
-	numBigTexX = smfReadMap->numBigTexX;
-	numBigTexY = smfReadMap->numBigTexY;
 	waterDrawn = false; //FIXME
 
 #ifdef USE_GML
@@ -73,16 +71,16 @@ CLegacyMeshDrawer::~CLegacyMeshDrawer()
 
 
 
-inline void CLegacyMeshDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y)
+void CLegacyMeshDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y)
 {
-	//! don't send the normals as vertex attributes
-	//! (DLOD'ed triangles mess with interpolation)
-	//! const float3& n = readmap->vertexNormals[(y * smfReadMap->heightMapSizeX) + x];
+	// don't send the normals as vertex attributes
+	// (DLOD'ed triangles mess with interpolation)
+	// const float3& n = readmap->vertexNormals[(y * smfReadMap->heightMapSizeX) + x];
 
 	DrawVertexAQ(ma, x, y, GetVisibleVertexHeight(y * smfReadMap->heightMapSizeX + x));
 }
 
-inline void CLegacyMeshDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y, float height)
+void CLegacyMeshDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y, float height)
 {
 	if (waterDrawn && height < 0.0f) {
 		height *= 2.0f;
@@ -91,12 +89,12 @@ inline void CLegacyMeshDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y, floa
 	ma->AddVertexQ0(x * SQUARE_SIZE, height, y * SQUARE_SIZE);
 }
 
-inline void CLegacyMeshDrawer::EndStripQ(CVertexArray* ma)
+void CLegacyMeshDrawer::EndStripQ(CVertexArray* ma)
 {
 	ma->EndStripQ();
 }
 
-inline void CLegacyMeshDrawer::DrawGroundVertexArrayQ(CVertexArray * &ma)
+void CLegacyMeshDrawer::DrawGroundVertexArrayQ(CVertexArray*& ma)
 {
 	ma->DrawArray0(GL_TRIANGLE_STRIP);
 	ma = GetVertexArray();
@@ -104,13 +102,13 @@ inline void CLegacyMeshDrawer::DrawGroundVertexArrayQ(CVertexArray * &ma)
 
 
 
-inline bool CLegacyMeshDrawer::BigTexSquareRowVisible(const CCamera* cam, int bty) const {
+bool CLegacyMeshDrawer::BigTexSquareRowVisible(const CCamera* cam, int bty) const {
 	const int minz =  bty * smfReadMap->bigTexSize;
 	const int maxz = minz + smfReadMap->bigTexSize;
 	const float miny = readmap->currMinHeight;
 	const float maxy = fabs(cam->pos.y);
 
-	const float3 mins(               0, miny, minz);
+	const float3 mins(                   0, miny, minz);
 	const float3 maxs(smfReadMap->mapSizeX, maxy, maxz);
 
 	return (cam->InView(mins, maxs));
@@ -118,7 +116,7 @@ inline bool CLegacyMeshDrawer::BigTexSquareRowVisible(const CCamera* cam, int bt
 
 
 
-inline void CLegacyMeshDrawer::FindRange(const CCamera* cam, int& xs, int& xe, int y, int lod) {
+void CLegacyMeshDrawer::FindRange(const CCamera* cam, int& xs, int& xe, int y, int lod) {
 	int xt0, xt1;
 
 	const std::vector<CCamera::FrustumLine>& negSides = cam->negFrustumSides;
@@ -156,7 +154,7 @@ inline void CLegacyMeshDrawer::FindRange(const CCamera* cam, int& xs, int& xe, i
 
 
 
-inline void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty) {
+void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty) {
 	if (!BigTexSquareRowVisible(cam, bty)) {
 		//! skip this entire row of squares if we can't see it
 		return;
@@ -582,7 +580,7 @@ void CLegacyMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 		DrawShadowMesh(); //FIXME
 		return;
 	}
-	
+
 	//FIXME
 	viewRadius  = int(viewRadius * fastmath::apxsqrt(45.0f / camera->GetFov()));
 	viewRadius  = std::max(std::max(smfReadMap->numBigTexY, smfReadMap->numBigTexX), viewRadius);
@@ -627,7 +625,7 @@ void CLegacyMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 }
 
 
-inline void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
+void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 	CVertexArray* ma = GetVertexArray();
 	ma->Initialize();
 

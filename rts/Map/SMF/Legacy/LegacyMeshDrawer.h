@@ -29,11 +29,12 @@ public:
 
 private:
 	void FindRange(const CCamera* cam, int& xs, int& xe, int y, int lod);
+	inline bool BigTexSquareRowVisible(const CCamera* cam, int) const;
 
-	void DrawVertexAQ(CVertexArray* ma, int x, int y);
-	void DrawVertexAQ(CVertexArray* ma, int x, int y, float height);
-	void EndStripQ(CVertexArray* ma);
-	void DrawGroundVertexArrayQ(CVertexArray*& ma);
+	inline void DrawVertexAQ(CVertexArray* ma, int x, int y);
+	inline void DrawVertexAQ(CVertexArray* ma, int x, int y, float height);
+	inline void EndStripQ(CVertexArray* ma);
+	inline void DrawGroundVertexArrayQ(CVertexArray*& ma);
 
 	void DoDrawGroundRow(const CCamera* cam, int bty);
 	void DoDrawGroundShadowLOD(int nlod);
@@ -43,16 +44,9 @@ private:
 	static void DoDrawGroundShadowLODMT(void* c, int nlod);
 #endif
 
-	bool BigTexSquareRowVisible(const CCamera* cam, int) const;
-
 private:
 	CSMFReadMap* smfReadMap;
 	CSMFGroundDrawer* smfGroundDrawer;
-
-	float3 lastCamPos;
-	float maxCamDeltaDistSq;
-	int numBigTexX;
-	int numBigTexY;
 
 	int viewRadius;
 	int neededLod;
