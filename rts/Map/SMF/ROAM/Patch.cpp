@@ -111,13 +111,16 @@ void Patch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY,
 	const int sizeY = std::max(leftY - rightY, rightY - leftY);
 	const int size  = std::max(sizeX, sizeY);
 
-	if (node < (1 << VARIANCE_DEPTH)) { 
-		TriVariance = ((float) m_CurrentVariance[node] * PATCH_SIZE )
-				/ distfromcam * size ; // Take both distance and variance and patch size into consideration
+	if (node < (1 << VARIANCE_DEPTH)) {
+		// make max tesslation viewRadius dependent
+		const float maxVariance = smfGroundDrawer->viewRadius * 0.5f;
+		float myVariance = std::min(m_CurrentVariance[node], maxVariance);
+
+		TriVariance = (myVariance * PATCH_SIZE) / (distfromcam * size); // Take both distance and variance and patch size into consideration
 	}
 
-	if ((node >= (1 << VARIANCE_DEPTH)) || // IF we do not have variance info for this node, then we must have gotten here by splitting, so continue down to the lowest level.
-			((TriVariance > 1))) // OR if we are not below the variance tree, test for variance.
+	if ((node >= (1 << VARIANCE_DEPTH)) ||  // IF we do not have variance info for this node, then we must have gotten here by splitting, so continue down to the lowest level.
+			((TriVariance > 1.0f))) // OR if we are not below the variance tree, test for variance.
 	{
 		Split(tri); // Split this triangle.
 
@@ -182,28 +185,26 @@ float Patch::RecursComputeVariance(int leftX, int leftY,
 	float myVariance = abs(centerZ - ((leftZ + rightZ) / 2));
 	
 	if (leftZ*rightZ<0 || leftZ*centerZ<0 || rightZ*centerZ<0)
-		myVariance = std::max(myVariance*2,20.0f); //shore lines get more variance for higher accuracy
+		myVariance = std::max(myVariance * 1.5f, 20.0f); //shore lines get more variance for higher accuracy
 
-	//myVariance= MAX(abs(leftX - rightX),abs(leftY - rightY))*myVariance;
-	if (myVariance<0)
-		myVariance = 100;
+	//myVariance= MAX(abs(leftX - rightX),abs(leftY - rightY)) * myVariance;
 
 	// Since we're after speed and not perfect representations,
 	//    only calculate variance down to a 4x4 block
 	if ((abs(leftX - rightX) >= 4) || (abs(leftY - rightY) >= 4)) {
 		// Final Variance for this node is the max of it's own variance and that of it's children.
-		myVariance =
-			std::max( myVariance, RecursComputeVariance( apexX, apexY, apexZ, leftX, leftY, leftZ, centerX, centerY, centerZ, node<<1 ) );
-		myVariance =
-			std::max( myVariance, RecursComputeVariance( rightX, rightY, rightZ, apexX, apexY, apexZ, centerX, centerY, centerZ, 1+(node<<1)) );
+		const float child1Variance = RecursComputeVariance(apexX, apexY, apexZ, leftX, leftY, leftZ, centerX, centerY, centerZ, node<<1);
+		const float child2Variance = RecursComputeVariance(rightX, rightY, rightZ, apexX, apexY, apexZ, centerX, centerY, centerZ, 1+(node<<1));
+		myVariance = std::max(myVariance, child1Variance);
+		myVariance = std::max(myVariance, child2Variance);
 	}
-	
-	// Store the final variance for this node.  Note Variance is never zero.
-	if (node < (1 << VARIANCE_DEPTH))
-		m_CurrentVariance[node] = myVariance;//NOW IT IS 0 MUWAHAHAHAHA
 
-	if (myVariance<0)
-		myVariance=0.001;
+	// Note Variance is never zero.
+	myVariance = std::max(0.001f, myVariance);
+
+	// Store the final variance for this node.
+	if (node < (1 << VARIANCE_DEPTH))
+		m_CurrentVariance[node] = myVariance;
 
 	return myVariance;
 }
@@ -213,7 +214,7 @@ float Patch::RecursComputeVariance(int leftX, int leftY,
 //
 void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ, const float* hMap, int mx)
 {
-	drawer = _drawer;
+	smfGroundDrawer = _drawer;
 
 	// Clear all the relationships
 	mapx = mx;
@@ -462,7 +463,7 @@ int Patch::Render(bool waterdrawn)
 
 void Patch::SetSquareTexture() const
 {
-	drawer->SetupBigSquare(m_WorldX / PATCH_SIZE, m_WorldY / PATCH_SIZE);
+	smfGroundDrawer->SetupBigSquare(m_WorldX / PATCH_SIZE, m_WorldY / PATCH_SIZE);
 }
 
 
