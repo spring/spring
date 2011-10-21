@@ -95,8 +95,9 @@ IPath::SearchResult CPathFinder::GetPath(
 	this->needPath = needPath;
 
 	start = startPos;
-	startxSqr = start.x / SQUARE_SIZE; startxSqr |= 1;
-	startzSqr = start.z / SQUARE_SIZE; startzSqr |= 1;
+
+	startxSqr = start.x / SQUARE_SIZE; startxSqr;
+	startzSqr = start.z / SQUARE_SIZE; startzSqr;
 
 	// Clamp the start position
 	if (startxSqr >= gs->mapx) startxSqr = gs->mapxm1;
@@ -232,13 +233,8 @@ IPath::SearchResult CPathFinder::DoSearch(const MoveData& moveData, const CPathF
 	if (openSquares.empty())
 		return IPath::GoalOutOfRange;
 
-<<<<<<< HEAD:rts/Sim/Path/Default/PathFinder.cpp
 	// should be unreachable
 	LogObject() << "ERROR: CPathFinder::DoSearch() - Unhandled end of search!\n";
-=======
-	// Below shall never be runned.
-	LOG_L(L_ERROR, "%s - Unhandled end of search!", __FUNCTION__);
->>>>>>> master:rts/Sim/Path/Default/PathFinder.cpp
 	return IPath::Error;
 }
 
@@ -271,8 +267,8 @@ bool CPathFinder::TestSquare(
 		return false;
 	}
 
-	       const unsigned int blockStatus = moveData.moveMath->IsBlocked(moveData, square.x, square.y);
-	static const unsigned int blockBits = (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY);
+	const CMoveMath::BlockType blockStatus = moveData.moveMath->IsBlocked(moveData, square.x, square.y);
+	static CMoveMath::BlockType blockBits = (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY);
 
 	// Check if square are out of constraints or blocked by something.
 	// Doesn't need to be done on open squares, as those are already tested.

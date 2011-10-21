@@ -1,43 +1,62 @@
-Steps taken for last few releases (0.82.X)
-==========================================
+How to make a spring release
+============================
 
-Make the release
-----------------
 
-1) cherry pick a whole lot of stuff / or ensure code we want to release is in some branch one way or another
-2) write / update change-log (doc/changelog.txt)
-3) edit rts/Game/GameVersion.cpp and commit it:
-		${EDITOR} add rts/Game/GameVersion.cpp
-		git add rts/Game/GameVersion.cpp
-		git commit -m "bump version to 0.82.7.1"`
-4) tag the release
-		git tag -a -m "0.82.7.1 release" 0.82.7.1`
-5) edit rts/Game/GameVersion.cpp and commit it:
-		${EDITOR} add rts/Game/GameVersion.cpp
-		git add rts/Game/GameVersion.cpp
-		git commit -m "post release version bump"`
-6) create source-packages:
-		git checkout 0.82.7.1
+Preparation
+-----------
+
+1) Create the release branch:
+		git fetch
+		git checkout -b release origin/develop
+		git push origin release
+   From now on, EVERYTHING that should to be in the release,
+   has ot be commited on this branch.
+2) Write & update the change-log (doc/changelog.txt)
+3) possibly add fixes
+
+
+Release Time
+------------
+
+1) Merge the release branch into master:
+		git checkout master
+		git reset --hard origin/master
+		git merge release --no-ff
+2) Tag the release:
+   TODO Here we should probably add more info to the tag description, for example whether the AI/Unitsync/Lua API changed since the last release
+		git tag -a -m "83.0 release" 83.0
+3) create source-packages:
+		git checkout 83.0
 		./installer/make_source_package.sh
-7) POINT OF NO RETURN: push to main repo:
-		git push --tags origin 0.82-branch
-8) Trigger the build of the tag (0.82.7.1) on the buildbot. You may put the tag name in the revision field. Do not set branch (as it is currently an issue for buildbot when translating stack-traces).
-9) write the news post
-10) once 8) is finished, create portable archive:
-		wget http://springrts.com/dl/buildbot/default/master/0.82.7.1/spring_0.82.7.1.exe
-		installer/make_portable_archive.sh spring_0.82.7.1.exe
+4) Merge the release branch into develop:
+		git checkout develop
+		git fetch
+		git stash
+		# Do not forget this, somewhen later:
+		#git stash pop
+		git rebase origin/develop
+		git merge release --no-ff
+5) Tag the develop branch:
+		git tag -a -m "dev version after the 83.0 release" 83.0.1
+7) POINT OF NO RETURN: Push to the main repo:
+		git push --tags origin master develop
+9) Write the news post for the springrts.com frontpage, while waiting for the
+   buildbot to compile the master branch.
+10) once the buildbot is finnished, create the portable archive:
+		wget http://springrts.com/dl/buildbot/default/master/83.0/spring_83.0.exe
+		installer/make_portable_archive.sh spring_83.0.exe
 11) you should now have these files:
-	* spring_0.82.7.1.exe
-	* spring_0.82.7.1_portable.7z
-	* spring_0.82.7.1_src.tar.gz
-	* spring_0.82.7.1_src.tar.lzma
+	* spring_83.0.exe
+	* spring_83.0_portable.7z
+	* spring_83.0_src.tar.gz
+	* spring_83.0_src.tar.lzma
 	Upload them to SF (replace USER with your SF account name):
-		rsync -e ssh spring_0.82.7.1* USER,springrts@frs.sourceforge.net:/home/frs/project/s/sp/springrts/springrts/spring-0.82.7.1/
-12) post news post
+		rsync -e ssh spring_83.0* USER,springrts@frs.sourceforge.net:/home/frs/project/s/sp/springrts/springrts/spring-83.0/
+12) Post the news post.
 13) download page mirror links:
-    Ask someone with access to http://springrts.com/dl/ to put spring_0.82.7.1* stuff there.
+    Ask someone with access to http://springrts.com/dl/ to put spring_83.0* stuff there.
 
-After 1 or 2 days, enforce it on the server, if it is a sync relevant change.
+14) After 1 or 2 days, enforce it on the server, if it is a sync relevant change.
 
 
 Enforcing on server
@@ -54,7 +73,9 @@ This only needs to be done if it is a sync relevant change.
 3) Update the default downloads for each platform on SF.
 	Installer .exe for Windows, .tar.gz for all other platforms.
 	Do so through the file(s) properties on this page:
-		https://sourceforge.net/projects/springrts/files/springrts/spring-0.82.7.1/
+		https://sourceforge.net/projects/springrts/files/springrts/spring-83.0/
+
+
 
 
 Old stuff, to be cleaned up later

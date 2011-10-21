@@ -32,6 +32,7 @@
 #include "Util.h"
 
 #include "System/maindefines.h"
+#include "System/SafeCStrings.h"
 #if defined USING_STREFLOP
 #include "lib/streflop/streflopC.h" // for streflop_init_Simple()
 #else
@@ -51,7 +52,7 @@ char* util_allocStrCpy(const char* toCopy) {
 
 	const size_t copy_sizeMax = strlen(toCopy) + 1;
 	char* copy = (char*) calloc(copy_sizeMax, sizeof(char));
-	STRCPYS(copy, copy_sizeMax, toCopy);
+	STRCPY_T(copy, copy_sizeMax, toCopy);
 	return copy;
 }
 

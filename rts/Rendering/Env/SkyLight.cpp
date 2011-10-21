@@ -9,8 +9,9 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/Config/ConfigHandler.h"
+#include "System/EventHandler.h"
 #include "System/myMath.h"
+#include "System/Config/ConfigHandler.h"
 
 CONFIG(float, DynamicSunMinElevation).defaultValue(0.1f);
 
@@ -50,7 +51,7 @@ void DynamicSkyLight::Update() {
 
 		lightIntensity = math::sqrt(Clamp(lightDir.y, 0.0f, 1.0f));
 
-		const float shadowDensity = std::min(1.0f, lightIntensity * shadowDensityFactor); //FIXME why min(1.)? shouldn't the shadow fade away in the night?
+		const float shadowDensity = std::min(1.0f, lightIntensity * shadowDensityFactor);
 		const CMapInfo::light_t& light = mapInfo->light;
 
 		groundShadowDensity = shadowDensity * light.groundShadowDensity;
@@ -58,10 +59,11 @@ void DynamicSkyLight::Update() {
 	}
 
 	if (updateNeeded) {
+		updateNeeded = false;
+
 		sky->UpdateSunDir();
-		unitDrawer->UpdateSunDir();
 		readmap->GetGroundDrawer()->UpdateSunDir();
-		groundDecals->UpdateSunDir();
+		eventHandler.SunChanged(lightDir);
 	}
 }
 
@@ -69,7 +71,13 @@ void DynamicSkyLight::Update() {
 
 bool DynamicSkyLight::SetLightDir(const float4& newLightDir) {
 	if (newLightDir != lightDir) {
-		updateNeeded = (lightDir.dot(newLightDir) < 0.95f);
+		static float4 lastUpdate = ZeroVector;
+		static const float minCosAngle = cos(1.5f * (PI/180.f));
+
+		if (lastUpdate.dot(newLightDir) < minCosAngle) {
+			lastUpdate   = newLightDir;
+			updateNeeded = true;
+		}
 
 		lightDir = newLightDir;
 		lightDir.w = 0.0f;

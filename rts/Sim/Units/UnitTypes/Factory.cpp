@@ -3,16 +3,12 @@
 
 #include "Factory.h"
 #include "Game/GameHelper.h"
-#include "Game/GlobalUnsynced.h"
 #include "Game/WaitCommandsAI.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
-#include "Rendering/GlobalRendering.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Projectiles/Unsynced/GfxProjectile.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/FactoryCAI.h"
@@ -69,7 +65,7 @@ CFactory::~CFactory() {
 void CFactory::PostLoad()
 {
 	nextBuild = unitDefHandler->GetUnitDefByName(nextBuildName);
-	if(opening){
+	if (opening) {
 		script->Activate();
 	}
 	if (curBuild) {
@@ -122,10 +118,10 @@ void CFactory::Update()
 
 			if (!unitDef->canBeAssisted) {
 				b->soloBuilder = this;
-				b->AddDeathDependence(this);
+				b->AddDeathDependence(this, DEPENDENCE_BUILDER);
 			}
 
-			AddDeathDependence(b);
+			AddDeathDependence(b, DEPENDENCE_BUILD);
 			curBuild = b;
 
 			script->StartBuilding();
@@ -167,7 +163,7 @@ void CFactory::Update()
 
 			const CCommandQueue& queue = commandAI->commandQue;
 
-			if(!queue.empty() && (queue.front().GetID() == CMD_WAIT)) {
+			if (!queue.empty() && (queue.front().GetID() == CMD_WAIT)) {
 				curBuild->AddBuildPower(0, this);
 			} else {
 				if (curBuild->AddBuildPower(buildSpeed, this)) {
@@ -256,11 +252,6 @@ void CFactory::DependentDied(CObject* o)
 		StopBuild();
 	}
 	CUnit::DependentDied(o);
-}
-
-void CFactory::FinishedBuilding(void)
-{
-	CBuilding::FinishedBuilding();
 }
 
 
@@ -353,7 +344,7 @@ bool CFactory::ChangeTeam(int newTeam, ChangeType type)
 }
 
 
-void CFactory::CreateNanoParticle(void)
+void CFactory::CreateNanoParticle(bool highPriority)
 {
 	const int piece = script->QueryNanoPiece();
 
@@ -362,21 +353,12 @@ void CFactory::CreateNanoParticle(void)
 		return;
 #endif
 
-	if (ph->currentNanoParticles < ph->maxNanoParticles && unitDef->showNanoSpray) {
-		const float3 relWeaponFirePos = script->GetPiecePos(piece);
-		const float3 weaponPos = pos + (frontdir * relWeaponFirePos.z)
-			+ (updir    * relWeaponFirePos.y)
-			+ (rightdir * relWeaponFirePos.x);
-		float3 dif = (curBuild->midPos - weaponPos);
-		const float l = fastmath::apxsqrt2(dif.SqLength());
-		dif /= l;
-		dif += gu->usRandVector() * 0.15f;
-		float3 color = unitDef->nanoColor;
+	const float3 relWeaponFirePos = script->GetPiecePos(piece);
+	const float3 weaponPos = pos
+		+ (frontdir * relWeaponFirePos.z)
+		+ (updir    * relWeaponFirePos.y)
+		+ (rightdir * relWeaponFirePos.x);
 
-		if (globalRendering->teamNanospray) {
-			unsigned char* tcol = teamHandler->Team(team)->color;
-			color = float3(tcol[0] * (1.0f / 255.0f), tcol[1] * (1.0f / 255.0f), tcol[2] * (1.0f / 255.0f));
-		}
-		new CGfxProjectile(weaponPos, dif, (int) l, color);
-	}
+	// unsynced
+	ph->AddNanoParticle(weaponPos, curBuild->midPos, unitDef, team, highPriority);
 }

@@ -14,17 +14,30 @@ extern "C" {
 
 EXPORT(int              ) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, int commandId, int commandTopic, void* commandData);
 
+
+EXPORT(const char*      ) skirmishAiCallback_Engine_Version_getFull(int skirmishAIId);
+
 EXPORT(const char*      ) skirmishAiCallback_Engine_Version_getMajor(int skirmishAIId);
 
 EXPORT(const char*      ) skirmishAiCallback_Engine_Version_getMinor(int skirmishAIId);
 
 EXPORT(const char*      ) skirmishAiCallback_Engine_Version_getPatchset(int skirmishAIId);
 
+EXPORT(const char*      ) skirmishAiCallback_Engine_Version_getCommits(int skirmishAIId);
+
+EXPORT(const char*      ) skirmishAiCallback_Engine_Version_getHash(int skirmishAIId);
+
+EXPORT(const char*      ) skirmishAiCallback_Engine_Version_getBranch(int skirmishAIId);
+
 EXPORT(const char*      ) skirmishAiCallback_Engine_Version_getAdditional(int skirmishAIId);
 
 EXPORT(const char*      ) skirmishAiCallback_Engine_Version_getBuildTime(int skirmishAIId);
 
+EXPORT(bool             ) skirmishAiCallback_Engine_Version_isRelease(int skirmishAIId);
+
 EXPORT(const char*      ) skirmishAiCallback_Engine_Version_getNormal(int skirmishAIId);
+
+EXPORT(const char*      ) skirmishAiCallback_Engine_Version_getSync(int skirmishAIId);
 
 EXPORT(const char*      ) skirmishAiCallback_Engine_Version_getFull(int skirmishAIId);
 

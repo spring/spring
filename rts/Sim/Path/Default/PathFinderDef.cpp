@@ -3,12 +3,11 @@
 #include "PathFinderDef.h"
 #include "Map/ReadMap.h"
 #include "Sim/MoveTypes/MoveInfo.h"
-#include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/Misc/GlobalSynced.h"
 
 CPathFinderDef::CPathFinderDef(const float3& goalCenter, float goalRadius):
 goal(goalCenter),
-sqGoalRadius(goalRadius)
+sqGoalRadius(goalRadius * goalRadius)
 {
 	// make sure that the goal can be reached with 2-square resolution
 	if (sqGoalRadius < (SQUARE_SIZE * SQUARE_SIZE * 2))
@@ -35,7 +34,7 @@ float CPathFinderDef::Heuristic(unsigned int xSquare, unsigned int zSquare) cons
 
 // returns if the goal is inaccessable: this is
 // true if the goal area is "small" and blocked
-bool CPathFinderDef::GoalIsBlocked(const MoveData& moveData, unsigned int moveMathOptions) const {
+bool CPathFinderDef::GoalIsBlocked(const MoveData& moveData, const CMoveMath::BlockType& moveMathOptions) const {
 	const float r0 = SQUARE_SIZE * SQUARE_SIZE * 4.0f;
 	const float r1 = ((moveData.xsize * SQUARE_SIZE) >> 1) * ((moveData.zsize * SQUARE_SIZE) >> 1) * 1.5f;
 

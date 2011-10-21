@@ -24,7 +24,7 @@ public:
 	float GetExtractionRange() const { return extractionRange; }
 	float GetExtractionDepth() const { return extractionDepth; }
 
-	virtual void FinishedBuilding();
+	void FinishedBuilding(bool postInit);
 
 protected:
 	struct MetalSquareOfControl {

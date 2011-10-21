@@ -53,7 +53,7 @@ CLightningProjectile::CLightningProjectile(
 	}
 
 	if (weapon) {
-		AddDeathDependence(weapon);
+		AddDeathDependence(weapon, DEPENDENCE_WEAPON);
 	}
 
 #ifdef TRACE_SYNC

@@ -279,6 +279,34 @@ ENDIF (MINGW)
 # Sub-parts of the build system may add dependencies to this target
 add_custom_target(generateSources)
 
+
+# Generate the version files
+Set(VERSION_GENERATE_DIR "${CMAKE_BINARY_DIR}")
+
+Set_Source_Files_Properties(
+		"${VERSION_GENERATE_DIR}/src-generated/engine/System/VersionGenerated.h"
+		"${VERSION_GENERATE_DIR}/VERSION"
+		PROPERTIES GENERATED TRUE
+	)
+
+# This is always executed (on every run of "make"),
+# but the actual version files are only written in case of a change
+# in the version info they use, or in the template file content.
+Add_Custom_Target(generateVersionFiles)
+Add_Custom_Command(TARGET generateVersionFiles
+	COMMAND "${CMAKE_COMMAND}"
+		"-DSOURCE_ROOT=${CMAKE_SOURCE_DIR}"
+		"-DCMAKE_MODULES_SPRING=${CMAKE_MODULES_SPRING}"
+		"-DGENERATE_DIR=${VERSION_GENERATE_DIR}"
+		"-DVERSION_ADDITIONAL=${VERSION_ADDITIONAL}"
+		-P "${CMAKE_MODULES_SPRING}/ConfigureVersion.cmake"
+	COMMENT
+		"  Configuring Version files ..." VERBATIM
+	)
+
+Add_Dependencies(generateSources generateVersionFiles)
+
+
 ### Where the other CMakeLists.txt are
 
 # As the libs are required by all the other sub-projects, we add them first

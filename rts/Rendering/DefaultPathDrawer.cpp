@@ -128,9 +128,11 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 
 				for (int ty = starty; ty < endy; ++ty) {
 					for (int tx = 0; tx < gs->hmapx; ++tx) {
+						const int sqx = (tx << 1);
+						const int sqy = (ty << 1);
 						const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
-						const int hmIdx = (ty << 1) * gs->mapxp1 + (tx << 1);
-						const int cnIdx = (ty << 1) * (gs->mapx    ) + (tx << 1);
+						const int hmIdx = sqy * gs->mapxp1 + sqx;
+						const int cnIdx = sqy * gs->mapx   + sqx;
 
 						if (md != NULL) {
 							const float height = hm[hmIdx];
@@ -150,10 +152,17 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 							m = Clamp(m, 0.0f, 1.0f);
 							m *= 255;
 
-							if (los || loshandler->InLos((tx << 1), (ty << 1), gu->myAllyTeam)) {
-								if ((md->moveMath->IsBlocked(*md, (tx << 1) + 1, (ty << 1) + 1) & CMoveMath::BLOCK_STRUCTURE)) {
-									m = 0.0f;
-								}
+							if (los || loshandler->InLos(sqx, sqy, gu->myAllyTeam)) {
+								float fact = 1.0f;
+								if (md->moveMath->IsBlocked(*md, sqx, sqy) & CMoveMath::BLOCK_STRUCTURE)
+									fact -= 0.25f;
+								if (md->moveMath->IsBlocked(*md, sqx+1, sqy) & CMoveMath::BLOCK_STRUCTURE)
+									fact -= 0.25f;
+								if (md->moveMath->IsBlocked(*md, sqx, sqy+1) & CMoveMath::BLOCK_STRUCTURE)
+									fact -= 0.25f;
+								if (md->moveMath->IsBlocked(*md, sqx+1, sqy+1) & CMoveMath::BLOCK_STRUCTURE)
+									fact -= 0.25f;
+								m *= fact;
 							}
 
 							texMem[texIdx + CBaseGroundDrawer::COLOR_R] = 255 - m;

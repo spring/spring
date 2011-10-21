@@ -16,12 +16,12 @@ const unsigned int MAX_SEARCHED_NODES_PF = MAX_SEARCHED_NODES;
 const unsigned int MAX_SEARCHED_NODES_PE = MAX_SEARCHED_NODES;
 
 // PathManager distance thresholds (to use PF or PE)
-const float DETAILED_DISTANCE     = 25;
-const float ESTIMATE_DISTANCE     = 55;
-const float MIN_ESTIMATE_DISTANCE = 64;
-const float MIN_DETAILED_DISTANCE = 32;
+const float DETAILED_DISTANCE     = 25.0f;
+const float ESTIMATE_DISTANCE     = 55.0f;
+const float MIN_ESTIMATE_DISTANCE = 64.0f;
+const float MIN_DETAILED_DISTANCE = 32.0f;
 
-const unsigned int PATHESTIMATOR_VERSION = 46;
+const unsigned int PATHESTIMATOR_VERSION = 49;
 
 const unsigned int MEDRES_PE_BLOCKSIZE =  8;
 const unsigned int LOWRES_PE_BLOCKSIZE = 32;

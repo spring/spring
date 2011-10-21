@@ -32,8 +32,8 @@ void ConfigVariable::AddMetaData(const ConfigVariableMetaData* data)
 	MetaDataMap::const_iterator pos = vars.find(data->GetKey());
 
 	if (pos != vars.end()) {
-		LOG_VAR(data, "Duplicate config variable declaration \"%s\"\n", data->GetKey().c_str());
-		LOG_VAR(pos->second, "  Previously declared here\n");
+		LOG_VAR(data, "Duplicate config variable declaration \"%s\"", data->GetKey().c_str());
+		LOG_VAR(pos->second, "  Previously declared here");
 	}
 	else {
 		vars[data->GetKey()] = data;

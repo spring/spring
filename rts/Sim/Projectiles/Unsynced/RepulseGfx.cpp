@@ -29,7 +29,7 @@ CRepulseGfx::CRepulseGfx(CUnit* owner, CProjectile* repulsed, float maxDist, con
 	color(color)
 {
 	if (repulsed) {
-		AddDeathDependence(repulsed);
+		AddDeathDependence(repulsed, DEPENDENCE_REPULSE);
 	}
 
 	checkCol = false;

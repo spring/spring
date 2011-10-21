@@ -50,7 +50,7 @@ Joystick::Joystick()
 	}
 	else
 	{
-		LOG_L(L_ERROR, "Joystick %i not found", stickNum);
+		LOG_L(L_WARNING, "Joystick %i not found", stickNum);
 	}
 }
 

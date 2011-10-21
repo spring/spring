@@ -312,7 +312,7 @@ bool CUnitDrawer::LoadModelShaders()
 }
 
 
-void CUnitDrawer::UpdateSunDir() {
+void CUnitDrawer::SunChanged(const float3& sunDir) {
 	if (advShading && shadowHandler->shadowsSupported && globalRendering->haveGLSL) {
 		const float3 factoredUnitSunColor = unitSunColor * sky->GetLight()->GetLightIntensity();
 
@@ -2086,7 +2086,7 @@ inline void CUnitDrawer::UpdateUnitDrawPos(CUnit* u) {
 		u->drawPos = u->pos + (u->speed * globalRendering->timeOffset);
 	}
 #endif
-	u->drawMidPos = u->drawPos + (u->midPos - u->pos);
+	u->drawMidPos = u->drawPos + u->relMidPos;
 }
 
 

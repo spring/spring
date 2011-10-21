@@ -1245,7 +1245,7 @@ void CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 	if (GetFullRead()) {
 		LUA_UNIT_BATCH_PUSH(,UNIT_UNIT_COLLISION, collider, collidee);
 		LUA_CALL_IN_CHECK(L);
-		lua_checkstack(L, 4);
+		lua_checkstack(L, 5);
 
 		if (!watchUnitDefs[collider->unitDef->id]) { return; }
 		if (!watchUnitDefs[collidee->unitDef->id]) { return; }
@@ -1262,8 +1262,9 @@ void CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 
 		lua_pushnumber(L, collider->id);
 		lua_pushnumber(L, collidee->id);
+		lua_pushboolean(L, collidee->crushKilled);
 
-		RunCallInTraceback(cmdStr, 2, 0, errFunc);
+		RunCallInTraceback(cmdStr, 3, 0, errFunc);
 	}
 }
 
@@ -1272,7 +1273,7 @@ void CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* col
 	if (GetFullRead()) {
 		LUA_OBJ_BATCH_PUSH(UNIT_FEAT_COLLISION, collider, collidee);
 		LUA_CALL_IN_CHECK(L);
-		lua_checkstack(L, 4);
+		lua_checkstack(L, 5);
 
 		if (!watchUnitDefs[collider->unitDef->id]) { return; }
 		if (!watchFeatureDefs[collidee->def->id]) { return; }
@@ -1289,8 +1290,9 @@ void CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* col
 
 		lua_pushnumber(L, collider->id);
 		lua_pushnumber(L, collidee->id);
+		lua_pushboolean(L, collidee->crushKilled);
 
-		RunCallInTraceback(cmdStr, 2, 0, errFunc);
+		RunCallInTraceback(cmdStr, 3, 0, errFunc);
 	}
 }
 

@@ -1754,7 +1754,9 @@ bool AAIExecute::BuildFactory()
 		{
 			++factory_types_requested;
 
-			my_rating = bt->GetFactoryRating(*fac) / pow( (float) (1 + bt->units_dynamic[*fac].active), 2.0f);
+			const float activeFacsOfType = bt->units_dynamic[*fac].active;
+
+			my_rating = bt->GetFactoryRating(*fac) / pow(activeFacsOfType + 1.0f, 2.0f);
 			my_rating *= (1 + sqrt(2.0 + (float) GetBuildqueueOfFactory(*fac)->size()));
 
 			if(ut->activeFactories < 1)

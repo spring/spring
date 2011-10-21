@@ -68,7 +68,8 @@ CMoveInfo* moveinfo;
 static float DegreesToMaxSlope(float degrees)
 {
 	const float deg = Clamp(degrees, 0.0f, 60.0f) * 1.5f;
-	const float rad = deg * (PI / 180.0f);
+	static const float degToRad = PI / 180.0f; // Prevent MSVC from inlining stuff that would break the PE checksum compatibility between debug and release
+	const float rad = deg * degToRad;
 
 	return (1.0f - cos(rad));
 }

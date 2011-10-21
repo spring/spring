@@ -52,7 +52,6 @@ class CTransportUnit;
 #define LOS_ALL_MASK_BITS \
 	(LOS_INLOS_MASK | LOS_INRADAR_MASK | LOS_PREVLOS_MASK | LOS_CONTRADAR_MASK)
 
-
 enum ScriptCloakBits { // FIXME -- not implemented
 	// always set to 0 if not enabled
 	SCRIPT_CLOAK_ENABLED          = (1 << 0),
@@ -84,9 +83,9 @@ public:
 	virtual void DoDamage(const DamageArray& damages, CUnit* attacker,
 	                      const float3& impulse, int weaponId = -1);
 	virtual void DoWaterDamage();
-	virtual void Kill(const float3& impulse);
+	virtual void Kill(const float3& impulse, bool crushKill);
 	virtual void AddImpulse(const float3&);
-	virtual void FinishedBuilding();
+	virtual void FinishedBuilding(bool postInit);
 
 	bool AttackGround(const float3& pos, bool wantManualFire, bool fpsMode = false);
 	bool AttackUnit(CUnit* unit, bool wantManualFire, bool fpsMode = false);
@@ -120,19 +119,6 @@ public:
 	}
 
 	void DependentDied(CObject* o);
-	enum DependenceType {
-		DEPENDENCE_ATTACKER,
-		DEPENDENCE_BUILD,
-		DEPENDENCE_BUILDER,
-		DEPENDENCE_CAPTURE,
-		DEPENDENCE_RECLAIM, 
-		DEPENDENCE_RESURRECT,
-		DEPENDENCE_TARGET,
-		DEPENDENCE_TERRAFORM,
-		DEPENDENCE_TRANSPORTEE,
-		DEPENDENCE_TRANSPORTER
-	};
-	virtual void DeleteDeathDependence(CObject* o, DependenceType dep);
 
 	void SetUserTarget(CUnit* target);
 	bool SetGroup(CGroup* group);

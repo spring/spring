@@ -84,12 +84,12 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 	}
 
 	if (target) {
-		AddDeathDependence(target);
+		AddDeathDependence(target, DEPENDENCE_WEAPONTARGET);
 	}
 
 	if (interceptTarget) {
 		interceptTarget->targeted = true;
-		AddDeathDependence(interceptTarget);
+		AddDeathDependence(interceptTarget, DEPENDENCE_INTERCEPTTARGET);
 	}
 
 	if (weaponDef != NULL) {

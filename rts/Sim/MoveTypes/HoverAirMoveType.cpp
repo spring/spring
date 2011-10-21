@@ -88,9 +88,7 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	forceHeadingTo(wantedHeading),
 	maxDrift(1)
 {
-	if (owner) {
-		owner->dontUseWeapons = true;
-	}
+	owner->dontUseWeapons = true;
 }
 
 

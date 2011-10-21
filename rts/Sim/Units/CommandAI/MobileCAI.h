@@ -51,6 +51,7 @@ public:
 	virtual bool IsValidTarget(const CUnit* enemy) const;
 
 	float3 goalPos;
+	float3 lastBuggerGoalPos;
 	float3 lastUserGoal;
 
 	int lastIdleCheck;
