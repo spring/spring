@@ -31,7 +31,6 @@ SET(sources_engine_Map
 		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/SMFMapFile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/SMFReadMap.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/Legacy/LegacyMeshDrawer.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/ROAM/Landscape.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/ROAM/Patch.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/ROAM/RoamMeshDrawer.cpp"
 	)

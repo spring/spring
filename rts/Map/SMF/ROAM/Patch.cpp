@@ -12,7 +12,7 @@
 //
 
 #include "Patch.h"
-#include "Landscape.h"
+#include "RoamMeshDrawer.h"
 #include "Game/Camera.h"
 #include "Map/ReadMap.h"
 #include "Map/SMF/SMFGroundDrawer.h"
@@ -42,8 +42,8 @@ void Patch::Split(TriTreeNode *tri)
 		Split(tri->BaseNeighbor);
 
 	// Create children and link into mesh
-	tri->LeftChild  = Landscape::AllocateTri();
-	tri->RightChild = Landscape::AllocateTri();
+	tri->LeftChild  = CRoamMeshDrawer::AllocateTri();
+	tri->RightChild = CRoamMeshDrawer::AllocateTri();
 
 	// If creation failed, just exit.
 	if (!tri->RightChild)
