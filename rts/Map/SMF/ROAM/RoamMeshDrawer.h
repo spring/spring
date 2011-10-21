@@ -59,6 +59,9 @@ protected:
 	static int m_NextTriNode;                //< Index to next free TriTreeNode
 	static TriTreeNode m_TriPool[POOL_SIZE]; //< Pool of TriTree nodes for splitting //FIXME this array is 9.5MB large! better use a std::vector? 
 
+public:
+	static bool forceRetessellate;
+
 private:
 	CSMFReadMap* smfReadMap;
 	CSMFGroundDrawer* smfGroundDrawer;
