@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef DEFAULTPATHDRAWER_HDR
-#define DEFAULTPATHDRAWER_HDR
+#ifndef DEFAULT_PATHDRAWER_HDR
+#define DEFAULT_PATHDRAWER_HDR
 
 #include "IPathDrawer.h"
 
