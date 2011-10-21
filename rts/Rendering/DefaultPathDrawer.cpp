@@ -31,17 +31,21 @@
 #include "Rendering/GL/glExtra.h"
 #include "System/myMath.h"
 
+static CPathManager* pm = NULL;
+
+
+
 DefaultPathDrawer::DefaultPathDrawer() {
 	pm = dynamic_cast<CPathManager*>(pathManager);
 }
 
-void DefaultPathDrawer::Draw() const {
+void DefaultPathDrawer::DrawAll() const {
 	// CPathManager is not thread-safe
 	#if !defined(USE_GML) || !GML_ENABLE_SIM
 	if (globalRendering->drawdebug && (gs->cheatEnabled || gu->spectating)) {
 		glPushAttrib(GL_ENABLE_BIT);
 
-		Draw(pm);
+		Draw();
 		Draw(pm->maxResPF);
 		Draw(pm->medResPE);
 		Draw(pm->lowResPE);
@@ -250,7 +254,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 
 
 
-void DefaultPathDrawer::Draw(const CPathManager* pm) const {
+void DefaultPathDrawer::Draw() const {
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
 	glLineWidth(3);
@@ -350,10 +354,12 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 	}
 
 	if (!selectedUnits.selectedUnits.empty()) {
-		const CUnit* unit = (*selectedUnits.selectedUnits.begin());
+		const CUnitSet& unitSet = selectedUnits.selectedUnits;
+		const CUnit* unit = *(unitSet.begin());
+		const UnitDef* unitDef = unit->unitDef;
 
-		if (unit->unitDef->movedata) {
-			md = unit->unitDef->movedata;
+		if (unitDef->movedata) {
+			md = unitDef->movedata;
 		}
 	}
 

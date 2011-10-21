@@ -142,7 +142,7 @@ void CWorldDrawer::Draw()
 	unitDrawer->Draw(false);
 	modelDrawer->Draw();
 	featureDrawer->Draw();
-	pathDrawer->Draw();
+	pathDrawer->DrawAll();
 
 	//! transparent stuff
 	glEnable(GL_BLEND);
