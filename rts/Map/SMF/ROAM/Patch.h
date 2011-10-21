@@ -108,7 +108,7 @@ public:
 protected:
 	static RenderMode renderMode;
 
-	CSMFGroundDrawer* drawer;
+	CSMFGroundDrawer* smfGroundDrawer;
 
 	const float* m_HeightMap; //< Pointer to height map to use
 	const float* heightData;
