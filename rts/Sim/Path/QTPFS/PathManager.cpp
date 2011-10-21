@@ -14,7 +14,16 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
+
+#define NO_LOADSCREEN
+#ifdef NO_LOADSCREEN
+	struct DummyLoadScreen { void SetLoadMessage(const std::string& msg) const { LOG("%s", msg.c_str()); } };
+	static DummyLoadScreen dummyLoadScreen;
+	#undef loadscreen
+	#define loadscreen (&dummyLoadScreen)
+#endif
 
 
 
@@ -58,7 +67,7 @@ QTPFS::PathManager::PathManager() {
 		streflop_init<streflop::Simple>();
 
 		char loadMsg[512] = {'\0'};
-		const char* fmtString = "[%s] using %u threads for %u node-layers";
+		const char* fmtString = "[%s] using %u threads for %u node-layers (cached? %s)";
 
 		#ifdef OPENMP
 			// never use more threads than the number of layers
@@ -69,7 +78,7 @@ QTPFS::PathManager::PathManager() {
 			//
 			// omp_set_num_threads(std::min(maxThreads, minThreads));
 
-			sprintf(loadMsg, fmtString, __FUNCTION__, omp_get_num_threads(), nodeLayers.size());
+			sprintf(loadMsg, fmtString, __FUNCTION__, omp_get_num_threads(), nodeLayers.size(), (haveCacheDir? "true": "false"));
 			loadscreen->SetLoadMessage(loadMsg);
 
 			#pragma omp parallel for private(loadMsg)
@@ -85,13 +94,13 @@ QTPFS::PathManager::PathManager() {
 				// (if it does, we only need to initialize speed{Mods, Bins})
 				UpdateNodeLayer(i, mapRect, !haveCacheDir);
 
-				sprintf(loadMsg, "  initialized node-layer %u (node-ratio %f)", i, nodeLayers[i].GetNodeRatio());
+				sprintf(loadMsg, "  initialized node-layer %u (%u leafs, ratio %f)", i, nodeLayers[i].GetNumLeafNodes(), nodeLayers[i].GetNodeRatio());
 				loadscreen->SetLoadMessage(loadMsg);
 			}
 
 		#else
 
-			sprintf(loadMsg, fmtString, __FUNCTION__, GetNumThreads(), nodeLayers.size());
+			sprintf(loadMsg, fmtString, __FUNCTION__, GetNumThreads(), nodeLayers.size(), (haveCacheDir? "true": "false"));
 			loadscreen->SetLoadMessage(loadMsg);
 
 			std::vector<boost::thread*> threads(std::min(GetNumThreads(), nodeLayers.size()), NULL);
@@ -145,7 +154,7 @@ void QTPFS::PathManager::InitNodeLayers(unsigned int threadNum, unsigned int num
 
 		UpdateNodeLayer(i, mapRect, !haveCacheDir);
 
-		sprintf(loadMsg, "  initialized node-layer %u (node-ratio %f)", i, nodeLayers[i].GetNodeRatio());
+		sprintf(loadMsg, "  initialized node-layer %u (%u leafs, ratio %f)", i, nodeLayers[i].GetNumLeafNodes(), nodeLayers[i].GetNodeRatio());
 		loadscreen->SetLoadMessage(loadMsg);
 	}
 }
@@ -181,6 +190,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 	char loadMsg[512] = {'\0'};
 	const char* fmtString = "[%s] serializing node-tree %u";
 
+	// TODO: calculate checksum over each tree
 	// NOTE: also compress the tree cache-files?
 	for (unsigned int i = 0; i < nodeTrees.size(); i++) {
 		fileNames[i] = cacheFileDir + "tree" + IntToString(i, "%02x");
