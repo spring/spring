@@ -101,8 +101,7 @@ void Patch::Split(TriTreeNode *tri)
 // Tessellate a Patch.
 // Will continue to split until the variance metric is met.
 //
-void Patch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY,
-		int rightX, int rightY, int apexX, int apexY, int node)
+void Patch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY, int rightX, int rightY, int apexX, int apexY, int node)
 {
 	float TriVariance = 0.0f;
 	const int centerX = (leftX + rightX) >> 1; // Compute X coordinate of center of Hypotenuse
@@ -134,7 +133,7 @@ void Patch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY,
 					centerX, centerY, 1 + (node << 1));
 		}
 	} else {
-		//stop tess
+		// stop tess
 	}
 }
 
@@ -143,8 +142,7 @@ void Patch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY,
 //
 
 
-void Patch::RecursRender(TriTreeNode* tri, int leftX, int leftY, int rightX,
-		int rightY, int apexX, int apexY, bool dir, int maxdepth, bool waterdrawn)
+void Patch::RecursRender(TriTreeNode* tri, int leftX, int leftY, int rightX, int rightY, int apexX, int apexY, bool dir, int maxdepth)
 {
 	int m_depth = maxdepth + 1;
 	
@@ -155,8 +153,8 @@ void Patch::RecursRender(TriTreeNode* tri, int leftX, int leftY, int rightX,
 	} else {
 		int centerX = (leftX + rightX) >> 1; // Compute X coordinate of center of Hypotenuse
 		int centerY = (leftY + rightY) >> 1; // Compute Y coord...
-		RecursRender(tri->LeftChild, apexX, apexY, leftX, leftY, centerX, centerY, dir, m_depth, waterdrawn);
-		RecursRender(tri->RightChild, rightX, rightY, apexX, apexY, centerX, centerY, dir, m_depth, waterdrawn);
+		RecursRender(tri->LeftChild, apexX, apexY, leftX, leftY, centerX, centerY, dir, m_depth);
+		RecursRender(tri->RightChild, rightX, rightY, apexX, apexY, centerX, centerY, dir, m_depth);
 	}
 }
 
@@ -235,7 +233,7 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ, const float*
 	heightData = hMap;
 
 	// Initialize flags
-	m_VarianceDirty = 1;
+	m_isDirty   = true;
 	m_isVisible = false;
 
 	vertices.resize(3 * (PATCH_SIZE + 1) * (PATCH_SIZE + 1));
@@ -293,6 +291,8 @@ void Patch::UpdateHeightMap()
 	}
 	*/
 	glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+	
+	m_isDirty = true;
 }
 
 // ---------------------------------------------------------------------
@@ -328,7 +328,7 @@ void Patch::ComputeVariance()
 			m_HeightMap[(PATCH_SIZE * (mapx+1)) + PATCH_SIZE], 1);
 
 	// Clear the dirty flag for this patch
-	m_VarianceDirty = 0;
+	m_isDirty = false;
 }
 
 // ---------------------------------------------------------------------
@@ -426,11 +426,11 @@ void Patch::DrawTriArray()
 }
 
 
-int Patch::Render(bool waterdrawn)
+int Patch::Render()
 {
 	indices.clear();
-	RecursRender(&m_BaseLeft, 0, PATCH_SIZE, PATCH_SIZE, 0, 0, 0, true, 0, waterdrawn);
-	RecursRender(&m_BaseRight, PATCH_SIZE, 0, 0, PATCH_SIZE, PATCH_SIZE, PATCH_SIZE, false, 0, waterdrawn);
+	RecursRender(&m_BaseLeft, 0, PATCH_SIZE, PATCH_SIZE, 0, 0, 0, true, 0);
+	RecursRender(&m_BaseRight, PATCH_SIZE, 0, 0, PATCH_SIZE, PATCH_SIZE, PATCH_SIZE, false, 0);
 
 	switch (renderMode) {
 		case DL:

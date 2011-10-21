@@ -698,6 +698,7 @@ void CSMFGroundDrawer::Update()
 	}
 
 	groundTextures->DrawUpdate();
+	meshDrawer->Update();
 }
 
 

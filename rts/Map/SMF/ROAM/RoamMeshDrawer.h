@@ -28,9 +28,10 @@ private:
 
 	Landscape landscape;
 	bool* visibilitygrid;
-
+	
 	float3 lastCamPos;
-	float maxCamDeltaDistSq;
+	int lastViewRadius;
+
 	int numBigTexX;
 	int numBigTexY;
 };

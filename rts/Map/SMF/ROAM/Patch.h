@@ -70,11 +70,11 @@ public:
 	{
 		return &m_BaseRight;
 	}
-	char isDirty()
+	char IsDirty()
 	{
-		return m_VarianceDirty;
+		return m_isDirty;
 	}
-	bool isVisibile()
+	bool IsVisible()
 	{
 		return m_isVisible;
 	}
@@ -89,7 +89,7 @@ public:
 	void Tessellate(const float3& campos, int viewradius);
 	void ComputeVariance();
 
-	int Render(bool waterdrawn);
+	int Render();
 	void DrawTriArray();
 
 	void SetSquareTexture() const;
@@ -97,13 +97,9 @@ public:
 private:
 	// The recursive half of the Patch Class
 	void Split(TriTreeNode* tri);
-	void RecursTessellate(TriTreeNode* tri, int leftX, int leftY,
-			int rightX, int rightY, int apexX, int apexY, int node);
-	void RecursRender(TriTreeNode* tri, int leftX, int leftY, int rightX,
-		int rightY, int apexX, int apexY, bool dir, int maxdepth, bool waterdrawn);
-	float RecursComputeVariance(int leftX, int leftY,
-		float leftZ, int rightX, int rightY, float rightZ,
-		int apexX, int apexY, float apexZ, int node);
+	void RecursTessellate(TriTreeNode* tri, int leftX, int leftY, int rightX, int rightY, int apexX, int apexY, int node);
+	void RecursRender(TriTreeNode* tri, int leftX, int leftY, int rightX, int rightY, int apexX, int apexY, bool dir, int maxdepth);
+	float RecursComputeVariance(int leftX, int leftY, float leftZ, int rightX, int rightY, float rightZ, int apexX, int apexY, float apexZ, int node);
 
 public:
 	static void SetRenderMode(RenderMode mode) {
@@ -125,6 +121,7 @@ protected:
 	float* m_CurrentVariance;  //< Which varience we are currently using. [Only valid during the Tessellate and ComputeVariance passes]
 
 	bool m_isVisible; //< Is this patch visible in the current frame?
+	bool m_isDirty; //< Does the Varience Tree need to be recalculated for this Patch?
 
 	TriTreeNode m_BaseLeft;  //< Left base triangle tree node
 	TriTreeNode m_BaseRight; //< Right base triangle tree node
@@ -143,9 +140,6 @@ protected:
 	GLuint triList;
 	GLuint vertexBuffer;
 	GLuint vertexIndexBuffer;
-
-public:
-	unsigned char m_VarianceDirty; //< Does the Varience Tree need to be recalculated for this Patch? FIXME why not bool?
 };
 
 #endif

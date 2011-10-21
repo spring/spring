@@ -44,7 +44,6 @@ Landscape::Landscape(CSMFGroundDrawer* _drawer, const float* hMap, int bx, int b
 	// Store the Height Field array
 	h = by;
 	w = bx;
-	updateCount = 0;
 
 	m_Patches.resize((bx / PATCH_SIZE) * (by / PATCH_SIZE));
 
@@ -140,37 +139,19 @@ void Landscape::Tessellate(const float3& campos, int viewradius)
 {
 	// Perform Tessellation
 	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); it++) {
-		if (it->isVisibile())
+		if (it->IsVisible())
 			it->Tessellate(campos, viewradius);
 	}
-	updateCount = 0;
 }
 
 // ---------------------------------------------------------------------
 // Render each patch of the landscape & adjust the frame variance.
 //
-int Landscape::Render(bool camMoved, bool inShadowPass, bool waterdrawn)
+int Landscape::Render(bool inShadowPass)
 {
-	bool dirty = false;
-
-	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); it++) {
-		if (it->isDirty() == 1) {
-			dirty = true;
-			it->ComputeVariance();
-		}
-	}
-
-	if (dirty) {
-		Reset();
-		Tessellate(ZeroVector, 200);
-	}
-
 	int tricount = 0;
 	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); it++) {
-		if (it->isVisibile()) {
-			if (camMoved)
-				it->Render(waterdrawn);
-
+		if (it->IsVisible()) {
 			if (!inShadowPass)
 				it->SetSquareTexture();
 
@@ -190,12 +171,6 @@ int Landscape::Render(bool camMoved, bool inShadowPass, bool waterdrawn)
 
 void Landscape::UnsyncedHeightMapUpdate(const SRectangle& rect)
 {
-	//FIXME find a better to way to find out if ROAM is used
-	if (m_Patches.empty())
-		return;
-
-	updateCount = 0;
-
 	const int xstart = std::floor(rect.x1 / PATCH_SIZE);
 	const int xend   = std::ceil( rect.x2 / PATCH_SIZE);
 	const int zstart = std::floor(rect.z1 / PATCH_SIZE);
@@ -207,9 +182,8 @@ void Landscape::UnsyncedHeightMapUpdate(const SRectangle& rect)
 		for (int x = xstart; x <= xend; x++) {
 			Patch& p = m_Patches[z * pwidth + x];
 			p.UpdateHeightMap();
-			p.m_VarianceDirty = 1;
-
-			updateCount++;
 		}
 	}
+
+	//LOG("ROAM dbg: UnsyncedHeightMapUpdate, fram=%i", globalRendering->drawFrame);
 }
