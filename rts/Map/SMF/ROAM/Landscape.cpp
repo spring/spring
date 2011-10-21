@@ -34,15 +34,11 @@ TriTreeNode Landscape::m_TriPool[POOL_SIZE];
 // ---------------------------------------------------------------------
 // Ctor
 //
-Landscape::Landscape()
+Landscape::Landscape(CSMFGroundDrawer* _drawer, const float* hMap, int bx, int by)
 	: CEventClient("[Landscape]", 271989, false)
 {
 	eventHandler.AddClient(this);
-}
 
-
-void Landscape::Init(CSMFGroundDrawer* _drawer, const float* hMap, int bx, int by)
-{
 	drawer = _drawer;
 
 	// Store the Height Field array

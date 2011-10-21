@@ -13,6 +13,7 @@
 CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	: smfReadMap(rm)
 	, smfGroundDrawer(gd)
+	, landscape(smfGroundDrawer, readmap->GetCornerHeightMapSynced(), gs->mapx, gs->mapy) //FIXME use GetCornerHeightMapUnsynced()
 	, visibilitygrid(NULL)
 {
 	//viewRadius = configHandler->GetInt("GroundDetail");
@@ -21,7 +22,6 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	numBigTexX = smfReadMap->numBigTexX;
 	numBigTexY = smfReadMap->numBigTexY;
 
-	landscape.Init(smfGroundDrawer, readmap->GetCornerHeightMapSynced(), gs->mapx, gs->mapy); //FIXME use GetCornerHeightMapUnsynced()
 	visibilitygrid = new bool[smfReadMap->numBigTexX * smfReadMap->numBigTexY];
 	
 	for (int i = 0; i < (numBigTexX * numBigTexY); i++){
