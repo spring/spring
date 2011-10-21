@@ -112,8 +112,9 @@ void Patch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY,
 	const int size  = std::max(sizeX, sizeY);
 
 	if (node < (1 << VARIANCE_DEPTH)) {
-		// make max tesslation viewRadius dependent
-		const float maxVariance = smfGroundDrawer->viewRadius * 0.5f;
+		// make max tessellation viewRadius dependent
+		// w/o this huge cliffs cause huge variances and so will always tessellate fully independent of camdist (-> huge/distfromcam ~= huge)
+		const float maxVariance = smfGroundDrawer->viewRadius * 0.35f;
 		const float myVariance = std::min(m_CurrentVariance[node], maxVariance);
 
 		TriVariance = (myVariance * PATCH_SIZE * size) / distfromcam; // Take both distance and variance and patch size into consideration
