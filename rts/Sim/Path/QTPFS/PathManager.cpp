@@ -18,8 +18,10 @@
 
 
 
-static unsigned int GetNumThreads() {
-	unsigned int numThreads = std::max(0, configHandler->GetInt("HardwareThreadCount"));
+QTPFS::NodeLayer* QTPFS::PathManager::serializingNodeLayer = NULL;
+
+static size_t GetNumThreads() {
+	size_t numThreads = std::max(0, configHandler->GetInt("HardwareThreadCount"));
 
 	if (numThreads == 0) {
 		// auto-detect
@@ -50,39 +52,57 @@ QTPFS::PathManager::PathManager() {
 	const std::string& cacheDirName = GetCacheDirName(gameSetup->mapName, gameSetup->modName);
 	const bool haveCacheDir = FileSystem::DirExists(cacheDirName);
 
-	static const SRectangle r = SRectangle(0, 0,  gs->mapx, gs->mapy);
+	static const SRectangle mapRect = SRectangle(0, 0,  gs->mapx, gs->mapy);
 
 	{
 		streflop_init<streflop::Simple>();
 
-		// never use more threads than the number of layers
-		const unsigned int maxThreads = omp_get_max_threads();
-		const unsigned int minThreads = std::min(size_t(GetNumThreads()), nodeLayers.size());
-
-		omp_set_num_threads(std::min(maxThreads, minThreads));
-
-		char loadMsg[512] = {0};
+		char loadMsg[512] = {'\0'};
 		const char* fmtString = "[%s] using %u threads for %u node-layers";
 
-		sprintf(loadMsg, fmtString, __FUNCTION__, omp_get_num_threads(), nodeLayers.size());
-		loadscreen->SetLoadMessage(loadMsg);
+		#ifdef OPENMP
+			// never use more threads than the number of layers
+			// FIXME: this needs project-global linking changes
+			//
+			// const unsigned int maxThreads = omp_get_max_threads();
+			// const unsigned int minThreads = std::min(size_t(GetNumThreads()), nodeLayers.size());
+			//
+			// omp_set_num_threads(std::min(maxThreads, minThreads));
 
-		#pragma omp parallel for private(loadMsg)
-		for (unsigned int i = 0; i < nodeLayers.size(); i++) {
-			sprintf(loadMsg, "  initializing node-layer %u (thread %u)", i, omp_get_thread_num());
+			sprintf(loadMsg, fmtString, __FUNCTION__, omp_get_num_threads(), nodeLayers.size());
 			loadscreen->SetLoadMessage(loadMsg);
 
-			nodeTrees[i] = new QTPFS::QTNode(0,  r.x1, r.z1,  r.x2, r.z2);
-			nodeLayers[i].Init();
-			nodeLayers[i].RegisterNode(nodeTrees[i]);
+			#pragma omp parallel for private(loadMsg)
+			for (unsigned int i = 0; i < nodeLayers.size(); i++) {
+				sprintf(loadMsg, "  initializing node-layer %u (thread %u)", i, omp_get_thread_num());
+				loadscreen->SetLoadMessage(loadMsg);
 
-			// construct each tree from scratch IFF no cache-dir exists
-			// (if it does, we only need to initialize speed{Mods, Bins})
-			UpdateNodeLayer(i, r, !haveCacheDir);
+				nodeTrees[i] = new QTPFS::QTNode(0,  mapRect.x1, mapRect.z1,  mapRect.x2, mapRect.z2);
+				nodeLayers[i].Init();
+				nodeLayers[i].RegisterNode(nodeTrees[i]);
 
-			sprintf(loadMsg, "  initialized node-layer %u (node-ratio %f)", i, nodeLayers[i].GetNodeRatio());
+				// construct each tree from scratch IFF no cache-dir exists
+				// (if it does, we only need to initialize speed{Mods, Bins})
+				UpdateNodeLayer(i, mapRect, !haveCacheDir);
+
+				sprintf(loadMsg, "  initialized node-layer %u (node-ratio %f)", i, nodeLayers[i].GetNodeRatio());
+				loadscreen->SetLoadMessage(loadMsg);
+			}
+
+		#else
+
+			sprintf(loadMsg, fmtString, __FUNCTION__, GetNumThreads(), nodeLayers.size());
 			loadscreen->SetLoadMessage(loadMsg);
-		}
+
+			std::vector<boost::thread*> threads(std::min(GetNumThreads(), nodeLayers.size()), NULL);
+
+			for (unsigned int i = 0; i < threads.size(); i++) {
+				threads[i] = new boost::thread(boost::bind(&PathManager::InitNodeLayers, this, i, threads.size(), mapRect, haveCacheDir));
+			}
+			for (unsigned int i = 0; i < threads.size(); i++) {
+				threads[i]->join(); delete threads[i];
+			}
+		#endif
 
 		streflop_init<streflop::Simple>();
 	}
@@ -105,18 +125,7 @@ QTPFS::PathManager::~PathManager() {
 
 
 
-#if 0
-void QTPFS::PathManager::InitThreads(bool haveCacheDir) {
-	std::vector<boost::thread*> threads(std::min(GetNumThreads(), nodeLayers.size()), NULL);
-
-	for (unsigned int i = 0; i < threads.size(); i++) {
-		threads[i] = new boost::thread(boost::bind(&PathManager::InitNodeLayers, this, i, threads.size(), haveCacheDir));
-	}
-	for (unsigned int i = 0; i < threads.size(); i++) {
-		threads[i]->join(); delete threads[i];
-	}
-}
-void QTPFS::PathManager::InitNodeLayers(unsigned int threadNum, unsigned int numThreads, bool haveCacheDir) {
+void QTPFS::PathManager::InitNodeLayers(unsigned int threadNum, unsigned int numThreads, const SRectangle& mapRect, bool haveCacheDir) {
 	static const unsigned int layersPerThread = (nodeLayers.size() / numThreads);
 	static const unsigned int numExcessLayers = (threadNum == (numThreads - 1))?
 		(nodeLayers.size() % numThreads): 0;
@@ -124,15 +133,22 @@ void QTPFS::PathManager::InitNodeLayers(unsigned int threadNum, unsigned int num
 	const unsigned int minLayer = threadNum * layersPerThread;
 	const unsigned int maxLayer = minLayer + layersPerThread + numExcessLayers;
 
+	char loadMsg[512] = {'\0'};
+
 	for (unsigned int i = minLayer; i < maxLayer; i++) {
-		nodeTrees[i] = new QTPF::QTNode(0,  r.x1, r.z1,  r.x2, r.z2);
+		sprintf(loadMsg, "  initializing node-layer %u (thread %u)", i, threadNum);
+		loadscreen->SetLoadMessage(loadMsg);
+
+		nodeTrees[i] = new QTPFS::QTNode(0,  mapRect.x1, mapRect.z1,  mapRect.x2, mapRect.z2);
 		nodeLayers[i].Init();
 		nodeLayers[i].RegisterNode(nodeTrees[i]);
 
-		UpdateNodeLayer(i, r, !haveCacheDir);
+		UpdateNodeLayer(i, mapRect, !haveCacheDir);
+
+		sprintf(loadMsg, "  initialized node-layer %u (node-ratio %f)", i, nodeLayers[i].GetNodeRatio());
+		loadscreen->SetLoadMessage(loadMsg);
 	}
 }
-#endif
 
 
 
@@ -145,7 +161,7 @@ std::string QTPFS::PathManager::GetCacheDirName(const std::string& mapArchiveNam
 		IntToString(mapCheckSum, "%08x") + "-" +
 		IntToString(modCheckSum, "%08x") + "/";
 
-	char loadMsg[512] = {0};
+	char loadMsg[512] = {'\0'};
 	const char* fmtString = "[%s] using cache-dir %s (map-checksum %u, mod-checksum %u)";
 
 	sprintf(loadMsg, fmtString, __FUNCTION__, dir.c_str(), mapCheckSum, modCheckSum);
@@ -162,7 +178,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 		assert(FileSystem::DirExists(cacheFileDir));
 	}
 
-	char loadMsg[512] = {0};
+	char loadMsg[512] = {'\0'};
 	const char* fmtString = "[%s] serializing node-tree %u";
 
 	// NOTE: also compress the tree cache-files?
