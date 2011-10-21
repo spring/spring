@@ -40,9 +40,8 @@ public:
 	void UnsyncedHeightMapUpdate(const SRectangle& rect);
 
 public:
-	Landscape();
+	Landscape(CSMFGroundDrawer* drawer, const float* hMap, int bx, int by);
 
-	void Init(CSMFGroundDrawer* drawer, const float* hMap, int bx, int by);
 	void Reset();
 	void Tessellate(const float3& campos, int viewradius);
 	int Render(bool changed, bool shadows, bool waterdrawn);
@@ -59,10 +58,10 @@ protected:
 
 	CSMFGroundDrawer* drawer;
 
+	int h, w;
+
 public:
 	std::vector<Patch> m_Patches; //[NUM_PATCHES_PER_SIDE][NUM_PATCHES_PER_SIDE];  //< Array of patches
-
-	int h, w;
 	int updateCount;
 };
 
