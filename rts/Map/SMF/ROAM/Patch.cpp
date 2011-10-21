@@ -42,7 +42,7 @@ void Patch::Split(TriTreeNode *tri)
 		Split(tri->BaseNeighbor);
 
 	// Create children and link into mesh
-	tri->LeftChild = Landscape::AllocateTri();
+	tri->LeftChild  = Landscape::AllocateTri();
 	tri->RightChild = Landscape::AllocateTri();
 
 	// If creation failed, just exit.
@@ -104,7 +104,7 @@ void Patch::Split(TriTreeNode *tri)
 void Patch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY,
 		int rightX, int rightY, int apexX, int apexY, int node)
 {
-	float TriVariance=0;
+	float TriVariance = 0.0f;
 	const int centerX = (leftX + rightX) >> 1; // Compute X coordinate of center of Hypotenuse
 	const int centerY = (leftY + rightY) >> 1; // Compute Y coord...
 	const int sizeX = std::max(leftX - rightX, rightX - leftX);
@@ -129,8 +129,8 @@ void Patch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY,
 			RecursTessellate(tri->RightChild, rightX, rightY, apexX, apexY,
 					centerX, centerY, 1 + (node << 1));
 		}
-	}else{
-		//bool stoptess=true; //this is just for them debuggings
+	} else {
+		//stop tess
 	}
 }
 
@@ -142,7 +142,7 @@ void Patch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY,
 void Patch::RecursRender(TriTreeNode* tri, int leftX, int leftY, int rightX,
 		int rightY, int apexX, int apexY, bool dir, int maxdepth, bool waterdrawn)
 {
-	int m_depth=maxdepth+1;
+	int m_depth = maxdepth + 1;
 	
 	if ( tri->LeftChild == NULL || maxdepth>12 ) { // All non-leaf nodes have both children, so just check for one
 		indices.push_back(apexX  + apexY  * (PATCH_SIZE + 1));
@@ -173,13 +173,13 @@ float Patch::RecursComputeVariance(int leftX, int leftY,
 
 	int centerX = (leftX + rightX) >> 1; // Compute X coordinate of center of Hypotenuse
 	int centerY = (leftY + rightY) >> 1; // Compute Y coord...
-	float myVariance;
 
 	// Get the height value at the middle of the Hypotenuse
 	float centerZ = m_HeightMap[(centerY * (mapx+1)) + centerX];
+
 	// Variance of this triangle is the actual height at it's hypotenuse midpoint minus the interpolated height.
 	// Use values passed on the stack instead of re-accessing the Height Field.
-	myVariance = abs(centerZ - ((leftZ + rightZ) / 2));
+	float myVariance = abs(centerZ - ((leftZ + rightZ) / 2));
 	
 	if (leftZ*rightZ<0 || leftZ*centerZ<0 || rightZ*centerZ<0)
 		myVariance = std::max(myVariance*2,20.0f); //shore lines get more variance for higher accuracy
