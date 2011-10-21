@@ -44,10 +44,10 @@ public:
 	void DrawMesh(bool haveShadows, bool inShadowPass, bool drawWaterReflection, bool drawUnitReflection);
 	
 	bool useROAM;
-	bool * visibilitygrid;
+	bool* visibilitygrid;
 	int shc;
 	int dc;
-	unsigned char * charheight;
+	unsigned char* charheight;
 
 	Landscape landscape;
 	
