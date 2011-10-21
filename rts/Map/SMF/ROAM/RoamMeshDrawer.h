@@ -69,9 +69,8 @@ private:
 	float3 lastCamPos;
 	int lastViewRadius;
 
-	int numBigTexX;
-	int numBigTexY;
-	int h, w;
+	int numPatchesX;
+	int numPatchesY;
 
 	std::vector<Patch> m_Patches; //[NUM_PATCHES_PER_SIDE][NUM_PATCHES_PER_SIDE];  //< Array of patches
 	bool* visibilitygrid;
