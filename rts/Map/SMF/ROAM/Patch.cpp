@@ -355,10 +355,13 @@ void Patch::UpdateVisibility()
 void Patch::Tessellate(const float3& campos, int viewradius)
 {
 	const float myx = (m_WorldX + PATCH_SIZE / 2) * SQUARE_SIZE;
+	const float myy = (maxh + minh) * 0.5f;
 	const float myz = (m_WorldY + PATCH_SIZE / 2) * SQUARE_SIZE;
-
-	distfromcam  = math::fabs(campos.x - myx) + campos.y + math::fabs(campos.z - myz);
+	const float3 myPos(myx,myy,myz);
+	
+	distfromcam  = (myPos - campos).Length();
 	distfromcam *= 200.0f / viewradius;
+	distfromcam  = std::max(1.f, distfromcam);
 
 	// Split each of the base triangles
 	m_CurrentVariance = m_VarianceLeft;
