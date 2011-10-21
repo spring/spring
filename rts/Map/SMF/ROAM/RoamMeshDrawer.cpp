@@ -49,41 +49,40 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	//viewRadius = configHandler->GetInt("GroundDetail");
 	//viewRadius += (viewRadius & 1); // we need a multiple of 2
 
-	numBigTexX = smfReadMap->numBigTexX;
-	numBigTexY = smfReadMap->numBigTexY;
-	h = gs->mapy;
-	w = gs->mapx;
+	numPatchesX = gs->mapx / PATCH_SIZE;
+	numPatchesY = gs->mapy / PATCH_SIZE;
+	//assert((numPatchesX == smfReadMap->numBigTexX) && (numPatchesY == smfReadMap->numBigTexY));
 
-	//m_Patches.reserve((w / PATCH_SIZE) * (h / PATCH_SIZE));
-	m_Patches.resize((w / PATCH_SIZE) * (h / PATCH_SIZE));
+	//m_Patches.reserve(numPatchesX * numPatchesY);
+	m_Patches.resize(numPatchesX * numPatchesY);
 
 	const float* hmap = rm->GetCornerHeightMapSynced(); //FIXME use GetCornerHeightMapUnsynced()
 
 	// Initialize all terrain patches
-	for (int Y = 0; Y < h / PATCH_SIZE; Y++) {
-		for (int X = 0; X < w / PATCH_SIZE; X++) {
+	for (int Y = 0; Y < numPatchesY; Y++) {
+		for (int X = 0; X < numPatchesX; X++) {
 			/*Patch* patch = new Patch(
 				smfGroundDrawer,
 				X * PATCH_SIZE,
 				Y * PATCH_SIZE,
 				hMap,
-				w);
+				gs->mapx);
 			patch->ComputeVariance();
 			m_Patches.push_back(patch);*/
 
-			Patch& patch = m_Patches[Y * (w / PATCH_SIZE) + X];
+			Patch& patch = m_Patches[Y * numPatchesX + X];
 			patch.Init(
 					smfGroundDrawer,
 					X * PATCH_SIZE,
 					Y * PATCH_SIZE,
 					hmap,
-					w);
+					gs->mapx);
 			patch.ComputeVariance();
 		}
 	}
 
-	visibilitygrid = new bool[smfReadMap->numBigTexX * smfReadMap->numBigTexY];
-	for (int i = 0; i < (numBigTexX * numBigTexY); i++){
+	visibilitygrid = new bool[numPatchesX * numPatchesY];
+	for (int i = 0; i < (numPatchesX * numPatchesY); i++){
 		visibilitygrid[i] = false;
 	}
 }
@@ -103,7 +102,7 @@ void CRoamMeshDrawer::Update()
 	bool retessellate = false;
 
 	{ SCOPED_TIMER("ROAM::Visibility");
-		for (int i = 0; i < (numBigTexX * numBigTexY); i++) {
+		for (int i = 0; i < (numPatchesX * numPatchesY); i++) {
 			Patch& p = m_Patches[i];
 			p.UpdateVisibility();
 			if (p.IsVisible()) {
@@ -225,9 +224,9 @@ void CRoamMeshDrawer::Reset()
 	SetNextTriNode(0);
 
 	// Go through the patches performing resets, compute variances, and linking.
-	for (int Y = 0; Y < h / PATCH_SIZE; Y++)
-		for (int X = 0; X < w / PATCH_SIZE; X++) {
-			Patch& patch = m_Patches[Y * (w / PATCH_SIZE) + X];
+	for (int Y = 0; Y < numPatchesY; Y++)
+		for (int X = 0; X < numPatchesX; X++) {
+			Patch& patch = m_Patches[Y * numPatchesX + X];
 
 			// Reset the patch
 			patch.Reset();
@@ -235,26 +234,22 @@ void CRoamMeshDrawer::Reset()
 
 			// Link all the patches together.
 			if (X > 0)
-				patch.GetBaseLeft()->LeftNeighbor = m_Patches[Y * (w
-						/ PATCH_SIZE) + X - 1].GetBaseRight();
+				patch.GetBaseLeft()->LeftNeighbor = m_Patches[Y * numPatchesX + X - 1].GetBaseRight();
 			else
 				patch.GetBaseLeft()->LeftNeighbor = NULL; // Link to bordering Landscape here..
 
-			if (X < ((w / PATCH_SIZE) - 1))
-				patch.GetBaseRight()->LeftNeighbor = m_Patches[Y * (w
-						/ PATCH_SIZE) + X + 1].GetBaseLeft();
+			if (X < (numPatchesX - 1))
+				patch.GetBaseRight()->LeftNeighbor = m_Patches[Y * numPatchesX + X + 1].GetBaseLeft();
 			else
 				patch.GetBaseRight()->LeftNeighbor = NULL; // Link to bordering Landscape here..
 
 			if (Y > 0)
-				patch.GetBaseLeft()->RightNeighbor = m_Patches[(Y - 1)
-						* (w / PATCH_SIZE) + X].GetBaseRight();
+				patch.GetBaseLeft()->RightNeighbor = m_Patches[(Y - 1) * numPatchesX + X].GetBaseRight();
 			else
 				patch.GetBaseLeft()->RightNeighbor = NULL; // Link to bordering Landscape here..
 
-			if (Y < ((h / PATCH_SIZE) - 1))
-				patch.GetBaseRight()->RightNeighbor = m_Patches[(Y + 1)
-						* (w / PATCH_SIZE) + X].GetBaseLeft();
+			if (Y < ((numPatchesY) - 1))
+				patch.GetBaseRight()->RightNeighbor = m_Patches[(Y + 1) * numPatchesX + X].GetBaseLeft();
 			else
 				patch.GetBaseRight()->RightNeighbor = NULL; // Link to bordering Landscape here..
 		}
@@ -284,11 +279,9 @@ void CRoamMeshDrawer::UnsyncedHeightMapUpdate(const SRectangle& rect)
 	const int zstart = std::floor(rect.z1 / PATCH_SIZE);
 	const int zend   = std::ceil( rect.z2 / PATCH_SIZE);
 
-	const int pwidth = (gs->mapx / PATCH_SIZE);
-
 	for (int z = zstart; z <= zend; z++) {
 		for (int x = xstart; x <= xend; x++) {
-			Patch& p = m_Patches[z * pwidth + x];
+			Patch& p = m_Patches[z * numPatchesX + x];
 			p.UpdateHeightMap();
 		}
 	}
