@@ -11,17 +11,11 @@
 
 class CSMFGroundDrawer;
 
-// ---------------------------------------------------------------------
-// Various Pre-Defined map sizes & their #define counterparts:
-
-
-
 // How many TriTreeNodes should be allocated?
 #define POOL_SIZE (500000)
 
 // How many heightmap pixels a patch consists of
 #define PATCH_SIZE 128
-
 
 //
 // Landscape Class
@@ -44,7 +38,7 @@ public:
 
 	void Reset();
 	void Tessellate(const float3& campos, int viewradius);
-	int Render(bool changed, bool shadows, bool waterdrawn);
+	int Render(bool shadows);
 
 	static TriTreeNode* AllocateTri();
 
@@ -62,7 +56,6 @@ protected:
 
 public:
 	std::vector<Patch> m_Patches; //[NUM_PATCHES_PER_SIDE][NUM_PATCHES_PER_SIDE];  //< Array of patches
-	int updateCount;
 };
 
 #endif
