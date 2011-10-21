@@ -34,7 +34,7 @@ RenderMode Patch::renderMode = VBO;
 void Patch::Split(TriTreeNode *tri)
 {
 	// We are already split, no need to do it again.
-	if (tri->LeftChild)
+	if (!tri->IsLeaf())
 		return;
 
 	// If this triangle is not in a proper diamond, force split our base neighbor
@@ -46,7 +46,7 @@ void Patch::Split(TriTreeNode *tri)
 	tri->RightChild = Landscape::AllocateTri();
 
 	// If creation failed, just exit.
-	if (!tri->LeftChild)
+	if (!tri->RightChild)
 		return;
 
 	// Fill in the information we can get from the parent (neighbor pointers)
@@ -82,7 +82,7 @@ void Patch::Split(TriTreeNode *tri)
 
 	// Link our Base Neighbor to the new children
 	if (tri->BaseNeighbor != NULL) {
-		if (tri->BaseNeighbor->LeftChild) {
+		if (!tri->BaseNeighbor->IsLeaf()) {
 			tri->BaseNeighbor->LeftChild->RightNeighbor = tri->RightChild;
 			tri->BaseNeighbor->RightChild->LeftNeighbor = tri->LeftChild;
 			tri->LeftChild->RightNeighbor = tri->BaseNeighbor->RightChild;
@@ -148,7 +148,7 @@ void Patch::RecursRender(TriTreeNode* tri, int leftX, int leftY, int rightX,
 {
 	int m_depth = maxdepth + 1;
 	
-	if ( tri->LeftChild == NULL || maxdepth>12 ) { // All non-leaf nodes have both children, so just check for one
+	if ( tri->IsLeaf() || maxdepth>12 ) {
 		indices.push_back(apexX  + apexY  * (PATCH_SIZE + 1));
 		indices.push_back(leftX  + leftY  * (PATCH_SIZE + 1));
 		indices.push_back(rightX + rightY * (PATCH_SIZE + 1));
