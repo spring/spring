@@ -96,8 +96,8 @@ IPath::SearchResult CPathFinder::GetPath(
 
 	start = startPos;
 
-	startxSqr = start.x / SQUARE_SIZE; startxSqr;
-	startzSqr = start.z / SQUARE_SIZE; startzSqr;
+	startxSqr = start.x / SQUARE_SIZE;
+	startzSqr = start.z / SQUARE_SIZE;
 
 	// Clamp the start position
 	if (startxSqr >= gs->mapx) startxSqr = gs->mapxm1;
