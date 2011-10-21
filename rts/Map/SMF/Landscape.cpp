@@ -11,13 +11,15 @@
 // Much help and hints provided by Seumas McNally, LDA.
 
 
-
-#include "Rendering/GL/VertexArray.h"
-#include "Map/SMF/SMFGroundDrawer.h"
 #include "Landscape.h"
 #include "Game/Camera.h"
 #include "Map/MapDamage.h"
+#include "Map/SMF/SMFGroundDrawer.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "System/LogOutput.h"
+
+
 // -------------------------------------------------------------------------------------------------
 //	LANDSCAPE CLASS
 // -------------------------------------------------------------------------------------------------
@@ -29,11 +31,56 @@ int Landscape::m_NextTriNode;
 TriTreeNode Landscape::m_TriPool[POOL_SIZE];
 
 // ---------------------------------------------------------------------
+// Ctor
+//
+void Landscape::Init(CSMFGroundDrawer* _drawer, const float* hMap, int bx, int by)
+{
+	drawer = _drawer;
+	heightData = hMap;
+
+	// Store the Height Field array
+	m_HeightMap = hMap;
+	h = by;
+	w = bx;
+	updateCount = 0;
+
+	m_Patches.resize((bx / PATCH_SIZE) * (by / PATCH_SIZE));
+	minhpatch.resize((bx / PATCH_SIZE) * (by / PATCH_SIZE), -10000.0f);
+	maxhpatch.resize((bx / PATCH_SIZE) * (by / PATCH_SIZE), 10000.0f);
+
+	// Initialize all terrain patches
+	for (int Y = 0; Y < by / PATCH_SIZE; Y++) {
+		for (int X = 0; X < bx / PATCH_SIZE; X++) {
+			Patch* patch = &(m_Patches[Y * (bx / PATCH_SIZE) + X]);
+			for (int i = 0; i < PATCH_SIZE; i++) {
+				for (int j = 0; j < PATCH_SIZE; j++) {
+					maxhpatch[Y * bx / PATCH_SIZE + X]
+							= MAX(maxhpatch[Y*bx/PATCH_SIZE+X], heightData[X*PATCH_SIZE+i+(Y*PATCH_SIZE+j)*(bx+1)]);
+					minhpatch[Y * bx / PATCH_SIZE + X]
+							= MIN(minhpatch[Y*bx/PATCH_SIZE+X], heightData[X*PATCH_SIZE+i+(Y*PATCH_SIZE+j)*(bx+1)]);
+				}
+			}
+			patch->heightData=heightData;
+			patch->Init(
+					drawer,
+					X * PATCH_SIZE,
+					Y * PATCH_SIZE,
+					hMap,
+					bx,
+					maxhpatch[Y * bx / PATCH_SIZE + X],
+					minhpatch[Y * bx / PATCH_SIZE + X]);
+			patch->ComputeVariance();
+		}
+	}
+}
+
+
+// ---------------------------------------------------------------------
 // Allocate a TriTreeNode from the pool.
 //
-TriTreeNode *Landscape::AllocateTri()
+TriTreeNode* Landscape::AllocateTri()
 {
-	TriTreeNode *pTri=NULL;
+	TriTreeNode* pTri=NULL;
 
 	// IF we've run out of TriTreeNodes, just return NULL (this is handled gracefully)
 	if (m_NextTriNode >= POOL_SIZE)
@@ -44,71 +91,23 @@ TriTreeNode *Landscape::AllocateTri()
 	return pTri;
 }
 
-// ---------------------------------------------------------------------
-// Initialize all patches
-//
-void Landscape::Init(const float *hMap, int bx, int by)//513 513
-{
-	Patch *patch;
-	int X, Y;
-	heightData = hMap;
-
-	// Store the Height Field array
-	m_HeightMap = hMap;
-	h = by;
-	w = bx;
-	m_Patches = new Patch[(bx / PATCH_SIZE) * (by / PATCH_SIZE)];
-	minhpatch = new float[(bx / PATCH_SIZE) * (by / PATCH_SIZE)];
-	maxhpatch = new float[(bx / PATCH_SIZE) * (by / PATCH_SIZE)];
-
-	for (int i = 0; i < (bx / PATCH_SIZE) * (by / PATCH_SIZE); i++) {
-		maxhpatch[i] = -10000.0f;
-		minhpatch[i] = 10000.0f;
-	}
-	updateCount=0;
-	// Initialize all terrain patches
-	for (Y = 0; Y < by / PATCH_SIZE; Y++)
-		for (X = 0; X < bx / PATCH_SIZE; X++) {
-			patch = &(m_Patches[Y * (bx / PATCH_SIZE) + X]);
-			for (int i = 0; i < PATCH_SIZE; i++) {
-				for (int j = 0; j < PATCH_SIZE; j++) {
-					maxhpatch[Y * bx / PATCH_SIZE + X]
-							=MAX(maxhpatch[Y*bx/PATCH_SIZE+X], heightData[X*PATCH_SIZE+i+(Y*PATCH_SIZE+j)*(bx+1)]);
-					minhpatch[Y * bx / PATCH_SIZE + X]
-							=MIN(minhpatch[Y*bx/PATCH_SIZE+X], heightData[X*PATCH_SIZE+i+(Y*PATCH_SIZE+j)*(bx+1)]);
-				}
-			}
-			patch->heightData=heightData;
-			patch->Init(
-					X * PATCH_SIZE,
-					Y * PATCH_SIZE,
-					hMap,
-					bx,
-					maxhpatch[Y * bx / PATCH_SIZE + X],
-					minhpatch[Y * bx / PATCH_SIZE + X]);
-			patch->ComputeVariance();
-		}
-}
 
 // ---------------------------------------------------------------------
 // Reset all patches, recompute variance if needed
 //
 void Landscape::Reset()
 {
-	int X, Y;
-	Patch *patch;
-
 	// Set the next free triangle pointer back to the beginning
 	SetNextTriNode(0);
 
 	// Go through the patches performing resets, compute variances, and linking.
-	for (Y = 0; Y < h / PATCH_SIZE; Y++)
-		for (X = 0; X < w / PATCH_SIZE; X++) {
-			patch = &(m_Patches[Y * (w / PATCH_SIZE) + X]);
+	for (int Y = 0; Y < h / PATCH_SIZE; Y++)
+		for (int X = 0; X < w / PATCH_SIZE; X++) {
+			Patch* patch = &(m_Patches[Y * (w / PATCH_SIZE) + X]);
 
 			// Reset the patch
 			patch->Reset();
-			patch->SetVisibility();
+			patch->UpdateVisibility();
 
 			// Check to see if this patch has been deformed since last frame.
 			// If so, recompute the varience tree for it.
@@ -150,53 +149,49 @@ void Landscape::Reset()
 // ---------------------------------------------------------------------
 // Create an approximate mesh of the landscape.
 //
-void Landscape::Tessellate(float cx, float cy, float cz, int viewradius)
+void Landscape::Tessellate(const float3& campos, int viewradius)
 {
 	// Perform Tessellation
-	Patch *patch = &(m_Patches[0]);
-
-	for (int nCount = 0; nCount < (w / PATCH_SIZE) * (h / PATCH_SIZE); nCount++, patch++) {
-		if (patch->isVisibile())
-			patch->Tessellate(cx, cy, cz, viewradius);
+	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); it++) {
+		if (it->isVisibile())
+			it->Tessellate(campos, viewradius);
 	}
-	updateCount=0;
+	updateCount = 0;
 }
 
 // ---------------------------------------------------------------------
 // Render each patch of the landscape & adjust the frame variance.
 //
-int Landscape::Render(CSMFGroundDrawer* parent, bool camMoved, bool inShadowPass, bool waterdrawn)
+int Landscape::Render(bool camMoved, bool inShadowPass, bool waterdrawn)
 {
-	int nCount;
-	Patch *patch = &(m_Patches[0]);
-	int tricount=0;
-	bool dirty=false;
-	for (nCount = 0; nCount < (w / PATCH_SIZE) * (h / PATCH_SIZE); nCount++, patch++) {
-		if (patch->isDirty()==1) {
-			dirty=true;
-			patch->ComputeVariance();
-		}
+	bool dirty = false;
 
+	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); it++) {
+		if (it->isDirty() == 1) {
+			dirty = true;
+			it->ComputeVariance();
+		}
 	}
-	if (dirty){
+
+	if (dirty) {
 		Reset();
-		Tessellate(0,0,0,200);
+		Tessellate(ZeroVector, 200);
 	}
-	patch = &(m_Patches[0]);
-	for (nCount = 0; nCount < (w / PATCH_SIZE) * (h / PATCH_SIZE); nCount++, patch++) {
 
-		if (patch->isVisibile()) {
+	int tricount = 0;
+	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); it++) {
+		if (it->isVisibile()) {
 			if (camMoved)
-				tricount+=patch->Render(parent, nCount, waterdrawn);
-			tricount+=patch->lend/9;
-	
-			if (!inShadowPass) {
-				parent->SetupBigSquare(nCount % (w / PATCH_SIZE), nCount / (w / PATCH_SIZE));
-			}
-			patch->DrawTriArray(parent);
-		}
+				it->Render(waterdrawn);
 
+			if (!inShadowPass)
+				it->SetSquareTexture();
+
+			tricount += it->GetTriCount();
+			it->DrawTriArray();
+		}
 	}
+
 	//if (GetNextTriNode() != gDesiredTris)
 	//	gFrameVariance += ((float) GetNextTriNode() - (float) gDesiredTris)
 	//			/ (float) gDesiredTris;
@@ -207,17 +202,19 @@ int Landscape::Render(CSMFGroundDrawer* parent, bool camMoved, bool inShadowPass
 
 void Landscape::Explosion(float x, float y, float z, float radius)
 {
-	int nCount;
-	Patch *patch = &(m_Patches[0]);
-	updateCount=0;
-	for (nCount = 0; nCount < (w / PATCH_SIZE) * (h / PATCH_SIZE); nCount++, patch++) {
-		if  (patch->m_WorldX*8				< x + radius && 
-			(patch->m_WorldX+PATCH_SIZE)*8	> x - radius &&
-			 patch->m_WorldY*8				< z + radius && 
-			 (patch->m_WorldY+PATCH_SIZE)*8	> z - radius){
-			patch->m_VarianceDirty=1;
+	//FIXME use syncedheightmapupdate!
+	updateCount = 0;
+
+	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); it++) {
+		if (
+			it->m_WorldX * SQUARE_SIZE                  < x + radius &&
+			(it->m_WorldX + PATCH_SIZE) * SQUARE_SIZE   > x - radius &&
+			it->m_WorldY * SQUARE_SIZE                  < z + radius &&
+			(it->m_WorldY + PATCH_SIZE) * SQUARE_SIZE   > z - radius
+		) {
+			it->m_VarianceDirty = 1;
 			updateCount++;
-		} 
+		}
 	}
 	//LogObject() << "Explosion: updating " << updateCount <<" patches";
 	
