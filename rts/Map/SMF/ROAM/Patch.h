@@ -37,8 +37,14 @@ struct TriTreeNode
 		, RightNeighbor(NULL)
 	{}
 
+	bool IsLeaf() const {
+		// All non-leaf nodes have both children, so just check for one
+		return (LeftChild == NULL);
+	}
+
 	TriTreeNode* LeftChild;
 	TriTreeNode* RightChild;
+
 	TriTreeNode* BaseNeighbor;
 	TriTreeNode* LeftNeighbor;
 	TriTreeNode* RightNeighbor;
