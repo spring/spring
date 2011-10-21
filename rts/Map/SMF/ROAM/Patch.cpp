@@ -114,9 +114,9 @@ void Patch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY,
 	if (node < (1 << VARIANCE_DEPTH)) {
 		// make max tesslation viewRadius dependent
 		const float maxVariance = smfGroundDrawer->viewRadius * 0.5f;
-		float myVariance = std::min(m_CurrentVariance[node], maxVariance);
+		const float myVariance = std::min(m_CurrentVariance[node], maxVariance);
 
-		TriVariance = (myVariance * PATCH_SIZE) / (distfromcam * size); // Take both distance and variance and patch size into consideration
+		TriVariance = (myVariance * PATCH_SIZE * size) / distfromcam; // Take both distance and variance and patch size into consideration
 	}
 
 	if ((node >= (1 << VARIANCE_DEPTH)) ||  // IF we do not have variance info for this node, then we must have gotten here by splitting, so continue down to the lowest level.
