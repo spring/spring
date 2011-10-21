@@ -14,16 +14,15 @@ struct DefaultPathDrawer: public IPathDrawer {
 public:
 	DefaultPathDrawer();
 
-	void Draw() const;
+	void DrawAll() const;
 	void UpdateExtraTexture(int, int, int, int, unsigned char*) const;
 
 private:
-	void Draw(const CPathManager*) const;
+	void Draw() const;
 	void Draw(const CPathFinderDef*) const;
 	void Draw(const CPathFinder*) const;
 	void Draw(const CPathEstimator*) const;
-
-	CPathManager* pm;
 };
 
 #endif
+

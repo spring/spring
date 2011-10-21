@@ -5,12 +5,21 @@
 
 #include "IPathDrawer.h"
 
+namespace QTPFS {
+	class QTNode;
+};
+
 struct QTPFSPathDrawer: public IPathDrawer {
 public:
-	QTPFSPathDrawer() {}
+	QTPFSPathDrawer();
 
-	void Draw() const {}
+	void DrawAll() const;
 	void UpdateExtraTexture(int, int, int, int, unsigned char*) const {}
+
+private:
+	void Draw() const;
+	void DrawNodeTree(const QTPFS::QTNode*) const;
 };
 
 #endif
+
