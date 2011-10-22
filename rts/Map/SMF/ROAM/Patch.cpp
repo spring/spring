@@ -358,7 +358,7 @@ void Patch::UpdateVisibility()
 void Patch::Tessellate(const float3& campos, int viewradius)
 {
 	const float myx = (m_WorldX + PATCH_SIZE / 2) * SQUARE_SIZE;
-	const float myy = (maxh + minh) * 0.5f;
+	const float myy = (readmap->currMaxHeight + readmap->currMinHeight) * 0.5f;
 	const float myz = (m_WorldY + PATCH_SIZE / 2) * SQUARE_SIZE;
 	const float3 myPos(myx,myy,myz);
 	
