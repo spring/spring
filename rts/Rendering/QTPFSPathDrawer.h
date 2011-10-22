@@ -6,6 +6,7 @@
 #include "IPathDrawer.h"
 
 struct MoveData;
+class CMoveMath;
 class CVertexArray;
 
 namespace QTPFS {
@@ -22,7 +23,12 @@ public:
 
 private:
 	void DrawNodeTree(const MoveData* md) const;
-	void DrawNodeTreeRec(const QTPFS::QTNode* nt, CVertexArray* va) const;
+	void DrawNodeTreeRec(
+		const QTPFS::QTNode* nt,
+		const MoveData* md,
+		const CMoveMath* mm,
+		CVertexArray* va
+	) const;
 	void DrawPaths(const MoveData* md) const;
 	void DrawPath(const QTPFS::IPath* path, CVertexArray* va) const;
 };
