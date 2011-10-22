@@ -393,7 +393,7 @@ float3 QTPFS::PathManager::NextWayPoint(
 
 	// find the point furthest along the
 	// path within distance <rad> of <pos>
-	for (unsigned int i = 0; i < (livePath->NumPoints() - 0); i++) {
+	for (unsigned int i = 0; i < (livePath->NumPoints() - 1); i++) {
 		const float3& point = livePath->GetPoint(i);
 
 		if ((curPoint - point).SqLength() < radiusSq) {
