@@ -355,7 +355,7 @@ float3 QTPFS::PathManager::NextWayPoint(
 	unsigned int pathID,
 	float3 curPoint,
 	float radius,
-	int, // numTrials
+	int, // numRetries
 	int, // ownerID
 	bool synced
 ) {
