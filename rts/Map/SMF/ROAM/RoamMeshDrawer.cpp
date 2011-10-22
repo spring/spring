@@ -59,8 +59,8 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	const float* hmap = rm->GetCornerHeightMapSynced(); //FIXME use GetCornerHeightMapUnsynced()
 
 	// Initialize all terrain patches
-	for (int Y = 0; Y < numPatchesY; Y++) {
-		for (int X = 0; X < numPatchesX; X++) {
+	for (int Y = 0; Y < numPatchesY; ++Y) {
+		for (int X = 0; X < numPatchesX; ++X) {
 			/*Patch* patch = new Patch(
 				smfGroundDrawer,
 				X * PATCH_SIZE,
@@ -82,7 +82,7 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	}
 
 	visibilitygrid = new bool[numPatchesX * numPatchesY];
-	for (int i = 0; i < (numPatchesX * numPatchesY); i++){
+	for (int i = 0; i < (numPatchesX * numPatchesY); ++i){
 		visibilitygrid[i] = false;
 	}
 }
@@ -102,7 +102,7 @@ void CRoamMeshDrawer::Update()
 	bool retessellate = false;
 
 	{ SCOPED_TIMER("ROAM::Visibility");
-		for (int i = 0; i < (numPatchesX * numPatchesY); i++) {
+		for (int i = 0; i < (numPatchesX * numPatchesY); ++i) {
 			Patch& p = m_Patches[i];
 			p.UpdateVisibility();
 			if (p.IsVisible() != visibilitygrid[i]) {
@@ -151,7 +151,7 @@ void CRoamMeshDrawer::Update()
 		}
 
 		{ SCOPED_TIMER("ROAM::Render");
-			for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); it++) {
+			for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
 				if (it->IsVisible()) {
 					it->Render();
 				}
@@ -194,11 +194,11 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 	//  It doesn't update the tessellation, neither does it send the indices to the GPU.
 	//  So it patches that weren't updated the last tessellation, just uses the last
 	//  tessellation which may created with a totally different camera.
-	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); it++) {
+	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
 		it->UpdateVisibility();
 	}
 
-	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); it++) {
+	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
 		if (it->IsVisible()) {
 			if (!inShadowPass)
 				it->SetSquareTexture();
@@ -233,8 +233,8 @@ void CRoamMeshDrawer::Reset()
 	SetNextTriNode(0);
 
 	// Go through the patches performing resets, compute variances, and linking.
-	for (int Y = 0; Y < numPatchesY; Y++) {
-		for (int X = 0; X < numPatchesX; X++) {
+	for (int Y = 0; Y < numPatchesY; ++Y) {
+		for (int X = 0; X < numPatchesX; ++X) {
 			Patch& patch = m_Patches[Y * numPatchesX + X];
 
 			// Reset the patch
@@ -263,7 +263,7 @@ void CRoamMeshDrawer::Reset()
 void CRoamMeshDrawer::Tessellate(const float3& campos, int viewradius)
 {
 	// Perform Tessellation
-	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); it++) {
+	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
 		if (it->IsVisible())
 			it->Tessellate(campos, viewradius);
 	}
@@ -281,8 +281,8 @@ void CRoamMeshDrawer::UnsyncedHeightMapUpdate(const SRectangle& rect)
 	const int zstart = std::max(0,           (int)std::floor((rect.z1 - 1.0f) / PATCH_SIZE));
 	const int zend   = std::min(numPatchesY - 1, (int)std::ceil( (rect.z2 + 1.0f) / PATCH_SIZE));
 
-	for (int z = zstart; z <= zend; z++) {
-		for (int x = xstart; x <= xend; x++) {
+	for (int z = zstart; z <= zend; ++z) {
+		for (int x = xstart; x <= xend; ++x) {
 			Patch& p = m_Patches[z * numPatchesX + x];
 			p.UpdateHeightMap(); //FIXME only update changed area?
 		}
