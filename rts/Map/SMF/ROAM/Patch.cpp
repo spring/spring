@@ -31,7 +31,7 @@ RenderMode Patch::renderMode = VBO;
 // Split a single Triangle and link it into the mesh.
 // Will correctly force-split diamonds.
 //
-void Patch::Split(TriTreeNode *tri)
+void Patch::Split(TriTreeNode* tri)
 {
 	// We are already split, no need to do it again.
 	if (!tri->IsLeaf())
@@ -110,7 +110,9 @@ void Patch::RecursTessellate(TriTreeNode* const& tri, const int& leftX, const in
 	const int sizeY = std::max(leftY - rightY, rightY - leftY);
 	const int size  = std::max(sizeX, sizeY);
 
-	if (node < (1 << VARIANCE_DEPTH)) {
+	const bool varianceSaved = (node < (1 << VARIANCE_DEPTH));
+
+	if (varianceSaved) {
 		// make max tessellation viewRadius dependent
 		// w/o this huge cliffs cause huge variances and so will always tessellate fully independent of camdist (-> huge/distfromcam ~= huge)
 		const float maxVariance = smfGroundDrawer->viewRadius * 0.35f;
@@ -119,8 +121,8 @@ void Patch::RecursTessellate(TriTreeNode* const& tri, const int& leftX, const in
 		TriVariance = (myVariance * PATCH_SIZE * size) / distfromcam; // Take both distance and variance and patch size into consideration
 	}
 
-	if ((node >= (1 << VARIANCE_DEPTH)) ||  // IF we do not have variance info for this node, then we must have gotten here by splitting, so continue down to the lowest level.
-			((TriVariance > 1.0f))) // OR if we are not below the variance tree, test for variance.
+	if ((!varianceSaved) ||       // IF we do not have variance info for this node, then we must have gotten here by splitting, so continue down to the lowest level.
+		(TriVariance > 1.0f)) // OR if we are not below the variance tree, test for variance.
 	{
 		Split(tri); // Split this triangle.
 
@@ -215,7 +217,7 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ, const float*
 	mapx = mx;
 
 	// Attach the two m_Base triangles together
-	m_BaseLeft = TriTreeNode();
+	m_BaseLeft  = TriTreeNode();
 	m_BaseRight = TriTreeNode();
 	m_BaseLeft.BaseNeighbor = &m_BaseRight;
 	m_BaseRight.BaseNeighbor = &m_BaseLeft;
@@ -300,11 +302,11 @@ void Patch::Reset()
 	m_isVisible = false;
 
 	// Reset the important relationships
-	m_BaseLeft = TriTreeNode();
+	m_BaseLeft  = TriTreeNode();
 	m_BaseRight = TriTreeNode();
 
 	// Attach the two m_Base triangles together
-	m_BaseLeft.BaseNeighbor = &m_BaseRight;
+	m_BaseLeft.BaseNeighbor  = &m_BaseRight;
 	m_BaseRight.BaseNeighbor = &m_BaseLeft;
 }
 
@@ -361,24 +363,23 @@ void Patch::Tessellate(const float3& campos, int viewradius)
 
 	// Split each of the base triangles
 	m_CurrentVariance = m_VarianceLeft;
-	RecursTessellate(
-		&m_BaseLeft, 
-		m_WorldX, 
-		m_WorldY + PATCH_SIZE, 
-		m_WorldX + PATCH_SIZE, 
-		m_WorldY, 
-		m_WorldX, 
-		m_WorldY, 
+	RecursTessellate(&m_BaseLeft,
+		m_WorldX,
+		m_WorldY + PATCH_SIZE,
+		m_WorldX + PATCH_SIZE,
+		m_WorldY,
+		m_WorldX,
+		m_WorldY,
 		1);
 
 	m_CurrentVariance = m_VarianceRight;
-	RecursTessellate(&m_BaseRight, 
-		m_WorldX + PATCH_SIZE, 
-		m_WorldY, 
-		m_WorldX,
-		m_WorldY + PATCH_SIZE, 
+	RecursTessellate(&m_BaseRight,
 		m_WorldX + PATCH_SIZE,
-		m_WorldY + PATCH_SIZE, 
+		m_WorldY,
+		m_WorldX,
+		m_WorldY + PATCH_SIZE,
+		m_WorldX + PATCH_SIZE,
+		m_WorldY + PATCH_SIZE,
 		1);
 }
 

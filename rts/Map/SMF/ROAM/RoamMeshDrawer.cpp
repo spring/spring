@@ -30,7 +30,7 @@
 // ---------------------------------------------------------------------
 // Definition of the static member variables
 //
-int CRoamMeshDrawer::m_NextTriNode;
+int CRoamMeshDrawer::m_NextTriNode = 0;
 TriTreeNode CRoamMeshDrawer::m_TriPool[POOL_SIZE];
 bool CRoamMeshDrawer::forceRetessellate = false;
 
@@ -224,7 +224,7 @@ void CRoamMeshDrawer::Reset()
 	SetNextTriNode(0);
 
 	// Go through the patches performing resets, compute variances, and linking.
-	for (int Y = 0; Y < numPatchesY; Y++)
+	for (int Y = 0; Y < numPatchesY; Y++) {
 		for (int X = 0; X < numPatchesX; X++) {
 			Patch& patch = m_Patches[Y * numPatchesX + X];
 
@@ -232,28 +232,20 @@ void CRoamMeshDrawer::Reset()
 			patch.Reset();
 			patch.UpdateVisibility();
 
-			// Link all the patches together.
+			// Link all the patches together. (leave borders NULL)
 			if (X > 0)
 				patch.GetBaseLeft()->LeftNeighbor = m_Patches[Y * numPatchesX + X - 1].GetBaseRight();
-			else
-				patch.GetBaseLeft()->LeftNeighbor = NULL; // Link to bordering Landscape here..
 
 			if (X < (numPatchesX - 1))
 				patch.GetBaseRight()->LeftNeighbor = m_Patches[Y * numPatchesX + X + 1].GetBaseLeft();
-			else
-				patch.GetBaseRight()->LeftNeighbor = NULL; // Link to bordering Landscape here..
 
 			if (Y > 0)
 				patch.GetBaseLeft()->RightNeighbor = m_Patches[(Y - 1) * numPatchesX + X].GetBaseRight();
-			else
-				patch.GetBaseLeft()->RightNeighbor = NULL; // Link to bordering Landscape here..
 
-			if (Y < ((numPatchesY) - 1))
+			if (Y < (numPatchesY - 1))
 				patch.GetBaseRight()->RightNeighbor = m_Patches[(Y + 1) * numPatchesX + X].GetBaseLeft();
-			else
-				patch.GetBaseRight()->RightNeighbor = NULL; // Link to bordering Landscape here..
 		}
-
+	}
 }
 
 // ---------------------------------------------------------------------
