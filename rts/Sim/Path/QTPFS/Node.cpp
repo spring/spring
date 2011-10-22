@@ -138,6 +138,7 @@ QTPFS::QTNode::QTNode(
 	unsigned int x2, unsigned int z2)
 {
 	identifier = id;
+	searchState = 0;
 	tempNum = -1;
 
 	_xmin = x1;
@@ -148,6 +149,10 @@ QTPFS::QTNode::QTNode(
 	_zmid = (_zmin + _zmax) >> 1;
 	_xsize = _xmax - _xmin;
 	_zsize = _zmax - _zmin;
+
+	fCost = 0.0f;
+	gCost = 0.0f;
+	hCost = 0.0f;
 
 	speedModAvg = 0.0f;
 	speedModSum = 0.0f;
