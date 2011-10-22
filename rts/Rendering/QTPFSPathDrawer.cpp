@@ -1,5 +1,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
+#include "Map/Ground.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
@@ -92,12 +93,22 @@ void QTPFSPathDrawer::DrawNodeTreeRec(
 	CVertexArray* va
 ) const {
 	if (nt->IsLeaf()) {
+		#define xmin (nt->xmin() * SQUARE_SIZE)
+		#define xmax (nt->xmax() * SQUARE_SIZE)
+		#define zmin (nt->zmin() * SQUARE_SIZE)
+		#define zmax (nt->zmax() * SQUARE_SIZE)
+
 		const float3 verts[4] = {
-			float3(nt->xmin() * SQUARE_SIZE, 0.0f, nt->zmin() * SQUARE_SIZE),
-			float3(nt->xmax() * SQUARE_SIZE, 0.0f, nt->zmin() * SQUARE_SIZE),
-			float3(nt->xmax() * SQUARE_SIZE, 0.0f, nt->zmax() * SQUARE_SIZE),
-			float3(nt->xmin() * SQUARE_SIZE, 0.0f, nt->zmax() * SQUARE_SIZE),
+			float3(xmin, ground->GetHeightReal(xmin, zmin, false), zmin),
+			float3(xmax, ground->GetHeightReal(xmax, zmin, false), zmin),
+			float3(xmax, ground->GetHeightReal(xmax, zmax, false), zmax),
+			float3(xmin, ground->GetHeightReal(xmin, zmax, false), zmax),
 		};
+
+		#undef xmin
+		#undef xmax
+		#undef zmin
+		#undef zmax
 
 		static const unsigned char colors[2][4] = {
 			{1 * 255, 0 * 255, 0 * 255, 1 * 255}, // blocked
@@ -143,8 +154,11 @@ void QTPFSPathDrawer::DrawPath(const QTPFS::IPath* path, CVertexArray* va) const
 	};
 
 	for (unsigned int n = 0; n < path->NumPoints() - 1; n++) {
-		va->AddVertexQC(path->GetPoint(n + 0), color);
-		va->AddVertexQC(path->GetPoint(n + 1), color);
+		float3 p0 = path->GetPoint(n + 0); p0.y = ground->GetHeightReal(p0.x, p0.z, false);
+		float3 p1 = path->GetPoint(n + 1); p1.y = ground->GetHeightReal(p1.x, p1.z, false);
+
+		va->AddVertexQC(p0, color);
+		va->AddVertexQC(p1, color);
 	}
 
 	glLineWidth(4);
