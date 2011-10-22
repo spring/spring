@@ -258,7 +258,7 @@ bool CGroundMoveType::Update()
 				const bool   wpBehind = (waypointDir.dot(flatFrontDir) < 0.0f);
 
 				if (!haveFinalWaypoint) {
-					GetNextWaypoint();
+					GetNextWayPoint();
 				} else {
 					if (atGoal) {
 						Arrived();
@@ -492,7 +492,7 @@ void CGroundMoveType::SetDeltaSpeed(float newWantedSpeed, bool wantReverse, bool
 			}
 
 			if (startBreaking) {
-				// at this point, Update() will no longer call GetNextWaypoint()
+				// at this point, Update() will no longer call GetNextWayPoint()
 				// and we must slow down to prevent entering an infinite circle
 				wSpeed = std::min(wSpeed, fastmath::apxsqrt(currWayPointDist * decRate));
 			}
@@ -1084,7 +1084,7 @@ void CGroundMoveType::GetNewPath()
 		haveFinalWaypoint = false;
 
 		waypoint = owner->pos;
-		nextWaypoint = pathManager->NextWaypoint(pathId, waypoint, 1.25f * SQUARE_SIZE, 0, owner->id);
+		nextWaypoint = pathManager->NextWayPoint(pathId, waypoint, 1.25f * SQUARE_SIZE, 0, owner->id);
 	} else {
 		Fail();
 	}
@@ -1097,9 +1097,8 @@ void CGroundMoveType::GetNewPath()
 /*
 Sets waypoint to next in path.
 */
-void CGroundMoveType::GetNextWaypoint()
+void CGroundMoveType::GetNextWayPoint()
 {
-
 	if (pathId == 0) {
 		return;
 	}
@@ -1131,7 +1130,7 @@ void CGroundMoveType::GetNextWaypoint()
 
 	if (nextWaypoint.x != -1.0f && (nextWaypoint - waypoint).SqLength2D() > 0.1f) {
 		waypoint = nextWaypoint;
-		nextWaypoint = pathManager->NextWaypoint(pathId, waypoint, 1.25f * SQUARE_SIZE, 0, owner->id);
+		nextWaypoint = pathManager->NextWayPoint(pathId, waypoint, 1.25f * SQUARE_SIZE, 0, owner->id);
 
 		if (waypoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
 			waypoint = goalPos;
@@ -1681,7 +1680,7 @@ void CGroundMoveType::TestNewTerrainSquare()
 					break;
 				}
 
-				GetNextWaypoint();
+				GetNextWayPoint();
 
 				nwsx = (int) nextWaypoint.x / (MIN_WAYPOINT_DISTANCE) - moveSquareX;
 				nwsy = (int) nextWaypoint.z / (MIN_WAYPOINT_DISTANCE) - moveSquareY;

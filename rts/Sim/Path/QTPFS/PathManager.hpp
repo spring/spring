@@ -36,7 +36,14 @@ namespace QTPFS {
 			bool synced
 		);
 
-		float3 NextWaypoint(unsigned int pathID, float3 pos, float rad, int, int, bool);
+		float3 NextWayPoint(
+			unsigned int pathID,
+			float3 curPoint,
+			float radius = 0.0f,
+			int = 0, // numRetries
+			int = 0, // ownerID
+			bool synced = true
+		);
 		static NodeLayer* GetSerializingNodeLayer() { return serializingNodeLayer; }
 
 		static const unsigned int NUM_SPEEDMOD_BINS = 20;

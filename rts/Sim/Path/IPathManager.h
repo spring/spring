@@ -11,7 +11,7 @@ class CSolidObject;
 
 class IPathManager {
 public:
-	static IPathManager* GetInstance();
+	static IPathManager* GetInstance(unsigned int type);
 
 	virtual ~IPathManager() {}
 
@@ -53,14 +53,14 @@ public:
 	 *     the next waypoint of the path, or (-1,-1,-1) in case no new
 	 *     waypoint could be found.
 	 */
-	virtual float3 NextWaypoint(
+	virtual float3 NextWayPoint(
 		unsigned int pathId,
 		float3 callerPos,
 		float minDistance = 0.0f,
 		int numRetries = 0,
 		int ownerId = 0,
 		bool synced = true
-	) const { return ZeroVector; }
+	) { return ZeroVector; }
 
 	//! NOTE: should not be in the interface
 	/**
@@ -138,6 +138,11 @@ public:
 	virtual bool SetNodeExtraCost(unsigned int x, unsigned int z, float cost, bool synced) { return false; }
 	virtual float GetNodeExtraCost(unsigned int x, unsigned int z, bool synced) const { return 0.0f; }
 	virtual const float* GetNodeExtraCosts(bool synced) const { return NULL; }
+
+	enum {
+		PM_TYPE_DEFAULT = 0,
+		PM_TYPE_QTPFS   = 1,
+	};
 };
 
 extern IPathManager* pathManager;

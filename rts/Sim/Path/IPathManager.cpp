@@ -6,15 +6,14 @@
 
 IPathManager* pathManager = NULL;
 
-IPathManager* IPathManager::GetInstance() {
+IPathManager* IPathManager::GetInstance(unsigned int type) {
 	static IPathManager* pm = NULL;
 
 	if (pm == NULL) {
-		#ifdef DEFAULT_PFS
-		pm = new CPathManager();
-		#else
-		pm = new QTPFS::PathManager();
-		#endif
+		switch (type) {
+			case PM_TYPE_DEFAULT: { pm = new       CPathManager(); } break;
+			case PM_TYPE_QTPFS:   { pm = new QTPFS::PathManager(); } break;
+		}
 	}
 
 	return pm;

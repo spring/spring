@@ -567,7 +567,7 @@ void CGame::LoadSimulation(const std::string& mapName)
 	loshandler = new CLosHandler();
 	radarhandler = new CRadarHandler(false);
 
-	pathManager = IPathManager::GetInstance();
+	pathManager = IPathManager::GetInstance(IPathManager::PM_TYPE_QTPFS);
 
 	wind.LoadWind(mapInfo->atmosphere.minWind, mapInfo->atmosphere.maxWind);
 
