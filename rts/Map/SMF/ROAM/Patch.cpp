@@ -101,7 +101,7 @@ void Patch::Split(TriTreeNode *tri)
 // Tessellate a Patch.
 // Will continue to split until the variance metric is met.
 //
-void Patch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY, int rightX, int rightY, int apexX, int apexY, int node)
+void Patch::RecursTessellate(TriTreeNode* const& tri, const int& leftX, const int& leftY, const int& rightX, const int& rightY, const int& apexX, const int& apexY, const int& node)
 {
 	float TriVariance = 0.0f;
 	const int centerX = (leftX + rightX) >> 1; // Compute X coordinate of center of Hypotenuse
@@ -127,10 +127,8 @@ void Patch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY, int rightX,
 		if (tri->LeftChild && // If this triangle was split, try to split it's children as well.
 				((abs(leftX - rightX) >= 2) || (abs(leftY - rightY) >= 2))) // Tessellate all the way down to one vertex per height field entry
 		{
-			RecursTessellate(tri->LeftChild, apexX, apexY, leftX, leftY,
-					centerX, centerY, node << 1);
-			RecursTessellate(tri->RightChild, rightX, rightY, apexX, apexY,
-					centerX, centerY, 1 + (node << 1));
+			RecursTessellate(tri->LeftChild, apexX, apexY, leftX, leftY, centerX, centerY, node << 1);
+			RecursTessellate(tri->RightChild, rightX, rightY, apexX, apexY, centerX, centerY, 1 + (node << 1));
 		}
 	} else {
 		// stop tess
@@ -142,19 +140,17 @@ void Patch::RecursTessellate(TriTreeNode *tri, int leftX, int leftY, int rightX,
 //
 
 
-void Patch::RecursRender(TriTreeNode* tri, int leftX, int leftY, int rightX, int rightY, int apexX, int apexY, bool dir, int maxdepth)
+void Patch::RecursRender(TriTreeNode* const& tri, const int& leftX, const int& leftY, const int& rightX, const int& rightY, const int& apexX, const int& apexY, int maxdepth)
 {
-	int m_depth = maxdepth + 1;
-	
 	if ( tri->IsLeaf() || maxdepth>12 ) {
 		indices.push_back(apexX  + apexY  * (PATCH_SIZE + 1));
 		indices.push_back(leftX  + leftY  * (PATCH_SIZE + 1));
 		indices.push_back(rightX + rightY * (PATCH_SIZE + 1));
 	} else {
-		int centerX = (leftX + rightX) >> 1; // Compute X coordinate of center of Hypotenuse
-		int centerY = (leftY + rightY) >> 1; // Compute Y coord...
-		RecursRender(tri->LeftChild, apexX, apexY, leftX, leftY, centerX, centerY, dir, m_depth);
-		RecursRender(tri->RightChild, rightX, rightY, apexX, apexY, centerX, centerY, dir, m_depth);
+		const int centerX = (leftX + rightX) >> 1; // Compute X coordinate of center of Hypotenuse
+		const int centerY = (leftY + rightY) >> 1; // Compute Y coord...
+		RecursRender(tri->LeftChild, apexX, apexY, leftX, leftY, centerX, centerY, maxdepth + 1);
+		RecursRender(tri->RightChild, rightX, rightY, apexX, apexY, centerX, centerY, maxdepth + 1);
 	}
 }
 
@@ -163,9 +159,9 @@ void Patch::RecursRender(TriTreeNode* tri, int leftX, int leftY, int rightX, int
 // ---------------------------------------------------------------------
 // Computes Variance over the entire tree.  Does not examine node relationships.
 //
-float Patch::RecursComputeVariance(int leftX, int leftY,
-		float leftZ, int rightX, int rightY, float rightZ,
-		int apexX, int apexY, float apexZ, int node)
+float Patch::RecursComputeVariance(const int& leftX, const int& leftY, const float& leftZ,
+		const int& rightX, const int& rightY, const float& rightZ,
+		const int& apexX, const int& apexY, const float& apexZ, const int& node)
 {
 	//        /|\
 	//      /  |  \
@@ -429,8 +425,8 @@ void Patch::DrawTriArray()
 int Patch::Render()
 {
 	indices.clear();
-	RecursRender(&m_BaseLeft, 0, PATCH_SIZE, PATCH_SIZE, 0, 0, 0, true, 0);
-	RecursRender(&m_BaseRight, PATCH_SIZE, 0, 0, PATCH_SIZE, PATCH_SIZE, PATCH_SIZE, false, 0);
+	RecursRender(&m_BaseLeft, 0, PATCH_SIZE, PATCH_SIZE, 0, 0, 0, 0);
+	RecursRender(&m_BaseRight, PATCH_SIZE, 0, 0, PATCH_SIZE, PATCH_SIZE, PATCH_SIZE, 0);
 
 	switch (renderMode) {
 		case DL:
