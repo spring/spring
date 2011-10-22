@@ -103,32 +103,36 @@ void Patch::Split(TriTreeNode* tri)
 //
 void Patch::RecursTessellate(TriTreeNode* const& tri, const int& leftX, const int& leftY, const int& rightX, const int& rightY, const int& apexX, const int& apexY, const int& node)
 {
-	float TriVariance = 0.0f;
-	const int centerX = (leftX + rightX) >> 1; // Compute X coordinate of center of Hypotenuse
-	const int centerY = (leftY + rightY) >> 1; // Compute Y coord...
-	const int sizeX = std::max(leftX - rightX, rightX - leftX);
-	const int sizeY = std::max(leftY - rightY, rightY - leftY);
-	const int size  = std::max(sizeX, sizeY);
+	const bool canFurtherTes = ((abs(leftX - rightX) > 1) || (abs(leftY - rightY) > 1));
+	if (!canFurtherTes)
+		return;
 
+	float TriVariance;
 	const bool varianceSaved = (node < (1 << VARIANCE_DEPTH));
-
 	if (varianceSaved) {
 		// make max tessellation viewRadius dependent
 		// w/o this huge cliffs cause huge variances and so will always tessellate fully independent of camdist (-> huge/distfromcam ~= huge)
 		const float maxVariance = smfGroundDrawer->viewRadius * 0.35f;
 		const float myVariance = std::min(m_CurrentVariance[node], maxVariance);
 
-		TriVariance = (myVariance * PATCH_SIZE * size) / distfromcam; // Take both distance and variance and patch size into consideration
+		const int sizeX = std::max(leftX - rightX, rightX - leftX);
+		const int sizeY = std::max(leftY - rightY, rightY - leftY);
+		const int size  = std::max(sizeX, sizeY);
+
+		// Take both distance and variance and patch size into consideration
+		TriVariance = (myVariance * PATCH_SIZE * size) / distfromcam;
+	} else {
+		TriVariance = 10.0f; // >1 -> When variance isn't saved issue further tessellation
 	}
 
-	if ((!varianceSaved) ||       // IF we do not have variance info for this node, then we must have gotten here by splitting, so continue down to the lowest level.
-		(TriVariance > 1.0f)) // OR if we are not below the variance tree, test for variance.
+	if (TriVariance > 1.0f)
 	{
 		Split(tri); // Split this triangle.
 
-		if (tri->LeftChild && // If this triangle was split, try to split it's children as well.
-				((abs(leftX - rightX) >= 2) || (abs(leftY - rightY) >= 2))) // Tessellate all the way down to one vertex per height field entry
-		{
+		if (tri->HasChildren()) { // If this triangle was split, try to split it's children as well.
+			const int centerX = (leftX + rightX) >> 1; // Compute X coordinate of center of Hypotenuse
+			const int centerY = (leftY + rightY) >> 1; // Compute Y coord...
+
 			RecursTessellate(tri->LeftChild, apexX, apexY, leftX, leftY, centerX, centerY, node << 1);
 			RecursTessellate(tri->RightChild, rightX, rightY, apexX, apexY, centerX, centerY, 1 + (node << 1));
 		}
