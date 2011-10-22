@@ -15,6 +15,7 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
+#include "System/TimeProfiler.h"
 #include "System/Util.h"
 
 #define NO_LOADSCREEN
@@ -226,8 +227,8 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 
 // NOTE:
 //     gets called during initialization for trees etc., but
-//     never with a map-covering rectangle (which constructor
-//     takes care of)
+//     never with a map-covering rectangle (constructor does
+//     this for us)
 //
 //     all layers *must* be updated on the same frame
 //
@@ -235,6 +236,7 @@ void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsign
 	const SRectangle r = SRectangle(x1, z1,  x2, z2);
 
 	{
+		SCOPED_TIMER("PathManager::TerrainChange");
 		streflop_init<streflop::Simple>();
 
 		#pragma omp parallel for
@@ -267,6 +269,8 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int i, const SRectangle& r, bo
 
 
 void QTPFS::PathManager::Update() {
+	SCOPED_TIMER("PathManager::Update");
+
 	for (unsigned int i = 0; i < pathCaches.size(); i++) {
 		PathCache& pathCache = pathCaches[i];
 		PathCache::PathIDSet::const_iterator deadPathsIt;
@@ -360,6 +364,8 @@ float3 QTPFS::PathManager::NextWayPoint(
 	int, // ownerID
 	bool synced
 ) {
+	SCOPED_TIMER("PathManager::NextWayPoint");
+
 	const PathCacheMap::const_iterator cacheIt = pathCacheMap.find(pathID);
 
 	// dangling ID after re-request failure or regular deletion
@@ -432,6 +438,8 @@ unsigned int QTPFS::PathManager::RequestPath(
 	CSolidObject* object,
 	bool synced)
 {
+	SCOPED_TIMER("PathManager::RequestPath");
+
 	// NOTE:
 	//     all paths get deleted by the cache they are in;
 	//     all searches get deleted by subsequent Update's
