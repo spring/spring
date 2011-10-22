@@ -139,7 +139,7 @@ void QTPFSPathDrawer::DrawPath(const QTPFS::IPath* path, CVertexArray* va) const
 	va->EnlargeArrays(path->NumPoints() * 2, 0, VA_SIZE_C);
 
 	static const unsigned char color[4] = {
-		0 * 255, 1 * 255, 0 * 255, 1 * 255,
+		0 * 255, 0 * 255, 1 * 255, 1 * 255,
 	};
 
 	for (unsigned int n = 0; n < path->NumPoints() - 1; n++) {
