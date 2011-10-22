@@ -152,7 +152,7 @@ QTPFS::QTNode::QTNode(
 	speedModAvg = 0.0f;
 	speedModSum = 0.0f;
 	moveCostAvg = 0.0f;
-	
+
 	// for leafs, all children remain NULL
 	children.resize(QTNode::CHILD_COUNT, NULL);
 }

@@ -17,7 +17,7 @@ namespace QTPFS {
 		bool operator < (const INode* n) const { return (fCost < n->fCost); }
 		bool operator () (const INode* a, const INode* b) const { return (a->fCost > b->fCost); }
 
-		virtual void Serialize(std::fstream&, bool) {}
+		virtual void Serialize(std::fstream&, bool) { assert(false); }
 		virtual unsigned int GetNeighbors(const std::vector<INode*>&, std::vector<INode*>&) { return 0; }
 
 		unsigned int GetNeighborRelation(const INode* ngb) const;
@@ -26,16 +26,16 @@ namespace QTPFS {
 		float3 GetNeighborEdgeMidPoint(const INode* ngb) const;
 		SRectangle ClipRectangle(const SRectangle& r) const;
 
-		virtual unsigned int xmin() const { return 0; }
-		virtual unsigned int zmin() const { return 0; }
-		virtual unsigned int xmax() const { return 1; }
-		virtual unsigned int zmax() const { return 1; }
-		virtual unsigned int xmid() const { return 0; }
-		virtual unsigned int zmid() const { return 0; }
-		virtual unsigned int xsize() const { return 1; }
-		virtual unsigned int zsize() const { return 1; }
+		virtual unsigned int xmin() const { assert(false); return 0; }
+		virtual unsigned int zmin() const { assert(false); return 0; }
+		virtual unsigned int xmax() const { assert(false); return 1; }
+		virtual unsigned int zmax() const { assert(false); return 1; }
+		virtual unsigned int xmid() const { assert(false); return 0; }
+		virtual unsigned int zmid() const { assert(false); return 0; }
+		virtual unsigned int xsize() const { assert(false); return 1; }
+		virtual unsigned int zsize() const { assert(false); return 1; }
 
-		virtual float GetMoveCost() const { return 1.0f; }
+		virtual float GetMoveCost() const { assert(false); return 1.0f; }
 
 		void SetPathCost(unsigned int type, float cost);
 		float GetPathCost(unsigned int type) const;
