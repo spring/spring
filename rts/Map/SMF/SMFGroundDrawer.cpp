@@ -27,9 +27,6 @@
 #include "System/Util.h"
 
 
-using std::min;
-using std::max;
-
 CONFIG(int, GroundDetail).defaultValue(40);
 
 CONFIG(int, MaxDynamicMapLights)
@@ -38,7 +35,9 @@ CONFIG(int, MaxDynamicMapLights)
 
 CONFIG(int, AdvMapShading).defaultValue(1);
 
-CONFIG(int, ROAM).defaultValue(1);
+CONFIG(int, ROAM)
+	.defaultValue(1)
+	.description("Use ROAM for terrain mesh rendering.");
 
 
 CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
@@ -50,8 +49,6 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	viewRadius = configHandler->GetInt("GroundDetail");
 	viewRadius += (viewRadius & 1); // we need a multiple of 2
 
-	//numBigTexX = rm->numBigTexX;
-	//numBigTexY = rm->numBigTexY;
 	useShaders = false;
 	waterDrawn = false;
 
@@ -358,7 +355,7 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 
 	smfShaderCurGLSL = shadowHandler->shadowsLoaded? smfShaderAdvGLSL: smfShaderDefGLSL;
 	useShaders = advShading && (!DrawExtraTex() && ((smfShaderCurrARB != NULL && shadowHandler->shadowsLoaded) || (smfShaderCurGLSL != NULL)));
-	waterDrawn = (drawPass != DrawPass::WaterReflection);
+	waterDrawn = (drawPass != DrawPass::WaterReflection); //FIXME remove. save drawPass somewhere instead
 
 
 	glDisable(GL_BLEND);
@@ -372,7 +369,7 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 		if (wireframe) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		}
-	
+
 			if (mapInfo->map.voidWater && (drawPass != DrawPass::WaterReflection)) {
 				glEnable(GL_ALPHA_TEST);
 				glAlphaFunc(GL_GREATER, 0.9f);
@@ -625,7 +622,7 @@ void CSMFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			}
 
 			#ifdef DYNWATER_OVERRIDE_VERTEX_PROGRAM
-			//! see comment above
+			// see comment above
 			#endif
 		}
 	}
