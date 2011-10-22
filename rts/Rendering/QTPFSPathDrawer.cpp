@@ -2,6 +2,7 @@
 #include "Game/SelectedUnits.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/MoveTypes/MoveInfo.h"
+#include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 
@@ -80,11 +81,16 @@ void QTPFSPathDrawer::DrawNodeTree(const MoveData* md) const {
 	QTPFS::QTNode* nt = pm->nodeTrees[md->pathType];
 	CVertexArray* va = GetVertexArray();
 
-	DrawNodeTreeRec(nt, va);
+	DrawNodeTreeRec(nt, md, md->moveMath, va);
 	glLineWidth(1);
 }
 
-void QTPFSPathDrawer::DrawNodeTreeRec(const QTPFS::QTNode* nt, CVertexArray* va) const {
+void QTPFSPathDrawer::DrawNodeTreeRec(
+	const QTPFS::QTNode* nt,
+	const MoveData* md,
+	const CMoveMath* mm,
+	CVertexArray* va
+) const {
 	if (nt->IsLeaf()) {
 		const float3 verts[4] = {
 			float3(nt->xmin() * SQUARE_SIZE, 0.0f, nt->zmin() * SQUARE_SIZE),
@@ -92,9 +98,14 @@ void QTPFSPathDrawer::DrawNodeTreeRec(const QTPFS::QTNode* nt, CVertexArray* va)
 			float3(nt->xmax() * SQUARE_SIZE, 0.0f, nt->zmax() * SQUARE_SIZE),
 			float3(nt->xmin() * SQUARE_SIZE, 0.0f, nt->zmax() * SQUARE_SIZE),
 		};
-		static const unsigned char color[4] = {
-			1 * 255, 0 * 255, 0 * 255, 1 * 255,
+
+		static const unsigned char colors[2][4] = {
+			{1 * 255, 0 * 255, 0 * 255, 1 * 255}, // blocked
+			{0 * 255, 1 * 255, 0 * 255, 1 * 255}, // passable
 		};
+		const unsigned char* color = (mm->GetPosSpeedMod(*md, nt->xmid(), nt->zmid()) <= 0.001f)?
+			&colors[0][0]:
+			&colors[1][0];
 
 		va->Initialize();
 		va->EnlargeArrays(4, 0, VA_SIZE_C);
@@ -105,7 +116,7 @@ void QTPFSPathDrawer::DrawNodeTreeRec(const QTPFS::QTNode* nt, CVertexArray* va)
 		va->DrawArrayC(GL_QUADS);
 	} else {
 		for (unsigned int i = 0; i < QTPFS::QTNode::CHILD_COUNT; i++) {
-			DrawNodeTreeRec(nt->children[i], va);
+			DrawNodeTreeRec(nt->children[i], md, mm, va);
 		}
 	}
 }
