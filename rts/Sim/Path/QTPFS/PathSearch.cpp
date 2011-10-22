@@ -92,6 +92,7 @@ void QTPFS::PathSearch::IterateSearch(const std::vector<INode*>& allNodes, std::
 
 		const float mDist = (nxtPoint - curPoint).Length();
 		const float gCost = curNode->GetPathCost(NODE_PATH_COST_G) + (mDist * curNode->GetMoveCost());
+
 		bool keepNextNode = true;
 
 		if (isCurrent) {
