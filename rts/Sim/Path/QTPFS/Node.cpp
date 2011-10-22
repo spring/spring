@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <limits>
 
 #include "Node.hpp"
 #include "NodeLayer.hpp"
@@ -294,7 +295,7 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r) {
 
 	// (re-)calculate the average cost of this node
 	speedModAvg = speedModSum / (xsize() * zsize());
-	moveCostAvg = 1.0f / std::max(speedModAvg, 0.00001f);
+	moveCostAvg = (speedModAvg <= 0.001f)? std::numeric_limits<float>::infinity(): (1.0f / speedModAvg);
 
 	// we want to *keep* splitting so long as not ALL squares
 	// within <r> share the SAME bin, OR we keep finding one

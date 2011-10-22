@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <list>
+#include <limits>
 
 #include "PathSearch.hpp"
 #include "Path.hpp"
@@ -51,7 +52,7 @@ bool QTPFS::PathSearch::Execute(PathCache* cache, NodeLayer* layer, unsigned int
 		srcNode->SetPathCost(NODE_PATH_COST_F, (srcNode->GetPathCost(NODE_PATH_COST_G) + srcNode->GetPathCost(NODE_PATH_COST_H)));
 	}
 
-	while (haveOpenNode && !haveFullPath) {
+	while ((haveOpenNode = !openNodes.empty()) && !(haveFullPath = (curNode == tgtNode))) {
 		IterateSearch(allNodes, ngbNodes);
 	}
 
@@ -66,68 +67,62 @@ void QTPFS::PathSearch::IterateSearch(const std::vector<INode*>& allNodes, std::
 
 	if (curNode != srcNode)
 		curPoint = curNode->GetNeighborEdgeMidPoint(curNode->GetPrevNode());
+	if (curNode == tgtNode)
+		return;
+	if (curNode->GetMoveCost() == std::numeric_limits<float>::infinity())
+		return;
 
-	haveFullPath = (curNode == tgtNode);
+	const unsigned int numNgbs = curNode->GetNeighbors(allNodes, ngbNodes);
 
-	if (!haveFullPath) {
-		// calculate neighbors on-the-fly rather than
-		// storing them in the nodes themselves (less
-		// complex)
-		const unsigned int numNgbs = curNode->GetNeighbors(allNodes, ngbNodes);
+	// examine each neighbor of <curNode>
+	for (unsigned int i = 0; i < numNgbs; i++) {
+		// NOTE:
+		//     this uses the actual distance that edges of the final path will cover,
+		//     from <curPoint> (initialized to sourcePoint) to the middle of shared edge
+		//     between <curNode> and <nxtNode>
+		//     (each individual path-segment is weighted by the average move-cost of
+		//     the node it crosses, UNLIKE the goal-heuristic)
+		// NOTE:
+		//     heading for the MIDDLE of the shared edge is not always the best option
+		nxtNode = ngbNodes[i];
+		nxtPoint = curNode->GetNeighborEdgeMidPoint(nxtNode);
 
-		// examine each neighbor of <curNode>
-		for (unsigned int i = 0; i < numNgbs; i++) {
-			nxtNode = ngbNodes[i];
+		const bool isCurrent = (nxtNode->GetSearchState() >= searchState);
+		const bool isClosed = ((nxtNode->GetSearchState() & 1) == NODE_STATE_CLOSED);
 
-			const bool isCurrent = (nxtNode->GetSearchState() >= searchState);
-			const bool isClosed = ((nxtNode->GetSearchState() & 1) == NODE_STATE_CLOSED);
+		const float mDist = (nxtPoint - curPoint).Length();
+		const float gCost = curNode->GetPathCost(NODE_PATH_COST_G) + (mDist * curNode->GetMoveCost());
+		bool keepNextNode = true;
 
-			// NOTE:
-			//     this uses the actual distance that edges of the final path will cover,
-			//     from <curPoint> (initialized to sourcePoint) to the middle of shared edge
-			//     between <curNode> and <nxtNode>
-			//     (each individual path-segment is weighted by the average move-cost of
-			//     the node it crosses, UNLIKE the goal-heuristic)
-			// NOTE:
-			//     heading for the MIDDLE of the shared edge is not always the best option
-			nxtPoint = curNode->GetNeighborEdgeMidPoint(nxtNode);
-
-			const float mDist = (nxtPoint - curPoint).Length();
-			const float gCost = curNode->GetPathCost(NODE_PATH_COST_G) + (mDist * curNode->GetMoveCost());
-			bool keepNextNode = true;
-
-			if (isCurrent) {
-				if (isClosed) {
-					continue;
-				}
-
-				// if true, we found a new shorter route to <nxtNode>
-				keepNextNode = (gCost < nxtNode->GetPathCost(NODE_PATH_COST_G));
-			} else {
-				// at this point, we know that <nxtNode> is either
-				// not from the current search (!current) or (if it
-				// is) already placed in the open queue
-				nxtNode->SetSearchState(searchState | NODE_STATE_OPEN);
-				openNodes.push(nxtNode);
+		if (isCurrent) {
+			if (isClosed) {
+				continue;
 			}
 
-			if (keepNextNode) {
-				// NOTE:
-				//     the heuristic must never over-estimate the distance,
-				//     but this is *impossible* to achieve on a non-regular
-				//     grid on which any node only has an average move-cost
-				//     associated with it (and these costs can even be less
-				//     than 1) --> paths will not be optimal, but they could
-				//     not be anyway on an irregular grid
-				nxtNode->SetPrevNode(curNode);
-				nxtNode->SetPathCost(NODE_PATH_COST_G, gCost);
-				nxtNode->SetPathCost(NODE_PATH_COST_H, (tgtPoint - nxtPoint).Length() * hCostMult);
-				nxtNode->SetPathCost(NODE_PATH_COST_F, (nxtNode->GetPathCost(NODE_PATH_COST_G) + nxtNode->GetPathCost(NODE_PATH_COST_H)));
-			}
+			// if true, we found a new shorter route to <nxtNode>
+			keepNextNode = (gCost < nxtNode->GetPathCost(NODE_PATH_COST_G));
+		} else {
+			// at this point, we know that <nxtNode> is either
+			// not from the current search (!current) or (if it
+			// is) already placed in the open queue
+			nxtNode->SetSearchState(searchState | NODE_STATE_OPEN);
+			openNodes.push(nxtNode);
+		}
+
+		if (keepNextNode) {
+			// NOTE:
+			//     the heuristic must never over-estimate the distance,
+			//     but this is *impossible* to achieve on a non-regular
+			//     grid on which any node only has an average move-cost
+			//     associated with it (and these costs can even be less
+			//     than 1) --> paths will not be optimal, but they could
+			//     not be anyway on an irregular grid
+			nxtNode->SetPrevNode(curNode);
+			nxtNode->SetPathCost(NODE_PATH_COST_G, gCost);
+			nxtNode->SetPathCost(NODE_PATH_COST_H, (tgtPoint - nxtPoint).Length() * hCostMult);
+			nxtNode->SetPathCost(NODE_PATH_COST_F, (nxtNode->GetPathCost(NODE_PATH_COST_G) + nxtNode->GetPathCost(NODE_PATH_COST_H)));
 		}
 	}
-
-	haveOpenNode = (!openNodes.empty());
 }
 
 void QTPFS::PathSearch::Finalize(IPath* path, bool replace) {
