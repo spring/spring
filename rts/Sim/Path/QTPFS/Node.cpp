@@ -294,7 +294,7 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r) {
 
 	// (re-)calculate the average cost of this node
 	speedModAvg = speedModSum / (xsize() * zsize());
-	moveCostAvg = 1.0f / std::max(speedModAvg, 0.001f);
+	moveCostAvg = 1.0f / std::max(speedModAvg, 0.00001f);
 
 	// we want to *keep* splitting so long as not ALL squares
 	// within <r> share the SAME bin, OR we keep finding one

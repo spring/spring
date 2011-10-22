@@ -33,6 +33,28 @@
 
 static CPathManager* pm = NULL;
 
+static const MoveData* GetMoveData() {
+	const MoveData* md = NULL;
+	const CUnitSet& unitSet = selectedUnits.selectedUnits;
+
+	if (moveinfo->moveData.empty()) {
+		return md;
+	}
+
+	md = moveinfo->moveData[0];
+
+	if (!unitSet.empty()) {
+		const CUnit* unit = *(unitSet.begin());
+		const UnitDef* unitDef = unit->unitDef;
+
+		if (unitDef->movedata != NULL) {
+			md = unitDef->movedata;
+		}
+	}
+
+	return md;
+}
+
 
 
 DefaultPathDrawer::DefaultPathDrawer() {
@@ -345,23 +367,7 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 	GML_RECMUTEX_LOCK(sel); // Draw
 
-	MoveData* md = NULL;
-
-	if (!moveinfo->moveData.empty()) {
-		md = moveinfo->moveData[0];
-	} else {
-		return;
-	}
-
-	if (!selectedUnits.selectedUnits.empty()) {
-		const CUnitSet& unitSet = selectedUnits.selectedUnits;
-		const CUnit* unit = *(unitSet.begin());
-		const UnitDef* unitDef = unit->unitDef;
-
-		if (unitDef->movedata) {
-			md = unitDef->movedata;
-		}
-	}
+	const MoveData* md = GetMoveData();
 
 	glDisable(GL_TEXTURE_2D);
 	glColor3f(1.0f, 1.0f, 0.0f);
