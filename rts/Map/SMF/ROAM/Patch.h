@@ -135,7 +135,6 @@ protected:
 	float distfromcam;
 
 	int mapx;
-	float maxh, minh;
 	int m_WorldX, m_WorldY; //< World coordinate offset of this patch.
 
 
