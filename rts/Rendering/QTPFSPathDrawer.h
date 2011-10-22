@@ -5,6 +5,8 @@
 
 #include "IPathDrawer.h"
 
+class CVertexArray;
+
 namespace QTPFS {
 	class QTNode;
 };
@@ -18,7 +20,7 @@ public:
 
 private:
 	void Draw() const;
-	void DrawNodeTree(const QTPFS::QTNode*) const;
+	void DrawNodeTree(const QTPFS::QTNode*, CVertexArray*) const;
 };
 
 #endif
