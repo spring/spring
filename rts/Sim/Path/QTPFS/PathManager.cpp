@@ -49,7 +49,8 @@ static size_t GetNumThreads() {
 
 
 QTPFS::PathManager::PathManager() {
-	searchStateOffset = 0;
+	// NOTE: offset *must* start at a non-zero value
+	searchStateOffset = NODE_STATE_OFFSET;
 	numTerrainChanges = 0;
 	numPathRequests   = 0;
 
