@@ -15,9 +15,9 @@
 
 void QTPFS::INode::SetPathCost(unsigned int type, float cost) {
 	switch (type) {
-		case NODE_PATH_COST_F: { fCost = cost; } break;
-		case NODE_PATH_COST_G: { gCost = cost; } break;
-		case NODE_PATH_COST_H: { hCost = cost; } break;
+		case NODE_PATH_COST_F: { fCost = cost; return; } break;
+		case NODE_PATH_COST_G: { gCost = cost; return; } break;
+		case NODE_PATH_COST_H: { hCost = cost; return; } break;
 	}
 
 	assert(false);
@@ -175,6 +175,10 @@ void QTPFS::QTNode::Delete() {
 
 bool QTPFS::QTNode::IsLeaf() const {
 	assert(children.size() == QTNode::CHILD_COUNT);
+	assert(
+		(children[0] == NULL && children[1] == NULL && children[2] == NULL && children[3] == NULL) ||
+		(children[0] != NULL && children[1] != NULL && children[2] != NULL && children[3] != NULL)
+	);
 	return (children[0] == NULL);
 }
 
@@ -197,6 +201,7 @@ bool QTPFS::QTNode::Split(NodeLayer& nl) {
 	children[NODE_IDX_BL] = new QTNode(GetChildID(NODE_IDX_BL),  xmin(), zmid(),  xmid(), zmax());
 
 	nl.SetNumLeafNodes(nl.GetNumLeafNodes() + (4 - 1));
+	assert(!IsLeaf());
 	return true;
 }
 
@@ -211,6 +216,7 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 	}
 
 	nl.SetNumLeafNodes(nl.GetNumLeafNodes() - (4 - 1));
+	assert(IsLeaf());
 	return true;
 }
 
@@ -256,42 +262,57 @@ void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const SRectangle& r) {
 
 
 void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r) {
-	unsigned int numNewBinSquares = 0;
-	unsigned int numRefBinSquares = 0;
+	unsigned int numNewBinSquares = 0; // number of squares that changed bin within <r> after deformation
+	unsigned int numRefBinSquares = 0; // number of squares in <r> NOT equal to the new ref-bin at <x1, z1>
+
+	const std::vector<int>& oldSpeedBins = nl.GetOldSpeedBins();
+	const std::vector<int>& curSpeedBins = nl.GetCurSpeedBins();
+	const std::vector<float>& oldSpeedMods = nl.GetOldSpeedMods();
+	const std::vector<float>& curSpeedMods = nl.GetCurSpeedMods();
 
 	for (unsigned int hmx = r.x1; hmx < r.x2; hmx++) {
 		for (unsigned int hmz = r.z1; hmz < r.z2; hmz++) {
 			const unsigned int sqrIdx = hmz * gs->mapx + hmx;
 
-			const int oldSpeedBin = nl.GetOldSpeedBins()[sqrIdx];
-			const int curSpeedBin = nl.GetCurSpeedBins()[sqrIdx];
-			const int refSpeedBin = nl.GetCurSpeedBins()[r.z1 * gs->mapx + r.x1];
+			const int oldSpeedBin = oldSpeedBins[sqrIdx];
+			const int curSpeedBin = curSpeedBins[sqrIdx];
+			const int refSpeedBin = curSpeedBins[r.z1 * gs->mapx + r.x1];
 
 			numNewBinSquares += (curSpeedBin != oldSpeedBin)? 1: 0;
 			numRefBinSquares += (curSpeedBin != refSpeedBin)? 1: 0;
 
-			speedModSum -= nl.GetOldSpeedMods()[sqrIdx];
-			speedModSum += nl.GetCurSpeedMods()[sqrIdx];
+			speedModSum -= oldSpeedMods[sqrIdx];
+			speedModSum += curSpeedMods[sqrIdx];
 		}
 	}
+
+	assert(
+		((numNewBinSquares == (r.GetWidth() * r.GetHeight())) && (numRefBinSquares == 0)) ||
+		((numNewBinSquares >                               0) && (numRefBinSquares >  0)) ||
+		((numNewBinSquares ==                              0) && (numRefBinSquares == 0))
+	);
 
 	// (re-)calculate the average cost of this node
 	speedModAvg = speedModSum / (xsize() * zsize());
 	moveCostAvg = 1.0f / std::max(speedModAvg, 0.001f);
 
-	// we want to keep splitting so long as not all squares
-	// within <r> share the same bin, or we keep finding one
-	// that changed bins after the terrain change (we already
+	// we want to *keep* splitting so long as not ALL squares
+	// within <r> share the SAME bin, OR we keep finding one
+	// that SWITCHED bins after the terrain change (we already
 	// know this is true for the entire rectangle or we would
 	// not have reached PreTesselate)
 	//
-	// NOTE: if <r> fully overlaps <this>, splitting is not
-	// technically required (when numRefBinSquares is zero)
+	// NOTE: during tree construction, numNewBinSquares is ALWAYS
+	// non-0 for the entire map-rectangle (see NodeLayer::Update)
+	//
+	// NOTE: if <r> fully overlaps <this>, then splitting is *not*
+	// technically required whenever numRefBinSquares is zero, ie.
+	// when ALL squares in <r> changed bins in unison
 	//
 	// if true, we are at the bottom of the recursion
 	bool registerNode = true;
 
-	if (numRefBinSquares > 0 || numNewBinSquares > 0) {
+	if (numNewBinSquares > 0 && numRefBinSquares > 0) {
 		Merge(nl);
 
 		if (Split(nl)) {

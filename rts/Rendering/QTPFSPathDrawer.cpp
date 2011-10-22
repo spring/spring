@@ -63,14 +63,17 @@ void QTPFSPathDrawer::Draw() const {
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glDisable(GL_DEPTH_TEST);
-	DrawNodeTree(pm->nodeTrees[md->pathType]);
+		QTPFS::QTNode* nt = pm->nodeTrees[md->pathType];
+		CVertexArray* va = GetVertexArray();
+
+		DrawNodeTree(nt, va);
 	glEnable(GL_DEPTH_TEST);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	glLineWidth(1);
 }
 
-void QTPFSPathDrawer::DrawNodeTree(const QTPFS::QTNode* node) const {
+void QTPFSPathDrawer::DrawNodeTree(const QTPFS::QTNode* node, CVertexArray* va) const {
 	if (node->IsLeaf()) {
 		const float3 verts[4] = {
 			float3(node->xmin() * SQUARE_SIZE, 0.0f, node->zmin() * SQUARE_SIZE),
@@ -82,8 +85,6 @@ void QTPFSPathDrawer::DrawNodeTree(const QTPFS::QTNode* node) const {
 			1 * 255, 0 * 255, 0 * 255, 1 * 255,
 		};
 
-		CVertexArray* va = GetVertexArray();
-
 		va->Initialize();
 		va->EnlargeArrays(4, 0, VA_SIZE_C);
 		va->AddVertexQC(verts[0], color);
@@ -93,7 +94,7 @@ void QTPFSPathDrawer::DrawNodeTree(const QTPFS::QTNode* node) const {
 		va->DrawArrayC(GL_QUADS);
 	} else {
 		for (unsigned int i = 0; i < QTPFS::QTNode::CHILD_COUNT; i++) {
-			DrawNodeTree(node->children[i]);
+			DrawNodeTree(node->children[i], va);
 		}
 	}
 }

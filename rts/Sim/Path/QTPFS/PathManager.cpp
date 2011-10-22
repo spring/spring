@@ -171,7 +171,7 @@ std::string QTPFS::PathManager::GetCacheDirName(const std::string& mapArchiveNam
 		IntToString(modCheckSum, "%08x") + "/";
 
 	char loadMsg[512] = {'\0'};
-	const char* fmtString = "[%s] using cache-dir %s (map-checksum %u, mod-checksum %u)";
+	const char* fmtString = "[%s] using cache-dir %s (map-checksum %08x, mod-checksum %08x)";
 
 	sprintf(loadMsg, fmtString, __FUNCTION__, dir.c_str(), mapCheckSum, modCheckSum);
 	loadscreen->SetLoadMessage(loadMsg);
@@ -179,6 +179,8 @@ std::string QTPFS::PathManager::GetCacheDirName(const std::string& mapArchiveNam
 }
 
 void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
+	return; // FIXME
+
 	std::vector<std::string> fileNames(nodeTrees.size());
 	std::vector<std::fstream*> fileStreams(nodeTrees.size());
 
@@ -221,10 +223,9 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 
 
 // NOTE:
-//     is this also called during engine initialization?
-//     constructor takes care of the <0, 0> - <mapx, mapy>
-//     special case so we do NOT have to do anything here
-//     on frame 0
+//     gets called during initialization for trees etc., but
+//     never with a map-covering rectangle (which constructor
+//     takes care of)
 //
 //     all layers *must* be updated on the same frame
 //
