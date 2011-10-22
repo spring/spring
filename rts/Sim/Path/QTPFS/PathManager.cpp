@@ -372,20 +372,28 @@ float3 QTPFS::PathManager::NextWayPoint(
 		// path-request has not yet been processed
 		// (so ID still maps to a temporary path);
 		// just set the unit off toward its target
+		//
+		// <curPoint> is initially the position of
+		// the unit requesting a path, but changes
+		// to the value returned by NextWayPoint()
 		assert(livePath->GetID() == 0);
-		return curPoint;
+
+		const float3& sourcePoint = curPoint;
+		const float3& targetPoint = tempPath->GetTargetPoint();
+		const float3  targetDirec = (targetPoint - sourcePoint).SafeNormalize();
+		return (sourcePoint + targetDirec);
+	} else {
+		assert(livePath->GetID() != 0);
 	}
 
-	assert(livePath->GetID() != 0);
-
-	const float radiusSq = std::max(float(SQUARE_SIZE), radius * radius);
+	const float radiusSq = std::max(float(SQUARE_SIZE * SQUARE_SIZE), radius * radius);
 
 	unsigned int curPointIdx =  0;
 	unsigned int nxtPointIdx = -1U;
 
 	// find the point furthest along the
 	// path within distance <rad> of <pos>
-	for (unsigned int i = 0; i < (livePath->NumPoints() - 1); i++) {
+	for (unsigned int i = 0; i < (livePath->NumPoints() - 0); i++) {
 		const float3& point = livePath->GetPoint(i);
 
 		if ((curPoint - point).SqLength() < radiusSq) {
@@ -394,7 +402,7 @@ float3 QTPFS::PathManager::NextWayPoint(
 		}
 	}
 
-	if (curPointIdx > 0 && nxtPointIdx != -1U) {
+	if (nxtPointIdx != -1U) {
 		// if close enough to at least one <curPoint>,
 		// switch to <nxtPoint> immediately after it
 		livePath->SetPointIdx(nxtPointIdx);
