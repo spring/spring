@@ -251,6 +251,8 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ, const float*
 Patch::~Patch()
 {
 	glDeleteLists(triList, 1);
+	glDeleteBuffersARB(1, &vertexBuffer);
+	glDeleteBuffersARB(1, &vertexIndexBuffer);
 }
 
 
