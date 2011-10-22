@@ -238,7 +238,6 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ, const float*
 	m_isDirty   = true;
 	m_isVisible = false;
 
-	vertices.resize(3 * (PATCH_SIZE + 1) * (PATCH_SIZE + 1));
 
 	triList = glGenLists(1);
 
@@ -259,30 +258,30 @@ void Patch::UpdateHeightMap()
 {
 	const float* hMap = readmap->GetCornerHeightMapSynced(); //FIXME
 
-	float minHeight = FLT_MAX;
-	float maxHeight = FLT_MIN;
-
-	int index = 0;
-	for (int z = m_WorldY; z <= (m_WorldY + PATCH_SIZE); z++) {
-		for (int x = m_WorldX; x <= (m_WorldX + PATCH_SIZE); x++) {
-			const float& h = hMap[z * (mapx+1) + x];
-			
-			vertices[index++] = x * SQUARE_SIZE;
-			vertices[index++] = h;
-			vertices[index++] = z * SQUARE_SIZE;
-
-			//FIXME use map global ones instead?
-			maxHeight = std::max(maxHeight, h);
-			minHeight = std::min(minHeight, h);
+	if (vertices.empty()) {
+		// Initialize
+		vertices.resize(3 * (PATCH_SIZE + 1) * (PATCH_SIZE + 1));
+		int index = 0;
+		for (int z = m_WorldY; z <= (m_WorldY + PATCH_SIZE); z++) {
+			for (int x = m_WorldX; x <= (m_WorldX + PATCH_SIZE); x++) {
+				vertices[index++] = x * SQUARE_SIZE;
+				vertices[index++] = 0.0f;
+				vertices[index++] = z * SQUARE_SIZE;
+			}
 		}
 	}
 
-	maxh = maxHeight;
-	minh = minHeight;
+	for (int z = 0; z <= PATCH_SIZE; z++) {
+		for (int x = 0; x <= PATCH_SIZE; x++) {
+			const float& h = hMap[(z + m_WorldY) * gs->mapxp1 + (x + m_WorldX)];
+			const int vindex = (z * (PATCH_SIZE + 1) + x) * 3;
+			vertices[vindex + 1] = h; // only update Y coord
+		}
+	}
 
 	// Fill vertexBuffer
 	glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);
-	glBufferDataARB(GL_ARRAY_BUFFER_ARB, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW_ARB);
+	glBufferDataARB(GL_ARRAY_BUFFER_ARB, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW_ARB); 
 	/*
 	int bufferSize = 0;
 	glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_SIZE_ARB, &bufferSize);
@@ -293,7 +292,7 @@ void Patch::UpdateHeightMap()
 	}
 	*/
 	glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
-	
+
 	m_isDirty = true;
 }
 
@@ -340,12 +339,12 @@ void Patch::UpdateVisibility()
 {
 	const float3 mins(
 		m_WorldX * SQUARE_SIZE,
-		minh,
+		readmap->currMinHeight,
 		m_WorldY * SQUARE_SIZE
 	);
 	const float3 maxs(
 		(m_WorldX + PATCH_SIZE) * SQUARE_SIZE,
-		maxh,
+		readmap->currMaxHeight,
 		(m_WorldY + PATCH_SIZE) * SQUARE_SIZE
 	);
 	m_isVisible = cam2->InView(mins, maxs);
