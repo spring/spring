@@ -87,11 +87,13 @@ void QTPFS::PathSearch::IterateSearch(const std::vector<INode*>& allNodes, std::
 		nxtNode = ngbNodes[i];
 		nxtPoint = curNode->GetNeighborEdgeMidPoint(nxtNode);
 
+		assert(curNode->GetNeighborEdgeMidPoint(nxtNode) == nxtNode->GetNeighborEdgeMidPoint(curNode));
+
 		const bool isCurrent = (nxtNode->GetSearchState() >= searchState);
 		const bool isClosed = ((nxtNode->GetSearchState() & 1) == NODE_STATE_CLOSED);
 
-		const float mDist = (nxtPoint - curPoint).Length();
-		const float gCost = curNode->GetPathCost(NODE_PATH_COST_G) + (mDist * curNode->GetMoveCost());
+		const float nCost = curNode->GetMoveCost() * (nxtPoint - curPoint).Length();
+		const float gCost = curNode->GetPathCost(NODE_PATH_COST_G) + nCost;
 
 		bool keepNextNode = true;
 

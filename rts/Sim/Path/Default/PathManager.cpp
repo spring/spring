@@ -290,7 +290,7 @@ float3 CPathManager::NextWayPoint(
 	int ownerId,
 	bool synced
 ) {
-	SCOPED_TIMER("PathManager::NextWaypoint");
+	SCOPED_TIMER("PathManager::NextWayPoint");
 
 	// 0 indicates a no-path id
 	if (pathId == 0)
