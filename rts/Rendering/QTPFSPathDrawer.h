@@ -5,10 +5,12 @@
 
 #include "IPathDrawer.h"
 
+struct MoveData;
 class CVertexArray;
 
 namespace QTPFS {
-	class QTNode;
+	struct QTNode;
+	struct IPath;
 };
 
 struct QTPFSPathDrawer: public IPathDrawer {
@@ -19,8 +21,10 @@ public:
 	void UpdateExtraTexture(int, int, int, int, unsigned char*) const {}
 
 private:
-	void Draw() const;
-	void DrawNodeTree(const QTPFS::QTNode*, CVertexArray*) const;
+	void DrawNodeTree(const MoveData* md) const;
+	void DrawNodeTreeRec(const QTPFS::QTNode* nt, CVertexArray* va) const;
+	void DrawPaths(const MoveData* md) const;
+	void DrawPath(const QTPFS::IPath* path, CVertexArray* va) const;
 };
 
 #endif
