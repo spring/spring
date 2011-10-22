@@ -105,7 +105,16 @@ void CRoamMeshDrawer::Update()
 		for (int i = 0; i < (numPatchesX * numPatchesY); i++) {
 			Patch& p = m_Patches[i];
 			p.UpdateVisibility();
-			if (p.IsVisible()) {
+			if (p.IsVisible() != visibilitygrid[i]) {
+				visibilitygrid[i] = p.IsVisible();
+				retessellate = true;
+			}
+			if (p.IsVisible() && p.IsDirty()) {
+				//FIXME don't retessellate on small heightmap changes?
+				p.ComputeVariance();
+				retessellate = true;
+			}
+			/*if (p.IsVisible()) {
 				if (!visibilitygrid[i]) {
 					visibilitygrid[i] = true;
 					retessellate = true;
@@ -117,7 +126,7 @@ void CRoamMeshDrawer::Update()
 				}
 			} else {
 				visibilitygrid[i] = false;
-			}
+			}*/
 		}
 	}
 
