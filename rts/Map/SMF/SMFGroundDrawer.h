@@ -26,8 +26,6 @@ public:
 
 	friend class CSMFReadMap;
 	friend class IMeshDrawer;
-	//friend class Landscape;
-	//friend class Patch;
 
 	void Draw(const DrawPass::e& drawPass);
 	void DrawShadowPass();
@@ -67,13 +65,13 @@ private:
 	GLuint waterPlaneCamOutDispList;
 	GLuint waterPlaneCamInDispList;
 
-	Shader::IProgramObject* smfShaderBaseARB;   //! default (V+F) SMF ARB shader
-	Shader::IProgramObject* smfShaderReflARB;   //! shader (V+F) for the DynamicWater reflection pass
-	Shader::IProgramObject* smfShaderRefrARB;   //! shader (V+F) for the DynamicWater refraction pass
-	Shader::IProgramObject* smfShaderCurrARB;   //! currently active ARB shader
-	Shader::IProgramObject* smfShaderDefGLSL;   //! GLSL shader used when shadows are on
-	Shader::IProgramObject* smfShaderAdvGLSL;   //! GLSL shader used when shadows are off
-	Shader::IProgramObject* smfShaderCurGLSL;   //! currently active GLSL shader
+	Shader::IProgramObject* smfShaderBaseARB;   // default (V+F) SMF ARB shader
+	Shader::IProgramObject* smfShaderReflARB;   // shader (V+F) for the DynamicWater reflection pass
+	Shader::IProgramObject* smfShaderRefrARB;   // shader (V+F) for the DynamicWater refraction pass
+	Shader::IProgramObject* smfShaderCurrARB;   // currently active ARB shader
+	Shader::IProgramObject* smfShaderDefGLSL;   // GLSL shader used when shadows are on
+	Shader::IProgramObject* smfShaderAdvGLSL;   // GLSL shader used when shadows are off
+	Shader::IProgramObject* smfShaderCurGLSL;   // currently active GLSL shader
 
 	GL::LightHandler lightHandler;
 
