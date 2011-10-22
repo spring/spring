@@ -97,9 +97,9 @@ public:
 private:
 	// The recursive half of the Patch Class
 	void Split(TriTreeNode* tri);
-	void RecursTessellate(TriTreeNode* tri, int leftX, int leftY, int rightX, int rightY, int apexX, int apexY, int node);
-	void RecursRender(TriTreeNode* tri, int leftX, int leftY, int rightX, int rightY, int apexX, int apexY, bool dir, int maxdepth);
-	float RecursComputeVariance(int leftX, int leftY, float leftZ, int rightX, int rightY, float rightZ, int apexX, int apexY, float apexZ, int node);
+	void RecursTessellate(TriTreeNode* const& tri, const int& leftX, const int& leftY, const int& rightX, const int& rightY, const int& apexX, const int& apexY, const int& node);
+	void RecursRender(TriTreeNode* const& tri, const int& leftX, const int& leftY, const int& rightX, const int& rightY, const int& apexX, const int& apexY, int maxdepth);
+	float RecursComputeVariance(const int& leftX, const int& leftY, const float& leftZ, const int& rightX, const int& rightY, const float& rightZ, const int& apexX, const int& apexY, const float& apexZ, const int& node);
 
 public:
 	static void SetRenderMode(RenderMode mode) {
