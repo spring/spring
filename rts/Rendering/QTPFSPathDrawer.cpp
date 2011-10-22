@@ -1,3 +1,4 @@
+#include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
 #include "Map/Ground.h"
@@ -17,10 +18,12 @@
 #include "Sim/Path/QTPFS/PathManager.hpp"
 #undef private
 
+#include "Rendering/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/QTPFSPathDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
+#include "System/Util.h"
 
 static QTPFS::PathManager* pm = NULL;
 
@@ -65,9 +68,7 @@ void QTPFSPathDrawer::DrawAll() const {
 			glDisable(GL_LIGHTING);
 			glDisable(GL_DEPTH_TEST);
 
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			DrawNodeTree(md);
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 			DrawPaths(md);
 		}
 
@@ -92,24 +93,21 @@ void QTPFSPathDrawer::DrawNodeTreeRec(
 	const CMoveMath* mm,
 	CVertexArray* va
 ) const {
+	#define xminw (nt->xmin() * SQUARE_SIZE)
+	#define xmaxw (nt->xmax() * SQUARE_SIZE)
+	#define zminw (nt->zmin() * SQUARE_SIZE)
+	#define zmaxw (nt->zmax() * SQUARE_SIZE)
+	#define xmidw (nt->xmid() * SQUARE_SIZE)
+	#define zmidw (nt->zmid() * SQUARE_SIZE)
+
 	if (nt->IsLeaf()) {
-		#define xmin (nt->xmin() * SQUARE_SIZE)
-		#define xmax (nt->xmax() * SQUARE_SIZE)
-		#define zmin (nt->zmin() * SQUARE_SIZE)
-		#define zmax (nt->zmax() * SQUARE_SIZE)
-
-		const float3 verts[4] = {
-			float3(xmin, ground->GetHeightReal(xmin, zmin, false), zmin),
-			float3(xmax, ground->GetHeightReal(xmax, zmin, false), zmin),
-			float3(xmax, ground->GetHeightReal(xmax, zmax, false), zmax),
-			float3(xmin, ground->GetHeightReal(xmin, zmax, false), zmax),
+		const float3 verts[5] = {
+			float3(xminw, ground->GetHeightReal(xminw, zminw, false) + 4.0f, zminw),
+			float3(xmaxw, ground->GetHeightReal(xmaxw, zminw, false) + 4.0f, zminw),
+			float3(xmaxw, ground->GetHeightReal(xmaxw, zmaxw, false) + 4.0f, zmaxw),
+			float3(xminw, ground->GetHeightReal(xminw, zmaxw, false) + 4.0f, zmaxw),
+			float3(xmidw, ground->GetHeightReal(xmidw, zmidw, false) + 4.0f, zmidw),
 		};
-
-		#undef xmin
-		#undef xmax
-		#undef zmin
-		#undef zmax
-
 		static const unsigned char colors[2][4] = {
 			{1 * 255, 0 * 255, 0 * 255, 1 * 255}, // blocked
 			{0 * 255, 1 * 255, 0 * 255, 1 * 255}, // passable
@@ -118,18 +116,32 @@ void QTPFSPathDrawer::DrawNodeTreeRec(
 			&colors[0][0]:
 			&colors[1][0];
 
-		va->Initialize();
-		va->EnlargeArrays(4, 0, VA_SIZE_C);
-		va->AddVertexQC(verts[0], color);
-		va->AddVertexQC(verts[1], color);
-		va->AddVertexQC(verts[2], color);
-		va->AddVertexQC(verts[3], color);
-		va->DrawArrayC(GL_QUADS);
+		if (camera->InView(verts[4])) {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			va->Initialize();
+			va->EnlargeArrays(4, 0, VA_SIZE_C);
+			va->AddVertexQC(verts[0], color);
+			va->AddVertexQC(verts[1], color);
+			va->AddVertexQC(verts[2], color);
+			va->AddVertexQC(verts[3], color);
+			va->DrawArrayC(GL_QUADS);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+			font->SetTextColor(0.0f, 0.0f, 0.0f, 1.0f);
+			font->glWorldPrint(verts[4], 4.0f, FloatToString(nt->GetMoveCost(), "%8.2f"));
+		}
 	} else {
 		for (unsigned int i = 0; i < QTPFS::QTNode::CHILD_COUNT; i++) {
 			DrawNodeTreeRec(nt->children[i], md, mm, va);
 		}
 	}
+
+	#undef xminw
+	#undef xmaxw
+	#undef zminw
+	#undef zmaxw
+	#undef xmidw
+	#undef zmidw
 }
 
 void QTPFSPathDrawer::DrawPaths(const MoveData* md) const {
