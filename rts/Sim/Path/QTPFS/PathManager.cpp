@@ -180,8 +180,6 @@ std::string QTPFS::PathManager::GetCacheDirName(const std::string& mapArchiveNam
 }
 
 void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
-	return; // FIXME
-
 	std::vector<std::string> fileNames(nodeTrees.size());
 	std::vector<std::fstream*> fileStreams(nodeTrees.size());
 
@@ -190,6 +188,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 		assert(FileSystem::DirExists(cacheFileDir));
 	}
 
+	bool read = false;
 	char loadMsg[512] = {'\0'};
 	const char* fmtString = "[%s] serializing node-tree %u";
 
@@ -201,9 +200,11 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 
 		if (FileSystem::FileExists(fileNames[i])) {
 			// read the i-th tree
+			read = true;
 			fileStreams[i]->open(fileNames[i].c_str(), std::ios::in | std::ios::binary);
 		} else {
 			// write the i-th tree
+			read = false;
 			fileStreams[i]->open(fileNames[i].c_str(), std::ios::out | std::ios::binary);
 		}
 
@@ -211,7 +212,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 		loadscreen->SetLoadMessage(loadMsg);
 
 		serializingNodeLayer = &nodeLayers[i];
-		nodeTrees[i]->Serialize(*fileStreams[i], FileSystem::FileExists(fileNames[i]));
+		nodeTrees[i]->Serialize(*fileStreams[i], read);
 		serializingNodeLayer = NULL;
 
 		fileStreams[i]->flush();
