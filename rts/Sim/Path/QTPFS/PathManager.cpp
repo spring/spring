@@ -351,7 +351,14 @@ void QTPFS::PathManager::Update() {
 	}
 }
 
-float3 QTPFS::PathManager::NextWaypoint(unsigned int pathID, float3 curPoint, float rad, int, int, bool) {
+float3 QTPFS::PathManager::NextWayPoint(
+	unsigned int pathID,
+	float3 curPoint,
+	float radius,
+	int, // numTrials
+	int, // ownerID
+	bool synced
+) {
 	const PathCacheMap::const_iterator cacheIt = pathCacheMap.find(pathID);
 
 	// dangling ID after re-request failure or regular deletion
@@ -371,7 +378,7 @@ float3 QTPFS::PathManager::NextWaypoint(unsigned int pathID, float3 curPoint, fl
 
 	assert(livePath->GetID() != 0);
 
-	const float radSq = std::max(float(SQUARE_SIZE), rad * rad);
+	const float radiusSq = std::max(float(SQUARE_SIZE), radius * radius);
 
 	unsigned int curPointIdx =  0;
 	unsigned int nxtPointIdx = -1U;
@@ -381,7 +388,7 @@ float3 QTPFS::PathManager::NextWaypoint(unsigned int pathID, float3 curPoint, fl
 	for (unsigned int i = 0; i < (livePath->NumPoints() - 1); i++) {
 		const float3& point = livePath->GetPoint(i);
 
-		if ((curPoint - point).SqLength() < radSq) {
+		if ((curPoint - point).SqLength() < radiusSq) {
 			curPointIdx = i;
 			nxtPointIdx = i + 1;
 		}

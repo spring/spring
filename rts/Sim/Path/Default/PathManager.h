@@ -30,14 +30,14 @@ public:
 	void DeletePath(unsigned int pathId);
 
 
-	float3 NextWaypoint(
+	float3 NextWayPoint(
 		unsigned int pathId,
 		float3 callerPos,
 		float minDistance = 0.0f,
 		int numRetries = 0,
 		int ownerId = 0,
 		bool synced = true
-	) const;
+	);
 
 	unsigned int RequestPath(
 		const MoveData* moveData,

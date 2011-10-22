@@ -733,7 +733,7 @@ int CAICallback::InitPath(const float3& start, const float3& end, int pathType, 
 
 float3 CAICallback::GetNextWaypoint(int pathId)
 {
-	return pathManager->NextWaypoint(pathId, ZeroVector, 0.0f, 0, 0, false);
+	return pathManager->NextWayPoint(pathId, ZeroVector, 0.0f, 0, 0, false);
 }
 
 void CAICallback::FreePath(int pathId)

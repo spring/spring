@@ -282,14 +282,14 @@ void CPathManager::LowRes2MedRes(MultiPath& multiPath, const float3& startPos, i
 /*
 Removes and return the next waypoint in the multipath corresponding to given id.
 */
-float3 CPathManager::NextWaypoint(
+float3 CPathManager::NextWayPoint(
 	unsigned int pathId,
 	float3 callerPos,
 	float minDistance,
 	int numRetries,
 	int ownerId,
 	bool synced
-) const {
+) {
 	SCOPED_TIMER("PathManager::NextWaypoint");
 
 	// 0 indicates a no-path id
@@ -350,7 +350,7 @@ float3 CPathManager::NextWaypoint(
 					return float3(-1.0f, -1.0f, -1.0f);
 				}
 			} else {
-				return NextWaypoint(pathId, callerPos, minDistance, numRetries + 1, ownerId, synced);
+				return NextWayPoint(pathId, callerPos, minDistance, numRetries + 1, ownerId, synced);
 			}
 		} else {
 			waypoint = multiPath->maxResPath.path.back();

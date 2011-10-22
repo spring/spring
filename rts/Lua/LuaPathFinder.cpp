@@ -127,7 +127,7 @@ static int path_next(lua_State* L)
 	const float minDist = luaL_optfloat(L, 5, 0.0f);
 
 	const bool synced = CLuaHandle::GetSynced(L);
-	const float3 point = pathManager->NextWaypoint(pathID, callerPos, minDist, 0, 0, synced);
+	const float3 point = pathManager->NextWayPoint(pathID, callerPos, minDist, 0, 0, synced);
 
 	if ((point.x == -1.0f) &&
 	    (point.y == -1.0f) &&
