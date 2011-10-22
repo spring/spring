@@ -24,7 +24,7 @@ class CSMFGroundDrawer;
 /**
  * Map mesh drawer implementation
  */
-class CRoamMeshDrawer : public IMeshDrawer, public CEventClient //FIXME merge with landscape class
+class CRoamMeshDrawer : public IMeshDrawer, public CEventClient
 {
 public:
 	// CEventClient interface
