@@ -295,15 +295,24 @@ void CRoamMeshDrawer::Tessellate(const float3& campos, int viewradius)
 void CRoamMeshDrawer::UnsyncedHeightMapUpdate(const SRectangle& rect)
 {
 	// hint: the -+1 are cause Patches share 1 pixel border (no vertex holes!)
-	const int xstart = std::max(0,           (int)std::floor((rect.x1 - 1.0f) / PATCH_SIZE));
+	const int xstart = std::max(0,               (int)std::floor((rect.x1 - 1.0f) / PATCH_SIZE));
 	const int xend   = std::min(numPatchesX - 1, (int)std::ceil( (rect.x2 + 1.0f) / PATCH_SIZE));
-	const int zstart = std::max(0,           (int)std::floor((rect.z1 - 1.0f) / PATCH_SIZE));
+	const int zstart = std::max(0,               (int)std::floor((rect.z1 - 1.0f) / PATCH_SIZE));
 	const int zend   = std::min(numPatchesY - 1, (int)std::ceil( (rect.z2 + 1.0f) / PATCH_SIZE));
 
-	for (int z = zstart; z <= zend; ++z) {
-		for (int x = xstart; x <= xend; ++x) {
+	for (int z = zstart; z < zend; ++z) {
+		for (int x = xstart; x < xend; ++x) {
 			Patch& p = m_Patches[z * numPatchesX + x];
-			p.UpdateHeightMap(); //FIXME only update changed area?
+
+			// clamp the update rect to the patch constraints
+			SRectangle prect(
+				std::max(rect.x1 - p.m_WorldX, 0),
+				std::max(rect.z1 - p.m_WorldY, 0),
+				std::min(rect.x2 - p.m_WorldX, PATCH_SIZE),
+				std::min(rect.z2 - p.m_WorldY, PATCH_SIZE)
+			);
+
+			p.UpdateHeightMap(prect);
 		}
 	}
 

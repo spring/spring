@@ -4,22 +4,27 @@
 #define PATCH_H
 
 #include "Rendering/GL/myGL.h"
+#include "System/Rectangle.h"
 
 
 class CSMFGroundDrawer;
 
 
+// How many heightmap pixels a patch consists of
+#define PATCH_SIZE 128
+
 // Depth of variance tree: should be near SQRT(PATCH_SIZE) + 1
 #define VARIANCE_DEPTH (12)
+
 
 /**
  * Patch render mode
  * way indices/vertices are send to the GPU
  */
 enum RenderMode {
-	VA,
-	DL,
-	VBO
+	VBO = 1,
+	DL  = 2,
+	VA  = 3
 };
 
 
@@ -65,6 +70,8 @@ public:
 	void Init(CSMFGroundDrawer* drawer, int worldX, int worldZ, const float* hMap, int mx); //FIXME make this a ctor!
 	~Patch();
 
+	friend class CRoamMeshDrawer;
+
 	void Reset();
 	
 	TriTreeNode* GetBaseLeft()
@@ -89,7 +96,7 @@ public:
 	}
 
 	void UpdateVisibility();
-	void UpdateHeightMap();
+	void UpdateHeightMap(const SRectangle& rect = SRectangle(0,0,PATCH_SIZE,PATCH_SIZE));
 
 	void Tessellate(const float3& campos, int viewradius);
 	void ComputeVariance();
