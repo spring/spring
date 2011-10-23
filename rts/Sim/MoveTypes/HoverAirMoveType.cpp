@@ -189,6 +189,7 @@ void CHoverAirMoveType::StartMoving(float3 pos, float goalRadius)
 
 	SetGoal(pos, goalRadius);
 	brakeDistance = ((maxSpeed * maxSpeed) / decRate);
+	progressState = AMoveType::Active;
 }
 
 void CHoverAirMoveType::StartMoving(float3 pos, float goalRadius, float speed)
@@ -271,6 +272,8 @@ void CHoverAirMoveType::StopMoving()
 	forceHeading = false;
 	owner->isMoving = false;
 	wantedHeight = orgWantedHeight;
+	if (progressState != AMoveType::Failed)
+		progressState = AMoveType::Done;
 }
 
 
@@ -292,6 +295,9 @@ void CHoverAirMoveType::UpdateLanded()
 	}
 
 	spd = ZeroVector;
+
+	if (progressState != AMoveType::Failed)
+		progressState = AMoveType::Done;
 }
 
 void CHoverAirMoveType::UpdateTakeoff()
@@ -527,6 +533,7 @@ void CHoverAirMoveType::UpdateLanding()
 			if (goalPos.SqDistance2D(pos) < 900) {
 				goalPos = goalPos + gs->randVector() * 300;
 				goalPos.CheckInBounds();
+				progressState = AMoveType::Failed; // exact landing pos failed, make sure finishcommand is called anyway
 			}
 			flyState = FLY_LANDING;
 			UpdateFlying();
