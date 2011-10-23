@@ -135,11 +135,13 @@ SRectangle QTPFS::INode::ClipRectangle(const SRectangle& r) const {
 QTPFS::QTNode::QTNode(
 	unsigned int id,
 	unsigned int x1, unsigned int z1,
-	unsigned int x2, unsigned int z2)
-{
-	identifier = id;
+	unsigned int x2, unsigned int z2
+) {
+	nodeNumber = id;
 	searchState = 0;
-	tempNum = -1;
+
+	currMagicNum =  0;
+	prevMagicNum = -1U;
 
 	_xmin = x1;
 	_zmin = z1;
@@ -232,7 +234,7 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 // that contains rectangle <r> (<n> will be found
 // from any higher node passed in, including root)
 //
-void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const SRectangle& r) {
+void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const SRectangle& r, bool isInitializing) {
 	const unsigned int rel = GetRectangleRelation(r);
 
 	if (rel == REL_RECT_EXTERIOR_NODE) {
@@ -249,7 +251,7 @@ void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const SRectangle& r) {
 		true;
 
 	if (leaf || !cont) {
-		Tesselate(nl, cr);
+		Tesselate(nl, cr, isInitializing);
 		return;
 	}
 
@@ -261,13 +263,13 @@ void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const SRectangle& r) {
 	// breaking <r> up into pieces while descending further)
 	//
 	for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
-		children[i]->PreTesselate(nl, cr);
+		children[i]->PreTesselate(nl, cr, isInitializing);
 	}
 }
 
 
 
-void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r) {
+void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool isInitializing) {
 	unsigned int numNewBinSquares = 0; // number of squares that changed bin within <r> after deformation
 	unsigned int numRefBinSquares = 0; // number of squares in <r> NOT equal to the new ref-bin at <x1, z1>
 
@@ -291,12 +293,6 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r) {
 			speedModSum += curSpeedMods[sqrIdx];
 		}
 	}
-
-	assert(
-		((numNewBinSquares == (r.GetWidth() * r.GetHeight())) && (numRefBinSquares == 0)) ||
-		((numNewBinSquares >                               0) && (numRefBinSquares >  0)) ||
-		((numNewBinSquares ==                              0) && (numRefBinSquares == 0))
-	);
 
 	// (re-)calculate the average cost of this node
 	speedModAvg = speedModSum / (xsize() * zsize());
@@ -325,7 +321,7 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r) {
 			registerNode = false;
 
 			for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
-				children[i]->Tesselate(nl, children[i]->ClipRectangle(r));
+				children[i]->Tesselate(nl, children[i]->ClipRectangle(r), isInitializing);
 			}
 		}
 	}
@@ -362,7 +358,7 @@ void QTPFS::QTNode::Serialize(std::fstream& fStream, bool read) {
 	unsigned int numChildren = IsLeaf()? 0: QTNode::CHILD_COUNT;
 
 	if (read) {
-		fStream.read(reinterpret_cast<char*>(&identifier), sizeof(unsigned int));
+		fStream.read(reinterpret_cast<char*>(&nodeNumber), sizeof(unsigned int));
 		fStream.read(reinterpret_cast<char*>(&numChildren), sizeof(unsigned int));
 
 		fStream.read(reinterpret_cast<char*>(&speedModAvg), sizeof(float));
@@ -378,7 +374,7 @@ void QTPFS::QTNode::Serialize(std::fstream& fStream, bool read) {
 			PathManager::GetSerializingNodeLayer()->RegisterNode(this);
 		}
 	} else {
-		fStream.write(reinterpret_cast<const char*>(&identifier), sizeof(unsigned int));
+		fStream.write(reinterpret_cast<const char*>(&nodeNumber), sizeof(unsigned int));
 		fStream.write(reinterpret_cast<const char*>(&numChildren), sizeof(unsigned int));
 
 		fStream.write(reinterpret_cast<const char*>(&speedModAvg), sizeof(float));
@@ -394,10 +390,10 @@ void QTPFS::QTNode::Serialize(std::fstream& fStream, bool read) {
 unsigned int QTPFS::QTNode::GetNeighbors(const std::vector<INode*>& nodes, std::vector<INode*>& ngbs) {
 	assert(IsLeaf());
 
-	if (tempNum != gs->frameNum) {
-		tempNum = gs->frameNum;
+	if (prevMagicNum != currMagicNum) {
+		prevMagicNum = currMagicNum;
 
-		// regenerate our neighbor cache for this frame
+		// regenerate our neighbor cache
 		if (GetMaxNumNeighbors() > 0) {
 			neighbors.clear();
 			neighbors.reserve(GetMaxNumNeighbors() + 4);

@@ -17,8 +17,11 @@ namespace QTPFS {
 		bool Update(const SRectangle& r, const MoveData* md, const CMoveMath* mm);
 		void Clear();
 
-		float GetNodeRatio() const;
-		INode* GetNode(unsigned int x, unsigned int z);
+		float GetNodeRatio() const { return (numLeafNodes / float(xsize * zsize)); }
+		const INode* GetNode(unsigned int x, unsigned int z) const { return nodeGrid[z * xsize + x]; }
+		      INode* GetNode(unsigned int x, unsigned int z)       { return nodeGrid[z * xsize + x]; }
+		const INode* GetNode(unsigned int i) const { return nodeGrid[i]; }
+		      INode* GetNode(unsigned int i)       { return nodeGrid[i]; }
 
 		const std::vector<int>& GetOldSpeedBins() const { return oldSpeedBins; }
 		const std::vector<int>& GetCurSpeedBins() const { return curSpeedBins; }
@@ -39,6 +42,9 @@ namespace QTPFS {
 		std::vector<int  > oldSpeedBins;
 
 		unsigned int numLeafNodes;
+
+		unsigned int xsize;
+		unsigned int zsize;
 	};
 };
 
