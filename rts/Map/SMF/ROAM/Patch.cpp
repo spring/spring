@@ -112,15 +112,14 @@ void Patch::RecursTessellate(TriTreeNode* const& tri, const int& leftX, const in
 	if (varianceSaved) {
 		// make max tessellation viewRadius dependent
 		// w/o this huge cliffs cause huge variances and so will always tessellate fully independent of camdist (-> huge/distfromcam ~= huge)
-		const float maxVariance = smfGroundDrawer->viewRadius * 0.35f;
-		const float myVariance = std::min(m_CurrentVariance[node], maxVariance);
+		const float myVariance = std::min(m_CurrentVariance[node], varianceMaxLimit);
 
 		const int sizeX = std::max(leftX - rightX, rightX - leftX);
 		const int sizeY = std::max(leftY - rightY, rightY - leftY);
 		const int size  = std::max(sizeX, sizeY);
 
 		// Take both distance and variance and patch size into consideration
-		TriVariance = (myVariance * PATCH_SIZE * size) / distfromcam;
+		TriVariance = (myVariance * PATCH_SIZE * size) * camDistLODFactor;
 	} else {
 		TriVariance = 10.0f; // >1 -> When variance isn't saved issue further tessellation
 	}
@@ -355,16 +354,24 @@ void Patch::UpdateVisibility()
 // ---------------------------------------------------------------------
 // Create an approximate mesh.
 //
-void Patch::Tessellate(const float3& campos, int viewradius)
+void Patch::Tessellate(const float3& campos, int groundDetail)
 {
+	// Set/Update LOD params
 	const float myx = (m_WorldX + PATCH_SIZE / 2) * SQUARE_SIZE;
 	const float myy = (readmap->currMaxHeight + readmap->currMinHeight) * 0.5f;
 	const float myz = (m_WorldY + PATCH_SIZE / 2) * SQUARE_SIZE;
 	const float3 myPos(myx,myy,myz);
-	
-	distfromcam  = (myPos - campos).Length();
-	distfromcam *= 200.0f / viewradius;
-	distfromcam  = std::max(1.f, distfromcam);
+
+	camDistLODFactor  = (myPos - campos).Length();
+	camDistLODFactor *= 300.0f / groundDetail; // MAGIC NUMBER 1: increase the dividend to reduce LOD in camera distance
+	camDistLODFactor  = std::max(1.0f, camDistLODFactor);
+	camDistLODFactor  = 1.0f / camDistLODFactor;
+
+	// MAGIC NUMBER 2: variances are clamped by it, so it regulates how strong areas are tessellated.
+	//   Note, the maximum tessellation is untouched by it. Instead it reduces the maximum LOD in
+	//   distance, while the param above defines the overall FallOff rate.
+	varianceMaxLimit = groundDetail * 0.35f;
+
 
 	// Split each of the base triangles
 	m_CurrentVariance = m_VarianceLeft;
