@@ -45,6 +45,8 @@ public:
 
 	void SetupBigSquare(const int bigSquareX, const int bigSquareY);
 
+	void SwitchMeshDrawer(int mode = -1);
+
 private:
 	bool LoadMapShaders();
 	void CreateWaterPlanes(bool camOufOfMap);

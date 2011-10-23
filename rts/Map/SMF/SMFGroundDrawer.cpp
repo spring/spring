@@ -96,6 +96,33 @@ CSMFGroundDrawer::~CSMFGroundDrawer(void)
 }
 
 
+void CSMFGroundDrawer::SwitchMeshDrawer(int mode)
+{
+	int curMode = (dynamic_cast<CRoamMeshDrawer*>(meshDrawer) ? 1 : 0);
+
+	if (mode < 0) {
+		mode = curMode + 1;
+		mode %= 2;
+	}
+
+	if (curMode == mode)
+		return;
+
+	delete meshDrawer;
+
+	switch (mode) {
+		case 0:
+			LOG("Switching to Legacy Mesh Rendering");
+			meshDrawer = new CLegacyMeshDrawer(smfMap, this);
+			break;
+		default:
+			LOG("Switching to ROAM Mesh Rendering");
+			meshDrawer = new CRoamMeshDrawer(smfMap, this);
+			break;
+	}
+}
+
+
 bool CSMFGroundDrawer::LoadMapShaders() {
 	#define sh shaderHandler
 

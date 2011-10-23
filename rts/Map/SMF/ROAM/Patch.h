@@ -106,18 +106,15 @@ public:
 
 	void SetSquareTexture() const;
 
+public:
+	static void SwitchRenderMode(int mode = -1);
+
 private:
 	// The recursive half of the Patch Class
 	void Split(TriTreeNode* tri);
 	void RecursTessellate(TriTreeNode* const& tri, const int& leftX, const int& leftY, const int& rightX, const int& rightY, const int& apexX, const int& apexY, const int& node);
 	void RecursRender(TriTreeNode* const& tri, const int& leftX, const int& leftY, const int& rightX, const int& rightY, const int& apexX, const int& apexY, int maxdepth);
 	float RecursComputeVariance(const int& leftX, const int& leftY, const float& leftZ, const int& rightX, const int& rightY, const float& rightZ, const int& apexX, const int& apexY, const float& apexZ, const int& node);
-
-public:
-	static void SetRenderMode(RenderMode mode) {
-		renderMode = mode;
-	}
-	static void ToggleRenderMode();
 
 protected:
 	static RenderMode renderMode;
@@ -129,7 +126,6 @@ protected:
 
 	float m_VarianceLeft[1 << (VARIANCE_DEPTH)];  //< Left variance tree
 	float m_VarianceRight[1 << (VARIANCE_DEPTH)]; //< Right variance tree
-
 	float* m_CurrentVariance;  //< Which varience we are currently using. [Only valid during the Tessellate and ComputeVariance passes]
 
 	bool m_isVisible; //< Is this patch visible in the current frame?
