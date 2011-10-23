@@ -43,15 +43,15 @@ public:
 		drawPathCost,
 	};
 
-	CBaseGroundDrawer(void);
-	virtual ~CBaseGroundDrawer(void);
+	CBaseGroundDrawer();
+	virtual ~CBaseGroundDrawer();
 
 	virtual void Draw(const DrawPass::e& drawPass) = 0;
-	virtual void DrawShadowPass(void);
+	virtual void DrawShadowPass();
 
-	virtual void SetupBaseDrawPass(void) {}
-	virtual void SetupReflDrawPass(void) {}
-	virtual void SetupRefrDrawPass(void) {}
+	virtual void SetupBaseDrawPass() {}
+	virtual void SetupReflDrawPass() {}
+	virtual void SetupRefrDrawPass() {}
 
 	virtual void Update() = 0;
 	virtual void UpdateSunDir() = 0;
