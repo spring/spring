@@ -147,7 +147,7 @@ void Patch::RecursTessellate(TriTreeNode* const& tri, const int& leftX, const in
 
 void Patch::RecursRender(TriTreeNode* const& tri, const int& leftX, const int& leftY, const int& rightX, const int& rightY, const int& apexX, const int& apexY, int maxdepth)
 {
-	if ( tri->IsLeaf() || maxdepth>12 ) {
+	if ( tri->IsLeaf() /*|| maxdepth>12*/ ) {
 		indices.push_back(apexX  + apexY  * (PATCH_SIZE + 1));
 		indices.push_back(leftX  + leftY  * (PATCH_SIZE + 1));
 		indices.push_back(rightX + rightY * (PATCH_SIZE + 1));
