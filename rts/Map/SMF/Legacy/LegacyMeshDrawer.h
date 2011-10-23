@@ -28,6 +28,8 @@ public:
 	void DrawShadowMesh();
 
 private:
+	void UpdateLODParams(const DrawPass::e& drawPass);
+
 	void FindRange(const CCamera* cam, int& xs, int& xe, int y, int lod);
 	inline bool BigTexSquareRowVisible(const CCamera* cam, int) const;
 

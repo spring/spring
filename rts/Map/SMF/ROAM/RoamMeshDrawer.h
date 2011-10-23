@@ -67,7 +67,7 @@ private:
 	CSMFGroundDrawer* smfGroundDrawer;
 
 	float3 lastCamPos;
-	int lastViewRadius;
+	int lastGroundDetail;
 
 	int numPatchesX;
 	int numPatchesY;

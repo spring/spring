@@ -55,6 +55,7 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	: CEventClient("[CRoamMeshDrawer]", 271989, false)
 	, smfReadMap(rm)
 	, smfGroundDrawer(gd)
+	, lastGroundDetail(0)
 	, visibilitygrid(NULL)
 {
 	eventHandler.AddClient(this);
@@ -154,18 +155,14 @@ void CRoamMeshDrawer::Update()
 
 	retessellate |= forceRetessellate;
 
-	retessellate |= (lastViewRadius != smfGroundDrawer->viewRadius);
+	retessellate |= (lastGroundDetail != smfGroundDrawer->GetGroundDetail());
 
 	if (retessellate) {
-		lastViewRadius = smfGroundDrawer->viewRadius;
-		lastCamPos = cam->pos;
-		forceRetessellate = false;
-
 		{ SCOPED_TIMER("ROAM::Tessellate");
 			//FIXME this tessellates with current camera + viewRadius
 			//  so it doesn't retessellate patches that are e.g. only vis. in the shadow frustum
 			Reset();
-			Tessellate(cam->pos, smfGroundDrawer->viewRadius);
+			Tessellate(cam->pos, smfGroundDrawer->GetGroundDetail());
 		}
 
 		{ SCOPED_TIMER("ROAM::Render");
@@ -197,6 +194,10 @@ void CRoamMeshDrawer::Update()
 				cam2->pos.z
 				);
 		}*/
+
+		lastGroundDetail = smfGroundDrawer->GetGroundDetail();
+		lastCamPos = cam->pos;
+		forceRetessellate = false;
 	}
 }
 

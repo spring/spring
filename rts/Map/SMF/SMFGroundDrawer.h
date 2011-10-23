@@ -25,7 +25,6 @@ public:
 	~CSMFGroundDrawer();
 
 	friend class CSMFReadMap;
-	friend class IMeshDrawer;
 
 	void Draw(const DrawPass::e& drawPass);
 	void DrawShadowPass();
@@ -40,6 +39,7 @@ public:
 
 	void IncreaseDetail();
 	void DecreaseDetail();
+	int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const;
 
 	GL::LightHandler* GetLightHandler() { return &lightHandler; }
 
@@ -53,14 +53,11 @@ private:
 	void SetupTextureUnits(bool drawReflection);
 	void ResetTextureUnits(bool drawReflection);
 
-private:
+protected:
 	CSMFReadMap* smfMap;
 	IMeshDrawer* meshDrawer;
 
-public://FIXME
-	int viewRadius;
-private:
-	int neededLod;
+	int groundDetail;
 
 	GLuint waterPlaneCamOutDispList;
 	GLuint waterPlaneCamInDispList;
