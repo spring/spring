@@ -58,6 +58,7 @@ bool QTPFS::PathSearch::Execute(
 	}
 
 	if (!haveFullPath) {
+		openNodes.reserve(16384);
 		openNodes.push(srcNode);
 		srcNode->SetPrevNode(NULL);
 		srcNode->SetPathCost(NODE_PATH_COST_G, 0.0f);

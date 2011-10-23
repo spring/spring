@@ -10,6 +10,8 @@
 
 #include "Path.hpp"
 
+#define IGNORE_DEAD_PATHS
+
 struct SRectangle;
 
 namespace QTPFS {
