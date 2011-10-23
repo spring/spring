@@ -255,7 +255,7 @@ Patch::~Patch()
 }
 
 
-void Patch::UpdateHeightMap()
+void Patch::UpdateHeightMap(const SRectangle& rect)
 {
 	const float* hMap = readmap->GetCornerHeightMapSynced(); //FIXME
 
@@ -272,17 +272,18 @@ void Patch::UpdateHeightMap()
 		}
 	}
 
-	for (int z = 0; z <= PATCH_SIZE; z++) {
-		for (int x = 0; x <= PATCH_SIZE; x++) {
+	for (int z = rect.z1; z <= rect.z2; z++) {
+		for (int x = rect.x1; x <= rect.x2; x++) {
 			const float& h = hMap[(z + m_WorldY) * gs->mapxp1 + (x + m_WorldX)];
 			const int vindex = (z * (PATCH_SIZE + 1) + x) * 3;
 			vertices[vindex + 1] = h; // only update Y coord
 		}
 	}
 
-	// Fill vertexBuffer
+	//FIXME don't do so in DispList mode!
+	// Upload vertexBuffer
 	glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);
-	glBufferDataARB(GL_ARRAY_BUFFER_ARB, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW_ARB); 
+	glBufferDataARB(GL_ARRAY_BUFFER_ARB, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW_ARB);
 	/*
 	int bufferSize = 0;
 	glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_SIZE_ARB, &bufferSize);

@@ -17,8 +17,7 @@ class CSMFGroundDrawer;
 // How many TriTreeNodes should be allocated?
 #define POOL_SIZE (500000)
 
-// How many heightmap pixels a patch consists of
-#define PATCH_SIZE 128
+
 
 
 /**
