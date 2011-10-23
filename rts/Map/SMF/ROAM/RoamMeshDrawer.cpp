@@ -22,7 +22,6 @@
 #include "System/Rectangle.h"
 //#include "System/OpenMP_cond.h"
 #include "System/TimeProfiler.h"
-#include "System/Config/ConfigHandler.h" //FIXME?
 #include "System/Log/ILog.h"
 
 #include <cmath>
@@ -59,9 +58,6 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	, visibilitygrid(NULL)
 {
 	eventHandler.AddClient(this);
-
-	//viewRadius = configHandler->GetInt("GroundDetail");
-	//viewRadius += (viewRadius & 1); // we need a multiple of 2
 
 	numPatchesX = gs->mapx / PATCH_SIZE;
 	numPatchesY = gs->mapy / PATCH_SIZE;
