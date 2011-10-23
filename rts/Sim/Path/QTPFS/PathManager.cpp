@@ -319,6 +319,7 @@ void QTPFS::PathManager::Update() {
 
 		searches.clear();
 
+		#ifndef IGNORE_DEAD_PATHS
 		// re-request LIVE paths that were marked as DEAD after a deformation
 		for (deadPathsIt = deadPaths.begin(); deadPathsIt != deadPaths.end(); ++deadPathsIt) {
 			const IPath* oldPath = pathCache.GetLivePath(*deadPathsIt);
@@ -367,6 +368,7 @@ void QTPFS::PathManager::Update() {
 		//     --> all subsequent NextWaypoint (and DeletePath)
 		//     calls will be no-ops
 		pathCache.KillDeadPaths(replacedPathIDs);
+		#endif
 	}
 }
 

@@ -3,10 +3,10 @@
 #ifndef QTPFS_PATHSEARCH_HDR
 #define QTPFS_PATHSEARCH_HDR
 
-#include <queue>
 #include <vector>
 
 #include "Node.hpp"
+#include "PathDataTypes.hpp"
 #include "System/float3.h"
 
 #define TRACE_PATH_SEARCHES
@@ -121,7 +121,8 @@ namespace QTPFS {
 		INode *curNode, *nxtNode;
 
 		// rely on INode::operator() to sort the INode*'s by increasing f-cost
-		std::priority_queue<INode*, std::vector<INode*>, INode> openNodes;
+		// std::priority_queue<INode*, std::vector<INode*>, INode> openNodes;
+		reservable_priority_queue<INode*, std::vector<INode*>, INode> openNodes;
 
 		bool haveOpenNode;
 		bool haveFullPath;
