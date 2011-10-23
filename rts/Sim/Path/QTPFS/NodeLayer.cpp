@@ -25,29 +25,27 @@ static int GetSpeedModBin(float absSpeedMod, float relSpeedMod) {
 
 
 
-float QTPFS::NodeLayer::GetNodeRatio() const { return (numLeafNodes / float(gs->mapx * gs->mapy)); }
-QTPFS::INode* QTPFS::NodeLayer::GetNode(unsigned int x, unsigned int z) { return nodeGrid[z * gs->mapx + x]; }
-
-
-
 void QTPFS::NodeLayer::RegisterNode(INode* n) {
 	for (unsigned int hmx = n->xmin(); hmx < n->xmax(); hmx++) {
 		for (unsigned int hmz = n->zmin(); hmz < n->zmax(); hmz++) {
-			nodeGrid[hmz * gs->mapx + hmx] = n;
+			nodeGrid[hmz * xsize + hmx] = n;
 		}
 	}
 }
 
 void QTPFS::NodeLayer::Init() {
-	nodeGrid.resize(gs->mapx * gs->mapy, NULL);
-
-	curSpeedMods.resize(gs->mapx * gs->mapy, 0.0f);
-	oldSpeedMods.resize(gs->mapx * gs->mapy, 0.0f);
-	oldSpeedBins.resize(gs->mapx * gs->mapy, -1);
-	curSpeedBins.resize(gs->mapx * gs->mapy, -1);
-
 	// pre-count the root
 	numLeafNodes = 1;
+
+	xsize = gs->mapx;
+	zsize = gs->mapy;
+
+	nodeGrid.resize(xsize * zsize, NULL);
+
+	curSpeedMods.resize(xsize * zsize, 0.0f);
+	oldSpeedMods.resize(xsize * zsize, 0.0f);
+	oldSpeedBins.resize(xsize * zsize, -1);
+	curSpeedBins.resize(xsize * zsize, -1);
 }
 
 void QTPFS::NodeLayer::Clear() {
@@ -72,7 +70,7 @@ bool QTPFS::NodeLayer::Update(const SRectangle& r, const MoveData* md, const CMo
 	// divide speed-modifiers into bins
 	for (unsigned int hmx = r.x1; hmx < r.x2; hmx++) {
 		for (unsigned int hmz = r.z1; hmz < r.z2; hmz++) {
-			const unsigned int sqrIdx = hmz * gs->mapx + hmx;
+			const unsigned int sqrIdx = hmz * xsize + hmx;
 
 			const float newAbsSpeedMod = Clamp(mm->GetPosSpeedMod(*md, hmx, hmz), PM::MIN_SPEEDMOD_VALUE, PM::MAX_SPEEDMOD_VALUE);
 			const float newRelSpeedMod = (newAbsSpeedMod - minSpeedMod) / speedModRng;

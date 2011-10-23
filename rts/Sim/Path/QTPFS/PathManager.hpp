@@ -44,6 +44,7 @@ namespace QTPFS {
 			int = 0, // ownerID
 			bool synced = true
 		);
+
 		static NodeLayer* GetSerializingNodeLayer() { return serializingNodeLayer; }
 
 		static const unsigned int NUM_SPEEDMOD_BINS = 20;
@@ -53,17 +54,20 @@ namespace QTPFS {
 	private:
 		std::string GetCacheDirName(const std::string& mapArchiveName, const std::string& modArchiveName) const;
 		void InitNodeLayers(unsigned int threadNum, unsigned int numThreads, const SRectangle& mapRect, bool haveCacheDir);
-		void UpdateNodeLayer(unsigned int i, const SRectangle& r, bool wantTesselation);
+		void UpdateNodeLayer(unsigned int i, const SRectangle& r, bool isInitializing, bool wantTesselation);
 		void Serialize(const std::string& cacheFileDir);
 
 		std::vector<NodeLayer> nodeLayers;
 		std::vector<QTNode*> nodeTrees;
 		std::vector<PathCache> pathCaches;
-		std::map<unsigned int, unsigned int> pathCacheMap;
 		std::vector< std::list<IPathSearch*> > pathSearches;
+		std::map<unsigned int, unsigned int> pathTypes;
+		std::map<unsigned int, PathSearchTrace::Execution*> pathTraces;
 
-		typedef std::map<unsigned int, unsigned int> PathCacheMap;
-		typedef std::map<unsigned int, unsigned int>::iterator PathCacheMapIt;
+		typedef std::map<unsigned int, unsigned int> PathTypeMap;
+		typedef std::map<unsigned int, unsigned int>::iterator PathTypeMapIt;
+		typedef std::map<unsigned int, PathSearchTrace::Execution*> PathTraceMap;
+		typedef std::map<unsigned int, PathSearchTrace::Execution*>::iterator PathTraceMapIt;
 
 		static NodeLayer* serializingNodeLayer;
 

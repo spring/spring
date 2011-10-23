@@ -9,10 +9,48 @@
 #include "Node.hpp"
 #include "System/float3.h"
 
+#define TRACE_PATH_SEARCHES
+
 namespace QTPFS {
 	struct PathCache;
 	struct NodeLayer;
 	struct IPath;
+
+	namespace PathSearchTrace {
+		struct Iteration {
+			Iteration() { nodeIndices.push_back(-1U); }
+			~Iteration() { nodeIndices.clear(); }
+
+			void Clear() {
+				nodeIndices.clear();
+				nodeIndices.push_back(-1U);
+			}
+			void SetPoppedNodeIdx(unsigned int i) { (nodeIndices.front()) = i; }
+			void AddPushedNodeIdx(unsigned int i) { (nodeIndices.push_back(i)); }
+
+			const std::list<unsigned int>& GetNodeIndices() const { return nodeIndices; }
+
+		private:
+			// NOTE: indices are only valid so long as tree is not re-tesselated
+			std::list<unsigned int> nodeIndices;
+		};
+
+		struct Execution {
+			Execution(unsigned int f): frame(f) {}
+			~Execution() { iterations.clear(); }
+
+			void AddIteration(const Iteration& iter) { iterations.push_back(iter); }
+			const std::list<Iteration>& GetIterations() const { return iterations; }
+
+			unsigned int GetFrame() const { return frame; }
+		private:
+			std::list<Iteration> iterations;
+
+			// sim-frame at which the search was executed
+			unsigned int frame;
+		};
+	};
+
 
 	// NOTE:
 	//     we could support "time-sliced" execution, but we would have
@@ -28,17 +66,25 @@ namespace QTPFS {
 		virtual ~IPathSearch() {}
 
 		virtual void Initialize(const float3& sourcePoint, const float3& targetPoint) = 0;
-		virtual bool Execute(PathCache* cache, NodeLayer* layer, unsigned int searchStateOffset) = 0;
+		virtual bool Execute(
+			PathCache* cache,
+			NodeLayer* layer,
+			PathSearchTrace::Execution* exec,
+			unsigned int searchStateOffset = 0,
+			unsigned int searchMagicNumber = 0
+		) = 0;
 		virtual void Finalize(IPath* path, bool replace) = 0;
 
 		void SetID(unsigned int n) { searchID = n; }
 		unsigned int GetID() const { return searchID; }
 
 	protected:
-		unsigned int searchType;
-		unsigned int searchState;
-		unsigned int searchID;
+		unsigned int searchType;   // indicates whether A* or Dijkstra search is employed
+		unsigned int searchState;  // offset that identifies nodes as part of current search
+		unsigned int searchID;     // links us to the temp-path that this search will finalize
+		unsigned int searchMagic;  // used to signal nodes they should update their neighbor-set
 	};
+
 
 	struct PathSearch: public IPathSearch {
 	public:
@@ -46,11 +92,21 @@ namespace QTPFS {
 		~PathSearch() { while (!openNodes.empty()) { openNodes.pop(); } }
 
 		void Initialize(const float3& sourcePoint, const float3& targetPoint);
-		bool Execute(PathCache* cache, NodeLayer* layer, unsigned int searchStateOffset);
+		bool Execute(
+			PathCache* cache,
+			NodeLayer* layer,
+			PathSearchTrace::Execution* exec,
+			unsigned int searchStateOffset = 0,
+			unsigned int searchMagicNumber = 0
+		);
 		void Finalize(IPath* path, bool replace);
 
 	private:
-		void IterateSearch(const std::vector<INode*>& allNodes, std::vector<INode*>& ngbNodes);
+		void IterateSearch(
+			const std::vector<INode*>& allNodes,
+			      std::vector<INode*>& ngbNodes,
+			      PathSearchTrace::Iteration* iter
+			);
 		void FillPath(IPath* path);
 
 		PathCache* pathCache;

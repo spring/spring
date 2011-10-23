@@ -94,7 +94,7 @@ QTPFS::PathManager::PathManager() {
 
 				// construct each tree from scratch IFF no cache-dir exists
 				// (if it does, we only need to initialize speed{Mods, Bins})
-				UpdateNodeLayer(i, mapRect, !haveCacheDir);
+				UpdateNodeLayer(i, mapRect, true, !haveCacheDir);
 
 				sprintf(loadMsg, "  initialized node-layer %u (%u leafs, ratio %f)", i, nodeLayers[i].GetNumLeafNodes(), nodeLayers[i].GetNodeRatio());
 				loadscreen->SetLoadMessage(loadMsg);
@@ -125,13 +125,15 @@ QTPFS::PathManager::~PathManager() {
 	for (unsigned int i = 0; i < nodeLayers.size(); i++) {
 		nodeTrees[i]->Delete();
 		nodeLayers[i].Clear();
-		pathSearches[i].clear();
+		pathSearches[i].clear(); // TODO: delete values in pathSearches[i]
 	}
 
 	nodeTrees.clear();
 	nodeLayers.clear();
 	pathCaches.clear();
 	pathSearches.clear();
+	pathTypes.clear();
+	pathTraces.clear(); // TODO: delete values
 }
 
 
@@ -154,7 +156,7 @@ void QTPFS::PathManager::InitNodeLayers(unsigned int threadNum, unsigned int num
 		nodeLayers[i].Init();
 		nodeLayers[i].RegisterNode(nodeTrees[i]);
 
-		UpdateNodeLayer(i, mapRect, !haveCacheDir);
+		UpdateNodeLayer(i, mapRect, true, !haveCacheDir);
 
 		sprintf(loadMsg, "  initialized node-layer %u (%u leafs, ratio %f)", i, nodeLayers[i].GetNumLeafNodes(), nodeLayers[i].GetNodeRatio());
 		loadscreen->SetLoadMessage(loadMsg);
@@ -241,7 +243,7 @@ void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsign
 
 		#pragma omp parallel for
 		for (unsigned int i = 0; i < nodeLayers.size(); i++) {
-			UpdateNodeLayer(i, r, true);
+			UpdateNodeLayer(i, r, false, true);
 		}
 
 		streflop_init<streflop::Simple>();
@@ -250,7 +252,7 @@ void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsign
 	numTerrainChanges += 1;
 }
 
-void QTPFS::PathManager::UpdateNodeLayer(unsigned int i, const SRectangle& r, bool wantTesselation) {
+void QTPFS::PathManager::UpdateNodeLayer(unsigned int i, const SRectangle& r, bool isInitializing, bool wantTesselation) {
 	const MoveData*  md = moveinfo->moveData[i];
 	const CMoveMath* mm = md->moveMath;
 
@@ -258,7 +260,7 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int i, const SRectangle& r, bo
 		return;
 
 	if (nodeLayers[i].Update(r, md, mm) && wantTesselation) {
-		nodeTrees[i]->PreTesselate(nodeLayers[i], r);
+		nodeTrees[i]->PreTesselate(nodeLayers[i], r, isInitializing);
 		pathCaches[i].MarkDeadPaths(r);
 	}
 }
@@ -296,10 +298,18 @@ void QTPFS::PathManager::Update() {
 			assert(search->GetID() != 0);
 			assert(path->GetID() == search->GetID());
 
+			#ifdef TRACE_PATH_SEARCHES
+			PathSearchTrace::Execution* searchExec = new PathSearchTrace::Execution(gs->frameNum);
+			pathTraces[path->GetID()] = searchExec;
+			#else
+			PathSearchTrace::Execution* searchExec = NULL;
+			pathTraces[path->GetID()] = searchExec;
+			#endif
+
 			search->Initialize(path->GetSourcePoint(), path->GetTargetPoint());
 
 			// removes path from temp-paths, adds it to live-paths
-			if (search->Execute(&pathCaches[i], &nodeLayers[i], searchStateOffset)) {
+			if (search->Execute(&pathCaches[i], &nodeLayers[i], searchExec, searchStateOffset, numTerrainChanges)) {
 				search->Finalize(path, false);
 				delete search;
 			}
@@ -326,12 +336,16 @@ void QTPFS::PathManager::Update() {
 			newPath->SetRadius(oldPath->GetRadius());
 			newPath->SetSynced(oldPath->GetSynced());
 
-			// start re-request from the current position
+			// start re-request from the current point
 			// along the path, not the original source
+			//
+			// NOTE: we do not really need this search
+			// to have an ID (since it is executed for
+			// a live-path)
 			newSearch->SetID(oldPath->GetID());
 			newSearch->Initialize(oldPath->GetPoint(oldPath->GetPointIdx() - 1), oldPath->GetTargetPoint());
 
-			if (newSearch->Execute(&pathCaches[i], &nodeLayers[i], searchStateOffset)) {
+			if (newSearch->Execute(&pathCaches[i], &nodeLayers[i], NULL, searchStateOffset, numTerrainChanges)) {
 				newSearch->Finalize(newPath, true);
 				delete newSearch;
 
@@ -341,7 +355,7 @@ void QTPFS::PathManager::Update() {
 			} else {
 				// failed to re-request, so path is still dead
 				// and will be cleaned up next by KillDeadPaths
-				pathCacheMap.erase(oldPath->GetID());
+				pathTypes.erase(oldPath->GetID());
 			}
 
 			searchStateOffset += NODE_STATE_OFFSET;
@@ -366,14 +380,14 @@ float3 QTPFS::PathManager::NextWayPoint(
 ) {
 	SCOPED_TIMER("PathManager::NextWayPoint");
 
-	const PathCacheMap::const_iterator cacheIt = pathCacheMap.find(pathID);
+	const PathTypeMap::const_iterator pathTypeIt = pathTypes.find(pathID);
 
 	// dangling ID after re-request failure or regular deletion
-	if (cacheIt == pathCacheMap.end())
+	if (pathTypeIt == pathTypes.end())
 		return curPoint;
 
-	IPath* tempPath = pathCaches[cacheIt->second].GetTempPath(pathID);
-	IPath* livePath = pathCaches[cacheIt->second].GetLivePath(pathID);
+	IPath* tempPath = pathCaches[pathTypeIt->second].GetTempPath(pathID);
+	IPath* livePath = pathCaches[pathTypeIt->second].GetLivePath(pathID);
 
 	if (tempPath->GetID() != 0) {
 		// path-request has not yet been processed
@@ -419,12 +433,18 @@ float3 QTPFS::PathManager::NextWayPoint(
 }
 
 void QTPFS::PathManager::DeletePath(unsigned int pathID) {
-	const PathCacheMapIt cacheIt = pathCacheMap.find(pathID);
+	const PathTypeMapIt pathTypeIt = pathTypes.find(pathID);
+	const PathTraceMapIt pathTraceIt = pathTraces.find(pathID);
 
-	if (cacheIt != pathCacheMap.end()) {
-		PathCache& pathCache = pathCaches[cacheIt->second];
+	if (pathTypeIt != pathTypes.end()) {
+		PathCache& pathCache = pathCaches[pathTypeIt->second];
 		pathCache.DelPath(pathID);
-		pathCacheMap.erase(cacheIt);
+
+		pathTypes.erase(pathTypeIt);
+	}
+
+	if (pathTraceIt != pathTraces.end()) {
+		pathTraces.erase(pathTraceIt);
 	}
 }
 
@@ -463,7 +483,7 @@ unsigned int QTPFS::PathManager::RequestPath(
 	pathCaches[moveData->pathType].AddTempPath(path);
 
 	// map the path-ID to the index of the cache that stores it
-	pathCacheMap[path->GetID()] = moveData->pathType;
+	pathTypes[path->GetID()] = moveData->pathType;
 	return (path->GetID());
 }
 

@@ -37,18 +37,20 @@ namespace QTPFS {
 
 		virtual float GetMoveCost() const { assert(false); return 1.0f; }
 
+		virtual void SetSearchState(unsigned int) { assert(false); }
+		virtual unsigned int GetSearchState() const { assert(false); return 0; }
+
+		virtual void SetMagicNumber(unsigned int) { assert(false); }
+		virtual unsigned int GetMagicNumber() const { assert(false); return 0; }
+
 		void SetPathCost(unsigned int type, float cost);
 		float GetPathCost(unsigned int type) const;
 
-		void SetSearchState(unsigned int state) { searchState = state; }
-		unsigned int GetSearchState() const { return searchState; }
-
 		void SetPrevNode(INode* n) { prevNode = n; }
-		const INode* GetPrevNode() const { return prevNode; }
+		INode* GetPrevNode() { return prevNode; }
 
 	protected:
-		unsigned int identifier;
-		unsigned int searchState;
+		unsigned int nodeNumber;
 
 		float fCost;
 		float gCost;
@@ -71,12 +73,12 @@ namespace QTPFS {
 		// NOTE:
 		//     root-node identifier is always 0
 		//     <i> is a NODE_IDX index in [0, 3]
-		unsigned int GetChildID(unsigned int i) const { return (identifier << 2) + (i + 1); }
-		unsigned int GetParentID() const { return ((identifier - 1) >> 2); }
+		unsigned int GetChildID(unsigned int i) const { return (nodeNumber << 2) + (i + 1); }
+		unsigned int GetParentID() const { return ((nodeNumber - 1) >> 2); }
 
 		void Delete();
-		void PreTesselate(NodeLayer& nl, const SRectangle& r);
-		void Tesselate(NodeLayer& nl, const SRectangle& r);
+		void PreTesselate(NodeLayer& nl, const SRectangle& r, bool isInitializing);
+		void Tesselate(NodeLayer& nl, const SRectangle& r, bool isInitializing);
 		void Serialize(std::fstream& fStream, bool read);
 
 		bool IsLeaf() const;
@@ -96,16 +98,24 @@ namespace QTPFS {
 		unsigned int xsize() const { return _xsize; }
 		unsigned int zsize() const { return _zsize; }
 
+		void SetSearchState(unsigned int state) { searchState = state; }
+		unsigned int GetSearchState() const { return searchState; }
+
+		void SetMagicNumber(unsigned int number) { currMagicNum = number; }
+		unsigned int GetMagicNumber() const { return currMagicNum; }
+
 		static const unsigned int CHILD_COUNT = 4;
 	private:
 		unsigned int _xmin, _xmax, _xmid, _xsize;
 		unsigned int _zmin, _zmax, _zmid, _zsize;
 
-		int tempNum;
-
 		float speedModAvg;
 		float speedModSum;
 		float moveCostAvg;
+
+		unsigned int searchState;
+		unsigned int currMagicNum;
+		unsigned int prevMagicNum;
 
 		std::vector<QTNode*> children;
 		std::vector<QTNode*> neighbors;
