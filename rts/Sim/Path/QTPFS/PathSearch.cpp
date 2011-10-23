@@ -81,6 +81,33 @@ bool QTPFS::PathSearch::Execute(
 	return haveFullPath;
 }
 
+
+
+void QTPFS::PathSearch::UpdateNode(INode* nxt, INode* cur, float gCost) {
+	// NOTE:
+	//     the heuristic must never over-estimate the distance,
+	//     but this is *impossible* to achieve on a non-regular
+	//     grid on which any node only has an average move-cost
+	//     associated with it (and these costs can even be less
+	//     than 1) --> paths will not be optimal, but they could
+	//     not be anyway
+	nxt->SetSearchState(searchState | NODE_STATE_OPEN);
+	nxt->SetPrevNode(cur);
+	nxt->SetPathCost(NODE_PATH_COST_G, gCost);
+	nxt->SetPathCost(NODE_PATH_COST_H, (tgtPoint - nxtPoint).Length() * hCostMult);
+	nxt->SetPathCost(NODE_PATH_COST_F, (nxt->GetPathCost(NODE_PATH_COST_G) + nxt->GetPathCost(NODE_PATH_COST_H)));
+}
+
+void QTPFS::PathSearch::UpdateQueue() {
+	// restore ordering in case nxtNode was already open
+	// (changing the f-cost of an OPEN node messes up the
+	// queue's internal consistency; a pushed node remains
+	// OPEN until it gets popped)
+	INode* top = openNodes.top();
+	openNodes.pop();
+	openNodes.push(top);
+}
+
 void QTPFS::PathSearch::IterateSearch(
 	const std::vector<INode*>& allNodes,
 	      std::vector<INode*>& ngbNodes,
@@ -125,40 +152,27 @@ void QTPFS::PathSearch::IterateSearch(
 		const float nCost = curNode->GetMoveCost() * (nxtPoint - curPoint).Length();
 		const float gCost = curNode->GetPathCost(NODE_PATH_COST_G) + nCost;
 
-		bool keepNextNode = true;
-
-		if (isCurrent) {
-			if (isClosed) {
-				continue;
-			}
-
-			// if true, we found a new shorter route to <nxtNode>
-			keepNextNode = (gCost < nxtNode->GetPathCost(NODE_PATH_COST_G));
-		} else {
+		if (!isCurrent) {
 			// at this point, we know that <nxtNode> is either
 			// not from the current search (!current) or (if it
 			// is) already placed in the open queue
-			nxtNode->SetSearchState(searchState | NODE_STATE_OPEN);
-			openNodes.push(nxtNode);
-		}
-
-		if (keepNextNode) {
-			// NOTE:
-			//     the heuristic must never over-estimate the distance,
-			//     but this is *impossible* to achieve on a non-regular
-			//     grid on which any node only has an average move-cost
-			//     associated with it (and these costs can even be less
-			//     than 1) --> paths will not be optimal, but they could
-			//     not be anyway
-			nxtNode->SetPrevNode(curNode);
-			nxtNode->SetPathCost(NODE_PATH_COST_G, gCost);
-			nxtNode->SetPathCost(NODE_PATH_COST_H, (tgtPoint - nxtPoint).Length() * hCostMult);
-			nxtNode->SetPathCost(NODE_PATH_COST_F, (nxtNode->GetPathCost(NODE_PATH_COST_G) + nxtNode->GetPathCost(NODE_PATH_COST_H)));
+			UpdateNode(nxtNode, curNode, gCost);
 
 			#ifdef TRACE_PATH_SEARCHES
 			iter->AddPushedNodeIdx(nxtNode->zmin() * gs->mapx + nxtNode->xmin());
 			#endif
+
+			openNodes.push(nxtNode);
+			continue;
 		}
+
+		if (isClosed)
+			continue;
+		if (gCost >= nxtNode->GetPathCost(NODE_PATH_COST_G))
+			continue;
+
+		UpdateNode(nxtNode, curNode, gCost);
+		UpdateQueue();
 	}
 }
 

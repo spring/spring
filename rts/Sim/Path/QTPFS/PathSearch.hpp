@@ -108,6 +108,8 @@ namespace QTPFS {
 			      PathSearchTrace::Iteration* iter
 			);
 		void FillPath(IPath* path);
+		void UpdateNode(INode* nxtNode, INode* curNode, float gCost);
+		void UpdateQueue();
 
 		PathCache* pathCache;
 		NodeLayer* nodeLayer;
