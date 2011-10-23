@@ -131,8 +131,8 @@ protected:
 	TriTreeNode m_BaseLeft;  //< Left base triangle tree node
 	TriTreeNode m_BaseRight; //< Right base triangle tree node
 
-	// Some encapsulation functions & extras
-	float distfromcam;
+	float varianceMaxLimit;
+	float camDistLODFactor; //< defines the LOD falloff in camera distance
 
 	int mapx;
 	int m_WorldX, m_WorldY; //< World coordinate offset of this patch.
