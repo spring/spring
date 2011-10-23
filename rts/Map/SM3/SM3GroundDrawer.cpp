@@ -245,3 +245,7 @@ void CSM3GroundDrawer::DecreaseDetail()
 	LOG("Terrain detail changed to: %2.2f", tr->config.detailMod);
 }
 
+int CSM3GroundDrawer::GetGroundDetail(const DrawPass::e& drawPass) const
+{
+	return 100 * tr->config.detailMod;
+}

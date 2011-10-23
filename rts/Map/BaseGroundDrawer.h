@@ -58,6 +58,7 @@ public:
 
 	virtual void IncreaseDetail() = 0;
 	virtual void DecreaseDetail() = 0;
+	virtual int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const = 0;
 
 	virtual void SetDrawMode(BaseGroundDrawMode dm) { drawMode = dm; }
 	virtual GL::LightHandler* GetLightHandler() { return NULL; }

@@ -26,6 +26,7 @@ public:
 
 	void IncreaseDetail();
 	void DecreaseDetail();
+	int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const;
 
 protected:
 	void DrawObjects(const DrawPass::e& drawPass);

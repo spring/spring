@@ -48,12 +48,10 @@ CONFIG(bool, MultiThreadDrawGroundShadow).defaultValue(false);
 CLegacyMeshDrawer::CLegacyMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	: smfReadMap(rm)
 	, smfGroundDrawer(gd)
+	, viewRadius(4)
+	, neededLod(4)
+	//, waterDrawn(false)
 {
-	viewRadius = configHandler->GetInt("GroundDetail");
-	viewRadius += (viewRadius & 1); //! we need a multiple of 2
-
-	waterDrawn = false; //FIXME
-
 #ifdef USE_GML
 	multiThreadDrawGround = configHandler->GetBool("MultiThreadDrawGround");
 	multiThreadDrawGroundShadow = configHandler->GetBool("MultiThreadDrawGroundShadow");
@@ -82,9 +80,9 @@ void CLegacyMeshDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y)
 
 void CLegacyMeshDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y, float height)
 {
-	if (waterDrawn && height < 0.0f) {
-		height *= 2.0f;
-	}
+	//if (waterDrawn && height < 0.0f) {
+	//	height *= 2.0f;
+	//}
 
 	ma->AddVertexQ0(x * SQUARE_SIZE, height, y * SQUARE_SIZE);
 }
@@ -574,19 +572,37 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty) {
 	}
 }
 
+
+void CLegacyMeshDrawer::UpdateLODParams(const DrawPass::e& drawPass)
+{
+	// Get current ground detail (draw pass dependent)
+	viewRadius  = smfGroundDrawer->GetGroundDetail(drawPass);
+
+	// Take FOV into account
+	viewRadius  = int(viewRadius * fastmath::apxsqrt(45.0f / camera->GetFov()));
+
+	// Clamp it to mapsize dependent minimum, else we get holes in the terrain
+	viewRadius  = std::max(std::max(smfReadMap->numBigTexY, smfReadMap->numBigTexX) + 1, viewRadius);
+
+	// we need a multiple of 2
+	viewRadius += (viewRadius & 1);
+
+	// Compute count of LODs needed/visible
+	neededLod   = std::max(1, int((globalRendering->viewRange * 0.125f) / viewRadius) << 1);
+	neededLod   = std::min(neededLod, std::min(gs->mapx, gs->mapy));
+}
+
+
 void CLegacyMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 {
 	if (drawPass == DrawPass::Shadow) {
-		DrawShadowMesh(); //FIXME
+		DrawShadowMesh();
 		return;
 	}
 
-	//FIXME
-	viewRadius  = int(viewRadius * fastmath::apxsqrt(45.0f / camera->GetFov()));
-	viewRadius  = std::max(std::max(smfReadMap->numBigTexY, smfReadMap->numBigTexX), viewRadius);
-	viewRadius += (viewRadius & 1); // we need a multiple of 2
-	neededLod   = std::max(1, int((globalRendering->viewRange * 0.125f) / viewRadius) << 1);
-	neededLod   = std::min(neededLod, std::min(gs->mapx, gs->mapy));
+	UpdateLODParams(drawPass);
+
+	//waterDrawn = (drawPass == DrawPass::WaterReflection);
 
 	{ // profiler scope
 #ifdef USE_GML

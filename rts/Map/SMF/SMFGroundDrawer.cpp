@@ -46,8 +46,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 {
 	groundTextures = new CSMFGroundTextures(smfMap);
 
-	viewRadius = configHandler->GetInt("GroundDetail");
-	viewRadius += (viewRadius & 1); // we need a multiple of 2
+	groundDetail = configHandler->GetInt("GroundDetail");
 
 	useShaders = false;
 	waterDrawn = false;
@@ -86,7 +85,7 @@ CSMFGroundDrawer::~CSMFGroundDrawer(void)
 
 	shaderHandler->ReleaseProgramObjects("[SMFGroundDrawer]");
 
-	configHandler->Set("GroundDetail", viewRadius);
+	configHandler->Set("GroundDetail", groundDetail);
 
 	if (waterPlaneCamInDispList) {
 		glDeleteLists(waterPlaneCamInDispList, 1);
@@ -341,18 +340,6 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 		return;
 	}
 
-	const int baseViewRadius = std::max(4, viewRadius);
-	if (drawPass == DrawPass::UnitReflection) {
-		viewRadius = (int(viewRadius * LODScaleUnitReflection)) & 0xfffffe;
-	}
-	if (drawPass == DrawPass::WaterReflection) {
-		viewRadius = (int(viewRadius * LODScaleReflection)) & 0xfffffe;
-	}
-	if (drawPass == DrawPass::WaterRefraction) {
-		viewRadius = (int(viewRadius * LODScaleRefraction)) & 0xfffffe;
-	}
-
-
 	smfShaderCurGLSL = shadowHandler->shadowsLoaded? smfShaderAdvGLSL: smfShaderDefGLSL;
 	useShaders = advShading && (!DrawExtraTex() && ((smfShaderCurrARB != NULL && shadowHandler->shadowsLoaded) || (smfShaderCurGLSL != NULL)));
 	waterDrawn = (drawPass != DrawPass::WaterReflection); //FIXME remove. save drawPass somewhere instead
@@ -396,8 +383,6 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 		groundDecals->Draw();
 		projectileDrawer->DrawGroundFlashes();
 	}
-
-	viewRadius = baseViewRadius;
 }
 
 
@@ -701,12 +686,42 @@ void CSMFGroundDrawer::Update()
 
 void CSMFGroundDrawer::IncreaseDetail()
 {
-	viewRadius += 2;
-	LOG("ViewRadius is now %i", viewRadius);
+	groundDetail += 2;
+	LOG("GroundDetail is now %i", groundDetail);
 }
 
 void CSMFGroundDrawer::DecreaseDetail()
 {
-	viewRadius -= 2;
-	LOG("ViewRadius is now %i", viewRadius);
+	if (groundDetail > 4) {
+		groundDetail -= 2;
+		LOG("GroundDetail is now %i", groundDetail);
+	}
+}
+
+int CSMFGroundDrawer::GetGroundDetail(const DrawPass::e& drawPass) const
+{
+	int detail = groundDetail;
+
+	switch (drawPass) {
+		case DrawPass::UnitReflection:
+			detail *= LODScaleUnitReflection;
+			break;
+		case DrawPass::WaterReflection:
+			detail *= LODScaleReflection;
+			break;
+		case DrawPass::WaterRefraction:
+			detail *= LODScaleRefraction;
+			break;
+		//TODO: currently the shadow mesh needs to be idential with the normal pass one
+		//  else we get z-fighting issues in the shadows. Ideal would be a special
+		//  shadow pass mesh renderer that reduce the mesh to `walls`/contours that cause the
+		//  same shadows as the original terrain
+		//case DrawPass::Shadow:
+		//	detail *= LODScaleShadow;
+		//	break;
+		default:
+			break;
+	}
+
+	return std::max(4, detail);
 }
