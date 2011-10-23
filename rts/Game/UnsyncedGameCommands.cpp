@@ -466,7 +466,7 @@ class ShadowsActionExecutor : public IUnsyncedActionExecutor {
 public:
 	ShadowsActionExecutor() : IUnsyncedActionExecutor("Shadows",
 			"Disables/Enables shadows rendering: -1=disabled, 0=off,"
-			" 1=unit&feature-shadows, 2=+terrain-shadows") {}
+			" 1=full shadows, 2=skip terrain shadows") {}
 
 	void Execute(const UnsyncedAction& action) const {
 		if (shadowHandler->shadowConfig < 0) {
