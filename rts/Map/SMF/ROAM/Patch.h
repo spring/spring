@@ -139,7 +139,7 @@ protected:
 
 	int mapx;
 	int m_WorldX, m_WorldY; //< World coordinate offset of this patch.
-
+	//float minHeight, maxHeight;
 
 	std::vector<float> vertices; // Why yes, this IS a mind bogglingly wasteful thing to do: TODO: remove this for both the Displaylist and the VBO implementations (only really needed for vertexarrays)
 	std::vector<unsigned int> indices;

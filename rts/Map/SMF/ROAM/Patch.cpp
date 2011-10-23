@@ -223,6 +223,8 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ, const float*
 	mapx = mx;
 	m_WorldX = worldX;
 	m_WorldY = worldZ;
+	//minHeight = FLT_MAX;
+	//maxHeight = FLT_MIN;
 	triList = 0;
 	vertexBuffer = 0;
 	vertexIndexBuffer = 0;
@@ -273,6 +275,9 @@ void Patch::UpdateHeightMap(const SRectangle& rect)
 			const float& h = hMap[(z + m_WorldY) * gs->mapxp1 + (x + m_WorldX)];
 			const int vindex = (z * (PATCH_SIZE + 1) + x) * 3;
 			vertices[vindex + 1] = h; // only update Y coord
+
+			//if (h < minHeight) minHeight = h;
+			//if (h > maxHeight) maxHeight = h;
 		}
 	}
 
@@ -346,6 +351,25 @@ void Patch::UpdateVisibility()
 		(m_WorldY + PATCH_SIZE) * SQUARE_SIZE
 	);
 	m_isVisible = cam2->InView(mins, maxs);
+
+	// AABB test seems to be a bit slower than sphere one (~10-50%), but it's a lot more accurate.
+	// So even with zero height the bounding radius of a patch would be `sqrt(2) * PATCH_SIZE`
+	// nearly 50% greater than the patch's edges! So we would render inevitable unvisible patches
+	// which takes ways more time than the additional time spend in the AABB test.
+	/*
+		const float3 p(
+			(m_WorldX + PATCH_SIZE * 0.5f) * SQUARE_SIZE,
+			(minHeight + maxHeight) * 0.5f,
+			(m_WorldY + PATCH_SIZE * 0.5f) * SQUARE_SIZE
+		);
+
+		const float& height  = p.y;
+		static const float SQRT2 = 1.45f; // just an approximation (a very bad one!)
+		static const float patchRadius2D = (PATCH_SIZE * SQUARE_SIZE) * SQRT2; // sqrt(a^2 + a^2) = sqrt(2*(a^2)) = a * sqrt(2)
+		const float radius   = math::sqrt(height * height + patchRadius2D * patchRadius2D);
+		//const float radius = std::max(height, radius2d) * SQRT2; // approx. saves a slow sqrt, but maybe too inaccurate
+		m_isVisible = cam2->InView(p, radius);
+	*/
 }
 
 // ---------------------------------------------------------------------
@@ -355,7 +379,7 @@ void Patch::Tessellate(const float3& campos, int groundDetail)
 {
 	// Set/Update LOD params
 	const float myx = (m_WorldX + PATCH_SIZE / 2) * SQUARE_SIZE;
-	const float myy = (readmap->currMaxHeight + readmap->currMinHeight) * 0.5f;
+	const float myy = (readmap->currMinHeight + readmap->currMaxHeight) * 0.5f;
 	const float myz = (m_WorldY + PATCH_SIZE / 2) * SQUARE_SIZE;
 	const float3 myPos(myx,myy,myz);
 
