@@ -342,7 +342,7 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 
 	smfShaderCurGLSL = shadowHandler->shadowsLoaded? smfShaderAdvGLSL: smfShaderDefGLSL;
 	useShaders = advShading && (!DrawExtraTex() && ((smfShaderCurrARB != NULL && shadowHandler->shadowsLoaded) || (smfShaderCurGLSL != NULL)));
-	waterDrawn = (drawPass != DrawPass::WaterReflection); //FIXME remove. save drawPass somewhere instead
+	waterDrawn = (drawPass == DrawPass::WaterReflection); //FIXME remove. save drawPass somewhere instead
 
 
 	glDisable(GL_BLEND);
