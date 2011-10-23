@@ -215,28 +215,24 @@ float Patch::RecursComputeVariance(const int& leftX, const int& leftY, const flo
 void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ, const float* hMap, int mx)
 {
 	smfGroundDrawer = _drawer;
-
-	// Clear all the relationships
+	heightData = hMap;
+	m_CurrentVariance = NULL;
+	m_isVisible = false;
+	m_isDirty = true;
+	camDistLODFactor = 1.f;
 	mapx = mx;
+	m_WorldX = worldX;
+	m_WorldY = worldZ;
+	triList = 0;
+	vertexBuffer = 0;
+	vertexIndexBuffer = 0;
 
 	// Attach the two m_Base triangles together
-	m_BaseLeft  = TriTreeNode();
-	m_BaseRight = TriTreeNode();
 	m_BaseLeft.BaseNeighbor = &m_BaseRight;
 	m_BaseRight.BaseNeighbor = &m_BaseLeft;
 
-	// Store Patch offsets for the world and heightmap.
-	m_WorldX = worldX;
-	m_WorldY = worldZ;
-
 	// Store pointer to first byte of the height data for this patch.
 	m_HeightMap = &hMap[worldZ * (mapx+1) + worldX];
-	heightData = hMap;
-
-	// Initialize flags
-	m_isDirty   = true;
-	m_isVisible = false;
-
 
 	triList = glGenLists(1);
 
