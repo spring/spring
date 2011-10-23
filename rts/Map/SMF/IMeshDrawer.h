@@ -14,11 +14,11 @@ class CSMFGroundDrawer;
 class IMeshDrawer
 {
 public:
-	IMeshDrawer() {};
-	IMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd) {};
+	IMeshDrawer() {}
+	IMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd) {}
+	virtual ~IMeshDrawer() {}
 
 	virtual void Update() = 0;
-
 	virtual void DrawMesh(const DrawPass::e& drawPass) = 0;
 };
 
