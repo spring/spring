@@ -18,13 +18,130 @@
 #include "Map/SMF/SMFGroundDrawer.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Log/ILog.h"
-
+#include "System/TimeProfiler.h"
+#include "System/OpenMP_cond.h"
 #include <cfloat>
 
 // -------------------------------------------------------------------------------------------------
 //	PATCH CLASS
 
 RenderMode Patch::renderMode = VBO;
+
+
+// ---------------------------------------------------------------------
+// C'tor etc.
+//
+Patch::Patch()
+	: smfGroundDrawer(NULL)
+	, heightData(NULL)
+	, m_CurrentVariance(NULL)
+	, m_isVisible(false)
+	, m_isDirty(true)
+	, camDistLODFactor(1.f)
+	, mapx(-1)
+	, m_WorldX(-1)
+	, m_WorldY(-1)
+	//, minHeight(FLT_MAX)
+	//, maxHeight(FLT_MIN)
+	, triList(0)
+	, vertexBuffer(0)
+	, vertexIndexBuffer(0)
+{
+	// Attach the two m_Base triangles together
+	m_BaseLeft.BaseNeighbor  = &m_BaseRight;
+	m_BaseRight.BaseNeighbor = &m_BaseLeft;
+
+	// Create used OpenGL objects
+	triList = glGenLists(1);
+	glGenBuffersARB(1, &vertexBuffer);
+	glGenBuffersARB(1, &vertexIndexBuffer);
+}
+
+
+void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ, const float* hMap, int mx)
+{
+	smfGroundDrawer = _drawer;
+	heightData = hMap;
+	mapx = mx;
+	m_WorldX = worldX;
+	m_WorldY = worldZ;
+
+	// Store pointer to first byte of the height data for this patch.
+	m_HeightMap = &hMap[worldZ * (mapx+1) + worldX];
+
+	UpdateHeightMap();
+}
+
+
+Patch::~Patch()
+{
+	glDeleteLists(triList, 1);
+	glDeleteBuffersARB(1, &vertexBuffer);
+	glDeleteBuffersARB(1, &vertexIndexBuffer);
+}
+
+
+void Patch::Reset()
+{
+	// Assume patch is not visible.
+	m_isVisible = false;
+
+	// Reset the important relationships
+	m_BaseLeft  = TriTreeNode();
+	m_BaseRight = TriTreeNode();
+
+	// Attach the two m_Base triangles together
+	m_BaseLeft.BaseNeighbor  = &m_BaseRight;
+	m_BaseRight.BaseNeighbor = &m_BaseLeft;
+}
+
+
+void Patch::UpdateHeightMap(const SRectangle& rect)
+{
+	const float* hMap = readmap->GetCornerHeightMapSynced(); //FIXME
+
+	if (vertices.empty()) {
+		// Initialize
+		vertices.resize(3 * (PATCH_SIZE + 1) * (PATCH_SIZE + 1));
+		int index = 0;
+		for (int z = m_WorldY; z <= (m_WorldY + PATCH_SIZE); z++) {
+			for (int x = m_WorldX; x <= (m_WorldX + PATCH_SIZE); x++) {
+				vertices[index++] = x * SQUARE_SIZE;
+				vertices[index++] = 0.0f;
+				vertices[index++] = z * SQUARE_SIZE;
+			}
+		}
+	}
+
+	for (int z = rect.z1; z <= rect.z2; z++) {
+		for (int x = rect.x1; x <= rect.x2; x++) {
+			const float& h = hMap[(z + m_WorldY) * gs->mapxp1 + (x + m_WorldX)];
+			const int vindex = (z * (PATCH_SIZE + 1) + x) * 3;
+			vertices[vindex + 1] = h; // only update Y coord
+
+			//if (h < minHeight) minHeight = h;
+			//if (h > maxHeight) maxHeight = h;
+		}
+	}
+
+	//FIXME don't do so in DispList mode!
+	// Upload vertexBuffer
+	glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);
+	glBufferDataARB(GL_ARRAY_BUFFER_ARB, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW_ARB);
+	/*
+	int bufferSize = 0;
+	glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_SIZE_ARB, &bufferSize);
+	if(index != bufferSize) {
+		glDeleteBuffersARB(1, &vertexBuffer);
+		glDeleteBuffersARB(1, &vertexIndexBuffer);
+		LOG("[createVBO()] Data size is mismatch with input array\n");
+	}
+	*/
+	glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+
+	m_isDirty = true;
+}
+
 
 // -------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------
@@ -209,112 +326,6 @@ float Patch::RecursComputeVariance(const int& leftX, const int& leftY, const flo
 	return myVariance;
 }
 
-// ---------------------------------------------------------------------
-// Initialize a patch.
-//
-void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ, const float* hMap, int mx)
-{
-	smfGroundDrawer = _drawer;
-	heightData = hMap;
-	m_CurrentVariance = NULL;
-	m_isVisible = false;
-	m_isDirty = true;
-	camDistLODFactor = 1.f;
-	mapx = mx;
-	m_WorldX = worldX;
-	m_WorldY = worldZ;
-	//minHeight = FLT_MAX;
-	//maxHeight = FLT_MIN;
-	triList = 0;
-	vertexBuffer = 0;
-	vertexIndexBuffer = 0;
-
-	// Attach the two m_Base triangles together
-	m_BaseLeft.BaseNeighbor = &m_BaseRight;
-	m_BaseRight.BaseNeighbor = &m_BaseLeft;
-
-	// Store pointer to first byte of the height data for this patch.
-	m_HeightMap = &hMap[worldZ * (mapx+1) + worldX];
-
-	triList = glGenLists(1);
-
-	glGenBuffersARB(1, &vertexBuffer);
-	glGenBuffersARB(1, &vertexIndexBuffer);
-
-	UpdateHeightMap();
-}
-
-
-Patch::~Patch()
-{
-	glDeleteLists(triList, 1);
-	glDeleteBuffersARB(1, &vertexBuffer);
-	glDeleteBuffersARB(1, &vertexIndexBuffer);
-}
-
-
-void Patch::UpdateHeightMap(const SRectangle& rect)
-{
-	const float* hMap = readmap->GetCornerHeightMapSynced(); //FIXME
-
-	if (vertices.empty()) {
-		// Initialize
-		vertices.resize(3 * (PATCH_SIZE + 1) * (PATCH_SIZE + 1));
-		int index = 0;
-		for (int z = m_WorldY; z <= (m_WorldY + PATCH_SIZE); z++) {
-			for (int x = m_WorldX; x <= (m_WorldX + PATCH_SIZE); x++) {
-				vertices[index++] = x * SQUARE_SIZE;
-				vertices[index++] = 0.0f;
-				vertices[index++] = z * SQUARE_SIZE;
-			}
-		}
-	}
-
-	for (int z = rect.z1; z <= rect.z2; z++) {
-		for (int x = rect.x1; x <= rect.x2; x++) {
-			const float& h = hMap[(z + m_WorldY) * gs->mapxp1 + (x + m_WorldX)];
-			const int vindex = (z * (PATCH_SIZE + 1) + x) * 3;
-			vertices[vindex + 1] = h; // only update Y coord
-
-			//if (h < minHeight) minHeight = h;
-			//if (h > maxHeight) maxHeight = h;
-		}
-	}
-
-	//FIXME don't do so in DispList mode!
-	// Upload vertexBuffer
-	glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);
-	glBufferDataARB(GL_ARRAY_BUFFER_ARB, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW_ARB);
-	/*
-	int bufferSize = 0;
-	glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_SIZE_ARB, &bufferSize);
-	if(index != bufferSize) {
-		glDeleteBuffersARB(1, &vertexBuffer);
-		glDeleteBuffersARB(1, &vertexIndexBuffer);
-		LOG("[createVBO()] Data size is mismatch with input array\n");
-	}
-	*/
-	glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
-
-	m_isDirty = true;
-}
-
-// ---------------------------------------------------------------------
-// Reset the patch.
-//
-void Patch::Reset()
-{
-	// Assume patch is not visible.
-	m_isVisible = false;
-
-	// Reset the important relationships
-	m_BaseLeft  = TriTreeNode();
-	m_BaseRight = TriTreeNode();
-
-	// Attach the two m_Base triangles together
-	m_BaseLeft.BaseNeighbor  = &m_BaseRight;
-	m_BaseRight.BaseNeighbor = &m_BaseLeft;
-}
 
 // ---------------------------------------------------------------------
 // Compute the variance tree for each of the Binary Triangles in this patch.
