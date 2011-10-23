@@ -108,8 +108,9 @@ CRoamMeshDrawer::~CRoamMeshDrawer()
 
 void CRoamMeshDrawer::Update()
 {
+#define RETESSELLATE_MODE 1
 	//FIXME this retessellates with the current camera frustum, shadow pass and others don't have to see the same patches!
-	
+
 	//const CCamera* cam = (inShadowPass)? camera: cam2;
 	const CCamera* cam = cam2;
 	bool retessellate = false;
@@ -118,16 +119,8 @@ void CRoamMeshDrawer::Update()
 		for (int i = 0; i < (numPatchesX * numPatchesY); ++i) {
 			Patch& p = m_Patches[i];
 			p.UpdateVisibility();
-			if (p.IsVisible() != visibilitygrid[i]) {
-				visibilitygrid[i] = p.IsVisible();
-				retessellate = true;
-			}
-			if (p.IsVisible() && p.IsDirty()) {
-				//FIXME don't retessellate on small heightmap changes?
-				p.ComputeVariance();
-				retessellate = true;
-			}
-			/*if (p.IsVisible()) {
+		#if (RETESSELLATE_MODE == 2)
+			if (p.IsVisible()) {
 				if (!visibilitygrid[i]) {
 					visibilitygrid[i] = true;
 					retessellate = true;
@@ -139,13 +132,25 @@ void CRoamMeshDrawer::Update()
 				}
 			} else {
 				visibilitygrid[i] = false;
-			}*/
+			}
+		#else
+			if (p.IsVisible() != visibilitygrid[i]) {
+				visibilitygrid[i] = p.IsVisible();
+				retessellate = true;
+			}
+			if (p.IsVisible() && p.IsDirty()) {
+				//FIXME don't retessellate on small heightmap changes?
+				p.ComputeVariance();
+				retessellate = true;
+			}
+		#endif
 		}
 	}
 
-	//static const float maxCamDeltaDistSq = 500.0f * 500.0f;
-	//retessellate |= ((cam->pos - lastCamPos).SqLength() > maxCamDeltaDistSq);
-	//const float cd = (cam->pos - lastCamPos).SqLength();
+#if (RETESSELLATE_MODE == 2)
+	static const float maxCamDeltaDistSq = 500.0f * 500.0f;
+	retessellate |= ((cam->pos - lastCamPos).SqLength() > maxCamDeltaDistSq);
+#endif
 
 	retessellate |= forceRetessellate;
 
