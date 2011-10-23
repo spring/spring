@@ -100,7 +100,8 @@ void CLegacyMeshDrawer::DrawGroundVertexArrayQ(CVertexArray*& ma)
 
 
 
-bool CLegacyMeshDrawer::BigTexSquareRowVisible(const CCamera* cam, int bty) const {
+bool CLegacyMeshDrawer::BigTexSquareRowVisible(const CCamera* cam, int bty) const
+{
 	const int minz =  bty * smfReadMap->bigTexSize;
 	const int maxz = minz + smfReadMap->bigTexSize;
 	const float miny = readmap->currMinHeight;
@@ -114,7 +115,8 @@ bool CLegacyMeshDrawer::BigTexSquareRowVisible(const CCamera* cam, int bty) cons
 
 
 
-void CLegacyMeshDrawer::FindRange(const CCamera* cam, int& xs, int& xe, int y, int lod) {
+void CLegacyMeshDrawer::FindRange(const CCamera* cam, int& xs, int& xe, int y, int lod)
+{
 	int xt0, xt1;
 
 	const std::vector<CCamera::FrustumLine>& negSides = cam->negFrustumSides;
@@ -152,7 +154,8 @@ void CLegacyMeshDrawer::FindRange(const CCamera* cam, int& xs, int& xe, int y, i
 
 
 
-void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty) {
+void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
+{
 	if (!BigTexSquareRowVisible(cam, bty)) {
 		//! skip this entire row of squares if we can't see it
 		return;
@@ -618,7 +621,7 @@ void CLegacyMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 				gmlThreadCount,                       // mt
 				FALSE,                                // sm
 				NULL,                                 // it
-				smfReadMap->numBigTexY,                   // nu
+				smfReadMap->numBigTexY,               // nu
 				50,                                   // l1
 				100,                                  // l2
 				TRUE                                  // sw
