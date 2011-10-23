@@ -481,16 +481,30 @@ void Patch::SetSquareTexture() const
 }
 
 
-void Patch::ToggleRenderMode() {
-	switch (renderMode) {
-		case VA:
-			LOG("Set ROAM mode to DispList");
-			renderMode = DL; break;
-		case DL:
-			LOG("Set ROAM mode to VBO");
-			renderMode = VBO; break;
-		default:
-			LOG("Set ROAM mode to VA");
-			renderMode = VA; break;
+void Patch::SwitchRenderMode(int mode)
+{
+	if (mode < 0) {
+		mode = renderMode + 1;
+		mode %= 3;
 	}
+
+	if (mode == renderMode)
+		return;
+
+	switch (mode) {
+		case VA:
+			LOG("Set ROAM mode to VA");
+			renderMode = VA;
+			break;
+		case DL:
+			LOG("Set ROAM mode to DisplayLists");
+			renderMode = DL;
+			break;
+		case VBO:
+			LOG("Set ROAM mode to VBO");
+			renderMode = VBO;
+			break;
+	}
+
+	CRoamMeshDrawer::forceRetessellate = true;
 }
