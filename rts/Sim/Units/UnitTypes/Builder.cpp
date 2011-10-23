@@ -287,6 +287,7 @@ void CBuilder::Update()
 					} else {
 						if (!curBuild->beingBuilt && curBuild->health >= curBuild->maxHealth) {
 							StopBuild();
+							inBuildStance = false;
 						}
 					}
 				}
