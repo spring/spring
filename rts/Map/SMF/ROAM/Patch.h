@@ -67,7 +67,8 @@ struct TriTreeNode
 class Patch
 {
 public:
-	void Init(CSMFGroundDrawer* drawer, int worldX, int worldZ, const float* hMap, int mx); //FIXME make this a ctor!
+	Patch();
+	void Init(CSMFGroundDrawer* drawer, int worldX, int worldZ, const float* hMap, int mx); //FIXME move this into the ctor
 	~Patch();
 
 	friend class CRoamMeshDrawer;
