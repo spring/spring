@@ -28,6 +28,19 @@
 #include <cmath>
 
 // ---------------------------------------------------------------------
+// Log Section
+//
+#define LOG_SECTION_ROAM "CRoamMeshDrawer"
+LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_ROAM)
+
+// use the specific section for all LOG*() calls in this source file
+#ifdef LOG_SECTION_CURRENT
+	#undef LOG_SECTION_CURRENT
+#endif
+#define LOG_SECTION_CURRENT LOG_SECTION_ROAM
+
+
+// ---------------------------------------------------------------------
 // Definition of the static member variables
 //
 int CRoamMeshDrawer::m_NextTriNode = 0;
@@ -166,11 +179,11 @@ void CRoamMeshDrawer::Update()
 				}
 			}
 		
-			LOG("ROAM dbg: Framechange, fram=%i tris=%i, viewrad=%i, cd=%f, camera=(%5.0f, %5.0f, %5.0f) camera2=  (%5.0f, %5.0f, %5.0f)",
+			LOG_L(L_DEBUG, "ROAM dbg: Framechange, fram=%i tris=%i, viewrad=%i, cd=%f, camera=(%5.0f, %5.0f, %5.0f) camera2=  (%5.0f, %5.0f, %5.0f)",
 				globalRendering->drawFrame,
 				tricount,
 				smfGroundDrawer->viewRadius,
-				cd,
+				(cam->pos - lastCamPos).SqLength();,
 				camera->pos.x,
 				camera->pos.y,
 				camera->pos.z,
@@ -288,5 +301,9 @@ void CRoamMeshDrawer::UnsyncedHeightMapUpdate(const SRectangle& rect)
 		}
 	}
 
-	//LOG("ROAM dbg: UnsyncedHeightMapUpdate, fram=%i", globalRendering->drawFrame);
+	LOG_L(L_DEBUG, "ROAM dbg: UnsyncedHeightMapUpdate, fram=%i, numpatches=%i, x1=%i x2=%i z1=%i z2=%i",
+		globalRendering->drawFrame,
+		(xend - xstart) * (zend - zstart),
+		rect.x1, rect.x2, rect.z1, rect.z2
+   	);
 }
