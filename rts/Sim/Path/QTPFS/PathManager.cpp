@@ -438,13 +438,17 @@ float3 QTPFS::PathManager::NextWayPoint(
 	IPath* livePath = pathCaches[pathTypeIt->second].GetLivePath(pathID);
 
 	if (tempPath->GetID() != 0) {
-		// path-request has not yet been processed
-		// (so ID still maps to a temporary path);
-		// just set the unit off toward its target
+		// path-request has not yet been processed (so ID still maps to
+		// a temporary path); just set the unit off toward its target
 		//
-		// <curPoint> is initially the position of
-		// the unit requesting a path, but changes
-		// to the value returned by NextWayPoint()
+		// <curPoint> is initially the position of the unit requesting a
+		// path, but later changes to the subsequent values returned here
+		//
+		// NOTE:
+		//     if the returned point P is too far away, then a unit U will
+		//     never switch to its live-path even after it becomes available
+		//     (because NextWayPoint is not called again until U gets close
+		//     to P), so always keep it a fixed small distance in front
 		assert(livePath->GetID() == 0);
 
 		const float3& sourcePoint = curPoint;

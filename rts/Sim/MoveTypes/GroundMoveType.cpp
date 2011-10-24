@@ -360,8 +360,7 @@ void CGroundMoveType::SlowUpdate()
 		} else {
 			if (gs->frameNum > pathRequestDelay) {
 				// case B: we want to be moving but don't have a path
-				LOG_L(L_DEBUG,
-						"SlowUpdate: unit %i has no path", owner->id);
+				LOG_L(L_DEBUG, "SlowUpdate: unit %i has no path", owner->id);
 
 				StopEngine();
 				StartEngine();
@@ -417,8 +416,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float _goalRadius, float s
 	currWayPointDist = 0.0f;
 	prevWayPointDist = 0.0f;
 
-	LOG_L(L_DEBUG,
-			"StartMoving: starting engine for unit %i", owner->id);
+	LOG_L(L_DEBUG, "StartMoving: starting engine for unit %i", owner->id);
 
 	StartEngine();
 
@@ -440,8 +438,7 @@ void CGroundMoveType::StopMoving() {
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
 #endif
 
-	LOG_L(L_DEBUG,
-			"StopMoving: stopping engine for unit %i", owner->id);
+	LOG_L(L_DEBUG, "StopMoving: stopping engine for unit %i", owner->id);
 
 	StopEngine();
 
@@ -1075,7 +1072,7 @@ float CGroundMoveType::Distance2D(CSolidObject* object1, CSolidObject* object2, 
 // Creates a path to the goal.
 void CGroundMoveType::GetNewPath()
 {
-	pathManager->DeletePath(pathId);
+	assert(pathId == 0);
 	pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
 
 	// if new path received, can't be at waypoint
@@ -1206,8 +1203,7 @@ void CGroundMoveType::StopEngine() {
 		// Stop animation.
 		owner->script->StopMoving();
 
-		LOG_L(L_DEBUG,
-				"StopEngine: engine stopped for unit %i", owner->id);
+		LOG_L(L_DEBUG, "StopEngine: engine stopped for unit %i", owner->id);
 	}
 
 	owner->isMoving = false;
@@ -1239,8 +1235,7 @@ void CGroundMoveType::Arrived()
 		progressState = Done;
 		owner->commandAI->SlowUpdate();
 
-		LOG_L(L_DEBUG,
-				"Arrived: unit %i arrived", owner->id);
+		LOG_L(L_DEBUG, "Arrived: unit %i arrived", owner->id);
 	}
 }
 
@@ -1250,8 +1245,7 @@ No more trials will be done before a new goal is given.
 */
 void CGroundMoveType::Fail()
 {
-	LOG_L(L_DEBUG,
-			"Fail: unit %i failed", owner->id);
+	LOG_L(L_DEBUG, "Fail: unit %i failed", owner->id);
 
 	StopEngine();
 
