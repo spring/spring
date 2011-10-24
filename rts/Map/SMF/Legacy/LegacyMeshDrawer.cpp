@@ -39,11 +39,11 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLODMT(void* c, int nlod) {
 	((CLegacyMeshDrawer*) c)->DoDrawGroundShadowLOD(nlod);
 }
 
-#endif
-
-//CONFIG(int, GroundDetail).defaultValue(40);
 CONFIG(bool, MultiThreadDrawGround).defaultValue(true);
 CONFIG(bool, MultiThreadDrawGroundShadow).defaultValue(false);
+
+#endif
+
 
 CLegacyMeshDrawer::CLegacyMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	: smfReadMap(rm)
@@ -51,6 +51,11 @@ CLegacyMeshDrawer::CLegacyMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	, viewRadius(4)
 	, neededLod(4)
 	//, waterDrawn(false)
+#ifdef USE_GML
+	// handled by reference!
+	, multiThreadDrawGround(gd->multiThreadDrawGround)
+	, multiThreadDrawGroundShadow(gd->multiThreadDrawGroundShadow)
+#endif
 {
 #ifdef USE_GML
 	multiThreadDrawGround = configHandler->GetBool("MultiThreadDrawGround");

@@ -51,8 +51,8 @@ private:
 	CSMFGroundDrawer* smfGroundDrawer;
 
 #ifdef USE_GML
-	bool multiThreadDrawGround;
-	bool multiThreadDrawGroundShadow;
+	bool& multiThreadDrawGround;
+	bool& multiThreadDrawGroundShadow;
 #endif
 
 	int viewRadius;
