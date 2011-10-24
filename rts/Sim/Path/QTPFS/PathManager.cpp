@@ -450,7 +450,7 @@ float3 QTPFS::PathManager::NextWayPoint(
 		const float3& sourcePoint = curPoint;
 		const float3& targetPoint = tempPath->GetTargetPoint();
 		const float3  targetDirec = (targetPoint - sourcePoint).SafeNormalize();
-		return (sourcePoint + targetDirec);
+		return (sourcePoint + targetDirec * SQUARE_SIZE);
 	} else {
 		assert(livePath->GetID() != 0);
 	}
