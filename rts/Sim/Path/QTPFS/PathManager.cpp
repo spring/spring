@@ -284,6 +284,7 @@ void QTPFS::PathManager::Update() {
 	// NOTE:
 	//     for a mod with N move-types, a unit will be waiting
 	//     <numUpdates> sim-frames before its request executes
+	//     (at a minimum)
 	static const unsigned int numUpdates =
 		std::max(1U, static_cast<unsigned int>(nodeLayers.size() / MAX_UPDATE_DELAY));
 
@@ -300,7 +301,6 @@ void QTPFS::PathManager::Update() {
 
 		assert(i == moveData->pathType);
 
-		std::list<unsigned int> replacedPathIDs;
 		std::list<IPathSearch*>& searches = pathSearches[i];
 		std::list<IPathSearch*>::iterator searchesIt = searches.begin();
 
@@ -310,10 +310,13 @@ void QTPFS::PathManager::Update() {
 				IPathSearch* search = *searchesIt;
 				IPath* path = pathCache.GetTempPath(search->GetID());
 
+				assert(search != NULL);
+				assert(path != NULL);
+
 				// temp-path might have been removed already via DeletePath
 				if (path->GetID() == 0) {
-					searches.pop_front();
-					searchesIt = searches.begin();
+					*searchesIt = NULL;
+					searchesIt = searches.erase(searchesIt);
 					delete search;
 					continue;
 				}
@@ -324,8 +327,9 @@ void QTPFS::PathManager::Update() {
 				const unsigned int numCurrSearches = numCurrExecutedSearches[search->GetTeam()];
 				const unsigned int numPrevSearches = numPrevExecutedSearches[search->GetTeam()];
 
-				if ((numCurrSearches - numPrevSearches) >= MAX_TEAM_SEARCHES)
-					continue;
+				if ((numCurrSearches - numPrevSearches) >= MAX_TEAM_SEARCHES) {
+					++searchesIt; continue;
+				}
 
 				numCurrExecutedSearches[search->GetTeam()] += 1;
 
@@ -342,11 +346,11 @@ void QTPFS::PathManager::Update() {
 				// removes path from temp-paths, adds it to live-paths
 				if (search->Execute(&pathCache, &nodeLayer, searchExec, searchStateOffset, numTerrainChanges)) {
 					search->Finalize(path, false);
-					delete search;
 				}
 
-				searches.pop_front();
-				searchesIt = searches.begin();
+				*searchesIt = NULL;
+				searchesIt = searches.erase(searchesIt);
+				delete search;
 
 				searchStateOffset += NODE_STATE_OFFSET;
 			}
@@ -354,6 +358,8 @@ void QTPFS::PathManager::Update() {
 
 		#ifndef IGNORE_DEAD_PATHS
 		if (!deadPaths.empty()) {
+			std::list<unsigned int> replacedPathIDs;
+
 			// re-request LIVE paths that were marked as DEAD after a deformation
 			for (deadPathsIt = deadPaths.begin(); deadPathsIt != deadPaths.end(); ++deadPathsIt) {
 				const IPath* oldPath = pathCache.GetLivePath(*deadPathsIt);
@@ -382,7 +388,6 @@ void QTPFS::PathManager::Update() {
 
 				if (newSearch->Execute(&pathCache, &nodeLayer, NULL, searchStateOffset, numTerrainChanges)) {
 					newSearch->Finalize(newPath, true);
-					delete newSearch;
 
 					// path was succesfully re-requested, remove
 					// it from the DEAD paths before killing them
@@ -393,6 +398,7 @@ void QTPFS::PathManager::Update() {
 					pathTypes.erase(oldPath->GetID());
 				}
 
+				delete newSearch;
 				searchStateOffset += NODE_STATE_OFFSET;
 			}
 
@@ -507,6 +513,9 @@ unsigned int QTPFS::PathManager::RequestPath(
 	//     all searches get deleted by subsequent Update's
 	IPath* path = new Path();
 	IPathSearch* pathSearch = new PathSearch(PATH_SEARCH_ASTAR);
+
+	assert(path != NULL);
+	assert(pathSearch != NULL);
 
 	// NOTE:
 	//     the unclamped end-points are temporary
