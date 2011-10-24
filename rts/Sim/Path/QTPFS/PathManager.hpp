@@ -47,6 +47,8 @@ namespace QTPFS {
 
 		static NodeLayer* GetSerializingNodeLayer() { return serializingNodeLayer; }
 
+		static const unsigned int MAX_UPDATE_DELAY = 10;
+		static const unsigned int MAX_TEAM_SEARCHES = 10;
 		static const unsigned int NUM_SPEEDMOD_BINS = 20;
 		static const float MIN_SPEEDMOD_VALUE = 0.0f;
 		static const float MAX_SPEEDMOD_VALUE = 2.0f;
@@ -64,6 +66,9 @@ namespace QTPFS {
 		std::map<unsigned int, unsigned int> pathTypes;
 		std::map<unsigned int, PathSearchTrace::Execution*> pathTraces;
 
+		std::vector<unsigned int> numCurrExecutedSearches;
+		std::vector<unsigned int> numPrevExecutedSearches;
+
 		typedef std::map<unsigned int, unsigned int> PathTypeMap;
 		typedef std::map<unsigned int, unsigned int>::iterator PathTypeMapIt;
 		typedef std::map<unsigned int, PathSearchTrace::Execution*> PathTraceMap;
@@ -71,6 +76,7 @@ namespace QTPFS {
 
 		static NodeLayer* serializingNodeLayer;
 
+		unsigned int searchUpdateIndex;
 		unsigned int searchStateOffset;
 		unsigned int numTerrainChanges;
 		unsigned int numPathRequests;

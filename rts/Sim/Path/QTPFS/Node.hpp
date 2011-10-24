@@ -6,7 +6,7 @@
 #include <vector>
 #include <fstream>
 
-#include "Enums.hpp"
+#include "PathEnums.hpp"
 #include "System/float3.h"
 
 struct SRectangle;

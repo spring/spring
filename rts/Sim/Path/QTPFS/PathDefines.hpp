@@ -1,0 +1,9 @@
+#ifndef QTPFS_DEFINE_HDR
+#define QTPFS_DEFINE_HDR
+
+#define NO_LOADSCREEN
+#define IGNORE_DEAD_PATHS
+#define TRACE_PATH_SEARCHES
+
+#endif
+
