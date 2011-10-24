@@ -313,8 +313,11 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool isInitial
 	//
 	// if true, we are at the bottom of the recursion
 	bool registerNode = true;
+	bool allowRecursion = isInitializing?
+		(numNewBinSquares > 0 && numRefBinSquares > 0):
+		(numNewBinSquares > 0 || numRefBinSquares > 0);
 
-	if (numNewBinSquares > 0 && numRefBinSquares > 0) {
+	if (allowRecursion) {
 		Merge(nl);
 
 		if (Split(nl)) {

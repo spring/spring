@@ -83,7 +83,7 @@ namespace QTPFS {
 		unsigned int searchID;     // links us to the temp-path that this search will finalize
 		unsigned int searchTeam;   // which team queued this search
 
-		unsigned int searchType;   // indicates whether A* or Dijkstra search is employed
+		unsigned int searchType;   // indicates if Dijkstra (h==0) or A* (h!=0) search is employed
 		unsigned int searchState;  // offset that identifies nodes as part of current search
 		unsigned int searchMagic;  // used to signal nodes they should update their neighbor-set
 	};
