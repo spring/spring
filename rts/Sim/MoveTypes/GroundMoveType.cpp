@@ -334,7 +334,8 @@ void CGroundMoveType::SlowUpdate()
 		return;
 	}
 
-	if (progressState == Active) {
+	// FIXME: re-enable when QTPFS is faster
+	if (false && progressState == Active) {
 		if (pathId != 0) {
 			if (idling) {
 				numIdlingSlowUpdates = std::min(MAX_IDLING_SLOWUPDATES, int(numIdlingSlowUpdates + 1));
@@ -367,7 +368,6 @@ void CGroundMoveType::SlowUpdate()
 			}
 		}
 	}
-
 
 	if (!flying) {
 		// move us into the map, and update <oldPos>
