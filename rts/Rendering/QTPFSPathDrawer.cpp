@@ -155,7 +155,6 @@ void QTPFSPathDrawer::DrawSearchExecution(unsigned int pathType, const QTPFS::Pa
 	// number of frames reserved to draw the entire trace
 	static const unsigned int MAX_DRAW_TIME = GAME_SPEED * 5;
 
-	// advance one iteration every N=1 frames
 	unsigned int itersPerFrame = (searchIters.size() / MAX_DRAW_TIME) + 1;
 	unsigned int curSearchIter = 0;
 	unsigned int maxSearchIter = ((gs->frameNum - searchFrame) + 1) * itersPerFrame;
