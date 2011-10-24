@@ -6,10 +6,9 @@
 #include <vector>
 
 #include "Node.hpp"
+#include "PathDefines.hpp"
 #include "PathDataTypes.hpp"
 #include "System/float3.h"
-
-#define TRACE_PATH_SEARCHES
 
 namespace QTPFS {
 	struct PathCache;
@@ -76,12 +75,16 @@ namespace QTPFS {
 		virtual void Finalize(IPath* path, bool replace) = 0;
 
 		void SetID(unsigned int n) { searchID = n; }
+		void SetTeam(unsigned int n) { searchTeam = n; }
 		unsigned int GetID() const { return searchID; }
+		unsigned int GetTeam() const { return searchTeam; }
 
 	protected:
+		unsigned int searchID;     // links us to the temp-path that this search will finalize
+		unsigned int searchTeam;   // which team queued this search
+
 		unsigned int searchType;   // indicates whether A* or Dijkstra search is employed
 		unsigned int searchState;  // offset that identifies nodes as part of current search
-		unsigned int searchID;     // links us to the temp-path that this search will finalize
 		unsigned int searchMagic;  // used to signal nodes they should update their neighbor-set
 	};
 
