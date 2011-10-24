@@ -72,7 +72,12 @@ bool QTPFS::NodeLayer::Update(const SRectangle& r, const MoveData* md, const CMo
 		for (unsigned int hmz = r.z1; hmz < r.z2; hmz++) {
 			const unsigned int sqrIdx = hmz * xsize + hmx;
 
-			const float newAbsSpeedMod = Clamp(mm->GetPosSpeedMod(*md, hmx, hmz), PM::MIN_SPEEDMOD_VALUE, PM::MAX_SPEEDMOD_VALUE);
+			// NOTE: GetPosSpeedMod only checks terrain (height/slope/type), not the blocking-map
+			const CMoveMath::BlockType blockBits = mm->IsBlockedNoSpeedModCheck(*md, hmx, hmz);
+
+			const float rawAbsSpeedMod = mm->GetPosSpeedMod(*md, hmx, hmz);
+			const float tmpAbsSpeedMod = Clamp(rawAbsSpeedMod, PM::MIN_SPEEDMOD_VALUE, PM::MAX_SPEEDMOD_VALUE);
+			const float newAbsSpeedMod = ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0)? tmpAbsSpeedMod: 0.0f;
 			const float newRelSpeedMod = (newAbsSpeedMod - minSpeedMod) / speedModRng;
 			const float curRelSpeedMod = curSpeedMods[sqrIdx];
 
