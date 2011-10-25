@@ -94,7 +94,7 @@ QTPFS::PathManager::PathManager() {
 				loadscreen->SetLoadMessage(loadMsg);
 
 				nodeTrees[i] = new QTPFS::QTNode(0,  mapRect.x1, mapRect.z1,  mapRect.x2, mapRect.z2);
-				nodeLayers[i].Init();
+				nodeLayers[i].Init(i);
 				nodeLayers[i].RegisterNode(nodeTrees[i]);
 
 				// construct each tree from scratch IFF no cache-dir exists
@@ -161,7 +161,7 @@ void QTPFS::PathManager::InitNodeLayers(unsigned int threadNum, unsigned int num
 		loadscreen->SetLoadMessage(loadMsg);
 
 		nodeTrees[i] = new QTPFS::QTNode(0,  mapRect.x1, mapRect.z1,  mapRect.x2, mapRect.z2);
-		nodeLayers[i].Init();
+		nodeLayers[i].Init(i);
 		nodeLayers[i].RegisterNode(nodeTrees[i]);
 
 		UpdateNodeLayer(i, mapRect, true, !haveCacheDir);
@@ -206,7 +206,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 	// TODO: calculate checksum over each tree
 	// NOTE: also compress the tree cache-files?
 	for (unsigned int i = 0; i < nodeTrees.size(); i++) {
-		fileNames[i] = cacheFileDir + "tree" + IntToString(i, "%02x");
+		fileNames[i] = cacheFileDir + "tree" + IntToString(i, "%02x") + "-" + moveinfo->moveData[i]->name;
 		fileStreams[i] = new std::fstream();
 
 		if (FileSystem::FileExists(fileNames[i])) {
@@ -243,6 +243,13 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 //     all layers *must* be updated on the same frame
 //
 void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2) {
+	// adjust the borders so we are not left with "rims" of
+	// impassable squares when eg. a structure is reclaimed
+	x1 = std::max(int(x1) - 1,        0);
+	z1 = std::max(int(z1) - 1,        0);
+	x2 = std::min(int(x2) + 1, gs->mapx);
+	z2 = std::min(int(z2) + 1, gs->mapy);
+
 	const SRectangle r = SRectangle(x1, z1,  x2, z2);
 
 	{
