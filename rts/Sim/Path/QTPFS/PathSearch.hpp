@@ -76,8 +76,8 @@ namespace QTPFS {
 			unsigned int searchStateOffset = 0,
 			unsigned int searchMagicNumber = 0
 		) = 0;
-		virtual bool SharedFinalize(const IPath* srcPath, IPath* dstPath) {}
 		virtual void Finalize(IPath* path, bool replace) = 0;
+		virtual void SharedFinalize(const IPath* srcPath, IPath* dstPath) {}
 
 		virtual const boost::uint64_t GetHash(unsigned int N, unsigned int k) const = 0;
 
@@ -112,8 +112,8 @@ namespace QTPFS {
 			unsigned int searchStateOffset = 0,
 			unsigned int searchMagicNumber = 0
 		);
-		bool SharedFinalize(const IPath* srcPath, IPath* dstPath);
 		void Finalize(IPath* path, bool replace);
+		void SharedFinalize(const IPath* srcPath, IPath* dstPath);
 
 		const boost::uint64_t GetHash(unsigned int N, unsigned int k) const;
 
