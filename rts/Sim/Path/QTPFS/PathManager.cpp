@@ -305,6 +305,10 @@ void QTPFS::PathManager::Update() {
 		std::list<IPathSearch*>::iterator searchesIt = searches.begin();
 
 		if (!searches.empty()) {
+			#ifdef QTPFS_SEARCH_SHARED_PATHS
+			std::map<boost::uint64_t, IPath*> sharedPaths;
+			#endif
+
 			// execute all pending searches collected via RequestPath
 			while (searchesIt != searches.end()) {
 				IPathSearch* search = *searchesIt;
@@ -313,6 +317,8 @@ void QTPFS::PathManager::Update() {
 				assert(search != NULL);
 				assert(path != NULL);
 
+				search->Initialize(&nodeLayer, &pathCache, path->GetSourcePoint(), path->GetTargetPoint());
+
 				// temp-path might have been removed already via DeletePath
 				if (path->GetID() == 0) {
 					*searchesIt = NULL;
@@ -320,6 +326,22 @@ void QTPFS::PathManager::Update() {
 					delete search;
 					continue;
 				}
+
+
+				#ifdef QTPFS_SEARCH_SHARED_PATHS
+				const boost::uint32_t N = nodeLayer.GetNumLeafNodes();
+				const boost::uint64_t K = search->GetHash(N, i);
+				const std::map<boost::uint64_t, IPath*>::const_iterator sharedPathsIt = sharedPaths.find(K);
+
+				if (sharedPathsIt != sharedPaths.end()) {
+					search->SharedFinalize(sharedPathsIt->second, path);
+					*searchesIt = NULL;
+					searchesIt = searches.erase(searchesIt);
+					delete search;
+					continue;
+				}
+				#endif
+
 
 				assert(search->GetID() != 0);
 				assert(path->GetID() == search->GetID());
@@ -341,11 +363,13 @@ void QTPFS::PathManager::Update() {
 				pathTraces[path->GetID()] = searchExec;
 				#endif
 
-				search->Initialize(path->GetSourcePoint(), path->GetTargetPoint());
-
 				// removes path from temp-paths, adds it to live-paths
-				if (search->Execute(&pathCache, &nodeLayer, searchExec, searchStateOffset, numTerrainChanges)) {
+				if (search->Execute(searchExec, searchStateOffset, numTerrainChanges)) {
 					search->Finalize(path, false);
+
+					#ifdef QTPFS_SEARCH_SHARED_PATHS
+					sharedPaths[K] = path;
+					#endif
 				}
 
 				*searchesIt = NULL;
@@ -384,9 +408,9 @@ void QTPFS::PathManager::Update() {
 				// to have an ID (since it is executed for
 				// a live-path)
 				newSearch->SetID(oldPath->GetID());
-				newSearch->Initialize(oldPath->GetPoint(oldPath->GetPointIdx() - 1), oldPath->GetTargetPoint());
+				newSearch->Initialize(&nodeLayer, &pathCache, oldPath->GetPoint(oldPath->GetPointIdx() - 1), oldPath->GetTargetPoint());
 
-				if (newSearch->Execute(&pathCache, &nodeLayer, NULL, searchStateOffset, numTerrainChanges)) {
+				if (newSearch->Execute(NULL, searchStateOffset, numTerrainChanges)) {
 					newSearch->Finalize(newPath, true);
 
 					// path was succesfully re-requested, remove
@@ -528,7 +552,9 @@ unsigned int QTPFS::PathManager::RequestPath(
 	path->SetOwnerID((object != NULL)? object->id: -1U);
 	path->SetRadius(radius);
 	path->SetSynced(synced);
-	path->SetEndPoints(sourcePoint, targetPoint);
+	path->AllocPoints(2);
+	path->SetSourcePoint(sourcePoint);
+	path->SetTargetPoint(targetPoint);
 	pathSearch->SetID(path->GetID());
 	pathSearch->SetTeam((object != NULL)? object->team: teamHandler->ActiveTeams());
 

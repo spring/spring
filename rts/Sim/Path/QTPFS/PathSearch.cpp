@@ -14,28 +14,31 @@
 #include "Sim/Misc/GlobalSynced.h"
 #endif
 
-void QTPFS::PathSearch::Initialize(const float3& sourcePoint, const float3& targetPoint) {
+void QTPFS::PathSearch::Initialize(
+	NodeLayer* layer,
+	PathCache* cache,
+	const float3& sourcePoint,
+	const float3& targetPoint
+) {
 	srcPoint = sourcePoint; srcPoint.CheckInBounds();
 	tgtPoint = targetPoint; tgtPoint.CheckInBounds();
 	curPoint = srcPoint;
 	nxtPoint = tgtPoint;
-}
 
-bool QTPFS::PathSearch::Execute(
-	PathCache* cache,
-	NodeLayer* layer,
-	PathSearchTrace::Execution* exec,
-	unsigned int searchStateOffset,
-	unsigned int searchMagicNumber
-) {
-	pathCache = cache;
 	nodeLayer = layer;
+	pathCache = cache;
 
 	srcNode = nodeLayer->GetNode(srcPoint.x / SQUARE_SIZE, srcPoint.z / SQUARE_SIZE);
 	tgtNode = nodeLayer->GetNode(tgtPoint.x / SQUARE_SIZE, tgtPoint.z / SQUARE_SIZE);
 	curNode = NULL;
 	nxtNode = NULL;
+}
 
+bool QTPFS::PathSearch::Execute(
+	PathSearchTrace::Execution* exec,
+	unsigned int searchStateOffset,
+	unsigned int searchMagicNumber
+) {
 	searchState = searchStateOffset;
 	searchMagic = searchMagicNumber;
 
@@ -58,7 +61,7 @@ bool QTPFS::PathSearch::Execute(
 	}
 
 	if (!haveFullPath) {
-		openNodes.reserve(16384);
+		openNodes.reserve(nodeLayer->GetNumLeafNodes());
 		openNodes.push(srcNode);
 		srcNode->SetPrevNode(NULL);
 		srcNode->SetPathCost(NODE_PATH_COST_G, 0.0f);
@@ -149,6 +152,7 @@ void QTPFS::PathSearch::IterateSearch(
 		//     the node it crosses, UNLIKE the goal-heuristic)
 		// NOTE:
 		//     heading for the MIDDLE of the shared edge is not always the best option
+		//     fix this in TracePath by examining each triplet of nodes / points A B C
 		#ifdef QTPFS_COPY_NEIGHBOR_NODES
 		nxtNode = ngbNodes[i];
 		nxtPoint = curNode->GetNeighborEdgeMidPoint(nxtNode);
@@ -190,16 +194,16 @@ void QTPFS::PathSearch::IterateSearch(
 }
 
 void QTPFS::PathSearch::Finalize(IPath* path, bool replace) {
-	FillPath(path);
+	TracePath(path);
 
-	path->SetPoint(                    0, srcPoint);
-	path->SetPoint(path->NumPoints() - 1, tgtPoint);
+	path->SetSourcePoint(srcPoint);
+	path->SetTargetPoint(tgtPoint);
 
 	// path remains in live-cache until DeletePath is called
 	pathCache->AddLivePath(path, replace);
 }
 
-void QTPFS::PathSearch::FillPath(IPath* path) {
+void QTPFS::PathSearch::TracePath(IPath* path) {
 	std::list<float3> points;
 	std::list<float3>::const_iterator pointsIt;
 
@@ -218,7 +222,12 @@ void QTPFS::PathSearch::FillPath(IPath* path) {
 	}
 
 	// if source equals target, we need only two points
-	path->AllocPoints(points.size() + 2);
+	if (!points.empty()) {
+		path->AllocPoints(points.size() + 2);
+	} else {
+		assert(path->NumPoints() == 2);
+		return;
+	}
 
 	// set waypoints with indices [1, N - 2]; the first (0)
 	// and last (N - 1) waypoint are not set until after we
@@ -227,5 +236,24 @@ void QTPFS::PathSearch::FillPath(IPath* path) {
 		path->SetPoint((path->NumPoints() - points.size()) - 1, points.front());
 		points.pop_front();
 	}
+}
+
+
+
+bool QTPFS::PathSearch::SharedFinalize(const IPath* srcPath, IPath* dstPath) {
+	assert(dstPath->GetID() != 0);
+	assert(dstPath->GetID() != srcPath->GetID());
+	assert(dstPath->NumPoints() == 2);
+
+	// copy <srcPath> to <dstPath>
+	dstPath->CopyPoints(*srcPath);
+	dstPath->SetSourcePoint(srcPoint);
+	dstPath->SetTargetPoint(tgtPoint);
+	pathCache->AddLivePath(dstPath, false);
+	return true;
+}
+
+const boost::uint64_t QTPFS::PathSearch::GetHash(unsigned int N, unsigned int k) const {
+	return (srcNode->GetNodeNumber() + (tgtNode->GetNodeNumber() * N) + (k * N * N));
 }
 

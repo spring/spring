@@ -95,6 +95,13 @@ void QTPFSPathDrawer::DrawNodeTreeRec(
 		DrawNode(nt, md, mm, va, false, true);
 	} else {
 		for (unsigned int i = 0; i < QTPFS::QTNode::CHILD_COUNT; i++) {
+			const QTPFS::QTNode* n = nt->children[i];
+			const float3 mins = float3(n->xmin() * SQUARE_SIZE, 0.0f, n->zmin() * SQUARE_SIZE);
+			const float3 maxs = float3(n->xmax() * SQUARE_SIZE, 0.0f, n->zmax() * SQUARE_SIZE);
+
+			if (!camera->InView(mins, maxs))
+				continue;
+
 			DrawNodeTreeRec(nt->children[i], md, mm, va);
 		}
 	}

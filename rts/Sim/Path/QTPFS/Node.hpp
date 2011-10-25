@@ -14,6 +14,8 @@ struct SRectangle;
 namespace QTPFS {
 	struct NodeLayer;
 	struct INode {
+		unsigned int GetNodeNumber() const { return nodeNumber; }
+
 		bool operator < (const INode* n) const { return (fCost < n->fCost); }
 		bool operator () (const INode* a, const INode* b) const { return (a->fCost > b->fCost); }
 
