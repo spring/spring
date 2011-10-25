@@ -240,7 +240,7 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 
 
 
-bool QTPFS::PathSearch::SharedFinalize(const IPath* srcPath, IPath* dstPath) {
+void QTPFS::PathSearch::SharedFinalize(const IPath* srcPath, IPath* dstPath) {
 	assert(dstPath->GetID() != 0);
 	assert(dstPath->GetID() != srcPath->GetID());
 	assert(dstPath->NumPoints() == 2);
@@ -250,7 +250,6 @@ bool QTPFS::PathSearch::SharedFinalize(const IPath* srcPath, IPath* dstPath) {
 	dstPath->SetSourcePoint(srcPoint);
 	dstPath->SetTargetPoint(tgtPoint);
 	pathCache->AddLivePath(dstPath, false);
-	return true;
 }
 
 const boost::uint64_t QTPFS::PathSearch::GetHash(unsigned int N, unsigned int k) const {
