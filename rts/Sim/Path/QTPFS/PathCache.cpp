@@ -83,7 +83,7 @@ void QTPFS::PathCache::DelPath(unsigned int pathID) {
 
 
 bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
-	#ifdef IGNORE_DEAD_PATHS
+	#ifdef QTPFS_IGNORE_DEAD_PATHS
 	return false;
 	#endif
 

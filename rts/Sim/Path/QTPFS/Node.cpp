@@ -391,6 +391,24 @@ void QTPFS::QTNode::Serialize(std::fstream& fStream, bool read) {
 }
 
 unsigned int QTPFS::QTNode::GetNeighbors(const std::vector<INode*>& nodes, std::vector<INode*>& ngbs) {
+	UpdateNeighborCache(nodes);
+
+	if (!neighbors.empty()) {
+		ngbs.clear();
+		ngbs.resize(neighbors.size());
+
+		std::copy(neighbors.begin(), neighbors.end(), ngbs.begin());
+	}
+
+	return (neighbors.size());
+}
+
+const std::vector<QTPFS::INode*>& QTPFS::QTNode::GetNeighbors(const std::vector<INode*>& nodes) {
+	UpdateNeighborCache(nodes);
+	return neighbors;
+}
+
+bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 	assert(IsLeaf());
 
 	if (prevMagicNum != currMagicNum) {
@@ -415,7 +433,7 @@ unsigned int QTPFS::QTNode::GetNeighbors(const std::vector<INode*>& nodes, std::
 				for (unsigned int hmz = zmin(); hmz < zmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
 					hmz += ngb->zsize();
-					neighbors.push_back((QTNode*) ngb);
+					neighbors.push_back(ngb);
 				}
 
 				ngbsL = true;
@@ -427,7 +445,7 @@ unsigned int QTPFS::QTNode::GetNeighbors(const std::vector<INode*>& nodes, std::
 				for (unsigned int hmz = zmin(); hmz < zmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
 					hmz += ngb->zsize();
-					neighbors.push_back((QTNode*) ngb);
+					neighbors.push_back(ngb);
 				}
 
 				ngbsR = true;
@@ -440,7 +458,7 @@ unsigned int QTPFS::QTNode::GetNeighbors(const std::vector<INode*>& nodes, std::
 				for (unsigned int hmx = xmin(); hmx < xmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
 					hmx += ngb->xsize();
-					neighbors.push_back((QTNode*) ngb);
+					neighbors.push_back(ngb);
 				}
 
 				ngbsT = true;
@@ -452,26 +470,21 @@ unsigned int QTPFS::QTNode::GetNeighbors(const std::vector<INode*>& nodes, std::
 				for (unsigned int hmx = xmin(); hmx < xmax(); ) {
 					ngb = nodes[hmz * gs->mapx + hmx];
 					hmx += ngb->xsize();
-					neighbors.push_back((QTNode*) ngb);
+					neighbors.push_back(ngb);
 				}
 
 				ngbsB = true;
 			}
 
-			if (ngbsL && ngbsT) { neighbors.push_back((QTNode*) nodes[(zmin() - 1) * gs->mapx + (xmin() - 1)]); } // VERT_TL neighbor
-			if (ngbsL && ngbsB) { neighbors.push_back((QTNode*) nodes[(zmax() + 0) * gs->mapx + (xmin() - 1)]); } // VERT_BL neighbor
-			if (ngbsR && ngbsT) { neighbors.push_back((QTNode*) nodes[(zmin() - 1) * gs->mapx + (xmax() + 0)]); } // VERT_TR neighbor
-			if (ngbsR && ngbsB) { neighbors.push_back((QTNode*) nodes[(zmax() + 0) * gs->mapx + (xmax() + 0)]); } // VERT_BR neighbor
+			if (ngbsL && ngbsT) { neighbors.push_back(nodes[(zmin() - 1) * gs->mapx + (xmin() - 1)]); } // VERT_TL neighbor
+			if (ngbsL && ngbsB) { neighbors.push_back(nodes[(zmax() + 0) * gs->mapx + (xmin() - 1)]); } // VERT_BL neighbor
+			if (ngbsR && ngbsT) { neighbors.push_back(nodes[(zmin() - 1) * gs->mapx + (xmax() + 0)]); } // VERT_TR neighbor
+			if (ngbsR && ngbsB) { neighbors.push_back(nodes[(zmax() + 0) * gs->mapx + (xmax() + 0)]); } // VERT_BR neighbor
 		}
+
+		return true;
 	}
 
-	if (!neighbors.empty()) {
-		ngbs.clear();
-		ngbs.resize(neighbors.size());
-
-		std::copy(neighbors.begin(), neighbors.end(), ngbs.begin());
-	}
-
-	return (neighbors.size());
+	return false;
 }
 

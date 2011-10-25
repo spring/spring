@@ -17,8 +17,12 @@ namespace QTPFS {
 		bool operator < (const INode* n) const { return (fCost < n->fCost); }
 		bool operator () (const INode* a, const INode* b) const { return (a->fCost > b->fCost); }
 
+		// NOTE:
+		//     not pure virtuals, because INode is used as comparator in
+		//     a std::pqueue and STL does not allow using abstract types
 		virtual void Serialize(std::fstream&, bool) { assert(false); }
-		virtual unsigned int GetNeighbors(const std::vector<INode*>&, std::vector<INode*>&) { return 0; }
+		virtual unsigned int GetNeighbors(const std::vector<INode*>&, std::vector<INode*>&) { assert(false); return 0; }
+		virtual const std::vector<INode*>& GetNeighbors(const std::vector<INode*>& v) { assert(false); return v; }
 
 		unsigned int GetNeighborRelation(const INode* ngb) const;
 		unsigned int GetRectangleRelation(const SRectangle& r) const;
@@ -87,6 +91,7 @@ namespace QTPFS {
 
 		unsigned int GetMaxNumNeighbors() const;
 		unsigned int GetNeighbors(const std::vector<INode*>&, std::vector<INode*>&);
+		const std::vector<INode*>& GetNeighbors(const std::vector<INode*>&);
 		float GetMoveCost() const { return moveCostAvg; }
 
 		unsigned int xmin() const { return _xmin; }
@@ -105,7 +110,10 @@ namespace QTPFS {
 		unsigned int GetMagicNumber() const { return currMagicNum; }
 
 		static const unsigned int CHILD_COUNT = 4;
+
 	private:
+		bool UpdateNeighborCache(const std::vector<INode*>& nodes);
+
 		unsigned int _xmin, _xmax, _xmid, _xsize;
 		unsigned int _zmin, _zmax, _zmid, _zsize;
 
@@ -118,7 +126,7 @@ namespace QTPFS {
 		unsigned int prevMagicNum;
 
 		std::vector<QTNode*> children;
-		std::vector<QTNode*> neighbors;
+		std::vector<INode*> neighbors;
 	};
 };
 

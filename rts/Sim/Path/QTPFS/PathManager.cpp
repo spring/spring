@@ -20,7 +20,7 @@
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
 
-#ifdef NO_LOADSCREEN
+#ifdef QTPFS_NO_LOADSCREEN
 	struct DummyLoadScreen { void SetLoadMessage(const std::string& msg) const { LOG("%s", msg.c_str()); } };
 	static DummyLoadScreen dummyLoadScreen;
 	#undef loadscreen
@@ -333,7 +333,7 @@ void QTPFS::PathManager::Update() {
 
 				numCurrExecutedSearches[search->GetTeam()] += 1;
 
-				#ifdef TRACE_PATH_SEARCHES
+				#ifdef QTPFS_TRACE_PATH_SEARCHES
 				PathSearchTrace::Execution* searchExec = new PathSearchTrace::Execution(gs->frameNum);
 				pathTraces[path->GetID()] = searchExec;
 				#else

@@ -23,6 +23,9 @@ namespace QTPFS {
 		PathManager();
 		~PathManager();
 
+		// TODO
+		boost::uint32_t GetPathCheckSum() const { return 0xDEADC0DE; }
+
 		void TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2);
 		void Update();
 		void DeletePath(unsigned int pathID);

@@ -10,7 +10,7 @@
 #include "NodeLayer.hpp"
 #include "Sim/Misc/GlobalConstants.h"
 
-#ifdef TRACE_PATH_SEARCHES
+#ifdef QTPFS_TRACE_PATH_SEARCHES
 #include "Sim/Misc/GlobalSynced.h"
 #endif
 
@@ -66,14 +66,14 @@ bool QTPFS::PathSearch::Execute(
 		srcNode->SetPathCost(NODE_PATH_COST_F, (srcNode->GetPathCost(NODE_PATH_COST_G) + srcNode->GetPathCost(NODE_PATH_COST_H)));
 	}
 
-	#ifdef TRACE_PATH_SEARCHES
+	#ifdef QTPFS_TRACE_PATH_SEARCHES
 	assert(exec != NULL);
 	#endif
 
 	while ((haveOpenNode = !openNodes.empty()) && !(haveFullPath = (curNode == tgtNode))) {
 		IterateSearch(allNodes, ngbNodes, &iter);
 
-		#ifdef TRACE_PATH_SEARCHES
+		#ifdef QTPFS_TRACE_PATH_SEARCHES
 		exec->AddIteration(iter);
 		iter.Clear();
 		#endif
@@ -120,7 +120,7 @@ void QTPFS::PathSearch::IterateSearch(
 
 	openNodes.pop();
 
-	#ifdef TRACE_PATH_SEARCHES
+	#ifdef QTPFS_TRACE_PATH_SEARCHES
 	iter->SetPoppedNodeIdx(curNode->zmin() * gs->mapx + curNode->xmin());
 	#endif
 
@@ -131,7 +131,14 @@ void QTPFS::PathSearch::IterateSearch(
 	if (curNode->GetMoveCost() == std::numeric_limits<float>::infinity())
 		return;
 
+
+	#ifdef QTPFS_COPY_NEIGHBOR_NODES
 	const unsigned int numNgbs = curNode->GetNeighbors(allNodes, ngbNodes);
+	#else
+	// cannot assign to <ngbNodes> because that would still make a copy
+	const std::vector<INode*>& nxtNodes = curNode->GetNeighbors(allNodes);
+	const unsigned int numNgbs = nxtNodes.size();
+	#endif
 
 	for (unsigned int i = 0; i < numNgbs; i++) {
 		// NOTE:
@@ -142,8 +149,13 @@ void QTPFS::PathSearch::IterateSearch(
 		//     the node it crosses, UNLIKE the goal-heuristic)
 		// NOTE:
 		//     heading for the MIDDLE of the shared edge is not always the best option
+		#ifdef QTPFS_COPY_NEIGHBOR_NODES
 		nxtNode = ngbNodes[i];
 		nxtPoint = curNode->GetNeighborEdgeMidPoint(nxtNode);
+		#else
+		nxtNode = nxtNodes[i];
+		nxtPoint = curNode->GetNeighborEdgeMidPoint(nxtNode);
+		#endif
 
 		assert(curNode->GetNeighborEdgeMidPoint(nxtNode) == nxtNode->GetNeighborEdgeMidPoint(curNode));
 
@@ -159,7 +171,7 @@ void QTPFS::PathSearch::IterateSearch(
 			// is) already placed in the open queue
 			UpdateNode(nxtNode, curNode, gCost);
 
-			#ifdef TRACE_PATH_SEARCHES
+			#ifdef QTPFS_TRACE_PATH_SEARCHES
 			iter->AddPushedNodeIdx(nxtNode->zmin() * gs->mapx + nxtNode->xmin());
 			#endif
 

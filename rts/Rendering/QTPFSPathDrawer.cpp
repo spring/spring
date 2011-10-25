@@ -111,7 +111,7 @@ void QTPFSPathDrawer::DrawPaths(const MoveData* md) const {
 	for (pathsIt = paths.begin(); pathsIt != paths.end(); ++pathsIt) {
 		DrawPath(pathsIt->second, va);
 
-		#ifdef TRACE_PATH_SEARCHES
+		#ifdef QTPFS_TRACE_PATH_SEARCHES
 		#define PM QTPFS::PathManager
 		const PM::PathTypeMap::const_iterator typeIt = pm->pathTypes.find(pathsIt->first);
 		const PM::PathTraceMap::const_iterator traceIt = pm->pathTraces.find(pathsIt->first);
@@ -134,8 +134,14 @@ void QTPFSPathDrawer::DrawPath(const QTPFS::IPath* path, CVertexArray* va) const
 	};
 
 	for (unsigned int n = 0; n < path->NumPoints() - 1; n++) {
-		float3 p0 = path->GetPoint(n + 0); p0.y = ground->GetHeightReal(p0.x, p0.z, false);
-		float3 p1 = path->GetPoint(n + 1); p1.y = ground->GetHeightReal(p1.x, p1.z, false);
+		float3 p0 = path->GetPoint(n + 0);
+		float3 p1 = path->GetPoint(n + 1);
+
+		if (!camera->InView(p0) && !camera->InView(p1))
+			continue;
+
+		p0.y = ground->GetHeightReal(p0.x, p0.z, false);
+		p1.y = ground->GetHeightReal(p1.x, p1.z, false);
 
 		va->AddVertexQC(p0, color);
 		va->AddVertexQC(p1, color);
@@ -274,6 +280,9 @@ void QTPFSPathDrawer::DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS:
 	static const unsigned char color[4] = {
 		1 * 255, 0 * 255, 1 * 255, 1 * 128,
 	};
+
+	if (!camera->InView(verts[0]) && !camera->InView(verts[1]))
+		return;
 
 	va->Initialize();
 	va->EnlargeArrays(2, 0, VA_SIZE_C);
