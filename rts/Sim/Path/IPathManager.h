@@ -138,11 +138,6 @@ public:
 	virtual bool SetNodeExtraCost(unsigned int x, unsigned int z, float cost, bool synced) { return false; }
 	virtual float GetNodeExtraCost(unsigned int x, unsigned int z, bool synced) const { return 0.0f; }
 	virtual const float* GetNodeExtraCosts(bool synced) const { return NULL; }
-
-	enum {
-		PM_TYPE_DEFAULT = 0,
-		PM_TYPE_QTPFS   = 1,
-	};
 };
 
 extern IPathManager* pathManager;
