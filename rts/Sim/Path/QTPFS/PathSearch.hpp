@@ -3,6 +3,7 @@
 #ifndef QTPFS_PATHSEARCH_HDR
 #define QTPFS_PATHSEARCH_HDR
 
+#include <map>
 #include <vector>
 
 #include "Node.hpp"
@@ -64,15 +65,21 @@ namespace QTPFS {
 		IPathSearch(unsigned int pathSearchType): searchType(pathSearchType) {}
 		virtual ~IPathSearch() {}
 
-		virtual void Initialize(const float3& sourcePoint, const float3& targetPoint) = 0;
-		virtual bool Execute(
-			PathCache* cache,
+		virtual void Initialize(
 			NodeLayer* layer,
+			PathCache* cache,
+			const float3& sourcePoint,
+			const float3& targetPoint
+		) = 0;
+		virtual bool Execute(
 			PathSearchTrace::Execution* exec,
 			unsigned int searchStateOffset = 0,
 			unsigned int searchMagicNumber = 0
 		) = 0;
+		virtual bool SharedFinalize(const IPath* srcPath, IPath* dstPath) {}
 		virtual void Finalize(IPath* path, bool replace) = 0;
+
+		virtual const boost::uint64_t GetHash(unsigned int N, unsigned int k) const = 0;
 
 		void SetID(unsigned int n) { searchID = n; }
 		void SetTeam(unsigned int n) { searchTeam = n; }
@@ -94,15 +101,21 @@ namespace QTPFS {
 		PathSearch(unsigned int pathSearchType): IPathSearch(pathSearchType) {}
 		~PathSearch() { while (!openNodes.empty()) { openNodes.pop(); } }
 
-		void Initialize(const float3& sourcePoint, const float3& targetPoint);
-		bool Execute(
-			PathCache* cache,
+		void Initialize(
 			NodeLayer* layer,
+			PathCache* cache,
+			const float3& sourcePoint,
+			const float3& targetPoint
+		);
+		bool Execute(
 			PathSearchTrace::Execution* exec,
 			unsigned int searchStateOffset = 0,
 			unsigned int searchMagicNumber = 0
 		);
+		bool SharedFinalize(const IPath* srcPath, IPath* dstPath);
 		void Finalize(IPath* path, bool replace);
+
+		const boost::uint64_t GetHash(unsigned int N, unsigned int k) const;
 
 	private:
 		void IterateSearch(
@@ -110,12 +123,12 @@ namespace QTPFS {
 			      std::vector<INode*>& ngbNodes,
 			      PathSearchTrace::Iteration* iter
 			);
-		void FillPath(IPath* path);
+		void TracePath(IPath* path);
 		void UpdateNode(INode* nxtNode, INode* curNode, float gCost);
 		void UpdateQueue();
 
-		PathCache* pathCache;
 		NodeLayer* nodeLayer;
+		PathCache* pathCache;
 
 		float3 srcPoint, tgtPoint;
 		float3 curPoint, nxtPoint;
