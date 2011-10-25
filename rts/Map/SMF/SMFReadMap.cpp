@@ -292,8 +292,8 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 {
 	// ReadMap::UpdateHeightMapSynced clamps to [0, gs->mapx - 1]
 
-	const int x1 = update.x1, y1 = update.y1;
-	const int x2 = update.x2, y2 = update.y2;
+	int x1 = update.x1, y1 = update.y1;
+	int x2 = update.x2, y2 = update.y2;
 
 	// update the visible (LOS) heights and normals
 	{
@@ -439,6 +439,12 @@ void CSMFReadMap::UpdateHeightMapUnsynced(const HeightMapUpdate& update)
 	// this can be done for diffuse lighting only
 	{
 		// texture space is [0 .. gs->mapxm1] x [0 .. gs->mapym1]
+
+		// enlarge rect by 1pixel in all directions (cause we use center normals and not corner ones)
+		x1 = std::max(x1 - 1, 0);
+		y1 = std::max(y1 - 1, 0);
+		x2 = std::min(x2 + 1, gs->mapx - 1);
+		y2 = std::min(y2 + 1, gs->mapy - 1);
 
 		const int xsize = (x2 - x1) + 1; // +1 cause we iterate:
 		const int ysize = (y2 - y1) + 1; // x1 <= xi <= x2  (not!  x1 <= xi < x2)
