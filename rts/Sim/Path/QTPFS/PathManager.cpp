@@ -236,11 +236,11 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 
 
 // NOTE:
-//     gets called during initialization for trees etc., but
-//     never with a map-covering rectangle (constructor does
-//     this for us)
-//
 //     all layers *must* be updated on the same frame
+//
+//     map-features added during loading do NOT trigger
+//     this event (because map and features are already
+//     present when PathManager gets instantiated)
 //
 void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2) {
 	// adjust the borders so we are not left with "rims" of
