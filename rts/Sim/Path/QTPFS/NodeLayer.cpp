@@ -33,9 +33,10 @@ void QTPFS::NodeLayer::RegisterNode(INode* n) {
 	}
 }
 
-void QTPFS::NodeLayer::Init() {
+void QTPFS::NodeLayer::Init(unsigned int n) {
 	// pre-count the root
 	numLeafNodes = 1;
+	layerNumber = n;
 
 	xsize = gs->mapx;
 	zsize = gs->mapy;

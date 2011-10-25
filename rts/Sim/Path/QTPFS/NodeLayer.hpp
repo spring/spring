@@ -13,7 +13,7 @@ namespace QTPFS {
 	struct INode;
 	struct NodeLayer {
 	public:
-		void Init();
+		void Init(unsigned int n);
 		bool Update(const SRectangle& r, const MoveData* md, const CMoveMath* mm);
 		void Clear();
 
@@ -33,6 +33,8 @@ namespace QTPFS {
 
 		void SetNumLeafNodes(unsigned int n) { numLeafNodes = n; }
 		unsigned int GetNumLeafNodes() const { return numLeafNodes; }
+
+		unsigned int GetLayerNumber() const { return layerNumber; }
 	private:
 		std::vector<INode*> nodeGrid;
 
@@ -42,6 +44,7 @@ namespace QTPFS {
 		std::vector<int  > oldSpeedBins;
 
 		unsigned int numLeafNodes;
+		unsigned int layerNumber;
 
 		unsigned int xsize;
 		unsigned int zsize;
