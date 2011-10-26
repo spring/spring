@@ -76,7 +76,7 @@ QTPFS::PathManager::PathManager() {
 		char loadMsg[512] = {'\0'};
 		const char* fmtString = "[%s] using %u threads for %u node-layers (cached? %s)";
 
-		#ifdef OPENMP
+		#ifdef QTPFS_OPENMP_INITIALIZATION
 			// never use more threads than the number of layers
 			// TODO: this needs project-global linking changes
 			//
@@ -147,8 +147,8 @@ QTPFS::PathManager::~PathManager() {
 
 
 void QTPFS::PathManager::InitNodeLayers(unsigned int threadNum, unsigned int numThreads, const SRectangle& mapRect, bool haveCacheDir) {
-	static const unsigned int layersPerThread = (nodeLayers.size() / numThreads);
-	static const unsigned int numExcessLayers = (threadNum == (numThreads - 1))?
+	const unsigned int layersPerThread = (nodeLayers.size() / numThreads);
+	const unsigned int numExcessLayers = (threadNum == (numThreads - 1))?
 		(nodeLayers.size() % numThreads): 0;
 
 	const unsigned int minLayer = threadNum * layersPerThread;
