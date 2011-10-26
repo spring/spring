@@ -4,6 +4,7 @@
 #define QTPFS_NODELAYER_HDR
 
 #include <vector>
+#include <boost/cstdint.hpp>
 
 struct SRectangle;
 struct MoveData;
@@ -35,6 +36,17 @@ namespace QTPFS {
 		unsigned int GetNumLeafNodes() const { return numLeafNodes; }
 
 		unsigned int GetLayerNumber() const { return layerNumber; }
+
+		boost::uint64_t GetMemFootPrint() const {
+			boost::uint64_t memFootPrint = 0;
+			memFootPrint += (curSpeedMods.size() * sizeof(float));
+			memFootPrint += (oldSpeedMods.size() * sizeof(float));
+			memFootPrint += (curSpeedBins.size() * sizeof(int));
+			memFootPrint += (oldSpeedBins.size() * sizeof(int));
+			memFootPrint += (nodeGrid.size() * sizeof(INode*));
+			memFootPrint += sizeof(NodeLayer);
+			return memFootPrint;
+		}
 	private:
 		std::vector<INode*> nodeGrid;
 

@@ -2,6 +2,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
+#include <boost/cstdint.hpp>
 #include <omp.h>
 
 #include "PathDefines.hpp"
@@ -70,6 +71,8 @@ QTPFS::PathManager::PathManager() {
 
 	InitNodeLayersThreaded(SRectangle(0, 0,  gs->mapx, gs->mapy), haveCacheDir);
 	Serialize(cacheDirName);
+
+	loadscreen->SetLoadMessage("[PathManager] memory-footprint: " + IntToString(GetMemFootPrint()) + "MB");
 }
 
 QTPFS::PathManager::~PathManager() {
@@ -88,6 +91,18 @@ QTPFS::PathManager::~PathManager() {
 
 	numCurrExecutedSearches.clear();
 	numPrevExecutedSearches.clear();
+}
+
+boost::uint64_t QTPFS::PathManager::GetMemFootPrint() const {
+	boost::uint64_t memFootPrint = sizeof(PathManager);
+
+	for (unsigned int i = 0; i < nodeLayers.size(); i++) {
+		memFootPrint += nodeLayers[i].GetMemFootPrint();
+		memFootPrint += nodeTrees[i]->GetMemFootPrint();
+	}
+
+	// convert to megabytes
+	return (memFootPrint / (1024 * 1024));
 }
 
 
@@ -109,7 +124,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect, bool hav
 	streflop_init<streflop::Simple>();
 
 	char loadMsg[512] = {'\0'};
-	const char* fmtString = "[%s] using %u threads for %u node-layers (cached? %s)";
+	const char* fmtString = "[PathManager::%s] using %u threads for %u node-layers (cached? %s)";
 
 	#ifdef QTPFS_OPENMP_ENABLED
 	{
@@ -251,7 +266,7 @@ std::string QTPFS::PathManager::GetCacheDirName(const std::string& mapArchiveNam
 		IntToString(modCheckSum, "%08x") + "/";
 
 	char loadMsg[512] = {'\0'};
-	const char* fmtString = "[%s] using cache-dir %s (map-checksum %08x, mod-checksum %08x)";
+	const char* fmtString = "[PathManager::%s] using cache-dir %s (map-checksum %08x, mod-checksum %08x)";
 
 	sprintf(loadMsg, fmtString, __FUNCTION__, dir.c_str(), mapCheckSum, modCheckSum);
 	loadscreen->SetLoadMessage(loadMsg);
@@ -269,7 +284,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 
 	bool read = false;
 	char loadMsg[512] = {'\0'};
-	const char* fmtString = "[%s] serializing node-tree %u (%s)";
+	const char* fmtString = "[PathManager::%s] serializing node-tree %u (%s)";
 
 	// TODO:
 	//     calculate checksum over each tree
