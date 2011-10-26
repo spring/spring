@@ -93,13 +93,13 @@ QTPFS::PathManager::PathManager() {
 				sprintf(loadMsg, "  initializing node-layer %u (thread %u)", i, omp_get_thread_num());
 				loadscreen->SetLoadMessage(loadMsg);
 
-				nodeTrees[i] = new QTPFS::QTNode(0,  mapRect.x1, mapRect.z1,  mapRect.x2, mapRect.z2);
+				nodeTrees[i] = new QTPFS::QTNode(NULL,  0,  mapRect.x1, mapRect.z1,  mapRect.x2, mapRect.z2);
 				nodeLayers[i].Init(i);
 				nodeLayers[i].RegisterNode(nodeTrees[i]);
 
 				// construct each tree from scratch IFF no cache-dir exists
 				// (if it does, we only need to initialize speed{Mods, Bins})
-				UpdateNodeLayer(i, mapRect, true, !haveCacheDir);
+				UpdateNodeLayer(i, mapRect, !haveCacheDir);
 
 				sprintf(loadMsg, "  initialized node-layer %u (%u leafs, ratio %f)", i, nodeLayers[i].GetNumLeafNodes(), nodeLayers[i].GetNodeRatio());
 				loadscreen->SetLoadMessage(loadMsg);
@@ -160,11 +160,11 @@ void QTPFS::PathManager::InitNodeLayers(unsigned int threadNum, unsigned int num
 		sprintf(loadMsg, "  initializing node-layer %u (thread %u)", i, threadNum);
 		loadscreen->SetLoadMessage(loadMsg);
 
-		nodeTrees[i] = new QTPFS::QTNode(0,  mapRect.x1, mapRect.z1,  mapRect.x2, mapRect.z2);
+		nodeTrees[i] = new QTPFS::QTNode(NULL,  0,  mapRect.x1, mapRect.z1,  mapRect.x2, mapRect.z2);
 		nodeLayers[i].Init(i);
 		nodeLayers[i].RegisterNode(nodeTrees[i]);
 
-		UpdateNodeLayer(i, mapRect, true, !haveCacheDir);
+		UpdateNodeLayer(i, mapRect, !haveCacheDir);
 
 		sprintf(loadMsg, "  initialized node-layer %u (%u leafs, ratio %f)", i, nodeLayers[i].GetNumLeafNodes(), nodeLayers[i].GetNodeRatio());
 		loadscreen->SetLoadMessage(loadMsg);
@@ -201,7 +201,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 
 	bool read = false;
 	char loadMsg[512] = {'\0'};
-	const char* fmtString = "[%s] serializing node-tree %u";
+	const char* fmtString = "[%s] serializing node-tree %u (%s)";
 
 	// TODO: calculate checksum over each tree
 	// NOTE: also compress the tree cache-files?
@@ -219,7 +219,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 			fileStreams[i]->open(fileNames[i].c_str(), std::ios::out | std::ios::binary);
 		}
 
-		sprintf(loadMsg, fmtString, __FUNCTION__, i);
+		sprintf(loadMsg, fmtString, __FUNCTION__, i, moveinfo->moveData[i]->name.c_str());
 		loadscreen->SetLoadMessage(loadMsg);
 
 		serializingNodeLayer = &nodeLayers[i];
@@ -258,7 +258,7 @@ void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsign
 
 		#pragma omp parallel for
 		for (unsigned int i = 0; i < nodeLayers.size(); i++) {
-			UpdateNodeLayer(i, r, false, true);
+			UpdateNodeLayer(i, r, true);
 		}
 
 		streflop_init<streflop::Simple>();
@@ -267,7 +267,7 @@ void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsign
 	numTerrainChanges += 1;
 }
 
-void QTPFS::PathManager::UpdateNodeLayer(unsigned int i, const SRectangle& r, bool isInitializing, bool wantTesselation) {
+void QTPFS::PathManager::UpdateNodeLayer(unsigned int i, const SRectangle& r, bool wantTesselation) {
 	const MoveData*  md = moveinfo->moveData[i];
 	const CMoveMath* mm = md->moveMath;
 
@@ -275,7 +275,7 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int i, const SRectangle& r, bo
 		return;
 
 	if (nodeLayers[i].Update(r, md, mm) && wantTesselation) {
-		nodeTrees[i]->PreTesselate(nodeLayers[i], r, isInitializing);
+		nodeTrees[i]->PreTesselate(nodeLayers[i], r);
 		pathCaches[i].MarkDeadPaths(r);
 	}
 }

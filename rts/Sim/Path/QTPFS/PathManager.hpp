@@ -59,7 +59,7 @@ namespace QTPFS {
 	private:
 		std::string GetCacheDirName(const std::string& mapArchiveName, const std::string& modArchiveName) const;
 		void InitNodeLayers(unsigned int threadNum, unsigned int numThreads, const SRectangle& mapRect, bool haveCacheDir);
-		void UpdateNodeLayer(unsigned int i, const SRectangle& r, bool isInitializing, bool wantTesselation);
+		void UpdateNodeLayer(unsigned int i, const SRectangle& r, bool wantTesselation);
 		void Serialize(const std::string& cacheFileDir);
 
 		std::vector<NodeLayer> nodeLayers;
