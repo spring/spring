@@ -453,7 +453,7 @@ void QTPFS::QTNode::UpdateMoveCost(
 	assert(speedModSum >= 0.0f);
 
 	speedModAvg = speedModSum / (xsize() * zsize());
-	moveCostAvg = (speedModAvg <= 0.001f)? std::numeric_limits<float>::infinity(): (1.0f / speedModAvg);
+	moveCostAvg = (speedModAvg <= 0.001f)? QTPFS_POSITIVE_INFINITY: (1.0f / speedModAvg);
 
 	assert(moveCostAvg > 0.0f);
 }

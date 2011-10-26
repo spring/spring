@@ -41,6 +41,9 @@ private:
 		const CMoveMath* mm,
 		CVertexArray* va
 	) const;
+
+	void GetVisibleNodes(const QTPFS::QTNode* nt, std::list<const QTPFS::QTNode*>& nodes) const;
+
 	void DrawPaths(const MoveData* md) const;
 	void DrawPath(const QTPFS::IPath* path, CVertexArray* va) const;
 	void DrawSearchExecution(unsigned int pathType, const QTPFS::PathSearchTrace::Execution* searchExec) const;
@@ -51,7 +54,8 @@ private:
 		const CMoveMath* mm,
 		CVertexArray* va,
 		bool fillQuad,
-		bool showCost
+		bool showCost,
+		bool batchDraw
 	) const;
 	void DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS::QTNode* poppedNode, CVertexArray* va) const;
 };

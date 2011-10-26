@@ -9,5 +9,7 @@
 // #define QTPFS_SLOW_ACCURATE_TESSELATION
 // #define QTPFS_OPENMP_ENABLED
 
+#define QTPFS_POSITIVE_INFINITY (std::numeric_limits<float>::infinity())
+
 #endif
 
