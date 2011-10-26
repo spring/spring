@@ -411,11 +411,6 @@ void QTPFS::QTNode::UpdateMoveCost(
 				numNewBinSquares += (curSpeedBin != oldSpeedBin)? 1: 0;
 				numDifBinSquares += (curSpeedBin != refSpeedBin)? 1: 0;
 
-				// NOTE:
-				//     a sequence 1 2 1 2 ... produces a higer dif-bin count than
-				//     it should, but we only care whether the total is non-zero
-				// prvSpeedBin = curSpeedBin;
-
 				speedModSum -= oldSpeedMods[sqrIdx];
 				speedModSum += curSpeedMods[sqrIdx];
 
