@@ -21,7 +21,7 @@ namespace QTPFS {
 
 		// NOTE:
 		//     not pure virtuals, because INode is used as comparator in
-		//     a std::pqueue and STL does not allow using abstract types
+		//     std::pqueue and STL does not allow abstract types for that
 		virtual void Serialize(std::fstream&, bool) { assert(false); }
 		virtual unsigned int GetNeighbors(const std::vector<INode*>&, std::vector<INode*>&) { assert(false); return 0; }
 		virtual const std::vector<INode*>& GetNeighbors(const std::vector<INode*>& v) { assert(false); return v; }
@@ -70,6 +70,7 @@ namespace QTPFS {
 
 	struct QTNode: public INode {
 		QTNode(
+			const QTNode* parent,
 			unsigned int id,
 			unsigned int x1, unsigned int z1,
 			unsigned int x2, unsigned int z2
@@ -83,8 +84,8 @@ namespace QTPFS {
 		unsigned int GetParentID() const { return ((nodeNumber - 1) >> 2); }
 
 		void Delete();
-		void PreTesselate(NodeLayer& nl, const SRectangle& r, bool isInitializing);
-		void Tesselate(NodeLayer& nl, const SRectangle& r, bool isInitializing);
+		void PreTesselate(NodeLayer& nl, const SRectangle& r);
+		void Tesselate(NodeLayer& nl, const SRectangle& r, bool merged, bool split);
 		void Serialize(std::fstream& fStream, bool read);
 
 		bool IsLeaf() const;
@@ -114,13 +115,20 @@ namespace QTPFS {
 		static const unsigned int CHILD_COUNT = 4;
 
 	private:
+		void UpdateMoveCost(
+			const NodeLayer& nl,
+			unsigned int x1, unsigned int z1,
+			unsigned int x2, unsigned int z2,
+			unsigned int& numNewBinSquares,
+			unsigned int& numDifBinSquares
+		);
 		bool UpdateNeighborCache(const std::vector<INode*>& nodes);
 
 		unsigned int _xmin, _xmax, _xmid, _xsize;
 		unsigned int _zmin, _zmax, _zmid, _zsize;
 
-		float speedModAvg;
 		float speedModSum;
+		float speedModAvg;
 		float moveCostAvg;
 
 		unsigned int searchState;

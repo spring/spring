@@ -112,13 +112,18 @@ float3 QTPFS::INode::GetNeighborEdgeMidPoint(const INode* ngb) const {
 
 // clip an OVERLAPPING rectangle against our boundaries
 //
-// NOTE: the rectangle is only ASSUMED to not lie completely
-// inside <this> (in which case this function acts as no-op),
-// we do not explicitly test
+// NOTE:
+//     the rectangle is only ASSUMED to not lie completely
+//     inside <this> (in which case this function acts as
+//     no-op), we do not explicitly test
+//
+//     both REL_RECT_EXTERIOR_NODE and REL_NODE_OVERLAPS_RECT
+//     relations can produce zero- or negative-area rectangles
+//     when clipping --> need to ensure to not leave move-cost
+//     at its default value (0.0, which no node can logically
+//     have)
 //
 SRectangle QTPFS::INode::ClipRectangle(const SRectangle& r) const {
-	assert(GetRectangleRelation(r) != REL_RECT_EXTERIOR_NODE);
-
 	SRectangle cr = SRectangle(0, 0, 0, 0);
 	cr.x1 = std::max(int(xmin()), r.x1);
 	cr.z1 = std::max(int(zmin()), r.z1);
@@ -133,6 +138,7 @@ SRectangle QTPFS::INode::ClipRectangle(const SRectangle& r) const {
 
 
 QTPFS::QTNode::QTNode(
+	const QTNode*,
 	unsigned int id,
 	unsigned int x1, unsigned int z1,
 	unsigned int x2, unsigned int z2
@@ -152,12 +158,15 @@ QTPFS::QTNode::QTNode(
 	_xsize = _xmax - _xmin;
 	_zsize = _zmax - _zmin;
 
+	assert(_xsize != 0);
+	assert(_zsize != 0);
+
 	fCost = 0.0f;
 	gCost = 0.0f;
 	hCost = 0.0f;
 
-	speedModAvg = 0.0f;
 	speedModSum = 0.0f;
+	speedModAvg = 0.0f;
 	moveCostAvg = 0.0f;
 
 	// for leafs, all children remain NULL
@@ -176,6 +185,7 @@ void QTPFS::QTNode::Delete() {
 		}
 	}
 
+	neighbors.clear();
 	delete this;
 }
 
@@ -197,16 +207,18 @@ bool QTPFS::QTNode::Split(NodeLayer& nl) {
 		return false;
 	}
 
+	neighbors.clear();
+
 	// can only split leaf-nodes (ie. nodes with NULL-children)
 	assert(children[NODE_IDX_TL] == NULL);
 	assert(children[NODE_IDX_TR] == NULL);
 	assert(children[NODE_IDX_BR] == NULL);
 	assert(children[NODE_IDX_BL] == NULL);
 
-	children[NODE_IDX_TL] = new QTNode(GetChildID(NODE_IDX_TL),  xmin(), zmin(),  xmid(), zmid());
-	children[NODE_IDX_TR] = new QTNode(GetChildID(NODE_IDX_TR),  xmid(), zmin(),  xmax(), zmid());
-	children[NODE_IDX_BR] = new QTNode(GetChildID(NODE_IDX_BR),  xmid(), zmid(),  xmax(), zmax());
-	children[NODE_IDX_BL] = new QTNode(GetChildID(NODE_IDX_BL),  xmin(), zmid(),  xmid(), zmax());
+	children[NODE_IDX_TL] = new QTNode(this, GetChildID(NODE_IDX_TL),  xmin(), zmin(),  xmid(), zmid());
+	children[NODE_IDX_TR] = new QTNode(this, GetChildID(NODE_IDX_TR),  xmid(), zmin(),  xmax(), zmid());
+	children[NODE_IDX_BR] = new QTNode(this, GetChildID(NODE_IDX_BR),  xmid(), zmid(),  xmax(), zmax());
+	children[NODE_IDX_BL] = new QTNode(this, GetChildID(NODE_IDX_BL),  xmin(), zmid(),  xmid(), zmax());
 
 	nl.SetNumLeafNodes(nl.GetNumLeafNodes() + (4 - 1));
 	assert(!IsLeaf());
@@ -217,6 +229,8 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 	if (IsLeaf()) {
 		return false;
 	}
+
+	neighbors.clear();
 
 	// get rid of our children completely, but not of <this>!
 	for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
@@ -230,74 +244,93 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 
 
 
-// re-tesselate a tree from the deepest node <n>
-// that contains rectangle <r> (<n> will be found
-// from any higher node passed in, including root)
-//
-void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const SRectangle& r, bool isInitializing) {
-	const unsigned int rel = GetRectangleRelation(r);
-
-	if (rel == REL_RECT_EXTERIOR_NODE) {
-		return;
-	}
-
-	// use <r> if it is fully inside <this>, otherwise clip
-	const SRectangle& cr = (rel != REL_RECT_INTERIOR_NODE)? ClipRectangle(r): r;
-
-	const bool leaf = IsLeaf();
-	const bool cont = (rel != REL_RECT_INTERIOR_NODE)?
-		(((xsize() >> 1) > (cr.x2 - cr.x1)) &&
-		 ((zsize() >> 1) > (cr.z2 - cr.z1))):
-		true;
-
-	if (leaf || !cont) {
-		Tesselate(nl, cr, isInitializing);
-		return;
-	}
-
-	// continue recursion while our children are still larger than the clipped rectangle
-	//
-	// NOTE: this is a trade-off between minimizing the number of leaf-nodes (achieved by
-	// re-tesselating in its entirety the deepest node that fully contains <r>) and cost
-	// of re-tesselating (which grows as the node-count decreases, kept under control by
-	// breaking <r> up into pieces while descending further)
-	//
-	for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
-		children[i]->PreTesselate(nl, cr, isInitializing);
-	}
-}
 
 
 
-void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool isInitializing) {
-	unsigned int numNewBinSquares = 0; // number of squares that changed bin within <r> after deformation
-	unsigned int numRefBinSquares = 0; // number of squares in <r> NOT equal to the new ref-bin at <x1, z1>
+#ifndef QTPFS_SLOW_TESSELATION
+	// this code is MUCH slower in the worst-case (when a rectangle
+	// overlaps all four children of the ROOT node), but minimizes
+	// the overall number of nodes in the tree at any given time
+	void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const SRectangle& r) {
+		bool recursed = false;
 
-	const std::vector<int>& oldSpeedBins = nl.GetOldSpeedBins();
-	const std::vector<int>& curSpeedBins = nl.GetCurSpeedBins();
-	const std::vector<float>& oldSpeedMods = nl.GetOldSpeedMods();
-	const std::vector<float>& curSpeedMods = nl.GetCurSpeedMods();
+		if (!IsLeaf()) {
+			for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
+				if (children[i]->GetRectangleRelation(r) == REL_RECT_INTERIOR_NODE) {
+					recursed = true; children[i]->PreTesselate(nl, r); break;
+				}
+			}
+		}
 
-	for (unsigned int hmx = r.x1; hmx < r.x2; hmx++) {
-		for (unsigned int hmz = r.z1; hmz < r.z2; hmz++) {
-			const unsigned int sqrIdx = hmz * gs->mapx + hmx;
-
-			const int oldSpeedBin = oldSpeedBins[sqrIdx];
-			const int curSpeedBin = curSpeedBins[sqrIdx];
-			const int refSpeedBin = curSpeedBins[r.z1 * gs->mapx + r.x1];
-
-			numNewBinSquares += (curSpeedBin != oldSpeedBin)? 1: 0;
-			numRefBinSquares += (curSpeedBin != refSpeedBin)? 1: 0;
-
-			speedModSum -= oldSpeedMods[sqrIdx];
-			speedModSum += curSpeedMods[sqrIdx];
+		if (!recursed) {
+			Merge(nl);
+			Tesselate(nl, r, true, false);
 		}
 	}
 
-	// (re-)calculate the average cost of this node
-	speedModAvg = speedModSum / (xsize() * zsize());
-	moveCostAvg = (speedModAvg <= 0.001f)? std::numeric_limits<float>::infinity(): (1.0f / speedModAvg);
+#else
 
+	// FIXME
+	// re-tesselate a tree from the deepest node <n>
+	// that contains rectangle <r> (<n> will be found
+	// from any higher node passed in, including root)
+	//
+	void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const SRectangle& r) {
+		const unsigned int rel = GetRectangleRelation(r);
+
+		// guaranteed to be true for the root
+		assert(rel != REL_RECT_EXTERIOR_NODE);
+
+		// use <r> if it is fully inside <this>, otherwise clip
+		const SRectangle& cr = (rel != REL_RECT_INTERIOR_NODE)? ClipRectangle(r): r;
+
+		const bool leaf = IsLeaf();
+		const bool cont = (rel != REL_RECT_INTERIOR_NODE)?
+			(((xsize() >> 1) > (cr.x2 - cr.x1)) &&
+			 ((zsize() >> 1) > (cr.z2 - cr.z1))):
+			true;
+
+		if (leaf || !cont) {
+			Tesselate(nl, cr, ?, ?);
+			return;
+		}
+
+		// continue recursion while our children are still larger than the clipped rectangle
+		//
+		// NOTE: this is a trade-off between minimizing the number of leaf-nodes (achieved by
+		// re-tesselating in its entirety the deepest node that fully contains <r>) and cost
+		// of re-tesselating (which grows as the node-count decreases, kept under control by
+		// breaking <r> up into pieces while descending further)
+		//
+		for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
+			if (children[i]->GetRectangleRelation(cr) == REL_RECT_EXTERIOR_NODE)
+				continue;
+
+			children[i]->PreTesselate(nl, cr);
+		}
+	}
+
+#endif
+
+
+
+void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool merged, bool split) {
+	unsigned int numNewBinSquares = 0; // number of squares that changed bin in <r> after deformation
+	unsigned int numDifBinSquares = 0; // number of different bin-types across all squares in <r>
+
+	// if true, we are at the bottom of the recursion
+	bool registerNode = true;
+
+	// if we just entered Tesselate from PreTesselate, <this> was
+	// merged and we need to update squares across the entire node
+	//
+	// if we entered from a higher-level Tesselate, <this> is newly
+	// allocated and we STILL need to update across the entire node
+	//
+	// this means the rectangle is actually irrelevant: only use it
+	// has is that numNewBinSquares can be calculated for area under
+	// rectangle rather than full node
+	//
 	// we want to *keep* splitting so long as not ALL squares
 	// within <r> share the SAME bin, OR we keep finding one
 	// that SWITCHED bins after the terrain change (we already
@@ -311,20 +344,18 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool isInitial
 	// technically required whenever numRefBinSquares is zero, ie.
 	// when ALL squares in <r> changed bins in unison
 	//
-	// if true, we are at the bottom of the recursion
-	bool registerNode = true;
-	bool allowRecursion = isInitializing?
-		(numNewBinSquares > 0 && numRefBinSquares > 0):
-		(numNewBinSquares > 0 || numRefBinSquares > 0);
+	UpdateMoveCost(nl, xmin(), zmin(), xmax(), zmax(), numNewBinSquares, numDifBinSquares);
 
-	if (allowRecursion) {
-		Merge(nl);
-
+	if (numDifBinSquares > 0) {
 		if (Split(nl)) {
 			registerNode = false;
 
 			for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
-				children[i]->Tesselate(nl, children[i]->ClipRectangle(r), isInitializing);
+				QTNode* cn = children[i];
+				SRectangle cr = cn->ClipRectangle(r);
+
+				cn->Tesselate(nl, cr, false, true);
+				assert(cn->moveCostAvg != 0.0f);
 			}
 		}
 	}
@@ -333,6 +364,50 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool isInitial
 		nl.RegisterNode(this);
 	}
 }
+
+void QTPFS::QTNode::UpdateMoveCost(
+	const NodeLayer& nl,
+	unsigned int x1, unsigned int z1,
+	unsigned int x2, unsigned int z2,
+	unsigned int& numNewBinSquares,
+	unsigned int& numDifBinSquares
+) {
+	const std::vector<int>& oldSpeedBins = nl.GetOldSpeedBins();
+	const std::vector<int>& curSpeedBins = nl.GetCurSpeedBins();
+	const std::vector<float>& oldSpeedMods = nl.GetOldSpeedMods();
+	const std::vector<float>& curSpeedMods = nl.GetCurSpeedMods();
+
+	int prvSpeedBin = curSpeedBins[z1 * gs->mapx + x1];
+
+	for (unsigned int hmx = x1; hmx < x2; hmx++) {
+		for (unsigned int hmz = z1; hmz < z2; hmz++) {
+			const unsigned int sqrIdx = hmz * gs->mapx + hmx;
+
+			const int oldSpeedBin = oldSpeedBins[sqrIdx];
+			const int curSpeedBin = curSpeedBins[sqrIdx];
+
+			numNewBinSquares += (curSpeedBin != oldSpeedBin)? 1: 0;
+			numDifBinSquares += (curSpeedBin != prvSpeedBin)? 1: 0;
+
+			// NOTE:
+			//     a sequence 1 2 1 2 ... produces a higer dif-bin count than
+			//     it should, but we only care whether the total is non-zero
+			prvSpeedBin = curSpeedBin;
+
+			speedModSum -= oldSpeedMods[sqrIdx];
+			speedModSum += curSpeedMods[sqrIdx];
+		}
+	}
+
+	// (re-)calculate the average cost of this node
+	speedModAvg = speedModSum / (xsize() * zsize());
+	moveCostAvg = (speedModAvg <= 0.001f)? std::numeric_limits<float>::infinity(): (1.0f / speedModAvg);
+
+	assert(moveCostAvg != 0.0f);
+}
+
+
+
 
 
 
