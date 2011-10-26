@@ -247,8 +247,12 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 
 
 
-#ifndef QTPFS_SLOW_TESSELATION
-	// this code is MUCH slower in the worst-case (when a rectangle
+#ifdef QTPFS_SLOW_ACCURATE_TESSELATION
+	// re-tesselate a tree from the deepest node <n> that contains
+	// rectangle <r> (<n> will be found from any higher node passed
+	// in)
+	//
+	// this code can be VERY slow in the worst-case (eg. when <r>
 	// overlaps all four children of the ROOT node), but minimizes
 	// the overall number of nodes in the tree at any given time
 	void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const SRectangle& r) {
@@ -257,7 +261,7 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 		if (!IsLeaf()) {
 			for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
 				if (children[i]->GetRectangleRelation(r) == REL_RECT_INTERIOR_NODE) {
-					recursed = true; children[i]->PreTesselate(nl, r); break;
+					children[i]->PreTesselate(nl, r); recursed = true; break;
 				}
 			}
 		}
@@ -270,43 +274,37 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 
 #else
 
-	// FIXME
-	// re-tesselate a tree from the deepest node <n>
-	// that contains rectangle <r> (<n> will be found
-	// from any higher node passed in, including root)
-	//
 	void QTPFS::QTNode::PreTesselate(NodeLayer& nl, const SRectangle& r) {
 		const unsigned int rel = GetRectangleRelation(r);
 
-		// guaranteed to be true for the root
-		assert(rel != REL_RECT_EXTERIOR_NODE);
-
-		// use <r> if it is fully inside <this>, otherwise clip
+		// use <r> if it is fully inside <this>, otherwise clip against our edges
 		const SRectangle& cr = (rel != REL_RECT_INTERIOR_NODE)? ClipRectangle(r): r;
 
-		const bool leaf = IsLeaf();
-		const bool cont = (rel != REL_RECT_INTERIOR_NODE)?
-			(((xsize() >> 1) > (cr.x2 - cr.x1)) &&
-			 ((zsize() >> 1) > (cr.z2 - cr.z1))):
-			true;
-
-		if (leaf || !cont) {
-			Tesselate(nl, cr, ?, ?);
+		if ((cr.x2 - cr.x1) <= 0 || (cr.z2 - cr.z1) <= 0) {
 			return;
 		}
 
-		// continue recursion while our children are still larger than the clipped rectangle
+		// continue recursion while our CHILDREN are still larger than the clipped rectangle
 		//
 		// NOTE: this is a trade-off between minimizing the number of leaf-nodes (achieved by
 		// re-tesselating in its entirety the deepest node that fully contains <r>) and cost
 		// of re-tesselating (which grows as the node-count decreases, kept under control by
 		// breaking <r> up into pieces while descending further)
 		//
-		for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
-			if (children[i]->GetRectangleRelation(cr) == REL_RECT_EXTERIOR_NODE)
-				continue;
+		const bool leaf = IsLeaf();
+		const bool cont = (rel != REL_RECT_INTERIOR_NODE)?
+			(((xsize() >> 1) > (r.x2 - r.x1)) &&
+			 ((zsize() >> 1) > (r.z2 - r.z1))):
+			true;
 
-			children[i]->PreTesselate(nl, cr);
+		if (leaf || !cont) {
+			Merge(nl);
+			Tesselate(nl, r, true, false);
+			return;
+		}
+
+		for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
+			children[i]->PreTesselate(nl, r);
 		}
 	}
 
@@ -315,8 +313,8 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 
 
 void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool merged, bool split) {
-	unsigned int numNewBinSquares = 0; // number of squares that changed bin in <r> after deformation
-	unsigned int numDifBinSquares = 0; // number of different bin-types across all squares in <r>
+	unsigned int numNewBinSquares = 0; // nr. of squares in <r> that changed bin after deformation
+	unsigned int numDifBinSquares = 0; // nr. of different bin-types across all squares within <r>
 
 	// if true, we are at the bottom of the recursion
 	bool registerNode = true;
@@ -387,7 +385,6 @@ void QTPFS::QTNode::UpdateMoveCost(
 
 	if (moveCostAvg > 0.0f) {
 		// just merged, so <r> is fully inside <this>
-		// (valid when QTPFS_SLOW_TESSELATION is used)
 		//
 		// the reference-square (xmin, zmin) MUST lie
 		// outside <r> when <r> does not cover <this>
