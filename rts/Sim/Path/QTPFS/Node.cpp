@@ -191,6 +191,23 @@ void QTPFS::QTNode::Delete() {
 
 
 
+boost::uint64_t QTPFS::QTNode::GetMemFootPrint() const {
+	boost::uint64_t memFootPrint = sizeof(QTNode);
+
+	if (IsLeaf()) {
+		memFootPrint += (neighbors.size() * sizeof(INode*));
+		memFootPrint += (children.size() * sizeof(QTNode*));
+	} else {
+		for (unsigned int i = 0; i < CHILD_COUNT; i++) {
+			memFootPrint += (children[i]->GetMemFootPrint());
+		}
+	}
+
+	return memFootPrint;
+}
+
+
+
 bool QTPFS::QTNode::IsLeaf() const {
 	assert(children.size() == QTNode::CHILD_COUNT);
 	assert(

@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <fstream>
+#include <boost/cstdint.hpp>
 
 #include "PathEnums.hpp"
 #include "System/float3.h"
@@ -82,6 +83,8 @@ namespace QTPFS {
 		//     <i> is a NODE_IDX index in [0, 3]
 		unsigned int GetChildID(unsigned int i) const { return (nodeNumber << 2) + (i + 1); }
 		unsigned int GetParentID() const { return ((nodeNumber - 1) >> 2); }
+
+		boost::uint64_t GetMemFootPrint() const;
 
 		void Delete();
 		void PreTesselate(NodeLayer& nl, const SRectangle& r);
