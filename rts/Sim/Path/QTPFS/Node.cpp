@@ -165,9 +165,9 @@ QTPFS::QTNode::QTNode(
 	gCost = 0.0f;
 	hCost = 0.0f;
 
-	speedModSum = 0.0f;
-	speedModAvg = 0.0f;
-	moveCostAvg = 0.0f;
+	speedModSum =  0.0f;
+	speedModAvg =  0.0f;
+	moveCostAvg = -1.0f;
 
 	// for leafs, all children remain NULL
 	children.resize(QTNode::CHILD_COUNT, NULL);
@@ -355,7 +355,7 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool merged, b
 				SRectangle cr = cn->ClipRectangle(r);
 
 				cn->Tesselate(nl, cr, false, true);
-				assert(cn->moveCostAvg != 0.0f);
+				assert(cn->moveCostAvg != -1.0f);
 			}
 		}
 	}
@@ -378,26 +378,65 @@ void QTPFS::QTNode::UpdateMoveCost(
 
 	const int refSpeedBin = curSpeedBins[zmin() * gs->mapx + xmin()];
 
-	speedModSum = 0.0f;
+	// <this> can either just have been merged or added as
+	// new child of split parent; in the former case we can
+	// restrict ourselves to <r> and update the sum in part
+	// (as well as checking homogeneousness just for squares
+	// in <r> with a single reference point outside it)
+	assert(moveCostAvg == -1.0f || moveCostAvg > 0.0f);
 
-	for (unsigned int hmx = xmin(); hmx < xmax(); hmx++) {
-		for (unsigned int hmz = zmin(); hmz < zmax(); hmz++) {
-			const unsigned int sqrIdx = hmz * gs->mapx + hmx;
+	if (moveCostAvg > 0.0f) {
+		// just merged, so <r> is fully inside <this>
+		// (valid when QTPFS_SLOW_TESSELATION is used)
+		//
+		// the reference-square (xmin, zmin) MUST lie
+		// outside <r> when <r> does not cover <this>
+		// 100%, otherwise we would find a value of 0
+		// for numDifBinSquares in some situations
+		assert((r.x2 - r.x1) >= 0);
+		assert((r.z2 - r.z1) >= 0);
 
-			const int oldSpeedBin = oldSpeedBins[sqrIdx];
-			const int curSpeedBin = curSpeedBins[sqrIdx];
+		const unsigned int minx = std::max(r.x1 - 1, int(xmin()));
+		const unsigned int maxx = std::min(r.x2 + 1, int(xmax()));
+		const unsigned int minz = std::max(r.z1 - 1, int(zmin()));
+		const unsigned int maxz = std::min(r.z2 + 1, int(zmax()));
 
-			numNewBinSquares += (curSpeedBin != oldSpeedBin)? 1: 0;
-			numDifBinSquares += (curSpeedBin != refSpeedBin)? 1: 0;
+		for (unsigned int hmx = minx; hmx < maxx; hmx++) {
+			for (unsigned int hmz = minz; hmz < maxz; hmz++) {
+				const unsigned int sqrIdx = hmz * gs->mapx + hmx;
 
-			// NOTE:
-			//     a sequence 1 2 1 2 ... produces a higer dif-bin count than
-			//     it should, but we only care whether the total is non-zero
-			// prvSpeedBin = curSpeedBin;
+				const int oldSpeedBin = oldSpeedBins[sqrIdx];
+				const int curSpeedBin = curSpeedBins[sqrIdx];
 
-			// needed for partial update of area under <r>
-			// speedModSum -= oldSpeedMods[sqrIdx];
-			speedModSum += curSpeedMods[sqrIdx];
+				numNewBinSquares += (curSpeedBin != oldSpeedBin)? 1: 0;
+				numDifBinSquares += (curSpeedBin != refSpeedBin)? 1: 0;
+
+				// NOTE:
+				//     a sequence 1 2 1 2 ... produces a higer dif-bin count than
+				//     it should, but we only care whether the total is non-zero
+				// prvSpeedBin = curSpeedBin;
+
+				speedModSum -= oldSpeedMods[sqrIdx];
+				speedModSum += curSpeedMods[sqrIdx];
+
+				assert(speedModSum >= 0.0f);
+			}
+		}
+	} else {
+		speedModSum = 0.0f;
+
+		for (unsigned int hmx = xmin(); hmx < xmax(); hmx++) {
+			for (unsigned int hmz = zmin(); hmz < zmax(); hmz++) {
+				const unsigned int sqrIdx = hmz * gs->mapx + hmx;
+
+				const int oldSpeedBin = oldSpeedBins[sqrIdx];
+				const int curSpeedBin = curSpeedBins[sqrIdx];
+
+				numNewBinSquares += (curSpeedBin != oldSpeedBin)? 1: 0;
+				numDifBinSquares += (curSpeedBin != refSpeedBin)? 1: 0;
+
+				speedModSum += curSpeedMods[sqrIdx];
+			}
 		}
 	}
 
@@ -407,7 +446,7 @@ void QTPFS::QTNode::UpdateMoveCost(
 	speedModAvg = speedModSum / (xsize() * zsize());
 	moveCostAvg = (speedModAvg <= 0.001f)? std::numeric_limits<float>::infinity(): (1.0f / speedModAvg);
 
-	assert(moveCostAvg != 0.0f);
+	assert(moveCostAvg > 0.0f);
 }
 
 
