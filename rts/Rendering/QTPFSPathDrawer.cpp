@@ -1,3 +1,5 @@
+#include <limits>
+
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
@@ -80,8 +82,22 @@ void QTPFSPathDrawer::DrawNodeTree(const MoveData* md) const {
 	QTPFS::QTNode* nt = pm->nodeTrees[md->pathType];
 	CVertexArray* va = GetVertexArray();
 
+	std::list<const QTPFS::QTNode*> nodes;
+	std::list<const QTPFS::QTNode*>::const_iterator nodesIt;
+
+	GetVisibleNodes(nt, nodes);
+
+	va->Initialize();
+	va->EnlargeArrays(nodes.size() * 4, 0, VA_SIZE_C);
+
+	for (nodesIt = nodes.begin(); nodesIt != nodes.end(); ++nodesIt) {
+		DrawNode(*nodesIt, md, md->moveMath, va, false, true, true);
+	}
+
 	glLineWidth(2);
-	DrawNodeTreeRec(nt, md, md->moveMath, va);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	va->DrawArrayC(GL_QUADS);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glLineWidth(1);
 }
 
@@ -92,7 +108,7 @@ void QTPFSPathDrawer::DrawNodeTreeRec(
 	CVertexArray* va
 ) const {
 	if (nt->IsLeaf()) {
-		DrawNode(nt, md, mm, va, false, true);
+		DrawNode(nt, md, mm, va, false, true, false);
 	} else {
 		for (unsigned int i = 0; i < QTPFS::QTNode::CHILD_COUNT; i++) {
 			const QTPFS::QTNode* n = nt->children[i];
@@ -106,6 +122,25 @@ void QTPFSPathDrawer::DrawNodeTreeRec(
 		}
 	}
 }
+
+void QTPFSPathDrawer::GetVisibleNodes(const QTPFS::QTNode* nt, std::list<const QTPFS::QTNode*>& nodes) const {
+	if (nt->IsLeaf()) {
+		nodes.push_back(nt);
+	} else {
+		for (unsigned int i = 0; i < QTPFS::QTNode::CHILD_COUNT; i++) {
+			const QTPFS::QTNode* n = nt->children[i];
+			const float3 mins = float3(n->xmin() * SQUARE_SIZE, 0.0f, n->zmin() * SQUARE_SIZE);
+			const float3 maxs = float3(n->xmax() * SQUARE_SIZE, 0.0f, n->zmax() * SQUARE_SIZE);
+
+			if (!camera->InView(mins, maxs))
+				continue;
+
+			GetVisibleNodes(nt->children[i], nodes);
+		}
+	}
+}
+
+
 
 void QTPFSPathDrawer::DrawPaths(const MoveData* md) const {
 	const QTPFS::PathCache& pathCache = pm->pathCaches[md->pathType];
@@ -195,14 +230,14 @@ void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::list
 	const QTPFS::QTNode* poppedNode = (const QTPFS::QTNode*) nodeLayer.GetNode(hmx, hmz);
 	const QTPFS::QTNode* pushedNode = NULL;
 
-	DrawNode(poppedNode, NULL, NULL, va, true, false);
+	DrawNode(poppedNode, NULL, NULL, va, true, false, false);
 
 	for (++it; it != nodeIndices.end(); ++it) {
 		hmx = (*it) % gs->mapx;
 		hmz = (*it) / gs->mapx;
 		pushedNode = (const QTPFS::QTNode*) nodeLayer.GetNode(hmx, hmz);
 
-		DrawNode(pushedNode, NULL, NULL, va, true, false);
+		DrawNode(pushedNode, NULL, NULL, va, true, false, false);
 		DrawNodeLink(pushedNode, poppedNode, va);
 	}
 }
@@ -213,7 +248,8 @@ void QTPFSPathDrawer::DrawNode(
 	const CMoveMath* mm,
 	CVertexArray* va,
 	bool fillQuad,
-	bool showCost
+	bool showCost,
+	bool batchDraw
 ) const {
 	#define xminw (node->xmin() * SQUARE_SIZE)
 	#define xmaxw (node->xmax() * SQUARE_SIZE)
@@ -235,33 +271,38 @@ void QTPFSPathDrawer::DrawNode(
 		{0 * 255, 0 * 255, 1 *  64, 1 *  64}, // light blue --> pushed
 	};
 
-	const unsigned char* color = NULL;
-
-	if (!camera->InView(verts[4])) {
-		return;
-	}
-
-	if (!showCost) {
-		color = &colors[2][0];
-	} else {
-		color = (mm->GetPosSpeedMod(*md, node->xmid(), node->zmid()) <= 0.001f)?
+	const unsigned char* color =
+		(!showCost)?
+			&colors[2][0]:
+		(node->moveCostAvg == QTPFS_POSITIVE_INFINITY)?
 			&colors[0][0]:
 			&colors[1][0];
+
+	if (!batchDraw) {
+		if (!camera->InView(verts[4])) {
+			return;
+		}
+
+		va->Initialize();
+		va->EnlargeArrays(4, 0, VA_SIZE_C);
+
+		if (!fillQuad) {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		}
 	}
 
-	if (!fillQuad)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	va->Initialize();
-	va->EnlargeArrays(4, 0, VA_SIZE_C);
 	va->AddVertexQC(verts[0], color);
 	va->AddVertexQC(verts[1], color);
 	va->AddVertexQC(verts[2], color);
 	va->AddVertexQC(verts[3], color);
-	va->DrawArrayC(GL_QUADS);
 
-	if (!fillQuad)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	if (!batchDraw) {
+		va->DrawArrayC(GL_QUADS);
+
+		if (!fillQuad) {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
+	}
 
 	if (showCost) {
 		font->SetTextColor(0.0f, 0.0f, 0.0f, 1.0f);

@@ -131,7 +131,7 @@ void QTPFS::PathSearch::IterateSearch(
 		curPoint = curNode->GetNeighborEdgeMidPoint(curNode->GetPrevNode());
 	if (curNode == tgtNode)
 		return;
-	if (curNode->GetMoveCost() == std::numeric_limits<float>::infinity())
+	if (curNode->GetMoveCost() == QTPFS_POSITIVE_INFINITY)
 		return;
 
 
