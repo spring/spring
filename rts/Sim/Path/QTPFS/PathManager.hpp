@@ -57,9 +57,34 @@ namespace QTPFS {
 		static const float MAX_SPEEDMOD_VALUE = 2.0f;
 
 	private:
+		typedef void (PathManager::*MemberFunc)(
+			unsigned int threadNum,
+			unsigned int numThreads,
+			const SRectangle& rect,
+			bool wantTesselation
+		);
+
+		void SpawnBoostThreads(MemberFunc f, const SRectangle& r, bool b);
+
+		void InitNodeLayersThreaded(const SRectangle& rect, bool haveCacheDir);
+		void UpdateNodeLayersThreaded(const SRectangle& rect);
+		void InitNodeLayersThread(
+			unsigned int threadNum,
+			unsigned int numThreads,
+			const SRectangle& rect,
+			bool haveCacheDir
+		);
+		void UpdateNodeLayersThread(
+			unsigned int threadNum,
+			unsigned int numThreads,
+			const SRectangle& rect,
+			bool wantTesselation
+		);
+		void InitNodeLayer(unsigned int layerNum, const SRectangle& rect);
+		void UpdateNodeLayer(unsigned int layerNum, const SRectangle& r, bool wantTesselation);
+
+
 		std::string GetCacheDirName(const std::string& mapArchiveName, const std::string& modArchiveName) const;
-		void InitNodeLayers(unsigned int threadNum, unsigned int numThreads, const SRectangle& mapRect, bool haveCacheDir);
-		void UpdateNodeLayer(unsigned int i, const SRectangle& r, bool wantTesselation);
 		void Serialize(const std::string& cacheFileDir);
 
 		std::vector<NodeLayer> nodeLayers;

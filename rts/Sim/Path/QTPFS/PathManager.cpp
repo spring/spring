@@ -68,61 +68,7 @@ QTPFS::PathManager::PathManager() {
 	const std::string& cacheDirName = GetCacheDirName(gameSetup->mapName, gameSetup->modName);
 	const bool haveCacheDir = FileSystem::DirExists(cacheDirName);
 
-	static const SRectangle mapRect = SRectangle(0, 0,  gs->mapx, gs->mapy);
-
-	{
-		streflop_init<streflop::Simple>();
-
-		char loadMsg[512] = {'\0'};
-		const char* fmtString = "[%s] using %u threads for %u node-layers (cached? %s)";
-
-		#ifdef QTPFS_OPENMP_INITIALIZATION
-			// never use more threads than the number of layers
-			// TODO: this needs project-global linking changes
-			//
-			// const unsigned int maxThreads = omp_get_max_threads();
-			// const unsigned int minThreads = std::min(size_t(GetNumThreads()), nodeLayers.size());
-			//
-			// omp_set_num_threads(std::min(maxThreads, minThreads));
-
-			sprintf(loadMsg, fmtString, __FUNCTION__, omp_get_num_threads(), nodeLayers.size(), (haveCacheDir? "true": "false"));
-			loadscreen->SetLoadMessage(loadMsg);
-
-			#pragma omp parallel for private(loadMsg)
-			for (unsigned int i = 0; i < nodeLayers.size(); i++) {
-				sprintf(loadMsg, "  initializing node-layer %u (thread %u)", i, omp_get_thread_num());
-				loadscreen->SetLoadMessage(loadMsg);
-
-				nodeTrees[i] = new QTPFS::QTNode(NULL,  0,  mapRect.x1, mapRect.z1,  mapRect.x2, mapRect.z2);
-				nodeLayers[i].Init(i);
-				nodeLayers[i].RegisterNode(nodeTrees[i]);
-
-				// construct each tree from scratch IFF no cache-dir exists
-				// (if it does, we only need to initialize speed{Mods, Bins})
-				UpdateNodeLayer(i, mapRect, !haveCacheDir);
-
-				sprintf(loadMsg, "  initialized node-layer %u (%u leafs, ratio %f)", i, nodeLayers[i].GetNumLeafNodes(), nodeLayers[i].GetNodeRatio());
-				loadscreen->SetLoadMessage(loadMsg);
-			}
-
-		#else
-
-			sprintf(loadMsg, fmtString, __FUNCTION__, GetNumThreads(), nodeLayers.size(), (haveCacheDir? "true": "false"));
-			loadscreen->SetLoadMessage(loadMsg);
-
-			std::vector<boost::thread*> threads(std::min(GetNumThreads(), nodeLayers.size()), NULL);
-
-			for (unsigned int i = 0; i < threads.size(); i++) {
-				threads[i] = new boost::thread(boost::bind(&PathManager::InitNodeLayers, this, i, threads.size(), mapRect, haveCacheDir));
-			}
-			for (unsigned int i = 0; i < threads.size(); i++) {
-				threads[i]->join(); delete threads[i];
-			}
-		#endif
-
-		streflop_init<streflop::Simple>();
-	}
-
+	InitNodeLayersThreaded(SRectangle(0, 0,  gs->mapx, gs->mapy), haveCacheDir);
 	Serialize(cacheDirName);
 }
 
@@ -146,7 +92,72 @@ QTPFS::PathManager::~PathManager() {
 
 
 
-void QTPFS::PathManager::InitNodeLayers(unsigned int threadNum, unsigned int numThreads, const SRectangle& mapRect, bool haveCacheDir) {
+void QTPFS::PathManager::SpawnBoostThreads(MemberFunc f, const SRectangle& r, bool b) {
+	static std::vector<boost::thread*> threads(std::min(GetNumThreads(), nodeLayers.size()), NULL);
+
+	for (unsigned int threadNum = 0; threadNum < threads.size(); threadNum++) {
+		threads[threadNum] = new boost::thread(boost::bind(f, this, threadNum, threads.size(), r, b));
+	}
+	for (unsigned int threadNum = 0; threadNum < threads.size(); threadNum++) {
+		threads[threadNum]->join(); delete threads[threadNum];
+	}
+}
+
+
+
+void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect, bool haveCacheDir) {
+	streflop_init<streflop::Simple>();
+
+	char loadMsg[512] = {'\0'};
+	const char* fmtString = "[%s] using %u threads for %u node-layers (cached? %s)";
+
+	#ifdef QTPFS_OPENMP_ENABLED
+	{
+		// never use more threads than the number of layers
+		// TODO: OpenMP needs project-global linking changes
+		//
+		const unsigned int maxThreads = omp_get_max_threads();
+		const unsigned int minThreads = std::min(size_t(GetNumThreads()), nodeLayers.size());
+
+		omp_set_num_threads(std::min(maxThreads, minThreads));
+
+		sprintf(loadMsg, fmtString, __FUNCTION__, omp_get_num_threads(), nodeLayers.size(), (haveCacheDir? "true": "false"));
+		loadscreen->SetLoadMessage(loadMsg);
+
+		#pragma omp parallel for private(loadMsg)
+		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
+			sprintf(loadMsg, "  initializing node-layer %u (thread %u)", layerNum, omp_get_thread_num());
+			loadscreen->SetLoadMessage(loadMsg);
+
+			// construct each tree from scratch IFF no cache-dir exists
+			// (if it does, we only need to initialize speed{Mods, Bins})
+			InitNodeLayer(layerNum, rect);
+			UpdateNodeLayer(layerNum, rect, !haveCacheDir);
+
+			const NodeLayer& layer = nodeLayers[layerNum];
+
+			sprintf(loadMsg, "  initialized node-layer %u (%u leafs, ratio %f)", i, layer.GetNumLeafNodes(), layer.GetNodeRatio());
+			loadscreen->SetLoadMessage(loadMsg);
+		}
+	}
+	#else
+	{
+		sprintf(loadMsg, fmtString, __FUNCTION__, GetNumThreads(), nodeLayers.size(), (haveCacheDir? "true": "false"));
+		loadscreen->SetLoadMessage(loadMsg);
+
+		SpawnBoostThreads(&PathManager::InitNodeLayersThread, rect, haveCacheDir);
+	}
+	#endif
+
+	streflop_init<streflop::Simple>();
+}
+
+void QTPFS::PathManager::InitNodeLayersThread(
+	unsigned int threadNum,
+	unsigned int numThreads,
+	const SRectangle& rect,
+	bool haveCacheDir
+) {
 	const unsigned int layersPerThread = (nodeLayers.size() / numThreads);
 	const unsigned int numExcessLayers = (threadNum == (numThreads - 1))?
 		(nodeLayers.size() % numThreads): 0;
@@ -156,18 +167,75 @@ void QTPFS::PathManager::InitNodeLayers(unsigned int threadNum, unsigned int num
 
 	char loadMsg[512] = {'\0'};
 
-	for (unsigned int i = minLayer; i < maxLayer; i++) {
-		sprintf(loadMsg, "  initializing node-layer %u (thread %u)", i, threadNum);
+	for (unsigned int layerNum = minLayer; layerNum < maxLayer; layerNum++) {
+		sprintf(loadMsg, "  initializing node-layer %u (thread %u)", layerNum, threadNum);
 		loadscreen->SetLoadMessage(loadMsg);
 
-		nodeTrees[i] = new QTPFS::QTNode(NULL,  0,  mapRect.x1, mapRect.z1,  mapRect.x2, mapRect.z2);
-		nodeLayers[i].Init(i);
-		nodeLayers[i].RegisterNode(nodeTrees[i]);
+		InitNodeLayer(layerNum, rect);
+		UpdateNodeLayer(layerNum, rect, !haveCacheDir);
 
-		UpdateNodeLayer(i, mapRect, !haveCacheDir);
+		const NodeLayer& layer = nodeLayers[layerNum];
 
-		sprintf(loadMsg, "  initialized node-layer %u (%u leafs, ratio %f)", i, nodeLayers[i].GetNumLeafNodes(), nodeLayers[i].GetNodeRatio());
+		sprintf(loadMsg, "  initialized node-layer %u (%u leafs, ratio %f)", layerNum, layer.GetNumLeafNodes(), layer.GetNodeRatio());
 		loadscreen->SetLoadMessage(loadMsg);
+	}
+}
+
+void QTPFS::PathManager::InitNodeLayer(unsigned int layerNum, const SRectangle& rect) {
+	nodeTrees[layerNum] = new QTPFS::QTNode(NULL,  0,  rect.x1, rect.z1,  rect.x2, rect.z2);
+	nodeLayers[layerNum].Init(layerNum);
+	nodeLayers[layerNum].RegisterNode(nodeTrees[layerNum]);
+}
+
+
+
+void QTPFS::PathManager::UpdateNodeLayersThreaded(const SRectangle& rect) {
+	streflop_init<streflop::Simple>();
+
+	#ifdef QTPFS_OPENMP_ENABLED
+	{
+		#pragma omp parallel for
+		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
+			UpdateNodeLayer(layerNum, rect, true);
+		}
+	}
+	#else
+	{
+		SpawnBoostThreads(&PathManager::UpdateNodeLayersThread, rect, true);
+	}
+	#endif
+
+	streflop_init<streflop::Simple>();
+}
+
+void QTPFS::PathManager::UpdateNodeLayersThread(
+	unsigned int threadNum,
+	unsigned int numThreads,
+	const SRectangle& rect,
+	bool wantTesselation
+) {
+	const unsigned int layersPerThread = (nodeLayers.size() / numThreads);
+	const unsigned int numExcessLayers = (threadNum == (numThreads - 1))?
+		(nodeLayers.size() % numThreads): 0;
+
+	const unsigned int minLayer = threadNum * layersPerThread;
+	const unsigned int maxLayer = minLayer + layersPerThread + numExcessLayers;
+
+	for (unsigned int layerNum = minLayer; layerNum < maxLayer; layerNum++) {
+		UpdateNodeLayer(layerNum, rect, wantTesselation);
+	}
+}
+
+void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle& r, bool wantTesselation) {
+	const MoveData*  md = moveinfo->moveData[layerNum];
+	const CMoveMath* mm = md->moveMath;
+
+	if (md->unitDefRefCount == 0)
+		return;
+
+	if (nodeLayers[layerNum].Update(r, md, mm) && wantTesselation) {
+		nodeTrees[layerNum]->PreTesselate(nodeLayers[layerNum], r);
+		pathCaches[layerNum].MarkDeadPaths(r);
 	}
 }
 
@@ -203,8 +271,9 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 	char loadMsg[512] = {'\0'};
 	const char* fmtString = "[%s] serializing node-tree %u (%s)";
 
-	// TODO: calculate checksum over each tree
-	// NOTE: also compress the tree cache-files?
+	// TODO:
+	//     calculate checksum over each tree
+	//     also compress the tree cache-files?
 	for (unsigned int i = 0; i < nodeTrees.size(); i++) {
 		fileNames[i] = cacheFileDir + "tree" + IntToString(i, "%02x") + "-" + moveinfo->moveData[i]->name;
 		fileStreams[i] = new std::fstream();
@@ -243,6 +312,8 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 //     present when PathManager gets instantiated)
 //
 void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2) {
+	SCOPED_TIMER("PathManager::TerrainChange");
+
 	// adjust the borders so we are not left with "rims" of
 	// impassable squares when eg. a structure is reclaimed
 	x1 = std::max(int(x1) - 1,        0);
@@ -250,34 +321,8 @@ void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsign
 	x2 = std::min(int(x2) + 1, gs->mapx);
 	z2 = std::min(int(z2) + 1, gs->mapy);
 
-	const SRectangle r = SRectangle(x1, z1,  x2, z2);
-
-	{
-		SCOPED_TIMER("PathManager::TerrainChange");
-		streflop_init<streflop::Simple>();
-
-		#pragma omp parallel for
-		for (unsigned int i = 0; i < nodeLayers.size(); i++) {
-			UpdateNodeLayer(i, r, true);
-		}
-
-		streflop_init<streflop::Simple>();
-	}
-
+	UpdateNodeLayersThreaded(SRectangle(x1, z1,  x2, z2));
 	numTerrainChanges += 1;
-}
-
-void QTPFS::PathManager::UpdateNodeLayer(unsigned int i, const SRectangle& r, bool wantTesselation) {
-	const MoveData*  md = moveinfo->moveData[i];
-	const CMoveMath* mm = md->moveMath;
-
-	if (md->unitDefRefCount == 0)
-		return;
-
-	if (nodeLayers[i].Update(r, md, mm) && wantTesselation) {
-		nodeTrees[i]->PreTesselate(nodeLayers[i], r);
-		pathCaches[i].MarkDeadPaths(r);
-	}
 }
 
 
