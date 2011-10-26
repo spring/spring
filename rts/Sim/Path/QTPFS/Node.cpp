@@ -344,7 +344,7 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool merged, b
 	// technically required whenever numRefBinSquares is zero, ie.
 	// when ALL squares in <r> changed bins in unison
 	//
-	UpdateMoveCost(nl, xmin(), zmin(), xmax(), zmax(), numNewBinSquares, numDifBinSquares);
+	UpdateMoveCost(nl, r, numNewBinSquares, numDifBinSquares);
 
 	if (numDifBinSquares > 0) {
 		if (Split(nl)) {
@@ -367,8 +367,7 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool merged, b
 
 void QTPFS::QTNode::UpdateMoveCost(
 	const NodeLayer& nl,
-	unsigned int x1, unsigned int z1,
-	unsigned int x2, unsigned int z2,
+	const SRectangle& r,
 	unsigned int& numNewBinSquares,
 	unsigned int& numDifBinSquares
 ) {
@@ -377,29 +376,34 @@ void QTPFS::QTNode::UpdateMoveCost(
 	const std::vector<float>& oldSpeedMods = nl.GetOldSpeedMods();
 	const std::vector<float>& curSpeedMods = nl.GetCurSpeedMods();
 
-	int prvSpeedBin = curSpeedBins[z1 * gs->mapx + x1];
+	const int refSpeedBin = curSpeedBins[zmin() * gs->mapx + xmin()];
 
-	for (unsigned int hmx = x1; hmx < x2; hmx++) {
-		for (unsigned int hmz = z1; hmz < z2; hmz++) {
+	speedModSum = 0.0f;
+
+	for (unsigned int hmx = xmin(); hmx < xmax(); hmx++) {
+		for (unsigned int hmz = zmin(); hmz < zmax(); hmz++) {
 			const unsigned int sqrIdx = hmz * gs->mapx + hmx;
 
 			const int oldSpeedBin = oldSpeedBins[sqrIdx];
 			const int curSpeedBin = curSpeedBins[sqrIdx];
 
 			numNewBinSquares += (curSpeedBin != oldSpeedBin)? 1: 0;
-			numDifBinSquares += (curSpeedBin != prvSpeedBin)? 1: 0;
+			numDifBinSquares += (curSpeedBin != refSpeedBin)? 1: 0;
 
 			// NOTE:
 			//     a sequence 1 2 1 2 ... produces a higer dif-bin count than
 			//     it should, but we only care whether the total is non-zero
-			prvSpeedBin = curSpeedBin;
+			// prvSpeedBin = curSpeedBin;
 
-			speedModSum -= oldSpeedMods[sqrIdx];
+			// needed for partial update of area under <r>
+			// speedModSum -= oldSpeedMods[sqrIdx];
 			speedModSum += curSpeedMods[sqrIdx];
 		}
 	}
 
 	// (re-)calculate the average cost of this node
+	assert(speedModSum >= 0.0f);
+
 	speedModAvg = speedModSum / (xsize() * zsize());
 	moveCostAvg = (speedModAvg <= 0.001f)? std::numeric_limits<float>::infinity(): (1.0f / speedModAvg);
 

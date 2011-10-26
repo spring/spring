@@ -117,8 +117,7 @@ namespace QTPFS {
 	private:
 		void UpdateMoveCost(
 			const NodeLayer& nl,
-			unsigned int x1, unsigned int z1,
-			unsigned int x2, unsigned int z2,
+			const SRectangle& r,
 			unsigned int& numNewBinSquares,
 			unsigned int& numDifBinSquares
 		);
