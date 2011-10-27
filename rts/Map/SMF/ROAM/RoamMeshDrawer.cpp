@@ -43,8 +43,6 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_ROAM)
 // ---------------------------------------------------------------------
 // Definition of the static member variables
 //
-int CRoamMeshDrawer::m_NextTriNode = 0;
-TriTreeNode CRoamMeshDrawer::m_TriPool[POOL_SIZE];
 bool CRoamMeshDrawer::forceRetessellate = false;
 
 
@@ -94,6 +92,8 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	for (int i = 0; i < (numPatchesX * numPatchesY); ++i){
 		visibilitygrid[i] = false;
 	}
+
+	CTriNodePool::InitPools();
 }
 
 CRoamMeshDrawer::~CRoamMeshDrawer()
@@ -101,6 +101,8 @@ CRoamMeshDrawer::~CRoamMeshDrawer()
 	configHandler->Set("ROAM", (int)Patch::renderMode);
 
 	delete[] visibilitygrid;
+
+	CTriNodePool::FreePools();
 }
 
 
@@ -156,7 +158,6 @@ void CRoamMeshDrawer::Update()
 	static const float maxCamDeltaDistSq = 500.0f * 500.0f;
 	retessellate |= ((cam->pos - lastCamPos).SqLength() > maxCamDeltaDistSq);
 #endif
-
 	retessellate |= forceRetessellate;
 	retessellate |= (lastGroundDetail != smfGroundDrawer->GetGroundDetail());
 
@@ -241,19 +242,6 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 }
 
 
-// ---------------------------------------------------------------------
-// Allocate a TriTreeNode from the pool.
-//
-TriTreeNode* CRoamMeshDrawer::AllocateTri()
-{
-	// IF we've run out of TriTreeNodes, just return NULL (this is handled gracefully)
-	if (m_NextTriNode >= POOL_SIZE)
-		return NULL;
-
-	TriTreeNode* pTri = &(m_TriPool[m_NextTriNode++]);
-	pTri->LeftChild = pTri->RightChild = NULL;
-	return pTri;
-}
 
 
 // ---------------------------------------------------------------------
@@ -262,7 +250,7 @@ TriTreeNode* CRoamMeshDrawer::AllocateTri()
 void CRoamMeshDrawer::Reset()
 {
 	// Set the next free triangle pointer back to the beginning
-	SetNextTriNode(0);
+	CTriNodePool::ResetAll();
 
 	// Go through the patches performing resets, compute variances, and linking.
 	for (int Y = 0; Y < numPatchesY; ++Y) {
@@ -294,10 +282,39 @@ void CRoamMeshDrawer::Reset()
 void CRoamMeshDrawer::Tessellate(const float3& campos, int viewradius)
 {
 	// Perform Tessellation
+#ifdef _OPENMP
+	// hint: just helps a little with huge cpu usage in retessellation, still better than nothing
+
+	//  _____
+	// |0|_|_|..
+	// |_|_|_|..
+	// |_|_|8|..
+	//  .....
+	// split the patches in 3x3 sized blocks. The tessellation itself can
+	// extend into the neighbor patches (check Patch::Split). So we could
+	// not multi-thread the whole loop w/o mutexes (in ::Split).
+	// But instead we take a safety distance between the thread's working
+	// area (which is 2 patches), so they don't conflict with each other.
+	for (int idx = 0; idx < 9; ++idx) {
+		#pragma omp parallel for
+		for (int i = m_Patches.size() - 1; i >= 0; --i) {
+			Patch* it = &m_Patches[i];
+
+			const int X = it->m_WorldX;
+			const int Z = it->m_WorldY;
+			const int subindex = (X % 3) + (Z % 3) * 3;
+
+			if ((subindex == idx) && it->IsVisible()) {
+				it->Tessellate(campos, viewradius);
+			}
+		}
+	}
+#else
 	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
 		if (it->IsVisible())
 			it->Tessellate(campos, viewradius);
 	}
+#endif
 }
 
 
