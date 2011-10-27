@@ -288,6 +288,9 @@ void QTPFS::PathSearch::SmoothPath(IPath* path) {
 		const unsigned int ngbz = hEdge? (p1z - 1): p1z;
 		const INode* nodeTL = nodes[ngbz * gs->mapx + ngbx];
 
+		assert(ngbx < gs->mapx);
+		assert(ngbz < gs->mapy);
+
 		assert(nodeTL->GetNeighborRelation(nodeBR) != 0);
 		assert(nodeBR->GetNeighborRelation(nodeTL) != 0);
 
@@ -297,7 +300,7 @@ void QTPFS::PathSearch::SmoothPath(IPath* path) {
 		const unsigned int xmax = std::min(nodeTL->xmax(), nodeBR->xmax());
 		const unsigned int zmax = std::min(nodeTL->zmax(), nodeBR->zmax());
 
-		if (false) {
+		{
 			// calculate intersection point between ray (p2 - p0) and edge
 			// if pi lies between bounds, use that and move to next triplet
 			//
@@ -313,19 +316,24 @@ void QTPFS::PathSearch::SmoothPath(IPath* path) {
 				((nodeTL->zmax() * SQUARE_SIZE) - p0.z): // A(z)
 				((nodeBR->zmin() * SQUARE_SIZE) - p0.z); // B(z)
 
-			const float tx = xdist / std::max(p2p0.x, 0.001f);
-			const float tz = zdist / std::max(p2p0.z, 0.001f);
+			const float dx = (math::fabs(p2p0.x) > 0.001f)? p2p0.x: 0.001f;
+			const float dz = (math::fabs(p2p0.z) > 0.001f)? p2p0.z: 0.001f;
+			const float tx = xdist / dx;
+			const float tz = zdist / dz;
 
-			bool ok = false;
+			bool ok = true;
 
 			if (vEdge) {
-				pi  = p0 + p2p0 * tx;
-				ok |= (pi.z >= (zmin * SQUARE_SIZE) && pi.z <= (zmax * SQUARE_SIZE));
+				pi.x = p1.x;
+				pi.z = p0.z + p2p0.z * tx;
 			}
 			if (hEdge) {
-				pi  = p0 + p2p0 * tz;
-				ok |= (pi.x >= (xmin * SQUARE_SIZE) && pi.x <= (xmax * SQUARE_SIZE));
+				pi.x = p0.x + p2p0.x * tz;
+				pi.z = p1.z;
 			}
+
+			ok = ok && (pi.x >= (xmin * SQUARE_SIZE) && pi.x <= (xmax * SQUARE_SIZE));
+			ok = ok && (pi.z >= (zmin * SQUARE_SIZE) && pi.z <= (zmax * SQUARE_SIZE));
 
 			if (ok) {
 				path->SetPoint(n + 1, pi); continue;
