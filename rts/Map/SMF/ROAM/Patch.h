@@ -73,6 +73,7 @@ public:
 	void Init(CSMFGroundDrawer* drawer, int worldX, int worldZ); //FIXME move this into the ctor
 
 	friend class CRoamMeshDrawer;
+	friend class CPatchInViewChecker;
 
 	void Reset();
 	
@@ -82,7 +83,6 @@ public:
 	bool IsVisible()   const { return m_isVisible; }
 	int  GetTriCount() const { return indices.size() / 3; }
 
-	void UpdateVisibility();
 	void UpdateHeightMap(const SRectangle& rect = SRectangle(0,0,PATCH_SIZE,PATCH_SIZE));
 
 	void Tessellate(const float3& campos, int viewradius);
@@ -95,6 +95,9 @@ public:
 
 public:
 	static void SwitchRenderMode(int mode = -1);
+
+	//void UpdateVisibility(CCamera*& cam);
+	static void UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const int& numPatchesX);
 
 private:
 	// The recursive half of the Patch Class

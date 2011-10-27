@@ -104,19 +104,25 @@ CRoamMeshDrawer::~CRoamMeshDrawer()
 }
 
 
+/**
+ * Retessellates the current terrain
+ */
 void CRoamMeshDrawer::Update()
 {
-#define RETESSELLATE_MODE 1
 	//FIXME this retessellates with the current camera frustum, shadow pass and others don't have to see the same patches!
 
 	//const CCamera* cam = (inShadowPass)? camera: cam2;
-	const CCamera* cam = cam2;
-	bool retessellate = false;
+	CCamera* cam = cam2;
 
-	{ SCOPED_TIMER("ROAM::Visibility");
+	// Update Patch visibility
+	Patch::UpdateVisibility(cam, m_Patches, numPatchesX);
+
+	// Check if a retessellation is needed
+#define RETESSELLATE_MODE 1
+	bool retessellate = false;
+	{ SCOPED_TIMER("ROAM::ComputeVariance");
 		for (int i = 0; i < (numPatchesX * numPatchesY); ++i) {
 			Patch& p = m_Patches[i];
-			p.UpdateVisibility();
 		#if (RETESSELLATE_MODE == 2)
 			if (p.IsVisible()) {
 				if (!visibilitygrid[i]) {
@@ -145,15 +151,16 @@ void CRoamMeshDrawer::Update()
 		}
 	}
 
+	// Further conditions that can cause a retessellation
 #if (RETESSELLATE_MODE == 2)
 	static const float maxCamDeltaDistSq = 500.0f * 500.0f;
 	retessellate |= ((cam->pos - lastCamPos).SqLength() > maxCamDeltaDistSq);
 #endif
 
 	retessellate |= forceRetessellate;
-
 	retessellate |= (lastGroundDetail != smfGroundDrawer->GetGroundDetail());
 
+	// Retessellate
 	if (retessellate) {
 		{ SCOPED_TIMER("ROAM::Tessellate");
 			//FIXME this tessellates with current camera + viewRadius
@@ -210,9 +217,8 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 	//  It doesn't update the tessellation, neither does it send the indices to the GPU.
 	//  So it patches that weren't updated the last tessellation, just uses the last
 	//  tessellation which may created with a totally different camera.
-	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
-		it->UpdateVisibility();
-	}
+	CCamera* cam = (inShadowPass)? camera: cam2;
+	Patch::UpdateVisibility(cam, m_Patches, numPatchesX);
 
 	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
 		if (it->IsVisible()) {
@@ -255,7 +261,6 @@ void CRoamMeshDrawer::Reset()
 
 			// Reset the patch
 			patch.Reset();
-			patch.UpdateVisibility();
 
 			// Link all the patches together. (leave borders NULL)
 			if (X > 0)
