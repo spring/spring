@@ -291,10 +291,10 @@ void CRoamMeshDrawer::Tessellate(const float3& campos, int viewradius)
 void CRoamMeshDrawer::UnsyncedHeightMapUpdate(const SRectangle& rect)
 {
 	// hint: the -+1 are cause Patches share 1 pixel border (no vertex holes!)
-	const int xstart = std::max(0,               (int)std::floor((rect.x1 - 1.0f) / PATCH_SIZE));
-	const int xend   = std::min(numPatchesX - 1, (int)std::ceil( (rect.x2 + 1.0f) / PATCH_SIZE));
-	const int zstart = std::max(0,               (int)std::floor((rect.z1 - 1.0f) / PATCH_SIZE));
-	const int zend   = std::min(numPatchesY - 1, (int)std::ceil( (rect.z2 + 1.0f) / PATCH_SIZE));
+	const int xstart = std::max(0,               (int)floor((rect.x1 - 1.0f) / PATCH_SIZE));
+	const int xend   = std::min(numPatchesX - 1, (int)ceil( (rect.x2 + 1.0f) / PATCH_SIZE));
+	const int zstart = std::max(0,               (int)floor((rect.z1 - 1.0f) / PATCH_SIZE));
+	const int zend   = std::min(numPatchesY - 1, (int)ceil( (rect.z2 + 1.0f) / PATCH_SIZE));
 
 	for (int z = zstart; z < zend; ++z) {
 		for (int x = xstart; x < xend; ++x) {
