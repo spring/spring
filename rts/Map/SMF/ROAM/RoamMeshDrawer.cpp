@@ -66,17 +66,13 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	//m_Patches.reserve(numPatchesX * numPatchesY);
 	m_Patches.resize(numPatchesX * numPatchesY);
 
-	const float* hmap = rm->GetCornerHeightMapSynced(); //FIXME use GetCornerHeightMapUnsynced()
-
 	// Initialize all terrain patches
 	for (int Y = 0; Y < numPatchesY; ++Y) {
 		for (int X = 0; X < numPatchesX; ++X) {
 			/*Patch* patch = new Patch(
 				smfGroundDrawer,
 				X * PATCH_SIZE,
-				Y * PATCH_SIZE,
-				hMap,
-				gs->mapx);
+				Y * PATCH_SIZE);
 			patch->ComputeVariance();
 			m_Patches.push_back(patch);*/
 
@@ -84,9 +80,7 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 			patch.Init(
 					smfGroundDrawer,
 					X * PATCH_SIZE,
-					Y * PATCH_SIZE,
-					hmap,
-					gs->mapx);
+					Y * PATCH_SIZE);
 			patch.ComputeVariance();
 		}
 	}
