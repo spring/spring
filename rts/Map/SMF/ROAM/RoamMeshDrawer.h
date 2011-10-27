@@ -16,6 +16,8 @@ class CSMFGroundDrawer;
 
 
 
+// Visualize visible patches in Minimap for debugging?
+//#define DRAW_DEBUG_IN_MINIMAP
 
 
 /**
@@ -26,12 +28,19 @@ class CRoamMeshDrawer : public IMeshDrawer, public CEventClient
 public:
 	// CEventClient interface
 	bool WantsEvent(const std::string& eventName) {
-		return (eventName == "UnsyncedHeightMapUpdate");
+		return (eventName == "UnsyncedHeightMapUpdate")
+#ifdef DRAW_DEBUG_IN_MINIMAP
+			|| (eventName == "DrawInMiniMap")
+#endif
+		;
 	}
 	bool GetFullRead() const { return true; }
 	int  GetReadAllyTeam() const { return AllAccessTeam; }
 
 	void UnsyncedHeightMapUpdate(const SRectangle& rect);
+#ifdef DRAW_DEBUG_IN_MINIMAP
+	void DrawInMiniMap();
+#endif
 
 public:
 	CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd);

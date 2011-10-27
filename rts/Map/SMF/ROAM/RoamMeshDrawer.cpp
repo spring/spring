@@ -25,7 +25,12 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 
+#ifdef DRAW_DEBUG_IN_MINIMAP
+	#include "Game/UI/MiniMap.h"
+#endif
+
 #include <cmath>
+
 
 // ---------------------------------------------------------------------
 // Log Section
@@ -242,6 +247,34 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 }
 
 
+#ifdef DRAW_DEBUG_IN_MINIMAP
+void CRoamMeshDrawer::DrawInMiniMap()
+{
+	glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glLoadIdentity();
+		glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0, -1.0);
+		glTranslatef((float)minimap->GetPosX() * globalRendering->pixelX, (float)minimap->GetPosY() * globalRendering->pixelY, 0.0f);
+		glScalef((float)minimap->GetSizeX() * globalRendering->pixelX, (float)minimap->GetSizeY() * globalRendering->pixelY, 1.0f);
+	glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
+		glTranslatef(0.0f, 1.0f, 0.0f);
+		glScalef(1.0f / gs->mapx, -1.0f / gs->mapy, 1.0f);
+
+	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
+	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
+		if (!it->IsVisible()) {
+			glRectf(it->m_WorldX, it->m_WorldY, it->m_WorldX + PATCH_SIZE, it->m_WorldY + PATCH_SIZE);
+		}
+	}
+
+	glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+		glPopMatrix();
+}
+#endif
 
 
 // ---------------------------------------------------------------------
