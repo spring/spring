@@ -83,7 +83,6 @@ namespace QTPFS {
 		//     <i> is a NODE_IDX index in [0, 3]
 		unsigned int GetChildID(unsigned int i) const { return (nodeNumber << 2) + (i + 1); }
 		unsigned int GetParentID() const { return ((nodeNumber - 1) >> 2); }
-		unsigned int GetDepth() const;
 
 		boost::uint64_t GetMemFootPrint() const;
 
@@ -105,10 +104,11 @@ namespace QTPFS {
 		unsigned int zmin() const { return _zmin; }
 		unsigned int xmax() const { return _xmax; }
 		unsigned int zmax() const { return _zmax; }
-		unsigned int xmid() const { return _xmid; }
-		unsigned int zmid() const { return _zmid; }
-		unsigned int xsize() const { return _xsize; }
-		unsigned int zsize() const { return _zsize; }
+		unsigned int xmid() const { return ((_xmin + _xmax) >> 1); }
+		unsigned int zmid() const { return ((_zmin + _zmax) >> 1); }
+		unsigned int xsize() const { return (_xmax - _xmin); }
+		unsigned int zsize() const { return (_zmax - _zmin); }
+		unsigned int depth() const { return _depth; }
 
 		void SetSearchState(unsigned int state) { searchState = state; }
 		unsigned int GetSearchState() const { return searchState; }
@@ -130,8 +130,9 @@ namespace QTPFS {
 		);
 		bool UpdateNeighborCache(const std::vector<INode*>& nodes);
 
-		unsigned int _xmin, _xmax, _xmid, _xsize;
-		unsigned int _zmin, _zmax, _zmid, _zsize;
+		unsigned int _xmin, _xmax;
+		unsigned int _zmin, _zmax;
+		unsigned int _depth;
 
 		float speedModSum;
 		float speedModAvg;
