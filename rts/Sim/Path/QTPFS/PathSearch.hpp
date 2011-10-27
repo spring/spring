@@ -124,6 +124,7 @@ namespace QTPFS {
 			      PathSearchTrace::Iteration* iter
 			);
 		void TracePath(IPath* path);
+		void SmoothPath(IPath* path);
 		void UpdateNode(INode* nxtNode, INode* curNode, float gCost);
 		void UpdateQueue();
 
