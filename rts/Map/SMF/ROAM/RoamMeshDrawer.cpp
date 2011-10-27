@@ -19,8 +19,8 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
+#include "System/OpenMP_cond.h"
 #include "System/Rectangle.h"
-//#include "System/OpenMP_cond.h"
 #include "System/TimeProfiler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
@@ -169,10 +169,20 @@ void CRoamMeshDrawer::Update()
 			Tessellate(cam->pos, smfGroundDrawer->GetGroundDetail());
 		}
 
-		{ SCOPED_TIMER("ROAM::Render");
+		{ SCOPED_TIMER("ROAM::GenerateIndexArray");
+			#pragma omp parallel for
+			for (int i = m_Patches.size() - 1; i >= 0; --i) {
+				Patch* it = &m_Patches[i];
+				if (it->IsVisible()) {
+					it->GenerateIndices();
+				}
+			}
+		}
+
+		{ SCOPED_TIMER("ROAM::Upload");
 			for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
 				if (it->IsVisible()) {
-					it->Render();
+					it->Upload();
 				}
 			}
 		}
@@ -225,7 +235,7 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 			if (!inShadowPass)
 				it->SetSquareTexture();
 
-			it->DrawTriArray();
+			it->Draw();
 		}
 	}
 }

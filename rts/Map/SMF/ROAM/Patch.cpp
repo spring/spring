@@ -202,8 +202,9 @@ void Patch::Split(TriTreeNode* tri)
 			tri->BaseNeighbor->RightChild->LeftNeighbor = tri->LeftChild;
 			tri->LeftChild->RightNeighbor = tri->BaseNeighbor->RightChild;
 			tri->RightChild->LeftNeighbor = tri->BaseNeighbor->LeftChild;
-		} else
+		} else {
 			Split(tri->BaseNeighbor); // Base Neighbor (in a diamond with us) was not split yet, so do that now.
+		}
 	} else {
 		// An edge triangle, trivial case.
 		tri->LeftChild->RightNeighbor = NULL;
@@ -389,7 +390,7 @@ void Patch::Tessellate(const float3& campos, int groundDetail)
 // Render the mesh.
 //
 
-void Patch::DrawTriArray()
+void Patch::Draw()
 {
 	switch (renderMode) {
 		case VA:
@@ -425,12 +426,16 @@ void Patch::DrawTriArray()
 }
 
 
-int Patch::Render()
+void Patch::GenerateIndices()
 {
 	indices.clear();
 	RecursRender(&m_BaseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0),                   0);
 	RecursRender(&m_BaseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE), 0);
+}
 
+
+void Patch::Upload() const
+{
 	switch (renderMode) {
 		case DL:
 			glNewList(triList, GL_COMPILE);
@@ -459,10 +464,7 @@ int Patch::Render()
 		default:
 			break;
 	}
-	
-	return GetTriCount(); //return the number of tris rendered
 }
-
 
 void Patch::SetSquareTexture() const
 {
