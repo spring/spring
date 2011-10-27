@@ -220,7 +220,7 @@ bool QTPFS::QTNode::IsLeaf() const {
 
 
 bool QTPFS::QTNode::Split(NodeLayer& nl) {
-	if (xsize() <= 1 || zsize() <= 1) {
+	if (xsize() <= QTPFS_MIN_NODE_SIZE_X || zsize() <= QTPFS_MIN_NODE_SIZE_Z) {
 		return false;
 	}
 
