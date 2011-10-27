@@ -88,8 +88,9 @@ public:
 	void Tessellate(const float3& campos, int viewradius);
 	void ComputeVariance();
 
-	int Render();
-	void DrawTriArray();
+	void GenerateIndices();
+	void Upload() const;
+	void Draw();
 
 	void SetSquareTexture() const;
 
