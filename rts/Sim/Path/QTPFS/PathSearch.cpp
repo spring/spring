@@ -297,17 +297,21 @@ void QTPFS::PathSearch::SmoothPath(IPath* path) {
 		const unsigned int xmax = std::min(nodeTL->xmax(), nodeBR->xmax());
 		const unsigned int zmax = std::min(nodeTL->zmax(), nodeBR->zmax());
 
-		{
+		if (false) {
 			// calculate intersection point between ray (p2 - p0) and edge
 			// if pi lies between bounds, use that and move to next triplet
+			//
+			// cases:
+			//     A) p0-p1-p2 (p2p0.xz >= 0 -- p0 in nodeTL, p2 in nodeBR)
+			//     B) p2-p1-p0 (p2p0.xz <= 0 -- p2 in nodeTL, p0 in nodeBR)
 			float3 pi = ZeroVector;
 
 			const float xdist = (p2p0.x > 0.0f)?
-				((nodeTL->xmax() * SQUARE_SIZE) - p1.x):
-				((nodeBR->xmin() * SQUARE_SIZE) - p1.x);
+				((nodeTL->xmax() * SQUARE_SIZE) - p0.x): // A(x)
+				((nodeBR->xmin() * SQUARE_SIZE) - p0.x); // B(x)
 			const float zdist = (p2p0.z > 0.0f)?
-				((nodeTL->zmax() * SQUARE_SIZE) - p1.z):
-				((nodeBR->zmin() * SQUARE_SIZE) - p1.z);
+				((nodeTL->zmax() * SQUARE_SIZE) - p0.z): // A(z)
+				((nodeBR->zmin() * SQUARE_SIZE) - p0.z); // B(z)
 
 			const float tx = xdist / std::max(p2p0.x, 0.001f);
 			const float tz = zdist / std::max(p2p0.z, 0.001f);
@@ -315,12 +319,12 @@ void QTPFS::PathSearch::SmoothPath(IPath* path) {
 			bool ok = false;
 
 			if (vEdge) {
-				pi = p0 + p2p0 * tx;
-				ok = (pi.z >= (zmin * SQUARE_SIZE) && pi.z <= (zmax * SQUARE_SIZE));
+				pi  = p0 + p2p0 * tx;
+				ok |= (pi.z >= (zmin * SQUARE_SIZE) && pi.z <= (zmax * SQUARE_SIZE));
 			}
 			if (hEdge) {
-				pi = p0 + p2p0 * tz;
-				ok = (pi.x >= (xmin * SQUARE_SIZE) && pi.x <= (xmax * SQUARE_SIZE));
+				pi  = p0 + p2p0 * tz;
+				ok |= (pi.x >= (xmin * SQUARE_SIZE) && pi.x <= (xmax * SQUARE_SIZE));
 			}
 
 			if (ok) {
