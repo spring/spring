@@ -152,7 +152,7 @@ void QTPFS::PathSearch::IterateSearch(
 		//     the node it crosses, UNLIKE the goal-heuristic)
 		// NOTE:
 		//     heading for the MIDDLE of the shared edge is not always the best option
-		//     fix this in TracePath by examining each triplet of nodes / points A B C
+		//     we deal with this sub-optimality later (in SmoothPath if it is enabled)
 		#ifdef QTPFS_COPY_NEIGHBOR_NODES
 		nxtNode = ngbNodes[i];
 		nxtPoint = curNode->GetNeighborEdgeMidPoint(nxtNode);
@@ -199,6 +199,10 @@ void QTPFS::PathSearch::Finalize(IPath* path, bool replace) {
 	path->SetSourcePoint(srcPoint);
 	path->SetTargetPoint(tgtPoint);
 
+	#ifdef QTPFS_SMOOTH_PATHS
+	SmoothPath(path);
+	#endif
+
 	// path remains in live-cache until DeletePath is called
 	pathCache->AddLivePath(path, replace);
 }
@@ -235,6 +239,133 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 	while (!points.empty()) {
 		path->SetPoint((path->NumPoints() - points.size()) - 1, points.front());
 		points.pop_front();
+	}
+}
+
+void QTPFS::PathSearch::SmoothPath(IPath* path) {
+	const std::vector<INode*>& nodes = nodeLayer->GetNodes();
+
+	for (unsigned int n = 0; n < (path->NumPoints() - 2); n++) {
+		const float3& p0 = path->GetPoint(n    );
+		      float3  p1 = path->GetPoint(n + 1);
+		const float3& p2 = path->GetPoint(n + 2);
+
+		const unsigned int p1x = p1.x / SQUARE_SIZE;
+		const unsigned int p1z = p1.z / SQUARE_SIZE;
+
+		const INode* nodeBR = nodes[p1z * gs->mapx + p1x];
+
+		assert(p1x == nodeBR->xmin() || p1z == nodeBR->zmin());
+
+		// check if we can reduce the angle between segments
+		// p0-p1 and p1-p2 (ideally to zero degrees, making
+		// p0-p2 a straight line) without causing either of
+		// the segments to cross into other nodes
+		//
+		// p1 always lies on the node to the right and/or to
+		// the bottom of the shared edge between p0 and p2,
+		// and we move it along the edge-dimension (x or z)
+		// between [xmin, xmax] or [zmin, zmax]
+		const float3 p1p0 = (p1 - p0).SafeNormalize();
+		const float3 p2p1 = (p2 - p1).SafeNormalize();
+		const float3 p2p0 = (p2 - p0).SafeNormalize();
+		const float   dot = p1p0.dot(p2p1);
+
+		// if segments are already nearly parallel, skip
+		if (dot >= 0.995f)
+			continue;
+
+		// figure out if p1 is on a horizontal or a vertical edge
+		// (if both of these are true, it is in fact in a corner)
+		const bool hEdge = (p1z == nodeBR->zmin() && p1z > 0);
+		const bool vEdge = (p1x == nodeBR->xmin() && p1x > 0);
+
+		if (!hEdge && !vEdge)
+			continue;
+
+		// get the neighbor on the other side of the edge
+		const unsigned int ngbx = vEdge? (p1x - 1): p1x;
+		const unsigned int ngbz = hEdge? (p1z - 1): p1z;
+		const INode* nodeTL = nodes[ngbz * gs->mapx + ngbx];
+
+		assert(nodeTL->GetNeighborRelation(nodeBR) != 0);
+		assert(nodeBR->GetNeighborRelation(nodeTL) != 0);
+
+		// establish the x- and z-range within which p1 can be moved
+		const unsigned int xmin = std::max(nodeTL->xmin(), nodeBR->xmin());
+		const unsigned int zmin = std::max(nodeTL->zmin(), nodeBR->zmin());
+		const unsigned int xmax = std::min(nodeTL->xmax(), nodeBR->xmax());
+		const unsigned int zmax = std::min(nodeTL->zmax(), nodeBR->zmax());
+
+		{
+			// calculate intersection point between ray (p2 - p0) and edge
+			// if pi lies between bounds, use that and move to next triplet
+			float3 pi = ZeroVector;
+
+			const float xdist = (p2p0.x > 0.0f)?
+				((nodeTL->xmax() * SQUARE_SIZE) - p1.x):
+				((nodeBR->xmin() * SQUARE_SIZE) - p1.x);
+			const float zdist = (p2p0.z > 0.0f)?
+				((nodeTL->zmax() * SQUARE_SIZE) - p1.z):
+				((nodeBR->zmin() * SQUARE_SIZE) - p1.z);
+
+			const float tx = xdist / std::max(p2p0.x, 0.001f);
+			const float tz = zdist / std::max(p2p0.z, 0.001f);
+
+			bool ok = false;
+
+			if (vEdge) {
+				pi = p0 + p2p0 * tx;
+				ok = (pi.z >= (zmin * SQUARE_SIZE) && pi.z <= (zmax * SQUARE_SIZE));
+			}
+			if (hEdge) {
+				pi = p0 + p2p0 * tz;
+				ok = (pi.x >= (xmin * SQUARE_SIZE) && pi.x <= (xmax * SQUARE_SIZE));
+			}
+
+			if (ok) {
+				path->SetPoint(n + 1, pi); continue;
+			}
+		}
+
+		{
+			// get the edge end-points
+			float3 e0 = p1;
+			float3 e1 = p1;
+
+			if (vEdge) {
+				assert(p1z >= nodeBR->zmin() && p1z < nodeBR->zmax());
+				e0.z = zmin * SQUARE_SIZE;
+				e1.z = zmax * SQUARE_SIZE;
+			}
+			if (hEdge) {
+				assert(p1x >= nodeBR->xmin() && p1x < nodeBR->xmax());
+				e0.x = xmin * SQUARE_SIZE;
+				e1.x = xmax * SQUARE_SIZE;
+			}
+
+			// figure out what the angle between p0-p1 and p1-p2
+			// would be after substituting the edge-ends for p1
+			// (we want dot-products as close to 1 as possible)
+			//
+			// p0-e0-p2
+			const float3 e0p0 = (e0 - p0).SafeNormalize();
+			const float3 p2e0 = (p2 - e0).SafeNormalize();
+			const float  dot0 = e0p0.dot(p2e0);
+			// p0-e1-p2
+			const float3 e1p0 = (e1 - p0).SafeNormalize();
+			const float3 p2e1 = (p2 - e1).SafeNormalize();
+			const float  dot1 = e1p0.dot(p2e1);
+
+			// if neither end-point is an improvement, skip
+			if (dot > std::max(dot0, dot1))
+				continue;
+
+			if (dot0 > std::max(dot1, dot)) { p1 = e0; }
+			if (dot1 > std::max(dot0, dot)) { p1 = e1; }
+
+			path->SetPoint(n + 1, p1);
+		}
 	}
 }
 

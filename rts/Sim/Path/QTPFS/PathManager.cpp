@@ -437,6 +437,8 @@ void QTPFS::PathManager::Update() {
 					#ifdef QTPFS_SEARCH_SHARED_PATHS
 					sharedPaths[K] = path;
 					#endif
+				} else {
+					DeletePath(path->GetID());
 				}
 
 				*searchesIt = NULL;
@@ -540,6 +542,9 @@ float3 QTPFS::PathManager::NextWayPoint(
 		//     never switch to its live-path even after it becomes available
 		//     (because NextWayPoint is not called again until U gets close
 		//     to P), so always keep it a fixed small distance in front
+		//
+		//     if the queued search fails, the next call to us should make
+		//     the unit stop
 		assert(livePath->GetID() == 0);
 
 		const float3& sourcePoint = curPoint;
