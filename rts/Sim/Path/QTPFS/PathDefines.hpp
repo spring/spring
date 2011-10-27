@@ -9,9 +9,6 @@
 // #define QTPFS_SLOW_ACCURATE_TESSELATION
 // #define QTPFS_OPENMP_ENABLED
 
-#define QTPFS_MIN_NODE_SIZE_X 2
-#define QTPFS_MIN_NODE_SIZE_Z 2
-
 #define QTPFS_POSITIVE_INFINITY (std::numeric_limits<float>::infinity())
 
 #endif

@@ -83,6 +83,7 @@ namespace QTPFS {
 		//     <i> is a NODE_IDX index in [0, 3]
 		unsigned int GetChildID(unsigned int i) const { return (nodeNumber << 2) + (i + 1); }
 		unsigned int GetParentID() const { return ((nodeNumber - 1) >> 2); }
+		unsigned int GetDepth() const;
 
 		boost::uint64_t GetMemFootPrint() const;
 
@@ -116,6 +117,9 @@ namespace QTPFS {
 		unsigned int GetMagicNumber() const { return currMagicNum; }
 
 		static const unsigned int CHILD_COUNT = 4;
+		static const unsigned int MIN_SIZE_X = 2;
+		static const unsigned int MIN_SIZE_Z = 2;
+		static const unsigned int MAX_DEPTH = 16;
 
 	private:
 		void UpdateMoveCost(

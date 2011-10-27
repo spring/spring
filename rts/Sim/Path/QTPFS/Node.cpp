@@ -191,6 +191,14 @@ void QTPFS::QTNode::Delete() {
 
 
 
+unsigned int QTPFS::QTNode::GetDepth() const {
+	const unsigned int N = gs->mapx / xsize();
+	      unsigned int K = 0;
+
+	while ((1 << K) != N) { K += 1; }
+	return K;
+}
+
 boost::uint64_t QTPFS::QTNode::GetMemFootPrint() const {
 	boost::uint64_t memFootPrint = sizeof(QTNode);
 
@@ -220,9 +228,9 @@ bool QTPFS::QTNode::IsLeaf() const {
 
 
 bool QTPFS::QTNode::Split(NodeLayer& nl) {
-	if (xsize() <= QTPFS_MIN_NODE_SIZE_X || zsize() <= QTPFS_MIN_NODE_SIZE_Z) {
-		return false;
-	}
+	if (xsize() <= MIN_SIZE_X) { return false; }
+	if (xsize() <= MIN_SIZE_Z) { return false; }
+	if (GetDepth() >= MAX_DEPTH) { return false; }
 
 	neighbors.clear();
 
