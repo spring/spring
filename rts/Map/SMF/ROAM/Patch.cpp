@@ -162,7 +162,7 @@ void Patch::Split(TriTreeNode* tri)
 	tri->RightChild = CRoamMeshDrawer::AllocateTri();
 
 	// If creation failed, just exit.
-	if (!tri->RightChild)
+	if (!tri->IsBranch())
 		return;
 
 	// Fill in the information we can get from the parent (neighbor pointers)
@@ -198,7 +198,7 @@ void Patch::Split(TriTreeNode* tri)
 
 	// Link our Base Neighbor to the new children
 	if (tri->BaseNeighbor != NULL) {
-		if (!tri->BaseNeighbor->IsLeaf()) {
+		if (tri->BaseNeighbor->IsBranch()) {
 			tri->BaseNeighbor->LeftChild->RightNeighbor = tri->RightChild;
 			tri->BaseNeighbor->RightChild->LeftNeighbor = tri->LeftChild;
 			tri->LeftChild->RightNeighbor = tri->BaseNeighbor->RightChild;
@@ -244,7 +244,7 @@ void Patch::RecursTessellate(TriTreeNode* const& tri, const int& leftX, const in
 	{
 		Split(tri); // Split this triangle.
 
-		if (tri->HasChildren()) { // If this triangle was split, try to split it's children as well.
+		if (tri->IsBranch()) { // If this triangle was split, try to split it's children as well.
 			const int centerX = (leftX + rightX) >> 1; // Compute X coordinate of center of Hypotenuse
 			const int centerY = (leftY + rightY) >> 1; // Compute Y coord...
 

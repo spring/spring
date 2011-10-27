@@ -47,7 +47,7 @@ struct TriTreeNode
 		return (LeftChild == NULL);
 	}
 
-	bool HasChildren() const {
+	bool IsBranch() const {
 		// All non-leaf nodes have both children, so just check for one
 		return !!RightChild;
 	}
