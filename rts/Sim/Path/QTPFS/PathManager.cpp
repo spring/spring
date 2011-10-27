@@ -358,6 +358,10 @@ void QTPFS::PathManager::Update() {
 	static unsigned int minUpdate = 0;
 	static unsigned int maxUpdate = numUpdates;
 
+	#ifdef QTPFS_SEARCH_SHARED_PATHS
+	std::map<boost::uint64_t, IPath*> sharedPaths;
+	#endif
+
 	for (unsigned int i = minUpdate; i < maxUpdate; i++) {
 		NodeLayer& nodeLayer = nodeLayers[i];
 		PathCache& pathCache = pathCaches[i];
@@ -372,10 +376,6 @@ void QTPFS::PathManager::Update() {
 		std::list<IPathSearch*>::iterator searchesIt = searches.begin();
 
 		if (!searches.empty()) {
-			#ifdef QTPFS_SEARCH_SHARED_PATHS
-			std::map<boost::uint64_t, IPath*> sharedPaths;
-			#endif
-
 			// execute all pending searches collected via RequestPath
 			while (searchesIt != searches.end()) {
 				IPathSearch* search = *searchesIt;
