@@ -36,8 +36,8 @@ CONFIG(int, MaxDynamicMapLights)
 CONFIG(int, AdvMapShading).defaultValue(1);
 
 CONFIG(int, ROAM)
-	.defaultValue(1)
-	.description("Use ROAM for terrain mesh rendering.");
+	.defaultValue(VBO)
+	.description("Use ROAM for terrain mesh rendering. 1=VBO mode, 2=DL mode, 3=VA mode");
 
 
 CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
@@ -69,7 +69,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
 	advShading = LoadMapShaders();
 
-	bool useROAM = configHandler->GetInt("ROAM");
+	bool useROAM = !!configHandler->GetInt("ROAM");
 	if (useROAM) {
 		meshDrawer = new CRoamMeshDrawer(smfMap, this);
 	} else {
@@ -78,14 +78,17 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 }
 
 
-CSMFGroundDrawer::~CSMFGroundDrawer(void)
+CSMFGroundDrawer::~CSMFGroundDrawer()
 {
+	bool roamUsed = dynamic_cast<CRoamMeshDrawer*>(meshDrawer);
+
 	delete groundTextures;
 	delete meshDrawer;
 
-	shaderHandler->ReleaseProgramObjects("[SMFGroundDrawer]");
-
+	if (!roamUsed) configHandler->Set("ROAM", 0); // if enabled, the configvar is written in CRoamMeshDrawer's dtor
 	configHandler->Set("GroundDetail", groundDetail);
+
+	shaderHandler->ReleaseProgramObjects("[SMFGroundDrawer]");
 
 	if (waterPlaneCamInDispList) {
 		glDeleteLists(waterPlaneCamInDispList, 1);

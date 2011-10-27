@@ -450,7 +450,7 @@ public:
 			sscanf((action.GetArgs()).c_str(), "%i %i", &useRoam, &roamMode);
 
 			smfGD->SwitchMeshDrawer(useRoam);
-			if (useRoam) {
+			if (useRoam && roamMode >= 0) {
 				Patch::SwitchRenderMode(roamMode);
 			}
 		} else {

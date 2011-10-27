@@ -22,6 +22,7 @@
 #include "System/Rectangle.h"
 //#include "System/OpenMP_cond.h"
 #include "System/TimeProfiler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 
 #include <cmath>
@@ -59,6 +60,10 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 {
 	eventHandler.AddClient(this);
 
+	// Set ROAM upload mode (VA,DL,VBO)
+	const int mode = configHandler->GetInt("ROAM");
+	Patch::SwitchRenderMode(mode);
+
 	numPatchesX = gs->mapx / PATCH_SIZE;
 	numPatchesY = gs->mapy / PATCH_SIZE;
 	//assert((numPatchesX == smfReadMap->numBigTexX) && (numPatchesY == smfReadMap->numBigTexY));
@@ -93,6 +98,8 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 
 CRoamMeshDrawer::~CRoamMeshDrawer()
 {
+	configHandler->Set("ROAM", (int)Patch::renderMode);
+
 	delete[] visibilitygrid;
 }
 
