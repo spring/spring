@@ -98,8 +98,6 @@ void Patch::Reset()
 
 void Patch::UpdateHeightMap(const SRectangle& rect)
 {
-	const float* hMap = readmap->GetCornerHeightMapSynced(); //FIXME
-
 	if (vertices.empty()) {
 		// Initialize
 		vertices.resize(3 * (PATCH_SIZE + 1) * (PATCH_SIZE + 1));
@@ -113,6 +111,7 @@ void Patch::UpdateHeightMap(const SRectangle& rect)
 		}
 	}
 
+	static const float* hMap = readmap->GetCornerHeightMapUnsynced();
 	for (int z = rect.z1; z <= rect.z2; z++) {
 		for (int x = rect.x1; x <= rect.x2; x++) {
 			const float& h = hMap[(z + m_WorldY) * gs->mapxp1 + (x + m_WorldX)];
