@@ -75,26 +75,11 @@ public:
 
 	void Reset();
 	
-	TriTreeNode* GetBaseLeft()
-	{
-		return &m_BaseLeft;
-	}
-	TriTreeNode* GetBaseRight()
-	{
-		return &m_BaseRight;
-	}
-	char IsDirty()
-	{
-		return m_isDirty;
-	}
-	bool IsVisible()
-	{
-		return m_isVisible;
-	}
-	int GetTriCount()
-	{
-		return indices.size() / 3;
-	}
+	TriTreeNode* GetBaseLeft()  { return &m_BaseLeft;  }
+	TriTreeNode* GetBaseRight() { return &m_BaseRight; }
+	char IsDirty()     const { return m_isDirty; }
+	bool IsVisible()   const { return m_isVisible; }
+	int  GetTriCount() const { return indices.size() / 3; }
 
 	void UpdateVisibility();
 	void UpdateHeightMap(const SRectangle& rect = SRectangle(0,0,PATCH_SIZE,PATCH_SIZE));

@@ -58,7 +58,7 @@ private:
 	int viewRadius;
 	int neededLod;
 
-	bool waterDrawn;
+	//bool waterDrawn;
 };
 
 #endif // _LEGACY_MESH_DRAWER_H_
