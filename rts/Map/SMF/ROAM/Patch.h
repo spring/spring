@@ -69,8 +69,8 @@ class Patch
 {
 public:
 	Patch();
-	void Init(CSMFGroundDrawer* drawer, int worldX, int worldZ, const float* hMap, int mx); //FIXME move this into the ctor
 	~Patch();
+	void Init(CSMFGroundDrawer* drawer, int worldX, int worldZ); //FIXME move this into the ctor
 
 	friend class CRoamMeshDrawer;
 
@@ -124,7 +124,6 @@ protected:
 	float varianceMaxLimit;
 	float camDistLODFactor; //< defines the LOD falloff in camera distance
 
-	int mapx;
 	int m_WorldX, m_WorldY; //< World coordinate offset of this patch.
 	//float minHeight, maxHeight;
 

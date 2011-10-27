@@ -33,12 +33,13 @@ RenderMode Patch::renderMode = VBO;
 //
 Patch::Patch()
 	: smfGroundDrawer(NULL)
+	, m_HeightMap(NULL)
 	, heightData(NULL)
 	, m_CurrentVariance(NULL)
 	, m_isVisible(false)
 	, m_isDirty(true)
+	, varianceMaxLimit(FLT_MAX)
 	, camDistLODFactor(1.f)
-	, mapx(-1)
 	, m_WorldX(-1)
 	, m_WorldY(-1)
 	//, minHeight(FLT_MAX)
@@ -52,11 +53,10 @@ Patch::Patch()
 }
 
 
-void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ, const float* hMap, int mx)
+void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ)
 {
 	smfGroundDrawer = _drawer;
-	heightData = hMap;
-	mapx = mx;
+	heightData = readmap->GetCornerHeightMapUnsynced();;
 	m_WorldX = worldX;
 	m_WorldY = worldZ;
 
@@ -65,7 +65,7 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ, const float*
 	m_BaseRight.BaseNeighbor = &m_BaseLeft;
 
 	// Store pointer to first byte of the height data for this patch.
-	m_HeightMap = &hMap[worldZ * (mapx+1) + worldX];
+	m_HeightMap = &heightData[worldZ * gs->mapxp1 + worldX];
 
 	// Create used OpenGL objects
 	triList = glGenLists(1);
@@ -300,7 +300,7 @@ float Patch::RecursComputeVariance(const int& leftX, const int& leftY, const flo
 	int centerY = (leftY + rightY) >> 1; // Compute Y coord...
 
 	// Get the height value at the middle of the Hypotenuse
-	float centerZ = m_HeightMap[(centerY * (mapx+1)) + centerX];
+	float centerZ = m_HeightMap[(centerY * gs->mapxp1) + centerX];
 
 	// Variance of this triangle is the actual height at it's hypotenuse midpoint minus the interpolated height.
 	// Use values passed on the stack instead of re-accessing the Height Field.
