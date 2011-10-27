@@ -1136,8 +1136,9 @@ int LuaSyncedCtrl::SetUnitHealth(lua_State* L)
 				}
 				else if (key == "build") {
 					unit->buildProgress = value;
-					if (unit->beingBuilt && (value >= 1.0f)) {
-						unit->FinishedBuilding();
+
+					if (unit->buildProgress >= 1.0f) {
+						unit->FinishedBuilding(false);
 					}
 				}
 			}

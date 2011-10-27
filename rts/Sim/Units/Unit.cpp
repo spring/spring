@@ -539,7 +539,8 @@ void CUnit::PostInit(const CUnit* builder)
 	eoh->UnitCreated(*this, builder);
 
 	if (!beingBuilt) {
-		FinishedBuilding();
+		// skip past the gradual build-progression
+		FinishedBuilding(true);
 	}
 }
 
@@ -1702,24 +1703,23 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 
 		lastNanoAdd = gs->frameNum;
 
-
 		if (beingBuilt) { //build
 			if ((teamHandler->Team(builder->team)->metal  >= metalUse) &&
 			    (teamHandler->Team(builder->team)->energy >= energyUse) &&
 			    (!luaRules || luaRules->AllowUnitBuildStep(builder, this, part))) {
-				if (builder->UseMetal(metalUse)) { //just because we checked doesn't mean they were deducted since upkeep can prevent deduction
+				if (builder->UseMetal(metalUse)) {
+					// just because we checked doesn't mean they were deducted since upkeep can prevent deduction
 					if (builder->UseEnergy(energyUse)) {
 						health += (maxHealth * part);
+						health = std::min(health, maxHealth);
 						buildProgress += part;
+
 						if (buildProgress >= 1.0f) {
-							if (health > maxHealth) {
-								health = maxHealth;
-							}
-							FinishedBuilding();
+							FinishedBuilding(false);
 						}
-					}
-					else {
-						builder->UseMetal(-metalUse); //refund the metal if the energy cannot be deducted
+					} else {
+						// refund the metal if the energy cannot be deducted
+						builder->UseMetal(-metalUse);
 					}
 				}
 				return true;
@@ -1799,18 +1799,19 @@ bool CUnit::AddBuildPower(float amount, CUnit* builder)
 }
 
 
-void CUnit::FinishedBuilding()
+void CUnit::FinishedBuilding(bool postInit)
 {
+	if (!beingBuilt && !postInit) {
+		return;
+	}
+
 	beingBuilt = false;
 	buildProgress = 1.0f;
+	mass = unitDef->mass;
 
 	if (soloBuilder) {
 		DeleteDeathDependence(soloBuilder, DEPENDENCE_BUILDER);
 		soloBuilder = NULL;
-	}
-
-	if (!(immobile && (mass == CSolidObject::DEFAULT_MASS))) {
-		mass = unitDef->mass;
 	}
 
 	ChangeLos(realLosRadius, realAirLosRadius);

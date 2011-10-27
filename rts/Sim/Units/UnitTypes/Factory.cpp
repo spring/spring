@@ -254,11 +254,6 @@ void CFactory::DependentDied(CObject* o)
 	CUnit::DependentDied(o);
 }
 
-void CFactory::FinishedBuilding(void)
-{
-	CBuilding::FinishedBuilding();
-}
-
 
 
 void CFactory::SendToEmptySpot(CUnit* unit)

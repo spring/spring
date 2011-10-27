@@ -85,7 +85,6 @@ public:
 
 	virtual void Update() {}
 	virtual void UpdateShadingTexture() {}
-	virtual void Explosion(float x, float y, float strength) {}
 
 	virtual void NewGroundDrawer() = 0;
 	virtual CBaseGroundDrawer* GetGroundDrawer() { return 0; }

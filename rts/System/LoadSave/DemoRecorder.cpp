@@ -28,14 +28,15 @@ CDemoRecorder::CDemoRecorder()
 	SetName("unnamed", "");
 	demoName = GetName();
 
-	std::string filename = dataDirsAccess.LocateFile(demoName, FileQueryFlags::WRITE);
+	const std::string filename = dataDirsAccess.LocateFile(demoName, FileQueryFlags::WRITE);
+	const std::string versionString = SpringVersion::GetSync();
 	recordDemo.open(filename.c_str(), std::ios::out | std::ios::binary);
 
 	memset(&fileHeader, 0, sizeof(DemoFileHeader));
 	strcpy(fileHeader.magic, DEMOFILE_MAGIC);
 	fileHeader.version = DEMOFILE_VERSION;
 	fileHeader.headerSize = sizeof(DemoFileHeader);
-	strcpy(fileHeader.versionString, SpringVersion::GetSync().c_str());
+	STRNCPY(fileHeader.versionString, versionString.c_str(), sizeof(fileHeader.versionString) - 1);
 
 	__time64_t currtime = CTimeUtil::GetCurrentTime();
 	fileHeader.unixTime = currtime;

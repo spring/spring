@@ -218,14 +218,8 @@ void CExtractorBuilding::ReCalculateMetalExtraction()
 
 
 /* Finds the amount of metal to extract and sets the rotationspeed when the extractor is built. */
-void CExtractorBuilding::FinishedBuilding()
+void CExtractorBuilding::FinishedBuilding(bool postInit)
 {
 	SetExtractionRangeAndDepth(unitDef->extractRange, unitDef->extractsMetal);
-
-#ifdef TRACE_SYNC
-	tracefile << "Metal extractor finished: ";
-	tracefile << metalExtract << " ";
-#endif
-
-	CBuilding::FinishedBuilding();
+	CUnit::FinishedBuilding(postInit);
 }
