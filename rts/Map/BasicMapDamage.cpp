@@ -170,7 +170,6 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 	}
 
 	explosions.push_back(e);
-	readmap->Explosion(pos.x, pos.z, strength);
 }
 
 void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)

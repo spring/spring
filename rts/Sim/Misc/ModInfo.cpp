@@ -24,7 +24,6 @@ CModInfo modInfo;
 void CModInfo::Init(const char* modArchive)
 {
 	filename = modArchive;
-
 	humanName = archiveScanner->NameFromArchive(modArchive);
 
 	const CArchiveScanner::ArchiveData md = archiveScanner->GetArchiveData(humanName);

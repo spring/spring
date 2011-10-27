@@ -4,22 +4,27 @@
 #define PATCH_H
 
 #include "Rendering/GL/myGL.h"
+#include "System/Rectangle.h"
 
 
 class CSMFGroundDrawer;
 
 
+// How many heightmap pixels a patch consists of
+#define PATCH_SIZE 128
+
 // Depth of variance tree: should be near SQRT(PATCH_SIZE) + 1
 #define VARIANCE_DEPTH (12)
+
 
 /**
  * Patch render mode
  * way indices/vertices are send to the GPU
  */
 enum RenderMode {
-	VA,
-	DL,
-	VBO
+	VBO = 1,
+	DL  = 2,
+	VA  = 3
 };
 
 
@@ -37,8 +42,19 @@ struct TriTreeNode
 		, RightNeighbor(NULL)
 	{}
 
+	bool IsLeaf() const {
+		// All non-leaf nodes have both children, so just check for one
+		return (LeftChild == NULL);
+	}
+
+	bool HasChildren() const {
+		// All non-leaf nodes have both children, so just check for one
+		return !!RightChild;
+	}
+
 	TriTreeNode* LeftChild;
 	TriTreeNode* RightChild;
+
 	TriTreeNode* BaseNeighbor;
 	TriTreeNode* LeftNeighbor;
 	TriTreeNode* RightNeighbor;
@@ -51,8 +67,14 @@ struct TriTreeNode
 class Patch
 {
 public:
+	Patch();
+	void Init(CSMFGroundDrawer* drawer, int worldX, int worldZ, const float* hMap, int mx); //FIXME move this into the ctor
 	~Patch();
 
+	friend class CRoamMeshDrawer;
+
+	void Reset();
+	
 	TriTreeNode* GetBaseLeft()
 	{
 		return &m_BaseLeft;
@@ -61,11 +83,11 @@ public:
 	{
 		return &m_BaseRight;
 	}
-	char isDirty()
+	char IsDirty()
 	{
-		return m_VarianceDirty;
+		return m_isDirty;
 	}
-	bool isVisibile()
+	bool IsVisible()
 	{
 		return m_isVisible;
 	}
@@ -75,63 +97,57 @@ public:
 	}
 
 	void UpdateVisibility();
+	void UpdateHeightMap(const SRectangle& rect = SRectangle(0,0,PATCH_SIZE,PATCH_SIZE));
+
+	void Tessellate(const float3& campos, int viewradius);
+	void ComputeVariance();
+
+	int Render();
+	void DrawTriArray();
 
 	void SetSquareTexture() const;
 
-	// The static half of the Patch Class
-	virtual void Init(CSMFGroundDrawer* drawer, int worldX, int worldZ, const float* hMap, int mx, float maxH, float minH);
-	virtual void Reset();
-	virtual void Tessellate(const float3& campos, int viewradius);
-	
-	virtual int Render(bool waterdrawn);
-	virtual void ComputeVariance();
+public:
+	static void SwitchRenderMode(int mode = -1);
 
+private:
 	// The recursive half of the Patch Class
-	virtual void Split(TriTreeNode* tri);
-	virtual void RecursTessellate(TriTreeNode* tri, int leftX, int leftY,
-			int rightX, int rightY, int apexX, int apexY, int node);
-	virtual void RecursRender(TriTreeNode* tri, int leftX, int leftY, int rightX,
-		int rightY, int apexX, int apexY, bool dir, int maxdepth, bool waterdrawn);
-	virtual unsigned char RecursComputeVariance(int leftX, int leftY,
-		float leftZ, int rightX, int rightY, float rightZ,
-		int apexX, int apexY, float apexZ, int node);
-	virtual void DrawTriArray();
+	void Split(TriTreeNode* tri);
+	void RecursTessellate(TriTreeNode* const& tri, const int& leftX, const int& leftY, const int& rightX, const int& rightY, const int& apexX, const int& apexY, const int& node);
+	void RecursRender(TriTreeNode* const& tri, const int& leftX, const int& leftY, const int& rightX, const int& rightY, const int& apexX, const int& apexY, int maxdepth);
+	float RecursComputeVariance(const int& leftX, const int& leftY, const float& leftZ, const int& rightX, const int& rightY, const float& rightZ, const int& apexX, const int& apexY, const float& apexZ, const int& node);
 
 protected:
 	static RenderMode renderMode;
 
-	CSMFGroundDrawer* drawer;
+	CSMFGroundDrawer* smfGroundDrawer;
 
 	const float* m_HeightMap; //< Pointer to height map to use
+	const float* heightData;
 
 	float m_VarianceLeft[1 << (VARIANCE_DEPTH)];  //< Left variance tree
 	float m_VarianceRight[1 << (VARIANCE_DEPTH)]; //< Right variance tree
-
 	float* m_CurrentVariance;  //< Which varience we are currently using. [Only valid during the Tessellate and ComputeVariance passes]
 
 	bool m_isVisible; //< Is this patch visible in the current frame?
+	bool m_isDirty; //< Does the Varience Tree need to be recalculated for this Patch?
 
 	TriTreeNode m_BaseLeft;  //< Left base triangle tree node
 	TriTreeNode m_BaseRight; //< Right base triangle tree node
 
-	// Some encapsulation functions & extras
-	float distfromcam;
+	float varianceMaxLimit;
+	float camDistLODFactor; //< defines the LOD falloff in camera distance
 
 	int mapx;
-	float maxh, minh;
+	int m_WorldX, m_WorldY; //< World coordinate offset of this patch.
+	//float minHeight, maxHeight;
 
 	std::vector<float> vertices; // Why yes, this IS a mind bogglingly wasteful thing to do: TODO: remove this for both the Displaylist and the VBO implementations (only really needed for vertexarrays)
 	std::vector<unsigned int> indices;
 
-
 	GLuint triList;
 	GLuint vertexBuffer;
 	GLuint vertexIndexBuffer;
-
-public:
-	const float* heightData;
-	int m_WorldX, m_WorldY; //< World coordinate offset of this patch.
-	unsigned char m_VarianceDirty; //< Does the Varience Tree need to be recalculated for this Patch? FIXME why not bool?
 };
 
 #endif
