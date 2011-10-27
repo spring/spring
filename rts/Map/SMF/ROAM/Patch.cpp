@@ -22,11 +22,96 @@
 #include "System/OpenMP_cond.h"
 #include <cfloat>
 
+
 // -------------------------------------------------------------------------------------------------
-//	PATCH CLASS
+// -------------------------------------------------------------------------------------------------
+// STATICS
 
 RenderMode Patch::renderMode = VBO;
 
+
+static std::vector<CTriNodePool*> pools;
+
+void CTriNodePool::InitPools()
+{
+	if (pools.empty()) {
+		#pragma omp parallel
+		{
+			#pragma omp master
+			{
+			#ifdef _OPENMP
+				int numThreads = omp_get_num_threads();
+			#else
+				int numThreads = 1;
+			#endif
+				const size_t allocPerThread = std::max(POOL_SIZE / numThreads, POOL_SIZE / 3);
+				pools.reserve(numThreads);
+				for (; numThreads > 0; --numThreads) {
+					pools.push_back(new CTriNodePool(allocPerThread));
+				}
+			}
+		}
+	}
+}
+
+
+void CTriNodePool::FreePools()
+{
+	for (std::vector<CTriNodePool*>::iterator it = pools.begin(); it != pools.end(); ++it) {
+		delete (*it);
+	}
+	pools.clear();
+}
+
+
+void CTriNodePool::ResetAll()
+{
+	for (std::vector<CTriNodePool*>::iterator it = pools.begin(); it != pools.end(); ++it) {
+		(*it)->Reset();
+	}
+}
+
+
+CTriNodePool* CTriNodePool::GetPool()
+{
+#ifdef _OPENMP
+	const size_t th_id = omp_get_thread_num();
+	return pools[th_id];
+#else
+	return pools[0];
+#endif
+}
+
+
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+// CTriNodePool Class
+
+void CTriNodePool::Reset()
+{
+	m_NextTriNode = 0;
+	const size_t s = pool.size();
+	pool.clear();
+	pool.resize(s);
+}
+
+
+TriTreeNode* CTriNodePool::AllocateTri()
+{
+	// IF we've run out of TriTreeNodes, just return NULL (this is handled gracefully)
+	if (m_NextTriNode >= pool.size())
+		return NULL;
+
+	TriTreeNode* pTri = &pool[m_NextTriNode++];
+	//*pTri = TriTreeNode();
+	return pTri;
+}
+
+
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+// Patch Class
+//
 
 // -------------------------------------------------------------------------------------------------
 // C'tor etc.
@@ -157,8 +242,9 @@ void Patch::Split(TriTreeNode* tri)
 		Split(tri->BaseNeighbor);
 
 	// Create children and link into mesh
-	tri->LeftChild  = CRoamMeshDrawer::AllocateTri();
-	tri->RightChild = CRoamMeshDrawer::AllocateTri();
+	CTriNodePool* pool = CTriNodePool::GetPool();
+	tri->LeftChild  = pool->AllocateTri();
+	tri->RightChild = pool->AllocateTri();
 
 	// If creation failed, just exit.
 	if (!tri->IsBranch())

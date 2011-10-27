@@ -14,8 +14,6 @@ class CSMFReadMap;
 class CSMFGroundDrawer;
 
 
-// How many TriTreeNodes should be allocated?
-#define POOL_SIZE (500000)
 
 
 
@@ -43,21 +41,11 @@ public:
 
 	void DrawMesh(const DrawPass::e& drawPass);
 
-	// used by Patch.cpp
-	static TriTreeNode* AllocateTri();
-
 private:
 	void Reset();
 	void Tessellate(const float3& campos, int viewradius);
 	int Render(bool shadows);
-
-protected:
-	static int  GetNextTriNode() { return m_NextTriNode; }
-	static void SetNextTriNode(int nNextNode) { m_NextTriNode = nNextNode; }
-
-	static int m_NextTriNode;                //< Index to next free TriTreeNode
-	static TriTreeNode m_TriPool[POOL_SIZE]; //< Pool of TriTree nodes for splitting //FIXME this array is 9.5MB large! better use a std::vector? 
-
+	
 public:
 	static bool forceRetessellate;
 
