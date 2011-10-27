@@ -47,14 +47,6 @@ Patch::Patch()
 	, vertexBuffer(0)
 	, vertexIndexBuffer(0)
 {
-	// Attach the two m_Base triangles together
-	m_BaseLeft.BaseNeighbor  = &m_BaseRight;
-	m_BaseRight.BaseNeighbor = &m_BaseLeft;
-
-	// Create used OpenGL objects
-	triList = glGenLists(1);
-	glGenBuffersARB(1, &vertexBuffer);
-	glGenBuffersARB(1, &vertexIndexBuffer);
 }
 
 
@@ -66,8 +58,17 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ, const float*
 	m_WorldX = worldX;
 	m_WorldY = worldZ;
 
+	// Attach the two m_Base triangles together
+	m_BaseLeft.BaseNeighbor  = &m_BaseRight;
+	m_BaseRight.BaseNeighbor = &m_BaseLeft;
+
 	// Store pointer to first byte of the height data for this patch.
 	m_HeightMap = &hMap[worldZ * (mapx+1) + worldX];
+
+	// Create used OpenGL objects
+	triList = glGenLists(1);
+	glGenBuffersARB(1, &vertexBuffer);
+	glGenBuffersARB(1, &vertexIndexBuffer);
 
 	UpdateHeightMap();
 }
