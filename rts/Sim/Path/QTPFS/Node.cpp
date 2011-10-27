@@ -138,7 +138,7 @@ SRectangle QTPFS::INode::ClipRectangle(const SRectangle& r) const {
 
 
 QTPFS::QTNode::QTNode(
-	const QTNode*,
+	const QTNode* parent,
 	unsigned int id,
 	unsigned int x1, unsigned int z1,
 	unsigned int x2, unsigned int z2
@@ -149,17 +149,13 @@ QTPFS::QTNode::QTNode(
 	currMagicNum =  0;
 	prevMagicNum = -1U;
 
-	_xmin = x1;
-	_zmin = z1;
-	_xmax = x2;
-	_zmax = z2;
-	_xmid = (_xmin + _xmax) >> 1;
-	_zmid = (_zmin + _zmax) >> 1;
-	_xsize = _xmax - _xmin;
-	_zsize = _zmax - _zmin;
+	_xmin = x1; _xmax = x2;
+	_zmin = z1; _zmax = z2;
 
-	assert(_xsize != 0);
-	assert(_zsize != 0);
+	assert(xsize() != 0);
+	assert(zsize() != 0);
+
+	_depth = (parent != NULL)? parent->depth() + 1: 0;
 
 	fCost = 0.0f;
 	gCost = 0.0f;
@@ -190,14 +186,6 @@ void QTPFS::QTNode::Delete() {
 }
 
 
-
-unsigned int QTPFS::QTNode::GetDepth() const {
-	const unsigned int N = gs->mapx / xsize();
-	      unsigned int K = 0;
-
-	while ((1 << K) != N) { K += 1; }
-	return K;
-}
 
 boost::uint64_t QTPFS::QTNode::GetMemFootPrint() const {
 	boost::uint64_t memFootPrint = sizeof(QTNode);
@@ -230,7 +218,7 @@ bool QTPFS::QTNode::IsLeaf() const {
 bool QTPFS::QTNode::Split(NodeLayer& nl) {
 	if (xsize() <= MIN_SIZE_X) { return false; }
 	if (xsize() <= MIN_SIZE_Z) { return false; }
-	if (GetDepth() >= MAX_DEPTH) { return false; }
+	if (depth() >= MAX_DEPTH) { return false; }
 
 	neighbors.clear();
 
