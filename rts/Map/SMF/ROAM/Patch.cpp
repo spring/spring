@@ -86,9 +86,6 @@ Patch::~Patch()
 
 void Patch::Reset()
 {
-	// Assume patch is not visible.
-	m_isVisible = false;
-
 	// Reset the important relationships
 	m_BaseLeft  = TriTreeNode();
 	m_BaseRight = TriTreeNode();
@@ -351,42 +348,6 @@ void Patch::ComputeVariance()
 	m_isDirty = false;
 }
 
-// ---------------------------------------------------------------------
-// Set patch's visibility flag.
-//
-void Patch::UpdateVisibility()
-{
-	const float3 mins(
-		m_WorldX * SQUARE_SIZE,
-		readmap->currMinHeight,
-		m_WorldY * SQUARE_SIZE
-	);
-	const float3 maxs(
-		(m_WorldX + PATCH_SIZE) * SQUARE_SIZE,
-		readmap->currMaxHeight,
-		(m_WorldY + PATCH_SIZE) * SQUARE_SIZE
-	);
-	m_isVisible = cam2->InView(mins, maxs);
-
-	// AABB test seems to be a bit slower than sphere one (~10-50%), but it's a lot more accurate.
-	// So even with zero height the bounding radius of a patch would be `sqrt(2) * PATCH_SIZE`
-	// nearly 50% greater than the patch's edges! So we would render inevitable unvisible patches
-	// which takes ways more time than the additional time spend in the AABB test.
-	/*
-		const float3 p(
-			(m_WorldX + PATCH_SIZE * 0.5f) * SQUARE_SIZE,
-			(minHeight + maxHeight) * 0.5f,
-			(m_WorldY + PATCH_SIZE * 0.5f) * SQUARE_SIZE
-		);
-
-		const float& height  = p.y;
-		static const float SQRT2 = 1.45f; // just an approximation (a very bad one!)
-		static const float patchRadius2D = (PATCH_SIZE * SQUARE_SIZE) * SQRT2; // sqrt(a^2 + a^2) = sqrt(2*(a^2)) = a * sqrt(2)
-		const float radius   = math::sqrt(height * height + patchRadius2D * patchRadius2D);
-		//const float radius = std::max(height, radius2d) * SQRT2; // approx. saves a slow sqrt, but maybe too inaccurate
-		m_isVisible = cam2->InView(p, radius);
-	*/
-}
 
 // ---------------------------------------------------------------------
 // Create an approximate mesh.
@@ -536,4 +497,55 @@ void Patch::SwitchRenderMode(int mode)
 	}
 
 	CRoamMeshDrawer::forceRetessellate = true;
+}
+
+
+// ---------------------------------------------------------------------
+// Visibility Update Functions
+//
+
+/*void Patch::UpdateVisibility(CCamera*& cam)
+{
+	const float3 mins(
+		m_WorldX * SQUARE_SIZE,
+		readmap->currMinHeight,
+		m_WorldY * SQUARE_SIZE
+	);
+	const float3 maxs(
+		(m_WorldX + PATCH_SIZE) * SQUARE_SIZE,
+		readmap->currMaxHeight,
+		(m_WorldY + PATCH_SIZE) * SQUARE_SIZE
+	);
+	m_isVisible = cam->InView(mins, maxs);
+}*/
+
+
+class CPatchInViewChecker : public CReadMap::IQuadDrawer
+{
+public:
+	std::vector<Patch>* patches;
+	int numPatchesX;
+
+	void DrawQuad(int x, int y) {
+		(*patches)[x + y * numPatchesX].m_isVisible = true;
+	}
+};
+
+
+void Patch::UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const int& numPatchesX)
+{
+	// very slow
+	//for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
+	//	it->UpdateVisibility(cam);
+	//}
+
+	// very fast
+	static CPatchInViewChecker checker;
+	checker.patches     = &patches;
+	checker.numPatchesX = numPatchesX;
+
+	for (std::vector<Patch>::iterator it = patches.begin(); it != patches.end(); ++it) {
+		it->m_isVisible = false;
+	}
+	readmap->GridVisibility(cam, PATCH_SIZE, 1e9, &checker, INT_MAX);
 }
