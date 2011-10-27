@@ -111,8 +111,8 @@ protected:
 	const float* m_HeightMap; //< Pointer to height map to use
 	const float* heightData;
 
-	float m_VarianceLeft[1 << (VARIANCE_DEPTH)];  //< Left variance tree
-	float m_VarianceRight[1 << (VARIANCE_DEPTH)]; //< Right variance tree
+	std::vector<float> m_VarianceLeft;  //< Left variance tree
+	std::vector<float> m_VarianceRight; //< Right variance tree
 	float* m_CurrentVariance;  //< Which varience we are currently using. [Only valid during the Tessellate and ComputeVariance passes]
 
 	bool m_isVisible; //< Is this patch visible in the current frame?

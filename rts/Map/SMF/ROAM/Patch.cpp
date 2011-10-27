@@ -47,6 +47,8 @@ Patch::Patch()
 	, vertexBuffer(0)
 	, vertexIndexBuffer(0)
 {
+	m_VarianceLeft.resize(1 << VARIANCE_DEPTH);
+	m_VarianceRight.resize(1 << VARIANCE_DEPTH);
 }
 
 
@@ -336,11 +338,11 @@ float Patch::RecursComputeVariance(const int& leftX, const int& leftY, const flo
 void Patch::ComputeVariance()
 {
 	// Compute variance on each of the base triangles...
-	m_CurrentVariance = m_VarianceLeft;
+	m_CurrentVariance = &m_VarianceLeft[0];
 	RecursComputeVariance(0, PATCH_SIZE, m_HeightMap[PATCH_SIZE * gs->mapxp1],
 			PATCH_SIZE, 0, m_HeightMap[PATCH_SIZE], 0, 0, m_HeightMap[0], 1);
 
-	m_CurrentVariance = m_VarianceRight;
+	m_CurrentVariance = &m_VarianceRight[0];
 	RecursComputeVariance(PATCH_SIZE, 0, m_HeightMap[PATCH_SIZE], 0,
 			PATCH_SIZE, m_HeightMap[PATCH_SIZE * gs->mapxp1], PATCH_SIZE, PATCH_SIZE,
 			m_HeightMap[(PATCH_SIZE * gs->mapxp1) + PATCH_SIZE], 1);
@@ -407,16 +409,15 @@ void Patch::Tessellate(const float3& campos, int groundDetail)
 	//   distance, while the param above defines the overall FallOff rate.
 	varianceMaxLimit = groundDetail * 0.35f;
 
-
 	// Split each of the base triangles
-	m_CurrentVariance = m_VarianceLeft;
+	m_CurrentVariance = &m_VarianceLeft[0];
 	RecursTessellate(&m_BaseLeft,
 		int2(m_WorldX,              m_WorldY + PATCH_SIZE),
 		int2(m_WorldX + PATCH_SIZE, m_WorldY),
 		int2(m_WorldX,              m_WorldY),
 		1);
 
-	m_CurrentVariance = m_VarianceRight;
+	m_CurrentVariance = &m_VarianceRight[0];
 	RecursTessellate(&m_BaseRight,
 		int2(m_WorldX + PATCH_SIZE, m_WorldY),
 		int2(m_WorldX,              m_WorldY + PATCH_SIZE),
