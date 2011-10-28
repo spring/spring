@@ -6,6 +6,7 @@
 
 #include "Node.hpp"
 #include "NodeLayer.hpp"
+#include "PathDefines.hpp"
 #include "PathManager.hpp"
 
 #include "Sim/Misc/GlobalConstants.h"
@@ -543,6 +544,7 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 			neighbors.clear();
 			neighbors.reserve(GetMaxNumNeighbors() + 4);
+
 			INode* ngb = NULL;
 
 			if (xmin() > 0) {
@@ -595,6 +597,7 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 				ngbRel |= REL_NGB_EDGE_B;
 			}
 
+			#ifdef QTPFS_CORNER_CONNECTED_NODES
 			// top- and bottom-left corners
 			if ((ngbRel & REL_NGB_EDGE_L) != 0) {
 				if ((ngbRel & REL_NGB_EDGE_T) != 0) {
@@ -638,6 +641,7 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 						neighbors.push_back(ngbC);
 				}
 			}
+			#endif
 		}
 
 		return true;
