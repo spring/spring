@@ -146,13 +146,18 @@ void QTPFS::PathSearch::IterateSearch(
 	for (unsigned int i = 0; i < numNgbs; i++) {
 		// NOTE:
 		//     this uses the actual distance that edges of the final path will cover,
-		//     from <curPoint> (initialized to sourcePoint) to the middle of shared edge
-		//     between <curNode> and <nxtNode>
+		//     from <curPoint> (initialized to sourcePoint) to the middle of the edge
+		//     shared between <curNode> and <nxtNode>
 		//     (each individual path-segment is weighted by the average move-cost of
 		//     the node it crosses, UNLIKE the goal-heuristic)
 		// NOTE:
 		//     heading for the MIDDLE of the shared edge is not always the best option
 		//     we deal with this sub-optimality later (in SmoothPath if it is enabled)
+		// NOTE:
+		//     short paths that should have 3 points (2 nodes) can contain 4 (3 nodes);
+		//     this happens when a path takes a "detour" through a corner neighbor of
+		//     srcNode if the shared corner vertex is closer to the goal position than
+		//     the mid-point on the edge between srcNode and tgtNode
 		#ifdef QTPFS_COPY_NEIGHBOR_NODES
 		nxtNode = ngbNodes[i];
 		nxtPoint = curNode->GetNeighborEdgeMidPoint(nxtNode);
@@ -217,8 +222,12 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 
 		while ((oldNode != NULL) && (tmpNode != srcNode)) {
 			points.push_front(tmpNode->GetNeighborEdgeMidPoint(oldNode));
+
+			#ifndef QTPFS_SMOOTH_PATHS
 			// make sure these can never become dangling
+			// (if we smooth, we do this in SmoothPath())
 			tmpNode->SetPrevNode(NULL);
+			#endif
 
 			tmpNode = oldNode;
 			oldNode = tmpNode->GetPrevNode();
@@ -243,19 +252,31 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 }
 
 void QTPFS::PathSearch::SmoothPath(IPath* path) {
-	const std::vector<INode*>& nodes = nodeLayer->GetNodes();
+	if (path->NumPoints() == 2)
+		return;
 
-	for (unsigned int n = 0; n < (path->NumPoints() - 2); n++) {
-		const float3& p0 = path->GetPoint(n    );
-		      float3  p1 = path->GetPoint(n + 1);
-		const float3& p2 = path->GetPoint(n + 2);
+	INode* n0 = tgtNode;
+	INode* n1 = tgtNode;
 
-		const unsigned int p1x = p1.x / SQUARE_SIZE;
-		const unsigned int p1z = p1.z / SQUARE_SIZE;
+	assert(srcNode->GetPrevNode() == NULL);
 
-		const INode* nodeBR = nodes[p1z * gs->mapx + p1x];
+	// smooth in reverse order (target to source)
+	unsigned int ni = path->NumPoints();
 
-		assert(p1x == nodeBR->xmin() || p1z == nodeBR->zmin());
+	while (n1 != srcNode) {
+		n0 = n1;
+		n1 = n0->GetPrevNode();
+		n0->SetPrevNode(NULL);
+		ni -= 1;
+
+		assert(n1->GetNeighborRelation(n0) != 0);
+		assert(n0->GetNeighborRelation(n1) != 0);
+		assert(ni < path->NumPoints());
+
+		const unsigned int ngbRel = n0->GetNeighborRelation(n1);
+		const float3& p0 = path->GetPoint(ni    );
+		      float3  p1 = path->GetPoint(ni - 1);
+		const float3& p2 = path->GetPoint(ni - 2);
 
 		// check if we can reduce the angle between segments
 		// p0-p1 and p1-p2 (ideally to zero degrees, making
@@ -277,83 +298,71 @@ void QTPFS::PathSearch::SmoothPath(IPath* path) {
 
 		// figure out if p1 is on a horizontal or a vertical edge
 		// (if both of these are true, it is in fact in a corner)
-		const bool hEdge = (p1z == nodeBR->zmin() && p1z > 0);
-		const bool vEdge = (p1x == nodeBR->xmin() && p1x > 0);
+		const bool hEdge = (((ngbRel & REL_NGB_EDGE_T) != 0) || ((ngbRel & REL_NGB_EDGE_B) != 0));
+		const bool vEdge = (((ngbRel & REL_NGB_EDGE_L) != 0) || ((ngbRel & REL_NGB_EDGE_R) != 0));
 
-		if (!hEdge && !vEdge)
-			continue;
-
-		// get the neighbor on the other side of the edge
-		const unsigned int ngbx = vEdge? (p1x - 1): p1x;
-		const unsigned int ngbz = hEdge? (p1z - 1): p1z;
-		const INode* nodeTL = nodes[ngbz * gs->mapx + ngbx];
-
-		assert(ngbx < gs->mapx);
-		assert(ngbz < gs->mapy);
-
-		assert(nodeTL->GetNeighborRelation(nodeBR) != 0);
-		assert(nodeBR->GetNeighborRelation(nodeTL) != 0);
+		assert(hEdge || vEdge);
 
 		// establish the x- and z-range within which p1 can be moved
-		const unsigned int xmin = std::max(nodeTL->xmin(), nodeBR->xmin());
-		const unsigned int zmin = std::max(nodeTL->zmin(), nodeBR->zmin());
-		const unsigned int xmax = std::min(nodeTL->xmax(), nodeBR->xmax());
-		const unsigned int zmax = std::min(nodeTL->zmax(), nodeBR->zmax());
+		const unsigned int xmin = std::max(n1->xmin(), n0->xmin());
+		const unsigned int zmin = std::max(n1->zmin(), n0->zmin());
+		const unsigned int xmax = std::min(n1->xmax(), n0->xmax());
+		const unsigned int zmax = std::min(n1->zmax(), n0->zmax());
 
 		{
 			// calculate intersection point between ray (p2 - p0) and edge
 			// if pi lies between bounds, use that and move to next triplet
 			//
 			// cases:
-			//     A) p0-p1-p2 (p2p0.xz >= 0 -- p0 in nodeTL, p2 in nodeBR)
-			//     B) p2-p1-p0 (p2p0.xz <= 0 -- p2 in nodeTL, p0 in nodeBR)
+			//     A) p0-p1-p2 (p2p0.xz >= 0 -- p0 in n0, p2 in n1)
+			//     B) p2-p1-p0 (p2p0.xz <= 0 -- p2 in n1, p0 in n0)
 			float3 pi = ZeroVector;
 
-			const float xdist = (p2p0.x > 0.0f)?
-				((nodeTL->xmax() * SQUARE_SIZE) - p0.x): // A(x)
-				((nodeBR->xmin() * SQUARE_SIZE) - p0.x); // B(x)
-			const float zdist = (p2p0.z > 0.0f)?
-				((nodeTL->zmax() * SQUARE_SIZE) - p0.z): // A(z)
-				((nodeBR->zmin() * SQUARE_SIZE) - p0.z); // B(z)
+			// x- and z-distances to edge between n0 and n1
+			const float dfx = (p2p0.x > 0.0f)?
+				((n0->xmax() * SQUARE_SIZE) - p0.x): // A(x)
+				((n0->xmin() * SQUARE_SIZE) - p0.x); // B(x)
+			const float dfz = (p2p0.z > 0.0f)?
+				((n0->zmax() * SQUARE_SIZE) - p0.z): // A(z)
+				((n0->zmin() * SQUARE_SIZE) - p0.z); // B(z)
 
 			const float dx = (math::fabs(p2p0.x) > 0.001f)? p2p0.x: 0.001f;
 			const float dz = (math::fabs(p2p0.z) > 0.001f)? p2p0.z: 0.001f;
-			const float tx = xdist / dx;
-			const float tz = zdist / dz;
+			const float tx = dfx / dx;
+			const float tz = dfz / dz;
 
 			bool ok = true;
 
-			if (vEdge) {
-				pi.x = p1.x;
-				pi.z = p0.z + p2p0.z * tx;
-			}
 			if (hEdge) {
 				pi.x = p0.x + p2p0.x * tz;
 				pi.z = p1.z;
+			}
+			if (vEdge) {
+				pi.x = p1.x;
+				pi.z = p0.z + p2p0.z * tx;
 			}
 
 			ok = ok && (pi.x >= (xmin * SQUARE_SIZE) && pi.x <= (xmax * SQUARE_SIZE));
 			ok = ok && (pi.z >= (zmin * SQUARE_SIZE) && pi.z <= (zmax * SQUARE_SIZE));
 
 			if (ok) {
-				path->SetPoint(n + 1, pi); continue;
+				path->SetPoint(ni - 1, pi);
+				continue;
 			}
 		}
 
-		{
+		if (hEdge != vEdge) {
 			// get the edge end-points
 			float3 e0 = p1;
 			float3 e1 = p1;
 
-			if (vEdge) {
-				assert(p1z >= nodeBR->zmin() && p1z < nodeBR->zmax());
-				e0.z = zmin * SQUARE_SIZE;
-				e1.z = zmax * SQUARE_SIZE;
-			}
 			if (hEdge) {
-				assert(p1x >= nodeBR->xmin() && p1x < nodeBR->xmax());
 				e0.x = xmin * SQUARE_SIZE;
 				e1.x = xmax * SQUARE_SIZE;
+			}
+			if (vEdge) {
+				e0.z = zmin * SQUARE_SIZE;
+				e1.z = zmax * SQUARE_SIZE;
 			}
 
 			// figure out what the angle between p0-p1 and p1-p2
@@ -376,7 +385,7 @@ void QTPFS::PathSearch::SmoothPath(IPath* path) {
 			if (dot0 > std::max(dot1, dot)) { p1 = e0; }
 			if (dot1 > std::max(dot0, dot)) { p1 = e1; }
 
-			path->SetPoint(n + 1, p1);
+			path->SetPoint(ni - 1, p1);
 		}
 	}
 }
