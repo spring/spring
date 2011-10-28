@@ -23,8 +23,7 @@ namespace QTPFS {
 		PathManager();
 		~PathManager();
 
-		// TODO
-		boost::uint32_t GetPathCheckSum() const { return 0xDEADC0DE; }
+		boost::uint32_t GetPathCheckSum() const { return pfsCheckSum; }
 
 		void TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2);
 		void Update();
@@ -115,7 +114,7 @@ namespace QTPFS {
 		);
 
 
-		std::string GetCacheDirName(const std::string& mapArchiveName, const std::string& modArchiveName) const;
+		std::string GetCacheDirName(boost::uint32_t mapCheckSum, boost::uint32_t modCheckSum) const;
 		void Serialize(const std::string& cacheFileDir);
 
 		std::vector<NodeLayer> nodeLayers;
@@ -138,6 +137,8 @@ namespace QTPFS {
 		unsigned int numTerrainChanges;
 		unsigned int numPathRequests;
 		unsigned int maxNumLayerNodes;
+
+		boost::uint32_t pfsCheckSum;
 	};
 };
 
