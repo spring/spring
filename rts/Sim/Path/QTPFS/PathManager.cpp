@@ -140,9 +140,12 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect, bool hav
 			loadscreen->SetLoadMessage(loadMsg);
 		}
 
+		const char* preFmtStr = "  initializing node-layer %u (thread %u)";
+		const char* pstFmtStr = "  initialized node-layer %u (%u MB, %u leafs, ratio %f)";
+
 		#pragma omp parallel for private(loadMsg)
 		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
-			sprintf(loadMsg, "  initializing node-layer %u (thread %u)", layerNum, omp_get_thread_num());
+			sprintf(loadMsg, preFmtStr, layerNum, omp_get_thread_num());
 			loadscreen->SetLoadMessage(loadMsg);
 
 			// construct each tree from scratch IFF no cache-dir exists
@@ -150,9 +153,11 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect, bool hav
 			InitNodeLayer(layerNum, rect);
 			UpdateNodeLayer(layerNum, rect, !haveCacheDir);
 
+			const QTNode* tree = nodeTrees[layerNum];
 			const NodeLayer& layer = nodeLayers[layerNum];
+			const unsigned int mem = (tree->GetMemFootPrint() + layer.GetMemFootPrint()) / (1024 * 1024);
 
-			sprintf(loadMsg, "  initialized node-layer %u (%u leafs, ratio %f)", layerNum, layer.GetNumLeafNodes(), layer.GetNodeRatio());
+			sprintf(loadMsg, pstFmtStr, layerNum, mem, layer.GetNumLeafNodes(), layer.GetNodeRatio());
 			loadscreen->SetLoadMessage(loadMsg);
 		}
 	}
@@ -182,17 +187,21 @@ void QTPFS::PathManager::InitNodeLayersThread(
 	const unsigned int maxLayer = minLayer + layersPerThread + numExcessLayers;
 
 	char loadMsg[512] = {'\0'};
+	const char* preFmtStr = "  initializing node-layer %u (thread %u)";
+	const char* pstFmtStr = "  initialized node-layer %u (%u MB, %u leafs, ratio %f)";
 
 	for (unsigned int layerNum = minLayer; layerNum < maxLayer; layerNum++) {
-		sprintf(loadMsg, "  initializing node-layer %u (thread %u)", layerNum, threadNum);
+		sprintf(loadMsg, preFmtStr, layerNum, threadNum);
 		loadscreen->SetLoadMessage(loadMsg);
 
 		InitNodeLayer(layerNum, rect);
 		UpdateNodeLayer(layerNum, rect, !haveCacheDir);
 
+		const QTNode* tree = nodeTrees[layerNum];
 		const NodeLayer& layer = nodeLayers[layerNum];
+		const unsigned int mem = (tree->GetMemFootPrint() + layer.GetMemFootPrint()) / (1024 * 1024);
 
-		sprintf(loadMsg, "  initialized node-layer %u (%u leafs, ratio %f)", layerNum, layer.GetNumLeafNodes(), layer.GetNodeRatio());
+		sprintf(loadMsg, pstFmtStr, layerNum, mem, layer.GetNumLeafNodes(), layer.GetNodeRatio());
 		loadscreen->SetLoadMessage(loadMsg);
 	}
 }
