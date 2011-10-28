@@ -218,7 +218,7 @@ bool QTPFS::QTNode::IsLeaf() const {
 
 bool QTPFS::QTNode::Split(NodeLayer& nl) {
 	if (xsize() <= MIN_SIZE_X) { return false; }
-	if (xsize() <= MIN_SIZE_Z) { return false; }
+	if (zsize() <= MIN_SIZE_Z) { return false; }
 	if (depth() >= MAX_DEPTH) { return false; }
 
 	neighbors.clear();
