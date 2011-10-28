@@ -539,14 +539,10 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 		// regenerate our neighbor cache
 		if (GetMaxNumNeighbors() > 0) {
+			unsigned int ngbRel = 0;
+
 			neighbors.clear();
 			neighbors.reserve(GetMaxNumNeighbors() + 4);
-
-			bool ngbsL = false;
-			bool ngbsR = false;
-			bool ngbsT = false;
-			bool ngbsB = false;
-
 			INode* ngb = NULL;
 
 			if (xmin() > 0) {
@@ -559,7 +555,7 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 					neighbors.push_back(ngb);
 				}
 
-				ngbsL = true;
+				ngbRel |= REL_NGB_EDGE_L;
 			}
 			if (xmax() < static_cast<unsigned int>(gs->mapx)) {
 				const unsigned int hmx = xmax() + 0;
@@ -571,7 +567,7 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 					neighbors.push_back(ngb);
 				}
 
-				ngbsR = true;
+				ngbRel |= REL_NGB_EDGE_R;
 			}
 
 			if (zmin() > 0) {
@@ -584,7 +580,7 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 					neighbors.push_back(ngb);
 				}
 
-				ngbsT = true;
+				ngbRel |= REL_NGB_EDGE_T;
 			}
 			if (zmax() < static_cast<unsigned int>(gs->mapy)) {
 				const unsigned int hmz = zmax() + 0;
@@ -596,13 +592,52 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 					neighbors.push_back(ngb);
 				}
 
-				ngbsB = true;
+				ngbRel |= REL_NGB_EDGE_B;
 			}
 
-			if (ngbsL && ngbsT) { neighbors.push_back(nodes[(zmin() - 1) * gs->mapx + (xmin() - 1)]); } // VERT_TL neighbor
-			if (ngbsL && ngbsB) { neighbors.push_back(nodes[(zmax() + 0) * gs->mapx + (xmin() - 1)]); } // VERT_BL neighbor
-			if (ngbsR && ngbsT) { neighbors.push_back(nodes[(zmin() - 1) * gs->mapx + (xmax() + 0)]); } // VERT_TR neighbor
-			if (ngbsR && ngbsB) { neighbors.push_back(nodes[(zmax() + 0) * gs->mapx + (xmax() + 0)]); } // VERT_BR neighbor
+			// top- and bottom-left corners
+			if ((ngbRel & REL_NGB_EDGE_L) != 0) {
+				if ((ngbRel & REL_NGB_EDGE_T) != 0) {
+					const INode* ngbL = nodes[(zmin() + 0) * gs->mapx + (xmin() - 1)];
+					const INode* ngbT = nodes[(zmin() - 1) * gs->mapx + (xmin() + 0)];
+						  INode* ngbC = nodes[(zmin() - 1) * gs->mapx + (xmin() - 1)];
+
+					// VERT_TL ngb must be distinct from EDGE_L and EDGE_T ngbs
+					if (ngbC != ngbL && ngbC != ngbT)
+						neighbors.push_back(ngbC);
+				}
+				if ((ngbRel & REL_NGB_EDGE_B) != 0) {
+					const INode* ngbL = nodes[(zmax() - 1) * gs->mapx + (xmin() - 1)];
+					const INode* ngbB = nodes[(zmax() + 0) * gs->mapx + (xmin() + 0)];
+						  INode* ngbC = nodes[(zmax() + 0) * gs->mapx + (xmin() - 1)];
+
+					// VERT_BL ngb must be distinct from EDGE_L and EDGE_B ngbs
+					if (ngbC != ngbL && ngbC != ngbB)
+						neighbors.push_back(ngbC);
+				}
+			}
+
+			// top- and bottom-right corners
+			if ((ngbRel & REL_NGB_EDGE_R) != 0) {
+				if ((ngbRel & REL_NGB_EDGE_T) != 0) {
+					const INode* ngbR = nodes[(zmin() + 0) * gs->mapx + (xmax() + 0)];
+					const INode* ngbT = nodes[(zmin() - 1) * gs->mapx + (xmax() - 1)];
+						  INode* ngbC = nodes[(zmin() - 1) * gs->mapx + (xmax() + 0)];
+
+					// VERT_TR ngb must be distinct from EDGE_R and EDGE_T ngbs
+					if (ngbC != ngbR && ngbC != ngbT)
+						neighbors.push_back(ngbC);
+				}
+				if ((ngbRel & REL_NGB_EDGE_B) != 0) {
+					const INode* ngbR = nodes[(zmax() - 1) * gs->mapx + (xmax() + 0)];
+					const INode* ngbB = nodes[(zmax() + 0) * gs->mapx + (xmax() - 1)];
+						  INode* ngbC = nodes[(zmax() + 0) * gs->mapx + (xmax() + 0)];
+
+					// VERT_BR ngb must be distinct from EDGE_R and EDGE_B ngbs
+					if (ngbC != ngbR && ngbC != ngbB)
+						neighbors.push_back(ngbC);
+				}
+			}
 		}
 
 		return true;
