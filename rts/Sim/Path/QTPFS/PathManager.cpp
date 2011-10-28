@@ -68,7 +68,23 @@ QTPFS::PathManager::PathManager() {
 	numPrevExecutedSearches.resize(teamHandler->ActiveTeams() + 1, 0);
 
 	{
-		const std::string& cacheDirName = GetCacheDirName(gameSetup->mapName, gameSetup->modName);
+		static const boost::uint32_t mapCheckSum = archiveScanner->GetArchiveCompleteChecksum(gameSetup->mapName);
+		static const boost::uint32_t modCheckSum = archiveScanner->GetArchiveCompleteChecksum(gameSetup->modName);
+
+		// NOTE:
+		//     should be sufficient in theory, because if either
+		//     the map or the mod changes then the checksum does
+		//     (should!) as well and we get a cache-miss
+		//     this value can still be combined with the tree-sums
+		//     to make it depend on the tesselation code specifics,
+		//     which are also subject to change (TODO)
+		pfsCheckSum = mapCheckSum ^ modCheckSum;
+
+		#ifdef SYNCDEBUG
+		{ SyncedUint tmp(pfsCheckSum); }
+		#endif
+
+		const std::string& cacheDirName = GetCacheDirName(mapCheckSum, modCheckSum);
 		const bool haveCacheDir = FileSystem::DirExists(cacheDirName);
 
 		InitNodeLayersThreaded(SRectangle(0, 0,  gs->mapx, gs->mapy), haveCacheDir);
@@ -81,7 +97,11 @@ QTPFS::PathManager::PathManager() {
 		PathSearch::InitGlobalQueue(maxNumLayerNodes);
 	}
 
-	loadscreen->SetLoadMessage("[PathManager] memory-footprint: " + IntToString(GetMemFootPrint()) + "MB");
+	{
+		const std::string sumStr = "pfs-checksum: " + IntToString(pfsCheckSum, "%08x") + ", ";
+		const std::string memStr = "mem-footprint: " + IntToString(GetMemFootPrint()) + "MB";
+		loadscreen->SetLoadMessage("[PathManager] " + sumStr + memStr);
+	}
 }
 
 QTPFS::PathManager::~PathManager() {
@@ -277,10 +297,7 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle
 
 
 
-std::string QTPFS::PathManager::GetCacheDirName(const std::string& mapArchiveName, const std::string& modArchiveName) const {
-	static const unsigned int mapCheckSum = archiveScanner->GetArchiveCompleteChecksum(mapArchiveName);
-	static const unsigned int modCheckSum = archiveScanner->GetArchiveCompleteChecksum(modArchiveName);
-
+std::string QTPFS::PathManager::GetCacheDirName(boost::uint32_t mapCheckSum, boost::uint32_t modCheckSum) const {
 	static const std::string dir =
 		"cache/PathNodeTrees/" +
 		IntToString(mapCheckSum, "%08x") + "-" +
@@ -291,6 +308,7 @@ std::string QTPFS::PathManager::GetCacheDirName(const std::string& mapArchiveNam
 
 	sprintf(loadMsg, fmtString, __FUNCTION__, dir.c_str(), mapCheckSum, modCheckSum);
 	loadscreen->SetLoadMessage(loadMsg);
+
 	return dir;
 }
 
