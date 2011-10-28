@@ -128,16 +128,17 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect, bool hav
 
 	#ifdef QTPFS_OPENMP_ENABLED
 	{
-		// never use more threads than the number of layers
-		// TODO: OpenMP needs project-global linking changes
-		//
-		const unsigned int maxThreads = omp_get_max_threads();
-		const unsigned int minThreads = std::min(size_t(GetNumThreads()), nodeLayers.size());
-
-		omp_set_num_threads(std::min(maxThreads, minThreads));
-
-		sprintf(loadMsg, fmtString, __FUNCTION__, omp_get_num_threads(), nodeLayers.size(), (haveCacheDir? "true": "false"));
-		loadscreen->SetLoadMessage(loadMsg);
+		#pragma omp parallel
+		if (omp_get_thread_num() == 0) {
+			// "trust" OpenMP implementation to set a pool-size that
+			// matches the CPU threading capacity (eg. the number of
+			// active physical cores * number of threads per core);
+			// too many and esp. too few threads would be wasteful
+			//
+			// TODO: OpenMP needs project-global linking changes
+			sprintf(loadMsg, fmtString, __FUNCTION__, omp_get_num_threads(), nodeLayers.size(), (haveCacheDir? "true": "false"));
+			loadscreen->SetLoadMessage(loadMsg);
+		}
 
 		#pragma omp parallel for private(loadMsg)
 		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
@@ -151,7 +152,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect, bool hav
 
 			const NodeLayer& layer = nodeLayers[layerNum];
 
-			sprintf(loadMsg, "  initialized node-layer %u (%u leafs, ratio %f)", i, layer.GetNumLeafNodes(), layer.GetNodeRatio());
+			sprintf(loadMsg, "  initialized node-layer %u (%u leafs, ratio %f)", layerNum, layer.GetNumLeafNodes(), layer.GetNodeRatio());
 			loadscreen->SetLoadMessage(loadMsg);
 		}
 	}
