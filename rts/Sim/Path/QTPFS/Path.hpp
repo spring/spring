@@ -9,20 +9,22 @@
 
 namespace QTPFS {
 	struct IPath {
-		IPath(): id(0), ownerID(-1U), pointIdx(0), radius(0.0f), synced(true) {}
+		IPath(): pathID(0), ownerID(-1U), pointIdx(0), hash(-1U), radius(0.0f), synced(true) {}
 		virtual ~IPath() {}
 
-		unsigned int GetID() const { return id; }
-		void SetID(unsigned int id) { this->id = id; }
+		unsigned int GetID() const { return pathID; }
+		void SetID(unsigned int pathID) { this->pathID = pathID; }
 
 		void SetOwnerID(unsigned int ownerID) { this->ownerID = ownerID; }
 		void SetPointIdx(unsigned int pointIdx) { this->pointIdx = pointIdx; }
+		void SetHash(boost::uint64_t hash) { this->hash = hash; }
 		void SetRadius(float radius) { this->radius = radius; }
 		void SetSynced(bool synced) { this->synced = synced; }
 
 		unsigned int GetOwnerID() const { return ownerID; }
 		unsigned int GetPointIdx() const { return pointIdx; }
 		float GetRadius() const { return radius; }
+		boost::uint64_t GetHash() const { return hash; }
 		bool GetSynced() const { return synced; }
 
 		virtual void SetPoint(unsigned int, const float3&) {}
@@ -38,10 +40,11 @@ namespace QTPFS {
 		virtual void CopyPoints(const IPath&) {}
 
 	protected:
-		unsigned int id;
+		unsigned int pathID;
 		unsigned int ownerID;
 		unsigned int pointIdx;
 
+		boost::uint64_t hash;
 		float radius;
 		bool synced;
 	};
@@ -51,11 +54,14 @@ namespace QTPFS {
 		Path(): IPath() {}
 		Path(const Path& p) { *this = p; }
 		Path& operator = (const Path& p) {
-			id = p.GetID();
+			pathID = p.GetID();
 			ownerID = p.GetOwnerID();
 			pointIdx = p.GetPointIdx();
+
+			hash   = p.GetHash();
 			synced = p.GetSynced();
 			radius = p.GetRadius();
+
 			points = p.GetPoints();
 			return *this;
 		}

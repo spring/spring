@@ -65,6 +65,14 @@ namespace QTPFS {
 			const SRectangle& rect,
 			bool wantTesselation
 		);
+		typedef std::map<unsigned int, unsigned int> PathTypeMap;
+		typedef std::map<unsigned int, unsigned int>::iterator PathTypeMapIt;
+		typedef std::map<unsigned int, PathSearchTrace::Execution*> PathTraceMap;
+		typedef std::map<unsigned int, PathSearchTrace::Execution*>::iterator PathTraceMapIt;
+		typedef std::map<boost::uint64_t, IPath*> SharedPathMap;
+		typedef std::map<boost::uint64_t, IPath*>::iterator SharedPathMapIt;
+		typedef std::list<IPathSearch*> PathSearchList;
+		typedef std::list<IPathSearch*>::iterator PathSearchListIt;
 
 		void SpawnBoostThreads(MemberFunc f, const SRectangle& r, bool b);
 
@@ -85,6 +93,27 @@ namespace QTPFS {
 		void InitNodeLayer(unsigned int layerNum, const SRectangle& rect);
 		void UpdateNodeLayer(unsigned int layerNum, const SRectangle& r, bool wantTesselation);
 
+		void ExecuteQueuedSearches(unsigned int pathType);
+		void QueueDeadPathSearches(unsigned int pathType);
+
+		unsigned int QueueSearch(
+			const IPath* oldPath,
+			const CSolidObject* object,
+			const MoveData* moveData,
+			const float3& sourcePoint,
+			const float3& targetPoint,
+			const float radius,
+			const bool synced
+		);
+
+		void ExecuteSearch(
+			PathSearchList& searches,
+			PathSearchListIt& searchesIt,
+			NodeLayer& nodeLayer,
+			PathCache& pathCache,
+			unsigned int pathType
+		);
+
 
 		std::string GetCacheDirName(const std::string& mapArchiveName, const std::string& modArchiveName) const;
 		void Serialize(const std::string& cacheFileDir);
@@ -96,13 +125,12 @@ namespace QTPFS {
 		std::map<unsigned int, unsigned int> pathTypes;
 		std::map<unsigned int, PathSearchTrace::Execution*> pathTraces;
 
+		// maps "hashes" of executed searches to the found paths
+		std::map<boost::uint64_t, IPath*> sharedPaths;
+
 		std::vector<unsigned int> numCurrExecutedSearches;
 		std::vector<unsigned int> numPrevExecutedSearches;
 
-		typedef std::map<unsigned int, unsigned int> PathTypeMap;
-		typedef std::map<unsigned int, unsigned int>::iterator PathTypeMapIt;
-		typedef std::map<unsigned int, PathSearchTrace::Execution*> PathTraceMap;
-		typedef std::map<unsigned int, PathSearchTrace::Execution*>::iterator PathTraceMapIt;
 
 		static NodeLayer* serializingNodeLayer;
 

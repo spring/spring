@@ -206,7 +206,7 @@ void QTPFS::PathSearch::IterateSearch(
 	}
 }
 
-void QTPFS::PathSearch::Finalize(IPath* path, bool replace) {
+void QTPFS::PathSearch::Finalize(IPath* path) {
 	TracePath(path);
 
 	path->SetSourcePoint(srcPoint);
@@ -217,7 +217,7 @@ void QTPFS::PathSearch::Finalize(IPath* path, bool replace) {
 	#endif
 
 	// path remains in live-cache until DeletePath is called
-	pathCache->AddLivePath(path, replace);
+	pathCache->AddLivePath(path);
 }
 
 void QTPFS::PathSearch::TracePath(IPath* path) {
@@ -409,7 +409,7 @@ void QTPFS::PathSearch::SharedFinalize(const IPath* srcPath, IPath* dstPath) {
 	dstPath->CopyPoints(*srcPath);
 	dstPath->SetSourcePoint(srcPoint);
 	dstPath->SetTargetPoint(tgtPoint);
-	pathCache->AddLivePath(dstPath, false);
+	pathCache->AddLivePath(dstPath);
 }
 
 const boost::uint64_t QTPFS::PathSearch::GetHash(unsigned int N, unsigned int k) const {

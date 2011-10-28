@@ -9,7 +9,7 @@
 QTPFS::IPath* QTPFS::PathCache::GetLivePath(unsigned int pathID) {
 	static IPath livePath; // dummy
 
-	PathMap::iterator it = livePaths.find(pathID);
+	PathMapIt it = livePaths.find(pathID);
 
 	if (it != livePaths.end()) {
 		numCacheHits += 1;
@@ -23,7 +23,7 @@ QTPFS::IPath* QTPFS::PathCache::GetLivePath(unsigned int pathID) {
 QTPFS::IPath* QTPFS::PathCache::GetTempPath(unsigned int pathID) {
 	static IPath tempPath; // dummy
 
-	PathMap::iterator it = tempPaths.find(pathID);
+	PathMapIt it = tempPaths.find(pathID);
 
 	if (it != tempPaths.end()) {
 		return (it->second);
@@ -43,40 +43,42 @@ void QTPFS::PathCache::AddTempPath(IPath* path) {
 	tempPaths.insert(std::make_pair<unsigned int, IPath*>(path->GetID(), path));
 }
 
-void QTPFS::PathCache::AddLivePath(IPath* path, bool replace) {
+void QTPFS::PathCache::AddLivePath(IPath* path) {
 	assert(path->GetID() != 0);
 	assert(path->NumPoints() >= 2);
 
-	if (!replace) {
-		assert(tempPaths.find(path->GetID()) != tempPaths.end());
-		assert(livePaths.find(path->GetID()) == livePaths.end());
+	assert(tempPaths.find(path->GetID()) != tempPaths.end());
+	assert(livePaths.find(path->GetID()) == livePaths.end());
+	assert(deadPaths.find(path->GetID()) == deadPaths.end());
 
-		// promote a path from temporary- to live-status (no deletion)
-		tempPaths.erase(path->GetID());
-		livePaths.insert(std::make_pair<unsigned int, IPath*>(path->GetID(), path));
-	} else {
-		assert(tempPaths.find(path->GetID()) == tempPaths.end());
-		assert(livePaths.find(path->GetID()) != livePaths.end());
-
-		ReplacePath(path);
-	}
+	// promote a path from temporary- to live-status (no deletion)
+	tempPaths.erase(path->GetID());
+	livePaths.insert(std::make_pair<unsigned int, IPath*>(path->GetID(), path));
 }
 
 void QTPFS::PathCache::DelPath(unsigned int pathID) {
-	// if pathID is in tempPaths, livePaths and deadPaths
-	// are guaranteed not to contain it (and vice versa)
-	PathMap::iterator it;
+	// if pathID is in xPaths, then yPaths and zPaths are guaranteed not
+	// to contain it (*only* exception is that deadPaths briefly overlaps
+	// tempPaths between QueueDeadPathSearches and KillDeadPaths)
+	PathMapIt it;
 
 	if ((it = tempPaths.find(pathID)) != tempPaths.end()) {
-		delete it->second;
+		assert(livePaths.find(pathID) == livePaths.end());
+		assert(deadPaths.find(pathID) == deadPaths.end());
+		delete (it->second);
 		tempPaths.erase(it);
+		return;
 	}
 	if ((it = livePaths.find(pathID)) != livePaths.end()) {
-		delete it->second;
+		assert(deadPaths.find(pathID) == deadPaths.end());
+		delete (it->second);
 		livePaths.erase(it);
+		return;
 	}
-
-	deadPaths.erase(pathID);
+	if ((it = deadPaths.find(pathID)) != deadPaths.end()) {
+		delete (it->second);
+		deadPaths.erase(it);
+	}
 }
 
 
@@ -89,6 +91,8 @@ bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
 
 	const unsigned int numDeadPaths = deadPaths.size();
 
+	std::list<PathMapIt> livePathIts;
+
 	// NOTE:
 	//     terrain might have been retesselated since
 	//     path was originally cached (!) --> some or
@@ -97,7 +101,7 @@ bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
 	//     the area of a terrain deformation
 	//
 	for (PathMap::const_iterator mit = livePaths.begin(); mit != livePaths.end(); ++mit) {
-		const IPath* path = mit->second;
+		IPath* path = mit->second;
 
 		// figure out if <path> has at least one edge crossing <r>
 		for (unsigned int i = 0; i < (path->NumPoints() - 1); i++) {
@@ -118,53 +122,29 @@ bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
 
 			// remember the ID of each path affected by the deformation
 			if ((int(pointInRect0) + int(pointInRect1) >= 1) || edgeCrossesRect) {
-				deadPaths.insert(path->GetID());
+				assert(tempPaths.find(path->GetID()) == tempPaths.end());
+				deadPaths.insert(std::make_pair<unsigned int, IPath*>(path->GetID(), path));
+				livePathIts.push_back(livePaths.find(path->GetID()));
 				break;
 			}
 		}
 	}
 
+	for (std::list<PathMapIt>::const_iterator it = livePathIts.begin(); it != livePathIts.end(); ++it) {
+		livePaths.erase(*it);
+	}
+
 	return (deadPaths.size() > numDeadPaths);
 }
 
-void QTPFS::PathCache::KillDeadPaths(std::list<unsigned int>& replacedPathIDs) {
-	// the (IDs of) paths that were succesfully
-	// re-requested must no longer count as dead
-	for (std::list<unsigned int>::const_iterator it = replacedPathIDs.begin(); it != replacedPathIDs.end(); ++it) {
-		assert(tempPaths.find(*it) == tempPaths.end());
-		deadPaths.erase(*it);
-	}
-
-	// get rid of paths that were marked as dead
-	// (and were *not* replaced) up to this point
-	for (PathIDSet::const_iterator it = deadPaths.begin(); it != deadPaths.end(); ++it) {
-		assert(tempPaths.find(*it) == tempPaths.end());
-		assert(livePaths.find(*it) != livePaths.end());
-
-		PathMap::iterator pathIt = livePaths.find(*it);
-		IPath* path = pathIt->second;
-
-		delete path;
-		livePaths.erase(pathIt);
+void QTPFS::PathCache::KillDeadPaths() {
+	for (PathMap::const_iterator deadPathsIt = deadPaths.begin(); deadPathsIt != deadPaths.end(); ++deadPathsIt) {
+		// NOTE: "!=" because re-requested dead paths go onto the temp-pile
+		assert(tempPaths.find(deadPathsIt->first) != tempPaths.end());
+		assert(livePaths.find(deadPathsIt->first) == livePaths.end());
+		delete (deadPathsIt->second);
 	}
 
 	deadPaths.clear();
-	replacedPathIDs.clear();
-}
-
-
-
-void QTPFS::PathCache::ReplacePath(IPath* newPath) {
-	PathMap::iterator oldPathIt = livePaths.find(newPath->GetID());
-	IPath* oldPath = oldPathIt->second;
-
-	assert(oldPathIt != livePaths.end());
-	assert(oldPath->GetID() == newPath->GetID());
-	assert(oldPath != newPath);
-
-	delete oldPath;
-
-	livePaths.erase(oldPathIt);
-	livePaths.insert(std::make_pair<unsigned int, IPath*>(newPath->GetID(), newPath));
 }
 
