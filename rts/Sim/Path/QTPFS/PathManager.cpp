@@ -56,6 +56,7 @@ QTPFS::PathManager::PathManager() {
 	searchStateOffset = NODE_STATE_OFFSET;
 	numTerrainChanges = 0;
 	numPathRequests   = 0;
+	maxNumLayerNodes  = 0;
 
 	nodeTrees.resize(moveinfo->moveData.size(), NULL);
 	nodeLayers.resize(moveinfo->moveData.size());
@@ -66,11 +67,19 @@ QTPFS::PathManager::PathManager() {
 	numCurrExecutedSearches.resize(teamHandler->ActiveTeams() + 1, 0);
 	numPrevExecutedSearches.resize(teamHandler->ActiveTeams() + 1, 0);
 
-	const std::string& cacheDirName = GetCacheDirName(gameSetup->mapName, gameSetup->modName);
-	const bool haveCacheDir = FileSystem::DirExists(cacheDirName);
+	{
+		const std::string& cacheDirName = GetCacheDirName(gameSetup->mapName, gameSetup->modName);
+		const bool haveCacheDir = FileSystem::DirExists(cacheDirName);
 
-	InitNodeLayersThreaded(SRectangle(0, 0,  gs->mapx, gs->mapy), haveCacheDir);
-	Serialize(cacheDirName);
+		InitNodeLayersThreaded(SRectangle(0, 0,  gs->mapx, gs->mapy), haveCacheDir);
+		Serialize(cacheDirName);
+
+		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
+			maxNumLayerNodes = std::max(nodeLayers[layerNum].GetNumLeafNodes(), maxNumLayerNodes);
+		}
+
+		PathSearch::InitGlobalQueue(maxNumLayerNodes);
+	}
 
 	loadscreen->SetLoadMessage("[PathManager] memory-footprint: " + IntToString(GetMemFootPrint()) + "MB");
 }
@@ -91,6 +100,8 @@ QTPFS::PathManager::~PathManager() {
 
 	numCurrExecutedSearches.clear();
 	numPrevExecutedSearches.clear();
+
+	PathSearch::FreeGlobalQueue();
 }
 
 boost::uint64_t QTPFS::PathManager::GetMemFootPrint() const {

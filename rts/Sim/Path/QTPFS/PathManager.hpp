@@ -106,10 +106,10 @@ namespace QTPFS {
 
 		static NodeLayer* serializingNodeLayer;
 
-		unsigned int searchUpdateIndex;
 		unsigned int searchStateOffset;
 		unsigned int numTerrainChanges;
 		unsigned int numPathRequests;
+		unsigned int maxNumLayerNodes;
 	};
 };
 
