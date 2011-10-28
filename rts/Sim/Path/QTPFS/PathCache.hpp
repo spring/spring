@@ -5,7 +5,6 @@
 
 #include <list>
 #include <map>
-#include <set>
 #include <vector>
 
 #include "PathDefines.hpp"
@@ -21,28 +20,27 @@ namespace QTPFS {
 		}
 
 		typedef std::map<unsigned int, IPath*> PathMap;
-		typedef std::set<unsigned int> PathIDSet;
+		typedef std::map<unsigned int, IPath*>::iterator PathMapIt;
 
 		bool MarkDeadPaths(const SRectangle& r);
-		void KillDeadPaths(std::list<unsigned int>& replacedPathIDs);
-		void ReplacePath(IPath* newPath);
+		void KillDeadPaths();
 
 		IPath* GetLivePath(unsigned int pathID);
 		IPath* GetTempPath(unsigned int pathID);
 
 		void AddTempPath(IPath* path);
-		void AddLivePath(IPath* path, bool replace);
+		void AddLivePath(IPath* path);
 
 		void DelPath(unsigned int pathID);
 
 		const PathMap& GetTempPaths() const { return tempPaths; }
 		const PathMap& GetLivePaths() const { return livePaths; }
-		const PathIDSet& GetDeadPaths() const { return deadPaths; }
+		const PathMap& GetDeadPaths() const { return deadPaths; }
 
 	private:
 		PathMap tempPaths;
 		PathMap livePaths;
-		PathIDSet deadPaths;
+		PathMap deadPaths;
 
 		unsigned int numCacheHits;
 		unsigned int numCacheMisses;
