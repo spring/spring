@@ -14,6 +14,14 @@
 #include "Sim/Misc/GlobalSynced.h"
 #endif
 
+QTPFS::reservable_priority_queue<
+	QTPFS::INode*,
+	QTPFS::clearable_vector<QTPFS::INode*>,
+	QTPFS::INode
+> QTPFS::PathSearch::openNodes;
+
+
+
 void QTPFS::PathSearch::Initialize(
 	NodeLayer* layer,
 	PathCache* cache,
@@ -61,7 +69,7 @@ bool QTPFS::PathSearch::Execute(
 	}
 
 	if (!haveFullPath) {
-		openNodes.reserve(nodeLayer->GetNumLeafNodes());
+		openNodes.reset();
 		openNodes.push(srcNode);
 		srcNode->SetPrevNode(NULL);
 		srcNode->SetPathCost(NODE_PATH_COST_G, 0.0f);
