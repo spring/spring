@@ -465,10 +465,8 @@ void QTPFS::PathManager::ExecuteSearch(
 
 	#ifdef QTPFS_TRACE_PATH_SEARCHES
 	PathSearchTrace::Execution* searchExec = new PathSearchTrace::Execution(gs->frameNum);
-	pathTraces[path->GetID()] = searchExec;
 	#else
 	PathSearchTrace::Execution* searchExec = NULL;
-	pathTraces[path->GetID()] = searchExec;
 	#endif
 
 	// removes path from temp-paths, adds it to live-paths
@@ -478,6 +476,8 @@ void QTPFS::PathManager::ExecuteSearch(
 		#ifdef QTPFS_SEARCH_SHARED_PATHS
 		sharedPaths[path->GetHash()] = path;
 		#endif
+
+		pathTraces[path->GetID()] = searchExec;
 	} else {
 		DeletePath(path->GetID());
 	}
@@ -537,8 +537,10 @@ unsigned int QTPFS::PathManager::QueueSearch(
 
 		// start re-request from the current point
 		// along the path, not the original source
+		// FIXME: this point can now have +inf cost
 		newPath->AllocPoints(2);
-		newPath->SetSourcePoint(oldPath->GetPoint(oldPath->GetPointIdx() - 1));
+		// newPath->SetSourcePoint(oldPath->GetPoint(oldPath->GetPointIdx() - 1));
+		newPath->SetSourcePoint(oldPath->GetSourcePoint());
 		newPath->SetTargetPoint(oldPath->GetTargetPoint());
 		newSearch->SetID(oldPath->GetID());
 		newSearch->SetTeam(teamHandler->ActiveTeams());
