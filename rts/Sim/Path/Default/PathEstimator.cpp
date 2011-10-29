@@ -277,7 +277,7 @@ void CPathEstimator::FindOffset(const MoveData& moveData, int blockX, int blockZ
 	const CMoveMath& moveMath = *(moveData.moveMath);
 
 	float speedMod = moveMath.GetPosSpeedMod(moveData, lowerX, lowerZ);
-	bool curblock = (speedMod == 0.0f) || moveMath.IsBlockedStructureNoSpeedModCheck(moveData, lowerX, lowerZ);
+	bool curblock = (speedMod == 0.0f) || moveMath.IsBlockedStructure(moveData, lowerX, lowerZ);
 	// search for an accessible position
 	unsigned int z = 0;
 	while (true) {
@@ -300,13 +300,13 @@ void CPathEstimator::FindOffset(const MoveData& moveData, int blockX, int blockZ
 				break;
 			// if last position was not blocked, then we do not need to check the entire square
 			speedMod = moveMath.GetPosSpeedMod(moveData, lowerX + x, lowerZ + z);
-			curblock = (speedMod == 0.0f) || (curblock ? moveMath.IsBlockedStructureNoSpeedModCheck(moveData, lowerX + x, lowerZ + z) :
+			curblock = (speedMod == 0.0f) || (curblock ? moveMath.IsBlockedStructure(moveData, lowerX + x, lowerZ + z) :
 						moveMath.IsBlockedStructureXmax(moveData, lowerX + x, lowerZ + z));
 		}
 		if (++z >= BLOCK_SIZE)
 			break;
 		speedMod = moveMath.GetPosSpeedMod(moveData, lowerX, lowerZ + z);
-		curblock = (speedMod == 0.0f) || (zcurblock ? moveMath.IsBlockedStructureNoSpeedModCheck(moveData, lowerX, lowerZ + z) :
+		curblock = (speedMod == 0.0f) || (zcurblock ? moveMath.IsBlockedStructure(moveData, lowerX, lowerZ + z) :
 						moveMath.IsBlockedStructureZmax(moveData, lowerX, lowerZ + z));
 	}
 

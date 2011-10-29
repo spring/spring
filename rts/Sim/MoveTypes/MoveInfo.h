@@ -42,6 +42,11 @@ struct MoveData {
 
 		moveMath        = unitDefMD? unitDefMD->moveMath:        NULL;
 		tempOwner       = NULL;
+
+		xSizeOdd = (xsize & 1) != 0;
+		zSizeOdd = (zsize & 1) != 0;
+		xh = (xsize - 1) >> 1;
+		zh = (zsize - 1) >> 1;
 	}
 
 	enum MoveType {
@@ -99,6 +104,12 @@ struct MoveData {
 
 	CMoveMath* moveMath;
 	CSolidObject* tempOwner;
+
+	// precalculated data for pathestimator
+	bool xSizeOdd;
+	bool zSizeOdd;
+	int xh;
+	int zh;
 };
 
 
