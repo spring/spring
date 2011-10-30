@@ -110,6 +110,7 @@ CONFIG(int, WindowPosY).defaultValue(32);
 CONFIG(int, WindowState).defaultValue(0);
 CONFIG(bool, WindowBorderless).defaultValue(false);
 CONFIG(int, HardwareThreadCount).defaultValue(0);
+CONFIG(bool, MultiThreadShareLists).defaultValue(true);
 CONFIG(int, MultiThreadSim).defaultValue(1);
 CONFIG(std::string, name).defaultValue("UnnamedPlayer");
 
@@ -879,6 +880,11 @@ void SpringApp::ParseCmdLine()
 	globalRendering->winState = configHandler->GetInt("WindowState");
 
 #ifdef USE_GML
+	gmlShareLists = configHandler->GetBool("MultiThreadShareLists");
+	if (!gmlShareLists) {
+		gmlMaxServerThreadNum = GML_LOAD_THREAD_NUM;
+		gmlNoGLThreadNum = GML_SIM_THREAD_NUM;
+	}
 	gmlThreadCountOverride = configHandler->GetInt("HardwareThreadCount");
 	gmlThreadCount=GML_CPU_COUNT;
 #if GML_ENABLE_SIM
@@ -992,7 +998,7 @@ volatile int SpringApp::gmlKeepRunning = 0;
 int SpringApp::Sim()
 {
 	try {
-		if(GML_SHARE_LISTS)
+		if(gmlShareLists)
 			ogc->WorkerThreadPost();
 
 		Watchdog::ClearTimer(WDT_SIM, true);
@@ -1020,7 +1026,7 @@ int SpringApp::Sim()
 			boost::thread::yield();
 		}
 
-		if(GML_SHARE_LISTS)
+		if(gmlShareLists)
 			ogc->WorkerThreadFree();
 	} CATCH_SPRING_ERRORS
 
@@ -1143,7 +1149,7 @@ int SpringApp::Run(int argc, char *argv[])
 	gmlKeepRunning = 1;
 	gmlStartSim = 0;
 
-	if (GML_SHARE_LISTS)
+	if (gmlShareLists)
 		ogc = new COffscreenGLContext();
 	gmlProcessor->AuxWork(&SpringApp::Simcb, this); // start sim thread
 #	endif
@@ -1189,7 +1195,7 @@ void SpringApp::Shutdown()
 		gmlKeepRunning=0; // wait for sim to finish
 		while(!gmlProcessor->PumpAux())
 			boost::thread::yield();
-		if(GML_SHARE_LISTS)
+		if(gmlShareLists)
 			DeleteAndNull(ogc);
 #endif
 		DeleteAndNull(gmlProcessor);

@@ -17,6 +17,11 @@
 #define GML_MUTEX_PROFILER 0 // enables mutex profiler
 
 #ifdef USE_GML
+
+extern bool gmlShareLists; // use glShareLists to allow opengl calls in sim thread, unfortunately this may reduce the FPS a bit
+extern int gmlMaxServerThreadNum;
+extern int gmlNoGLThreadNum;
+
 #define GML_MUTEX_PROFILE 0 // detailed profiling of specific mutex
 extern const char *gmlProfMutex;
 #define GML_PROC_PROFILER 0 // enables gmlprocessor profiler
