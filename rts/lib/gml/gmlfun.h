@@ -336,7 +336,6 @@ public:
 		}
 	}
 	static unsigned getLockTime() {
-		extern volatile int gmlMultiThreadSim, gmlStartSim;
 		unsigned ret = 0;
 		if(gmlMultiThreadSim && gmlStartSim)
 			ret = gmlLockTime;
