@@ -414,6 +414,8 @@ void QTPFS::PathSearch::SharedFinalize(const IPath* srcPath, IPath* dstPath) {
 	dstPath->CopyPoints(*srcPath);
 	dstPath->SetSourcePoint(srcPoint);
 	dstPath->SetTargetPoint(tgtPoint);
+	dstPath->SetBoundingBox();
+
 	pathCache->AddLivePath(dstPath);
 }
 
