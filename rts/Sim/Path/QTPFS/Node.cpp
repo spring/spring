@@ -215,12 +215,19 @@ bool QTPFS::QTNode::IsLeaf() const {
 	return (children[0] == NULL);
 }
 
-
-
-bool QTPFS::QTNode::Split(NodeLayer& nl) {
+bool QTPFS::QTNode::CanSplit() const {
+	// NOTE: caller must additionally check IsLeaf()
 	if (xsize() <= MIN_SIZE_X) { return false; }
 	if (zsize() <= MIN_SIZE_Z) { return false; }
 	if (depth() >= MAX_DEPTH) { return false; }
+	return true;
+}
+
+
+
+bool QTPFS::QTNode::Split(NodeLayer& nl) {
+	if (!CanSplit())
+		return false;
 
 	neighbors.clear();
 
@@ -330,6 +337,7 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool merged, bool split) {
 	unsigned int numNewBinSquares = 0; // nr. of squares in <r> that changed bin after deformation
 	unsigned int numDifBinSquares = 0; // nr. of different bin-types across all squares within <r>
+	unsigned int numClosedSquares = 0;
 
 	// if true, we are at the bottom of the recursion
 	bool registerNode = true;
@@ -357,7 +365,7 @@ void QTPFS::QTNode::Tesselate(NodeLayer& nl, const SRectangle& r, bool merged, b
 	// technically required whenever numRefBinSquares is zero, ie.
 	// when ALL squares in <r> changed bins in unison
 	//
-	UpdateMoveCost(nl, r, numNewBinSquares, numDifBinSquares);
+	UpdateMoveCost(nl, r, numNewBinSquares, numDifBinSquares, numClosedSquares);
 
 	if (numDifBinSquares > 0) {
 		if (Split(nl)) {
@@ -382,7 +390,8 @@ void QTPFS::QTNode::UpdateMoveCost(
 	const NodeLayer& nl,
 	const SRectangle& r,
 	unsigned int& numNewBinSquares,
-	unsigned int& numDifBinSquares
+	unsigned int& numDifBinSquares,
+	unsigned int& numClosedSquares
 ) {
 	const std::vector<int>& oldSpeedBins = nl.GetOldSpeedBins();
 	const std::vector<int>& curSpeedBins = nl.GetCurSpeedBins();
@@ -422,6 +431,7 @@ void QTPFS::QTNode::UpdateMoveCost(
 
 				numNewBinSquares += (curSpeedBin != oldSpeedBin)? 1: 0;
 				numDifBinSquares += (curSpeedBin != refSpeedBin)? 1: 0;
+				numClosedSquares += (curSpeedMods[sqrIdx] <= 0.0f)? 1: 0;
 
 				speedModSum -= oldSpeedMods[sqrIdx];
 				speedModSum += curSpeedMods[sqrIdx];
@@ -441,6 +451,7 @@ void QTPFS::QTNode::UpdateMoveCost(
 
 				numNewBinSquares += (curSpeedBin != oldSpeedBin)? 1: 0;
 				numDifBinSquares += (curSpeedBin != refSpeedBin)? 1: 0;
+				numClosedSquares += (curSpeedMods[sqrIdx] <= 0.0f)? 1: 0;
 
 				speedModSum += curSpeedMods[sqrIdx];
 			}
@@ -452,6 +463,12 @@ void QTPFS::QTNode::UpdateMoveCost(
 
 	speedModAvg = speedModSum / (xsize() * zsize());
 	moveCostAvg = (speedModAvg <= 0.001f)? QTPFS_POSITIVE_INFINITY: (1.0f / speedModAvg);
+
+	// if we are not going to tesselate this node further
+	// and there is at least one impassable square inside
+	// it, make sure the pathfinder will not pick us
+	if (((numDifBinSquares == 0) || !CanSplit()) && (numClosedSquares > 0))
+		moveCostAvg = QTPFS_POSITIVE_INFINITY;
 
 	assert(moveCostAvg > 0.0f);
 }

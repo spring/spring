@@ -102,6 +102,8 @@ namespace QTPFS {
 		void Serialize(std::fstream& fStream, bool read);
 
 		bool IsLeaf() const;
+		bool CanSplit() const;
+
 		bool Split(NodeLayer& nl);
 		bool Merge(NodeLayer& nl);
 
@@ -136,7 +138,8 @@ namespace QTPFS {
 			const NodeLayer& nl,
 			const SRectangle& r,
 			unsigned int& numNewBinSquares,
-			unsigned int& numDifBinSquares
+			unsigned int& numDifBinSquares,
+			unsigned int& numClosedSquares
 		);
 		bool UpdateNeighborCache(const std::vector<INode*>& nodes);
 
