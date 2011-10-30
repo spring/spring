@@ -37,8 +37,9 @@ CS3OTextureHandler::CS3OTextureHandler()
 {
 	s3oTextures.push_back(new S3oTex());
 	s3oTextures.push_back(new S3oTex());
-#if defined(USE_GML) && GML_ENABLE_SIM && GML_SHARE_LISTS
-	DoUpdateDraw();
+#if defined(USE_GML) && GML_ENABLE_SIM
+	if (gmlShareLists)
+		DoUpdateDraw();
 #endif
 }
 
@@ -52,11 +53,12 @@ CS3OTextureHandler::~CS3OTextureHandler()
 }
 
 void CS3OTextureHandler::LoadS3OTexture(S3DModel* model) {
-#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
-	model->textureType = Threading::IsSimThread() ? -1 : LoadS3OTextureNow(model);
-#else
-	model->textureType = LoadS3OTextureNow(model);
+#if defined(USE_GML) && GML_ENABLE_SIM
+	if (!gmlShareLists)
+		model->textureType = Threading::IsSimThread() ? -1 : LoadS3OTextureNow(model);
+	else
 #endif
+		model->textureType = LoadS3OTextureNow(model);
 }
 
 void CS3OTextureHandler::Update() {
@@ -73,8 +75,8 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 	const string totalName = model->tex1 + model->tex2;
 
 	if (s3oTextureNames.find(totalName) != s3oTextureNames.end()) {
-#if defined(USE_GML) && GML_ENABLE_SIM && GML_SHARE_LISTS
-		if (!Threading::IsSimThread())
+#if defined(USE_GML) && GML_ENABLE_SIM
+		if (gmlShareLists && !Threading::IsSimThread())
 			DoUpdateDraw();
 #endif
 		return s3oTextureNames[totalName];
@@ -125,8 +127,8 @@ int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
 	s3oTextures.push_back(tex);
 	s3oTextureNames[totalName] = tex->num;
 
-#if defined(USE_GML) && GML_ENABLE_SIM && GML_SHARE_LISTS
-	if (!Threading::IsSimThread())
+#if defined(USE_GML) && GML_ENABLE_SIM
+	if (gmlShareLists && !Threading::IsSimThread())
 		DoUpdateDraw();
 #endif
 
@@ -148,21 +150,29 @@ inline void DoSetS3oTexture(int num, std::vector<CS3OTextureHandler::S3oTex *>& 
 
 void CS3OTextureHandler::SetS3oTexture(int num)
 {
-#if defined(USE_GML) && GML_ENABLE_SIM && GML_SHARE_LISTS 
-	if (!Threading::IsSimThread()) {
-		DoSetS3oTexture(num, s3oTexturesDraw);
-		return;
+#if defined(USE_GML) && GML_ENABLE_SIM 
+	if (gmlShareLists) {
+		if (!Threading::IsSimThread()) {
+			DoSetS3oTexture(num, s3oTexturesDraw);
+			return;
+		}
+		// it seems this is only accessed by draw thread, but just in case..
+		GML_RECMUTEX_LOCK(model); // SetS3oTexture
+		DoSetS3oTexture(num, s3oTextures);
 	}
-	// it seems this is only accessed by draw thread, but just in case..
-	GML_RECMUTEX_LOCK(model); // SetS3oTexture
+	else
 #endif
-	DoSetS3oTexture(num, s3oTextures);
+	{
+		DoSetS3oTexture(num, s3oTextures);
+	}
 }
 
 void CS3OTextureHandler::UpdateDraw() {
-#if defined(USE_GML) && GML_ENABLE_SIM && GML_SHARE_LISTS
-	GML_RECMUTEX_LOCK(model); // UpdateDraw
+#if defined(USE_GML) && GML_ENABLE_SIM
+	if (gmlShareLists) {
+		GML_RECMUTEX_LOCK(model); // UpdateDraw
 
-	DoUpdateDraw();
+		DoUpdateDraw();
+	}
 #endif
 }

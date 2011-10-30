@@ -939,7 +939,6 @@ bool CGame::Draw() {
 			return true;
 		skipLastDraw = currentTime;
 #if defined(USE_GML) && GML_ENABLE_SIM
-		extern volatile int gmlMultiThreadSim;
 		if (!gmlMultiThreadSim)
 #endif
 		{

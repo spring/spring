@@ -279,12 +279,6 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 }
 
 
-
-#if       GML_ENABLE_SIM
-extern volatile int gmlMultiThreadSim;
-extern volatile int gmlStartSim;
-#endif // GML_ENABLE_SIM
-
 namespace { // prevents linking problems in case of duplicate symbols
 
 /* XXX
@@ -1508,7 +1502,7 @@ public:
 		bool mtSim = (StringToLower(action.GetInnerAction().command) == "multithread") ? mtEnabled : gmlMultiThreadSim;
 		SetBoolArg(mtSim, action.GetArgs());
 		gmlMultiThreadSim = mtSim;
-		gmlStartSim = 1;
+		gmlStartSim = true;
 
 		LogSystemStatus("Simulation threading", gmlMultiThreadSim);
 #	endif // GML_ENABLE_SIM
