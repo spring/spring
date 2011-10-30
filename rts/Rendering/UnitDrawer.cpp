@@ -2229,11 +2229,13 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
 	texturehandlerS3O->UpdateDraw();
 
-#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
-	if (u->model && TEX_TYPE(u) < 0)
-		TEX_TYPE(u) = texturehandlerS3O->LoadS3OTextureNow(u->model);
-	if((unsortedUnits.size() % 10) == 0)
-		Watchdog::ClearPrimaryTimers(); // batching can create an avalance of events during /give xxx, triggering hang detection
+#if defined(USE_GML) && GML_ENABLE_SIM
+	if (!gmlShareLists) {
+		if (u->model && TEX_TYPE(u) < 0)
+			TEX_TYPE(u) = texturehandlerS3O->LoadS3OTextureNow(u->model);
+		if((unsortedUnits.size() % 10) == 0)
+			Watchdog::ClearPrimaryTimers(); // batching can create an avalance of events during /give xxx, triggering hang detection
+	}
 #endif
 
 	if (building)

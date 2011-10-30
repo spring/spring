@@ -117,10 +117,12 @@ C3DModelLoader::~C3DModelLoader()
 
 	parsers.clear();
 
-#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
-	createLists.clear();
-	fixLocalModels.clear();
-	Update(); // delete remaining local models
+#if defined(USE_GML) && GML_ENABLE_SIM
+	if (!gmlShareLists) {
+		createLists.clear();
+		fixLocalModels.clear();
+		Update(); // delete remaining local models
+	}
 #endif
 }
 
@@ -177,23 +179,25 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffs
 }
 
 void C3DModelLoader::Update() {
-#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
-	GML_RECMUTEX_LOCK(model); // Update
+#if defined(USE_GML) && GML_ENABLE_SIM
+	if (!gmlShareLists) {
+		GML_RECMUTEX_LOCK(model); // Update
 
-	for (std::vector<S3DModelPiece*>::iterator it = createLists.begin(); it != createLists.end(); ++it) {
-		CreateListsNow(*it);
-	}
-	createLists.clear();
+		for (std::vector<S3DModelPiece*>::iterator it = createLists.begin(); it != createLists.end(); ++it) {
+			CreateListsNow(*it);
+		}
+		createLists.clear();
 
-	for (std::set<CUnit*>::iterator i = fixLocalModels.begin(); i != fixLocalModels.end(); ++i) {
-		SetLocalModelPieceDisplayLists(*i);
-	}
-	fixLocalModels.clear();
+		for (std::set<CUnit*>::iterator i = fixLocalModels.begin(); i != fixLocalModels.end(); ++i) {
+			SetLocalModelPieceDisplayLists(*i);
+		}
+		fixLocalModels.clear();
 
-	for (std::vector<LocalModel*>::iterator i = deleteLocalModels.begin(); i != deleteLocalModels.end(); ++i) {
-		delete *i;
+		for (std::vector<LocalModel*>::iterator i = deleteLocalModels.begin(); i != deleteLocalModels.end(); ++i) {
+			delete *i;
+		}
+		deleteLocalModels.clear();
 	}
-	deleteLocalModels.clear();
 #endif
 }
 
@@ -211,27 +215,35 @@ void C3DModelLoader::DeleteChilds(S3DModelPiece* o)
 
 void C3DModelLoader::DeleteLocalModel(CUnit* unit)
 {
-#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
-	GML_RECMUTEX_LOCK(model); // DeleteLocalModel
+#if defined(USE_GML) && GML_ENABLE_SIM
+	if (!gmlShareLists) {
+		GML_RECMUTEX_LOCK(model); // DeleteLocalModel
 
-	fixLocalModels.erase(unit);
-	deleteLocalModels.push_back(unit->localmodel);
-#else
-	delete unit->localmodel;
+		fixLocalModels.erase(unit);
+		deleteLocalModels.push_back(unit->localmodel);
+	}
+	else
 #endif
+	{
+		delete unit->localmodel;
+	}
 }
 
 void C3DModelLoader::CreateLocalModel(CUnit* unit)
 {
-#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
-	GML_RECMUTEX_LOCK(model); // CreateLocalModel
+#if defined(USE_GML) && GML_ENABLE_SIM
+	if (!gmlShareLists) {
+		GML_RECMUTEX_LOCK(model); // CreateLocalModel
 
-	unit->localmodel = new LocalModel(unit->model);
-	fixLocalModels.insert(unit);
-#else
-	unit->localmodel = new LocalModel(unit->model);
-	// SetLocalModelPieceDisplayLists(unit);
+		unit->localmodel = new LocalModel(unit->model);
+		fixLocalModels.insert(unit);
+	}
+	else
 #endif
+	{
+		unit->localmodel = new LocalModel(unit->model);
+		// SetLocalModelPieceDisplayLists(unit);
+	}
 }
 
 
@@ -266,11 +278,12 @@ void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 
 
 void C3DModelLoader::CreateLists(S3DModelPiece* o) {
-#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
-	createLists.push_back(o);
-#else
-	CreateListsNow(o);
+#if defined(USE_GML) && GML_ENABLE_SIM
+	if (!gmlShareLists)
+		createLists.push_back(o);
+	else
 #endif
+		CreateListsNow(o);
 }
 
 /******************************************************************************/

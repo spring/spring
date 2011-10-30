@@ -172,7 +172,7 @@ extern unsigned gmlCPUCount();
 #	define GML_CPU_COUNT (gmlThreadCountOverride ? gmlThreadCountOverride : gmlCPUCount() )
 #endif
 #define GML_MAX_NUM_THREADS (32+2) // extra for the Sim & Loading threads
-#define GML_IF_SERVER_THREAD(thread) if(!GML_ENABLE || ((GML_SHARE_LISTS && thread <= GML_SIM_THREAD_NUM) || (!GML_SHARE_LISTS && thread <= GML_LOAD_THREAD_NUM)))
+#define GML_IF_SERVER_THREAD(thread) if(!GML_ENABLE || (thread <= gmlMaxServerThreadNum))
 extern int gmlItemsConsumed;
 
 typedef unsigned char BYTE;

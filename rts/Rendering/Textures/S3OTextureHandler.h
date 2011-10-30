@@ -36,9 +36,11 @@ public:
 
 private:
 	inline void DoUpdateDraw() {
-#if defined(USE_GML) && GML_ENABLE_SIM && GML_SHARE_LISTS
-		while (s3oTexturesDraw.size() < s3oTextures.size())
-			s3oTexturesDraw.push_back(s3oTextures[s3oTexturesDraw.size()]);
+#if defined(USE_GML) && GML_ENABLE_SIM
+		if (gmlShareLists) {
+			while (s3oTexturesDraw.size() < s3oTextures.size())
+				s3oTexturesDraw.push_back(s3oTextures[s3oTexturesDraw.size()]);
+		}
 #endif
 	}
 	const S3oTex* DoGetS3oTex(int num, std::vector<S3oTex *>& s3oTex) {
@@ -50,13 +52,19 @@ private:
 
 public:
 	const S3oTex* GetS3oTex(int num) {
-#if defined(USE_GML) && GML_ENABLE_SIM && GML_SHARE_LISTS
-		if (!Threading::IsSimThread())
-			return DoGetS3oTex(num, s3oTexturesDraw);
+#if defined(USE_GML) && GML_ENABLE_SIM
+		if (gmlShareLists) {
+			if (!Threading::IsSimThread())
+				return DoGetS3oTex(num, s3oTexturesDraw);
 
-		GML_RECMUTEX_LOCK(model); // GetS3oTex
+			GML_RECMUTEX_LOCK(model); // GetS3oTex
+			return DoGetS3oTex(num, s3oTextures);
+		}
+		else
 #endif
-		return DoGetS3oTex(num, s3oTextures);
+		{
+			return DoGetS3oTex(num, s3oTextures);
+		}
 	}
 
 	void UpdateDraw();
@@ -64,7 +72,7 @@ public:
 private:
 	std::map<std::string, int> s3oTextureNames;
 	std::vector<S3oTex *> s3oTextures;
-#if defined(USE_GML) && GML_ENABLE_SIM && GML_SHARE_LISTS
+#if defined(USE_GML) && GML_ENABLE_SIM
 	std::vector<S3oTex *> s3oTexturesDraw;
 #endif
 };
