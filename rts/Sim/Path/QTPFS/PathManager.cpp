@@ -405,10 +405,19 @@ void QTPFS::PathManager::Update() {
 		ExecuteQueuedSearches(pathTypeUpdate);
 	}
 
-	minPathTypeUpdate = (minPathTypeUpdate + numPathTypeUpdates) % nodeLayers.size();
+	std::copy(numCurrExecutedSearches.begin(), numCurrExecutedSearches.end(), numPrevExecutedSearches.begin());
+
+	minPathTypeUpdate = (minPathTypeUpdate + numPathTypeUpdates);
 	maxPathTypeUpdate = (minPathTypeUpdate + numPathTypeUpdates);
 
-	std::copy(numCurrExecutedSearches.begin(), numCurrExecutedSearches.end(), numPrevExecutedSearches.begin());
+	if (minPathTypeUpdate >= nodeLayers.size()) {
+		minPathTypeUpdate = 0;
+		maxPathTypeUpdate = numPathTypeUpdates;
+		return;
+	}
+	if (maxPathTypeUpdate >= nodeLayers.size()) {
+		maxPathTypeUpdate = nodeLayers.size() - 1;
+	}
 }
 
 
