@@ -30,7 +30,9 @@ CR_REG_METADATA(MoveData, (
 	CR_ENUM_MEMBER(terrainClass),
 
 	CR_MEMBER(xsize),
+	CR_MEMBER(xsizeh),
 	CR_MEMBER(zsize),
+	CR_MEMBER(zsizeh),
 	CR_MEMBER(depth),
 	CR_MEMBER(maxSlope),
 	CR_MEMBER(slopeMod),
@@ -183,6 +185,9 @@ CMoveInfo::CMoveInfo()
 		md->zsize = zsize * scale;
 		md->xsize -= ((md->xsize & 1)? 0: 1);
 		md->zsize -= ((md->zsize & 1)? 0: 1);
+		// precalculated data for MoveMath
+		md->xsizeh = md->xsize >> 1;
+		md->zsizeh = md->zsize >> 1;
 		assert((md->xsize & 1) == 1);
 		assert((md->zsize & 1) == 1);
 		md->slopeMod = moveTable.GetFloat("slopeMod", 4.0f / (md->maxSlope + 0.001f));
