@@ -115,6 +115,15 @@ bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
 	for (PathMap::const_iterator mit = livePaths.begin(); mit != livePaths.end(); ++mit) {
 		IPath* path = mit->second;
 
+		const float3& pathMins = path->GetBoundingBoxMins();
+		const float3& pathMaxs = path->GetBoundingBoxMaxs();
+
+		// if rectangle does not overlap bounding-box, skip this path
+		if ((r.x2 * SQUARE_SIZE) < pathMins.x) { continue; }
+		if ((r.z2 * SQUARE_SIZE) < pathMins.z) { continue; }
+		if ((r.x1 * SQUARE_SIZE) > pathMaxs.x) { continue; }
+		if ((r.z1 * SQUARE_SIZE) > pathMaxs.z) { continue; }
+
 		// figure out if <path> has at least one edge crossing <r>
 		for (unsigned int i = 0; i < (path->NumPoints() - 1); i++) {
 			const float3& p0 = path->GetPoint(i    );
@@ -131,9 +140,10 @@ bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
 				((p0.x < r.x1 && p1.x >= r.x2) && (p0.z >= r.z1 && p1.z < r.z2)) || // H
 				((p0.z < r.z1 && p1.z >= r.z2) && (p0.x >= r.x1 && p1.x < r.x2)) || // V
 				false;
+			const bool havePointInRect = (pointInRect0 || pointInRect1);
 
 			// remember the ID of each path affected by the deformation
-			if ((int(pointInRect0) + int(pointInRect1) >= 1) || edgeCrossesRect) {
+			if (havePointInRect || edgeCrossesRect) {
 				assert(tempPaths.find(path->GetID()) == tempPaths.end());
 				deadPaths.insert(std::make_pair<unsigned int, IPath*>(path->GetID(), path));
 				livePathIts.push_back(livePaths.find(path->GetID()));
