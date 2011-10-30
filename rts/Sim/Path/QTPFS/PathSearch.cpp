@@ -219,6 +219,8 @@ void QTPFS::PathSearch::Finalize(IPath* path) {
 	SmoothPath(path);
 	#endif
 
+	path->SetBoundingBox();
+
 	// path remains in live-cache until DeletePath is called
 	pathCache->AddLivePath(path);
 }

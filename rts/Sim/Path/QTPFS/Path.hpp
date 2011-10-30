@@ -27,7 +27,10 @@ namespace QTPFS {
 		boost::uint64_t GetHash() const { return hash; }
 		bool GetSynced() const { return synced; }
 
+		virtual void SetBoundingBox() {}
 		virtual void SetPoint(unsigned int, const float3&) {}
+		virtual const float3& GetBoundingBoxMins() const {}
+		virtual const float3& GetBoundingBoxMaxs() const {}
 		virtual const float3& GetPoint(unsigned int) const { return ZeroVector; }
 
 		virtual void SetObjectPoint(const float3&) {}
@@ -66,11 +69,28 @@ namespace QTPFS {
 
 			points = p.GetPoints();
 			point = p.GetObjectPoint();
+
+			mins = p.GetBoundingBoxMins();
+			maxs = p.GetBoundingBoxMaxs();
 			return *this;
 		}
 		~Path() { points.clear(); }
 
+		void SetBoundingBox() {
+			mins.x = 1e6f; maxs.x = -1e6f;
+			mins.z = 1e6f; maxs.z = -1e6f;
+
+			for (unsigned int n = 0; n < points.size(); n++) {
+				mins.x = std::min(mins.x, points[n].x);
+				mins.z = std::min(mins.z, points[n].z);
+				maxs.x = std::max(maxs.x, points[n].x);
+				maxs.z = std::max(maxs.z, points[n].z);
+			}
+		}
+
 		void SetPoint(unsigned int i, const float3& p) { points[std::min(i, NumPoints() - 1)] = p; }
+		const float3& GetBoundingBoxMins() const { return mins; }
+		const float3& GetBoundingBoxMaxs() const { return maxs; }
 		const float3& GetPoint(unsigned int i) const { return points[std::min(i, NumPoints() - 1)]; }
 
 		void SetObjectPoint(const float3& p) {                             point                     = p; }
@@ -96,6 +116,10 @@ namespace QTPFS {
 
 	private:
 		std::vector<float3> points;
+
+		// corners of the bounding-box containing all our points
+		float3 mins;
+		float3 maxs;
 
 		// where on the map our owner (CSolidObject*) currently is
 		// (normally lies roughly between two consecutive waypoints)
