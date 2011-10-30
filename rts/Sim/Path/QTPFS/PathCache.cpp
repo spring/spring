@@ -101,17 +101,17 @@ bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
 	return false;
 	#endif
 
+	if (livePaths.empty())
+		return false;
+
 	const unsigned int numDeadPaths = deadPaths.size();
 
+	// "mark" any live path crossing the area of a terrain
+	// deformation, for which some or all of its waypoints
+	// might now be invalid and need to be recomputed
+	//
 	std::list<PathMapIt> livePathIts;
 
-	// NOTE:
-	//     terrain might have been retesselated since
-	//     path was originally cached (!) --> some or
-	//     all of its waypoints might now be invalid
-	//     --> need to adjust any live paths crossing
-	//     the area of a terrain deformation
-	//
 	for (PathMap::const_iterator mit = livePaths.begin(); mit != livePaths.end(); ++mit) {
 		IPath* path = mit->second;
 
