@@ -32,6 +32,18 @@ QTPFS::IPath* QTPFS::PathCache::GetTempPath(unsigned int pathID) {
 	return &tempPath;
 }
 
+QTPFS::IPath* QTPFS::PathCache::GetDeadPath(unsigned int pathID) {
+	static IPath deadPath; // dummy
+
+	PathMapIt it = deadPaths.find(pathID);
+
+	if (it != deadPaths.end()) {
+		return (it->second);
+	}
+
+	return &deadPath;
+}
+
 
 
 void QTPFS::PathCache::AddTempPath(IPath* path) {
