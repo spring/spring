@@ -14,11 +14,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #endif
 
-QTPFS::reservable_priority_queue<
-	QTPFS::INode*,
-	QTPFS::clearable_vector<QTPFS::INode*>,
-	QTPFS::INode
-> QTPFS::PathSearch::openNodes;
+QTPFS::binary_heap<QTPFS::INode*> QTPFS::PathSearch::openNodes;
 
 
 
@@ -110,16 +106,6 @@ void QTPFS::PathSearch::UpdateNode(INode* nxt, INode* cur, float gCost) {
 	nxt->SetPathCost(NODE_PATH_COST_F, (nxt->GetPathCost(NODE_PATH_COST_G) + nxt->GetPathCost(NODE_PATH_COST_H)));
 }
 
-void QTPFS::PathSearch::UpdateQueue() {
-	// restore ordering in case nxtNode was already open
-	// (changing the f-cost of an OPEN node messes up the
-	// queue's internal consistency; a pushed node remains
-	// OPEN until it gets popped)
-	INode* top = openNodes.top();
-	openNodes.pop();
-	openNodes.push(top);
-}
-
 void QTPFS::PathSearch::IterateSearch(
 	const std::vector<INode*>& allNodes,
 	      std::vector<INode*>& ngbNodes,
@@ -130,6 +116,10 @@ void QTPFS::PathSearch::IterateSearch(
 	curNode->SetMagicNumber(searchMagic);
 
 	openNodes.pop();
+
+	#ifdef QTPFS_DEBUG_QUEUE
+	openNodes.check_heap_property(0);
+	#endif
 
 	#ifdef QTPFS_TRACE_PATH_SEARCHES
 	iter->SetPoppedNodeIdx(curNode->zmin() * gs->mapx + curNode->xmin());
@@ -193,6 +183,10 @@ void QTPFS::PathSearch::IterateSearch(
 			#endif
 
 			openNodes.push(nxtNode);
+
+			#ifdef QTPFS_DEBUG_QUEUE
+			openNodes.check_heap_property(0);
+			#endif
 			continue;
 		}
 
@@ -202,8 +196,17 @@ void QTPFS::PathSearch::IterateSearch(
 			continue;
 
 		UpdateNode(nxtNode, curNode, gCost);
-		UpdateQueue();
+
+		// nxtNode was already marked open, restore ordering
+		// (changing the f-cost of an OPEN node messes up the
+		// queue's internal consistency; a pushed node remains
+		// OPEN until it gets popped)
+		openNodes.resort(nxtNode);
 	}
+
+	#ifdef QTPFS_DEBUG_QUEUE
+	openNodes.check_heap_property(0);
+	#endif
 }
 
 void QTPFS::PathSearch::Finalize(IPath* path) {

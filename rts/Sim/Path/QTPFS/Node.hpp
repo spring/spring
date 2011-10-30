@@ -15,17 +15,23 @@ struct SRectangle;
 namespace QTPFS {
 	struct NodeLayer;
 	struct INode {
+		void SetNodeNumber(unsigned int n) { this->nodeNumber = n; }
+		void SetHeapIndex(unsigned int n) { this->heapIndex = n; }
 		unsigned int GetNodeNumber() const { return nodeNumber; }
+		unsigned int GetHeapIndex() const { return heapIndex; }
 
-		bool operator < (const INode* n) const { return (fCost < n->fCost); }
-		bool operator () (const INode* a, const INode* b) const { return (a->fCost > b->fCost); }
+		bool operator <  (const INode* n) const { return (fCost <  n->fCost); }
+		bool operator >  (const INode* n) const { return (fCost >  n->fCost); }
+		bool operator == (const INode* n) const { return (fCost == n->fCost); }
+		bool operator <= (const INode* n) const { return (fCost <= n->fCost); }
+		bool operator >= (const INode* n) const { return (fCost >= n->fCost); }
 
 		// NOTE:
 		//     not pure virtuals, because INode is used as comparator in
 		//     std::pqueue and STL does not allow abstract types for that
-		virtual void Serialize(std::fstream&, bool) { assert(false); }
-		virtual unsigned int GetNeighbors(const std::vector<INode*>&, std::vector<INode*>&) { assert(false); return 0; }
-		virtual const std::vector<INode*>& GetNeighbors(const std::vector<INode*>& v) { assert(false); return v; }
+		virtual void Serialize(std::fstream&, bool) = 0;
+		virtual unsigned int GetNeighbors(const std::vector<INode*>&, std::vector<INode*>&) = 0;
+		virtual const std::vector<INode*>& GetNeighbors(const std::vector<INode*>& v) = 0;
 
 		unsigned int GetNeighborRelation(const INode* ngb) const;
 		unsigned int GetRectangleRelation(const SRectangle& r) const;
@@ -33,22 +39,22 @@ namespace QTPFS {
 		float3 GetNeighborEdgeMidPoint(const INode* ngb) const;
 		SRectangle ClipRectangle(const SRectangle& r) const;
 
-		virtual unsigned int xmin() const { assert(false); return 0; }
-		virtual unsigned int zmin() const { assert(false); return 0; }
-		virtual unsigned int xmax() const { assert(false); return 1; }
-		virtual unsigned int zmax() const { assert(false); return 1; }
-		virtual unsigned int xmid() const { assert(false); return 0; }
-		virtual unsigned int zmid() const { assert(false); return 0; }
-		virtual unsigned int xsize() const { assert(false); return 1; }
-		virtual unsigned int zsize() const { assert(false); return 1; }
+		virtual unsigned int xmin() const = 0;
+		virtual unsigned int zmin() const = 0;
+		virtual unsigned int xmax() const = 0;
+		virtual unsigned int zmax() const = 0;
+		virtual unsigned int xmid() const = 0;
+		virtual unsigned int zmid() const = 0;
+		virtual unsigned int xsize() const = 0;
+		virtual unsigned int zsize() const = 0;
 
-		virtual float GetMoveCost() const { assert(false); return 1.0f; }
+		virtual float GetMoveCost() const = 0;
 
-		virtual void SetSearchState(unsigned int) { assert(false); }
-		virtual unsigned int GetSearchState() const { assert(false); return 0; }
+		virtual void SetSearchState(unsigned int) = 0;
+		virtual unsigned int GetSearchState() const = 0;
 
-		virtual void SetMagicNumber(unsigned int) { assert(false); }
-		virtual unsigned int GetMagicNumber() const { assert(false); return 0; }
+		virtual void SetMagicNumber(unsigned int) = 0;
+		virtual unsigned int GetMagicNumber() const = 0;
 
 		void SetPathCost(unsigned int type, float cost);
 		float GetPathCost(unsigned int type) const;
@@ -57,7 +63,11 @@ namespace QTPFS {
 		INode* GetPrevNode() { return prevNode; }
 
 	protected:
+		// NOTE:
+		//     storing the heap-index is an *UGLY* break of abstraction,
+		//     but the only way to keep the cost of resorting acceptable
 		unsigned int nodeNumber;
+		unsigned int heapIndex;
 
 		float fCost;
 		float gCost;
@@ -72,7 +82,7 @@ namespace QTPFS {
 	struct QTNode: public INode {
 		QTNode(
 			const QTNode* parent,
-			unsigned int id,
+			unsigned int nn,
 			unsigned int x1, unsigned int z1,
 			unsigned int x2, unsigned int z2
 		);
