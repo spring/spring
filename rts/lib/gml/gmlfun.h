@@ -336,7 +336,6 @@ public:
 		}
 	}
 	static unsigned getLockTime() {
-		extern volatile int gmlMultiThreadSim, gmlStartSim;
 		unsigned ret = 0;
 		if(gmlMultiThreadSim && gmlStartSim)
 			ret = gmlLockTime;
@@ -357,11 +356,11 @@ public:
 	rettype rdummy = (rettype)0;\
 	return rdummy;
 #define GML_IF_SIM_THREAD_RET(thread,name)\
-	if(!GML_SHARE_LISTS && thread == GML_SIM_THREAD_NUM) {\
+	if(thread == gmlNoGLThreadNum) {\
 		GML_THREAD_ERROR(GML_QUOTE(gml##name), GML_DUMMYRET())\
 	}
 #define GML_IF_SIM_THREAD_RETVAL(thread,name,rettype)\
-	if(!GML_SHARE_LISTS && thread == GML_SIM_THREAD_NUM) {\
+	if(thread == gmlNoGLThreadNum) {\
 		GML_THREAD_ERROR(GML_QUOTE(gml##name), GML_DUMMYRETVAL(rettype))\
 	}
 #else
@@ -422,12 +421,12 @@ EXTERN inline void gmlSync(gmlQueue *qd) {
 
 #if GML_ENABLE_ITEMSERVER_CHECK
 #define GML_ITEMSERVER_CHECK(thread)\
-	if(!GML_SHARE_LISTS && thread == GML_SIM_THREAD_NUM) {\
+	if(thread == gmlNoGLThreadNum) {\
 		GML_ITEMLOG_PRINT()\
 		GML_DUMMYRET()\
 	}
 #define GML_ITEMSERVER_CHECK_RET(thread,rettype)\
-	if(!GML_SHARE_LISTS && thread == GML_SIM_THREAD_NUM) {\
+	if(thread == gmlNoGLThreadNum) {\
 		GML_ITEMLOG_PRINT()\
 		GML_DUMMYRETVAL(rettype)\
 	}

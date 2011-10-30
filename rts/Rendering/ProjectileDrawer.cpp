@@ -1058,8 +1058,8 @@ void CProjectileDrawer::RenderProjectileCreated(const CProjectile* p)
 {
 	texturehandlerS3O->UpdateDraw();
 
-#if defined(USE_GML) && GML_ENABLE_SIM && !GML_SHARE_LISTS
-	if(p->model && TEX_TYPE(p) < 0)
+#if defined(USE_GML) && GML_ENABLE_SIM
+	if(!gmlShareLists && p->model && TEX_TYPE(p) < 0)
 		TEX_TYPE(p) = texturehandlerS3O->LoadS3OTextureNow(p->model);
 #endif
 
