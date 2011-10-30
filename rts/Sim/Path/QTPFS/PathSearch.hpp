@@ -141,12 +141,8 @@ namespace QTPFS {
 		INode *curNode, *nxtNode;
 
 		// rely on INode::operator() to sort the INode*'s by increasing f-cost
-		//
-		// std::priority_queue<INode*, std::vector<INode*>, INode> openNodes;
-		// reservable_priority_queue<INode*, std::vector<INode*>, INode> openNodes;
-		//
 		// global queue: allocated once, re-used by all searches without clear()'s
-		static reservable_priority_queue<INode*, clearable_vector<INode*>, INode> openNodes;
+		static binary_heap<INode*> openNodes;
 
 		bool haveOpenNode;
 		bool haveFullPath;

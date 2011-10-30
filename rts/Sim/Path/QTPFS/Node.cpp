@@ -140,11 +140,12 @@ SRectangle QTPFS::INode::ClipRectangle(const SRectangle& r) const {
 
 QTPFS::QTNode::QTNode(
 	const QTNode* parent,
-	unsigned int id,
+	unsigned int nn,
 	unsigned int x1, unsigned int z1,
 	unsigned int x2, unsigned int z2
 ) {
-	nodeNumber = id;
+	nodeNumber = nn;
+	heapIndex = -1U;
 	searchState = 0;
 
 	currMagicNum =  0;
