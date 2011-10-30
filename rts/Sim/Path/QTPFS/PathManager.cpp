@@ -336,6 +336,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 			// read the i-th tree
 			read = true;
 			fileStreams[i]->open(fileNames[i].c_str(), std::ios::in | std::ios::binary);
+			assert(nodeTrees[i]->IsLeaf());
 		} else {
 			// write the i-th tree
 			read = false;
