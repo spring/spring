@@ -78,8 +78,8 @@ float CMoveMath::GetPosSpeedMod(const MoveData& moveData, int xSquare, int zSqua
 CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveData& moveData, int xSquare, int zSquare) const
 {
 	BlockType ret = BLOCK_NONE;
-	const int xmin = xSquare - moveData.xh, xmax = xSquare + moveData.xh;
-	const int zmin = zSquare - moveData.zh, zmax = zSquare + moveData.zh;
+	const int xmin = xSquare - moveData.xsizeh, xmax = xSquare + moveData.xsizeh;
+	const int zmin = zSquare - moveData.zsizeh, zmax = zSquare + moveData.zsizeh;
 	const int xstep = 2, zstep = 2;
 	// (footprints are point-symmetric around <xSquare, zSquare>)
 	for (int x = xmin; x <= xmax; x += xstep) {
@@ -87,41 +87,15 @@ CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveData& moveDat
 			ret |= SquareIsBlocked(moveData, x, z);
 		}
 	}
-	if (moveData.xSizeOdd && moveData.zSizeOdd)
-		return ret;
-	// Try extending the footprint towards each possible "even" side, and
-	// only consider it blocked if all those sides have a matching BlockType.
-	// This is an approximation, but better than truncating it to odd size.
-	BlockType bxmin = BLOCK_NONE, bxmax = BLOCK_NONE;
-	if (!moveData.xSizeOdd) {
-		for (int z = zmin; z <= zmax; z += zstep) {
-			bxmin |= SquareIsBlocked(moveData, xmin - 1, z);
-			bxmax |= SquareIsBlocked(moveData, xmax + 1, z);
-		}
-		if (moveData.zSizeOdd)
-			return ret | (bxmin & bxmax);
-	}
-	BlockType bzmin = BLOCK_NONE, bzmax = BLOCK_NONE;
-	if (!moveData.zSizeOdd) {
-		for (int x = xmin; x <= xmax; x += xstep) {
-			bzmin |= SquareIsBlocked(moveData, x, zmin - 1);
-			bzmax |= SquareIsBlocked(moveData, x, zmax + 1);
-		}
-		if (moveData.xSizeOdd)
-			return ret | (bzmin & bzmax);
-	}
-	return ret |
-		((bxmin | bzmin | SquareIsBlocked(moveData, xmin - 1, zmin - 1)) &
-		 (bxmin | bzmax | SquareIsBlocked(moveData, xmin - 1, zmax + 1)) &
-		 (bxmax | bzmin | SquareIsBlocked(moveData, xmax + 1, zmin - 1)) &
-		 (bxmax | bzmax | SquareIsBlocked(moveData, xmax + 1, zmax + 1)));
+
+	return ret;
 }
 
 /* Optimized function to check if a given square-position has a structure block. */
 bool CMoveMath::IsBlockedStructure(const MoveData& moveData, int xSquare, int zSquare) const
 {
-	const int xmin = xSquare - moveData.xh, xmax = xSquare + moveData.xh;
-	const int zmin = zSquare - moveData.zh, zmax = zSquare + moveData.zh;
+	const int xmin = xSquare - moveData.xsizeh, xmax = xSquare + moveData.xsizeh;
+	const int zmin = zSquare - moveData.zsizeh, zmax = zSquare + moveData.zsizeh;
 	const int xstep = 2, zstep = 2;
 	// (footprints are point-symmetric around <xSquare, zSquare>)
 	for (int x = xmin; x <= xmax; x += xstep) {
@@ -130,92 +104,23 @@ bool CMoveMath::IsBlockedStructure(const MoveData& moveData, int xSquare, int zS
 				return true;
 		}
 	}
-	if (moveData.xSizeOdd && moveData.zSizeOdd)
-		return false;
-	// Try extending the footprint towards each possible "even" side, and
-	// only consider it blocked if all those sides have a matching BlockType.
-	// This is an approximation, but better than truncating it to odd size.
-	bool bxmin = false, bxmax = false;
-	if (!moveData.xSizeOdd) {
-		for (int z = zmin; z <= zmax; z += zstep) {
-			if (SquareIsBlocked(moveData, xmin - 1, z) & BLOCK_STRUCTURE) {
-				bxmin = true;
-				break;
-			}
-		}
-		for (int z = zmin; z <= zmax; z += zstep) {
-			if (SquareIsBlocked(moveData, xmax + 1, z) & BLOCK_STRUCTURE) {
-				bxmax = true;
-				break;
-			}
-		}
-		if (bxmin && bxmax)
-			return true;
-		if (moveData.zSizeOdd)
-			return false;
-	}
-	bool bzmin = false, bzmax = false;
-	if (!moveData.zSizeOdd) {
-		for (int x = xmin; x <= xmax; x += xstep) {
-			if (SquareIsBlocked(moveData, x, zmin - 1) & BLOCK_STRUCTURE) {
-				bzmin = true;
-				break;
-			}
-		}
-		for (int x = xmin; x <= xmax; x += xstep) {
-			if (SquareIsBlocked(moveData, x, zmax + 1) & BLOCK_STRUCTURE) {
-				bzmax = true;
-				break;
-			}
-		}
-		if (bzmin && bzmax)
-			return true;
-		if (moveData.xSizeOdd)
-			return false;
-	}
-	return 
-		((bxmin || bzmin || (SquareIsBlocked(moveData, xmin - 1, zmin - 1) & BLOCK_STRUCTURE)) &&
-		 (bxmin || bzmax || (SquareIsBlocked(moveData, xmin - 1, zmax + 1) & BLOCK_STRUCTURE)) &&
-		 (bxmax || bzmin || (SquareIsBlocked(moveData, xmax + 1, zmin - 1) & BLOCK_STRUCTURE)) &&
-		 (bxmax || bzmax || (SquareIsBlocked(moveData, xmax + 1, zmax + 1) & BLOCK_STRUCTURE)));
+
+	return false;
 }
 
 /* Optimized function to check if the square at the given position has a structure block, 
    provided that the square at (xSquare - 1, zSquare) did not have a structure block */
 bool CMoveMath::IsBlockedStructureXmax(const MoveData& moveData, int xSquare, int zSquare) const
 {
-	const int xmin = xSquare - moveData.xh, xmax = xSquare + moveData.xh;
-	const int zmin = zSquare - moveData.zh, zmax = zSquare + moveData.zh;
+	const int xmin = xSquare - moveData.xsizeh, xmax = xSquare + moveData.xsizeh;
+	const int zmin = zSquare - moveData.zsizeh, zmax = zSquare + moveData.zsizeh;
 	const int xstep = 2, zstep = 2;
 	// (footprints are point-symmetric around <xSquare, zSquare>)
 	for (int z = zmin; z <= zmax; z += zstep) {
 		if (SquareIsBlocked(moveData, xmax, z) & BLOCK_STRUCTURE)
 			return true;
 	}
-	if (moveData.zSizeOdd)
-		return false;
-	bool bmin = (SquareIsBlocked(moveData, xmax, zmin - 1) & BLOCK_STRUCTURE) != 0;
-	bool bmax = (SquareIsBlocked(moveData, xmax, zmax + 1) & BLOCK_STRUCTURE) != 0;
-	if (!bmin && !bmax)
-		return false;
-	if (bmin && bmax)
-		return true;
-	if (bmax) {
-		if (!moveData.xSizeOdd && (SquareIsBlocked(moveData, xmin - 1, zmin - 1) & BLOCK_STRUCTURE))
-			return true;
-		for (int x = xmin; x < xmax; x += xstep) {
-			if (SquareIsBlocked(moveData, x, zmin - 1) & BLOCK_STRUCTURE)
-				return true;
-		}
-	}
-	else {
-		if (!moveData.xSizeOdd && (SquareIsBlocked(moveData, xmin - 1, zmax + 1) & BLOCK_STRUCTURE))
-			return true;
-		for (int x = xmin; x < xmax; x += xstep) {
-			if (SquareIsBlocked(moveData, x, zmax + 1) & BLOCK_STRUCTURE)
-				return true;
-		}
-	}
+
 	return false;
 }
 
@@ -223,38 +128,15 @@ bool CMoveMath::IsBlockedStructureXmax(const MoveData& moveData, int xSquare, in
    provided that the square at (xSquare, zSquare - 1) did not have a structure block */
 bool CMoveMath::IsBlockedStructureZmax(const MoveData& moveData, int xSquare, int zSquare) const
 {
-	const int xmin = xSquare - moveData.xh, xmax = xSquare + moveData.xh;
-	const int zmin = zSquare - moveData.zh, zmax = zSquare + moveData.zh;
+	const int xmin = xSquare - moveData.xsizeh, xmax = xSquare + moveData.xsizeh;
+	const int zmin = zSquare - moveData.zsizeh, zmax = zSquare + moveData.zsizeh;
 	const int xstep = 2, zstep = 2;
 	// (footprints are point-symmetric around <xSquare, zSquare>)
 	for (int x = xmin; x <= xmax; x += xstep) {
 		if (SquareIsBlocked(moveData, x, zmax) & BLOCK_STRUCTURE)
 			return true;
 	}
-	if (moveData.xSizeOdd)
-		return false;
-	bool bmin = (SquareIsBlocked(moveData, xmin - 1, zmax) & BLOCK_STRUCTURE) != 0;
-	bool bmax = (SquareIsBlocked(moveData, xmax + 1, zmax) & BLOCK_STRUCTURE) != 0;
-	if (!bmin && !bmax)
-		return false;
-	if (bmin && bmax)
-		return true;
-	if (bmax) {
-		if (!moveData.zSizeOdd && (SquareIsBlocked(moveData, xmin - 1, zmin - 1) & BLOCK_STRUCTURE))
-			return true;
-		for (int z = zmin; z < zmax; z += zstep) {
-			if (SquareIsBlocked(moveData, xmin - 1, z) & BLOCK_STRUCTURE)
-				return true;
-		}
-	}
-	else {
-		if (!moveData.zSizeOdd && (SquareIsBlocked(moveData, xmax + 1, zmin - 1) & BLOCK_STRUCTURE))
-			return true;
-		for (int z = zmin; z < zmax; z += zstep) {
-			if (SquareIsBlocked(moveData, xmax + 1, z) & BLOCK_STRUCTURE)
-				return true;
-		}
-	}
+
 	return false;
 }
 
