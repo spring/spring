@@ -1125,19 +1125,27 @@ void CGroundMoveType::GetNextWayPoint()
 		}
 	}
 
-	if (nextWaypoint.x != -1.0f && (nextWaypoint - waypoint).SqLength2D() > 0.1f) {
+
+	if (waypoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
+		// trigger Arrived on the next Update
+		haveFinalWaypoint = true;
+	}
+
+	haveFinalWaypoint = haveFinalWaypoint || (nextWaypoint.x == -1.0f);
+
+	if (haveFinalWaypoint) {
+		waypoint = goalPos;
+		nextWaypoint = goalPos;
+		return;
+	}
+
+	if ((nextWaypoint - waypoint).SqLength2D() > 0.1f) {
 		waypoint = nextWaypoint;
 		nextWaypoint = pathManager->NextWayPoint(pathId, waypoint, 1.25f * SQUARE_SIZE, 0, owner->id);
 
 		if (waypoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
 			waypoint = goalPos;
 		}
-	} else {
-		// trigger Arrived on the next Update
-		haveFinalWaypoint = true;
-
-		waypoint = goalPos;
-		nextWaypoint = goalPos;
 	}
 }
 
