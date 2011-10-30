@@ -21,6 +21,9 @@
 extern bool gmlShareLists; // use glShareLists to allow opengl calls in sim thread, unfortunately this may reduce the FPS a bit
 extern int gmlMaxServerThreadNum;
 extern int gmlNoGLThreadNum;
+extern volatile bool gmlMultiThreadSim;
+extern volatile bool gmlStartSim;
+extern volatile bool gmlKeepRunning;
 
 #define GML_MUTEX_PROFILE 0 // detailed profiling of specific mutex
 extern const char *gmlProfMutex;
@@ -201,7 +204,6 @@ inline unsigned gmlGetTicks() {
 
 #if GML_CALL_DEBUG
 #define GML_EXPGEN_CHECK() \
-	extern volatile int gmlMultiThreadSim, gmlStartSim;\
 	if(gmlThreadNumber != GML_SIM_THREAD_NUM && gmlMultiThreadSim && gmlStartSim) {\
 		lua_State *currentLuaState = gmlCurrentLuaStates[gmlThreadNumber];\
 		LOG_SL("GML", L_ERROR, "Draw thread created ExpGenSpawnable (%s)", GML_CURRENT_LUA(currentLuaState));\

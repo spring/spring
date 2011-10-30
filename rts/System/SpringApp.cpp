@@ -888,8 +888,7 @@ void SpringApp::ParseCmdLine()
 	gmlThreadCountOverride = configHandler->GetInt("HardwareThreadCount");
 	gmlThreadCount=GML_CPU_COUNT;
 #if GML_ENABLE_SIM
-	extern volatile int gmlMultiThreadSim;
-	gmlMultiThreadSim=configHandler->GetInt("MultiThreadSim");
+	gmlMultiThreadSim = configHandler->GetInt("MultiThreadSim");
 #endif
 #endif
 }
@@ -991,9 +990,6 @@ bool SpringApp::UpdateSim(CGameController *ac)
 }
 
 #if defined(USE_GML) && GML_ENABLE_SIM
-volatile int gmlMultiThreadSim;
-volatile int gmlStartSim;
-volatile int SpringApp::gmlKeepRunning = 0;
 
 int SpringApp::Sim()
 {
@@ -1056,7 +1052,7 @@ int SpringApp::Update()
 			if (!gs->frameNum) {
 				ret = UpdateSim(activeController);
 				if (gs->frameNum) {
-					gmlStartSim = 1;
+					gmlStartSim = true;
 				}
 			}
 		} else {
@@ -1146,8 +1142,8 @@ int SpringApp::Run(int argc, char *argv[])
 #ifdef USE_GML
 	gmlProcessor = new gmlClientServer<void, int, CUnit*>;
 #	if GML_ENABLE_SIM
-	gmlKeepRunning = 1;
-	gmlStartSim = 0;
+	gmlKeepRunning = true;
+	gmlStartSim = false;
 
 	if (gmlShareLists)
 		ogc = new COffscreenGLContext();
@@ -1192,7 +1188,7 @@ void SpringApp::Shutdown()
 #ifdef USE_GML
 	if(gmlProcessor) {
 #if GML_ENABLE_SIM
-		gmlKeepRunning=0; // wait for sim to finish
+		gmlKeepRunning = false; // wait for sim to finish
 		while(!gmlProcessor->PumpAux())
 			boost::thread::yield();
 		if(gmlShareLists)
