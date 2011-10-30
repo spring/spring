@@ -556,10 +556,10 @@ unsigned int QTPFS::PathManager::QueueSearch(
 
 		// start re-request from the current point
 		// along the path, not the original source
-		// FIXME: this point can now have +inf cost
+		// (oldPath->GetSourcePoint())
 		newPath->AllocPoints(2);
-		// newPath->SetSourcePoint(oldPath->GetPoint(oldPath->GetPointIdx() - 1));
-		newPath->SetSourcePoint(oldPath->GetSourcePoint());
+		newPath->SetObjectPoint(oldPath->GetObjectPoint());
+		newPath->SetSourcePoint(oldPath->GetObjectPoint());
 		newPath->SetTargetPoint(oldPath->GetTargetPoint());
 		newSearch->SetID(oldPath->GetID());
 		newSearch->SetTeam(teamHandler->ActiveTeams());
@@ -572,6 +572,7 @@ unsigned int QTPFS::PathManager::QueueSearch(
 		newPath->SetRadius(radius);
 		newPath->SetSynced(synced);
 		newPath->AllocPoints(2);
+		newPath->SetObjectPoint((object != NULL)? object->pos: sourcePoint);
 		newPath->SetSourcePoint(sourcePoint);
 		newPath->SetTargetPoint(targetPoint);
 		newSearch->SetID(newPath->GetID());
@@ -638,25 +639,38 @@ float3 QTPFS::PathManager::NextWayPoint(
 
 	const float radiusSq = std::max(float(SQUARE_SIZE * SQUARE_SIZE), radius * radius);
 
-	unsigned int curPointIdx =  0;
-	unsigned int nxtPointIdx = -1U;
+	unsigned int curPointID =  0;
+	unsigned int nxtPointID = -1U;
 
 	// find the point furthest along the
 	// path within distance <rad> of <pos>
-	for (unsigned int i = livePath->GetPointIdx(); i < (livePath->NumPoints() - 1); i++) {
+	for (unsigned int i = livePath->GetPointID(); i < (livePath->NumPoints() - 1); i++) {
 		if ((curPoint - livePath->GetPoint(i)).SqLength() < radiusSq) {
-			curPointIdx = i;
-			nxtPointIdx = i + 1;
+			curPointID = i;
+			nxtPointID = i + 1;
 		}
 	}
 
-	if (nxtPointIdx != -1U) {
+	if (nxtPointID != -1U) {
 		// if close enough to at least one <curPoint>,
 		// switch to <nxtPoint> immediately after it
-		livePath->SetPointIdx(nxtPointIdx);
+		livePath->SetPointID(nxtPointID);
 	}
 
-	return (livePath->GetPoint(livePath->GetPointIdx()));
+	return (livePath->GetPoint(livePath->GetPointID()));
+}
+
+void QTPFS::PathManager::UpdatePath(const CSolidObject* owner, unsigned int pathID) {
+	const PathTypeMapIt pathTypeIt = pathTypes.find(pathID);
+
+	if (pathTypeIt != pathTypes.end()) {
+		PathCache& pathCache = pathCaches[pathTypeIt->second];
+		IPath* livePath = pathCache.GetLivePath(pathID);
+
+		if (livePath->GetID() != 0) {
+			livePath->SetObjectPoint(owner->pos);
+		}
+	}
 }
 
 void QTPFS::PathManager::DeletePath(unsigned int pathID) {

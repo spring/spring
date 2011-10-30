@@ -27,6 +27,7 @@ namespace QTPFS {
 
 		IPath* GetLivePath(unsigned int pathID);
 		IPath* GetTempPath(unsigned int pathID);
+		IPath* GetDeadPath(unsigned int pathID);
 
 		void AddTempPath(IPath* path);
 		void AddLivePath(IPath* path);
