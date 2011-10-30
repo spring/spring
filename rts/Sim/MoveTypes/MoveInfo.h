@@ -24,6 +24,11 @@ struct MoveData {
 
 		xsize           = unitDefMD? unitDefMD->xsize:           0;
 		zsize           = unitDefMD? unitDefMD->zsize:           0;
+
+		// precalculated data for MoveMath
+		xsizeh          = xsize >> 1;
+		zsizeh          = zsize >> 1;
+
 		depth           = unitDefMD? unitDefMD->depth:           0.0f;
 		maxSlope        = unitDefMD? unitDefMD->maxSlope:        1.0f;
 		slopeMod        = unitDefMD? unitDefMD->slopeMod:        0.0f;
@@ -42,11 +47,6 @@ struct MoveData {
 
 		moveMath        = unitDefMD? unitDefMD->moveMath:        NULL;
 		tempOwner       = NULL;
-
-		xSizeOdd = (xsize & 1) != 0;
-		zSizeOdd = (zsize & 1) != 0;
-		xh = (xsize - 1) >> 1;
-		zh = (zsize - 1) >> 1;
 	}
 
 	enum MoveType {
@@ -77,8 +77,9 @@ struct MoveData {
 	TerrainClass terrainClass;
 
 	/// of the footprint
-	int xsize;
-	int zsize;
+	int xsize, xsizeh;
+	int zsize, zsizeh;
+
 	/// minWaterDepth for ships, maxWaterDepth otherwise
 	float depth;
 	float maxSlope;
@@ -104,12 +105,6 @@ struct MoveData {
 
 	CMoveMath* moveMath;
 	CSolidObject* tempOwner;
-
-	// precalculated data for pathestimator
-	bool xSizeOdd;
-	bool zSizeOdd;
-	int xh;
-	int zh;
 };
 
 

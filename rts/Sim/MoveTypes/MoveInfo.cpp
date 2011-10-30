@@ -179,6 +179,8 @@ CMoveInfo::CMoveInfo()
 		md->zsize = zsize * scale;
 		md->xsize -= ((md->xsize & 1)? 0: 1);
 		md->zsize -= ((md->zsize & 1)? 0: 1);
+		assert((md->xsize & 1) == 1);
+		assert((md->zsize & 1) == 1);
 		md->slopeMod = moveTable.GetFloat("slopeMod", 4.0f / (md->maxSlope + 0.001f));
 
 		const unsigned int checksum =
