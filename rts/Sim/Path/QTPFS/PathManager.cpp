@@ -416,7 +416,7 @@ void QTPFS::PathManager::Update() {
 		return;
 	}
 	if (maxPathTypeUpdate >= nodeLayers.size()) {
-		maxPathTypeUpdate = nodeLayers.size() - 1;
+		maxPathTypeUpdate = nodeLayers.size();
 	}
 }
 
