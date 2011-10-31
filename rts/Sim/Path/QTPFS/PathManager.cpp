@@ -26,12 +26,10 @@ namespace QTPFS {
 		PMLoadScreen(): loading(true) {}
 
 		void SetLoading(bool b) { loading = b; }
-
 		void SetLoadMessage(const std::string& msg) {
 			boost::mutex::scoped_lock loadMessageLock(loadMessageMutex);
 			loadMessages.push_back(msg);
 		}
-
 		void SetLoadMessages() {
 			while (loading) {
 				boost::this_thread::sleep(boost::posix_time::millisec(50));
