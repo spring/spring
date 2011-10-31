@@ -20,6 +20,7 @@ void QTPFS::INode::SetPathCost(unsigned int type, float cost) {
 		case NODE_PATH_COST_F: { fCost = cost; return; } break;
 		case NODE_PATH_COST_G: { gCost = cost; return; } break;
 		case NODE_PATH_COST_H: { hCost = cost; return; } break;
+		case NODE_PATH_COST_M: { mCost = cost; return; } break;
 	}
 
 	assert(false);
@@ -30,6 +31,7 @@ float QTPFS::INode::GetPathCost(unsigned int type) const {
 		case NODE_PATH_COST_F: { return fCost; } break;
 		case NODE_PATH_COST_G: { return gCost; } break;
 		case NODE_PATH_COST_H: { return hCost; } break;
+		case NODE_PATH_COST_M: { return mCost; } break;
 	}
 
 	assert(false);

@@ -67,10 +67,7 @@ bool QTPFS::PathSearch::Execute(
 	if (!haveFullPath) {
 		openNodes.reset();
 		openNodes.push(srcNode);
-		srcNode->SetPrevNode(NULL);
-		srcNode->SetPathCost(NODE_PATH_COST_G, 0.0f);
-		srcNode->SetPathCost(NODE_PATH_COST_H, (tgtPoint - srcPoint).Length() * hCostMult);
-		srcNode->SetPathCost(NODE_PATH_COST_F, (srcNode->GetPathCost(NODE_PATH_COST_G) + srcNode->GetPathCost(NODE_PATH_COST_H)));
+		UpdateNode(srcNode, NULL, 0.0f, (tgtPoint - srcPoint).Length() * hCostMult, srcNode->GetMoveCost());
 	}
 
 	#ifdef QTPFS_TRACE_PATH_SEARCHES
@@ -91,7 +88,13 @@ bool QTPFS::PathSearch::Execute(
 
 
 
-void QTPFS::PathSearch::UpdateNode(INode* nxt, INode* cur, float gCost) {
+void QTPFS::PathSearch::UpdateNode(
+	INode* nxt,
+	INode* cur,
+	float gCost,
+	float hCost,
+	float mCost
+) {
 	// NOTE:
 	//     the heuristic must never over-estimate the distance,
 	//     but this is *impossible* to achieve on a non-regular
@@ -102,8 +105,13 @@ void QTPFS::PathSearch::UpdateNode(INode* nxt, INode* cur, float gCost) {
 	nxt->SetSearchState(searchState | NODE_STATE_OPEN);
 	nxt->SetPrevNode(cur);
 	nxt->SetPathCost(NODE_PATH_COST_G, gCost);
-	nxt->SetPathCost(NODE_PATH_COST_H, (tgtPoint - nxtPoint).Length() * hCostMult);
-	nxt->SetPathCost(NODE_PATH_COST_F, (nxt->GetPathCost(NODE_PATH_COST_G) + nxt->GetPathCost(NODE_PATH_COST_H)));
+	nxt->SetPathCost(NODE_PATH_COST_H, hCost * hCostMult);
+	nxt->SetPathCost(NODE_PATH_COST_F, gCost + (hCost * hCostMult));
+	nxt->SetPathCost(NODE_PATH_COST_M, mCost);
+
+	#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
+	nxt->SetNumPrevNodes((cur != NULL)? (cur->GetNumPrevNodes() + 1): 0);
+	#endif
 }
 
 void QTPFS::PathSearch::IterateSearch(
@@ -147,7 +155,8 @@ void QTPFS::PathSearch::IterateSearch(
 		//     from <curPoint> (initialized to sourcePoint) to the middle of the edge
 		//     shared between <curNode> and <nxtNode>
 		//     (each individual path-segment is weighted by the average move-cost of
-		//     the node it crosses, UNLIKE the goal-heuristic)
+		//     the node it crosses; the heuristic is weighted by the average move-cost
+		//     of all nodes encountered along partial path thus far)
 		// NOTE:
 		//     heading for the MIDDLE of the shared edge is not always the best option
 		//     we deal with this sub-optimality later (in SmoothPath if it is enabled)
@@ -156,6 +165,12 @@ void QTPFS::PathSearch::IterateSearch(
 		//     this happens when a path takes a "detour" through a corner neighbor of
 		//     srcNode if the shared corner vertex is closer to the goal position than
 		//     the mid-point on the edge between srcNode and tgtNode
+		// NOTE:
+		//     H needs to be of the same order as G, otherwise the search reduces to
+		//     Dijkstra (if G dominates H) or becomes inadmissable (if H dominates G)
+		//     in the first case we would explore many more nodes than necessary (CPU
+		//     nightmare), while in the second we would get low-quality paths (player
+		//     nightmare)
 		#ifdef QTPFS_COPY_NEIGHBOR_NODES
 		nxtNode = ngbNodes[i];
 		nxtPoint = curNode->GetNeighborEdgeMidPoint(nxtNode);
@@ -169,14 +184,21 @@ void QTPFS::PathSearch::IterateSearch(
 		const bool isCurrent = (nxtNode->GetSearchState() >= searchState);
 		const bool isClosed = ((nxtNode->GetSearchState() & 1) == NODE_STATE_CLOSED);
 
-		const float nCost = curNode->GetMoveCost() * (nxtPoint - curPoint).Length();
-		const float gCost = curNode->GetPathCost(NODE_PATH_COST_G) + nCost;
+		#ifdef QTPFS_WEIGHTED_HEURISTIC_COST
+		const float hWeight = curNode->GetPathCost(NODE_PATH_COST_M) / (curNode->GetNumPrevNodes() + 1);
+		#else
+		const float hWeight = 2.0f;
+		#endif
+
+		const float mCost = curNode->GetPathCost(NODE_PATH_COST_M) + curNode->GetMoveCost();
+		const float gCost = curNode->GetPathCost(NODE_PATH_COST_G) + curNode->GetMoveCost() * (nxtPoint - curPoint).Length();
+		const float hCost = (tgtPoint - nxtPoint).Length() * hWeight;
 
 		if (!isCurrent) {
 			// at this point, we know that <nxtNode> is either
 			// not from the current search (!current) or (if it
 			// is) already placed in the open queue
-			UpdateNode(nxtNode, curNode, gCost);
+			UpdateNode(nxtNode, curNode, gCost, hCost, mCost);
 
 			#ifdef QTPFS_TRACE_PATH_SEARCHES
 			iter->AddPushedNodeIdx(nxtNode->zmin() * gs->mapx + nxtNode->xmin());
@@ -195,7 +217,7 @@ void QTPFS::PathSearch::IterateSearch(
 		if (gCost >= nxtNode->GetPathCost(NODE_PATH_COST_G))
 			continue;
 
-		UpdateNode(nxtNode, curNode, gCost);
+		UpdateNode(nxtNode, curNode, gCost, hCost, mCost);
 
 		// nxtNode was already marked open, restore ordering
 		// (changing the f-cost of an OPEN node messes up the
