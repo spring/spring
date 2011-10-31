@@ -464,13 +464,17 @@ void QTPFS::QTNode::UpdateMoveCost(
 	speedModAvg = speedModSum / (xsize() * zsize());
 	moveCostAvg = (speedModAvg <= 0.001f)? QTPFS_POSITIVE_INFINITY: (1.0f / speedModAvg);
 
+	assert(moveCostAvg > 0.0f);
+
+	if (numClosedSquares == 0)
+		return;
+	if (numDifBinSquares > 0 && CanSplit())
+		return;
+
 	// if we are not going to tesselate this node further
 	// and there is at least one impassable square inside
 	// it, make sure the pathfinder will not pick us
-	if (((numDifBinSquares == 0) || !CanSplit()) && (numClosedSquares > 0))
-		moveCostAvg = QTPFS_POSITIVE_INFINITY;
-
-	assert(moveCostAvg > 0.0f);
+	moveCostAvg = QTPFS_POSITIVE_INFINITY;
 }
 
 

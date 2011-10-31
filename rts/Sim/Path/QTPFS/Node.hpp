@@ -26,9 +26,6 @@ namespace QTPFS {
 		bool operator <= (const INode* n) const { return (fCost <= n->fCost); }
 		bool operator >= (const INode* n) const { return (fCost >= n->fCost); }
 
-		// NOTE:
-		//     not pure virtuals, because INode is used as comparator in
-		//     std::pqueue and STL does not allow abstract types for that
 		virtual void Serialize(std::fstream&, bool) = 0;
 		virtual unsigned int GetNeighbors(const std::vector<INode*>&, std::vector<INode*>&) = 0;
 		virtual const std::vector<INode*>& GetNeighbors(const std::vector<INode*>& v) = 0;
