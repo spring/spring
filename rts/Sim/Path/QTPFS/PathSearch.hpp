@@ -128,7 +128,13 @@ namespace QTPFS {
 			);
 		void TracePath(IPath* path);
 		void SmoothPath(IPath* path);
-		void UpdateNode(INode* nxtNode, INode* curNode, float gCost);
+		void UpdateNode(
+			INode* nxtNode,
+			INode* curNode,
+			float gCost,
+			float hCost,
+			float mCost
+		);
 		void UpdateQueue();
 
 		NodeLayer* nodeLayer;
@@ -140,8 +146,8 @@ namespace QTPFS {
 		INode *srcNode, *tgtNode;
 		INode *curNode, *nxtNode;
 
-		// rely on INode::operator() to sort the INode*'s by increasing f-cost
 		// global queue: allocated once, re-used by all searches without clear()'s
+		// this relies on INode::operator< to sort the INode*'s by increasing f-cost
 		static binary_heap<INode*> openNodes;
 
 		bool haveOpenNode;
