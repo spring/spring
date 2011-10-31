@@ -57,6 +57,8 @@ namespace QTPFS {
 		static const float MAX_SPEEDMOD_VALUE = 2.0f;
 
 	private:
+		void Load();
+
 		boost::uint64_t GetMemFootPrint() const;
 
 		typedef void (PathManager::*MemberFunc)(
