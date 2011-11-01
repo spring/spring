@@ -534,11 +534,15 @@ void CUnit::PostInit(const CUnit* builder)
 		commandAI->GiveCommand(c);
 	}
 
+	// Lua might call SetUnitHealth within UnitCreated
+	// and trigger FinishedBuilding before we get to it
+	const bool preBeingBuilt = beingBuilt;
+
 	// these must precede UnitFinished from FinishedBuilding
 	eventHandler.UnitCreated(this, builder);
 	eoh->UnitCreated(*this, builder);
 
-	if (!beingBuilt) {
+	if (!preBeingBuilt && !beingBuilt) {
 		// skip past the gradual build-progression
 		FinishedBuilding(true);
 	}
