@@ -654,73 +654,6 @@ unsigned int QTPFS::PathManager::QueueSearch(
 
 
 
-float3 QTPFS::PathManager::NextWayPoint(
-	unsigned int pathID,
-	float3 curPoint,
-	float radius,
-	int, // numRetries
-	int, // ownerID
-	bool // synced
-) {
-	SCOPED_TIMER("PathManager::NextWayPoint");
-
-	const PathTypeMap::const_iterator pathTypeIt = pathTypes.find(pathID);
-
-	// dangling ID after re-request failure or regular deletion
-	if (pathTypeIt == pathTypes.end())
-		return curPoint;
-
-	IPath* tempPath = pathCaches[pathTypeIt->second].GetTempPath(pathID);
-	IPath* livePath = pathCaches[pathTypeIt->second].GetLivePath(pathID);
-
-	if (tempPath->GetID() != 0 || livePath->GetID() == 0) {
-		// path-request has not yet been processed (so ID still maps to
-		// a temporary path); just set the unit off toward its target
-		//
-		// alternatively, the request WAS processed but then immediately
-		// undone by a TerrainChange --> MarkDeadPaths in the same frame
-		// as NextWayPoint (so pathID is only in deadPaths)
-		//
-		// <curPoint> is initially the position of the unit requesting a
-		// path, but later changes to the subsequent values returned here
-		//
-		// NOTE:
-		//     if the returned point P is too far away, then a unit U will
-		//     never switch to its live-path even after it becomes available
-		//     (because NextWayPoint is not called again until U gets close
-		//     to P), so always keep it a fixed small distance in front
-		//
-		//     if the queued search fails, the next call to us should make
-		//     the unit stop
-		const float3& sourcePoint = curPoint;
-		const float3& targetPoint = tempPath->GetTargetPoint();
-		const float3  targetDirec = (targetPoint - sourcePoint).SafeNormalize();
-		return (sourcePoint + targetDirec * SQUARE_SIZE);
-	}
-
-	const float radiusSq = std::max(float(SQUARE_SIZE * SQUARE_SIZE), radius * radius);
-
-	unsigned int curPointID =  0;
-	unsigned int nxtPointID = -1U;
-
-	// find the point furthest along the
-	// path within distance <rad> of <pos>
-	for (unsigned int i = livePath->GetPointID(); i < (livePath->NumPoints() - 1); i++) {
-		if ((curPoint - livePath->GetPoint(i)).SqLength() < radiusSq) {
-			curPointID = i;
-			nxtPointID = i + 1;
-		}
-	}
-
-	if (nxtPointID != -1U) {
-		// if close enough to at least one <curPoint>,
-		// switch to <nxtPoint> immediately after it
-		livePath->SetPointID(nxtPointID);
-	}
-
-	return (livePath->GetPoint(livePath->GetPointID()));
-}
-
 void QTPFS::PathManager::UpdatePath(const CSolidObject* owner, unsigned int pathID) {
 	const PathTypeMapIt pathTypeIt = pathTypes.find(pathID);
 
@@ -750,8 +683,6 @@ void QTPFS::PathManager::DeletePath(unsigned int pathID) {
 	}
 }
 
-
-
 unsigned int QTPFS::PathManager::RequestPath(
 	const MoveData* moveData,
 	const float3& sourcePoint,
@@ -762,5 +693,101 @@ unsigned int QTPFS::PathManager::RequestPath(
 {
 	SCOPED_TIMER("PathManager::RequestPath");
 	return (QueueSearch(NULL, object, moveData, sourcePoint, targetPoint, radius, synced));
+}
+
+
+
+float3 QTPFS::PathManager::NextWayPoint(
+	unsigned int pathID,
+	float3 point,
+	float radius,
+	int, // numRetries
+	int, // ownerID
+	bool // synced
+) {
+	SCOPED_TIMER("PathManager::NextWayPoint");
+
+	const PathTypeMap::const_iterator pathTypeIt = pathTypes.find(pathID);
+
+	// dangling ID after re-request failure or regular deletion
+	if (pathTypeIt == pathTypes.end())
+		return point;
+
+	IPath* tempPath = pathCaches[pathTypeIt->second].GetTempPath(pathID);
+	IPath* livePath = pathCaches[pathTypeIt->second].GetLivePath(pathID);
+
+	if (tempPath->GetID() != 0 || livePath->GetID() == 0) {
+		// path-request has not yet been processed (so ID still maps to
+		// a temporary path); just set the unit off toward its target
+		//
+		// alternatively, the request WAS processed but then immediately
+		// undone by a TerrainChange --> MarkDeadPaths in the same frame
+		// as NextWayPoint (so pathID is only in deadPaths)
+		//
+		// <curPoint> is initially the position of the unit requesting a
+		// path, but later changes to the subsequent values returned here
+		//
+		// NOTE:
+		//     if the returned point P is too far away, then a unit U will
+		//     never switch to its live-path even after it becomes available
+		//     (because NextWayPoint is not called again until U gets close
+		//     to P), so always keep it a fixed small distance in front
+		//
+		//     if the queued search fails, the next call to us should make
+		//     the unit stop
+		const float3& sourcePoint = point;
+		const float3& targetPoint = tempPath->GetTargetPoint();
+		const float3  targetDirec = (targetPoint - sourcePoint).SafeNormalize();
+		return (sourcePoint + targetDirec * SQUARE_SIZE);
+	}
+
+	const float radiusSq = std::max(float(SQUARE_SIZE * SQUARE_SIZE), radius * radius);
+
+	unsigned int curPointID =  0;
+	unsigned int nxtPointID = -1U;
+
+	// find the point furthest along the
+	// path within distance <rad> of <pos>
+	for (unsigned int i = livePath->GetPointID(); i < (livePath->NumPoints() - 1); i++) {
+		if ((point - livePath->GetPoint(i)).SqLength() < radiusSq) {
+			curPointID = i;
+			nxtPointID = i + 1;
+		}
+	}
+
+	if (nxtPointID != -1U) {
+		// if close enough to at least one <curPoint>,
+		// switch to <nxtPoint> immediately after it
+		livePath->SetPointID(nxtPointID);
+	}
+
+	return (livePath->GetPoint(livePath->GetPointID()));
+}
+
+
+
+void QTPFS::PathManager::GetEstimatedPath(
+	unsigned int pathID,
+	std::vector<float3>& points,
+	std::vector<int>& starts
+) const {
+	const PathTypeMap::const_iterator pathTypeIt = pathTypes.find(pathID);
+
+	if (pathTypeIt == pathTypes.end())
+		return;
+
+	const PathCache& cache = pathCaches[pathTypeIt->second];
+	const IPath* path = cache.GetLivePath(pathID);
+
+	if (path->GetID() == 0)
+		return;
+
+	// maintain compatibility with the tri-layer legacy PFS
+	points.resize(path->NumPoints());
+	starts.resize(3, 0);
+
+	for (unsigned int n = 0; n < path->NumPoints(); n++) {
+		points[n] = path->GetPoint(n);
+	}
 }
 
