@@ -112,6 +112,7 @@ namespace QTPFS {
 				points[n] = p.GetPoint(n);
 			}
 		}
+
 		const std::vector<float3>& GetPoints() const { return points; }
 
 	private:

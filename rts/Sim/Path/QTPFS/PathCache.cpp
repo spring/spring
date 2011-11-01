@@ -6,42 +6,39 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Rectangle.h"
 
-QTPFS::IPath* QTPFS::PathCache::GetLivePath(unsigned int pathID) {
-	static IPath livePath; // dummy
+const QTPFS::IPath* QTPFS::PathCache::GetPath(unsigned int pathID, unsigned int pathType) const {
+	static IPath path; // dummy
+	const PathMap* map;
 
-	PathMapIt it = livePaths.find(pathID);
-
-	if (it != livePaths.end()) {
-		numCacheHits += 1;
-		return (it->second);
+	switch (pathType) {
+		case PATH_TYPE_TEMP: { map = &tempPaths; } break;
+		case PATH_TYPE_LIVE: { map = &livePaths; } break;
+		case PATH_TYPE_DEAD: { map = &deadPaths; } break;
+		default:             { map =       NULL; } break;
 	}
 
-	numCacheMisses += 1;
-	return &livePath;
+	if (map == NULL)
+		return &path;
+
+	const PathMap::const_iterator it = map->find(pathID);
+
+	if (it != map->end()) {
+		return it->second;
+	}
+
+	return &path;
 }
 
-QTPFS::IPath* QTPFS::PathCache::GetTempPath(unsigned int pathID) {
-	static IPath tempPath; // dummy
+QTPFS::IPath* QTPFS::PathCache::GetPath(unsigned int pathID, unsigned int pathType) {
+	IPath* path = const_cast<IPath*>(GetPath(pathID, pathType));
 
-	PathMapIt it = tempPaths.find(pathID);
-
-	if (it != tempPaths.end()) {
-		return (it->second);
+	if (path->GetID() != 0) {
+		numCacheHits[pathType] += 1;
+	} else {
+		numCacheMisses[pathType] += 1;
 	}
 
-	return &tempPath;
-}
-
-QTPFS::IPath* QTPFS::PathCache::GetDeadPath(unsigned int pathID) {
-	static IPath deadPath; // dummy
-
-	PathMapIt it = deadPaths.find(pathID);
-
-	if (it != deadPaths.end()) {
-		return (it->second);
-	}
-
-	return &deadPath;
+	return path;
 }
 
 
@@ -112,7 +109,7 @@ bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
 	//
 	std::list<PathMapIt> livePathIts;
 
-	for (PathMap::iterator it = livePaths.begin(); it != livePaths.end(); ++it) {
+	for (PathMapIt it = livePaths.begin(); it != livePaths.end(); ++it) {
 		IPath* path = it->second;
 
 		const float3& pathMins = path->GetBoundingBoxMins();

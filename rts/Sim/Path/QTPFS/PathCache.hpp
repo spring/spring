@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "PathDefines.hpp"
+#include "PathEnums.hpp"
 #include "Path.hpp"
 
 struct SRectangle;
@@ -15,8 +16,10 @@ struct SRectangle;
 namespace QTPFS {
 	struct PathCache {
 		PathCache() {
-			numCacheHits = 0;
-			numCacheMisses = 0;
+			for (unsigned int n = 0; n <= PATH_TYPE_DEAD; n++) {
+				numCacheHits[n] = 0;
+				numCacheMisses[n] = 0;
+			}
 		}
 
 		typedef std::map<unsigned int, IPath*> PathMap;
@@ -25,9 +28,12 @@ namespace QTPFS {
 		bool MarkDeadPaths(const SRectangle& r);
 		void KillDeadPaths();
 
-		IPath* GetLivePath(unsigned int pathID);
-		IPath* GetTempPath(unsigned int pathID);
-		IPath* GetDeadPath(unsigned int pathID);
+		const IPath* GetTempPath(unsigned int pathID) const { return (GetPath(pathID, PATH_TYPE_TEMP)); }
+		const IPath* GetLivePath(unsigned int pathID) const { return (GetPath(pathID, PATH_TYPE_LIVE)); }
+		const IPath* GetDeadPath(unsigned int pathID) const { return (GetPath(pathID, PATH_TYPE_DEAD)); }
+		      IPath* GetTempPath(unsigned int pathID)       { return (GetPath(pathID, PATH_TYPE_TEMP)); }
+		      IPath* GetLivePath(unsigned int pathID)       { return (GetPath(pathID, PATH_TYPE_LIVE)); }
+		      IPath* GetDeadPath(unsigned int pathID)       { return (GetPath(pathID, PATH_TYPE_DEAD)); }
 
 		void AddTempPath(IPath* path);
 		void AddLivePath(IPath* path);
@@ -39,12 +45,15 @@ namespace QTPFS {
 		const PathMap& GetDeadPaths() const { return deadPaths; }
 
 	private:
+		const IPath* GetPath(unsigned int pathID, unsigned int pathType) const;
+		      IPath* GetPath(unsigned int pathID, unsigned int pathType);
+
 		PathMap tempPaths;
 		PathMap livePaths;
 		PathMap deadPaths;
 
-		unsigned int numCacheHits;
-		unsigned int numCacheMisses;
+		unsigned int numCacheHits[PATH_TYPE_DEAD + 1];
+		unsigned int numCacheMisses[PATH_TYPE_DEAD + 1];
 	};
 };
 

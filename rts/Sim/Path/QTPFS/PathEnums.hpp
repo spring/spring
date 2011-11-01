@@ -41,6 +41,11 @@ namespace QTPFS {
 		PATH_SEARCH_ASTAR    = 0,
 		PATH_SEARCH_DIJKSTRA = 1,
 	};
+	enum {
+		PATH_TYPE_TEMP = 0,
+		PATH_TYPE_LIVE = 1,
+		PATH_TYPE_DEAD = 2,
+	};
 };
 
 #endif
