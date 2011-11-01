@@ -55,6 +55,7 @@ Engine / bugfixes:
  - fix multithreaded crash in lua material rendering
  - fix hang after crash
  - fix memory corruption in bitmap handling
+ - fix a certain /take exploit
 
 Engine / misc defs:
  - replace UnitDef::pieceTrailCEG* by a Lua subtable of sfxTypes
