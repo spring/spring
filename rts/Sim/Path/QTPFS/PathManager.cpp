@@ -27,29 +27,35 @@ namespace QTPFS {
 		~PMLoadScreen() { assert(loadMessages.empty()); }
 
 		void SetLoading(bool b) { loading = b; }
-		void SetLoadMessage(const std::string& msg) {
+		void AddLoadMessage(const std::string& msg) {
 			boost::mutex::scoped_lock loadMessageLock(loadMessageMutex);
 			loadMessages.push_back(msg);
 		}
+		void SetLoadMessage(const std::string& msg) {
+			#ifdef QTPFS_NO_LOADSCREEN
+			LOG("%s", msg.c_str());
+			#else
+			loadscreen->SetLoadMessage(msg);
+			#endif
+		}
 		void SetLoadMessages() {
+			boost::mutex::scoped_lock loadMessageLock(loadMessageMutex);
+
+			while (!loadMessages.empty()) {
+				SetLoadMessage(loadMessages.front());
+				loadMessages.pop_front();
+			}
+		}
+		void Loop() {
 			while (loading) {
 				boost::this_thread::sleep(boost::posix_time::millisec(50));
 
-				if (true) {
-					// need this to be always executed after waking up
-					boost::mutex::scoped_lock loadMessageLock(loadMessageMutex);
-
-					while (!loadMessages.empty()) {
-						#ifdef QTPFS_NO_LOADSCREEN
-						LOG("%s", (loadMessages.front()).c_str());
-						#else
-						loadscreen->SetLoadMessage(loadMessages.front());
-						#endif
-
-						loadMessages.pop_front();
-					}
-				}
+				// need this to be always executed after waking up
+				SetLoadMessages();
 			}
+
+			// handle any leftovers
+			SetLoadMessages();
 		}
 
 	private:
@@ -86,7 +92,7 @@ namespace QTPFS {
 
 QTPFS::PathManager::PathManager() {
 	pmLoadThread = boost::thread(boost::bind(&PathManager::Load, this));
-	pmLoadScreen.SetLoadMessages();
+	pmLoadScreen.Loop();
 	pmLoadThread.join();
 }
 
@@ -161,7 +167,7 @@ void QTPFS::PathManager::Load() {
 	{
 		const std::string sumStr = "pfs-checksum: " + IntToString(pfsCheckSum, "%08x") + ", ";
 		const std::string memStr = "mem-footprint: " + IntToString(GetMemFootPrint()) + "MB";
-		pmLoadScreen.SetLoadMessage("[PathManager] " + sumStr + memStr);
+		pmLoadScreen.AddLoadMessage("[PathManager] " + sumStr + memStr);
 		pmLoadScreen.SetLoading(false);
 	}
 }
@@ -211,7 +217,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect, bool hav
 			//
 			// TODO: OpenMP needs project-global linking changes
 			sprintf(loadMsg, fmtString, __FUNCTION__, omp_get_num_threads(), nodeLayers.size(), (haveCacheDir? "true": "false"));
-			pmLoadScreen.SetLoadMessage(loadMsg);
+			pmLoadScreen.AddLoadMessage(loadMsg);
 		}
 
 		const char* preFmtStr = "  initializing node-layer %u (thread %u)";
@@ -220,7 +226,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect, bool hav
 		#pragma omp parallel for private(loadMsg)
 		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
 			sprintf(loadMsg, preFmtStr, layerNum, omp_get_thread_num());
-			pmLoadScreen.SetLoadMessage(loadMsg);
+			pmLoadScreen.AddLoadMessage(loadMsg);
 
 			// construct each tree from scratch IFF no cache-dir exists
 			// (if it does, we only need to initialize speed{Mods, Bins})
@@ -232,13 +238,13 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect, bool hav
 			const unsigned int mem = (tree->GetMemFootPrint() + layer.GetMemFootPrint()) / (1024 * 1024);
 
 			sprintf(loadMsg, pstFmtStr, layerNum, mem, layer.GetNumLeafNodes(), layer.GetNodeRatio());
-			pmLoadScreen.SetLoadMessage(loadMsg);
+			pmLoadScreen.AddLoadMessage(loadMsg);
 		}
 	}
 	#else
 	{
 		sprintf(loadMsg, fmtString, __FUNCTION__, GetNumThreads(), nodeLayers.size(), (haveCacheDir? "true": "false"));
-		pmLoadScreen.SetLoadMessage(loadMsg);
+		pmLoadScreen.AddLoadMessage(loadMsg);
 
 		SpawnBoostThreads(&PathManager::InitNodeLayersThread, rect, haveCacheDir);
 	}
@@ -266,7 +272,7 @@ void QTPFS::PathManager::InitNodeLayersThread(
 
 	for (unsigned int layerNum = minLayer; layerNum < maxLayer; layerNum++) {
 		sprintf(loadMsg, preFmtStr, layerNum, threadNum);
-		pmLoadScreen.SetLoadMessage(loadMsg);
+		pmLoadScreen.AddLoadMessage(loadMsg);
 
 		InitNodeLayer(layerNum, rect);
 		UpdateNodeLayer(layerNum, rect, !haveCacheDir);
@@ -276,7 +282,7 @@ void QTPFS::PathManager::InitNodeLayersThread(
 		const unsigned int mem = (tree->GetMemFootPrint() + layer.GetMemFootPrint()) / (1024 * 1024);
 
 		sprintf(loadMsg, pstFmtStr, layerNum, mem, layer.GetNumLeafNodes(), layer.GetNodeRatio());
-		pmLoadScreen.SetLoadMessage(loadMsg);
+		pmLoadScreen.AddLoadMessage(loadMsg);
 	}
 }
 
@@ -350,7 +356,7 @@ std::string QTPFS::PathManager::GetCacheDirName(boost::uint32_t mapCheckSum, boo
 	const char* fmtString = "[PathManager::%s] using cache-dir %s (map-checksum %08x, mod-checksum %08x)";
 
 	sprintf(loadMsg, fmtString, __FUNCTION__, dir.c_str(), mapCheckSum, modCheckSum);
-	pmLoadScreen.SetLoadMessage(loadMsg);
+	pmLoadScreen.AddLoadMessage(loadMsg);
 
 	return dir;
 }
@@ -387,7 +393,7 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 		}
 
 		sprintf(loadMsg, fmtString, __FUNCTION__, i, moveinfo->moveData[i]->name.c_str());
-		pmLoadScreen.SetLoadMessage(loadMsg);
+		pmLoadScreen.AddLoadMessage(loadMsg);
 
 		serializingNodeLayer = &nodeLayers[i];
 		nodeTrees[i]->Serialize(*fileStreams[i], read);
