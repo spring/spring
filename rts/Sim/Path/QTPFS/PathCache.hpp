@@ -28,9 +28,9 @@ namespace QTPFS {
 		bool MarkDeadPaths(const SRectangle& r);
 		void KillDeadPaths();
 
-		const IPath* GetTempPath(unsigned int pathID) const { return (GetPath(pathID, PATH_TYPE_TEMP)); }
-		const IPath* GetLivePath(unsigned int pathID) const { return (GetPath(pathID, PATH_TYPE_LIVE)); }
-		const IPath* GetDeadPath(unsigned int pathID) const { return (GetPath(pathID, PATH_TYPE_DEAD)); }
+		const IPath* GetTempPath(unsigned int pathID) const { return (GetConstPath(pathID, PATH_TYPE_TEMP)); }
+		const IPath* GetLivePath(unsigned int pathID) const { return (GetConstPath(pathID, PATH_TYPE_LIVE)); }
+		const IPath* GetDeadPath(unsigned int pathID) const { return (GetConstPath(pathID, PATH_TYPE_DEAD)); }
 		      IPath* GetTempPath(unsigned int pathID)       { return (GetPath(pathID, PATH_TYPE_TEMP)); }
 		      IPath* GetLivePath(unsigned int pathID)       { return (GetPath(pathID, PATH_TYPE_LIVE)); }
 		      IPath* GetDeadPath(unsigned int pathID)       { return (GetPath(pathID, PATH_TYPE_DEAD)); }
@@ -45,7 +45,7 @@ namespace QTPFS {
 		const PathMap& GetDeadPaths() const { return deadPaths; }
 
 	private:
-		const IPath* GetPath(unsigned int pathID, unsigned int pathType) const;
+		const IPath* GetConstPath(unsigned int pathID, unsigned int pathType) const;
 		      IPath* GetPath(unsigned int pathID, unsigned int pathType);
 
 		PathMap tempPaths;

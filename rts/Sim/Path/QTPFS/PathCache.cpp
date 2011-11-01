@@ -6,7 +6,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Rectangle.h"
 
-const QTPFS::IPath* QTPFS::PathCache::GetPath(unsigned int pathID, unsigned int pathType) const {
+const QTPFS::IPath* QTPFS::PathCache::GetConstPath(unsigned int pathID, unsigned int pathType) const {
 	static IPath path; // dummy
 	const PathMap* map;
 
@@ -30,7 +30,7 @@ const QTPFS::IPath* QTPFS::PathCache::GetPath(unsigned int pathID, unsigned int 
 }
 
 QTPFS::IPath* QTPFS::PathCache::GetPath(unsigned int pathID, unsigned int pathType) {
-	IPath* path = const_cast<IPath*>(GetPath(pathID, pathType));
+	IPath* path = const_cast<IPath*>(GetConstPath(pathID, pathType));
 
 	if (path->GetID() != 0) {
 		numCacheHits[pathType] += 1;
