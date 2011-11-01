@@ -112,7 +112,7 @@ bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
 	//
 	std::list<PathMapIt> livePathIts;
 
-	for (PathMap::const_iterator it = livePaths.begin(); it != livePaths.end(); ++it) {
+	for (PathMap::iterator it = livePaths.begin(); it != livePaths.end(); ++it) {
 		IPath* path = it->second;
 
 		const float3& pathMins = path->GetBoundingBoxMins();
