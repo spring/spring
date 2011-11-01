@@ -24,6 +24,7 @@
 namespace QTPFS {
 	struct PMLoadScreen {
 		PMLoadScreen(): loading(true) {}
+		~PMLoadScreen() { assert(loadMessages.empty()); }
 
 		void SetLoading(bool b) { loading = b; }
 		void SetLoadMessage(const std::string& msg) {
@@ -34,7 +35,8 @@ namespace QTPFS {
 			while (loading) {
 				boost::this_thread::sleep(boost::posix_time::millisec(50));
 
-				if (loading) {
+				if (true) {
+					// need this to be always executed after waking up
 					boost::mutex::scoped_lock loadMessageLock(loadMessageMutex);
 
 					while (!loadMessages.empty()) {
