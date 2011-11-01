@@ -43,7 +43,7 @@ Engine / bugfixes:
  - fix DamageArray related sync error
  - fix a lot of memory-leaks
  - fix unit does sometimes not reach target position when given a restore command
- - fix build time-out when builder is blocking the build pos
+ - prevent build time-out when builder or other units are blocking the build pos
  - fix "cheat" status disparity between server and client after watching demo
  - fix captured unit still getting shot at
  - fix repeat commands remain even if the target object is destroyed
@@ -57,6 +57,7 @@ Engine / bugfixes:
  - fix memory corruption in bitmap handling
  - fix desync in PieceProjectile (#2591)
  - fix a certain /take exploit
+ - fix hover aircraft may become unresponsive in conjunction with command chains and repeat enabled
 
 Engine / misc defs:
  - replace UnitDef::pieceTrailCEG* by a Lua subtable of sfxTypes
