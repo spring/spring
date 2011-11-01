@@ -55,6 +55,8 @@ Engine / bugfixes:
  - fix multithreaded crash in lua material rendering
  - fix hang after crash
  - fix memory corruption in bitmap handling
+ - fix desync in PieceProjectile (#2591)
+ - fix a certain /take exploit
 
 Engine / misc defs:
  - replace UnitDef::pieceTrailCEG* by a Lua subtable of sfxTypes
@@ -184,6 +186,7 @@ Engine / Lua:
  - fix Spring.SetUnitWeaponState "range" for cannon weapons
  - add control over airStrafe via MoveCtrl.SetGunshipMoveTypeData
  - migrate MoveCtrl.SetLeaveTracks to (LuaUnsynced) Spring.SetUnitLeaveTracks
+ - removed all widgets (moved to examples/Widgets)
 
 Engine / Internal:
  - added limited OpenMP support
