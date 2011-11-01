@@ -317,18 +317,18 @@ bool QTPFS::QTNode::Merge(NodeLayer& nl) {
 		//
 		const bool leaf = IsLeaf();
 		const bool cont = (rel != REL_RECT_INTERIOR_NODE)?
-			(((xsize() >> 1) > (r.x2 - r.x1)) &&
-			 ((zsize() >> 1) > (r.z2 - r.z1))):
+			(((xsize() >> 1) > (cr.x2 - cr.x1)) &&
+			 ((zsize() >> 1) > (cr.z2 - cr.z1))):
 			true;
 
 		if (leaf || !cont) {
 			Merge(nl);
-			Tesselate(nl, r, true, false);
+			Tesselate(nl, cr, true, false);
 			return;
 		}
 
 		for (unsigned int i = 0; i < QTNode::CHILD_COUNT; i++) {
-			children[i]->PreTesselate(nl, r);
+			children[i]->PreTesselate(nl, cr);
 		}
 	}
 
@@ -409,7 +409,7 @@ void QTPFS::QTNode::UpdateMoveCost(
 	// in <r> with a single reference point outside it)
 	assert(moveCostAvg == -1.0f || moveCostAvg > 0.0f);
 
-	if (moveCostAvg > 0.0f) {
+	if (false && moveCostAvg > 0.0f) {
 		// just merged, so <r> is fully inside <this>
 		//
 		// the reference-square (xmin, zmin) MUST lie
@@ -419,10 +419,10 @@ void QTPFS::QTNode::UpdateMoveCost(
 		assert((r.x2 - r.x1) >= 0);
 		assert((r.z2 - r.z1) >= 0);
 
-		const unsigned int minx = std::max(r.x1 - 1, int(xmin()));
-		const unsigned int maxx = std::min(r.x2 + 1, int(xmax()));
-		const unsigned int minz = std::max(r.z1 - 1, int(zmin()));
-		const unsigned int maxz = std::min(r.z2 + 1, int(zmax()));
+		const unsigned int minx = std::max(r.x1, int(xmin()));
+		const unsigned int maxx = std::min(r.x2, int(xmax()));
+		const unsigned int minz = std::max(r.z1, int(zmin()));
+		const unsigned int maxz = std::min(r.z2, int(zmax()));
 
 		for (unsigned int hmx = minx; hmx < maxx; hmx++) {
 			for (unsigned int hmz = minz; hmz < maxz; hmz++) {
