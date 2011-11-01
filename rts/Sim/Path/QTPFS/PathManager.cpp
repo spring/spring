@@ -497,6 +497,7 @@ void QTPFS::PathManager::ExecuteSearch(
 ) {
 	IPathSearch* search = *searchesIt;
 	IPath* path = pathCache.GetTempPath(search->GetID());
+	PathSearchTrace::Execution* exec = NULL;
 
 	assert(search != NULL);
 	assert(path != NULL);
@@ -516,8 +517,8 @@ void QTPFS::PathManager::ExecuteSearch(
 	search->Initialize(&nodeLayer, &pathCache, path->GetSourcePoint(), path->GetTargetPoint());
 	path->SetHash(search->GetHash(gs->mapx * gs->mapy, pathType));
 
-	#ifdef QTPFS_SEARCH_SHARED_PATHS
 	{
+		#ifdef QTPFS_SEARCH_SHARED_PATHS
 		SharedPathMap::const_iterator sharedPathsIt = sharedPaths.find(path->GetHash());
 
 		if (sharedPathsIt != sharedPaths.end()) {
@@ -527,10 +528,9 @@ void QTPFS::PathManager::ExecuteSearch(
 			delete search;
 			return;
 		}
-	}
-	#endif
+		#endif
 
-	{
+		#ifdef QTPFS_LIMIT_TEAM_SEARCHES
 		const unsigned int numCurrSearches = numCurrExecutedSearches[search->GetTeam()];
 		const unsigned int numPrevSearches = numPrevExecutedSearches[search->GetTeam()];
 
@@ -539,23 +539,20 @@ void QTPFS::PathManager::ExecuteSearch(
 		}
 
 		numCurrExecutedSearches[search->GetTeam()] += 1;
+		#endif
 	}
 
-	#ifdef QTPFS_TRACE_PATH_SEARCHES
-	PathSearchTrace::Execution* searchExec = new PathSearchTrace::Execution(gs->frameNum);
-	#else
-	PathSearchTrace::Execution* searchExec = NULL;
-	#endif
-
 	// removes path from temp-paths, adds it to live-paths
-	if (search->Execute(searchExec, searchStateOffset, numTerrainChanges)) {
+	if (search->Execute(searchStateOffset, numTerrainChanges)) {
 		search->Finalize(path);
 
 		#ifdef QTPFS_SEARCH_SHARED_PATHS
 		sharedPaths[path->GetHash()] = path;
 		#endif
 
-		pathTraces[path->GetID()] = searchExec;
+		#ifdef QTPFS_TRACE_PATH_SEARCHES
+		pathTraces[path->GetID()] = search->GetExecutionTrace();
+		#endif
 	} else {
 		DeletePath(path->GetID());
 	}
@@ -679,6 +676,7 @@ void QTPFS::PathManager::DeletePath(unsigned int pathID) {
 	}
 
 	if (pathTraceIt != pathTraces.end()) {
+		delete (pathTraceIt->second);
 		pathTraces.erase(pathTraceIt);
 	}
 }

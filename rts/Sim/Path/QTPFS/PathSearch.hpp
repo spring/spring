@@ -72,12 +72,12 @@ namespace QTPFS {
 			const float3& targetPoint
 		) = 0;
 		virtual bool Execute(
-			PathSearchTrace::Execution* exec,
 			unsigned int searchStateOffset = 0,
 			unsigned int searchMagicNumber = 0
 		) = 0;
 		virtual void Finalize(IPath* path) = 0;
 		virtual void SharedFinalize(const IPath* srcPath, IPath* dstPath) {}
+		virtual PathSearchTrace::Execution* GetExecutionTrace() { return NULL; }
 
 		virtual const boost::uint64_t GetHash(unsigned int N, unsigned int k) const = 0;
 
@@ -108,12 +108,12 @@ namespace QTPFS {
 			const float3& targetPoint
 		);
 		bool Execute(
-			PathSearchTrace::Execution* exec,
 			unsigned int searchStateOffset = 0,
 			unsigned int searchMagicNumber = 0
 		);
 		void Finalize(IPath* path);
 		void SharedFinalize(const IPath* srcPath, IPath* dstPath);
+		PathSearchTrace::Execution* GetExecutionTrace() { return searchExec; }
 
 		const boost::uint64_t GetHash(unsigned int N, unsigned int k) const;
 
@@ -123,9 +123,8 @@ namespace QTPFS {
 	private:
 		void IterateSearch(
 			const std::vector<INode*>& allNodes,
-			      std::vector<INode*>& ngbNodes,
-			      PathSearchTrace::Iteration* iter
-			);
+			      std::vector<INode*>& ngbNodes
+		);
 		void TracePath(IPath* path);
 		void SmoothPath(IPath* path);
 		void UpdateNode(
@@ -145,6 +144,10 @@ namespace QTPFS {
 
 		INode *srcNode, *tgtNode;
 		INode *curNode, *nxtNode;
+
+		// not used unless QTPFS_TRACE_PATH_SEARCHES is defined
+		PathSearchTrace::Execution* searchExec;
+		PathSearchTrace::Iteration searchIter;
 
 		// global queue: allocated once, re-used by all searches without clear()'s
 		// this relies on INode::operator< to sort the INode*'s by increasing f-cost

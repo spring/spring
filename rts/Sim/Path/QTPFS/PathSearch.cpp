@@ -32,6 +32,8 @@ void QTPFS::PathSearch::Initialize(
 	nodeLayer = layer;
 	pathCache = cache;
 
+	searchExec = NULL;
+
 	srcNode = nodeLayer->GetNode(srcPoint.x / SQUARE_SIZE, srcPoint.z / SQUARE_SIZE);
 	tgtNode = nodeLayer->GetNode(tgtPoint.x / SQUARE_SIZE, tgtPoint.z / SQUARE_SIZE);
 	curNode = NULL;
@@ -39,7 +41,6 @@ void QTPFS::PathSearch::Initialize(
 }
 
 bool QTPFS::PathSearch::Execute(
-	PathSearchTrace::Execution* exec,
 	unsigned int searchStateOffset,
 	unsigned int searchMagicNumber
 ) {
@@ -53,7 +54,9 @@ bool QTPFS::PathSearch::Execute(
 	std::vector<INode*>& allNodes = nodeLayer->GetNodes();
 	std::vector<INode*> ngbNodes;
 
-	PathSearchTrace::Iteration iter;
+	#ifdef QTPFS_TRACE_PATH_SEARCHES
+	searchExec = new PathSearchTrace::Execution(gs->frameNum);
+	#endif
 
 	switch (searchType) {
 		case PATH_SEARCH_ASTAR:    { hCostMult = 1.0f; } break;
@@ -70,16 +73,12 @@ bool QTPFS::PathSearch::Execute(
 		UpdateNode(srcNode, NULL, 0.0f, (tgtPoint - srcPoint).Length() * hCostMult, srcNode->GetMoveCost());
 	}
 
-	#ifdef QTPFS_TRACE_PATH_SEARCHES
-	assert(exec != NULL);
-	#endif
-
 	while ((haveOpenNode = !openNodes.empty()) && !(haveFullPath = (curNode == tgtNode))) {
-		IterateSearch(allNodes, ngbNodes, &iter);
+		IterateSearch(allNodes, ngbNodes);
 
 		#ifdef QTPFS_TRACE_PATH_SEARCHES
-		exec->AddIteration(iter);
-		iter.Clear();
+		searchExec->AddIteration(searchIter);
+		searchIter.Clear();
 		#endif
 	}
 
@@ -116,8 +115,7 @@ void QTPFS::PathSearch::UpdateNode(
 
 void QTPFS::PathSearch::IterateSearch(
 	const std::vector<INode*>& allNodes,
-	      std::vector<INode*>& ngbNodes,
-	PathSearchTrace::Iteration* iter
+	      std::vector<INode*>& ngbNodes
 ) {
 	curNode = openNodes.top();
 	curNode->SetSearchState(searchState | NODE_STATE_CLOSED);
@@ -130,7 +128,7 @@ void QTPFS::PathSearch::IterateSearch(
 	#endif
 
 	#ifdef QTPFS_TRACE_PATH_SEARCHES
-	iter->SetPoppedNodeIdx(curNode->zmin() * gs->mapx + curNode->xmin());
+	searchIter.SetPoppedNodeIdx(curNode->zmin() * gs->mapx + curNode->xmin());
 	#endif
 
 	if (curNode != srcNode)
@@ -201,7 +199,7 @@ void QTPFS::PathSearch::IterateSearch(
 			UpdateNode(nxtNode, curNode, gCost, hCost, mCost);
 
 			#ifdef QTPFS_TRACE_PATH_SEARCHES
-			iter->AddPushedNodeIdx(nxtNode->zmin() * gs->mapx + nxtNode->xmin());
+			searchIter.AddPushedNodeIdx(nxtNode->zmin() * gs->mapx + nxtNode->xmin());
 			#endif
 
 			openNodes.push(nxtNode);
