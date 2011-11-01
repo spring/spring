@@ -112,8 +112,8 @@ bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
 	//
 	std::list<PathMapIt> livePathIts;
 
-	for (PathMap::const_iterator mit = livePaths.begin(); mit != livePaths.end(); ++mit) {
-		IPath* path = mit->second;
+	for (PathMap::const_iterator it = livePaths.begin(); it != livePaths.end(); ++it) {
+		IPath* path = it->second;
 
 		const float3& pathMins = path->GetBoundingBoxMins();
 		const float3& pathMaxs = path->GetBoundingBoxMaxs();
@@ -146,7 +146,7 @@ bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
 			if (havePointInRect || edgeCrossesRect) {
 				assert(tempPaths.find(path->GetID()) == tempPaths.end());
 				deadPaths.insert(std::make_pair<unsigned int, IPath*>(path->GetID(), path));
-				livePathIts.push_back(livePaths.find(path->GetID()));
+				livePathIts.push_back(it);
 				break;
 			}
 		}
