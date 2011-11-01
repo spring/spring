@@ -338,9 +338,17 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle
 	if (md->unitDefRefCount == 0)
 		return;
 
-	if (nodeLayers[layerNum].Update(r, md, mm) && wantTesselation) {
-		nodeTrees[layerNum]->PreTesselate(nodeLayers[layerNum], r);
-		pathCaches[layerNum].MarkDeadPaths(r);
+	// adjust the borders so we are not left with "rims" of
+	// impassable squares when eg. a structure is reclaimed
+	SRectangle mr = SRectangle(r);
+	mr.x1 = std::max(int(r.x1) - (md->xsize >> 1),        0);
+	mr.z1 = std::max(int(r.z1) - (md->zsize >> 1),        0);
+	mr.x2 = std::min(int(r.x2) + (md->xsize >> 1), gs->mapx);
+	mr.z2 = std::min(int(r.z2) + (md->zsize >> 1), gs->mapy);
+
+	if (nodeLayers[layerNum].Update(mr, md, mm) && wantTesselation) {
+		nodeTrees[layerNum]->PreTesselate(nodeLayers[layerNum], mr);
+		pathCaches[layerNum].MarkDeadPaths(mr);
 	}
 }
 
@@ -417,13 +425,6 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 //
 void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2) {
 	SCOPED_TIMER("PathManager::TerrainChange");
-
-	// adjust the borders so we are not left with "rims" of
-	// impassable squares when eg. a structure is reclaimed
-	x1 = std::max(int(x1) - 1,        0);
-	z1 = std::max(int(z1) - 1,        0);
-	x2 = std::min(int(x2) + 1, gs->mapx);
-	z2 = std::min(int(z2) + 1, gs->mapy);
 
 	UpdateNodeLayersThreaded(SRectangle(x1, z1,  x2, z2));
 	numTerrainChanges += 1;
