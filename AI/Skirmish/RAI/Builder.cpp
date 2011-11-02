@@ -11,6 +11,12 @@ sBuildQuarry::sBuildQuarry(sRAIBuildList *buildlist)
 	builderID=-1;
 	RS=0;
 	tryCount=0;
+	builderUI=0;
+	creationUDID=0;
+	creationUD=0;
+	index=0;
+	type=0;
+	deletionFrame=0;
 };
 
 sBuildQuarry::~sBuildQuarry()

@@ -43,6 +43,8 @@ ResourceSiteExt::ResourceSiteExt(ResourceSite *RSite, IAICallback* callback)
 	builderID=-1;
 	ally=false;
 	enemy=false;
+	unitUD=0;
+	builderUI=0;
 	if( S->featureID == -1 ) // Metal-Site
 	{
 		searchRadius=cb->GetExtractorRadius()/2.0f;
