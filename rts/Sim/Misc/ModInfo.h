@@ -42,9 +42,9 @@ public:
 		, requireSonarUnderWater(true)
 		, featureVisibility(FEATURELOS_NONE)
 		, luaThreadingModel(2)
-		, pathFinderSystem(PFS_TYPE_QTPFS)
+		, pathFinderSystem(PFS_TYPE_DEFAULT)
 	{}
-	~CModInfo() {}
+
 
 	void Init(const char* modArchive);
 

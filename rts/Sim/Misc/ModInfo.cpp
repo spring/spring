@@ -146,6 +146,6 @@ void CModInfo::Init(const char* modArchive)
 
 	const LuaTable system = root.SubTable("system");
 	luaThreadingModel = system.GetInt("luaThreadingModel", MT_LUA_SINGLE_BATCH);
-	pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_QTPFS) % PFS_NUM_TYPES;
+	pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
 }
 
