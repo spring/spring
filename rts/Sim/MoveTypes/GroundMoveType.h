@@ -64,7 +64,6 @@ public:
 	float goalRadius;
 
 	SyncedFloat3 waypoint;
-	SyncedFloat3 nextWaypoint;
 
 protected:
 	float3 ObstacleAvoidance(const float3& desiredDir);

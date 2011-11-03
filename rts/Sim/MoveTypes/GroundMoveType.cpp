@@ -73,7 +73,6 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(goalRadius),
 
 	CR_MEMBER(waypoint),
-	CR_MEMBER(nextWaypoint),
 	CR_MEMBER(atGoal),
 	CR_MEMBER(haveFinalWaypoint),
 	CR_MEMBER(currWayPointDist),
@@ -133,7 +132,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	goalRadius(0),
 
 	waypoint(ZeroVector),
-	nextWaypoint(ZeroVector),
 	atGoal(false),
 	haveFinalWaypoint(false),
 	currWayPointDist(0.0f),
@@ -334,8 +332,7 @@ void CGroundMoveType::SlowUpdate()
 		return;
 	}
 
-	// FIXME: re-enable when QTPFS is faster
-	if (false && progressState == Active) {
+	if (progressState == Active) {
 		if (pathId != 0) {
 			if (idling) {
 				numIdlingSlowUpdates = std::min(MAX_IDLING_SLOWUPDATES, int(numIdlingSlowUpdates + 1));
@@ -345,6 +342,7 @@ void CGroundMoveType::SlowUpdate()
 
 			if (numIdlingUpdates > (SHORTINT_MAXVALUE / turnRate)) {
 				// case A: we have a path but are not moving
+				// FIXME: triggers during 180-degree turns
 				LOG_L(L_DEBUG,
 						"SlowUpdate: unit %i has pathID %i but %i ETA failures",
 						owner->id, pathId, numIdlingUpdates);
@@ -1080,8 +1078,7 @@ void CGroundMoveType::GetNewPath()
 		atGoal = false;
 		haveFinalWaypoint = false;
 
-		waypoint = owner->pos;
-		nextWaypoint = pathManager->NextWayPoint(pathId, waypoint, 1.25f * SQUARE_SIZE, 0, owner->id);
+		waypoint = pathManager->NextWayPoint(pathId, owner->pos, 1.25f * SQUARE_SIZE, 0, owner->id);
 	} else {
 		Fail();
 	}
@@ -1105,6 +1102,7 @@ void CGroundMoveType::GetNextWayPoint()
 		// plot the vector to the waypoint
 		const int figGroupID =
 			geometricObjects->AddLine(owner->pos + UpVector * 20, waypoint + UpVector * 20, 8.0f, 1, 4);
+
 		geometricObjects->SetColor(figGroupID, 1, 0.3f, 0.3f, 0.6f);
 		#endif
 
@@ -1131,17 +1129,25 @@ void CGroundMoveType::GetNextWayPoint()
 		haveFinalWaypoint = true;
 	}
 
-	haveFinalWaypoint = haveFinalWaypoint || (nextWaypoint.x == -1.0f);
+	haveFinalWaypoint = haveFinalWaypoint || (waypoint.x == -1.0f);
 
 	if (haveFinalWaypoint) {
 		waypoint = goalPos;
-		nextWaypoint = goalPos;
 		return;
 	}
 
-	if ((nextWaypoint - waypoint).SqLength2D() > 0.1f) {
-		waypoint = nextWaypoint;
-		nextWaypoint = pathManager->NextWayPoint(pathId, waypoint, 1.25f * SQUARE_SIZE, 0, owner->id);
+	const float breakDist = BreakingDistance((reversing)? maxReverseSpeed: maxSpeed);
+	const float minDistSq = breakDist * breakDist;
+
+	// TODO-QTPFS:
+	//     regularly check if a terrain-change modified our path by comparing
+	//     NextWayPoint(pathId, owner->pos, 1.25f * SQUARE_SIZE, 0, owner->id)
+	//     and waypoint, eg. every 15 frames
+	//     if we do not and a terrain-change area happened to contain <waypoint>
+	//     (the immediate next destination), then the unit will keep heading for
+	//     it and might possibly get stuck
+	if ((waypoint - owner->pos).SqLength2D() < minDistSq) {
+		waypoint = pathManager->NextWayPoint(pathId, waypoint, 1.25f * SQUARE_SIZE, 0, owner->id);
 
 		if (waypoint.SqDistance2D(goalPos) < Square(MIN_WAYPOINT_DISTANCE)) {
 			waypoint = goalPos;
@@ -1651,8 +1657,8 @@ void CGroundMoveType::TestNewTerrainSquare()
 			moveSquareY = newMoveSquareY;
 
 			// if we have moved, check if we can get to the next waypoint
-			int nwsx = (int) nextWaypoint.x / (MIN_WAYPOINT_DISTANCE) - moveSquareX;
-			int nwsy = (int) nextWaypoint.z / (MIN_WAYPOINT_DISTANCE) - moveSquareY;
+			int nwsx = (int) waypoint.x / (MIN_WAYPOINT_DISTANCE) - moveSquareX;
+			int nwsy = (int) waypoint.z / (MIN_WAYPOINT_DISTANCE) - moveSquareY;
 			int numIter = 0;
 
 			static const unsigned int blockBits =
@@ -1684,8 +1690,8 @@ void CGroundMoveType::TestNewTerrainSquare()
 
 				GetNextWayPoint();
 
-				nwsx = (int) nextWaypoint.x / (MIN_WAYPOINT_DISTANCE) - moveSquareX;
-				nwsy = (int) nextWaypoint.z / (MIN_WAYPOINT_DISTANCE) - moveSquareY;
+				nwsx = (int) waypoint.x / (MIN_WAYPOINT_DISTANCE) - moveSquareX;
+				nwsy = (int) waypoint.z / (MIN_WAYPOINT_DISTANCE) - moveSquareY;
 				++numIter;
 			}
 		}
