@@ -606,7 +606,6 @@ unsigned int QTPFS::PathManager::QueueSearch(
 		assert(oldPath->GetID() != 0);
 
 		newPath->SetID(oldPath->GetID());
-		newPath->SetOwnerID(oldPath->GetOwnerID());
 		newPath->SetRadius(oldPath->GetRadius());
 		newPath->SetSynced(oldPath->GetSynced());
 
@@ -624,7 +623,6 @@ unsigned int QTPFS::PathManager::QueueSearch(
 		//     the unclamped end-points are temporary
 		//     zero is a reserved ID, so pre-increment
 		newPath->SetID(++numPathRequests);
-		newPath->SetOwnerID((object != NULL)? object->id: -1U);
 		newPath->SetRadius(radius);
 		newPath->SetSynced(synced);
 		newPath->AllocPoints(2);
@@ -739,24 +737,37 @@ float3 QTPFS::PathManager::NextWayPoint(
 		return (sourcePoint + targetDirec * SQUARE_SIZE);
 	}
 
-	const float radiusSq = std::max(float(SQUARE_SIZE * SQUARE_SIZE), radius * radius);
+	const float minRadiusSq = std::max(float(SQUARE_SIZE * SQUARE_SIZE), radius * radius);
+	      float curRadiusSq = QTPFS_POSITIVE_INFINITY;
 
-	unsigned int curPointID =  0;
-	unsigned int nxtPointID = -1U;
+	unsigned int minPointIdx =  0;
+	unsigned int nxtPointIdx = -1U;
 
-	// find the point furthest along the
-	// path within distance <rad> of <pos>
-	for (unsigned int i = livePath->GetPointID(); i < (livePath->NumPoints() - 1); i++) {
-		if ((point - livePath->GetPoint(i)).SqLength() < radiusSq) {
-			curPointID = i;
-			nxtPointID = i + 1;
+	// find the point furthest along the path within
+	// distance <rad> of <pos>, as well as the point
+	// closest to us
+	//
+	// a path can change while a unit is following
+	// it, so we always check each and every point
+	for (unsigned int i = 0; i < (livePath->NumPoints() - 1); i++) {
+		const float radiusSq = (point - livePath->GetPoint(i)).SqLength();
+
+		if (radiusSq < minRadiusSq) {
+			nxtPointIdx = i + 1;
+		}
+		if (radiusSq > 1.0f && radiusSq < curRadiusSq) {
+			curRadiusSq = radiusSq;
+			minPointIdx = i + 0;
 		}
 	}
 
-	if (nxtPointID != -1U) {
-		// if close enough to at least one <curPoint>,
-		// switch to <nxtPoint> immediately after it
-		livePath->SetPointID(nxtPointID);
+	if (nxtPointIdx != -1U) {
+		// if close enough to at least one waypoint <i>,
+		// switch to the point immediately following it
+		livePath->SetPointID(nxtPointIdx);
+	} else {
+		// otherwise just pick the closest point
+		livePath->SetPointID(minPointIdx);
 	}
 
 	return (livePath->GetPoint(livePath->GetPointID()));
