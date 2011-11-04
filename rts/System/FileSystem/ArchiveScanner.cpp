@@ -762,10 +762,15 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 
 void CArchiveScanner::ReadCacheData(const std::string& filename)
 {
+	if (!FileSystem::FileExists(filename)) {
+		LOG_L(L_INFO, "Archive cache doesn't exist: %s", filename.c_str());
+		return;
+	}
+
 	LuaParser p(filename, SPRING_VFS_RAW, SPRING_VFS_BASE);
 
 	if (!p.Execute()) {
-		LOG_L(L_WARNING, "Failed to read archive cache: %s",
+		LOG_L(L_ERROR, "Failed to parse archive cache: %s",
 				p.GetErrorLog().c_str());
 		return;
 	}
