@@ -55,11 +55,8 @@ Lua-5.1.4 source code modifications:
         lua_calchash()
         lua_pushhstring()
 
-  11. modify luaconf.h:lua_number2int*
-        prevent FPE's in lua_number2int* casts when NaN-signaling is enabled
-        see commit 01ef12fa4656534b23735e3abfd1d33c71bd46f1
-
-  12.
+  11.
       modify lauxlib.cpp::luaL_checknumber and LuaInclude.h::lua_tofloat to
       trigger asserts if a Lua script pushes a NaN or Inf onto the stack and
       the engine reads it (asserts are disabled for Lua-internal math calls)
+

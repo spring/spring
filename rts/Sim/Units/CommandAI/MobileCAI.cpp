@@ -343,22 +343,26 @@ bool CMobileCAI::RefuelIfNeeded()
 /// returns true if the unit has to land
 bool CMobileCAI::LandRepairIfNeeded()
 {
-	if (owner->moveType->reservedPad == NULL && owner->moveType->WantsRepair()) {
-		// we're damaged, just seek a pad for repairs
-		CAirBaseHandler::LandingPad* lp =
-			airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
+	if (owner->moveType->reservedPad != NULL)
+		return false;
 
-		if (lp != NULL) {
-			owner->moveType->ReservePad(lp);
-			return true;
-		}
+	if (!owner->moveType->WantsRepair())
+		return false;
 
-		const float3& newGoal = airBaseHandler->FindClosestAirBasePos(owner, owner->unitDef->minAirBasePower);
+	// we're damaged, just seek a pad for repairs
+	CAirBaseHandler::LandingPad* lp =
+		airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
 
-		if (newGoal != ZeroVector) {
-			SetGoal(newGoal, owner->pos);
-			return true;
-		}
+	if (lp != NULL) {
+		owner->moveType->ReservePad(lp);
+		return true;
+	}
+
+	const float3& newGoal = airBaseHandler->FindClosestAirBasePos(owner, owner->unitDef->minAirBasePower);
+
+	if (newGoal != ZeroVector) {
+		SetGoal(newGoal, owner->pos);
+		return true;
 	}
 
 	return false;
@@ -366,7 +370,7 @@ bool CMobileCAI::LandRepairIfNeeded()
 
 void CMobileCAI::SlowUpdate()
 {
-	if(gs->paused) // Commands issued may invoke SlowUpdate when paused
+	if (gs->paused) // Commands issued may invoke SlowUpdate when paused
 		return;
 	bool wantToLand = false;
 	if (dynamic_cast<AAirMoveType*>(owner->moveType)) {
