@@ -292,7 +292,7 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius
 	const CTransportUnit* ownerTrans = (CTransportUnit*) owner;
 	const MoveData* moveData = unitToUnload->unitDef->movedata;
 
-	if (dynamic_cast<CTAAirMoveType*>(owner->moveType)) {
+	if (dynamic_cast<AAirMoveType*>(owner->moveType)) {
 		if (radius < (emptyRadius * 2.0f)) {
 			// the command radius is less than the diameter of the unit we wish to drop
 			//
@@ -325,7 +325,7 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius
 					(delta.SqLength2D() > 1.0f);
 			} while (badPos);
 
-			pos.y = ground->GetHeight(pos.x, pos.z);
+			pos.y = ground->GetHeightReal(pos.x, pos.z);
 
 			if (!ownerTrans->CanLoadUnloadAtPos(pos, unitToUnload))
 				continue;
