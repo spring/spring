@@ -768,6 +768,10 @@ void CGroundMoveType::CheckCollisionSkid()
 	const vector<CUnit*>& nearUnits = qf->GetUnitsExact(midPos, owner->radius);
 	const vector<CFeature*>& nearFeatures = qf->GetFeaturesExact(midPos, owner->radius);
 
+	// magic number to reduce damage taken from collisions
+	// between a very heavy and a very light CSolidObject
+	static const float MASS_MULT = 0.02f;
+
 	vector<CUnit*>::const_iterator ui;
 	vector<CFeature*>::const_iterator fi;
 
@@ -787,7 +791,7 @@ void CGroundMoveType::CheckCollisionSkid()
 
 		if (u->mobility == NULL) {
 			const float impactSpeed = -owner->speed.dot(dif);
-			const float impactDamageMult = impactSpeed * owner->mass * 0.02f;
+			const float impactDamageMult = std::min(impactSpeed * owner->mass * MASS_MULT, MAX_UNIT_SPEED);
 
 			if (impactSpeed > 0.0f) {
 				owner->MoveMidPos(dif * impactSpeed);
@@ -808,11 +812,13 @@ void CGroundMoveType::CheckCollisionSkid()
 
 			const float ownerRelMass = (owner->mass / (owner->mass + u->mass));
 			const float impactSpeed = (u->speed - owner->speed).dot(dif) * 0.5f;
+			const float colliderRelImpactSpeed = impactSpeed * (1.0f - ownerRelMass);
+			const float collideeRelImpactSpeed = impactSpeed * (       ownerRelMass); 
 
-			const float colliderImpactDmgMult  =       impactSpeed * (1.0f - ownerRelMass) * owner->mass;
-			const float collideeImpactDmgMult  =       impactSpeed * (       ownerRelMass) * owner->mass;
-			const float3 colliderImpactImpulse = dif * impactSpeed * (1.0f - ownerRelMass);
-			const float3 collideeImpactImpulse = dif * impactSpeed * (       ownerRelMass);
+			const float colliderImpactDmgMult  = std::min(colliderRelImpactSpeed * owner->mass * MASS_MULT, MAX_UNIT_SPEED);
+			const float collideeImpactDmgMult  = std::min(collideeRelImpactSpeed * owner->mass * MASS_MULT, MAX_UNIT_SPEED);
+			const float3 colliderImpactImpulse = dif * colliderRelImpactSpeed;
+			const float3 collideeImpactImpulse = dif * collideeRelImpactSpeed;
 
 			if (impactSpeed > 0.0f) {
 				owner->MoveMidPos(colliderImpactImpulse);
@@ -827,11 +833,11 @@ void CGroundMoveType::CheckCollisionSkid()
 
 				// damage the collider
 				if (impactSpeed > ownerUD->minCollisionSpeed && ownerUD->minCollisionSpeed >= 0.0f) {
-					owner->DoDamage(DamageArray(colliderImpactDmgMult * 0.02f), NULL, dif * colliderImpactDmgMult);
+					owner->DoDamage(DamageArray(colliderImpactDmgMult), NULL, dif * colliderImpactDmgMult);
 				}
 				// damage the collidee
 				if (impactSpeed > unitUD->minCollisionSpeed && unitUD->minCollisionSpeed >= 0.0f) {
-					u->DoDamage(DamageArray(collideeImpactDmgMult * 0.02f), NULL, dif * -collideeImpactDmgMult);
+					u->DoDamage(DamageArray(collideeImpactDmgMult), NULL, dif * -collideeImpactDmgMult);
 				}
 
 				owner->speed *= 0.9f;
@@ -855,7 +861,7 @@ void CGroundMoveType::CheckCollisionSkid()
 
 		const float3 dif = (midPos - f->midPos).SafeNormalize();
 		const float impactSpeed = -owner->speed.dot(dif);
-		const float impactDamageMult = impactSpeed * owner->mass * 0.02f;
+		const float impactDamageMult = std::min(impactSpeed * owner->mass * MASS_MULT, MAX_UNIT_SPEED);
 		const float3 impactImpulse = dif * impactSpeed;
 
 		if (impactSpeed > 0.0f) {
