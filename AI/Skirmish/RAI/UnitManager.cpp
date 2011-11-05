@@ -121,7 +121,7 @@ void cUnitManager::UnitIdle(int unit,UnitInfo *U)
 				U->inCombat = true;
 				G->UpdateEventAdd(1,cb->GetCurrentFrame()+90,unit,U);
 			}
-			if( G->Enemies.size() == 0 && (UAssault.size() > 50 || (G->UDH->BLMobileRadar->UDefActiveTemp == 0)) )
+			if( G->Enemies.empty() && (UAssault.size() > 50 || (G->UDH->BLMobileRadar->UDefActiveTemp == 0)) )
 			{
 				int num=0;
 				for( map<int,UnitInfo*>::iterator iU = U->group->Units.begin(); iU != U->group->Units.end(); ++iU )
