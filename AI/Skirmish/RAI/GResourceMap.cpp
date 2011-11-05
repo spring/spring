@@ -302,7 +302,7 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrain
 								RS->options.insert(ud->id);
 						}
 					}
-					if( RS->options.size() == 0 )
+					if( RS->options.empty() )
 					{
 						*l<<"\n  Energy Resource located at (x"<<RS->position.x<<" z"<<RS->position.z<<" y"<<RS->position.y<<") is unusable in this mod.";
 						delete RS;
