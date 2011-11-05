@@ -304,7 +304,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	// iff a mass value is not defined, default to metalCost
 	// (do not allow it to be zero or negative in either case)
 	metalCost = std::max(1.0f, udTable.GetFloat("buildCostMetal", 0.0f));
-	mass = std::max(1.0f, udTable.GetFloat("mass", metalCost));
+	mass = Clamp(udTable.GetFloat("mass", metalCost), CSolidObject::MINIMUM_MASS, CSolidObject::MAXIMUM_MASS);
 
 	energyCost = udTable.GetFloat("buildCostEnergy", 0.0f);
 	buildTime = std::max(0.1f, udTable.GetFloat("buildTime", 0.0f)); //avoid some nasty divide by 0

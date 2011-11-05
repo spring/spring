@@ -13,6 +13,7 @@
 #include "System/creg/STL_List.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
+#include "System/myMath.h"
 #include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
 #include "System/creg/STL_Set.h"
@@ -172,9 +173,11 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const str
 	fd->xsize = std::max(1 * 2, fdTable.GetInt("footprintX", 1) * 2);
 	fd->zsize = std::max(1 * 2, fdTable.GetInt("footprintZ", 1) * 2);
 
-	const float minMass = 1.0f;
+	const float minMass = CSolidObject::MINIMUM_MASS;
+	const float maxMass = CSolidObject::MAXIMUM_MASS;
 	const float defMass = (fd->metal * 0.4f) + (fd->maxHealth * 0.1f);
-	fd->mass = std::max(minMass, fdTable.GetFloat("mass", defMass));
+
+	fd->mass = Clamp(fdTable.GetFloat("mass", defMass), minMass, maxMass);
 
 	// custom parameters table
 	fdTable.SubTable("customParams").GetMap(fd->customParams);

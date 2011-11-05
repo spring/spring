@@ -11,7 +11,9 @@
 #include "System/myMath.h"
 
 int CSolidObject::deletingRefID = -1;
-const float CSolidObject::DEFAULT_MASS = 100000.0f;
+const float CSolidObject::DEFAULT_MASS = 1e5f;
+const float CSolidObject::MINIMUM_MASS = 1e0f; // 1.0f
+const float CSolidObject::MAXIMUM_MASS = 1e6f;
 
 CR_BIND_DERIVED(CSolidObject, CWorldObject, );
 CR_REG_METADATA(CSolidObject,
