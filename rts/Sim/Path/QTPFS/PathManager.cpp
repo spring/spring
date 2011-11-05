@@ -596,7 +596,7 @@ unsigned int QTPFS::PathManager::QueueSearch(
 	// NOTE:
 	//     all paths get deleted by the cache they are in;
 	//     all searches get deleted by subsequent Update's
-	IPath* newPath = new Path();
+	IPath* newPath = new IPath();
 	IPathSearch* newSearch = new PathSearch(PATH_SEARCH_ASTAR);
 
 	assert(newPath != NULL);

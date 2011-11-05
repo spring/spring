@@ -10,7 +10,23 @@
 namespace QTPFS {
 	struct IPath {
 		IPath(): pathID(0), pointID(0), hash(-1U), radius(0.0f), synced(true) {}
-		virtual ~IPath() {}
+		IPath(const IPath& p) { *this = p; }
+		IPath& operator = (const IPath& p) {
+			pathID = p.GetID();
+			pointID = p.GetPointID();
+
+			hash   = p.GetHash();
+			radius = p.GetRadius();
+			synced = p.GetSynced();
+			points = p.GetPoints();
+
+			boundingBoxMins = p.GetBoundingBoxMins();
+			boundingBoxMaxs = p.GetBoundingBoxMaxs();
+
+			objectPoint = p.GetObjectPoint();
+			return *this;
+		}
+		~IPath() { points.clear(); }
 
 		void SetID(unsigned int pathID) { this->pathID = pathID; }
 		void SetPointID(unsigned int pointID) { this->pointID = pointID; }
@@ -25,76 +41,31 @@ namespace QTPFS {
 		boost::uint64_t GetHash() const { return hash; }
 		bool GetSynced() const { return synced; }
 
-		virtual void SetBoundingBox() {}
-		virtual void SetPoint(unsigned int, const float3&) {}
-		virtual const float3& GetBoundingBoxMins() const {}
-		virtual const float3& GetBoundingBoxMaxs() const {}
-		virtual const float3& GetPoint(unsigned int) const { return ZeroVector; }
-
-		virtual void SetObjectPoint(const float3&) {}
-		virtual void SetSourcePoint(const float3&) {}
-		virtual void SetTargetPoint(const float3&) {}
-		virtual const float3& GetSourcePoint() const { return ZeroVector; }
-		virtual const float3& GetTargetPoint() const { return ZeroVector; }
-		virtual const float3& GetObjectPoint() const { return ZeroVector; }
-
-		virtual unsigned int NumPoints() const { return 0; }
-		virtual void AllocPoints(unsigned int) {}
-		virtual void CopyPoints(const IPath&) {}
-
-	protected:
-		unsigned int pathID;
-		unsigned int pointID; // ID (index) of the next waypoint to be visited
-
-		boost::uint64_t hash;
-		float radius;
-		bool synced;
-	};
-
-	struct Path: public IPath {
-	public:
-		Path(): IPath() {}
-		Path(const Path& p) { *this = p; }
-		Path& operator = (const Path& p) {
-			pathID = p.GetID();
-			pointID = p.GetPointID();
-
-			hash   = p.GetHash();
-			synced = p.GetSynced();
-			radius = p.GetRadius();
-
-			points = p.GetPoints();
-			point = p.GetObjectPoint();
-
-			mins = p.GetBoundingBoxMins();
-			maxs = p.GetBoundingBoxMaxs();
-			return *this;
-		}
-		~Path() { points.clear(); }
-
 		void SetBoundingBox() {
-			mins.x = 1e6f; maxs.x = -1e6f;
-			mins.z = 1e6f; maxs.z = -1e6f;
+			boundingBoxMins.x = 1e6f; boundingBoxMaxs.x = -1e6f;
+			boundingBoxMins.z = 1e6f; boundingBoxMaxs.z = -1e6f;
 
 			for (unsigned int n = 0; n < points.size(); n++) {
-				mins.x = std::min(mins.x, points[n].x);
-				mins.z = std::min(mins.z, points[n].z);
-				maxs.x = std::max(maxs.x, points[n].x);
-				maxs.z = std::max(maxs.z, points[n].z);
+				boundingBoxMins.x = std::min(boundingBoxMins.x, points[n].x);
+				boundingBoxMins.z = std::min(boundingBoxMins.z, points[n].z);
+				boundingBoxMaxs.x = std::max(boundingBoxMaxs.x, points[n].x);
+				boundingBoxMaxs.z = std::max(boundingBoxMaxs.z, points[n].z);
 			}
 		}
 
+		const float3& GetBoundingBoxMins() const { return boundingBoxMins; }
+		const float3& GetBoundingBoxMaxs() const { return boundingBoxMaxs; }
+
 		void SetPoint(unsigned int i, const float3& p) { points[std::min(i, NumPoints() - 1)] = p; }
-		const float3& GetBoundingBoxMins() const { return mins; }
-		const float3& GetBoundingBoxMaxs() const { return maxs; }
 		const float3& GetPoint(unsigned int i) const { return points[std::min(i, NumPoints() - 1)]; }
 
-		void SetObjectPoint(const float3& p) {                             point                     = p; }
 		void SetSourcePoint(const float3& p) { assert(points.size() >= 2); points[                0] = p; }
 		void SetTargetPoint(const float3& p) { assert(points.size() >= 2); points[points.size() - 1] = p; }
-		const float3& GetObjectPoint() const { return point;                     }
 		const float3& GetSourcePoint() const { return points[                0]; }
 		const float3& GetTargetPoint() const { return points[points.size() - 1]; }
+
+		void SetObjectPoint(const float3& p) { objectPoint = p; }
+		const float3& GetObjectPoint() const { return objectPoint; }
 
 		unsigned int NumPoints() const { return (points.size()); }
 		void AllocPoints(unsigned int n) {
@@ -111,16 +82,23 @@ namespace QTPFS {
 
 		const std::vector<float3>& GetPoints() const { return points; }
 
-	private:
+	protected:
+		unsigned int pathID;
+		unsigned int pointID; // ID (index) of the next waypoint to be visited
+
+		boost::uint64_t hash;
+		float radius;
+		bool synced;
+
 		std::vector<float3> points;
 
 		// corners of the bounding-box containing all our points
-		float3 mins;
-		float3 maxs;
+		float3 boundingBoxMins;
+		float3 boundingBoxMaxs;
 
 		// where on the map our owner (CSolidObject*) currently is
 		// (normally lies roughly between two consecutive waypoints)
-		float3 point;
+		float3 objectPoint;
 	};
 };
 
