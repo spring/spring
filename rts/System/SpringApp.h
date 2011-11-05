@@ -46,7 +46,6 @@ protected:
 #if defined(USE_GML) && GML_ENABLE_SIM
 	int Sim();                                      //!< Simulation  loop
 	static void Simcb(void *c) {((SpringApp *)c)->Sim();}
-	static volatile int gmlKeepRunning;
 #endif
 
 	/**

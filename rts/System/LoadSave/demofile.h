@@ -21,7 +21,7 @@
  * The current demofile version. Only change on major modifications for which
  * appending stuff to DemoFileHeader is not sufficient.
  */
-#define DEMOFILE_VERSION 4
+#define DEMOFILE_VERSION 5
 
 #pragma pack(push, 1)
 
@@ -52,24 +52,24 @@
  */
 struct DemoFileHeader
 {
-	char magic[16];         ///< DEMOFILE_MAGIC
-	int version;            ///< DEMOFILE_VERSION
-	int headerSize;         ///< Size of the DemoFileHeader, minor version number.
-	char versionString[16]; ///< Spring version string, e.g. "0.75b2", "0.75b2+svn4123"
-	boost::uint8_t gameID[16];       ///< Unique game identifier. Identical for each player of the game.
-	boost::uint64_t unixTime;        ///< Unix time when game was started.
-	int scriptSize;         ///< Size of startscript.
-	int demoStreamSize;     ///< Size of the demo stream.
-	int gameTime;           ///< Total number of seconds game time.
-	int wallclockTime;      ///< Total number of seconds wallclock time.
-	int numPlayers;         ///< Number of players for which stats are saved.
-	int playerStatSize;     ///< Size of the entire player statistics chunk.
-	int playerStatElemSize; ///< sizeof(CPlayer::Statistics)
-	int numTeams;           ///< Number of teams for which stats are saved.
-	int teamStatSize;       ///< Size of the entire team statistics chunk.
-	int teamStatElemSize;   ///< sizeof(CTeam::Statistics)
-	int teamStatPeriod;     ///< Interval (in seconds) between team stats.
-	int winningAllyTeamsSize;    ///< The size of the vector of the winning ally teams
+	char magic[16];               ///< DEMOFILE_MAGIC
+	int version;                  ///< DEMOFILE_VERSION
+	int headerSize;               ///< Size of the DemoFileHeader, minor version number.
+	char versionString[256];      ///< Spring version string, e.g. "0.75b2", "0.75b2+svn4123"
+	boost::uint8_t gameID[16];    ///< Unique game identifier. Identical for each player of the game.
+	boost::uint64_t unixTime;     ///< Unix time when game was started.
+	int scriptSize;               ///< Size of startscript.
+	int demoStreamSize;           ///< Size of the demo stream.
+	int gameTime;                 ///< Total number of seconds game time.
+	int wallclockTime;            ///< Total number of seconds wallclock time.
+	int numPlayers;               ///< Number of players for which stats are saved.
+	int playerStatSize;           ///< Size of the entire player statistics chunk.
+	int playerStatElemSize;       ///< sizeof(CPlayer::Statistics)
+	int numTeams;                 ///< Number of teams for which stats are saved.
+	int teamStatSize;             ///< Size of the entire team statistics chunk.
+	int teamStatElemSize;         ///< sizeof(CTeam::Statistics)
+	int teamStatPeriod;           ///< Interval (in seconds) between team stats.
+	int winningAllyTeamsSize;     ///< The size of the vector of the winning ally teams
 
 
 	/// Change structure from host endian to little endian or vice versa.

@@ -44,7 +44,7 @@
 #define GML_MSC_TLS_OPT 1 // use the Win32 TIB for TLS in MSVC (possibly faster)
 #define GML_64BIT_USE_GS 1 // 64-bit OS will use the GS register for TLS (untested feature)
 #define GML_LOCKED_GMLCOUNT_ASSIGNMENT 0 // experimental feature, probably not needed
-#define GML_SHARE_LISTS 1 // use glShareLists to allow opengl calls in sim thread
+#define GML_NO_THREAD_NUM -1 // no thread number flag
 #define GML_DRAW_THREAD_NUM 0 // thread number of draw thread
 #define GML_LOAD_THREAD_NUM 1 // thread number of game loading thread
 #define GML_SIM_THREAD_NUM 2 // thread number of sim thread

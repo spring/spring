@@ -51,7 +51,7 @@ else
 	echo "Making test-packages"
 	# Insert the branch name as the patch-set part.
 	# (double-quotation is required because of the sub-shell)
-	versionString="${describe}_${branch}")
+	versionString="${describe}_${branch}"
 fi
 
 echo "Using branch \"${versionString}\" as source"
@@ -113,11 +113,11 @@ git submodule update --init
 cd ..
 [ -n "${linux_exclude}" ] && rm -rf ${linux_exclude}
 [ -n "${lzma}" ] && echo "Creating .tar.lzma archive (${lzma})" && \
-	tar -c -f --lzma "../${lzma}" ${include} ${linux_include} --exclude=.git
+	tar -c --lzma  -f "../${lzma}" ${include} ${linux_include} --exclude=.git
 [ -n "${tbz}" ] && echo "Creating .tar.bz2 archive (${tbz})" && \
-	tar -c -f -j     "../${tbz}"  ${include} ${linux_include} --exclude=.git
+	tar -c --bzip2 -f  "../${tbz}"  ${include} ${linux_include} --exclude=.git
 [ -n "${tgz}" ] && echo "Creating .tar.gz archive (${tgz})" && \
-	tar -c -f -z     "../${tgz}"  ${include} ${linux_include} --exclude=.git
+	tar -c --gzip  -f  "../${tgz}"  ${include} ${linux_include} --exclude=.git
 cd ..
 echo 'Cleaning'
 rm -rf lf
