@@ -87,6 +87,8 @@ public:
 	int buildFacing;                            ///< Orientation of footprint, 4 different states
 
 	static const float DEFAULT_MASS;
+	static const float MINIMUM_MASS;
+	static const float MAXIMUM_MASS;
 
 	static int deletingRefID;
 	static void SetDeletingRefID(int id) { deletingRefID = id; }
