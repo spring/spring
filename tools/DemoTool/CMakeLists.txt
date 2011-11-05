@@ -33,5 +33,6 @@ IF (MINGW)
 	SET_TARGET_PROPERTIES(demotool PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
 ENDIF (MINGW)
 TARGET_LINK_LIBRARIES(demotool ${Boost_PROGRAM_OPTIONS_LIBRARY})
+Add_Dependencies(demotool generateVersionFiles)
 
 

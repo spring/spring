@@ -13,7 +13,7 @@
 // The server thread (gmlThreadNumber = 0) will then consume GL calls from the queues of each thread.
 // When the server thread makes a GL call, it calls directly into OpenGL of course.
 // The game load thread (gmlThreadNumber = 1) can also make GL calls.
-// The sim thread (gmlThreadNumber = 2) is allowed to make GL calls only if GML_SHARE_LISTS is enabled.
+// The sim thread (gmlThreadNumber = 2) is allowed to make GL calls only if gmlShareLists is enabled.
 
 // Since a single server thread makes all GL calls, there is no point in multithreading code that contains
 // lots of GL calls but almost no CPU intensive calculations. Also, there is no point in multithreading
@@ -52,6 +52,12 @@ unsigned gmlLockTime = 0;
 
 int gmlProcNumLoop = 25;
 int gmlProcInterval = 8;
+bool gmlShareLists = true;
+int gmlMaxServerThreadNum = GML_SIM_THREAD_NUM;
+int gmlNoGLThreadNum = GML_NO_THREAD_NUM;
+volatile bool gmlMultiThreadSim = true;
+volatile bool gmlStartSim = false;
+volatile bool gmlKeepRunning = false;
 
 #define EXEC_RUN (BYTE *)NULL
 #define EXEC_SYNC (BYTE *)-1

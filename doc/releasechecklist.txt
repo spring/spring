@@ -5,14 +5,18 @@ How to make a spring release
 Preparation
 -----------
 
-1) Create the release branch:
-		git fetch
-		git checkout -b release origin/develop
+1) Make sure to be on branch develop,
+   on a commit that is on the main repo already.
+2) Create the release branch:
+		git checkout -b release
 		git push origin release
    From now on, EVERYTHING that should to be in the release,
-   has ot be commited on this branch.
-2) Write & update the change-log (doc/changelog.txt)
-3) possibly add fixes
+   has to be commited on this branch.
+3) Write & update the change-log (doc/changelog.txt)
+4) Possibly add fixes
+~) You may want to merge the release branch into develop from time to time:
+		git checkout develop
+		git merge release --no-ff
 
 
 Release Time
@@ -23,10 +27,10 @@ Release Time
 		git reset --hard origin/master
 		git merge release --no-ff
 2) Tag the release:
-   TODO Here we should probably add more info to the tag description, for example whether the AI/Unitsync/Lua API changed since the last release
-		git tag -a -m "83.0 release" 83.0
+		git tag -a -m "83.0 release [changed APIs: AI, Lua, unitsync]" 83.0
+   Make sure it looks correct:
+		gitk master develop release &
 3) create source-packages:
-		git checkout 83.0
 		./installer/make_source_package.sh
 4) Merge the release branch into develop:
 		git checkout develop
@@ -44,7 +48,7 @@ Release Time
    buildbot to compile the master branch.
 10) once the buildbot is finnished, create the portable archive:
 		wget http://springrts.com/dl/buildbot/default/master/83.0/spring_83.0.exe
-		installer/make_portable_archive.sh spring_83.0.exe
+		./installer/make_portable_archive.sh spring_83.0.exe
 11) you should now have these files:
 	* spring_83.0.exe
 	* spring_83.0_portable.7z

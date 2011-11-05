@@ -24,6 +24,9 @@ struct MoveData {
 
 		xsize           = unitDefMD? unitDefMD->xsize:           0;
 		zsize           = unitDefMD? unitDefMD->zsize:           0;
+		xsizeh          = unitDefMD? unitDefMD->xsizeh:          0;
+		zsizeh          = unitDefMD? unitDefMD->zsizeh:          0;
+
 		depth           = unitDefMD? unitDefMD->depth:           0.0f;
 		maxSlope        = unitDefMD? unitDefMD->maxSlope:        1.0f;
 		slopeMod        = unitDefMD? unitDefMD->slopeMod:        0.0f;
@@ -72,8 +75,9 @@ struct MoveData {
 	TerrainClass terrainClass;
 
 	/// of the footprint
-	int xsize;
-	int zsize;
+	int xsize, xsizeh;
+	int zsize, zsizeh;
+
 	/// minWaterDepth for ships, maxWaterDepth otherwise
 	float depth;
 	float maxSlope;

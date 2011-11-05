@@ -49,6 +49,7 @@ public:
 	inline BlockType IsBlocked(const MoveData& moveData, const float3& pos) const;
 	inline BlockType IsBlocked(const MoveData& moveData, int xSquare, int zSquare) const;
 	BlockType IsBlockedNoSpeedModCheck(const MoveData& moveData, int xSquare, int zSquare) const;
+	bool IsBlockedStructure(const MoveData& moveData, int xSquare, int zSquare) const;
 	bool IsBlockedStructureXmax(const MoveData& moveData, int xSquare, int zSquare) const;
 	bool IsBlockedStructureZmax(const MoveData& moveData, int xSquare, int zSquare) const;
 	
@@ -75,6 +76,5 @@ inline CMoveMath::BlockType CMoveMath::IsBlocked(const MoveData& moveData, const
 {
 	return IsBlocked(moveData, pos.x / SQUARE_SIZE, pos.z / SQUARE_SIZE);
 }
-
 
 #endif
