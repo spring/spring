@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <cassert>
 #include "System/mmgr.h"
 
 #include "TransportCAI.h"
@@ -286,23 +287,20 @@ bool CTransportCAI::CanTransport(const CUnit* unit)
 }
 
 
-// FindEmptySpot(pos, max(16.0f, radius), spread, found, u);
-bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius, float3& found, CUnit* unitToUnload)
+bool CTransportCAI::FindEmptySpot(const float3& center, float radius, float spread, float3& found, const CUnit* unitToUnload)
 {
 	const CTransportUnit* ownerTrans = (CTransportUnit*) owner;
 	const MoveData* moveData = unitToUnload->unitDef->movedata;
 
 	if (dynamic_cast<AAirMoveType*>(owner->moveType)) {
-		if (radius < (emptyRadius * 2.0f)) {
-			// the command radius is less than the diameter of the unit we wish to drop
-			//
-			// Boundary checking.  If we are too close to the edge of the map, we will get stuck
-			// in an infinite loop due to not finding any random positions that match a valid location.
-			if ((center.x + radius) <                            emptyRadius ) { return false; }
-			if ((center.z + radius) <                            emptyRadius ) { return false; }
-			if ((center.x - radius) >= (gs->mapx * SQUARE_SIZE - emptyRadius)) { return false; }
-			if ((center.z - radius) >= (gs->mapy * SQUARE_SIZE - emptyRadius)) { return false; }
-		}
+		// Boundary checking.  If we are too close to the edge of the map, we will get stuck
+		// in an infinite loop due to not finding any random positions that match a valid location.
+		//
+		// we must have at least <spread> free space on each side
+		if ((center.x - radius) <  (                  spread)) { return false; }
+		if ((center.z - radius) <  (                  spread)) { return false; }
+		if ((center.x + radius) >= (float3::maxxpos - spread)) { return false; }
+		if ((center.z + radius) >= (float3::maxzpos - spread)) { return false; }
 
 		// handle air transports differently: randomly pick
 		// an unload-position in the circle <center, radius>
@@ -317,14 +315,12 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius
 			do {
 				delta.x = (gs->randFloat() - 0.5f) * 2;
 				delta.z = (gs->randFloat() - 0.5f) * 2;
-				pos = center + delta * std::max(radius, emptyRadius);
+				pos = center + delta * std::min(radius, spread);
 
-				badPos =
-					(pos.x >= (float3::maxxpos - emptyRadius)) ||
-					(pos.z >= (float3::maxzpos - emptyRadius)) ||
-					(delta.SqLength2D() > 1.0f);
+				badPos = ((delta.SqLength2D() > 1.0f) || !pos.IsInBounds());
 			} while (badPos);
 
+			assert(pos.IsInBounds());
 			pos.y = ground->GetHeightReal(pos.x, pos.z);
 
 			if (!ownerTrans->CanLoadUnloadAtPos(pos, unitToUnload))
@@ -334,7 +330,7 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius
 			if (moveData != NULL && ground->GetSlope(pos.x, pos.z) > moveData->maxSlope)
 				continue;
 
-			const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, emptyRadius + SQUARE_SIZE);
+			const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, spread + SQUARE_SIZE);
 
 			if (units.size() > 1 || (units.size() == 1 && units[0] != owner))
 				continue;
@@ -343,20 +339,20 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius
 			return true;
 		}
 	} else {
-		const float minz = std::max(                               emptyRadius,  center.z - radius);
-		const float maxz = std::min(float(gs->mapy * SQUARE_SIZE - emptyRadius), center.z + radius);
+		const float minz = std::max(                               spread,  center.z - radius);
+		const float maxz = std::min(float(gs->mapy * SQUARE_SIZE - spread), center.z + radius);
 
 		for (float z = minz; z < maxz; z += SQUARE_SIZE) {
 			float dz = z - center.z;
 			float rx = radius * radius - dz * dz;
 
-			if (rx <= emptyRadius)
+			if (rx <= spread)
 				continue;
 
 			rx = sqrt(rx);
 	
-			const float minx = std::max(                               emptyRadius,  center.x - rx);
-			const float maxx = std::min(float(gs->mapx * SQUARE_SIZE - emptyRadius), center.x + rx);
+			const float minx = std::max(                               spread,  center.x - rx);
+			const float maxx = std::min(float(gs->mapx * SQUARE_SIZE - spread), center.x + rx);
 
 			for (float x = minx; x < maxx; x += SQUARE_SIZE) {
 				const float3 pos(x, ground->GetApproximateHeight(x, z), z);
@@ -368,7 +364,7 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius
 				if (moveData != NULL && ground->GetSlope(x, z) > moveData->maxSlope)
 					continue;
 
-				if (!qf->GetUnitsExact(pos, emptyRadius + SQUARE_SIZE).empty())
+				if (!qf->GetUnitsExact(pos, spread + SQUARE_SIZE).empty())
 					continue;
 
 				found = pos;
@@ -493,12 +489,14 @@ void CTransportCAI::UnloadUnits_Land(Command& c, CTransportUnit* transport)
 	bool canUnload = false;
 	float3 unloadPos;
 	CUnit* u = NULL;
-	const std::list<CTransportUnit::TransportedUnit>& transpunits = ((CTransportUnit*) owner)->GetTransportedUnits();
+	const CTransportUnit* ownerTrans = (CTransportUnit*) owner;
+	const std::list<CTransportUnit::TransportedUnit>& transpunits = ownerTrans->GetTransportedUnits();
+
 	for(std::list<CTransportUnit::TransportedUnit>::const_iterator it = transpunits.begin(); it != transpunits.end(); ++it) {
 		u = it->unit;
 		const float3 pos(c.params[0], c.params[1], c.params[2]);
 		const float radius = c.params[3];
-		const float spread = u->radius * ((CTransportUnit*) owner)->unitDef->unloadSpread;
+		const float spread = u->radius * ownerTrans->unitDef->unloadSpread;
 		canUnload = FindEmptySpot(pos, std::max(16.0f, radius), spread, unloadPos, u);
 		if (canUnload) {
 			break;
@@ -592,16 +590,18 @@ void CTransportCAI::UnloadUnits_LandFlood(Command& c, CTransportUnit* transport)
 		FinishCommand();
 		return;
 	}
+
 	float3 pos(c.params[0], c.params[1], c.params[2]);
-	float radius = c.params[3];
 	float3 found;
-	//((CTransportUnit*)owner)->transported
 
-	bool canUnload = FindEmptySpot(pos, std::max(16.0f,radius),
-			((CTransportUnit*)owner)->GetTransportedUnits().front().unit->radius * ((CTransportUnit*)owner)->unitDef->unloadSpread,
-			found, ((CTransportUnit*)owner)->GetTransportedUnits().front().unit);
+	const CTransportUnit* ownerTrans = (CTransportUnit*) owner;
+	const std::list<CTransportUnit::TransportedUnit>& transportees = ownerTrans->GetTransportedUnits();
+	const CUnit* transportee = (transportees.front()).unit;
+	const float radius = std::max(16.0f, c.params[3]);
+	const float spread = transportee->radius * ownerTrans->unitDef->unloadSpread;
+	const bool canUnload = FindEmptySpot(pos, radius, spread, found, transportee);
+
 	if (canUnload) {
-
 		Command c2(CMD_UNLOAD_UNIT, c.options | INTERNAL_ORDER);
 		c2.params.push_back(found.x);
 		c2.params.push_back(found.y);
