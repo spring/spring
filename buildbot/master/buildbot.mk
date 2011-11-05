@@ -36,7 +36,7 @@ stop-slave:
 	rm ~/run/slave_schroot_session
 
 enter-chroot:
-	schroot --run-session --chroot `cat ~/run/slave_schroot_session` --user=${USER}
+	schroot --run-session --chroot `cat ~/run/slave_schroot_session` --user=${USER} --directory /
 
 start-stacktrace-translator:
 	spring/buildbot/stacktrace_translator/stacktrace_translator.py >> ~/log/stacktrace_translator.log 2>&1 &
