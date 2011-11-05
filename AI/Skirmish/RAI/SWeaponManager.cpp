@@ -55,13 +55,13 @@ void cSWeaponManager::UnitIdle(int unit, sRAIUnitDef* udr)
 			{
 				iE = ImmobileTargets.begin();
 				for( int i=0; i < rand()%int(ImmobileTargets.size()); i++ )
-					iE++;
+					++iE;
 			}
 			else
 			{
 				iE = Targets.begin();
 				for( int i=0; i < rand()%int(Targets.size()); i++ )
-					iE++;
+					++iE;
 			}
 
 			EnemyInfo *E = &G->Enemies.find(*iE)->second;
