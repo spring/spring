@@ -51,7 +51,7 @@ else
 	echo "Making test-packages"
 	# Insert the branch name as the patch-set part.
 	# (double-quotation is required because of the sub-shell)
-	versionString="${describe}_${branch}")
+	versionString="${describe}_${branch}"
 fi
 
 echo "Using branch \"${versionString}\" as source"
