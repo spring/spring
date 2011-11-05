@@ -6,6 +6,7 @@
 
 sRAIUnitDefBL::sRAIUnitDefBL(sRAIUnitDef* RAIud, sRAIBuildList* BuildList, float Efficiency, int Task)
 {
+	udIndex=0;
 	RUD=RAIud;
 	RUD->List[RUD->ListSize++]=this;
 	RBL=BuildList;

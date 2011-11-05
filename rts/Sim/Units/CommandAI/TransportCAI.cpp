@@ -289,95 +289,94 @@ bool CTransportCAI::CanTransport(const CUnit* unit)
 // FindEmptySpot(pos, max(16.0f, radius), spread, found, u);
 bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius, float3& found, CUnit* unitToUnload)
 {
-	if (dynamic_cast<CHoverAirMoveType*>(owner->moveType)) {
-		// If the command radius is less than the diameter of the unit we wish to drop
-		if (radius < emptyRadius*2) {
+	const CTransportUnit* ownerTrans = (CTransportUnit*) owner;
+	const MoveData* moveData = unitToUnload->unitDef->movedata;
+
+	if (dynamic_cast<CTAAirMoveType*>(owner->moveType)) {
+		if (radius < (emptyRadius * 2.0f)) {
+			// the command radius is less than the diameter of the unit we wish to drop
+			//
 			// Boundary checking.  If we are too close to the edge of the map, we will get stuck
 			// in an infinite loop due to not finding any random positions that match a valid location.
-			if	(	(center.x+radius < emptyRadius)
-				||	(center.z+radius < emptyRadius)
-				||	(center.x-radius >= gs->mapx * SQUARE_SIZE - emptyRadius)
-				||	(center.z-radius >= gs->mapy * SQUARE_SIZE - emptyRadius)
-				)
-			{
-				return false;
-			}
+			if ((center.x + radius) <                            emptyRadius ) { return false; }
+			if ((center.z + radius) <                            emptyRadius ) { return false; }
+			if ((center.x - radius) >= (gs->mapx * SQUARE_SIZE - emptyRadius)) { return false; }
+			if ((center.z - radius) >= (gs->mapy * SQUARE_SIZE - emptyRadius)) { return false; }
 		}
 
-		// handle air transports differently
+		// handle air transports differently: randomly pick
+		// an unload-position in the circle <center, radius>
+		// for each transportee, try this an arbitrary magic
+		// number of times
 		for (int a = 0; a < 100; ++a) {
-			float3 delta(1.0f, 0.0f, 1.0f);
-			float3 tmp;
+			float3 delta;
+			float3 pos;
+
+			bool badPos = true;
+
 			do {
 				delta.x = (gs->randFloat() - 0.5f) * 2;
 				delta.z = (gs->randFloat() - 0.5f) * 2;
-				tmp = center + delta * radius;
-			} while (delta.SqLength2D() > 1
-					|| tmp.x < emptyRadius || tmp.z < emptyRadius
-					|| tmp.x >= gs->mapx * SQUARE_SIZE - emptyRadius
-					|| tmp.z >= gs->mapy * SQUARE_SIZE - emptyRadius);
+				pos = center + delta * std::max(radius, emptyRadius);
 
-			float3 pos = center + delta * radius;
-			pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
+				badPos =
+					(pos.x >= (float3::maxxpos - emptyRadius)) ||
+					(pos.z >= (float3::maxzpos - emptyRadius)) ||
+					(delta.SqLength2D() > 1.0f);
+			} while (badPos);
 
-			if (dynamic_cast<const CBuilding*>(unitToUnload)) {
-				pos = helper->Pos2BuildPos(BuildInfo(unitToUnload->unitDef, pos, unitToUnload->buildFacing), true);
-			}
+			pos.y = ground->GetHeight(pos.x, pos.z);
 
-			if (!((CTransportUnit*)owner)->CanLoadUnloadAtPos(pos, unitToUnload)) {
+			if (!ownerTrans->CanLoadUnloadAtPos(pos, unitToUnload))
 				continue;
-			}
 
-			// Don't unload anything on slopes
-			if (unitToUnload->unitDef->movedata
-					&& ground->GetSlope(pos.x, pos.z) > unitToUnload->unitDef->movedata->maxSlope) {
+			// don't unload unit on too-steep slopes
+			if (moveData != NULL && ground->GetSlope(pos.x, pos.z) > moveData->maxSlope)
 				continue;
-			}
-			const std::vector<CUnit*> &units = qf->GetUnitsExact(pos, emptyRadius + 8);
-			if (units.size() > 1 || (units.size() == 1 && units[0] != owner)) {
+
+			const std::vector<CUnit*>& units = qf->GetUnitsExact(pos, emptyRadius + SQUARE_SIZE);
+
+			if (units.size() > 1 || (units.size() == 1 && units[0] != owner))
 				continue;
-			}
 
 			found = pos;
 			return true;
 		}
 	} else {
-		for (float y = std::max(emptyRadius, center.z - radius); y < std::min(float(gs->mapy * SQUARE_SIZE - emptyRadius), center.z + radius); y += SQUARE_SIZE) {
-			float dy = y - center.z;
-			float rx = radius * radius - dy * dy;
+		const float minz = std::max(                               emptyRadius,  center.z - radius);
+		const float maxz = std::min(float(gs->mapy * SQUARE_SIZE - emptyRadius), center.z + radius);
 
-			if (rx <= emptyRadius) {
+		for (float z = minz; z < maxz; z += SQUARE_SIZE) {
+			float dz = z - center.z;
+			float rx = radius * radius - dz * dz;
+
+			if (rx <= emptyRadius)
 				continue;
-			}
 
 			rx = sqrt(rx);
+	
+			const float minx = std::max(                               emptyRadius,  center.x - rx);
+			const float maxx = std::min(float(gs->mapx * SQUARE_SIZE - emptyRadius), center.x + rx);
 
-			for (float x = std::max(emptyRadius, center.x - rx); x < std::min(float(gs->mapx * SQUARE_SIZE - emptyRadius), center.x + rx); x += SQUARE_SIZE) {
-				float3 pos(x, ground->GetApproximateHeight(x, y), y);
+			for (float x = minx; x < maxx; x += SQUARE_SIZE) {
+				const float3 pos(x, ground->GetApproximateHeight(x, z), z);
 
-				if (dynamic_cast<const CBuilding*>(unitToUnload)) {
-					pos = helper->Pos2BuildPos(BuildInfo(unitToUnload->unitDef, pos, unitToUnload->buildFacing), true);
-				}
-
-				if (!((CTransportUnit*)owner)->CanLoadUnloadAtPos(pos, unitToUnload)) {
+				if (!ownerTrans->CanLoadUnloadAtPos(pos, unitToUnload))
 					continue;
-				}
 
-				// Don't unload anything on slopes
-				if (unitToUnload->unitDef->movedata
-						&& ground->GetSlope(x, y) > unitToUnload->unitDef->movedata->maxSlope) {
+				// don't unload unit on too-steep slopes
+				if (moveData != NULL && ground->GetSlope(x, z) > moveData->maxSlope)
 					continue;
-				}
 
-				if (!qf->GetUnitsExact(pos, emptyRadius + 8).empty()) {
+				if (!qf->GetUnitsExact(pos, emptyRadius + SQUARE_SIZE).empty())
 					continue;
-				}
 
 				found = pos;
 				return true;
 			}
 		}
 	}
+
 	return false;
 }
 

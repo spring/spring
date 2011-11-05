@@ -4,24 +4,28 @@ At least debootstrap and schroot are required. I didn't compile an exhaustive li
 
 ## Configuring schroot
 
-Add to the end of /etc/schroot/schroot.conf:
+Add a file (name does not matter) to `/etc/schroot/chroot.d` with the following contents, after substituting an absolute path for `$DIR`:
 
 	[buildbot-maverick]
 	description=Ubuntu Maverick
-	location=/fast/buildbot/chroots/maverick
+	directory=$DIR
 	type=directory
-	priority=3
 	users=buildbot
+	groups=buildbot
 	root-groups=root
 	personality=linux32
-	run-setup-scripts=true
 	script-config=script-defaults
+	message-verbosity=verbose
+
+Then, remove or comment out the `/home` bind mount in `/etc/schroot/default/fstab`!
+
+This configuration has been tested with schroot 1.4.23. With any other version YMMV.
 
 ## Building and entering the chroot
 
-	debootstrap --variant=buildd --arch i386 maverick /fast/buildbot/chroots/maverick/ http://ftp.cvut.cz/ubuntu/
-	mkdir -p /fast/buildbot/chroots/maverick/home/buildbot/www
-	chown buildbot:buildbot /fast/buildbot/chroots/maverick/home/buildbot
+	debootstrap --variant=buildd --arch i386 maverick $DIR http://ftp.cvut.cz/ubuntu/
+	mkdir -p $DIR/home/buildbot/www
+	chown buildbot:buildbot $DIR/home/buildbot
 	schroot -c buildbot-maverick
 
 # Inside the chroot
