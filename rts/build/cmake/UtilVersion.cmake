@@ -116,7 +116,7 @@ Macro    (GetVersionFromFile vers_var vers_file)
 	Set(${vers_var}-NOTFOUND)
 
 	If    (EXISTS "${vers_file}")
-		File(STRINGS "${vers_file}" ${vers_var}_tmp LIMIT_COUNT 1 REGEX "^${VERSION_REGEX_ALL}$")
+		File(STRINGS "${vers_file}" ${vers_var}_tmp LIMIT_COUNT 1 REGEX "^${VERSION_REGEX_ANY}$")
 		If    (NOT ("${${vers_var}_tmp}" STREQUAL ""))
 			Set(${vers_var} "${${vers_var}_tmp}")
 		Else  ()
