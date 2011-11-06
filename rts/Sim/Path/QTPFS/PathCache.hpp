@@ -7,7 +7,6 @@
 #include <map>
 #include <vector>
 
-#include "PathDefines.hpp"
 #include "PathEnums.hpp"
 #include "Path.hpp"
 
