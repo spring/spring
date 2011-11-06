@@ -25,7 +25,7 @@ public:
 	QTPFSPathDrawer();
 
 	void DrawAll() const;
-	void UpdateExtraTexture(int, int, int, int, unsigned char*) const {}
+	void UpdateExtraTexture(int, int, int, int, unsigned char*) const;
 
 private:
 	enum {

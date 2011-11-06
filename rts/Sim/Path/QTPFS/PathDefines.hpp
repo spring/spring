@@ -15,6 +15,7 @@
 // #define QTPFS_OPENMP_ENABLED
 
 #define QTPFS_POSITIVE_INFINITY (std::numeric_limits<float>::infinity())
+#define WS(p) ((p) * SQUARE_SIZE)
 
 #endif
 

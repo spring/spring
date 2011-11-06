@@ -3,16 +3,24 @@
 #include <cassert>
 
 #include "PathCache.hpp"
+#include "PathDefines.hpp"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/CollisionHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/Rectangle.h"
 
-static void GetRectangleCollisionVolume(const SRectangle& r, CollisionVolume& v) {
+static void GetRectangleCollisionVolume(const SRectangle& r, CollisionVolume& v, float3& rm) {
 	float3 vScales;
-	vScales.x = (r.x2 - r.x1) * SQUARE_SIZE;
-	vScales.z = (r.z2 - r.z1) * SQUARE_SIZE;
+
+	// rectangle dimensions (WS)
+	vScales.x = WS(r.x2 - r.x1);
+	vScales.z = WS(r.z2 - r.z1);
 	vScales.y = 1.0f;
+
+	// rectangle mid-point (WS)
+	rm.x = WS(r.x1 + r.x2) >> 1;
+	rm.z = WS(r.z1 + r.z2) >> 1;
+	rm.y = 0.0f;
 
 	#define CV CollisionVolume
 	v.Init(vScales, ZeroVector, CV::COLVOL_TYPE_BOX, CV::COLVOL_HITTEST_CONT, CV::COLVOL_AXIS_Y);
@@ -116,11 +124,11 @@ bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
 	if (livePaths.empty())
 		return false;
 
-	const unsigned int numDeadPaths = deadPaths.size();
-
 	// NOTE: not static, we run in multiple threads
 	CollisionVolume rv;
-	GetRectangleCollisionVolume(r, rv);
+	float3 rm;
+
+	GetRectangleCollisionVolume(r, rv, rm);
 
 	// "mark" any live path crossing the area of a terrain
 	// deformation, for which some or all of its waypoints
@@ -135,10 +143,10 @@ bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
 		const float3& pathMaxs = path->GetBoundingBoxMaxs();
 
 		// if rectangle does not overlap bounding-box, skip this path
-		if ((r.x2 * SQUARE_SIZE) < pathMins.x) { continue; }
-		if ((r.z2 * SQUARE_SIZE) < pathMins.z) { continue; }
-		if ((r.x1 * SQUARE_SIZE) > pathMaxs.x) { continue; }
-		if ((r.z1 * SQUARE_SIZE) > pathMaxs.z) { continue; }
+		if (WS(r.x2) < pathMins.x) { continue; }
+		if (WS(r.z2) < pathMins.z) { continue; }
+		if (WS(r.x1) > pathMaxs.x) { continue; }
+		if (WS(r.z1) > pathMaxs.z) { continue; }
 
 		// figure out if <path> has at least one edge crossing <r>
 		// we only care about the segments we have not yet visited
@@ -147,20 +155,20 @@ bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
 			const float3& p1 = path->GetPoint(i + 1);
 
 			const bool pointInRect0 =
-				((p0.x >= (r.x1 * SQUARE_SIZE) && p0.x < (r.x2 * SQUARE_SIZE)) &&
-				 (p0.z >= (r.z1 * SQUARE_SIZE) && p0.z < (r.z2 * SQUARE_SIZE)));
+				((p0.x >= WS(r.x1) && p0.x < WS(r.x2)) &&
+				 (p0.z >= WS(r.z1) && p0.z < WS(r.z2)));
 			const bool pointInRect1 =
-				((p1.x >= (r.x1 * SQUARE_SIZE) && p1.x < (r.x2 * SQUARE_SIZE)) &&
-				 (p1.z >= (r.z1 * SQUARE_SIZE) && p1.z < (r.z2 * SQUARE_SIZE)));
+				((p1.x >= WS(r.x1) && p1.x < WS(r.x2)) &&
+				 (p1.z >= WS(r.z1) && p1.z < WS(r.z2)));
+			const bool havePointInRect = (pointInRect0 || pointInRect1);
 			// NOTE:
 			//     box-volume tests in its own space, but points are
 			//     in world-space so we must inv-transform them first
-			//     (p0 --> ZeroVector, p1 --> p1 - p0)
+			//     (p0 --> p0 - rm, p1 --> p1 - rm)
 			const bool edgeCrossesRect =
-				((p0.x < r.x1 && p1.x >= r.x2) && (p0.z >= r.z1 && p1.z < r.z2)) || // H
-				((p0.z < r.z1 && p1.z >= r.z2) && (p0.x >= r.x1 && p1.x < r.x2)) || // V
-				CCollisionHandler::IntersectBox(&rv, ZeroVector, p1 - p0, NULL);
-			const bool havePointInRect = (pointInRect0 || pointInRect1);
+				((p0.x < WS(r.x1) && p1.x >= WS(r.x2)) && (p0.z >= WS(r.z1) && p1.z < WS(r.z2))) ||  // H
+				((p0.z < WS(r.z1) && p1.z >= WS(r.z2)) && (p0.x >= WS(r.x1) && p1.x < WS(r.x2))) ||  // V
+				CCollisionHandler::IntersectBox(&rv, p0 - rm, p1 - rm, NULL);
 
 			// remember the ID of each path affected by the deformation
 			if (havePointInRect || edgeCrossesRect) {
@@ -176,7 +184,7 @@ bool QTPFS::PathCache::MarkDeadPaths(const SRectangle& r) {
 		livePaths.erase(*it);
 	}
 
-	return (deadPaths.size() > numDeadPaths);
+	return true;
 }
 
 void QTPFS::PathCache::KillDeadPaths() {

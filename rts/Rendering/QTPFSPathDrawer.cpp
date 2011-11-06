@@ -3,6 +3,7 @@
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnits.h"
+#include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/MoveTypes/MoveInfo.h"
@@ -23,6 +24,7 @@
 #include "Rendering/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/QTPFSPathDrawer.h"
+#include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "System/Util.h"
@@ -168,29 +170,45 @@ void QTPFSPathDrawer::DrawPaths(const MoveData* md) const {
 }
 
 void QTPFSPathDrawer::DrawPath(const QTPFS::IPath* path, CVertexArray* va) const {
-	va->Initialize();
-	va->EnlargeArrays(path->NumPoints() * 2, 0, VA_SIZE_C);
+	glLineWidth(4);
 
-	static const unsigned char color[4] = {
-		0 * 255, 0 * 255, 1 * 255, 1 * 255,
-	};
+	{
+		va->Initialize();
+		va->EnlargeArrays(path->NumPoints() * 2, 0, VA_SIZE_C);
 
-	for (unsigned int n = 0; n < path->NumPoints() - 1; n++) {
-		float3 p0 = path->GetPoint(n + 0);
-		float3 p1 = path->GetPoint(n + 1);
+		static const unsigned char color[4] = {
+			0 * 255, 0 * 255, 1 * 255, 1 * 255,
+		};
 
-		if (!camera->InView(p0) && !camera->InView(p1))
-			continue;
+		for (unsigned int n = 0; n < path->NumPoints() - 1; n++) {
+			float3 p0 = path->GetPoint(n + 0);
+			float3 p1 = path->GetPoint(n + 1);
 
-		p0.y = ground->GetHeightReal(p0.x, p0.z, false);
-		p1.y = ground->GetHeightReal(p1.x, p1.z, false);
+			if (!camera->InView(p0) && !camera->InView(p1))
+				continue;
 
-		va->AddVertexQC(p0, color);
-		va->AddVertexQC(p1, color);
+			p0.y = ground->GetHeightReal(p0.x, p0.z, false);
+			p1.y = ground->GetHeightReal(p1.x, p1.z, false);
+
+			va->AddVertexQC(p0, color);
+			va->AddVertexQC(p1, color);
+		}
+
+		va->DrawArrayC(GL_LINES);
 	}
 
-	glLineWidth(4);
-	va->DrawArrayC(GL_LINES);
+	#ifdef QTPFS_DRAW_WAYPOINT_GROUND_CIRCLES
+	{
+		glColor4ub(color[0], color[1], color[2], color[3]);
+
+		for (unsigned int n = 0; n < path->NumPoints(); n++) {
+			glSurfaceCircle(path->GetPoint(n), path->GetRadius(), 16);
+		}
+
+		glColor4ub(255, 255, 255, 255);
+	}
+	#endif
+
 	glLineWidth(1);
 }
 
@@ -342,5 +360,31 @@ void QTPFSPathDrawer::DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS:
 
 	#undef xmidw
 	#undef zmidw
+}
+
+
+
+void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {
+	switch (extraTex) {
+		case CBaseGroundDrawer::drawPathTraversability: {
+			const MoveData* md = GetMoveData();
+
+			if (md == NULL)
+				return;
+
+			// TODO
+			for (int ty = starty; ty < endy; ++ty) {
+				for (int tx = 0; tx < gs->hmapx; ++tx) {
+					const int sqx = (tx << 1);
+					const int sqz = (ty << 1);
+					const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
+					const int mapIdx = sqz * gs->mapxp1 + sqx;
+				}
+			}
+		} break;
+
+		case CBaseGroundDrawer::drawPathCost: {
+		} break;
+	}
 }
 
