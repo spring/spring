@@ -645,8 +645,10 @@ bool CCollisionHandler::IntersectBox(const CollisionVolume* v, const float3& pi0
 	if ((ba && bb && bc) /* && (bd && be && bf) */) {
 		// terminate early in the special case
 		// that shot originated within volume
-		q->b0 = true; q->p0 = ZVEC;
-		q->b1 = true; q->p1 = ZVEC;
+		if (q != NULL) {
+			q->b0 = true; q->p0 = ZVEC;
+			q->b1 = true; q->p1 = ZVEC;
+		}
 		return true;
 	}
 
@@ -732,7 +734,7 @@ bool CCollisionHandler::IntersectBox(const CollisionVolume* v, const float3& pi0
 	const bool b0 = (dSq0 <= segLenSq);
 	const bool b1 = (dSq1 <= segLenSq);
 
-	if (q) {
+	if (q != NULL) {
 		q->b0 = b0; q->b1 = b1;
 		q->t0 = tn; q->t1 = tf;
 		q->p0 = p0; q->p1 = p1;
