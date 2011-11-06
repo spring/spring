@@ -649,6 +649,7 @@ bool CCollisionHandler::IntersectBox(const CollisionVolume* v, const float3& pi0
 			q->b0 = true; q->p0 = ZVEC;
 			q->b1 = true; q->p1 = ZVEC;
 		}
+
 		return true;
 	}
 
