@@ -49,14 +49,16 @@ fi
 if ${isRelease}; then
 	echo "Making release-packages"
 	versionString=${describe}
+	versionInfo=${describe}
 else
 	echo "Making test-packages"
 	# Insert the branch name as the patch-set part.
 	# (double-quotation is required because of the sub-shell)
 	versionString="${describe}_${branch}"
+	versionInfo="${describe} ${branch}"
 fi
 
-echo "Using branch \"${versionString}\" as source"
+echo "Using version \"${versionInfo}\" as source"
 
 
 dir="spring_${versionString}"
@@ -95,10 +97,17 @@ windows_include=""
 echo 'Exporting checkout dir with LF line endings'
 git clone -n . lf/${dir}
 cd lf/${dir}
+
+# Checkout the release-version
 git checkout ${branch}
+# ... and respective submodules (mostly AIs)
 git submodule update --init
+# Add the engine version info, as we can not fetch it through git
+# when using a source archive
+echo "${versionInfo}" > ./VERSION
+
 cd ..
-# FIXME use git-archive instead? (submodules may cause a bit trouble with it)
+# XXX use git-archive instead? (submodules may cause a bit trouble with it)
 [ -n "${linux_exclude}" ] && rm -rf ${linux_exclude}
 [ -n "${lzma}" ] && echo "Creating .tar.lzma archive (${lzma})" && \
 	tar -c --lzma  -f "../${lzma}" ${include} ${linux_include} --exclude=.git
