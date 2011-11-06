@@ -712,13 +712,9 @@ float3 QTPFS::PathManager::NextWayPoint(
 	IPath* tempPath = pathCaches[pathTypeIt->second].GetTempPath(pathID);
 	IPath* livePath = pathCaches[pathTypeIt->second].GetLivePath(pathID);
 
-	if (tempPath->GetID() != 0 || livePath->GetID() == 0) {
+	if (tempPath->GetID() != 0) {
 		// path-request has not yet been processed (so ID still maps to
 		// a temporary path); just set the unit off toward its target
-		//
-		// alternatively, the request WAS processed but then immediately
-		// undone by a TerrainChange --> MarkDeadPaths in the same frame
-		// as NextWayPoint (so pathID is only in deadPaths)
 		//
 		// <curPoint> is initially the position of the unit requesting a
 		// path, but later changes to the subsequent values returned here
@@ -735,6 +731,12 @@ float3 QTPFS::PathManager::NextWayPoint(
 		const float3& targetPoint = tempPath->GetTargetPoint();
 		const float3  targetDirec = (targetPoint - sourcePoint).SafeNormalize();
 		return (sourcePoint + targetDirec * SQUARE_SIZE);
+	}
+	if (livePath->GetID() == 0) {
+		// the request WAS processed but then immediately undone by a
+		// TerrainChange --> MarkDeadPaths event in the same frame as
+		// NextWayPoint (so pathID is only in deadPaths)
+		return point;
 	}
 
 	const float minRadiusSq = std::max(float(SQUARE_SIZE * SQUARE_SIZE), radius * radius);

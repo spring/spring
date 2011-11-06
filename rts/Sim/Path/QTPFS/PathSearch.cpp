@@ -254,7 +254,11 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 		INode* oldNode = tmpNode->GetPrevNode();
 
 		while ((oldNode != NULL) && (tmpNode != srcNode)) {
-			points.push_front(tmpNode->GetNeighborEdgeMidPoint(oldNode));
+			const float3& point = tmpNode->GetNeighborEdgeMidPoint(oldNode);
+
+			assert(!math::isinf(point.x) && !math::isinf(point.z));
+			assert(!math::isnan(point.x) && !math::isnan(point.z));
+			points.push_front(point);
 
 			#ifndef QTPFS_SMOOTH_PATHS
 			// make sure these can never become dangling
@@ -379,6 +383,8 @@ void QTPFS::PathSearch::SmoothPath(IPath* path) {
 			ok = ok && (pi.z >= (zmin * SQUARE_SIZE) && pi.z <= (zmax * SQUARE_SIZE));
 
 			if (ok) {
+				assert(!math::isinf(pi.x) && !math::isinf(pi.z));
+				assert(!math::isnan(pi.x) && !math::isnan(pi.z));
 				path->SetPoint(ni - 1, pi);
 				continue;
 			}
@@ -418,6 +424,8 @@ void QTPFS::PathSearch::SmoothPath(IPath* path) {
 			if (dot0 > std::max(dot1, dot)) { p1 = e0; }
 			if (dot1 > std::max(dot0, dot)) { p1 = e1; }
 
+			assert(!math::isinf(p1.x) && !math::isinf(p1.z));
+			assert(!math::isnan(p1.x) && !math::isnan(p1.z));
 			path->SetPoint(ni - 1, p1);
 		}
 	}
