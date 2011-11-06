@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# tarball generation script
+
 # Quit on error.
 set -e
 
@@ -75,30 +77,15 @@ tgz="spring_${versionString}_src.tar.gz"
 
 # This is the list of files/directories that go in the source package.
 # (directories are included recursively)
-include=" \
- ${dir}/AI/ \
- ${dir}/doc/ \
- ${dir}/cont/ \
- ${dir}/include/ \
- ${dir}/installer/ \
- ${dir}/rts/ \
- ${dir}/tools/unitsync/ \
- ${dir}/tools/ArchiveMover/ \
- ${dir}/tools/DemoTool/ \
- ${dir}/tools/CMakeLists.txt \
- ${dir}/CMakeLists.txt \
- ${dir}/Doxyfile \
- ${dir}/directories.txt \
- ${dir}/README.markdown \
- ${dir}/LICENSE \
- ${dir}/LICENSE.html \
- ${dir}/THANKS \
- ${dir}/AUTHORS \
- ${dir}/FAQ \
- ${dir}/COPYING"
+# Note: include all files by default
+include="${dir}"
 
-# On linux, win32 executables are useless.
-exclude_from_all=""
+# Excude list (exclude git-files, win32 executables on linux, etc.)
+exclude_from_all=" \
+ ${dir}/.git \
+ ${dir}/.gitignore \
+ ${dir}/.gitmodules \
+ ${dir}/.mailmap"
 linux_exclude="${exclude_from_all}"
 linux_include=""
 windows_exclude="${exclude_from_all}"
@@ -111,6 +98,7 @@ cd lf/${dir}
 git checkout ${branch}
 git submodule update --init
 cd ..
+# FIXME use git-archive instead? (submodules may cause a bit trouble with it)
 [ -n "${linux_exclude}" ] && rm -rf ${linux_exclude}
 [ -n "${lzma}" ] && echo "Creating .tar.lzma archive (${lzma})" && \
 	tar -c --lzma  -f "../${lzma}" ${include} ${linux_include} --exclude=.git
