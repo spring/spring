@@ -378,66 +378,74 @@ void CGame::ClientReadNet()
 			case NETMSG_COMMAND: {
 				try {
 					netcode::UnpackPacket pckt(packet, 1);
-					short int psize;
-					pckt >> psize;
-					unsigned char player;
-					pckt >> player;
-					if (!playerHandler->IsValidPlayer(player))
+
+					unsigned short packetSize; pckt >> packetSize;
+					unsigned char playerNum; pckt >> playerNum;
+					const unsigned int numParams = (packetSize - 9) / sizeof(float);
+
+					if (!playerHandler->IsValidPlayer(playerNum))
 						throw netcode::UnpackPacketException("Invalid player number");
 
-					int cmd_id;
-					unsigned char cmd_opt;
-					pckt >> cmd_id;
-					pckt >> cmd_opt;
+					int cmdID;
+					unsigned char cmdOpt;
+					pckt >> cmdID;
+					pckt >> cmdOpt;
 
-					Command c(cmd_id, cmd_opt);
-					for (int a = 0; a < ((psize-9)/4); ++a) {
-						float param;
-						pckt >> param;
+					Command c(cmdID, cmdOpt);
+					c.params.reserve(numParams);
+
+					for (int a = 0; a < numParams; ++a) {
+						float param; pckt >> param;
 						c.params.push_back(param);
 					}
-					selectedUnits.NetOrder(c,player);
-					AddTraffic(player, packetCode, dataLength);
+
+					selectedUnits.NetOrder(c, playerNum);
+					AddTraffic(playerNum, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "Got invalid Command: %s", ex.what());
 				}
+
 				break;
 			}
 
 			case NETMSG_SELECT: {
 				try {
 					netcode::UnpackPacket pckt(packet, 1);
-					short int psize;
-					pckt >> psize;
-					unsigned char player;
-					pckt >> player;
-					if (!playerHandler->IsValidPlayer(player))
+
+					unsigned short packetSize; pckt >> packetSize;
+					unsigned char playerNum; pckt >> playerNum;
+					const unsigned int numUnitIDs = (packetSize - 4) / sizeof(short int);
+
+					if (!playerHandler->IsValidPlayer(playerNum)) {
 						throw netcode::UnpackPacketException("Invalid player number");
+					}
 
-					vector<int> selected;
-					bool firsterr = true;
-					for (int a = 0; a < ((psize-4)/2); ++a) {
-						short int unitid;
-						pckt >> unitid;
+					std::vector<int> selectedUnitIDs;
+					selectedUnitIDs.reserve(numUnitIDs);
 
-						if (uh->GetUnit(unitid) == NULL) {
-							if (firsterr) {
-								LOG_L(L_WARNING, "Got invalid Select: Invalid unit ID (%i)", unitid);
-							}
-							firsterr = false;
+					for (int a = 0; a < numUnitIDs; ++a) {
+						short int unitID; pckt >> unitID;
+						const CUnit* unit = uh->GetUnit(unitID);
+
+						if (unit == NULL) {
+							// unit was destroyed in simulation (without its ID being recycled)
+							// after sending a command but before receiving it back, more likely
+							// to happen in high-latency situations
+							// LOG_L(L_WARNING, "[NETMSG_SELECT] invalid unitID (%i) from player %i", unitID, playerNum);
 							continue;
 						}
 
-						if ((uh->GetUnit(unitid)->team == playerHandler->Player(player)->team) || gs->godMode) {
-							selected.push_back(unitid);
+						if ((unit->team == playerHandler->Player(playerNum)->team) || gs->godMode) {
+							selectedUnitIDs.push_back(unitID);
 						}
 					}
-					selectedUnits.NetSelect(selected, player);
 
-					AddTraffic(player, packetCode, dataLength);
+					selectedUnits.NetSelect(selectedUnitIDs, playerNum);
+					AddTraffic(playerNum, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "Got invalid Select: %s", ex.what());
 				}
+
 				break;
 			}
 
@@ -1062,7 +1070,5 @@ void CGame::ClientReadNet()
 			}
 		}
 	}
-
-	return;
 }
 
