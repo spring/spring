@@ -753,7 +753,7 @@ float CAICallback::GetPathLength(float3 start, float3 end, int pathType, float g
 	std::vector<float3> points;
 	std::vector<int>    lengths;
 
-	pathManager->GetEstimatedPath(pathID, points, lengths);
+	pathManager->GetPathWayPoints(pathID, points, lengths);
 
 	if (points.empty()) {
 		return 0.0f;
