@@ -2003,7 +2003,7 @@ public:
 class CrossActionExecutor : public IUnsyncedActionExecutor {
 public:
 	CrossActionExecutor() : IUnsyncedActionExecutor("Cross",
-			"Allows to exchange and modify the appearance of the"
+			"Allows one to exchange and modify the appearance of the"
 			" cross/mouse-pointer in first-person-control view") {}
 
 	void Execute(const UnsyncedAction& action) const {

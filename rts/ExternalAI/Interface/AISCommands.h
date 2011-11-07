@@ -260,7 +260,7 @@ enum UnitCommandOptions {
 		)
 
 /**
- * Allows to give an income (dis-)advantage to the team
+ * Allows one to give an income (dis-)advantage to the team
  * controlled by the Skimrish AI.
  * This value can also be set through the GameSetup script,
  * with the difference that it causes an instant desync when set here.
