@@ -41,7 +41,7 @@ class CTransportUnit;
 #define LOS_INLOS      (1 << 0)  // the unit is currently in the los of the allyteam
 #define LOS_INRADAR    (1 << 1)  // the unit is currently in radar from the allyteam
 #define LOS_PREVLOS    (1 << 2)  // the unit has previously been in los from the allyteam
-#define LOS_CONTRADAR  (1 << 3)  // the unit has continously been in radar since it was last inlos by the allyteam
+#define LOS_CONTRADAR  (1 << 3)  // the unit has continuously been in radar since it was last inlos by the allyteam
 
 // LOS mask bits  (masked bits are not automatically updated)
 #define LOS_INLOS_MASK     (1 << 8)   // do not update LOS_INLOS
