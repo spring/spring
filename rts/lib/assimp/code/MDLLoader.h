@@ -78,7 +78,7 @@ using namespace MDL;
  *   </ul>
  *  These formats are partially identical and it would be possible to load
  *  them all with a single 1000-line function-beast. However, it has been
- *  splitted to several code paths to make the code easier to read and maintain.
+ *  split to several code paths to make the code easier to read and maintain.
 */
 class MDLImporter : public BaseImporter
 {
