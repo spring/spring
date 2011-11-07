@@ -202,7 +202,7 @@ struct SSkirmishAICallback {
 	const char*       (CALLING_CONV *DataDirs_getConfigDir)(int skirmishAIId);
 
 	/**
-	 * This interfaces writeable data dir, which is where eg logs, caches
+	 * This interfaces writable data dir, which is where eg logs, caches
 	 * and learning data should be stored, e.g.:
 	 * /home/userX/.spring/AI/Skirmish/RAI/0.601/
 	 */
@@ -221,9 +221,9 @@ struct SSkirmishAICallback {
 	 * @see DataDirs_Roots_locatePath
 	 * @param   path          store for the resulting absolute path
 	 * @param   path_sizeMax  storage size of the above
-	 * @param   writeable  if true, only the writeable data-dir is considered
+	 * @param   writeable  if true, only the writable data-dir is considered
 	 * @param   create     if true, and realPath is not found, its dir structure
-	 *                     is created recursively under the writeable data-dir
+	 *                     is created recursively under the writable data-dir
 	 * @param   dir        if true, realPath specifies a dir, which means if
 	 *                     create is true, the whole path will be created,
 	 *                     including the last part
@@ -260,9 +260,9 @@ struct SSkirmishAICallback {
 	 * @param   path          store for the resulting absolute path
 	 * @param   path_sizeMax  storage size of the above
 	 * @param   relPath    the relative path to find
-	 * @param   writeable  if true, only the writeable data-dir is considered
+	 * @param   writeable  if true, only the writable data-dir is considered
 	 * @param   create     if true, and realPath is not found, its dir structure
-	 *                     is created recursively under the writeable data-dir
+	 *                     is created recursively under the writable data-dir
 	 * @param   dir        if true, realPath specifies a dir, which means if
 	 *                     create is true, the whole path will be created,
 	 *                     including the last part

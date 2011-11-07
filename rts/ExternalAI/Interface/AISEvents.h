@@ -380,7 +380,7 @@ struct SLoadEvent {
  * This AI event is sent when the AI should be saving its full state to a file.
  */
 struct SSaveEvent {
-	/// Absolute file path, writeable
+	/// Absolute file path, writable
 	const char* file;
 }; //$ EVENT_SAVE INTERFACES:LoadSave(file)
 
