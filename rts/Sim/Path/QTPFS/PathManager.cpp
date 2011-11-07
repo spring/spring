@@ -777,7 +777,7 @@ float3 QTPFS::PathManager::NextWayPoint(
 
 
 
-void QTPFS::PathManager::GetEstimatedPath(
+void QTPFS::PathManager::GetPathWayPoints(
 	unsigned int pathID,
 	std::vector<float3>& points,
 	std::vector<int>& starts

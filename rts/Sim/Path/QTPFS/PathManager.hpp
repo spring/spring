@@ -48,7 +48,7 @@ namespace QTPFS {
 			bool synced = true
 		);
 
-		void GetEstimatedPath(
+		void GetPathWayPoints(
 			unsigned int pathID,
 			std::vector<float3>& points,
 			std::vector<int>& starts

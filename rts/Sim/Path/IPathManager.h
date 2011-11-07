@@ -62,21 +62,29 @@ public:
 		bool synced = true
 	) { return ZeroVector; }
 
-	//! NOTE: should not be in the interface
+
 	/**
-	 * Returns current estimated waypoints sorted by estimation levels
+	 * Returns all waypoints of a path. Different segments of a path might
+	 * have different resolutions, or each segment might be represented at
+	 * multiple different resolution levels. In the former case, a subset
+	 * of waypoints (those belonging to i-th resolution path SEGMENTS) are
+	 * stored between points[starts[i]] and points[starts[i + 1]], while in
+	 * the latter case ALL waypoints (of the i-th resolution PATH) are stored
+	 * between points[starts[i]] and points[starts[i + 1]]
+	 *
 	 * @param pathId
 	 *     The path-id returned by RequestPath.
 	 * @param points
-	 *     The list of estimated waypoints.
+	 *     The list of waypoints.
 	 * @param starts
-	 *     The list of starting indices for the different estimation levels
+	 *     The list of starting indices for the different resolutions
 	 */
-	virtual void GetEstimatedPath(
+	virtual void GetPathWayPoints(
 		unsigned int pathId,
 		std::vector<float3>& points,
 		std::vector<int>& starts
 	) const {}
+
 
 	/**
 	 * Generate a path from startPos to the target defined by

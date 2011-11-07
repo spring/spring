@@ -472,7 +472,7 @@ void CPathManager::GetDetailedPathSquares(unsigned pathId, std::vector<int2>& po
 
 
 
-void CPathManager::GetEstimatedPath(
+void CPathManager::GetPathWayPoints(
 	unsigned int pathId,
 	std::vector<float3>& points,
 	std::vector<int>& starts
