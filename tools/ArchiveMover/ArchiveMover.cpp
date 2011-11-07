@@ -454,7 +454,7 @@ static int run(int argc, const Char* const* argv){
 
 		if (!quiet) {
 			message<<_("The ")<<(content == R_MAP? _("map '") : _("game '"))<<source_file.leaf()
-			<<_("' has been saved succesfully to '")<<target_dir.branch_path()<<_("'.")<<endl
+			<<_("' has been saved successfully to '")<<target_dir.branch_path()<<_("'.")<<endl
 			<<_("Use the reload games/maps button in the lobby to make Spring find it.")<<endl;
 		}
 
