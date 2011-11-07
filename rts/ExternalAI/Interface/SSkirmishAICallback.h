@@ -331,7 +331,7 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *Game_getTeamAllyTeam)(int skirmishAIId, int otherTeamId);
 
 	/**
-	 * Returns the current level of a resource of an other team.
+	 * Returns the current level of a resource of another team.
 	 * Allways works for allied teams.
 	 * Works for all teams when cheating is enabled.
 	 * @return current level of the requested resource of the other team, or -1.0 on an invalid request
@@ -339,7 +339,7 @@ struct SSkirmishAICallback {
 	float             (CALLING_CONV *Game_getTeamResourceCurrent)(int skirmishAIId, int otherTeamId, int resourceId);
 
 	/**
-	 * Returns the current income of a resource of an other team.
+	 * Returns the current income of a resource of another team.
 	 * Allways works for allied teams.
 	 * Works for all teams when cheating is enabled.
 	 * @return current income of the requested resource of the other team, or -1.0 on an invalid request
@@ -347,7 +347,7 @@ struct SSkirmishAICallback {
 	float             (CALLING_CONV *Game_getTeamResourceIncome)(int skirmishAIId, int otherTeamId, int resourceId);
 
 	/**
-	 * Returns the current usage of a resource of an other team.
+	 * Returns the current usage of a resource of another team.
 	 * Allways works for allied teams.
 	 * Works for all teams when cheating is enabled.
 	 * @return current usage of the requested resource of the other team, or -1.0 on an invalid request
@@ -355,7 +355,7 @@ struct SSkirmishAICallback {
 	float             (CALLING_CONV *Game_getTeamResourceUsage)(int skirmishAIId, int otherTeamId, int resourceId);
 
 	/**
-	 * Returns the storage capacity for a resource of an other team.
+	 * Returns the storage capacity for a resource of another team.
 	 * Allways works for allied teams.
 	 * Works for all teams when cheating is enabled.
 	 * @return storage capacity for the requested resource of the other team, or -1.0 on an invalid request

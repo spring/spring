@@ -669,7 +669,7 @@ struct STimeWaitUnitCommand {
 }; //$ COMMAND_UNIT_WAIT_TIME Unit_waitFor
 
 /**
- * Wait until an other unit is dead, units will not wait on themselves.
+ * Wait until another unit is dead, units will not wait on themselves.
  * Example:
  * A group of aircrafts waits for an enemy's anti-air defenses to die,
  * before passing over their ruins to attack.

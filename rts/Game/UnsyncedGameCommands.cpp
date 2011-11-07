@@ -985,7 +985,7 @@ public:
 class TeamActionExecutor : public IUnsyncedActionExecutor {
 public:
 	TeamActionExecutor() : IUnsyncedActionExecutor("Team",
-			"Lets the local user change to an other team", true) {}
+			"Lets the local user change to another team", true) {}
 
 	void Execute(const UnsyncedAction& action) const {
 		const int teamId = atoi(action.GetArgs().c_str());
@@ -1056,7 +1056,7 @@ public:
 class AllyActionExecutor : public IUnsyncedActionExecutor {
 public:
 	AllyActionExecutor() : IUnsyncedActionExecutor("Ally",
-			"Starts/Ends alliance of the local players ally-team with an other ally-team") {}
+			"Starts/Ends alliance of the local players ally-team with another ally-team") {}
 
 	void Execute(const UnsyncedAction& action) const {
 		if (!gu->spectating) {

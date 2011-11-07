@@ -227,7 +227,7 @@ struct SUnitDestroyedEvent {
 }; //$ EVENT_UNIT_DESTROYED INTERFACES:Unit(unit),UnitLifeState()
 
 /**
- * This AI event is sent when a unit changed from one team to an other,
+ * This AI event is sent when a unit changed from one team to another,
  * either because the old owner gave it to the new one, or because the
  * new one took it from the old one; see the /take command.
  * Both giving and receiving team will get this event.
