@@ -42,6 +42,9 @@ static void log_sink_record_console(const char* section, int level,
 {
 	FILE* outStream = log_chooseStream(level);
 	FPRINTF(outStream, "%s\n", record);
+	// *printf does not always flush after a newline
+	// (eg. if stdout is being redirected to a file)
+	fflush(outStream);
 }
 
 ///@}
