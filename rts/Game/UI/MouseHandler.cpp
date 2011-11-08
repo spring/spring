@@ -77,25 +77,25 @@ static CInputReceiver*& activeReceiver = CInputReceiver::GetActiveReceiverRef();
 
 
 CMouseHandler::CMouseHandler()
-	: hardwareCursor(false)
-	, lastx(-1)
+	: lastx(-1)
 	, lasty(-1)
-	, hide(true)
-	, hwHide(true)
 	, locked(false)
-	, invertMouse(false)
 	, doubleClickTime(0.0f)
 	, scrollWheelSpeed(0.0f)
 	, dragScrollThreshold(0.0f)
+	, activeButton(-1)
+	, dir(ZeroVector)
+	, wasLocked(false)
 	, crossSize(0.0f)
 	, crossAlpha(0.0f)
 	, crossMoveScale(0.0f)
 	, cursorScale(1.0f)
-	, activeButton(-1)
-	, dir(ZeroVector)
 	, cursorText("")
 	, currentCursor(NULL)
-	, wasLocked(false)
+	, hide(true)
+	, hwHide(true)
+	, hardwareCursor(false)
+	, invertMouse(false)
 	, scrollx(0.0f)
 	, scrolly(0.0f)
 {
@@ -106,6 +106,8 @@ CMouseHandler::CMouseHandler()
 	}
 
 	LoadCursors();
+
+	currentCursor = cursorCommandMap[""];
 
 #ifndef __APPLE__
 	hardwareCursor = configHandler->GetBool("HardwareCursor");
