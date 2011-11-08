@@ -1014,6 +1014,7 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 		CSolidObject::Flying;
 	owner->useAirLos = (newState != AIRCRAFT_LANDED);
 	owner->crashing = (newState == AIRCRAFT_CRASHING);
+
 	if (newState != AIRCRAFT_LANDING) {
 		// don't need a reserved position anymore
 		reservedLandingPos.x = -1.0f;
