@@ -21,7 +21,7 @@
 #endif // !defined __cplusplus && !defined bool
 
 // define if we have a X11 enviroment (:= linux/freebsd)
-#if !defined(__APPLE__) || !defined(WIN32)
+#if !defined(__APPLE__) && !defined(_WIN32)
 	//FIXME move this check to cmake, which has FindX11.cmake?
 	#define _X11
 #endif
