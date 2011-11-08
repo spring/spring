@@ -18,6 +18,7 @@ CR_REG_METADATA(AAirMoveType, (
 	CR_MEMBER(reservedLandingPos),
 
 	CR_MEMBER(wantedHeight),
+	CR_MEMBER(orgWantedHeight),
 
 	CR_MEMBER(collide),
 	CR_MEMBER(useSmoothMesh),
@@ -41,6 +42,7 @@ AAirMoveType::AAirMoveType(CUnit* unit) :
 	autoLand(true),
 	lastColWarning(NULL),
 	lastColWarningType(0),
+	orgWantedHeight(0.0f),
 	lastFuelUpdateFrame(gs->frameNum)
 {
 	useHeading = false;
@@ -69,18 +71,20 @@ bool AAirMoveType::UseSmoothMesh() const {
 
 void AAirMoveType::ReservePad(CAirBaseHandler::LandingPad* lp) {
 	oldGoalPos = goalPos;
+	orgWantedHeight = wantedHeight;
 
 	AMoveType::ReservePad(lp);
 	Takeoff();
 }
 
 void AAirMoveType::DependentDied(CObject* o) {
-	AMoveType::DependentDied(o);
-
 	if (o == reservedPad) {
 		SetState(AIRCRAFT_FLYING);
 		goalPos = oldGoalPos;
+		wantedHeight = orgWantedHeight;
 	}
+
+	AMoveType::DependentDied(o);
 }
 
 bool AAirMoveType::Update() {
@@ -201,9 +205,9 @@ bool AAirMoveType::MoveToRepairPad() {
 			}
 		} else if (padStatus == 1) {
 			// landing on pad
-			if (aircraftState != AIRCRAFT_FLYING) {
-				SetState(AIRCRAFT_FLYING);
-			}
+			const AircraftState landingState = GetLandingState();
+			if (aircraftState != landingState)
+				SetState(landingState);
 
 			goalPos = absPadPos;
 			reservedLandingPos = absPadPos;
@@ -229,6 +233,7 @@ bool AAirMoveType::MoveToRepairPad() {
 				reservedPad = NULL;
 				padStatus = 0;
 				goalPos = oldGoalPos;
+				wantedHeight = orgWantedHeight;
 				SetState(AIRCRAFT_TAKEOFF);
 			}
 		}
