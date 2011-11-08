@@ -16,16 +16,13 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitDef.h"
-#include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Groups/Group.h"
-#include "Sim/Units/UnitTypes/Factory.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/WeaponDef.h"
 #include "System/EventHandler.h"
 #include "System/LoadSave/LoadSaveInterface.h"
 #include "System/myMath.h"
@@ -34,7 +31,16 @@
 #include "System/creg/STL_Deque.h"
 #include <assert.h>
 
-static const int TARGET_LOST_TIMER = 120; // in calls to SlowUpdate() (approx. twice every second)
+// number of SlowUpdate calls that a target (unit) must
+// be out of radar (and hence LOS) contact before it is
+// considered 'lost' and invalid (for attack orders etc)
+//
+// historically this value was 120, which meant that it
+// took (120 * UNIT_SLOWUPDATE_RATE) / GAME_SPEED == 64
+// seconds (!) before eg. aircraft would stop tracking a
+// target that cloaked after flying over it --> obviously
+// unreasonable
+static const int TARGET_LOST_TIMER = 15;
 
 CR_BIND(CCommandQueue, );
 CR_REG_METADATA(CCommandQueue, (
@@ -1171,12 +1177,12 @@ std::vector<Command> CCommandAI::GetOverlapQueued(const Command& c, CCommandQueu
 
 int CCommandAI::UpdateTargetLostTimer(int unitID)
 {
-	if (targetLostTimer)
-		--targetLostTimer;
-
 	const CUnit* unit = uh->GetUnit(unitID);
 
-	if (unit && (unit->losStatus[owner->allyteam] & LOS_INRADAR))
+	if (targetLostTimer > 0)
+		--targetLostTimer;
+
+	if (unit != NULL && (unit->losStatus[owner->allyteam] & LOS_INRADAR))
 		targetLostTimer = TARGET_LOST_TIMER;
 
 	return targetLostTimer;
