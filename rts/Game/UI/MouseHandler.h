@@ -28,7 +28,7 @@ public:
 
 	void EmptyMsgQueUpdate(void);
 	void UpdateCursors();
-	std::string GetCurrentTooltip(void);
+	std::string GetCurrentTooltip();
 
 	void HideMouse();
 	void ShowMouse();
