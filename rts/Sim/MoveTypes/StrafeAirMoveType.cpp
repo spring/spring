@@ -364,7 +364,7 @@ void CStrafeAirMoveType::SlowUpdate()
 		}
 		#endif
 
-		owner->pos.y = Clamp(posy, gndy, gndy + owner->unitDef->wantedHeight + 5.0f);
+		owner->pos.y = Clamp(posy, gndy, gndy + owner->unitDef->wantedHeight * 5.0f);
 	}
 
 	// note: NOT AAirMoveType::SlowUpdate
