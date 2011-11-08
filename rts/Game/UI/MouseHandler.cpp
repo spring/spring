@@ -43,8 +43,6 @@
 #include "System/mmgr.h"
 #include "System/Input/KeyInput.h"
 #include "System/Input/MouseInput.h"
-#include "System/Sound/ISound.h"
-#include "System/Sound/SoundChannels.h"
 
 #include <algorithm>
 #include <boost/cstdint.hpp>
@@ -54,8 +52,6 @@
 #include <SDL_events.h>
 #include <SDL_keysym.h>
 
-
-#define PLAY_SOUNDS 1
 
 CONFIG(bool, HardwareCursor).defaultValue(false);
 CONFIG(bool, InvertMouse).defaultValue(false);
@@ -81,26 +77,25 @@ static CInputReceiver*& activeReceiver = CInputReceiver::GetActiveReceiverRef();
 
 
 CMouseHandler::CMouseHandler()
-	: hardwareCursor(false)
-	, lastx(-1)
+	: lastx(-1)
 	, lasty(-1)
-	, hide(true)
-	, hwHide(true)
 	, locked(false)
-	, invertMouse(false)
 	, doubleClickTime(0.0f)
 	, scrollWheelSpeed(0.0f)
 	, dragScrollThreshold(0.0f)
+	, activeButton(-1)
+	, dir(ZeroVector)
+	, wasLocked(false)
 	, crossSize(0.0f)
 	, crossAlpha(0.0f)
 	, crossMoveScale(0.0f)
 	, cursorScale(1.0f)
-	, activeButton(-1)
-	, dir(ZeroVector)
-	, soundMultiselID(0)
 	, cursorText("")
 	, currentCursor(NULL)
-	, wasLocked(false)
+	, hide(true)
+	, hwHide(true)
+	, hardwareCursor(false)
+	, invertMouse(false)
 	, scrollx(0.0f)
 	, scrolly(0.0f)
 {
@@ -112,11 +107,11 @@ CMouseHandler::CMouseHandler()
 
 	LoadCursors();
 
+	currentCursor = cursorCommandMap[""];
+
 #ifndef __APPLE__
 	hardwareCursor = configHandler->GetBool("HardwareCursor");
 #endif
-
-	soundMultiselID = sound->GetSoundId("MultiSelect", false);
 
 	invertMouse = configHandler->GetBool("InvertMouse");
 	doubleClickTime = configHandler->GetFloat("DoubleClickTime") / 1000.0f;
@@ -196,6 +191,7 @@ void CMouseHandler::LoadCursors()
 
 void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 {
+	//FIXME don't update with lock?
 	lastx = x;
 	lasty = y;
 
@@ -207,23 +203,24 @@ void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 
 	dir = hide ? camera->forward : camera->CalcPixelDir(x,y);
 
-	if (hide) {
+	if (locked) {
 		camHandler->GetCurrentController().MouseMove(float3(dx, dy, invertMouse ? -1.0f : 1.0f));
 		return;
 	}
 
-	buttons[SDL_BUTTON_LEFT].movement  += (int)sqrt(float(dx*dx + dy*dy));
-	buttons[SDL_BUTTON_RIGHT].movement += (int)sqrt(float(dx*dx + dy*dy));
+	const int movedPixels = (int)sqrt(float(dx*dx + dy*dy));
+	buttons[SDL_BUTTON_LEFT].movement  += movedPixels;
+	buttons[SDL_BUTTON_RIGHT].movement += movedPixels;
 
 	if (!game->gameOver) {
-		playerHandler->Player(gu->myPlayerNum)->currentStats.mousePixels += (int)sqrt(float(dx*dx + dy*dy));
+		playerHandler->Player(gu->myPlayerNum)->currentStats.mousePixels += movedPixels;
 	}
 
-	if (activeReceiver){
+	if (activeReceiver) {
 		activeReceiver->MouseMove(x, y, dx, dy, activeButton);
 	}
 
-	if (inMapDrawer && inMapDrawer->IsDrawMode()){
+	if (inMapDrawer && inMapDrawer->IsDrawMode()) {
 		inMapDrawer->MouseMove(x, y, dx, dy, activeButton);
 	}
 
@@ -234,6 +231,7 @@ void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 	}
 }
 
+
 void CMouseHandler::MousePress(int x, int y, int button)
 {
 	if (button > NUM_BUTTONS)
@@ -241,33 +239,33 @@ void CMouseHandler::MousePress(int x, int y, int button)
 
 	camHandler->GetCurrentController().MousePress(x, y, button);
 
-	dir = hide? camera->forward: camera->CalcPixelDir(x, y);
+	dir = hide ? camera->forward : camera->CalcPixelDir(x, y);
 
 	if (!game->gameOver)
 		playerHandler->Player(gu->myPlayerNum)->currentStats.mouseClicks++;
 
- 	buttons[button].chorded = buttons[SDL_BUTTON_LEFT].pressed ||
- 	                          buttons[SDL_BUTTON_RIGHT].pressed;
-	buttons[button].pressed = true;
-	buttons[button].time = gu->gameTime;
-	buttons[button].x = x;
-	buttons[button].y = y;
-	buttons[button].camPos = camera->pos;
-	buttons[button].dir = dir;
-	buttons[button].movement = 0;
+	ButtonPressEvt& bp = buttons[button];
+	bp.chorded  = (buttons[SDL_BUTTON_LEFT].pressed || buttons[SDL_BUTTON_RIGHT].pressed);
+	bp.pressed  = true;
+	bp.time     = gu->gameTime;
+	bp.x        = x;
+	bp.y        = y;
+	bp.camPos   = camera->pos;
+	bp.dir      = dir;
+	bp.movement = 0;
 
 	activeButton = button;
 
 	if (activeReceiver && activeReceiver->MousePress(x, y, button))
 		return;
 
-	if(inMapDrawer && inMapDrawer->IsDrawMode()){
+	if (inMapDrawer && inMapDrawer->IsDrawMode()) {
 		inMapDrawer->MousePress(x, y, button);
 		return;
 	}
 
 	// limited receivers for MMB
-	if (button == SDL_BUTTON_MIDDLE){
+	if (button == SDL_BUTTON_MIDDLE) {
 		if (!locked) {
 			if (luaInputReceiver != NULL) {
 				if (luaInputReceiver->MousePress(x, y, button)) {
@@ -312,6 +310,41 @@ void CMouseHandler::MousePress(int x, int y, int button)
 }
 
 
+/**
+ * GetSelectionBoxCoeff
+ *  returns the topright & bottomleft corner positions of the SelectionBox in (cam->right, cam->up)-space
+ */
+void CMouseHandler::GetSelectionBoxCoeff(const float3& pos1, const float3& dir1, const float3& pos2, const float3& dir2, float2& topright, float2& btmleft)
+{
+	float dist = ground->LineGroundCol(pos1, pos1 + dir1 * globalRendering->viewRange * 1.4f, false);
+	if(dist < 0) dist = globalRendering->viewRange * 1.4f;
+	float3 gpos1 = pos1 + dir1 * dist;
+
+	dist = ground->LineGroundCol(pos2, pos2 + dir2 * globalRendering->viewRange * 1.4f, false);
+	if(dist < 0) dist = globalRendering->viewRange * 1.4f;
+	float3 gpos2 = pos2 + dir2 * dist;
+
+	const float3 cdir1 = (gpos1 - camera->pos).ANormalize();
+	const float3 cdir2 = (gpos2 - camera->pos).ANormalize();
+
+	// prevent DivByZero
+	float cdir1_fw = cdir1.dot(camera->forward); if (cdir1_fw == 0.0f) cdir1_fw = 0.0001f;
+	float cdir2_fw = cdir2.dot(camera->forward); if (cdir2_fw == 0.0f) cdir2_fw = 0.0001f;
+
+	// one corner of the rectangle
+	topright.x = cdir1.dot(camera->right) / cdir1_fw;
+	topright.y = cdir1.dot(camera->up)    / cdir1_fw;
+
+	// opposite corner
+	btmleft.x = cdir2.dot(camera->right) / cdir2_fw;
+	btmleft.y = cdir2.dot(camera->up)    / cdir2_fw;
+
+	// sort coeff so topright really is the topright corner
+	if (topright.x < btmleft.x) std::swap(topright.x, btmleft.x);
+	if (topright.y < btmleft.y) std::swap(topright.y, btmleft.y);
+}
+
+
 void CMouseHandler::MouseRelease(int x, int y, int button)
 {
 	if (button > NUM_BUTTONS)
@@ -319,7 +352,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 
 	camHandler->GetCurrentController().MouseRelease(x, y, button);
 
-	dir = hide ? camera->forward: camera->CalcPixelDir(x, y);
+	dir = hide ? camera->forward : camera->CalcPixelDir(x, y);
 	buttons[button].pressed = false;
 
 	if (inMapDrawer && inMapDrawer->IsDrawMode()){
@@ -334,16 +367,16 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		return;
 	}
 
-	GML_RECMUTEX_LOCK(sel); // MouseRelease
+	GML_RECMUTEX_LOCK(sel); //FIXME redundant? (selectedUnits already has mutexes)
 
-	//! Switch camera mode on a middle click that wasn't a middle mouse drag scroll.
-	//! the latter is determined by the time the mouse was held down:
-	//! switch (dragScrollThreshold)
-	//!   <= means a camera mode switch
-	//!    > means a drag scroll
+	// Switch camera mode on a middle click that wasn't a middle mouse drag scroll.
+	// the latter is determined by the time the mouse was held down:
+	// switch (dragScrollThreshold)
+	//   <= means a camera mode switch
+	//    > means a drag scroll
 	if (button == SDL_BUTTON_MIDDLE) {
 		if (buttons[SDL_BUTTON_MIDDLE].time > (gu->gameTime - dragScrollThreshold))
-			ToggleState();
+			ToggleMiddleClickScroll();
 		return;
 	}
 
@@ -352,164 +385,45 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	}
 
 	if ((button == SDL_BUTTON_LEFT) && !buttons[button].chorded) {
+		ButtonPressEvt& bp = buttons[SDL_BUTTON_LEFT];
+
 		if (!keyInput->IsKeyPressed(SDLK_LSHIFT) && !keyInput->IsKeyPressed(SDLK_LCTRL)) {
 			selectedUnits.ClearSelected();
 		}
 
-		if (buttons[SDL_BUTTON_LEFT].movement > 4) {
+		if (bp.movement > 4) {
 			// select box
-			float dist = ground->LineGroundCol(
-				buttons[SDL_BUTTON_LEFT].camPos,
-				buttons[SDL_BUTTON_LEFT].camPos +
-				buttons[SDL_BUTTON_LEFT].dir * globalRendering->viewRange * 1.4f,
-				false
-			);
+			float2 topright, btmleft;
+			GetSelectionBoxCoeff(bp.camPos, bp.dir, camera->pos, dir, topright, btmleft);
 
-			if(dist<0)
-				dist=globalRendering->viewRange*1.4f;
-			float3 pos1=buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*dist;
+			// GetSelectionBoxCoeff returns us the corner pos, but we want to do a inview frustum check.
+			// To do so we need the frustum planes (= plane normal + plane offset).
+			float3 norm1 = camera->up;
+			float3 norm2 = -camera->up;
+			float3 norm3 = camera->right;
+			float3 norm4 = -camera->right;
 
-			dist = ground->LineGroundCol(camera->pos, camera->pos + dir * globalRendering->viewRange * 1.4f, false);
-			if(dist<0)
-				dist=globalRendering->viewRange*1.4f;
-			float3 pos2=camera->pos+dir*dist;
+			#define signf(x) ((x>0.0f) ? 1.0f : -1)
+			if (topright.y != 0) norm1 = (camera->forward * signf(-topright.y)) + (camera->up / fabs(topright.y));
+			if (btmleft.y  != 0) norm2 = (camera->forward * signf(  btmleft.y)) - (camera->up / fabs(btmleft.y));
+			if (topright.x != 0) norm3 = (camera->forward * signf(-topright.x)) + (camera->right / fabs(topright.x));
+			if (btmleft.x  != 0) norm4 = (camera->forward * signf(  btmleft.x)) - (camera->right / fabs(btmleft.x));
 
-			float3 dir1 = pos1 - camera->pos;
-			dir1.ANormalize();
-			float3 dir2 = pos2 - camera->pos;
-			dir2.ANormalize();
+			const float4 plane1(norm1, -(norm1.dot(camera->pos)));
+			const float4 plane2(norm2, -(norm2.dot(camera->pos)));
+			const float4 plane3(norm3, -(norm3.dot(camera->pos)));
+			const float4 plane4(norm4, -(norm4.dot(camera->pos)));
 
-			float rl1 = dir1.dot(camera->right) / dir1.dot(camera->forward);
-			float ul1 = dir1.dot(camera->up) / dir1.dot(camera->forward);
-
-			float rl2 = dir2.dot(camera->right) / dir2.dot(camera->forward);
-			float ul2 = dir2.dot(camera->up) / dir2.dot(camera->forward);
-
-			if (rl1<rl2)
-				std::swap(rl1, rl2);
-			if (ul1<ul2)
-				std::swap(ul1, ul2);
-
-			float3 norm1,norm2,norm3,norm4;
-
-			if (ul1>0)
-				norm1=-camera->forward+camera->up/fabs(ul1);
-			else if(ul1<0)
-				norm1=camera->forward+camera->up/fabs(ul1);
-			else
-				norm1=camera->up;
-
-			if (ul2>0)
-				norm2=camera->forward-camera->up/fabs(ul2);
-			else if(ul2<0)
-				norm2=-camera->forward-camera->up/fabs(ul2);
-			else
-				norm2=-camera->up;
-
-			if(rl1>0)
-				norm3=-camera->forward+camera->right/fabs(rl1);
-			else if(rl1<0)
-				norm3=camera->forward+camera->right/fabs(rl1);
-			else
-				norm3=camera->right;
-
-			if(rl2>0)
-				norm4=camera->forward-camera->right/fabs(rl2);
-			else if(rl2<0)
-				norm4=-camera->forward-camera->right/fabs(rl2);
-			else
-				norm4=-camera->right;
-
-			CUnitSet::iterator ui;
-			CUnit* unit = NULL;
-			int addedunits=0;
-			int team, lastTeam;
-			if (gu->spectatingFullSelect) {
-				team = 0;
-				lastTeam = teamHandler->ActiveTeams() - 1;
-			} else {
-				team = gu->myTeam;
-				lastTeam = gu->myTeam;
-			}
-			for (; team <= lastTeam; team++) {
-				for(ui=teamHandler->Team(team)->units.begin();ui!=teamHandler->Team(team)->units.end();++ui){
-					float3 vec=(*ui)->midPos-camera->pos;
-					if (vec.dot(norm1) < 0.0f && vec.dot(norm2) < 0.0f && vec.dot(norm3) < 0.0f && vec.dot(norm4) < 0.0f) {
-						if (keyInput->IsKeyPressed(SDLK_LCTRL) && selectedUnits.selectedUnits.find(*ui) != selectedUnits.selectedUnits.end()) {
-							selectedUnits.RemoveUnit(*ui);
-						} else {
-							selectedUnits.AddUnit(*ui);
-							unit = *ui;
-							addedunits++;
-						}
-					}
-				}
-			}
-
-			#if (PLAY_SOUNDS == 1)
-			if (addedunits == 1) {
-				const int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
-				if (soundIdx >= 0) {
-					Channels::UnitReply.PlaySample(
-						unit->unitDef->sounds.select.getID(soundIdx), unit,
-						unit->unitDef->sounds.select.getVolume(soundIdx));
-				}
-			}
-			else if (addedunits) //more than one unit selected
-				Channels::UserInterface.PlaySample(soundMultiselID);
-			#endif
+			selectedUnits.HandleUnitBoxSelection(plane1, plane2, plane3, plane4);
 		} else {
 			CUnit* unit;
 			CFeature* feature;
-			TraceRay::GuiTraceRay(camera->pos, dir, globalRendering->viewRange*1.4f, false, NULL, unit, feature);
-			if (unit && ((unit->team == gu->myTeam) || gu->spectatingFullSelect)) {
-				if (buttons[button].lastRelease < (gu->gameTime - doubleClickTime)) {
-					CUnit* unitM = uh->units[unit->id];
-					if (keyInput->IsKeyPressed(SDLK_LCTRL) && selectedUnits.selectedUnits.find((CUnit*)unit) != selectedUnits.selectedUnits.end()) {
-						selectedUnits.RemoveUnit(unitM);
-					} else {
-						selectedUnits.AddUnit(unitM);
-					}
-				} else {
-					//double click
-					if (unit->group && !keyInput->IsKeyPressed(SDLK_LCTRL)) {
-						//select the current unit's group if it has one
-						selectedUnits.SelectGroup(unit->group->id);
-					} else {
-						//select all units of same type (on screen, unless CTRL is pressed)
-						int team, lastTeam;
-						if (gu->spectatingFullSelect) {
-							team = 0;
-							lastTeam = teamHandler->ActiveTeams() - 1;
-						} else {
-							team = gu->myTeam;
-							lastTeam = gu->myTeam;
-						}
-						for (; team <= lastTeam; team++) {
-							CUnitSet::iterator ui;
-							CUnitSet& teamUnits = teamHandler->Team(team)->units;
-							for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
-								if ((*ui)->unitDef->id == unit->unitDef->id) {
-									if (camera->InView((*ui)->midPos) || keyInput->IsKeyPressed(SDLK_LCTRL)) {
-										selectedUnits.AddUnit(*ui);
-									}
-								}
-							}
-						}
-					}
-				}
-				buttons[button].lastRelease=gu->gameTime;
+			TraceRay::GuiTraceRay(camera->pos, dir, globalRendering->viewRange * 1.4f, false, NULL, unit, feature);
 
-				#if (PLAY_SOUNDS == 1)
-				const int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
-				if (soundIdx >= 0) {
-					Channels::UnitReply.PlaySample(
-						unit->unitDef->sounds.select.getID(soundIdx), unit,
-						unit->unitDef->sounds.select.getVolume(soundIdx));
-				}
-				#endif
-			}
+			selectedUnits.HandleSingleUnitClickSelection(unit, true);
 		}
+
+		bp.lastRelease = gu->gameTime;
 	}
 }
 
@@ -534,36 +448,19 @@ void CMouseHandler::DrawSelectionBox()
 	if (gu->fpsMode) {
 		return;
 	}
-	if (buttons[SDL_BUTTON_LEFT].pressed && !buttons[SDL_BUTTON_LEFT].chorded &&
-	   (buttons[SDL_BUTTON_LEFT].movement > 4) &&
-	   (!inMapDrawer || !inMapDrawer->IsDrawMode())) {
 
-		float dist = ground->LineGroundCol(
-			buttons[SDL_BUTTON_LEFT].camPos,
-			buttons[SDL_BUTTON_LEFT].camPos +
-			buttons[SDL_BUTTON_LEFT].dir * globalRendering->viewRange * 1.4f,
-			false
-		);
+	ButtonPressEvt& bp = buttons[SDL_BUTTON_LEFT];
 
-		if(dist<0)
-			dist=globalRendering->viewRange*1.4f;
-		float3 pos1=buttons[SDL_BUTTON_LEFT].camPos+buttons[SDL_BUTTON_LEFT].dir*dist;
+	if (bp.pressed && !bp.chorded && (bp.movement > 4) &&
+	   (!inMapDrawer || !inMapDrawer->IsDrawMode()))
+	{
+		float2 topright, btmleft;
+		GetSelectionBoxCoeff(bp.camPos, bp.dir, camera->pos, dir, topright, btmleft);
 
-		dist = ground->LineGroundCol(camera->pos, camera->pos + dir * globalRendering->viewRange * 1.4f, false);
-		if(dist<0)
-			dist=globalRendering->viewRange*1.4f;
-		float3 pos2=camera->pos+dir*dist;
-
-		float3 dir1=pos1-camera->pos;
-		dir1.Normalize();
-		float3 dir2=pos2-camera->pos;
-		dir2.Normalize();
-
-		float3 dir1S = camera->right * dir1.dot(camera->right) / dir1.dot(camera->forward);
-		float3 dir1U = camera->up * dir1.dot(camera->up) / dir1.dot(camera->forward);
-
-		float3 dir2S = camera->right * dir2.dot(camera->right) / dir2.dot(camera->forward);
-		float3 dir2U = camera->up * dir2.dot(camera->up) / dir2.dot(camera->forward);
+		float3 dir1S = camera->right * topright.x;
+		float3 dir1U = camera->up    * topright.y;
+		float3 dir2S = camera->right * btmleft.x;
+		float3 dir2U = camera->up    * btmleft.y;
 
 		glColor4fv(cmdColors.mouseBox);
 
@@ -580,10 +477,10 @@ void CMouseHandler::DrawSelectionBox()
 		glLineWidth(cmdColors.MouseBoxLineWidth());
 
 		float3 verts[] = {
-			camera->pos+dir1U*30+dir1S*30+camera->forward*30,
-			camera->pos+dir2U*30+dir1S*30+camera->forward*30,
-			camera->pos+dir2U*30+dir2S*30+camera->forward*30,
-			camera->pos+dir1U*30+dir2S*30+camera->forward*30,
+			camera->pos + (dir1U + dir1S + camera->forward) * 30,
+			camera->pos + (dir2U + dir1S + camera->forward) * 30,
+			camera->pos + (dir2U + dir2S + camera->forward) * 30,
+			camera->pos + (dir1U + dir2S + camera->forward) * 30,
 		};
 
 		glEnableClientState(GL_VERTEX_ARRAY);
@@ -598,20 +495,10 @@ void CMouseHandler::DrawSelectionBox()
 }
 
 
-void CMouseHandler::WarpMouse(int x, int y)
-{
-	if (!locked) {
-		lastx = x + globalRendering->viewPosX;
-		lasty = y + globalRendering->viewPosY;
-		mouseInput->SetPos(int2(lastx, lasty));
-	}
-}
-
-
 // CALLINFO:
 // LuaUnsyncedRead::GetCurrentTooltip
 // CTooltipConsole::Draw --> CMouseHandler::GetCurrentTooltip
-std::string CMouseHandler::GetCurrentTooltip(void)
+std::string CMouseHandler::GetCurrentTooltip()
 {
 	std::string s;
 	std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
@@ -642,13 +529,8 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 
 		dist = TraceRay::GuiTraceRay(camera->pos, dir, range, true, NULL, unit, feature);
 
-		if (unit) {
-			return CTooltipConsole::MakeUnitString(unit);
-		}
-
-		if (feature) {
-			return CTooltipConsole::MakeFeatureString(feature);
-		}
+		if (unit)    return CTooltipConsole::MakeUnitString(unit);
+		if (feature) return CTooltipConsole::MakeFeatureString(feature);
 	}
 
 	const string selTip = selectedUnits.GetTooltip();
@@ -665,19 +547,28 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 }
 
 
-void CMouseHandler::EmptyMsgQueUpdate()
+void CMouseHandler::Update()
 {
 	if (!hide) {
 		return;
 	}
 
+	// Update MiddleClickScrolling
 	scrollx *= 0.5f;
 	scrolly *= 0.5f;
-
 	lastx = globalRendering->viewSizeX / 2 + globalRendering->viewPosX;
 	lasty = globalRendering->viewSizeY / 2 + globalRendering->viewPosY;
-
 	if (globalRendering->active) {
+		mouseInput->SetPos(int2(lastx, lasty));
+	}
+}
+
+
+void CMouseHandler::WarpMouse(int x, int y)
+{
+	if (!locked) {
+		lastx = x + globalRendering->viewPosX;
+		lasty = y + globalRendering->viewPosY;
 		mouseInput->SetPos(int2(lastx, lasty));
 	}
 }
@@ -685,16 +576,18 @@ void CMouseHandler::EmptyMsgQueUpdate()
 
 void CMouseHandler::ShowMouse()
 {
-	if(hide){
-		// I don't use SDL_ShowCursor here 'cos it would cause a flicker (with hwCursor)
+	if (hide) {
+		hide = false;
+		cursorText = "%none%"; // force hardware cursor rebinding (else we have standard b&w cursor)
+
+		// I don't use SDL_ShowCursor here 'cos it would cause a flicker with hwCursor
+		// (flicker caused by switching between default cursor and later the really one e.g. `attack`)
 		// instead update state and cursor at the same time
-		if (hardwareCursor){
-			hwHide=true; //call SDL_ShowCursor(SDL_ENABLE) later!
-		}else{
+		if (hardwareCursor) {
+			hwHide = true;
+		} else {
 			SDL_ShowCursor(SDL_DISABLE);
 		}
-		cursorText=""; //force hardware cursor rebinding (else we have standard b&w cursor)
-		hide=false;
 	}
 }
 
@@ -715,7 +608,7 @@ void CMouseHandler::HideMouse()
 }
 
 
-void CMouseHandler::ToggleState()
+void CMouseHandler::ToggleMiddleClickScroll()
 {
 	if (locked) {
 		locked = false;
@@ -727,23 +620,24 @@ void CMouseHandler::ToggleState()
 }
 
 
-void CMouseHandler::UpdateHwCursor()
+void CMouseHandler::ToggleHwCursor(const bool& enable)
 {
-	if (hardwareCursor){
-		hwHide=true; //call SDL_ShowCursor(SDL_ENABLE) later!
-	}else{
+	hardwareCursor = enable;
+	if (hardwareCursor) {
+		hwHide = true;
+	} else {
 		mouseInput->SetWMMouseCursor(NULL);
 		SDL_ShowCursor(SDL_DISABLE);
 	}
-	cursorText = "";
+	cursorText = "%none%";
 }
 
 
 /******************************************************************************/
 
-void CMouseHandler::SetCursor(const std::string& cmdName)
+void CMouseHandler::SetCursor(const std::string& cmdName, const bool& forceRebind)
 {
-	if (cursorText.compare(cmdName) == 0) {
+	if ((cursorText == cmdName) && !forceRebind) {
 		return;
 	}
 
@@ -752,7 +646,7 @@ void CMouseHandler::SetCursor(const std::string& cmdName)
 	if (it != cursorCommandMap.end()) {
 		currentCursor = it->second;
 	} else {
-		currentCursor = cursorFileMap["cursornormal"];
+		currentCursor = cursorCommandMap[""];
 	}
 
 	if (hardwareCursor && !hide && currentCursor) {
@@ -897,7 +791,7 @@ void CMouseHandler::DrawCursor()
 		return;
 	}
 
-	if (hide || (cursorText == "none"))
+	if (hide || (cursorText == "%none%"))
 		return;
 
 	if (!currentCursor || (hardwareCursor && currentCursor->hwValid)) {
@@ -909,7 +803,7 @@ void CMouseHandler::DrawCursor()
 		currentCursor->Draw(lastx, lasty, cursorScale);
 	}
 	else {
-		//! hovered minimap, show default cursor and draw `special` cursor scaled-down bottom right of the default one
+		// hovered minimap, show default cursor and draw `special` cursor scaled-down bottom right of the default one
 		CMouseCursor* nc = cursorFileMap["cursornormal"];
 		if (nc == NULL) {
 			currentCursor->Draw(lastx, lasty, -cursorScale);
@@ -943,6 +837,7 @@ bool CMouseHandler::AssignMouseCursor(const std::string& cmdName,
 	}
 
 	if (haveFile) {
+		// cursor is already loaded, reuse it
 		cursorCommandMap[cmdName] = fileIt->second;
 		return true;
 	}
@@ -991,11 +886,11 @@ bool CMouseHandler::ReplaceMouseCursor(const string& oldName,
 
 	fileIt->second = newCursor;
 
-	delete oldCursor;
-
 	if (currentCursor == oldCursor) {
-		currentCursor = newCursor;
+		SetCursor(cursorText, true);
 	}
+
+	delete oldCursor;
 
 	return true;
 }
@@ -1007,20 +902,18 @@ void CMouseHandler::SafeDeleteCursor(CMouseCursor* cursor)
 
 	for (it = cursorCommandMap.begin(); it != cursorCommandMap.end(); ++it) {
 		if (it->second == cursor) {
-			return; // being used
+			return; // being used, can't delete
 		}
 	}
 
 	for (it = cursorFileMap.begin(); it != cursorFileMap.end(); ++it) {
 		if (it->second == cursor) {
 			cursorFileMap.erase(it);
-			delete cursor;
-			return;
 		}
 	}
 
 	if (currentCursor == cursor) {
-		currentCursor = NULL;
+		SetCursor("%none%", true);
 	}
 
 	delete cursor;

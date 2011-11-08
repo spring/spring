@@ -155,7 +155,7 @@ EXPORT(int         ) GetDataDirectoryCount();
 EXPORT(const char* ) GetDataDirectory(int index);
 
 /**
- * @brief Process an other unit and return how many are left to process
+ * @brief Process another unit and return how many are left to process
  *
  * Call this function repeatedly until it returns 0 before calling any other
  * function related to units.

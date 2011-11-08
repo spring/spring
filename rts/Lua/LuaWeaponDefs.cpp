@@ -448,7 +448,7 @@ static bool InitParamMap()
 	ADD_FUNCTION("noGroundCollide",      wd.collisionFlags, NoGroundCollide);
 	ADD_FUNCTION("onlyTargetCategories", wd.onlyTargetCategory, CategorySetFromBits);
 
-	ADD_FUNCTION("maxVelocity", wd.projectilespeed, DeprecatedMaxVelocity); // NOTE: deprecated (needs to be linked via _FUNCTION, else it would be writeable)
+	ADD_FUNCTION("maxVelocity", wd.projectilespeed, DeprecatedMaxVelocity); // NOTE: deprecated (needs to be linked via _FUNCTION, else it would be writable)
 
 	ADD_INT("id", wd.id);
 

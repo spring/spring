@@ -103,6 +103,7 @@ void CWorldDrawer::Update()
 	unitDrawer->Update();
 	featureDrawer->Update();
 	lineDrawer.UpdateLineStipple();
+	IWater::ApplyPushedChanges(game);
 }
 
 
@@ -129,7 +130,6 @@ void CWorldDrawer::Draw()
 
 		water->OcclusionQuery();
 		if (water->IsDrawSolid()) {
-			IWater::ApplyPushedChanges(game);
 			water->UpdateWater(game);
 			water->Draw();
 		}
@@ -171,7 +171,6 @@ void CWorldDrawer::Draw()
 		if (!water->IsDrawSolid()) {
 			//! Water rendering will overwrite features, so save them
 			featureDrawer->SwapFeatures();
-			IWater::ApplyPushedChanges(game);
 			water->UpdateWater(game);
 			water->Draw();
 			featureDrawer->SwapFeatures();

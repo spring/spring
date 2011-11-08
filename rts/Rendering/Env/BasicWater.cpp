@@ -3,6 +3,7 @@
 #include "System/mmgr.h"
 
 #include "BasicWater.h"
+#include "ISky.h"
 
 #include "Rendering/Textures/Bitmap.h"
 #include "Map/MapInfo.h"
@@ -42,6 +43,9 @@ void CBasicWater::Draw()
 	if (!mapInfo->water.forceRendering && (readmap->currMinHeight > 1.0f)) {
 		return;
 	}
+
+	glPushAttrib(GL_FOG_BIT);
+	ISky::SetupFog();
 
 	if (displist == 0) {
 		displist = glGenLists(1);
@@ -87,4 +91,6 @@ void CBasicWater::Draw()
 		glEndList();
 	}
 	glCallList(displist);
+
+	glPopAttrib();
 }

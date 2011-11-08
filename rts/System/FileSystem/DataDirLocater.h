@@ -32,12 +32,12 @@ public:
 	/**
 	 * @brief locate spring data directories
 	 *
-	 * Attempts to locate a writeable data dir, and then tries to
+	 * Attempts to locate a writable data dir, and then tries to
 	 * chdir to it.
-	 * As the writeable data dir will usually be the current dir already under
+	 * As the writable data dir will usually be the current dir already under
 	 * windows, the chdir will have no effect.
 	 *
-	 * The first dir added will be the writeable data dir.
+	 * The first dir added will be the writable data dir.
 	 *
 	 * How the dirs get assembled
 	 * --------------------------

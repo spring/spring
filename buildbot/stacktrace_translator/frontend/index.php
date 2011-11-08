@@ -3,7 +3,7 @@
 /*
 	Simple Frontend for the Stacktrace translator on http://springrts.com:8000/
 	
-	Note: the file lastrun has to be writeable by the webserver
+	Note: the file lastrun has to be writable by the webserver
 
 */
 

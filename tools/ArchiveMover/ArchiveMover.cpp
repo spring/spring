@@ -293,7 +293,7 @@ typedef void(CALLING_CONV_FUNC_POINTER *usyncUnInit)(void);
 typedef const char*(CALLING_CONV_FUNC_POINTER *usyncGetDataDir)(void);
 
 /**
-	@param res springs writeable dir
+	@param res springs writable dir
 	@return true if res was written
 */
 bool getWriteableDataDir(Path& res){
@@ -367,7 +367,7 @@ static int run(int argc, const Char* const* argv){
 		}
 		Path target_dir;
 		if (!getWriteableDataDir(target_dir)){
-			message << _("Couldn't get writeable dir from unitsync") << endl;
+			message << _("Couldn't get writable dir from unitsync") << endl;
 			return 1;
 		}
 
@@ -454,7 +454,7 @@ static int run(int argc, const Char* const* argv){
 
 		if (!quiet) {
 			message<<_("The ")<<(content == R_MAP? _("map '") : _("game '"))<<source_file.leaf()
-			<<_("' has been saved succesfully to '")<<target_dir.branch_path()<<_("'.")<<endl
+			<<_("' has been saved successfully to '")<<target_dir.branch_path()<<_("'.")<<endl
 			<<_("Use the reload games/maps button in the lobby to make Spring find it.")<<endl;
 		}
 

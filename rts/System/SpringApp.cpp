@@ -1288,7 +1288,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 
 			//! unlock mouse
 			if (mouse && mouse->locked) {
-				mouse->ToggleState();
+				mouse->ToggleMiddleClickScroll();
 			}
 
 			//! release all keyboard keys
