@@ -203,7 +203,7 @@ void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 
 	dir = hide ? camera->forward : camera->CalcPixelDir(x,y);
 
-	if (hide) {
+	if (locked) {
 		camHandler->GetCurrentController().MouseMove(float3(dx, dy, invertMouse ? -1.0f : 1.0f));
 		return;
 	}
