@@ -221,7 +221,7 @@ public:
 class LuaRulesActionExecutor : public ISyncedActionExecutor {
 public:
 	LuaRulesActionExecutor() : ISyncedActionExecutor("LuaRules",
-			"Allows to reload or disable Lua-rules, or alternatively to send"
+			"Allows one to reload or disable Lua-rules, or alternatively to send"
 			" a chat message to Lua-rules") {}
 
 	void Execute(const SyncedAction& action) const {
@@ -256,7 +256,7 @@ public:
 class LuaGaiaActionExecutor : public ISyncedActionExecutor {
 public:
 	LuaGaiaActionExecutor() : ISyncedActionExecutor("LuaGaia",
-			"Allows to reload or disable Lua-Gaia, or alternatively to send"
+			"Allows one to reload or disable Lua-Gaia, or alternatively to send"
 			" a chat message to Lua-Gaia") {}
 
 	void Execute(const SyncedAction& action) const {
@@ -296,7 +296,7 @@ public:
 class DesyncActionExecutor : public ISyncedActionExecutor {
 public:
 	DesyncActionExecutor() : ISyncedActionExecutor("Desync",
-			"Allows to create an artificial desync of the local client with"
+			"Allows one to create an artificial desync of the local client with"
 			" the rest of the participating hosts", true) {}
 
 	void Execute(const SyncedAction& action) const {

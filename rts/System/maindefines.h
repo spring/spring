@@ -20,6 +20,12 @@
 #endif
 #endif // !defined __cplusplus && !defined bool
 
+// define if we have a X11 enviroment (:= linux/freebsd)
+#if !defined(__APPLE__) && !defined(_WIN32)
+	//FIXME move this check to cmake, which has FindX11.cmake?
+	#define _X11
+#endif
+
 // define a common indicator for 32bit or 64bit-ness
 #if defined _WIN64 || defined __LP64__ || defined __ppc64__ || defined __ILP64__ || defined __SILP64__ || defined __LLP64__ || defined(__sparcv9)
 #define __arch64__
