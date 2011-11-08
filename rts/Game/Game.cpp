@@ -1035,8 +1035,8 @@ bool CGame::Draw() {
 	texturehandlerS3O->Update();
 	modelParser->Update();
 	worldDrawer->Update();
+	mouse->Update();
 	mouse->UpdateCursors();
-	mouse->EmptyMsgQueUpdate();
 	guihandler->Update();
 
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();

@@ -187,7 +187,7 @@ public:
 
 	PacketType SendGiveAwayEverything(uchar myPlayerNum, uchar giveToTeam);
 	/**
-	 * Gives everything from one team to an other.
+	 * Gives everything from one team to another.
 	 * The player issuing this command has to be leader of the takeFromTeam.
 	 */
 	PacketType SendGiveAwayEverything(uchar myPlayerNum, uchar giveToTeam, uchar takeFromTeam);

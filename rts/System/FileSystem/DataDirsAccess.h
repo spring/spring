@@ -38,7 +38,7 @@ public:
 	 * Attempts to locate a file.
 	 *
 	 * If the FileSystem::WRITE flag is set, the path is assembled in the
-	 * writeable data-dir.
+	 * writable data-dir.
 	 * If FileSystem::CREATE_DIRS is set it tries to create the subdirectory
 	 * the file should live in.
 	 *

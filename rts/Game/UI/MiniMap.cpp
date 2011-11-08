@@ -519,7 +519,7 @@ void CMiniMap::MoveView(int x, int y)
 
 void CMiniMap::SelectUnits(int x, int y) const
 {
-	GML_RECMUTEX_LOCK(sel); // SelectUnits
+	GML_RECMUTEX_LOCK(sel); //FIXME redundant? (selectedUnits already has mutexes)
 
 	if (!keyInput->IsKeyPressed(SDLK_LSHIFT) && !keyInput->IsKeyPressed(SDLK_LCTRL)) {
 		selectedUnits.ClearSelected();
@@ -536,52 +536,12 @@ void CMiniMap::SelectUnits(int x, int y) const
 		const float zmin = std::min(oldPos.z, newPos.z);
 		const float zmax = std::max(oldPos.z, newPos.z);
 
-		CUnitSet::iterator ui;
-		CUnitSet& selection = selectedUnits.selectedUnits;
+		const float4  planeRight(-1.0f, 0.0f,  0.0f,  xmin);
+		const float4   planeLeft( 1.0f, 0.0f,  0.0f, -xmax);
+		const float4    planeTop( 0.0f, 0.0f,  1.0f, -zmax);
+		const float4 planeBottom( 0.0f, 0.0f, -1.0f,  zmin);
 
-		CUnit* unit = NULL;
-		int addedunits = 0;
-		int team, lastTeam;
-
-		if (gu->spectatingFullSelect) {
-			team = 0;
-			lastTeam = teamHandler->ActiveTeams() - 1;
-		} else {
-			team = gu->myTeam;
-			lastTeam = gu->myTeam;
-		}
-		for (; team <= lastTeam; team++) {
-			CUnitSet& teamUnits = teamHandler->Team(team)->units;
-			for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
-				const float3& midPos = (*ui)->midPos;
-
-				if ((midPos.x > xmin) && (midPos.x < xmax) &&
-					(midPos.z > zmin) && (midPos.z < zmax)) {
-
-					if (keyInput->IsKeyPressed(SDLK_LCTRL) && (selection.find(*ui) != selection.end())) {
-						selectedUnits.RemoveUnit(*ui);
-					} else {
-						selectedUnits.AddUnit(*ui);
-						unit = *ui;
-						addedunits++;
-					}
-				}
-			}
-		}
-
-		#if (PLAY_SOUNDS == 1)
-		if (addedunits >= 2) {
-			Channels::UserInterface.PlaySample(mouse->soundMultiselID);
-		}
-		else if (addedunits == 1) {
-			const int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
-			if (soundIdx >= 0) {
-				Channels::UnitReply.PlaySample(
-					unit->unitDef->sounds.select.getID(soundIdx), unit,
-					unit->unitDef->sounds.select.getVolume(soundIdx));
-			}
-		}
-		#endif
+		selectedUnits.HandleUnitBoxSelection(planeRight, planeLeft, planeTop, planeBottom);
 	}
 	else {
 		// Single unit
@@ -595,52 +555,7 @@ void CMiniMap::SelectUnits(int x, int y) const
 			unit = helper->GetClosestFriendlyUnit(pos, size, gu->myAllyTeam);
 		}
 
-		CUnitSet::iterator ui;
-		CUnitSet& selection = selectedUnits.selectedUnits;
-
-		if (unit && ((unit->team == gu->myTeam) || gu->spectatingFullSelect)) {
-			if (bp.lastRelease < (gu->gameTime - mouse->doubleClickTime)) {
-				if (keyInput->IsKeyPressed(SDLK_LCTRL) && (selection.find(unit) != selection.end())) {
-					selectedUnits.RemoveUnit(unit);
-				} else {
-					selectedUnits.AddUnit(unit);
-				}
-			} else {
-				//double click
-				if (unit->group && !keyInput->IsKeyPressed(SDLK_LCTRL)) {
-					//select the current units group if it has one
-					selectedUnits.SelectGroup(unit->group->id);
-				} else {
-					//select all units of same type
-					int team, lastTeam;
-					if (gu->spectatingFullSelect) {
-						team = 0;
-						lastTeam = teamHandler->ActiveTeams() - 1;
-					} else {
-						team = gu->myTeam;
-						lastTeam = gu->myTeam;
-					}
-					for (; team <= lastTeam; team++) {
-						CUnitSet& myUnits = teamHandler->Team(team)->units;
-						for (ui = myUnits.begin(); ui != myUnits.end(); ++ui) {
-							if ((*ui)->unitDef->id == unit->unitDef->id) {
-								selectedUnits.AddUnit(*ui);
-							}
-						}
-					}
-				}
-			}
-			bp.lastRelease = gu->gameTime;
-
-			#if (PLAY_SOUNDS == 1)
-			const int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
-			if (soundIdx >= 0) {
-				Channels::UnitReply.PlaySample(
-					unit->unitDef->sounds.select.getID(soundIdx), unit,
-					unit->unitDef->sounds.select.getVolume(soundIdx));
-			}
-			#endif
-		}
+		selectedUnits.HandleSingleUnitClickSelection(unit, false);
 	}
 }
 

@@ -227,7 +227,7 @@ struct SUnitDestroyedEvent {
 }; //$ EVENT_UNIT_DESTROYED INTERFACES:Unit(unit),UnitLifeState()
 
 /**
- * This AI event is sent when a unit changed from one team to an other,
+ * This AI event is sent when a unit changed from one team to another,
  * either because the old owner gave it to the new one, or because the
  * new one took it from the old one; see the /take command.
  * Both giving and receiving team will get this event.
@@ -380,7 +380,7 @@ struct SLoadEvent {
  * This AI event is sent when the AI should be saving its full state to a file.
  */
 struct SSaveEvent {
-	/// Absolute file path, writeable
+	/// Absolute file path, writable
 	const char* file;
 }; //$ EVENT_SAVE INTERFACES:LoadSave(file)
 

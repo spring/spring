@@ -70,7 +70,7 @@ EXPORT(int) initStatic(int _interfaceId,
 				"", true, true, true, false);
 		if (!ddwFetched) {
 			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-					"Failed locating writeable data-dir \"%s\"", ddw);
+					"Failed locating writable data-dir \"%s\"", ddw);
 		}
 		int p;
 		for (p=0; p < numProps; ++p) {

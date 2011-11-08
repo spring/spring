@@ -8,6 +8,7 @@
 #include <map>
 
 #include "System/float3.h"
+#include "System/Vec2.h"
 #include "MouseCursor.h"
 
 static const int NUM_BUTTONS = 10;
@@ -22,17 +23,17 @@ public:
 	CMouseHandler();
 	virtual ~CMouseHandler();
 
-	void SetCursor(const std::string& cmdName);
+	void SetCursor(const std::string& cmdName, const bool& forceRebind = false);
 
-	void UpdateHwCursor(); /// calls SDL_ShowCursor, used for ingame hwcursor enabling
+	void ToggleHwCursor(const bool& enable);
 
-	void EmptyMsgQueUpdate(void);
+	void Update();
 	void UpdateCursors();
-	std::string GetCurrentTooltip(void);
+	std::string GetCurrentTooltip();
 
 	void HideMouse();
 	void ShowMouse();
-	void ToggleState(); /// lock+hide (used by fps camera and middle click scrolling)
+	void ToggleMiddleClickScroll(); /// lock+hide
 	void WarpMouse(int x, int y);
 
 	void DrawSelectionBox(); /// draw mousebox (selection box)
@@ -54,22 +55,15 @@ public:
 	/// @see ConfigHandler::ConfigNotifyCallback
 	void ConfigNotify(const std::string& key, const std::string& value);
 
-	bool hardwareCursor;
+public:
 	int lastx;
 	int lasty;
-	bool hide;
-	bool hwHide;
+
 	bool locked;
-	bool invertMouse;
+
 	float doubleClickTime;
 	float scrollWheelSpeed;
 	float dragScrollThreshold;
-
-	/// locked mouse indicator size
-	float crossSize;
-	float crossAlpha;
-	float crossMoveScale;
-	float cursorScale;
 
 	struct ButtonPressEvt {
 		bool pressed;
@@ -87,14 +81,18 @@ public:
 	int activeButton;
 	float3 dir;
 
-	int soundMultiselID;
-
-	std::string cursorText; /// current cursor name
-	CMouseCursor* currentCursor;
-
 	/// Stores if the mouse was locked or not before going into direct control,
 	/// so we can restore it when we return to normal.
 	bool wasLocked;
+
+	/// locked mouse indicator size
+	float crossSize;
+	float crossAlpha;
+	float crossMoveScale;
+	float cursorScale;
+
+	std::string cursorText; /// current cursor name
+	CMouseCursor* currentCursor;
 
 	std::map<std::string, CMouseCursor*> cursorFileMap;
 	std::map<std::string, CMouseCursor*> cursorCommandMap;
@@ -103,8 +101,16 @@ private:
 	void SafeDeleteCursor(CMouseCursor* cursor);
 	void LoadCursors();
 
+	static void GetSelectionBoxCoeff(const float3& pos1, const float3& dir1, const float3& pos2, const float3& dir2, float2& topright, float2& btmleft);
+
 	void DrawScrollCursor();
 	void DrawFPSCursor();
+
+private:
+	bool hide;
+	bool hwHide;
+	bool hardwareCursor;
+	bool invertMouse;
 
 	float scrollx;
 	float scrolly;
