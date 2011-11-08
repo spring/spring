@@ -20,19 +20,25 @@
 
 #include "System/mmgr.h"
 
+#include "MouseInput.h"
+#include "InputHandler.h"
+
+#include "Game/GlobalUnsynced.h"
 #include "Game/UI/MouseHandler.h"
+#include "Rendering/GlobalRendering.h"
+#include "Rendering/GL/FBO.h"
+#include "System/maindefines.h"
 
 #include <boost/bind.hpp>
 #include <SDL_events.h>
-#include "Game/GlobalUnsynced.h"
-#include "Rendering/GlobalRendering.h"
-#include "Rendering/GL/FBO.h"
 #ifdef _WIN32
 	#include <SDL_syswm.h>
 	#include "System/Platform/Win/wsdl.h"
 #endif
-#include "System/Input/MouseInput.h"
-#include "System/Input/InputHandler.h"
+#ifdef _X11
+	#include <SDL_syswm.h>
+	#include <X11/Xlib.h>
+#endif
 
 
 IMouseInput* mouseInput = NULL;
@@ -213,6 +219,28 @@ void IMouseInput::SetPos(int2 pos)
 	wsdl::SDL_WarpMouse(pos.x, pos.y);
 #else
 	SDL_WarpMouse(pos.x, pos.y);
+
+	#ifdef _X11
+		// SDL Workaround!
+		// SDL_WarpMouse has a bug on Linux in fullscreen mode & SDL_ShowCursor(SDL_DISABLE).
+		// It just won't move the real X11 cursor pos (instead it seems to update some SDL internal vars only).
+		// But we use SDL_ShowCursor for MiddleClickScroll and want that the cursor spawns
+		// at screen center when calling SDL_ShowCursor(SDL_ENABLE), so we call X11 here to
+		// force cursor pos update even when the cursor is hidden.
+		if (globalRendering->fullScreen) {
+			SDL_SysWMinfo info;
+			SDL_VERSION(&info.version);
+			if(SDL_GetWMInfo(&info)) {
+				info.info.x11.lock_func();
+					Display* display = info.info.x11.display;
+					Window& window = info.info.x11.window;
+
+					if (display && window != None)
+						XWarpPointer(display, None, window, 0, 0, 0, 0, pos.x, pos.y);
+				info.info.x11.unlock_func();
+			}
+		}
+	#endif
 #endif
 
 	//! SDL_WarpMouse generates SDL_MOUSEMOTION events
