@@ -1182,8 +1182,12 @@ int CCommandAI::UpdateTargetLostTimer(int unitID)
 	if (targetLostTimer > 0)
 		--targetLostTimer;
 
-	if (unit != NULL && (unit->losStatus[owner->allyteam] & LOS_INRADAR))
-		targetLostTimer = TARGET_LOST_TIMER;
+	if (unit == NULL) {
+		targetLostTimer = 0;
+	} else {
+		if ((unit->losStatus[owner->allyteam] & LOS_INRADAR) || unit->unitDef->IsImmobileUnit())
+			targetLostTimer = TARGET_LOST_TIMER;
+	}
 
 	return targetLostTimer;
 }
