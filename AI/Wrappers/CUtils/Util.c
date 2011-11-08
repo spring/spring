@@ -740,7 +740,7 @@ bool util_findDir(const char* dirs[], unsigned int numDirs,
 
 	// not found -> create it
 	if (!found && create && numDirs >= 1) {
-		// use dirs[0], as it is assumed this is the writeable dir
+		// use dirs[0], as it is assumed this is the writable dir
 		char* tmpPath = util_allocStrCatFSPath(2, dirs[0], relativeDirPath);
 		STRCPY(absoluteDirPath, tmpPath);
 		free(tmpPath);

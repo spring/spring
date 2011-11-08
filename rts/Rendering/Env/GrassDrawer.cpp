@@ -702,12 +702,12 @@ void CGrassDrawer::Draw(void)
 				float3 pos(dx, ground->GetHeightReal(dx, dy, false) + 0.5f, dy);
 					pos.y -= (ground->GetSlope(dx, dy, false) * 10.0f + 0.03f);
 
-				if (camera->InView(pos, turfSize * 0.7f)) {
+				//if (camera->InView(pos, turfSize * 0.7f)) { //the QuadField visibility check should be enough
 					va->AddVertexQTN(pos,         0.0f, 0.0f, float3(-partTurfSize, -partTurfSize, col));
 					va->AddVertexQTN(pos, 1.0f / 16.0f, 0.0f, float3( partTurfSize, -partTurfSize, col));
 					va->AddVertexQTN(pos, 1.0f / 16.0f, 1.0f, float3( partTurfSize,  partTurfSize, col));
 					va->AddVertexQTN(pos,         0.0f, 1.0f, float3(-partTurfSize,  partTurfSize, col));
-				}
+				//}
 			}
 
 			va->DrawArrayTN(GL_QUADS);

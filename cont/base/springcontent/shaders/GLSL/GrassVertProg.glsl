@@ -22,8 +22,7 @@ void main() {
 			0.005 * (1.0 + sin((vertexPos.x + vertexPos.z) / 45.0 + simFrame / 15.0)) *
 			gl_Normal.y * (1.0 - texOffset.x);
 
-		 vertexPos.x += (windSpeed.x * windScale);
-		 vertexPos.z += (windSpeed.z * windScale);
+		 vertexPos.xz += (windSpeed.xz * windScale);
 		#endif
 
 		vertexPos.xyz += billboardDirX * gl_Normal.x;
@@ -35,9 +34,11 @@ void main() {
 	gl_TexCoord[2].st = vertexPos.xz * mapSize;
 	gl_TexCoord[3].st = vertexPos.xz * mapSizePO2;
 
+	vertexPos = gl_ModelViewMatrix * vertexPos;
+
 	gl_FrontColor = gl_Color;
-	gl_FogFragCoord = length((gl_ModelViewProjectionMatrix * vertexPos).xyz);
-	gl_Position = gl_ModelViewProjectionMatrix * vertexPos;
+	gl_FogFragCoord = length(vertexPos.xyz);
+	gl_Position = gl_ProjectionMatrix * vertexPos;
 	#endif
 
 
@@ -67,7 +68,7 @@ void main() {
 	gl_TexCoord[3].st = gl_MultiTexCoord0.st;
 
 	gl_FrontColor = gl_Color;
-	gl_FogFragCoord = length((gl_ProjectionMatrix * vertexPos).xyz);
+	gl_FogFragCoord = length(vertexPos.xyz);
 	gl_Position = gl_ProjectionMatrix * vertexPos;
 	#endif
 
@@ -82,8 +83,7 @@ void main() {
 			0.005 * (1.0 + sin((vertexPos.x + vertexPos.z) / 45.0 + simFrame / 15.0)) *
 			gl_Normal.y * (1.0 - texOffset.x);
 
-		 vertexPos.x += (windSpeed.x * windScale);
-		 vertexPos.z += (windSpeed.z * windScale);
+		 vertexPos.xz += (windSpeed.xz * windScale);
 		#endif
 
 		vertexPos.xyz += billboardDirX * gl_Normal.x;
@@ -101,8 +101,10 @@ void main() {
 	gl_TexCoord[2].st = vertexPos.xz * mapSize;
 	gl_TexCoord[3].st = gl_MultiTexCoord0.st + texOffset;
 
+	vertexPos = gl_ModelViewMatrix * vertexPos;
+
 	gl_FrontColor = gl_Color;
-	gl_FogFragCoord = length((gl_ModelViewProjectionMatrix * vertexPos).xyz);
-	gl_Position = gl_ModelViewProjectionMatrix * vertexPos;
+	gl_FogFragCoord = length(vertexPos.xyz);
+	gl_Position = gl_ProjectionMatrix * vertexPos;
 	#endif
 }

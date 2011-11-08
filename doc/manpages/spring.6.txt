@@ -90,7 +90,7 @@ Data directories are searched for content, and among other things, may contain:
 *AI
 
 When running the engine, it may use multiple data directories,
-but it will use only a single one of them as writeable, to write cache & log
+but it will use only a single one of them as writable, to write cache & log
 files to.
 
 Files

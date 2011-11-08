@@ -486,7 +486,7 @@ void AAIMap::ReadContinentFile()
 	STRCPY(filename, buffer);
 
 	// as we will have to write to the file later on anyway,
-	// we want it writeable
+	// we want it writable
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 
 	FILE* file = fopen(filename, "r");

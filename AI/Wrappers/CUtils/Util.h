@@ -157,7 +157,7 @@ bool util_getParentDir(char* path);
  * and saves the resulting path in absoluteFilePath.
  * If searchOnlyWriteable is set, only the first entry in dirs
  * is used for the search, as it is assumed to contain
- * the writeable directory.
+ * the writable directory.
  *
  * @return  true if the file exists
  */
@@ -170,7 +170,7 @@ bool util_findFile(const char* dirs[], unsigned int numDirs,
  * and saves the resulting path in absoluteDirPath.
  * If searchOnlyWriteable is set, only the first entry in dirs
  * is used for the search, as it is assumed to contain
- * the writeable directory.
+ * the writable directory.
  *
  * @return  true if the file existed or was created
  */

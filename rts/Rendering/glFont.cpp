@@ -1217,7 +1217,7 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 					word wL = SplitWord(*wi, freeWordSpace);
 
 					if (splitLastWord && wL.width == 0.0f) {
-						//! With smart splitting it can happen that the word isn't splitted at all,
+						//! With smart splitting it can happen that the word isn't split at all,
 						//! this can cause a race condition when the word is longer than maxWidth.
 						//! In this case we have to force an unaesthetic split.
 						wL = SplitWord(*wi, freeWordSpace, false);
