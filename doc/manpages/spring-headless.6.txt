@@ -35,7 +35,7 @@ single-player mode against AIs.
 This is the engine version without graphics or sound output.
 It still runs the full simulation, while spring-dedicated basically
 only redirects network traffic.
-It is usefull for testing and simulating AI only games at high speeds
+It is useful for testing and simulating AI only games at high speeds
 on systems without graphics and sound output support.
 For more details, please reffer to:
 

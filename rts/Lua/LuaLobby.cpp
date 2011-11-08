@@ -42,7 +42,7 @@ inline LuaLobby* toLuaLobby(lua_State* L, int idx)
 LuaLobby::LuaLobby(lua_State* L) : L_Sim(luaUI->L_Sim), L_Draw(luaUI->L_Draw)
 {
 	if (L != L_Sim && L != L_Draw) {
-		luaL_error(L, "Tried to create a LuaLobby object in a non-LuaUI enviroment!");
+		luaL_error(L, "Tried to create a LuaLobby object in a non-LuaUI environment!");
 	}
 }
 
