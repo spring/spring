@@ -431,12 +431,11 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 					return false;
 				}
 			} else {
-				if (c.params.size() == 3) {
+				if (c.params.size() >= 3) {
 					const float3 cPos(c.params[0], c.params[1], c.params[2]);
 
 					// check if attack ground is really attack ground
-					if (!aiOrder && !fromSynced &&
-						fabs(cPos.y - ground->GetHeightReal(cPos.x, cPos.z)) > SQUARE_SIZE) {
+					if (!aiOrder && math::fabs(cPos.y - ground->GetHeightReal(cPos.x, cPos.z, fromSynced)) > SQUARE_SIZE) {
 						return false;
 					}
 				}
