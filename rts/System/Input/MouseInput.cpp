@@ -214,12 +214,15 @@ CWin32MouseInput* CWin32MouseInput::inst = 0;
 
 void IMouseInput::SetPos(int2 pos)
 {
+	if (!globalRendering->active) {
+		return;
+	}
+
 	mousepos = pos;
 #ifdef WIN32
 	wsdl::SDL_WarpMouse(pos.x, pos.y);
 #else
 	SDL_WarpMouse(pos.x, pos.y);
-
 	#ifdef _X11
 		// SDL Workaround!
 		// SDL_WarpMouse has a bug on Linux in fullscreen mode & SDL_ShowCursor(SDL_DISABLE).
