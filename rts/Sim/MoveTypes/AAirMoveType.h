@@ -33,6 +33,7 @@ public:
 	virtual bool IsFighter() const = 0;
 	virtual void Takeoff() = 0;
 	virtual void SetState(AircraftState state) = 0;
+	virtual AircraftState GetLandingState() const { return AIRCRAFT_LANDING; }
 
 	void ReservePad(CAirBaseHandler::LandingPad* lp);
 	void DependentDied(CObject* o);
@@ -45,6 +46,8 @@ public:
 	float3 reservedLandingPos;
 
 	float wantedHeight;
+	/// to reset altitude back
+	float orgWantedHeight;
 
 	/// mods can use this to disable plane collisions
 	bool collide;

@@ -1089,7 +1089,8 @@ void CStrafeAirMoveType::DependentDied(CObject* o)
 		lastColWarning = NULL;
 		lastColWarningType = 0;
 	}
-	AMoveType::DependentDied(o);
+
+	AAirMoveType::DependentDied(o);
 }
 
 
