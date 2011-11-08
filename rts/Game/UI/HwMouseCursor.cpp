@@ -32,6 +32,8 @@
 #include <cstring> // for memset
 
 #include <SDL_syswm.h>
+#include <SDL_mouse.h>
+#include <SDL_events.h>
 #endif
 
 
@@ -401,6 +403,7 @@ void CHwWinCursor::Bind()
 	}
 	SetClassLong(info.window,GCL_HCURSOR,(LONG)cursor);*/ //SDL doesn't let us use it :<
 
+	SDL_ShowCursor(SDL_ENABLE);
 	SetCursor(cursor);
 	mouseInput->SetWMMouseCursor(cursor);
 }
@@ -532,7 +535,11 @@ void CHwX11Cursor::Bind()
 		LOG_L(L_ERROR, "SDL error: can't get X11 window info");
 		return;
 	}
-	XDefineCursor(info.info.x11.display,info.info.x11.window,cursor);
+	// do between lock/unlock so SDL's default cursors doesn't flicker in
+	info.info.x11.lock_func();
+		SDL_ShowCursor(SDL_ENABLE);
+		XDefineCursor(info.info.x11.display, info.info.x11.window, cursor);
+	info.info.x11.unlock_func();
 }
 
 CHwX11Cursor::CHwX11Cursor(void)
