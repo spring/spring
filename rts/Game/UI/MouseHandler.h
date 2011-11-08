@@ -23,7 +23,7 @@ public:
 	CMouseHandler();
 	virtual ~CMouseHandler();
 
-	void SetCursor(const std::string& cmdName);
+	void SetCursor(const std::string& cmdName, const bool& forceRebind = false);
 
 	void UpdateHwCursor(); /// calls SDL_ShowCursor, used for ingame hwcursor enabling
 

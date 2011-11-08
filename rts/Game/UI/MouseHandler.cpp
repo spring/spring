@@ -626,15 +626,15 @@ void CMouseHandler::UpdateHwCursor()
 		mouseInput->SetWMMouseCursor(NULL);
 		SDL_ShowCursor(SDL_DISABLE);
 	}
-	cursorText = "";
+	cursorText = "%none%";
 }
 
 
 /******************************************************************************/
 
-void CMouseHandler::SetCursor(const std::string& cmdName)
+void CMouseHandler::SetCursor(const std::string& cmdName, const bool& forceRebind)
 {
-	if (cursorText.compare(cmdName) == 0) {
+	if ((cursorText == cmdName) && !forceRebind) {
 		return;
 	}
 
@@ -643,7 +643,7 @@ void CMouseHandler::SetCursor(const std::string& cmdName)
 	if (it != cursorCommandMap.end()) {
 		currentCursor = it->second;
 	} else {
-		currentCursor = cursorFileMap["cursornormal"];
+		currentCursor = cursorCommandMap[""];
 	}
 
 	if (hardwareCursor && !hide && currentCursor) {
@@ -788,7 +788,7 @@ void CMouseHandler::DrawCursor()
 		return;
 	}
 
-	if (hide || (cursorText == "none"))
+	if (hide || (cursorText == "%none%"))
 		return;
 
 	if (!currentCursor || (hardwareCursor && currentCursor->hwValid)) {
@@ -883,11 +883,11 @@ bool CMouseHandler::ReplaceMouseCursor(const string& oldName,
 
 	fileIt->second = newCursor;
 
-	delete oldCursor;
-
 	if (currentCursor == oldCursor) {
-		currentCursor = newCursor;
+		SetCursor(cursorText, true);
 	}
+
+	delete oldCursor;
 
 	return true;
 }
@@ -906,13 +906,11 @@ void CMouseHandler::SafeDeleteCursor(CMouseCursor* cursor)
 	for (it = cursorFileMap.begin(); it != cursorFileMap.end(); ++it) {
 		if (it->second == cursor) {
 			cursorFileMap.erase(it);
-			delete cursor;
-			return;
 		}
 	}
 
 	if (currentCursor == cursor) {
-		currentCursor = NULL;
+		SetCursor("%none%", true);
 	}
 
 	delete cursor;
