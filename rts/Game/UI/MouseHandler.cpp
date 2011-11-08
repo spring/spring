@@ -365,7 +365,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		return;
 	}
 
-	GML_RECMUTEX_LOCK(sel); // MouseRelease
+	GML_RECMUTEX_LOCK(sel); //FIXME redundant? (selectedUnits already has mutexes)
 
 	// Switch camera mode on a middle click that wasn't a middle mouse drag scroll.
 	// the latter is determined by the time the mouse was held down:
