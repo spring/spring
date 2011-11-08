@@ -376,7 +376,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	//    > means a drag scroll
 	if (button == SDL_BUTTON_MIDDLE) {
 		if (buttons[SDL_BUTTON_MIDDLE].time > (gu->gameTime - dragScrollThreshold))
-			ToggleState();
+			ToggleMiddleClickScroll();
 		return;
 	}
 
@@ -547,7 +547,7 @@ std::string CMouseHandler::GetCurrentTooltip()
 }
 
 
-void CMouseHandler::EmptyMsgQueUpdate()
+void CMouseHandler::Update()
 {
 	if (!hide) {
 		return;
@@ -576,16 +576,18 @@ void CMouseHandler::WarpMouse(int x, int y)
 
 void CMouseHandler::ShowMouse()
 {
-	if(hide){
-		// I don't use SDL_ShowCursor here 'cos it would cause a flicker (with hwCursor)
+	if (hide) {
+		hide = false;
+		cursorText = "%none%"; // force hardware cursor rebinding (else we have standard b&w cursor)
+
+		// I don't use SDL_ShowCursor here 'cos it would cause a flicker with hwCursor
+		// (flicker caused by switching between default cursor and later the really one e.g. `attack`)
 		// instead update state and cursor at the same time
-		if (hardwareCursor){
-			hwHide=true; //call SDL_ShowCursor(SDL_ENABLE) later!
-		}else{
+		if (hardwareCursor) {
+			hwHide = true;
+		} else {
 			SDL_ShowCursor(SDL_DISABLE);
 		}
-		cursorText=""; //force hardware cursor rebinding (else we have standard b&w cursor)
-		hide=false;
 	}
 }
 
@@ -606,7 +608,7 @@ void CMouseHandler::HideMouse()
 }
 
 
-void CMouseHandler::ToggleState()
+void CMouseHandler::ToggleMiddleClickScroll()
 {
 	if (locked) {
 		locked = false;
@@ -618,11 +620,12 @@ void CMouseHandler::ToggleState()
 }
 
 
-void CMouseHandler::UpdateHwCursor()
+void CMouseHandler::ToggleHwCursor(const bool& enable)
 {
-	if (hardwareCursor){
-		hwHide=true; //call SDL_ShowCursor(SDL_ENABLE) later!
-	}else{
+	hardwareCursor = enable;
+	if (hardwareCursor) {
+		hwHide = true;
+	} else {
 		mouseInput->SetWMMouseCursor(NULL);
 		SDL_ShowCursor(SDL_DISABLE);
 	}

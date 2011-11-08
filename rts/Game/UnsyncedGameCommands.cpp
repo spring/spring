@@ -1589,11 +1589,10 @@ public:
 			"Enables/Disables hardware mouse-cursor support") {}
 
 	void Execute(const UnsyncedAction& action) const {
-// XXX one setting stored in two places (mouse->hardwareCursor & configHandler["HardwareCursor"]) -> refactor?
-		SetBoolArg(mouse->hardwareCursor, action.GetArgs());
-		mouse->UpdateHwCursor();
-		configHandler->Set("HardwareCursor", (int)mouse->hardwareCursor);
-		LogSystemStatus("Hardware mouse-cursor", mouse->hardwareCursor);
+		const bool enable = (atoi(action.GetArgs().c_str()) != 0);
+		mouse->ToggleHwCursor(enable);
+		configHandler->Set("HardwareCursor", enable);
+		LogSystemStatus("Hardware mouse-cursor", enable);
 	}
 };
 
@@ -2984,7 +2983,7 @@ bool CGame::ActionReleased(const Action& action)
 		mouse->MouseRelease(mouse->lastx, mouse->lasty, 3);
 	}
 	else if (cmd == "mousestate") {
-		mouse->ToggleState();
+		mouse->ToggleMiddleClickScroll();
 	}
 	else if (cmd == "gameinfoclose") {
 		CGameInfo::Disable();

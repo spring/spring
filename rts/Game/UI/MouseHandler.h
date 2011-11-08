@@ -25,15 +25,15 @@ public:
 
 	void SetCursor(const std::string& cmdName, const bool& forceRebind = false);
 
-	void UpdateHwCursor(); /// calls SDL_ShowCursor, used for ingame hwcursor enabling
+	void ToggleHwCursor(const bool& enable);
 
-	void EmptyMsgQueUpdate(void);
+	void Update();
 	void UpdateCursors();
 	std::string GetCurrentTooltip();
 
 	void HideMouse();
 	void ShowMouse();
-	void ToggleState(); /// lock+hide (used by fps camera and middle click scrolling)
+	void ToggleMiddleClickScroll(); /// lock+hide
 	void WarpMouse(int x, int y);
 
 	void DrawSelectionBox(); /// draw mousebox (selection box)
