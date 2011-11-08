@@ -799,7 +799,7 @@ function wrappFunction(retType, fullName, params) {
 
 function wrappFunctionPlusMeta(retType, fullName, params, metaComment) {
 
-	# This function has to be defined in an other script
+	# This function has to be defined in another script
 	doWrapp_wf = doWrappOO(fullName, params, metaComment);
 
 	if (doWrapp_wf) {

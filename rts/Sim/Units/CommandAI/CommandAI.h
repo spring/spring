@@ -132,7 +132,7 @@ protected:
 private:
 	std::set<CObject *> commandDeathDependences;
 	/**
-	 * continously set to some non-zero value while target is in radar
+	 * continuously set to some non-zero value while target is in radar
 	 * decremented every frame, command is canceled if it reaches 0
 	 */
 	int targetLostTimer;

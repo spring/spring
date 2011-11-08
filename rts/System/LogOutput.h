@@ -26,7 +26,7 @@ public:
 	/**
 	 * @brief set the log file
 	 *
-	 * Relative paths are relative to the writeable data-dir.
+	 * Relative paths are relative to the writable data-dir.
 	 * This method may only be called as long as the logger is not yet
 	 * initialized.
 	 * @see Initialize()
@@ -35,13 +35,13 @@ public:
 	/**
 	 * @brief returns the log file name (without path)
 	 *
-	 * Relative paths are relative to the writeable data-dir.
+	 * Relative paths are relative to the writable data-dir.
 	 */
 	const std::string& GetFileName() const;
 	/**
 	 * @brief returns the absolute path to the log file
 	 *
-	 * Relative paths are relative to the writeable data-dir.
+	 * Relative paths are relative to the writable data-dir.
 	 * This method may only be called after the logger got initialized.
 	 * @see Initialize()
 	 */
@@ -77,7 +77,7 @@ private:
 	/**
 	 * @brief creates an absolute file path from a file name
 	 *
-	 * Will use the CWD, whihc should be the writeable data-dir format
+	 * Will use the CWD, which should be the writable data-dir format
 	 * absoluteification.
 	 */
 	static std::string CreateFilePath(const std::string& fileName);

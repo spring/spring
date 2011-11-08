@@ -20,7 +20,7 @@ Engine:
  - add "isolation" mode (do not use global data-dirs)
  - change lobbyserver main address to "lobby.springrts.com"
  - use http://springrts.com/ everywhere (deprecate clan-sy links)
- - ArchiveMover uses unitsync to detect the writeable data dir
+ - ArchiveMover uses unitsync to detect the writable data dir
  - improve version logging on non-Windows OSs
  - include player-name in log message when resingning
  - add `../` as data-dir if it contains `maps/`, `games/` and `engines/`
