@@ -493,7 +493,7 @@ function printOOEventClass(retType_ec, evtName_ec, ooParams_ec, meta_ec, ind_evt
 		print("\t\t" "return this." _name ";") >> outFile;
 		print("\t" "}") >> outFile;
 
-		# print out an other getter if the interface param name is different
+		# print out another getter if the interface param name is different
 		if (_name in myIntParams_intParams_ec) {
 			_intName = myIntParams_intParams_ec[_name];
 			intParams_toPrint_ec[_intName] = 0;
