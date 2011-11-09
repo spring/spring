@@ -132,6 +132,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 				}
 			} else {
 				const MoveData* md = NULL;
+				const CMoveMath* mm = NULL;
 				const bool los = (gs->cheatEnabled || gu->spectating);
 
 				const float* hm = readmap->GetCornerHeightMapUnsynced();
@@ -147,6 +148,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 					if (!selUnits.empty()) {
 						selUnit = *selUnits.begin();
 						md = selUnit->unitDef->movedata;
+						mm = md->moveMath;
 					}
 				}
 
@@ -159,9 +161,11 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 						const int cnIdx = sqy * gs->mapx   + sqx;
 
 						if (md != NULL) {
+							float m = 1.0f;
+
+							#if 0
 							const float height = hm[hmIdx];
 							const float slope = 1.0f - cn[cnIdx].y;
-							float m = 1.0f;
 
 							if (md->moveFamily == MoveData::Ship) {
 								// only check water depth
@@ -172,20 +176,25 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 								m = (height < (-md->depth))? 0.0f: m;
 								m = (height <= 0.0f && md->moveFamily == MoveData::Hover)? 1.0f: m;
 							}
+							#else
+							m = mm->GetPosSpeedMod(md, sqx, sqy);
+							#endif
 
 							m = Clamp(m, 0.0f, 1.0f);
 							m *= 255;
 
 							if (los || loshandler->InLos(sqx, sqy, gu->myAllyTeam)) {
 								float fact = 1.0f;
-								if (md->moveMath->IsBlocked(*md, sqx, sqy) & CMoveMath::BLOCK_STRUCTURE)
+
+								if (mm->IsBlocked(*md, sqx,     sqy    ) & CMoveMath::BLOCK_STRUCTURE)
 									fact -= 0.25f;
-								if (md->moveMath->IsBlocked(*md, sqx+1, sqy) & CMoveMath::BLOCK_STRUCTURE)
+								if (mm->IsBlocked(*md, sqx + 1, sqy    ) & CMoveMath::BLOCK_STRUCTURE)
 									fact -= 0.25f;
-								if (md->moveMath->IsBlocked(*md, sqx, sqy+1) & CMoveMath::BLOCK_STRUCTURE)
+								if (mm->IsBlocked(*md, sqx,     sqy + 1) & CMoveMath::BLOCK_STRUCTURE)
 									fact -= 0.25f;
-								if (md->moveMath->IsBlocked(*md, sqx+1, sqy+1) & CMoveMath::BLOCK_STRUCTURE)
+								if (mm->IsBlocked(*md, sqx + 1, sqy + 1) & CMoveMath::BLOCK_STRUCTURE)
 									fact -= 0.25f;
+
 								m *= fact;
 							}
 
