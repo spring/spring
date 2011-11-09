@@ -254,8 +254,10 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWind
 SelectMenu::~SelectMenu()
 {
 	ShowConnectWindow(false);
+	ShowSettingsWindow(false, "");
+	ShowUpdateWindow(false);
 	CleanWindow();
-	delete updWindow;
+
 	delete mySettings;
 }
 
@@ -305,6 +307,7 @@ void SelectMenu::Single()
 		pregame = new CPreGame(mySettings);
 		pregame->LoadSetupscript(CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, mySettings->myPlayerName));
 		agui::gui->RmElement(this);
+		//delete this;
 	}
 }
 
@@ -327,6 +330,7 @@ void SelectMenu::Multi()
 void SelectMenu::Quit()
 {
 	gu->globalQuit = true;
+	//delete this;
 }
 
 void SelectMenu::ShowConnectWindow(bool show)
