@@ -55,6 +55,8 @@ int CSMFMapFile::ReadMinimap(std::vector<boost::uint8_t>& data, unsigned mipleve
 	return mipsize;
 }
 
+
+// used only by ReadInfoMap (for unitsync)
 void CSMFMapFile::ReadHeightmap(unsigned short* heightmap)
 {
 	const int hmx = header.mapx + 1;
@@ -69,7 +71,7 @@ void CSMFMapFile::ReadHeightmap(unsigned short* heightmap)
 }
 
 
-void CSMFMapFile::ReadHeightmap(float* heightmap, float base, float mod)
+void CSMFMapFile::ReadHeightmap(float* sHeightMap, float* uHeightMap, float base, float mod)
 {
 	const int hmx = header.mapx + 1;
 	const int hmy = header.mapy + 1;
@@ -79,7 +81,10 @@ void CSMFMapFile::ReadHeightmap(float* heightmap, float base, float mod)
 	ifs.Read(temphm, hmx * hmy * 2);
 
 	for (int y = 0; y < hmx * hmy; ++y) {
-		heightmap[y] = base + swabWord(temphm[y]) * mod;
+		const float h = base + swabWord(temphm[y]) * mod;
+
+		if (sHeightMap != NULL) { sHeightMap[y] = h; }
+		if (uHeightMap != NULL) { uHeightMap[y] = h; }
 	}
 
 	delete[] temphm;
