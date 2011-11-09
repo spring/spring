@@ -469,6 +469,7 @@ bool SpringApp::SetSDLVideoMode()
 
 	int bits;
 	SDL_GL_GetAttribute(SDL_GL_BUFFER_SIZE, &bits);
+	SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE,  &globalRendering->depthBufferBits);
 	if (globalRendering->fullScreen) {
 		LOG("Video mode set to %ix%i/%ibit", globalRendering->viewSizeX, globalRendering->viewSizeY, bits);
 	} else {

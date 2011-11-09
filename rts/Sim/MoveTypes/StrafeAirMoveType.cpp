@@ -105,10 +105,11 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	// force LOS recalculation
 	owner->mapSquare += 1;
 
-	maxRudder   *= 0.99f + gs->randFloat() * 0.02f;
-	maxElevator *= 0.99f + gs->randFloat() * 0.02f;
-	maxAileron  *= 0.99f + gs->randFloat() * 0.02f;
-	maxAcc      *= 0.99f + gs->randFloat() * 0.02f;
+	// FIXME: WHY ARE THESE RANDOMIZED?
+	maxRudder   *= (0.99f + gs->randFloat() * 0.02f);
+	maxElevator *= (0.99f + gs->randFloat() * 0.02f);
+	maxAileron  *= (0.99f + gs->randFloat() * 0.02f);
+	maxAcc      *= (0.99f + gs->randFloat() * 0.02f);
 
 	crashAileron = 1 - gs->randFloat() * gs->randFloat();
 	if (gs->randInt() & 1) {
@@ -351,9 +352,19 @@ void CStrafeAirMoveType::SlowUpdate()
 
 	// try to handle aircraft getting unlimited height
 	if (owner->pos != oldSlowUpdatePos) {
-		if ((owner->pos.y - ground->GetApproximateHeight(owner->pos.x, owner->pos.z)) > (wantedHeight * 5 + 100)) {
-			owner->pos.y = ground->GetApproximateHeight(owner->pos.x, owner->pos.z) + wantedHeight * 5 + 100;
+		const float posy = owner->pos.y;
+		const float gndy = ground->GetApproximateHeight(owner->pos.x, owner->pos.z);
+
+		#if 0
+		// if wantedHeight suddenly jumps (from eg. 400 to 20)
+		// this will teleport the aircraft down *instantly* to
+		// match the new value --> bad
+		if ((posy - gndy) > (wantedHeight * 5.0f + 100.0f)) {
+			owner->pos.y = gndy + (wantedHeight * 5.0f + 100.0f);
 		}
+		#endif
+
+		owner->pos.y = Clamp(posy, gndy, gndy + owner->unitDef->wantedHeight * 5.0f);
 	}
 
 	// note: NOT AAirMoveType::SlowUpdate
@@ -1014,6 +1025,7 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 		CSolidObject::Flying;
 	owner->useAirLos = (newState != AIRCRAFT_LANDED);
 	owner->crashing = (newState == AIRCRAFT_CRASHING);
+
 	if (newState != AIRCRAFT_LANDING) {
 		// don't need a reserved position anymore
 		reservedLandingPos.x = -1.0f;
@@ -1077,7 +1089,8 @@ void CStrafeAirMoveType::DependentDied(CObject* o)
 		lastColWarning = NULL;
 		lastColWarningType = 0;
 	}
-	AMoveType::DependentDied(o);
+
+	AAirMoveType::DependentDied(o);
 }
 
 

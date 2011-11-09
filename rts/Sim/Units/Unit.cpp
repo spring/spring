@@ -723,8 +723,7 @@ void CUnit::Update()
 		// leave the pad if reserved
 		if (moveType->reservedPad) {
 			airBaseHandler->LeaveLandingPad(moveType->reservedPad);
-			moveType->reservedPad = 0;
-			moveType->padStatus = 0;
+			moveType->DependentDied(moveType->reservedPad->GetUnit()); // restore wantedHeight etc
 		}
 		// paralyzed weapons shouldn't reload
 		for (std::vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {

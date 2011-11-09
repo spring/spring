@@ -433,11 +433,32 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 			} else {
 				if (c.params.size() >= 3) {
 					const float3 cPos(c.params[0], c.params[1], c.params[2]);
+					const float gHeight = ground->GetHeightReal(cPos.x, cPos.z, fromSynced);
 
-					// check if attack ground is really attack ground
-					if (!aiOrder && math::fabs(cPos.y - ground->GetHeightReal(cPos.x, cPos.z, fromSynced)) > SQUARE_SIZE) {
+					#if 0
+					// check if attack-ground is really attack-ground
+					//
+					// NOTE:
+					//     problematic if command contains value from UHM
+					//     but is evaluated in synced context against SHM
+					//     after roundtrip (when UHM and SHM differ a lot)
+					//
+					//     instead just clamp the elevation, which creates
+					//     fewer issues overall (eg. artillery force-firing
+					//     at positions outside LOS where UHM and SHM do not
+					//     match will not be broken)
+					//
+					if (!aiOrder && math::fabs(cPos.y - gHeight) > SQUARE_SIZE) {
 						return false;
 					}
+					#else
+					if (!aiOrder) {
+						Command& cc = const_cast<Command&>(c);
+						cc.params[1] = gHeight;
+					}
+
+					return true;
+					#endif
 				}
 			}
 			break;

@@ -66,7 +66,6 @@ public:
 	};
 	ProgressState progressState;
 
-protected:
 	void DependentDied(CObject* o);
 };
 
