@@ -18,6 +18,7 @@ CR_REG_METADATA(AAirMoveType, (
 	CR_MEMBER(reservedLandingPos),
 
 	CR_MEMBER(wantedHeight),
+	CR_MEMBER(orgWantedHeight),
 
 	CR_MEMBER(collide),
 	CR_MEMBER(useSmoothMesh),
@@ -36,6 +37,7 @@ AAirMoveType::AAirMoveType(CUnit* unit) :
 	oldGoalPos(owner? owner->pos : ZeroVector),
 	reservedLandingPos(-1.0f, -1.0f, -1.0f),
 	wantedHeight(80.0f),
+	orgWantedHeight(0.0f),
 	collide(true),
 	useSmoothMesh(false),
 	autoLand(true),
@@ -69,18 +71,20 @@ bool AAirMoveType::UseSmoothMesh() const {
 
 void AAirMoveType::ReservePad(CAirBaseHandler::LandingPad* lp) {
 	oldGoalPos = goalPos;
+	orgWantedHeight = wantedHeight;
 
 	AMoveType::ReservePad(lp);
 	Takeoff();
 }
 
 void AAirMoveType::DependentDied(CObject* o) {
-	AMoveType::DependentDied(o);
-
 	if (o == reservedPad) {
 		SetState(AIRCRAFT_FLYING);
 		goalPos = oldGoalPos;
+		wantedHeight = orgWantedHeight;
 	}
+
+	AMoveType::DependentDied(o);
 }
 
 bool AAirMoveType::Update() {
@@ -201,15 +205,15 @@ bool AAirMoveType::MoveToRepairPad() {
 			}
 		} else if (padStatus == 1) {
 			// landing on pad
-			if (aircraftState != AIRCRAFT_FLYING) {
-				SetState(AIRCRAFT_FLYING);
-			}
+			const AircraftState landingState = GetLandingState();
+			if (aircraftState != landingState)
+				SetState(landingState);
 
 			goalPos = absPadPos;
 			reservedLandingPos = absPadPos;
 			wantedHeight = absPadPos.y - ground->GetHeightAboveWater(absPadPos.x, absPadPos.z);
 
-			if (owner->pos.SqDistance(absPadPos) < 9.0f || aircraftState == AIRCRAFT_LANDED) {
+			if ((owner->pos.SqDistance(absPadPos) < SQUARE_SIZE * SQUARE_SIZE) || aircraftState == AIRCRAFT_LANDED) {
 				padStatus = 2;
 			}
 		} else {
@@ -229,6 +233,7 @@ bool AAirMoveType::MoveToRepairPad() {
 				reservedPad = NULL;
 				padStatus = 0;
 				goalPos = oldGoalPos;
+				wantedHeight = orgWantedHeight;
 				SetState(AIRCRAFT_TAKEOFF);
 			}
 		}
