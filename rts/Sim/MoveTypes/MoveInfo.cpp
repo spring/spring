@@ -186,6 +186,18 @@ CMoveInfo::CMoveInfo()
 		md->zsizeh = md->zsize >> 1;
 		assert((md->xsize & 1) == 1);
 		assert((md->zsize & 1) == 1);
+
+		//  <maxSlope> ranges from 0.0 to 60 * 1.5 degrees, ie. from 0.0 to
+		//  0.5 * PI radians, ie. from 1.0 - cos(0.0) to 1.0 - cos(0.5 * PI)
+		//  = [0, 1] --> DEFAULT <slopeMod> values range from (4 / 0.001) to
+		//  (4 / 1.001) = [4000.0, 3.996]
+		//
+		// speedMod values for a terrain-square slope in [0, 1] are given by
+		// (1.0 / (1.0 + slope * slopeMod)) and therefore have a MAXIMUM at
+		// <slope=0, slopeMod=...> and a MINIMUM at <slope=1, slopeMod=4000>
+		// (of 1.0 / (1.0 + 0.0 * ...) = 1.0 and 1.0 / (1.0 + 1.0 * 4000.0)
+		// = 0.00025 respectively)
+		//
 		md->slopeMod = moveTable.GetFloat("slopeMod", 4.0f / (md->maxSlope + 0.001f));
 
 		const unsigned int checksum =
